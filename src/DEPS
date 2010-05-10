@@ -1,0 +1,8 @@
+deps = {
+  "src/third_party/gtest":
+    "http://googletest.googlecode.com/svn/trunk@422",
+  "src/protobuf/files":
+    "http://protobuf.googlecode.com/svn/trunk@328",
+  "src/mozc_build_tools/gyp":
+    "http://gyp.googlecode.com/svn/trunk@819",
+}

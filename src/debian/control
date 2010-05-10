@@ -1,0 +1,11 @@
+Source: mozc
+Section: utils
+Priority: extra
+Maintainer: Yusuke Sato <yusukes>
+Build-Depends: debhelper (>= 4.0.0), libibus-dev, libcurl4-openssl-dev, pkg-config
+Standards-Version: 3.6.2
+
+Package: ibus-mozc
+Architecture: any
+Depends: ${shlibs:Depends}, ibus
+Description: IBus engine module for Mozc

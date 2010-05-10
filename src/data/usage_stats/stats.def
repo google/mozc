@@ -1,0 +1,215 @@
+#TODO(toshiyuki): we want add comment for each name
+ConversionWindowDuration
+PredictionWindowDuration
+SuggestionWindowDuration
+Commit
+CommitFromSuggestion
+CommitFromPrediction
+CommitFromConversion
+SessionAllEvent
+# elapsed time for processing the request
+ElapsedTime
+SessionCreated
+SetConfig
+SubmittedSegmentLength
+SubmittedSegmentNumber
+SubmittedLength
+ASCIITyping
+NonASCIITyping
+Prediction0
+Prediction1
+Prediction2
+Prediction3
+Prediction4
+Prediction5
+Prediction6
+Prediction7
+Prediction8
+Prediction9
+PredictionGE10
+MouseSelect
+SessionDuration
+PreeditDuration
+ShowCascadingWindow
+ShutDown
+# Clear personalization data
+ClearUserHistory
+# Clear all history
+ClearUserPrediction
+# Clear unused history
+ClearUnusedUserPrediction
+BackSpaceAfterCommit
+
+# special keys
+NO_SPECIALKEY
+DIGIT
+ON
+OFF
+SPACE
+ENTER
+LEFT
+RIGHT
+UP
+DOWN
+ESCAPE
+DEL
+BACKSPACE
+HENKAN
+MUHENKAN
+# VK_DBE_HIRAGANA(Win), kVK_JIS_Kana(Mac)
+KANA
+HOME
+END
+TAB
+F1
+F2
+F3
+F4
+F5
+F6
+F7
+F8
+F9
+F10
+F11
+F12
+PAGE_UP
+PAGE_DOWN
+INSERT
+F13
+F14
+F15
+F16
+F17
+F18
+F19
+F20
+F21
+F22
+F23
+F24
+# alphanumeric  VK_DBE_ALPHANUMERIC(Win), kVK_JIS_Eisu(Mac)
+EISU
+NUMPAD0
+NUMPAD1
+NUMPAD2
+NUMPAD3
+NUMPAD4
+NUMPAD5
+NUMPAD6
+NUMPAD7
+NUMPAD8
+NUMPAD9
+# Numpad [*]
+MULTIPLY
+# Numpad [+]
+ADD
+# Numpad [enter]
+SEPARATOR
+# Numpad [-]
+SUBTRACT
+# Numpad [.]
+DECIMAL
+# Numpad [/]
+DIVIDE
+# Numpad [=]
+EQUALS
+ASCII
+HANKAKU
+KANJI
+
+# Keymap style
+ConfigSessionKeymap
+# Input mode
+ConfigPreeditMethod
+# Punctuation style
+ConfigPunctuationMethod
+# Symbol style
+ConfigSymbolMethod
+# Adjust conversion based on previous input
+ConfigHistoryLearningLevel
+# Date/time conversion
+ConfigUseDateConversion
+# Single kanji dictionary
+ConfigUseSingleKanjiConversion
+# Symbol dictionary
+ConfigUseSymbolConversion
+# Special number conversion
+ConfigUseNumberConversion
+# Secret mode
+ConfigIncognito
+# Selection shortcut
+ConfigSelectionShortcut
+# Use input history
+ConfigUseHistorySuggest
+# Use system dictionary
+ConfigUseDictionarySuggest
+# Maximum number of suggestions
+ConfigSuggestionsSize
+# Automatically switch to halfwidth
+ConfigUseAutoIMETurnOff
+# Composition Editor's behavior with Shift key
+ConfigShiftKeyModeSwitch
+# Numpad character style
+ConfigNumpadCharacterForm
+# Space input style
+ConfigSpaceCharacterForm
+
+# Need to show the help page after install (TSF is disabled)
+PostInstallShowPageRequired
+# Need to logoff after install (CUAS is disabled)
+PostInstallLogoffRequired
+# Need to do nothing after install
+PostInstallNothingRequired
+# Set Mozc as default on install
+PostInstallSetDefault
+# Do not set Mozc as default on install
+PostInstallNotSetDefault
+# Push OK button
+PostInstallOkButton
+# Push Logoff Now button
+PostInstallLogoffNowButton
+# Push Logoff Later button
+PostInstallLogoffLaterButton
+# Push reject (x) button
+PostInstallRejectButton
+
+# Whether the user customed keybindings for IME activation
+IMEActivationKeyCustomized
+
+# Number of user registered dictionary word
+UserRegisteredWord
+# Number of user history entries for UserHistoryPredictor
+UserHistoryPredictorEntrySize
+# Number of user history entries for UserBoundaryHistoryRewriter
+UserBoundaryHistoryEntrySize
+# Number of user history entries for UserSegmentHistoryRewriter
+UserSegmentHistoryEntrySize
+# Total memory in MB
+TotalPhysicalMemory
+# for windows
+WindowsX64
+MsctfVerMajor
+MsctfVerMinor
+MsctfVerBuild
+MsctfVerRevision
+
+# usage stats
+UsageStatsUploadFailed
+
+#DictionarySuggestionSelected
+#HistorySuggestionSelected
+#TypingDuration
+#MozcIsDefault
+#UploadFailure
+#UseMozcTool
+#Candidate0
+#Candidate1
+#Candidate2
+#Candidate3
+#Candidate4
+#Candidate5
+#Candidate6
+#Candidate7
+#Candidate8
+#Candidate9

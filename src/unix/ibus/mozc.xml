@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component>
+  <name>com.google.IBus.Mozc</name>
+  <description>Mozc Component</description>
+  <exec>/usr/libexec/ibus-engine-mozc</exec>
+  <!-- TODO(mazda): Generate the version number -->
+  <version>0.0.0.0</version>
+  <author>Google Inc.</author>
+  <license>New BSD</license>
+  <homepage>http://code.google.com/p/mozc/</homepage>
+  <textdomain>ibus-mozc</textdomain>
+  <engines>
+    <engine>
+      <name>mozc</name>
+      <language>ja</language>
+      <license>New BSD</license>
+      <author>Google Inc.</author>
+      <icon>/usr/share/ibus-mozc/product_icon.png</icon>
+      <layout>jp</layout>
+      <longname>Mozc</longname>
+      <description>Mozc Japanese input method</description>
+      <rank></rank>
+    </engine>
+  </engines>
+</component>

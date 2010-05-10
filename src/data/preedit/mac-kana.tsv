@@ -1,0 +1,84 @@
+Grave	ろ
+1	ぬ
+2	ふ
+3	あ
+Shift 3	ぁ
+4	う
+Shift 4	ぅ
+5	え
+Shift 5	ぇ
+6	お
+Shift 6	ぉ
+7	や
+Shift 7	ゃ
+8	ゆ
+Shift 8	ゅ
+9	よ
+Shift 9	ょ
+0	わ
+Shift 0	を
+Minus	ほ
+Shift Minus	ー
+Equal	へ
+Shift Equal	ゑ
+kVK_JIS_Yen	ー
+Q	た
+W	て
+E	い
+Shift E	ぃ
+R	す
+T	か
+Y	ん
+U	な
+I	に
+O	ら
+P	せ
+LeftBracket	゛
+RightBracket	゜
+Shift RightBracket	「
+A	ち
+S	と
+D	し
+F	は
+G	き
+H	く
+J	ま
+K	の
+L	り
+Semicolon	れ
+Quote	け
+Shift Quote	ヶ
+Backslash	む
+Shift Backslash	」
+Z	つ
+Shift Z	っ
+X	さ
+C	そ
+V	ひ
+Shift V	ゐ
+B	こ
+N	み
+M	も
+Comma	ね
+Shift Comma	、
+Period	る
+Shift Period	。
+Slash	め
+Shift Slash	・
+kVK_JIS_Underscore	ろ
+kVK_JIS_KeypadComma	、
+KeypadMultiply	*
+KeypadPlus	+
+KeypadDivide	/
+KeypadMinus	-
+KeypadEquals	=
+Keypad0		0
+Keypad1		1
+Keypad2		2
+Keypad3		3
+Keypad4		4
+Keypad5		5
+Keypad6		6
+Keypad7		7
+Keypad8		8
+Keypad9		9

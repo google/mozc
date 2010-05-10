@@ -1,0 +1,538 @@
+// Copyright 2010, Google Inc.
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+//     * Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//     * Redistributions in binary form must reproduce the above
+// copyright notice, this list of conditions and the following disclaimer
+// in the documentation and/or other materials provided with the
+// distribution.
+//     * Neither the name of Google Inc. nor the names of its
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+#ifndef MOZC_BASE_UTIL_H_
+#define MOZC_BASE_UTIL_H_
+
+#include <vector>
+#include <string>
+#include <utility>
+
+#include "base/base.h"
+
+struct tm;
+
+namespace mozc {
+
+class Util {
+ public:
+  // String utils
+  static void SplitStringUsing(const string &str,
+                               const char *delm,
+                               vector<string> *output);
+
+  static void SplitStringAllowEmpty(const string &str,
+                                    const char *delm,
+                                    vector<string> *output);
+
+  static void SplitCSV(const string &str, vector<string> *output);
+
+  static void JoinStrings(const vector<string> &str,
+                          const char *delm,
+                          string *output);
+
+
+  static void StringReplace(const string &s, const string &oldsub,
+                            const string &newsub, bool replace_all,
+                            string *res);
+
+  static void LowerString(string *output);
+  static void UpperString(string *output);
+
+  // Transform the first character to the upper case and tailing
+  // characters to the lower cases.  ex. "abCd" => "Abcd".
+  static void CapitalizeString(string *output);
+
+  static size_t OneCharLen(const char *src);
+
+  static size_t CharsLen(const char *src, size_t size);
+
+  static size_t CharsLen(const string &str) {
+    return CharsLen(str.c_str(), str.size());
+  }
+
+  static uint16 UTF8ToUCS2(const char *begin,
+                           const char *end,
+                           size_t *mblen);
+
+  // Convert UCS2 code point to UTF8 string
+  static void UCS2ToUTF8(uint16 c, string *output);
+  static void UCS2ToUTF8Append(uint16 c, string *output);
+
+#if defined(OS_WINDOWS) && defined(COMPILER_MSVC)
+  // Converts the encoding of the specified string from UTF-8 to UTF-16, and
+  // vice versa.
+  static int UTF8ToWide(const char *input, wstring *output);
+  static int UTF8ToWide(const string &input, wstring *output);
+  static int WideToUTF8(const wchar_t *input, string *output);
+  static int WideToUTF8(const wstring &input, string *output);
+#endif
+
+  static void SubString(const string &src,
+                        const size_t start, const size_t length,
+                        string *result);
+
+  static string SubString(const string &src,
+                          const size_t start, const size_t length) {
+    string result;
+    SubString(src, start, length, &result);
+    return result;
+  }
+
+  // Strip a heading UTF-8 BOM (binary order mark) sequence (= \xef\xbb\xbf).
+  static void StripUTF8BOM(string *line);
+
+  // return true the line starts with UTF16-LE/UTF16-BE BOM.
+  static bool IsUTF16BOM(const string &line);
+
+  // Convert the number to a string and append it to output.
+  static string SimpleItoa(int32 number);
+
+  // Convert the string to a number and return it.
+  static int SimpleAtoi(const string &str);
+
+  // Convert the string to a 32-/64-bit unsigned int.  Returns true if success
+  // or false if the string is in the wrong format.
+  static bool SafeStrToUInt32(const string &str, uint32 *value);
+  static bool SafeStrToUInt64(const string &str, uint64 *value);
+
+  // Chop the return characters (i.e. '\n' and '\r') at the end of the
+  // given line.
+  static bool ChopReturns(string *line);
+
+  // 32bit Fingerprint
+  static uint32 Fingerprint32(const string &key);
+#ifndef SWIG
+  static uint32 Fingerprint32(const char *str, size_t length);
+  static uint32 Fingerprint32(const char *str);
+#endif
+
+  static uint32 Fingerprint32WithSeed(const string &key,
+                                      uint32 seed);
+#ifndef SWIG
+  static uint32 Fingerprint32WithSeed(const char *str,
+                                      size_t length, uint32 seed);
+  static uint32 Fingerprint32WithSeed(const char *str,
+                                      uint32 seed);
+#endif
+
+  // 64bit Fingerprint
+  static uint64 Fingerprint(const string &key);
+  static uint64 Fingerprint(const char *str, size_t length);
+
+  static uint64 FingerprintWithSeed(const string &key, uint32 seed);
+
+  static uint64 FingerprintWithSeed(const char *str,
+                                    size_t length, uint32 seed);
+
+  // Fill a given buffer with random characters
+  static bool GetSecureRandomSequence(char *buf, size_t buf_size);
+  static bool GetSecureRandomAsciiSequence(char *buf, size_t buf_size);
+
+  // Get the current time info using gettimeofday-like functions.
+  // sec: number of seconds from epoch
+  // usec: micro-second passed: [0,1000000)
+  static void GetTimeOfDay(uint64 *sec, uint32 *usec);
+
+  // Get the current time info using time-like function
+  // For Windows, _time64() is used.
+  // For Linux/Mac, time() is used.
+  static uint64 GetTime();
+
+  // Get the current local time to current_time.  Returns true if succeeded.
+  static bool GetCurrentTm(tm *current_time);
+  // Get local time, which is offset_sec seconds after now. Returns true if
+  // succeeded.
+  static bool GetTmWithOffsetSecond(tm *time_with_offset, int offset_sec);
+
+  // Suspends the execution of the current thread until
+  // the time-out interval elapses.
+  static void Sleep(uint32 msec);
+
+  // Convert Kanji numeric into Arabic numeric
+  // When the trim_leading_zeros is true, leading zeros for arabic_output
+  // are trimmed off.
+  // TODO(toshiyuki): This parameter is only applied for arabic_output now.
+  //
+  // When input contains non-number characters, conversion will be failed
+  // and returns false.
+  //
+  // Input: "2千五百"
+  // kanji_output: "二千五百"
+  // arabic output: 2500
+  static bool NormalizeNumbers(const string &input,
+                               bool trim_leading_zeros,
+                               string *kanji_output,
+                               string *arabic_output);
+
+  // Japanese utils
+  static void HiraganaToKatakana(const string &input,
+                                 string *output);
+
+  static void HiraganaToHalfwidthKatakana(const string &input,
+                                          string *output);
+
+  static void HiraganaToRomanji(const string &input,
+                                string *output);
+
+  static void HalfWidthAsciiToFullWidthAscii(const string &input,
+                                             string *output);
+
+  static void FullWidthAsciiToHalfWidthAscii(const string &input,
+                                             string *output);
+
+  static void HiraganaToFullwidthRomanji(const string &input,
+                                         string *output);
+
+  static void RomanjiToHiragana(const string &input,
+                                string *output);
+
+  static void KatakanaToHiragana(const string &input,
+                                 string *output);
+
+  static void HalfWidthKatakanaToFullWidthKatakana(const string &input,
+                                                   string *output);
+
+  static void FullWidthKatakanaToHalfWidthKatakana(const string &input,
+                                                   string *output);
+
+  static void FullWidthToHalfWidth(const string &input,
+                                   string *output);
+
+  static void HalfWidthToFullWidth(const string &input,
+                                   string *output);
+
+  // return true if all chars in input are both defined
+  // in full width and half-width-katakana area
+  static bool IsFullWidthSymbolInHalfWidthKatakana(const string &input);
+
+  // return true if all chars are defiend in
+  // half-width-katakana area.
+  static bool IsHalfWidthKatakanaSymbol(const string &input);
+
+
+  static void NormalizeVoicedSoundMark(const string &input,
+                                       string *output);
+
+  // Note: this function just does charcter-by-character conversion
+  // "百二十" -> 10020
+  static void KanjiNumberToArabicNumber(const string &input,
+                                        string *output);
+
+  // return true if key is an open bracket.
+  // if key is an open bracket, corresponding close bracket is
+  // assigned
+  static bool IsOpenBracket(const string &key, string *close_bracket);
+
+  // return true if key is a close bracket.
+  // if key is a close bracket, corresponding open bracket is
+  // assigned.
+  static bool IsCloseBracket(const string &key, string *open_bracket);
+
+  // Code converter
+#ifndef OS_WINDOWS
+  static void UTF8ToEUC(const string &input, string *output);
+  static void EUCToUTF8(const string &input, string *output);
+  static void EUCToSJIS(const string &input, string *output);
+  static void SJISToEUC(const string &input, string *output);
+#endif
+
+  static void UTF8ToSJIS(const string &input, string *output);
+  static void SJISToUTF8(const string &input, string *output);
+
+  // File and directory operations
+  static bool CreateDirectory(const string &path);
+  static bool RemoveDirectory(const string &dirname);
+  static bool Unlink(const string &filename);
+  static bool FileExists(const string &filename);
+  static bool DirectoryExists(const string &filename);
+  static bool Rename(const string &from, const string &to);
+  // This function has a limitation. See comment in the .cc file.
+  static bool CopyTextFile(const string &from, const string &to);
+
+  // Move/Rename file atomically.
+  // Vista or Later: use Transactional NTFS API, which guarantees atomic
+  // file move operation.
+  // When anything wrong happen during the transactional NTFS api, execute
+  // the fallback plan, which is the same as the treatment for Windows XP.
+  //
+  // XP: use MoveFileWx with MOVEFILE_WRITE_THROUGH, which isn't atomic but
+  // almost always works as intended.
+  //
+  // Linux: use rename(2), which is atomic.
+  //
+  // Mac OSX: use rename(2), but rename(2) on Mac OSX
+  // is not properly implemented, atomic rename is POSIX spec though.
+  // http://www.weirdnet.nl/apple/rename.html
+  static bool AtomicRename(const string &from, const string &to);
+
+  static string JoinPath(const string &path1, const string &path2);
+
+#ifndef SWIG
+  static void JoinPath(const string &path1, const string &path2,
+                       string *output);
+#endif
+
+  static string Basename(const string &filename);
+  static string Dirname(const string &filename);
+
+  // return normalized path by replacing '/' with '\\' in Windows.
+  // does nothing in other platforms.
+  static string NormalizeDirectorySeparator(const string &path);
+
+  // return ~/.mozc for Unix/Mac
+  // return %APPDATA%\\google\\mozc for Windows 2000, XP and Vista
+  static string GetUserProfileDirectory();
+
+  // return ~/Library/Logs/Mozc for Mac
+  // Otherwise same as GetUserProfileDirectory().
+  static string GetLoggingDirectory();
+
+  // set user dir
+
+  // Currently we enabled this method to release-build too because
+  // some tests use this.
+  // TODO(mukai,taku): find better way to hide this method in the release
+  // build but available from those tests.
+  static void SetUserProfileDirectory(const string &path);
+
+  // return the directory name where the mozc server exist.
+  static string GetServerDirectory();
+
+  // return the path of the mozc server.
+  static string GetServerPath();
+
+  // return the username.  This function's name was GetUserName.
+  // Since Windows reserves GetUserName as a macro, we have changed
+  // the name to GetUserNameAsString.
+  static string GetUserNameAsString();
+
+  // return Windows SID as string.
+  // On Linux and Mac, GetUserSidAsString() is equivalent to
+  // GetUserNameAsString()
+  static string GetUserSidAsString();
+
+
+  // return DesktopName as string.
+  // On Windows. return <session_id>.<DesktopStationName>.<ThreadDesktopName>
+  // On Linux, return getenv("DISPLAY")
+  // Mac has no DesktopName() so, just return empty string
+  static string GetDesktopNameAsString();
+
+  // Command line arguments
+
+  // Rotate the first argv value to the end of argv.
+  static void CommandLineRotateArguments(int argc, char ***argv);
+
+  // Get a pair of key and value from argv, and returns the number of
+  // arguments used for the pair of key and value.  If the argv
+  // contains invalid format, this function returns false and the
+  // number of checked arguments.  Otherwise returns true.
+  static bool CommandLineGetFlag(int argc,
+                                 char **argv,
+                                 string *key,
+                                 string *value,
+                                 int *used_args);
+
+  static void EncodeURI(const string &input, string *output);
+  static void DecodeURI(const string &input, string *output);
+
+  // Make a string for CGI parameters from params and append it to
+  // base.  The result looks like:
+  //   <base><key1>=<encoded val1>&<key2>=<encoded val2>
+  // The base is supposed to end "?" or "&".
+  static void AppendCGIParams(const vector<pair<string, string> > &params,
+                              string *base);
+
+  // Escape any characters into \x prefixed hex digits.
+  // ex.  "ABC" => "\x41\x42\x43".
+  static void Escape(const string &input, string *output);
+
+  // Escape unsafe html characters such as <, > and &.
+  static void EscapeHtml(const string &text, string *res);
+
+  // Escape unsafe CSS characters like <.  Note > and & are not
+  // escaped becaused they are operands of CSS.
+  static void EscapeCss(const string &text, string *result);
+
+  enum ScriptType {
+    UNKNOWN_SCRIPT,
+    KATAKANA,
+    HIRAGANA,
+    KANJI,
+    NUMBER,
+    ALPHABET,
+    SCRIPT_TYPE_SIZE,
+  };
+
+  // return script type of w
+  static ScriptType GetScriptType(uint16 w);
+
+  // return script type of first character in [begin, end)
+  static ScriptType GetScriptType(const char *begin, const char *end,
+                                  size_t *mblen);
+
+  // return script type of string. all chars in str must be
+  // KATAKANA/HIRAGANA/KANJI/NUMBER or ALPHABET.
+  // If str has mixed scripts, this function returns UNKNOWN_SCRIPT
+  static ScriptType GetScriptType(const string &str);
+
+  // return true if all script_type in str is "type"
+  static bool IsScriptType(const string &str, ScriptType type);
+
+  // return true if the string contains script_type char
+  static bool ContainsScriptType(const string &str, ScriptType type);
+
+  enum FormType {
+    UNKNOWN_FORM,
+    HALF_WIDTH,
+    FULL_WIDTH,
+    FORM_TYPE_SIZE,
+  };
+
+  // return Form type of single character
+  static FormType GetFormType(uint16 w);
+
+  // return FormType of string
+  static FormType GetFormType(const string &str);
+
+  // Basically, if chraset >= JIX0212, the char is platform dependent char.
+  enum CharacterSet {
+    ASCII,         // ASCII (simply ucs2 <= 0x007F)
+    JISX0201,      // defined at least in 0201 (can be in 0208/0212/0213/CP9232)
+    JISX0208,      // defined at least in 0208 (can be in 0212/0213/CP932)
+    JISX0212,      // defined at least in 0212 (can be in 0213/CP932)
+    JISX0213,      // defined at least in 0213 (can be in CP932)
+    CP932,         // defined only in CP932, not in JISX02*
+    UNICODE_ONLY,  // defined only in UNICODE, not in JISX* nor CP932
+    CHARACTER_SET_SIZE,
+  };
+
+  // return CharacterSet
+  static CharacterSet GetCharacterSet(uint16 ucs2);
+
+  // return CharacterSet of string.
+  // if the given string contains multiple charasets, return
+  // the maximum character set.
+  static CharacterSet GetCharacterSet(const string &str);
+
+  // Return true if the OS is supported.
+  // [OS_MACOSX] This function never returns false.
+  // [OS_LINUX] This function never returns false.
+  // TODO(yukawa): support Mac and Linux.
+  static bool IsPlatformSupported();
+
+#ifdef OS_WINDOWS
+  // return true if the version of Windows is Vista or later.
+  static bool IsVistaOrLater();
+
+  // return true if the version of Windows is x64 Edition.
+  static bool IsWindowsX64();
+
+  // return system directory. If failed, return NULL.
+  // You need not to delete the returned pointer.
+  // This function is thread safe.
+  static const wchar_t *GetSystemDir();
+
+  // Load a DLL which has the specified base-name and is located in the
+  // system directory.
+  // If the function succeeds, the return value is a handle to the module.
+  // You should call FreeLibrary with the handle.
+  // If the function fails, the return value is NULL.
+  static HMODULE LoadSystemLibrary(const wstring &base_filename);
+
+  // Load a DLL which has the specified base-name and is located in the
+  // Mozc server directory.
+  // If the function succeeds, the return value is a handle to the module.
+  // You should call FreeLibrary with the handle.
+  // If the function fails, the return value is NULL.
+  static HMODULE LoadMozcLibrary(const wstring &base_filename);
+
+  // If a DLL which has the specified base-name and located in the system
+  // directory is loaded in the caller process, retrieve its module handle.
+  // If the function succeeds, the return value is a handle to the module
+  // without incrementing its reference count so that you should not call
+  // FreeLibrary with the handle.
+  // If the function fails, the return value is NULL.
+  static HMODULE GetSystemModuleHandle(const wstring &base_filename);
+
+  // Retrieves version of the specified file.
+  // If the function fails, returns false.
+  static bool GetFileVersion(const wstring &file_fullpath,
+                             int *major, int *minor, int *build, int *revision);
+
+  // Retrieves version string of the specified file.
+  // The version string consists of 4 digits separated by comma
+  // like "X.YY.ZZZ.WWWW".
+  // If the function fails, the return value is an empty string.
+  static string GetFileVersionString(const wstring &file_fullpath);
+
+#endif
+
+  // return string representing os version
+  // TODO(toshiyuki): Add unittests.
+  static string GetOSVersionString();
+
+  // disable IME in the current process/thread
+  static void DisableIME();
+
+  // retrieve total physical memory. returns 0 if any error occurs.
+  static uint64 GetTotalPhysicalMemory();
+
+  // read specified memory-mapped region to cause page fault.
+  // this function does not consider memory alignment.
+  // if |*query_quit| is or becomes true, it returns immediately.
+  static void PreloadMappedRegion(const void *begin,
+                                  size_t region_size_in_byte,
+                                  volatile bool *query_quit);
+
+  // write byte array header to ofs
+  // Windows does not accept static string of size >= 65536.
+  // so we represent string in an array of uint64 in Windows.
+  //  * static const size_t k<name>Size and
+  //  * static const uint64 k<name>Uint64[] and
+  //    static const char *k<name> =
+  //                            reinterpret_cast<const char *>(k<name>Uint64)
+  //    (for Windows), or
+  //  * static const char k<name>[] (for others)
+  // are generated.
+  static void WriteByteArray(const string &name, const char *buf,
+                             size_t buf_size, ostream *ofs);
+
+  // check endian-ness at runtime.
+  static bool IsLittleEndian();
+
+  // should never be allocated.
+ private:
+  Util() {}
+  virtual ~Util() {}
+};
+}  // namespace mozc
+
+#endif  // MOZC_BASE_UTIL_H_

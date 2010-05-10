@@ -1,0 +1,489 @@
+// Copyright 2010, Google Inc.
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+//     * Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//     * Redistributions in binary form must reproduce the above
+// copyright notice, this list of conditions and the following disclaimer
+// in the documentation and/or other materials provided with the
+// distribution.
+//     * Neither the name of Google Inc. nor the names of its
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+// Protocol messages to be used for mozc client/server communication
+// and client/renderer communication.
+//
+// The Command message contains all the input/output values for
+// client/server commnication.  The messages structure of Command and
+// its child messages are here:
+
+syntax = "proto2";
+
+import "session/config.proto";
+
+package mozc.commands;
+
+// This enum is used by SessionCommand::input_mode with
+// CHANGE_INPUT_MODE and Output::mode.
+enum CompositionMode {
+  DIRECT = 0;
+  HIRAGANA = 1;
+  FULL_KATAKANA = 2;
+  HALF_ASCII = 3;
+  FULL_ASCII = 4;
+  HALF_KATAKANA = 5;
+  NUM_OF_COMPOSITIONS = 6;
+}
+
+message KeyEvent {
+  enum SpecialKey {
+    NO_SPECIALKEY = 0;
+    DIGIT = 1;
+    ON = 2;
+    OFF = 3;
+    SPACE = 4;
+    ENTER = 5;
+    LEFT = 6;
+    RIGHT = 7;
+    UP = 8;
+    DOWN = 9;
+    ESCAPE = 10;
+    DEL = 11;    // not DELETE because DELETE is reserved in MSVC
+    BACKSPACE = 12;
+    HENKAN = 13;
+    MUHENKAN = 14;
+    KANA = 15;  // VK_DBE_HIRAGANA(Win), kVK_JIS_Kana(Mac)
+    HOME = 16;
+    END = 17;
+    TAB = 18;
+    F1 = 19;
+    F2 = 20;
+    F3 = 21;
+    F4 = 22;
+    F5 = 23;
+    F6 = 24;
+    F7 = 25;
+    F8 = 26;
+    F9 = 27;
+    F10 = 28;
+    F11 = 29;
+    F12 = 30;
+    PAGE_UP = 31;
+    PAGE_DOWN = 32;
+    INSERT = 33;
+    F13 = 34;
+    F14 = 35;
+    F15 = 36;
+    F16 = 37;
+    F17 = 38;
+    F18 = 39;
+    F19 = 40;
+    F20 = 41;
+    F21 = 42;
+    F22 = 43;
+    F23 = 44;
+    F24 = 45;
+    EISU = 46;  // alphanumeric  VK_DBE_ALPHANUMERIC(Win), kVK_JIS_Eisu(Mac)
+    NUMPAD0 = 47;
+    NUMPAD1 = 48;
+    NUMPAD2 = 49;
+    NUMPAD3 = 50;
+    NUMPAD4 = 51;
+    NUMPAD5 = 52;
+    NUMPAD6 = 53;
+    NUMPAD7 = 54;
+    NUMPAD8 = 55;
+    NUMPAD9 = 56;
+    MULTIPLY = 57;  // Numpad [*]
+    ADD = 58;  // Numpad [+]
+    SEPARATOR = 59;  // Numpad [enter]
+    SUBTRACT = 60;  // Numpad [-]
+    DECIMAL = 61;  // Numpad [.]
+    DIVIDE = 62;  // Numpad [/]
+    EQUALS = 63;  // Numpad [=]
+    ASCII = 64;
+    HANKAKU = 65;
+    KANJI = 66;
+    NUM_SPECIALKEYS = 67;
+  };
+  enum ModifierKey {
+    CTRL = 1;
+    ALT = 2;
+    SHIFT = 4;
+    KEY_DOWN = 8;
+    KEY_UP = 16;
+  };
+
+  optional uint32 key_code = 1;  // Printable key in ASCII.
+  optional uint32 modifiers = 2;  // Going to be obsolete.
+  optional SpecialKey special_key = 3;  // Unprintable key listed above.
+  repeated ModifierKey modifier_keys = 4;  // ModifierKeys
+
+  // String used for preedit.  Kana characters and strings typed from
+  // a software keyboard are supposed to be stored here.  To set kana
+  // value, key_code=1 should be stored an ascii character for the
+  // kana key.
+  optional string key_string = 5;
+
+  enum InputStyle {
+    // Follow the current input mode (default).
+    FOLLOW_MODE = 0;
+    // Do not transliterate key_string and use it as-is.
+    AS_IS = 1;
+    // Immediately output key_string on the precomposition mode.
+    // Same with AS_IS on the preedit mode.
+    DIRECT_INPUT = 2;
+  };
+  optional InputStyle input_style = 6 [default = FOLLOW_MODE];
+
+  // Input mode
+  optional CompositionMode mode = 7;
+};
+
+message SessionCommand {
+  enum CommandType {
+    // Revert the session, this is usually similar to type ESC several times.
+    REVERT = 1;
+    // Commit the session, this is usually similar to type Enter.
+    SUBMIT = 2;
+    // Select the specified candidate word by id.  This command is
+    // usually used with mouse clicking.
+    SELECT_CANDIDATE = 3;
+
+    // Set the focus to the candidate by id.  This is usually used
+    // with mouse dragging.  The difference from SELECT_CANDIDATE is
+    // that HIGHLIGHT_CANDIDATE does not close the candidate window
+    // while SELECT_CANDIDATE closes the candidate window.
+    HIGHLIGHT_CANDIDATE = 4;
+
+    // Specify the input mode.  This command should be used with
+    // composition_mode.
+    SWITCH_INPUT_MODE = 5;
+
+    // Return the current status such as composition mode, preedit method, etc.
+    GET_STATUS = 6;
+  };
+  required CommandType type = 1;
+
+  // Unique number specifying a candidate word.
+  optional int32 id = 2;
+
+  // This is used with SWITCH_INPUT_MODE.
+  optional CompositionMode composition_mode = 3;
+};
+
+message Input {
+  enum CommandType {
+    NONE = 0;
+    CREATE_SESSION = 1;
+    DELETE_SESSION = 2;
+    SEND_KEY = 3;
+
+    // Check only if the key event will be consumed.  This command is
+    // for TSF on Windows.  You do not need to use this command, if it
+    // is not necessary.
+    TEST_SEND_KEY = 4;
+
+    // Evaluate the command specified by SessionCommand.  The output
+    // format should be the same with an output of a SEND_KEY command.
+    SEND_COMMAND = 5;
+
+    // Set & Config
+    GET_CONFIG = 6;
+    SET_CONFIG = 7;
+
+    // sync dictionary/history data to local file
+    SYNC_DATA = 8;
+
+    // shutdowon server safely
+    SHUTDOWN = 9;
+
+    // reload mutable data (like config, user-dic, history)
+    RELOAD = 10;
+
+    // clear user history data
+    CLEAR_USER_HISTORY = 11;
+
+    // clear user prediction data
+    CLEAR_USER_PREDICTION = 12;
+
+    // clear unused prediction
+    CLEAR_UNUSED_USER_PREDICTION = 16;
+
+    // clean up sessions
+    // shutdwon if session is empty and
+    // mozc_server is launched with timeout mode
+    CLEANUP = 13;
+
+    // no operation
+    // can be used for pinging the server
+    NO_OPERATION = 14;
+  };
+  required CommandType type = 1;
+
+  // Session ID created by CREATE_SESSION.
+  optional uint64 id = 2;
+
+  // Key combinations used for SEND_KEY or TEST_SEND_KEY.
+  optional KeyEvent key = 3;
+
+  // Command sent to the session layer used with SEND_COMMAND.
+  optional SessionCommand command = 4;
+
+  // Input config
+  optional mozc.config.Config config = 5;
+};
+
+
+// Result contains data to be submitted to the host application by the
+// ime client.
+message Result {
+  enum ResultType {
+    NONE = 0;
+    STRING = 1;
+  };
+  required ResultType type = 1;
+  // The result of conversion.
+  required string value = 2;
+
+  // Source of the value.  It is almost always the reading of the value.
+  optional string key = 3;
+};
+
+
+// Preedit represents a composition data, which is rendered on the
+// host application by the ime client.  On Japanese IME, the both
+// Preedit and Conversion statuses are represented by this message.
+message Preedit {
+  required uint32 cursor = 1;
+  // The string data of Preedit is separated into Segment messages
+  // presenting the ime server's status.  On Preedit status of
+  // Japanese IME, there are up to three segments; left side chars of
+  // cursor, forcused char, right side chars of cursor.  On Conversion
+  // status of Japanese IME, the messages literally represent the
+  // segments of the conversion.
+  repeated group Segment = 2 {
+    enum Annotation {
+      NONE = 0;
+      UNDERLINE = 1;
+      HIGHLIGHT = 2;
+    };
+    required Annotation annotation = 3;
+    required string value = 4;
+
+    // The length of value in characters.  This is NOT a number in
+    // bytes or logical character units.  So, the length of "abc" and
+    // "あいう" should be 3, "ヴ" should be 1 and "ｳﾞ" and "う゛"
+    // should be 2.
+    required uint32 value_length = 5;
+
+    // Source of the value.  It is almost always the reading of the value.
+    optional string key = 6;
+  };
+
+  // The position of the first segment whose annotation is 'HIGHLIGHT'. Not set
+  // if there are no such segments.
+  optional uint32 highlighted_position = 3;
+};
+
+// Annotation against a candidate.
+message Annotation {
+  // Annotation prepended to the value.
+  optional string prefix = 1;
+  // Annotation appended to the value.
+  optional string suffix = 2;
+  // Type of the candidate such as [HALF][KATAKANA], [GREEK],
+  // [Black square], etc...
+  optional string description = 3;
+  // Shortcut key to select this candidate.
+  optional string shortcut = 4;
+};
+
+// Additional information to a candidate word.  This message is
+// used for describing a word usage for instance.
+message Information {
+  // Unique number specifing the candidate.  This id and Candidate::id
+  // must be numbered for the same candidate.
+  optional int32 id = 1;
+
+  // Title string of the information.  For usage, this value is
+  // probably equal to Candidate::value or its canonicalized value.
+  optional string title = 2;
+
+  // The content of the information.  For usage, this value actually
+  // describes how to use the word.
+  optional string description = 3;
+};
+
+// Category describes the attribute of the words.
+enum Category {
+  CONVERSION = 0;
+  PREDICTION = 1;
+  SUGGESTION = 2;
+  TRANSLITERATION = 3;
+  USAGE = 4;
+};
+
+// DisplayType is a hint to UI renderers describing how the words are
+// displayed.
+enum DisplayType {
+  MAIN = 0;
+  CASCADE = 1;
+};
+
+message InformationList {
+  optional uint32 focused_index = 1;
+  repeated Information information = 2;
+  // Category of the infolist.
+  optional Category category = 3 [default = CONVERSION];
+
+  // Information to be used for rendering.
+  optional DisplayType display_type = 4 [default = CASCADE];
+};
+
+// Message representing the footer part of the candidate window.
+message Footer {
+  // Message shown like a status bar.
+  optional string label = 1;
+  // Whether index (e.g. 10/120) is visible or not.
+  optional bool index_visible = 2 [default = false];
+  // Whether the logo image is visible or not.
+  optional bool logo_visible = 3 [default = false];
+  // Message modestly shown.  It is used for displaying the version on
+  // dev-channel now.
+  optional string sub_label = 4;
+};
+
+message Candidates {
+  // When has_focused_index() is true, this message contains predicted and
+  // normally converted candidates. Otherwise, when the field is not set,
+  // this message contains a 'suggestion'.
+  optional uint32 focused_index = 1;
+
+  required uint32 size = 2;
+  repeated group Candidate = 3 {
+    // The first index should be zero and index numbers should increase by one.
+    required uint32 index = 4;
+    required string value = 5;
+    optional int32 id = 9;  // Unique number specifing the candidate.
+    optional Annotation annotation = 7;
+  };
+  // The position on the preedit.  The number represents the left edge
+  // of the candidate window.
+  required uint32 position = 6;
+
+  // Nested candidates aka cascading window.
+  optional Candidates subcandidates = 8;
+
+  // Usages of candidates.
+  optional InformationList usages = 10;
+
+  // Category of the candidates
+  optional Category category = 11 [default = CONVERSION];
+
+  // Information to be used for rendering.
+  optional DisplayType display_type = 12 [default = MAIN];
+
+  // Footer of the GUI window.
+  optional Footer footer = 13;
+
+};
+
+message Output {
+  optional uint64 id = 1;
+  optional CompositionMode mode = 2;
+  optional bool consumed = 3;
+  optional Result result = 4;
+  optional Preedit preedit = 5;
+  optional Candidates candidates = 6;
+  optional KeyEvent key = 7;
+
+  // when URL is non empty, UI can open the page with a browser,
+  // after finishing the all rendering part.
+  // We are using this feature for bug-report system.
+  optional string url = 8;
+
+  // Output config
+  optional mozc.config.Config config = 9;
+
+  // PreeditMethod: this is the default input mode of the session.
+  // If the user's config is "kana-input", it returns KANA.  Only
+  // CreateSession response will have this field.
+  enum PreeditMethod {
+    ASCII = 0;
+    KANA = 1;
+  };
+  optional PreeditMethod preedit_method = 10 [default = ASCII];
+
+  // ErrorCode:
+  // if SessionHandler::EvalCommand() returns false,
+  // return output with error_code = SESSION_FAILURE;
+  enum ErrorCode {
+    SESSION_SUCCESS = 0;
+    SESSION_FAILURE = 1;
+  };
+  optional ErrorCode error_code = 11 [ default = SESSION_SUCCESS ];
+
+  // number of microseconds that have elapsed for processing the request.
+  optional uint32 elapsed_time = 12 [ default = 0 ];
+};
+
+message Command {
+  required Input input = 1;
+  required Output output = 2;
+};
+
+message RendererCommand {
+  enum CommandType {
+    NOOP = 0;      // No operation
+    UPDATE = 1;    // Update the current window
+    SHUTDOWN = 2;  // shutdown renderer
+  };
+
+  optional CommandType type = 1 [ default = NOOP ];
+
+  // set visibility
+  // if visible is false, the content of output
+  // is basically ignored.
+  optional bool visible = 2 [ default = false ];
+
+  optional Output output = 3;
+
+  // Preedit rectangle
+  message Rectangle {
+    optional int32 left   = 1;
+    optional int32 top    = 2;
+    optional int32 right  = 3;
+    optional int32 bottom = 4;
+  };
+
+  optional Rectangle preedit_rectangle = 4;
+
+  // Application information Mozc UI is attaching
+  message ApplicationInfo {
+    optional uint32 process_id = 1;
+    optional uint32 thread_id = 2;
+    // used in Windows:
+    // WHND of the message-only window:
+    optional uint32 receiver_handle = 3;
+  };
+
+  optional ApplicationInfo application_info = 5;
+};

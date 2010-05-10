@@ -1,0 +1,105 @@
+## Test data for session_client_main.
+## Comments should start with double # characters (i.e. ##).
+## A single # is treated as an input from a keyboard.
+## A brank line is treated as a new session.
+##
+## Single # character.
+#
+
+## Simple Conversion (kanji)
+k
+a
+n
+j
+i
+SPACE
+SPACE
+SPACE
+ENTER
+## History Learning (kanji)
+k
+a
+n
+j
+i
+SPACE
+ENTER
+
+## Transliterations (MOji)
+M
+O
+j
+i
+F6
+F7
+F8
+F9
+F10
+F11
+SPACE
+SPACE
+F11
+F10
+F9
+F8
+F7
+F6
+
+## Multiple segments (kurumade matu)
+k
+u
+r
+u
+m
+a
+d
+e
+m
+a
+t
+u
+SPACE
+SPACE
+SHIFT RIGHT
+RIGHT
+SHIFT LEFT
+LEFT
+
+## http://b/19768201
+i
+n
+b
+o
+u
+TAB
+SHIFT LEFT
+SPACE
+## SubmitSegment
+CTRL DOWN
+
+## http://b/1975771
+a
+TAB
+## SubmitSegment
+CTRL DOWN
+a
+
+## http://b/2034943
+m
+o
+z
+u
+SPACE
+## SubmitSegment
+CTRL DOWN
+k
+u
+
+## http://b/2026354
+a
+i
+u
+e
+o
+SPACE
+SPACE

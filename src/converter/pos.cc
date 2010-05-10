@@ -1,0 +1,283 @@
+// Copyright 2010, Google Inc.
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+//     * Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//     * Redistributions in binary form must reproduce the above
+// copyright notice, this list of conditions and the following disclaimer
+// in the documentation and/or other materials provided with the
+// distribution.
+//     * Neither the name of Google Inc. nor the names of its
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+#include "converter/pos.h"
+
+#include <map>
+#include <cstring>
+#include <algorithm>
+#include "base/base.h"
+#include "base/singleton.h"
+
+namespace mozc {
+namespace {
+
+// Some data types and static data definitoin for POSHandlerImpl.
+struct ConjugationType {
+  const char *key_suffix;
+  const char *value_suffix;
+  uint16 id;
+};
+
+struct POSToken {
+  const char *pos;
+  uint16 conjugation_size;
+  const ConjugationType *conjugation_form;
+};
+
+#include "converter/pos_data.h"
+
+// Definition of class POSHandlerImpl
+
+class POSHandlerImpl : public POS::POSHandlerInterface {
+ public:
+  POSHandlerImpl() {
+    for (size_t i = 0; kPOSToken[i].pos != NULL; ++i) {
+      pos_map_.insert(make_pair(string(kPOSToken[i].pos),
+                                &kPOSToken[i]));
+    }
+    CHECK_GT(pos_map_.size(), 1);
+
+    // const char kNumberPOS[] = "数";
+    // const char kUnknownPOS[] = "名詞サ変";
+
+    const char kNumberPOS[] = "\xE6\x95\xB0";
+    const char kUnknownPOS[] =
+        "\xE5\x90\x8D\xE8\xA9\x9E\xE3\x82\xB5\xE5\xA4\x89";
+
+    CHECK(GetPOSIDs(kNumberPOS, &number_id_));
+    CHECK(GetPOSIDs(kUnknownPOS, &unknown_id_));
+
+    // const char kLastNamePos[] = "姓";
+    // const char kFistNamePos[] = "名";
+    const char kLastNamePos[] = "\xE5\xA7\x93";
+    const char kFistNamePos[] = "\xE5\x90\x8D";
+    CHECK(GetPOSIDs(kLastNamePos, &last_name_id_));
+    CHECK(GetPOSIDs(kFistNamePos, &first_name_id_));
+  }
+
+  virtual ~POSHandlerImpl() {}
+
+  virtual bool IsNumber(uint16 id) const {
+    const uint16 *pos = find(kNumberId,
+                             kNumberId + arraysize(kNumberId),
+                             id);
+    if (pos == (kNumberId + arraysize(kNumberId))) {
+      return false;
+    }
+
+    return true;
+  }
+
+  virtual bool IsZipcode(uint16 id) const {
+    return id == kZipcodeId;
+  }
+
+  virtual bool IsFunctional(uint16 id) const {
+    const uint16 *pos = find(
+        kFunctionalWordId, kFunctionalWordId + arraysize(kFunctionalWordId),
+        id);
+    if (pos == (kFunctionalWordId + arraysize(kFunctionalWordId))) {
+      return false;
+    }
+
+    return true;
+  }
+
+  virtual void GetPOSList(vector<string> *pos_list) const {
+    pos_list->clear();
+    for (size_t i = 0; kPOSToken[i].pos != NULL; ++i) {
+      pos_list->push_back(kPOSToken[i].pos);
+    }
+  }
+
+  virtual bool IsValidPOS(const string &pos) const {
+    for (size_t i = 0; kPOSToken[i].pos != NULL; ++i) {
+      if (pos == kPOSToken[i].pos) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  virtual bool GetPOSIDs(const string &pos, uint16 *id) const {
+    map<string, const POSToken*>::const_iterator it = pos_map_.find(pos);
+    if (it == pos_map_.end()) {
+      return false;
+    }
+
+    const ConjugationType *conjugation_form = it->second->conjugation_form;
+    CHECK(conjugation_form);
+
+    *id = conjugation_form[0].id;
+
+    return true;
+  }
+
+  virtual bool GetTokens(const string &key,
+                         const string &value,
+                         const string &pos,
+                         POS::CostType cost_type,
+                         vector<POS::Token> *tokens) const {
+    if (key.empty() ||
+        value.empty() ||
+        pos.empty() ||
+        tokens == NULL) {
+      return false;
+    }
+
+    tokens->clear();
+    map<string, const POSToken*>::const_iterator it = pos_map_.find(pos);
+    if (it == pos_map_.end()) {
+      return false;
+    }
+
+    const ConjugationType *conjugation_form = it->second->conjugation_form;
+    CHECK(conjugation_form);
+
+    const size_t size = static_cast<size_t>(it->second->conjugation_size);
+    CHECK_GE(size, 1);
+    tokens->resize(size);
+
+    // TODO(taku)  Change the cost by seeing cost_type
+    const int16 kDefaultCost = 5000;
+
+    if (size == 1) {  // no conjugation
+      (*tokens)[0].key = key;
+      (*tokens)[0].value = value;
+      (*tokens)[0].id = conjugation_form[0].id;
+      (*tokens)[0].cost= kDefaultCost;
+    } else {
+      // expand all other forms
+      // TOOD(taku): Currently, user has to pass "word stem"
+      // form if the word has conjugations.
+      // e.g., "ググる" must be registered as "ググ" with
+      // ラ行五段
+      // This is compatible with ATOK/MS-IME,
+      // but we think it is not friendly.
+      // We'd like to handle the case when a base form is passed
+      // to "key/value".
+      for (size_t i = 0; i < size; ++i) {
+        (*tokens)[i].key   = key   + conjugation_form[i].key_suffix;
+        (*tokens)[i].value = value + conjugation_form[i].value_suffix;
+        (*tokens)[i].id    = conjugation_form[i].id;
+        (*tokens)[i].cost  = kDefaultCost;
+      }
+    }
+
+    return true;
+  }
+
+  virtual uint16 number_id() const {
+    return number_id_;
+  }
+
+  virtual uint16 unknown_id() const {
+    return unknown_id_;
+  }
+
+  virtual uint16 first_name_id() const {
+    return first_name_id_;
+  }
+
+  virtual uint16 last_name_id() const {
+    return last_name_id_;
+  }
+
+  uint16 number_id_;
+  uint16 unknown_id_;
+  uint16 first_name_id_;
+  uint16 last_name_id_;
+
+  map<string, const POSToken *> pos_map_;
+};
+
+const POS::POSHandlerInterface *g_pos_handler = NULL;
+
+const POS::POSHandlerInterface &GetPOSHandler() {
+  if (g_pos_handler != NULL) {
+    return *g_pos_handler;
+  }
+  return *(Singleton<POSHandlerImpl>::get());
+}
+}  // namespace
+
+// Definition of class POS
+uint16 POS::number_id() {
+  return GetPOSHandler().number_id();
+}
+
+bool POS::IsNumber(uint16 id) {
+  return GetPOSHandler().IsNumber(id);
+}
+
+bool POS::IsZipcode(uint16 id) {
+  return GetPOSHandler().IsZipcode(id);
+}
+
+bool POS::IsFunctional(uint16 id) {
+  return GetPOSHandler().IsFunctional(id);
+}
+
+uint16 POS::unknown_id() {
+  return GetPOSHandler().unknown_id();
+}
+
+uint16 POS::first_name_id() {
+  return GetPOSHandler().first_name_id();
+}
+
+uint16 POS::last_name_id() {
+  return GetPOSHandler().last_name_id();
+}
+
+void POS::GetPOSList(vector<string> *pos_list) {
+  GetPOSHandler().GetPOSList(pos_list);
+}
+
+bool POS::IsValidPOS(const string &pos) {
+  return GetPOSHandler().IsValidPOS(pos);
+}
+
+bool POS::GetPOSIDs(const string &pos, uint16 *id) {
+  return GetPOSHandler().GetPOSIDs(pos, id);
+}
+
+bool POS::GetTokens(const string &key,
+                    const string &value,
+                    const string &pos,
+                    POS::CostType cost_type,
+                    vector<POS::Token> *tokens) {
+  return GetPOSHandler().GetTokens(key, value, pos, cost_type, tokens);
+}
+
+void POS::SetHandler(const POSHandlerInterface *impl) {
+  g_pos_handler = impl;
+}
+}  // namespace mozc

@@ -1,0 +1,98 @@
+status	key	command
+Conversion	ASCII	InsertCharacter
+Conversion	Backspace	Cancel
+Conversion	Ctrl ;	DisplayAsHalfWidth
+Conversion	Ctrl :	DisplayAsHalfAlphanumeric
+Conversion	Ctrl '	DisplayAsHalfAlphanumeric
+Conversion	Ctrl a	SegmentFocusFirst
+Conversion	Ctrl Alt F11	Abort
+Conversion	Ctrl b	SegmentFocusLeft
+Conversion	Ctrl Down	CommitOnlyFirstSegment
+Conversion	Ctrl e	SegmentFocusLast
+Conversion	Ctrl f	SegmentFocusRight
+Conversion	Ctrl g	Cancel
+Conversion	Ctrl h	Cancel
+Conversion	Ctrl i	SegmentWidthShrink
+Conversion	Ctrl j	DisplayAsHiragana
+Conversion	Ctrl k	DisplayAsFullKatakana
+Conversion	Ctrl l	DisplayAsFullAlphanumeric
+Conversion	Ctrl Left	SegmentFocusFirst
+Conversion	Ctrl m	Commit
+Conversion	Ctrl n	ConvertNext
+Conversion	Ctrl o	SegmentWidthExpand
+Conversion	Ctrl p	ConvertPrev
+Conversion	Ctrl Right	SegmentFocusLast
+Conversion	Down	ConvertNext
+Conversion	Enter	Commit
+Conversion	ESC	Cancel
+Conversion	F1	ReportBug
+Conversion	F10	DisplayAsHalfAlphanumeric
+Conversion	F3	ReportBug
+Conversion	F6	DisplayAsHiragana
+Conversion	F7	DisplayAsFullKatakana
+Conversion	F8	DisplayAsHalfWidth
+Conversion	F9	DisplayAsFullAlphanumeric
+Conversion	Henkan	ConvertNext
+Conversion	Left	SegmentFocusLeft
+Conversion	OFF	IMEOff
+Conversion	ON	IMEOn
+Conversion	PageDown	ConvertNextPage
+Conversion	PageUp	ConvertPrevPage
+Conversion	Right	SegmentFocusRight
+Conversion	Shift Down	ConvertNextPage
+Conversion	Shift Left	SegmentWidthShrink
+Conversion	Shift Right	SegmentWidthExpand
+Conversion	Shift Up	ConvertPrevPage
+Conversion	Space	ConvertNext
+Conversion	Tab	PredictAndConvert
+Conversion	Up	ConvertPrev
+DirectInput	ON	IMEOn
+Precomposition	ASCII	InsertCharacter
+Precomposition	Ctrl Alt F11	Abort
+Precomposition	Eisu	ToggleAlphanumericMode
+Precomposition	OFF	IMEOff
+Precomposition	ON	IMEOn
+Precomposition	Shift Space	InsertAlternateSpace
+Precomposition	Space	InsertSpace
+Composition	ASCII	InsertCharacter
+Composition	Backspace	Backspace
+Composition	Ctrl ,	ToggleAlphanumericMode
+Composition	Ctrl ;	DisplayAsHalfWidth
+Composition	Ctrl :	DisplayAsHalfAlphanumeric
+Composition	Ctrl '	DisplayAsHalfAlphanumeric
+Composition	Ctrl a	MoveCursorToBeginning
+Composition	Ctrl Alt F11	Abort
+Composition	Ctrl b	MoveCursorLeft
+Composition	Ctrl d	Delete
+Composition	Ctrl e	MoveCursorToEnd
+Composition	Ctrl f	MoveCursorRight
+Composition	Ctrl g	Cancel
+Composition	Ctrl h	Backspace
+Composition	Ctrl j	DisplayAsHiragana
+Composition	Ctrl k	DisplayAsFullKatakana
+Composition	Ctrl l	DisplayAsFullAlphanumeric
+Composition	Ctrl Left	MoveCursorToBeginning
+Composition	Ctrl m	Commit
+Composition	Ctrl m	Commit
+Composition	Ctrl Right	MoveCursorToEnd
+Composition	Delete	Delete
+Composition	Eisu	ToggleAlphanumericMode
+Composition	Enter	Commit
+Composition	ESC	Cancel
+Composition	F10	DisplayAsHalfAlphanumeric
+Composition	F10	DisplayAsHalfAlphanumeric
+Composition	F2	ConvertWithoutHistory
+Composition	F6	DisplayAsHiragana
+Composition	F7	DisplayAsFullKatakana
+Composition	F8	DisplayAsHalfWidth
+Composition	F9	DisplayAsFullAlphanumeric
+Composition	Henkan	Convert
+Composition	Left	MoveCursorLeft
+Composition	OFF	IMEOff
+Composition	ON	IMEOn
+Composition	Right	MoveCursorRight
+Composition	Shift	ToggleAlphanumericMode
+Composition	Space	Convert
+Composition	Tab	PredictAndConvert
+Suggestion	Down	PredictAndConvert
+Suggestion	Shift Enter	CommitFirstSuggestion
