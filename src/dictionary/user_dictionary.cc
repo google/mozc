@@ -36,7 +36,7 @@
 #include "base/config_file_stream.h"
 #include "base/mutex.h"
 #include "base/singleton.h"
-#include "converter/converter_data.h"
+#include "converter/node.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
 #include "session/config.pb.h"
@@ -59,7 +59,8 @@ REGISTER_MODULE_RELOADER(reload_user_dictionary,
 
 class POSTokenLess {
  public:
-  bool operator()(const POS::Token *lhs, const POS::Token *rhs) const {
+  bool operator()(const UserPOS::Token *lhs,
+                  const UserPOS::Token *rhs) const {
     return lhs->key < rhs->key;
   }
 };
@@ -141,7 +142,7 @@ bool UserDictionary::CheckReloaderAndDelete() const {
 }
 
 Node *UserDictionary::LookupPredictive(const char *str, int size,
-                                       ConverterData *data) const {
+                                       NodeAllocatorInterface *allocator) const {
   if (size == 0) {
     LOG(WARNING) << "string of length zero is passed.";
     return NULL;
@@ -156,14 +157,14 @@ Node *UserDictionary::LookupPredictive(const char *str, int size,
     return NULL;
   }
 
-  DCHECK(data != NULL);
+  DCHECK(allocator != NULL);
   Node *result_node = NULL;
   string key(str, size);
 
   // Look for a starting point of iteration over dictionary contents.
-  POS::Token key_token;
+  UserPOS::Token key_token;
   key_token.key = key;
-  vector<POS::Token *>::const_iterator it =
+  vector<UserPOS::Token *>::const_iterator it =
       lower_bound(tokens_.begin(), tokens_.end(), &key_token, POSTokenLess());
 
   for (; it != tokens_.end(); ++it) {
@@ -171,7 +172,7 @@ Node *UserDictionary::LookupPredictive(const char *str, int size,
       break;
     }
 
-    Node *new_node = data->NewNode();
+    Node *new_node = allocator->NewNode();
     new_node->lid = (*it)->id;
     new_node->rid = (*it)->id;
     new_node->wcost = (*it)->cost;
@@ -186,7 +187,7 @@ Node *UserDictionary::LookupPredictive(const char *str, int size,
 }
 
 Node *UserDictionary::LookupExact(const char *str, int size,
-                                  ConverterData *data) const {
+                                  NodeAllocatorInterface *allocator) const {
   if (!CheckReloaderAndDelete()) {
     LOG(WARNING) << "Reloader is running";
     return NULL;
@@ -196,7 +197,7 @@ Node *UserDictionary::LookupExact(const char *str, int size,
 }
 
 Node *UserDictionary::LookupPrefix(const char *str, int size,
-                                   ConverterData *data) const {
+                                   NodeAllocatorInterface *allocator) const {
   if (size == 0) {
     LOG(WARNING) << "string of length zero is passed.";
     return NULL;
@@ -211,14 +212,14 @@ Node *UserDictionary::LookupPrefix(const char *str, int size,
     return NULL;
   }
 
-  DCHECK(data != NULL);
+  DCHECK(allocator != NULL);
   Node *result_node = NULL;
   string key(str, size);
 
   // Look for a starting point of iteration over dictionary contents.
-  POS::Token key_token;
+  UserPOS::Token key_token;
   key_token.key = key.substr(0, Util::OneCharLen(key.c_str()));
-  vector<POS::Token *>::const_iterator it =
+  vector<UserPOS::Token *>::const_iterator it =
       lower_bound(tokens_.begin(), tokens_.end(), &key_token, POSTokenLess());
 
   for (; it != tokens_.end(); ++it) {
@@ -229,7 +230,7 @@ Node *UserDictionary::LookupPrefix(const char *str, int size,
       continue;
     }
 
-    Node *new_node = data->NewNode();
+    Node *new_node = allocator->NewNode();
     new_node->lid = (*it)->id;
     new_node->rid = (*it)->id;
     new_node->wcost = (*it)->cost;
@@ -245,7 +246,7 @@ Node *UserDictionary::LookupPrefix(const char *str, int size,
 }
 
 Node *UserDictionary::LookupReverse(const char *str, int size,
-                                    ConverterData *data) const {
+                                    NodeAllocatorInterface *allocator) const {
   if (!CheckReloaderAndDelete()) {
     LOG(WARNING) << "Reloader is running";
     return NULL;
@@ -300,7 +301,7 @@ bool UserDictionary::Load(const UserDictionaryStorage &storage) {
   Clear();
 
   set<uint64> seen;
-  vector<POS::Token> tokens;
+  vector<UserPOS::Token> tokens;
 
   for (size_t i = 0; i < storage.dictionaries_size(); ++i) {
     const UserDictionaryStorage::UserDictionary &dic =
@@ -335,10 +336,10 @@ bool UserDictionary::Load(const UserDictionaryStorage &storage) {
       }
 
       tokens.clear();
-      POS::GetTokens(reading, entry.value(), entry.pos(),
-                     POS::DEFAULT, &tokens);
+      UserPOS::GetTokens(reading, entry.value(), entry.pos(),
+                         UserPOS::DEFAULT, &tokens);
       for (size_t k = 0; k < tokens.size(); ++k) {
-        tokens_.push_back(new POS::Token(tokens[k]));
+        tokens_.push_back(new UserPOS::Token(tokens[k]));
       }
     }
   }
@@ -354,7 +355,7 @@ bool UserDictionary::Load(const UserDictionaryStorage &storage) {
 }
 
 void UserDictionary::Clear() {
-  for (vector<POS::Token *>::iterator it = tokens_.begin();
+  for (vector<UserPOS::Token *>::iterator it = tokens_.begin();
        it != tokens_.end(); it++) {
     delete *it;
   }

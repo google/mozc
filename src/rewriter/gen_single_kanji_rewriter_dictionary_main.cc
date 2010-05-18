@@ -37,11 +37,11 @@
 #include <algorithm>
 #include <cmath>
 #include <set>
-#include "converter/pos.h"
 #include "base/base.h"
 #include "base/file_stream.h"
 #include "base/port.h"
 #include "base/util.h"
+#include "dictionary/user_pos.h"
 #include "rewriter/symbol_rewriter.h"
 #include "rewriter/embedded_dictionary.h"
 
@@ -143,7 +143,7 @@ void MakeDictioanry(const string &single_kanji_dictionary_file,
   // assume POS of single-kanji is NOUN
   //  static const char kPOS[] = "名詞";
   static const char kPOS[] = "\345\220\215\350\251\236";
-  CHECK(POS::GetPOSIDs(kPOS, &id));
+  CHECK(UserPOS::GetPOSIDs(kPOS, &id));
 
   map<string, map<string, pair<double, string> > > rdic;
   set<string> seen;

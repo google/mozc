@@ -27,14 +27,15 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "dictionary/system_dictionary.h"
+#include "dictionary/system/system_dictionary.h"
 
 #include "base/base.h"
 #include "base/util.h"
-#include "converter/converter_data.h"
-#include "dictionary/dictionary.h"
-#include "dictionary/text_dictionary.h"
-#include "dictionary/system_dictionary_builder.h"
+#include "converter/node.h"
+#include "dictionary/dictionary_interface.h"
+#include "dictionary/dictionary_token.h"
+#include "dictionary/text_dictionary_loader.h"
+#include "dictionary/system/system_dictionary_builder.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
@@ -48,11 +49,35 @@ DEFINE_int32(dictionary_test_size, 100000,
 DECLARE_string(test_srcdir);
 
 namespace mozc {
+namespace {
+
+class TestNodeAllocator : public NodeAllocatorInterface {
+ public:
+  TestNodeAllocator() {}
+  virtual ~TestNodeAllocator() {
+    for (size_t i = 0; i < nodes_.size(); ++i) {
+      delete nodes_[i];
+    }
+    nodes_.clear();
+  }
+
+  virtual Node *NewNode() {
+    Node *node = new Node;
+    CHECK(node);
+    node->Init();
+    nodes_.push_back(node);
+    return node;
+  }
+
+ private:
+  vector<Node *> nodes_;
+};
+
 
 class SystemDictionaryTest : public testing::Test {
  protected:
   SystemDictionaryTest()
-      : text_dict_(new TextDictionary),
+      : text_dict_(new TextDictionaryLoader),
         dic_fn_(FLAGS_test_tmpdir + "/mozc.dic") {
     const string dic_path = Util::JoinPath(FLAGS_test_srcdir,
                                            FLAGS_dictionary_source);
@@ -68,7 +93,7 @@ class SystemDictionaryTest : public testing::Test {
     return abs(c1 - c2) < 256;
   }
 
-  scoped_ptr<TextDictionary> text_dict_;
+  scoped_ptr<TextDictionaryLoader> text_dict_;
   const string dic_fn_;
 };
 
@@ -94,8 +119,8 @@ Token* SystemDictionaryTest::CreateToken(const string& key,
   t->key = key;
   t->value = value;
   t->cost = 0;
-  t->left_id = 0;
-  t->right_id = 0;
+  t->lid = 0;
+  t->rid = 0;
   return t;
 }
 
@@ -118,8 +143,8 @@ TEST_F(SystemDictionaryTest, test_words) {
       if (node->key == (*it)->key &&
           node->value == (*it)->value &&
           CompareCost(node->wcost, (*it)->cost) &&
-          node->lid == (*it)->left_id &&
-          node->rid == (*it)->right_id) {
+          node->lid == (*it)->lid &&
+          node->rid == (*it)->rid) {
         found = true;
       }
       Node *tmp_node = node;
@@ -301,9 +326,9 @@ TEST_F(SystemDictionaryTest, nodes_size) {
   const int kNumNodes = 5;
 
   // Tests LookupPrefix
-  ConverterData data1;
-  data1.set_max_nodes_size(kNumNodes);
-  Node *node = rx_dic->LookupPrefix(s.c_str(), s.size(), &data1);
+  TestNodeAllocator allocator1;
+  allocator1.set_max_nodes_size(kNumNodes);
+  Node *node = rx_dic->LookupPrefix(s.c_str(), s.size(), &allocator1);
   int count = 0;
   for (Node *tmp = node; tmp; tmp = tmp->bnext) {
     ++count;
@@ -316,4 +341,5 @@ TEST_F(SystemDictionaryTest, nodes_size) {
     delete added_tokens[i];
   }
 }
+}  // namespace
 }  // namespace mozc

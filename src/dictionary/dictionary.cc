@@ -27,83 +27,112 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "dictionary/dictionary.h"
+#include "dictionary/dictionary_interface.h"
 
-#include <cstring>
-#include <list>
-#include <set>
-#include <map>
+#include <vector>
 #include <string>
 
 #include "base/base.h"
+#include "base/singleton.h"
 #include "converter/node.h"
 #include "dictionary/system/system_dictionary.h"
+#include "dictionary/dictionary_preloader.h"
 #include "dictionary/user_dictionary.h"
 
 namespace mozc {
 
-Dictionary::Dictionary() {}
+namespace {
+#include "dictionary/embedded_dictionary_data.h"
 
-// TODO(keni) decide how and when to call destoructors of dictionaries
-// that are generated through Dictionary::Add().
-Dictionary::~Dictionary() {}
+class DictionaryImpl : public DictionaryInterface {
+ public:
+  DictionaryImpl();
+  virtual ~DictionaryImpl();
 
-DictionaryInterface *Dictionary::Add(DictionaryType type) {
-  DictionaryInterface *dic = NULL;
-  switch (type) {
-    case SYSTEM:
-      dic = SystemDictionary::GetSystemDictionary();
-      break;
-    case USER:
-      dic = UserDictionary::GetUserDictionary();
-      break;
-    default:
-      break;
-  }
-  if (dic != NULL) {
+  virtual Node *LookupPredictive(const char *str, int size,
+                                 NodeAllocatorInterface *allocator) const;
+
+  virtual Node *LookupExact(const char *str, int size,
+                            NodeAllocatorInterface *allocator) const;
+
+  virtual Node *LookupPrefix(const char *str, int size,
+                             NodeAllocatorInterface *allocator) const;
+
+  virtual Node *LookupReverse(const char *str, int size,
+                              NodeAllocatorInterface *allocator) const;
+
+ private:
+  vector<DictionaryInterface *> dics_;
+  enum LookupType {
+    PREDICTIVE,
+    EXACT,
+    PREFIX,
+    REVERSE,
+  };
+
+  Node *LookupInternal(const char *str, int size,
+                       LookupType type,
+                       NodeAllocatorInterface *allocator) const;
+};
+
+DictionaryImpl::DictionaryImpl() {
+  {
+    SystemDictionary *dic = SystemDictionary::GetSystemDictionary();
+    CHECK(dic->OpenFromArray(kDictionaryData_data, kDictionaryData_size));
+    DictionaryPreloader::PreloadIfApplicable(kDictionaryData_data,
+                                             kDictionaryData_size);
     dics_.push_back(dic);
   }
-  return dic;
+
+  {
+    UserDictionary *dic = UserDictionary::GetUserDictionary();
+    dics_.push_back(dic);
+  }
 }
 
-Node *Dictionary::LookupPredictive(const char *str, int size,
-                                   ConverterData *data) const {
-  return LookupInternal(str, size, PREDICTIVE, data);
+// since all sub-dictionaries are singleton, no need to delete them
+DictionaryImpl::~DictionaryImpl() {
+  dics_.clear();
 }
 
-Node *Dictionary::LookupExact(const char *str, int size,
-                              ConverterData *data) const {
-  return LookupInternal(str, size, EXACT, data);
+Node *DictionaryImpl::LookupPredictive(const char *str, int size,
+                                       NodeAllocatorInterface *allocator) const {
+  return LookupInternal(str, size, PREDICTIVE, allocator);
 }
 
-Node *Dictionary::LookupPrefix(const char *str, int size,
-                               ConverterData *data) const {
-  return LookupInternal(str, size, PREFIX, data);
+Node *DictionaryImpl::LookupExact(const char *str, int size,
+                                  NodeAllocatorInterface *allocator) const {
+  return LookupInternal(str, size, EXACT, allocator);
 }
 
-Node *Dictionary::LookupReverse(const char *str, int size,
-                                ConverterData *data) const {
-  return LookupInternal(str, size, REVERSE, data);
+Node *DictionaryImpl::LookupPrefix(const char *str, int size,
+                                   NodeAllocatorInterface *allocator) const {
+  return LookupInternal(str, size, PREFIX, allocator);
 }
 
-Node *Dictionary::LookupInternal(const char *str, int size,
-                                 LookupType type,
-                                 ConverterData *data) const {
+Node *DictionaryImpl::LookupReverse(const char *str, int size,
+                                    NodeAllocatorInterface *allocator) const {
+  return LookupInternal(str, size, REVERSE, allocator);
+}
+
+Node *DictionaryImpl::LookupInternal(const char *str, int size,
+                                     LookupType type,
+                                     NodeAllocatorInterface *allocator) const {
   Node *head = NULL;
-  for (int i = 0; i < dics_.size(); ++i) {
+  for (size_t i = 0; i < dics_.size(); ++i) {
     Node *nodes = NULL;
     switch (type) {
       case PREDICTIVE:
-        nodes = dics_[i]->LookupPredictive(str, size, data);
+        nodes = dics_[i]->LookupPredictive(str, size, allocator);
         break;
       case EXACT:
-        nodes = dics_[i]->LookupExact(str, size, data);
+        nodes = dics_[i]->LookupExact(str, size, allocator);
         break;
       case PREFIX:
-        nodes = dics_[i]->LookupPrefix(str, size, data);
+        nodes = dics_[i]->LookupPrefix(str, size, allocator);
         break;
       case REVERSE:
-        nodes = dics_[i]->LookupReverse(str, size, data);
+        nodes = dics_[i]->LookupReverse(str, size, allocator);
         break;
     }
     if (head == NULL) {
@@ -116,6 +145,22 @@ Node *Dictionary::LookupInternal(const char *str, int size,
       head = nodes;
     }
   }
+
   return head;
+}
+
+DictionaryInterface *g_dictionary = NULL;
+}  // namespace
+
+DictionaryInterface *DictionaryFactory::GetDictionary() {
+  if (g_dictionary == NULL) {
+    return Singleton<DictionaryImpl>::get();
+  } else {
+    return g_dictionary;
+  }
+}
+
+void DictionaryFactory::SetDictionary(DictionaryInterface *dictionary) {
+  g_dictionary = dictionary;
 }
 }  // namespace mozc

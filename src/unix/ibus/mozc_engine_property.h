@@ -27,23 +27,69 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_CONVERTER_DICTIONARY_DATA_H_
-#define MOZC_CONVERTER_DICTIONARY_DATA_H_
+#ifndef MOZC_UNIX_IBUS_MOZC_ENGINE_PROPERTY_H_
+#define MOZC_UNIX_IBUS_MOZC_ENGINE_PROPERTY_H_
+
+#include <ibus.h>
 
 #include "base/base.h"
+#include "session/commands.pb.h"
 
 namespace mozc {
+namespace ibus {
 
-class DictionaryData {
- public:
-  // Load dictionary data embedded in .obj file
-  // size of data is stored in *size
-  static const char *GetDictionaryData(size_t *size);
-
-  // Load connection-matrix data embedded in .obj file
-  // size of data is stored in *size
-  static const char *GetConnectionData(size_t *size);
+// The list of properties used in ibus-mozc.
+const struct MozcEngineProperty {
+  commands::CompositionMode composition_mode;
+  const char *key;  // IBus property key for the mode.
+  const char *label;  // text for the radio menu (ibus-anthy compatible).
+  const char *label_for_panel;  // text for the language panel.
+} kMozcEngineProperties[] = {
+  {
+    commands::DIRECT,
+    "CompositionMode.Direct",
+    "Direct input",
+    "A",
+  },
+  {
+    commands::HIRAGANA,
+    "CompositionMode.Hiragana",
+    "Hiragana",
+    "\xe3\x81\x82",  // Hiragana letter A
+  },
+  {
+    commands::FULL_KATAKANA,
+    "CompositionMode.Katakana",
+    "Katakana",
+    "\xe3\x82\xa2",  // Katakana letter A
+  },
+  {
+    commands::HALF_ASCII,
+    "CompositionMode.Latin",
+    "Latin",
+    "_A",
+  },
+  {
+    commands::FULL_ASCII,
+    "CompositionMode.WideLatin",
+    "Wide Latin",
+    "\xef\xbc\xa1",  // Full width ASCII letter A
+  },
+  {
+    commands::HALF_KATAKANA,
+    "CompositionMode.HalfWidthKatakana",
+    "Half width katakana",
+    "_\xef\xbd\xb1",  // Half width Katakana letter A
+  },
 };
+
+const size_t kMozcEnginePropertiesSize = arraysize(kMozcEngineProperties);
+COMPILE_ASSERT(commands::NUM_OF_COMPOSITIONS == kMozcEnginePropertiesSize,
+               bad_number_of_props);
+const commands::CompositionMode kMozcEngineInitialCompositionMode =
+    commands::HIRAGANA;
+
+}  // namespace ibus
 }  // namespace mozc
 
-#endif  // MOZC_CONVERTER_DICTIONARY_DATA_H_
+#endif  // MOZC_UNIX_IBUS_MOZC_ENGINE_PROPERTY_H_

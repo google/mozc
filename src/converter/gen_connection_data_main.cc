@@ -28,20 +28,31 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <string>
+#include <vector>
 #include "base/base.h"
-#include "converter/dictionary_data.h"
-#include "testing/base/public/gunit.h"
+#include "base/util.h"
+#include "converter/connector.h"
 
-TEST(DictionaryDataTest, DictionaryDataTest) {
-  size_t dic_size = 0;
-  const char *dic
-      = mozc::DictionaryData::GetDictionaryData(&dic_size);
-  EXPECT_TRUE(dic);
-  EXPECT_GT(dic_size, 0);
+DEFINE_string(input, "", "input text file");
+DEFINE_string(output, "", "output binary file");
+DEFINE_bool(make_header, false, "make header mode");
 
-  size_t connection_size = 0;
-  const char *connection
-      = mozc::DictionaryData::GetConnectionData(&connection_size);
-  EXPECT_TRUE(connection);
-  EXPECT_GT(connection_size, 0);
+int main(int argc, char **argv) {
+  InitGoogle(argv[0], &argc, &argv, false);
+  string output = FLAGS_output;
+
+  if (FLAGS_make_header) {
+    output += ".tmp";
+  }
+
+  mozc::ConnectorInterface::Compile(FLAGS_input.c_str(),
+                                    output.c_str());
+
+  if (FLAGS_make_header) {
+    const char kName[] = "ConnectionData";
+    mozc::Util::MakeByteArrayFile(kName, output, FLAGS_output);
+    mozc::Util::Unlink(output);
+  }
+
+  return 0;
 }

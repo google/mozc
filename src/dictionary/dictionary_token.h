@@ -27,11 +27,20 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "converter/dictionary_preloader.h"
+#ifndef MOZC_DICTIONARY_TEXT_DICTIONARY_TOKEN_H_
+#define MOZC_DICTIONARY_TEXT_DICTIONARY_TOKEN_H_
 
-#include "testing/base/public/gunit.h"
-#include "session/config_handler.h"
-#include "session/config.pb.h"
+#include <string>
 
 namespace mozc {
-}  // namespace mozc
+
+struct Token {
+  string key;
+  string value;
+  int    cost;
+  int    lid;
+  int    rid;
+};
+}  // mozc
+
+#endif  // MOZC_DICTIONARY_TEXT_DICTIONARY_TOKEN_H_

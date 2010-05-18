@@ -30,6 +30,14 @@
 #ifndef MOZC_TESTING_BASE_PUBLIC_GUNIT_PROD_H_
 #define MOZC_TESTING_BASE_PUBLIC_GUNIT_PROD_H_
 
-#include "third_party/gtest/include/gtest/gtest_prod.h"
+#ifdef OS_CHROMEOS
+// gtest is omitted from Chromium OS build temporarily because unittest tests
+// are not integrated to the automated test framework yet.
+// Just use the following macro definition.
+#define FRIEND_TEST(test_case_name, test_name)\
+friend class test_case_name##_##test_name##_Test
+#else
+#include "gtest/gtest_prod.h"
+#endif  // OS_CHROMEOS
 
 #endif  // MOZC_TESTING_BASE_PUBLIC_GUNIT_PROD_H_

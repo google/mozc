@@ -39,6 +39,7 @@
 namespace mozc {
 
 class CharacterFormManagerData;
+template <class T> class Singleton;
 
 class CharacterFormManager {
  public:
@@ -119,10 +120,11 @@ class CharacterFormManager {
   // return singleton class
   static CharacterFormManager* GetCharacterFormManager();
 
+ private:
+  friend class Singleton<CharacterFormManager>;
+
   CharacterFormManager();
   virtual ~CharacterFormManager();
-
- private:
   scoped_ptr<CharacterFormManagerData> data_;
 };
 }  // namespace mozc

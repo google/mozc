@@ -1,0 +1,24 @@
+# Generate POSMatcher rules:
+#
+# format:
+# FunctionName1 RegexPattern1
+# FunctionName2 RegexPattern2
+# FunctionName3 RegexPattern3
+# ..
+#
+# Generates the following methods inside POSMatcher
+# uint16 POSMatcher::Get<FunctionalName>Id() { ... }
+# bool   POSMatcher::Is<FunctionalName>(uint16 id) { ... }
+#
+# Example:
+# uint16 POSMatcher::GetFirstNameId() { ... }
+# bool   POSMatcher::IsFirstName(uint16 id) { ... }
+
+Functional ^(助詞|助動詞|記号|動詞,非自立|名詞,非自立|形容詞,非自立|動詞,接尾|名詞,接尾|形容詞,接尾)
+
+Unknown    名詞,サ変接続
+
+FirstName  名詞,固有名詞,人名,名
+LastName   名詞,固有名詞,人名,姓
+
+Number     名詞,数

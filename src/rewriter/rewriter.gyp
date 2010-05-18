@@ -205,7 +205,7 @@
       ],
        'dependencies': [
          '../base/base.gyp:base',
-         '../converter/converter.gyp:pos_data',
+         '../dictionary/dictionary.gyp:user_pos_data',
        ],
     },
     {
@@ -228,7 +228,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        '../converter/converter.gyp:pos_data',
+        '../dictionary/dictionary.gyp:user_pos_data',
       ],
     },
     {

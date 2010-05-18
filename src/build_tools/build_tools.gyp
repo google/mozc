@@ -53,8 +53,9 @@
       'dependencies': [
         'primitive_tools/primitive_tools.gyp:primitive_tools',
         '../base/base.gyp:install_gen_config_file_stream_data_main',
-        '../converter/converter.gyp:install_gen_converter_data_main',
+        '../converter/converter.gyp:install_gen_connection_data_main',
         '../converter/converter.gyp:install_gen_segmenter_bitarray_main',
+        '../dictionary/dictionary.gyp:install_gen_system_dictionary_data_main',
         '../rewriter/rewriter.gyp:install_gen_collocation_data_main',
         '../rewriter/rewriter.gyp:install_gen_single_kanji_rewriter_dictionary_main',
         '../rewriter/rewriter.gyp:install_gen_symbol_rewriter_dictionary_main',

@@ -33,7 +33,6 @@
 #include "base/base.h"
 #include "base/file_stream.h"
 #include "base/util.h"
-#include "converter/pos_util.h"
 
 // Input: id.def, user-pos.def, cforms.def
 // Output: pos_data.h
@@ -44,8 +43,45 @@ DEFINE_string(output, "", "");
 DECLARE_bool(logtostderr);
 
 namespace mozc {
-
 namespace {
+
+class POSUtil {
+ public:
+  // load data/dictioanry/id.def
+  void Open(const string &id_file) {
+    ids_.clear();
+    InputFileStream ifs(id_file.c_str());
+    CHECK(ifs);
+    string line;
+    vector<string> fields;
+    while (getline(ifs, line)) {
+      if (line.empty() || line[0] == '#') {
+        continue;
+      }
+      fields.clear();
+      Util::SplitStringUsing(line, "\t ", &fields);
+      CHECK_GE(fields.size(), 2);
+      const int id = atoi32(fields[0].c_str());
+      ids_.push_back(make_pair(fields[1], static_cast<uint16>(id)));
+    }
+  }
+
+  // return id of feature defined in id.def
+  uint16 id(const string &feature) const {
+    CHECK(!feature.empty());
+    for (size_t i = 0; i < ids_.size(); ++i) {
+      if (ids_[i].first.find(feature) == 0) {
+        return ids_[i].second;
+      }
+    }
+    LOG(ERROR) << "Cannot find the POS for: " << feature;
+    return 0;
+  }
+
+ private:
+  vector<pair<string, uint16> > ids_;
+};
+
 string Escape(const string &str) {
   string output;
   Util::Escape(str, &output);
@@ -59,7 +95,7 @@ struct ConjugationType {
 };
 
 void LoadConjugation(const string &filename,
-                    map<string, vector<ConjugationType> > *output) {
+                     map<string, vector<ConjugationType> > *output) {
   InputFileStream ifs(filename.c_str());
   CHECK(ifs);
 
@@ -82,7 +118,7 @@ void LoadConjugation(const string &filename,
 }
 
 void Convert() {
-  mozc::POSUtil util;
+  POSUtil util;
   util.Open(FLAGS_id_file);
 
   map<string, vector<ConjugationType> > inflection_map;
@@ -146,7 +182,7 @@ void Convert() {
       }
       CHECK_GT(added, 0);
       *ofs << "};" << endl;
-      pos_tokens.push_back(make_pair(user_pos, forms.size()));
+      pos_tokens.push_back(make_pair(user_pos, added));
     }
   }
 
@@ -157,29 +193,6 @@ void Convert() {
   }
   *ofs << "  { NULL, 0, NULL }" << endl;
   *ofs << "};" << endl;
-
-  *ofs << "const uint16 kZipcodeId = "
-       << util.zipcode_id() << ";" << endl;
-
-  const vector<uint16> &number_lids = util.number_ids();
-  *ofs << "const uint16 kNumberId[] = {";
-  for (size_t i = 0; i < number_lids.size(); ++i) {
-    if (i != 0) {
-      *ofs << ", ";
-    }
-    *ofs << number_lids[i];
-  }
-  *ofs << " };" << endl;
-
-  const vector<uint16> &functional_lids = util.functional_word_ids();
-  *ofs << "const uint16 kFunctionalWordId[] = {";
-  for (size_t i = 0; i < functional_lids.size(); ++i) {
-    if (i != 0) {
-      *ofs << ", ";
-    }
-    *ofs << functional_lids[i];
-  }
-  *ofs << " };" << endl;
 
   if (ofs != &cout) {
     delete ofs;

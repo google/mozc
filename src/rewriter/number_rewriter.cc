@@ -36,7 +36,7 @@
 #include <vector>
 
 #include "converter/segments.h"
-#include "converter/pos.h"
+#include "converter/pos_matcher.h"
 #include "session/config_handler.h"
 #include "session/config.pb.h"
 
@@ -474,7 +474,7 @@ int GetNumericCandidate(Segment* seg) {
   // looks numeric, try to expand the candidates to find
   // Arabic numbers.
   if (seg->candidates_size() == 1) {
-    if (!POS::IsNumber(top.lid)) {
+    if (!POSMatcher::IsNumber(top.lid)) {
       return -1;
     }
     const size_t kExpandSize = 5;

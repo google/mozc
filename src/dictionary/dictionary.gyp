@@ -39,9 +39,8 @@
       'sources': [
         '<(proto_out_dir)/<(relative_dir)/user_dictionary_storage.pb.cc',
         'dictionary.cc',
-        'dictionary_compiler.cc',
-        'dictionary_interface.cc',
-        'text_dictionary.cc',
+        'dictionary_preloader.cc',
+        'text_dictionary_loader.cc',
         'user_dictionary.cc',
         'user_dictionary_importer.cc',
         'user_dictionary_storage.cc',
@@ -52,10 +51,46 @@
         '../base/base.gyp:base',
         '../session/session.gyp:genproto_session',
         'file/dictionary_file.gyp:dictionary_file',
+        'user_pos_data',
         'genproto_dictionary',
         'system/system_dictionary.gyp:system_dictionary_builder',
       ],
+       'conditions': [['two_pass_build==0', {
+        'dependencies': [
+          'install_gen_system_dictionary_data_main',
+          'install_gen_user_pos_data_main'
+        ],
+      }]],
       'actions': [
+        {
+          'action_name': 'gen_embedded_dictionary_data',
+          'variables': {
+            'input_files': [
+              '../data/dictionary/dictionary0.txt',
+              '../data/dictionary/dictionary1.txt',
+            ],
+          },
+          'inputs': [
+            '<@(input_files)',
+          ],
+          'conditions': [['two_pass_build==0', {
+            'inputs': [
+              '<(mozc_build_tools_dir)/gen_system_dictionary_data_main',
+            ],
+          }]],
+          'outputs': [
+            '<(gen_out_dir)/embedded_dictionary_data.h',
+          ],
+          'action': [
+            # Use the pre-built version. See comments in mozc.gyp for why.
+            '<(mozc_build_tools_dir)/gen_system_dictionary_data_main',
+            '--logtostderr',
+            '--input=<(input_files)',
+            '--make_header',
+            '--output=<(gen_out_dir)/embedded_dictionary_data.h',
+          ],
+          'message': 'Generating <(gen_out_dir)/embedded_dictionary_data.h.',
+        },
         {
           'action_name': 'gen_pos_map',
           'variables': {
@@ -81,37 +116,101 @@
       ],
     },
     {
+      'target_name': 'gen_user_pos_data_main',
+      'type': 'executable',
+      'sources': [
+        'gen_user_pos_data_main.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+      ],
+    },
+    {
+      'target_name': 'install_gen_user_pos_data_main',
+      'type': 'none',
+      'variables': {
+        'bin_name': 'gen_user_pos_data_main'
+      },
+      'includes' : [
+        '../gyp/install_build_tool.gypi'
+      ]
+    },
+    {
+      'target_name': 'user_pos_data',
+      'type': 'static_library',
+      'sources': [
+        'user_pos.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+      ],
+      'conditions': [['two_pass_build==0', {
+        'dependencies': [
+          'install_gen_user_pos_data_main',
+        ],
+      }]],
+      'actions': [
+        {
+          'action_name': 'gen_user_pos_data',
+          'variables': {
+            'input_files': [
+               '../data/dictionary/id.def',
+               '../data/rules/user_pos.def',
+               '../data/rules/cforms.def',
+            ],
+          },
+          'inputs': [
+            '<@(input_files)',
+          ],
+          'conditions': [['two_pass_build==0', {
+            'inputs': [
+              '<(mozc_build_tools_dir)/gen_user_pos_data_main',
+            ],
+          }]],
+          'outputs': [
+            '<(gen_out_dir)/user_pos_data.h',
+          ],
+          'action': [
+            'python', '../build_tools/redirect.py',
+            '<(gen_out_dir)/user_pos_data.h',
+            '<(mozc_build_tools_dir)/gen_user_pos_data_main',
+            '<@(input_files)',
+          ],
+          'message': 'Generating <(gen_out_dir)/user_pos_data.h.',
+        },
+      ],
+    },
+    {
       'target_name': 'genproto_dictionary',
       'type': 'none',
       'sources': [
         'user_dictionary_storage.proto',
       ],
-      'conditions': [['two_pass_build==0', {
-        'dependencies': [
-          '../protobuf/protobuf.gyp:install_protoc',
-        ],
-      }]],
-      'rules': [
-        {
-          'rule_name': 'genproto',
-          'extension': 'proto',
-          'inputs': [
-            '../build_tools/run_after_chdir.py',
-          ],
-          'outputs': [
-            '<(proto_out_dir)/<(relative_dir)/<(RULE_INPUT_ROOT).pb.h',
-            '<(proto_out_dir)/<(relative_dir)/<(RULE_INPUT_ROOT).pb.cc',
-          ],
-          'action': [
-            'python', '../build_tools/run_after_chdir.py',
-            '<(DEPTH)',
-            '<(relative_dir)/<(mozc_build_tools_dir)/protoc<(EXECUTABLE_SUFFIX)',
-            '<(relative_dir)/<(RULE_INPUT_NAME)',
-            '--cpp_out=<(proto_out_dir)',
-          ],
-          'message': 'Generating C++ code from <(RULE_INPUT_PATH)',
-        },
+      'includes': [
+        '../protobuf/genproto.gypi',
       ],
+    },
+    {
+      'target_name': 'gen_system_dictionary_data_main',
+      'type': 'executable',
+      'sources': [
+        'text_dictionary_loader.cc',
+        'gen_system_dictionary_data_main.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        'system/system_dictionary.gyp:system_dictionary_builder',
+      ],
+    },
+    {
+      'target_name': 'install_gen_system_dictionary_data_main',
+      'type': 'none',
+      'variables': {
+        'bin_name': 'gen_system_dictionary_data_main'
+      },
+      'includes' : [
+        '../gyp/install_build_tool.gypi'
+      ]
     },
   ],
 }

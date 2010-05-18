@@ -34,27 +34,40 @@ namespace mozc {
 
 // These structures are defined in converter
 struct Node;
-class ConverterData;
+class NodeAllocatorInterface;
 
 class DictionaryInterface {
  public:
-  virtual ~DictionaryInterface();
-
-  virtual bool Open(const char *filename);
-  virtual bool OpenFromArray(const char *ptr, int len);
   virtual Node *LookupPredictive(const char *str, int size,
-                                 ConverterData *data) const = 0;
+                                 NodeAllocatorInterface *allocator) const = 0;
 
   virtual Node *LookupExact(const char *str, int size,
-                            ConverterData *data) const = 0;
+                            NodeAllocatorInterface *allocator) const = 0;
 
   virtual Node *LookupPrefix(const char *str, int size,
-                             ConverterData *data) const = 0;
+                             NodeAllocatorInterface *allocator) const = 0;
 
   virtual Node *LookupReverse(const char *str, int size,
-                              ConverterData *data) const = 0;
+                              NodeAllocatorInterface *allocator) const = 0;
+
+ protected:
+  // Do not allow instantiation/destruction
+  DictionaryInterface() {}
+  virtual ~DictionaryInterface() {}
 };
 
+class DictionaryFactory {
+ public:
+  // return singleton object
+  static DictionaryInterface *GetDictionary();
+
+  // dependency injection for unittesting
+  static void SetDictionary(DictionaryInterface *dictionary);
+
+ private:
+  DictionaryFactory() {}
+  ~DictionaryFactory() {}
+};
 } // namespace mozc
 
 #endif  // MOZC_DICTIONARY_INTERFACE_H_

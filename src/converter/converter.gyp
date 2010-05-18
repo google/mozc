@@ -65,7 +65,6 @@
       'type': 'static_library',
       'sources': [
         '<(gen_out_dir)/embedded_connection_data.h',
-        '<(gen_out_dir)/embedded_dictionary_data.h',
         '<(gen_out_dir)/segmenter_data.h',
         '<(gen_out_dir)/segmenter_inl.h',
         'candidate_filter.cc',
@@ -74,12 +73,9 @@
         'converter.cc',
         'converter_data.cc',
         'converter_mock.cc',
-        'dictionary_data.cc',
-        'dictionary_preloader.cc',
         'focus_candidate_handler.cc',
         'immutable_converter.cc',
         'key_corrector.cc',
-        'pos_mock.cc',
         'nbest_generator.cc',
         'segmenter.cc',
         'segments.cc',
@@ -92,47 +88,15 @@
         '../session/session.gyp:session_protocol',
         'character_form_manager',
         'gen_segmenter_inl',
-        'pos_data',
+        'gen_pos_matcher',
       ],
       'conditions': [['two_pass_build==0', {
         'dependencies': [
-          'install_gen_converter_data_main',
-          'install_gen_pos_data_main',
+          'install_gen_connection_data_main',
           'install_gen_segmenter_bitarray_main',
         ],
       }]],
       'actions': [
-        {
-          'action_name': 'gen_embedded_dictionary_data',
-          'variables': {
-            'input_files': [
-              '../data/dictionary/dictionary0.txt',
-              '../data/dictionary/dictionary1.txt',
-            ],
-          },
-          'inputs': [
-            '<@(input_files)',
-          ],
-          'conditions': [['two_pass_build==0', {
-            'inputs': [
-              '<(mozc_build_tools_dir)/gen_converter_data_main',
-            ],
-          }]],
-          'outputs': [
-            '<(gen_out_dir)/embedded_dictionary_data.h',
-          ],
-          'action': [
-            # Use the pre-built version. See comments in mozc.gyp for why.
-            '<(mozc_build_tools_dir)/gen_converter_data_main',
-            '--logtostderr',
-            '--mode=dic',
-            '--name=DictionaryData',
-            '--input=<(input_files)',
-            '--make_header',
-            '--output=<(gen_out_dir)/embedded_dictionary_data.h',
-          ],
-          'message': 'Generating <(gen_out_dir)/embedded_dictionary_data.h.',
-        },
         {
           'action_name': 'gen_embedded_connection_data',
           'variables': {
@@ -150,7 +114,7 @@
           # input on Windows.
           'conditions': [['two_pass_build==0 and OS!="win"', {
             'inputs': [
-              '<(mozc_build_tools_dir)/gen_converter_data_main',
+               '<(mozc_build_tools_dir)/gen_connection_data_main',
             ],
           }]],
           'outputs': [
@@ -158,10 +122,8 @@
           ],
           'action': [
             # Use the pre-built version. See comments in mozc.gyp for why.
-            '<(mozc_build_tools_dir)/gen_converter_data_main',
+            '<(mozc_build_tools_dir)/gen_connection_data_main',
             '--logtostderr',
-            '--mode=con',
-            '--name=ConnectionData',
             '--input=<(input_files)',
             '--make_header',
             '--output=<(gen_out_dir)/embedded_connection_data.h',
@@ -193,93 +155,22 @@
       ],
     },
     {
-      'target_name': 'pos_data',
-      'type': 'static_library',
-      'sources': [
-        '<(gen_out_dir)/pos_data.h',
-        'pos.cc',
-      ],
-      'dependencies': [
-        '../base/base.gyp:base',
-      ],
-      'conditions': [['two_pass_build==0', {
-        'dependencies': [
-          'install_gen_pos_data_main',
-        ],
-      }]],
-      'actions': [
-        {
-          'action_name': 'gen_pos_data',
-          'variables': {
-            'input_files': [
-               '../data/dictionary/id.def',
-               '../data/rules/user_pos.def',
-               '../data/rules/cforms.def',
-            ],
-          },
-          'inputs': [
-            '<@(input_files)',
-          ],
-          'conditions': [['two_pass_build==0', {
-            'inputs': [
-              '<(mozc_build_tools_dir)/gen_pos_data_main',
-            ],
-          }]],
-          'outputs': [
-            '<(gen_out_dir)/pos_data.h',
-          ],
-          'action': [
-            'python', '../build_tools/redirect.py',
-            '<(gen_out_dir)/pos_data.h',
-            '<(mozc_build_tools_dir)/gen_pos_data_main',
-            '<@(input_files)',
-          ],
-          'message': 'Generating <(gen_out_dir)/pos_data.h.',
-        },
-      ],
-    },
-    {
-      'target_name': 'gen_converter_data_main',
+      'target_name': 'gen_connection_data_main',
       'type': 'executable',
       'sources': [
         'connector.cc',
         'connector_compiler.cc',
-        'converter_compiler.cc',
-        'gen_converter_data_main.cc',
-        'converter_data.cc',
-        'key_corrector.cc',
+        'gen_connection_data_main.cc',
       ],
       'dependencies': [
-        '../dictionary/dictionary.gyp:dictionary',
         '../storage/storage.gyp:storage',
       ],
     },
     {
-      'target_name': 'install_gen_converter_data_main',
+      'target_name': 'install_gen_connection_data_main',
       'type': 'none',
       'variables': {
-        'bin_name': 'gen_converter_data_main'
-      },
-      'includes' : [
-        '../gyp/install_build_tool.gypi'
-      ]
-    },
-    {
-      'target_name': 'gen_pos_data_main',
-      'type': 'executable',
-      'sources': [
-        'gen_pos_data_main.cc',
-        'pos_util.cc',
-      ],
-      'dependencies': [
-        '../base/base.gyp:base',
-      ],
-    },
-    {
-      'target_name': 'install_gen_pos_data_main',
-      'type': 'none',
-      'variables': {
-        'bin_name': 'gen_pos_data_main'
+       'bin_name': 'gen_connection_data_main'
       },
       'includes' : [
         '../gyp/install_build_tool.gypi'
@@ -291,14 +182,12 @@
       'sources': [
         'connector.cc',
         'connector_compiler.cc',
-        'converter_compiler.cc',
         'converter_data.cc',
         'gen_segmenter_bitarray_main.cc',
         'key_corrector.cc',
       ],
       'dependencies': [
         'gen_segmenter_inl',
-        '../dictionary/dictionary.gyp:dictionary',
         '../storage/storage.gyp:storage',
       ],
     },
@@ -328,6 +217,35 @@
             '<@(input_files)',
           ],
           'message': 'Generating <(gen_out_dir)/segmenter_inl.h.',
+        },
+      ],
+    },
+    {
+      'target_name': 'gen_pos_matcher',
+      'type': 'none',
+      'actions': [
+        {
+          'action_name': 'gen_pos_matcher',
+          'variables': {
+            'input_files': [
+              '../data/dictionary/id.def',
+              '../data/rules/pos_matcher_rule.def',
+            ],
+          },
+          'inputs': [
+            'gen_pos_matcher_code.py',
+            '<@(input_files)',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/pos_matcher.h',
+          ],
+          'action': [
+            'python', '../build_tools/redirect.py',
+            '<(gen_out_dir)/pos_matcher.h',
+            'gen_pos_matcher_code.py',
+            '<@(input_files)',
+          ],
+          'message': 'Generating <(gen_out_dir)/pos_matcher.h.',
         },
       ],
     },

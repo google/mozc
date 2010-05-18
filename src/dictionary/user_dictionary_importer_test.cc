@@ -701,7 +701,8 @@ TEST(UserDictionaryImporter, ImportFromMSIMETest) {
 
 #ifdef OS_WINDOWS
   // Currently the following tests are disabled since necessary components
-  // are not available on Punlse VM. See http://b/237578 for details.
+  // are not available on the continuous build system.
+  // See http://b/237578 for details.
   // TODO(yukawa): Arrange some automated tests instead of these tests.
   //               http://b/2375839
   // EXPECT_NE(UserDictionaryImporter::IMPORT_CANNOT_OPEN_DICTIONARY, result);

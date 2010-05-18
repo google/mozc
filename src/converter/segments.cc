@@ -39,7 +39,7 @@
 #include "converter/converter_data.h"
 #include "converter/nbest_generator.h"
 #include "converter/node.h"
-#include "converter/pos.h"
+#include "converter/pos_matcher.h"
 #include "converter/segments.h"
 #include "session/config.pb.h"
 #include "session/config_handler.h"
@@ -217,7 +217,7 @@ void Segment::Candidate::ResetDescription(int description_type) {
 
   // Zipcode description
   if ((description_type & Segment::Candidate::ZIPCODE) &&
-      POS::IsZipcode(lid) && lid == rid) {
+      POSMatcher::IsZipcode(lid) && lid == rid) {
     description = content_key;
   }
 }
@@ -698,7 +698,8 @@ bool Segment::Expand(size_t size) {
     }
 
     // Make Arabic number node:
-    if (!is_numbers_expanded_ && POS::IsNumber(c->lid) && c->lid == c->rid) {
+    if (!is_numbers_expanded_ &&
+        POSMatcher::IsNumber(c->lid) && c->lid == c->rid) {
       string new_value, new_content_value, new_content_key;
       bool content = false;
       const Node *node = NULL;
@@ -715,7 +716,7 @@ bool Segment::Expand(size_t size) {
       // nbest_generator_.cc after implementing
       // content-word/functional-word classifier
       for (node = begin_node; node != end_node; node = node->next) {
-        if (!content && POS::IsNumber(node->lid) &&
+        if (!content && POSMatcher::IsNumber(node->lid) &&
             node->lid == node->rid) {
           new_content_key += node->key;
           new_content_value += node->value;
@@ -1016,8 +1017,12 @@ bool Segments::has_lattice() const {
   return converter_data_->has_lattice();
 }
 
-ConverterData *Segments::converter_data() {
+ConverterData *Segments::converter_data() const {
   return converter_data_.get();
+}
+
+NodeAllocatorInterface *Segments::node_allocator() const {
+  return converter_data_->node_allocator();
 }
 
 size_t Segments::max_history_segments_size() const {

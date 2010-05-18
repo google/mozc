@@ -164,9 +164,6 @@ void ConverterMock::SetClearUnusedUserPrediction(bool result) {
   clearunuseduserprediction_output_ = result;
 }
 
-void ConverterMock::SetGetDictionary(Dictionary *dictionary) {
-  getdictionary_output_ = dictionary;
-}
 
 void ConverterMock::GetStartConversion(Segments *segments, string *key) {
   CopySegments(startconversion_input_.segments, segments);
@@ -475,10 +472,5 @@ bool ConverterMock::ClearUserPrediction() const {
 bool ConverterMock::ClearUnusedUserPrediction() const {
   LOG(INFO) << "mock function: ClearUserPrediction";
   return clearunuseduserprediction_output_;
-}
-
-Dictionary *ConverterMock::GetDictionary() const {
-  LOG(INFO) << "mock function: GetDictionary";
-  return getdictionary_output_;
 }
 }  // namespace mozc

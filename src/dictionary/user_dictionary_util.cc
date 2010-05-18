@@ -35,7 +35,7 @@
 #include "base/config_file_stream.h"
 #include "base/file_stream.h"
 #include "base/util.h"
-#include "converter/pos.h"
+#include "dictionary/user_pos.h"
 
 namespace mozc {
 
@@ -92,7 +92,7 @@ bool UserDictionaryUtil::IsValidEntry(
     VLOG(1) << "Invalid reading";
     return false;
   }
-  if (!POS::IsValidPOS(entry.pos())) {
+  if (!UserPOS::IsValidPOS(entry.pos())) {
     VLOG(1) << "Invalid POS";
     return false;
   }

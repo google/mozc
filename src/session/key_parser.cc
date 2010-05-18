@@ -88,6 +88,7 @@ class KeyParserData {
     keycode_map_["muhenkan"] = commands::KeyEvent::MUHENKAN;
     keycode_map_["kana"] = commands::KeyEvent::KANA;
     keycode_map_["hiragana"] = commands::KeyEvent::KANA;
+    keycode_map_["katakana"] = commands::KeyEvent::KATAKANA;
     keycode_map_["eisu"] = commands::KeyEvent::EISU;
     keycode_map_["home"] = commands::KeyEvent::HOME;
     keycode_map_["end"] = commands::KeyEvent::END;

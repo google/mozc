@@ -1,4 +1,10 @@
-mozc (0.10.288.102-1) jaunty; urgency=low
+mozc (0.11.354.100) lucid; urgency=low
+
+  * Ver. 0.11.354.100 on 2010-05-17
+
+ -- Yusuke Sato <yusukes>  Mon, 17 May 2010 19:22:54 +0900
+
+mozc (0.10.288.102) jaunty; urgency=low
 
   * Ver. 0.10.288.102 on 2010-03-09
 

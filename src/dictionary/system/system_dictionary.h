@@ -43,12 +43,13 @@
 
 namespace mozc {
 
-class ConverterData;
+class NodeAllocatorInterface;
 class DictionaryFile;
-class Token;
+struct Token;
 
 class SystemDictionary : public DictionaryInterface {
  public:
+  SystemDictionary();
   virtual ~SystemDictionary();
 
   virtual bool Open(const char *filename);
@@ -56,13 +57,13 @@ class SystemDictionary : public DictionaryInterface {
   virtual void Close();
 
   virtual Node *LookupPredictive(const char *str, int size,
-                                 ConverterData *data) const;
+                                 NodeAllocatorInterface *allocator) const;
   virtual Node *LookupExact(const char *str, int size,
-                            ConverterData *data) const;
+                            NodeAllocatorInterface *allocator) const;
   virtual Node *LookupPrefix(const char *str, int size,
-                             ConverterData *data) const;
+                             NodeAllocatorInterface *allocator) const;
   virtual Node *LookupReverse(const char *str, int size,
-                              ConverterData *data) const;
+                              NodeAllocatorInterface *allocator) const;
 
 
   // Most of key strings are Hiragana or Katakana, so we modify
@@ -139,9 +140,6 @@ class SystemDictionary : public DictionaryInterface {
   static const int HIRAGANA_OFFSET = 75;
   static const int KATAKANA_OFFSET = 159;
 
-  // Test may call this constructor directly.
-  SystemDictionary();
-
   bool OpenDictionaryFile(DictionaryFile *file);
   // Only populates token pointed by positition when it is specified.
   // Otherwise (position==NULL) it scans all the tokens for same reading.
@@ -153,10 +151,10 @@ class SystemDictionary : public DictionaryInterface {
   // Returns list of nodes.
   // This method updates max_nodes_size value if non NULL value is given.
   Node *LookupInternal(const char *str, int size,
-                       ConverterData *data,
+                       NodeAllocatorInterface *allocator,
                        bool is_predictive,
                        int *max_nodes_size) const;
-  Node *CopyTokenToNode(ConverterData *data,
+  Node *CopyTokenToNode(NodeAllocatorInterface *allocator,
                         const Token *token) const;
 
   // Rx stores a trie. rx_ stores key strings and token_rx_ stores

@@ -265,28 +265,6 @@ bool IPCPathManager::GetPathName(string *ipc_name) {
   return true;
 }
 
-bool IPCPathManager::GetOldPathName(string *ipc_name) {
-#ifndef OS_MACOSX
-  return false;
-#endif  // OS_MACOSX
-
-  if (ipc_name == NULL) {
-    LOG(ERROR) << "ipc_name is NULL";
-    return false;
-  }
-
-  if (ipc_path_info_->key().empty() && !LoadPathName()) {
-    LOG(ERROR) << "GetPathName failed";
-    return false;
-  }
-
-  *ipc_name = "/tmp/.mozc.";
-  ipc_name->append(ipc_path_info_->key());
-  ipc_name->append(".");
-  ipc_name->append(name_);
-  return true;
-}
-
 uint32 IPCPathManager::GetServerProtocolVersion() const {
   return ipc_path_info_->protocol_version();
 }

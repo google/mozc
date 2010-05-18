@@ -249,7 +249,14 @@ Session::Session(const composer::Table *table,
       composer_(composer::Composer::Create(table)),
       converter_(new session::SessionConverter(converter)),
       keymap_(keymap),
-      state_(SessionState::PRECOMPOSITION) {
+#ifdef OS_WINDOWS
+      // On Windows session is started with direct mode.
+      // TODO(toshiyuki): Ditto for Mac after verifying on Mac.
+      state_(SessionState::DIRECT)
+#else
+      state_(SessionState::PRECOMPOSITION)
+#endif
+{
   ReloadConfig();
 }
 
@@ -282,19 +289,14 @@ bool Session::SendCommand(commands::Command *command) {
         // TODO(komatsu): Implement here.
         return false;
       case commands::HIRAGANA:
-        EnsureIMEIsOn();
         return InputModeHiragana(command);
       case commands::FULL_KATAKANA:
-        EnsureIMEIsOn();
         return InputModeFullKatakana(command);
       case commands::HALF_ASCII:
-        EnsureIMEIsOn();
         return InputModeHalfASCII(command);
       case commands::FULL_ASCII:
-        EnsureIMEIsOn();
         return InputModeFullASCII(command);
       case commands::HALF_KATAKANA:
-        EnsureIMEIsOn();
         return InputModeHalfKatakana(command);
       default:
         LOG(ERROR) << "Unknown mode: " << session_command.composition_mode();
@@ -414,7 +416,6 @@ bool Session::SendKey(commands::Command *command) {
   }
 
   bool result = false;
-
   switch (state_) {
     case SessionState::DIRECT:
       result = SendKeyDirectInputState(command);
@@ -452,6 +453,16 @@ bool Session::SendKeyDirectInputState(commands::Command *command) {
       return InsertSpace(command);
     case keymap::DirectInputState::INSERT_ALTERNATE_SPACE:
       return InsertSpaceToggled(command);
+    case keymap::DirectInputState::INPUT_MODE_HIRAGANA:
+      return InputModeHiragana(command);
+    case keymap::DirectInputState::INPUT_MODE_FULL_KATAKANA:
+      return InputModeFullKatakana(command);
+    case keymap::DirectInputState::INPUT_MODE_HALF_KATAKANA:
+      return InputModeHalfKatakana(command);
+    case keymap::DirectInputState::INPUT_MODE_FULL_ALPHANUMERIC:
+      return InputModeFullASCII(command);
+    case keymap::DirectInputState::INPUT_MODE_HALF_ALPHANUMERIC:
+      return InputModeHalfASCII(command);
     case keymap::DirectInputState::NONE:
       return EchoBack(command);
   }
@@ -1243,6 +1254,7 @@ bool Session::TranslateHalfASCII(commands::Command *command) {
 }
 
 bool Session::InputModeHiragana(commands::Command *command) {
+  EnsureIMEIsOn();
   // The temporary mode should not be overridden.
   if (composer_->GetInputMode() != transliteration::HIRAGANA) {
     composer_->SetInputMode(transliteration::HIRAGANA);
@@ -1252,6 +1264,7 @@ bool Session::InputModeHiragana(commands::Command *command) {
 }
 
 bool Session::InputModeFullKatakana(commands::Command *command) {
+  EnsureIMEIsOn();
   // The temporary mode should not be overridden.
   if (composer_->GetInputMode() != transliteration::FULL_KATAKANA) {
     composer_->SetInputMode(transliteration::FULL_KATAKANA);
@@ -1261,6 +1274,7 @@ bool Session::InputModeFullKatakana(commands::Command *command) {
 }
 
 bool Session::InputModeHalfKatakana(commands::Command *command) {
+  EnsureIMEIsOn();
   // The temporary mode should not be overridden.
   if (composer_->GetInputMode() != transliteration::HALF_KATAKANA) {
     composer_->SetInputMode(transliteration::HALF_KATAKANA);
@@ -1270,6 +1284,7 @@ bool Session::InputModeHalfKatakana(commands::Command *command) {
 }
 
 bool Session::InputModeFullASCII(commands::Command *command) {
+  EnsureIMEIsOn();
   // The temporary mode should not be overridden.
   if (composer_->GetInputMode() != transliteration::FULL_ASCII) {
     composer_->SetInputMode(transliteration::FULL_ASCII);
@@ -1279,6 +1294,7 @@ bool Session::InputModeFullASCII(commands::Command *command) {
 }
 
 bool Session::InputModeHalfASCII(commands::Command *command) {
+  EnsureIMEIsOn();
   // The temporary mode should not be overridden.
   if (composer_->GetInputMode() != transliteration::HALF_ASCII) {
     composer_->SetInputMode(transliteration::HALF_ASCII);

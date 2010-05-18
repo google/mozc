@@ -50,7 +50,14 @@ enum Commands {
   // If Config::space_character_form is FULL_WIDTH,
   // space should be full_width even in direct mode
   INSERT_SPACE,  // To handle spaces.
-  INSERT_ALTERNATE_SPACE,  // to handle shift+spaces (useally toggle half/full with)
+  // to handle shift+spaces (useally toggle half/full width)
+  INSERT_ALTERNATE_SPACE,
+  // Switch input mode.
+  INPUT_MODE_HIRAGANA,
+  INPUT_MODE_FULL_KATAKANA,
+  INPUT_MODE_HALF_KATAKANA,
+  INPUT_MODE_FULL_ALPHANUMERIC,
+  INPUT_MODE_HALF_ALPHANUMERIC,
 };
 };
 
@@ -61,7 +68,8 @@ enum Commands {
   IME_ON,
   INSERT_CHARACTER,  // Move to Composition status.
   INSERT_SPACE,   // To handle spaces.
-  INSERT_ALTERNATE_SPACE,  // to handle shift+spaces (useally toggle half/full with)
+  // to handle shift+spaces (useally toggle half/full with)
+  INSERT_ALTERNATE_SPACE,
   INSERT_HALF_SPACE,  // Input half-width space
   INSERT_FULL_SPACE,  // Input full-width space
   TOGGLE_ALPHANUMERIC_MODE,  // toggle AlphaNumeric and Hiragana mode.

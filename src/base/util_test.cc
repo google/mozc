@@ -1485,22 +1485,58 @@ TEST(UtilTest, CharacterSet) {
 }
 
 TEST(UtilTest, WriteByteArray) {
-  ostringstream os;
-  const string name = "Test";
-  char buf[] = "mozc";
-  size_t buf_size = sizeof(buf);
-  Util::WriteByteArray(name, buf, buf_size, &os);
-  EXPECT_NE(os.str().find("static const size_t kTestSize ="), string::npos);
+  {
+    ostringstream os;
+    const string name = "Test";
+    char buf[] = "mozc";
+    size_t buf_size = sizeof(buf);
+    Util::WriteByteArray(name, buf, buf_size, &os);
+    EXPECT_NE(os.str().find("const size_t kTest_size ="), string::npos);
 #ifdef OS_WINDOWS
-  EXPECT_NE(os.str().find("static const uint64 kTestUint64[] ="),
-            string::npos);
-  EXPECT_NE(os.str().find("static const char *kTest = "
-                          "reinterpret_cast<const char *>(kTestUint64);"),
-            string::npos);
+    EXPECT_NE(string::npos,
+              os.str().find("const uint64 kTest_data_uint64[] ="));
+    EXPECT_NE(string::npos,
+              os.str().find("const char *kTest_data = "
+                            "reinterpret_cast<const char *>("
+                            "kTest_data_uint64);"));
 #else
-  EXPECT_NE(os.str().find("static const char kTest[] ="), string::npos);
+    EXPECT_NE(os.str().find("const char kTest_data[] ="), string::npos);
 #endif
-  LOG(INFO) << os.str();
+    LOG(INFO) << os.str();
+  }
+
+  const char kExpected[] = "const size_t ktest_size = 3;\n"
+#ifdef OS_WINDOWS
+      "const uint64 ktest_data_uint64[] = {\n"
+      "0x636261, };\n"
+      "const char *ktest_data = reinterpret_cast<const char *>("
+      "ktest_data_uint64);\n"
+#else
+      "const char ktest_data[] =\n"
+      "\"" "\\" "x61" "\\" "x62" "\\" "x63" "\"\n"
+      ";\n"
+#endif
+      ;
+  {
+    ostringstream os;
+    Util::WriteByteArray("test",
+                         "abc",
+                         3,
+                         &os);
+    EXPECT_EQ(kExpected, os.str());
+  }
+
+  const string filepath = Util::JoinPath(FLAGS_test_tmpdir, "testfile");
+  {
+    OutputFileStream ofs(filepath.c_str());
+    ofs << "abc";
+  }
+
+  {
+    ostringstream os;
+    Util::MakeByteArrayStream("test", filepath, &os);
+    EXPECT_EQ(kExpected, os.str());
+  }
 }
 
 TEST(UtilTest, DirectoryExists) {
@@ -1661,5 +1697,4 @@ TEST(UtilTest, Issue2190350) {
   EXPECT_EQ(1, result.length());
   EXPECT_EQ("a", result);
 }
-
 }  // namespace mozc

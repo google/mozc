@@ -30,10 +30,10 @@
 #include <string>
 #include <vector>
 #include "base/base.h"
+#include "base/singleton.h"
 #include "converter/segments.h"
 #include "session/config_handler.h"
 #include "session/config.pb.h"
-#include "prediction/predictor.h"
 #include "prediction/predictor_interface.h"
 #include "prediction/dictionary_predictor.h"
 #include "prediction/user_history_predictor.h"
@@ -42,6 +42,38 @@ namespace mozc {
 namespace {
 const int kPredictionSize = 100;
 
+class PredictorImpl : public PredictorInterface {
+ public:
+  PredictorImpl();
+  virtual ~PredictorImpl();
+
+  // This method is basically called when user hit TAB key.
+  virtual bool Predict(Segments *segments) const;
+
+  // Automatic prediction. More conservative than Predict()
+  virtual bool Suggest(Segments *segments) const;
+
+  // Hook(s) for all mutable operations
+  virtual void Finish(Segments *segments);
+
+  // Revert the last Finish operation
+  virtual void Revert(Segments *segments);
+
+  // clear all history data of UserHistoryPredictor
+  virtual bool ClearAllHistory();
+
+  // clear unused history data of UserHistoryPredictor
+  virtual bool ClearUnusedHistory();
+
+  // Sync user history
+  virtual bool Sync();
+
+ public:
+  UserHistoryPredictor *user_history_predictor_;
+  DictionaryPredictor  *dictionary_predictor_;
+  vector<PredictorInterface *> predictors_;
+};
+
 size_t GetCandidatesSize(const Segments &segments) {
   if (segments.conversion_segments_size() <= 0) {
     LOG(ERROR) << "No conversion segments found";
@@ -49,35 +81,35 @@ size_t GetCandidatesSize(const Segments &segments) {
   }
   return segments.conversion_segment(0).candidates_size();
 }
-}
 
-Predictor::Predictor() : user_history_predictor_(NULL) {
-  user_history_predictor_ = new UserHistoryPredictor;
+PredictorImpl::PredictorImpl()
+    : user_history_predictor_(new UserHistoryPredictor),
+      dictionary_predictor_(new DictionaryPredictor) {
   predictors_.push_back(user_history_predictor_);
-  predictors_.push_back(new DictionaryPredictor);
+  predictors_.push_back(dictionary_predictor_);
   DCHECK(user_history_predictor_);
+  DCHECK(dictionary_predictor_);
 }
 
-Predictor::~Predictor() {
-  for (size_t i = 0; i < predictors_.size(); ++i) {
-    delete predictors_[i];
-  }
+PredictorImpl::~PredictorImpl() {
+  delete user_history_predictor_;
+  delete dictionary_predictor_;
   predictors_.clear();
 }
 
-void Predictor::Finish(Segments *segments) {
+void PredictorImpl::Finish(Segments *segments) {
   for (size_t i = 0; i < predictors_.size(); ++i) {
     predictors_[i]->Finish(segments);
   }
 }
 
-void Predictor::Revert(Segments *segments) {
+void PredictorImpl::Revert(Segments *segments) {
   for (size_t i = 0; i < predictors_.size(); ++i) {
     predictors_[i]->Revert(segments);
   }
 }
 
-bool Predictor::Suggest(Segments *segments) const {
+bool PredictorImpl::Suggest(Segments *segments) const {
   bool result = false;
   int size = min(9, max(1, static_cast<int>(GET_CONFIG(suggestions_size))));
 
@@ -92,7 +124,7 @@ bool Predictor::Suggest(Segments *segments) const {
   return result;
 }
 
-bool Predictor::Predict(Segments *segments) const {
+bool PredictorImpl::Predict(Segments *segments) const {
   bool result = false;
   int size = kPredictionSize;
   for (size_t i = 0; i < predictors_.size(); ++i) {
@@ -106,15 +138,30 @@ bool Predictor::Predict(Segments *segments) const {
   return result;
 }
 
-bool Predictor::ClearAllHistory() {
+bool PredictorImpl::ClearAllHistory() {
   return user_history_predictor_->ClearAllHistory();
 }
 
-bool Predictor::ClearUnusedHistory() {
+bool PredictorImpl::ClearUnusedHistory() {
   return user_history_predictor_->ClearUnusedHistory();
 }
 
-bool Predictor::Sync() {
+bool PredictorImpl::Sync() {
   return user_history_predictor_->Sync();
+}
+
+PredictorInterface *g_predictor = NULL;
+}  // namespace
+
+PredictorInterface *PredictorFactory::GetPredictor() {
+  if (g_predictor == NULL) {
+    return Singleton<PredictorImpl>::get();
+  } else {
+    return g_predictor;
+  }
+}
+
+void PredictorFactory::SetPredictor(PredictorInterface *predictor) {
+  g_predictor = predictor;
 }
 }  // namespace mozc

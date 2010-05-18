@@ -34,7 +34,7 @@
 #include "converter/candidate_filter.h"
 #include "converter/connector.h"
 #include "converter/converter_data.h"
-#include "converter/pos.h"
+#include "converter/pos_matcher.h"
 #include "converter/segmenter.h"
 #include "converter/segments.h"
 
@@ -125,7 +125,7 @@ bool NBestGenerator::Next(Segment::Candidate *candidate,
           has_constrained_node = true;
         }
 
-        if (!is_functional && !POS::IsFunctional(node->lid)) {
+        if (!is_functional && !POSMatcher::IsFunctional(node->lid)) {
           candidate->content_value += node->value;
           candidate->content_key += node->key;
         } else {

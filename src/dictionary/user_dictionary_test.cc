@@ -39,18 +39,39 @@
 #include "base/base.h"
 #include "base/file_stream.h"
 #include "base/util.h"
-#include "converter/converter_data.h"
-#include "converter/pos_mock.h"
+#include "converter/node.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
+#include "dictionary/user_pos.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
 
 namespace mozc {
-
 namespace {
+
+class TestNodeAllocator : public NodeAllocatorInterface {
+ public:
+  TestNodeAllocator() {}
+  virtual ~TestNodeAllocator() {
+    for (size_t i = 0; i < nodes_.size(); ++i) {
+      delete nodes_[i];
+    }
+    nodes_.clear();
+  }
+
+  Node *NewNode() {
+    Node *node = new Node;
+    CHECK(node);
+    node->Init();
+    nodes_.push_back(node);
+    return node;
+  }
+
+ private:
+  vector<Node *> nodes_;
+};
 
 const char kUserDictionary0[] =
     "start\tstart\tverb\n"
@@ -75,6 +96,80 @@ const char kUserDictionary0[] =
 
 const char kUserDictionary1[] = "end\tend\tverb\n";
 
+void PushBackToken(const string &key,
+                   const string &value,
+                   uint16 id,
+                   vector<UserPOS::Token> *tokens) {
+  tokens->resize(tokens->size() + 1);
+  UserPOS::Token *t = &tokens->back();
+  t->key = key;
+  t->value = value;
+  t->id = id;
+  t->cost = 0;
+}
+
+// This class is a mock class for writing unit tests of a class that
+// depends on POS. It accepts only two values for part-of-speech:
+// "noun" as words without inflection and "verb" as words with
+// inflection.
+class UserPOSMock : public UserPOS::UserPOSInterface {
+ public:
+  UserPOSMock() {}
+  virtual ~UserPOSMock() {}
+
+  // This method returns true if the given pos is "noun" or "verb".
+  virtual bool IsValidPOS(const string &pos) const {
+    return true;
+  }
+
+  // Given a verb, this method expands it to three different forms,
+  // i.e. base form (the word itself), "-ed" form and "-ing" form. For
+  // example, if the given word is "play", the method returns "play",
+  // "played" and "playing". When a noun is passed, it returns only
+  // base form. The method set lid and rid of the word as following:
+  //
+  //  POS              | lid | rid
+  // ------------------+-----+-----
+  //  noun             | 100 | 100
+  //  verb (base form) | 200 | 200
+  //  verb (-ed form)  | 210 | 210
+  //  verb (-ing form) | 220 | 220
+  virtual bool GetTokens(const string &key,
+                         const string &value,
+                         const string &pos,
+                         UserPOS::CostType cost_type,
+                         vector<UserPOS::Token> *tokens) const {
+    if (key.empty() ||
+        value.empty() ||
+        pos.empty() ||
+        tokens == NULL) {
+      return false;
+    }
+
+    tokens->clear();
+    if (pos == "noun") {
+      PushBackToken(key, value, 100, tokens);
+      return true;
+    } else if (pos == "verb") {
+      PushBackToken(key, value, 200, tokens);
+      PushBackToken(key + "ed", value + "ed", 210, tokens);
+      PushBackToken(key + "ing", value + "ing", 220, tokens);
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  virtual void GetPOSList(vector<string> *pos_list) const {}
+
+  virtual bool GetPOSIDs(const string &pos, uint16 *id) const {
+    return false;
+  }
+
+ private:
+  DISALLOW_COPY_AND_ASSIGN(UserPOSMock);
+};
+
 int Random(int size) {
   return static_cast<int> (1.0 * size * rand() / (RAND_MAX + 1.0));
 }
@@ -88,13 +183,12 @@ string GenRandomAlphabet(int size) {
   }
   return result;
 }
-}  // namespace
 
 class UserDictionaryTest : public testing::Test {
  protected:
   static void SetUpTestCase() {
     Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    POS::SetHandler(new POSMockHandler);
+    UserPOS::SetUserPOSInterface(new UserPOSMock);
   }
 
   // Workaround for the constructor of UserDictionary being protected.
@@ -114,8 +208,8 @@ class UserDictionaryTest : public testing::Test {
                                          const char *key,
                                          size_t key_size,
                                          const UserDictionary &dic) {
-    ConverterData data;
-    Node *node = dic.LookupPredictive(key, key_size, &data);
+    TestNodeAllocator allocator;
+    Node *node = dic.LookupPredictive(key, key_size, &allocator);
 
     if (expected == NULL || expected_size == 0) {
       EXPECT_TRUE(NULL == node);
@@ -130,8 +224,8 @@ class UserDictionaryTest : public testing::Test {
                                      const char *key,
                                      size_t key_size,
                                      const UserDictionary &dic) {
-    ConverterData data;
-    Node *node = dic.LookupPrefix(key, key_size, &data);
+    TestNodeAllocator allocator;
+    Node *node = dic.LookupPrefix(key, key_size, &allocator);
 
     if (expected == NULL || expected_size == 0) {
       EXPECT_TRUE(NULL == node);
@@ -344,20 +438,21 @@ TEST_F(UserDictionaryTest, AsyncLoadTest) {
   }
 
   {
-    UserDictionary dic;
+    UserDictionary *dic = UserDictionary::GetUserDictionary();
     // Wait for async reload called from the constructor.
-    dic.WaitForReloader();
-    dic.SetUserDictionaryName(filename);
+    dic->WaitForReloader();
+    dic->SetUserDictionaryName(filename);
 
-    ConverterData data;
+    TestNodeAllocator allocator;
     for (int i = 0; i < 32; ++i) {
       random_shuffle(keys.begin(), keys.end());
-      dic.AsyncReload();
+      dic->AsyncReload();
       for (int i = 0; i < 1000; ++i) {
-        dic.LookupPrefix(keys[i].c_str(),
-                         keys[i].size(), &data);
+        dic->LookupPrefix(keys[i].c_str(),
+                          keys[i].size(), &allocator);
       }
     }
   }
 }
+}  // namespace
 }  // namespace mozc

@@ -35,7 +35,6 @@
 
 namespace mozc {
 
-class Dictionary;
 class Segments;
 
 class ConverterInterface {
@@ -123,16 +122,15 @@ class ConverterInterface {
   // clear unused user prediction data
   virtual bool ClearUnusedUserPrediction() const = 0;
 
-  // return dictionary
-  virtual Dictionary *GetDictionary() const = 0;
-
   // Create singleton Converter insntance.
   // If failed, return NULL
+  // TODO(taku): move them to ConverterFactory
   static ConverterInterface *GetConverter();
 
   // Inject a dependency for unittesting
   static void SetConverter(ConverterInterface *converter);
 
+ protected:
   virtual ~ConverterInterface() {}
   ConverterInterface() {}
 

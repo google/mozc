@@ -40,7 +40,7 @@
 #include "base/util.h"
 #include "base/singleton.h"
 #include "converter/node.h"
-#include "converter/pos.h"
+#include "converter/pos_matcher.h"
 #include "converter/segments.h"
 
 namespace mozc {
@@ -147,8 +147,8 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
   // We basically ignores the cost threadshould. Filter candidate
   // only with StructureCost
   int cost_offset = kCostOffset;
-  if (candidate->lid == POS::last_name_id() ||
-      candidate->lid == POS::first_name_id()) {
+  if (candidate->lid == POSMatcher::GetLastNameId() ||
+      candidate->lid == POSMatcher::GetFirstNameId()) {
     cost_offset = INT_MAX;
   }
 

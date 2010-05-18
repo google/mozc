@@ -37,7 +37,8 @@
 #include "base/file_stream.h"
 #include "base/util.h"
 #include "dictionary/file/dictionary_file.h"
-#include "dictionary/text_dictionary.h"
+#include "dictionary/dictionary_token.h"
+#include "dictionary/text_dictionary_loader.h"
 #include "dictionary/system/system_dictionary.h"
 
 DEFINE_bool(preserve_intermediate_dictionary, false,
@@ -85,11 +86,11 @@ RxTokenInfo::RxTokenInfo(Token *t,
 struct TokenGreaterThan {
   inline bool operator()(const RxTokenInfo* lhs,
                          const RxTokenInfo* rhs) const {
-    return ((lhs->token->left_id > rhs->token->left_id) ||
-            ((lhs->token->left_id == rhs->token->left_id) &&
-             (lhs->token->right_id > rhs->token->right_id)) ||
-            ((lhs->token->left_id == rhs->token->left_id) &&
-             (lhs->token->right_id == rhs->token->right_id) &&
+    return ((lhs->token->lid > rhs->token->lid) ||
+            ((lhs->token->lid == rhs->token->lid) &&
+             (lhs->token->rid > rhs->token->rid)) ||
+            ((lhs->token->lid == rhs->token->lid) &&
+             (lhs->token->rid == rhs->token->rid) &&
              (lhs->offset_in_word_rx < rhs->offset_in_word_rx)));
   }
 };
@@ -231,12 +232,12 @@ void SystemDictionaryBuilder::WriteToken(const RxKeyStringInfo &key, int n,
     flags |= SystemDictionary::LAST_TOKEN_FLAG;
   }
   const Token *t = token_info->token;
-  uint32 pos = (t->left_id << 16) | t->right_id;
+  uint32 pos = (t->lid << 16) | t->rid;
   // Determines pos encoding.
   if (frequent_pos_.find(pos) == frequent_pos_.end()) {
     if (prev_token &&
-        prev_token->token->left_id == t->left_id &&
-        prev_token->token->right_id == t->right_id) {
+        prev_token->token->lid == t->lid &&
+        prev_token->token->rid == t->rid) {
       flags |= SystemDictionary::SAME_POS_FLAG;
     } else {
       flags |= SystemDictionary::FULL_POS_FLAG;
@@ -262,10 +263,10 @@ void SystemDictionaryBuilder::WriteToken(const RxKeyStringInfo &key, int n,
   offset = 3;
 
   if (flags & SystemDictionary::FULL_POS_FLAG) {
-    b[offset] = t->left_id & 255;
-    b[offset + 1] = t->left_id >> 8;
-    b[offset + 2] = t->right_id & 255;
-    b[offset + 3] = t->right_id >> 8;
+    b[offset] = t->lid & 255;
+    b[offset + 1] = t->lid >> 8;
+    b[offset + 2] = t->rid & 255;
+    b[offset + 3] = t->rid >> 8;
     offset += 4;
   } else if (!(flags & SystemDictionary::SAME_POS_FLAG)) {
     // Frequent 1 byte pos.
@@ -379,9 +380,9 @@ void SystemDictionaryBuilder::CollectFrequentPos(
   for (vector<Token *>::const_iterator it = tokens.begin();
        it != tokens.end(); ++it) {
     uint32 pos = 0;
-    pos = (*it)->left_id;
+    pos = (*it)->lid;
     pos <<= 16;
-    pos |= (*it)->right_id;
+    pos |= (*it)->rid;
     pos_map[pos]++;
   }
   // Get histgram of frequency
@@ -423,7 +424,7 @@ void SystemDictionaryBuilder::CollectFrequentPos(
 
 void SystemDictionaryBuilder::Build() {
   LOG(INFO) << "reading file\n";
-  TextDictionary d;
+  TextDictionaryLoader d;
   d.Open(input_filename_.c_str());
   // Get all tokens
   vector<Token *> tokens;
@@ -488,7 +489,7 @@ void SystemDictionaryBuilder::BuildTokenInfo(const vector<Token *>& tokens) {
     } else {
       ki = key_info_[key];
     }
-    uint32 pos = ((*it)->left_id << 16) | (*it)->right_id;
+    uint32 pos = ((*it)->lid << 16) | (*it)->rid;
     bool is_frequent_pos = (frequent_pos_.find(pos) != frequent_pos_.end());
     RxTokenInfo *t = new RxTokenInfo(*it, is_frequent_pos);
     // inserts into map

@@ -38,9 +38,9 @@
 #include "base/util.h"
 #include "converter/node.h"
 #include "converter/converter_interface.h"
-#include "converter/converter_data.h"
+#include "converter/node.h"
 #include "converter/segments.h"
-#include "dictionary/dictionary.h"
+#include "dictionary/dictionary_interface.h"
 #include "prediction/svm_model.h"
 #include "prediction/suggestion_filter.h"
 #include "prediction/predictor_interface.h"
@@ -54,28 +54,12 @@ namespace {
 #include "prediction/suggestion_feature_pos_group.h"
 }
 
-DictionaryPredictor::DictionaryPredictor() : dictionary_(NULL) {}
+DictionaryPredictor::DictionaryPredictor()
+    : dictionary_(DictionaryFactory::GetDictionary()) {}
 
 DictionaryPredictor::~DictionaryPredictor() {}
 
 bool DictionaryPredictor::Lookup(Segments *segments) const {
-  // lazy evaluation
-  // We cannot initialize dictioanry_ in the constructor,
-  // as DictionaryPredictor() is initialized by Converter.
-  // TODO(taku): we can make Converter a PURE static class.
-  if (dictionary_ == NULL) {
-    ConverterInterface *converter = ConverterInterface::GetConverter();
-    if (converter == NULL) {
-      LOG(ERROR) << "ConverterInterface::GetConveter() failed";
-      return false;
-    }
-    dictionary_ = converter->GetDictionary();
-    if (dictionary_ == NULL) {
-      LOG(ERROR) << "GetDictioanry() failed";
-      return false;
-    }
-  }
-
   if (!GET_CONFIG(use_dictionary_suggest) &&
       segments->request_type() == Segments::SUGGESTION) {
     VLOG(2) << "no_dictionary_suggest";
@@ -118,9 +102,9 @@ bool DictionaryPredictor::Lookup(Segments *segments) const {
     return false;
   }
 
-  ConverterData *data = segments->converter_data();
-  if (data == NULL) {
-    LOG(WARNING) << "converter data is NULL";
+  NodeAllocatorInterface *allocator = segments->node_allocator();
+  if (allocator == NULL) {
+    LOG(WARNING) << "NodeAllocator is NULL";
     return false;
   }
 
@@ -139,9 +123,10 @@ bool DictionaryPredictor::Lookup(Segments *segments) const {
     return false;
   }
 
-  data->set_max_nodes_size(max_nodes_size);
+  allocator->set_max_nodes_size(max_nodes_size);
   const Node *node = dictionary_->LookupPredictive(key.c_str(),
-                                                   key.size(), data);
+                                                   key.size(),
+                                                   allocator);
   if (node == NULL) {
     return false;
   }

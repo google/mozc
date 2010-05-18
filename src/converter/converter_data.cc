@@ -35,18 +35,40 @@
 
 namespace mozc {
 
-ConverterData::ConverterData(): bos_node_(NULL),
-                                eos_node_(NULL),
-                                key_corrector_(new KeyCorrector),
-                                node_freelist_(1024),
-                                max_nodes_size_(8192) {}
+class NodeAllocator : public NodeAllocatorInterface {
+ public:
+  NodeAllocator(): node_freelist_(1024) {}
+  virtual ~NodeAllocator() {}
+
+  virtual Node *NewNode() {
+    Node *node = node_freelist_.Alloc();
+    DCHECK(node);
+    node->Init();
+    return node;
+  }
+
+  // Free all nodes allocateed by NewNode()
+  void Free(){
+    node_freelist_.Free();
+  }
+
+ private:
+  FreeList<Node> node_freelist_;
+};
+
+ConverterData::ConverterData() : bos_node_(NULL),
+                                 eos_node_(NULL),
+                                 key_corrector_(new KeyCorrector),
+                                 node_allocator_(new NodeAllocator) {}
 
 ConverterData::~ConverterData() {}
 
+NodeAllocatorInterface *ConverterData::node_allocator() const {
+  return node_allocator_.get();
+}
+
 Node *ConverterData::NewNode() {
-  Node *node = node_freelist_.Alloc();
-  node->Init();
-  return node;
+  return node_allocator_->NewNode();
 }
 
 Node **ConverterData::begin_nodes_list() {
@@ -86,6 +108,6 @@ void ConverterData::clear_lattice() {
   key_.clear();
   begin_nodes_list_.clear();
   end_nodes_list_.clear();
-  node_freelist_.Free();
+  node_allocator_->Free();
 }
 }  // namespace mozc

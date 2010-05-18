@@ -27,7 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "converter/dictionary_preloader.h"
+#include "dictionary/dictionary_preloader.h"
 
 #if defined(OS_WINDOWS)
 #include <process.h>
@@ -42,8 +42,8 @@
 #endif
 
 #include "base/util.h"
-#include "converter/dictionary_data.h"
-#include "dictionary/dictionary.h"
+#include "base/singleton.h"
+#include "base/thread.h"
 #include "session/config_handler.h"
 #include "session/config.pb.h"
 
@@ -53,19 +53,14 @@ DEFINE_int32(preload_memory_factor, 5,
              "Preload is enabled if available system memory is "
              "large enough");
 
+namespace mozc {
 namespace {
-bool IsPreloadable() {
-  if (!mozc::GET_CONFIG(use_dictionary_suggest)) {
+bool IsPreloadable(const char *image, size_t size) {
+  if (!GET_CONFIG(use_dictionary_suggest)) {
     return false;
   }
 
-  size_t dictionary_size = 0;
-  mozc::DictionaryData::GetDictionaryData(&dictionary_size);
-  size_t connection_size = 0;
-  mozc::DictionaryData::GetConnectionData(&connection_size);
-
-  const int64 preload_size =
-      static_cast<int64>(dictionary_size) + connection_size;
+  const int64 preload_size = size;
 
 #ifdef OS_WINDOWS
   MEMORYSTATUSEX status;
@@ -99,70 +94,79 @@ bool IsPreloadable() {
   // Since Linux is installed into heterogeneous environment,
   // we have to check the amount of available memory.
   LOG(WARNING) << "Dictionary preloading is not implemented: " << preload_size;
-  return false;
+  return true;
+  //  return false;
 #endif
 }
 
 // Note: this thread proc may be terminated by the end of main thread.
-void *ThreadProc(void *ptr) {
-#ifdef OS_WINDOWS
-  // GetCurrentThread returns pseudo handle, which you need not
-  // to pass CloseHandle.
-  const HANDLE thread_handle = ::GetCurrentThread();
+class PreloaderThread : public Thread {
+ public:
+  PreloaderThread() : image_(NULL), size_(0) {}
 
-  // Enter low priority mode.
-  if (mozc::Util::IsVistaOrLater()) {
-    // THREAD_MODE_BACKGROUND_BEGIN is beneficial for the preloader since
-    // all I/Os occurred in the background-mode thread are marked as
-    // "Low-Priority" so that the activity of the preloader is less likely
-    // to interrupt normal I/O tasks.
-    // Note that "all I/Os" includes implicit page-fault I/Os, which is
-    // what the preloader aims to do.
-    ::SetThreadPriority(thread_handle, THREAD_MODE_BACKGROUND_BEGIN);
-  } else {
-    ::SetThreadPriority(thread_handle, THREAD_PRIORITY_IDLE);
+  ~PreloaderThread() {
+    Join();
   }
+
+  void StartPreloader(const char *image, size_t size) {
+    if (IsRunning()) {
+      LOG(WARNING) << "Preloader is already running";
+      return;
+    }
+    image_ = image;
+    size_ = size;
+    Thread::Start();
+  }
+
+  void Run() {
+#ifdef OS_WINDOWS
+    // GetCurrentThread returns pseudo handle, which you need not
+    // to pass CloseHandle.
+    const HANDLE thread_handle = ::GetCurrentThread();
+
+    // Enter low priority mode.
+    if (Util::IsVistaOrLater()) {
+      // THREAD_MODE_BACKGROUND_BEGIN is beneficial for the preloader since
+      // all I/Os occurred in the background-mode thread are marked as
+      // "Low-Priority" so that the activity of the preloader is less likely
+      // to interrupt normal I/O tasks.
+      // Note that "all I/Os" includes implicit page-fault I/Os, which is
+      // what the preloader aims to do.
+      ::SetThreadPriority(thread_handle, THREAD_MODE_BACKGROUND_BEGIN);
+    } else {
+      ::SetThreadPriority(thread_handle, THREAD_PRIORITY_IDLE);
+    }
 #endif
 
-  size_t dictionary_size = 0;
-  const char *dictionary_data =
-      mozc::DictionaryData::GetDictionaryData(&dictionary_size);
-  size_t connection_size = 0;
-  const char *connection_data =
-      mozc::DictionaryData::GetConnectionData(&connection_size);
+    if (image_ == NULL || size_ == 0) {
+      LOG(ERROR) << "image is NULL or size is 0";
+      return;
+    }
 
-  // Preleoad dictionary region.
-  // TODO(yukawa): determine the best region to load.
-  mozc::Util::PreloadMappedRegion(
-      dictionary_data, dictionary_size, NULL);
-  mozc::Util::PreloadMappedRegion(
-      connection_data, connection_size, NULL);
+    // Preleoad dictionary region.
+    // TODO(yukawa): determine the best region to load.
+    Util::PreloadMappedRegion(image_, size_, NULL);
 
-  // On Windows, we do not call SetThreadPriority to restore the priority
-  // not to disturb the thread scheduler any more.
-  // We don't change the priority for Mac/Linux at this moment.
-  return NULL;
-}
+    VLOG(1) << "Preloader done!";
+  }
+
+ private:
+  const char *image_;
+  size_t size_;
+};
 }  // anonymous namespace
 
-namespace mozc {
-void DictionaryPreloader::PreloadIfApplicable() {
-// On Windows, dictionary preloader is no longer enabled because
-// GoogleIMEJaCacheService.exe is responsible for keeping the dictionary
-// on-page (or freeing the memory in low-memory condition).
-// See http://b/2354549 for details.
+void DictionaryPreloader::PreloadIfApplicable(const char *image, size_t size) {
+  // On Windows, dictionary preloader is no longer enabled because
+  // GoogleIMEJaCacheService.exe is responsible for keeping the dictionary
+  // on-page (or freeing the memory in low-memory condition).
+  // See http://b/2354549 for details.
 #if defined(OS_MACOSX) || defined(OS_LINUX)
-  if (!IsPreloadable()) {
+  if (!IsPreloadable(image, size)) {
     return;
   }
 
-  pthread_t handle;
-  // Since pthread scheduling policy looks platform dependent,
-  // we now use the default priority.
-  const int result = pthread_create(&handle, 0, ThreadProc, NULL);
-  if (result != 0) {
-    LOG(ERROR) << "pthread_create failed: " << result;
-  }
+  Singleton<PreloaderThread>::get()->StartPreloader(image, size);
 #endif  // OS_MACOSX or OS_LINUX
 }
 }  // namespace mozc

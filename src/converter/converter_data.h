@@ -40,11 +40,15 @@
 namespace mozc {
 
 class NBestGenerator;
+class NodeAllocator;
 
 class ConverterData {
  public:
-  // methods used by Converter
+  NodeAllocatorInterface *node_allocator() const;
+
+  // Old interface for compatibility
   Node *NewNode();
+
   Node **begin_nodes_list();
   Node **end_nodes_list();
 
@@ -72,14 +76,6 @@ class ConverterData {
   void clear_lattice();
   bool has_lattice() const;
 
-  size_t max_nodes_size() const {
-    return max_nodes_size_;
-  }
-
-  void set_max_nodes_size(size_t max_nodes_size) {
-    max_nodes_size_ = max_nodes_size;
-  }
-
   ConverterData();
   virtual ~ConverterData();
 
@@ -88,12 +84,11 @@ class ConverterData {
   Node *bos_node_;
   Node *eos_node_;
   scoped_ptr<KeyCorrector> key_corrector_;
+  scoped_ptr<NodeAllocator> node_allocator_;
   vector<Node *> begin_nodes_list_;
   vector<Node *> end_nodes_list_;
-  FreeList<Node> node_freelist_;
   // Limit of node count returned by each dictionary backend. Total number of
   // nodes may exceed this.
-  size_t max_nodes_size_;
 };
 }  // namespace mozc
 

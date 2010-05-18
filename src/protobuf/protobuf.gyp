@@ -32,44 +32,52 @@
     {
       'target_name': 'protobuf',
       'type': 'static_library',
-      'sources': [
-        'files/src/google/protobuf/compiler/importer.cc',
-        'files/src/google/protobuf/compiler/parser.cc',
-        'files/src/google/protobuf/descriptor.cc',
-        'files/src/google/protobuf/descriptor.pb.cc',
-        'files/src/google/protobuf/descriptor_database.cc',
-        'files/src/google/protobuf/dynamic_message.cc',
-        'files/src/google/protobuf/extension_set.cc',
-        'files/src/google/protobuf/extension_set_heavy.cc',
-        'files/src/google/protobuf/generated_message_reflection.cc',
-        'files/src/google/protobuf/generated_message_util.cc',
-        'files/src/google/protobuf/io/coded_stream.cc',
-        'files/src/google/protobuf/io/gzip_stream.cc',
-        'files/src/google/protobuf/io/printer.cc',
-        'files/src/google/protobuf/io/tokenizer.cc',
-        'files/src/google/protobuf/io/zero_copy_stream.cc',
-        'files/src/google/protobuf/io/zero_copy_stream_impl.cc',
-        'files/src/google/protobuf/io/zero_copy_stream_impl_lite.cc',
-        'files/src/google/protobuf/message.cc',
-        'files/src/google/protobuf/message_lite.cc',
-        'files/src/google/protobuf/reflection_ops.cc',
-        'files/src/google/protobuf/repeated_field.cc',
-        'files/src/google/protobuf/service.cc',
-        'files/src/google/protobuf/stubs/common.cc',
-        'files/src/google/protobuf/stubs/hash.cc',
-        'files/src/google/protobuf/stubs/once.cc',
-        'files/src/google/protobuf/stubs/structurally_valid.cc',
-        'files/src/google/protobuf/stubs/strutil.cc',
-        'files/src/google/protobuf/stubs/substitute.cc',
-        'files/src/google/protobuf/text_format.cc',
-        'files/src/google/protobuf/unknown_field_set.cc',
-        'files/src/google/protobuf/wire_format.cc',
-        'files/src/google/protobuf/wire_format_lite.cc',
-      ],
-      'include_dirs': [
-        '.',
-      ],
       'conditions': [
+        ['OS!="linux"', {
+          'sources': [
+            'files/src/google/protobuf/compiler/importer.cc',
+            'files/src/google/protobuf/compiler/parser.cc',
+            'files/src/google/protobuf/descriptor.cc',
+            'files/src/google/protobuf/descriptor.pb.cc',
+            'files/src/google/protobuf/descriptor_database.cc',
+            'files/src/google/protobuf/dynamic_message.cc',
+            'files/src/google/protobuf/extension_set.cc',
+            'files/src/google/protobuf/extension_set_heavy.cc',
+            'files/src/google/protobuf/generated_message_reflection.cc',
+            'files/src/google/protobuf/generated_message_util.cc',
+            'files/src/google/protobuf/io/coded_stream.cc',
+            'files/src/google/protobuf/io/gzip_stream.cc',
+            'files/src/google/protobuf/io/printer.cc',
+            'files/src/google/protobuf/io/tokenizer.cc',
+            'files/src/google/protobuf/io/zero_copy_stream.cc',
+            'files/src/google/protobuf/io/zero_copy_stream_impl.cc',
+            'files/src/google/protobuf/io/zero_copy_stream_impl_lite.cc',
+            'files/src/google/protobuf/message.cc',
+            'files/src/google/protobuf/message_lite.cc',
+            'files/src/google/protobuf/reflection_ops.cc',
+            'files/src/google/protobuf/repeated_field.cc',
+            'files/src/google/protobuf/service.cc',
+            'files/src/google/protobuf/stubs/common.cc',
+            'files/src/google/protobuf/stubs/hash.cc',
+            'files/src/google/protobuf/stubs/once.cc',
+            'files/src/google/protobuf/stubs/structurally_valid.cc',
+            'files/src/google/protobuf/stubs/strutil.cc',
+            'files/src/google/protobuf/stubs/substitute.cc',
+            'files/src/google/protobuf/text_format.cc',
+            'files/src/google/protobuf/unknown_field_set.cc',
+            'files/src/google/protobuf/wire_format.cc',
+            'files/src/google/protobuf/wire_format_lite.cc',
+          ],
+          'include_dirs': [
+            '.',
+          ],
+        }, {  # else
+          'link_settings': {
+            'libraries': [
+              '-lprotobuf',
+            ],
+          },
+        }],
         ['OS=="mac"', {
           'xcode_settings': {
             'WARNING_CFLAGS': ['-Wno-error'],
@@ -133,9 +141,14 @@
       'variables': {
         'bin_name': 'protoc',
       },
-      'includes' : [
-        '../gyp/install_build_tool.gypi',
-      ]
+      'conditions': [
+        # use system-installed protoc on Linux
+        ['OS!="linux"', {
+          'includes' : [
+            '../gyp/install_build_tool.gypi',
+          ]
+        }],
+      ],
     },
   ],
 }

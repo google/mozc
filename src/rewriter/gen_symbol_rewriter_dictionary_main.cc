@@ -41,7 +41,6 @@
 #include "base/base.h"
 #include "base/file_stream.h"
 #include "base/util.h"
-#include "converter/pos.h"
 #include "rewriter/dictionary_generator.h"
 #include "rewriter/embedded_dictionary.h"
 #include "rewriter/symbol_rewriter.h"

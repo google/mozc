@@ -27,72 +27,47 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+# This file provides a common rule for genproto command.
 {
   'variables': {
-    'relative_dir': 'usage_stats',
-    'gen_out_dir': '<(SHARED_INTERMEDIATE_DIR)/<(relative_dir)',
+    'protobuf_dir%': '../protobuf',
+    'build_tools_dir%': '../build_tools',
   },
-  'targets': [
-    {
-      'target_name': 'usage_stats',
-      'type': 'static_library',
-      'sources': [
-        '<(proto_out_dir)/<(relative_dir)/usage_stats.pb.cc',
-        'upload_util.cc',
-        'usage_stats.cc',
-      ],
+  'conditions': [
+    ['two_pass_build==0', {
       'dependencies': [
-        '../protobuf/protobuf.gyp:protobuf',
-        '../base/base.gyp:base',
-        '../net/net.gyp:net',
-        '../storage/storage.gyp:storage',
-        'genproto_usage_stats',
+        '<(protobuf_dir)/protobuf.gyp:install_protoc',
       ],
-      'actions': [
-        {
-          'action_name': 'gen_usage_stats_list',
-          'variables': {
-            'input_files': [
-              '../data/usage_stats/stats.def',
-            ],
-          },
-          'inputs': [
-            'gen_stats_list.py',
-            '<@(input_files)',
-          ],
-          'outputs': [
-            '<(gen_out_dir)/usage_stats_list.h',
-          ],
-          'action': [
-            'python', '../build_tools/redirect.py',
-            '<(gen_out_dir)/usage_stats_list.h',
-            'gen_stats_list.py',
-            '<@(input_files)',
-          ],
-        },
-      ],
-    },
+    }],
+    ['OS!="linux"', {
+      'variables': {
+        'protoc_command%': '<(relative_dir)/<(mozc_build_tools_dir)/protoc<(EXECUTABLE_SUFFIX)',
+      },
+    }, { # else
+      'variables': {
+        'protoc_command%': 'protoc<(EXECUTABLE_SUFFIX)',
+      },
+    }],
+  ],
+  'rules': [
     {
-      'target_name': 'genproto_usage_stats',
-      'type': 'none',
-      'sources': [
-        'usage_stats.proto',
+      'rule_name': 'genproto',
+      'extension': 'proto',
+      'inputs': [
+        '<(build_tools_dir)/run_after_chdir.py',
       ],
-      'includes': [
-        '../protobuf/genproto.gypi',
+      'outputs': [
+        '<(proto_out_dir)/<(relative_dir)/<(RULE_INPUT_ROOT).pb.h',
+        '<(proto_out_dir)/<(relative_dir)/<(RULE_INPUT_ROOT).pb.cc',
       ],
-    },
-    {
-      'target_name': 'usage_stats_test',
-      'type': 'executable',
-      'sources': [
-        'upload_util_test.cc',
-        'usage_stats_test.cc',
+      'action': [
+        'python', '../build_tools/run_after_chdir.py',
+        '<(DEPTH)',
+        '<(protoc_command)',
+        '<(relative_dir)/<(RULE_INPUT_NAME)',
+        '--cpp_out=<(proto_out_dir)',
       ],
-      'dependencies': [
-        '../testing/testing.gyp:gtest_main',
-        'usage_stats',
-      ],
+      'message': 'Generating C++ code from <(RULE_INPUT_PATH)',
     },
   ],
 }

@@ -37,9 +37,13 @@
 #include "base/base.h"
 #include "unix/ibus/engine_registrar.h"
 #include "unix/ibus/key_translator.h"
+#include "unix/ibus/mozc_engine_property.h"
 #include "unix/ibus/session.h"
 
 namespace {
+
+// A key which associates an IBusProperty object with MozcEngineProperty.
+const char kGObjectDataKey[] = "ibus-mozc-aux-data";
 
 struct IBusMozcEngineClass {
   IBusEngineClass parent;
@@ -182,10 +186,73 @@ IBusText *ComposeAuxiliaryText(const commands::Candidates &candidates) {
 
 MozcEngine::MozcEngine()
     : key_translator_(new KeyTranslator),
-      session_(new Session) {
+      session_(new Session),
+      prop_root_(NULL),
+      prop_composition_mode_(NULL),
+      current_composition_mode_(kMozcEngineInitialCompositionMode) {
+  // |sub_prop_list| is a radio menu which is shown when a button in the
+  // language panel (i.e. |prop_composition_mode_| below) is clicked.
+  IBusPropList *sub_prop_list = ibus_prop_list_new();
+
+  // Create items for the radio menu.
+  IBusText *label_for_panel = NULL;  // e.g. Hiragana letter A.
+  for (size_t i = 0; i < kMozcEnginePropertiesSize; ++i) {
+    const MozcEngineProperty &entry = kMozcEngineProperties[i];
+    IBusText *label = ibus_text_new_from_static_string(entry.label);
+    IBusPropState state = PROP_STATE_UNCHECKED;
+    if (entry.composition_mode == kMozcEngineInitialCompositionMode) {
+      state = PROP_STATE_CHECKED;
+      label_for_panel = ibus_text_new_from_static_string(entry.label_for_panel);
+    }
+    IBusProperty *item = ibus_property_new(entry.key,
+                                           PROP_TYPE_RADIO,
+                                           label,
+                                           NULL /* icon */,
+                                           NULL /* tooltip */,
+                                           TRUE /* sensitive */,
+                                           TRUE /* visible */,
+                                           state,
+                                           NULL /* sub props */);
+    g_object_set_data(G_OBJECT(item), kGObjectDataKey, (gpointer)&entry);
+    ibus_prop_list_append(sub_prop_list, item);
+    // |sub_prop_list| owns |item| by calling g_object_ref_sink for the |item|.
+  }
+  DCHECK(label_for_panel) << "All items are disabled by default";
+
+  // The label of |prop_composition_mode_| is shown in the language panel.
+  prop_composition_mode_ = ibus_property_new("CompositionMode",
+                                             PROP_TYPE_MENU,
+                                             label_for_panel,
+                                             NULL /* icon */,
+                                             NULL /* tooltip */,
+                                             TRUE /* sensitive */,
+                                             TRUE /* visible */,
+                                             PROP_STATE_UNCHECKED,
+                                             sub_prop_list);
+  // Likewise, |prop_composition_mode_| owns |sub_prop_list|. We have to sink
+  // |prop_composition_mode_| here so ibus_engine_update_property() call in
+  // PropertyActivate() does not destruct the object.
+  g_object_ref_sink(prop_composition_mode_);
+
+  // |prop_root_| is used for registering properties in FocusIn().
+  prop_root_ = ibus_prop_list_new();
+  // We have to sink |prop_root_| as well so ibus_engine_register_properties()
+  // in FocusIn() does not destruct it.
+  g_object_ref_sink(prop_root_);
+  ibus_prop_list_append(prop_root_, prop_composition_mode_);
 }
 
 MozcEngine::~MozcEngine() {
+  if (prop_composition_mode_) {
+    // The ref counter will drop to one.
+    g_object_unref(prop_composition_mode_);
+    prop_composition_mode_ = NULL;
+  }
+  if (prop_root_) {
+    // Destroy all objects under the root.
+    g_object_unref(prop_root_);
+    prop_root_ = NULL;
+  }
 }
 
 void MozcEngine::CandidateClicked(
@@ -213,7 +280,7 @@ void MozcEngine::Enable(IBusEngine *engine) {
 }
 
 void MozcEngine::FocusIn(IBusEngine *engine) {
-  // TODO(mazda): Implement this.
+  ibus_engine_register_properties(engine, prop_root_);
 }
 
 void MozcEngine::FocusOut(IBusEngine *engine) {
@@ -244,6 +311,9 @@ gboolean MozcEngine::ProcessKeyEvent(
   if (modifiers & IBUS_RELEASE_MASK) {
     return FALSE;
   }
+  if (current_composition_mode_ == commands::DIRECT) {
+    return FALSE;
+  }
 
   commands::KeyEvent key;
   if (!key_translator_->Translate(keyval, keycode, modifiers, &key)) {
@@ -271,10 +341,54 @@ gboolean MozcEngine::ProcessKeyEvent(
   return consumed ? TRUE : FALSE;
 }
 
-void MozcEngine::PropertyActivate(
-    IBusEngine *engine,
-    const gchar *property_name,
-    guint property_state) {
+void MozcEngine::SetCompositionMode(
+    IBusEngine *engine, commands::CompositionMode composition_mode) {
+  commands::SessionCommand command;
+  commands::Output output;
+  if (composition_mode == commands::DIRECT) {
+    // Commit a preedit string.
+    command.set_type(commands::SessionCommand::SUBMIT);
+    session_->SendCommand(command, &output);
+    UpdateAll(engine, output);
+  } else {
+    command.set_type(commands::SessionCommand::SWITCH_INPUT_MODE);
+    command.set_composition_mode(composition_mode);
+    session_->SendCommand(command, &output);
+  }
+  current_composition_mode_ = composition_mode;
+}
+
+void MozcEngine::PropertyActivate(IBusEngine *engine,
+                                  const gchar *property_name,
+                                  guint property_state) {
+  if (property_state != PROP_STATE_CHECKED) {
+    return;
+  }
+
+  size_t i = 0;
+  IBusProperty *prop;
+  while (prop = ibus_prop_list_get(prop_composition_mode_->sub_props, i++)) {
+    if (!g_strcmp0(property_name, prop->key)) {
+      const MozcEngineProperty *entry =
+          reinterpret_cast<const MozcEngineProperty*>(
+              g_object_get_data(G_OBJECT(prop), kGObjectDataKey));
+      DCHECK(entry);
+      if (entry) {
+        // Update Mozc state.
+        SetCompositionMode(engine, entry->composition_mode);
+        // Update the language panel.
+        ibus_property_set_label(
+            prop_composition_mode_,
+            ibus_text_new_from_static_string(entry->label_for_panel));
+      }
+      // Update the radio menu item.
+      ibus_property_set_state(prop, PROP_STATE_CHECKED);
+    } else {
+      ibus_property_set_state(prop, PROP_STATE_UNCHECKED);
+    }
+    // No need to call unref since ibus_prop_list_get does not add ref.
+  }
+  ibus_engine_update_property(engine, prop_composition_mode_);
 }
 
 void MozcEngine::PropertyHide(IBusEngine *engine,
@@ -339,11 +453,11 @@ void MozcEngine::Disconnected(IBusBus *bus, gpointer user_data) {
   }
 }
 
-bool MozcEngine::UpdateAll(IBusEngine *engine,
-                           const commands::Output &output) const {
+bool MozcEngine::UpdateAll(IBusEngine *engine, const commands::Output &output) {
   UpdateResult(engine, output);
   UpdatePreedit(engine, output);
   UpdateCandidates(engine, output);
+  UpdateCompositionMode(engine, output);
   return true;
 }
 
@@ -417,6 +531,23 @@ bool MozcEngine::UpdateCandidates(IBusEngine *engine,
   }
 
   return true;
+}
+
+void MozcEngine::UpdateCompositionMode(IBusEngine *engine,
+                                       const commands::Output &output) {
+  if (!output.has_mode()) {
+    return;
+  }
+  const commands::CompositionMode new_composition_mode = output.mode();
+  if (current_composition_mode_ == new_composition_mode) {
+    return;
+  }
+  for (size_t i = 0; i < kMozcEnginePropertiesSize; ++i) {
+    const MozcEngineProperty &entry = kMozcEngineProperties[i];
+    if (entry.composition_mode == new_composition_mode) {
+      PropertyActivate(engine, entry.key, PROP_STATE_CHECKED);
+    }
+  }
 }
 
 }  // namespace ibus

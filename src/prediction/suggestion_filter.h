@@ -38,6 +38,10 @@ namespace mozc {
 class SuggestionFilter {
  public:
   static bool IsBadSuggestion(const string &text);
+
+ private:
+  SuggestionFilter() {}
+  ~SuggestionFilter() {}
 };
 }  // namespace mozc
 

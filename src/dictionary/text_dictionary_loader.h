@@ -27,23 +27,36 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_CONVERTER_DICTIONARY_PRELOADER_H_
-#define MOZC_CONVERTER_DICTIONARY_PRELOADER_H_
+#ifndef MOZC_DICTIONARY_TEXT_DICTIONARY_LOADER_H_
+#define MOZC_DICTIONARY_TEXT_DICTIONARY_LOADER_H_
 
-#include "base/base.h"
+#include <string>
+#include <vector>
 
 namespace mozc {
-// This class make a background thread to preload memory-mapped dictionary in
-// background by simply reading memory region.
-// TODO(yukawa): Make this class generic for any memory region.
-class DictionaryPreloader {
- public:
-  // In Windows, starts preload if available memory is large enough and
-  // dictionary suggest is enabled.
-  static void PreloadIfApplicable();
- private:
-  DISALLOW_COPY_AND_ASSIGN(DictionaryPreloader);
-};
-}
 
-#endif  // MOZC_CONVERTER_DICTIONARY_PRELOADER_H_
+struct Token;
+
+class TextDictionaryLoader {
+ public:
+  TextDictionaryLoader();
+  virtual ~TextDictionaryLoader();
+
+  virtual bool Open(const char *filename);
+  // Reads source dictionary file at most lines_limit lines. No limit will
+  // be applied when the limit is -1.
+  // This is mainly used for test to reduce run time.
+  // You can pass multiple filenames delimiterd by ",".
+  bool OpenWithLineLimit(const char *filename, int lines_limit);
+
+  void Close();
+
+  virtual void CollectTokens(vector<Token *> *res);
+
+ private:
+  void ParseTSV(const string &line);
+  vector<Token *> tokens_;
+};
+}  // namespace mozc
+
+#endif  // MOZC_DICTIONARY_TEXT_DICTIONARY_LOADER_H_

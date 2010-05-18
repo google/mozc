@@ -44,8 +44,11 @@
       # generation tool is changed. In fact, a comment fix in 'base/util.h'
       # causes the code generation. We want to avoid that.
       'two_pass_build%': 1,
+      # This variable need to be set to 1 when you build Mozc for Chromium OS.
+      'chromeos%': 0,
     },
     'two_pass_build%': '<(two_pass_build)',
+    'chromeos%': '<(chromeos)',
 
     # warning_cflags_cflags will be shared with Mac and Linux.
     'warning_cflags': [
@@ -283,17 +286,15 @@
     'include_dirs': [
       '<(DEPTH)',
       '<(DEPTH)/..',
-      '<(DEPTH)/third_party/gtest',
-      '<(DEPTH)/third_party/gtest/include',
       '<(DEPTH)/third_party/breakpad/src',
       '<(SHARED_INTERMEDIATE_DIR)',
       '<(SHARED_INTERMEDIATE_DIR)/proto_out',
-      '../protobuf/files/src',
     ],
     'conditions': [
       ['OS=="win"', {
         'defines': [
           'COMPILER_MSVC',
+          'BUILD_MOZC',  # for ime_shared library
           'ID_TRACE_LEVEL=1',
           'OS_WINDOWS',
           'UNICODE',
@@ -316,10 +317,13 @@
           '_WINDOWS',
         ],
         'include_dirs': [
-          '<(DEPTH)/../third_party/platformsdk/v6_1/files/include',
-          '<(DEPTH)/../third_party/wtl_80/files/include',
+          '../protobuf/files/src',
           '<(DEPTH)/../third_party/atlmfc_vc80/files/include',
-          '<(DEPTH)/../third_party/vc_80/files/vc/include'
+          '<(DEPTH)/../third_party/platformsdk/v6_1/files/include',
+          '<(DEPTH)/../third_party/vc_80/files/vc/include',
+          '<(DEPTH)/../third_party/wtl_80/files/include',
+          '<(DEPTH)/third_party/gtest',
+          '<(DEPTH)/third_party/gtest/include',
         ],
         # We don't have cygwin in our tree, but we need to have
         # setup_env.bat in the directory specified in 'msvs_cygwin_dirs'
@@ -416,10 +420,22 @@
           '-lssl',
           '-lz',
         ],
+        'conditions': [
+          ['chromeos==1', {
+            'defines': [
+              'OS_CHROMEOS',
+            ],
+          }],
+        ],
       }],
       ['OS=="mac"', {
         'defines': [
           'OS_MACOSX',
+        ],
+        'include_dirs': [
+          '../protobuf/files/src',
+          '<(DEPTH)/third_party/gtest',
+          '<(DEPTH)/third_party/gtest/include',
         ],
         'mac_framework_dirs': [
           '<(DEPTH)/../mac/Releases/GoogleBreakpad',

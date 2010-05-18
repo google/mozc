@@ -70,6 +70,8 @@ message KeyEvent {
     HENKAN = 13;
     MUHENKAN = 14;
     KANA = 15;  // VK_DBE_HIRAGANA(Win), kVK_JIS_Kana(Mac)
+    // TODO(toshiyuki): It is better to rename this to HIRAGANA
+    // In Windows, we have Katakana and it may confusing.
     HOME = 16;
     END = 17;
     TAB = 18;
@@ -121,7 +123,8 @@ message KeyEvent {
     ASCII = 64;
     HANKAKU = 65;
     KANJI = 66;
-    NUM_SPECIALKEYS = 67;
+    KATAKANA = 67; // VK_DBE_KATAKANA(Win)
+    NUM_SPECIALKEYS = 68;
   };
   enum ModifierKey {
     CTRL = 1;
@@ -476,6 +479,24 @@ message RendererCommand {
 
   optional Rectangle preedit_rectangle = 4;
 
+  // TODO(yukawa): make a common font format for all platforms.
+  message WinLogFont {
+    optional int32 height         = 1 [ default = 0 ];
+    optional int32 width          = 2 [ default = 0 ];
+    optional int32 escapement     = 3 [ default = 0 ];
+    optional int32 orientation    = 4 [ default = 0 ];
+    optional int32 weight         = 5 [ default = 0 ];   // FW_DONTCARE
+    optional bool  italic         = 6 [ default = false ];
+    optional bool  underline      = 7 [ default = false ];
+    optional bool  strike_out     = 8 [ default = false ];
+    optional int32 char_set       = 9 [ default = 1 ];   // DEFAULT_CHARSET
+    optional int32 out_precision  = 10 [ default = 0 ];  // OUT_DEFAULT_PRECIS
+    optional int32 clip_precision = 11 [ default = 0 ];  // CLIP_DEFAULT_PRECIS
+    optional int32 quality        = 12 [ default = 0 ];  // DEFAULT_QUALITY
+    optional int32 pitch_and_family = 13 [ default = 0 ];  // DEFAULT_PITCH
+    optional string face_name = 14;  // should be within 32 TCHARs (w/ '\0')
+  };
+
   // Application information Mozc UI is attaching
   message ApplicationInfo {
     optional uint32 process_id = 1;
@@ -483,6 +504,13 @@ message RendererCommand {
     // used in Windows:
     // WHND of the message-only window:
     optional uint32 receiver_handle = 3;
+    // used in Windows:
+    // HWND of the target window:
+    // This handle can be used for LogicalToPhysicalPoint.
+    optional uint32 target_window_handle = 4;
+    // used in Windows:
+    // Preffered font for composition string.
+    optional WinLogFont compositon_font = 5;
   };
 
   optional ApplicationInfo application_info = 5;

@@ -219,7 +219,13 @@ TEST(KeyMap, LoadStreamWithErrors) {
   errors.clear();
   is.reset(ConfigFileStream::Open("system://ms-ime.tsv"));
   EXPECT_TRUE(manager.LoadStreamWithErrors(is.get(), &errors));
+#ifdef OS_WINDOWS
+  // Now we have invalid commands for Mac
+  // Input mode change commands are not allowed on Mac.
   EXPECT_TRUE(errors.empty());
+#else
+  EXPECT_FALSE(errors.empty());
+#endif  // OS_WINDOWS
 
   errors.clear();
   is.reset(ConfigFileStream::Open("system://kotoeri.tsv"));

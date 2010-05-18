@@ -27,34 +27,37 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// we here independent dictionary_compile.cc as
-// this file cannot be included in mozc_server
-
-#include "dictionary/dictionary.h"
-
-#include "base/base.h"
-#include "dictionary/system/system_dictionary_builder.h"
-#include "dictionary/user_dictionary.h"
-
-DECLARE_int32(maximum_cost_threshold);
+#ifndef MOZC_CONVERTER_IMMUTABLE_CONVERTER_INTERFACE_H_
+#define MOZC_CONVERTER_IMMUTABLE_CONVERTER_INTERFACE_H_
 
 namespace mozc {
 
-void Dictionary::Compile(DictionaryType type,
-                         const char *text_file,
-                         const char *binary_file) {
-#if defined OS_WINDOWS && defined _DEBUG
-  // Seems that dictionary compiler won't work due to allocation faiulre
-  // with debug build. So, we restrict the size of dictionary for debug build.
-  FLAGS_maximum_cost_threshold = 8000;
-#endif
+class Segments;
 
-  switch (type) {
-    case SYSTEM:
-      SystemDictionaryBuilder::Compile(text_file, binary_file);
-      break;
-    default:
-      break;
-  }
-}
+// Perform one-shot conversion with constraints.
+// constraits are encoded in |segments|
+class ImmutableConverterInterface {
+ public:
+  virtual bool Convert(Segments *segments) const = 0;
+
+ protected:
+  ImmutableConverterInterface() {}
+  virtual ~ImmutableConverterInterface() {}
+};
+
+class ImmutableConverterFactory {
+ public:
+  // return singleton object
+  static ImmutableConverterInterface *GetImmutableConverter();
+
+  // dependency injection for unittesting
+  static void SetImmutableConverter(ImmutableConverterInterface
+                                    *immutable_converter);
+
+ private:
+  ImmutableConverterFactory() {}
+  ~ImmutableConverterFactory() {}
+};
 }  // namespace mozc
+
+#endif  // MOZC_CONVERTER_IMMUTABLE_CONVERTER_INTERFACE_H_

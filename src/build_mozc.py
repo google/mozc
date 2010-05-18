@@ -131,6 +131,12 @@ def GetGypFileNames():
     gyp_file_names.append('third_party/mozc/sandbox/sandbox.gyp')
   elif IsLinux():
     gyp_file_names.extend(glob.glob('%s/unix/*/*.gyp' % SRC_DIR))
+    # Add ibus.gyp if ibus is isntalled.
+    # Ubuntu 8.04 (Hardy) does not contain ibus package.
+    try:
+      RunOrDie(['pkg-config', '--exists', 'ibus-1.0'])
+    except RunOrDieError:
+      gyp_file_names.remove('%s/unix/ibus/ibus.gyp' % SRC_DIR)
   gyp_file_names.extend(glob.glob('third_party/rx/*.gyp'))
   gyp_file_names.sort()
   return gyp_file_names
@@ -256,12 +262,12 @@ def GypMain(deps_file_name):
   for file_name in gyp_file_names:
     print '- %s' % file_name
   # We use the one in mozc_build_tools/gyp
-  gyp_script = 'mozc_build_tools/gyp/gyp'
+  gyp_script = '%s/gyp' % options.gypdir
   # If we don't have a copy of gyp, download it.
   if not os.path.isfile(gyp_script):
     # SVN creates mozc_build_tools directory if it's not present.
     gyp_svn_url = GetGypSvnUrl(deps_file_name)
-    RunOrDie(['svn', 'checkout', gyp_svn_url, 'mozc_build_tools/gyp'])
+    RunOrDie(['svn', 'checkout', gyp_svn_url, options.gypdir])
   # Run GYP.
   print 'Running GYP...'
   command_line = [sys.executable, gyp_script,
@@ -325,6 +331,7 @@ def ParseGypOptions():
                     default=False, help='build mozc in one pass. ' +
                     'Not recommended for Debug build.')
   parser.add_option('--branding', dest='branding', default='Mozc')
+  parser.add_option('--gypdir', dest='gypdir', default='mozc_build_tools/gyp')
   (options, unused_args) = parser.parse_args()
   return options
 
@@ -336,6 +343,8 @@ def ParseBuildOptions():
                     help='run jobs in parallel')
   parser.add_option('--configuration', '-c', dest='configuration',
                     default='Debug', help='specify the build configuration.')
+  parser.add_option('--build_base', dest='build_base',
+                    help='specify the base directory of the built binaries.')
   if IsWindows():
     parser.add_option('--platform', '-p', dest='platform',
                       default='Win32',
@@ -388,9 +397,11 @@ def BuildOnLinux(options, targets):
     if envvar in os.environ:
       os.environ[envvar] = os.getenv(envvar)
 
-  RunOrDie([make_command, '-j%s' % options.jobs,
-            'BUILDTYPE=%s' % options.configuration] +
-           target_names)
+  build_args = ['-j%s' % options.jobs, 'BUILDTYPE=%s' % options.configuration]
+  if options.build_base:
+    build_args.append('builddir_name=%s' % options.build_base)
+
+  RunOrDie([make_command] + build_args + target_names)
 
 
 def CheckFileOrDie(file_name):
@@ -423,7 +434,10 @@ def BuildOnMac(options, targets, original_directory_name):
   # the -project parameter. Convert the original_directory_name to a
   # relative path from the build top level directory.
   original_directory_relpath = GetRelpath(original_directory_name, os.getcwd())
-  sym_root = os.path.join(os.getcwd(), 'xcodebuild')
+  if options.build_base:
+    sym_root = options.build_base
+  else:
+    sym_root = os.path.join(os.getcwd(), 'xcodebuild')
   for target in targets:
     (gyp_file_name, target_name) = ParseTarget(target)
     gyp_file_name = os.path.join(original_directory_relpath, gyp_file_name)

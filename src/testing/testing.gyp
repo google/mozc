@@ -46,9 +46,19 @@
       'sources': [
         'base/internal/googletest.cc',
         'base/internal/gtest_main.cc',
-      ],
-      'dependencies': [
-        'testing',
+       ],
+      'conditions': [
+        ['OS!="linux"', {
+          'dependencies': [
+            'testing',
+          ],
+        }, {  # else
+          'link_settings': {
+            'libraries': [
+              '-lgtest',
+            ],
+          },
+        }],
       ],
     },
   ],

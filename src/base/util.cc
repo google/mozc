@@ -61,6 +61,7 @@
 #include "base/base.h"
 #include "base/const.h"
 #include "base/file_stream.h"
+#include "base/mmap.h"
 #include "base/mutex.h"
 #include "base/port.h"
 #include "base/singleton.h"
@@ -2374,14 +2375,31 @@ void Util::PreloadMappedRegion(const void *begin,
   }
 }
 
-void Util::WriteByteArray(const string &name, const char *buf,
-                          size_t buf_size, ostream *ofs) {
-  const char *begin = buf;
-  const char *end = buf + buf_size;
-  *ofs << "static const size_t k" << name << "Size = "
-       << buf_size << ";" << endl;
+void Util::MakeByteArrayFile(const string &name,
+                          const string &input,
+                          const string &output) {
+  OutputFileStream ofs(output.c_str());
+  CHECK(ofs);
+  Util::MakeByteArrayStream(name, input, &ofs);
+}
+
+void Util::MakeByteArrayStream(const string &name,
+                               const string &input,
+                               ostream *os) {
+  Mmap<char> mmap;
+  CHECK(mmap.Open(input.c_str()));
+  Util::WriteByteArray(name, mmap.begin(), mmap.GetFileSize(), os);
+}
+
+void Util::WriteByteArray(const string &name, const char *image,
+                          size_t image_size, ostream *ofs) {
+  const char *begin = image;
+  const char *end = image + image_size;
+  *ofs << "const size_t k" << name << "_size = "
+       << image_size << ";" << endl;
+
 #ifdef OS_WINDOWS
-  *ofs << "static const uint64 k" << name << "Uint64[] = {" << endl;
+  *ofs << "const uint64 k" << name << "_data_uint64[] = {" << endl;
   ofs->setf(ios::hex, ios::basefield);  // in hex
   ofs->setf(ios::showbase);             // add 0x
   int num = 0;
@@ -2400,10 +2418,11 @@ void Util::WriteByteArray(const string &name, const char *buf,
     }
   }
   *ofs << "};" << endl;
-  *ofs << "static const char *k" << name
-       << " = reinterpret_cast<const char *>(k" << name << "Uint64);" << endl;
+  *ofs << "const char *k" << name << "_data"
+       << " = reinterpret_cast<const char *>(k"
+       << name << "_data_uint64);" << endl;
 #else
-  *ofs << "static const char k" << name << "[] =" << endl;
+  *ofs << "const char k" << name << "_data[] =" << endl;
   static const size_t kBucketSize = 20;
   while (begin < end) {
      const size_t size = min(static_cast<size_t>(end - begin), kBucketSize);

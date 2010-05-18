@@ -252,16 +252,12 @@ IPCClient::~IPCClient() {
   // Do nothing
 }
 
-// Mach IPC doesn't depend on the path name, so do nothing with Init.
 void IPCClient::Init(const string &name, const string &serverPath) {
-  IPCPathManager *manager = IPCPathManager::GetIPCPathManager(name);
+  ipc_path_manager_ = IPCPathManager::GetIPCPathManager(name);
   string serverAddress;
-  if (!manager->GetPathName(&serverAddress)) {
-    if (!manager->GetOldPathName(&serverAddress)) {
-      return;
-    }
+  if (!ipc_path_manager_->GetPathName(&serverAddress)) {
+    LOG(ERROR) << "Cannot make IPC path name";
   }
-  ipc_path_manager_ = manager;
 }
 
 bool IPCClient::Call(const char *request_,
@@ -389,6 +385,12 @@ bool IPCClient::Call(const char *request_,
 }
 
 bool IPCClient::Connected() const {
+  string serverAddress;
+  if (!ipc_path_manager_->GetPathName(&serverAddress)) {
+    // No server files found: not running server or not initialized yet.
+    return false;
+  }
+
   MachPortManagerInterface *manager = mach_port_manager_;
   if (manager == NULL) {
     manager = Singleton<DefaultClientMachPortManager>::get();
@@ -418,8 +420,7 @@ IPCServer::IPCServer(const string &name,
   // TODO(mukai): Switch to new path name when the new IPC client is
   // widely distributed.
   LOG(INFO) << "Server created";
-  if (!manager->CreateNewPathName() ||
-      !manager->GetOldPathName(&server_address_)) {
+  if (!manager->CreateNewPathName()) {
     LOG(ERROR) << "Cannot make IPC path name";
     return;
   }

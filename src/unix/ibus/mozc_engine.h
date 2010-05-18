@@ -93,7 +93,7 @@ class MozcEngine : public EngineInterface {
  private:
   // Updates the preedit text and the candidate window and inserts result
   // based on the content of |output|.
-  bool UpdateAll(IBusEngine *engine, const commands::Output &output) const;
+  bool UpdateAll(IBusEngine *engine, const commands::Output &output);
   // Inserts a result text based on the content of |output|.
   bool UpdateResult(IBusEngine *engine, const commands::Output &output) const;
   // Updates the preedit text based on the content of |output|.
@@ -101,9 +101,20 @@ class MozcEngine : public EngineInterface {
   // Updates the candidate window based on the content of |output|.
   bool UpdateCandidates(IBusEngine *engine,
                         const commands::Output &output) const;
+  // Updates the composition mode based on the content of |output|.
+  void UpdateCompositionMode(IBusEngine *engine,
+                             const commands::Output &output);
+  // Sets the composition mode to |composition_mode|. Updates Mozc and IBus
+  // panel status.
+  void SetCompositionMode(IBusEngine *engine,
+                          commands::CompositionMode composition_mode);
 
   scoped_ptr<KeyTranslator> key_translator_;
   scoped_ptr<Session> session_;
+
+  IBusPropList *prop_root_;
+  IBusProperty *prop_composition_mode_;
+  commands::CompositionMode current_composition_mode_;
 
   DISALLOW_COPY_AND_ASSIGN(MozcEngine);
 };

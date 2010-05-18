@@ -30,11 +30,13 @@
 {
   'variables': {
     'relative_dir': 'unix/ibus',
-    'variables': {
-      # SYSROOT directory path used for Chromium OS build
-      'sysroot%': '',
-    },
-    'sysroot%': '<(sysroot)',
+    'pkg_config_libs': [
+      'dbus-1',
+      'glib-2.0',
+      'gobject-2.0',
+      'ibus-1.0',
+      'libcurl',
+    ],
     'ibus_dependencies': [
       '../../base/base.gyp:base',
       '../../base/base.gyp:config_file_stream',
@@ -50,23 +52,6 @@
       '../../transliteration/transliteration.gyp:transliteration',
       '../../usage_stats/usage_stats.gyp:usage_stats',
     ],
-    'ibus_include_dirs': [
-      '<(sysroot)/usr/include/dbus-1.0',
-      '<(sysroot)/usr/include/glib-2.0',
-      '<(sysroot)/usr/include/ibus-1.0',
-      '<(sysroot)/usr/lib/dbus-1.0/include',
-      '<(sysroot)/usr/lib/glib-2.0/include'
-    ],
-    'ibus_libraries': [
-      '-lcurl',
-      '-ldbus-1',
-      '-lglib-2.0',
-      '-lgobject-2.0',
-      '-libus',
-    ],
-    'ibus_ldflags': [
-      '-L<(sysroot)/usr/lib',
-    ],
   },
   'targets': [
     {
@@ -79,8 +64,8 @@
         'path_util.cc',
         'session.cc',
       ],
-      'include_dirs': [
-        '<@(ibus_include_dirs)',
+      'cflags': [
+        '<!@(pkg-config --cflags <@(pkg_config_libs))',
       ],
     },
     {
@@ -93,15 +78,15 @@
         '<@(ibus_dependencies)',
         'ibus_mozc_lib',
       ],
-      'include_dirs': [
-        '<@(ibus_include_dirs)',
+      'cflags': [
+        '<!@(pkg-config --cflags <@(pkg_config_libs))',
       ],
       'libraries': [
-        '<@(ibus_libraries)',
+        '<!@(pkg-config --libs-only-l <@(pkg_config_libs))',
       ],
       'ldflags': [
-        '<@(ibus_ldflags)',
-      ]
+        '<!@(pkg-config --libs-only-L <@(pkg_config_libs))',
+      ],
     },
     {
       'target_name': 'ibus_mozc_test',
@@ -116,15 +101,15 @@
         '../../testing/testing.gyp:gtest_main',
         'ibus_mozc_lib',
       ],
-      'include_dirs': [
-        '<@(ibus_include_dirs)',
+      'cflags': [
+        '<!@(pkg-config --cflags <@(pkg_config_libs))',
       ],
       'libraries': [
-        '<@(ibus_libraries)',
+        '<!@(pkg-config --libs-only-l <@(pkg_config_libs))',
       ],
       'ldflags': [
-        '<@(ibus_ldflags)',
-      ]
+        '<!@(pkg-config --libs-only-L <@(pkg_config_libs))',
+      ],
     },
   ],
 }

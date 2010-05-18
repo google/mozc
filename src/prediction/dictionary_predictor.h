@@ -38,7 +38,7 @@
 namespace mozc {
 
 class Segments;
-class Dictionary;
+class DictionaryInterface;
 
 // Dictioanry-based predictor
 class DictionaryPredictor: public PredictorInterface {
@@ -65,7 +65,7 @@ class DictionaryPredictor: public PredictorInterface {
 
  private:
   bool Lookup(Segments *segments) const;
-  mutable Dictionary *dictionary_;
+  DictionaryInterface *dictionary_;
 };
 }  // namespace mozc
 

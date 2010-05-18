@@ -38,6 +38,7 @@
 namespace mozc {
 
 struct Node;
+class NodeAllocatorInterface;
 class NBestGenerator;
 class ConverterData;
 template <class T> class ObjectPool;
@@ -366,7 +367,9 @@ class Segments {
 
   void DebugString(string *output) const;
 
-  ConverterData* converter_data();
+  ConverterData* converter_data() const;
+
+  NodeAllocatorInterface *node_allocator() const;
 
   // Revert entries
   void clear_revert_entries();

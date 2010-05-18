@@ -27,7 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "converter/immutable_converter.h"
+#include "converter/immutable_converter_interface.h"
 
 #include <algorithm>
 #include <climits>
@@ -36,35 +36,30 @@
 #include <vector>
 #include "base/base.h"
 #include "base/config_file_stream.h"
+#include "base/singleton.h"
 #include "base/thread.h"
 #include "base/util.h"
-#include "converter/dictionary_data.h"
-#include "converter/dictionary_preloader.h"
 #include "converter/key_corrector.h"
 #include "converter/segments.h"
 #include "converter/converter_data.h"
 #include "converter/connector.h"
 #include "converter/nbest_generator.h"
-#include "converter/pos.h"
+#include "converter/pos_matcher.h"
 #include "converter/segmenter.h"
 #include "session/config_handler.h"
 #include "session/config.pb.h"
-#include "dictionary/dictionary.h"
+#include "dictionary/dictionary_interface.h"
 
 namespace mozc {
-
 namespace {
+
+#include "converter/embedded_connection_data.h"
 
 const size_t kMaxSegmentsSize   = 256;
 const size_t kMaxCharLength     = 1024;
 const int    kMaxCost           = 32767;
 const int    kDefaultNumberCost = 3000;
 const int    kEOSPenalty        = 700;
-
-// const char kLastNamePos[] = "姓";
-// const char kFistNamePos[] = "名";
-const char kLastNamePos[] = "\xE5\xA7\x93";
-const char kFistNamePos[] = "\xE5\x90\x8D";
 
 enum {
   CONNECTED,
@@ -105,10 +100,10 @@ Node *InitEOSNode(ConverterData *data, uint16 length) {
 
   Node *eos_noun_node = data->NewNode();
   // "サ変名詞"
-  // POS::unknown_id(), POS::unknown_id()
+  // POSMatcher::GetUnknownId(), POSMatcher::GetUnknownId()
   // returns IDs for "サ変名詞"
-  eos_noun_node->rid = POS::unknown_id();
-  eos_noun_node->lid = POS::unknown_id();
+  eos_noun_node->rid = POSMatcher::GetUnknownId();
+  eos_noun_node->lid = POSMatcher::GetUnknownId();
   eos_noun_node->key.clear();
   eos_noun_node->value = "EOS";
   eos_noun_node->node_type = Node::EOS_NODE;
@@ -167,7 +162,7 @@ int GetCorrectedCostPenalty(const string &key) {
 
 void InsertCorrectedNodes(size_t pos, const string &key,
                           const KeyCorrector &key_corrector,
-                          Dictionary *dictionary,
+                          DictionaryInterface *dictionary,
                           ConverterData *data) {
   size_t length = 0;
   const char *str = key_corrector.GetCorrectedPrefix(pos, &length);
@@ -175,7 +170,8 @@ void InsertCorrectedNodes(size_t pos, const string &key,
     return;
   }
 
-  Node *r_node = dictionary->LookupPrefix(str, length, data);
+  Node *r_node = dictionary->LookupPrefix(str, length,
+                                          data->node_allocator());
   Node *prev = NULL;
   for (Node *node = r_node; node != NULL; node = node->bnext) {
     const size_t offset =
@@ -305,12 +301,10 @@ void NormalizeHistorySegments(Segments *segments) {
     }
   }
 }
-}   // anonymous namespace
 
-class ImmutableConverterImpl: public ImmutableConverter {
+class ImmutableConverterImpl: public ImmutableConverterInterface {
  public:
   virtual bool Convert(Segments *segments) const;
-  virtual Dictionary *GetDictionary() const;
   ImmutableConverterImpl();
   virtual ~ImmutableConverterImpl() {}
 
@@ -343,48 +337,22 @@ class ImmutableConverterImpl: public ImmutableConverter {
   }
 
   scoped_ptr<ConnectorInterface> connector_;
-  scoped_ptr<Dictionary> dictionary_;
+  DictionaryInterface *dictionary_;
 
   int32 last_to_first_name_transition_cost_;
   DISALLOW_COPY_AND_ASSIGN(ImmutableConverterImpl);
 };
 
 ImmutableConverterImpl::ImmutableConverterImpl()
-    : dictionary_(new Dictionary),
+    : connector_(
+        ConnectorInterface::OpenFromArray(
+            kConnectionData_data, kConnectionData_size)),
+      dictionary_(DictionaryFactory::GetDictionary()),
       last_to_first_name_transition_cost_(0) {
-  size_t connection_size = 0;
-  const char *connection_data =
-      DictionaryData::GetConnectionData(&connection_size);
-  CHECK(connection_data);
-  CHECK_GT(connection_size, 0);
-  connector_.reset(ConnectorInterface::OpenFromArray(connection_data,
-                                                     connection_size));
   CHECK(connector_.get());
-
-  DictionaryInterface *sys_dic = dictionary_->Add(Dictionary::SYSTEM);
-  CHECK(sys_dic);
-
-  size_t dictionary_size = 0;
-  const char *dictionary_data =
-      DictionaryData::GetDictionaryData(&dictionary_size);
-  CHECK(dictionary_data);
-  CHECK_GT(dictionary_size, 0);
-
-  CHECK(sys_dic->OpenFromArray(dictionary_data,
-                               dictionary_size));
-
-  DictionaryInterface *user_dic = dictionary_->Add(Dictionary::USER);
-  CHECK(user_dic);
-
   last_to_first_name_transition_cost_
       = connector_->GetTransitionCost(
-          POS::last_name_id(), POS::first_name_id());
-
-  DictionaryPreloader::PreloadIfApplicable();
-}
-
-Dictionary *ImmutableConverterImpl::GetDictionary() const {
-  return dictionary_.get();
+          POSMatcher::GetLastNameId(), POSMatcher::GetFirstNameId());
 }
 
 void ImmutableConverterImpl::Resegment(size_t pos, ConverterData *data) const {
@@ -417,8 +385,8 @@ bool ImmutableConverterImpl::ResegmentArabicNumberAndSuffix(
     if (bnode->value.size() > 0 &&
         bnode->value[0] >= '0' && bnode->value[0] <= '9' &&
         bnode->key[0] >= '0' && bnode->key[0] <= '9' &&
-        POS::IsNumber(compound_node->lid) &&
-        !POS::IsNumber(compound_node->rid)) {
+        POSMatcher::IsNumber(compound_node->lid) &&
+        !POSMatcher::IsNumber(compound_node->rid)) {
       string number_value, number_key;
       string suffix_value, suffix_key;
       DecomposeNumber(compound_node->value, &number_value, &suffix_value);
@@ -488,8 +456,8 @@ bool ImmutableConverterImpl::ResegmentPersonalName(
   for (const Node *compound_node = bnode;
        compound_node != NULL; compound_node = compound_node->bnext) {
     // left word is last name and right word is first name
-    if (compound_node->lid != POS::last_name_id() ||
-        compound_node->rid != POS::first_name_id()) {
+    if (compound_node->lid != POSMatcher::GetLastNameId() ||
+        compound_node->rid != POSMatcher::GetFirstNameId()) {
       continue;
     }
 
@@ -548,15 +516,15 @@ bool ImmutableConverterImpl::ResegmentPersonalName(
 
     // Constraint 4.a
     if (len >= 4 &&
-        (best_last_name_node->lid != POS::last_name_id() &&
-         best_first_name_node->rid != POS::first_name_id())) {
+        (best_last_name_node->lid != POSMatcher::GetLastNameId() &&
+         best_first_name_node->rid != POSMatcher::GetFirstNameId())) {
       continue;
     }
 
     // Constraint 4.b
     if (len == 3 &&
-        (best_last_name_node->lid != POS::last_name_id() ||
-         best_first_name_node->rid != POS::first_name_id())) {
+        (best_last_name_node->lid != POSMatcher::GetLastNameId() ||
+         best_first_name_node->rid != POSMatcher::GetFirstNameId())) {
       continue;
     }
 
@@ -579,7 +547,7 @@ bool ImmutableConverterImpl::ResegmentPersonalName(
     last_name_node->key = best_last_name_node->key;
     last_name_node->value = best_last_name_node->value;
     last_name_node->lid = compound_node->lid;
-    last_name_node->rid = POS::last_name_id();
+    last_name_node->rid = POSMatcher::GetLastNameId();
     last_name_node->wcost = wcost;
     last_name_node->node_type = Node::NOR_NODE;
     last_name_node->bnext = NULL;
@@ -591,7 +559,7 @@ bool ImmutableConverterImpl::ResegmentPersonalName(
     CHECK(first_name_node);
     first_name_node->key = best_first_name_node->key;
     first_name_node->value = best_first_name_node->value;
-    first_name_node->lid = POS::first_name_id();
+    first_name_node->lid = POSMatcher::GetFirstNameId();
     first_name_node->rid = compound_node->rid;
     first_name_node->wcost = wcost;
     first_name_node->node_type = Node::NOR_NODE;
@@ -614,11 +582,11 @@ bool ImmutableConverterImpl::ResegmentPersonalName(
 Node *ImmutableConverterImpl::Lookup(const char *begin,
                                      const char *end,
                                      ConverterData *data) const {
-  data->set_max_nodes_size(8192);
+  data->node_allocator()->set_max_nodes_size(8192);
   Node *result_node =
       dictionary_->LookupPrefix(begin,
                                 static_cast<int>(end - begin),
-                                data);
+                                data->node_allocator());
 
   size_t mblen = 0;
   const uint16 w = Util::UTF8ToUCS2(begin, end, &mblen);
@@ -628,11 +596,11 @@ Node *ImmutableConverterImpl::Lookup(const char *begin,
 
   Node *new_node = data->NewNode();
   if (first_script_type == Util::NUMBER) {
-    new_node->lid = POS::number_id();
-    new_node->rid = POS::number_id();
+    new_node->lid = POSMatcher::GetNumberId();
+    new_node->rid = POSMatcher::GetNumberId();
   } else {
-    new_node->lid = POS::unknown_id();
-    new_node->rid = POS::unknown_id();
+    new_node->lid = POSMatcher::GetUnknownId();
+    new_node->rid = POSMatcher::GetUnknownId();
   }
 
   new_node->wcost = kMaxCost;
@@ -669,11 +637,11 @@ Node *ImmutableConverterImpl::Lookup(const char *begin,
     mblen = static_cast<uint32>(p - begin);
     Node *new_node = data->NewNode();
     if (first_script_type == Util::NUMBER) {
-      new_node->lid = POS::number_id();
-      new_node->rid = POS::number_id();
+      new_node->lid = POSMatcher::GetNumberId();
+      new_node->rid = POSMatcher::GetNumberId();
     } else {
-      new_node->lid = POS::unknown_id();
-      new_node->rid = POS::unknown_id();
+      new_node->lid = POSMatcher::GetUnknownId();
+      new_node->rid = POSMatcher::GetUnknownId();
     }
     new_node->wcost = kMaxCost / 2;
     new_node->value.assign(begin, mblen);
@@ -887,7 +855,8 @@ bool ImmutableConverterImpl::MakeLattice(Segments *segments) const {
     // Here, try to find "おいかわたくや(及川卓也)" from dictionary
     // and insert "卓也" as a new word node with a modified cost
     if (s + 1 == history_segments_size) {
-      const Node *node = Lookup(key_begin + segments_pos, key_end, data);
+      const Node *node = Lookup(key_begin + segments_pos, key_end,
+                                data);
       for (const Node *compound_node = node; compound_node != NULL;
            compound_node = compound_node->bnext) {
         // No overlapps
@@ -976,7 +945,7 @@ bool ImmutableConverterImpl::MakeLattice(Segments *segments) const {
       // Insert corrected nodes like みんあ -> みんな
       InsertCorrectedNodes(pos, key,
                            key_corrector,
-                           dictionary_.get(), data);
+                           dictionary_, data);
     }
   }
 
@@ -1135,7 +1104,21 @@ bool ImmutableConverterImpl::Convert(Segments *segments) const {
   return true;
 }
 
-ImmutableConverter* ImmutableConverter::Create() {
-  return new ImmutableConverterImpl;
+ImmutableConverterInterface *g_immutable_converter = NULL;
+
+}   // anonymous namespace
+
+ImmutableConverterInterface *
+ImmutableConverterFactory::GetImmutableConverter() {
+  if (g_immutable_converter == NULL) {
+    return Singleton<ImmutableConverterImpl>::get();
+  } else {
+    return g_immutable_converter;
+  }
+}
+
+void ImmutableConverterFactory::SetImmutableConverter(
+    ImmutableConverterInterface *immutable_converter) {
+  g_immutable_converter = immutable_converter;
 }
 }  // namespace mozc

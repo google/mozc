@@ -391,6 +391,20 @@ bool KeyMapManager::LoadStreamWithErrors(istream *ifs, vector<string> *errors) {
 
 void KeyMapManager::InitCommandData() {
   command_direct_map_["IMEOn"] = DirectInputState::IME_ON;
+  // Support InputMode command only on Windows for now.
+  // TODO(toshiyuki): delete #ifdef when we support them on Mac.
+#ifdef OS_WINDOWS
+  command_direct_map_["InputModeHiragana"] =
+      DirectInputState::INPUT_MODE_HIRAGANA;
+  command_direct_map_["InputModeFullKatakana"] =
+      DirectInputState::INPUT_MODE_FULL_KATAKANA;
+  command_direct_map_["InputModeHalfKatakana"] =
+      DirectInputState::INPUT_MODE_HALF_KATAKANA;
+  command_direct_map_["InputModeFullAlphanumeric"] =
+      DirectInputState::INPUT_MODE_FULL_ALPHANUMERIC;
+  command_direct_map_["InputModeHalfAlphanumeric"] =
+      DirectInputState::INPUT_MODE_HALF_ALPHANUMERIC;
+#endif  // OS_WINDOWS
 
   // Precomposition
   command_precomposition_map_["IMEOff"] = PrecompositionState::IME_OFF;
@@ -406,6 +420,7 @@ void KeyMapManager::InitCommandData() {
       PrecompositionState::INSERT_FULL_SPACE;
   command_precomposition_map_["ToggleAlphanumericMode"] =
       PrecompositionState::TOGGLE_ALPHANUMERIC_MODE;
+#ifdef OS_WINDOWS
   command_precomposition_map_["InputModeHiragana"] =
       PrecompositionState::INPUT_MODE_HIRAGANA;
   command_precomposition_map_["InputModeFullKatakana"] =
@@ -416,6 +431,7 @@ void KeyMapManager::InitCommandData() {
       PrecompositionState::INPUT_MODE_FULL_ALPHANUMERIC;
   command_precomposition_map_["InputModeHalfAlphanumeric"] =
       PrecompositionState::INPUT_MODE_HALF_ALPHANUMERIC;
+#endif  // OS_WINDOWS
   command_precomposition_map_["Revert"] = PrecompositionState::REVERT;
 //  command_precomposition_map_["Undo"] = PrecompositionState::UNDO;
 
@@ -476,6 +492,7 @@ void KeyMapManager::InitCommandData() {
       CompositionState::TRANSLATE_HALF_ASCII;
   command_composition_map_["ToggleAlphanumericMode"] =
       CompositionState::TOGGLE_ALPHANUMERIC_MODE;
+#ifdef OS_WINDOWS
   command_composition_map_["InputModeHiragana"] =
       CompositionState::INPUT_MODE_HIRAGANA;
   command_composition_map_["InputModeFullKatakana"] =
@@ -486,6 +503,7 @@ void KeyMapManager::InitCommandData() {
       CompositionState::INPUT_MODE_FULL_ALPHANUMERIC;
   command_composition_map_["InputModeHalfAlphanumeric"] =
       CompositionState::INPUT_MODE_HALF_ALPHANUMERIC;
+#endif  // OS_WINDOWS
 #ifdef _DEBUG  // only for debugging
   command_composition_map_["Abort"] = CompositionState::ABORT;
 #endif  // _DEBUG
@@ -551,6 +569,7 @@ void KeyMapManager::InitCommandData() {
       ConversionState::TRANSLATE_FULL_ASCII;
   command_conversion_map_["DisplayAsHalfAlphanumeric"] =
       ConversionState::TRANSLATE_HALF_ASCII;
+#ifdef OS_WINDOWS
   command_conversion_map_["InputModeHiragana"] =
       ConversionState::INPUT_MODE_HIRAGANA;
   command_conversion_map_["InputModeFullKatakana"] =
@@ -561,6 +580,7 @@ void KeyMapManager::InitCommandData() {
       ConversionState::INPUT_MODE_FULL_ALPHANUMERIC;
   command_conversion_map_["InputModeHalfAlphanumeric"] =
       ConversionState::INPUT_MODE_HALF_ALPHANUMERIC;
+#endif  // OS_WINDOWS
 #ifndef NO_LOGGING  // means NOT RELEASE build
   command_conversion_map_["ReportBug"] = ConversionState::REPORT_BUG;
 #endif  // NO_LOGGING

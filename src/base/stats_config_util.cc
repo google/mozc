@@ -93,7 +93,7 @@ void DeleteWrongOmahaUsagestatsValueUnderHKCU() {
 // |*disabled_by_hkcu| will be set to |true| if the user disabled the usagestats
 // by the registry key under HKUC.  The caller should behave as if the
 // usagestats is disabled regardless of the settings under HKLM.
-void FixupUserstatsSettingsUnderHKCU(bool *disabled_by_hkcu) {
+void FixupUsagestatsSettingsUnderHKCU(bool *disabled_by_hkcu) {
   bool dummy = false;
   bool &usagestats_disabled_by_hkcu =
       (disabled_by_hkcu != NULL ? *disabled_by_hkcu : dummy);
@@ -186,7 +186,7 @@ WinStatsConfigUtilImpl::~WinStatsConfigUtilImpl() {}
 bool WinStatsConfigUtilImpl::IsEnabled() {
   // Try to clean the registry if wrongly set.
   bool disabled_by_hkcu = false;
-  FixupUserstatsSettingsUnderHKCU(&disabled_by_hkcu);
+  FixupUsagestatsSettingsUnderHKCU(&disabled_by_hkcu);
 #ifdef CHANNEL_DEV
   return true;
 #else

@@ -27,25 +27,20 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "dictionary/dictionary.h"
-
-#include <iostream>
-
+#include "dictionary/dictionary_interface.h"
 #include "base/base.h"
-#include "converter/converter_data.h"
-#include "dictionary/text_dictionary.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
 
-class Dictionary_test : public testing::Test {
-};
-
 TEST(Dictionary_test, basic) {
-  // TODO(tabata): write more test that is not tested by tx_dictionary_test
-
   // delete without Open()
-  Dictionary *d = new Dictionary();
-  delete d;
+  DictionaryInterface *d1 = DictionaryFactory::GetDictionary();
+  EXPECT_TRUE(d1 != NULL);
+
+  DictionaryInterface *d2 = DictionaryFactory::GetDictionary();
+  EXPECT_TRUE(d2 != NULL);
+
+  EXPECT_EQ(d1, d2);
 }
 }  // namespace mozc

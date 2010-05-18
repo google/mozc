@@ -58,10 +58,6 @@ class IPCPathManager {
   // return false if LoadPathName() failed.
   bool GetPathName(string *path_name);
 
-  // Get the old path name from memory.
-  // return false if LoadPathName() failed.
-  bool GetOldPathName(string *path_name);
-
   // return protocol version.
   // return 0 if protocol version is not defined.
   uint32 GetServerProtocolVersion() const;

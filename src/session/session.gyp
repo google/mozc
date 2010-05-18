@@ -95,31 +95,8 @@
         'config.proto',
         'state.proto',
       ],
-      'conditions': [['two_pass_build==0', {
-        'dependencies': [
-          '../protobuf/protobuf.gyp:install_protoc',
-        ],
-      }]],
-      'rules': [
-        {
-          'rule_name': 'genproto',
-          'extension': 'proto',
-          'inputs': [
-            '../build_tools/run_after_chdir.py',
-          ],
-          'outputs': [
-            '<(proto_out_dir)/<(relative_dir)/<(RULE_INPUT_ROOT).pb.h',
-            '<(proto_out_dir)/<(relative_dir)/<(RULE_INPUT_ROOT).pb.cc',
-          ],
-          'action': [
-            'python', '../build_tools/run_after_chdir.py',
-            '<(DEPTH)',
-            '<(relative_dir)/<(mozc_build_tools_dir)/protoc<(EXECUTABLE_SUFFIX)',
-            '<(relative_dir)/<(RULE_INPUT_NAME)',
-            '--cpp_out=<(proto_out_dir)',
-          ],
-          'message': 'Generating C++ code from <(RULE_INPUT_PATH)',
-        },
+      'includes': [
+        '../protobuf/genproto.gypi',
       ],
     },
     {

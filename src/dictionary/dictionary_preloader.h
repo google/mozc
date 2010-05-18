@@ -27,41 +27,23 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_CONVERTER_CONVERTER_COMPILER_H_
-#define MOZC_CONVERTER_CONVERTER_COMPILER_H_
+#ifndef MOZC_DICTIONARY_DICTIONARY_PRELOADER_H_
+#define MOZC_DICTIONARY_DICTIONARY_PRELOADER_H_
 
-#include <iomanip>  // ostream
-#include <vector>
-#include <string>
+#include "base/base.h"
 
 namespace mozc {
-
-class ConverterCompiler {
+// This class make a background thread to preload memory-mapped dictionary in
+// background by simply reading memory region.
+// TODO(yukawa): Make this class generic for any memory region.
+class DictionaryPreloader {
  public:
-  static void CompileConnectionTable(const string &input,
-                                     const string &output);
-
-  static void CompileDictionary(const string &input,
-                                const string &output);
-
-  // read binary dictionary/connection table,
-  // output C/C++ header file like
-  //
-  // static const char $(name)_data[] = "...";
-  // static const size_t = 1000;
-  static void MakeHeaderFile(const string &name,
-                             const string &input,
-                             const string &output);
-
-  static void MakeHeaderStream(const string &name,
-                               const string &input,
-                               ostream *os);
-
-  static void MakeHeaderStreamFromArray(const string &name,
-                                        const char *image,
-                                        size_t image_size,
-                                        ostream *os);
-
+  // In Windows, starts preload if available memory is large enough and
+  // dictionary suggest is enabled.
+  static void PreloadIfApplicable(const char *image, size_t size);
+ private:
+  DISALLOW_COPY_AND_ASSIGN(DictionaryPreloader);
 };
-}  // mozc
-#endif  // MOZC_CONVERTER_CONVERTER_COMPILER_H_
+}
+
+#endif  // MOZC_DICTIONARY_DICTIONARY_PRELOADER_H_

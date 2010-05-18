@@ -34,8 +34,8 @@
 #include <vector>
 #include "base/base.h"
 #include "base/thread.h"
-#include "converter/pos.h"
 #include "dictionary/dictionary_interface.h"
+#include "dictionary/user_pos.h"
 
 namespace mozc {
 
@@ -44,17 +44,17 @@ class UserDictionaryReloader;
 
 class UserDictionary : public DictionaryInterface {
  public:
-  virtual ~UserDictionary();
   UserDictionary();
+  virtual ~UserDictionary();
 
   virtual Node *LookupPredictive(const char *str, int size,
-                                 ConverterData *data) const;
+                                 NodeAllocatorInterface *allocator) const;
   virtual Node *LookupExact(const char *str, int size,
-                            ConverterData *data) const;
+                            NodeAllocatorInterface *allocator) const;
   virtual Node *LookupPrefix(const char *str, int size,
-                             ConverterData *data) const;
+                             NodeAllocatorInterface *allocator) const;
   virtual Node *LookupReverse(const char *str, int size,
-                              ConverterData *data) const;
+                              NodeAllocatorInterface *allocator) const;
 
   // Load dictionary from UserDictionaryStorage.
   // mainly for unittesting
@@ -77,10 +77,11 @@ class UserDictionary : public DictionaryInterface {
 
  private:
   friend class UserDictionaryTest;
+
   void Clear();
   bool CheckReloaderAndDelete() const;
 
-  vector<POS::Token *> tokens_;
+  vector<UserPOS::Token *> tokens_;
   mutable scoped_ptr<UserDictionaryReloader> reloader_;
   DISALLOW_COPY_AND_ASSIGN(UserDictionary);
 };

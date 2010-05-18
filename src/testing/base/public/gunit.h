@@ -30,6 +30,6 @@
 #ifndef MOZC_TESTING_BASE_PUBLIC_GUNIT_H_
 #define MOZC_TESTING_BASE_PUBLIC_GUNIT_H_
 
-#include "third_party/gtest/include/gtest/gtest.h"
+#include "gtest/gtest.h"
 
 #endif  // MOZC_TESTING_BASE_PUBLIC_GUNIT_H_

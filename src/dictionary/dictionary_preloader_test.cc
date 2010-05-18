@@ -27,47 +27,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_PREDICTION_PREDICTOR_H_
-#define MOZC_PREDICTION_PREDICTOR_H_
+#include "dictionary/dictionary_preloader.h"
 
-#include <vector>
+#include "testing/base/public/gunit.h"
+#include "session/config_handler.h"
+#include "session/config.pb.h"
 
 namespace mozc {
-
-class Segments;
-class PredictorInterface;
-class UserHistoryPredictor;
-
-class Predictor {
- public:
-  Predictor();
-  virtual ~Predictor();
-
-  // This method is basically called when user hit TAB key.
-  virtual bool Predict(Segments *segments) const;
-
-  // Automatic prediction. More conservative than Predict()
-  virtual bool Suggest(Segments *segments) const;
-
-  // Hook(s) for all mutable operations
-  virtual void Finish(Segments *segments);
-
-  // Revert the last Finish operation
-  virtual void Revert(Segments *segments);
-
-  // clear all history data of UserHistoryPredictor
-  virtual bool ClearAllHistory();
-
-  // clear unused history data of UserHistoryPredictor
-  virtual bool ClearUnusedHistory();
-
-  // Sync user history
-  virtual bool Sync();
-
- public:
-  UserHistoryPredictor *user_history_predictor_;
-  vector<PredictorInterface *> predictors_;
-};
-}  // mozc
-
-#endif  // MOZC_REWRITER_REWRITER_H_
+}  // namespace mozc

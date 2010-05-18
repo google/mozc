@@ -34,7 +34,7 @@
 #include "base/file_stream.h"
 #include "base/freelist.h"
 #include "base/util.h"
-#include "converter/pos.h"
+#include "dictionary/user_pos.h"
 #include "rewriter/dictionary_generator.h"
 
 namespace mozc {
@@ -141,7 +141,7 @@ bool DictionaryGenerator::Output(const string &filename) const {
     const uint32 cost = 10 * num_same_keys;
 
     uint16 id;
-    CHECK(POS::GetPOSIDs(pos, &id)) << "Unknown POS type: " << pos;
+    CHECK(UserPOS::GetPOSIDs(pos, &id)) << "Unknown POS type: " << pos;
 
     // Output in mozc dictionary format
     ofs << token.key() << "\t"

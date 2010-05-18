@@ -33,7 +33,6 @@
 #include "base/mmap.h"
 #include "base/util.h"
 #include "converter/connector.h"
-#include "converter/converter_compiler.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
@@ -63,8 +62,8 @@ class ConnectorTest : public testing::Test {
       }
     }
 
-    ConverterCompiler::CompileConnectionTable(input_filename,
-                                              output_filename);
+    ConnectorInterface::Compile(input_filename.c_str(),
+                                output_filename.c_str());
 
     Mmap<char> cmmap;
     CHECK(cmmap.Open(output_filename.c_str()))

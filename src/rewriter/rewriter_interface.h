@@ -36,9 +36,6 @@ class Segments;
 
 class RewriterInterface {
  public:
-  RewriterInterface() {}
-  virtual ~RewriterInterface() {}
-
   // Rewrite request and/or result.
   virtual bool Rewrite(Segments *segments) const = 0;
 
@@ -50,6 +47,24 @@ class RewriterInterface {
 
   // clear internal data
   virtual void Clear() {}
+
+ protected:
+  RewriterInterface() {}
+  virtual ~RewriterInterface() {}
+};
+
+// factory for making "default" rewriter
+class RewriterFactory {
+ public:
+  // return singleton object
+  static RewriterInterface *GetRewriter();
+
+  // dependency injection for unittesting
+  static void SetRewriter(RewriterInterface *predictor);
+
+ private:
+  RewriterFactory() {}
+  ~RewriterFactory() {}
 };
 }  // mozc
 #endif  // MOZC_REWRITER_REWRITER_INTERFACE_H_

@@ -31,36 +31,33 @@
 // dictionary. Please check error handling, if you want to include
 // this to run within client.
 
-#include "dictionary/text_dictionary.h"
+#include "dictionary/text_dictionary_loader.h"
 
 #include <string.h>
-
 #include <climits>
 
 #include "base/base.h"
 #include "base/file_stream.h"
 #include "base/util.h"
-
-DEFINE_int32(maximum_cost_threshold, -1,
-             "Maximum Cost threshold used for Text Dictionary");
+#include "dictionary/dictionary_token.h"
 
 namespace mozc {
 
-TextDictionary::TextDictionary() {
+TextDictionaryLoader::TextDictionaryLoader() {
 }
 
-TextDictionary::~TextDictionary() {
-  vector<Token *>::iterator it;
-  for (it = tokens_.begin(); it != tokens_.end(); it++) {
-    delete *it;
-  }
+TextDictionaryLoader::~TextDictionaryLoader() {
+  Close();
 }
 
-bool TextDictionary::Open(const char *filename) {
+bool TextDictionaryLoader::Open(const char *filename) {
+  Close();
   return OpenWithLineLimit(filename, -1);
 }
 
-bool TextDictionary::OpenWithLineLimit(const char *filename, int limit) {
+bool TextDictionaryLoader::OpenWithLineLimit(const char *filename,
+                                             int limit) {
+  Close();
   if (limit < 0) {
     limit = INT_MAX;
   }
@@ -82,11 +79,7 @@ bool TextDictionary::OpenWithLineLimit(const char *filename, int limit) {
     string line;
     while (limit > 0 && getline(ifs, line)) {
       Util::ChopReturns(&line);
-      if (strchr(line.c_str(), '\t')) {
-        ParseTSV(line);
-      } else {
-        ParseCSV(line);
-      }
+      ParseTSV(line);
       --limit;
     }
   }
@@ -96,72 +89,34 @@ bool TextDictionary::OpenWithLineLimit(const char *filename, int limit) {
   return true;
 }
 
-void TextDictionary::Close() {
+void TextDictionaryLoader::Close() {
+  for (vector<Token *>::iterator it = tokens_.begin();
+       it != tokens_.end(); ++it) {
+    delete *it;
+  }
+  tokens_.clear();
 }
 
-Node *TextDictionary::LookupPredictive(const char *str, int size,
-                                       ConverterData *data) const {
-  return NULL;
-}
-
-Node *TextDictionary::LookupExact(const char *str, int size,
-                                  ConverterData *data) const {
-  return NULL;
-}
-
-Node *TextDictionary::LookupPrefix(const char *str, int size,
-                                   ConverterData *data) const {
-  return NULL;
-}
-
-Node *TextDictionary::LookupReverse(const char *str, int size,
-                                    ConverterData *data) const {
-  return NULL;
-}
-
-void TextDictionary::CollectTokens(vector<Token *>* res) {
-  vector<Token *>::iterator it;
-  for (it = tokens_.begin(); it != tokens_.end(); it++) {
+void TextDictionaryLoader::CollectTokens(vector<Token *> *res) {
+  for (vector<Token *>::const_iterator it = tokens_.begin();
+       it != tokens_.end(); ++it) {
     res->push_back(*it);
   }
 }
 
-void TextDictionary::ParseCSV(const string &line) {
-  vector<string> fields;
-  Util::SplitStringUsing(line, ",", &fields);
-  const int cost = atoi(fields[3].c_str());
-  if (FLAGS_maximum_cost_threshold > 0 &&
-      FLAGS_maximum_cost_threshold <= cost) {
-    return;
-  }
-  Token *t = new Token();
-  Util::NormalizeVoicedSoundMark(fields[0], &t->value);
-  t->value = fields[0];
-  t->left_id = atoi(fields[1].c_str());
-  t->right_id = atoi(fields[2].c_str());
-  t->cost = cost;
-  Util::NormalizeVoicedSoundMark(fields[11], &t->key);
-  tokens_.push_back(t);
-}
-
-void TextDictionary::ParseTSV(const string &line) {
+void TextDictionaryLoader::ParseTSV(const string &line) {
   const int kNumFields = 5;
   vector<string> fields;
-  fields.reserve(kNumFields);
   Util::SplitStringUsing(line, "\t", &fields);
   CHECK_GE(fields.size(), kNumFields) << "malformed line in dictionary:"
                                       << line;
-  const int cost = atoi(fields[3].c_str());
-  if (FLAGS_maximum_cost_threshold > 0 &&
-      FLAGS_maximum_cost_threshold <= cost) {
-    return;
-  }
-  Token *t = new Token();
-  Util::NormalizeVoicedSoundMark(fields[0], &t->key);
-  t->left_id = atoi(fields[1].c_str());
-  t->right_id = atoi(fields[2].c_str());
-  t->cost = cost;
-  Util::NormalizeVoicedSoundMark(fields[4], &t->value);
-  tokens_.push_back(t);
+  Token *token = new Token;
+  CHECK(token);
+  Util::NormalizeVoicedSoundMark(fields[0], &token->key);
+  token->lid = atoi(fields[1].c_str());
+  token->rid = atoi(fields[2].c_str());
+  token->cost = atoi(fields[3].c_str());
+  Util::NormalizeVoicedSoundMark(fields[4], &token->value);
+  tokens_.push_back(token);
 }
 }  // namespace mozc

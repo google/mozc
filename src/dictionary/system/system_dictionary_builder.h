@@ -42,7 +42,7 @@ struct rbx_builder;
 namespace mozc {
 
 class OutputFileStream;
-class Token;
+struct Token;
 struct RxKeyStringInfo;
 struct RxTokenInfo;
 

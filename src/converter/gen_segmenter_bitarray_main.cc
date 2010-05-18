@@ -33,7 +33,6 @@
 #include "base/base.h"
 #include "base/bitarray.h"
 #include "base/file_stream.h"
-#include "converter/converter_compiler.h"
 #include "converter/segmenter_inl.h"
 
 DEFINE_string(output, "", "output header filename");
@@ -201,11 +200,10 @@ int main(int argc, char **argv) {
   rtable.Output("kCompressedRIDTable", &ofs);
 
   const char kBitArrayName[] = "SegmenterBitArrayData";
-  mozc::ConverterCompiler::MakeHeaderStreamFromArray(
-      kBitArrayName,
-      reinterpret_cast<const char *>(barray.array()),
-      barray.array_size(),
-      &ofs);
+  mozc::Util::WriteByteArray(kBitArrayName,
+                             reinterpret_cast<const char *>(barray.array()),
+                             barray.array_size(),
+                             &ofs);
 
   return 0;
 }

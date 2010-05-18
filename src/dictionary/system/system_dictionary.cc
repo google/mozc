@@ -36,16 +36,14 @@
 #include "base/util.h"
 #include "base/flags.h"
 #include "base/mmap.h"
-#include "base/mutex.h"
-#include "converter/converter_data.h"
+#include "base/singleton.h"
+#include "converter/node.h"
 #include "dictionary/file/dictionary_file.h"
-#include "dictionary/text_dictionary.h"
+#include "dictionary/dictionary_token.h"
+#include "dictionary/text_dictionary_loader.h"
 
 namespace mozc {
 namespace {
-static Mutex g_system_dic_mutex;
-static SystemDictionary *g_system_dictionary = NULL;
-
 
 struct RxResults {
   vector<string> retStr;
@@ -69,78 +67,59 @@ static int rx_cb(void *cookie, const char *s, int len, int id) {
 }  // namespace
 
 SystemDictionary::SystemDictionary()
-    : opened_(false) {
-}
+    : rx_(NULL), token_rx_(NULL), rbx_(NULL), frequent_pos_(NULL) {}
 
 bool SystemDictionary::Open(const char *filename) {
-  if (opened_) {
-    return true;
-  }
-  scoped_lock l(&g_system_dic_mutex);
-  if (opened_) {
-    return true;
-  }
   VLOG(1) << "Opening Rx dictionary" << filename;
   DictionaryFile *df = new DictionaryFile();
   if (!df->Open(filename, false)) {
     delete df;
     return false;
   }
-  opened_ = true;
   return OpenDictionaryFile(df);
 }
 
 bool SystemDictionary::OpenFromArray(const char *ptr, int len) {
-  if (opened_) {
-    return true;
-  }
-  scoped_lock l(&g_system_dic_mutex);
-  if (opened_) {
-    return true;
-  }
   DictionaryFile *df = new DictionaryFile();
   if (!df->SetPtr(ptr, len)) {
     delete df;
     return false;
   }
-  opened_ = true;
   return OpenDictionaryFile(df);
 }
 
 void SystemDictionary::Close() {
-  if (!opened_) {
-    return;
+  if (rx_ != NULL) {
+    rx_close(rx_);
+    rx_close(token_rx_);
+    rbx_close(rbx_);
   }
-  rx_close(rx_);
-  rx_close(token_rx_);
-  rbx_close(rbx_);
-  opened_ = false;
 }
 
 Node *SystemDictionary::LookupPredictive(const char *str, int size,
-                                         ConverterData *data) const {
+                                         NodeAllocatorInterface *allocator) const {
   // Predictive lookup. Gets all tokens matche the key.
-  return LookupInternal(str, size, data, true, NULL);
+  return LookupInternal(str, size, allocator, true, NULL);
 }
 
 Node *SystemDictionary::LookupExact(const char *str, int size,
-                                    ConverterData *data) const {
+                                    NodeAllocatorInterface *allocator) const {
   return NULL;
 }
 
 Node *SystemDictionary::LookupPrefix(const char *str, int size,
-                                     ConverterData *data) const {
+                                     NodeAllocatorInterface *allocator) const {
   // Not a predictive lookup. Gets all tokens match the key.
-  return LookupInternal(str, size, data, false, NULL);
+  return LookupInternal(str, size, allocator, false, NULL);
 }
 
 Node *SystemDictionary::LookupReverse(const char *str, int size,
-                                      ConverterData *data) const {
+                                      NodeAllocatorInterface *allocator) const {
   return NULL;
 }
 
 Node *SystemDictionary::LookupInternal(const char *str, int size,
-                                       ConverterData *data,
+                                       NodeAllocatorInterface *allocator,
                                        bool is_predictive,
                                        int *max_nodes_size) const {
   string key_str;
@@ -155,8 +134,8 @@ Node *SystemDictionary::LookupInternal(const char *str, int size,
     // Assuming one key has more than one values.
     res.limit = *max_nodes_size;
     limit = max_nodes_size;
-  } else if (data != NULL) {
-    res.limit = data->max_nodes_size();
+  } else if (allocator != NULL) {
+    res.limit = allocator->max_nodes_size();
   }
 
   if (is_predictive) {
@@ -177,9 +156,9 @@ Node *SystemDictionary::LookupInternal(const char *str, int size,
     for (vector<Token *>::iterator it = tokens.begin();
          it != tokens.end(); ++it) {
       if (*limit > 0) {
-        Node *newNode = CopyTokenToNode(data, *it);
-        newNode->bnext = resultNode;
-        resultNode = newNode;
+        Node *new_node = CopyTokenToNode(allocator, *it);
+        new_node->bnext = resultNode;
+        resultNode = new_node;
         --(*limit);
       }
       delete *it;
@@ -189,22 +168,22 @@ Node *SystemDictionary::LookupInternal(const char *str, int size,
   return resultNode;
 }
 
-Node *SystemDictionary::CopyTokenToNode(ConverterData *data,
+Node *SystemDictionary::CopyTokenToNode(NodeAllocatorInterface *allocator,
                                         const Token *token) const {
-  Node *newNode = NULL;
-  if (data != NULL) {
-    newNode = data->NewNode();
+  Node *new_node = NULL;
+  if (allocator != NULL) {
+    new_node = allocator->NewNode();
   } else {
     // for test
-    newNode = new Node();
+    new_node = new Node();
   }
-  newNode->lid = token->left_id;
-  newNode->rid = token->right_id;
-  newNode->wcost = token->cost;
-  newNode->key = token->key;
-  newNode->value = token->value;
-  newNode->node_type = Node::NOR_NODE;
-  return newNode;
+  new_node->lid = token->lid;
+  new_node->rid = token->rid;
+  new_node->wcost = token->cost;
+  new_node->key = token->key;
+  new_node->value = token->value;
+  new_node->node_type = Node::NOR_NODE;
+  return new_node;
 }
 
 void SystemDictionary::EncodeIndexString(const string &src,
@@ -440,19 +419,19 @@ int SystemDictionary::DecodeToken(const string& key, const uint8* ptr,
 
   // Decodes pos.
   if (flags & FULL_POS_FLAG) {
-    t->left_id = ptr[offset];
-    t->left_id += (ptr[offset + 1] << 8);
-    t->right_id = ptr[offset + 2];
-    t->right_id += (ptr[offset + 3] << 8);
+    t->lid = ptr[offset];
+    t->lid += (ptr[offset + 1] << 8);
+    t->rid = ptr[offset + 2];
+    t->rid += (ptr[offset + 3] << 8);
     offset += 4;
   } else if (flags & SAME_POS_FLAG) {
-    t->left_id = prev_token->left_id;
-    t->right_id = prev_token->right_id;
+    t->lid = prev_token->lid;
+    t->rid = prev_token->rid;
   } else {
     int pos_id = ptr[offset];
     uint32 pos = frequent_pos_[pos_id];
-    t->left_id = pos >> 16;
-    t->right_id = pos & 0xffff;
+    t->lid = pos >> 16;
+    t->rid = pos & 0xffff;
     offset += 1;
   }
 
@@ -485,12 +464,6 @@ int SystemDictionary::DecodeToken(const string& key, const uint8* ptr,
 }
 
 SystemDictionary *SystemDictionary::GetSystemDictionary() {
-  if (g_system_dictionary == NULL) {
-    scoped_lock l(&g_system_dic_mutex);
-    if (g_system_dictionary == NULL) {
-      g_system_dictionary = new SystemDictionary();
-    }
-  }
-  return g_system_dictionary;
+  return Singleton<SystemDictionary>::get();
 }
 }  // namespace mozc

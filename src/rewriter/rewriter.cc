@@ -32,9 +32,9 @@
 #include <string>
 #include <vector>
 #include "base/util.h"
+#include "base/singleton.h"
 #include "converter/segments.h"
 #include "rewriter/collocation_rewriter.h"
-#include "rewriter/rewriter.h"
 #include "rewriter/rewriter_interface.h"
 #include "rewriter/date_rewriter.h"
 #include "rewriter/number_rewriter.h"
@@ -45,32 +45,74 @@
 #include "rewriter/version_rewriter.h"
 
 namespace mozc {
+namespace {
 
-Rewriter::Rewriter() {
-  rewriters_.push_back(new SingleKanjiRewriter);
-  rewriters_.push_back(new SymbolRewriter);
-  rewriters_.push_back(new NumberRewriter);
-  rewriters_.push_back(new CollocationRewriter);
-  rewriters_.push_back(new DateRewriter);
-  rewriters_.push_back(new UserBoundaryHistoryRewriter);
-  rewriters_.push_back(new UserSegmentHistoryRewriter);
-  rewriters_.push_back(new VersionRewriter);
+class RewriterImpl: public RewriterInterface {
+ public:
+  RewriterImpl();
+  virtual ~RewriterImpl();
+
+  // Rewrite request and/or result.
+  // Can call converter if need be
+  virtual bool Rewrite(Segments *segments) const;
+
+  // Hook(s) for all mutable operations
+  virtual void Finish(Segments *segments);
+
+  virtual bool Sync();
+
+  virtual void Clear();
+
+ private:
+  SingleKanjiRewriter *single_kanji_rewriter_;
+  SymbolRewriter *symbol_rewriter_;
+  NumberRewriter *number_rewriter_;
+  CollocationRewriter *collocation_rewriter_;
+  DateRewriter *date_rewriter_;
+  UserBoundaryHistoryRewriter *user_boundary_history_rewriter_;
+  UserSegmentHistoryRewriter  *user_segment_history_rewriter_;
+  VersionRewriter *version_rewriter_;
+  vector<RewriterInterface *> rewriters_;
+};
+
+RewriterImpl::RewriterImpl()
+    : single_kanji_rewriter_(new SingleKanjiRewriter),
+      symbol_rewriter_(new SymbolRewriter),
+      number_rewriter_(new NumberRewriter),
+      collocation_rewriter_(new CollocationRewriter),
+      date_rewriter_(new DateRewriter),
+      user_boundary_history_rewriter_(new UserBoundaryHistoryRewriter),
+      user_segment_history_rewriter_(new UserSegmentHistoryRewriter),
+      version_rewriter_(new VersionRewriter) {
+  rewriters_.push_back(single_kanji_rewriter_);
+  rewriters_.push_back(symbol_rewriter_);
+  rewriters_.push_back(number_rewriter_);
+  rewriters_.push_back(collocation_rewriter_);
+  rewriters_.push_back(date_rewriter_);
+  rewriters_.push_back(user_boundary_history_rewriter_);
+  rewriters_.push_back(user_segment_history_rewriter_);
+  rewriters_.push_back(version_rewriter_);
 }
 
-Rewriter::~Rewriter() {
-  for (size_t i = 0; i < rewriters_.size(); ++i) {
-    delete rewriters_[i];
-  }
+RewriterImpl::~RewriterImpl() {
+  delete single_kanji_rewriter_;
+  delete symbol_rewriter_;
+  delete number_rewriter_;
+  delete collocation_rewriter_;
+  delete date_rewriter_;
+  delete user_boundary_history_rewriter_;
+  delete user_segment_history_rewriter_;
+  delete version_rewriter_;
   rewriters_.clear();
 }
 
-void Rewriter::Finish(Segments *segments) {
+void RewriterImpl::Finish(Segments *segments) {
   for (size_t i = 0; i < rewriters_.size(); ++i) {
     rewriters_[i]->Finish(segments);
   }
 }
 
-bool Rewriter::Rewrite(Segments *segments) const {
+bool RewriterImpl::Rewrite(Segments *segments) const {
   bool result = false;
   for (size_t i = 0; i < rewriters_.size(); ++i) {
     result |= rewriters_[i]->Rewrite(segments);
@@ -78,7 +120,7 @@ bool Rewriter::Rewrite(Segments *segments) const {
   return result;
 }
 
-bool Rewriter::Sync() {
+bool RewriterImpl::Sync() {
   bool result = false;
   for (size_t i = 0; i < rewriters_.size(); ++i) {
     result |= rewriters_[i]->Sync();
@@ -86,9 +128,24 @@ bool Rewriter::Sync() {
   return result;
 }
 
-void Rewriter::Clear() {
+void RewriterImpl::Clear() {
   for (size_t i = 0; i < rewriters_.size(); ++i) {
     rewriters_[i]->Clear();
   }
+}
+
+RewriterInterface *g_rewriter = NULL;
+}  // namespace
+
+RewriterInterface *RewriterFactory::GetRewriter() {
+  if (g_rewriter == NULL) {
+    return Singleton<RewriterImpl>::get();
+  } else {
+    return g_rewriter;
+  }
+}
+
+void RewriterFactory::SetRewriter(RewriterInterface *rewriter) {
+  g_rewriter = rewriter;
 }
 }  // namespace mozc

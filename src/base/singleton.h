@@ -38,14 +38,12 @@ class SingletonFinalizer {
  public:
   typedef void (*FinalizerFunc)();
 
-  // AddFinalzer is not thread safe.
   // Do not call this method directly.
   // use Singleton<Typename> instead.
   static void AddFinalizer(FinalizerFunc func);
 
   // Call Finalize() if you want to finalize
   // all instances created by Sigleton.
-  // This function is NOT thread-safe
   //
   // Mozc UI for Windows (DLL) can call
   // SigletonFinalizer::Finalize()

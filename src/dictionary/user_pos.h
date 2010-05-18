@@ -27,38 +27,16 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_CONVERTER_POS_H_
-#define MOZC_CONVERTER_POS_H_
+#ifndef MOZC_DICTIONARY_USER_POS_H_
+#define MOZC_DICTIONARY_USER_POS_H_
 
 #include <string>
 #include <vector>
 #include "base/base.h"
 
 namespace mozc {
-
-class POS {
+class UserPOS {
  public:
-  // The belows are aliases of frequently-used POS code
-  // You can call it anytime, since the data is cached.
-  static uint16 number_id();   // "数"
-
-  // return true if a word with lid/rid is regraded as a number
-  static bool IsNumber(uint16 id);
-
-  // return true if a word with lid/rid is regarded as a Zipcode
-  static bool IsZipcode(uint16 id);
-
-  // return true if id is grouped as a functional word
-  static bool IsFunctional(uint16 id);
-
-  // Return the POS of unknown word.
-  // Currently, this method just returns the POS of "サ変名詞"
-  static uint16 unknown_id();
-
-  // Return the POS of personal names
-  static uint16 first_name_id();
-  static uint16 last_name_id();
-
   // return posssible list of part-of-speech Mozc can handle
   static void GetPOSList(vector<string> *pos_list);
 
@@ -99,21 +77,14 @@ class POS {
   // POS. There is an underlying helper class inside POS and behaivior
   // of POS can be customized by replacing the instance of the helper
   // class with another one.
-  class POSHandlerInterface;
-  static void SetHandler(const POSHandlerInterface *impl);
+  class UserPOSInterface;
+  static void SetUserPOSInterface(const UserPOSInterface *impl);
 
   // Interface that defines interface of the helper class used by
   // POS. Default implementation is defined in the .cc file.
-  class POSHandlerInterface {
+  class UserPOSInterface {
    public:
-    virtual ~POSHandlerInterface() {}
-    virtual uint16 number_id() const = 0;
-    virtual uint16 unknown_id() const = 0;
-    virtual uint16 first_name_id() const = 0;
-    virtual uint16 last_name_id() const = 0;
-    virtual bool IsNumber(uint16 id) const = 0;
-    virtual bool IsFunctional(uint16 id) const = 0;
-    virtual bool IsZipcode(uint16 id) const = 0;
+    virtual ~UserPOSInterface() {}
     virtual void GetPOSList(vector<string> *pos_list) const = 0;
     virtual bool IsValidPOS(const string &pos) const = 0;
     virtual bool GetPOSIDs(const string &pos, uint16 *id) const = 0;
@@ -125,8 +96,8 @@ class POS {
   };
 
  private:
-  POS() {}
-  virtual ~POS() {}
+  UserPOS() {}
+  virtual ~UserPOS() {}
 };
 }  // mozc
-#endif  // MOZC_CONVERTER_POS_H_
+#endif  // MOZC_DICTIONARY_USER_POS_H_

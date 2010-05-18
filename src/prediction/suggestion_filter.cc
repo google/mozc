@@ -51,8 +51,8 @@ class SuggestionFilterImpl {
   SuggestionFilterImpl() : filter_(NULL) {
     // kSuggestionFilterData_data and kSuggestionFilterData_size
     // are defined in suggest_filter_data.h
-    filter_.reset(ExistenceFilter::Read(kSuggestionFilterData,
-                                        kSuggestionFilterDataSize));
+    filter_.reset(ExistenceFilter::Read(kSuggestionFilterData_data,
+                                        kSuggestionFilterData_size));
     LOG_IF(ERROR, filter_.get() == NULL)
         << "SuggestionFilterData is broken";
   }
@@ -60,13 +60,9 @@ class SuggestionFilterImpl {
  private:
   scoped_ptr<ExistenceFilter> filter_;
 };
-
-const SuggestionFilterImpl &GetSuggestionFilter() {
-  return *(Singleton<SuggestionFilterImpl>::get());
-}
 }  // namespace
 
 bool SuggestionFilter::IsBadSuggestion(const string &text) {
-  return GetSuggestionFilter().IsBadSuggestion(text);
+  return Singleton<SuggestionFilterImpl>::get()->IsBadSuggestion(text);
 }
 }  // namespace mozc

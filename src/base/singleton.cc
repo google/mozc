@@ -28,32 +28,54 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "base/base.h"
+#include "base/mutex.h"
 #include "base/singleton.h"
 
 namespace mozc {
 namespace {
+
 const size_t kMaxFinalizersSize = 256;
 
-// they must be POD
 size_t g_finalizers_size = 0;
+Mutex *g_mutex = NULL;
+once_t g_mutex_once = MOZC_ONCE_INIT;
+once_t g_singleton_finalize_once = MOZC_ONCE_INIT;
+
 SingletonFinalizer::FinalizerFunc g_finalizers[kMaxFinalizersSize];
+
+void InitSingletonMutex() {
+  g_mutex = new Mutex;
+  CHECK(g_mutex);
 }
+}  // namespace
 
 
-// not thread safe. should not use it directly.
 void SingletonFinalizer::AddFinalizer(FinalizerFunc func) {
   // TODO(taku):
   // we only allow up to kMaxFinalizersSize functions here.
-  CHECK_LT(g_finalizers_size, kMaxFinalizersSize);
-  g_finalizers[g_finalizers_size++] = func;
+  CallOnce(&g_mutex_once, &InitSingletonMutex);
+  {
+    scoped_lock l(g_mutex);
+    CHECK_LT(g_finalizers_size, kMaxFinalizersSize);
+    g_finalizers[g_finalizers_size++] = func;
+  }
 }
 
-// not thread safe
-void SingletonFinalizer::Finalize() {
+namespace {
+void DeleteSingleton() {
   // delete instances in reverse order.
   for (int i = static_cast<int>(g_finalizers_size) - 1; i >= 0; --i) {
     (*g_finalizers[i])();
   }
-  g_finalizers_size = 0;
+  // set kMaxFinalizersSize so that AddFinalizers cannot be called
+  // twice
+  g_finalizers_size = kMaxFinalizersSize;
+  delete g_mutex;
+  g_mutex = NULL;
+}
+}  // namespace
+
+void SingletonFinalizer::Finalize() {
+  CallOnce(&g_singleton_finalize_once, &DeleteSingleton);
 }
 }  // mozc

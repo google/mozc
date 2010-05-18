@@ -515,15 +515,26 @@ class Util {
   // write byte array header to ofs
   // Windows does not accept static string of size >= 65536.
   // so we represent string in an array of uint64 in Windows.
-  //  * static const size_t k<name>Size and
-  //  * static const uint64 k<name>Uint64[] and
-  //    static const char *k<name> =
-  //                            reinterpret_cast<const char *>(k<name>Uint64)
+  //  * const size_t k<name>_size and
+  //  * const uint64 k<name>_uint64_data[] and
+  //    const char *k<name>_data =
+  //                     reinterpret_cast<const char *>(k<name>_uint64_data)
   //    (for Windows), or
-  //  * static const char k<name>[] (for others)
+  //  * const char k<name>_data[] (for others)
   // are generated.
   static void WriteByteArray(const string &name, const char *buf,
                              size_t buf_size, ostream *ofs);
+
+
+  // Convert binary file |input| into header file |output|
+  static void MakeByteArrayFile(const string &name,
+                                const string &input,
+                                const string &output);
+
+  // Convert binary file |input| into header filestream |os|
+  static void MakeByteArrayStream(const string &name,
+                                  const string &input,
+                                  ostream *os);
 
   // check endian-ness at runtime.
   static bool IsLittleEndian();

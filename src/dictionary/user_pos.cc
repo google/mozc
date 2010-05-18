@@ -27,10 +27,9 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "converter/pos.h"
+#include "dictionary/user_pos.h"
 
 #include <map>
-#include <cstring>
 #include <algorithm>
 #include "base/base.h"
 #include "base/singleton.h"
@@ -38,7 +37,7 @@
 namespace mozc {
 namespace {
 
-// Some data types and static data definitoin for POSHandlerImpl.
+// Some data types and static data definitoin for UserPOSImpl.
 struct ConjugationType {
   const char *key_suffix;
   const char *value_suffix;
@@ -51,64 +50,19 @@ struct POSToken {
   const ConjugationType *conjugation_form;
 };
 
-#include "converter/pos_data.h"
+#include "dictionary/user_pos_data.h"
 
-// Definition of class POSHandlerImpl
-
-class POSHandlerImpl : public POS::POSHandlerInterface {
+class UserPOSImpl : public UserPOS::UserPOSInterface {
  public:
-  POSHandlerImpl() {
+  UserPOSImpl() {
     for (size_t i = 0; kPOSToken[i].pos != NULL; ++i) {
       pos_map_.insert(make_pair(string(kPOSToken[i].pos),
                                 &kPOSToken[i]));
     }
     CHECK_GT(pos_map_.size(), 1);
-
-    // const char kNumberPOS[] = "数";
-    // const char kUnknownPOS[] = "名詞サ変";
-
-    const char kNumberPOS[] = "\xE6\x95\xB0";
-    const char kUnknownPOS[] =
-        "\xE5\x90\x8D\xE8\xA9\x9E\xE3\x82\xB5\xE5\xA4\x89";
-
-    CHECK(GetPOSIDs(kNumberPOS, &number_id_));
-    CHECK(GetPOSIDs(kUnknownPOS, &unknown_id_));
-
-    // const char kLastNamePos[] = "姓";
-    // const char kFistNamePos[] = "名";
-    const char kLastNamePos[] = "\xE5\xA7\x93";
-    const char kFistNamePos[] = "\xE5\x90\x8D";
-    CHECK(GetPOSIDs(kLastNamePos, &last_name_id_));
-    CHECK(GetPOSIDs(kFistNamePos, &first_name_id_));
   }
 
-  virtual ~POSHandlerImpl() {}
-
-  virtual bool IsNumber(uint16 id) const {
-    const uint16 *pos = find(kNumberId,
-                             kNumberId + arraysize(kNumberId),
-                             id);
-    if (pos == (kNumberId + arraysize(kNumberId))) {
-      return false;
-    }
-
-    return true;
-  }
-
-  virtual bool IsZipcode(uint16 id) const {
-    return id == kZipcodeId;
-  }
-
-  virtual bool IsFunctional(uint16 id) const {
-    const uint16 *pos = find(
-        kFunctionalWordId, kFunctionalWordId + arraysize(kFunctionalWordId),
-        id);
-    if (pos == (kFunctionalWordId + arraysize(kFunctionalWordId))) {
-      return false;
-    }
-
-    return true;
-  }
+  virtual ~UserPOSImpl() {}
 
   virtual void GetPOSList(vector<string> *pos_list) const {
     pos_list->clear();
@@ -118,12 +72,8 @@ class POSHandlerImpl : public POS::POSHandlerInterface {
   }
 
   virtual bool IsValidPOS(const string &pos) const {
-    for (size_t i = 0; kPOSToken[i].pos != NULL; ++i) {
-      if (pos == kPOSToken[i].pos) {
-        return true;
-      }
-    }
-    return false;
+    map<string, const POSToken*>::const_iterator it = pos_map_.find(pos);
+    return it != pos_map_.end();
   }
 
   virtual bool GetPOSIDs(const string &pos, uint16 *id) const {
@@ -143,8 +93,8 @@ class POSHandlerImpl : public POS::POSHandlerInterface {
   virtual bool GetTokens(const string &key,
                          const string &value,
                          const string &pos,
-                         POS::CostType cost_type,
-                         vector<POS::Token> *tokens) const {
+                         UserPOS::CostType cost_type,
+                         vector<UserPOS::Token> *tokens) const {
     if (key.empty() ||
         value.empty() ||
         pos.empty() ||
@@ -194,90 +144,40 @@ class POSHandlerImpl : public POS::POSHandlerInterface {
     return true;
   }
 
-  virtual uint16 number_id() const {
-    return number_id_;
-  }
-
-  virtual uint16 unknown_id() const {
-    return unknown_id_;
-  }
-
-  virtual uint16 first_name_id() const {
-    return first_name_id_;
-  }
-
-  virtual uint16 last_name_id() const {
-    return last_name_id_;
-  }
-
-  uint16 number_id_;
-  uint16 unknown_id_;
-  uint16 first_name_id_;
-  uint16 last_name_id_;
-
   map<string, const POSToken *> pos_map_;
 };
 
-const POS::POSHandlerInterface *g_pos_handler = NULL;
+const UserPOS::UserPOSInterface *g_pos_impl= NULL;
 
-const POS::POSHandlerInterface &GetPOSHandler() {
-  if (g_pos_handler != NULL) {
-    return *g_pos_handler;
+const UserPOS::UserPOSInterface &GetPOSHandler() {
+  if (g_pos_impl != NULL) {
+    return *g_pos_impl;
   }
-  return *(Singleton<POSHandlerImpl>::get());
+  return *(Singleton<UserPOSImpl>::get());
 }
 }  // namespace
 
-// Definition of class POS
-uint16 POS::number_id() {
-  return GetPOSHandler().number_id();
-}
-
-bool POS::IsNumber(uint16 id) {
-  return GetPOSHandler().IsNumber(id);
-}
-
-bool POS::IsZipcode(uint16 id) {
-  return GetPOSHandler().IsZipcode(id);
-}
-
-bool POS::IsFunctional(uint16 id) {
-  return GetPOSHandler().IsFunctional(id);
-}
-
-uint16 POS::unknown_id() {
-  return GetPOSHandler().unknown_id();
-}
-
-uint16 POS::first_name_id() {
-  return GetPOSHandler().first_name_id();
-}
-
-uint16 POS::last_name_id() {
-  return GetPOSHandler().last_name_id();
-}
-
-void POS::GetPOSList(vector<string> *pos_list) {
+void UserPOS::GetPOSList(vector<string> *pos_list) {
   GetPOSHandler().GetPOSList(pos_list);
 }
 
-bool POS::IsValidPOS(const string &pos) {
+bool UserPOS::IsValidPOS(const string &pos) {
   return GetPOSHandler().IsValidPOS(pos);
 }
 
-bool POS::GetPOSIDs(const string &pos, uint16 *id) {
+bool UserPOS::GetPOSIDs(const string &pos, uint16 *id) {
   return GetPOSHandler().GetPOSIDs(pos, id);
 }
 
-bool POS::GetTokens(const string &key,
+bool UserPOS::GetTokens(const string &key,
                     const string &value,
                     const string &pos,
-                    POS::CostType cost_type,
-                    vector<POS::Token> *tokens) {
+                    UserPOS::CostType cost_type,
+                    vector<UserPOS::Token> *tokens) {
   return GetPOSHandler().GetTokens(key, value, pos, cost_type, tokens);
 }
 
-void POS::SetHandler(const POSHandlerInterface *impl) {
-  g_pos_handler = impl;
+void UserPOS::SetUserPOSInterface(const UserPOSInterface *impl) {
+  g_pos_impl = impl;
 }
 }  // namespace mozc

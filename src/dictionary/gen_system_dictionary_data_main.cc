@@ -27,26 +27,16 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// Dictioneray data generator:
-// (1) Making transition matrix
-// % gen_dictionary_data_main
-//   --mode=con --input=connection.txt --output=matrix.bin
-// (2) Making binary dictionary
-// % gen_dictionary_data_main
-//   --mode=dic --input=dictionary0.txt,dictionary1.txt
-//   --output=dic.bin
 #include <string>
 #include <vector>
 #include "base/base.h"
 #include "base/util.h"
-#include "converter/converter_compiler.h"
+#include "dictionary/system/system_dictionary_builder.h"
 
 DEFINE_string(input, "", "input text file");
 DEFINE_string(output, "", "output binary file");
-DEFINE_string(mode, "", "mode");
-
-DEFINE_string(name, "", "name of variable name");
 DEFINE_bool(make_header, false, "make header mode");
+DECLARE_int32(maximum_cost_threshold);
 
 namespace mozc {
 namespace {
@@ -63,28 +53,27 @@ string CreateInputFileName(const string ssv_filename) {
 
 int main(int argc, char **argv) {
   InitGoogle(argv[0], &argc, &argv, false);
-
   const string input = mozc::CreateInputFileName(FLAGS_input);
   string output = FLAGS_output;
+
+#if defined OS_WINDOWS && defined _DEBUG
+  // Seems that dictionary compiler won't work due to allocation faiulre
+  // with debug build. So, we restrict the size of dictionary for debug build.
+  FLAGS_maximum_cost_threshold = 8000;
+#endif
 
   if (FLAGS_make_header) {
     output += ".tmp";
   }
 
-  if (FLAGS_mode == "dic") {
-    mozc::ConverterCompiler::CompileDictionary(input, output);
-  } else if (FLAGS_mode == "con") {
-    mozc::ConverterCompiler::CompileConnectionTable(input, output);
-  } else {
-    LOG(FATAL) << "Unknown mode: " << FLAGS_mode;
-    return -1;
-  }
+  mozc::SystemDictionaryBuilder::Compile(input.c_str(),
+                                         output.c_str());
 
   if (FLAGS_make_header) {
-    CHECK(!FLAGS_name.empty());
-    mozc::ConverterCompiler::MakeHeaderFile(FLAGS_name,
-                                            output,
-                                            FLAGS_output);
+    const char kName[] = "DictionaryData";
+    mozc::Util::MakeByteArrayFile(kName,
+                                  output,
+                                  FLAGS_output);
     mozc::Util::Unlink(output);
   }
 

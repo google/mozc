@@ -36,9 +36,6 @@ class Segments;
 
 class PredictorInterface {
  public:
-  PredictorInterface() {}
-  virtual ~PredictorInterface() {}
-
   // This method is basically called when user hit TAB key.
   virtual bool Predict(Segments *segments) const = 0;
 
@@ -62,7 +59,26 @@ class PredictorInterface {
 
   // clear internal data
   virtual void Clear() {}
+
+ protected:
+  // don't allow users to call constructor and destructor
+  PredictorInterface() {}
+  virtual ~PredictorInterface() {}
 };
-}
+
+// factory for making "default" predictor
+class PredictorFactory {
+ public:
+  // return singleton object
+  static PredictorInterface *GetPredictor();
+
+  // dependency injection for unittesting
+  static void SetPredictor(PredictorInterface *predictor);
+
+ private:
+  PredictorFactory() {}
+  ~PredictorFactory() {}
+};
+}  // namespace mozc
 
 #endif  // MOZC_PREDICTION_PREDICTOR_INTERFACE_H_

@@ -32,7 +32,7 @@
 #include <string>
 
 #include "converter/segments.h"
-#include "dictionary/dictionary.h"
+#include "dictionary/dictionary_interface.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
@@ -288,22 +288,6 @@ TEST(ConverterMockTest, SetClearUserPrediction) {
 
   mock.SetClearUserPrediction(false);
   EXPECT_FALSE(converter->ClearUserPrediction());
-}
-
-TEST(ConverterMockTest, SetGetDictionary) {
-  ConverterMock mock;
-  ConverterInterface::SetConverter(&mock);
-  ConverterInterface *converter = ConverterInterface::GetConverter();
-
-  scoped_ptr<Dictionary> dic(new Dictionary);
-  Dictionary *result;
-  mock.SetGetDictionary(dic.get());
-  result = converter->GetDictionary();
-  EXPECT_EQ(dic.get(), result);
-
-  mock.SetGetDictionary(NULL);
-  result = converter->GetDictionary();
-  EXPECT_EQ(static_cast<Dictionary*>(NULL), result);
 }
 
 TEST(ConverterMockTest, GetStartConversion) {

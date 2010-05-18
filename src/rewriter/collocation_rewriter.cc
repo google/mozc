@@ -38,7 +38,7 @@
 #include "base/singleton.h"
 #include "base/util.h"
 #include "converter/segments.h"
-#include "converter/pos.h"
+#include "converter/pos_matcher.h"
 #include "rewriter/collocation_util.h"
 #include "rewriter/rewriter_interface.h"
 #include "storage/existence_filter.h"
@@ -221,8 +221,8 @@ void ResolveCompoundSegment(const string &top_value, const string &value,
 }
 
 bool IsName(const Segment::Candidate &cand) {
-  const bool ret = (cand.lid == POS::last_name_id()
-                    || cand.lid == POS::first_name_id());
+  const bool ret = (cand.lid == POSMatcher::GetLastNameId()
+                    || cand.lid == POSMatcher::GetFirstNameId());
   if (ret) {
     VLOG(3) << cand.value << " is name sagment";
   }

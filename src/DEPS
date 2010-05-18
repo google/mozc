@@ -1,8 +1,25 @@
+vars = {
+  "gyp_revision": "819",
+  "gtest_revision": "422",
+  "protobuf_revision": "328",
+}
+
 deps = {
-  "src/third_party/gtest":
-    "http://googletest.googlecode.com/svn/trunk@422",
-  "src/protobuf/files":
-    "http://protobuf.googlecode.com/svn/trunk@328",
   "src/mozc_build_tools/gyp":
-    "http://gyp.googlecode.com/svn/trunk@819",
+    "http://gyp.googlecode.com/svn/trunk@" + Var("gyp_revision"),
+}
+
+deps_os = {
+  "win": {
+    "src/third_party/gtest":
+      "http://googletest.googlecode.com/svn/trunk@" + Var("gtest_revision"),
+    "src/protobuf/files":
+      "http://protobuf.googlecode.com/svn/trunk@" + Var("protobuf_revision"),
+  },
+  "mac": {
+    "src/third_party/gtest":
+      "http://googletest.googlecode.com/svn/trunk@" + Var("gtest_revision"),
+    "src/protobuf/files":
+      "http://protobuf.googlecode.com/svn/trunk@" + Var("protobuf_revision"),
+  },
 }

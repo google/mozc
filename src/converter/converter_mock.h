@@ -81,7 +81,6 @@ class ConverterMock : public ConverterInterface {
   void SetClearUserHistory(bool result);
   void SetClearUserPrediction(bool result);
   void SetClearUnusedUserPrediction(bool result);
-  void SetGetDictionary(Dictionary *dictionary);
 
   // get last input of respective functions
   void GetStartConversion(Segments *segments, string *key);
@@ -141,7 +140,6 @@ class ConverterMock : public ConverterInterface {
   bool ClearUserHistory() const;
   bool ClearUserPrediction() const;
   bool ClearUnusedUserPrediction() const;
-  Dictionary *GetDictionary() const;
 
  private:
   // mutable for recode input in const functions
@@ -178,7 +176,6 @@ class ConverterMock : public ConverterInterface {
   bool clearuserhistory_output_;
   bool clearuserprediction_output_;
   bool clearunuseduserprediction_output_;
-  Dictionary *getdictionary_output_;
 };
 
 }  // namespace mozc

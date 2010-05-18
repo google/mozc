@@ -88,22 +88,30 @@ class Thread {
     if (!joinable_) {
       return;
     }
+    if (!handle_) {
+      return;
+    }
 #ifdef OS_WINDOWS
     ::WaitForSingleObject(handle_, INFINITE);
     ::CloseHandle(handle_);
     handle_ = NULL;
 #else
     pthread_join(handle_, NULL);
+    handle_ = 0;
 #endif
   }
 
   // This method is not encouraged especiialy in Windows.
   void Terminate() {
+    if (handle_) {
 #ifdef OS_WINDOWS
-    ::TerminateThread(handle_, 0);
+      ::TerminateThread(handle_, 0);
+      handle_ = NULL;
 #else
-    pthread_cancel(handle_);
+      pthread_cancel(handle_);
+      handle_ = 0;
 #endif
+    }
   }
 
   Thread() : handle_(0),

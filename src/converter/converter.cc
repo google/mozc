@@ -39,11 +39,11 @@
 #include "transliteration/transliteration.h"
 #include "converter/character_form_manager.h"
 #include "converter/focus_candidate_handler.h"
-#include "converter/immutable_converter.h"
+#include "converter/immutable_converter_interface.h"
 #include "converter/segments.h"
-#include "dictionary/dictionary.h"
-#include "prediction/predictor.h"
-#include "rewriter/rewriter.h"
+#include "dictionary/dictionary_interface.h"
+#include "prediction/predictor_interface.h"
+#include "rewriter/rewriter_interface.h"
 
 namespace mozc {
 namespace {
@@ -91,12 +91,11 @@ class ConverterImpl : public ConverterInterface {
   bool ClearUserHistory() const;
   bool ClearUserPrediction() const;
   bool ClearUnusedUserPrediction() const;
-  Dictionary *GetDictionary() const;
 
  private:
-  scoped_ptr<Rewriter> rewriter_;
-  scoped_ptr<Predictor> predictor_;
-  scoped_ptr<ImmutableConverter> immutable_converter_;
+  RewriterInterface *rewriter_;
+  PredictorInterface *predictor_;
+  ImmutableConverterInterface *immutable_converter_;
 };
 
 size_t GetSegmentIndex(const Segments *segments,
@@ -141,9 +140,10 @@ void ConverterInterface::SetConverter(ConverterInterface *converter) {
 }
 
 ConverterImpl::ConverterImpl()
-    : rewriter_(new Rewriter),
-      predictor_(new Predictor),
-      immutable_converter_(ImmutableConverter::Create()) {
+    : rewriter_(RewriterFactory::GetRewriter()),
+      predictor_(PredictorFactory::GetPredictor()),
+      immutable_converter_(
+          ImmutableConverterFactory::GetImmutableConverter()) {
   VLOG(1) << "ConverterImpl is created";
 }
 
@@ -541,10 +541,6 @@ bool ConverterImpl::ClearUserPrediction() const {
 bool ConverterImpl::ClearUnusedUserPrediction() const {
   predictor_->ClearUnusedHistory();
   return true;
-}
-
-Dictionary *ConverterImpl::GetDictionary() const {
-  return immutable_converter_->GetDictionary();
 }
 
 void ConverterUtil::InitSegmentsFromString(const string &key,

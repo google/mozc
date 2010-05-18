@@ -244,4 +244,9 @@ class NullLogFinalizer {
 #define DCHECK_LT(a, b) while (false) CHECK_LT(a, b)
 
 #endif  // DEBUG
+
+#define DVLOG(verboselevel) DLOG_IF(INFO, VLOG_IS_ON(verboselevel))
+#define DVLOG_IF(verboselevel, condition) \
+  DLOG_IF(INFO, (condition) && VLOG_IS_ON(verboselevel))
+
 #endif  // MOZC_BASE_LOGGING_H_
