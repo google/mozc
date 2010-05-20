@@ -35,6 +35,7 @@
 #include <string>
 
 #include "base/base.h"
+#include "session/ime_switch_util.h"
 #include "unix/ibus/engine_registrar.h"
 #include "unix/ibus/key_translator.h"
 #include "unix/ibus/mozc_engine_property.h"
@@ -44,6 +45,8 @@ namespace {
 
 // A key which associates an IBusProperty object with MozcEngineProperty.
 const char kGObjectDataKey[] = "ibus-mozc-aux-data";
+// An ID for a candidate which is not associated with a text.
+const int32 kBadCandidateId = -1;
 
 struct IBusMozcEngineClass {
   IBusEngineClass parent;
@@ -160,13 +163,10 @@ int CursorPos(const commands::Output &output) {
   if (!output.has_preedit()) {
     return 0;
   }
-  if (!output.has_candidates()) {
-    return output.preedit().cursor();
-  }
   if (output.preedit().has_highlighted_position()) {
     return output.preedit().highlighted_position();
   }
-  return 0;
+  return output.preedit().cursor();
 }
 
 // Returns an IBusText used for showing the auxiliary text in the candidate
@@ -260,7 +260,19 @@ void MozcEngine::CandidateClicked(
     guint index,
     guint button,
     guint state) {
-  // TODO(mazda): Implement this.
+  if (index >= unique_candidate_ids_.size()) {
+    return;
+  }
+  const int32 id = unique_candidate_ids_[index];
+  if (id == kBadCandidateId) {
+    return;
+  }
+  commands::Output output;
+  commands::SessionCommand command;
+  command.set_type(commands::SessionCommand::SELECT_CANDIDATE);
+  command.set_id(id);
+  session_->SendCommand(command, &output);
+  UpdateAll(engine, output);
 }
 
 void MozcEngine::CursorDown(IBusEngine *engine) {
@@ -311,17 +323,34 @@ gboolean MozcEngine::ProcessKeyEvent(
   if (modifiers & IBUS_RELEASE_MASK) {
     return FALSE;
   }
-  if (current_composition_mode_ == commands::DIRECT) {
+
+  config::Config config;
+  if (!session_->GetConfig(&config)) {
+    LOG(ERROR) << "GetConfig failed";
     return FALSE;
   }
+  const config::Config::PreeditMethod method =
+      config.has_preedit_method() ?
+      config.preedit_method() : config::Config::ROMAN;
+
+  // TODO(yusukes): use |layout| in IBusEngineDesc if possible.
+  const bool layout_is_jp = !g_strcmp0(ibus_engine_get_name(engine), "mozc-jp");
 
   commands::KeyEvent key;
-  if (!key_translator_->Translate(keyval, keycode, modifiers, &key)) {
+  if (!key_translator_->Translate(
+          keyval, keycode, modifiers, method, layout_is_jp, &key)) {
     LOG(ERROR) << "Translate failed";
     return FALSE;
   }
 
   VLOG(2) << key.DebugString();
+
+  if ((current_composition_mode_ == commands::DIRECT) &&
+      // We DO consume keys that enable Mozc such as Henkan even when in the
+      // DIRECT mode.
+      !config::ImeSwitchUtil::IsTurnOnInDirectMode(key)) {
+    return FALSE;
+  }
 
   commands::Output output;
   if (!session_->SendKey(key, &output)) {
@@ -486,9 +515,9 @@ bool MozcEngine::UpdatePreedit(IBusEngine *engine,
   return true;
 }
 
-// TODO(mazda): Replace this with a candidate window for Chrome OS.
 bool MozcEngine::UpdateCandidates(IBusEngine *engine,
-                                  const commands::Output &output) const {
+                                  const commands::Output &output) {
+  unique_candidate_ids_.clear();
   if (!output.has_candidates()) {
     ibus_engine_hide_auxiliary_text(engine);
     ibus_engine_hide_lookup_table(engine);
@@ -512,7 +541,9 @@ bool MozcEngine::UpdateCandidates(IBusEngine *engine,
                                                  cursor_pos,
                                                  cursor_visible,
                                                  kRound);
-
+#if IBUS_CHECK_VERSION(1, 3, 0)
+  ibus_lookup_table_set_orientation(table, IBUS_ORIENTATION_VERTICAL);
+#endif
   for (int i = 0; i < candidates.candidate_size(); ++i) {
     IBusText *text =
         ibus_text_new_from_string(candidates.candidate(i).value().c_str());
@@ -530,6 +561,17 @@ bool MozcEngine::UpdateCandidates(IBusEngine *engine,
     ibus_engine_hide_auxiliary_text(engine);
   }
 
+  for (int i = 0; i < candidates.candidate_size(); ++i) {
+    if (candidates.candidate(i).has_id()) {
+      const int32 id = candidates.candidate(i).id();
+      unique_candidate_ids_.push_back(id);
+    } else {
+      // The parent node of the cascading window does not have an id since the
+      // node does not contain a candidate word.
+      unique_candidate_ids_.push_back(kBadCandidateId);
+    }
+  }
+  
   return true;
 }
 

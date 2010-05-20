@@ -136,12 +136,35 @@ bool Session::DeleteSession() {
 }
 
 bool Session::GetConfig(config::Config *config) {
-  // TODO(mazda): Implement this
+  commands::Input input;
+  input.set_id(id_);
+  input.set_type(commands::Input::GET_CONFIG);
+
+  commands::Output output;
+  if (!Call(input, &output)) {
+    return false;
+  }
+
+  if (!output.has_config()) {
+    return false;
+  }
+
+  config->Clear();
+  config->CopyFrom(output.config());
   return true;
 }
 
 bool Session::SetConfig(const config::Config &config) {
-  // TODO(mazda): Implement this
+  commands::Input input;
+  input.set_id(id_);
+  input.set_type(commands::Input::SET_CONFIG);
+  input.mutable_config()->CopyFrom(config);
+
+  commands::Output output;
+  if (!Call(input, &output)) {
+    return false;
+  }
+
   return true;
 }
 

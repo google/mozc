@@ -100,7 +100,7 @@ class MozcEngine : public EngineInterface {
   bool UpdatePreedit(IBusEngine *engine, const commands::Output &output) const;
   // Updates the candidate window based on the content of |output|.
   bool UpdateCandidates(IBusEngine *engine,
-                        const commands::Output &output) const;
+                        const commands::Output &output);
   // Updates the composition mode based on the content of |output|.
   void UpdateCompositionMode(IBusEngine *engine,
                              const commands::Output &output);
@@ -115,6 +115,9 @@ class MozcEngine : public EngineInterface {
   IBusPropList *prop_root_;
   IBusProperty *prop_composition_mode_;
   commands::CompositionMode current_composition_mode_;
+
+  // Unique IDs of candidates that are currently shown.
+  vector<int32> unique_candidate_ids_;
 
   DISALLOW_COPY_AND_ASSIGN(MozcEngine);
 };

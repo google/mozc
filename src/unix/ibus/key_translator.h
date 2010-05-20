@@ -53,11 +53,14 @@ class KeyTranslator {
   bool Translate(guint keyval,
                  guint keycode,
                  guint modifiers,
-                 mozc::commands::KeyEvent *out_event) const;
+                 config::Config::PreeditMethod method,
+                 bool layout_is_jp,
+                 commands::KeyEvent *out_event) const;
 
  private:
   typedef map<guint, commands::KeyEvent::SpecialKey> SpecialKeyMap;
   typedef map<guint, commands::KeyEvent::ModifierKey> ModifierKeyMap;
+  typedef map<guint, pair<string, string> > KanaMap;
 
   // Returns true iff key is modifier key such as SHIFT, ALT, or CAPSLOCK.
   bool IsModifierKey(guint keyval,
@@ -68,6 +71,13 @@ class KeyTranslator {
   bool IsSpecialKey(guint keyval,
                     guint keycode,
                     guint modifiers) const;
+
+  // Returns true iff |keyval| is a key with a kana assigned.
+  bool IsKanaAvailable(guint keyval,
+                       guint keycode,
+                       guint modifiers,
+                       bool layout_is_jp,
+                       string *out) const;
 
   // Returns true iff key is ASCII such as '0', 'A', or '!'.
   static bool IsAscii(guint keyval,
@@ -83,7 +93,12 @@ class KeyTranslator {
   ModifierKeyMap modifier_key_map_;
   // Stores a mapping from ibus modifier masks to Mozc's modifier keys.
   ModifierKeyMap modifier_mask_map_;
-
+  // Stores a mapping from ASCII to Kana character. For example, ASCII character
+  // '4' is mapped to Japanese 'Hiragana Letter U' (without Shift modifier) and
+  // 'Hiragana Letter Small U' (with Shift modifier).
+  KanaMap kana_map_jp_;  // mapping for JP keyboard.
+  KanaMap kana_map_us_;  // mapping for US keyboard.
+  
   DISALLOW_COPY_AND_ASSIGN(KeyTranslator);
 };
 
