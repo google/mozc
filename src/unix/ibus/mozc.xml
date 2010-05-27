@@ -9,28 +9,5 @@
   <license>New BSD</license>
   <homepage>http://code.google.com/p/mozc/</homepage>
   <textdomain>ibus-mozc</textdomain>
-  <engines>
-    <engine>
-      <name>mozc</name>
-      <language>ja</language>
-      <license>New BSD</license>
-      <author>Google Inc.</author>
-      <icon>/usr/share/ibus-mozc/product_icon.png</icon>
-      <layout>us</layout>
-      <longname>Mozc (US keyboard layout)</longname>
-      <description>Mozc Japanese input method</description>
-      <rank></rank>
-    </engine>
-    <engine>
-      <name>mozc-jp</name>
-      <language>ja</language>
-      <license>New BSD</license>
-      <author>Google Inc.</author>
-      <icon>/usr/share/ibus-mozc/product_icon.png</icon>
-      <layout>jp</layout>
-      <longname>Mozc (Japanese keyboard layout)</longname>
-      <description>Mozc Japanese input method</description>
-      <rank></rank>
-    </engine>
-  </engines>
+  <engines exec="/usr/libexec/ibus-engine-mozc --xml" />
 </component>

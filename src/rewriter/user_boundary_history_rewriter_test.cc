@@ -105,7 +105,7 @@ class UserBoundaryHistoryRewriterTest : public testing::Test {
   UserBoundaryHistoryRewriterTest() {}
 
   virtual void SetUp() {
-    ConverterInterface::SetConverter(&mock_);
+    ConverterFactory::SetConverter(&mock_);
     Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
   }
 

@@ -56,7 +56,6 @@ class NBestGenerator {
   // set starting Node and ending Node --
   // Try to enumurate N-best results between begin_node and end_node.
   void  Init(Node *begin_node, Node *end_node,
-             ConnectorInterface *connector,
              ConverterData *data);
 
   // reset internal priority queue. Reuse begin_node and eos_node

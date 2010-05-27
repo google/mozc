@@ -34,6 +34,52 @@
   },
   'targets': [
     {
+      'target_name': 'user_dictionary',
+      'type': 'static_library',
+      'sources': [
+        '<(proto_out_dir)/<(relative_dir)/user_dictionary_storage.pb.cc',
+        'user_dictionary.cc',
+        'user_dictionary_importer.cc',
+        'user_dictionary_storage.cc',
+        'user_dictionary_util.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        '../session/session.gyp:genproto_session',
+        'user_pos_data',
+        'genproto_dictionary',
+      ],
+      'conditions': [['two_pass_build==0', {
+        'dependencies': [
+          'install_gen_user_pos_data_main'
+        ],
+      }]],
+      'actions': [
+        {
+          'action_name': 'gen_pos_map',
+          'variables': {
+            'input_files': [
+              '../data/rules/user_pos.def',
+              '../data/rules/third_party_pos_map.def'
+            ],
+          },
+          'inputs': [
+            'gen_pos_map.py',
+            '<@(input_files)',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/pos_map.h',
+          ],
+          'action': [
+            'python', '../build_tools/redirect.py',
+            '<(gen_out_dir)/pos_map.h',
+            'gen_pos_map.py',
+            '<@(input_files)',
+          ],
+        },
+      ],
+    },
+    {
       'target_name': 'dictionary',
       'type': 'static_library',
       'sources': [
@@ -51,14 +97,13 @@
         '../base/base.gyp:base',
         '../session/session.gyp:genproto_session',
         'file/dictionary_file.gyp:dictionary_file',
-        'user_pos_data',
+        'user_dictionary',
         'genproto_dictionary',
         'system/system_dictionary.gyp:system_dictionary_builder',
       ],
-       'conditions': [['two_pass_build==0', {
+      'conditions': [['two_pass_build==0', {
         'dependencies': [
           'install_gen_system_dictionary_data_main',
-          'install_gen_user_pos_data_main'
         ],
       }]],
       'actions': [
@@ -90,28 +135,6 @@
             '--output=<(gen_out_dir)/embedded_dictionary_data.h',
           ],
           'message': 'Generating <(gen_out_dir)/embedded_dictionary_data.h.',
-        },
-        {
-          'action_name': 'gen_pos_map',
-          'variables': {
-            'input_files': [
-              '../data/rules/user_pos.def',
-              '../data/rules/third_party_pos_map.def'
-            ],
-          },
-          'inputs': [
-            'gen_pos_map.py',
-            '<@(input_files)',
-          ],
-          'outputs': [
-            '<(gen_out_dir)/pos_map.h',
-          ],
-          'action': [
-            'python', '../build_tools/redirect.py',
-            '<(gen_out_dir)/pos_map.h',
-            'gen_pos_map.py',
-            '<@(input_files)',
-          ],
         },
       ],
     },

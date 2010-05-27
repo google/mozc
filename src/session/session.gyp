@@ -36,7 +36,6 @@
       'target_name': 'session',
       'type': 'static_library',
       'sources': [
-        'ime_switch_util.cc',
         'internal/candidate_list.cc',
         'internal/keymap.cc',
         'internal/session_normalizer.cc',
@@ -58,7 +57,9 @@
         '../usage_stats/usage_stats.gyp:usage_stats',
         'config_handler',
         'genproto_session',
+        'ime_switch_util',
         'key_parser',
+        'keymap',
         'session_protocol',
       ],
     },
@@ -83,6 +84,33 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        'genproto_session',
+        'session_protocol',
+      ],
+    },
+    {
+      'target_name': 'keymap',
+      'type': 'static_library',
+      'sources': [
+        'internal/keymap.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        'genproto_session',
+        'session_protocol',
+      ],
+    },
+    {
+      'target_name': 'ime_switch_util',
+      'type': 'static_library',
+      'sources': [
+        'ime_switch_util.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        '../base/base.gyp:config_file_stream',
+        'config_handler',
+        'key_parser',
         'genproto_session',
         'session_protocol',
       ],

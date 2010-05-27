@@ -42,7 +42,7 @@
 #include "converter/key_corrector.h"
 #include "converter/segments.h"
 #include "converter/converter_data.h"
-#include "converter/connector.h"
+#include "converter/connector_interface.h"
 #include "converter/nbest_generator.h"
 #include "converter/pos_matcher.h"
 #include "converter/segmenter.h"
@@ -52,8 +52,6 @@
 
 namespace mozc {
 namespace {
-
-#include "converter/embedded_connection_data.h"
 
 const size_t kMaxSegmentsSize   = 256;
 const size_t kMaxCharLength     = 1024;
@@ -336,7 +334,7 @@ class ImmutableConverterImpl: public ImmutableConverterInterface {
     return connector_->GetTransitionCost(lnode->rid, rnode->lid) + rnode->wcost;
   }
 
-  scoped_ptr<ConnectorInterface> connector_;
+  ConnectorInterface *connector_;
   DictionaryInterface *dictionary_;
 
   int32 last_to_first_name_transition_cost_;
@@ -344,12 +342,9 @@ class ImmutableConverterImpl: public ImmutableConverterInterface {
 };
 
 ImmutableConverterImpl::ImmutableConverterImpl()
-    : connector_(
-        ConnectorInterface::OpenFromArray(
-            kConnectionData_data, kConnectionData_size)),
+    : connector_(ConnectorFactory::GetConnector()),
       dictionary_(DictionaryFactory::GetDictionary()),
       last_to_first_name_transition_cost_(0) {
-  CHECK(connector_.get());
   last_to_first_name_transition_cost_
       = connector_->GetTransitionCost(
           POSMatcher::GetLastNameId(), POSMatcher::GetFirstNameId());
@@ -1030,8 +1025,7 @@ bool ImmutableConverterImpl::MakeSegments(Segments *segments,
                Segmenter::IsBoundary(node, node->next)) {
       Segment *segment = segments->add_segment();
       NBestGenerator *nbest = segment->nbest_generator();
-      nbest->Init(prev, node->next, connector_.get(),
-                  segments->converter_data());
+      nbest->Init(prev, node->next, segments->converter_data());
       segment->set_key(key);
       segment->Expand(max(static_cast<size_t>(1), old_seg.candidates_size()));
       if (segment->candidates_size() == 0) {

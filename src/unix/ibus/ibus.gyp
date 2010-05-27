@@ -37,8 +37,14 @@
       'ibus-1.0',
       'libcurl',
     ],
-    'ibus_dependencies': [
+    'ibus_common_dependencies': [
       '../../base/base.gyp:base',
+    ],
+    'ibus_client_dependencies' : [
+      '../../client/client.gyp:client',
+      '../../session/session.gyp:ime_switch_util',
+    ],
+    'ibus_standalone_dependencies' : [
       '../../base/base.gyp:config_file_stream',
       '../../composer/composer.gyp:composer',
       '../../converter/converter.gyp:converter',
@@ -52,6 +58,19 @@
       '../../transliteration/transliteration.gyp:transliteration',
       '../../usage_stats/usage_stats.gyp:usage_stats',
     ],
+    'conditions': [
+      ['chromeos==1', {
+       'ibus_dependencies': [
+        '<@(ibus_common_dependencies)',
+        '<@(ibus_standalone_dependencies)',
+        ],
+      },{
+       'ibus_dependencies': [
+        '<@(ibus_common_dependencies)',
+        '<@(ibus_client_dependencies)',
+        ],
+      }],
+    ],
   },
   'targets': [
     {
@@ -62,8 +81,12 @@
         'key_translator.cc',
         'mozc_engine.cc',
         'path_util.cc',
-        'session.cc',
       ],
+      'conditions': [
+        ['chromeos==1', {
+         'sources': [ 'session.cc' ],
+        }],
+       ],
       'cflags': [
         '<!@(pkg-config --cflags <@(pkg_config_libs))',
       ],
@@ -94,7 +117,11 @@
       'sources': [
         'key_translator_test.cc',
         'path_util_test.cc',
-        'session_test.cc',
+      ],
+      'conditions': [
+        ['chromeos==1', {
+           'sources': [ 'session_test.cc' ],
+        }],
       ],
       'dependencies': [
         '<@(ibus_dependencies)',

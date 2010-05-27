@@ -31,7 +31,7 @@
 #include <vector>
 #include "base/base.h"
 #include "base/util.h"
-#include "converter/connector.h"
+#include "converter/sparse_connector.h"
 
 DEFINE_string(input, "", "input text file");
 DEFINE_string(output, "", "output binary file");
@@ -45,8 +45,8 @@ int main(int argc, char **argv) {
     output += ".tmp";
   }
 
-  mozc::ConnectorInterface::Compile(FLAGS_input.c_str(),
-                                    output.c_str());
+  mozc::SparseConnectorBuilder::Compile(FLAGS_input.c_str(),
+                                        output.c_str());
 
   if (FLAGS_make_header) {
     const char kName[] = "ConnectionData";

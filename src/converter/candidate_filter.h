@@ -60,7 +60,6 @@ class CandidateFilter {
 
   set<string> seen_;
   const Segment::Candidate *top_candidate_;
-  set<pair<int, int> > svm_no_filter_ids_;
 
   DISALLOW_COPY_AND_ASSIGN(CandidateFilter);
 };

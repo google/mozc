@@ -67,8 +67,8 @@ class Singleton {
 
  private:
   static void Init() {
-    instance_ = new T;
     SingletonFinalizer::AddFinalizer(&Singleton<T>::Delete);
+    instance_ = new T;
   }
 
   static void Delete() {

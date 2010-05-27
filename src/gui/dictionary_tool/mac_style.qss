@@ -1,0 +1,23 @@
+QListView {
+  show-decoration-selected: 1;
+  background-color: #DEE4EB;
+  border-width: 0px;
+  selection-color: #FFFFFF;
+}
+
+QListView:!active {
+  background-color: #EDEDED;
+}
+
+QListView::item:selected:!active {
+  background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                              stop: 0 #BEBEBE, stop: 1 #A0A0A0);
+}
+
+QListView::item:selected:active {
+ selection-color: white;
+ background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                             stop: 0 #6CA5DD , stop: 1 #1B6BBA);
+}
+
+QStatusBar { font-size: 11px; }

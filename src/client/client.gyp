@@ -38,7 +38,7 @@
       'type': 'static_library',
       'sources': [
         'session.cc',
-        'start_server.cc',
+        'server_launcher.cc',
       ],
       'dependencies': [
         '../base/base.gyp:base',

@@ -362,7 +362,22 @@ bool IPCPathManager::IsValidServer(uint32 pid,
 #endif
 
   VLOG(1) << "server path: " << server_path << " " << server_path_;
-  return (server_path == server_path_);
+  if (server_path == server_path_) {
+    return true;
+  }
+
+#ifdef OS_LINUX
+  if ((server_path + " (deleted)") == server_path_) {
+    LOG(WARNING) << server_path << " on disk is modified";
+    // If a user updates the server binary on disk during the server is running,
+    // "readlink /proc/<pid>/exe" returns a path with the " (deleted)" suffix.
+    // We allow the special case.
+    server_path_ = server_path;
+    return true;
+  }
+#endif
+
+  return false;
 }
 
 bool IPCPathManager::LoadPathName() {

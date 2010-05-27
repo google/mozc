@@ -34,12 +34,19 @@
 #include <stdio.h>
 
 #include "base/base.h"
+#include "base/const.h"
 #include "base/crash_report_util.h"
 #include "base/file_stream.h"
+#include "base/process.h"
+#include "base/run_level.h"
 #include "base/util.h"
 #include "base/version.h"
 #include "ipc/ipc.h"
 #include "session/commands.pb.h"
+
+#ifdef OS_MACOSX
+#include "base/mac_process.h"
+#endif
 
 namespace mozc {
 namespace client {
@@ -66,7 +73,7 @@ const int kDeleteSessionOnDestructorTimeout = 1000;  // 1 sec
 
 Session::Session()
     : id_(0),
-      start_server_handler_(new StartServerHandler),
+      server_launcher_(new ServerLauncher),
       result_(new char[kResultBufferSize]),
       preferences_(NULL),
       timeout_(kDefaultTimeout),
@@ -85,9 +92,13 @@ void Session::SetIPCClientFactory(IPCClientFactoryInterface *client_factory) {
   client_factory_ = client_factory;
 }
 
-void Session::SetStartServerHandler(
-    StartServerHandlerInterface *start_server_handler) {
-  start_server_handler_.reset(start_server_handler);
+void Session::SetServerLauncher(
+    ServerLauncherInterface *server_launcher) {
+  server_launcher_.reset(server_launcher);
+}
+
+bool Session::IsValidRunLevel() const {
+  return RunLevel::IsValidClientRunLevel();
 }
 
 bool Session::EnsureConnection() {
@@ -101,23 +112,23 @@ bool Session::EnsureConnection() {
       return false;
       break;
     case SERVER_TIMEOUT:
-      OnFatal(StartServerHandlerInterface::SERVER_TIMEOUT);
+      OnFatal(ServerLauncherInterface::SERVER_TIMEOUT);
       server_status_ = SERVER_FATAL;
       return false;
       break;
     case SERVER_BROKEN_MESSAGE:
-      OnFatal(StartServerHandlerInterface::SERVER_BROKEN_MESSAGE);
+      OnFatal(ServerLauncherInterface::SERVER_BROKEN_MESSAGE);
       server_status_ = SERVER_FATAL;
       return false;
       break;
     case SERVER_VERSION_MISMATCH:
-      OnFatal(StartServerHandlerInterface::SERVER_VERSION_MISMATCH);
+      OnFatal(ServerLauncherInterface::SERVER_VERSION_MISMATCH);
       server_status_ = SERVER_FATAL;
       return false;
       break;
     case SERVER_SHUTDOWN:
 #ifdef _DEBUG
-      OnFatal(StartServerHandlerInterface::SERVER_SHUTDOWN);
+      OnFatal(ServerLauncherInterface::SERVER_SHUTDOWN);
       // don't break here as SERVER_SHUTDOWN and SERVER_UNKNOWN
       // have basically the same treatment.
 #endif  // _DEBUG
@@ -127,7 +138,7 @@ bool Session::EnsureConnection() {
         return true;
       } else {
         LOG(ERROR) << "Cannot start server";
-        OnFatal(StartServerHandlerInterface::SERVER_FATAL);
+        OnFatal(ServerLauncherInterface::SERVER_FATAL);
         server_status_ = SERVER_FATAL;
         return false;
       }
@@ -333,6 +344,14 @@ void Session::set_timeout(int timeout) {
   timeout_ = timeout;
 }
 
+void Session::set_restricted(bool restricted) {
+  server_launcher_->set_restricted(restricted);
+}
+
+void Session::set_server_program(const string &program_path) {
+  server_launcher_->set_server_program(program_path);
+}
+
 bool Session::CreateSession() {
   id_ = 0;
   commands::Input input;
@@ -420,7 +439,7 @@ bool Session::ClearUnusedUserPrediction() {
 
 bool Session::Shutdown() {
   CallCommand(commands::Input::SHUTDOWN);
-  if (!start_server_handler_->WaitServer(server_process_id_)) {
+  if (!server_launcher_->WaitServer(server_process_id_)) {
     LOG(ERROR) << "Cannot shutdown the server";
     return false;
   }
@@ -454,7 +473,7 @@ bool Session::PingServer() const {
  // Call IPC
   scoped_ptr<IPCClientInterface> client(
       client_factory_->NewClient(kServerAddress,
-                                 start_server_handler_->server_program()));
+                                 server_launcher_->server_program()));
 
   if (client.get() == NULL) {
     LOG(ERROR) << "Cannot make client object";
@@ -521,7 +540,7 @@ bool Session::Call(const commands::Input &input,
   // Call IPC
   scoped_ptr<IPCClientInterface> client(
       client_factory_->NewClient(kServerAddress,
-                                 start_server_handler_->server_program()));
+                                 server_launcher_->server_program()));
 
   // set client protocol version.
   // When an error occurs inside Connected() function,
@@ -595,16 +614,16 @@ bool Session::Call(const commands::Input &input,
 }
 
 bool Session::StartServer() {
-  if (start_server_handler_.get() != NULL) {
-    return start_server_handler_->StartServer(this);
+  if (server_launcher_.get() != NULL) {
+    return server_launcher_->StartServer(this);
   }
   return true;
 }
 
 
-void Session::OnFatal(StartServerHandlerInterface::ServerErrorType type) {
-  if (start_server_handler_.get() != NULL) {
-    start_server_handler_->OnFatal(type);
+void Session::OnFatal(ServerLauncherInterface::ServerErrorType type) {
+  if (server_launcher_.get() != NULL) {
+    server_launcher_->OnFatal(type);
   }
 }
 
@@ -662,13 +681,13 @@ bool Session::CheckVersionOrRestartServerInternal(
       // force to terminate the process if protocol version is not compatible
       if (!shutdown_result ||
           (!call_result && server_protocol_version_ < IPC_PROTOCOL_VERSION)) {
-        if (!start_server_handler_->ForceTerminateServer(kServerAddress)) {
+        if (!server_launcher_->ForceTerminateServer(kServerAddress)) {
           LOG(ERROR) << "ForceTerminateProcess failed";
           server_status_ = SERVER_BROKEN_MESSAGE;
           return false;
         }
 
-        if (!start_server_handler_->WaitServer(server_process_id_)) {
+        if (!server_launcher_->WaitServer(server_process_id_)) {
           LOG(ERROR) << "Cannot terminate server process";
         }
       }
@@ -708,6 +727,96 @@ bool Session::IsAbortKey(const commands::KeyEvent &key) {
         key.modifier_keys(1) == commands::KeyEvent::ALT) ||
        (key.modifier_keys(0) == commands::KeyEvent::ALT &&
         key.modifier_keys(1) == commands::KeyEvent::CTRL));
+}
+
+bool Session::LaunchTool(const string &mode, const string &extra_arg) {
+#ifdef OS_LINUX
+  // TODO(taku): define it in const.h
+  const char kMozcTool[] = "mozc_tool";
+#endif  // OS_LINUX
+
+  // Don't execute any child process if the parent process is not
+  // in proper runlevel.
+  if (!IsValidRunLevel()) {
+    return false;
+  }
+
+  // Validate |mode|.
+  // TODO(taku): better to validate the parameter more carefully.
+  const size_t kModeMaxSize = 32;
+  if (mode.empty() || mode.size() >= kModeMaxSize) {
+    LOG(ERROR) << "Invalid mode: " << mode;
+    return false;
+  }
+
+  if (mode == "administration_dialog") {
+#ifdef OS_WINDOWS
+    const string path = mozc::Util::JoinPath
+        (mozc::Util::GetServerDirectory(), kMozcTool);
+    wstring wpath;
+    Util::UTF8ToWide(path.c_str(), &wpath);
+    wpath = L"\"" + wpath + L"\"";
+    // Run administration dialog with UAC.
+    // AFAIK, ShellExecute is only the way to launch process with
+    // UAC protection.
+    // No COM operations are executed as ShellExecute is only
+    // used for launching an UAC-process.
+    //
+    // In Windows XP, cannot use "runas", instead, administration
+    // dialog is launched with normal process with "open"
+    // http://b/2415191
+    const int result =
+        reinterpret_cast<int>(::ShellExecute(0,
+                                             mozc::Util::IsVistaOrLater() ?
+                                             L"runas" : L"open",
+                                             wpath.c_str(),
+                                             L"--mode=administration_dialog",
+                                             mozc::Util::GetSystemDir(),
+                                             SW_SHOW));
+    if (result <= 32) {
+      LOG(ERROR) << "::ShellExecute failed: " << result;
+      return false;
+    }
+#endif  // OS_WINDOWS
+
+    return false;
+  }
+
+#if defined(OS_WINDOWS) || defined(OS_LINUX)
+  string arg = "--mode=" + mode;
+  if (!extra_arg.empty()) {
+    arg += " ";
+    arg += extra_arg;
+  }
+  if (!mozc::Process::SpawnMozcProcess(kMozcTool, arg)) {
+    LOG(ERROR) << "Cannot execute: " << kMozcTool << " " << arg;
+    return false;
+  }
+#endif  // OS_WINDOWS || OS_LINUX
+
+  // TODO(taku): move MacProcess inside SpawnMozcProcess.
+  // TODO(taku): support extra_arg.
+#ifdef OS_MACOSX
+  if (!MacProcess::LaunchMozcTool(mode)) {
+    LOG(ERROR) << "Cannot execute: " << mode;
+    return false;
+  }
+#endif  // OS_MACOSX
+
+  return true;
+}
+
+bool Session::OpenBrowser(const string &url) {
+  if (!IsValidRunLevel()) {
+    return false;
+  }
+
+  if (!Process::OpenBrowser(url)) {
+    LOG(ERROR) << "Process::OpenBrowser failed.";
+    return false;
+  }
+
+  return true;
 }
 
 }  // namespace client

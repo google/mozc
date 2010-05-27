@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE TS>
+<TS version="2.0">
+<context>
+    <name>AdministrationDialog</name>
+    <message>
+        <location filename="administration_dialog.ui" line="32"/>
+        <source>Mozc administrator settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="administration_dialog.ui" line="60"/>
+        <source>Help make Mozc better by automatically sending usage statistics and crash reports to Google (changes will take effect after you log out and log back in)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="administration_dialog.ui" line="108"/>
+        <source>Disable Mozc for UAC-elevated applications</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="administration_dialog.ui" line="89"/>
+        <source>Always allocate conversion dictionary into physical memory</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>mozc::gui::AdministrationDialog</name>
+    <message>
+        <location filename="administration_dialog.cc" line="55"/>
+        <location filename="administration_dialog.cc" line="74"/>
+        <location filename="administration_dialog.cc" line="91"/>
+        <location filename="administration_dialog.cc" line="105"/>
+        <source>Mozc administration settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="administration_dialog.cc" line="56"/>
+        <source>This computer does not have enough memory to load dictionary into physical memory.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="administration_dialog.cc" line="92"/>
+        <source>Failed to change the configuration of on-memory dictionary. Administrator privilege is required to change the configuration.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="administration_dialog.cc" line="106"/>
+        <source>Failed to save the UAC policy setting. Administrator privilege is required to change UAC settings.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+</TS>

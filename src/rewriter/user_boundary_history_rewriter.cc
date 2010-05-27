@@ -199,7 +199,7 @@ bool UserBoundaryHistoryRewriter::ResizeOrInsert(Segments *segments,
     return false;
   }
 
-  ConverterInterface *converter = ConverterInterface::GetConverter();
+  ConverterInterface *converter = ConverterFactory::GetConverter();
 
   deque<pair<string, size_t> > keys(target_segments_size -
                                     history_segments_size);

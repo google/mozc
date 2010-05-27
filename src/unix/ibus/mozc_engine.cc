@@ -39,7 +39,16 @@
 #include "unix/ibus/engine_registrar.h"
 #include "unix/ibus/key_translator.h"
 #include "unix/ibus/mozc_engine_property.h"
+#include "unix/ibus/path_util.h"
+
+#ifdef OS_CHROMEOS
+// use standalone (in-process) session
 #include "unix/ibus/session.h"
+#else
+// use server/client session
+#include "base/util.h"
+#include "client/session.h"
+#endif
 
 namespace {
 
@@ -47,6 +56,17 @@ namespace {
 const char kGObjectDataKey[] = "ibus-mozc-aux-data";
 // An ID for a candidate which is not associated with a text.
 const int32 kBadCandidateId = -1;
+
+// Icon path for MozcTool
+// TODO(taku): currently, unknown icon is displayed.
+const char kMozcToolIconPath[] = "unknown.ico";
+
+// for every 5 minutes, call SyncData
+const uint64 kSyncDataInterval = 5 * 60;
+
+uint64 GetTime() {
+  return static_cast<uint64>(time(NULL));
+}
 
 struct IBusMozcEngineClass {
   IBusEngineClass parent;
@@ -142,10 +162,18 @@ IBusText *ComposePreeditText(const commands::Preedit &preedit) {
     // reasons. Here we add a background color for the highlighted candidate
     // to make it easiliy distinguishable.
     if (segment.annotation() == commands::Preedit::Segment::HIGHLIGHT) {
-      const guint kBackGroundColor = 0xD1EAFF;
+      const guint kBackgroundColor = 0xD1EAFF;
       ibus_text_append_attribute(text,
                                  IBUS_ATTR_TYPE_BACKGROUND,
-                                 kBackGroundColor,
+                                 kBackgroundColor,
+                                 start,
+                                 end);
+      // IBUS_ATTR_TYPE_FOREGROUND is necessary to highlight the segment on
+      // Firefox.
+      const guint kForegroundColor = 0x000000;
+      ibus_text_append_attribute(text,
+                                 IBUS_ATTR_TYPE_FOREGROUND,
+                                 kForegroundColor,
                                  start,
                                  end);
     }
@@ -177,7 +205,7 @@ IBusText *ComposeAuxiliaryText(const commands::Candidates &candidates) {
   char buf[128];
   const int result = snprintf(buf,
                               128,
-                              "%d / %d",
+                              "%d/%d",
                               candidates.focused_index() + 1,
                               candidates.size());
   DCHECK_GE(result, 0) << "snprintf in ComposeAuxiliaryText failed";
@@ -185,11 +213,18 @@ IBusText *ComposeAuxiliaryText(const commands::Candidates &candidates) {
 }
 
 MozcEngine::MozcEngine()
-    : key_translator_(new KeyTranslator),
-      session_(new Session),
+    : last_sync_time_(GetTime()),
+      key_translator_(new KeyTranslator),
+#ifdef OS_CHROMEOS
+      session_(new ibus::Session),
+#else
+      session_(new client::Session),
+#endif
       prop_root_(NULL),
       prop_composition_mode_(NULL),
-      current_composition_mode_(kMozcEngineInitialCompositionMode) {
+      prop_mozc_tool_(NULL),
+      current_composition_mode_(kMozcEngineInitialCompositionMode),
+      preedit_method_(config::Config::ROMAN) {
   // |sub_prop_list| is a radio menu which is shown when a button in the
   // language panel (i.e. |prop_composition_mode_| below) is clicked.
   IBusPropList *sub_prop_list = ibus_prop_list_new();
@@ -229,24 +264,73 @@ MozcEngine::MozcEngine()
                                              TRUE /* visible */,
                                              PROP_STATE_UNCHECKED,
                                              sub_prop_list);
+
   // Likewise, |prop_composition_mode_| owns |sub_prop_list|. We have to sink
   // |prop_composition_mode_| here so ibus_engine_update_property() call in
   // PropertyActivate() does not destruct the object.
   g_object_ref_sink(prop_composition_mode_);
+
+#ifndef OS_CHROMEOS
+  // Create items for MozcTool
+  sub_prop_list = ibus_prop_list_new();
+
+  for (size_t i = 0; i < kMozcEngineToolPropertiesSize; ++i) {
+    const MozcEngineToolProperty &entry = kMozcEngineToolProperties[i];
+    IBusText *label = ibus_text_new_from_static_string(entry.label);
+    IBusProperty *item = ibus_property_new(entry.mode,
+                                           PROP_TYPE_NORMAL,
+                                           label,
+                                           NULL,
+                                           NULL,
+                                           TRUE,
+                                           TRUE,
+                                           PROP_STATE_UNCHECKED,
+                                           NULL);
+    g_object_set_data(G_OBJECT(item), kGObjectDataKey, (gpointer)&entry);
+    ibus_prop_list_append(sub_prop_list, item);
+  }
+
+  const string icon_path = GetIconPath(kMozcToolIconPath);
+  prop_mozc_tool_ = ibus_property_new("MozcTool",
+                                      PROP_TYPE_MENU,
+                                      NULL /* label */,
+                                      icon_path.c_str(),
+                                      NULL /* tooltip */,
+                                      TRUE /* sensitive */,
+                                      TRUE /* visible */,
+                                      PROP_STATE_UNCHECKED,
+                                      sub_prop_list);
+
+  // Likewise, |prop_mozc_tool_| owns |sub_prop_list|. We have to sink
+  // |prop_mozc_tool_| here so ibus_engine_update_property() call in
+  // PropertyActivate() does not destruct the object.
+  g_object_ref_sink(prop_mozc_tool_);
+#endif
 
   // |prop_root_| is used for registering properties in FocusIn().
   prop_root_ = ibus_prop_list_new();
   // We have to sink |prop_root_| as well so ibus_engine_register_properties()
   // in FocusIn() does not destruct it.
   g_object_ref_sink(prop_root_);
+
   ibus_prop_list_append(prop_root_, prop_composition_mode_);
+
+#ifndef OS_CHROMEOS
+  ibus_prop_list_append(prop_root_, prop_mozc_tool_);
+#endif
 }
 
 MozcEngine::~MozcEngine() {
+  SyncData(true);
   if (prop_composition_mode_) {
     // The ref counter will drop to one.
     g_object_unref(prop_composition_mode_);
     prop_composition_mode_ = NULL;
+  }
+  if (prop_mozc_tool_) {
+    // The ref counter will drop to one.
+    g_object_unref(prop_mozc_tool_);
+    prop_mozc_tool_ = NULL;
   }
   if (prop_root_) {
     // Destroy all objects under the root.
@@ -288,7 +372,9 @@ void MozcEngine::Disable(IBusEngine *engine) {
 }
 
 void MozcEngine::Enable(IBusEngine *engine) {
-  // TODO(mazda): Implement this.
+  // Launch mozc_server
+  session_->EnsureConnection();
+  UpdatePreeditMethod();
 }
 
 void MozcEngine::FocusIn(IBusEngine *engine) {
@@ -301,6 +387,7 @@ void MozcEngine::FocusOut(IBusEngine *engine) {
   commands::Output output;
   session_->SendCommand(command, &output);
   UpdateAll(engine, output);
+  SyncData(false);
 }
 
 void MozcEngine::PageDown(IBusEngine *engine) {
@@ -324,21 +411,26 @@ gboolean MozcEngine::ProcessKeyEvent(
     return FALSE;
   }
 
-  config::Config config;
-  if (!session_->GetConfig(&config)) {
-    LOG(ERROR) << "GetConfig failed";
-    return FALSE;
-  }
-  const config::Config::PreeditMethod method =
-      config.has_preedit_method() ?
-      config.preedit_method() : config::Config::ROMAN;
+  // Since IBus for ChromeOS is based on in-process conversion,
+  // it is basically ok to call GetConfig() at every keyevent.
+  // On the other hands, IBus for Linux is based on out-process (IPC)
+  // conversion and user may install large keybinding/roman-kana tables.
+  // To reduce IPC overheads, we don't call UpdatePreeditMethod()
+  // at every keyevent. When user changes the preedit method via
+  // config dialog, the dialog shows a message saying that
+  // "preedit method is enabled after new applications.".
+  // This behavior is the same as Google Japanese Input for Windows.
+#ifdef OS_CHROMEOS
+  UpdatePreeditMethod();
+#endif
 
   // TODO(yusukes): use |layout| in IBusEngineDesc if possible.
-  const bool layout_is_jp = !g_strcmp0(ibus_engine_get_name(engine), "mozc-jp");
+  const bool layout_is_jp =
+      !g_strcmp0(ibus_engine_get_name(engine), kEngineNames[1]);
 
   commands::KeyEvent key;
   if (!key_translator_->Translate(
-          keyval, keycode, modifiers, method, layout_is_jp, &key)) {
+          keyval, keycode, modifiers, preedit_method_, layout_is_jp, &key)) {
     LOG(ERROR) << "Translate failed";
     return FALSE;
   }
@@ -362,7 +454,7 @@ gboolean MozcEngine::ProcessKeyEvent(
 
   UpdateAll(engine, output);
 
-  bool consumed = output.consumed();
+  const bool consumed = output.consumed();
   // TODO(mazda): Check if this code is necessary
   // if (!consumed) {
   //   ibus_engine_forward_key_event(engine, keyval, keycode, modifiers);
@@ -390,12 +482,30 @@ void MozcEngine::SetCompositionMode(
 void MozcEngine::PropertyActivate(IBusEngine *engine,
                                   const gchar *property_name,
                                   guint property_state) {
+  size_t i = 0;
+  IBusProperty *prop = NULL;
+
+#ifndef OS_CHROMEOS
+  DCHECK(prop_mozc_tool_);
+  while (prop = ibus_prop_list_get(prop_mozc_tool_->sub_props, i++)) {
+    if (!g_strcmp0(property_name, prop->key)) {
+      const MozcEngineToolProperty *entry =
+          reinterpret_cast<const MozcEngineToolProperty*>(
+              g_object_get_data(G_OBJECT(prop), kGObjectDataKey));
+      DCHECK(entry->mode);
+      if (!session_->LaunchTool(entry->mode, "")) {
+        LOG(ERROR) << "cannot launch: " << entry->mode;
+      }
+      return;
+    }
+  }
+#endif
+
   if (property_state != PROP_STATE_CHECKED) {
     return;
   }
 
-  size_t i = 0;
-  IBusProperty *prop;
+  i = 0;
   while (prop = ibus_prop_list_get(prop_composition_mode_->sub_props, i++)) {
     if (!g_strcmp0(property_name, prop->key)) {
       const MozcEngineProperty *entry =
@@ -531,7 +641,7 @@ bool MozcEngine::UpdateCandidates(IBusEngine *engine,
       TRUE : FALSE;
   int cursor_pos = 0;
   if (candidates.has_focused_index()) {
-    for (int i =0; i < candidates.candidate_size(); ++i) {
+    for (int i = 0; i < candidates.candidate_size(); ++i) {
       if (candidates.focused_index() == candidates.candidate(i).index()) {
         cursor_pos = i;
       }
@@ -544,6 +654,7 @@ bool MozcEngine::UpdateCandidates(IBusEngine *engine,
 #if IBUS_CHECK_VERSION(1, 3, 0)
   ibus_lookup_table_set_orientation(table, IBUS_ORIENTATION_VERTICAL);
 #endif
+
   for (int i = 0; i < candidates.candidate_size(); ++i) {
     IBusText *text =
         ibus_text_new_from_string(candidates.candidate(i).value().c_str());
@@ -571,7 +682,7 @@ bool MozcEngine::UpdateCandidates(IBusEngine *engine,
       unique_candidate_ids_.push_back(kBadCandidateId);
     }
   }
-  
+
   return true;
 }
 
@@ -589,6 +700,31 @@ void MozcEngine::UpdateCompositionMode(IBusEngine *engine,
     if (entry.composition_mode == new_composition_mode) {
       PropertyActivate(engine, entry.key, PROP_STATE_CHECKED);
     }
+  }
+}
+
+void MozcEngine::UpdatePreeditMethod() {
+  config::Config config;
+  if (!session_->GetConfig(&config)) {
+    LOG(ERROR) << "GetConfig failed";
+    return;
+  }
+  preedit_method_ = config.has_preedit_method() ?
+      config.preedit_method() : config::Config::ROMAN;
+}
+
+void MozcEngine::SyncData(bool force) {
+  if (session_.get() == NULL) {
+    return;
+  }
+
+  const uint64 current_time = GetTime();
+  if (force ||
+      (current_time >= last_sync_time_ &&
+       current_time - last_sync_time_ >= kSyncDataInterval)) {
+    VLOG(1) << "Syncing data";
+    session_->SyncData();
+    last_sync_time_ = current_time;
   }
 }
 

@@ -28,17 +28,15 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <vector>
+#include "base/base.h"
 #include "base/file_stream.h"
 #include "base/mmap.h"
-#include "converter/connector.h"
-
-DEFINE_bool(use_sparse_connector, true, "uses SparseConnector.");
-DEFINE_bool(verify_connector, true, "verify output of connector");
-DEFINE_bool(use_symmetric_matrix, true, "use symmetric matrix");
+#include "converter/sparse_connector.h"
+#include "storage/sparse_array_image.h"
 
 namespace mozc {
-void ConnectorInterface::Compile(const char *text_file,
-                                 const char *binary_file) {
+void SparseConnectorBuilder::Compile(const char *text_file,
+                                     const char *binary_file) {
   InputFileStream ifs(text_file);
   CHECK(ifs);
   string line;
@@ -56,9 +54,7 @@ void ConnectorInterface::Compile(const char *text_file,
   vector<int16> matrix(lsize * rsize);
   fill(matrix.begin(), matrix.end(), 0);
 
-  if (FLAGS_use_symmetric_matrix) {
-    CHECK_EQ(lsize, rsize);
-  }
+  CHECK_EQ(lsize, rsize);
 
   while (getline(ifs, line)) {
     fields.clear();
@@ -95,20 +91,58 @@ void ConnectorInterface::Compile(const char *text_file,
     }
   }
 
-  if (FLAGS_use_sparse_connector) {
-    SparseConnector::CompileImage(&matrix[0], lsize, rsize,
-                                  binary_file);
-  } else {
-    DenseConnector::CompileImage(&matrix[0], lsize, rsize,
-                                 binary_file);
+  {
+    LOG(INFO) << "compiling matrix with " << lsize * rsize;
+
+    SparseArrayBuilder builder;
+    vector<int16> default_cost(lsize);
+    fill(default_cost.begin(), default_cost.end(), static_cast<int16>(0));
+
+    for (int lid = 0; lid < lsize; ++lid) {
+      for (int rid = 0; rid < rsize; ++rid) {
+        const int16 c = matrix[lid + lsize * rid];
+        if (ConnectorInterface::kInvalidCost != c) {
+          default_cost[lid] = max(default_cost[lid], c);  // save default cost
+        }
+      }
+    }
+
+    for (int lid = 0; lid < lsize; ++lid) {
+      for (int rid = 0; rid < rsize; ++rid) {
+        const int16 c = matrix[lid + lsize * rid];
+        if (c != default_cost[lid]) {
+          builder.AddValue(SparseConnector::EncodeKey(lid, rid), c);
+        }
+      }
+    }
+
+    builder.Build();
+
+    OutputFileStream ofs(binary_file, ios::binary|ios::out);
+    CHECK(ofs) << "permission denied: " << binary_file;
+
+    CHECK_EQ(lsize, default_cost.size());
+
+    uint16 magic = SparseConnector::kSparseConnectorMagic;
+    ofs.write(reinterpret_cast<const char*>(&magic), sizeof(magic));
+    // write one more value to align matrix image in 4 bytes.
+    magic = 0;
+    ofs.write(reinterpret_cast<const char*>(&magic), sizeof(magic));
+    ofs.write(reinterpret_cast<const char*>(&lsize), sizeof(lsize));
+    ofs.write(reinterpret_cast<const char*>(&rsize), sizeof(rsize));
+    ofs.write(reinterpret_cast<const char*>(&default_cost[0]),
+              sizeof(default_cost[0]) * default_cost.size());
+    ofs.write(builder.GetImage(), builder.GetSize());
+    ofs.close();
   }
 
-  if (FLAGS_verify_connector) {
+  // verify connector
+  {
     Mmap<char> mmap;
     CHECK(mmap.Open(binary_file, "r"));
 
-    scoped_ptr<ConnectorInterface> connector(
-        ConnectorInterface::OpenFromArray(mmap.begin(), mmap.GetFileSize()));
+    scoped_ptr<SparseConnector> connector(
+        new SparseConnector(mmap.begin(), mmap.GetFileSize()));
     CHECK(connector.get());
 
     for (int rid = 0; rid < rsize; ++rid) {

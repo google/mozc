@@ -57,7 +57,7 @@ class SessionConverterTest : public testing::Test {
  protected:
   virtual void SetUp() {
     convertermock_.reset(new ConverterMock());
-    ConverterInterface::SetConverter(convertermock_.get());
+    ConverterFactory::SetConverter(convertermock_.get());
     Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
 
     table_.reset(new composer::Table);
@@ -1620,7 +1620,7 @@ class ConverterMockForRevert : public ConverterMock {
 
 TEST(SessionConverterResetTest, Reset) {
   ConverterMockForReset convertermock;
-  ConverterInterface::SetConverter(&convertermock);
+  ConverterFactory::SetConverter(&convertermock);
   SessionConverter converter(&convertermock);
   EXPECT_FALSE(convertermock.reset_conversion_called());
   converter.Reset();
@@ -1629,7 +1629,7 @@ TEST(SessionConverterResetTest, Reset) {
 
 TEST(SessionConverterRevertTest, Revert) {
   ConverterMockForRevert convertermock;
-  ConverterInterface::SetConverter(&convertermock);
+  ConverterFactory::SetConverter(&convertermock);
   SessionConverter converter(&convertermock);
   EXPECT_FALSE(convertermock.revert_conversion_called());
   converter.Revert();

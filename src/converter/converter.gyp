@@ -69,7 +69,7 @@
         '<(gen_out_dir)/segmenter_inl.h',
         'candidate_filter.cc',
         'connector.cc',
-        'connector_compiler.cc',
+        'sparse_connector.cc',
         'converter.cc',
         'converter_data.cc',
         'converter_mock.cc',
@@ -158,8 +158,8 @@
       'target_name': 'gen_connection_data_main',
       'type': 'executable',
       'sources': [
-        'connector.cc',
-        'connector_compiler.cc',
+        'sparse_connector.cc',
+        'sparse_connector_builder.cc',
         'gen_connection_data_main.cc',
       ],
       'dependencies': [
@@ -180,9 +180,6 @@
       'target_name': 'gen_segmenter_bitarray_main',
       'type': 'executable',
       'sources': [
-        'connector.cc',
-        'connector_compiler.cc',
-        'converter_data.cc',
         'gen_segmenter_bitarray_main.cc',
         'key_corrector.cc',
       ],

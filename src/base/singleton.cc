@@ -49,14 +49,16 @@ void InitSingletonMutex() {
 }
 }  // namespace
 
-
 void SingletonFinalizer::AddFinalizer(FinalizerFunc func) {
+  // When g_finalizers_size is equal to kMaxFinalizersSize,
+  // SingletonFinalizer::Finalize is called already.
+  CHECK_LT(g_finalizers_size, kMaxFinalizersSize);
+
   // TODO(taku):
   // we only allow up to kMaxFinalizersSize functions here.
   CallOnce(&g_mutex_once, &InitSingletonMutex);
   {
     scoped_lock l(g_mutex);
-    CHECK_LT(g_finalizers_size, kMaxFinalizersSize);
     g_finalizers[g_finalizers_size++] = func;
   }
 }
@@ -68,7 +70,7 @@ void DeleteSingleton() {
     (*g_finalizers[i])();
   }
   // set kMaxFinalizersSize so that AddFinalizers cannot be called
-  // twice
+  // twice.
   g_finalizers_size = kMaxFinalizersSize;
   delete g_mutex;
   g_mutex = NULL;

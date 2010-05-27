@@ -111,11 +111,11 @@ bool ConfigHandlerImpl::SetConfigInternal(const Config &config) {
 
   // Initialize platform specific configuration.
   if (config_.session_keymap() == Config::NONE) {
-#ifdef OS_WINDOWS
-    config_.set_session_keymap(Config::MSIME);
-#else  // Mac or Linux
+#ifdef OS_MACOSX
     config_.set_session_keymap(Config::KOTOERI);
-#endif
+#else  // OS_MACOSX
+    config_.set_session_keymap(Config::MSIME);
+#endif  // OS_MACOSX
   }
 
   return true;
@@ -207,11 +207,11 @@ bool ConfigHandler::SetConfig(const Config &config) {
 
 void ConfigHandler::GetDefaultConfig(Config *config) {
   config->Clear();
-#ifdef OS_WINDOWS
-  config->set_session_keymap(Config::MSIME);
-#else  // Mac or Linux
+#ifdef OS_MACOSX
   config->set_session_keymap(Config::KOTOERI);
-#endif
+#else  // OS_MACOSX
+  config->set_session_keymap(Config::MSIME);
+#endif  // OS_MACOSX
 
   // "ア"
   AddCharacterFormRule(config, "\xE3\x82\xA2",

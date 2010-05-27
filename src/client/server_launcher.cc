@@ -87,13 +87,13 @@ const string LoadServerFlags() {
 }  // namespace
 
 // initialize default path
-StartServerHandler::StartServerHandler()
+ServerLauncher::ServerLauncher()
     : server_program_(Util::GetServerPath()),
       restricted_(false) {}
 
-StartServerHandler::~StartServerHandler() {}
+ServerLauncher::~ServerLauncher() {}
 
-bool StartServerHandler::StartServer(SessionInterface *session) {
+bool ServerLauncher::StartServer(SessionInterface *session) {
   if (server_program().empty()) {
     LOG(ERROR) << "Server path is empty";
     return false;
@@ -223,34 +223,34 @@ bool StartServerHandler::StartServer(SessionInterface *session) {
   return false;
 }
 
-bool StartServerHandler::ForceTerminateServer(const string &name) {
+bool ServerLauncher::ForceTerminateServer(const string &name) {
   return IPCClient::TerminateServer(name);
 }
 
-bool StartServerHandler::WaitServer(uint32 pid) {
+bool ServerLauncher::WaitServer(uint32 pid) {
   const int kTimeout = 10000;
   return Process::WaitProcess(static_cast<size_t>(pid), kTimeout);
 }
 
-void StartServerHandler::OnFatal(
-    StartServerHandlerInterface::ServerErrorType type) {
+void ServerLauncher::OnFatal(
+    ServerLauncherInterface::ServerErrorType type) {
   LOG(ERROR) << "OnFatal is called: " << static_cast<int>(type);
 
   string error_type;
   switch (type) {
-    case StartServerHandlerInterface::SERVER_TIMEOUT:
+    case ServerLauncherInterface::SERVER_TIMEOUT:
       error_type = "server_timeout";
       break;
-    case StartServerHandlerInterface::SERVER_BROKEN_MESSAGE:
+    case ServerLauncherInterface::SERVER_BROKEN_MESSAGE:
       error_type = "server_broken_message";
       break;
-    case StartServerHandlerInterface::SERVER_VERSION_MISMATCH:
+    case ServerLauncherInterface::SERVER_VERSION_MISMATCH:
       error_type = "server_version_mismatch";
       break;
-    case StartServerHandlerInterface::SERVER_SHUTDOWN:
+    case ServerLauncherInterface::SERVER_SHUTDOWN:
       error_type = "server_shutdown";
       break;
-    case StartServerHandlerInterface::SERVER_FATAL:
+    case ServerLauncherInterface::SERVER_FATAL:
       error_type = "server_fatal";
       break;
     default:

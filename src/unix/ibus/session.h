@@ -43,9 +43,9 @@ namespace config {
 class Config;
 }  // namespace config
 
-class SessionHandler;
-
 namespace ibus {
+
+class StandaloneSessionHandler;
 
 // Implements SessionInterface for ibus-mozc.
 // NOTE: ibus-mozc is directlly linked to the Mozc server comoponents so it is
@@ -60,12 +60,15 @@ class Session : public client::SessionInterface {
   Session();
   virtual ~Session();
 
-  // Returns true if session id is valid.
-  // If session id is invalid, re-issue a valid sssion id.
-  virtual bool EnsureSession();
+  // Dose nothing and always returns true.
+  virtual bool IsValidRunLevel() const;
 
   // Does nothing.
   virtual bool EnsureConnection();
+
+  // Returns true if session id is valid.
+  // If session id is invalid, re-issue a valid sssion id.
+  virtual bool EnsureSession();
 
   // Does nothing.
   virtual bool CheckVersionOrRestartServer();
@@ -89,19 +92,31 @@ class Session : public client::SessionInterface {
   virtual bool SyncData();
   virtual bool Reload();
   virtual bool Cleanup();
-
-  virtual bool NoOperation();
+  virtual void Reset();
 
   // Does nothing.
   virtual bool PingServer() const;
 
-  virtual void Reset();
+  virtual bool NoOperation();
 
   // Enables or disables using cascading window.
   virtual void EnableCascadingWindow(bool enable);
 
   // Does nothing.
   virtual void set_timeout(int timeout);
+
+  // Does nothing.
+  virtual void set_restricted(bool restricted);
+
+  // Does nothing.
+  virtual void set_server_program(const string &program_path);
+
+  // Does nothing.
+  virtual bool LaunchTool(const string &mode,
+                          const string &extra_arg);
+
+  // Does nothing.
+  virtual bool OpenBrowser(const string &url);
 
  private:
   bool CreateSession();
@@ -117,7 +132,8 @@ class Session : public client::SessionInterface {
             commands::Output *output);
 
   uint64 id_;
-  scoped_ptr<SessionHandler> handler_;
+
+  StandaloneSessionHandler *handler_;
 };
 
 }  // namespace ibus

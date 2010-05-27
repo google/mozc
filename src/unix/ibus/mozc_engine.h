@@ -37,10 +37,19 @@
 #include "unix/ibus/engine_interface.h"
 
 namespace mozc {
+
+namespace client {
+class SessionInterface;
+}
+
 namespace ibus {
 
 class KeyTranslator;
-class Session;
+
+static const char *kEngineNames[] = { "mozc", "mozc-jp" };
+static const char *kEngineLayouts[] = { "us", "jp" };
+COMPILE_ASSERT(
+    arraysize(kEngineNames) == arraysize(kEngineLayouts), bad_array_size);
 
 // Implements EngineInterface and handles signals from IBus daemon.
 // This class mainly does the two things:
@@ -104,17 +113,29 @@ class MozcEngine : public EngineInterface {
   // Updates the composition mode based on the content of |output|.
   void UpdateCompositionMode(IBusEngine *engine,
                              const commands::Output &output);
+
+  // Updates internal preedit_method (Roman/Kana) state
+  void UpdatePreeditMethod();
+
   // Sets the composition mode to |composition_mode|. Updates Mozc and IBus
   // panel status.
   void SetCompositionMode(IBusEngine *engine,
                           commands::CompositionMode composition_mode);
 
+  // Calls SyncData command. if |force| is false, SyncData is called
+  // at an appropriate timing to reduce IPC calls. if |force| is true,
+  // always calls SyncData.
+  void SyncData(bool force);
+
+  uint64 last_sync_time_;
   scoped_ptr<KeyTranslator> key_translator_;
-  scoped_ptr<Session> session_;
+  scoped_ptr<client::SessionInterface> session_;
 
   IBusPropList *prop_root_;
   IBusProperty *prop_composition_mode_;
+  IBusProperty *prop_mozc_tool_;
   commands::CompositionMode current_composition_mode_;
+  config::Config::PreeditMethod preedit_method_;
 
   // Unique IDs of candidates that are currently shown.
   vector<int32> unique_candidate_ids_;

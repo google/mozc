@@ -30,19 +30,46 @@
 #include "unix/ibus/session.h"
 
 #include "base/base.h"
+#include "base/singleton.h"
 #include "session/commands.pb.h"
 #include "session/session_handler.h"
 
 namespace mozc {
 namespace ibus {
 
+// Session Handler must be singleton per user.
+class StandaloneSessionHandler {
+public:
+  StandaloneSessionHandler()
+    : handler_(new SessionHandler) {}
+
+  bool EvalCommand(commands::Command *command) {
+    // SessionHandler::EvalCommand is not thread safe.
+    // When IBusMozc creates multiple Session instances and
+    // calls EvalCommand simultaneously, EvalCommand will crashes.
+    // To prevent such situation, do a giant lock on EvalCommand
+    // just in case. Seems that IBusMozc will never create
+    // multiple instances.
+    scoped_lock l(&mutex_);
+    return handler_->EvalCommand(command);
+  }
+
+private:
+  Mutex mutex_;
+  scoped_ptr<SessionHandler> handler_;
+};
+
 Session::Session()
     : id_(0),
-      handler_(new SessionHandler) {
+      handler_(Singleton<StandaloneSessionHandler>::get()) {
 }
 
 Session::~Session() {
   DeleteSession();
+}
+
+bool Session::IsValidRunLevel() const {
+  return true;
 }
 
 bool Session::EnsureSession() {
@@ -102,6 +129,21 @@ void Session::EnableCascadingWindow(bool enable) {
 }
 
 void Session::set_timeout(int timeout) {
+}
+
+void Session::set_restricted(bool restricted) {
+}
+
+void Session::set_server_program(const string &program_path) {
+}
+
+bool Session::LaunchTool(const string &mode,
+                         const string &extra_arg) {
+  return true;
+}
+
+bool Session::OpenBrowser(const string &url) {
+  return true;
 }
 
 bool Session::CreateSession() {

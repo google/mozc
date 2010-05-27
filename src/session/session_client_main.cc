@@ -47,7 +47,7 @@ void Loop(istream *input, ostream *output) {
   // Initialize session.
   composer::Table table;
   table.Initialize();
-  ConverterInterface *converter = ConverterInterface::GetConverter();
+  ConverterInterface *converter = ConverterFactory::GetConverter();
   keymap::KeyMapManager *keymap = new keymap::KeyMapManager();
   scoped_ptr<Session> session(new Session(&table, converter, keymap));
 

@@ -327,16 +327,11 @@ int main(int argc, char **argv) {
   FLAGS_logtostderr = true;
 
   mozc::client::Session client;
-
-  mozc::client::StartServerHandler *handler =
-      new mozc::client::StartServerHandler;
   if (!FLAGS_server_path.empty()) {
-    VLOG(1) << "Setting server path: " << FLAGS_server_path;
-    handler->set_server_program(FLAGS_server_path);
+    client.set_server_program(FLAGS_server_path);
   }
 
-  client.SetStartServerHandler(handler);
-
+  CHECK(client.IsValidRunLevel()) << "IsValidRunLevel failed";
   CHECK(client.EnsureSession()) << "EnsureSession failed";
   CHECK(client.NoOperation()) << "Server is not respoinding";
 

@@ -307,7 +307,7 @@ bool RewriteEntireCandidate(Segments *segments) {
         Util::CharsLen(segments->conversion_segment(0).key());
     const int diff = static_cast<int>(all_length - first_length);
     if (diff > 0) {
-      ConverterInterface::GetConverter()->ResizeSegment(segments, 0, diff);
+      ConverterFactory::GetConverter()->ResizeSegment(segments, 0, diff);
     }
 
     // ignore if the size of segments != 1 even with Resize

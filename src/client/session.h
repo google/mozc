@@ -47,10 +47,48 @@ class Config;
 
 namespace client {
 
-// default StartServerHanlder implemntation.
+class ServerLauncherInterface {
+ public:
+  enum ServerErrorType {
+    SERVER_TIMEOUT,
+    SERVER_BROKEN_MESSAGE,
+    SERVER_VERSION_MISMATCH,
+    SERVER_SHUTDOWN,
+    SERVER_FATAL,
+  };
+
+  // implement StartServer.
+  // return true if server can launched sucesfully.
+  virtual bool StartServer(SessionInterface *session) = 0;
+
+  // terminate the server.
+  // You should not call this method unless protocol version mismatch happens.
+  virtual bool ForceTerminateServer(const string &name) = 0;
+
+  // Wait server until it terminates
+  virtual bool WaitServer(uint32 pid) = 0;
+
+  // called when fatal error occured.
+  virtual void OnFatal(ServerErrorType type) = 0;
+
+  // set the full path of server program.
+  virtual void set_server_program(const string &server_program) = 0;
+
+  // return the full path of server program
+  // This is used for making IPC connection.
+  virtual const string &server_program() const = 0;
+
+  // launch with restricted mode
+  virtual void set_restricted(bool restricted) = 0;
+
+  ServerLauncherInterface() {}
+  virtual ~ServerLauncherInterface() {}
+};
+
+// default ServerLauncher implemntation.
 // This class uses fork&exec (linux/mac) and CreateProcess() (Windows)
 // to launch server process
-class StartServerHandler : public StartServerHandlerInterface {
+class ServerLauncher : public ServerLauncherInterface {
  public:
   bool StartServer(SessionInterface *session);
 
@@ -58,7 +96,7 @@ class StartServerHandler : public StartServerHandlerInterface {
 
   bool WaitServer(uint32 pid);
 
-  void OnFatal(StartServerHandlerInterface::ServerErrorType type);
+  void OnFatal(ServerLauncherInterface::ServerErrorType type);
 
   // specify server program. On Mac, we need to specify the server path
   // using this method.
@@ -75,8 +113,8 @@ class StartServerHandler : public StartServerHandlerInterface {
     restricted_ = restricted;
   }
 
-  StartServerHandler();
-  virtual ~StartServerHandler();
+  ServerLauncher();
+  virtual ~ServerLauncher();
 
  private:
   string server_program_;
@@ -89,29 +127,19 @@ class Session : public SessionInterface {
   virtual ~Session();
   void SetIPCClientFactory(IPCClientFactoryInterface *client_factory);
 
-  // set StartServerHandler.
-  // StartServerHandler is used as default
+  // set ServerLauncher.
+  // ServerLauncher is used as default
   // NOTE: Session class takes the owership of start_server_handler.
-  void SetStartServerHandler(StartServerHandlerInterface *start_server_handler);
+  void SetServerLauncher(ServerLauncherInterface *server_launcher);
 
-  // return true if connection is alive.
-  // If connection is not available,  re-launch mozc_server internally.
+  bool IsValidRunLevel() const;
+
   bool EnsureConnection();
 
-  // return true if session id is valid.
-  // if session id is invalid, re-issue a valid sssion id.
   bool EnsureSession();
 
-  // Check protocol/product version.
-  // If a  new version is avaialable, restart the server.
-  // return true the server is available.
-  // return false some error happend during the server restart.
-  // This method calls EnsureConnection automatically.
   bool CheckVersionOrRestartServer();
 
-  // SendKey/TestSendKey/SendCommand automatically
-  // make a connection and issue an session id
-  // if valid session id is not found.
   bool SendKey(const commands::KeyEvent &key,
                commands::Output *output);
   bool TestSendKey(const commands::KeyEvent &key,
@@ -119,11 +147,6 @@ class Session : public SessionInterface {
   bool SendCommand(const commands::SessionCommand &command,
                    commands::Output *output);
 
-  // The methods below don't call
-  // StartServer if server is not available. This treatment
-  // avoids unexceptional and continuous server restart trials.
-  // If you really want to ensure the connection,
-  // call EnsureConnection() in advance
   bool GetConfig(config::Config *config);
   bool SetConfig(const config::Config &config);
 
@@ -135,28 +158,20 @@ class Session : public SessionInterface {
   bool Reload();
   bool Cleanup();
 
-  // This method is similar to PingServer(), but the internal
-  // state may change. In almost all cases, you don't need to
-  // call this method
   bool NoOperation();
-
-  // Ping server:
-  // This method will never change the internal state.
   bool PingServer() const;
 
-  // Reset internal state (changs the state to be SERVER_UNKNWON)
   void Reset();
 
-  // Enables or disables using cascading window.
   void EnableCascadingWindow(bool enable);
 
-  // Sets the time out in milli second used for the IPC connection.
   void set_timeout(int timeout);
+  void set_restricted(bool restricted);
+  void set_server_program(const string &server_program);
 
-  // Dump the recent user inputs to specified file with label
-  // This is used for debugging
-  void DumpHistorySnapshot(const string &filename,
-                           const string &label) const;
+  bool LaunchTool(const string &mode, const string &arg);
+
+  bool OpenBrowser(const string &url);
 
  private:
   enum ServerStatus {
@@ -170,6 +185,11 @@ class Session : public SessionInterface {
     SERVER_FATAL             // cannot start server (binary is broken/missing)
   };
 
+  // Dump the recent user inputs to specified file with label
+  // This is used for debugging
+  void DumpHistorySnapshot(const string &filename,
+                           const string &label) const;
+
   // Start server:
   // return true if server is launched sucessfully or server is already running.
   // return false if server cannot be launched.
@@ -180,7 +200,7 @@ class Session : public SessionInterface {
   bool StartServer();
 
   // Displays a message box to notify the user of fatal error.
-  void OnFatal(StartServerHandlerInterface::ServerErrorType type);
+  void OnFatal(ServerLauncherInterface::ServerErrorType type);
 
   // Initialize input filling id and preferences.
   void InitInput(commands::Input *input) const;
@@ -231,7 +251,7 @@ class Session : public SessionInterface {
 
   uint64 id_;
   IPCClientFactoryInterface *client_factory_;
-  scoped_ptr<StartServerHandlerInterface> start_server_handler_;
+  scoped_ptr<ServerLauncherInterface> server_launcher_;
   scoped_array<char> result_;
   scoped_ptr<config::Config> preferences_;
   bool use_cascading_window_;

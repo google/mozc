@@ -122,7 +122,7 @@ class UserSegmentHistoryRewriterTest : public testing::Test {
   UserSegmentHistoryRewriterTest() {}
 
   virtual void SetUp() {
-    ConverterInterface::SetConverter(&mock_);
+    ConverterFactory::SetConverter(&mock_);
     Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
 
     config::Config config;

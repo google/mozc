@@ -27,71 +27,24 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_CONVERTER_CONNECTOR_H_
-#define MOZC_CONVERTER_CONNECTOR_H_
+#ifndef MOZC_CONVERTER_SPARSE_CONNECTOR_H_
+#define MOZC_CONVERTER_SPARSE_CONNECTOR_H_
 
 #include "base/base.h"
-#include "testing/base/public/gunit_prod.h"  // for FRIEND_TEST
+#include "converter/connector_interface.h"
 
 namespace mozc {
 
-class SparseArrayBuilder;
 class SparseArrayImage;
-
-class ConnectorInterface {
- public:
-  static ConnectorInterface *OpenFromArray(const char *ptr, size_t size);
-
-  static void Compile(const char *text_file,
-                      const char *binary_file);
-
-  // magic number at the head of DenseConnector image.
-  static const uint16 kDenseConnectorMagic = 0x2020;
-  static const uint16 kSparseConnectorMagic = 0x4141;
-
-  // InvalidCost
-  static const int16 kInvalidCost = 30000;
-
-  virtual int GetTransitionCost(uint16 rid, uint16 lid) const = 0;
-
-  virtual ~ConnectorInterface() {}
-};
-
-// Array based straightforward implementation of connection cost table.
-// TODO(tabata): Remove this class, once compressed connector works well.
-class DenseConnector : public ConnectorInterface {
- public:
-  DenseConnector(const char *ptr, size_t size);
-  ~DenseConnector();
-
-  virtual int GetTransitionCost(uint16 rid, uint16 lid) const {
-    return matrix_[rid + lsize_ * lid];
-  }
-
-  static void CompileImage(const int16 *matrix,
-                           uint16 lsize, uint16 rsize,
-                           const char *binary_file);
-
- private:
-  const int16 *matrix_;
-  uint16      lsize_;
-  uint16      rsize_;
-
-  DISALLOW_COPY_AND_ASSIGN(DenseConnector);
-};
 
 class SparseConnector : public ConnectorInterface {
  public:
   SparseConnector(const char *ptr, size_t size);
   virtual ~SparseConnector();
 
-  virtual int GetTransitionCost(uint16 rid, uint16 lid) const;
+  static const uint16 kSparseConnectorMagic = 0x4141;
 
-  // key of matrix is (rid + lsize * lid).
-  // left and right is default cost for each lid, rid.
-  static void CompileImage(const int16 *matrix,
-                           uint16 lsize, uint16 rsize,
-                           const char *binary_file);
+  virtual int GetTransitionCost(uint16 rid, uint16 lid) const;
 
   // It is better to store rid in higher bit as loop for rid is outside
   // of lid loop.
@@ -100,13 +53,17 @@ class SparseConnector : public ConnectorInterface {
   }
 
  private:
-  FRIEND_TEST(SparseConnectorTest, key_coding);
-
   scoped_ptr<SparseArrayImage> array_image_;
   const int16 *default_cost_;
 
   DISALLOW_COPY_AND_ASSIGN(SparseConnector);
 };
-}  // namespace mozc
 
-#endif  // MOZC_CONVERTER_CONNECTOR_H_
+class SparseConnectorBuilder {
+ public:
+  static void Compile(const char *text_file,
+                      const char *binary_file);
+};
+}  // mozc
+
+#endif  // MOZC_CONVERTER_SPARSE_CONNECTOR_H_

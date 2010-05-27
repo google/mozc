@@ -42,6 +42,7 @@
 namespace {
 const int kNumConnections = 10;
 const int kTimeOut = 5000;  // 5000msec
+const char kSessionName[] = "session";
 const char kEventName[] = "session";
 const uint32 kSchedulerDelay = 60*1000;  // 1 min
 const uint32 kSchedulerRandomDelay = 5*60*1000;  // 5 min
@@ -50,8 +51,8 @@ const uint32 kScheduleMaxInterval = 2*60*60*1000;  // 2 hours
 }
 
 namespace mozc {
-SessionServer::SessionServer(const string& name)
-    : IPCServer(name, kNumConnections, kTimeOut),
+SessionServer::SessionServer()
+    : IPCServer(kSessionName, kNumConnections, kTimeOut),
       handler_(new SessionHandler()),
       usage_observer_(new session::SessionUsageObserver()) {
   // start session watch dog timer

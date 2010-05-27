@@ -21,4 +21,4 @@ Unknown    名詞,サ変接続
 FirstName  名詞,固有名詞,人名,名
 LastName   名詞,固有名詞,人名,姓
 
-Number     名詞,数
+Number     名詞,数,アラビア数字

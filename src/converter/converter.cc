@@ -49,7 +49,6 @@ namespace mozc {
 namespace {
 
 size_t kErrorIndex = static_cast<size_t>(-1);
-ConverterInterface *g_converter = NULL;
 
 class ConverterImpl : public ConverterInterface {
  public:
@@ -125,9 +124,12 @@ void SetKey(Segments *segments, const string &key) {
     LOG(INFO) << buf;
   }
 }
+
+ConverterInterface *g_converter = NULL;
+
 }  // namespace
 
-ConverterInterface *ConverterInterface::GetConverter() {
+ConverterInterface *ConverterFactory::GetConverter() {
   if (g_converter == NULL) {
     return Singleton<ConverterImpl>::get();
   } else {
@@ -135,7 +137,7 @@ ConverterInterface *ConverterInterface::GetConverter() {
   }
 }
 
-void ConverterInterface::SetConverter(ConverterInterface *converter) {
+void ConverterFactory::SetConverter(ConverterInterface *converter) {
   g_converter = converter;
 }
 
@@ -147,11 +149,7 @@ ConverterImpl::ConverterImpl()
   VLOG(1) << "ConverterImpl is created";
 }
 
-ConverterImpl::~ConverterImpl() {
-  // Call Sync so that all data is synced to the disk
-  // before logoff/shutdown
-  Sync();
-}
+ConverterImpl::~ConverterImpl() {}
 
 bool ConverterImpl::StartConversion(Segments *segments,
                                     const string &key) const {

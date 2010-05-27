@@ -1,0 +1,49 @@
+QToolBar > .QPushButton {
+  background-color: rgb(213,228,246);
+  border-color: rgb(183,196,225);
+  color: rgb(18,50,114);
+  border-width: 1px;
+  border-style: none;
+  border-radius: 5px;
+  min-height: 18px;
+  min-width: 50px;
+  padding: 4px;
+}
+
+QToolBar > .QPushButton:pressed {
+  background-color: rgb(221,228,235);
+  border-style: solid;
+  border-width: 1px;
+  padding-left: 6px;
+  padding-top: 6px;
+}
+
+QToolBar > .QPushButton:hover {
+  border-width: 1px;
+  border-style: solid;
+  background-color: rgb(238,243,250);
+}
+
+QToolBar > .QPushButton:disabled {
+  color: rgb(96,100,104);
+}
+
+QToolBar > .QPushButton::menu-indicator {
+  subcontrol-position: right center;
+  subcontrol-origin: padding;
+  color: rgb(18,50,114);
+  left: -2px;
+}
+
+QStatusBar {
+  color: rgb(18,50,114);
+  background-color: rgb(213,228,246);
+}
+
+QToolBar {
+ border-width: 0px;
+ margin: 0px;
+ padding: 5px;
+ spacing: 5px;
+ background-color: rgb(213,228,246);
+}

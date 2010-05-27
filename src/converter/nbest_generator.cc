@@ -32,7 +32,7 @@
 #include <string>
 #include "base/base.h"
 #include "converter/candidate_filter.h"
-#include "converter/connector.h"
+#include "converter/connector_interface.h"
 #include "converter/converter_data.h"
 #include "converter/pos_matcher.h"
 #include "converter/segmenter.h"
@@ -43,16 +43,15 @@ namespace mozc {
 NBestGenerator::NBestGenerator()
     : freelist_(128), filter_(NULL),
       begin_node_(NULL), end_node_(NULL),
-      connector_(NULL), data_(NULL) {}
+      connector_(ConnectorFactory::GetConnector()),
+      data_(NULL) {}
 
 NBestGenerator::~NBestGenerator() {}
 
 void NBestGenerator::Init(Node *begin_node, Node *end_node,
-                          ConnectorInterface *connector,
                           ConverterData *data) {
   begin_node_ = begin_node;
   end_node_ = end_node;
-  connector_ = connector;
   data_ = data;
   Reset();
 }

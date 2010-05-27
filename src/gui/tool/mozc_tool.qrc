@@ -1,0 +1,21 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+<!--
+// The following is the manual step to make *qm files.
+// - Edit source files
+//   % g4 edit *.cpp *.h *.ts
+// - Update *ts file. tr() messages are stored in .ts
+//   % lupdate . -ts mozc_tool_ja.ts
+//   % lupdate . -ts mozc_tool_en.ts
+// - open *.ts files with QT linguest and added translation
+// - convert *.ts file to *.qm file
+//   % lrelease mozc_tool_ja.ts -qm mozc_tool_ja.qm
+//   % lrelease mozc_tool_en.ts -qm mozc_tool_en.qm
+-->
+<qresource>
+ <!---
+  // copeid from QT_DIR/transliations/qt_ja_JP.qm which contains default TS
+  -->
+  
+</qresource>
+</RCC>

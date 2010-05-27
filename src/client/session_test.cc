@@ -55,9 +55,9 @@ const string UpdateVersion(int diff) {
 }
 }
 
-class TestStartServerHandler : public StartServerHandlerInterface {
+class TestServerLauncher : public ServerLauncherInterface {
  public:
-  TestStartServerHandler(IPCClientFactoryMock *factory)
+  TestServerLauncher(IPCClientFactoryMock *factory)
       : factory_(factory),
         start_server_result_(false),
         start_server_called_(false),
@@ -90,12 +90,12 @@ class TestStartServerHandler : public StartServerHandlerInterface {
     return true;
   }
 
-  virtual void OnFatal(StartServerHandlerInterface::ServerErrorType type) {
+  virtual void OnFatal(ServerLauncherInterface::ServerErrorType type) {
     LOG(ERROR) << static_cast<int>(type);
     error_map_[static_cast<int>(type)]++;
   }
 
-  int error_count(StartServerHandlerInterface::ServerErrorType type) {
+  int error_count(ServerLauncherInterface::ServerErrorType type) {
     return error_map_[static_cast<int>(type)];
   }
 
@@ -113,6 +113,9 @@ class TestStartServerHandler : public StartServerHandlerInterface {
 
   void set_force_terminate_server_called(bool force_terminate_server_called) {
     force_terminate_server_called_ = force_terminate_server_called;
+  }
+
+  void set_server_program(const string &server_path) {
   }
 
   virtual const string &server_program() const {
@@ -167,8 +170,8 @@ class SessionTest : public testing::Test {
     session_.reset(new Session);
     session_->SetIPCClientFactory(client_factory_.get());
 
-    start_server_handler_ = new TestStartServerHandler(client_factory_.get());
-    session_->SetStartServerHandler(start_server_handler_);
+    server_launcher_ = new TestServerLauncher(client_factory_.get());
+    session_->SetServerLauncher(server_launcher_);
   }
 
   virtual void TearDown() {
@@ -198,7 +201,7 @@ class SessionTest : public testing::Test {
     } else {
       client_factory_->SetServerProductVersion(UpdateVersion(version_diff_));
     }
-    start_server_handler_->set_start_server_result(true);
+    server_launcher_->set_start_server_result(true);
 
     // TODO(komatsu): Due to the limitation of the testing mock,
     // EnsureConnection should be explicitly called before calling
@@ -211,7 +214,7 @@ class SessionTest : public testing::Test {
 
   scoped_ptr<IPCClientFactoryMock> client_factory_;
   scoped_ptr<Session> session_;
-  TestStartServerHandler *start_server_handler_;
+  TestServerLauncher *server_launcher_;
   int version_diff_;
 
  private:
@@ -220,7 +223,7 @@ class SessionTest : public testing::Test {
 
 TEST_F(SessionTest, ConnectionError) {
   client_factory_->SetConnection(false);
-  start_server_handler_->set_start_server_result(false);
+  server_launcher_->set_start_server_result(false);
   EXPECT_FALSE(session_->EnsureConnection());
 
   commands::KeyEvent key;
@@ -378,12 +381,12 @@ TEST_F(SessionTest, VersionMismatch) {
   commands::Output output;
   EXPECT_FALSE(session_->SendKey(key_event, &output));
   EXPECT_FALSE(session_->EnsureConnection());
-  EXPECT_EQ(1, start_server_handler_->error_count
-            (StartServerHandlerInterface::SERVER_VERSION_MISMATCH));
+  EXPECT_EQ(1, server_launcher_->error_count
+            (ServerLauncherInterface::SERVER_VERSION_MISMATCH));
 }
 
 TEST_F(SessionTest, ProtocolUpdate) {
-  start_server_handler_->set_start_server_result(true);
+  server_launcher_->set_start_server_result(true);
 
   const int mock_id = 0;
   EXPECT_TRUE(SetupConnection(mock_id));
@@ -393,22 +396,22 @@ TEST_F(SessionTest, ProtocolUpdate) {
   SetMockOutput(mock_output);
   EXPECT_TRUE(session_->EnsureConnection());
 
-  start_server_handler_->set_force_terminate_server_called(false);
-  start_server_handler_->set_force_terminate_server_result(true);
-  start_server_handler_->set_start_server_called(false);
+  server_launcher_->set_force_terminate_server_called(false);
+  server_launcher_->set_force_terminate_server_result(true);
+  server_launcher_->set_start_server_called(false);
 
   // Now connecting to an old server
   client_factory_->SetServerProtocolVersion(IPC_PROTOCOL_VERSION - 1);
   // after start server, protocol version becomes the same
-  start_server_handler_->set_server_protocol_version(IPC_PROTOCOL_VERSION);
+  server_launcher_->set_server_protocol_version(IPC_PROTOCOL_VERSION);
 
   EXPECT_TRUE(session_->EnsureSession());
-  EXPECT_TRUE(start_server_handler_->start_server_called());
-  EXPECT_TRUE(start_server_handler_->force_terminate_server_called());
+  EXPECT_TRUE(server_launcher_->start_server_called());
+  EXPECT_TRUE(server_launcher_->force_terminate_server_called());
 }
 
 TEST_F(SessionTest, ProtocolUpdateFailSameBinary) {
-  start_server_handler_->set_start_server_result(true);
+  server_launcher_->set_start_server_result(true);
 
   const int mock_id = 0;
   EXPECT_TRUE(SetupConnection(mock_id));
@@ -418,27 +421,27 @@ TEST_F(SessionTest, ProtocolUpdateFailSameBinary) {
   SetMockOutput(mock_output);
   EXPECT_TRUE(session_->EnsureConnection());
 
-  start_server_handler_->set_force_terminate_server_called(false);
-  start_server_handler_->set_force_terminate_server_result(true);
-  start_server_handler_->set_start_server_called(false);
+  server_launcher_->set_force_terminate_server_called(false);
+  server_launcher_->set_force_terminate_server_result(true);
+  server_launcher_->set_start_server_called(false);
 
-  EXPECT_FALSE(start_server_handler_->start_server_called());
+  EXPECT_FALSE(server_launcher_->start_server_called());
 
   // version is updated after restart the server
   client_factory_->SetServerProtocolVersion(IPC_PROTOCOL_VERSION - 1);
   // even after server reboot, protocol version is old
-  start_server_handler_->set_server_protocol_version(IPC_PROTOCOL_VERSION - 1);
-  start_server_handler_->set_mock_after_start_server(mock_output);
+  server_launcher_->set_server_protocol_version(IPC_PROTOCOL_VERSION - 1);
+  server_launcher_->set_mock_after_start_server(mock_output);
   EXPECT_FALSE(session_->EnsureSession());
-  EXPECT_TRUE(start_server_handler_->start_server_called());
-  EXPECT_TRUE(start_server_handler_->force_terminate_server_called());
+  EXPECT_TRUE(server_launcher_->start_server_called());
+  EXPECT_TRUE(server_launcher_->force_terminate_server_called());
   EXPECT_FALSE(session_->EnsureConnection());
-  EXPECT_EQ(1, start_server_handler_->error_count
-            (StartServerHandlerInterface::SERVER_BROKEN_MESSAGE));
+  EXPECT_EQ(1, server_launcher_->error_count
+            (ServerLauncherInterface::SERVER_BROKEN_MESSAGE));
 }
 
 TEST_F(SessionTest, ProtocolUpdateFailOnTerminate) {
-  start_server_handler_->set_start_server_result(true);
+  server_launcher_->set_start_server_result(true);
 
   const int mock_id = 0;
   EXPECT_TRUE(SetupConnection(mock_id));
@@ -448,28 +451,28 @@ TEST_F(SessionTest, ProtocolUpdateFailOnTerminate) {
   SetMockOutput(mock_output);
   EXPECT_TRUE(session_->EnsureConnection());
 
-  start_server_handler_->set_force_terminate_server_called(false);
-  start_server_handler_->set_force_terminate_server_result(false);
-  start_server_handler_->set_start_server_called(false);
+  server_launcher_->set_force_terminate_server_called(false);
+  server_launcher_->set_force_terminate_server_result(false);
+  server_launcher_->set_start_server_called(false);
 
-  EXPECT_FALSE(start_server_handler_->start_server_called());
+  EXPECT_FALSE(server_launcher_->start_server_called());
 
   // version is updated after restart the server
   client_factory_->SetServerProtocolVersion(IPC_PROTOCOL_VERSION - 1);
   // even after server reboot, protocol version is old
-  start_server_handler_->set_server_protocol_version(IPC_PROTOCOL_VERSION);
-  start_server_handler_->set_mock_after_start_server(mock_output);
+  server_launcher_->set_server_protocol_version(IPC_PROTOCOL_VERSION);
+  server_launcher_->set_mock_after_start_server(mock_output);
   EXPECT_FALSE(session_->EnsureSession());
-  EXPECT_FALSE(start_server_handler_->start_server_called());
-  EXPECT_TRUE(start_server_handler_->force_terminate_server_called());
+  EXPECT_FALSE(server_launcher_->start_server_called());
+  EXPECT_TRUE(server_launcher_->force_terminate_server_called());
   EXPECT_FALSE(session_->EnsureConnection());
-  EXPECT_EQ(1, start_server_handler_->error_count
-            (StartServerHandlerInterface::SERVER_BROKEN_MESSAGE));
+  EXPECT_EQ(1, server_launcher_->error_count
+            (ServerLauncherInterface::SERVER_BROKEN_MESSAGE));
 }
 
 TEST_F(SessionTest, ServerUpdate) {
   SetupProductVersion(-1);  // old version
-  start_server_handler_->set_start_server_result(true);
+  server_launcher_->set_start_server_result(true);
 
   const int mock_id = 0;
   EXPECT_TRUE(SetupConnection(mock_id));
@@ -481,19 +484,19 @@ TEST_F(SessionTest, ServerUpdate) {
   SetMockOutput(mock_output);
   EXPECT_TRUE(session_->EnsureConnection());
 
-  start_server_handler_->set_start_server_called(false);
-  EXPECT_FALSE(start_server_handler_->start_server_called());
+  server_launcher_->set_start_server_called(false);
+  EXPECT_FALSE(server_launcher_->start_server_called());
 
   // version is updated after restart the server
-  start_server_handler_->set_product_version_after_start_server(
+  server_launcher_->set_product_version_after_start_server(
       Version::GetMozcVersion());
   EXPECT_TRUE(session_->EnsureSession());
-  EXPECT_TRUE(start_server_handler_->start_server_called());
+  EXPECT_TRUE(server_launcher_->start_server_called());
 }
 
 TEST_F(SessionTest, ServerUpdateToNewer) {
   SetupProductVersion(1);  // new version
-  start_server_handler_->set_start_server_result(true);
+  server_launcher_->set_start_server_result(true);
 
   const int mock_id = 0;
   EXPECT_TRUE(SetupConnection(mock_id));
@@ -504,14 +507,14 @@ TEST_F(SessionTest, ServerUpdateToNewer) {
   mock_output.set_id(mock_id);
   SetMockOutput(mock_output);
   EXPECT_TRUE(session_->EnsureConnection());
-  start_server_handler_->set_start_server_called(false);
+  server_launcher_->set_start_server_called(false);
   EXPECT_TRUE(session_->EnsureSession());
-  EXPECT_FALSE(start_server_handler_->start_server_called());
+  EXPECT_FALSE(server_launcher_->start_server_called());
 }
 
 TEST_F(SessionTest, ServerUpdateFail) {
   SetupProductVersion(-1);  // old
-  start_server_handler_->set_start_server_result(true);
+  server_launcher_->set_start_server_result(true);
 
   const int mock_id = 0;
   EXPECT_TRUE(SetupConnection(mock_id));
@@ -521,16 +524,16 @@ TEST_F(SessionTest, ServerUpdateFail) {
   SetMockOutput(mock_output);
   EXPECT_TRUE(session_->EnsureConnection());
 
-  start_server_handler_->set_start_server_called(false);
-  EXPECT_FALSE(start_server_handler_->start_server_called());
+  server_launcher_->set_start_server_called(false);
+  EXPECT_FALSE(server_launcher_->start_server_called());
 
   // version is not updated after restart the server
-  start_server_handler_->set_mock_after_start_server(mock_output);
+  server_launcher_->set_mock_after_start_server(mock_output);
   EXPECT_FALSE(session_->EnsureSession());
-  EXPECT_TRUE(start_server_handler_->start_server_called());
+  EXPECT_TRUE(server_launcher_->start_server_called());
   EXPECT_FALSE(session_->EnsureConnection());
-  EXPECT_EQ(1, start_server_handler_->error_count
-            (StartServerHandlerInterface::SERVER_BROKEN_MESSAGE));
+  EXPECT_EQ(1, server_launcher_->error_count
+            (ServerLauncherInterface::SERVER_BROKEN_MESSAGE));
 }
 }  // namespace client
 }  // namespace mozc

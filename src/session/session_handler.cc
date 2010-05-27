@@ -112,7 +112,7 @@ SessionHandler::SessionHandler()
     return;
   }
 
-  converter_ = ConverterInterface::GetConverter();
+  converter_ = ConverterFactory::GetConverter();
   if (converter_ == NULL) {
     return;
   }

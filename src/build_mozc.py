@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright 2010, Google Inc.
 # All rights reserved.
 #
@@ -131,12 +132,17 @@ def GetGypFileNames():
     gyp_file_names.append('third_party/mozc/sandbox/sandbox.gyp')
   elif IsLinux():
     gyp_file_names.extend(glob.glob('%s/unix/*/*.gyp' % SRC_DIR))
-    # Add ibus.gyp if ibus is isntalled.
+    # Add ibus.gyp if ibus is installed.
     # Ubuntu 8.04 (Hardy) does not contain ibus package.
     try:
       RunOrDie(['pkg-config', '--exists', 'ibus-1.0'])
     except RunOrDieError:
       gyp_file_names.remove('%s/unix/ibus/ibus.gyp' % SRC_DIR)
+    # Add gui.gyp if Qt libraries are installed.
+    try:
+      RunOrDie(['pkg-config', '--exists', 'QtCore', 'QtGui'])
+    except RunOrDieError:
+      gyp_file_names.remove('%s/gui/gui.gyp' % SRC_DIR)
   gyp_file_names.extend(glob.glob('third_party/rx/*.gyp'))
   gyp_file_names.sort()
   return gyp_file_names

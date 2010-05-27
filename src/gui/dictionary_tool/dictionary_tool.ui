@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>DictionaryTool</class>
+ <widget class="QMainWindow" name="DictionaryTool">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>700</width>
+    <height>420</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Mozc Dictionary Tool</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="0" column="0">
+     <widget class="ZeroWidthSplitter" name="splitter_">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+      <widget class="QListWidget" name="dic_list_"/>
+      <widget class="DictionaryContentTableWidget" name="dic_content_"/>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QToolBar" name="toolbar_">
+   <property name="windowTitle">
+    <string>toolBar</string>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+  </widget>
+  <widget class="QStatusBar" name="statusbar_"/>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ZeroWidthSplitter</class>
+   <extends>QSplitter</extends>
+   <header>gui/dictionary_tool/zero_width_splitter.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>DictionaryContentTableWidget</class>
+   <extends>QTableWidget</extends>
+   <header>gui/dictionary_tool/dictionary_content_table_widget.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

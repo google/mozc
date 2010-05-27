@@ -47,7 +47,7 @@ class SessionUsageObserver;
 
 // Session IPC Server
 // Usage:
-// SessionServer server("/tmp/.iroha_dic");
+// SessionServer server;
 // server.Loop();   // <- Falls into infinite Loop
 //
 // or
@@ -57,7 +57,7 @@ class SessionUsageObserver;
 // server.Wait();
 class SessionServer: public IPCServer {
  public:
-  SessionServer(const string& server_address);
+  SessionServer();
   virtual ~SessionServer();
 
   virtual bool Connected() const;

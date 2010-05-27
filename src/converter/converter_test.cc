@@ -42,7 +42,7 @@ namespace mozc {
 // TODO(toshiyuki): make dictionary mock and test strictly.
 TEST(ConverterTest, CanConvertTest) {
   mozc::ConverterInterface *converter
-      = mozc::ConverterInterface::GetConverter();
+      = mozc::ConverterFactory::GetConverter();
   CHECK(converter);
   {
     mozc::Segments segments;

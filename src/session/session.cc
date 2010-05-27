@@ -239,6 +239,14 @@ void InitTransformTable(const config::Config &config, TransformTable *table) {
     table->insert(make_pair("\xE3\x83\xBB", key_event));
   }
 }
+
+// Set input mode if the current input mode is not the given mode.
+void SwitchInputMode(const transliteration::TransliterationType mode,
+                     composer::Composer *composer) {
+  if (composer->GetInputMode() != mode) {
+    composer->SetInputMode(mode);
+  }
+}
 }  // namespace
 
 Session::Session(const composer::Table *table,
@@ -795,6 +803,30 @@ bool Session::UpdatePreferences(commands::Command *command) {
 bool Session::IMEOn(commands::Command *command) {
   command->mutable_output()->set_consumed(true);
   state_ = SessionState::PRECOMPOSITION;
+  const commands::KeyEvent &key = command->input().key();
+  if (key.has_mode()) {
+    // Ime on with specified mode.
+    switch (key.mode()) {
+      case commands::HIRAGANA:
+        SwitchInputMode(transliteration::HIRAGANA, composer_.get());
+        break;
+      case commands::FULL_KATAKANA:
+        SwitchInputMode(transliteration::FULL_KATAKANA, composer_.get());
+        break;
+      case commands::HALF_KATAKANA:
+        SwitchInputMode(transliteration::HALF_KATAKANA, composer_.get());
+        break;
+      case commands::FULL_ASCII:
+        SwitchInputMode(transliteration::FULL_ASCII, composer_.get());
+        break;
+      case commands::HALF_ASCII:
+        SwitchInputMode(transliteration::HALF_ASCII, composer_.get());
+        break;
+      default:
+        LOG(ERROR) << "ime on with invalid mode";
+        DCHECK(false);
+    }
+  }
   OutputMode(command);
   return true;
 }
@@ -1256,9 +1288,7 @@ bool Session::TranslateHalfASCII(commands::Command *command) {
 bool Session::InputModeHiragana(commands::Command *command) {
   EnsureIMEIsOn();
   // The temporary mode should not be overridden.
-  if (composer_->GetInputMode() != transliteration::HIRAGANA) {
-    composer_->SetInputMode(transliteration::HIRAGANA);
-  }
+  SwitchInputMode(transliteration::HIRAGANA, composer_.get());
   OutputMode(command);
   return true;
 }
@@ -1266,9 +1296,7 @@ bool Session::InputModeHiragana(commands::Command *command) {
 bool Session::InputModeFullKatakana(commands::Command *command) {
   EnsureIMEIsOn();
   // The temporary mode should not be overridden.
-  if (composer_->GetInputMode() != transliteration::FULL_KATAKANA) {
-    composer_->SetInputMode(transliteration::FULL_KATAKANA);
-  }
+  SwitchInputMode(transliteration::FULL_KATAKANA, composer_.get());
   OutputMode(command);
   return true;
 }
@@ -1276,9 +1304,7 @@ bool Session::InputModeFullKatakana(commands::Command *command) {
 bool Session::InputModeHalfKatakana(commands::Command *command) {
   EnsureIMEIsOn();
   // The temporary mode should not be overridden.
-  if (composer_->GetInputMode() != transliteration::HALF_KATAKANA) {
-    composer_->SetInputMode(transliteration::HALF_KATAKANA);
-  }
+  SwitchInputMode(transliteration::HALF_KATAKANA, composer_.get());
   OutputMode(command);
   return true;
 }
@@ -1286,9 +1312,7 @@ bool Session::InputModeHalfKatakana(commands::Command *command) {
 bool Session::InputModeFullASCII(commands::Command *command) {
   EnsureIMEIsOn();
   // The temporary mode should not be overridden.
-  if (composer_->GetInputMode() != transliteration::FULL_ASCII) {
-    composer_->SetInputMode(transliteration::FULL_ASCII);
-  }
+  SwitchInputMode(transliteration::FULL_ASCII, composer_.get());
   OutputMode(command);
   return true;
 }
@@ -1296,9 +1320,7 @@ bool Session::InputModeFullASCII(commands::Command *command) {
 bool Session::InputModeHalfASCII(commands::Command *command) {
   EnsureIMEIsOn();
   // The temporary mode should not be overridden.
-  if (composer_->GetInputMode() != transliteration::HALF_ASCII) {
-    composer_->SetInputMode(transliteration::HALF_ASCII);
-  }
+  SwitchInputMode(transliteration::HALF_ASCII, composer_.get());
   OutputMode(command);
   return true;
 }

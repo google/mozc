@@ -32,64 +32,49 @@
 #include "base/file_stream.h"
 #include "base/mmap.h"
 #include "base/util.h"
-#include "converter/connector.h"
+#include "converter/connector_interface.h"
+#include "converter/sparse_connector.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
-DECLARE_bool(use_sparse_connector);
 
 namespace mozc {
 
-class ConnectorTest : public testing::Test {
- protected:
-  void ConnectorOpenTest() {
-    const string input_filename
-        = mozc::Util::JoinPath(FLAGS_test_tmpdir, "connector.txt");
+TEST(SparseConnectorTest, SparseConnecterOpenTest) {
+  const string input_filename
+      = mozc::Util::JoinPath(FLAGS_test_tmpdir, "connector.txt");
 
-    const string output_filename
-        = mozc::Util::JoinPath(FLAGS_test_tmpdir, "connector.db");
+  const string output_filename
+      = mozc::Util::JoinPath(FLAGS_test_tmpdir, "connector.db");
 
-    {
-      mozc::OutputFileStream ofs(input_filename.c_str());
-      EXPECT_TRUE(ofs);
+  {
+    mozc::OutputFileStream ofs(input_filename.c_str());
+    EXPECT_TRUE(ofs);
 
-      ofs << "3 3" << endl;  // 3x3 matrix
-      for (int i = 0; i < 3; ++i) {
-        for (int j = 0; j < 3; ++j) {
-          // lid, rid, cost
-          ofs << i << " " << j << " " << 3 * i + j << endl;
-        }
-      }
-    }
-
-    ConnectorInterface::Compile(input_filename.c_str(),
-                                output_filename.c_str());
-
-    Mmap<char> cmmap;
-    CHECK(cmmap.Open(output_filename.c_str()))
-        << "Failed to open matrix image" << output_filename;
-    CHECK_GE(cmmap.Size(), 4) << "Malformed matrix image";
-    scoped_ptr<ConnectorInterface> connector(
-        ConnectorInterface::OpenFromArray(cmmap.begin(), cmmap.GetFileSize()));
-
+    ofs << "3 3" << endl;  // 3x3 matrix
     for (int i = 0; i < 3; ++i) {
       for (int j = 0; j < 3; ++j) {
-        EXPECT_EQ(3 * i + j, connector->GetTransitionCost(i, j));
+        // lid, rid, cost
+        ofs << i << " " << j << " " << 3 * i + j << endl;
       }
     }
   }
-};
 
-// This code is a kind of kludge to use 2 implementations of transition
-// cost matrix. We might remove this later.
-TEST_F(ConnectorTest, DenseConnecterOpenTest) {
-  FLAGS_use_sparse_connector = false;
-  ConnectorOpenTest();
-}
+  SparseConnectorBuilder::Compile(input_filename.c_str(),
+                                  output_filename.c_str());
 
-TEST_F(ConnectorTest, SparseConnecterOpenTest) {
-  FLAGS_use_sparse_connector = true;
-  ConnectorOpenTest();
+  Mmap<char> cmmap;
+  CHECK(cmmap.Open(output_filename.c_str()))
+      << "Failed to open matrix image" << output_filename;
+  CHECK_GE(cmmap.Size(), 4) << "Malformed matrix image";
+  scoped_ptr<SparseConnector> connector(
+      new SparseConnector(cmmap.begin(), cmmap.GetFileSize()));
+
+  for (int i = 0; i < 3; ++i) {
+    for (int j = 0; j < 3; ++j) {
+      EXPECT_EQ(3 * i + j, connector->GetTransitionCost(i, j));
+    }
+  }
 }
 
 TEST(SparseConnectorTest, key_coding) {

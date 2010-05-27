@@ -1,0 +1,19 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+<!--
+// The following is the manual step to make *qm files.
+// - Edit source files
+//   % g4 edit *.cpp *.h *.ts
+// - Update *ts file. tr() messages are stored in .ts
+//   % lupdate . -ts error_message_dialog_ja.ts
+//   % lupdate . -ts error_message_dialog_en.ts
+// - open *.ts files with QT linguest and added translation
+// - convert *.ts file to *.qm file
+//   % lrelease error_message_dialog_ja.ts -qm error_message_dialog_ja.qm
+//   % lrelease error_message_dialog_en.ts -qm error_message_dialog_en.qm
+-->
+<qresource>
+  <file>error_message_dialog_ja.qm</file>
+  <file>error_message_dialog_en.qm</file>
+</qresource>
+</RCC>

@@ -95,7 +95,7 @@ class SessionTest : public testing::Test {
     config::ConfigHandler::GetConfig(&default_config_);
     Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
     convertermock_.reset(new ConverterMock());
-    ConverterInterface::SetConverter(convertermock_.get());
+    ConverterFactory::SetConverter(convertermock_.get());
     Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
 
     handler_.reset(new SessionHandler());
@@ -1443,7 +1443,7 @@ TEST_F(SessionTest, RomajiInput) {
   scoped_ptr<keymap::KeyMapManager> keymap(new keymap::KeyMapManager());
 
   scoped_ptr<Session> session(new Session(&table,
-                                          ConverterInterface::GetConverter(),
+                                          ConverterFactory::GetConverter(),
                                           keymap.get()));
   InitSessionToPrecomposition(session.get());
 
@@ -1490,7 +1490,7 @@ TEST_F(SessionTest, KanaInput) {
   scoped_ptr<keymap::KeyMapManager> keymap(new keymap::KeyMapManager());
 
   scoped_ptr<Session> session(new Session(&table,
-                                          ConverterInterface::GetConverter(),
+                                          ConverterFactory::GetConverter(),
                                           keymap.get()));
   InitSessionToPrecomposition(session.get());
 
@@ -3003,6 +3003,101 @@ TEST_F(SessionTest, SendKeyDirectInputStateTest) {
 #endif  // OS_WINDOWS
 }
 
+TEST_F(SessionTest, IMEOnWithModeTest) {
+  {
+    scoped_ptr<Session> session(handler_->NewSession());
+    InitSessionToPrecomposition(session.get());
+    commands::Command command;
+    session->IMEOff(&command);
+    command.Clear();
+    command.mutable_input()->mutable_key()->set_mode(
+        commands::HIRAGANA);
+    EXPECT_TRUE(session->IMEOn(&command));
+    EXPECT_TRUE(command.output().has_consumed());
+    EXPECT_TRUE(command.output().consumed());
+    EXPECT_TRUE(command.output().has_mode());
+    EXPECT_EQ(commands::HIRAGANA,
+              command.output().mode());
+    SendKey("a", session.get(), &command);
+    EXPECT_TRUE(command.output().has_preedit());
+    EXPECT_EQ(1, command.output().preedit().segment_size());
+    // "あ"
+    EXPECT_EQ("\xE3\x81\x82", command.output().preedit().segment(0).key());
+  }
+  {
+    scoped_ptr<Session> session(handler_->NewSession());
+    InitSessionToPrecomposition(session.get());
+    commands::Command command;
+    session->IMEOff(&command);
+    command.Clear();
+    command.mutable_input()->mutable_key()->set_mode(
+        commands::FULL_KATAKANA);
+    EXPECT_TRUE(session->IMEOn(&command));
+    EXPECT_TRUE(command.output().has_mode());
+    EXPECT_EQ(commands::FULL_KATAKANA,
+              command.output().mode());
+    SendKey("a", session.get(), &command);
+    EXPECT_TRUE(command.output().has_preedit());
+    EXPECT_EQ(1, command.output().preedit().segment_size());
+    // "ア"
+    EXPECT_EQ("\xE3\x82\xA2", command.output().preedit().segment(0).key());
+  }
+  {
+    scoped_ptr<Session> session(handler_->NewSession());
+    InitSessionToPrecomposition(session.get());
+    commands::Command command;
+    session->IMEOff(&command);
+    command.Clear();
+    command.mutable_input()->mutable_key()->set_mode(
+        commands::HALF_KATAKANA);
+    EXPECT_TRUE(session->IMEOn(&command));
+    EXPECT_TRUE(command.output().has_mode());
+    EXPECT_EQ(commands::HALF_KATAKANA,
+              command.output().mode());
+    SendKey("a", session.get(), &command);
+    EXPECT_TRUE(command.output().has_preedit());
+    EXPECT_EQ(1, command.output().preedit().segment_size());
+    // "ｱ" (half-width Katakana)
+    EXPECT_EQ("\xEF\xBD\xB1", command.output().preedit().segment(0).key());
+  }
+  {
+    scoped_ptr<Session> session(handler_->NewSession());
+    InitSessionToPrecomposition(session.get());
+    commands::Command command;
+    session->IMEOff(&command);
+    command.Clear();
+    command.mutable_input()->mutable_key()->set_mode(
+        commands::FULL_ASCII);
+    EXPECT_TRUE(session->IMEOn(&command));
+    EXPECT_TRUE(command.output().has_mode());
+    EXPECT_EQ(commands::FULL_ASCII,
+              command.output().mode());
+    SendKey("a", session.get(), &command);
+    EXPECT_TRUE(command.output().has_preedit());
+    EXPECT_EQ(1, command.output().preedit().segment_size());
+    // "ａ"
+    EXPECT_EQ("\xEF\xBD\x81", command.output().preedit().segment(0).key());
+  }
+  {
+    scoped_ptr<Session> session(handler_->NewSession());
+    InitSessionToPrecomposition(session.get());
+    commands::Command command;
+    session->IMEOff(&command);
+    command.Clear();
+    command.mutable_input()->mutable_key()->set_mode(
+        commands::HALF_ASCII);
+    EXPECT_TRUE(session->IMEOn(&command));
+    EXPECT_TRUE(command.output().has_mode());
+    EXPECT_EQ(commands::HALF_ASCII,
+              command.output().mode());
+    SendKey("a", session.get(), &command);
+    EXPECT_TRUE(command.output().has_preedit());
+    EXPECT_EQ(1, command.output().preedit().segment_size());
+    // "a"
+    EXPECT_EQ("a", command.output().preedit().segment(0).key());
+  }
+}
+
 // since History segments are almost hidden from
 namespace {
 class ConverterMockForReset : public ConverterMock {
@@ -3049,7 +3144,7 @@ class ConverterMockForRevert : public ConverterMock {
 // Independent test
 TEST(SessionResetTest, IssueResetConversion) {
   scoped_ptr<ConverterMockForReset> convertermock(new ConverterMockForReset);
-  ConverterInterface::SetConverter(convertermock.get());
+  ConverterFactory::SetConverter(convertermock.get());
   scoped_ptr<SessionHandler> handler(new SessionHandler);
   scoped_ptr<Session> session(handler->NewSession());
   InitSessionToPrecomposition(session.get());
@@ -3068,7 +3163,7 @@ TEST(SessionResetTest, IssueResetConversion) {
 
 TEST(SessionRevertTest, IssueRevert) {
   scoped_ptr<ConverterMockForRevert> convertermock(new ConverterMockForRevert);
-  ConverterInterface::SetConverter(convertermock.get());
+  ConverterFactory::SetConverter(convertermock.get());
   scoped_ptr<SessionHandler> handler(new SessionHandler);
   scoped_ptr<Session> session(handler->NewSession());
   InitSessionToPrecomposition(session.get());

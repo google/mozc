@@ -75,6 +75,7 @@ class TestSession : public client::SessionInterface {
  public:
   TestSession(): cleanup_counter_(0) {}
 
+  bool IsValidRunLevel() const { return true; }
   bool EnsureSession() { return true; }
   bool EnsureConnection() { return true; }
 
@@ -99,6 +100,15 @@ class TestSession : public client::SessionInterface {
   void EnableCascadingWindow(bool enable) {}
 
   void set_timeout(int timeout) {}
+  void set_restricted(bool restricted) {}
+  void set_server_program(const string &server_program) {}
+
+  bool LaunchTool(const string &mode, const string &extra_arg) {
+    return true;
+  }
+  bool OpenBrowser(const string &url) {
+    return true;
+  }
 
   void Reset() {}
 

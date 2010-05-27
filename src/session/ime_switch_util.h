@@ -27,8 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_BASE_IME_SWITCH_UTIL_H_
-#define MOZC_BASE_IME_SWITCH_UTIL_H_
+#ifndef MOZC_SESSION_IME_SWITCH_UTIL_H_
+#define MOZC_SESSION_IME_SWITCH_UTIL_H_
 
 #include <vector>
 
@@ -49,9 +49,6 @@ class ImeSwitchUtil {
   // Returns the copy of key event list.
   // They are needed for Windows.
   // On Windows, we should register these hotkeys on IME activation.
-  // You cannot assume the returned vector is immutable. An explicit
-  // or an implicit call of ImeSwitchUtil::Reload may update the content
-  // of the returned vector.
   static void GetTurnOnInDirectModeKeyEventList(
       vector<commands::KeyEvent> *key_events);
 
@@ -64,4 +61,4 @@ class ImeSwitchUtil {
 }  // namespace config
 }  // namespace mozc
 
-#endif  // MOZC_BASE_IME_SWITCH_UTIL_H_
+#endif  // MOZC_SESSION_IME_SWITCH_UTIL_H_

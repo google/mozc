@@ -1,0 +1,10 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+<qresource>
+  <file>dictionary_tool_ja.qm</file>
+  <file>dictionary_tool_en.qm</file>
+  <file>mac_style.qss</file>  
+  <file>win_style.qss</file>  
+  <file>win_aero_style.qss</file>  
+</qresource>
+</RCC>

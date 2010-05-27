@@ -139,6 +139,7 @@ UserHistoryPredictor::UserHistoryPredictor()
 
 UserHistoryPredictor::~UserHistoryPredictor() {
   // In destructor, must call blocking version
+  WaitForSyncer();
   Save();   // blocking
 }
 

@@ -122,6 +122,16 @@ class ConverterInterface {
   // clear unused user prediction data
   virtual bool ClearUnusedUserPrediction() const = 0;
 
+ protected:
+  virtual ~ConverterInterface() {}
+  ConverterInterface() {}
+
+ private:
+  DISALLOW_COPY_AND_ASSIGN(ConverterInterface);
+};
+
+class ConverterFactory {
+ public:
   // Create singleton Converter insntance.
   // If failed, return NULL
   // TODO(taku): move them to ConverterFactory
@@ -130,12 +140,9 @@ class ConverterInterface {
   // Inject a dependency for unittesting
   static void SetConverter(ConverterInterface *converter);
 
- protected:
-  virtual ~ConverterInterface() {}
-  ConverterInterface() {}
-
  private:
-  DISALLOW_COPY_AND_ASSIGN(ConverterInterface);
+  ConverterFactory() {}
+  ~ConverterFactory() {}
 };
 
 // static converter utilities

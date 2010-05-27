@@ -42,7 +42,7 @@ namespace mozc {
 // filename format:
 //
 // A) system file embedded in .exe file
-//   system://default.tsv
+//   system://ms-ime.tsv
 //   system://kotoeri.tsv
 //
 // B) user file. expaneded into $(USER_PROFILE_DIR)/file_name

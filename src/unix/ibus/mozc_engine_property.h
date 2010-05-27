@@ -89,6 +89,30 @@ COMPILE_ASSERT(commands::NUM_OF_COMPOSITIONS == kMozcEnginePropertiesSize,
 const commands::CompositionMode kMozcEngineInitialCompositionMode =
     commands::HIRAGANA;
 
+const struct MozcEngineToolProperty {
+  const char *key;    // IBus property key for the MozcTool.
+  const char *mode;   // command line passed as --mode=
+  const char *label;  // text for the menu.
+} kMozcEngineToolProperties[] = {
+  {
+    "Tool.ConfigDialog",
+    "config_dialog",
+    "property"
+  },
+  {
+    "Tool.DictionaryTool",
+    "dictionary_tool",
+    "dictionary tool"
+  },
+  {
+    "Tool.AboutDialog",
+    "about_dialog",
+    "About Mozc"
+  },
+};
+
+const size_t kMozcEngineToolPropertiesSize =
+    arraysize(kMozcEngineToolProperties);
 }  // namespace ibus
 }  // namespace mozc
 

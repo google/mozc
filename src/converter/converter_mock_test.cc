@@ -49,18 +49,18 @@ void SetSegments(Segments *segments, const string &cand_value) {
 
 TEST(ConverterMockTest, SetConverter) {
   ConverterMock mock;
-  ConverterInterface *converter = ConverterInterface::GetConverter();
+  ConverterInterface *converter = ConverterFactory::GetConverter();
   EXPECT_NE(&mock, converter);
 
-  ConverterInterface::SetConverter(&mock);
-  ConverterInterface *converter_mock = ConverterInterface::GetConverter();
+  ConverterFactory::SetConverter(&mock);
+  ConverterInterface *converter_mock = ConverterFactory::GetConverter();
   EXPECT_EQ(&mock, converter_mock);
 }
 
 TEST(ConverterMockTest, SetStartConvert) {
   ConverterMock mock;
-  ConverterInterface::SetConverter(&mock);
-  ConverterInterface *converter = ConverterInterface::GetConverter();
+  ConverterFactory::SetConverter(&mock);
+  ConverterInterface *converter = ConverterFactory::GetConverter();
 
   Segments output, expect;
   string output_str, expect_str;
@@ -74,8 +74,8 @@ TEST(ConverterMockTest, SetStartConvert) {
 
 TEST(ConverterMockTest, SetStartPrediction) {
   ConverterMock mock;
-  ConverterInterface::SetConverter(&mock);
-  ConverterInterface *converter = ConverterInterface::GetConverter();
+  ConverterFactory::SetConverter(&mock);
+  ConverterInterface *converter = ConverterFactory::GetConverter();
 
   Segments output, expect;
   string output_str, expect_str;
@@ -89,8 +89,8 @@ TEST(ConverterMockTest, SetStartPrediction) {
 
 TEST(ConverterMockTest, SetStartSuggestion) {
   ConverterMock mock;
-  ConverterInterface::SetConverter(&mock);
-  ConverterInterface *converter = ConverterInterface::GetConverter();
+  ConverterFactory::SetConverter(&mock);
+  ConverterInterface *converter = ConverterFactory::GetConverter();
 
   Segments output, expect;
   string output_str, expect_str;
@@ -104,8 +104,8 @@ TEST(ConverterMockTest, SetStartSuggestion) {
 
 TEST(ConverterMockTest, SetFinishConversion) {
   ConverterMock mock;
-  ConverterInterface::SetConverter(&mock);
-  ConverterInterface *converter = ConverterInterface::GetConverter();
+  ConverterFactory::SetConverter(&mock);
+  ConverterInterface *converter = ConverterFactory::GetConverter();
 
   Segments output, expect;
   string output_str, expect_str;
@@ -119,8 +119,8 @@ TEST(ConverterMockTest, SetFinishConversion) {
 
 TEST(ConverterMockTest, SetCancelConversion) {
   ConverterMock mock;
-  ConverterInterface::SetConverter(&mock);
-  ConverterInterface *converter = ConverterInterface::GetConverter();
+  ConverterFactory::SetConverter(&mock);
+  ConverterInterface *converter = ConverterFactory::GetConverter();
 
   Segments output, expect;
   string output_str, expect_str;
@@ -134,8 +134,8 @@ TEST(ConverterMockTest, SetCancelConversion) {
 
 TEST(ConverterMockTest, SetResetConversion) {
   ConverterMock mock;
-  ConverterInterface::SetConverter(&mock);
-  ConverterInterface *converter = ConverterInterface::GetConverter();
+  ConverterFactory::SetConverter(&mock);
+  ConverterInterface *converter = ConverterFactory::GetConverter();
 
   Segments output, expect;
   string output_str, expect_str;
@@ -149,8 +149,8 @@ TEST(ConverterMockTest, SetResetConversion) {
 
 TEST(ConverterMockTest, SetGetCandidates) {
   ConverterMock mock;
-  ConverterInterface::SetConverter(&mock);
-  ConverterInterface *converter = ConverterInterface::GetConverter();
+  ConverterFactory::SetConverter(&mock);
+  ConverterInterface *converter = ConverterFactory::GetConverter();
 
   Segments output, expect;
   string output_str, expect_str;
@@ -164,8 +164,8 @@ TEST(ConverterMockTest, SetGetCandidates) {
 
 TEST(ConverterMockTest, SetCommitSegmentValue) {
   ConverterMock mock;
-  ConverterInterface::SetConverter(&mock);
-  ConverterInterface *converter = ConverterInterface::GetConverter();
+  ConverterFactory::SetConverter(&mock);
+  ConverterInterface *converter = ConverterFactory::GetConverter();
 
   Segments output, expect;
   string output_str, expect_str;
@@ -179,8 +179,8 @@ TEST(ConverterMockTest, SetCommitSegmentValue) {
 
 TEST(ConverterMockTest, SetFocusSegmentValue) {
   ConverterMock mock;
-  ConverterInterface::SetConverter(&mock);
-  ConverterInterface *converter = ConverterInterface::GetConverter();
+  ConverterFactory::SetConverter(&mock);
+  ConverterInterface *converter = ConverterFactory::GetConverter();
 
   Segments output, expect;
   string output_str, expect_str;
@@ -194,8 +194,8 @@ TEST(ConverterMockTest, SetFocusSegmentValue) {
 
 TEST(ConverterMockTest, SetFreeSegmentValue) {
   ConverterMock mock;
-  ConverterInterface::SetConverter(&mock);
-  ConverterInterface *converter = ConverterInterface::GetConverter();
+  ConverterFactory::SetConverter(&mock);
+  ConverterInterface *converter = ConverterFactory::GetConverter();
 
   Segments output, expect;
   string output_str, expect_str;
@@ -209,8 +209,8 @@ TEST(ConverterMockTest, SetFreeSegmentValue) {
 
 TEST(ConverterMockTest, SetSubmitFirstSegment) {
   ConverterMock mock;
-  ConverterInterface::SetConverter(&mock);
-  ConverterInterface *converter = ConverterInterface::GetConverter();
+  ConverterFactory::SetConverter(&mock);
+  ConverterInterface *converter = ConverterFactory::GetConverter();
 
   Segments output, expect;
   string output_str, expect_str;
@@ -224,8 +224,8 @@ TEST(ConverterMockTest, SetSubmitFirstSegment) {
 
 TEST(ConverterMockTest, SetResizeSegment1) {
   ConverterMock mock;
-  ConverterInterface::SetConverter(&mock);
-  ConverterInterface *converter = ConverterInterface::GetConverter();
+  ConverterFactory::SetConverter(&mock);
+  ConverterInterface *converter = ConverterFactory::GetConverter();
 
   Segments output, expect;
   string output_str, expect_str;
@@ -239,8 +239,8 @@ TEST(ConverterMockTest, SetResizeSegment1) {
 
 TEST(ConverterMockTest, SetResizeSegment2) {
   ConverterMock mock;
-  ConverterInterface::SetConverter(&mock);
-  ConverterInterface *converter = ConverterInterface::GetConverter();
+  ConverterFactory::SetConverter(&mock);
+  ConverterInterface *converter = ConverterFactory::GetConverter();
 
   Segments output, expect;
   string output_str, expect_str;
@@ -256,8 +256,8 @@ TEST(ConverterMockTest, SetResizeSegment2) {
 
 TEST(ConverterMockTest, SetSync) {
   ConverterMock mock;
-  ConverterInterface::SetConverter(&mock);
-  ConverterInterface *converter = ConverterInterface::GetConverter();
+  ConverterFactory::SetConverter(&mock);
+  ConverterInterface *converter = ConverterFactory::GetConverter();
 
   mock.SetSync(true);
   EXPECT_TRUE(converter->Sync());
@@ -268,8 +268,8 @@ TEST(ConverterMockTest, SetSync) {
 
 TEST(ConverterMockTest, SetClearUserHistory) {
   ConverterMock mock;
-  ConverterInterface::SetConverter(&mock);
-  ConverterInterface *converter = ConverterInterface::GetConverter();
+  ConverterFactory::SetConverter(&mock);
+  ConverterInterface *converter = ConverterFactory::GetConverter();
 
   mock.SetClearUserHistory(true);
   EXPECT_TRUE(converter->ClearUserHistory());
@@ -280,8 +280,8 @@ TEST(ConverterMockTest, SetClearUserHistory) {
 
 TEST(ConverterMockTest, SetClearUserPrediction) {
   ConverterMock mock;
-  ConverterInterface::SetConverter(&mock);
-  ConverterInterface *converter = ConverterInterface::GetConverter();
+  ConverterFactory::SetConverter(&mock);
+  ConverterInterface *converter = ConverterFactory::GetConverter();
 
   mock.SetClearUserPrediction(true);
   EXPECT_TRUE(converter->ClearUserPrediction());
@@ -292,8 +292,8 @@ TEST(ConverterMockTest, SetClearUserPrediction) {
 
 TEST(ConverterMockTest, GetStartConversion) {
   ConverterMock mock;
-  ConverterInterface::SetConverter(&mock);
-  ConverterInterface *converter = ConverterInterface::GetConverter();
+  ConverterFactory::SetConverter(&mock);
+  ConverterInterface *converter = ConverterFactory::GetConverter();
 
   Segments input;
   string input_str;
@@ -314,8 +314,8 @@ TEST(ConverterMockTest, GetStartConversion) {
 
 TEST(ConverterMockTest, GetStartPrediction) {
   ConverterMock mock;
-  ConverterInterface::SetConverter(&mock);
-  ConverterInterface *converter = ConverterInterface::GetConverter();
+  ConverterFactory::SetConverter(&mock);
+  ConverterInterface *converter = ConverterFactory::GetConverter();
 
   Segments input;
   string input_str;
@@ -336,8 +336,8 @@ TEST(ConverterMockTest, GetStartPrediction) {
 
 TEST(ConverterMockTest, GetStartSuggestion) {
   ConverterMock mock;
-  ConverterInterface::SetConverter(&mock);
-  ConverterInterface *converter = ConverterInterface::GetConverter();
+  ConverterFactory::SetConverter(&mock);
+  ConverterInterface *converter = ConverterFactory::GetConverter();
 
   Segments input;
   string input_str;
@@ -358,8 +358,8 @@ TEST(ConverterMockTest, GetStartSuggestion) {
 
 TEST(ConverterMockTest, GetFinishConversion) {
   ConverterMock mock;
-  ConverterInterface::SetConverter(&mock);
-  ConverterInterface *converter = ConverterInterface::GetConverter();
+  ConverterFactory::SetConverter(&mock);
+  ConverterInterface *converter = ConverterFactory::GetConverter();
 
   Segments input;
   string input_str;
@@ -377,8 +377,8 @@ TEST(ConverterMockTest, GetFinishConversion) {
 
 TEST(ConverterMockTest, GetCancelConversion) {
   ConverterMock mock;
-  ConverterInterface::SetConverter(&mock);
-  ConverterInterface *converter = ConverterInterface::GetConverter();
+  ConverterFactory::SetConverter(&mock);
+  ConverterInterface *converter = ConverterFactory::GetConverter();
 
   Segments input;
   string input_str;
@@ -396,8 +396,8 @@ TEST(ConverterMockTest, GetCancelConversion) {
 
 TEST(ConverterMockTest, GetResetConversion) {
   ConverterMock mock;
-  ConverterInterface::SetConverter(&mock);
-  ConverterInterface *converter = ConverterInterface::GetConverter();
+  ConverterFactory::SetConverter(&mock);
+  ConverterInterface *converter = ConverterFactory::GetConverter();
 
   Segments input;
   string input_str;
@@ -415,8 +415,8 @@ TEST(ConverterMockTest, GetResetConversion) {
 
 TEST(ConverterMockTest, GetGetCandidates) {
   ConverterMock mock;
-  ConverterInterface::SetConverter(&mock);
-  ConverterInterface *converter = ConverterInterface::GetConverter();
+  ConverterFactory::SetConverter(&mock);
+  ConverterInterface *converter = ConverterFactory::GetConverter();
 
   Segments input;
   string input_str;
@@ -438,8 +438,8 @@ TEST(ConverterMockTest, GetGetCandidates) {
 
 TEST(ConverterMockTest, GetCommitSegmentValue) {
   ConverterMock mock;
-  ConverterInterface::SetConverter(&mock);
-  ConverterInterface *converter = ConverterInterface::GetConverter();
+  ConverterFactory::SetConverter(&mock);
+  ConverterInterface *converter = ConverterFactory::GetConverter();
 
   Segments input;
   string input_str;
@@ -463,8 +463,8 @@ TEST(ConverterMockTest, GetCommitSegmentValue) {
 
 TEST(ConverterMockTest, GetFocusSegmentValue) {
   ConverterMock mock;
-  ConverterInterface::SetConverter(&mock);
-  ConverterInterface *converter = ConverterInterface::GetConverter();
+  ConverterFactory::SetConverter(&mock);
+  ConverterInterface *converter = ConverterFactory::GetConverter();
 
   Segments input;
   string input_str;
@@ -488,8 +488,8 @@ TEST(ConverterMockTest, GetFocusSegmentValue) {
 
 TEST(ConverterMockTest, GetFreeSegmentValue) {
   ConverterMock mock;
-  ConverterInterface::SetConverter(&mock);
-  ConverterInterface *converter = ConverterInterface::GetConverter();
+  ConverterFactory::SetConverter(&mock);
+  ConverterInterface *converter = ConverterFactory::GetConverter();
 
   Segments input;
   string input_str;
@@ -510,8 +510,8 @@ TEST(ConverterMockTest, GetFreeSegmentValue) {
 
 TEST(ConverterMockTest, GetSubmitFirstSegment) {
   ConverterMock mock;
-  ConverterInterface::SetConverter(&mock);
-  ConverterInterface *converter = ConverterInterface::GetConverter();
+  ConverterFactory::SetConverter(&mock);
+  ConverterInterface *converter = ConverterFactory::GetConverter();
 
   Segments input;
   string input_str;
@@ -532,8 +532,8 @@ TEST(ConverterMockTest, GetSubmitFirstSegment) {
 
 TEST(ConverterMockTest, GetResizeSegment1) {
   ConverterMock mock;
-  ConverterInterface::SetConverter(&mock);
-  ConverterInterface *converter = ConverterInterface::GetConverter();
+  ConverterFactory::SetConverter(&mock);
+  ConverterInterface *converter = ConverterFactory::GetConverter();
 
   Segments input;
   string input_str;
@@ -557,8 +557,8 @@ TEST(ConverterMockTest, GetResizeSegment1) {
 
 TEST(ConverterMockTest, GetResizeSegment2) {
   ConverterMock mock;
-  ConverterInterface::SetConverter(&mock);
-  ConverterInterface *converter = ConverterInterface::GetConverter();
+  ConverterFactory::SetConverter(&mock);
+  ConverterInterface *converter = ConverterFactory::GetConverter();
 
   Segments input;
   string input_str;
@@ -590,8 +590,8 @@ TEST(ConverterMockTest, GetResizeSegment2) {
 
 TEST(ConverterMockTest, DefaultBehavior) {
   ConverterMock mock;
-  ConverterInterface::SetConverter(&mock);
-  ConverterInterface *converter = ConverterInterface::GetConverter();
+  ConverterFactory::SetConverter(&mock);
+  ConverterInterface *converter = ConverterFactory::GetConverter();
 
   Segments input;
   const string input_key = "Key";

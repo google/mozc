@@ -124,7 +124,7 @@ bool ExecCommand(const mozc::ConverterInterface &converter,
 int main(int argc, char **argv) {
   InitGoogle(argv[0], &argc, &argv, false);
   mozc::ConverterInterface *converter
-      = mozc::ConverterInterface::GetConverter();
+      = mozc::ConverterFactory::GetConverter();
   CHECK(converter);
 
   mozc::Segments segments;

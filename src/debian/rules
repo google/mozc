@@ -17,7 +17,7 @@
 export DH_OPTIONS
 
 BUILD_DIR=./out
-TARGETS=unix/ibus/ibus.gyp:ibus_mozc
+TARGETS=unix/ibus/ibus.gyp:ibus_mozc server/server.gyp:mozc_server gui/gui.gyp:mozc_tool
 
 configure: configure-stamp
 configure-stamp:
@@ -29,7 +29,7 @@ build: build-arch
 
 build-arch: build-arch-stamp
 build-arch-stamp: configure-stamp 
-	python build_mozc.py gyp
+	python build_mozc.py gyp --gypdir=/usr/bin
 	python build_mozc.py build_tools -c Release
 	python build_mozc.py build $(TARGETS) -c Release
 	touch build-arch-stamp
@@ -48,10 +48,18 @@ install-arch:
 	dh_testroot
 	dh_clean -k -s 
 	dh_installdirs -s
+
 	mkdir -p $(CURDIR)/debian/ibus-mozc/usr/lib/ibus-mozc/
 	cp -p $(BUILD_DIR)/Release/ibus_mozc $(CURDIR)/debian/ibus-mozc/usr/lib/ibus-mozc/ibus-engine-mozc
 	mkdir -p $(CURDIR)/debian/ibus-mozc/usr/share/ibus/component/
 	sed 's|/usr/libexec/ibus-engine-mozc|/usr/lib/ibus-mozc/ibus-engine-mozc|' < unix/ibus/mozc.xml > $(CURDIR)/debian/ibus-mozc/usr/share/ibus/component/mozc.xml
+
+	mkdir -p $(CURDIR)/debian/mozc-server/usr/lib/mozc
+	cp -p $(BUILD_DIR)/Release/mozc_server $(CURDIR)/debian/mozc-server/usr/lib/mozc/
+
+	mkdir -p $(CURDIR)/debian/mozc-utils-gui/usr/lib/mozc
+	cp -p $(BUILD_DIR)/Release/mozc_tool $(CURDIR)/debian/mozc-utils-gui/usr/lib/mozc
+
 	dh_install -s
 
 # Must not depend on anything. This is to be called by

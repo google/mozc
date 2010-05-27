@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE TS>
+<TS version="2.0">
+<context>
+    <name>mozc::gui::KeyMapEditorDialog</name>
+    <message>
+        <source>Conversion</source>
+        <translation>Conversion</translation>
+    </message>
+    <message>
+        <source>Composition</source>
+        <translation>Composition</translation>
+    </message>
+    <message>
+        <source>DirectInput</source>
+        <translation>DirectInput</translation>
+    </message>
+    <message>
+        <source>Precomposition</source>
+        <translation>Precomposition</translation>
+    </message>
+    <message>
+        <source>Prediction</source>
+        <translation>Selecting suggestion</translation>
+    </message>
+    <message>
+        <source>Suggestion</source>
+        <translation>Viewing suggestion</translation>
+    </message>
+    <message>
+        <source>Backspace</source>
+        <translation>Backspace (erase character before cursor)</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Cancel</translation>
+    </message>
+    <message>
+        <source>Revert</source>
+        <translation>Cancel the last preference learning</translation>
+    </message>
+    <message>
+        <source>Commit</source>
+        <translation>Commit</translation>
+    </message>
+    <message>
+        <source>CommitFirstSuggestion</source>
+        <translation>Commit first suggestion</translation>
+    </message>
+    <message>
+        <source>CommitOnlyFirstSegment</source>
+        <translation>Commit only first segment</translation>
+    </message>
+    <message>
+        <source>Convert</source>
+        <translation>Convert</translation>
+    </message>
+    <message>
+        <source>ConvertNext</source>
+        <translation>Select next candidate</translation>
+    </message>
+    <message>
+        <source>ConvertNextPage</source>
+        <translation>Select next page</translation>
+    </message>
+    <message>
+        <source>ConvertPrev</source>
+        <translation>Select previous candidate</translation>
+    </message>
+    <message>
+        <source>ConvertPrevPage</source>
+        <translation>Select previous page</translation>
+    </message>
+    <message>
+        <source>ConvertToFullAlphanumeric</source>
+        <translation>Convert to full-width alphanumeric</translation>
+    </message>
+    <message>
+        <source>ConvertToFullKatakana</source>
+        <translation>Convert to full-width katakana</translation>
+    </message>
+    <message>
+        <source>ConvertToHalfKatakana</source>
+        <translation>Convert to half-width katakana</translation>
+    </message>
+    <message>
+        <source>ConvertToHalfAlphanumeric</source>
+        <translation>Convert to half-width alphanumeric</translation>
+    </message>
+    <message>
+        <source>ConvertToHalfWidth</source>
+        <translation>Convert to half width</translation>
+    </message>
+    <message>
+        <source>ConvertToHiragana</source>
+        <translation>Convert to hiragana</translation>
+    </message>
+    <message>
+        <source>ConvertWithoutHistory</source>
+        <translation>Convert without using history</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>Delete (erase character after cursor)</translation>
+    </message>
+    <message>
+        <source>DisplayAsFullAlphanumeric</source>
+        <translation>Display as full-width alphanumeric</translation>
+    </message>
+    <message>
+        <source>DisplayAsFullKatakana</source>
+        <translation>Replace to full katakana</translation>
+    </message>
+    <message>
+        <source>DisplayAsHalfKatakana</source>
+        <translation>Replace to half katakana</translation>
+    </message>
+    <message>
+        <source>DisplayAsHalfAlphanumeric</source>
+        <translation>Replace to half ascii</translation>
+    </message>
+    <message>
+        <source>DisplayAsHalfWidth</source>
+        <translation>Replace to half width</translation>
+    </message>
+    <message>
+        <source>DisplayAsHiragana</source>
+        <translation>Replace to hiragana</translation>
+    </message>
+    <message>
+        <source>IMEOff</source>
+        <translation>Deactivate IME</translation>
+    </message>
+    <message>
+        <source>IMEOn</source>
+        <translation>Activate IME</translation>
+    </message>
+    <message>
+        <source>InputModeFullAlphanumeric</source>
+        <translation>Set input mode to full-width alphanumeric</translation>
+    </message>
+    <message>
+        <source>InputModeFullKatakana</source>
+        <translation>Set input mode to full-width katakana</translation>
+    </message>
+    <message>
+        <source>InputModeHalfAlphanumeric</source>
+        <translation>Set input mode to half-width alphanumeric</translation>
+    </message>
+    <message>
+        <source>InputModeHalfKatakana</source>
+        <translation>Set input mode to half-width katakana</translation>
+    </message>
+    <message>
+        <source>InputModeHiragana</source>
+        <translation>Set input mode to Hiragana</translation>
+    </message>
+    <message>
+        <source>InsertAlternateSpace</source>
+        <translation>Insert alternate space</translation>
+    </message>
+    <message>
+        <source>InsertFullSpace</source>
+        <translation>Insert half-width space</translation>
+    </message>
+    <message>
+        <source>InsertHalfSpace</source>
+        <translation>Insert full-width space</translation>
+    </message>
+    <message>
+        <source>InsertSpace</source>
+        <translation>Insert space</translation>
+    </message>
+    <message>
+        <source>MoveCursorLeft</source>
+        <translation>Move cursor left</translation>
+    </message>
+    <message>
+        <source>MoveCursorRight</source>
+        <translation>Move cursor right</translation>
+    </message>
+    <message>
+        <source>MoveCursorToBeginning</source>
+        <translation>Move cursor to the beginning</translation>
+    </message>
+    <message>
+        <source>MoveCursorToEnd</source>
+        <translation>Move cursor to the end</translation>
+    </message>
+    <message>
+        <source>PredictAndConvert</source>
+        <translation>Predict and convert</translation>
+    </message>
+    <message>
+        <source>SegmentFocusFirst</source>
+        <translation>Move segment focus to the first segment</translation>
+    </message>
+    <message>
+        <source>SegmentFocusLast</source>
+        <translation>Move segment focus to the last segment</translation>
+    </message>
+    <message>
+        <source>SegmentFocusLeft</source>
+        <translation>Move segment focus left</translation>
+    </message>
+    <message>
+        <source>SegmentFocusRight</source>
+        <translation>Move segment focus right</translation>
+    </message>
+    <message>
+        <source>SegmentWidthExpand</source>
+        <translation>Expand segment</translation>
+    </message>
+    <message>
+        <source>SegmentWidthShrink</source>
+        <translation>Shrink segment</translation>
+    </message>
+    <message>
+        <source>SwitchKanaType</source>
+        <translation>Switch kana type</translation>
+    </message>
+    <message>
+        <source>ToggleAlphanumericMode</source>
+        <translation>Toggle alphanumeric mode</translation>
+    </message>
+</context>
+</TS>
