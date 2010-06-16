@@ -198,7 +198,6 @@
         'encryptor_test.cc',
         'flags_test.cc',
         'hash_tables_test.cc',
-        'init_test.cc',
         'logging_test.cc',
         'mmap_test.cc',
         'mutex_test.cc',
@@ -218,6 +217,19 @@
         'url_test.cc',
         'util_test.cc',
         'version_test.cc',
+      ],
+      'dependencies': [
+        'base',
+        '../testing/testing.gyp:gtest_main',
+      ],
+    },
+    # init_test.cc is separated from all other base_test because it
+    # calls finalizers.
+    {
+      'target_name': 'base_init_test',
+      'type': 'executable',
+      'sources': [
+        'init_test.cc',
       ],
       'dependencies': [
         'base',

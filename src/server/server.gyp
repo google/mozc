@@ -57,7 +57,7 @@
       ],
       'conditions': [
         ['OS=="mac"', {
-          'product_name': 'GoogleJapaneseInputConverter',
+          'product_name': '<(branding)Converter',
           'sources': [
             '../mac/mozc_server_info',
           ],
@@ -75,7 +75,7 @@
           },
           'variables': {
             # This product name is used in postbuilds_mac.gypi.
-            'product_name': 'GoogleJapaneseInputConverter',
+            'product_name': '<(branding)Converter',
           },
           'includes': [
             '../gyp/postbuilds_mac.gypi',

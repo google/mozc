@@ -2,13 +2,18 @@ Source: mozc
 Section: utils
 Priority: extra
 Maintainer: Yusuke Sato <yusukes>
-Build-Depends: debhelper (>= 4.0.0), libibus-dev, libcurl4-openssl-dev, pkg-config, libprotobuf-dev, protobuf-compiler, libgtest-dev, libqt4-dev, gyp
+Build-Depends: debhelper (>= 4.0.0), libibus-dev, libcurl4-openssl-dev, pkg-config, libprotobuf-dev, protobuf-compiler, libgtest-dev, libqt4-dev, scim, libscim-dev, gyp
 Standards-Version: 3.6.2
 
 Package: ibus-mozc
 Architecture: any
-Depends: ${shlibs:Depends}, ibus, mozc-server (= ${Source-Version}), mozc-utils-gui (= ${Source-Version})
+Depends: ${shlibs:Depends}, ibus, mozc-server (= ${Source-Version})
 Description: IBus engine module for Mozc.
+
+Package: scim-mozc
+Architecture: any
+Depends: ${shlibs:Depends}, scim, mozc-server (= ${Source-Version})
+Description: SCIM IMEngine module for Mozc.
 
 Package: mozc-server
 Architecture: any

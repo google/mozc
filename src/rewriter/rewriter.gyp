@@ -253,6 +253,7 @@
         'user_segment_history_rewriter_test.cc',
       ],
       'dependencies': [
+        '../converter/converter.gyp:converter',
         '../testing/testing.gyp:gtest_main',
         'rewriter',
       ],

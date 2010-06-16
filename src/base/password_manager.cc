@@ -40,6 +40,7 @@
 
 #include <string>
 #include "base/base.h"
+#include "base/const.h"
 #include "base/encryptor.h"
 #include "base/file_stream.h"
 #include "base/mmap.h"
@@ -272,12 +273,12 @@ bool WinPasswordManager::RemovePassword() const {
 //////////////////////////////////////////////////////////////////
 // MacPasswordManager
 namespace {
-static const char kMacPasswordManagerName[] = "GoogleJapaneseInput";
+static const char kMacPasswordManagerName[] = kProductPrefix;
 }  // anonymous namespace
 
 class MacPasswordManager : public PasswordManagerInterface {
  public:
-  MacPasswordManager(const string &key = "GoogleJapaneseInput")
+  MacPasswordManager(const string &key = kProductPrefix)
       : key_(key) {}
 
   bool FindKeychainItem(string *password, SecKeychainItemRef *item_ref) const {

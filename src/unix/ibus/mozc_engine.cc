@@ -35,6 +35,12 @@
 #include <string>
 
 #include "base/base.h"
+#include "base/const.h"
+#include "base/protobuf/descriptor.h"
+#include "base/protobuf/message.h"
+#include "base/singleton.h"
+#include "base/util.h"
+#include "session/config.pb.h"
 #include "session/ime_switch_util.h"
 #include "unix/ibus/engine_registrar.h"
 #include "unix/ibus/key_translator.h"
@@ -46,7 +52,6 @@
 #include "unix/ibus/session.h"
 #else
 // use server/client session
-#include "base/util.h"
 #include "client/session.h"
 #endif
 
@@ -56,6 +61,8 @@ namespace {
 const char kGObjectDataKey[] = "ibus-mozc-aux-data";
 // An ID for a candidate which is not associated with a text.
 const int32 kBadCandidateId = -1;
+// The ibus-memconf section name in which we're interested.
+const char kMozcSectionName[] = "engine/Mozc";
 
 // Icon path for MozcTool
 // TODO(taku): currently, unknown icon is displayed.
@@ -68,6 +75,12 @@ uint64 GetTime() {
   return static_cast<uint64>(time(NULL));
 }
 
+// Returns true if mozc_tool is installed.
+bool IsMozcToolAvailable() {
+  return mozc::Util::FileExists(
+      mozc::Util::JoinPath(mozc::Util::GetServerDirectory(), mozc::kMozcTool));
+}
+
 struct IBusMozcEngineClass {
   IBusEngineClass parent;
 };
@@ -77,10 +90,9 @@ struct IBusMozcEngine {
   mozc::ibus::MozcEngine *engine;
 };
 
-mozc::ibus::MozcEngine *g_engine = NULL;
 IBusEngineClass *g_parent_class = NULL;
 
-GObject* MozcEngineClassConstructor(
+GObject *MozcEngineClassConstructor(
     GType type,
     guint n_construct_properties,
     GObjectConstructParam *construct_properties) {
@@ -96,12 +108,9 @@ void MozcEngineClassDestroy(IBusObject *engine) {
 void MozcEngineClassInit(gpointer klass, gpointer class_data) {
   IBusEngineClass *engine_class = IBUS_ENGINE_CLASS(klass);
 
-  if (!g_engine) {
-    g_engine = new mozc::ibus::MozcEngine;
-  } else {
-    VLOG(1) << "MozcEngine has been already instantiated.";
-  }
-  mozc::ibus::EngineRegistrar::Register(g_engine, engine_class);
+  VLOG(2) << "MozcEngineClassInit is called";
+  mozc::ibus::EngineRegistrar::Register(
+      mozc::Singleton<mozc::ibus::MozcEngine>::get(), engine_class);
 
   g_parent_class = reinterpret_cast<IBusEngineClass*>(
       g_type_class_peek_parent(klass));
@@ -114,7 +123,7 @@ void MozcEngineClassInit(gpointer klass, gpointer class_data) {
 
 void MozcEngineInstanceInit(GTypeInstance *instance, gpointer klass) {
   IBusMozcEngine *engine = reinterpret_cast<IBusMozcEngine*>(instance);
-  engine->engine = g_engine;
+  engine->engine = mozc::Singleton<mozc::ibus::MozcEngine>::get();
 }
 
 }  // namespace
@@ -271,40 +280,42 @@ MozcEngine::MozcEngine()
   g_object_ref_sink(prop_composition_mode_);
 
 #ifndef OS_CHROMEOS
-  // Create items for MozcTool
-  sub_prop_list = ibus_prop_list_new();
+  if (IsMozcToolAvailable()) {
+    // Create items for MozcTool
+    sub_prop_list = ibus_prop_list_new();
 
-  for (size_t i = 0; i < kMozcEngineToolPropertiesSize; ++i) {
-    const MozcEngineToolProperty &entry = kMozcEngineToolProperties[i];
-    IBusText *label = ibus_text_new_from_static_string(entry.label);
-    IBusProperty *item = ibus_property_new(entry.mode,
-                                           PROP_TYPE_NORMAL,
-                                           label,
-                                           NULL,
-                                           NULL,
-                                           TRUE,
-                                           TRUE,
-                                           PROP_STATE_UNCHECKED,
-                                           NULL);
-    g_object_set_data(G_OBJECT(item), kGObjectDataKey, (gpointer)&entry);
-    ibus_prop_list_append(sub_prop_list, item);
+    for (size_t i = 0; i < kMozcEngineToolPropertiesSize; ++i) {
+      const MozcEngineToolProperty &entry = kMozcEngineToolProperties[i];
+      IBusText *label = ibus_text_new_from_static_string(entry.label);
+      IBusProperty *item = ibus_property_new(entry.mode,
+                                             PROP_TYPE_NORMAL,
+                                             label,
+                                             NULL,
+                                             NULL,
+                                             TRUE,
+                                             TRUE,
+                                             PROP_STATE_UNCHECKED,
+                                             NULL);
+      g_object_set_data(G_OBJECT(item), kGObjectDataKey, (gpointer)&entry);
+      ibus_prop_list_append(sub_prop_list, item);
+    }
+
+    const string icon_path = GetIconPath(kMozcToolIconPath);
+    prop_mozc_tool_ = ibus_property_new("MozcTool",
+                                        PROP_TYPE_MENU,
+                                        NULL /* label */,
+                                        icon_path.c_str(),
+                                        NULL /* tooltip */,
+                                        TRUE /* sensitive */,
+                                        TRUE /* visible */,
+                                        PROP_STATE_UNCHECKED,
+                                        sub_prop_list);
+
+    // Likewise, |prop_mozc_tool_| owns |sub_prop_list|. We have to sink
+    // |prop_mozc_tool_| here so ibus_engine_update_property() call in
+    // PropertyActivate() does not destruct the object.
+    g_object_ref_sink(prop_mozc_tool_);
   }
-
-  const string icon_path = GetIconPath(kMozcToolIconPath);
-  prop_mozc_tool_ = ibus_property_new("MozcTool",
-                                      PROP_TYPE_MENU,
-                                      NULL /* label */,
-                                      icon_path.c_str(),
-                                      NULL /* tooltip */,
-                                      TRUE /* sensitive */,
-                                      TRUE /* visible */,
-                                      PROP_STATE_UNCHECKED,
-                                      sub_prop_list);
-
-  // Likewise, |prop_mozc_tool_| owns |sub_prop_list|. We have to sink
-  // |prop_mozc_tool_| here so ibus_engine_update_property() call in
-  // PropertyActivate() does not destruct the object.
-  g_object_ref_sink(prop_mozc_tool_);
 #endif
 
   // |prop_root_| is used for registering properties in FocusIn().
@@ -316,7 +327,9 @@ MozcEngine::MozcEngine()
   ibus_prop_list_append(prop_root_, prop_composition_mode_);
 
 #ifndef OS_CHROMEOS
-  ibus_prop_list_append(prop_root_, prop_mozc_tool_);
+  if (IsMozcToolAvailable()) {
+    ibus_prop_list_append(prop_root_, prop_mozc_tool_);
+  }
 #endif
 }
 
@@ -583,13 +596,27 @@ GType MozcEngine::GetType() {
   return type;
 }
 
-// The callback function to the "disconnected" signal.
+// static
 void MozcEngine::Disconnected(IBusBus *bus, gpointer user_data) {
   ibus_quit();
-  if (g_engine) {
-    delete g_engine;
-    g_engine = NULL;
-  }
+}
+
+// static
+void MozcEngine::ConfigValueChanged(IBusConfig *config,
+                                    const gchar *section,
+                                    const gchar *name,
+                                    GValue *gvalue,
+                                    gpointer user_data) {
+#ifdef OS_CHROMEOS
+  // This function might be called _before_ MozcEngineClassInit is called if
+  // you press the "Configure..." button for Mozc before switching to the Mozc
+  // input method.
+  MozcEngine *engine = mozc::Singleton<MozcEngine>::get();
+  engine->UpdateConfig(section, name, gvalue);
+#else
+  // On plain Linux, we don't use ibus-gconf for now. In other words, this
+  // method should never be called.
+#endif
 }
 
 bool MozcEngine::UpdateAll(IBusEngine *engine, const commands::Output &output) {
@@ -656,10 +683,25 @@ bool MozcEngine::UpdateCandidates(IBusEngine *engine,
 #endif
 
   for (int i = 0; i < candidates.candidate_size(); ++i) {
+    const commands::Candidates::Candidate &candidate = candidates.candidate(i);
     IBusText *text =
-        ibus_text_new_from_string(candidates.candidate(i).value().c_str());
+        ibus_text_new_from_string(candidate.value().c_str());
     ibus_lookup_table_append_candidate(table, text);
     // |text| is released by ibus_engine_update_lookup_table along with |table|.
+
+    const bool has_label = candidate.has_annotation() &&
+        candidate.annotation().has_shortcut();
+    // Need to append an empty string when the candidate does not have a
+    // shortcut. Otherwise the ibus lookup table shows numeric labels.
+    // NOTE: Since the candidate window for Chrome OS does not support custom
+    // labels, it always shows numeric labels.
+    IBusText *label =
+        ibus_text_new_from_string(has_label ?
+                                  candidate.annotation().shortcut().c_str() :
+                                  "");
+    ibus_lookup_table_append_label(table, label);
+    // |label| is released by ibus_engine_update_lookup_table along with
+    // |table|.
   }
   ibus_engine_update_lookup_table(engine, table, TRUE);
   // |table| is released by ibus_engine_update_lookup_table.
@@ -684,6 +726,74 @@ bool MozcEngine::UpdateCandidates(IBusEngine *engine,
   }
 
   return true;
+}
+
+void MozcEngine::UpdateConfig(
+    const gchar *section, const gchar *name, GValue *gvalue) {
+#ifdef OS_CHROMEOS
+  if (!section || !name || !gvalue) {
+    return;
+  }
+  if (strcmp(section, kMozcSectionName) != 0) {
+    return;
+  }
+
+  config::Config mozc_config;
+  const google::protobuf::Descriptor *descriptor = mozc_config.GetDescriptor();
+  const google::protobuf::Reflection *reflection = mozc_config.GetReflection();
+  const google::protobuf::FieldDescriptor *field_to_update =
+      descriptor->FindFieldByName(name);
+
+  if (!field_to_update) {
+    LOG(ERROR) << "Unknown config name: " << name;
+    return;
+  }
+
+  // Set |gvalue| to |mozc_config|.
+  switch (field_to_update->cpp_type()) {
+    case google::protobuf::FieldDescriptor::CPPTYPE_ENUM: {
+      // |value| should be G_TYPE_STRING.
+      if (!G_VALUE_HOLDS_STRING(gvalue)) {
+        LOG(ERROR) << "Bad GValue type for " << name;
+        return;
+      }
+      const gchar *string_value = g_value_get_string(gvalue);
+      DCHECK(string_value);
+      const google::protobuf::EnumValueDescriptor *enum_value =
+          descriptor->FindEnumValueByName(string_value);
+      if (!enum_value) {
+        LOG(ERROR) << "Bad GValue value for " << name << ": " << string_value;
+        return;
+      }
+      reflection->SetEnum(&mozc_config, field_to_update, enum_value);
+      VLOG(2) << "setting mozc config: " << name << " = " << string_value;
+      break;
+    }
+    case google::protobuf::FieldDescriptor::CPPTYPE_BOOL: {
+      // |value| should be G_TYPE_BOOLEAN
+      if (!G_VALUE_HOLDS_BOOLEAN(gvalue)) {
+        LOG(ERROR) << "Bad GValue type for " << name;
+        return;
+      }
+      const gboolean boolean_value = g_value_get_boolean(gvalue);
+      reflection->SetBool(&mozc_config, field_to_update, boolean_value);
+      VLOG(2) << "setting mozc config: " << name << " = "
+              << (boolean_value ? "true" : "false");
+      break;
+    }
+    default: {
+      // TODO(yusukes): Support other types.
+      LOG(ERROR) << "Unknown or unsupported type: " << name << ": "
+                 << field_to_update->cpp_type();
+      return;
+    }
+  }
+
+  // Update config1.db.
+  session_->SetConfig(mozc_config);
+  session_->SyncData();  // TODO(yusukes): remove this call?
+  VLOG(2) << "Session::SetConfig() is called: " << name;
+#endif
 }
 
 void MozcEngine::UpdateCompositionMode(IBusEngine *engine,

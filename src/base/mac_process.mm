@@ -32,6 +32,7 @@
 #import <Cocoa/Cocoa.h>
 
 #include "base/base.h"
+#include "base/const.h"
 #include "base/mac_util.h"
 #include "base/util.h"
 
@@ -79,7 +80,7 @@ namespace {
 bool LaunchMozcToolByPath() {
   NSString *mozcToolPath =
       [[[NSBundle mainBundle] resourcePath]
-        stringByAppendingPathComponent:@"GoogleJapaneseInputTool.app"];
+        stringByAppendingPathComponent:@ kProductPrefix "Tool.app"];
   return [[NSWorkspace sharedWorkspace] launchApplication:mozcToolPath];
 }
 
@@ -96,15 +97,15 @@ bool LaunchMozcToolInternal(const string &tool_name, const string &error_type) {
   NSString *mozcToolPath =
       [workspace absolutePathForAppBundleWithIdentifier:kMozcToolBundleId];
   if (!mozcToolPath) {
-    LOG(ERROR) << "cannot find GoogleJapaneseInputTool.app";
+    LOG(ERROR) << "cannot find " << kProductPrefix << "Tool.app";
     [pool drain];
     return LaunchMozcToolByPath();
   }
   NSString *serverDirectory =
       [NSString stringWithUTF8String:Util::GetServerDirectory().c_str()];
   if (![mozcToolPath hasPrefix:serverDirectory]) {
-    LOG(ERROR) << "The system has GoogleJapaneseInputTool.app in a wrong path "
-               << [mozcToolPath UTF8String];
+    LOG(ERROR) << "The system has " << kProductPrefix << "Tool.app"
+               << " in a wrong path " << [mozcToolPath UTF8String];
     [pool drain];
     return false;
   }

@@ -36,7 +36,7 @@
 #include "base/freelist.h"
 #include "transliteration/transliteration.h"
 #include "converter/character_form_manager.h"
-#include "converter/converter_data.h"
+#include "converter/lattice.h"
 #include "converter/nbest_generator.h"
 #include "converter/node.h"
 #include "converter/pos_matcher.h"
@@ -842,7 +842,7 @@ Segments::Segments(): max_history_segments_size_(0),
                       resized_(false),
                       use_user_history_(true),
                       request_type_(Segments::CONVERSION),
-                      converter_data_(new ConverterData),
+                      lattice_(new Lattice),
                       pool_(new ObjectPool<Segment>(32)) {}
 
 Segments::~Segments() {}
@@ -1010,19 +1010,15 @@ void Segments::clear_conversion_segments() {
 }
 
 void Segments::clear_lattice() {
-  converter_data_->clear_lattice();
+  lattice_->Clear();
 }
 
-bool Segments::has_lattice() const {
-  return converter_data_->has_lattice();
-}
-
-ConverterData *Segments::converter_data() const {
-  return converter_data_.get();
+Lattice *Segments::lattice() const {
+  return lattice_.get();
 }
 
 NodeAllocatorInterface *Segments::node_allocator() const {
-  return converter_data_->node_allocator();
+  return lattice_->node_allocator();
 }
 
 size_t Segments::max_history_segments_size() const {
@@ -1041,14 +1037,6 @@ void Segments::set_resized(bool resized) {
 
 bool Segments::has_resized() const {
   return resized_;
-}
-
-Node *Segments::bos_node() const {
-  return converter_data_->bos_node();
-}
-
-Node *Segments::eos_node() const {
-  return converter_data_->eos_node();
 }
 
 size_t Segments::max_prediction_candidates_size() const {

@@ -96,8 +96,14 @@ class MozcEngine : public EngineInterface {
 
   // Returns the GType which this class represents.
   static GType GetType();
-  // The callback function to the "disconnected" signal.
+  // The callback function to the "disconnected" signal to the bus object.
   static void Disconnected(IBusBus *bus, gpointer user_data);
+  // The callback function to the "value-changed" signal to the config object.
+  static void ConfigValueChanged(IBusConfig *config,
+                                 const gchar *section,
+                                 const gchar *name,
+                                 GValue *value,
+                                 gpointer user_data);
 
  private:
   // Updates the preedit text and the candidate window and inserts result
@@ -110,6 +116,8 @@ class MozcEngine : public EngineInterface {
   // Updates the candidate window based on the content of |output|.
   bool UpdateCandidates(IBusEngine *engine,
                         const commands::Output &output);
+  // Updates the configuration.
+  void UpdateConfig(const gchar *section, const gchar *name, GValue *gvalue);
   // Updates the composition mode based on the content of |output|.
   void UpdateCompositionMode(IBusEngine *engine,
                              const commands::Output &output);

@@ -75,7 +75,7 @@ wstring GetMappedFileNameByAddress(LPVOID address) {
 
 // This function scans each section of a given mapped image section and
 // changes memory protection attribute to read-only.
-// Retruns true if all sections are changes to be read-only region.
+// Retruns true if all sections are changed to one read-only region.
 // |result_info| contains the memory block information of the combined
 // region if succeeds.
 bool MakeReadOnlyForMappedModule(
@@ -335,7 +335,7 @@ VOID WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv) {
   //  03DE8000  Image   8       Read/Write             .data
   //  03DEA000  Image   4       Read                   .rsrc
   //  03DEB000  Image   252     Read                   .reloc
-  // Altough an initial protection attribute is not always read-only, you can
+  // Although an initial protection attribute is not always read-only, you can
   // change each protection to read-only by VirtualProtect API.
   MEMORY_BASIC_INFORMATION mem_info;
   if (!MakeReadOnlyForMappedModule(image, &mem_info)) {

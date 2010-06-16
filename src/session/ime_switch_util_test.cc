@@ -77,7 +77,7 @@ TEST_F(ImeSwitchUtilTest, PresetTest) {
   {
     commands::KeyEvent key;
     KeyParser::ParseKey("HENKAN", &key);
-    EXPECT_FALSE(ImeSwitchUtil::IsTurnOnInDirectMode(key));
+    EXPECT_TRUE(ImeSwitchUtil::IsTurnOnInDirectMode(key));
   }
   {
     commands::KeyEvent key;

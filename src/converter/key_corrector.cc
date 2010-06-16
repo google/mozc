@@ -570,4 +570,18 @@ bool KeyCorrector::IsInvalidPosition(size_t pos) {
 size_t KeyCorrector::InvalidPosition() {
   return kInvalidPos;
 }
+
+// static
+int KeyCorrector::GetCorrectedCostPenalty(const string &key) {
+  // "んん" and "っっ" must be mis-spelling.
+  // if (key.find("んん") != string::npos ||
+  //     key.find("っっ") != string::npos) {
+  if (key.find("\xE3\x82\x93\xE3\x82\x93") != string::npos ||
+      key.find("\xE3\x81\xA3\xE3\x81\xA3") != string::npos) {
+    return 0;
+  }
+  // add 3000 to the original word cost
+  const int kCorrectedCostPenalty = 3000;
+  return kCorrectedCostPenalty;
+}
 }  // namespace mozc

@@ -40,7 +40,7 @@ namespace mozc {
 struct Node;
 class NodeAllocatorInterface;
 class NBestGenerator;
-class ConverterData;
+class Lattice;
 template <class T> class ObjectPool;
 
 class Segment {
@@ -356,18 +356,15 @@ class Segments {
 
   // lattice
   void clear_lattice();
-  bool has_lattice() const;
 
   // clear segments and lattice
   void clear();
   void Clear();
 
-  Node *bos_node() const;
-  Node *eos_node() const;
-
   void DebugString(string *output) const;
 
-  ConverterData* converter_data() const;
+  // return lattice instance
+  Lattice *lattice() const;
 
   NodeAllocatorInterface *node_allocator() const;
 
@@ -387,7 +384,7 @@ class Segments {
   bool resized_;
   bool use_user_history_;
   RequestType request_type_;
-  scoped_ptr<ConverterData> converter_data_;
+  scoped_ptr<Lattice> lattice_;
   scoped_ptr<ObjectPool<Segment> > pool_;
   deque<Segment *> segments_;
   vector<RevertEntry> revert_entries_;

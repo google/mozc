@@ -27,69 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_CONVERTER_CONVERTER_DATA_H_
-#define MOZC_CONVERTER_CONVERTER_DATA_H_
+#include "testing/base/public/gunit.h"
 
-#include <vector>
-#include <string>
-#include "base/freelist.h"
-#include "converter/node.h"
-#include "converter/nbest_generator.h"
-#include "converter/key_corrector.h"
-
-namespace mozc {
-
-class NBestGenerator;
-class NodeAllocator;
-
-class ConverterData {
- public:
-  NodeAllocatorInterface *node_allocator() const;
-
-  // Old interface for compatibility
-  Node *NewNode();
-
-  Node **begin_nodes_list();
-  Node **end_nodes_list();
-
-  const KeyCorrector &key_corrector() const;
-
-  Node *bos_node() const {
-    return bos_node_;
-  }
-
-  Node *eos_node() const {
-    return eos_node_;
-  }
-
-  void set_bos_node(Node *bos_node) {
-    bos_node_ = bos_node;
-  }
-
-  void set_eos_node(Node *eos_node) {
-    eos_node_ = eos_node;
-  }
-
-  void set_key(const string &key, KeyCorrector::InputMode mode);
-  const string& key() const;
-
-  void clear_lattice();
-  bool has_lattice() const;
-
-  ConverterData();
-  virtual ~ConverterData();
-
- private:
-  string key_;
-  Node *bos_node_;
-  Node *eos_node_;
-  scoped_ptr<KeyCorrector> key_corrector_;
-  scoped_ptr<NodeAllocator> node_allocator_;
-  vector<Node *> begin_nodes_list_;
-  vector<Node *> end_nodes_list_;
-  // Limit of node count returned by each dictionary backend. Total number of
-  // nodes may exceed this.
-};
-}  // namespace mozc
-
-#endif  // MOZC_CONVERTER_CONVERTER_DATA_H_
+TEST(MozcSoLinkTest, TestDummy) {
+  // This test is intentionally left empty.
+}

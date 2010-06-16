@@ -1395,11 +1395,15 @@ UserProfileDirectoryImpl::UserProfileDirectoryImpl() {
 
 #elif defined(OS_MACOSX)
   dir = MacUtil::GetApplicationSupportDirectory();
+#ifdef GOOGLE_JAPANESE_INPUT_BUILD
   dir = Util::JoinPath(dir, "Google");
   // The permission of ~/Library/Application Support/Google seems to be 0755.
   // TODO(komatsu): nice to make a wrapper function.
   ::mkdir(dir.c_str(), 0755);
   dir = Util::JoinPath(dir, "JapaneseInput");
+#else
+  dir = Util::JoinPath(dir, "Mozc");
+#endif
 #else  // OS_LINUX
   char buf[1024];
   struct passwd pw, *ppw;

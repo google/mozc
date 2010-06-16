@@ -308,8 +308,8 @@ SparseArrayImage::SparseArrayImage(const char *image, int size)
   bytes += values_size_;
   CHECK(ReadInt(bytes) == SparseArrayBuilder::kTrailerMagic)
       << "trailer magic mismatch";
-  LOG(INFO) << "SparseArrayImage: "
-            << values_size_ / 2 << " values";
+  VLOG(1) << "SparseArrayImage: "
+          << values_size_ / 2 << " values";
 }
 
 SparseArrayImage::~SparseArrayImage() {

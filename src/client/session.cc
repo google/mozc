@@ -730,11 +730,6 @@ bool Session::IsAbortKey(const commands::KeyEvent &key) {
 }
 
 bool Session::LaunchTool(const string &mode, const string &extra_arg) {
-#ifdef OS_LINUX
-  // TODO(taku): define it in const.h
-  const char kMozcTool[] = "mozc_tool";
-#endif  // OS_LINUX
-
   // Don't execute any child process if the parent process is not
   // in proper runlevel.
   if (!IsValidRunLevel()) {

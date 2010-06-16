@@ -34,12 +34,13 @@
 
 #include <launch.h>
 
+#include "base/const.h"
 #include "base/util.h"
 
 namespace mozc {
 namespace {
 const char kServerDirectory[] =
-    "/Library/Input Methods/GoogleJapaneseInput.app/Contents/Resources";
+    "/Library/Input Methods/" kProductPrefix ".app/Contents/Resources";
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
 const char kProjectPrefix[] =
     "com.google.inputmethod.Japanese.";
@@ -75,7 +76,7 @@ string MacUtil::GetLoggingDirectory() {
   if ([paths count] > 0) {
     dir.assign(
         [[[[paths objectAtIndex:0] stringByAppendingPathComponent:@"Logs"]
-           stringByAppendingPathComponent:@"GoogleJapaneseInput"]
+           stringByAppendingPathComponent:@kProductPrefix]
           fileSystemRepresentation]);
   }
   [pool drain];

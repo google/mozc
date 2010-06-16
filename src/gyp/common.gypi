@@ -34,21 +34,18 @@
 # http://src.chromium.org/viewvc/chrome/trunk/src/build/common.gypi
 {
   'variables': {
-    # Define default values in the inner 'variables' dict. This looks
-    # weird but necessary.
-    'variables': {
-      # By default, we build mozc in two passes to avoid unnecessary code
-      # generation. For instance, it takes quite some time to generate
-      # embedded_dictionary_data.h. If we build mozc in one pass, we end up
-      # invoking the code generation every time code used in the code
-      # generation tool is changed. In fact, a comment fix in 'base/util.h'
-      # causes the code generation. We want to avoid that.
-      'two_pass_build%': 1,
-      # This variable need to be set to 1 when you build Mozc for Chromium OS.
-      'chromeos%': 0,
-    },
-    'two_pass_build%': '<(two_pass_build)',
-    'chromeos%': '<(chromeos)',
+    # By default, we build mozc in two passes to avoid unnecessary code
+    # generation. For instance, it takes quite some time to generate
+    # embedded_dictionary_data.h. If we build mozc in one pass, we end up
+    # invoking the code generation every time code used in the code
+    # generation tool is changed. In fact, a comment fix in 'base/util.h'
+    # causes the code generation. We want to avoid that.
+    'two_pass_build%': 1,
+    # This variable need to be set to 1 when you build Mozc for Chromium OS.
+    'chromeos%': 0,
+    # Extra libraries for Linux. This can be used like:
+    # GYP_DEFINES='extra_linux_libs="-lfoo -lbar"' python build_mozc.py gyp
+    'extra_linux_libs%': [],
 
     # warning_cflags_cflags will be shared with Mac and Linux.
     'warning_cflags': [
@@ -67,16 +64,6 @@
       '-include base/namespace.h',
       '-pipe',
     ],
-    'msvc_libs_x86': [
-      '<(DEPTH)/../third_party/platformsdk/v6_1/files/Lib',
-      '<(DEPTH)/../third_party/atlmfc_vc80/files/lib',
-      '<(DEPTH)/../third_party/vc_80/files/vc/lib',
-    ],
-    'msvc_libs_x64': [
-      '<(DEPTH)/../third_party/platformsdk/v6_1/files/lib/x64',
-      '<(DEPTH)/../third_party/atlmfc_vc80/files/lib/amd64',
-      '<(DEPTH)/../third_party/vc_80/files/vc/lib/amd64',
-    ],
     # We wanted to have this directory under the build output directory
     # (ex. 'out' for Linux), but there is no variable defined for the top
     # level source directory, hence we create the directory in the top
@@ -84,6 +71,14 @@
     'mozc_build_tools_dir': '<(DEPTH)/mozc_build_tools/<(OS)',
     'proto_out_dir': '<(SHARED_INTERMEDIATE_DIR)/proto_out',
     'branding%': 'Mozc',
+    # use_qt is 'YES' only if you want to use GUI binaries.
+    'use_qt%': 'YES',
+
+    # Copied from Chromium:build/common.gypi
+    # Set to 1 to enable code coverage.  In addition to build changes
+    # (e.g. extra CFLAGS), also creates a new target in the src/chrome
+    # project file called "coverage".
+    'coverage%': 0,
   },
   'target_defaults': {
     'variables': {
@@ -125,28 +120,6 @@
       },
       'x86_Base': {
         'abstract': 1,
-        'msvs_settings': {
-          'VCLibrarianTool': {
-            'AdditionalLibraryDirectories': [
-              '<@(msvc_libs_x86)',
-            ],
-            'AdditionalLibraryDirectories!': [
-              '<@(msvc_libs_x64)',
-            ],
-          },
-          'VCLinkerTool': {
-            'TargetMachine': '<(win_target_machine_x86)',
-            'AdditionalOptions': [
-              '/SAFESEH',
-            ],
-            'AdditionalLibraryDirectories': [
-              '<@(msvc_libs_x86)',
-            ],
-            'AdditionalLibraryDirectories!': [
-              '<@(msvc_libs_x64)',
-            ],
-          },
-        },
         'msvs_configuration_attributes': {
           'OutputDirectory': '<(DEPTH)/out_win/$(ConfigurationName)',
           'IntermediateDirectory': '<(DEPTH)/out_win/$(ConfigurationName)/obj/$(ProjectName)',
@@ -160,25 +133,6 @@
           'IntermediateDirectory': '<(DEPTH)/out_win/$(ConfigurationName)64/obj/$(ProjectName)',
         },
         'msvs_configuration_platform': 'x64',
-        'msvs_settings': {
-          'VCLibrarianTool': {
-            'AdditionalLibraryDirectories': [
-              '<@(msvc_libs_x64)',
-            ],
-            'AdditionalLibraryDirectories!': [
-              '<@(msvc_libs_x86)',
-            ],
-          },
-          'VCLinkerTool': {
-            'TargetMachine': '<(win_target_machine_x64)',
-            'AdditionalLibraryDirectories': [
-              '<@(msvc_libs_x64)',
-            ],
-            'AdditionalLibraryDirectories!': [
-              '<@(msvc_libs_x86)',
-            ],
-          },
-        },
       },
       'Debug_Base': {
         'abstract': 1,
@@ -318,10 +272,6 @@
         ],
         'include_dirs': [
           '../protobuf/files/src',
-          '<(DEPTH)/../third_party/atlmfc_vc80/files/include',
-          '<(DEPTH)/../third_party/platformsdk/v6_1/files/include',
-          '<(DEPTH)/../third_party/vc_80/files/vc/include',
-          '<(DEPTH)/../third_party/wtl_80/files/include',
           '<(DEPTH)/third_party/gtest',
           '<(DEPTH)/third_party/gtest/include',
         ],
@@ -329,7 +279,7 @@
         # setup_env.bat in the directory specified in 'msvs_cygwin_dirs'
         # for GYP to be happy.
         'msvs_cygwin_dirs': [
-          '<(DEPTH)/gyp',
+          '<(DEPTH)/third_party/cygwin',
         ],
         'msvs_settings': {
           'VCCLCompilerTool': {
@@ -419,6 +369,7 @@
           '-lrt',
           '-lssl',
           '-lz',
+          '<@(extra_linux_libs)',
         ],
         'conditions': [
           ['chromeos==1', {
@@ -461,6 +412,46 @@
           ],
         }
       }],
+      # code coverage.  Copied from Chromium:build/common.gypi
+      ['coverage!=0', {
+        'conditions': [
+          ['OS=="mac"', {
+            'xcode_settings': {
+              'GCC_INSTRUMENT_PROGRAM_FLOW_ARCS': 'YES',  # -fprofile-arcs
+              'GCC_GENERATE_TEST_COVERAGE_FILES': 'YES',  # -ftest-coverage
+            },
+            # Add -lgcov for types executable, shared_library, and
+            # loadable_module; not for static_library.
+            # This is a delayed conditional.
+            'target_conditions': [
+              ['_type!="static_library"', {
+                'xcode_settings': { 'OTHER_LDFLAGS': [ '-lgcov' ] },
+              }],
+            ],
+          }],
+          # Linux gyp (into scons) doesn't like target_conditions?
+          # TODO(team): track down why 'target_conditions' doesn't work
+          # on Linux gyp into scons like it does on Mac gyp into xcodeproj.
+          ['OS=="linux"', {
+            'cflags': [ '-ftest-coverage',
+                        '-fprofile-arcs' ],
+            'link_settings': { 'libraries': [ '-lgcov' ] },
+          }],
+          # Finally, for Windows, we simply turn on profiling.
+          ['OS=="win"', {
+            'msvs_settings': {
+              'VCLinkerTool': {
+                'Profile': 'true',
+              },
+              'VCCLCompilerTool': {
+                # /Z7, not /Zi, so coverage is happyb
+                'DebugInformationFormat': '1',
+                'AdditionalOptions': ['/Yd'],
+              }
+            }
+         }],  # OS==win
+        ],  # conditions for coverage
+      }],  # coverage!=0
     ],
   },
 }

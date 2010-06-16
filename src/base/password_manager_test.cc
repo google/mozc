@@ -59,6 +59,7 @@ TEST(PasswordManager, PasswordManagerTest) {
   EXPECT_NE(password1, password2);
 
   EXPECT_TRUE(PasswordManager::RemovePassword());
+  EXPECT_TRUE(PasswordManager::InitPassword());
   EXPECT_TRUE(PasswordManager::GetPassword(&password1));
   EXPECT_TRUE(PasswordManager::GetPassword(&password2));
   EXPECT_EQ(password1, password2);

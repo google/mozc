@@ -37,18 +37,11 @@
 #include <pthread.h>
 #endif
 
-#ifdef OS_WINDOWS
-#define BEGINTHREAD(src, stack, func, arg, flag, id) \
-     (HANDLE)_beginthreadex((void *)(src), (unsigned)(stack), \
-                       (unsigned(_stdcall *)(void *))(func), (void *)(arg), \
-                       (unsigned)(flag), (unsigned *)(id))
-#endif
-
 namespace mozc {
 
 class Thread {
  public:
-  virtual void Run() {}
+  virtual void Run() { }
 
   void Start() {
     if (IsRunning()) {
@@ -57,11 +50,12 @@ class Thread {
 
     Detach();
 #ifdef OS_WINDOWS
-    DWORD id = 0;
-    handle_ = BEGINTHREAD(0, 0, &Thread::Wrapper, this, 0, &id);
+    handle_ = reinterpret_cast<HANDLE>(
+                  _beginthreadex(NULL, 0, &Thread::WrapperForWindows,
+                                 this, 0, NULL));
 #else
     is_running_ = true;
-    if (0 != pthread_create(&handle_, 0, &Thread::Wrapper,
+    if (0 != pthread_create(&handle_, 0, &Thread::WrapperForPOSIX,
                             static_cast<void *>(this))) {
       is_running_ = false;
     }
@@ -134,17 +128,21 @@ class Thread {
     handle_ = 0;
   }
 
-  static void* Wrapper(void *ptr) {
+#if defined(OS_WINDOWS)
+  static unsigned __stdcall WrapperForWindows(void *ptr) {
     Thread *p = static_cast<Thread *>(ptr);
-#ifndef OS_WINDOWS
-    pthread_cleanup_push(&Thread::Cleanup, static_cast<void *>(&p->is_running_));
-#endif
     p->Run();
-#ifndef OS_WINDOWS
+    return 0;
+  }
+#else
+  static void * WrapperForPOSIX(void *ptr) {
+    Thread *p = static_cast<Thread *>(ptr);
+    pthread_cleanup_push(&Thread::Cleanup, static_cast<void *>(&p->is_running_));
+    p->Run();
     pthread_cleanup_pop(1);
-#endif
     return NULL;
   }
+#endif
 
 #ifndef OS_WINDOWS
   static void Cleanup(void *ptr) {

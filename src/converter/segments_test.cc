@@ -52,7 +52,7 @@ TEST(SegmentsTest, BasicTest) {
   EXPECT_FALSE(segments.use_user_history());
 
   EXPECT_EQ(0, segments.segments_size());
-  EXPECT_TRUE(NULL != segments.converter_data());
+  EXPECT_TRUE(NULL != segments.lattice());
 
   const int kSegmentsSize = 5;
   Segment *seg[kSegmentsSize];

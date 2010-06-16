@@ -1,4 +1,4 @@
-#TODO(toshiyuki): we want add comment for each name
+#TODO(toshiyuki): we want to add comments for each name
 ConversionWindowDuration
 PredictionWindowDuration
 SuggestionWindowDuration
@@ -196,20 +196,3 @@ MsctfVerRevision
 
 # usage stats
 UsageStatsUploadFailed
-
-#DictionarySuggestionSelected
-#HistorySuggestionSelected
-#TypingDuration
-#MozcIsDefault
-#UploadFailure
-#UseMozcTool
-#Candidate0
-#Candidate1
-#Candidate2
-#Candidate3
-#Candidate4
-#Candidate5
-#Candidate6
-#Candidate7
-#Candidate8
-#Candidate9

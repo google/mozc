@@ -536,25 +536,36 @@
     {
       'target_name': 'mozc_tool',
       'type': 'executable',
-      'sources': [
-        '<(gen_out_dir)/tool/qrc_mozc_tool.cc',
-        'tool/mozc_tool_main.cc',
-      ],
-      'dependencies': [
-        'about_dialog_lib',
-        'administration_dialog_lib',
-        'confirmation_dialog_lib',
-        'config_dialog_lib',
-        'dictionary_tool_lib',
-        'error_message_dialog_lib',
-        'gen_mozc_tool_files',
-        'gui_base',
-        'post_install_dialog_lib',
-        'set_default_dialog_lib',
-      ],
       'conditions': [
+        ['use_qt=="YES"', {
+          'sources': [
+            '<(gen_out_dir)/tool/qrc_mozc_tool.cc',
+           'tool/mozc_tool_main.cc',
+          ],
+          'dependencies': [
+            'about_dialog_lib',
+            'administration_dialog_lib',
+            'confirmation_dialog_lib',
+            'config_dialog_lib',
+            'dictionary_tool_lib',
+            'error_message_dialog_lib',
+            'gen_mozc_tool_files',
+            'gui_base',
+            'post_install_dialog_lib',
+            'set_default_dialog_lib',
+          ],
+          'includes': [
+            'qt_libraries.gypi',
+          ],
+        }, { # else
+          # if you don't use Qt, you will use a mock main file for tool
+          # and do not have dependencies to _lib.
+          'sources': [
+            'tool/mozc_tool_main_noqt.cc',
+          ],
+        },],
         ['OS=="mac"', {
-          'product_name': 'GoogleJapaneseInputTool',
+          'product_name': '<(branding)Tool',
           'sources': [
             '../mac/shared_subpackage_info',
           ],
@@ -572,7 +583,7 @@
           },
           'variables': {
             # This product name is used in postbuilds_mac.gypi.
-            'product_name': 'GoogleJapaneseInputTool',
+            'product_name': '<(branding)Tool',
           },
           'includes': [
             '../gyp/postbuilds_mac.gypi',
@@ -583,16 +594,21 @@
           'dependencies': [
             '<(DEPTH)/third_party/breakpad/breakpad.gyp:breakpad',
             '../win32/win32.gyp:ime_base',
+            '../base/base.gyp:base',
+          ],
+          'includes': [
+            '../gyp/postbuilds_win.gypi',
           ],
         }],
-      ],
-      'includes': [
-        'qt_libraries.gypi',
-        '../gyp/postbuilds_win.gypi',
       ],
     },
   ],
   'conditions': [
+    ['use_qt=="YES"', {
+      'includes': [
+        'qt_target_default.gypi',
+      ],
+    },],
     ['OS=="mac"', {
       'targets': [
         {

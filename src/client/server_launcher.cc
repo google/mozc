@@ -189,11 +189,11 @@ bool ServerLauncher::StartServer(SessionInterface *session) {
     const int ret = listener.WaitEventOrProcess(kServerWaitTimeout, pid);
     switch (ret) {
       case NamedEventListener::TIMEOUT:
-        LOG(WARNING) << "seems that Google Japanese Input Converter is not "
+        LOG(WARNING) << "seems that " << kProductNameInEnglish << " is not "
                      << "ready within " << kServerWaitTimeout << " msec";
         break;
       case NamedEventListener::EVENT_SIGNALED:
-        VLOG(1) << "Google Japanese Input Converter is launched successfully "
+        VLOG(1) << kProductNameInEnglish << " is launched successfully "
                 << "within " << kServerWaitTimeout << " msec";
         break;
       case NamedEventListener::PROCESS_SIGNALED:
@@ -218,7 +218,7 @@ bool ServerLauncher::StartServer(SessionInterface *session) {
     Util::Sleep(kRetryIntervalForServer);
   }
 
-  LOG(ERROR) << "Google Japanese Input Converter cannot be launched";
+  LOG(ERROR) << kProductNameInEnglish << " cannot be launched";
 
   return false;
 }

@@ -71,7 +71,7 @@ message Config {
   //
 
   // Incognito mode:
-  // Disable all mutable operation inf incognito_mode is true
+  // Disable all mutable operation if incognito_mode is true
   optional bool incognito_mode = 20 [default = false];
 
   // This flag is not used

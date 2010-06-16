@@ -99,14 +99,18 @@ google_breakpad::CustomClientInfo* GetCustomInfo() {
   // Get the first two command line switches if they exist.
   google_breakpad::CustomInfoEntry switch1(L"switch-1", L"");
   google_breakpad::CustomInfoEntry switch2(L"switch-2", L"");
-  int num_args = 0;
-  wchar_t** args = ::CommandLineToArgvW(::GetCommandLineW(), &num_args);
-  if (args != NULL) {
-    if (num_args > 1) {
-      switch1.set_value(TrimToBreakpadMax(args[1]).c_str());
-    }
-    if (num_args > 2) {
-      switch2.set_value(TrimToBreakpadMax(args[2]).c_str());
+  {
+    int num_args = 0;
+    wchar_t** args = ::CommandLineToArgvW(::GetCommandLineW(), &num_args);
+    if (args != NULL) {
+      if (num_args > 1) {
+        switch1.set_value(TrimToBreakpadMax(args[1]).c_str());
+      }
+      if (num_args > 2) {
+        switch2.set_value(TrimToBreakpadMax(args[2]).c_str());
+      }
+      // Caller is responsible to free the returned value of CommandLineToArgv.
+      ::LocalFree(args);
     }
   }
 

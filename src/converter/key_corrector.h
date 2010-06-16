@@ -142,6 +142,11 @@ class KeyCorrector {
   size_t GetOriginalOffset(const size_t original_key_pos,
                            const size_t new_key_offset) const;
 
+
+  // return the cost penalty for the corrected key.
+  // The return value is added to the original cost as a penalty.
+  static int GetCorrectedCostPenalty(const string &key);
+
   // clear internal data
   void Clear();
 

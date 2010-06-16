@@ -31,15 +31,27 @@
 #define MOZC_BASE_CONST_H_
 
 namespace mozc {
-#if defined(OS_WINDOWS)
-const char kCompanyNameInEnglish[] = "Google";
+#ifdef GOOGLE_JAPANESE_INPUT_BUILD
 const char kProductNameInEnglish[] = "Google Japanese Input";
 // "Google 日本語入力"
 const char kProductNameLocalized[]
     = "Google \xE6\x97\xA5\xE6\x9C\xAC\xE8\xAA\x9E\xE5\x85\xA5\xE5\x8A\x9B";
+#define kProductPrefix "GoogleJapaneseInput"
+#else
+const char kProductNameInEnglish[] = "Mozc";
+const char kProductNameLocalized[] = "Mozc";
+#define kProductPrefix "Mozc"
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
+
+#if defined(OS_WINDOWS)
+const char kCompanyNameInEnglish[] = "Google";
 const char kCharacterPadMailslotPrefix[]
     = "\\\\.\\mailslot\\googlejapaneseinput.character_pad.";
+#ifdef GOOGLE_JAPANESE_INPUT_BUILD
 const char kEventPathPrefix[] = "Global\\GoogleJapaneseInput.event.";
+#else
+const char kEventPathPrefix[] = "Global\\Mozc.event.";
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
 const char kMozcServerName[] = "GoogleIMEJaConverter.exe";
 const char kIMEFile[] = "GoogleIMEJa.ime";
 const char kMozcTIP32[] = "GoogleIMEJaTIP32.dll";
@@ -78,11 +90,16 @@ const wchar_t kElevatedProcessDisabledKey[]
     = L"Software\\Policies\\Google\\Google Japanese Input\\Preferences";
 const wchar_t kDefaultKeyboardLayout[] = L"00000411";
 #elif defined(OS_MACOSX)
-const char kMozcServerName[] = "GoogleJapaneseInputConverter.app";
+const char kMozcServerName[] = kProductPrefix "Converter.app";
+#ifdef GOOGLE_JAPANESE_INPUT_BUILD
 const char kEventPathPrefix[] = "GoogleJapaneseInput.event.";
+#else
+const char kEventPathPrefix[] = "Mozc.event.";
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
 #else  // OS_LINUX
 const char kMozcServerName[] = "mozc_server";
 const char kEventPathPrefix[] = "mozc.event.";
+const char kMozcTool[] = "mozc_tool";
 #endif
 }  // namespace mozc
 

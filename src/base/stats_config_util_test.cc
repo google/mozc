@@ -33,6 +33,7 @@
 #include "base/base.h"
 #include "base/singleton.h"
 #include "base/stats_config_util.h"
+#include "base/util.h"
 #include "testing/base/public/gunit.h"
 #ifdef OS_WINDOWS
 #include "shared/opensource/patching/sidestep/cross/auto_testing_hook.h"
@@ -274,11 +275,25 @@ class RegistryEmulator {
   sidestep::AutoTestingHook hook_reg_delete_value_;
 };
 
+class StatsConfigUtilTestWin : public testing::Test {
+ protected:
+  static void SetUpTestCase() {
+    // A quick fix of b/2669319.  If mozc::Util::GetSystemDir is first called
+    // when registry APIs are hooked by sidestep, GetSystemDir fails
+    // unexpectedly because GetSystemDir also depends on registry API
+    // internally.  The second call of mozc::Util::GetSystemDir works well
+    // because it caches the result of the first call.  So any registry API
+    // access occurs in the second call.  We call mozc::Util::GetSystemDir here
+    // so that it works even when registry APIs are hooked.
+    // TODO(yukawa): remove this quick fix as a part of b/2769852.
+    mozc::Util::GetSystemDir();
+  }
+};
 }  // namespace
 
 namespace mozc {
 #if defined(CHANNEL_DEV)
-TEST(StatsConfigUtilTestWinDevChannel, SetEnabledIgnoresRegistrySettings) {
+TEST_F(StatsConfigUtilTestWin, SetEnabledIgnoresRegistrySettings) {
   // In dev channel, settings in the registry are simply ignored and
   // StatsConfigUtil::IsEnabled always returns true.
   RegistryEmulator<__COUNTER__> test;
@@ -333,7 +348,7 @@ TEST(StatsConfigUtilTestWinDevChannel, SetEnabledIgnoresRegistrySettings) {
   EXPECT_TRUE(StatsConfigUtil::IsEnabled());
 }
 
-TEST(StatsConfigUtilTestWinDevChannel, SetEnabledNeverFailsForRunLevelMedium) {
+TEST_F(StatsConfigUtilTestWin, SetEnabledNeverFailsForRunLevelMedium) {
   // In dev channel, StatsConfigUtil::SetEnabled does not update the
   // the registry but always returns true.
   RegistryEmulator<__COUNTER__> test;
@@ -342,7 +357,7 @@ TEST(StatsConfigUtilTestWinDevChannel, SetEnabledNeverFailsForRunLevelMedium) {
   EXPECT_TRUE(StatsConfigUtil::SetEnabled(false));
 }
 
-TEST(StatsConfigUtilTestWinDevChannel, SetEnabledNeverFailsForRunLevelLow) {
+TEST_F(StatsConfigUtilTestWin, SetEnabledNeverFailsForRunLevelLow) {
   // In dev channel, StatsConfigUtil::SetEnabled does not update the
   // the registry but always returns true.
   RegistryEmulator<__COUNTER__> test;
@@ -353,7 +368,7 @@ TEST(StatsConfigUtilTestWinDevChannel, SetEnabledNeverFailsForRunLevelLow) {
 #endif  // CHANNEL_DEV
 
 #if !defined(CHANNEL_DEV)
-TEST(StatsConfigUtilTestWinNonDev, SetEnabledForRunLevelHigh) {
+TEST_F(StatsConfigUtilTestWin, SetEnabledForRunLevelHigh) {
   // In beta and stable channel, StatsConfigUtil::SetEnabled requires
   // sufficient rights.
   RegistryEmulator<__COUNTER__> test;
@@ -375,7 +390,7 @@ TEST(StatsConfigUtilTestWinNonDev, SetEnabledForRunLevelHigh) {
   EXPECT_EQ(0, value);
 }
 
-TEST(StatsConfigUtilTestWinNonDev, SetEnabledForRunLevelMedium) {
+TEST_F(StatsConfigUtilTestWin, SetEnabledForRunLevelMedium) {
   // In beta and stable channels, StatsConfigUtil::SetEnabled requires
   // sufficient rights.
   RegistryEmulator<__COUNTER__> test;
@@ -388,7 +403,7 @@ TEST(StatsConfigUtilTestWinNonDev, SetEnabledForRunLevelMedium) {
   EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
 }
 
-TEST(StatsConfigUtilTestWinNonDev, SetEnabledForRunLevelLow) {
+TEST_F(StatsConfigUtilTestWin, SetEnabledForRunLevelLow) {
   // In beta and stable channels, StatsConfigUtil::SetEnabled requires
   // sufficient rights.
   RegistryEmulator<__COUNTER__> test;
@@ -401,7 +416,7 @@ TEST(StatsConfigUtilTestWinNonDev, SetEnabledForRunLevelLow) {
   EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
 }
 
-TEST(StatsConfigUtilTestWinNonDev, IsEnabled) {
+TEST_F(StatsConfigUtilTestWin, IsEnabled) {
   RegistryEmulator<__COUNTER__> test;
   test.SetRunLevel(kRunLevelHigh);
 
@@ -455,7 +470,7 @@ TEST(StatsConfigUtilTestWinNonDev, IsEnabled) {
 }
 #endif  // !CHANNEL_DEV
 
-TEST(StatsConfigUtilTestWin, RemoveDisablingHKCUEntryInIsEnabled) {
+TEST_F(StatsConfigUtilTestWin, RemoveDisablingHKCUEntryInIsEnabled) {
   RegistryEmulator<__COUNTER__> test;
 
   test.SetRunLevel(kRunLevelHigh);
@@ -486,7 +501,7 @@ TEST(StatsConfigUtilTestWin, RemoveDisablingHKCUEntryInIsEnabled) {
   EXPECT_EQ(0, value);
 }
 
-TEST(StatsConfigUtilTestWin, IsEnabledForRunLevelLow) {
+TEST_F(StatsConfigUtilTestWin, IsEnabledForRunLevelLow) {
   RegistryEmulator<__COUNTER__> test;
 
   test.SetRunLevel(kRunLevelHigh);
@@ -516,7 +531,7 @@ TEST(StatsConfigUtilTestWin, IsEnabledForRunLevelLow) {
   EXPECT_EQ(0, value);
 }
 
-TEST(StatsConfigUtilTestWin, RemoveEnablingHKCUEntryInIsEnabled) {
+TEST_F(StatsConfigUtilTestWin, RemoveEnablingHKCUEntryInIsEnabled) {
   RegistryEmulator<__COUNTER__> test;
   test.SetRunLevel(kRunLevelMedium);
   // Enabling usagestats with wrong style (should be fixed).
@@ -539,8 +554,8 @@ TEST(StatsConfigUtilTestWin, RemoveEnablingHKCUEntryInIsEnabled) {
   EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
 }
 
-TEST(StatsConfigUtilTestWin,
-     RemoveEnablingHKCUEntryInIsEnabledForRunLevelLow) {
+TEST_F(StatsConfigUtilTestWin,
+       RemoveEnablingHKCUEntryInIsEnabledForRunLevelLow) {
   RegistryEmulator<__COUNTER__> test;
   test.SetRunLevel(kRunLevelMedium);
   // Enabling usagestats with wrong style (should be fixed).

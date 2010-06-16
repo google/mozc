@@ -161,11 +161,11 @@
     </message>
     <message>
         <source>InsertFullSpace</source>
-        <translation>Insert half-width space</translation>
+        <translation>Insert full-width space</translation>
     </message>
     <message>
         <source>InsertHalfSpace</source>
-        <translation>Insert full-width space</translation>
+        <translation>Insert half-width space</translation>
     </message>
     <message>
         <source>InsertSpace</source>

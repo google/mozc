@@ -50,6 +50,7 @@ DEFINE_bool(enable_us_engine,
 namespace {
 
 IBusBus *g_bus = NULL;
+IBusConfig *g_config = NULL;
 
 const char kComponentName[] = "com.google.IBus.Mozc";
 const char kComponentDescription[] = "Mozc Component";
@@ -57,14 +58,21 @@ const char kLicense[] = "New BSD";
 const char kAuthor[] = "Google Inc.";
 const char kHomePage[] = "http://code.google.com/p/mozc/";
 const char kTextDomain[] = "ibus-mozc";
+#ifdef GOOGLE_JAPANESE_INPUT_BUILD
+const char *kEngineLongNames[] = {
+  "Google Japanese Input (US keyboard layout)",
+  "Google Japanese Input (Japanese keyboard layout)",
+};
+#else
 const char *kEngineLongNames[] = {
   "Mozc (US keyboard layout)",
 #ifdef OS_CHROMEOS
   "Mozc (Japanese keyboard layout)",
 #else
   "Mozc",
-#endif
+#endif  // OS_CHROMEOS
 };
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
 const char kEngineDescription[] = "Mozc Japanese input method";
 const char kEngineIcon[] = "product_icon.png";
 const char kEngineLanguage[] = "ja";
@@ -145,6 +153,12 @@ void InitIBusComponent(bool executed_by_ibus_daemon) {
                    "disconnected",
                    G_CALLBACK(mozc::ibus::MozcEngine::Disconnected),
                    NULL);
+  g_config = ibus_bus_get_config(g_bus);
+  g_object_ref_sink(g_config);
+  g_signal_connect(g_config,
+                   "value-changed",
+                   G_CALLBACK(mozc::ibus::MozcEngine::ConfigValueChanged),
+                   NULL);
 
   IBusComponent *component = GetIBusComponent();
   IBusFactory *factory = ibus_factory_new(ibus_bus_get_connection(g_bus));
@@ -180,6 +194,9 @@ int main(gint argc, gchar **argv) {
     IgnoreSigChild();
 #endif
     ibus_main();
+    if (g_config) {
+      g_object_unref(g_config);
+    }
   }
   return 0;
 }

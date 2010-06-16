@@ -77,7 +77,7 @@ class ScopedSCHandle {
 
 // Returns a redirector for the specified string resource in Vista or later.
 // Returns a redirected string for the specified string resource in XP.
-// Return an empty string if any error occurs.
+// Returns an empty string if any error occurs.
 // See http://msdn.microsoft.com/en-us/library/dd374120.aspx for details.
 wstring GetRegistryStringRedirectorOrRedirectedString(int resource_id) {
   const wchar_t kRegistryStringRedirectionPattern[] = L"@%s,-%d";
@@ -329,7 +329,7 @@ bool SetServiceDescription(const ScopedSCHandle &service_handle,
 //  - Desctiption
 //  - Load type (regardless of the amount of the system memory)
 // This function also starts or stops the cache service.
-// Win32ServiceState::installed() will be ignored.  You can not use this
+// Win32ServiceState::IsInstalled() will be ignored.  You cannot use this
 // function to install nor uninstall the cache service.
 bool RestoreStateInternal(const cache_service::Win32ServiceState &state) {
   ScopedSCHandle service_handle;

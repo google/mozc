@@ -2,6 +2,7 @@ vars = {
   "gyp_revision": "819",
   "gtest_revision": "422",
   "protobuf_revision": "328",
+  "cygwin_in_chromium_revision": "11984",
 }
 
 deps = {
@@ -13,6 +14,9 @@ deps_os = {
   "win": {
     "src/third_party/gtest":
       "http://googletest.googlecode.com/svn/trunk@" + Var("gtest_revision"),
+    "src/third_party/cygwin":
+      "http://src.chromium.org/svn/trunk/deps/third_party/cygwin@" +
+      Var("cygwin_in_chromium_revision"),
     "src/protobuf/files":
       "http://protobuf.googlecode.com/svn/trunk@" + Var("protobuf_revision"),
   },

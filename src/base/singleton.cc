@@ -35,49 +35,49 @@ namespace mozc {
 namespace {
 
 const size_t kMaxFinalizersSize = 256;
-
 size_t g_finalizers_size = 0;
-Mutex *g_mutex = NULL;
-once_t g_mutex_once = MOZC_ONCE_INIT;
-once_t g_singleton_finalize_once = MOZC_ONCE_INIT;
 
 SingletonFinalizer::FinalizerFunc g_finalizers[kMaxFinalizersSize];
 
-void InitSingletonMutex() {
-  g_mutex = new Mutex;
-  CHECK(g_mutex);
+// We can't use CHECK logic for Singleton because CHECK (and LOG)
+// obtains the singleton LogStream by calling Singleton::get().  If
+// something goes wrong during Singleton::get of the LogStream, it
+// recursively calls Singleton::get again to report errors, which
+// leads an inifinite wait loop because the first Singleton::get locks
+// everything.
+// ExitWithError() exits the program without reporting errors, which
+// is not good but better than an inifinite loop.
+void ExitWithError() {
+  // This logic is copied from logging.h
+#ifdef OS_WINDOWS
+  ::RaiseException(::GetLastError(),
+                   EXCEPTION_NONCONTINUABLE,
+                   NULL, NULL);
+#else
+  exit(-1);
+#endif
 }
-}  // namespace
+}  // anonymous namespace
 
 void SingletonFinalizer::AddFinalizer(FinalizerFunc func) {
   // When g_finalizers_size is equal to kMaxFinalizersSize,
   // SingletonFinalizer::Finalize is called already.
-  CHECK_LT(g_finalizers_size, kMaxFinalizersSize);
-
-  // TODO(taku):
-  // we only allow up to kMaxFinalizersSize functions here.
-  CallOnce(&g_mutex_once, &InitSingletonMutex);
-  {
-    scoped_lock l(g_mutex);
-    g_finalizers[g_finalizers_size++] = func;
+  if (g_finalizers_size >= kMaxFinalizersSize) {
+    ExitWithError();
   }
+  // This part is not thread safe.
+  // When two different classes are instantiated at the same time,
+  // this code will raise an exception.
+  g_finalizers[g_finalizers_size++] = func;
 }
 
-namespace {
-void DeleteSingleton() {
-  // delete instances in reverse order.
+void SingletonFinalizer::Finalize() {
+  // This part is not thread safe.
+  // When two different classes are instantiated at the same time,
+  // this code will raise an exception.
   for (int i = static_cast<int>(g_finalizers_size) - 1; i >= 0; --i) {
     (*g_finalizers[i])();
   }
-  // set kMaxFinalizersSize so that AddFinalizers cannot be called
-  // twice.
-  g_finalizers_size = kMaxFinalizersSize;
-  delete g_mutex;
-  g_mutex = NULL;
-}
-}  // namespace
-
-void SingletonFinalizer::Finalize() {
-  CallOnce(&g_singleton_finalize_once, &DeleteSingleton);
+  g_finalizers_size = 0;
 }
 }  // mozc

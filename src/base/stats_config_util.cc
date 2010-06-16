@@ -263,16 +263,8 @@ class MacStatsConfigUtilImpl : public StatsConfigUtilInterface {
 };
 
 MacStatsConfigUtilImpl::MacStatsConfigUtilImpl() {
-  string dir;
-  dir = MacUtil::GetApplicationSupportDirectory();
-  // "~/Library/Application Support"
-  dir += "/Google";
-  ::mkdir(dir.c_str(), 0755);
-  dir += "/JapaneseInput";
-  ::mkdir(dir.c_str(), 0755);
-  // TODO(toshiyuki): this is duplicate code of Util
-
-  config_file_ = dir + "/.usagestats.db";  // hidden file
+  config_file_ =
+      Util::GetUserProfileDirectory() + "/.usagestats.db";  // hidden file
 }
 
 MacStatsConfigUtilImpl::~MacStatsConfigUtilImpl() {}

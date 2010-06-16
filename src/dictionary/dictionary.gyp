@@ -47,37 +47,14 @@
         '../base/base.gyp:base',
         '../session/session.gyp:genproto_session',
         'user_pos_data',
+        'pos_map',
         'genproto_dictionary',
       ],
       'conditions': [['two_pass_build==0', {
         'dependencies': [
-          'install_gen_user_pos_data_main'
+          'install_gen_user_pos_data_main',
         ],
       }]],
-      'actions': [
-        {
-          'action_name': 'gen_pos_map',
-          'variables': {
-            'input_files': [
-              '../data/rules/user_pos.def',
-              '../data/rules/third_party_pos_map.def'
-            ],
-          },
-          'inputs': [
-            'gen_pos_map.py',
-            '<@(input_files)',
-          ],
-          'outputs': [
-            '<(gen_out_dir)/pos_map.h',
-          ],
-          'action': [
-            'python', '../build_tools/redirect.py',
-            '<(gen_out_dir)/pos_map.h',
-            'gen_pos_map.py',
-            '<@(input_files)',
-          ],
-        },
-      ],
     },
     {
       'target_name': 'dictionary',
@@ -104,15 +81,43 @@
       'conditions': [['two_pass_build==0', {
         'dependencies': [
           'install_gen_system_dictionary_data_main',
+          'install_gen_zip_code_dictionary_data_main',
         ],
       }]],
       'actions': [
+        {
+          'action_name': 'gen_zip_code_dictionary_data',
+          'variables': {
+            'input_files': [
+              '../data/dictionary/zip_code_seed.tsv',
+            ],
+          },
+          'inputs': [
+            '<@(input_files)',
+          ],
+          'conditions': [['two_pass_build==0', {
+            'inputs': [
+              '<(mozc_build_tools_dir)/gen_zip_code_dictionary_data_main',
+            ],
+          }]],
+          'outputs': [
+            '<(gen_out_dir)/zip_code_dictionary.txt',
+          ],
+          'action': [
+            # Use the pre-built version. See comments in mozc.gyp for why.
+            '<(mozc_build_tools_dir)/gen_zip_code_dictionary_data_main',
+            '--input=<(input_files)',
+            '--output=<(gen_out_dir)/zip_code_dictionary.txt',
+          ],
+          'message': 'Generating <(gen_out_dir)/zip_code_dictionary.txt.',
+        },
         {
           'action_name': 'gen_embedded_dictionary_data',
           'variables': {
             'input_files': [
               '../data/dictionary/dictionary0.txt',
               '../data/dictionary/dictionary1.txt',
+              '<(gen_out_dir)/zip_code_dictionary.txt',
             ],
           },
           'inputs': [
@@ -204,6 +209,34 @@
       ],
     },
     {
+      'target_name': 'pos_map',
+      'type': 'none',
+      'actions': [
+        {
+          'action_name': 'gen_pos_map',
+          'variables': {
+            'input_files': [
+              '../data/rules/user_pos.def',
+              '../data/rules/third_party_pos_map.def',
+            ],
+          },
+          'inputs': [
+            'gen_pos_map.py',
+            '<@(input_files)',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/pos_map.h',
+          ],
+          'action': [
+            'python', '../build_tools/redirect.py',
+            '<(gen_out_dir)/pos_map.h',
+            'gen_pos_map.py',
+            '<@(input_files)',
+          ],
+        },
+      ],
+    },
+    {
       'target_name': 'genproto_dictionary',
       'type': 'none',
       'sources': [
@@ -233,7 +266,28 @@
       },
       'includes' : [
         '../gyp/install_build_tool.gypi'
-      ]
+      ],
+    },
+    {
+      'target_name': 'gen_zip_code_dictionary_data_main',
+      'type': 'executable',
+      'sources': [
+        'gen_zip_code_dictionary_data_main.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        '../converter/converter.gyp:gen_pos_matcher',
+      ],
+    },
+    {
+      'target_name': 'install_gen_zip_code_dictionary_data_main',
+      'type': 'none',
+      'variables': {
+        'bin_name': 'gen_zip_code_dictionary_data_main'
+      },
+      'includes' : [
+        '../gyp/install_build_tool.gypi'
+      ],
     },
   ],
 }

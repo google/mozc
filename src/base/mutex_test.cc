@@ -69,6 +69,7 @@ TEST(MutexTest, MutexBasicTest) {
   scoped_lock l(&mutex);  // get mutex 2nd
   ++g_counter;
   EXPECT_EQ(2, g_counter);
+  t.Join();               // make sure that the thread no longer uses the mutex
 }
 
 TEST(MutexTest, MutexBatchTest) {

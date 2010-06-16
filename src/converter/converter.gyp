@@ -71,7 +71,7 @@
         'connector.cc',
         'sparse_connector.cc',
         'converter.cc',
-        'converter_data.cc',
+        'lattice.cc',
         'converter_mock.cc',
         'focus_candidate_handler.cc',
         'immutable_converter.cc',

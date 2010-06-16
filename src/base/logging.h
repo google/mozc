@@ -45,6 +45,8 @@
 #include <iostream>
 #include <string>
 
+#include "base/namespace.h"
+
 namespace mozc {
 
 enum LogSeverity {

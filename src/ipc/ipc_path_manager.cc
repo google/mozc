@@ -41,6 +41,7 @@
 
 #ifdef OS_MACOSX
 #include <sys/sysctl.h>
+#include "base/mac_util.h"
 #endif
 
 #include "base/base.h"
@@ -250,8 +251,7 @@ bool IPCPathManager::GetPathName(string *ipc_name) {
 #ifdef OS_WINDOWS
   *ipc_name = mozc::kIPCPrefix;
 #elif defined(OS_MACOSX)
-  const char kIPCPrefix[] = "com.Google.JapaneseInput";
-  *ipc_name = kIPCPrefix;
+  ipc_name->assign(MacUtil::GetLabelForSuffix(""));
 #else  // not OS_WINDOWS nor OS_MACOSX
   // GetUserIPCName("<name>") => "/tmp/.mozc.<key>.<name>"
   const char kIPCPrefix[] = "/tmp/.mozc.";

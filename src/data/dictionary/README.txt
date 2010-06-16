@@ -12,3 +12,10 @@ used for Google Japanese Input. The differences are as follows:
 - Open source version doesn't include Katakana transliterations.
   (あんどろいど->Android)
 - Open source version doesn't include Japanese postal code dictionary .
+
+You can add zip code dictionary by follows:
+1. Download zip code data from http://www.post.japanpost.jp/zipcode/download.html
+2. Extract them
+3. Update zip_code_seed.tsv by
+  ../../dictionary/gen_zip_code_seed.py \
+   --zip_code=KEN_ALL.CSV --jigyosyo=JIGYOSYO.CSV > ./zip_code_seed.tsv

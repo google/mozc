@@ -33,7 +33,7 @@
 #include "base/base.h"
 #include "converter/candidate_filter.h"
 #include "converter/connector_interface.h"
-#include "converter/converter_data.h"
+#include "converter/lattice.h"
 #include "converter/pos_matcher.h"
 #include "converter/segmenter.h"
 #include "converter/segments.h"
@@ -44,15 +44,15 @@ NBestGenerator::NBestGenerator()
     : freelist_(128), filter_(NULL),
       begin_node_(NULL), end_node_(NULL),
       connector_(ConnectorFactory::GetConnector()),
-      data_(NULL) {}
+      lattice_(NULL) {}
 
 NBestGenerator::~NBestGenerator() {}
 
 void NBestGenerator::Init(Node *begin_node, Node *end_node,
-                          ConverterData *data) {
+                          Lattice *lattice) {
   begin_node_ = begin_node;
   end_node_ = end_node;
-  data_ = data;
+  lattice_ = lattice;
   Reset();
 }
 
@@ -72,12 +72,11 @@ void NBestGenerator::Reset() {
 bool NBestGenerator::Next(Segment::Candidate *candidate,
                           const Node **candidate_begin_node,
                           const Node **candidate_end_node) {
-  if (data_ == NULL || !data_->has_lattice()) {
+  if (lattice_ == NULL || !lattice_->has_lattice()) {
     LOG(ERROR) << "Must create lattice in advance";
     return false;
   }
 
-  Node **end_nodes_list = data_->end_nodes_list();
   const int KMaxTrial = 500;
   int num_trials = 0;
   string key;
@@ -176,7 +175,7 @@ bool NBestGenerator::Next(Segment::Candidate *candidate,
           // do nothing
       }
     } else {
-      for (Node *lnode = end_nodes_list[rnode->begin_pos];
+      for (Node *lnode = lattice_->end_nodes(rnode->begin_pos);
            lnode != NULL; lnode = lnode->enext) {
         // is_edge is true if current lnode/rnode has same boundary as
         // begin/end node regardless of its value.

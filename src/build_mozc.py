@@ -47,12 +47,13 @@ import shutil
 import subprocess
 import sys
 
+from build_tools import mozc_version
+
+
 SRC_DIR = '.'
 EXTRA_SRC_DIR = '..'
 
 sys.path.append(SRC_DIR)
-
-from build_tools import mozc_version
 
 
 def IsWindows():
@@ -239,16 +240,20 @@ def MoveToTopLevelSourceDirectory():
 def GetGypSvnUrl(deps_file_name):
   """Get the GYP SVN URL from DEPS file."""
   contents = file(deps_file_name).read()
-  match = re.search(r'"(http://gyp\.googlecode\.com.*?)"', contents)
+  match = re.search(r'"(http://gyp\.googlecode\.com.*?)@', contents)
   if match:
-    return match.group(1)
+    base_url = match.group(1)
+    match = re.search(r'"gyp_revision":\s+"(\d+)"', contents)
+    if match:
+      revision = match.group(1)
+      return '%s@%s' % (base_url, revision)
   else:
     PrintErrorAndExit('GYP URL not found in %s:' % deps_file_name)
 
 
 def GypMain(deps_file_name):
-  options = ParseGypOptions()
   """The main function for the 'gyp' command."""
+  options = ParseGypOptions()
   # Copy rx.gyp to the third party directory.
   CopyFile('%s/gyp/rx.gyp' % SRC_DIR,
            'third_party/rx/rx.gyp')
@@ -286,6 +291,12 @@ def GypMain(deps_file_name):
 
   if options.branding:
     command_line.extend(['-D', 'branding=%s' % options.branding])
+  if options.noqt:
+    command_line.extend(['-D', 'use_qt=NO'])
+  if options.coverage:
+    command_line.extend(['-D', 'coverage=1'])
+
+
   RunOrDie(command_line)
 
 
@@ -334,10 +345,14 @@ def ParseGypOptions():
   """Parse command line options for the gyp command."""
   parser = optparse.OptionParser(usage='Usage: %prog gyp [options]')
   parser.add_option('--onepass', '-1', dest='onepass', action='store_true',
-                    default=False, help='build mozc in one pass. ' +
+                    default=False, help='build mozc in one pass. '
                     'Not recommended for Debug build.')
   parser.add_option('--branding', dest='branding', default='Mozc')
   parser.add_option('--gypdir', dest='gypdir', default='mozc_build_tools/gyp')
+  parser.add_option('--noqt', action='store_true', dest='noqt', default=False)
+  parser.add_option('--coverage', action='store_true', dest='coverage',
+                    help='use code coverage analysis build options',
+                    default=False)
   (options, unused_args) = parser.parse_args()
   return options
 
@@ -351,6 +366,7 @@ def ParseBuildOptions():
                     default='Debug', help='specify the build configuration.')
   parser.add_option('--build_base', dest='build_base',
                     help='specify the base directory of the built binaries.')
+  parser.add_option('--noqt', action='store_true', dest='noqt', default=False)
   if IsWindows():
     parser.add_option('--platform', '-p', dest='platform',
                       default='Win32',
@@ -454,7 +470,8 @@ def BuildOnMac(options, targets, original_directory_name):
               '-configuration', options.configuration,
               '-target', target_name,
               '-parallelizeTargets',
-              'SYMROOT=%s' % sym_root])
+              'SYMROOT=%s' % sym_root,
+              'BUILD_WITH_GYP=1'])
 
 
 def BuildOnWindows(options, targets, original_directory_name):
@@ -466,10 +483,10 @@ def BuildOnWindows(options, targets, original_directory_name):
   #   2. Get the directory of the DLL corresponding to retrieved clsid
   program_files_path = os.getenv('ProgramFiles(x86)',
                                  os.getenv('ProgramFiles'))
-  rel_paths = ['Microsoft Visual Studio 8/VC/vcpackages',
-               'Microsoft SDKs/Windows/v6.0/VC/Bin']
+  rel_vcbuild_paths = ['Microsoft Visual Studio 8/VC/vcpackages',
+                       'Microsoft SDKs/Windows/v6.0/VC/Bin']
   abs_vcbuild_dir = ''
-  for rel_path in rel_paths:
+  for rel_path in rel_vcbuild_paths:
     search_dir = os.path.join(program_files_path, rel_path)
     if os.path.exists(os.path.join(search_dir, 'vcbuild.exe')):
       abs_vcbuild_dir = os.path.abspath(search_dir)
@@ -481,20 +498,6 @@ def BuildOnWindows(options, targets, original_directory_name):
   else:
     os.environ['PATH'] = abs_vcbuild_dir
 
-  rel_paths = ['%s/third_party/platformsdk/v6_1/files/Bin' % EXTRA_SRC_DIR,
-               '%s/third_party/code_signing' % EXTRA_SRC_DIR,
-               '%s/third_party/vc_80/files/common7/IDE' % EXTRA_SRC_DIR,
-               '%s/third_party/vc_80/files/common7/Tools' % EXTRA_SRC_DIR,
-               '%s/third_party/vc_80/files/common7/Tools/bin' % EXTRA_SRC_DIR,
-               '%s/third_party/wix/v3_0_4220/files' % EXTRA_SRC_DIR]
-  rel_paths_x64 = ['%s/third_party/vc_80/files/vc/bin/x86_amd64'
-                   % EXTRA_SRC_DIR]
-  rel_paths_x86 = ['%s/third_party/vc_80/files/vc/bin' % EXTRA_SRC_DIR]
-  if options.platform == 'x64':
-    rel_paths += rel_paths_x64
-  rel_paths += rel_paths_x86
-  abs_paths = [os.path.abspath(path) for path in rel_paths]
-  os.environ['PATH'] = os.pathsep.join(abs_paths + [os.getenv('PATH')])
 
   os.environ['INCLUDE'] = ''
   os.environ['LIB'] = ''
@@ -510,7 +513,8 @@ def BuildOnWindows(options, targets, original_directory_name):
     # To use different toolsets for vcbuild, we set %PATH%, %INCLUDE%, %LIB%,
     # %LIBPATH% and specify /useenv option here.  See the following article
     # for details.
-    # http://blogs.msdn.com/vcblog/archive/2007/12/30/using-different-toolsets-for-vc-build.aspx
+    # http://blogs.msdn.com/vcblog/archive/2007/12/30/using-different-toolsets-
+    #   for-vc-build.aspx
     RunOrDie(['vcbuild',
               '/useenv',  # Use %PATH%, %INCLUDE%, %LIB%, %LIBPATH%
               '/M',       # Use concurrent build
@@ -529,10 +533,13 @@ def BuildMain(original_directory_name):
   (template_path, version_path) = GetVersionFileNames()
   GenerateVersionFile(template_path, version_path)
 
-  # Set $QTDIR for mozc_tool
-  if options.qtdir:
-    print 'export $QTDIR = %s' % options.qtdir
-    os.environ['QTDIR'] = options.qtdir
+  if not options.noqt:
+    # Set $QTDIR for mozc_tool
+    if options.qtdir:
+      if not options.qtdir.startswith('/'):
+        options.qtdir = os.path.join(os.getcwd(), options.qtdir)
+      print 'export $QTDIR = %s' % options.qtdir
+      os.environ['QTDIR'] = options.qtdir
 
   if IsMac():
     BuildOnMac(options, targets, original_directory_name)
@@ -541,7 +548,7 @@ def BuildMain(original_directory_name):
   elif IsWindows():
     BuildOnWindows(options, targets, original_directory_name)
   else:
-    print 'Unsupported platform: ', system
+    print 'Unsupported platform: ', os.name
 
 
 def BuildToolsMain(original_directory_name):

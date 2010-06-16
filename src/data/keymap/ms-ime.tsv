@@ -130,6 +130,7 @@ DirectInput	ON	IMEOn
 DirectInput	Hankaku/Zenkaku	IMEOn
 DirectInput	Kanji	IMEOn
 DirectInput	F13	IMEOn
+DirectInput	Henkan	IMEOn
 Precomposition	Hiragana	InputModeHiragana
 Precomposition	Katakana	InputModeFullKatakana
 Precomposition	Eisu	IMEOff

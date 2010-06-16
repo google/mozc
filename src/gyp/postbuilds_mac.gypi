@@ -65,16 +65,6 @@
             '${BUILT_PRODUCTS_DIR}/<(product_name).app/Contents/MacOS/<(product_name)'
           ],
         },
-        {
-          'postbuild_name': 'code signing',
-          'action': [
-            'python', '../build_tools/run_after_chdir.py',
-            '../',
-            './build_tools/codesign_mac.py',
-            '--target', '${BUILT_PRODUCTS_DIR}/<(product_name).app',
-            '--noautoconf',
-          ]
-        },
       ],
     }, {  # branding != GoogleJapaneseInput
       'postbuilds': [

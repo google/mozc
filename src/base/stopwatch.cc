@@ -54,7 +54,7 @@ int64 Stopwatch::GetFrequency() {
 #if defined(OS_WINDOWS)
   LARGE_INTEGER timestamp;
   // TODO(yukawa): Consider the case where QueryPerformanceCounter is not
-  // supported.
+  // available.
   const BOOL result = ::QueryPerformanceFrequency(&timestamp);
   return timestamp.QuadPart;
 #endif  // OS_WINDOWS
@@ -74,7 +74,7 @@ int64 Stopwatch::GetTimestamp() {
 #if defined(OS_WINDOWS)
   LARGE_INTEGER timestamp;
   // TODO(yukawa): Consider the case where QueryPerformanceCounter is not
-  // supported.
+  // available.
   const BOOL result = ::QueryPerformanceCounter(&timestamp);
   return timestamp.QuadPart;
 #endif  // OS_WINDOWS

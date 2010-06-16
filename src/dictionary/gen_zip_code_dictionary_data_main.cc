@@ -27,33 +27,65 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+// Calculate scores and output dictionary for zip code.
+
+#include <cmath>
 #include <string>
+#include <vector>
+
 #include "base/base.h"
-#include "converter/node.h"
-#include "converter/converter_data.h"
-#include "testing/base/public/gunit.h"
+#include "base/util.h"
+#include "base/file_stream.h"
+#include "converter/pos_matcher.h"
 
-TEST(ConverterDataTest, ConverterDataTest) {
-  mozc::ConverterData data;
+DEFINE_string(input, "", "input seed file");
+DEFINE_string(output, "", "output dictionary text file");
 
-  EXPECT_EQ("", data.key());
-  EXPECT_FALSE(data.has_lattice());
+namespace {
+const uint32 kOffset = 30000;
+const uint32 kScoreMax = 32767;
 
-  data.set_key("this is a test", mozc::KeyCorrector::ROMAN);
-  EXPECT_TRUE(data.has_lattice());
+uint32 GetScore(int64 freq) {
+  if (freq <= 0) {
+    return kOffset;
+  }
+  uint32 score = kOffset - log(static_cast<double>(freq));
+  if (score > kScoreMax) {  // cost should be within 15 bits
+    score = kScoreMax;
+  }
+  return score;
+}
+}  // namespace
 
-  mozc::Node *node = data.NewNode();
-  EXPECT_TRUE(node != NULL);
-  EXPECT_EQ(0, node->lid);
-  EXPECT_EQ(0, node->rid);
+int main(int argc, char **argv) {
+  InitGoogle(argv[0], &argc, &argv, false);
 
-  mozc::Node **bos = data.begin_nodes_list();
-  EXPECT_TRUE(bos != NULL);
+  const uint16 zip_code_pos = mozc::POSMatcher::GetZipcodeId();
 
-  mozc::Node **eos = data.end_nodes_list();
-  EXPECT_TRUE(eos != NULL);
+  mozc::InputFileStream ifs(FLAGS_input.c_str());
+  CHECK(ifs);
+  string line;
+  vector<string> tokens;
 
-  data.clear_lattice();
-  EXPECT_EQ("", data.key());
-  EXPECT_FALSE(data.has_lattice());
+  mozc::OutputFileStream ofs(FLAGS_output.c_str());
+  CHECK(ofs);
+
+  while (getline(ifs, line)) {
+    if (line.size() <= 0 || line[0] == '#') {
+      continue;
+    }
+    tokens.clear();
+    mozc::Util::SplitStringUsing(line, "\t", &tokens);
+    if (tokens.size() < 3) {
+      LOG(ERROR) << "format error: " << line;
+      continue;
+    }
+    const string &key = tokens[0];
+    const string &value = tokens[1];
+    const int64 freq = static_cast<int64>(strtod(tokens[2].c_str(), NULL));
+    const uint32 score = GetScore(freq);
+
+    ofs << key << "\t" << zip_code_pos << "\t" << zip_code_pos << "\t"
+        << score << "\t" << value << endl;
+  }
 }

@@ -43,11 +43,11 @@ namespace mozc {
 
 class CandidateFilter;
 class ConnectorInterface;
-class ConverterData;
+class Lattice;
 
 // TODO(toshiyuki): write unittest for NBestGenerator.
 //                  we can unittest this by making Mocks
-//                  for Connector and ConverterData.
+//                  for Connector and Lattice
 class NBestGenerator {
  public:
   explicit NBestGenerator();
@@ -55,8 +55,7 @@ class NBestGenerator {
 
   // set starting Node and ending Node --
   // Try to enumurate N-best results between begin_node and end_node.
-  void  Init(Node *begin_node, Node *end_node,
-             ConverterData *data);
+  void  Init(Node *begin_node, Node *end_node, Lattice *lattice);
 
   // reset internal priority queue. Reuse begin_node and eos_node
   void Reset();
@@ -101,7 +100,7 @@ class NBestGenerator {
   Node *begin_node_;
   Node *end_node_;
   ConnectorInterface *connector_;
-  ConverterData *data_;
+  Lattice *lattice_;
 
   DISALLOW_COPY_AND_ASSIGN(NBestGenerator);
 };

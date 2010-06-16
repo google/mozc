@@ -37,9 +37,6 @@
       'ibus-1.0',
       'libcurl',
     ],
-    'ibus_common_dependencies': [
-      '../../base/base.gyp:base',
-    ],
     'ibus_client_dependencies' : [
       '../../client/client.gyp:client',
       '../../session/session.gyp:ime_switch_util',
@@ -57,19 +54,6 @@
       '../../storage/storage.gyp:storage',
       '../../transliteration/transliteration.gyp:transliteration',
       '../../usage_stats/usage_stats.gyp:usage_stats',
-    ],
-    'conditions': [
-      ['chromeos==1', {
-       'ibus_dependencies': [
-        '<@(ibus_common_dependencies)',
-        '<@(ibus_standalone_dependencies)',
-        ],
-      },{
-       'ibus_dependencies': [
-        '<@(ibus_common_dependencies)',
-        '<@(ibus_client_dependencies)',
-        ],
-      }],
     ],
   },
   'targets': [
@@ -98,9 +82,20 @@
         'main.cc',
       ],
       'dependencies': [
-        '<@(ibus_dependencies)',
+        '../../base/base.gyp:base',
         'ibus_mozc_lib',
       ],
+      'conditions': [
+        ['chromeos==1', {
+         'dependencies+': [
+           '<@(ibus_standalone_dependencies)',
+         ],
+        }, {
+         'dependencies+': [
+           '<@(ibus_client_dependencies)',
+         ],
+        }],
+       ],
       'cflags': [
         '<!@(pkg-config --cflags <@(pkg_config_libs))',
       ],
@@ -124,10 +119,21 @@
         }],
       ],
       'dependencies': [
-        '<@(ibus_dependencies)',
+        '../../base/base.gyp:base',
         '../../testing/testing.gyp:gtest_main',
         'ibus_mozc_lib',
       ],
+      'conditions': [
+        ['chromeos==1', {
+         'dependencies+': [
+           '<@(ibus_standalone_dependencies)',
+         ],
+        }, {
+         'dependencies+': [
+           '<@(ibus_client_dependencies)',
+         ],
+        }],
+       ],
       'cflags': [
         '<!@(pkg-config --cflags <@(pkg_config_libs))',
       ],
