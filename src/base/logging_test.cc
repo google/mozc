@@ -27,6 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <sstream>
 #include "base/logging.h"
 
 #include "base/base.h"
@@ -99,6 +100,20 @@ TEST(LoggingTest, CompileTest) {
 TEST(LoggingTest, SideEffectTest) {
   bool flag = false;
 
+#ifdef NO_LOGGING
+  // LOG_(INFO|WARNING|ERROR) are not executed on release mode
+  flag = true;
+  LOG_IF(INFO, flag = false) << "";
+  EXPECT_TRUE(flag);
+
+  flag = true;
+  LOG_IF(WARNING, flag = false) << "";
+  EXPECT_TRUE(flag);
+
+  flag = true;
+  LOG_IF(ERROR, flag = false) << "";
+  EXPECT_TRUE(flag);
+#else
   flag = true;
   LOG_IF(INFO, flag = false) << "";
   EXPECT_FALSE(flag);
@@ -110,6 +125,7 @@ TEST(LoggingTest, SideEffectTest) {
   flag = true;
   LOG_IF(ERROR, flag = false) << "";
   EXPECT_FALSE(flag);
+#endif
 
   flag = true;
   LOG_IF(FATAL, flag = false) << "";
@@ -144,5 +160,46 @@ TEST(LoggingTest, SideEffectTest) {
   i = 10;
   CHECK_LT(1, i = 11) << "";
   EXPECT_EQ(i, 11);
+}
+
+namespace {
+int g_counter = 0;
+string DebugString() {
+  ++g_counter;
+  ostringstream os;
+  os << g_counter << " test!";
+  return os.str();
+}
+}  // namespace
+
+TEST(LoggingTest, RightHandSideEvaluation) {
+  g_counter = 0;
+  LOG(INFO) << "test: " << DebugString();
+  LOG(ERROR) << "test: " << DebugString();
+  LOG(WARNING) << "test: " << DebugString();
+
+#ifdef NO_LOGGING
+  EXPECT_EQ(0, g_counter);
+#else
+  EXPECT_EQ(3, g_counter);
+#endif
+
+  g_counter = 0;
+  LOG_IF(INFO, true) << "test: " << DebugString();
+  LOG_IF(ERROR, true) << "test: " << DebugString();
+  LOG_IF(WARNING, true) << "test: " << DebugString();
+
+#ifdef NO_LOGGING
+  EXPECT_EQ(0, g_counter);
+#else
+  EXPECT_EQ(3, g_counter);
+#endif
+
+  g_counter = 0;
+  LOG_IF(INFO, false) << "test: " << DebugString();
+  LOG_IF(ERROR, false) << "test: " << DebugString();
+  LOG_IF(WARNING, false) << "test: " << DebugString();
+
+  EXPECT_EQ(0, g_counter);
 }
 }  // namespace mozc

@@ -38,5 +38,10 @@
         <source>Log out</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <location filename="confirmation_dialog.cc" line="53"/>
+        <source>Remind me in 1 hour</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 </TS>

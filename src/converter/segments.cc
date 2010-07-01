@@ -41,8 +41,6 @@
 #include "converter/node.h"
 #include "converter/pos_matcher.h"
 #include "converter/segments.h"
-#include "session/config.pb.h"
-#include "session/config_handler.h"
 
 namespace mozc {
 

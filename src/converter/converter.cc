@@ -172,7 +172,7 @@ bool ConverterImpl::StartSuggestion(Segments *segments,
                                     const string &key) const {
   SetKey(segments, key);
   segments->set_request_type(Segments::SUGGESTION);
-  return predictor_->Suggest(segments);
+  return predictor_->Predict(segments);
 }
 
 bool ConverterImpl::FinishConversion(Segments *segments) const {

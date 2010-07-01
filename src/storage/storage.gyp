@@ -47,15 +47,18 @@
       'target_name': 'storage_test',
       'type': 'executable',
       'sources': [
-        'lru_storage_test',
-        'existence_filter_test',
-        'tiny_storage_test',
-        'registry_test',
+        'lru_storage_test.cc',
+        'existence_filter_test.cc',
+        'tiny_storage_test.cc',
+        'registry_test.cc',
       ],
       'dependencies': [
         '../testing/testing.gyp:gtest_main',
         'storage',
       ],
+      'variables': {
+        'test_size': 'small',
+      },
     },
   ],
 }

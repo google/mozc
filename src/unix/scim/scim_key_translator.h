@@ -43,13 +43,6 @@
 
 namespace mozc_unix_scim {
 
-struct KanaMapEntry {
-  string no_shift, shift;
-  KanaMapEntry() {}
-  KanaMapEntry(const string &no_shift, const string &shift)
-      : no_shift(no_shift), shift(shift) {}
-};
-
 // This class is responsible for converting scim::KeyEvent object (defined in
 // /usr/include/scim-1.0/scim_event.h) to IPC input for mozc_server.
 class ScimKeyTranslator {
@@ -102,8 +95,8 @@ class ScimKeyTranslator {
   map<uint32, mozc::commands::KeyEvent::SpecialKey> special_key_map_;
   set<uint32> modifier_keys_;
   map<uint32, uint32> special_ascii_map_;
-  map<uint32, KanaMapEntry> kana_map_jp_;
-  map<uint32, KanaMapEntry> kana_map_us_;
+  map<uint32, const char *> kana_map_jp_;
+  map<uint32, const char *> kana_map_us_;
 
   DISALLOW_COPY_AND_ASSIGN(ScimKeyTranslator);
 };

@@ -31,6 +31,7 @@
 
 #include <string>
 
+#include "base/const.h"
 #include "base/process.h"
 #include "base/run_level.h"
 #include "base/util.h"
@@ -41,11 +42,9 @@ class ConfigPointer;
 
 namespace {
 
-const char kMozcTool[] = "mozc_tool";  // TODO(yusukes): Use const.h.
-
 void Spawn(const string &tool) {
   string args = "--mode=" + tool;
-  mozc::Process::SpawnMozcProcess(kMozcTool, args);
+  mozc::Process::SpawnMozcProcess(mozc::kMozcTool, args);
 }
 
 bool IsRunLevelNormal() {
@@ -108,7 +107,7 @@ extern "C" {
     gtk_widget_show(vbox);
 
     if (mozc::Util::FileExists(mozc::Util::JoinPath(
-            mozc::Util::GetServerDirectory(), kMozcTool))) {
+            mozc::Util::GetServerDirectory(), mozc::kMozcTool))) {
       if (IsRunLevelNormal()) {
         GtkWidget *button1;
         GtkWidget *button2;

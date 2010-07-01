@@ -39,7 +39,22 @@ DECLARE_string(test_tmpdir);
 
 namespace mozc {
 
-TEST(CharacterFormManagerTest, DefaultTest) {
+class CharacterFormManagerTest : public testing::Test {
+ public:
+  static void SetUpTestCase() {
+    CharacterFormManager *manager =
+        CharacterFormManager::GetCharacterFormManager();
+    manager->SetDefaultRule();
+  }
+
+  static void TearDownTestCase() {
+    CharacterFormManager *manager =
+        CharacterFormManager::GetCharacterFormManager();
+    manager->SetDefaultRule();
+  }
+};
+
+TEST_F(CharacterFormManagerTest, DefaultTest) {
   // set default user profile directory
   Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
   string output;
@@ -773,7 +788,7 @@ TEST(CharacterFormManagerTest, DefaultTest) {
             "\xe3\x83\x8d\xe3\x83\x83\xe3\x83\x88", output);
 }
 
-TEST(CharacterFormManagerTest, MixedFormTest) {
+TEST_F(CharacterFormManagerTest, MixedFormTest) {
   Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
   CharacterFormManager *manager =
       CharacterFormManager::GetCharacterFormManager();
@@ -794,7 +809,7 @@ TEST(CharacterFormManagerTest, MixedFormTest) {
   EXPECT_EQ("\xef\xbc\x91\x2e\xef\xbc\x92\xef\xbc\x93", output);
 }
 
-TEST(CharacterFormManagerTest, GroupTest) {
+TEST_F(CharacterFormManagerTest, GroupTest) {
   Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
 
   CharacterFormManager *manager =

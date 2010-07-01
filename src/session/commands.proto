@@ -454,6 +454,25 @@ message Command {
 };
 
 message RendererCommand {
+  // Note for DPI Virtualization in Windows:
+  // All 2D positional fields in this command are screen coordinates obtained
+  // in the UI process.  This means you should treat these coordinates as
+  // logical coordinates in case that the UI process is DPI-unaware.  See the
+  // following documents for details about DPI Virtualization in Windows.
+  // - http://msdn.microsoft.com/en-us/library/dd464660.aspx
+  // - http://msdn.microsoft.com/en-us/library/ms633533.aspx
+  // - http://msdn.microsoft.com/en-us/library/ms633536.aspx
+  message Rectangle {
+    optional int32 left   = 1;
+    optional int32 top    = 2;
+    optional int32 right  = 3;
+    optional int32 bottom = 4;
+  };
+  message Point {
+    optional int32 x = 1;
+    optional int32 y = 2;
+  };
+
   enum CommandType {
     NOOP = 0;      // No operation
     UPDATE = 1;    // Update the current window
@@ -470,13 +489,6 @@ message RendererCommand {
   optional Output output = 3;
 
   // Preedit rectangle
-  message Rectangle {
-    optional int32 left   = 1;
-    optional int32 top    = 2;
-    optional int32 right  = 3;
-    optional int32 bottom = 4;
-  };
-
   optional Rectangle preedit_rectangle = 4;
 
   // TODO(yukawa): make a common font format for all platforms.
@@ -505,8 +517,7 @@ message RendererCommand {
     // WHND of the message-only window:
     optional uint32 receiver_handle = 3;
     // used in Windows:
-    // HWND of the target window:
-    // This handle can be used for LogicalToPhysicalPoint.
+    // HWND of the window where composition is displayed.
     optional uint32 target_window_handle = 4;
     // used in Windows:
     // Preffered font for composition string.
@@ -514,4 +525,5 @@ message RendererCommand {
   };
 
   optional ApplicationInfo application_info = 5;
+
 };

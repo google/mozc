@@ -31,11 +31,57 @@
 #include "transliteration/transliteration.h"
 #include "converter/character_form_manager.h"
 #include "converter/segments.h"
+#include "session/config.pb.h"
+#include "session/config_handler.h"
 #include "testing/base/public/gunit.h"
+
+DECLARE_string(test_tmpdir);
 
 namespace mozc {
 
-TEST(SegmentsTest, BasicTest) {
+class SegmentsTest : public testing::Test {
+ protected:
+  virtual void SetUp() {
+    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    config::ConfigHandler::GetDefaultConfig(&default_config_);
+    config::ConfigHandler::SetConfig(default_config_);
+  }
+
+  virtual void TearDown() {
+    config::ConfigHandler::SetConfig(default_config_);
+  }
+ private:
+  config::Config default_config_;
+};
+
+class CandidateTest : public testing::Test {
+ protected:
+  virtual void SetUp() {
+    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    config::ConfigHandler::GetDefaultConfig(&default_config_);
+    config::ConfigHandler::SetConfig(default_config_);
+  }
+
+ private:
+  config::Config default_config_;
+};
+
+class SegmentTest : public testing::Test {
+ protected:
+  virtual void SetUp() {
+    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    config::ConfigHandler::GetDefaultConfig(&default_config_);
+    config::ConfigHandler::SetConfig(default_config_);
+  }
+
+  virtual void TearDown() {
+    config::ConfigHandler::SetConfig(default_config_);
+  }
+ private:
+  config::Config default_config_;
+};
+
+TEST_F(SegmentsTest, BasicTest) {
   Segments segments;
 
   // flags
@@ -144,7 +190,7 @@ TEST(SegmentsTest, BasicTest) {
   EXPECT_EQ(0, segments.segments_size());
 }
 
-TEST(CandidateTest, BasicTest) {
+TEST_F(CandidateTest, BasicTest) {
   Segment segment;
 
   const char str[] = "this is a test";
@@ -230,7 +276,7 @@ TEST(CandidateTest, BasicTest) {
   EXPECT_FALSE(segment.has_candidate_value("foo"));
 }
 
-TEST(SegmentsTest, RevertEntryTest) {
+TEST_F(SegmentsTest, RevertEntryTest) {
   Segments segments;
   EXPECT_EQ(0, segments.revert_entries_size());
 
@@ -272,7 +318,7 @@ TEST(SegmentsTest, RevertEntryTest) {
   EXPECT_EQ(0, segments.revert_entries_size());
 }
 
-TEST(CandidateTest, SetDefaultDescription) {
+TEST_F(CandidateTest, SetDefaultDescription) {
   {
     Segment::Candidate candidate;
     candidate.Init();
@@ -318,7 +364,7 @@ TEST(CandidateTest, SetDefaultDescription) {
   }
 }
 
-TEST(CandidateTest, SetTransliterationDescription) {
+TEST_F(CandidateTest, SetTransliterationDescription) {
   {
     Segment::Candidate candidate;
     candidate.Init();
@@ -355,7 +401,7 @@ TEST(CandidateTest, SetTransliterationDescription) {
   }
 }
 
-TEST(CandidateTest, SetDescription) {
+TEST_F(CandidateTest, SetDescription) {
   {
     Segment::Candidate candidate;
     candidate.Init();
@@ -371,7 +417,7 @@ TEST(CandidateTest, SetDescription) {
   }
 }
 
-TEST(CandidateTest, ResetDescription) {
+TEST_F(CandidateTest, ResetDescription) {
   {
     Segment::Candidate candidate;
     candidate.Init();
@@ -398,7 +444,7 @@ TEST(CandidateTest, ResetDescription) {
   }
 }
 
-TEST(SegmentTest, ExpandAlternative) {
+TEST_F(SegmentTest, ExpandAlternative) {
   Segments segments;
 
   Segment *seg = segments.push_back_segment();
@@ -539,7 +585,7 @@ TEST(SegmentTest, ExpandAlternative) {
   }
 }
 
-TEST(SegmentTest, SetTransliterations) {
+TEST_F(SegmentTest, SetTransliterations) {
   Segments segments;
   Segment *seg = segments.push_back_segment();
 

@@ -35,8 +35,10 @@
 #include <string>
 #include <vector>
 #include "base/base.h"
-#include "session/commands.pb.h"
 #include "client/session_interface.h"
+#include "session/commands.pb.h"
+#include "testing/base/public/gunit_prod.h"
+// for FRIEND_TEST()
 
 namespace mozc {
 class IPCClientFactoryInterface;
@@ -174,6 +176,13 @@ class Session : public SessionInterface {
   bool OpenBrowser(const string &url);
 
  private:
+  FRIEND_TEST(SessionPlaybackTest, PushAndResetHistoryWithNoModeTest);
+  FRIEND_TEST(SessionPlaybackTest, PushAndResetHistoryWithModeTest);
+  FRIEND_TEST(SessionPlaybackTest, PushAndResetHistoryWithDirectTest);
+  FRIEND_TEST(SessionPlaybackTest, PlaybackHistoryTest);
+  FRIEND_TEST(SessionPlaybackTest, SetModeInitializerTest);
+  FRIEND_TEST(SessionPlaybackTest, ConsumedTest);
+
   enum ServerStatus {
     SERVER_UNKNOWN,          // initial status
     SERVER_SHUTDOWN,         // server is currently not working
@@ -232,6 +241,7 @@ class Session : public SessionInterface {
   void PlaybackHistory();
   void PushHistory(const commands::Input &input,
                    const commands::Output &output);
+  void ResetHistory();
   // Returns true if the |key| corresponds to the key combination for aborting
   // the application.
   bool IsAbortKey(const commands::KeyEvent &key);
@@ -249,6 +259,10 @@ class Session : public SessionInterface {
   bool CheckVersionOrRestartServerInternal(const commands::Input &input,
                                            commands::Output *output);
 
+  // for unittest
+  // copy the history inputs to |result|.
+  void GetHistoryInputs(vector<commands::Input> *result) const;
+
   uint64 id_;
   IPCClientFactoryInterface *client_factory_;
   scoped_ptr<ServerLauncherInterface> server_launcher_;
@@ -261,6 +275,8 @@ class Session : public SessionInterface {
   uint32 server_process_id_;
   string server_product_version_;
   vector<commands::Input> history_inputs_;
+  // Remember the composition mode of input session for playback.
+  commands::CompositionMode last_mode_;
 };
 
 }  // namespace client

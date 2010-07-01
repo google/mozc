@@ -45,6 +45,8 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        '../converter/converter.gyp:segments',
+        '../usage_stats/usage_stats.gyp:usage_stats',
         'genproto_prediction',
       ],
       'conditions': [['two_pass_build==0', {
@@ -158,14 +160,23 @@
       'target_name': 'prediction_test',
       'type': 'executable',
       'sources': [
-        'suggestion_filter_test',
-        'dictionary_predictor_test',
-        'user_history_predictor_test',
+        'suggestion_filter_test.cc',
+        'dictionary_predictor_test.cc',
+        'user_history_predictor_test.cc',
       ],
       'dependencies': [
         '../testing/testing.gyp:gtest_main',
         'prediction',
-      ]
+      ],
+      'variables': {
+        'test_size': 'small',
+        'test_data_subdir': 'data/dictionary',
+        'test_data': [
+          '../<(test_data_subdir)/suggestion_filter.txt',
+          '../<(test_data_subdir)/dictionary1.txt',
+        ],
+      },
+      'includes': [ '../gyp/install_testdata.gypi' ],
     },
   ],
 }

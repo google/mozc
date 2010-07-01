@@ -191,6 +191,10 @@ class UserDictionaryTest : public testing::Test {
     UserPOS::SetUserPOSInterface(new UserPOSMock);
   }
 
+  static void TearDownTestCase() {
+    UserPOS::SetUserPOSInterface(NULL);
+  }
+
   // Workaround for the constructor of UserDictionary being protected.
   UserDictionary *CreateDictionary() {
     return new UserDictionary;

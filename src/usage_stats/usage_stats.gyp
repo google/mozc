@@ -93,6 +93,9 @@
         '../testing/testing.gyp:gtest_main',
         'usage_stats',
       ],
+      'variables': {
+        'test_size': 'small',
+      },
     },
   ],
 }

@@ -67,6 +67,7 @@ class ScimMozc : public scim::IMEngineInstanceBase {
   virtual void select_candidate(unsigned int index);
   virtual void reset();
   virtual void focus_in();
+  virtual void focus_out();
   virtual void trigger_property(const scim::String &property);
 
   // Functions called by the MozcResponseParser class to update UI.

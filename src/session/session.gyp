@@ -150,6 +150,9 @@
         'session',
         '../testing/testing.gyp:gtest_main',
       ],
+      'variables': {
+        'test_size': 'small',
+      },
     },
     {
       'target_name': 'session_handler_test',
@@ -161,6 +164,9 @@
         'session',
         '../testing/testing.gyp:gtest_main',
       ],
+      'variables': {
+        'test_size': 'small',
+      },
     },
     {
       'target_name': 'session_module_test',
@@ -177,6 +183,9 @@
         'session',
         '../testing/testing.gyp:gtest_main',
       ],
+      'variables': {
+        'test_size': 'small',
+      },
     },
     {
       'target_name': 'session_internal_test',
@@ -191,6 +200,9 @@
         'session',
         '../testing/testing.gyp:gtest_main',
       ],
+      'variables': {
+        'test_size': 'small',
+      },
     },
   ],
 }

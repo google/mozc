@@ -85,7 +85,7 @@ class Util {
   static void UCS2ToUTF8(uint16 c, string *output);
   static void UCS2ToUTF8Append(uint16 c, string *output);
 
-#if defined(OS_WINDOWS) && defined(COMPILER_MSVC)
+#ifdef OS_WINDOWS
   // Converts the encoding of the specified string from UTF-8 to UTF-16, and
   // vice versa.
   static int UTF8ToWide(const char *input, wstring *output);
@@ -259,8 +259,6 @@ class Util {
 #ifndef OS_WINDOWS
   static void UTF8ToEUC(const string &input, string *output);
   static void EUCToUTF8(const string &input, string *output);
-  static void EUCToSJIS(const string &input, string *output);
-  static void SJISToEUC(const string &input, string *output);
 #endif
 
   static void UTF8ToSJIS(const string &input, string *output);

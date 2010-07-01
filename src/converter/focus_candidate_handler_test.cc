@@ -33,6 +33,8 @@
 #include "transliteration/transliteration.h"
 #include "converter/segments.h"
 #include "converter/focus_candidate_handler.h"
+#include "session/config.pb.h"
+#include "session/config_handler.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/googletest.h"
 
@@ -46,7 +48,19 @@ void AddCandidate(Segment *segment, const string &value) {
 }
 }  // namespace
 
-TEST(FocusCandidateHandler, FocusCandidateHandlerInvalidQuery) {
+class FocusCandidateHandlerTest : public testing::Test {
+ protected:
+  virtual void SetUp() {
+    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    config::ConfigHandler::GetDefaultConfig(&default_config_);
+    config::ConfigHandler::SetConfig(default_config_);
+  }
+
+ private:
+  config::Config default_config_;
+};
+
+TEST_F(FocusCandidateHandlerTest, FocusCandidateHandlerInvalidQuery) {
   Segments segments;
 
   Segment *seg1 = segments.add_segment();
@@ -80,7 +94,7 @@ TEST(FocusCandidateHandler, FocusCandidateHandlerInvalidQuery) {
   EXPECT_FALSE(FocusCandidateHandler::FocusSegmentValue(&segments, 2, 0));
 }
 
-TEST(FocusCandidateHandler, FocusCandidateHandlerLeftToRight) {
+TEST_F(FocusCandidateHandlerTest, FocusCandidateHandlerLeftToRight) {
   Segments segments;
 
   Segment *seg1 = segments.add_segment();
@@ -125,7 +139,7 @@ TEST(FocusCandidateHandler, FocusCandidateHandlerLeftToRight) {
   EXPECT_EQ("\xef\xbd\xa3", seg4->candidate(0).content_value);
 }
 
-TEST(FocusCandidateHandler, FocusCandidateHandlerRightToLeft) {
+TEST_F(FocusCandidateHandlerTest, FocusCandidateHandlerRightToLeft) {
   Segments segments;
 
   Segment *seg1 = segments.add_segment();
@@ -171,7 +185,7 @@ TEST(FocusCandidateHandler, FocusCandidateHandlerRightToLeft) {
   EXPECT_EQ("\xef\xbd\xa2", seg1->candidate(0).content_value);
 }
 
-TEST(FocusCandidateHandler, FocusCandidateHandlerLeftToRightNest) {
+TEST_F(FocusCandidateHandlerTest, FocusCandidateHandlerLeftToRightNest) {
   Segments segments;
   Segment *seg[7];
   for (int i = 0; i < arraysize(seg); ++i) {
@@ -227,7 +241,7 @@ TEST(FocusCandidateHandler, FocusCandidateHandlerLeftToRightNest) {
   EXPECT_EQ(")", seg[4]->candidate(0).content_value);
 }
 
-TEST(FocusCandidateHandler, FocusCandidateHandlerRightToLeftNest) {
+TEST_F(FocusCandidateHandlerTest, FocusCandidateHandlerRightToLeftNest) {
   Segments segments;
   Segment *seg[7];
   for (int i = 0; i < arraysize(seg); ++i) {
@@ -282,7 +296,7 @@ TEST(FocusCandidateHandler, FocusCandidateHandlerRightToLeftNest) {
   EXPECT_EQ("(", seg[2]->candidate(0).content_value);
 }
 
-TEST(FocusCandidateHandler, FocusCandidateHandlerMetaCandidate) {
+TEST_F(FocusCandidateHandlerTest, FocusCandidateHandlerMetaCandidate) {
   Segments segments;
   Segment *seg[3];
   for (int i = 0; i < arraysize(seg); ++i) {
@@ -335,7 +349,7 @@ TEST(FocusCandidateHandler, FocusCandidateHandlerMetaCandidate) {
                                                         invalid_index));
 }
 
-TEST(FocusCandidateHandler, FocusCandidateHandlerNumber) {
+TEST_F(FocusCandidateHandlerTest, FocusCandidateHandlerNumber) {
   Segments segments;
   Segment *seg[7];
   for (int i = 0; i < arraysize(seg); ++i) {
@@ -425,7 +439,7 @@ TEST(FocusCandidateHandler, FocusCandidateHandlerNumber) {
   EXPECT_EQ("4",  seg[6]->candidate(0).content_value);  // far from
 }
 
-TEST(FocusCandidateHandler, FocusCandidateHandlerSuffix) {
+TEST_F(FocusCandidateHandlerTest, FocusCandidateHandlerSuffix) {
   {
     Segments segments;
     Segment *seg[6];

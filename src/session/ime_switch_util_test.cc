@@ -120,7 +120,16 @@ TEST_F(ImeSwitchUtilTest, DefaultTest) {
   {
     commands::KeyEvent key;
     KeyParser::ParseKey("HENKAN", &key);
+    // HENKAN key in MSIME is TurnOn key while it's not in KOTOERI.
+    // This is not good as a test case but effective enough to make
+    // sure how it works.
+    // TODO(toshiyuki): reorganize the test cases not to need such
+    // tricks.
+#ifdef OS_WINDOWS
+    EXPECT_TRUE(ImeSwitchUtil::IsTurnOnInDirectMode(key));
+#else
     EXPECT_FALSE(ImeSwitchUtil::IsTurnOnInDirectMode(key));
+#endif
   }
   {
     commands::KeyEvent key;

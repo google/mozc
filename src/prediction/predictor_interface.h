@@ -36,11 +36,13 @@ class Segments;
 
 class PredictorInterface {
  public:
-  // This method is basically called when user hit TAB key.
+  // return suggestions.
+  // You may need to change the behavior according to the
+  // Segments::request_type flag
+  // SUGGESTION: automatic suggestions
+  // PREDICTION: invoked only when user pushes "tab" key.
+  // less aggressive than SUGGESTION mode.
   virtual bool Predict(Segments *segments) const = 0;
-
-  // Automatic prediction. More conservative than Prediction()
-  virtual bool Suggest(Segments *segments) const = 0;
 
   // Hook(s) for all mutable operations
   virtual void Finish(Segments *segments) {}

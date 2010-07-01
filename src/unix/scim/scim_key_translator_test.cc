@@ -42,38 +42,38 @@ const char kAscii[] = {
 };
 
 struct KanaMap {
-  uint32 code;
-  std::string no_shift, shift;
+  uint32 keysym;
+  const char *kana;
 };
 
 const KanaMap kKanaMapJP[] = {
   // Selected
-  { 'a' , "\xe3\x81\xa1", "\xe3\x81\xa1" },  // "ち", "ち"
-  { 'A' , "\xe3\x81\xa1", "\xe3\x81\xa1" },  // "ち", "ち"
-  { 'z' , "\xe3\x81\xa4", "\xe3\x81\xa3" },  // "つ", "っ"
-  { 'Z' , "\xe3\x81\xa4", "\xe3\x81\xa3" },  // "つ", "っ"
-  { '0' , "\xe3\x82\x8f", "\xe3\x82\x92" },  // "わ", "を"
-  { '/' , "\xe3\x82\x81", "\xe3\x83\xbb" },  // "め", "・"
-  { '?' , "\xe3\x82\x81", "\xe3\x83\xbb" },  // "め", "・"
-  { '=' , "\xe3\x81\xbb", "\xe3\x81\xbb" },  // "ほ", "ほ"
-  { '~' , "\xe3\x81\xb8", "\xe3\x82\x92" },  // "へ", "を"
-  { '|' , "\xe3\x83\xbc", "\xe3\x83\xbc" },  // "ー", "ー"
-  { '_' , "\xe3\x82\x8d", "\xe3\x82\x8d" },  // "ろ", "ろ"
+  { 'a' , "\xe3\x81\xa1" },  // "ち"
+  { 'A' , "\xe3\x81\xa1" },  // "ち"
+  { 'z' , "\xe3\x81\xa4" },  // "つ"
+  { 'Z' , "\xe3\x81\xa3" },  // "っ"
+  { '0' , "\xe3\x82\x8f" },  // "わ"
+  { '/' , "\xe3\x82\x81" },  // "め"
+  { '?' , "\xe3\x83\xbb" },  // "・"
+  { '=' , "\xe3\x81\xbb" },  // "ほ"
+  { '~' , "\xe3\x82\x92" },  // "を"
+  { '|' , "\xe3\x83\xbc" },  // "ー"
+  { '_' , "\xe3\x82\x8d" },  // "ろ"
 };
 
 const KanaMap kKanaMapUS[] = {
   // Selected
-  { 'a' , "\xe3\x81\xa1", "\xe3\x81\xa1" },  // "ち", "ち"
-  { 'A' , "\xe3\x81\xa1", "\xe3\x81\xa1" },  // "ち", "ち"
-  { 'z' , "\xe3\x81\xa4", "\xe3\x81\xa3" },  // "つ", "っ"
-  { 'Z' , "\xe3\x81\xa4", "\xe3\x81\xa3" },  // "つ", "っ"
-  { '0' , "\xe3\x82\x8f", "\xe3\x82\x92" },  // "わ", "を"
-  { '/' , "\xe3\x82\x81", "\xe3\x83\xbb" },  // "め", "・"
-  { '?' , "\xe3\x82\x81", "\xe3\x83\xbb" },  // "め", "・"
-  { '=' , "\xe3\x81\xb8", "\xe3\x81\xb8" },  // "へ", "へ"
-  { '~' , "\xe3\x82\x8d", "\xe3\x82\x8d" },  // "ろ", "ろ"
-  { '|' , "\xe3\x82\x80", "\xe3\x80\x8d" },  // "む", "」"
-  { '_' , "\xe3\x81\xbb", "\xe3\x83\xbc" },  // "ほ", "ー"
+  { 'a' , "\xe3\x81\xa1" },  // "ち"
+  { 'A' , "\xe3\x81\xa1" },  // "ち"
+  { 'z' , "\xe3\x81\xa4" },  // "つ"
+  { 'Z' , "\xe3\x81\xa3" },  // "っ"
+  { '0' , "\xe3\x82\x8f" },  // "わ"
+  { '/' , "\xe3\x82\x81" },  // "め"
+  { '?' , "\xe3\x83\xbb" },  // "・"
+  { '=' , "\xe3\x81\xb8" },  // "へ"
+  { '~' , "\xe3\x82\x8d" },  // "ろ"
+  { '|' , "\xe3\x80\x8d" },  // "」"
+  { '_' , "\xe3\x83\xbc" },  // "ー"
 };
 
 const scim::KeyCode kSpecial[] = {
@@ -318,16 +318,16 @@ TEST(ScimKeyTranslatorTest, TestTranslate_AsciiKanaJP) {
   ScimKeyTranslator translator;
   for (int j = 0; j < arraysize(kLayoutJP); ++j) {
     for (int i = 0; i < arraysize(kKanaMapJP); ++i) {
-      KeyEvent key(kKanaMapJP[i].code, 0, kLayoutJP[j]);
+      KeyEvent key(kKanaMapJP[i].keysym, 0, kLayoutJP[j]);
       mozc::commands::KeyEvent out_key;
       translator.Translate(key, mozc::config::Config::KANA, &out_key);
       EXPECT_TRUE(out_key.IsInitialized());
       ASSERT_TRUE(out_key.has_key_code());
-      EXPECT_EQ(kKanaMapJP[i].code, out_key.key_code());
+      EXPECT_EQ(kKanaMapJP[i].keysym, out_key.key_code());
       EXPECT_EQ(0, out_key.modifier_keys_size());
       EXPECT_FALSE(out_key.has_special_key());
       EXPECT_TRUE(out_key.has_key_string());
-      EXPECT_EQ(kKanaMapJP[i].no_shift, out_key.key_string());
+      EXPECT_EQ(kKanaMapJP[i].kana, out_key.key_string());
     }
   }
 }
@@ -336,16 +336,16 @@ TEST(ScimKeyTranslatorTest, TestTranslate_AsciiKanaUS) {
   ScimKeyTranslator translator;
   for (int j = 0; j < arraysize(kLayoutUS); ++j) {
     for (int i = 0; i < arraysize(kKanaMapUS); ++i) {
-      KeyEvent key(kKanaMapUS[i].code, 0, kLayoutUS[j]);
+      KeyEvent key(kKanaMapUS[i].keysym, 0, kLayoutUS[j]);
       mozc::commands::KeyEvent out_key;
       translator.Translate(key, mozc::config::Config::KANA, &out_key);
       EXPECT_TRUE(out_key.IsInitialized());
       ASSERT_TRUE(out_key.has_key_code());
-      EXPECT_EQ(kKanaMapUS[i].code, out_key.key_code());
+      EXPECT_EQ(kKanaMapUS[i].keysym, out_key.key_code());
       EXPECT_EQ(0, out_key.modifier_keys_size());
       EXPECT_FALSE(out_key.has_special_key());
       EXPECT_TRUE(out_key.has_key_string());
-      EXPECT_EQ(kKanaMapUS[i].no_shift, out_key.key_string());
+      EXPECT_EQ(kKanaMapUS[i].kana, out_key.key_string());
     }
   }
 }
@@ -354,16 +354,17 @@ TEST(ScimKeyTranslatorTest, TestTranslate_AsciiKanaShiftJP) {
   ScimKeyTranslator translator;
   for (int j = 0; j < arraysize(kLayoutJP); ++j) {
     for (int i = 0; i < arraysize(kKanaMapJP); ++i) {
-      KeyEvent key(kKanaMapJP[i].code, scim::SCIM_KEY_ShiftMask, kLayoutJP[j]);
+      KeyEvent key(
+          kKanaMapJP[i].keysym, scim::SCIM_KEY_ShiftMask, kLayoutJP[j]);
       mozc::commands::KeyEvent out_key;
       translator.Translate(key, mozc::config::Config::KANA, &out_key);
       EXPECT_TRUE(out_key.IsInitialized());
       ASSERT_TRUE(out_key.has_key_code());
-      EXPECT_EQ(kKanaMapJP[i].code, out_key.key_code());
+      EXPECT_EQ(kKanaMapJP[i].keysym, out_key.key_code());
       EXPECT_EQ(0, out_key.modifier_keys_size());
       EXPECT_FALSE(out_key.has_special_key());
       EXPECT_TRUE(out_key.has_key_string());
-      EXPECT_EQ(kKanaMapJP[i].shift, out_key.key_string());
+      EXPECT_EQ(kKanaMapJP[i].kana, out_key.key_string());
     }
   }
 }
@@ -372,16 +373,17 @@ TEST(ScimKeyTranslatorTest, TestTranslate_AsciiKanaShiftUS) {
   ScimKeyTranslator translator;
   for (int j = 0; j < arraysize(kLayoutUS); ++j) {
     for (int i = 0; i < arraysize(kKanaMapUS); ++i) {
-      KeyEvent key(kKanaMapUS[i].code, scim::SCIM_KEY_ShiftMask, kLayoutUS[j]);
+      KeyEvent key(
+          kKanaMapUS[i].keysym, scim::SCIM_KEY_ShiftMask, kLayoutUS[j]);
       mozc::commands::KeyEvent out_key;
       translator.Translate(key, mozc::config::Config::KANA, &out_key);
       EXPECT_TRUE(out_key.IsInitialized());
       ASSERT_TRUE(out_key.has_key_code());
-      EXPECT_EQ(kKanaMapUS[i].code, out_key.key_code());
+      EXPECT_EQ(kKanaMapUS[i].keysym, out_key.key_code());
       EXPECT_EQ(0, out_key.modifier_keys_size());
       EXPECT_FALSE(out_key.has_special_key());
       EXPECT_TRUE(out_key.has_key_string());
-      EXPECT_EQ(kKanaMapUS[i].shift, out_key.key_string());
+      EXPECT_EQ(kKanaMapUS[i].kana, out_key.key_string());
     }
   }
 }

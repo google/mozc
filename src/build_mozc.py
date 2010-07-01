@@ -40,6 +40,7 @@ Typical usage:
 __author__ = "komatsu"
 
 import glob
+import logging
 import optparse
 import os
 import re
@@ -69,6 +70,31 @@ def IsMac():
 def IsLinux():
   """Returns true if the platform is Linux."""
   return os.name == 'posix' and os.uname()[0] == 'Linux'
+
+
+# TODO(yukawa): Move this function to util.py (b/2715400)
+def GetNumberOfProcessors():
+  """Returns the number of processors available.
+
+  Returns:
+    An integer corresponding to the number of processors available in
+    Windows, Mac, and Linux.  In other platforms, returns 1.
+  """
+  if IsWindows():
+    return int(os.environ['NUMBER_OF_PROCESSORS'])
+  elif IsMac():
+    commands = ['sysctl', '-n', 'hw.ncpu']
+    process = subprocess.Popen(commands, stdout=subprocess.PIPE)
+    return int(process.communicate()[0])
+  elif IsLinux():
+    # Count the number of 'vendor_id' in /proc/cpuinfo, assuming that
+    # each line corresponds to one logical CPU.
+    file = open('/proc/cpuinfo', 'r')
+    count = len([line for line in file if line.find('vendor_id') != -1])
+    file.close()
+    return count
+  else:
+    return 1
 
 
 def GetGeneratorName():
@@ -103,9 +129,9 @@ def GenerateVersionFile(version_template_path, version_path):
     open(version_path, 'w').write(version_definition)
 
 
-def GetVersionFileNames():
+def GetVersionFileNames(options):
   """Gets the (template of version file, version file) pair."""
-  template_path = '%s/mozc_version_template.txt' % SRC_DIR
+  template_path = '%s/%s' % (SRC_DIR, options.version_file)
   version_path = '%s/mozc_version.txt' % SRC_DIR
   return (template_path, version_path)
 
@@ -144,6 +170,11 @@ def GetGypFileNames():
       RunOrDie(['pkg-config', '--exists', 'QtCore', 'QtGui'])
     except RunOrDieError:
       gyp_file_names.remove('%s/gui/gui.gyp' % SRC_DIR)
+    # Add scim.gyp if SCIM is installed.
+    try:
+      RunOrDie(['pkg-config', '--exists', 'scim'])
+    except RunOrDieError:
+      gyp_file_names.remove('%s/unix/scim/scim.gyp' % SRC_DIR)
   gyp_file_names.extend(glob.glob('third_party/rx/*.gyp'))
   gyp_file_names.sort()
   return gyp_file_names
@@ -207,10 +238,10 @@ def CleanBuildFilesAndDirectories():
   # Collect stuff in the top-level directory.
   directory_names.append('mozc_build_tools')
   if IsMac():
-    directory_names.append('xcodebuild')
+    directory_names.append('out_mac')
   elif IsLinux():
     file_names.append('Makefile')
-    directory_names.append('out')
+    directory_names.append('out_linux')
   elif IsWindows():
     file_names.append('third_party/breakpad/breakpad.gyp')
     directory_names.append('out_win')
@@ -272,7 +303,7 @@ def GypMain(deps_file_name):
   print 'GYP files:'
   for file_name in gyp_file_names:
     print '- %s' % file_name
-  # We use the one in mozc_build_tools/gyp
+  # We use the one in third_party/gyp
   gyp_script = '%s/gyp' % options.gypdir
   # If we don't have a copy of gyp, download it.
   if not os.path.isfile(gyp_script):
@@ -296,12 +327,153 @@ def GypMain(deps_file_name):
   if options.coverage:
     command_line.extend(['-D', 'coverage=1'])
 
+  # Check the version and determine if the building version is
+  # dev-channel or not.
+  (template_path, unused_version_path) = GetVersionFileNames(options)
+  version = mozc_version.MozcVersion(template_path, expand_daily=False)
+  if options.channel_dev or version.IsDevChannel():
+    command_line.extend(['-D', 'channel_dev=1'])
+
 
   RunOrDie(command_line)
 
 
   # Done!
   print 'Done'
+
+
+def ListAllTests():
+  """List all existing tests in the gyp files.
+
+  Returns:
+    a list of dict which contains 'target' and 'size'
+  """
+  all_tests = []
+  # Here we directly load the .gyp files.
+  # TODO(mukai): use GYP as a library to load gyp files correctly with
+  # variable expansions.
+  gyp_file_names = GetGypFileNames()
+  for file_name in gyp_file_names:
+    if not os.path.exists(file_name):
+      logging.warning('gyp file %s is not found', file_name)
+      continue
+    gyp_file = open(file_name)
+    gyp_map = eval(open(file_name).read())
+    if not isinstance(gyp_map, dict):
+      logging.warning('Not a valid gyp file: %s', file_name)
+      continue
+    if (not gyp_map.has_key('targets') or
+        not isinstance(gyp_map['targets'], list)):
+      logging.warning('gyp does not have a valid targets: %s', file_name)
+      continue
+    for target in gyp_map['targets']:
+      if not target.has_key('target_name'):
+        logging.warning('not a valid target in %s', file_name)
+        continue
+      if not target['target_name'].endswith('_test'):
+        # Not a test target
+        continue
+      if (not target.has_key('variables') or
+          not target['variables'].has_key('test_size')):
+        logging.warning('test target does not have test_size: %s:%s',
+                        file_name,target['target_name'])
+        continue
+      all_tests.append(
+          {'target': '%s:%s' % (file_name, target['target_name']),
+           'size': target['variables']['test_size']})
+  return all_tests
+
+
+def RunTests(targets, configuration, calculate_coverage):
+  """Run built tests actually.
+
+  Args:
+    targets: a list of 'gyp_file:test_target'
+    configuration: build configuration ('Release' or 'Debug')
+    calculate_coverage: True if runtests calculates the test coverage.
+  """
+  # Currently we don't check calculate at all -- just run tests.
+  if IsMac():
+    base_path = os.path.join('out_mac', configuration)
+  elif IsLinux():
+    base_path = os.path.join('out_linux', configuration)
+  elif IsWindows():
+    base_path = os.path.join('out_win', configuration)
+  else:
+    logging.error('Unsupported platform: %s', os.name)
+    return
+
+  failed_tests = []
+  for target in targets:
+    logging.info('running %s...', target)
+
+    index = target.find(':')
+    if index == -1:
+      print "Invalid target name:", target
+      failed_tests.append(target)
+      continue
+    gyp_file = target[0:index]
+    binary_name = target[(index+1):]
+
+    try:
+      RunOrDie([os.path.join(base_path, binary_name)])
+    except RunOrDieError, e:
+      print e
+      failed_tests.append(target)
+  if len(failed_tests) > 0:
+    raise RunOrDieError('\n'.join(['following tests failed'] + failed_tests))
+
+
+def RuntestsMain(original_directory_name):
+  """The main function for 'runtests' command."""
+  (options, args) = ParseRuntestsOptions()
+
+  # extracting test targets and build flags.  To avoid parsing build
+  # options from ParseRuntestsOptions(), user has to specify the test
+  # targets at first, and then add '--' and build flags.  Although
+  # optparse removes the '--' argument itself, the first element of
+  # build options has to start with '-' character because they are
+  # flags.
+  # ex: runtests foo.gyp:foo_test bar.gyp:bar_test -- -c Release
+  #   => ['foo.gyp:foo_test', 'bar.gyp:bar_test', '-c', 'Release']
+  # here 'foo.gyp:foo_test' and 'bar.gyp:bar_test' are test targets
+  # and '-c' and 'Release' are build options.
+  targets = []
+  build_options = []
+  for i in xrange(len(args)):
+    if args[i].startswith('-'):
+      # starting with build options
+      build_options = args[i:]
+      break
+    targets.append(args[i])
+
+  # configuration flag is shared among runtests options and build
+  # options.
+  if options.configuration:
+    build_options.extend(['-c', options.configuration])
+
+  alltests = ListAllTests()
+  # filter out target which is not a test actually
+  all_test_targets = [test['target'] for test in alltests]
+  test_targets = []
+  for target in targets:
+    if not target in all_test_targets:
+      logging.warning('specified target %s is not a test target', target)
+      continue
+    test_targets.append(target)
+
+  # the test targets not specified.  Find all tests which matches the
+  # specified size.
+  if not test_targets:
+    test_targets = [test['target'] for test in alltests
+                    if test['size'] == options.test_size]
+
+  # Build the test targets
+  sys.argv = [sys.argv[0]] + build_options + test_targets
+  BuildMain(original_directory_name)
+
+  # Run tests actually
+  RunTests(test_targets, options.configuration, options.calculate_coverage)
 
 
 def CleanMain():
@@ -348,11 +520,17 @@ def ParseGypOptions():
                     default=False, help='build mozc in one pass. '
                     'Not recommended for Debug build.')
   parser.add_option('--branding', dest='branding', default='Mozc')
-  parser.add_option('--gypdir', dest='gypdir', default='mozc_build_tools/gyp')
+  parser.add_option('--gypdir', dest='gypdir', default='third_party/gyp')
   parser.add_option('--noqt', action='store_true', dest='noqt', default=False)
   parser.add_option('--coverage', action='store_true', dest='coverage',
                     help='use code coverage analysis build options',
                     default=False)
+  parser.add_option('--channel_dev', action='store_true', dest='channel_dev',
+                    help='Specify this to build dev channel explicitly',
+                    default=False)
+  parser.add_option('--version_file', dest='version_file',
+                    help='use the specified version template file',
+                    default='mozc_version_template.txt')
   (options, unused_args) = parser.parse_args()
   return options
 
@@ -367,6 +545,9 @@ def ParseBuildOptions():
   parser.add_option('--build_base', dest='build_base',
                     help='specify the base directory of the built binaries.')
   parser.add_option('--noqt', action='store_true', dest='noqt', default=False)
+  parser.add_option('--version_file', dest='version_file',
+                    help='use the specified version template file',
+                    default='mozc_version_template.txt')
   if IsWindows():
     parser.add_option('--platform', '-p', dest='platform',
                       default='Win32',
@@ -384,6 +565,22 @@ def ParseBuildOptions():
   targets = args
   if not targets:
     PrintErrorAndExit('No build target is specified.')
+
+  return (options, args)
+
+
+def ParseRuntestsOptions():
+  """Parse command line options for the runtests command."""
+  parser = optparse.OptionParser(
+      usage='Usage: %prog runtests [options] [test_targets] [-- build options]')
+  parser.add_option('--test_size', dest='test_size', default='small')
+  parser.add_option('--calculate_coverage', dest='calculate_coverage',
+                    default=False, action='store_true',
+                    help='specify if you want to calculate test coverage.')
+  parser.add_option('--configuration', '-c', dest='configuration',
+                    default='Debug', help='specify the build configuration.')
+
+  (options, args) = parser.parse_args()
 
   return (options, args)
 
@@ -418,6 +615,9 @@ def BuildOnLinux(options, targets):
   for envvar in envvars:
     if envvar in os.environ:
       os.environ[envvar] = os.getenv(envvar)
+
+  # set output directory
+  os.environ['builddir_name'] = 'out_linux'
 
   build_args = ['-j%s' % options.jobs, 'BUILDTYPE=%s' % options.configuration]
   if options.build_base:
@@ -459,7 +659,7 @@ def BuildOnMac(options, targets, original_directory_name):
   if options.build_base:
     sym_root = options.build_base
   else:
-    sym_root = os.path.join(os.getcwd(), 'xcodebuild')
+    sym_root = os.path.join(os.getcwd(), 'out_mac')
   for target in targets:
     (gyp_file_name, target_name) = ParseTarget(target)
     gyp_file_name = os.path.join(original_directory_relpath, gyp_file_name)
@@ -474,23 +674,24 @@ def BuildOnMac(options, targets, original_directory_name):
               'BUILD_WITH_GYP=1'])
 
 
-def BuildOnWindows(options, targets, original_directory_name):
-  """Build the target on Windowsw."""
-  # TODO(yukawa): make a python module to set up environment for vcbuild.
+def LocateVCBuildDir():
+  """Locate the directory where vcbuild.exe exists.
 
-  # TODO(yukawa): Locate the directory of the vcbuild.exe as follows.
-  #   1. Get the clsid corresponding to 'VisualStudio.VCProjectEngine.8.0'
-  #   2. Get the directory of the DLL corresponding to retrieved clsid
-  program_files_path = os.getenv('ProgramFiles(x86)',
-                                 os.getenv('ProgramFiles'))
-  rel_vcbuild_paths = ['Microsoft Visual Studio 8/VC/vcpackages',
-                       'Microsoft SDKs/Windows/v6.0/VC/Bin']
-  abs_vcbuild_dir = ''
-  for rel_path in rel_vcbuild_paths:
-    search_dir = os.path.join(program_files_path, rel_path)
-    if os.path.exists(os.path.join(search_dir, 'vcbuild.exe')):
-      abs_vcbuild_dir = os.path.abspath(search_dir)
-      break
+  Returns:
+    A string of absolute directory path where vcbuild.exe exists.
+  """
+  if not IsWindows():
+    PrintErrorAndExit('vcbuild.exe is not supported on this platform')
+
+  # TODO(yukawa): Implement this.
+  PrintErrorAndExit('Failed to locate vcbuild.exe')
+
+
+def BuildOnWindows(options, targets, original_directory_name):
+  """Build the target on Windows."""
+  # TODO(yukawa): make a python module to set up environment for vcbuild.
+  abs_vcbuild_dir = LocateVCBuildDir()
+
   CheckFileOrDie(os.path.join(abs_vcbuild_dir, 'vcbuild.exe'))
 
   if os.getenv('PATH'):
@@ -510,6 +711,7 @@ def BuildOnWindows(options, targets, original_directory_name):
     CheckFileOrDie(gyp_file_name)
     (sln_base_name, _) = os.path.splitext(gyp_file_name)
     sln_file_path = os.path.abspath('%s.sln' % sln_base_name)
+    build_concurrency = GetNumberOfProcessors() * 2
     # To use different toolsets for vcbuild, we set %PATH%, %INCLUDE%, %LIB%,
     # %LIBPATH% and specify /useenv option here.  See the following article
     # for details.
@@ -517,7 +719,7 @@ def BuildOnWindows(options, targets, original_directory_name):
     #   for-vc-build.aspx
     RunOrDie(['vcbuild',
               '/useenv',  # Use %PATH%, %INCLUDE%, %LIB%, %LIBPATH%
-              '/M',       # Use concurrent build
+              '/M%d' % build_concurrency,  # Use concurrent build
               '/time',    # Show build time
               '/platform:%s' % options.platform,
               sln_file_path,
@@ -530,7 +732,7 @@ def BuildMain(original_directory_name):
 
   # Generate a version definition file.
   print 'Generating version definition file...'
-  (template_path, version_path) = GetVersionFileNames()
+  (template_path, version_path) = GetVersionFileNames(options)
   GenerateVersionFile(template_path, version_path)
 
   if not options.noqt:
@@ -576,6 +778,7 @@ def ShowHelpAndExit():
   print '  gyp          Generate project files.'
   print '  build        Build the specified target.'
   print '  build_tools  Build tools used by the build command.'
+  print '  runtests     Build all tests and run them.'
   print '  clean        Clean all the build files and directories.'
   print ''
   print 'See also the comment in the script for typical usage.'
@@ -605,6 +808,8 @@ def main():
     CleanMain()
   elif command == 'gyp':
     GypMain(deps_file_name)
+  elif command == 'runtests':
+    RuntestsMain(original_directory_name)
   else:
     print 'Unknown command: ' + command
     ShowHelpAndExit()

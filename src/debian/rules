@@ -16,7 +16,7 @@
 # This has to be exported to make some magic below work.
 export DH_OPTIONS
 
-BUILD_DIR=./out
+BUILD_DIR=./out_linux
 TARGETS=unix/ibus/ibus.gyp:ibus_mozc unix/scim/scim.gyp:scim_mozc unix/scim/scim.gyp:scim_mozc_setup server/server.gyp:mozc_server gui/gui.gyp:mozc_tool
 
 configure: configure-stamp
@@ -52,7 +52,7 @@ install-arch:
 	mkdir -p $(CURDIR)/debian/ibus-mozc/usr/lib/ibus-mozc/
 	cp -p $(BUILD_DIR)/Release/ibus_mozc $(CURDIR)/debian/ibus-mozc/usr/lib/ibus-mozc/ibus-engine-mozc
 	mkdir -p $(CURDIR)/debian/ibus-mozc/usr/share/ibus/component/
-	sed 's|/usr/libexec/ibus-engine-mozc|/usr/lib/ibus-mozc/ibus-engine-mozc|' < unix/ibus/mozc.xml > $(CURDIR)/debian/ibus-mozc/usr/share/ibus/component/mozc.xml
+	sed 's|/usr/libexec/ibus-engine-mozc|/usr/lib/ibus-mozc/ibus-engine-mozc|' < $(BUILD_DIR)/Release/obj/gen/unix/ibus/mozc.xml > $(CURDIR)/debian/ibus-mozc/usr/share/ibus/component/mozc.xml
 
 	mkdir -p $(CURDIR)/debian/scim-mozc`pkg-config --variable=moduledir scim`/IMEngine/
 	cp -p $(BUILD_DIR)/Release/lib.target/libscim_mozc.so $(CURDIR)/debian/scim-mozc`pkg-config --variable=moduledir scim`/IMEngine/mozc.so

@@ -222,6 +222,9 @@
         'base',
         '../testing/testing.gyp:gtest_main',
       ],
+      'variables': {
+        'test_size': 'small',
+      },
     },
     # init_test.cc is separated from all other base_test because it
     # calls finalizers.
@@ -235,6 +238,9 @@
         'base',
         '../testing/testing.gyp:gtest_main',
       ],
+      'variables': {
+        'test_size': 'small',
+      },
     },
   ],
 }

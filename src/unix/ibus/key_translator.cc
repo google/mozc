@@ -144,10 +144,11 @@ const struct ModifierMaskMap {
   {IBUS_MOD1_MASK, mozc::commands::KeyEvent::ALT},
 };
 
+// TODO:Add kana_map_dv to support Dvoraklayout.
 const struct KanaMap {
   guint code;
-  string no_shift;
-  string shift;
+  const char *no_shift;
+  const char *shift;
 } kana_map_jp[] = {
   { '1' , "\xe3\x81\xac", "\xe3\x81\xac" },  // "ぬ", "ぬ"
   { '!' , "\xe3\x81\xac", "\xe3\x81\xac" },  // "ぬ", "ぬ"
@@ -355,7 +356,6 @@ KeyTranslator::KeyTranslator() {
 KeyTranslator::~KeyTranslator() {
 }
 
-// TODO(mazda): Support Kana input
 bool KeyTranslator::Translate(guint keyval,
                               guint keycode,
                               guint modifiers,

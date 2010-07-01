@@ -159,7 +159,10 @@ class NullLogFinalizer {
 // ad-hoc porting of google-glog
 #ifdef NO_LOGGING   // don't use logging feature.
 
+// in release binary, we don't want to evaluate the outputs for logging.
+// LOG(FATAL) is an exception.
 #define LOG(severity) \
+  (mozc::LOG_##severity < mozc::LOG_FATAL) ? (void) 0 : \
   mozc::NullLogFinalizer(mozc::LOG_##severity) & \
   mozc::Logging::GetNullLogStream()
 
@@ -167,7 +170,7 @@ class NullLogFinalizer {
 // inserted.  This technique is suggested by the gcc manual
 // -Wunused-variable section.
 #define LOG_IF(severity, condition) \
-  (!(condition)) ? (void) 0 : \
+  (mozc::LOG_##severity < mozc::LOG_FATAL || !(condition)) ? (void) 0 : \
   mozc::NullLogFinalizer(mozc::LOG_##severity) & \
   mozc::Logging::GetNullLogStream()
 

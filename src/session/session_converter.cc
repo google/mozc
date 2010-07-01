@@ -63,14 +63,7 @@ SessionConverter::SessionConverter(const ConverterInterface *converter)
   operation_preferences_.candidate_shortcuts.clear();
 }
 
-SessionConverter::~SessionConverter() {
-  // TODO(taku): not sure that Converter::Sync() can be called inside
-  // SessionHandler::DeleteSession. Need to investigate the latency
-
-  // sync all mutable data to disk.
-  VLOG(1) << "Syncing converter data";
-  converter_->Sync();
-}
+SessionConverter::~SessionConverter() {}
 
 void SessionConverter::ReloadConfig() {
   UpdateConfig(config::ConfigHandler::GetConfig());

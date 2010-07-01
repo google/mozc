@@ -27,25 +27,34 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+// Generates system dictionary header file.
+//
+// gen_system_dictionary_data_main
+//  --input="dictionary0.txt dictionary1.txt zip_code_seed.txt"
+//  --output="output.h"
+//  --include_zip_code
+//  --make_header
+
 #include <string>
 #include <vector>
 #include "base/base.h"
 #include "base/util.h"
 #include "dictionary/system/system_dictionary_builder.h"
+#include "dictionary/zip_code_dictionary_builder.h"
 
-DEFINE_string(input, "", "input text file");
+DEFINE_string(input, "", "space separated input text files");
 DEFINE_string(output, "", "output binary file");
+DEFINE_bool(include_zip_code, false,
+            "include zip code dictionary by specifying seed dictionary"
+            " at the end of --input");
 DEFINE_bool(make_header, false, "make header mode");
-DECLARE_int32(maximum_cost_threshold);
 
 namespace mozc {
 namespace {
 // convert space delimtered text to CSV
-string CreateInputFileName(const string ssv_filename) {
-  vector<string> tokens;
+string GetInputFileName(const vector<string> filenames) {
   string output;
-  Util::SplitStringUsing(ssv_filename, " ", &tokens);
-  Util::JoinStrings(tokens, ",", &output);
+  Util::JoinStrings(filenames, ",", &output);
   return output;
 }
 }  // namespace
@@ -53,18 +62,27 @@ string CreateInputFileName(const string ssv_filename) {
 
 int main(int argc, char **argv) {
   InitGoogle(argv[0], &argc, &argv, false);
-  const string input = mozc::CreateInputFileName(FLAGS_input);
-  string output = FLAGS_output;
 
-#if defined OS_WINDOWS && defined _DEBUG
-  // Seems that dictionary compiler won't work due to allocation faiulre
-  // with debug build. So, we restrict the size of dictionary for debug build.
-  FLAGS_maximum_cost_threshold = 8000;
-#endif
+  vector<string> input_files;
+  mozc::Util::SplitStringUsing(FLAGS_input, " ", &input_files);
+  string output = FLAGS_output;
 
   if (FLAGS_make_header) {
     output += ".tmp";
   }
+
+  string zip_code_text_dictionary;
+  if (FLAGS_include_zip_code) {
+    zip_code_text_dictionary = FLAGS_output + ".zip_code_tmp";
+    const string zip_code_input = input_files.back();
+    input_files.pop_back();
+    mozc::ZipCodeDictionaryBuilder zip_code_builder(zip_code_input,
+                                                    zip_code_text_dictionary);
+    zip_code_builder.Build();
+    input_files.push_back(zip_code_text_dictionary);
+  }
+
+  const string input = mozc::GetInputFileName(input_files);
 
   mozc::SystemDictionaryBuilder::Compile(input.c_str(),
                                          output.c_str());
@@ -75,6 +93,10 @@ int main(int argc, char **argv) {
                                   output,
                                   FLAGS_output);
     mozc::Util::Unlink(output);
+  }
+
+  if (!zip_code_text_dictionary.empty()) {
+    mozc::Util::Unlink(zip_code_text_dictionary);
   }
 
   return 0;

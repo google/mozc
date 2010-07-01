@@ -47,15 +47,27 @@ MozcConnectionInterface::~MozcConnectionInterface() {
 MozcConnection::MozcConnection(
     mozc::client::ServerLauncherInterface *server_launcher,
     mozc::IPCClientFactoryInterface *client_factory)
-    : translator_(new ScimKeyTranslator) {
+    : translator_(new ScimKeyTranslator),
+      preedit_method_(mozc::config::Config::ROMAN) {
+  VLOG(1) << "MozcConnection is created";
   mozc::client::Session *session = new mozc::client::Session;
   session->SetServerLauncher(server_launcher);
   session->SetIPCClientFactory(client_factory);
   session_.reset(session);
+
+  mozc::config::Config config;
+  if (session_->EnsureConnection() &&
+      session_->GetConfig(&config) && config.has_preedit_method()) {
+    preedit_method_ = config.preedit_method();
+  }
+  VLOG(1)
+      << "Current preedit method is "
+      << (preedit_method_ == mozc::config::Config::ROMAN ? "Roman" : "Kana");
 }
 
 MozcConnection::~MozcConnection() {
-  session_->Shutdown();
+  session_->SyncData();
+  VLOG(1) << "MozcConnection is destroyed";
 }
 
 bool MozcConnection::TrySendKeyEvent(
@@ -66,26 +78,16 @@ bool MozcConnection::TrySendKeyEvent(
   DCHECK(out);
   DCHECK(out_error);
 
-  mozc::config::Config config;
+  // Call EnsureConnection just in case MozcConnection::MozcConnection() fails
+  // to establish the server connection.
   if (!session_->EnsureConnection()) {
-    *out_error = "IPC error";
-    VLOG(1) << "TrySendKeyEvent: EnsureConnection failed";
-    return false;
-  }
-
-  // TODO(yusukes): GetConfig() call could be very heavy. It would be better to
-  // remove the call. See ibus/mozc_engine.cc for details.
-  if (!session_->GetConfig(&config)) {
-    *out_error = "IPC error";
-    VLOG(1) << "TrySendKeyEvent: GetConfig failed";
+    *out_error = "EnsureConnection failed";
+    VLOG(1) << "EnsureConnection failed";
     return false;
   }
 
   mozc::commands::KeyEvent event;
-  const mozc::config::Config::PreeditMethod method =
-      config.has_preedit_method() ?
-      config.preedit_method() : mozc::config::Config::ROMAN;
-  translator_->Translate(key, method, &event);
+  translator_->Translate(key, preedit_method_, &event);
 
   if ((composition_mode == mozc::commands::DIRECT) &&
       !mozc::config::ImeSwitchUtil::IsTurnOnInDirectMode(event)) {
@@ -93,13 +95,13 @@ bool MozcConnection::TrySendKeyEvent(
     return false;  // not consumed.
   }
 
-  VLOG(1) << "TrySendInternal: --->" << endl << event.DebugString();
+  VLOG(1) << "TrySendKeyEvent: " << endl << event.DebugString();
   if (!session_->SendKey(event, out)) {
-    *out_error = "IPC error";
-    VLOG(1) << "TrySendInternal: <--- ERROR";
+    *out_error = "SendKey failed";
+    VLOG(1) << "ERROR";
     return false;
   }
-  VLOG(1) << "TrySendInternal: <---" << endl << out->DebugString();
+  VLOG(1) << "OK: " << endl << out->DebugString();
   return true;
 }
 
@@ -111,14 +113,7 @@ bool MozcConnection::TrySendClick(int32 unique_id,
 
   mozc::commands::SessionCommand command;
   translator_->TranslateClick(unique_id, &command);
-  VLOG(1) << "TrySendInternal: --->" << endl << command.DebugString();
-  if (!session_->SendCommand(command, out)) {
-    *out_error = "IPC error";
-    VLOG(1) << "TrySendInternal: <--- ERROR";
-    return false;
-  }
-  VLOG(1) << "TrySendInternal: <---" << endl << out->DebugString();
-  return true;
+  return TrySendCommandInternal(command, out, out_error);
 }
 
 bool MozcConnection::TrySendCompositionMode(
@@ -131,32 +126,32 @@ bool MozcConnection::TrySendCompositionMode(
   mozc::commands::SessionCommand command;
   command.set_type(mozc::commands::SessionCommand::SWITCH_INPUT_MODE);
   command.set_composition_mode(mode);
-
-  VLOG(1) << "TrySendInternal: --->" << endl << command.DebugString();
-  if (!session_->SendCommand(command, out)) {
-    *out_error = "IPC error";
-    VLOG(1) << "TrySendInternal: <--- ERROR";
-    return false;
-  }
-  VLOG(1) << "TrySendInternal: <---" << endl << out->DebugString();
-  return true;
+  return TrySendCommandInternal(command, out, out_error);
 }
 
-bool MozcConnection::TrySendSubmit(mozc::commands::Output *out,
-                                   string *out_error) const {
+bool MozcConnection::TrySendCommand(
+    mozc::commands::SessionCommand::CommandType type,
+    mozc::commands::Output *out,
+    string *out_error) const {
   DCHECK(out);
   DCHECK(out_error);
 
   mozc::commands::SessionCommand command;
-  command.set_type(mozc::commands::SessionCommand::SUBMIT);
+  command.set_type(type);
+  return TrySendCommandInternal(command, out, out_error);
+}
 
-  VLOG(1) << "TrySendInternal: --->" << endl << command.DebugString();
+bool MozcConnection::TrySendCommandInternal(
+    const mozc::commands::SessionCommand& command,
+    mozc::commands::Output *out,
+    string *out_error) const {
+  VLOG(1) << "TrySendCommandInternal: " << endl << command.DebugString();
   if (!session_->SendCommand(command, out)) {
-    *out_error = "IPC error";
-    VLOG(1) << "TrySendInternal: <--- ERROR";
+    *out_error = "SendCommand failed";
+    VLOG(1) << "ERROR";
     return false;
   }
-  VLOG(1) << "TrySendInternal: <---" << endl << out->DebugString();
+  VLOG(1) << "OK: " << endl << out->DebugString();
   return true;
 }
 

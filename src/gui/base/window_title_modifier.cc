@@ -27,10 +27,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <QApplication>
-#include <QObject>
-#include <QString>
-#include <QWidget>
+#include <QtCore/QObject>
+#include <QtCore/QString>
+#include <QtGui/QApplication>
+#include <QtGui/QWidget>
 
 #include "base/base.h"
 #include "base/singleton.h"

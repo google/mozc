@@ -59,36 +59,32 @@
         'character_form_manager',
         '../testing/testing.gyp:gtest_main',
       ],
+      'variables': {
+        'test_size': 'small',
+      },
     },
     {
-      'target_name': 'converter',
+      'target_name': 'segments',
       'type': 'static_library',
       'sources': [
         '<(gen_out_dir)/embedded_connection_data.h',
+        '<(gen_out_dir)/pos_matcher.h',
         '<(gen_out_dir)/segmenter_data.h',
         '<(gen_out_dir)/segmenter_inl.h',
         'candidate_filter.cc',
         'connector.cc',
-        'sparse_connector.cc',
-        'converter.cc',
         'lattice.cc',
-        'converter_mock.cc',
-        'focus_candidate_handler.cc',
-        'immutable_converter.cc',
-        'key_corrector.cc',
         'nbest_generator.cc',
         'segmenter.cc',
         'segments.cc',
+        'sparse_connector.cc',
       ],
       'dependencies': [
         '../base/base.gyp:base',
         '../dictionary/dictionary.gyp:dictionary',
-        '../prediction/prediction.gyp:prediction',
-        '../rewriter/rewriter.gyp:rewriter',
-        '../session/session.gyp:session_protocol',
         'character_form_manager',
-        'gen_segmenter_inl',
         'gen_pos_matcher',
+        'gen_segmenter_inl',
       ],
       'conditions': [['two_pass_build==0', {
         'dependencies': [
@@ -152,6 +148,26 @@
           ],
           'message': 'Generating <(gen_out_dir)/segmenter_data.h.',
         },
+      ],
+    },
+    {
+      'target_name': 'converter',
+      'type': 'static_library',
+      'sources': [
+        'converter.cc',
+        'converter_mock.cc',
+        'focus_candidate_handler.cc',
+        'immutable_converter.cc',
+        'key_corrector.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        '../prediction/prediction.gyp:prediction',
+        '../rewriter/rewriter.gyp:rewriter',
+        '../session/session.gyp:genproto_session',
+        '../session/session.gyp:session_protocol',
+        'gen_pos_matcher',
+        'segments',
       ],
     },
     {
@@ -255,6 +271,32 @@
       'includes' : [
         '../gyp/install_build_tool.gypi',
       ]
+    },
+    {
+      'target_name': 'converter_test',
+      'type': 'executable',
+      'sources': [
+        'candidate_filter_test.cc',
+        'character_form_manager_test.cc',
+        'connector_test.cc',
+        'converter_mock_test.cc',
+        'converter_test.cc',
+        'focus_candidate_handler_test.cc',
+        'key_corrector_test.cc',
+        'lattice_test.cc',
+        'segmenter_test.cc',
+        'segments_test.cc',
+        'sparse_connector_builder.cc',
+      ],
+      'dependencies': [
+        '../session/session.gyp:config_handler',
+        '../testing/testing.gyp:gtest_main',
+        'converter',
+        'segments',
+      ],
+      'variables': {
+        'test_size': 'small',
+      },
     },
   ],
 }

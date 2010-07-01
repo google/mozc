@@ -46,11 +46,7 @@ class ThreadTest: public Thread {
  public:
   virtual void Run() {
     for (int i = 0; i < 3; ++i) {
-#ifdef COMPILER_MSVC
-      Sleep(1000);
-#else
-      sleep(1);
-#endif
+      Util::Sleep(1000);
     }
   }
 };

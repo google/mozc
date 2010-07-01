@@ -46,11 +46,6 @@ namespace ibus {
 
 class KeyTranslator;
 
-static const char *kEngineNames[] = { "mozc", "mozc-jp" };
-static const char *kEngineLayouts[] = { "us", "jp" };
-COMPILE_ASSERT(
-    arraysize(kEngineNames) == arraysize(kEngineLayouts), bad_array_size);
-
 // Implements EngineInterface and handles signals from IBus daemon.
 // This class mainly does the two things:
 // - Converting IBus key events to Mozc's key events and passes them to the

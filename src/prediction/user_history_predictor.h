@@ -50,11 +50,7 @@ class UserHistoryPredictor: public PredictorInterface {
   UserHistoryPredictor();
   virtual ~UserHistoryPredictor();
 
-  // This method is basically called when user hit TAB key.
   bool Predict(Segments *segments) const;
-
-  // Automatic prediction. More conservative than Predict()
-  bool Suggest(Segments *segments) const;
 
   // Hook(s) for all mutable operations
   void Finish(Segments *segments);
@@ -110,7 +106,6 @@ class UserHistoryPredictor: public PredictorInterface {
           last_access_time(0) {}
   };
 
-  bool Lookup(Segments *segments) const;
   void Insert(const string &key, const string &value,
               const string &description,
               bool is_suggestion_selected,

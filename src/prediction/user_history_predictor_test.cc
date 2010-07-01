@@ -107,7 +107,7 @@ TEST(UserHistoryPredictor, UserHistoryPredictorTest) {
       // "わたしのなまえはなかのです"
       MakeSegmentsForSuggestion(
           "\xE3\x81\xA6\xE3\x81\x99\xE3\x81\xA8", &segments);
-      EXPECT_FALSE(predictor.Suggest(&segments));
+      EXPECT_FALSE(predictor.Predict(&segments));
       EXPECT_EQ(segments.segment(0).candidates_size(), 0);
     }
 
@@ -140,7 +140,7 @@ TEST(UserHistoryPredictor, UserHistoryPredictorTest) {
       // "わたしの"
       MakeSegmentsForSuggestion(
           "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE", &segments);
-      EXPECT_TRUE(predictor.Suggest(&segments));
+      EXPECT_TRUE(predictor.Predict(&segments));
       // "私の名前は中野です"
       EXPECT_EQ(segments.segment(0).candidate(0).value,
                 "\xE7\xA7\x81\xE3\x81\xAE\xE5\x90\x8D\xE5\x89\x8D"
@@ -180,7 +180,7 @@ TEST(UserHistoryPredictor, UserHistoryPredictorTest) {
       // "わたしの"
       MakeSegmentsForSuggestion(
         "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE", &segments);
-      EXPECT_FALSE(predictor.Suggest(&segments));
+      EXPECT_FALSE(predictor.Predict(&segments));
 
       config.set_use_history_suggest(true);
       config.set_incognito_mode(true);
@@ -189,7 +189,7 @@ TEST(UserHistoryPredictor, UserHistoryPredictorTest) {
       // "わたしの"
       MakeSegmentsForSuggestion(
         "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE", &segments);
-      EXPECT_FALSE(predictor.Suggest(&segments));
+      EXPECT_FALSE(predictor.Predict(&segments));
     }
      
     // turn on
@@ -202,7 +202,7 @@ TEST(UserHistoryPredictor, UserHistoryPredictorTest) {
     // "わたしの"
     MakeSegmentsForSuggestion(
         "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE", &segments);
-    EXPECT_TRUE(predictor.Suggest(&segments));
+    EXPECT_TRUE(predictor.Predict(&segments));
     // "私の名前は中野です"
     EXPECT_EQ(segments.segment(0).candidate(0).value,
               "\xE7\xA7\x81\xE3\x81\xAE\xE5\x90\x8D\xE5\x89\x8D"
@@ -226,7 +226,7 @@ TEST(UserHistoryPredictor, UserHistoryPredictorTest) {
         "\xE3\x81\xAA\xE3\x81\xBE\xE3\x81\x88\xE3\x81\xAF"
         "\xE3\x81\xAA\xE3\x81\x8B\xE3\x81\xAE\xE3\x81\xA7\xE3\x81\x99",
         &segments);
-    EXPECT_TRUE(predictor.Suggest(&segments));
+    EXPECT_TRUE(predictor.Predict(&segments));
     // "私の名前は中野です"
     EXPECT_EQ(segments.segment(0).candidate(0).value,
               "\xE7\xA7\x81\xE3\x81\xAE\xE5\x90\x8D\xE5\x89\x8D"
@@ -258,7 +258,7 @@ TEST(UserHistoryPredictor, UserHistoryPredictorTest) {
     // "わたしの"
     MakeSegmentsForSuggestion(
         "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE", &segments);
-    EXPECT_FALSE(predictor.Suggest(&segments));
+    EXPECT_FALSE(predictor.Predict(&segments));
 
     // "わたしの"
     MakeSegmentsForPrediction(
@@ -276,7 +276,7 @@ TEST(UserHistoryPredictor, UserHistoryPredictorTest) {
     // "わたしの"
     MakeSegmentsForSuggestion(
         "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE", &segments);
-    EXPECT_FALSE(predictor.Suggest(&segments));
+    EXPECT_FALSE(predictor.Predict(&segments));
 
     // "わたしの"
     MakeSegmentsForPrediction(
@@ -318,7 +318,7 @@ TEST(UserHistoryPredictor, DescriptionTest) {
       // "わたしの"
       MakeSegmentsForSuggestion(
           "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE", &segments);
-      EXPECT_TRUE(predictor.Suggest(&segments));
+      EXPECT_TRUE(predictor.Predict(&segments));
       // "私の名前は中野です"
       EXPECT_EQ(segments.segment(0).candidate(0).value,
                 "\xE7\xA7\x81\xE3\x81\xAE\xE5\x90\x8D\xE5\x89\x8D"
@@ -365,7 +365,7 @@ TEST(UserHistoryPredictor, DescriptionTest) {
       // "わたしの"
       MakeSegmentsForSuggestion(
         "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE", &segments);
-      EXPECT_FALSE(predictor.Suggest(&segments));
+      EXPECT_FALSE(predictor.Predict(&segments));
 
       config.set_use_history_suggest(true);
       config.set_incognito_mode(true);
@@ -374,7 +374,7 @@ TEST(UserHistoryPredictor, DescriptionTest) {
       // "わたしの"
       MakeSegmentsForSuggestion(
         "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE", &segments);
-      EXPECT_FALSE(predictor.Suggest(&segments));
+      EXPECT_FALSE(predictor.Predict(&segments));
     }
 
     // turn on
@@ -388,7 +388,7 @@ TEST(UserHistoryPredictor, DescriptionTest) {
     // "わたしの"
     MakeSegmentsForSuggestion(
         "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE", &segments);
-    EXPECT_TRUE(predictor.Suggest(&segments));
+    EXPECT_TRUE(predictor.Predict(&segments));
     // "私の名前は中野です"
     EXPECT_EQ(segments.segment(0).candidate(0).value,
               "\xE7\xA7\x81\xE3\x81\xAE\xE5\x90\x8D\xE5\x89\x8D"
@@ -418,7 +418,7 @@ TEST(UserHistoryPredictor, DescriptionTest) {
         "\xE3\x81\xAA\xE3\x81\xBE\xE3\x81\x88\xE3\x81\xAF"
         "\xE3\x81\xAA\xE3\x81\x8B\xE3\x81\xAE\xE3\x81\xA7\xE3\x81\x99",
         &segments);
-    EXPECT_TRUE(predictor.Suggest(&segments));
+    EXPECT_TRUE(predictor.Predict(&segments));
     // "私の名前は中野です"
     EXPECT_EQ(segments.segment(0).candidate(0).value,
               "\xE7\xA7\x81\xE3\x81\xAE\xE5\x90\x8D\xE5\x89\x8D"
@@ -456,7 +456,7 @@ TEST(UserHistoryPredictor, DescriptionTest) {
     // "わたしの"
     MakeSegmentsForSuggestion(
         "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE", &segments);
-    EXPECT_FALSE(predictor.Suggest(&segments));
+    EXPECT_FALSE(predictor.Predict(&segments));
 
     // "わたしの"
     MakeSegmentsForPrediction(
@@ -474,7 +474,7 @@ TEST(UserHistoryPredictor, DescriptionTest) {
     // "わたしの"
     MakeSegmentsForSuggestion(
         "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE", &segments);
-    EXPECT_FALSE(predictor.Suggest(&segments));
+    EXPECT_FALSE(predictor.Predict(&segments));
 
     // "わたしの"
     MakeSegmentsForPrediction(
@@ -533,7 +533,7 @@ TEST(UserHistoryPredictor, UserHistoryPredictorUnusedHistoryTest) {
     // "わたしの"
     MakeSegmentsForSuggestion("\xE3\x82\x8F\xE3\x81\x9F"
                               "\xE3\x81\x97\xE3\x81\xAE", &segments);
-    EXPECT_TRUE(predictor.Suggest(&segments));
+    EXPECT_TRUE(predictor.Predict(&segments));
     // "私の名前は中野です"
     EXPECT_EQ(segments.segment(0).candidate(0).value,
               "\xE7\xA7\x81\xE3\x81\xAE\xE5\x90\x8D\xE5\x89\x8D"
@@ -543,7 +543,7 @@ TEST(UserHistoryPredictor, UserHistoryPredictorUnusedHistoryTest) {
     // "ひろすえ"
     MakeSegmentsForSuggestion("\xE3\x81\xB2\xE3\x82\x8D"
                               "\xE3\x81\x99\xE3\x81\x88", &segments);
-    EXPECT_TRUE(predictor.Suggest(&segments));
+    EXPECT_TRUE(predictor.Predict(&segments));
     // "広末涼子"
     EXPECT_EQ(segments.segment(0).candidate(0).value,
               "\xE5\xBA\x83\xE6\x9C\xAB\xE6\xB6\xBC\xE5\xAD\x90");
@@ -555,7 +555,7 @@ TEST(UserHistoryPredictor, UserHistoryPredictorUnusedHistoryTest) {
     // "わたしの"
     MakeSegmentsForSuggestion("\xE3\x82\x8F\xE3\x81\x9F"
                               "\xE3\x81\x97\xE3\x81\xAE", &segments);
-    EXPECT_TRUE(predictor.Suggest(&segments));
+    EXPECT_TRUE(predictor.Predict(&segments));
     // "私の名前は中野です"
     EXPECT_EQ(segments.segment(0).candidate(0).value,
               "\xE7\xA7\x81\xE3\x81\xAE\xE5\x90\x8D\xE5\x89\x8D"
@@ -565,7 +565,7 @@ TEST(UserHistoryPredictor, UserHistoryPredictorUnusedHistoryTest) {
     // "ひろすえ"
     MakeSegmentsForSuggestion("\xE3\x81\xB2\xE3\x82\x8D"
                               "\xE3\x81\x99\xE3\x81\x88", &segments);
-    EXPECT_FALSE(predictor.Suggest(&segments));
+    EXPECT_FALSE(predictor.Predict(&segments));
 
     predictor.Sync();
   }
@@ -578,7 +578,7 @@ TEST(UserHistoryPredictor, UserHistoryPredictorUnusedHistoryTest) {
     // "わたしの"
     MakeSegmentsForSuggestion("\xE3\x82\x8F\xE3\x81\x9F"
                               "\xE3\x81\x97\xE3\x81\xAE", &segments);
-    EXPECT_TRUE(predictor.Suggest(&segments));
+    EXPECT_TRUE(predictor.Predict(&segments));
     // "私の名前は中野です"
     EXPECT_EQ(segments.segment(0).candidate(0).value,
               "\xE7\xA7\x81\xE3\x81\xAE\xE5\x90\x8D\xE5\x89\x8D"
@@ -588,7 +588,7 @@ TEST(UserHistoryPredictor, UserHistoryPredictorUnusedHistoryTest) {
     // "ひろすえ"
     MakeSegmentsForSuggestion("\xE3\x81\xB2\xE3\x82\x8D"
                               "\xE3\x81\x99\xE3\x81\x88", &segments);
-    EXPECT_FALSE(predictor.Suggest(&segments));
+    EXPECT_FALSE(predictor.Predict(&segments));
   }
 }
 
@@ -618,7 +618,7 @@ TEST(UserHistoryPredictor, UserHistoryPredictorRevertTest) {
   // "わたしの"
   MakeSegmentsForSuggestion("\xE3\x82\x8F\xE3\x81\x9F"
                             "\xE3\x81\x97\xE3\x81\xAE", &segments2);
-  EXPECT_TRUE(predictor.Suggest(&segments2));
+  EXPECT_TRUE(predictor.Predict(&segments2));
   // "私の名前は中野です"
   EXPECT_EQ(segments.segment(0).candidate(0).value,
             "\xE7\xA7\x81\xE3\x81\xAE\xE5\x90\x8D\xE5\x89\x8D"
@@ -635,7 +635,7 @@ TEST(UserHistoryPredictor, UserHistoryPredictorRevertTest) {
   EXPECT_FALSE(predictor.Predict(&segments));
   EXPECT_EQ(segments.segment(0).candidates_size(), 0);
 
-  EXPECT_FALSE(predictor.Suggest(&segments));
+  EXPECT_FALSE(predictor.Predict(&segments));
   EXPECT_EQ(segments.segment(0).candidates_size(), 0);
 }
 
@@ -669,11 +669,11 @@ TEST(UserHistoryPredictor, UserHistoryPredictorClearTest) {
   {
     Segments segments;
     MakeSegmentsForSuggestion("0", &segments);
-    EXPECT_FALSE(predictor.Suggest(&segments));
+    EXPECT_FALSE(predictor.Predict(&segments));
 
     segments.clear();
     MakeSegmentsForSuggestion("012-345", &segments);
-    EXPECT_TRUE(predictor.Suggest(&segments));
+    EXPECT_TRUE(predictor.Predict(&segments));
   }
 }
 
@@ -735,7 +735,7 @@ TEST(UserHistoryPredictor, SyncTest) {
       case Command::LOOKUP:
         segments.clear();
         MakeSegmentsForSuggestion(commands[i].key, &segments);
-        predictor.Suggest(&segments);
+        predictor.Predict(&segments);
       default:
         break;
     }

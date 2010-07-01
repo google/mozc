@@ -66,14 +66,14 @@ TEST(DictionaryPredictor, DictionaryPredictorTest) {
   MakeSegmentsForSuggestion
       ("\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90\xE3\x82\x8B\xE3\x81\x82",
        &segments);
-  EXPECT_FALSE(predictor.Suggest(&segments));
+  EXPECT_FALSE(predictor.Predict(&segments));
 
   // turn on
   config.set_use_dictionary_suggest(true);
   MakeSegmentsForSuggestion
       ("\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90\xE3\x82\x8B\xE3\x81\x82",
        &segments);
-  EXPECT_FALSE(predictor.Suggest(&segments));
+  EXPECT_FALSE(predictor.Predict(&segments));
 }
 
 TEST(DictionaryPredictor, IsZipCodeRequestTest) {

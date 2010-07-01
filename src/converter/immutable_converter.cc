@@ -65,11 +65,14 @@ enum {
 };
 
 void InsertCorrectedNodes(size_t pos, const string &key,
-                          const KeyCorrector &key_corrector,
+                          const KeyCorrector *key_corrector,
                           DictionaryInterface *dictionary,
                           Lattice *lattice) {
+  if (key_corrector == NULL) {
+    return;
+  }
   size_t length = 0;
-  const char *str = key_corrector.GetCorrectedPrefix(pos, &length);
+  const char *str = key_corrector->GetCorrectedPrefix(pos, &length);
   if (str == NULL || length == 0) {
     return;
   }
@@ -79,7 +82,7 @@ void InsertCorrectedNodes(size_t pos, const string &key,
   Node *prev = NULL;
   for (Node *node = rnode; node != NULL; node = node->bnext) {
     const size_t offset =
-        key_corrector.GetOriginalOffset(pos, node->key.size());
+        key_corrector->GetOriginalOffset(pos, node->key.size());
     if (KeyCorrector::IsValidPosition(offset) && offset > 0) {
       // rewrite key
       node->key = key.substr(pos, offset);
@@ -932,12 +935,16 @@ bool ImmutableConverterImpl::MakeLattice(Segments *segments) const {
     return false;
   }
 
-  KeyCorrector::InputMode mode = KeyCorrector::ROMAN;
-  if (GET_CONFIG(preedit_method) != config::Config::ROMAN) {
-    mode = KeyCorrector::KANA;
+  // Do not use KeyCorrector if user changes the boundary.
+  // http://b/issue?id=2804996
+  scoped_ptr<KeyCorrector> key_corrector;
+  if (!segments->has_resized()) {
+    KeyCorrector::InputMode mode = KeyCorrector::ROMAN;
+    if (GET_CONFIG(preedit_method) != config::Config::ROMAN) {
+      mode = KeyCorrector::KANA;
+    }
+    key_corrector.reset(new KeyCorrector(key, mode));
   }
-
-  KeyCorrector key_corrector(key, mode);
 
   for (size_t pos = history_key.size(); pos < key.size(); ++pos) {
     if (lattice->end_nodes(pos) != NULL) {
@@ -946,7 +953,7 @@ bool ImmutableConverterImpl::MakeLattice(Segments *segments) const {
       lattice->Insert(pos, rnode);
       // Insert corrected nodes like みんあ -> みんな
       InsertCorrectedNodes(pos, key,
-                           key_corrector,
+                           key_corrector.get(),
                            dictionary_, lattice);
     }
   }

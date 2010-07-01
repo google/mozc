@@ -64,19 +64,33 @@
       ],
     },
     {
+      'target_name': 'ipc_test_util',
+      'type': 'static_library',
+      'sources': [
+        'ipc_test_util.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        'ipc',
+      ],
+    },
+    {
       'target_name': 'ipc_test',
       'type': 'executable',
       'sources': [
         'ipc_path_manager_test.cc',
         'ipc_test.cc',
-        'ipc_test_util.cc',
         'named_event_test.cc',
         'process_watch_dog_test.cc',
       ],
       'dependencies': [
         '../testing/testing.gyp:gtest_main',
         'ipc',
+        'ipc_test_util',
       ],
+      'variables': {
+        'test_size': 'small',
+      },
     },
   ],
 }

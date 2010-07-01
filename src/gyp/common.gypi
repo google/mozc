@@ -74,11 +74,16 @@
     # use_qt is 'YES' only if you want to use GUI binaries.
     'use_qt%': 'YES',
 
+    # a flag whether the current build is dev-channel or not.
+    'channel_dev%': '0',
+
     # Copied from Chromium:build/common.gypi
     # Set to 1 to enable code coverage.  In addition to build changes
     # (e.g. extra CFLAGS), also creates a new target in the src/chrome
     # project file called "coverage".
     'coverage%': 0,
+
+    'mozc_data_dir': '<(SHARED_INTERMEDIATE_DIR)',
   },
   'target_defaults': {
     'variables': {
@@ -115,6 +120,9 @@
            'defines': ['GOOGLE_JAPANESE_INPUT_BUILD'],
           }, {  # else
            'defines': ['MOZC_BUILD'],
+          },],
+          ['channel_dev==1', {
+           'defines': ['CHANNEL_DEV'],
           },],
         ],
       },
@@ -235,7 +243,7 @@
       'GTEST_HAS_TR1_TUPLE=0',
       # For gtest
       # For gtest
-      'MOZC_DATA_DIR="<(SHARED_INTERMEDIATE_DIR)"',
+      'MOZC_DATA_DIR="<(mozc_data_dir)"',
     ],
     'include_dirs': [
       '<(DEPTH)',

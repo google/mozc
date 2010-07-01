@@ -28,30 +28,10 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 {
-  'targets': [
+  'copies': [
     {
-      'target_name': 'transliteration',
-      'type': 'static_library',
-      'sources': [
-        'transliteration.cc',
-      ],
-      'dependencies': [
-        '../base/base.gyp:base',
-      ],
-    },
-    {
-      'target_name': 'transliteration_test',
-      'type': 'executable',
-      'sources': [
-        'transliteration_test.cc',
-      ],
-      'dependencies': [
-        '../testing/testing.gyp:gtest_main',
-        'transliteration',
-      ],
-      'variables': {
-        'test_size': 'small',
-      },
+      'destination': '<(mozc_data_dir)/<(test_data_subdir)',
+      'files': [ '<@(test_data)' ],
     },
   ],
 }

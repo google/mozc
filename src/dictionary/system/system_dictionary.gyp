@@ -65,7 +65,11 @@
         '../../base/base.gyp:base',
         '../../testing/testing.gyp:gtest_main',
       ],
-    },    {
+      'variables': {
+        'test_size': 'small',
+      },
+    },
+    {
       'target_name': 'system_dictionary_builder_test',
       'type': 'executable',
       'sources': [
@@ -76,6 +80,9 @@
         '../../base/base.gyp:base',
         '../../testing/testing.gyp:gtest_main',
       ],
+      'variables': {
+        'test_size': 'small',
+      },
     },
   ],
 }

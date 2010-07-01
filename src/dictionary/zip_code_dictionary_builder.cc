@@ -27,7 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// Calculate scores and output dictionary for zip code.
+#include "dictionary/zip_code_dictionary_builder.h"
 
 #include <cmath>
 #include <string>
@@ -38,9 +38,7 @@
 #include "base/file_stream.h"
 #include "converter/pos_matcher.h"
 
-DEFINE_string(input, "", "input seed file");
-DEFINE_string(output, "", "output dictionary text file");
-
+namespace mozc {
 namespace {
 const uint32 kOffset = 30000;
 const uint32 kScoreMax = 32767;
@@ -57,17 +55,21 @@ uint32 GetScore(int64 freq) {
 }
 }  // namespace
 
-int main(int argc, char **argv) {
-  InitGoogle(argv[0], &argc, &argv, false);
+ZipCodeDictionaryBuilder::ZipCodeDictionaryBuilder(const string &input,
+                                                   const string &output)
+    : input_filename_(input), output_filename_(output) {
+}
 
-  const uint16 zip_code_pos = mozc::POSMatcher::GetZipcodeId();
+ZipCodeDictionaryBuilder::~ZipCodeDictionaryBuilder() {}
 
-  mozc::InputFileStream ifs(FLAGS_input.c_str());
+void ZipCodeDictionaryBuilder::Build() {
+  const uint16 zip_code_pos = POSMatcher::GetZipcodeId();
+  InputFileStream ifs(input_filename_.c_str());
   CHECK(ifs);
   string line;
   vector<string> tokens;
 
-  mozc::OutputFileStream ofs(FLAGS_output.c_str());
+  OutputFileStream ofs(output_filename_.c_str());
   CHECK(ofs);
 
   while (getline(ifs, line)) {
@@ -75,7 +77,7 @@ int main(int argc, char **argv) {
       continue;
     }
     tokens.clear();
-    mozc::Util::SplitStringUsing(line, "\t", &tokens);
+    Util::SplitStringUsing(line, "\t", &tokens);
     if (tokens.size() < 3) {
       LOG(ERROR) << "format error: " << line;
       continue;
@@ -89,3 +91,4 @@ int main(int argc, char **argv) {
         << score << "\t" << value << endl;
   }
 }
+}  // namespace mozc

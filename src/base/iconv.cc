@@ -27,7 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef COMPILER_MSVC
+#ifndef OS_WINDOWS
 #include <iconv.h>
 #else
 #include <windows.h>
@@ -39,7 +39,7 @@
 
 namespace {
 
-#ifndef COMPILER_MSVC
+#ifndef OS_WINDOWS
 void IconvHelper(iconv_t ic, const string &input, string *output) {
   size_t ilen = input.size();
   size_t olen = ilen * 4;
@@ -152,14 +152,6 @@ void Util::UTF8ToEUC(const string &input, string *output) {
 
 void Util::EUCToUTF8(const string &input, string *output) {
   Convert("EUC-JP-MS", "UTF8", input, output);
-}
-
-void Util::EUCToSJIS(const string &input, string *output) {
-  Convert("EUC-JP-MS", "SJIS", input, output);
-}
-
-void Util::SJISToEUC(const string &input, string *output) {
-  Convert("SJIS", "EUC-JP-MS", input, output);
 }
 #endif
 

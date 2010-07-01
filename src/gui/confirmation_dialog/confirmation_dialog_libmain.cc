@@ -35,6 +35,10 @@
 #include "gui/base/locale_util.h"
 #include "gui/confirmation_dialog/confirmation_dialog.h"
 
+DECLARE_string(confirmation_type);
+DEFINE_int32(confirmation_wait_time, 3600,
+             "The interval time to pop-up the confirmation again, in sec.");
+
 int RunConfirmationDialog(int argc, char *argv[]) {
   Q_INIT_RESOURCE(qrc_confirmation_dialog);
 
@@ -53,9 +57,21 @@ int RunConfirmationDialog(int argc, char *argv[]) {
   mozc::gui::LocaleUtil::InstallTranslationMessageAndFont
       ("confirmation_dialog");
 
-  if (mozc::gui::ConfirmationDialog::Show()) {
-    return 0;  // Yes.
-  } else {
+  if (FLAGS_confirmation_type != "log_out") {
+    if (mozc::gui::ConfirmationDialog::Show()) {
+      return 0;  // Yes.
+    }
     return 1;  // No.
   }
+
+  // confirmation_type == "log_out"
+  for (;;) {
+    if (mozc::gui::ConfirmationDialog::Show()) {
+      return 0;  // Yes.
+    }
+    mozc::Util::Sleep(FLAGS_confirmation_wait_time * 1000 /* msec */);
+  }
+
+  // Code will not reach here but put the return value just in case.
+  return 1;
 }

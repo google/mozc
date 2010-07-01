@@ -535,5 +535,379 @@ TEST_F(SessionTest, ServerUpdateFail) {
   EXPECT_EQ(1, server_launcher_->error_count
             (ServerLauncherInterface::SERVER_BROKEN_MESSAGE));
 }
+
+class SessionPlaybackTestServerLauncher :
+      public ServerLauncherInterface {
+ public:
+  SessionPlaybackTestServerLauncher(IPCClientFactoryMock *factory)
+      : factory_(factory),
+        start_server_result_(false),
+        start_server_called_(false),
+        force_terminate_server_result_(false),
+        force_terminate_server_called_(false),
+        server_protocol_version_(IPC_PROTOCOL_VERSION) {}
+
+  virtual void Ready() {}
+  virtual void Wait() {}
+  virtual void Error() {}
+
+  virtual bool StartServer(SessionInterface *session) {
+    if (!response_.empty()) {
+      factory_->SetMockResponse(response_);
+    }
+    if (!product_version_after_start_server_.empty()) {
+      factory_->SetServerProductVersion(product_version_after_start_server_);
+    }
+    factory_->SetServerProtocolVersion(server_protocol_version_);
+    start_server_called_ = true;
+    return start_server_result_;
+  }
+
+  virtual bool ForceTerminateServer(const string &name) {
+    force_terminate_server_called_ = true;
+    return force_terminate_server_result_;
+  }
+
+  virtual bool WaitServer(uint32 pid) {
+    return true;
+  }
+
+  virtual void OnFatal(ServerLauncherInterface::ServerErrorType type) {
+  }
+
+  void set_server_program(const string &server_path) {}
+
+  void set_restricted(bool restricted) {}
+
+  void set_start_server_result(const bool result) {
+    start_server_result_ = result;
+  }
+
+
+  virtual const string &server_program() const {
+    static const string path;
+    return path;
+  }
+
+ private:
+  IPCClientFactoryMock *factory_;
+  bool start_server_result_;
+  bool start_server_called_;
+  bool force_terminate_server_result_;
+  bool force_terminate_server_called_;
+  uint32 server_protocol_version_;
+  string response_;
+  string product_version_after_start_server_;
+  map<int, int> error_map_;
+};
+
+class SessionPlaybackTest : public testing::Test {
+ protected:
+  SessionPlaybackTest() {}
+
+  virtual void SetUp() {
+    client_factory_.reset(new IPCClientFactoryMock);
+    client_.reset(reinterpret_cast<IPCClientMock *>(
+        client_factory_->NewClient("")));
+    session_.reset(new Session);
+    session_->SetIPCClientFactory(client_factory_.get());
+    server_launcher_ = new SessionPlaybackTestServerLauncher(
+        client_factory_.get());
+    session_->SetServerLauncher(server_launcher_);
+  }
+
+  virtual void TearDown() {
+    session_.reset();
+    client_factory_.reset();
+  }
+
+  bool SetupConnection(const int id) {
+    client_factory_->SetConnection(true);
+    client_factory_->SetResult(true);
+    client_factory_->SetServerProductVersion(Version::GetMozcVersion());
+    server_launcher_->set_start_server_result(true);
+
+    // TODO(komatsu): Due to the limitation of the testing mock,
+    // EnsureConnection should be explicitly called before calling
+    // SendKey.  Fix the testing mock.
+    commands::Output mock_output;
+    mock_output.set_id(id);
+    SetMockOutput(mock_output);
+    return session_->EnsureConnection();
+  }
+
+  void SetMockOutput(const commands::Output &mock_output) {
+    string response;
+    mock_output.SerializeToString(&response);
+    client_factory_->SetMockResponse(response);
+  }
+
+  void GetGeneratedInput(commands::Input *input) {
+    input->ParseFromString(client_factory_->GetGeneratedRequest());
+  }
+
+  scoped_ptr<IPCClientFactoryMock> client_factory_;
+  scoped_ptr<IPCClientMock> client_;
+  scoped_ptr<Session> session_;
+  SessionPlaybackTestServerLauncher *server_launcher_;
+
+ private:
+  DISALLOW_COPY_AND_ASSIGN(SessionPlaybackTest);
+};
+
+// TODO(toshiyuki): Update these test after the implementation for Mac.
+
+TEST_F(SessionPlaybackTest, PushAndResetHistoryWithNoModeTest) {
+  const int mock_id = 123;
+  EXPECT_TRUE(SetupConnection(mock_id));
+
+  commands::KeyEvent key_event;
+  key_event.set_special_key(commands::KeyEvent::ENTER);
+
+  commands::Output mock_output;
+  mock_output.set_id(mock_id);
+  mock_output.set_consumed(true);
+  SetMockOutput(mock_output);
+
+  commands::Output output;
+  EXPECT_TRUE(session_->SendKey(key_event, &output));
+  EXPECT_EQ(mock_output.consumed(), output.consumed());
+
+  vector<commands::Input> history;
+  session_->GetHistoryInputs(&history);
+  EXPECT_EQ(1, history.size());
+
+  mock_output.Clear();
+  mock_output.set_id(mock_id);
+  mock_output.set_consumed(true);
+  mock_output.mutable_result()->set_type(commands::Result::STRING);
+  mock_output.mutable_result()->set_value("output");
+  EXPECT_FALSE(mock_output.has_mode());
+  SetMockOutput(mock_output);
+  EXPECT_TRUE(session_->SendKey(key_event, &output));
+  EXPECT_EQ(mock_output.consumed(), output.consumed());
+
+  // history should be reset.
+  session_->GetHistoryInputs(&history);
+  EXPECT_EQ(0, history.size());
+}
+
+TEST_F(SessionPlaybackTest, PushAndResetHistoryWithModeTest) {
+#ifdef OS_WINDOWS
+  const int mock_id = 123;
+  EXPECT_TRUE(SetupConnection(mock_id));
+
+  commands::KeyEvent key_event;
+  key_event.set_special_key(commands::KeyEvent::ENTER);
+
+  // On Windows, mode initializer should be added if the output contains mode.
+  commands::Output mock_output;
+  mock_output.set_id(mock_id);
+  mock_output.set_consumed(true);
+  mock_output.set_mode(commands::HIRAGANA);
+  SetMockOutput(mock_output);
+
+  commands::Output output;
+  EXPECT_TRUE(session_->SendKey(key_event, &output));
+  EXPECT_EQ(mock_output.consumed(), output.consumed());
+  EXPECT_TRUE(output.has_mode());
+  EXPECT_EQ(commands::HIRAGANA, output.mode());
+
+  EXPECT_TRUE(session_->SendKey(key_event, &output));
+  EXPECT_EQ(mock_output.consumed(), output.consumed());
+  EXPECT_TRUE(output.has_mode());
+  EXPECT_EQ(commands::HIRAGANA, output.mode());
+
+  vector<commands::Input> history;
+  session_->GetHistoryInputs(&history);
+  EXPECT_EQ(2, history.size());
+
+  mock_output.Clear();
+  mock_output.set_id(mock_id);
+  mock_output.set_consumed(true);
+  mock_output.mutable_result()->set_type(commands::Result::STRING);
+  mock_output.mutable_result()->set_value("output");
+  SetMockOutput(mock_output);
+  EXPECT_TRUE(session_->SendKey(key_event, &output));
+  EXPECT_EQ(mock_output.consumed(), output.consumed());
+  // history is reset, but initializer should be added.
+  session_->GetHistoryInputs(&history);
+  EXPECT_EQ(1, history.size());
+#endif
+}
+
+TEST_F(SessionPlaybackTest, PushAndResetHistoryWithDirectTest) {
+#ifdef OS_WINDOWS
+  const int mock_id = 123;
+  EXPECT_TRUE(SetupConnection(mock_id));
+
+  commands::KeyEvent key_event;
+  key_event.set_special_key(commands::KeyEvent::ENTER);
+
+  // On Windows, mode initializer should be added if the output contains mode.
+  commands::Output mock_output;
+  mock_output.set_id(mock_id);
+  mock_output.set_consumed(true);
+  mock_output.set_mode(commands::DIRECT);
+  SetMockOutput(mock_output);
+
+  commands::Output output;
+  // Send key twice
+  EXPECT_TRUE(session_->SendKey(key_event, &output));
+  EXPECT_EQ(mock_output.consumed(), output.consumed());
+  EXPECT_TRUE(output.has_mode());
+  EXPECT_EQ(commands::DIRECT, output.mode());
+
+  EXPECT_TRUE(session_->SendKey(key_event, &output));
+  EXPECT_EQ(mock_output.consumed(), output.consumed());
+  EXPECT_TRUE(output.has_mode());
+  EXPECT_EQ(commands::DIRECT, output.mode());
+
+  vector<commands::Input> history;
+  session_->GetHistoryInputs(&history);
+  EXPECT_EQ(2, history.size());
+
+  mock_output.Clear();
+  mock_output.set_id(mock_id);
+  mock_output.set_consumed(true);
+  mock_output.mutable_result()->set_type(commands::Result::STRING);
+  mock_output.mutable_result()->set_value("output");
+  SetMockOutput(mock_output);
+  EXPECT_TRUE(session_->SendKey(key_event, &output));
+  EXPECT_EQ(mock_output.consumed(), output.consumed());
+  // history is reset, and initializer should not be added.
+  session_->GetHistoryInputs(&history);
+  EXPECT_EQ(0, history.size());
+#endif
+}
+
+TEST_F(SessionPlaybackTest, PlaybackHistoryTest) {
+  const int mock_id = 123;
+  EXPECT_TRUE(SetupConnection(mock_id));
+
+  commands::KeyEvent key_event;
+  key_event.set_special_key(commands::KeyEvent::ENTER);
+
+  // On Windows, mode initializer should be added if the output contains mode.
+  commands::Output mock_output;
+  mock_output.set_id(mock_id);
+  mock_output.set_consumed(true);
+  SetMockOutput(mock_output);
+
+  commands::Output output;
+  EXPECT_TRUE(session_->SendKey(key_event, &output));
+  EXPECT_EQ(mock_output.consumed(), output.consumed());
+
+  EXPECT_TRUE(session_->SendKey(key_event, &output));
+  EXPECT_EQ(mock_output.consumed(), output.consumed());
+
+  vector<commands::Input> history;
+  session_->GetHistoryInputs(&history);
+  EXPECT_EQ(2, history.size());
+
+  // Invalid id
+  const int new_id = 456;
+  mock_output.set_id(new_id);
+  SetMockOutput(mock_output);
+  EXPECT_TRUE(session_->SendKey(key_event, &output));
+
+#ifndef _DEBUG
+  // PlaybackHistory and push history
+  session_->GetHistoryInputs(&history);
+  EXPECT_EQ(3, history.size());
+#else
+  // PlaybackHistory, dump history(including reset), and add last input
+  session_->GetHistoryInputs(&history);
+  EXPECT_EQ(1, history.size());
+#endif
+}
+
+TEST_F(SessionPlaybackTest, SetModeInitializerTest) {
+#ifdef OS_WINDOWS
+  const int mock_id = 123;
+  EXPECT_TRUE(SetupConnection(mock_id));
+
+  commands::KeyEvent key_event;
+  key_event.set_special_key(commands::KeyEvent::ENTER);
+
+  // On Windows, mode initializer should be added if the output contains mode.
+  commands::Output mock_output;
+  mock_output.set_id(mock_id);
+  mock_output.set_consumed(true);
+  mock_output.set_mode(commands::HIRAGANA);
+  SetMockOutput(mock_output);
+
+  commands::Output output;
+  EXPECT_TRUE(session_->SendKey(key_event, &output));
+  EXPECT_EQ(mock_output.consumed(), output.consumed());
+
+  mock_output.set_mode(commands::DIRECT);
+  SetMockOutput(mock_output);
+
+  EXPECT_TRUE(session_->SendKey(key_event, &output));
+  EXPECT_EQ(mock_output.consumed(), output.consumed());
+  EXPECT_TRUE(output.has_mode());
+  EXPECT_EQ(commands::DIRECT, output.mode());
+
+  mock_output.set_mode(commands::FULL_KATAKANA);
+  SetMockOutput(mock_output);
+
+  EXPECT_TRUE(session_->SendKey(key_event, &output));
+  EXPECT_EQ(mock_output.consumed(), output.consumed());
+  EXPECT_TRUE(output.has_mode());
+  EXPECT_EQ(commands::FULL_KATAKANA, output.mode());
+
+  vector<commands::Input> history;
+  session_->GetHistoryInputs(&history);
+  EXPECT_EQ(3, history.size());
+
+  mock_output.Clear();
+  mock_output.set_id(mock_id);
+  mock_output.set_consumed(true);
+  mock_output.mutable_result()->set_type(commands::Result::STRING);
+  mock_output.mutable_result()->set_value("output");
+  SetMockOutput(mock_output);
+  EXPECT_TRUE(session_->SendKey(key_event, &output));
+  EXPECT_EQ(mock_output.consumed(), output.consumed());
+  // history is reset, but initializer should be added.
+  session_->GetHistoryInputs(&history);
+  EXPECT_EQ(1, history.size());
+  EXPECT_EQ(commands::FULL_KATAKANA, history[0].key().mode());
+#endif
+}
+
+TEST_F(SessionPlaybackTest, ConsumedTest) {
+  const int mock_id = 123;
+  EXPECT_TRUE(SetupConnection(mock_id));
+
+  commands::KeyEvent key_event;
+  key_event.set_special_key(commands::KeyEvent::ENTER);
+
+  commands::Output mock_output;
+  mock_output.set_id(mock_id);
+  mock_output.set_consumed(true);
+  SetMockOutput(mock_output);
+
+  commands::Output output;
+  EXPECT_TRUE(session_->SendKey(key_event, &output));
+  EXPECT_EQ(mock_output.consumed(), output.consumed());
+
+  EXPECT_TRUE(session_->SendKey(key_event, &output));
+  EXPECT_EQ(mock_output.consumed(), output.consumed());
+
+  vector<commands::Input> history;
+  session_->GetHistoryInputs(&history);
+  EXPECT_EQ(2, history.size());
+
+  mock_output.set_consumed(false);
+  SetMockOutput(mock_output);
+
+  EXPECT_TRUE(session_->SendKey(key_event, &output));
+  EXPECT_EQ(mock_output.consumed(), output.consumed());
+
+  // Do not push unconsumed input
+  session_->GetHistoryInputs(&history);
+  EXPECT_EQ(2, history.size());
+}
 }  // namespace client
 }  // namespace mozc

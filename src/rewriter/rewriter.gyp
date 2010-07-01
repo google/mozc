@@ -257,6 +257,9 @@
         '../testing/testing.gyp:gtest_main',
         'rewriter',
       ],
+      'variables': {
+        'test_size': 'small',
+      },
     },
   ],
 }

@@ -47,11 +47,7 @@ class PredictorImpl : public PredictorInterface {
   PredictorImpl();
   virtual ~PredictorImpl();
 
-  // This method is basically called when user hit TAB key.
   virtual bool Predict(Segments *segments) const;
-
-  // Automatic prediction. More conservative than Predict()
-  virtual bool Suggest(Segments *segments) const;
 
   // Hook(s) for all mutable operations
   virtual void Finish(Segments *segments);
@@ -109,24 +105,14 @@ void PredictorImpl::Revert(Segments *segments) {
   }
 }
 
-bool PredictorImpl::Suggest(Segments *segments) const {
-  bool result = false;
-  int size = min(9, max(1, static_cast<int>(GET_CONFIG(suggestions_size))));
-
-  for (size_t i = 0; i < predictors_.size(); ++i) {
-    if (size <= 0) {
-      break;
-    }
-    segments->set_max_prediction_candidates_size(static_cast<size_t>(size));
-    result |= predictors_[i]->Suggest(segments);
-    size -= static_cast<int>(GetCandidatesSize(*segments));
-  }
-  return result;
-}
-
 bool PredictorImpl::Predict(Segments *segments) const {
   bool result = false;
+
   int size = kPredictionSize;
+  if (segments->request_type() == Segments::SUGGESTION) {
+    size = min(9, max(1, static_cast<int>(GET_CONFIG(suggestions_size))));
+  }
+
   for (size_t i = 0; i < predictors_.size(); ++i) {
     if (size <= 0) {
       break;
@@ -135,6 +121,7 @@ bool PredictorImpl::Predict(Segments *segments) const {
     result |= predictors_[i]->Predict(segments);
     size -= static_cast<int>(GetCandidatesSize(*segments));
   }
+
   return result;
 }
 

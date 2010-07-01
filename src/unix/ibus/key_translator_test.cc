@@ -220,13 +220,15 @@ class KeyTranslatorTest : public testing::Test {
 TEST_F(KeyTranslatorTest, TranslateAscii) {
   commands::KeyEvent out;
   // ' ' (0x20) is treated as a special key by Mozc.
-  EXPECT_TRUE(translator_->Translate(0x20, 0, 0, &out));
+  EXPECT_TRUE(translator_->Translate(0x20, 0, 0, config::Config::ROMAN, true,
+                                     &out));
   EXPECT_FALSE(out.has_key_code());
   EXPECT_TRUE(out.has_special_key());
   EXPECT_EQ(0, out.modifier_keys_size());
 
   for (char c = 0x21; c < 0x7f; ++c) {
-    EXPECT_TRUE(translator_->Translate(c, 0, 0, &out));
+    EXPECT_TRUE(translator_->Translate(c, 0, 0, config::Config::ROMAN, true,
+                                       &out));
     EXPECT_TRUE(out.has_key_code());
     EXPECT_FALSE(out.has_special_key());
     EXPECT_EQ(c, out.key_code());
@@ -237,7 +239,8 @@ TEST_F(KeyTranslatorTest, TranslateAscii) {
 TEST_F(KeyTranslatorTest, TranslateSpecial) {
   commands::KeyEvent out;
   for (int i = 0; i < arraysize(special_keys); ++i) {
-    EXPECT_TRUE(translator_->Translate(special_keys[i], 0, 0, &out));
+    EXPECT_TRUE(translator_->Translate(special_keys[i], 0, 0,
+                                       config::Config::ROMAN, true, &out));
     EXPECT_FALSE(out.has_key_code());
     EXPECT_TRUE(out.has_special_key());
     EXPECT_EQ(mapped_special_keys[i], out.special_key());
@@ -258,7 +261,8 @@ TEST_F(KeyTranslatorTest, TranslateModifierMasks) {
       }
     }
 
-    EXPECT_TRUE(translator_->Translate(IBUS_F1, 0, modifier, &out));
+    EXPECT_TRUE(translator_->Translate(IBUS_F1, 0, modifier,
+                                       config::Config::ROMAN, true, &out));
     EXPECT_EQ(mapped_modifier.size(), out.modifier_keys_size());
 
     set<commands::KeyEvent::ModifierKey> actual_modifier;
@@ -268,7 +272,8 @@ TEST_F(KeyTranslatorTest, TranslateModifierMasks) {
     EXPECT_TRUE(mapped_modifier == actual_modifier);
 
     // Shift modifier key is dropped for ascii characters.
-    EXPECT_TRUE(translator_->Translate(IBUS_A, 0, modifier, &out));
+    EXPECT_TRUE(translator_->Translate(IBUS_A, 0, modifier,
+                                       config::Config::ROMAN, true, &out));
     if (mapped_modifier.find(commands::KeyEvent::SHIFT) !=
         mapped_modifier.end()) {
       mapped_modifier.erase(commands::KeyEvent::SHIFT);
@@ -284,20 +289,32 @@ TEST_F(KeyTranslatorTest, TranslateModifierMasks) {
 
 TEST_F(KeyTranslatorTest, TranslateUnknow) {
   commands::KeyEvent out;
-  EXPECT_FALSE(translator_->Translate(IBUS_VoidSymbol, 0, 0, &out));
+  EXPECT_FALSE(translator_->Translate(IBUS_VoidSymbol, 0, 0,
+                                      config::Config::ROMAN, true, &out));
 
   // Mozc does not support F25 - F35.
-  EXPECT_FALSE(translator_->Translate(IBUS_F25, 0, 0, &out));
-  EXPECT_FALSE(translator_->Translate(IBUS_F26, 0, 0, &out));
-  EXPECT_FALSE(translator_->Translate(IBUS_F27, 0, 0, &out));
-  EXPECT_FALSE(translator_->Translate(IBUS_F28, 0, 0, &out));
-  EXPECT_FALSE(translator_->Translate(IBUS_F29, 0, 0, &out));
-  EXPECT_FALSE(translator_->Translate(IBUS_F30, 0, 0, &out));
-  EXPECT_FALSE(translator_->Translate(IBUS_F31, 0, 0, &out));
-  EXPECT_FALSE(translator_->Translate(IBUS_F32, 0, 0, &out));
-  EXPECT_FALSE(translator_->Translate(IBUS_F33, 0, 0, &out));
-  EXPECT_FALSE(translator_->Translate(IBUS_F34, 0, 0, &out));
-  EXPECT_FALSE(translator_->Translate(IBUS_F35, 0, 0, &out));
+  EXPECT_FALSE(translator_->Translate(IBUS_F25, 0, 0, config::Config::ROMAN,
+                                      true, &out));
+  EXPECT_FALSE(translator_->Translate(IBUS_F26, 0, 0, config::Config::ROMAN,
+                                      true, &out));
+  EXPECT_FALSE(translator_->Translate(IBUS_F27, 0, 0, config::Config::ROMAN,
+                                      true, &out));
+  EXPECT_FALSE(translator_->Translate(IBUS_F28, 0, 0, config::Config::ROMAN,
+                                      true, &out));
+  EXPECT_FALSE(translator_->Translate(IBUS_F29, 0, 0, config::Config::ROMAN,
+                                      true, &out));
+  EXPECT_FALSE(translator_->Translate(IBUS_F30, 0, 0, config::Config::ROMAN,
+                                      true, &out));
+  EXPECT_FALSE(translator_->Translate(IBUS_F31, 0, 0, config::Config::ROMAN,
+                                      true, &out));
+  EXPECT_FALSE(translator_->Translate(IBUS_F32, 0, 0, config::Config::ROMAN,
+                                      true, &out));
+  EXPECT_FALSE(translator_->Translate(IBUS_F33, 0, 0, config::Config::ROMAN,
+                                      true, &out));
+  EXPECT_FALSE(translator_->Translate(IBUS_F34, 0, 0, config::Config::ROMAN,
+                                      true, &out));
+  EXPECT_FALSE(translator_->Translate(IBUS_F35, 0, 0, config::Config::ROMAN,
+                                      true, &out));
 }
 
 }  // namespace ibus

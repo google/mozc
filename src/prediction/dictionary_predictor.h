@@ -46,11 +46,7 @@ class DictionaryPredictor: public PredictorInterface {
   DictionaryPredictor();
   virtual ~DictionaryPredictor();
 
-  // This method is basically called when user hit TAB key.
   bool Predict(Segments *segments) const;
-
-  // Automatic prediction. More conservative than Predict()
-  bool Suggest(Segments *segments) const;
 
   static void MakeFeature(const string &query,
                           const string &key,
@@ -64,7 +60,6 @@ class DictionaryPredictor: public PredictorInterface {
   static bool IsZipCodeRequest(const string &key);
 
  private:
-  bool Lookup(Segments *segments) const;
   DictionaryInterface *dictionary_;
 };
 }  // namespace mozc

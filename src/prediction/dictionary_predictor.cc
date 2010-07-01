@@ -59,7 +59,7 @@ DictionaryPredictor::DictionaryPredictor()
 
 DictionaryPredictor::~DictionaryPredictor() {}
 
-bool DictionaryPredictor::Lookup(Segments *segments) const {
+bool DictionaryPredictor::Predict(Segments *segments) const {
   if (!GET_CONFIG(use_dictionary_suggest) &&
       segments->request_type() == Segments::SUGGESTION) {
     VLOG(2) << "no_dictionary_suggest";
@@ -207,14 +207,6 @@ bool DictionaryPredictor::Lookup(Segments *segments) const {
   }
 
   return added;
-}
-
-bool DictionaryPredictor::Predict(Segments *segments) const {
-  return Lookup(segments);
-}
-
-bool DictionaryPredictor::Suggest(Segments *segments) const {
-  return Lookup(segments);
 }
 
 namespace {

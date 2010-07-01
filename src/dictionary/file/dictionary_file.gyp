@@ -50,6 +50,9 @@
         '../../base/base.gyp:base',
         '../../testing/testing.gyp:gtest_main',
       ],
+      'variables': {
+        'test_size': 'small',
+      },
     },
   ],
 }

@@ -230,7 +230,12 @@ bool WinStatsConfigUtilImpl::SetEnabled(bool val) {
 #ifdef CHANNEL_DEV
   // On Dev channel, usage stats and crash report should be always sent.
   val = true;
+  // We always returns true in DevChannel.
+  const bool kReturnCodeInError = true;
 #else
+  const bool kReturnCodeInError = false;
+#endif  // CHANNEL_DEV
+
   CRegKey key;
   const REGSAM sam_desired = KEY_WRITE |
       (mozc::Util::IsWindowsX64() ? KEY_WOW64_32KEY : 0);
@@ -238,15 +243,27 @@ bool WinStatsConfigUtilImpl::SetEnabled(bool val) {
                            REG_NONE, REG_OPTION_NON_VOLATILE,
                            sam_desired);
   if (ERROR_SUCCESS != result) {
-    return false;
+    return kReturnCodeInError;
   }
+
   result = key.SetDWORDValue(kSendStatsName, val ? 1 : 0);
   if (ERROR_SUCCESS != result) {
-    return false;
+    return kReturnCodeInError;
   }
-#endif  // CHANNEL_DEV
+
+  // We've successfully set 1 to the proper entry.
+  // Remove the corresponding entry under "ClientStateMedium" just in case.
+  CRegKey key_medium;
+  result = key_medium.Open(HKEY_LOCAL_MACHINE,
+                           kOmahaUsageKeyForEveryone,
+                           sam_desired);
+  if (result == ERROR_SUCCESS && key_medium) {
+    // We do not check the result here.
+    key_medium.DeleteValue(kSendStatsName);
+  }
   return true;
 }
+
 #endif  // OS_WINDOWS
 
 #ifdef OS_MACOSX

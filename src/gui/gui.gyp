@@ -41,18 +41,34 @@
       'type': 'static_library',
       'sources': [
         '<(proto_out_dir)/ipc/window_info.pb.cc',
+        '<(gen_out_dir)/base/moc_window_title_modifier.cc',
         'base/debug_util.cc',
         'base/locale_util.cc',
         'base/singleton_window_helper.cc',
         'base/win_util.cc',
+        'base/window_title_modifier.cc',
       ],
       'dependencies': [
         '../ipc/ipc.gyp:genproto_ipc',
         '../ipc/ipc.gyp:ipc',
         '../session/session.gyp:genproto_session',
+        'gen_base_files',
       ],
       'includes': [
         'qt_libraries.gypi',
+      ],
+    },
+    {
+      'target_name': 'gen_base_files',
+      'type': 'none',
+      'variables': {
+        'subdir': 'base',
+      },
+      'sources': [
+        '<(subdir)/window_title_modifier.h',
+      ],
+      'includes': [
+        'qt_moc.gypi',
       ],
     },
     {
@@ -592,7 +608,6 @@
         ['OS=="win"', {
           'product_name': 'GoogleIMEJaTool',
           'dependencies': [
-            '<(DEPTH)/third_party/breakpad/breakpad.gyp:breakpad',
             '../win32/win32.gyp:ime_base',
             '../base/base.gyp:base',
           ],

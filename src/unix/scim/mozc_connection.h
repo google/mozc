@@ -74,8 +74,9 @@ class MozcConnectionInterface {
   virtual bool TrySendCompositionMode(mozc::commands::CompositionMode mode,
                                       mozc::commands::Output *out,
                                       string *out_error) const = 0;
-  virtual bool TrySendSubmit(mozc::commands::Output *out,
-                             string *out_error) const = 0;
+  virtual bool TrySendCommand(mozc::commands::SessionCommand::CommandType type,
+                              mozc::commands::Output *out,
+                              string *out_error) const = 0;
   virtual bool CanSend(const scim::KeyEvent &key) const = 0;
 };
 
@@ -105,9 +106,10 @@ class MozcConnection : public MozcConnectionInterface {
                                       mozc::commands::Output *out,
                                       string *out_error) const;
 
-  // Sends 'SUBMIT' command to the server.
-  virtual bool TrySendSubmit(mozc::commands::Output *out,
-                             string *out_error) const;
+  // Sends a command to the server.
+  virtual bool TrySendCommand(mozc::commands::SessionCommand::CommandType type,
+                              mozc::commands::Output *out,
+                              string *out_error) const;
 
   // Returns true iff TrySendKeyEvent() accepts the key.
   virtual bool CanSend(const scim::KeyEvent &key) const;
@@ -117,8 +119,14 @@ class MozcConnection : public MozcConnectionInterface {
   MozcConnection(mozc::client::ServerLauncherInterface *server_launcher,
                  mozc::IPCClientFactoryInterface *client_factory);
 
+  bool TrySendCommandInternal(
+      const mozc::commands::SessionCommand& command,
+      mozc::commands::Output *out,
+      string *out_error) const;
+
   const scoped_ptr<ScimKeyTranslator> translator_;
   scoped_ptr<mozc::client::SessionInterface> session_;
+  mozc::config::Config::PreeditMethod preedit_method_;
 
   DISALLOW_COPY_AND_ASSIGN(MozcConnection);
 };

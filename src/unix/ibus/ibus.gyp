@@ -30,6 +30,7 @@
 {
   'variables': {
     'relative_dir': 'unix/ibus',
+    'gen_out_dir': '<(SHARED_INTERMEDIATE_DIR)/<(relative_dir)',
     'pkg_config_libs': [
       'dbus-1',
       'glib-2.0',
@@ -66,6 +67,46 @@
         'mozc_engine.cc',
         'path_util.cc',
       ],
+      'actions': [
+        {
+          'action_name': 'gen_mozc_xml',
+          'inputs': [
+            './gen_mozc_xml.py',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/mozc.xml',
+          ],
+          'conditions': [
+            ['chromeos==1 and branding=="GoogleJapaneseInput"', {
+              'action': [
+                'python', '../../build_tools/redirect.py',
+                '<(gen_out_dir)/mozc.xml',
+                './gen_mozc_xml.py',
+                '--platform=ChromeOS',
+                '--branding=GoogleJapaneseInput',
+              ],
+            }],
+            ['chromeos==1 and branding!="GoogleJapaneseInput"', {
+              'action': [
+                'python', '../../build_tools/redirect.py',
+                '<(gen_out_dir)/mozc.xml',
+                './gen_mozc_xml.py',
+                '--platform=ChromeOS',
+                '--branding=Mozc',
+              ],
+            }],
+            ['chromeos!=1', {
+              'action': [
+                'python', '../../build_tools/redirect.py',
+                '<(gen_out_dir)/mozc.xml',
+                './gen_mozc_xml.py',
+                '--platform=Linux',
+                '--branding=Mozc',
+              ],
+            }],
+          ],
+        },
+      ],
       'conditions': [
         ['chromeos==1', {
          'sources': [ 'session.cc' ],
@@ -80,6 +121,27 @@
       'type': 'executable',
       'sources': [
         'main.cc',
+        '<(gen_out_dir)/main.h',
+      ],
+      'actions': [
+        {
+          'action_name': 'gen_main_h',
+          'inputs': [
+            './gen_mozc_xml.py',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/main.h',
+          ],
+          'action': [
+            'python', '../../build_tools/redirect.py',
+            '<(gen_out_dir)/main.h',
+            './gen_mozc_xml.py',
+            # Always use Linux+Mozc. It's okay since main.h is for debugging.
+            '--platform=Linux',
+            '--branding=Mozc',
+            '--output_cpp'
+          ],
+        },
       ],
       'dependencies': [
         '../../base/base.gyp:base',
@@ -143,6 +205,9 @@
       'ldflags': [
         '<!@(pkg-config --libs-only-L <@(pkg_config_libs))',
       ],
+      'variables': {
+        'test_size': 'small',
+      },
     },
   ],
 }

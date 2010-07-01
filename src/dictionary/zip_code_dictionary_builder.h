@@ -27,23 +27,25 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "base/base.h"
-#include "testing/base/public/gunit.h"
+// Calculate scores and output dictionary for zip code.
+
+#ifndef MOZC_DICTIONARY_ZIP_CODE_DICTIONARY_BUILDER_H_
+#define MOZC_DICTIONARY_ZIP_CODE_DICTIONARY_BUILDER_H_
+
+#include <string>
 
 namespace mozc {
-extern bool kUseMockPasswordManager;
+class ZipCodeDictionaryBuilder {
+ public:
+  // This constructor sets input/output file names.
+  ZipCodeDictionaryBuilder(const string &input, const string &output);
+  virtual ~ZipCodeDictionaryBuilder();
+
+  // Build and write dictionary file
+  void Build();
+ private:
+  const string input_filename_;
+  const string output_filename_;
+};
 }  // namespace mozc
-
-int main(int argc, char **argv) {
-  // TODO(yukawa, team): Implement b/2805528 so that you can specify any option
-  // given by gunit.
-  InitGoogle(argv[0], &argc, &argv, false);
-  testing::InitGoogleTest(&argc, argv);
-
-  // Without this flag, ::RaiseException makes the job stuck.
-  // See b/2805521 for details.
-  testing::GTEST_FLAG(catch_exceptions) = true;
-
-  mozc::kUseMockPasswordManager = true;
-  return RUN_ALL_TESTS();
-}
+#endif  // MOZC_DICTIONARY_ZIP_CODE_DICTIONARY_BUILDER_H_

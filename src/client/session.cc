@@ -79,7 +79,8 @@ Session::Session()
       timeout_(kDefaultTimeout),
       server_status_(SERVER_UNKNOWN),
       server_protocol_version_(0),
-      server_process_id_(0) {
+      server_process_id_(0),
+      last_mode_(commands::DIRECT) {
   client_factory_ = IPCClientFactory::GetIPCClientFactory();
 }
 
@@ -176,7 +177,7 @@ void Session::DumpQueryOfDeath() {
   const char kFilename[] = "query_of_death.log";
   const char kLabel[] = "Query of Death";
   DumpHistorySnapshot(kFilename, kLabel);
-  history_inputs_.clear();
+  ResetHistory();
 }
 
 void Session::DumpHistorySnapshot(const string &filename,
@@ -197,7 +198,7 @@ void Session::DumpHistorySnapshot(const string &filename,
 
 void Session::PlaybackHistory() {
   if (history_inputs_.size() >= kMaxPlayBackSize) {
-    history_inputs_.clear();
+    ResetHistory();
     return;
   }
 
@@ -215,6 +216,16 @@ void Session::PlaybackHistory() {
 
 void Session::PushHistory(const commands::Input &input,
                           const commands::Output &output) {
+  if (!output.has_consumed() || !output.consumed()) {
+    // Do not remember unconsumed input.
+    return;
+  }
+
+  // Update mode
+  if (output.has_mode()) {
+    last_mode_ = output.mode();
+  }
+
   // don't insert a new input when history_inputs_.size()
   // reaches to the maximum size. This prevents DOS attack.
   if (history_inputs_.size() < kMaxPlayBackSize) {
@@ -222,9 +233,40 @@ void Session::PushHistory(const commands::Input &input,
   }
 
   // found context boundary.
+  // don't regard the empty output (output without preedit) as the context
+  // boundary, as the IMEOn command make the empty output.
   if (input.type() == commands::Input::SEND_KEY &&
-      (!output.has_preedit() || output.has_result())) {
-    history_inputs_.clear();
+      output.has_result()) {
+    ResetHistory();
+  }
+}
+
+// Clear the history and push IMEOn command for initialize session.
+void Session::ResetHistory() {
+  history_inputs_.clear();
+#ifdef OS_WINDOWS
+  // On Windows, we should send ON key at the first of each input session
+  // excepting the very first session, because when the session is restored,
+  // its state is direct. On the first session, users should send ON key
+  // by themselves.
+  // Note that we are assuming that ResetHistory is called only when the
+  // client is ON.
+  // TODO(toshiyuki): Make sure that this assuming is reasonable or not.
+  // TODO(toshiyuki): Investigate for Mac and remove #ifdef guard.
+  if (last_mode_ != commands::DIRECT) {
+    commands::Input input;
+    input.set_type(commands::Input::SEND_KEY);
+    input.mutable_key()->set_special_key(commands::KeyEvent::ON);
+    input.mutable_key()->set_mode(last_mode_);
+    history_inputs_.push_back(input);
+  }
+#endif
+}
+
+void Session::GetHistoryInputs(vector<commands::Input> *output) const {
+  output->clear();
+  for (size_t i = 0; i < history_inputs_.size(); ++i) {
+    output->push_back(history_inputs_[i]);
   }
 }
 
@@ -464,6 +506,10 @@ bool Session::NoOperation() {
 
 // PingServer ignores all server status
 bool Session::PingServer() const {
+  if (client_factory_ == NULL) {
+    return false;
+  }
+
   commands::Input input;
   commands::Output output;
 
@@ -530,6 +576,10 @@ bool Session::Call(const commands::Input &input,
   // SERVER_FATAL, SERVER_TIMEOUT, or SERVER_BROKEN_MESSAGE
   if (server_status_ >= SERVER_TIMEOUT) {
     LOG(ERROR) << "Don't repat the same status: " << server_status_;
+    return false;
+  }
+
+  if (client_factory_ == NULL) {
     return false;
   }
 

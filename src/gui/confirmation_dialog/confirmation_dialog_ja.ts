@@ -38,5 +38,10 @@
         <source>Log out</source>
         <translation>ログアウトする</translation>
     </message>
+    <message>
+        <location filename="confirmation_dialog.cc" line="53"/>
+        <source>Remind me in 1 hour</source>
+        <translation>1時間後にまた通知</translation>
+    </message>
 </context>
 </TS>

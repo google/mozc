@@ -80,8 +80,9 @@ class DummyMozcConnection : public mozc_unix_scim::MozcConnectionInterface {
     return true;
   }
 
-  virtual bool TrySendSubmit(mozc::commands::Output *out,
-                             string *out_error) const {
+  virtual bool TrySendCommand(mozc::commands::SessionCommand::CommandType type,
+                              mozc::commands::Output *out,
+                              string *out_error) const {
     return true;
   }
 

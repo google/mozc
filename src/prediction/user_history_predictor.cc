@@ -467,7 +467,7 @@ bool UserHistoryPredictor::ClearUnusedHistory() {
   return true;
 }
 
-bool UserHistoryPredictor::Lookup(Segments *segments) const {
+bool UserHistoryPredictor::Predict(Segments *segments) const {
   if (!CheckSyncerAndDelete()) {
     LOG(WARNING) << "Syncer is running";
     return false;
@@ -592,14 +592,6 @@ bool UserHistoryPredictor::Lookup(Segments *segments) const {
   }
 
   return (segment->candidates_size() > 0);
-}
-
-bool UserHistoryPredictor::Predict(Segments *segments) const {
-  return Lookup(segments);
-}
-
-bool UserHistoryPredictor::Suggest(Segments *segments) const {
-  return Lookup(segments);
 }
 
 void UserHistoryPredictor::Insert(const string &key,

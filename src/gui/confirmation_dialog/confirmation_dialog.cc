@@ -74,10 +74,9 @@ bool ConfirmationDialog::Show() {
     if (yes_button != NULL) {
       yes_button->setText(QObject::tr("Log out"));
     }
-    // Do not show "NO" button!
     QAbstractButton *no_button = message_box.button(QMessageBox::No);
     if (no_button != NULL) {
-      no_button->hide();
+      no_button->setText(QObject::tr("Remind me in 1 hour"));
     }
   }
 

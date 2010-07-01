@@ -83,8 +83,6 @@
         }],
         ['OS=="win"', {
           'product_name': 'GoogleIMEJaConverter',
-          'dependencies': [
-          ],
           'includes': [
             '../gyp/postbuilds_win.gypi',
           ],

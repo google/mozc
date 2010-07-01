@@ -42,20 +42,31 @@
 
 DECLARE_bool(restricted);   // in SessionHandler
 
+namespace {
+mozc::SessionServer *g_session_server = NULL;
+}
+
 namespace mozc {
 namespace {
-
-// return singleton object of SessionServer
-SessionServer *GetSessionServer() {
-  return Singleton<SessionServer>::get();
-}
 
 // When OS is about to shutdown/logoff,
 // ShutdownSessionCallback is kicked.
 void ShutdownSessionCallback() {
   VLOG(1) << "ShutdownSessionFunc is called";
-  GetSessionServer()->Terminate();
+  if (g_session_server != NULL) {
+    g_session_server->Terminate();
+  }
 }
+
+// TOOD(taku): replace it with more generic class
+// http://www.google.com/codesearch/p?hl=ja#hfE6470xZHk/base/at_exit.h&q=base::AtExitManager%20package:chromium&sa=N&cd=1&ct=rc
+class ScopedRunFinalizer {
+ public:
+  ScopedRunFinalizer() {}
+  ~ScopedRunFinalizer() {
+    mozc::RunFinalizers();
+  }
+};
 
 REGISTER_MODULE_SHUTDOWN_HANDLER(shudown_session,
                                  ShutdownSessionCallback());
@@ -69,6 +80,8 @@ int main(int argc, char *argv[]) {
   // dependent. If we want to sync the data via network sync feature, we
   // will see some problems.
   CHECK(mozc::Util::IsLittleEndian()) << "Big endian is not supported.";
+
+  mozc::ScopedRunFinalizer run_finalizer;
 
 #ifdef OS_WINDOWS
   // http://msdn.microsoft.com/en-us/library/ms686227.aspx
@@ -99,19 +112,25 @@ int main(int argc, char *argv[]) {
     FLAGS_restricted = true;
   }
 
-  mozc::SessionServer *session_server = mozc::GetSessionServer();
-  CHECK(session_server);
+  {
+    scoped_ptr<mozc::SessionServer> session_server
+        (new mozc::SessionServer);
+    g_session_server = session_server.get();
+    CHECK(g_session_server);
+    if (!g_session_server->Connected()) {
+      LOG(ERROR) << "SessionServer initialization failed";
+      return -1;
+    }
 
-  if (!session_server->Connected()) {
-    LOG(ERROR) << "SessionServer initialization failed";
-    return -1;
+    // Create a new thread.
+    // We can't call Loop() as Loop() doesn't make a thread.
+    // We have to make a thread here so that ShutdownSessionCallback()
+    // is called properly.
+    g_session_server->LoopAndReturn();
+
+    // Wait until the session server thread finishes.
+    g_session_server->Wait();
   }
-
-  session_server->LoopAndReturn();
-  session_server->Wait();
-
-  // cleanup all static instances (like singleton)
-  mozc::RunFinalizers();
 
   return 0;
 }

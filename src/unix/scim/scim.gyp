@@ -34,47 +34,17 @@
       'sysroot%': '',
     },
     'sysroot%': '<(sysroot)',
+    'pkg_config_libs': [
+      'scim',
+      'gtk+-2.0',
+    ],
     'scim_dependencies': [
       '../../client/client.gyp:client',
       '../../session/session.gyp:genproto_session',
       '../../session/session.gyp:session',
     ],
-    # These directories come from "pkg-config --cflags-only-I gtk+-2.0 scim"
-    # on Ubuntu Hardy. Until it becomes necessary, we will not invoke
-    # pkg-config here.
-    'scim_include_dirs': [
-      '/usr/include/atk-1.0',
-      '/usr/include/cairo',
-      '/usr/include/freetype2',
-      '/usr/include/glib-2.0',
-      '/usr/include/gtk-2.0',
-      '/usr/include/libpng12',
-      '/usr/include/pango-1.0',
-      '/usr/include/pixman-1',
-      '/usr/include/scim-1.0',
-      '/usr/lib/glib-2.0/include',
-      '/usr/lib/gtk-2.0/include',
-    ],
-    # The libraries come from "pkg-config --libs-only-l scim gtk+-2.0".
-    'scim_libraries': [
-      '-latk-1.0',
-      '-lcairo',
-      '-lgdk-x11-2.0',
-      '-lgdk_pixbuf-2.0',
-      '-lglib-2.0',
-      '-lgmodule-2.0',
-      '-lgobject-2.0',
-      '-lgtk-x11-2.0',
-      '-lm',
-      '-lpango-1.0',
-      '-lpangocairo-1.0',
-      '-lscim-1.0',
-    ],
-    'scim_cflags': [
-      '-fPIC',
-    ],
     'scim_defines': [
-      'SCIM_ICONDIR="/usr/share/scim/icons"',
+      'SCIM_ICONDIR="<!@(pkg-config --variable=icondir scim)"',
     ]
   },
   'targets': [
@@ -93,8 +63,8 @@
       'dependencies': [
         '<@(scim_dependencies)',
       ],
-      'include_dirs': [
-        '<@(scim_include_dirs)',
+      'cflags': [
+        '<!@(pkg-config --cflags <@(pkg_config_libs))',
       ],
       'defines': [
         '<@(scim_defines)',
@@ -109,8 +79,8 @@
       'dependencies': [
         '<@(scim_dependencies)',
       ],
-      'include_dirs': [
-        '<@(scim_include_dirs)',
+      'cflags': [
+        '<!@(pkg-config --cflags <@(pkg_config_libs))',
       ],
       'defines': [
         '<@(scim_defines)',
@@ -129,19 +99,20 @@
         '../../testing/testing.gyp:gtest_main',
         'scim_mozc',
       ],
-      'include_dirs': [
-        '<@(scim_include_dirs)',
+      'cflags': [
+        '<!@(pkg-config --cflags <@(pkg_config_libs))',
       ],
       'libraries': [
-        '<@(scim_libraries)',
-      ],
-      'cflags': [
-        '<@(scim_cflags)',
+        '<!@(pkg-config --libs-only-l <@(pkg_config_libs))',
       ],
       'ldflags': [
+        '<!@(pkg-config --libs-only-L <@(pkg_config_libs))',
         # Add a library path to the directory of libscim_mozc.so.
         '-Wl,-rpath,<(PRODUCT_DIR)/lib.target',
       ],
+      'variables': {
+        'test_size': 'small',
+      },
     },
   ],
 }

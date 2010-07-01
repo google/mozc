@@ -193,15 +193,35 @@ void ScimMozc::select_candidate(unsigned int index) {
 // This function is called from SCIM framework.
 void ScimMozc::reset() {
   VLOG(1) << "reset";
-  ClearAll();
+  string error;
+  mozc::commands::Output raw_response;
+  if (connection_->TrySendCommand(
+          mozc::commands::SessionCommand::REVERT, &raw_response, &error)) {
+    parser_->ParseResponse(raw_response, this);
+  }
+  ClearAll();  // just in case.
   DrawAll();
 }
 
-// This function is called from SCIM framework when the window gets focus.
+// This function is called from SCIM framework when the ic gets focus.
 void ScimMozc::focus_in() {
   VLOG(1) << "focus_in";
   DrawAll();
   InitializeBar();
+}
+
+// This function is called when the ic loses focus.
+void ScimMozc::focus_out() {
+  VLOG(1) << "focus_out";
+  string error;
+  mozc::commands::Output raw_response;
+  if (connection_->TrySendCommand(
+          mozc::commands::SessionCommand::REVERT, &raw_response, &error)) {
+    parser_->ParseResponse(raw_response, this);
+  }
+  ClearAll();  // just in case.
+  DrawAll();
+  // TODO(yusukes): Call session::SyncData() like ibus-mozc.
 }
 
 // This function is called from SCIM framework when Mozc related icon in the
@@ -215,7 +235,8 @@ void ScimMozc::trigger_property(const scim::String &property) {
         // Commit a preedit string.
         string error;
         mozc::commands::Output raw_response;
-        if (connection_->TrySendSubmit(&raw_response, &error)) {
+        if (connection_->TrySendCommand(mozc::commands::SessionCommand::SUBMIT,
+                                        &raw_response, &error)) {
           parser_->ParseResponse(raw_response, this);
         }
         DrawAll();
@@ -245,6 +266,7 @@ void ScimMozc::trigger_property(const scim::String &property) {
   }
 
   // Spawn mozc_tool.
+  // TODO(yusukes): Use session::LaunchTool().
   mozc::Process::SpawnMozcProcess("mozc_tool", args);
 }
 

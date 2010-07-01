@@ -439,7 +439,7 @@ gboolean MozcEngine::ProcessKeyEvent(
 
   // TODO(yusukes): use |layout| in IBusEngineDesc if possible.
   const bool layout_is_jp =
-      !g_strcmp0(ibus_engine_get_name(engine), kEngineNames[1]);
+      !g_strcmp0(ibus_engine_get_name(engine), "mozc-jp");
 
   commands::KeyEvent key;
   if (!key_translator_->Translate(
@@ -767,6 +767,18 @@ void MozcEngine::UpdateConfig(
       }
       reflection->SetEnum(&mozc_config, field_to_update, enum_value);
       VLOG(2) << "setting mozc config: " << name << " = " << string_value;
+      break;
+    }
+    case google::protobuf::FieldDescriptor::CPPTYPE_UINT32: {
+      // unsigned int is not supported as chrome's preference type and int is
+      // used as an alternative type, so |value| should be G_TYPE_INT.
+      if (!G_VALUE_HOLDS_INT(gvalue)) {
+        LOG(ERROR) << "Bad GValue type for " << name;
+        return;
+      }
+      const gint int_value = g_value_get_int(gvalue);
+      reflection->SetUInt32(&mozc_config, field_to_update, int_value);
+      VLOG(2) << "setting mozc config: " << name << " = " << int_value;
       break;
     }
     case google::protobuf::FieldDescriptor::CPPTYPE_BOOL: {

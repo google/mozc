@@ -38,8 +38,41 @@ REVISION=0
 """
 
 import datetime
+import os
 import re
 import sys
+
+
+def IsWindows():
+  """Returns true if the platform is Windows."""
+  return os.name == 'nt'
+
+
+def IsMac():
+  """Returns true if the platform is Mac."""
+  return os.name == 'posix' and os.uname()[0] == 'Darwin'
+
+
+def IsLinux():
+  """Returns true if the platform is Linux."""
+  return os.name == 'posix' and os.uname()[0] == 'Linux'
+
+
+def CalculateRevisionForPlatform(revision):
+  """Returns the revision for the current platform."""
+  if not revision:
+    return revision
+  if IsWindows():
+    last_digit = '0'
+  elif IsMac():
+    last_digit = '1'
+  elif IsLinux():
+    last_digit = '2'
+  if last_digit:
+    return revision[0:-1] + last_digit
+
+  # If not supported, just use the specified version.
+  return revision
 
 
 class MozcVersion(object):
@@ -68,12 +101,18 @@ class MozcVersion(object):
     self._major = self._dict['MAJOR']
     self._minor = self._dict['MINOR']
     self._build = self._dict['BUILD']
-    self._revision = self._dict['REVISION']
+    self._revision = CalculateRevisionForPlatform(self._dict['REVISION'])
     if expand_daily and self._build == 'daily':
       zero_day = datetime.date(2009, 5, 24)
       self._build = str(
           datetime.date.today().toordinal() - zero_day.toordinal())
 
+  def IsDevChannel(self):
+    """Returns true if the parsed version is dev-channel."""
+    if len(self._revision) >= 3 and self._revision[-3] == '1':
+      return True
+
+    return False
 
   def GetVersionString(self):
     """Returns the normal version info string.

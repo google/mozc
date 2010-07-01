@@ -45,7 +45,9 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        '../session/session.gyp:config_handler',
         '../session/session.gyp:genproto_session',
+        '../usage_stats/usage_stats.gyp:usage_stats',
         'user_pos_data',
         'pos_map',
         'genproto_dictionary',
@@ -57,17 +59,21 @@
       }]],
     },
     {
+      'target_name': 'text_dictionary_loader',
+      'type': 'static_library',
+      'sources': [
+        'text_dictionary_loader.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+      ],
+    },
+    {
       'target_name': 'dictionary',
       'type': 'static_library',
       'sources': [
-        '<(proto_out_dir)/<(relative_dir)/user_dictionary_storage.pb.cc',
         'dictionary.cc',
         'dictionary_preloader.cc',
-        'text_dictionary_loader.cc',
-        'user_dictionary.cc',
-        'user_dictionary_importer.cc',
-        'user_dictionary_storage.cc',
-        'user_dictionary_util.cc',
       ],
       'dependencies': [
         '<(DEPTH)/third_party/rx/rx.gyp:rx',
@@ -77,47 +83,21 @@
         'user_dictionary',
         'genproto_dictionary',
         'system/system_dictionary.gyp:system_dictionary_builder',
+        'text_dictionary_loader',
       ],
       'conditions': [['two_pass_build==0', {
         'dependencies': [
           'install_gen_system_dictionary_data_main',
-          'install_gen_zip_code_dictionary_data_main',
         ],
       }]],
       'actions': [
-        {
-          'action_name': 'gen_zip_code_dictionary_data',
-          'variables': {
-            'input_files': [
-              '../data/dictionary/zip_code_seed.tsv',
-            ],
-          },
-          'inputs': [
-            '<@(input_files)',
-          ],
-          'conditions': [['two_pass_build==0', {
-            'inputs': [
-              '<(mozc_build_tools_dir)/gen_zip_code_dictionary_data_main',
-            ],
-          }]],
-          'outputs': [
-            '<(gen_out_dir)/zip_code_dictionary.txt',
-          ],
-          'action': [
-            # Use the pre-built version. See comments in mozc.gyp for why.
-            '<(mozc_build_tools_dir)/gen_zip_code_dictionary_data_main',
-            '--input=<(input_files)',
-            '--output=<(gen_out_dir)/zip_code_dictionary.txt',
-          ],
-          'message': 'Generating <(gen_out_dir)/zip_code_dictionary.txt.',
-        },
         {
           'action_name': 'gen_embedded_dictionary_data',
           'variables': {
             'input_files': [
               '../data/dictionary/dictionary0.txt',
               '../data/dictionary/dictionary1.txt',
-              '<(gen_out_dir)/zip_code_dictionary.txt',
+              '../data/dictionary/zip_code_seed.tsv',
             ],
           },
           'inputs': [
@@ -136,6 +116,7 @@
             '<(mozc_build_tools_dir)/gen_system_dictionary_data_main',
             '--logtostderr',
             '--input=<(input_files)',
+            '--include_zip_code',
             '--make_header',
             '--output=<(gen_out_dir)/embedded_dictionary_data.h',
           ],
@@ -250,12 +231,14 @@
       'target_name': 'gen_system_dictionary_data_main',
       'type': 'executable',
       'sources': [
-        'text_dictionary_loader.cc',
         'gen_system_dictionary_data_main.cc',
+        'zip_code_dictionary_builder.cc',
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        '../converter/converter.gyp:gen_pos_matcher',
         'system/system_dictionary.gyp:system_dictionary_builder',
+        'text_dictionary_loader',
       ],
     },
     {
@@ -269,25 +252,29 @@
       ],
     },
     {
-      'target_name': 'gen_zip_code_dictionary_data_main',
+      'target_name': 'dictionary_test',
       'type': 'executable',
       'sources': [
-        'gen_zip_code_dictionary_data_main.cc',
+        'dictionary_preloader_test.cc',
+        'dictionary_test.cc',
+        'text_dictionary_loader_test.cc',
+        'user_dictionary_importer_test.cc',
+        'user_dictionary_storage_test.cc',
+        'user_dictionary_test.cc',
+        'user_dictionary_util_test.cc',
+        'user_pos_test.cc',
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        '../converter/converter.gyp:gen_pos_matcher',
+        '../protobuf/protobuf.gyp:protobuf',
+        '../testing/testing.gyp:gtest_main',
+        'dictionary',
+        'text_dictionary_loader',
+        'user_dictionary',
       ],
-    },
-    {
-      'target_name': 'install_gen_zip_code_dictionary_data_main',
-      'type': 'none',
       'variables': {
-        'bin_name': 'gen_zip_code_dictionary_data_main'
+        'test_size': 'small',
       },
-      'includes' : [
-        '../gyp/install_build_tool.gypi'
-      ],
     },
   ],
 }

@@ -1,12 +1,13 @@
 vars = {
-  "gyp_revision": "819",
+  "gyp_revision": "827",
   "gtest_revision": "422",
   "protobuf_revision": "328",
   "cygwin_in_chromium_revision": "11984",
+  "python_in_chromium_revision": "22967",
 }
 
 deps = {
-  "src/mozc_build_tools/gyp":
+  "src/third_party/gyp":
     "http://gyp.googlecode.com/svn/trunk@" + Var("gyp_revision"),
 }
 
@@ -17,6 +18,9 @@ deps_os = {
     "src/third_party/cygwin":
       "http://src.chromium.org/svn/trunk/deps/third_party/cygwin@" +
       Var("cygwin_in_chromium_revision"),
+    "src/third_party/python_24":
+      "http://src.chromium.org/svn/trunk/deps/third_party/python_24@" +
+      Var("python_in_chromium_revision"),
     "src/protobuf/files":
       "http://protobuf.googlecode.com/svn/trunk@" + Var("protobuf_revision"),
   },

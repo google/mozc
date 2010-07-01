@@ -110,7 +110,7 @@ class Interface(object):
 
 # snippet used for generating all interface function bodies.
 function_body_template = Template(
-    "#ifdef NO_LOGGING\n"
+    "#if defined(NO_LOGGING) && !defined(CHANNEL_DEV)\n"
     "    HRESULT result =\n"
     "          static_cast<T*>(this)->${function_name}Impl(${argv});\n"
     "    return result;\n"
@@ -125,7 +125,7 @@ function_body_template = Template(
     "      ::DebugBreak();\n"
     "      return E_FAIL;\n"
     "    }\n"
-    "#endif  // _DEBUG\n")
+    "#endif  // defined(NO_LOGGING) && !defined(CHANNEL_DEV)\n")
 
 
 def LineToArgv(line):

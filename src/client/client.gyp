@@ -58,6 +58,9 @@
         'client',
         '../testing/testing.gyp:gtest_main',
       ],
+      'variables': {
+        'test_size': 'small',
+      },
     },
   ],
 }

@@ -293,7 +293,7 @@ class StatsConfigUtilTestWin : public testing::Test {
 
 namespace mozc {
 #if defined(CHANNEL_DEV)
-TEST_F(StatsConfigUtilTestWin, SetEnabledIgnoresRegistrySettings) {
+TEST_F(StatsConfigUtilTestWin, IsEnabledIgnoresRegistrySettings) {
   // In dev channel, settings in the registry are simply ignored and
   // StatsConfigUtil::IsEnabled always returns true.
   RegistryEmulator<__COUNTER__> test;
@@ -348,6 +348,157 @@ TEST_F(StatsConfigUtilTestWin, SetEnabledIgnoresRegistrySettings) {
   EXPECT_TRUE(StatsConfigUtil::IsEnabled());
 }
 
+TEST_F(StatsConfigUtilTestWin, SetEnabledForRunLevelHighInDevChannel) {
+  // In dev channel, StatsConfigUtil::SetEnabled always returns true.
+  RegistryEmulator<__COUNTER__> test;
+  test.SetRunLevel(kRunLevelHigh);
+  DWORD value = 0;
+
+  test.ClearUsagestatsValue();
+  EXPECT_TRUE(StatsConfigUtil::SetEnabled(false));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKCU_ClientState));
+  EXPECT_TRUE(test.HasUsagestatsValue(kHKLM_ClientState));
+  test.GetUsagestatsValue(kHKLM_ClientState, &value);
+  EXPECT_EQ(1, value);
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
+
+  test.ClearUsagestatsValue();
+  EXPECT_TRUE(StatsConfigUtil::SetEnabled(true));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKCU_ClientState));
+  EXPECT_TRUE(test.HasUsagestatsValue(kHKLM_ClientState));
+  test.GetUsagestatsValue(kHKLM_ClientState, &value);
+  EXPECT_EQ(1, value);
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
+
+  test.ClearUsagestatsValue();
+  test.SetUsagestatsValue(kHKLM_ClientStateMedium, 0);  // disable usagestats
+  EXPECT_TRUE(StatsConfigUtil::SetEnabled(false));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKCU_ClientState));
+  EXPECT_TRUE(test.HasUsagestatsValue(kHKLM_ClientState));
+  test.GetUsagestatsValue(kHKLM_ClientState, &value);
+  EXPECT_EQ(1, value);
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));  // removed
+
+  test.ClearUsagestatsValue();
+  test.SetUsagestatsValue(kHKLM_ClientStateMedium, 1);  // enable usagestats
+  EXPECT_TRUE(StatsConfigUtil::SetEnabled(false));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKCU_ClientState));
+  EXPECT_TRUE(test.HasUsagestatsValue(kHKLM_ClientState));
+  test.GetUsagestatsValue(kHKLM_ClientState, &value);
+  EXPECT_EQ(1, value);
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));  // removed
+}
+
+TEST_F(StatsConfigUtilTestWin, SetEnabledForRunLevelMediumInDevChannel) {
+  // In dev channel, StatsConfigUtil::SetEnabled always returns true.
+  RegistryEmulator<__COUNTER__> test;
+  test.SetRunLevel(kRunLevelMedium);
+  DWORD value = 0;
+
+  test.ClearUsagestatsValue();
+  EXPECT_TRUE(StatsConfigUtil::SetEnabled(true));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKCU_ClientState));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientState));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
+
+  test.ClearUsagestatsValue();
+  test.SetUsagestatsValue(kHKLM_ClientStateMedium, 1);
+  EXPECT_TRUE(StatsConfigUtil::SetEnabled(true));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKCU_ClientState));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientState));
+  EXPECT_TRUE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
+  test.GetUsagestatsValue(kHKLM_ClientStateMedium, &value);
+  EXPECT_EQ(1, value);
+
+  test.ClearUsagestatsValue();
+  test.SetUsagestatsValue(kHKLM_ClientStateMedium, 0);
+  EXPECT_TRUE(StatsConfigUtil::SetEnabled(true));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKCU_ClientState));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientState));
+  EXPECT_TRUE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
+  test.GetUsagestatsValue(kHKLM_ClientStateMedium, &value);
+  EXPECT_EQ(0, value);
+
+  test.ClearUsagestatsValue();
+  EXPECT_TRUE(StatsConfigUtil::SetEnabled(false));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKCU_ClientState));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientState));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
+
+  test.ClearUsagestatsValue();
+  test.SetUsagestatsValue(kHKLM_ClientStateMedium, 1);
+  EXPECT_TRUE(StatsConfigUtil::SetEnabled(false));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKCU_ClientState));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientState));
+  EXPECT_TRUE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
+  test.GetUsagestatsValue(kHKLM_ClientStateMedium, &value);
+  EXPECT_EQ(1, value);
+
+  test.ClearUsagestatsValue();
+  test.SetUsagestatsValue(kHKLM_ClientStateMedium, 0);
+  EXPECT_TRUE(StatsConfigUtil::SetEnabled(false));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKCU_ClientState));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientState));
+  EXPECT_TRUE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
+  test.GetUsagestatsValue(kHKLM_ClientStateMedium, &value);
+  EXPECT_EQ(0, value);
+}
+
+TEST_F(StatsConfigUtilTestWin, SetEnabledForRunLevelLowInDevChannel) {
+  // In dev channel, StatsConfigUtil::SetEnabled always returns true.
+  RegistryEmulator<__COUNTER__> test;
+  test.SetRunLevel(kRunLevelLow);
+  DWORD value = 0;
+
+  test.ClearUsagestatsValue();
+  EXPECT_TRUE(StatsConfigUtil::SetEnabled(true));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKCU_ClientState));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientState));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
+
+  test.ClearUsagestatsValue();
+  test.SetUsagestatsValue(kHKLM_ClientStateMedium, 1);
+  EXPECT_TRUE(StatsConfigUtil::SetEnabled(true));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKCU_ClientState));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientState));
+  EXPECT_TRUE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
+  test.GetUsagestatsValue(kHKLM_ClientStateMedium, &value);
+  EXPECT_EQ(1, value);
+
+  test.ClearUsagestatsValue();
+  test.SetUsagestatsValue(kHKLM_ClientStateMedium, 0);
+  EXPECT_TRUE(StatsConfigUtil::SetEnabled(true));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKCU_ClientState));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientState));
+  EXPECT_TRUE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
+  test.GetUsagestatsValue(kHKLM_ClientStateMedium, &value);
+  EXPECT_EQ(0, value);
+
+  test.ClearUsagestatsValue();
+  EXPECT_TRUE(StatsConfigUtil::SetEnabled(false));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKCU_ClientState));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientState));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
+
+  test.ClearUsagestatsValue();
+  test.SetUsagestatsValue(kHKLM_ClientStateMedium, 1);
+  EXPECT_TRUE(StatsConfigUtil::SetEnabled(false));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKCU_ClientState));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientState));
+  EXPECT_TRUE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
+  test.GetUsagestatsValue(kHKLM_ClientStateMedium, &value);
+  EXPECT_EQ(1, value);
+
+  test.ClearUsagestatsValue();
+  test.SetUsagestatsValue(kHKLM_ClientStateMedium, 0);
+  EXPECT_TRUE(StatsConfigUtil::SetEnabled(false));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKCU_ClientState));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientState));
+  EXPECT_TRUE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
+  test.GetUsagestatsValue(kHKLM_ClientStateMedium, &value);
+  EXPECT_EQ(0, value);
+}
+
 TEST_F(StatsConfigUtilTestWin, SetEnabledNeverFailsForRunLevelMedium) {
   // In dev channel, StatsConfigUtil::SetEnabled does not update the
   // the registry but always returns true.
@@ -373,47 +524,177 @@ TEST_F(StatsConfigUtilTestWin, SetEnabledForRunLevelHigh) {
   // sufficient rights.
   RegistryEmulator<__COUNTER__> test;
   test.SetRunLevel(kRunLevelHigh);
+  DWORD value = 0;
 
   // Check if SetEnabled(true) works as expected.
+  test.ClearUsagestatsValue();
   EXPECT_TRUE(StatsConfigUtil::SetEnabled(true));
   EXPECT_FALSE(test.HasUsagestatsValue(kHKCU_ClientState));
   EXPECT_TRUE(test.HasUsagestatsValue(kHKLM_ClientState));
-  DWORD value = 0;
+  test.GetUsagestatsValue(kHKLM_ClientState, &value);
+  EXPECT_EQ(1, value);
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
+
+  // Check if SetEnabled(true) merges kHKLM_ClientStateMedium.
+  test.ClearUsagestatsValue();
+  test.SetUsagestatsValue(kHKLM_ClientStateMedium, 1);
+  EXPECT_TRUE(StatsConfigUtil::SetEnabled(true));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKCU_ClientState));
+  EXPECT_TRUE(test.HasUsagestatsValue(kHKLM_ClientState));
+  test.GetUsagestatsValue(kHKLM_ClientState, &value);
+  EXPECT_EQ(1, value);
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
+
+  test.ClearUsagestatsValue();
+  test.SetUsagestatsValue(kHKLM_ClientStateMedium, 0);
+  EXPECT_TRUE(StatsConfigUtil::SetEnabled(true));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKCU_ClientState));
+  EXPECT_TRUE(test.HasUsagestatsValue(kHKLM_ClientState));
   test.GetUsagestatsValue(kHKLM_ClientState, &value);
   EXPECT_EQ(1, value);
   EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
 
   // Check if SetEnabled(false) works as expected.
+  test.ClearUsagestatsValue();
   EXPECT_TRUE(StatsConfigUtil::SetEnabled(false));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKCU_ClientState));
   EXPECT_TRUE(test.HasUsagestatsValue(kHKLM_ClientState));
   test.GetUsagestatsValue(kHKLM_ClientState, &value);
   EXPECT_EQ(0, value);
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
+
+  // Check if SetEnabled(false) works as expected.
+  test.ClearUsagestatsValue();
+  test.SetUsagestatsValue(kHKLM_ClientStateMedium, 1);
+  EXPECT_TRUE(StatsConfigUtil::SetEnabled(false));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKCU_ClientState));
+  EXPECT_TRUE(test.HasUsagestatsValue(kHKLM_ClientState));
+  test.GetUsagestatsValue(kHKLM_ClientState, &value);
+  EXPECT_EQ(0, value);
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
+
+  test.ClearUsagestatsValue();
+  test.SetUsagestatsValue(kHKLM_ClientStateMedium, 0);
+  EXPECT_TRUE(StatsConfigUtil::SetEnabled(false));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKCU_ClientState));
+  EXPECT_TRUE(test.HasUsagestatsValue(kHKLM_ClientState));
+  test.GetUsagestatsValue(kHKLM_ClientState, &value);
+  EXPECT_EQ(0, value);
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
 }
 
 TEST_F(StatsConfigUtilTestWin, SetEnabledForRunLevelMedium) {
   // In beta and stable channels, StatsConfigUtil::SetEnabled requires
   // sufficient rights.
   RegistryEmulator<__COUNTER__> test;
-
   test.SetRunLevel(kRunLevelMedium);
-  // Check if SetEnabled(true) fails as expected.
+  DWORD value = 0;
+
+  test.ClearUsagestatsValue();
   EXPECT_FALSE(StatsConfigUtil::SetEnabled(true));
   EXPECT_FALSE(test.HasUsagestatsValue(kHKCU_ClientState));
   EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientState));
   EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
+
+  test.ClearUsagestatsValue();
+  test.SetUsagestatsValue(kHKLM_ClientStateMedium, 1);
+  EXPECT_FALSE(StatsConfigUtil::SetEnabled(true));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKCU_ClientState));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientState));
+  EXPECT_TRUE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
+  test.GetUsagestatsValue(kHKLM_ClientStateMedium, &value);
+  EXPECT_EQ(1, value);
+
+  test.ClearUsagestatsValue();
+  test.SetUsagestatsValue(kHKLM_ClientStateMedium, 0);
+  EXPECT_FALSE(StatsConfigUtil::SetEnabled(true));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKCU_ClientState));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientState));
+  EXPECT_TRUE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
+  test.GetUsagestatsValue(kHKLM_ClientStateMedium, &value);
+  EXPECT_EQ(0, value);
+
+  test.ClearUsagestatsValue();
+  EXPECT_FALSE(StatsConfigUtil::SetEnabled(false));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKCU_ClientState));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientState));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
+
+  test.ClearUsagestatsValue();
+  test.SetUsagestatsValue(kHKLM_ClientStateMedium, 1);
+  EXPECT_FALSE(StatsConfigUtil::SetEnabled(false));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKCU_ClientState));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientState));
+  EXPECT_TRUE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
+  test.GetUsagestatsValue(kHKLM_ClientStateMedium, &value);
+  EXPECT_EQ(1, value);
+
+  test.ClearUsagestatsValue();
+  test.SetUsagestatsValue(kHKLM_ClientStateMedium, 0);
+  EXPECT_FALSE(StatsConfigUtil::SetEnabled(false));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKCU_ClientState));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientState));
+  EXPECT_TRUE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
+  test.GetUsagestatsValue(kHKLM_ClientStateMedium, &value);
+  EXPECT_EQ(0, value);
 }
 
 TEST_F(StatsConfigUtilTestWin, SetEnabledForRunLevelLow) {
   // In beta and stable channels, StatsConfigUtil::SetEnabled requires
   // sufficient rights.
   RegistryEmulator<__COUNTER__> test;
-
   test.SetRunLevel(kRunLevelLow);
+  DWORD value = 0;
+
   // Check if SetEnabled(true) fails as expected.
+  test.ClearUsagestatsValue();
   EXPECT_FALSE(StatsConfigUtil::SetEnabled(true));
   EXPECT_FALSE(test.HasUsagestatsValue(kHKCU_ClientState));
   EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientState));
   EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
+
+  // Check if SetEnabled(false) fails as expected.
+  test.ClearUsagestatsValue();
+  EXPECT_FALSE(StatsConfigUtil::SetEnabled(false));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKCU_ClientState));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientState));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
+
+  test.ClearUsagestatsValue();
+  test.SetUsagestatsValue(kHKLM_ClientStateMedium, 1);
+  EXPECT_FALSE(StatsConfigUtil::SetEnabled(true));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKCU_ClientState));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientState));
+  EXPECT_TRUE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
+  test.GetUsagestatsValue(kHKLM_ClientStateMedium, &value);
+  EXPECT_EQ(1, value);
+
+  test.ClearUsagestatsValue();
+  test.SetUsagestatsValue(kHKLM_ClientStateMedium, 0);
+  EXPECT_FALSE(StatsConfigUtil::SetEnabled(true));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKCU_ClientState));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientState));
+  EXPECT_TRUE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
+  test.GetUsagestatsValue(kHKLM_ClientStateMedium, &value);
+  EXPECT_EQ(0, value);
+
+  test.ClearUsagestatsValue();
+  test.SetUsagestatsValue(kHKLM_ClientStateMedium, 1);
+  EXPECT_FALSE(StatsConfigUtil::SetEnabled(false));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKCU_ClientState));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientState));
+  EXPECT_TRUE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
+  test.GetUsagestatsValue(kHKLM_ClientStateMedium, &value);
+  EXPECT_EQ(1, value);
+
+  test.ClearUsagestatsValue();
+  test.SetUsagestatsValue(kHKLM_ClientStateMedium, 0);
+  EXPECT_FALSE(StatsConfigUtil::SetEnabled(false));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKCU_ClientState));
+  EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientState));
+  EXPECT_TRUE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
+  test.GetUsagestatsValue(kHKLM_ClientStateMedium, &value);
+  EXPECT_EQ(0, value);
 }
 
 TEST_F(StatsConfigUtilTestWin, IsEnabled) {
