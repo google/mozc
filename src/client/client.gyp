@@ -62,5 +62,13 @@
         'test_size': 'small',
       },
     },
+    # Test cases meta target: this target is referred from gyp/tests.gyp
+    {
+      'target_name': 'client_all_test',
+      'type': 'none',
+      'dependencies': [
+        'client_test',
+      ],
+    },
   ],
 }

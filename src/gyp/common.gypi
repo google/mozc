@@ -91,8 +91,10 @@
       'mac_release_optimization%': '2', # Use -O2 unless overridden
       'mac_debug_optimization%': '0',   # Use -O0 unless overridden
       # See http://msdn.microsoft.com/en-us/library/aa652360(VS.71).aspx
-      'win_release_optimization%': '2', # 2 = /Os
-      'win_debug_optimization%': '0',   # 0 = /Od
+      'win_optimization_debug%': '0',   # 0 = /Od
+      'win_optimization_release%': '2', # 2 = /Og /Oi /Ot /Oy /Ob2 /Gs /GF /Gy
+      'win_optimization_custom%': '4',  # 4 = None but prevents vcbuild from
+                                        # inheriting default optimization.
       # See http://msdn.microsoft.com/en-us/library/aa652367(VS.71).aspx
       'win_release_static_crt%': '0',  # 0 = /MT (nondebug static)
       'win_debug_static_crt%': '1',    # 1 = /MTd (debug static)
@@ -151,7 +153,7 @@
         },
         'msvs_settings': {
           'VCCLCompilerTool': {
-            'Optimization': '<(win_debug_optimization)',
+            'Optimization': '<(win_optimization_debug)',
             'PreprocessorDefinitions': ['_DEBUG'],
             'BasicRuntimeChecks': '3',
             'RuntimeLibrary': '<(win_debug_static_crt)',
@@ -181,7 +183,21 @@
         },
         'msvs_settings': {
           'VCCLCompilerTool': {
-            'Optimization': '<(win_release_optimization)',
+            # '<(win_optimization_release)' (that is /O2) contains /Oy option,
+            # which makes debugging extremely difficult. (See b/1852473)
+            # http://msdn.microsoft.com/en-us/library/8f8h5cxt.aspx
+            # We can still disable FPO by using /Oy- option but the document
+            # says there is an order dependency, that is, the last /Oy  or /Oy-
+            # is valid.  See the following document for details.
+            # http://msdn.microsoft.com/en-us/library/2kxx5t2c.aspx
+            # As far as we observed, /Oy- adding in 'AdditionalOptions'@always
+            # appears at the end of options so using
+            # '<(win_optimization_release) here is considered to be harmless.
+            # Another reason to use /O2 here is b/2822535, where we observed
+            # warning C4748 when we build mozc_tool with Qt libraries, which
+            # are built with /O2.  We use the same optimization option between
+            # Mozc and Qt just in case warning C4748 is true.
+            'Optimization': '<(win_optimization_release)',
             'RuntimeLibrary': '<(win_release_static_crt)',
           },
         },
@@ -304,10 +320,15 @@
             'ForcedIncludeFiles': ['base/namespace.h'],
                                                    # /FI<header_file.h>
             'OptimizeForWindows98': '1',           # /OPT:NOWIN98
-            'OmitFramePointers': 'False',          # /Oy-
             'SuppressStartupBanner': 'True',       # /nologo
             'TreatWChar_tAsBuiltInType': 'False',  # /Zc:wchar_t-
             'WarningLevel': '3',                   # /W3
+
+            # Unfortunately, 'OmitFramePointers': 'false' does not mean
+            # /Oy- on Visual C++ 2008 or prior.  You need to use
+            # 'AdditionalOptions' option to specify /Oy- instead.
+            'OmitFramePointers': 'False',          # /Oy- (for Visual C++ 2010)
+            'AdditionalOptions': ['/Oy-'],         # /Oy-
           },
           'VCLinkerTool': {
             # TODO(satorux): Reduce the number of libraries. We should
@@ -347,17 +368,14 @@
             'TerminalServerAware': '2',            # /TSAWARE
           },
           'VCResourceCompilerTool': {
-            # TODO(yukawa): embed version info via command line parameters.
             'PreprocessorDefinitions': [
               'MOZC_RES_USE_TEMPLATE=1',
-              'MOZC_RES_FILE_VERSION_NUMBER="0,0,1,9999"',
-              'MOZC_RES_PRODUCT_VERSION_NUMBER="0,0,1,9999"',
-              'MOZC_RES_FILE_VERSION_STRING="""0.0.1.9999"""',
-              'MOZC_RES_PRODUCT_VERSION_STRING="""0.0.1.9999"""',
-              'MOZC_RES_COMPANY_NAME="""Google Inc."""',
-              'MOZC_RES_LEGAL_COPYRIGHT="""Copyright (C) 2010 Google Inc. All Rights Reserved."""',
+              'MOZC_RES_USE_TEMPLATE_AUTOGEN=1',
             ],
-            'AdditionalIncludeDirectories': ['<(DEPTH)'],
+            'AdditionalIncludeDirectories': [
+              '<(SHARED_INTERMEDIATE_DIR)',
+              '<(DEPTH)',
+            ],
           },
         },
       }],

@@ -132,14 +132,37 @@
           'outputs': [
             '<(gen_out_dir)/main.h',
           ],
-          'action': [
-            'python', '../../build_tools/redirect.py',
-            '<(gen_out_dir)/main.h',
-            './gen_mozc_xml.py',
-            # Always use Linux+Mozc. It's okay since main.h is for debugging.
-            '--platform=Linux',
-            '--branding=Mozc',
-            '--output_cpp'
+          'conditions': [
+            ['chromeos==1 and branding=="GoogleJapaneseInput"', {
+              'action': [
+                'python', '../../build_tools/redirect.py',
+                '<(gen_out_dir)/main.h',
+                './gen_mozc_xml.py',
+                '--platform=ChromeOS',
+                '--branding=GoogleJapaneseInput',
+                '--output_cpp'
+              ],
+            }],
+            ['chromeos==1 and branding!="GoogleJapaneseInput"', {
+              'action': [
+                'python', '../../build_tools/redirect.py',
+                '<(gen_out_dir)/main.h',
+                './gen_mozc_xml.py',
+                '--platform=ChromeOS',
+                '--branding=Mozc',
+                '--output_cpp'
+              ],
+            }],
+            ['chromeos!=1', {
+              'action': [
+                'python', '../../build_tools/redirect.py',
+                '<(gen_out_dir)/main.h',
+                './gen_mozc_xml.py',
+                '--platform=Linux',
+                '--branding=Mozc',
+                '--output_cpp'
+              ],
+            }],
           ],
         },
       ],

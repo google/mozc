@@ -607,9 +607,13 @@
         }],
         ['OS=="win"', {
           'product_name': 'GoogleIMEJaTool',
+          'sources': [
+            'tool/mozc_tool.rc',
+          ],
           'dependencies': [
-            '../win32/win32.gyp:ime_base',
             '../base/base.gyp:base',
+            '../win32/win32.gyp:gen_mozc_version_def',
+            '../win32/win32.gyp:ime_base',
           ],
           'includes': [
             '../gyp/postbuilds_win.gypi',

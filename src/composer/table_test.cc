@@ -91,7 +91,27 @@ string GetInput(const mozc::composer::Table &table, const string &key) {
   return entry->input();
 }
 
-TEST(TableTest, LookUp) {
+class TableTest : public testing::Test {
+ protected:
+  TableTest() {}
+
+  virtual void SetUp() {
+    mozc::Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    mozc::config::ConfigHandler::GetDefaultConfig(&default_config_);
+    mozc::config::ConfigHandler::SetConfig(default_config_);
+  }
+
+  virtual void TearDown() {
+    mozc::config::ConfigHandler::SetConfig(default_config_);
+  }
+
+  mozc::config::Config default_config_;
+
+ private:
+  DISALLOW_COPY_AND_ASSIGN(TableTest);
+};
+
+TEST_F(TableTest, LookUp) {
   static const struct TestCase {
     const char* input;
     const bool expected_result;
@@ -138,7 +158,7 @@ TEST(TableTest, LookUp) {
   }
 }
 
-TEST(TableTest, Puncutations) {
+TEST_F(TableTest, Puncutations) {
   static const struct TestCase {
     mozc::config::Config::PunctuationMethod method;
     const char *input;
@@ -180,7 +200,7 @@ TEST(TableTest, Puncutations) {
   }
 }
 
-TEST(TableTest, Symbols) {
+TEST_F(TableTest, Symbols) {
   static const struct TestCase {
     mozc::config::Config::SymbolMethod method;
     const char *input;
@@ -226,7 +246,7 @@ TEST(TableTest, Symbols) {
   }
 }
 
-TEST(TableTest, KanaSuppressed) {
+TEST_F(TableTest, KanaSuppressed) {
   mozc::config::Config config;
   mozc::config::ConfigHandler::GetConfig(&config);
 
@@ -243,7 +263,7 @@ TEST(TableTest, KanaSuppressed) {
   EXPECT_TRUE(entry->pending().empty());
 }
 
-TEST(TableTest, KanaCombination) {
+TEST_F(TableTest, KanaCombination) {
   mozc::composer::Table table;
   ASSERT_TRUE(table.Initialize());
   // "か゛"
@@ -254,7 +274,7 @@ TEST(TableTest, KanaCombination) {
   EXPECT_TRUE(entry->pending().empty());
 }
 
-TEST(TableTest, InvalidEntryTest) {
+TEST_F(TableTest, InvalidEntryTest) {
   {
     mozc::composer::Table table;
     table.AddRule("a", "aa", "");
@@ -280,7 +300,7 @@ TEST(TableTest, InvalidEntryTest) {
   }
 }
 
-TEST(TableTest, CustomPunctuationsAndSymbols) {
+TEST_F(TableTest, CustomPunctuationsAndSymbols) {
   // Test against Issue2465801.
   string custom_roman_table;
   custom_roman_table.append("mozc\tMOZC\n");
@@ -323,7 +343,7 @@ TEST(TableTest, CustomPunctuationsAndSymbols) {
   EXPECT_EQ("CLOSE", entry->result());
 }
 
-TEST(TableTest, CaseSensitive) {
+TEST_F(TableTest, CaseSensitive) {
   mozc::composer::Table table;
   table.AddRule("a", "[a]", "");
   table.AddRule("A", "[A]", "");

@@ -178,5 +178,13 @@
       },
       'includes': [ '../gyp/install_testdata.gypi' ],
     },
+    # Test cases meta target: this target is referred from gyp/tests.gyp
+    {
+      'target_name': 'prediction_all_test',
+      'type': 'none',
+      'dependencies': [
+        'prediction_test',
+      ],
+    },
   ],
 }

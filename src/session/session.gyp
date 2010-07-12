@@ -204,5 +204,17 @@
         'test_size': 'small',
       },
     },
+    # Test cases meta target: this target is referred from gyp/tests.gyp
+    {
+      'target_name': 'session_all_test',
+      'type': 'none',
+      'dependencies': [
+        'session_test',
+        'session_internal_test',
+        'session_internal_test',
+        'session_handler_test',
+        'session_module_test',
+      ],
+    },
   ],
 }

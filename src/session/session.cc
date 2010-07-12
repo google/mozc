@@ -833,7 +833,12 @@ bool Session::IMEOn(commands::Command *command) {
 
 bool Session::IMEOff(commands::Command *command) {
   command->mutable_output()->set_consumed(true);
-  EditCancel(command);
+  // If you want to cancel composition on IMEOff,
+  // call EditCancel() instead of Commit() here.
+  // TODO(toshiyuki): Modify here if we have the config.
+  //  EditCancel(command);
+  Commit(command);
+
   state_ = SessionState::DIRECT;
   OutputMode(command);
   return true;
@@ -1286,42 +1291,47 @@ bool Session::TranslateHalfASCII(commands::Command *command) {
 }
 
 bool Session::InputModeHiragana(commands::Command *command) {
+  command->mutable_output()->set_consumed(true);
   EnsureIMEIsOn();
   // The temporary mode should not be overridden.
   SwitchInputMode(transliteration::HIRAGANA, composer_.get());
-  OutputMode(command);
+  OutputFromState(command);
   return true;
 }
 
 bool Session::InputModeFullKatakana(commands::Command *command) {
+  command->mutable_output()->set_consumed(true);
   EnsureIMEIsOn();
   // The temporary mode should not be overridden.
   SwitchInputMode(transliteration::FULL_KATAKANA, composer_.get());
-  OutputMode(command);
+  OutputFromState(command);
   return true;
 }
 
 bool Session::InputModeHalfKatakana(commands::Command *command) {
+  command->mutable_output()->set_consumed(true);
   EnsureIMEIsOn();
   // The temporary mode should not be overridden.
   SwitchInputMode(transliteration::HALF_KATAKANA, composer_.get());
-  OutputMode(command);
+  OutputFromState(command);
   return true;
 }
 
 bool Session::InputModeFullASCII(commands::Command *command) {
+  command->mutable_output()->set_consumed(true);
   EnsureIMEIsOn();
   // The temporary mode should not be overridden.
   SwitchInputMode(transliteration::FULL_ASCII, composer_.get());
-  OutputMode(command);
+  OutputFromState(command);
   return true;
 }
 
 bool Session::InputModeHalfASCII(commands::Command *command) {
+  command->mutable_output()->set_consumed(true);
   EnsureIMEIsOn();
   // The temporary mode should not be overridden.
   SwitchInputMode(transliteration::HALF_ASCII, composer_.get());
-  OutputMode(command);
+  OutputFromState(command);
   return true;
 }
 
@@ -1371,23 +1381,7 @@ bool Session::ToggleAlphanumericMode(commands::Command *command) {
   command->mutable_output()->set_consumed(true);
   composer_->ToggleInputMode();
 
-  // TODO(komatsu): These output should be integrated in one function.
-  if (state_ == SessionState::PRECOMPOSITION) {
-    OutputMode(command);
-    return true;
-  }
-
-  if (state_ == SessionState::COMPOSITION) {
-    OutputComposition(command);
-    return true;
-  }
-
-  if (state_ == SessionState::CONVERSION) {
-    Output(command);
-    return true;
-  }
-
-  OutputMode(command);
+  OutputFromState(command);
   return true;
 }
 
@@ -1648,6 +1642,22 @@ bool Session::PredictAndConvert(commands::Command *command) {
     OutputComposition(command);
   }
   return true;
+}
+
+void Session::OutputFromState(commands::Command *command) {
+  if (state_ == SessionState::PRECOMPOSITION) {
+    OutputMode(command);
+    return;
+  }
+  if (state_ == SessionState::COMPOSITION) {
+    OutputComposition(command);
+    return;
+  }
+  if (state_ == SessionState::CONVERSION) {
+    Output(command);
+    return;
+  }
+  OutputMode(command);
 }
 
 void Session::Output(commands::Command *command) {

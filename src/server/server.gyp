@@ -90,6 +90,9 @@
             'mozc_server.rc',
             'mozc_server.exe.manifest',
           ],
+          'dependencies': [
+            '../win32/win32.gyp:gen_mozc_version_def',
+          ],
           'msvs_settings': {
             'VCLinkerTool': {
               'DelayLoadDLLs': [
@@ -142,7 +145,8 @@
             'mozc_cache_service.exe.manifest',
           ],
           'dependencies': [
-             'cache_service_manager',
+            '../win32/win32.gyp:gen_mozc_version_def',
+            'cache_service_manager',
           ],
         },
       ],

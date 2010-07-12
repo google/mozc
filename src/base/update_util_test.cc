@@ -38,20 +38,6 @@
 
 #ifdef OS_WINDOWS
 
-// Users of the sidestep library need to supply these functions.
-// See sidestep/cross/integration.h
-// for more details.
-// TODO(mazda): Make a library for these implementations.
-namespace sidestep {
-void AssertImpl(bool assertion_is_true, const char* message) {
-  DCHECK(assertion_is_true) << message;
-}
-
-void LogImpl(const char* message) {
-  DLOG(INFO) << message;
-}
-}  // sidestep
-
 namespace {
 HKEY g_created_key;
 wstring g_created_key_path;
@@ -106,16 +92,29 @@ LSTATUS WINAPI TestRegQueryValueEx(
 class UpdateUtilTestWin : public testing::Test {
  protected:
   static void SetUpTestCase() {
-     static sidestep::AutoTestingHook g_hook_reg_create =
-        sidestep::MakeTestingHook(RegCreateKeyExW, TestRegCreateKeyExW);
-     static sidestep::AutoTestingHook g_hook_reg_set =
-        sidestep::MakeTestingHook(RegSetValueEx, TestRegSetValueEx);
-     static sidestep::AutoTestingHook g_hook_reg_close =
-        sidestep::MakeTestingHook(RegCloseKey, TestRegCloseKey);
-     static sidestep::AutoTestingHook g_hook_reg_open =
-        sidestep::MakeTestingHook(RegOpenKeyEx, TestRegOpenKeyEx);
-     static sidestep::AutoTestingHook g_hook_reg_query =
-        sidestep::MakeTestingHook(RegQueryValueEx, TestRegQueryValueEx);
+    hook_reg_create_ =
+      sidestep::MakeTestingHook(RegCreateKeyExW, TestRegCreateKeyExW);
+    hook_reg_set_ =
+      sidestep::MakeTestingHook(RegSetValueEx, TestRegSetValueEx);
+    hook_reg_close_ =
+      sidestep::MakeTestingHook(RegCloseKey, TestRegCloseKey);
+    hook_reg_open_ =
+      sidestep::MakeTestingHook(RegOpenKeyEx, TestRegOpenKeyEx);
+    hook_reg_query_ =
+      sidestep::MakeTestingHook(RegQueryValueEx, TestRegQueryValueEx);
+  }
+
+  static void TearDownTestCase() {
+    delete hook_reg_create_;
+    hook_reg_create_ = NULL;
+    delete hook_reg_set_;
+    hook_reg_set_ = NULL;
+    delete hook_reg_close_;
+    hook_reg_close_ = NULL;
+    delete hook_reg_open_;
+    hook_reg_open_ = NULL;
+    delete hook_reg_query_;
+    hook_reg_query_ = NULL;
   }
 
   virtual void SetUp() {
@@ -131,8 +130,19 @@ class UpdateUtilTestWin : public testing::Test {
   }
   virtual void TearDown() {
   }
+ private:
+  static sidestep::AutoTestingHookBase *hook_reg_create_;
+  static sidestep::AutoTestingHookBase *hook_reg_set_;
+  static sidestep::AutoTestingHookBase *hook_reg_close_;
+  static sidestep::AutoTestingHookBase *hook_reg_open_;
+  static sidestep::AutoTestingHookBase *hook_reg_query_;
 };
 
+sidestep::AutoTestingHookBase *UpdateUtilTestWin::hook_reg_create_;
+sidestep::AutoTestingHookBase *UpdateUtilTestWin::hook_reg_set_;
+sidestep::AutoTestingHookBase *UpdateUtilTestWin::hook_reg_close_;
+sidestep::AutoTestingHookBase *UpdateUtilTestWin::hook_reg_open_;
+sidestep::AutoTestingHookBase *UpdateUtilTestWin::hook_reg_query_;
 }  // namespace
 
 namespace mozc {

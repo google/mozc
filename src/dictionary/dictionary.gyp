@@ -276,5 +276,16 @@
         'test_size': 'small',
       },
     },
+    # Test cases meta target: this target is referred from gyp/tests.gyp
+    {
+      'target_name': 'dictionary_all_test',
+      'type': 'none',
+      'dependencies': [
+        'dictionary_test',
+        'file/dictionary_file.gyp:dictionary_file_test',
+        'system/system_dictionary.gyp:system_dictionary_test',
+        'system/system_dictionary.gyp:system_dictionary_builder_test',
+      ],
+    },
   ],
 }

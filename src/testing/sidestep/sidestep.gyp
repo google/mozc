@@ -28,44 +28,21 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 {
+  'variables': {
+    'relative_dir': 'testing/sidestep',
+    'gen_out_dir': '<(SHARED_INTERMEDIATE_DIR)/<(relative_dir)',
+  },
   'targets': [
     {
-      'target_name': 'storage',
-      'type': 'static_library',
-      'sources': [
-        'existence_filter.cc',
-        'lru_storage.cc',
-        'registry.cc',
-        'tiny_storage.cc',
-        'sparse_array_image.cc',
-      ],
-      'dependencies': [
-        '../base/base.gyp:base',
-      ],
-    },
-    {
-      'target_name': 'storage_test',
-      'type': 'executable',
-      'sources': [
-        'lru_storage_test.cc',
-        'existence_filter_test.cc',
-        'tiny_storage_test.cc',
-        'registry_test.cc',
-      ],
-      'dependencies': [
-        '../testing/testing.gyp:gtest_main',
-        'storage',
-      ],
-      'variables': {
-        'test_size': 'small',
-      },
-    },
-    # Test cases meta target: this target is referred from gyp/tests.gyp
-    {
-      'target_name': 'storage_all_test',
-      'type': 'none',
-      'dependencies': [
-        'storage_test',
+      'target_name': 'sidestep',
+      'conditions': [
+        ['OS=="win"', {
+          'type': 'static_library',
+        }, {  # else
+          # This block is needed because this is an element of 'targets' block.
+          # Gyp assumes that each child element has 'target_name' and 'type'.
+          'type': 'none',
+        }],
       ],
     },
   ],

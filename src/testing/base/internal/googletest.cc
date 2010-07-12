@@ -48,15 +48,6 @@ DECLARE_string(program_invocation_name);
 
 namespace mozc {
 namespace {
-string GetTestSrcdir();
-string GetTestTmpdir();
-
-void InitTestFlags() {
-  FLAGS_test_srcdir = GetTestSrcdir();
-  FLAGS_test_tmpdir = GetTestTmpdir();
-}
-
-REGISTER_MODULE_INITIALIZER(test_flags, InitTestFlags());
 
 #ifdef OS_WINDOWS
 string GetProgramPath() {
@@ -126,4 +117,14 @@ string GetTestTmpdir() {
 #endif  // OS_WINDOWS
 
 }  // namespace
+
+void InitTestFlags() {
+  if (FLAGS_test_srcdir.empty()) {
+    FLAGS_test_srcdir = GetTestSrcdir();
+  }
+  if (FLAGS_test_tmpdir.empty()) {
+    FLAGS_test_tmpdir = GetTestTmpdir();
+  }
+}
+
 }  // namespace mozc

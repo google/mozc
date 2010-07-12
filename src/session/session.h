@@ -228,6 +228,8 @@ class Session {
   // Process it and return true, otherwise return false.
   bool MaybeSelectCandidate(commands::Command *command);
 
+  // Fill command's output according to the current state.
+  void OutputFromState(commands::Command *command);
   void Output(commands::Command *command);
   void OutputMode(commands::Command *command) const;
   void OutputComposition(commands::Command *command) const;

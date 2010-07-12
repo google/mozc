@@ -210,10 +210,8 @@
         'thread_test.cc',
         'timer_test.cc',
         'unnamed_event_test.cc',
-        # TODO(satorux): temporarily disabled as it was tricky to build
-        # with sidestep on Windows.
-        # 'update_util_test.cc',
-        # 'stats_config_util_test.cc',
+        'update_util_test.cc',
+        'stats_config_util_test.cc',
         'url_test.cc',
         'util_test.cc',
         'version_test.cc',
@@ -241,6 +239,15 @@
       'variables': {
         'test_size': 'small',
       },
+    },
+    # Test cases meta target: this target is referred from gyp/tests.gyp
+    {
+      'target_name': 'base_all_test',
+      'type': 'none',
+      'dependencies': [
+        'base_test',
+        'base_init_test',
+      ],
     },
   ],
 }

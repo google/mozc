@@ -85,10 +85,7 @@ IBUS_ENGINES_PROPS = {
         'layout': ['jp', 'us', 'us(dvorak)'],
         # hotkeys property is Chrome/Chromium OS specific. Upstream ibus-daemon
         # doesn't support this.
-        # TODO(yusukes): Check if Kana key in the Chrome OS Japanese keyboard
-        # actually generates the Hiragana_Katakana keysym on "jp" XKB layout
-        # when the keyboard gets ready.
-        'hotkeys': ['Hiragana_Katakana', '', ''],
+        'hotkeys': ['Henkan', '', ''],
     },
 }
 

@@ -27,26 +27,5 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_TESTING_BASE_PUBLIC_GOOGLETEST_H_
-#define MOZC_TESTING_BASE_PUBLIC_GOOGLETEST_H_
-
-#include "base/flags.h"
-
-// --test_srcdir is the path to a directory that contains the input data files
-// for a test, so that each entry in the 'data' section of the BUILD rule for
-// this test specifies a path relative to FLAGS_test_srcdir.
-DECLARE_string(test_srcdir);
-
-// --test_tmpdir is a temporary directory that you can write to from inside a
-// test.  Files you write will eventually be cleaned up but you can see them at
-// ~/local/tmp in the immediate aftermath of the test.  These files are
-// stored on local disk, not on the networked filer.
-DECLARE_string(test_tmpdir);
-
-namespace mozc {
-  // Initialize FLAGS_test_srcdir and FLAGS_test_tmpdir.
-  void InitTestFlags();
-}
-
-
-#endif  // MOZC_TESTING_BASE_PUBLIC_GOOGLETEST_H_
+#include "base/base.h"
+#include "testing/base/public/gunit.h"

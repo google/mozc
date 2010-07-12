@@ -393,6 +393,7 @@ TEST_F(SessionTest, InputMode) {
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   EXPECT_TRUE(session->InputModeHalfASCII(&command));
+  EXPECT_TRUE(command.output().consumed());
   EXPECT_EQ(mozc::commands::HALF_ASCII, command.output().mode());
 
   SendKey("a", session.get(), &command);
@@ -2951,7 +2952,7 @@ TEST_F(SessionTest, Issue2569789) {
   }
 }
 
-TEST_F(SessionTest, Isue2555503) {
+TEST_F(SessionTest, Issue2555503) {
   // This is a unittest against http://b/2555503.
   // Mode respects the previous character too much.
 
@@ -2972,6 +2973,79 @@ TEST_F(SessionTest, Isue2555503) {
   EXPECT_EQ("\xE3\x81\x82", GetComposition(command));
   EXPECT_EQ(commands::FULL_KATAKANA, command.output().mode());
 }
+
+TEST_F(SessionTest, Issue2791640) {
+  // This is a unittest against http://b/2791640.
+  // Existing preedit should be committed when IME is turned off.
+
+  scoped_ptr<Session> session(handler_->NewSession());
+  InitSessionToPrecomposition(session.get());
+
+  commands::Command command;
+  SendKey("a", session.get(), &command);
+
+  command.Clear();
+
+  SendKey("hankaku/zenkaku", session.get(), &command);
+
+  ASSERT_TRUE(command.output().consumed());
+
+  ASSERT_TRUE(command.output().has_result());
+  // "あ"
+  EXPECT_EQ("\xE3\x81\x82", command.output().result().value());
+  EXPECT_EQ(commands::DIRECT, command.output().mode());
+
+  ASSERT_FALSE(command.output().has_preedit());
+}
+
+TEST_F(SessionTest, CommitExistingPreeditWhenIMEIsTurnedOff) {
+  // Existing preedit should be committed when IME is turned off.
+
+  // Check "hankaku/zenkaku"
+  {
+    scoped_ptr<Session> session(handler_->NewSession());
+    InitSessionToPrecomposition(session.get());
+
+    commands::Command command;
+    SendKey("a", session.get(), &command);
+
+    command.Clear();
+
+    SendKey("hankaku/zenkaku", session.get(), &command);
+
+    ASSERT_TRUE(command.output().consumed());
+
+    ASSERT_TRUE(command.output().has_result());
+    // "あ"
+    EXPECT_EQ("\xE3\x81\x82", command.output().result().value());
+    EXPECT_EQ(commands::DIRECT, command.output().mode());
+
+    ASSERT_FALSE(command.output().has_preedit());
+  }
+
+  // Check "kanji"
+  {
+    scoped_ptr<Session> session(handler_->NewSession());
+    InitSessionToPrecomposition(session.get());
+
+    commands::Command command;
+    SendKey("a", session.get(), &command);
+
+    command.Clear();
+
+    SendKey("kanji", session.get(), &command);
+
+    ASSERT_TRUE(command.output().consumed());
+
+    ASSERT_TRUE(command.output().has_result());
+    // "あ"
+    EXPECT_EQ("\xE3\x81\x82", command.output().result().value());
+    EXPECT_EQ(commands::DIRECT, command.output().mode());
+
+    ASSERT_FALSE(command.output().has_preedit());
+  }
+}
+
 
 TEST_F(SessionTest, SendKeyDirectInputStateTest) {
   // InputModeChange commands from direct mode are supported only for Windows
@@ -3097,6 +3171,162 @@ TEST_F(SessionTest, IMEOnWithModeTest) {
     EXPECT_EQ("a", command.output().preedit().segment(0).key());
   }
 }
+
+TEST_F(SessionTest, InputModeConsumed) {
+  scoped_ptr<Session> session(handler_->NewSession());
+  InitSessionToPrecomposition(session.get());
+  commands::Command command;
+  EXPECT_TRUE(session->InputModeHiragana(&command));
+  EXPECT_TRUE(command.output().consumed());
+  EXPECT_EQ(mozc::commands::HIRAGANA, command.output().mode());
+  command.Clear();
+  EXPECT_TRUE(session->InputModeFullKatakana(&command));
+  EXPECT_TRUE(command.output().consumed());
+  EXPECT_EQ(mozc::commands::FULL_KATAKANA, command.output().mode());
+  command.Clear();
+  EXPECT_TRUE(session->InputModeHalfKatakana(&command));
+  EXPECT_TRUE(command.output().consumed());
+  EXPECT_EQ(mozc::commands::HALF_KATAKANA, command.output().mode());
+  command.Clear();
+  EXPECT_TRUE(session->InputModeFullASCII(&command));
+  EXPECT_TRUE(command.output().consumed());
+  EXPECT_EQ(mozc::commands::FULL_ASCII, command.output().mode());
+  command.Clear();
+  EXPECT_TRUE(session->InputModeHalfASCII(&command));
+  EXPECT_TRUE(command.output().consumed());
+  EXPECT_EQ(mozc::commands::HALF_ASCII, command.output().mode());
+}
+
+TEST_F(SessionTest, InputModeConsumedForTestSendKey) {
+  // This test is only for Windows, because InputModeHiragana bound
+  // with Hiragana key is only supported on Windows yet.
+#ifdef OS_WINDOWS
+  config::Config config;
+  config::ConfigHandler::GetConfig(&config);
+  config.set_session_keymap(config::Config::MSIME);
+  config::ConfigHandler::SetConfig(config);
+
+  scoped_ptr<Session> session(handler_->NewSession());
+  InitSessionToPrecomposition(session.get());
+  ASSERT_EQ(config::Config::MSIME, GET_CONFIG(session_keymap));
+  // In MSIME keymap, Hiragana is assigned for
+  // ImputModeHiragana in Precomposition.
+
+  commands::Command command;
+  EXPECT_TRUE(TestSendKey("Hiragana", session.get(), &command));
+  EXPECT_TRUE(command.output().consumed());
+#endif  // OS_WINDOWS
+}
+
+TEST_F(SessionTest, InputModeOutputHasComposition) {
+  scoped_ptr<Session> session(handler_->NewSession());
+  InitSessionToPrecomposition(session.get());
+  commands::Command command;
+  SendKey("a", session.get(), &command);
+  EXPECT_TRUE(command.output().has_preedit());
+  EXPECT_EQ(1, command.output().preedit().segment_size());
+  // "あ"
+  EXPECT_EQ("\xE3\x81\x82", command.output().preedit().segment(0).key());
+
+  command.Clear();
+  EXPECT_TRUE(session->InputModeHiragana(&command));
+  EXPECT_TRUE(command.output().consumed());
+  EXPECT_EQ(mozc::commands::HIRAGANA, command.output().mode());
+  EXPECT_TRUE(command.output().has_preedit());
+  EXPECT_EQ(1, command.output().preedit().segment_size());
+  // "あ"
+  EXPECT_EQ("\xE3\x81\x82", command.output().preedit().segment(0).key());
+
+  command.Clear();
+  EXPECT_TRUE(session->InputModeFullKatakana(&command));
+  EXPECT_TRUE(command.output().consumed());
+  EXPECT_EQ(mozc::commands::FULL_KATAKANA, command.output().mode());
+  EXPECT_TRUE(command.output().has_preedit());
+  EXPECT_EQ(1, command.output().preedit().segment_size());
+  // "あ"
+  EXPECT_EQ("\xE3\x81\x82", command.output().preedit().segment(0).key());
+
+  command.Clear();
+  EXPECT_TRUE(session->InputModeHalfKatakana(&command));
+  EXPECT_TRUE(command.output().consumed());
+  EXPECT_EQ(mozc::commands::HALF_KATAKANA, command.output().mode());
+  EXPECT_TRUE(command.output().has_preedit());
+  EXPECT_EQ(1, command.output().preedit().segment_size());
+  // "あ"
+  EXPECT_EQ("\xE3\x81\x82", command.output().preedit().segment(0).key());
+
+  command.Clear();
+  EXPECT_TRUE(session->InputModeFullASCII(&command));
+  EXPECT_TRUE(command.output().consumed());
+  EXPECT_EQ(mozc::commands::FULL_ASCII, command.output().mode());
+  EXPECT_TRUE(command.output().has_preedit());
+  EXPECT_EQ(1, command.output().preedit().segment_size());
+  // "あ"
+  EXPECT_EQ("\xE3\x81\x82", command.output().preedit().segment(0).key());
+
+  command.Clear();
+  EXPECT_TRUE(session->InputModeHalfASCII(&command));
+  EXPECT_TRUE(command.output().consumed());
+  EXPECT_EQ(mozc::commands::HALF_ASCII, command.output().mode());
+  EXPECT_TRUE(command.output().has_preedit());
+  EXPECT_EQ(1, command.output().preedit().segment_size());
+  // "あ"
+  EXPECT_EQ("\xE3\x81\x82", command.output().preedit().segment(0).key());
+}
+
+TEST_F(SessionTest, InputModeOutputHasCandidates) {
+  scoped_ptr<Session> session(handler_->NewSession());
+  InitSessionToPrecomposition(session.get());
+
+  Segments segments;
+  SetAiueo(&segments);
+  convertermock_->SetStartConversion(&segments, true);
+
+  commands::Command command;
+  InsertCharacterChars("aiueo", session.get(), &command);
+
+  command.Clear();
+  session->Convert(&command);
+  session->ConvertNext(&command);
+  EXPECT_TRUE(command.output().has_candidates());
+  EXPECT_TRUE(command.output().has_preedit());
+
+  command.Clear();
+  EXPECT_TRUE(session->InputModeHiragana(&command));
+  EXPECT_TRUE(command.output().consumed());
+  EXPECT_EQ(mozc::commands::HIRAGANA, command.output().mode());
+  EXPECT_TRUE(command.output().has_candidates());
+  EXPECT_TRUE(command.output().has_preedit());
+
+  command.Clear();
+  EXPECT_TRUE(session->InputModeFullKatakana(&command));
+  EXPECT_TRUE(command.output().consumed());
+  EXPECT_EQ(mozc::commands::FULL_KATAKANA, command.output().mode());
+  EXPECT_TRUE(command.output().has_candidates());
+  EXPECT_TRUE(command.output().has_preedit());
+
+  command.Clear();
+  EXPECT_TRUE(session->InputModeHalfKatakana(&command));
+  EXPECT_TRUE(command.output().consumed());
+  EXPECT_EQ(mozc::commands::HALF_KATAKANA, command.output().mode());
+  EXPECT_TRUE(command.output().has_candidates());
+  EXPECT_TRUE(command.output().has_preedit());
+
+  command.Clear();
+  EXPECT_TRUE(session->InputModeFullASCII(&command));
+  EXPECT_TRUE(command.output().consumed());
+  EXPECT_EQ(mozc::commands::FULL_ASCII, command.output().mode());
+  EXPECT_TRUE(command.output().has_candidates());
+  EXPECT_TRUE(command.output().has_preedit());
+
+  command.Clear();
+  EXPECT_TRUE(session->InputModeHalfASCII(&command));
+  EXPECT_TRUE(command.output().consumed());
+  EXPECT_EQ(mozc::commands::HALF_ASCII, command.output().mode());
+  EXPECT_TRUE(command.output().has_candidates());
+  EXPECT_TRUE(command.output().has_preedit());
+}
+
 
 // since History segments are almost hidden from
 namespace {

@@ -97,5 +97,13 @@
         'test_size': 'small',
       },
     },
+    # Test cases meta target: this target is referred from gyp/tests.gyp
+    {
+      'target_name': 'usage_stats_all_test',
+      'type': 'none',
+      'dependencies': [
+        'usage_stats_test',
+      ],
+    },
   ],
 }

@@ -39,7 +39,7 @@
 
 namespace mozc {
 namespace storage {
-
+namespace {
 void CreateKeyValue(map<string, string> *output, int size) {
   output->clear();
   for (int i = 0; i < size; ++i) {
@@ -50,9 +50,38 @@ void CreateKeyValue(map<string, string> *output, int size) {
     output->insert(make_pair<string, string>(key, value));
   }
 }
+}  // anonymous namespace
 
-TEST(TinyStorageTest, TinyStorageTest) {
-  const string filename = Util::JoinPath(FLAGS_test_tmpdir, "test.db");
+class TinyStorageTest : public testing::Test {
+ protected:
+  TinyStorageTest() {}
+
+  virtual void SetUp() {
+    UnlinkDBFileIfExists();
+  }
+
+  virtual void TearDown() {
+    UnlinkDBFileIfExists();
+  }
+
+  static void UnlinkDBFileIfExists() {
+    const string path = GetTemporaryFilePath();
+    if (Util::FileExists(path)) {
+      Util::Unlink(path);
+    }
+  }
+
+  static string GetTemporaryFilePath() {
+    // This name should be unique to each test.
+    return Util::JoinPath(FLAGS_test_tmpdir, "TinyStorageTest_test.db");
+  }
+ private:
+  DISALLOW_COPY_AND_ASSIGN(TinyStorageTest);
+};
+
+
+TEST_F(TinyStorageTest, TinyStorageTest) {
+  const string filename = GetTemporaryFilePath();
 
   static const int kSize[] = {10, 100, 1000};
 
@@ -130,5 +159,5 @@ TEST(TinyStorageTest, TinyStorageTest) {
     }
   }
 }
-}  // storage
-}  // mozc
+}  // namespace storage
+}  // namespace mozc

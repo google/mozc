@@ -85,7 +85,9 @@ void ErrorMessageDialog::Show() {
                         "Please restart this application."));
   } else if (FLAGS_error_type == "server_broken_message") {
     OnFatal(QObject::tr("Connecting to an incompatible conversion engine. "
-                        "Please restart your computer to enable Mozc."));
+                        "Please restart your computer to enable Mozc. "
+                        "If this problem persists, please uninstall Mozc "
+                        "and install it again."));
   } else if (FLAGS_error_type == "server_version_mismatch") {
     OnFatal(QObject::tr("Conversion engine has been upgraded. "
                         "Please restart this application to enable conversion engine. "

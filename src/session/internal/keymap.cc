@@ -392,7 +392,8 @@ bool KeyMapManager::LoadStreamWithErrors(istream *ifs, vector<string> *errors) {
 void KeyMapManager::InitCommandData() {
   command_direct_map_["IMEOn"] = DirectInputState::IME_ON;
   // Support InputMode command only on Windows for now.
-  // TODO(toshiyuki): delete #ifdef when we support them on Mac.
+  // TODO(toshiyuki): delete #ifdef when we support them on Mac, and
+  // activate SessionTest.InputModeConsumedForTestSendKey.
 #ifdef OS_WINDOWS
   command_direct_map_["InputModeHiragana"] =
       DirectInputState::INPUT_MODE_HIRAGANA;

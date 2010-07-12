@@ -143,6 +143,10 @@ class UserSegmentHistoryRewriterTest : public testing::Test {
   virtual void TearDown() {
     UserSegmentHistoryRewriter rewriter;
     rewriter.Clear();
+    // reset config of test_tmpdir.
+    config::Config config;
+    config::ConfigHandler::GetDefaultConfig(&config);
+    config::ConfigHandler::SetConfig(config);
   }
 
   ConverterMock &mock() {

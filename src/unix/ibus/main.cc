@@ -68,9 +68,6 @@ IBusComponent *GetIBusComponent() {
       "",
       kComponentTextdomain);
   const string icon_path = mozc::ibus::GetIconPath(kEngineIcon);
-
-  // The engine description(s) in main.h is used only when --ibus option is not
-  // specified (i.e. debugging).
   for (size_t i = 0; i < kEngineArrayLen; ++i) {
     ibus_component_add_engine(component,
                               ibus_engine_desc_new(kEngineNameArray[i],

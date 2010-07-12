@@ -147,6 +147,8 @@ def GetGypFileNames():
   for name in mozc_top_level_names:
     gyp_file_names.extend(glob.glob(name + '/*.gyp'))
   gyp_file_names.extend(glob.glob('%s/build_tools/*/*.gyp' % SRC_DIR))
+  # Include tests gyp
+  gyp_file_names.append('%s/gyp/tests.gyp' % SRC_DIR)
   # Include subdirectory of dictionary
   gyp_file_names.append(
       '%s/dictionary/file/dictionary_file.gyp' % SRC_DIR)
@@ -342,53 +344,10 @@ def GypMain(deps_file_name):
   print 'Done'
 
 
-def ListAllTests():
-  """List all existing tests in the gyp files.
-
-  Returns:
-    a list of dict which contains 'target' and 'size'
-  """
-  all_tests = []
-  # Here we directly load the .gyp files.
-  # TODO(mukai): use GYP as a library to load gyp files correctly with
-  # variable expansions.
-  gyp_file_names = GetGypFileNames()
-  for file_name in gyp_file_names:
-    if not os.path.exists(file_name):
-      logging.warning('gyp file %s is not found', file_name)
-      continue
-    gyp_file = open(file_name)
-    gyp_map = eval(open(file_name).read())
-    if not isinstance(gyp_map, dict):
-      logging.warning('Not a valid gyp file: %s', file_name)
-      continue
-    if (not gyp_map.has_key('targets') or
-        not isinstance(gyp_map['targets'], list)):
-      logging.warning('gyp does not have a valid targets: %s', file_name)
-      continue
-    for target in gyp_map['targets']:
-      if not target.has_key('target_name'):
-        logging.warning('not a valid target in %s', file_name)
-        continue
-      if not target['target_name'].endswith('_test'):
-        # Not a test target
-        continue
-      if (not target.has_key('variables') or
-          not target['variables'].has_key('test_size')):
-        logging.warning('test target does not have test_size: %s:%s',
-                        file_name,target['target_name'])
-        continue
-      all_tests.append(
-          {'target': '%s:%s' % (file_name, target['target_name']),
-           'size': target['variables']['test_size']})
-  return all_tests
-
-
-def RunTests(targets, configuration, calculate_coverage):
+def RunTests(configuration, calculate_coverage):
   """Run built tests actually.
 
   Args:
-    targets: a list of 'gyp_file:test_target'
     configuration: build configuration ('Release' or 'Debug')
     calculate_coverage: True if runtests calculates the test coverage.
   """
@@ -403,23 +362,26 @@ def RunTests(targets, configuration, calculate_coverage):
     logging.error('Unsupported platform: %s', os.name)
     return
 
+  options = []
+
+
   failed_tests = []
-  for target in targets:
-    logging.info('running %s...', target)
-
-    index = target.find(':')
-    if index == -1:
-      print "Invalid target name:", target
-      failed_tests.append(target)
-      continue
-    gyp_file = target[0:index]
-    binary_name = target[(index+1):]
-
+  # This is a silly algorithm: it runs *all* tests built in the target
+  # directory.  Therefore, if you build multiple tests without
+  # cleaning, the second runtests runs every test.
+  # TODO(mukai): parses gyp files and get the target binaries, if possible.
+  executable_suffix = ''
+  if IsWindows():
+    executable_suffix = '.exe'
+  test_binaries = glob.glob(
+      os.path.join(base_path, '*_test' + executable_suffix))
+  for binary in test_binaries:
+    logging.info('running %s...', binary)
     try:
-      RunOrDie([os.path.join(base_path, binary_name)])
+      RunOrDie([binary] + options)
     except RunOrDieError, e:
       print e
-      failed_tests.append(target)
+      failed_tests.append(binary)
   if len(failed_tests) > 0:
     raise RunOrDieError('\n'.join(['following tests failed'] + failed_tests))
 
@@ -445,35 +407,30 @@ def RuntestsMain(original_directory_name):
       # starting with build options
       build_options = args[i:]
       break
-    targets.append(args[i])
+    target = args[i]
+    # If the a directory name is specified as a target, it builds
+    # _all_test target instead.
+    if args[i].endswith('/'):
+      matched = re.search(r'([^/]+)/$', args[i])
+      if matched:
+        dirname = matched.group(1)
+        target = '%s%s.gyp:%s_all_test' % (args[i], dirname, dirname)
+    targets.append(target)
 
   # configuration flag is shared among runtests options and build
   # options.
   if options.configuration:
     build_options.extend(['-c', options.configuration])
 
-  alltests = ListAllTests()
-  # filter out target which is not a test actually
-  all_test_targets = [test['target'] for test in alltests]
-  test_targets = []
-  for target in targets:
-    if not target in all_test_targets:
-      logging.warning('specified target %s is not a test target', target)
-      continue
-    test_targets.append(target)
-
-  # the test targets not specified.  Find all tests which matches the
-  # specified size.
-  if not test_targets:
-    test_targets = [test['target'] for test in alltests
-                    if test['size'] == options.test_size]
+  if not targets:
+    targets.append('%s/gyp/tests.gyp:unittests' % SRC_DIR)
 
   # Build the test targets
-  sys.argv = [sys.argv[0]] + build_options + test_targets
+  sys.argv = [sys.argv[0]] + build_options + targets
   BuildMain(original_directory_name)
 
   # Run tests actually
-  RunTests(test_targets, options.configuration, options.calculate_coverage)
+  RunTests(options.configuration, options.calculate_coverage)
 
 
 def CleanMain():
@@ -711,7 +668,7 @@ def BuildOnWindows(options, targets, original_directory_name):
     CheckFileOrDie(gyp_file_name)
     (sln_base_name, _) = os.path.splitext(gyp_file_name)
     sln_file_path = os.path.abspath('%s.sln' % sln_base_name)
-    build_concurrency = GetNumberOfProcessors() * 2
+    build_concurrency = 1
     # To use different toolsets for vcbuild, we set %PATH%, %INCLUDE%, %LIB%,
     # %LIBPATH% and specify /useenv option here.  See the following article
     # for details.

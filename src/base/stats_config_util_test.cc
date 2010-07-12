@@ -41,20 +41,6 @@
 
 #ifdef OS_WINDOWS
 
-// Users of the sidestep library need to supply these functions.
-// See sidestep/cross/integration.h
-// for more details.
-// TODO(mazda): Make a library for these implementations.
-namespace sidestep {
-void AssertImpl(bool assertion_is_true, const char* message) {
-  DCHECK(assertion_is_true) << message;
-}
-
-void LogImpl(const char* message) {
-  DLOG(INFO) << message;
-}
-}  // sidestep
-
 namespace {
 const wchar_t kOmahaGUID[] = L"{DDCCD2A9-025E-4142-BCEB-F467B88CF830}";
 const wchar_t kOmahaUsageKey[] =

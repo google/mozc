@@ -30,42 +30,24 @@
 {
   'targets': [
     {
-      'target_name': 'storage',
-      'type': 'static_library',
-      'sources': [
-        'existence_filter.cc',
-        'lru_storage.cc',
-        'registry.cc',
-        'tiny_storage.cc',
-        'sparse_array_image.cc',
-      ],
-      'dependencies': [
-        '../base/base.gyp:base',
-      ],
-    },
-    {
-      'target_name': 'storage_test',
-      'type': 'executable',
-      'sources': [
-        'lru_storage_test.cc',
-        'existence_filter_test.cc',
-        'tiny_storage_test.cc',
-        'registry_test.cc',
-      ],
-      'dependencies': [
-        '../testing/testing.gyp:gtest_main',
-        'storage',
-      ],
-      'variables': {
-        'test_size': 'small',
-      },
-    },
-    # Test cases meta target: this target is referred from gyp/tests.gyp
-    {
-      'target_name': 'storage_all_test',
+      'target_name': 'unittests',
       'type': 'none',
       'dependencies': [
-        'storage_test',
+        "../base/base.gyp:base_all_test",
+        "../client/client.gyp:client_all_test",
+        "../composer/composer.gyp:composer_all_test",
+        "../converter/converter.gyp:converter_all_test",
+        "../dictionary/dictionary.gyp:dictionary_all_test",
+        # "../gui/gui.gyp:gui_all_test",
+        "../ipc/ipc.gyp:ipc_all_test",
+        # "../net/net.gyp:net_all_test",
+        "../prediction/prediction.gyp:prediction_all_test",
+        "../rewriter/rewriter.gyp:rewriter_all_test",
+        # "../server/server.gyp:server_all_test",
+        "../session/session.gyp:session_all_test",
+        "../storage/storage.gyp:storage_all_test",
+        "../transliteration/transliteration.gyp:transliteration_all_test",
+        "../usage_stats/usage_stats.gyp:usage_stats_all_test",
       ],
     },
   ],

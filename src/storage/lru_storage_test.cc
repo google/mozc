@@ -41,7 +41,7 @@
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
-
+namespace {
 int Random(int size) {
   return 1 + static_cast<int> (1.0 * size * rand() / (RAND_MAX + 1.0));
 }
@@ -93,10 +93,39 @@ void RunTest(LRUStorage *storage, uint32 size) {
     EXPECT_TRUE(v2 == NULL);
   }
 }
+}  // anonymous namespace
 
-TEST(LRUStorageTest, LRUStorageTest) {
+class LRUStorageTest : public testing::Test {
+ protected:
+  LRUStorageTest() {}
+
+  virtual void SetUp() {
+    UnlinkDBFileIfExists();
+  }
+
+  virtual void TearDown() {
+    UnlinkDBFileIfExists();
+  }
+
+  static void UnlinkDBFileIfExists() {
+    const string path = GetTemporaryFilePath();
+    if (Util::FileExists(path)) {
+      Util::Unlink(path);
+    }
+  }
+
+  static string GetTemporaryFilePath() {
+    // This name should be unique to each test.
+    return Util::JoinPath(FLAGS_test_tmpdir, "LRUStorageTest_test.db");
+  }
+
+ private:
+  DISALLOW_COPY_AND_ASSIGN(LRUStorageTest);
+};
+
+TEST_F(LRUStorageTest, LRUStorageTest) {
   static const int kSize[] = {10, 100, 1000, 10000};
-  const string file = FLAGS_test_tmpdir + "/test.db";
+  const string file = GetTemporaryFilePath();
   for (int i = 0; i < arraysize(kSize); ++i) {
     LRUStorage::CreateStorageFile(file.c_str(), 4, kSize[i], 0x76fef);
     LRUStorage storage;
@@ -107,8 +136,36 @@ TEST(LRUStorageTest, LRUStorageTest) {
   }
 }
 
-TEST(LRUStorageTest, LRUStoragOpenOrCreate) {
-  const string file = FLAGS_test_tmpdir + "/test2.db";
+class LRUStoragOpenOrCreateTest : public testing::Test {
+ protected:
+  LRUStoragOpenOrCreateTest() {}
+
+  virtual void SetUp() {
+    UnlinkDBFileIfExists();
+  }
+
+  virtual void TearDown() {
+    UnlinkDBFileIfExists();
+  }
+
+  static void UnlinkDBFileIfExists() {
+    const string path = GetTemporaryFilePath();
+    if (Util::FileExists(path)) {
+      Util::Unlink(path);
+    }
+  }
+
+  static string GetTemporaryFilePath() {
+    // This name should be unique to each test.
+    return Util::JoinPath(FLAGS_test_tmpdir,
+                          "LRUStoragOpenOrCreateTest_test.db");
+  }
+ private:
+  DISALLOW_COPY_AND_ASSIGN(LRUStoragOpenOrCreateTest);
+};
+
+TEST_F(LRUStoragOpenOrCreateTest, LRUStoragOpenOrCreateTest) {
+  const string file = GetTemporaryFilePath();
   {
     OutputFileStream ofs(file.c_str());
     ofs << "test";
@@ -129,4 +186,4 @@ TEST(LRUStorageTest, LRUStoragOpenOrCreate) {
     CHECK_EQ(v, *result);
   }
 }
-}  // mozc
+}  // namespace mozc

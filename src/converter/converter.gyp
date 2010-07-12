@@ -298,5 +298,14 @@
         'test_size': 'small',
       },
     },
+    # Test cases meta target: this target is referred from gyp/tests.gyp
+    {
+      'target_name': 'converter_all_test',
+      'type': 'none',
+      'dependencies': [
+        'converter_test',
+        'character_form_manager_test',
+      ],
+    },
   ],
 }
