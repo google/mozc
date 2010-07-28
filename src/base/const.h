@@ -49,8 +49,10 @@ const char kCharacterPadMailslotPrefix[]
     = "\\\\.\\mailslot\\googlejapaneseinput.character_pad.";
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
 const char kEventPathPrefix[] = "Global\\GoogleJapaneseInput.event.";
+const char kMutexPathPrefix[] = "Global\\GoogleJapaneseInput.mutex.";
 #else
 const char kEventPathPrefix[] = "Global\\Mozc.event.";
+const char kMutexPathPrefix[] = "Global\\Mozc.mutex.";
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 const char kMozcServerName[] = "GoogleIMEJaConverter.exe";
 const char kIMEFile[] = "GoogleIMEJa.ime";

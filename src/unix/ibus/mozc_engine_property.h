@@ -44,42 +44,49 @@ const struct MozcEngineProperty {
   const char *key;  // IBus property key for the mode.
   const char *label;  // text for the radio menu (ibus-anthy compatible).
   const char *label_for_panel;  // text for the language panel.
+  const char *icon;
 } kMozcEngineProperties[] = {
   {
     commands::DIRECT,
     "CompositionMode.Direct",
     "Direct input",
     "A",
+    "direct.png",
   },
   {
     commands::HIRAGANA,
     "CompositionMode.Hiragana",
     "Hiragana",
     "\xe3\x81\x82",  // Hiragana letter A
+    "hiragana.png",
   },
   {
     commands::FULL_KATAKANA,
     "CompositionMode.Katakana",
     "Katakana",
     "\xe3\x82\xa2",  // Katakana letter A
+    "katakana_full.png",
   },
   {
     commands::HALF_ASCII,
     "CompositionMode.Latin",
     "Latin",
     "_A",
+    "alpha_half.png",
   },
   {
     commands::FULL_ASCII,
     "CompositionMode.WideLatin",
     "Wide Latin",
     "\xef\xbc\xa1",  // Full width ASCII letter A
+    "alpha_full.png",
   },
   {
     commands::HALF_KATAKANA,
     "CompositionMode.HalfWidthKatakana",
     "Half width katakana",
     "_\xef\xbd\xb1",  // Half width Katakana letter A
+    "katakana_half.png",
   },
 };
 
@@ -93,21 +100,25 @@ const struct MozcEngineToolProperty {
   const char *key;    // IBus property key for the MozcTool.
   const char *mode;   // command line passed as --mode=
   const char *label;  // text for the menu.
+  const char *icon;   // icon
 } kMozcEngineToolProperties[] = {
   {
     "Tool.ConfigDialog",
     "config_dialog",
-    "property"
+    "Property",
+    "properties.png",
   },
   {
     "Tool.DictionaryTool",
     "dictionary_tool",
-    "dictionary tool"
+    "Dictionary tool",
+    "dictionary.png",
   },
   {
     "Tool.AboutDialog",
     "about_dialog",
-    "About Mozc"
+    "About Mozc",
+    NULL,
   },
 };
 

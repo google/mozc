@@ -49,9 +49,9 @@ const char kPropToolIcon[] = SCIM_ICONDIR "/scim-mozc-tool.png";
 const char kPropToolDictionary[] = "/Mozc/Tool/dictionary";
 const char kPropToolDictionaryIcon[] = SCIM_ICONDIR "/scim-mozc-dictionary.png";
 const char kPropToolProperty[] = "/Mozc/Tool/property";
-const char kPropToolPropertyIcon[] = SCIM_ICONDIR "/scim-mozc-property.png";
+const char kPropToolPropertyIcon[] = SCIM_ICONDIR "/scim-mozc-properties.png";
 
-const char kPropCompositionModeIcon[] = "/Mozc/CompositionMode";
+const char kPropCompositionMode[] = "/Mozc/CompositionMode";
 
 const struct CompositionMode {
   const char *icon;
@@ -61,37 +61,37 @@ const struct CompositionMode {
   mozc::commands::CompositionMode mode;
 } kPropCompositionModes[] = {
   {
-    "",  // TODO(yusukes): use icons.
+    SCIM_ICONDIR "/scim-mozc-direct.png",
     "A",
     "/Mozc/CompositionMode/direct",
     "Direct",
     mozc::commands::DIRECT,
   }, {
-    "",
+    SCIM_ICONDIR "/scim-mozc-hiragana.png",
     "\xe3\x81\x82",  // Hiragana letter A in UTF-8.
     "/Mozc/CompositionMode/hiragana",
     "Hiragana",
     mozc::commands::HIRAGANA,
   }, {
-    "",
+    SCIM_ICONDIR "/scim-mozc-katakana_full.png",
     "\xe3\x82\xa2",  // Katakana letter A.
     "/Mozc/CompositionMode/full_katakana",
     "Full Katakana",
     mozc::commands::FULL_KATAKANA,
   }, {
-    "",
+    SCIM_ICONDIR "/scim-mozc-alpha_half.png",
     "_A",
     "/Mozc/CompositionMode/half_ascii",
     "Half ASCII",
     mozc::commands::HALF_ASCII,
   }, {
-    "",
+    SCIM_ICONDIR "/scim-mozc-alpha_full.png",
     "\xef\xbc\xa1",  // Full width ASCII letter A.
     "/Mozc/CompositionMode/full_ascii",
     "Full ASCII",
     mozc::commands::FULL_ASCII,
   }, {
-    "",
+    SCIM_ICONDIR "/scim-mozc-katakana_half.png",
     "_\xef\xbd\xb1",  // Half width Katakana letter A.
     "/Mozc/CompositionMode/half_katakana",
     "Half Katakana",
@@ -301,9 +301,8 @@ void ScimMozc::SetCompositionMode(mozc::commands::CompositionMode mode) {
   composition_mode_ = mode;
   // Update the bar.
   const char *icon = GetCurrentCompositionModeIcon();
-  const char *label = GetCurrentCompositionModeLabel();
   scim::Property p = scim::Property(
-      kPropCompositionModeIcon, label, icon, "Composition mode");
+      kPropCompositionMode, "", icon, "Composition mode");
   update_property(p);
 }
 
@@ -366,13 +365,12 @@ void ScimMozc::OpenUrl() {
 
 void ScimMozc::InitializeBar() {
   VLOG(1) << "Registering properties";
-  // TODO(yusukes): L10N needed for "Tool", "Dictionary", and "Property".
+  // TODO(yusukes): L10N needed for "Tool", "Dictionary tool", and "Property".
   scim::PropertyList prop_list;
 
   const char *icon = GetCurrentCompositionModeIcon();
-  const char *label = GetCurrentCompositionModeLabel();
   scim::Property p = scim::Property(
-      kPropCompositionModeIcon, label, icon, "Composition mode");
+      kPropCompositionMode, "", icon, "Composition mode");
   prop_list.push_back(p);
   for (size_t i = 0; i < kNumCompositionModes; ++i) {
     p = scim::Property(kPropCompositionModes[i].config_path,
@@ -388,7 +386,7 @@ void ScimMozc::InitializeBar() {
     p = scim::Property(kPropTool, "", kPropToolIcon, "Tool");
     prop_list.push_back(p);
     p = scim::Property(
-        kPropToolDictionary, "Dictionary", kPropToolDictionaryIcon);
+        kPropToolDictionary, "Dictionary tool", kPropToolDictionaryIcon);
     prop_list.push_back(p);
     p = scim::Property(kPropToolProperty, "Property", kPropToolPropertyIcon);
     prop_list.push_back(p);
@@ -401,14 +399,6 @@ const char *ScimMozc::GetCurrentCompositionModeIcon() const {
   DCHECK(composition_mode_ < kNumCompositionModes);
   if (composition_mode_ < kNumCompositionModes) {
     return kPropCompositionModes[composition_mode_].icon;
-  }
-  return "";
-}
-
-const char *ScimMozc::GetCurrentCompositionModeLabel() const {
-  DCHECK(composition_mode_ < kNumCompositionModes);
-  if (composition_mode_ < kNumCompositionModes) {
-    return kPropCompositionModes[composition_mode_].label;
   }
   return "";
 }

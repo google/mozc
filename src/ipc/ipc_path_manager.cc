@@ -37,7 +37,12 @@
 #ifdef OS_WINDOWS
 #include <windows.h>
 #include <psapi.h>   // GetModuleFileNameExW
-#endif
+#else
+// For stat system call
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#endif  // OS_WINDOWS
 
 #ifdef OS_MACOSX
 #include <sys/sysctl.h>
@@ -176,7 +181,8 @@ IPCPathManager::IPCPathManager(const string &name)
     : mutex_(new Mutex),
       ipc_path_info_(new ipc::IPCPathInfo),
       name_(name),
-      server_pid_(0) {}
+      server_pid_(0),
+      last_modified_(-1) {}
 
 IPCPathManager::~IPCPathManager() {}
 
@@ -234,6 +240,7 @@ bool IPCPathManager::SavePathName() {
 
   VLOG(1) << "ServerIPCKey: " << ipc_path_info_->key();
 
+  last_modified_ = GetIPCFileTimeStamp();
   return true;
 }
 
@@ -243,7 +250,7 @@ bool IPCPathManager::GetPathName(string *ipc_name) {
     return false;
   }
 
-  if (ipc_path_info_->key().empty() && !LoadPathName()) {
+  if ((ShouldReload() || ipc_path_info_->key().empty()) && !LoadPathName()) {
     LOG(ERROR) << "GetPathName failed";
     return false;
   }
@@ -380,6 +387,39 @@ bool IPCPathManager::IsValidServer(uint32 pid,
   return false;
 }
 
+bool IPCPathManager::ShouldReload() const {
+#ifdef OS_WINDOWS
+  // In windows, no reloading mechanism is necessary because IPC files
+  // are automatically removed.
+  return false;
+#else
+  scoped_lock l(mutex_.get());
+
+  time_t last_modified = GetIPCFileTimeStamp();
+  if (last_modified == last_modified_) {
+    return false;
+  }
+
+  return true;
+#endif  // OS_WINDOWS
+}
+
+time_t IPCPathManager::GetIPCFileTimeStamp() const {
+#ifdef OS_WINDOWS
+  // In windows, we don't need to get the exact file timestamp, so
+  // just returns -1 at this time.
+  return static_cast<time_t>(-1);
+#else
+  const string filename = GetIPCKeyFileName(name_);
+  struct stat filestat;
+  if (::stat(filename.c_str(), &filestat) == -1) {
+    VLOG(2) << "stat(2) failed.  Skipping reload";
+    return static_cast<time_t>(-1);
+  }
+  return filestat.st_mtime;
+#endif  // OS_WINDOWS
+}
+
 bool IPCPathManager::LoadPathName() {
   scoped_lock l(mutex_.get());
 
@@ -460,6 +500,7 @@ bool IPCPathManager::LoadPathName() {
   VLOG(1) << "ClientIPCKey: " << ipc_path_info_->key();
   VLOG(1) << "ProtocolVersion: " << ipc_path_info_->protocol_version();
 
+  last_modified_ = GetIPCFileTimeStamp();
   return true;
 }
 }  // namespace mozc

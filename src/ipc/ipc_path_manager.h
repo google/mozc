@@ -30,9 +30,16 @@
 #ifndef MOZC_IPC_IPC_PATH_MANAGER_H_
 #define MOZC_IPC_IPC_PATH_MANAGER_H_
 
+#ifdef OS_WINDOWS
+#include <time.h>  // for time_t
+#else
+#include <sys/time.h>  // for time_t
+#endif  // OS_WINDOWS
 #include <string>
 #include "base/base.h"
 #include "base/mutex.h"
+// For FRIEND_TEST
+#include "testing/base/public/gunit_prod.h"
 
 namespace mozc {
 
@@ -93,10 +100,17 @@ class IPCPathManager {
   virtual ~IPCPathManager();
 
  private:
+  FRIEND_TEST(IPCPathManagerTest, ReloadTest);
 
   // Load ipc name from ~/.mozc/.ipc
   // Note that this method overwrites the ipc_key_
   bool LoadPathName();
+
+  // Returns true if the ipc file is updated after it load.
+  bool ShouldReload() const;
+
+  // Returns the last modified timestamp of the IPC file.
+  time_t GetIPCFileTimeStamp() const;
 
   scoped_ptr<ProcessMutex> path_mutex_;   // lock ipc path file
   scoped_ptr<Mutex> mutex_;   // mutex for methods
@@ -104,6 +118,7 @@ class IPCPathManager {
   string name_;
   string server_path_;   // cache for server_path
   uint32 server_pid_;    // cache for pid of server_path
+  time_t last_modified_;
 };
 }  // mozc
 

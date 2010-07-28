@@ -150,7 +150,7 @@ class TestStatsConfigUtil : public StatsConfigUtilInterface {
   bool val_;
 };
 
-const char kBaseUrl[] = "http://client4.google.com/tbproxy/usagestats";
+const char kBaseUrl[] = "http://clients4.google.com/tbproxy/usagestats";
 
 const char kTestClientId[] = "TestClientId";
 

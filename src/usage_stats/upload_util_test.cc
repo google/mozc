@@ -102,7 +102,7 @@ class TestHTTPClient : public HTTPClientInterface {
 TEST(UploadUtilTest, UploadTest) {
   TestHTTPClient client;
   HTTPClient::SetHTTPClientHandler(&client);
-  const string base_url = "http://client4.google.com/tbproxy/usagestats";
+  const string base_url = "http://clients4.google.com/tbproxy/usagestats";
   {
     TestHTTPClient::Result result;
     result.expected_url = base_url + "?sourceid=ime&hl=ja&v=test";

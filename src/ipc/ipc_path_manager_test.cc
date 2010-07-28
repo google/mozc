@@ -28,6 +28,8 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "base/base.h"
+#include "base/file_stream.h"
+#include "base/process_mutex.h"
 #include "base/util.h"
 #include "base/thread.h"
 #include "ipc/ipc_path_manager.h"
@@ -72,6 +74,7 @@ class BatchGetPathNameThread : public Thread {
     }
   }
 };
+}  // anonymous namespace
 
 TEST(IPCPathManagerTest, IPCPathManagerTest) {
   mozc::Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
@@ -102,5 +105,29 @@ TEST(IPCPathManagerTest, IPCPathManagerBatchTest) {
     threads[i].Join();
   }
 }
-}  // namespace
+
+TEST(IPCPathManagerTest, ReloadTest) {
+  // We have only mock implementations for Windows, so no test should be run.
+#ifndef OS_WINDOWS
+  mozc::IPCPathManager *manager =
+      mozc::IPCPathManager::GetIPCPathManager("reload_test");
+
+  EXPECT_TRUE(manager->CreateNewPathName());
+  EXPECT_TRUE(manager->SavePathName());
+
+  // Just after the save, there are no need to reload.
+  EXPECT_FALSE(manager->ShouldReload());
+
+  // Modify the saved file explicitly.
+  EXPECT_TRUE(manager->path_mutex_->UnLock());
+  Util::Sleep(1000 /* msec */);
+  string filename = Util::JoinPath(
+      Util::GetUserProfileDirectory(), ".reload_test.ipc");
+  OutputFileStream outf(filename.c_str());
+  outf << "foobar";
+  outf.close();
+
+  EXPECT_TRUE(manager->ShouldReload());
+#endif  // OS_WINDOWS
+}
 }  // mozc

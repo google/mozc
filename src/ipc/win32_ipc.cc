@@ -35,7 +35,9 @@
 #include <windows.h>
 #include <string>
 #include "base/base.h"
+#include "base/const.h"
 #include "base/mutex.h"
+#include "base/singleton.h"
 #include "base/util.h"
 #include "ipc/ipc_path_manager.h"
 #include "third_party/mozc/sandbox/security_attributes.h"
@@ -67,6 +69,84 @@ void InitFPGetNamedPipeServerProcessId() {
       reinterpret_cast<FPGetNamedPipeServerProcessId>
       (::GetProcAddress(lib, "GetNamedPipeServerProcessId"));
 }
+
+class IPCClientMutex {
+ public:
+  IPCClientMutex() {
+    // Make a kernel mutex object so that multiple ipc connections are
+    // serialized here. In Windows, there is no useful way to serialize
+    // the multiple connections to the single-thread named pipe server.
+    // WaitForNamedPipe doesn't work for this propose as it just lets
+    // clients know that the connection becomes "available" right now.
+    // It doesn't mean that connection is available for the current
+    /// thread. The "available" notification is sent to all waiting ipc
+    // clients at the same time and only one client gets the connection.
+    // This causes redundant and wasteful CreateFile calles.
+    string mutex_name = kMutexPathPrefix;
+    mutex_name += Util::GetUserSidAsString();
+    mutex_name += ".ipc";
+    wstring wmutex_name;
+    Util::UTF8ToWide(mutex_name.c_str(), &wmutex_name);
+
+    LPSECURITY_ATTRIBUTES security_attributes_ptr = NULL;
+    SECURITY_ATTRIBUTES security_attributes;
+    if (!sandbox::MakeSecurityAttributes(&security_attributes)) {
+      LOG(ERROR) << "Cannot make SecurityAttributes";
+    } else {
+      security_attributes_ptr = &security_attributes;
+    }
+
+    // http://msdn.microsoft.com/en-us/library/ms682411(VS.85).aspx:
+    // Two or more processes can call CreateMutex to create the same named
+    // mutex. The first process actually creates the mutex, and subsequent
+    // processes with sufficient access rights simply open a handle to
+    // the existing mutex. This enables multiple processes to get handles
+    // of the same mutex, while relieving the user of the responsibility
+    // of ensuring that the creating process is started first.
+    // When using this technique, you should set the
+    // bInitialOwner flag to FALSE; otherwise, it can be difficult to be
+    // certain which process has initial ownership.
+    ipc_mutex_.reset(::CreateMutex(security_attributes_ptr,
+                                   FALSE, wmutex_name.c_str()));
+
+    if (ipc_mutex_.get() == NULL) {
+      LOG(ERROR) << "CreateMutex failed: " << ::GetLastError();
+      return;
+    }
+
+    // permit the access from a process runinning with low integrity level
+    if (Util::IsVistaOrLater()) {
+      sandbox::SetMandatoryLabelW(ipc_mutex_.get(),
+                                  SE_KERNEL_OBJECT, L"NX", L"LW");
+    }
+  }
+
+  virtual ~IPCClientMutex() {}
+
+  HANDLE get() const {
+    return ipc_mutex_.get();
+  }
+
+ private:
+  ScopedHandle ipc_mutex_;
+};
+
+// RAII class for calling ReleaseMutex in destructor.
+class ScopedReleaseMutex {
+ public:
+  ScopedReleaseMutex(HANDLE handle)
+      : handle_(handle) {}
+
+  virtual ~ScopedReleaseMutex() {
+    if (NULL != handle_) {
+      ::ReleaseMutex(handle_);
+    }
+  }
+
+  HANDLE get() const { return handle_; }
+ private:
+  HANDLE handle_;
+};
 
 uint32 GetServerProcessId(HANDLE handle) {
   CallOnce(&g_once, &InitFPGetNamedPipeServerProcessId);
@@ -386,6 +466,33 @@ IPCClient::IPCClient(const string &name, const string &server_path)
 void IPCClient::Init(const string &name, const string &server_path) {
   last_ipc_error_ = IPC_NO_CONNECTION;
 
+  // TODO(taku): ICPClientMutex doesn't take IPC path name into consideration.
+  // Currently, it is not a critical problem, as we only have single
+  // channel (session).
+  ScopedReleaseMutex ipc_mutex(Singleton<IPCClientMutex>::get()->get());
+
+  if (ipc_mutex.get() == NULL) {
+    LOG(ERROR) << "IPC mutex is not available";
+  } else {
+    const int kMutexTimeout = 10 * 1000;  // wait at most 10sec.
+    switch (::WaitForSingleObject(ipc_mutex.get(), kMutexTimeout)) {
+      case WAIT_TIMEOUT:
+        // TODO(taku): with suspend/resume, WaitForSingleObject may
+        // return WAIT_TIMEOUT. We have to consider the case
+        // in the future.
+        LOG(ERROR) << "IPC client was not available even after "
+                   << kMutexTimeout << " msec.";
+        break;
+      case WAIT_ABANDONED:
+        DLOG(INFO) << "mutex object was removed";
+        break;
+      case WAIT_OBJECT_0:
+        break;
+      default:
+        break;
+    }
+  }
+
   IPCPathManager *manager = IPCPathManager::GetIPCPathManager(name);
   if (manager == NULL) {
     LOG(ERROR) << "IPCPathManager::GetIPCPathManager failed";
@@ -441,7 +548,7 @@ void IPCClient::Init(const string &name, const string &server_path) {
     }
 
     // wait for 10 second until server is ready
-    // TODO(taku): control the timout via flag.
+    // TODO(taku): control the timeout via flag.
 #ifdef _DEBUG
     const int kNamedPipeTimeout = 100000;   // 100 sec
 #else

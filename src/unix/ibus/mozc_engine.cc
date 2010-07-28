@@ -65,8 +65,7 @@ const int32 kBadCandidateId = -1;
 const char kMozcSectionName[] = "engine/Mozc";
 
 // Icon path for MozcTool
-// TODO(taku): currently, unknown icon is displayed.
-const char kMozcToolIconPath[] = "unknown.ico";
+const char kMozcToolIconPath[] = "tool.png";
 
 // for every 5 minutes, call SyncData
 const uint64 kSyncDataInterval = 5 * 60;
@@ -239,14 +238,14 @@ MozcEngine::MozcEngine()
   IBusPropList *sub_prop_list = ibus_prop_list_new();
 
   // Create items for the radio menu.
-  IBusText *label_for_panel = NULL;  // e.g. Hiragana letter A.
+  string icon_path_for_panel;
   for (size_t i = 0; i < kMozcEnginePropertiesSize; ++i) {
     const MozcEngineProperty &entry = kMozcEngineProperties[i];
     IBusText *label = ibus_text_new_from_static_string(entry.label);
     IBusPropState state = PROP_STATE_UNCHECKED;
     if (entry.composition_mode == kMozcEngineInitialCompositionMode) {
       state = PROP_STATE_CHECKED;
-      label_for_panel = ibus_text_new_from_static_string(entry.label_for_panel);
+      icon_path_for_panel = GetIconPath(entry.icon);
     }
     IBusProperty *item = ibus_property_new(entry.key,
                                            PROP_TYPE_RADIO,
@@ -261,13 +260,13 @@ MozcEngine::MozcEngine()
     ibus_prop_list_append(sub_prop_list, item);
     // |sub_prop_list| owns |item| by calling g_object_ref_sink for the |item|.
   }
-  DCHECK(label_for_panel) << "All items are disabled by default";
+  DCHECK(!icon_path_for_panel.empty());
 
   // The label of |prop_composition_mode_| is shown in the language panel.
   prop_composition_mode_ = ibus_property_new("CompositionMode",
                                              PROP_TYPE_MENU,
-                                             label_for_panel,
-                                             NULL /* icon */,
+                                             NULL /* label */,
+                                             icon_path_for_panel.c_str(),
                                              NULL /* tooltip */,
                                              TRUE /* sensitive */,
                                              TRUE /* visible */,
@@ -287,11 +286,12 @@ MozcEngine::MozcEngine()
     for (size_t i = 0; i < kMozcEngineToolPropertiesSize; ++i) {
       const MozcEngineToolProperty &entry = kMozcEngineToolProperties[i];
       IBusText *label = ibus_text_new_from_static_string(entry.label);
+      // TODO(yusukes): It would be better to use entry.icon here?
       IBusProperty *item = ibus_property_new(entry.mode,
                                              PROP_TYPE_NORMAL,
                                              label,
-                                             NULL,
-                                             NULL,
+                                             NULL /* icon */,
+                                             NULL /* tooltip */,
                                              TRUE,
                                              TRUE,
                                              PROP_STATE_UNCHECKED,
@@ -381,13 +381,19 @@ void MozcEngine::CursorUp(IBusEngine *engine) {
 }
 
 void MozcEngine::Disable(IBusEngine *engine) {
-  // TODO(mazda): Implement this.
+  RevertSession(engine);
 }
 
 void MozcEngine::Enable(IBusEngine *engine) {
   // Launch mozc_server
   session_->EnsureConnection();
   UpdatePreeditMethod();
+
+  // When ibus-mozc is disabled by the "next input method" hot key, ibus-daemon
+  // does not call MozcEngine::Disable(). Call RevertSession() here so the
+  // mozc_server could discard a preedit string before the hot key is pressed
+  // (crosbug.com/4596).
+  RevertSession(engine);
 }
 
 void MozcEngine::FocusIn(IBusEngine *engine) {
@@ -395,11 +401,7 @@ void MozcEngine::FocusIn(IBusEngine *engine) {
 }
 
 void MozcEngine::FocusOut(IBusEngine *engine) {
-  commands::SessionCommand command;
-  command.set_type(commands::SessionCommand::REVERT);
-  commands::Output output;
-  session_->SendCommand(command, &output);
-  UpdateAll(engine, output);
+  RevertSession(engine);
   SyncData(false);
 }
 
@@ -471,7 +473,7 @@ gboolean MozcEngine::ProcessKeyEvent(
   // TODO(mazda): Check if this code is necessary
   // if (!consumed) {
   //   ibus_engine_forward_key_event(engine, keyval, keycode, modifiers);
-  //  }
+  // }
   return consumed ? TRUE : FALSE;
 }
 
@@ -499,17 +501,18 @@ void MozcEngine::PropertyActivate(IBusEngine *engine,
   IBusProperty *prop = NULL;
 
 #ifndef OS_CHROMEOS
-  DCHECK(prop_mozc_tool_);
-  while (prop = ibus_prop_list_get(prop_mozc_tool_->sub_props, i++)) {
-    if (!g_strcmp0(property_name, prop->key)) {
-      const MozcEngineToolProperty *entry =
-          reinterpret_cast<const MozcEngineToolProperty*>(
-              g_object_get_data(G_OBJECT(prop), kGObjectDataKey));
-      DCHECK(entry->mode);
-      if (!session_->LaunchTool(entry->mode, "")) {
-        LOG(ERROR) << "cannot launch: " << entry->mode;
+  if (prop_mozc_tool_) {
+    while (prop = ibus_prop_list_get(prop_mozc_tool_->sub_props, i++)) {
+      if (!g_strcmp0(property_name, prop->key)) {
+        const MozcEngineToolProperty *entry =
+            reinterpret_cast<const MozcEngineToolProperty*>(
+                g_object_get_data(G_OBJECT(prop), kGObjectDataKey));
+        DCHECK(entry->mode);
+        if (!session_->LaunchTool(entry->mode, "")) {
+          LOG(ERROR) << "cannot launch: " << entry->mode;
+        }
+        return;
       }
-      return;
     }
   }
 #endif
@@ -529,9 +532,8 @@ void MozcEngine::PropertyActivate(IBusEngine *engine,
         // Update Mozc state.
         SetCompositionMode(engine, entry->composition_mode);
         // Update the language panel.
-        ibus_property_set_label(
-            prop_composition_mode_,
-            ibus_text_new_from_static_string(entry->label_for_panel));
+        ibus_property_set_icon(prop_composition_mode_,
+                               GetIconPath(entry->icon).c_str());
       }
       // Update the radio menu item.
       ibus_property_set_state(prop, PROP_STATE_CHECKED);
@@ -554,7 +556,7 @@ void MozcEngine::PropertyShow(IBusEngine *engine,
 }
 
 void MozcEngine::Reset(IBusEngine *engine) {
-  // TODO(mazda): Implement this.
+  RevertSession(engine);
 }
 
 void MozcEngine::SetCapabilities(IBusEngine *engine,
@@ -848,6 +850,17 @@ void MozcEngine::SyncData(bool force) {
     session_->SyncData();
     last_sync_time_ = current_time;
   }
+}
+
+void MozcEngine::RevertSession(IBusEngine *engine) {
+  commands::SessionCommand command;
+  command.set_type(commands::SessionCommand::REVERT);
+  commands::Output output;
+  if (!session_->SendCommand(command, &output)) {
+    LOG(ERROR) << "RevertSession() failed";
+    return;
+  }
+  UpdateAll(engine, output);
 }
 
 }  // namespace ibus

@@ -36,7 +36,7 @@ namespace mozc {
 namespace usage_stats {
 namespace {
 const char kStatServerAddress[] =
-    "http://client4.google.com/tbproxy/usagestats";
+    "http://clients4.google.com/tbproxy/usagestats";
 const char kStatServerSourceId[] = "sourceid=ime";
 const char kStatServerAddedSendHeader[] =
     "Content-Type: application/x-www-form-urlencoded";

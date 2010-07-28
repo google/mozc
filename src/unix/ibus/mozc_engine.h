@@ -130,6 +130,10 @@ class MozcEngine : public EngineInterface {
   // always calls SyncData.
   void SyncData(bool force);
 
+  // Reverts internal state of mozc_server by sending SessionCommand::REVERT IPC
+  // message, then hides a preedit string and the candidate window.
+  void RevertSession(IBusEngine *engine);
+
   uint64 last_sync_time_;
   scoped_ptr<KeyTranslator> key_translator_;
   scoped_ptr<client::SessionInterface> session_;
