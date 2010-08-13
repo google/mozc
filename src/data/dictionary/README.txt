@@ -10,7 +10,7 @@ used for Google Japanese Input. The differences are as follows:
   (like 社員証, 再起動) are added. We basically collected these compounds
   with a set of POS rules.
 - Open source version doesn't include Katakana transliterations.
-  (あんどろいど->Android)
+  (いんたーねっと->Internet)
 - Open source version doesn't include Japanese postal code dictionary .
 
 You can add zip code dictionary by follows:

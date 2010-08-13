@@ -92,6 +92,11 @@ TEST(IPCPathManagerTest, IPCPathManagerTest) {
   EXPECT_FALSE(manager->GetServerProductVersion().empty());
   EXPECT_GT(manager->GetServerProcessId(), 0);
   EXPECT_EQ(t.path(), path);
+#ifdef OS_LINUX
+  // On Linux, |path| should be abstract (see man unix(7) for details.)
+  ASSERT_FALSE(path.empty());
+  EXPECT_EQ('\0', path[0]);
+#endif
 }
 
 // Test the thread-safeness of GetPathName() and

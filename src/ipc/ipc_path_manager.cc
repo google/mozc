@@ -265,6 +265,11 @@ bool IPCPathManager::GetPathName(string *ipc_name) {
   *ipc_name = kIPCPrefix;
 #endif  // OS_WINDOWS
 
+#ifdef OS_LINUX
+  // On Linux, use abstract namespace which is independent of the file system.
+  (*ipc_name)[0] = '\0';
+#endif
+
   ipc_name->append(ipc_path_info_->key());
   ipc_name->append(".");
   ipc_name->append(name_);
@@ -359,7 +364,7 @@ bool IPCPathManager::IsValidServer(uint32 pid,
   char filename[512];
   snprintf(proc, sizeof(proc) - 1, "/proc/%u/exe", server_pid_);
   const ssize_t size = readlink(proc, filename, sizeof(filename) - 1);
-  if (size == static_cast<size_t>(-1)) {
+  if (size == -1) {
     LOG(ERROR) << "readlink failed: " << strerror(errno);
     return false;
   }

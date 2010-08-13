@@ -351,7 +351,7 @@ LinuxStatsConfigUtilImpl::LinuxStatsConfigUtilImpl() {}
 LinuxStatsConfigUtilImpl::~LinuxStatsConfigUtilImpl() {}
 
 bool LinuxStatsConfigUtilImpl::IsEnabled() {
-  return true;
+  return false;
 }
 
 bool LinuxStatsConfigUtilImpl::SetEnabled(bool val) {

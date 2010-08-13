@@ -840,3 +840,8 @@ TEST_F(StatsConfigUtilTestWin,
 }  // namespace mozc
 #endif  // OS_WINDOWS
 
+#ifdef OS_LINUX
+TEST(StatsConfigUtilTestLinux, DefaultValueTest) {
+  EXPECT_FALSE(mozc::StatsConfigUtil::IsEnabled());
+}
+#endif

@@ -249,6 +249,12 @@ void SetCloseOnExecFlag(int fd) {
                  << strerror(errno);
   }
 }
+
+// Returns true if address is in abstract namespace. See unix(7) on Linux for
+// details.
+bool IsAbstractSocket(const string& address) {
+  return (!address.empty()) && (address[0] == '\0');
+}
 }  // namespace
 
 // Client
@@ -409,11 +415,15 @@ IPCServer::IPCServer(const string &name,
 #ifdef OS_MACOSX
   addr.sun_len = SUN_LEN(&addr);
   const size_t sun_len = sizeof(addr);
-  ::chmod(server_address_.c_str(), 0600);  // Linux does not use files for IPC.
 #else
   const size_t sun_len = sizeof(addr.sun_family) + server_address_.size();
 #endif
+  if (!IsAbstractSocket(server_address_)) {
+    // Linux does not use files for IPC.
+    ::chmod(server_address_.c_str(), 0600);
+  }
   if (::bind(socket_, reinterpret_cast<sockaddr *>(&addr), sun_len) != 0) {
+    // The UNIX domain socket file (server_address_) already exists?
     LOG(FATAL) << "bind() failed: " << strerror(errno);
     return;
   }
@@ -438,10 +448,10 @@ IPCServer::~IPCServer() {
   }
   ::shutdown(socket_, SHUT_RDWR);
   ::close(socket_);
-#ifdef OS_MACOSX
-  // Since Linux uses abstract namespace, unlink() is not necessary.
-  ::unlink(server_address_.c_str());
-#endif
+  if (!IsAbstractSocket(server_address_)) {
+    // When abstract namespace is used, unlink() is not necessary.
+    ::unlink(server_address_.c_str());
+  }
   connected_ = false;
   socket_ = kInvalidSocket;
   VLOG(1) << "IPCServer destructed";
@@ -487,10 +497,10 @@ void IPCServer::Loop() {
 
   ::shutdown(socket_, SHUT_RDWR);
   ::close(socket_);
-#ifdef OS_MACOSX
-  // Since Linux uses abstract namespace, unlink() is not necessary.
-  ::unlink(server_address_.c_str());
-#endif
+  if (!IsAbstractSocket(server_address_)) {
+    // When abstract namespace is used, unlink() is not necessary.
+    ::unlink(server_address_.c_str());
+  }
   connected_ = false;
   socket_ = kInvalidSocket;
 }

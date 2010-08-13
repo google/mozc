@@ -340,13 +340,21 @@ bool ConfigDialog::Update() {
 }
 
 void ConfigDialog::SetSendStatsCheckBox() {
+  // On windows, usage_stats flag is managed by
+  // administration_dialog. http://b/issue?id=2889759
+#ifndef OS_WINDOWS
   const bool val = StatsConfigUtil::IsEnabled();
   usageStatsCheckBox->setChecked(val);
+#endif  // OS_WINDOWS
 }
 
 void ConfigDialog::GetSendStatsCheckBox() const {
+  // On windows, usage_stats flag is managed by
+  // administration_dialog. http://b/issue?id=2889759
+#ifndef OS_WINDOWS
   const bool val = usageStatsCheckBox->isChecked();
   StatsConfigUtil::SetEnabled(val);
+#endif  // OS_WINDOWS
 }
 
 #define SET_COMBOBOX(combobox, enumname, field) \
