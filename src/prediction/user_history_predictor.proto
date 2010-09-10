@@ -32,6 +32,12 @@ syntax = "proto2";
 package mozc.user_history_predictor;
 
 message UserHistory {
+  message NextEntry {
+    // Just store the Fingerprint32(key + "\t" + value)
+    // |entry| is used as the key of LRU cache
+    optional uint32 entry_fp = 1 [ default = 0 ];
+  };
+
   message Entry {
     // don't use string as key/value might be encrypted
     required bytes key = 1;
@@ -45,6 +51,12 @@ message UserHistory {
     optional uint32 conversion_freq = 5 [ default = 0 ];
 
     optional uint32 last_access_time = 4 [ default = 0 ];
+
+    // list entries which were input just after this entry.
+    repeated NextEntry next_entries = 7;
+
+    // internally used in UserHistoryPredictor.
+    optional bool bigram_boost = 20 [ default = false ];
   };
 
   repeated Entry entries = 6;

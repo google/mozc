@@ -206,18 +206,41 @@ int CursorPos(const commands::Output &output) {
 }
 
 // Returns an IBusText used for showing the auxiliary text in the candidate
-// window.
-// Caller must release the returned IBusText object.
+// window. Returns NULL if no text has to be shown. Caller must release the
+// returned IBusText object.
 IBusText *ComposeAuxiliaryText(const commands::Candidates &candidates) {
-  // Max size of candidates is 200 so 128 is sufficient size for the buffer.
-  char buf[128];
-  const int result = snprintf(buf,
-                              128,
-                              "%d/%d",
-                              candidates.focused_index() + 1,
-                              candidates.size());
-  DCHECK_GE(result, 0) << "snprintf in ComposeAuxiliaryText failed";
-  return ibus_text_new_from_string(buf);
+  if (!candidates.has_footer()) {
+    // We don't have to show the auxiliary text.
+    return NULL;
+  }
+  const commands::Footer &footer = candidates.footer();
+
+  std::string auxiliary_text;
+  if (footer.has_label()) {
+    // TODO(yusukes,mozc-team): label() is not localized. Currently, it's always
+    // written in Japanese (in UTF-8).
+    auxiliary_text = footer.label();
+  } else if (footer.has_sub_label()) {
+    // Windows client shows sub_label() only when label() is not specified. We
+    // follow the policy.
+    auxiliary_text = footer.sub_label();
+  }
+
+  if (footer.has_index_visible() && footer.index_visible() &&
+      candidates.has_focused_index()) {
+    // Max size of candidates is 200 so 128 is sufficient size for the buffer.
+    char index_buf[128] = {0};
+    const int result = snprintf(index_buf,
+                                sizeof(index_buf) - 1,
+                                "%s%d/%d",
+                                (auxiliary_text.empty() ? "" : " "),
+                                candidates.focused_index() + 1,
+                                candidates.size());
+    DCHECK_GE(result, 0) << "snprintf in ComposeAuxiliaryText failed";
+    auxiliary_text += index_buf;
+  }
+  return auxiliary_text.empty() ?
+      NULL : ibus_text_new_from_string(auxiliary_text.c_str());
 }
 
 MozcEngine::MozcEngine()
@@ -398,6 +421,7 @@ void MozcEngine::Enable(IBusEngine *engine) {
 
 void MozcEngine::FocusIn(IBusEngine *engine) {
   ibus_engine_register_properties(engine, prop_root_);
+  UpdatePreeditMethod();
 }
 
 void MozcEngine::FocusOut(IBusEngine *engine) {
@@ -452,6 +476,7 @@ gboolean MozcEngine::ProcessKeyEvent(
 
   VLOG(2) << key.DebugString();
 
+  // TODO(yusukes): Remove DIRECT mode. http://crosbug.com/6226.
   if ((current_composition_mode_ == commands::DIRECT) &&
       // We DO consume keys that enable Mozc such as Henkan even when in the
       // DIRECT mode.
@@ -625,7 +650,9 @@ bool MozcEngine::UpdateAll(IBusEngine *engine, const commands::Output &output) {
   UpdateResult(engine, output);
   UpdatePreedit(engine, output);
   UpdateCandidates(engine, output);
-  UpdateCompositionMode(engine, output);
+  if (output.has_mode()) {
+    UpdateCompositionMode(engine, output.mode());
+  }
   return true;
 }
 
@@ -708,8 +735,8 @@ bool MozcEngine::UpdateCandidates(IBusEngine *engine,
   ibus_engine_update_lookup_table(engine, table, TRUE);
   // |table| is released by ibus_engine_update_lookup_table.
 
-  if (candidates.has_focused_index()) {
-    IBusText *auxiliary_text = ComposeAuxiliaryText(candidates);
+  IBusText *auxiliary_text = ComposeAuxiliaryText(candidates);
+  if (auxiliary_text) {
     ibus_engine_update_auxiliary_text(engine, auxiliary_text, TRUE);
     // |auxiliary_text| is released by ibus_engine_update_auxiliary_text.
   } else {
@@ -810,12 +837,8 @@ void MozcEngine::UpdateConfig(
 #endif
 }
 
-void MozcEngine::UpdateCompositionMode(IBusEngine *engine,
-                                       const commands::Output &output) {
-  if (!output.has_mode()) {
-    return;
-  }
-  const commands::CompositionMode new_composition_mode = output.mode();
+void MozcEngine::UpdateCompositionMode(
+    IBusEngine *engine, const commands::CompositionMode new_composition_mode) {
   if (current_composition_mode_ == new_composition_mode) {
     return;
   }
@@ -853,6 +876,9 @@ void MozcEngine::SyncData(bool force) {
 }
 
 void MozcEngine::RevertSession(IBusEngine *engine) {
+  const commands::CompositionMode original_composition_mode =
+      current_composition_mode_;
+
   commands::SessionCommand command;
   command.set_type(commands::SessionCommand::REVERT);
   commands::Output output;
@@ -860,7 +886,12 @@ void MozcEngine::RevertSession(IBusEngine *engine) {
     LOG(ERROR) << "RevertSession() failed";
     return;
   }
-  UpdateAll(engine, output);
+  UpdateAll(engine, output);  // may update |current_composition_mode_|.
+
+  // If the original composition mode is DIRECT, we should resume the setting.
+  if (original_composition_mode == commands::DIRECT) {
+    UpdateCompositionMode(engine, original_composition_mode);
+  }
 }
 
 }  // namespace ibus

@@ -37,6 +37,8 @@ namespace mozc {
 class ConnectorInterface {
  public:
   virtual int GetTransitionCost(uint16 rid, uint16 lid) const = 0;
+  // Test code can use this method to get acceptable error.
+  virtual int GetResolution() const = 0;
 
   static const int16 kInvalidCost = 30000;
 

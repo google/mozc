@@ -43,10 +43,18 @@
       'variables': {
         'protoc_command%': '<(relative_dir)/<(mozc_build_tools_dir)/protoc<(EXECUTABLE_SUFFIX)',
       },
-    }, { # else
-      'variables': {
-        'protoc_command%': 'protoc<(EXECUTABLE_SUFFIX)',
-      },
+    }, {  # else
+      'conditions': [
+        ['use_libgtest==0', {
+          'variables': {
+            'protoc_command%': '<(relative_dir)/<(mozc_build_tools_dir)/protoc<(EXECUTABLE_SUFFIX)',
+          },
+        }, {  # else
+          'variables': {
+            'protoc_command%': 'protoc<(EXECUTABLE_SUFFIX)',
+          },
+        }],
+      ],
     }],
   ],
   'rules': [

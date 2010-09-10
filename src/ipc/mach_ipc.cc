@@ -180,6 +180,49 @@ class DefaultClientMachPortManager : public MachPortManagerInterface {
 
     return kr == BOOTSTRAP_SUCCESS;
   }
+
+  virtual bool IsServerRunning(const string &name) const {
+    string server_label = MacUtil::GetLabelForSuffix("");
+    if (name == "session") {
+      server_label += "Converter";
+    } else if (name == "renderer") {
+      server_label += "Renderer";
+    } else {
+      LOG(ERROR) << "Unknown server name: " << name;
+      server_label.assign(MacUtil::GetLabelForSuffix(name));
+    }
+
+    launch_data_t request = launch_data_alloc(LAUNCH_DATA_DICTIONARY);
+    launch_data_dict_insert(request,
+                            launch_data_new_string(server_label.c_str()),
+                            LAUNCH_KEY_GETJOB);
+    launch_data_t job = launch_msg(request);
+    launch_data_free(request);
+    if (job == NULL) {
+      LOG(ERROR) << "Server job not found";
+      return false;
+    }
+    if (launch_data_get_type(job) != LAUNCH_DATA_DICTIONARY) {
+      LOG(ERROR) << "Something goes wrong with getting server information: "
+                 << launch_data_get_type(job);
+      launch_data_free(job);
+      return false;
+    }
+
+    launch_data_t pid_data = launch_data_dict_lookup(job, LAUNCH_JOBKEY_PID);
+    if (pid_data == NULL ||
+        launch_data_get_type(pid_data) != LAUNCH_DATA_INTEGER) {
+      // PID information is unavailable, which means server is not running.
+      VLOG(2) << "Returned job is formatted wrongly: cannot find PID data.";
+      launch_data_free(job);
+      return false;
+    }
+
+    VLOG(2) << "Server is running with PID "
+            << launch_data_get_integer(pid_data);
+    launch_data_free(job);
+    return true;
+  }
 };
 
 // The default port manager for servers: using bootstrap_check_in.  It
@@ -214,6 +257,12 @@ class DefaultServerMachPortManager : public MachPortManagerInterface {
         bootstrap_port, const_cast<char *>(port_name.c_str()), port);
     mach_ports_[port_name] = *port;
     return kr == BOOTSTRAP_SUCCESS;
+  }
+
+  // In the server side, it always return "true" because the caller
+  // itself is the server.
+  virtual bool IsServerRunning(const string &name) const {
+    return true;
   }
 
  private:
@@ -396,15 +445,7 @@ bool IPCClient::Connected() const {
     manager = Singleton<DefaultClientMachPortManager>::get();
   }
 
-  // Obtain the server port
-  mach_port_t server_port;
-  if (manager == NULL || !manager->GetMachPort(name_, &server_port)) {
-    LOG(ERROR) << "Failed to connect to the server";
-    return false;
-  }
-
-  VLOG(1) << "Connected";
-  return true;
+  return manager->IsServerRunning(name_);
 }
 
 // Server implementation
@@ -440,15 +481,7 @@ bool IPCServer::Connected() const {
     manager = Singleton<DefaultServerMachPortManager>::get();
   }
 
-  // Obtain the server port
-  mach_port_t server_port;
-  if (manager == NULL || !manager->GetMachPort(name_, &server_port)) {
-    LOG(ERROR) << "Failed to reserve the port.";
-    return false;
-  }
-
-  VLOG(1) << "Succeed";
-  return true;
+  return manager->IsServerRunning(name_);
 }
 
 void IPCServer::Loop() {

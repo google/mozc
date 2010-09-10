@@ -59,12 +59,15 @@
         ['OS=="mac"', {
           'product_name': '<(branding)Converter',
           'sources': [
-            '../mac/mozc_server_info',
+            '../data/mac/mozc_server_info',
           ],
           'dependencies': [
             'gen_mozc_server_info_plist',
           ],
           'mac_bundle': 1,
+          'mac_bundle_resources': [
+            '../data/images/product_icon.icns'
+          ],
           'xcode_settings': {
             # Currently metadata in the Info.plist file like version
             # info go away because the generated xcodeproj don't know
@@ -160,7 +163,7 @@
             {
               'action_name': 'generate',
               'inputs': [
-                '../mac/mozc_server_info',
+                '../data/mac/mozc_server_info',
               ],
               'outputs': [
                 '<(gen_out_dir)/mozc_server_info',
@@ -168,8 +171,9 @@
               'action': [
                 'python', '../build_tools/tweak_info_plist.py',
                 '--output', '<(gen_out_dir)/mozc_server_info',
-                '--input', '../mac/mozc_server_info',
+                '--input', '../data/mac/mozc_server_info',
                 '--version_file', '../mozc_version.txt',
+                '--branding', '<(branding)',
               ],
             },
           ],

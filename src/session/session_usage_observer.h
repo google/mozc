@@ -60,15 +60,28 @@ class SessionUsageObserver : public SessionObserverInterface {
                         const commands::Output &output,
                         map<uint64, SessionState> *states);
   void EvalSendKey(const commands::Input &input,
+                   const commands::Output &output);
+  // Update state and update stats using input and output.
+  void UpdateState(const commands::Input &input,
                    const commands::Output &output,
                    SessionState *state);
-  void UpdateState(const commands::Output &output,
-                   SessionState *state);
+  // Update selected indices of |state|.
+  void UpdateSelectedIndices(const commands::Input &input,
+                             const commands::Output &output,
+                             SessionState *state) const;
+  // Update mode of |state|.
+  void UpdateMode(const commands::Input &input, const commands::Output &output,
+                  SessionState *state) const;
+  // Check output and update stats.
   void CheckOutput(const commands::Input &input,
                    const commands::Output &output,
-                   SessionState *state);
+                   const SessionState *state);
+  // Utility function for updating stats of candidates.
+  void UpdateCandidateStats(const string &base_name, uint32 index);
+
   // Update stats. Values are cached.
   void IncrementCount(const string &name);
+  void IncrementCountBy(const string &name, uint64 count);
   void UpdateTiming(const string &name, uint64 val);
   void SetInteger(const string &name, int val);
   void SetBoolean(const string &name, bool val);

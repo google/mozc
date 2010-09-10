@@ -68,6 +68,7 @@ class SparseArrayBuilder {
   SparseArrayBuilder();
   ~SparseArrayBuilder();
   void AddValue(uint32 key, int val);
+  void SetUse1ByteValue(bool use_1byte_value);
   // Build sparse array image of added values.
   void Build();
   int GetSize() const;
@@ -83,6 +84,7 @@ class SparseArrayBuilder {
 
   // Encoded key to value.
   map<uint32, int> values_;
+  bool use_1byte_value_;
   // Root node of trie tree.
   sparse_array_image::BitTreeNode *root_node_;
   int num_nodes_;
@@ -117,6 +119,7 @@ class SparseArrayImage {
   int size_;
 
   int num_bits_per_level_;
+  bool use_1byte_value_;
   int num_levels_;
   vector<sparse_array_image::BitArray *> arrays_;
 

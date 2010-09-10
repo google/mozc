@@ -1,46 +1,130 @@
-#TODO(toshiyuki): we want to add comments for each name
+# The duration of showing each window in sec
 ConversionWindowDuration
 PredictionWindowDuration
 SuggestionWindowDuration
+
+# The number of commit
 Commit
+# The number of commit from each state
 CommitFromSuggestion
 CommitFromPrediction
 CommitFromConversion
+CommitFromComposition
+
+# The number of all events
 SessionAllEvent
-# elapsed time for processing the request
+
+# The elapsed time for processing the request
 ElapsedTime
+
+# The number of session creation
 SessionCreated
+
+# The number of SetConfig command call
 SetConfig
+
+# The total submitted length count
+SubmittedTotalLength
+
+# The length of submitted segment
+# 猫を|飼う -> [2, 2]
 SubmittedSegmentLength
+# The number of submitted segment
+# 猫を|飼う -> 2
 SubmittedSegmentNumber
+# The length of submitted segment
+# 猫を|飼う -> 4
 SubmittedLength
+
+# The number of ascii/non-ascii typing input
 ASCIITyping
 NonASCIITyping
-Prediction0
-Prediction1
-Prediction2
-Prediction3
-Prediction4
-Prediction5
-Prediction6
-Prediction7
-Prediction8
-Prediction9
-PredictionGE10
+
+# The number of each candidate are selected from prediction
+PredictionCandidates0
+PredictionCandidates1
+PredictionCandidates2
+PredictionCandidates3
+PredictionCandidates4
+PredictionCandidates5
+PredictionCandidates6
+PredictionCandidates7
+PredictionCandidates8
+PredictionCandidates9
+PredictionCandidatesGE10
+
+# The number of each candidate are selected from suggestion
+SuggestionCandidates0
+SuggestionCandidates1
+SuggestionCandidates2
+SuggestionCandidates3
+SuggestionCandidates4
+SuggestionCandidates5
+SuggestionCandidates6
+SuggestionCandidates7
+SuggestionCandidates8
+SuggestionCandidates9
+SuggestionCandidatesGE10
+
+# The number of each candidate are selected from conversion
+ConversionCandidates0
+ConversionCandidates1
+ConversionCandidates2
+ConversionCandidates3
+ConversionCandidates4
+ConversionCandidates5
+ConversionCandidates6
+ConversionCandidates7
+ConversionCandidates8
+ConversionCandidates9
+ConversionCandidatesGE10
+
+# The number of each candidate are selected from conversion and 
+# it was transliteration candidates
+TransliterationCandidates0
+TransliterationCandidates1
+TransliterationCandidates2
+TransliterationCandidates3
+TransliterationCandidates4
+TransliterationCandidates5
+TransliterationCandidates6
+TransliterationCandidates7
+TransliterationCandidates8
+TransliterationCandidates9
+TransliterationCandidatesGE10
+
+# The number of mouse selection command call
 MouseSelect
+
+# The time in sec of each session
 SessionDuration
+
+# The time in sec of each preedit
 PreeditDuration
+
+# The number of showing cascading window
 ShowCascadingWindow
+
+# The number of ShutDown command call
 ShutDown
-# Clear personalization data
+
+# The number of SendKey command, consumed or unconsumed
+ConsumedSendKey
+UnconsumedSendKey
+
+# The number of clear personalization data command call
 ClearUserHistory
-# Clear all history
+
+# The number of clear all history command call
 ClearUserPrediction
-# Clear unused history
+
+# The number of clear unused history command call
 ClearUnusedUserPrediction
+
+# The number of pressing BS just after commit command
 BackSpaceAfterCommit
 
-# special keys
+# The number of special keys input
 NO_SPECIALKEY
 DIGIT
 ON
@@ -117,7 +201,9 @@ EQUALS
 ASCII
 HANKAKU
 KANJI
+KATAKANA
 
+# Stats for config
 # Keymap style
 ConfigSessionKeymap
 # Input mode

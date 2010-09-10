@@ -35,8 +35,9 @@
 #include <utility>
 #include <vector>
 
-#include "converter/segments.h"
+#include "base/util.h"
 #include "converter/pos_matcher.h"
+#include "converter/segments.h"
 #include "session/config_handler.h"
 #include "session/config.pb.h"
 
@@ -108,6 +109,16 @@ const char* kCircledNumbers[] = {
   "\xe2\x91\xae", "\xe2\x91\xaf", "\xe2\x91\xb0", "\xe2\x91\xb1",
   "\xe2\x91\xb2", "\xe2\x91\xb3",
   //   "⑪", "⑫", "⑬", "⑭", "⑮", "⑯", "⑰", "⑱", "⑲", "⑳",
+  "\xE3\x89\x91", "\xE3\x89\x92", "\xE3\x89\x93", "\xE3\x89\x94",
+  "\xE3\x89\x95", "\xE3\x89\x96", "\xE3\x89\x97", "\xE3\x89\x98",
+  "\xE3\x89\x99", "\xE3\x89\x9A", "\xE3\x89\x9B", "\xE3\x89\x9C",
+  "\xE3\x89\x9D", "\xE3\x89\x9E", "\xE3\x89\x9F",
+  // 21-35
+  "\xE3\x8A\xB1", "\xE3\x8A\xB2", "\xE3\x8A\xB3", "\xE3\x8A\xB4",
+  "\xE3\x8A\xB5", "\xE3\x8A\xB6", "\xE3\x8A\xB7", "\xE3\x8A\xB8",
+  "\xE3\x8A\xB9", "\xE3\x8A\xBA", "\xE3\x8A\xBB", "\xE3\x8A\xBC",
+  "\xE3\x8A\xBD", "\xE3\x8A\xBE", "\xE3\x8A\xBF",
+  //36-50
   NULL
 };
 
@@ -444,56 +455,75 @@ void ArabicToOtherRadixes(const string& input_num,
   }
 }
 
-// return true if candidate is pure Arabic numeric candidate
-bool IsArabicNumericCandidate(const Segment::Candidate &cand) {
-  if (cand.value.empty()) {
-    return false;
-  }
-  for (size_t i = 0; i < cand.value.size(); ++i) {
-    if (!isdigit(static_cast<unsigned char>(cand.value[i]))) {
-      return false;
-    }
-  }
-  return true;
+bool IsNumber(uint16 lid) {
+  return
+      (POSMatcher::IsNumber(lid) ||
+       POSMatcher::IsKanjiNumber(lid));
 }
 
-// return the candidate index of Arabic number candidate.
-// return -1 if no Arabic number candidate is found
-int GetNumericCandidate(Segment* seg) {
-  if (seg->candidates_size() == 0) {
-    return -1;
-  }
-
-  const Segment::Candidate &top = seg->candidate(0);
-
-  if (IsArabicNumericCandidate(top)) {
-    return 0;
-  }
-
-  // if Segment only has 1 candidate and the top candidate
-  // looks numeric, try to expand the candidates to find
-  // Arabic numbers.
-  if (seg->candidates_size() == 1) {
-    if (!POSMatcher::IsNumber(top.lid)) {
-      return -1;
-    }
-    const size_t kExpandSize = 5;
-    seg->GetCandidates(kExpandSize);
-  }
-
-  // try to find ArabicNumerci candidates from the rest
+// Return true if rewriter should insert numerical variants.
+// *base_candidate_pos: candidate index of base_candidate. POS information
+// for numerical variants are coped from the base_candidate.
+// *insert_pos: the candidate index from which numerical variants
+// should be inserted.
+bool GetNumericCandidatePositions(Segment *seg,
+                                  int *base_candidate_pos, int *insert_pos) {
+  CHECK(base_candidate_pos);
+  CHECK(insert_pos);
   for (size_t i = 0; i < seg->candidates_size(); ++i) {
-    const Segment::Candidate& cand = seg->candidate(i);
-    if (cand.value.empty()) {
+    const Segment::Candidate &c = seg->candidate(i);
+    if (!IsNumber(c.lid)) {
       continue;
     }
-    if (IsArabicNumericCandidate(cand)) {
-      return i;
+
+    if (Util::GetScriptType(c.content_value) == Util::NUMBER) {
+      *base_candidate_pos = i;
+      // +2 as fullwidht/(or halfwidth) variant is on i + 1 postion.
+      *insert_pos = i + 2;
+      return true;
     }
+
+    string kanji_number, arabic_number, half_width_new_content_value;
+    Util::FullWidthToHalfWidth(c.content_key,
+                               &half_width_new_content_value);
+    // try to get normalized kanji_number and arabic_number.
+    // if it failed, do nothing.
+    if (!Util::NormalizeNumbers(c.content_value, true,
+                                  &kanji_number, &arabic_number) ||
+        arabic_number == half_width_new_content_value) {
+      return false;
+    }
+
+    // Insert arabic number first
+    Segment::Candidate *arabic_c = seg->insert_candidate(i + 1);
+    DCHECK(arabic_c);
+    const string suffix =
+        c.value.substr(c.content_value.size(),
+                       c.value.size() - c.content_value.size());
+    arabic_c->Init();
+    arabic_c->value = arabic_number + suffix;
+    arabic_c->content_value = arabic_number;
+    arabic_c->content_key = c.content_key;
+    arabic_c->cost = c.cost;
+    arabic_c->structure_cost = c.structure_cost;
+    arabic_c->lid = c.lid;
+    arabic_c->rid = c.rid;
+    arabic_c->SetDefaultDescription(
+        Segment::Candidate::CHARACTER_FORM |
+        Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER);
+    seg->ExpandAlternative(i + 1);
+
+    // If top candidate is Kanji numeric, we want to expand at least
+    // 5 candidates here.
+    // http://b/issue?id=2872048
+    const int kArabicNumericOffset = 5;
+    *base_candidate_pos = i + 1;
+    *insert_pos = i + kArabicNumericOffset;
+    return true;
   }
 
-  return -1;
-}
+  return false;
+ }
 }   // namespace
 
 NumberRewriter::NumberRewriter() {}
@@ -509,38 +539,64 @@ bool NumberRewriter::Rewrite(Segments *segments) const {
   for (size_t i = segments->history_segments_size();
        i < segments->segments_size(); ++i) {
     Segment *seg = segments->mutable_segment(i);
-    if (seg == NULL) {
-      return false;
-    }
-    int pos = GetNumericCandidate(seg);
-    if (pos < 0) {
+    DCHECK(seg);
+    int base_candidate_pos = 0;
+    int insert_pos = 0;
+    if (!GetNumericCandidatePositions(seg,
+                                      &base_candidate_pos,
+                                      &insert_pos)) {
       continue;
     }
-    const Segment::Candidate &base_cand = seg->candidate(pos);
+
+    const Segment::Candidate &base_cand = seg->candidate(base_candidate_pos);
+
+    if (base_cand.content_value.size() > base_cand.value.size()) {
+      LOG(ERROR) << "Invalid content_value/value: ";
+      continue;
+    }
+
+    string base_content_value;
+    Util::FullWidthToHalfWidth(base_cand.content_value, &base_content_value);
+
+    if (Util::GetScriptType(base_content_value) != Util::NUMBER) {
+      LOG(ERROR) << "base_content_value is not number: " << base_content_value;
+      continue;
+    }
+
+    seg->GetCandidates(insert_pos);
+    insert_pos = min(insert_pos, static_cast<int>(seg->candidates_size()));
+
     modified = true;
     vector<Segment::Candidate> converted_numbers;
-    ArabicToWideArabic(base_cand.value, &converted_numbers);
-    ArabicToSeparatedArabic(base_cand.value, &converted_numbers);
-    ArabicToKanji(base_cand.value, &converted_numbers);
-    ArabicToOtherForms(base_cand.value, &converted_numbers);
+    ArabicToWideArabic(base_content_value, &converted_numbers);
+    ArabicToSeparatedArabic(base_content_value, &converted_numbers);
+    ArabicToKanji(base_content_value, &converted_numbers);
+    ArabicToOtherForms(base_content_value, &converted_numbers);
     if (segments->conversion_segments_size() == 1) {
-      ArabicToOtherRadixes(base_cand.value, &converted_numbers);
+      ArabicToOtherRadixes(base_content_value, &converted_numbers);
     }
+
+    const string suffix =
+        base_cand.value.substr(base_cand.content_value.size(),
+                               base_cand.value.size() -
+                               base_cand.content_value.size());
+
     for (vector<Segment::Candidate>::const_iterator iter =
              converted_numbers.begin();
          iter != converted_numbers.end(); ++iter) {
-      Segment::Candidate* c = seg->insert_candidate(++pos);
-      if (c != NULL) {
-        c->lid = base_cand.lid;
-        c->rid = base_cand.rid;
-        c->cost = base_cand.cost;
-        c->value = iter->value;
-        c->style = iter->style;
-        c->SetDescription(Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER |
-                          Segment::Candidate::CHARACTER_FORM |
-                          Segment::Candidate::FULL_HALF_WIDTH,
-                          iter->description);
-      }
+      Segment::Candidate* c = seg->insert_candidate(insert_pos++);
+      DCHECK(c);
+      c->lid = base_cand.lid;
+      c->rid = base_cand.rid;
+      c->cost = base_cand.cost;
+      c->value = iter->value + suffix;
+      c->content_value = iter->value;
+      c->content_key = base_cand.content_key;
+      c->style = iter->style;
+      c->SetDescription(Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER |
+                        Segment::Candidate::CHARACTER_FORM |
+                        Segment::Candidate::FULL_HALF_WIDTH,
+                        iter->description);
     }
   }
 

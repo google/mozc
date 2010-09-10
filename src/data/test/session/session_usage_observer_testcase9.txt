@@ -1,0 +1,1577 @@
+# Command log for unittests.
+#
+# KANJI
+# a
+# SPACE, SPACE
+# UP x 4
+# ENTER (submit "£á")
+# KANJI
+#
+
+commands {
+  input {
+    type: NO_OPERATION
+    id: 0
+  }
+  output {
+    id: 0
+    elapsed_time: 8
+  }
+}
+commands {
+  input {
+    type: CREATE_SESSION
+  }
+  output {
+    id: 8122507021326012000
+    elapsed_time: 495
+  }
+}
+commands {
+  input {
+    type: SEND_KEY
+    id: 8122507021326012000
+    key {
+      special_key: KANJI
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 8122507021326012000
+    mode: HIRAGANA
+    consumed: true
+    elapsed_time: 111
+  }
+}
+commands {
+  input {
+    type: TEST_SEND_KEY
+    id: 8122507021326012000
+    key {
+      key_code: 97
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 8122507021326012000
+    consumed: true
+    elapsed_time: 26
+  }
+}
+commands {
+  input {
+    type: SEND_KEY
+    id: 8122507021326012000
+    key {
+      key_code: 97
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 8122507021326012000
+    mode: HIRAGANA
+    consumed: true
+    preedit {
+      cursor: 1
+      Segment {
+        annotation: UNDERLINE
+        value: "\343\201\202"
+        value_length: 1
+        key: "\343\201\202"
+      }
+    }
+    elapsed_time: 5346
+  }
+}
+commands {
+  input {
+    type: TEST_SEND_KEY
+    id: 8122507021326012000
+    key {
+      special_key: SPACE
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 8122507021326012000
+    mode: HIRAGANA
+    consumed: true
+    preedit {
+      cursor: 1
+      Segment {
+        annotation: UNDERLINE
+        value: "\343\201\202"
+        value_length: 1
+        key: "\343\201\202"
+      }
+    }
+    elapsed_time: 85
+  }
+}
+commands {
+  input {
+    type: SEND_KEY
+    id: 8122507021326012000
+    key {
+      special_key: SPACE
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 8122507021326012000
+    mode: HIRAGANA
+    consumed: true
+    preedit {
+      cursor: 1
+      Segment {
+        annotation: HIGHLIGHT
+        value: "\343\201\202"
+        value_length: 1
+        key: "\343\201\202"
+      }
+      highlighted_position: 0
+    }
+    elapsed_time: 6218
+  }
+}
+commands {
+  input {
+    type: TEST_SEND_KEY
+    id: 8122507021326012000
+    key {
+      special_key: SPACE
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 8122507021326012000
+    mode: HIRAGANA
+    consumed: true
+    preedit {
+      cursor: 1
+      Segment {
+        annotation: HIGHLIGHT
+        value: "\343\201\202"
+        value_length: 1
+        key: "\343\201\202"
+      }
+      highlighted_position: 0
+    }
+    elapsed_time: 59
+  }
+}
+commands {
+  input {
+    type: SEND_KEY
+    id: 8122507021326012000
+    key {
+      special_key: SPACE
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 8122507021326012000
+    mode: HIRAGANA
+    consumed: true
+    preedit {
+      cursor: 1
+      Segment {
+        annotation: HIGHLIGHT
+        value: "\344\272\234"
+        value_length: 1
+        key: "\343\201\202"
+      }
+      highlighted_position: 0
+    }
+    candidates {
+      focused_index: 1
+      size: 42
+      Candidate {
+        index: 0
+        value: "\343\201\202"
+        annotation {
+          description: "\343\201\262\343\202\211\343\201\214\343\201\252"
+          shortcut: "1"
+        }
+        id: 0
+      }
+      Candidate {
+        index: 1
+        value: "\344\272\234"
+        annotation {
+          shortcut: "2"
+        }
+        id: 1
+      }
+      Candidate {
+        index: 2
+        value: "\346\234\211"
+        annotation {
+          shortcut: "3"
+        }
+        id: 2
+      }
+      Candidate {
+        index: 3
+        value: "\343\201\201"
+        annotation {
+          description: "\346\215\250\343\201\246\344\273\256\345\220\215 \345\260\217\346\233\270\343\201\215\346\226\207\345\255\227"
+          shortcut: "4"
+        }
+        id: 3
+      }
+      Candidate {
+        index: 4
+        value: "\343\202\241"
+        annotation {
+          description: "\346\215\250\343\201\246\344\273\256\345\220\215 \345\260\217\346\233\270\343\201\215\346\226\207\345\255\227"
+          shortcut: "5"
+        }
+        id: 4
+      }
+      Candidate {
+        index: 5
+        value: "\345\234\250"
+        annotation {
+          shortcut: "6"
+        }
+        id: 5
+      }
+      Candidate {
+        index: 6
+        value: "\343\202\242"
+        annotation {
+          description: "[\345\205\250] \343\202\253\343\202\277\343\202\253\343\203\212"
+          shortcut: "7"
+        }
+        id: 7
+      }
+      Candidate {
+        index: 7
+        value: "\351\230\277"
+        annotation {
+          shortcut: "8"
+        }
+        id: 8
+      }
+      Candidate {
+        index: 8
+        value: "\345\256\211"
+        annotation {
+          shortcut: "9"
+        }
+        id: 9
+      }
+      position: 0
+      category: CONVERSION
+      display_type: MAIN
+      footer {
+        index_visible: true
+        logo_visible: true
+        sub_label: "build 15"
+      }
+    }
+    elapsed_time: 630
+  }
+}
+commands {
+  input {
+    type: TEST_SEND_KEY
+    id: 8122507021326012000
+    key {
+      special_key: UP
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 8122507021326012000
+    mode: HIRAGANA
+    consumed: true
+    preedit {
+      cursor: 1
+      Segment {
+        annotation: HIGHLIGHT
+        value: "\344\272\234"
+        value_length: 1
+        key: "\343\201\202"
+      }
+      highlighted_position: 0
+    }
+    candidates {
+      focused_index: 1
+      size: 42
+      Candidate {
+        index: 0
+        value: "\343\201\202"
+        annotation {
+          description: "\343\201\262\343\202\211\343\201\214\343\201\252"
+          shortcut: "1"
+        }
+        id: 0
+      }
+      Candidate {
+        index: 1
+        value: "\344\272\234"
+        annotation {
+          shortcut: "2"
+        }
+        id: 1
+      }
+      Candidate {
+        index: 2
+        value: "\346\234\211"
+        annotation {
+          shortcut: "3"
+        }
+        id: 2
+      }
+      Candidate {
+        index: 3
+        value: "\343\201\201"
+        annotation {
+          description: "\346\215\250\343\201\246\344\273\256\345\220\215 \345\260\217\346\233\270\343\201\215\346\226\207\345\255\227"
+          shortcut: "4"
+        }
+        id: 3
+      }
+      Candidate {
+        index: 4
+        value: "\343\202\241"
+        annotation {
+          description: "\346\215\250\343\201\246\344\273\256\345\220\215 \345\260\217\346\233\270\343\201\215\346\226\207\345\255\227"
+          shortcut: "5"
+        }
+        id: 4
+      }
+      Candidate {
+        index: 5
+        value: "\345\234\250"
+        annotation {
+          shortcut: "6"
+        }
+        id: 5
+      }
+      Candidate {
+        index: 6
+        value: "\343\202\242"
+        annotation {
+          description: "[\345\205\250] \343\202\253\343\202\277\343\202\253\343\203\212"
+          shortcut: "7"
+        }
+        id: 7
+      }
+      Candidate {
+        index: 7
+        value: "\351\230\277"
+        annotation {
+          shortcut: "8"
+        }
+        id: 8
+      }
+      Candidate {
+        index: 8
+        value: "\345\256\211"
+        annotation {
+          shortcut: "9"
+        }
+        id: 9
+      }
+      position: 0
+      category: CONVERSION
+      display_type: MAIN
+      footer {
+        index_visible: true
+        logo_visible: true
+        sub_label: "build 15"
+      }
+    }
+    elapsed_time: 284
+  }
+}
+commands {
+  input {
+    type: SEND_KEY
+    id: 8122507021326012000
+    key {
+      special_key: UP
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 8122507021326012000
+    mode: HIRAGANA
+    consumed: true
+    preedit {
+      cursor: 1
+      Segment {
+        annotation: HIGHLIGHT
+        value: "\343\201\202"
+        value_length: 1
+        key: "\343\201\202"
+      }
+      highlighted_position: 0
+    }
+    candidates {
+      focused_index: 0
+      size: 42
+      Candidate {
+        index: 0
+        value: "\343\201\202"
+        annotation {
+          description: "\343\201\262\343\202\211\343\201\214\343\201\252"
+          shortcut: "1"
+        }
+        id: 0
+      }
+      Candidate {
+        index: 1
+        value: "\344\272\234"
+        annotation {
+          shortcut: "2"
+        }
+        id: 1
+      }
+      Candidate {
+        index: 2
+        value: "\346\234\211"
+        annotation {
+          shortcut: "3"
+        }
+        id: 2
+      }
+      Candidate {
+        index: 3
+        value: "\343\201\201"
+        annotation {
+          description: "\346\215\250\343\201\246\344\273\256\345\220\215 \345\260\217\346\233\270\343\201\215\346\226\207\345\255\227"
+          shortcut: "4"
+        }
+        id: 3
+      }
+      Candidate {
+        index: 4
+        value: "\343\202\241"
+        annotation {
+          description: "\346\215\250\343\201\246\344\273\256\345\220\215 \345\260\217\346\233\270\343\201\215\346\226\207\345\255\227"
+          shortcut: "5"
+        }
+        id: 4
+      }
+      Candidate {
+        index: 5
+        value: "\345\234\250"
+        annotation {
+          shortcut: "6"
+        }
+        id: 5
+      }
+      Candidate {
+        index: 6
+        value: "\343\202\242"
+        annotation {
+          description: "[\345\205\250] \343\202\253\343\202\277\343\202\253\343\203\212"
+          shortcut: "7"
+        }
+        id: 7
+      }
+      Candidate {
+        index: 7
+        value: "\351\230\277"
+        annotation {
+          shortcut: "8"
+        }
+        id: 8
+      }
+      Candidate {
+        index: 8
+        value: "\345\256\211"
+        annotation {
+          shortcut: "9"
+        }
+        id: 9
+      }
+      position: 0
+      category: CONVERSION
+      display_type: MAIN
+      footer {
+        index_visible: true
+        logo_visible: true
+        sub_label: "build 15"
+      }
+    }
+    elapsed_time: 274
+  }
+}
+commands {
+  input {
+    type: TEST_SEND_KEY
+    id: 8122507021326012000
+    key {
+      special_key: UP
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 8122507021326012000
+    mode: HIRAGANA
+    consumed: true
+    preedit {
+      cursor: 1
+      Segment {
+        annotation: HIGHLIGHT
+        value: "\343\201\202"
+        value_length: 1
+        key: "\343\201\202"
+      }
+      highlighted_position: 0
+    }
+    candidates {
+      focused_index: 0
+      size: 42
+      Candidate {
+        index: 0
+        value: "\343\201\202"
+        annotation {
+          description: "\343\201\262\343\202\211\343\201\214\343\201\252"
+          shortcut: "1"
+        }
+        id: 0
+      }
+      Candidate {
+        index: 1
+        value: "\344\272\234"
+        annotation {
+          shortcut: "2"
+        }
+        id: 1
+      }
+      Candidate {
+        index: 2
+        value: "\346\234\211"
+        annotation {
+          shortcut: "3"
+        }
+        id: 2
+      }
+      Candidate {
+        index: 3
+        value: "\343\201\201"
+        annotation {
+          description: "\346\215\250\343\201\246\344\273\256\345\220\215 \345\260\217\346\233\270\343\201\215\346\226\207\345\255\227"
+          shortcut: "4"
+        }
+        id: 3
+      }
+      Candidate {
+        index: 4
+        value: "\343\202\241"
+        annotation {
+          description: "\346\215\250\343\201\246\344\273\256\345\220\215 \345\260\217\346\233\270\343\201\215\346\226\207\345\255\227"
+          shortcut: "5"
+        }
+        id: 4
+      }
+      Candidate {
+        index: 5
+        value: "\345\234\250"
+        annotation {
+          shortcut: "6"
+        }
+        id: 5
+      }
+      Candidate {
+        index: 6
+        value: "\343\202\242"
+        annotation {
+          description: "[\345\205\250] \343\202\253\343\202\277\343\202\253\343\203\212"
+          shortcut: "7"
+        }
+        id: 7
+      }
+      Candidate {
+        index: 7
+        value: "\351\230\277"
+        annotation {
+          shortcut: "8"
+        }
+        id: 8
+      }
+      Candidate {
+        index: 8
+        value: "\345\256\211"
+        annotation {
+          shortcut: "9"
+        }
+        id: 9
+      }
+      position: 0
+      category: CONVERSION
+      display_type: MAIN
+      footer {
+        index_visible: true
+        logo_visible: true
+        sub_label: "build 15"
+      }
+    }
+    elapsed_time: 297
+  }
+}
+commands {
+  input {
+    type: SEND_KEY
+    id: 8122507021326012000
+    key {
+      special_key: UP
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 8122507021326012000
+    mode: HIRAGANA
+    consumed: true
+    preedit {
+      cursor: 1
+      Segment {
+        annotation: HIGHLIGHT
+        value: "\357\275\261"
+        value_length: 1
+        key: "\343\201\202"
+      }
+      highlighted_position: 0
+    }
+    candidates {
+      focused_index: 41
+      size: 42
+      Candidate {
+        index: 36
+        value: "\347\227\276"
+        annotation {
+          shortcut: "1"
+        }
+        id: 38
+      }
+      Candidate {
+        index: 37
+        value: "\351\264\211"
+        annotation {
+          shortcut: "2"
+        }
+        id: 39
+      }
+      Candidate {
+        index: 38
+        value: "\347\225\224"
+        annotation {
+          shortcut: "3"
+        }
+        id: 40
+      }
+      Candidate {
+        index: 39
+        value: "\347\224\230"
+        annotation {
+          shortcut: "4"
+        }
+        id: 41
+      }
+      Candidate {
+        index: 40
+        value: "\351\201\245"
+        annotation {
+          shortcut: "5"
+        }
+        id: 42
+      }
+      Candidate {
+        index: 41
+        value: "\343\201\235\343\201\256\343\201\273\343\201\213\343\201\256\346\226\207\345\255\227\347\250\256"
+        annotation {
+          shortcut: "6"
+        }
+        id: -11
+      }
+      position: 0
+      subcandidates {
+        focused_index: 6
+        size: 7
+        Candidate {
+          index: 0
+          value: "\343\201\202"
+          annotation {
+            description: "\343\201\262\343\202\211\343\201\214\343\201\252"
+          }
+          id: -1
+        }
+        Candidate {
+          index: 1
+          value: "\343\202\242"
+          annotation {
+            description: "[\345\205\250] \343\202\253\343\202\277\343\202\253\343\203\212"
+          }
+          id: -2
+        }
+        Candidate {
+          index: 2
+          value: "a"
+          annotation {
+            description: "[\345\215\212] \343\202\242\343\203\253\343\203\225\343\202\241\343\203\231\343\203\203\343\203\210"
+          }
+          id: -3
+        }
+        Candidate {
+          index: 3
+          value: "A"
+          annotation {
+            description: "[\345\215\212] \343\202\242\343\203\253\343\203\225\343\202\241\343\203\231\343\203\203\343\203\210"
+          }
+          id: -4
+        }
+        Candidate {
+          index: 4
+          value: "\357\275\201"
+          annotation {
+            description: "[\345\205\250] \343\202\242\343\203\253\343\203\225\343\202\241\343\203\231\343\203\203\343\203\210"
+          }
+          id: -7
+        }
+        Candidate {
+          index: 5
+          value: "\357\274\241"
+          annotation {
+            description: "[\345\205\250] \343\202\242\343\203\253\343\203\225\343\202\241\343\203\231\343\203\203\343\203\210"
+          }
+          id: -8
+        }
+        Candidate {
+          index: 6
+          value: "\357\275\261"
+          annotation {
+            description: "[\345\215\212] \343\202\253\343\202\277\343\202\253\343\203\212"
+          }
+          id: -11
+        }
+        position: 41
+        category: TRANSLITERATION
+        display_type: CASCADE
+      }
+      category: CONVERSION
+      display_type: MAIN
+      footer {
+        index_visible: true
+        logo_visible: true
+        sub_label: "build 15"
+      }
+    }
+    elapsed_time: 249
+  }
+}
+commands {
+  input {
+    type: TEST_SEND_KEY
+    id: 8122507021326012000
+    key {
+      special_key: UP
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 8122507021326012000
+    mode: HIRAGANA
+    consumed: true
+    preedit {
+      cursor: 1
+      Segment {
+        annotation: HIGHLIGHT
+        value: "\357\275\261"
+        value_length: 1
+        key: "\343\201\202"
+      }
+      highlighted_position: 0
+    }
+    candidates {
+      focused_index: 41
+      size: 42
+      Candidate {
+        index: 36
+        value: "\347\227\276"
+        annotation {
+          shortcut: "1"
+        }
+        id: 38
+      }
+      Candidate {
+        index: 37
+        value: "\351\264\211"
+        annotation {
+          shortcut: "2"
+        }
+        id: 39
+      }
+      Candidate {
+        index: 38
+        value: "\347\225\224"
+        annotation {
+          shortcut: "3"
+        }
+        id: 40
+      }
+      Candidate {
+        index: 39
+        value: "\347\224\230"
+        annotation {
+          shortcut: "4"
+        }
+        id: 41
+      }
+      Candidate {
+        index: 40
+        value: "\351\201\245"
+        annotation {
+          shortcut: "5"
+        }
+        id: 42
+      }
+      Candidate {
+        index: 41
+        value: "\343\201\235\343\201\256\343\201\273\343\201\213\343\201\256\346\226\207\345\255\227\347\250\256"
+        annotation {
+          shortcut: "6"
+        }
+        id: -11
+      }
+      position: 0
+      subcandidates {
+        focused_index: 6
+        size: 7
+        Candidate {
+          index: 0
+          value: "\343\201\202"
+          annotation {
+            description: "\343\201\262\343\202\211\343\201\214\343\201\252"
+          }
+          id: -1
+        }
+        Candidate {
+          index: 1
+          value: "\343\202\242"
+          annotation {
+            description: "[\345\205\250] \343\202\253\343\202\277\343\202\253\343\203\212"
+          }
+          id: -2
+        }
+        Candidate {
+          index: 2
+          value: "a"
+          annotation {
+            description: "[\345\215\212] \343\202\242\343\203\253\343\203\225\343\202\241\343\203\231\343\203\203\343\203\210"
+          }
+          id: -3
+        }
+        Candidate {
+          index: 3
+          value: "A"
+          annotation {
+            description: "[\345\215\212] \343\202\242\343\203\253\343\203\225\343\202\241\343\203\231\343\203\203\343\203\210"
+          }
+          id: -4
+        }
+        Candidate {
+          index: 4
+          value: "\357\275\201"
+          annotation {
+            description: "[\345\205\250] \343\202\242\343\203\253\343\203\225\343\202\241\343\203\231\343\203\203\343\203\210"
+          }
+          id: -7
+        }
+        Candidate {
+          index: 5
+          value: "\357\274\241"
+          annotation {
+            description: "[\345\205\250] \343\202\242\343\203\253\343\203\225\343\202\241\343\203\231\343\203\203\343\203\210"
+          }
+          id: -8
+        }
+        Candidate {
+          index: 6
+          value: "\357\275\261"
+          annotation {
+            description: "[\345\215\212] \343\202\253\343\202\277\343\202\253\343\203\212"
+          }
+          id: -11
+        }
+        position: 41
+        category: TRANSLITERATION
+        display_type: CASCADE
+      }
+      category: CONVERSION
+      display_type: MAIN
+      footer {
+        index_visible: true
+        logo_visible: true
+        sub_label: "build 15"
+      }
+    }
+    elapsed_time: 306
+  }
+}
+commands {
+  input {
+    type: SEND_KEY
+    id: 8122507021326012000
+    key {
+      special_key: UP
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 8122507021326012000
+    mode: HIRAGANA
+    consumed: true
+    preedit {
+      cursor: 1
+      Segment {
+        annotation: HIGHLIGHT
+        value: "\357\274\241"
+        value_length: 1
+        key: "\343\201\202"
+      }
+      highlighted_position: 0
+    }
+    candidates {
+      focused_index: 41
+      size: 42
+      Candidate {
+        index: 36
+        value: "\347\227\276"
+        annotation {
+          shortcut: "1"
+        }
+        id: 38
+      }
+      Candidate {
+        index: 37
+        value: "\351\264\211"
+        annotation {
+          shortcut: "2"
+        }
+        id: 39
+      }
+      Candidate {
+        index: 38
+        value: "\347\225\224"
+        annotation {
+          shortcut: "3"
+        }
+        id: 40
+      }
+      Candidate {
+        index: 39
+        value: "\347\224\230"
+        annotation {
+          shortcut: "4"
+        }
+        id: 41
+      }
+      Candidate {
+        index: 40
+        value: "\351\201\245"
+        annotation {
+          shortcut: "5"
+        }
+        id: 42
+      }
+      Candidate {
+        index: 41
+        value: "\343\201\235\343\201\256\343\201\273\343\201\213\343\201\256\346\226\207\345\255\227\347\250\256"
+        annotation {
+          shortcut: "6"
+        }
+        id: -8
+      }
+      position: 0
+      subcandidates {
+        focused_index: 5
+        size: 7
+        Candidate {
+          index: 0
+          value: "\343\201\202"
+          annotation {
+            description: "\343\201\262\343\202\211\343\201\214\343\201\252"
+          }
+          id: -1
+        }
+        Candidate {
+          index: 1
+          value: "\343\202\242"
+          annotation {
+            description: "[\345\205\250] \343\202\253\343\202\277\343\202\253\343\203\212"
+          }
+          id: -2
+        }
+        Candidate {
+          index: 2
+          value: "a"
+          annotation {
+            description: "[\345\215\212] \343\202\242\343\203\253\343\203\225\343\202\241\343\203\231\343\203\203\343\203\210"
+          }
+          id: -3
+        }
+        Candidate {
+          index: 3
+          value: "A"
+          annotation {
+            description: "[\345\215\212] \343\202\242\343\203\253\343\203\225\343\202\241\343\203\231\343\203\203\343\203\210"
+          }
+          id: -4
+        }
+        Candidate {
+          index: 4
+          value: "\357\275\201"
+          annotation {
+            description: "[\345\205\250] \343\202\242\343\203\253\343\203\225\343\202\241\343\203\231\343\203\203\343\203\210"
+          }
+          id: -7
+        }
+        Candidate {
+          index: 5
+          value: "\357\274\241"
+          annotation {
+            description: "[\345\205\250] \343\202\242\343\203\253\343\203\225\343\202\241\343\203\231\343\203\203\343\203\210"
+          }
+          id: -8
+        }
+        Candidate {
+          index: 6
+          value: "\357\275\261"
+          annotation {
+            description: "[\345\215\212] \343\202\253\343\202\277\343\202\253\343\203\212"
+          }
+          id: -11
+        }
+        position: 41
+        category: TRANSLITERATION
+        display_type: CASCADE
+      }
+      category: CONVERSION
+      display_type: MAIN
+      footer {
+        index_visible: true
+        logo_visible: true
+        sub_label: "build 15"
+      }
+    }
+    elapsed_time: 256
+  }
+}
+commands {
+  input {
+    type: TEST_SEND_KEY
+    id: 8122507021326012000
+    key {
+      special_key: UP
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 8122507021326012000
+    mode: HIRAGANA
+    consumed: true
+    preedit {
+      cursor: 1
+      Segment {
+        annotation: HIGHLIGHT
+        value: "\357\274\241"
+        value_length: 1
+        key: "\343\201\202"
+      }
+      highlighted_position: 0
+    }
+    candidates {
+      focused_index: 41
+      size: 42
+      Candidate {
+        index: 36
+        value: "\347\227\276"
+        annotation {
+          shortcut: "1"
+        }
+        id: 38
+      }
+      Candidate {
+        index: 37
+        value: "\351\264\211"
+        annotation {
+          shortcut: "2"
+        }
+        id: 39
+      }
+      Candidate {
+        index: 38
+        value: "\347\225\224"
+        annotation {
+          shortcut: "3"
+        }
+        id: 40
+      }
+      Candidate {
+        index: 39
+        value: "\347\224\230"
+        annotation {
+          shortcut: "4"
+        }
+        id: 41
+      }
+      Candidate {
+        index: 40
+        value: "\351\201\245"
+        annotation {
+          shortcut: "5"
+        }
+        id: 42
+      }
+      Candidate {
+        index: 41
+        value: "\343\201\235\343\201\256\343\201\273\343\201\213\343\201\256\346\226\207\345\255\227\347\250\256"
+        annotation {
+          shortcut: "6"
+        }
+        id: -8
+      }
+      position: 0
+      subcandidates {
+        focused_index: 5
+        size: 7
+        Candidate {
+          index: 0
+          value: "\343\201\202"
+          annotation {
+            description: "\343\201\262\343\202\211\343\201\214\343\201\252"
+          }
+          id: -1
+        }
+        Candidate {
+          index: 1
+          value: "\343\202\242"
+          annotation {
+            description: "[\345\205\250] \343\202\253\343\202\277\343\202\253\343\203\212"
+          }
+          id: -2
+        }
+        Candidate {
+          index: 2
+          value: "a"
+          annotation {
+            description: "[\345\215\212] \343\202\242\343\203\253\343\203\225\343\202\241\343\203\231\343\203\203\343\203\210"
+          }
+          id: -3
+        }
+        Candidate {
+          index: 3
+          value: "A"
+          annotation {
+            description: "[\345\215\212] \343\202\242\343\203\253\343\203\225\343\202\241\343\203\231\343\203\203\343\203\210"
+          }
+          id: -4
+        }
+        Candidate {
+          index: 4
+          value: "\357\275\201"
+          annotation {
+            description: "[\345\205\250] \343\202\242\343\203\253\343\203\225\343\202\241\343\203\231\343\203\203\343\203\210"
+          }
+          id: -7
+        }
+        Candidate {
+          index: 5
+          value: "\357\274\241"
+          annotation {
+            description: "[\345\205\250] \343\202\242\343\203\253\343\203\225\343\202\241\343\203\231\343\203\203\343\203\210"
+          }
+          id: -8
+        }
+        Candidate {
+          index: 6
+          value: "\357\275\261"
+          annotation {
+            description: "[\345\215\212] \343\202\253\343\202\277\343\202\253\343\203\212"
+          }
+          id: -11
+        }
+        position: 41
+        category: TRANSLITERATION
+        display_type: CASCADE
+      }
+      category: CONVERSION
+      display_type: MAIN
+      footer {
+        index_visible: true
+        logo_visible: true
+        sub_label: "build 15"
+      }
+    }
+    elapsed_time: 162
+  }
+}
+commands {
+  input {
+    type: SEND_KEY
+    id: 8122507021326012000
+    key {
+      special_key: UP
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 8122507021326012000
+    mode: HIRAGANA
+    consumed: true
+    preedit {
+      cursor: 1
+      Segment {
+        annotation: HIGHLIGHT
+        value: "\357\275\201"
+        value_length: 1
+        key: "\343\201\202"
+      }
+      highlighted_position: 0
+    }
+    candidates {
+      focused_index: 41
+      size: 42
+      Candidate {
+        index: 36
+        value: "\347\227\276"
+        annotation {
+          shortcut: "1"
+        }
+        id: 38
+      }
+      Candidate {
+        index: 37
+        value: "\351\264\211"
+        annotation {
+          shortcut: "2"
+        }
+        id: 39
+      }
+      Candidate {
+        index: 38
+        value: "\347\225\224"
+        annotation {
+          shortcut: "3"
+        }
+        id: 40
+      }
+      Candidate {
+        index: 39
+        value: "\347\224\230"
+        annotation {
+          shortcut: "4"
+        }
+        id: 41
+      }
+      Candidate {
+        index: 40
+        value: "\351\201\245"
+        annotation {
+          shortcut: "5"
+        }
+        id: 42
+      }
+      Candidate {
+        index: 41
+        value: "\343\201\235\343\201\256\343\201\273\343\201\213\343\201\256\346\226\207\345\255\227\347\250\256"
+        annotation {
+          shortcut: "6"
+        }
+        id: -7
+      }
+      position: 0
+      subcandidates {
+        focused_index: 4
+        size: 7
+        Candidate {
+          index: 0
+          value: "\343\201\202"
+          annotation {
+            description: "\343\201\262\343\202\211\343\201\214\343\201\252"
+          }
+          id: -1
+        }
+        Candidate {
+          index: 1
+          value: "\343\202\242"
+          annotation {
+            description: "[\345\205\250] \343\202\253\343\202\277\343\202\253\343\203\212"
+          }
+          id: -2
+        }
+        Candidate {
+          index: 2
+          value: "a"
+          annotation {
+            description: "[\345\215\212] \343\202\242\343\203\253\343\203\225\343\202\241\343\203\231\343\203\203\343\203\210"
+          }
+          id: -3
+        }
+        Candidate {
+          index: 3
+          value: "A"
+          annotation {
+            description: "[\345\215\212] \343\202\242\343\203\253\343\203\225\343\202\241\343\203\231\343\203\203\343\203\210"
+          }
+          id: -4
+        }
+        Candidate {
+          index: 4
+          value: "\357\275\201"
+          annotation {
+            description: "[\345\205\250] \343\202\242\343\203\253\343\203\225\343\202\241\343\203\231\343\203\203\343\203\210"
+          }
+          id: -7
+        }
+        Candidate {
+          index: 5
+          value: "\357\274\241"
+          annotation {
+            description: "[\345\205\250] \343\202\242\343\203\253\343\203\225\343\202\241\343\203\231\343\203\203\343\203\210"
+          }
+          id: -8
+        }
+        Candidate {
+          index: 6
+          value: "\357\275\261"
+          annotation {
+            description: "[\345\215\212] \343\202\253\343\202\277\343\202\253\343\203\212"
+          }
+          id: -11
+        }
+        position: 41
+        category: TRANSLITERATION
+        display_type: CASCADE
+      }
+      category: CONVERSION
+      display_type: MAIN
+      footer {
+        index_visible: true
+        logo_visible: true
+        sub_label: "build 15"
+      }
+    }
+    elapsed_time: 184
+  }
+}
+commands {
+  input {
+    type: TEST_SEND_KEY
+    id: 8122507021326012000
+    key {
+      special_key: ENTER
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 8122507021326012000
+    mode: HIRAGANA
+    consumed: true
+    preedit {
+      cursor: 1
+      Segment {
+        annotation: HIGHLIGHT
+        value: "\357\275\201"
+        value_length: 1
+        key: "\343\201\202"
+      }
+      highlighted_position: 0
+    }
+    candidates {
+      focused_index: 41
+      size: 42
+      Candidate {
+        index: 36
+        value: "\347\227\276"
+        annotation {
+          shortcut: "1"
+        }
+        id: 38
+      }
+      Candidate {
+        index: 37
+        value: "\351\264\211"
+        annotation {
+          shortcut: "2"
+        }
+        id: 39
+      }
+      Candidate {
+        index: 38
+        value: "\347\225\224"
+        annotation {
+          shortcut: "3"
+        }
+        id: 40
+      }
+      Candidate {
+        index: 39
+        value: "\347\224\230"
+        annotation {
+          shortcut: "4"
+        }
+        id: 41
+      }
+      Candidate {
+        index: 40
+        value: "\351\201\245"
+        annotation {
+          shortcut: "5"
+        }
+        id: 42
+      }
+      Candidate {
+        index: 41
+        value: "\343\201\235\343\201\256\343\201\273\343\201\213\343\201\256\346\226\207\345\255\227\347\250\256"
+        annotation {
+          shortcut: "6"
+        }
+        id: -7
+      }
+      position: 0
+      subcandidates {
+        focused_index: 4
+        size: 7
+        Candidate {
+          index: 0
+          value: "\343\201\202"
+          annotation {
+            description: "\343\201\262\343\202\211\343\201\214\343\201\252"
+          }
+          id: -1
+        }
+        Candidate {
+          index: 1
+          value: "\343\202\242"
+          annotation {
+            description: "[\345\205\250] \343\202\253\343\202\277\343\202\253\343\203\212"
+          }
+          id: -2
+        }
+        Candidate {
+          index: 2
+          value: "a"
+          annotation {
+            description: "[\345\215\212] \343\202\242\343\203\253\343\203\225\343\202\241\343\203\231\343\203\203\343\203\210"
+          }
+          id: -3
+        }
+        Candidate {
+          index: 3
+          value: "A"
+          annotation {
+            description: "[\345\215\212] \343\202\242\343\203\253\343\203\225\343\202\241\343\203\231\343\203\203\343\203\210"
+          }
+          id: -4
+        }
+        Candidate {
+          index: 4
+          value: "\357\275\201"
+          annotation {
+            description: "[\345\205\250] \343\202\242\343\203\253\343\203\225\343\202\241\343\203\231\343\203\203\343\203\210"
+          }
+          id: -7
+        }
+        Candidate {
+          index: 5
+          value: "\357\274\241"
+          annotation {
+            description: "[\345\205\250] \343\202\242\343\203\253\343\203\225\343\202\241\343\203\231\343\203\203\343\203\210"
+          }
+          id: -8
+        }
+        Candidate {
+          index: 6
+          value: "\357\275\261"
+          annotation {
+            description: "[\345\215\212] \343\202\253\343\202\277\343\202\253\343\203\212"
+          }
+          id: -11
+        }
+        position: 41
+        category: TRANSLITERATION
+        display_type: CASCADE
+      }
+      category: CONVERSION
+      display_type: MAIN
+      footer {
+        index_visible: true
+        logo_visible: true
+        sub_label: "build 15"
+      }
+    }
+    elapsed_time: 297
+  }
+}
+commands {
+  input {
+    type: SEND_KEY
+    id: 8122507021326012000
+    key {
+      special_key: ENTER
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 8122507021326012000
+    mode: HIRAGANA
+    consumed: true
+    result {
+      type: STRING
+      value: "\357\275\201"
+      key: "\343\201\202"
+    }
+    elapsed_time: 346
+  }
+}
+commands {
+  input {
+    type: SEND_KEY
+    id: 8122507021326012000
+    key {
+      special_key: KANJI
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 8122507021326012000
+    mode: DIRECT
+    consumed: true
+    elapsed_time: 25
+  }
+}
+commands {
+  input {
+    type: SEND_KEY
+    id: 8122507021326012000
+    key {
+      special_key: OFF
+    }
+  }
+  output {
+    id: 8122507021326012000
+    mode: DIRECT
+    consumed: false
+    key {
+      special_key: OFF
+    }
+    elapsed_time: 50
+  }
+}
+commands {
+  input {
+    type: DELETE_SESSION
+    id: 8122507021326012000
+  }
+  output {
+    id: 8122507021326012000
+    elapsed_time: 759
+  }
+}

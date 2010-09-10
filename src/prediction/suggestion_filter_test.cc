@@ -38,8 +38,16 @@
 #include "testing/base/public/gunit.h"
 
 DEFINE_string(dictionary_file,
-              "data/dictionary/dictionary0.txt,"
-              "data/dictionary/dictionary1.txt",
+              "data/dictionary/dictionary00.txt,"
+              "data/dictionary/dictionary01.txt,"
+              "data/dictionary/dictionary02.txt,"
+              "data/dictionary/dictionary03.txt,"
+              "data/dictionary/dictionary04.txt,"
+              "data/dictionary/dictionary05.txt,"
+              "data/dictionary/dictionary06.txt,"
+              "data/dictionary/dictionary07.txt,"
+              "data/dictionary/dictionary08.txt,"
+              "data/dictionary/dictionary09.txt",
               "default mozc dictionary");
 DEFINE_string(suggestion_filter_files,
               "data/dictionary/suggestion_filter.txt",

@@ -53,10 +53,10 @@ namespace mozc {
 namespace gui {
 namespace {
 
-const char *kKeyMapTableFiles[] = {
-  "system://atok.tsv",
-  "system://ms-ime.tsv",
-  "system://kotoeri.tsv"
+config::Config::SessionKeymap kKeyMaps[] = {
+  config::Config::ATOK,
+  config::Config::MSIME,
+  config::Config::KOTOERI,
 };
 
 const char *kKeyMapStatus[] = {
@@ -240,7 +240,7 @@ KeyMapEditorDialog::KeyMapEditorDialog(QWidget *parent)
       commands_delegate_(new ComboBoxDelegate),
       keybinding_delegate_(new KeyBindingEditorDelegate) {
   actions_.reset(new QAction * [MENU_SIZE]);
-  import_actions_.reset(new QAction * [arraysize(kKeyMapTableFiles)]);
+  import_actions_.reset(new QAction * [arraysize(kKeyMaps)]);
 
   actions_[NEW_INDEX] =  mutable_edit_menu()->addAction(tr("New entry"));
   actions_[REMOVE_INDEX] =
@@ -468,7 +468,7 @@ void KeyMapEditorDialog::UpdateMenuStatus() {
 
 void KeyMapEditorDialog::OnEditMenuAction(QAction *action) {
   int import_index = -1;
-  for (size_t i = 0; i < arraysize(kKeyMapTableFiles); ++i) {
+  for (size_t i = 0; i < arraysize(kKeyMaps); ++i) {
     if (import_actions_[i] == action) {
       import_index = i;
       break;
@@ -497,9 +497,11 @@ void KeyMapEditorDialog::OnEditMenuAction(QAction *action) {
       Import();
     // otherwise, load from predefined tables
     } else if (import_index >= 0 &&
-               import_index < arraysize(kKeyMapTableFiles)) {
+               import_index < arraysize(kKeyMaps)) {
+      const char *keymap_file =
+          keymap::KeyMapManager::GetKeyMapFileName(kKeyMaps[import_index]);
       scoped_ptr<istream> ifs(
-          ConfigFileStream::Open(kKeyMapTableFiles[import_index]));
+          ConfigFileStream::Open(keymap_file));
       CHECK(ifs.get() != NULL);  // should never happen
       CHECK(LoadFromStream(ifs.get()));
     }

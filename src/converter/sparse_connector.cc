@@ -41,11 +41,12 @@ namespace mozc {
 
 SparseConnector::SparseConnector(const char *ptr, size_t size)
     : default_cost_(NULL) {
-  // |magic(2byte)|null(2byte)|size(2byte)|rsize(2byte)
+  // |magic(2bytes)|resolution(2bytes)|lsize(2bytes)|rsize(2bytes)
   // |default_cost..|sparse_image
   const size_t kHeaderSize = 8;
   CHECK_GT(size, kHeaderSize);
   const uint16 *image = reinterpret_cast<const uint16*>(ptr);
+  resolution_ = image[1];
   const uint16 lsize = image[2];
   const uint16 rsize = image[3];
   CHECK_EQ(lsize, rsize);
@@ -69,6 +70,14 @@ int SparseConnector::GetTransitionCost(uint16 rid, uint16 lid) const {
   if (pos == SparseArrayImage::kInvalidValueIndex) {
     return default_cost_[rid];
   }
-  return array_image_->GetValue(pos);
+  const int cost = array_image_->GetValue(pos);
+  if (resolution_ > 1 && cost == kInvalid1ByteCostValue) {
+    return ConnectorInterface::kInvalidCost;
+  }
+  return cost * resolution_;
+}
+
+int SparseConnector::GetResolution() const {
+  return resolution_;
 }
 }  // namespace mozc

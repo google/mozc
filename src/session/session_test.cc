@@ -92,29 +92,57 @@ void InitSessionToPrecomposition(Session* session) {
 class SessionTest : public testing::Test {
  protected:
   virtual void SetUp() {
-    config::ConfigHandler::GetConfig(&default_config_);
     Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    config::Config config;
+    config::ConfigHandler::GetDefaultConfig(&config);
+    config::ConfigHandler::SetConfig(config);
     convertermock_.reset(new ConverterMock());
     ConverterFactory::SetConverter(convertermock_.get());
-    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
-
     handler_.reset(new SessionHandler());
   }
 
   virtual void TearDown() {
-    config::ConfigHandler::SetConfig(default_config_);
+    // just in case, reset the config in test_tmpdir
+    config::Config config;
+    config::ConfigHandler::GetDefaultConfig(&config);
+    config::ConfigHandler::SetConfig(config);
   }
 
   void InsertCharacterChars(const string &chars,
-                       Session *session,
-                       commands::Command *command) const {
-    static const uint32 kNoModifiers = 0;
+                            Session *session,
+                            commands::Command *command) const {
+    const uint32 kNoModifiers = 0;
     for (int i = 0; i < chars.size(); ++i) {
       command->clear_input();
       command->clear_output();
       commands::KeyEvent *key_event = command->mutable_input()->mutable_key();
       key_event->set_key_code(chars[i]);
       key_event->set_modifiers(kNoModifiers);
+      session->InsertCharacter(command);
+    }
+  }
+
+  void InsertCharacterString(const string &key_strings,
+                             const string &chars,
+                             Session *session,
+                             commands::Command *command) const {
+    const uint32 kNoModifiers = 0;
+    vector<string> inputs;
+    const char *begin = key_strings.data();
+    const char *end = key_strings.data() + key_strings.size();
+    while (begin < end) {
+      const size_t mblen = Util::OneCharLen(begin);
+      inputs.push_back(string(begin, mblen));
+      begin += mblen;
+    }
+    CHECK_EQ(inputs.size(), chars.size());
+    for (int i = 0; i < chars.size(); ++i) {
+      command->clear_input();
+      command->clear_output();
+      commands::KeyEvent *key_event = command->mutable_input()->mutable_key();
+      key_event->set_key_code(chars[i]);
+      key_event->set_modifiers(kNoModifiers);
+      key_event->set_key_string(inputs[i]);
       session->InsertCharacter(command);
     }
   }
@@ -158,7 +186,6 @@ class SessionTest : public testing::Test {
         = "\xe3\x82\xa2\xe3\x82\xa4\xe3\x82\xa6\xe3\x82\xa8\xe3\x82\xaa";
   }
 
-  config::Config default_config_;
   scoped_ptr<SessionHandler> handler_;
   scoped_ptr<ConverterMock> convertermock_;
 };
@@ -1579,6 +1606,72 @@ TEST_F(SessionTest, ExceededComposition) {
   EXPECT_FALSE(command.output().has_preedit());
 }
 
+TEST_F(SessionTest, OutputAllCandidateWords) {
+  scoped_ptr<Session> session(handler_->NewSession());
+  InitSessionToPrecomposition(session.get());
+  commands::Command command;
+
+  Segments segments;
+  SetAiueo(&segments);
+  InsertCharacterChars("aiueo", session.get(), &command);
+  convertermock_->SetStartConversion(&segments, true);
+
+  command.Clear();
+  session->Convert(&command);
+  {
+    const commands::Output &output = command.output();
+    EXPECT_TRUE(output.has_all_candidate_words());
+
+    EXPECT_EQ(0, output.all_candidate_words().focused_index());
+    EXPECT_EQ(commands::CONVERSION, output.all_candidate_words().category());
+#ifdef OS_LINUX
+    // Cascading window is not supported on Linux, so the size of
+    // candidate words is different from other platform.
+    // TODO(komatsu): Modify the client for Linux to explicitly change
+    // the preference rather than relying on the exceptional default value.
+    // [ "あいうえお", "アイウエオ",
+    //   "aiueo" (t13n), "AIUEO" (t13n), "Aieuo" (t13n),
+    //   "ａｉｕｅｏ"  (t13n), "ＡＩＵＥＯ" (t13n), "Ａｉｅｕｏ" (t13n),
+    //   "ｱｲｳｴｵ" (t13n) ]
+    EXPECT_EQ(9, output.all_candidate_words().candidates_size());
+#else
+    // [ "あいうえお", "アイウエオ", "アイウエオ" (t13n), "あいうえお" (t13n),
+    //   "aiueo" (t13n), "AIUEO" (t13n), "Aieuo" (t13n),
+    //   "ａｉｕｅｏ"  (t13n), "ＡＩＵＥＯ" (t13n), "Ａｉｅｕｏ" (t13n),
+    //   "ｱｲｳｴｵ" (t13n) ]
+    EXPECT_EQ(11, output.all_candidate_words().candidates_size());
+#endif  // OS_LINUX
+  }
+
+  command.Clear();
+  session->ConvertNext(&command);
+  {
+    const commands::Output &output = command.output();
+
+    EXPECT_TRUE(output.has_all_candidate_words());
+
+    EXPECT_EQ(1, output.all_candidate_words().focused_index());
+    EXPECT_EQ(commands::CONVERSION, output.all_candidate_words().category());
+#ifdef OS_LINUX
+    // Cascading window is not supported on Linux, so the size of
+    // candidate words is different from other platform.
+    // TODO(komatsu): Modify the client for Linux to explicitly change
+    // the preference rather than relying on the exceptional default value.
+    // [ "あいうえお", "アイウエオ", "アイウエオ" (t13n), "あいうえお" (t13n),
+    //   "aiueo" (t13n), "AIUEO" (t13n), "Aieuo" (t13n),
+    //   "ａｉｕｅｏ"  (t13n), "ＡＩＵＥＯ" (t13n), "Ａｉｅｕｏ" (t13n),
+    //   "ｱｲｳｴｵ" (t13n) ]
+    EXPECT_EQ(9, output.all_candidate_words().candidates_size());
+#else
+    // [ "あいうえお", "アイウエオ",
+    //   "aiueo" (t13n), "AIUEO" (t13n), "Aieuo" (t13n),
+    //   "ａｉｕｅｏ"  (t13n), "ＡＩＵＥＯ" (t13n), "Ａｉｅｕｏ" (t13n),
+    //   "ｱｲｳｴｵ" (t13n) ]
+    EXPECT_EQ(11, output.all_candidate_words().candidates_size());
+#endif  // OS_LINUX
+  }
+}
+
 TEST_F(SessionTest, Issue1805239) {
   // This is a unittest against http://b/1805239.
   Segments segments;
@@ -1955,6 +2048,87 @@ TEST_F(SessionTest, InsertCharacterWithShiftKey) {
     // "アAaアア"
     EXPECT_EQ("\xE3\x82\xA2\x41\x61\xE3\x82\xA2\xE3\x82\xA2",
               GetComposition(command));
+  }
+}
+
+TEST_F(SessionTest, StatusOutput) {
+  {  // Basic behavior
+    scoped_ptr<Session> session(handler_->NewSession());
+    InitSessionToPrecomposition(session.get());
+    commands::Command command;
+    EXPECT_TRUE(SendKey("a", session.get(), &command));  // "あ"
+    ASSERT_TRUE(command.output().has_status());
+    EXPECT_TRUE(command.output().status().activated());
+    EXPECT_EQ(commands::HIRAGANA, command.output().status().mode());
+    // command.output().mode() is going to be obsolete.
+    EXPECT_EQ(commands::HIRAGANA, command.output().mode());
+
+    EXPECT_TRUE(SendKey("A", session.get(), &command));  // "あA"
+    ASSERT_TRUE(command.output().has_status());
+    EXPECT_TRUE(command.output().status().activated());
+    EXPECT_EQ(commands::HALF_ASCII, command.output().status().mode());
+    EXPECT_EQ(commands::HALF_ASCII, command.output().mode());  // obsolete
+
+    EXPECT_TRUE(SendKey("a", session.get(), &command));  // "あAa"
+    ASSERT_TRUE(command.output().has_status());
+    EXPECT_TRUE(command.output().status().activated());
+    EXPECT_EQ(commands::HALF_ASCII, command.output().status().mode());
+    EXPECT_EQ(commands::HALF_ASCII, command.output().mode());  // obsolete
+
+    // Shift reverts the input mode to Hiragana.
+    EXPECT_TRUE(SendKey("Shift", session.get(), &command));
+    EXPECT_TRUE(SendKey("a", session.get(), &command));  // "あAaあ"
+    ASSERT_TRUE(command.output().has_status());
+    EXPECT_TRUE(command.output().status().activated());
+    EXPECT_EQ(commands::HIRAGANA, command.output().status().mode());
+    EXPECT_EQ(commands::HIRAGANA, command.output().mode());  // obsolete
+
+    EXPECT_TRUE(SendKey("A", session.get(), &command));  // "あAaあA"
+    ASSERT_TRUE(command.output().has_status());
+    EXPECT_TRUE(command.output().status().activated());
+    EXPECT_EQ(commands::HALF_ASCII, command.output().status().mode());
+    EXPECT_EQ(commands::HALF_ASCII, command.output().mode());
+
+    // When the IME is deactivated, the temporary composition mode is reset.
+    EXPECT_TRUE(SendKey("OFF", session.get(), &command));  // "あAaあA"
+    ASSERT_TRUE(command.output().has_status());
+    EXPECT_FALSE(command.output().status().activated());
+    EXPECT_EQ(commands::HIRAGANA, command.output().status().mode());
+    // command.output().mode() always returns DIRECT when IME is
+    // deactivated.  This is the reason why command.output().mode() is
+    // going to be obsolete.
+    EXPECT_EQ(commands::DIRECT, command.output().mode());
+  }
+
+  {  // Katakana mode + Shift key
+    scoped_ptr<Session> session(handler_->NewSession());
+    InitSessionToPrecomposition(session.get());
+    commands::Command command;
+    session->InputModeFullKatakana(&command);
+    EXPECT_EQ(commands::FULL_KATAKANA, command.output().status().mode());
+    EXPECT_EQ(commands::FULL_KATAKANA, command.output().mode());  // obsolete
+
+    EXPECT_TRUE(SendKey("a", session.get(), &command));
+    ASSERT_TRUE(command.output().has_status());
+    EXPECT_TRUE(command.output().status().activated());
+    EXPECT_EQ(commands::FULL_KATAKANA, command.output().status().mode());
+    EXPECT_EQ(commands::FULL_KATAKANA, command.output().mode());  // obsolete
+
+    EXPECT_TRUE(SendKey("A", session.get(), &command));  // "アA"
+    ASSERT_TRUE(command.output().has_status());
+    EXPECT_TRUE(command.output().status().activated());
+    EXPECT_EQ(commands::HALF_ASCII, command.output().status().mode());
+    EXPECT_EQ(commands::HALF_ASCII, command.output().mode());  // obsolete
+
+    // When the IME is deactivated, the temporary composition mode is reset.
+    EXPECT_TRUE(SendKey("OFF", session.get(), &command));  // "アA"
+    ASSERT_TRUE(command.output().has_status());
+    EXPECT_FALSE(command.output().status().activated());
+    EXPECT_EQ(commands::FULL_KATAKANA, command.output().status().mode());
+    // command.output().mode() always returns DIRECT when IME is
+    // deactivated.  This is the reason why command.output().mode() is
+    // going to be obsolete.
+    EXPECT_EQ(commands::DIRECT, command.output().mode());
   }
 }
 
@@ -3406,5 +3580,282 @@ TEST(SessionRevertTest, IssueRevert) {
 
   EXPECT_FALSE(command.output().consumed());
   EXPECT_TRUE(convertermock->revert_conversion_called());
+}
+
+TEST_F(SessionTest, AutoConversion) {
+  config::Config config;
+  config::ConfigHandler::GetDefaultConfig(&config);
+
+  Segments segments;
+  SetAiueo(&segments);
+  convertermock_->SetStartConversion(&segments, true);
+
+  // Auto Off
+  config.set_use_auto_conversion(false);
+  config::ConfigHandler::SetConfig(config);
+  {
+    scoped_ptr<Session> session(handler_->NewSession());
+    InitSessionToPrecomposition(session.get());
+    commands::Command command;
+
+    // The last "." is a triggering key for auto conversion
+    InsertCharacterChars("tesuto.", session.get(), &command);
+
+    EXPECT_TRUE(command.output().has_preedit());
+    EXPECT_EQ(1, command.output().preedit().segment_size());
+    EXPECT_TRUE(command.output().preedit().segment(0).has_value());
+    EXPECT_TRUE(command.output().preedit().segment(0).has_key());
+    // "てすと。",
+    EXPECT_EQ("\xE3\x81\xA6\xE3\x81\x99\xE3\x81\xA8\xE3\x80\x82",
+              command.output().preedit().segment(0).key());
+  }
+  {
+    scoped_ptr<Session> session(handler_->NewSession());
+    InitSessionToPrecomposition(session.get());
+    commands::Command command;
+
+    // The last "." is a triggering key for auto conversion
+    // "てすと。"
+    InsertCharacterString("\xE3\x81\xA6\xE3\x81\x99\xE3\x81\xA8\xE3\x80\x82",
+                          "wrs/", session.get(), &command);
+
+    EXPECT_TRUE(command.output().has_preedit());
+    EXPECT_EQ(1, command.output().preedit().segment_size());
+    EXPECT_TRUE(command.output().preedit().segment(0).has_value());
+    EXPECT_TRUE(command.output().preedit().segment(0).has_key());
+    // "てすと。",
+    EXPECT_EQ("\xE3\x81\xA6\xE3\x81\x99\xE3\x81\xA8\xE3\x80\x82",
+              command.output().preedit().segment(0).key());
+  }
+
+
+  // Auto On
+  config.set_use_auto_conversion(true);
+  config::ConfigHandler::SetConfig(config);
+  {
+    scoped_ptr<Session> session(handler_->NewSession());
+    InitSessionToPrecomposition(session.get());
+
+    commands::Command command;
+
+    // The last "." is a triggering key for auto conversion
+    InsertCharacterChars("tesuto.", session.get(), &command);
+
+    EXPECT_TRUE(command.output().has_preedit());
+    EXPECT_EQ(1, command.output().preedit().segment_size());
+    EXPECT_TRUE(command.output().preedit().segment(0).has_value());
+    EXPECT_TRUE(command.output().preedit().segment(0).has_key());
+
+    // "あいうえお"
+    EXPECT_EQ("\xe3\x81\x82\xe3\x81\x84\xe3\x81\x86\xe3\x81\x88\xe3\x81\x8a",
+              command.output().preedit().segment(0).key());
+
+    EXPECT_TRUE(command.output().has_preedit());
+
+    string key;
+    for (int i = 0; i < command.output().preedit().segment_size(); ++i) {
+      EXPECT_TRUE(command.output().preedit().segment(i).has_value());
+      EXPECT_TRUE(command.output().preedit().segment(i).has_key());
+      key += command.output().preedit().segment(i).key();
+    }
+    // "あいうえお"
+    EXPECT_EQ("\xe3\x81\x82\xe3\x81\x84\xe3\x81\x86\xe3\x81\x88\xe3\x81\x8a",
+              key);
+  }
+  {
+    scoped_ptr<Session> session(handler_->NewSession());
+    InitSessionToPrecomposition(session.get());
+
+    commands::Command command;
+
+    // The last "." is a triggering key for auto conversion
+    // "てすと。",
+    InsertCharacterString("\xE3\x81\xA6\xE3\x81\x99\xE3\x81\xA8\xE3\x80\x82",
+                          "wrs/", session.get(), &command);
+
+    EXPECT_TRUE(command.output().has_preedit());
+    EXPECT_EQ(1, command.output().preedit().segment_size());
+    EXPECT_TRUE(command.output().preedit().segment(0).has_value());
+    EXPECT_TRUE(command.output().preedit().segment(0).has_key());
+
+    // "あいうえお"
+    EXPECT_EQ("\xe3\x81\x82\xe3\x81\x84\xe3\x81\x86\xe3\x81\x88\xe3\x81\x8a",
+              command.output().preedit().segment(0).key());
+
+    EXPECT_TRUE(command.output().has_preedit());
+
+    string key;
+    for (int i = 0; i < command.output().preedit().segment_size(); ++i) {
+      EXPECT_TRUE(command.output().preedit().segment(i).has_value());
+      EXPECT_TRUE(command.output().preedit().segment(i).has_key());
+      key += command.output().preedit().segment(i).key();
+    }
+    // "あいうえお"
+    EXPECT_EQ("\xe3\x81\x82\xe3\x81\x84\xe3\x81\x86\xe3\x81\x88\xe3\x81\x8a",
+              key);
+  }
+
+  // Don't trigger auto conversion for the pattern number + "."
+  {
+    scoped_ptr<Session> session(handler_->NewSession());
+    InitSessionToPrecomposition(session.get());
+    commands::Command command;
+
+    // The last "." is a triggering key for auto conversion
+    InsertCharacterChars("123.", session.get(), &command);
+
+    EXPECT_TRUE(command.output().has_preedit());
+    EXPECT_EQ(1, command.output().preedit().segment_size());
+    EXPECT_TRUE(command.output().preedit().segment(0).has_value());
+    EXPECT_TRUE(command.output().preedit().segment(0).has_key());
+
+    // "１２３．"
+    EXPECT_EQ("\xEF\xBC\x91\xEF\xBC\x92\xEF\xBC\x93\xEF\xBC\x8E",
+              command.output().preedit().segment(0).key());
+    EXPECT_TRUE(command.output().has_preedit());
+  }
+
+  // Don't trigger auto conversion for the ".."
+  {
+    scoped_ptr<Session> session(handler_->NewSession());
+    InitSessionToPrecomposition(session.get());
+    commands::Command command;
+
+    // The last "." is a triggering key for auto conversion
+    InsertCharacterChars("..", session.get(), &command);
+
+    EXPECT_TRUE(command.output().has_preedit());
+    EXPECT_EQ(1, command.output().preedit().segment_size());
+    EXPECT_TRUE(command.output().preedit().segment(0).has_value());
+    EXPECT_TRUE(command.output().preedit().segment(0).has_key());
+
+    // "。。"
+    EXPECT_EQ("\xE3\x80\x82\xE3\x80\x82",
+              command.output().preedit().segment(0).key());
+    EXPECT_TRUE(command.output().has_preedit());
+  }
+
+  {
+    scoped_ptr<Session> session(handler_->NewSession());
+    InitSessionToPrecomposition(session.get());
+    commands::Command command;
+
+    // The last "." is a triggering key for auto conversion
+    // "１２３。"
+    InsertCharacterString("\xEF\xBC\x91\xEF\xBC\x92\xEF\xBC\x93\xE3\x80\x82",
+                          "123.", session.get(), &command);
+
+    EXPECT_TRUE(command.output().has_preedit());
+    EXPECT_EQ(1, command.output().preedit().segment_size());
+    EXPECT_TRUE(command.output().preedit().segment(0).has_value());
+    EXPECT_TRUE(command.output().preedit().segment(0).has_key());
+
+    // "１２３．"
+    EXPECT_EQ("\xEF\xBC\x91\xEF\xBC\x92\xEF\xBC\x93\xEF\xBC\x8E",
+              command.output().preedit().segment(0).key());
+    EXPECT_TRUE(command.output().has_preedit());
+  }
+
+  // Don't trigger auto conversion for "." only.
+  {
+    scoped_ptr<Session> session(handler_->NewSession());
+    InitSessionToPrecomposition(session.get());
+    commands::Command command;
+
+    // The last "." is a triggering key for auto conversion
+    InsertCharacterChars(".", session.get(), &command);
+
+    EXPECT_TRUE(command.output().has_preedit());
+    EXPECT_EQ(1, command.output().preedit().segment_size());
+    EXPECT_TRUE(command.output().preedit().segment(0).has_value());
+    EXPECT_TRUE(command.output().preedit().segment(0).has_key());
+
+    // "。"
+    EXPECT_EQ("\xE3\x80\x82",
+              command.output().preedit().segment(0).key());
+    EXPECT_TRUE(command.output().has_preedit());
+  }
+
+  {
+    scoped_ptr<Session> session(handler_->NewSession());
+    InitSessionToPrecomposition(session.get());
+    commands::Command command;
+
+    // The last "." is a triggering key for auto conversion
+    // "。",
+    InsertCharacterString("\xE3\x80\x82", "/", session.get(), &command);
+
+    EXPECT_TRUE(command.output().has_preedit());
+    EXPECT_EQ(1, command.output().preedit().segment_size());
+    EXPECT_TRUE(command.output().preedit().segment(0).has_value());
+    EXPECT_TRUE(command.output().preedit().segment(0).has_key());
+
+    // "。"
+    EXPECT_EQ("\xE3\x80\x82",
+              command.output().preedit().segment(0).key());
+    EXPECT_TRUE(command.output().has_preedit());
+  }
+
+  {
+    const char trigger_key[] = ".,?!";
+
+    // try all possible patterns.
+    for (int kana_mode = 0; kana_mode < 2; ++kana_mode) {
+      for (int onoff = 0; onoff < 2; ++onoff) {
+        for (int pattern = 0; pattern <= 16; ++pattern) {
+          config.set_use_auto_conversion(static_cast<bool>(onoff));
+          config.set_auto_conversion_key(pattern);
+          config::ConfigHandler::SetConfig(config);
+
+          int flag[4];
+          flag[0] = static_cast<int>(
+              config.auto_conversion_key() &
+              config::Config::AUTO_CONVERSION_KUTEN);
+          flag[1] = static_cast<int>(
+              config.auto_conversion_key() &
+              config::Config::AUTO_CONVERSION_TOUTEN);
+          flag[2] = static_cast<int>(
+              config.auto_conversion_key() &
+              config::Config::AUTO_CONVERSION_QUESTION_MARK);
+          flag[3] = static_cast<int>(
+              config.auto_conversion_key() &
+              config::Config::AUTO_CONVERSION_EXCLAMATION_MARK);
+
+          for (int i = 0; i < 4; ++i) {
+            scoped_ptr<Session> session(handler_->NewSession());
+            InitSessionToPrecomposition(session.get());
+            commands::Command command;
+
+            if (kana_mode) {
+              // "てすと"
+              string key = "\xE3\x81\xA6\xE3\x81\x99\xE3\x81\xA8";
+              key += trigger_key[i];
+              InsertCharacterString(key, "wst/", session.get(), &command);
+            } else {
+              string key = "tesuto";
+              key += trigger_key[i];
+              InsertCharacterChars(key, session.get(), &command);
+            }
+            EXPECT_TRUE(command.output().has_preedit());
+            EXPECT_EQ(1, command.output().preedit().segment_size());
+            EXPECT_TRUE(command.output().preedit().segment(0).has_value());
+            EXPECT_TRUE(command.output().preedit().segment(0).has_key());
+
+            if (onoff > 0 && flag[i] > 0) {
+              // "あいうえお"
+              EXPECT_EQ("\xe3\x81\x82\xe3\x81\x84\xe3\x81\x86"
+                        "\xe3\x81\x88\xe3\x81\x8a",
+                        command.output().preedit().segment(0).key());
+            } else {
+              // Not "あいうえお"
+              EXPECT_NE("\xe3\x81\x82\xe3\x81\x84\xe3\x81\x86"
+                        "\xe3\x81\x88\xe3\x81\x8a",
+                        command.output().preedit().segment(0).key());
+            }
+          }
+        }
+      }
+    }
+  }
 }
 }  // namespace mozc

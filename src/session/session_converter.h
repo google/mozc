@@ -154,6 +154,9 @@ class SessionConverter : public SessionConverterInterface {
   // Fill protocol buffers
   void FillOutput(commands::Output *output) const;
 
+  // Fill protocol buffers with all flatten candidate words.
+  void FillAllCandidateWords(commands::CandidateList *candidates) const;
+
   const string &GetDefaultResult() const;
 
   // Fill segments with the conversion preferences.

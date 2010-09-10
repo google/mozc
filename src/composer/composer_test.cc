@@ -74,8 +74,10 @@ class ComposerTest : public testing::Test {
   ComposerTest() {}
 
   virtual void SetUp() {
-    config::ConfigHandler::GetConfig(&default_config_);
     Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    config::Config config;
+    config::ConfigHandler::GetDefaultConfig(&config);
+    config::ConfigHandler::SetConfig(config);
     table_.reset(new Table);
     composer_.reset(Composer::Create(table_.get()));
     CharacterFormManager::GetCharacterFormManager()->SetDefaultRule();
@@ -84,13 +86,14 @@ class ComposerTest : public testing::Test {
   virtual void TearDown() {
     table_.reset();
     composer_.reset();
-    config::ConfigHandler::SetConfig(default_config_);
+    // just in case, reset config in test_tmpdir
+    config::Config config;
+    config::ConfigHandler::GetDefaultConfig(&config);
+    config::ConfigHandler::SetConfig(config);
   }
 
   scoped_ptr<Composer> composer_;
   scoped_ptr<Table> table_;
-  config::Config default_config_;
-
 
  private:
   DISALLOW_COPY_AND_ASSIGN(ComposerTest);
@@ -1395,10 +1398,22 @@ TEST_F(ComposerTest, TransformCharactersForNumbers) {
           "\xE3\x80\x82\xEF\xBC\x91\xEF\xBC\x94\xEF\xBC\x91\xEF\xBC\x95"
           "\xEF\xBC\x99\xE3\x80\x82";
   EXPECT_TRUE(Composer::TransformCharactersForNumbers(&query));
-  // "およそ、３．１４１５９。"
+  // "およそ、３．１４１５９．"
   EXPECT_EQ("\xE3\x81\x8A\xE3\x82\x88\xE3\x81\x9D\xE3\x80\x81\xEF\xBC\x93"
             "\xEF\xBC\x8E\xEF\xBC\x91\xEF\xBC\x94\xEF\xBC\x91\xEF\xBC\x95"
-            "\xEF\xBC\x99\xE3\x80\x82",
+            "\xEF\xBC\x99\xEF\xBC\x8E",
+            query);
+
+  // "１００、" => "１００，"
+  query = "\xEF\xBC\x91\xEF\xBC\x90\xEF\xBC\x90\xE3\x80\x81";
+  EXPECT_TRUE(Composer::TransformCharactersForNumbers(&query));
+  EXPECT_EQ("\xEF\xBC\x91\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x8C",
+            query);
+
+  // "１００。" => "１００．"
+  query = "\xEF\xBC\x91\xEF\xBC\x90\xEF\xBC\x90\xE3\x80\x82";
+  EXPECT_TRUE(Composer::TransformCharactersForNumbers(&query));
+  EXPECT_EQ("\xEF\xBC\x91\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x8E",
             query);
 }
 

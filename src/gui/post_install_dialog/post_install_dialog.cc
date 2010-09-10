@@ -47,23 +47,16 @@
 
 #ifdef OS_WINDOWS
 #include "win32/base/imm_util.h"
+#include "win32/base/migration_util.h"
 #endif
 
 namespace mozc {
 namespace gui {
 
 PostInstallDialog::PostInstallDialog()
-    : logoff_required_(false),
-      storage_(
+    : storage_(
           new UserDictionaryStorage(
               UserDictionaryUtil::GetUserDictionaryFileName())) {
-#ifdef OS_WINDOWS
-  if (!mozc::ImeUtil::IsCuasEnabled()) {
-    logoff_required_ = true;
-    mozc::ImeUtil::SetCuasEnabled(true);
-  }
-#endif
-
   setupUi(this);
   setWindowFlags(Qt::WindowSystemMenuHint |
                  Qt::MSWindowsFixedSizeDialogHint |
@@ -114,6 +107,12 @@ PostInstallDialog::PostInstallDialog()
     logoffNowButton->setVisible(false);
     logoffLaterButton->setVisible(false);
   } else {
+    // Currently, |logoff_required()| always returns false so the following
+    // conditional section, which was originally been used for rebooting system
+    // to enable CUAS on Windows XP, is now dead code.  If you enable this
+    // section again for some reason, please note that OnLogoffNow has not
+    // supported Mac nor Linux yet.
+    DCHECK(!logoff_required());
     if (logoff_required()) {
       usage_stats::UsageStats::IncrementCount("PostInstallLogoffRequired");
       thanksLabel->setText(tr("Thanks for installing.\nYou must log off before "
@@ -140,13 +139,26 @@ PostInstallDialog::PostInstallDialog()
 
   // import MS-IME by default
   migrateDefaultIMEUserDictionaryCheckBox->setChecked(true);
+
+#ifdef OS_WINDOWS
+  if (win32::MigrationUtil::IsFullIMEAvailable()) {
+    if (!win32::MigrationUtil::DisableDummyIME()) {
+      return;
+    }
+    if (!win32::MigrationUtil::DisableOldProfile()) {
+      return;
+    }
+  }
+#endif  // OS_WINDOWS
 }
 
 PostInstallDialog::~PostInstallDialog() {
 }
 
 bool PostInstallDialog::logoff_required() {
-  return logoff_required_;
+  // This function always returns false in all platforms.  See b/2899762 for
+  // details.
+  return false;
 }
 
 bool PostInstallDialog::ShowHelpPageIfRequired() {
@@ -199,7 +211,7 @@ void PostInstallDialog::ApplySettings() {
 #ifdef OS_WINDOWS
   if (setAsDefaultCheckBox->isChecked()) {
     usage_stats::UsageStats::IncrementCount("PostInstallSetDefault");
-    ImeUtil::SetDefault();
+    win32::ImeUtil::SetDefault();
   } else {
     usage_stats::UsageStats::IncrementCount("PostInstallNotSetDefault");
   }
@@ -258,7 +270,7 @@ void PostInstallDialog::ApplySettings() {
 
 bool PostInstallDialog::IsShowHelpPageRequired() {
 #ifdef OS_WINDOWS
-  return !ImeUtil::IsCtfmonRunning();
+  return !win32::ImeUtil::IsCtfmonRunning();
 #else
   // not supported on Mac and Linux
   return false;

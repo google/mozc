@@ -37,6 +37,7 @@
         '<(DEPTH)/third_party/gtest/src/gtest-death-test.cc',
         '<(DEPTH)/third_party/gtest/src/gtest-filepath.cc',
         '<(DEPTH)/third_party/gtest/src/gtest-port.cc',
+        '<(DEPTH)/third_party/gtest/src/gtest-printers.cc',
         '<(DEPTH)/third_party/gtest/src/gtest-test-part.cc',
       ],
     },
@@ -52,12 +53,21 @@
           'dependencies': [
             'testing',
           ],
-        }, {  # else
-          'link_settings': {
-            'libraries': [
-              '-lgtest',
-            ],
-          },
+        }, {  # OS=="linux"
+          'conditions': [
+            ['use_libgtest==1', {
+              'link_settings': {
+                'libraries': [
+                  # NOTE(komatsu): Nice to use pkg-config when it is available.
+                  '-lgtest',
+                ],
+              },
+            }, {  # OS=="linux" and use_libgtest!="YES"
+              'dependencies': [
+                'testing',
+              ],
+            }],
+          ],
         }],
       ],
     },

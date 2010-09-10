@@ -95,8 +95,16 @@
           'action_name': 'gen_embedded_dictionary_data',
           'variables': {
             'input_files': [
-              '../data/dictionary/dictionary0.txt',
-              '../data/dictionary/dictionary1.txt',
+              '../data/dictionary/dictionary00.txt',
+              '../data/dictionary/dictionary01.txt',
+              '../data/dictionary/dictionary02.txt',
+              '../data/dictionary/dictionary03.txt',
+              '../data/dictionary/dictionary04.txt',
+              '../data/dictionary/dictionary05.txt',
+              '../data/dictionary/dictionary06.txt',
+              '../data/dictionary/dictionary07.txt',
+              '../data/dictionary/dictionary08.txt',
+              '../data/dictionary/dictionary09.txt',
               '../data/dictionary/zip_code_seed.tsv',
             ],
           },

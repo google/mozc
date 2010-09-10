@@ -35,6 +35,7 @@
 #include "converter/character_form_manager.h"
 #include "converter/converter_interface.h"
 #include "converter/converter_mock.h"
+#include "converter/pos_matcher.h"
 #include "converter/segments.h"
 #include "session/config.pb.h"
 #include "session/config_handler.h"
@@ -147,6 +148,9 @@ class UserSegmentHistoryRewriterTest : public testing::Test {
     config::Config config;
     config::ConfigHandler::GetDefaultConfig(&config);
     config::ConfigHandler::SetConfig(config);
+
+    // Clear converter mock.  Otherwise, subsequent tests receive garbage.
+    ConverterFactory::SetConverter(NULL);
   }
 
   ConverterMock &mock() {
@@ -907,6 +911,66 @@ TEST_F(UserSegmentHistoryRewriterTest, ReplacableTest) {
   }
 }
 
+TEST_F(UserSegmentHistoryRewriterTest, LeftRightNumber) {
+  SetLearningLevel(config::Config::DEFAULT_HISTORY);
+  Segments segments;
+  UserSegmentHistoryRewriter rewriter;
+
+  rewriter.Clear();
+
+  {
+    InitSegments(&segments, 2);
+
+    segments.mutable_segment(0)->mutable_candidate(0)->value = "1234";
+    segments.mutable_segment(1)->move_candidate(2, 0);
+    segments.mutable_segment(1)->mutable_candidate(0)->learning_type
+        |= Segment::Candidate::RERANKED;
+    segments.mutable_segment(1)->mutable_candidate(0)->learning_type
+        |= Segment::Candidate::CONTEXT_SENSITIVE;
+    segments.mutable_segment(1)->set_segment_type(Segment::FIXED_VALUE);
+    rewriter.Finish(&segments);
+    EXPECT_EQ("1234",
+              segments.segment(0).candidate(0).value);
+    EXPECT_EQ("candidate2",
+              segments.segment(1).candidate(0).value);
+
+    InitSegments(&segments, 2);
+    // different num.
+    segments.mutable_segment(0)->mutable_candidate(0)->value = "5678";
+    rewriter.Rewrite(&segments);
+    EXPECT_EQ("5678",
+              segments.segment(0).candidate(0).value);
+    EXPECT_EQ("candidate2",
+              segments.segment(1).candidate(0).value);
+  }
+
+  {
+    InitSegments(&segments, 2);
+
+    segments.mutable_segment(1)->mutable_candidate(0)->value = "1234";
+    segments.mutable_segment(0)->move_candidate(2, 0);
+    segments.mutable_segment(0)->mutable_candidate(0)->learning_type
+        |= Segment::Candidate::RERANKED;
+    segments.mutable_segment(0)->mutable_candidate(0)->learning_type
+        |= Segment::Candidate::CONTEXT_SENSITIVE;
+    segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
+    rewriter.Finish(&segments);
+    EXPECT_EQ("candidate2",
+              segments.segment(0).candidate(0).value);
+    EXPECT_EQ("1234",
+              segments.segment(1).candidate(0).value);
+
+    InitSegments(&segments, 2);
+    // different num.
+    segments.mutable_segment(1)->mutable_candidate(0)->value = "5678";
+    rewriter.Rewrite(&segments);
+    EXPECT_EQ("candidate2",
+              segments.segment(0).candidate(0).value);
+    EXPECT_EQ("5678",
+              segments.segment(1).candidate(0).value);
+  }
+}
+
 TEST_F(UserSegmentHistoryRewriterTest, BacketMatching) {
   SetLearningLevel(config::Config::DEFAULT_HISTORY);
   Segments segments;
@@ -1016,8 +1080,10 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberSpecial) {
     Segment::Candidate *candidate =
         segments.mutable_segment(0)->insert_candidate(0);
     candidate->value = "\xE2\x91\xAB";  // circled 12
-    candidate->content_value = "";
-    candidate->content_key = "";
+    candidate->content_value = "\xE2\x91\xAB";
+    candidate->content_key = "12";
+    candidate->lid = POSMatcher::GetNumberId();
+    candidate->rid = POSMatcher::GetNumberId();
     candidate->style = Segment::Candidate::NUMBER_CIRCLED;
     segments.mutable_segment(0)->mutable_candidate(0)->learning_type
         |= Segment::Candidate::RERANKED;
@@ -1033,8 +1099,10 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberSpecial) {
       Segment::Candidate *candidate =
           segments.mutable_segment(0)->insert_candidate(0);
       candidate->value = "14";
-      candidate->content_value = "";
-      candidate->content_key = "";
+      candidate->content_value = "14";
+      candidate->content_key = "14";
+      candidate->lid = POSMatcher::GetNumberId();
+      candidate->rid = POSMatcher::GetNumberId();
     }
     EXPECT_TRUE(number_rewriter.Rewrite(&segments));
     rewriter.Rewrite(&segments);
@@ -1062,8 +1130,11 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberHalfWidth) {
     // "１，２３４"
     candidate->value =
         "\xEF\xBC\x91\xEF\xBC\x8C\xEF\xBC\x92\xEF\xBC\x93\xEF\xBC\x94";
-    candidate->content_value = "";
-    candidate->content_key = "";
+    candidate->content_value =
+        "\xEF\xBC\x91\xEF\xBC\x8C\xEF\xBC\x92\xEF\xBC\x93\xEF\xBC\x94";
+    candidate->content_key = "1234";
+    candidate->lid = POSMatcher::GetNumberId();
+    candidate->rid = POSMatcher::GetNumberId();
     candidate->style =
         Segment::Candidate::NUMBER_SEPARATED_ARABIC_FULLWIDTH;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
@@ -1078,8 +1149,10 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberHalfWidth) {
       Segment::Candidate *candidate =
           segments.mutable_segment(0)->insert_candidate(0);
       candidate->value = "1234";
-      candidate->content_value = "";
-      candidate->content_key = "";
+      candidate->content_value = "1234";
+      candidate->content_key = "1234";
+      candidate->lid = POSMatcher::GetNumberId();
+      candidate->rid = POSMatcher::GetNumberId();
     }
 
     EXPECT_TRUE(number_rewriter.Rewrite(&segments));
@@ -1106,8 +1179,10 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberFullWidth) {
     Segment::Candidate *candidate =
         segments.mutable_segment(0)->insert_candidate(0);
     candidate->value = "1,234";
-    candidate->content_value = "";
-    candidate->content_key = "";
+    candidate->content_value = "1,2344";
+    candidate->content_key = "1234";
+    candidate->lid = POSMatcher::GetNumberId();
+    candidate->rid = POSMatcher::GetNumberId();
     candidate->style =
         Segment::Candidate::NUMBER_SEPARATED_ARABIC_HALFWIDTH;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
@@ -1122,8 +1197,10 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberFullWidth) {
       Segment::Candidate *candidate =
           segments.mutable_segment(0)->insert_candidate(0);
       candidate->value = "1234";
-      candidate->content_value = "";
-      candidate->content_key = "";
+      candidate->content_value = "1234";
+      candidate->content_key = "1234";
+      candidate->lid = POSMatcher::GetNumberId();
+      candidate->rid = POSMatcher::GetNumberId();
     }
     EXPECT_TRUE(number_rewriter.Rewrite(&segments));
     rewriter.Rewrite(&segments);
@@ -1150,8 +1227,10 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberNoSeparated) {
     Segment::Candidate *candidate =
         segments.mutable_segment(0)->insert_candidate(0);
     candidate->value = "\xe5\x8d\x81";  // "十"
-    candidate->content_value = "";
-    candidate->content_key = "";
+    candidate->content_value = "\xe5\x8d\x81";
+    candidate->content_key = "10";
+    candidate->lid = POSMatcher::GetNumberId();
+    candidate->rid = POSMatcher::GetNumberId();
     candidate->style = Segment::Candidate::NUMBER_KANJI;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
     rewriter.Finish(&segments);  // learn kanji
@@ -1163,8 +1242,10 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberNoSeparated) {
     Segment::Candidate *candidate =
         segments.mutable_segment(0)->insert_candidate(0);
     candidate->value = "1,234";
-    candidate->content_value = "";
-    candidate->content_key = "";
+    candidate->content_value = "1,234";
+    candidate->content_key = "1234";
+    candidate->lid = POSMatcher::GetNumberId();
+    candidate->rid = POSMatcher::GetNumberId();
     candidate->style =
         Segment::Candidate::NUMBER_SEPARATED_ARABIC_HALFWIDTH;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
@@ -1178,8 +1259,10 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberNoSeparated) {
       Segment::Candidate *candidate =
           segments.mutable_segment(0)->insert_candidate(0);
       candidate->value = "9";
-      candidate->content_value = "";
-      candidate->content_key = "";
+      candidate->content_value = "9";
+      candidate->content_key = "9";
+      candidate->lid = POSMatcher::GetNumberId();
+      candidate->rid = POSMatcher::GetNumberId();
     }
     EXPECT_TRUE(number_rewriter.Rewrite(&segments));
     rewriter.Rewrite(&segments);

@@ -44,6 +44,7 @@ class TestMachPortManager : public mozc::MachPortManagerInterface {
   ~TestMachPortManager();
 
   virtual bool GetMachPort(const string &name, mach_port_t *port);
+  virtual bool IsServerRunning(const string &name) const;
 
  private:
   mach_port_t port_;

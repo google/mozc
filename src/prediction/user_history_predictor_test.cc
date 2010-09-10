@@ -70,9 +70,9 @@ void MakeSegmentsForConversion(const string key,
   seg->set_segment_type(Segment::FIXED_VALUE);
 }
 
-void AddCandidate(const string &value, Segments *segments) {
+void AddCandidate(size_t index, const string &value, Segments *segments) {
   Segment::Candidate *candidate =
-      segments->mutable_segment(0)->add_candidate();
+      segments->mutable_segment(index)->add_candidate();
   CHECK(candidate);
   candidate->Init();
   candidate->value = value;
@@ -80,17 +80,28 @@ void AddCandidate(const string &value, Segments *segments) {
   candidate->content_key = segments->segment(0).key();
 }
 
-void AddCandidateWithDescription(const string &value,
+void AddCandidateWithDescription(size_t index,
+                                 const string &value,
                                  const string &desc,
                                  Segments *segments) {
   Segment::Candidate *candidate =
-      segments->mutable_segment(0)->add_candidate();
+      segments->mutable_segment(index)->add_candidate();
   CHECK(candidate);
   candidate->Init();
   candidate->value = value;
   candidate->content_value = value;
   candidate->content_key = segments->segment(0).key();
   candidate->description = desc;
+}
+
+void AddCandidate(const string &value, Segments *segments) {
+  AddCandidate(0, value, segments);
+}
+
+void AddCandidateWithDescription(const string &value,
+                                 const string &desc,
+                                 Segments *segments) {
+  AddCandidateWithDescription(0, value, desc, segments);
 }
 
 TEST(UserHistoryPredictor, UserHistoryPredictorTest) {
@@ -191,13 +202,13 @@ TEST(UserHistoryPredictor, UserHistoryPredictorTest) {
         "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE", &segments);
       EXPECT_FALSE(predictor.Predict(&segments));
     }
-     
+
     // turn on
     {
       config::Config config;
       config::ConfigHandler::SetConfig(config);
     }
-     
+
     // reproducesd
     // "わたしの"
     MakeSegmentsForSuggestion(
@@ -310,9 +321,6 @@ TEST(UserHistoryPredictor, DescriptionTest) {
           // "テスト"
           "\xe3\x83\x86\xe3\x82\xb9\xe3\x83\x88",
           &segments);
-      string info;
-      segments.DebugString(&info);
-      LOG(INFO) << info;
       predictor.Finish(&segments);
 
       // "わたしの"
@@ -677,6 +685,652 @@ TEST(UserHistoryPredictor, UserHistoryPredictorClearTest) {
   }
 }
 
+TEST(UserHistoryPredictor, UserHistoryPredictorTailingPunctuation) {
+  kUseMockPasswordManager = true;
+  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+  UserHistoryPredictor predictor;
+  predictor.WaitForSyncer();
+  predictor.ClearAllHistory();
+
+  Segments segments;
+
+  // "わたしのなまえはなかのです"
+  MakeSegmentsForConversion
+      ("\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE"
+       "\xE3\x81\xAA\xE3\x81\xBE\xE3\x81\x88\xE3\x81\xAF"
+       "\xE3\x81\xAA\xE3\x81\x8B\xE3\x81\xAE\xE3\x81\xA7"
+       "\xE3\x81\x99", &segments);
+
+  // "私の名前は中野です"
+  AddCandidate(
+      0,
+      "\xE7\xA7\x81\xE3\x81\xAE\xE5\x90\x8D\xE5\x89\x8D"
+      "\xE3\x81\xAF\xE4\xB8\xAD\xE9\x87\x8E\xE3\x81\xA7"
+      "\xE3\x81\x99", &segments);
+
+  // "。"
+  MakeSegmentsForConversion("\xE3\x80\x82", &segments);
+  AddCandidate(1, "\xE3\x80\x82", &segments);
+
+  predictor.Finish(&segments);
+
+  segments.Clear();
+  // "わたしの"
+  MakeSegmentsForPrediction("\xE3\x82\x8F\xE3\x81\x9F"
+                            "\xE3\x81\x97\xE3\x81\xAE", &segments);
+  EXPECT_TRUE(predictor.Predict(&segments));
+  EXPECT_EQ(segments.segment(0).candidates_size(), 2);
+  // "私の名前は中野です"
+  EXPECT_EQ(segments.segment(0).candidate(0).value,
+            "\xE7\xA7\x81\xE3\x81\xAE\xE5\x90\x8D\xE5\x89\x8D"
+            "\xE3\x81\xAF\xE4\xB8\xAD\xE9\x87\x8E\xE3\x81\xA7\xE3\x81\x99");
+  // "私の名前は中野です。"
+  EXPECT_EQ(segments.segment(0).candidate(1).value,
+            "\xE7\xA7\x81\xE3\x81\xAE\xE5\x90\x8D\xE5\x89\x8D"
+            "\xE3\x81\xAF\xE4\xB8\xAD\xE9\x87\x8E\xE3\x81\xA7\xE3\x81\x99"
+            "\xE3\x80\x82");
+
+  segments.Clear();
+  // "わたしの"
+  MakeSegmentsForSuggestion("\xE3\x82\x8F\xE3\x81\x9F"
+                            "\xE3\x81\x97\xE3\x81\xAE", &segments);
+
+  EXPECT_TRUE(predictor.Predict(&segments));
+  EXPECT_EQ(segments.segment(0).candidates_size(), 2);
+  // "私の名前は中野です"
+  EXPECT_EQ(segments.segment(0).candidate(0).value,
+            "\xE7\xA7\x81\xE3\x81\xAE\xE5\x90\x8D\xE5\x89\x8D"
+            "\xE3\x81\xAF\xE4\xB8\xAD\xE9\x87\x8E\xE3\x81\xA7\xE3\x81\x99");
+  // "私の名前は中野です。"
+  EXPECT_EQ(segments.segment(0).candidate(1).value,
+            "\xE7\xA7\x81\xE3\x81\xAE\xE5\x90\x8D\xE5\x89\x8D"
+            "\xE3\x81\xAF\xE4\xB8\xAD\xE9\x87\x8E\xE3\x81\xA7\xE3\x81\x99"
+            "\xE3\x80\x82");
+}
+
+TEST(UserHistoryPredictor, UserHistoryPredictorPreceedingPunctuation) {
+  kUseMockPasswordManager = true;
+  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+  UserHistoryPredictor predictor;
+  predictor.WaitForSyncer();
+  predictor.ClearAllHistory();
+
+  Segments segments;
+
+  // "。"
+  MakeSegmentsForConversion("\xE3\x80\x82", &segments);
+  AddCandidate(0, "\xE3\x80\x82", &segments);
+
+  // "わたしのなまえはなかのです"
+  MakeSegmentsForConversion
+      ("\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE"
+       "\xE3\x81\xAA\xE3\x81\xBE\xE3\x81\x88\xE3\x81\xAF"
+       "\xE3\x81\xAA\xE3\x81\x8B\xE3\x81\xAE\xE3\x81\xA7"
+       "\xE3\x81\x99", &segments);
+
+  // "私の名前は中野です"
+  AddCandidate(
+      1,
+      "\xE7\xA7\x81\xE3\x81\xAE\xE5\x90\x8D\xE5\x89\x8D"
+      "\xE3\x81\xAF\xE4\xB8\xAD\xE9\x87\x8E\xE3\x81\xA7"
+      "\xE3\x81\x99", &segments);
+
+  predictor.Finish(&segments);
+
+  segments.Clear();
+  // "わたしの"
+  MakeSegmentsForPrediction("\xE3\x82\x8F\xE3\x81\x9F"
+                            "\xE3\x81\x97\xE3\x81\xAE", &segments);
+
+  EXPECT_TRUE(predictor.Predict(&segments));
+  EXPECT_EQ(segments.segment(0).candidates_size(), 1);
+  // "私の名前は中野です"
+  EXPECT_EQ(segments.segment(0).candidate(0).value,
+            "\xE7\xA7\x81\xE3\x81\xAE\xE5\x90\x8D\xE5\x89\x8D"
+            "\xE3\x81\xAF\xE4\xB8\xAD\xE9\x87\x8E\xE3\x81\xA7\xE3\x81\x99");
+
+
+  segments.Clear();
+  // "わたしの"
+  MakeSegmentsForSuggestion("\xE3\x82\x8F\xE3\x81\x9F"
+                            "\xE3\x81\x97\xE3\x81\xAE", &segments);
+  EXPECT_TRUE(predictor.Predict(&segments));
+  EXPECT_EQ(segments.segment(0).candidates_size(), 1);
+  // "私の名前は中野です"
+  EXPECT_EQ(segments.segment(0).candidate(0).value,
+            "\xE7\xA7\x81\xE3\x81\xAE\xE5\x90\x8D\xE5\x89\x8D"
+            "\xE3\x81\xAF\xE4\xB8\xAD\xE9\x87\x8E\xE3\x81\xA7\xE3\x81\x99");
+}
+
+TEST(UserHistoryPredictor, MultiSegmentsMultiInput) {
+  kUseMockPasswordManager = true;
+  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+  UserHistoryPredictor predictor;
+  predictor.WaitForSyncer();
+  predictor.ClearAllHistory();
+
+  Segments segments;
+
+  // "たろうは/太郎は"
+  MakeSegmentsForConversion("\xE3\x81\x9F\xE3\x82\x8D"
+                            "\xE3\x81\x86\xE3\x81\xAF", &segments);
+  AddCandidate(0, "\xE5\xA4\xAA\xE9\x83\x8E\xE3\x81\xAF", &segments);
+  predictor.Finish(&segments);
+  segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
+
+  // "はなこに/花子に"
+  MakeSegmentsForConversion("\xE3\x81\xAF\xE3\x81\xAA"
+                            "\xE3\x81\x93\xE3\x81\xAB", &segments);
+  AddCandidate(1, "\xE8\x8A\xB1\xE5\xAD\x90\xE3\x81\xAB", &segments);
+  predictor.Finish(&segments);
+  segments.mutable_segment(1)->set_segment_type(Segment::HISTORY);
+
+  // "むずかしい/難しい"
+  segments.clear_conversion_segments();
+  MakeSegmentsForConversion("\xE3\x82\x80\xE3\x81\x9A"
+                            "\xE3\x81\x8B\xE3\x81\x97"
+                            "\xE3\x81\x84", &segments);
+  AddCandidate(2, "\xE9\x9B\xA3\xE3\x81\x97\xE3\x81\x84", &segments);
+  predictor.Finish(&segments);
+  segments.mutable_segment(2)->set_segment_type(Segment::HISTORY);
+
+  // "ほんを/本を"
+  segments.clear_conversion_segments();
+  MakeSegmentsForConversion("\xE3\x81\xBB"
+                            "\xE3\x82\x93\xE3\x82\x92", &segments);
+  AddCandidate(3, "\xE6\x9C\xAC\xE3\x82\x92", &segments);
+  predictor.Finish(&segments);
+  segments.mutable_segment(3)->set_segment_type(Segment::HISTORY);
+
+  // "よませた/読ませた"
+  segments.clear_conversion_segments();
+  MakeSegmentsForConversion("\xE3\x82\x88\xE3\x81\xBE"
+                            "\xE3\x81\x9B\xE3\x81\x9F", &segments);
+  AddCandidate(4, "\xE8\xAA\xAD\xE3\x81\xBE"
+               "\xE3\x81\x9B\xE3\x81\x9F", &segments);
+  predictor.Finish(&segments);
+
+  // "た", Too short inputs
+  segments.Clear();
+  MakeSegmentsForSuggestion("\xE3\x81\x9F", &segments);
+  EXPECT_FALSE(predictor.Predict(&segments));
+
+  // "たろうは"
+  segments.Clear();
+  MakeSegmentsForSuggestion("\xE3\x81\x9F\xE3\x82\x8D"
+                            "\xE3\x81\x86\xE3\x81\xAF", &segments);
+  EXPECT_TRUE(predictor.Predict(&segments));
+
+  // "ろうは", suggests only from segment boundary.
+  segments.Clear();
+  MakeSegmentsForSuggestion("\xE3\x82\x8D"
+                            "\xE3\x81\x86\xE3\x81\xAF", &segments);
+  EXPECT_FALSE(predictor.Predict(&segments));
+
+  // "たろうははな"
+  segments.Clear();
+  MakeSegmentsForSuggestion("\xE3\x81\x9F\xE3\x82\x8D"
+                            "\xE3\x81\x86\xE3\x81\xAF"
+                            "\xE3\x81\xAF\xE3\x81\xAA", &segments);
+  EXPECT_TRUE(predictor.Predict(&segments));
+
+  // "はなこにむ"
+  segments.Clear();
+  MakeSegmentsForSuggestion("\xE3\x81\xAF\xE3\x81\xAA"
+                            "\xE3\x81\x93\xE3\x81\xAB\xE3\x82\x80", &segments);
+  EXPECT_TRUE(predictor.Predict(&segments));
+
+  // "むずかし"
+  segments.Clear();
+  MakeSegmentsForSuggestion("\xE3\x82\x80\xE3\x81\x9A"
+                            "\xE3\x81\x8B\xE3\x81\x97", &segments);
+  EXPECT_TRUE(predictor.Predict(&segments));
+
+  // "はなこにむずかしいほ"
+  segments.Clear();
+  MakeSegmentsForSuggestion("\xE3\x81\xAF\xE3\x81\xAA"
+                            "\xE3\x81\x93\xE3\x81\xAB"
+                            "\xE3\x82\x80\xE3\x81\x9A"
+                            "\xE3\x81\x8B\xE3\x81\x97"
+                            "\xE3\x81\x84\xE3\x81\xBB", &segments);
+  EXPECT_TRUE(predictor.Predict(&segments));
+
+  // "ほんをよま"
+  segments.Clear();
+  MakeSegmentsForSuggestion("\xE3\x81\xBB\xE3\x82\x93"
+                            "\xE3\x82\x92\xE3\x82\x88\xE3\x81\xBE", &segments);
+  EXPECT_TRUE(predictor.Predict(&segments));
+
+  Util::Sleep(1000);
+
+  // Add new entry "たろうはよしこに/太郎は良子に"
+  segments.Clear();
+  MakeSegmentsForConversion("\xE3\x81\x9F\xE3\x82\x8D"
+                            "\xE3\x81\x86\xE3\x81\xAF", &segments);
+  AddCandidate(0, "\xE5\xA4\xAA\xE9\x83\x8E\xE3\x81\xAF", &segments);
+  predictor.Finish(&segments);
+  segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
+
+  MakeSegmentsForConversion("\xE3\x82\x88\xE3\x81\x97"
+                            "\xE3\x81\x93\xE3\x81\xAB", &segments);
+  AddCandidate(1, "\xE8\x89\xAF\xE5\xAD\x90\xE3\x81\xAB", &segments);
+  predictor.Finish(&segments);
+  segments.mutable_segment(1)->set_segment_type(Segment::HISTORY);
+
+  // "たろうは"
+  segments.Clear();
+  MakeSegmentsForSuggestion("\xE3\x81\x9F\xE3\x82\x8D"
+                            "\xE3\x81\x86\xE3\x81\xAF", &segments);
+  EXPECT_TRUE(predictor.Predict(&segments));
+  EXPECT_EQ(segments.segment(0).candidate(0).value,
+            "\xE5\xA4\xAA\xE9\x83\x8E\xE3\x81\xAF"
+            "\xE8\x89\xAF\xE5\xAD\x90\xE3\x81\xAB");
+}
+
+TEST(UserHistoryPredictor, MultiSegmentsSingleInput) {
+  kUseMockPasswordManager = true;
+  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+  UserHistoryPredictor predictor;
+  predictor.WaitForSyncer();
+  predictor.ClearAllHistory();
+
+  Segments segments;
+
+  // "たろうは/太郎は"
+  MakeSegmentsForConversion("\xE3\x81\x9F\xE3\x82\x8D"
+                            "\xE3\x81\x86\xE3\x81\xAF", &segments);
+  AddCandidate(0, "\xE5\xA4\xAA\xE9\x83\x8E\xE3\x81\xAF", &segments);
+
+  // "はなこに/花子に"
+  MakeSegmentsForConversion("\xE3\x81\xAF\xE3\x81\xAA"
+                            "\xE3\x81\x93\xE3\x81\xAB", &segments);
+  AddCandidate(1, "\xE8\x8A\xB1\xE5\xAD\x90\xE3\x81\xAB", &segments);
+
+  // "むずかしい/難しい"
+  MakeSegmentsForConversion("\xE3\x82\x80\xE3\x81\x9A"
+                            "\xE3\x81\x8B\xE3\x81\x97"
+                            "\xE3\x81\x84", &segments);
+  AddCandidate(2, "\xE9\x9B\xA3\xE3\x81\x97\xE3\x81\x84", &segments);
+
+  MakeSegmentsForConversion("\xE3\x81\xBB"
+                            "\xE3\x82\x93\xE3\x82\x92", &segments);
+  AddCandidate(3, "\xE6\x9C\xAC\xE3\x82\x92", &segments);
+
+  // "よませた/読ませた"
+  MakeSegmentsForConversion("\xE3\x82\x88\xE3\x81\xBE"
+                            "\xE3\x81\x9B\xE3\x81\x9F", &segments);
+  AddCandidate(4, "\xE8\xAA\xAD\xE3\x81\xBE"
+               "\xE3\x81\x9B\xE3\x81\x9F", &segments);
+
+  predictor.Finish(&segments);
+
+  // "たろうは"
+  segments.Clear();
+  MakeSegmentsForSuggestion("\xE3\x81\x9F\xE3\x82\x8D"
+                            "\xE3\x81\x86\xE3\x81\xAF", &segments);
+  EXPECT_TRUE(predictor.Predict(&segments));
+
+  // "た", Too short input
+  segments.Clear();
+  MakeSegmentsForSuggestion("\xE3\x81\x9F", &segments);
+  EXPECT_FALSE(predictor.Predict(&segments));
+
+  // "たろうははな"
+  segments.Clear();
+  MakeSegmentsForSuggestion("\xE3\x81\x9F\xE3\x82\x8D"
+                            "\xE3\x81\x86\xE3\x81\xAF"
+                            "\xE3\x81\xAF\xE3\x81\xAA", &segments);
+  EXPECT_TRUE(predictor.Predict(&segments));
+
+  // "ろうははな", suggest only from segment boundary
+  segments.Clear();
+  MakeSegmentsForSuggestion("\xE3\x82\x8D"
+                            "\xE3\x81\x86\xE3\x81\xAF"
+                            "\xE3\x81\xAF\xE3\x81\xAA", &segments);
+  EXPECT_FALSE(predictor.Predict(&segments));
+
+  // "はなこにむ"
+  segments.Clear();
+  MakeSegmentsForSuggestion("\xE3\x81\xAF\xE3\x81\xAA"
+                            "\xE3\x81\x93\xE3\x81\xAB\xE3\x82\x80", &segments);
+  EXPECT_TRUE(predictor.Predict(&segments));
+
+  // "むずかし"
+  segments.Clear();
+  MakeSegmentsForSuggestion("\xE3\x82\x80\xE3\x81\x9A"
+                            "\xE3\x81\x8B\xE3\x81\x97", &segments);
+  EXPECT_TRUE(predictor.Predict(&segments));
+
+  // "はなこにむずかしいほ"
+  segments.Clear();
+  MakeSegmentsForSuggestion("\xE3\x81\xAF\xE3\x81\xAA"
+                            "\xE3\x81\x93\xE3\x81\xAB"
+                            "\xE3\x82\x80\xE3\x81\x9A"
+                            "\xE3\x81\x8B\xE3\x81\x97"
+                            "\xE3\x81\x84\xE3\x81\xBB", &segments);
+  EXPECT_TRUE(predictor.Predict(&segments));
+
+  // "ほんをよま"
+  segments.Clear();
+  MakeSegmentsForSuggestion("\xE3\x81\xBB\xE3\x82\x93"
+                            "\xE3\x82\x92\xE3\x82\x88\xE3\x81\xBE", &segments);
+  EXPECT_TRUE(predictor.Predict(&segments));
+
+  Util::Sleep(1000);
+
+  // Add new entry "たろうはよしこに/太郎は良子に"
+  segments.Clear();
+  MakeSegmentsForConversion("\xE3\x81\x9F\xE3\x82\x8D"
+                            "\xE3\x81\x86\xE3\x81\xAF", &segments);
+  AddCandidate(0, "\xE5\xA4\xAA\xE9\x83\x8E\xE3\x81\xAF", &segments);
+  predictor.Finish(&segments);
+  segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
+
+  MakeSegmentsForConversion("\xE3\x82\x88\xE3\x81\x97"
+                            "\xE3\x81\x93\xE3\x81\xAB", &segments);
+  AddCandidate(1, "\xE8\x89\xAF\xE5\xAD\x90\xE3\x81\xAB", &segments);
+  predictor.Finish(&segments);
+  segments.mutable_segment(1)->set_segment_type(Segment::HISTORY);
+
+  // "たろうは"
+  segments.Clear();
+  MakeSegmentsForSuggestion("\xE3\x81\x9F\xE3\x82\x8D"
+                            "\xE3\x81\x86\xE3\x81\xAF", &segments);
+  EXPECT_TRUE(predictor.Predict(&segments));
+  EXPECT_EQ(segments.segment(0).candidate(0).value,
+            "\xE5\xA4\xAA\xE9\x83\x8E\xE3\x81\xAF"
+            "\xE8\x89\xAF\xE5\xAD\x90\xE3\x81\xAB");
+}
+
+TEST(UserHistoryPredictor, Regression2843371_Case1) {
+  kUseMockPasswordManager = true;
+  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+  UserHistoryPredictor predictor;
+  predictor.WaitForSyncer();
+  predictor.ClearAllHistory();
+
+  Segments segments;
+
+  // "とうきょうは"
+  MakeSegmentsForConversion("\xE3\x81\xA8\xE3\x81\x86"
+                            "\xE3\x81\x8D\xE3\x82\x87"
+                            "\xE3\x81\x86\xE3\x81\xAF", &segments);
+  AddCandidate(0,
+               "\xE6\x9D\xB1\xE4\xBA\xAC"
+               "\xE3\x81\xAF", &segments);
+
+  // "、"
+  MakeSegmentsForConversion("\xE3\x80\x81", &segments);
+  AddCandidate(1, "\xE3\x80\x81", &segments);
+
+  // "にほんです"
+  MakeSegmentsForConversion("\xE3\x81\xAB\xE3\x81\xBB"
+                            "\xE3\x82\x93\xE3\x81\xA7\xE3\x81\x99",
+                            &segments);
+  AddCandidate(2,
+               "\xE6\x97\xA5\xE6\x9C\xAC"
+               "\xE3\x81\xA7\xE3\x81\x99", &segments);
+
+  // "。"
+  MakeSegmentsForConversion("\xE3\x80\x82", &segments);
+  AddCandidate(3, "\xE3\x80\x82", &segments);
+
+  predictor.Finish(&segments);
+
+  segments.Clear();
+
+  Util::Sleep(1000);
+
+  // "らーめんは"
+  MakeSegmentsForConversion("\xE3\x82\x89\xE3\x83\xBC"
+                            "\xE3\x82\x81\xE3\x82\x93"
+                            "\xE3\x81\xAF", &segments);
+  AddCandidate(0,
+               "\xE3\x83\xA9\xE3\x83\xBC"
+               "\xE3\x83\xA1\xE3\x83\xB3\xE3\x81\xAF", &segments);
+
+  // "、"
+  MakeSegmentsForConversion("\xE3\x80\x81", &segments);
+  AddCandidate(1, "\xE3\x80\x81", &segments);
+
+  // "めんるいです"
+  MakeSegmentsForConversion("\xE3\x82\x81\xE3\x82\x93"
+                            "\xE3\x82\x8B\xE3\x81\x84"
+                            "\xE3\x81\xA7\xE3\x81\x99", &segments);
+  AddCandidate(2,
+               "\xE9\xBA\xBA\xE9\xA1\x9E"
+               "\xE3\x81\xA7\xE3\x81\x99", &segments);
+
+  // "。"
+  MakeSegmentsForConversion("\xE3\x80\x82", &segments);
+  AddCandidate(3, "\xE3\x80\x82", &segments);
+
+  predictor.Finish(&segments);
+
+  segments.Clear();
+
+  // "とうきょうは"
+  MakeSegmentsForSuggestion("\xE3\x81\xA8\xE3\x81\x86"
+                            "\xE3\x81\x8D\xE3\x82\x87"
+                            "\xE3\x81\x86\xE3\x81\xAF\xE3\x80\x81",
+                            &segments);
+  EXPECT_TRUE(predictor.Predict(&segments));
+
+  // "東京は、日本です"
+  EXPECT_EQ(segments.segment(0).candidate(0).value,
+            "\xE6\x9D\xB1\xE4\xBA\xAC"
+            "\xE3\x81\xAF\xE3\x80\x81"
+            "\xE6\x97\xA5\xE6\x9C\xAC"
+            "\xE3\x81\xA7\xE3\x81\x99");
+
+}
+
+TEST(UserHistoryPredictor, Regression2843371_Case2) {
+  kUseMockPasswordManager = true;
+  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+  UserHistoryPredictor predictor;
+  predictor.WaitForSyncer();
+  predictor.ClearAllHistory();
+
+  Segments segments;
+
+  // "えど/江戸"
+  MakeSegmentsForConversion("\xE3\x81\x88\xE3\x81\xA9", &segments);
+  AddCandidate(0, "\xE6\xB1\x9F\xE6\x88\xB8", &segments);
+
+  // "("
+  MakeSegmentsForConversion("(", &segments);
+  AddCandidate(1, "(", &segments);
+
+  // "とうきょう/東京"
+  MakeSegmentsForConversion("\xE3\x81\xA8\xE3\x81\x86\xE3\x81\x8D\xE3\x82\x87\xE3\x81\x86", &segments);
+  AddCandidate(2, "\xE6\x9D\xB1\xE4\xBA\xAC", &segments);
+
+  // ")"
+  MakeSegmentsForConversion(")", &segments);
+  AddCandidate(3, ")", &segments);
+
+  // "は"
+  MakeSegmentsForConversion("\xE3\x81\xAF", &segments);
+  AddCandidate(4, "\xE3\x81\xAF", &segments);
+
+  // "えぞ/蝦夷"
+  MakeSegmentsForConversion("\xE3\x81\x88\xE3\x81\x9E", &segments);
+  AddCandidate(5, "\xE8\x9D\xA6\xE5\xA4\xB7", &segments);
+
+  // "("
+  MakeSegmentsForConversion("(", &segments);
+  AddCandidate(6, "(", &segments);
+
+  // "ほっかいどう/北海道"
+  MakeSegmentsForConversion("\xE3\x81\xBB\xE3\x81\xA3\xE3\x81\x8B"
+                            "\xE3\x81\x84\xE3\x81\xA9\xE3\x81\x86",
+                            &segments);
+  AddCandidate(7, "\xE5\x8C\x97\xE6\xB5\xB7\xE9\x81\x93",
+               &segments);
+
+  // ")"
+  MakeSegmentsForConversion(")", &segments);
+  AddCandidate(8, ")", &segments);
+
+  // "ではない"
+  MakeSegmentsForConversion("\xE3\x81\xA7\xE3\x81\xAF"
+                            "\xE3\x81\xAA\xE3\x81\x84", &segments);
+  AddCandidate(9, "\xE3\x81\xA7\xE3\x81\xAF"
+               "\xE3\x81\xAA\xE3\x81\x84", &segments);
+
+  // "。"
+  MakeSegmentsForConversion("\xE3\x80\x82", &segments);
+  AddCandidate(10, "\xE3\x80\x82", &segments);
+
+  predictor.Finish(&segments);
+
+  segments.Clear();
+
+  // "えど("
+  MakeSegmentsForSuggestion("\xE3\x81\x88\xE3\x81\xA9(", &segments);
+  EXPECT_TRUE(predictor.Predict(&segments));
+  EXPECT_EQ(segments.segment(0).candidate(0).value,
+            "\xE6\xB1\x9F\xE6\x88\xB8(\xE6\x9D\xB1\xE4\xBA\xAC");
+
+  EXPECT_TRUE(predictor.Predict(&segments));
+
+  // "江戸(東京"
+  EXPECT_EQ(segments.segment(0).candidate(0).value,
+            "\xE6\xB1\x9F\xE6\x88\xB8(\xE6\x9D\xB1\xE4\xBA\xAC");
+}
+
+TEST(UserHistoryPredictor, Regression2843371_Case3) {
+  kUseMockPasswordManager = true;
+  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+  UserHistoryPredictor predictor;
+  predictor.WaitForSyncer();
+  predictor.ClearAllHistory();
+
+  Segments segments;
+
+  // "「"
+  MakeSegmentsForConversion("\xE3\x80\x8C", &segments);
+  AddCandidate(0, "\xE3\x80\x8C", &segments);
+
+  // "やま/山"
+  MakeSegmentsForConversion("\xE3\x82\x84\xE3\x81\xBE", &segments);
+  AddCandidate(1, "\xE5\xB1\xB1", &segments);
+
+  // "」"
+  MakeSegmentsForConversion("\xE3\x80\x8D", &segments);
+  AddCandidate(2, "\xE3\x80\x8D", &segments);
+
+  // "は"
+  MakeSegmentsForConversion("\xE3\x81\xAF", &segments);
+  AddCandidate(3, "\xE3\x81\xAF", &segments);
+
+  // "たかい/高い"
+  MakeSegmentsForConversion("\xE3\x81\x9F\xE3\x81\x8B\xE3\x81\x84",
+                            &segments);
+  AddCandidate(4, "\xE9\xAB\x98\xE3\x81\x84", &segments);
+
+  // "。"
+  MakeSegmentsForConversion("\xE3\x80\x82", &segments);
+  AddCandidate(5, "\xE3\x80\x82", &segments);
+
+  predictor.Finish(&segments);
+
+  Util::Sleep(2000);
+
+  segments.Clear();
+
+  // "「"
+  MakeSegmentsForConversion("\xE3\x80\x8C", &segments);
+  AddCandidate(0, "\xE3\x80\x8C", &segments);
+
+  // "うみ/海"
+  MakeSegmentsForConversion("\xE3\x81\x86\xE3\x81\xBF", &segments);
+  AddCandidate(1, "\xE6\xB5\xB7", &segments);
+
+  // "」"
+  MakeSegmentsForConversion("\xE3\x80\x8D", &segments);
+  AddCandidate(2, "\xE3\x80\x8D", &segments);
+
+  // "は"
+  MakeSegmentsForConversion("\xE3\x81\xAF", &segments);
+  AddCandidate(3, "\xE3\x81\xAF", &segments);
+
+  // "たかい/高い"
+  MakeSegmentsForConversion("\xE3\x81\xB5\xE3\x81\x8B\xE3\x81\x84", &segments);
+  AddCandidate(4, "\xE6\xB7\xB1\xE3\x81\x84", &segments);
+
+  // "。"
+  MakeSegmentsForConversion("\xE3\x80\x82", &segments);
+  AddCandidate(5, "\xE3\x80\x82", &segments);
+
+  predictor.Finish(&segments);
+
+  segments.Clear();
+
+  // "「やま」は"
+  MakeSegmentsForSuggestion("\xE3\x80\x8C\xE3\x82\x84"
+                            "\xE3\x81\xBE\xE3\x80\x8D\xE3\x81\xAF",
+                            &segments);
+  EXPECT_TRUE(predictor.Predict(&segments));
+
+  // "「山」は高い"
+  EXPECT_EQ(segments.segment(0).candidate(0).value,
+            "\xE3\x80\x8C\xE5\xB1\xB1\xE3\x80\x8D"
+            "\xE3\x81\xAF\xE9\xAB\x98\xE3\x81\x84");
+}
+
+TEST(UserHistoryPredictor, Regression2843775) {
+  kUseMockPasswordManager = true;
+  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+  UserHistoryPredictor predictor;
+  predictor.WaitForSyncer();
+  predictor.ClearAllHistory();
+
+  Segments segments;
+
+  // "そうです"
+  MakeSegmentsForConversion("\xE3\x81\x9D\xE3\x81\x86"
+                            "\xE3\x81\xA7\xE3\x81\x99", &segments);
+  AddCandidate(0,
+               "\xE3\x81\x9D\xE3\x81\x86"
+               "\xE3\x81\xA7\xE3\x81\x99", &segments);
+
+  // "。よろしくおねがいします/。よろしくお願いします"
+  MakeSegmentsForConversion("\xE3\x80\x82\xE3\x82\x88"
+                            "\xE3\x82\x8D\xE3\x81\x97"
+                            "\xE3\x81\x8F\xE3\x81\x8A"
+                            "\xE3\x81\xAD\xE3\x81\x8C"
+                            "\xE3\x81\x84\xE3\x81\x97"
+                            "\xE3\x81\xBE\xE3\x81\x99", &segments);
+  AddCandidate(1,
+               "\xE3\x80\x82\xE3\x82\x88"
+               "\xE3\x82\x8D\xE3\x81\x97"
+               "\xE3\x81\x8F\xE3\x81\x8A"
+               "\xE9\xA1\x98\xE3\x81\x84"
+               "\xE3\x81\x97\xE3\x81\xBE\xE3\x81\x99", &segments);
+
+  predictor.Finish(&segments);
+
+  segments.Clear();
+
+  // "そうです"
+  MakeSegmentsForSuggestion("\xE3\x81\x9D\xE3\x81\x86"
+                            "\xE3\x81\xA7\xE3\x81\x99", &segments);
+  EXPECT_TRUE(predictor.Predict(&segments));
+
+  // "そうです。よろしくお願いします"
+  EXPECT_EQ(segments.segment(0).candidate(0).value,
+            "\xE3\x81\x9D\xE3\x81\x86"
+            "\xE3\x81\xA7\xE3\x81\x99"
+            "\xE3\x80\x82\xE3\x82\x88"
+            "\xE3\x82\x8D\xE3\x81\x97"
+            "\xE3\x81\x8F\xE3\x81\x8A"
+            "\xE9\xA1\x98\xE3\x81\x84"
+            "\xE3\x81\x97\xE3\x81\xBE"
+            "\xE3\x81\x99");
+}
+
 struct Command {
   enum Type {
     LOOKUP,
@@ -739,6 +1393,214 @@ TEST(UserHistoryPredictor, SyncTest) {
       default:
         break;
     }
+  }
+}
+
+TEST(UserHistoryPredictor, GetMatchTypeTest) {
+  EXPECT_EQ(UserHistoryPredictor::NO_MATCH,
+            UserHistoryPredictor::GetMatchType("", "test"));
+
+  EXPECT_EQ(UserHistoryPredictor::NO_MATCH,
+            UserHistoryPredictor::GetMatchType("test", ""));
+
+  EXPECT_EQ(UserHistoryPredictor::NO_MATCH,
+            UserHistoryPredictor::GetMatchType("", ""));
+
+  EXPECT_EQ(UserHistoryPredictor::NO_MATCH,
+            UserHistoryPredictor::GetMatchType("foo", "bar"));
+
+  EXPECT_EQ(UserHistoryPredictor::EXACT_MATCH,
+            UserHistoryPredictor::GetMatchType("foo", "foo"));
+
+  EXPECT_EQ(UserHistoryPredictor::LEFT_PREFIX_MATCH,
+            UserHistoryPredictor::GetMatchType("foo", "foobar"));
+
+  EXPECT_EQ(UserHistoryPredictor::RIGHT_PREFIX_MATCH,
+            UserHistoryPredictor::GetMatchType("foobar", "foo"));
+}
+
+TEST(UserHistoryPredictor, FingerPrintTest) {
+  const char kKey[] = "abc";
+  const char kValue[] = "ABC";
+
+  UserHistoryPredictor::Entry entry;
+  entry.set_key(kKey);
+  entry.set_value(kValue);
+
+  const uint32 entry_fp1 =
+      UserHistoryPredictor::Fingerprint(kKey, kValue);
+  const uint32 entry_fp2 =
+      UserHistoryPredictor::EntryFingerprint(entry);
+
+  Segment segment;
+  segment.set_key(kKey);
+  Segment::Candidate *c = segment.add_candidate();
+  c->content_value = kValue;
+  c->value = kValue;
+
+  const uint32 segment_fp =
+      UserHistoryPredictor::SegmentFingerprint(segment);
+
+  EXPECT_EQ(entry_fp1, entry_fp2);
+  EXPECT_EQ(segment_fp, entry_fp2);
+  EXPECT_EQ(segment_fp, entry_fp1);
+}
+
+TEST(UserHistoryPredictor, Uint32ToStringTest) {
+  EXPECT_EQ(123,
+            UserHistoryPredictor::StringToUint32(
+                UserHistoryPredictor::Uint32ToString(123)));
+
+  EXPECT_EQ(12141,
+            UserHistoryPredictor::StringToUint32(
+                UserHistoryPredictor::Uint32ToString(12141)));
+
+  for (uint32 i = 0; i < 10000; ++i) {
+    EXPECT_EQ(i,
+              UserHistoryPredictor::StringToUint32(
+                  UserHistoryPredictor::Uint32ToString(i)));
+  }
+
+  // invalid input
+  EXPECT_EQ(0, UserHistoryPredictor::StringToUint32(""));
+
+  // not 4byte
+  EXPECT_EQ(0, UserHistoryPredictor::StringToUint32("abcdef"));
+}
+
+TEST(UserHistoryPredictor, GetScore) {
+  // latest value has higher score.
+  {
+    UserHistoryPredictor::Entry entry1, entry2;
+
+    entry1.set_key("abc");
+    entry1.set_value("ABC");
+    entry1.set_last_access_time(10);
+
+    entry2.set_key("foo");
+    entry2.set_value("ABC");
+    entry2.set_last_access_time(20);
+
+    EXPECT_GT(UserHistoryPredictor::GetScore(entry2),
+              UserHistoryPredictor::GetScore(entry1));
+  }
+
+  // shorter value has higher score.
+  {
+    UserHistoryPredictor::Entry entry1, entry2;
+
+    entry1.set_key("abc");
+    entry1.set_value("ABC");
+    entry1.set_last_access_time(10);
+
+    entry2.set_key("foo");
+    entry2.set_value("ABCD");
+    entry2.set_last_access_time(10);
+
+    EXPECT_GT(UserHistoryPredictor::GetScore(entry1),
+              UserHistoryPredictor::GetScore(entry2));
+  }
+
+  // bigram boost makes the entry stronger
+  {
+    UserHistoryPredictor::Entry entry1, entry2;
+
+    entry1.set_key("abc");
+    entry1.set_value("ABC");
+    entry1.set_last_access_time(10);
+
+    entry2.set_key("foo");
+    entry2.set_value("ABC");
+    entry2.set_last_access_time(10);
+    entry2.set_bigram_boost(true);
+
+    EXPECT_GT(UserHistoryPredictor::GetScore(entry2),
+              UserHistoryPredictor::GetScore(entry1));
+  }
+
+  // bigram boost makes the entry stronger
+  {
+    UserHistoryPredictor::Entry entry1, entry2;
+
+    entry1.set_key("abc");
+    entry1.set_value("ABCD");
+    entry1.set_last_access_time(10);
+    entry1.set_bigram_boost(true);
+
+    entry2.set_key("foo");
+    entry2.set_value("ABC");
+    entry2.set_last_access_time(50);
+
+    EXPECT_GT(UserHistoryPredictor::GetScore(entry1),
+              UserHistoryPredictor::GetScore(entry2));
+  }
+}
+
+TEST(UserHistoryPredictor, IsValidSuggestion) {
+  UserHistoryPredictor::Entry entry;
+
+  EXPECT_FALSE(UserHistoryPredictor::IsValidSuggestion(1, entry));
+
+  entry.set_bigram_boost(true);
+  EXPECT_TRUE(UserHistoryPredictor::IsValidSuggestion(1, entry));
+
+  entry.set_bigram_boost(false);
+  entry.set_conversion_freq(10);
+  EXPECT_TRUE(UserHistoryPredictor::IsValidSuggestion(1, entry));
+}
+
+TEST(UserHistoryPredictor, EntryPriorityQueueTest) {
+  // removed automatically
+  const int kSize = 10000;
+  {
+    UserHistoryPredictor::EntryPriorityQueue queue;
+    for (int i = 0; i < 10000; ++i) {
+      EXPECT_TRUE(queue.NewEntry());
+    }
+  }
+
+  {
+    UserHistoryPredictor::EntryPriorityQueue queue;
+    vector<UserHistoryPredictor::Entry *> expected;
+    for (int i = 0; i < kSize; ++i) {
+      UserHistoryPredictor::Entry *entry = queue.NewEntry();
+      entry->set_key("test" + Util::SimpleItoa(i));
+      entry->set_value("test" + Util::SimpleItoa(i));
+      entry->set_last_access_time(i + 1000);
+      expected.push_back(entry);
+      EXPECT_TRUE(queue.Push(entry));
+    }
+
+    int n = kSize - 1;
+    while (true) {
+      const UserHistoryPredictor::Entry *entry = queue.Pop();
+      if (entry == NULL) {
+        break;
+      }
+      EXPECT_EQ(entry, expected[n]);
+      --n;
+    }
+    EXPECT_EQ(-1, n);
+  }
+
+  {
+    UserHistoryPredictor::EntryPriorityQueue queue;
+    for (int i = 0; i < 5; ++i) {
+      UserHistoryPredictor::Entry *entry = queue.NewEntry();
+      entry->set_key("test");
+      entry->set_value("test");
+      queue.Push(entry);
+    }
+    EXPECT_EQ(1, queue.size());
+
+    for (int i = 0; i < 5; ++i) {
+      UserHistoryPredictor::Entry *entry = queue.NewEntry();
+      entry->set_key("foo");
+      entry->set_value("bar");
+      queue.Push(entry);
+    }
+
+    EXPECT_EQ(2, queue.size());
   }
 }
 }  // namespace

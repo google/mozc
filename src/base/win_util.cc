@@ -27,15 +27,42 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#ifdef OS_WINDOWS
+#include <Aux_ulib.h>
+#endif  // OS_WINDOWS
+
 #include "base/win_util.h"
 #ifdef OS_WINDOWS
-#include <winternl.h>
+#include "base/singleton.h"
 #endif  // OS_WINDOWS
 
 namespace mozc {
 #ifdef OS_WINDOWS
-
 namespace {
+class AuxLibInitializer {
+ public:
+  AuxLibInitializer() {
+   ::AuxUlibInitialize();
+  }
+  bool IsDLLSynchronizationHeld(bool *lock_status) const {
+    if (lock_status == NULL) {
+      return false;
+    }
+
+    BOOL synchronization_held = FALSE;
+    const BOOL result =
+      ::AuxUlibIsDLLSynchronizationHeld(&synchronization_held);
+    if (!result) {
+      const int error = ::GetLastError();
+      DLOG(ERROR) << "AuxUlibIsDLLSynchronizationHeld failed. error = "
+                  << error;
+      return false;
+    }
+    *lock_status = (synchronization_held != FALSE);
+    return true;
+  }
+};
+
 // Adjusts privileges in the process token to be able to shutdown the machine.
 // Returns true if the operation finishes without error.
 // We do not use LOG functions in this function to avoid dependency to CRT.
@@ -71,6 +98,11 @@ bool AdjustPrivilegesForShutdown() {
 }
 }  // namespace
 
+bool WinUtil::IsDLLSynchronizationHeld(bool *lock_status) {
+  return Singleton<AuxLibInitializer>::get()->IsDLLSynchronizationHeld(
+      lock_status);
+}
+
 bool WinUtil::Logoff() {
   if (!AdjustPrivilegesForShutdown()) {
     return false;
@@ -79,7 +111,7 @@ bool WinUtil::Logoff() {
 }
 
 ScopedCOMInitializer::ScopedCOMInitializer()
- : hr_(::CoInitialize(NULL)) {
+    : hr_(::CoInitialize(NULL)) {
 }
 
 ScopedCOMInitializer::~ScopedCOMInitializer() {

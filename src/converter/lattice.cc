@@ -31,6 +31,7 @@
 
 #include <string>
 #include "base/base.h"
+#include "converter/boundary_data.h"
 #include "converter/node.h"
 #include "converter/pos_matcher.h"
 
@@ -41,7 +42,7 @@ namespace {
 Node *InitBOSNode(Lattice *lattice, uint16 length) {
   Node *bos_node = lattice->NewNode();
   DCHECK(bos_node);
-  bos_node->rid = 0;
+  bos_node->rid = 0;  // 0 is reserved for EOS/BOS
   bos_node->lid = 0;
   bos_node->key.clear();
   bos_node->value = "BOS";
@@ -54,34 +55,30 @@ Node *InitBOSNode(Lattice *lattice, uint16 length) {
 }
 
 Node *InitEOSNode(Lattice *lattice, uint16 length) {
-  Node *eos_node = lattice->NewNode();
-  DCHECK(eos_node);
-  eos_node->rid = 0;   // pure EOS
-  eos_node->lid = 0;
-  eos_node->key.clear();
-  eos_node->value = "EOS";
-  eos_node->node_type = Node::EOS_NODE;
-  eos_node->wcost = 0;
-  eos_node->cost = 0;
-  eos_node->begin_pos = length;
-  eos_node->end_pos = length;
+  Node *result = NULL;
+  const int kCostOffset = 2000;
+  for (int i = 0; i < arraysize(kBoundaryData); ++i) {
+    if (kBoundaryData[i].wcost - kBoundaryData[0].wcost > kCostOffset) {
+      break;
+    }
+    Node *eos_node = lattice->NewNode();
+    DCHECK(eos_node);
+    eos_node->rid = kBoundaryData[i].id;
+    eos_node->lid = kBoundaryData[i].id;
+    eos_node->key.clear();
+    eos_node->value = "EOS";
+    eos_node->node_type = Node::EOS_NODE;
+    eos_node->wcost = kBoundaryData[i].wcost;
+    eos_node->cost = 0;
+    eos_node->begin_pos = length;
+    eos_node->end_pos = length;
+    eos_node->bnext = result;
+    // chain nodes
+    result = eos_node;
+  }
 
-  Node *eos_noun_node = lattice->NewNode();
-  DCHECK(eos_noun_node);
-  eos_noun_node->rid = POSMatcher::GetUnknownId();
-  eos_noun_node->lid = POSMatcher::GetUnknownId();
-  eos_noun_node->key.clear();
-  eos_noun_node->value = "EOS";
-  eos_noun_node->node_type = Node::EOS_NODE;
-  eos_noun_node->wcost = 0;
-  eos_noun_node->cost = 0;
-  eos_noun_node->begin_pos = length;
-  eos_noun_node->end_pos = length;
-
-  // chain nodes
-  eos_node->bnext = eos_noun_node;
-
-  return eos_node;
+  CHECK(result);
+  return result;
 }
 }  // namespace
 

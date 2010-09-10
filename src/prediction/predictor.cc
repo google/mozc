@@ -97,6 +97,17 @@ void PredictorImpl::Finish(Segments *segments) {
   for (size_t i = 0; i < predictors_.size(); ++i) {
     predictors_[i]->Finish(segments);
   }
+  if (segments->conversion_segments_size() < 1 ||
+      segments->request_type() == Segments::CONVERSION) {
+    return;
+  }
+  Segment *segment = segments->mutable_conversion_segment(0);
+  if (segment->candidates_size() < 1) {
+    return;
+  }
+  // update the key as the original key only contains
+  // the 'prefix'.
+  segment->set_key(segment->candidate(0).content_key);
 }
 
 void PredictorImpl::Revert(Segments *segments) {

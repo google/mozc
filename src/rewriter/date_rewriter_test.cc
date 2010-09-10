@@ -56,7 +56,78 @@ void Expect3Results(const vector<string> &src,
     EXPECT_TRUE(src[i] == exp1 || src[i] == exp2 || src[i] == exp3);
   }
 }
+
+void InitSegment(const string &key, const string &value,
+                 Segments *segments) {
+  segments->Clear();
+  Segment *seg = segments->add_segment();
+  Segment::Candidate *candidate = seg->add_candidate();
+  seg->set_key(key);
+  candidate->content_key = key;
+  candidate->value = value;
+  candidate->content_value = value;
+}
+
+int CountDescription(const Segments &segments, const string &description) {
+  int num = 0;
+  for (size_t i = 0; i < segments.segment(0).candidates_size(); ++i) {
+    if (segments.segment(0).candidate(i).description == description) {
+        ++num;
+     }
+  }
+  return num;
+}
 }  // namespace
+
+// TODO(taku): want to test the contents.
+TEST(DateRewriteTest, DateRewriteTest) {
+  DateRewriter rewriter;
+  Segments segments;
+
+  // "きょう/今日/今日の日付"
+  {
+    InitSegment("\xE3\x81\x8D\xE3\x82\x87\xE3\x81\x86",
+                "\xE4\xBB\x8A\xE6\x97\xA5", &segments);
+    EXPECT_TRUE(rewriter.Rewrite(&segments));
+    EXPECT_EQ(4, CountDescription(
+        segments,
+        "\xE4\xBB\x8A\xE6\x97\xA5"
+        "\xE3\x81\xAE\xE6\x97\xA5\xE4\xBB\x98"));
+  }
+
+  // "あした/明日/明日の日付"
+  {
+    InitSegment("\xE3\x81\x82\xE3\x81\x97\xE3\x81\x9F",
+                "\xE6\x98\x8E\xE6\x97\xA5", &segments);
+    EXPECT_TRUE(rewriter.Rewrite(&segments));
+    EXPECT_EQ(4, CountDescription(
+        segments,
+        "\xE6\x98\x8E\xE6\x97\xA5"
+        "\xE3\x81\xAE\xE6\x97\xA5\xE4\xBB\x98"));
+  }
+
+  // "きのう/昨日/昨日の日付"
+  {
+    InitSegment("\xE3\x81\x8D\xE3\x81\xAE\xE3\x81\x86",
+                "\xE6\x98\xA8\xE6\x97\xA5", &segments);
+    EXPECT_TRUE(rewriter.Rewrite(&segments));
+    EXPECT_EQ(4, CountDescription(
+        segments,
+        "\xE6\x98\xA8\xE6\x97\xA5"
+        "\xE3\x81\xAE\xE6\x97\xA5\xE4\xBB\x98"));
+  }
+
+  // "あさって/明後日/明後日の日付"
+  {
+    InitSegment("\xE3\x81\x82\xE3\x81\x95\xE3\x81\xA3\xE3\x81\xA6",
+                "\xE6\x98\x8E\xE5\xBE\x8C\xE6\x97\xA5", &segments);
+    EXPECT_TRUE(rewriter.Rewrite(&segments));
+    EXPECT_EQ(4, CountDescription(
+        segments,
+        "\xE6\x98\x8E\xE5\xBE\x8C\xE6\x97\xA5"
+        "\xE3\x81\xAE\xE6\x97\xA5\xE4\xBB\x98"));
+  }
+}
 
 TEST(DateRewriterTest, ADToERA) {
   DateRewriter rewriter;

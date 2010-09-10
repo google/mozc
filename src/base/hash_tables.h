@@ -34,14 +34,13 @@
 #define MOZC_BASE_HASH_TABLES_H_
 
 
-#if defined(OS_WINDOWS)
-
+#ifdef OS_WINDOWS
 #include <hash_map>
 #include <hash_set>
 using stdext::hash_map;
 using stdext::hash_set;
+#else  // not OS_WINDOWS
 
-#else  // OS_WINDOWS
 
 #include <ext/hash_map>
 #include <ext/hash_set>
@@ -62,8 +61,6 @@ struct hash<std::string> {
   }
 };
 }
-
-#endif  // OS_WINDOWS
-
+#endif  // not OS_WINDOWS
 
 #endif  // MOZC_BASE_HASH_TABLES_H_

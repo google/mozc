@@ -179,6 +179,122 @@ TEST(SessionOutputTest, FillCandidates) {
   EXPECT_FALSE(candidates_proto.subcandidates().has_focused_index());
 }
 
+TEST(SessionOutputTest, FillAllCandidateWords) {
+  // IDs are ordered by BFS.
+  // 
+  //  ID|Idx| Candidate list tree
+  //   1| 0 | [1:[sub1_1,
+  //   5| 1 |    sub1_2:[subsub1_1,
+  //   6| 2 |            subsub1_2],
+  //   2| 3 |    sub1_3],
+  //   0| 4 |  2,
+  //   3| 5 |  3:[sub2_1,
+  //   4| 6 |     sub2_2]]
+  CandidateList main_list(true);
+  CandidateList sub1(true);
+  CandidateList sub2(true);
+  CandidateList subsub1(true);
+  commands::CandidateList candidates_proto;
+
+  // Initialize Segment
+  Segment segment;
+  const char* kNormalKey = "key";
+  segment.set_key(kNormalKey);
+
+  const char* kValues[7] =
+    {"2", "sub1_1", "sub1_3", "sub2_1", "sub2_2", "subsub1_1", "subsub1_2"};
+  const size_t kValueSize = arraysize(kValues);
+  for (size_t i = 0; i < kValueSize; ++i) {
+    Segment::Candidate *candidate = segment.push_back_candidate();
+    candidate->content_key = kNormalKey;
+    candidate->value = kValues[i];
+  }
+  // Set special key to ID:4 / Index:6
+  const char* kSpecialKey = "Special Key";
+  segment.mutable_candidate(4)->content_key = kSpecialKey;
+
+  // Main
+  main_list.AddSubCandidateList(&sub1);
+  main_list.AddCandidate(0, kValues[0]);
+  main_list.AddSubCandidateList(&sub2);
+
+  // Sub1
+  sub1.AddCandidate(1, kValues[1]);
+  sub1.AddSubCandidateList(&subsub1);
+  sub1.AddCandidate(2, kValues[2]);
+
+  // Sub2
+  sub2.AddCandidate(3, kValues[3]);
+  sub2.AddCandidate(4, kValues[4]);
+
+  // SubSub1
+  subsub1.AddCandidate(5, kValues[5]);
+  subsub1.AddCandidate(6, kValues[6]);
+
+  // Set forcus to ID:5 / Index:1
+  main_list.set_focused(true);
+  sub1.set_focused(true);
+  subsub1.set_focused(true);
+  main_list.MoveToId(5);
+  EXPECT_EQ(5, main_list.focused_id());
+  EXPECT_EQ(0, main_list.focused_index());
+  EXPECT_EQ(1, sub1.focused_index());
+  EXPECT_EQ(0, subsub1.focused_index());
+  // End of Initialization
+
+
+  // Exexcute FillAllCandidateWords
+  const commands::Category kCategory = commands::PREDICTION;
+  SessionOutput::FillAllCandidateWords(segment, main_list, kCategory,
+                                       &candidates_proto);
+
+  // Varidation
+  EXPECT_EQ(1, candidates_proto.focused_index());
+  EXPECT_EQ(kCategory, candidates_proto.category());
+  EXPECT_EQ(kValueSize, candidates_proto.candidates_size());
+
+  EXPECT_EQ(1, candidates_proto.candidates(0).id());
+  EXPECT_EQ(5, candidates_proto.candidates(1).id());
+  EXPECT_EQ(6, candidates_proto.candidates(2).id());
+  EXPECT_EQ(2, candidates_proto.candidates(3).id());
+  EXPECT_EQ(0, candidates_proto.candidates(4).id());
+  EXPECT_EQ(3, candidates_proto.candidates(5).id());
+  EXPECT_EQ(4, candidates_proto.candidates(6).id());
+
+  EXPECT_EQ(0, candidates_proto.candidates(0).index());
+  EXPECT_EQ(1, candidates_proto.candidates(1).index());
+  EXPECT_EQ(2, candidates_proto.candidates(2).index());
+  EXPECT_EQ(3, candidates_proto.candidates(3).index());
+  EXPECT_EQ(4, candidates_proto.candidates(4).index());
+  EXPECT_EQ(5, candidates_proto.candidates(5).index());
+  EXPECT_EQ(6, candidates_proto.candidates(6).index());
+
+  EXPECT_FALSE(candidates_proto.candidates(0).has_key());
+  EXPECT_FALSE(candidates_proto.candidates(1).has_key());
+  EXPECT_FALSE(candidates_proto.candidates(2).has_key());
+  EXPECT_FALSE(candidates_proto.candidates(3).has_key());
+  EXPECT_FALSE(candidates_proto.candidates(4).has_key());
+  EXPECT_FALSE(candidates_proto.candidates(5).has_key());
+  EXPECT_TRUE(candidates_proto.candidates(6).has_key());
+  EXPECT_EQ(kSpecialKey, candidates_proto.candidates(6).key());
+
+  EXPECT_EQ(kValues[1], candidates_proto.candidates(0).value());
+  EXPECT_EQ(kValues[5], candidates_proto.candidates(1).value());
+  EXPECT_EQ(kValues[6], candidates_proto.candidates(2).value());
+  EXPECT_EQ(kValues[2], candidates_proto.candidates(3).value());
+  EXPECT_EQ(kValues[0], candidates_proto.candidates(4).value());
+  EXPECT_EQ(kValues[3], candidates_proto.candidates(5).value());
+  EXPECT_EQ(kValues[4], candidates_proto.candidates(6).value());
+
+  EXPECT_FALSE(candidates_proto.candidates(0).has_annotation());
+  EXPECT_FALSE(candidates_proto.candidates(1).has_annotation());
+  EXPECT_FALSE(candidates_proto.candidates(2).has_annotation());
+  EXPECT_FALSE(candidates_proto.candidates(3).has_annotation());
+  EXPECT_FALSE(candidates_proto.candidates(4).has_annotation());
+  EXPECT_FALSE(candidates_proto.candidates(5).has_annotation());
+  EXPECT_FALSE(candidates_proto.candidates(6).has_annotation());
+}
+
 TEST(SessionOutputTest, FillUsages) {
   Segment segment;
   CandidateList candidate_list(true);

@@ -42,9 +42,14 @@ class SparseConnector : public ConnectorInterface {
   SparseConnector(const char *ptr, size_t size);
   virtual ~SparseConnector();
 
+  // magic number for SparseConnector image.
   static const uint16 kSparseConnectorMagic = 0x4141;
+  // Special cost number to denote kInvalidCost for 1 byte cost encoding
+  // mode.
+  static const uint8 kInvalid1ByteCostValue = 255;
 
   virtual int GetTransitionCost(uint16 rid, uint16 lid) const;
+  virtual int GetResolution() const;
 
   // It is better to store rid in higher bit as loop for rid is outside
   // of lid loop.
@@ -55,6 +60,8 @@ class SparseConnector : public ConnectorInterface {
  private:
   scoped_ptr<SparseArrayImage> array_image_;
   const int16 *default_cost_;
+  // Resolution of cost value. This value should be 1 for 2bytes cost mode.
+  int resolution_;
 
   DISALLOW_COPY_AND_ASSIGN(SparseConnector);
 };

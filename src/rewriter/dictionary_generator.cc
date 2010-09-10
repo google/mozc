@@ -61,6 +61,9 @@ void Token::MergeFrom(const Token &token) {
   if (!token.description().empty()) {
     description_ = token.description();
   }
+  if (!token.additional_description().empty()) {
+    additional_description_ = token.additional_description();
+  }
 }
 
 uint64 Token::GetID() const {
@@ -148,10 +151,10 @@ bool DictionaryGenerator::Output(const string &filename) const {
         << id << "\t"
         << id << "\t"
         << cost << "\t"
-        << token.value();
-    if (!token.description().empty()) {
-      ofs << "\t" << token.description();
-    }
+        << token.value() << "\t"
+        << (token.description().empty()? "": token.description()) << "\t"
+        << (token.additional_description().empty()?
+            "": token.additional_description());
     ofs << endl;
   }
   return true;

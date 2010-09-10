@@ -244,15 +244,14 @@ void Session::PushHistory(const commands::Input &input,
 // Clear the history and push IMEOn command for initialize session.
 void Session::ResetHistory() {
   history_inputs_.clear();
-#ifdef OS_WINDOWS
-  // On Windows, we should send ON key at the first of each input session
+#if defined(OS_WINDOWS) || defined(OS_MACOSX)
+  // On Windows/Mac, we should send ON key at the first of each input session
   // excepting the very first session, because when the session is restored,
   // its state is direct. On the first session, users should send ON key
   // by themselves.
   // Note that we are assuming that ResetHistory is called only when the
   // client is ON.
   // TODO(toshiyuki): Make sure that this assuming is reasonable or not.
-  // TODO(toshiyuki): Investigate for Mac and remove #ifdef guard.
   if (last_mode_ != commands::DIRECT) {
     commands::Input input;
     input.set_type(commands::Input::SEND_KEY);

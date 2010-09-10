@@ -67,6 +67,7 @@
       'target_name': 'segments',
       'type': 'static_library',
       'sources': [
+        '<(gen_out_dir)/boundary_data.h',
         '<(gen_out_dir)/embedded_connection_data.h',
         '<(gen_out_dir)/pos_matcher.h',
         '<(gen_out_dir)/segmenter_data.h',
@@ -83,6 +84,7 @@
         '../base/base.gyp:base',
         '../dictionary/dictionary.gyp:dictionary',
         'character_form_manager',
+        'gen_boundary_data',
         'gen_pos_matcher',
         'gen_segmenter_inl',
       ],
@@ -263,6 +265,34 @@
       ],
     },
     {
+      'target_name': 'gen_boundary_data',
+      'type': 'none',
+      'actions': [
+        {
+          'action_name': 'gen_boundary_data',
+          'variables': {
+            'input_files': [
+              '../data/dictionary/boundary.txt',
+            ],
+          },
+          'inputs': [
+            'gen_boundary_data.py',
+            '<@(input_files)',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/boundary_data.h',
+          ],
+          'action': [
+            'python', '../build_tools/redirect.py',
+            '<(gen_out_dir)/boundary_data.h',
+            'gen_boundary_data.py',
+            '<@(input_files)',
+          ],
+          'message': 'Generating <(gen_out_dir)/boundary_data.h.',
+        },
+      ],
+    },
+    {
       'target_name': 'install_gen_segmenter_bitarray_main',
       'type': 'none',
       'variables': {
@@ -298,6 +328,54 @@
         'test_size': 'small',
       },
     },
+    {
+      'target_name': 'quality_regression_test_data',
+      'type': 'none',
+      'actions': [
+        {
+          'action_name': 'quality_regression_test_data',
+          'variables': {
+            'input_files': [
+              '../data/test/quality_regression_test/anthy_corpus.tsv',
+              '../data/test/quality_regression_test/regression_test_auto.tsv',
+              '../data/test/quality_regression_test/regression_test_manual.tsv',
+            ],
+          },
+          'inputs': [
+            'gen_quality_regression_test_data.py',
+            '<@(input_files)',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/quality_regression_test_data.h',
+          ],
+          'action': [
+            'python', '../build_tools/redirect.py',
+            '<(gen_out_dir)/quality_regression_test_data.h',
+            'gen_quality_regression_test_data.py',
+            '<@(input_files)',
+          ],
+          'message': 'Generating <(gen_out_dir)/quality_regression_test_data.h.',
+        },
+      ],
+    },
+    {
+      'target_name': 'quality_regression_test',
+      'type': 'executable',
+      'sources': [
+        '<(gen_out_dir)/quality_regression_test_data.h',
+        'quality_regression_test.cc',
+      ],
+      'dependencies': [
+        '../session/session.gyp:config_handler',
+        '../testing/testing.gyp:gtest_main',
+        'converter',
+        'segments',
+        'quality_regression_test_data',
+      ],
+      'variables': {
+        'test_size': 'large',
+      },
+    },
     # Test cases meta target: this target is referred from gyp/tests.gyp
     {
       'target_name': 'converter_all_test',
@@ -305,6 +383,7 @@
       'dependencies': [
         'converter_test',
         'character_form_manager_test',
+        'quality_regression_test',
       ],
     },
   ],

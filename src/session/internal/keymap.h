@@ -105,6 +105,8 @@ class KeyMapManager {
 
   // Return the file name bound with the keymap enum.
   static const char *GetKeyMapFileName(config::Config::SessionKeymap keymap);
+  // Return the default keymap.
+  static config::Config::SessionKeymap GetDefaultKeyMap();
 
  private:
   void InitCommandData();

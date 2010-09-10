@@ -184,7 +184,7 @@ int main(int argc, char **argv) {
     for (size_t lid = 0; lid <= kRSize; ++lid) {
       const int index= rid + kLSize * lid;
       const uint32 cindex = ltable.id(rid) + kCompressedLSize * rtable.id(lid);
-      CHECK_EQ(barray.get(cindex), array[index]);
+      CHECK_EQ(barray.get(cindex), (array[index] != 0));
     }
   }
 

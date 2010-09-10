@@ -760,6 +760,11 @@ bool DateRewriter::RewriteTime(Segment *segment,
                "%d\xE5\xB9\xB4%d\xE6\x9C\x88%d\xE6\x97\xA5",
                t_st.tm_year + 1900, t_st.tm_mon + 1, t_st.tm_mday);
       Insert(segment, cand, i + 1, tmp, description, kDatePrefix);
+      // YYYY-MM-DD
+      snprintf(tmp, sizeof(tmp),
+               "%d-%2.2d-%2.2d",
+               t_st.tm_year + 1900, t_st.tm_mon + 1, t_st.tm_mday);
+      Insert(segment, cand, i + 1, tmp, description, kDatePrefix);
       // YYYY/MM/DD
       snprintf(tmp, sizeof(tmp),
                "%d/%2.2d/%2.2d",

@@ -35,6 +35,8 @@
 #include <sys/time.h>  // time()
 #endif
 
+#include <limits.h>
+
 #include <algorithm>
 #include <map>
 #include <set>
@@ -47,6 +49,7 @@
 #include "session/commands.pb.h"
 #include "session/config_handler.h"
 #include "session/config.pb.h"
+#include "session/internal/keymap.h"
 #include "session/state.pb.h"
 #include "usage_stats/usage_stats.h"
 
@@ -58,6 +61,11 @@ const size_t kMaxSession = 64;
 const size_t kDefaultSaveInterval = 500;
 const char kIMEOnCommand[] = "IMEOn";
 const char kIMEOffCommand[] = "IMEOff";
+// Used for selected_indices
+// We use negative integer for transliterated candidates,
+// but we have transliterated candidates at most 20 or so.
+// So we can use INT_MIN for special meaning.
+const int kSelectDirectly = INT_MIN;
 
 void ExtractActivationKeys(istream *ifs, set<string> *keys) {
   DCHECK(keys);
@@ -78,10 +86,10 @@ void ExtractActivationKeys(istream *ifs, set<string> *keys) {
   }
 }
 
-const char *kKeyMapTableFiles[] = {
-  "system://atok.tsv",
-  "system://ms-ime.tsv",
-  "system://kotoeri.tsv"
+config::Config::SessionKeymap kKeyMaps[] = {
+  config::Config::ATOK,
+  config::Config::MSIME,
+  config::Config::KOTOERI,
 };
 
 bool IMEActivationKeyCustomized() {
@@ -93,8 +101,10 @@ bool IMEActivationKeyCustomized() {
   istringstream ifs_custom(custom_keymap_table);
   set<string> customized;
   ExtractActivationKeys(&ifs_custom, &customized);
-  for (size_t i = 0; i < arraysize(kKeyMapTableFiles); ++i) {
-    scoped_ptr<istream> ifs(ConfigFileStream::Open(kKeyMapTableFiles[i]));
+  for (size_t i = 0; i < arraysize(kKeyMaps); ++i) {
+    const char *keymap_file =
+        keymap::KeyMapManager::GetKeyMapFileName(kKeyMaps[i]);
+    scoped_ptr<istream> ifs(ConfigFileStream::Open(keymap_file));
     if (ifs.get() == NULL) {
       LOG(ERROR) << "can not open default keymap table " << i;
       continue;
@@ -164,6 +174,109 @@ void SetConfigStats() {
   const bool ime_activation_key_customized = IMEActivationKeyCustomized();
   usage_stats::UsageStats::SetBoolean("IMEActivationKeyCustomized",
                                       ime_activation_key_customized);
+}
+
+// Return true if the value is in the candidate.
+bool FindInCandidates(const string &value,
+                      const commands::Candidates &candidates) {
+  if (candidates.has_subcandidates()) {
+    for (size_t i = 0; i < candidates.subcandidates().candidate_size(); ++i) {
+      if (value == candidates.subcandidates().candidate(i).value()) {
+        return true;
+      }
+    }
+  }
+  for (size_t i = 0; i < candidates.candidate_size(); ++i) {
+    if (value == candidates.candidate(i).value()) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// Return session state mode from candidate mode
+session::SessionState::Mode GetSessionModeFromCandidates(
+    const commands::Candidates &candidates) {
+  switch (candidates.category()) {
+    case commands::CONVERSION:
+      return session::SessionState::CONVERSION;
+    case commands::PREDICTION:
+      return session::SessionState::PREDICTION;
+    case commands::SUGGESTION:
+      return session::SessionState::SUGGESTION;
+    default:
+      DCHECK(false) << "invalid candidate category";
+      return session::SessionState::COMPOSITION;
+  }
+}
+
+// Return true if input is mouse select command
+bool IsMouseSelect(const commands::Input &input) {
+  return (input.type() == commands::Input::SEND_COMMAND &&
+          input.has_command() &&
+          input.command().type() == commands::SessionCommand::SELECT_CANDIDATE);
+}
+
+// Return true if resegmented
+bool IsResegmented(const commands::Preedit &prev_preedit,
+                   const commands::Preedit &cur_preedit) {
+  if (prev_preedit.segment_size() != cur_preedit.segment_size()) {
+    return true;
+  }
+  int changed_segment = 0;
+  for (size_t i = 0; i < prev_preedit.segment_size(); ++i) {
+    if (prev_preedit.segment(i).key() != cur_preedit.segment(i).key()) {
+      ++changed_segment;
+    }
+  }
+  return (changed_segment > 1);
+}
+
+// Return true if given preedits are same in value.
+bool IsSamePreedit(const commands::Preedit &prev_preedit,
+                   const commands::Preedit &cur_preedit) {
+  if (prev_preedit.segment_size() != cur_preedit.segment_size()) {
+    return false;
+  }
+  for (size_t i = 0; i < prev_preedit.segment_size(); ++i) {
+    if (prev_preedit.segment(i).value() != cur_preedit.segment(i).value()) {
+      return false;
+    }
+  }
+  return true;
+}
+
+// Find candidate with value and set its index to |idx|.
+// Return false if |value| is not found in candidates.
+bool GetSelectedIndex(const string &value,
+                      const commands::Candidates &candidates, int *idx) {
+  DCHECK(idx != NULL);
+  *idx = 0;
+  if (candidates.has_subcandidates() &&
+      (candidates.subcandidates().category() == commands::TRANSLITERATION)) {
+    for (size_t i = 0; i < candidates.subcandidates().candidate_size(); ++i) {
+      if (value == candidates.subcandidates().candidate(i).value()) {
+        const int t13n_idx = candidates.subcandidates().candidate(i).index();
+        // t13n candidates
+        *idx = (-t13n_idx - 1);
+        return true;
+      }
+    }
+  }
+  for (size_t i = 0; i < candidates.candidate_size(); ++i) {
+    if (value == candidates.candidate(i).value()) {
+      *idx = candidates.candidate(i).index();
+      return true;
+    }
+  }
+  return false;
+}
+
+// Return true if state's candidates have given category
+bool CheckCandidateCategory(const SessionState *state,
+                            commands::Category category) {
+  return (state->has_candidates() &&
+          state->candidates().category() == category);
 }
 }  // namespace
 
@@ -237,6 +350,7 @@ class EventConverter {
     specialkey_map_[commands::KeyEvent::ASCII] = "ASCII";
     specialkey_map_[commands::KeyEvent::HANKAKU] = "HANKAKU";
     specialkey_map_[commands::KeyEvent::KANJI] = "KANJI";
+    specialkey_map_[commands::KeyEvent::KATAKANA] = "KATAKANA";
   }
 
   const map<uint32, string> &GetSpecialKeyMap() const {
@@ -293,7 +407,14 @@ void SessionUsageObserver::SaveStats() {
 }
 
 void SessionUsageObserver::IncrementCount(const string &name) {
-  count_cache_[name]++;
+  IncrementCountBy(name, 1);
+}
+
+void SessionUsageObserver::IncrementCountBy(const string &name,
+                                            uint64 count) {
+  DCHECK(usage_stats::UsageStats::IsListed(name))
+      << name << " is not in the stats list";
+  count_cache_[name] += count;
   ++update_count_;
   if (update_count_ >= save_interval_) {
     SaveStats();
@@ -301,6 +422,8 @@ void SessionUsageObserver::IncrementCount(const string &name) {
 }
 
 void SessionUsageObserver::UpdateTiming(const string &name, uint64 val) {
+  DCHECK(usage_stats::UsageStats::IsListed(name))
+      << name << " is not in the stats list";
   timing_cache_[name].push_back(val);
   ++update_count_;
   if (update_count_ >= save_interval_) {
@@ -309,6 +432,8 @@ void SessionUsageObserver::UpdateTiming(const string &name, uint64 val) {
 }
 
 void SessionUsageObserver::SetInteger(const string &name, int val) {
+  DCHECK(usage_stats::UsageStats::IsListed(name))
+      << name << " is not in the stats list";
   integer_cache_[name] = val;
   ++update_count_;
   if (update_count_ >= save_interval_) {
@@ -317,15 +442,14 @@ void SessionUsageObserver::SetInteger(const string &name, int val) {
 }
 
 void SessionUsageObserver::SetBoolean(const string &name, bool val) {
+  DCHECK(usage_stats::UsageStats::IsListed(name))
+      << name << " is not in the stats list";
   boolean_cache_[name] = val;
   ++update_count_;
   if (update_count_ >= save_interval_) {
     SaveStats();
   }
 }
-
-// TODO(toshiyuki): Implement the way to make sure that
-//                  stats name is in the stats list on compiling
 
 void SessionUsageObserver::EvalCreateSession(const commands::Input &input,
                                              const commands::Output &output,
@@ -341,7 +465,120 @@ void SessionUsageObserver::EvalCreateSession(const commands::Input &input,
   }
 }
 
-void SessionUsageObserver::UpdateState(const commands::Output &output,
+void SessionUsageObserver::UpdateMode(const commands::Input &input,
+                                      const commands::Output &output,
+                                      SessionState *state) const {
+  if (!output.has_preedit()) {
+    state->set_mode(session::SessionState::COMPOSITION);
+    return;
+  }
+
+  bool has_highlighted = false;
+  for (size_t i = 0; i < output.preedit().segment_size(); ++i) {
+    if (output.preedit().segment(i).annotation() ==
+        commands::Preedit::Segment::HIGHLIGHT) {
+      has_highlighted = true;
+      break;
+    }
+  }
+
+  if (!has_highlighted) {
+    state->set_mode(session::SessionState::COMPOSITION);
+    return;
+  }
+
+  // Mouse select and no candidate window now.
+  if (IsMouseSelect(input)) {
+    DCHECK(state->has_candidates());
+    if (state->has_candidates()) {
+      state->set_mode(
+          GetSessionModeFromCandidates(state->candidates()));
+    }
+    return;
+  }
+
+  if (output.has_candidates()) {
+    state->set_mode(
+        GetSessionModeFromCandidates(output.candidates()));
+    return;
+  }
+
+  if (state->mode() == session::SessionState::COMPOSITION) {
+    // First conversion
+    state->set_mode(session::SessionState::CONVERSION);
+  }
+}
+
+// Update selected indices
+void SessionUsageObserver::UpdateSelectedIndices(const commands::Input &input,
+                                                 const commands::Output &output,
+                                                 SessionState *state) const {
+  if (!output.has_preedit()) {
+    state->clear_selected_indices();
+    return;
+  }
+
+  if (state->selected_indices_size() == 0) {
+    for (size_t i = 0; i < output.preedit().segment_size(); ++i) {
+      state->add_selected_indices(0);
+    }
+  }
+
+  if (IsSamePreedit(state->preedit(), output.preedit())) {
+    // no change
+    return;
+  }
+
+  if (IsResegmented(state->preedit(), output.preedit())) {
+    // When the conversion result is resegmented, keep the
+    // unchanged indices and set others to '0'.
+    vector<int> new_indices;
+    int changed_idx = 0;
+    for (size_t i = 0; i < output.preedit().segment_size(); ++i) {
+      if ((output.preedit().segment(i).annotation() ==
+           commands::Preedit::Segment::HIGHLIGHT)) {
+        changed_idx = i;
+        break;
+      }
+    }
+    for (size_t i = 0; i < changed_idx; ++i) {
+      new_indices.push_back(state->selected_indices(i));
+    }
+    for (size_t i = changed_idx; i < output.preedit().segment_size(); ++i) {
+      new_indices.push_back(0);
+    }
+    state->clear_selected_indices();
+    for (size_t i = 0; i < new_indices.size(); ++i) {
+      state->add_selected_indices(new_indices[i]);
+    }
+  } else {
+    int changed_idx = 0;
+    // Find target segment.
+    for (size_t i = 0; i < output.preedit().segment_size(); ++i) {
+      if ((output.preedit().segment(i).annotation() ==
+           commands::Preedit::Segment::HIGHLIGHT)) {
+        changed_idx = i;
+        break;
+      }
+    }
+    const string &new_value = output.preedit().segment(changed_idx).value();
+    int idx = 0;
+    if (output.has_candidates() &&
+        GetSelectedIndex(new_value, output.candidates(), &idx)) {
+      state->set_selected_indices(changed_idx, idx);
+    } else if (IsMouseSelect(input) &&
+               state->has_candidates() &&
+               GetSelectedIndex(new_value, state->candidates(), &idx)) {
+      // Candidate can be selected by mouse
+      state->set_selected_indices(changed_idx, idx);
+    } else {
+      state->set_selected_indices(changed_idx, kSelectDirectly);
+    }
+  }
+}
+
+void SessionUsageObserver::UpdateState(const commands::Input &input,
+                                       const commands::Output &output,
                                        SessionState *state) {
   // Preedit
   if (!state->has_preedit() && output.has_preedit()) {
@@ -421,6 +658,9 @@ void SessionUsageObserver::UpdateState(const commands::Output &output,
     // no transition
   }
 
+  UpdateSelectedIndices(input, output, state);
+  UpdateMode(input, output, state);
+
   // Cascading window
   if ((!state->has_candidates() ||
        (state->has_candidates() &&
@@ -435,6 +675,7 @@ void SessionUsageObserver::UpdateState(const commands::Output &output,
   } else {
     state->clear_preedit();
   }
+
   // Update Candidates
   if (output.has_candidates()) {
     state->mutable_candidates()->CopyFrom(output.candidates());
@@ -458,8 +699,7 @@ void SessionUsageObserver::UpdateState(const commands::Output &output,
 }
 
 void SessionUsageObserver::EvalSendKey(const commands::Input &input,
-                                       const commands::Output &output,
-                                       SessionState *state) {
+                                       const commands::Output &output) {
   if (input.has_key() && input.key().has_key_code()) {
     // Number of consumed ASCII(printable) typing
     IncrementCount("ASCIITyping");
@@ -478,49 +718,86 @@ void SessionUsageObserver::EvalSendKey(const commands::Input &input,
   }
 }
 
+void SessionUsageObserver::UpdateCandidateStats(const string &base_name,
+                                                uint32 index) {
+  if (index <= 9) {
+    const string stats_name = base_name + Util::SimpleItoa(index);
+    IncrementCount(stats_name);
+  } else {
+    const string stats_name = base_name + "GE10";
+    IncrementCount(stats_name);
+  }
+}
+
 void SessionUsageObserver::CheckOutput(const commands::Input &input,
                                        const commands::Output &output,
-                                       SessionState *state) {
-  if (output.has_result() &&
-      output.result().type() == commands::Result::STRING) {
-    // commit preedit
-    IncrementCount("Commit");
+                                       const SessionState *state) {
+  if (!output.has_result() ||
+      output.result().type() != commands::Result::STRING) {
+    // No commit string
+    return;
+  }
 
-    if (state->has_candidates() &&
-        state->candidates().has_category() &&
-        state->candidates().category() == commands::SUGGESTION) {
-      IncrementCount("CommitFromSuggestion");
+  // commit preedit
+  IncrementCount("Commit");
+
+  const string &submit_value = output.result().value();
+
+  if (state->mode() == session::SessionState::SUGGESTION ||
+      (CheckCandidateCategory(state, commands::SUGGESTION) &&
+       FindInCandidates(submit_value, state->candidates()))) {
+    // We should check the candidate contents because suggestion
+    // candidates are shown automatically.
+    IncrementCount("CommitFromSuggestion");
+    DCHECK(state->selected_indices_size() == 1);
+    const uint32 index = state->selected_indices(0);
+    if (index == kSelectDirectly) {
+      // Treat as top candidate
+      UpdateCandidateStats("SuggestionCandidates", 0);
+    } else {
+      UpdateCandidateStats("SuggestionCandidates", index);
     }
-
-    if (state->has_candidates() &&
-        state->candidates().has_category() &&
-        state->candidates().category() == commands::CONVERSION) {
-      IncrementCount("CommitFromConversion");
+  } else if (state->mode() == session::SessionState::PREDICTION ||
+             CheckCandidateCategory(state, commands::PREDICTION)) {
+    IncrementCount("CommitFromPrediction");
+    DCHECK(state->selected_indices_size() == 1);
+    const uint32 index = state->selected_indices(0);
+    if (index == kSelectDirectly) {
+      // Treat as top candidate
+      UpdateCandidateStats("PredictionCandidates", 0);
+    } else {
+      UpdateCandidateStats("PredictionCandidates", index);
     }
-
-    if (state->has_candidates() &&
-        state->candidates().has_category() &&
-        state->candidates().category() == commands::PREDICTION) {
-      IncrementCount("CommitFromPrediction");
-      const uint32 idx = state->candidates().focused_index();
-      if (idx <= 9) {
-        const string stats_name = "Prediction" + Util::SimpleItoa(idx);
-        IncrementCount(stats_name);
+  } else if (state->mode() == session::SessionState::CONVERSION ||
+             CheckCandidateCategory(state, commands::CONVERSION)) {
+    IncrementCount("CommitFromConversion");
+    for (size_t i = 0; i < state->selected_indices_size(); ++i) {
+      const int index = state->selected_indices(i);
+      if (index == kSelectDirectly) {
+        // Treat as top conversion candidate
+        // This may treat 'F8' result to 'ConversionCandidates0'.
+        UpdateCandidateStats("ConversionCandidates", 0);
+      } else  if (index < 0) {
+        const int t13n_index = -index-1;
+        UpdateCandidateStats("TransliterationCandidates", t13n_index);
       } else {
-        IncrementCount("PredictionGE10");
+        UpdateCandidateStats("ConversionCandidates", index);
       }
     }
+  } else if (state->has_preedit()) {
+    IncrementCount("CommitFromComposition");
+  }
 
-    if (state->has_preedit()) {
-      uint32 total_len = 0;
-      for (size_t i = 0; i < state->preedit().segment_size(); ++i) {
-        const uint32 len = state->preedit().segment(i).value_length();
-        total_len += len;
-        UpdateTiming("SubmittedSegmentLength", len);
-      }
-      UpdateTiming("SubmittedLength", total_len);
-      UpdateTiming("SubmittedSegmentNumber",state->preedit().segment_size());
+  if (state->has_preedit()) {
+    uint64 total_len = 0;
+    for (size_t i = 0; i < state->preedit().segment_size(); ++i) {
+      const uint32 len = state->preedit().segment(i).value_length();
+      total_len += len;
+      UpdateTiming("SubmittedSegmentLength", len);
     }
+    UpdateTiming("SubmittedLength", total_len);
+    UpdateTiming("SubmittedSegmentNumber",state->preedit().segment_size());
+    IncrementCountBy("SubmittedTotalLength", total_len);
   }
 }
 
@@ -531,6 +808,15 @@ void SessionUsageObserver::EvalCommandHandler(
 
   IncrementCount("SessionAllEvent");
   UpdateTiming("ElapsedTime", output.elapsed_time());
+
+  if (input.type() == commands::Input::SEND_KEY) {
+    if (output.has_consumed() && output.consumed()) {
+      IncrementCount("ConsumedSendKey");
+    } else {
+      IncrementCount("UnconsumedSendKey");
+    }
+    EvalSendKey(input, output);
+  }
 
   if (input.type() == commands::Input::CREATE_SESSION) {
     EvalCreateSession(input, output, &states_);
@@ -583,39 +869,33 @@ void SessionUsageObserver::EvalCommandHandler(
     return;
   }
 
-  if (input.type() == commands::Input::SEND_KEY &&
-      output.has_consumed() && output.consumed()) {
-    EvalSendKey(input, output, state);
-  }
-
   // Backspace key after commit
   if (state->committed() &&
        // for Applications supporting TEST_SEND_KEY
       (input.type() == commands::Input::TEST_SEND_KEY ||
        // other Applications
-       (input.type() == commands::Input::SEND_KEY &&
-        output.has_consumed() && !output.consumed())) &&
-      input.has_key() && input.key().has_special_key() &&
-      input.key().special_key() == commands::KeyEvent::BACKSPACE &&
-      state->has_result() &&
-      state->result().type() == commands::Result::STRING) {
-    IncrementCount("BackSpaceAfterCommit");
-  }
-
-  if (input.type() == commands::Input::SEND_COMMAND &&
-      input.has_command() && output.consumed()) {
-    if (input.has_command() &&
-        input.command().type() == commands::SessionCommand::SELECT_CANDIDATE) {
-      IncrementCount("MouseSelect");
+       input.type() == commands::Input::SEND_KEY)) {
+    if (input.has_key() && input.key().has_special_key() &&
+        input.key().special_key() == commands::KeyEvent::BACKSPACE &&
+        state->has_result() &&
+        state->result().type() == commands::Result::STRING) {
+      IncrementCount("BackSpaceAfterCommit");
+      // Count only one for each submitted result.
     }
+    state->set_committed(false);
   }
 
-  state->set_committed(false);
+  if (IsMouseSelect(input)) {
+    IncrementCount("MouseSelect");
+  }
 
-  if (output.has_consumed() && output.consumed()) {
+  if ((input.type() == commands::Input::SEND_COMMAND ||
+       input.type() == commands::Input::SEND_KEY) &&
+      output.has_consumed() &&
+      output.consumed()) {
     // update states only when input was consumed
     CheckOutput(input, output, state);
-    UpdateState(output, state);
+    UpdateState(input, output, state);
   }
 }
 

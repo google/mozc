@@ -32,6 +32,7 @@
 #include <string>
 #include <vector>
 #include "base/base.h"
+#include "base/util.h"
 #include "converter/segments.h"
 #include "testing/base/public/gunit.h"
 
@@ -125,7 +126,25 @@ TEST_F(CandidateFilterTest, MayHaveMoreCandidates) {
   c4->structure_cost = INT_MAX;
   c4->value = "ghi";
   // High cost candidate should be rejected.
-  EXPECT_EQ(CandidateFilter::STOP_ENUMERATION,
+  EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
             filter.FilterCandidate(c4.get()));
+
+  // Insert many valid candidates
+  for (int i = 0; i < 50; ++i) {
+    scoped_ptr<Segment::Candidate> tmp(GetCandidate());
+    tmp->value = Util::SimpleItoa(i) + "test";
+    filter.FilterCandidate(tmp.get());
+  }
+
+  scoped_ptr<Segment::Candidate> c5(GetCandidate());
+  c5->cost = INT_MAX;
+  c5->structure_cost = INT_MAX;
+  c5->value = "ghi";
+
+  // finally, it returns STOP_ENUMERATION, because
+  // filter has seen more than 50 good candidates.
+  c5->value = "ghi2";
+  EXPECT_EQ(CandidateFilter::STOP_ENUMERATION,
+            filter.FilterCandidate(c5.get()));
 }
 }  // namespace mozc

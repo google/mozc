@@ -234,6 +234,19 @@ class Segment {
   // return true if the candidate is expanded.
   bool ExpandAlternative(int i);
 
+  // Given English word, expand its variants by changing
+  // lower case/upper cases. If the original input has mixed
+  // upper/lower case characters, it only expands lower case pattern.
+  // Example:
+  // input="English" => [english, ENGLISH], and return true
+  // input="SELECT" => [select, Select], and return true
+  // input="foo" => [Foo, FOO], and return true
+  // input="MeCab => [mecab], and return true (mixed lower/upper)
+  // input="Foo Bar" => [], and return fasle (multi word expressions)
+  // input="グーグル" => [] and return fasle (non-ascii)
+  static bool ExpandEnglishVariants(const string &input,
+                                    vector<string> *variants);
+
   bool Reset();
   void clear();
   void Clear();
@@ -249,8 +262,8 @@ class Segment {
   size_t requested_candidates_size_;
   scoped_ptr<NBestGenerator> nbest_generator_;
   scoped_ptr<ObjectPool<Candidate> > pool_;
-  bool is_numbers_expanded_;
   bool initialized_transliterations_;
+  bool all_expanded_;
   // Maximum prefix length of Katakana t13n candidate.
   // We only allow that one katakana key is converted into English.
   // This length saves the length of Katakana which appeared at first.

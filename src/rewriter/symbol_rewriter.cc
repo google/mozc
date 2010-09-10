@@ -27,10 +27,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "rewriter/symbol_rewriter.h"
+
 #include <algorithm>
 #include <string>
 #include <vector>
 #include <set>
+
 #include "base/base.h"
 #include "base/singleton.h"
 #include "base/util.h"
@@ -38,7 +41,6 @@
 #include "converter/segments.h"
 #include "converter/character_form_manager.h"
 #include "rewriter/rewriter_interface.h"
-#include "rewriter/symbol_rewriter.h"
 #include "rewriter/embedded_dictionary.h"
 #include "session/config_handler.h"
 #include "session/config.pb.h"
@@ -54,6 +56,12 @@
 namespace mozc {
 
 namespace {
+// Try to start inserting symbols from this position
+const size_t kOffsetSize = 3;
+// Number of symbols which are inserted to first part
+const size_t kMaxInsertToMedium = 15;
+// Insert rest symbols from this position
+const size_t kInsertRestSymbolsPos = 100;
 
 #include "rewriter/symbol_rewriter_data.h"
 
@@ -72,11 +80,18 @@ class SymbolDictionary {
  private:
   scoped_ptr<EmbeddedDictionary> dic_;
 };
+} // namespace
 
 // Some characters may have different description for full/half width forms.
 // Here we just change the description in this function.
+// If the symbol has description and additional description,
+// Return merged description.
 // TODO(taku): allow us to define two descriptions in *.tsv file
-const string GetDescription(const string &value, const char *description) {
+// static function
+const string SymbolRewriter::GetDescription(
+    const string &value,
+    const char *description,
+    const char *additional_description) {
   if (description == NULL) {
     return "";
   }
@@ -86,12 +101,18 @@ const string GetDescription(const string &value, const char *description) {
         "\xE3\x83\x90\xE3\x83\x83\xE3\x82\xAF"
         "\xE3\x82\xB9\xE3\x83\xA9\xE3\x83\x83\xE3\x82\xB7\xE3\x83\xA5";
   }
-  return description;
+  string ret = description;
+  // Merge description
+  if (additional_description != NULL) {
+    ret += string("(") + string(additional_description) + string(")");
+  }
+  return ret;
 }
 
 // return true if all the characters in value should have
 // Half/Fullwidth description
-bool HasHalfFullWidthDescription(const string &value) {
+// static function
+bool SymbolRewriter::HasHalfFullWidthDescription(const string &value) {
   if (value.empty()) {
     return false;
   }
@@ -117,7 +138,8 @@ bool HasHalfFullWidthDescription(const string &value) {
 }
 
 // return true key has no-hiragana
-bool IsSymbol(const string &key) {
+// static function
+bool SymbolRewriter::IsSymbol(const string &key) {
   const char *begin  = key.data();
   const char *end = key.data() + key.size();
   while (begin < end) {
@@ -131,7 +153,8 @@ bool IsSymbol(const string &key) {
   return true;
 }
 
-void ExpandSpace(Segment *segment) {
+// static function
+void SymbolRewriter::ExpandSpace(Segment *segment) {
   for (size_t i = 0; i < segment->candidates_size(); ++i) {
     if (segment->candidate(i).value == " ") {
       Segment::Candidate *c = segment->insert_candidate(i + 1);
@@ -149,11 +172,38 @@ void ExpandSpace(Segment *segment) {
   }
 }
 
+// TODO(toshiyuki): Should we move this under Util module?
+bool SymbolRewriter::IsPlatformDependent(
+    const EmbeddedDictionary::Value &value) {
+  if (value.value == NULL) {
+    return false;
+  }
+  const Util::CharacterSet cset = Util::GetCharacterSet(value.value);
+  return (cset >= Util::JISX0212);
+}
+
+// Return true if two symbols are in same group
+// static function
+bool SymbolRewriter::InSameSymbolGroup(const EmbeddedDictionary::Value &lhs,
+                                       const EmbeddedDictionary::Value &rhs) {
+  // "矢印記号", "矢印記号"
+  // "ギリシャ(大文字)", "ギリシャ(小文字)"
+  if (lhs.description == NULL || rhs.description == NULL) {
+    return false;
+  }
+  const int cmp_len = max(strlen(lhs.description), strlen(rhs.description));
+  if (strncmp(lhs.description, rhs.description, cmp_len) == 0) {
+    return true;
+  }
+  return false;
+}
+
 // Insert Symbol into segment.
-void InsertCandidates(const EmbeddedDictionary::Value *value, size_t size,
-                      bool context_sensitive,
-                      Segment *segment) {
-  static const size_t kOffsetSize = 3;   // insert 3rd position
+// static function
+void SymbolRewriter::InsertCandidates(const EmbeddedDictionary::Value *value,
+                                      size_t size,
+                                      bool context_sensitive,
+                                      Segment *segment) {
   segment->GetCandidates(kOffsetSize);
   if (segment->candidates_size() == 0) {
     LOG(WARNING) << "candiadtes_size is 0";
@@ -189,7 +239,9 @@ void InsertCandidates(const EmbeddedDictionary::Value *value, size_t size,
           half_width_value == value[j].value) {
         // ovewrite description
         c->SetDescription(type,
-                          GetDescription(c->value, value[j].description));
+                          GetDescription(c->value,
+                                         value[j].description,
+                                         value[j].additional_description));
         added.insert(c->value);
         added.insert(full_width_value);
         added.insert(half_width_value);
@@ -200,6 +252,21 @@ void InsertCandidates(const EmbeddedDictionary::Value *value, size_t size,
 
   const Segment::Candidate &base_candidate = segment->candidate(0);
   size_t offset = min(kOffsetSize, segment->candidates_size());
+  // Find the position wehere we start to insert the symbols
+  // We want to skip the single-kanji we inserted by single-kanji rewriter.
+
+  for (size_t i = offset; i < segment->candidates_size(); ++i) {
+    const string &value = segment->candidate(i).value;
+    if (Util::CharsLen(value) == 1 &&
+        Util::IsScriptType(value, Util::KANJI)) {
+      ++offset;
+    } else {
+      break;
+    }
+  }
+
+  size_t inserted_count = 0;
+  bool finish_first_part = false;
 
   for (size_t i = 0; i < size; ++i) {
     if (added.find(value[i].value) != added.end()) {
@@ -239,28 +306,52 @@ void InsertCandidates(const EmbeddedDictionary::Value *value, size_t size,
         c1->description.clear();
         c1->SetDescription(Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER |
                            Segment::Candidate::FULL_HALF_WIDTH,
-                           GetDescription(c1->value, value[i].description));
+                           GetDescription(c1->value,
+                                          value[i].description,
+                                          value[i].additional_description));
       }
       if (c2 != NULL) {
         c2->description.clear();
         c2->SetDescription(Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER |
                            Segment::Candidate::FULL_HALF_WIDTH,
-                           GetDescription(c2->value, value[i].description));
+                           GetDescription(c2->value,
+                                          value[i].description,
+                                          value[i].additional_description));
       }
       offset += 2;
+      inserted_count += 2;
     } else {
       c->description.clear();
       int type = Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER;
       if (HasHalfFullWidthDescription(c->value)) {
         type |= Segment::Candidate::FULL_HALF_WIDTH;
       }
-      c->SetDescription(type, GetDescription(c->value, value[i].description));
+      c->SetDescription(type, GetDescription(c->value,
+                                             value[i].description,
+                                             value[i].additional_description));
       ++offset;
+      ++inserted_count;
+    }
+
+    // Insert to latter position
+    // If number of rest symbols is small, insert current position.
+    if (i + 1 < size &&
+        !finish_first_part &&
+        inserted_count >= kMaxInsertToMedium &&
+        size - inserted_count >= 5 &&
+        // Do not divide symbols which seem to be in the same group
+        // prividing that they are not platform dependent characters.
+        (!InSameSymbolGroup(value[i], value[i + 1]) ||
+         IsPlatformDependent(value[i + 1]))) {
+      segment->GetCandidates(kInsertRestSymbolsPos);
+      offset = segment->candidates_size();
+      finish_first_part = true;
     }
   }
 }
 
-bool RewriteEachCandidate(Segments *segments) {
+// static function
+bool SymbolRewriter::RewriteEachCandidate(Segments *segments) {
   bool rewrite = false;
   for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
     const string &key = segments->conversion_segment(i).key();
@@ -283,7 +374,8 @@ bool RewriteEachCandidate(Segments *segments) {
   return rewrite;
 }
 
-bool RewriteEntireCandidate(Segments *segments) {
+// static function
+bool SymbolRewriter::RewriteEntireCandidate(Segments *segments) {
   string key;
   for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
     key += segments->conversion_segment(i).key();
@@ -322,7 +414,6 @@ bool RewriteEntireCandidate(Segments *segments) {
 
   return true;
 }
-}  // namespace
 
 SymbolRewriter::SymbolRewriter() {}
 

@@ -250,6 +250,10 @@ class Session {
   // if session status is DIRECT, set the status to PRECOMPOSITION.
   void EnsureIMEIsOn();
 
+  // return true if |key_event| is a triggering key_event of
+  // AutoIMEConversion.
+  bool CanStartAutoConversion(const commands::KeyEvent &key_event) const;
+
   DISALLOW_COPY_AND_ASSIGN(Session);
 };
 

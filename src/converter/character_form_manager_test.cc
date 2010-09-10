@@ -32,6 +32,7 @@
 #include "base/util.h"
 #include "converter/character_form_manager.h"
 #include "session/config.pb.h"
+#include "session/config_handler.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/googletest.h"
 
@@ -41,16 +42,25 @@ namespace mozc {
 
 class CharacterFormManagerTest : public testing::Test {
  public:
-  static void SetUpTestCase() {
+  virtual void SetUp() {
+    // set default user profile directory
+    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    config::Config config;
+    config::ConfigHandler::GetDefaultConfig(&config);
+    config::ConfigHandler::SetConfig(config);
     CharacterFormManager *manager =
         CharacterFormManager::GetCharacterFormManager();
     manager->SetDefaultRule();
   }
 
-  static void TearDownTestCase() {
+  virtual void TearDown() {
     CharacterFormManager *manager =
         CharacterFormManager::GetCharacterFormManager();
     manager->SetDefaultRule();
+    // reset config in test_tmpdir
+    config::Config config;
+    config::ConfigHandler::GetDefaultConfig(&config);
+    config::ConfigHandler::SetConfig(config);
   }
 };
 

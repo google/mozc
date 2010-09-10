@@ -106,6 +106,63 @@ void SessionOutput::FillCandidates(const Segment &segment,
   FillUsages(segment, candidate_list, candidates_proto);
 }
 
+namespace {
+static void FillAllCandidateWordsInternal(
+    const Segment &segment,
+    const CandidateList &candidate_list,
+    const int focused_id,
+    commands::CandidateList *candidate_list_proto) {
+  for (size_t i = 0; i < candidate_list.size(); ++i) {
+    const Candidate &candidate = candidate_list.candidate(i);
+    if (candidate.IsSubcandidateList()) {
+      FillAllCandidateWordsInternal(
+          segment, candidate.subcandidate_list(), focused_id,
+          candidate_list_proto);
+      continue;
+    }
+
+    commands::CandidateWord *candidate_word_proto =
+      candidate_list_proto->add_candidates();
+    // id
+    const int id = candidate.id();
+    candidate_word_proto->set_id(id);
+
+    // index
+    const int index = candidate_list_proto->candidates_size() - 1;
+    candidate_word_proto->set_index(index);
+
+    // check focused id
+    if (id == focused_id) {
+      candidate_list_proto->set_focused_index(index);
+    }
+
+    const Segment::Candidate &segment_candidate = segment.candidate(id);
+    // key
+    if (segment.key() != segment_candidate.content_key) {
+      candidate_word_proto->set_key(segment_candidate.content_key);
+    }
+    // value
+    SessionNormalizer::NormalizeCandidateText(
+        segment_candidate.value, candidate_word_proto->mutable_value());
+
+    // annotations are not set.
+  }
+}
+}  // anonymous namespace
+
+// static
+void SessionOutput::FillAllCandidateWords(
+    const Segment &segment,
+    const CandidateList &candidate_list,
+    const commands::Category category,
+    commands::CandidateList *candidate_list_proto) {
+  candidate_list_proto->set_category(category);
+  FillAllCandidateWordsInternal(
+      segment, candidate_list, candidate_list.focused_id(),
+      candidate_list_proto);
+}
+
+
 
 // static
 bool SessionOutput::ShouldShowUsages(const Segment &segment,

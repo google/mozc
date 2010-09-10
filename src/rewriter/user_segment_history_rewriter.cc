@@ -38,6 +38,7 @@
 #include "base/util.h"
 #include "transliteration/transliteration.h"
 #include "converter/character_form_manager.h"
+#include "converter/pos_matcher.h"
 #include "converter/segments.h"
 #include "storage/lru_storage.h"
 #include "rewriter/rewriter_interface.h"
@@ -215,6 +216,44 @@ inline bool GetFeatureR(const Segments &segments, size_t i,
       base_value + '\t' +
       segments.segment(i + 1).candidate(j).value;
   return true;
+}
+
+// Feature "Left Number"
+inline bool GetFeatureLN(const Segments &segments, size_t i,
+                         const string &base_key,
+                         const string &base_value, string *value) {
+  DCHECK(value);
+  if (i < 1) {
+    return false;
+  }
+  const int j = GetDefaultCandidateIndex(segments.segment(i - 1));
+  const Segment::Candidate &candidate = segments.segment(i - 1).candidate(j);
+  if (POSMatcher::IsNumber(candidate.rid) ||
+      POSMatcher::IsKanjiNumber(candidate.rid) ||
+      Util::GetScriptType(candidate.value) == Util::NUMBER) {
+    *value = string("LN") + '\t' + base_key + '\t' + base_value;
+    return true;
+  }
+  return false;
+}
+
+// Feature "Right Number"
+inline bool GetFeatureRN(const Segments &segments, size_t i,
+                         const string &base_key,
+                         const string &base_value, string *value) {
+  DCHECK(value);
+  if (i + 1 >= segments.segments_size()) {
+    return false;
+  }
+  const int j = GetDefaultCandidateIndex(segments.segment(i + 1));
+  const Segment::Candidate &candidate = segments.segment(i + 1).candidate(j);
+  if (POSMatcher::IsNumber(candidate.lid) ||
+      POSMatcher::IsKanjiNumber(candidate.lid) ||
+      Util::GetScriptType(candidate.value) == Util::NUMBER) {
+    *value = string("RN") + '\t' + base_key + '\t' + base_value;
+    return true;
+  }
+  return false;
 }
 
 // Feature "Current"
@@ -495,10 +534,11 @@ bool UserSegmentHistoryRewriter::GetScore(const Segments &segments,
   uint32 last_access_time_result = 0;
   string feature_key;
 
-  const uint32 trigram_score = (segments_size == 3) ? 180 : 30;
-  const uint32 bigram_score  = (segments_size == 2) ? 60  : 10;
-  const uint32 unigram_score = (segments_size == 1) ? 36  : 6;
-  const uint32 single_score  = (segments_size == 1) ? 90  : 15;
+  const uint32 trigram_score       = (segments_size == 3) ? 180 : 30;
+  const uint32 bigram_score        = (segments_size == 2) ? 60  : 10;
+  const uint32 bigram_number_score = (segments_size == 2) ? 50  : 8;
+  const uint32 unigram_score       = (segments_size == 1) ? 36  : 6;
+  const uint32 single_score        = (segments_size == 1) ? 90  : 15;
 
   FETCH_FEATURE(GetFeatureLR, all_key, all_value, trigram_score);
   FETCH_FEATURE(GetFeatureLL, all_key, all_value, trigram_score);
@@ -506,6 +546,8 @@ bool UserSegmentHistoryRewriter::GetScore(const Segments &segments,
   FETCH_FEATURE(GetFeatureL,  all_key, all_value, bigram_score);
   FETCH_FEATURE(GetFeatureR,  all_key, all_value, bigram_score);
   FETCH_FEATURE(GetFeatureS,  all_key, all_value, single_score);
+  FETCH_FEATURE(GetFeatureLN, content_key, content_value, bigram_number_score);
+  FETCH_FEATURE(GetFeatureRN, content_key, content_value, bigram_number_score);
 
   if (!context_sensitive && is_replaceable) {
     FETCH_FEATURE(GetFeatureC,  all_key, all_value, unigram_score);
@@ -521,6 +563,10 @@ bool UserSegmentHistoryRewriter::GetScore(const Segments &segments,
   FETCH_FEATURE(GetFeatureL,  content_key, content_value, bigram_score / 2);
   FETCH_FEATURE(GetFeatureR,  content_key, content_value, bigram_score / 2);
   FETCH_FEATURE(GetFeatureS,  content_key, content_value, single_score / 2);
+  FETCH_FEATURE(GetFeatureLN, content_key,
+                content_value, bigram_number_score / 2);
+  FETCH_FEATURE(GetFeatureRN, content_key,
+                content_value, bigram_number_score / 2);
 
   if (!context_sensitive) {
     FETCH_FEATURE(GetFeatureC,  content_key, content_value, unigram_score / 2);
@@ -601,6 +647,8 @@ void UserSegmentHistoryRewriter::RememberFirstCandidate(
   INSERT_FEATURE(GetFeatureRR, all_key, all_value, force_insert);
   INSERT_FEATURE(GetFeatureL,  all_key, all_value, force_insert);
   INSERT_FEATURE(GetFeatureR,  all_key, all_value, force_insert);
+  INSERT_FEATURE(GetFeatureLN, all_key, all_value, force_insert);
+  INSERT_FEATURE(GetFeatureRN, all_key, all_value, force_insert);
   INSERT_FEATURE(GetFeatureS,  all_key, all_value, force_insert);
 
   if (!context_sensitive && is_replaceable) {
@@ -614,6 +662,8 @@ void UserSegmentHistoryRewriter::RememberFirstCandidate(
     INSERT_FEATURE(GetFeatureRR, content_key, content_value, force_insert);
     INSERT_FEATURE(GetFeatureL,  content_key, content_value, force_insert);
     INSERT_FEATURE(GetFeatureR,  content_key, content_value, force_insert);
+    INSERT_FEATURE(GetFeatureLN, content_key, content_value, force_insert);
+    INSERT_FEATURE(GetFeatureRN, content_key, content_value, force_insert);
     INSERT_FEATURE(GetFeatureS,  content_key, content_value, force_insert);
     if (!context_sensitive) {
       INSERT_FEATURE(GetFeatureC, content_key, content_value, force_insert);
@@ -780,11 +830,11 @@ bool UserSegmentHistoryRewriter::RewriteNumber(Segment *segment) const {
            != Segment::Candidate::NUMBER_SEPARATED_ARABIC_HALFWIDTH)) {
         last_access_time--;
       }
+      scores.resize(scores.size() + 1);
+      scores.back().score = score;
+      scores.back().last_access_time = last_access_time;
+      scores.back().candidate = segment->mutable_candidate(j);
     }
-    scores.resize(scores.size() + 1);
-    scores.back().score = score;
-    scores.back().last_access_time = last_access_time;
-    scores.back().candidate = segment->mutable_candidate(j);
   }
 
   if (scores.empty()) {

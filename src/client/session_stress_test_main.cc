@@ -44,6 +44,7 @@
 #include "base/util.h"
 #include "client/session.h"
 #include "renderer/renderer_client.h"
+#include "session/random_keyevents_generator.h"
 #include "session/commands.pb.h"
 
 DEFINE_int32(max_keyevents, 100000,
@@ -58,241 +59,6 @@ DECLARE_bool(logtostderr);
 
 namespace mozc {
 namespace {
-
-#include "client/session_stress_test_data.h"
-
-const commands::KeyEvent::SpecialKey kSpecialKeys[] = {
-  commands::KeyEvent::SPACE,
-  commands::KeyEvent::BACKSPACE,
-  commands::KeyEvent::DEL,
-  commands::KeyEvent::DOWN,
-  commands::KeyEvent::END,
-  commands::KeyEvent::ENTER,
-  commands::KeyEvent::ESCAPE,
-  commands::KeyEvent::HOME,
-  commands::KeyEvent::INSERT,
-  commands::KeyEvent::HENKAN,
-  commands::KeyEvent::MUHENKAN,
-  commands::KeyEvent::LEFT,
-  commands::KeyEvent::RIGHT,
-  commands::KeyEvent::UP,
-  commands::KeyEvent::DOWN,
-  commands::KeyEvent::PAGE_UP,
-  commands::KeyEvent::PAGE_DOWN,
-  commands::KeyEvent::TAB,
-  commands::KeyEvent::F1,
-  commands::KeyEvent::F2,
-  commands::KeyEvent::F3,
-  commands::KeyEvent::F4,
-  commands::KeyEvent::F5,
-  commands::KeyEvent::F6,
-  commands::KeyEvent::F7,
-  commands::KeyEvent::F8,
-  commands::KeyEvent::F9,
-  commands::KeyEvent::F10,
-  commands::KeyEvent::F11,
-  commands::KeyEvent::F12
-};
-
-int GetRandom(int size) {
-  return static_cast<int> (1.0 * size * rand() / (RAND_MAX + 1.0));
-}
-
-uint32 GetRandomAsciiKey() {
-  return static_cast<uint32>(' ') + GetRandom(static_cast<uint32>('~' - ' '));
-}
-
-void GenerateSequence(vector<commands::KeyEvent> *keys) {
-  CHECK(keys);
-  keys->clear();
-
-  const string sentence = kTestSentences[GetRandom(arraysize(kTestSentences))];
-  CHECK(!sentence.empty());
-
-  string tmp, input;
-  Util::HiraganaToRomanji(sentence, &tmp);
-  Util::FullWidthToHalfWidth(tmp, &input);
-
-  VLOG(1) << input;
-
-  vector<commands::KeyEvent> basic_keys;
-
-  // generate basic input
-  {
-    // first add a normal keys
-    const char *begin = input.data();
-    const char *end = input.data() + input.size();
-    while (begin < end) {
-      size_t mblen = 0;
-      const uint16 ucs2 = Util::UTF8ToUCS2(begin, end, &mblen);
-      CHECK_GT(mblen, 0);
-      begin += mblen;
-      if (ucs2 >= 0x20 && ucs2 <= 0x7F) {
-        commands::KeyEvent key;
-        key.set_key_code(ucs2);
-        basic_keys.push_back(key);
-      }
-    }
-  }
-
-  // basic keys + conversion
-  {
-    for (size_t i = 0; i < basic_keys.size(); ++i) {
-      keys->push_back(basic_keys[i]);
-    }
-
-    for (int i = 0; i < 5; ++i) {
-      const size_t num = GetRandom(30) + 8;
-      for (size_t j = 0; j < num; ++j) {
-        commands::KeyEvent key;
-        key.set_special_key(commands::KeyEvent::SPACE);
-        if (GetRandom(4) == 0) {
-          key.add_modifier_keys(commands::KeyEvent::SHIFT);
-          keys->push_back(key);
-        }
-      }
-      commands::KeyEvent key;
-      key.set_special_key(commands::KeyEvent::RIGHT);
-      keys->push_back(key);
-    }
-
-    commands::KeyEvent key;
-    key.set_special_key(commands::KeyEvent::ENTER);
-    keys->push_back(key);
-  }
-
-  // segment resize
-  {
-    for (size_t i = 0; i < basic_keys.size(); ++i) {
-      keys->push_back(basic_keys[i]);
-    }
-
-    const size_t num = GetRandom(30) + 10;
-    for (size_t i = 0; i < num; ++i) {
-      commands::KeyEvent key;
-      switch (GetRandom(4)) {
-        case 0:
-          key.set_special_key(commands::KeyEvent::LEFT);
-          if (GetRandom(2) == 0) {
-            key.add_modifier_keys(commands::KeyEvent::SHIFT);
-          }
-          break;
-        case 1:
-          key.set_special_key(commands::KeyEvent::RIGHT);
-          if (GetRandom(2) == 0) {
-            key.add_modifier_keys(commands::KeyEvent::SHIFT);
-          }
-          break;
-        default:
-          {
-            const size_t space_num = GetRandom(20) + 3;
-            for (size_t i = 0; i < space_num; ++i) {
-              key.set_special_key(commands::KeyEvent::SPACE);
-              keys->push_back(key);
-            }
-          }
-          break;
-      }
-
-      if (GetRandom(4) == 0) {
-        key.add_modifier_keys(commands::KeyEvent::CTRL);
-      }
-
-      if (GetRandom(10) == 0) {
-        key.add_modifier_keys(commands::KeyEvent::ALT);
-      }
-
-      keys->push_back(key);
-    }
-
-    commands::KeyEvent key;
-    key.set_special_key(commands::KeyEvent::ENTER);
-    keys->push_back(key);
-  }
-
-  // insert + delete
-  {
-    for (size_t i = 0; i < basic_keys.size(); ++i) {
-      keys->push_back(basic_keys[i]);
-    }
-
-    const size_t num = GetRandom(20) + 10;
-    for (size_t i = 0; i < num; ++i) {
-      commands::KeyEvent key;
-      switch (GetRandom(5)) {
-        case 0:
-          key.set_special_key(commands::KeyEvent::LEFT);
-          break;
-        case 1:
-          key.set_special_key(commands::KeyEvent::RIGHT);
-          break;
-        case 2:
-          key.set_special_key(commands::KeyEvent::DEL);
-          break;
-        case 3:
-          key.set_special_key(commands::KeyEvent::BACKSPACE);
-          break;
-        default:
-          {
-            // add any ascii
-            const size_t insert_num = GetRandom(5) + 1;
-            for (size_t i = 0; i < insert_num; ++i) {
-              key.set_key_code(GetRandomAsciiKey());
-            }
-          }
-      }
-      keys->push_back(key);
-    }
-
-    commands::KeyEvent key;
-    key.set_special_key(commands::KeyEvent::ENTER);
-    keys->push_back(key);
-  }
-
-  // basic keys + modifiers
-  {
-    for (size_t i = 0; i < basic_keys.size(); ++i) {
-      commands::KeyEvent key;
-      switch (GetRandom(8)) {
-        case 0:
-          key.set_key_code(kSpecialKeys[GetRandom(arraysize(kSpecialKeys))]);
-          break;
-        case 1:
-          key.set_key_code(GetRandomAsciiKey());
-          break;
-        default:
-          key.CopyFrom(basic_keys[i]);
-          break;
-      }
-
-      if (GetRandom(10) == 0) {  // 10%
-        key.add_modifier_keys(commands::KeyEvent::CTRL);
-      }
-
-      if (GetRandom(10) == 0) {  // 10%
-        key.add_modifier_keys(commands::KeyEvent::SHIFT);
-      }
-
-      if (GetRandom(50) == 0) {  // 2%
-        key.add_modifier_keys(commands::KeyEvent::KEY_DOWN);
-      }
-
-      if (GetRandom(50) == 0) {  // 2%
-        key.add_modifier_keys(commands::KeyEvent::KEY_UP);
-      }
-
-      keys->push_back(key);
-    }
-
-    // submit
-    commands::KeyEvent key;
-    key.set_special_key(commands::KeyEvent::ENTER);
-    keys->push_back(key);
-  }
-
-  CHECK_GT(keys->size(), 0);
-  VLOG(1) << "key sequence is generated: " << keys->size();
-}
 
 void DisplayPreedit(const commands::Output &output) {
   // TODO(taku): display segment attributes
@@ -357,11 +123,6 @@ int main(int argc, char **argv) {
     CHECK(renderer_client->Activate());
   }
 
-  uint32 seed = 0;
-  mozc::Util::GetSecureRandomSequence(reinterpret_cast<char *>(&seed),
-                                      sizeof(seed));
-  srand(seed);
-
   vector<mozc::commands::KeyEvent> keys;
   mozc::commands::Output output;
   int32 keyevents_size = 0;
@@ -372,7 +133,7 @@ int main(int argc, char **argv) {
   // client library, as client automatically re-lahches the server.
 
   while (true) {
-    mozc::GenerateSequence(&keys);
+    mozc::session::RandomKeyEventsGenerator::GenerateSequence(&keys);
     CHECK(client.NoOperation()) << "Server is not responding";
     for (size_t i = 0; i < keys.size(); ++i) {
       mozc::Util::Sleep(FLAGS_key_duration);

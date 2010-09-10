@@ -142,6 +142,14 @@ ConfigDialog::ConfigDialog()
   verboseLevelComboBox->addItem(tr("1"));
   verboseLevelComboBox->addItem(tr("2"));
 
+  yenSignComboBox->addItem(tr("Yen Sign \xC2\xA5"));
+  yenSignComboBox->addItem(tr("Backslash \\"));
+
+#ifndef OS_MACOSX
+  // On Windows/Linux, yenSignCombBox can be hidden.
+  yenSignLabel->hide();
+  yenSignComboBox->hide();
+#endif  // !OS_MACOSX
 
   // signal/slot
   QObject::connect(configDialogButtonBox,
@@ -180,11 +188,15 @@ ConfigDialog::ConfigDialog()
                    SIGNAL(currentIndexChanged(int)),
                    this,
                    SLOT(SelectInputModeSetting(int)));
-
   QObject::connect(keymapSettingComboBox,
                    SIGNAL(currentIndexChanged(int)),
                    this,
                    SLOT(SelectKeymapSetting(int)));
+  QObject::connect(useAutoConversion,
+                   SIGNAL(stateChanged(int)),
+                   this,
+                   SLOT(SelectAutoConversionSetting(int)));
+
   QObject::connect(launchAdministrationDialogButton,
                    SIGNAL(clicked()),
                    this,
@@ -258,6 +270,8 @@ ConfigDialog::ConfigDialog()
                           tr("Failed to get current config values"));
   }
   ConvertFromProto(config);
+
+  SelectAutoConversionSetting(static_cast<int>(config.use_auto_conversion()));
 
   initial_preedit_method_ = static_cast<int>(config.preedit_method());
 
@@ -341,7 +355,7 @@ bool ConfigDialog::Update() {
 
 void ConfigDialog::SetSendStatsCheckBox() {
   // On windows, usage_stats flag is managed by
-  // administration_dialog. http://b/issue?id=2889759
+  // administration_dialog. http://b/2889759
 #ifndef OS_WINDOWS
   const bool val = StatsConfigUtil::IsEnabled();
   usageStatsCheckBox->setChecked(val);
@@ -350,7 +364,7 @@ void ConfigDialog::SetSendStatsCheckBox() {
 
 void ConfigDialog::GetSendStatsCheckBox() const {
   // On windows, usage_stats flag is managed by
-  // administration_dialog. http://b/issue?id=2889759
+  // administration_dialog. http://b/2889759
 #ifndef OS_WINDOWS
   const bool val = usageStatsCheckBox->isChecked();
   StatsConfigUtil::SetEnabled(val);
@@ -399,11 +413,27 @@ void ConfigDialog::ConvertFromProto(const config::Config &config) {
                history_learning_level);
   SET_CHECKBOX(singleKanjiDictionaryCheckBox, use_single_kanji_conversion);
   SET_CHECKBOX(symbolDictionaryCheckBox, use_symbol_conversion);
+  SET_CHECKBOX(emoticonDictionaryCheckBox, use_emoticon_conversion);
   SET_CHECKBOX(dateConversionCheckBox, use_date_conversion);
   SET_CHECKBOX(numberConversionCheckBox, use_number_conversion);
 
   // tab3
   SET_CHECKBOX(useAutoImeTurnOff, use_auto_ime_turn_off);
+
+  SET_CHECKBOX(useAutoConversion, use_auto_conversion);
+  kutenCheckBox->setChecked(
+      config.auto_conversion_key() &
+      config::Config::AUTO_CONVERSION_KUTEN);
+  toutenCheckBox->setChecked(
+      config.auto_conversion_key() &
+      config::Config::AUTO_CONVERSION_TOUTEN);
+  questionMarkCheckBox->setChecked(
+      config.auto_conversion_key() &
+      config::Config::AUTO_CONVERSION_QUESTION_MARK);
+  exclamationMarkCheckBox->setChecked(
+      config.auto_conversion_key() &
+      config::Config::AUTO_CONVERSION_EXCLAMATION_MARK);
+
   SET_COMBOBOX(shiftKeyModeSwitchComboBox,
                ShiftKeyModeSwitch,
                shift_key_mode_switch);
@@ -422,6 +452,7 @@ void ConfigDialog::ConvertFromProto(const config::Config &config) {
   // tab6
   SET_COMBOBOX(verboseLevelComboBox, int, verbose_level);
   SET_CHECKBOX(checkDefaultCheckBox, check_default);
+  SET_COMBOBOX(yenSignComboBox, YenSignCharacter, yen_sign_character);
 
   characterFormEditor->Load(config);
 }
@@ -453,11 +484,34 @@ void ConfigDialog::ConvertToProto(config::Config *config) const {
                history_learning_level);
   GET_CHECKBOX(singleKanjiDictionaryCheckBox, use_single_kanji_conversion);
   GET_CHECKBOX(symbolDictionaryCheckBox, use_symbol_conversion);
+  GET_CHECKBOX(emoticonDictionaryCheckBox, use_emoticon_conversion);
   GET_CHECKBOX(dateConversionCheckBox, use_date_conversion);
   GET_CHECKBOX(numberConversionCheckBox, use_number_conversion);
 
   // tab3
   GET_CHECKBOX(useAutoImeTurnOff, use_auto_ime_turn_off);
+
+  GET_CHECKBOX(useAutoConversion, use_auto_conversion);
+
+  uint32 auto_conversion_key = 0;
+  if (kutenCheckBox->isChecked()) {
+    auto_conversion_key |=
+        config::Config::AUTO_CONVERSION_KUTEN;
+  }
+  if (toutenCheckBox->isChecked()) {
+    auto_conversion_key |=
+        config::Config::AUTO_CONVERSION_TOUTEN;
+  }
+  if (questionMarkCheckBox->isChecked()) {
+    auto_conversion_key |=
+        config::Config::AUTO_CONVERSION_QUESTION_MARK;
+  }
+  if (exclamationMarkCheckBox->isChecked()) {
+    auto_conversion_key |=
+        config::Config::AUTO_CONVERSION_EXCLAMATION_MARK;
+  }
+  config->set_auto_conversion_key(auto_conversion_key);
+
   GET_COMBOBOX(shiftKeyModeSwitchComboBox,
                ShiftKeyModeSwitch,
                shift_key_mode_switch);
@@ -476,6 +530,7 @@ void ConfigDialog::ConvertToProto(config::Config *config) const {
   // tab6
   config->set_verbose_level(verboseLevelComboBox->currentIndex());
   GET_CHECKBOX(checkDefaultCheckBox, check_default);
+  GET_COMBOBOX(yenSignComboBox, YenSignCharacter, yen_sign_character);
 
   characterFormEditor->Save(config);
 }
@@ -605,6 +660,13 @@ void ConfigDialog::SelectKeymapSetting(int index) {
 void ConfigDialog::SelectInputModeSetting(int index) {
   // enable "EDIT" button if roman mode is selected
   editRomanTableButton->setEnabled((index == 0));
+}
+
+void ConfigDialog::SelectAutoConversionSetting(int state) {
+  kutenCheckBox->setEnabled(static_cast<bool>(state));
+  toutenCheckBox->setEnabled(static_cast<bool>(state));
+  questionMarkCheckBox->setEnabled(static_cast<bool>(state));
+  exclamationMarkCheckBox->setEnabled(static_cast<bool>(state));
 }
 
 void ConfigDialog::ResetToDefaults() {

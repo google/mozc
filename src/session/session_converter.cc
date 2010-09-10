@@ -216,7 +216,8 @@ bool SessionConverter::ConvertToTransliteration(
     // converter/converter.cc to enable to accept mozc::Segment::FIXED
     // from the session layer.
     if (segments_->conversion_segments_size() != 1) {
-      converter_->ResizeSegment(segments_.get(), 0, Util::CharsLen(composition_));
+      converter_->ResizeSegment(segments_.get(), 0,
+                                Util::CharsLen(composition_));
       UpdateCandidateList();
     }
 
@@ -261,7 +262,8 @@ bool SessionConverter::ConvertToHalfWidth(const composer::Composer *composer) {
     // converter/converter.cc to enable to accept mozc::Segment::FIXED
     // from the session layer.
     if (segments_->conversion_segments_size() != 1) {
-      converter_->ResizeSegment(segments_.get(), 0, Util::CharsLen(composition_));
+      converter_->ResizeSegment(segments_.get(), 0,
+                                Util::CharsLen(composition_));
       UpdateCandidateList();
     }
 
@@ -310,7 +312,8 @@ bool SessionConverter::SwitchKanaType(const composer::Composer *composer) {
     // converter/converter.cc to enable to accept mozc::Segment::FIXED
     // from the session layer.
     if (segments_->conversion_segments_size() != 1) {
-      converter_->ResizeSegment(segments_.get(), 0, Util::CharsLen(composition_));
+      converter_->ResizeSegment(segments_.get(), 0,
+                                Util::CharsLen(composition_));
       UpdateCandidateList();
     }
 
@@ -856,6 +859,10 @@ void SessionConverter::FillOutput(commands::Output *output) const {
       candidate_list_visible_) {
     FillCandidates(output->mutable_candidates());
   }
+  // All candidate words
+  if (CheckState(SUGGESTION | PREDICTION | CONVERSION)) {
+    FillAllCandidateWords(output->mutable_all_candidate_words());
+  }
 }
 
 const string &SessionConverter::GetDefaultResult() const {
@@ -1132,6 +1139,32 @@ void SessionConverter::FillCandidates(commands::Candidates *candidates) const {
 
   // Store footer.
   SessionOutput::FillFooter(candidates->category(), candidates);
+}
+
+
+void SessionConverter::FillAllCandidateWords(
+    commands::CandidateList *candidates) const {
+  DCHECK(CheckState(SUGGESTION | PREDICTION | CONVERSION));
+  commands::Category category;
+  switch (segments_->request_type()) {
+    case Segments::CONVERSION:
+      category = commands::CONVERSION;
+      break;
+    case Segments::PREDICTION:
+      category = commands::PREDICTION;
+      break;
+    case Segments::SUGGESTION:
+      category = commands::SUGGESTION;
+      break;
+    default:
+      LOG(WARNING) << "Unkown request type: " << segments_->request_type();
+      category = commands::CONVERSION;
+      break;
+  }
+
+  const Segment &segment = segments_->conversion_segment(segment_index_);
+  SessionOutput::FillAllCandidateWords(
+      segment, *candidate_list_, category, candidates);
 }
 
 }  // namespace session

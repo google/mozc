@@ -126,12 +126,22 @@ message KeyEvent {
     KATAKANA = 67; // VK_DBE_KATAKANA(Win)
     NUM_SPECIALKEYS = 68;
   };
+
+  // CTRL, ALT and SHIFT covers both LEFT and RIGHT keys.  If the
+  // different of LEFT and RIGHT is no matter, using CTRL (or ALT, SHIFT)
+  // is preferred.
   enum ModifierKey {
     CTRL = 1;
     ALT = 2;
     SHIFT = 4;
     KEY_DOWN = 8;
     KEY_UP = 16;
+    LEFT_CTRL = 32;
+    LEFT_ALT = 64;
+    LEFT_SHIFT = 128;
+    RIGHT_CTRL = 256;
+    RIGHT_ALT = 512;
+    RIGHT_SHIFT = 1024;
   };
 
   optional uint32 key_code = 1;  // Printable key in ASCII.
@@ -374,13 +384,51 @@ message Footer {
   optional string sub_label = 4;
 };
 
+message CandidateWord {
+  // Unique number specifing the candidate.  This may be a negative value.
+  optional int32 id = 1;
+  // The first index should be zero and index numbers should increase by one.
+  optional uint32 index = 2;
+  // Reading of the value.  The value is only used when the key is
+  // different from the input composition (e.g. suggestion/prediction).
+  optional string key = 3;
+  // Converted value.  (e.g. Kanji value).
+  optional string value = 4;
+  optional Annotation annotation = 5;
+};
+
+message CandidateList {
+  // This value represents the focused position of the next
+  // |candidates|.  If the |candidates| is a part of the whole
+  // candidate words (as a result of paging), this value indicates the
+  // position from the beginning of that part.  (ex. where
+  // |candidates| contatins 10th to 18th candidates, focused_index=0
+  // means the 10th candidate, but not 1st candidate.
+  //
+  // The existense of |focused_index| does not represents whether this
+  // candidate list is a 'suggestion' or not.  |category| represents
+  // it.
+  optional uint32 focused_index = 1;
+  repeated CandidateWord candidates = 2;
+  // Category of the candidates.
+  optional Category category = 3 [default = CONVERSION];
+};
+
+// TODO(komatsu) rename it to CandidateWindow.
 message Candidates {
+  // TODO(komatsu): Use CandidateList.
   // When has_focused_index() is true, this message contains predicted and
   // normally converted candidates. Otherwise, when the field is not set,
   // this message contains a 'suggestion'.
   optional uint32 focused_index = 1;
 
+  // The size of the total candidates in this candidate list.  The
+  // value does not include the size of subcandidate lists.  Note, the
+  // next repeated-Candidate=3 may not contain all candidates.
+  // all_candidates contains the values of subcandidate lists.
   required uint32 size = 2;
+
+  // TODO(komatsu): Use CandidateList.
   repeated group Candidate = 3 {
     // The first index should be zero and index numbers should increase by one.
     required uint32 index = 4;
@@ -398,6 +446,7 @@ message Candidates {
   // Usages of candidates.
   optional InformationList usages = 10;
 
+  // TODO(komatsu): Use CandidateList.
   // Category of the candidates
   optional Category category = 11 [default = CONVERSION];
 
@@ -406,12 +455,22 @@ message Candidates {
 
   // Footer of the GUI window.
   optional Footer footer = 13;
+};
 
+message Status {
+  // Whether IME is ON or OFF
+  optional bool activated = 1;
+
+  // Composition mode when IME is activated.
+  optional CompositionMode mode = 2;
 };
 
 message Output {
   optional uint64 id = 1;
+
+  // This variable is going to be obsolete.
   optional CompositionMode mode = 2;
+
   optional bool consumed = 3;
   optional Result result = 4;
   optional Preedit preedit = 5;
@@ -446,6 +505,13 @@ message Output {
 
   // number of microseconds that have elapsed for processing the request.
   optional uint32 elapsed_time = 12 [ default = 0 ];
+
+  // The current IME status.
+  optional Status status = 13;
+
+  // All flatten candidate words stored in 1D array.  This value is
+  // filled only when the content is changed.
+  optional CandidateList all_candidate_words = 14;
 };
 
 message Command {
@@ -453,6 +519,11 @@ message Command {
   required Output output = 2;
 };
 
+message CommandList {
+  // This message is used for unittest.
+  repeated Command commands = 1;
+};
+// TODO(team): Make a new proto file into which RendererCommand is moved.
 message RendererCommand {
   // Note for DPI Virtualization in Windows:
   // All 2D positional fields in this command are screen coordinates obtained
@@ -509,6 +580,7 @@ message RendererCommand {
     optional string face_name = 14;  // should be within 32 TCHARs (w/ '\0')
   };
 
+
   // Application information Mozc UI is attaching
   message ApplicationInfo {
     optional uint32 process_id = 1;
@@ -521,9 +593,9 @@ message RendererCommand {
     optional uint32 target_window_handle = 4;
     // used in Windows:
     // Preffered font for composition string.
-    optional WinLogFont compositon_font = 5;
+    optional WinLogFont composition_font = 5;
+
   };
 
   optional ApplicationInfo application_info = 5;
-
 };

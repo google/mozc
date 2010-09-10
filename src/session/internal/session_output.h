@@ -63,6 +63,15 @@ class SessionOutput {
                              size_t position,
                              commands::Candidates *candidates_proto);
 
+  // Fill the CandidateList protobuf with the contents of
+  // candidate_list.  Candidates in the candidate_list are flatten
+  // even if the candidate_list contains sub-candidate lists.
+  static void FillAllCandidateWords(
+      const Segment &segment,
+      const CandidateList &candidate_list,
+      const commands::Category category,
+      commands::CandidateList *candidate_list_proto);
+
   // Check if the usages should be rendered on the current CandidateList status.
   static bool ShouldShowUsages(const Segment &segment,
                                const CandidateList &cand_list);

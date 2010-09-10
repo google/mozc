@@ -41,9 +41,9 @@
 #include "base/password_manager.h"
 #include "base/config_file_stream.h"
 #include "converter/segments.h"
-#include "storage/lru_cache.h"
 #include "prediction/predictor_interface.h"
 #include "prediction/user_history_predictor.pb.h"
+#include "storage/lru_cache.h"
 #include "session/config_handler.h"
 #include "session/config.pb.h"
 #include "usage_stats/usage_stats.h"
@@ -51,19 +51,26 @@
 namespace mozc {
 
 namespace {
-// find suggestion candidates from the most recent 1000 history in LRU.
+// find suggestion candidates from the most recent 3000 history in LRU.
 // We don't check all history, since suggestion is called every key event
-const size_t kMaxSuggestionTrial = 1000;
+const size_t kMaxSuggestionTrial = 3000;
+
+// find suffix matches of history_segments from the most recent 500 histories
+// in LRU.
+const size_t kMaxPrevValueTrial = 500;
 
 // cache size
 const size_t kLRUCacheSize = 10000;
 
 // don't save key/value that are
 // longer than kMaxCandidateSize to avoid memory explosion
-const size_t kMaxStringLength = 128;
+const size_t kMaxStringLength = 256;
 
 // salt size for encryption
 const size_t kSaltSize = 32;
+
+// maximum size of next_entries
+const size_t kMaxNextEntriesSize = 4;
 
 // 64Mbyte
 // Maximum file size for history
@@ -71,6 +78,9 @@ const size_t kMaxFileSize = 64 * 1024 * 1024;
 
 // revert id for user_history_predictor
 const uint16 kRevertId = 1;
+
+// default object pool size for EntryPriorityQueue
+const size_t kEntryPoolSize = 16;
 
 // file name for the history
 #ifdef OS_WINDOWS
@@ -82,18 +92,57 @@ const char kFileName[] = "user://.history.db";
 // use '\t' as a key/value delimiter
 const char kDelimiter[] = "\t";
 
-bool IsValidSuggestion(uint32 prefix_len,
-                       uint32 word_len,
-                       uint32 suggestion_freq,
-                       uint32 conversion_freq) {
-  // Handle suggestion_freq and conversion_freq differently.
-  // conversion_freq is less aggressively affecting to the final decision.
-  const uint32 freq = max(suggestion_freq, conversion_freq / 4);
+bool IsPunctuation(const string &value) {
+  //  return (value == "。" || value == "." ||
+  //          value == "、" || value == "," ||
+  //          value == "？" || value == "?" ||
+  //          value == "，" || value == "．");
+  return (value == "\xE3\x80\x82" || value == "." ||
+          value == "\xE3\x80\x81" || value == "," ||
+          value == "\xEF\xBC\x9F" || value == "?" ||
+          value == "\xEF\xBC\x8C" || value == "\xEF\xBC\x8E");
+}
 
-  const uint32 base_prefix_len = 3 - min(static_cast<uint32>(2), freq);
-  return (prefix_len >= base_prefix_len);
+// return true if value looks like a content word.
+// Currently, just checks the script type.
+bool IsContentWord(const string &value) {
+  return Util::CharsLen(value) > 1 ||
+      Util::GetScriptType(value) != Util::UNKNOWN_SCRIPT;
 }
 }  // namespace
+
+UserHistoryPredictor::EntryPriorityQueue::EntryPriorityQueue()
+    : pool_(kEntryPoolSize) {}
+
+UserHistoryPredictor::EntryPriorityQueue::~EntryPriorityQueue() {}
+
+bool UserHistoryPredictor::EntryPriorityQueue::Push(Entry *entry) {
+  DCHECK(entry);
+  if (!seen_.insert(Util::Fingerprint32(entry->value())).second) {
+    VLOG(2) << "found dups";
+    return false;
+  }
+  const uint32 score = UserHistoryPredictor::GetScore(*entry);
+  agenda_.push(make_pair(score, entry));
+  return true;
+}
+
+UserHistoryPredictor::Entry *
+UserHistoryPredictor::EntryPriorityQueue::Pop() {
+  if (agenda_.empty()) {
+    return NULL;
+  }
+  const QueueElement &element = agenda_.top();
+  Entry *result = element.second;
+  DCHECK(result);
+  agenda_.pop();
+  return result;
+}
+
+UserHistoryPredictor::Entry *
+UserHistoryPredictor::EntryPriorityQueue::NewEntry() {
+  return pool_.Alloc();
+}
 
 class UserHistoryPredictorSyncer : public Thread {
  public:
@@ -201,8 +250,7 @@ bool UserHistoryPredictor::AsyncSave() {
 bool UserHistoryPredictor::Load() {
   mozc::user_history_predictor::UserHistory history;
   {
-    string input;
-    string salt;
+    string input, salt;
 
     // read encrypted message and salt from local file
     {
@@ -262,20 +310,9 @@ bool UserHistoryPredictor::Load() {
     }
   }
 
-  Entry entry;
   for (size_t i = 0; i < history.entries_size(); ++i) {
-    entry.suggestion_freq = history.entries(i).suggestion_freq();
-    entry.conversion_freq = history.entries(i).conversion_freq();
-    entry.last_access_time =  history.entries(i).last_access_time();
-    entry.length = Util::CharsLen(history.entries(i).value());
-    entry.description.clear();
-    const string dic_key =
-        history.entries(i).key() + kDelimiter + history.entries(i).value();
-    if (history.entries(i).has_description() &&
-        history.entries(i).description().size() > 0) {
-      entry.description = history.entries(i).description();
-    }
-    dic_->Insert(dic_key, entry);
+    dic_->Insert(EntryFingerprint(history.entries(i)),
+                 history.entries(i));
   }
 
   VLOG(1) << "Loaded user histroy, size=" << history.entries_size();
@@ -303,42 +340,17 @@ bool UserHistoryPredictor::Save() {
     return true;
   }
 
-  string salt;
-  string output;
-
-  vector<string> tokens;
+  string salt, output;
   {
     mozc::user_history_predictor::UserHistory history;
     for (const DicElement *elm = tail; elm != NULL; elm = elm->prev) {
-      tokens.clear();
-      Util::SplitStringUsing(elm->key, kDelimiter, &tokens);
-      if (tokens.size() != 2) {
-        LOG(ERROR) << "Format error: " << elm->key;
-        continue;
-      }
-      const string &key = tokens[0];
-      const string &value = tokens[1];
-      if (key.empty() || value.empty()) {
-        LOG(ERROR) << "key or value is empty";
-        continue;
-      }
-      mozc::user_history_predictor::UserHistory::Entry *entry
-          = history.add_entries();
-      if (entry == NULL) {
-        LOG(ERROR) << "entry is NULL";
-        continue;
-      }
-      entry->set_key(key);
-      entry->set_value(value);
-      entry->set_description(elm->value.description);
-      entry->set_suggestion_freq(elm->value.suggestion_freq);
-      entry->set_conversion_freq(elm->value.conversion_freq);
-      entry->set_last_access_time(elm->value.last_access_time);
+      history.add_entries()->CopyFrom(elm->value);
     }
 
     // update usage stats here.
-    usage_stats::UsageStats::SetInteger("UserHistoryPredictorEntrySize",
-                                        static_cast<int>(history.entries_size()));
+    usage_stats::UsageStats::SetInteger(
+        "UserHistoryPredictorEntrySize",
+        static_cast<int>(history.entries_size()));
 
     if (history.entries_size() == 0) {
       LOG(WARNING) << "etries size is 0. Not saved";
@@ -441,10 +453,10 @@ bool UserHistoryPredictor::ClearUnusedHistory() {
     return false;
   }
 
-  vector<string> keys;
+  vector<uint32> keys;
   for (const DicElement *elm = head; elm != NULL; elm = elm->next) {
-    VLOG(3) << elm->key << " " << elm->value.suggestion_freq;
-    if (elm->value.suggestion_freq == 0) {
+    VLOG(3) << elm->key << " " << elm->value.suggestion_freq();
+    if (elm->value.suggestion_freq() == 0) {
       keys.push_back(elm->key);
     }
   }
@@ -463,6 +475,224 @@ bool UserHistoryPredictor::ClearUnusedHistory() {
   }
 
   VLOG(1) << keys.size() << " removed";
+
+  return true;
+}
+
+bool UserHistoryPredictor::LookupEntry(
+    const string &input_key,
+    const UserHistoryPredictor::Entry *entry,
+    const UserHistoryPredictor::Entry *prev_entry,
+    EntryPriorityQueue *results) const {
+  CHECK(entry);
+  CHECK(results);
+  Entry *result = NULL;
+
+  const Entry *last_entry = NULL;
+
+  // last_access_time of the left-closest content word.
+  uint32 left_last_access_time = 0;
+
+  // last_access_time of the left-most content word.
+  uint32 left_most_last_access_time = 0;
+
+  // Example: [a|B|c|D]
+  // a,c: functional word
+  // B,D: content word
+  // left_last_access_time:   timestamp of D
+  // left_most_last_access_time:   timestamp of B
+
+  // |input_key| is a query user is now typing.
+  // |entry->key()| is a target value saved in the database.
+  const MatchType mtype = GetMatchType(input_key, entry->key());
+  if (mtype == NO_MATCH) {
+    return false;
+  } else if (mtype == LEFT_PREFIX_MATCH) {
+    // |input_key| is shorter than |entry->key()|
+    // This scenario is a simple prefix match.
+    // e.g., |input_key|="foo", |entry->key()|="foobar"
+    result = results->NewEntry();
+    result->Clear();
+    result->CopyFrom(*entry);
+    last_entry = entry;
+    left_last_access_time = entry->last_access_time();
+    left_most_last_access_time = IsContentWord(entry->value()) ?
+        left_last_access_time : 0;
+  } else if (mtype == RIGHT_PREFIX_MATCH || mtype == EXACT_MATCH) {
+    // |input_key| is longer than or the same as |entry->key()|.
+    // In this case, recursively traverse "next_entries" until
+    // target entry gets longer than input_key.
+    // e.g., |input_key|="foobar", |entry->key()|="foo"
+    left_last_access_time = entry->last_access_time();
+    left_most_last_access_time = IsContentWord(entry->value()) ?
+        left_last_access_time : 0;
+    string key = entry->key();
+    string value = entry->value();
+    const Entry *current_entry = entry;
+    set<uint64> seen;
+    seen.insert(EntryFingerprint(*current_entry));
+    // Until target entry gets longer than input_key.
+    while (key.size() <= input_key.size()) {
+      const Entry *latest_entry = NULL;
+      const Entry *left_same_timestamp_entry = NULL;
+      const Entry *left_most_same_timestamp_entry = NULL;
+      for (size_t i = 0; i < current_entry->next_entries_size(); ++i) {
+        const Entry *tmp_entry = dic_->LookupWithoutInsert(
+            current_entry->next_entries(i).entry_fp());
+        if (tmp_entry == NULL || tmp_entry->key().empty()) {
+          continue;
+        }
+        const MatchType mtype2 = GetMatchType(key + tmp_entry->key(),
+                                              input_key);
+        if (mtype2 == NO_MATCH) {
+          continue;
+        }
+        if (latest_entry == NULL ||
+            latest_entry->last_access_time() < tmp_entry->last_access_time()) {
+          latest_entry = tmp_entry;
+        }
+        if (tmp_entry->last_access_time() == left_last_access_time) {
+          left_same_timestamp_entry = tmp_entry;
+        }
+        if (tmp_entry->last_access_time() == left_most_last_access_time) {
+          left_most_same_timestamp_entry = tmp_entry;
+        }
+      }
+
+      // Prefer bigrams which are generated at the same time.
+      // When last_access_time are the same, these two bigrams were
+      // input together.
+      // The preferences:
+      // (1). The current entry's time stamp is equal to that of
+      //      left most content word
+      // (2). The current entry's time stamp is equal to that of
+      //      left closest content word
+      // (3). The current entry is the latest
+      const Entry *next_entry = left_most_same_timestamp_entry;
+      if (next_entry == NULL) {
+        next_entry = left_same_timestamp_entry;
+      }
+      if (next_entry == NULL) {
+        next_entry = latest_entry;
+      }
+
+      if (next_entry == NULL || next_entry->key().empty()) {
+        break;
+      }
+
+      // if duplicate entry is found, don't expand more.
+      // This is because an entry only has one timestamp.
+      // we cannot trust the timestamp if there are duplicate values
+      // in one input.
+      if (!seen.insert(EntryFingerprint(*next_entry)).second) {
+        break;
+      }
+
+      key += next_entry->key();
+      value += next_entry->value();
+      current_entry = next_entry;
+      last_entry = next_entry;
+
+
+      // Don't update left_access_time if the current entry is
+      // not a content word.
+      // The time-stamp of non-content-word will be updated frequently.
+      // The time-stamp of the previous candidate is more trustful.
+      // It partially fixes the bug http://b/2843371.
+      const bool is_content_word = IsContentWord(current_entry->value());
+
+      if (is_content_word) {
+        left_last_access_time = current_entry->last_access_time();
+      }
+
+      // if left_most entry is a functional word (symbols/punctuations),
+      // we don't take it as a canonical candidate.
+      if (left_most_last_access_time == 0 && is_content_word) {
+        left_most_last_access_time = current_entry->last_access_time();
+      }
+    }
+
+    if (key.size() < input_key.size()) {
+      VLOG(3) << "Cannot find prefix match even after chain rules";
+      return false;
+    }
+
+    result = results->NewEntry();
+    result->CopyFrom(*entry);
+    result->set_key(key);
+    result->set_value(value);
+  } else {
+    LOG(ERROR) << "Unknown match mode: " << mtype;
+    return false;
+  }
+
+  DCHECK(result);
+
+  // if prev entry is not NULL, check whether there is a bigram
+  // from |prev_entry| to |entry|.
+  result->set_bigram_boost(false);
+
+  if (prev_entry != NULL) {
+    const uint32 fp = EntryFingerprint(*entry);
+    for (int i = 0; i < prev_entry->next_entries_size(); ++i) {
+      if (fp == prev_entry->next_entries(i).entry_fp()) {
+        // set bigram_boost flag so that this entry is boosted
+        // against LRU policy.
+        result->set_bigram_boost(true);
+        break;
+      }
+    }
+  }
+
+  results->Push(result);
+
+  // Expand new entry which was input just after "last_entry"
+  if (last_entry != NULL &&
+      Util::CharsLen(result->key()) >= 1 &&
+      2 * Util::CharsLen(input_key) >= Util::CharsLen(result->key())) {
+    const Entry *latest_entry = NULL;
+    const Entry *left_same_timestamp_entry = NULL;
+    const Entry *left_most_same_timestamp_entry = NULL;
+    for (int i = 0; i < last_entry->next_entries_size(); ++i) {
+      const Entry *tmp_entry = dic_->LookupWithoutInsert(
+          last_entry->next_entries(i).entry_fp());
+      if (tmp_entry == NULL || tmp_entry->key().empty()) {
+        continue;
+      }
+      if (latest_entry == NULL ||
+          latest_entry->last_access_time() < tmp_entry->last_access_time()) {
+        latest_entry = tmp_entry;
+      }
+      if (tmp_entry->last_access_time() == left_last_access_time) {
+        left_same_timestamp_entry = tmp_entry;
+      }
+      if (tmp_entry->last_access_time() == left_most_last_access_time) {
+        left_most_same_timestamp_entry = tmp_entry;
+      }
+    }
+
+    const Entry *next_entry = left_most_same_timestamp_entry;
+    if (next_entry == NULL) {
+      next_entry = left_same_timestamp_entry;
+    }
+    if (next_entry == NULL) {
+      next_entry = latest_entry;
+    }
+
+    // the new entry was input within 10 seconds.
+    // TODO(taku): This is a simple heuristics.
+    if (next_entry != NULL && !next_entry->key().empty() &&
+        abs(static_cast<int32>(next_entry->last_access_time() -
+                               last_entry->last_access_time())) <= 10 &&
+        IsContentWord(next_entry->value())) {
+      Entry *result2 = results->NewEntry();
+      result2->Clear();
+      result2->CopyFrom(*result);
+      *(result2->mutable_value()) += next_entry->value();
+      *(result2->mutable_key()) += next_entry->key();
+      results->Push(result2);
+    }
+  }
 
   return true;
 }
@@ -494,9 +724,9 @@ bool UserHistoryPredictor::Predict(Segments *segments) const {
     return false;
   }
 
-  const string &key = segments->conversion_segment(0).key();
-  const size_t key_len = Util::CharsLen(key);
-  if (key_len == 0) {
+  const string &input_key = segments->conversion_segment(0).key();
+  const size_t input_key_len = Util::CharsLen(input_key);
+  if (input_key_len == 0) {
     VLOG(2) << "key length is 0";
     return false;
   }
@@ -504,6 +734,12 @@ bool UserHistoryPredictor::Predict(Segments *segments) const {
   const DicElement *head = dic_->Head();
   if (head == NULL) {
     VLOG(2) << "dic head is NULL";
+    return false;
+  }
+
+  if (segments->request_type() == Segments::SUGGESTION &&
+      IsPunctuation(Util::SubString(input_key, 0, 1))) {
+    VLOG(2) << "input_key starts with punctuations";
     return false;
   }
 
@@ -515,39 +751,88 @@ bool UserHistoryPredictor::Predict(Segments *segments) const {
     return false;
   }
 
-  size_t size = segments->max_prediction_candidates_size();
+  const size_t history_segments_size = segments->history_segments_size();
+  const Entry *prev_entry = NULL;
+
+  // when threre are non-zero history segments, lookup an entry
+  // from the LRU dictionary, which is correspoinding to the last
+  // history segment.
+  if (history_segments_size > 0) {
+    const Segment &history_segment =
+        segments->history_segment(history_segments_size - 1);
+    // Simply lookup the history_segment.
+    prev_entry = dic_->LookupWithoutInsert(
+        SegmentFingerprint(history_segment));
+    // When |prev_entry| is NULL or |prev_entry| has no valid next_entries,
+    // do linear-search over the LRU.
+    if ((prev_entry == NULL && history_segment.candidates_size() > 0) ||
+        (prev_entry != NULL && prev_entry->next_entries_size() == 0)) {
+      const string &prev_value = prev_entry == NULL ?
+          history_segment.candidate(0).value : prev_entry->value();
+      int trial = 0;
+      for (const DicElement *elm = head;
+           trial++ < kMaxPrevValueTrial && elm != NULL; elm = elm->next) {
+        const Entry *entry = &(elm->value);
+        // entry->value() equals to the prev_value or
+        // entry->value() is a SUFFIX of prev_value.
+        // length of entry->value() must be >= 2, as single-length
+        // match would be noisy.
+        if (entry != prev_entry &&
+            entry->next_entries_size() > 0 &&
+            entry->value().size() <= prev_value.size() &&
+            memcmp(prev_value.data() +
+                   prev_value.size() - entry->value().size(),
+                   entry->value().data(), entry->value().size()) == 0 &&
+            Util::CharsLen(entry->value()) >= 2) {
+          prev_entry = entry;
+          break;
+        }
+      }
+    }
+  }
+
+  const size_t max_results_size =
+      5 * segments->max_prediction_candidates_size();
 
   int trial = 0;
-  for (const DicElement *elm = head; size > 0 && elm != NULL; elm = elm->next) {
+  EntryPriorityQueue results;
+
+  for (const DicElement *elm = head; elm != NULL; elm = elm->next) {
     if (segments->request_type() == Segments::SUGGESTION &&
         trial++ >= kMaxSuggestionTrial) {
       VLOG(2) << "too many trials";
       break;
     }
 
-    // format is:
-    // <key><delimiter><value>
-    const string::size_type key_size = elm->key.find(kDelimiter);
-
-    if (key_size == string::npos ||
-        key_size == 0 ||
-        key.size() > key_size ||
-        memcmp(elm->key.data(), key.data(), key.size()) != 0) {
+    // lookup input_key from elm_value and prev_entry.
+    // If a new entry is found, the entry is pushed to the results.
+    if (!LookupEntry(input_key, &(elm->value), prev_entry, &results)) {
       continue;
     }
 
-    const string value = elm->key.substr(key_size + 1,
-                                         elm->key.size() - key_size - 1);
-    const string description = elm->value.description;
-
-    // don't suggest exactly the same candidate
-    if (key == value) {
-      continue;
+    // already found enough results.
+    if (results.size() >= max_results_size) {
+      break;
     }
+  }
 
-    Segment::Candidate *candidate = NULL;
+  if (results.size() == 0) {
+    VLOG(2) << "no prefix match candiate is found.";
+    return false;
+  }
+
+  while (segment->candidates_size() <
+         segments->max_prediction_candidates_size()) {
+    // |results| is a priority queue where the elemtnt
+    // in the queue is sorted by the score defined in GetScore().
+    const Entry *result_entry = results.Pop();
+    if (result_entry == NULL) {
+      // Pop() returns NULL when no more valid entry exists.
+      break;
+    }
+    bool is_valid_candidate = false;
     if (segments->request_type() == Segments::PREDICTION) {
-      candidate = segment->push_back_candidate();
+      is_valid_candidate = true;
     } else if (segments->request_type() == Segments::SUGGESTION) {
       // The top result of suggestion should be a VALID suggestion candidate.
       // i.e., SuggestionTrigerFunc should return true for the first
@@ -557,10 +842,8 @@ bool UserHistoryPredictor::Predict(Segments *segments) const {
       // "です" after that,  showing "デスノート" is annoying.
       // In this situation, "です" is in the LRU, but SuggestionTrigerFunc
       // returns false for "です", since it is short.
-      if (IsValidSuggestion(key_len, elm->value.length,
-                            elm->value.suggestion_freq,
-                            elm->value.conversion_freq)) {
-        candidate = segment->push_back_candidate();
+      if (IsValidSuggestion(input_key_len, *result_entry)) {
+        is_valid_candidate = true;
       } else if (segment->candidates_size() == 0) {
         VLOG(2) << "candidates size is 0";
         return false;
@@ -570,15 +853,18 @@ bool UserHistoryPredictor::Predict(Segments *segments) const {
       return false;
     }
 
-    if (candidate == NULL) {
-      VLOG(2) << "candiate is NULL";
+    if (!is_valid_candidate) {
+      VLOG(2) << "not a valid candidate: " << result_entry->key();
       continue;
     }
 
+    Segment::Candidate *candidate = segment->push_back_candidate();
+    DCHECK(candidate);
     candidate->Init();
-    candidate->content_key = elm->key.substr(0, key_size);
-    candidate->value = value;
-    candidate->content_value = value;
+    candidate->content_key = result_entry->key();
+    candidate->value = result_entry->value();
+    candidate->content_value = result_entry->value();
+    const string &description = result_entry->description();
     // If we have stored description, set it exactly.
     if (!description.empty()) {
       candidate->description = description;
@@ -586,25 +872,72 @@ bool UserHistoryPredictor::Predict(Segments *segments) const {
       candidate->SetDefaultDescription(
           Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER);
     }
-
-    // decrease the total size of candidates
-    --size;
   }
 
   return (segment->candidates_size() > 0);
+}
+
+void UserHistoryPredictor::InsertNextEntry(
+    const UserHistoryPredictor::NextEntry &next_entry,
+    UserHistoryPredictor::Entry *entry) const {
+  if (next_entry.entry_fp() == 0 || entry == NULL) {
+    return;
+  }
+
+  NextEntry *target_next_entry = NULL;
+
+  // If next_entries_size is less than kMaxNextEntriesSize,
+  // we simply allocate a new entry.
+  if (entry->next_entries_size() < kMaxNextEntriesSize) {
+    target_next_entry = entry->add_next_entries();
+  } else {
+    // Otherwise, find the oldest next_entry.
+    uint32 last_access_time = UINT_MAX;
+    for (int i = 0; i < entry->next_entries_size(); ++i) {
+      // already has the same id
+      if (next_entry.entry_fp() == entry->next_entries(i).entry_fp()) {
+        target_next_entry = entry->mutable_next_entries(i);
+        break;
+      }
+      const Entry *next_entry = dic_->LookupWithoutInsert(
+          entry->next_entries(i).entry_fp());
+      // reuse the entry if it is already removed from the LRU.
+      if (next_entry == NULL) {
+        target_next_entry = entry->mutable_next_entries(i);
+        break;
+      }
+      // preserve the oldest entry
+      if (target_next_entry == NULL ||
+          last_access_time > next_entry->last_access_time()) {
+        target_next_entry = entry->mutable_next_entries(i);
+        last_access_time = next_entry->last_access_time();
+      }
+    }
+  }
+
+  if (target_next_entry == NULL) {
+    LOG(ERROR) << "cannot find a room for inserting next fp";
+    return;
+  }
+
+  target_next_entry->CopyFrom(next_entry);
 }
 
 void UserHistoryPredictor::Insert(const string &key,
                                   const string &value,
                                   const string &description,
                                   bool is_suggestion_selected,
+                                  uint32 next_fp,
+                                  uint32 last_access_time,
                                   Segments *segments) {
-  if (key.size() > kMaxStringLength ||
+  if (key.empty() || value.empty() ||
+      key.size() > kMaxStringLength ||
       value.size() > kMaxStringLength ||
       description.size() > kMaxStringLength) {
     return;
   }
-  const string dic_key = key + kDelimiter + value;
+
+  const uint32 dic_key = Fingerprint(key, value);
 
   if (!dic_->HasKey(dic_key)) {
     // the key is a new key inserted in the last Finish method.
@@ -612,7 +945,7 @@ void UserHistoryPredictor::Insert(const string &key,
     // removed when Revert() method is called.
     Segments::RevertEntry *revert_entry = segments->push_back_revert_entry();
     DCHECK(revert_entry);
-    revert_entry->key = dic_key;
+    revert_entry->key = Uint32ToString(dic_key);
     revert_entry->id = UserHistoryPredictor::revert_id();
     revert_entry->revert_entry_type = Segments::RevertEntry::CREATE_ENTRY;
   } else {
@@ -627,21 +960,35 @@ void UserHistoryPredictor::Insert(const string &key,
     return;
   }
 
-  e->value.length = Util::CharsLen(value);
-  e->value.last_access_time = static_cast<uint32>(time(NULL));
-  if (!description.empty()) {
-    e->value.description = description;
-  }
+  Entry *entry = &(e->value);
+  DCHECK(entry);
 
-  if (is_suggestion_selected) {
-    e->value.suggestion_freq++;
+  entry->set_key(key);
+  entry->set_value(value);
+
+  if (description.empty()) {
+    entry->clear_description();
   } else {
-    e->value.conversion_freq++;
+    entry->set_description(description);
   }
 
-  VLOG(3) << dic_key << " has inserted: "
-          << e->value.suggestion_freq << " "
-          << e->value.conversion_freq;
+  entry->set_last_access_time(last_access_time);
+  if (is_suggestion_selected) {
+    entry->set_suggestion_freq(entry->suggestion_freq() + 1);
+  } else {
+    entry->set_conversion_freq(entry->conversion_freq() + 1);
+  }
+
+  // Insert next_fp to the entry
+  if (next_fp != 0) {
+    NextEntry next_entry;
+    next_entry.set_entry_fp(next_fp);
+    InsertNextEntry(next_entry, entry);
+  }
+
+  VLOG(2) << key << " " << value << " has inserted: "
+          << entry->suggestion_freq() << " "
+          << entry->conversion_freq();
 
   // new entry is inserted to the cache
   updated_ = true;
@@ -663,61 +1010,100 @@ void UserHistoryPredictor::Finish(Segments *segments) {
     return;
   }
 
-  const bool kInsertConversion = false;
   const bool kInsertSuggestion = true;
+  const bool kInsertConversion = false;
+
+  const uint32 last_access_time = static_cast<uint32>(time(NULL));
+
+  // If user inputs a punctuation just after some long sentence,
+  // we make a new candidate by concatinating the top element in LRU and
+  // the punctuation user input. The top element in LRU is supposed to be
+  // the long sentence user input before.
+  // This is a fix for http://b/issue?id=2216838
+  if (dic_->Head() != NULL &&
+      segments->conversion_segments_size() == 1 &&
+      segments->history_segments_size() > 0 &&
+      segments->conversion_segment(0).candidates_size() > 0 &&
+      segments->history_segment(
+          segments->history_segments_size() - 1).candidates_size() > 0 &&
+      Util::CharsLen(
+          segments->conversion_segment(0).candidate(0).value) == 1 &&
+      IsPunctuation(
+          segments->conversion_segment(0).candidate(0).value) &&
+      dic_->Head()->value.last_access_time() + 5 > last_access_time) {
+    const Entry *entry = &(dic_->Head()->value);
+    DCHECK(entry);
+    const string &last_value =
+        segments->history_segment(
+            segments->history_segments_size() - 1).candidate(0).value;
+    // Check that value in head element of LRU ends with the candidate value
+    // in history segments.
+    if (last_value.size() <= entry->value().size() &&
+        entry->value().substr(entry->value().size() - last_value.size(),
+                              last_value.size()) == last_value) {
+      const Segment::Candidate &candidate =
+          segments->conversion_segment(0).candidate(0);
+      const string key = entry->key() + candidate.content_key;
+      const string value = entry->value() + candidate.value;
+      // use the same last_access_time stored in the top element
+      // so that this item can be grouped together.
+      Insert(key, value, entry->description(), kInsertConversion, 0,
+             entry->last_access_time(), segments);
+    }
+  }
+
+  string all_key, all_value;
 
   if (segments->request_type() == Segments::CONVERSION) {
     const size_t history_segments_size = segments->history_segments_size();
-    string content_key, content_value, key, value;
+
+    // Check every segment is valid.
     for (size_t i = history_segments_size; i < segments->segments_size(); ++i) {
       const Segment &segment = segments->segment(i);
       if (segment.candidates_size() < 1) {
         VLOG(2) << "candidates size < 1";
         return;
       }
-      if (segment.candidate(0).learning_type &
+      if (segment.segment_type() != Segment::FIXED_VALUE) {
+        VLOG(2) << "segment is not FIXED_VALUE";
+        return;
+      }
+      const Segment::Candidate &candidate = segment.candidate(0);
+      if (candidate.learning_type &
           Segment::Candidate::NO_SUGGEST_LEARNING) {
         VLOG(2) << "NO_SUGGEST_LEARNING";
         return;
       }
+    }
 
-      // Just get the prefix of segments having FIXED_VALUE type.
-      if (segment.segment_type() != Segment::FIXED_VALUE) {
-        VLOG(2) << "segment is not FIXED_VALUE";
-        break;
+    set<uint64> seen;
+    for (size_t i = history_segments_size; i < segments->segments_size(); ++i) {
+      const Segment &segment = segments->segment(i);
+      all_key += segment.key();
+      all_value += segment.candidate(0).value;
+      uint32 next_fp = (i == segments->segments_size() - 1) ?
+          0 : SegmentFingerprint(segments->segment(i + 1));
+      // If two duplicate segments exist, kills the link
+      // to the next candidate to prevent unexceptional loops.
+      if (!seen.insert(SegmentFingerprint(segment)).second) {
+        next_fp = 0;
       }
-      // remove the last functional word
-      if (i + 1 == segments->segments_size()) {
-        content_key += segment.candidate(0).content_key;
-        content_value += segment.candidate(0).content_value;
-      } else {
-        content_key += segment.key();
-        content_value += segment.candidate(0).value;
-      }
-      key += segment.key();
-      value += segment.candidate(0).value;
+      Insert(segment.key(), segment.candidate(0).value,
+             segment.candidate(0).description,
+             kInsertConversion, next_fp,
+             last_access_time, segments);
     }
 
-    if (key.empty() || value.empty()) {
-      VLOG(2) << "key or value is empty";
-      return;
+    // insert all_key/all_value
+    if (segments->conversion_segments_size() > 1 &&
+        !all_key.empty() && !all_value.empty()) {
+      Insert(all_key, all_value, "",
+             kInsertConversion,
+             0, last_access_time, segments);
     }
 
-    string description;
-    if (history_segments_size + 1 == segments->segments_size()) {
-      description =
-          segments->segment(history_segments_size).candidate(0).description;
-    }
-
-    if (content_value != value) {
-      // do not save description for content
-      Insert(content_key, content_value, "", kInsertConversion, segments);
-    }
-
-    Insert(key, value, description, kInsertConversion, segments);
-
-  // Store user-history from predictoin
   } else {
+    // Store user-history from predictoin
     if (segments->conversion_segments_size() < 1) {
       return;
     }
@@ -726,11 +1112,32 @@ void UserHistoryPredictor::Finish(Segments *segments) {
       return;
     }
 
-    const string &key = segment.candidate(0).content_key;
-    const string &value = segment.candidate(0).content_value;
+    all_key = segment.candidate(0).content_key;
+    all_value = segment.candidate(0).content_value;
     const string &description = segment.candidate(0).description;
 
-    Insert(key, value, description, kInsertSuggestion, segments);
+    Insert(all_key, all_value, description,
+           kInsertSuggestion, 0, last_access_time, segments);
+  }
+
+  // make a link from the right most history_segment to
+  // the left most segment or entire user input.
+  if (segments->history_segments_size() > 0 &&
+      segments->conversion_segments_size() > 0) {
+    Entry *history_entry =
+        dic_->MutableLookupWithoutInsert(
+            SegmentFingerprint(
+                segments->segment(
+                    segments->history_segments_size() - 1)));
+    NextEntry next_entry;
+    next_entry.set_entry_fp(
+        SegmentFingerprint(segments->conversion_segment(0)));
+    InsertNextEntry(next_entry, history_entry);
+    // entire user input
+    if (segments->conversion_segments_size() > 1) {
+      next_entry.set_entry_fp(Fingerprint(all_key, all_value));
+      InsertNextEntry(next_entry, history_entry);
+    }
   }
 
   return;
@@ -747,9 +1154,100 @@ void UserHistoryPredictor::Revert(Segments *segments) {
         segments->revert_entry(i);
     if (revert_entry.id == UserHistoryPredictor::revert_id() &&
         revert_entry.revert_entry_type == Segments::RevertEntry::CREATE_ENTRY) {
-      VLOG(2) << "Erasing the key: " << revert_entry.key;
-      dic_->Erase(revert_entry.key);
+      VLOG(2) << "Erasing the key: " << StringToUint32(revert_entry.key);
+      dic_->Erase(StringToUint32(revert_entry.key));
     }
   }
+}
+
+// type
+UserHistoryPredictor::MatchType
+UserHistoryPredictor::GetMatchType(const string &lstr, const string &rstr) {
+  const size_t size = min(lstr.size(), rstr.size());
+  if (size == 0) {
+    return NO_MATCH;
+  }
+
+  const int result = memcmp(lstr.data(), rstr.data(), size);
+  if (result != 0) {
+    return NO_MATCH;
+  }
+
+  if (lstr.size() == rstr.size()) {
+    return EXACT_MATCH;
+  } else if (lstr.size() < rstr.size()) {
+    return LEFT_PREFIX_MATCH;
+  } else {
+    return RIGHT_PREFIX_MATCH;
+  }
+
+  return NO_MATCH;
+}
+
+// static
+uint32 UserHistoryPredictor::Fingerprint(const string &key,
+                                         const string &value) {
+  return Util::Fingerprint32(key + kDelimiter + value);
+}
+
+// static
+uint32 UserHistoryPredictor::EntryFingerprint(
+    const UserHistoryPredictor::Entry &entry) {
+  return Fingerprint(entry.key(), entry.value());
+}
+
+// static
+uint32 UserHistoryPredictor::SegmentFingerprint(const Segment &segment) {
+  if (segment.candidates_size() > 0) {
+    return Fingerprint(segment.key(), segment.candidate(0).value);
+  }
+  return 0;
+}
+
+// static
+string UserHistoryPredictor::Uint32ToString(uint32 fp) {
+  string buf(reinterpret_cast<const char *>(&fp), sizeof(fp));
+  return buf;
+}
+
+// static
+uint32 UserHistoryPredictor::StringToUint32(const string &input) {
+  uint32 result = 0;
+  if (input.size() == sizeof(result)) {
+    memcpy(reinterpret_cast<char *>(&result), input.data(), input.size());
+  }
+  return result;
+}
+
+// static
+bool UserHistoryPredictor::IsValidSuggestion(
+    uint32 prefix_len,
+    const UserHistoryPredictor::Entry &entry) {
+  // when bigram_boost is true, that means that previous user input
+  // and current input have bigram relation.
+  if (entry.bigram_boost()) {
+    return true;
+  }
+  // Handle suggestion_freq and conversion_freq differently.
+  // conversion_freq is less aggressively affecting to the final decision.
+  const uint32 freq = max(entry.suggestion_freq(),
+                          entry.conversion_freq() / 4);
+
+  // TODO(taku,komatsu): better to make it simpler and easier to be understood.
+  const uint32 base_prefix_len = 3 - min(static_cast<uint32>(2), freq);
+  return (prefix_len >= base_prefix_len);
+}
+
+// static
+// 1) sort by last_access_time, which is basically the same as LRU policy.
+// 2) boost shorter candidate, if having the same last_access_time.
+// 3) add a bigram boost as a special bonus.
+// TODO(taku): better to take "frequency" into consideration
+uint32 UserHistoryPredictor::GetScore(
+    const UserHistoryPredictor::Entry &entry) {
+  const uint32 kBigramBoostAsTime = 7 * 24 * 60 * 60;   // 1 week.
+  return
+      entry.last_access_time() - Util::CharsLen(entry.value()) +
+      (entry.bigram_boost() ? kBigramBoostAsTime : 0);
 }
 }  // namespace mozc

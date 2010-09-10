@@ -33,6 +33,7 @@
 #include <windows.h>
 #endif  // OS_WINDOWS
 
+#include <cctype>
 #include <string>
 
 #include "base/file_stream.h"

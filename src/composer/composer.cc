@@ -858,10 +858,8 @@ bool Composer::TransformCharactersForNumbers(string *query) {
     if (script == JA_COMMA) {
       // Previous char should exist and be a number.
       const bool lhs_check = (i > 0 && char_scripts[i-1] == ALPHANUM);
-      // Next three characters should exist and be all digits.
-      const bool rhs_check = (i+1 < chars_len && char_scripts[i+1] == ALPHANUM);
       // JA_COMMA should be transformed to COMMA.
-      if (lhs_check && rhs_check) {
+      if (lhs_check) {
         string append_char;
         CharacterFormManager::GetCharacterFormManager()->
             ConvertPreeditString("\xEF\xBC\x8C", &append_char);  // "，"
@@ -879,11 +877,8 @@ bool Composer::TransformCharactersForNumbers(string *query) {
     if (script == JA_PERIOD) {
       // Previous char should exist and be a number.
       const bool lhs_check = (i > 0 && char_scripts[i-1] == ALPHANUM);
-      // Next three characters should exist and be a digit.
-      const bool rhs_check = (i+1 < chars_len && char_scripts[i+1] == ALPHANUM);
-
       // JA_PRERIOD should be transformed to PRERIOD.
-      if (lhs_check && rhs_check) {
+      if (lhs_check) {
         string append_char;
         CharacterFormManager::GetCharacterFormManager()->
             ConvertPreeditString("\xEF\xBC\x8E", &append_char);  // "．"

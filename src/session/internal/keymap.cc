@@ -52,11 +52,6 @@ static const char kMSIMEKeyMapFile[] = "system://ms-ime.tsv";
 static const char kATOKKeyMapFile[] = "system://atok.tsv";
 static const char kKotoeriKeyMapFile[] = "system://kotoeri.tsv";
 static const char kCustomKeyMapFile[] = "user://keymap.tsv";
-#ifdef OS_WINDOWS
-static const char *kDefafultKeyMapFile = kMSIMEKeyMapFile;
-#else  // Mac or Linux
-static const char *kDefafultKeyMapFile = kKotoeriKeyMapFile;
-#endif
 
 uint32 GetModifiers(const commands::KeyEvent &key_event) {
   uint32 modifiers = 0;
@@ -217,7 +212,8 @@ bool KeyMapManager::Reload() {
     const string &custom_keymap_table = GET_CONFIG(custom_keymap_table);
     if (custom_keymap_table.empty()) {
       LOG(WARNING) << "custom_keymap_table is empty. use default setting";
-      return LoadFile(kDefafultKeyMapFile);
+      const char *default_keymapfile = GetKeyMapFileName(GetDefaultKeyMap());
+      return LoadFile(default_keymapfile);
     }
 #ifndef NO_LOGGING
     // make a copy of keymap file just for debugging
@@ -239,17 +235,14 @@ bool KeyMapManager::Reload() {
     return true;
   }
 
-  return LoadFile(kDefafultKeyMapFile);
+  const char *default_keymapfile = GetKeyMapFileName(GetDefaultKeyMap());
+  return LoadFile(default_keymapfile);
 }
 
 // static
 const char *KeyMapManager::GetKeyMapFileName(
     const config::Config::SessionKeymap keymap) {
   switch(keymap) {
-    case config::Config::NONE:
-      // NONE should not appear here.
-      LOG(ERROR) << "NONE appeared at key map initialization.";
-      return kDefafultKeyMapFile;
     case config::Config::ATOK:
       return kATOKKeyMapFile;
     case config::Config::MSIME:
@@ -258,10 +251,28 @@ const char *KeyMapManager::GetKeyMapFileName(
       return kKotoeriKeyMapFile;
     case config::Config::CUSTOM:
       return kCustomKeyMapFile;
+    case config::Config::NONE:
     default:
-      LOG(WARNING) << "Unknown keymap type: " << keymap;
-      return kDefafultKeyMapFile;
+      // should not appear here.
+      LOG(ERROR) << "Keymap type: " << keymap
+                 << " appeared at key map initialization.";
+      const config::Config::SessionKeymap default_keymap = GetDefaultKeyMap();
+      DCHECK(default_keymap == config::Config::ATOK ||
+             default_keymap == config::Config::MSIME ||
+             default_keymap == config::Config::KOTOERI ||
+             default_keymap == config::Config::CUSTOM);
+      // should never make loop.
+      return GetKeyMapFileName(default_keymap);
   }
+}
+
+// static
+config::Config::SessionKeymap KeyMapManager::GetDefaultKeyMap() {
+#ifdef OS_MACOSX
+  return config::Config::KOTOERI;
+#else  // OS_MACOSX
+  return config::Config::MSIME;
+#endif  // OS_MACOSX
 }
 
 bool KeyMapManager::LoadFile(const char *filename) {

@@ -70,8 +70,14 @@ class Token {
   const string &description() const {
     return description_;
   }
+  const string &additional_description() const {
+    return additional_description_;
+  }
   void set_description(const string &description) {
     description_ = description;
+  }
+  void set_additional_description(const string &additional_description) {
+    additional_description_ = additional_description;
   }
 
  private:
@@ -80,7 +86,8 @@ class Token {
   string value_;
   string pos_;
   string description_;
-  // NOTE(komatsu): When new arguments are added, CopyFrom function
+  string additional_description_;
+  // NOTE(komatsu): When new arguments are added, MergeFrom function
   // should be updated too.
 
   DISALLOW_COPY_AND_ASSIGN(Token);

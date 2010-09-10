@@ -114,9 +114,8 @@ class MozcEngine : public EngineInterface {
   // Updates the configuration.
   void UpdateConfig(const gchar *section, const gchar *name, GValue *gvalue);
   // Updates the composition mode based on the content of |output|.
-  void UpdateCompositionMode(IBusEngine *engine,
-                             const commands::Output &output);
-
+  void UpdateCompositionMode(
+      IBusEngine *engine, const commands::CompositionMode new_composition_mode);
   // Updates internal preedit_method (Roman/Kana) state
   void UpdatePreeditMethod();
 

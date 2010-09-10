@@ -37,7 +37,9 @@
 #include <windows.h>
 #else
 #include <sys/stat.h>
+#include <unistd.h>
 #endif
+
 
 #include <algorithm>
 #include <fstream>
@@ -52,6 +54,14 @@
 DEFINE_bool(logtostderr,
             false,
             "log messages go to stderr instead of logfiles");
+
+// Even if log_dir is modified in the middle of the process, the
+// logging directory will not be changed because the logging stream is
+// initialized in the very early initialization stage.
+DEFINE_string(log_dir,
+              "",
+              "If specified, logfiles are written into this directory "
+              "instead of the default logging directory.");
 DEFINE_int32(v, 0, "verbose level");
 
 namespace mozc {
@@ -145,8 +155,9 @@ void LogStreamImpl::Init(const char *argv0) {
 #endif
     const char *program_name = (slash == NULL) ? argv0 : slash + 1;
     const string log_base = string(program_name) + ".log";
-    const string filename = Util::JoinPath(
-        Util::GetLoggingDirectory(), log_base);
+    const string log_dir =
+        FLAGS_log_dir.empty() ? Util::GetLoggingDirectory() : FLAGS_log_dir;
+    const string filename = Util::JoinPath(log_dir, log_base);
     stream_ = new OutputFileStream(filename.c_str(), ios::app);
 #ifndef OS_WINDOWS
     ::chmod(filename.c_str(), 0600);

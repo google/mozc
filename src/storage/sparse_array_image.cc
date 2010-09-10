@@ -165,7 +165,8 @@ const string &ByteStream::GetString() const {
 }
 }  // namespace sparse_array_image
 
-SparseArrayBuilder::SparseArrayBuilder() : root_node_(NULL),
+SparseArrayBuilder::SparseArrayBuilder() : use_1byte_value_(false),
+                                           root_node_(NULL),
                                            value_stream_(new ByteStream),
                                            main_stream_(new ByteStream) {
   num_bits_per_node_ = (1 << kNumBitsPerLevel);
@@ -182,6 +183,10 @@ SparseArrayBuilder::~SparseArrayBuilder() {
   }
 }
 
+void SparseArrayBuilder::SetUse1ByteValue(bool use_1byte_value) {
+  use_1byte_value_ = use_1byte_value;
+}
+
 void SparseArrayBuilder::AddValue(uint32 key, int val) {
   values_[key] = val;
 }
@@ -196,15 +201,23 @@ void SparseArrayBuilder::Build() {
   for (map<uint32, int>::const_iterator it = values_.begin();
        it != values_.end(); ++it) {
     AddNode(it->first);
-    value_stream_->PushByte(it->second & 0xff);
-    value_stream_->PushByte((it->second >> 8) & 0xff);
+    const int value = it->second;
+    if (use_1byte_value_) {
+      CHECK_LT(value, 256) << "value should be within a byte.";
+      value_stream_->PushByte(value);
+    } else {
+      value_stream_->PushByte(value & 0xff);
+      value_stream_->PushByte((value >> 8) & 0xff);
+    }
   }
   LOG(INFO) << "allocated " << num_nodes_ << " nodes";
   Serialize();
   Concatenate();
   LOG(INFO) << "image size=" << main_stream_->GetSize() << "bytes";
-  float ratio =
-      static_cast<float>(main_stream_->GetSize() - (values_.size() * 2))
+  const int value_width = use_1byte_value_ ? 1 : 2;
+  const float ratio =
+      static_cast<float>(main_stream_->GetSize() -
+                         (values_.size() * value_width))
       / values_.size();
   LOG(INFO) << "trie over head per each value=" << ratio << "bytes";
 }
@@ -269,6 +282,11 @@ void SparseArrayBuilder::Serialize() {
 void SparseArrayBuilder::Concatenate() {
   // num bits per level.
   main_stream_->PushInt(kNumBitsPerLevel);
+  if (use_1byte_value_) {
+    main_stream_->PushInt(1);
+  } else {
+    main_stream_->PushInt(2);
+  }
   main_stream_->PushInt(value_stream_->GetSize());
   // write streams.
   for (size_t i = 0; i < streams_.size(); ++i) {
@@ -286,27 +304,31 @@ void SparseArrayBuilder::Concatenate() {
 
 SparseArrayImage::SparseArrayImage(const char *image, int size)
     : image_(image), size_(size) {
-  DCHECK(image) << "got empty message";
+  DCHECK(image) << "got empty image";
   const char *p = image_;
   num_bits_per_level_ = ReadInt(p);
+  p += 4;
+  const int use_1byte_value_flag = ReadInt(p);
+  use_1byte_value_ = (use_1byte_value_flag == 1);
   p += 4;
   values_size_ = ReadInt(p);
   p += 4;
   num_levels_ = 32 / num_bits_per_level_;
-  if (32 % num_bits_per_level_) {
+  if (32 % num_bits_per_level_ != 0) {
     ++num_levels_;
   }
   const char *bytes = p + (num_levels_ * 4);
   for (int i = 0; i < num_levels_; ++i) {
-    size = ReadInt(p);
+    const int level_size = ReadInt(p);
     p += 4;
-    BitArray *array = new BitArray(bytes, size);
-    bytes += size;
+    BitArray *array = new BitArray(bytes, level_size);
+    bytes += level_size;
     arrays_.push_back(array);
   }
   values_ = bytes;
   bytes += values_size_;
-  CHECK(ReadInt(bytes) == SparseArrayBuilder::kTrailerMagic)
+  const int magic = ReadInt(bytes);
+  CHECK(magic == SparseArrayBuilder::kTrailerMagic)
       << "trailer magic mismatch";
   VLOG(1) << "SparseArrayImage: "
           << values_size_ / 2 << " values";
@@ -340,6 +362,10 @@ int SparseArrayImage::Peek(uint32 index) const {
 }
 
 int SparseArrayImage::GetValue(int nth) const {
+  if (use_1byte_value_) {
+    const uint8 *v = reinterpret_cast<const uint8 *>(&values_[nth]);
+    return *v;
+  }
   const uint16 *v = reinterpret_cast<const uint16 *>(&values_[nth * 2]);
   return *v;
 }

@@ -85,9 +85,9 @@
         '<(subdir)/version_image_widget.h',
       ],
       'includes': [
+        'qt_moc.gypi',
         'qt_rcc.gypi',
         'qt_uic.gypi',
-        'qt_moc.gypi',
       ],
     },
     {
@@ -143,9 +143,9 @@
         }],
       ],
       'includes': [
+        'qt_moc.gypi',
         'qt_rcc.gypi',
         'qt_uic.gypi',
-        'qt_moc.gypi',
       ],
     },
     {
@@ -201,9 +201,9 @@
         '<(subdir)/roman_table_editor.h',
       ],
       'includes': [
+        'qt_moc.gypi',
         'qt_rcc.gypi',
         'qt_uic.gypi',
-        'qt_moc.gypi',
       ],
     },
     {
@@ -264,19 +264,16 @@
         'qrc_base_name': 'confirmation_dialog',
       },
       'sources': [
-        '<(subdir)/confirmation_dialog.h',
         '<(subdir)/confirmation_dialog.qrc',
       ],
       'includes': [
         'qt_rcc.gypi',
-        'qt_moc.gypi',
       ],
     },
     {
       'target_name': 'confirmation_dialog_lib',
       'type': 'static_library',
       'sources': [
-        '<(gen_out_dir)/confirmation_dialog/moc_confirmation_dialog.cc',
         '<(gen_out_dir)/confirmation_dialog/qrc_confirmation_dialog.cc',
         'confirmation_dialog/confirmation_dialog.cc',
         'confirmation_dialog/confirmation_dialog_libmain.cc',
@@ -320,9 +317,9 @@
         '<(subdir)/zero_width_splitter.h',
       ],
       'includes': [
+        'qt_moc.gypi',
         'qt_rcc.gypi',
         'qt_uic.gypi',
-        'qt_moc.gypi',
       ],
     },
     {
@@ -380,8 +377,8 @@
         '<(subdir)/error_message_dialog.qrc',
       ],
       'includes': [
-        'qt_rcc.gypi',
         'qt_moc.gypi',
+        'qt_rcc.gypi',
       ],
     },
     {
@@ -428,9 +425,9 @@
         '<(subdir)/post_install_dialog.ui',
       ],
       'includes': [
+        'qt_moc.gypi',
         'qt_rcc.gypi',
         'qt_uic.gypi',
-        'qt_moc.gypi',
       ],
     },
     {
@@ -490,9 +487,9 @@
         '<(subdir)/set_default_dialog.ui',
       ],
       'includes': [
+        'qt_moc.gypi',
         'qt_rcc.gypi',
         'qt_uic.gypi',
-        'qt_moc.gypi',
       ],
     },
     {
@@ -581,24 +578,15 @@
           ],
         },],
         ['OS=="mac"', {
-          'product_name': '<(branding)Tool',
-          'sources': [
-            '../mac/shared_subpackage_info',
-          ],
+          'product_name': '<(product_name)',
           'dependencies': [
             'gen_mozc_tool_info_plist',
           ],
           'mac_bundle': 1,
           'xcode_settings': {
-            # Currently metadata in the Info.plist file like version
-            # info go away because the generated xcodeproj do not know
-            # version info.
-            # TODO(mukai): write a script to expand those variables
-            # and use that script instead of this INFOPLIST_FILE.
-            'INFOPLIST_FILE': '<(gen_out_dir)/shared_subpackage_info',
+            'INFOPLIST_FILE': '<(gen_out_dir)/hidden_mozc_tool_info',
           },
           'variables': {
-            # This product name is used in postbuilds_mac.gypi.
             'product_name': '<(branding)Tool',
           },
           'includes': [
@@ -635,20 +623,103 @@
           'type': 'none',
           'actions': [
             {
-              'action_name': 'generate',
+              'action_name': 'generate normal info plist',
               'inputs': [
-                '../mac/shared_subpackage_info',
+                '../data/mac/mozc_tool_info',
               ],
               'outputs': [
-                '<(gen_out_dir)/shared_subpackage_info',
+                '<(gen_out_dir)/mozc_tool_info',
               ],
               'action': [
                 'python', '../build_tools/tweak_info_plist.py',
-                '--output', '<(gen_out_dir)/shared_subpackage_info',
-                '--input', '../mac/shared_subpackage_info',
+                '--output', '<(gen_out_dir)/mozc_tool_info',
+                '--input', '../data/mac/mozc_tool_info',
                 '--version_file', '../mozc_version.txt',
+                '--branding', '<(branding)',
               ],
             },
+            {
+              'action_name': 'generate hidden info plist',
+              'inputs': [
+                '../data/mac/hidden_mozc_tool_info',
+              ],
+              'outputs': [
+                '<(gen_out_dir)/hidden_mozc_tool_info',
+              ],
+              'action': [
+                'python', '../build_tools/tweak_info_plist.py',
+                '--output', '<(gen_out_dir)/hidden_mozc_tool_info',
+                '--input', '../data/mac/hidden_mozc_tool_info',
+                '--version_file', '../mozc_version.txt',
+                '--branding', '<(branding)',
+              ],
+            },
+          ],
+        },
+        {
+          'target_name': 'about_dialog_mac',
+          'type': 'executable',
+          'mac_bundle': 1,
+          'variables': {
+            'product_name': 'AboutDialog',
+          },
+          'xcode_settings': {
+            'INFOPLIST_FILE': '<(gen_out_dir)/hidden_mozc_tool_info',
+          },
+          'includes': [
+            'mac_gui.gypi',
+          ],
+        },
+        {
+          'target_name': 'config_dialog_mac',
+          'type': 'executable',
+          'mac_bundle': 1,
+          'variables': {
+            'product_name': 'ConfigDialog',
+          },
+          'xcode_settings': {
+            'INFOPLIST_FILE': '<(gen_out_dir)/mozc_tool_info',
+          },
+          'mac_bundle_resources': [
+            '../data/images/product_icon.icns',
+            '../data/mac/ConfigDialog/English.lproj/InfoPlist.strings',
+            '../data/mac/ConfigDialog/Japanese.lproj/InfoPlist.strings',
+          ],
+          'includes': [
+            'mac_gui.gypi',
+          ],
+        },
+        {
+          'target_name': 'dictionary_tool_mac',
+          'type': 'executable',
+          'mac_bundle': 1,
+          'variables': {
+            'product_name': 'DictionaryTool',
+          },
+          'xcode_settings': {
+            'INFOPLIST_FILE': '<(gen_out_dir)/mozc_tool_info',
+          },
+          'mac_bundle_resources': [
+            '../data/images/product_icon.icns',
+            '../data/mac/DictionaryTool/English.lproj/InfoPlist.strings',
+            '../data/mac/DictionaryTool/Japanese.lproj/InfoPlist.strings',
+          ],
+          'includes': [
+            'mac_gui.gypi',
+          ],
+        },
+        {
+          'target_name': 'error_message_dialog_mac',
+          'type': 'executable',
+          'mac_bundle': 1,
+          'variables': {
+            'product_name': 'ErrorMessageDialog',
+          },
+          'xcode_settings': {
+            'INFOPLIST_FILE': '<(gen_out_dir)/hidden_mozc_tool_info',
+          },
+          'includes': [
+            'mac_gui.gypi',
           ],
         },
       ],

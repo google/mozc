@@ -40,22 +40,13 @@
 #include "session/commands.pb.h"
 #include "session/config_handler.h"
 #include "session/config.pb.h"
+#include "session/internal/keymap.h"
 #include "session/key_event_normalizer.h"
 #include "session/key_parser.h"
 
 namespace mozc {
 namespace config {
 namespace {
-// TODO(toshiyuki): remove dup codes here.
-const char kMSIMEKeyMapFile[] = "system://ms-ime.tsv";
-const char kATOKKeyMapFile[] = "system://atok.tsv";
-const char kKotoeriKeyMapFile[] = "system://kotoeri.tsv";
-#ifdef OS_WINDOWS
-const char *kDefaultKeyMapFile = kMSIMEKeyMapFile;
-#else  // Mac or Linux
-const char *kDefaultKeyMapFile = kKotoeriKeyMapFile;
-#endif
-
 const char kModeDirect[] = "Direct";
 const char kModeDirectInput[] = "DirectInput";
 const char kCommandIMEOn[] = "IMEOn";
@@ -97,7 +88,10 @@ class ImeSwitchUtilImpl {
       const string &custom_keymap_table = GET_CONFIG(custom_keymap_table);
       if (custom_keymap_table.empty()) {
         LOG(WARNING) << "custom_keymap_table is empty. use default setting";
-        ReloadFromFile(kDefaultKeyMapFile);
+        const char *default_keymapfile =
+            keymap::KeyMapManager::GetKeyMapFileName(
+                keymap::KeyMapManager::GetDefaultKeyMap());
+        ReloadFromFile(default_keymapfile);
         return;
       }
       istringstream ifs(custom_keymap_table);
@@ -105,7 +99,7 @@ class ImeSwitchUtilImpl {
       CheckMigration();
       return;
     }
-    const char *keymap_file = GetKeyMapFileName(keymap);
+    const char *keymap_file = keymap::KeyMapManager::GetKeyMapFileName(keymap);
     ReloadFromFile(keymap_file);
   }
 
@@ -195,25 +189,6 @@ class ImeSwitchUtilImpl {
       return;
     }
     return ReloadFromStream(ifs.get());
-  }
-
-  const char *GetKeyMapFileName(
-      const config::Config::SessionKeymap keymap) const {
-    switch (keymap) {
-      case config::Config::NONE:
-        return kDefaultKeyMapFile;
-      case config::Config::ATOK:
-        return kATOKKeyMapFile;
-      case config::Config::MSIME:
-        return kMSIMEKeyMapFile;
-      case config::Config::KOTOERI:
-        return kKotoeriKeyMapFile;
-      case config::Config::CUSTOM:
-        DCHECK(false) << "should not be occured";
-        return kDefaultKeyMapFile;
-      default:
-        return kDefaultKeyMapFile;
-    }
   }
 
   // original forms

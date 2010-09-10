@@ -189,6 +189,26 @@ message Config {
   };
   optional NumpadCharacterForm numpad_character_form = 60 [ default = NUMPAD_HALF_WIDTH ];
 
+  enum AutoConversionKey {
+    AUTO_CONVERSION_OFF = 0;
+    AUTO_CONVERSION_KUTEN = 1;
+    AUTO_CONVERSION_TOUTEN = 2;
+    AUTO_CONVERSION_QUESTION_MARK = 4;
+    AUTO_CONVERSION_EXCLAMATION_MARK = 8;
+  };
+  optional bool use_auto_conversion = 61 [ default = false ];
+
+  // can't use AutoConversionKey as a type since
+  // undefined enum type is not correctly handled.
+  optional uint32 auto_conversion_key = 62 [ default = 13 ];
+
+  // This config item is valid only with Mac OSX.
+  enum YenSignCharacter {
+    YEN_SIGN = 0;
+    BACKSLASH = 1;
+  };
+  optional YenSignCharacter yen_sign_character = 63 [ default = YEN_SIGN ];
+
   //////////////////////////////////////////////////////////////
   //
   // Dictionary (80-99)
@@ -197,6 +217,7 @@ message Config {
   optional bool use_single_kanji_conversion = 81 [ default = true ];
   optional bool use_symbol_conversion = 82 [ default = true ];
   optional bool use_number_conversion = 83 [ default = true ];
+  optional bool use_emoticon_conversion = 84 [ default = true ];
 
   //////////////////////////////////////////////////////////////
   //

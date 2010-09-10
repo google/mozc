@@ -34,6 +34,13 @@
 #include "converter/sparse_connector.h"
 #include "storage/sparse_array_image.h"
 
+DEFINE_bool(use_1byte_cost, false,
+            "Cost is encoded int a byte, instead of 2 bytes.");
+DEFINE_int32(cost_resolution, 64,
+             "Cost value is calculated by the value in SparseArray * "
+             "cost_resolution. So every cost value should be smaller than "
+             "resolution*256.");
+
 namespace mozc {
 void SparseConnectorBuilder::Compile(const char *text_file,
                                      const char *binary_file) {
@@ -95,6 +102,9 @@ void SparseConnectorBuilder::Compile(const char *text_file,
     LOG(INFO) << "compiling matrix with " << lsize * rsize;
 
     SparseArrayBuilder builder;
+    if (FLAGS_use_1byte_cost) {
+      builder.SetUse1ByteValue(true);
+    }
     vector<int16> default_cost(lsize);
     fill(default_cost.begin(), default_cost.end(), static_cast<int16>(0));
 
@@ -109,8 +119,16 @@ void SparseConnectorBuilder::Compile(const char *text_file,
 
     for (int lid = 0; lid < lsize; ++lid) {
       for (int rid = 0; rid < rsize; ++rid) {
-        const int16 c = matrix[lid + lsize * rid];
+        int16 c = matrix[lid + lsize * rid];
         if (c != default_cost[lid]) {
+          if (FLAGS_use_1byte_cost) {
+            if (c == ConnectorInterface::kInvalidCost) {
+              c = SparseConnector::kInvalid1ByteCostValue;
+            } else {
+              c = c / FLAGS_cost_resolution;
+              CHECK(c < 256 && c != SparseConnector::kInvalid1ByteCostValue);
+            }
+          }
           builder.AddValue(SparseConnector::EncodeKey(lid, rid), c);
         }
       }
@@ -123,11 +141,13 @@ void SparseConnectorBuilder::Compile(const char *text_file,
 
     CHECK_EQ(lsize, default_cost.size());
 
-    uint16 magic = SparseConnector::kSparseConnectorMagic;
+    const uint16 magic = SparseConnector::kSparseConnectorMagic;
     ofs.write(reinterpret_cast<const char*>(&magic), sizeof(magic));
-    // write one more value to align matrix image in 4 bytes.
-    magic = 0;
-    ofs.write(reinterpret_cast<const char*>(&magic), sizeof(magic));
+    uint16 resolution = 1;
+    if (FLAGS_use_1byte_cost) {
+      resolution = FLAGS_cost_resolution;
+    }
+    ofs.write(reinterpret_cast<const char*>(&resolution), sizeof(resolution));
     ofs.write(reinterpret_cast<const char*>(&lsize), sizeof(lsize));
     ofs.write(reinterpret_cast<const char*>(&rsize), sizeof(rsize));
     ofs.write(reinterpret_cast<const char*>(&default_cost[0]),
@@ -145,10 +165,13 @@ void SparseConnectorBuilder::Compile(const char *text_file,
         new SparseConnector(mmap.begin(), mmap.GetFileSize()));
     CHECK(connector.get());
 
+    const int resolution = connector->GetResolution();
+
     for (int rid = 0; rid < rsize; ++rid) {
       for (int lid = 0; lid < lsize; ++lid) {
-        CHECK_EQ(connector->GetTransitionCost(lid, rid),
-                 matrix[lid + lsize * rid]);
+        const int diff = abs(connector->GetTransitionCost(lid, rid) -
+                             matrix[lid + lsize * rid]);
+        CHECK_LT(diff, resolution);
       }
     }
   }

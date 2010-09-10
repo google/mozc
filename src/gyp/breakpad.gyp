@@ -36,6 +36,11 @@
       'type': 'static_library',
       'conditions': [
         ['OS=="win"', {
+          'include_dirs': [
+            # Use the local glog configured for Windows.
+            # See b/2954681 for details.
+            'src/third_party/glog/glog/src/windows',
+          ],
           'sources': [
             'src/client/windows/crash_generation/client_info.cc',
             'src/client/windows/crash_generation/crash_generation_client.cc',

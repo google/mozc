@@ -39,6 +39,11 @@
 DECLARE_string(test_tmpdir);
 
 namespace mozc {
+namespace {
+int GetFakeCost(int l, int r) {
+  return (3 * l + r) * 1000;
+}
+}  // namespace
 
 TEST(SparseConnectorTest, SparseConnecterOpenTest) {
   const string input_filename
@@ -55,7 +60,7 @@ TEST(SparseConnectorTest, SparseConnecterOpenTest) {
     for (int i = 0; i < 3; ++i) {
       for (int j = 0; j < 3; ++j) {
         // lid, rid, cost
-        ofs << i << " " << j << " " << 3 * i + j << endl;
+        ofs << i << " " << j << " " << GetFakeCost(i, j) << endl;
       }
     }
   }
@@ -70,9 +75,11 @@ TEST(SparseConnectorTest, SparseConnecterOpenTest) {
   scoped_ptr<SparseConnector> connector(
       new SparseConnector(cmmap.begin(), cmmap.GetFileSize()));
 
+  const int cost_resolution = connector->GetResolution();
   for (int i = 0; i < 3; ++i) {
     for (int j = 0; j < 3; ++j) {
-      EXPECT_EQ(3 * i + j, connector->GetTransitionCost(i, j));
+      const int diff = GetFakeCost(i, j) - connector->GetTransitionCost(i, j);
+      EXPECT_LT(abs(diff), cost_resolution);
     }
   }
 }

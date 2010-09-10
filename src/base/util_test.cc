@@ -388,6 +388,47 @@ TEST(UtilTest, SafeStrToUInt64) {
   EXPECT_FALSE(Util::SafeStrToUInt64("", &value));
 }
 
+TEST(UtilTest, SafeStrToDouble) {
+  double value = 1.0;
+
+  EXPECT_TRUE(Util::SafeStrToDouble("0", &value));
+  EXPECT_EQ(0.0, value);
+  EXPECT_TRUE(Util::SafeStrToDouble(" \t\r\n\v\f0 \t\r\n\v\f", &value));
+  EXPECT_EQ(0.0, value);
+  EXPECT_TRUE(Util::SafeStrToDouble("-0", &value));
+  EXPECT_EQ(0.0, value);
+  EXPECT_TRUE(Util::SafeStrToDouble("1.0e1", &value));
+  EXPECT_EQ(10.0, value);
+  EXPECT_TRUE(Util::SafeStrToDouble("-5.0e-1", &value));
+  EXPECT_EQ(-0.5, value);
+  EXPECT_TRUE(Util::SafeStrToDouble(".0", &value));
+  EXPECT_EQ(0.0, value);
+  EXPECT_TRUE(Util::SafeStrToDouble("0.", &value));
+  EXPECT_EQ(0.0, value);
+  EXPECT_TRUE(Util::SafeStrToDouble("0.0", &value));
+  EXPECT_EQ(0.0, value);
+  EXPECT_TRUE(Util::SafeStrToDouble("1.7976931348623158e308", &value));
+  EXPECT_EQ(1.7976931348623158e308, value);  // approximated representation
+                                             // of max of double
+  EXPECT_TRUE(Util::SafeStrToDouble("-1.7976931348623158e308", &value));
+  EXPECT_EQ(-1.7976931348623158e308, value);
+  // GCC accepts hexadecimal number, but VisualC++ does not.
+#ifndef _MSC_VER
+  EXPECT_TRUE(Util::SafeStrToDouble("0x1234", &value));
+  EXPECT_EQ(static_cast<double>(0x1234), value);
+#endif
+
+  EXPECT_FALSE(Util::SafeStrToDouble("1.7976931348623159e308",  // overflow
+                                     &value));
+  EXPECT_FALSE(Util::SafeStrToDouble("-1.7976931348623159e308", &value));
+  EXPECT_FALSE(Util::SafeStrToDouble("3e", &value));
+  EXPECT_FALSE(Util::SafeStrToDouble(".", &value));
+  EXPECT_FALSE(Util::SafeStrToDouble("", &value));
+#ifdef _MSC_VER
+  EXPECT_FALSE(Util::SafeStrToDouble("0x1234", &value));
+#endif
+}
+
 TEST(UtilTest, HiraganaToKatakana) {
   {
     // "わたしのなまえはなかのですうまーよろしゅう"
@@ -1586,6 +1627,17 @@ TEST(UtilTest, GetTotalPhysicalMemoryTest) {
 TEST(UtilTest, IsWindowsX64Test) {
   // just make sure we can compile it.
   Util::IsWindowsX64();
+}
+
+TEST(UtilTest, SetIsWindowsX64ModeForTest) {
+  Util::SetIsWindowsX64ModeForTest(Util::IS_WINDOWS_X64_EMULATE_64BIT_MACHINE);
+  EXPECT_TRUE(Util::IsWindowsX64());
+
+  Util::SetIsWindowsX64ModeForTest(Util::IS_WINDOWS_X64_EMULATE_32BIT_MACHINE);
+  EXPECT_FALSE(Util::IsWindowsX64());
+
+  // Clear the emulation.
+  Util::SetIsWindowsX64ModeForTest(Util::IS_WINDOWS_X64_DEFAULT_MODE);
 }
 
 TEST(UtilTest, GetFileVersion) {

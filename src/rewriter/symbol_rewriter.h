@@ -30,10 +30,14 @@
 #ifndef MOZC_REWRITER_SYMBOL_REWRITER_H_
 #define MOZC_REWRITER_SYMBOL_REWRITER_H_
 
+#include "rewriter/embedded_dictionary.h"
 #include "rewriter/rewriter_interface.h"
+// for FRIEND_TEST()
+#include "testing/base/public/gunit_prod.h"
 
 namespace mozc {
 
+class Segment;
 class Segments;
 
 class SymbolRewriter: public RewriterInterface  {
@@ -41,6 +45,46 @@ class SymbolRewriter: public RewriterInterface  {
   SymbolRewriter();
   virtual ~SymbolRewriter();
   virtual bool Rewrite(Segments *segments) const;
+
+private:
+  FRIEND_TEST(SymbolRewriterTest, TriggerRewriteEntireTest);
+  FRIEND_TEST(SymbolRewriterTest, TriggerRewriteEachTest);
+  FRIEND_TEST(SymbolRewriterTest, SplitDescriptionTest);
+
+  // Some characters may have different description for full/half width forms.
+  // Here we just change the description in this function.
+  static const string GetDescription(const string &value,
+                                     const char *description,
+                                     const char *additional_description);
+
+  // return true if all the characters in value should have
+  // Half/Fullwidth description
+  static bool HasHalfFullWidthDescription(const string &value);
+
+  // return true key has no-hiragana
+  static bool IsSymbol(const string &key);
+
+  // Insert alternative form of space.
+  static void ExpandSpace(Segment *segment);
+
+  // Returns true if the symbol is platform dependent
+  static bool IsPlatformDependent(const EmbeddedDictionary::Value &value);
+
+  // Return true if two symbols are in same group.
+  static bool InSameSymbolGroup(const EmbeddedDictionary::Value &lhs,
+                                const EmbeddedDictionary::Value &rhs);
+
+  // Insert Symbol into segment.
+  static void InsertCandidates(const EmbeddedDictionary::Value *value,
+                               size_t size,
+                               bool context_sensitive,
+                               Segment *segment);
+
+  // Insert symbols using connected all segments.
+  static bool RewriteEntireCandidate(Segments *segments);
+
+  // Insert symbols using single segment.
+  static bool RewriteEachCandidate(Segments *segments);
 };
 }  // namespace mozc
 

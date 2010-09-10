@@ -30,13 +30,22 @@
 #ifndef MOZC_PREDICTION_USER_HISTORY_PREDICTOR_H_
 #define MOZC_PREDICTION_USER_HISTORY_PREDICTOR_H_
 
+#include <algorithm>
+#include <queue>
+#include <set>
 #include <string>
+#include <utility>
+#include <vector>
+#include "base/freelist.h"
 #include "prediction/predictor_interface.h"
+#include "prediction/user_history_predictor.pb.h"
 #include "storage/lru_cache.h"
+#include "testing/base/public/gunit_prod.h"  // for FRIEND_TEST
 
 namespace mozc {
 
 class Segments;
+class Segment;
 
 class UserHistoryPredictorSyncer;
 
@@ -88,32 +97,96 @@ class UserHistoryPredictor: public PredictorInterface {
   // return id for RevertEntry
   static uint16 revert_id();
 
- private:
-  bool CheckSyncerAndDelete() const;
+  typedef user_history_predictor::UserHistory::Entry Entry;
+  typedef user_history_predictor::UserHistory::NextEntry NextEntry;
 
-  bool updated_;
-
-  struct Entry {
-    uint32 length;
-    uint32 suggestion_prefix_length;
-    uint32 suggestion_freq;
-    uint32 conversion_freq;
-    uint32 last_access_time;
-    string description;
-    Entry()
-        : length(0), suggestion_prefix_length(0),
-          suggestion_freq(0), conversion_freq(0),
-          last_access_time(0) {}
+  enum MatchType {
+    NO_MATCH,            // no match
+    LEFT_PREFIX_MATCH,   // left string is a prefix of right string
+    RIGHT_PREFIX_MATCH,  // right string is a prefix of left string
+    EXACT_MATCH,         // right string == left string
   };
 
-  void Insert(const string &key, const string &value,
+  static MatchType GetMatchType(const string &lstr, const string &rstr);
+
+  // return fingerprints from various object.
+  static uint32 Fingerprint(const string &key, const string &value);
+  static uint32 EntryFingerprint(const Entry &entry);
+  static uint32 SegmentFingerprint(const Segment &segment);
+
+  // Uint32 <=> string conversion
+  static string Uint32ToString(uint32 fp);
+  static uint32 StringToUint32(const string &input);
+
+  // return true |result_entry| can be handled as
+  // a valid result if the length of user input is |prefix_len|.
+  static bool IsValidSuggestion(uint32 prefix_len,
+                                const Entry &result_entry);
+
+  // return "tweaked" score of result_entry.
+  // the score is basically determined by "last_access_time", (a.k.a,
+  // LRU policy), but we want to slightly change the score
+  // with different signals, including the length of value and/or
+  // bigram_boost flags.
+  static uint32 GetScore(const Entry &result_entry);
+
+  // Priority Queue class for entry. New item is sorted by
+  // |score| internally. By calling Pop() in sequence, you
+  // can obtain the list of entry sorted by |score|.
+  class EntryPriorityQueue {
+   public:
+    EntryPriorityQueue();
+    virtual ~EntryPriorityQueue();
+    size_t size() const {
+      return agenda_.size();
+    }
+    bool Push(Entry *entry);
+    Entry *Pop();
+    Entry *NewEntry();
+   private:
+    typedef pair<uint32, Entry *> QueueElement;
+    typedef priority_queue<QueueElement> Agenda;
+    Agenda agenda_;
+    FreeList<Entry> pool_;
+    set<uint32> seen_;
+  };
+
+ private:
+  typedef LRUCache<uint32, Entry>  DicCache;
+  typedef LRUCache<uint32, Entry>::Element DicElement;
+
+  bool CheckSyncerAndDelete() const;
+
+  bool Lookup(Segments *segments) const;
+
+  // Lookup with a key |input_key|.
+  // Can set |prev_entry| if there is a history segment just before |input_key|.
+  // |prev_entry| is an optional field. If set NULL, this field is just ignored.
+  // This method adds a new result entry with score, pair<score, entry>, to
+  // |results|.
+  bool LookupEntry(const string &input_key,
+                   const Entry *entry,
+                   const Entry *prev_entry,
+                   EntryPriorityQueue *results) const;
+
+  // insert |key,value,description| to the internal dictionary database.
+  // |is_suggestion_selected|: key/value is suggestion or conversion.
+  // |next_fp|: fingerprint of the next segment.
+  // |last_access_time|: the time when this entrty was created
+  void Insert(const string &key,
+              const string &value,
               const string &description,
               bool is_suggestion_selected,
+              uint32 next_fp,
+              uint32 last_access_time,
               Segments *segments);
 
-  typedef LRUCache<string, Entry> DicCache;
-  typedef LRUCache<string, Entry>::Element DicElement;
+  // Insert a new |next_entry| into |entry|.
+  // it makes a bigram connection from entry to next_entry.
+  void InsertNextEntry(const NextEntry &next_entry,
+                       UserHistoryPredictor::Entry *entry) const;
 
+  bool updated_;
   scoped_ptr<DicCache> dic_;
   mutable scoped_ptr<UserHistoryPredictorSyncer> syncer_;
 };

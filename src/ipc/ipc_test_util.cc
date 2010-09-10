@@ -52,6 +52,12 @@ bool TestMachPortManager::GetMachPort(const string &name, mach_port_t *port) {
   *port = port_;
   return true;
 }
+
+// Server is always running for test because both client and server is
+// running in a same process.
+bool TestMachPortManager::IsServerRunning(const string &name) const {
+  return true;
+}
 #endif
 
 IPCClientInterface *IPCClientFactoryOnMemory::NewClient(

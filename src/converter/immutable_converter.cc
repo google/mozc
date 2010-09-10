@@ -56,7 +56,6 @@ const size_t kMaxSegmentsSize   = 256;
 const size_t kMaxCharLength     = 1024;
 const int    kMaxCost           = 32767;
 const int    kDefaultNumberCost = 3000;
-const int    kEOSPenalty        = 700;
 
 enum {
   CONNECTED,
@@ -794,13 +793,6 @@ bool ImmutableConverterImpl::MakeLattice(Segments *segments) const {
   const string key = history_key + conversion_key;
   lattice->SetKey(key);
 
-  for (Node *node = lattice->eos_nodes();
-       node != NULL; node = node->bnext) {
-    if (node->lid != 0 || node->rid != 0) {
-      node->wcost = kEOSPenalty;
-    }
-  }
-
   size_t segments_pos = 0;
   const char *key_end = key.data() + key.size();
   const char *key_begin = key.data();
@@ -815,12 +807,11 @@ bool ImmutableConverterImpl::MakeLattice(Segments *segments) const {
     }
     const Segment::Candidate &c = seg.candidate(0);
 
-    // basically, we add a new node as an
-    // empty (BOS/EOS) node
+    // Add a virtual nodes corresponding to HISTORY segments.
     Node *rnode = lattice->NewNode();
     CHECK(rnode);
-    rnode->lid = 0;
-    rnode->rid = 0;
+    rnode->lid = c.lid;
+    rnode->rid = c.rid;
     rnode->wcost = 0;
     rnode->value = c.value;
     rnode->key = seg.key();
@@ -829,18 +820,17 @@ bool ImmutableConverterImpl::MakeLattice(Segments *segments) const {
     lattice->Insert(segments_pos, rnode);
 
     // For the last history segment,  we also insert a new node having
-    // a rid as a contextual information. Viterbi algorithm will find the
-    // best path from rnode(BOS) and rnode2(context).
-    // It is almost true that user input unit is equivalent to mozc segment.
-    // So we add a penalty constant so that BOS node is prefered.
-    // We changed it from 2000 to 500 after bigram.
-    const int kContextNodePenalty = 500;
-    if (s + 1 == history_segments_size) {
+    // EOS part-of-speech. Viterbi algorithm will find the
+    // best path from rnode(context) and rnode2(EOS).
+    // Also, set negative word cost to this node so that EOS is
+    // more likely selected than other contextual nodes.
+    if (s + 1 == history_segments_size && c.rid != 0) {
+      const int kEOSCostBounus = -1000;
       Node *rnode2 = lattice->NewNode();
       CHECK(rnode2);
-      rnode2->lid = 0;
-      rnode2->rid = c.rid;
-      rnode2->wcost = kContextNodePenalty;
+      rnode2->lid = c.lid;
+      rnode2->rid = 0;   // 0 is EOS
+      rnode2->wcost = kEOSCostBounus;
       rnode2->value = c.value;
       rnode2->key = seg.key();
       rnode2->node_type = Node::HIS_NODE;
@@ -892,29 +882,20 @@ bool ImmutableConverterImpl::MakeLattice(Segments *segments) const {
 
         // New cost recalcuration:
         //
-        // trans(last_rid, rnode->lid) + rnode->wcost +
-        // trans(rnode->rid, new_node->lid) + new_node->wcost ==
+        // trans(last_rid, c.lid) + c.cost + trans(c.rid, new_node->lid)
+        // + new_node->wcost ==
         // trans(last_rid, compound_node->lid) + compound_node->wcost
         //
         // i.e.
         // new_node->wcost =
         // trans(last_rid, compound_node->lid) + compound_node->wcost
-        //  - { trans(last_rid, new_node->lid) + rnode->wcost +
-        //      trans(rnode->rid, new_node->lid) }
-        //
-        // Also,
-        // c.cost =   trans(last_rid, rnode->lid)
-        //          + rnode->wcost
-        //          + trans(rnode->rid, EOS_lid(0))
-        // i.e,
-        // trans(last_rid, rnode->lid) + rnode->wcost ==
-        //  c.cost - trans(rnode->rid, EOS_lid(0))
+        //   - trans(last_rid, c.lid) - c.cost - trans(c.rid, new_node->lid)
         new_node->wcost =
             connector_->GetTransitionCost(last_rid, compound_node->lid)
             + compound_node->wcost
+            - connector_->GetTransitionCost(last_rid, c.lid)
             - c.cost
-            + connector_->GetTransitionCost(rnode->rid, 0)
-            - connector_->GetTransitionCost(rnode->rid, compound_node->lid);
+            - connector_->GetTransitionCost(c.rid, new_node->lid);
 
         new_node->constrained_prev = rnode;
 

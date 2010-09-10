@@ -60,4 +60,18 @@ TEST(SparseArray, basic) {
   EXPECT_EQ(image.GetValue(1), 20);
   EXPECT_EQ(image.GetValue(2), 30);
 }
+
+TEST(SparseArray, use_1byte_value) {
+  SparseArrayBuilder builder;
+  builder.SetUse1ByteValue(true);
+  for (int i = 0; i <= 100; ++i) {
+    builder.AddValue(100 + i * i, i);
+  }
+  builder.Build();
+  SparseArrayImage image(builder.GetImage(), builder.GetSize());
+  for (int i = 0; i <= 100; ++i) {
+    EXPECT_EQ(i, image.Peek(100 + i * i));
+    EXPECT_EQ(i, image.GetValue(i));
+  }
+}
 }  // namespace mozc

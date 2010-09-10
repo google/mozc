@@ -186,12 +186,14 @@ string GenRandomAlphabet(int size) {
 
 class UserDictionaryTest : public testing::Test {
  protected:
-  static void SetUpTestCase() {
+  virtual void SetUp() {
+    pos_mock_.reset(new UserPOSMock);
     Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    UserPOS::SetUserPOSInterface(new UserPOSMock);
+    UserPOS::SetUserPOSInterface(pos_mock_.get());
   }
 
-  static void TearDownTestCase() {
+  virtual void TearDown() {
+    pos_mock_.reset();
     UserPOS::SetUserPOSInterface(NULL);
   }
 
@@ -293,6 +295,8 @@ class UserDictionaryTest : public testing::Test {
       entry->set_pos(fields[2]);
     }
   }
+
+  scoped_ptr<UserPOSMock> pos_mock_;
 };
 
 TEST_F(UserDictionaryTest, TestLookupPredictive) {

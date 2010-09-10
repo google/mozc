@@ -33,6 +33,7 @@
 #ifndef MOZC_COMPOSER_INTERNAL_MODE_SWITCHING_HANDLER_H_
 #define MOZC_COMPOSER_INTERNAL_MODE_SWITCHING_HANDLER_H_
 
+#include <cctype>
 #include <map>
 #include <string>
 #include <utility>

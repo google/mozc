@@ -67,6 +67,7 @@ class ConfigDialog : public QDialog,
   virtual void ResetToDefaults();
   virtual void SelectKeymapSetting(int index);
   virtual void SelectInputModeSetting(int index);
+  virtual void SelectAutoConversionSetting(int state);
   virtual void LaunchAdministrationDialog();
 
  protected:

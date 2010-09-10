@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>450</width>
-    <height>400</height>
+    <height>430</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -19,13 +19,13 @@
   <property name="minimumSize">
    <size>
     <width>450</width>
-    <height>400</height>
+    <height>430</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
     <width>450</width>
-    <height>400</height>
+    <height>430</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -37,7 +37,7 @@
      <x>0</x>
      <y>0</y>
      <width>451</width>
-     <height>401</height>
+     <height>431</height>
     </rect>
    </property>
    <widget class="QTabWidget" name="configDialogTabWidget">
@@ -46,7 +46,7 @@
       <x>10</x>
       <y>10</y>
       <width>431</width>
-      <height>341</height>
+      <height>371</height>
      </rect>
     </property>
     <property name="currentIndex">
@@ -62,7 +62,7 @@
         <x>30</x>
         <y>30</y>
         <width>371</width>
-        <height>181</height>
+        <height>211</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout">
@@ -79,7 +79,7 @@
          </property>
         </widget>
        </item>
-       <item row="3" column="1">
+       <item row="4" column="1">
         <widget class="QComboBox" name="spaceCharacterFormComboBox">
          <property name="enabled">
           <bool>true</bool>
@@ -107,31 +107,31 @@
          </property>
         </widget>
        </item>
-       <item row="3" column="0">
+       <item row="4" column="0">
         <widget class="QLabel" name="spaceInputSettingLabel">
          <property name="text">
           <string>Space input style</string>
          </property>
         </widget>
        </item>
-       <item row="4" column="1">
+       <item row="5" column="1">
         <widget class="QComboBox" name="selectionShortcutModeComboBox"/>
        </item>
-       <item row="4" column="0">
+       <item row="5" column="0">
         <widget class="QLabel" name="selectionShortcutModeLabel">
          <property name="text">
           <string>Selection shortcut</string>
          </property>
         </widget>
        </item>
-       <item row="5" column="0">
+       <item row="6" column="0">
         <widget class="QLabel" name="numpadCharacterFormLabel">
          <property name="text">
           <string>Numpad style</string>
          </property>
         </widget>
        </item>
-       <item row="5" column="1">
+       <item row="6" column="1">
         <widget class="QComboBox" name="numpadCharacterFormComboBox">
          <property name="minimumSize">
           <size>
@@ -141,13 +141,23 @@
          </property>
         </widget>
        </item>
+       <item row="3" column="0">
+        <widget class="QLabel" name="yenSignLabel">
+         <property name="text">
+          <string>character entered by ¥ key</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="1">
+        <widget class="QComboBox" name="yenSignComboBox"/>
+       </item>
       </layout>
      </widget>
      <widget class="QWidget" name="gridLayoutWidget_2">
       <property name="geometry">
        <rect>
         <x>30</x>
-        <y>240</y>
+        <y>270</y>
         <width>371</width>
         <height>66</height>
        </rect>
@@ -240,7 +250,7 @@
       <property name="geometry">
        <rect>
         <x>20</x>
-        <y>220</y>
+        <y>250</y>
         <width>391</width>
         <height>20</height>
        </rect>
@@ -375,7 +385,7 @@
         <x>30</x>
         <y>210</y>
         <width>371</width>
-        <height>71</height>
+        <height>121</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_3">
@@ -404,6 +414,13 @@
         <widget class="QCheckBox" name="numberConversionCheckBox">
          <property name="text">
           <string>Special number conversion</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="QCheckBox" name="emoticonDictionaryCheckBox">
+         <property name="text">
+          <string>Emoticon dictionary</string>
          </property>
         </widget>
        </item>
@@ -514,9 +531,9 @@
       <property name="geometry">
        <rect>
         <x>30</x>
-        <y>170</y>
+        <y>180</y>
         <width>371</width>
-        <height>131</height>
+        <height>141</height>
        </rect>
       </property>
      </widget>
@@ -526,7 +543,7 @@
         <x>20</x>
         <y>10</y>
         <width>391</width>
-        <height>21</height>
+        <height>20</height>
        </rect>
       </property>
       <layout class="QHBoxLayout" name="horizontalLayout_4">
@@ -556,7 +573,7 @@
       <property name="geometry">
        <rect>
         <x>20</x>
-        <y>140</y>
+        <y>150</y>
         <width>391</width>
         <height>21</height>
        </rect>
@@ -584,72 +601,100 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="horizontalLayoutWidget_4">
+     <widget class="QWidget" name="gridLayoutWidget_9">
       <property name="geometry">
        <rect>
         <x>30</x>
         <y>30</y>
-        <width>361</width>
-        <height>32</height>
+        <width>371</width>
+        <height>111</height>
        </rect>
       </property>
-      <layout class="QHBoxLayout" name="horizontalLayout_7">
-       <item>
+      <layout class="QGridLayout" name="gridLayout_9">
+       <item row="0" column="0" colspan="7">
         <widget class="QCheckBox" name="useAutoImeTurnOff">
          <property name="text">
           <string>Automatically switch to halfwidth</string>
          </property>
         </widget>
        </item>
-      </layout>
-     </widget>
-     <widget class="QWidget" name="horizontalLayoutWidget_7">
-      <property name="geometry">
-       <rect>
-        <x>20</x>
-        <y>80</y>
-        <width>391</width>
-        <height>21</height>
-       </rect>
-      </property>
-      <layout class="QHBoxLayout" name="horizontalLayout_5">
-       <item>
+       <item row="2" column="0" colspan="3">
         <widget class="QLabel" name="autoCorrectionLable_3">
          <property name="text">
           <string>Shift key mode switch</string>
          </property>
         </widget>
        </item>
-       <item>
-        <widget class="Line" name="autoCorrectionLine_3">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
+       <item row="2" column="3" colspan="4">
+        <widget class="QComboBox" name="shiftKeyModeSwitchComboBox">
+         <property name="minimumSize">
+          <size>
+           <width>150</width>
+           <height>0</height>
+          </size>
          </property>
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
+        </widget>
+       </item>
+       <item row="1" column="4">
+        <widget class="QCheckBox" name="toutenCheckBox">
+         <property name="maximumSize">
+          <size>
+           <width>45</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>、</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="5">
+        <widget class="QCheckBox" name="questionMarkCheckBox">
+         <property name="maximumSize">
+          <size>
+           <width>45</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>?</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0" colspan="3">
+        <widget class="QCheckBox" name="useAutoConversion">
+         <property name="text">
+          <string>Convert at punctuations</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="3">
+        <widget class="QCheckBox" name="kutenCheckBox">
+         <property name="maximumSize">
+          <size>
+           <width>45</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>。</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="6">
+        <widget class="QCheckBox" name="exclamationMarkCheckBox">
+         <property name="maximumSize">
+          <size>
+           <width>45</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>!</string>
          </property>
         </widget>
        </item>
       </layout>
-     </widget>
-     <widget class="QComboBox" name="shiftKeyModeSwitchComboBox">
-      <property name="geometry">
-       <rect>
-        <x>30</x>
-        <y>100</y>
-        <width>200</width>
-        <height>26</height>
-       </rect>
-      </property>
-      <property name="minimumSize">
-       <size>
-        <width>150</width>
-        <height>0</height>
-       </size>
-      </property>
      </widget>
     </widget>
     <widget class="QWidget" name="suggestionsTab">
@@ -1235,7 +1280,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>360</y>
+      <y>390</y>
       <width>431</width>
       <height>32</height>
      </rect>
@@ -1308,6 +1353,7 @@
   <tabstop>inputModeComboBox</tabstop>
   <tabstop>punctuationsSettingComboBox</tabstop>
   <tabstop>symbolsSettingComboBox</tabstop>
+  <tabstop>yenSignComboBox</tabstop>
   <tabstop>spaceCharacterFormComboBox</tabstop>
   <tabstop>selectionShortcutModeComboBox</tabstop>
   <tabstop>numpadCharacterFormComboBox</tabstop>
@@ -1323,7 +1369,14 @@
   <tabstop>dateConversionCheckBox</tabstop>
   <tabstop>symbolDictionaryCheckBox</tabstop>
   <tabstop>numberConversionCheckBox</tabstop>
+  <tabstop>emoticonDictionaryCheckBox</tabstop>
   <tabstop>useAutoImeTurnOff</tabstop>
+  <tabstop>useAutoConversion</tabstop>
+  <tabstop>kutenCheckBox</tabstop>
+  <tabstop>toutenCheckBox</tabstop>
+  <tabstop>questionMarkCheckBox</tabstop>
+  <tabstop>exclamationMarkCheckBox</tabstop>
+  <tabstop>shiftKeyModeSwitchComboBox</tabstop>
   <tabstop>characterFormEditor</tabstop>
   <tabstop>historySuggestCheckBox</tabstop>
   <tabstop>clearUnusedUserPredictionButton</tabstop>

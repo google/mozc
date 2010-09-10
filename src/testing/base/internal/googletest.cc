@@ -31,6 +31,8 @@
 
 #ifdef OS_WINDOWS
 #include <windows.h>
+#else
+#include <unistd.h>
 #endif  // OS_WINDOWS
 
 #include <climits>

@@ -51,6 +51,10 @@ class PostInstallDialog : public QDialog,
   virtual ~PostInstallDialog();
 
   // Returns true if log off is required to use Mozc.
+  // However, this function always returns false in all platforms.
+  // TODO(team): remove the functionalities related to logoff_required and
+  //   OnLogoffNow when we are convinced that we no longer need them.
+  //   See b/2899762 for details.
   bool logoff_required();
 
   // Shows the help page by opening it with the default browser.
@@ -72,8 +76,6 @@ class PostInstallDialog : public QDialog,
 
   // Returns true if showing the help page is required.
   static bool IsShowHelpPageRequired();
-
-  bool logoff_required_;
 
   scoped_ptr<UserDictionaryStorage> storage_;
 };

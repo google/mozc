@@ -96,6 +96,10 @@ class MachPortManagerInterface {
   // "port" and returns true.  Otherwise port doesn't change and
   // returns false.
   virtual bool GetMachPort(const string &name, mach_port_t *port) = 0;
+
+  // Returns true if the connecting server is running, checked via
+  // OS-depended way.  This method can be defined differently for testing.
+  virtual bool IsServerRunning(const string &name) const = 0;
 };
 #endif  // OS_MACOSX
 

@@ -35,6 +35,7 @@
 #include "session/config_handler.h"
 #include "session/key_event_normalizer.h"
 #include "session/key_parser.h"
+#include "session/internal/keymap.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/googletest.h"
 
@@ -121,24 +122,20 @@ TEST_F(ImeSwitchUtilTest, DefaultTest) {
     commands::KeyEvent key;
     KeyParser::ParseKey("HENKAN", &key);
     // HENKAN key in MSIME is TurnOn key while it's not in KOTOERI.
-    // This is not good as a test case but effective enough to make
-    // sure how it works.
-    // TODO(toshiyuki): reorganize the test cases not to need such
-    // tricks.
-#ifdef OS_WINDOWS
-    EXPECT_TRUE(ImeSwitchUtil::IsTurnOnInDirectMode(key));
-#else
-    EXPECT_FALSE(ImeSwitchUtil::IsTurnOnInDirectMode(key));
-#endif
+    if (keymap::KeyMapManager::GetDefaultKeyMap() == config::Config::MSIME) {
+      EXPECT_TRUE(ImeSwitchUtil::IsTurnOnInDirectMode(key));
+    } else {
+      EXPECT_FALSE(ImeSwitchUtil::IsTurnOnInDirectMode(key));
+    }
   }
   {
     commands::KeyEvent key;
     KeyParser::ParseKey("EISU", &key);
-#ifdef OS_WINDOWS
-    EXPECT_TRUE(ImeSwitchUtil::IsTurnOnInDirectMode(key));
-#else
-    EXPECT_FALSE(ImeSwitchUtil::IsTurnOnInDirectMode(key));
-#endif
+    if (keymap::KeyMapManager::GetDefaultKeyMap() == config::Config::MSIME) {
+      EXPECT_TRUE(ImeSwitchUtil::IsTurnOnInDirectMode(key));
+    } else {
+      EXPECT_FALSE(ImeSwitchUtil::IsTurnOnInDirectMode(key));
+    }
   }
   {
     commands::KeyEvent key;

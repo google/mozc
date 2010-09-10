@@ -37,6 +37,7 @@
 #include <pthread.h>
 #endif
 
+
 namespace mozc {
 
 class Thread {
@@ -104,7 +105,7 @@ class Thread {
 #else
       pthread_cancel(handle_);
       handle_ = 0;
-#endif
+#endif  // OS_WINDOWS
     }
   }
 
@@ -142,9 +143,7 @@ class Thread {
     pthread_cleanup_pop(1);
     return NULL;
   }
-#endif
 
-#ifndef OS_WINDOWS
   static void Cleanup(void *ptr) {
     bool *is_running = static_cast<bool *>(ptr);
     *is_running = false;

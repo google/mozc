@@ -89,12 +89,34 @@ def GetNumberOfProcessors():
   elif IsLinux():
     # Count the number of 'vendor_id' in /proc/cpuinfo, assuming that
     # each line corresponds to one logical CPU.
-    file = open('/proc/cpuinfo', 'r')
-    count = len([line for line in file if line.find('vendor_id') != -1])
-    file.close()
+    cpuinfo = open('/proc/cpuinfo', 'r')
+    count = len([line for line in cpuinfo if line.find('vendor_id') != -1])
+    cpuinfo.close()
     return count
   else:
     return 1
+
+
+def GetBuildBaseName(options):
+  """Returns the buildb ase directory."""
+  if options.build_base:
+    return options.build_base
+  # For some reason, xcodebuild does not accept absolute path names for
+  # the -project parameter. Convert the original_directory_name to a
+  # relative path from the build top level directory.
+  build_base = ''
+  if IsMac():
+    build_base = os.path.join(os.getcwd(), 'out_mac')
+  elif IsWindows():
+    build_base = os.path.join(os.getcwd(), 'out_win')
+  elif IsLinux():
+    # On Linux, seems there is no way to specify the build_base directory
+    # inside common.gypi
+    build_base = './out_linux'
+  else:
+    logging.error('Unsupported platform: %s', os.name)
+
+  return build_base
 
 
 def GetGeneratorName():
@@ -329,11 +351,16 @@ def GypMain(deps_file_name):
   if options.coverage:
     command_line.extend(['-D', 'coverage=1'])
 
-  # Check the version and determine if the building version is
-  # dev-channel or not.
+  command_line.extend(['-D', 'build_base=%s' % GetBuildBaseName(options)])
+
+  # Check the version and determine if the building version is dev-channel or
+  # not. Note that if --channel_dev is explicitly set, we don't check the
+  # version number.
   (template_path, unused_version_path) = GetVersionFileNames(options)
   version = mozc_version.MozcVersion(template_path, expand_daily=False)
-  if options.channel_dev or version.IsDevChannel():
+  if options.channel_dev == None:
+    options.channel_dev = version.IsDevChannel()
+  if options.channel_dev:
     command_line.extend(['-D', 'channel_dev=1'])
 
 
@@ -364,6 +391,10 @@ def RunTests(configuration, calculate_coverage):
 
   options = []
 
+
+  # Specify the log_dir directory.
+  # base_path looks like out_mac/Debug.
+  options.append('--log_dir=%s' % base_path)
 
   failed_tests = []
   # This is a silly algorithm: it runs *all* tests built in the target
@@ -482,14 +513,48 @@ def ParseGypOptions():
   parser.add_option('--coverage', action='store_true', dest='coverage',
                     help='use code coverage analysis build options',
                     default=False)
-  parser.add_option('--channel_dev', action='store_true', dest='channel_dev',
-                    help='Specify this to build dev channel explicitly',
-                    default=False)
+  parser.add_option('--channel_dev', action='store', dest='channel_dev',
+                    type='int',
+                    help='Pass --channel_dev=1 if you need to build mozc with '
+                    'the CHANNEL_DEV macro enabled. Pass 0 if you don\'t need '
+                    'the macro. If --channel_dev= flag is not passed, Mozc '
+                    'version is used to deretmine if the macro is necessary.')
   parser.add_option('--version_file', dest='version_file',
                     help='use the specified version template file',
                     default='mozc_version_template.txt')
+
+  parser.add_option('--build_base', dest='build_base',
+                    help='specify the base directory of the built binaries.')
+
   (options, unused_args) = parser.parse_args()
   return options
+
+
+def ParseMetaTarget(meta_target_name):
+  """Returns a list of build targets with expanding meta target name.
+
+  If the specified name is 'package', returns a list of build targets for
+  building production package.
+
+  If the specified name is not a meta target name, returns it as a list.
+
+  Args:
+    meta_target_name: meta target name to be expanded.
+  """
+  if meta_target_name != 'package':
+    return [meta_target_name]
+
+  if IsLinux():
+    targets = ['%s/unix/ibus/ibus.gyp:ibus_mozc',
+               '%s/server/server.gyp:mozc_server',
+               '%s/gui/gui.gyp:mozc_tool']
+  elif IsMac():
+    targets = ['%s/mac/mac.gyp:DiskImage']
+  elif IsWindows():
+    targets = ['%s/win32/build32/build32.gyp:',
+               '%s/win32/build64/build64.gyp:',
+               '%s/win32/installer/installer.gyp:']
+  return [(target % SRC_DIR) for target in targets]
 
 
 def ParseBuildOptions():
@@ -499,18 +564,18 @@ def ParseBuildOptions():
                     help='run jobs in parallel')
   parser.add_option('--configuration', '-c', dest='configuration',
                     default='Debug', help='specify the build configuration.')
-  parser.add_option('--build_base', dest='build_base',
-                    help='specify the base directory of the built binaries.')
   parser.add_option('--noqt', action='store_true', dest='noqt', default=False)
   parser.add_option('--version_file', dest='version_file',
                     help='use the specified version template file',
                     default='mozc_version_template.txt')
-  if IsWindows():
-    parser.add_option('--platform', '-p', dest='platform',
-                      default='Win32',
-                      help='specify the target plaform: [Win32|x64]')
+
+  # On Linux, seems there is no way to set build_base in the ParseGyp section
+  if IsLinux():
+    parser.add_option('--build_base', dest='build_base',
+                      help='specify the base directory of the built binaries.')
+
   # default Qt dir to support the current build procedure for Debian.
-  default_qtdir = '/usr/local/Trolltech/Qt-4.5.2'
+  default_qtdir = '/usr/local/Trolltech/Qt-4.6.3'
   if IsWindows():
     default_qtdir = None
   parser.add_option('--qtdir', dest='qtdir',
@@ -519,11 +584,15 @@ def ParseBuildOptions():
 
   (options, args) = parser.parse_args()
 
-  targets = args
-  if not targets:
+  original_targets = args
+  if not original_targets:
     PrintErrorAndExit('No build target is specified.')
 
-  return (options, args)
+  targets = []
+  for target in original_targets:
+    targets.extend(ParseMetaTarget(target))
+
+  return (options, targets)
 
 
 def ParseRuntestsOptions():
@@ -609,14 +678,7 @@ def GetRelpath(path, start):
 
 def BuildOnMac(options, targets, original_directory_name):
   """Build the targets on Mac."""
-  # For some reason, xcodebuild does not accept absolute path names for
-  # the -project parameter. Convert the original_directory_name to a
-  # relative path from the build top level directory.
   original_directory_relpath = GetRelpath(original_directory_name, os.getcwd())
-  if options.build_base:
-    sym_root = options.build_base
-  else:
-    sym_root = os.path.join(os.getcwd(), 'out_mac')
   for target in targets:
     (gyp_file_name, target_name) = ParseTarget(target)
     gyp_file_name = os.path.join(original_directory_relpath, gyp_file_name)
@@ -627,7 +689,6 @@ def BuildOnMac(options, targets, original_directory_name):
               '-configuration', options.configuration,
               '-target', target_name,
               '-parallelizeTargets',
-              'SYMROOT=%s' % sym_root,
               'BUILD_WITH_GYP=1'])
 
 
@@ -644,6 +705,8 @@ def LocateVCBuildDir():
   PrintErrorAndExit('Failed to locate vcbuild.exe')
 
 
+
+
 def BuildOnWindows(options, targets, original_directory_name):
   """Build the target on Windows."""
   # TODO(yukawa): make a python module to set up environment for vcbuild.
@@ -656,31 +719,6 @@ def BuildOnWindows(options, targets, original_directory_name):
   else:
     os.environ['PATH'] = abs_vcbuild_dir
 
-
-  os.environ['INCLUDE'] = ''
-  os.environ['LIB'] = ''
-  os.environ['LIBPATH'] = ''
-
-  for target in targets:
-    # TODO(yukawa): target name is currently ignored.
-    (gyp_file_name, _) = ParseTarget(target)
-    gyp_file_name = os.path.join(original_directory_name, gyp_file_name)
-    CheckFileOrDie(gyp_file_name)
-    (sln_base_name, _) = os.path.splitext(gyp_file_name)
-    sln_file_path = os.path.abspath('%s.sln' % sln_base_name)
-    build_concurrency = 1
-    # To use different toolsets for vcbuild, we set %PATH%, %INCLUDE%, %LIB%,
-    # %LIBPATH% and specify /useenv option here.  See the following article
-    # for details.
-    # http://blogs.msdn.com/vcblog/archive/2007/12/30/using-different-toolsets-
-    #   for-vc-build.aspx
-    RunOrDie(['vcbuild',
-              '/useenv',  # Use %PATH%, %INCLUDE%, %LIB%, %LIBPATH%
-              '/M%d' % build_concurrency,  # Use concurrent build
-              '/time',    # Show build time
-              '/platform:%s' % options.platform,
-              sln_file_path,
-              '%s|%s' % (options.configuration, options.platform)])
 
 
 def BuildMain(original_directory_name):

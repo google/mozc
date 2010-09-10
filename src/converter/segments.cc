@@ -57,7 +57,7 @@ class CompareByScore {
 };
 
 // Ad-hoc function to detect English candidate
-bool IsKatakanaT13N(const string &value) {
+bool IsKatakanaT13NValue(const string &value) {
   for (size_t i = 0; i < value.size(); ++i) {
     if (value[i] == 0x20 ||
         (value[i] >= 0x41 && value[i] <= 0x5A) ||
@@ -68,6 +68,11 @@ bool IsKatakanaT13N(const string &value) {
     }
   }
   return true;
+}
+
+bool IsKatakanaT13N(const Segment::Candidate &candidate) {
+  return (Util::GetScriptType(candidate.content_key) == Util::HIRAGANA &&
+          IsKatakanaT13NValue(candidate.content_value));
 }
 }  // namespace
 
@@ -225,8 +230,8 @@ Segment::Segment()
       requested_candidates_size_(0),
       nbest_generator_(new NBestGenerator),
       pool_(new ObjectPool<Candidate>(16)),
-      is_numbers_expanded_(false),
       initialized_transliterations_(false),
+      all_expanded_(false),
       katakana_t13n_length_(0) {}
 
 Segment::~Segment() {}
@@ -415,8 +420,8 @@ void Segment::clear_candidates() {
   pool_->Free();
   candidates_.clear();
   requested_candidates_size_ = 0;
+  all_expanded_ = false;
   katakana_t13n_length_ = 0;
-  is_numbers_expanded_ = false;
 }
 
 Segment::Candidate *Segment::push_back_candidate() {
@@ -613,6 +618,49 @@ bool Segment::ExpandAlternative(int i) {
   return true;
 }
 
+// static
+bool Segment::ExpandEnglishVariants(const string &input,
+                                    vector<string> *variants) {
+  if (input.empty()) {
+    return false;
+  }
+
+  // multi-word
+  if (input.find(" ") != string::npos) {
+    return false;
+  }
+
+  string lower = input;
+  string upper = input;
+  string capitalized = input;
+  Util::LowerString(&lower);
+  Util::UpperString(&upper);
+  Util::CapitalizeString(&capitalized);
+
+  if (lower == upper) {
+    // given word is non-ascii.
+    return false;
+  }
+
+  variants->clear();
+  if (input != lower && input != upper && input != capitalized) {
+    variants->push_back(lower);
+    return true;
+  }
+
+  if (input != lower) {
+    variants->push_back(lower);
+  }
+  if (input != capitalized) {
+    variants->push_back(capitalized);
+  }
+  if (input != upper) {
+    variants->push_back(upper);
+  }
+
+  return true;
+}
+
 bool Segment::Expand(size_t size) {
   if (size <= 0) {
     LOG(WARNING) << "invalid size";
@@ -624,6 +672,11 @@ bool Segment::Expand(size_t size) {
     return false;
   }
 
+  // already expanded
+  if (all_expanded_) {
+    return true;
+  }
+
   const size_t target_size = candidates_size() + size;
   if (requested_candidates_size() >= target_size) {
     // Avaliable candidates have been already generated.
@@ -633,8 +686,6 @@ bool Segment::Expand(size_t size) {
 
   // if NBestGenerator::Next() returns NULL,
   // no more entries are generated.
-  bool all_expanded = false;
-
   while (candidates_size() < target_size) {
     Candidate *c = push_back_candidate();
     const Node *begin_node = NULL;
@@ -644,9 +695,12 @@ bool Segment::Expand(size_t size) {
       return false;
     }
     c->Init();
+
     if (!nbest_generator_->Next(c, &begin_node, &end_node)) {
       pop_back_candidate();
-      all_expanded = true;   // no more entries
+      // set all_expanded_ to be true that Expand() is never called again.
+      // http://b/issue?id=2868423
+      all_expanded_ = true;   // no more entries
       break;
     }
     c->SetDefaultDescription(
@@ -662,110 +716,58 @@ bool Segment::Expand(size_t size) {
     for (const Node *node = begin_node;
          node != end_node;
          node = node->next) {
-      const bool is_katakana_t13n = IsKatakanaT13N(node->value);
-      // Hack for Katakana 13n.
-      // Suppose we have two katakana's  (A and B) in candidate results
-      // A is t13ned into A',A'' ..
-      // A is t13ned into B',B'' ..
-      // Here we don't show B' B'' ...
-      // in the candidate as they are noisy -- e.g.,
-      // partially matching to the entier candidate string.
-      // TODO(taku): remove it when we can improve candidate filter
-      if (is_katakana_t13n) {
-        if (node != begin_node ||   // only allow prefix match
-            (katakana_t13n_length_ != 0 &&   // different candidate
-             Util::GetScriptType(node->key) == Util::HIRAGANA &&
-             node->key.size() != katakana_t13n_length_)) {
-          remove_candidate = true;
-          break;
-        }
-        katakana_t13n_length_ = node->key.size();
-      }
-
-      if (node->normalization_type == Node::NO_NORMALIZATION ||
-          is_katakana_t13n) {
+      if (node->normalization_type == Node::NO_NORMALIZATION) {
         c->can_expand_alternative = false;
+      }
+      // KatakanaT13N must be the prefix of the candidate.
+      // TODO(taku): better to move this logic inside CandidateFilter.
+      if (node != begin_node && IsKatakanaT13NValue(node->value)) {
+        remove_candidate = true;
         break;
       }
     }
 
     if (remove_candidate) {
-      VLOG(1) << c->value << " is remvoed";
       pop_back_candidate();
-      continue;
+      continue;   // next while() loop
     }
 
-    // Make Arabic number node:
-    if (!is_numbers_expanded_ &&
-        POSMatcher::IsNumber(c->lid) && c->lid == c->rid) {
-      string new_value, new_content_value, new_content_key;
-      bool content = false;
-      const Node *node = NULL;
-      // Current mozc doesn't have a functionality to classify
-      // a word into functional-word or content-word.
-      // We simply assume that the first word inside a segmenet
-      // is content word,
-      // e.g, "知らないことはない" => "知ら" is content, and "ないことはない"
-      // s funcitonal. However, that won't work for numbers. "三百円"
-      // --"三" is content, "百円" is functional
-      // with the current implementation.
-      // This for loop just finds a sequence of numbers and rewrite
-      // the content_value. Ideally, we should do this inside
-      // nbest_generator_.cc after implementing
-      // content-word/functional-word classifier
-      for (node = begin_node; node != end_node; node = node->next) {
-        if (!content && POSMatcher::IsNumber(node->lid) &&
-            node->lid == node->rid) {
-          new_content_key += node->key;
-          new_content_value += node->value;
-        } else {
-          content = true;
+    // Make KatakanaT13n Candidates
+    if (IsKatakanaT13N(*c)) {
+      if (katakana_t13n_length_ != 0 &&
+          katakana_t13n_length_ != c->content_key.size()) {
+        VLOG(1) << c->value << " is remvoed";
+        pop_back_candidate();
+        continue;   // next while() loop
+      } else {
+        vector<string> variants;
+        // TODO(taku): could be possible to move this logic to Rewriter.
+        if (Segment::ExpandEnglishVariants(c->content_value, &variants)) {
+          katakana_t13n_length_ = c->content_key.size();
+          c->can_expand_alternative = false;
+          for (size_t i = 0; i < variants.size(); ++i) {
+            Candidate *variant_c = add_candidate();
+            DCHECK(variant_c);
+            variant_c->Init();
+            variant_c->value = variants[i] +
+                c->value.substr(c->content_value.size(),
+                                c->value.size() - c->content_value.size());
+            variant_c->content_value = variants[i];
+            variant_c->content_key = c->content_key;
+            variant_c->cost = c->cost + 1;
+            variant_c->structure_cost = c->structure_cost + 1;
+            variant_c->nodes = c->nodes;
+            variant_c->lid = c->lid;
+            variant_c->rid = c->rid;
+            variant_c->can_expand_alternative = false;
+            variant_c->SetDefaultDescription(
+                Segment::Candidate::FULL_HALF_WIDTH |
+                Segment::Candidate::CHARACTER_FORM |
+                Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER);
+          }
         }
-        new_value += node->value;
+        // Don't call ExpandAlternative() for Katakana T13n candidates
       }
-
-      // rewrite content_value
-      c->value = new_value;
-      c->content_value = new_content_value;
-      c->content_key = new_content_key;
-
-      // Expand Full/Half
-      ExpandAlternative(candidates_size() - 1);
-
-      // We respect the best candidate ImmutableConverter generates.
-      // Number rewriter expands candidates if candidate contains
-      // arabic number.
-      // Example:
-      // key: "20まんえん"
-      // best: "20万円"
-      // arabic alternative: "200000円"
-      // If the best candidate is already arabic number,
-      // no need to generate alternatives
-      string kanji_number, arabic_number, half_width_new_content_value;
-      Util::FullWidthToHalfWidth(new_content_key,
-                                 &half_width_new_content_value);
-      if (Util::NormalizeNumbers(new_content_value, true,
-                                 &kanji_number, &arabic_number) &&
-          arabic_number != half_width_new_content_value) {
-        Candidate *arabic_c = push_back_candidate();
-        const string suffix =
-            new_value.substr(new_content_value.size(),
-                             new_value.size() - new_content_value.size());
-        arabic_c->Init();
-        arabic_c->value = arabic_number + suffix;
-        arabic_c->content_value = arabic_number;
-        arabic_c->content_key = c->content_key;
-        arabic_c->cost = c->cost;
-        arabic_c->structure_cost = c->structure_cost;
-        arabic_c->lid = c->lid;
-        arabic_c->rid = c->rid;
-        arabic_c->SetDefaultDescription(
-            Segment::Candidate::CHARACTER_FORM |
-            Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER);
-        ExpandAlternative(candidates_size() - 1);
-      }
-
-      is_numbers_expanded_ = true;
     } else {
       ExpandAlternative(candidates_size() - 1);
     }
@@ -776,7 +778,7 @@ bool Segment::Expand(size_t size) {
   // layer wants to request. Here we simply add a Katakana candidate
   // only when the number of results NbestGenerator() returns
   // is smaller than requested_candidates_size().
-  if (candidates_size() > 0 && all_expanded) {
+  if (candidates_size() > 0 && all_expanded_) {
     const string &hiragana_value = key();
     string katakana_value;
     Util::HiraganaToKatakana(key(), &katakana_value);

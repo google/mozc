@@ -40,9 +40,12 @@ namespace mozc {
 // - Symbol dictionary
 class EmbeddedDictionary {
  public:
+  // This should be same as CompilerToken excepting the key.
   struct Value {
     const char *value;
     const char *description;
+    // Currently, additional description is used only for symbol dictionary.
+    const char *additional_description;
     uint16 lid;
     uint16 rid;
     int16  cost;
@@ -68,6 +71,9 @@ class EmbeddedDictionary {
   //   }
   // }
   const Token *Lookup(const string &key) const;
+
+  // return All tokens this dictionary holds.
+  const Token *AllToken() const;
 
   // Given mozc-dictionary tsv file (e.g, data/dictionary/dic.txt)
   // output *.h file that contains array of token.

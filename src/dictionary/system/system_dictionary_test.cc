@@ -41,7 +41,7 @@
 
 DEFINE_string(
     dictionary_source,
-    "data/dictionary/dictionary0.txt",
+    "data/dictionary/dictionary00.txt",
     "source dictionary file to run test");
 
 DEFINE_int32(dictionary_test_size, 100000,

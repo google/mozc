@@ -75,64 +75,49 @@ bool MacProcess::OpenApplication(const string &path) {
 }
 
 namespace {
-// Launch MozcTool.app by using path name.  This function assumes that
-// environmental variables are already specified.
-bool LaunchMozcToolByPath() {
-  NSString *mozcToolPath =
-      [[[NSBundle mainBundle] resourcePath]
-        stringByAppendingPathComponent:@ kProductPrefix "Tool.app"];
-  return [[NSWorkspace sharedWorkspace] launchApplication:mozcToolPath];
-}
-
 bool LaunchMozcToolInternal(const string &tool_name, const string &error_type) {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-  // use --fromenv option to specify tool name
-  setenv("FLAGS_mode", tool_name.c_str(), 1);
+
   // FLAGS_error_type is used where FLAGS_mode is "error_message_dialog".
   setenv("FLAGS_error_type", error_type.c_str(), 1);
-  NSString *kMozcToolBundleId =
-      [NSString
-        stringWithUTF8String:MacUtil::GetLabelForSuffix("Tool").c_str()];
-  NSWorkspace *workspace = [NSWorkspace sharedWorkspace];
-  NSString *mozcToolPath =
-      [workspace absolutePathForAppBundleWithIdentifier:kMozcToolBundleId];
-  if (!mozcToolPath) {
-    LOG(ERROR) << "cannot find " << kProductPrefix << "Tool.app";
-    [pool drain];
-    return LaunchMozcToolByPath();
+
+  // If normal expected tool_name is specified, we invoke specific application.
+  NSString *appName = nil;
+  NSString *toolAppPath = nil;
+  if (tool_name == "about_dialog") {
+    appName = @"AboutDialog.app";
+  } else if (tool_name == "config_dialog") {
+    appName = @"ConfigDialog.app";
+  } else if (tool_name == "dictionary_tool") {
+    appName = @"DictionaryTool.app";
+  } else if (tool_name == "error_message_dialog") {
+    appName = @"ErrorMessageDialog.app";
   }
-  NSString *serverDirectory =
-      [NSString stringWithUTF8String:Util::GetServerDirectory().c_str()];
-  if (![mozcToolPath hasPrefix:serverDirectory]) {
-    LOG(ERROR) << "The system has " << kProductPrefix << "Tool.app"
-               << " in a wrong path " << [mozcToolPath UTF8String];
-    [pool drain];
-    return false;
+
+  if (appName != nil) {
+    toolAppPath = [[[NSBundle mainBundle] resourcePath]
+                    stringByAppendingPathComponent:appName];
+  } else {
+    // Otherwise, we tries to invoke the application by settings FLAGS_mode.
+    // use --fromenv option to specify tool name
+    setenv("FLAGS_mode", tool_name.c_str(), 1);
+    toolAppPath = [[[NSBundle mainBundle] resourcePath]
+                    stringByAppendingPathComponent:@ kProductPrefix "Tool.app"];
   }
-  if (![workspace
-         launchAppWithBundleIdentifier:kMozcToolBundleId
-                               options:NSWorkspaceLaunchNewInstance
-        additionalEventParamDescriptor:[NSAppleEventDescriptor nullDescriptor]
-                      launchIdentifier:nil]) {
-    LOG(ERROR) << "cannot launch " << tool_name;
-    [pool drain];
-    return false;
-  }
-  DLOG(INFO) << tool_name << " is launched";
+
+  bool succeeded =
+      [[NSWorkspace sharedWorkspace] launchApplication:toolAppPath];
   [pool drain];
-  return true;
+  return succeeded;
 }
 }  // namespace
 
 bool MacProcess::LaunchMozcTool(const string &tool_name) {
-  const bool result = LaunchMozcToolInternal(tool_name, "");
-  return result;
+  return LaunchMozcToolInternal(tool_name, "");
 }
 
 bool MacProcess::LaunchErrorMessageDialog(const string &error_type) {
-  const bool result = LaunchMozcToolInternal("error_message_dialog",
-                                             error_type);
-  return result;
+  return LaunchMozcToolInternal("error_message_dialog", error_type);
 }
 
 }  // namespace mozc

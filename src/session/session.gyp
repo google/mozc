@@ -30,6 +30,7 @@
 {
   'variables': {
     'relative_dir': 'session',
+    'gen_out_dir': '<(SHARED_INTERMEDIATE_DIR)/<(relative_dir)',
   },
   'targets': [
     {
@@ -105,6 +106,7 @@
       'type': 'static_library',
       'sources': [
         'ime_switch_util.cc',
+        'internal/keymap.cc',
       ],
       'dependencies': [
         '../base/base.gyp:base',
@@ -113,6 +115,20 @@
         'key_parser',
         'genproto_session',
         'session_protocol',
+      ],
+    },
+    {
+      'target_name': 'random_keyevents_generator',
+      'type': 'static_library',
+      'sources': [
+        'random_keyevents_generator.cc',
+        '<(gen_out_dir)/session_stress_test_data.h',
+      ],
+      'dependencies': [
+        'session',
+        'genproto_session',
+        'session_protocol',
+        'gen_session_stress_test_data',
       ],
     },
     {
@@ -169,12 +185,22 @@
       },
     },
     {
+      'target_name': 'session_converter_test',
+      'type': 'executable',
+      'sources': [
+        'session_converter_test.cc',
+      ],
+      'dependencies': [
+        'session',
+        '../testing/testing.gyp:gtest_main',
+      ],
+    },
+    {
       'target_name': 'session_module_test',
       'type': 'executable',
       'sources': [
         'config_handler_test.cc',
         'ime_switch_util_test.cc',
-        'session_converter_test.cc',
         'session_observer_handler_test.cc',
         'session_usage_observer_test.cc',
         'session_watch_dog_test.cc',
@@ -185,7 +211,28 @@
       ],
       'variables': {
         'test_size': 'small',
+        'test_data': [
+          '../<(test_data_subdir)/session_usage_observer_testcase1.txt',
+          '../<(test_data_subdir)/session_usage_observer_testcase2.txt',
+          '../<(test_data_subdir)/session_usage_observer_testcase3.txt',
+          '../<(test_data_subdir)/session_usage_observer_testcase4.txt',
+          '../<(test_data_subdir)/session_usage_observer_testcase5.txt',
+          '../<(test_data_subdir)/session_usage_observer_testcase6.txt',
+          '../<(test_data_subdir)/session_usage_observer_testcase7.txt',
+          '../<(test_data_subdir)/session_usage_observer_testcase8.txt',
+          '../<(test_data_subdir)/session_usage_observer_testcase9.txt',
+          '../<(test_data_subdir)/session_usage_observer_testcase10.txt',
+          '../<(test_data_subdir)/session_usage_observer_testcase11.txt',
+          '../<(test_data_subdir)/session_usage_observer_testcase12.txt',
+          '../<(test_data_subdir)/session_usage_observer_testcase13.txt',
+          '../<(test_data_subdir)/session_usage_observer_testcase14.txt',
+          '../<(test_data_subdir)/session_usage_observer_testcase15.txt',
+          '../<(test_data_subdir)/session_usage_observer_testcase16.txt',
+          '../<(test_data_subdir)/session_usage_observer_testcase17.txt',
+        ],
+        'test_data_subdir': 'data/test/session',
       },
+      'includes': ['../gyp/install_testdata.gypi'],
     },
     {
       'target_name': 'session_internal_test',
@@ -204,15 +251,68 @@
         'test_size': 'small',
       },
     },
+    {
+      'target_name': 'session_handler_stress_test',
+      'type': 'executable',
+      'sources': [
+        'session_handler_stress_test.cc'
+      ],
+      'dependencies': [
+        'session',
+        'random_keyevents_generator',
+        '../testing/testing.gyp:gtest_main',
+      ],
+      'variables': {
+        'test_size': 'small',
+      },
+    },
+    {
+      'target_name': 'random_keyevents_generator_test',
+      'type': 'executable',
+      'sources': [
+        'random_keyevents_generator_test.cc',
+      ],
+      'dependencies': [
+        'random_keyevents_generator',
+        '../testing/testing.gyp:gtest_main',
+      ],
+      'variables': {
+        'test_size': 'large',
+      },
+    },
+    {
+      'target_name': 'gen_session_stress_test_data',
+      'type': 'none',
+      'actions': [
+        {
+          'action_name': 'gen_session_stress_test_data',
+          'inputs': [
+            '../data/test/stress_test/sentences.txt',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/session_stress_test_data.h'
+          ],
+          'action': [
+            'python', '../build_tools/redirect.py',
+            '<(gen_out_dir)/session_stress_test_data.h',
+            'gen_session_stress_test_data.py',
+            '../data/test/stress_test/sentences.txt',
+          ],
+          'message': 'Generating <(gen_out_dir)/session_stress_test_data.h',
+        },
+      ],
+    },
     # Test cases meta target: this target is referred from gyp/tests.gyp
     {
       'target_name': 'session_all_test',
       'type': 'none',
       'dependencies': [
+        'random_keyevents_generator_test',
         'session_test',
         'session_internal_test',
         'session_internal_test',
         'session_handler_test',
+        'session_handler_stress_test',
         'session_module_test',
       ],
     },

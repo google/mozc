@@ -457,6 +457,11 @@ TEST_F(UsageStatsTest, UploadDataTest) {
   EXPECT_TRUE(UsageStats::Send(NULL));
 }
 
+TEST_F(UsageStatsTest, IsListedTest) {
+  EXPECT_TRUE(UsageStats::IsListed("Commit"));
+  EXPECT_FALSE(UsageStats::IsListed("WeDoNotDefinedThisStats"));
+}
+
 TEST(ClientIdTest, CreateClientIdTest) {
   // test default client id handler here
   UsageStats::SetClientIdHandler(NULL);

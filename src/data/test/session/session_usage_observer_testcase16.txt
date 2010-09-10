@@ -1,0 +1,989 @@
+# Command log for unittests.
+#
+# KANJI
+# commit "もずく" from composition
+# BACKSPACE x 3
+# select "もずく酢" from suggestion
+# ENTER
+# BACKSPACE x 4
+# KANJI
+#
+
+commands {
+  input {
+    type: NO_OPERATION
+    id: 0
+  }
+  output {
+    id: 0
+    elapsed_time: 10
+  }
+}
+commands {
+  input {
+    type: CREATE_SESSION
+  }
+  output {
+    id: 14034906155216874304
+    elapsed_time: 518
+  }
+}
+commands {
+  input {
+    type: SEND_KEY
+    id: 14034906155216874304
+    key {
+      special_key: KANJI
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 14034906155216874304
+    mode: HIRAGANA
+    consumed: true
+    elapsed_time: 47
+  }
+}
+commands {
+  input {
+    type: TEST_SEND_KEY
+    id: 14034906155216874304
+    key {
+      modifier_keys: ALT
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 14034906155216874304
+    mode: HIRAGANA
+    consumed: false
+    key {
+      modifier_keys: ALT
+      mode: HIRAGANA
+    }
+    elapsed_time: 78
+  }
+}
+commands {
+  input {
+    type: TEST_SEND_KEY
+    id: 14034906155216874304
+    key {
+      key_code: 109
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 14034906155216874304
+    consumed: true
+    elapsed_time: 28
+  }
+}
+commands {
+  input {
+    type: SEND_KEY
+    id: 14034906155216874304
+    key {
+      key_code: 109
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 14034906155216874304
+    mode: HIRAGANA
+    consumed: true
+    preedit {
+      cursor: 1
+      Segment {
+        annotation: UNDERLINE
+        value: "\357\275\215"
+        value_length: 1
+        key: "\357\275\215"
+      }
+    }
+    elapsed_time: 5156
+  }
+}
+commands {
+  input {
+    type: TEST_SEND_KEY
+    id: 14034906155216874304
+    key {
+      key_code: 111
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 14034906155216874304
+    mode: HIRAGANA
+    consumed: true
+    preedit {
+      cursor: 1
+      Segment {
+        annotation: UNDERLINE
+        value: "\357\275\215"
+        value_length: 1
+        key: "\357\275\215"
+      }
+    }
+    elapsed_time: 99
+  }
+}
+commands {
+  input {
+    type: SEND_KEY
+    id: 14034906155216874304
+    key {
+      key_code: 111
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 14034906155216874304
+    mode: HIRAGANA
+    consumed: true
+    preedit {
+      cursor: 1
+      Segment {
+        annotation: UNDERLINE
+        value: "\343\202\202"
+        value_length: 1
+        key: "\343\202\202"
+      }
+    }
+    elapsed_time: 847
+  }
+}
+commands {
+  input {
+    type: TEST_SEND_KEY
+    id: 14034906155216874304
+    key {
+      key_code: 122
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 14034906155216874304
+    mode: HIRAGANA
+    consumed: true
+    preedit {
+      cursor: 1
+      Segment {
+        annotation: UNDERLINE
+        value: "\343\202\202"
+        value_length: 1
+        key: "\343\202\202"
+      }
+    }
+    elapsed_time: 85
+  }
+}
+commands {
+  input {
+    type: SEND_KEY
+    id: 14034906155216874304
+    key {
+      key_code: 122
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 14034906155216874304
+    mode: HIRAGANA
+    consumed: true
+    preedit {
+      cursor: 2
+      Segment {
+        annotation: UNDERLINE
+        value: "\343\202\202\357\275\232"
+        value_length: 2
+        key: "\343\202\202\357\275\232"
+      }
+    }
+    elapsed_time: 699
+  }
+}
+commands {
+  input {
+    type: TEST_SEND_KEY
+    id: 14034906155216874304
+    key {
+      key_code: 117
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 14034906155216874304
+    mode: HIRAGANA
+    consumed: true
+    preedit {
+      cursor: 2
+      Segment {
+        annotation: UNDERLINE
+        value: "\343\202\202\357\275\232"
+        value_length: 2
+        key: "\343\202\202\357\275\232"
+      }
+    }
+    elapsed_time: 127
+  }
+}
+commands {
+  input {
+    type: SEND_KEY
+    id: 14034906155216874304
+    key {
+      key_code: 117
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 14034906155216874304
+    mode: HIRAGANA
+    consumed: true
+    preedit {
+      cursor: 2
+      Segment {
+        annotation: UNDERLINE
+        value: "\343\202\202\343\201\232"
+        value_length: 2
+        key: "\343\202\202\343\201\232"
+      }
+    }
+    elapsed_time: 859
+  }
+}
+commands {
+  input {
+    type: TEST_SEND_KEY
+    id: 14034906155216874304
+    key {
+      key_code: 107
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 14034906155216874304
+    mode: HIRAGANA
+    consumed: true
+    preedit {
+      cursor: 2
+      Segment {
+        annotation: UNDERLINE
+        value: "\343\202\202\343\201\232"
+        value_length: 2
+        key: "\343\202\202\343\201\232"
+      }
+    }
+    elapsed_time: 104
+  }
+}
+commands {
+  input {
+    type: SEND_KEY
+    id: 14034906155216874304
+    key {
+      key_code: 107
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 14034906155216874304
+    mode: HIRAGANA
+    consumed: true
+    preedit {
+      cursor: 3
+      Segment {
+        annotation: UNDERLINE
+        value: "\343\202\202\343\201\232\357\275\213"
+        value_length: 3
+        key: "\343\202\202\343\201\232\357\275\213"
+      }
+    }
+    elapsed_time: 899
+  }
+}
+commands {
+  input {
+    type: TEST_SEND_KEY
+    id: 14034906155216874304
+    key {
+      key_code: 117
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 14034906155216874304
+    mode: HIRAGANA
+    consumed: true
+    preedit {
+      cursor: 3
+      Segment {
+        annotation: UNDERLINE
+        value: "\343\202\202\343\201\232\357\275\213"
+        value_length: 3
+        key: "\343\202\202\343\201\232\357\275\213"
+      }
+    }
+    elapsed_time: 141
+  }
+}
+commands {
+  input {
+    type: SEND_KEY
+    id: 14034906155216874304
+    key {
+      key_code: 117
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 14034906155216874304
+    mode: HIRAGANA
+    consumed: true
+    preedit {
+      cursor: 3
+      Segment {
+        annotation: UNDERLINE
+        value: "\343\202\202\343\201\232\343\201\217"
+        value_length: 3
+        key: "\343\202\202\343\201\232\343\201\217"
+      }
+    }
+    candidates {
+      size: 2
+      Candidate {
+        index: 0
+        value: "\343\203\242\343\202\272\343\202\257"
+        annotation {
+          description: "Dictionary Suggest"
+        }
+        id: 0
+      }
+      Candidate {
+        index: 1
+        value: "\343\202\202\343\201\232\343\201\217\351\205\242"
+        annotation {
+          description: "Dictionary Suggest"
+        }
+        id: 1
+      }
+      position: 0
+      category: SUGGESTION
+      display_type: MAIN
+      footer {
+        sub_label: "build 15"
+      }
+    }
+    elapsed_time: 4269
+  }
+}
+commands {
+  input {
+    type: TEST_SEND_KEY
+    id: 14034906155216874304
+    key {
+      special_key: ENTER
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 14034906155216874304
+    mode: HIRAGANA
+    consumed: true
+    preedit {
+      cursor: 3
+      Segment {
+        annotation: UNDERLINE
+        value: "\343\202\202\343\201\232\343\201\217"
+        value_length: 3
+        key: "\343\202\202\343\201\232\343\201\217"
+      }
+    }
+    elapsed_time: 119
+  }
+}
+commands {
+  input {
+    type: SEND_KEY
+    id: 14034906155216874304
+    key {
+      special_key: ENTER
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 14034906155216874304
+    mode: HIRAGANA
+    consumed: true
+    result {
+      type: STRING
+      value: "\343\202\202\343\201\232\343\201\217"
+      key: "\343\202\202\343\201\232\343\201\217"
+    }
+    elapsed_time: 755
+  }
+}
+commands {
+  input {
+    type: TEST_SEND_KEY
+    id: 14034906155216874304
+    key {
+      special_key: BACKSPACE
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 14034906155216874304
+    mode: HIRAGANA
+    consumed: false
+    key {
+      special_key: BACKSPACE
+      mode: HIRAGANA
+    }
+    elapsed_time: 71
+  }
+}
+commands {
+  input {
+    type: TEST_SEND_KEY
+    id: 14034906155216874304
+    key {
+      special_key: BACKSPACE
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 14034906155216874304
+    mode: HIRAGANA
+    consumed: false
+    key {
+      special_key: BACKSPACE
+      mode: HIRAGANA
+    }
+    elapsed_time: 52
+  }
+}
+commands {
+  input {
+    type: TEST_SEND_KEY
+    id: 14034906155216874304
+    key {
+      special_key: BACKSPACE
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 14034906155216874304
+    mode: HIRAGANA
+    consumed: false
+    key {
+      special_key: BACKSPACE
+      mode: HIRAGANA
+    }
+    elapsed_time: 52
+  }
+}
+commands {
+  input {
+    type: TEST_SEND_KEY
+    id: 14034906155216874304
+    key {
+      key_code: 109
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 14034906155216874304
+    consumed: true
+    elapsed_time: 31
+  }
+}
+commands {
+  input {
+    type: SEND_KEY
+    id: 14034906155216874304
+    key {
+      key_code: 109
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 14034906155216874304
+    mode: HIRAGANA
+    consumed: true
+    preedit {
+      cursor: 1
+      Segment {
+        annotation: UNDERLINE
+        value: "\357\275\215"
+        value_length: 1
+        key: "\357\275\215"
+      }
+    }
+    elapsed_time: 695
+  }
+}
+commands {
+  input {
+    type: TEST_SEND_KEY
+    id: 14034906155216874304
+    key {
+      key_code: 111
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 14034906155216874304
+    mode: HIRAGANA
+    consumed: true
+    preedit {
+      cursor: 1
+      Segment {
+        annotation: UNDERLINE
+        value: "\357\275\215"
+        value_length: 1
+        key: "\357\275\215"
+      }
+    }
+    elapsed_time: 90
+  }
+}
+commands {
+  input {
+    type: SEND_KEY
+    id: 14034906155216874304
+    key {
+      key_code: 111
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 14034906155216874304
+    mode: HIRAGANA
+    consumed: true
+    preedit {
+      cursor: 1
+      Segment {
+        annotation: UNDERLINE
+        value: "\343\202\202"
+        value_length: 1
+        key: "\343\202\202"
+      }
+    }
+    elapsed_time: 734
+  }
+}
+commands {
+  input {
+    type: TEST_SEND_KEY
+    id: 14034906155216874304
+    key {
+      key_code: 122
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 14034906155216874304
+    mode: HIRAGANA
+    consumed: true
+    preedit {
+      cursor: 1
+      Segment {
+        annotation: UNDERLINE
+        value: "\343\202\202"
+        value_length: 1
+        key: "\343\202\202"
+      }
+    }
+    elapsed_time: 86
+  }
+}
+commands {
+  input {
+    type: SEND_KEY
+    id: 14034906155216874304
+    key {
+      key_code: 122
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 14034906155216874304
+    mode: HIRAGANA
+    consumed: true
+    preedit {
+      cursor: 2
+      Segment {
+        annotation: UNDERLINE
+        value: "\343\202\202\357\275\232"
+        value_length: 2
+        key: "\343\202\202\357\275\232"
+      }
+    }
+    elapsed_time: 677
+  }
+}
+commands {
+  input {
+    type: TEST_SEND_KEY
+    id: 14034906155216874304
+    key {
+      key_code: 117
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 14034906155216874304
+    mode: HIRAGANA
+    consumed: true
+    preedit {
+      cursor: 2
+      Segment {
+        annotation: UNDERLINE
+        value: "\343\202\202\357\275\232"
+        value_length: 2
+        key: "\343\202\202\357\275\232"
+      }
+    }
+    elapsed_time: 107
+  }
+}
+commands {
+  input {
+    type: SEND_KEY
+    id: 14034906155216874304
+    key {
+      key_code: 117
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 14034906155216874304
+    mode: HIRAGANA
+    consumed: true
+    preedit {
+      cursor: 2
+      Segment {
+        annotation: UNDERLINE
+        value: "\343\202\202\343\201\232"
+        value_length: 2
+        key: "\343\202\202\343\201\232"
+      }
+    }
+    elapsed_time: 675
+  }
+}
+commands {
+  input {
+    type: TEST_SEND_KEY
+    id: 14034906155216874304
+    key {
+      key_code: 107
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 14034906155216874304
+    mode: HIRAGANA
+    consumed: true
+    preedit {
+      cursor: 2
+      Segment {
+        annotation: UNDERLINE
+        value: "\343\202\202\343\201\232"
+        value_length: 2
+        key: "\343\202\202\343\201\232"
+      }
+    }
+    elapsed_time: 88
+  }
+}
+commands {
+  input {
+    type: SEND_KEY
+    id: 14034906155216874304
+    key {
+      key_code: 107
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 14034906155216874304
+    mode: HIRAGANA
+    consumed: true
+    preedit {
+      cursor: 3
+      Segment {
+        annotation: UNDERLINE
+        value: "\343\202\202\343\201\232\357\275\213"
+        value_length: 3
+        key: "\343\202\202\343\201\232\357\275\213"
+      }
+    }
+    elapsed_time: 813
+  }
+}
+commands {
+  input {
+    type: TEST_SEND_KEY
+    id: 14034906155216874304
+    key {
+      key_code: 117
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 14034906155216874304
+    mode: HIRAGANA
+    consumed: true
+    preedit {
+      cursor: 3
+      Segment {
+        annotation: UNDERLINE
+        value: "\343\202\202\343\201\232\357\275\213"
+        value_length: 3
+        key: "\343\202\202\343\201\232\357\275\213"
+      }
+    }
+    elapsed_time: 200
+  }
+}
+commands {
+  input {
+    type: SEND_KEY
+    id: 14034906155216874304
+    key {
+      key_code: 117
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 14034906155216874304
+    mode: HIRAGANA
+    consumed: true
+    preedit {
+      cursor: 3
+      Segment {
+        annotation: UNDERLINE
+        value: "\343\202\202\343\201\232\343\201\217"
+        value_length: 3
+        key: "\343\202\202\343\201\232\343\201\217"
+      }
+    }
+    candidates {
+      size: 2
+      Candidate {
+        index: 0
+        value: "\343\203\242\343\202\272\343\202\257"
+        annotation {
+          description: "Dictionary Suggest"
+        }
+        id: 0
+      }
+      Candidate {
+        index: 1
+        value: "\343\202\202\343\201\232\343\201\217\351\205\242"
+        annotation {
+          description: "Dictionary Suggest"
+        }
+        id: 1
+      }
+      position: 0
+      category: SUGGESTION
+      display_type: MAIN
+      footer {
+        sub_label: "build 15"
+      }
+    }
+    elapsed_time: 3243
+  }
+}
+commands {
+  input {
+    type: SEND_COMMAND
+    id: 14034906155216874304
+    command {
+      type: SELECT_CANDIDATE
+      id: 1
+    }
+  }
+  output {
+    id: 14034906155216874304
+    mode: HIRAGANA
+    consumed: true
+    preedit {
+      cursor: 4
+      Segment {
+        annotation: HIGHLIGHT
+        value: "\343\202\202\343\201\232\343\201\217\351\205\242"
+        value_length: 4
+        key: "\343\202\202\343\201\232\343\201\217"
+      }
+      highlighted_position: 0
+    }
+    elapsed_time: 3936
+  }
+}
+commands {
+  input {
+    type: TEST_SEND_KEY
+    id: 14034906155216874304
+    key {
+      special_key: ENTER
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 14034906155216874304
+    mode: HIRAGANA
+    consumed: true
+    preedit {
+      cursor: 4
+      Segment {
+        annotation: HIGHLIGHT
+        value: "\343\202\202\343\201\232\343\201\217\351\205\242"
+        value_length: 4
+        key: "\343\202\202\343\201\232\343\201\217"
+      }
+      highlighted_position: 0
+    }
+    elapsed_time: 62
+  }
+}
+commands {
+  input {
+    type: SEND_KEY
+    id: 14034906155216874304
+    key {
+      special_key: ENTER
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 14034906155216874304
+    mode: HIRAGANA
+    consumed: true
+    result {
+      type: STRING
+      value: "\343\202\202\343\201\232\343\201\217\351\205\242"
+      key: "\343\202\202\343\201\232\343\201\217\343\201\231"
+    }
+    elapsed_time: 136
+  }
+}
+commands {
+  input {
+    type: TEST_SEND_KEY
+    id: 14034906155216874304
+    key {
+      special_key: BACKSPACE
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 14034906155216874304
+    mode: HIRAGANA
+    consumed: false
+    key {
+      special_key: BACKSPACE
+      mode: HIRAGANA
+    }
+    elapsed_time: 61
+  }
+}
+commands {
+  input {
+    type: TEST_SEND_KEY
+    id: 14034906155216874304
+    key {
+      special_key: BACKSPACE
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 14034906155216874304
+    mode: HIRAGANA
+    consumed: false
+    key {
+      special_key: BACKSPACE
+      mode: HIRAGANA
+    }
+    elapsed_time: 51
+  }
+}
+commands {
+  input {
+    type: TEST_SEND_KEY
+    id: 14034906155216874304
+    key {
+      special_key: BACKSPACE
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 14034906155216874304
+    mode: HIRAGANA
+    consumed: false
+    key {
+      special_key: BACKSPACE
+      mode: HIRAGANA
+    }
+    elapsed_time: 52
+  }
+}
+commands {
+  input {
+    type: TEST_SEND_KEY
+    id: 14034906155216874304
+    key {
+      special_key: BACKSPACE
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 14034906155216874304
+    mode: HIRAGANA
+    consumed: false
+    key {
+      special_key: BACKSPACE
+      mode: HIRAGANA
+    }
+    elapsed_time: 51
+  }
+}
+commands {
+  input {
+    type: SEND_KEY
+    id: 14034906155216874304
+    key {
+      special_key: KANJI
+      mode: HIRAGANA
+    }
+  }
+  output {
+    id: 14034906155216874304
+    mode: DIRECT
+    consumed: true
+    elapsed_time: 26
+  }
+}
+commands {
+  input {
+    type: SEND_KEY
+    id: 14034906155216874304
+    key {
+      special_key: OFF
+    }
+  }
+  output {
+    id: 14034906155216874304
+    mode: DIRECT
+    consumed: false
+    key {
+      special_key: OFF
+    }
+    elapsed_time: 34
+  }
+}

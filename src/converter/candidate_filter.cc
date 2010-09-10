@@ -46,7 +46,7 @@
 namespace mozc {
 
 namespace {
-const size_t kMaxCandidatesSize     = 200;   // how many candidates we expand
+const size_t kMaxCandidatesSize = 200;   // how many candidates we expand
 
 // Currently, the cost (logprob) is calcurated as cost = -500 * log(prob).
 // Suppose having two candidates A and B and prob(A) = C * prob(B), where
@@ -67,12 +67,13 @@ const size_t kMaxCandidatesSize     = 200;   // how many candidates we expand
 // 10000   4605.17
 // 100000  5756.46
 // 1000000 6907.75
-const int    kMinCost                = 100;
-const int    kCostOffset             = 6907;
-const int    kStructureCostOffset    = 3453;
-const int    kMinStructureCostOffset = 1151;
-const int32  kNoFilterRank           = 3;
-const int32  kNoFilterIfSameIdRank   = 10;
+const int   kMinCost                 = 100;
+const int   kCostOffset              = 6907;
+const int   kStructureCostOffset     = 3453;
+const int   kMinStructureCostOffset  = 1151;
+const int32 kNoFilterRank            = 3;
+const int32 kNoFilterIfSameIdRank    = 10;
+const int32 kStopEnmerationCacheSize = 15;
 }
 
 CandidateFilter::CandidateFilter()
@@ -136,8 +137,8 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
   // This is a temporal workaround for fixing "おそう" => "御|総"
   // TODO(taku): remove it after intorducing a word clustering for noun.
   if (candidate_size >= 3 && candidate->nodes.size() > 1 &&
-      (candidate->nodes[0]->key == "\xE3\x81\x8A" ||  // "お|ご"
-       candidate->nodes[0]->key == "\xE3\x81\x94")) {
+      candidate->nodes[0]->lid == candidate->nodes[0]->rid &&
+      POSMatcher::IsNounPrefix(candidate->nodes[0]->lid)) {
     VLOG(1) << "removing noisy prefix pattern";
     return CandidateFilter::BAD_CANDIDATE;
   }
@@ -158,18 +159,32 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
       < candidate->structure_cost) {
     // Stops candidates enumeration when we see sufficiently high cost
     // candidate.
-    VLOG(1) << "cost is invalid: "
-            << "top_cost " << top_cost
-            << " value " << candidate->value
-            << " cost " << candidate->cost;
-    return CandidateFilter::STOP_ENUMERATION;
+    VLOG(2) << "cost is invalid: "
+            << "top_cost=" << top_cost
+            << " cost_offset=" << cost_offset
+            << " value=" << candidate->value
+            << " cost=" << candidate->cost
+            << " top_structure_cost=" << top_structure_cost
+            << " structure_cost=" << candidate->structure_cost
+            << " lid=" << candidate->lid
+            << " rid=" << candidate->rid;
+    if (candidate_size < kStopEnmerationCacheSize) {
+      // Even when the current candidate is classified as bad candidate,
+      // we don't return STOP_ENUMERATION here.
+      // When the current candidate is removed only with the "structure_cost",
+      // there might exist valid candidates just after the current candidate.
+      // We don't want to miss them.
+      return CandidateFilter::BAD_CANDIDATE;
+    } else {
+      return CandidateFilter::STOP_ENUMERATION;
+    }
   }
 
   // Filters out candidates with higher cost structure.
   if (top_structure_cost + kStructureCostOffset < candidate->structure_cost) {
     // We don't stop enumeration here. Just drops high cost structure
     // looks enough.
-    VLOG(1) << "structure cost is invalid:  "
+    VLOG(2) << "structure cost is invalid:  "
             << candidate->value << " " << candidate->structure_cost
             << " " << candidate->cost;
     return CandidateFilter::BAD_CANDIDATE;

@@ -1000,13 +1000,17 @@ bool Session::InsertCharacter(commands::Command *command) {
   composer_->InsertCharacterKeyEvent(command->input().key());
 
   state_ = SessionState::COMPOSITION;
+  if (CanStartAutoConversion(command->input().key())) {
+    return Convert(command);
+  }
+
   if (converter_->Suggest(composer_.get())) {
     DCHECK(converter_->IsActive());
     Output(command);
     return true;
   }
-
   OutputComposition(command);
+
   return true;
 }
 
@@ -1666,19 +1670,36 @@ void Session::Output(commands::Command *command) {
 }
 
 void Session::OutputMode(commands::Command *command) const {
+  commands::CompositionMode mode = commands::HIRAGANA;
+  switch (composer_->GetInputMode()) {
+  case transliteration::HIRAGANA:
+    mode = commands::HIRAGANA;
+    break;
+  case transliteration::FULL_KATAKANA:
+    mode = commands::FULL_KATAKANA;
+    break;
+  case transliteration::HALF_KATAKANA:
+    mode = commands::HALF_KATAKANA;
+    break;
+  case transliteration::FULL_ASCII:
+    mode = commands::FULL_ASCII;
+    break;
+  case transliteration::HALF_ASCII:
+    mode = commands::HALF_ASCII;
+    break;
+  default:
+    LOG(ERROR) << "Unknown input mode: " << composer_->GetInputMode();
+    // use HIRAGANA as a default.
+  }
+
   if (state_ == SessionState::DIRECT) {
     command->mutable_output()->set_mode(commands::DIRECT);
-  } else if (composer_->GetInputMode() == transliteration::HIRAGANA) {
-    command->mutable_output()->set_mode(commands::HIRAGANA);
-  } else if (composer_->GetInputMode() == transliteration::FULL_KATAKANA) {
-    command->mutable_output()->set_mode(commands::FULL_KATAKANA);
-  } else if (composer_->GetInputMode() == transliteration::HALF_KATAKANA) {
-    command->mutable_output()->set_mode(commands::HALF_KATAKANA);
-  } else if (composer_->GetInputMode() == transliteration::FULL_ASCII) {
-    command->mutable_output()->set_mode(commands::FULL_ASCII);
-  } else if (composer_->GetInputMode() == transliteration::HALF_ASCII) {
-    command->mutable_output()->set_mode(commands::HALF_ASCII);
+    command->mutable_output()->mutable_status()->set_activated(false);
+  } else {
+    command->mutable_output()->set_mode(mode);
+    command->mutable_output()->mutable_status()->set_activated(true);
   }
+  command->mutable_output()->mutable_status()->set_mode(mode);
 }
 
 void Session::OutputComposition(commands::Command *command) const {
@@ -1691,6 +1712,125 @@ void Session::OutputKey(commands::Command *command) const {
   OutputMode(command);
   commands::KeyEvent *key = command->mutable_output()->mutable_key();
   key->CopyFrom(command->input().key());
+}
+
+namespace {
+// return
+// ((key_code == static_cast<uint32>('.') ||
+//       key_string == "." || key_string == "．" ||
+//   key_string == "。" || key_string == "｡") &&
+//  (config.auto_conversion_key() &
+//   config::Config::AUTO_CONVERSION_KUTEN)) ||
+// ((key_code == static_cast<uint32>(',') ||
+//       key_string == "," || key_string == "，" ||
+//   key_string == "、" || key_string == "､") &&
+//  (config.auto_conversion_key() &
+//   config::Config::AUTO_CONVERSION_TOUTEN)) ||
+// ((key_code == static_cast<uint32>('?') ||
+//   key_string == "?" || key_string == "？") &&
+//  (config.auto_conversion_key() &
+//   config::Config::AUTO_CONVERSION_QUESTION_MARK)) ||
+// ((key_code == static_cast<uint32>('!') ||
+//   key_string == "!" || key_string == "！") &&
+//  (config.auto_conversion_key() &
+//   config::Config::AUTO_CONVERSION_EXCLAMATION_MARK));
+bool IsValidKey(const config::Config &config,
+                const uint32 key_code, const string &key_string) {
+  return
+      (((key_code == static_cast<uint32>('.') && key_string.empty()) ||
+        key_string == "." || key_string == "\xEF\xBC\x8E" ||
+        key_string == "\xE3\x80\x82" || key_string == "\xEF\xBD\xA1") &&
+       (config.auto_conversion_key() &
+        config::Config::AUTO_CONVERSION_KUTEN)) ||
+      (((key_code == static_cast<uint32>(',') && key_string.empty()) ||
+        key_string == "," || key_string == "\xEF\xBC\x8C" ||
+        key_string == "\xE3\x80\x81" || key_string == "\xEF\xBD\xA4") &&
+       (config.auto_conversion_key() &
+        config::Config::AUTO_CONVERSION_TOUTEN)) ||
+      (((key_code == static_cast<uint32>('?') && key_string.empty()) ||
+        key_string == "?" || key_string == "\xEF\xBC\x9F") &&
+       (config.auto_conversion_key() &
+        config::Config::AUTO_CONVERSION_QUESTION_MARK)) ||
+      (((key_code == static_cast<uint32>('!') && key_string.empty()) ||
+        key_string == "!" || key_string == "\xEF\xBC\x81") &&
+       (config.auto_conversion_key() &
+        config::Config::AUTO_CONVERSION_EXCLAMATION_MARK));
+}
+}  // namespace
+
+bool Session::CanStartAutoConversion(
+    const commands::KeyEvent &key_event) const {
+  if (!GET_CONFIG(use_auto_conversion)) {
+    return false;
+  }
+
+  // Disable if the input comes from non-standard user keyboards, like numpad.
+  // http://b/issue?id=2932067
+  if (key_event.input_style() != commands::KeyEvent::FOLLOW_MODE) {
+    return false;
+  }
+
+  // This is a tentative workaround for the bug http://b/issue?id=2932028
+  // When user types <Shift Down>O<Shift Up>racle<Shift Down>!<Shift Up>,
+  // The final "!" must be half-width, however, due to the limitation
+  // of converter interface, we don't have a good way to change it halfwidth, as
+  // the default preference of "!" is fullwidth. Basically, the converter is
+  // not composition-mode-aware.
+  // We simply disable the auto conversion feature if the mode is ASCII.
+  // We conclude that disabling this feature is better in this situation.
+  // TODO(taku): fix the behavior. Converter module needs to be fixed.
+  if (key_event.mode() == commands::HALF_ASCII ||
+      key_event.mode() == commands::FULL_ASCII) {
+    return false;
+  }
+
+  const config::Config &config = config::ConfigHandler::GetConfig();
+  const uint32 key_code = key_event.key_code();
+  const string &key_string = key_event.key_string();
+
+  // first, check raw user key encoded in |key_code| and |key_string|.
+  // At this moment, we don't check the preedit string.
+  // We'd like to return this function as early as possible, since
+  // auto_conversion feature isn't a default feature and will not
+  // be activated often.
+  // We can suppose that this function returns false here in almost all case,
+  // even when auto_convesion is true.
+  if (!IsValidKey(config, key_code, key_string)) {
+    return false;
+  }
+
+  // now evaluate preedit string and preedit length.
+  const size_t length = composer_->GetLength();
+  if (length <= 1) {
+    return false;
+  }
+
+  string preedit;
+  DCHECK(composer_.get());
+  composer_->GetStringForPreedit(&preedit);
+  const string last_char = Util::SubString(preedit, length - 1, 1);
+  if (last_char.empty()) {
+    return false;
+  }
+
+  // Check last character as user may change romaji table,
+  // For instance, if user assigns "." as "foo", we don't
+  // want to invoke auto_conversion.
+  if (!IsValidKey(config, key_code, last_char)) {
+    return false;
+  }
+
+  // check the previous character of last_character.
+  // when |last_prev_char| is number, we don't invoke auto_conversion
+  // if the same invoke key is repeated, do not conversion.
+  // http://b/issue?id=2932118
+  const string last_prev_char = Util::SubString(preedit, length - 2, 1);
+  if (last_prev_char.empty() || last_prev_char == last_char ||
+      Util::NUMBER == Util::GetScriptType(last_prev_char)) {
+    return false;
+  }
+
+  return true;
 }
 
 void Session::UpdateTime() {

@@ -43,6 +43,7 @@ struct CompilerToken {
   string key;
   string value;
   string description;
+  string additional_description;
   uint16 lid;
   uint16 rid;
   int16 cost;
@@ -86,6 +87,12 @@ EmbeddedDictionary::Lookup(const string &key) const {
   return result;
 }
 
+const EmbeddedDictionary::Token *
+EmbeddedDictionary::AllToken() const {
+  // |token_ + size| has a placeholder for the all tokens
+  return token_ + size_;
+}
+
 void EmbeddedDictionary::Compile(const string &name,
                                  const string &input,
                                  const string &output) {
@@ -109,12 +116,14 @@ void EmbeddedDictionary::Compile(const string &name,
     token.rid   = atoi32(fields[2].c_str());
     token.cost  = atoi32(fields[3].c_str());
     token.description = (fields.size() > 5) ? fields[5] : "";
+    token.additional_description = (fields.size() > 6) ? fields[6] : "";
     dic[key].push_back(token);
   }
 
   ofs << "static const mozc::EmbeddedDictionary::Value k" << name
       << "_value[] = {" << endl;
 
+  size_t value_size = 0;
   for (map<string, vector<CompilerToken> >::iterator it = dic.begin();
        it != dic.end(); ++it) {
     vector<CompilerToken> &vec = it->second;
@@ -129,11 +138,18 @@ void EmbeddedDictionary::Compile(const string &name,
         Util::Escape(vec[i].description, &escaped);
         ofs << " \"" << escaped << "\", ";
       }
+      if (vec[i].additional_description.empty()) {
+        ofs << "NULL, ";
+      } else {
+        Util::Escape(vec[i].additional_description, &escaped);
+        ofs << " \"" << escaped << "\", ";
+      }
       ofs << vec[i].lid << ", " << vec[i].rid << ", " << vec[i].cost << " },";
       ofs << endl;
+      ++value_size;
     }
   }
-  ofs << "  { NULL, NULL, 0, 0, 0 }" << endl;
+  ofs << "  { NULL, NULL, NULL, 0, 0, 0 }" << endl;
   ofs << "};" << endl;
 
   ofs << "static const size_t k" << name << "_token_size = "
@@ -151,7 +167,7 @@ void EmbeddedDictionary::Compile(const string &name,
         << offset << ", " << it->second.size() << "}," << endl;
     offset += it->second.size();
   }
-  ofs << "  { NULL, 0, 0 }" << endl;
+  ofs << "  { NULL, " << "k" << name << "_value, " << value_size << " }" << endl;
 
   ofs << "};" << endl;
 };

@@ -43,6 +43,19 @@ message SessionState {
   // whether session is just after commitment
   optional bool committed = 3 [default = false];
 
+  // selected indices from the candidates
+  repeated int32 selected_indices = 4;
+
+  // conversion mode
+  // indicates where the selected candidates came from
+  enum Mode {
+    COMPOSITION = 0;
+    CONVERSION = 1;
+    PREDICTION = 2;
+    SUGGESTION = 3;
+  };
+  optional Mode mode = 5 [default = COMPOSITION];
+
   optional uint64 start_preedit_time = 10;
   optional uint64 start_conversion_window_time = 11;
   optional uint64 start_prediction_window_time = 12;

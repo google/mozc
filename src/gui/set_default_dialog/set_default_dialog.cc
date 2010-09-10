@@ -62,12 +62,12 @@ SetDefaultDialog::~SetDefaultDialog() {
 void SetDefaultDialog::accept() {
 // TODO(mazda): Implement SetDefault on Mac and Linux.
 #ifdef OS_WINDOWS
-  if (!mozc::ImeUtil::SetDefault()) {
+  if (!mozc::win32::ImeUtil::SetDefault()) {
     LOG(ERROR) << "Failed to set Mozc as the default IME";
   }
 #endif  // OS_WINDOWS
 
-  if(dontAskAgainCheckBox->checkState() == Qt::Checked) {
+  if (dontAskAgainCheckBox->checkState() == Qt::Checked) {
     if (!SetCheckDefault(false)) {
       LOG(ERROR) << "Failed to set check_default";
     }
@@ -76,7 +76,7 @@ void SetDefaultDialog::accept() {
 }
 
 void SetDefaultDialog::reject() {
-  if(dontAskAgainCheckBox->checkState() == Qt::Checked) {
+  if (dontAskAgainCheckBox->checkState() == Qt::Checked) {
     if (!SetCheckDefault(false)) {
       LOG(ERROR) << "Failed to set check_default";
     }
@@ -91,7 +91,7 @@ bool SetDefaultDialog::SetCheckDefault(bool check_default) {
     return false;
   }
   mozc::config::Config config;
-  if(!mozc::config::ConfigHandler::GetConfig(&config)) {
+  if (!mozc::config::ConfigHandler::GetConfig(&config)) {
     LOG(ERROR) << "Cannot get config";
     return false;
   }

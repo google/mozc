@@ -53,6 +53,7 @@
       '-Werror',
       '-Wno-char-subscripts',
       '-Wno-sign-compare',
+      '-Wno-deprecated-declarations',
       '-Wwrite-strings',
     ],
     # gcc_cflags_cflags will be shared with Mac and Linux.
@@ -64,6 +65,32 @@
       '-include base/namespace.h',
       '-pipe',
     ],
+    'msvc_disabled_warnings': [
+      # 'expression' : signed/unsigned mismatch
+      # http://msdn.microsoft.com/en-us/library/y92ktdf2.aspx
+      '4018',
+      # 'argument' : conversion from 'type1' to 'type2', possible loss
+      # of data
+      # http://msdn.microsoft.com/en-us/library/2d7604yb.aspx
+      '4244',
+      # 'var' : conversion from 'size_t' to 'type', possible loss of
+      # data
+      # http://msdn.microsoft.com/en-us/library/6kck0s93.aspx
+      '4267',
+      # 'identifier' : truncation from 'type1' to 'type2'
+      # http://msdn.microsoft.com/en-us/library/0as1ke3f.aspx
+      '4305',
+      # 'type' : forcing value to bool 'true' or 'false'
+      # (performance warning)
+      # http://msdn.microsoft.com/en-us/library/b6801kcy.aspx
+      '4800',
+      # The file contains a character that cannot be represented in the
+      # current code page (number). Save the file in Unicode format to
+      # prevent data loss.
+      # http://msdn.microsoft.com/en-us/library/ms173715.aspx
+      '4819',
+    ],
+
     # We wanted to have this directory under the build output directory
     # (ex. 'out' for Linux), but there is no variable defined for the top
     # level source directory, hence we create the directory in the top
@@ -73,6 +100,14 @@
     'branding%': 'Mozc',
     # use_qt is 'YES' only if you want to use GUI binaries.
     'use_qt%': 'YES',
+
+    # use_libgtest represents if gtest library is used or not.
+    # This option is only for Linux.
+    'use_libgtest%': 1,
+
+    # use_libprotobuf represents if protobuf library is used or not.
+    # This option is only for Linux.
+    'use_libprotobuf%': 1,
 
     # a flag whether the current build is dev-channel or not.
     'channel_dev%': '0',
@@ -131,24 +166,29 @@
       'x86_Base': {
         'abstract': 1,
         'msvs_configuration_attributes': {
-          'OutputDirectory': '<(DEPTH)/out_win/$(ConfigurationName)',
-          'IntermediateDirectory': '<(DEPTH)/out_win/$(ConfigurationName)/obj/$(ProjectName)',
+          'OutputDirectory': '<(build_base)/$(ConfigurationName)',
+          'IntermediateDirectory': '<(build_base)/$(ConfigurationName)/obj/$(ProjectName)',
         },
         'msvs_configuration_platform': 'Win32',
       },
       'x64_Base': {
         'abstract': 1,
         'msvs_configuration_attributes': {
-          'OutputDirectory': '<(DEPTH)/out_win/$(ConfigurationName)64',
-          'IntermediateDirectory': '<(DEPTH)/out_win/$(ConfigurationName)64/obj/$(ProjectName)',
+          'OutputDirectory': '<(build_base)/$(ConfigurationName)64',
+          'IntermediateDirectory': '<(build_base)/$(ConfigurationName)64/obj/$(ProjectName)',
         },
         'msvs_configuration_platform': 'x64',
       },
       'Debug_Base': {
         'abstract': 1,
+        'defines': [
+	  'DEBUG',
+	],
         'xcode_settings': {
           'COPY_PHASE_STRIP': 'NO',
           'GCC_OPTIMIZATION_LEVEL': '<(mac_debug_optimization)',
+          'GCC_SYMBOLS_PRIVATE_EXTERN': 'YES',
+          'GCC_INLINES_ARE_PRIVATE_EXTERN': 'YES',
           'OTHER_CFLAGS': [ '<@(debug_extra_cflags)', ],
         },
         'msvs_settings': {
@@ -190,7 +230,7 @@
             # says there is an order dependency, that is, the last /Oy  or /Oy-
             # is valid.  See the following document for details.
             # http://msdn.microsoft.com/en-us/library/2kxx5t2c.aspx
-            # As far as we observed, /Oy- adding in 'AdditionalOptions'@always
+            # As far as we observed, /Oy- adding in 'AdditionalOptions' always
             # appears at the end of options so using
             # '<(win_optimization_release) here is considered to be harmless.
             # Another reason to use /O2 here is b/2822535, where we observed
@@ -312,8 +352,7 @@
             'CompileOnly': 'True',                 # /c
             'DebugInformationFormat': '3',         # /Zi
             'DefaultCharIsUnsigned': 'True',       # /J
-            'DisableSpecificWarnings': ['4018', '4150', '4722'],
-                                                   # /wdXXXX
+            'DisableSpecificWarnings': ['<@(msvc_disabled_warnings)'],  # /wdXXXX
             'EnableFunctionLevelLinking': 'True',  # /Gy
             'EnableIntrinsicFunctions': 'True',    # /Oi
             'ExceptionHandling': '2',              # /EHs
@@ -335,6 +374,7 @@
             # only have common libraries here.
             'AdditionalDependencies': [
               'Advapi32.lib',
+              'Aux_ulib.lib',
               'comdlg32.lib',
               'crypt32.lib',
               'dbghelp.lib',
@@ -398,6 +438,17 @@
           '<@(extra_linux_libs)',
         ],
         'conditions': [
+          ['use_libgtest==0', {
+            'include_dirs': [
+              '<(DEPTH)/third_party/gtest',
+              '<(DEPTH)/third_party/gtest/include',
+            ],
+          }],
+          ['use_libprotobuf==0', {
+            'include_dirs': [
+              '../protobuf/files/src',
+            ],
+          }],
           ['chromeos==1', {
             'defines': [
               'OS_CHROMEOS',
@@ -479,5 +530,10 @@
         ],  # conditions for coverage
       }],  # coverage!=0
     ],
+  },
+  'xcode_settings': {
+   'SYMROOT': '<(build_base)',
+   'GCC_INLINES_ARE_PRIVATE_EXTERN': 'YES',
+   'GCC_SYMBOLS_PRIVATE_EXTERN': 'YES',
   },
 }

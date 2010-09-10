@@ -122,6 +122,13 @@ class Util {
   static bool SafeStrToUInt32(const string &str, uint32 *value);
   static bool SafeStrToUInt64(const string &str, uint64 *value);
 
+  // Convert the string to a double.  Returns true if success or false if the
+  // string is in the wrong format.
+  // If |str| is a hexadecimal number like "0x1234", the result depends on
+  // compiler.  It returns false when compiled by VisualC++.  On the other hand
+  // it returns true and sets correct value when compiled by gcc.
+  static bool SafeStrToDouble(const string &str, double *value);
+
   // Chop the return characters (i.e. '\n' and '\r') at the end of the
   // given line.
   static bool ChopReturns(string *line);
@@ -452,6 +459,15 @@ class Util {
 
   // return true if the version of Windows is x64 Edition.
   static bool IsWindowsX64();
+
+  enum IsWindowsX64Mode {
+    IS_WINDOWS_X64_DEFAULT_MODE,
+    IS_WINDOWS_X64_EMULATE_32BIT_MACHINE,
+    IS_WINDOWS_X64_EMULATE_64BIT_MACHINE,
+  };
+
+  // For unit tests, this function overrides the behavior of |IsWindowsX64|.
+  static void SetIsWindowsX64ModeForTest(IsWindowsX64Mode mode);
 
   // return system directory. If failed, return NULL.
   // You need not to delete the returned pointer.

@@ -72,6 +72,10 @@ class LRUCache {
   // return non-const Value
   Value *MutableLookup(const Key &key);
 
+  // Lookup/MutableLookup don't change the LRU order.
+  const Value *LookupWithoutInsert(const Key &key) const;
+  Value *MutableLookupWithoutInsert(const Key &key) const;
+
   // Removes the cache entry specified by key.  Returns true if the entry was
   // in the cache, otherwise returns false.
   bool Erase(const Key &key);
@@ -112,7 +116,7 @@ class LRUCache {
 
   // Returns the Element* associated with key, or NULL if no element with this
   // key is found.
-  Element* LookupInternal(const Key &key);
+  Element* LookupInternal(const Key &key) const;
 
   // Removes the specified element from the LRU list.
   void RemoveFromLRU(Element* element);
@@ -211,7 +215,7 @@ LRUCache<Key, Value>::NextFreeElement() {
 
 template<typename Key, typename Value>
 typename LRUCache<Key, Value>::Element*
-LRUCache<Key, Value>::LookupInternal(const Key &key) {
+LRUCache<Key, Value>::LookupInternal(const Key &key) const {
   typename Table::iterator iter = table_->find(key);
   if (iter != table_->end()) {
     return iter->second;
@@ -351,6 +355,20 @@ Value* LRUCache<Key, Value>::MutableLookup(const Key& key) {
 template<typename Key, typename Value>
 const Value* LRUCache<Key, Value>::Lookup(const Key& key) {
   return MutableLookup(key);
+}
+
+template<typename Key, typename Value>
+Value* LRUCache<Key, Value>::MutableLookupWithoutInsert(const Key& key) const {
+  Element *e = LookupInternal(key);
+  if (e != NULL) {
+    return &(e->value);
+  }
+  return NULL;
+}
+
+template<typename Key, typename Value>
+const Value* LRUCache<Key, Value>::LookupWithoutInsert(const Key& key) const {
+  return MutableLookupWithoutInsert(key);
 }
 
 template<typename Key, typename Value>

@@ -1242,6 +1242,78 @@ TEST_F(SessionConverterTest, ReloadConfig) {
   }
 }
 
+TEST_F(SessionConverterTest, OutputAllCandidateWords) {
+  SessionConverter converter(convertermock_.get());
+  Segments segments;
+  SetKamaboko(&segments);
+  convertermock_->SetStartConversion(&segments, true);
+
+  // "かまぼこの"
+  const string kKamabokono =
+    "\xe3\x81\x8b\xe3\x81\xbe\xe3\x81\xbc\xe3\x81\x93\xe3\x81\xae";
+  // "いんぼう"
+  const string kInbou =
+    "\xe3\x81\x84\xe3\x82\x93\xe3\x81\xbc\xe3\x81\x86";
+  composer_->InsertCharacterPreedit(kKamabokono + kInbou);
+  commands::Output output;
+
+  EXPECT_TRUE(converter.Convert(composer_.get()));
+  {
+    ASSERT_TRUE(converter.IsActive());
+    EXPECT_FALSE(converter.IsCandidateListVisible());
+
+    output.Clear();
+    converter.PopOutput(&output);
+    EXPECT_FALSE(output.has_result());
+    EXPECT_TRUE(output.has_preedit());
+    EXPECT_FALSE(output.has_candidates());
+    EXPECT_TRUE(output.has_all_candidate_words());
+
+    EXPECT_EQ(0, output.all_candidate_words().focused_index());
+    EXPECT_EQ(commands::CONVERSION, output.all_candidate_words().category());
+    // [ "かまぼこの", "カマボコの", "カマボコノ" (t13n), "かまぼこの" (t13n),
+    //   "ｶﾏﾎﾞｺﾉ" (t13n) ]
+    EXPECT_EQ(5, output.all_candidate_words().candidates_size());
+  }
+
+  converter.CandidateNext();
+  {
+    ASSERT_TRUE(converter.IsActive());
+    EXPECT_TRUE(converter.IsCandidateListVisible());
+
+    output.Clear();
+    converter.PopOutput(&output);
+    EXPECT_FALSE(output.has_result());
+    EXPECT_TRUE(output.has_preedit());
+    EXPECT_TRUE(output.has_candidates());
+    EXPECT_TRUE(output.has_all_candidate_words());
+
+    EXPECT_EQ(1, output.all_candidate_words().focused_index());
+    EXPECT_EQ(commands::CONVERSION, output.all_candidate_words().category());
+    // [ "かまぼこの", "カマボコの", "カマボコノ" (t13n), "かまぼこの" (t13n),
+    //   "ｶﾏﾎﾞｺﾉ" (t13n) ]
+    EXPECT_EQ(5, output.all_candidate_words().candidates_size());
+  }
+
+  converter.SegmentFocusRight();
+  {
+    ASSERT_TRUE(converter.IsActive());
+    EXPECT_FALSE(converter.IsCandidateListVisible());
+
+    output.Clear();
+    converter.PopOutput(&output);
+    EXPECT_FALSE(output.has_result());
+    EXPECT_TRUE(output.has_preedit());
+    EXPECT_FALSE(output.has_candidates());
+    EXPECT_TRUE(output.has_all_candidate_words());
+
+    EXPECT_EQ(0, output.all_candidate_words().focused_index());
+    EXPECT_EQ(commands::CONVERSION, output.all_candidate_words().category());
+    // [ "陰謀", "印房", "インボウ" (t13n), "いんぼう" (t13n), "ｲﾝﾎﾞｳ" (t13n) ]
+    EXPECT_EQ(5, output.all_candidate_words().candidates_size());
+  }
+}
+
 // Suggest() in the suggestion state was not accepted.  (http://b/1948334)
 TEST_F(SessionConverterTest, Issue1948334) {
   SessionConverter converter(convertermock_.get());

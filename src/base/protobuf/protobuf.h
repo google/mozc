@@ -42,12 +42,31 @@
   }  /* namespace protobuf */                   \
   }  /* namespace mozc */
 
+#define MOZC_TYPEDEF_PROTOBUF_IO(name)          \
+  namespace google {                            \
+  namespace protobuf {                          \
+  namespace io {                                \
+  class name;                                   \
+  }  /* namespace io */                         \
+  }  /* namespace protobuf */                   \
+  }  /* namespace google */                     \
+  namespace mozc {                              \
+  namespace protobuf {                          \
+  namespace io {                                \
+  typedef google::protobuf::io::name name;      \
+  }  /* namespace io */                         \
+  }  /* namespace protobuf */                   \
+  }  /* namespace mozc */
+
 
 // Typedef declarations.
 MOZC_TYPEDEF_PROTOBUF(Message);
 MOZC_TYPEDEF_PROTOBUF(Reflection);
 MOZC_TYPEDEF_PROTOBUF(FieldDescriptor);
+MOZC_TYPEDEF_PROTOBUF(TextFormat);
+MOZC_TYPEDEF_PROTOBUF_IO(IstreamInputStream);
 
 #undef MOZC_TYPEDEF_PROTOBUF
+#undef MOZC_TYPEDEF_PROTOBUF_IO
 
 #endif  // MOZC_BASE_PROTOBUF_PROTOBUF_H_

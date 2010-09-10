@@ -52,6 +52,7 @@
 #include <cerrno>
 #include <fstream>
 #include <iterator>
+#include <limits>
 #include <map>
 #include <sstream>
 #include <string>
@@ -70,6 +71,7 @@
 #include "base/mac_util.h"
 #endif
 
+
 namespace {
 
 const char kFileDelimiterForUnix = '/';
@@ -77,6 +79,8 @@ const char kFileDelimiterForWindows = '\\';
 
 #ifdef OS_WINDOWS
 const char kFileDelimiter = kFileDelimiterForWindows;
+volatile mozc::Util::IsWindowsX64Mode g_is_windows_x64_mode =
+    mozc::Util::IS_WINDOWS_X64_DEFAULT_MODE;
 #else
 const char kFileDelimiter = kFileDelimiterForUnix;
 #endif
@@ -559,6 +563,31 @@ bool Util::SafeStrToUInt64(const string &str, uint64 *value) {
   return *s != 0 && *endptr == 0 && errno == 0 &&
       static_cast<unsigned long long>(*value) == ull;  // no overflow
 #endif
+}
+
+bool Util::SafeStrToDouble(const string &str, double *value) {
+  DCHECK(value);
+
+  const char *s = str.c_str();
+
+  char *endptr;
+  errno = 0;  // errno only gets set on errors
+  // strtod of GCC accepts hexadecimal number like "0x1234", but that of
+  // VisualC++ does not.
+  *value = strtod(s, &endptr);
+  if ((*value ==  numeric_limits<double>::infinity()) ||
+      (*value == -numeric_limits<double>::infinity())) {
+    return false;
+  }
+
+  if (endptr == s) {
+    return false;
+  }
+  while (isspace(*endptr)) {
+    ++endptr;
+  }
+
+  return (*endptr == '\0') && (errno == 0);
 }
 
 bool Util::ChopReturns(string *line) {
@@ -2124,7 +2153,7 @@ class IsWindowsX64Cache {
     ::ZeroMemory(&system_info, sizeof(system_info));
     proc(&system_info);
 
-    return system_info.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64;
+    return (system_info.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64);
   }
 
   bool is_x64_;
@@ -2132,7 +2161,33 @@ class IsWindowsX64Cache {
 };
 
 bool Util::IsWindowsX64() {
-  return Singleton<IsWindowsX64Cache>::get()->is_x64();
+  switch (g_is_windows_x64_mode) {
+    case IS_WINDOWS_X64_EMULATE_32BIT_MACHINE:
+      return false;
+    case IS_WINDOWS_X64_EMULATE_64BIT_MACHINE:
+      return true;
+    case IS_WINDOWS_X64_DEFAULT_MODE:
+      return Singleton<IsWindowsX64Cache>::get()->is_x64();
+    default:
+      DCHECK(false) << "Unexpected mode specified.  mode = "
+                    << g_is_windows_x64_mode;
+      return Singleton<IsWindowsX64Cache>::get()->is_x64();
+  }
+}
+
+void Util::SetIsWindowsX64ModeForTest(IsWindowsX64Mode mode) {
+  g_is_windows_x64_mode = mode;
+  switch (g_is_windows_x64_mode) {
+    case IS_WINDOWS_X64_EMULATE_32BIT_MACHINE:
+    case IS_WINDOWS_X64_EMULATE_64BIT_MACHINE:
+    case IS_WINDOWS_X64_DEFAULT_MODE:
+      // Known mode. OK.
+      break;
+    default:
+      DCHECK(false) << "Unexpected mode specified.  mode = "
+                    << g_is_windows_x64_mode;
+      break;
+  }
 }
 
 namespace {
@@ -2343,6 +2398,7 @@ uint64 Util::GetTotalPhysicalMemory() {
   const long number_of_phyisical_pages = sysconf(_SC_PHYS_PAGES);
   if (number_of_phyisical_pages < 0) {
     // likely to be overflowed.
+    LOG(FATAL) << number_of_phyisical_pages << ", " << page_size;
     return 0;
   }
   return static_cast<uint64>(number_of_phyisical_pages) * page_size;

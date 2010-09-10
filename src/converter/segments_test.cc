@@ -29,6 +29,7 @@
 
 #include "base/util.h"
 #include "transliteration/transliteration.h"
+#include "converter/converter_interface.h"
 #include "converter/character_form_manager.h"
 #include "converter/segments.h"
 #include "session/config.pb.h"
@@ -585,6 +586,58 @@ TEST_F(SegmentTest, ExpandAlternative) {
   }
 }
 
+TEST_F(SegmentTest, ExpandEnglishVariants) {
+  vector<string> variants;
+
+  EXPECT_TRUE(
+      Segment::ExpandEnglishVariants(
+          "foo",
+          &variants));
+  EXPECT_EQ(2, variants.size());
+  EXPECT_EQ("Foo", variants[0]);
+  EXPECT_EQ("FOO", variants[1]);
+
+  EXPECT_TRUE(
+      Segment::ExpandEnglishVariants(
+          "Bar",
+          &variants));
+  EXPECT_EQ(2, variants.size());
+  EXPECT_EQ("bar", variants[0]);
+  EXPECT_EQ("BAR", variants[1]);
+
+  EXPECT_TRUE(
+      Segment::ExpandEnglishVariants(
+          "HOGE",
+          &variants));
+  EXPECT_EQ(2, variants.size());
+  EXPECT_EQ("hoge", variants[0]);
+  EXPECT_EQ("Hoge", variants[1]);
+
+  EXPECT_FALSE(
+      Segment::ExpandEnglishVariants(
+          "Foo Bar",
+          &variants));
+
+  EXPECT_TRUE(
+      Segment::ExpandEnglishVariants(
+          "iPhone",
+          &variants));
+  EXPECT_EQ(1, variants.size());
+  EXPECT_EQ("iphone", variants[0]);
+
+  EXPECT_TRUE(
+      Segment::ExpandEnglishVariants(
+          "MeCab",
+          &variants));
+  EXPECT_EQ(1, variants.size());
+  EXPECT_EQ("mecab", variants[0]);
+
+  EXPECT_FALSE(
+      Segment::ExpandEnglishVariants(
+          "\xe3\x82\xb0\xe3\x83\xbc\xe3\x82\xb0\xe3\x83\xab",
+          &variants));
+}
+
 TEST_F(SegmentTest, SetTransliterations) {
   Segments segments;
   Segment *seg = segments.push_back_segment();
@@ -642,4 +695,38 @@ TEST_F(SegmentTest, SetTransliterations) {
   EXPECT_FALSE(seg->initialized_transliterations());
 }
 
-}  // namespace mozc
+TEST_F(SegmentTest, ExpandArabicNumber) {
+  // assume that "さんびゃく->三百" can be converted correctly;
+  mozc::Segments segments;
+  ConverterInterface *converter = ConverterFactory::GetConverter();
+  DCHECK(converter);
+  // "さんびゃく"
+  EXPECT_TRUE(converter->StartConversion(
+      &segments,
+      "\xE3\x81\x95\xE3\x82\x93\xE3\x81\xB3\xE3\x82\x83\xE3\x81\x8F"));
+  EXPECT_GT(segments.conversion_segments_size(), 0);
+  const mozc::Segment &seg = segments.conversion_segment(0);
+  EXPECT_GT(seg.candidates_size(), 2);
+  // "三百"
+  EXPECT_EQ(seg.candidate(0).value, "\xE4\xB8\x89\xE7\x99\xBE");
+  EXPECT_EQ(seg.candidate(1).value, "300");  // Arabic number is added
+}
+
+TEST_F(SegmentTest, RequestedCandidatesSizeTest) {
+  const size_t kExpandSize[] = { 5, 10, 15, 20, 100, 150, 250, 1024 };
+  ConverterInterface *converter = ConverterFactory::GetConverter();
+  DCHECK(converter);
+  for (size_t i = 0; i < arraysize(kExpandSize); ++i) {
+    const size_t size = kExpandSize[i];
+    mozc::Segments segments;
+    // "よろしく"
+    converter->StartConversion(
+        &segments,
+        "\xE3\x82\x88\xE3\x82\x8D\xE3\x81\x97\xE3\x81\x8F");
+    EXPECT_EQ(1, segments.segments_size());
+    const size_t result_size = segments.segment(0).candidates_size() + size;
+    segments.mutable_segment(0)->Expand(size);
+    EXPECT_EQ(result_size, segments.segment(0).requested_candidates_size());
+  }
+}
+}  // namespace

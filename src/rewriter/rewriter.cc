@@ -34,10 +34,13 @@
 #include "base/util.h"
 #include "base/singleton.h"
 #include "converter/segments.h"
+#include "rewriter/calculator_rewriter.h"
 #include "rewriter/collocation_rewriter.h"
-#include "rewriter/rewriter_interface.h"
 #include "rewriter/date_rewriter.h"
+#include "rewriter/emoticon_rewriter.h"
+#include "rewriter/fortune_rewriter.h"
 #include "rewriter/number_rewriter.h"
+#include "rewriter/rewriter_interface.h"
 #include "rewriter/single_kanji_rewriter.h"
 #include "rewriter/symbol_rewriter.h"
 #include "rewriter/user_segment_history_rewriter.h"
@@ -72,6 +75,9 @@ class RewriterImpl: public RewriterInterface {
   UserBoundaryHistoryRewriter *user_boundary_history_rewriter_;
   UserSegmentHistoryRewriter  *user_segment_history_rewriter_;
   VersionRewriter *version_rewriter_;
+  EmoticonRewriter *emoticon_rewriter_;
+  CalculatorRewriter *calculator_rewriter_;
+  FortuneRewriter *fortune_rewriter_;
   vector<RewriterInterface *> rewriters_;
 };
 
@@ -83,9 +89,22 @@ RewriterImpl::RewriterImpl()
       date_rewriter_(new DateRewriter),
       user_boundary_history_rewriter_(new UserBoundaryHistoryRewriter),
       user_segment_history_rewriter_(new UserSegmentHistoryRewriter),
-      version_rewriter_(new VersionRewriter) {
+      version_rewriter_(new VersionRewriter),
+      emoticon_rewriter_(new EmoticonRewriter),
+#if defined(OS_LINUX) && !defined(OS_CHROMEOS)
+      calculator_rewriter_(new CalculatorRewriter),
+#else
+      calculator_rewriter_(NULL),
+#endif
+      fortune_rewriter_(new FortuneRewriter) {
   rewriters_.push_back(single_kanji_rewriter_);
   rewriters_.push_back(symbol_rewriter_);
+  // Push back calculator_rewriter_ only if it is enabled.
+  if (calculator_rewriter_) {
+    rewriters_.push_back(calculator_rewriter_);
+  }
+  rewriters_.push_back(emoticon_rewriter_);
+  rewriters_.push_back(fortune_rewriter_);
   rewriters_.push_back(number_rewriter_);
   rewriters_.push_back(collocation_rewriter_);
   rewriters_.push_back(date_rewriter_);
@@ -103,6 +122,9 @@ RewriterImpl::~RewriterImpl() {
   delete user_boundary_history_rewriter_;
   delete user_segment_history_rewriter_;
   delete version_rewriter_;
+  delete emoticon_rewriter_;
+  delete fortune_rewriter_;
+  delete calculator_rewriter_;
   rewriters_.clear();
 }
 

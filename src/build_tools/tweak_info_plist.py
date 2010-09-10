@@ -31,7 +31,7 @@
 """Fix all version info in the input Info.plist file.
 
   % python tweak_info_plist.py --output=out.txt --input=in.txt \
-      --version_file=version.txt
+      --branding=Mozc --version_file=version.txt
 
 See mozc_version.py for the detailed information for version.txt.
 """
@@ -82,6 +82,7 @@ def ParseOptions():
   parser.add_option("--version_file", dest="version_file")
   parser.add_option("--output", dest="output")
   parser.add_option("--input", dest="input")
+  parser.add_option("--branding", dest="branding")
 
   (options, unused_args) = parser.parse_args()
   return options
@@ -99,6 +100,9 @@ def main():
   if options.input is None:
     logging.error("--input is not specified.")
     exit(-1)
+  if options.branding is None:
+    logging.error("--branding is not specified.")
+    exit(-1)
 
   version = mozc_version.MozcVersion(options.version_file, expand_daily=False)
 
@@ -106,12 +110,17 @@ def main():
   copyright_message = '\xC2\xA9 %d Google Inc.' % _COPYRIGHT_YEAR
   long_version = version.GetVersionString()
   short_version = version.GetVersionInFormat('@MAJOR@.@MINOR@.@BUILD@')
+  domain_prefix = 'org.mozc'
+  if options.branding == 'GoogleJapaneseInput':
+    domain_prefix = 'com.google'
   variables = {
       'GOOGLE_VERSIONINFO_LONG': long_version,
       'GOOGLE_VERSIONINFO_SHORT': short_version,
       'GOOGLE_VERSIONINFO_ABOUT': copyright_message,
       'GOOGLE_VERSIONINFO_FINDER':
         'Google Japanese Input %s, %s' % (long_version, copyright_message),
+      'BRANDING': options.branding,
+      'DOMAIN_PREFIX': domain_prefix,
       }
 
   open(options.output, 'w').write(

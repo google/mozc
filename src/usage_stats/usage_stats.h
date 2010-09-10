@@ -96,13 +96,14 @@ class UsageStats {
   // Sets client id handler
   static void SetClientIdHandler(ClientIdInterface *client_id_handler);
 
+  // Returns true if given stats name is in the stats list
+  // (for debugging)
+  static bool IsListed(const string &name);
+
  private:
   FRIEND_TEST(ClientIdTest, CreateClientIdTest);
   FRIEND_TEST(ClientIdTest, GetClientIdTest);
   FRIEND_TEST(ClientIdTest, GetClientIdFailTest);
-  // Returns true if given stats name is in the stats list
-  // (for debugging)
-  static bool IsListed(const string &name);
 
   static void LoadStats(UploadUtil *uploader);
   static void ClearStats();

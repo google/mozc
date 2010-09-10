@@ -38,15 +38,19 @@
       'type': 'static_library',
       'sources': [
         '<(gen_out_dir)/embedded_collocation_data.h',
+        '<(gen_out_dir)/emoticon_rewriter_data.h',
         '<(gen_out_dir)/single_kanji_rewriter_data.h',
         '<(gen_out_dir)/symbol_rewriter_data.h',
         '<(gen_out_dir)/user_segment_history_rewriter_rule.h',
+        'calculator_rewriter.cc',
         'collocation_rewriter.cc',
         'collocation_util.cc',
         'date_rewriter.cc',
         'dictionary_generator.cc',
         'version_rewriter.cc',
         'embedded_dictionary.cc',
+        'emoticon_rewriter.cc',
+        'fortune_rewriter.cc',
         'number_rewriter.cc',
         'rewriter.cc',
         'single_kanji_rewriter.cc',
@@ -65,10 +69,12 @@
         '../storage/storage.gyp:storage',
         '../dictionary/dictionary.gyp:dictionary',
         '../usage_stats/usage_stats.gyp:usage_stats',
+        'calculator/calculator.gyp:calculator',
       ],
       'conditions': [['two_pass_build==0', {
         'dependencies': [
           'install_gen_collocation_data_main',
+          'install_gen_emoticon_rewriter_dictionary_main',
           'install_gen_single_kanji_rewriter_dictionary_main',
           'install_gen_symbol_rewriter_dictionary_main',
         ],
@@ -153,6 +159,31 @@
           ],
         },
         {
+          'action_name': 'gen_emoticon_rewriter_data',
+          'variables': {
+            'input_files': [
+              '../data/emoticon/emoticon.tsv',
+            ],
+          },
+          'inputs': [
+            '<@(input_files)',
+          ],
+          'conditions': [['two_pass_build==0', {
+            'inputs': [
+              '<(mozc_build_tools_dir)/gen_emoticon_rewriter_dictionary_main',
+            ],
+          }]],
+          'outputs': [
+            '<(gen_out_dir)/emoticon_rewriter_data.h',
+          ],
+          'action': [
+            '<(mozc_build_tools_dir)/gen_emoticon_rewriter_dictionary_main',
+            '--input=<@(input_files)',
+            '--logtostderr',
+            '--output=<(gen_out_dir)/emoticon_rewriter_data.h',
+          ],
+        },
+        {
           'action_name': 'gen_user_segment_history_rewriter_rule',
           'variables': {
             'input_files': [
@@ -232,6 +263,17 @@
       ],
     },
     {
+      'target_name': 'gen_emoticon_rewriter_dictionary_main',
+      'type': 'executable',
+      'sources': [
+        'embedded_dictionary.cc',
+        'gen_emoticon_rewriter_dictionary_main.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+      ],
+    },
+    {
       'target_name': 'install_gen_symbol_rewriter_dictionary_main',
       'type': 'none',
       'variables': {
@@ -242,19 +284,34 @@
       ]
     },
     {
+      'target_name': 'install_gen_emoticon_rewriter_dictionary_main',
+      'type': 'none',
+      'variables': {
+        'bin_name': 'gen_emoticon_rewriter_dictionary_main'
+      },
+      'includes' : [
+        '../gyp/install_build_tool.gypi',
+      ]
+    },
+    {
       'target_name': 'rewriter_test',
       'type': 'executable',
       'sources': [
+        'calculator_rewriter_test.cc',
         'collocation_util_test.cc',
         'date_rewriter_test.cc',
         'dictionary_generator_test.cc',
+        'emoticon_rewriter_test.cc',
+        'fortune_rewriter_test.cc',
         'number_rewriter_test.cc',
+        'symbol_rewriter_test.cc',
         'user_boundary_history_rewriter_test.cc',
         'user_segment_history_rewriter_test.cc',
       ],
       'dependencies': [
         '../converter/converter.gyp:converter',
         '../testing/testing.gyp:gtest_main',
+        'calculator/calculator.gyp:calculator_mock',
         'rewriter',
       ],
       'variables': {
@@ -267,6 +324,7 @@
       'type': 'none',
       'dependencies': [
         'rewriter_test',
+        'calculator/calculator.gyp:calculator_all_test',
       ],
     },
   ],

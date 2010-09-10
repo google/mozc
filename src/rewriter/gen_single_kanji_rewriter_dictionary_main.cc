@@ -42,7 +42,6 @@
 #include "base/port.h"
 #include "base/util.h"
 #include "dictionary/user_pos.h"
-#include "rewriter/symbol_rewriter.h"
 #include "rewriter/embedded_dictionary.h"
 
 DEFINE_string(input, "", "single kanji dictionary file");

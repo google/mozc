@@ -47,9 +47,10 @@
       'target_name': 'storage_test',
       'type': 'executable',
       'sources': [
-        'lru_storage_test.cc',
         'existence_filter_test.cc',
+        'sparse_array_image_test.cc',
         'tiny_storage_test.cc',
+        'lru_storage_test.cc',
         'registry_test.cc',
       ],
       'dependencies': [
