@@ -192,6 +192,7 @@ bool DictionaryPredictor::Predict(Segments *segments) const {
     candidate->lid = node->lid;
     candidate->rid = node->rid;
     candidate->cost = node->wcost;
+    candidate->is_spelling_correction = node->is_spelling_correction;
 
     // Don't provide any descriptions for dictionary suggests
 #ifdef _DEBUG

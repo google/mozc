@@ -91,25 +91,18 @@ RewriterImpl::RewriterImpl()
       user_segment_history_rewriter_(new UserSegmentHistoryRewriter),
       version_rewriter_(new VersionRewriter),
       emoticon_rewriter_(new EmoticonRewriter),
-#if defined(OS_LINUX) && !defined(OS_CHROMEOS)
       calculator_rewriter_(new CalculatorRewriter),
-#else
-      calculator_rewriter_(NULL),
-#endif
       fortune_rewriter_(new FortuneRewriter) {
   rewriters_.push_back(single_kanji_rewriter_);
   rewriters_.push_back(symbol_rewriter_);
-  // Push back calculator_rewriter_ only if it is enabled.
-  if (calculator_rewriter_) {
-    rewriters_.push_back(calculator_rewriter_);
-  }
+  rewriters_.push_back(calculator_rewriter_);
   rewriters_.push_back(emoticon_rewriter_);
-  rewriters_.push_back(fortune_rewriter_);
   rewriters_.push_back(number_rewriter_);
   rewriters_.push_back(collocation_rewriter_);
   rewriters_.push_back(date_rewriter_);
   rewriters_.push_back(user_boundary_history_rewriter_);
   rewriters_.push_back(user_segment_history_rewriter_);
+  rewriters_.push_back(fortune_rewriter_);
   rewriters_.push_back(version_rewriter_);
 }
 

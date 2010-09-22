@@ -30,6 +30,7 @@
 #include "prediction/user_history_predictor.h"
 
 #include <algorithm>
+#include <climits>
 #include <time.h>
 #include <string>
 #include "base/base.h"
@@ -1129,12 +1130,17 @@ void UserHistoryPredictor::Finish(Segments *segments) {
             SegmentFingerprint(
                 segments->segment(
                     segments->history_segments_size() - 1)));
+
     NextEntry next_entry;
-    next_entry.set_entry_fp(
-        SegmentFingerprint(segments->conversion_segment(0)));
-    InsertNextEntry(next_entry, history_entry);
-    // entire user input
-    if (segments->conversion_segments_size() > 1) {
+    if (segments->request_type() == Segments::CONVERSION) {
+      next_entry.set_entry_fp(
+          SegmentFingerprint(segments->conversion_segment(0)));
+      InsertNextEntry(next_entry, history_entry);
+    }
+
+    // entire user input or SUGGESTION
+    if (segments->request_type() != Segments::CONVERSION ||
+        segments->conversion_segments_size() > 1) {
       next_entry.set_entry_fp(Fingerprint(all_key, all_value));
       InsertNextEntry(next_entry, history_entry);
     }
@@ -1199,7 +1205,16 @@ uint32 UserHistoryPredictor::EntryFingerprint(
 // static
 uint32 UserHistoryPredictor::SegmentFingerprint(const Segment &segment) {
   if (segment.candidates_size() > 0) {
-    return Fingerprint(segment.key(), segment.candidate(0).value);
+    // When segment.key().size() < segment.candidate(0).content_key.size(),
+    // the candidate is generated from suggestion.
+    // http://b/issue?id=2966638
+    // TODO(taku): better to have Segment::Candidate::key.
+    if (segment.key().size() < segment.candidate(0).content_key.size()) {
+      return Fingerprint(segment.candidate(0).content_key,
+                         segment.candidate(0).content_value);
+    } else {
+      return Fingerprint(segment.key(), segment.candidate(0).value);
+    }
   }
   return 0;
 }

@@ -38,6 +38,7 @@
 
 #include "base/base.h"
 #include "session/common.h"
+#include "session/session_handler_interface.h"
 #include "storage/lru_cache.h"
 
 namespace mozc {
@@ -61,24 +62,24 @@ class SessionObserverInterface;
 class Session;
 class ConverterInterface;
 
-class SessionHandler {
+class SessionHandler : public SessionHandlerInterface {
  public:
   SessionHandler();
   virtual ~SessionHandler();
 
-  // return true if SessionHandle is available
-  bool IsAvailable() const;
+  // Returns true if SessionHandle is available.
+  virtual bool IsAvailable() const;
 
-  bool EvalCommand(commands::Command *command);
+  virtual bool EvalCommand(commands::Command *command);
 
-  // start watch dog timer to cleanup sessions
-  bool StartWatchDog();
+  // Starts watch dog timer to cleanup sessions.
+  virtual bool StartWatchDog();
 
   // NewSession returns new Sessoin.
   // Client needs to delete it properly
   Session *NewSession();
 
-  void AddObserver(session::SessionObserverInterface *observer);
+  virtual void AddObserver(session::SessionObserverInterface *observer);
 
  private:
   // Reload settings which are managed by SessionHandler

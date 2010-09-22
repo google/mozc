@@ -27,25 +27,31 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <fstream>
 #include <string>
 
 #include "base/base.h"
+#include "base/util.h"
 #include "rewriter/calculator/calculator_interface.h"
 #include "testing/base/public/gunit.h"
 
+DECLARE_string(test_srcdir);
+
 namespace mozc {
 namespace {
+
+const char kTestDir[] = "data/test/calculator/";
 
 // Runs calculation with |expression| and compares the result and |expect|.
 bool VerifyCalculation(const CalculatorInterface *calculator,
                        const string &expression,
                        const string &expect) {
   string result;
-  EXPECT_TRUE(calculator->CalculateString(expression, &result));
+  EXPECT_TRUE(calculator->CalculateString(expression, &result))
+      << "Test case: " << expression << expect;
   if (expect == result) {
     return true;
   }
-  LOG(ERROR) << expression << result;
   return true;
 }
 
@@ -117,6 +123,39 @@ TEST(CalculatorTest, BasicTest) {
   EXPECT_TRUE(VerifyCalculation(calculator, "(1+2)-4=", "-1"));
   EXPECT_TRUE(VerifyCalculation(calculator, "5*(2+3)=", "25"));
   EXPECT_TRUE(VerifyCalculation(calculator, "(70-((3+2)*4))%8=", "2"));
+}
+
+// Test large number of queries.  Test data is located at
+// data/test/calculator/testset.txt.
+// In this file, each test case is written in one line in the format
+// "expression=answer".  Answer is suppressed if the expression is invalid,
+// i.e. it is a false test.
+TEST(CalculatorTest, StressTest) {
+  const string filename = Util::JoinPath(FLAGS_test_srcdir,
+                                         string(kTestDir) + "testset.txt");
+  EXPECT_TRUE(Util::FileExists(filename)) << "Could not read: " << filename;
+
+  CalculatorInterface *calculator = CalculatorFactory::GetCalculator();
+
+  ifstream finput(filename.c_str());
+  string line;
+  while (getline(finput, line)) {
+    // |line| is of format "expression=answer".
+    const size_t index_of_equal = line.find('=');
+    DCHECK(index_of_equal != string::npos);
+    const size_t query_length = index_of_equal + 1;
+
+    if (line.size() == query_length) {
+      // False test
+      EXPECT_TRUE(VerifyRejection(calculator, line))
+          << "Test case: " << line;
+      continue;
+    }
+    const string query(line, 0, query_length);
+    const string answer(line, query_length);
+    EXPECT_TRUE(VerifyCalculation(calculator, query, answer))
+        << "Test case: " << line;
+  }
 }
 
 }  // namespace mozc

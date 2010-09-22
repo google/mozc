@@ -41,7 +41,7 @@
 #include "session/config.pb.h"
 
 #ifdef OS_WINDOWS
-#include "win32/base/imm_util.h"
+#include "win32/base/migration_util.h"
 #endif
 
 
@@ -61,17 +61,21 @@ SetDefaultDialog::~SetDefaultDialog() {
 
 void SetDefaultDialog::accept() {
 // TODO(mazda): Implement SetDefault on Mac and Linux.
+  const bool dont_ask_again =
+      (dontAskAgainCheckBox->checkState() == Qt::Checked);
 #ifdef OS_WINDOWS
-  if (!mozc::win32::ImeUtil::SetDefault()) {
+  // LaunchBrokerForSetDefault is responsible to do the same task of
+  // |SetCheckDefault(false)| if |dont_ask_again| is true.
+  if (!win32::MigrationUtil::LaunchBrokerForSetDefault(dont_ask_again)) {
     LOG(ERROR) << "Failed to set Mozc as the default IME";
   }
-#endif  // OS_WINDOWS
-
-  if (dontAskAgainCheckBox->checkState() == Qt::Checked) {
+#else
+  if (dont_ask_again) {
     if (!SetCheckDefault(false)) {
       LOG(ERROR) << "Failed to set check_default";
     }
   }
+#endif
   done(QDialog::Accepted);
 }
 

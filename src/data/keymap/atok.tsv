@@ -1,5 +1,7 @@
 status	key	command
 Precomposition	Ctrl Alt F11	Abort
+Precomposition	Ctrl 0	ToggleAlphanumericMode
+Precomposition	Ctrl Eisu	ToggleAlphanumericMode
 Precomposition	Eisu	ToggleAlphanumericMode
 Precomposition	F10	ToggleAlphanumericMode
 Precomposition	Kana	ToggleAlphanumericMode
@@ -8,9 +10,16 @@ Precomposition	Shift Space	InsertAlternateSpace
 Precomposition	Space	InsertSpace
 Precomposition	Backspace	Revert
 Composition	Backspace	Backspace
+Composition	Ctrl 0	ConvertToHalfAlphanumeric
+Composition	Ctrl 2	ConvertWithoutHistory
+Composition	Ctrl 6	ConvertToHiragana
+Composition	Ctrl 7	ConvertToFullKatakana
+Composition	Ctrl 8	ConvertToHalfWidth
+Composition	Ctrl 9	ConvertToFullAlphanumeric
 Composition	Ctrl [	Cancel
 Composition	Ctrl @	ConvertToHalfAlphanumeric
 Composition	Ctrl Alt F11	Abort
+Composition	Ctrl Eisu	ToggleAlphanumericMode
 Composition	Ctrl g	Delete
 Composition	Ctrl h	Backspace
 Composition	Ctrl i	ConvertToFullKatakana
@@ -47,9 +56,15 @@ Composition	Shift Space	Convert
 Composition	Space	Convert
 Composition	Tab	PredictAndConvert
 Conversion	Backspace	Cancel
+Conversion	Ctrl 0	ConvertToHalfAlphanumeric
+Conversion	Ctrl 6	ConvertToHiragana
+Conversion	Ctrl 7	ConvertToFullKatakana
+Conversion	Ctrl 8	ConvertToHalfWidth
+Conversion	Ctrl 9	ConvertToFullAlphanumeric
 Conversion	Ctrl [	Cancel
 Conversion	Ctrl @	ConvertToHalfAlphanumeric
 Conversion	Ctrl Alt F11	Abort
+Conversion	Ctrl Eisu	ToggleAlphanumericMode
 Conversion	Ctrl h	Cancel
 Conversion	Ctrl i	ConvertToFullKatakana
 Conversion	Ctrl k	SegmentWidthShrink
@@ -80,10 +95,12 @@ Conversion	Insert	Cancel
 Conversion	Hiragana	ToggleAlphanumericMode
 Conversion	Left	SegmentWidthShrink
 Conversion	Right	SegmentWidthExpand
+Conversion	Shift Down	ConvertNextPage
 Conversion	Shift Henkan	ConvertPrevPage
 Conversion	Shift Left	SegmentFocusLeft
 Conversion	Shift Right	SegmentFocusRight
 Conversion	Shift Space	ConvertNext
+Conversion	Shift Up	ConvertPrevPage
 Conversion	Space	ConvertNext
 Conversion	Tab	PredictAndConvert
 Conversion	Up	ConvertPrev

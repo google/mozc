@@ -1,8 +1,8 @@
 vars = {
-  "gyp_revision": "827",
-  "gtest_revision": "422",
-  "protobuf_revision": "328",
-  "cygwin_in_chromium_revision": "11984",
+  "gyp_revision": "844",
+  "gtest_revision": "484",
+  "protobuf_revision": "344",
+  "cygwin_in_chromium_revision": "11972",
   "python_in_chromium_revision": "22967",
 }
 

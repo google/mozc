@@ -234,7 +234,6 @@ ProcessWatchDog::ProcessWatchDog()
 
 ProcessWatchDog::~ProcessWatchDog() {
   is_finished_ = true;
-  Thread::Terminate();
   Join();
 }
 

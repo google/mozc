@@ -341,5 +341,73 @@ TEST_F(SystemDictionaryTest, nodes_size) {
     delete added_tokens[i];
   }
 }
+
+TEST_F(SystemDictionaryTest, spelling_correction_tokens) {
+  scoped_ptr<Token> t1(new Token);
+  // "あぼがど"
+  t1->key = "\xe3\x81\x82\xe3\x81\xbc\xe3\x81\x8c\xe3\x81\xa9";
+  // "アボカド"
+  t1->value = "\xe3\x82\xa2\xe3\x83\x9c\xe3\x82\xab\xe3\x83\x89";
+  t1->cost = 1;
+  t1->lid = 0 + SystemDictionary::kSpellingCorrectionPosOffset;
+  t1->rid = 2;
+
+  scoped_ptr<Token> t2(new Token);
+  // "しゅみれーしょん"
+  t2->key = "\xe3\x81\x97\xe3\x82\x85\xe3\x81\xbf\xe3\x82\x8c"
+      "\xe3\x83\xbc\xe3\x81\x97\xe3\x82\x87\xe3\x82\x93";
+  // "シミュレーション"
+  t2->value = "\xe3\x82\xb7\xe3\x83\x9f\xe3\x83\xa5\xe3\x83"
+      "\xac\xe3\x83\xbc\xe3\x82\xb7\xe3\x83\xa7\xe3\x83\xb3";
+  t2->cost = 1;
+  t2->lid = 100 + SystemDictionary::kSpellingCorrectionPosOffset;
+  t2->rid = 3;
+
+  scoped_ptr<Token> t3(new Token);
+  // "あきはばら"
+  t3->key = "\xe3\x81\x82\xe3\x81\x8d\xe3\x81\xaf\xe3\x81\xb0\xe3\x82\x89";
+  // "秋葉原"
+  t3->value = "\xe7\xa7\x8b\xe8\x91\x89\xe5\x8e\x9f";
+  t3->cost = 1000;
+  t3->lid = 1;
+  t3->rid = 2;
+
+  vector<Token *> source_tokens;
+  source_tokens.push_back(t1.get());
+  source_tokens.push_back(t2.get());
+  source_tokens.push_back(t3.get());
+  BuildSystemDictionary(source_tokens, source_tokens.size());
+
+  scoped_ptr<SystemDictionary> system_dic(new SystemDictionary);
+  CHECK(system_dic->Open(dic_fn_.c_str()))
+      << "Failed to open dictionary source:" << dic_fn_;
+
+  vector<Token *>::const_iterator it;
+  for (it = source_tokens.begin(); it != source_tokens.end(); ++it) {
+    Node *node = system_dic->LookupExact((*it)->key.c_str(), (*it)->key.size(),
+                                         NULL);
+    const Token *t = *it;
+    while (node) {
+      EXPECT_EQ(node->is_spelling_correction,
+                t->lid >= SystemDictionary::kSpellingCorrectionPosOffset);
+
+      if (node->is_spelling_correction) {
+        EXPECT_EQ(node->lid,
+                  t->lid - SystemDictionary::kSpellingCorrectionPosOffset);
+      } else {
+        EXPECT_EQ(node->lid, t->lid);
+      }
+
+      EXPECT_EQ(node->rid, t->rid);
+      EXPECT_EQ(node->wcost, t->cost);
+      EXPECT_EQ(node->key, t->key);
+      EXPECT_EQ(node->value, t->value);
+
+      Node *tmp_node = node;
+      node = node->bnext;
+      delete tmp_node;
+    }
+  }
+}
 }  // namespace
 }  // namespace mozc

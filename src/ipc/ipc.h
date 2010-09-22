@@ -148,6 +148,8 @@ class IPCClient : public IPCClientInterface {
   // Return true when IPC finishes successfully.
   // When Server doesn't send response within timeout, 'Call' returns false.
   // When timeout (in msec) is set -1, 'Call' waits forever.
+  // Note that on Linux, Call() closes the socket_. This means you cannot call
+  // the Call() function more than once.
   bool Call(const char *request,
             size_t request_size,
             char *response,

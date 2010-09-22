@@ -47,13 +47,6 @@ const struct MozcEngineProperty {
   const char *icon;
 } kMozcEngineProperties[] = {
   {
-    commands::DIRECT,
-    "CompositionMode.Direct",
-    "Direct input",
-    "A",
-    "direct.png",
-  },
-  {
     commands::HIRAGANA,
     "CompositionMode.Hiragana",
     "Hiragana",
@@ -91,7 +84,8 @@ const struct MozcEngineProperty {
 };
 
 const size_t kMozcEnginePropertiesSize = arraysize(kMozcEngineProperties);
-COMPILE_ASSERT(commands::NUM_OF_COMPOSITIONS == kMozcEnginePropertiesSize,
+// DIRECT mode is obsolete and not supported.
+COMPILE_ASSERT((commands::NUM_OF_COMPOSITIONS - 1)== kMozcEnginePropertiesSize,
                bad_number_of_props);
 const commands::CompositionMode kMozcEngineInitialCompositionMode =
     commands::HIRAGANA;

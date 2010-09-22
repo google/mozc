@@ -157,6 +157,7 @@ bool CharChunk::AddInputInternal(const Table &table, string *input) {
     const string new_pending_chars = input->substr(0, key_length);
     raw_.append(new_pending_chars);
     pending_.append(new_pending_chars);
+    ambiguous_.append(new_pending_chars);
     input->erase(0, key_length);
     return kNoLoop;
   }
@@ -349,6 +350,7 @@ bool CharChunk::SplitChunk(const TransliteratorInterface *t12r,
 
     conversion_.clear();
     pending_ = converted_rhs;
+    ambiguous_.clear();
   } else {
     // [ conversion | pending ] => [ conv#1 ] [ conv#2 | pending ]
     left_new_chunk->set_conversion(converted_lhs);

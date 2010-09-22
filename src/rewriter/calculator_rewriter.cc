@@ -38,7 +38,9 @@
 
 namespace mozc {
 
-CalculatorRewriter::CalculatorRewriter() {}
+CalculatorRewriter::CalculatorRewriter() {
+  // Google calculator is enabled only on Cloud IME.
+}
 
 CalculatorRewriter::~CalculatorRewriter() {}
 
@@ -123,6 +125,14 @@ bool CalculatorRewriter::InsertCandidate(const string &value,
   const Segment::Candidate &reference_candidate =
       segment->candidate(reference_index);
 
+  // Normalize the expression, used in description.
+  string temp, temp2, expression;
+  Util::FullWidthAsciiToHalfWidthAscii(base_candidate.content_key, &temp);
+  // "・"
+  Util::StringReplace(temp, "\xE3\x83\xBB", "/", true, &temp2);
+  // "ー", onbiki
+  Util::StringReplace(temp2, "\xE3\x83\xBC", "-", true, &expression);
+
   candidate->Init();
   candidate->lid = reference_candidate.lid;
   candidate->rid = reference_candidate.rid;
@@ -133,7 +143,7 @@ bool CalculatorRewriter::InsertCandidate(const string &value,
   candidate->can_expand_alternative = false;
   candidate->learning_type |= Segment::Candidate::NO_LEARNING;
   // description "[expression] の計算結果"
-  string description = base_candidate.content_key +
+  const string description = expression +
       " \xE3\x81\xAE\xE8\xA8\x88\xE7\xAE\x97\xE7\xB5\x90\xE6\x9E\x9C";
   candidate->SetDescription(0, description);
   return true;

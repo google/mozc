@@ -32,6 +32,7 @@
 #include <ibus.h>
 
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/version.h"
 #include "unix/ibus/main.h"
 #include "unix/ibus/mozc_engine.h"
@@ -45,6 +46,13 @@ IBusBus *g_bus = NULL;
 IBusConfig *g_config = NULL;
 
 #ifndef OS_CHROMEOS
+void EnableVerboseLog() {
+  const int kDefaultVerboseLevel = 1;
+  if (mozc::Logging::GetVerboseLevel() < kDefaultVerboseLevel) {
+    mozc::Logging::SetVerboseLevel(kDefaultVerboseLevel);
+  }
+}
+
 void IgnoreSigChild() {
   // Don't wait() child process termination.
   struct sigaction sa;
@@ -120,6 +128,9 @@ int main(gint argc, gchar **argv) {
   ibus_init();
   InitIBusComponent(FLAGS_ibus);
 #ifndef OS_CHROMEOS
+#ifndef NO_LOGGING
+  EnableVerboseLog();
+#endif
   IgnoreSigChild();
 #endif
   ibus_main();

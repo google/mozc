@@ -177,7 +177,14 @@ Node *SystemDictionary::CopyTokenToNode(NodeAllocatorInterface *allocator,
     // for test
     new_node = new Node();
   }
-  new_node->lid = token->lid;
+
+  if (token->lid >= kSpellingCorrectionPosOffset) {
+    new_node->lid = token->lid - kSpellingCorrectionPosOffset;
+    new_node->is_spelling_correction = true;
+  } else {
+    new_node->lid = token->lid;
+    new_node->is_spelling_correction = false;
+  }
   new_node->rid = token->rid;
   new_node->wcost = token->cost;
   new_node->key = token->key;

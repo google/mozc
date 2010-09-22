@@ -34,20 +34,53 @@
 
 DEFINE_string(test_string, "hogehoge", "test_string");
 DEFINE_int32(test_int32, 20, "test_int32");
-DEFINE_int64(test_int64, 30, "test_int64");
+DEFINE_int64(test_int64,   29051773239673121LL, "test_int64");
+DEFINE_uint64(test_uint64, 84467440737095516LL, "test_uint64");
 DEFINE_bool(test_bool, false, "test_bool");
 DEFINE_double(test_double, 0.5, "test_double");
 
 namespace mozc {
+
 namespace {
-// TODO(taku): Emulate InitGoogle() and enrich test cases
+char *strdup_with_new(const char *str) {
+  char *result = new char [strlen(str) + 1];
+  strcpy(result, str);
+  return result;
+}
+}   // namespace
+
+namespace {
 TEST(FlagsTest, FlagsBasicTest) {
   EXPECT_EQ(false, FLAGS_test_bool);
   EXPECT_EQ(20, FLAGS_test_int32);
-  EXPECT_EQ(30, FLAGS_test_int64);
+  EXPECT_EQ(29051773239673121LL, FLAGS_test_int64);
+  EXPECT_EQ(84467440737095516LL, FLAGS_test_uint64);
   EXPECT_EQ("hogehoge", FLAGS_test_string);
   EXPECT_LT(0.4, FLAGS_test_double);
   EXPECT_GT(0.6, FLAGS_test_double);
+
+  char **argv = new char * [7];
+  argv[0] = strdup_with_new("test");
+  argv[1] = strdup_with_new("--test_int32=11214141");
+  argv[2] = strdup_with_new("--test_string=test");
+  argv[3] = strdup_with_new("--test_bool=true");
+  argv[4] = strdup_with_new("--test_double=1.5");
+  argv[5] = strdup_with_new("--test_int64=8172141141413124");
+  argv[6] = strdup_with_new("--test_uint64=9414041694169841");
+  int argc = 7;
+  mozc_flags::ParseCommandLineFlags(&argc, &argv, false);
+  for (size_t i = 0; i < 7; ++i) {
+    delete [] argv[i];
+  }
+  delete [] argv;
+
+  EXPECT_EQ(true, FLAGS_test_bool);
+  EXPECT_EQ(11214141, FLAGS_test_int32);
+  EXPECT_EQ(8172141141413124LL, FLAGS_test_int64);
+  EXPECT_EQ(9414041694169841LL, FLAGS_test_uint64);
+  EXPECT_EQ("test", FLAGS_test_string);
+  EXPECT_LT(1.4, FLAGS_test_double);
+  EXPECT_GT(1.6, FLAGS_test_double);
 }
 }  // namespace
 }  // namespace mozc

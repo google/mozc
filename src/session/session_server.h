@@ -37,7 +37,7 @@
 #include "ipc/ipc.h"
 #include "session/session_handler.h"
 
-class SessionHandler;
+class SessionHandlerInterface;
 
 namespace mozc {
 
@@ -68,7 +68,7 @@ class SessionServer: public IPCServer {
                        size_t *response_size);
 
  private:
-  scoped_ptr<SessionHandler> handler_;
+  scoped_ptr<SessionHandlerInterface> handler_;
   scoped_ptr<session::SessionUsageObserver> usage_observer_;
   DISALLOW_COPY_AND_ASSIGN(SessionServer);
 };

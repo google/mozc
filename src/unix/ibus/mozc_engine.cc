@@ -254,7 +254,6 @@ MozcEngine::MozcEngine()
       prop_root_(NULL),
       prop_composition_mode_(NULL),
       prop_mozc_tool_(NULL),
-      current_composition_mode_(kMozcEngineInitialCompositionMode),
       preedit_method_(config::Config::ROMAN) {
   // |sub_prop_list| is a radio menu which is shown when a button in the
   // language panel (i.e. |prop_composition_mode_| below) is clicked.
@@ -476,14 +475,6 @@ gboolean MozcEngine::ProcessKeyEvent(
 
   VLOG(2) << key.DebugString();
 
-  // TODO(yusukes): Remove DIRECT mode. http://crosbug.com/6226.
-  if ((current_composition_mode_ == commands::DIRECT) &&
-      // We DO consume keys that enable Mozc such as Henkan even when in the
-      // DIRECT mode.
-      !config::ImeSwitchUtil::IsTurnOnInDirectMode(key)) {
-    return FALSE;
-  }
-
   commands::Output output;
   if (!session_->SendKey(key, &output)) {
     LOG(ERROR) << "SendKey failed";
@@ -504,19 +495,16 @@ gboolean MozcEngine::ProcessKeyEvent(
 
 void MozcEngine::SetCompositionMode(
     IBusEngine *engine, commands::CompositionMode composition_mode) {
-  commands::SessionCommand command;
-  commands::Output output;
   if (composition_mode == commands::DIRECT) {
-    // Commit a preedit string.
-    command.set_type(commands::SessionCommand::SUBMIT);
-    session_->SendCommand(command, &output);
-    UpdateAll(engine, output);
-  } else {
-    command.set_type(commands::SessionCommand::SWITCH_INPUT_MODE);
-    command.set_composition_mode(composition_mode);
-    session_->SendCommand(command, &output);
+    LOG(ERROR) << "direct mode is not supported";
+    return;
   }
-  current_composition_mode_ = composition_mode;
+
+  commands::SessionCommand command;
+  command.set_type(commands::SessionCommand::SWITCH_INPUT_MODE);
+  command.set_composition_mode(composition_mode);
+  commands::Output output;
+  session_->SendCommand(command, &output);
 }
 
 void MozcEngine::PropertyActivate(IBusEngine *engine,
@@ -713,8 +701,43 @@ bool MozcEngine::UpdateCandidates(IBusEngine *engine,
 
   for (int i = 0; i < candidates.candidate_size(); ++i) {
     const commands::Candidates::Candidate &candidate = candidates.candidate(i);
-    IBusText *text =
-        ibus_text_new_from_string(candidate.value().c_str());
+
+#ifdef OS_CHROMEOS
+    const bool has_description = candidate.has_annotation() &&
+                                 candidate.annotation().has_description();
+    IBusText *text = NULL;
+    if (has_description) {
+      // |kDelimiter| divides a candidate and an annotation.
+      static const char kDelimiter[] = " ";
+
+      // Append an annotation to a candidate word. Both are separated
+      // by |kDelimiter|.
+      text = ibus_text_new_from_string(
+                 (candidate.value() + kDelimiter +
+                  candidate.annotation().description()).c_str());
+
+      // The candidate window on Chrome OS will know
+      // the start index of an annotation by specific number (e.g. 0x888888).
+      // TODO(nhiroki): We should modify the way when iBus supports annotations.
+      const guint kAnnotationForegroundColor = 0x888888;
+
+      // Insert an attribute. It incidates annotation's
+      // start and end index.
+      const guint start = Util::CharsLen(candidate.value() + kDelimiter);
+      const guint end = start +
+          Util::CharsLen(candidate.annotation().description());
+      ibus_text_append_attribute(text,
+                                 IBUS_ATTR_TYPE_FOREGROUND,
+                                 kAnnotationForegroundColor,
+                                 start,
+                                 end);
+    } else {
+      text = ibus_text_new_from_string(candidate.value().c_str());
+    }
+#else
+    IBusText *text = ibus_text_new_from_string(candidate.value().c_str());
+#endif
+
     ibus_lookup_table_append_candidate(table, text);
     // |text| is released by ibus_engine_update_lookup_table along with |table|.
 
@@ -839,12 +862,23 @@ void MozcEngine::UpdateConfig(
 
 void MozcEngine::UpdateCompositionMode(
     IBusEngine *engine, const commands::CompositionMode new_composition_mode) {
-  if (current_composition_mode_ == new_composition_mode) {
-    return;
+  commands::CompositionMode composition_mode = new_composition_mode;
+  // No key binding is currently assigned for switching the input mode to
+  // DIRECT, so the server should not return DIRECT as a composition mode.
+  // However, it is possible that users can somehow set key bindings which
+  // cause the server to switch the input mode to DIRECT.
+  // In order to cope with such a senario, we fallback to HIRAGANA when DIRECT
+  // is returned by the server.
+  // TODO(mazda): Verify the server nerver returns DIRECT as a composition mode
+  // and remove this hack.
+  if (new_composition_mode == commands::DIRECT) {
+    SetCompositionMode(engine, commands::HIRAGANA);
+    composition_mode = commands::HIRAGANA;
   }
+
   for (size_t i = 0; i < kMozcEnginePropertiesSize; ++i) {
     const MozcEngineProperty &entry = kMozcEngineProperties[i];
-    if (entry.composition_mode == new_composition_mode) {
+    if (entry.composition_mode == composition_mode) {
       PropertyActivate(engine, entry.key, PROP_STATE_CHECKED);
     }
   }
@@ -876,9 +910,6 @@ void MozcEngine::SyncData(bool force) {
 }
 
 void MozcEngine::RevertSession(IBusEngine *engine) {
-  const commands::CompositionMode original_composition_mode =
-      current_composition_mode_;
-
   commands::SessionCommand command;
   command.set_type(commands::SessionCommand::REVERT);
   commands::Output output;
@@ -886,12 +917,7 @@ void MozcEngine::RevertSession(IBusEngine *engine) {
     LOG(ERROR) << "RevertSession() failed";
     return;
   }
-  UpdateAll(engine, output);  // may update |current_composition_mode_|.
-
-  // If the original composition mode is DIRECT, we should resume the setting.
-  if (original_composition_mode == commands::DIRECT) {
-    UpdateCompositionMode(engine, original_composition_mode);
-  }
+  UpdateAll(engine, output);
 }
 
 }  // namespace ibus

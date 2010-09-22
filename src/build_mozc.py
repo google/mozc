@@ -151,6 +151,8 @@ def GenerateVersionFile(version_template_path, version_path):
     open(version_path, 'w').write(version_definition)
 
 
+
+
 def GetVersionFileNames(options):
   """Gets the (template of version file, version file) pair."""
   template_path = '%s/%s' % (SRC_DIR, options.version_file)
@@ -729,6 +731,7 @@ def BuildMain(original_directory_name):
   print 'Generating version definition file...'
   (template_path, version_path) = GetVersionFileNames(options)
   GenerateVersionFile(template_path, version_path)
+
 
   if not options.noqt:
     # Set $QTDIR for mozc_tool

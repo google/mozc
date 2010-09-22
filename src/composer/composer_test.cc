@@ -111,6 +111,17 @@ TEST_F(ComposerTest, Reset) {
   EXPECT_EQ(transliteration::HALF_ASCII, composer_->GetInputMode());
 }
 
+TEST_F(ComposerTest, ResetInputMode) {
+  composer_->InsertCharacter("mozuku");
+
+  composer_->SetInputMode(transliteration::FULL_KATAKANA);
+  composer_->SetTemporaryInputMode(transliteration::HALF_ASCII);
+  composer_->ResetInputMode();
+
+  EXPECT_FALSE(composer_->Empty());
+  EXPECT_EQ(transliteration::FULL_KATAKANA, composer_->GetInputMode());
+}
+
 TEST_F(ComposerTest, Empty) {
   composer_->InsertCharacter("mozuku");
   EXPECT_FALSE(composer_->Empty());
@@ -1720,5 +1731,72 @@ TEST_F(ComposerTest, Isue2555503) {
   EXPECT_EQ(transliteration::FULL_KATAKANA, composer_->GetInputMode());
 }
 
+TEST_F(ComposerTest, Issue2819580_1) {
+  // This is a unittest against http://b/2819580.
+  // 'y' after 'n' disappears.
+  // "ん"
+  table_->AddRule("n", "\xe3\x82\x93", "");
+  // "な"
+  table_->AddRule("na", "\xe3\x81\xaa", "");
+  // "や"
+  table_->AddRule("ya", "\xe3\x82\x84", "");
+  // "にゃ"
+  table_->AddRule("nya", "\xe3\x81\xab\xe3\x82\x83", "");
+
+  InsertKey("n", composer_.get());
+  InsertKey("y", composer_.get());
+
+  string result;
+  composer_->GetQueryForConversion(&result);
+  // "んy"
+  EXPECT_EQ("\xe3\x82\x93y", result);
+}
+
+TEST_F(ComposerTest, Issue2819580_2) {
+  // This is a unittest against http://b/2819580.
+  // 'y' after 'n' disappears.
+  // "ぽ"
+  table_->AddRule("po", "\xe3\x81\xbd", "");
+  // "ん"
+  table_->AddRule("n", "\xe3\x82\x93", "");
+  // "な"
+  table_->AddRule("na", "\xe3\x81\xaa", "");
+  // "や"
+  table_->AddRule("ya", "\xe3\x82\x84", "");
+  // "にゃ"
+  table_->AddRule("nya", "\xe3\x81\xab\xe3\x82\x83", "");
+
+  InsertKey("p", composer_.get());
+  InsertKey("o", composer_.get());
+  InsertKey("n", composer_.get());
+  InsertKey("y", composer_.get());
+
+  string result;
+  composer_->GetQueryForConversion(&result);
+  // "ぽんy"
+  EXPECT_EQ("\xe3\x81\xbd\xe3\x82\x93y", result);
+}
+
+TEST_F(ComposerTest, Issue2819580_3) {
+  // This is a unittest against http://b/2819580.
+  // 'y' after 'n' disappears.
+  // "ん"
+  table_->AddRule("n", "\xe3\x82\x93", "");
+  // "な"
+  table_->AddRule("na", "\xe3\x81\xaa", "");
+  // "や"
+  table_->AddRule("ya", "\xe3\x82\x84", "");
+  // "にゃ"
+  table_->AddRule("nya", "\xe3\x81\xab\xe3\x82\x83", "");
+
+  InsertKey("z", composer_.get());
+  InsertKey("n", composer_.get());
+  InsertKey("y", composer_.get());
+
+  string result;
+  composer_->GetQueryForConversion(&result);
+  // "zんy"
+  EXPECT_EQ("z\xe3\x82\x93y", result);
+}
 }  // namespace composer
 }  // namespace mozc

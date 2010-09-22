@@ -32,25 +32,49 @@
 // gen_system_dictionary_data_main
 //  --input="dictionary0.txt dictionary1.txt zip_code_seed.txt"
 //  --output="output.h"
-//  --include_zip_code
 //  --make_header
+//
+// Special input files are distinguished by prefixes of filenames
+//   zip_code*   : zip code seed dictionary
+//   correction* : correction dictionary
+//
+// TODO(takiba): correction* -> spelling_correction*
 
 #include <string>
 #include <vector>
 #include "base/base.h"
 #include "base/util.h"
+#include "dictionary/spelling_correction_dictionary_builder.h"
 #include "dictionary/system/system_dictionary_builder.h"
 #include "dictionary/zip_code_dictionary_builder.h"
 
 DEFINE_string(input, "", "space separated input text files");
 DEFINE_string(output, "", "output binary file");
-DEFINE_bool(include_zip_code, false,
-            "include zip code dictionary by specifying seed dictionary"
-            " at the end of --input");
 DEFINE_bool(make_header, false, "make header mode");
 
 namespace mozc {
 namespace {
+// In gyp build, file names will be given in unix style(separated by '/')
+// even for windows.
+// So we can not use Util::Basename().
+// Here we assume that |file_path| contains '/' or '\' only for separater.
+string GetBasenameWithAnyStyles(const string &file_path) {
+  // First we try with unix style
+  const string::size_type unix_style_separated_pos =
+      file_path.find_last_of('/');
+  if (unix_style_separated_pos != string::npos) {
+    return file_path.substr(unix_style_separated_pos + 1);
+  }
+  // Try with windows style
+  const string::size_type win_style_separated_pos =
+      file_path.find_last_of('\\');
+  if (win_style_separated_pos != string::npos) {
+    return file_path.substr(win_style_separated_pos + 1);
+  }
+  // Return as-is |file_path| for the file in the current directory.
+  return file_path;
+}
+
 // convert space delimtered text to CSV
 string GetInputFileName(const vector<string> filenames) {
   string output;
@@ -71,15 +95,45 @@ int main(int argc, char **argv) {
     output += ".tmp";
   }
 
+  string zip_code_input;
+  string spelling_correction_input;
+  for (int i = 0; i < input_files.size(); ++i) {
+    const string &file_path = input_files[i];
+    const string file_name = mozc::GetBasenameWithAnyStyles(file_path);
+
+    if (file_name.find("zip_code") == 0) {
+      CHECK(zip_code_input.empty())
+          << "Multiple zip code seed dictionaries are not supported";
+      zip_code_input = file_path;
+      input_files.erase(input_files.begin() + i--);
+      LOG(INFO) << "zip code seed dictionary: " << zip_code_input;
+    } else if (file_name.find("correction") == 0) {
+      CHECK(spelling_correction_input.empty())
+          << "Multiple spelling correction dictionaries are not supported";
+      spelling_correction_input = file_path;
+      input_files.erase(input_files.begin() + i--);
+      LOG(INFO) << "spelling correction dictionary: "
+                << spelling_correction_input;
+    }
+  }
+
   string zip_code_text_dictionary;
-  if (FLAGS_include_zip_code) {
+  if (!zip_code_input.empty()) {
     zip_code_text_dictionary = FLAGS_output + ".zip_code_tmp";
-    const string zip_code_input = input_files.back();
-    input_files.pop_back();
     mozc::ZipCodeDictionaryBuilder zip_code_builder(zip_code_input,
                                                     zip_code_text_dictionary);
     zip_code_builder.Build();
     input_files.push_back(zip_code_text_dictionary);
+  }
+
+  string spelling_correction_converted_dictionary;
+  if (!spelling_correction_input.empty()) {
+    spelling_correction_converted_dictionary = FLAGS_output + ".correction_tmp";
+    mozc::SpellingCorrectionDictionaryBuilder
+        spelling_correction_builder(spelling_correction_input,
+                                    spelling_correction_converted_dictionary);
+    spelling_correction_builder.Build();
+    input_files.push_back(spelling_correction_converted_dictionary);
   }
 
   const string input = mozc::GetInputFileName(input_files);
@@ -97,6 +151,9 @@ int main(int argc, char **argv) {
 
   if (!zip_code_text_dictionary.empty()) {
     mozc::Util::Unlink(zip_code_text_dictionary);
+  }
+  if (!spelling_correction_converted_dictionary.empty()) {
+    mozc::Util::Unlink(spelling_correction_converted_dictionary);
   }
 
   return 0;

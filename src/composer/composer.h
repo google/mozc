@@ -57,6 +57,12 @@ class Composer {
   // Reset all composing data except table.
   void Reset();
 
+  // Reset input mode.  When the current input mode is
+  // HalfAlphanumeric by pressing capital alphabet, this function
+  // revert the input mode from HalfAlphanumeric to the previous input
+  // mode.
+  void ResetInputMode();
+
   // Reload the configuration.
   void ReloadConfig();
 

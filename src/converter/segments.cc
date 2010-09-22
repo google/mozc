@@ -223,6 +223,13 @@ void Segment::Candidate::ResetDescription(int description_type) {
       POSMatcher::IsZipcode(lid) && lid == rid) {
     description = content_key;
   }
+
+  // Spelling Correction description
+  if (is_spelling_correction) {
+    // description = "<もしかして>"
+    description = "<\xE3\x82\x82\xE3\x81\x97\xE3\x81\x8B\xE3\x81\x97"
+        "\xE3\x81\xA6>";
+  }
 }
 
 Segment::Segment()

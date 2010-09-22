@@ -29,6 +29,7 @@
 
 #include "converter/candidate_filter.h"
 
+#include <climits>
 #include <string>
 #include <vector>
 #include "base/base.h"

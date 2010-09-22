@@ -76,6 +76,7 @@ class Segment {
     uint8  learning_type;
     uint8  style;  // candidate style added by rewriters
     bool can_expand_alternative;  // Can expand full/half width form
+    bool is_spelling_correction;
     // for experimant of removing noisy candidates
     // TODO(toshiyuki): delete this member after the experiment
     vector<const Node *> nodes;
@@ -96,12 +97,14 @@ class Segment {
       learning_type = 0;
       style = 0;
       can_expand_alternative = true;
+      is_spelling_correction = false;
     }
 
     Candidate()
         : cost(0), lid(0), rid(0),
           learning_type(0), style(0),
-          can_expand_alternative(true) {}
+          can_expand_alternative(true),
+          is_spelling_correction(false) {}
 
     enum LearningType {
       DEFAULT_LEARNING = 0,

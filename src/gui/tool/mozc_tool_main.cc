@@ -48,13 +48,10 @@ int RunDictionaryTool(int argc, char *argv[]);
 int RunErrorMessageDialog(int argc, char *argv[]);
 
 #ifdef OS_WINDOWS
-// (SetDefault|PostInstall|RunAdministartion)Dialog and
-// RunUpdateNotifier are used for Windows only
+// (SetDefault|PostInstall|RunAdministartion)Dialog are used for Windows only.
 int RunSetDefaultDialog(int argc, char *argv[]);
 int RunPostInstallDialog(int argc, char *argv[]);
 int RunAdministrationDialog(int argc, char *argv[]);
-int RunIMEMigrator(int argc, char *argv[]);
-// int RunUpdateNotifier(int argc, char *argv[]);
 #endif  // OS_WINDOWS
 
 #ifdef OS_MACOSX
@@ -137,12 +134,6 @@ int main(int argc, char *argv[]) {
   } else if (FLAGS_mode == "administration_dialog") {
     // administration_dialog is used on Windows only.
     return RunAdministrationDialog(argc, argv);
-  } else if (FLAGS_mode == "update_notifier") {
-    // update_notifier is used on Windows only.
-    // return RunUpdateNotifier(argc, argv);
-  } else if (FLAGS_mode == "ime_migrator") {
-    // ime_migrator is used on Windows only.
-    return RunIMEMigrator(argc, argv);
 #endif  // OS_WINDOWS
 #ifdef OS_MACOSX
   } else if (FLAGS_mode == "confirmation_dialog") {

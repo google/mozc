@@ -17,15 +17,16 @@
 export DH_OPTIONS
 
 BUILD_DIR=./out_linux
-TARGETS=unix/ibus/ibus.gyp:ibus_mozc unix/scim/scim.gyp:scim_mozc unix/scim/scim.gyp:scim_mozc_setup server/server.gyp:mozc_server gui/gui.gyp:mozc_tool
+TARGETS=unix/ibus/ibus.gyp:ibus_mozc unix/scim/scim.gyp:scim_mozc unix/scim/scim.gyp:scim_mozc_setup unix/emacs/emacs.gyp:mozc_emacs_helper server/server.gyp:mozc_server gui/gui.gyp:mozc_tool
 
 configure: configure-stamp
 configure-stamp:
 	dh_testdir
 	touch configure-stamp
 
+
 #Architecture 
-build: build-arch
+build: build-arch build-indep
 
 build-arch: build-arch-stamp
 build-arch-stamp: configure-stamp 
@@ -34,6 +35,10 @@ build-arch-stamp: configure-stamp
 	python build_mozc.py build $(TARGETS) -c Release
 	touch build-arch-stamp
 
+build-indep: build-indep-stamp
+build-indep-stamp: configure-stamp
+	touch $@
+
 clean:
 	dh_testdir
 	dh_testroot
@@ -41,7 +46,16 @@ clean:
 	python build_mozc.py clean
 	dh_clean 
 
-install: install-arch
+install: install-arch install-indep
+
+install-indep:
+	dh_testdir
+	dh_testroot
+	dh_prep
+	dh_installdirs
+
+	mkdir -p $(CURDIR)/debian/emacs-mozc/usr/share/emacs/site-lisp/emacs-mozc/
+	cp -p unix/emacs/mozc.el $(CURDIR)/debian/emacs-mozc/usr/share/emacs/site-lisp/emacs-mozc/
 
 install-arch:
 	dh_testdir
@@ -81,6 +95,9 @@ install-arch:
 	cp -p data/images/unix/ui-alpha_half.png $(CURDIR)/debian/scim-mozc`pkg-config --variable=icondir scim`/scim-mozc-alpha_half.png
 	cp -p data/images/unix/ui-alpha_full.png $(CURDIR)/debian/scim-mozc`pkg-config --variable=icondir scim`/scim-mozc-alpha_full.png
 
+	mkdir -p $(CURDIR)/debian/emacs-mozc-bin/usr/bin/
+	cp -p $(BUILD_DIR)/Release/mozc_emacs_helper $(CURDIR)/debian/emacs-mozc-bin/usr/bin/
+
 	mkdir -p $(CURDIR)/debian/mozc-server/usr/lib/mozc
 	cp -p $(BUILD_DIR)/Release/mozc_server $(CURDIR)/debian/mozc-server/usr/lib/mozc/
 
@@ -101,7 +118,7 @@ binary-common:
 #	dh_installmenu
 #	dh_installdebconf	
 #	dh_installlogrotate	
-#	dh_installemacsen
+	dh_installemacsen
 #	dh_installpam
 #	dh_installmime
 #	dh_installinit
@@ -120,6 +137,9 @@ binary-common:
 	dh_gencontrol
 	dh_md5sums
 	dh_builddeb
+
+binary-indep: build-indep install-indep
+	$(MAKE) -f debian/rules DH_OPTIONS=-i binary-common
 
 # Build architecture dependant packages using the common target.
 binary-arch: build-arch install-arch

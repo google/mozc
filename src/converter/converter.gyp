@@ -161,10 +161,12 @@
         'focus_candidate_handler.cc',
         'immutable_converter.cc',
         'key_corrector.cc',
+        '<(gen_out_dir)/user_segment_history_rewriter_rule.h',
       ],
       'dependencies': [
         '../base/base.gyp:base',
         '../prediction/prediction.gyp:prediction',
+        '../rewriter/rewriter.gyp:gen_rewriter_files',
         '../rewriter/rewriter.gyp:rewriter',
         '../session/session.gyp:genproto_session',
         '../session/session.gyp:session_protocol',

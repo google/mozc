@@ -410,7 +410,6 @@
           'VCResourceCompilerTool': {
             'PreprocessorDefinitions': [
               'MOZC_RES_USE_TEMPLATE=1',
-              'MOZC_RES_USE_TEMPLATE_AUTOGEN=1',
             ],
             'AdditionalIncludeDirectories': [
               '<(SHARED_INTERMEDIATE_DIR)',
@@ -474,6 +473,7 @@
             '<@(gcc_cflags)',
           ],
           'WARNING_CFLAGS': ['<@(warning_cflags)'],
+          'SDKROOT': 'macosx10.5',
         },
         'link_settings': {
           'libraries': [

@@ -203,6 +203,10 @@ Composer::~Composer() {}
 
 void Composer::Reset() {
   EditErase();
+  ResetInputMode();
+}
+
+void Composer::ResetInputMode() {
   SetInputMode(comeback_input_mode_);
 }
 

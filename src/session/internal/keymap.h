@@ -95,6 +95,15 @@ class KeyMapManager {
   bool GetCommandPrediction(const commands::KeyEvent &key_event,
                             ConversionState::Commands *command) const;
 
+  bool GetNameFromCommandDirect(DirectInputState::Commands command,
+                                string *name) const;
+  bool GetNameFromCommandPrecomposition(PrecompositionState::Commands command,
+                                        string *name) const;
+  bool GetNameFromCommandComposition(CompositionState::Commands command,
+                                     string *name) const;
+  bool GetNameFromCommandConversion(ConversionState::Commands command,
+                                    string *name) const;
+
   // Get command names
   void GetAvailableCommandNameDirect(set<string> *command_names) const;
   void GetAvailableCommandNamePrecomposition(set<string> *command_names) const;
@@ -119,6 +128,15 @@ class KeyMapManager {
                            CompositionState::Commands *command) const;
   bool ParseCommandConversion(const string &command_string,
                               ConversionState::Commands *command) const;
+  void RegisterDirectCommand(const string &command_string,
+                             DirectInputState::Commands command);
+  void RegisterPrecompositionCommand(const string &command_string,
+                                     PrecompositionState::Commands command);
+  void RegisterCompositionCommand(const string &command_string,
+                                  CompositionState::Commands command);
+  void RegisterConversionCommand(const string &command_string,
+                                 ConversionState::Commands command);
+
   // Migration code for CUSTOM keymap.
   // If custom keymap has no IMEOf/Off key settings, add them and save
   // to custom keymap.
@@ -134,6 +152,11 @@ class KeyMapManager {
   map<string, PrecompositionState::Commands> command_precomposition_map_;
   map<string, CompositionState::Commands> command_composition_map_;
   map<string, ConversionState::Commands> command_conversion_map_;
+
+  map<DirectInputState::Commands, string> reverse_command_direct_map_;
+  map<PrecompositionState::Commands, string> reverse_command_precomposition_map_;
+  map<CompositionState::Commands, string> reverse_command_composition_map_;
+  map<ConversionState::Commands, string> reverse_command_conversion_map_;
 
   // Status should be out of keymap.
   keymap::KeyMap<keymap::DirectInputState::Commands> keymap_direct_;

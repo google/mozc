@@ -15,6 +15,16 @@ Architecture: any
 Depends: ${shlibs:Depends}, scim, mozc-server (= ${Source-Version})
 Description: SCIM IMEngine module for Mozc.
 
+Package: emacs-mozc
+Architecture: all
+Depends: emacs | emacs22 | emacs23 | emacs-snapshot, emacs-mozc-bin (= ${Source-Version})
+Description: Mozc for Emacs.
+
+Package: emacs-mozc-bin
+Architecture: any
+Depends: ${shlibs:Depends}, mozc-server (= ${Source-Version})
+Description: Helper module for emacs-mozc
+
 Package: mozc-server
 Architecture: any
 Depends: ${shlibs:Depends}

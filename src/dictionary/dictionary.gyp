@@ -106,6 +106,7 @@
               '../data/dictionary/dictionary08.txt',
               '../data/dictionary/dictionary09.txt',
               '../data/dictionary/zip_code_seed.tsv',
+              # '../data/dictionary/correction_dictionary.txt',
             ],
           },
           'inputs': [
@@ -124,7 +125,6 @@
             '<(mozc_build_tools_dir)/gen_system_dictionary_data_main',
             '--logtostderr',
             '--input=<(input_files)',
-            '--include_zip_code',
             '--make_header',
             '--output=<(gen_out_dir)/embedded_dictionary_data.h',
           ],
@@ -241,6 +241,7 @@
       'sources': [
         'gen_system_dictionary_data_main.cc',
         'zip_code_dictionary_builder.cc',
+        'spelling_correction_dictionary_builder.cc',
       ],
       'dependencies': [
         '../base/base.gyp:base',

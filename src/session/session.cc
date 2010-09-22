@@ -270,9 +270,22 @@ Session::Session(const composer::Table *table,
 
 Session::~Session() {}
 
+void Session::SetSessionState(const SessionState::Type state) {
+  state_ = state;
+  if (state == SessionState::DIRECT ||
+      state == SessionState::PRECOMPOSITION) {
+    composer_->Reset();
+  } else if (state == SessionState::CONVERSION) {
+    composer_->ResetInputMode();
+  }
+  // else if (state == SessionState::COMPOSITION) {
+  //   Do nothing.
+  // }
+}
+
 void Session::EnsureIMEIsOn() {
   if (state_ == SessionState::DIRECT) {
-    state_ = SessionState::PRECOMPOSITION;
+    SetSessionState(SessionState::PRECOMPOSITION);
   }
 }
 
@@ -454,6 +467,11 @@ bool Session::SendKeyDirectInputState(commands::Command *command) {
   if (!keymap_->GetCommandDirect(command->input().key(), &key_command)) {
     return EchoBack(command);
   }
+  string command_name;
+  if (keymap_->GetNameFromCommandDirect(key_command, &command_name)) {
+    const string name = "Direct_" + command_name;
+    command->mutable_output()->set_performed_command(name);
+  }
   switch (key_command) {
     case keymap::DirectInputState::IME_ON:
       return IMEOn(command);
@@ -482,6 +500,11 @@ bool Session::SendKeyPrecompositionState(commands::Command *command) {
   if (!keymap_->GetCommandPrecomposition(command->input().key(),
                                          &key_command)) {
     return EchoBack(command);
+  }
+  string command_name;
+  if (keymap_->GetNameFromCommandPrecomposition(key_command, &command_name)) {
+    const string name = "Precomposition_" + command_name;
+    command->mutable_output()->set_performed_command(name);
   }
   switch (key_command) {
     case keymap::PrecompositionState::INSERT_CHARACTER:
@@ -534,7 +557,11 @@ bool Session::SendKeyCompositionState(commands::Command *command) {
   if (!result) {
     return DoNothing(command);
   }
-
+  string command_name;
+  if (keymap_->GetNameFromCommandComposition(key_command, &command_name)) {
+    const string name = "Composition_" + command_name;
+    command->mutable_output()->set_performed_command(name);
+  }
   switch (key_command) {
     case keymap::CompositionState::INSERT_CHARACTER:
       return InsertCharacter(command);
@@ -663,7 +690,11 @@ bool Session::SendKeyConversionState(commands::Command *command) {
   if (!result) {
     return DoNothing(command);
   }
-
+  string command_name;
+  if (keymap_->GetNameFromCommandConversion(key_command, &command_name)) {
+    const string name = "Conversion_" + command_name;
+    command->mutable_output()->set_performed_command(name);
+  }
   switch (key_command) {
     case keymap::ConversionState::INSERT_CHARACTER:
       return InsertCharacter(command);
@@ -802,7 +833,7 @@ bool Session::UpdatePreferences(commands::Command *command) {
 
 bool Session::IMEOn(commands::Command *command) {
   command->mutable_output()->set_consumed(true);
-  state_ = SessionState::PRECOMPOSITION;
+  SetSessionState(SessionState::PRECOMPOSITION);
   const commands::KeyEvent &key = command->input().key();
   if (key.has_mode()) {
     // Ime on with specified mode.
@@ -839,7 +870,7 @@ bool Session::IMEOff(commands::Command *command) {
   //  EditCancel(command);
   Commit(command);
 
-  state_ = SessionState::DIRECT;
+  SetSessionState(SessionState::DIRECT);
   OutputMode(command);
   return true;
 }
@@ -888,12 +919,7 @@ bool Session::Revert(commands::Command *command) {
     converter_->Cancel();
   }
 
-  // The first guard clause in this function guarantees that the current state
-  // is COMPOSITION or CONVERSION here.
-  // In either case, we should reset the composer.
-  composer_->Reset();
-
-  state_ = SessionState::PRECOMPOSITION;
+  SetSessionState(SessionState::PRECOMPOSITION);
   OutputMode(command);
   return true;
 }
@@ -925,7 +951,7 @@ bool Session::SelectCandidate(commands::Command *command) {
 
   command->mutable_output()->set_consumed(true);
   converter_->CandidateMoveToId(command->input().command().id());
-  state_ = SessionState::CONVERSION;
+  SetSessionState(SessionState::CONVERSION);
 
   Output(command);
   return true;
@@ -987,7 +1013,7 @@ bool Session::InsertCharacter(commands::Command *command) {
       result->mutable_key()->append(command->input().key().key_string());
       // Append a character representing key_code.
       result->mutable_value()->append(1, command->input().key().key_code());
-      state_ = SessionState::PRECOMPOSITION;
+      SetSessionState(SessionState::PRECOMPOSITION);
       return true;
     }
   }
@@ -999,7 +1025,7 @@ bool Session::InsertCharacter(commands::Command *command) {
 
   composer_->InsertCharacterKeyEvent(command->input().key());
 
-  state_ = SessionState::COMPOSITION;
+  SetSessionState(SessionState::COMPOSITION);
   if (CanStartAutoConversion(command->input().key())) {
     return Convert(command);
   }
@@ -1132,8 +1158,7 @@ bool Session::InsertSpaceFullWidth(commands::Command *command) {
 
 bool Session::EditCancel(commands::Command *command) {
   command->mutable_output()->set_consumed(true);
-  composer_->Reset();
-  state_ = SessionState::PRECOMPOSITION;
+  SetSessionState(SessionState::PRECOMPOSITION);
   OutputMode(command);
   return true;
 }
@@ -1149,8 +1174,7 @@ bool Session::Commit(commands::Command *command) {
   } else {  // SessionState::CONVERSION
     converter_->Commit();
   }
-  composer_->Reset();
-  state_ = SessionState::PRECOMPOSITION;
+  SetSessionState(SessionState::PRECOMPOSITION);
   Output(command);
   return true;
 }
@@ -1164,8 +1188,7 @@ bool Session::CommitFirstSuggestion(commands::Command *command) {
   const int kFirstIndex = 0;
   converter_->CommitSuggestion(kFirstIndex);
 
-  composer_->Reset();
-  state_ = SessionState::PRECOMPOSITION;
+  SetSessionState(SessionState::PRECOMPOSITION);
   Output(command);
   return true;
 }
@@ -1180,8 +1203,7 @@ bool Session::CommitSegment(commands::Command *command) {
   if (!converter_->IsActive()) {
     // If the converter is not active (ie. the segment size was one.),
     // the state should be switched to precomposition.
-    composer_->Reset();
-    state_ = SessionState::PRECOMPOSITION;
+    SetSessionState(SessionState::PRECOMPOSITION);
   }
   Output(command);
   return true;
@@ -1198,7 +1220,7 @@ bool Session::ConvertToTransliteration(
   if (!converter_->ConvertToTransliteration(composer_.get(), type)) {
     return false;
   }
-  state_ = SessionState::CONVERSION;
+  SetSessionState(SessionState::CONVERSION);
   Output(command);
   return true;
 }
@@ -1232,7 +1254,7 @@ bool Session::SwitchKanaType(commands::Command *command) {
   if (!converter_->SwitchKanaType(composer_.get())) {
     return false;
   }
-  state_ = SessionState::CONVERSION;
+  SetSessionState(SessionState::CONVERSION);
   Output(command);
   return true;
 }
@@ -1348,7 +1370,7 @@ bool Session::ConvertToHalfWidth(commands::Command *command) {
   if (!converter_->ConvertToHalfWidth(composer_.get())) {
     return false;
   }
-  state_ = SessionState::CONVERSION;
+  SetSessionState(SessionState::CONVERSION);
   Output(command);
   return true;
 }
@@ -1420,7 +1442,7 @@ bool Session::Convert(commands::Command *command) {
     return true;
   }
 
-  state_ = SessionState::CONVERSION;
+  SetSessionState(SessionState::CONVERSION);
   Output(command);
   return true;
 }
@@ -1437,7 +1459,7 @@ bool Session::ConvertWithoutHistory(commands::Command *command) {
     return true;
   }
 
-  state_ = SessionState::CONVERSION;
+  SetSessionState(SessionState::CONVERSION);
   Output(command);
   return true;
 }
@@ -1494,9 +1516,7 @@ bool Session::Delete(commands::Command *command) {
   command->mutable_output()->set_consumed(true);
   composer_->Delete();
   if (composer_->Empty()) {
-    // Input/output modes remain.
-    composer_->EditErase();
-    state_ = SessionState::PRECOMPOSITION;
+    SetSessionState(SessionState::PRECOMPOSITION);
     OutputMode(command);
   } else if (converter_->Suggest(composer_.get())) {
     DCHECK(converter_->IsActive());
@@ -1512,9 +1532,7 @@ bool Session::Backspace(commands::Command *command) {
   command->mutable_output()->set_consumed(true);
   composer_->Backspace();
   if (composer_->Empty()) {
-    // Input/output modes remain.
-    composer_->EditErase();
-    state_ = SessionState::PRECOMPOSITION;
+    SetSessionState(SessionState::PRECOMPOSITION);
     OutputMode(command);
   } else if (converter_->Suggest(composer_.get())) {
     DCHECK(converter_->IsActive());
@@ -1621,7 +1639,7 @@ bool Session::ConvertPrevPage(commands::Command *command) {
 bool Session::ConvertCancel(commands::Command *command) {
   command->mutable_output()->set_consumed(true);
 
-  state_ = SessionState::COMPOSITION;
+  SetSessionState(SessionState::COMPOSITION);
   converter_->Cancel();
   if (converter_->Suggest(composer_.get())) {
     DCHECK(converter_->IsActive());
@@ -1640,7 +1658,7 @@ bool Session::PredictAndConvert(commands::Command *command) {
 
   command->mutable_output()->set_consumed(true);
   if (converter_->Predict(composer_.get())) {
-    state_ = SessionState::CONVERSION;
+    SetSessionState(SessionState::CONVERSION);
     Output(command);
   } else {
     OutputComposition(command);

@@ -26,3 +26,6 @@ KanjiNumber 名詞,数,漢数字
 
 # used in CandidateFilter
 NounPrefix 接頭詞,名詞接続
+
+# used in ImmutableConverter
+Prefix 接頭詞,

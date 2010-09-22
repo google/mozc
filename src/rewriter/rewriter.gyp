@@ -70,15 +70,12 @@
         '../dictionary/dictionary.gyp:dictionary',
         '../usage_stats/usage_stats.gyp:usage_stats',
         'calculator/calculator.gyp:calculator',
+        'gen_rewriter_files',
       ],
-      'conditions': [['two_pass_build==0', {
-        'dependencies': [
-          'install_gen_collocation_data_main',
-          'install_gen_emoticon_rewriter_dictionary_main',
-          'install_gen_single_kanji_rewriter_dictionary_main',
-          'install_gen_symbol_rewriter_dictionary_main',
-        ],
-      }]],
+    },
+    {
+      'target_name': 'gen_rewriter_files',
+      'type': 'none',
       'actions': [
         {
           'action_name': 'gen_collocation_data',
@@ -206,6 +203,14 @@
           ],
         },
       ],
+      'conditions': [['two_pass_build==0', {
+        'dependencies': [
+          'install_gen_collocation_data_main',
+          'install_gen_emoticon_rewriter_dictionary_main',
+          'install_gen_single_kanji_rewriter_dictionary_main',
+          'install_gen_symbol_rewriter_dictionary_main',
+        ],
+      }]],
     },
     {
       'target_name': 'gen_collocation_data_main',

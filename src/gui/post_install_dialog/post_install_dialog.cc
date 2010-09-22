@@ -141,14 +141,7 @@ PostInstallDialog::PostInstallDialog()
   migrateDefaultIMEUserDictionaryCheckBox->setChecked(true);
 
 #ifdef OS_WINDOWS
-  if (win32::MigrationUtil::IsFullIMEAvailable()) {
-    if (!win32::MigrationUtil::DisableDummyIME()) {
-      return;
-    }
-    if (!win32::MigrationUtil::DisableOldProfile()) {
-      return;
-    }
-  }
+  win32::MigrationUtil::LaunchBrokerForPostInstallCleanup();
 #endif  // OS_WINDOWS
 }
 

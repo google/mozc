@@ -163,7 +163,7 @@ TEST_F(SymbolRewriterTest, TriggerRewriteEachTest) {
   }
 }
 
-TEST_F(SymbolRewriterTest, InsertAfterSingleKanji) {
+TEST_F(SymbolRewriterTest, InsertAfterSingleKanjiAndT13n) {
   SymbolRewriter symbol_rewriter;
   {
     Segments segments;
@@ -171,13 +171,17 @@ TEST_F(SymbolRewriterTest, InsertAfterSingleKanji) {
     AddSegment("\xe3\x81\xa6\xe3\x82\x93", "\xe3\x81\xa6\xe3\x82\x93",
                &segments);
     Segment *seg = segments.mutable_segment(0);
-    // Add 15 single-kanji candidates
+    // Add 15 single-kanji and transliterated candidates
     // "点"
     AddCandidate("\xe7\x82\xb9", seg);
     // "転"
     AddCandidate("\xe8\xbb\xa2", seg);
     // "天"
     AddCandidate("\xe5\xa4\xa9", seg);
+    // "てん"
+    AddCandidate("\xe3\x81\xa6\xe3\x82\x93", seg);
+    // "テン"
+    AddCandidate("\xe3\x83\x86\xe3\x83\xb3", seg);
     // "展"
     AddCandidate("\xe5\xb1\x95", seg);
     // "店"
@@ -198,18 +202,13 @@ TEST_F(SymbolRewriterTest, InsertAfterSingleKanji) {
     AddCandidate("\xe7\x94\x9c", seg);
     // "貼"
     AddCandidate("\xe8\xb2\xbc", seg);
-    // "殿"
-    AddCandidate("\xe6\xae\xbf", seg);
-    // "槙"
-    AddCandidate("\xe6\xa7\x99", seg);
 
     EXPECT_TRUE(symbol_rewriter.Rewrite(&segments));
     EXPECT_GT(segments.segment(0).candidates_size(), 16);
-    // candidate 0 is "てん"
-    for (int i = 1; i < 16; ++i) {
+    for (int i = 0; i < 16; ++i) {
       const string &value = segments.segment(0).candidate(i).value;
-      EXPECT_EQ(1, Util::CharsLen(value)) << i << ": " << value;
-      EXPECT_TRUE(Util::IsScriptType(value, Util::KANJI)) << i << ": " << value;
+      EXPECT_FALSE(Util::IsScriptType(value, Util::UNKNOWN_SCRIPT))
+          << i << ": " << value;
     }
   }
 }

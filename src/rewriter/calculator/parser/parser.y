@@ -6,21 +6,21 @@
 
 %include {
 #include <assert.h>
+#ifdef OS_WINDOWS
+#include <float.h>
+#endif
 #include <string.h>
 #include <cmath>
 
-// Visual C++ does not support std::isnormal, which comes from C99.
-#if defined(_MSC_VER)
-#include <cfloat>
-namespace std {
-bool isnormal(double x) {
-  const int type = _fpclass(x);
-  const bool is_negative_normal = (type == _FPCLASS_NN);
-  const bool is_positive_normal = (type == _FPCLASS_PN);
-  return (is_negative_normal || is_positive_normal);
-}
-}
+namespace {
+bool IsFinite(double x) {
+#ifdef OS_WINDOWS
+  return _finite(x);
+#else
+  return std::isfinite(x);
 #endif
+}
+}  // anonymous namespace
 
 #include "parser.h"
 
@@ -41,6 +41,12 @@ struct Result {
 
   Result() : value(0), error_type(NOT_ACCEPTED) {}
   ~Result() {}
+
+  void CheckValue(double val) {
+    if (!IsFinite(val)) {
+      error_type = RESULT_OVERFLOW;
+    }
+  }
 };
 
 }
@@ -67,23 +73,36 @@ struct Result {
 
 program ::= expr(A). {
   if (result->error_type == Result::NOT_ACCEPTED &&
-      (A == 0.0 || std::isnormal(A))){
+      IsFinite(A)){
     result->value = A;
   } else {
     result->error_type = Result::RESULT_OVERFLOW;
   }
 }
 
-expr(A) ::= expr(B) MINUS  expr(C). { A = B - C; }
-expr(A) ::= expr(B) PLUS   expr(C). { A = B + C; }
-expr(A) ::= expr(B) TIMES  expr(C). { A = B * C; }
+expr(A) ::= expr(B) MINUS  expr(C). {
+  A = B - C;
+  result->CheckValue(A);
+}
+expr(A) ::= expr(B) PLUS   expr(C). {
+  A = B + C;
+  result->CheckValue(A);
+}
+expr(A) ::= expr(B) TIMES  expr(C). {
+  A = B * C;
+  result->CheckValue(A);
+}
 expr(A) ::= MINUS  expr(B). [NOT] { A = - B; }
 expr(A) ::= PLUS   expr(B). [NOT] { A = B; }
-expr(A) ::= expr(B) POW expr(C). { A = std::pow(B, C); }
+expr(A) ::= expr(B) POW expr(C). {
+  A = std::pow(B, C);
+  result->CheckValue(A);
+}
 expr(A) ::= LP expr(B) RP. { A = B; }
 expr(A) ::= expr(B) DIVIDE expr(C). {
   if (C != 0.0) {
     A = B / C;
+    result->CheckValue(A);
   } else {
     result->error_type = Result::DIVIDE_BY_ZERO;
   }
@@ -91,6 +110,7 @@ expr(A) ::= expr(B) DIVIDE expr(C). {
 expr(A) ::= expr(B) MOD expr(C). {
   if (C != 0.0) {
     A = std::fmod(B, C);
+    result->CheckValue(A);
   } else {
     result->error_type = Result::DIVIDE_BY_ZERO;
   }

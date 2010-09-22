@@ -390,7 +390,8 @@ bool KeyMapManager::LoadStreamWithErrors(istream *ifs, vector<string> *errors) {
 
   commands::KeyEvent key_event;
   KeyParser::ParseKey("ASCII", &key_event);
-  keymap_precomposition_.AddRule(key_event, PrecompositionState::INSERT_CHARACTER);
+  keymap_precomposition_.AddRule(key_event,
+                                 PrecompositionState::INSERT_CHARACTER);
   keymap_composition_.AddRule(key_event, CompositionState::INSERT_CHARACTER);
   keymap_conversion_.AddRule(key_event, ConversionState::INSERT_CHARACTER);
 
@@ -400,207 +401,277 @@ bool KeyMapManager::LoadStreamWithErrors(istream *ifs, vector<string> *errors) {
   return true;
 }
 
+namespace {
+template<typename T> bool GetNameInternal(
+    const map<T, string> &reverse_command_map, T command, string *name) {
+  DCHECK(name);
+  typename map<T, string>::const_iterator itr =
+      reverse_command_map.find(command);
+  if (itr == reverse_command_map.end()) {
+    return false;
+  } else {
+    *name = itr->second;
+    return true;
+  }
+}
+}  // namespace
+
+bool KeyMapManager::GetNameFromCommandDirect(
+    DirectInputState::Commands command, string *name) const {
+  return GetNameInternal<DirectInputState::Commands>(
+      reverse_command_direct_map_, command, name);
+}
+
+bool KeyMapManager::GetNameFromCommandPrecomposition(
+    PrecompositionState::Commands command, string *name) const {
+  return GetNameInternal<PrecompositionState::Commands>(
+      reverse_command_precomposition_map_, command, name);
+}
+
+bool KeyMapManager::GetNameFromCommandComposition(
+    CompositionState::Commands command, string *name) const {
+  return GetNameInternal<CompositionState::Commands>(
+      reverse_command_composition_map_, command, name);
+}
+
+bool KeyMapManager::GetNameFromCommandConversion(
+    ConversionState::Commands command, string *name) const {
+  return GetNameInternal<ConversionState::Commands>(
+      reverse_command_conversion_map_, command, name);
+}
+
+void KeyMapManager::RegisterDirectCommand(
+    const string &command_string, DirectInputState::Commands command) {
+  command_direct_map_[command_string] = command;
+  reverse_command_direct_map_[command] = command_string;
+}
+
+void KeyMapManager::RegisterPrecompositionCommand(
+    const string &command_string, PrecompositionState::Commands command) {
+  command_precomposition_map_[command_string] = command;
+  reverse_command_precomposition_map_[command] = command_string;
+}
+
+void KeyMapManager::RegisterCompositionCommand(
+    const string &command_string, CompositionState::Commands command) {
+  command_composition_map_[command_string] = command;
+  reverse_command_composition_map_[command] = command_string;
+}
+
+void KeyMapManager::RegisterConversionCommand(
+    const string &command_string, ConversionState::Commands command) {
+  command_conversion_map_[command_string] = command;
+  reverse_command_conversion_map_[command] = command_string;
+}
+
 void KeyMapManager::InitCommandData() {
-  command_direct_map_["IMEOn"] = DirectInputState::IME_ON;
+  RegisterDirectCommand("IMEOn", DirectInputState::IME_ON);
   // Support InputMode command only on Windows for now.
   // TODO(toshiyuki): delete #ifdef when we support them on Mac, and
   // activate SessionTest.InputModeConsumedForTestSendKey.
 #ifdef OS_WINDOWS
-  command_direct_map_["InputModeHiragana"] =
-      DirectInputState::INPUT_MODE_HIRAGANA;
-  command_direct_map_["InputModeFullKatakana"] =
-      DirectInputState::INPUT_MODE_FULL_KATAKANA;
-  command_direct_map_["InputModeHalfKatakana"] =
-      DirectInputState::INPUT_MODE_HALF_KATAKANA;
-  command_direct_map_["InputModeFullAlphanumeric"] =
-      DirectInputState::INPUT_MODE_FULL_ALPHANUMERIC;
-  command_direct_map_["InputModeHalfAlphanumeric"] =
-      DirectInputState::INPUT_MODE_HALF_ALPHANUMERIC;
+  RegisterDirectCommand("InputModeHiragana",
+                        DirectInputState::INPUT_MODE_HIRAGANA);
+  RegisterDirectCommand("InputModeFullKatakana",
+                        DirectInputState::INPUT_MODE_FULL_KATAKANA);
+  RegisterDirectCommand("InputModeHalfKatakana",
+                        DirectInputState::INPUT_MODE_HALF_KATAKANA);
+  RegisterDirectCommand("InputModeFullAlphanumeric",
+                        DirectInputState::INPUT_MODE_FULL_ALPHANUMERIC);
+  RegisterDirectCommand("InputModeHalfAlphanumeric",
+                        DirectInputState::INPUT_MODE_HALF_ALPHANUMERIC);
 #endif  // OS_WINDOWS
 
   // Precomposition
-  command_precomposition_map_["IMEOff"] = PrecompositionState::IME_OFF;
-  command_precomposition_map_["IMEOn"] = PrecompositionState::IME_ON;
-  command_precomposition_map_["InsertCharacter"] =
-      PrecompositionState::INSERT_CHARACTER;
-  command_precomposition_map_["InsertSpace"] = PrecompositionState::INSERT_SPACE;
-  command_precomposition_map_["InsertAlternateSpace"] =
-      PrecompositionState::INSERT_ALTERNATE_SPACE;
-  command_precomposition_map_["InsertHalfSpace"] =
-      PrecompositionState::INSERT_HALF_SPACE;
-  command_precomposition_map_["InsertFullSpace"] =
-      PrecompositionState::INSERT_FULL_SPACE;
-  command_precomposition_map_["ToggleAlphanumericMode"] =
-      PrecompositionState::TOGGLE_ALPHANUMERIC_MODE;
+  RegisterPrecompositionCommand("IMEOff", PrecompositionState::IME_OFF);
+  RegisterPrecompositionCommand("IMEOn", PrecompositionState::IME_ON);
+  RegisterPrecompositionCommand("InsertCharacter",
+                                PrecompositionState::INSERT_CHARACTER);
+  RegisterPrecompositionCommand("InsertSpace",
+                                PrecompositionState::INSERT_SPACE);
+  RegisterPrecompositionCommand("InsertAlternateSpace",
+                                PrecompositionState::INSERT_ALTERNATE_SPACE);
+  RegisterPrecompositionCommand("InsertHalfSpace",
+                                PrecompositionState::INSERT_HALF_SPACE);
+  RegisterPrecompositionCommand("InsertFullSpace",
+                                PrecompositionState::INSERT_FULL_SPACE);
+  RegisterPrecompositionCommand("ToggleAlphanumericMode",
+                                PrecompositionState::TOGGLE_ALPHANUMERIC_MODE);
 #ifdef OS_WINDOWS
-  command_precomposition_map_["InputModeHiragana"] =
-      PrecompositionState::INPUT_MODE_HIRAGANA;
-  command_precomposition_map_["InputModeFullKatakana"] =
-      PrecompositionState::INPUT_MODE_FULL_KATAKANA;
-  command_precomposition_map_["InputModeHalfKatakana"] =
-      PrecompositionState::INPUT_MODE_HALF_KATAKANA;
-  command_precomposition_map_["InputModeFullAlphanumeric"] =
-      PrecompositionState::INPUT_MODE_FULL_ALPHANUMERIC;
-  command_precomposition_map_["InputModeHalfAlphanumeric"] =
-      PrecompositionState::INPUT_MODE_HALF_ALPHANUMERIC;
+  RegisterPrecompositionCommand("InputModeHiragana",
+                                PrecompositionState::INPUT_MODE_HIRAGANA);
+  RegisterPrecompositionCommand("InputModeFullKatakana",
+                                PrecompositionState::INPUT_MODE_FULL_KATAKANA);
+  RegisterPrecompositionCommand("InputModeHalfKatakana",
+                                PrecompositionState::INPUT_MODE_HALF_KATAKANA);
+  RegisterPrecompositionCommand(
+      "InputModeFullAlphanumeric",
+      PrecompositionState::INPUT_MODE_FULL_ALPHANUMERIC);
+  RegisterPrecompositionCommand(
+      "InputModeHalfAlphanumeric",
+      PrecompositionState::INPUT_MODE_HALF_ALPHANUMERIC);
 #endif  // OS_WINDOWS
-  command_precomposition_map_["Revert"] = PrecompositionState::REVERT;
-//  command_precomposition_map_["Undo"] = PrecompositionState::UNDO;
+  RegisterPrecompositionCommand("Revert", PrecompositionState::REVERT);
+//  RegisterPrecompositionCommand("Undo", PrecompositionState::UNDO);
 
 #ifdef _DEBUG  // only for debugging
-  command_precomposition_map_["Abort"] = PrecompositionState::ABORT;
+  RegisterPrecompositionCommand("Abort", PrecompositionState::ABORT);
 #endif  // _DEBUG
 
   // Composition
-  command_composition_map_["IMEOff"] = CompositionState::IME_OFF;
-  command_composition_map_["IMEOn"] = CompositionState::IME_ON;
-  command_composition_map_["InsertCharacter"] = CompositionState::INSERT_CHARACTER;
-  command_composition_map_["Delete"] = CompositionState::DEL;
-  command_composition_map_["Backspace"] = CompositionState::BACKSPACE;
-  command_composition_map_["InsertHalfSpace"] =
-      CompositionState::INSERT_HALF_SPACE;
-  command_composition_map_["InsertFullSpace"] =
-      CompositionState::INSERT_FULL_SPACE;
-  command_composition_map_["Cancel"] = CompositionState::CANCEL;
-  command_composition_map_["MoveCursorLeft"] = CompositionState::MOVE_CURSOR_LEFT;
-  command_composition_map_["MoveCursorRight"] = CompositionState::MOVE_CURSOR_RIGHT;
-  command_composition_map_["MoveCursorToBeginning"] =
-      CompositionState::MOVE_CURSOR_TO_BEGINNING;
-  command_composition_map_["MoveCursorToEnd"] =
-      CompositionState::MOVE_MOVE_CURSOR_TO_END;
-  command_composition_map_["Commit"] = CompositionState::COMMIT;
-  command_composition_map_["CommitFirstSuggestion"] =
-      CompositionState::COMMIT_FIRST_SUGGESTION;
-  command_composition_map_["Convert"] = CompositionState::CONVERT;
-  command_composition_map_["ConvertWithoutHistory"] =
-      CompositionState::CONVERT_WITHOUT_HISTORY;
-  command_composition_map_["PredictAndConvert"] =
-      CompositionState::PREDICT_AND_CONVERT;
-  command_composition_map_["ConvertToHiragana"] =
-      CompositionState::CONVERT_TO_HIRAGANA;
-  command_composition_map_["ConvertToFullKatakana"] =
-      CompositionState::CONVERT_TO_FULL_KATAKANA;
-  command_composition_map_["ConvertToHalfKatakana"] =
-      CompositionState::CONVERT_TO_HALF_KATAKANA;
-  command_composition_map_["ConvertToHalfWidth"] =
-      CompositionState::CONVERT_TO_HALF_WIDTH;
-  command_composition_map_["ConvertToFullAlphanumeric"] =
-      CompositionState::CONVERT_TO_FULL_ALPHANUMERIC;
-  command_composition_map_["ConvertToHalfAlphanumeric"] =
-    CompositionState::CONVERT_TO_HALF_ALPHANUMERIC;
-  command_composition_map_["SwitchKanaType"] =
-    CompositionState::SWITCH_KANA_TYPE;
-  command_composition_map_["DisplayAsHiragana"] =
-      CompositionState::DISPLAY_AS_HIRAGANA;
-  command_composition_map_["DisplayAsFullKatakana"] =
-      CompositionState::DISPLAY_AS_FULL_KATAKANA;
-  command_composition_map_["DisplayAsHalfKatakana"] =
-      CompositionState::DISPLAY_AS_HALF_KATAKANA;
-  command_composition_map_["DisplayAsHalfWidth"] =
-      CompositionState::TRANSLATE_HALF_WIDTH;
-  command_composition_map_["DisplayAsFullAlphanumeric"] =
-      CompositionState::TRANSLATE_FULL_ASCII;
-  command_composition_map_["DisplayAsHalfAlphanumeric"] =
-      CompositionState::TRANSLATE_HALF_ASCII;
-  command_composition_map_["ToggleAlphanumericMode"] =
-      CompositionState::TOGGLE_ALPHANUMERIC_MODE;
+  RegisterCompositionCommand("IMEOff", CompositionState::IME_OFF);
+  RegisterCompositionCommand("IMEOn", CompositionState::IME_ON);
+  RegisterCompositionCommand("InsertCharacter",
+                             CompositionState::INSERT_CHARACTER);
+  RegisterCompositionCommand("Delete", CompositionState::DEL);
+  RegisterCompositionCommand("Backspace", CompositionState::BACKSPACE);
+  RegisterCompositionCommand("InsertHalfSpace",
+                             CompositionState::INSERT_HALF_SPACE);
+  RegisterCompositionCommand("InsertFullSpace",
+                             CompositionState::INSERT_FULL_SPACE);
+  RegisterCompositionCommand("Cancel", CompositionState::CANCEL);
+  RegisterCompositionCommand("MoveCursorLeft",
+                             CompositionState::MOVE_CURSOR_LEFT);
+  RegisterCompositionCommand("MoveCursorRight",
+                             CompositionState::MOVE_CURSOR_RIGHT);
+  RegisterCompositionCommand("MoveCursorToBeginning",
+                             CompositionState::MOVE_CURSOR_TO_BEGINNING);
+  RegisterCompositionCommand("MoveCursorToEnd",
+                             CompositionState::MOVE_MOVE_CURSOR_TO_END);
+  RegisterCompositionCommand("Commit", CompositionState::COMMIT);
+  RegisterCompositionCommand("CommitFirstSuggestion",
+                             CompositionState::COMMIT_FIRST_SUGGESTION);
+  RegisterCompositionCommand("Convert", CompositionState::CONVERT);
+  RegisterCompositionCommand("ConvertWithoutHistory",
+                             CompositionState::CONVERT_WITHOUT_HISTORY);
+  RegisterCompositionCommand("PredictAndConvert",
+                             CompositionState::PREDICT_AND_CONVERT);
+  RegisterCompositionCommand("ConvertToHiragana",
+                             CompositionState::CONVERT_TO_HIRAGANA);
+  RegisterCompositionCommand("ConvertToFullKatakana",
+                             CompositionState::CONVERT_TO_FULL_KATAKANA);
+  RegisterCompositionCommand("ConvertToHalfKatakana",
+                             CompositionState::CONVERT_TO_HALF_KATAKANA);
+  RegisterCompositionCommand("ConvertToHalfWidth",
+                             CompositionState::CONVERT_TO_HALF_WIDTH);
+  RegisterCompositionCommand("ConvertToFullAlphanumeric",
+                             CompositionState::CONVERT_TO_FULL_ALPHANUMERIC);
+  RegisterCompositionCommand("ConvertToHalfAlphanumeric",
+                             CompositionState::CONVERT_TO_HALF_ALPHANUMERIC);
+  RegisterCompositionCommand("SwitchKanaType",
+                             CompositionState::SWITCH_KANA_TYPE);
+  RegisterCompositionCommand("DisplayAsHiragana",
+                             CompositionState::DISPLAY_AS_HIRAGANA);
+  RegisterCompositionCommand("DisplayAsFullKatakana",
+                             CompositionState::DISPLAY_AS_FULL_KATAKANA);
+  RegisterCompositionCommand("DisplayAsHalfKatakana",
+                             CompositionState::DISPLAY_AS_HALF_KATAKANA);
+  RegisterCompositionCommand("DisplayAsHalfWidth",
+                             CompositionState::TRANSLATE_HALF_WIDTH);
+  RegisterCompositionCommand("DisplayAsFullAlphanumeric",
+                             CompositionState::TRANSLATE_FULL_ASCII);
+  RegisterCompositionCommand("DisplayAsHalfAlphanumeric",
+                             CompositionState::TRANSLATE_HALF_ASCII);
+  RegisterCompositionCommand("ToggleAlphanumericMode",
+                             CompositionState::TOGGLE_ALPHANUMERIC_MODE);
 #ifdef OS_WINDOWS
-  command_composition_map_["InputModeHiragana"] =
-      CompositionState::INPUT_MODE_HIRAGANA;
-  command_composition_map_["InputModeFullKatakana"] =
-      CompositionState::INPUT_MODE_FULL_KATAKANA;
-  command_composition_map_["InputModeHalfKatakana"] =
-      CompositionState::INPUT_MODE_HALF_KATAKANA;
-  command_composition_map_["InputModeFullAlphanumeric"] =
-      CompositionState::INPUT_MODE_FULL_ALPHANUMERIC;
-  command_composition_map_["InputModeHalfAlphanumeric"] =
-      CompositionState::INPUT_MODE_HALF_ALPHANUMERIC;
+  RegisterCompositionCommand("InputModeHiragana",
+                             CompositionState::INPUT_MODE_HIRAGANA);
+  RegisterCompositionCommand("InputModeFullKatakana",
+                             CompositionState::INPUT_MODE_FULL_KATAKANA);
+  RegisterCompositionCommand("InputModeHalfKatakana",
+                             CompositionState::INPUT_MODE_HALF_KATAKANA);
+  RegisterCompositionCommand("InputModeFullAlphanumeric",
+                             CompositionState::INPUT_MODE_FULL_ALPHANUMERIC);
+  RegisterCompositionCommand("InputModeHalfAlphanumeric",
+                             CompositionState::INPUT_MODE_HALF_ALPHANUMERIC);
 #endif  // OS_WINDOWS
 #ifdef _DEBUG  // only for debugging
-  command_composition_map_["Abort"] = CompositionState::ABORT;
+  RegisterCompositionCommand("Abort", CompositionState::ABORT);
 #endif  // _DEBUG
 
   // Conversion
-  command_conversion_map_["IMEOff"] = ConversionState::IME_OFF;
-  command_conversion_map_["IMEOn"] = ConversionState::IME_ON;
-  command_conversion_map_["InsertCharacter"] =
-      ConversionState::INSERT_CHARACTER;
-  command_conversion_map_["InsertHalfSpace"] =
-      ConversionState::INSERT_HALF_SPACE;
-  command_conversion_map_["InsertFullSpace"] =
-      ConversionState::INSERT_FULL_SPACE;
-  command_conversion_map_["Cancel"] = ConversionState::CANCEL;
-  command_conversion_map_["SegmentFocusLeft"] =
-      ConversionState::SEGMENT_FOCUS_LEFT;
-  command_conversion_map_["SegmentFocusRight"] =
-      ConversionState::SEGMENT_FOCUS_RIGHT;
-  command_conversion_map_["SegmentFocusFirst"] =
-      ConversionState::SEGMENT_FOCUS_FIRST;
-  command_conversion_map_["SegmentFocusLast"] =
-      ConversionState::SEGMENT_FOCUS_LAST;
-  command_conversion_map_["SegmentWidthExpand"] =
-      ConversionState::SEGMENT_WIDTH_EXPAND;
-  command_conversion_map_["SegmentWidthShrink"] =
-      ConversionState::SEGMENT_WIDTH_SHRINK;
-  command_conversion_map_["ConvertNext"] = ConversionState::CONVERT_NEXT;
-  command_conversion_map_["ConvertPrev"] = ConversionState::CONVERT_PREV;
-  command_conversion_map_["ConvertNextPage"] =
-    ConversionState::CONVERT_NEXT_PAGE;
-  command_conversion_map_["ConvertPrevPage"] =
-    ConversionState::CONVERT_PREV_PAGE;
-  command_conversion_map_["PredictAndConvert"] =
-      ConversionState::PREDICT_AND_CONVERT;
-  command_conversion_map_["Commit"] = ConversionState::COMMIT;
-  command_conversion_map_["CommitOnlyFirstSegment"] =
-      ConversionState::COMMIT_SEGMENT;
-  command_conversion_map_["ConvertToHiragana"] =
-      ConversionState::CONVERT_TO_HIRAGANA;
-  command_conversion_map_["ConvertToFullKatakana"] =
-      ConversionState::CONVERT_TO_FULL_KATAKANA;
-  command_conversion_map_["ConvertToHalfKatakana"] =
-      ConversionState::CONVERT_TO_HALF_KATAKANA;
-  command_conversion_map_["ConvertToHalfWidth"] =
-      ConversionState::CONVERT_TO_HALF_WIDTH;
-  command_conversion_map_["ConvertToFullAlphanumeric"] =
-      ConversionState::CONVERT_TO_FULL_ALPHANUMERIC;
-  command_conversion_map_["ConvertToHalfAlphanumeric"] =
-      ConversionState::CONVERT_TO_HALF_ALPHANUMERIC;
-  command_conversion_map_["SwitchKanaType"] =
-      ConversionState::SWITCH_KANA_TYPE;
-  command_conversion_map_["ToggleAlphanumericMode"] =
-      ConversionState::TOGGLE_ALPHANUMERIC_MODE;
-  command_conversion_map_["DisplayAsHiragana"] =
-      ConversionState::DISPLAY_AS_HIRAGANA;
-  command_conversion_map_["DisplayAsFullKatakana"] =
-      ConversionState::DISPLAY_AS_FULL_KATAKANA;
-  command_conversion_map_["DisplayAsHalfKatakana"] =
-      ConversionState::DISPLAY_AS_HALF_KATAKANA;
-  command_conversion_map_["DisplayAsHalfWidth"] =
-      ConversionState::TRANSLATE_HALF_WIDTH;
-  command_conversion_map_["DisplayAsFullAlphanumeric"] =
-      ConversionState::TRANSLATE_FULL_ASCII;
-  command_conversion_map_["DisplayAsHalfAlphanumeric"] =
-      ConversionState::TRANSLATE_HALF_ASCII;
+  RegisterConversionCommand("IMEOff", ConversionState::IME_OFF);
+  RegisterConversionCommand("IMEOn", ConversionState::IME_ON);
+  RegisterConversionCommand("InsertCharacter",
+                            ConversionState::INSERT_CHARACTER);
+  RegisterConversionCommand("InsertHalfSpace",
+                            ConversionState::INSERT_HALF_SPACE);
+  RegisterConversionCommand("InsertFullSpace",
+                            ConversionState::INSERT_FULL_SPACE);
+  RegisterConversionCommand("Cancel", ConversionState::CANCEL);
+  RegisterConversionCommand("SegmentFocusLeft",
+                            ConversionState::SEGMENT_FOCUS_LEFT);
+  RegisterConversionCommand("SegmentFocusRight",
+                            ConversionState::SEGMENT_FOCUS_RIGHT);
+  RegisterConversionCommand("SegmentFocusFirst",
+                            ConversionState::SEGMENT_FOCUS_FIRST);
+  RegisterConversionCommand("SegmentFocusLast",
+                            ConversionState::SEGMENT_FOCUS_LAST);
+  RegisterConversionCommand("SegmentWidthExpand",
+                            ConversionState::SEGMENT_WIDTH_EXPAND);
+  RegisterConversionCommand("SegmentWidthShrink",
+                            ConversionState::SEGMENT_WIDTH_SHRINK);
+  RegisterConversionCommand("ConvertNext", ConversionState::CONVERT_NEXT);
+  RegisterConversionCommand("ConvertPrev", ConversionState::CONVERT_PREV);
+  RegisterConversionCommand("ConvertNextPage",
+                            ConversionState::CONVERT_NEXT_PAGE);
+  RegisterConversionCommand("ConvertPrevPage",
+                            ConversionState::CONVERT_PREV_PAGE);
+  RegisterConversionCommand("PredictAndConvert",
+                            ConversionState::PREDICT_AND_CONVERT);
+  RegisterConversionCommand("Commit", ConversionState::COMMIT);
+  RegisterConversionCommand("CommitOnlyFirstSegment",
+                            ConversionState::COMMIT_SEGMENT);
+  RegisterConversionCommand("ConvertToHiragana",
+                            ConversionState::CONVERT_TO_HIRAGANA);
+  RegisterConversionCommand("ConvertToFullKatakana",
+                            ConversionState::CONVERT_TO_FULL_KATAKANA);
+  RegisterConversionCommand("ConvertToHalfKatakana",
+                            ConversionState::CONVERT_TO_HALF_KATAKANA);
+  RegisterConversionCommand("ConvertToHalfWidth",
+                            ConversionState::CONVERT_TO_HALF_WIDTH);
+  RegisterConversionCommand("ConvertToFullAlphanumeric",
+                            ConversionState::CONVERT_TO_FULL_ALPHANUMERIC);
+  RegisterConversionCommand("ConvertToHalfAlphanumeric",
+                            ConversionState::CONVERT_TO_HALF_ALPHANUMERIC);
+  RegisterConversionCommand("SwitchKanaType",
+                            ConversionState::SWITCH_KANA_TYPE);
+  RegisterConversionCommand("ToggleAlphanumericMode",
+                            ConversionState::TOGGLE_ALPHANUMERIC_MODE);
+  RegisterConversionCommand("DisplayAsHiragana",
+                            ConversionState::DISPLAY_AS_HIRAGANA);
+  RegisterConversionCommand("DisplayAsFullKatakana",
+                            ConversionState::DISPLAY_AS_FULL_KATAKANA);
+  RegisterConversionCommand("DisplayAsHalfKatakana",
+                            ConversionState::DISPLAY_AS_HALF_KATAKANA);
+  RegisterConversionCommand("DisplayAsHalfWidth",
+                            ConversionState::TRANSLATE_HALF_WIDTH);
+  RegisterConversionCommand("DisplayAsFullAlphanumeric",
+                            ConversionState::TRANSLATE_FULL_ASCII);
+  RegisterConversionCommand("DisplayAsHalfAlphanumeric",
+                            ConversionState::TRANSLATE_HALF_ASCII);
 #ifdef OS_WINDOWS
-  command_conversion_map_["InputModeHiragana"] =
-      ConversionState::INPUT_MODE_HIRAGANA;
-  command_conversion_map_["InputModeFullKatakana"] =
-      ConversionState::INPUT_MODE_FULL_KATAKANA;
-  command_conversion_map_["InputModeHalfKatakana"] =
-      ConversionState::INPUT_MODE_HALF_KATAKANA;
-  command_conversion_map_["InputModeFullAlphanumeric"] =
-      ConversionState::INPUT_MODE_FULL_ALPHANUMERIC;
-  command_conversion_map_["InputModeHalfAlphanumeric"] =
-      ConversionState::INPUT_MODE_HALF_ALPHANUMERIC;
+  RegisterConversionCommand("InputModeHiragana",
+                            ConversionState::INPUT_MODE_HIRAGANA);
+  RegisterConversionCommand("InputModeFullKatakana",
+                            ConversionState::INPUT_MODE_FULL_KATAKANA);
+  RegisterConversionCommand("InputModeHalfKatakana",
+                            ConversionState::INPUT_MODE_HALF_KATAKANA);
+  RegisterConversionCommand("InputModeFullAlphanumeric",
+                            ConversionState::INPUT_MODE_FULL_ALPHANUMERIC);
+  RegisterConversionCommand("InputModeHalfAlphanumeric",
+                            ConversionState::INPUT_MODE_HALF_ALPHANUMERIC);
 #endif  // OS_WINDOWS
 #ifndef NO_LOGGING  // means NOT RELEASE build
-  command_conversion_map_["ReportBug"] = ConversionState::REPORT_BUG;
+  RegisterConversionCommand("ReportBug", ConversionState::REPORT_BUG);
 #endif  // NO_LOGGING
 #ifdef _DEBUG  // only for dubugging
-  command_conversion_map_["Abort"] = ConversionState::ABORT;
+  RegisterConversionCommand("Abort", ConversionState::ABORT);
 #endif  // _DEBUG
 }
 
+#undef ADD_TO_COMMAND_MAP
 
 bool KeyMapManager::GetCommandDirect(
     const commands::KeyEvent &key_event,

@@ -1,0 +1,9 @@
+This directory is workaround to avoid build error of GYP.
+
+parser.y was located at rewriter/calculator/, but it
+caused build error of calclator.gyp:calculator.  GNU make tried to call yacc
+to process parser.y, though there was no rule about parser.y in gyp files.
+
+This error can be avoided by moving parser.y to some directory other than that
+of parser.c, so I moved it to this directory.
+

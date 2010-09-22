@@ -109,6 +109,7 @@ bool NBestGenerator::Next(Segment::Candidate *candidate,
       candidate->content_key.clear();
       candidate->nodes.clear();
       key.clear();
+      candidate->is_spelling_correction = false;
 
       for (const Node *node = *candidate_begin_node; true; node = node->next) {
         DCHECK(node != NULL);
@@ -132,6 +133,7 @@ bool NBestGenerator::Next(Segment::Candidate *candidate,
 
         key += node->key;
         candidate->value += node->value;
+        candidate->is_spelling_correction |= node->is_spelling_correction;
 
         candidate->nodes.push_back(node);
       }

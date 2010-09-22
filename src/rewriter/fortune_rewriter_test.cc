@@ -56,8 +56,8 @@ bool HasFortune(const Segments &segments) {
   CHECK_EQ(segments.segments_size(), 1);
   for (size_t i = 0; i < segments.segment(0).candidates_size(); ++i) {
     const Segment::Candidate &candidate = segments.segment(0).candidate(i);
-    // description is "おみくじ"
-    if ("\xE3\x81\x8A\xE3\x81\xBF\xE3\x81\x8F\xE3\x81\x98"
+    // description is "今日の運勢"
+    if ("\xE4\xBB\x8A\xE6\x97\xA5\xE3\x81\xAE\xE9\x81\x8B\xE5\x8B\xA2"
         == candidate.description) {
       // has valid value?
       if ("\xE5\xA4\xA7\xE5\x90\x89" == candidate.value ||  // "大吉"

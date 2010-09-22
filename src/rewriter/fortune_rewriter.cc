@@ -169,8 +169,9 @@ bool InsertCandidate(FortuneType fortune_type,
   c->content_key = base_candidate.content_key;
   c->can_expand_alternative = false;
   c->learning_type |= Segment::Candidate::NO_LEARNING;
-  // discription "おみくじ"
-  c->SetDescription(0, "\xE3\x81\x8A\xE3\x81\xBF\xE3\x81\x8F\xE3\x81\x98");
+  // discription "今日の運勢"
+  c->SetDescription(0,
+      "\xE4\xBB\x8A\xE6\x97\xA5\xE3\x81\xAE\xE9\x81\x8B\xE5\x8B\xA2");
   return true;
 }
 
@@ -196,17 +197,11 @@ bool FortuneRewriter::Rewrite(Segments *segments) const {
   if (key != "\xE3\x81\x8A\xE3\x81\xBF\xE3\x81\x8F\xE3\x81\x98") {
     return false;
   }
-  size_t pos = 0;
-  while (pos < segment.candidates_size()) {
-    if (segment.candidate(pos).value == key) {
-      break;
-    }
-    ++pos;
-  }
   FortuneData *fortune_data = Singleton<FortuneData>::get();
   fortune_data->ChangeFortune();
+  // Insert a fortune candidate into the last of all candidates.
   return InsertCandidate(fortune_data->fortune_type(),
-                         pos + 1,
+                         segment.candidates_size(),
                          segments->mutable_conversion_segment(0));
 }
 }  // namespace mozc

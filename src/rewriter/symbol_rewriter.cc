@@ -254,11 +254,14 @@ void SymbolRewriter::InsertCandidates(const EmbeddedDictionary::Value *value,
   size_t offset = min(kOffsetSize, segment->candidates_size());
   // Find the position wehere we start to insert the symbols
   // We want to skip the single-kanji we inserted by single-kanji rewriter.
+  // We also skip transliterated key candidates.
 
   for (size_t i = offset; i < segment->candidates_size(); ++i) {
     const string &value = segment->candidate(i).value;
-    if (Util::CharsLen(value) == 1 &&
-        Util::IsScriptType(value, Util::KANJI)) {
+    if ((Util::CharsLen(value) == 1 &&
+         Util::IsScriptType(value, Util::KANJI)) ||
+        Util::IsScriptType(value, Util::HIRAGANA) ||
+        Util::IsScriptType(value, Util::KATAKANA)) {
       ++offset;
     } else {
       break;

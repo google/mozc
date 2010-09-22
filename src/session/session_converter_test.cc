@@ -122,6 +122,42 @@ class SessionConverterTest : public testing::Test {
     candidate->value = "\xe5\x8d\xb0\xe6\x88\xbf";
   }
 
+  // set result for "like"
+  void InitConverterWithLike(Segments *segments) {
+    // "ぃ"
+    composer_->InsertCharacterKeyAndPreedit("li", "\xE3\x81\x83");
+    // "け"
+    composer_->InsertCharacterKeyAndPreedit("ke", "\xE3\x81\x91");
+
+    Segment *segment;
+    Segment::Candidate *candidate;
+
+    segments->clear();
+    segment = segments->add_segment();
+
+    // "ぃ"
+    segment->set_key("\xE3\x81\x83");
+    candidate = segment->add_candidate();
+    // "ぃ"
+    candidate->value = "\xE3\x81\x83";
+
+    candidate = segment->add_candidate();
+    // "ィ"
+    candidate->value = "\xE3\x82\xA3";
+
+    segment = segments->add_segment();
+    // "け"
+    segment->set_key("\xE3\x81\x91");
+    candidate = segment->add_candidate();
+    // "家"
+    candidate->value = "\xE5\xAE\xB6";
+    candidate = segment->add_candidate();
+    // "け"
+    candidate->value = "\xE3\x81\x91";
+
+    convertermock_->SetStartConversion(segments, true);
+  }
+
   scoped_ptr<ConverterMock> convertermock_;
 
   scoped_ptr<composer::Composer> composer_;
@@ -223,6 +259,46 @@ TEST_F(SessionConverterTest, ConvertToTransliteration) {
     EXPECT_EQ(1, conversion.segment_size());
     EXPECT_EQ("\xEF\xBC\xA1\xEF\xBC\xA9\xEF\xBC\xB5\xEF\xBC\xA5\xEF\xBC\xAF",
               conversion.segment(0).value());
+    EXPECT_FALSE(converter.IsCandidateListVisible());
+  }
+}
+
+TEST_F(SessionConverterTest, ConvertToTransliterationWithMultipleSegments) {
+  Segments segments;
+  InitConverterWithLike(&segments);
+  SessionConverter converter(convertermock_.get());
+
+  // Convert
+  EXPECT_TRUE(converter.Convert(composer_.get()));
+  {  // Check the conversion #1
+    commands::Output output;
+    converter.FillOutput(&output);
+    EXPECT_FALSE(output.has_result());
+    EXPECT_TRUE(output.has_preedit());
+    EXPECT_FALSE(output.has_candidates());
+
+    const commands::Preedit &conversion = output.preedit();
+    EXPECT_EQ(2, conversion.segment_size());
+    // "ぃ"
+    EXPECT_EQ("\xE3\x81\x83", conversion.segment(0).value());
+    // "家"
+    EXPECT_EQ("\xE5\xAE\xB6", conversion.segment(1).value());
+    EXPECT_FALSE(converter.IsCandidateListVisible());
+  }
+
+  // Convert to half-width alphanumeric.
+  EXPECT_TRUE(converter.ConvertToTransliteration(composer_.get(),
+                                                 transliteration::HALF_ASCII));
+  {  // Check the conversion #2
+    commands::Output output;
+    converter.FillOutput(&output);
+    EXPECT_FALSE(output.has_result());
+    EXPECT_TRUE(output.has_preedit());
+    EXPECT_FALSE(output.has_candidates());
+
+    const commands::Preedit &conversion = output.preedit();
+    EXPECT_EQ(2, conversion.segment_size());
+    EXPECT_EQ("li", conversion.segment(0).value());
     EXPECT_FALSE(converter.IsCandidateListVisible());
   }
 }

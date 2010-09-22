@@ -8,12 +8,19 @@ Precomposition	Space	InsertSpace
 Precomposition	Backspace	Revert
 Composition	ASCII	InsertCharacter
 Composition	Backspace	Backspace
+Composition	Ctrl 0	ConvertToHalfAlphanumeric
+Composition	Ctrl 2	ConvertWithoutHistory
+Composition	Ctrl 6	ConvertToHiragana
+Composition	Ctrl 7	ConvertToFullKatakana
+Composition	Ctrl 8	ConvertToHalfWidth
+Composition	Ctrl 9	ConvertToFullAlphanumeric
 Composition	Ctrl a	MoveCursorToBeginning
 Composition	Ctrl Alt F11	Abort
 Composition	Ctrl Backspace	Backspace
 Composition	Ctrl d	MoveCursorRight
 Composition	Ctrl Down	MoveCursorToEnd
 Composition	Ctrl e	MoveCursorToBeginning
+Composition	Ctrl Eisu	ToggleAlphanumericMode
 Composition	Ctrl Enter	Commit
 Composition	Ctrl f	MoveCursorToEnd
 Composition	Ctrl g	Delete
@@ -63,6 +70,11 @@ Composition	Tab	PredictAndConvert
 Suggestion	Down	PredictAndConvert
 Suggestion	Shift Enter	CommitFirstSuggestion
 Conversion	Backspace	Cancel
+Conversion	Ctrl 0	ConvertToHalfAlphanumeric
+Conversion	Ctrl 6	ConvertToHiragana
+Conversion	Ctrl 7	ConvertToFullKatakana
+Conversion	Ctrl 8	ConvertToHalfWidth
+Conversion	Ctrl 9	ConvertToFullAlphanumeric
 Conversion	Ctrl a	SegmentFocusFirst
 Conversion	Ctrl Alt F11	Abort
 Conversion	Ctrl Backspace	Cancel
@@ -70,6 +82,7 @@ Conversion	Ctrl d	SegmentFocusRight
 Conversion	Ctrl Down	CommitOnlyFirstSegment
 Conversion	Ctrl e	ConvertPrev
 Conversion	Ctrl Enter	Commit
+Conversion	Ctrl Eisu	ToggleAlphanumericMode
 Conversion	Ctrl f	SegmentFocusLast
 Conversion	Ctrl g	Cancel
 Conversion	Ctrl h	Cancel
@@ -104,7 +117,6 @@ Conversion	F7	ConvertToFullKatakana
 Conversion	F8	ConvertToHalfWidth
 Conversion	F9	ConvertToFullAlphanumeric
 Conversion	Henkan	ConvertNext
-Conversion	Henkan	ConvertNext
 Conversion	Home	SegmentFocusFirst
 Conversion	Left	SegmentFocusLeft
 Conversion	Muhenkan	SwitchKanaType
@@ -131,6 +143,7 @@ DirectInput	Hankaku/Zenkaku	IMEOn
 DirectInput	Kanji	IMEOn
 DirectInput	F13	IMEOn
 DirectInput	Henkan	IMEOn
+Precomposition	Ctrl Eisu	ToggleAlphanumericMode
 Precomposition	Hiragana	InputModeHiragana
 Precomposition	Katakana	InputModeFullKatakana
 Precomposition	Eisu	ToggleAlphanumericMode

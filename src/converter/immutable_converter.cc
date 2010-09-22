@@ -63,6 +63,16 @@ enum {
   NOT_CONNECTED,
 };
 
+// TODO(taku): this is a tentative fix.
+// including the header file both in rewriter and converter are redudant.
+// we'd like to have a common module.
+#include "rewriter/user_segment_history_rewriter_rule.h"
+
+// return the POS group of the given candidate
+uint16 GetPosGroup(uint16 lid) {
+  return kLidGroup[lid];
+}
+
 void InsertCorrectedNodes(size_t pos, const string &key,
                           const KeyCorrector *key_corrector,
                           DictionaryInterface *dictionary,
@@ -858,6 +868,12 @@ bool ImmutableConverterImpl::MakeLattice(Segments *segments) const {
           continue;
         }
 
+        // Must be in the same POS group.
+        // http://b/issue?id=2977618
+        if (GetPosGroup(c.lid) != GetPosGroup(compound_node->lid)) {
+          continue;
+        }
+
         // make new virtual node
         Node *new_node = lattice->NewNode();
         CHECK(new_node);
@@ -896,6 +912,15 @@ bool ImmutableConverterImpl::MakeLattice(Segments *segments) const {
             - connector_->GetTransitionCost(last_rid, c.lid)
             - c.cost
             - connector_->GetTransitionCost(c.rid, new_node->lid);
+
+        VLOG(2) << " compound_node->lid=" << compound_node->lid
+                << " compound_node->rid=" << compound_node->rid
+                << " compound_node->wcost=" << compound_node->wcost;
+        VLOG(2) << " last_rid=" << last_rid
+                << " c.lid=" << c.lid
+                << " c.rid=" << c.rid
+                << " c.cost=" << c.cost;
+        VLOG(2) << " new_node->wcost=" << new_node->wcost;
 
         new_node->constrained_prev = rnode;
 
@@ -942,6 +967,22 @@ bool ImmutableConverterImpl::MakeLattice(Segments *segments) const {
   if (lattice->end_nodes(key.size()) == NULL) {
     LOG(WARNING) << "cannot build lattice from input";
     return false;
+  }
+
+  // Fix for "好む" vs "この|無", "大|代" vs "代々" preferences.
+  // If the last node ends with "prefix", give an extra
+  // wcost penalty. In this case  "無" doesn't tend to appear at
+  // user input.
+  for (Node *node = lattice->end_nodes(key.size());
+       node != NULL; node = node->enext) {
+    // Add a special penalty to prefix.
+    // if the key of the prefix is equal to the user input,
+    // that's no the case.
+    if (POSMatcher::IsPrefix(node->rid) &&
+        node->key.size() < conversion_key.size()) {
+      const int kPrefixPenalty = 2000;
+      node->wcost += kPrefixPenalty;
+    }
   }
 
   // resegments

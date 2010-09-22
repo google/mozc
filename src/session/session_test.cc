@@ -178,12 +178,43 @@ class SessionTest : public testing::Test {
         "\xe3\x81\x82\xe3\x81\x84\xe3\x81\x86\xe3\x81\x88\xe3\x81\x8a");
     candidate = segment->add_candidate();
     // "あいうえお"
-    candidate->value
-        = "\xe3\x81\x82\xe3\x81\x84\xe3\x81\x86\xe3\x81\x88\xe3\x81\x8a";
+    candidate->value =
+        "\xe3\x81\x82\xe3\x81\x84\xe3\x81\x86\xe3\x81\x88\xe3\x81\x8a";
     candidate = segment->add_candidate();
     // "アイウエオ"
-    candidate->value
-        = "\xe3\x82\xa2\xe3\x82\xa4\xe3\x82\xa6\xe3\x82\xa8\xe3\x82\xaa";
+    candidate->value =
+        "\xe3\x82\xa2\xe3\x82\xa4\xe3\x82\xa6\xe3\x82\xa8\xe3\x82\xaa";
+  }
+
+  // set result for "like"
+  void InitConverterWithLike(Segments *segments) {
+    Segment *segment;
+    Segment::Candidate *candidate;
+
+    segments->clear();
+    segment = segments->add_segment();
+
+    // "ぃ"
+    segment->set_key("\xE3\x81\x83");
+    candidate = segment->add_candidate();
+    // "ぃ"
+    candidate->value = "\xE3\x81\x83";
+
+    candidate = segment->add_candidate();
+    // "ィ"
+    candidate->value = "\xE3\x82\xA3";
+
+    segment = segments->add_segment();
+    // "け"
+    segment->set_key("\xE3\x81\x91");
+    candidate = segment->add_candidate();
+    // "家"
+    candidate->value = "\xE5\xAE\xB6";
+    candidate = segment->add_candidate();
+    // "け"
+    candidate->value = "\xE3\x81\x91";
+
+    convertermock_->SetStartConversion(segments, true);
   }
 
   scoped_ptr<SessionHandler> handler_;
@@ -1112,6 +1143,48 @@ TEST_F(SessionTest, ConvertToTransliteration) {
   EXPECT_TRUE(command.output().has_preedit());
   EXPECT_EQ(1, command.output().preedit().segment_size());
   EXPECT_EQ("jishin", command.output().preedit().segment(0).value());
+}
+
+TEST_F(SessionTest, ConvertToTransliterationWithMultipleSegments) {
+  scoped_ptr<Session> session(handler_->NewSession());
+  InitSessionToPrecomposition(session.get());
+
+  commands::Command command;
+  InsertCharacterChars("like", session.get(), &command);
+
+  Segments segments;
+  InitConverterWithLike(&segments);
+
+  // Convert
+  command.Clear();
+  session->Convert(&command);
+  {  // Check the conversion #1
+    const commands::Output &output = command.output();
+    EXPECT_FALSE(output.has_result());
+    EXPECT_TRUE(output.has_preedit());
+    EXPECT_FALSE(output.has_candidates());
+
+    const commands::Preedit &conversion = output.preedit();
+    EXPECT_EQ(2, conversion.segment_size());
+    // "ぃ"
+    EXPECT_EQ("\xE3\x81\x83", conversion.segment(0).value());
+    // "家"
+    EXPECT_EQ("\xE5\xAE\xB6", conversion.segment(1).value());
+  }
+
+  // TranslateHalfASCII
+  command.Clear();
+  session->TranslateHalfASCII(&command);
+  {  // Check the conversion #2
+    const commands::Output &output = command.output();
+    EXPECT_FALSE(output.has_result());
+    EXPECT_TRUE(output.has_preedit());
+    EXPECT_FALSE(output.has_candidates());
+
+    const commands::Preedit &conversion = output.preedit();
+    EXPECT_EQ(2, conversion.segment_size());
+    EXPECT_EQ("li", conversion.segment(0).value());
+  }
 }
 
 TEST_F(SessionTest, ConvertToHalfWidth) {
@@ -2048,6 +2121,90 @@ TEST_F(SessionTest, InsertCharacterWithShiftKey) {
     // "アAaアア"
     EXPECT_EQ("\xE3\x82\xA2\x41\x61\xE3\x82\xA2\xE3\x82\xA2",
               GetComposition(command));
+  }
+}
+
+TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommitingSugesstion) {
+  // This is a unittest against http://b/2977131.
+  {
+    scoped_ptr<Session> session(handler_->NewSession());
+    InitSessionToPrecomposition(session.get());
+    commands::Command command;
+    EXPECT_TRUE(SendKey("N", session.get(), &command));
+    EXPECT_EQ(commands::HALF_ASCII, command.output().status().mode());
+    EXPECT_EQ(commands::HALF_ASCII, command.output().mode());  // obsolete
+
+    Segments segments;
+    Segment *segment = segments.add_segment();
+    segment->set_key("NFL");
+    segment->add_candidate()->value = "NFL";
+    convertermock_->SetStartConversion(&segments, true);
+
+    EXPECT_TRUE(session->Convert(&command));
+    EXPECT_FALSE(command.output().has_candidates());
+    EXPECT_FALSE(command.output().candidates().has_focused_index());
+    EXPECT_EQ(0, command.output().candidates().focused_index());
+    EXPECT_FALSE(command.output().has_result());
+    EXPECT_EQ(commands::HIRAGANA, command.output().status().mode());
+    EXPECT_EQ(commands::HIRAGANA, command.output().mode());  // obsolete
+
+    EXPECT_TRUE(SendKey("a", session.get(), &command));
+    EXPECT_FALSE(command.output().has_candidates());
+    EXPECT_TRUE(command.output().has_result());
+    EXPECT_EQ(commands::HIRAGANA, command.output().status().mode());
+    EXPECT_EQ(commands::HIRAGANA, command.output().mode());  // obsolete
+  }
+
+  {
+    scoped_ptr<Session> session(handler_->NewSession());
+    InitSessionToPrecomposition(session.get());
+    commands::Command command;
+    EXPECT_TRUE(SendKey("N", session.get(), &command));
+    EXPECT_EQ(commands::HALF_ASCII, command.output().status().mode());
+    EXPECT_EQ(commands::HALF_ASCII, command.output().mode());  // obsolete
+
+    Segments segments;
+    Segment *segment = segments.add_segment();
+    segment->set_key("NFL");
+    segment->add_candidate()->value = "NFL";
+    convertermock_->SetStartPrediction(&segments, true);
+
+    EXPECT_TRUE(session->PredictAndConvert(&command));
+    ASSERT_TRUE(command.output().has_candidates());
+    EXPECT_TRUE(command.output().candidates().has_focused_index());
+    EXPECT_EQ(0, command.output().candidates().focused_index());
+    EXPECT_FALSE(command.output().has_result());
+    EXPECT_EQ(commands::HIRAGANA, command.output().status().mode());
+    EXPECT_EQ(commands::HIRAGANA, command.output().mode());  // obsolete
+
+    EXPECT_TRUE(SendKey("a", session.get(), &command));
+    EXPECT_FALSE(command.output().has_candidates());
+    EXPECT_TRUE(command.output().has_result());
+    EXPECT_EQ(commands::HIRAGANA, command.output().status().mode());
+    EXPECT_EQ(commands::HIRAGANA, command.output().mode());  // obsolete
+  }
+
+  {
+    scoped_ptr<Session> session(handler_->NewSession());
+    InitSessionToPrecomposition(session.get());
+    commands::Command command;
+    EXPECT_TRUE(SendKey("N", session.get(), &command));
+    EXPECT_EQ(commands::HALF_ASCII, command.output().status().mode());
+    EXPECT_EQ(commands::HALF_ASCII, command.output().mode());  // obsolete
+
+    EXPECT_TRUE(session->ConvertToHalfASCII(&command));
+    EXPECT_FALSE(command.output().has_candidates());
+    EXPECT_FALSE(command.output().candidates().has_focused_index());
+    EXPECT_EQ(0, command.output().candidates().focused_index());
+    EXPECT_FALSE(command.output().has_result());
+    EXPECT_EQ(commands::HIRAGANA, command.output().status().mode());
+    EXPECT_EQ(commands::HIRAGANA, command.output().mode());  // obsolete
+
+    EXPECT_TRUE(SendKey("a", session.get(), &command));
+    EXPECT_FALSE(command.output().has_candidates());
+    EXPECT_TRUE(command.output().has_result());
+    EXPECT_EQ(commands::HIRAGANA, command.output().status().mode());
+    EXPECT_EQ(commands::HIRAGANA, command.output().mode());  // obsolete
   }
 }
 
@@ -3501,6 +3658,57 @@ TEST_F(SessionTest, InputModeOutputHasCandidates) {
   EXPECT_TRUE(command.output().has_preedit());
 }
 
+TEST_F(SessionTest, PerformedCommand) {
+  scoped_ptr<Session> session(handler_->NewSession());
+  InitSessionToPrecomposition(session.get());
+
+  {
+    commands::Command command;
+    // IMEOff
+    command.mutable_input()->mutable_key()->set_special_key(
+        commands::KeyEvent::OFF);
+    session->SendKey(&command);
+    EXPECT_EQ("Precomposition_IMEOff", command.output().performed_command());
+  }
+  {
+    commands::Command command;
+    // IMEOn
+    command.mutable_input()->mutable_key()->set_special_key(
+        commands::KeyEvent::ON);
+    session->SendKey(&command);
+    EXPECT_EQ("Direct_IMEOn", command.output().performed_command());
+  }
+  {
+    commands::Command command;
+    // 'a'
+    command.mutable_input()->mutable_key()->set_key_code('a');
+    session->SendKey(&command);
+    EXPECT_EQ("Precomposition_InsertCharacter",
+              command.output().performed_command());
+  }
+  {
+    // SetStartConversion for changing state to Convert.
+    Segments segments;
+    SetAiueo(&segments);
+    convertermock_->SetStartConversion(&segments, true);
+    commands::Command command;
+    // SPACE
+    command.mutable_input()->mutable_key()->set_special_key(
+        commands::KeyEvent::SPACE);
+    session->SendKey(&command);
+    EXPECT_EQ("Composition_Convert",
+              command.output().performed_command());
+  }
+  {
+    commands::Command command;
+    // ENTER
+    command.mutable_input()->mutable_key()->set_special_key(
+        commands::KeyEvent::ENTER);
+    session->SendKey(&command);
+    EXPECT_EQ("Conversion_Commit",
+              command.output().performed_command());
+  }
+}
 
 // since History segments are almost hidden from
 namespace {

@@ -111,6 +111,9 @@ class SystemDictionary : public DictionaryInterface {
 
   static const int kMaxTokensPerLookup = 10000;
 
+  // Spelling Correction tokens are distinguished by offset of lid
+  static const int kSpellingCorrectionPosOffset = 10000;
+
  private:
   FRIEND_TEST(SystemDictionaryTest, test_words);
   FRIEND_TEST(SystemDictionaryTest, test_prefix);

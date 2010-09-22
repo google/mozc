@@ -1,10 +1,17 @@
 status	key	command
 Precomposition	Ctrl Alt F11	Abort
+Precomposition	Ctrl Eisu	ToggleAlphanumericMode
 Precomposition	Eisu	ToggleAlphanumericMode
 Precomposition	Shift Space	InsertAlternateSpace
 Precomposition	Space	InsertSpace
 Precomposition	Backspace	Revert
 Composition	Backspace	Backspace
+Composition	Ctrl 0	DisplayAsHalfAlphanumeric
+Composition	Ctrl 2	ConvertWithoutHistory
+Composition	Ctrl 6	DisplayAsHiragana
+Composition	Ctrl 7	DisplayAsFullKatakana
+Composition	Ctrl 8	DisplayAsHalfWidth
+Composition	Ctrl 9	DisplayAsFullAlphanumeric
 Composition	Ctrl ;	DisplayAsHalfWidth
 Composition	Ctrl :	DisplayAsHalfAlphanumeric
 Composition	Ctrl '	DisplayAsHalfAlphanumeric
@@ -13,6 +20,7 @@ Composition	Ctrl Alt F11	Abort
 Composition	Ctrl b	MoveCursorLeft
 Composition	Ctrl d	Delete
 Composition	Ctrl e	MoveCursorToEnd
+Composition	Ctrl Eisu	ToggleAlphanumericMode
 Composition	Ctrl f	MoveCursorRight
 Composition	Ctrl g	Cancel
 Composition	Ctrl h	Backspace
@@ -23,6 +31,11 @@ Composition	Ctrl Left	MoveCursorToBeginning
 Composition	Ctrl m	Commit
 Composition	Ctrl m	Commit
 Composition	Ctrl Right	MoveCursorToEnd
+Composition	Ctrl Option 1	DisplayAsHiragana
+Composition	Ctrl Option 2	DisplayAsFullKatakana
+Composition	Ctrl Option 3	DisplayAsFullAlphanumeric
+Composition	Ctrl Option 4	DisplayAsHalfWidth
+Composition	Ctrl Option 5	DisplayAsHalfAlphanumeric
 Composition	Delete	Delete
 Composition	Eisu	ToggleAlphanumericMode
 Composition	Enter	Commit
@@ -42,8 +55,6 @@ Composition	Option F3	DisplayAsFullAlphanumeric
 Composition	Option F4	DisplayAsHalfWidth
 Composition	Option F5	DisplayAsHalfAlphanumeric
 Composition	Option j	MoveCursorLeft
-Composition	Option j	MoveCursorLeft
-Composition	Option l	MoveCursorRight
 Composition	Option l	MoveCursorRight
 Composition	Option s	DisplayAsHalfAlphanumeric
 Composition	Option Space	InsertFullSpace
@@ -53,6 +64,11 @@ Composition	Right	MoveCursorRight
 Composition	Space	Convert
 Composition	Tab	PredictAndConvert
 Conversion	Backspace	Cancel
+Conversion	Ctrl 0	DisplayAsHalfAlphanumeric
+Conversion	Ctrl 6	DisplayAsHiragana
+Conversion	Ctrl 7	DisplayAsFullKatakana
+Conversion	Ctrl 8	DisplayAsHalfWidth
+Conversion	Ctrl 9	DisplayAsFullAlphanumeric
 Conversion	Ctrl ;	DisplayAsHalfWidth
 Conversion	Ctrl :	DisplayAsHalfAlphanumeric
 Conversion	Ctrl '	DisplayAsHalfAlphanumeric
@@ -74,6 +90,11 @@ Conversion	Ctrl o	SegmentWidthExpand
 Conversion	Ctrl p	ConvertPrev
 Conversion	Ctrl q	SegmentWidthShrink
 Conversion	Ctrl Right	SegmentFocusLast
+Conversion	Ctrl Option 1	DisplayAsHiragana
+Conversion	Ctrl Option 2	DisplayAsFullKatakana
+Conversion	Ctrl Option 3	DisplayAsFullAlphanumeric
+Conversion	Ctrl Option 4	DisplayAsHalfWidth
+Conversion	Ctrl Option 5	DisplayAsHalfAlphanumeric
 Conversion	Ctrl s	SegmentFocusLeft
 Conversion	Ctrl w	SegmentWidthExpand
 Conversion	Ctrl x	ConvertNext

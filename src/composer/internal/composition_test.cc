@@ -1046,6 +1046,141 @@ TEST_F(CompositionTest, Issue2330530) {
   EXPECT_EQ("Win7", preedit);
 }
 
+TEST_F(CompositionTest, Issue2819580) {
+  // This is a unittest against http://b/2819580.
+  // 'y' after 'n' disappears.
+  Table table;
+  // "ぽ"
+  table.AddRule("po", "\xe3\x81\xbd", "");
+  // "ん"
+  table.AddRule("n", "\xe3\x82\x93", "");
+  // "な"
+  table.AddRule("na", "\xe3\x81\xaa", "");
+  // "や"
+  table.AddRule("ya", "\xe3\x82\x84", "");
+  // "にゃ"
+  table.AddRule("nya", "\xe3\x81\xab\xe3\x82\x83", "");
+  // "びょ"
+  table.AddRule("byo", "\xe3\x81\xb3\xe3\x82\x87", "");
+
+  Composition comp;
+  comp.SetTable(&table);
+
+  comp.SetInputMode(TransliteratorsJa::GetHiraganaTransliterator());
+
+  size_t pos = 0;
+  pos = comp.InsertAt(pos, "n");
+  pos = comp.InsertAt(pos, "y");
+  {
+    string output;
+    comp.GetStringWithTrimMode(FIX, &output);
+    // "んｙ"
+    EXPECT_EQ("\xe3\x82\x93\xef\xbd\x99", output);
+
+    comp.GetStringWithTrimMode(ASIS, &output);
+    // "ｎｙ"
+    EXPECT_EQ("\xef\xbd\x8e\xef\xbd\x99", output);
+
+    comp.GetStringWithTrimMode(TRIM, &output);
+    // ""
+    EXPECT_EQ("", output);
+  }
+}
+
+TEST_F(CompositionTest, Issue2990253) {
+  // SplitChunk fails.
+  // Ambiguous text is left in rhs CharChunk invalidly.
+  Table table;
+  // "ぽ"
+  table.AddRule("po", "\xe3\x81\xbd", "");
+  // "ん"
+  table.AddRule("n", "\xe3\x82\x93", "");
+  // "な"
+  table.AddRule("na", "\xe3\x81\xaa", "");
+  // "や"
+  table.AddRule("ya", "\xe3\x82\x84", "");
+  // "にゃ"
+  table.AddRule("nya", "\xe3\x81\xab\xe3\x82\x83", "");
+  // "びょ"
+  table.AddRule("byo", "\xe3\x81\xb3\xe3\x82\x87", "");
+
+  Composition comp;
+  comp.SetTable(&table);
+
+  comp.SetInputMode(TransliteratorsJa::GetHiraganaTransliterator());
+
+  size_t pos = 0;
+  pos = comp.InsertAt(pos, "n");
+  pos = comp.InsertAt(pos, "y");
+  pos = 1;
+  pos = comp.InsertAt(pos, "b");
+  {
+    string output;
+    comp.GetStringWithTrimMode(FIX, &output);
+    // "んｂｙ"
+    EXPECT_EQ("\xe3\x82\x93\xef\xbd\x82\xef\xbd\x99", output);
+
+    comp.GetStringWithTrimMode(ASIS, &output);
+    // "んｂｙ"
+    EXPECT_EQ("\xe3\x82\x93\xef\xbd\x82\xef\xbd\x99", output);
+
+    comp.GetStringWithTrimMode(TRIM, &output);
+    // "んｂ"
+    // doubtful result. should be "ん"
+    // May relate to http://b/2990358
+    EXPECT_EQ("\xe3\x82\x93\xef\xbd\x82", output);
+  }
+}
+
+
+TEST_F(CompositionTest, Issue2990358) {
+  // http://b/2990358
+  Table table;
+  // "ぽ"
+  table.AddRule("po", "\xe3\x81\xbd", "");
+  // "ん"
+  table.AddRule("n", "\xe3\x82\x93", "");
+  // "な"
+  table.AddRule("na", "\xe3\x81\xaa", "");
+  // "や"
+  table.AddRule("ya", "\xe3\x82\x84", "");
+  // "にゃ"
+  table.AddRule("nya", "\xe3\x81\xab\xe3\x82\x83", "");
+  // "びょ"
+  table.AddRule("byo", "\xe3\x81\xb3\xe3\x82\x87", "");
+
+  Composition comp;
+  comp.SetTable(&table);
+
+  comp.SetInputMode(TransliteratorsJa::GetHiraganaTransliterator());
+
+  size_t pos = 0;
+  pos = comp.InsertAt(pos, "n");
+  pos = comp.InsertAt(pos, "y");
+  pos = 1;
+  pos = comp.InsertAt(pos, "b");
+  pos = 3;
+  pos = comp.InsertAt(pos, "o");
+  {
+    string output;
+    comp.GetStringWithTrimMode(FIX, &output);
+    // "んびょ"
+    // Commented out because currently returns "んｂよ"
+    // EXPECT_EQ("\xe3\x82\x93\xe3\x81\xb3\xe3\x82\x87", output);
+
+    comp.GetStringWithTrimMode(ASIS, &output);
+    // "んびょ"
+    // Commented out because currently returns "んｂよ"
+    // EXPECT_EQ("\xe3\x82\x93\xe3\x81\xb3\xe3\x82\x87", output);
+
+    comp.GetStringWithTrimMode(TRIM, &output);
+    // "んびょ"
+    // Commented out because currently returns "んｂよ"
+    // EXPECT_EQ("\xe3\x82\x93\xe3\x81\xb3\xe3\x82\x87", output);
+  }
+}
+
+
 #ifdef UNDEFINE_ARRAYSIZE
 #undef ARRAYSIZE
 #endif  // UNDEFINE_ARRAYSIZE

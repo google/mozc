@@ -35,6 +35,7 @@
 #include "base/protobuf/zero_copy_stream_impl.h"
 #include "session/commands.pb.h"
 #include "session/config_handler.h"
+#include "session/internal/keymap.h"
 #include "session/session_usage_observer.h"
 #include "storage/registry.h"
 #include "testing/base/public/gunit.h"
@@ -311,6 +312,65 @@ TEST_F(SessionUsageObserverTest, AllSpecialKeysTest) {
   }
 }
 
+TEST_F(SessionUsageObserverTest, PerformedCommandTest) {
+  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
+  observer->SetInterval(1);
+  string reg_str;
+  scoped_ptr<keymap::KeyMapManager> keymap_manager(new keymap::KeyMapManager);
+  {
+    set<string> command_names;
+    keymap_manager->GetAvailableCommandNameDirect(&command_names);
+    for (set<string>::const_iterator itr = command_names.begin();
+         itr != command_names.end(); ++itr) {
+      commands::Command command;
+      command.mutable_input()->set_type(commands::Input::SEND_KEY);
+      command.mutable_output()->set_id(1);
+      command.mutable_output()->set_performed_command("Direct_" + *itr);
+      observer->EvalCommandHandler(command);
+      ExpectStatsCount("Performed_Direct_" + *itr, 1);
+    }
+  }
+  {
+    set<string> command_names;
+    keymap_manager->GetAvailableCommandNamePrecomposition(&command_names);
+    for (set<string>::const_iterator itr = command_names.begin();
+         itr != command_names.end(); ++itr) {
+      commands::Command command;
+      command.mutable_input()->set_type(commands::Input::SEND_KEY);
+      command.mutable_output()->set_id(1);
+      command.mutable_output()->set_performed_command("Precomposition_" + *itr);
+      observer->EvalCommandHandler(command);
+      ExpectStatsCount("Performed_Precomposition_" + *itr, 1);
+    }
+  }
+  {
+    set<string> command_names;
+    keymap_manager->GetAvailableCommandNameComposition(&command_names);
+    for (set<string>::const_iterator itr = command_names.begin();
+         itr != command_names.end(); ++itr) {
+      commands::Command command;
+      command.mutable_input()->set_type(commands::Input::SEND_KEY);
+      command.mutable_output()->set_id(1);
+      command.mutable_output()->set_performed_command("Composition_" + *itr);
+      observer->EvalCommandHandler(command);
+      ExpectStatsCount("Performed_Composition_" + *itr, 1);
+    }
+  }
+  {
+    set<string> command_names;
+    keymap_manager->GetAvailableCommandNameConversion(&command_names);
+    for (set<string>::const_iterator itr = command_names.begin();
+         itr != command_names.end(); ++itr) {
+      commands::Command command;
+      command.mutable_input()->set_type(commands::Input::SEND_KEY);
+      command.mutable_output()->set_id(1);
+      command.mutable_output()->set_performed_command("Conversion_" + *itr);
+      observer->EvalCommandHandler(command);
+      ExpectStatsCount("Performed_Conversion_" + *itr, 1);
+    }
+  }
+}
+
 TEST_F(SessionUsageObserverTest, ConfigTest) {
 
   scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);;
@@ -322,6 +382,8 @@ TEST_F(SessionUsageObserverTest, ConfigTest) {
       "usage_stats.ConfigSessionKeymap", &reg_str));
   EXPECT_TRUE(storage::Registry::Lookup(
       "usage_stats.ConfigPreeditMethod", &reg_str));
+  EXPECT_TRUE(storage::Registry::Lookup(
+      "usage_stats.ConfigCustomRomanTable", &reg_str));
   EXPECT_TRUE(storage::Registry::Lookup(
       "usage_stats.ConfigPunctuationMethod", &reg_str));
   EXPECT_TRUE(storage::Registry::Lookup(
@@ -363,6 +425,8 @@ TEST_F(SessionUsageObserverTest, ConfigTest) {
       "usage_stats.ConfigSessionKeymap", &reg_str));
   EXPECT_FALSE(storage::Registry::Lookup(
       "usage_stats.ConfigPreeditMethod", &reg_str));
+  EXPECT_FALSE(storage::Registry::Lookup(
+      "usage_stats.ConfigCustomRomanTable", &reg_str));
   EXPECT_FALSE(storage::Registry::Lookup(
       "usage_stats.ConfigPunctuationMethod", &reg_str));
   EXPECT_FALSE(storage::Registry::Lookup(
@@ -409,6 +473,8 @@ TEST_F(SessionUsageObserverTest, ConfigTest) {
       "usage_stats.ConfigSessionKeymap", &reg_str));
   EXPECT_TRUE(storage::Registry::Lookup(
       "usage_stats.ConfigPreeditMethod", &reg_str));
+  EXPECT_TRUE(storage::Registry::Lookup(
+      "usage_stats.ConfigCustomRomanTable", &reg_str));
   EXPECT_TRUE(storage::Registry::Lookup(
       "usage_stats.ConfigPunctuationMethod", &reg_str));
   EXPECT_TRUE(storage::Registry::Lookup(

@@ -78,6 +78,7 @@ struct Node {
   bool      is_weak_connected;
   string    key;
   string    value;
+  bool      is_spelling_correction;
 
   inline void Init() {
     prev = next = bnext = enext = constrained_prev = NULL;
@@ -90,6 +91,7 @@ struct Node {
     wcost = 0;
     cost = 0;
     is_weak_connected = false;
+    is_spelling_correction = false;
   }
 };
 

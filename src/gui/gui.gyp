@@ -596,12 +596,12 @@
         ['OS=="win"', {
           'product_name': 'GoogleIMEJaTool',
           'sources': [
-            'tool/mozc_tool.rc',
+            '<(gen_out_dir)/tool/mozc_tool_autogen.rc',
           ],
           'dependencies': [
             '../base/base.gyp:base',
-            '../win32/win32.gyp:gen_mozc_version_def',
             '../win32/win32.gyp:ime_base',
+            'gen_mozc_tool_header',
           ],
           'includes': [
             '../gyp/postbuilds_win.gypi',
@@ -616,6 +616,22 @@
         'qt_target_default.gypi',
       ],
     },],
+    ['OS=="win"', {
+      'targets': [
+        {
+          'target_name': 'gen_mozc_tool_header',
+          'variables': {
+            'gen_resource_proj_name': 'mozc_tool',
+            'gen_main_resource_path': 'gui/tool/mozc_tool.rc',
+            'gen_output_resource_path':
+                '<(gen_out_dir)/tool/mozc_tool_autogen.rc',
+          },
+          'includes': [
+            '../win32/gen_resource_header.gypi',
+          ],
+        },
+      ],
+    }],
     ['OS=="mac"', {
       'targets': [
         {
@@ -681,7 +697,7 @@
             'INFOPLIST_FILE': '<(gen_out_dir)/mozc_tool_info',
           },
           'mac_bundle_resources': [
-            '../data/images/product_icon.icns',
+            '../data/images/mac/product_icon.icns',
             '../data/mac/ConfigDialog/English.lproj/InfoPlist.strings',
             '../data/mac/ConfigDialog/Japanese.lproj/InfoPlist.strings',
           ],
@@ -700,7 +716,7 @@
             'INFOPLIST_FILE': '<(gen_out_dir)/mozc_tool_info',
           },
           'mac_bundle_resources': [
-            '../data/images/product_icon.icns',
+            '../data/images/mac/product_icon.icns',
             '../data/mac/DictionaryTool/English.lproj/InfoPlist.strings',
             '../data/mac/DictionaryTool/Japanese.lproj/InfoPlist.strings',
           ],

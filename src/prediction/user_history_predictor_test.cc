@@ -77,7 +77,7 @@ void AddCandidate(size_t index, const string &value, Segments *segments) {
   candidate->Init();
   candidate->value = value;
   candidate->content_value = value;
-  candidate->content_key = segments->segment(0).key();
+  candidate->content_key = segments->segment(index).key();
 }
 
 void AddCandidateWithDescription(size_t index,
@@ -90,7 +90,7 @@ void AddCandidateWithDescription(size_t index,
   candidate->Init();
   candidate->value = value;
   candidate->content_value = value;
-  candidate->content_key = segments->segment(0).key();
+  candidate->content_key = segments->segment(index).key();
   candidate->description = desc;
 }
 
@@ -1441,9 +1441,20 @@ TEST(UserHistoryPredictor, FingerPrintTest) {
   const uint32 segment_fp =
       UserHistoryPredictor::SegmentFingerprint(segment);
 
+  Segment segment2;
+  segment2.set_key("ab");
+  Segment::Candidate *c2 = segment2.add_candidate();
+  c2->content_key = kKey;
+  c2->content_value = kValue;
+  c2->value = kValue;
+
+  const uint32 segment_fp2 =
+      UserHistoryPredictor::SegmentFingerprint(segment2);
+
   EXPECT_EQ(entry_fp1, entry_fp2);
   EXPECT_EQ(segment_fp, entry_fp2);
   EXPECT_EQ(segment_fp, entry_fp1);
+  EXPECT_EQ(segment_fp, segment_fp2);
 }
 
 TEST(UserHistoryPredictor, Uint32ToStringTest) {

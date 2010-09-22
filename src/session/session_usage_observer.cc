@@ -127,6 +127,9 @@ void SetConfigStats() {
   usage_stats::UsageStats::SetInteger("ConfigSessionKeymap", keymap);
   const uint32 preedit_method = GET_CONFIG(preedit_method);
   usage_stats::UsageStats::SetInteger("ConfigPreeditMethod", preedit_method);
+  const bool custom_roman = (!GET_CONFIG(custom_roman_table).empty() &&
+                             preedit_method == config::Config::ROMAN);
+  usage_stats::UsageStats::SetBoolean("ConfigCustomRomanTable", custom_roman);
   const uint32 punctuation_method = GET_CONFIG(punctuation_method);
   usage_stats::UsageStats::SetInteger("ConfigPunctuationMethod",
                                       punctuation_method);
@@ -808,6 +811,11 @@ void SessionUsageObserver::EvalCommandHandler(
 
   IncrementCount("SessionAllEvent");
   UpdateTiming("ElapsedTime", output.elapsed_time());
+
+  if (output.has_performed_command() &&
+      !output.performed_command().empty()) {
+    IncrementCount("Performed_" + output.performed_command());
+  }
 
   if (input.type() == commands::Input::SEND_KEY) {
     if (output.has_consumed() && output.consumed()) {

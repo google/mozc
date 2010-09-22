@@ -217,21 +217,26 @@ bool RecvMessage(int socket,
     *last_ipc_error = IPC_UNKNOWN_ERROR;
     return false;
   }
-  if (IsReadTimeout(socket, timeout)) {
-    LOG(WARNING) << "Read timeout " << timeout;
-    *last_ipc_error = IPC_TIMEOUT_ERROR;
-    return false;
-  }
-  const ssize_t length = ::recv(socket, buf, *buf_length, 0);
-  *buf_length = (length > 0) ? length : 0;
-  if (length == 0) {
-    LOG(WARNING) << "Received 0 result. ignored";
-  }
-  if (length < 0) {
-    LOG(ERROR) << "an error occurred during recv(): " << strerror(errno);
-    *last_ipc_error = IPC_READ_ERROR;
-    return false;
-  }
+  ssize_t buf_left = *buf_length;
+  ssize_t read_length = 0;
+  *buf_length = 0;
+  do {
+    if (IsReadTimeout(socket, timeout)) {
+      LOG(WARNING) << "Read timeout " << timeout;
+      *last_ipc_error = IPC_TIMEOUT_ERROR;
+      return false;
+    }
+    read_length = ::recv(socket, buf, buf_left, 0);
+    if (read_length < 0) {
+      LOG(ERROR) << "an error occurred during recv(): " << strerror(errno);
+      *buf_length = 0;
+      *last_ipc_error = IPC_READ_ERROR;
+      return false;
+    }
+    *buf_length += read_length;
+    buf += read_length;
+    buf_left -= read_length;
+  } while (read_length != 0 && buf_left > 0);
   VLOG(1) << *buf_length << " bytes received";
   return true;
 }
@@ -317,6 +322,11 @@ void IPCClient::Init(const string &name, const string &server_path) {
                   reinterpret_cast<const sockaddr*>(&address),
                   sun_len) != 0 ||
         !IsPeerValid(socket_, &pid)) {
+      if ((errno == ENOTSOCK || errno == ECONNREFUSED) &&
+          !IsAbstractSocket(server_address)) {
+        // If abstract namepace is not enabled, recreate server_addresss path.
+        ::unlink(server_address.c_str());
+      }
       LOG(WARNING) << "connect failed: " << strerror(errno);
       connected_ = false;
       manager->Clear();
@@ -358,6 +368,15 @@ bool IPCClient::Call(const char *request_,
     LOG(ERROR) << "SendMessage failed";
     return false;
   }
+
+  // Half-close the socket so that mozc_server could know the length of the
+  // request data. Without this, RecvMessage() in mozc_server would fail with
+  // timeout.
+  // TODO(yusukes): It would be also possible to modify Send and RecvMessage()
+  // so that they send/recv the payload size explicitly together with the actual
+  // data. Will revisit later.
+  ::shutdown(socket_, SHUT_WR);
+
   if (!RecvMessage(socket_, response_, response_size, timeout,
                    &last_ipc_error_)) {
     LOG(ERROR) << "RecvMessage failed";

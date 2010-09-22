@@ -66,7 +66,7 @@
           ],
           'mac_bundle': 1,
           'mac_bundle_resources': [
-            '../data/images/product_icon.icns'
+            '../data/images/mac/product_icon.icns'
           ],
           'xcode_settings': {
             # Currently metadata in the Info.plist file like version
@@ -90,11 +90,11 @@
             '../gyp/postbuilds_win.gypi',
           ],
           'sources': [
-            'mozc_server.rc',
             'mozc_server.exe.manifest',
+            '<(gen_out_dir)/mozc_server_autogen.rc',
           ],
           'dependencies': [
-            '../win32/win32.gyp:gen_mozc_version_def',
+            'gen_mozc_server_resource_header',
           ],
           'msvs_settings': {
             'VCLinkerTool': {
@@ -123,6 +123,30 @@
           ],
         },
         {
+          'target_name': 'gen_mozc_server_resource_header',
+          'variables': {
+            'gen_resource_proj_name': 'mozc_server',
+            'gen_main_resource_path': 'server/mozc_server.rc',
+            'gen_output_resource_path':
+                '<(gen_out_dir)/mozc_server_autogen.rc',
+          },
+          'includes': [
+            '../win32/gen_resource_header.gypi',
+          ],
+        },
+        {
+          'target_name': 'gen_mozc_cache_service_resource_header',
+          'variables': {
+            'gen_resource_proj_name': 'mozc_cache_service',
+            'gen_main_resource_path': 'server/mozc_cache_service.rc',
+            'gen_output_resource_path':
+                '<(gen_out_dir)/mozc_cache_service_autogen.rc',
+          },
+          'includes': [
+            '../win32/gen_resource_header.gypi',
+          ],
+        },
+        {
           'target_name': 'cache_service_manager',
           'type': 'static_library',
           'sources': [
@@ -144,12 +168,12 @@
           ],
           'sources': [
             'mozc_cache_service.cc',
-            'mozc_cache_service.rc',
             'mozc_cache_service.exe.manifest',
+            '<(gen_out_dir)/mozc_cache_service_autogen.rc',
           ],
           'dependencies': [
-            '../win32/win32.gyp:gen_mozc_version_def',
             'cache_service_manager',
+            'gen_mozc_cache_service_resource_header',
           ],
         },
       ],

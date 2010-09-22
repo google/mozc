@@ -54,6 +54,8 @@ typedef long long           int64;
 
 #ifdef OS_WINDOWS
 #define snprintf _snprintf_s
+#define strtoull _strtoui64
+#define strtoll  _strtoi64
 #endif
 
 template <typename T, size_t N>

@@ -181,21 +181,33 @@ TEST_F(CalculatorRewriterTest, SeparatedSegmentsTest) {
   calculator_rewriter.Rewrite(&segments);
   EXPECT_EQ(segments.segments_size(), 1);  // merged
 
-  // This test could only be verified for the opensource version
-  // because we do not activate the calculator rewriter for other
-  // platforms.  The rewritten result for the resized segment is
-  // calculated by the following steps:
-  //  1 the calculator rewriter calls the ResizeSegment() of the converter
-  //  2 the converter calls Rewrite() of the rewriter
-  //  3 the rewriter calls each rewriter
-  // Unfortunately we do not use the calculator rewriter in the step 3
-  // for platforms other than OS_LINUX, thus we cannot get the
-  // calculator result even for this test.
-  // TODO(tok): remove this ifdef clause when turning on the
-  // calculator rewriter in the all platform.
-#if defined(OS_LINUX) && !defined(OS_CHROMEOS)
   int index = GetIndexOfCalculatedCandidate(segments);
   EXPECT_NE(index, -1);
-#endif
+}
+
+// Verify the description of calculator candidate.
+TEST_F(CalculatorRewriterTest, DescriptionCheckTest) {
+  // "５・（８／４）ー７％３＋６＾−１＊９＝"
+  const char kExpression[] =
+      "\xEF\xBC\x95\xE3\x83\xBB\xEF\xBC\x88\xEF\xBC\x98\xEF\xBC\x8F"
+      "\xEF\xBC\x94\xEF\xBC\x89\xE3\x83\xBC\xEF\xBC\x97\xEF\xBC\x85"
+      "\xEF\xBC\x93\xEF\xBC\x8B\xEF\xBC\x96\xEF\xBC\xBE\xE2\x88\x92"
+      "\xEF\xBC\x91\xEF\xBC\x8A\xEF\xBC\x99\xEF\xBC\x9D";
+  // Expected description
+  const string description =
+      "5/(8/4)-7%3+6^-1*9= " + kPartOfCalculationDescription;
+
+  // Pretend kExpression is calculated to "3"
+  calculator_mock().SetCalculatePair(kExpression, "3", true);
+
+  CalculatorRewriter calculator_rewriter;
+
+  Segments segments;
+  AddSegment(kExpression, kExpression, &segments);
+
+  calculator_rewriter.Rewrite(&segments);
+  const int index = GetIndexOfCalculatedCandidate(segments);
+
+  EXPECT_EQ(segments.segment(0).candidate(index).description, description);
 }
 }  // namespace mozc

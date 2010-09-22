@@ -157,6 +157,17 @@
       ],
     },
     {
+      'target_name': 'session_server_main',
+      'type': 'executable',
+      'sources': [
+        'session_server_main.cc',
+      ],
+      'dependencies': [
+        'session',
+        'session_protocol',
+      ],
+    },
+    {
       'target_name': 'session_test',
       'type': 'executable',
       'sources': [
@@ -302,6 +313,20 @@
         },
       ],
     },
+    {
+      'target_name': 'session_converter_stress_test',
+      'type': 'executable',
+      'sources': [
+        'session_converter_stress_test.cc'
+      ],
+      'dependencies': [
+        'session',
+        '../testing/testing.gyp:gtest_main',
+      ],
+      'variables': {
+        'test_size': 'large',
+      },
+    },
     # Test cases meta target: this target is referred from gyp/tests.gyp
     {
       'target_name': 'session_all_test',
@@ -314,6 +339,8 @@
         'session_handler_test',
         'session_handler_stress_test',
         'session_module_test',
+        'session_converter_test',
+        'session_converter_stress_test',
       ],
     },
   ],

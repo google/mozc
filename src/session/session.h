@@ -204,6 +204,9 @@ class Session {
   SessionState::Type state_;
   TransformTable transform_table_;
 
+  // Set session state to the given state and also update related status.
+  void SetSessionState(SessionState::Type state);
+
   // Return true if full width space is preferred in the current
   // situation rather than half width space.
   bool IsFullWidthInsertSpace() const;

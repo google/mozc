@@ -35,6 +35,7 @@
 #include <map>
 #include <sstream>
 #include <string>
+#include <vector>
 #include "base/base.h"
 #include "base/init.h"
 #include "base/singleton.h"
@@ -118,13 +119,15 @@ bool FlagUtil::SetFlag(const string &name, const string &value) {
       *(reinterpret_cast<bool *>(flag->storage)) = IsTrue(v.c_str());
       break;
     case I64:
-      *(reinterpret_cast<int64 *>(flag->storage)) = atoi32(v.c_str());
+      *(reinterpret_cast<int64 *>(flag->storage)) =
+          strtoll(v.c_str(), NULL, 10);
       break;
     case U64:
-      *(reinterpret_cast<uint64 *>(flag->storage)) = atoi32(v.c_str());
+      *(reinterpret_cast<uint64 *>(flag->storage)) =
+          strtoull(v.c_str(), NULL, 10);
       break;
     case D:
-      *(reinterpret_cast<double *>(flag->storage)) = atof(v.c_str());
+      *(reinterpret_cast<double *>(flag->storage)) = strtod(v.c_str(), NULL);
       break;
     case S:
       *(reinterpret_cast<string *>(flag->storage)) = v;
@@ -153,11 +156,11 @@ void FlagUtil::PrintFlags(string *output) {
                                break;
       case I64:
         os << "  type: int64 default: " <<
-            *(reinterpret_cast<const int *>(flag->default_storage)) << endl;
+            *(reinterpret_cast<const int64 *>(flag->default_storage)) << endl;
                                break;
       case U64:
         os << "  type: uint64  default: " <<
-            *(reinterpret_cast<const int *>(flag->default_storage)) << endl;
+            *(reinterpret_cast<const uint64 *>(flag->default_storage)) << endl;
                                  break;
       case D:
         os << "  type: double  default: " <<

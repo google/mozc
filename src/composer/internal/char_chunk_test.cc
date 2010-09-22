@@ -532,6 +532,188 @@ TEST(CharChunkTest, Issue2209634) {
   EXPECT_EQ("q@", output);
 }
 
+TEST(CharChunkTest, Issue2819580) {
+  // This is an unittest against http://b/2819580.
+  // 'y' after 'n' disappears.
+
+  const TransliteratorInterface *kHiraganaT12r =
+      TransliteratorsJa::GetHiraganaTransliterator();
+
+  Table table;
+  // "ぽ"
+  table.AddRule("po", "\xe3\x81\xbd", "");
+  // "ん"
+  table.AddRule("n", "\xe3\x82\x93", "");
+  // "な"
+  table.AddRule("na", "\xe3\x81\xaa", "");
+  // "や"
+  table.AddRule("ya", "\xe3\x82\x84", "");
+  // "にゃ"
+  table.AddRule("nya", "\xe3\x81\xab\xe3\x82\x83", "");
+
+  // Test for reported situation ("ny").
+  // AddInput ver.
+  {
+    CharChunk chunk;
+    chunk.SetTransliterator(kHiraganaT12r);
+
+    {
+      string input("n");
+      chunk.AddInput(table, &input);
+    }
+    {
+      string input("y");
+      chunk.AddInput(table, &input);
+    }
+    {
+      string result;
+      chunk.AppendFixedResult(table, kHiraganaT12r, &result);
+      // "んｙ"
+      EXPECT_EQ("\xe3\x82\x93\xef\xbd\x99", result);
+    }
+
+    {
+      string input("a");
+      chunk.AddInput(table, &input);
+    }
+    {
+      string result;
+      chunk.AppendFixedResult(table, kHiraganaT12r, &result);
+      // "にゃ"
+      EXPECT_EQ("\xe3\x81\xab\xe3\x82\x83", result);
+    }
+  }
+
+  // Test for reported situation (ny).
+  // AddInputAndConvertedChar ver.
+  {
+    CharChunk chunk;
+    chunk.SetTransliterator(kHiraganaT12r);
+
+    {
+      string input("n");
+      chunk.AddInput(table, &input);
+    }
+    {
+      string input("y");
+      chunk.AddInput(table, &input);
+    }
+    {
+      string input("a");
+      string converted("a");
+      chunk.AddInputAndConvertedChar(table, &input, &converted);
+    }
+    {
+      string result;
+      chunk.AppendFixedResult(table, kHiraganaT12r, &result);
+      // "にゃ"
+      EXPECT_EQ("\xe3\x81\xab\xe3\x82\x83", result);
+    }
+  }
+
+  // Test for reported situation ("pony").
+  {
+    CharChunk chunk;
+    chunk.SetTransliterator(kHiraganaT12r);
+
+    {
+      string input("p");
+      chunk.AddInput(table, &input);
+    }
+    {
+      string input("o");
+      chunk.AddInput(table, &input);
+    }
+    {
+      string input("n");
+      chunk.AddInput(table, &input);
+    }
+    {
+      string input("y");
+      chunk.AddInput(table, &input);
+    }
+    {
+      string result;
+      chunk.AppendFixedResult(table, kHiraganaT12r, &result);
+      // "ぽんｙ"
+      EXPECT_EQ("\xe3\x81\xbd\xe3\x82\x93\xef\xbd\x99", result);
+    }
+
+    {
+      string input("a");
+      chunk.AddInput(table, &input);
+    }
+    {
+      string result;
+      chunk.AppendFixedResult(table, kHiraganaT12r, &result);
+      // "ぽにゃ"
+      EXPECT_EQ("\xe3\x81\xbd\xe3\x81\xab\xe3\x82\x83", result);
+    }
+  }
+
+  // The first input is not contained in the table.
+  {
+    CharChunk chunk;
+    chunk.SetTransliterator(kHiraganaT12r);
+
+    {
+      string input("z");
+      chunk.AddInput(table, &input);
+    }
+    {
+      string input("n");
+      chunk.AddInput(table, &input);
+    }
+    {
+      string input("y");
+      chunk.AddInput(table, &input);
+    }
+    {
+      string result;
+      chunk.AppendFixedResult(table, kHiraganaT12r, &result);
+      // "ｚんｙ"
+      EXPECT_EQ("\xef\xbd\x9a\xe3\x82\x93\xef\xbd\x99", result);
+    }
+  }
+}
+
+TEST(CharChunkTest, Issue2990253) {
+  // http://b/2990253
+  // SplitChunk fails.
+  // Ambiguous text is left in rhs CharChunk invalidly.
+
+  const TransliteratorInterface *kHiraganaT12r =
+      TransliteratorsJa::GetHiraganaTransliterator();
+
+  Table table;
+  // "ん"
+  table.AddRule("n", "\xe3\x82\x93", "");
+  // "な"
+  table.AddRule("na", "\xe3\x81\xaa", "");
+  // "や"
+  table.AddRule("ya", "\xe3\x82\x84", "");
+  // "にゃ"
+  table.AddRule("nya", "\xe3\x81\xab\xe3\x82\x83", "");
+
+  CharChunk chunk, left_new_chunk;
+
+  {
+    string input("n");
+    chunk.AddInput(table, &input);
+  }
+  {
+    string input("y");
+    chunk.AddInput(table, &input);
+  }
+  chunk.SplitChunk(kHiraganaT12r, size_t(1), &left_new_chunk);
+  {
+    string result;
+    chunk.AppendFixedResult(table, kHiraganaT12r, &result);
+    // "ｙ"
+    EXPECT_EQ("\xef\xbd\x99", result);
+  }
+
+}
 
 }  // namespace composer
 }  // namespace mozc

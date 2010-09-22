@@ -49,7 +49,7 @@ const unsigned int kNumberOfIMEngines = 1;
 // A pointer to the SCIM configuration.
 const scim::ConfigPointer *scim_config = NULL;
 
-void EnableDebug() {
+void EnableVerboseLog() {
   mozc::Logging::InitLogStream("scim_mozc");
   mozc::Logging::SetVerboseLevel(1);
 }
@@ -80,8 +80,9 @@ extern "C" {
       return;
     }
 
-    // Logging is disabled by default.
-    // EnableDebug();
+#ifndef NO_LOGGING
+    EnableVerboseLog();
+#endif
 
     VLOG(1) << "mozc_LTX_scim_module_init. "
             << "my pid=" << ::getpid()

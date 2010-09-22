@@ -104,7 +104,7 @@ void AddSymbolToDictionary(const string &pos,
   map<string, uint16>::const_iterator itr = sorting_map.find(first_value);
   uint16 sorting_key = 0;
   if (itr == sorting_map.end()) {
-    LOG(WARNING) << first_value << " is not defined in sorting map.";
+    DLOG(WARNING) << first_value << " is not defined in sorting map.";
     // If the character is platform-dependent, put the character at the last.
     const Util::CharacterSet cset = Util::GetCharacterSet(value);
     if (cset >= Util::JISX0212) {
@@ -166,7 +166,7 @@ void MakeDictionary(const string &symbol_dictionary_file,
     mozc::Util::UpperString(&pos);
     const string &value = fields[1];
     if (seen.find(value) != seen.end()) {
-      DLOG(WARNING) << "already inserted: " << value;
+      LOG(WARNING) << "already inserted: " << value;
       continue;
     } else {
       seen.insert(value);
