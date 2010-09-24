@@ -626,9 +626,6 @@
             'gen_output_resource_path':
                 '<(gen_out_dir)/tool/mozc_tool_autogen.rc',
           },
-          'includes': [
-            '../win32/gen_resource_header.gypi',
-          ],
         },
       ],
     }],
