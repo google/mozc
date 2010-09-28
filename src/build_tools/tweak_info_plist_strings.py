@@ -28,20 +28,17 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-"""Fix all version info in the input Info.plist file.
+"""Replace variables in InfoPlist.strings with file.
 
-  % python tweak_info_plist.py --output=out.txt --input=in.txt \
-      --branding=Mozc --version_file=version.txt
-
-See mozc_version.py for the detailed information for version.txt.
+  % python tweak_info_plist_strings.py --output=out.txt --input=in.txt \
+      --branding=Mozc
 """
 
-__author__ = "mukai"
+__author__ = "komatsu"
 
 import logging
 import optparse
 import sys
-import mozc_version
 import tweak_data
 
 _COPYRIGHT_YEAR = 2010
@@ -53,7 +50,6 @@ def ParseOptions():
     An options data.
   """
   parser = optparse.OptionParser()
-  parser.add_option("--version_file", dest="version_file")
   parser.add_option("--output", dest="output")
   parser.add_option("--input", dest="input")
   parser.add_option("--branding", dest="branding")
@@ -65,9 +61,6 @@ def ParseOptions():
 def main():
   """The main function."""
   options = ParseOptions()
-  if options.version_file is None:
-    logging.error("--version_file is not specified.")
-    sys.exit(-1)
   if options.output is None:
     logging.error("--output is not specified.")
     sys.exit(-1)
@@ -78,26 +71,22 @@ def main():
     logging.error("--branding is not specified.")
     sys.exit(-1)
 
-  version = mozc_version.MozcVersion(options.version_file, expand_daily=False)
-
   # \xC2\xA9 is the copyright mark in UTF-8
   copyright_message = '\xC2\xA9 %d Google Inc.' % _COPYRIGHT_YEAR
-  long_version = version.GetVersionString()
-  short_version = version.GetVersionInFormat('@MAJOR@.@MINOR@.@BUILD@')
-  domain_prefix = 'org.mozc'
-  product_name = 'Mozc'
   if options.branding == 'GoogleJapaneseInput':
-    domain_prefix = 'com.google'
-    product_name = 'Google Japanese Input'
-  variables = {
-      'GOOGLE_VERSIONINFO_LONG': long_version,
-      'GOOGLE_VERSIONINFO_SHORT': short_version,
-      'GOOGLE_VERSIONINFO_ABOUT': copyright_message,
-      'GOOGLE_VERSIONINFO_FINDER':
-        '%s %s, %s' % (product_name, long_version, copyright_message),
-      'BRANDING': options.branding,
-      'DOMAIN_PREFIX': domain_prefix,
-      }
+    variables = {
+        'CF_BUNDLE_NAME_EN': 'Google Japanese Input',
+        'CF_BUNDLE_NAME_JA': u'Google 日本語入力'.encode('utf-8'),
+        'NS_HUMAN_READABLE_COPYRIGHT': copyright_message,
+        'INPUT_MODE_ANNOTATION': 'Google',
+        }
+  else:
+    variables = {
+        'CF_BUNDLE_NAME_EN': 'Mozc',
+        'CF_BUNDLE_NAME_JA': 'Mozc',
+        'NS_HUMAN_READABLE_COPYRIGHT': copyright_message,
+        'INPUT_MODE_ANNOTATION': 'Mozc',
+        }
 
   open(options.output, 'w').write(
       tweak_data.ReplaceVariables(open(options.input).read(), variables))

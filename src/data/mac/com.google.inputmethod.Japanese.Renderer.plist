@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Program</key>
+	<string>/Library/Input Methods/${BRANDING}.app/Contents/Resources/${BRANDING}Renderer.app/Contents/MacOS/${BRANDING}Renderer</string>
+	<key>Label</key>
+	<string>${DOMAIN_PREFIX}.inputmethod.Japanese.Renderer</string>
+	<key>MachServices</key>
+	<dict>
+		<key>${DOMAIN_PREFIX}.inputmethod.Japanese.Renderer.renderer</key>
+		<true/>
+	</dict>
+	<key>KeepAlive</key>
+	<false/>
+</dict>
+</plist>
