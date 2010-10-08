@@ -111,6 +111,9 @@ class Session : public client::SessionInterface {
   // Does nothing.
   virtual void set_server_program(const string &program_path);
 
+  // Remember the client capability information.
+  virtual void set_client_capability(const commands::Capability &capability);
+
   // Does nothing.
   virtual bool LaunchTool(const string &mode,
                           const string &extra_arg);
@@ -134,6 +137,7 @@ class Session : public client::SessionInterface {
   uint64 id_;
 
   StandaloneSessionHandler *handler_;
+  commands::Capability client_capability_;
 };
 
 }  // namespace ibus

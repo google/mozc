@@ -129,6 +129,29 @@ bool CharChunk::IsAppendable(const TransliteratorInterface *t12r) const {
   return !pending_.empty() && (t12r == NULL || t12r == transliterator_);
 }
 
+bool CharChunk::IsConvertible(
+    const TransliteratorInterface *t12r,
+    const Table &table,
+    const string &input) const {
+  if(!IsAppendable(t12r)) {
+    return false;
+  }
+
+  size_t key_length = 0;
+  bool fixed = false;
+  string key = pending_ + input;
+  const Entry* entry = table.LookUpPrefix(key, &key_length, &fixed);
+
+  return entry && (key.size() == key_length) && fixed;
+}
+
+void CharChunk::Combine(const CharChunk& left_chunk) {
+  conversion_ = left_chunk.conversion_ + conversion_;
+  raw_ = left_chunk.raw_ + raw_;
+  ambiguous_ = left_chunk.ambiguous_ + ambiguous_;
+  pending_ = left_chunk.pending_ + pending_;
+}
+
 bool CharChunk::AddInputInternal(const Table &table, string *input) {
   const bool kNoLoop = false;
 
@@ -307,6 +330,14 @@ const string &CharChunk::pending() const {
 
 void CharChunk::set_pending(const string &pending) {
   pending_ = pending;
+}
+
+const string &CharChunk::ambiguous() const {
+  return ambiguous_;
+}
+
+void CharChunk::set_ambiguous(const string &ambiguous) {
+  ambiguous_ = ambiguous;
 }
 
 void CharChunk::set_status(const uint32 status_mask) {

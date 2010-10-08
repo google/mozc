@@ -278,7 +278,9 @@ bool SessionConverter::ConvertToHalfWidth(const composer::Composer *composer) {
   // If composition_ is "あｂｃ", it should be treated as Katakana.
   if (Util::ContainsScriptType(*composition, Util::KATAKANA) ||
       Util::ContainsScriptType(*composition, Util::HIRAGANA) ||
-      Util::ContainsScriptType(*composition, Util::KANJI)) {
+      Util::ContainsScriptType(*composition, Util::KANJI) ||
+      Util::IsKanaSymbolContained(*composition)
+  ) {
     attributes |= KATAKANA;
   } else {
     attributes |= ASCII;
@@ -637,13 +639,15 @@ void SessionConverter::SegmentFocusRight() {
     return;  // Do nothing.
   }
   ResetResult();
+  SegmentFix();
 
   if (segment_index_ + 1 >= segments_->conversion_segments_size()) {
-    return;
+    // If |segment_index_| is at the tail of the segments,
+    // focus on the head.
+    segment_index_ = 0;
+  } else {
+    ++segment_index_;
   }
-
-  SegmentFix();
-  ++segment_index_;
   UpdateCandidateList();
 }
 
@@ -672,13 +676,16 @@ void SessionConverter::SegmentFocusLeft() {
     return;  // Do nothing.
   }
   ResetResult();
+  SegmentFix();
 
   if (segment_index_ <= 0) {
-    return;
+    // If |segment_index_| is at the head of the segments,
+    // focus on the tail.
+    segment_index_ = segments_->conversion_segments_size() - 1;
+  } else {
+    --segment_index_;
   }
 
-  SegmentFix();
-  --segment_index_;
   UpdateCandidateList();
 }
 
@@ -863,6 +870,26 @@ void SessionConverter::FillOutput(commands::Output *output) const {
   if (CheckState(SUGGESTION | PREDICTION | CONVERSION)) {
     FillAllCandidateWords(output->mutable_all_candidate_words());
   }
+}
+
+void SessionConverter::FillContext(commands::Context *context) const {
+  if (context->has_preceding_text()) {
+    // Client has set the information of surrounding text, so do nothing.
+    return;
+  }
+  if (segments_->history_segments_size() == 0) {
+    return;
+  }
+
+  // Set preceding text using history segments.
+  string *preceding_text = context->mutable_preceding_text();
+  for (size_t i = 0; i < segments_->history_segments_size(); ++i) {
+    *preceding_text += segments_->history_segment(i).candidate(0).value;
+  }
+}
+
+void SessionConverter::RemoveTailOfHistorySegments(size_t num_of_characters) {
+  segments_->RemoveTailOfHistorySegments(num_of_characters);
 }
 
 const string &SessionConverter::GetDefaultResult() const {

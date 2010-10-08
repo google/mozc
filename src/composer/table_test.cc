@@ -415,6 +415,138 @@ TEST_F(TableTest, CaseSensitive) {
   }
 }
 
+TEST_F(TableTest, CaseSensitiveByConfiguration) {
+  mozc::config::Config config;
+  mozc::composer::Table table;
+
+  // mozc::config::Config::OFF (case sensitive)
+  {
+    config.set_shift_key_mode_switch(mozc::config::Config::OFF);
+    EXPECT_TRUE(mozc::config::ConfigHandler::SetConfig(config));
+    table.Initialize();
+
+    table.AddRule("a", "[a]", "");
+    table.AddRule("A", "[A]", "");
+    table.AddRule("ba", "[ba]", "");
+    table.AddRule("BA", "[BA]", "");
+    table.AddRule("Ba", "[Ba]", "");
+
+    EXPECT_TRUE(table.case_sensitive());
+    EXPECT_EQ("[a]", GetResult(table, "a"));
+    EXPECT_EQ("[A]", GetResult(table, "A"));
+    EXPECT_EQ("[ba]", GetResult(table, "ba"));
+    EXPECT_EQ("[BA]", GetResult(table, "BA"));
+    EXPECT_EQ("[Ba]", GetResult(table, "Ba"));
+    EXPECT_EQ("<NULL>", GetResult(table, "bA"));
+
+    EXPECT_EQ("a", GetInput(table, "a"));
+    EXPECT_EQ("A", GetInput(table, "A"));
+    EXPECT_EQ("ba", GetInput(table, "ba"));
+    EXPECT_EQ("BA", GetInput(table, "BA"));
+    EXPECT_EQ("Ba", GetInput(table, "Ba"));
+    EXPECT_EQ("<NULL>", GetInput(table, "bA"));
+
+    // Test for HasSubRules
+    EXPECT_FALSE(table.HasSubRules("Z"));
+
+    { // Test for LookUpPrefix
+      const mozc::composer::Entry *entry = NULL;
+      size_t key_length = 0;
+      bool fixed = false;
+      entry = table.LookUpPrefix("bA", &key_length, &fixed);
+      EXPECT_TRUE(entry == NULL);
+      EXPECT_EQ(1, key_length);
+      EXPECT_TRUE(fixed);
+    }
+  }
+
+  // mozc::config::Config::ASCII_INPUT_MODE (case insensitive)
+  {
+    config.set_shift_key_mode_switch(mozc::config::Config::ASCII_INPUT_MODE);
+    EXPECT_TRUE(mozc::config::ConfigHandler::SetConfig(config));
+    table.Initialize();
+
+    table.AddRule("a", "[a]", "");
+    table.AddRule("A", "[A]", "");
+    table.AddRule("ba", "[ba]", "");
+    table.AddRule("BA", "[BA]", "");
+    table.AddRule("Ba", "[Ba]", "");
+
+    EXPECT_FALSE(table.case_sensitive());
+    EXPECT_EQ("[a]", GetResult(table, "a"));
+    EXPECT_EQ("[a]", GetResult(table, "A"));
+    EXPECT_EQ("[ba]", GetResult(table, "ba"));
+    EXPECT_EQ("[ba]", GetResult(table, "BA"));
+    EXPECT_EQ("[ba]", GetResult(table, "Ba"));
+    EXPECT_EQ("[ba]", GetResult(table, "bA"));
+
+    EXPECT_EQ("a", GetInput(table, "a"));
+    EXPECT_EQ("a", GetInput(table, "A"));
+    EXPECT_EQ("ba", GetInput(table, "ba"));
+    EXPECT_EQ("ba", GetInput(table, "BA"));
+    EXPECT_EQ("ba", GetInput(table, "Ba"));
+    EXPECT_EQ("ba", GetInput(table, "bA"));
+
+    // Test for HasSubRules
+    EXPECT_TRUE(table.HasSubRules("Z"));
+
+    {  // Test for LookUpPrefix
+      const mozc::composer::Entry *entry = NULL;
+      size_t key_length = 0;
+      bool fixed = false;
+      entry = table.LookUpPrefix("bA", &key_length, &fixed);
+      EXPECT_TRUE(entry != NULL);
+      EXPECT_EQ("[ba]", entry->result());
+      EXPECT_EQ(2, key_length);
+      EXPECT_TRUE(fixed);
+    }
+  }
+
+  // mozc::config::Config::KATAKANA_INPUT_MODE (case insensitive)
+  {
+    config.set_shift_key_mode_switch(mozc::config::Config::KATAKANA_INPUT_MODE);
+    EXPECT_TRUE(mozc::config::ConfigHandler::SetConfig(config));
+    table.Initialize();
+
+    table.AddRule("a", "[a]", "");
+    table.AddRule("A", "[A]", "");
+    table.AddRule("ba", "[ba]", "");
+    table.AddRule("BA", "[BA]", "");
+    table.AddRule("Ba", "[Ba]", "");
+
+    EXPECT_FALSE(table.case_sensitive());
+    EXPECT_EQ("[a]", GetResult(table, "a"));
+    EXPECT_EQ("[a]", GetResult(table, "A"));
+    EXPECT_EQ("[ba]", GetResult(table, "ba"));
+    EXPECT_EQ("[ba]", GetResult(table, "BA"));
+    EXPECT_EQ("[ba]", GetResult(table, "Ba"));
+    EXPECT_EQ("[ba]", GetResult(table, "bA"));
+
+    EXPECT_EQ("a", GetInput(table, "a"));
+    EXPECT_EQ("a", GetInput(table, "A"));
+    EXPECT_EQ("ba", GetInput(table, "ba"));
+    EXPECT_EQ("ba", GetInput(table, "BA"));
+    EXPECT_EQ("ba", GetInput(table, "Ba"));
+    EXPECT_EQ("ba", GetInput(table, "bA"));
+
+    // Test for HasSubRules
+    EXPECT_TRUE(table.HasSubRules("Z"));
+
+    {  // Test for LookUpPrefix
+      const mozc::composer::Entry *entry = NULL;
+      size_t key_length = 0;
+      bool fixed = false;
+      entry = table.LookUpPrefix("bA", &key_length, &fixed);
+      EXPECT_TRUE(entry != NULL);
+      EXPECT_EQ("[ba]", entry->result());
+      EXPECT_EQ(2, key_length);
+      EXPECT_TRUE(fixed);
+    }
+  }
+}
+
+
+
 #ifdef UNDEFINE_ARRAYSIZE
 #undef ARRAYSIZE
 #endif  // UNDEFINE_ARRAYSIZE

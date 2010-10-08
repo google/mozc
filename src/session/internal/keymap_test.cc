@@ -588,5 +588,52 @@ TEST(KeyMap, AdditionalKeymapsForChromeOS) {
   EXPECT_EQ(ConversionState::CONVERT_PREV_PAGE, conv_command);
 }
 
+TEST(KeyMap, ShiftTabToConvertPrev) {
+  // http://b/2973471
+  // Shift+TAB does not work on a suggestion window
+
+  config::Config config;
+  KeyMapManager manager;
+  commands::KeyEvent key_event;
+
+  ConversionState::Commands conv_command;
+
+  // MSIME
+  {
+    config.CopyFrom(config::ConfigHandler::GetConfig());
+    config.set_session_keymap(config::Config::MSIME);
+    config::ConfigHandler::SetConfig(config);
+    manager.Reload();
+
+    KeyParser::ParseKey("Shift Tab", &key_event);
+    EXPECT_TRUE(manager.GetCommandConversion(key_event, &conv_command));
+    EXPECT_EQ(ConversionState::CONVERT_PREV, conv_command);
+  }
+
+  // Kotoeri
+  {
+    config.CopyFrom(config::ConfigHandler::GetConfig());
+    config.set_session_keymap(config::Config::KOTOERI);
+    config::ConfigHandler::SetConfig(config);
+    manager.Reload();
+
+    KeyParser::ParseKey("Shift Tab", &key_event);
+    EXPECT_TRUE(manager.GetCommandConversion(key_event, &conv_command));
+    EXPECT_EQ(ConversionState::CONVERT_PREV, conv_command);
+  }
+
+  // ATOK
+  {
+    config.CopyFrom(config::ConfigHandler::GetConfig());
+    config.set_session_keymap(config::Config::ATOK);
+    config::ConfigHandler::SetConfig(config);
+    manager.Reload();
+
+    KeyParser::ParseKey("Shift Tab", &key_event);
+    EXPECT_TRUE(manager.GetCommandConversion(key_event, &conv_command));
+    EXPECT_EQ(ConversionState::CONVERT_PREV, conv_command);
+  }
+}
+
 }  // namespace keymap
 }  // namespace mozc

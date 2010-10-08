@@ -30,13 +30,14 @@
 #include "prediction/dictionary_predictor.h"
 
 #include <cmath>
+#include <set>
 #include <string>
+#include <utility>
 #include <vector>
 #include <algorithm>
 #include "base/base.h"
 #include "base/init.h"
 #include "base/util.h"
-#include "converter/node.h"
 #include "converter/converter_interface.h"
 #include "converter/node.h"
 #include "converter/segments.h"
@@ -52,7 +53,55 @@ namespace mozc {
 namespace {
 // define kLidGroup[]
 #include "prediction/suggestion_feature_pos_group.h"
+
+class Result {
+ public:
+  Result() : node_(NULL), score_(0), is_bigram_(false) {}
+  Result(const Node *node, int score, bool is_bigram)
+      : node_(node), score_(score), is_bigram_(is_bigram) {}
+  ~Result() {}
+
+  const Node *node() const {
+    return node_;
+  }
+
+  void set_score(int score) {
+    score_ = score;
+  }
+
+  int score() const {
+    return score_;
+  }
+
+  bool is_bigram() const {
+    return is_bigram_;
+  }
+
+ private:
+  const Node *node_;
+  int score_;
+  bool is_bigram_;
+};
+
+class ResultCompare {
+ public:
+  bool operator() (const Result &a, const Result &b) const {
+    return a.score() < b.score();
+  }
+};
+
+// TODO(taku): remove this function when we implemented Segment::Candidate::key
+string GetSegmentKey(const Segment &segment) {
+  // This a tentative workaround.
+  // when segment.key() is shorter than content_key, it is more likely that
+  // the segment.key() is not a complete key.
+  if (segment.key().size() < segment.candidate(0).content_key.size()) {
+    return segment.candidate(0).content_key;
+  } else {
+    return segment.key();
+  }
 }
+}  // namespace
 
 DictionaryPredictor::DictionaryPredictor()
     : dictionary_(DictionaryFactory::GetDictionary()) {}
@@ -60,51 +109,12 @@ DictionaryPredictor::DictionaryPredictor()
 DictionaryPredictor::~DictionaryPredictor() {}
 
 bool DictionaryPredictor::Predict(Segments *segments) const {
-  if (!GET_CONFIG(use_dictionary_suggest) &&
-      segments->request_type() == Segments::SUGGESTION) {
-    VLOG(2) << "no_dictionary_suggest";
+  if (segments == NULL) {
     return false;
   }
 
-  if (segments->request_type() == Segments::CONVERSION) {
-    VLOG(2) << "request type is CONVERSION";
-    return false;
-  }
-
-  if (segments->conversion_segments_size() < 1) {
-    VLOG(2) << "segment size < 1";
-    return false;
-  }
-
-  const string &key = segments->conversion_segment(0).key();
-  const size_t key_len = Util::CharsLen(key);
-  if (key_len == 0) {
-    VLOG(2) << "key length is 0";
-    return false;
-  }
-
-  if (segments->request_type() == Segments::SUGGESTION &&
-      key_len < 3) {  // too short
-    VLOG(2) << "key length is short";
-    return false;
-  }
-
-  const bool is_zip_code = IsZipCodeRequest(key);
-  if (segments->request_type() == Segments::SUGGESTION &&
-      is_zip_code && key_len < 6) {
-    VLOG(2) << "key looks like a zip code request";
-    return false;
-  }
-
-  Segment *segment = segments->mutable_conversion_segment(0);
-  if (segment == NULL) {
-    LOG(ERROR) << "conversion segment is NULL";
-    return false;
-  }
-
-  NodeAllocatorInterface *allocator = segments->node_allocator();
-  if (allocator == NULL) {
-    LOG(WARNING) << "NodeAllocator is NULL";
+  const PredictionType prediction_type = GetPredictionType(*segments);
+  if (prediction_type == NO_PREDICTION) {
     return false;
   }
 
@@ -123,48 +133,128 @@ bool DictionaryPredictor::Predict(Segments *segments) const {
     return false;
   }
 
+  NodeAllocatorInterface *allocator = segments->node_allocator();
   allocator->set_max_nodes_size(max_nodes_size);
-  const Node *node = dictionary_->LookupPredictive(key.c_str(),
-                                                   key.size(),
-                                                   allocator);
-  if (node == NULL) {
-    return false;
+
+  const string &key = segments->conversion_segment(0).key();
+
+  vector<Result> results;
+  if (prediction_type & UNIGRAM) {
+    const size_t prev_results_size = results.size();
+    const Node *unigram_node = dictionary_->LookupPredictive(key.c_str(),
+                                                             key.size(),
+                                                             allocator);
+    size_t unigram_results_size = 0;
+    for (; unigram_node != NULL; unigram_node = unigram_node->bnext) {
+      results.push_back(Result(unigram_node, 0, false));
+      ++unigram_results_size;
+    }
+
+    // if size reaches max_nodes_size.
+    // we don't show the candidates, since disambiguation from
+    // 256 candidates is hard. (It may exceed max_nodes_size, because this is
+    // just a limit for each backend, so total number may be larger)
+    if (unigram_results_size >= max_nodes_size) {
+      results.resize(prev_results_size);
+    }
   }
 
-  vector<pair<int, const Node *> > results;
-  results.reserve(max_nodes_size);
-  for (; node != NULL; node = node->bnext) {
-    results.push_back(make_pair(0, node));
+  string bigram_key, bigram_prefix_key, bigram_prefix_value;
+  if (prediction_type & BIGRAM) {
+    const Segment &history_segment =
+        segments->history_segment(segments->history_segments_size() - 1);
+    bigram_prefix_key = GetSegmentKey(history_segment);
+    bigram_prefix_value = history_segment.candidate(0).value;
+    bigram_key = bigram_prefix_key + key;
+    const Node *bigram_node = dictionary_->LookupPredictive(bigram_key.c_str(),
+                                                            bigram_key.size(),
+                                                            allocator);
+    const size_t prev_results_size = results.size();
+    size_t bigram_results_size  = 0;
+    for (; bigram_node != NULL; bigram_node = bigram_node->bnext) {
+      // filter out the output (value)'s prefix doesn't match to
+      // the history value.
+      if (Util::StartsWith(bigram_node->value, bigram_prefix_value)) {
+        results.push_back(Result(bigram_node, 0, true));
+        ++bigram_results_size;
+      }
+    }
+
+    // if size reaches max_nodes_size.
+    // we don't show the candidates, since disambiguation from
+    // 256 candidates is hard. (It may exceed max_nodes_size, because this is
+    // just a limit for each backend, so total number may be larger)
+    if (bigram_results_size >= max_nodes_size) {
+      results.resize(prev_results_size);
+    }
   }
 
-  // if size reaches max_nodes_size.
-  // we don't show the candidates, since disambiguation from
-  // 256 candidates is hard. (It may exceed max_nodes_size, because this is
-  // just a limit for each backend, so total number may be larger)
-  if (results.size() >= max_nodes_size) {
+  if (results.empty()) {
+    VLOG(2) << "|result| is empty";
     return false;
   }
 
   // ranking
+  const bool is_zip_code = DictionaryPredictor::IsZipCodeRequest(key);
+
   vector<pair<int, double> > feature;
   for (size_t i = 0; i < results.size(); ++i) {
-    const Node *node = results[i].second;
-    MakeFeature(key,
+    // use the same scoring function for both unigram/bigram.
+    // Bigram will be boosted because we pass the previous
+    // key as a context information.
+    const Node *node = results[i].node();
+    MakeFeature(results[i].is_bigram() ? bigram_key : key,
                 node->key, node->value, node->wcost, node->lid,
                 is_zip_code,
                 &feature);
-    results[i].first = static_cast<int>(-1000 * SVMClassify(feature));
+    results[i].set_score(static_cast<int>(1000 * SVMClassify(feature)));
   }
 
   const size_t size = min(segments->max_prediction_candidates_size(),
                           results.size());
 
-  partial_sort(results.begin(), results.begin() + size,
-               results.end());
+  // Collect values of non-spelling correction predictions.
+  // This is to stop showing inadequate <did you mean?> notations.
+  //
+  // ex. When the key is "あぼ", the following candidates are contained:
+  // - アボカド
+  // - アボカド <did you mean?>
+  // but we should not show "アボカド <did you mean?>".
+  //
+  // So we don't allow spelling correction predictions that
+  // there are non-spelling correction predictions with the same values.
+  //
+  // TODO(takiba): this may cause bad performance
+  set<string> non_spelling_correction_values;
+  for (size_t i = 0; i < results.size(); ++i) {
+    const Node *node = results[i].node();
+    if (!node->is_spelling_correction) {
+      non_spelling_correction_values.insert(node->value);
+    }
+  }
 
-  bool added = false;
-  for (size_t i = 0; i < size; ++i) {
-    const Node *node = results[i].second;
+  // Instead of sorting all the results, we construct a heap.
+  // This is done in linear time and
+  // we can pop as many results as we need effectively.
+  make_heap(results.begin(), results.end(), ResultCompare());
+
+  Segment *segment = segments->mutable_conversion_segment(0);
+  if (segment == NULL) {
+    LOG(ERROR) << "conversion segment is NULL";
+    return false;
+  }
+
+  int added = 0;
+  const size_t key_length = Util::CharsLen(key);
+  for (size_t i = 0; i < results.size(); ++i) {
+    if (added >= size) {
+      break;
+    }
+
+    pop_heap(results.begin(), results.end() - i, ResultCompare());
+    const Result &result = results[results.size() - i - 1];
+    const Node *node = result.node();
+
     string value = node->value;
     Util::LowerString(&value);
     if (SuggestionFilter::IsBadSuggestion(value)) {
@@ -172,8 +262,28 @@ bool DictionaryPredictor::Predict(Segments *segments) const {
     }
 
     // don't suggest exactly the same candidate as key
-    if (key == node->value) {
+    if ((result.is_bigram() && bigram_key == node->value) ||
+        (!result.is_bigram() && key == node->value)) {
       continue;
+    }
+
+    // The below conditions should never happen
+    if (result.is_bigram() &&
+        (node->key.size() <= bigram_prefix_key.size() ||
+         (node->value.size() <= bigram_prefix_value.size()))) {
+      LOG(ERROR) << "Invalid bigram key/value";
+      continue;
+    }
+
+    // filter bad spelling correction
+    if (node->is_spelling_correction) {
+      if (non_spelling_correction_values.count(node->value)) {
+        continue;
+      }
+      // TODO(takiba): 0.75 is just heurestics.
+      if (key_length < Util::CharsLen(node->key) * 0.75) {
+        continue;
+      }
     }
 
     Segment::Candidate *candidate = segment->push_back_candidate();
@@ -185,10 +295,21 @@ bool DictionaryPredictor::Predict(Segments *segments) const {
     candidate->Init();
     VLOG(2) << "DictionarySuggest: " << node->wcost << " "
             << node->value;
-    candidate->content_key = node->key;
+
     // TODO(taku): call CharacterFormManager for these values
-    candidate->value = node->value;
-    candidate->content_value = node->value;
+    if (result.is_bigram()) {
+      // remove the prefix of history key and history value.
+      candidate->content_key =
+          node->key.substr(bigram_prefix_key.size(),
+                           node->key.size() - bigram_prefix_key.size());
+      candidate->value =
+          node->value.substr(bigram_prefix_value.size(),
+                             node->value.size() - bigram_prefix_value.size());
+    } else {
+      candidate->content_key = node->key;
+      candidate->value = node->value;
+    }
+    candidate->content_value = candidate->value;
     candidate->lid = node->lid;
     candidate->rid = node->rid;
     candidate->cost = node->wcost;
@@ -204,10 +325,10 @@ bool DictionaryPredictor::Predict(Segments *segments) const {
     candidate->SetDescription(Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER |
                               Segment::Candidate::ZIPCODE,
                               kDescription);
-    added = true;
+    ++added;
   }
 
-  return added;
+  return added > 0;
 }
 
 namespace {
@@ -279,5 +400,71 @@ bool DictionaryPredictor::IsZipCodeRequest(const string &key) {
   }
 
   return true;
+}
+
+DictionaryPredictor::PredictionType
+DictionaryPredictor::GetPredictionType(const Segments &segments) {
+  if (!GET_CONFIG(use_dictionary_suggest) &&
+      segments.request_type() == Segments::SUGGESTION) {
+    VLOG(2) << "no_dictionary_suggest";
+    return NO_PREDICTION;
+  }
+
+  if (segments.request_type() == Segments::CONVERSION) {
+    VLOG(2) << "request type is CONVERSION";
+    return NO_PREDICTION;
+  }
+
+  if (segments.node_allocator() == NULL) {
+    LOG(WARNING) << "NodeAllocator is NULL";
+    return NO_PREDICTION;
+  }
+
+  if (segments.conversion_segments_size() < 1) {
+    VLOG(2) << "segment size < 1";
+    return NO_PREDICTION;
+  }
+
+  const string &key = segments.conversion_segment(0).key();
+  const size_t key_len = Util::CharsLen(key);
+  if (key_len == 0) {
+    return NO_PREDICTION;
+  }
+
+  const bool is_zip_code = DictionaryPredictor::IsZipCodeRequest(key);
+
+  // Never trigger prediction if key looks like zip code.
+  if (segments.request_type() == Segments::SUGGESTION &&
+      is_zip_code && key_len < 6) {
+    return NO_PREDICTION;
+  }
+
+  int result = NO_PREDICTION;
+
+  // unigram based suggestion requires key_len >= 3.
+  // Providing suggestions from very short user input key is annoying.
+  if (segments.request_type() != Segments::SUGGESTION || key_len >= 3) {
+    result |= UNIGRAM;
+  }
+
+  const size_t history_segments_size = segments.history_segments_size();
+  if (history_segments_size > 0) {
+    const Segment &history_segment =
+        segments.history_segment(history_segments_size - 1);
+    // even in PREDICTION mode, bigram-based suggestion requires that
+    // the length of previous key is >= 3.
+    // It also implies that bigram-based suggestion will be triggered,
+    // even if the current key length is short enough.
+    // TOOD(taku): this setting might be aggressive if the current key
+    // looks like Japanese particle like "が|で|は"
+    // If the current key looks like particle, we can make the behavior
+    // less aggressive.
+    if (history_segment.candidates_size() > 0 &&
+        Util::CharsLen(GetSegmentKey(history_segment)) >= 3) {
+      result |= BIGRAM;
+    }
+  }
+
+  return static_cast<PredictionType>(result);
 }
 }  // namespace mozc

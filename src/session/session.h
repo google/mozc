@@ -179,6 +179,9 @@ class Session {
 
   void ReloadConfig();
 
+  // Set client capability for this session.  Used by unittest.
+  void set_client_capability(const commands::Capability &capability);
+
   uint64 create_session_time() const {
     return create_session_time_;
   }
@@ -204,6 +207,8 @@ class Session {
   SessionState::Type state_;
   TransformTable transform_table_;
 
+  commands::Capability client_capability_;
+
   // Set session state to the given state and also update related status.
   void SetSessionState(SessionState::Type state);
 
@@ -227,6 +232,9 @@ class Session {
   // window.
   bool HighlightCandidate(commands::Command *command);
 
+  // The internal implementation of both SelectCandidate and HighlightCandidate.
+  bool SelectCandidateInternal(commands::Command *command);
+
   // If the command is a shortcut to select a candidate from a list,
   // Process it and return true, otherwise return false.
   bool MaybeSelectCandidate(commands::Command *command);
@@ -249,6 +257,9 @@ class Session {
   // update preferences only affecting this session.
   bool UpdatePreferences(commands::Command *command);
 
+  // Modify input of SendKey, TestSendKey, and SendCommand.
+  void TransformInput(commands::Input *input);
+
   // ensure session status is not DIRECT.
   // if session status is DIRECT, set the status to PRECOMPOSITION.
   void EnsureIMEIsOn();
@@ -256,6 +267,9 @@ class Session {
   // return true if |key_event| is a triggering key_event of
   // AutoIMEConversion.
   bool CanStartAutoConversion(const commands::KeyEvent &key_event) const;
+
+  // Expand composition if required for nested calculation.
+  void ExpandCompositionForCalculator(commands::Command *command);
 
   DISALLOW_COPY_AND_ASSIGN(Session);
 };

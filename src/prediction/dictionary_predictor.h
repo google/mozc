@@ -59,6 +59,19 @@ class DictionaryPredictor: public PredictorInterface {
   // return true if key consistes of '0'-'9' or '-'
   static bool IsZipCodeRequest(const string &key);
 
+  enum PredictionType {
+    // don't need to show any suggestions.
+    NO_PREDICTION = 0,
+    // suggests from current key user is now typing
+    UNIGRAM = 1,
+    // suggests from the previous history key user typed before.
+    BIGRAM = 2,
+  };
+
+  // return PredictionType.
+  // return value may be UNIGRAM | BIGRAM.
+  static PredictionType GetPredictionType(const Segments &segments);
+
  private:
   DictionaryInterface *dictionary_;
 };

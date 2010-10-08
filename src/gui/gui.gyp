@@ -596,6 +596,7 @@
         ['OS=="win"', {
           'product_name': 'GoogleIMEJaTool',
           'sources': [
+            'tool/mozc_tool.exe.manifest',
             '<(gen_out_dir)/tool/mozc_tool_autogen.rc',
           ],
           'dependencies': [

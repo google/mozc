@@ -35,11 +35,12 @@
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
 #include "rewriter/calculator/calculator_interface.h"
+#include "session/config_handler.h"
+#include "session/config.pb.h"
 
 namespace mozc {
 
 CalculatorRewriter::CalculatorRewriter() {
-  // Google calculator is enabled only on Cloud IME.
 }
 
 CalculatorRewriter::~CalculatorRewriter() {}
@@ -51,6 +52,10 @@ CalculatorRewriter::~CalculatorRewriter() {}
 // TODO(tok): It currently calculates same expression twice, if |segments| is
 //            a valid expression.
 bool CalculatorRewriter::Rewrite(Segments *segments) const {
+  if (!GET_CONFIG(use_calculator)) {
+    return false;
+  }
+
   CalculatorInterface *calculator = CalculatorFactory::GetCalculator();
 
   const size_t segments_size = segments->conversion_segments_size();

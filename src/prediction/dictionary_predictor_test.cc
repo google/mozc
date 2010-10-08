@@ -43,8 +43,24 @@ DECLARE_string(test_tmpdir);
 namespace mozc {
 namespace {
 
+class DictionaryPredictorTest : public testing::Test {
+ protected:
+  virtual void SetUp() {
+    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    config::ConfigHandler::GetDefaultConfig(&default_config_);
+    config::ConfigHandler::SetConfig(default_config_);
+  }
+
+  virtual void TearDown() {
+    config::ConfigHandler::SetConfig(default_config_);
+  }
+ private:
+  config::Config default_config_;
+};
+
 void MakeSegmentsForSuggestion(const string key,
                                Segments *segments) {
+  segments->Clear();
   segments->set_max_prediction_candidates_size(10);
   segments->set_request_type(Segments::SUGGESTION);
   Segment *seg = segments->add_segment();
@@ -52,8 +68,17 @@ void MakeSegmentsForSuggestion(const string key,
   seg->set_segment_type(Segment::FIXED_VALUE);
 }
 
-TEST(DictionaryPredictor, DictionaryPredictorTest) {
-  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+void PrependHistorySegments(const string &key,
+                            const string &value,
+                            Segments *segments) {
+  Segment *seg = segments->push_front_segment();
+  seg->set_segment_type(Segment::HISTORY);
+  seg->set_key(key);
+  Segment::Candidate *c = seg->add_candidate();
+  c->value = value;
+}
+
+TEST_F(DictionaryPredictorTest, OnOffTest) {
   DictionaryPredictor predictor;
 
   // turn off
@@ -62,21 +87,166 @@ TEST(DictionaryPredictor, DictionaryPredictorTest) {
   config.set_use_dictionary_suggest(false);
   config::ConfigHandler::SetConfig(config);
 
-
+  // "ぐーぐるあ"
   MakeSegmentsForSuggestion
       ("\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90\xE3\x82\x8B\xE3\x81\x82",
        &segments);
   EXPECT_FALSE(predictor.Predict(&segments));
 
   // turn on
+  // "ぐーぐるあ"
   config.set_use_dictionary_suggest(true);
+  config::ConfigHandler::SetConfig(config);
   MakeSegmentsForSuggestion
       ("\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90\xE3\x82\x8B\xE3\x81\x82",
        &segments);
-  EXPECT_FALSE(predictor.Predict(&segments));
+  EXPECT_TRUE(predictor.Predict(&segments));
 }
 
-TEST(DictionaryPredictor, IsZipCodeRequestTest) {
+TEST_F(DictionaryPredictorTest, BigramTest) {
+  Segments segments;
+  config::Config config;
+  config.set_use_dictionary_suggest(true);
+  config::ConfigHandler::SetConfig(config);
+
+  // "あ"
+  MakeSegmentsForSuggestion("\xE3\x81\x82", &segments);
+
+  // history is "グーグル"
+  PrependHistorySegments("\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90\xE3\x82\x8B",
+                         "\xE3\x82\xB0\xE3\x83\xBC\xE3\x82\xB0\xE3\x83\xAB",
+                         &segments);
+
+  DictionaryPredictor predictor;
+  // "グーグルアドセンス" will be returned.
+  EXPECT_TRUE(predictor.Predict(&segments));
+}
+
+// Check that previous candidate never be shown at the current candidate.
+TEST_F(DictionaryPredictorTest, Regression3042706) {
+  Segments segments;
+  config::Config config;
+  config.set_use_dictionary_suggest(true);
+  config::ConfigHandler::SetConfig(config);
+
+  // "だい"
+  MakeSegmentsForSuggestion("\xE3\x81\xA0\xE3\x81\x84", &segments);
+
+  // history is "きょうと/京都"
+  PrependHistorySegments("\xE3\x81\x8D\xE3\x82\x87"
+                         "\xE3\x81\x86\xE3\x81\xA8",
+                         "\xE4\xBA\xAC\xE9\x83\xBD",
+                         &segments);
+
+  DictionaryPredictor predictor;
+  EXPECT_TRUE(predictor.Predict(&segments));
+  EXPECT_EQ(2, segments.segments_size());   // history + current
+  for (int i = 0; i < segments.segment(1).candidates_size(); ++i) {
+    const Segment::Candidate &candidate = segments.segment(1).candidate(i);
+    // "京都"
+    EXPECT_FALSE(Util::StartsWith(candidate.content_value,
+                                  "\xE4\xBA\xAC\xE9\x83\xBD"));
+    // "だい"
+    EXPECT_TRUE(Util::StartsWith(candidate.content_key,
+                                 "\xE3\x81\xA0\xE3\x81\x84"));
+  }
+}
+
+TEST_F(DictionaryPredictorTest, GetPredictionTypeTest) {
+  Segments segments;
+  config::Config config;
+  config.set_use_dictionary_suggest(true);
+  config::ConfigHandler::SetConfig(config);
+
+  // empty segments
+  {
+    EXPECT_EQ(
+        DictionaryPredictor::NO_PREDICTION,
+        DictionaryPredictor::GetPredictionType(segments));
+  }
+
+  // normal segments
+  {
+    // "てすとだよ"
+    MakeSegmentsForSuggestion("\xE3\x81\xA6\xE3\x81\x99\xE3"
+                              "\x81\xA8\xE3\x81\xA0\xE3\x82\x88",
+                              &segments);
+    EXPECT_EQ(
+        DictionaryPredictor::UNIGRAM,
+        DictionaryPredictor::GetPredictionType(segments));
+
+    segments.set_request_type(Segments::PREDICTION);
+    EXPECT_EQ(
+        DictionaryPredictor::UNIGRAM,
+        DictionaryPredictor::GetPredictionType(segments));
+
+    segments.set_request_type(Segments::CONVERSION);
+    EXPECT_EQ(
+        DictionaryPredictor::NO_PREDICTION,
+        DictionaryPredictor::GetPredictionType(segments));
+  }
+
+  // short key
+  {
+    // "てす"
+    MakeSegmentsForSuggestion("\xE3\x81\xA6\xE3\x81\x99",
+                              &segments);
+    EXPECT_EQ(
+        DictionaryPredictor::NO_PREDICTION,
+        DictionaryPredictor::GetPredictionType(segments));
+
+    // on prediction mode, return UNIGRAM
+    segments.set_request_type(Segments::PREDICTION);
+    EXPECT_EQ(
+        DictionaryPredictor::UNIGRAM,
+        DictionaryPredictor::GetPredictionType(segments));
+  }
+
+  // zipcode-like key
+  {
+    MakeSegmentsForSuggestion("0123", &segments);
+    EXPECT_EQ(
+        DictionaryPredictor::NO_PREDICTION,
+        DictionaryPredictor::GetPredictionType(segments));
+  }
+
+  // History is short => UNIGRAM
+  {
+    // "てすとだよ"
+    MakeSegmentsForSuggestion("\xE3\x81\xA6\xE3\x81\x99\xE3\x81\xA8"
+                              "\xE3\x81\xA0\xE3\x82\x88", &segments);
+    PrependHistorySegments("A", "A", &segments);
+    EXPECT_EQ(
+        DictionaryPredictor::UNIGRAM,
+        DictionaryPredictor::GetPredictionType(segments));
+  }
+
+  // both History and current segment are long => UNIGRAM|BIGRAM
+  {
+    // "てすとだよ"
+    MakeSegmentsForSuggestion("\xE3\x81\xA6\xE3\x81\x99\xE3\x81\xA8"
+                              "\xE3\x81\xA0\xE3\x82\x88", &segments);
+    PrependHistorySegments("\xE3\x81\xA6\xE3\x81\x99\xE3\x81\xA8"
+                           "\xE3\x81\xA0\xE3\x82\x88", "abc", &segments);
+    EXPECT_EQ(
+        DictionaryPredictor::UNIGRAM | DictionaryPredictor::BIGRAM,
+        DictionaryPredictor::GetPredictionType(segments));
+  }
+
+  // Current segment is short => BIGRAM
+  {
+    MakeSegmentsForSuggestion("A", &segments);
+    // "てすとだよ"
+    PrependHistorySegments("\xE3\x81\xA6\xE3\x81\x99"
+                           "\xE3\x81\xA8\xE3\x81\xA0\xE3\x82\x88",
+                           "abc", &segments);
+    EXPECT_EQ(
+        DictionaryPredictor::BIGRAM,
+        DictionaryPredictor::GetPredictionType(segments));
+  }
+}
+
+TEST_F(DictionaryPredictorTest, IsZipCodeRequestTest) {
   EXPECT_TRUE(DictionaryPredictor::IsZipCodeRequest("000"));
   EXPECT_FALSE(DictionaryPredictor::IsZipCodeRequest("ABC"));
   EXPECT_TRUE(DictionaryPredictor::IsZipCodeRequest("---"));

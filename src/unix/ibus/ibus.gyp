@@ -196,6 +196,7 @@
       'type': 'executable',
       'sources': [
         'key_translator_test.cc',
+        'mozc_engine_test.cc',
         'path_util_test.cc',
       ],
       'conditions': [

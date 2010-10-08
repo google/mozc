@@ -393,10 +393,15 @@ void Session::set_server_program(const string &program_path) {
   server_launcher_->set_server_program(program_path);
 }
 
+void Session::set_client_capability(const commands::Capability &capability) {
+  client_capability_.CopyFrom(capability);
+}
+
 bool Session::CreateSession() {
   id_ = 0;
   commands::Input input;
   input.set_type(commands::Input::CREATE_SESSION);
+  input.mutable_capability()->CopyFrom(client_capability_);
 
   commands::Output output;
   if (!CheckVersionOrRestartServerInternal(input, &output)) {

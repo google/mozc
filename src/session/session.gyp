@@ -55,6 +55,7 @@
         '../client/client.gyp:client',
         '../composer/composer.gyp:composer',
         '../converter/converter.gyp:converter',
+        '../rewriter/calculator/calculator.gyp:calculator',
         '../usage_stats/usage_stats.gyp:usage_stats',
         'config_handler',
         'genproto_session',
@@ -179,6 +180,20 @@
       ],
       'variables': {
         'test_size': 'small',
+      },
+    },
+    {
+      'target_name': 'session_regression_test',
+      'type': 'executable',
+      'sources': [
+        'session_regression_test.cc',
+      ],
+      'dependencies': [
+        'session',
+        '../testing/testing.gyp:gtest_main',
+      ],
+      'variables': {
+        'test_size': 'large',
       },
     },
     {
@@ -341,6 +356,7 @@
         'session_module_test',
         'session_converter_test',
         'session_converter_stress_test',
+        'session_regression_test',
       ],
     },
   ],

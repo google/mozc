@@ -424,6 +424,13 @@
          </property>
         </widget>
        </item>
+       <item row="2" column="1">
+        <widget class="QCheckBox" name="calculatorCheckBox">
+         <property name="text">
+          <string>Calculator</string>
+         </property>
+        </widget>
+       </item>
       </layout>
      </widget>
      <widget class="QWidget" name="horizontalLayoutWidget_5">
@@ -1371,6 +1378,7 @@
   <tabstop>numberConversionCheckBox</tabstop>
   <tabstop>emoticonDictionaryCheckBox</tabstop>
   <tabstop>useAutoImeTurnOff</tabstop>
+  <tabstop>calculatorCheckBox</tabstop>
   <tabstop>useAutoConversion</tabstop>
   <tabstop>kutenCheckBox</tabstop>
   <tabstop>toutenCheckBox</tabstop>

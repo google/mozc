@@ -89,7 +89,7 @@ static int InitComposition(Composition* comp) {
   comp->MaybeSplitChunkAt(0, &it);
   for (int i = 0; i < test_chunks_size; ++i) {
     const TestCharChunk& data = test_chunks[i];
-    CharChunk* chunk = comp->InsertChunk(&it);
+    CharChunk* chunk = *comp->InsertChunk(&it);
     chunk->set_conversion(data.conversion);
     chunk->set_pending(data.pending);
     chunk->set_raw(data.raw);
@@ -104,7 +104,7 @@ static CharChunk *AppendChunk(const char *conversion,
   CharChunkList::iterator it;
   comp->MaybeSplitChunkAt(comp->GetLength(), &it);
 
-  CharChunk* chunk = comp->InsertChunk(&it);
+  CharChunk* chunk = *comp->InsertChunk(&it);
   chunk->set_conversion(conversion);
   chunk->set_pending(pending);
   chunk->set_raw(raw);
@@ -1132,9 +1132,10 @@ TEST_F(CompositionTest, Issue2990253) {
   }
 }
 
-
-TEST_F(CompositionTest, Issue2990358) {
+TEST_F(CompositionTest, InsertionIntoPreeditMakesInvalidText_1) {
   // http://b/2990358
+  // Test for mainly Composition::InsertAt()
+
   Table table;
   // "ぽ"
   table.AddRule("po", "\xe3\x81\xbd", "");
@@ -1165,21 +1166,144 @@ TEST_F(CompositionTest, Issue2990358) {
     string output;
     comp.GetStringWithTrimMode(FIX, &output);
     // "んびょ"
-    // Commented out because currently returns "んｂよ"
-    // EXPECT_EQ("\xe3\x82\x93\xe3\x81\xb3\xe3\x82\x87", output);
+    EXPECT_EQ("\xe3\x82\x93\xe3\x81\xb3\xe3\x82\x87", output);
 
     comp.GetStringWithTrimMode(ASIS, &output);
     // "んびょ"
-    // Commented out because currently returns "んｂよ"
-    // EXPECT_EQ("\xe3\x82\x93\xe3\x81\xb3\xe3\x82\x87", output);
+    EXPECT_EQ("\xe3\x82\x93\xe3\x81\xb3\xe3\x82\x87", output);
 
     comp.GetStringWithTrimMode(TRIM, &output);
     // "んびょ"
-    // Commented out because currently returns "んｂよ"
-    // EXPECT_EQ("\xe3\x82\x93\xe3\x81\xb3\xe3\x82\x87", output);
+    EXPECT_EQ("\xe3\x82\x93\xe3\x81\xb3\xe3\x82\x87", output);
   }
 }
 
+TEST_F(CompositionTest, InsertionIntoPreeditMakesInvalidText_2) {
+  // http://b/2990358
+  // Test for mainly Composition::InsertKeyAndPreeditAt()
+
+  Composition comp;
+  Table table;
+  // "す゛", "ず"
+  table.AddRule("\xe3\x81\x99\xe3\x82\x9b", "\xe3\x81\x9a", "");
+  // "く゛", "ぐ"
+  table.AddRule("\xe3\x81\x8f\xe3\x82\x9b", "\xe3\x81\x90", "");
+  comp.SetTable(&table);
+
+  size_t pos = 0;
+  // "も"
+  pos = comp.InsertKeyAndPreeditAt(pos, "m", "\xe3\x82\x82");
+  // "す"
+  pos = comp.InsertKeyAndPreeditAt(pos, "r", "\xe3\x81\x99");
+  // "く"
+  pos = comp.InsertKeyAndPreeditAt(pos, "h", "\xe3\x81\x8f");
+  // "゛"
+  pos = comp.InsertKeyAndPreeditAt(2, "@", "\xe3\x82\x9b");
+  pos = comp.InsertKeyAndPreeditAt(5, "!", "!");
+
+  string comp_str;
+  comp.GetString(&comp_str);
+  // "もずく!"
+  EXPECT_EQ("\xe3\x82\x82\xe3\x81\x9a\xe3\x81\x8f\x21", comp_str);
+
+  string comp_ascii_str;
+  comp.GetStringWithTransliterator(raw_t12r_, &comp_ascii_str);
+  EXPECT_EQ("mr@h!", comp_ascii_str);
+}
+
+TEST_F(CompositionTest, CombinePendingChunks) {
+  Table table;
+  // "ぽ"
+  table.AddRule("po", "\xe3\x81\xbd", "");
+  // "ん"
+  table.AddRule("n", "\xe3\x82\x93", "");
+  // "な"
+  table.AddRule("na", "\xe3\x81\xaa", "");
+  // "や"
+  table.AddRule("ya", "\xe3\x82\x84", "");
+  // "にゃ"
+  table.AddRule("nya", "\xe3\x81\xab\xe3\x82\x83", "");
+  // "びょ"
+  table.AddRule("byo", "\xe3\x81\xb3\xe3\x82\x87", "");
+
+  {
+    // empty chunks + "n" -> empty chunks + "n"
+    Composition comp;
+    comp.SetTable(&table);
+    comp.SetInputMode(TransliteratorsJa::GetHiraganaTransliterator());
+
+    size_t pos = 0;
+
+    CharChunkList::iterator it;
+    comp.MaybeSplitChunkAt(pos, &it);
+    CharChunkList::iterator chunk_it = comp.GetInsertionChunk(&it);
+    comp.CombinePendingChunks(chunk_it, "n");
+    EXPECT_EQ("", (*chunk_it)->pending());
+    EXPECT_EQ("", (*chunk_it)->conversion());
+    EXPECT_EQ("", (*chunk_it)->raw());
+    EXPECT_EQ("", (*chunk_it)->ambiguous());
+  }
+  {
+    // [x] + "n" -> [x] + "n"
+    // No combination performed.
+    Composition comp;
+    comp.SetTable(&table);
+    comp.SetInputMode(TransliteratorsJa::GetHiraganaTransliterator());
+
+    size_t pos = 0;
+    pos = comp.InsertAt(pos, "x");
+
+    CharChunkList::iterator it;
+    comp.MaybeSplitChunkAt(pos, &it);
+    CharChunkList::iterator chunk_it = comp.GetInsertionChunk(&it);
+    comp.CombinePendingChunks(chunk_it, "n");
+    EXPECT_EQ("", (*chunk_it)->pending());
+    EXPECT_EQ("", (*chunk_it)->conversion());
+    EXPECT_EQ("", (*chunk_it)->raw());
+    EXPECT_EQ("", (*chunk_it)->ambiguous());
+  }
+  {
+    // Append "a" to [n][y] -> [ny] + "a"
+    // Combination performed.
+    Composition comp;
+    comp.SetTable(&table);
+    comp.SetInputMode(TransliteratorsJa::GetHiraganaTransliterator());
+
+    size_t pos = 0;
+    pos = comp.InsertAt(pos, "y");
+    pos = comp.InsertAt(0, "n");
+
+    CharChunkList::iterator it;
+    comp.MaybeSplitChunkAt(2, &it);
+    CharChunkList::iterator chunk_it = comp.GetInsertionChunk(&it);
+    comp.CombinePendingChunks(chunk_it, "a");
+    EXPECT_EQ("ny", (*chunk_it)->pending());
+    EXPECT_EQ("", (*chunk_it)->conversion());
+    EXPECT_EQ("ny", (*chunk_it)->raw());
+    EXPECT_EQ("\xe3\x82\x93y", (*chunk_it)->ambiguous());
+  }
+  {
+    // Append "a" to [x][n][y] -> [x][ny] + "a"
+    // Combination performed.
+    Composition comp;
+    comp.SetTable(&table);
+    comp.SetInputMode(TransliteratorsJa::GetHiraganaTransliterator());
+
+    size_t pos = 0;
+    pos = comp.InsertAt(pos, "x");
+    pos = comp.InsertAt(pos, "y");
+    pos = comp.InsertAt(1, "n");
+
+    CharChunkList::iterator it;
+    comp.MaybeSplitChunkAt(3, &it);
+    CharChunkList::iterator chunk_it = comp.GetInsertionChunk(&it);
+    comp.CombinePendingChunks(chunk_it, "a");
+    EXPECT_EQ("ny", (*chunk_it)->pending());
+    EXPECT_EQ("", (*chunk_it)->conversion());
+    EXPECT_EQ("ny", (*chunk_it)->raw());
+    EXPECT_EQ("\xe3\x82\x93y", (*chunk_it)->ambiguous());
+  }
+}
 
 #ifdef UNDEFINE_ARRAYSIZE
 #undef ARRAYSIZE

@@ -31,6 +31,7 @@
 #define MOZC_UNIX_IBUS_MOZC_ENGINE_H_
 
 #include <ibus.h>
+#include <set>
 #include "base/port.h"
 #include "base/scoped_ptr.h"
 #include "session/commands.pb.h"
@@ -100,6 +101,15 @@ class MozcEngine : public EngineInterface {
                                  GValue *value,
                                  gpointer user_data);
 
+  // Manages modifier keys.  Returns false if it should not be sent to server.
+  // It is static for unittest.
+  static bool ProcessModifiers(
+      bool is_key_up,
+      gint keyval,
+      commands::KeyEvent *key,
+      set<gint> *currently_pressed_modifiers,
+      set<commands::KeyEvent::ModifierKey> *modifiers_to_be_sent);
+
  private:
   // Updates the preedit text and the candidate window and inserts result
   // based on the content of |output|.
@@ -144,6 +154,15 @@ class MozcEngine : public EngineInterface {
 
   // Unique IDs of candidates that are currently shown.
   vector<int32> unique_candidate_ids_;
+
+  // Currently pressed modifier keys.  It is set of keyval.
+  set<gint> currently_pressed_modifiers_;
+  // Pending modifier keys.
+  set<commands::KeyEvent::ModifierKey> modifiers_to_be_sent_;
+
+  // A flag to avoid reverting session after deleting surrounding text.
+  // This is a workaround.  See the implementation of ProcessKeyEvent().
+  bool ignore_reset_for_deletion_range_workaround_;
 
   DISALLOW_COPY_AND_ASSIGN(MozcEngine);
 };

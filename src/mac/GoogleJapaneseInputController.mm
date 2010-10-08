@@ -82,6 +82,10 @@ using mozc::CallOnce;
 - (void)openLink:(NSURL *)url;
 
 
+// Ask the converter to the current input mode and update roman/kana
+// input.
+- (void)handleInputMode;
+
 // Switches to a new mode and sync the current mode with the converter.
 - (void)switchMode:(CompositionMode)new_mode client:(id)sender;
 
@@ -375,6 +379,31 @@ class MouseCallback : public mozc::client::SendCommandInterface {
   [sender selectInputMode:it->second];
 }
 
+- (void)handleInputMode {
+  if (!checkInputMode_) {
+    return;
+  }
+
+  if (mode_ == mozc::commands::DIRECT) {
+    // Do not want to invoke the converter during the direct mode.
+    return;
+  }
+
+  Config config;
+  if (!session_->GetConfig(&config)) {
+    LOG(ERROR) << "Cannot obtain the current config";
+    return;
+  }
+
+  InputMode input_mode = ASCII;
+  if (config.preedit_method() == Config::KANA) {
+    input_mode = KANA;
+  }
+  [keyCodeMap_ setInputMode:input_mode];
+  yenSignCharacter_ = config.yen_sign_character();
+  checkInputMode_ = NO;
+}
+
 #pragma mark Mozc Server methods
 
 
@@ -537,6 +566,8 @@ class MouseCallback : public mozc::client::SendCommandInterface {
     // applications like PhotoShop is stuck.
     return YES;
   }
+
+  [self handleInputMode];
 
   // Get the Mozc key event
   KeyEvent keyEvent;

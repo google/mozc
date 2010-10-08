@@ -42,6 +42,7 @@
 #include "base/version.h"
 #include "composer/composer.h"
 #include "composer/table.h"
+#include "rewriter/calculator/calculator_interface.h"
 #include "session/commands.pb.h"
 #include "session/config_handler.h"
 #include "session/config.pb.h"
@@ -240,6 +241,42 @@ void InitTransformTable(const config::Config &config, TransformTable *table) {
   }
 }
 
+// Logic of nested calculation
+// Returns the number of characters to expand preedit to left.
+size_t GetCompositionExpansionForCalculator(const string &preceding_text,
+                                            const string &composition,
+                                            string *expanded_characters) {
+  DCHECK(expanded_characters != NULL);
+
+  // Return 0, if last character is neither "=" nor "＝".
+  if (composition.empty() ||
+      !(Util::EndsWith(composition, "=") ||
+        Util::EndsWith(composition, "\xEF\xBC\x9D"))) {
+    return 0;
+  }
+
+  const CalculatorInterface *calculator = CalculatorFactory::GetCalculator();
+
+  string result;
+  const size_t preceding_length = Util::CharsLen(preceding_text);
+  size_t expansion = preceding_length;
+  while (expansion > 0) {
+    const string part_of_preceding =
+        Util::SubString(preceding_text,
+                        preceding_length - expansion,
+                        expansion);
+    const string key = part_of_preceding + composition;
+    // Skip if the first character is space.
+    if (!Util::StartsWith(key, " ") &&
+        calculator->CalculateString(key, &result)) {
+      *expanded_characters = part_of_preceding;
+      break;
+    }
+    --expansion;
+  }
+  return expansion;
+}
+
 // Set input mode if the current input mode is not the given mode.
 void SwitchInputMode(const transliteration::TransliterationType mode,
                      composer::Composer *composer) {
@@ -295,10 +332,7 @@ bool Session::SendCommand(commands::Command *command) {
   if (!command->input().has_command()) {
     return false;
   }
-  if (command->input().has_key()) {
-    TransformKeyEvent(transform_table_,
-                      command->mutable_input()->mutable_key());
-  }
+  TransformInput(command->mutable_input());
   const commands::SessionCommand &session_command = command->input().command();
 
   if (session_command.type() == commands::SessionCommand::SWITCH_INPUT_MODE) {
@@ -358,10 +392,7 @@ bool Session::TestSendKey(commands::Command *command) {
   if (!keymap_) {
     return false;
   }
-  if (command->input().has_key()) {
-    TransformKeyEvent(transform_table_,
-                      command->mutable_input()->mutable_key());
-  }
+  TransformInput(command->mutable_input());
 
   if (state_ == SessionState::NONE) {
     // This must be an error.
@@ -431,10 +462,7 @@ bool Session::SendKey(commands::Command *command) {
   if (!keymap_) {
     return false;
   }
-  if (command->input().has_key()) {
-    TransformKeyEvent(transform_table_,
-                      command->mutable_input()->mutable_key());
-  }
+  TransformInput(command->mutable_input());
 
   bool result = false;
   switch (state_) {
@@ -823,12 +851,19 @@ bool Session::SendKeyConversionState(commands::Command *command) {
 }
 
 bool Session::UpdatePreferences(commands::Command *command) {
-  if (command == NULL ||
-      !command->input().has_config()) {
+  if (command == NULL) {
     return false;
   }
-  converter_->UpdateConfig(command->input().config());
-  return true;
+  bool result = false;
+  if (command->input().has_config()) {
+    converter_->UpdateConfig(command->input().config());
+    result = true;
+  }
+  if (command->input().has_capability()) {
+    client_capability_ = command->input().capability();
+    result = true;
+  }
+  return result;
 }
 
 bool Session::IMEOn(commands::Command *command) {
@@ -936,7 +971,7 @@ bool Session::GetStatus(commands::Command *command) {
   return true;
 }
 
-bool Session::SelectCandidate(commands::Command *command) {
+bool Session::SelectCandidateInternal(commands::Command *command) {
   // If the current state is not conversion or composition, the
   // candidate window should not be shown.  (On composition, the
   // window is able to be shown as a suggestion window).
@@ -953,12 +988,19 @@ bool Session::SelectCandidate(commands::Command *command) {
   converter_->CandidateMoveToId(command->input().command().id());
   SetSessionState(SessionState::CONVERSION);
 
+  return true;
+}
+
+bool Session::SelectCandidate(commands::Command *command) {
+  if (!SelectCandidateInternal(command)) {
+    return false;
+  }
   Output(command);
   return true;
 }
 
 bool Session::HighlightCandidate(commands::Command *command) {
-  if (!SelectCandidate(command)) {
+  if (!SelectCandidateInternal(command)) {
     return false;
   }
   converter_->SetCandidateListVisible(true);
@@ -978,6 +1020,10 @@ bool Session::MaybeSelectCandidate(commands::Command *command) {
   return converter_->CandidateMoveToShortcut(shortcut);
 }
 
+
+void Session::set_client_capability(const commands::Capability &capability) {
+  client_capability_.CopyFrom(capability);
+}
 
 bool Session::InsertCharacter(commands::Command *command) {
   // If the input_style is DIRECT_INPUT, KeyEvent is not consumed and
@@ -1024,6 +1070,8 @@ bool Session::InsertCharacter(commands::Command *command) {
   }
 
   composer_->InsertCharacterKeyEvent(command->input().key());
+
+  ExpandCompositionForCalculator(command);
 
   SetSessionState(SessionState::COMPOSITION);
   if (CanStartAutoConversion(command->input().key())) {
@@ -1853,5 +1901,49 @@ bool Session::CanStartAutoConversion(
 
 void Session::UpdateTime() {
   last_command_time_ = Util::GetTime();
+}
+
+void Session::TransformInput(commands::Input *input) {
+  if (input->has_key()) {
+    TransformKeyEvent(transform_table_, input->mutable_key());
+  }
+  converter_->FillContext(input->mutable_context());
+}
+
+void Session::ExpandCompositionForCalculator(commands::Command *command) {
+  if ((client_capability_.text_deletion() &
+           commands::Capability::DELETE_PRECEDING_TEXT) == 0) {
+    return;
+  }
+  if (!command->input().has_context()) {
+    return;
+  }
+
+  // Expand composition if expanded composition makes an expression of
+  // Calculator.
+  // E.g. if preceding text is "あいう１" and composition is "+1=", then
+  // composition is expanded to "１+1=".
+  string preedit, expanded_characters;
+  composer_->GetStringForPreedit(&preedit);
+  const size_t expansion_length =
+      GetCompositionExpansionForCalculator(
+          command->input().context().preceding_text(),
+          preedit,
+          &expanded_characters);
+
+  if (expansion_length == 0) {
+    return;
+  }
+
+  composer_->InsertCharacterPreeditAt(0, expanded_characters);
+
+  commands::DeletionRange *range =
+      command->mutable_output()->mutable_deletion_range();
+  range->set_offset(-expansion_length);
+  range->set_length(expansion_length);
+
+  // Delete part of history segments, because corresponding surrounding
+  // text will be removed by client.
+  converter_->RemoveTailOfHistorySegments(expansion_length);
 }
 }  // namespace mozc

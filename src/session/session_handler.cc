@@ -405,6 +405,8 @@ bool SessionHandler::CreateSession(commands::Command *command) {
   // The oldes item should be reused
   DCHECK(oldest_element == NULL || oldest_element == element);
 
+  session->set_client_capability(command->input().capability());
+
   // session is not empty.
   last_session_empty_time_ = 0;
 
@@ -415,6 +417,7 @@ bool SessionHandler::DeleteSession(commands::Command *command) {
   const SessionID id = command->input().id();
   command->mutable_output()->set_id(id);
   DeleteSessionID(id);
+  converter_->Sync();
   return true;
 }
 
@@ -475,6 +478,10 @@ bool SessionHandler::Cleanup(commands::Command *command) {
     DeleteSessionID(remove_ids[i]);
     VLOG(1) << "Session ID " << remove_ids[i] << " is removed by server";
   }
+
+  // Sync all data.
+  // This is a regression bug fix http://b/issue?id=3033708
+  converter_->Sync();
 
   // timeout is enabled.
   if (FLAGS_timeout > 0 &&

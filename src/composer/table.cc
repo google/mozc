@@ -85,6 +85,14 @@ static const char kMiddleDot[]   = "\xE3\x83\xBB";  // "・"
 bool Table::Initialize() {
   bool result = false;
   const config::Config &config = config::ConfigHandler::GetConfig();
+
+  // If shift_key_mode_switch option is disabled,
+  // table looking up is executed in case sensitive mode.
+  // This makes power users who use extremely customized Romaji input table
+  // happy.
+  set_case_sensitive(
+      config.shift_key_mode_switch() == mozc::config::Config::OFF);
+
   switch(config.preedit_method()) {
     case config::Config::ROMAN:
       result = (config.has_custom_roman_table() &&

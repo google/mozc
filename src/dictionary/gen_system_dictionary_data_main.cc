@@ -35,10 +35,8 @@
 //  --make_header
 //
 // Special input files are distinguished by prefixes of filenames
-//   zip_code*   : zip code seed dictionary
-//   correction* : correction dictionary
-//
-// TODO(takiba): correction* -> spelling_correction*
+//   zip_code*            : zip code seed dictionary
+//   spelling_correction* : spelling correction dictionary
 
 #include <string>
 #include <vector>
@@ -107,7 +105,7 @@ int main(int argc, char **argv) {
       zip_code_input = file_path;
       input_files.erase(input_files.begin() + i--);
       LOG(INFO) << "zip code seed dictionary: " << zip_code_input;
-    } else if (file_name.find("correction") == 0) {
+    } else if (file_name.find("spelling_correction") == 0) {
       CHECK(spelling_correction_input.empty())
           << "Multiple spelling correction dictionaries are not supported";
       spelling_correction_input = file_path;
@@ -128,7 +126,8 @@ int main(int argc, char **argv) {
 
   string spelling_correction_converted_dictionary;
   if (!spelling_correction_input.empty()) {
-    spelling_correction_converted_dictionary = FLAGS_output + ".correction_tmp";
+    spelling_correction_converted_dictionary
+        = FLAGS_output + ".spelling_correction_tmp";
     mozc::SpellingCorrectionDictionaryBuilder
         spelling_correction_builder(spelling_correction_input,
                                     spelling_correction_converted_dictionary);

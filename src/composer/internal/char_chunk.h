@@ -69,6 +69,20 @@ class CharChunk {
                          string *result) const;
   bool IsFixed() const;
 
+  // True if IsAppendable() is true and this object is fixed (|pending_|=="")
+  // when |input| is appended.
+  bool IsConvertible(
+      const TransliteratorInterface *transliterator,
+      const Table &table,
+      const string &input) const;
+
+  // Combines all fields with |left_chunk|.
+  // [this chunk] := [left_chunk]+[this chunk]
+  // Note that after calling this method,
+  // the information contained in |left_chunk| duplicates.
+  // Deleting |left_chunk| would be preferable.
+  void Combine(const CharChunk& left_chunk);
+
   // Return true if this char chunk accepts additional characters with
   // the specified transliterator.
   bool IsAppendable(const TransliteratorInterface *transliterator) const;
@@ -87,14 +101,27 @@ class CharChunk {
   const TransliteratorInterface *GetTransliterator(
       const TransliteratorInterface *transliterator) const;
 
+  // Test only
   const string &raw() const;
+  // Test only
   void set_raw(const string &raw);
 
+  // Test only
   const string &conversion() const;
+  // Test only
   void set_conversion(const string &conversion);
 
+  // Test only
   const string &pending() const;
+  // Test only
   void set_pending(const string &pending);
+
+  // Test only
+  const string &ambiguous() const;
+  // Test only
+  void set_ambiguous(const string &ambiguous);
+
+
 
   enum Status {
     NO_CONVERSION = 1,

@@ -128,6 +128,7 @@ Conversion	Shift Down	ConvertNextPage
 Conversion	Shift Left	SegmentWidthShrink
 Conversion	Shift Right	SegmentWidthExpand
 Conversion	Shift Space	ConvertPrev
+Conversion	Shift Tab	ConvertPrev
 Conversion	Shift Up	ConvertPrevPage
 Conversion	Space	ConvertNext
 Conversion	Tab	PredictAndConvert

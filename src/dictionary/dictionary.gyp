@@ -106,7 +106,7 @@
               '../data/dictionary/dictionary08.txt',
               '../data/dictionary/dictionary09.txt',
               '../data/dictionary/zip_code_seed.tsv',
-              # '../data/dictionary/correction_dictionary.txt',
+              '../data/dictionary/spelling_correction_dictionary.txt',
             ],
           },
           'inputs': [

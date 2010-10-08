@@ -466,6 +466,21 @@ void Util::SubString(const string &src,
   return;
 }
 
+bool Util::StartsWith(const string &str, const string &prefix) {
+  if (str.size() < prefix.size()) {
+    return false;
+  }
+  return (0 == memcmp(str.data(), prefix.data(), prefix.size()));
+}
+
+bool Util::EndsWith(const string &str, const string &suffix) {
+  if (str.size() < suffix.size()) {
+    return false;
+  }
+  return (0 == memcmp(str.data() + str.size() - suffix.size(),
+                      suffix.data(), suffix.size()));
+}
+
 void Util::StripUTF8BOM(string *line) {
   const char kUTF8BOM[] = "\xef\xbb\xbf";
   if (line->substr(0, 3) == kUTF8BOM) {
@@ -1097,14 +1112,14 @@ bool Util::IsFullWidthSymbolInHalfWidthKatakana(const string &input) {
     size_t mblen = 0;
     uint16 w = UTF8ToUCS2(begin, end, &mblen);
     switch (w) {
-      case 0x3002:  // FULLSTOP
-      case 0x300C:  // LEFT CORNER BRACKET
-      case 0x300D:  // RIGHT CORNER BRACKET
-      case 0x3001:  // COMMA
-      case 0x30FB:  // MIDDLE DOT
-      case 0x30FC:  // SOUND_MARK
-      case 0x3099:  // VOICE SOUND MARK
-      case 0x309A:  // SEMI VOICE SOUND MARK
+      case 0x3002:  // FULLSTOP "。"
+      case 0x300C:  // LEFT CORNER BRACKET "「"
+      case 0x300D:  // RIGHT CORNER BRACKET "」"
+      case 0x3001:  // COMMA "、"
+      case 0x30FB:  // MIDDLE DOT "・"
+      case 0x30FC:  // SOUND_MARK "ー"
+      case 0x3099:  // VOICE SOUND MARK "゙"
+      case 0x309A:  // SEMI VOICE SOUND MARK "゚"
         begin += mblen;
         break;
       default:
@@ -1122,14 +1137,14 @@ bool Util::IsHalfWidthKatakanaSymbol(const string &input) {
     size_t mblen = 0;
     uint16 w = UTF8ToUCS2(begin, end, &mblen);
     switch (w) {
-      case 0xFF61:  // FULLSTOP
-      case 0xFF62:  // LEFT CORNER BRACKET
-      case 0xFF63:  // RIGHT CORNER BRACKET
-      case 0xFF64:  // COMMA
-      case 0xFF65:  // MIDDLE DOT
-      case 0xFF70:  // SOUND_MARK
-      case 0xFF9E:  // VOICE SOUND MARK
-      case 0xFF9F:  // SEMI VOICE SOUND MARK
+      case 0xFF61:  // FULLSTOP "｡"
+      case 0xFF62:  // LEFT CORNER BRACKET "｢"
+      case 0xFF63:  // RIGHT CORNER BRACKET "｣"
+      case 0xFF64:  // COMMA "､"
+      case 0xFF65:  // MIDDLE DOT "･"
+      case 0xFF70:  // SOUND_MARK "ｰ"
+      case 0xFF9E:  // VOICE SOUND MARK "ﾞ"
+      case 0xFF9F:  // SEMI VOICE SOUND MARK "ﾟ"
         begin += mblen;
         break;
       default:
@@ -1137,6 +1152,37 @@ bool Util::IsHalfWidthKatakanaSymbol(const string &input) {
     }
   }
   return true;
+}
+
+bool Util::IsKanaSymbolContained(const string &input) {
+  const char *begin = input.data();
+  const char *end = begin + input.size();
+  while (begin < end) {
+    size_t mblen = 0;
+    uint16 w = UTF8ToUCS2(begin, end, &mblen);
+    switch (w) {
+      case 0x3002:  // FULLSTOP "。"
+      case 0x300C:  // LEFT CORNER BRACKET "「"
+      case 0x300D:  // RIGHT CORNER BRACKET "」"
+      case 0x3001:  // COMMA "、"
+      case 0x30FB:  // MIDDLE DOT "・"
+      case 0x30FC:  // SOUND_MARK "ー"
+      case 0x3099:  // VOICE SOUND MARK "゙"
+      case 0x309A:  // SEMI VOICE SOUND MARK "゚"
+      case 0xFF61:  // FULLSTOP "｡"
+      case 0xFF62:  // LEFT CORNER BRACKET "｢"
+      case 0xFF63:  // RIGHT CORNER BRACKET "｣"
+      case 0xFF64:  // COMMA "､"
+      case 0xFF65:  // MIDDLE DOT "･"
+      case 0xFF70:  // SOUND_MARK "ｰ"
+      case 0xFF9E:  // VOICE SOUND MARK "ﾞ"
+      case 0xFF9F:  // SEMI VOICE SOUND MARK "ﾟ"
+        return true;
+      default:
+        begin += mblen;
+    }
+  }
+  return false;
 }
 
 bool Util::Unlink(const string &filename) {
@@ -1922,39 +1968,56 @@ Util::ScriptType Util::GetScriptType(const char *begin,
   return Util::GetScriptType(w);
 }
 
-Util::ScriptType Util::GetScriptType(const string &str) {
+namespace {
+Util::ScriptType GetScriptTypeInternal(const string &str,
+                                       bool ignore_white_space) {
   const char *begin = str.data();
   const char *end = str.data() + str.size();
   size_t mblen = 0;
-  ScriptType result = SCRIPT_TYPE_SIZE;
+  Util::ScriptType result = Util::SCRIPT_TYPE_SIZE;
 
   while (begin < end) {
     const uint16 w = Util::UTF8ToUCS2(begin, end, &mblen);
-    ScriptType type = Util::GetScriptType(w);
+    Util::ScriptType type = Util::GetScriptType(w);
     if ((w == 0x30FC || w == 0x30FB ||
          (w >= 0x3099 && w <= 0x309C)) &&
         // PROLONGEDSOUND MARK|MIDLE_DOT|VOICDE_SOUND_MARKS
         // are HIRAGANA as well
-        (result == SCRIPT_TYPE_SIZE ||
-         result == HIRAGANA || result == KATAKANA)) {
+        (result == Util::SCRIPT_TYPE_SIZE ||
+         result == Util::HIRAGANA || result == Util::KATAKANA)) {
       type = result;  // restore the previous state
     }
-    if (type == UNKNOWN_SCRIPT) {
-      return UNKNOWN_SCRIPT;
+    // white space or full widith space
+    if (ignore_white_space && (w == 0x0020 || w == 0x3000)) {
+      begin += mblen;
+      continue;
+    }
+    if (type == Util::UNKNOWN_SCRIPT) {
+      return Util::UNKNOWN_SCRIPT;
     }
     // not first character
-    if (str.data() != begin && result != SCRIPT_TYPE_SIZE && type != result) {
-      return UNKNOWN_SCRIPT;
+    if (str.data() != begin &&
+        result != Util::SCRIPT_TYPE_SIZE && type != result) {
+      return Util::UNKNOWN_SCRIPT;
     }
     result = type;
     begin += mblen;
   }
 
-  if (result == SCRIPT_TYPE_SIZE) {  // everything is "ー"
-    return UNKNOWN_SCRIPT;
+  if (result == Util::SCRIPT_TYPE_SIZE) {  // everything is "ー"
+    return Util::UNKNOWN_SCRIPT;
   }
 
   return result;
+}
+}  // anonymous namespace
+
+Util::ScriptType Util::GetScriptType(const string &str) {
+  return GetScriptTypeInternal(str, false);
+}
+
+Util::ScriptType Util::GetScriptTypeWithoutWhiteSpace(const string &str) {
+  return GetScriptTypeInternal(str, true);
 }
 
 // return true if all script_type in str is "type"

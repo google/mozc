@@ -90,13 +90,21 @@ class Composition : public CompositionInterface {
   size_t GetPosition(const TransliteratorInterface *transliterator,
                      const CharChunkList::const_iterator &it) const;
 
-  CharChunk *GetInsertionChunk(CharChunkList::iterator *it);
-  CharChunk *InsertChunk(CharChunkList::iterator *left_it);
+  CharChunkList::iterator GetInsertionChunk(CharChunkList::iterator *it);
+  CharChunkList::iterator InsertChunk(CharChunkList::iterator *left_it);
 
   CharChunk *MaybeSplitChunkAt(size_t position, CharChunkList::iterator *it);
   void SplitChunk(const size_t position,
                   CharChunk *left_new_chunk,
                   CharChunk *right_orig_chunk) const;
+
+  // Combine |input| and chunks from |it| to left direction,
+  // which have pending data and can be combined.
+  // e.g. [pending='q']+[pending='k']+[pending='y']+[input='o'] are combined
+  //      into [pending='q']+[pending='ky'] because [pending='ky']+[input='o']
+  //      can turn to be a fixed chunk.
+  // e.g. [pending='k']+[pending='y']+[input='q'] are not combined.
+  void CombinePendingChunks(CharChunkList::iterator it, const string &input);
 
   void GetStringWithModes(const TransliteratorInterface *transliterator,
                           TrimMode trim_mode,

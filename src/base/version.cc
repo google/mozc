@@ -62,7 +62,7 @@ bool Version::CompareVersion(const string &lhs, const string &rhs) {
     return false;
   }
   if (lhs.find("Unknown") != string::npos ||
-      rhs.find("Unknonw") != string::npos) {
+      rhs.find("Unknown") != string::npos) {
     LOG(WARNING) << "Unknown is given as version";
     return false;
   }

@@ -59,9 +59,9 @@ class CompareByScore {
 // Ad-hoc function to detect English candidate
 bool IsKatakanaT13NValue(const string &value) {
   for (size_t i = 0; i < value.size(); ++i) {
-    if (value[i] == 0x20 ||
-        (value[i] >= 0x41 && value[i] <= 0x5A) ||
-        (value[i] >= 0x61 && value[i] <= 0x7A)) {
+    if (value[i] == 0x20 || value[i] == 0x21 ||  // " " or "!"
+        (value[i] >= 0x41 && value[i] <= 0x5A) || // A..Z
+        (value[i] >= 0x61 && value[i] <= 0x7A)) { // a..z
       // do nothing
     } else {
       return false;
@@ -94,7 +94,7 @@ void Segment::Candidate::SetDefaultDescription(int description_type) {
 
   if (description_type & Segment::Candidate::CHARACTER_FORM) {
     const string &value = this->value;
-    const Util::ScriptType type = Util::GetScriptType(value);
+    const Util::ScriptType type = Util::GetScriptTypeWithoutWhiteSpace(value);
     switch (type) {
       case Util::HIRAGANA:
         message = kHiragana;
@@ -230,6 +230,22 @@ void Segment::Candidate::ResetDescription(int description_type) {
     description = "<\xE3\x82\x82\xE3\x81\x97\xE3\x81\x8B\xE3\x81\x97"
         "\xE3\x81\xA6>";
   }
+}
+
+string Segment::Candidate::functional_key() const {
+  if (key.size() <= content_key.size()) {
+    return "";
+  }
+  return key.substr(content_key.size(),
+                    key.size() - content_key.size());
+}
+
+string Segment::Candidate::functional_value() const {
+  if (value.size() <= content_value.size()) {
+    return "";
+  }
+  return value.substr(content_value.size(),
+                      value.size() - content_value.size());
 }
 
 Segment::Segment()
@@ -976,6 +992,34 @@ void Segments::pop_back_segment() {
     Segment *seg = segments_.back();
     pool_->Release(seg);
     segments_.pop_back();
+  }
+}
+
+void Segments::RemoveTailOfHistorySegments(size_t num_of_characters) {
+  size_t history_size = history_segments_size();
+  while (history_size > 0 &&
+         num_of_characters > 0) {
+    Segment *last_history_segment =
+        mutable_history_segment(history_size - 1);
+
+    const size_t length_of_last_history_segment =
+        Util::CharsLen(last_history_segment->candidate(0).value);
+
+    if (length_of_last_history_segment <= num_of_characters) {
+      num_of_characters -= length_of_last_history_segment;
+      --history_size;
+      erase_segment(history_size);
+      continue;
+    }
+
+    // Remove part of last history segment.
+    // We should change rId of the candidate too, but currently ignore it.
+    // TODO(komatsu): Treat rId properly.
+    last_history_segment->mutable_candidate(0)->value =
+        Util::SubString(last_history_segment->candidate(0).value,
+                        0,
+                        length_of_last_history_segment - num_of_characters);
+    break;
   }
 }
 

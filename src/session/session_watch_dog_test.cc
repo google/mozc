@@ -102,6 +102,7 @@ class TestSession : public client::SessionInterface {
   void set_timeout(int timeout) {}
   void set_restricted(bool restricted) {}
   void set_server_program(const string &server_program) {}
+  void set_client_capability(const commands::Capability &capability) {}
 
   bool LaunchTool(const string &mode, const string &extra_arg) {
     return true;

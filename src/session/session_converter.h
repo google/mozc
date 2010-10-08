@@ -154,6 +154,12 @@ class SessionConverter : public SessionConverterInterface {
   // Fill protocol buffers
   void FillOutput(commands::Output *output) const;
 
+  // Fill context information
+  void FillContext(commands::Context *context) const;
+
+  // Remove tail part of history segments
+  void RemoveTailOfHistorySegments(size_t num_of_characters);
+
   // Fill protocol buffers with all flatten candidate words.
   void FillAllCandidateWords(commands::CandidateList *candidates) const;
 

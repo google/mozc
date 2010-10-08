@@ -35,6 +35,7 @@
 #include "client/session.h"
 #include "session/commands.pb.h"
 #include "session/session_handler.h"
+#include "converter/converter_mock.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/googletest.h"
 
@@ -181,5 +182,47 @@ TEST(SessionHandlerTest, LastCommandTimeout) {
   Util::Sleep(12000);
   EXPECT_TRUE(Cleanup(&handler));
   EXPECT_FALSE(IsGoodSession(&handler, id));
+}
+
+class SyncCheckConverterMock : public ConverterMock {
+ public:
+  SyncCheckConverterMock() : sync_is_called_(false) {}
+  ~SyncCheckConverterMock() {}
+
+  bool Sync() const {
+    sync_is_called_ = true;
+    return true;
+  }
+
+  bool sync_is_called() const {
+    return sync_is_called_;
+  }
+
+ private:
+  mutable bool sync_is_called_;
+};
+
+TEST(SessionHandlerTest, VerifySyncIsCalled) {
+  {
+    SyncCheckConverterMock mock;
+    ConverterFactory::SetConverter(&mock);
+    SessionHandler handler;
+    commands::Command command;
+    command.mutable_input()->set_type(commands::Input::DELETE_SESSION);
+    EXPECT_FALSE(mock.sync_is_called());
+    handler.EvalCommand(&command);
+    EXPECT_TRUE(mock.sync_is_called());
+  }
+
+  {
+    SyncCheckConverterMock mock;
+    ConverterFactory::SetConverter(&mock);
+    SessionHandler handler;
+    commands::Command command;
+    command.mutable_input()->set_type(commands::Input::CLEANUP);
+    EXPECT_FALSE(mock.sync_is_called());
+    handler.EvalCommand(&command);
+    EXPECT_TRUE(mock.sync_is_called());
+  }
 }
 }

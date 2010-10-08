@@ -218,6 +218,7 @@ message Config {
   optional bool use_symbol_conversion = 82 [ default = true ];
   optional bool use_number_conversion = 83 [ default = true ];
   optional bool use_emoticon_conversion = 84 [ default = true ];
+  optional bool use_calculator = 85 [ default = true ];
 
   //////////////////////////////////////////////////////////////
   //

@@ -476,8 +476,98 @@ TEST_F(SessionConverterTest, MultiSegmentsConversion) {
               candidates.candidate(2).value());
   }
 
+  // Test for segment motion. [SegmentFocusLeft]
+  {
+    converter.SegmentFocusLeft();
+    EXPECT_FALSE(converter.IsCandidateListVisible());
+    converter.SetCandidateListVisible(true);
+
+    commands::Output output;
+    converter.FillOutput(&output);
+    EXPECT_FALSE(output.has_result());
+    EXPECT_TRUE(output.has_preedit());
+    EXPECT_TRUE(output.has_candidates());
+
+    const commands::Candidates &candidates = output.candidates();
+    EXPECT_EQ(0, candidates.focused_index());
+    EXPECT_EQ(3, candidates.size());  // two candidates + one t13n sub list.
+    EXPECT_EQ(0, candidates.position());
+    EXPECT_EQ(kKamabokono, candidates.candidate(0).value());
+    // "カマボコの"
+    EXPECT_EQ("\xe3\x82\xab\xe3\x83\x9e\xe3\x83\x9c\xe3\x82\xb3\xe3\x81\xae",
+              candidates.candidate(1).value());
+
+    // "そのほかの文字種";
+    EXPECT_EQ("\xe3\x81\x9d\xe3\x81\xae\xe3\x81\xbb\xe3\x81\x8b\xe3\x81\xae"
+              "\xe6\x96\x87\xe5\xad\x97\xe7\xa8\xae",
+              candidates.candidate(2).value());
+  }
+
+  // Test for segment motion. [SegmentFocusLeft] at the head of segments.
+  // http://b/2990134
+  // Focus changing at the tail of segments to right,
+  // and at the head of segments to left, should work.
+  {
+    converter.SegmentFocusLeft();
+    EXPECT_FALSE(converter.IsCandidateListVisible());
+    converter.SetCandidateListVisible(true);
+
+    commands::Output output;
+    converter.FillOutput(&output);
+    EXPECT_FALSE(output.has_result());
+    EXPECT_TRUE(output.has_preedit());
+    EXPECT_TRUE(output.has_candidates());
+
+    const commands::Candidates &candidates = output.candidates();
+    EXPECT_EQ(0, candidates.focused_index());
+    EXPECT_EQ(3, candidates.size());  // two candidates + one t13n sub list.
+    EXPECT_EQ(5, candidates.position());
+    // "陰謀"
+    EXPECT_EQ("\xe9\x99\xb0\xe8\xac\x80",
+              candidates.candidate(0).value());
+    // "印房"
+    EXPECT_EQ("\xe5\x8d\xb0\xe6\x88\xbf",
+              candidates.candidate(1).value());
+
+    // "そのほかの文字種";
+    EXPECT_EQ("\xe3\x81\x9d\xe3\x81\xae\xe3\x81\xbb\xe3\x81\x8b\xe3\x81\xae"
+              "\xe6\x96\x87\xe5\xad\x97\xe7\xa8\xae",
+              candidates.candidate(2).value());
+  }
+
+  // Test for segment motion. [SegmentFocusRight] at the tail of segments.
+  // http://b/2990134
+  // Focus changing at the tail of segments to right,
+  // and at the head of segments to left, should work.
+  {
+    converter.SegmentFocusRight();
+    EXPECT_FALSE(converter.IsCandidateListVisible());
+    converter.SetCandidateListVisible(true);
+
+    commands::Output output;
+    converter.FillOutput(&output);
+    EXPECT_FALSE(output.has_result());
+    EXPECT_TRUE(output.has_preedit());
+    EXPECT_TRUE(output.has_candidates());
+
+    const commands::Candidates &candidates = output.candidates();
+    EXPECT_EQ(0, candidates.focused_index());
+    EXPECT_EQ(3, candidates.size());  // two candidates + one t13n sub list.
+    EXPECT_EQ(0, candidates.position());
+    EXPECT_EQ(kKamabokono, candidates.candidate(0).value());
+    // "カマボコの"
+    EXPECT_EQ("\xe3\x82\xab\xe3\x83\x9e\xe3\x83\x9c\xe3\x82\xb3\xe3\x81\xae",
+              candidates.candidate(1).value());
+
+    // "そのほかの文字種";
+    EXPECT_EQ("\xe3\x81\x9d\xe3\x81\xae\xe3\x81\xbb\xe3\x81\x8b\xe3\x81\xae"
+              "\xe6\x96\x87\xe5\xad\x97\xe7\xa8\xae",
+              candidates.candidate(2).value());
+  }
+
   // Test for candidate motion. [CandidateNext]
   {
+    converter.SegmentFocusRight(); // Focus to the last segment.
     converter.CandidateNext();
     EXPECT_TRUE(converter.IsCandidateListVisible());
     commands::Output output;
@@ -735,6 +825,44 @@ TEST_F(SessionConverterTest, ConvertToHalfWidth) {
     EXPECT_EQ(1, conversion.segment_size());
     // "abc"
     EXPECT_EQ("abc", conversion.segment(0).value());
+  }
+}
+
+TEST_F(SessionConverterTest, ConvertToHalfWidth_2) {
+  // http://b/2517514
+  // ConvertToHalfWidth converts punctuations differently w/ or w/o kana.
+  SessionConverter converter(convertermock_.get());
+  // "ｑ"
+  composer_->InsertCharacterKeyAndPreedit("q", "\xef\xbd\x91");
+  // "、"
+  composer_->InsertCharacterKeyAndPreedit(",", "\xe3\x80\x81");
+  // "。"
+  composer_->InsertCharacterKeyAndPreedit(".", "\xe3\x80\x82");
+
+  Segments segments;
+  {  // Initialize segments.
+    Segment *segment = segments.add_segment();
+    // "ｑ、。"
+    segment->set_key("\xef\xbd\x91\xe3\x80\x81\xe3\x80\x82");
+    segment->add_candidate()->value = "q,.";
+    // "q､｡"
+    segment->add_candidate()->value = "q\xef\xbd\xa4\xef\xbd\xa1";
+  }
+  convertermock_->SetStartConversion(&segments, true);
+  EXPECT_TRUE(converter.ConvertToHalfWidth(composer_.get()));
+  EXPECT_FALSE(converter.IsCandidateListVisible());
+
+  {  // Make sure the output
+    commands::Output output;
+    converter.FillOutput(&output);
+    EXPECT_FALSE(output.has_result());
+    EXPECT_TRUE(output.has_preedit());
+    EXPECT_FALSE(output.has_candidates());
+
+    const commands::Preedit &conversion = output.preedit();
+    EXPECT_EQ(1, conversion.segment_size());
+    // "q､｡"
+    EXPECT_EQ("q\xef\xbd\xa4\xef\xbd\xa1", conversion.segment(0).value());
   }
 }
 
@@ -1388,6 +1516,41 @@ TEST_F(SessionConverterTest, OutputAllCandidateWords) {
     // [ "陰謀", "印房", "インボウ" (t13n), "いんぼう" (t13n), "ｲﾝﾎﾞｳ" (t13n) ]
     EXPECT_EQ(5, output.all_candidate_words().candidates_size());
   }
+}
+
+TEST_F(SessionConverterTest, FillContext) {
+  SessionConverter converter(convertermock_.get());
+  Segments segments;
+
+  // Set history segments.
+  // "車で", "行く"
+  const string kHistoryInput[] = {
+      "\xE8\xBB\x8A\xE3\x81\xA7",
+      "\xE8\xA1\x8C\xE3\x81\x8F"
+  };
+  for (int i = 0; i < arraysize(kHistoryInput); ++i) {
+    Segment *segment = segments.add_segment();
+    segment->set_segment_type(Segment::HISTORY);
+    Segment::Candidate *candidate = segment->add_candidate();
+    candidate->value = kHistoryInput[i];
+  }
+  convertermock_->SetFinishConversion(&segments, true);
+  converter.CommitPreedit(*composer_);
+
+  // FillContext must fill concatenation of values of history segments into
+  // preceding_text.
+  commands::Context context;
+  converter.FillContext(&context);
+  EXPECT_TRUE(context.has_preceding_text());
+  EXPECT_EQ(kHistoryInput[0] + kHistoryInput[1], context.preceding_text());
+
+  // If preceding text has been set already, do not overwrite it.
+  // "自動車で行く"
+  const char kPrecedingText[] = "\xE8\x87\xAA\xE5\x8B\x95\xE8\xBB\x8A"
+                                "\xE3\x81\xA7\xE8\xA1\x8C\xE3\x81\x8F";
+  context.set_preceding_text(kPrecedingText);
+  converter.FillContext(&context);
+  EXPECT_EQ(kPrecedingText, context.preceding_text());
 }
 
 // Suggest() in the suggestion state was not accepted.  (http://b/1948334)

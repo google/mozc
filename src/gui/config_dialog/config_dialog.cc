@@ -416,6 +416,7 @@ void ConfigDialog::ConvertFromProto(const config::Config &config) {
   SET_CHECKBOX(emoticonDictionaryCheckBox, use_emoticon_conversion);
   SET_CHECKBOX(dateConversionCheckBox, use_date_conversion);
   SET_CHECKBOX(numberConversionCheckBox, use_number_conversion);
+  SET_CHECKBOX(calculatorCheckBox, use_calculator);
 
   // tab3
   SET_CHECKBOX(useAutoImeTurnOff, use_auto_ime_turn_off);
@@ -487,6 +488,7 @@ void ConfigDialog::ConvertToProto(config::Config *config) const {
   GET_CHECKBOX(emoticonDictionaryCheckBox, use_emoticon_conversion);
   GET_CHECKBOX(dateConversionCheckBox, use_date_conversion);
   GET_CHECKBOX(numberConversionCheckBox, use_number_conversion);
+  GET_CHECKBOX(calculatorCheckBox, use_calculator);
 
   // tab3
   GET_CHECKBOX(useAutoImeTurnOff, use_auto_ime_turn_off);

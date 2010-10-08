@@ -55,6 +55,9 @@ class Segment {
   };
 
   struct Candidate {
+    // reading
+    string key;
+    // surface form
     string value;
     string content_value;
     string content_key;
@@ -81,6 +84,7 @@ class Segment {
     // TODO(toshiyuki): delete this member after the experiment
     vector<const Node *> nodes;
     void Init() {
+      key.clear();
       value.clear();
       content_value.clear();
       content_key.clear();
@@ -163,6 +167,16 @@ class Segment {
 
     // Reset description keeping description_message
     void ResetDescription(int type);
+
+    // return functional key
+    // functional_key =
+    // key.substr(content_key.size(), key.size() - content_key.size());
+    string functional_key() const;
+
+    // return functional value
+    // functional_value =
+    // value.substr(content_value.size(), value.size() - content_value.size());
+    string functional_value() const;
   };
 
   const SegmentType segment_type() const;
@@ -369,6 +383,9 @@ class Segments {
 
   bool has_resized() const;
   void set_resized(bool resized);
+
+  // Removes specified number of characters at the end of history segments.
+  void RemoveTailOfHistorySegments(size_t num_of_characters);
 
   // lattice
   void clear_lattice();

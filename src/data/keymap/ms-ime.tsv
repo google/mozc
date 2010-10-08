@@ -131,6 +131,7 @@ Conversion	Shift Left	SegmentWidthShrink
 Conversion	Shift Muhenkan	ConvertToFullAlphanumeric
 Conversion	Shift Right	SegmentWidthExpand
 Conversion	Shift Space	ConvertPrev
+Conversion	Shift Tab	ConvertPrev
 Conversion	Shift Up	ConvertPrevPage
 Conversion	Space	ConvertNext
 Conversion	Tab	PredictAndConvert

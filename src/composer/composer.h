@@ -42,6 +42,7 @@
 
 namespace mozc {
 namespace commands {
+class Context;
 class KeyEvent;
 }  // namespace commands
 
@@ -115,6 +116,10 @@ class Composer {
   void InsertCharacter(const string &input);
   void InsertCharacterPreedit(const string &input);
   void InsertCharacterKeyAndPreedit(const string &key, const string &preedit);
+  void InsertCharacterPreeditAt(size_t pos, const string &input);
+  void InsertCharacterKeyAndPreeditAt(size_t pos,
+                                      const string &key,
+                                      const string &preedit);
   bool InsertCharacterKeyEvent(const commands::KeyEvent &key);
   void Delete();
   void Backspace();
@@ -147,6 +152,12 @@ class Composer {
   // Automatically switch the composition mode according to the current
   // status and user's settings.
   void AutoSwitchMode();
+
+  // Insert preceding text if |context| meets some condition.  It returns the
+  // number of characters at the end of context.preceding_text() which are
+  // involved to composition and must be deleted from preceding text.
+  // NOTE: Do not call this function if client cannot delete preceding text.
+  size_t InsertPrecedingText(const commands::Context &context);
 
   static Composer *Create(const Table *table);
   // Transform characters for preferred number format.  If any

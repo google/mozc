@@ -79,7 +79,6 @@ bool NBestGenerator::Next(Segment::Candidate *candidate,
 
   const int KMaxTrial = 500;
   int num_trials = 0;
-  string key;
 
   while (!agenda_->empty()) {
     QueueElement *top = agenda_->top();
@@ -104,11 +103,11 @@ bool NBestGenerator::Next(Segment::Candidate *candidate,
 
       *candidate_begin_node = static_cast<const Node *>(rnode->next);
 
+      candidate->key.clear();
       candidate->value.clear();
       candidate->content_value.clear();
       candidate->content_key.clear();
       candidate->nodes.clear();
-      key.clear();
       candidate->is_spelling_correction = false;
 
       for (const Node *node = *candidate_begin_node; true; node = node->next) {
@@ -131,7 +130,7 @@ bool NBestGenerator::Next(Segment::Candidate *candidate,
           is_functional = true;
         }
 
-        key += node->key;
+        candidate->key += node->key;
         candidate->value += node->value;
         candidate->is_spelling_correction |= node->is_spelling_correction;
 
@@ -143,7 +142,7 @@ bool NBestGenerator::Next(Segment::Candidate *candidate,
       if (candidate->content_value.empty() ||
           candidate->content_key.empty()) {
         candidate->content_value = candidate->value;
-        candidate->content_key = key;
+        candidate->content_key = candidate->key;
       }
 
       // use remaining route cost as candidate cost

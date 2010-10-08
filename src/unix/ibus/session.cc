@@ -137,6 +137,10 @@ void Session::set_restricted(bool restricted) {
 void Session::set_server_program(const string &program_path) {
 }
 
+void Session::set_client_capability(const commands::Capability &capability) {
+  client_capability_.CopyFrom(capability);
+}
+
 bool Session::LaunchTool(const string &mode,
                          const string &extra_arg) {
   return true;
@@ -154,6 +158,7 @@ bool Session::CreateSession() {
 
   commands::Command command;
   command.mutable_input()->set_type(commands::Input::CREATE_SESSION);
+  command.mutable_input()->set_capability(client_capability_);
   if (!handler_->EvalCommand(&command)) {
     LOG(ERROR) << "EvalCommand failed";
     return false;

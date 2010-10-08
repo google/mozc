@@ -122,6 +122,22 @@ class SessionTest : public testing::Test {
     }
   }
 
+  void InsertCharacterCharsWithContext(const string &chars,
+                                       const commands::Context &context,
+                                       Session *session,
+                                       commands::Command *command) const {
+    const uint32 kNoModifiers = 0;
+    for (size_t i = 0; i < chars.size(); ++i) {
+      command->clear_input();
+      command->clear_output();
+      command->mutable_input()->mutable_context()->CopyFrom(context);
+      commands::KeyEvent *key_event = command->mutable_input()->mutable_key();
+      key_event->set_key_code(chars[i]);
+      key_event->set_modifiers(kNoModifiers);
+      session->InsertCharacter(command);
+    }
+  }
+
   void InsertCharacterString(const string &key_strings,
                              const string &chars,
                              Session *session,
@@ -514,6 +530,12 @@ TEST_F(SessionTest, HighlightCandidate) {
   command.clear_input();
   command.clear_output();
   session->ConvertNext(&command);
+  EXPECT_TRUE(command.output().has_preedit());
+  EXPECT_EQ(1, command.output().preedit().segment_size());
+  // "アイウエオ"
+  EXPECT_EQ("\xE3\x82\xA2\xE3\x82\xA4\xE3\x82\xA6\xE3\x82\xA8\xE3\x82\xAA",
+            command.output().preedit().segment(0).value());
+  EXPECT_TRUE(command.output().has_candidates());
 
   command.clear_input();
   command.clear_output();
@@ -525,6 +547,10 @@ TEST_F(SessionTest, HighlightCandidate) {
   EXPECT_TRUE(command.output().consumed());
   EXPECT_FALSE(command.output().has_result());
   EXPECT_TRUE(command.output().has_preedit());
+  EXPECT_EQ(1, command.output().preedit().segment_size());
+  // "ｱｲｳｴｵ"
+  EXPECT_EQ("\xEF\xBD\xB1\xEF\xBD\xB2\xEF\xBD\xB3\xEF\xBD\xB4\xEF\xBD\xB5",
+            command.output().preedit().segment(0).value());
   EXPECT_TRUE(command.output().has_candidates());
 }
 
@@ -4065,5 +4091,101 @@ TEST_F(SessionTest, AutoConversion) {
       }
     }
   }
+}
+
+TEST_F(SessionTest, FillHistoryContext) {
+  scoped_ptr<Session> session(handler_->NewSession());
+  InitSessionToPrecomposition(session.get());
+  commands::Command command;
+
+  const string kHistory[] = { "abc", "def" };
+
+  Segments segments;
+  {
+    Segment *segment = segments.add_segment();
+    segment->set_segment_type(Segment::HISTORY);
+    Segment::Candidate *candidate = segment->add_candidate();
+    candidate->value =kHistory[0];
+  }
+  convertermock_->SetFinishConversion(&segments, true);
+
+  // dummy code to set segments above
+  EXPECT_TRUE(SendKey("a", session.get(), &command));
+  EXPECT_TRUE(SendKey("Enter", session.get(), &command));
+
+  // Fill context in TestSendKey
+  EXPECT_TRUE(TestSendKey("x", session.get(), &command));
+  EXPECT_TRUE(command.input().context().has_preceding_text());
+  EXPECT_EQ("abc", command.input().context().preceding_text());
+
+  // Fill context in SendKey
+  EXPECT_TRUE(SendKey("x", session.get(), &command));
+  EXPECT_TRUE(command.input().context().has_preceding_text());
+  EXPECT_EQ("abc", command.input().context().preceding_text());
+
+  // Fill context in SendCommand
+  command.mutable_input()->set_type(commands::Input::SEND_COMMAND);
+  command.mutable_input()->mutable_command()->set_type(
+      commands::SessionCommand::REVERT);
+  EXPECT_TRUE(session->SendCommand(&command));
+  EXPECT_EQ("abc", command.input().context().preceding_text());
+
+  // Multiple history segments are concatenated and put into context.
+  {
+    Segment *segment = segments.add_segment();
+    segment->set_segment_type(Segment::HISTORY);
+    Segment::Candidate *candidate = segment->add_candidate();
+    candidate->value = kHistory[1];
+  }
+  convertermock_->SetFinishConversion(&segments, true);
+
+  // dummy code to set segments above
+  EXPECT_TRUE(SendKey("a", session.get(), &command));
+  EXPECT_TRUE(SendKey("Enter", session.get(), &command));
+
+  EXPECT_TRUE(TestSendKey("x", session.get(), &command));
+  EXPECT_TRUE(command.input().context().has_preceding_text());
+  EXPECT_EQ("abcdef", command.input().context().preceding_text());
+}
+
+TEST_F(SessionTest, ExpandCompositionForNestedCalculation) {
+  scoped_ptr<Session> session(handler_->NewSession());
+  InitSessionToPrecomposition(session.get());
+
+  commands::Context context;
+  // "あい 1１"
+  context.set_preceding_text("\xE3\x81\x82\xE3\x81\x84 1\xEF\xBC\x91");
+
+  // Incapable case
+  commands::Capability capability;
+  session->set_client_capability(capability);
+
+  commands::Command command;
+  InsertCharacterCharsWithContext("+1=", context, session.get(), &command);
+
+  EXPECT_EQ(0, command.output().deletion_range().offset());
+  EXPECT_EQ(0, command.output().deletion_range().length());
+
+  // "＋１＝"
+  EXPECT_EQ("\xEF\xBC\x8B\xEF\xBC\x91\xEF\xBC\x9D",
+            command.output().preedit().segment(0).key());
+
+  command.Clear();
+  session->Revert(&command);
+  command.Clear();
+
+  // Capable case
+  capability.set_text_deletion(commands::Capability::DELETE_PRECEDING_TEXT);
+  session->set_client_capability(capability);
+
+  InsertCharacterCharsWithContext("+1=", context, session.get(), &command);
+
+  EXPECT_TRUE(command.output().has_deletion_range());
+  EXPECT_EQ(-2, command.output().deletion_range().offset());
+  EXPECT_EQ(2, command.output().deletion_range().length());
+  // "1１＋１＝"
+  EXPECT_EQ("1\xEF\xBC\x91\xEF\xBC\x8B\xEF\xBC\x91\xEF\xBC\x9D",
+            command.output().preedit().segment(0).key());
+
 }
 }  // namespace mozc

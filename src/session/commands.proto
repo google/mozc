@@ -202,6 +202,26 @@ message SessionCommand {
   optional CompositionMode composition_mode = 3;
 };
 
+message Context {
+  // Former part of surrounding text.
+  optional string preceding_text = 1;
+
+  // Latter part of surrounding text.
+  optional string following_text = 2;
+};
+
+message Capability {
+  // Bit fields to notify what the client can do.
+  enum TextDeletionCapabilityType {
+    NO_TEXT_DELETION_CAPABILITY = 0;
+
+    // Can delete preceding text which is adjacent to preedit.
+    DELETE_PRECEDING_TEXT = 1;
+  };
+  optional TextDeletionCapabilityType text_deletion = 1
+      [default = NO_TEXT_DELETION_CAPABILITY];
+};
+
 message Input {
   enum CommandType {
     NONE = 0;
@@ -262,6 +282,12 @@ message Input {
 
   // Input config
   optional mozc.config.Config config = 5;
+
+  // Context data
+  optional Context context = 6;
+
+  // Client capability
+  optional Capability capability = 7;
 };
 
 
@@ -465,6 +491,22 @@ message Status {
   optional CompositionMode mode = 2;
 };
 
+// This messsage contains which characters are to be deleted by client.
+// E.g. if current composition and surrounding text are
+//     "この感じは漢字は"
+//                ^^^^^^
+// and we send DeletionRange with offset == -3 and length == 3, then they will
+// be rendered like:
+//     "この漢字は"
+//          ^^^^^^
+message DeletionRange {
+  // Offset of start of range.
+  optional int32 offset = 1;
+
+  // Length of the range.
+  optional int32 length = 2;
+};
+
 message Output {
   optional uint64 id = 1;
 
@@ -515,6 +557,9 @@ message Output {
 
   // Performed command name in the server
   optional string performed_command = 15;
+
+  // Range of characters to be deleted by client.
+  optional DeletionRange deletion_range = 16;
 };
 
 message Command {
@@ -528,14 +573,6 @@ message CommandList {
 };
 // TODO(team): Make a new proto file into which RendererCommand is moved.
 message RendererCommand {
-  // Note for DPI Virtualization in Windows:
-  // All 2D positional fields in this command are screen coordinates obtained
-  // in the UI process.  This means you should treat these coordinates as
-  // logical coordinates in case that the UI process is DPI-unaware.  See the
-  // following documents for details about DPI Virtualization in Windows.
-  // - http://msdn.microsoft.com/en-us/library/dd464660.aspx
-  // - http://msdn.microsoft.com/en-us/library/ms633533.aspx
-  // - http://msdn.microsoft.com/en-us/library/ms633536.aspx
   message Rectangle {
     optional int32 left   = 1;
     optional int32 top    = 2;

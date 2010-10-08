@@ -187,6 +187,7 @@ void PrintMessage(
   vector<const protobuf::FieldDescriptor*> fields;
   reflection->ListFields(message, &fields);
 
+  // TODO(yukishiino): Removes use of ostream according to the style guide.
   os << "(";
   for (int i = 0; i < fields.size(); ++i) {
     PrintField(message, *reflection, *fields[i], os);
@@ -293,14 +294,24 @@ void PrintFieldValue(
     case protobuf::FieldDescriptor::CPPTYPE_##CPP_TYPE: \
         os << GET_FIELD_VALUE(METHOD_TYPE);             \
     break;
+#define PRINT_FIELD_VALUE_AS_STRING(CPP_TYPE, METHOD_TYPE)  \
+    case protobuf::FieldDescriptor::CPPTYPE_##CPP_TYPE:     \
+        os << "\"" << GET_FIELD_VALUE(METHOD_TYPE) << "\""; \
+    break;
 
+    // Since Emacs does not support 64-bit integers, it supports only
+    // 60-bit integers on 64-bit version, and 28-bit on 32-bit version,
+    // we escape it into a string as a workaround.
+    // We don't need any 64-bit values on Emacs so far, and 32-bit
+    // integer values have never got over 28-bit yet.
     PRINT_FIELD_VALUE(INT32, Int32);
-    PRINT_FIELD_VALUE(INT64, Int64);
+    PRINT_FIELD_VALUE_AS_STRING(INT64, Int64);
     PRINT_FIELD_VALUE(UINT32, UInt32);
-    PRINT_FIELD_VALUE(UINT64, UInt64);
+    PRINT_FIELD_VALUE_AS_STRING(UINT64, UInt64);
     PRINT_FIELD_VALUE(DOUBLE, Double);
     PRINT_FIELD_VALUE(FLOAT, Float);
 #undef PRINT_FIELD_VALUE
+#undef PRINT_FIELD_VALUE_AS_STRING
 
     case protobuf::FieldDescriptor::CPPTYPE_BOOL:  // bool
       os << (GET_FIELD_VALUE(Bool) ? "t" : "nil");

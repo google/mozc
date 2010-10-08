@@ -179,7 +179,7 @@ TEST_F(MozcEmacsHelperLibTest, PrintMessage) {
   output.mutable_preedit()->CopyFrom(preedit);
   output.mutable_key()->CopyFrom(key_event);
   PrintAndTestSexpr(output,
-    "((id . 1234)"
+    "((id . \"1234\")"
      "(mode . hiragana)"
      "(consumed . t)"
      "(result . ((type . string)"

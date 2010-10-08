@@ -170,6 +170,7 @@ class Session : public SessionInterface {
   void set_timeout(int timeout);
   void set_restricted(bool restricted);
   void set_server_program(const string &server_program);
+  void set_client_capability(const commands::Capability &capability);
 
   bool LaunchTool(const string &mode, const string &arg);
 
@@ -277,6 +278,7 @@ class Session : public SessionInterface {
   vector<commands::Input> history_inputs_;
   // Remember the composition mode of input session for playback.
   commands::CompositionMode last_mode_;
+  commands::Capability client_capability_;
 };
 
 }  // namespace client

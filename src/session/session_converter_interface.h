@@ -177,6 +177,12 @@ class SessionConverterInterface {
   // Fill protocol buffers
   virtual void FillOutput(commands::Output *output) const ABSTRACT;
 
+  // Fill context information
+  virtual void FillContext(commands::Context *context) const ABSTRACT;
+
+  // Remove tail part of history segments
+  virtual void RemoveTailOfHistorySegments(size_t num_of_characters) ABSTRACT;
+
   virtual const string &GetDefaultResult() const ABSTRACT;
 
  private:

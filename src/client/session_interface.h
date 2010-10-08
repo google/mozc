@@ -37,6 +37,7 @@ namespace config {
 class Config;
 }
 namespace commands {
+class Capability;
 class KeyEvent;
 class Output;
 class SessionCommand;
@@ -129,6 +130,10 @@ class SessionInterface {
   // Sets server program path.
   // mainly for unittesting.
   virtual void set_server_program(const string &program_path) = 0;
+
+  // Sets client capability.
+  virtual void set_client_capability(const commands::Capability &capability)
+      = 0;
 
   // Launches mozc tool. |mode| is the mode of MozcTool,
   // e,g,. "config_dialog", "dictionary_tool".

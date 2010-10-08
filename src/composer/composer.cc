@@ -291,6 +291,8 @@ void Composer::SetOutputMode(transliteration::TransliterationType mode) {
   MoveCursorToEnd();
 }
 
+// This function is not used.
+// TODO(komatsu): Remove this function.
 void Composer::InsertCharacterAt(size_t pos, const string &input) {
   if (!EnableInsert()) {
     return;
@@ -315,6 +317,32 @@ void Composer::InsertCharacterKeyAndPreedit(const string &key,
     return;
   }
   position_ = composition_->InsertKeyAndPreeditAt(position_, key, preedit);
+}
+
+void Composer::InsertCharacterPreeditAt(size_t pos, const string &input) {
+  InsertCharacterKeyAndPreeditAt(pos, input, input);
+}
+
+void Composer::InsertCharacterKeyAndPreeditAt(size_t pos,
+                                              const string &key,
+                                              const string &preedit) {
+  const size_t position_before_insertion = position_;
+  const size_t length_before_insertion = composition_->GetLength();
+  const size_t insertion_length = Util::CharsLen(preedit);
+
+  composition_->SetInputMode(
+      Transliterators::GetConversionStringSelector());
+
+  composition_->InsertKeyAndPreeditAt(pos, key, preedit);
+  DCHECK(insertion_length ==
+             composition_->GetLength() - length_before_insertion);
+
+  composition_->SetInputMode(GetTransliterator(input_mode_));
+
+  position_ = position_before_insertion;
+  if (position_before_insertion >= pos) {
+    position_ += insertion_length;
+  }
 }
 
 bool Composer::InsertCharacterKeyEvent(const commands::KeyEvent &key) {
@@ -368,6 +396,7 @@ bool Composer::InsertCharacterKeyEvent(const commands::KeyEvent &key) {
     // Romaji input usually does not has key_string.  Note that, the
     // existence of key_string never determine if the input mode is
     // Kana or Romaji.
+
     if ('A' <= key_char && key_char <= 'Z') {
       if (GET_CONFIG(shift_key_mode_switch) ==
           config::Config::ASCII_INPUT_MODE) {
@@ -379,17 +408,17 @@ bool Composer::InsertCharacterKeyEvent(const commands::KeyEvent &key) {
         }
       } else if (GET_CONFIG(shift_key_mode_switch) ==
                  config::Config::KATAKANA_INPUT_MODE) {
-        if (input_mode_ == transliteration::FULL_KATAKANA) {
-          // Do nothing.
-        } else {
+        if (input_mode_ == transliteration::HIRAGANA) {
           SetTemporaryInputMode(transliteration::FULL_KATAKANA);
+        } else {
+          // Do nothing.
         }
       }
       ++capital_sequence_count_;
-    }
-    // When capital input continues, the next lower input is the end
-    // of temporary half-width Ascii input.
-    if ('a' <= key_char && key_char <= 'z') {
+    } else if ('a' <= key_char && key_char <= 'z') {
+      // When capital input continues, the next lower input is the end
+      // of temporary half-width Ascii input.
+
       if (capital_sequence_count_ > 1 &&
           GET_CONFIG(shift_key_mode_switch) ==
           config::Config::ASCII_INPUT_MODE) {
@@ -399,6 +428,11 @@ bool Composer::InsertCharacterKeyEvent(const commands::KeyEvent &key) {
           config::Config::KATAKANA_INPUT_MODE) {
         SetInputMode(comeback_input_mode_);
       }
+      capital_sequence_count_ = 0;
+    } else {
+      // If the key_char is not an alphabet, reset capital_sequence_count_
+      // because "Continuous capital input" feature should be reset
+      // when the input meets non-alphabet character.
       capital_sequence_count_ = 0;
     }
     InsertCharacter(input);

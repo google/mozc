@@ -40,6 +40,7 @@
 #include "base/protobuf/message.h"
 #include "base/singleton.h"
 #include "base/util.h"
+#include "session/commands.pb.h"
 #include "session/config.pb.h"
 #include "session/ime_switch_util.h"
 #include "unix/ibus/engine_registrar.h"
@@ -69,6 +70,12 @@ const char kMozcToolIconPath[] = "tool.png";
 
 // for every 5 minutes, call SyncData
 const uint64 kSyncDataInterval = 5 * 60;
+
+// Backspace key code
+const guint kBackSpaceKeyCode = 14;
+
+// Left shift key code
+const guint kShiftLeftKeyCode = 42;
 
 uint64 GetTime() {
   return static_cast<uint64>(time(NULL));
@@ -254,7 +261,8 @@ MozcEngine::MozcEngine()
       prop_root_(NULL),
       prop_composition_mode_(NULL),
       prop_mozc_tool_(NULL),
-      preedit_method_(config::Config::ROMAN) {
+      preedit_method_(config::Config::ROMAN),
+      ignore_reset_for_deletion_range_workaround_(false) {
   // |sub_prop_list| is a radio menu which is shown when a button in the
   // language panel (i.e. |prop_composition_mode_| below) is clicked.
   IBusPropList *sub_prop_list = ibus_prop_list_new();
@@ -353,6 +361,17 @@ MozcEngine::MozcEngine()
     ibus_prop_list_append(prop_root_, prop_mozc_tool_);
   }
 #endif
+
+  // We don't enable the DELETE_PRECEDING_TEXT feature on Chrome OS for now
+  // since it's highly experimental.
+#ifndef OS_CHROMEOS
+  // Currently client capability is fixed.
+  commands::Capability capability;
+  capability.set_text_deletion(commands::Capability::DELETE_PRECEDING_TEXT);
+  session_->set_client_capability(capability);
+  // TODO(yusukes): write a unit test to check if the capability is set
+  // as expected.
+#endif
 }
 
 MozcEngine::~MozcEngine() {
@@ -403,10 +422,16 @@ void MozcEngine::CursorUp(IBusEngine *engine) {
 }
 
 void MozcEngine::Disable(IBusEngine *engine) {
+  // Stop ignoring "reset" signal.  See ProcessKeyevent().
+  ignore_reset_for_deletion_range_workaround_ = false;
+
   RevertSession(engine);
 }
 
 void MozcEngine::Enable(IBusEngine *engine) {
+  // Stop ignoring "reset" signal.  See ProcessKeyevent().
+  ignore_reset_for_deletion_range_workaround_ = false;
+
   // Launch mozc_server
   session_->EnsureConnection();
   UpdatePreeditMethod();
@@ -424,6 +449,9 @@ void MozcEngine::FocusIn(IBusEngine *engine) {
 }
 
 void MozcEngine::FocusOut(IBusEngine *engine) {
+  // Stop ignoring "reset" signal.  See ProcessKeyevent().
+  ignore_reset_for_deletion_range_workaround_ = false;
+
   RevertSession(engine);
   SyncData(false);
 }
@@ -445,9 +473,8 @@ gboolean MozcEngine::ProcessKeyEvent(
           << ", keycode: " << keycode
           << ", modifiers: " << modifiers;
 
-  if (modifiers & IBUS_RELEASE_MASK) {
-    return FALSE;
-  }
+  // Stop ignoring "reset" signal.  See the code of deletion below.
+  ignore_reset_for_deletion_range_workaround_ = false;
 
   // Since IBus for ChromeOS is based on in-process conversion,
   // it is basically ok to call GetConfig() at every keyevent.
@@ -473,6 +500,14 @@ gboolean MozcEngine::ProcessKeyEvent(
     return FALSE;
   }
 
+  if (!ProcessModifiers((modifiers & IBUS_RELEASE_MASK) != 0,
+                        keyval,
+                        &key,
+                        &currently_pressed_modifiers_,
+                        &modifiers_to_be_sent_)) {
+    return FALSE;
+  }
+
   VLOG(2) << key.DebugString();
 
   commands::Output output;
@@ -483,13 +518,54 @@ gboolean MozcEngine::ProcessKeyEvent(
 
   VLOG(2) << output.DebugString();
 
+  if (output.has_deletion_range() &&
+      output.deletion_range().offset() < 0 &&
+      output.deletion_range().offset() + output.deletion_range().length() >=
+          0) {
+    // Delete some characters of preceding text.  We really want to use
+    // ibus_engine_delete_surrounding_text(), but it does not work on many
+    // applications, e.g. Chrome, Firefox.  So we currently forward backspaces
+    // to application.
+    // NOTE: There are some workarounds.  They must be maintained
+    // continuosly.
+    // NOTE: It cannot delete range of characters not adjacent to the left side
+    // of cursor.  If the range is not adjacent to the cursor, ignore it.  If
+    // the range contains the cursor, only characters on the left side of cursor
+    // are deleted.
+    const int length = -output.deletion_range().offset();
+
+    // Some applications, e.g. Chrome, delete preedit character when we forward
+    // a backspace.  We can avoid it by hiding preedit before forwarding
+    // backspaces.
+    ibus_engine_hide_preedit_text(engine);
+
+    // Forward backspaces.
+    for (size_t i = 0; i < length; ++i) {
+      ibus_engine_forward_key_event(
+          engine, IBUS_BackSpace, kBackSpaceKeyCode, 0);
+    }
+
+    // This is a workaround.  Some applications (e.g. Chrome, etc.) send
+    // strange signals such as "focus_out" and "focus_in" after forwarding
+    // Backspace key event.  However, such strange signals are not sent if we
+    // forward another key event after backspaces.  Here we choose Shift L,
+    // which is one of the most quiet key event.
+    ibus_engine_forward_key_event(engine, IBUS_Shift_L, kShiftLeftKeyCode, 0);
+
+    // This is also a workaround.  Some applications (e.g. gedit, etc.) send a
+    // "reset" signal after forwarding backspaces.  This signal is sent after
+    // this ProcessKeyEvent() returns, and we want to avoid reverting the
+    // session.
+    // See also Reset(), which calls RevertSession() only if
+    // ignore_reset_for_deletion_range_workaround_ is false.  This flag is
+    // reset on Disable(), FocusOut(), and ProcessKeyEvent().  Reset() also
+    // reset this flag, i.e. this flag does not work more than once.
+    ignore_reset_for_deletion_range_workaround_ = true;
+  }
+
   UpdateAll(engine, output);
 
   const bool consumed = output.consumed();
-  // TODO(mazda): Check if this code is necessary
-  // if (!consumed) {
-  //   ibus_engine_forward_key_event(engine, keyval, keycode, modifiers);
-  // }
   return consumed ? TRUE : FALSE;
 }
 
@@ -569,6 +645,16 @@ void MozcEngine::PropertyShow(IBusEngine *engine,
 }
 
 void MozcEngine::Reset(IBusEngine *engine) {
+  // Ignore this signal if ignore_reset_for_deletion_range_workaround_ is true.
+  // This is workaround of deletion of surrounding text.
+  // See also ProcessKeyEvent().
+  if (ignore_reset_for_deletion_range_workaround_) {
+    VLOG(2) << "Reset signal is ignored";
+    // We currently do not know the cases that application sends reset signal
+    // more than once, so reset the flag here.
+    ignore_reset_for_deletion_range_workaround_ = false;
+    return;
+  }
   RevertSession(engine);
 }
 
@@ -632,6 +718,76 @@ void MozcEngine::ConfigValueChanged(IBusConfig *config,
   // On plain Linux, we don't use ibus-gconf for now. In other words, this
   // method should never be called.
 #endif
+}
+
+// static
+bool MozcEngine::ProcessModifiers(
+    bool is_key_up,
+    gint keyval,
+    commands::KeyEvent *key,
+    set<gint> *currently_pressed_modifiers,
+    set<commands::KeyEvent::ModifierKey> *modifiers_to_be_sent) {
+  // Manage modifier key event.
+  // Modifier key event is sent on key up if non-modifier key has not been
+  // pressed since key down of modifier keys and no modifier keys are pressed
+  // anymore.
+  // Following examples are expected behaviors.
+  //
+  // E.g.) Usual key is sent on key down.  Modifier keys are not sent if usual
+  //       key is sent.
+  //    <Event from ibus> <Event to server>
+  //     Shift down      | None
+  //     "a" down        | Shift+a
+  //     "a" up          | None
+  //     Shift up        | None
+  //
+  // E.g.) Modifier key is sent on key up.
+  //    <Event from ibus> <Event to server>
+  //     Shift down      | None
+  //     Shift up        | Shift
+  //
+  // E.g.) Multiple modifier keys are sent on the last key up.
+  //    <Event from ibus> <Event to server>
+  //     Shift down      | None
+  //     Control down    | None
+  //     Shift up        | None
+  //     Control up      | Control+Shift
+  const bool is_modifier_only =
+      !(key->has_key_code() || key->has_special_key());
+  if (is_key_up) {
+    if (!is_modifier_only) {
+      return false;
+    }
+    currently_pressed_modifiers->erase(keyval);
+    if (!currently_pressed_modifiers->empty() ||
+        modifiers_to_be_sent->empty()) {
+      return false;
+    }
+    // Modifier key event fires
+    key->mutable_modifier_keys()->Clear();
+    for (set<commands::KeyEvent::ModifierKey>::const_iterator it =
+             modifiers_to_be_sent->begin();
+         it != modifiers_to_be_sent->end();
+         ++it) {
+      key->add_modifier_keys(*it);
+    }
+    modifiers_to_be_sent->clear();
+  } else if (is_modifier_only) {
+    if (currently_pressed_modifiers->empty() ||
+        !modifiers_to_be_sent->empty()) {
+      for (size_t i = 0; i < key->modifier_keys_size(); ++i) {
+        modifiers_to_be_sent->insert(key->modifier_keys(i));
+      }
+    }
+    currently_pressed_modifiers->insert(keyval);
+    return false;
+  }
+  // Clear modifier data just in case if |key| has no modifier keys.
+  if (key->modifier_keys_size() == 0) {
+    currently_pressed_modifiers->clear();
+    modifiers_to_be_sent->clear();
+  }
+  return true;
 }
 
 bool MozcEngine::UpdateAll(IBusEngine *engine, const commands::Output &output) {

@@ -34,6 +34,8 @@
 #include "rewriter/calculator_rewriter.h"
 #include "rewriter/calculator/calculator_interface.h"
 #include "rewriter/calculator/calculator_mock.h"
+#include "session/config_handler.h"
+#include "session/config.pb.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
@@ -209,5 +211,35 @@ TEST_F(CalculatorRewriterTest, DescriptionCheckTest) {
   const int index = GetIndexOfCalculatedCandidate(segments);
 
   EXPECT_EQ(segments.segment(0).candidate(index).description, description);
+}
+
+TEST_F(CalculatorRewriterTest, ConfigTest) {
+  config::Config config;
+  config::ConfigHandler::GetDefaultConfig(&config);
+
+  calculator_mock().SetCalculatePair("1+1=", "2", true);
+  CalculatorRewriter calculator_rewriter;
+
+  {
+    Segments segments;
+    AddSegment("1", "1", &segments);
+    AddSegment("+", "+", &segments);
+    AddSegment("1", "1", &segments);
+    AddSegment("=", "=", &segments);
+    config.set_use_calculator(true);
+    config::ConfigHandler::SetConfig(config);
+    EXPECT_TRUE(calculator_rewriter.Rewrite(&segments));
+  }
+
+  {
+    Segments segments;
+    AddSegment("1", "1", &segments);
+    AddSegment("+", "+", &segments);
+    AddSegment("1", "1", &segments);
+    AddSegment("=", "=", &segments);
+    config.set_use_calculator(false);
+    config::ConfigHandler::SetConfig(config);
+    EXPECT_FALSE(calculator_rewriter.Rewrite(&segments));
+  }
 }
 }  // namespace mozc

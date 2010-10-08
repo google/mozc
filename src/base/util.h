@@ -105,6 +105,12 @@ class Util {
     return result;
   }
 
+  // Determines whether the beginning of |str| matches |prefix|.
+  static bool StartsWith(const string &str, const string &prefix);
+
+  // Determines whether the end of |str| matches |suffix|.
+  static bool EndsWith(const string &str, const string &suffix);
+
   // Strip a heading UTF-8 BOM (binary order mark) sequence (= \xef\xbb\xbf).
   static void StripUTF8BOM(string *line);
 
@@ -243,6 +249,9 @@ class Util {
   // half-width-katakana area.
   static bool IsHalfWidthKatakanaSymbol(const string &input);
 
+  // return true if one or more Kana-symbol characters are
+  // in the input.
+  static bool IsKanaSymbolContained(const string &input);
 
   static void NormalizeVoicedSoundMark(const string &input,
                                        string *output);
@@ -407,6 +416,10 @@ class Util {
   // KATAKANA/HIRAGANA/KANJI/NUMBER or ALPHABET.
   // If str has mixed scripts, this function returns UNKNOWN_SCRIPT
   static ScriptType GetScriptType(const string &str);
+
+  // The same as GetScryptType(), but it ignores white spaces
+  // in the |str|.
+  static ScriptType GetScriptTypeWithoutWhiteSpace(const string &str);
 
   // return true if all script_type in str is "type"
   static bool IsScriptType(const string &str, ScriptType type);

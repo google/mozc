@@ -280,6 +280,27 @@ TEST(UtilTest, SubString) {
   EXPECT_EQ(result, "\xe4\xb8\xad\xe9\x87\x8e\xe3\x81\xa7\xe3\x81\x99");
 }
 
+TEST(UtilTest, StartsWith) {
+  const string str = "abcdefg";
+  EXPECT_TRUE(Util::StartsWith(str, ""));
+  EXPECT_TRUE(Util::StartsWith(str, "a"));
+  EXPECT_TRUE(Util::StartsWith(str, "abc"));
+  EXPECT_TRUE(Util::StartsWith(str, "abcdefg"));
+  EXPECT_FALSE(Util::StartsWith(str, "abcdefghi"));
+  EXPECT_FALSE(Util::StartsWith(str, "foobar"));
+}
+
+TEST(UtilTest, EndsWith) {
+  const string str = "abcdefg";
+  EXPECT_TRUE(Util::EndsWith(str, ""));
+  EXPECT_TRUE(Util::EndsWith(str, "g"));
+  EXPECT_TRUE(Util::EndsWith(str, "fg"));
+  EXPECT_TRUE(Util::EndsWith(str, "abcdefg"));
+  EXPECT_FALSE(Util::EndsWith(str, "aaabcdefg"));
+  EXPECT_FALSE(Util::EndsWith(str, "foobar"));
+  EXPECT_FALSE(Util::EndsWith(str, "foobarbuzbuz"));
+}
+
 TEST(UtilTest, StripUTF8BOM) {
   string line;
 
@@ -1446,6 +1467,46 @@ TEST(UtilTest, ScriptType) {
 }
 
 
+TEST(UtilTest, ScriptTypeWithoutWhiteSpace) {
+  // "くど う"
+  EXPECT_EQ(Util::HIRAGANA, Util::GetScriptTypeWithoutWhiteSpace(
+      "\xe3\x81\x8f\xe3\x81\xa9 \xe3\x81\x86"));
+  // "京 都"
+  EXPECT_EQ(Util::KANJI, Util::GetScriptTypeWithoutWhiteSpace(
+      "\xe4\xba\xac \xe9\x83\xbd"));
+  // "モズ ク"
+  EXPECT_EQ(Util::KATAKANA, Util::GetScriptTypeWithoutWhiteSpace(
+      "\xe3\x83\xa2\xe3\x82\xba\xe3\x82\xaf"));
+  // "モズ クﾓｽﾞｸ"
+  EXPECT_EQ(Util::KATAKANA, Util::GetScriptTypeWithoutWhiteSpace(
+      "\xe3\x83\xa2\xe3\x82\xba \xe3\x82\xaf\xef\xbe\x93\xef\xbd"
+      "\xbd\xef\xbe\x9e\xef\xbd\xb8"));
+  // "Google Earth"
+  EXPECT_EQ(Util::ALPHABET, Util::GetScriptTypeWithoutWhiteSpace(
+      "Google Earth"));
+  // "Google "
+  EXPECT_EQ(Util::ALPHABET, Util::GetScriptTypeWithoutWhiteSpace(
+      "Google "));
+  // " Google"
+  EXPECT_EQ(Util::ALPHABET, Util::GetScriptTypeWithoutWhiteSpace(
+      " Google"));
+  // " Google "
+  EXPECT_EQ(Util::ALPHABET, Util::GetScriptTypeWithoutWhiteSpace(
+      " Google "));
+  // "     g"
+  EXPECT_EQ(Util::ALPHABET, Util::GetScriptTypeWithoutWhiteSpace(
+      "     g"));
+  // ""
+  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptTypeWithoutWhiteSpace(
+      ""));
+  // " "
+  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptTypeWithoutWhiteSpace(
+      " "));
+  // "  "
+  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptTypeWithoutWhiteSpace(
+      "   "));
+}
+
 TEST(UtilTest, FormType) {
   // "くどう"
   EXPECT_EQ(Util::FULL_WIDTH, Util::GetFormType("\xe3\x81\x8f\xe3\x81\xa9\xe3"
@@ -1732,6 +1793,16 @@ TEST(UtilTest, AtomicRename) {
 
   Util::Unlink(from);
   Util::Unlink(to);
+}
+
+TEST(UtilTest, IsKanaSymbolContained) {
+  const string kFullstop("\xe3\x80\x82"); // "。"
+  const string kSpace(" ");
+  EXPECT_TRUE(Util::IsKanaSymbolContained(kFullstop));
+  EXPECT_TRUE(Util::IsKanaSymbolContained(kSpace + kFullstop));
+  EXPECT_TRUE(Util::IsKanaSymbolContained(kFullstop + kSpace));
+  EXPECT_FALSE(Util::IsKanaSymbolContained(kSpace));
+  EXPECT_FALSE(Util::IsKanaSymbolContained(""));
 }
 
 TEST(UtilTest, Issue2190350) {

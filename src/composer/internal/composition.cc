@@ -64,14 +64,16 @@ size_t Composition::InsertAt(size_t pos, const string &input) {
   CharChunkList::iterator it;
   MaybeSplitChunkAt(pos, &it);
 
-  CharChunk *chunk = GetInsertionChunk(&it);
+  CharChunkList::iterator chunk_it = GetInsertionChunk(&it);
+  CombinePendingChunks(chunk_it, input);
+
   string key = input;
   while (true) {
-    chunk->AddInput(*table_, &key);
+    (*chunk_it)->AddInput(*table_, &key);
     if (key.empty()) {
       break;
     }
-    chunk = InsertChunk(&it);
+    chunk_it = InsertChunk(&it);
   }
   return GetPosition(kNullT12r, it);
 }
@@ -86,15 +88,17 @@ size_t Composition::InsertKeyAndPreeditAt(const size_t pos,
   CharChunkList::iterator it;
   MaybeSplitChunkAt(pos, &it);
 
-  CharChunk *chunk = GetInsertionChunk(&it);
+  CharChunkList::iterator chunk_it = GetInsertionChunk(&it);
+  CombinePendingChunks(chunk_it, preedit);
+
   string raw_char = key;
   string converted_char = preedit;
   while (true) {
-    chunk->AddInputAndConvertedChar(*table_, &raw_char, &converted_char);
+    (*chunk_it)->AddInputAndConvertedChar(*table_, &raw_char, &converted_char);
     if (raw_char.empty() && converted_char.empty()) {
       break;
     }
-    chunk = InsertChunk(&it);
+    chunk_it = InsertChunk(&it);
   }
   return GetPosition(kNullT12r, it);
 }
@@ -347,13 +351,28 @@ CharChunk *Composition::MaybeSplitChunkAt(const size_t pos,
   return left_chunk;
 }
 
+void Composition::CombinePendingChunks(
+    CharChunkList::iterator it, const string &input) {
+  // Combine |**it| and |**(--it)| into |**it| as long as possible.
+  while(it != chunks_.begin()) {
+    CharChunkList::iterator left_it = it;
+    --left_it;
+    if(!(*left_it)->IsConvertible(
+        input_t12r_, *table_, (*it)->pending() + input)) {
+      return;
+    }
+
+    (*it)->Combine(**left_it);
+    delete *left_it;
+    chunks_.erase(left_it);
+  }
+}
 
 // Insert a chunk to the prev of it.
-CharChunk *Composition::InsertChunk(CharChunkList::iterator *it) {
+CharChunkList::iterator Composition::InsertChunk(CharChunkList::iterator *it) {
   CharChunk *new_chunk = new CharChunk();
   new_chunk->SetTransliterator(input_t12r_);
-  chunks_.insert(*it, new_chunk);
-  return new_chunk;
+  return chunks_.insert(*it, new_chunk);
 }
 
 const CharChunkList &Composition::GetCharChunkList() const {
@@ -361,7 +380,8 @@ const CharChunkList &Composition::GetCharChunkList() const {
 }
 
 // Return charchunk to be inserted and iterator of the *next* char chunk.
-CharChunk *Composition::GetInsertionChunk(CharChunkList::iterator *it) {
+CharChunkList::iterator Composition::GetInsertionChunk(
+    CharChunkList::iterator *it) {
   if (*it == chunks_.begin()) {
     return InsertChunk(it);
   }
@@ -369,7 +389,7 @@ CharChunk *Composition::GetInsertionChunk(CharChunkList::iterator *it) {
   CharChunkList::iterator left_it = *it;
   --left_it;
   if ((*left_it)->IsAppendable(input_t12r_)) {
-    return *left_it;
+    return left_it;
   }
   return InsertChunk(it);
 }

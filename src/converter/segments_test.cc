@@ -319,6 +319,36 @@ TEST_F(SegmentsTest, RevertEntryTest) {
   EXPECT_EQ(0, segments.revert_entries_size());
 }
 
+TEST_F(SegmentsTest, RemoveTailOfHistorySegments) {
+  Segments segments;
+  {
+    Segment *segment = segments.add_segment();
+    segment->set_segment_type(Segment::HISTORY);
+    Segment::Candidate *candidate = segment->add_candidate();
+    // "Mozc を"
+    candidate->value = "Mozc \xE3\x82\x92";
+  }
+  {
+    Segment *segment = segments.add_segment();
+    segment->set_segment_type(Segment::HISTORY);
+    Segment::Candidate *candidate = segment->add_candidate();
+    // "使う"
+    candidate->value = "\xE4\xBD\xBF\xE3\x81\x86";
+  }
+
+  segments.RemoveTailOfHistorySegments(1);
+  EXPECT_EQ(2, segments.history_segments_size());
+  // "使"
+  EXPECT_EQ("\xE4\xBD\xBF", segments.history_segment(1).candidate(0).value);
+
+  segments.RemoveTailOfHistorySegments(2);
+  EXPECT_EQ(1, segments.history_segments_size());
+  EXPECT_EQ("Mozc ", segments.history_segment(0).candidate(0).value);
+
+  segments.RemoveTailOfHistorySegments(2);
+  EXPECT_EQ("Moz", segments.history_segment(0).candidate(0).value);
+}
+
 TEST_F(CandidateTest, SetDefaultDescription) {
   {
     Segment::Candidate candidate;
@@ -326,6 +356,22 @@ TEST_F(CandidateTest, SetDefaultDescription) {
     candidate.value = "HalfASCII";
     candidate.content_value = candidate.value;
     candidate.content_key = "halfascii";
+    candidate.SetDefaultDescription(
+        Segment::Candidate::FULL_HALF_WIDTH |
+        Segment::Candidate::CHARACTER_FORM |
+        Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER);
+    // "[半] アルファベット"
+    EXPECT_EQ("\x5b\xe5\x8d\x8a\x5d\x20\xe3\x82\xa2\xe3\x83\xab\xe3\x83\x95\xe3"
+              "\x82\xa1\xe3\x83\x99\xe3\x83\x83\xe3\x83\x88",
+              candidate.description);
+  }
+  // containing white space
+  {
+    Segment::Candidate candidate;
+    candidate.Init();
+    candidate.value = "Half ASCII";
+    candidate.content_value = candidate.value;
+    candidate.content_key = "half ascii";
     candidate.SetDefaultDescription(
         Segment::Candidate::FULL_HALF_WIDTH |
         Segment::Candidate::CHARACTER_FORM |
@@ -443,6 +489,68 @@ TEST_F(CandidateTest, ResetDescription) {
               // "[全] [なんと]びっくり(なんと)",
               candidate.description);
   }
+}
+
+TEST_F(CandidateTest, functional_key) {
+  Segment::Candidate candidate;
+  candidate.Init();
+
+  candidate.key = "testfoobar";
+  candidate.content_key = "test";
+  EXPECT_EQ("foobar", candidate.functional_key());
+
+  candidate.key = "testfoo";
+  candidate.content_key = "test";
+  EXPECT_EQ("foo", candidate.functional_key());
+
+  // This is unexpected key/context_key.
+  // This method doesn't check the prefix part.
+  candidate.key = "abcdefg";
+  candidate.content_key = "test";
+  EXPECT_EQ("efg", candidate.functional_key());
+
+  candidate.key = "test";
+  candidate.content_key = "test";
+  EXPECT_EQ("", candidate.functional_key());
+
+  candidate.key = "test";
+  candidate.content_key = "testfoobar";
+  EXPECT_EQ("", candidate.functional_key());
+
+  candidate.key = "";
+  candidate.content_key = "";
+  EXPECT_EQ("", candidate.functional_key());
+}
+
+TEST_F(CandidateTest, functional_value) {
+  Segment::Candidate candidate;
+  candidate.Init();
+
+  candidate.value = "testfoobar";
+  candidate.content_value = "test";
+  EXPECT_EQ("foobar", candidate.functional_value());
+
+  candidate.value = "testfoo";
+  candidate.content_value = "test";
+  EXPECT_EQ("foo", candidate.functional_value());
+
+  // This is unexpected value/context_value.
+  // This method doesn't check the prefix part.
+  candidate.value = "abcdefg";
+  candidate.content_value = "test";
+  EXPECT_EQ("efg", candidate.functional_value());
+
+  candidate.value = "test";
+  candidate.content_value = "test";
+  EXPECT_EQ("", candidate.functional_value());
+
+  candidate.value = "test";
+  candidate.content_value = "testfoobar";
+  EXPECT_EQ("", candidate.functional_value());
+
+  candidate.value = "";
+  candidate.content_value = "";
+  EXPECT_EQ("", candidate.functional_value());
 }
 
 TEST_F(SegmentTest, ExpandAlternative) {

@@ -188,6 +188,63 @@ TEST_F(ComposerTest, BackSpace) {
   EXPECT_EQ("ab", result);
 }
 
+TEST_F(ComposerTest, InsertCharacterPreeditAt) {
+  // "あ"
+  table_->AddRule("a", "\xe3\x81\x82", "");
+  // "い"
+  table_->AddRule("i", "\xe3\x81\x84", "");
+  // "う"
+  table_->AddRule("u", "\xe3\x81\x86", "");
+  // "く"
+  table_->AddRule("ku", "\xE3\x81\x8F", "");
+
+  composer_->InsertCharacter("au");
+  string output;
+
+  const transliteration::TransliterationType input_mode =
+      composer_->GetInputMode();
+
+  composer_->InsertCharacterPreeditAt(0, "a");
+  EXPECT_EQ(3, composer_->GetLength());
+  EXPECT_EQ(3, composer_->GetCursor());
+  composer_->GetStringForPreedit(&output);
+  // "aあう"
+  EXPECT_EQ("a\xE3\x81\x82\xE3\x81\x86", output);
+  // Input mode of composer must not be changed
+  EXPECT_EQ(input_mode, composer_->GetInputMode());
+
+  composer_->MoveCursorLeft();
+  // "い"
+  composer_->InsertCharacterPreeditAt(2, "\xE3\x81\x84");
+  EXPECT_EQ(4, composer_->GetLength());
+  EXPECT_EQ(3, composer_->GetCursor());
+  composer_->GetStringForPreedit(&output);
+  // "aあいう"
+  EXPECT_EQ("a\xE3\x81\x82\xE3\x81\x84\xE3\x81\x86", output);
+  EXPECT_EQ(input_mode, composer_->GetInputMode());
+
+  composer_->MoveCursorLeft();
+  composer_->InsertCharacterPreeditAt(3, "ku");
+  EXPECT_EQ(6, composer_->GetLength());
+  EXPECT_EQ(2, composer_->GetCursor());
+  composer_->GetStringForPreedit(&output);
+  // "aあいkuう"
+  EXPECT_EQ("a\xE3\x81\x82\xE3\x81\x84ku\xE3\x81\x86", output);
+  EXPECT_EQ(input_mode, composer_->GetInputMode());
+
+  composer_->InsertCharacterPreeditAt(0, "1");
+  composer_->GetStringForPreedit(&output);
+  // "1aあいkuう"
+  EXPECT_EQ("1a\xE3\x81\x82\xE3\x81\x84ku\xE3\x81\x86", output);
+  EXPECT_EQ(input_mode, composer_->GetInputMode());
+
+  // Check the actual input mode of composition
+  composer_->InsertCharacter("a");
+  composer_->GetStringForPreedit(&output);
+  // "1aああいkuう"
+  EXPECT_EQ("1a\xE3\x81\x82\xE3\x81\x82\xE3\x81\x84ku\xE3\x81\x86", output);
+}
+
 TEST_F(ComposerTest, OutputMode) {
   // "あ"
   table_->AddRule("a", "\xe3\x81\x82", "");
@@ -846,12 +903,12 @@ TEST_F(ComposerTest, ShiftKeyOperation) {
     InsertKey("&", composer_.get());  // "D&"
     InsertKey("D", composer_.get());  // "D&D"
     InsertKey("2", composer_.get());  // "D&D2"
-    InsertKey("a", composer_.get());  // "D&D2あ"
+    InsertKey("a", composer_.get());  // "D&D2a"
 
     string preedit;
     composer_->GetStringForPreedit(&preedit);
-    // "D&D2あ"
-    EXPECT_EQ("\x44\x26\x44\x32\xE3\x81\x82", preedit);
+    // "D&D2a"
+    EXPECT_EQ("\x44\x26\x44\x32\x61", preedit);
   }
 
   {  // Full-witdh alphanumeric
@@ -1798,5 +1855,196 @@ TEST_F(ComposerTest, Issue2819580_3) {
   // "zんy"
   EXPECT_EQ("z\xe3\x82\x93y", result);
 }
+
+TEST_F(ComposerTest, Issue2797991_1) {
+  // This is a unittest against http://b/2797991.
+  // Half-width alphanumeric mode quits after [CAPITAL LETTER]:[CAPITAL LETTER]
+  // e.g. C:\Wi -> C:\Wい
+
+  // "い"
+  table_->AddRule("i", "\xe3\x81\x84", "");
+
+  InsertKey("C", composer_.get());
+  InsertKey(":", composer_.get());
+  InsertKey("\\", composer_.get());
+  InsertKey("W", composer_.get());
+  InsertKey("i", composer_.get());
+
+  string result;
+  composer_->GetStringForPreedit(&result);
+  EXPECT_EQ("C:\\Wi", result);
+}
+
+TEST_F(ComposerTest, Issue2797991_2) {
+  // This is a unittest against http://b/2797991.
+  // Half-width alphanumeric mode quits after [CAPITAL LETTER]:[CAPITAL LETTER]
+  // e.g. C:\Wi -> C:\Wい
+
+  // "い"
+  table_->AddRule("i", "\xe3\x81\x84", "");
+
+  InsertKey("C", composer_.get());
+  InsertKey(":", composer_.get());
+  InsertKey("W", composer_.get());
+  InsertKey("i", composer_.get());
+
+  string result;
+  composer_->GetStringForPreedit(&result);
+  EXPECT_EQ("C:Wi", result);
+}
+
+TEST_F(ComposerTest, Issue2797991_3) {
+  // This is a unittest against http://b/2797991.
+  // Half-width alphanumeric mode quits after [CAPITAL LETTER]:[CAPITAL LETTER]
+  // e.g. C:\Wi -> C:\Wい
+
+  // "い"
+  table_->AddRule("i", "\xe3\x81\x84", "");
+
+  InsertKey("C", composer_.get());
+  InsertKey(":", composer_.get());
+  InsertKey("\\", composer_.get());
+  InsertKey("W", composer_.get());
+  InsertKey("i", composer_.get());
+  InsertKeyWithMode("i", commands::HIRAGANA, composer_.get());
+  string result;
+  composer_->GetStringForPreedit(&result);
+  // "C:\Wiい"
+  EXPECT_EQ("C:\\Wi\xe3\x81\x84", result);
+}
+
+TEST_F(ComposerTest, Issue2797991_4) {
+  // This is a unittest against http://b/2797991.
+  // Half-width alphanumeric mode quits after [CAPITAL LETTER]:[CAPITAL LETTER]
+  // e.g. C:\Wi -> C:\Wい
+
+  // "い"
+  table_->AddRule("i", "\xe3\x81\x84", "");
+
+  InsertKey("c", composer_.get());
+  InsertKey(":", composer_.get());
+  InsertKey("\\", composer_.get());
+  InsertKey("W", composer_.get());
+  InsertKey("i", composer_.get());
+
+  string result;
+  composer_->GetStringForPreedit(&result);
+  EXPECT_EQ("c:\\Wi", result);
+}
+
+TEST_F(ComposerTest, CaseSensitiveByConfiguration) {
+  {
+    config::Config config;
+    config::ConfigHandler::GetDefaultConfig(&config);
+    config.set_shift_key_mode_switch(mozc::config::Config::OFF);
+    config::ConfigHandler::SetConfig(config);
+    EXPECT_TRUE(mozc::config::ConfigHandler::SetConfig(config));
+    table_->Initialize();
+
+    // i -> "い"
+    table_->AddRule("i", "\xe3\x81\x84", "");
+    // I -> "イ"
+    table_->AddRule("I", "\xe3\x82\xa4", "");
+
+    InsertKey("i", composer_.get());
+    InsertKey("I", composer_.get());
+    InsertKey("i", composer_.get());
+    InsertKey("I", composer_.get());
+    string result;
+    composer_->GetStringForPreedit(&result);
+    // "いイいイ"
+    EXPECT_EQ("\xe3\x81\x84\xe3\x82\xa4\xe3\x81\x84\xe3\x82\xa4", result);
+  }
+  composer_->Reset();
+  {
+    config::Config config;
+    config::ConfigHandler::GetDefaultConfig(&config);
+    config.set_shift_key_mode_switch(mozc::config::Config::ASCII_INPUT_MODE);
+    config::ConfigHandler::SetConfig(config);
+    EXPECT_TRUE(mozc::config::ConfigHandler::SetConfig(config));
+    table_->Initialize();
+
+    // i -> "い"
+    table_->AddRule("i", "\xe3\x81\x84", "");
+    // I -> "イ"
+    table_->AddRule("I", "\xe3\x82\xa4", "");
+
+    InsertKey("i", composer_.get());
+    InsertKey("I", composer_.get());
+    InsertKey("i", composer_.get());
+    InsertKey("I", composer_.get());
+    string result;
+    composer_->GetStringForPreedit(&result);
+    // "いIiI"
+    EXPECT_EQ("\xe3\x81\x84IiI", result);
+  }
+}
+
+TEST_F(ComposerTest,
+       InputUppercaseInAlphanumericModeWithShiftKeyModeSwitchIsKatakana) {
+  {
+    config::Config config;
+    config::ConfigHandler::GetDefaultConfig(&config);
+    config.set_shift_key_mode_switch(mozc::config::Config::KATAKANA_INPUT_MODE);
+    config::ConfigHandler::SetConfig(config);
+    EXPECT_TRUE(mozc::config::ConfigHandler::SetConfig(config));
+    table_->Initialize();
+
+    // i -> "い"
+    table_->AddRule("i", "\xe3\x81\x84", "");
+    // I -> "イ"
+    table_->AddRule("I", "\xe3\x82\xa4", "");
+
+    {
+      composer_->Reset();
+      composer_->SetInputMode(transliteration::FULL_ASCII);
+      InsertKey("I", composer_.get());
+      string result;
+      composer_->GetStringForPreedit(&result);
+      // "Ｉ"
+      EXPECT_EQ("\xef\xbc\xa9", result);
+    }
+
+    {
+      composer_->Reset();
+      composer_->SetInputMode(transliteration::HALF_ASCII);
+      InsertKey("I", composer_.get());
+      string result;
+      composer_->GetStringForPreedit(&result);
+      EXPECT_EQ("I", result);
+    }
+
+    {
+      composer_->Reset();
+      composer_->SetInputMode(transliteration::FULL_KATAKANA);
+      InsertKey("I", composer_.get());
+      string result;
+      composer_->GetStringForPreedit(&result);
+      // "イ"
+      EXPECT_EQ("\xe3\x82\xa4", result);
+    }
+
+    {
+      composer_->Reset();
+      composer_->SetInputMode(transliteration::HALF_KATAKANA);
+      InsertKey("I", composer_.get());
+      string result;
+      composer_->GetStringForPreedit(&result);
+      // "ｲ"
+      EXPECT_EQ("\xEF\xBD\xB2", result);
+    }
+
+    {
+      composer_->Reset();
+      composer_->SetInputMode(transliteration::HIRAGANA);
+      InsertKey("I", composer_.get());
+      string result;
+      composer_->GetStringForPreedit(&result);
+      // "イ"
+      EXPECT_EQ("\xe3\x82\xa4", result);
+    }
+  }
+}
+
 }  // namespace composer
 }  // namespace mozc
