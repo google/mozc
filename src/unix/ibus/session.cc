@@ -158,7 +158,7 @@ bool Session::CreateSession() {
 
   commands::Command command;
   command.mutable_input()->set_type(commands::Input::CREATE_SESSION);
-  command.mutable_input()->set_capability(client_capability_);
+  command.mutable_input()->mutable_capability()->CopyFrom(client_capability_);
   if (!handler_->EvalCommand(&command)) {
     LOG(ERROR) << "EvalCommand failed";
     return false;
