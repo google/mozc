@@ -48,18 +48,11 @@ namespace {
 
 static const size_t kMaxHistorySize = 32;
 
-class CompareByScore {
- public:
-  bool operator()(mozc::Segment::Candidate *a,
-                  mozc::Segment::Candidate *b) const {
-    return (a->cost < b->cost);
-  }
-};
-
 // Ad-hoc function to detect English candidate
 bool IsKatakanaT13NValue(const string &value) {
   for (size_t i = 0; i < value.size(); ++i) {
-    if (value[i] == 0x20 || value[i] == 0x21 ||  // " " or "!"
+    if (value[i] == 0x20 || value[i] == 0x21 || value[i] == 0x2D ||
+        // " ", "!", "-"
         (value[i] >= 0x41 && value[i] <= 0x5A) || // A..Z
         (value[i] >= 0x61 && value[i] <= 0x7A)) { // a..z
       // do nothing
@@ -94,7 +87,7 @@ void Segment::Candidate::SetDefaultDescription(int description_type) {
 
   if (description_type & Segment::Candidate::CHARACTER_FORM) {
     const string &value = this->value;
-    const Util::ScriptType type = Util::GetScriptTypeWithoutWhiteSpace(value);
+    const Util::ScriptType type = Util::GetScriptTypeWithoutSymbols(value);
     switch (type) {
       case Util::HIRAGANA:
         message = kHiragana;
@@ -711,40 +704,38 @@ bool Segment::Expand(size_t size) {
   // no more entries are generated.
   while (candidates_size() < target_size) {
     Candidate *c = push_back_candidate();
-    const Node *begin_node = NULL;
-    const Node *end_node = NULL;
     if (c == NULL) {
-      LOG(WARNING) << "candidate is NULL";
+      LOG(ERROR) << "candidate is NULL";
       return false;
     }
     c->Init();
 
-    if (!nbest_generator_->Next(c, &begin_node, &end_node)) {
+    if (!nbest_generator_->Next(c)) {
       pop_back_candidate();
       // set all_expanded_ to be true that Expand() is never called again.
       // http://b/issue?id=2868423
       all_expanded_ = true;   // no more entries
       break;
     }
+
     c->SetDefaultDescription(
         Segment::Candidate::FULL_HALF_WIDTH |
         Segment::Candidate::CHARACTER_FORM |
         Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER |
         Segment::Candidate::ZIPCODE);
 
+    const vector<const Node *> &nodes = c->nodes;
+    DCHECK(!nodes.empty());
+
     bool remove_candidate = false;
 
     // Check all nodes are DEFAULT_NORMALIZATION
     // Otherwise, don't call ExpandAlternative()
-    for (const Node *node = begin_node;
-         node != end_node;
-         node = node->next) {
-      if (node->normalization_type == Node::NO_NORMALIZATION) {
-        c->can_expand_alternative = false;
-      }
+    for (size_t i = 0; i < nodes.size(); ++i) {
+      const Node *node = nodes[i];
       // KatakanaT13N must be the prefix of the candidate.
       // TODO(taku): better to move this logic inside CandidateFilter.
-      if (node != begin_node && IsKatakanaT13NValue(node->value)) {
+      if (node != nodes[0] && IsKatakanaT13NValue(node->value)) {
         remove_candidate = true;
         break;
       }
@@ -757,6 +748,7 @@ bool Segment::Expand(size_t size) {
 
     // Make KatakanaT13n Candidates
     if (IsKatakanaT13N(*c)) {
+      c->can_expand_alternative = false;
       if (katakana_t13n_length_ != 0 &&
           katakana_t13n_length_ != c->content_key.size()) {
         VLOG(1) << c->value << " is remvoed";
@@ -767,7 +759,6 @@ bool Segment::Expand(size_t size) {
         // TODO(taku): could be possible to move this logic to Rewriter.
         if (Segment::ExpandEnglishVariants(c->content_value, &variants)) {
           katakana_t13n_length_ = c->content_key.size();
-          c->can_expand_alternative = false;
           for (size_t i = 0; i < variants.size(); ++i) {
             Candidate *variant_c = add_candidate();
             DCHECK(variant_c);
@@ -851,12 +842,6 @@ bool Segment::Expand(size_t size) {
     }
   }
 
-  return true;
-}
-
-bool Segment::Reset() {
-  clear_candidates();
-  nbest_generator_->Reset();
   return true;
 }
 
@@ -1140,6 +1125,7 @@ void Segments::DebugString(string *output) const {
          << seg.candidate(j).content_value
          << " cost=" << seg.candidate(j).cost
          << " scost=" << seg.candidate(j).structure_cost
+         << " wcost=" << seg.candidate(j).wcost
          << " lid=" << seg.candidate(j).lid
          << " rid=" << seg.candidate(j).rid
          << " prefix=" << seg.candidate(j).prefix

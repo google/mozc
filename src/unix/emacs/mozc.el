@@ -112,10 +112,6 @@ Return non-nil when enabled, otherwise nil."
       ;; disabled
       (mozc-clean-up-session)
     ;; enabled
-    ;; Check the terminal type.
-    (unless window-system
-      ;; TODO(yukishiino): Better supports tty terminals.
-      (error "Mozc doesn't support a tty terminal"))
     ;; Put the keymap at the top of the list of minor mode keymaps.
     (setq minor-mode-map-alist
           (cons (cons 'mozc-mode mozc-mode-map)
@@ -198,7 +194,7 @@ If Mozc server didn't consume a key event, try to process the key event
 without Mozc finding another command bound to the key sequence.
 
 EVENT is the last input event, which is usually passed by the command loop."
-  (interactive (list last-input-event))
+  (interactive (list last-command-event))
   (cond
    ;; Keyboard event
    ((or (integerp event) (symbolp event))
@@ -246,7 +242,8 @@ Key code and symbols are renamed so that the helper process understands them."
   (let ((basic-type (event-basic-type event)))
     (cons (case basic-type
             ;; TODO(yuizumi): Supports Kana input.
-            (?\s 'space)  ; space
+            (?\s 'space)
+            (127 'backspace)
             (t basic-type))
           (event-modifiers event))))
 
@@ -431,11 +428,17 @@ CANDIDATES must be the candidates field in a response protobuf."
 
 ;;;; Candidate window (echo area version)
 
-(defsubst mozc-cand-echo-area-update (candidates)
+(defun mozc-cand-echo-area-update (candidates)
   "Update the candidate list in the echo area.
 CANDIDATES must be the candidates field in a response protobuf."
-  (let (message-log-max)
-    (message "%s" (mozc-cand-echo-area-make-contents candidates))))
+  ;; If the current buffer is a minibuffer, shows only conversion results
+  ;; to avoid hiding the original contents of the minibuffer as much as
+  ;; possible.  Despite not showing a candidate list for non-conversion
+  ;; results, suggestion and prediction are still available and work.
+  (when (or (not (minibufferp))
+            (eq (mozc-protobuf-get candidates 'category) 'conversion))
+    (let (message-log-max)
+      (message "%s" (mozc-cand-echo-area-make-contents candidates)))))
 
 (defun mozc-cand-echo-area-make-contents (candidates)
   "Make a list of candidates as an echo area message.

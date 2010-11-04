@@ -87,6 +87,7 @@ class ConfigDialog : public QDialog,
   string custom_keymap_table_;
   string custom_roman_table_;
   int initial_preedit_method_;
+  bool initial_use_keyboard_to_change_preedit_method_;
 };
 }  // namespace gui
 }  // namespace mozc

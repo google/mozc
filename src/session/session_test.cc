@@ -3084,8 +3084,8 @@ TEST_F(SessionTest, Issue2223755) {
     command.Clear();
     EXPECT_TRUE(session->DisplayAsFullKatakana(&command));
 
-    // "ア イ"
-    EXPECT_EQ("\xE3\x82\xA2\x20\xE3\x82\xA4", GetComposition(command));
+    // "ア　イ"(fullwidth space)
+    EXPECT_EQ("\xE3\x82\xA2\xE3\x80\x80\xE3\x82\xA4", GetComposition(command));
   }
 
   {  // ConvertToFullKatakana
@@ -3119,8 +3119,8 @@ TEST_F(SessionTest, Issue2223755) {
     command.Clear();
     EXPECT_TRUE(session->ConvertToFullKatakana(&command));
 
-    // "ア イ"
-    EXPECT_EQ("\xE3\x82\xA2\x20\xE3\x82\xA4", GetComposition(command));
+    // "ア　イ"(fullwidth space)
+    EXPECT_EQ("\xE3\x82\xA2\xE3\x80\x80\xE3\x82\xA4", GetComposition(command));
   }
 }
 
@@ -4098,7 +4098,7 @@ TEST_F(SessionTest, FillHistoryContext) {
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
-  const string kHistory[] = { "abc", "def" };
+  const string kHistory[] = {"abc", "def"};
 
   Segments segments;
   {

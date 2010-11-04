@@ -44,6 +44,10 @@ class ConverterInterface {
   virtual bool StartConversion(Segments *segments,
                                const string &key) const = 0;
 
+  // Start reverse conversion with key.
+  virtual bool StartReverseConversion(Segments *segments,
+                                      const string &key) const = 0;
+
   // Start prediction with key (request_type = PREDICTION)
   virtual bool StartPrediction(Segments *segments,
                                const string &key) const = 0;

@@ -29,12 +29,11 @@
 
 #include "unix/emacs/mozc_emacs_helper_lib.h"
 
-#include <sstream>
-
 #include "base/protobuf/message.h"
+#include "base/util.h"
 #include "session/commands.pb.h"
-#include "testing/base/public/gunit.h"
 #include "testing/base/public/googletest.h"
+#include "testing/base/public/gunit.h"
 
 
 class MozcEmacsHelperLibTest : public testing::Test {
@@ -54,16 +53,11 @@ class MozcEmacsHelperLibTest : public testing::Test {
 
   void PrintAndTestSexpr(
       const mozc::protobuf::Message &message, const string &sexpr) {
-    ostringstream sexpr_stream;
-    mozc::emacs::PrintMessage(message, sexpr_stream);
-    // Our string class is special one and not standard one, and
-    // ostringstream.str() returns std::string (standard one).
-    // Thus we need a type conversion from std::string to string.
-    //
-    // NOTE: From the view point of porting, we're using
-    // ostream class in the standard.  And it requires ostringstream
-    // in the standard.
-    EXPECT_EQ(sexpr, string(sexpr_stream.str()));
+    vector<string> buffer;
+    mozc::emacs::PrintMessage(message, &buffer);
+    string output;
+    mozc::Util::JoinStrings(buffer, "", &output);
+    EXPECT_EQ(sexpr, output);
   }
 };
 

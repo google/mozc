@@ -544,5 +544,46 @@ TEST(SessionOutputTest, FillPreeditResult) {
   EXPECT_EQ("ABC", result.value());
 }
 
+TEST(SessionOutputTest, FillAllCandidateWords_NonForcused) {
+  // Test against b/3059255
+  // Even when no candidate was focused, all_candidate_words had focused_index.
+
+  CandidateList main_list(true);
+  commands::CandidateList candidates_proto;
+  main_list.AddCandidate(0, "key");
+
+  // Initialize Segment
+  Segment segment;
+  const char *kNormalKey = "key";
+  segment.set_key(kNormalKey);
+
+  Segment::Candidate *candidate = segment.push_back_candidate();
+  candidate->content_key = "key";
+  candidate->value = "value";
+
+  {
+    // Exexcute FillAllCandidateWords
+    const commands::Category kCategory = commands::SUGGESTION;
+    SessionOutput::FillAllCandidateWords(segment, main_list, kCategory,
+                                         &candidates_proto);
+
+    // Varidation
+    EXPECT_FALSE(candidates_proto.has_focused_index());
+  }
+  {
+    main_list.set_focused(true);
+    // Exexcute FillAllCandidateWords
+    // When the category is SUGGESTION, has_focused_index never return true in
+    // real usage. This is just a testcase.
+    const commands::Category kCategory = commands::SUGGESTION;
+    SessionOutput::FillAllCandidateWords(segment, main_list, kCategory,
+                                         &candidates_proto);
+
+    // Varidation
+    // If a candidate is forcused, true is expected.
+    EXPECT_TRUE(candidates_proto.has_focused_index());
+  }
+}
+
 }  // namespace session
 }  // namespace mozc

@@ -712,7 +712,83 @@ TEST(CharChunkTest, Issue2990253) {
     // "ｙ"
     EXPECT_EQ("\xef\xbd\x99", result);
   }
+}
 
+TEST(CharChunkTest, Combine) {
+  CharChunk lhs, rhs;
+  lhs.set_ambiguous("LA");
+  lhs.set_conversion("LC");
+  lhs.set_pending("LP");
+  lhs.set_raw("LR");
+  rhs.set_status(CharChunk::NO_RAW);
+
+  rhs.set_ambiguous("RA");
+  rhs.set_conversion("RC");
+  rhs.set_pending("RP");
+  rhs.set_raw("RR");
+  rhs.set_status(CharChunk::NO_CONVERSION);
+
+  rhs.Combine(lhs);
+  EXPECT_EQ("LARA", rhs.ambiguous());
+  EXPECT_EQ("LCRC", rhs.conversion());
+  EXPECT_EQ("LPRP", rhs.pending());
+  EXPECT_EQ("LRRR", rhs.raw());
+  EXPECT_TRUE(rhs.has_status(CharChunk::NO_CONVERSION));
+}
+
+TEST(CharChunkTest, IsConvertible) {
+  CharChunk chunk;
+  const TransliteratorInterface *kHiraganaT12r =
+      TransliteratorsJa::GetHiraganaTransliterator();
+  const TransliteratorInterface *kFullAsciiT12r =
+      TransliteratorsJa::GetFullAsciiTransliterator();
+  Table table;
+  // "ん"
+  table.AddRule("n", "\xe3\x82\x93", "");
+  // "な"
+  table.AddRule("na", "\xe3\x81\xaa", "");
+  {
+    // If pending is empty, returns false.
+    chunk.Clear();
+    EXPECT_EQ("", chunk.pending());
+    EXPECT_FALSE(chunk.IsConvertible(kHiraganaT12r, table, "n"));
+  }
+  {
+    // If t12r is inconsistent, returns false.
+    chunk.Clear();
+    chunk.SetTransliterator(kHiraganaT12r);
+    string input("n");
+    chunk.AddInput(table, &input);
+    EXPECT_EQ("n", chunk.pending());
+    EXPECT_FALSE(chunk.IsConvertible(kFullAsciiT12r, table, "a"));
+  }
+  {
+    // If no entries are found from the table, returns false.
+    chunk.Clear();
+    chunk.SetTransliterator(kHiraganaT12r);
+    string input("n");
+    chunk.AddInput(table, &input);
+    EXPECT_EQ("n", chunk.pending());
+    EXPECT_FALSE(chunk.IsConvertible(kHiraganaT12r, table, "x"));
+  }
+  {
+    // If found entry does not consume all of input, returns false.
+    chunk.Clear();
+    chunk.SetTransliterator(kHiraganaT12r);
+    string input("n");
+    chunk.AddInput(table, &input);
+    EXPECT_EQ("n", chunk.pending());
+    EXPECT_FALSE(chunk.IsConvertible(kHiraganaT12r, table, "y"));
+  }
+  {
+    // [pending='n'] + [input='a'] is convertible (single combination).
+    chunk.Clear();
+    chunk.SetTransliterator(kHiraganaT12r);
+    string input("n");
+    chunk.AddInput(table, &input);
+    EXPECT_EQ("n", chunk.pending());
+    EXPECT_TRUE(chunk.IsConvertible(kHiraganaT12r, table, "a"));
+  }
 }
 
 }  // namespace composer

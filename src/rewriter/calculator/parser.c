@@ -58,14 +58,14 @@
 #include <float.h>
 #endif
 #include <string.h>
-#include <cmath>
+#include <math.h>
 
 namespace {
 bool IsFinite(double x) {
 #ifdef OS_WINDOWS
   return _finite(x);
 #else
-  return std::isfinite(x);
+  return isfinite(x);
 #endif
 }
 }  // anonymous namespace
@@ -823,7 +823,7 @@ static void yy_reduce(
       case 6: /* expr ::= expr POW expr */
 #line 97 "parser.y"
 {
-  yygotominor.yy0 = std::pow(yymsp[-2].minor.yy0, yymsp[0].minor.yy0);
+  yygotominor.yy0 = pow(yymsp[-2].minor.yy0, yymsp[0].minor.yy0);
   result->CheckValue(yygotominor.yy0);
 }
 #line 770 "parser.c"
@@ -849,7 +849,7 @@ static void yy_reduce(
 #line 110 "parser.y"
 {
   if (yymsp[0].minor.yy0 != 0.0) {
-    yygotominor.yy0 = std::fmod(yymsp[-2].minor.yy0, yymsp[0].minor.yy0);
+    yygotominor.yy0 = fmod(yymsp[-2].minor.yy0, yymsp[0].minor.yy0);
     result->CheckValue(yygotominor.yy0);
   } else {
     result->error_type = Result::DIVIDE_BY_ZERO;

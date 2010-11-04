@@ -30,8 +30,8 @@
 #ifndef MOZC_UNIX_EMACS_MOZC_EMACS_HELPER_LIB_H_
 #define MOZC_UNIX_EMACS_MOZC_EMACS_HELPER_LIB_H_
 
-#include <iostream>
 #include <string>
+#include <vector>
 
 #include "base/port.h"
 #include "base/protobuf/protobuf.h"
@@ -73,10 +73,11 @@ void ParseInputLine(
 // - other types are expressed as is
 //
 // Input parameter 'message' is a protocol buffer to be output.
-// 'os' is an output stream to output 'message'.
+// 'output' is a text buffer to output 'message'.
 //
 // This function never outputs newlines except for ones in strings.
-void PrintMessage(const mozc::protobuf::Message &message, ostream &os);
+void PrintMessage(const mozc::protobuf::Message &message,
+                  vector<string>* output);
 
 
 // Utilities

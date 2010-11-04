@@ -45,38 +45,23 @@ namespace mozc {
 // Wrapper for Windows InterlockedCompareExchange
 namespace {
 #ifdef OS_LINUX
-// TODO(taku):
 // Linux doesn't provide InterlockedCompareExchange-like function.
-// we have to double-check it
 inline int InterlockedCompareExchange(volatile int *target,
                                       int new_value,
                                       int old_value) {
-#if defined(__GNUC__) && \
-        (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 1)) && \
-        !defined(__arm__)
-  // Use GCC's extention (Note: ARM GCC doesn't have this function.)
-  // http://gcc.gnu.org/onlinedocs/gcc-4.1.2/gcc/Atomic-Builtins.html
-  return __sync_val_compare_and_swap(target, old_value, new_value);
-#else
-#ifdef __i486__
-  // Use cmpxchgl: http://0xcc.net/blog/archives/000128.html
-  int result;
-  asm volatile ("lock; cmpxchgl %1, %2"
-                : "=a" (result)
-                : "r" (new_value), "m" (*(target)), "0"(old_value)
-                : "memory", "cc");
-  return result;
-#else  // __i486__
-  // TODO(yusukes): Write a thread-safe implementation for ChromeOS for ARM.
+  // TODO(yusukes): For now, we use the architecture-neutral implementation,
+  // but I believe it's definitely better to port Chromium's singleton to Mozc.
+  // The implementation should be much faster and supports ARM Linux.
+  // http://src.chromium.org/viewvc/chrome/trunk/src/base/singleton.h
 
-  // not thread safe
-  if (*target == old_value) {
+  static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+  pthread_mutex_lock(&lock);
+  int result = *target;
+  if (result == old_value) {
     *target = new_value;
-    return old_value;
   }
-  return *target;
-#endif  // __i486__
-#endif  // __GNUC__
+  pthread_mutex_unlock(&lock);
+  return result;
 }
 #endif  // OS_LINUX
 

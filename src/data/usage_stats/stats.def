@@ -3,24 +3,24 @@ ConversionWindowDuration
 PredictionWindowDuration
 SuggestionWindowDuration
 
-# The number of commit
+# The count of commit
 Commit
-# The number of commit from each state
+# The count of commit from each state
 CommitFromSuggestion
 CommitFromPrediction
 CommitFromConversion
 CommitFromComposition
 
-# The number of all events
+# The count of all events
 SessionAllEvent
 
 # The elapsed time for processing the request
 ElapsedTime
 
-# The number of session creation
+# The count of session creation
 SessionCreated
 
-# The number of SetConfig command call
+# The count of SetConfig command call
 SetConfig
 
 # The total submitted length count
@@ -29,18 +29,18 @@ SubmittedTotalLength
 # The length of submitted segment
 # 猫を|飼う -> [2, 2]
 SubmittedSegmentLength
-# The number of submitted segment
+# The count of submitted segment
 # 猫を|飼う -> 2
 SubmittedSegmentNumber
 # The length of submitted segment
 # 猫を|飼う -> 4
 SubmittedLength
 
-# The number of ascii/non-ascii typing input
+# The count of ascii/non-ascii typing input
 ASCIITyping
 NonASCIITyping
 
-# The number of each candidate are selected from prediction
+# The count that each candidate is selected from prediction
 PredictionCandidates0
 PredictionCandidates1
 PredictionCandidates2
@@ -53,7 +53,7 @@ PredictionCandidates8
 PredictionCandidates9
 PredictionCandidatesGE10
 
-# The number of each candidate are selected from suggestion
+# The count that each candidate is selected from suggestion
 SuggestionCandidates0
 SuggestionCandidates1
 SuggestionCandidates2
@@ -66,7 +66,7 @@ SuggestionCandidates8
 SuggestionCandidates9
 SuggestionCandidatesGE10
 
-# The number of each candidate are selected from conversion
+# The count that each candidate is selected from conversion
 ConversionCandidates0
 ConversionCandidates1
 ConversionCandidates2
@@ -79,8 +79,8 @@ ConversionCandidates8
 ConversionCandidates9
 ConversionCandidatesGE10
 
-# The number of each candidate are selected from conversion and 
-# it was transliteration candidates
+# The count that each candidate is selected from conversion and
+# it was from transliteration
 TransliterationCandidates0
 TransliterationCandidates1
 TransliterationCandidates2
@@ -93,7 +93,7 @@ TransliterationCandidates8
 TransliterationCandidates9
 TransliterationCandidatesGE10
 
-# The number of mouse selection command call
+# The count of mouse selection command call
 MouseSelect
 
 # The time in sec of each session
@@ -102,26 +102,26 @@ SessionDuration
 # The time in sec of each preedit
 PreeditDuration
 
-# The number of showing cascading window
+# The count of showing cascading window
 ShowCascadingWindow
 
-# The number of ShutDown command call
+# The count of ShutDown command call
 ShutDown
 
-# The number of SendKey command, consumed or unconsumed
+# The count of SendKey command, consumed or unconsumed
 ConsumedSendKey
 UnconsumedSendKey
 
-# The number of clear personalization data command call
+# The count of clear personalization data command call
 ClearUserHistory
 
-# The number of clear all history command call
+# The count of clear all history command call
 ClearUserPrediction
 
-# The number of clear unused history command call
+# The count of clear unused history command call
 ClearUnusedUserPrediction
 
-# The number of pressing BS just after commit command
+# The count of pressing BS just after commit command
 BackSpaceAfterCommit
 
 # Performed command names for sendkey command
@@ -227,7 +227,7 @@ Performed_Conversion_InputModeHalfAlphanumeric
 Performed_Conversion_ReportBug
 Performed_Conversion_Abort
 
-# The number of special keys input
+# The count of special keys input
 NO_SPECIALKEY
 DIGIT
 ON
@@ -378,12 +378,18 @@ UserBoundaryHistoryEntrySize
 UserSegmentHistoryEntrySize
 # Total memory in MB
 TotalPhysicalMemory
+
 # for windows
+
+# 64 bit
 WindowsX64
+# Msctf version
 MsctfVerMajor
 MsctfVerMinor
 MsctfVerBuild
 MsctfVerRevision
+# CUAS status
+CuasEnabled
 
 # usage stats
 UsageStatsUploadFailed

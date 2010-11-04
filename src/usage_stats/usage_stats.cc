@@ -47,6 +47,10 @@
 #include "usage_stats/usage_stats.pb.h"
 #include "usage_stats/upload_util.h"
 
+#ifdef OS_WINDOWS
+#include "win32/base/imm_util.h"  // IsCuasEnabled
+#endif
+
 namespace mozc {
 namespace usage_stats {
 
@@ -282,6 +286,7 @@ bool UsageStats::Send(void *data) {
       LOG(ERROR) << "get file version for msctf.dll failed";
     }
   }
+  UsageStats::SetBoolean("CuasEnabled", win32::ImeUtil::IsCuasEnabled());
 #endif
 
   LoadStats(&uploader);

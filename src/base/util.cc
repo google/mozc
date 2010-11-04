@@ -35,6 +35,7 @@
 #include <shlobj.h>
 #include <time.h>
 #include <sddl.h>
+#include <stdio.h>  // MSVC requires this for _vsnprintf
 // #include <KnownFolders.h>
 #else
 #include <pwd.h>
@@ -50,6 +51,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cerrno>
+#include <cstdarg>
 #include <fstream>
 #include <iterator>
 #include <limits>
@@ -131,7 +133,6 @@ void SplitStringToIteratorUsing(const string &full,
   }
 }
 
-
 template <typename ITR>
 void SplitStringToIteratorAllowEmpty(const string &full,
                                      const char *delim,
@@ -147,6 +148,54 @@ void SplitStringToIteratorAllowEmpty(const string &full,
     }
     *result++ = full.substr(begin_index, (end_index - begin_index));
     begin_index = end_index + 1;
+  }
+}
+
+// Lower-level routine that takes a va_list and appends to a specified
+// string.  All other routines of sprintf family are just convenience
+// wrappers around it.
+void StringAppendV(string* dst, const char* format, va_list ap) {
+  // First try with a small fixed size buffer
+  char space[1024];
+
+  // It's possible for methods that use a va_list to invalidate
+  // the data in it upon use.  The fix is to make a copy
+  // of the structure before using it and use that copy instead.
+  va_list backup_ap;
+  va_copy(backup_ap, ap);
+  int result = vsnprintf(space, sizeof(space), format, backup_ap);
+  va_end(backup_ap);
+
+  if ((result >= 0) && (result < sizeof(space))) {
+    // It fit
+    dst->append(space, result);
+    return;
+  }
+
+  // Repeatedly increase buffer size until it fits
+  int length = sizeof(space);
+  while (true) {
+    if (result < 0) {
+      // Older behavior: just try doubling the buffer size
+      length *= 2;
+    } else {
+      // We need exactly "result+1" characters
+      length = result+1;
+    }
+    char* buf = new char[length];
+
+    // Restore the va_list before we use it again
+    va_copy(backup_ap, ap);
+    result = vsnprintf(buf, length, format, backup_ap);
+    va_end(backup_ap);
+
+    if ((result >= 0) && (result < length)) {
+      // It fit
+      dst->append(buf, result);
+      delete[] buf;
+      return;
+    }
+    delete[] buf;
   }
 }
 
@@ -603,6 +652,15 @@ bool Util::SafeStrToDouble(const string &str, double *value) {
   }
 
   return (*endptr == '\0') && (errno == 0);
+}
+
+string Util::StringPrintf(const char* format, ...) {
+  va_list ap;
+  va_start(ap, format);
+  string result;
+  StringAppendV(&result, format, ap);
+  va_end(ap);
+  return result;
 }
 
 bool Util::ChopReturns(string *line) {
@@ -1970,7 +2028,7 @@ Util::ScriptType Util::GetScriptType(const char *begin,
 
 namespace {
 Util::ScriptType GetScriptTypeInternal(const string &str,
-                                       bool ignore_white_space) {
+                                       bool ignore_symbols) {
   const char *begin = str.data();
   const char *end = str.data() + str.size();
   size_t mblen = 0;
@@ -1987,13 +2045,13 @@ Util::ScriptType GetScriptTypeInternal(const string &str,
          result == Util::HIRAGANA || result == Util::KATAKANA)) {
       type = result;  // restore the previous state
     }
-    // white space or full widith space
-    if (ignore_white_space && (w == 0x0020 || w == 0x3000)) {
+    // Ignore symbols
+    // Regard UNKNOWN_SCRIPT as symbols here
+    if (ignore_symbols &&
+        result != Util::UNKNOWN_SCRIPT &&
+        type == Util::UNKNOWN_SCRIPT) {
       begin += mblen;
       continue;
-    }
-    if (type == Util::UNKNOWN_SCRIPT) {
-      return Util::UNKNOWN_SCRIPT;
     }
     // not first character
     if (str.data() != begin &&
@@ -2016,7 +2074,7 @@ Util::ScriptType Util::GetScriptType(const string &str) {
   return GetScriptTypeInternal(str, false);
 }
 
-Util::ScriptType Util::GetScriptTypeWithoutWhiteSpace(const string &str) {
+Util::ScriptType Util::GetScriptTypeWithoutSymbols(const string &str) {
   return GetScriptTypeInternal(str, true);
 }
 

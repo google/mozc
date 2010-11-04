@@ -236,6 +236,10 @@ bool UserHistoryPredictor::AsyncLoad() {
 }
 
 bool UserHistoryPredictor::AsyncSave() {
+  if (!updated_) {
+    return true;
+  }
+
   if (!CheckSyncerAndDelete()) {  // now loading/saving
     return true;
   }
@@ -862,6 +866,7 @@ bool UserHistoryPredictor::Predict(Segments *segments) const {
     Segment::Candidate *candidate = segment->push_back_candidate();
     DCHECK(candidate);
     candidate->Init();
+    candidate->key = result_entry->key();
     candidate->content_key = result_entry->key();
     candidate->value = result_entry->value();
     candidate->content_value = result_entry->value();
@@ -1044,7 +1049,7 @@ void UserHistoryPredictor::Finish(Segments *segments) {
                               last_value.size()) == last_value) {
       const Segment::Candidate &candidate =
           segments->conversion_segment(0).candidate(0);
-      const string key = entry->key() + candidate.content_key;
+      const string key = entry->key() + candidate.key;
       const string value = entry->value() + candidate.value;
       // use the same last_access_time stored in the top element
       // so that this item can be grouped together.
@@ -1113,8 +1118,8 @@ void UserHistoryPredictor::Finish(Segments *segments) {
       return;
     }
 
-    all_key = segment.candidate(0).content_key;
-    all_value = segment.candidate(0).content_value;
+    all_key = segment.candidate(0).key;
+    all_value = segment.candidate(0).value;
     const string &description = segment.candidate(0).description;
 
     Insert(all_key, all_value, description,
@@ -1205,16 +1210,7 @@ uint32 UserHistoryPredictor::EntryFingerprint(
 // static
 uint32 UserHistoryPredictor::SegmentFingerprint(const Segment &segment) {
   if (segment.candidates_size() > 0) {
-    // When segment.key().size() < segment.candidate(0).content_key.size(),
-    // the candidate is generated from suggestion.
-    // http://b/issue?id=2966638
-    // TODO(taku): better to have Segment::Candidate::key.
-    if (segment.key().size() < segment.candidate(0).content_key.size()) {
-      return Fingerprint(segment.candidate(0).content_key,
-                         segment.candidate(0).content_value);
-    } else {
-      return Fingerprint(segment.key(), segment.candidate(0).value);
-    }
+    return Fingerprint(segment.candidate(0).key, segment.candidate(0).value);
   }
   return 0;
 }

@@ -133,6 +133,7 @@ bool VersionRewriter::Rewrite(Segments *segments) const {
             new_cand->cost = c.cost;
             new_cand->value = ent->output_;
             new_cand->content_value = ent->output_;
+            new_cand->key = seg->key();
             new_cand->content_key = seg->key();
             // we don't learn version
             new_cand->learning_type |= Segment::Candidate::NO_LEARNING;

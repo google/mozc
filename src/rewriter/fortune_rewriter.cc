@@ -166,6 +166,7 @@ bool InsertCandidate(FortuneType fortune_type,
   c->cost = trigger_c.cost;
   c->value = value;
   c->content_value = value;
+  c->key = base_candidate.key;
   c->content_key = base_candidate.content_key;
   c->can_expand_alternative = false;
   c->learning_type |= Segment::Candidate::NO_LEARNING;

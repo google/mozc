@@ -71,8 +71,15 @@ class Segment {
     string usage_title;
     // Content of the usage.
     string usage_description;
+    // Context "sensitive" candidate cost.
+    // Taking adjacent words/nodes into consideration.
+    // Basically, canidate is sorted by this cost.
     int32  cost;
-    // Cost of transitions (cost without word cost adjacent context)
+    // Context "free" candidate cost
+    // NOT taking adjacent words/nodes into consideration.
+    int32  wcost;
+    // (cost without transition cost between left/right boundaries)
+    // Cost of only transitions (cost without word cost adjacent context)
     int32  structure_cost;
     uint16 lid;
     uint16 rid;
@@ -96,6 +103,7 @@ class Segment {
       nodes.clear();
       cost = 0;
       structure_cost = 0;
+      wcost = 0;
       lid = 0;
       rid = 0;
       learning_type = 0;
@@ -264,7 +272,6 @@ class Segment {
   static bool ExpandEnglishVariants(const string &input,
                                     vector<string> *variants);
 
-  bool Reset();
   void clear();
   void Clear();
 
@@ -312,6 +319,7 @@ class Segments {
  public:
   enum RequestType {
     CONVERSION,  // normal conversion
+    REVERSE_CONVERSION,  // reverse conversion
     PREDICTION,  // show prediction with user tab key
     SUGGESTION,  // show prediction automatically
   };

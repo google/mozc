@@ -69,7 +69,7 @@ void InitSessionToPrecomposition(Session* session) {
   session->IMEOn(&command);
 #endif  // OS_WINDOWS
 }
-}  // namespace
+}  // anonymous namespace
 
 class SessionRegressionTest : public testing::Test {
  protected:

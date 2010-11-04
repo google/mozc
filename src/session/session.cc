@@ -1025,6 +1025,15 @@ void Session::set_client_capability(const commands::Capability &capability) {
   client_capability_.CopyFrom(capability);
 }
 
+void Session::set_application_info(const commands::ApplicationInfo
+                                   &application_info) {
+  application_info_.CopyFrom(application_info);
+}
+
+const commands::ApplicationInfo &Session::application_info() const {
+  return application_info_;
+}
+
 bool Session::InsertCharacter(commands::Command *command) {
   // If the input_style is DIRECT_INPUT, KeyEvent is not consumed and
   // done echo back.  It works only when key_string is equal to

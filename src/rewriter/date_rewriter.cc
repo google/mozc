@@ -611,6 +611,8 @@ void Insert(Segment *segment,
   c->cost = base_candidate.cost;
   c->value = value;
   c->learning_type = Segment::Candidate::NO_LEARNING;
+  c->key = base_candidate.key;
+  c->content_key = base_candidate.content_key;
   if (description != NULL) {
     c->description = description;
   }

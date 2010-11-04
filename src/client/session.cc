@@ -48,6 +48,10 @@
 #include "base/mac_process.h"
 #endif
 
+#ifdef OS_WINDOWS
+#include <windows.h>
+#endif
+
 namespace mozc {
 namespace client {
 
@@ -401,7 +405,19 @@ bool Session::CreateSession() {
   id_ = 0;
   commands::Input input;
   input.set_type(commands::Input::CREATE_SESSION);
+
   input.mutable_capability()->CopyFrom(client_capability_);
+
+  commands::ApplicationInfo *info = input.mutable_application_info();
+  DCHECK(info);
+
+#ifdef OS_WINDOWS
+  info->set_process_id(static_cast<uint32>(::GetCurrentProcessId()));
+  info->set_thread_id(static_cast<uint32>(::GetCurrentThreadId()));
+#else
+  info->set_process_id(static_cast<uint32>(getpid()));
+  info->set_thread_id(0);
+#endif
 
   commands::Output output;
   if (!CheckVersionOrRestartServerInternal(input, &output)) {

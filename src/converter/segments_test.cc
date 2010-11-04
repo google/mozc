@@ -365,7 +365,7 @@ TEST_F(CandidateTest, SetDefaultDescription) {
               "\x82\xa1\xe3\x83\x99\xe3\x83\x83\xe3\x83\x88",
               candidate.description);
   }
-  // containing white space
+  // containing symbols
   {
     Segment::Candidate candidate;
     candidate.Init();
@@ -380,6 +380,60 @@ TEST_F(CandidateTest, SetDefaultDescription) {
     EXPECT_EQ("\x5b\xe5\x8d\x8a\x5d\x20\xe3\x82\xa2\xe3\x83\xab\xe3\x83\x95\xe3"
               "\x82\xa1\xe3\x83\x99\xe3\x83\x83\xe3\x83\x88",
               candidate.description);
+  }
+  {
+    Segment::Candidate candidate;
+    candidate.Init();
+    candidate.value = "Half!ASCII!";
+    candidate.content_value = candidate.value;
+    candidate.content_key = "half!ascii!";
+    candidate.SetDefaultDescription(
+        Segment::Candidate::FULL_HALF_WIDTH |
+        Segment::Candidate::CHARACTER_FORM |
+        Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER);
+    // "[半] アルファベット"
+    EXPECT_EQ("\x5b\xe5\x8d\x8a\x5d\x20\xe3\x82\xa2\xe3\x83\xab\xe3\x83\x95\xe3"
+              "\x82\xa1\xe3\x83\x99\xe3\x83\x83\xe3\x83\x88",
+              candidate.description);
+  }
+  {
+    Segment::Candidate candidate;
+    candidate.Init();
+    candidate.value = "CD-ROM";
+    candidate.content_value = candidate.value;
+    // "しーでぃーろむ"
+    candidate.content_key =
+        "\xe3\x81\x97\xe3\x83\xbc\xe3\x81\xa7\xe3\x81\x83\xe3"
+        "\x83\xbc\xe3\x82\x8d\xe3\x82\x80";
+    candidate.SetDefaultDescription(
+        Segment::Candidate::FULL_HALF_WIDTH |
+        Segment::Candidate::CHARACTER_FORM |
+        Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER);
+    // "[半] アルファベット"
+    EXPECT_EQ("\x5b\xe5\x8d\x8a\x5d\x20\xe3\x82\xa2\xe3\x83\xab\xe3\x83\x95\xe3"
+              "\x82\xa1\xe3\x83\x99\xe3\x83\x83\xe3\x83\x88",
+              candidate.description);
+  }
+  {
+    Segment::Candidate candidate;
+    candidate.Init();
+    // "コギト・エルゴ・スム"
+    candidate.value = "\xe3\x82\xb3\xe3\x82\xae\xe3\x83\x88\xe3\x83\xbb\xe3\x82"
+        "\xa8\xe3\x83\xab\xe3\x82\xb4\xe3\x83\xbb\xe3\x82\xb9\xe3\x83\xa0";
+    candidate.content_value = candidate.value;
+    // "こぎとえるごすむ"
+    candidate.content_key =
+        "\xe3\x81\x93\xe3\x81\x8e\xe3\x81\xa8\xe3\x81\x88\xe3\x82\x8b\xe3\x81"
+        "\x94\xe3\x81\x99\xe3\x82\x80";
+    candidate.SetDefaultDescription(
+        Segment::Candidate::FULL_HALF_WIDTH |
+        Segment::Candidate::CHARACTER_FORM |
+        Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER);
+    // "[全] カタカナ"
+    EXPECT_EQ(
+        "\x5b\xe5\x85\xa8\x5d\x20\xe3\x82\xab\xe3\x82\xbf\xe3\x82\xab"
+        "\xe3\x83\x8a",
+        candidate.description);
   }
   {
     Segment::Candidate candidate;
@@ -406,8 +460,10 @@ TEST_F(CandidateTest, SetDefaultDescription) {
         Segment::Candidate::FULL_HALF_WIDTH |
         Segment::Candidate::CHARACTER_FORM |
         Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER);
-    // TODO(komatsu): Make sure this is an expected behavior.
-    EXPECT_TRUE(candidate.description.empty());
+    // "[全] アルファベット"
+    EXPECT_EQ("\x5b\xe5\x85\xa8\x5d\x20\xe3\x82\xa2\xe3\x83\xab\xe3\x83\x95"
+              "\xe3\x82\xa1\xe3\x83\x99\xe3\x83\x83\xe3\x83\x88",
+              candidate.description);
   }
 }
 

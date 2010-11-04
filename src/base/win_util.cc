@@ -27,6 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "base/win_util.h"
+
 #ifdef OS_WINDOWS
 #include <Aux_ulib.h>
 #include <Winternl.h>
@@ -34,9 +36,9 @@
 #include <clocale>
 #endif  // OS_WINDOWS
 
-#include "base/win_util.h"
 #ifdef OS_WINDOWS
 #include "base/util.h"
+#include "base/scoped_handle.h"
 #include "base/singleton.h"
 #endif  // OS_WINDOWS
 
@@ -99,6 +101,10 @@ bool AdjustPrivilegesForShutdown() {
   }
 
   return true;
+}
+
+bool EqualLuid(const LUID &L1, const LUID &L2) {
+  return (L1.LowPart == L2.LowPart && L1.HighPart == L2.HighPart);
 }
 }  // namespace
 
@@ -238,6 +244,129 @@ bool WinUtil::SystemEqualString(
   CrtEqualString(lhs_null_trimmed, rhs_null_trimmed, ignore_case, &are_equal);
 
   return are_equal;
+}
+
+bool WinUtil::IsServiceUser(HANDLE hToken, bool *is_service) {
+  if (is_service == NULL) {
+    return false;
+  }
+
+  TOKEN_STATISTICS ts;
+  DWORD dwSize = 0;
+  // Use token logon LUID instead of user SID, for brevity and safety
+  if (!::GetTokenInformation(hToken, TokenStatistics,
+                             (LPVOID)&ts, sizeof(ts), &dwSize)) {
+    return false;
+  }
+
+  // Compare LUID
+  const LUID SystemLuid = SYSTEM_LUID;
+  const LUID LocalServiceLuid = LOCALSERVICE_LUID;
+  const LUID NetworkServiceLuid = NETWORKSERVICE_LUID;
+  if (EqualLuid(SystemLuid, ts.AuthenticationId) ||
+      EqualLuid(LocalServiceLuid, ts.AuthenticationId) ||
+      EqualLuid(NetworkServiceLuid, ts.AuthenticationId)) {
+    *is_service = true;
+    return true;
+  }
+
+  // Not a service account
+  *is_service = false;
+  return true;
+}
+
+bool WinUtil::IsServiceProcess(bool *is_service) {
+  if (is_service == NULL) {
+    return false;
+  }
+
+  if (Util::IsVistaOrLater()) {
+    // Session 0 is dedicated to services
+    DWORD dwSessionId = 0;
+    if (!::ProcessIdToSessionId(::GetCurrentProcessId(), &dwSessionId) ||
+        (dwSessionId == 0)) {
+      *is_service = true;
+      return true;
+    }
+  }
+
+  // Get process token
+  HANDLE hProcessToken = NULL;
+  if (!::OpenProcessToken(::GetCurrentProcess(),
+                          TOKEN_QUERY | TOKEN_QUERY_SOURCE,
+                          &hProcessToken)) {
+    return false;
+  }
+
+  ScopedHandle process_token(hProcessToken);
+
+  // Process token is one for a service account.
+  if (!IsServiceUser(process_token.get(), is_service)) {
+    return false;
+  }
+
+  return true;
+}
+
+bool WinUtil::IsServiceThread(bool *is_service) {
+  if (is_service == NULL) {
+    return false;
+  }
+
+  // Get thread token (if any)
+  HANDLE hThreadToken = NULL;
+  if (!::OpenThreadToken(::GetCurrentThread(),
+                        TOKEN_QUERY, TRUE, &hThreadToken) &&
+      ERROR_NO_TOKEN != ::GetLastError()) {
+    return false;
+  }
+
+  if (hThreadToken == NULL) {
+    // No thread token.
+    *is_service = false;
+    return true;
+  }
+
+  ScopedHandle thread_token(hThreadToken);
+
+  // Check if the thread token (if any) is one for a service account.
+  if (!IsServiceUser(thread_token.get(), is_service)) {
+    return false;
+  }
+  return true;
+}
+
+bool WinUtil::IsServiceAccount(bool *is_service) {
+  if (is_service == NULL) {
+    return false;
+  }
+
+  bool is_service_process = false;
+  if (!WinUtil::IsServiceProcess(&is_service_process)) {
+    DLOG(ERROR) << "WinUtil::IsServiceProcess failed.";
+    return false;
+  }
+
+  if (is_service_process) {
+    *is_service = true;
+    return true;
+  }
+
+  // Process token is not one for service.
+  // Check thread token just in case.
+  bool is_service_thread = false;
+  if (!WinUtil::IsServiceThread(&is_service_thread)) {
+    DLOG(ERROR) << "WinUtil::IsServiceThread failed.";
+    return false;
+  }
+
+  if (is_service_thread) {
+    *is_service = true;
+    return true;
+  }
+
+  *is_service = false;
+  return true;
 }
 
 ScopedCOMInitializer::ScopedCOMInitializer()

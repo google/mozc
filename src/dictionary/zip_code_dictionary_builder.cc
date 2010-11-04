@@ -40,7 +40,7 @@
 
 namespace mozc {
 namespace {
-const uint32 kOffset = 30000;
+const uint32 kOffset = 10000;
 const uint32 kScoreMax = 32767;
 
 uint32 GetScore(int64 freq) {

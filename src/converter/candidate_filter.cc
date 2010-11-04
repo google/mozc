@@ -87,8 +87,17 @@ void CandidateFilter::Reset() {
 }
 
 CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
-    const Segment::Candidate *candidate) {
+   const Segment::Candidate *candidate) {
   DCHECK(candidate);
+
+  // In general, the cost of constrained node tends to be overestimated.
+  // If the top candidate has constrained node, we skip the main body
+  // of CandidateFilter, meaning that the node is not treated as the top
+  // node for CandidateFilter.
+  if (candidate->learning_type & Segment::Candidate::CONTEXT_SENSITIVE) {
+    return CandidateFilter::GOOD_CANDIDATE;
+  }
+
   const size_t candidate_size = seen_.size();
   if (top_candidate_ == NULL || candidate_size == 0) {
     top_candidate_ = candidate;

@@ -32,6 +32,7 @@
 
 #ifdef OS_WINDOWS
 #include "base/const.h"
+#include "base/win_util.h"
 #include "third_party/mozc/sandbox/acl.h"
 #include <aclapi.h>
 #include <windows.h>
@@ -51,37 +52,6 @@ const wchar_t kElevatedProcessDisabledName[]
 = L"elevated_process_disabled";
 
 #ifdef OS_WINDOWS
-bool EqualLuid(const LUID &L1, const LUID &L2) {
-  return (L1.LowPart == L2.LowPart && L1.HighPart == L2.HighPart);
-}
-
-// Returns true if the token is one of the known service
-// user accounts or if failed to determine.
-bool IsServiceUser(const HANDLE hToken) {
-  TOKEN_STATISTICS ts;
-  DWORD dwSize = 0;
-  // Use token logon LUID instead of user SID, for brevity and safety
-  // If this function failed, we assume that mozc is running
-  // as system accounts just in case.
-  if (!::GetTokenInformation(hToken, TokenStatistics,
-                             (LPVOID)&ts, sizeof(ts), &dwSize)) {
-    return true;
-  }
-
-  // Compare LUID
-  const LUID SystemLuid = SYSTEM_LUID;
-  const LUID LocalServiceLuid = LOCALSERVICE_LUID;
-  const LUID NetworkServiceLuid = NETWORKSERVICE_LUID;
-  if (EqualLuid(SystemLuid, ts.AuthenticationId) ||
-      EqualLuid(LocalServiceLuid, ts.AuthenticationId) ||
-      EqualLuid(NetworkServiceLuid, ts.AuthenticationId)) {
-    return true;
-  }
-
-  // Not a service account
-  return false;
-}
-
 // returns true if the token was created by Secondary Logon
 // (typically via RunAs command) or UAC (w/ alternative credential provided)
 //  or if failed to determine.
@@ -169,16 +139,13 @@ bool IsElevatedByUAC(const HANDLE hToken) {
 
 RunLevel::RunLevelType RunLevel::GetRunLevel(RunLevel::RequestType type) {
 #ifdef OS_WINDOWS
-  // Vista or later
-  // Check session id is NOT 0
-  if (Util::IsVistaOrLater()) {
-    // Session 0 is dedicated to services
-    DWORD dwSessionId = 0;
-    if (!::ProcessIdToSessionId(::GetCurrentProcessId(),
-                                &dwSessionId) ||
-        dwSessionId == 0) {
-      return RunLevel::DENY;
-    }
+  bool is_service_process = false;
+  if (!WinUtil::IsServiceProcess(&is_service_process)) {
+    // Returns DENY conservatively.
+    return RunLevel::DENY;
+  }
+  if (is_service_process) {
+    return RunLevel::DENY;
   }
 
   // Get process token
@@ -190,11 +157,6 @@ RunLevel::RunLevelType RunLevel::GetRunLevel(RunLevel::RequestType type) {
   }
 
   ScopedHandle process_token(hProcessToken);
-
-  // Process token must not a service account.
-  if (IsServiceUser(process_token.get())) {
-    return RunLevel::DENY;
-  }
 
   // Opt out of elevated process.
   if (CLIENT == type &&
@@ -214,8 +176,15 @@ RunLevel::RunLevelType RunLevel::GetRunLevel(RunLevel::RequestType type) {
   ScopedHandle thread_token(hThreadToken);
 
   // Thread token (if any) must not a service account.
-  if (NULL != thread_token.get() && IsServiceUser(thread_token.get())) {
-    return RunLevel::DENY;
+  if (NULL != thread_token.get()) {
+    bool is_service_thread = false;
+    if (!WinUtil::IsServiceUser(thread_token.get(), &is_service_thread)) {
+      // Returns DENY conservatively.
+      return RunLevel::DENY;
+    }
+    if (is_service_thread) {
+      return RunLevel::DENY;
+    }
   }
 
   // Check whether the server/renderer is running inside sandbox.

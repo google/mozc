@@ -29,8 +29,11 @@
 
 #include "unix/emacs/mozc_emacs_helper_lib.h"
 
+#include <cstdio>
+
 #include "base/protobuf/descriptor.h"
 #include "base/protobuf/message.h"
+#include "base/util.h"
 #include "base/version.h"
 #include "client/session.h"
 #include "session/commands.pb.h"
@@ -40,11 +43,9 @@ namespace {
 
 // Prints a greeting message when a process starts.
 void PrintGreetingMessage() {
-  cout << "((mozc-emacs-helper . t)"
-       << "(version . "
-       << mozc::emacs::QuoteString(mozc::Version::GetMozcVersion())
-       << "))"
-       << endl;
+  fprintf(stdout, "((mozc-emacs-helper . t)(version . %s))\n",
+          mozc::emacs::QuoteString(mozc::Version::GetMozcVersion()).c_str());
+  fflush(stdout);
 }
 
 // Main loop, which take an input line as a command and print a corresponding
@@ -88,11 +89,14 @@ void ProcessLoop() {
     }
 
     // Output results.
-    cout << "((emacs-event-id . " << event_id << ")";
-    cout << "(emacs-session-id . " << session_id << ")";
-    cout << "(output . ";
-    mozc::emacs::PrintMessage(command.output(), cout);
-    cout << "))" << endl;
+    vector<string> buffer;
+    mozc::emacs::PrintMessage(command.output(), &buffer);
+    string output;
+    mozc::Util::JoinStrings(buffer, "", &output);
+    fprintf(stdout,
+            "((emacs-event-id . %u)(emacs-session-id . %u)(output . %s))\n",
+            event_id, session_id, output.c_str());
+    fflush(stdout);
   }
 }
 

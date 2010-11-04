@@ -503,6 +503,7 @@ bool GetNumericCandidatePositions(Segment *seg,
     arabic_c->Init();
     arabic_c->value = arabic_number + suffix;
     arabic_c->content_value = arabic_number;
+    arabic_c->key = c.key;
     arabic_c->content_key = c.content_key;
     arabic_c->cost = c.cost;
     arabic_c->structure_cost = c.structure_cost;
@@ -591,6 +592,7 @@ bool NumberRewriter::Rewrite(Segments *segments) const {
       c->cost = base_cand.cost;
       c->value = iter->value + suffix;
       c->content_value = iter->value;
+      c->key = base_cand.key;
       c->content_key = base_cand.content_key;
       c->style = iter->style;
       c->SetDescription(Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER |

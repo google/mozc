@@ -49,8 +49,6 @@ class UserDictionary : public DictionaryInterface {
 
   virtual Node *LookupPredictive(const char *str, int size,
                                  NodeAllocatorInterface *allocator) const;
-  virtual Node *LookupExact(const char *str, int size,
-                            NodeAllocatorInterface *allocator) const;
   virtual Node *LookupPrefix(const char *str, int size,
                              NodeAllocatorInterface *allocator) const;
   virtual Node *LookupReverse(const char *str, int size,

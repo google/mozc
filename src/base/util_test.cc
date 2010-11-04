@@ -450,6 +450,53 @@ TEST(UtilTest, SafeStrToDouble) {
 #endif
 }
 
+TEST(UtilTest, StringPrintf) {
+  // strings
+  // NB: GCC warns an empty format string, so uses string().c_str() instead.
+  EXPECT_EQ("", Util::StringPrintf(string().c_str()));
+  EXPECT_EQ("", Util::StringPrintf("%s", ""));
+  EXPECT_EQ("hello, world", Util::StringPrintf("hello, world"));
+  EXPECT_EQ("hello, world", Util::StringPrintf("%s", "hello, world"));
+  EXPECT_EQ("hello, world", Util::StringPrintf("%s, %s", "hello", "world"));
+  const char kHello[] = "\xE3\x81\xAF\xE3\x82\x8D\xE3\x83\xBC"  // はろー
+                        "\xE4\xB8\x96\xE7\x95\x8C";  // 世界
+  EXPECT_EQ(kHello, Util::StringPrintf("%s", kHello));
+
+  // 32-bit integers
+  EXPECT_EQ("-2147483648", Util::StringPrintf("%d", kint32min));
+  EXPECT_EQ("2147483647", Util::StringPrintf("%d", kint32max));
+  EXPECT_EQ("4294967295", Util::StringPrintf("%u", kuint32max));
+  EXPECT_EQ("80000000", Util::StringPrintf("%x", kint32min));
+  EXPECT_EQ("7fffffff", Util::StringPrintf("%x", kint32max));
+  EXPECT_EQ("FFFFFFFF", Util::StringPrintf("%X", kuint32max));
+
+  // 64-bit integers
+  EXPECT_EQ("-9223372036854775808",
+            Util::StringPrintf("%"GG_LL_FORMAT"d", kint64min));
+  EXPECT_EQ("9223372036854775807",
+            Util::StringPrintf("%"GG_LL_FORMAT"d", kint64max));
+  EXPECT_EQ("18446744073709551615",
+            Util::StringPrintf("%"GG_LL_FORMAT"u", kuint64max));
+  EXPECT_EQ("8000000000000000",
+            Util::StringPrintf("%"GG_LL_FORMAT"x", kint64min));
+  EXPECT_EQ("7fffffffffffffff",
+            Util::StringPrintf("%"GG_LL_FORMAT"x", kint64max));
+  EXPECT_EQ("FFFFFFFFFFFFFFFF",
+            Util::StringPrintf("%"GG_LL_FORMAT"X", kuint64max));
+
+  // Simple test for floating point numbers
+  EXPECT_EQ("-1.75", Util::StringPrintf("%.2f", -1.75));
+
+  // 4096 is greater than a temporary buffer size (1024 bytes)
+  // which is used in StringPrintf().
+  const string kLongStrA(4096, '.');
+  const string kLongStrB(4096, '_');
+  const string& result = Util::StringPrintf("%s\t%s\n",
+                                            kLongStrA.c_str(),
+                                            kLongStrB.c_str());
+  EXPECT_EQ(kLongStrA + "\t" + kLongStrB + "\n", result);
+}
+
 TEST(UtilTest, HiraganaToKatakana) {
   {
     // "わたしのなまえはなかのですうまーよろしゅう"
@@ -1467,44 +1514,88 @@ TEST(UtilTest, ScriptType) {
 }
 
 
-TEST(UtilTest, ScriptTypeWithoutWhiteSpace) {
+TEST(UtilTest, ScriptTypeWithoutSymbols) {
   // "くど う"
-  EXPECT_EQ(Util::HIRAGANA, Util::GetScriptTypeWithoutWhiteSpace(
+  EXPECT_EQ(Util::HIRAGANA, Util::GetScriptTypeWithoutSymbols(
       "\xe3\x81\x8f\xe3\x81\xa9 \xe3\x81\x86"));
   // "京 都"
-  EXPECT_EQ(Util::KANJI, Util::GetScriptTypeWithoutWhiteSpace(
+  EXPECT_EQ(Util::KANJI, Util::GetScriptTypeWithoutSymbols(
       "\xe4\xba\xac \xe9\x83\xbd"));
   // "モズ ク"
-  EXPECT_EQ(Util::KATAKANA, Util::GetScriptTypeWithoutWhiteSpace(
+  EXPECT_EQ(Util::KATAKANA, Util::GetScriptTypeWithoutSymbols(
       "\xe3\x83\xa2\xe3\x82\xba\xe3\x82\xaf"));
   // "モズ クﾓｽﾞｸ"
-  EXPECT_EQ(Util::KATAKANA, Util::GetScriptTypeWithoutWhiteSpace(
+  EXPECT_EQ(Util::KATAKANA, Util::GetScriptTypeWithoutSymbols(
       "\xe3\x83\xa2\xe3\x82\xba \xe3\x82\xaf\xef\xbe\x93\xef\xbd"
       "\xbd\xef\xbe\x9e\xef\xbd\xb8"));
   // "Google Earth"
-  EXPECT_EQ(Util::ALPHABET, Util::GetScriptTypeWithoutWhiteSpace(
+  EXPECT_EQ(Util::ALPHABET, Util::GetScriptTypeWithoutSymbols(
       "Google Earth"));
   // "Google "
-  EXPECT_EQ(Util::ALPHABET, Util::GetScriptTypeWithoutWhiteSpace(
+  EXPECT_EQ(Util::ALPHABET, Util::GetScriptTypeWithoutSymbols(
       "Google "));
   // " Google"
-  EXPECT_EQ(Util::ALPHABET, Util::GetScriptTypeWithoutWhiteSpace(
+  EXPECT_EQ(Util::ALPHABET, Util::GetScriptTypeWithoutSymbols(
       " Google"));
   // " Google "
-  EXPECT_EQ(Util::ALPHABET, Util::GetScriptTypeWithoutWhiteSpace(
+  EXPECT_EQ(Util::ALPHABET, Util::GetScriptTypeWithoutSymbols(
       " Google "));
   // "     g"
-  EXPECT_EQ(Util::ALPHABET, Util::GetScriptTypeWithoutWhiteSpace(
+  EXPECT_EQ(Util::ALPHABET, Util::GetScriptTypeWithoutSymbols(
       "     g"));
   // ""
-  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptTypeWithoutWhiteSpace(
+  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptTypeWithoutSymbols(
       ""));
   // " "
-  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptTypeWithoutWhiteSpace(
+  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptTypeWithoutSymbols(
       " "));
   // "  "
-  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptTypeWithoutWhiteSpace(
+  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptTypeWithoutSymbols(
       "   "));
+  EXPECT_EQ(Util::ALPHABET, Util::GetScriptTypeWithoutSymbols("Hello!"));
+  // "Hello!あ"
+  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptTypeWithoutSymbols(
+      "\x48\x65\x6c\x6c\x6f\x21\xe3\x81\x82"));
+  EXPECT_EQ(Util::ALPHABET, Util::GetScriptTypeWithoutSymbols("CD-ROM"));
+  // "CD-ROMア"
+  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptTypeWithoutSymbols(
+      "\x43\x44\x2d\x52\x4f\x4d\xe3\x82\xa2"));
+  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptTypeWithoutSymbols("-"));
+  EXPECT_EQ(Util::ALPHABET, Util::GetScriptTypeWithoutSymbols("-A"));
+  EXPECT_EQ(Util::ALPHABET, Util::GetScriptTypeWithoutSymbols("--A"));
+  EXPECT_EQ(Util::ALPHABET, Util::GetScriptTypeWithoutSymbols("--A---"));
+  // "--A-ｱ-"
+  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptTypeWithoutSymbols(
+      "\x2d\x2d\x41\x2d\xef\xbd\xb1\x2d"));
+  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptTypeWithoutSymbols("!"));
+  // "・あ"
+  EXPECT_EQ(Util::HIRAGANA, Util::GetScriptTypeWithoutSymbols(
+      "\xe3\x83\xbb\xe3\x81\x82"));
+  // "・・あ"
+  EXPECT_EQ(Util::HIRAGANA, Util::GetScriptTypeWithoutSymbols(
+      "\xe3\x83\xbb\xe3\x83\xbb\xe3\x81\x82"));
+  // "コギト・エルゴ・スム"
+  EXPECT_EQ(Util::KATAKANA, Util::GetScriptTypeWithoutSymbols(
+      "\xe3\x82\xb3\xe3\x82\xae\xe3\x83\x88\xe3\x83\xbb\xe3\x82\xa8"
+      "\xe3\x83\xab\xe3\x82\xb4\xe3\x83\xbb\xe3\x82\xb9\xe3\x83\xa0"));
+  // "コギト・エルゴ・住む"
+  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptTypeWithoutSymbols(
+      "\xe3\x82\xb3\xe3\x82\xae\xe3\x83\x88\xe3\x83\xbb\xe3\x82\xa8"
+      "\xe3\x83\xab\xe3\x82\xb4\xe3\x83\xbb\xe4\xbd\x8f\xe3\x82\x80"));
+  // "人☆名"
+  EXPECT_EQ(Util::KANJI, Util::GetScriptTypeWithoutSymbols(
+      "\xe4\xba\xba\xe2\x98\x86\xe5\x90\x8d"));
+  // "ひとの☆なまえ"
+  EXPECT_EQ(Util::HIRAGANA, Util::GetScriptTypeWithoutSymbols(
+      "\xe3\x81\xb2\xe3\x81\xa8\xe3\x81\xae\xe2\x98\x86\xe3\x81\xaa"
+      "\xe3\x81\xbe\xe3\x81\x88"));
+  // "超☆最高です"
+  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptTypeWithoutSymbols(
+      "\xe8\xb6\x85\xe2\x98\x86\xe6\x9c\x80\xe9\xab\x98\xe3\x81\xa7"
+      "\xe3\x81\x99"));
+  // "・--☆"
+  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptTypeWithoutSymbols(
+      "\xe3\x83\xbb\x2d\x2d\xe2\x98\x86"));
 }
 
 TEST(UtilTest, FormType) {
@@ -1807,13 +1898,15 @@ TEST(UtilTest, IsKanaSymbolContained) {
 
 TEST(UtilTest, Issue2190350) {
   string result = "";
-  Util::UTF8ToSJIS("a", &result);
-  EXPECT_EQ(1, result.length());
-  EXPECT_EQ("a", result);
+  // \xE3\x81\x82 == Hiragana a in UTF8
+  Util::UTF8ToSJIS("\xE3\x81\x82", &result);
+  EXPECT_EQ(2, result.length());
+  // \x82\xA0 == Hiragana a in Shift-JIS
+  EXPECT_EQ("\x82\xA0", result);
 
   result = "";
-  Util::SJISToUTF8("a", &result);
-  EXPECT_EQ(1, result.length());
-  EXPECT_EQ("a", result);
+  Util::SJISToUTF8("\x82\xA0", &result);
+  EXPECT_EQ(3, result.length());
+  EXPECT_EQ("\xE3\x81\x82", result);
 }
 }  // namespace mozc

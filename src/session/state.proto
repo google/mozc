@@ -34,6 +34,7 @@ import "session/commands.proto";
 
 package mozc.session;
 
+
 message SessionState {
   // session id
   required uint64 id = 1;

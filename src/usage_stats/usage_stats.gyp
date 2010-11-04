@@ -48,6 +48,13 @@
         '../storage/storage.gyp:storage',
         'genproto_usage_stats',
       ],
+      'conditions': [
+        ['OS=="win"', {
+          'dependencies': [
+            '../win32/win32.gyp:imm_util',
+          ],
+        }],
+      ],
       'actions': [
         {
           'action_name': 'gen_usage_stats_list',

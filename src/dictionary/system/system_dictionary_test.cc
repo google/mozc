@@ -384,24 +384,26 @@ TEST_F(SystemDictionaryTest, spelling_correction_tokens) {
 
   vector<Token *>::const_iterator it;
   for (it = source_tokens.begin(); it != source_tokens.end(); ++it) {
-    Node *node = system_dic->LookupExact((*it)->key.c_str(), (*it)->key.size(),
-                                         NULL);
     const Token *t = *it;
+    Node *node = system_dic->LookupPrefix(t->key.c_str(), t->key.size(),
+                                          NULL);
     while (node) {
-      EXPECT_EQ(node->is_spelling_correction,
-                t->lid >= SystemDictionary::kSpellingCorrectionPosOffset);
+      if (node->key == t->key) {
+        EXPECT_EQ(node->is_spelling_correction,
+                  t->lid >= SystemDictionary::kSpellingCorrectionPosOffset);
 
-      if (node->is_spelling_correction) {
-        EXPECT_EQ(node->lid,
-                  t->lid - SystemDictionary::kSpellingCorrectionPosOffset);
-      } else {
-        EXPECT_EQ(node->lid, t->lid);
+        if (node->is_spelling_correction) {
+          EXPECT_EQ(node->lid,
+                    t->lid - SystemDictionary::kSpellingCorrectionPosOffset);
+        } else {
+          EXPECT_EQ(node->lid, t->lid);
+        }
+
+        EXPECT_EQ(node->rid, t->rid);
+        EXPECT_TRUE(CompareCost(, t->cost));
+        EXPECT_EQ(node->key, t->key);
+        EXPECT_EQ(node->value, t->value);
       }
-
-      EXPECT_EQ(node->rid, t->rid);
-      EXPECT_EQ(node->wcost, t->cost);
-      EXPECT_EQ(node->key, t->key);
-      EXPECT_EQ(node->value, t->value);
 
       Node *tmp_node = node;
       node = node->bnext;

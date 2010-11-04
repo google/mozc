@@ -91,6 +91,19 @@ TEST_F(ConverterMockTest, SetStartConvert) {
   EXPECT_EQ(expect_str, output_str);
 }
 
+TEST_F(ConverterMockTest, SetStartReverseConvert) {
+  ConverterInterface *converter = ConverterFactory::GetConverter();
+
+  Segments output, expect;
+  string output_str, expect_str;
+  SetSegments(&expect, "StartReverseConvert");
+  GetMock()->SetStartReverseConversion(&expect, true);
+  EXPECT_TRUE(converter->StartReverseConversion(&output, "dummy"));
+  output.DebugString(&output_str);
+  expect.DebugString(&expect_str);
+  EXPECT_EQ(expect_str, output_str);
+}
+
 TEST_F(ConverterMockTest, SetStartPrediction) {
   ConverterInterface *converter = ConverterFactory::GetConverter();
 
@@ -293,6 +306,26 @@ TEST_F(ConverterMockTest, GetStartConversion) {
   string last_segment_str;
   string last_key;
   GetMock()->GetStartConversion(&last_segment, &last_key);
+  last_segment.DebugString(&last_segment_str);
+
+  EXPECT_EQ(input_str, last_segment_str);
+  EXPECT_EQ(input_key, last_key);
+}
+
+TEST_F(ConverterMockTest, GetStartReverseConversion) {
+  ConverterInterface *converter = ConverterFactory::GetConverter();
+
+  Segments input;
+  string input_str;
+  const string input_key = "Key";
+  SetSegments(&input, "StartReverseConversion");
+  input.DebugString(&input_str);
+  converter->StartReverseConversion(&input, input_key);
+
+  Segments last_segment;
+  string last_segment_str;
+  string last_key;
+  GetMock()->GetStartReverseConversion(&last_segment, &last_key);
   last_segment.DebugString(&last_segment_str);
 
   EXPECT_EQ(input_str, last_segment_str);

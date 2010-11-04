@@ -73,6 +73,27 @@ class Process {
   // you can set timeout. if timeout is negative, wait forever.
   static bool WaitProcess(size_t pid, int timeout);
 
+  // return true if a process having |pid| is still alive.
+  // if the the current thread has no permission to get the status or
+  // operation failed in system call, it returns |default_result|.
+  // TODO(all):
+  // Note that there is the case where the specified thread/process has already
+  // been terminated but the same thread/process ID is assigned to new ones.
+  // The caller might want to use another technique like comparing process
+  // creation time if this kind of false-positive matters.
+  static bool IsProcessAlive(size_t pid, bool default_result);
+
+  // return true if a thread having |thread_id| is still alive.
+  // if the current thread has no permission to get the status or
+  // operation failed in system call, it returns |default_result|.
+  // On Posix, it always returns |default_result| as thread_id is not supported.
+  // TODO(all):
+  // Note that there is the case where the specified thread/process has already
+  // been terminated but the same thread/process ID is assigned to new ones.
+  // The caller might want to use another technique like comparing process
+  // creation time if this kind of false-positive matters.
+  static bool IsThreadAlive(size_t thread_id, bool default_result);
+
 #ifdef OS_WINDOWS
   // Spawn a process specified by path as the specified integriy level and job
   // level.

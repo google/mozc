@@ -41,12 +41,11 @@ class DictionaryInterface {
   virtual Node *LookupPredictive(const char *str, int size,
                                  NodeAllocatorInterface *allocator) const = 0;
 
-  virtual Node *LookupExact(const char *str, int size,
-                            NodeAllocatorInterface *allocator) const = 0;
-
   virtual Node *LookupPrefix(const char *str, int size,
                              NodeAllocatorInterface *allocator) const = 0;
 
+  // For reverse lookup, the reading is stored in Node::value and the word
+  // is stored in Node::key.
   virtual Node *LookupReverse(const char *str, int size,
                               NodeAllocatorInterface *allocator) const = 0;
 

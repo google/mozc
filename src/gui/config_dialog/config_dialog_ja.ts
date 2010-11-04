@@ -445,130 +445,140 @@ Mozcの機能向上に役立てる（再ログイン後に変更は完了しま�
 <context>
     <name>mozc::gui::ConfigDialog</name>
     <message>
-        <location filename="config_dialog.cc" line="87"/>
+        <location filename="config_dialog.cc" line="88"/>
         <source>ATOK</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="88"/>
+        <location filename="config_dialog.cc" line="89"/>
         <source>MS-IME</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="89"/>
+        <location filename="config_dialog.cc" line="90"/>
         <source>Kotoeri</source>
         <translation>ことえり</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="86"/>
+        <location filename="config_dialog.cc" line="87"/>
         <source>Custom keymap</source>
         <translation>カスタム</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="91"/>
+        <location filename="config_dialog.cc" line="92"/>
         <source>Romaji</source>
         <translation>ローマ字入力</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="92"/>
+        <location filename="config_dialog.cc" line="93"/>
         <source>Kana</source>
         <translation>かな入力</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="94"/>
-        <location filename="config_dialog.cc" line="110"/>
+        <location filename="config_dialog.cc" line="97"/>
+        <source>Romaji (switchable)</source>
+        <translation>ローマ字入力 (切替可)</translation>
+    </message>
+    <message>
+        <location filename="config_dialog.cc" line="98"/>
+        <source>Kana (switchable)</source>
+        <translation>かな入力 (切替可)</translation>
+    </message>
+    <message>
+        <location filename="config_dialog.cc" line="101"/>
+        <location filename="config_dialog.cc" line="117"/>
         <source>Follow input mode</source>
         <translation>入力モードに従う</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="95"/>
-        <location filename="config_dialog.cc" line="111"/>
+        <location filename="config_dialog.cc" line="102"/>
+        <location filename="config_dialog.cc" line="118"/>
         <source>Fullwidth</source>
         <translation>全角</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="96"/>
-        <location filename="config_dialog.cc" line="112"/>
+        <location filename="config_dialog.cc" line="103"/>
+        <location filename="config_dialog.cc" line="119"/>
         <source>Halfwidth</source>
         <translation>半角</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="98"/>
+        <location filename="config_dialog.cc" line="105"/>
         <source>No shortcut</source>
         <translation>なし</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="99"/>
+        <location filename="config_dialog.cc" line="106"/>
         <source>1 -- 9</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="100"/>
+        <location filename="config_dialog.cc" line="107"/>
         <source>A -- L</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="102"/>
+        <location filename="config_dialog.cc" line="109"/>
         <source>Yes</source>
         <translation>有効</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="103"/>
+        <location filename="config_dialog.cc" line="110"/>
         <source>Yes (don&apos;t record new data)</source>
         <translation>有効（新規学習はしない）</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="104"/>
+        <location filename="config_dialog.cc" line="111"/>
         <source>No</source>
         <translation>無効</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="106"/>
+        <location filename="config_dialog.cc" line="113"/>
         <source>Off</source>
         <translation>オフ</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="107"/>
+        <location filename="config_dialog.cc" line="114"/>
         <source>Alphanumeric</source>
         <translation>英数字</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="108"/>
+        <location filename="config_dialog.cc" line="115"/>
         <source>Katakana</source>
         <translation>カタカナ</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="113"/>
+        <location filename="config_dialog.cc" line="120"/>
         <source>Direct input</source>
         <translation>直接入力</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="119"/>
+        <location filename="config_dialog.cc" line="126"/>
         <source>Yen Sign Â¥</source>
         <translation>円記号(¥)</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="120"/>
+        <location filename="config_dialog.cc" line="127"/>
         <source>Backslash \</source>
         <translation>バックスラッシュ(\)</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="316"/>
+        <location filename="config_dialog.cc" line="327"/>
         <source>Romaji/Kana setting is enabled from new applications.</source>
         <translation>ローマ字・かな入力の設定は新しいアプリケーションから有効になります。</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="556"/>
+        <location filename="config_dialog.cc" line="601"/>
         <source>Mozc Converter is not running. Settings were not saved.</source>
         <translation>変換サーバが反応していません。設定の反映に失敗しました。</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="580"/>
+        <location filename="config_dialog.cc" line="625"/>
         <source>Mozc Converter is not running. Settings were not saved</source>
         <translation>変換サーバが反応していません。設定の反映に失敗しました。</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="653"/>
+        <location filename="config_dialog.cc" line="698"/>
         <source>When you reset Mozc settings, any changes you&apos;ve made will be reverted to the default settings. Do you want to reset settings? The following items are not reset with this operation.
  - Personalization data
  - Input history
@@ -581,72 +591,72 @@ Mozcの機能向上に役立てる（再ログイン後に変更は完了しま�
  - 管理者用設定</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="115"/>
+        <location filename="config_dialog.cc" line="122"/>
         <source>0</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="116"/>
+        <location filename="config_dialog.cc" line="123"/>
         <source>1</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="117"/>
+        <location filename="config_dialog.cc" line="124"/>
         <source>2</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="243"/>
-        <location filename="config_dialog.cc" line="303"/>
-        <location filename="config_dialog.cc" line="315"/>
-        <location filename="config_dialog.cc" line="323"/>
-        <location filename="config_dialog.cc" line="541"/>
-        <location filename="config_dialog.cc" line="555"/>
-        <location filename="config_dialog.cc" line="565"/>
-        <location filename="config_dialog.cc" line="579"/>
-        <location filename="config_dialog.cc" line="589"/>
-        <location filename="config_dialog.cc" line="603"/>
-        <location filename="config_dialog.cc" line="652"/>
+        <location filename="config_dialog.cc" line="250"/>
+        <location filename="config_dialog.cc" line="312"/>
+        <location filename="config_dialog.cc" line="326"/>
+        <location filename="config_dialog.cc" line="334"/>
+        <location filename="config_dialog.cc" line="584"/>
+        <location filename="config_dialog.cc" line="600"/>
+        <location filename="config_dialog.cc" line="610"/>
+        <location filename="config_dialog.cc" line="624"/>
+        <location filename="config_dialog.cc" line="634"/>
+        <location filename="config_dialog.cc" line="648"/>
+        <location filename="config_dialog.cc" line="697"/>
         <source>Mozc settings</source>
         <translation>Mozc プロパティ</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="211"/>
+        <location filename="config_dialog.cc" line="218"/>
         <source>Dictionary preloading</source>
         <translation>オンメモリ辞書の設定</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="244"/>
+        <location filename="config_dialog.cc" line="251"/>
         <source>Failed to get current config values</source>
         <translation>設定の取得に失敗しました。</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="304"/>
+        <location filename="config_dialog.cc" line="313"/>
         <source>The current custom keymap table is empty. When custom keymap is selected, you must customize it.</source>
         <translation>有効なキー設定がありません。カスタム キーマップを選択した場合は、キーマップを編集する必要があります。</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="324"/>
+        <location filename="config_dialog.cc" line="335"/>
         <source>Failed to update config</source>
         <translation>設定の反映に失敗しました</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="542"/>
-        <source>Do you want to clear personalization data?</source>
-        <translation>学習結果がリセットされます。実行しますか？</translation>
+        <location filename="config_dialog.cc" line="585"/>
+        <source>Do you want to clear personalization data? Input history is not reset with this operation. Please open &quot;suggestion&quot; tab to remove input history data.</source>
+        <translation>学習結果がリセットされます。実行しますか？ 入力履歴データはリセットされません。入力履歴データのリセットは「サジェスト→全入力履歴の削除」で行えます。</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="604"/>
+        <location filename="config_dialog.cc" line="649"/>
         <source>Mozc Converter is not running. operation was not executed</source>
         <translation>Mozcコンバーターが起動していません。設定の反映に失敗しました。</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="566"/>
+        <location filename="config_dialog.cc" line="611"/>
         <source>Do you want to clear all history data?</source>
         <translation>すべての入力履歴が削除されます。実行しますか？</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="590"/>
+        <location filename="config_dialog.cc" line="635"/>
         <source>Do you want to clear unused history data?</source>
         <translation>サジェスト経由で入力されなかった履歴が削除されます。実行しますか？</translation>
     </message>

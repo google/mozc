@@ -298,6 +298,42 @@ TEST_F(TableTest, InvalidEntryTest) {
     table.AddRule("a", "aa", "a");
     EXPECT_TRUE(table.LookUp("a") == NULL);
   }
+
+  // Too long input
+  {
+    mozc::composer::Table table;
+    string too_long;
+    // Maximum size is 300 now.
+    for (int i = 0; i < 1024; ++i) {
+      too_long += 'a';
+    }
+    table.AddRule(too_long, "test", "test");
+    EXPECT_TRUE(table.LookUp(too_long) == NULL);
+
+    table.AddRule("a", too_long, "test");
+    EXPECT_TRUE(table.LookUp("a") == NULL);
+
+    table.AddRule("a", "test", too_long);
+    EXPECT_TRUE(table.LookUp("a") == NULL);
+  }
+
+  // reasonably long
+  {
+    mozc::composer::Table table;
+    string reasonably_long;
+    // Maximum size is 300 now.
+    for (int i = 0; i < 200; ++i) {
+      reasonably_long += 'a';
+    }
+    table.AddRule(reasonably_long, "test", "test");
+    EXPECT_TRUE(table.LookUp(reasonably_long) != NULL);
+
+    table.AddRule("a", reasonably_long, "test");
+    EXPECT_TRUE(table.LookUp("a") != NULL);
+
+    table.AddRule("a", "test", reasonably_long);
+    EXPECT_TRUE(table.LookUp("a") != NULL);
+  }
 }
 
 TEST_F(TableTest, CustomPunctuationsAndSymbols) {

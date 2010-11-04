@@ -60,7 +60,8 @@ namespace gui {
 
 ConfigDialog::ConfigDialog()
     : client_(new client::Session),
-      initial_preedit_method_(0) {
+      initial_preedit_method_(0),
+      initial_use_keyboard_to_change_preedit_method_(false) {
   setupUi(this);
   setWindowFlags(Qt::WindowSystemMenuHint);
   setWindowModality(Qt::NonModal);
@@ -116,6 +117,12 @@ ConfigDialog::ConfigDialog()
 
   inputModeComboBox->addItem(tr("Romaji"));
   inputModeComboBox->addItem(tr("Kana"));
+#ifdef OS_WINDOWS
+  // These options changing the preedit method by a hot key are only
+  // supported by Windows.
+  inputModeComboBox->addItem(tr("Romaji (switchable)"));
+  inputModeComboBox->addItem(tr("Kana (switchable)"));
+#endif  // OS_WINDOWS
 
   spaceCharacterFormComboBox->addItem(tr("Follow input mode"));
   spaceCharacterFormComboBox->addItem(tr("Fullwidth"));
@@ -274,6 +281,8 @@ ConfigDialog::ConfigDialog()
   SelectAutoConversionSetting(static_cast<int>(config.use_auto_conversion()));
 
   initial_preedit_method_ = static_cast<int>(config.preedit_method());
+  initial_use_keyboard_to_change_preedit_method_ =
+      config.use_keyboard_to_change_preedit_method();
 
   // If the keymap is a custome keymap (= 0), the buttion is activated.
   editKeymapButton->setEnabled(keymapSettingComboBox->currentIndex() == 0);
@@ -336,7 +345,9 @@ bool ConfigDialog::Update() {
 
 #if defined(OS_WINDOWS) || defined(OS_LINUX)
   if (initial_preedit_method_ !=
-      static_cast<int>(config.preedit_method())) {
+      static_cast<int>(config.preedit_method()) ||
+      initial_use_keyboard_to_change_preedit_method_ !=
+      static_cast<int>(config.use_keyboard_to_change_preedit_method())) {
     QMessageBox::information(this,
                              tr("Mozc settings"),
                              tr("Romaji/Kana setting is enabled from"
@@ -388,12 +399,45 @@ do {  \
 #define GET_CHECKBOX(checkbox, field) \
 do { config->set_##field((checkbox)->isChecked());  } while (0)
 
+
+namespace {
+static const int kPreeditMethodSize = 2;
+
+void SetComboboxForPreeditMethod(const config::Config &config,
+                                 QComboBox *combobox) {
+  int index = static_cast<int>(config.preedit_method());
+#ifdef OS_WINDOWS
+  if (config.use_keyboard_to_change_preedit_method()) {
+    index += kPreeditMethodSize;
+  }
+#endif  // OS_WINDOWS
+  combobox->setCurrentIndex(index);
+}
+
+void GetComboboxForPreeditMethod(const QComboBox *combobox,
+                                 config::Config *config) {
+  int index = combobox->currentIndex();
+  if (index >= kPreeditMethodSize) {
+    // |use_keyboard_to_change_preedit_method| should be true and
+    // |index| should be adjusted to smaller than kPreeditMethodSize.
+    config->set_preedit_method(
+        static_cast<config::Config_PreeditMethod>(index - kPreeditMethodSize));
+    config->set_use_keyboard_to_change_preedit_method(true);
+  } else {
+    config->set_preedit_method(
+        static_cast<config::Config_PreeditMethod>(index));
+    config->set_use_keyboard_to_change_preedit_method(false);
+  }
+}
+}  // anonymous namespace
+
+
 // TODO(taku)
 // Actually ConvertFromProto and ConvertToProto are almost the same.
 // The difference only SET_ and GET_. We would like to unify the twos.
 void ConfigDialog::ConvertFromProto(const config::Config &config) {
   // tab 1
-  SET_COMBOBOX(inputModeComboBox, PreeditMethod, preedit_method);
+  SetComboboxForPreeditMethod(config, inputModeComboBox);
   SET_COMBOBOX(punctuationsSettingComboBox, PunctuationMethod,
                punctuation_method);
   SET_COMBOBOX(symbolsSettingComboBox, SymbolMethod, symbol_method);
@@ -460,8 +504,7 @@ void ConfigDialog::ConvertFromProto(const config::Config &config) {
 
 void ConfigDialog::ConvertToProto(config::Config *config) const {
   // tab 1
-  GET_COMBOBOX(inputModeComboBox, PreeditMethod,
-               preedit_method);
+  GetComboboxForPreeditMethod(inputModeComboBox, config);
   GET_COMBOBOX(punctuationsSettingComboBox, PunctuationMethod,
                punctuation_method);
   GET_COMBOBOX(symbolsSettingComboBox, SymbolMethod, symbol_method);
@@ -565,7 +608,9 @@ void ConfigDialog::ClearUserHistory() {
       QMessageBox::question(
           this,
           tr("Mozc settings"),
-          tr("Do you want to clear personalization data?"),
+          tr("Do you want to clear personalization data? "
+             "Input history is not reset with this operation. "
+             "Please open \"suggestion\" tab to remove input history data."),
           QMessageBox::Ok | QMessageBox::Cancel,
           QMessageBox::Cancel)) {
     return;

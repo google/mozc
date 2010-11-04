@@ -146,4 +146,22 @@ TEST_F(ConverterTest, ContextAwareConversionTest) {
                 "\xE4\xBA\xBA",
                 "\xE3\x81\xB3\xE3\x81\xA8"));
 }
+
+TEST_F(ConverterTest, CandidateKeyTest) {
+  mozc::ConverterInterface *converter
+      = mozc::ConverterFactory::GetConverter();
+  CHECK(converter);
+  mozc::Segments segments;
+  // "わたしは"
+  EXPECT_TRUE(converter->StartConversion(
+      &segments,
+      string("\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAF")));
+  EXPECT_EQ(1, segments.segments_size());
+  // "わたしは"
+  EXPECT_EQ("\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAF",
+            segments.segment(0).candidate(0).key);
+  // "わたし"
+  EXPECT_EQ("\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97",
+            segments.segment(0).candidate(0).content_key);
+}
 }  // namespace mozc

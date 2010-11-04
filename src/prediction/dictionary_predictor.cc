@@ -89,18 +89,6 @@ class ResultCompare {
     return a.score() < b.score();
   }
 };
-
-// TODO(taku): remove this function when we implemented Segment::Candidate::key
-string GetSegmentKey(const Segment &segment) {
-  // This a tentative workaround.
-  // when segment.key() is shorter than content_key, it is more likely that
-  // the segment.key() is not a complete key.
-  if (segment.key().size() < segment.candidate(0).content_key.size()) {
-    return segment.candidate(0).content_key;
-  } else {
-    return segment.key();
-  }
-}
 }  // namespace
 
 DictionaryPredictor::DictionaryPredictor()
@@ -163,7 +151,7 @@ bool DictionaryPredictor::Predict(Segments *segments) const {
   if (prediction_type & BIGRAM) {
     const Segment &history_segment =
         segments->history_segment(segments->history_segments_size() - 1);
-    bigram_prefix_key = GetSegmentKey(history_segment);
+    bigram_prefix_key = history_segment.candidate(0).key;
     bigram_prefix_value = history_segment.candidate(0).value;
     bigram_key = bigram_prefix_key + key;
     const Node *bigram_node = dictionary_->LookupPredictive(bigram_key.c_str(),
@@ -217,9 +205,9 @@ bool DictionaryPredictor::Predict(Segments *segments) const {
   // This is to stop showing inadequate <did you mean?> notations.
   //
   // ex. When the key is "あぼ", the following candidates are contained:
-  // - アボカド
-  // - アボカド <did you mean?>
-  // but we should not show "アボカド <did you mean?>".
+  // - "アボカド"
+  // - "アボカド" <did you mean?>
+  // but we should not show ["アボカド" <did you mean?>].
   //
   // So we don't allow spelling correction predictions that
   // there are non-spelling correction predictions with the same values.
@@ -299,16 +287,17 @@ bool DictionaryPredictor::Predict(Segments *segments) const {
     // TODO(taku): call CharacterFormManager for these values
     if (result.is_bigram()) {
       // remove the prefix of history key and history value.
-      candidate->content_key =
+      candidate->key =
           node->key.substr(bigram_prefix_key.size(),
                            node->key.size() - bigram_prefix_key.size());
       candidate->value =
           node->value.substr(bigram_prefix_value.size(),
                              node->value.size() - bigram_prefix_value.size());
     } else {
-      candidate->content_key = node->key;
+      candidate->key = node->key;
       candidate->value = node->value;
     }
+    candidate->content_key = candidate->key;
     candidate->content_value = candidate->value;
     candidate->lid = node->lid;
     candidate->rid = node->rid;
@@ -460,7 +449,7 @@ DictionaryPredictor::GetPredictionType(const Segments &segments) {
     // If the current key looks like particle, we can make the behavior
     // less aggressive.
     if (history_segment.candidates_size() > 0 &&
-        Util::CharsLen(GetSegmentKey(history_segment)) >= 3) {
+        Util::CharsLen(history_segment.candidate(0).key) >= 3) {
       result |= BIGRAM;
     }
   }

@@ -181,18 +181,6 @@
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
-         <property name="minimumSize">
-          <size>
-           <width>70</width>
-           <height>0</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>100</width>
-           <height>16777215</height>
-          </size>
-         </property>
          <property name="text">
           <string>Customize...</string>
          </property>
@@ -1203,7 +1191,7 @@
        <rect>
         <x>30</x>
         <y>104</y>
-        <width>371</width>
+        <width>386</width>
         <height>32</height>
        </rect>
       </property>

@@ -288,6 +288,7 @@ void SymbolRewriter::InsertCandidates(const EmbeddedDictionary::Value *value,
     c->cost = base_candidate.cost;
     c->value = value[i].value;
     c->content_value = value[i].value;
+    c->key = base_candidate.key;
     c->content_key = base_candidate.content_key;
 
     if (context_sensitive) {

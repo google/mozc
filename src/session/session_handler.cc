@@ -35,6 +35,7 @@
 #include <vector>
 
 #include "base/base.h"
+#include "base/process.h"
 #include "base/stopwatch.h"
 #include "converter/converter_interface.h"
 #include "composer/table.h"
@@ -75,6 +76,30 @@ DEFINE_bool(restricted, false,
             "Launch server with restricted setting");
 
 namespace mozc {
+
+namespace {
+bool IsApplicationAlive(const Session &session) {
+  const commands::ApplicationInfo &info = session.application_info();
+  // When the thread/process's current status is unknown, i.e.,
+  // if IsThreadAlive/IsProcessAlive functions failed to know the
+  // status of the thread/process, return true just in case.
+  // Here, we want to kill the session only when the target thread/process
+  // are terminated with 100% probability. Otherwise, it's better to do
+  // nothing to prevent any side effects.
+#ifdef OS_WINDOWS
+  if (info.has_thread_id()) {
+    return Process::IsThreadAlive(
+        static_cast<size_t>(info.thread_id()), true);
+  }
+#else   // OS_WINDOWS
+  if (info.has_process_id()) {
+    return Process::IsProcessAlive(
+        static_cast<size_t>(info.process_id()), true);
+  }
+#endif  // OS_WINDOWS
+  return true;
+}
+}  // namespace
 
 SessionHandler::SessionHandler()
     : preedit_table_(new composer::Table()),
@@ -405,7 +430,13 @@ bool SessionHandler::CreateSession(commands::Command *command) {
   // The oldes item should be reused
   DCHECK(oldest_element == NULL || oldest_element == element);
 
-  session->set_client_capability(command->input().capability());
+  if (command->input().has_capability()) {
+    session->set_client_capability(command->input().capability());
+  }
+
+  if (command->input().has_application_info()) {
+    session->set_application_info(command->input().application_info());
+  }
 
   // session is not empty.
   last_session_empty_time_ = 0;
@@ -424,6 +455,7 @@ bool SessionHandler::DeleteSession(commands::Command *command) {
 // Scan all sessions and find and delete session which is either
 // (a) The session is not activated for 60min
 // (b) The session is created but not accessed for 5min
+// (c) application is already terminated.
 // Also, if timeout is enabled, shutdown server if there is
 // no active session and client doesn't send any conversion
 // request to the server for FLAGS_timeout sec.
@@ -460,7 +492,10 @@ bool SessionHandler::Cleanup(commands::Command *command) {
            const_cast<SessionElement *>(session_map_->Head());
        element != NULL; element = element->next) {
     Session *session = element->value;
-    if (session->last_command_time() == 0) {
+    if (!IsApplicationAlive(*session)) {
+      VLOG(2) << "Application is not alive. Removing: " << element->key;
+      remove_ids.push_back(element->key);
+    } else if (session->last_command_time() == 0) {
       // no command is exectuted
       if ((current_time - session->create_session_time()) >=
           kCreateSessionTimeout) {

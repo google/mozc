@@ -245,19 +245,15 @@ void Composer::UpdateInputMode() {
     return;
   }
 
-  if (position_ == composition_->GetLength()) {
-    // Do nothing, if the cursor is in the end of the composition.
-    return;
-  }
-
-  const TransliteratorInterface *lhs_t12r =
+  const TransliteratorInterface *current_t12r =
       composition_->GetTransliterator(position_);
-  const TransliteratorInterface *rhs_t12r =
-      composition_->GetTransliterator(position_ + 1);
-  if (lhs_t12r == rhs_t12r) {
-    // If the current cursor is between the same character type like
-    // "A|B" and "あ|い", the input mode follows the character type.
-    input_mode_ = GetTransliterationType(lhs_t12r, comeback_input_mode_);
+  if (position_ == composition_->GetLength() ||
+      current_t12r == composition_->GetTransliterator(position_ + 1)) {
+    // - The cursor is at the tail of composition.
+    //   Use last character's transliterator as the input mode.
+    // - If the current cursor is between the same character type like
+    //   "A|B" and "あ|い", the input mode follows the character type.
+    input_mode_ = GetTransliterationType(current_t12r, comeback_input_mode_);
     capital_sequence_count_ = 0;
     composition_->SetInputMode(GetTransliterator(input_mode_));
     return;
@@ -288,7 +284,7 @@ void Composer::SetOutputMode(transliteration::TransliterationType mode) {
   output_mode_ = mode;
   composition_->SetTransliterator(
       0, composition_->GetLength(), GetTransliterator(mode));
-  MoveCursorToEnd();
+  position_ = composition_->GetLength();
 }
 
 // This function is not used.
@@ -450,56 +446,62 @@ void Composer::DeleteAt(size_t pos) {
 }
 
 void Composer::Delete() {
-  position_ = composition_->DeleteAt(position_);
-  UpdateInputMode();
+    position_ = composition_->DeleteAt(position_);
+    UpdateInputMode();
 }
 
 void Composer::EditErase() {
   composition_->Erase();
   position_ = 0;
-  UpdateInputMode();
-}
-
-void Composer::BackspaceAt(size_t pos) {
-  if (pos == 0) {
-    return;
-  }
-  position_ = composition_->DeleteAt(pos - 1);
-  UpdateInputMode();
+  SetInputMode(comeback_input_mode_);
 }
 
 void Composer::Backspace() {
-  BackspaceAt(position_);
+  if (position_ == 0) {
+    return;
+  }
+
+  // In the view point of updating input mode,
+  // backspace is special case because new input mode is based on both
+  // new current character and *character to be deleted*.
+
+  // At first, move to left.
+  // Now the cursor is between 'new current character'
+  // and 'character to be deleted'.
+  --position_;
+
+  // Update input mode based on both 'new current character' and
+  // 'character to be deleted'.
   UpdateInputMode();
+
+  // Delete 'character to be deleted'
+  position_ = composition_->DeleteAt(position_);
 }
 
 void Composer::MoveCursorLeft() {
   if (position_ > 0) {
     --position_;
-    UpdateInputMode();
   }
+  UpdateInputMode();
 }
 
 void Composer::MoveCursorRight() {
   if (position_ < composition_->GetLength()) {
     ++position_;
-    UpdateInputMode();
   }
+  UpdateInputMode();
 }
 
 void Composer::MoveCursorToBeginning() {
-  if (position_ != 0) {
-    position_ = 0;
-    UpdateInputMode();
-  }
+  position_ = 0;
+  SetInputMode(comeback_input_mode_);
 }
 
 void Composer::MoveCursorToEnd() {
-  const size_t cursor_end = composition_->GetLength();
-  if (position_ != cursor_end) {
-    position_ = cursor_end;
-    UpdateInputMode();
-  }
+  position_ = composition_->GetLength();
+  // Behavior between MoveCursorToEnd and MoveCursorToRight is different.
+  // MoveCursorToEnd always makes current input mode default.
+  SetInputMode(comeback_input_mode_);
 }
 
 void Composer::GetPreedit(string *left, string *focused, string *right) const {
@@ -771,12 +773,17 @@ Composer *Composer::Create(const Table *table) {
 
 namespace {
 enum Script {
-  ALPHANUM,     // 0 - 9, "０" - "９", alphabet characters.
+  ALPHABET,   // alphabet characters or symbols
+  NUMBER,     // 0 - 9, "０" - "９"
   JA_HYPHEN,  // "ー"
   JA_COMMA,   // "、"
   JA_PERIOD,  // "。"
   OTHERS,
 };
+
+bool IsAlphabetOrNumber(const Script script) {
+  return (script == ALPHABET) || (script == NUMBER);
+}
 
 static const char *kNumberSymbols[] = {
   "+", "*", "/", "=", "(", ")", "<", ">",
@@ -800,7 +807,7 @@ bool Composer::TransformCharactersForNumbers(string *query) {
   vector<Script> char_scripts;
   // flags to determine whether continue to the next step.
   bool has_symbols = false;
-  bool has_numbers = false;
+  bool has_alphanumerics = false;
   for (size_t i = 0; i < chars_len; ++i) {
     Script script = OTHERS;
     const string one_char = Util::SubString(*query, i, 1);
@@ -814,15 +821,15 @@ bool Composer::TransformCharactersForNumbers(string *query) {
       has_symbols = true;
       script = JA_PERIOD;
     } else if (Util::IsScriptType(one_char, Util::NUMBER)) {
-      has_numbers = true;
-      script = ALPHANUM;
+      has_alphanumerics = true;
+      script = NUMBER;
     } else if (Util::IsScriptType(one_char, Util::ALPHABET)) {
-      has_numbers = true;
-      script = ALPHANUM;
+      has_alphanumerics = true;
+      script = ALPHABET;
     } else {
       for (size_t j = 0; j < arraysize(kNumberSymbols); ++j) {
         if (one_char == kNumberSymbols[j]) {
-          script = ALPHANUM;
+          script = ALPHABET;
           break;
         }
       }
@@ -830,8 +837,8 @@ bool Composer::TransformCharactersForNumbers(string *query) {
     char_scripts.push_back(script);
   }
   DCHECK_EQ(chars_len, char_scripts.size());
-  if (!has_numbers || !has_symbols) {
-    VLOG(1) << "The query does not contain number, symbol or neither.";
+  if (!has_alphanumerics || !has_symbols) {
+    VLOG(1) << "The query contains neither alphanumeric nor symbol.";
     return false;
   }
 
@@ -839,40 +846,27 @@ bool Composer::TransformCharactersForNumbers(string *query) {
   bool transformed = false;
   for (size_t i = 0; i < chars_len; ++i) {
     const Script script = char_scripts[i];
-    if (script == OTHERS || script == ALPHANUM) {
+    if (script == OTHERS || IsAlphabetOrNumber(script)) {
       // Append one character.
       Util::SubString(*query, i, 1, &transformed_query);
       continue;
     }
 
-    // "ー" should be "−" if the previous character is a digit, or the
-    // previous character is empty and the next character is a digit.
+    // JA_HYPHEN(s) "ー" is/are transformed to "−" if:
+    // (i) query has one and only one leading JA_HYPHEN followed by a number,
+    // (ii) JA_HYPHEN(s) follow(s) after an alphanumeric (ex. 0-, 0----, etc).
+    // Note that rule (i) implies that if query starts with more than
+    // one JA_HYPHENs, those JA_HYPHENs are not transformed.
     if (script == JA_HYPHEN) {
       bool check = false;
-      // If there is no previous char, the next character decides the
-      // transform.
-      if (i == 0) {
-        // Next char should exist and be a number.
-        if (i+1 < chars_len && char_scripts[i+1] == ALPHANUM) {
-          check = true;
-        } else if (i+2 < chars_len &&
-                   char_scripts[i+1] == JA_HYPHEN &&
-                   char_scripts[i+2] == ALPHANUM) {
-          // Otherwise, the next character should also be JA_HYPHEN
-          // and the i+2 th characters should be an alphanumeric (eg. 1--2).
-          check = true;
-        }
+      if (i == 0 && chars_len > 1) {
+        check = (char_scripts[1] == NUMBER);
       } else {
-        // If previous character(s) is an Alphanumeric or sequence of
-        // JA_HYPHEN terminated with an Alphanumeric, the target
-        // JA_HYPHEN should be transformed (ex. 0-, 0-----, etc).
         for (size_t j = i; j > 0; --j) {
           if (char_scripts[j - 1] == JA_HYPHEN) {
             continue;
           }
-          if (char_scripts[j - 1] == ALPHANUM) {
-            check = true;
-          }
+          check = IsAlphabetOrNumber(char_scripts[j - 1]);
           break;
         }
       }
@@ -892,10 +886,10 @@ bool Composer::TransformCharactersForNumbers(string *query) {
     }
 
     // "、" should be "，" if the previous character and the next
-    // character are both digits.
+    // character are both alphanumerics.
     if (script == JA_COMMA) {
       // Previous char should exist and be a number.
-      const bool lhs_check = (i > 0 && char_scripts[i-1] == ALPHANUM);
+      const bool lhs_check = (i > 0 && IsAlphabetOrNumber(char_scripts[i - 1]));
       // JA_COMMA should be transformed to COMMA.
       if (lhs_check) {
         string append_char;
@@ -911,10 +905,10 @@ bool Composer::TransformCharactersForNumbers(string *query) {
     }
 
     // "。" should be "．" if the previous character and the next
-    // character are both digits.
+    // character are both alphanumerics.
     if (script == JA_PERIOD) {
       // Previous char should exist and be a number.
-      const bool lhs_check = (i > 0 && char_scripts[i-1] == ALPHANUM);
+      const bool lhs_check = (i > 0 && IsAlphabetOrNumber(char_scripts[i - 1]));
       // JA_PRERIOD should be transformed to PRERIOD.
       if (lhs_check) {
         string append_char;

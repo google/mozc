@@ -30,9 +30,9 @@
 #ifndef MOZC_BASE_UTIL_H_
 #define MOZC_BASE_UTIL_H_
 
-#include <vector>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "base/base.h"
 
@@ -134,6 +134,13 @@ class Util {
   // compiler.  It returns false when compiled by VisualC++.  On the other hand
   // it returns true and sets correct value when compiled by gcc.
   static bool SafeStrToDouble(const string &str, double *value);
+
+#ifndef SWIG
+  // C++ string version of sprintf.
+  static string StringPrintf(const char* format, ...)
+      // Tell the compiler to do printf format string checking.
+      PRINTF_ATTRIBUTE(1, 2);
+#endif
 
   // Chop the return characters (i.e. '\n' and '\r') at the end of the
   // given line.
@@ -417,9 +424,9 @@ class Util {
   // If str has mixed scripts, this function returns UNKNOWN_SCRIPT
   static ScriptType GetScriptType(const string &str);
 
-  // The same as GetScryptType(), but it ignores white spaces
+  // The same as GetScryptType(), but it ignores symbols
   // in the |str|.
-  static ScriptType GetScriptTypeWithoutWhiteSpace(const string &str);
+  static ScriptType GetScriptTypeWithoutSymbols(const string &str);
 
   // return true if all script_type in str is "type"
   static bool IsScriptType(const string &str, ScriptType type);

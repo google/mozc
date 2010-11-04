@@ -49,6 +49,11 @@
 #include "testing/base/public/gunit.h"
 #include "usage_stats/usage_stats.pb.h"
 
+#ifdef OS_WINDOWS
+#include "win32/base/imm_util.h"  // IsCuasEnabled
+#endif
+
+
 DECLARE_string(test_tmpdir);
 
 namespace mozc {
@@ -449,6 +454,9 @@ TEST_F(UsageStatsTest, UploadDataTest) {
   } else {
     LOG(ERROR) << "get file version for msctf.dll failed";
   }
+  const string cuas = (string("CuasEnabled:b=")
+                       + (win32::ImeUtil::IsCuasEnabled()? "t" : "f"));
+  client_.AddExpectedData(cuas);
 #endif
   client_.AddExpectedData(string("Commit:c=100"));
   client_.AddExpectedData(string("ConfigHistoryLearningLevel:i=0"));

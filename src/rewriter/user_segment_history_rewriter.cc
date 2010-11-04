@@ -64,16 +64,6 @@ class FeatureValue {
   uint32 reserved_     : 31;  // this area is reserved for future
 };
 
-// return the "functional value" part of candidate
-string GetFunctionalValue(const Segment::Candidate &candidate) {
-  if (candidate.content_value.size() >= candidate.value.size()) {
-    return "";
-  }
-  return candidate.value.substr(candidate.content_value.size(),
-                                candidate.value.size() -
-                                candidate.content_value.size());
-}
-
 // define kLidGroup[]
 #include "rewriter/user_segment_history_rewriter_rule.h"
 
@@ -521,7 +511,7 @@ bool UserSegmentHistoryRewriter::GetScore(const Segments &segments,
       (segments.segment(segment_index).candidate(0).learning_type &
        Segment::Candidate::CONTEXT_SENSITIVE);
   const bool is_replaceable =
-      top_functional_value == GetFunctionalValue(candidate) &&
+      top_functional_value == candidate.functional_value() &&
       top_pos_group == GetPosGroup(candidate);
 
   DCHECK(score);
@@ -636,8 +626,7 @@ void UserSegmentHistoryRewriter::RememberFirstCandidate(
   const bool is_replaceable =
       (top_index == 0) ||
       (GetPosGroup(seg.candidate(top_index)) == GetPosGroup(candidate) &&
-       GetFunctionalValue(seg.candidate(top_index)) ==
-       GetFunctionalValue(candidate));
+       seg.candidate(top_index).functional_value() == candidate.functional_value());
 
   // |feature_key| is used inside INSERT_FEATURE
   string feature_key;
@@ -896,7 +885,7 @@ bool UserSegmentHistoryRewriter::Rewrite(Segments *segments) const {
     }
 
     const string top_functional_value =
-        GetFunctionalValue(segment->candidate(0));
+        segment->candidate(0).functional_value();
     const uint16 top_pos_group = GetPosGroup(segment->candidate(0));
 
     // for each all candidates expanded

@@ -263,14 +263,13 @@ def CleanBuildFilesAndDirectories():
   file_names.append('third_party/rx/rx.gyp')
   # Collect stuff in the top-level directory.
   directory_names.append('mozc_build_tools')
-  if IsMac():
-    directory_names.append('out_mac')
-  elif IsLinux():
+
+  (options, args) = ParseCleanOptions()
+  directory_names.append(GetBuildBaseName(options))
+  if IsLinux():
     file_names.append('Makefile')
-    directory_names.append('out_linux')
   elif IsWindows():
     file_names.append('third_party/breakpad/breakpad.gyp')
-    directory_names.append('out_win')
   # Remove files.
   for file_name in file_names:
     RemoveFile(file_name)
@@ -612,6 +611,17 @@ def ParseRuntestsOptions():
 
   return (options, args)
 
+def ParseCleanOptions():
+  """Parse command line options for the clean command."""
+  parser = optparse.OptionParser(
+      usage='Usage: %prog clean [-- build options]')
+  
+  parser.add_option('--build_base', dest='build_base',
+                    help='specify the base directory of the built binaries.')
+
+  (options, args) = parser.parse_args()
+
+  return (options, args)
 
 def ParseTarget(target):
   """Parses the target string."""
@@ -740,6 +750,7 @@ def BuildMain(original_directory_name):
         options.qtdir = os.path.join(os.getcwd(), options.qtdir)
       print 'export $QTDIR = %s' % options.qtdir
       os.environ['QTDIR'] = options.qtdir
+
 
   if IsMac():
     BuildOnMac(options, targets, original_directory_name)

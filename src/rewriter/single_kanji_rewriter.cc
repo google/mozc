@@ -75,8 +75,8 @@ void InsertCandidate(Segment *segment,
     return;
   }
 
-  // Adding 3000 to the single kanji cost
-  const int kOffsetDiff = 3000;
+  // Adding 5000 to the single kanji cost
+  const int kOffsetDiff = 5000;
 
   const Segment::Candidate &base_candidate = segment->candidate(0);
   size_t idx_j = 0;
@@ -118,6 +118,7 @@ void InsertCandidate(Segment *segment,
       c->rid = dict_values[idx_j].rid;
       c->cost = dict_values[idx_j].cost + kOffsetDiff;
       c->content_value = dict_values[idx_j].value;
+      c->key = base_candidate.key;
       c->content_key = base_candidate.content_key;
       c->value = dict_values[idx_j].value;
       c->learning_type |= Segment::Candidate::CONTEXT_SENSITIVE;

@@ -186,16 +186,6 @@ Node *UserDictionary::LookupPredictive(const char *str, int size,
   return result_node;
 }
 
-Node *UserDictionary::LookupExact(const char *str, int size,
-                                  NodeAllocatorInterface *allocator) const {
-  if (!CheckReloaderAndDelete()) {
-    LOG(WARNING) << "Reloader is running";
-    return NULL;
-  }
-
-  return NULL;
-}
-
 Node *UserDictionary::LookupPrefix(const char *str, int size,
                                    NodeAllocatorInterface *allocator) const {
   if (size == 0) {

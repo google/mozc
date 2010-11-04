@@ -38,7 +38,6 @@
 namespace mozc {
 namespace client {
 class Session;
-class SendCommandInterface;
 }  // namespace mozc::client
 
 namespace commands {
@@ -73,6 +72,10 @@ class RendererInterface;
   // no cursor is found, its value should be NSNotFound.
   int cursorPosition_;
 
+  // |replacementRange_| is the range in the original text to be
+  // replaced.  Set NSNotFound to its position when not used.
+  NSRange replacementRange_;
+
   // |mode_| stores the current input mode (Direct or conversion).
   mozc::commands::CompositionMode mode_;
 
@@ -101,8 +104,6 @@ class RendererInterface;
 
   // |candidateController_| controls the candidate windows.
   mozc::renderer::RendererInterface *candidateController_;
-
-  mozc::client::SendCommandInterface *mouseCallback_;
 
   // |rendererCommand_| stores the command sent to |candidateController_|
   mozc::commands::RendererCommand *rendererCommand_;

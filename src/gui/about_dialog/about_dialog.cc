@@ -86,18 +86,10 @@ AboutDialog::AboutDialog(QWidget *parent)
   version_info += Version::GetMozcVersion().c_str();
   version_info += ")";
   version_label->setText(version_info);
-  // TODO(mukai): obtain the latest version instead of current version
-  latest_version->setText(version_info);
   QPalette palette;
   palette.setColor(QPalette::Window, QColor(236, 233, 216));
   color_frame->setPalette(palette);
   color_frame->setAutoFillBackground(true);
-
-  // TODO(taku): disable the function for checking the latest mozc
-  // until it is implemented
-  label_latest_check->setHidden(true);
-  latest_version->setHidden(true);
-  version_image->setHidden(true);
 
   // change font size for product name
   QFont font = label->font();

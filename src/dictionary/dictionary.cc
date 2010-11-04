@@ -52,9 +52,6 @@ class DictionaryImpl : public DictionaryInterface {
   virtual Node *LookupPredictive(const char *str, int size,
                                  NodeAllocatorInterface *allocator) const;
 
-  virtual Node *LookupExact(const char *str, int size,
-                            NodeAllocatorInterface *allocator) const;
-
   virtual Node *LookupPrefix(const char *str, int size,
                              NodeAllocatorInterface *allocator) const;
 
@@ -65,7 +62,6 @@ class DictionaryImpl : public DictionaryInterface {
   vector<DictionaryInterface *> dics_;
   enum LookupType {
     PREDICTIVE,
-    EXACT,
     PREFIX,
     REVERSE,
   };
@@ -100,11 +96,6 @@ Node *DictionaryImpl::LookupPredictive(const char *str, int size,
   return LookupInternal(str, size, PREDICTIVE, allocator);
 }
 
-Node *DictionaryImpl::LookupExact(const char *str, int size,
-                                  NodeAllocatorInterface *allocator) const {
-  return LookupInternal(str, size, EXACT, allocator);
-}
-
 Node *DictionaryImpl::LookupPrefix(const char *str, int size,
                                    NodeAllocatorInterface *allocator) const {
   return LookupInternal(str, size, PREFIX, allocator);
@@ -124,9 +115,6 @@ Node *DictionaryImpl::LookupInternal(const char *str, int size,
     switch (type) {
       case PREDICTIVE:
         nodes = dics_[i]->LookupPredictive(str, size, allocator);
-        break;
-      case EXACT:
-        nodes = dics_[i]->LookupExact(str, size, allocator);
         break;
       case PREFIX:
         nodes = dics_[i]->LookupPrefix(str, size, allocator);

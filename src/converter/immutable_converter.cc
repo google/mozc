@@ -219,6 +219,7 @@ void NormalizeHistorySegments(Segments *segments) {
     Util::FullWidthAsciiToHalfWidthAscii(value, &c->value);
     Util::FullWidthAsciiToHalfWidthAscii(content_value, &c->content_value);
     Util::FullWidthAsciiToHalfWidthAscii(content_key, &c->content_key);
+    c->key = key;
     segment->set_key(key);
 
     // Ad-hoc rewrite for Numbers
@@ -228,6 +229,7 @@ void NormalizeHistorySegments(Segments *segments) {
     if (key.size() > 1 &&
         key == c->value &&
         key == c->content_value &&
+        key == c->key &&
         key == c->content_key &&
         Util::GetScriptType(key) == Util::NUMBER &&
         IsNumber(key[key.size() - 1])) {
@@ -508,7 +510,7 @@ bool ImmutableConverterImpl::ResegmentPersonalName(
       // lnode(last_name) is a prefix of compound, Constraint 1.
       if (compound_node->value.size() > lnode->value.size() &&
           compound_node->key.size() > lnode->key.size() &&
-          compound_node->value.find(lnode->value) == 0) {
+          Util::StartsWith(compound_node->value, lnode->value)) {
         // rnode(first_name) is a suffix of compound, Constraint 1.
         for (const Node *rnode = lattice->begin_nodes(pos + lnode->key.size());
              rnode != NULL; rnode = rnode->bnext) {
@@ -676,6 +678,8 @@ Node *ImmutableConverterImpl::Lookup(const char *begin,
 
 bool ImmutableConverterImpl::Viterbi(Segments *segments,
                                      const vector<uint16> &group) const {
+  const int kWeakConnectedPeanlty = 3453;   // log prob of 1/1000
+
   Lattice *lattice = segments->lattice();
   DCHECK(lattice);
 
@@ -707,7 +711,7 @@ bool ImmutableConverterImpl::Viterbi(Segments *segments,
             //      since C->D transition gets rarer.
             // - If converter ignores user-preference, it's also annoying, as
             //    the result will be unchanged even after changing the boundary.
-            cost = lnode->cost + (GetCost(lnode, rnode) * 2);
+            cost = lnode->cost + GetCost(lnode, rnode) + kWeakConnectedPeanlty;
             rnode->is_weak_connected = true;
             break;
           case NOT_CONNECTED:
@@ -863,8 +867,9 @@ bool ImmutableConverterImpl::MakeLattice(Segments *segments) const {
         // No overlapps
         if (compound_node->key.size() <= rnode->key.size() ||
             compound_node->value.size() <= rnode->value.size() ||
-            compound_node->key.find(rnode->key) != 0 ||
-            compound_node->value.find(rnode->value) != 0) {   // not a prefix
+            !Util::StartsWith(compound_node->key, rnode->key) ||
+            !Util::StartsWith(compound_node->value, rnode->value)) {
+          // not a prefix
           continue;
         }
 
@@ -898,19 +903,19 @@ bool ImmutableConverterImpl::MakeLattice(Segments *segments) const {
 
         // New cost recalcuration:
         //
-        // trans(last_rid, c.lid) + c.cost + trans(c.rid, new_node->lid)
+        // trans(last_rid, c.lid) + c.wcost + trans(c.rid, new_node->lid)
         // + new_node->wcost ==
         // trans(last_rid, compound_node->lid) + compound_node->wcost
         //
         // i.e.
         // new_node->wcost =
         // trans(last_rid, compound_node->lid) + compound_node->wcost
-        //   - trans(last_rid, c.lid) - c.cost - trans(c.rid, new_node->lid)
+        //   - trans(last_rid, c.lid) - c.wcost - trans(c.rid, new_node->lid)
         new_node->wcost =
             connector_->GetTransitionCost(last_rid, compound_node->lid)
             + compound_node->wcost
             - connector_->GetTransitionCost(last_rid, c.lid)
-            - c.cost
+            - c.wcost
             - connector_->GetTransitionCost(c.rid, new_node->lid);
 
         VLOG(2) << " compound_node->lid=" << compound_node->lid
@@ -919,7 +924,8 @@ bool ImmutableConverterImpl::MakeLattice(Segments *segments) const {
         VLOG(2) << " last_rid=" << last_rid
                 << " c.lid=" << c.lid
                 << " c.rid=" << c.rid
-                << " c.cost=" << c.cost;
+                << " c.cost=" << c.cost
+                << " c.wcost=" << c.wcost;
         VLOG(2) << " new_node->wcost=" << new_node->wcost;
 
         new_node->constrained_prev = rnode;
@@ -1078,6 +1084,7 @@ bool ImmutableConverterImpl::MakeSegments(Segments *segments,
           c->Init();
           c->value = key;  // hiragana
           c->content_value = key;
+          c->key = key;
           c->content_key = key;
         }
         {
@@ -1085,6 +1092,7 @@ bool ImmutableConverterImpl::MakeSegments(Segments *segments,
           c->Init();
           Util::HiraganaToKatakana(key, &c->value);  // katakana
           c->content_value = c->value;
+          c->key = key;
           c->content_key = key;
         }
       }

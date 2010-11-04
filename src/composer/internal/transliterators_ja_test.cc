@@ -80,6 +80,10 @@ TEST(TransliteratorsJaTest, HiraganaTransliterator) {
   // "っk"
   EXPECT_EQ("\xe3\x81\xa3\x6b", converted_rhs);
 
+  // "　"(full-width space), "　"(full-width space)
+  EXPECT_EQ("\xe3\x80\x80", t12r->Transliterate(" ", "\xe3\x80\x80"));
+  // " "(half-width space), "　"(full-width space)
+  EXPECT_EQ("\xe3\x80\x80", t12r->Transliterate(" ", " "));
 }
 
 TEST(TransliteratorsJaTest, FullKatakanaTransliterator) {
@@ -112,6 +116,11 @@ TEST(TransliteratorsJaTest, FullKatakanaTransliterator) {
   // "っ"
   EXPECT_EQ("\xe3\x81\xa3", converted_lhs);
   EXPECT_EQ("k", converted_rhs);
+
+  // "　"(full-width space), "　"(full-width space)
+  EXPECT_EQ("\xe3\x80\x80", t12r->Transliterate(" ", "\xe3\x80\x80"));
+  // " "(half-width space), "　"(full-width space)
+  EXPECT_EQ("\xe3\x80\x80", t12r->Transliterate(" ", " "));
 }
 
 TEST(TransliteratorsJaTest, HalfKatakanaTransliterator) {
@@ -158,6 +167,11 @@ TEST(TransliteratorsJaTest, HalfKatakanaTransliterator) {
   // "っ"
   EXPECT_EQ("\xe3\x81\xa3", converted_lhs);
   EXPECT_EQ("k", converted_rhs);
+
+  // "　"(full-width space), "　"(half-width space)
+  EXPECT_EQ(" ", t12r->Transliterate(" ", "\xe3\x80\x80"));
+  // " "(half-width space), "　"(half-width space)
+  EXPECT_EQ(" ", t12r->Transliterate(" ", " "));
 }
 
 TEST(TransliteratorsJaTest, HalfAsciiTransliterator) {
@@ -187,6 +201,11 @@ TEST(TransliteratorsJaTest, HalfAsciiTransliterator) {
   // "っ"
   EXPECT_EQ("\xe3\x81\xa3", converted_lhs);
   EXPECT_EQ("k", converted_rhs);
+
+  // "　"(full-width space), "　"(half-width space)
+  EXPECT_EQ(" ", t12r->Transliterate(" ", "\xe3\x80\x80"));
+  // " "(half-width space), "　"(half-width space)
+  EXPECT_EQ(" ", t12r->Transliterate(" ", " "));
 }
 
 TEST(TransliteratorsJaTest, FullAsciiTransliterator) {
@@ -218,6 +237,11 @@ TEST(TransliteratorsJaTest, FullAsciiTransliterator) {
   // "っ"
   EXPECT_EQ("\xe3\x81\xa3", converted_lhs);
   EXPECT_EQ("k", converted_rhs);
+
+  // "　"(full-width space), "　"(full-width space)
+  EXPECT_EQ("\xe3\x80\x80", t12r->Transliterate(" ", "\xe3\x80\x80"));
+  // " "(half-width space), "　"(full-width space)
+  EXPECT_EQ("\xe3\x80\x80", t12r->Transliterate(" ", " "));
 }
 
 }  // namespace composer

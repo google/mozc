@@ -199,7 +199,7 @@ bool Table::Reload() {
 void Table::AddRule(const string& input,
                     const string& output,
                     const string& pending) {
-  const size_t kMaxSize = 32;
+  const size_t kMaxSize = 300;
   if (input.size() >= kMaxSize ||
       output.size() >= kMaxSize ||
       pending.size() >= kMaxSize) {

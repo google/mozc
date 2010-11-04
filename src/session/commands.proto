@@ -40,6 +40,7 @@ import "session/config.proto";
 
 package mozc.commands;
 
+
 // This enum is used by SessionCommand::input_mode with
 // CHANGE_INPUT_MODE and Output::mode.
 enum CompositionMode {
@@ -222,6 +223,13 @@ message Capability {
       [default = NO_TEXT_DELETION_CAPABILITY];
 };
 
+// Note there is another ApplicationInfo inside RendererCommand.
+// Since Input is not using nested message, define ApplicationInfo here.
+message ApplicationInfo {
+  optional uint32 process_id = 1;
+  optional uint32 thread_id = 2;
+};
+
 message Input {
   enum CommandType {
     NONE = 0;
@@ -288,6 +296,11 @@ message Input {
 
   // Client capability
   optional Capability capability = 7;
+
+  // Application information, like process id.
+  // Server may be able to change the behavior by seeing the
+  // the program name.
+  optional ApplicationInfo application_info = 8;
 };
 
 
@@ -733,3 +746,4 @@ message RendererCommand {
 
   optional ApplicationInfo application_info = 5;
 };
+

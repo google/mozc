@@ -64,6 +64,7 @@ class ConverterMock : public ConverterInterface {
 
   // set next output of respective functions
   void SetStartConversion(Segments *segments, bool result);
+  void SetStartReverseConversion(Segments *segments, bool result);
   void SetStartPrediction(Segments *segments, bool result);
   void SetStartSuggestion(Segments *segments, bool result);
   void SetFinishConversion(Segments *segments, bool result);
@@ -84,6 +85,7 @@ class ConverterMock : public ConverterInterface {
 
   // get last input of respective functions
   void GetStartConversion(Segments *segments, string *key);
+  void GetStartReverseConversion(Segments *segments, string *key);
   void GetStartPrediction(Segments *segments, string *key);
   void GetStartSuggestion(Segments *segments, string *key);
   void GetFinishConversion(Segments *segments);
@@ -107,6 +109,8 @@ class ConverterMock : public ConverterInterface {
   // ConverterInterface
   bool StartConversion(Segments *segments,
                        const string &key) const;
+  bool StartReverseConversion(Segments *segments,
+                              const string &key) const;
   bool StartPrediction(Segments *segments,
                        const string &key) const;
   bool StartSuggestion(Segments *segments,
@@ -144,6 +148,7 @@ class ConverterMock : public ConverterInterface {
  private:
   // mutable for recode input in const functions
   mutable ConverterInput startconversion_input_;
+  mutable ConverterInput startreverseconversion_input_;
   mutable ConverterInput startprediction_input_;
   mutable ConverterInput startsuggestion_input_;
   mutable ConverterInput finishconversion_input_;
@@ -159,6 +164,7 @@ class ConverterMock : public ConverterInterface {
   mutable ConverterInput resizesegment2_input_;
 
   ConverterOutput startconversion_output_;
+  ConverterOutput startreverseconversion_output_;
   ConverterOutput startprediction_output_;
   ConverterOutput startsuggestion_output_;
   ConverterOutput finishconversion_output_;

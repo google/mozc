@@ -132,7 +132,7 @@ static void FillAllCandidateWordsInternal(
     candidate_word_proto->set_index(index);
 
     // check focused id
-    if (id == focused_id) {
+    if (id == focused_id && candidate_list.focused()) {
       candidate_list_proto->set_focused_index(index);
     }
 

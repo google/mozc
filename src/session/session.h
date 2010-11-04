@@ -182,6 +182,13 @@ class Session {
   // Set client capability for this session.  Used by unittest.
   void set_client_capability(const commands::Capability &capability);
 
+  // Set application information for this session.
+  void set_application_info(const commands::ApplicationInfo
+                            &application_info);
+
+  // Get application information
+  const commands::ApplicationInfo &application_info() const;
+
   uint64 create_session_time() const {
     return create_session_time_;
   }
@@ -208,6 +215,8 @@ class Session {
   TransformTable transform_table_;
 
   commands::Capability client_capability_;
+
+  commands::ApplicationInfo application_info_;
 
   // Set session state to the given state and also update related status.
   void SetSessionState(SessionState::Type state);

@@ -32,6 +32,7 @@ syntax = "proto2";
 
 package mozc.config;
 
+
 message Config {
   //////////////////////////////////////////////////////////////
   //
@@ -138,6 +139,23 @@ message Config {
   };
   optional FundamentalCharacterForm space_character_form = 47 [ default = FUNDAMENTAL_INPUT_MODE ];
 
+  // If this flag is true, Mozc toggles preedit method with some predefined
+  // key events when IME is turned on.  Otherwise, Mozc ignores such kind of
+  // key events so that their preferred can be preserved even when the toggle
+  // key is pressed by accident.
+  // As for Mozc, only Windows client supports such kind of toggle so this flag
+  // is currently valid only on Windows.
+  //
+  // Background:
+  //   Traditional Japanese IMEs have used "Roma-Ji" key in Japanese 106/109
+  //   keyboard to toggle the preedit method between Roman and Kana style and
+  //   this behavior was finally adopted into JIS X 4064:2002 as a basic
+  //   functionality which is expected to support by a Japanese Input Method.
+  //   However, people who are not aware of this functionality have been
+  //   puzzled because the default key stroke is likely to be pressed
+  //   by accident.
+  optional bool use_keyboard_to_change_preedit_method = 48 [ default = false ];
+
   // User history learning
   enum HistoryLearningLevel {
     DEFAULT_HISTORY = 0;
@@ -233,3 +251,4 @@ message Config {
   // size of suggestions
   optional uint32 suggestions_size = 110 [ default = 3 ];
 };
+

@@ -29,11 +29,10 @@
 
 #include "unix/emacs/mozc_emacs_helper_lib.h"
 
-#include <ctype.h>
-#include <stdlib.h>
-
 #include <algorithm>
-#include <vector>
+#include <cctype>
+#include <cstdio>
+#include <cstdlib>
 
 #include "base/base.h"
 #include "base/protobuf/descriptor.h"
@@ -50,13 +49,13 @@ void PrintField(
     const protobuf::Message &message,
     const protobuf::Reflection &reflection,
     const protobuf::FieldDescriptor &field,
-    ostream &os);
+    vector<string>* output);
 void PrintFieldValue(
     const protobuf::Message &message,
     const protobuf::Reflection &reflection,
     const protobuf::FieldDescriptor &field,
     int index,
-    ostream &os);
+    vector<string>* output);
 }  // namespace
 
 
@@ -177,22 +176,23 @@ void ParseInputLine(
 // - other types are expressed as is
 //
 // Input parameter 'message' is a protocol buffer to be output.
-// 'os' is an output stream to output 'message'.
+// 'output' is a text buffer to output 'message'.
 //
 // This function never outputs newlines except for ones in strings.
 void PrintMessage(
     const protobuf::Message &message,
-    ostream &os) {
+    vector<string>* output) {
+  DCHECK(output);
+
   const protobuf::Reflection *reflection = message.GetReflection();
   vector<const protobuf::FieldDescriptor*> fields;
   reflection->ListFields(message, &fields);
 
-  // TODO(yukishiino): Removes use of ostream according to the style guide.
-  os << "(";
+  output->push_back("(");
   for (int i = 0; i < fields.size(); ++i) {
-    PrintField(message, *reflection, *fields[i], os);
+    PrintField(message, *reflection, *fields[i], output);
   }
-  os << ")";
+  output->push_back(")");
 }
 
 
@@ -222,8 +222,8 @@ string QuoteString(const string &str) {
 
 // Prints an error message in S-expression and terminates with status code 1.
 void ErrorExit(const string &error, const string &message) {
-  cerr << "((error . " << error << ")"
-       << "(message . " << QuoteString(message) << "))" << endl;
+  fprintf(stderr, "((error . %s)(message . %s))\n",
+          error.c_str(), QuoteString(message).c_str());
   exit(1);
 }
 
@@ -241,27 +241,27 @@ void PrintField(
     const protobuf::Message &message,
     const protobuf::Reflection &reflection,
     const protobuf::FieldDescriptor &field,
-    ostream &os) {
-  os << "("
-     << NormalizeSymbol(field.name());
+    vector<string>* output) {
+  output->push_back("(");
+  output->push_back(NormalizeSymbol(field.name()));
 
   if (!field.is_repeated()) {
-    os << " . ";  // Print an object as a value.
-    PrintFieldValue(message, reflection, field, -1 /* dummy arg */, os);
+    output->push_back(" . ");  // Print an object as a value.
+    PrintFieldValue(message, reflection, field, -1 /* dummy arg */, output);
   } else {
-    os << " ";  // Print objects as a list.
+    output->push_back(" ");  // Print objects as a list.
     const int count = reflection.FieldSize(message, &field);
     const bool is_message =
         field.cpp_type() == protobuf::FieldDescriptor::CPPTYPE_MESSAGE;
     for (int i = 0; i < count; ++i) {
       if (i != 0 && !is_message) {
-        os << " ";
+        output->push_back(" ");
       }
-      PrintFieldValue(message, reflection, field, i, os);
+      PrintFieldValue(message, reflection, field, i, output);
     }
   }
 
-  os << ")";
+  output->push_back(")");
 }
 
 // Prints a value of a field of a protocol buffer in S-expression.
@@ -282,7 +282,7 @@ void PrintFieldValue(
     const protobuf::Reflection &reflection,
     const protobuf::FieldDescriptor &field,
     int index,
-    ostream &os) {
+    vector<string>* output) {
 #define GET_FIELD_VALUE(METHOD_TYPE)                                \
     (field.is_repeated() ?                                          \
      reflection.GetRepeated##METHOD_TYPE(message, &field, index) :  \
@@ -290,13 +290,11 @@ void PrintFieldValue(
 
   switch (field.cpp_type()) {
     // Number (integer and floating point)
-#define PRINT_FIELD_VALUE(CPP_TYPE, METHOD_TYPE)        \
-    case protobuf::FieldDescriptor::CPPTYPE_##CPP_TYPE: \
-        os << GET_FIELD_VALUE(METHOD_TYPE);             \
-    break;
-#define PRINT_FIELD_VALUE_AS_STRING(CPP_TYPE, METHOD_TYPE)  \
-    case protobuf::FieldDescriptor::CPPTYPE_##CPP_TYPE:     \
-        os << "\"" << GET_FIELD_VALUE(METHOD_TYPE) << "\""; \
+#define PRINT_FIELD_VALUE(CPP_TYPE, METHOD_TYPE, FORMAT)              \
+    case protobuf::FieldDescriptor::CPPTYPE_##CPP_TYPE:               \
+        output->push_back(                                            \
+            mozc::Util::StringPrintf(FORMAT,                          \
+                                     GET_FIELD_VALUE(METHOD_TYPE)));  \
     break;
 
     // Since Emacs does not support 64-bit integers, it supports only
@@ -304,21 +302,20 @@ void PrintFieldValue(
     // we escape it into a string as a workaround.
     // We don't need any 64-bit values on Emacs so far, and 32-bit
     // integer values have never got over 28-bit yet.
-    PRINT_FIELD_VALUE(INT32, Int32);
-    PRINT_FIELD_VALUE_AS_STRING(INT64, Int64);
-    PRINT_FIELD_VALUE(UINT32, UInt32);
-    PRINT_FIELD_VALUE_AS_STRING(UINT64, UInt64);
-    PRINT_FIELD_VALUE(DOUBLE, Double);
-    PRINT_FIELD_VALUE(FLOAT, Float);
+    PRINT_FIELD_VALUE(INT32, Int32, "%d");
+    PRINT_FIELD_VALUE(INT64, Int64, "\"%"GG_LL_FORMAT"d\"");  // as a string
+    PRINT_FIELD_VALUE(UINT32, UInt32, "%u");
+    PRINT_FIELD_VALUE(UINT64, UInt64, "\"%"GG_LL_FORMAT"u\"");  // as a string
+    PRINT_FIELD_VALUE(DOUBLE, Double, "%f");
+    PRINT_FIELD_VALUE(FLOAT, Float, "%f");
 #undef PRINT_FIELD_VALUE
-#undef PRINT_FIELD_VALUE_AS_STRING
 
     case protobuf::FieldDescriptor::CPPTYPE_BOOL:  // bool
-      os << (GET_FIELD_VALUE(Bool) ? "t" : "nil");
+      output->push_back(GET_FIELD_VALUE(Bool) ? "t" : "nil");
       break;
 
     case protobuf::FieldDescriptor::CPPTYPE_ENUM:  // enum
-      os << NormalizeSymbol(GET_FIELD_VALUE(Enum)->name());
+      output->push_back(NormalizeSymbol(GET_FIELD_VALUE(Enum)->name()));
       break;
 
     case protobuf::FieldDescriptor::CPPTYPE_STRING: {  // string
@@ -327,13 +324,13 @@ void PrintFieldValue(
             reflection.GetRepeatedStringReference(
                 message, &field, index, &str) :
             reflection.GetStringReference(message, &field, &str);
-      os << QuoteString(str);
+      output->push_back(QuoteString(str));
       break;
     }
 
     // message and group
     case protobuf::FieldDescriptor::CPPTYPE_MESSAGE:
-      PrintMessage(GET_FIELD_VALUE(Message), os);
+      PrintMessage(GET_FIELD_VALUE(Message), output);
       break;
   }
 

@@ -55,6 +55,9 @@ bool ExecCommand(const mozc::ConverterInterface &converter,
   if (func == "startconversion" || func == "start" || func == "s") {
     CHECK_FIELDS_LENGTH(2);
     return converter.StartConversion(segments, fields[1]);
+  } else if (func == "reverseconversion" || func == "reverse" || func == "r") {
+    CHECK_FIELDS_LENGTH(2);
+    return converter.StartReverseConversion(segments, fields[1]);
   } else if (func == "startprediction" || func == "predict" || func == "p") {
     CHECK_FIELDS_LENGTH(2);
     return converter.StartPrediction(segments, fields[1]);

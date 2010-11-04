@@ -57,6 +57,8 @@ class ConverterImpl : public ConverterInterface {
 
   bool StartConversion(Segments *segments,
                        const string &key) const;
+  bool StartReverseConversion(Segments *segments,
+                              const string &key) const;
   bool StartPrediction(Segments *segments,
                        const string &key) const;
   bool StartSuggestion(Segments *segments,
@@ -159,6 +161,11 @@ bool ConverterImpl::StartConversion(Segments *segments,
     rewriter_->Rewrite(segments);
     return true;
   }
+  return false;
+}
+bool ConverterImpl::StartReverseConversion(Segments *segments,
+                                           const string &key) const {
+  LOG(WARNING) << "StartReverseConversion is not implemented";
   return false;
 }
 bool ConverterImpl::StartPrediction(Segments *segments,
@@ -557,6 +564,7 @@ void ConverterUtil::InitSegmentsFromString(const string &key,
   c->Init();
   c->value = preedit;
   c->content_value = preedit;
+  c->key = key;
   c->content_key = key;
 }
 }  // namespace mozc

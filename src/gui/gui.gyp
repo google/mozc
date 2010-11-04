@@ -82,7 +82,6 @@
         '<(subdir)/about_dialog.qrc',
         '<(subdir)/about_dialog.ui',
         '<(subdir)/about_dialog.h',
-        '<(subdir)/version_image_widget.h',
       ],
       'includes': [
         'qt_moc.gypi',
@@ -95,11 +94,9 @@
       'type': 'static_library',
       'sources': [
         '<(gen_out_dir)/about_dialog/moc_about_dialog.cc',
-        '<(gen_out_dir)/about_dialog/moc_version_image_widget.cc',
         '<(gen_out_dir)/about_dialog/qrc_about_dialog.cc',
         'about_dialog/about_dialog.cc',
         'about_dialog/about_dialog_libmain.cc',
-        'about_dialog/version_image_widget.cc',
       ],
       'dependencies': [
         'gen_about_dialog_files',

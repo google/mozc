@@ -261,6 +261,7 @@ MozcEngine::MozcEngine()
       prop_root_(NULL),
       prop_composition_mode_(NULL),
       prop_mozc_tool_(NULL),
+      current_composition_mode_(kMozcEngineInitialCompositionMode),
       preedit_method_(config::Config::ROMAN),
       ignore_reset_for_deletion_range_workaround_(false) {
   // |sub_prop_list| is a radio menu which is shown when a button in the
@@ -509,6 +510,12 @@ gboolean MozcEngine::ProcessKeyEvent(
   }
 
   VLOG(2) << key.DebugString();
+  if ((current_composition_mode_ == commands::DIRECT) &&
+      // We DO consume keys that enable Mozc such as Henkan even when in the
+      // DIRECT mode.
+      !config::ImeSwitchUtil::IsTurnOnInDirectMode(key)) {
+    return FALSE;
+  }
 
   commands::Output output;
   if (!session_->SendKey(key, &output)) {
@@ -571,16 +578,19 @@ gboolean MozcEngine::ProcessKeyEvent(
 
 void MozcEngine::SetCompositionMode(
     IBusEngine *engine, commands::CompositionMode composition_mode) {
-  if (composition_mode == commands::DIRECT) {
-    LOG(ERROR) << "direct mode is not supported";
-    return;
-  }
-
   commands::SessionCommand command;
-  command.set_type(commands::SessionCommand::SWITCH_INPUT_MODE);
-  command.set_composition_mode(composition_mode);
   commands::Output output;
-  session_->SendCommand(command, &output);
+  if (composition_mode == commands::DIRECT) {
+    // Commit a preedit string.
+    command.set_type(commands::SessionCommand::SUBMIT);
+    session_->SendCommand(command, &output);
+    UpdateAll(engine, output);
+  } else {
+    command.set_type(commands::SessionCommand::SWITCH_INPUT_MODE);
+    command.set_composition_mode(composition_mode);
+    session_->SendCommand(command, &output);
+  }
+  current_composition_mode_ = composition_mode;
 }
 
 void MozcEngine::PropertyActivate(IBusEngine *engine,
@@ -1018,23 +1028,12 @@ void MozcEngine::UpdateConfig(
 
 void MozcEngine::UpdateCompositionMode(
     IBusEngine *engine, const commands::CompositionMode new_composition_mode) {
-  commands::CompositionMode composition_mode = new_composition_mode;
-  // No key binding is currently assigned for switching the input mode to
-  // DIRECT, so the server should not return DIRECT as a composition mode.
-  // However, it is possible that users can somehow set key bindings which
-  // cause the server to switch the input mode to DIRECT.
-  // In order to cope with such a senario, we fallback to HIRAGANA when DIRECT
-  // is returned by the server.
-  // TODO(mazda): Verify the server nerver returns DIRECT as a composition mode
-  // and remove this hack.
-  if (new_composition_mode == commands::DIRECT) {
-    SetCompositionMode(engine, commands::HIRAGANA);
-    composition_mode = commands::HIRAGANA;
+  if (current_composition_mode_ == new_composition_mode) {
+    return;
   }
-
   for (size_t i = 0; i < kMozcEnginePropertiesSize; ++i) {
     const MozcEngineProperty &entry = kMozcEngineProperties[i];
-    if (entry.composition_mode == composition_mode) {
+    if (entry.composition_mode == new_composition_mode) {
       PropertyActivate(engine, entry.key, PROP_STATE_CHECKED);
     }
   }
@@ -1066,6 +1065,9 @@ void MozcEngine::SyncData(bool force) {
 }
 
 void MozcEngine::RevertSession(IBusEngine *engine) {
+  const commands::CompositionMode original_composition_mode =
+      current_composition_mode_;
+
   commands::SessionCommand command;
   command.set_type(commands::SessionCommand::REVERT);
   commands::Output output;
@@ -1073,7 +1075,12 @@ void MozcEngine::RevertSession(IBusEngine *engine) {
     LOG(ERROR) << "RevertSession() failed";
     return;
   }
-  UpdateAll(engine, output);
+  UpdateAll(engine, output);  // may update |current_composition_mode_|.
+
+  // If the original composition mode is DIRECT, we should resume the setting.
+  if (original_composition_mode == commands::DIRECT) {
+    UpdateCompositionMode(engine, original_composition_mode);
+  }
 }
 
 }  // namespace ibus

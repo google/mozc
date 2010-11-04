@@ -55,7 +55,8 @@ class NBestGenerator {
 
   // set starting Node and ending Node --
   // Try to enumurate N-best results between begin_node and end_node.
-  void  Init(Node *begin_node, Node *end_node, Lattice *lattice);
+  void  Init(const Node *begin_node, const Node *end_node,
+             const Lattice *lattice);
 
   // reset internal priority queue. Reuse begin_node and eos_node
   void Reset();
@@ -69,38 +70,45 @@ class NBestGenerator {
   //  have exactly same nodes with begin/end_node_.
   //  note that candidate_begin_node is inclusive
   //  and candidate_end_node is exclusive.
-  bool Next(Segment::Candidate *candiadte,
-            const Node **candidate_begin_node,
-            const Node **candidate_end_node);
+  bool Next(Segment::Candidate *candiadte);
 
  private:
-  int GetTransitionCost(Node *lnode, Node *rnode) const;
+  void MakeCandidate(Segment::Candidate *candidate,
+                     int cost,
+                     int structure_cost,
+                     int w_cost) const;
+
+  int GetTransitionCost(const Node *lnode, const Node *rnode) const;
 
   struct QueueElement {
-    Node *node;
-    QueueElement *next;
+    const Node *node;
+    const QueueElement *next;
     int32 fx;  // f(x) = h(x) + g(x): cost function for A* search
     int32 gx;  // g(x)
-    int32 structure_gx;  // transition cost part of g(x)
+    // transition cost part of g(x).
+    // Do not take the transition costs to edge nodes.
+    int32 structure_gx;
+    int32 w_gx;
   };
 
   class QueueElementComp {
    public:
-    const bool operator()(QueueElement *q1, QueueElement *q2) const {
+    const bool operator()(const QueueElement *q1, const QueueElement *q2) const {
       return (q1->fx > q2->fx);
     }
   };
 
-  typedef priority_queue<QueueElement *, vector<QueueElement *>,
+  typedef priority_queue<const QueueElement *, vector<const QueueElement *>,
                          QueueElementComp> Agenda;
 
   scoped_ptr<Agenda> agenda_;
   FreeList<QueueElement> freelist_;
   scoped_ptr<CandidateFilter> filter_;
-  Node *begin_node_;
-  Node *end_node_;
-  ConnectorInterface *connector_;
-  Lattice *lattice_;
+  const Node *begin_node_;
+  const Node *end_node_;
+  const ConnectorInterface *connector_;
+  const Lattice *lattice_;
+  bool viterbi_result_inserted_;
 
   DISALLOW_COPY_AND_ASSIGN(NBestGenerator);
 };

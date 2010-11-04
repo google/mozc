@@ -54,6 +54,7 @@
 #include "session/ime_switch_util.h"
 
 using mozc::commands::Candidates;
+using mozc::commands::Capability;
 using mozc::commands::CompositionMode;
 using mozc::commands::Input;
 using mozc::commands::KeyEvent;
@@ -83,8 +84,8 @@ using mozc::CallOnce;
 
 
 // Ask the converter to the current input mode and update roman/kana
-// input.
-- (void)handleInputMode;
+// input.  Need to specify |sender| to check the capability at the same time.
+- (void)handleInputMode:(id)sender;
 
 // Switches to a new mode and sync the current mode with the converter.
 - (void)switchMode:(CompositionMode)new_mode client:(id)sender;
@@ -175,18 +176,6 @@ CompositionMode GetCompositionMode(NSString *modeID) {
   return mozc::commands::DIRECT;
 }
 
-class MouseCallback : public mozc::client::SendCommandInterface {
- public:
-  MouseCallback(GoogleJapaneseInputController *controller)
-      : controller_(controller) { }
-  virtual bool SendCommand(const SessionCommand &command,
-                           Output *unused_output) {
-    [controller_ candidateClicked:command.id()];
-    return true;
-  }
- private:
-  GoogleJapaneseInputController *controller_;
-};
 }  // anonymous namespace
 
 
@@ -210,24 +199,23 @@ class MouseCallback : public mozc::client::SendCommandInterface {
   resourcePath_ = [[[server bundle] resourcePath] copy];
   composedString_ = [[NSMutableAttributedString alloc] init];
   cursorPosition_ = NSNotFound;
+  replacementRange_ = NSMakeRange(NSNotFound, NSNotFound);
   mode_ = mozc::commands::DIRECT;
   checkInputMode_ = YES;
   yenSignCharacter_ = mozc::config::Config::YEN_SIGN;
   candidateController_ = new(nothrow) mozc::renderer::RendererClient;
-  mouseCallback_ = new(nothrow) MouseCallback(self);
   rendererCommand_ = new(nothrow)RendererCommand;
   session_ = new(nothrow) mozc::client::Session();
 
   if (![NSBundle loadNibNamed:@"Config" owner:self] ||
       !originalString_ || !resourcePath_ || !composedString_ ||
-      !candidateController_ || !mouseCallback_ || !rendererCommand_ ||
+      !candidateController_ || !rendererCommand_ ||
       !session_) {
     [self release];
     self = nil;
   } else {
     DLOG(INFO) << [[NSString stringWithFormat:@"initWithServer: %@ %@ %@",
                              server, delegate, inputClient] UTF8String];
-    candidateController_->SetSendCommandInterface(mouseCallback_);
     if (!candidateController_->Activate()) {
       LOG(ERROR) << "Cannot activate renderer";
       delete candidateController_;
@@ -253,7 +241,6 @@ class MouseCallback : public mozc::client::SendCommandInterface {
   [composedString_ release];
   [clientBundle_ release];
   delete candidateController_;
-  delete mouseCallback_;
   delete session_;
   delete rendererCommand_;
   DLOG(INFO) << "dealloc server";
@@ -379,16 +366,26 @@ class MouseCallback : public mozc::client::SendCommandInterface {
   [sender selectInputMode:it->second];
 }
 
-- (void)handleInputMode {
+- (void)handleInputMode:(id)sender {
   if (!checkInputMode_) {
     return;
   }
+
+  // Check the capability of the client application and sends the capability
+  Capability capability;
+  NSRange selectedRange = [sender selectedRange];
+  if (selectedRange.location != NSNotFound &&
+      selectedRange.length != NSNotFound) {
+    capability.set_text_deletion(Capability::DELETE_PRECEDING_TEXT);
+  }
+  session_->set_client_capability(capability);
 
   if (mode_ == mozc::commands::DIRECT) {
     // Do not want to invoke the converter during the direct mode.
     return;
   }
 
+  // Get the config and set client-side behaviors
   Config config;
   if (!session_->GetConfig(&config)) {
     LOG(ERROR) << "Cannot obtain the current config";
@@ -492,6 +489,14 @@ class MouseCallback : public mozc::client::SendCommandInterface {
       NSMakeRange(cursorPosition_, 0);
 }
 
+// |replacementRange| method is defined at IMKInputController class.
+// It returns the range where compositions/results should be inserted.
+- (NSRange)replacementRange {
+  return (replacementRange_.location == NSNotFound) ?
+      [super replacementRange] :  // default behavior defined at super class
+      replacementRange_;
+}
+
 - (void)updateCandidates:(const Output *)output client:(id)sender {
   if (output == NULL) {
     [self clearCandidates];
@@ -567,7 +572,7 @@ class MouseCallback : public mozc::client::SendCommandInterface {
     return YES;
   }
 
-  [self handleInputMode];
+  [self handleInputMode:sender];
 
   // Get the Mozc key event
   KeyEvent keyEvent;
@@ -583,9 +588,10 @@ class MouseCallback : public mozc::client::SendCommandInterface {
   if (mode_ == mozc::commands::DIRECT &&
       !ImeSwitchUtil::IsTurnOnInDirectMode(keyEvent)) {
     // Yen sign special hack: although the current mode is DIRECT,
-    // backslash is sent instead of yen sign for JIS yen key.  This
-    // behavior is based on the configuration.
+    // backslash is sent instead of yen sign for JIS yen key with no
+    // modifiers.  This behavior is based on the configuration.
     if ([event keyCode] == kVK_JIS_Yen &&
+        [event modifierFlags] == 0 &&
         yenSignCharacter_ == mozc::config::Config::BACKSLASH) {
       [sender insertText:@"\\" replacementRange:NSMakeRange(NSNotFound, 0)];
       return YES;
@@ -611,12 +617,36 @@ class MouseCallback : public mozc::client::SendCommandInterface {
     [self openLink:[NSURL URLWithString:url]];
     output.clear_url();
   }
+
+  // Initialize the position of the composition text.  selectedRange
+  // returns the position where composition will be inserted.
+  if ([composedString_ length] == 0) {
+    replacementRange_ = [sender selectedRange];
+  }
+
+  if (output.has_deletion_range()) {
+    if (replacementRange_.location != NSNotFound &&
+        replacementRange_.length != NSNotFound) {
+      // When there is already composition text, we can't remove text.
+      // Thus we clear composition at this time.  Actual new
+      // composition will be set below.
+      if ([composedString_ length] > 0) {
+        [self updateComposedString:NULL];
+      }
+
+      replacementRange_.location += output.deletion_range().offset();
+      replacementRange_.length = output.deletion_range().length();
+    }
+  }
+
   if (output.has_result()) {
     NSString *resultText =
         [NSString
           stringWithUTF8String:output.result().value().c_str()];
     [sender insertText:resultText
-            replacementRange:NSMakeRange(NSNotFound, 0)];
+      replacementRange:replacementRange_];
+    // Clear the position where composition is inserted.
+    replacementRange_.location = NSNotFound;
   }
   if (output.consumed()) {
     [self updateComposedString:&(output.preedit())];

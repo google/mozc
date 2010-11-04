@@ -485,6 +485,77 @@ bool Process::WaitProcess(size_t pid, int timeout) {
 #endif
 }
 
+bool Process::IsProcessAlive(size_t pid, bool default_result) {
+  if (pid == 0) {
+    return default_result;
+  }
+
+#ifdef OS_WINDOWS
+  {
+    ScopedHandle handle(::OpenProcess(SYNCHRONIZE, FALSE,
+                                      static_cast<DWORD>(pid)));
+    if (NULL == handle.get()) {
+      const DWORD error = ::GetLastError();
+      if (error == ERROR_ACCESS_DENIED) {
+        LOG(ERROR) << "OpenProcess failed: " << error;
+        return default_result;  // unknown
+      }
+      return false;  // not running
+    }
+
+    if (WAIT_TIMEOUT == ::WaitForSingleObject(handle.get(), 0)) {
+      return true;  // running
+    }
+  }  // release handle
+
+  return default_result;  // unknown
+
+#else  // OS_WINDOWS
+  const int kSig = 0;
+  if (::kill(static_cast<pid_t>(pid), kSig) == -1) {
+    if (errno == EPERM || errno == EINVAL) {
+      // permission denied or invalid signal.
+      return default_result;
+    }
+    return false;
+  }
+
+  return true;
+#endif  // OS_WINDOWS
+}
+
+bool Process::IsThreadAlive(size_t thread_id, bool default_result) {
+#ifdef OS_WINDOWS
+  if (thread_id == 0) {
+    return default_result;
+  }
+
+  {
+    ScopedHandle handle(::OpenThread(SYNCHRONIZE, FALSE,
+                                     static_cast<DWORD>(thread_id)));
+    if (NULL == handle.get()) {
+      const DWORD error = ::GetLastError();
+      if (error == ERROR_ACCESS_DENIED) {
+        LOG(ERROR) << "OpenThread failed: " << error;
+        return default_result;  // unknown
+      }
+      return false;  // not running
+    }
+
+    if (WAIT_TIMEOUT == ::WaitForSingleObject(handle.get(), 0)) {
+      return true;  // running
+    }
+  }  // release handle
+
+  return default_result;  // unknown
+
+#else   // OS_WINDOWS
+  // On Linux/Mac, there is no way to check the status of thread id from
+  // other process.
+  return default_result;
+#endif  // OS_WNIDOWS
+}
+
 bool Process::LaunchErrorMessageDialog(const string &error_type) {
 #ifdef OS_MACOSX
   if (!MacProcess::LaunchErrorMessageDialog(error_type)) {

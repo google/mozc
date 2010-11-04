@@ -82,6 +82,8 @@ class Composer {
 
   // Update the input mode considering the input modes of the
   // surrounding characters.
+  // If the input mode should not be changed based on the surrounding text,
+  // do not call this method (e.g. CursorToEnd, CursorToBeginning).
   void UpdateInputMode();
 
   transliteration::TransliterationType GetInputMode() const;
@@ -112,7 +114,6 @@ class Composer {
 
   void InsertCharacterAt(size_t pos, const string &input);
   void DeleteAt(size_t pos);
-  void BackspaceAt(size_t pos);
   void InsertCharacter(const string &input);
   void InsertCharacterPreedit(const string &input);
   void InsertCharacterKeyAndPreedit(const string &key, const string &preedit);

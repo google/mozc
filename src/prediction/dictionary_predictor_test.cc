@@ -75,7 +75,10 @@ void PrependHistorySegments(const string &key,
   seg->set_segment_type(Segment::HISTORY);
   seg->set_key(key);
   Segment::Candidate *c = seg->add_candidate();
+  c->key = key;
+  c->content_key = key;
   c->value = value;
+  c->content_value = value;
 }
 
 TEST_F(DictionaryPredictorTest, OnOffTest) {

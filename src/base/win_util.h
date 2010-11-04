@@ -61,6 +61,24 @@ class WinUtil {
   static bool SystemEqualString(
       const wstring &lhs, const wstring &rhs, bool ignore_case);
 
+  // Returns true if succeeds to determine whether the current process has
+  // a process token which seems to be one for service process.  Otherwise,
+  // returns false.
+  static bool IsServiceProcess(bool *is_service);
+
+  // Returns true if succeeds to determine whether the current process has
+  // a thread token which seems to be one for service thread.  Otherwise,
+  // returns false.
+  static bool IsServiceThread(bool *is_service);
+
+  // This is a utility function to check IsServiceProcess and IsServiceThread
+  // for the current process and thread.
+  static bool IsServiceAccount(bool *is_service);
+
+  // Returns true if succeeds to determine whether the |hToken| is one of the
+  // known service or not.  Otherwise, returns false.
+  static bool IsServiceUser(HANDLE hToken, bool *is_service);
+
  private:
   // Compares |lhs| with |rhs| by CompareStringOrdinal and returns the result
   // in |are_equal|.  If |ignore_case| is true, this function uses system

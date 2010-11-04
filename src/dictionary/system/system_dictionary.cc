@@ -102,11 +102,6 @@ Node *SystemDictionary::LookupPredictive(const char *str, int size,
   return LookupInternal(str, size, allocator, true, NULL);
 }
 
-Node *SystemDictionary::LookupExact(const char *str, int size,
-                                    NodeAllocatorInterface *allocator) const {
-  return NULL;
-}
-
 Node *SystemDictionary::LookupPrefix(const char *str, int size,
                                      NodeAllocatorInterface *allocator) const {
   // Not a predictive lookup. Gets all tokens match the key.

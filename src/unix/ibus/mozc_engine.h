@@ -150,6 +150,7 @@ class MozcEngine : public EngineInterface {
   IBusPropList *prop_root_;
   IBusProperty *prop_composition_mode_;
   IBusProperty *prop_mozc_tool_;
+  commands::CompositionMode current_composition_mode_;
   config::Config::PreeditMethod preedit_method_;
 
   // Unique IDs of candidates that are currently shown.

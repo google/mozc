@@ -69,9 +69,10 @@ class HiraganaTransliterator : public TransliteratorInterface {
   virtual ~HiraganaTransliterator() {}
 
   string Transliterate(const string &raw, const string &converted) const {
-    string output;
+    string full, output;
+    Util::HalfWidthToFullWidth(converted, &full);
     CharacterFormManager::GetCharacterFormManager()->
-        ConvertPreeditString(converted, &output);
+        ConvertPreeditString(full, &output);
     return output;
   }
 
@@ -91,12 +92,13 @@ class FullKatakanaTransliterator : public TransliteratorInterface {
   virtual ~FullKatakanaTransliterator() {}
 
   string Transliterate(const string &raw, const string &converted) const {
-    string t13n;
+    string t13n, full;
     Util::HiraganaToKatakana(converted, &t13n);
+    Util::HalfWidthToFullWidth(t13n, &full);
 
     string output;
     CharacterFormManager::GetCharacterFormManager()->
-        ConvertPreeditString(t13n, &output);
+        ConvertPreeditString(full, &output);
     return output;
   }
 

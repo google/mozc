@@ -107,7 +107,10 @@ void PredictorImpl::Finish(Segments *segments) {
   }
   // update the key as the original key only contains
   // the 'prefix'.
-  segment->set_key(segment->candidate(0).content_key);
+  // TODO(taku): Ideally, we don't need to set Segment::key(), since
+  // Segment::key() stores the request key.
+  // Here we keep the original code not to break backward compatibility.
+  segment->set_key(segment->candidate(0).key);
 }
 
 void PredictorImpl::Revert(Segments *segments) {

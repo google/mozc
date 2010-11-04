@@ -1528,7 +1528,7 @@ TEST_F(SessionConverterTest, FillContext) {
       "\xE8\xBB\x8A\xE3\x81\xA7",
       "\xE8\xA1\x8C\xE3\x81\x8F"
   };
-  for (int i = 0; i < arraysize(kHistoryInput); ++i) {
+  for (size_t i = 0; i < arraysize(kHistoryInput); ++i) {
     Segment *segment = segments.add_segment();
     segment->set_segment_type(Segment::HISTORY);
     Segment::Candidate *candidate = segment->add_candidate();

@@ -144,6 +144,7 @@ bool CalculatorRewriter::InsertCandidate(const string &value,
   candidate->cost = reference_candidate.cost;
   candidate->value = value;
   candidate->content_value = value;
+  candidate->key = base_candidate.key;
   candidate->content_key = base_candidate.content_key;
   candidate->can_expand_alternative = false;
   candidate->learning_type |= Segment::Candidate::NO_LEARNING;

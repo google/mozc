@@ -10,14 +10,14 @@
 #include <float.h>
 #endif
 #include <string.h>
-#include <cmath>
+#include <math.h>
 
 namespace {
 bool IsFinite(double x) {
 #ifdef OS_WINDOWS
   return _finite(x);
 #else
-  return std::isfinite(x);
+  return isfinite(x);
 #endif
 }
 }  // anonymous namespace
@@ -95,7 +95,7 @@ expr(A) ::= expr(B) TIMES  expr(C). {
 expr(A) ::= MINUS  expr(B). [NOT] { A = - B; }
 expr(A) ::= PLUS   expr(B). [NOT] { A = B; }
 expr(A) ::= expr(B) POW expr(C). {
-  A = std::pow(B, C);
+  A = pow(B, C);
   result->CheckValue(A);
 }
 expr(A) ::= LP expr(B) RP. { A = B; }
@@ -109,7 +109,7 @@ expr(A) ::= expr(B) DIVIDE expr(C). {
 }
 expr(A) ::= expr(B) MOD expr(C). {
   if (C != 0.0) {
-    A = std::fmod(B, C);
+    A = fmod(B, C);
     result->CheckValue(A);
   } else {
     result->error_type = Result::DIVIDE_BY_ZERO;
