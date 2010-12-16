@@ -412,5 +412,114 @@ void WinUtil::ActivateWindow(uint32 process_id) {
   }
 #endif  // OS_WINDOWS
 }
+
+#ifdef OS_WINDOWS
+namespace {
+const wchar_t kIMEHotKeyEntryKey[]   = L"Keyboard Layout\\Toggle";
+const wchar_t kIMEHotKeyEntryValue[] = L"Layout Hotkey";
+const wchar_t kIMEHotKeyEntryData[]  = L"3";
+}
+#endif  // OS_WINDOWS
+
+// static
+bool WinUtil::GetIMEHotKeyDisabled() {
+#ifdef OS_WINDOWS
+  HKEY key = 0;
+  LONG result = ::RegOpenKeyExW(HKEY_CURRENT_USER,
+                                kIMEHotKeyEntryKey,
+                                NULL,
+                                KEY_READ,
+                                &key);
+
+  // When the key doesn't exist, can return |false| as well.
+  if (ERROR_SUCCESS != result) {
+    return false;
+  }
+
+  wchar_t data[4];
+  DWORD data_size = sizeof(data);
+  DWORD data_type = 0;
+  result = ::RegQueryValueEx(key,
+                             kIMEHotKeyEntryValue,
+                             NULL,
+                             &data_type,
+                             reinterpret_cast<BYTE *>(&data),
+                             &data_size);
+
+  ::RegCloseKey(key);
+
+  // This is only the condition when this function
+  // can return |true|
+  if (ERROR_SUCCESS == result &&
+      data_type == REG_SZ &&
+      ::lstrcmpW(data, kIMEHotKeyEntryData) == 0) {
+    return true;
+  }
+
+  return false;
+#else   // OS_WINDOWS
+  return false;
+#endif  // OS_WINDOWS
+}
+
+// static
+bool WinUtil::SetIMEHotKeyDisabled(bool disabled) {
+#ifdef OS_WINDOWS
+  if (WinUtil::GetIMEHotKeyDisabled() == disabled) {
+    // Do not need to update this entry.
+    return true;
+  }
+
+  if (disabled) {
+    HKEY key = 0;
+    LONG result = ::RegCreateKeyExW(HKEY_CURRENT_USER,
+                                    kIMEHotKeyEntryKey,
+                                    0,
+                                    NULL,
+                                    0,
+                                    KEY_WRITE,
+                                    NULL,
+                                    &key,
+                                    NULL);
+    if (ERROR_SUCCESS != result) {
+      return false;
+    }
+
+    // set "3"
+    result = ::RegSetValueExW(
+        key,
+        kIMEHotKeyEntryValue,
+        0,
+        REG_SZ,
+        reinterpret_cast<const BYTE *>(&kIMEHotKeyEntryData),
+        sizeof(wchar_t) * (::lstrlenW(kIMEHotKeyEntryData) + 1));
+    ::RegCloseKey(key);
+
+    return ERROR_SUCCESS == result;
+  } else {
+    HKEY key = 0;
+    LONG result = ::RegOpenKeyExW(HKEY_CURRENT_USER,
+                                  kIMEHotKeyEntryKey,
+                                  NULL,
+                                  KEY_SET_VALUE | DELETE,
+                                  &key);
+    if (result == ERROR_FILE_NOT_FOUND) {
+      return true;  // default value will be used.
+    }
+
+    if (ERROR_SUCCESS != result) {
+      return false;
+    }
+
+    result = ::RegDeleteValueW(key, kIMEHotKeyEntryValue);
+
+    ::RegCloseKey(key);
+
+    return (ERROR_SUCCESS == result || ERROR_FILE_NOT_FOUND == result);
+  }
+#endif  // OS_WINDOWS
+
+  return false;
+}
 }  // namespace gui
 }  // namespace mozc

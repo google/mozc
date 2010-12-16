@@ -1794,6 +1794,25 @@ TEST_F(ComposerTest, ComposingWithcharactertransform) {
   }
 }
 
+TEST_F(ComposerTest, AlphanumericOfSSH) {
+  // This is a unittest against http://b/3199626
+  // 'ssh' (っｓｈ) + F10 should be 'ssh'.
+  table_->AddRule("ss", "[X]", "s");
+  table_->AddRule("sha", "[SHA]", "");
+  composer_->InsertCharacter("ssh");
+  // "［Ｘ］ｓｈ"
+  EXPECT_EQ("\xEF\xBC\xBB\xEF\xBC\xB8\xEF\xBC\xBD\xEF\xBD\x93\xEF\xBD\x88",
+            GetPreedit(composer_.get()));
+
+  string query;
+  composer_->GetQueryForConversion(&query);
+  EXPECT_EQ("[X]sh", query);
+
+  transliteration::Transliterations t13ns;
+  composer_->GetTransliterations(&t13ns);
+  EXPECT_EQ("ssh", t13ns[transliteration::HALF_ASCII]);
+}
+
 TEST_F(ComposerTest, Issue2190364) {
   // This is a unittest against http://b/2190364
   commands::KeyEvent key;

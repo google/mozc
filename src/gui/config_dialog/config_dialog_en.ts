@@ -290,6 +290,7 @@
         <source>Check if Mozc is the default IME on startup</source>
         <translation type="unfinished"></translation>
     </message>
+    
     <message>
         <location filename="config_dialog.ui" line="1089"/>
         <source>Default IME</source>

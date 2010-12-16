@@ -14,11 +14,18 @@
 名詞,数,(アラビア数字|漢数字) 名詞,数,区切り文字 false
 名詞,数,区切り文字  名詞,数,(アラビア数字|漢数字) false
 
+# 第九
+# This is a tentaive workaround for fixing 第|五三 vs 大誤算
+接頭詞,数接続 名詞,数,漢数字 false
+
 # 句読点 
 記号,(句点|読点|括弧開|括弧閉) * true
 * 記号,(句点|読点|括弧開|括弧閉|空白) true
 
 # フィラー should be isolated
+# One-character フィラー is an exception
+^フィラー,*,*,*,*,*,(あ|え|と|ま) * false
+* ^フィラー,*,*,*,*,*,(あ|え|と|ま) false
 ^フィラー * true
 * ^フィラー true
 

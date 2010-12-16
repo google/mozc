@@ -65,6 +65,7 @@ class PostInstallDialog : public QDialog,
   virtual void OnLogoffNow();
   virtual void OnLogoffLater();
   virtual void OnOk();
+  virtual void OnsetAsDefaultCheckBoxToggled(int state);
   virtual void reject();
 
  private:

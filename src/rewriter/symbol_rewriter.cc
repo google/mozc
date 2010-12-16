@@ -392,7 +392,7 @@ bool SymbolRewriter::RewriteEntireCandidate(Segments *segments) {
   }
 
   if (segments->conversion_segments_size() > 1) {
-    if (segments->has_resized()) {
+    if (segments->resized()) {
       // the given segments are resized by user
       // so don't modify anymore
       return false;

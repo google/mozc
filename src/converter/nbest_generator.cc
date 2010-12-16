@@ -93,8 +93,9 @@ void NBestGenerator::Reset() {
 
 void NBestGenerator::MakeCandidate(Segment::Candidate *candidate,
                                    int32 cost, int32 structure_cost,
-                                   int32 wcost) const {
-  DCHECK(!candidate->nodes.empty());
+                                   int32 wcost,
+                                   const vector<const Node *> nodes) const {
+  CHECK(!nodes.empty());
 
   bool has_constrained_node = false;
   bool is_functional = false;
@@ -105,14 +106,14 @@ void NBestGenerator::MakeCandidate(Segment::Candidate *candidate,
   candidate->content_key.clear();
   candidate->is_spelling_correction = false;
   candidate->can_expand_alternative = true;
-  candidate->lid = candidate->nodes.front()->lid;
-  candidate->rid = candidate->nodes.back()->rid;
+  candidate->lid = nodes.front()->lid;
+  candidate->rid = nodes.back()->rid;
   candidate->cost = cost;
   candidate->structure_cost = structure_cost;
   candidate->wcost = wcost;
 
-  for (size_t i = 0; i < candidate->nodes.size(); ++i) {
-    const Node *node = candidate->nodes[i];
+  for (size_t i = 0; i < nodes.size(); ++i) {
+    const Node *node = nodes[i];
     DCHECK(node != NULL);
     if (node->constrained_prev != NULL ||
         (node->next != NULL &&
@@ -183,16 +184,16 @@ bool NBestGenerator::Next(Segment::Candidate *candidate) {
   // Insert Viterbi best result here to make sure that
   // the top result is Viterbi best result.
   if (!viterbi_result_inserted_) {
-    candidate->nodes.clear();
+    vector<const Node *> nodes;
     int total_wcost = 0;
     for (const Node *node = begin_node_->next;
          node != end_node_; node = node->next) {
-      candidate->nodes.push_back(node);
+      nodes.push_back(node);
       if (node != begin_node_->next) {
         total_wcost += node->wcost;
       }
     }
-    DCHECK(!candidate->nodes.empty());
+    DCHECK(!nodes.empty());
 
     const int cost = end_node_->cost -
         begin_node_->cost - end_node_->wcost;
@@ -201,11 +202,11 @@ bool NBestGenerator::Next(Segment::Candidate *candidate) {
     const int wcost = end_node_->prev->cost -
         begin_node_->next->cost + begin_node_->next->wcost;
 
-    MakeCandidate(candidate, cost, structure_cost, wcost);
+    MakeCandidate(candidate, cost, structure_cost, wcost, nodes);
 
     // User CandiadteFilter so that filter is initialized with the
     // Viterbi-best path.
-    filter_->FilterCandidate(candidate);
+    filter_->FilterCandidate(candidate, nodes);
     viterbi_result_inserted_ = true;
 
     return true;
@@ -228,16 +229,16 @@ bool NBestGenerator::Next(Segment::Candidate *candidate) {
 
     // reached to the goal.
     if (rnode->end_pos == begin_node_->end_pos) {
-      candidate->nodes.clear();
+      vector<const Node *> nodes;
       for (const QueueElement *elm = top->next;
            elm->next != NULL; elm = elm->next) {
-        candidate->nodes.push_back(elm->node);
+        nodes.push_back(elm->node);
       }
-      CHECK(!candidate->nodes.empty());
+      CHECK(!nodes.empty());
 
-      MakeCandidate(candidate, top->gx, top->structure_gx, top->w_gx);
+      MakeCandidate(candidate, top->gx, top->structure_gx, top->w_gx, nodes);
 
-      switch (filter_->FilterCandidate(candidate)) {
+      switch (filter_->FilterCandidate(candidate, nodes)) {
         case CandidateFilter::GOOD_CANDIDATE:
           return true;
         case CandidateFilter::STOP_ENUMERATION:
@@ -315,7 +316,8 @@ bool NBestGenerator::Next(Segment::Candidate *candidate) {
           } else if (is_left_edge) {
             // use |lnode->cost - begin_node_->cost| is an approximation
             // of marginalized word cost.
-            cost_diff = (lnode->cost - begin_node_->cost) + transition_cost + rnode->wcost;
+            cost_diff = (lnode->cost - begin_node_->cost) +
+                transition_cost + rnode->wcost;
             structure_cost_diff = 0;
             wcost_diff = rnode->wcost;
           } else {

@@ -117,6 +117,33 @@ class CharacterFormManager {
   static void ConvertWidth(const string &input, string *output,
                            config::Config::CharacterForm form);
 
+  enum FormType {
+    UNKNOWN_FORM,
+    HALF_WIDTH,
+    FULL_WIDTH
+  };
+
+  // Return form tyeps for given two pair of strings.
+  // This function tries to find the difference between
+  // |input1| and |input2| and find the place where the script
+  // form (halfwidth/fullwidth) is different. This function returns
+  // true if input1 or input2 needs to have full/half width anotation.
+  //
+  // Example:
+  //  input1="ABCぐーぐる input2="ＡＢＣ"
+  //  form1=Half form2=Full
+  //
+  // If input1 and input2 have mixed form types and the result
+  // is ambigous, this function returns false.
+  //
+  // Ambiguous case:
+  //  input1="ABC１２３" input2="ＡＢＣ123"
+  //  return false.
+  static bool GetFormTypesFromStringPair(const string &input1,
+                                         FormType *form1,
+                                         const string &input2,
+                                         FormType *form2);
+
   // return singleton class
   static CharacterFormManager* GetCharacterFormManager();
 

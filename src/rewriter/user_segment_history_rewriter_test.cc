@@ -1349,6 +1349,40 @@ TEST_F(UserSegmentHistoryRewriterTest, Regression2459520) {
             segments.segment(1).candidate(0).value);
 }
 
+TEST_F(UserSegmentHistoryRewriterTest, PuntuationsTest) {
+  SetLearningLevel(config::Config::DEFAULT_HISTORY);
+  Segments segments;
+  UserSegmentHistoryRewriter rewriter;
+
+  const uint16 id = POSMatcher::GetJapanesePunctuationsId();
+
+  rewriter.Clear();
+
+  InitSegments(&segments, 2);
+  segments.mutable_segment(1)->set_key(".");
+  for (int i = 1; i < kCandidatesSize; ++i) {
+    segments.mutable_segment(1)->mutable_candidate(i)->lid = id;
+    segments.mutable_segment(1)->mutable_candidate(i)->rid = id;
+    segments.mutable_segment(1)->mutable_candidate(i)->value = ".";
+  }
+  segments.mutable_segment(1)->move_candidate(2, 0);
+  segments.mutable_segment(1)->mutable_candidate(0)->learning_type
+      |= Segment::Candidate::RERANKED;
+  segments.mutable_segment(1)->set_segment_type(Segment::FIXED_VALUE);
+  rewriter.Finish(&segments);
+
+  InitSegments(&segments, 2);
+  segments.mutable_segment(1)->set_key(".");
+  for (int i = 1; i < kCandidatesSize; ++i) {
+    segments.mutable_segment(1)->mutable_candidate(i)->lid = id;
+    segments.mutable_segment(1)->mutable_candidate(i)->rid = id;
+    segments.mutable_segment(1)->mutable_candidate(i)->value = ".";
+  }
+
+  // Punctuation is not remembered
+  rewriter.Rewrite(&segments);
+  EXPECT_EQ("candidate0", segments.segment(1).candidate(0).value);
+}
 
 namespace {
 int GetRandom(int size) {

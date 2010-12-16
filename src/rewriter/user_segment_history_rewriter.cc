@@ -72,6 +72,24 @@ uint16 GetPosGroup(const Segment::Candidate &candidate) {
   return kLidGroup[candidate.lid];
 }
 
+bool IsPunctuation(const string &str) {
+  // return (str == "。" || str == "｡" ||
+  // str == "、" || str == "､" ||
+  // str == "，" || str == "," ||
+  // str == "．"  || str == ".");
+  return (str == "\xE3\x80\x82" || str == "\xEF\xBD\xA1" ||
+          str == "\xE3\x80\x81" || str == "\xEF\xBD\xA4" ||
+          str == "\xEF\xBC\x8C" || str == "," ||
+          str == "\xEF\xBC\x8E"  || str == ".");
+}
+
+bool IsPunctuation(const Segment &seg,
+                   const Segment::Candidate &candidate) {
+  return (POSMatcher::IsJapanesePunctuations(candidate.lid) &&
+          candidate.lid == candidate.rid &&
+          IsPunctuation(seg.key()) && IsPunctuation(candidate.value));
+}
+
 class KeyTriggerValue {
  public:
   KeyTriggerValue()
@@ -506,7 +524,7 @@ bool UserSegmentHistoryRewriter::GetScore(const Segments &segments,
   // either top/target candidate has CONTEXT_SENSITIVE flags,
   // don't apply UNIGRAM model
   const bool context_sensitive =
-      segments.has_resized() ||
+      segments.resized() ||
       (candidate.learning_type & Segment::Candidate::CONTEXT_SENSITIVE) ||
       (segments.segment(segment_index).candidate(0).learning_type &
        Segment::Candidate::CONTEXT_SENSITIVE);
@@ -607,7 +625,14 @@ void UserSegmentHistoryRewriter::RememberFirstCandidate(
   }
 
   const Segment::Candidate &candidate = seg.candidate(0);
-  const bool context_sensitive = segments.has_resized() ||
+
+  // http://b/issue?id=3156109
+  // Do not remember the preference of Punctuations
+  if (IsPunctuation(seg, candidate)) {
+    return;
+  }
+
+  const bool context_sensitive = segments.resized() ||
       (candidate.learning_type & Segment::Candidate::CONTEXT_SENSITIVE);
   const string &all_value = candidate.value;
   const string &content_value = candidate.content_value;
@@ -862,6 +887,10 @@ bool UserSegmentHistoryRewriter::Rewrite(Segments *segments) const {
     DCHECK_GT(segment->candidates_size(), 0);
 
     if (segment->segment_type() == Segment::FIXED_VALUE) {
+      continue;
+    }
+
+    if (IsPunctuation(*segment, segment->candidate(0))) {
       continue;
     }
 

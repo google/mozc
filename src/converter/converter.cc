@@ -116,15 +116,13 @@ void SetKey(Segments *segments, const string &key) {
   segments->clear_revert_entries();
 
   mozc::Segment *seg = segments->add_segment();
+  DCHECK(seg);
+
   seg->clear();
   seg->set_key(key);
   seg->set_segment_type(mozc::Segment::FREE);
 
-  if (VLOG_IS_ON(2)) {
-    string buf;
-    segments->DebugString(&buf);
-    LOG(INFO) << buf;
-  }
+  VLOG(2) << segments->DebugString();
 }
 
 ConverterInterface *g_converter = NULL;

@@ -14,7 +14,7 @@
 # uint16 POSMatcher::GetFirstNameId() { ... }
 # bool   POSMatcher::IsFirstName(uint16 id) { ... }
 
-Functional ^(助詞|助動詞|記号|動詞,非自立|名詞,非自立|形容詞,非自立|動詞,接尾|名詞,接尾|形容詞,接尾)
+Functional ^(助詞|助動詞|動詞,非自立|名詞,非自立|形容詞,非自立|動詞,接尾|名詞,接尾|形容詞,接尾)
 
 Unknown    名詞,サ変接続
 
@@ -29,3 +29,10 @@ NounPrefix 接頭詞,名詞接続
 
 # used in ImmutableConverter
 Prefix 接頭詞,
+
+# used in UserHistoryRewriter
+JapanesePunctuations 記号,(句点|読点)
+
+# used in SymbolRewriter
+OpenBracket 記号,括弧開
+CloseBracket 記号,括弧閉

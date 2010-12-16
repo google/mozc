@@ -143,9 +143,21 @@ void InsertCandidates(const EmbeddedDictionary::Value *value,
     if (is_no_learning) {
       c->learning_type |= Segment::Candidate::NO_LEARNING;
     }
-    c->SetDescription(Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER,
-                      "\xE9\xA1\x94\xE6\x96\x87\xE5\xAD\x97");
+
     //  "顔文字";
+    const char kBaseEmoticonDescription[]
+        = "\xE9\xA1\x94\xE6\x96\x87\xE5\xAD\x97";
+
+    if (sorted_value[i]->description == NULL) {
+      c->SetDescription(Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER,
+                        kBaseEmoticonDescription);
+    } else {
+      string description = kBaseEmoticonDescription;
+      description.append(" ");
+      description.append(sorted_value[i]->description);
+      c->SetDescription(Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER,
+                        description);
+    }
   }
 }
 

@@ -33,8 +33,10 @@
 #include "converter/candidate_filter.h"
 
 #include <limits.h>
+#include <algorithm>
 #include <map>
 #include <set>
+#include <vector>
 #include <utility>
 
 #include "base/util.h"
@@ -87,7 +89,8 @@ void CandidateFilter::Reset() {
 }
 
 CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
-   const Segment::Candidate *candidate) {
+    const Segment::Candidate *candidate,
+    const vector<const Node *> nodes) {
   DCHECK(candidate);
 
   // In general, the cost of constrained node tends to be overestimated.
@@ -115,8 +118,10 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
     return CandidateFilter::BAD_CANDIDATE;
   }
 
+  CHECK(!nodes.empty());
+
   // The candidate consists of only one token
-  if (candidate->nodes.size() == 1) {
+  if (nodes.size() == 1) {
     VLOG(1) << "don't filter single segment";
     return CandidateFilter::GOOD_CANDIDATE;
   }
@@ -125,6 +130,24 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
   if (Util::CharsLen(candidate->value) == 1) {
     VLOG(1) << "don't filter single character";
     return CandidateFilter::GOOD_CANDIDATE;
+  }
+
+  // Check Katakana transliterations
+  {
+    const bool is_top_katakana_t13n =
+        Segment::IsKatakanaT13NValue(nodes[0]->value);
+    for (size_t i = 1; i < nodes.size(); ++i) {
+      // KatakanaT13N must be the prefix of the candidate.
+      if (Segment::IsKatakanaT13NValue(nodes[i]->value)) {
+        return CandidateFilter::BAD_CANDIDATE;
+      }
+      // nodes[1..] are non-functional candidates.
+      // In other words, the node just after KatakanaT13n candidate should
+      // be a functional word.
+      if (is_top_katakana_t13n && !POSMatcher::IsFunctional(nodes[i]->lid)) {
+        return CandidateFilter::BAD_CANDIDATE;
+      }
+    }
   }
 
   const int top_cost = max(kMinCost, top_candidate_->cost);
@@ -145,9 +168,9 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
   // the candidate if the rank of the candidate is below 3.
   // This is a temporal workaround for fixing "おそう" => "御|総"
   // TODO(taku): remove it after intorducing a word clustering for noun.
-  if (candidate_size >= 3 && candidate->nodes.size() > 1 &&
-      candidate->nodes[0]->lid == candidate->nodes[0]->rid &&
-      POSMatcher::IsNounPrefix(candidate->nodes[0]->lid)) {
+  if (candidate_size >= 3 && nodes.size() > 1 &&
+      nodes[0]->lid == nodes[0]->rid &&
+      POSMatcher::IsNounPrefix(nodes[0]->lid)) {
     VLOG(1) << "removing noisy prefix pattern";
     return CandidateFilter::BAD_CANDIDATE;
   }
@@ -203,8 +226,10 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
 }
 
 CandidateFilter::ResultType CandidateFilter::FilterCandidate(
-    const Segment::Candidate *candidate) {
-  const CandidateFilter::ResultType result = FilterCandidateInternal(candidate);
+    const Segment::Candidate *candidate,
+    const vector<const Node *> nodes) {
+  const CandidateFilter::ResultType result =
+      FilterCandidateInternal(candidate, nodes);
   if (result != CandidateFilter::GOOD_CANDIDATE) {
     return result;
   }

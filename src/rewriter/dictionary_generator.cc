@@ -36,6 +36,7 @@
 #include "base/util.h"
 #include "dictionary/user_pos.h"
 #include "rewriter/dictionary_generator.h"
+#include "converter/pos_matcher.h"
 
 namespace mozc {
 namespace rewriter {
@@ -144,7 +145,13 @@ bool DictionaryGenerator::Output(const string &filename) const {
     const uint32 cost = 10 * num_same_keys;
 
     uint16 id;
-    CHECK(UserPOS::GetPOSIDs(pos, &id)) << "Unknown POS type: " << pos;
+    if (pos == "\xE6\x8B\xAC\xE5\xBC\xA7\xE9\x96\x8B") {      // "括弧開"
+      id = POSMatcher::GetOpenBracketId();
+    } else if (pos == "\xE6\x8B\xAC\xE5\xBC\xA7\xE9\x96\x89") {  // "括弧閉"
+      id = POSMatcher::GetCloseBracketId();
+    } else {
+      CHECK(UserPOS::GetPOSIDs(pos, &id)) << "Unknown POS type: " << pos;
+    }
 
     // Output in mozc dictionary format
     ofs << token.key() << "\t"

@@ -137,8 +137,7 @@ int main(int argc, char **argv) {
     string tmp;
     if (ExecCommand(*converter, &segments, line)) {
       string output;
-      segments.DebugString(&output);
-      cout << output;
+      cout << segments.DebugString();
     } else {
       cout << "ExecCommand() return false" << endl;
     }

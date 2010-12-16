@@ -31,6 +31,7 @@
 #import <Cocoa/Cocoa.h>
 #import <InputMethodKit/IMKServer.h>
 
+#import "mac/GoogleJapaneseInputController.h"
 #import "mac/GoogleJapaneseInputServer.h"
 
 #include "base/base.h"
@@ -50,6 +51,8 @@ int main(int argc, char *argv[]) {
     return -1;
   }
   DLOG(INFO) << mozc::kProductNameInEnglish << " initialized";
+
+  [GoogleJapaneseInputController initializeConstants];
 
   RunApplicationEventLoop();
   [pool drain];

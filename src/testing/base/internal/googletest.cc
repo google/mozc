@@ -68,7 +68,9 @@ string GetProgramPath() {
 }
 
 string GetTestSrcdir() {
-  return MOZC_DATA_DIR;
+  // Return program path in default.
+  // TODO(toshiyuki) : Make it to be configured in build stage
+  return GetProgramPath();
 }
 
 string GetTestTmpdir() {

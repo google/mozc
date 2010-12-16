@@ -87,6 +87,60 @@ bool IsMozcToolAvailable() {
       mozc::Util::JoinPath(mozc::Util::GetServerDirectory(), mozc::kMozcTool));
 }
 
+#ifdef OS_CHROMEOS
+#if IBUS_CHECK_VERSION(1, 3, 99)
+// IBus-1.4 uses Glib's GVariant for configration.
+bool GetStringConfig(GVariant *value, const gchar **out_string) {
+  if (g_variant_classify(value) != G_VARIANT_CLASS_STRING) {
+    return false;
+  }
+  *out_string = g_variant_get_string(value, NULL);
+  return true;
+}
+
+bool GetIntegerConfig(GVariant *value, gint *out_integer) {
+  if (g_variant_classify(value) != G_VARIANT_CLASS_INT32) {
+    return false;
+  }
+  *out_integer = g_variant_get_int32(value);
+  return true;
+}
+
+bool GetBooleanConfig(GVariant *value, gboolean *out_boolean) {
+  if (g_variant_classify(value) != G_VARIANT_CLASS_BOOLEAN) {
+    return false;
+  }
+  *out_boolean = g_variant_get_boolean(value);
+  return true;
+}
+#else
+// IBus-1.2 and 1.3 use GValue for configration.
+bool GetStringConfig(GValue *value, const gchar **out_string) {
+  if (!G_VALUE_HOLDS_STRING(value)) {
+    return false;
+  }
+  *out_string = g_value_get_string(value);
+  return true;
+}
+
+bool GetIntegerConfig(GValue *value, gint *out_integer) {
+  if (!G_VALUE_HOLDS_INT(value)) {
+    return false;
+  }
+  *out_integer = g_value_get_int(value);
+  return true;
+}
+
+bool GetBooleanConfig(GValue *value, gboolean *out_boolean) {
+  if (!G_VALUE_HOLDS_BOOLEAN(value)) {
+    return false;
+  }
+  *out_boolean = g_value_get_boolean(value);
+  return true;
+}
+#endif
+#endif  // OS_CHROMEOS
+
 struct IBusMozcEngineClass {
   IBusEngineClass parent;
 };
@@ -712,23 +766,32 @@ void MozcEngine::Disconnected(IBusBus *bus, gpointer user_data) {
   ibus_quit();
 }
 
-// static
+#ifdef OS_CHROMEOS
+#if IBUS_CHECK_VERSION(1, 3, 99)
+// For IBus 1.4.
 void MozcEngine::ConfigValueChanged(IBusConfig *config,
                                     const gchar *section,
                                     const gchar *name,
-                                    GValue *gvalue,
+                                    GVariant *value,
                                     gpointer user_data) {
-#ifdef OS_CHROMEOS
   // This function might be called _before_ MozcEngineClassInit is called if
   // you press the "Configure..." button for Mozc before switching to the Mozc
   // input method.
   MozcEngine *engine = mozc::Singleton<MozcEngine>::get();
-  engine->UpdateConfig(section, name, gvalue);
-#else
-  // On plain Linux, we don't use ibus-gconf for now. In other words, this
-  // method should never be called.
-#endif
+  engine->UpdateConfig(section, name, value);
 }
+#else
+// For IBus 1.2 and 1.3.
+void MozcEngine::ConfigValueChanged(IBusConfig *config,
+                                    const gchar *section,
+                                    const gchar *name,
+                                    GValue *value,
+                                    gpointer user_data) {
+  MozcEngine *engine = mozc::Singleton<MozcEngine>::get();
+  engine->UpdateConfig(section, name, value);
+}
+#endif
+#endif  // OS_CHROMEOS
 
 // static
 bool MozcEngine::ProcessModifiers(
@@ -946,13 +1009,19 @@ bool MozcEngine::UpdateCandidates(IBusEngine *engine,
   return true;
 }
 
-void MozcEngine::UpdateConfig(
-    const gchar *section, const gchar *name, GValue *gvalue) {
 #ifdef OS_CHROMEOS
-  if (!section || !name || !gvalue) {
+void MozcEngine::UpdateConfig(const gchar *section,
+                              const gchar *name,
+#if IBUS_CHECK_VERSION(1, 3, 99)
+                              GVariant *value
+#else
+                              GValue *value
+#endif
+                              ) {
+  if (!section || !name || !value) {
     return;
   }
-  if (strcmp(section, kMozcSectionName) != 0) {
+  if (g_strcmp0(section, kMozcSectionName) != 0) {
     return;
   }
 
@@ -967,20 +1036,20 @@ void MozcEngine::UpdateConfig(
     return;
   }
 
-  // Set |gvalue| to |mozc_config|.
+  // Set |value| to |mozc_config|.
   switch (field_to_update->cpp_type()) {
     case google::protobuf::FieldDescriptor::CPPTYPE_ENUM: {
-      // |value| should be G_TYPE_STRING.
-      if (!G_VALUE_HOLDS_STRING(gvalue)) {
-        LOG(ERROR) << "Bad GValue type for " << name;
+      // |value| should be STRING.
+      const gchar *string_value = NULL;
+      if (!GetStringConfig(value, &string_value)) {
+        LOG(ERROR) << "Bad value type for " << name;
         return;
       }
-      const gchar *string_value = g_value_get_string(gvalue);
       DCHECK(string_value);
       const google::protobuf::EnumValueDescriptor *enum_value =
           descriptor->FindEnumValueByName(string_value);
       if (!enum_value) {
-        LOG(ERROR) << "Bad GValue value for " << name << ": " << string_value;
+        LOG(ERROR) << "Bad value for " << name << ": " << string_value;
         return;
       }
       reflection->SetEnum(&mozc_config, field_to_update, enum_value);
@@ -989,23 +1058,23 @@ void MozcEngine::UpdateConfig(
     }
     case google::protobuf::FieldDescriptor::CPPTYPE_UINT32: {
       // unsigned int is not supported as chrome's preference type and int is
-      // used as an alternative type, so |value| should be G_TYPE_INT.
-      if (!G_VALUE_HOLDS_INT(gvalue)) {
-        LOG(ERROR) << "Bad GValue type for " << name;
+      // used as an alternative type, so |value| should be INT.
+      gint int_value = -1;
+      if (!GetIntegerConfig(value, &int_value)) {
+        LOG(ERROR) << "Bad value type for " << name;
         return;
       }
-      const gint int_value = g_value_get_int(gvalue);
       reflection->SetUInt32(&mozc_config, field_to_update, int_value);
       VLOG(2) << "setting mozc config: " << name << " = " << int_value;
       break;
     }
     case google::protobuf::FieldDescriptor::CPPTYPE_BOOL: {
-      // |value| should be G_TYPE_BOOLEAN
-      if (!G_VALUE_HOLDS_BOOLEAN(gvalue)) {
-        LOG(ERROR) << "Bad GValue type for " << name;
+      // |value| should be BOOLEAN.
+      gboolean boolean_value = FALSE;
+      if (!GetBooleanConfig(value, &boolean_value)) {
+        LOG(ERROR) << "Bad value type for " << name;
         return;
       }
-      const gboolean boolean_value = g_value_get_boolean(gvalue);
       reflection->SetBool(&mozc_config, field_to_update, boolean_value);
       VLOG(2) << "setting mozc config: " << name << " = "
               << (boolean_value ? "true" : "false");
@@ -1023,8 +1092,8 @@ void MozcEngine::UpdateConfig(
   session_->SetConfig(mozc_config);
   session_->SyncData();  // TODO(yusukes): remove this call?
   VLOG(2) << "Session::SetConfig() is called: " << name;
-#endif
 }
+#endif
 
 void MozcEngine::UpdateCompositionMode(
     IBusEngine *engine, const commands::CompositionMode new_composition_mode) {

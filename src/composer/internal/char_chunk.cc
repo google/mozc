@@ -148,7 +148,17 @@ bool CharChunk::IsConvertible(
 void CharChunk::Combine(const CharChunk& left_chunk) {
   conversion_ = left_chunk.conversion_ + conversion_;
   raw_ = left_chunk.raw_ + raw_;
-  ambiguous_ = left_chunk.ambiguous_ + ambiguous_;
+  // TODO(komatsu): This is a hacky way.  We should look up the
+  // conversion table with the new |raw_| value.
+  if (left_chunk.ambiguous_.empty()) {
+    ambiguous_.clear();
+  } else {
+    if (ambiguous_.empty()) {
+      ambiguous_ = left_chunk.ambiguous_ + pending_;
+    } else {
+      ambiguous_ = left_chunk.ambiguous_ + ambiguous_;
+    }
+  }
   pending_ = left_chunk.pending_ + pending_;
 }
 
@@ -180,7 +190,11 @@ bool CharChunk::AddInputInternal(const Table &table, string *input) {
     const string new_pending_chars = input->substr(0, key_length);
     raw_.append(new_pending_chars);
     pending_.append(new_pending_chars);
-    ambiguous_.append(new_pending_chars);
+    if (!ambiguous_.empty()) {
+      // If ambiguos_ has already a value, ambiguous_ is appended.
+      // ex. "ny" makes ambiguous_ "んy", but "sh" leaves ambiguous_ empty.
+      ambiguous_.append(new_pending_chars);
+    }
     input->erase(0, key_length);
     return kNoLoop;
   }

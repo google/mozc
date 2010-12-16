@@ -703,4 +703,102 @@ void CharacterFormManager::SetDefaultRule() {
   data_->GetPreeditManager()->SetDefaultRule();
   data_->GetConversionManager()->SetDefaultRule();
 }
+
+namespace {
+// Almost the same as UTF8ToUCS2, but skip halfwidth
+// voice/semi-voice sound mark as they are treated as one character.
+const uint16 SkipHalfWidthVoiceSoundMark(const char *begin,
+                                         const char *end,
+                                         size_t *mblen) {
+  uint16 w = 0;
+  *mblen = 0;
+  while (begin < end) {
+    size_t tmp_mblen = 0;
+    w = Util::UTF8ToUCS2(begin, end, &tmp_mblen);
+    CHECK_GT(tmp_mblen, 0);
+    *mblen += tmp_mblen;
+    begin += tmp_mblen;
+    // 0xFF9E: Halfwidth voice sound mark
+    // 0xFF9F: Halfwidth semi-voice sound mark
+    if (w != 0xFF9E && w != 0xFF9F) {
+      break;
+    }
+  }
+
+  return w;
+}
+}   // namespace
+
+bool CharacterFormManager::GetFormTypesFromStringPair(
+    const string &input1, FormType *output_form1,
+    const string &input2, FormType *output_form2) {
+  CHECK(output_form1);
+  CHECK(output_form2);
+
+  *output_form1 = CharacterFormManager::UNKNOWN_FORM;
+  *output_form2 = CharacterFormManager::UNKNOWN_FORM;
+
+  if (input1.empty() || input2.empty()) {
+    return false;
+  }
+
+  const char *begin1 = input1.data();
+  const char *end1   = input1.data() + input1.size();
+  const char *begin2 = input2.data();
+  const char *end2   = input2.data() + input2.size();
+
+  while (begin1 < end1 && begin2 < end2) {
+    size_t mblen1 = 0;
+    size_t mblen2 = 0;
+    const uint16 w1 = SkipHalfWidthVoiceSoundMark(begin1, end1, &mblen1);
+    const uint16 w2 = SkipHalfWidthVoiceSoundMark(begin2, end2, &mblen2);
+    CHECK_GT(mblen1, 0);
+    CHECK_GT(mblen2, 0);
+    begin1 += mblen1;
+    begin2 += mblen2;
+
+    const Util::ScriptType script1 = Util::GetScriptType(w1);
+    const Util::ScriptType script2 = Util::GetScriptType(w2);
+    const Util::FormType form1 = Util::GetFormType(w1);
+    const Util::FormType form2 = Util::GetFormType(w2);
+
+    // TODO(taku): have to check that normalized w1 and w2 are identical
+    if (script1 != script2) {
+      return false;
+    }
+
+    DCHECK_EQ(script1, script2);
+
+    // when having different forms, record the diff.
+    if (form1 == Util::FULL_WIDTH && form2 == Util::HALF_WIDTH) {
+      if (*output_form1 == CharacterFormManager::HALF_WIDTH ||
+          *output_form2 == CharacterFormManager::FULL_WIDTH) {
+        // inconsitent with the previous forms.
+        return false;
+      }
+      *output_form1 = CharacterFormManager::FULL_WIDTH;
+      *output_form2 = CharacterFormManager::HALF_WIDTH;
+    } else if (form1 == Util::HALF_WIDTH && form2 == Util::FULL_WIDTH) {
+      if (*output_form1 == CharacterFormManager::FULL_WIDTH ||
+          *output_form2 == CharacterFormManager::HALF_WIDTH) {
+        // inconsitent with the previous forms.
+        return false;
+      }
+      *output_form1 = CharacterFormManager::HALF_WIDTH;
+      *output_form2 = CharacterFormManager::FULL_WIDTH;
+    }
+  }
+
+  // length should be the same
+  if (begin1 != end1 || begin2 != end2) {
+    return false;
+  }
+
+  if (*output_form1 == CharacterFormManager::UNKNOWN_FORM ||
+      *output_form2 == CharacterFormManager::UNKNOWN_FORM) {
+    return false;
+  }
+
+  return true;
+}
 }  // namespace mozc

@@ -32,10 +32,13 @@
 
 #include <set>
 #include <string>
+#include <vector>
 #include <utility>
 #include "converter/segments.h"
 
 namespace mozc {
+
+struct Node;
 
 class CandidateFilter {
  public:
@@ -49,14 +52,16 @@ class CandidateFilter {
   };
 
   // return ResultType
-  ResultType FilterCandidate(const Segment::Candidate *candidate);
+  ResultType FilterCandidate(const Segment::Candidate *candidate,
+                             const vector<const Node *> nodes);
 
   // reset internal state
   void Reset();
 
  private:
   ResultType FilterCandidateInternal(
-      const Segment::Candidate *candidate);
+      const Segment::Candidate *candidate,
+      const vector<const Node *> nodes);
 
   set<string> seen_;
   const Segment::Candidate *top_candidate_;

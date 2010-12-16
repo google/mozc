@@ -48,7 +48,7 @@ namespace {
 class AuxLibInitializer {
  public:
   AuxLibInitializer() {
-   ::AuxUlibInitialize();
+    ::AuxUlibInitialize();
   }
   bool IsDLLSynchronizationHeld(bool *lock_status) const {
     if (lock_status == NULL) {
@@ -218,7 +218,7 @@ bool WinUtil::SystemEqualString(
       const wstring &lhs, const wstring &rhs, bool ignore_case) {
   bool are_equal = false;
 
-  // We assume an string instance never contains NUL character in principle.
+  // We assume a string instance never contains NUL character in principle.
   // So we will raise an error to notify the unexpected situation in debug
   // builds.  In production, however, we will admit such an instance and
   // silently trim it at the first NUL character.

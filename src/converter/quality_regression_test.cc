@@ -34,121 +34,19 @@
 #include "base/base.h"
 #include "base/file_stream.h"
 #include "base/util.h"
-#include "converter/segments.h"
-#include "converter/converter_interface.h"
 #include "converter/quality_regression_test_data.h"
-#include "session/config_handler.h"
-#include "session/config.pb.h"
+#include "converter/quality_regression_util.h"
 #include "testing/base/public/gunit.h"
 
-// Do not rase exception even if error occurs
-DEFINE_bool(dryrun, false, "dryrun mode");
 DECLARE_string(test_tmpdir);
 
 namespace mozc {
 namespace {
 
-const char kConversionExpect[]    = "Conversion Expect";
-const char kConversionNotExpect[] = "Conversion Not Expect";
-const char kPredictionExpect[]    = "Prediction Expect";
-const char kPredictionNotExpect[] = "Prediction Not Expect";
-
-// copied from evaluation/quality_regression/evaluator.cc
-int GetRank(const string &value, const Segments *segments,
-              size_t current_pos, size_t current_segment) {
-  if (current_segment == segments->segments_size()) {
-    if (current_pos == value.size()) {
-      return 0;
-    } else {
-      return -1;
-    }
-  }
-  const Segment &seg = segments->segment(current_segment);
-  for (size_t i = 0; i < seg.candidates_size(); ++i) {
-    const string &cand_value = seg.candidate(i).value;
-    const size_t len = cand_value.size();
-    if (current_pos + len > value.size()) {
-      continue;
-    }
-    if (strncmp(cand_value.c_str(),
-                value.c_str() + current_pos, len) != 0) {
-      continue;
-    }
-    const int rest = GetRank(value, segments,
-                             current_pos + len, current_segment + 1);
-    if (rest == -1) {
-      continue;
-    }
-    return i + rest;
-  }
-  return -1;
-}
-
-
-bool ConvertAndTest(const ConverterInterface *converter,
-                    const string &key,
-                    const string &expected_value,
-                    const string &command,
-                    uint32 expected_rank,
-                    Segments *segments,
-                    string *actual_value) {
-  CHECK(segments);
-  CHECK(actual_value);
-
-  segments->Clear();
-  converter->ResetConversion(segments);
-  actual_value->clear();
-
-  const size_t expand_size = expected_rank + 32;
-
-  if (command == kConversionExpect ||
-      command == kConversionNotExpect) {
-    converter->StartConversion(segments, key);
-    if (expected_rank > 0) {
-      converter->GetCandidates(segments, 0, expand_size);
-    }
-  } else if (command == kPredictionExpect ||
-             command == kPredictionNotExpect) {
-    converter->StartPrediction(segments, key);
-  } else {
-    LOG(FATAL) << "Unknown command: " << command;
-  }
-
-  // No results is OK if "prediction not expect" command
-  if (command == kPredictionNotExpect &&
-      (segments->segments_size() == 0 ||
-       (segments->segments_size() >= 1 &&
-        segments->segment(0).candidates_size() == 0))) {
-    return true;
-  }
-
-  for (size_t i = 0; i < segments->segments_size(); ++i) {
-    *actual_value += segments->segment(i).candidate(0).value;
-  }
-
-  const int32 actual_rank = GetRank(expected_value, segments, 0, 0);
-
-  bool result = (actual_rank >= 0 && actual_rank <= expected_rank);
-
-  if (command == kConversionNotExpect ||
-      command == kPredictionNotExpect) {
-    result = !result;
-  }
-
-  return result;
-}
-
 TEST(QualityRegressionTest, BasicTest) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
-  CHECK(converter);
-
   Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+  quality_regression::QualityRegressionUtil util;
 
-  config::Config config;
-  config::ConfigHandler::GetDefaultConfig(&config);
-  config::ConfigHandler::SetConfig(config);
-
-  Segments segments;
   map<string, vector<pair<float, string> > > results;
 
   for (size_t i = 0; i < arraysize(kTestData); ++i) {
@@ -166,10 +64,10 @@ TEST(QualityRegressionTest, BasicTest) {
     CHECK_LE(expected_ratio, 1.0);
 
     string actual_value;
-    const  bool test_result = ConvertAndTest(converter, key,
-                                             expected_value,
-                                             command, expected_rank,
-                                             &segments, &actual_value);
+    const  bool test_result = util.ConvertAndTest(key,
+                                                  expected_value,
+                                                  command, expected_rank,
+                                                  &actual_value);
     line += "\tActual: ";
     line += actual_value;
     if (test_result) {

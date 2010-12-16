@@ -44,6 +44,7 @@
 #include "base/stats_config_util.h"
 #include "gui/config_dialog/keymap_editor.h"
 #include "gui/config_dialog/roman_table_editor.h"
+#include "gui/base/win_util.h"
 #include "ipc/ipc.h"
 #include "session/commands.pb.h"
 #include "session/config_handler.h"
@@ -287,6 +288,10 @@ ConfigDialog::ConfigDialog()
   // If the keymap is a custome keymap (= 0), the buttion is activated.
   editKeymapButton->setEnabled(keymapSettingComboBox->currentIndex() == 0);
 
+#ifdef OS_WINDOWS
+  IMEHotKeyDisabledCheckBox->setChecked(WinUtil::GetIMEHotKeyDisabled());
+#endif
+
 #ifdef CHANNEL_DEV
   usageStatsCheckBox->setEnabled(false);
 #endif  // CHANNEL_DEV
@@ -360,6 +365,15 @@ bool ConfigDialog::Update() {
                           tr("Mozc settings"),
                           tr("Failed to update config"));
   }
+
+#ifdef OS_WINDOWS
+  if (!WinUtil::SetIMEHotKeyDisabled(IMEHotKeyDisabledCheckBox->isChecked())) {
+    // Do not show any dialog here, since this operation will not fail
+    // in almost all cases.
+    // TODO(taku): better to show dialog?
+    LOG(ERROR) << "Failed to update IME HotKey status";
+  }
+#endif
 
   return true;
 }

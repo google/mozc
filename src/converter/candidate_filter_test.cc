@@ -33,7 +33,10 @@
 #include <string>
 #include <vector>
 #include "base/base.h"
+#include "base/freelist.h"
 #include "base/util.h"
+#include "converter/node.h"
+#include "converter/pos_matcher.h"
 #include "converter/segments.h"
 #include "testing/base/public/gunit.h"
 
@@ -42,102 +45,189 @@ namespace mozc {
 class CandidateFilterTest : public testing::Test {
  protected:
   virtual void SetUp() {
+    candidate_freelist_.reset(new FreeList<Segment::Candidate>(1024));
+    node_freelist_.reset(new FreeList<Node>(1024));
   }
 
-  virtual void TearDown() {}
+  virtual void TearDown() {
+    candidate_freelist_->Free();
+    node_freelist_->Free();
+  }
 
-  Segment::Candidate *GetCandidate() {
-    Segment::Candidate *c = new Segment::Candidate;
+  void GetDefaultNodes(vector<const Node *> *nodes) {
+    nodes->clear();
+    Node *n1 = NewNode();
+    // "てすと"
+    n1->value = "\xE3\x81\xA6\xE3\x81\x99\xE3\x81\xA8";
+    n1->lid = POSMatcher::GetUnknownId();
+    n1->rid = POSMatcher::GetUnknownId();
+    nodes->push_back(n1);
+
+    Node *n2 = NewNode();
+    // "てすと"
+    n2->value = "\xE3\x81\xA6\xE3\x81\x99\xE3\x81\xA8";
+    n2->lid = POSMatcher::GetFunctionalId();
+    n2->rid = POSMatcher::GetFunctionalId();
+    nodes->push_back(n2);
+  }
+
+  Node *NewNode() {
+    Node *n = node_freelist_->Alloc(1);
+    n->Init();
+    return n;
+  }
+
+  Segment::Candidate *NewCandidate() {
+    Segment::Candidate *c = candidate_freelist_->Alloc(1);
     c->Init();
     c->cost = 100;
     c->structure_cost = 100;
     return c;
   }
+
+ private:
+  scoped_ptr<FreeList<Segment::Candidate> > candidate_freelist_;
+  scoped_ptr<FreeList<Node> > node_freelist_;
 };
 
 TEST_F(CandidateFilterTest, FilterTest) {
   CandidateFilter filter;
-  scoped_ptr<Segment::Candidate> c1(GetCandidate());
+  vector<const Node *> n;
+
+  GetDefaultNodes(&n);
+  Segment::Candidate *c1 = NewCandidate();
   c1->value = "abc";
   EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
-            filter.FilterCandidate(c1.get()));
+            filter.FilterCandidate(c1, n));
 
-  scoped_ptr<Segment::Candidate> c2(GetCandidate());
+  Segment::Candidate *c2 = NewCandidate();
   c2->value = "abc";
   // Same value candidate should be rejected.
   EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
-            filter.FilterCandidate(c2.get()));
+            filter.FilterCandidate(c2, n));
 
-  scoped_ptr<Segment::Candidate> c3(GetCandidate());
+  Segment::Candidate *c3 = NewCandidate();
   c3->structure_cost = INT_MAX;
   c3->value = "def";
   // High structure cost candidate should be rejected.
   EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
-            filter.FilterCandidate(c3.get()));
+            filter.FilterCandidate(c3, n));
 
-  scoped_ptr<Segment::Candidate> c4(GetCandidate());
+  Segment::Candidate *c4 = NewCandidate();
   // Checks if a canidate is active before appending many candidates.
   EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
-            filter.FilterCandidate(c4.get()));
+            filter.FilterCandidate(c4, n));
 
   // Though CandidateFilter may change its limit, 1000 should
   // be always above the limit.
-  vector<Segment::Candidate *> vec;
   for (int i = 0; i < 1000; ++i) {
-    Segment::Candidate *cand = GetCandidate();
+    Segment::Candidate *cand = NewCandidate();
     char buf[10];
     snprintf(buf, sizeof(buf), "%d", i);
     cand->value = string(buf);
-    filter.FilterCandidate(cand);
-    vec.push_back(cand);
+    filter.FilterCandidate(cand, n);
   }
   // There will be no more candidates.
   EXPECT_EQ(CandidateFilter::STOP_ENUMERATION,
-            filter.FilterCandidate(c4.get()));
+            filter.FilterCandidate(c4, n));
+}
 
+TEST_F(CandidateFilterTest, KatakanaT13N) {
+  {
+    CandidateFilter filter;
+    vector<const Node *> nodes;
+    GetDefaultNodes(&nodes);
+    // nodes[0] is KatakanaT13N
+    Segment::Candidate *c = NewCandidate();
+    c->value = "abc";
+    Node *n = NewNode();
+    n->lid = POSMatcher::GetUnknownId();
+    n->rid = POSMatcher::GetUnknownId();
+    n->value = "abc";
+    nodes[0] = n;
+    EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
+              filter.FilterCandidate(c, nodes));
+  }
 
-  // Deletes them manually instead of STLDeleteContainerPointers.
-  for (int i = 0; i < 1000; ++i) {
-    delete vec[i];
+  {
+    CandidateFilter filter;
+    vector<const Node *> nodes;
+    GetDefaultNodes(&nodes);
+    // nodes[1] is KatakanaT13N
+    Segment::Candidate *c = NewCandidate();
+    c->value = "abc";
+    Node *n = NewNode();
+    n->lid = POSMatcher::GetFunctionalId();
+    n->rid = POSMatcher::GetFunctionalId();
+    n->value = "abc";
+    nodes[1] = n;
+    EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
+              filter.FilterCandidate(c, nodes));
+  }
+
+  {
+    CandidateFilter filter;
+    vector<const Node *> nodes;
+    GetDefaultNodes(&nodes);
+    // nodes[1] is not a functional word
+    Segment::Candidate *c = NewCandidate();
+    c->value = "abc";
+    Node *n1 = NewNode();
+    n1->lid = POSMatcher::GetUnknownId();
+    n1->rid = POSMatcher::GetUnknownId();
+    n1->value = "abc";
+    nodes[0] = n1;
+
+    Node *n2 = NewNode();
+    n2->lid = POSMatcher::GetUnknownId();
+    n2->rid = POSMatcher::GetUnknownId();
+    // "てすと";
+    n2->value = "\xE3\x81\xA6\xE3\x81\x99\xE3\x81\xA8";
+    nodes[1] = n2;
+    EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
+              filter.FilterCandidate(c, nodes));
   }
 }
 
 TEST_F(CandidateFilterTest, MayHaveMoreCandidates) {
   CandidateFilter filter;
-  scoped_ptr<Segment::Candidate> c1(GetCandidate());
+  vector<const Node *> n;
+  GetDefaultNodes(&n);
+
+  Segment::Candidate *c1 = NewCandidate();
   c1->value = "abc";
   EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
-            filter.FilterCandidate(c1.get()));
+            filter.FilterCandidate(c1, n));
 
-  scoped_ptr<Segment::Candidate> c2(GetCandidate());
+  Segment::Candidate *c2 = NewCandidate();
   c2->value = "abc";
   // Though same value candidate is rejected, enumeration should continue.
   EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
-            filter.FilterCandidate(c2.get()));
+            filter.FilterCandidate(c2, n));
 
-  scoped_ptr<Segment::Candidate> c3(GetCandidate());
+  Segment::Candidate *c3 = NewCandidate();
   c3->structure_cost = INT_MAX;
   c3->value = "def";
   // High structure cost should not Stop enumeration.
   EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
-            filter.FilterCandidate(c3.get()));
+            filter.FilterCandidate(c3, n));
 
-  scoped_ptr<Segment::Candidate> c4(GetCandidate());
+  Segment::Candidate *c4 = NewCandidate();
   c4->cost = INT_MAX;
   c4->structure_cost = INT_MAX;
   c4->value = "ghi";
   // High cost candidate should be rejected.
   EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
-            filter.FilterCandidate(c4.get()));
+            filter.FilterCandidate(c4, n));
 
   // Insert many valid candidates
   for (int i = 0; i < 50; ++i) {
-    scoped_ptr<Segment::Candidate> tmp(GetCandidate());
+    Segment::Candidate *tmp = NewCandidate();
     tmp->value = Util::SimpleItoa(i) + "test";
-    filter.FilterCandidate(tmp.get());
+    filter.FilterCandidate(tmp, n);
   }
 
-  scoped_ptr<Segment::Candidate> c5(GetCandidate());
+  Segment::Candidate *c5 = NewCandidate();
   c5->cost = INT_MAX;
   c5->structure_cost = INT_MAX;
   c5->value = "ghi";
@@ -146,6 +236,6 @@ TEST_F(CandidateFilterTest, MayHaveMoreCandidates) {
   // filter has seen more than 50 good candidates.
   c5->value = "ghi2";
   EXPECT_EQ(CandidateFilter::STOP_ENUMERATION,
-            filter.FilterCandidate(c5.get()));
+            filter.FilterCandidate(c5, n));
 }
 }  // namespace mozc

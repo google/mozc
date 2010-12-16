@@ -87,9 +87,7 @@ class Segment {
     uint8  style;  // candidate style added by rewriters
     bool can_expand_alternative;  // Can expand full/half width form
     bool is_spelling_correction;
-    // for experimant of removing noisy candidates
-    // TODO(toshiyuki): delete this member after the experiment
-    vector<const Node *> nodes;
+
     void Init() {
       key.clear();
       value.clear();
@@ -100,7 +98,6 @@ class Segment {
       description.clear();
       usage_title.clear();
       usage_description.clear();
-      nodes.clear();
       cost = 0;
       structure_cost = 0;
       wcost = 0;
@@ -134,10 +131,12 @@ class Segment {
     // 4) Zipcode description (XXX-XXXX)
     //     * note that this overrides other descriptions
     enum DescriptionType {
-      FULL_HALF_WIDTH = 1,
-      CHARACTER_FORM = 2,
-      PLATFORM_DEPENDENT_CHARACTER = 4,
-      ZIPCODE = 8,
+      FULL_HALF_WIDTH = 1,   // automatically detect full/haflwidth.
+      HALF_WIDTH = 2,        // always set half width description.
+      FULL_WIDTH = 4,        // always set full width description.
+      CHARACTER_FORM = 8,
+      PLATFORM_DEPENDENT_CHARACTER = 16,
+      ZIPCODE = 32,
     };
 
     // Candidate types
@@ -238,13 +237,8 @@ class Segment {
   // move old_idx-th-candidate to new_index
   void move_candidate(int old_idx, int new_idx);
 
-  // return true if value is alrady in the candidate
-  // do not call this method frequently, it just does linear search
-  bool has_candidate_value(const string &value) const;
-
   NBestGenerator *nbest_generator() const;
 
-  bool Expand(size_t size);
   bool GetCandidates(size_t size);
 
   // When candidate(i).value() has both halfwidth and fullwidth
@@ -272,6 +266,10 @@ class Segment {
   static bool ExpandEnglishVariants(const string &input,
                                     vector<string> *variants);
 
+  // return true if |value| is katakana to English transliteration.
+  // TODO(taku): move it to base/util.h
+  static bool IsKatakanaT13NValue(const string &value);
+
   void clear();
   void Clear();
 
@@ -284,15 +282,10 @@ class Segment {
   deque<Candidate *> candidates_;
   vector<Candidate>  meta_candidates_;
   size_t requested_candidates_size_;
-  scoped_ptr<NBestGenerator> nbest_generator_;
-  scoped_ptr<ObjectPool<Candidate> > pool_;
   bool initialized_transliterations_;
   bool all_expanded_;
-  // Maximum prefix length of Katakana t13n candidate.
-  // We only allow that one katakana key is converted into English.
-  // This length saves the length of Katakana which appeared at first.
-  // TODO(taku): remove it when we improve the candidate filter's accuracy
-  size_t katakana_t13n_length_;
+  scoped_ptr<NBestGenerator> nbest_generator_;
+  scoped_ptr<ObjectPool<Candidate> > pool_;
   DISALLOW_COPY_AND_ASSIGN(Segment);
 };
 
@@ -389,7 +382,7 @@ class Segments {
   void set_max_prediction_candidates_size(size_t size);
   size_t max_prediction_candidates_size() const;
 
-  bool has_resized() const;
+  bool resized() const;
   void set_resized(bool resized);
 
   // Removes specified number of characters at the end of history segments.
@@ -402,7 +395,8 @@ class Segments {
   void clear();
   void Clear();
 
-  void DebugString(string *output) const;
+  // Dump Segments structure
+  string DebugString() const;
 
   // return lattice instance
   Lattice *lattice() const;

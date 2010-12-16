@@ -36,8 +36,9 @@
 
 #include <unistd.h>
 
-#import "mac/KeyCodeMap.h"
+#import "mac/GoogleJapaneseInputControllerInterface.h"
 #import "mac/GoogleJapaneseInputServer.h"
+#import "mac/KeyCodeMap.h"
 
 #include "base/const.h"
 #include "base/logging.h"
@@ -68,66 +69,17 @@ using mozc::kProductNameInEnglish;
 using mozc::once_t;
 using mozc::CallOnce;
 
-@interface GoogleJapaneseInputController ()
-// Updates |composedString_| from the result of a key event and put
-// the updated composed string to the client application.
-- (void)updateComposedString:(const Preedit *)preedit;
-
-// Updates |candidates_| from the result of a key event.
-- (void)updateCandidates:(const Output *)output client:(id)sender;
-
-// Clear all candidate data in |candidates_|.
-- (void)clearCandidates;
-
-// Open link specified by the URL.
-- (void)openLink:(NSURL *)url;
-
-
-// Ask the converter to the current input mode and update roman/kana
-// input.  Need to specify |sender| to check the capability at the same time.
-- (void)handleInputMode:(id)sender;
-
-// Switches to a new mode and sync the current mode with the converter.
-- (void)switchMode:(CompositionMode)new_mode client:(id)sender;
-
-// Switch the mode icon in the task bar according to |mode_|.
-- (void)switchDisplayMode:(id)sender;
-@end
-
 namespace {
 // set of bundle IDs of applications on which Mozc should not open urls.
-NSSet * gNoOpenLinkApps = nil;
-once_t gOnceForNoOpenLinkApps = MOZC_ONCE_INIT;
-
-void InitializeBundleIdSets() {
-  gNoOpenLinkApps =
-      [NSSet setWithObjects:@"com.apple.securityagent", nil];
-}
-
-
-// a mapping of internal mode and external mode id
-// (like DIRECT -> com.gooogle.inputmethod.Japanese.Roman).
+NSSet *gNoOpenLinkApps = nil;
+// The mapping from the CompositionMode enum to the actual id string
+// of composition modes.
 const map<CompositionMode, NSString *> *gModeIdMap = NULL;
-once_t gOnceForModeIdMap = MOZC_ONCE_INIT;
 
 NSString *GetLabelForSuffix(const string &suffix) {
   string label = mozc::MacUtil::GetLabelForSuffix(suffix);
   return [[NSString stringWithUTF8String:label.c_str()] retain];
 }
-
-void InitializeModeIdMap() {
-  map<CompositionMode, NSString *> *newMap =
-      new map<CompositionMode, NSString *>;
-  (*newMap)[mozc::commands::DIRECT] = GetLabelForSuffix("Roman");
-  (*newMap)[mozc::commands::HIRAGANA] = GetLabelForSuffix("base");
-  (*newMap)[mozc::commands::FULL_KATAKANA] = GetLabelForSuffix("Katakana");
-  (*newMap)[mozc::commands::HALF_ASCII] = GetLabelForSuffix("Roman");
-  (*newMap)[mozc::commands::FULL_ASCII] = GetLabelForSuffix("FullWidthRoman");
-  (*newMap)[mozc::commands::HALF_KATAKANA] =
-      GetLabelForSuffix("FullWidthRoman");
-  gModeIdMap = newMap;
-}
-
 
 CompositionMode GetCompositionMode(NSString *modeID) {
   if (modeID == NULL) {
@@ -180,8 +132,26 @@ CompositionMode GetCompositionMode(NSString *modeID) {
 
 
 @implementation GoogleJapaneseInputController
-#pragma mark properties
-@synthesize session = session_;
+#pragma mark accessors for testing
+@synthesize keyCodeMap = keyCodeMap_;
+@synthesize yenSignCharacter = yenSignCharacter_;
+@synthesize mode = mode_;
+@synthesize rendererCommand = rendererCommand_;
+- (mozc::client::SessionInterface *)session {
+  return session_;
+}
+- (void)setSession:(mozc::client::SessionInterface *)newSession {
+  delete session_;
+  session_ = newSession;
+}
+- (mozc::renderer::RendererInterface *)renderer {
+  return candidateController_;
+}
+- (void)setRenderer:(mozc::renderer::RendererInterface *)newRenderer {
+  delete candidateController_;
+  candidateController_ = newRenderer;
+}
+
 
 #pragma mark object init/dealloc
 // Initializer designated in IMKInputController. see:
@@ -195,22 +165,22 @@ CompositionMode GetCompositionMode(NSString *modeID) {
     return self;
   }
   keyCodeMap_ = [[KeyCodeMap alloc] init];
+  clientBundle_ = [[inputClient bundleIdentifier] copy];
   originalString_ = [[NSMutableString alloc] init];
-  resourcePath_ = [[[server bundle] resourcePath] copy];
   composedString_ = [[NSMutableAttributedString alloc] init];
   cursorPosition_ = NSNotFound;
-  replacementRange_ = NSMakeRange(NSNotFound, NSNotFound);
   mode_ = mozc::commands::DIRECT;
   checkInputMode_ = YES;
   yenSignCharacter_ = mozc::config::Config::YEN_SIGN;
   candidateController_ = new(nothrow) mozc::renderer::RendererClient;
   rendererCommand_ = new(nothrow)RendererCommand;
   session_ = new(nothrow) mozc::client::Session();
+  server_ = reinterpret_cast<id<ServerCallback> >(server);
 
-  if (![NSBundle loadNibNamed:@"Config" owner:self] ||
-      !originalString_ || !resourcePath_ || !composedString_ ||
-      !candidateController_ || !rendererCommand_ ||
-      !session_) {
+  // We don't check the return value of NSBundle because it fails during tests.
+  [NSBundle loadNibNamed:@"Config" owner:self];
+  if (!originalString_ || !composedString_ || !candidateController_ ||
+      !rendererCommand_ || !session_) {
     [self release];
     self = nil;
   } else {
@@ -230,14 +200,12 @@ CompositionMode GetCompositionMode(NSString *modeID) {
     applicationInfo->set_receiver_handle(0);
   }
 
-  CallOnce(&gOnceForModeIdMap, InitializeModeIdMap);
   return self;
 }
 
 - (void)dealloc {
   [keyCodeMap_ release];
   [originalString_ release];
-  [resourcePath_ release];
   [composedString_ release];
   [clientBundle_ release];
   delete candidateController_;
@@ -249,6 +217,23 @@ CompositionMode GetCompositionMode(NSString *modeID) {
 
 - (NSMenu*)menu {
   return menu_;
+}
+
++ (void)initializeConstants {
+  // should not open links during screensaver.
+  gNoOpenLinkApps =
+      [NSSet setWithObjects:@"com.apple.securityagent", nil];
+
+  map<CompositionMode, NSString *> *newMap =
+      new map<CompositionMode, NSString *>;
+  (*newMap)[mozc::commands::DIRECT] = GetLabelForSuffix("Roman");
+  (*newMap)[mozc::commands::HIRAGANA] = GetLabelForSuffix("base");
+  (*newMap)[mozc::commands::FULL_KATAKANA] = GetLabelForSuffix("Katakana");
+  (*newMap)[mozc::commands::HALF_ASCII] = GetLabelForSuffix("Roman");
+  (*newMap)[mozc::commands::FULL_ASCII] = GetLabelForSuffix("FullWidthRoman");
+  (*newMap)[mozc::commands::HALF_KATAKANA] =
+      GetLabelForSuffix("FullWidthRoman");
+  gModeIdMap = newMap;
 }
 
 #pragma mark IMKStateSetting Protocol
@@ -265,7 +250,7 @@ CompositionMode GetCompositionMode(NSString *modeID) {
   if (rendererCommand_->visible() && candidateController_) {
     candidateController_->ExecCommand(*rendererCommand_);
   }
-  [[GoogleJapaneseInputServer getServer] setCurrentController:self];
+  [server_ setCurrentController:self];
   DLOG(INFO) << [[NSString stringWithFormat:
                              @"%s client (%@): activated for %@",
                            kProductNameInEnglish, self, sender] UTF8String];
@@ -307,47 +292,55 @@ CompositionMode GetCompositionMode(NSString *modeID) {
   [super setValue:value forTag:tag client:sender];
 }
 
-- (void)switchMode:(CompositionMode)new_mode client:(id)sender {
-  // Checks the consistency among |mode_| and the detected input mode.
-  if (mode_ != mozc::commands::DIRECT && new_mode == mozc::commands::DIRECT) {
-    // Input mode changes to direct.
-    mode_ = mozc::commands::DIRECT;
-    DLOG(INFO) << "Mode switch: HIRAGANA, KATAKANA, etc. -> DIRECT";
+// Mode changes to direct and clean up the status.
+- (void)switchModeToDirect:(id)sender {
+  mode_ = mozc::commands::DIRECT;
+  DLOG(INFO) << "Mode switch: HIRAGANA, KATAKANA, etc. -> DIRECT";
+  KeyEvent keyEvent;
+  Output output;
+  keyEvent.set_special_key(mozc::commands::KeyEvent::OFF);
+  session_->SendKey(keyEvent, &output);
+  if (output.has_result()) {
+    NSString *result_text =
+        [NSString
+            stringWithUTF8String:output.result().value().c_str()];
+    [sender insertText:result_text
+      replacementRange:NSMakeRange(NSNotFound, 0)];
+  }
+  if ([composedString_ length] > 0) {
+    [self updateComposedString:NULL];
+    [self clearCandidates];
+  }
+}
+
+// change the mode to the new mode and turn-on the IME if necessary.
+- (void)switchModeInternal:(CompositionMode)new_mode {
+  if (mode_ == mozc::commands::DIRECT) {
+    // Input mode changes from direct to an active mode.
+    DLOG(INFO) << "Mode switch: DIRECT -> HIRAGANA, KATAKANA, etc.";
     KeyEvent keyEvent;
     Output output;
-    keyEvent.set_special_key(mozc::commands::KeyEvent::OFF);
+    keyEvent.set_special_key(mozc::commands::KeyEvent::ON);
     session_->SendKey(keyEvent, &output);
-    if (output.has_result()) {
-      NSString *result_text =
-          [NSString
-            stringWithUTF8String:output.result().value().c_str()];
-      [sender insertText:result_text
-              replacementRange:NSMakeRange(NSNotFound, 0)];
-    }
-    if ([composedString_ length] > 0) {
-      [self updateComposedString:NULL];
-      [self clearCandidates];
-    }
-  } else if (new_mode != mozc::commands::DIRECT) {
-    if (mode_ == mozc::commands::DIRECT) {
-      // Input mode changes from direct to an active mode.
-      DLOG(INFO) << "Mode switch: DIRECT -> HIRAGANA, KATAKANA, etc.";
-      KeyEvent keyEvent;
-      Output output;
-      keyEvent.set_special_key(mozc::commands::KeyEvent::ON);
-      session_->SendKey(keyEvent, &output);
-    }
+  }
 
-    if (mode_ != new_mode) {
-      // Switch input mode.
-      DLOG(INFO) << "Switch input mode.";
-      SessionCommand command;
-      command.set_type(mozc::commands::SessionCommand::SWITCH_INPUT_MODE);
-      command.set_composition_mode(new_mode);
-      Output output;
-      session_->SendCommand(command, &output);
-      mode_ = new_mode;
-    }
+  if (mode_ != new_mode) {
+    // Switch input mode.
+    DLOG(INFO) << "Switch input mode.";
+    SessionCommand command;
+    command.set_type(mozc::commands::SessionCommand::SWITCH_INPUT_MODE);
+    command.set_composition_mode(new_mode);
+    Output output;
+    session_->SendCommand(command, &output);
+    mode_ = new_mode;
+  }
+}
+
+- (void)switchMode:(CompositionMode)new_mode client:(id)sender {
+  if (mode_ != mozc::commands::DIRECT && new_mode == mozc::commands::DIRECT) {
+    [self switchModeToDirect:sender];
+  } else if (new_mode != mozc::commands::DIRECT) {
+    [self switchModeInternal:new_mode];
   }
 }
 
@@ -366,22 +359,8 @@ CompositionMode GetCompositionMode(NSString *modeID) {
   [sender selectInputMode:it->second];
 }
 
-- (void)handleInputMode:(id)sender {
+- (void)handleInputMode {
   if (!checkInputMode_) {
-    return;
-  }
-
-  // Check the capability of the client application and sends the capability
-  Capability capability;
-  NSRange selectedRange = [sender selectedRange];
-  if (selectedRange.location != NSNotFound &&
-      selectedRange.length != NSNotFound) {
-    capability.set_text_deletion(Capability::DELETE_PRECEDING_TEXT);
-  }
-  session_->set_client_capability(capability);
-
-  if (mode_ == mozc::commands::DIRECT) {
-    // Do not want to invoke the converter during the direct mode.
     return;
   }
 
@@ -425,13 +404,13 @@ CompositionMode GetCompositionMode(NSString *modeID) {
   cursorPosition_ = NSNotFound;
   if (preedit != NULL) {
     cursorPosition_ = preedit->cursor();
-    NSDictionary *highlightAttributes =
-        [self markForStyle:kTSMHiliteSelectedConvertedText
-              atRange:NSMakeRange(NSNotFound, 0)];
-    NSDictionary *underlineAttributes =
-        [self markForStyle:kTSMHiliteConvertedText
-              atRange:NSMakeRange(NSNotFound, 0)];
     for (size_t i = 0; i < preedit->segment_size(); ++i) {
+      NSDictionary *highlightAttributes =
+          [self markForStyle:kTSMHiliteSelectedConvertedText
+                     atRange:NSMakeRange(NSNotFound, 0)];
+      NSDictionary *underlineAttributes =
+          [self markForStyle:kTSMHiliteConvertedText
+                     atRange:NSMakeRange(NSNotFound, 0)];
       const Preedit::Segment& seg = preedit->segment(i);
       NSDictionary *attr = (seg.annotation() == Preedit::Segment::HIGHLIGHT)?
           highlightAttributes : underlineAttributes;
@@ -489,14 +468,6 @@ CompositionMode GetCompositionMode(NSString *modeID) {
       NSMakeRange(cursorPosition_, 0);
 }
 
-// |replacementRange| method is defined at IMKInputController class.
-// It returns the range where compositions/results should be inserted.
-- (NSRange)replacementRange {
-  return (replacementRange_.location == NSNotFound) ?
-      [super replacementRange] :  // default behavior defined at super class
-      replacementRange_;
-}
-
 - (void)updateCandidates:(const Output *)output client:(id)sender {
   if (output == NULL) {
     [self clearCandidates];
@@ -549,7 +520,6 @@ CompositionMode GetCompositionMode(NSString *modeID) {
   // On some application like login window of screensaver, opening
   // link behavior should not happen because it can cause some
   // security issues.
-  CallOnce(&gOnceForNoOpenLinkApps, InitializeBundleIdSets);
   if (!clientBundle_ || [gNoOpenLinkApps containsObject:clientBundle_]) {
     return;
   }
@@ -572,7 +542,7 @@ CompositionMode GetCompositionMode(NSString *modeID) {
     return YES;
   }
 
-  [self handleInputMode:sender];
+  [self handleInputMode];
 
   // Get the Mozc key event
   KeyEvent keyEvent;
@@ -618,35 +588,12 @@ CompositionMode GetCompositionMode(NSString *modeID) {
     output.clear_url();
   }
 
-  // Initialize the position of the composition text.  selectedRange
-  // returns the position where composition will be inserted.
-  if ([composedString_ length] == 0) {
-    replacementRange_ = [sender selectedRange];
-  }
-
-  if (output.has_deletion_range()) {
-    if (replacementRange_.location != NSNotFound &&
-        replacementRange_.length != NSNotFound) {
-      // When there is already composition text, we can't remove text.
-      // Thus we clear composition at this time.  Actual new
-      // composition will be set below.
-      if ([composedString_ length] > 0) {
-        [self updateComposedString:NULL];
-      }
-
-      replacementRange_.location += output.deletion_range().offset();
-      replacementRange_.length = output.deletion_range().length();
-    }
-  }
-
   if (output.has_result()) {
     NSString *resultText =
         [NSString
           stringWithUTF8String:output.result().value().c_str()];
     [sender insertText:resultText
-      replacementRange:replacementRange_];
-    // Clear the position where composition is inserted.
-    replacementRange_.location = NSNotFound;
+      replacementRange:NSMakeRange(NSNotFound, 0)];
   }
   if (output.consumed()) {
     [self updateComposedString:&(output.preedit())];

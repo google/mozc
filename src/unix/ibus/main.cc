@@ -43,7 +43,10 @@ DEFINE_bool(ibus, false, "The engine is started by ibus-daemon");
 namespace {
 
 IBusBus *g_bus = NULL;
+#ifdef OS_CHROMEOS
+// We use the ibus configuration daemon only on Chromium OS.
 IBusConfig *g_config = NULL;
+#endif
 
 #ifndef OS_CHROMEOS
 void EnableVerboseLog() {
@@ -97,20 +100,28 @@ void InitIBusComponent(bool executed_by_ibus_daemon) {
                    "disconnected",
                    G_CALLBACK(mozc::ibus::MozcEngine::Disconnected),
                    NULL);
+
+#ifdef OS_CHROMEOS
   g_config = ibus_bus_get_config(g_bus);
   g_object_ref_sink(g_config);
   g_signal_connect(g_config,
                    "value-changed",
                    G_CALLBACK(mozc::ibus::MozcEngine::ConfigValueChanged),
                    NULL);
+#endif
 
   IBusComponent *component = GetIBusComponent();
   IBusFactory *factory = ibus_factory_new(ibus_bus_get_connection(g_bus));
   GList *engines = ibus_component_get_engines(component);
   for (GList *p = engines; p; p = p->next) {
     IBusEngineDesc *engine = reinterpret_cast<IBusEngineDesc*>(p->data);
+#if IBUS_CHECK_VERSION(1, 3, 99)
+    const gchar * const engine_name = ibus_engine_desc_get_name(engine);
+#else
+    const gchar * const engine_name = engine->name;
+#endif
     ibus_factory_add_engine(
-        factory, engine->name, mozc::ibus::MozcEngine::GetType());
+        factory, engine_name, mozc::ibus::MozcEngine::GetType());
   }
 
   if (executed_by_ibus_daemon) {
@@ -134,8 +145,12 @@ int main(gint argc, gchar **argv) {
   IgnoreSigChild();
 #endif
   ibus_main();
+
+#ifdef OS_CHROMEOS
   if (g_config) {
     g_object_unref(g_config);
   }
+#endif
+
   return 0;
 }

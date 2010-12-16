@@ -1097,7 +1097,7 @@
       <property name="geometry">
        <rect>
         <x>30</x>
-        <y>170</y>
+        <y>200</y>
         <width>371</width>
         <height>41</height>
        </rect>
@@ -1126,7 +1126,7 @@
       <property name="geometry">
        <rect>
         <x>20</x>
-        <y>151</y>
+        <y>181</y>
         <width>391</width>
         <height>20</height>
        </rect>
@@ -1158,7 +1158,7 @@
       <property name="geometry">
        <rect>
         <x>20</x>
-        <y>84</y>
+        <y>114</y>
         <width>391</width>
         <height>21</height>
        </rect>
@@ -1190,8 +1190,8 @@
       <property name="geometry">
        <rect>
         <x>30</x>
-        <y>104</y>
-        <width>386</width>
+        <y>134</y>
+        <width>371</width>
         <height>32</height>
        </rect>
       </property>
@@ -1267,6 +1267,19 @@
       </property>
       <property name="tristate">
        <bool>false</bool>
+      </property>
+     </widget>
+     <widget class="QCheckBox" name="IMEHotKeyDisabledCheckBox">
+      <property name="geometry">
+       <rect>
+        <x>30</x>
+        <y>75</y>
+        <width>369</width>
+        <height>17</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Disable Keyboard layout hotkey (Ctrl+Shift)</string>
       </property>
      </widget>
     </widget>
@@ -1383,6 +1396,7 @@
   <tabstop>usageStatsCheckBox</tabstop>
   <tabstop>launchAdministrationDialogButtonForUsageStats</tabstop>
   <tabstop>checkDefaultCheckBox</tabstop>
+  <tabstop>IMEHotKeyDisabledCheckBox</tabstop>
   <tabstop>launchAdministrationDialogButton</tabstop>
   <tabstop>verboseLevelComboBox</tabstop>
  </tabstops>

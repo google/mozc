@@ -95,11 +95,21 @@ class MozcEngine : public EngineInterface {
   // The callback function to the "disconnected" signal to the bus object.
   static void Disconnected(IBusBus *bus, gpointer user_data);
   // The callback function to the "value-changed" signal to the config object.
+#ifdef OS_CHROMEOS
+#if IBUS_CHECK_VERSION(1, 3, 99)
+  static void ConfigValueChanged(IBusConfig *config,
+                                 const gchar *section,
+                                 const gchar *name,
+                                 GVariant *value,
+                                 gpointer user_data);
+#else
   static void ConfigValueChanged(IBusConfig *config,
                                  const gchar *section,
                                  const gchar *name,
                                  GValue *value,
                                  gpointer user_data);
+#endif
+#endif  // OS_CHROMEOS
 
   // Manages modifier keys.  Returns false if it should not be sent to server.
   // It is static for unittest.
@@ -122,7 +132,16 @@ class MozcEngine : public EngineInterface {
   bool UpdateCandidates(IBusEngine *engine,
                         const commands::Output &output);
   // Updates the configuration.
-  void UpdateConfig(const gchar *section, const gchar *name, GValue *gvalue);
+#ifdef OS_CHROMEOS
+#if IBUS_CHECK_VERSION(1, 3, 99)
+  void UpdateConfig(
+      const gchar *section, const gchar *name, GVariant *gvalue);
+#else
+  void UpdateConfig(
+      const gchar *section, const gchar *name, GValue *gvalue);
+#endif
+#endif  // OS_CHROMEOS
+
   // Updates the composition mode based on the content of |output|.
   void UpdateCompositionMode(
       IBusEngine *engine, const commands::CompositionMode new_composition_mode);

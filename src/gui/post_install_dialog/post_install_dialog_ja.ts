@@ -38,6 +38,11 @@
         <source>Log off &amp;Now</source>
         <translation>今すぐログオフ(&amp;N)</translation>
     </message>
+    <message>
+        <location filename="post_install_dialog.ui" line="107"/>
+        <source>Disable Keyboard layout hotkey (Ctrl+Shift)</source>
+        <translation>押し間違えの多いホットキー(Ctrl+Shift)による IME の切り替えを無効化する</translation>
+    </message>
 </context>
 <context>
     <name>mozc::gui::PostInstallDialog</name>

@@ -38,9 +38,7 @@
 
 ;; Supported Emacs version and environment:
 ;;
-;; mozc-mode supports Emacs version 22.1 and later, but doesn't support
-;; a tty terminal, on which `event-basic-type' returns an unexpected
-;; key code.
+;; mozc-mode supports Emacs version 22.1 and later.
 
 ;; How to set up mozc-mode:
 ;;

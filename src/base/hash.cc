@@ -116,6 +116,11 @@ uint32 Util::Fingerprint32WithSeed(const char *str,
   return Fingerprint32WithSeed(str, strlen(str), seed);
 }
 
+uint32 Util::Fingerprint32WithSeed(uint32 num, uint32 seed) {
+  const char* str = reinterpret_cast<const char*>(&num);
+  return Fingerprint32WithSeed(str, sizeof(num), seed);
+}
+
 uint64 Util::Fingerprint(const string &key) {
   return Fingerprint(key.data(), key.size());
 }

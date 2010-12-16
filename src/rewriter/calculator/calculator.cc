@@ -114,7 +114,7 @@ bool CalculatorImpl::CalculateString(const string &key, string *result) const {
     return false;
   }
   char buffer[kBufferSizeOfOutputNumber];
-  snprintf(buffer, sizeof(buffer), "%.14g", result_value);
+  snprintf(buffer, sizeof(buffer), "%.8g", result_value);
   *result = buffer;
   return true;
 }

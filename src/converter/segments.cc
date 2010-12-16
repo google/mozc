@@ -43,44 +43,41 @@
 #include "converter/segments.h"
 
 namespace mozc {
-
 namespace {
 
-static const size_t kMaxHistorySize = 32;
+const size_t kMaxHistorySize = 32;
 
-// Ad-hoc function to detect English candidate
-bool IsKatakanaT13NValue(const string &value) {
-  for (size_t i = 0; i < value.size(); ++i) {
-    if (value[i] == 0x20 || value[i] == 0x21 || value[i] == 0x2D ||
-        // " ", "!", "-"
-        (value[i] >= 0x41 && value[i] <= 0x5A) || // A..Z
-        (value[i] >= 0x61 && value[i] <= 0x7A)) { // a..z
-      // do nothing
-    } else {
-      return false;
-    }
-  }
-  return true;
-}
+// "ひらがな"
+const char kHiragana[] = "\xE3\x81\xB2\xE3\x82\x89\xE3\x81\x8C\xE3\x81\xAA";
+// "カタカナ"
+const char kKatakana[] = "\xE3\x82\xAB\xE3\x82\xBF\xE3\x82\xAB\xE3\x83\x8A";
+// "数字"
+const char kNumber[] = "\xE6\x95\xB0\xE5\xAD\x97";
+// "アルファベット"
+const char kAlphabet[] = "\xE3\x82\xA2\xE3\x83\xAB\xE3\x83\x95\xE3\x82\xA1"
+                          "\xE3\x83\x99\xE3\x83\x83\xE3\x83\x88";
+// "漢字"
+const char kKanji[] = "\xe6\xbc\xa2\xe5\xad\x97";
+
+// "[全]"
+const char kFullWidth[] = "[\xE5\x85\xA8]";
+
+// "[半]"
+const char kHalfWidth[] = "[\xE5\x8D\x8A]";
+
+// "<機種依存文字>"
+const char kPlatformDependent[] = "<\xE6\xA9\x9F\xE7\xA8\xAE"
+    "\xE4\xBE\x9D\xE5\xAD\x98\xE6\x96\x87\xE5\xAD\x97>";
+
+// "<もしかして>"
+const char kDidYouMean[] =
+    "<\xE3\x82\x82\xE3\x81\x97\xE3\x81\x8B\xE3\x81\x97\xE3\x81\xA6>";
 
 bool IsKatakanaT13N(const Segment::Candidate &candidate) {
   return (Util::GetScriptType(candidate.content_key) == Util::HIRAGANA &&
-          IsKatakanaT13NValue(candidate.content_value));
+          Segment::IsKatakanaT13NValue(candidate.content_value));
 }
 }  // namespace
-
-// "ひらがな"
-static char kHiragana[] = "\xE3\x81\xB2\xE3\x82\x89\xE3\x81\x8C\xE3\x81\xAA";
-// "カタカナ"
-static char kKatakana[] = "\xE3\x82\xAB\xE3\x82\xBF\xE3\x82\xAB\xE3\x83\x8A";
-// "数字"
-static char kNumber[] = "\xE6\x95\xB0\xE5\xAD\x97";
-// "アルファベット"
-static char kAlphabet[] = "\xE3\x82\xA2\xE3\x83\xAB\xE3\x83\x95\xE3\x82\xA1"
-                          "\xE3\x83\x99\xE3\x83\x83\xE3\x83\x88";
-// "漢字"
-static char kKanji[] = "\xe6\xbc\xa2\xe5\xad\x97";
-
 
 void Segment::Candidate::SetDefaultDescription(int description_type) {
   string message;
@@ -179,15 +176,21 @@ void Segment::Candidate::ResetDescription(int description_type) {
     switch (form) {
       case Util::FULL_WIDTH:
         // description = "[全]";
-        description = "[\xE5\x85\xA8]";
+        description = kFullWidth;
         break;
       case Util::HALF_WIDTH:
         // description = "[半]";
-        description = "[\xE5\x8D\x8A]";
+        description = kHalfWidth;
       break;
     default:
       break;
     }
+  } else if (description_type & Segment::Candidate::FULL_WIDTH) {
+    // description = "[全]";
+    description = kFullWidth;
+  } else if (description_type & Segment::Candidate::HALF_WIDTH) {
+    // description = "[半]";
+    description = kHalfWidth;
   }
 
   // add main message
@@ -205,9 +208,8 @@ void Segment::Candidate::ResetDescription(int description_type) {
       if (!description.empty()) {
         description += " ";
       }
-      //      description += "<機種依存文字>";
-      description += "<\xE6\xA9\x9F\xE7\xA8\xAE"
-          "\xE4\xBE\x9D\xE5\xAD\x98\xE6\x96\x87\xE5\xAD\x97>";
+      // description += "<機種依存文字>";
+      description += kPlatformDependent;
     }
   }
 
@@ -218,10 +220,9 @@ void Segment::Candidate::ResetDescription(int description_type) {
   }
 
   // Spelling Correction description
+  // Delete all messages here.
   if (is_spelling_correction) {
-    // description = "<もしかして>"
-    description = "<\xE3\x82\x82\xE3\x81\x97\xE3\x81\x8B\xE3\x81\x97"
-        "\xE3\x81\xA6>";
+    description = kDidYouMean;
   }
 }
 
@@ -244,11 +245,10 @@ string Segment::Candidate::functional_value() const {
 Segment::Segment()
     : segment_type_(FREE),
       requested_candidates_size_(0),
-      nbest_generator_(new NBestGenerator),
-      pool_(new ObjectPool<Candidate>(16)),
       initialized_transliterations_(false),
       all_expanded_(false),
-      katakana_t13n_length_(0) {}
+      nbest_generator_(new NBestGenerator),
+      pool_(new ObjectPool<Candidate>(16)) {}
 
 Segment::~Segment() {}
 
@@ -437,7 +437,6 @@ void Segment::clear_candidates() {
   candidates_.clear();
   requested_candidates_size_ = 0;
   all_expanded_ = false;
-  katakana_t13n_length_ = 0;
 }
 
 Segment::Candidate *Segment::push_back_candidate() {
@@ -551,22 +550,6 @@ void Segment::clear() {
   nbest_generator_->Reset();
 }
 
-bool Segment::GetCandidates(size_t size) {
-  if (size > candidates_.size()) {
-    return Expand(size - candidates_.size());
-  }
-  return true;
-}
-
-bool Segment::has_candidate_value(const string &value) const {
-  for (size_t i = 0; i < candidates_.size(); ++i) {
-    if (candidates_[i]->value == value) {
-      return true;
-    }
-  }
-  return false;
-}
-
 bool Segment::ExpandAlternative(int i) {
   if (i < 0 || i >= candidates_size()) {
     LOG(WARNING) << "invalid index";
@@ -574,10 +557,7 @@ bool Segment::ExpandAlternative(int i) {
   }
 
   Candidate *org_c = mutable_candidate(i);
-  if (org_c == NULL) {
-    LOG(WARNING) << "org_c is NULL";
-    return false;
-  }
+  DCHECK(org_c);
 
   if (!org_c->can_expand_alternative) {
     VLOG(1) << "Canidate has NO_NORMALIZATION node";
@@ -604,32 +584,57 @@ bool Segment::ExpandAlternative(int i) {
     alternative_content_value = alternative_value;
   }
 
-  Candidate *new_c = insert_candidate(i);
-  if (new_c == NULL) {
-    LOG(WARNING) << "new_c is NULL";
-    return false;
+  CharacterFormManager::FormType default_form
+      = CharacterFormManager::UNKNOWN_FORM;
+  CharacterFormManager::FormType alternative_form
+      = CharacterFormManager::UNKNOWN_FORM;
+
+  int default_description_type =
+      (Segment::Candidate::CHARACTER_FORM |
+       Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER);
+
+  int alternative_description_type =
+      (Segment::Candidate::CHARACTER_FORM |
+       Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER);
+
+  if (CharacterFormManager::GetFormTypesFromStringPair(
+          default_value,
+          &default_form,
+          alternative_value,
+          &alternative_form)) {
+    if (default_form == CharacterFormManager::HALF_WIDTH) {
+      default_description_type |= Segment::Candidate::HALF_WIDTH;
+    } else if (default_form == CharacterFormManager::FULL_WIDTH) {
+      default_description_type |= Segment::Candidate::FULL_WIDTH;
+    }
+    if (alternative_form == CharacterFormManager::HALF_WIDTH) {
+      alternative_description_type |= Segment::Candidate::HALF_WIDTH;
+    } else if (alternative_form == CharacterFormManager::FULL_WIDTH) {
+      alternative_description_type |= Segment::Candidate::FULL_WIDTH;
+    }
+  } else {
+    default_description_type     |= Segment::Candidate::FULL_HALF_WIDTH;
+    alternative_description_type |= Segment::Candidate::FULL_HALF_WIDTH;
   }
 
+  Candidate *new_c = insert_candidate(i);
+  DCHECK(new_c);
+
   new_c->Init();
+  new_c->key = org_c->key;
+  new_c->value = default_value;
   new_c->content_key = org_c->content_key;
+  new_c->content_value = default_content_value;
   new_c->cost = org_c->cost;
   new_c->structure_cost = org_c->structure_cost;
   new_c->lid = org_c->lid;
   new_c->rid = org_c->rid;
-  new_c->value = default_value;
-  new_c->content_value = default_content_value;
-  new_c->SetDefaultDescription(
-      Segment::Candidate::FULL_HALF_WIDTH |
-      Segment::Candidate::CHARACTER_FORM |
-      Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER);
+  new_c->SetDefaultDescription(default_description_type);
 
   org_c->value = alternative_value;
   org_c->content_value = alternative_content_value;
   org_c->description.clear();
-  org_c->SetDefaultDescription(
-      Segment::Candidate::FULL_HALF_WIDTH |
-      Segment::Candidate::CHARACTER_FORM |
-      Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER);
+  org_c->SetDefaultDescription(alternative_description_type);
 
   return true;
 }
@@ -677,8 +682,22 @@ bool Segment::ExpandEnglishVariants(const string &input,
   return true;
 }
 
-bool Segment::Expand(size_t size) {
-  if (size <= 0) {
+bool Segment::IsKatakanaT13NValue(const string &value) {
+  for (size_t i = 0; i < value.size(); ++i) {
+    if (value[i] == 0x20 || value[i] == 0x21 || value[i] == 0x2D ||
+        // " ", "!", "-"
+        (value[i] >= 0x41 && value[i] <= 0x5A) ||  // A..Z
+        (value[i] >= 0x61 && value[i] <= 0x7A)) {  // a..z
+      // do nothing
+    } else {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool Segment::GetCandidates(size_t target_size) {
+  if (target_size <= 0) {
     LOG(WARNING) << "invalid size";
     return false;
   }
@@ -693,7 +712,6 @@ bool Segment::Expand(size_t size) {
     return true;
   }
 
-  const size_t target_size = candidates_size() + size;
   if (requested_candidates_size() >= target_size) {
     // Avaliable candidates have been already generated.
     return true;
@@ -704,15 +722,13 @@ bool Segment::Expand(size_t size) {
   // no more entries are generated.
   while (candidates_size() < target_size) {
     Candidate *c = push_back_candidate();
-    if (c == NULL) {
-      LOG(ERROR) << "candidate is NULL";
-      return false;
-    }
+    DCHECK(c);
     c->Init();
 
     if (!nbest_generator_->Next(c)) {
       pop_back_candidate();
-      // set all_expanded_ to be true that Expand() is never called again.
+      // set all_expanded_ to be true that
+      // GetCandidates() is never called again.
       // http://b/issue?id=2868423
       all_expanded_ = true;   // no more entries
       break;
@@ -724,63 +740,30 @@ bool Segment::Expand(size_t size) {
         Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER |
         Segment::Candidate::ZIPCODE);
 
-    const vector<const Node *> &nodes = c->nodes;
-    DCHECK(!nodes.empty());
-
-    bool remove_candidate = false;
-
-    // Check all nodes are DEFAULT_NORMALIZATION
-    // Otherwise, don't call ExpandAlternative()
-    for (size_t i = 0; i < nodes.size(); ++i) {
-      const Node *node = nodes[i];
-      // KatakanaT13N must be the prefix of the candidate.
-      // TODO(taku): better to move this logic inside CandidateFilter.
-      if (node != nodes[0] && IsKatakanaT13NValue(node->value)) {
-        remove_candidate = true;
-        break;
-      }
-    }
-
-    if (remove_candidate) {
-      pop_back_candidate();
-      continue;   // next while() loop
-    }
-
     // Make KatakanaT13n Candidates
     if (IsKatakanaT13N(*c)) {
       c->can_expand_alternative = false;
-      if (katakana_t13n_length_ != 0 &&
-          katakana_t13n_length_ != c->content_key.size()) {
-        VLOG(1) << c->value << " is remvoed";
-        pop_back_candidate();
-        continue;   // next while() loop
-      } else {
-        vector<string> variants;
-        // TODO(taku): could be possible to move this logic to Rewriter.
-        if (Segment::ExpandEnglishVariants(c->content_value, &variants)) {
-          katakana_t13n_length_ = c->content_key.size();
-          for (size_t i = 0; i < variants.size(); ++i) {
-            Candidate *variant_c = add_candidate();
-            DCHECK(variant_c);
-            variant_c->Init();
-            variant_c->value = variants[i] +
-                c->value.substr(c->content_value.size(),
-                                c->value.size() - c->content_value.size());
-            variant_c->content_value = variants[i];
-            variant_c->content_key = c->content_key;
-            variant_c->cost = c->cost + 1;
-            variant_c->structure_cost = c->structure_cost + 1;
-            variant_c->nodes = c->nodes;
-            variant_c->lid = c->lid;
-            variant_c->rid = c->rid;
-            variant_c->can_expand_alternative = false;
-            variant_c->SetDefaultDescription(
-                Segment::Candidate::FULL_HALF_WIDTH |
-                Segment::Candidate::CHARACTER_FORM |
-                Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER);
-          }
+      vector<string> variants;
+      // TODO(taku): could be possible to move this logic to Rewriter.
+      if (Segment::ExpandEnglishVariants(c->content_value, &variants)) {
+        for (size_t i = 0; i < variants.size(); ++i) {
+          Candidate *variant_c = add_candidate();
+          DCHECK(variant_c);
+          variant_c->Init();
+          variant_c->value = variants[i] + c->functional_value();
+          variant_c->key = c->key;
+          variant_c->content_value = variants[i];
+          variant_c->content_key = c->content_key;
+          variant_c->cost = c->cost + 1;
+          variant_c->structure_cost = c->structure_cost + 1;
+          variant_c->lid = c->lid;
+          variant_c->rid = c->rid;
+          variant_c->can_expand_alternative = false;
+          variant_c->SetDefaultDescription(
+              Segment::Candidate::FULL_HALF_WIDTH |
+              Segment::Candidate::CHARACTER_FORM |
+              Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER);
         }
-        // Don't call ExpandAlternative() for Katakana T13n candidates
       }
     } else {
       ExpandAlternative(candidates_size() - 1);
@@ -805,9 +788,10 @@ bool Segment::Expand(size_t size) {
       DCHECK(target_c);
       DCHECK(last_c);
       target_c->Init();
+      target_c->key = key();
       target_c->value = hiragana_value;
-      target_c->content_value = hiragana_value;
       target_c->content_key = key();
+      target_c->content_value = hiragana_value;
       target_c->cost = last_c->cost + 1;
       target_c->structure_cost = last_c->structure_cost + 1;
       target_c->lid = last_c->lid;
@@ -827,9 +811,10 @@ bool Segment::Expand(size_t size) {
       DCHECK(target_c);
       DCHECK(last_c);
       target_c->Init();
+      target_c->key = key();
       target_c->value = katakana_value;
-      target_c->content_value = katakana_value;
       target_c->content_key = key();
+      target_c->content_value = katakana_value;
       target_c->cost = last_c->cost + 1;
       target_c->structure_cost = last_c->structure_cost + 1;
       target_c->lid = last_c->lid;
@@ -1071,7 +1056,7 @@ void Segments::set_resized(bool resized) {
   resized_ = resized;
 }
 
-bool Segments::has_resized() const {
+bool Segments::resized() const {
   return resized_;
 }
 
@@ -1109,11 +1094,7 @@ Segments::RevertEntry *Segments::mutable_revert_entry(size_t i) {
   return &revert_entries_[i];
 }
 
-void Segments::DebugString(string *output) const {
-  if (output == NULL) {
-    return;
-  }
-  output->clear();
+string Segments::DebugString() const {
   stringstream os;
   os << "(" << endl;
   for (size_t i = 0; i < this->segments_size(); ++i) {
@@ -1127,19 +1108,21 @@ void Segments::DebugString(string *output) const {
          << " scost=" << seg.candidate(j).structure_cost
          << " wcost=" << seg.candidate(j).wcost
          << " lid=" << seg.candidate(j).lid
-         << " rid=" << seg.candidate(j).rid
-         << " prefix=" << seg.candidate(j).prefix
-         << " suffix=" << seg.candidate(j).suffix
-         << " desc=" << seg.candidate(j).description
-         << " nodes_size=" << seg.candidate(j).nodes.size();
-      for (int k = 0; k < seg.candidate(j).nodes.size(); ++k) {
-        os << "[" << seg.candidate(j).nodes[k]->lid << " "
-           << seg.candidate(j).nodes[k]->rid << "]";
+         << " rid=" << seg.candidate(j).rid;
+      if (!seg.candidate(j).prefix.empty()) {
+        os << " prefix=" << seg.candidate(j).prefix;
+      }
+      if (!seg.candidate(j).suffix.empty()) {
+        os << " suffix=" << seg.candidate(j).suffix;
+      }
+      if (!seg.candidate(j).description.empty()) {
+        os << " description=" << seg.candidate(j).description;
       }
       os << ")" << endl;
     }
   }
   os << ")" << endl;
-  *output = os.str();
+
+  return os.str();
 }
 }   // mozc

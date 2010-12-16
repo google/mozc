@@ -1081,7 +1081,7 @@ class BracketHandler {
   BracketHandler() {
     VLOG(1) << "Init bracket mapping";
 
-    static const struct BracketType {
+    const struct BracketType {
       const char *open_bracket;
       const char *close_bracket;
     } kBracketType[] = {
@@ -1094,6 +1094,8 @@ class BracketHandler {
       //  { "「", "」" },
       //  { "『", "』" },
       //  { "【", "】" },
+      //  { "〘", "〙" },
+      //  { "〚", "〛" },
       { "\xEF\xBC\x88", "\xEF\xBC\x89" },
       { "\xE3\x80\x94", "\xE3\x80\x95" },
       { "\xEF\xBC\xBB", "\xEF\xBC\xBD" },
@@ -1103,6 +1105,8 @@ class BracketHandler {
       { "\xE3\x80\x8C", "\xE3\x80\x8D" },
       { "\xE3\x80\x8E", "\xE3\x80\x8F" },
       { "\xE3\x80\x90", "\xE3\x80\x91" },
+      { "\xe3\x80\x98", "\xe3\x80\x99" },
+      { "\xe3\x80\x9a", "\xe3\x80\x9b" },
       { NULL, NULL },  // sentinel
     };
     string open_full_width, open_half_width;
@@ -1126,7 +1130,6 @@ class BracketHandler {
       close_bracket_[close_full_width] = open_full_width;
     }
   }
-
   ~BracketHandler() {}
 
   bool IsOpenBracket(const string &key, string *close_bracket) const {
@@ -1480,48 +1483,126 @@ class UserProfileDirectoryImpl {
   string dir_;
 };
 
-UserProfileDirectoryImpl::UserProfileDirectoryImpl() {
-  string dir;
 #ifdef OS_WINDOWS
-  // Windows Vista: use LocalLow
-  // Call SHGetKnownFolderPath dynamically.
-  // http://msdn.microsoft.com/en-us/library/bb762188(VS.85).aspx
-  // http://msdn.microsoft.com/en-us/library/bb762584(VS.85).aspx
-  // GUID: {A520A1A4-1780-4FF6-BD18-167343C5AF16}
-  if (Util::IsVistaOrLater()) {
-    const HMODULE hLib = mozc::Util::LoadSystemLibrary(L"shell32.dll");
-    if (hLib != NULL) {
-      typedef HRESULT (WINAPI *FPSHGetKnownFolderPath)(
-          const GUID &, DWORD, HANDLE, PWSTR *);
-      FPSHGetKnownFolderPath func = reinterpret_cast<FPSHGetKnownFolderPath>
-          (::GetProcAddress(hLib, "SHGetKnownFolderPath"));
-      if (func != NULL) {
-        PWSTR pstr = NULL;
-        const HRESULT result =
-            (*func)(FOLDERID_LocalAppDataLow, 0, NULL, &pstr);
-        if (SUCCEEDED(result) && pstr != NULL && ::lstrlen(pstr) > 0) {
-          Util::WideToUTF8(pstr, &dir);
-          ::CoTaskMemFree(pstr);
-        }
-      }
-      ::FreeLibrary(hLib);
-    }
+// TODO(yukawa): Use API wrapper so that unit test can emulate any case.
+class LocalAppDataDirectoryCache {
+ public:
+  LocalAppDataDirectoryCache()
+    : result_(E_FAIL) {
+    result_ = TryGetLocalAppData(&path_);
+  }
+  HRESULT result() const {
+    return result_;
+  }
+  const bool succeeded() const {
+    return SUCCEEDED(result_);
+  }
+  const string &path() const {
+    return path_;
   }
 
-  // Windows XP: use "%USERPROFILE%\Local Settings\Application Data"
-  if (dir.empty() || !Util::IsVistaOrLater()) {
+ private:
+  static HRESULT TryGetLocalAppData(string *dir) {
+    if (dir == NULL) {
+      return E_FAIL;
+    }
+    dir->clear();
+
+    if (Util::IsVistaOrLater()) {
+      return TryGetLocalAppDataLow(dir);
+    }
+
+    // Windows XP: use "%USERPROFILE%\Local Settings\Application Data"
+
     // Retrieve the directory "%USERPROFILE%\Local Settings\Application Data",
     // which is a user directory which serves a data repository for local
     // applications, to avoid user profiles from being roamed by indexers.
-    wchar_t config[MAX_PATH];
-    if (::SHGetFolderPathW(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT,
-                           &config[0]) == S_OK) {
-      Util::WideToUTF8(&config[0], &dir);
+    wchar_t config[MAX_PATH] = {};
+    const HRESULT result = ::SHGetFolderPathW(
+        NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, &config[0]);
+    if (FAILED(result)) {
+      return result;
     }
+
+    string buffer;
+    if (Util::WideToUTF8(&config[0], &buffer) == 0) {
+      return E_FAIL;
+    }
+
+    *dir = buffer;
+    return S_OK;
   }
 
-  CHECK(!dir.empty());
+  static HRESULT TryGetLocalAppDataLow(string *dir) {
+    if (dir == NULL) {
+      return E_FAIL;
+    }
+    dir->clear();
 
+    if (!Util::IsVistaOrLater()) {
+      return E_NOTIMPL;
+    }
+
+    // Windows Vista: use LocalLow
+    // Call SHGetKnownFolderPath dynamically.
+    // http://msdn.microsoft.com/en-us/library/bb762188(VS.85).aspx
+    // http://msdn.microsoft.com/en-us/library/bb762584(VS.85).aspx
+    // GUID: {A520A1A4-1780-4FF6-BD18-167343C5AF16}
+    const HMODULE hLib = mozc::Util::LoadSystemLibrary(L"shell32.dll");
+    if (hLib == NULL) {
+      return E_NOTIMPL;
+    }
+
+    typedef HRESULT (WINAPI *FPSHGetKnownFolderPath)(
+        const GUID &, DWORD, HANDLE, PWSTR *);
+    FPSHGetKnownFolderPath func = reinterpret_cast<FPSHGetKnownFolderPath>
+        (::GetProcAddress(hLib, "SHGetKnownFolderPath"));
+    if (func == NULL) {
+      ::FreeLibrary(hLib);
+      return E_NOTIMPL;
+    }
+
+    wchar_t *task_mem_buffer = NULL;
+    const HRESULT result =
+        (*func)(FOLDERID_LocalAppDataLow, 0, NULL, &task_mem_buffer);
+    if (FAILED(result)) {
+      if (task_mem_buffer != NULL) {
+        ::CoTaskMemFree(task_mem_buffer);
+      }
+      ::FreeLibrary(hLib);
+      return result;
+    }
+
+    if (task_mem_buffer == NULL) {
+      ::FreeLibrary(hLib);
+      return E_UNEXPECTED;
+    }
+
+    wstring wpath = task_mem_buffer;
+    ::CoTaskMemFree(task_mem_buffer);
+
+    string path;
+    if (Util::WideToUTF8(wpath, &path) == 0) {
+      ::FreeLibrary(hLib);
+      return E_UNEXPECTED;
+    }
+
+    *dir = path;
+
+    ::FreeLibrary(hLib);
+    return S_OK;
+  }
+
+  HRESULT result_;
+  string path_;
+};
+#endif
+
+UserProfileDirectoryImpl::UserProfileDirectoryImpl() {
+  string dir;
+#ifdef OS_WINDOWS
+  DCHECK(SUCCEEDED(Singleton<LocalAppDataDirectoryCache>::get()->result()));
+  dir = Singleton<LocalAppDataDirectoryCache>::get()->path();
   dir = Util::JoinPath(dir, kCompanyNameInEnglish);
   Util::CreateDirectory(dir);
   dir = Util::JoinPath(dir, kProductNameInEnglish);
@@ -1562,41 +1643,51 @@ UserProfileDirectoryImpl::UserProfileDirectoryImpl() {
 }
 
 #ifdef OS_WINDOWS
-class ServerDirectoryCache {
+// TODO(yukawa): Use API wrapper so that unit test can emulate any case.
+class ProgramFilesX86Cache {
  public:
-  ServerDirectoryCache() {
-    wchar_t program_files_path_buffer[MAX_PATH];
+  ProgramFilesX86Cache()
+    : result_(E_FAIL) {
+    wchar_t program_files_path_buffer[MAX_PATH] = {};
 #if defined(_M_X64)
-    // For x86-64 binaries (such as Text Input Prosessor DLL for 64-bit apps),
-    // CSIDL_PROGRAM_FILES points 64-bit Program Files directory so that
-    // CSIDL_PROGRAM_FILESX86 is appropriate to find server, renderer,
-    // and other binaries' path.
-    const HRESULT hr = ::SHGetFolderPathW(
+    // In 64-bit processes (such as Text Input Prosessor DLL for 64-bit apps),
+    // CSIDL_PROGRAM_FILES points 64-bit Program Files directory. In this case,
+    // we should use CSIDL_PROGRAM_FILESX86 to find server, renderer, and other
+    // binaries' path.
+    result_ = ::SHGetFolderPathW(
         NULL, CSIDL_PROGRAM_FILESX86, NULL,
         SHGFP_TYPE_CURRENT, program_files_path_buffer);
 #elif defined(_M_IX86)
-    // For x86 binaries (such as server, renderer, and other binaries),
+    // In 32-bit processes (such as server, renderer, and other binaries),
     // CSIDL_PROGRAM_FILES always points 32-bit Program Files directory
     // even if they are running in 64-bit Windows.
-    const HRESULT hr = ::SHGetFolderPathW(
+    result_ = ::SHGetFolderPathW(
         NULL, CSIDL_PROGRAM_FILES, NULL,
                            SHGFP_TYPE_CURRENT, program_files_path_buffer);
 #else
 #error "Unsupported CPU architecture"
 #endif  // _M_X64, _M_IX86, and others
-    CHECK(S_OK == hr) << "Failed to get server directory. HRESULT = "
-                      << hr;
-    string program_files_path;
-    Util::WideToUTF8(program_files_path_buffer, &program_files_path);
-    server_path_ = program_files_path;
-    server_path_ = Util::JoinPath(server_path_, kCompanyNameInEnglish);
-    server_path_ = Util::JoinPath(server_path_, kProductNameInEnglish);
+    if (FAILED(result_)) {
+      return;
+    }
+    if (Util::WideToUTF8(program_files_path_buffer,
+                         &path_) == 0) {
+      result_ = E_FAIL;
+      path_.clear();
+    }
   }
-  const string server_path() const {
-    return server_path_;
+  const bool succeeded() const {
+    return SUCCEEDED(result_);
+  }
+  const HRESULT result() const {
+    return result_;
+  }
+  const string &path() const {
+    return path_;
   }
  private:
-  string server_path_;
+  HRESULT result_;
+  string path_;
 };
 #endif  // OS_WINDOWS
 }  // namespace
@@ -1621,7 +1712,11 @@ string Util::GetLoggingDirectory() {
 
 string Util::GetServerDirectory() {
 #ifdef OS_WINDOWS
-  return Singleton<ServerDirectoryCache>::get()->server_path();
+  DCHECK(SUCCEEDED(Singleton<ProgramFilesX86Cache>::get()->result()));
+  return Util::JoinPath(
+      Util::JoinPath(Singleton<ProgramFilesX86Cache>::get()->path(),
+                     kCompanyNameInEnglish),
+      kProductNameInEnglish);
 #endif  // OS_WINDOWS
 
 // TODO(mazda): Not to use hardcoded path.
@@ -1649,7 +1744,11 @@ string Util::GetUserNameAsString() {
   wchar_t wusername[UNLEN + 1];
   DWORD name_size = UNLEN + 1;
   // Call the same name Windows API.  (include Advapi32.lib).
-  ::GetUserName(wusername, &name_size);
+  // TODO(komatsu, yukawa): Add error handling.
+  // TODO(komatsu, yukawa): Consider the case where the current thread is
+  //   or will be impersonated.
+  const BOOL result = ::GetUserName(wusername, &name_size);
+  DCHECK_NE(FALSE, result);
   Util::WideToUTF8(&wusername[0], &username);
 #else  // OS_WINDOWS
   char buf[1024];
@@ -2236,15 +2335,61 @@ bool Util::IsPlatformSupported() {
 #endif
 }
 #ifdef OS_WINDOWS
-bool Util::IsVistaOrLater() {
-  OSVERSIONINFOEX osvi = { 0 };
-  osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
-  osvi.dwMajorVersion = 6;
-  DWORDLONG conditional = 0;
-  VER_SET_CONDITION(conditional, VER_MAJORVERSION, VER_GREATER_EQUAL);
-  return 0 != VerifyVersionInfo(&osvi, VER_MAJORVERSION, conditional);
-}
+namespace {
+// TODO(yukawa): Use API wrapper so that unit test can emulate any case.
+class IsVistaOrLaterCache {
+ public:
+  IsVistaOrLaterCache()
+    : succeeded_(false),
+      is_vista_or_later_(true) {
+    // Examine if this system is greater than or equal to WinNT 6.0.
+    {
+      OSVERSIONINFOEX osvi = {};
+      osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
+      osvi.dwMajorVersion = 6;
+      DWORDLONG conditional = 0;
+      VER_SET_CONDITION(conditional, VER_MAJORVERSION, VER_GREATER_EQUAL);
+      const BOOL result =
+        ::VerifyVersionInfo(&osvi, VER_MAJORVERSION, conditional);
+      if (result != FALSE) {
+        succeeded_ = true;
+        is_vista_or_later_ = true;
+        return;
+      }
+    }
 
+    // Examine if this system is less than WinNT 6.0.
+    {
+      OSVERSIONINFOEX osvi = {};
+      osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
+      osvi.dwMajorVersion = 6;
+      DWORDLONG conditional = 0;
+      VER_SET_CONDITION(conditional, VER_MAJORVERSION, VER_LESS);
+      const BOOL result =
+        ::VerifyVersionInfo(&osvi, VER_MAJORVERSION, conditional);
+      if (result != FALSE) {
+        succeeded_ = true;
+        is_vista_or_later_ = false;
+        return;
+      }
+    }
+
+    // Unexpected situation.
+    succeeded_ = false;
+    is_vista_or_later_ = false;
+  }
+  const bool succeeded() const {
+    return succeeded_;
+  }
+  const bool is_vista_or_later() const {
+    return is_vista_or_later_;
+  }
+ private:
+  bool succeeded_;
+  bool is_vista_or_later_;
+};
+
+// TODO(yukawa): Use API wrapper so that unit test can emulate any case.
 class IsWindowsX64Cache {
  public:
   IsWindowsX64Cache() : is_x64_(IsX64()) {}
@@ -2281,6 +2426,36 @@ class IsWindowsX64Cache {
   DISALLOW_COPY_AND_ASSIGN(IsWindowsX64Cache);
 };
 
+// TODO(yukawa): Use API wrapper so that unit test can emulate any case.
+class SystemDirectoryCache {
+ public:
+  SystemDirectoryCache() : system_dir_(NULL) {
+    const UINT copied_len_wo_null_if_success =
+        ::GetSystemDirectory(path_buffer_, ARRAYSIZE(path_buffer_));
+    if (copied_len_wo_null_if_success >= ARRAYSIZE(path_buffer_)) {
+      // Function failed.
+      return;
+    }
+    DCHECK_EQ(L'\0', path_buffer_[copied_len_wo_null_if_success]);
+    system_dir_ = path_buffer_;
+  }
+  const bool succeeded() const {
+    return system_dir_ != NULL;
+  }
+  const wchar_t *system_dir() const {
+    return system_dir_;
+  }
+ private:
+  wchar_t path_buffer_[MAX_PATH];
+  wchar_t *system_dir_;
+};
+}  // anonymous namespace
+
+bool Util::IsVistaOrLater() {
+  DCHECK(Singleton<IsVistaOrLaterCache>::get()->succeeded());
+  return Singleton<IsVistaOrLaterCache>::get()->is_vista_or_later();
+}
+
 bool Util::IsWindowsX64() {
   switch (g_is_windows_x64_mode) {
     case IS_WINDOWS_X64_EMULATE_32BIT_MACHINE:
@@ -2311,29 +2486,8 @@ void Util::SetIsWindowsX64ModeForTest(IsWindowsX64Mode mode) {
   }
 }
 
-namespace {
-class SystemDirectoryCache {
- public:
-  SystemDirectoryCache() : system_dir_(NULL) {
-    const HRESULT hr = ::SHGetFolderPathW(NULL, CSIDL_SYSTEM, NULL,
-                                          SHGFP_TYPE_CURRENT, path_buffer_);
-    DCHECK(hr == S_OK);
-    if (hr != S_OK) {
-       LOG(ERROR) << "Failed to get system directory. HRESULT = " << hr;
-      return;
-    }
-    system_dir_ = path_buffer_;
-  }
-  const wchar_t *system_dir() const {
-    return system_dir_;
-  }
- private:
-  wchar_t path_buffer_[MAX_PATH];
-  wchar_t *system_dir_;
-};
-}  // namespace
-
 const wchar_t *Util::GetSystemDir() {
+  DCHECK(Singleton<SystemDirectoryCache>::get()->succeeded());
   return Singleton<SystemDirectoryCache>::get()->system_dir();
 }
 
@@ -2636,4 +2790,22 @@ bool Util::IsLittleEndian() {
 #endif
 }
 
+#ifdef OS_WINDOWS
+// TODO(team): Support other platforms.
+bool Util::EnsureVitalImmutableDataIsAvailable() {
+  if (!Singleton<IsVistaOrLaterCache>::get()->succeeded()) {
+    return false;
+  }
+  if (!Singleton<SystemDirectoryCache>::get()->succeeded()) {
+    return false;
+  }
+  if (!Singleton<ProgramFilesX86Cache>::get()->succeeded()) {
+    return false;
+  }
+  if (!Singleton<LocalAppDataDirectoryCache>::get()->succeeded()) {
+    return false;
+  }
+  return true;
+}
+#endif  // OS_WINDOWS
 }  // namespace mozc

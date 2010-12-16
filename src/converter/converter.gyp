@@ -305,6 +305,17 @@
       ]
     },
     {
+      'target_name': 'converter_main',
+      'type': 'executable',
+      'sources': [
+        'converter_main.cc',
+       ],
+      'dependencies': [
+        'converter',
+        'segments',
+      ],
+    },
+    {
       'target_name': 'converter_test',
       'type': 'executable',
       'sources': [
@@ -366,6 +377,7 @@
       'sources': [
         '<(gen_out_dir)/quality_regression_test_data.h',
         'quality_regression_test.cc',
+        'quality_regression_util.cc'
       ],
       'dependencies': [
         '../session/session.gyp:config_handler',
@@ -377,6 +389,18 @@
       'variables': {
         'test_size': 'large',
       },
+    },
+    {
+      'target_name': 'quality_regression_main',
+      'type': 'executable',
+      'sources': [
+        'quality_regression_main.cc',
+        'quality_regression_util.cc',
+       ],
+      'dependencies': [
+        'converter',
+        'segments',
+      ],
     },
     # Test cases meta target: this target is referred from gyp/tests.gyp
     {

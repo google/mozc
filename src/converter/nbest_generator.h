@@ -44,6 +44,7 @@ namespace mozc {
 class CandidateFilter;
 class ConnectorInterface;
 class Lattice;
+struct Node;
 
 // TODO(toshiyuki): write unittest for NBestGenerator.
 //                  we can unittest this by making Mocks
@@ -76,7 +77,8 @@ class NBestGenerator {
   void MakeCandidate(Segment::Candidate *candidate,
                      int cost,
                      int structure_cost,
-                     int w_cost) const;
+                     int w_cost,
+                     const vector<const Node *> nodes) const;
 
   int GetTransitionCost(const Node *lnode, const Node *rnode) const;
 
@@ -93,7 +95,8 @@ class NBestGenerator {
 
   class QueueElementComp {
    public:
-    const bool operator()(const QueueElement *q1, const QueueElement *q2) const {
+    const bool operator()(const QueueElement *q1,
+                          const QueueElement *q2) const {
       return (q1->fx > q2->fx);
     }
   };

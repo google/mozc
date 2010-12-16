@@ -211,6 +211,9 @@ message Context {
   optional string following_text = 2;
 };
 
+// Clients' capability.
+// Users cannot modify this.
+// The server has to obey this capability.
 message Capability {
   // Bit fields to notify what the client can do.
   enum TextDeletionCapabilityType {
@@ -222,6 +225,7 @@ message Capability {
   optional TextDeletionCapabilityType text_deletion = 1
       [default = NO_TEXT_DELETION_CAPABILITY];
 };
+
 
 // Note there is another ApplicationInfo inside RendererCommand.
 // Since Input is not using nested message, define ApplicationInfo here.
@@ -301,6 +305,7 @@ message Input {
   // Server may be able to change the behavior by seeing the
   // the program name.
   optional ApplicationInfo application_info = 8;
+
 };
 
 
@@ -640,12 +645,15 @@ message RendererCommand {
     enum Style {
       DEFAULT = 0;          // CFS_DEFAULT
       RECT = 1;             // CFS_RECT
-      POINT = 2;            // CFS_DEFAULT
+      POINT = 2;            // CFS_POINT
       FORCE_POSITION = 32;  // CFS_FORCE_POSITION
     };
-    optional Style style = 1;
+    // Use |style_bits| instead because there are some applications which
+    // specify a combination of style bits like CFS_RECT + CFS_POINT.
+    optional Style DEPRECATED_style = 1;
     optional Point current_position = 2;
     optional Rectangle area = 3;
+    optional uint32 style_bits = 4 [ default = 0 ];  // 0 means Style::DEFAULT
   };
 
   // This message is not ready to be externally released.
@@ -658,9 +666,12 @@ message RendererCommand {
       CANDIDATEPOS = 64;  // CFS_CANDIDATEPOS
       EXCLUDE = 128;      // CFS_EXCLUDE
     };
-    optional Style style = 1;
+    // Use |style_bits| instead in case there is an applications which
+    // specifies a combination of style bits.
+    optional Style DEPRECATED_style = 1;
     optional Point current_position = 2;
     optional Rectangle area = 3;
+    optional uint32 style_bits = 4 [ default = 0 ];  // 0 means Style::DEFAULT
   };
 
   // This message is not ready to be externally released.

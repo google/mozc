@@ -38,6 +38,11 @@
         <source>Log off &amp;Now</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <location filename="post_install_dialog.ui" line="107"/>
+        <source>Disable Keyboard layout hotkey (Ctrl+Shift)</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>mozc::gui::PostInstallDialog</name>

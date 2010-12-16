@@ -27,6 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <cmath>
+#include <cstdlib>
 #include <fstream>
 #include <string>
 
@@ -45,13 +47,31 @@ const char kTestDir[] = "data/test/calculator/";
 // Runs calculation with |expression| and compares the result and |expect|.
 bool VerifyCalculation(const CalculatorInterface *calculator,
                        const string &expression,
-                       const string &expect) {
+                       const string &expected) {
   string result;
   EXPECT_TRUE(calculator->CalculateString(expression, &result))
-      << "Test case: " << expression << expect;
-  if (expect == result) {
-    return true;
-  }
+      << expression << "  expected = " << expected;
+  const double result_val = atof(result.c_str());
+  const double expected_val = atof(expected.c_str());
+  const double err = abs(result_val - expected_val);
+
+  EXPECT_DOUBLE_EQ(expected_val, result_val)
+      << "comparison: " << result_val << " vs " << expected_val << endl
+      << "error: " << err << endl
+      << "expr = " << expression << endl
+      << "result = " << result;
+  return true;
+}
+
+// Runs calculation and compare results in PRINTED string.
+bool VerifyCalculationInString(const CalculatorInterface *calculator,
+                               const string &expression,
+                               const string &expected) {
+  string result;
+  EXPECT_TRUE(calculator->CalculateString(expression, &result))
+      << expression << "  expected = " << expected;
+  EXPECT_EQ(expected, result)
+      << "expr = " << expression << endl;
   return true;
 }
 
@@ -59,7 +79,9 @@ bool VerifyCalculation(const CalculatorInterface *calculator,
 bool VerifyRejection(const CalculatorInterface *calculator,
                      const string &wrong_key) {
   string result;
-  return !calculator->CalculateString(wrong_key, &result);
+  EXPECT_FALSE(calculator->CalculateString(wrong_key, &result))
+      << "expression: " << wrong_key << endl;
+  return true;
 }
 
 }  // anonymous namespace
@@ -123,6 +145,9 @@ TEST(CalculatorTest, BasicTest) {
   EXPECT_TRUE(VerifyCalculation(calculator, "(1+2)-4=", "-1"));
   EXPECT_TRUE(VerifyCalculation(calculator, "5*(2+3)=", "25"));
   EXPECT_TRUE(VerifyCalculation(calculator, "(70-((3+2)*4))%8=", "2"));
+
+  // Issue 3082576: 7472.4 - 7465.6 = 6.7999999999993 is not expected.
+  EXPECT_TRUE(VerifyCalculationInString(calculator, "7472.4-7465.6=", "6.8"));
 }
 
 // Test large number of queries.  Test data is located at
@@ -139,7 +164,10 @@ TEST(CalculatorTest, StressTest) {
 
   ifstream finput(filename.c_str());
   string line;
+  int lineno = 0;
   while (getline(finput, line)) {
+    ++lineno;
+
     // |line| is of format "expression=answer".
     const size_t index_of_equal = line.find('=');
     DCHECK(index_of_equal != string::npos);
@@ -148,14 +176,15 @@ TEST(CalculatorTest, StressTest) {
     if (line.size() == query_length) {
       // False test
       EXPECT_TRUE(VerifyRejection(calculator, line))
-          << "Test case: " << line;
+          << "line " << lineno << ": " << line;
       continue;
     }
     const string query(line, 0, query_length);
     const string answer(line, query_length);
     EXPECT_TRUE(VerifyCalculation(calculator, query, answer))
-        << "Test case: " << line;
+        << "line " << lineno << ": " << line;
   }
+  LOG(INFO) << "done " << lineno << " tests from " << filename << endl;
 }
 
 }  // namespace mozc

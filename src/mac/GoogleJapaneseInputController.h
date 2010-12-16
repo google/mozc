@@ -37,7 +37,7 @@
 
 namespace mozc {
 namespace client {
-class Session;
+class SessionInterface;
 }  // namespace mozc::client
 
 namespace commands {
@@ -72,10 +72,6 @@ class RendererInterface;
   // no cursor is found, its value should be NSNotFound.
   int cursorPosition_;
 
-  // |replacementRange_| is the range in the original text to be
-  // replaced.  Set NSNotFound to its position when not used.
-  NSRange replacementRange_;
-
   // |mode_| stores the current input mode (Direct or conversion).
   mozc::commands::CompositionMode mode_;
 
@@ -89,10 +85,6 @@ class RendererInterface;
   // want to delay the checking to the key event timing but we don't
   // want to call this every key events.
   BOOL checkInputMode_;
-
-  // |resoucePath_| caches the path to Resources/ on the package.
-  // |Used to launch binaries in the resource.
-  NSString *resourcePath_;
 
   // |keyCodeMap_| manages the mapping between Mac key code and mozc
   // key events.
@@ -109,13 +101,15 @@ class RendererInterface;
   mozc::commands::RendererCommand *rendererCommand_;
 
   // |session_| manages connection to the mozc server.
-  mozc::client::Session *session_;
+  mozc::client::SessionInterface *session_;
+
+  // |server_| holds the reference to GoogleJapaneseInputServer.
+  id<ServerCallback> server_;
 
   // |menu_| is the NSMenu to be shown in the pulldown menu-list of
   // the IME.
   IBOutlet NSMenu *menu_;
 }
-@property(readonly, assign, nonatomic) mozc::client::Session *session;
 
 // candidateClicked: is called when the user clicks a candidate item
 // in candidate windows.
@@ -140,4 +134,8 @@ class RendererInterface;
 // outputResult: put result text in the specified |output| into the
 // client application.
 - (void)outputResult:(mozc::commands::Output *)output;
+
+// create instances for global objects which will be referred from the
+// controller instances.
++ (void)initializeConstants;
 @end

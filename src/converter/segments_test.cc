@@ -109,15 +109,14 @@ TEST_F(SegmentsTest, BasicTest) {
     EXPECT_EQ(i + 1, segments.segments_size());
   }
 
-  string output;
-  segments.DebugString(&output);
+  const string output = segments.DebugString();
   EXPECT_FALSE(output.empty());
 
-  EXPECT_FALSE(segments.has_resized());
+  EXPECT_FALSE(segments.resized());
   segments.set_resized(true);
-  EXPECT_TRUE(segments.has_resized());
+  EXPECT_TRUE(segments.resized());
   segments.set_resized(false);
-  EXPECT_FALSE(segments.has_resized());
+  EXPECT_FALSE(segments.resized());
 
   segments.set_max_history_segments_size(10);
   EXPECT_EQ(10, segments.max_history_segments_size());
@@ -263,18 +262,6 @@ TEST_F(CandidateTest, BasicTest) {
   EXPECT_EQ(cand[2], segment.mutable_candidate(0));
   EXPECT_EQ(cand[0], segment.mutable_candidate(1));
   EXPECT_EQ(cand[1], segment.mutable_candidate(2));
-
-  segment.clear();
-  for (int i = 0; i < kCandidatesSize; ++i) {
-    char buf[32];
-    snprintf(buf, sizeof(buf), "value_%d", i);
-    cand[i] = segment.push_back_candidate();
-    cand[i]->value = buf;
-  }
-
-  EXPECT_TRUE(segment.has_candidate_value("value_0"));
-  EXPECT_TRUE(segment.has_candidate_value("value_3"));
-  EXPECT_FALSE(segment.has_candidate_value("foo"));
 }
 
 TEST_F(SegmentsTest, RevertEntryTest) {
@@ -802,6 +789,26 @@ TEST_F(SegmentTest, ExpandEnglishVariants) {
           &variants));
 }
 
+TEST_F(SegmentTest, IsKatakanaT13NValue) {
+  EXPECT_TRUE(Segment::IsKatakanaT13NValue("ABC"));
+  EXPECT_TRUE(Segment::IsKatakanaT13NValue("Google"));
+  EXPECT_TRUE(Segment::IsKatakanaT13NValue("Google Map"));
+  EXPECT_TRUE(Segment::IsKatakanaT13NValue("ABC-DEF"));
+  EXPECT_TRUE(Segment::IsKatakanaT13NValue("Foo-bar"));
+  EXPECT_TRUE(Segment::IsKatakanaT13NValue("Foo!"));
+  EXPECT_TRUE(Segment::IsKatakanaT13NValue("!"));
+  EXPECT_TRUE(Segment::IsKatakanaT13NValue("  "));
+  //  EXPECT_FALSE(Segment::IsKatakanaT13NValue("てすと"));
+  //  EXPECT_FALSE(Segment::IsKatakanaT13NValue("テスト"));
+  //  EXPECT_FALSE(Segment::IsKatakanaT13NValue("東京"));
+  EXPECT_FALSE(Segment::IsKatakanaT13NValue(
+      "\xE3\x81\xA6\xE3\x81\x99\xE3\x81\xA8"));
+  EXPECT_FALSE(Segment::IsKatakanaT13NValue(
+      "\xE3\x83\x86\xE3\x82\xB9\xE3\x83\x88"));
+  EXPECT_FALSE(Segment::IsKatakanaT13NValue(
+      "\xE6\x9D\xB1\xE4\xBA\xAC"));
+}
+
 TEST_F(SegmentTest, SetTransliterations) {
   Segments segments;
   Segment *seg = segments.push_back_segment();
@@ -889,7 +896,7 @@ TEST_F(SegmentTest, RequestedCandidatesSizeTest) {
         "\xE3\x82\x88\xE3\x82\x8D\xE3\x81\x97\xE3\x81\x8F");
     EXPECT_EQ(1, segments.segments_size());
     const size_t result_size = segments.segment(0).candidates_size() + size;
-    segments.mutable_segment(0)->Expand(size);
+    segments.mutable_segment(0)->GetCandidates(result_size);
     EXPECT_EQ(result_size, segments.segment(0).requested_candidates_size());
   }
 }

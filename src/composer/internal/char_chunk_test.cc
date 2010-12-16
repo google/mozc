@@ -121,6 +121,14 @@ TEST(CharChunkTest, AddInput_ForN) {
   EXPECT_EQ("", chunk1.conversion());
   EXPECT_EQ("ny", chunk1.pending());
   EXPECT_EQ("n", input);
+
+  input = "a";
+  EXPECT_FALSE(chunk1.AddInputInternal(table, &input));
+  EXPECT_TRUE(chunk1.IsFixed());
+  EXPECT_EQ("nya", chunk1.raw());
+  EXPECT_EQ("[NYA]", chunk1.conversion());
+  EXPECT_EQ("", chunk1.pending());
+  EXPECT_EQ("", input);
 }
 
 TEST(CharChunkTest, AddInput_WithString) {
@@ -464,6 +472,75 @@ TEST(CharChunkTest, CaseSensitive) {
   EXPECT_TRUE(chunk.pending().empty());
 }
 
+TEST(CharChunkTest, AlphanumericOfSSH) {
+  // This is a unittest against http://b/3199626
+  // 'ssh' (っｓｈ) + F10 should be 'ssh'.
+  const TransliteratorInterface *kHiraganaT12r =
+      TransliteratorsJa::GetHiraganaTransliterator();
+  Table table;
+  // "っ"
+  table.AddRule("ss", "\xE3\x81\xA3", "s");
+  // "し"
+  table.AddRule("shi", "\xE3\x81\x97", "");
+
+  CharChunk chunk;
+  chunk.SetTransliterator(kHiraganaT12r);
+
+  {
+    string input("ssh");
+    chunk.AddInput(table, &input);
+    EXPECT_TRUE(input.empty());
+    EXPECT_EQ("ssh", chunk.raw());
+    // "っ"
+    EXPECT_EQ("\xE3\x81\xA3", chunk.conversion());
+    EXPECT_EQ("sh", chunk.pending());
+    // empty() is intentionaly not used due to check the actual value.
+    EXPECT_EQ("", chunk.ambiguous());
+  }
+  {
+    string result;
+    chunk.AppendFixedResult(table, kHiraganaT12r, &result);
+    // "っｓｈ"
+    EXPECT_EQ("\xE3\x81\xA3\xEF\xBD\x93\xEF\xBD\x88", result);
+  }
+
+  // Break down of the internal procedures
+  chunk.Clear();
+  chunk.SetTransliterator(kHiraganaT12r);
+  {
+    string input("s");
+    chunk.AddInput(table, &input);
+    EXPECT_TRUE(input.empty());
+    EXPECT_EQ("s", chunk.raw());
+    // empty() is intentionaly not used due to check the actual value.
+    EXPECT_EQ("", chunk.conversion());
+    EXPECT_EQ("s", chunk.pending());
+    EXPECT_EQ("", chunk.ambiguous());
+  }
+  {
+    string input("s");
+    chunk.AddInput(table, &input);
+    EXPECT_TRUE(input.empty());
+    EXPECT_EQ("ss", chunk.raw());
+    // "っ"
+    EXPECT_EQ("\xE3\x81\xA3", chunk.conversion());
+    EXPECT_EQ("s", chunk.pending());
+    // empty() is intentionaly not used due to check the actual value.
+    EXPECT_EQ("", chunk.ambiguous());
+  }
+  {
+    string input("h");
+    chunk.AddInput(table, &input);
+    EXPECT_TRUE(input.empty());
+    EXPECT_EQ("ssh", chunk.raw());
+    // "っ"
+    EXPECT_EQ("\xE3\x81\xA3", chunk.conversion());
+    EXPECT_EQ("sh", chunk.pending());
+    // empty() is intentionaly not used due to check the actual value.
+    EXPECT_EQ("", chunk.ambiguous());
+  }
+}
+
 TEST(CharChunkTest, Issue2190364) {
   // This is a unittest against http://b/2190364
   Table table;
@@ -715,25 +792,71 @@ TEST(CharChunkTest, Issue2990253) {
 }
 
 TEST(CharChunkTest, Combine) {
-  CharChunk lhs, rhs;
-  lhs.set_ambiguous("LA");
-  lhs.set_conversion("LC");
-  lhs.set_pending("LP");
-  lhs.set_raw("LR");
-  rhs.set_status(CharChunk::NO_RAW);
+  {
+    CharChunk lhs, rhs;
+    lhs.set_ambiguous("LA");
+    lhs.set_conversion("LC");
+    lhs.set_pending("LP");
+    lhs.set_raw("LR");
+    rhs.set_status(CharChunk::NO_RAW);
 
-  rhs.set_ambiguous("RA");
-  rhs.set_conversion("RC");
-  rhs.set_pending("RP");
-  rhs.set_raw("RR");
-  rhs.set_status(CharChunk::NO_CONVERSION);
+    rhs.set_ambiguous("RA");
+    rhs.set_conversion("RC");
+    rhs.set_pending("RP");
+    rhs.set_raw("RR");
+    rhs.set_status(CharChunk::NO_CONVERSION);
 
-  rhs.Combine(lhs);
-  EXPECT_EQ("LARA", rhs.ambiguous());
-  EXPECT_EQ("LCRC", rhs.conversion());
-  EXPECT_EQ("LPRP", rhs.pending());
-  EXPECT_EQ("LRRR", rhs.raw());
-  EXPECT_TRUE(rhs.has_status(CharChunk::NO_CONVERSION));
+    rhs.Combine(lhs);
+    EXPECT_EQ("LARA", rhs.ambiguous());
+    EXPECT_EQ("LCRC", rhs.conversion());
+    EXPECT_EQ("LPRP", rhs.pending());
+    EXPECT_EQ("LRRR", rhs.raw());
+    EXPECT_TRUE(rhs.has_status(CharChunk::NO_CONVERSION));
+  }
+
+  {  // lhs' ambigous is empty.
+    CharChunk lhs, rhs;
+    lhs.set_ambiguous("");
+    lhs.set_conversion("LC");
+    lhs.set_pending("LP");
+    lhs.set_raw("LR");
+    rhs.set_status(CharChunk::NO_RAW);
+
+    rhs.set_ambiguous("RA");
+    rhs.set_conversion("RC");
+    rhs.set_pending("RP");
+    rhs.set_raw("RR");
+    rhs.set_status(CharChunk::NO_CONVERSION);
+
+    rhs.Combine(lhs);
+    EXPECT_EQ("", rhs.ambiguous());
+    EXPECT_EQ("LCRC", rhs.conversion());
+    EXPECT_EQ("LPRP", rhs.pending());
+    EXPECT_EQ("LRRR", rhs.raw());
+    EXPECT_TRUE(rhs.has_status(CharChunk::NO_CONVERSION));
+  }
+
+  {  // rhs' ambigous is empty.
+    CharChunk lhs, rhs;
+    lhs.set_ambiguous("LA");
+    lhs.set_conversion("LC");
+    lhs.set_pending("LP");
+    lhs.set_raw("LR");
+    rhs.set_status(CharChunk::NO_RAW);
+
+    rhs.set_ambiguous("");
+    rhs.set_conversion("RC");
+    rhs.set_pending("RP");
+    rhs.set_raw("RR");
+    rhs.set_status(CharChunk::NO_CONVERSION);
+
+    rhs.Combine(lhs);
+    EXPECT_EQ("LARP", rhs.ambiguous());
+    EXPECT_EQ("LCRC", rhs.conversion());
+    EXPECT_EQ("LPRP", rhs.pending());
+    EXPECT_EQ("LRRR", rhs.raw());
+    EXPECT_TRUE(rhs.has_status(CharChunk::NO_CONVERSION));
+  }
 }
 
 TEST(CharChunkTest, IsConvertible) {

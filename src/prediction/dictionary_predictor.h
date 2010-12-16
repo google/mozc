@@ -48,13 +48,17 @@ class DictionaryPredictor: public PredictorInterface {
 
   bool Predict(Segments *segments) const;
 
-  static void MakeFeature(const string &query,
-                          const string &key,
-                          const string &value,
-                          uint16 cost,
-                          uint16 lid,
-                          bool is_zip_code,
-                          vector<pair<int, double> > *feature);
+  // return SVM score from feature.
+  // |feature| is used as an internal buffer for calculating SVM score.
+  static int GetSVMScore(const string &query,
+                         const string &key,
+                         const string &value,
+                         uint16 cost,
+                         uint16 lid,
+                         bool is_zip_code,
+                         bool is_suggestion,
+                         size_t total_candidates_size,
+                         vector<pair<int, double> > *feature);
 
   // return true if key consistes of '0'-'9' or '-'
   static bool IsZipCodeRequest(const string &key);

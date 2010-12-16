@@ -767,7 +767,7 @@ bool ImmutableConverterImpl::MakeLattice(Segments *segments) const {
   Lattice *lattice = segments->lattice();
   DCHECK(lattice);
 
-  if (lattice->has_lattice() && !segments->has_resized()) {
+  if (lattice->has_lattice() && !segments->resized()) {
     string key;
     for (size_t i = 0; i < segments->segments_size(); ++i) {
       key += segments->segment(i).key();
@@ -950,7 +950,7 @@ bool ImmutableConverterImpl::MakeLattice(Segments *segments) const {
   // Do not use KeyCorrector if user changes the boundary.
   // http://b/issue?id=2804996
   scoped_ptr<KeyCorrector> key_corrector;
-  if (!segments->has_resized()) {
+  if (!segments->resized()) {
     KeyCorrector::InputMode mode = KeyCorrector::ROMAN;
     if (GET_CONFIG(preedit_method) != config::Config::ROMAN) {
       mode = KeyCorrector::KANA;
@@ -1076,9 +1076,10 @@ bool ImmutableConverterImpl::MakeSegments(Segments *segments,
       DCHECK(nbest);
       nbest->Init(prev, node->next, segments->lattice());
       segment->set_key(key);
-      segment->Expand(max(static_cast<size_t>(1), old_seg.candidates_size()));
+      segment->GetCandidates(max(static_cast<size_t>(1),
+                                 old_seg.candidates_size()));
       if (segment->candidates_size() == 0) {
-        LOG(WARNING) << "Segment::Expand() returns 0 result";
+        LOG(WARNING) << "Segment::GetCandidates() returns 0 result";
         {
           Segment::Candidate *c = segment->push_back_candidate();
           c->Init();

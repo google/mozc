@@ -660,6 +660,50 @@ TEST(UtilTest, FullWidthAndHalfWidth) {
   CHECK_EQ("\x20\xe3\x80\x80", output);
 }
 
+TEST(UtilTest, BracketTest) {
+  static const struct BracketType {
+    const char *open_bracket;
+    const char *close_bracket;
+  } kBracketType[] = {
+    //  { "（", "）" },
+    //  { "〔", "〕" },
+    //  { "［", "］" },
+    //  { "｛", "｝" },
+    //  { "〈", "〉" },
+    //  { "《", "》" },
+    //  { "「", "」" },
+    //  { "『", "』" },
+    //  { "【", "】" },
+    //  { "〘", "〙" },
+    //  { "〚", "〛" },
+    { "\xEF\xBC\x88", "\xEF\xBC\x89" },
+    { "\xE3\x80\x94", "\xE3\x80\x95" },
+    { "\xEF\xBC\xBB", "\xEF\xBC\xBD" },
+    { "\xEF\xBD\x9B", "\xEF\xBD\x9D" },
+    { "\xE3\x80\x88", "\xE3\x80\x89" },
+    { "\xE3\x80\x8A", "\xE3\x80\x8B" },
+    { "\xE3\x80\x8C", "\xE3\x80\x8D" },
+    { "\xE3\x80\x8E", "\xE3\x80\x8F" },
+    { "\xE3\x80\x90", "\xE3\x80\x91" },
+    { "\xe3\x80\x98", "\xe3\x80\x99" },
+    { "\xe3\x80\x9a", "\xe3\x80\x9b" },
+    { NULL, NULL },  // sentinel
+  };
+
+  string pair;
+  for (size_t i = 0;
+       (kBracketType[i].open_bracket != NULL ||
+        kBracketType[i].close_bracket != NULL);
+       ++i) {
+    EXPECT_TRUE(Util::IsOpenBracket(kBracketType[i].open_bracket, &pair));
+    EXPECT_EQ(kBracketType[i].close_bracket, pair);
+    EXPECT_TRUE(Util::IsCloseBracket(kBracketType[i].close_bracket, &pair));
+    EXPECT_EQ(kBracketType[i].open_bracket, pair);
+    EXPECT_FALSE(Util::IsOpenBracket(kBracketType[i].close_bracket, &pair));
+    EXPECT_FALSE(Util::IsCloseBracket(kBracketType[i].open_bracket, &pair));
+  }
+}
+
 TEST(UtilTest, KanjiNumberToArabicNumber) {
   {
     // "十"
@@ -1909,4 +1953,17 @@ TEST(UtilTest, Issue2190350) {
   EXPECT_EQ(3, result.length());
   EXPECT_EQ("\xE3\x81\x82", result);
 }
+
+TEST(UtilTest, Fingerprint32WithSeed_uint32) {
+  const uint32 seed = 0xabcdef;
+
+  const uint32 num = 0x12345678;    // Assumed little endian
+  const uint32 num_hash = Util::Fingerprint32WithSeed(num, seed);
+
+  const char* str = "\x78\x56\x34\x12";
+  const uint32 str_hash = Util::Fingerprint32WithSeed(str, 4, seed);
+
+  EXPECT_EQ(num_hash, str_hash) << num_hash << " != " << str_hash;
+}
+
 }  // namespace mozc

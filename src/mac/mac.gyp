@@ -40,6 +40,11 @@
       'type': 'executable',
       'dependencies': [
         '../base/base.gyp:base',
+        '../client/client.gyp:client',
+        '../renderer/renderer.gyp:renderer',
+        '../renderer/renderer.gyp:table_layout',
+        '../renderer/renderer.gyp:window_util',
+        '../session/session.gyp:ime_switch_util',
         '../session/session.gyp:session_protocol',
         '../testing/testing.gyp:gtest_main',
         'gen_key_mappings',
@@ -50,10 +55,12 @@
       'conditions': [
         ['OS=="mac"', {
           'sources': [
-            'KeyCodeMap.mm',
-            'KeyCodeMap_test.mm',
+            'GoogleJapaneseInputController.mm',
+            'GoogleJapaneseInputController_test.mm',
             'GoogleJapaneseInputServer.mm',
             'GoogleJapaneseInputServer_test.mm',
+            'KeyCodeMap.mm',
+            'KeyCodeMap_test.mm',
           ],
           'link_settings': {
             'libraries': [

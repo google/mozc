@@ -29,6 +29,7 @@
 
 #include "prediction/dictionary_predictor.h"
 
+#include <limits.h>   // INT_MIN
 #include <cmath>
 #include <set>
 #include <string>
@@ -184,6 +185,8 @@ bool DictionaryPredictor::Predict(Segments *segments) const {
 
   // ranking
   const bool is_zip_code = DictionaryPredictor::IsZipCodeRequest(key);
+  const bool is_suggestion = (segments->request_type() ==
+                              Segments::SUGGESTION);
 
   vector<pair<int, double> > feature;
   for (size_t i = 0; i < results.size(); ++i) {
@@ -191,11 +194,11 @@ bool DictionaryPredictor::Predict(Segments *segments) const {
     // Bigram will be boosted because we pass the previous
     // key as a context information.
     const Node *node = results[i].node();
-    MakeFeature(results[i].is_bigram() ? bigram_key : key,
-                node->key, node->value, node->wcost, node->lid,
-                is_zip_code,
-                &feature);
-    results[i].set_score(static_cast<int>(1000 * SVMClassify(feature)));
+    results[i].set_score(
+        GetSVMScore(
+            results[i].is_bigram() ? bigram_key : key,
+            node->key, node->value, node->wcost, node->lid,
+            is_zip_code, is_suggestion, results.size(), &feature));
   }
 
   const size_t size = min(segments->max_prediction_candidates_size(),
@@ -235,7 +238,7 @@ bool DictionaryPredictor::Predict(Segments *segments) const {
   int added = 0;
   const size_t key_length = Util::CharsLen(key);
   for (size_t i = 0; i < results.size(); ++i) {
-    if (added >= size) {
+    if (added >= size || results[i].score() == INT_MIN) {
       break;
     }
 
@@ -297,6 +300,7 @@ bool DictionaryPredictor::Predict(Segments *segments) const {
       candidate->key = node->key;
       candidate->value = node->value;
     }
+
     candidate->content_key = candidate->key;
     candidate->content_value = candidate->value;
     candidate->lid = node->lid;
@@ -339,13 +343,15 @@ enum {
 #define ADD_FEATURE(i, v) \
    { feature->push_back(make_pair<int, double>(i, v)); } while (0)
 
-void DictionaryPredictor::MakeFeature(const string &query,
-                                      const string &key,
-                                      const string &value,
-                                      uint16 cost,
-                                      uint16 lid,
-                                      bool is_zip_code,
-                                      vector<pair<int, double> > *feature) {
+int DictionaryPredictor::GetSVMScore(const string &query,
+                                     const string &key,
+                                     const string &value,
+                                     uint16 cost,
+                                     uint16 lid,
+                                     bool is_zip_code,
+                                     bool is_suggestion,
+                                     size_t total_candidates_size,
+                                     vector<pair<int, double> > *feature) {
   feature->clear();
 
   // We use the cost for ranking if query looks like zip code
@@ -353,22 +359,38 @@ void DictionaryPredictor::MakeFeature(const string &query,
   // huristics.
   if (is_zip_code) {
     ADD_FEATURE(COST, cost / 500.0);
-    return;
+  } else {
+    const size_t query_len = Util::CharsLen(query);
+    const size_t key_len = Util::CharsLen(key);
+
+    // Temporal workaround for fixing the problem where longer sentence-like
+    // suggestions are shown when user input is very short.
+    // "ただしい" => "ただしいけめんにかぎる"
+    // "それでもぼ" => "それでもぼくはやっていない".
+    // If total_candidates_size is small enough, we don't perform
+    // special filtering. e.g., "せんとち" has only two candidates, so
+    // showing "千と千尋の神隠し" is OK.
+    // Also, if the cost is too small (< 5000), we allow to display
+    // long phrases. Examples include "よろしくおねがいします".
+    if (is_suggestion && total_candidates_size >= 10 && key_len >= 8 &&
+        cost >= 5000 && query_len <= static_cast<size_t>(0.4 * key_len)) {
+      return INT_MIN;
+    }
+
+    const bool contains_alphabet =
+        Util::ContainsScriptType(value, Util::ALPHABET);
+    ADD_FEATURE(BIAS, 1.0);
+    ADD_FEATURE(QUERY_LEN, log(1.0 + query_len));
+    ADD_FEATURE(KEY_LEN, log(1.0 + key_len));
+    ADD_FEATURE(KEY_LEN1, key_len == 1 ? 1 : 0);
+    ADD_FEATURE(REMAIN_LEN0, query_len == key_len ? 1 : 0);
+    ADD_FEATURE(VALUE_LEN, log(1.0 + Util::CharsLen(value)));
+    ADD_FEATURE(COST, cost / 500.0);
+    ADD_FEATURE(CONTAINS_ALPHABET, contains_alphabet ? 1 : 0);
+    ADD_FEATURE(POS_BASE + kLidGroup[lid], 1.0);
   }
 
-  const size_t query_len = Util::CharsLen(query);
-  const size_t key_len = Util::CharsLen(key);
-  const bool contains_alphabet =
-      Util::ContainsScriptType(value, Util::ALPHABET);
-  ADD_FEATURE(BIAS, 1.0);
-  ADD_FEATURE(QUERY_LEN, log(1.0 + query_len));
-  ADD_FEATURE(KEY_LEN, log(1.0 + key_len));
-  ADD_FEATURE(KEY_LEN1, key_len == 1 ? 1 : 0);
-  ADD_FEATURE(REMAIN_LEN0, query_len == key_len ? 1 : 0);
-  ADD_FEATURE(VALUE_LEN, log(1.0 + Util::CharsLen(value)));
-  ADD_FEATURE(COST, cost / 500.0);
-  ADD_FEATURE(CONTAINS_ALPHABET, contains_alphabet ? 1 : 0);
-  ADD_FEATURE(POS_BASE + kLidGroup[lid], 1.0);
+  return static_cast<int>(1000 * SVMClassify(*feature));
 }
 #undef ADD_FEATURE
 

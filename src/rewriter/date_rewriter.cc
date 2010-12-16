@@ -938,10 +938,12 @@ bool DateRewriter::RewriteEra(Segment *current_segment,
   }
 
   const int kInsertPosition = 2;
+  current_segment->GetCandidates(kInsertPosition + 1);
+
   const int position
       = min(kInsertPosition,
             static_cast<int>(current_segment->candidates_size()));
-  current_segment->Expand(kInsertPosition + 1);
+
 
   // "和暦"
   const char kDescription[] = "\xE5\x92\x8C\xE6\x9A\xA6";

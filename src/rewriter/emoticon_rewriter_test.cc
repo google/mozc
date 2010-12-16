@@ -58,7 +58,8 @@ bool HasEmoticon(const Segments &segments) {
   for (size_t i = 0; i < segments.segment(0).candidates_size(); ++i) {
     const Segment::Candidate &candidate = segments.segment(0).candidate(i);
     // "顔文字"
-    if ("\xE9\xA1\x94\xE6\x96\x87\xE5\xAD\x97" == candidate.description) {
+    if (Util::StartsWith(candidate.description,
+                         "\xE9\xA1\x94\xE6\x96\x87\xE5\xAD\x97")) {
       return true;
     }
   }

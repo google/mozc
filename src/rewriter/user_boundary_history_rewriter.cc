@@ -134,7 +134,7 @@ void UserBoundaryHistoryRewriter::Finish(Segments *segments) {
     return;
   }
 
-  if (segments->has_resized()) {
+  if (segments->resized()) {
     ResizeOrInsert(segments, INSERT);
     // update usage stats here
     usage_stats::UsageStats::SetInteger(
@@ -164,7 +164,7 @@ bool UserBoundaryHistoryRewriter::Rewrite(Segments *segments) const {
     return false;
   }
 
-  if (!segments->has_resized()) {
+  if (!segments->resized()) {
     return ResizeOrInsert(segments, RESIZE);
   }
 

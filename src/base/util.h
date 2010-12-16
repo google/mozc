@@ -161,6 +161,7 @@ class Util {
   static uint32 Fingerprint32WithSeed(const char *str,
                                       uint32 seed);
 #endif
+  static uint32 Fingerprint32WithSeed(uint32 num, uint32 seed);
 
   // 64bit Fingerprint
   static uint64 Fingerprint(const string &key);
@@ -327,8 +328,11 @@ class Util {
   // does nothing in other platforms.
   static string NormalizeDirectorySeparator(const string &path);
 
-  // return ~/.mozc for Unix/Mac
-  // return %APPDATA%\\google\\mozc for Windows 2000, XP and Vista
+  // return "~/.mozc" for Unix/Mac
+  // return "%USERPROFILE%\\Local Settings\\Application\\"
+  //        "Google\\Google Japanese Input" for Windows XP.
+  // return "%USERPROFILE%\\AppData\\LocalLow\\"
+  //        "Google\\Google Japanese Input" for Windows Vista and later.
   static string GetUserProfileDirectory();
 
   // return ~/Library/Logs/Mozc for Mac
@@ -342,6 +346,27 @@ class Util {
   // TODO(mukai,taku): find better way to hide this method in the release
   // build but available from those tests.
   static void SetUserProfileDirectory(const string &path);
+
+#ifdef OS_WINDOWS
+  // From an early stage of the development of Mozc, we have somehow abused
+  // CHECK macro assuming that any failure of fundamental APIs like
+  // ::SHGetFolderPathW or ::SHGetKnownFolderPathis is worth being notified
+  // as a crash.  But the circumstances have been changed.  As filed as
+  // b/3216603, increasing number of instances of various applications begin
+  // to use their own sandbox technology, where these kind of fundamental APIs
+  // are far more likely to fail with an unexpected error code.
+  // EnsureVitalImmutableDataIsAvailable is a simple fail-fast mechanism to
+  // this situation.  This function simply returns false instead of making
+  // the process crash if any of following functions cannot work as expected.
+  // - IsVistaOrLaterCache
+  // - SystemDirectoryCache
+  // - ProgramFilesX86Cache
+  // - LocalAppDataDirectoryCache
+  // TODO(taku,yukawa): Implement more robust and reliable mechanism against
+  //   sandboxed environment, where such kind of fundamental APIs are far more
+  //   likely to fail.  See b/3216603.
+  static bool EnsureVitalImmutableDataIsAvailable();
+#endif  // OS_WINDOWS
 
   // return the directory name where the mozc server exist.
   static string GetServerDirectory();

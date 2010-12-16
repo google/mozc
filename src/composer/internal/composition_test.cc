@@ -1280,6 +1280,7 @@ TEST_F(CompositionTest, CombinePendingChunks) {
     EXPECT_EQ("ny", (*chunk_it)->pending());
     EXPECT_EQ("", (*chunk_it)->conversion());
     EXPECT_EQ("ny", (*chunk_it)->raw());
+    // "んy"
     EXPECT_EQ("\xe3\x82\x93y", (*chunk_it)->ambiguous());
   }
   {
@@ -1301,9 +1302,35 @@ TEST_F(CompositionTest, CombinePendingChunks) {
     EXPECT_EQ("ny", (*chunk_it)->pending());
     EXPECT_EQ("", (*chunk_it)->conversion());
     EXPECT_EQ("ny", (*chunk_it)->raw());
+    // "んy"
     EXPECT_EQ("\xe3\x82\x93y", (*chunk_it)->ambiguous());
   }
 }
+
+TEST_F(CompositionTest, AlphanumericOfSSH) {
+  // This is a unittest against http://b/3199626
+  // 'ssh' (っｓｈ) + F10 should be 'ssh'.
+  Table table;
+  // "っ"
+  table.AddRule("ss", "\xE3\x81\xA3", "s");
+  // "し"
+  table.AddRule("shi", "\xE3\x81\x97", "");
+
+  Composition comp;
+  comp.SetTable(&table);
+  comp.SetInputMode(TransliteratorsJa::GetHiraganaTransliterator());
+  size_t pos = 0;
+  pos = comp.InsertAt(pos, "s");
+  pos = comp.InsertAt(pos, "s");
+  pos = comp.InsertAt(pos, "h");
+  EXPECT_EQ(3, pos);
+
+  string output;
+  comp.GetStringWithTrimMode(FIX, &output);
+  // "っｓｈ"
+  EXPECT_EQ("\xE3\x81\xA3\xEF\xBD\x93\xEF\xBD\x88", output);
+}
+
 
 #ifdef UNDEFINE_ARRAYSIZE
 #undef ARRAYSIZE

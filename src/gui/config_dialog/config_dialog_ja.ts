@@ -300,6 +300,11 @@ Mozcの機能向上に役立てる（再ログイン後に変更は完了しま�
         <translation>起動時に Mozcが既定の IME であるか確認する</translation>
     </message>
     <message>
+        <location filename="config_dialog.ui" line="1282"/>
+        <source>Disable Keyboard layout hotkey (Ctrl+Shift)</source>
+        <translation>ホットキー(Ctrl+Shift)による IME の切り替えを無効化する</translation>
+    </message>
+    <message>
         <location filename="config_dialog.ui" line="1089"/>
         <source>Default IME</source>
         <translation>既定の IME</translation>

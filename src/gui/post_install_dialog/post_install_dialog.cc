@@ -38,16 +38,16 @@
 #include "base/process.h"
 #include "base/run_level.h"
 #include "base/util.h"
-#include "base/win_util.h"
 #include "dictionary/user_dictionary_importer.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
+#include "gui/base/win_util.h"
 #include "usage_stats/usage_stats.h"
-
 
 #ifdef OS_WINDOWS
 #include "win32/base/imm_util.h"
 #include "win32/base/migration_util.h"
+#include "base/win_util.h"
 #endif
 
 namespace mozc {
@@ -75,6 +75,10 @@ PostInstallDialog::PostInstallDialog()
                    SIGNAL(clicked()),
                    this,
                    SLOT(OnOk()));
+  QObject::connect(setAsDefaultCheckBox,
+                   SIGNAL(stateChanged(int)),
+                   this,
+                   SLOT(OnsetAsDefaultCheckBoxToggled(int)));
 
   // We change buttons to be displayed depending on the condition this dialog
   // is launched.
@@ -209,6 +213,13 @@ void PostInstallDialog::ApplySettings() {
     usage_stats::UsageStats::IncrementCount("PostInstallNotSetDefault");
   }
 
+  if (IMEHotKeyDisabledCheckBox->isEnabled()) {
+    if (!WinUtil::SetIMEHotKeyDisabled(
+            IMEHotKeyDisabledCheckBox->isChecked())) {
+      LOG(ERROR) << "Failed to set IMEHotKey";
+    }
+  }
+
   if (migrateDefaultIMEUserDictionaryCheckBox->isChecked() &&
       migrateDefaultIMEUserDictionaryCheckBox->isVisible()) {
     storage_->Load();
@@ -259,6 +270,14 @@ void PostInstallDialog::ApplySettings() {
 #else
   // not supported on Mac and Linux
 #endif  // OS_WINDOWS
+}
+
+void PostInstallDialog::OnsetAsDefaultCheckBoxToggled(int state) {
+#ifdef OS_WINDOWS
+  // IMEHotKey is only activated when setAsDefaultCheckBox is checked.
+  IMEHotKeyDisabledCheckBox->setChecked(state);
+  IMEHotKeyDisabledCheckBox->setEnabled(static_cast<bool>(state));
+#endif
 }
 
 bool PostInstallDialog::IsShowHelpPageRequired() {
