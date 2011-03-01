@@ -60,7 +60,7 @@ class RewriterFactory {
   static RewriterInterface *GetRewriter();
 
   // dependency injection for unittesting
-  static void SetRewriter(RewriterInterface *predictor);
+  static void SetRewriter(RewriterInterface *rewriter);
 
  private:
   RewriterFactory() {}

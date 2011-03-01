@@ -35,12 +35,17 @@
 
 namespace mozc {
 
-bool Segmenter::IsBoundary(const Node *lnode, const Node *rnode) {
+bool Segmenter::IsBoundary(const Node *lnode, const Node *rnode,
+                           bool is_single_segment) {
   if (lnode->node_type == Node::BOS_NODE ||
       rnode->node_type == Node::EOS_NODE) {
     return true;
   }
-  return Segmenter::IsBoundary(lnode->rid, rnode->lid);
+  // return always false in prediction mode.
+  // This implies that converter always returns single-segment-result
+  // in prediction mode.
+  return is_single_segment ?
+      false : Segmenter::IsBoundary(lnode->rid, rnode->lid);
 }
 
 // use only for gen_segmenter_bitarrray.

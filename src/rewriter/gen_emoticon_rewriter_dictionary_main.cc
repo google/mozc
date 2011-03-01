@@ -96,7 +96,7 @@ void ConvertEmoticonTsvToTextDictionary(
       vector<string> fields;
       Util::SplitStringAllowEmpty(line, "\t", &fields);
       CHECK_GE(fields.size(), 2) << "format error: " << line;
-      if (fields.size() > 2) {
+      if (fields.size() > 3) {
         LOG(WARNING) << "ignore extra columns: " << line;
       }
 

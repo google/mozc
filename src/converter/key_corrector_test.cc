@@ -679,4 +679,23 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanGetOriginalOffsetTest) {
               corrector.GetOriginalOffset(9, 6));
   }
 }
+
+// When Unicode strings in UCS4 range is given,
+// Simply give up the processing, as Mozc
+// currently doesn't support UCS4.
+// TODO(taku): Remove this test after migrating
+// UCS2 to UCS4. http://b/issue?id=3177634
+TEST(KeyCorrectorTest, Regression3386634) {
+  {
+    const string input = "\xF0\xA0\xAE\x9F";  // UCS4 char in UTF8
+    KeyCorrector corrector(input, KeyCorrector::ROMAN);
+    EXPECT_FALSE(corrector.IsAvailable());
+  }
+
+  {
+    const string input = "\xe3\x81\x93";      // UCS2 char in UTF8
+    KeyCorrector corrector(input, KeyCorrector::ROMAN);
+    EXPECT_TRUE(corrector.IsAvailable());
+  }
+}
 }  // namespace mozc

@@ -157,6 +157,8 @@ ConfigDialog::ConfigDialog()
   // On Windows/Linux, yenSignCombBox can be hidden.
   yenSignLabel->hide();
   yenSignComboBox->hide();
+  // On Windows/Linux, useJapaneseLayout checkbox should be invisible.
+  useJapaneseLayout->hide();
 #endif  // !OS_MACOSX
 
   // signal/slot
@@ -301,12 +303,10 @@ ConfigDialog::~ConfigDialog() {
 }
 
 bool ConfigDialog::SetConfig(const config::Config &config) {
-#ifndef OS_MACOSX
   if (!client_->CheckVersionOrRestartServer()) {
     LOG(ERROR) << "CheckVersionOrRestartServer failed";
     return false;
   }
-#endif  // OS_MACOSX
 
   if (!client_->SetConfig(config)) {
     LOG(ERROR) << "SetConfig failed";
@@ -317,12 +317,10 @@ bool ConfigDialog::SetConfig(const config::Config &config) {
 }
 
 bool ConfigDialog::GetConfig(config::Config *config) {
-#ifndef OS_MACOSX
   if (!client_->CheckVersionOrRestartServer()) {
     LOG(ERROR) << "CheckVersionOrRestartServer failed";
     return false;
   }
-#endif  // OS_MACOSX
 
   if (!client_->GetConfig(config)) {
     LOG(ERROR) << "GetConfig failed";
@@ -450,7 +448,7 @@ void GetComboboxForPreeditMethod(const QComboBox *combobox,
 // Actually ConvertFromProto and ConvertToProto are almost the same.
 // The difference only SET_ and GET_. We would like to unify the twos.
 void ConfigDialog::ConvertFromProto(const config::Config &config) {
-  // tab 1
+  // tab1
   SetComboboxForPreeditMethod(config, inputModeComboBox);
   SET_COMBOBOX(punctuationsSettingComboBox, PunctuationMethod,
                punctuation_method);
@@ -497,9 +495,12 @@ void ConfigDialog::ConvertFromProto(const config::Config &config) {
                ShiftKeyModeSwitch,
                shift_key_mode_switch);
 
+  SET_CHECKBOX(useJapaneseLayout, use_japanese_layout);
+
   // tab4
   SET_CHECKBOX(historySuggestCheckBox, use_history_suggest);
   SET_CHECKBOX(dictionarySuggestCheckBox, use_dictionary_suggest);
+  SET_CHECKBOX(realtimeConversionCheckBox, use_realtime_conversion);
 
   suggestionsSizeSpinBox->setValue
       (max(1, min(9, static_cast<int>(config.suggestions_size()))));
@@ -517,7 +518,7 @@ void ConfigDialog::ConvertFromProto(const config::Config &config) {
 }
 
 void ConfigDialog::ConvertToProto(config::Config *config) const {
-  // tab 1
+  // tab1
   GetComboboxForPreeditMethod(inputModeComboBox, config);
   GET_COMBOBOX(punctuationsSettingComboBox, PunctuationMethod,
                punctuation_method);
@@ -552,6 +553,8 @@ void ConfigDialog::ConvertToProto(config::Config *config) const {
 
   GET_CHECKBOX(useAutoConversion, use_auto_conversion);
 
+  GET_CHECKBOX(useJapaneseLayout, use_japanese_layout);
+
   uint32 auto_conversion_key = 0;
   if (kutenCheckBox->isChecked()) {
     auto_conversion_key |=
@@ -578,6 +581,7 @@ void ConfigDialog::ConvertToProto(config::Config *config) const {
   // tab4
   GET_CHECKBOX(historySuggestCheckBox, use_history_suggest);
   GET_CHECKBOX(dictionarySuggestCheckBox, use_dictionary_suggest);
+  GET_CHECKBOX(realtimeConversionCheckBox, use_realtime_conversion);
 
   config->set_suggestions_size
       (static_cast<uint32>(suggestionsSizeSpinBox->value()));
@@ -630,9 +634,7 @@ void ConfigDialog::ClearUserHistory() {
     return;
   }
 
-#ifndef OS_MACOSX
   client_->CheckVersionOrRestartServer();
-#endif  // OS_MACOSX
 
   if (!client_->ClearUserHistory()) {
     QMessageBox::critical(
@@ -654,9 +656,7 @@ void ConfigDialog::ClearUserPrediction() {
     return;
   }
 
-#ifndef OS_MACOSX
   client_->CheckVersionOrRestartServer();
-#endif  // OS_MACOSX
 
   if (!client_->ClearUserPrediction()) {
     QMessageBox::critical(
@@ -678,9 +678,7 @@ void ConfigDialog::ClearUnusedUserPrediction() {
     return;
   }
 
-#ifndef OS_MACOSX
   client_->CheckVersionOrRestartServer();
-#endif  // OS_MACOSX
 
   if (!client_->ClearUnusedUserPrediction()) {
     QMessageBox::critical(

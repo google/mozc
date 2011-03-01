@@ -48,7 +48,10 @@ int GetFakeCost(int l, int r) {
 TEST(SparseConnectorTest, SparseConnecterOpenTest) {
   const string input_filename
       = mozc::Util::JoinPath(FLAGS_test_tmpdir, "connector.txt");
-
+  const string id_filename
+      = mozc::Util::JoinPath(FLAGS_test_tmpdir, "id.def");
+  const string special_pos_filename
+      = mozc::Util::JoinPath(FLAGS_test_tmpdir, "special_pos.def");
   const string output_filename
       = mozc::Util::JoinPath(FLAGS_test_tmpdir, "connector.db");
 
@@ -65,8 +68,25 @@ TEST(SparseConnectorTest, SparseConnecterOpenTest) {
     }
   }
 
-  SparseConnectorBuilder::Compile(input_filename.c_str(),
-                                  output_filename.c_str());
+  {
+    mozc::OutputFileStream ofs(id_filename.c_str());
+    EXPECT_TRUE(ofs);
+    ofs << "0 foo" << endl;
+    ofs << "1 bar" << endl;
+    ofs << "2 buzz" << endl;
+  }
+
+  {
+    mozc::OutputFileStream ofs(special_pos_filename.c_str());
+    EXPECT_TRUE(ofs);
+    ofs << "extra1" << endl;
+    ofs << "extra2" << endl;
+  }
+
+  SparseConnectorBuilder::Compile(input_filename,
+                                  id_filename,
+                                  special_pos_filename,
+                                  output_filename);
 
   Mmap<char> cmmap;
   CHECK(cmmap.Open(output_filename.c_str()))
@@ -82,6 +102,17 @@ TEST(SparseConnectorTest, SparseConnecterOpenTest) {
       EXPECT_LT(abs(diff), cost_resolution);
     }
   }
+
+  const int16 invalid_cost = ConnectorInterface::kInvalidCost;
+  EXPECT_EQ(invalid_cost, connector->GetTransitionCost(1, 3));
+  EXPECT_EQ(invalid_cost, connector->GetTransitionCost(3, 4));
+  EXPECT_EQ(0, connector->GetTransitionCost(0, 3));
+  EXPECT_EQ(0, connector->GetTransitionCost(0, 4));
+
+  EXPECT_EQ(invalid_cost, connector->GetTransitionCost(3, 1));
+  EXPECT_EQ(invalid_cost, connector->GetTransitionCost(4, 3));
+  EXPECT_EQ(0, connector->GetTransitionCost(0, 3));
+  EXPECT_EQ(0, connector->GetTransitionCost(4, 0));
 }
 
 TEST(SparseConnectorTest, key_coding) {

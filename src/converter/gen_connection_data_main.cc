@@ -45,8 +45,14 @@ int main(int argc, char **argv) {
     output += ".tmp";
   }
 
-  mozc::SparseConnectorBuilder::Compile(FLAGS_input.c_str(),
-                                        output.c_str());
+  vector<string> files;
+  mozc::Util::SplitStringUsing(FLAGS_input, " ", &files);
+  CHECK_EQ(3, files.size());
+
+  mozc::SparseConnectorBuilder::Compile(files[0],  // connection.txt
+                                        files[1],  // id.def
+                                        files[2],  // special_pos.def
+                                        output);
 
   if (FLAGS_make_header) {
     const char kName[] = "ConnectionData";

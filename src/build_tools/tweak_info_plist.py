@@ -38,13 +38,14 @@ See mozc_version.py for the detailed information for version.txt.
 
 __author__ = "mukai"
 
+import datetime
 import logging
 import optparse
 import sys
 import mozc_version
 import tweak_data
 
-_COPYRIGHT_YEAR = 2010
+_COPYRIGHT_YEAR = datetime.date.today().year
 
 def ParseOptions():
   """Parse command line options.

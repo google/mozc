@@ -44,28 +44,39 @@
 namespace mozc {
 namespace composer {
 namespace {
-static const char kDefaultPreeditTableFile[] = "system://romanji-hiragana.tsv";
-static const char kRomajiPreeditTableFile[] = "system://romanji-hiragana.tsv";
+const char kDefaultPreeditTableFile[] = "system://romanji-hiragana.tsv";
+const char kRomajiPreeditTableFile[] = "system://romanji-hiragana.tsv";
 // Table for Kana combinations like "か゛" → "が".
-static const char kKanaCombinationTableFile[] = "system://kana.tsv";
+const char kKanaCombinationTableFile[] = "system://kana.tsv";
+
+const char kNewChunkPrefix[] = "\t";
+const char kSpecialKeyOpen[] = "\x0F";  // Shift-In of ASCII
+const char kSpecialKeyClose[] = "\x0E";  // Shift-Out of ASCII
 }  // anonymous namespace
 
 // ========================================
 // Entry
 // ========================================
-Entry::Entry(const string& input, const string& result, const string& pending)
-    : input_(input), result_(result), pending_(pending) {}
+Entry::Entry(const string &input,
+             const string &result,
+             const string &pending,
+             const TableAttributes attributes)
+    : input_(input),
+      result_(result),
+      pending_(pending),
+      attributes_(attributes) {}
 
 // ========================================
 // Table
 // ========================================
 Table::Table()
-    : entries_(new EntryTrie), case_sensitive_(false) {}
+    : entries_(new EntryTrie),
+      case_sensitive_(false) {}
 
 Table::~Table() {
   EntrySet::iterator it;
   for (it = entry_set_.begin(); it != entry_set_.end(); ++it) {
-    const Entry* entry = *it;
+    const Entry *entry = *it;
     delete entry;
   }
 }
@@ -85,14 +96,6 @@ static const char kMiddleDot[]   = "\xE3\x83\xBB";  // "・"
 bool Table::Initialize() {
   bool result = false;
   const config::Config &config = config::ConfigHandler::GetConfig();
-
-  // If shift_key_mode_switch option is disabled,
-  // table looking up is executed in case sensitive mode.
-  // This makes power users who use extremely customized Romaji input table
-  // happy.
-  set_case_sensitive(
-      config.shift_key_mode_switch() == mozc::config::Config::OFF);
-
   switch(config.preedit_method()) {
     case config::Config::ROMAN:
       result = (config.has_custom_roman_table() &&
@@ -196,36 +199,108 @@ bool Table::Reload() {
   return Initialize();
 }
 
-void Table::AddRule(const string& input,
-                    const string& output,
-                    const string& pending) {
-  const size_t kMaxSize = 300;
-  if (input.size() >= kMaxSize ||
-      output.size() >= kMaxSize ||
-      pending.size() >= kMaxSize) {
-    LOG(ERROR) << "Invalid input/output/pending";
-    return;
+bool Table::IsLoopingEntry(const string &input,
+                           const string &pending) const {
+  if (input.empty() || pending.empty()) {
+    return false;
   }
 
-  const Entry* old_entry = NULL;
-  if (!pending.empty() &&
-      (entries_->LookUp(pending, &old_entry) || input == pending)) {
+  string key = pending;
+  do {
+    // If input is a prefix of key, it should be looping.
+    // (ex. input="a", pending="abc").
+    if (Util::StartsWith(key, input)) {
+      return true;
+    }
+
+    size_t key_length = 0;
+    bool fixed = false;
+    const Entry *entry = LookUpPrefix(key, &key_length, &fixed);
+    if (entry == NULL) {
+      return false;
+    }
+    DCHECK_LE(key_length, key.size());
+    key = entry->pending() + key.substr(key_length);
+  } while (!key.empty());
+
+  return false;
+}
+
+const Entry *Table::AddRule(const string &input,
+                            const string &output,
+                            const string &pending) {
+  return AddRuleWithAttributes(input, output, pending, NO_TABLE_ATTRIBUTE);
+}
+
+const Entry *Table::AddRuleWithAttributes(const string &escaped_input,
+                                          const string &output,
+                                          const string &escaped_pending,
+                                          const TableAttributes attributes) {
+  if (attributes & NEW_CHUNK) {
+    // TODO(komatsu): Make a new trie tree for checking the new chunk
+    // attribute rather than reusing the conversion trie.
+    const string additional_input = kNewChunkPrefix + escaped_input;
+    AddRuleWithAttributes(additional_input, output, escaped_pending,
+                          NO_TABLE_ATTRIBUTE);
+  }
+
+  const size_t kMaxSize = 300;
+  if (escaped_input.size() >= kMaxSize ||
+      output.size() >= kMaxSize ||
+      escaped_pending.size() >= kMaxSize) {
+    LOG(ERROR) << "Invalid input/output/pending";
+    return NULL;
+  }
+
+  const string input = ParseSpecialKey(escaped_input);
+  const string pending = ParseSpecialKey(escaped_pending);
+  if (IsLoopingEntry(input, pending)) {
     LOG(WARNING) << "Entry "
                  << input << " " << output << " " << pending
                  << " is removed, since the rule is looping";
-    return;
+    return NULL;
   }
 
-  const Entry* entry = new Entry(input, output, pending);
+  const Entry *old_entry = NULL;
   if (entries_->LookUp(input, &old_entry)) {
     DeleteEntry(old_entry);
   }
+
+  Entry *entry = new Entry(input, output, pending, attributes);
   entries_->AddEntry(input, entry);
   entry_set_.insert(entry);
+
+  // Check if the input has a large captal character.
+  // Invisible character is exception.
+  if (!case_sensitive_) {
+    const string trimed_input = DeleteSpecialKey(input);
+    const char *begin = trimed_input.data();
+    size_t pos = 0;
+    size_t mblen = 0;
+    while (pos < trimed_input.size()) {
+      const uint16 ucs2 = Util::UTF8ToUCS2(begin + pos,
+                                           begin + trimed_input.size(),
+                                           &mblen);
+      if ('A' <= ucs2 && ucs2 <= 'Z') {
+        case_sensitive_ = true;
+        break;
+      }
+      pos += mblen;
+    }
+  }
+  return entry;
 }
 
-void Table::DeleteRule(const string& input) {
-  const Entry* old_entry;
+void Table::DeleteRule(const string &input) {
+  // NOTE : If this method is called and an entry is deleted,
+  //     case_sensitive_ turns to be invalid
+  //     because it is not updated.
+  //     Currently updating logic is omitted because;
+  //     - Updating needs some complex implementation.
+  //     - This method is not used.
+  //     - This method has no tests.
+  //     - This method is private scope.
+  const Entry *old_entry;
   if (entries_->LookUp(input, &old_entry)) {
     DeleteEntry(old_entry);
   }
@@ -237,13 +312,37 @@ bool Table::LoadFromString(const string &str) {
   return LoadFromStream(&is);
 }
 
-bool Table::LoadFromFile(const char* filepath) {
+bool Table::LoadFromFile(const char *filepath) {
   scoped_ptr<istream> ifs(ConfigFileStream::Open(filepath));
   if (ifs.get() == NULL) {
     return false;
   }
   return LoadFromStream(ifs.get());
 }
+
+namespace {
+const char kAttributeDelimiter[] = " ";
+
+TableAttributes ParseAttributes(const string &input) {
+  TableAttributes attributes = NO_TABLE_ATTRIBUTE;
+
+  vector<string> attribute_strings;
+  Util::SplitStringAllowEmpty(input, kAttributeDelimiter, &attribute_strings);
+
+  for (size_t i = 0; i < attribute_strings.size(); ++i) {
+    if (attribute_strings[i] == "NewChunk") {
+      attributes |= NEW_CHUNK;
+    } else if (attribute_strings[i] == "NoTransliteration") {
+      attributes |= NO_TRANSLITERATION;
+    } else if (attribute_strings[i] == "DirectInput") {
+      attributes |= DIRECT_INPUT;
+    } else if (attribute_strings[i] == "EndChunk") {
+      attributes |= END_CHUNK;
+    }
+  }
+  return attributes;
+}
+}  // anonymous namespace
 
 bool Table::LoadFromStream(istream *is) {
   DCHECK(is);
@@ -252,18 +351,23 @@ bool Table::LoadFromStream(istream *is) {
   while (!is->eof()) {
     getline(*is, line);
     Util::ChopReturns(&line);
-    if (line.empty() || line[0] == '#') {
+    if (line.empty()) {
       continue;
     }
 
     vector<string> rules;
     Util::SplitStringAllowEmpty(line, "\t", &rules);
-    if (rules.size() == 3) {
+    if (rules.size() == 4) {
+      const TableAttributes attributes = ParseAttributes(rules[3]);
+      AddRuleWithAttributes(rules[0], rules[1], rules[2], attributes);
+    } else if (rules.size() == 3) {
       AddRule(rules[0], rules[1], rules[2]);
     } else if (rules.size() == 2) {
       AddRule(rules[0], rules[1], empty_pending);
     } else {
-      LOG(ERROR) << "Format error: " << line;
+      if (line[0] != '#') {
+        LOG(ERROR) << "Format error: " << line;
+      }
       continue;
     }
   }
@@ -297,7 +401,23 @@ const Entry *Table::LookUpPrefix(const string &input,
   return entry;
 }
 
-bool Table::HasSubRules(const string& input) const {
+bool Table::HasNewChunkEntry(const string &input) const {
+  if (input.empty()) {
+    return false;
+  }
+
+  const string key = kNewChunkPrefix + input;
+  size_t key_length = 0;
+  bool fixed = false;
+  LookUpPrefix(key, &key_length, &fixed);
+  if (key_length > 1) {
+    return true;
+  }
+
+  return false;
+}
+
+bool Table::HasSubRules(const string &input) const {
   if (case_sensitive_) {
     return entries_->HasSubTrie(input);
   } else {
@@ -307,7 +427,7 @@ bool Table::HasSubRules(const string& input) const {
   }
 }
 
-void Table::DeleteEntry(const Entry* entry) {
+void Table::DeleteEntry(const Entry *entry) {
   entry_set_.erase(entry);
   delete entry;
 }
@@ -318,6 +438,75 @@ bool Table::case_sensitive() const {
 
 void Table::set_case_sensitive(const bool case_sensitive) {
   case_sensitive_ = case_sensitive;
+}
+
+namespace {
+bool FindBlock(const string &input, const string &open, const string &close,
+               const size_t offset, size_t *open_pos, size_t *close_pos) {
+  DCHECK(open_pos);
+  DCHECK(close_pos);
+
+  *open_pos = input.find(open, offset);
+  if (*open_pos == string::npos) {
+    return false;
+  }
+
+  *close_pos = input.find(close, *open_pos);
+  if (*close_pos == string::npos) {
+    return false;
+  }
+  
+  return true;
+}
+}  // anonymous namespace
+
+// static
+string Table::ParseSpecialKey(const string &input) {
+  string output;
+  size_t open_pos = 0;
+  size_t close_pos = 0;
+  for (size_t cursor = 0; cursor < input.size();) {
+    if (!FindBlock(input, "{", "}", cursor, &open_pos, &close_pos)) {
+      output.append(input.substr(cursor));
+      break;
+    }
+
+    output.append(input.substr(cursor, open_pos - cursor));
+
+    // The both sizes of "{" and "}" is 1.
+    const string key = input.substr(open_pos + 1, close_pos - open_pos - 1);
+    if (key == "{") {
+      // "{{}" is treated as "{".
+      output.append("{");
+    } else {
+      // "{abc}" is replaced with "<kSpecialKeyOpen>abc<kSpecialKeyClose>".
+      output.append(kSpecialKeyOpen);
+      output.append(key);
+      output.append(kSpecialKeyClose);
+    }
+
+    cursor = close_pos + 1;
+  }
+  return output;
+}
+
+// static
+string Table::DeleteSpecialKey(const string &input) {
+  string output;
+  size_t open_pos = 0;
+  size_t close_pos = 0;
+  for (size_t cursor = 0; cursor < input.size();) {
+    if (!FindBlock(input, kSpecialKeyOpen, kSpecialKeyClose,
+                   cursor, &open_pos, &close_pos)) {
+      output.append(input.substr(cursor));
+      break;
+    }
+
+    output.append(input.substr(cursor, open_pos - cursor));
+    // The size of kSpecialKeyClose is 1.
+    cursor = close_pos + 1;
+  }
+  return output;
 }
 }  // namespace composer
 }  // namespace mozc

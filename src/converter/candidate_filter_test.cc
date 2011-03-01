@@ -177,7 +177,6 @@ TEST_F(CandidateFilterTest, KatakanaT13N) {
     n1->rid = POSMatcher::GetUnknownId();
     n1->value = "abc";
     nodes[0] = n1;
-
     Node *n2 = NewNode();
     n2->lid = POSMatcher::GetUnknownId();
     n2->rid = POSMatcher::GetUnknownId();
@@ -187,6 +186,42 @@ TEST_F(CandidateFilterTest, KatakanaT13N) {
     EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
               filter.FilterCandidate(c, nodes));
   }
+}
+
+TEST_F(CandidateFilterTest, IsolatedWord) {
+  CandidateFilter filter;
+  vector<const Node *> nodes;
+  Segment::Candidate *c = NewCandidate();
+  c->value = "abc";
+
+  Node *node = NewNode();
+  nodes.push_back(node);
+  node->prev = NewNode();
+  node->next = NewNode();
+  node->lid = POSMatcher::GetIsolatedWordId();
+  node->rid = POSMatcher::GetIsolatedWordId();
+  node->key = "test";
+  node->value = "test";
+
+  node->prev->node_type = Node::NOR_NODE;
+  node->next->node_type = Node::EOS_NODE;
+  EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
+            filter.FilterCandidate(c, nodes));
+
+  node->prev->node_type = Node::BOS_NODE;
+  node->next->node_type = Node::NOR_NODE;
+  EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
+            filter.FilterCandidate(c, nodes));
+
+  node->prev->node_type = Node::NOR_NODE;
+  node->next->node_type = Node::NOR_NODE;
+  EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
+            filter.FilterCandidate(c, nodes));
+
+  node->prev->node_type = Node::BOS_NODE;
+  node->next->node_type = Node::EOS_NODE;
+  EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
+            filter.FilterCandidate(c, nodes));
 }
 
 TEST_F(CandidateFilterTest, MayHaveMoreCandidates) {

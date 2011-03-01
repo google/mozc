@@ -27,203 +27,25 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "converter/segments.h"
+
 #include <string>
 #include <algorithm>
-#include <sstream>
+#include <sstream>  // For DebugString()
+
 #include "base/base.h"
 #include "base/mutex.h"
 #include "base/util.h"
 #include "base/freelist.h"
-#include "transliteration/transliteration.h"
 #include "converter/character_form_manager.h"
 #include "converter/lattice.h"
-#include "converter/nbest_generator.h"
 #include "converter/node.h"
 #include "converter/pos_matcher.h"
-#include "converter/segments.h"
 
 namespace mozc {
 namespace {
-
 const size_t kMaxHistorySize = 32;
-
-// "ひらがな"
-const char kHiragana[] = "\xE3\x81\xB2\xE3\x82\x89\xE3\x81\x8C\xE3\x81\xAA";
-// "カタカナ"
-const char kKatakana[] = "\xE3\x82\xAB\xE3\x82\xBF\xE3\x82\xAB\xE3\x83\x8A";
-// "数字"
-const char kNumber[] = "\xE6\x95\xB0\xE5\xAD\x97";
-// "アルファベット"
-const char kAlphabet[] = "\xE3\x82\xA2\xE3\x83\xAB\xE3\x83\x95\xE3\x82\xA1"
-                          "\xE3\x83\x99\xE3\x83\x83\xE3\x83\x88";
-// "漢字"
-const char kKanji[] = "\xe6\xbc\xa2\xe5\xad\x97";
-
-// "[全]"
-const char kFullWidth[] = "[\xE5\x85\xA8]";
-
-// "[半]"
-const char kHalfWidth[] = "[\xE5\x8D\x8A]";
-
-// "<機種依存文字>"
-const char kPlatformDependent[] = "<\xE6\xA9\x9F\xE7\xA8\xAE"
-    "\xE4\xBE\x9D\xE5\xAD\x98\xE6\x96\x87\xE5\xAD\x97>";
-
-// "<もしかして>"
-const char kDidYouMean[] =
-    "<\xE3\x82\x82\xE3\x81\x97\xE3\x81\x8B\xE3\x81\x97\xE3\x81\xA6>";
-
-bool IsKatakanaT13N(const Segment::Candidate &candidate) {
-  return (Util::GetScriptType(candidate.content_key) == Util::HIRAGANA &&
-          Segment::IsKatakanaT13NValue(candidate.content_value));
-}
-}  // namespace
-
-void Segment::Candidate::SetDefaultDescription(int description_type) {
-  string message;
-
-  if (description_type & Segment::Candidate::CHARACTER_FORM) {
-    const string &value = this->value;
-    const Util::ScriptType type = Util::GetScriptTypeWithoutSymbols(value);
-    switch (type) {
-      case Util::HIRAGANA:
-        message = kHiragana;
-        // don't need to set full/half, because hiragana only has
-        // full form
-        description_type &= ~Segment::Candidate::FULL_HALF_WIDTH;
-        break;
-      case Util::KATAKANA:
-        // message = "カタカナ";
-        message = kKatakana;
-        break;
-      case Util::NUMBER:
-        // message = "数字";
-        message = kNumber;
-        break;
-      case Util::ALPHABET:
-        // message = "アルファベット";
-        message = kAlphabet;
-        break;
-      case Util::KANJI:
-        // don't need to have annotation for kanji, since it's obvious
-        description_type &= ~Segment::Candidate::FULL_HALF_WIDTH;
-        break;
-      case Util::UNKNOWN_SCRIPT:   // mixed character
-        description_type &= ~Segment::Candidate::FULL_HALF_WIDTH;
-        break;
-      default:
-        break;
-    }
-  }
-
-  SetDescription(description_type, message);
-}
-
-void Segment::Candidate::SetTransliterationDescription() {
-  string message;
-
-  int description_type = Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER;
-
-  const string &value = this->value;
-  const Util::ScriptType type = Util::GetScriptType(value);
-  switch (type) {
-    case Util::HIRAGANA:
-      message = kHiragana;
-      break;
-    case Util::KATAKANA:
-      // message = "カタカナ";
-      message = kKatakana;
-      description_type |= Segment::Candidate::FULL_HALF_WIDTH;
-      break;
-    case Util::NUMBER:
-      // message = "数字";
-      message = kNumber;
-      description_type |= Segment::Candidate::FULL_HALF_WIDTH;
-      break;
-    case Util::ALPHABET:
-      // message = "アルファベット";
-      message = kAlphabet;
-      description_type |= Segment::Candidate::FULL_HALF_WIDTH;
-      break;
-    case Util::KANJI:
-      // message = "漢字";
-      message = kKanji;
-      break;
-    case Util::UNKNOWN_SCRIPT:   // mixed character
-      // ex. "Mozc!", "＄１００", etc.
-      description_type |= Segment::Candidate::FULL_HALF_WIDTH;
-      break;
-    default:
-      break;
-  }
-
-  SetDescription(description_type, message);
-}
-
-void Segment::Candidate::SetDescription(
-    int description_type,
-    const string &message) {
-  description_message = message;
-  ResetDescription(description_type);
-}
-
-void Segment::Candidate::ResetDescription(int description_type) {
-  description.clear();
-
-  // full/half char description
-  if (description_type & Segment::Candidate::FULL_HALF_WIDTH) {
-    const Util::FormType form = Util::GetFormType(value);
-    switch (form) {
-      case Util::FULL_WIDTH:
-        // description = "[全]";
-        description = kFullWidth;
-        break;
-      case Util::HALF_WIDTH:
-        // description = "[半]";
-        description = kHalfWidth;
-      break;
-    default:
-      break;
-    }
-  } else if (description_type & Segment::Candidate::FULL_WIDTH) {
-    // description = "[全]";
-    description = kFullWidth;
-  } else if (description_type & Segment::Candidate::HALF_WIDTH) {
-    // description = "[半]";
-    description = kHalfWidth;
-  }
-
-  // add main message
-  if (!description_message.empty()) {
-    if (!description.empty()) {
-      description += " ";
-    }
-    description += description_message;
-  }
-
-  // Platform dependent char description
-  if (description_type & Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER) {
-    const Util::CharacterSet cset = Util::GetCharacterSet(value);
-    if (cset >= Util::JISX0212) {
-      if (!description.empty()) {
-        description += " ";
-      }
-      // description += "<機種依存文字>";
-      description += kPlatformDependent;
-    }
-  }
-
-  // Zipcode description
-  if ((description_type & Segment::Candidate::ZIPCODE) &&
-      POSMatcher::IsZipcode(lid) && lid == rid) {
-    description = content_key;
-  }
-
-  // Spelling Correction description
-  // Delete all messages here.
-  if (is_spelling_correction) {
-    description = kDidYouMean;
-  }
+const size_t kMaxConversionCandidatesSize = 200;
 }
 
 string Segment::Candidate::functional_key() const {
@@ -244,10 +66,7 @@ string Segment::Candidate::functional_value() const {
 
 Segment::Segment()
     : segment_type_(FREE),
-      requested_candidates_size_(0),
       initialized_transliterations_(false),
-      all_expanded_(false),
-      nbest_generator_(new NBestGenerator),
       pool_(new ObjectPool<Candidate>(16)) {}
 
 Segment::~Segment() {}
@@ -269,112 +88,8 @@ const string& Segment::key() const {
   return key_;
 }
 
-namespace {
-void InitT13NCandidate(const string &key,
-                       const string &value,
-                       Segment::Candidate *cand) {
-  cand->Init();
-  cand->value = value;
-  cand->content_value = value;
-  cand->content_key = key;
-  cand->SetTransliterationDescription();
-}
-}  // namespace
-
 void Segment::set_key(const string &key) {
   key_ = key;
-
-  const string &hiragana = key;
-  string full_katakana, half_ascii, full_ascii, half_katakana;
-  Util::HiraganaToKatakana(hiragana, &full_katakana);
-  Util::HiraganaToRomanji(hiragana, &half_ascii);
-  Util::HiraganaToFullwidthRomanji(hiragana, &full_ascii);
-  Util::HiraganaToHalfwidthKatakana(hiragana, &half_katakana);
-
-  meta_candidates_.resize(transliteration::NUM_T13N_TYPES);
-
-  InitT13NCandidate(key, hiragana,
-                    &(meta_candidates_[transliteration::HIRAGANA]));
-
-  InitT13NCandidate(key, full_katakana,
-                    &(meta_candidates_[transliteration::FULL_KATAKANA]));
-
-  InitT13NCandidate(key, half_ascii,
-                    &(meta_candidates_[transliteration::HALF_ASCII]));
-
-  // This function is used for a fail-safe.  So UPPER, LOWER,
-  // CAPITALIZED cases are omitted and the as-is case is used.
-  InitT13NCandidate(key, half_ascii,
-                    &(meta_candidates_[transliteration::HALF_ASCII_UPPER]));
-
-  InitT13NCandidate(key, half_ascii,
-                    &(meta_candidates_[transliteration::HALF_ASCII_LOWER]));
-
-  InitT13NCandidate(
-      key, half_ascii,
-      &(meta_candidates_[transliteration::HALF_ASCII_CAPITALIZED]));
-
-  InitT13NCandidate(key, full_ascii,
-                    &(meta_candidates_[transliteration::FULL_ASCII]));
-
-  InitT13NCandidate(key, full_ascii,
-                    &(meta_candidates_[transliteration::FULL_ASCII_UPPER]));
-
-  InitT13NCandidate(key, full_ascii,
-                    &(meta_candidates_[transliteration::FULL_ASCII_LOWER]));
-
-  InitT13NCandidate(
-      key, full_ascii,
-      &(meta_candidates_[transliteration::FULL_ASCII_CAPITALIZED]));
-
-  InitT13NCandidate(key, half_katakana,
-                    &(meta_candidates_[transliteration::HALF_KATAKANA]));
-}
-
-void Segment::SetTransliterations(const vector<string> &t13ns) {
-  meta_candidates_.resize(transliteration::NUM_T13N_TYPES);
-
-  InitT13NCandidate(key_, t13ns[transliteration::HIRAGANA],
-                    &(meta_candidates_[transliteration::HIRAGANA]));
-
-  InitT13NCandidate(key_, t13ns[transliteration::FULL_KATAKANA],
-                    &(meta_candidates_[transliteration::FULL_KATAKANA]));
-
-  InitT13NCandidate(key_, t13ns[transliteration::HALF_ASCII],
-                    &(meta_candidates_[transliteration::HALF_ASCII]));
-
-  InitT13NCandidate(key_, t13ns[transliteration::HALF_ASCII_UPPER],
-                    &(meta_candidates_[transliteration::HALF_ASCII_UPPER]));
-
-  InitT13NCandidate(key_, t13ns[transliteration::HALF_ASCII_LOWER],
-                    &(meta_candidates_[transliteration::HALF_ASCII_LOWER]));
-
-  InitT13NCandidate(
-      key_, t13ns[transliteration::HALF_ASCII_CAPITALIZED],
-      &(meta_candidates_[transliteration::HALF_ASCII_CAPITALIZED]));
-
-  InitT13NCandidate(key_, t13ns[transliteration::FULL_ASCII],
-                    &(meta_candidates_[transliteration::FULL_ASCII]));
-
-  InitT13NCandidate(key_, t13ns[transliteration::FULL_ASCII_UPPER],
-                    &(meta_candidates_[transliteration::FULL_ASCII_UPPER]));
-
-  InitT13NCandidate(key_, t13ns[transliteration::FULL_ASCII_LOWER],
-                    &(meta_candidates_[transliteration::FULL_ASCII_LOWER]));
-
-  InitT13NCandidate(
-      key_, t13ns[transliteration::FULL_ASCII_CAPITALIZED],
-      &(meta_candidates_[transliteration::FULL_ASCII_CAPITALIZED]));
-
-  InitT13NCandidate(key_, t13ns[transliteration::HALF_KATAKANA],
-                    &(meta_candidates_[transliteration::HALF_KATAKANA]));
-
-  initialized_transliterations_ = true;
-}
-
-
-NBestGenerator *Segment::nbest_generator() const {
-  return nbest_generator_.get();
 }
 
 const Segment::Candidate &Segment::candidate(int i) const {
@@ -384,19 +99,13 @@ const Segment::Candidate &Segment::candidate(int i) const {
   return *candidates_[i];
 }
 
-const Segment::Candidate &Segment::meta_candidate(size_t i) const {
-  if (i >= meta_candidates_.size()) {
-    LOG(ERROR) << "Invalid index number of meta_candidate: " << i;
-    i = 0;
-  }
-  return meta_candidates_[i];
-}
-
-
 Segment::Candidate *Segment::mutable_candidate(int i) {
   if (i < 0) {
-    return &meta_candidates_[-i-1];
+    const size_t meta_index = -i-1;
+    DCHECK_LT(meta_index, meta_candidates_.size());
+    return &meta_candidates_[meta_index];
   }
+  DCHECK_LT(i, candidates_.size());
   return candidates_[i];
 }
 
@@ -424,19 +133,9 @@ size_t Segment::candidates_size() const {
   return candidates_.size();
 }
 
-size_t Segment::meta_candidates_size() const {
-  return meta_candidates_.size();
-}
-
-size_t Segment::requested_candidates_size() const {
-  return requested_candidates_size_;
-}
-
 void Segment::clear_candidates() {
   pool_->Free();
   candidates_.clear();
-  requested_candidates_size_ = 0;
-  all_expanded_ = false;
 }
 
 Segment::Candidate *Segment::push_back_candidate() {
@@ -508,11 +207,52 @@ void Segment::erase_candidates(int i, size_t size) {
                     candidates_.begin() + end);
 }
 
+size_t Segment::meta_candidates_size() const {
+  return meta_candidates_.size();
+}
+
+void Segment::clear_meta_candidates() {
+  meta_candidates_.clear();
+}
+
+const vector<Segment::Candidate> &Segment::meta_candidates() const {
+  return meta_candidates_;
+}
+
+vector<Segment::Candidate> *Segment::mutable_meta_candidates() {
+  return &meta_candidates_;
+}
+
+const Segment::Candidate &Segment::meta_candidate(size_t i) const {
+  if (i >= meta_candidates_.size()) {
+    LOG(ERROR) << "Invalid index number of meta_candidate: " << i;
+    i = 0;
+  }
+  return meta_candidates_[i];
+}
+
+Segment::Candidate *Segment::mutable_meta_candidate(size_t i) {
+  if (i >= meta_candidates_.size()) {
+    LOG(ERROR) << "Invalid index number of meta_candidate: " << i;
+    i = 0;
+  }
+  return &meta_candidates_[i];
+}
+
+Segment::Candidate *Segment::add_meta_candidate() {
+  Candidate candidate;
+  candidate.Init();
+  meta_candidates_.push_back(candidate);
+  return &meta_candidates_[meta_candidates_size()-1];
+}
+
 void Segment::move_candidate(int old_idx, int new_idx) {
   // meta candidates
-  if (old_idx < 0 && old_idx >= -transliteration::NUM_T13N_TYPES) {
+  if (old_idx < 0) {
+    const int meta_idx = -old_idx-1;
+    DCHECK_LT(meta_idx, meta_candidates_size());
     Candidate *c = insert_candidate(new_idx);
-    *c = meta_candidates_[-old_idx - 1];
+    *c = meta_candidates_[meta_idx];
     return;
   }
 
@@ -538,318 +278,32 @@ void Segment::move_candidate(int old_idx, int new_idx) {
 }
 
 void Segment::Clear() {
-  clear();
-}
-
-void Segment::clear() {
   clear_candidates();
   key_.clear();
   meta_candidates_.clear();
   initialized_transliterations_ = false;
   segment_type_ = FREE;
-  nbest_generator_->Reset();
 }
 
-bool Segment::ExpandAlternative(int i) {
-  if (i < 0 || i >= candidates_size()) {
-    LOG(WARNING) << "invalid index";
-    return false;
-  }
-
-  Candidate *org_c = mutable_candidate(i);
-  DCHECK(org_c);
-
-  if (!org_c->can_expand_alternative) {
-    VLOG(1) << "Canidate has NO_NORMALIZATION node";
-    return false;
-  }
-
-  string default_value, alternative_value;
-  if (!CharacterFormManager::GetCharacterFormManager()->
-      ConvertConversionStringWithAlternative(
-          org_c->value,
-          &default_value, &alternative_value)) {
-    VLOG(1) << "ConvertConversionStringWithAlternative failed";
-    return false;
-  }
-
-  string default_content_value,  alternative_content_value;
-  if (org_c->value != org_c->content_value) {
-    CharacterFormManager::GetCharacterFormManager()->
-        ConvertConversionStringWithAlternative(
-            org_c->content_value,
-            &default_content_value, &alternative_content_value);
-  } else {
-    default_content_value = default_value;
-    alternative_content_value = alternative_value;
-  }
-
-  CharacterFormManager::FormType default_form
-      = CharacterFormManager::UNKNOWN_FORM;
-  CharacterFormManager::FormType alternative_form
-      = CharacterFormManager::UNKNOWN_FORM;
-
-  int default_description_type =
-      (Segment::Candidate::CHARACTER_FORM |
-       Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER);
-
-  int alternative_description_type =
-      (Segment::Candidate::CHARACTER_FORM |
-       Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER);
-
-  if (CharacterFormManager::GetFormTypesFromStringPair(
-          default_value,
-          &default_form,
-          alternative_value,
-          &alternative_form)) {
-    if (default_form == CharacterFormManager::HALF_WIDTH) {
-      default_description_type |= Segment::Candidate::HALF_WIDTH;
-    } else if (default_form == CharacterFormManager::FULL_WIDTH) {
-      default_description_type |= Segment::Candidate::FULL_WIDTH;
-    }
-    if (alternative_form == CharacterFormManager::HALF_WIDTH) {
-      alternative_description_type |= Segment::Candidate::HALF_WIDTH;
-    } else if (alternative_form == CharacterFormManager::FULL_WIDTH) {
-      alternative_description_type |= Segment::Candidate::FULL_WIDTH;
-    }
-  } else {
-    default_description_type     |= Segment::Candidate::FULL_HALF_WIDTH;
-    alternative_description_type |= Segment::Candidate::FULL_HALF_WIDTH;
-  }
-
-  Candidate *new_c = insert_candidate(i);
-  DCHECK(new_c);
-
-  new_c->Init();
-  new_c->key = org_c->key;
-  new_c->value = default_value;
-  new_c->content_key = org_c->content_key;
-  new_c->content_value = default_content_value;
-  new_c->cost = org_c->cost;
-  new_c->structure_cost = org_c->structure_cost;
-  new_c->lid = org_c->lid;
-  new_c->rid = org_c->rid;
-  new_c->SetDefaultDescription(default_description_type);
-
-  org_c->value = alternative_value;
-  org_c->content_value = alternative_content_value;
-  org_c->description.clear();
-  org_c->SetDefaultDescription(alternative_description_type);
-
-  return true;
-}
-
-// static
-bool Segment::ExpandEnglishVariants(const string &input,
-                                    vector<string> *variants) {
-  if (input.empty()) {
-    return false;
-  }
-
-  // multi-word
-  if (input.find(" ") != string::npos) {
-    return false;
-  }
-
-  string lower = input;
-  string upper = input;
-  string capitalized = input;
-  Util::LowerString(&lower);
-  Util::UpperString(&upper);
-  Util::CapitalizeString(&capitalized);
-
-  if (lower == upper) {
-    // given word is non-ascii.
-    return false;
-  }
-
-  variants->clear();
-  if (input != lower && input != upper && input != capitalized) {
-    variants->push_back(lower);
-    return true;
-  }
-
-  if (input != lower) {
-    variants->push_back(lower);
-  }
-  if (input != capitalized) {
-    variants->push_back(capitalized);
-  }
-  if (input != upper) {
-    variants->push_back(upper);
-  }
-
-  return true;
-}
-
-bool Segment::IsKatakanaT13NValue(const string &value) {
-  for (size_t i = 0; i < value.size(); ++i) {
-    if (value[i] == 0x20 || value[i] == 0x21 || value[i] == 0x2D ||
-        // " ", "!", "-"
-        (value[i] >= 0x41 && value[i] <= 0x5A) ||  // A..Z
-        (value[i] >= 0x61 && value[i] <= 0x7A)) {  // a..z
-      // do nothing
-    } else {
-      return false;
-    }
-  }
-  return true;
-}
-
-bool Segment::GetCandidates(size_t target_size) {
-  if (target_size <= 0) {
-    LOG(WARNING) << "invalid size";
-    return false;
-  }
-
-  if (nbest_generator_.get() == NULL) {
-    LOG(WARNING) << "nbest_generator is NULL";
-    return false;
-  }
-
-  // already expanded
-  if (all_expanded_) {
-    return true;
-  }
-
-  if (requested_candidates_size() >= target_size) {
-    // Avaliable candidates have been already generated.
-    return true;
-  }
-  requested_candidates_size_ = target_size;
-
-  // if NBestGenerator::Next() returns NULL,
-  // no more entries are generated.
-  while (candidates_size() < target_size) {
-    Candidate *c = push_back_candidate();
-    DCHECK(c);
-    c->Init();
-
-    if (!nbest_generator_->Next(c)) {
-      pop_back_candidate();
-      // set all_expanded_ to be true that
-      // GetCandidates() is never called again.
-      // http://b/issue?id=2868423
-      all_expanded_ = true;   // no more entries
-      break;
-    }
-
-    c->SetDefaultDescription(
-        Segment::Candidate::FULL_HALF_WIDTH |
-        Segment::Candidate::CHARACTER_FORM |
-        Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER |
-        Segment::Candidate::ZIPCODE);
-
-    // Make KatakanaT13n Candidates
-    if (IsKatakanaT13N(*c)) {
-      c->can_expand_alternative = false;
-      vector<string> variants;
-      // TODO(taku): could be possible to move this logic to Rewriter.
-      if (Segment::ExpandEnglishVariants(c->content_value, &variants)) {
-        for (size_t i = 0; i < variants.size(); ++i) {
-          Candidate *variant_c = add_candidate();
-          DCHECK(variant_c);
-          variant_c->Init();
-          variant_c->value = variants[i] + c->functional_value();
-          variant_c->key = c->key;
-          variant_c->content_value = variants[i];
-          variant_c->content_key = c->content_key;
-          variant_c->cost = c->cost + 1;
-          variant_c->structure_cost = c->structure_cost + 1;
-          variant_c->lid = c->lid;
-          variant_c->rid = c->rid;
-          variant_c->can_expand_alternative = false;
-          variant_c->SetDefaultDescription(
-              Segment::Candidate::FULL_HALF_WIDTH |
-              Segment::Candidate::CHARACTER_FORM |
-              Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER);
-        }
-      }
-    } else {
-      ExpandAlternative(candidates_size() - 1);
-    }
-  }
-
-  // Append katakana candidate at the bottom.
-  // In general, Converter cannot know how many candidates the session
-  // layer wants to request. Here we simply add a Katakana candidate
-  // only when the number of results NbestGenerator() returns
-  // is smaller than requested_candidates_size().
-  if (candidates_size() > 0 && all_expanded_) {
-    const string &hiragana_value = key();
-    string katakana_value;
-    Util::HiraganaToKatakana(key(), &katakana_value);
-
-    // key() may contain non-katakana sequences. In this situation,
-    // don't make pure hiragana candidate.
-    if (Util::GetScriptType(hiragana_value) == Util::HIRAGANA) {
-      Candidate *last_c = mutable_candidate(candidates_size() - 1);
-      Candidate *target_c = add_candidate();
-      DCHECK(target_c);
-      DCHECK(last_c);
-      target_c->Init();
-      target_c->key = key();
-      target_c->value = hiragana_value;
-      target_c->content_key = key();
-      target_c->content_value = hiragana_value;
-      target_c->cost = last_c->cost + 1;
-      target_c->structure_cost = last_c->structure_cost + 1;
-      target_c->lid = last_c->lid;
-      target_c->rid = last_c->rid;
-      target_c->SetDefaultDescription(
-          Segment::Candidate::FULL_HALF_WIDTH |
-          Segment::Candidate::CHARACTER_FORM |
-          Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER);
-      ExpandAlternative(candidates_size() - 1);
-    }
-
-    // key() may contain non-katakana sequences. In this situation,
-    // don't make pure katakana candidate.
-    if (Util::GetScriptType(katakana_value) == Util::KATAKANA) {
-      Candidate *last_c = mutable_candidate(candidates_size() - 1);
-      Candidate *target_c = add_candidate();
-      DCHECK(target_c);
-      DCHECK(last_c);
-      target_c->Init();
-      target_c->key = key();
-      target_c->value = katakana_value;
-      target_c->content_key = key();
-      target_c->content_value = katakana_value;
-      target_c->cost = last_c->cost + 1;
-      target_c->structure_cost = last_c->structure_cost + 1;
-      target_c->lid = last_c->lid;
-      target_c->rid = last_c->rid;
-      target_c->SetDefaultDescription(
-          Segment::Candidate::FULL_HALF_WIDTH |
-          Segment::Candidate::CHARACTER_FORM |
-          Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER);
-      ExpandAlternative(candidates_size() - 1);
-    }
-  }
-
-  return true;
-}
-
-Segments::Segments(): max_history_segments_size_(0),
-                      max_prediction_candidates_size_(0),
-                      resized_(false),
-                      use_user_history_(true),
-                      request_type_(Segments::CONVERSION),
-                      lattice_(new Lattice),
-                      pool_(new ObjectPool<Segment>(32)) {}
+Segments::Segments()
+  : max_history_segments_size_(0),
+    max_prediction_candidates_size_(0),
+    max_conversion_candidates_size_(kMaxConversionCandidatesSize),
+    resized_(false),
+    user_history_enabled_(true),
+    request_type_(Segments::CONVERSION),
+    lattice_(new Lattice),
+    pool_(new ObjectPool<Segment>(32)),
+    composer_(NULL) {}
 
 Segments::~Segments() {}
 
-void Segments::enable_user_history() {
-  use_user_history_ = true;
+void Segments::set_user_history_enabled(bool user_history_enabled) {
+  user_history_enabled_ = user_history_enabled;
 }
 
-void Segments::disable_user_history() {
-  use_user_history_ = false;
-}
-
-bool Segments::use_user_history() const {
-  return use_user_history_;
+bool Segments::user_history_enabled() const {
+  return user_history_enabled_;
 }
 
 Segments::RequestType Segments::request_type() const {
@@ -993,14 +447,10 @@ void Segments::RemoveTailOfHistorySegments(size_t num_of_characters) {
   }
 }
 
-void Segments::clear() {
+void Segments::Clear() {
   clear_segments();
   clear_lattice();
   clear_revert_entries();
-}
-
-void Segments::Clear() {
-  clear();
 }
 
 void Segments::clear_segments() {
@@ -1068,6 +518,14 @@ void Segments::set_max_prediction_candidates_size(size_t size) {
   max_prediction_candidates_size_ = size;
 }
 
+size_t Segments::max_conversion_candidates_size() const {
+  return max_conversion_candidates_size_;
+}
+
+void Segments::set_max_conversion_candidates_size(size_t size) {
+  max_conversion_candidates_size_ = size;
+}
+
 void Segments::clear_revert_entries() {
   revert_entries_.clear();
 }
@@ -1094,6 +552,14 @@ Segments::RevertEntry *Segments::mutable_revert_entry(size_t i) {
   return &revert_entries_[i];
 }
 
+const composer::Composer *Segments::composer() const {
+  return composer_;
+}
+
+void Segments::set_composer(const composer::Composer *composer) {
+  composer_ = composer;
+}
+
 string Segments::DebugString() const {
   stringstream os;
   os << "(" << endl;
@@ -1101,14 +567,24 @@ string Segments::DebugString() const {
     const mozc::Segment &seg = this->segment(i);
     os << " (key " << seg.segment_type()
        << " " << seg.key() << endl;
-    for (int j = 0; j < static_cast<int>(seg.candidates_size()); ++j) {
+    for (int l = 0;
+         l < static_cast<int>(seg.candidates_size() +
+                              seg.meta_candidates_size());
+         ++l) {
+      int j = 0;
+      if (j < seg.meta_candidates_size()) {
+        j = -l-1;
+      } else {
+        j = l - seg.meta_candidates_size();
+      }
       os << "   (value " << j << " " << seg.candidate(j).value << " "
          << seg.candidate(j).content_value
          << " cost=" << seg.candidate(j).cost
          << " scost=" << seg.candidate(j).structure_cost
          << " wcost=" << seg.candidate(j).wcost
          << " lid=" << seg.candidate(j).lid
-         << " rid=" << seg.candidate(j).rid;
+         << " rid=" << seg.candidate(j).rid
+         << " attributes=" << seg.candidate(j).attributes;
       if (!seg.candidate(j).prefix.empty()) {
         os << " prefix=" << seg.candidate(j).prefix;
       }

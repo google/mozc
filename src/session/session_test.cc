@@ -30,24 +30,30 @@
 #include <string>
 #include "base/base.h"
 #include "base/util.h"
+#include "composer/composer.h"
+#include "composer/table.h"
 #include "converter/converter_interface.h"
 #include "converter/converter_mock.h"
-#include "composer/table.h"
-#include "session/internal/keymap.h"
+#include "rewriter/transliteration_rewriter.h"
 #include "session/config.pb.h"
 #include "session/config_handler.h"
+#include "session/internal/keymap.h"
 #include "session/key_parser.h"
 #include "session/session.h"
 #include "session/session_handler.h"
+#include "session/internal/ime_context.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/googletest.h"
 
 DECLARE_string(test_tmpdir);
 
 namespace mozc {
+namespace session {
 
 namespace {
-bool SendKey(const string &key, Session *session, commands::Command *command) {
+bool SendKey(const string &key,
+             Session *session,
+             commands::Command *command) {
   command->Clear();
   command->mutable_input()->set_type(commands::Input::SEND_KEY);
   if (!KeyParser::ParseKey(key, command->mutable_input()->mutable_key())) {
@@ -56,10 +62,29 @@ bool SendKey(const string &key, Session *session, commands::Command *command) {
   return session->SendKey(command);
 }
 
+bool TestSendKey(const string &key,
+                 Session *session,
+                 commands::Command *command) {
+  command->Clear();
+  command->mutable_input()->set_type(commands::Input::SEND_KEY);
+  if (!KeyParser::ParseKey(key, command->mutable_input()->mutable_key())) {
+    return false;
+  }
+  return session->TestSendKey(command);
+}
+
+void SendSpecialKey(commands::KeyEvent::SpecialKey special_key,
+                    Session* session,
+                    commands::Command* command) {
+  command->Clear();
+  command->mutable_input()->mutable_key()->set_special_key(special_key);
+  session->SendKey(command);
+}
+
 bool InsertCharacterCodeAndString(const char key_code,
-                             const string &key_string,
-                             Session *session,
-                             commands::Command *command) {
+                                  const string &key_string,
+                                  Session *session,
+                                  commands::Command *command) {
   command->Clear();
   commands::KeyEvent *key_event = command->mutable_input()->mutable_key();
   key_event->set_key_code(key_code);
@@ -87,6 +112,7 @@ void InitSessionToPrecomposition(Session* session) {
   session->IMEOn(&command);
 #endif  // OS_WINDOWS
 }
+
 }  // namespace
 
 class SessionTest : public testing::Test {
@@ -99,6 +125,8 @@ class SessionTest : public testing::Test {
     convertermock_.reset(new ConverterMock());
     ConverterFactory::SetConverter(convertermock_.get());
     handler_.reset(new SessionHandler());
+
+    t13n_rewriter_.reset(new TransliterationRewriter());
   }
 
   virtual void TearDown() {
@@ -163,28 +191,9 @@ class SessionTest : public testing::Test {
     }
   }
 
-  bool TestSendKey(const string &key,
-                   Session *session,
-                   commands::Command *command) const {
-    command->Clear();
-    command->mutable_input()->set_type(commands::Input::SEND_KEY);
-    if (!KeyParser::ParseKey(key, command->mutable_input()->mutable_key())) {
-      return false;
-    }
-    return session->TestSendKey(command);
-  }
-
-  void SendSpecialKey(commands::KeyEvent::SpecialKey special_key,
-                      Session* session,
-                      commands::Command* command) const {
-    command->Clear();
-    command->mutable_input()->mutable_key()->set_special_key(special_key);
-    session->SendKey(command);
-  }
-
   // set result for "あいうえお"
   void SetAiueo(Segments *segments) {
-    segments->clear();
+    segments->Clear();
     Segment *segment;
     Segment::Candidate *candidate;
 
@@ -203,11 +212,11 @@ class SessionTest : public testing::Test {
   }
 
   // set result for "like"
-  void InitConverterWithLike(Segments *segments) {
+  void SetLike(Segments *segments) {
     Segment *segment;
     Segment::Candidate *candidate;
 
-    segments->clear();
+    segments->Clear();
     segment = segments->add_segment();
 
     // "ぃ"
@@ -229,12 +238,62 @@ class SessionTest : public testing::Test {
     candidate = segment->add_candidate();
     // "け"
     candidate->value = "\xE3\x81\x91";
+  }
 
-    convertermock_->SetStartConversion(segments, true);
+  void FillT13Ns(Segments *segments) {
+    t13n_rewriter_->Rewrite(segments);
+  }
+
+  void SetComposer(Session *session, Segments *segments) {
+    segments->set_composer(session->get_internal_composer_only_for_unittest());
+  }
+
+  void SetConfig(const config::Config &config) {
+    config::Config base_config;
+    config::ConfigHandler::GetConfig(&base_config);
+
+    commands::Command command;
+    command.mutable_input()->set_type(commands::Input::SET_CONFIG);
+    command.mutable_input()->mutable_config()->CopyFrom(base_config);
+    command.mutable_input()->mutable_config()->MergeFrom(config);
+    handler_->EvalCommand(&command);
+  }
+
+  void SetupMockForReverseConversion(const string &kanji,
+                                     const string &hiragana) {
+    // Set up Segments for reverse conversion.
+    Segments reverse_segments;
+    Segment *segment;
+    segment = reverse_segments.add_segment();
+    segment->set_key(kanji);
+    Segment::Candidate *candidate;
+    candidate = segment->add_candidate();
+    // For reverse conversion, key is the original kanji string.
+    candidate->key = kanji;
+    candidate->value = hiragana;
+    convertermock_->SetStartReverseConversion(&reverse_segments, true);
+    // Set up Segments for forward conversion.
+    Segments segments;
+    segment = segments.add_segment();
+    segment->set_key(hiragana);
+    candidate = segment->add_candidate();
+    candidate->key = hiragana;
+    candidate->value = kanji;
+    convertermock_->SetStartConversionWithComposer(&segments, true);
+  }
+
+  void SetupCommandForReverseConversion(const string &text,
+                                        commands::Input *input) {
+    input->set_type(commands::Input::SEND_COMMAND);
+    input->mutable_command()->set_type(
+        commands::SessionCommand::CONVERT_REVERSE);
+    input->mutable_command()->set_text(text);
+
   }
 
   scoped_ptr<SessionHandler> handler_;
   scoped_ptr<ConverterMock> convertermock_;
+  scoped_ptr<TransliterationRewriter> t13n_rewriter_;
 };
 
 TEST_F(SessionTest, TestSendKey) {
@@ -438,8 +497,10 @@ TEST_F(SessionTest, RevertComposition) {
 
   InsertCharacterChars("aiueo", session.get(), &command);
   Segments segments;
+  SetComposer(session.get(), &segments);
   SetAiueo(&segments);
-  convertermock_->SetStartConversion(&segments, true);
+  FillT13Ns(&segments);
+  convertermock_->SetStartConversionWithComposer(&segments, true);
 
   command.clear_input();
   command.clear_output();
@@ -489,8 +550,10 @@ TEST_F(SessionTest, SelectCandidate) {
   commands::Command command;
   InsertCharacterChars("aiueo", session.get(), &command);
   Segments segments;
+  SetComposer(session.get(), &segments);
   SetAiueo(&segments);
-  convertermock_->SetStartConversion(&segments, true);
+  FillT13Ns(&segments);
+  convertermock_->SetStartConversionWithComposer(&segments, true);
 
   command.clear_input();
   command.clear_output();
@@ -520,8 +583,10 @@ TEST_F(SessionTest, HighlightCandidate) {
   commands::Command command;
   InsertCharacterChars("aiueo", session.get(), &command);
   Segments segments;
+  SetComposer(session.get(), &segments);
   SetAiueo(&segments);
-  convertermock_->SetStartConversion(&segments, true);
+  FillT13Ns(&segments);
+  convertermock_->SetStartConversionWithComposer(&segments, true);
 
   command.clear_input();
   command.clear_output();
@@ -561,8 +626,10 @@ TEST_F(SessionTest, Conversion) {
   commands::Command command;
   InsertCharacterChars("aiueo", session.get(), &command);
   Segments segments;
+  SetComposer(session.get(), &segments);
   SetAiueo(&segments);
-  convertermock_->SetStartConversion(&segments, true);
+  FillT13Ns(&segments);
+  convertermock_->SetStartConversionWithComposer(&segments, true);
 
   EXPECT_TRUE(command.output().has_preedit());
   EXPECT_EQ(1, command.output().preedit().segment_size());
@@ -603,8 +670,10 @@ TEST_F(SessionTest, SegmentWidthShrink) {
   commands::Command command;
   InsertCharacterChars("aiueo", session.get(), &command);
   Segments segments;
+  SetComposer(session.get(), &segments);
   SetAiueo(&segments);
-  convertermock_->SetStartConversion(&segments, true);
+  FillT13Ns(&segments);
+  convertermock_->SetStartConversionWithComposer(&segments, true);
 
   command.clear_input();
   command.clear_output();
@@ -626,23 +695,21 @@ TEST_F(SessionTest, ConvertPrev) {
   commands::Command command;
   InsertCharacterChars("aiueo", session.get(), &command);
   Segments segments;
+  SetComposer(session.get(), &segments);
   SetAiueo(&segments);
-  convertermock_->SetStartConversion(&segments, true);
+  FillT13Ns(&segments);
+  convertermock_->SetStartConversionWithComposer(&segments, true);
 
-  command.clear_input();
-  command.clear_output();
+  command.Clear();
   session->Convert(&command);
 
-  command.clear_input();
-  command.clear_output();
+  command.Clear();
   session->ConvertNext(&command);
 
-  command.clear_input();
-  command.clear_output();
+  command.Clear();
   session->ConvertPrev(&command);
 
-  command.clear_input();
-  command.clear_output();
+  command.Clear();
   session->ConvertPrev(&command);
 }
 
@@ -691,8 +758,9 @@ TEST_F(SessionTest, ResetFocusedSegmentAfterCommit) {
   // "なかのです"
   candidate->value
       = "\xe3\x81\xaa\xe3\x81\x8b\xe3\x81\xae\xe3\x81\xa7\xe3\x81\x99";
-
-  convertermock_->SetStartConversion(&segments, true);
+  SetComposer(session.get(), &segments);
+  FillT13Ns(&segments);
+  convertermock_->SetStartConversionWithComposer(&segments, true);
 
   command.clear_input();
   command.clear_output();
@@ -736,13 +804,11 @@ TEST_F(SessionTest, ResetFocusedSegmentAfterCommit) {
   EXPECT_TRUE(command.output().has_result());
   // "私の名前はなかのです[]"
 
-  LOG(INFO) << "OK";
-
   command.clear_input();
   command.clear_output();
   InsertCharacterChars("a", session.get(), &command);
 
-  segments.clear();
+  segments.Clear();
   segment = segments.add_segment();
   // "あ"
   segment->set_key("\xe3\x81\x82");
@@ -753,7 +819,9 @@ TEST_F(SessionTest, ResetFocusedSegmentAfterCommit) {
   // "亜"
   candidate->value = "\xe4\xba\x9c";
 
-  convertermock_->SetStartConversion(&segments, true);
+  SetComposer(session.get(), &segments);
+  FillT13Ns(&segments);
+  convertermock_->SetStartConversionWithComposer(&segments, true);
 
   // "あ[]"
 
@@ -788,7 +856,9 @@ TEST_F(SessionTest, ResetFocusedSegmentAfterCancel) {
   candidate = segment->add_candidate();
   // "相"
   candidate->value = "\xe7\x9b\xb8";
-  convertermock_->SetStartConversion(&segments, true);
+  SetComposer(session.get(), &segments);
+  FillT13Ns(&segments);
+  convertermock_->SetStartConversionWithComposer(&segments, true);
   // "あい[]"
 
   command.clear_input();
@@ -796,7 +866,7 @@ TEST_F(SessionTest, ResetFocusedSegmentAfterCancel) {
   session->Convert(&command);
   // "[愛]"
 
-  segments.clear();
+  segments.Clear();
   segment = segments.add_segment();
   // "あ"
   segment->set_key("\xe3\x81\x82");
@@ -838,7 +908,7 @@ TEST_F(SessionTest, ResetFocusedSegmentAfterCancel) {
   session->ConvertCancel(&command);
   // "あい[]"
 
-  segments.clear();
+  segments.Clear();
   segment = segments.add_segment();
   // "あい"
   segment->set_key("\xe3\x81\x82\xe3\x81\x84");
@@ -848,7 +918,9 @@ TEST_F(SessionTest, ResetFocusedSegmentAfterCancel) {
   candidate = segment->add_candidate();
   // "相"
   candidate->value = "\xe7\x9b\xb8";
-  convertermock_->SetStartConversion(&segments, true);
+  SetComposer(session.get(), &segments);
+  FillT13Ns(&segments);
+  convertermock_->SetStartConversionWithComposer(&segments, true);
 
   command.clear_input();
   command.clear_output();
@@ -900,12 +972,16 @@ TEST_F(SessionTest, KeepFixedCandidateAfterSegmentWidthExpand) {
   // "行った"
   candidate->value = "\xe8\xa1\x8c\xe3\x81\xa3\xe3\x81\x9f";
 
-  convertermock_->SetStartConversion(&segments, true);
+  SetComposer(session.get(), &segments);
+  FillT13Ns(&segments);
+  convertermock_->SetStartConversionWithComposer(&segments, true);
 
   command.clear_input();
   command.clear_output();
   session->Convert(&command);
   // ex. "[バリに]旅行に行った"
+  EXPECT_EQ("\xE3\x83\x90\xE3\x83\xAA\xE3\x81\xAB\xE6\x97\x85\xE8\xA1\x8C\xE3"
+      "\x81\xAB\xE8\xA1\x8C\xE3\x81\xA3\xE3\x81\x9F", GetComposition(command));
   command.clear_input();
   command.clear_output();
   session->ConvertNext(&command);
@@ -985,7 +1061,9 @@ TEST_F(SessionTest, CommitSegment) {
   // "名前"
   candidate->value = "\xe5\x90\x8d\xe5\x89\x8d";
 
-  convertermock_->SetStartConversion(&segments, true);
+  SetComposer(session.get(), &segments);
+  FillT13Ns(&segments);
+  convertermock_->SetStartConversionWithComposer(&segments, true);
 
   command.Clear();
   session->Convert(&command);
@@ -1037,7 +1115,10 @@ TEST_F(SessionTest, CommitSegmentAt2ndSegment) {
   candidate = segment->add_candidate();
   // "母"
   candidate->value = "\xe6\xaf\x8d";
-  convertermock_->SetStartConversion(&segments, true);
+
+  SetComposer(session.get(), &segments);
+  FillT13Ns(&segments);
+  convertermock_->SetStartConversionWithComposer(&segments, true);
 
   command.Clear();
   session->Convert(&command);
@@ -1074,6 +1155,72 @@ TEST_F(SessionTest, CommitSegmentAt2ndSegment) {
   EXPECT_EQ(2, command.output().preedit().segment_size());
 }
 
+TEST_F(SessionTest, SegmentFocusRightOrCommit) {
+  Segments segments;
+  Segment *segment;
+  Segment::Candidate *candidate;
+
+  scoped_ptr<Session> session(handler_->NewSession());
+  const ImeContext &context = session->context();
+  InitSessionToPrecomposition(session.get());
+  EXPECT_EQ(ImeContext::PRECOMPOSITION, context.state());
+
+  commands::Command command;
+  InsertCharacterChars("watasinonamae", session.get(), &command);
+  // "わたしのなまえ[]"
+
+  segment = segments.add_segment();
+  // "わたしの"
+  segment->set_key("\xe3\x82\x8f\xe3\x81\x9f\xe3\x81\x97\xe3\x81\xae");
+  candidate = segment->add_candidate();
+  // "私の"
+  candidate->value = "\xe7\xa7\x81\xe3\x81\xae";
+  candidate = segment->add_candidate();
+  // "わたしの"
+  candidate->value = "\xe3\x82\x8f\xe3\x81\x9f\xe3\x81\x97\xe3\x81\xae";
+  candidate = segment->add_candidate();
+
+  segment = segments.add_segment();
+  // "なまえ"
+  segment->set_key("\xe3\x81\xaa\xe3\x81\xbe\xe3\x81\x88");
+  candidate = segment->add_candidate();
+  // "名前"
+  candidate->value = "\xe5\x90\x8d\xe5\x89\x8d";
+
+  SetComposer(session.get(), &segments);
+  convertermock_->SetStartConversionWithComposer(&segments, true);
+
+  command.Clear();
+  session->Convert(&command);
+  // "[私の]名前"
+  EXPECT_EQ(0, command.output().candidates().focused_index());
+
+  command.Clear();
+  session->ConvertNext(&command);
+  // "[わたしの]名前"
+  EXPECT_EQ(1, command.output().candidates().focused_index());
+  EXPECT_EQ(ImeContext::CONVERSION, context.state());
+
+  command.Clear();
+  session->SegmentFocusRightOrCommit(&command);
+  // "わたしの[名前]"
+  EXPECT_EQ(0, command.output().candidates().focused_index());
+  EXPECT_EQ(ImeContext::CONVERSION, context.state());
+
+  command.Clear();
+  session->SegmentFocusRightOrCommit(&command);
+  // "わたしの名前"
+  EXPECT_EQ(0, command.output().candidates().focused_index());
+  EXPECT_TRUE(command.output().has_result());
+  EXPECT_EQ(ImeContext::PRECOMPOSITION, context.state());
+
+  // Currently all the segments are committed.
+  // So additional SegmentFocusRightOrCommit does Nothing.
+  command.Clear();
+  session->SegmentFocusRightOrCommit(&command);
+  EXPECT_EQ(ImeContext::PRECOMPOSITION, context.state());
+}
+
 TEST_F(SessionTest, Transliterations) {
   Segments segments;
   Segment *segment;
@@ -1092,7 +1239,10 @@ TEST_F(SessionTest, Transliterations) {
   candidate = segment->add_candidate();
   // "自身"
   candidate->value = "\xe8\x87\xaa\xe8\xba\xab";
-  convertermock_->SetStartConversion(&segments, true);
+
+  SetComposer(session.get(), &segments);
+  FillT13Ns(&segments);
+  convertermock_->SetStartConversionWithComposer(&segments, true);
 
   command.Clear();
   session->Convert(&command);
@@ -1144,7 +1294,10 @@ TEST_F(SessionTest, ConvertToTransliteration) {
   candidate = segment->add_candidate();
   // "自身"
   candidate->value = "\xe8\x87\xaa\xe8\xba\xab";
-  convertermock_->SetStartConversion(&segments, true);
+
+  SetComposer(session.get(), &segments);
+  FillT13Ns(&segments);
+  convertermock_->SetStartConversionWithComposer(&segments, true);
 
   command.Clear();
   session->ConvertToHalfASCII(&command);
@@ -1179,7 +1332,10 @@ TEST_F(SessionTest, ConvertToTransliterationWithMultipleSegments) {
   InsertCharacterChars("like", session.get(), &command);
 
   Segments segments;
-  InitConverterWithLike(&segments);
+  SetLike(&segments);
+  SetComposer(session.get(), &segments);
+  FillT13Ns(&segments);
+  convertermock_->SetStartConversionWithComposer(&segments, true);
 
   // Convert
   command.Clear();
@@ -1227,7 +1383,9 @@ TEST_F(SessionTest, ConvertToHalfWidth) {
     // "あべし"
     segment->add_candidate()->value = "\xE3\x81\x82\xE3\x81\xB9\xE3\x81\x97";
   }
-  convertermock_->SetStartConversion(&segments, true);
+  SetComposer(session.get(), &segments);
+  FillT13Ns(&segments);
+  convertermock_->SetStartConversionWithComposer(&segments, true);
 
   command.Clear();
   session->ConvertToHalfWidth(&command);
@@ -1269,7 +1427,10 @@ TEST_F(SessionTest, ConvertConsonantsToFullAlphanumeric) {
   candidate->value = "DVD";
   candidate = segment->add_candidate();
   candidate->value = "dvd";
-  convertermock_->SetStartConversion(&segments, true);
+
+  SetComposer(session.get(), &segments);
+  FillT13Ns(&segments);
+  convertermock_->SetStartConversionWithComposer(&segments, true);
 
   command.Clear();
   session->ConvertToFullASCII(&command);
@@ -1330,7 +1491,10 @@ TEST_F(SessionTest, ConvertConsonantsToFullAlphanumericWithoutCascadingWindow) {
   candidate->value = "DVD";
   candidate = segment->add_candidate();
   candidate->value = "dvd";
-  convertermock_->SetStartConversion(&segments, true);
+
+  SetComposer(session.get(), &segments);
+  FillT13Ns(&segments);
+  convertermock_->SetStartConversionWithComposer(&segments, true);
 
   command.Clear();
   session->ConvertToFullASCII(&command);
@@ -1380,7 +1544,10 @@ TEST_F(SessionTest, SwitchKanaType) {
       // "あべし"
       segment->add_candidate()->value = "\xE3\x81\x82\xE3\x81\xB9\xE3\x81\x97";
     }
-    convertermock_->SetStartConversion(&segments, true);
+
+    SetComposer(session.get(), &segments);
+    FillT13Ns(&segments);
+    convertermock_->SetStartConversionWithComposer(&segments, true);
 
     command.Clear();
     session->SwitchKanaType(&command);
@@ -1437,7 +1604,10 @@ TEST_F(SessionTest, SwitchKanaType) {
       // "漢字"
       segment->add_candidate()->value = "\xE6\xBC\xA2\xE5\xAD\x97";
     }
-    convertermock_->SetStartConversion(&segments, true);
+
+    SetComposer(session.get(), &segments);
+    FillT13Ns(&segments);
+    convertermock_->SetStartConversionWithComposer(&segments, true);
 
     command.Clear();
     session->Convert(&command);
@@ -1527,7 +1697,10 @@ TEST_F(SessionTest, UpdatePreferences) {
   InsertCharacterChars("aiueo", session.get(), &command);
   Segments segments;
   SetAiueo(&segments);
-  convertermock_->SetStartConversion(&segments, true);
+
+  SetComposer(session.get(), &segments);
+  FillT13Ns(&segments);
+  convertermock_->SetStartConversionWithComposer(&segments, true);
 
   command.Clear();
   session->Convert(&command);
@@ -1552,6 +1725,27 @@ TEST_F(SessionTest, UpdatePreferences) {
       command.output().candidates().candidate_size();
 
   EXPECT_GT(no_cascading_cand_size, cascading_cand_size);
+
+  command.Clear();
+  session->ConvertCancel(&command);
+
+  // On MS-IME keymap, EISU key does nothing.
+  command.Clear();
+  command.mutable_input()->mutable_key()->set_special_key(
+      commands::KeyEvent::EISU);
+  command.mutable_input()->mutable_config()->set_session_keymap(
+      config::Config::MSIME);
+  session->SendKey(&command);
+  EXPECT_EQ(commands::HALF_ASCII, command.output().status().mode());
+
+  // On KOTOERI keymap, EISU key does "ToggleAlphanumericMode".
+  command.Clear();
+  command.mutable_input()->mutable_key()->set_special_key(
+      commands::KeyEvent::EISU);
+  command.mutable_input()->mutable_config()->set_session_keymap(
+      config::Config::KOTOERI);
+  session->SendKey(&command);
+  EXPECT_EQ(commands::HIRAGANA, command.output().status().mode());
 }
 
 TEST_F(SessionTest, RomajiInput) {
@@ -1569,9 +1763,8 @@ TEST_F(SessionTest, RomajiInput) {
 
   scoped_ptr<keymap::KeyMapManager> keymap(new keymap::KeyMapManager());
 
-  scoped_ptr<Session> session(new Session(&table,
-                                          ConverterFactory::GetConverter(),
-                                          keymap.get()));
+  scoped_ptr<Session> session(new Session(keymap.get()));
+  session->get_internal_composer_only_for_unittest()->SetTable(&table);
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -1589,7 +1782,10 @@ TEST_F(SessionTest, RomajiInput) {
   candidate = segment->add_candidate();
   // "パン"
   candidate->value = "\xe3\x83\x91\xe3\x83\xb3";
-  convertermock_->SetStartConversion(&segments, true);
+
+  SetComposer(session.get(), &segments);
+  FillT13Ns(&segments);
+  convertermock_->SetStartConversionWithComposer(&segments, true);
 
   session->ConvertToHiragana(&command);
   EXPECT_TRUE(command.output().has_preedit());
@@ -1616,9 +1812,8 @@ TEST_F(SessionTest, KanaInput) {
 
   scoped_ptr<keymap::KeyMapManager> keymap(new keymap::KeyMapManager());
 
-  scoped_ptr<Session> session(new Session(&table,
-                                          ConverterFactory::GetConverter(),
-                                          keymap.get()));
+  scoped_ptr<Session> session(new Session(keymap.get()));
+  session->get_internal_composer_only_for_unittest()->SetTable(&table);
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -1655,12 +1850,15 @@ TEST_F(SessionTest, KanaInput) {
             command.output().preedit().segment(0).value());
 
   segment = segments.add_segment();
-  // "もずく！"
-  segment->set_key("\xe3\x82\x82\xe3\x81\x9a\xe3\x81\x8f\xef\xbc\x81");
+  // "もずく!"
+  segment->set_key("\xe3\x82\x82\xe3\x81\x9a\xe3\x81\x8f!");
   candidate = segment->add_candidate();
   // "もずく！"
   candidate->value = "\xe3\x82\x82\xe3\x81\x9a\xe3\x81\x8f\xef\xbc\x81";
-  convertermock_->SetStartConversion(&segments, true);
+
+  SetComposer(session.get(), &segments);
+  FillT13Ns(&segments);
+  convertermock_->SetStartConversionWithComposer(&segments, true);
 
   command.Clear();
   session->ConvertToHalfASCII(&command);
@@ -1690,7 +1888,10 @@ TEST_F(SessionTest, ExceededComposition) {
   segment->set_key(long_a);
   candidate = segment->add_candidate();
   candidate->value = long_a;
-  convertermock_->SetStartConversion(&segments, true);
+
+  SetComposer(session.get(), &segments);
+  FillT13Ns(&segments);
+  convertermock_->SetStartConversionWithComposer(&segments, true);
 
   command.Clear();
   session->Convert(&command);
@@ -1713,7 +1914,10 @@ TEST_F(SessionTest, OutputAllCandidateWords) {
   Segments segments;
   SetAiueo(&segments);
   InsertCharacterChars("aiueo", session.get(), &command);
-  convertermock_->SetStartConversion(&segments, true);
+
+  SetComposer(session.get(), &segments);
+  FillT13Ns(&segments);
+  convertermock_->SetStartConversionWithComposer(&segments, true);
 
   command.Clear();
   session->Convert(&command);
@@ -1771,6 +1975,166 @@ TEST_F(SessionTest, OutputAllCandidateWords) {
   }
 }
 
+TEST_F(SessionTest, Undo) {
+  scoped_ptr<Session> session(handler_->NewSession());
+  InitSessionToPrecomposition(session.get());
+
+  commands::Capability capability;
+  capability.set_text_deletion(commands::Capability::DELETE_PRECEDING_TEXT);
+  session->set_client_capability(capability);
+
+  commands::Command command;
+  Segments segments;
+
+  {  // Undo after commitment of composition
+    InsertCharacterChars("aiueo", session.get(), &command);
+    SetComposer(session.get(), &segments);
+    SetAiueo(&segments);
+    FillT13Ns(&segments);
+    convertermock_->SetStartConversionWithComposer(&segments, true);
+
+    command.Clear();
+    session->Convert(&command);
+    EXPECT_FALSE(command.output().has_result());
+    EXPECT_TRUE(command.output().has_preedit());
+    // "あいうえお"
+    EXPECT_EQ("\xE3\x81\x82\xE3\x81\x84\xE3\x81\x86\xE3\x81\x88\xE3\x81\x8A",
+              GetComposition(command));
+
+    convertermock_->SetCommitSegmentValue(&segments, true);
+    command.Clear();
+    session->Commit(&command);
+    EXPECT_TRUE(command.output().has_result());
+    EXPECT_FALSE(command.output().has_preedit());
+    // "あいうえお"
+    EXPECT_EQ("\xE3\x81\x82\xE3\x81\x84\xE3\x81\x86\xE3\x81\x88\xE3\x81\x8A",
+              command.output().result().value());
+
+    command.Clear();
+    session->Undo(&command);
+    EXPECT_FALSE(command.output().has_result());
+    EXPECT_TRUE(command.output().has_deletion_range());
+    EXPECT_EQ(-5, command.output().deletion_range().offset());
+    EXPECT_EQ(5, command.output().deletion_range().length());
+    EXPECT_TRUE(command.output().has_preedit());
+    // "あいうえお"
+    EXPECT_EQ("\xE3\x81\x82\xE3\x81\x84\xE3\x81\x86\xE3\x81\x88\xE3\x81\x8A",
+              GetComposition(command));
+
+    // Undo twice - do nothing and keep the previous status.
+    command.Clear();
+    session->Undo(&command);
+    EXPECT_FALSE(command.output().has_result());
+    EXPECT_FALSE(command.output().has_deletion_range());
+    EXPECT_TRUE(command.output().has_preedit());
+    // "あいうえお"
+    EXPECT_EQ("\xE3\x81\x82\xE3\x81\x84\xE3\x81\x86\xE3\x81\x88\xE3\x81\x8A",
+              GetComposition(command));
+  }
+
+  {  // Undo after commitment of conversion
+    command.Clear();
+    session->ConvertNext(&command);
+    EXPECT_FALSE(command.output().has_result());
+    EXPECT_TRUE(command.output().has_preedit());
+    // "アイウエオ"
+    EXPECT_EQ("\xe3\x82\xa2\xe3\x82\xa4\xe3\x82\xa6\xe3\x82\xa8\xe3\x82\xaa",
+              GetComposition(command));
+
+    convertermock_->SetCommitSegmentValue(&segments, true);
+    command.Clear();
+    session->Commit(&command);
+    EXPECT_TRUE(command.output().has_result());
+    EXPECT_FALSE(command.output().has_preedit());
+    // "アイウエオ"
+    EXPECT_EQ("\xe3\x82\xa2\xe3\x82\xa4\xe3\x82\xa6\xe3\x82\xa8\xe3\x82\xaa",
+              command.output().result().value());
+
+    command.Clear();
+    session->Undo(&command);
+    EXPECT_FALSE(command.output().has_result());
+    EXPECT_TRUE(command.output().has_deletion_range());
+    EXPECT_EQ(-5, command.output().deletion_range().offset());
+    EXPECT_EQ(5, command.output().deletion_range().length());
+    EXPECT_TRUE(command.output().has_preedit());
+    // Because a mock converter is used, the previous commitment was not
+    // learned.
+    // "あいうえお"
+    EXPECT_EQ("\xE3\x81\x82\xE3\x81\x84\xE3\x81\x86\xE3\x81\x88\xE3\x81\x8A",
+              GetComposition(command));
+
+    // Undo twice - do nothing and keep the previous status.
+    command.Clear();
+    session->Undo(&command);
+    EXPECT_FALSE(command.output().has_result());
+    EXPECT_FALSE(command.output().has_deletion_range());
+    EXPECT_TRUE(command.output().has_preedit());
+    // "あいうえお"
+    EXPECT_EQ("\xE3\x81\x82\xE3\x81\x84\xE3\x81\x86\xE3\x81\x88\xE3\x81\x8A",
+              GetComposition(command));
+  }
+
+  {  // Undo after commitment of conversion with Ctrl-Backspace.
+    command.Clear();
+    session->ConvertNext(&command);
+    EXPECT_FALSE(command.output().has_result());
+    EXPECT_TRUE(command.output().has_preedit());
+    // "アイウエオ"
+    EXPECT_EQ("\xe3\x82\xa2\xe3\x82\xa4\xe3\x82\xa6\xe3\x82\xa8\xe3\x82\xaa",
+              GetComposition(command));
+
+    convertermock_->SetCommitSegmentValue(&segments, true);
+    command.Clear();
+    session->Commit(&command);
+    EXPECT_TRUE(command.output().has_result());
+    EXPECT_FALSE(command.output().has_preedit());
+    // "アイウエオ"
+    EXPECT_EQ("\xe3\x82\xa2\xe3\x82\xa4\xe3\x82\xa6\xe3\x82\xa8\xe3\x82\xaa",
+              command.output().result().value());
+
+    config::Config config;
+    config.set_session_keymap(config::Config::MSIME);
+    SetConfig(config);
+
+    command.Clear();
+    SendKey("Ctrl Backspace", session.get(), &command);
+    //    session->Undo(&command);
+    EXPECT_FALSE(command.output().has_result());
+    EXPECT_TRUE(command.output().has_deletion_range());
+    EXPECT_EQ(-5, command.output().deletion_range().offset());
+    EXPECT_EQ(5, command.output().deletion_range().length());
+    EXPECT_TRUE(command.output().has_preedit());
+    // Because a mock converter is used, the previous commitment was not
+    // learned.
+    // "あいうえお"
+    EXPECT_EQ("\xE3\x81\x82\xE3\x81\x84\xE3\x81\x86\xE3\x81\x88\xE3\x81\x8A",
+              GetComposition(command));
+  }
+
+  {
+    // If capability does not support DELETE_PRECEDIGN_TEXT, Undo is not
+    // performed.
+    convertermock_->SetCommitSegmentValue(&segments, true);
+    command.Clear();
+    session->Commit(&command);
+    EXPECT_TRUE(command.output().has_result());
+    EXPECT_FALSE(command.output().has_preedit());
+    // "あいうえお"
+    EXPECT_EQ("\xE3\x81\x82\xE3\x81\x84\xE3\x81\x86\xE3\x81\x88\xE3\x81\x8A",
+              command.output().result().value());
+
+    // Reset capability
+    capability.Clear();
+    session->set_client_capability(capability);
+
+    command.Clear();
+    session->Undo(&command);
+    EXPECT_FALSE(command.output().has_result());
+    EXPECT_FALSE(command.output().has_deletion_range());
+    EXPECT_FALSE(command.output().has_preedit());
+  }
+}
+
 TEST_F(SessionTest, Issue1805239) {
   // This is a unittest against http://b/1805239.
   Segments segments;
@@ -1800,7 +2164,10 @@ TEST_F(SessionTest, Issue1805239) {
   candidate = segment->add_candidate();
   // "ナマエ"
   candidate->value = "\xe3\x83\x8a\xe3\x83\x9e\xe3\x82\xa8";
-  convertermock_->SetStartConversion(&segments, true);
+
+  SetComposer(session.get(), &segments);
+  FillT13Ns(&segments);
+  convertermock_->SetStartConversionWithComposer(&segments, true);
 
   SendSpecialKey(commands::KeyEvent::SPACE, session.get(), &command);
   SendSpecialKey(commands::KeyEvent::RIGHT, session.get(), &command);
@@ -1857,7 +2224,10 @@ TEST_F(SessionTest, Issue1816861) {
   candidate = segment->add_candidate();
   // "印房"
   candidate->value = "\xe5\x8d\xb0\xe6\x88\xbf";
-  convertermock_->SetStartConversion(&segments, true);
+
+  SetComposer(session.get(), &segments);
+  FillT13Ns(&segments);
+  convertermock_->SetStartConversionWithComposer(&segments, true);
 
   SendSpecialKey(commands::KeyEvent::SPACE, session.get(), &command);
   SendSpecialKey(commands::KeyEvent::RIGHT, session.get(), &command);
@@ -1873,7 +2243,7 @@ TEST_F(SessionTest, Issue1816861) {
   SendSpecialKey(commands::KeyEvent::BACKSPACE, session.get(), &command);
   SendSpecialKey(commands::KeyEvent::BACKSPACE, session.get(), &command);
 
-  segments.clear();
+  segments.Clear();
   segment = segments.add_segment();
   // "いんぼう"
   segment->set_key("\xe3\x81\x84\xe3\x82\x93\xe3\x81\xbc\xe3\x81\x86");
@@ -1886,10 +2256,103 @@ TEST_F(SessionTest, Issue1816861) {
   candidate = segment->add_candidate();
   // "陰謀説"
   candidate->value = "\xe9\x99\xb0\xe8\xac\x80\xe8\xaa\xac";
+
   convertermock_->SetStartPrediction(&segments, true);
 
   SendSpecialKey(commands::KeyEvent::TAB, session.get(), &command);
-  LOG(INFO) << command.output().DebugString();
+}
+
+TEST_F(SessionTest, T13NWithResegmentation) {
+  // This is a unittest against http://b/3272827
+  Segment::Candidate *candidate;
+  scoped_ptr<Session> session(handler_->NewSession());
+  InitSessionToPrecomposition(session.get());
+
+  commands::Command command;
+  InsertCharacterChars("kamabokonoinbou", session.get(), &command);
+
+  {
+    Segments segments;
+    Segment *segment;
+    segment = segments.add_segment();
+    // "かまぼこの"
+    segment->set_key(
+        "\xe3\x81\x8b\xe3\x81\xbe\xe3\x81\xbc\xe3\x81\x93\xe3\x81\xae");
+    candidate = segment->add_candidate();
+    // "かまぼこの"
+    candidate->value
+        = "\xe3\x81\x8b\xe3\x81\xbe\xe3\x81\xbc\xe3\x81\x93\xe3\x81\xae";
+    candidate = segment->add_candidate();
+    // "カマボコの"
+    candidate->value
+        = "\xe3\x82\xab\xe3\x83\x9e\xe3\x83\x9c\xe3\x82\xb3\xe3\x81\xae";
+
+    segment = segments.add_segment();
+    // "いんぼう"
+    segment->set_key("\xe3\x81\x84\xe3\x82\x93\xe3\x81\xbc\xe3\x81\x86");
+    candidate = segment->add_candidate();
+    // "陰謀"
+    candidate->value = "\xe9\x99\xb0\xe8\xac\x80";
+    candidate = segment->add_candidate();
+    // "印房"
+    candidate->value = "\xe5\x8d\xb0\xe6\x88\xbf";
+    SetComposer(session.get(), &segments);
+    FillT13Ns(&segments);
+    convertermock_->SetStartConversionWithComposer(&segments, true);
+  }
+  {
+    Segments segments;
+    Segment *segment;
+    segment = segments.add_segment();
+    // "かまぼこの"
+    segment->set_key(
+        "\xe3\x81\x8b\xe3\x81\xbe\xe3\x81\xbc\xe3\x81\x93\xe3\x81\xae");
+    candidate = segment->add_candidate();
+    // "かまぼこの"
+    candidate->value
+        = "\xe3\x81\x8b\xe3\x81\xbe\xe3\x81\xbc\xe3\x81\x93\xe3\x81\xae";
+    candidate = segment->add_candidate();
+    // "カマボコの"
+    candidate->value
+        = "\xe3\x82\xab\xe3\x83\x9e\xe3\x83\x9c\xe3\x82\xb3\xe3\x81\xae";
+
+    segment = segments.add_segment();
+    // "いんぼ"
+    segment->set_key("\xe3\x81\x84\xe3\x82\x93\xe3\x81\xbc");
+    candidate = segment->add_candidate();
+    // "いんぼ"
+    candidate->value = "\xe3\x81\x84\xe3\x82\x93\xe3\x81\xbc";
+    candidate = segment->add_candidate();
+    // "インボ"
+    candidate->value = "\xe3\x82\xa4\xe3\x83\xb3\xe3\x83\x9c";
+
+    segment = segments.add_segment();
+    // "う"
+    segment->set_key("\xe3\x81\x86");
+    candidate = segment->add_candidate();
+    // "ウ"
+    candidate->value = "\xe3\x82\xa6";
+    candidate = segment->add_candidate();
+    // "卯"
+    candidate->value = "\xe5\x8d\xaf";
+
+    SetComposer(session.get(), &segments);
+    FillT13Ns(&segments);
+    convertermock_->SetResizeSegment1(&segments, true);
+  }
+
+  // Start conversion
+  SendSpecialKey(commands::KeyEvent::SPACE, session.get(), &command);
+  // Select second segment
+  SendSpecialKey(commands::KeyEvent::RIGHT, session.get(), &command);
+  // Shrink segment
+  SendKey("Shift left", session.get(), &command);
+  // Convert to T13N (Half katakana)
+  SendKey("F8", session.get(), &command);
+
+  // "ｲﾝﾎﾞ"
+  EXPECT_EQ("\xef\xbd\xb2\xef\xbe\x9d\xef\xbe\x8e\xef\xbe\x9e",
+            command.output().preedit().segment(1).value());
 }
 
 TEST_F(SessionTest, Shortcut) {
@@ -1905,7 +2368,9 @@ TEST_F(SessionTest, Shortcut) {
 
   Segments segments;
   SetAiueo(&segments);
-  convertermock_->SetStartConversion(&segments, true);
+  SetComposer(session.get(), &segments);
+  FillT13Ns(&segments);
+  convertermock_->SetStartConversionWithComposer(&segments, true);
 
   commands::Command command;
   InsertCharacterChars("aiueo", session.get(), &command);
@@ -2164,7 +2629,9 @@ TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommitingSugesstion) {
     Segment *segment = segments.add_segment();
     segment->set_key("NFL");
     segment->add_candidate()->value = "NFL";
-    convertermock_->SetStartConversion(&segments, true);
+    SetComposer(session.get(), &segments);
+    FillT13Ns(&segments);
+    convertermock_->SetStartConversionWithComposer(&segments, true);
 
     EXPECT_TRUE(session->Convert(&command));
     EXPECT_FALSE(command.output().has_candidates());
@@ -2422,7 +2889,9 @@ TEST_F(SessionTest, Suggest) {
     segment->add_candidate()->value = "M";
     segment->add_candidate()->value = "m";
   }
-  convertermock_->SetStartConversion(&segments_m_conv, true);
+  SetComposer(session.get(), &segments_m_conv);
+  FillT13Ns(&segments_m_conv);
+  convertermock_->SetStartConversionWithComposer(&segments_m_conv, true);
   command.Clear();
   EXPECT_TRUE(session->Convert(&command));
 
@@ -2519,7 +2988,9 @@ TEST_F(SessionTest, ToggleAlphanumericMode) {
 
     Segments segments;
     SetAiueo(&segments);
-    convertermock_->SetStartConversion(&segments, true);
+    SetComposer(session.get(), &segments);
+    FillT13Ns(&segments);
+    convertermock_->SetStartConversionWithComposer(&segments, true);
 
     command.Clear();
     session->Convert(&command);
@@ -2538,6 +3009,75 @@ TEST_F(SessionTest, ToggleAlphanumericMode) {
     InsertCharacterChars("a", session.get(), &command);  // on Half ascii mode.
     EXPECT_EQ("a", GetComposition(command));
   }
+}
+
+TEST_F(SessionTest, InsertSpace) {
+  scoped_ptr<Session> session(handler_->NewSession());
+  InitSessionToPrecomposition(session.get());
+  commands::Command command;
+
+  // Default should be FULL_WIDTH.
+  EXPECT_TRUE(session->InsertSpace(&command));
+  EXPECT_TRUE(command.output().consumed());
+  EXPECT_FALSE(command.output().has_preedit());
+  EXPECT_TRUE(command.output().has_result());
+  // "　" (full-width space)
+  EXPECT_EQ("\xE3\x80\x80", command.output().result().value());
+
+  // Change the setting to HALF_WIDTH.
+  config::Config config;
+  config.set_space_character_form(config::Config::FUNDAMENTAL_HALF_WIDTH);
+  SetConfig(config);
+  command.Clear();
+  EXPECT_TRUE(session->InsertSpace(&command));
+  EXPECT_FALSE(command.output().consumed());
+  EXPECT_FALSE(command.output().has_preedit());
+  EXPECT_FALSE(command.output().has_result());
+
+  // Change the setting to FULL_WIDTH.
+  config.set_space_character_form(config::Config::FUNDAMENTAL_FULL_WIDTH);
+  SetConfig(config);
+  command.Clear();
+  EXPECT_TRUE(session->InsertSpace(&command));
+  EXPECT_TRUE(command.output().consumed());
+  EXPECT_FALSE(command.output().has_preedit());
+  EXPECT_TRUE(command.output().has_result());
+  // "　" (full-width space)
+  EXPECT_EQ("\xE3\x80\x80", command.output().result().value());
+}
+
+TEST_F(SessionTest, InsertSpaceToggled) {
+  scoped_ptr<Session> session(handler_->NewSession());
+  InitSessionToPrecomposition(session.get());
+  commands::Command command;
+
+  // Default should be FULL_WIDTH.  So the toggled space should be
+  // half-width.
+  EXPECT_TRUE(session->InsertSpaceToggled(&command));
+  EXPECT_FALSE(command.output().consumed());
+  EXPECT_FALSE(command.output().has_preedit());
+  EXPECT_FALSE(command.output().has_result());
+
+  // Change the setting to HALF_WIDTH.
+  config::Config config;
+  config.set_space_character_form(config::Config::FUNDAMENTAL_HALF_WIDTH);
+  SetConfig(config);
+  command.Clear();
+  EXPECT_TRUE(session->InsertSpaceToggled(&command));
+  EXPECT_TRUE(command.output().consumed());
+  EXPECT_FALSE(command.output().has_preedit());
+  EXPECT_TRUE(command.output().has_result());
+  // "　" (full-width space)
+  EXPECT_EQ("\xE3\x80\x80", command.output().result().value());
+
+  // Change the setting to FULL_WIDTH.
+  config.set_space_character_form(config::Config::FUNDAMENTAL_FULL_WIDTH);
+  SetConfig(config);
+  command.Clear();
+  EXPECT_TRUE(session->InsertSpaceToggled(&command));
+  EXPECT_FALSE(command.output().consumed());
+  EXPECT_FALSE(command.output().has_preedit());
+  EXPECT_FALSE(command.output().has_result());
 }
 
 TEST_F(SessionTest, InsertSpaceHalfWidth) {
@@ -2563,7 +3103,9 @@ TEST_F(SessionTest, InsertSpaceHalfWidth) {
     Segments segments;
     // "亜 "
     segments.add_segment()->add_candidate()->value = "\xE4\xBA\x9C\x20";
-    convertermock_->SetStartConversion(&segments, true);
+    SetComposer(session.get(), &segments);
+    FillT13Ns(&segments);
+    convertermock_->SetStartConversionWithComposer(&segments, true);
 
     command.Clear();
     EXPECT_TRUE(session->Convert(&command));
@@ -2571,9 +3113,9 @@ TEST_F(SessionTest, InsertSpaceHalfWidth) {
 
   command.Clear();
   EXPECT_TRUE(session->InsertSpaceHalfWidth(&command));
-  // "亜 "
-  EXPECT_EQ("\xE4\xBA\x9C\x20", command.output().result().value());
-  EXPECT_EQ(" ", GetComposition(command));
+  // "亜  "
+  EXPECT_EQ("\xE4\xBA\x9C  ", command.output().result().value());
+  EXPECT_EQ("", GetComposition(command));
 }
 
 TEST_F(SessionTest, InsertSpaceFullWidth) {
@@ -2601,7 +3143,9 @@ TEST_F(SessionTest, InsertSpaceFullWidth) {
     Segments segments;
     // "亜　"
     segments.add_segment()->add_candidate()->value = "\xE4\xBA\x9C\xE3\x80\x80";
-    convertermock_->SetStartConversion(&segments, true);
+    SetComposer(session.get(), &segments);
+    FillT13Ns(&segments);
+    convertermock_->SetStartConversionWithComposer(&segments, true);
 
     command.Clear();
     EXPECT_TRUE(session->Convert(&command));
@@ -2609,9 +3153,10 @@ TEST_F(SessionTest, InsertSpaceFullWidth) {
 
   command.Clear();
   EXPECT_TRUE(session->InsertSpaceFullWidth(&command));
-  // "亜　"
-  EXPECT_EQ("\xE4\xBA\x9C\xE3\x80\x80", command.output().result().value());
-  EXPECT_EQ("\xE3\x80\x80", GetComposition(command));
+  // "亜　　"
+  EXPECT_EQ("\xE4\xBA\x9C\xE3\x80\x80\xE3\x80\x80",
+            command.output().result().value());
+  EXPECT_EQ("", GetComposition(command));
 }
 
 TEST_F(SessionTest, InsertSpaceFullWidthOnHalfKanaInput) {
@@ -2642,7 +3187,9 @@ TEST_F(SessionTest, Issue1951385) {
   ASSERT_EQ(500, exceeded_preedit.size());
   InsertCharacterChars(exceeded_preedit, session.get(), &command);
 
-  convertermock_->SetStartConversion(&segments, false);
+  SetComposer(session.get(), &segments);
+  FillT13Ns(&segments);
+  convertermock_->SetStartConversionWithComposer(&segments, false);
 
   command.Clear();
   session->ConvertToFullASCII(&command);
@@ -2678,7 +3225,9 @@ TEST_F(SessionTest, Issue1978201) {
   EXPECT_TRUE(session->SegmentWidthShrink(&command));
 
   command.Clear();
-  convertermock_->SetStartConversion(&segments, true);
+  SetComposer(session.get(), &segments);
+  FillT13Ns(&segments);
+  convertermock_->SetStartConversionWithComposer(&segments, true);
   EXPECT_TRUE(session->Convert(&command));
 
   command.Clear();
@@ -2746,7 +3295,7 @@ TEST_F(SessionTest, Issue2029466) {
   EXPECT_TRUE(session->PredictAndConvert(&command));
 
   // <ctrl-N>
-  segments.clear();
+  segments.Clear();
   convertermock_->SetFinishConversion(&segments, true);
   command.Clear();
   EXPECT_TRUE(session->CommitSegment(&command));
@@ -2775,7 +3324,9 @@ TEST_F(SessionTest, Issue2034943) {
     Segment::Candidate *candidate;
     candidate = segment->add_candidate();
     candidate->value = "MOZU";
-    convertermock_->SetStartConversion(&segments, true);
+    SetComposer(session.get(), &segments);
+    FillT13Ns(&segments);
+    convertermock_->SetStartConversionWithComposer(&segments, true);
   }
   // Get conversion
   command.Clear();
@@ -2802,7 +3353,9 @@ TEST_F(SessionTest, Issue2026354) {
   // Trigger suggest by pressing "a".
   Segments segments;
   SetAiueo(&segments);
-  convertermock_->SetStartConversion(&segments, true);
+  SetComposer(session.get(), &segments);
+  FillT13Ns(&segments);
+  convertermock_->SetStartConversionWithComposer(&segments, true);
 
   command.Clear();
   EXPECT_TRUE(session->Convert(&command));
@@ -2999,12 +3552,15 @@ TEST_F(SessionTest, Issue1799384) {
     Segment *segment;
     segments.set_request_type(Segments::CONVERSION);
     segment = segments.add_segment();
-    // "らぶ"
-    segment->set_key("\xE3\x82\x89\xE3\x81\xB6");
+    // "らヴ"
+    segment->set_key("\xE3\x82\x89\xE3\x83\xB4");
     Segment::Candidate *candidate;
     candidate = segment->add_candidate();
+    // "らぶ"
     candidate->value = "\xE3\x82\x89\xE3\x81\xB6";
-    convertermock_->SetStartConversion(&segments, true);
+    SetComposer(session.get(), &segments);
+    FillT13Ns(&segments);
+    convertermock_->SetStartConversionWithComposer(&segments, true);
   }
 
   command.Clear();
@@ -3113,7 +3669,9 @@ TEST_F(SessionTest, Issue2223755) {
       candidate = segment->add_candidate();
       // "あ い"
       candidate->value = "\xE3\x81\x82\x20\xE3\x81\x84";
-      convertermock_->SetStartConversion(&segments, true);
+      SetComposer(session.get(), &segments);
+      FillT13Ns(&segments);
+      convertermock_->SetStartConversionWithComposer(&segments, true);
     }
 
     command.Clear();
@@ -3218,7 +3776,9 @@ TEST_F(SessionTest, Issue2379374) {
     candidate = segment->add_candidate();
     // "亜"
     candidate->value = "\xE4\xBA\x9C";
-    convertermock_->SetStartConversion(&segments, true);
+    SetComposer(session.get(), &segments);
+    FillT13Ns(&segments);
+    convertermock_->SetStartConversionWithComposer(&segments, true);
   }
 
   EXPECT_TRUE(SendKey("a", session.get(), &command));
@@ -3434,6 +3994,48 @@ TEST_F(SessionTest, SendKeyDirectInputStateTest) {
 #endif  // OS_WINDOWS
 }
 
+TEST_F(SessionTest, HandlingDirectInputTableAttribute) {
+  composer::Table table;
+  // "か"
+  table.AddRuleWithAttributes("ka", "\xE3\x81\x8B", "",
+                              composer::DIRECT_INPUT);
+  // "っ"
+  table.AddRuleWithAttributes("tt", "\xE3\x81\xA3", "t",
+                              composer::DIRECT_INPUT);
+  // "た"
+  table.AddRuleWithAttributes("ta", "\xE3\x81\x9F", "",
+                              composer::NO_TABLE_ATTRIBUTE);
+
+  keymap::KeyMapManager keymap;
+  Session session(&keymap);
+  InitSessionToPrecomposition(&session);
+  session.get_internal_composer_only_for_unittest()->SetTable(&table);
+
+  commands::Command command;
+  SendKey("k", &session, &command);
+  EXPECT_FALSE(command.output().has_result());
+
+  command.Clear();
+  SendKey("a", &session, &command);
+  EXPECT_TRUE(command.output().has_result());
+  // "か"
+  EXPECT_EQ("\xE3\x81\x8B", command.output().result().value());
+
+  command.Clear();
+  SendKey("t", &session, &command);
+  EXPECT_FALSE(command.output().has_result());
+
+  command.Clear();
+  SendKey("t", &session, &command);
+  EXPECT_FALSE(command.output().has_result());
+
+  command.Clear();
+  SendKey("a", &session, &command);
+  EXPECT_TRUE(command.output().has_result());
+  // "った"
+  EXPECT_EQ("\xE3\x81\xA3\xE3\x81\x9F", command.output().result().value());
+}
+
 TEST_F(SessionTest, IMEOnWithModeTest) {
   {
     scoped_ptr<Session> session(handler_->NewSession());
@@ -3637,7 +4239,9 @@ TEST_F(SessionTest, InputModeOutputHasCandidates) {
 
   Segments segments;
   SetAiueo(&segments);
-  convertermock_->SetStartConversion(&segments, true);
+  SetComposer(session.get(), &segments);
+  FillT13Ns(&segments);
+  convertermock_->SetStartConversionWithComposer(&segments, true);
 
   commands::Command command;
   InsertCharacterChars("aiueo", session.get(), &command);
@@ -3716,7 +4320,9 @@ TEST_F(SessionTest, PerformedCommand) {
     // SetStartConversion for changing state to Convert.
     Segments segments;
     SetAiueo(&segments);
-    convertermock_->SetStartConversion(&segments, true);
+    SetComposer(session.get(), &segments);
+    FillT13Ns(&segments);
+    convertermock_->SetStartConversionWithComposer(&segments, true);
     commands::Command command;
     // SPACE
     command.mutable_input()->mutable_key()->set_special_key(
@@ -3777,7 +4383,7 @@ class ConverterMockForRevert : public ConverterMock {
  private:
   mutable bool revert_conversion_called_;
 };
-} // namespace
+}  // namespace
 
 // Independent test
 TEST(SessionResetTest, IssueResetConversion) {
@@ -3788,7 +4394,7 @@ TEST(SessionResetTest, IssueResetConversion) {
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
-  // any meaneangless key calles ResetConversion
+  // any meaneangless key calls ResetConversion
   EXPECT_FALSE(convertermock->reset_conversion_called());
   EXPECT_TRUE(SendKey("enter", session.get(), &command));
   EXPECT_TRUE(convertermock->reset_conversion_called());
@@ -3822,7 +4428,8 @@ TEST_F(SessionTest, AutoConversion) {
 
   Segments segments;
   SetAiueo(&segments);
-  convertermock_->SetStartConversion(&segments, true);
+  FillT13Ns(&segments);
+  convertermock_->SetStartConversionWithComposer(&segments, true);
 
   // Auto Off
   config.set_use_auto_conversion(false);
@@ -4105,7 +4712,7 @@ TEST_F(SessionTest, FillHistoryContext) {
     Segment *segment = segments.add_segment();
     segment->set_segment_type(Segment::HISTORY);
     Segment::Candidate *candidate = segment->add_candidate();
-    candidate->value =kHistory[0];
+    candidate->value = kHistory[0];
   }
   convertermock_->SetFinishConversion(&segments, true);
 
@@ -4186,6 +4793,139 @@ TEST_F(SessionTest, ExpandCompositionForNestedCalculation) {
   // "1１＋１＝"
   EXPECT_EQ("1\xEF\xBC\x91\xEF\xBC\x8B\xEF\xBC\x91\xEF\xBC\x9D",
             command.output().preedit().segment(0).key());
-
 }
+
+TEST_F(SessionTest, InputSpaceWithKatakanaMode) {
+  // This is a unittest against http://b/3203944.
+  // Input mode should not be changed when a space key is typed.
+  scoped_ptr<Session> session(handler_->NewSession());
+  InitSessionToPrecomposition(session.get());
+
+  commands::Command command;
+  EXPECT_TRUE(session->InputModeHiragana(&command));
+  EXPECT_TRUE(command.output().consumed());
+  EXPECT_EQ(mozc::commands::HIRAGANA, command.output().mode());
+
+  command.Clear();
+  command.mutable_input()->set_type(commands::Input::SEND_KEY);
+  command.mutable_input()->mutable_key()->set_special_key(
+      commands::KeyEvent::SPACE);
+  command.mutable_input()->mutable_key()->set_mode(
+      commands::FULL_KATAKANA);
+  EXPECT_TRUE(session->SendKey(&command));
+  EXPECT_TRUE(command.output().consumed());
+  EXPECT_TRUE(command.output().has_result());
+  EXPECT_EQ(mozc::commands::FULL_KATAKANA, command.output().mode());
+}
+
+TEST_F(SessionTest, AlphanumericOfSSH) {
+  // This is a unittest against http://b/3199626
+  // 'ssh' (っｓｈ) + F10 should be 'ssh'.
+  scoped_ptr<Session> session(handler_->NewSession());
+  InitSessionToPrecomposition(session.get());
+
+  commands::Command command;
+  InsertCharacterChars("ssh", session.get(), &command);
+  // "っｓｈ"
+  EXPECT_EQ("\xE3\x81\xA3\xEF\xBD\x93\xEF\xBD\x88", GetComposition(command));
+
+  Segments segments;
+  // Set a dummy segments for ConvertToHalfASCII.
+  {
+    Segment *segment;
+    segment = segments.add_segment();
+    //    // "っｓｈ"
+    //    segment->set_key("\xE3\x81\xA3\xEF\xBD\x93\xEF\xBD\x88");
+    // "っsh"
+    segment->set_key("\xE3\x81\xA3sh");
+
+    Segment::Candidate *candidate;
+    candidate = segment->add_candidate();
+    candidate->value = "[SSH]";
+  }
+  SetComposer(session.get(), &segments);
+  FillT13Ns(&segments);
+  convertermock_->SetStartConversionWithComposer(&segments, true);
+
+  command.Clear();
+  EXPECT_TRUE(session->ConvertToHalfASCII(&command));
+  EXPECT_TRUE(command.output().has_preedit());
+  EXPECT_EQ("ssh", GetComposition(command));
+}
+
+
+
+TEST_F(SessionTest, ConvertReverse) {
+  scoped_ptr<Session> session(handler_->NewSession());
+  InitSessionToPrecomposition(session.get());
+  // "阿伊宇江於"
+  const string kanji_aiueo =
+      "\xe9\x98\xbf\xe4\xbc\x8a\xe5\xae\x87\xe6\xb1\x9f\xe6\x96\xbc";
+  // "あいうえお"
+  const string hiragana_aiueo =
+      "\xe3\x81\x82\xe3\x81\x84\xe3\x81\x86\xe3\x81\x88\xe3\x81\x8a";
+
+  commands::Command command;
+  SetupCommandForReverseConversion(kanji_aiueo, command.mutable_input());
+  SetupMockForReverseConversion(kanji_aiueo, hiragana_aiueo);
+
+  EXPECT_TRUE(session->SendCommand(&command));
+  EXPECT_EQ(kanji_aiueo,
+            command.output().preedit().segment(0).value());
+  EXPECT_EQ(kanji_aiueo,
+            command.output().all_candidate_words().candidates(0).value());
+  EXPECT_TRUE(command.output().has_candidates());
+  EXPECT_GT(command.output().candidates().candidate_size(), 0);
+}
+
+TEST_F(SessionTest, ConvertReverseFromOffState) {
+  scoped_ptr<Session> session(handler_->NewSession());
+  InitSessionToPrecomposition(session.get());
+  // "阿伊宇江於"
+  const string kanji_aiueo =
+      "\xe9\x98\xbf\xe4\xbc\x8a\xe5\xae\x87\xe6\xb1\x9f\xe6\x96\xbc";
+  // "あいうえお"
+  const string hiragana_aiueo =
+      "\xe3\x81\x82\xe3\x81\x84\xe3\x81\x86\xe3\x81\x88\xe3\x81\x8a";
+
+  // IMEOff
+  commands::Command off_command;
+  off_command.mutable_input()->mutable_key()->set_special_key(
+      commands::KeyEvent::OFF);
+  session->SendKey(&off_command);
+
+  commands::Command command;
+  SetupCommandForReverseConversion(kanji_aiueo, command.mutable_input());
+  SetupMockForReverseConversion(kanji_aiueo, hiragana_aiueo);
+  EXPECT_TRUE(session->SendCommand(&command));
+}
+
+TEST_F(SessionTest, LaunchTool) {
+  scoped_ptr<Session> session(handler_->NewSession());
+
+  {
+    commands::Command command;
+    EXPECT_TRUE(session->LaunchConfigDialog(&command));
+    EXPECT_EQ(commands::Output::CONFIG_DIALOG,
+              command.output().launch_tool_mode());
+    EXPECT_TRUE(command.output().consumed());
+  }
+
+  {
+    commands::Command command;
+    EXPECT_TRUE(session->LaunchDictionaryTool(&command));
+    EXPECT_EQ(commands::Output::DICTIONARY_TOOL,
+              command.output().launch_tool_mode());
+    EXPECT_TRUE(command.output().consumed());
+  }
+
+  {
+    commands::Command command;
+    EXPECT_TRUE(session->LaunchWordRegisterDialog(&command));
+    EXPECT_EQ(commands::Output::WORD_REGISTER_DIALOG,
+              command.output().launch_tool_mode());
+    EXPECT_TRUE(command.output().consumed());
+  }
+}
+}  // namespace session
 }  // namespace mozc

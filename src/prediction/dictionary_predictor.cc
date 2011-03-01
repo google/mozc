@@ -46,8 +46,11 @@
 #include "prediction/svm_model.h"
 #include "prediction/suggestion_filter.h"
 #include "prediction/predictor_interface.h"
+#include "rewriter/variants_rewriter.h"
+#include "session/commands.pb.h"
 #include "session/config_handler.h"
 #include "session/config.pb.h"
+
 
 namespace mozc {
 
@@ -125,13 +128,13 @@ bool DictionaryPredictor::Predict(Segments *segments) const {
   NodeAllocatorInterface *allocator = segments->node_allocator();
   allocator->set_max_nodes_size(max_nodes_size);
 
-  const string &key = segments->conversion_segment(0).key();
+  const string &input_key = segments->conversion_segment(0).key();
 
   vector<Result> results;
   if (prediction_type & UNIGRAM) {
     const size_t prev_results_size = results.size();
-    const Node *unigram_node = dictionary_->LookupPredictive(key.c_str(),
-                                                             key.size(),
+    const Node *unigram_node = dictionary_->LookupPredictive(input_key.c_str(),
+                                                             input_key.size(),
                                                              allocator);
     size_t unigram_results_size = 0;
     for (; unigram_node != NULL; unigram_node = unigram_node->bnext) {
@@ -154,7 +157,7 @@ bool DictionaryPredictor::Predict(Segments *segments) const {
         segments->history_segment(segments->history_segments_size() - 1);
     bigram_prefix_key = history_segment.candidate(0).key;
     bigram_prefix_value = history_segment.candidate(0).value;
-    bigram_key = bigram_prefix_key + key;
+    bigram_key = bigram_prefix_key + input_key;
     const Node *bigram_node = dictionary_->LookupPredictive(bigram_key.c_str(),
                                                             bigram_key.size(),
                                                             allocator);
@@ -184,7 +187,7 @@ bool DictionaryPredictor::Predict(Segments *segments) const {
   }
 
   // ranking
-  const bool is_zip_code = DictionaryPredictor::IsZipCodeRequest(key);
+  const bool is_zip_code = DictionaryPredictor::IsZipCodeRequest(input_key);
   const bool is_suggestion = (segments->request_type() ==
                               Segments::SUGGESTION);
 
@@ -196,7 +199,7 @@ bool DictionaryPredictor::Predict(Segments *segments) const {
     const Node *node = results[i].node();
     results[i].set_score(
         GetSVMScore(
-            results[i].is_bigram() ? bigram_key : key,
+            results[i].is_bigram() ? bigram_key : input_key,
             node->key, node->value, node->wcost, node->lid,
             is_zip_code, is_suggestion, results.size(), &feature));
   }
@@ -219,7 +222,7 @@ bool DictionaryPredictor::Predict(Segments *segments) const {
   set<string> non_spelling_correction_values;
   for (size_t i = 0; i < results.size(); ++i) {
     const Node *node = results[i].node();
-    if (!node->is_spelling_correction) {
+    if (!(node->attributes & Node::SPELLING_CORRECTION)) {
       non_spelling_correction_values.insert(node->value);
     }
   }
@@ -236,7 +239,7 @@ bool DictionaryPredictor::Predict(Segments *segments) const {
   }
 
   int added = 0;
-  const size_t key_length = Util::CharsLen(key);
+  const size_t key_length = Util::CharsLen(input_key);
   for (size_t i = 0; i < results.size(); ++i) {
     if (added >= size || results[i].score() == INT_MIN) {
       break;
@@ -254,7 +257,7 @@ bool DictionaryPredictor::Predict(Segments *segments) const {
 
     // don't suggest exactly the same candidate as key
     if ((result.is_bigram() && bigram_key == node->value) ||
-        (!result.is_bigram() && key == node->value)) {
+        (!result.is_bigram() && input_key == node->value)) {
       continue;
     }
 
@@ -267,7 +270,7 @@ bool DictionaryPredictor::Predict(Segments *segments) const {
     }
 
     // filter bad spelling correction
-    if (node->is_spelling_correction) {
+    if (node->attributes & Node::SPELLING_CORRECTION) {
       if (non_spelling_correction_values.count(node->value)) {
         continue;
       }
@@ -306,18 +309,19 @@ bool DictionaryPredictor::Predict(Segments *segments) const {
     candidate->lid = node->lid;
     candidate->rid = node->rid;
     candidate->cost = node->wcost;
-    candidate->is_spelling_correction = node->is_spelling_correction;
+    candidate->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
+    if (node->attributes & Node::SPELLING_CORRECTION) {
+      candidate->attributes |= Segment::Candidate::SPELLING_CORRECTION;
+    }
 
     // Don't provide any descriptions for dictionary suggests
 #ifdef _DEBUG
     const char kDescription[] = "Dictionary Suggest";
-#else
-    const char kDescription[] = "";
+    candidate->description = kDescription;
 #endif
 
-    candidate->SetDescription(Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER |
-                              Segment::Candidate::ZIPCODE,
-                              kDescription);
+    VariantsRewriter::SetDescriptionForPrediction(candidate);
+
     ++added;
   }
 
@@ -341,7 +345,7 @@ enum {
 }
 
 #define ADD_FEATURE(i, v) \
-   { feature->push_back(make_pair<int, double>(i, v)); } while (0)
+  { feature->push_back(make_pair<int, double>(i, v)); } while (0)
 
 int DictionaryPredictor::GetSVMScore(const string &query,
                                      const string &key,
@@ -395,6 +399,9 @@ int DictionaryPredictor::GetSVMScore(const string &query,
 #undef ADD_FEATURE
 
 bool DictionaryPredictor::IsZipCodeRequest(const string &key) {
+  if (key.empty()) {
+    return false;
+  }
   const char *begin = key.data();
   const char *end = key.data() + key.size();
   size_t mblen = 0;
@@ -436,15 +443,17 @@ DictionaryPredictor::GetPredictionType(const Segments &segments) {
     return NO_PREDICTION;
   }
 
+  bool zero_query_suggestion = false;
+
   const string &key = segments.conversion_segment(0).key();
   const size_t key_len = Util::CharsLen(key);
-  if (key_len == 0) {
+  if (key_len == 0 && !zero_query_suggestion) {
     return NO_PREDICTION;
   }
 
   const bool is_zip_code = DictionaryPredictor::IsZipCodeRequest(key);
 
-  // Never trigger prediction if key looks like zip code.
+  // Never trigger prediction if key looks like pzip code.
   if (segments.request_type() == Segments::SUGGESTION &&
       is_zip_code && key_len < 6) {
     return NO_PREDICTION;
@@ -452,9 +461,12 @@ DictionaryPredictor::GetPredictionType(const Segments &segments) {
 
   int result = NO_PREDICTION;
 
-  // unigram based suggestion requires key_len >= 3.
+  const int kMinUnigramKeyLen = zero_query_suggestion ? 1 : 3;
+
+  // unigram based suggestion requires key_len >= kMinUnigramKeyLen.
   // Providing suggestions from very short user input key is annoying.
-  if (segments.request_type() != Segments::SUGGESTION || key_len >= 3) {
+  if ((segments.request_type() == Segments::PREDICTION && key_len >= 1) ||
+      key_len >= kMinUnigramKeyLen) {
     result |= UNIGRAM;
   }
 
@@ -462,8 +474,9 @@ DictionaryPredictor::GetPredictionType(const Segments &segments) {
   if (history_segments_size > 0) {
     const Segment &history_segment =
         segments.history_segment(history_segments_size - 1);
+    const int kMinBigramKeyLen = zero_query_suggestion ? 2 : 3;
     // even in PREDICTION mode, bigram-based suggestion requires that
-    // the length of previous key is >= 3.
+    // the length of previous key is >= kMinBigramKeyLen.
     // It also implies that bigram-based suggestion will be triggered,
     // even if the current key length is short enough.
     // TOOD(taku): this setting might be aggressive if the current key
@@ -471,7 +484,7 @@ DictionaryPredictor::GetPredictionType(const Segments &segments) {
     // If the current key looks like particle, we can make the behavior
     // less aggressive.
     if (history_segment.candidates_size() > 0 &&
-        Util::CharsLen(history_segment.candidate(0).key) >= 3) {
+        Util::CharsLen(history_segment.candidate(0).key) >= kMinBigramKeyLen) {
       result |= BIGRAM;
     }
   }

@@ -308,5 +308,11 @@ void RandomKeyEventsGenerator::GenerateSequence(
   CHECK_GT(keys->size(), 0);
   VLOG(1) << "key sequence is generated: " << keys->size();
 }
+
+// static
+const char **RandomKeyEventsGenerator::GetTestSentences(size_t *size) {
+  *size = arraysize(kTestSentences);
+  return kTestSentences;
+}
 }  // namespace session
 }  // namespace mozc

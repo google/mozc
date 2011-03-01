@@ -501,7 +501,7 @@ bool RewriteFromPrevSegment(const Segment::Candidate &prev_cand,
                   << seg->candidate(i).value;
         }
         seg->move_candidate(i, 0);
-        seg->mutable_candidate(0)->learning_type
+        seg->mutable_candidate(0)->attributes
             |= Segment::Candidate::CONTEXT_SENSITIVE;
         return true;
       }
@@ -540,10 +540,10 @@ bool RewriteUsingNextSegment(Segment *next_seg, Segment *seg) {
           if (LookupPair(cur, next)) {
             VLOG(3) << curs[k] << nexts[l] << " " << cur << next;
             seg->move_candidate(i, 0);
-            seg->mutable_candidate(0)->learning_type
+            seg->mutable_candidate(0)->attributes
                 |= Segment::Candidate::CONTEXT_SENSITIVE;
             next_seg->move_candidate(j, 0);
-            next_seg->mutable_candidate(0)->learning_type
+            next_seg->mutable_candidate(0)->attributes
                 |= Segment::Candidate::CONTEXT_SENSITIVE;
             return true;
           }
@@ -570,12 +570,6 @@ bool RewriteCollocation(Segments *segments) {
   vector<bool> segs_changed =
       vector<bool>(segments->segments_size(), false);
   bool changed = false;
-
-  for (size_t i = segments->history_segments_size();
-       i < segments->segments_size(); ++i) {
-    Segment *seg = segments->mutable_segment(i);
-    seg->GetCandidates(kCandidateSize);
-  }
 
   for (size_t i = segments->history_segments_size();
        i < segments->segments_size(); ++i) {

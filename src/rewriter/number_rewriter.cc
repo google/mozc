@@ -335,7 +335,7 @@ void ArabicToWideArabic(const string& input_num,
                         vector<Segment::Candidate>* output) {
   const uint16 kStyles[] = {
     Segment::Candidate::NUMBER_KANJI_ARABIC,
-    Segment::Candidate::DEFAULT,
+    Segment::Candidate::DEFAULT_STYLE,
     // use default for wide arabic, because half/full width for
     // normal number is learned by charactor form manager.
     0,
@@ -366,7 +366,7 @@ void ArabicToWideArabic(const string& input_num,
 void ArabicToOtherForms(const string& input_num,
                         vector<Segment::Candidate>* output) {
   if (input_num == kNumGoogol) {
-    PushBackCandidate("Googol", "", Segment::Candidate::DEFAULT, output);
+    PushBackCandidate("Googol", "", Segment::Candidate::DEFAULT_STYLE, output);
   }
   int32 n = 0;
   for (size_t i = 0; i < input_num.size(); ++i) {
@@ -509,10 +509,6 @@ bool GetNumericCandidatePositions(Segment *seg,
     arabic_c->structure_cost = c.structure_cost;
     arabic_c->lid = c.lid;
     arabic_c->rid = c.rid;
-    arabic_c->SetDefaultDescription(
-        Segment::Candidate::CHARACTER_FORM |
-        Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER);
-    seg->ExpandAlternative(i + 1);
 
     // If top candidate is Kanji numeric, we want to expand at least
     // 5 candidates here.
@@ -564,7 +560,6 @@ bool NumberRewriter::Rewrite(Segments *segments) const {
       continue;
     }
 
-    seg->GetCandidates(insert_pos);
     insert_pos = min(insert_pos, static_cast<int>(seg->candidates_size()));
 
     modified = true;
@@ -595,10 +590,13 @@ bool NumberRewriter::Rewrite(Segments *segments) const {
       c->key = base_cand.key;
       c->content_key = base_cand.content_key;
       c->style = iter->style;
-      c->SetDescription(Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER |
-                        Segment::Candidate::CHARACTER_FORM |
-                        Segment::Candidate::FULL_HALF_WIDTH,
-                        iter->description);
+      c->description = iter->description;
+      // Don't want to have FULL_WIDTH form for Hex/Oct/BIN..etc.
+      if (c->style == Segment::Candidate::NUMBER_HEX ||
+          c->style == Segment::Candidate::NUMBER_OCT ||
+          c->style == Segment::Candidate::NUMBER_BIN) {
+        c->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
+      }
     }
   }
 

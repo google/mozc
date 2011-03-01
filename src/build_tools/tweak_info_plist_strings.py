@@ -36,12 +36,13 @@
 
 __author__ = "komatsu"
 
+import datetime
 import logging
 import optparse
 import sys
 import tweak_data
 
-_COPYRIGHT_YEAR = 2010
+_COPYRIGHT_YEAR = datetime.date.today().year
 
 def ParseOptions():
   """Parse command line options.

@@ -223,5 +223,25 @@
         <source>ToggleAlphanumericMode</source>
         <translation>Toggle alphanumeric mode</translation>
     </message>
+    <message>
+        <source>LaunchConfigDialog</source>
+        <translation>Launch config dialog</translation>
+    </message>
+    <message>
+        <source>LaunchDictionaryTool</source>
+        <translation>Launch dictionary tool</translation>
+    </message>
+    <message>
+        <source>LaunchWordRegisterDialog</source>
+        <translation>Launch word register dialog</translation>
+    </message>
+    <message>
+        <source>Undo</source>
+        <translation>Undo</translation>
+    </message>
+    <message>
+        <source>SegmentFocusRightOrCommit</source>
+        <translation>Move segment focus right or commit segment</translation>
+    </message>
 </context>
 </TS>

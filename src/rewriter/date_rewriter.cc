@@ -313,7 +313,6 @@ const struct DateData kMonthData[] = {
   }
 };
 
-
 const struct DateData kCurrentTimeData[] = {
   {
     // "いま"
@@ -329,6 +328,16 @@ const struct DateData kCurrentTimeData[] = {
     "\xE7\x8F\xBE\xE5\x9C\xA8\xE3\x81\xAE\xE6\x99\x82\xE5\x88\xBB",
     0
   }
+};
+
+const struct DateData kDateAndCurrentTimeData[] = {
+  {
+    // "にちじ"
+    "\xE3\x81\xAB\xE3\x81\xA1\xE3\x81\x98",
+    "\xE6\x97\xA5\xE6\x99\x82",
+    "\xE7\x8F\xBE\xE5\x9C\xA8\xE3\x81\xAE\xE6\x97\xA5\xE6\x99\x82",
+    0
+  },
 };
 
 struct YearData {
@@ -606,13 +615,16 @@ void Insert(Segment *segment,
             const char *description,
             const char *prefix) {
   Segment::Candidate *c = segment->insert_candidate(position);
+  DCHECK(c);
+  c->Init();
   c->lid = base_candidate.lid;
   c->rid = base_candidate.rid;
   c->cost = base_candidate.cost;
   c->value = value;
-  c->learning_type = Segment::Candidate::NO_LEARNING;
   c->key = base_candidate.key;
   c->content_key = base_candidate.content_key;
+  c->attributes |= Segment::Candidate::NO_LEARNING;
+  c->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
   if (description != NULL) {
     c->description = description;
   }
@@ -637,6 +649,7 @@ enum {
   REWRITE_DATE,
   REWRITE_MONTH,
   REWRITE_CURRENT_TIME,
+  REWRITE_DATE_AND_CURRENT_TIME
 };
 
 bool ADtoERAforCourt(const YearData *data, int size,
@@ -733,7 +746,6 @@ bool DateRewriter::RewriteTime(Segment *segment,
   }
 
   const size_t kMinSize = 10;
-  segment->GetCandidates(kMinSize);
   const size_t size = min(kMinSize, segment->candidates_size());
 
   for (int i = 0; i < static_cast<int>(size); ++i) {
@@ -809,7 +821,25 @@ bool DateRewriter::RewriteTime(Segment *segment,
       for (int j = static_cast<int>(times.size()) - 1; j >= 0; --j) {
         Insert(segment, cand, i + 1, times[j], description, kDatePrefix);
       }
+      return true;
+    } else if (type == REWRITE_DATE_AND_CURRENT_TIME) {
+      if (!Util::GetCurrentTm(&t_st)) {
+        LOG(ERROR) << "GetCurrentTm failed";
+        return false;
+      }
+      vector<string> times;
+      ConvertTime(t_st.tm_hour, t_st.tm_min, &times);
+      if (times.empty()) {
+        return false;
+      }
+      // YYYY/MM/DD HH::MM
+      snprintf(tmp, sizeof(tmp),
+               "%d/%2.2d/%2.2d %s",
+               t_st.tm_year + 1900, t_st.tm_mon + 1, t_st.tm_mday,
+               times[0].c_str());
+      Insert(segment, cand, i + 1, tmp, description, kDatePrefix);
     }
+    return true;
   }
 
   return false;
@@ -900,6 +930,23 @@ bool DateRewriter::RewriteCurrentTime(Segment *segment) const {
   return false;
 }
 
+bool DateRewriter::RewriteDateAndCurrentTime(Segment *segment) const {
+  for (size_t i = 0; i < arraysize(kDateAndCurrentTimeData); ++i) {
+    if (RewriteTime(segment,
+                    kDateAndCurrentTimeData[i].key,
+                    kDateAndCurrentTimeData[i].value,
+                    kDateAndCurrentTimeData[i].description,
+                    REWRITE_DATE_AND_CURRENT_TIME,
+                    0)) {
+      VLOG(1) << "RewriteDateAndCurrentTime: "
+              << kDateAndCurrentTimeData[i].key << " "
+              << kDateAndCurrentTimeData[i].value;
+      return true;
+    }
+  }
+  return false;
+}
+
 bool DateRewriter::RewriteEra(Segment *current_segment,
                               const Segment &next_segment) const {
   if (current_segment->candidates_size() <= 0 ||
@@ -938,12 +985,9 @@ bool DateRewriter::RewriteEra(Segment *current_segment,
   }
 
   const int kInsertPosition = 2;
-  current_segment->GetCandidates(kInsertPosition + 1);
-
   const int position
       = min(kInsertPosition,
             static_cast<int>(current_segment->candidates_size()));
-
 
   // "和暦"
   const char kDescription[] = "\xE5\x92\x8C\xE6\x9A\xA6";
@@ -953,12 +997,8 @@ bool DateRewriter::RewriteEra(Segment *current_segment,
            position,
            results[i],
            kDescription, NULL);
-    if (current_segment->ExpandAlternative(position)) {
-      current_segment->mutable_candidate(position)->description
-          = kDescription;
-      current_segment->mutable_candidate(position + 1)->description
-          = kDescription;
-    }
+    current_segment->mutable_candidate(position)->attributes
+        &= ~Segment::Candidate::NO_VARIANTS_EXPANSION;
   }
 
   return true;
@@ -984,7 +1024,8 @@ bool DateRewriter::Rewrite(Segments *segments) const {
 
     if (RewriteDate(seg) || RewriteWeekday(seg) ||
         RewriteMonth(seg) || RewriteYear(seg) ||
-        RewriteCurrentTime(seg)) {
+        RewriteCurrentTime(seg) ||
+        RewriteDateAndCurrentTime(seg)) {
       modified = true;
     } else if (i + 1 < segments->segments_size() &&
                RewriteEra(seg, segments->segment(i + 1))) {

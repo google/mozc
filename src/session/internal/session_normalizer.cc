@@ -27,11 +27,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "session/internal/session_normalizer.h"
+
 #include "base/base.h"
 #include "base/util.h"
-#include "session/config_handler.h"
-#include "session/config.pb.h"
-#include "session/internal/session_normalizer.h"
 
 namespace mozc {
 namespace {

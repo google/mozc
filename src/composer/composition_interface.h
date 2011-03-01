@@ -37,6 +37,7 @@ namespace composer {
 
 class Table;
 class TransliteratorInterface;
+class CompositionInput;
 
 enum TrimMode {
   TRIM,  // "かn" => "か"
@@ -52,6 +53,11 @@ class CompositionInterface {
   virtual size_t InsertKeyAndPreeditAt(size_t pos,
                                        const string &key,
                                        const string &preedit) = 0;
+
+  // Insert the given |input| to the composition at the given |position|
+  // and return the new position.
+  virtual size_t InsertInput(size_t position,
+                             const CompositionInput &input) = 0;
 
   virtual void Erase() = 0;
 
@@ -95,6 +101,9 @@ class CompositionInterface {
                           string *right) const = 0;
   virtual void SetTable(const Table *table) = 0;
   virtual void SetInputMode(const TransliteratorInterface *transliterator) = 0;
+
+  // Return true if the composition is adviced to be committed immediately.
+  virtual bool ShouldCommit() const = 0;
 };
 
 }  // namespace composer

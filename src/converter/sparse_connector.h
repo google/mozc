@@ -30,6 +30,7 @@
 #ifndef MOZC_CONVERTER_SPARSE_CONNECTOR_H_
 #define MOZC_CONVERTER_SPARSE_CONNECTOR_H_
 
+#include <string>
 #include "base/base.h"
 #include "converter/connector_interface.h"
 
@@ -68,8 +69,10 @@ class SparseConnector : public ConnectorInterface {
 
 class SparseConnectorBuilder {
  public:
-  static void Compile(const char *text_file,
-                      const char *binary_file);
+  static void Compile(const string &text_connection_file,
+                      const string &id_file,
+                      const string &special_pos_file,
+                      const string &bnary_file);
 };
 }  // mozc
 

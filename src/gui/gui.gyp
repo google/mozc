@@ -363,6 +363,58 @@
       ],
     },
     {
+      'target_name': 'gen_word_register_dialog_files',
+      'type': 'none',
+      'variables': {
+        'subdir': 'word_register_dialog',
+        'qrc_base_name': 'word_register_dialog',
+      },
+      'sources': [
+        '<(subdir)/word_register_dialog.ui',
+        '<(subdir)/word_register_dialog.h',
+        '<(subdir)/word_register_dialog.qrc',
+      ],
+      'includes': [
+        'qt_moc.gypi',
+        'qt_rcc.gypi',
+        'qt_uic.gypi',
+      ],
+    },
+    {
+      'target_name': 'word_register_dialog_lib',
+      'type': 'static_library',
+      'sources': [
+        '<(gen_out_dir)/word_register_dialog/moc_word_register_dialog.cc',
+        '<(gen_out_dir)/word_register_dialog/qrc_word_register_dialog.cc',
+        'word_register_dialog/word_register_dialog.cc',
+        'word_register_dialog/word_register_dialog_libmain.cc',
+      ],
+      'dependencies': [
+        'gen_word_register_dialog_files',
+        '../base/base.gyp:base',
+        '../client/client.gyp:client',
+        '../dictionary/dictionary.gyp:user_dictionary',
+        '../dictionary/dictionary.gyp:genproto_dictionary',
+      ],
+      'includes': [
+        'qt_libraries.gypi',
+      ],
+    },
+    {
+      'target_name': 'word_register_dialog_main',
+      'type': 'executable',
+      'sources': [
+        'word_register_dialog/word_register_dialog_main.cc',
+      ],
+      'dependencies': [
+        'gui_base',
+        'word_register_dialog_lib',
+      ],
+      'includes': [
+        'qt_libraries.gypi',
+      ],
+    },
+    {
       'target_name': 'gen_error_message_dialog_files',
       'type': 'none',
       'variables': {
@@ -544,25 +596,53 @@
       ],
     },
     {
+      'target_name': 'mozc_tool_lib',
+      'sources': [
+        '<(gen_out_dir)/tool/qrc_mozc_tool.cc',
+        'tool/mozc_tool_libmain.cc',
+      ],
+      'dependencies': [
+        'about_dialog_lib',
+        'administration_dialog_lib',
+        'config_dialog_lib',
+        'confirmation_dialog_lib',
+        'dictionary_tool_lib',
+        'error_message_dialog_lib',
+        'gen_mozc_tool_files',
+        'gui_base',
+        'post_install_dialog_lib',
+        'set_default_dialog_lib',
+        'word_register_dialog_lib',
+      ],
+      'includes': [
+        'qt_libraries.gypi',
+      ],
+      'conditions': [
+        ['OS=="mac"', {
+          'type': 'shared_library',
+          'product_name': '<(branding)Tool_lib',
+          'mac_bundle': 1,
+          'includes': [
+            '../gyp/breakpad_mac.gypi',
+          ],
+          'xcode_settings': {
+            'INSTALL_PATH': '@executable_path/../Frameworks',
+          },
+        }, { # else
+          'type': 'static_library',
+        }],
+      ],
+    },
+    {
       'target_name': 'mozc_tool',
       'type': 'executable',
       'conditions': [
         ['use_qt=="YES"', {
           'sources': [
-            '<(gen_out_dir)/tool/qrc_mozc_tool.cc',
-           'tool/mozc_tool_main.cc',
+            'tool/mozc_tool_main.cc',
           ],
           'dependencies': [
-            'about_dialog_lib',
-            'administration_dialog_lib',
-            'confirmation_dialog_lib',
-            'config_dialog_lib',
-            'dictionary_tool_lib',
-            'error_message_dialog_lib',
-            'gen_mozc_tool_files',
-            'gui_base',
-            'post_install_dialog_lib',
-            'set_default_dialog_lib',
+            'mozc_tool_lib',
           ],
           'includes': [
             'qt_libraries.gypi',
@@ -576,6 +656,25 @@
         },],
         ['OS=="mac"', {
           'product_name': '<(product_name)',
+          'variables': {
+            'product_name': '<(branding)Tool',
+          },
+          'conditions': [
+            ['use_qt=="YES"', {
+              'variables': {
+                'copying_frameworks': [
+                  '<(PRODUCT_DIR)/<(branding)Tool_lib.framework',
+                ],
+              },
+              'includes': [
+                '../gyp/postbuilds_mac.gypi',
+              ],
+            }, {  # else
+              'includes': [
+                '../gyp/postbuilds_mac.gypi',
+              ],
+            }]
+          ],
           'dependencies': [
             'gen_mozc_tool_info_plist',
           ],
@@ -583,12 +682,6 @@
           'xcode_settings': {
             'INFOPLIST_FILE': '<(gen_out_dir)/hidden_mozc_tool_info',
           },
-          'variables': {
-            'product_name': '<(branding)Tool',
-          },
-          'includes': [
-            '../gyp/postbuilds_mac.gypi',
-          ],
         }],
         ['OS=="win"', {
           'product_name': 'GoogleIMEJaTool',
@@ -725,6 +818,20 @@
           'mac_bundle': 1,
           'variables': {
             'product_name': 'ErrorMessageDialog',
+          },
+          'xcode_settings': {
+            'INFOPLIST_FILE': '<(gen_out_dir)/hidden_mozc_tool_info',
+          },
+          'includes': [
+            'mac_gui.gypi',
+          ],
+        },
+        {
+          'target_name': 'word_register_dialog_mac',
+          'type': 'executable',
+          'mac_bundle': 1,
+          'variables': {
+            'product_name': 'WordRegisterDialog',
           },
           'xcode_settings': {
             'INFOPLIST_FILE': '<(gen_out_dir)/hidden_mozc_tool_info',

@@ -37,18 +37,33 @@
 #include "base/version.h"
 #include "client/session.h"
 #include "session/commands.pb.h"
+#include "session/config_handler.h"
 #include "unix/emacs/session_pool.h"
 
 namespace {
 
 // Prints a greeting message when a process starts.
 void PrintGreetingMessage() {
-  fprintf(stdout, "((mozc-emacs-helper . t)(version . %s))\n",
-          mozc::emacs::QuoteString(mozc::Version::GetMozcVersion()).c_str());
+  const mozc::config::Config &config = mozc::config::ConfigHandler::GetConfig();
+  const char *preedit_method = "unknown";
+  switch (config.preedit_method()) {
+    case mozc::config::Config::ROMAN:
+      preedit_method = "roman";
+      break;
+    case mozc::config::Config::KANA:
+      preedit_method = "kana";
+      break;
+  }
+
+  fprintf(stdout,
+          "((mozc-emacs-helper . t)(version . %s)"
+          "(config . ((preedit-method . %s))))\n",
+          mozc::emacs::QuoteString(mozc::Version::GetMozcVersion()).c_str(),
+          preedit_method);
   fflush(stdout);
 }
 
-// Main loop, which take an input line as a command and print a corresponding
+// Main loop, which takes an input line as a command and print a corresponding
 // result returned by Mozc server in S-expression.
 void ProcessLoop() {
   using mozc::emacs::ErrorExit;

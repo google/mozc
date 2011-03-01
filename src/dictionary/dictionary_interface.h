@@ -49,6 +49,11 @@ class DictionaryInterface {
   virtual Node *LookupReverse(const char *str, int size,
                               NodeAllocatorInterface *allocator) const = 0;
 
+  virtual void PopulateReverseLookupCache(
+      const char *str, int size, NodeAllocatorInterface *allocator) const {}
+  virtual void ClearReverseLookupCache(
+      NodeAllocatorInterface *allocator) const {}
+
  protected:
   // Do not allow instantiation/destruction
   DictionaryInterface() {}

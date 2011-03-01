@@ -32,52 +32,24 @@
 #ifndef MOZC_SESSION_SESSION_H_
 #define MOZC_SESSION_SESSION_H_
 
-#include <map>
 #include <string>
-#include <vector>
 
 #include "base/base.h"
-#include "transliteration/transliteration.h"
-#include "converter/converter_interface.h"
 #include "session/commands.pb.h"
-#include "session/common.h"
-// This should be keymap_interface.h
-#include "session/internal/keymap.h"
+// Need to include it for "ImeContext::State".
+#include "session/internal/ime_context.h"
+#include "transliteration/transliteration.h"
 
 namespace mozc {
-class ConverterInterface;
-
-namespace composer {
-class Composer;
-class Table;
-}  // namespace composer
-
 namespace keymap {
 class KeyMapManager;
 }  // namespace keymap
 
 namespace session {
-class SessionConverterInterface;
-}  // namespace session
-
-struct SessionState {
-  enum Type {
-    NONE = 0,
-    DIRECT = 1,
-    PRECOMPOSITION = 2,
-    COMPOSITION = 4,
-    CONVERSION = 8,
-  };
-};
-
-typedef map<string, commands::KeyEvent> TransformTable;
-
 class Session {
  public:
-  Session(const composer::Table *table,
-          const ConverterInterface *converter,
-          const keymap::KeyMapManager *keymap);
-  ~Session();
+  Session(const keymap::KeyMapManager *keymap);
+  virtual ~Session();
 
   bool SendKey(commands::Command *command);
 
@@ -98,6 +70,9 @@ class Session {
 
   // Return the current status such as a composition string, input mode, etc.
   bool GetStatus(commands::Command *command);
+
+  // Begins reverse conversion for the given session.
+  bool ConvertReverse(commands::Command *command);
 
   bool InsertSpace(commands::Command *command);
   bool InsertSpaceToggled(commands::Command *command);
@@ -129,9 +104,13 @@ class Session {
   // Commit only the first segment.
   bool CommitSegment(commands::Command *command);
 
+  // Undo the commitment.
+  bool Undo(commands::Command *command);
+
   bool SetComposition(const string &composition);
 
   bool SegmentFocusRight(commands::Command *command);
+  bool SegmentFocusRightOrCommit(commands::Command *command);
   bool SegmentFocusLeft(commands::Command *command);
   bool SegmentFocusLast(commands::Command *command);
   bool SegmentFocusLeftEdge(commands::Command *command);
@@ -170,6 +149,15 @@ class Session {
   bool InputModeFullASCII(commands::Command *command);
   bool InputModeHalfASCII(commands::Command *command);
 
+  // Let client launch config dialog
+  bool LaunchConfigDialog(commands::Command *command);
+
+  // Let client launch dictionary tool
+  bool LaunchDictionaryTool(commands::Command *command);
+
+  // Let client launch word register dialog
+  bool LaunchWordRegisterDialog(commands::Command *command);
+
   // finalize the session.
   bool Finish(commands::Command *command);
 
@@ -189,37 +177,40 @@ class Session {
   // Get application information
   const commands::ApplicationInfo &application_info() const;
 
-  uint64 create_session_time() const {
-    return create_session_time_;
-  }
+  // Return the time when this instance was created.
+  uint64 create_session_time() const;
 
-  // return static_cast<uint64>(-1) (default value)
-  // if no command is executed in this session.
-  uint64 last_command_time() const {
-    return last_command_time_;
-  }
+  // return 0 (default value) if no command is executed in this session.
+  uint64 last_command_time() const;
+
+  // TODO(komatsu): delete this funciton.
+  // For unittest only
+  composer::Composer *get_internal_composer_only_for_unittest();
+
+  const ImeContext &context() const;
+
+  // Update config of |context| referring |config|.
+  static void UpdateConfig(const config::Config &config, ImeContext *context);
+
+  // Set OperationPreferences on |context| by using (tentative) |config|.
+  static void UpdateOperationPreferences(const config::Config &config,
+                                         ImeContext *context);
 
  private:
-  // TODO(komatsu): Make SessionInterface abstract class and hide
-  // private functions from the upper layers.
-  uint64 create_session_time_;
-  uint64 last_command_time_;
-
-  scoped_ptr<composer::Composer> composer_;
-
-  scoped_ptr<session::SessionConverterInterface> converter_;
-
+  // TODO(komatsu): Delete them.
   const keymap::KeyMapManager *keymap_;
 
-  SessionState::Type state_;
-  TransformTable transform_table_;
+  scoped_ptr<ImeContext> context_;
+  scoped_ptr<ImeContext> prev_context_;
 
-  commands::Capability client_capability_;
+  void InitContext(ImeContext *context) const;
 
-  commands::ApplicationInfo application_info_;
+  void PushUndoContext();
+  void PopUndoContext();
+  void ClearUndoContext();
 
   // Set session state to the given state and also update related status.
-  void SetSessionState(SessionState::Type state);
+  void SetSessionState(ImeContext::State state);
 
   // Return true if full width space is preferred in the current
   // situation rather than half width space.
@@ -232,7 +223,6 @@ class Session {
   // would not be used from SendKey but used from SendCommand because
   // it requires the argument id.
   bool SelectCandidate(commands::Command *command);
-
   // Set the focus to the candidate located by input.command.id.  This
   // command would not be used from SendKey but used from SendCommand
   // because it requires the argument id.  The difference from
@@ -283,5 +273,6 @@ class Session {
   DISALLOW_COPY_AND_ASSIGN(Session);
 };
 
+}  // namespace session
 }  // namespace mozc
 #endif  // MOZC_SESSION_SESSION_H_

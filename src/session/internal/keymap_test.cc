@@ -232,6 +232,7 @@ TEST(KeyMap, LoadStreamWithErrors) {
   is.reset(ConfigFileStream::Open("system://kotoeri.tsv"));
   EXPECT_TRUE(manager.LoadStreamWithErrors(is.get(), &errors));
   EXPECT_TRUE(errors.empty());
+
 }
 
 TEST(KeyMap, MigrationTest) {
@@ -632,6 +633,72 @@ TEST(KeyMap, ShiftTabToConvertPrev) {
     KeyParser::ParseKey("Shift Tab", &key_event);
     EXPECT_TRUE(manager.GetCommandConversion(key_event, &conv_command));
     EXPECT_EQ(ConversionState::CONVERT_PREV, conv_command);
+  }
+}
+
+TEST(KeyMap, LaunchToolTest) {
+  config::Config config;
+  KeyMapManager manager;
+  commands::KeyEvent key_event;
+
+  PrecompositionState::Commands conv_command;
+
+  // ATOK
+  {
+    config.CopyFrom(config::ConfigHandler::GetConfig());
+    config.set_session_keymap(config::Config::ATOK);
+    config::ConfigHandler::SetConfig(config);
+    manager.Reload();
+
+    KeyParser::ParseKey("Ctrl F7", &key_event);
+    EXPECT_TRUE(manager.GetCommandPrecomposition(key_event, &conv_command));
+    EXPECT_EQ(PrecompositionState::LAUNCH_WORD_REGISTER_DIALOG, conv_command);
+
+    KeyParser::ParseKey("Ctrl F12", &key_event);
+    EXPECT_TRUE(manager.GetCommandPrecomposition(key_event, &conv_command));
+    EXPECT_EQ(PrecompositionState::LAUNCH_CONFIG_DIALOG, conv_command);
+  }
+}
+
+TEST(KeyMap, Undo) {
+  KeyMapManager manager;
+  PrecompositionState::Commands command;
+  commands::KeyEvent key_event;
+
+  manager.ReloadWithKeymap(config::Config::ATOK);
+  KeyParser::ParseKey("Ctrl Backspace", &key_event);
+  EXPECT_TRUE(manager.GetCommandPrecomposition(key_event, &command));
+  EXPECT_EQ(PrecompositionState::UNDO, command);
+
+  manager.ReloadWithKeymap(config::Config::MSIME);
+  KeyParser::ParseKey("Ctrl Backspace", &key_event);
+  EXPECT_TRUE(manager.GetCommandPrecomposition(key_event, &command));
+  EXPECT_EQ(PrecompositionState::UNDO, command);
+
+  manager.ReloadWithKeymap(config::Config::KOTOERI);
+  KeyParser::ParseKey("Ctrl Backspace", &key_event);
+  EXPECT_TRUE(manager.GetCommandPrecomposition(key_event, &command));
+  EXPECT_EQ(PrecompositionState::UNDO, command);
+}
+
+TEST(KeyMap, ReloadWithKeymap) {
+  KeyMapManager manager;
+  config::Config::SessionKeymap keymap_setting;
+  commands::KeyEvent key_event;
+  ConversionState::Commands conv_command;
+  {
+    keymap_setting = config::Config::ATOK;
+    manager.ReloadWithKeymap(keymap_setting);
+    KeyParser::ParseKey("Right", &key_event);
+    EXPECT_TRUE(manager.GetCommandConversion(key_event, &conv_command));
+    EXPECT_EQ(ConversionState::SEGMENT_WIDTH_EXPAND, conv_command);
+  }
+  {
+    keymap_setting = config::Config::MSIME;
+    manager.ReloadWithKeymap(keymap_setting);
+    KeyParser::ParseKey("Right", &key_event);
+    EXPECT_TRUE(manager.GetCommandConversion(key_event, &conv_command));
+    EXPECT_EQ(ConversionState::SEGMENT_FOCUS_RIGHT, conv_command);
   }
 }
 

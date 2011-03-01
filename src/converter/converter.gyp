@@ -83,6 +83,7 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../dictionary/dictionary.gyp:dictionary',
+        '../transliteration/transliteration.gyp:transliteration',
         'character_form_manager',
         'gen_boundary_data',
         'gen_pos_matcher',
@@ -100,6 +101,8 @@
           'variables': {
             'input_files': [
                '../data/dictionary/connection.txt',
+               '../data/dictionary/id.def',
+               '../data/rules/special_pos.def',
              ],
           },
           'inputs': [
@@ -153,23 +156,33 @@
       ],
     },
     {
-      'target_name': 'converter',
+      'target_name': 'immutable_converter',
       'type': 'static_library',
       'sources': [
-        'converter.cc',
-        'converter_mock.cc',
-        'focus_candidate_handler.cc',
         'immutable_converter.cc',
         'key_corrector.cc',
         '<(gen_out_dir)/user_segment_history_rewriter_rule.h',
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        '../prediction/prediction.gyp:prediction',
         '../rewriter/rewriter.gyp:gen_rewriter_files',
-        '../rewriter/rewriter.gyp:rewriter',
         '../session/session.gyp:genproto_session',
+      ],
+    },
+    {
+      'target_name': 'converter',
+      'type': 'static_library',
+      'sources': [
+        'converter.cc',
+        'converter_mock.cc',
+        'focus_candidate_handler.cc',
+      ],
+      'dependencies': [
+        '../composer/composer.gyp:composer',
+        '../prediction/prediction.gyp:prediction',
+        '../rewriter/rewriter.gyp:rewriter',
         '../session/session.gyp:session_protocol',
+        'immutable_converter',
         'gen_pos_matcher',
         'segments',
       ],
@@ -217,6 +230,7 @@
           'variables': {
             'input_files': [
               '../data/dictionary/id.def',
+              '../data/rules/special_pos.def',
               '../data/rules/segmenter.def',
             ],
           },
@@ -246,6 +260,7 @@
           'variables': {
             'input_files': [
               '../data/dictionary/id.def',
+              '../data/rules/special_pos.def',
               '../data/rules/pos_matcher_rule.def',
             ],
           },
@@ -334,6 +349,7 @@
       'dependencies': [
         '../session/session.gyp:config_handler',
         '../testing/testing.gyp:gtest_main',
+        '../transliteration/transliteration.gyp:transliteration',
         'converter',
         'segments',
       ],

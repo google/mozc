@@ -57,7 +57,7 @@ class NBestGenerator {
   // set starting Node and ending Node --
   // Try to enumurate N-best results between begin_node and end_node.
   void  Init(const Node *begin_node, const Node *end_node,
-             const Lattice *lattice);
+             const Lattice *lattice, bool is_prediction);
 
   // reset internal priority queue. Reuse begin_node and eos_node
   void Reset();
@@ -112,6 +112,7 @@ class NBestGenerator {
   const ConnectorInterface *connector_;
   const Lattice *lattice_;
   bool viterbi_result_inserted_;
+  bool is_prediction_;
 
   DISALLOW_COPY_AND_ASSIGN(NBestGenerator);
 };

@@ -55,6 +55,7 @@ namespace {
 const size_t kMaxSegmentsSize   = 256;
 const size_t kMaxCharLength     = 1024;
 const int    kMaxCost           = 32767;
+const int    kMinCost           = -32767;
 const int    kDefaultNumberCost = 3000;
 
 enum {
@@ -73,6 +74,79 @@ uint16 GetPosGroup(uint16 lid) {
   return kLidGroup[lid];
 }
 
+void ExpandCandidates(NBestGenerator *nbest, Segment *segment,
+                      size_t expand_size) {
+  DCHECK(nbest);
+  DCHECK(segment);
+  CHECK_GT(expand_size, 0);
+
+  while (segment->candidates_size() < expand_size) {
+    Segment::Candidate *candidate = segment->push_back_candidate();
+    DCHECK(candidate);
+    candidate->Init();
+
+    // if NBestGenerator::Next() returns NULL,
+    // no more entries are generated.
+    if (!nbest->Next(candidate)) {
+      segment->pop_back_candidate();
+      break;
+    }
+  }
+
+  // Insert a dummy hiragana candidate.
+  if (segment->candidates_size() == 0 ||
+      (segment->candidates_size() < expand_size &&
+       Util::GetScriptType(segment->key()) == Util::HIRAGANA)) {
+    Segment::Candidate *last_candidate =
+        segment->candidates_size() == 0 ? NULL :
+        segment->mutable_candidate(
+            segment->candidates_size() - 1);
+    Segment::Candidate *new_candidate = segment->add_candidate();
+    DCHECK(new_candidate);
+
+    // TODO(taku): want to have Candiadte::CopyFrom()
+    new_candidate->Init();
+    new_candidate->key = segment->key();
+    new_candidate->value = segment->key();
+    new_candidate->content_key = segment->key();
+    new_candidate->content_value = segment->key();
+    if (last_candidate != NULL) {
+      new_candidate->cost = last_candidate->cost;
+      new_candidate->wcost = last_candidate->wcost;
+      new_candidate->structure_cost =
+          last_candidate->structure_cost;
+      new_candidate->lid = last_candidate->lid;
+      new_candidate->rid = last_candidate->rid;
+    }
+  }
+
+  // Insert a dummy katakana candidate.
+  string katakana_value;
+  Util::HiraganaToKatakana(segment->key(), &katakana_value);
+  if (segment->candidates_size() > 0 &&
+      segment->candidates_size() < expand_size &&
+      Util::GetScriptType(katakana_value) == Util::KATAKANA) {
+    Segment::Candidate *last_candidate = segment->mutable_candidate(
+        segment->candidates_size() - 1);
+    Segment::Candidate *new_candidate = segment->add_candidate();
+    DCHECK(new_candidate);
+    DCHECK(last_candidate);
+    new_candidate->Init();
+    new_candidate->key = segment->key();
+    new_candidate->value = katakana_value;
+    new_candidate->content_key = segment->key();
+    new_candidate->content_value = katakana_value;
+    new_candidate->cost = last_candidate->cost;
+    new_candidate->wcost = last_candidate->wcost;
+    new_candidate->structure_cost =
+            last_candidate->structure_cost;
+    new_candidate->lid = last_candidate->lid;
+    new_candidate->rid = last_candidate->rid;
+  }
+
+  DCHECK_GT(segment->candidates_size(), 0);
+}
+
 void InsertCorrectedNodes(size_t pos, const string &key,
                           const KeyCorrector *key_corrector,
                           DictionaryInterface *dictionary,
@@ -88,26 +162,31 @@ void InsertCorrectedNodes(size_t pos, const string &key,
 
   Node *rnode = dictionary->LookupPrefix(str, length,
                                          lattice->node_allocator());
+  Node *head = NULL;
   Node *prev = NULL;
   for (Node *node = rnode; node != NULL; node = node->bnext) {
     const size_t offset =
         key_corrector->GetOriginalOffset(pos, node->key.size());
-    if (KeyCorrector::IsValidPosition(offset) && offset > 0) {
-      // rewrite key
-      node->key = key.substr(pos, offset);
-      node->wcost += KeyCorrector::GetCorrectedCostPenalty(node->key);
-      prev = node;
-    } else {
-      if (prev == NULL) {
-        rnode = node;    // drop the first node
-      } else {
-        prev->bnext = node->bnext;    // change the chain
-      }
+    if (!KeyCorrector::IsValidPosition(offset) || offset == 0) {
+      continue;
     }
+    node->key = key.substr(pos, offset);
+    node->wcost += KeyCorrector::GetCorrectedCostPenalty(node->key);
+    if (head == NULL) {
+      head = node;
+    }
+    if (prev != NULL) {
+      prev->bnext = node;
+    }
+    prev = node;
   }
 
-  if (rnode != NULL) {
-    lattice->Insert(pos, rnode);
+  if (prev != NULL) {
+    prev->bnext = NULL;
+  }
+
+  if (head != NULL) {
+    lattice->Insert(pos, head);
   }
 }
 
@@ -115,11 +194,7 @@ int GetConnectionType(const Node *lnode,
                       const Node *rnode,
                       const vector<uint16> &group,
                       const Segments *segments) {
-  // UNU (unusued) nodes
-  if (lnode->cost == INT_MAX ||
-      lnode->node_type == Node::UNU_NODE ||
-      rnode->node_type == Node::UNU_NODE ||
-      (rnode->node_type != Node::EOS_NODE &&
+  if ((rnode->node_type != Node::EOS_NODE &&
        group[rnode->begin_pos] != group[rnode->end_pos - 1]) ||
       (lnode->node_type != Node::BOS_NODE &&
        group[lnode->begin_pos] != group[lnode->end_pos - 1])) {
@@ -143,7 +218,12 @@ int GetConnectionType(const Node *lnode,
     return CONNECTED;
   }
 
-  const bool is_rule_boundary = Segmenter::IsBoundary(lnode, rnode);
+  const bool is_prediction =
+      (segments->request_type() == Segments::PREDICTION ||
+       segments->request_type() == Segments::SUGGESTION);
+
+  const bool is_rule_boundary = Segmenter::IsBoundary(lnode, rnode,
+                                                      is_prediction);
   const bool is_constraint_boundary =
       group[lnode->begin_pos] != group[rnode->begin_pos];
 
@@ -250,17 +330,32 @@ class ImmutableConverterImpl: public ImmutableConverterInterface {
 
  private:
   Node *Lookup(const char *begin, const char *end,
+               bool is_reverse,
                Lattice *lattice) const;
+  Node *AddCharacterTypeBasedNodes(const char *begin, const char *end,
+                                   Lattice *lattice, Node *nodes) const;
 
-  void Resegment(size_t pos, Lattice *lattice) const;
+  void Resegment(const string &history_key,
+                 const string &conversion_key,
+                 Segments *segments, Lattice *lattice) const;
 
+  void ApplyResegmentRules(size_t pos, Lattice *lattice) const;
   // return true resegmentation happened
   bool ResegmentArabicNumberAndSuffix(size_t pos, Lattice *lattice) const;
   bool ResegmentPrefixAndArabicNumber(size_t pos, Lattice *lattice) const;
   bool ResegmentPersonalName(size_t pos, Lattice *lattice) const;
 
   bool MakeLattice(Segments *segments) const;
-  bool ModifyLattice(Segments *segments) const;
+  bool MakeLatticeNodesForHistorySegments(Lattice *lattice,
+                                          Segments *segments) const;
+  void ApplyKeyCorrector(const string &history_key,
+                         Segments *segments, Lattice *lattice) const;
+  // Fix for "好む" vs "この|無", "大|代" vs "代々" preferences.
+  // If the last node ends with "prefix", give an extra
+  // wcost penalty. In this case  "無" doesn't tend to appear at
+  // user input.
+  void ApplyPrefixPenalty(const string &conversion_key,
+                          Lattice *lattice) const;
 
   bool Viterbi(Segments *segments,
                const vector<uint16> &group) const;
@@ -292,7 +387,8 @@ ImmutableConverterImpl::ImmutableConverterImpl()
           POSMatcher::GetLastNameId(), POSMatcher::GetFirstNameId());
 }
 
-void ImmutableConverterImpl::Resegment(size_t pos, Lattice *lattice) const {
+void ImmutableConverterImpl::ApplyResegmentRules(
+    size_t pos, Lattice *lattice) const {
   if (ResegmentArabicNumberAndSuffix(pos, lattice)) {
     VLOG(1) << "ResegmentArabicNumberAndSuffix returned true";
     return;
@@ -517,7 +613,7 @@ bool ImmutableConverterImpl::ResegmentPersonalName(
           if ((lnode->value.size() + rnode->value.size())
               == compound_node->value.size() &&
               (lnode->value + rnode->value) == compound_node->value &&
-              Segmenter::IsBoundary(lnode, rnode)) {   // Constraint 3.
+              Segmenter::IsBoundary(lnode, rnode, false)) {   // Constraint 3.
             const int32 cost = lnode->wcost + GetCost(lnode, rnode);
             if (cost < best_cost) {   // choose the smallest ones
               best_last_name_node = lnode;
@@ -601,12 +697,26 @@ bool ImmutableConverterImpl::ResegmentPersonalName(
 
 Node *ImmutableConverterImpl::Lookup(const char *begin,
                                      const char *end,
+                                     bool is_reverse,
                                      Lattice *lattice) const {
   lattice->node_allocator()->set_max_nodes_size(8192);
-  Node *result_node =
-      dictionary_->LookupPrefix(begin,
-                                static_cast<int>(end - begin),
-                                lattice->node_allocator());
+  Node *result_node;
+  if (is_reverse) {
+    result_node =
+        dictionary_->LookupReverse(begin,
+                                   static_cast<int>(end - begin),
+                                   lattice->node_allocator());
+  } else {
+    result_node =
+        dictionary_->LookupPrefix(begin,
+                                  static_cast<int>(end - begin),
+                                  lattice->node_allocator());
+  }
+  return AddCharacterTypeBasedNodes(begin, end, lattice, result_node);
+}
+
+Node *ImmutableConverterImpl::AddCharacterTypeBasedNodes(
+    const char *begin, const char *end, Lattice *lattice, Node *nodes) const {
 
   size_t mblen = 0;
   const uint16 w = Util::UTF8ToUCS2(begin, end, &mblen);
@@ -614,6 +724,7 @@ Node *ImmutableConverterImpl::Lookup(const char *begin,
   const Util::ScriptType first_script_type = Util::GetScriptType(w);
   const Util::FormType first_form_type = Util::GetFormType(w);
 
+  // Add 1 character node. It can be either UnknownId or NumberId.
   Node *new_node = lattice->NewNode();
   CHECK(new_node);
   if (first_script_type == Util::NUMBER) {
@@ -627,18 +738,18 @@ Node *ImmutableConverterImpl::Lookup(const char *begin,
   new_node->wcost = kMaxCost;
   new_node->value.assign(begin, mblen);
   new_node->key.assign(begin, mblen);
-  new_node->node_type = Node::UNK_NODE;
-  new_node->bnext = result_node;
-  result_node = new_node;
+  new_node->node_type = Node::NOR_NODE;
+  new_node->bnext = nodes;
+  nodes = new_node;
 
   if (first_script_type == Util::NUMBER) {
-    result_node->wcost = kDefaultNumberCost;
-    return result_node;
+    nodes->wcost = kDefaultNumberCost;
+    return nodes;
   }
 
   if (first_script_type != Util::ALPHABET &&
       first_script_type != Util::KATAKANA) {
-    return result_node;
+    return nodes;
   }
 
   // group by same char type
@@ -668,17 +779,22 @@ Node *ImmutableConverterImpl::Lookup(const char *begin,
     new_node->wcost = kMaxCost / 2;
     new_node->value.assign(begin, mblen);
     new_node->key.assign(begin, mblen);
-    new_node->node_type = Node::UNK_NODE;
-    new_node->bnext = result_node;
-    result_node = new_node;
+    new_node->node_type = Node::NOR_NODE;
+    new_node->bnext = nodes;
+    nodes = new_node;
   }
 
-  return result_node;
+  return nodes;
 }
 
 bool ImmutableConverterImpl::Viterbi(Segments *segments,
                                      const vector<uint16> &group) const {
-  const int kWeakConnectedPeanlty = 3453;   // log prob of 1/1000
+  // log prob of 1/1000
+  const int kWeakConnectedPeanlty = 3453;
+
+  // Reasonably big cost. Cannot use INT_MAX a new cost will be calculated
+  // based on kVeryBigCost.
+  const int kVeryBigCost = (INT_MAX >> 2);
 
   Lattice *lattice = segments->lattice();
   DCHECK(lattice);
@@ -712,10 +828,10 @@ bool ImmutableConverterImpl::Viterbi(Segments *segments,
             // - If converter ignores user-preference, it's also annoying, as
             //    the result will be unchanged even after changing the boundary.
             cost = lnode->cost + GetCost(lnode, rnode) + kWeakConnectedPeanlty;
-            rnode->is_weak_connected = true;
+            rnode->attributes |= Node::WEAK_CONNECTED;
             break;
           case NOT_CONNECTED:
-            cost = INT_MAX - 1;
+            cost = kVeryBigCost;
             break;
           default:
             break;
@@ -759,24 +875,9 @@ bool ImmutableConverterImpl::Viterbi(Segments *segments,
 }
 
 bool ImmutableConverterImpl::MakeLattice(Segments *segments) const {
-  // TOOD(taku) Code refactoring.
-  // It is not an optimal solution to calling MakeLattice
-  // when after ResizeSegment lattice is already made.
-  NormalizeHistorySegments(segments);
-
-  Lattice *lattice = segments->lattice();
-  DCHECK(lattice);
-
-  if (lattice->has_lattice() && !segments->resized()) {
-    string key;
-    for (size_t i = 0; i < segments->segments_size(); ++i) {
-      key += segments->segment(i).key();
-    }
-    if (key != lattice->key()) {
-      LOG(WARNING) << "inconsistent input key";
-      return false;
-    }
-    return true;
+  if (segments == NULL) {
+    LOG(ERROR) << "Segments is NULL";
+    return false;
   }
 
   if (segments->segments_size() >= kMaxSegmentsSize) {
@@ -784,14 +885,32 @@ bool ImmutableConverterImpl::MakeLattice(Segments *segments) const {
     return false;
   }
 
+  NormalizeHistorySegments(segments);
+
+  const bool is_reverse =
+      (segments->request_type() == Segments::REVERSE_CONVERSION);
+
+  const bool is_prediction =
+      (segments->request_type() == Segments::SUGGESTION ||
+       segments->request_type() == Segments::PREDICTION);
+
+  // In suggestion mode, ImmutableConverter will not accept multiple-segments.
+  // The result always consists of one segment.
+  if ((is_reverse || is_prediction) &&
+      (segments->conversion_segments_size() != 1 ||
+       segments->conversion_segment(0).segment_type() != Segment::FREE)) {
+    LOG(WARNING) << "ImmutableConverter doesn't support constrained requests";
+    return false;
+  }
+
   string history_key, conversion_key;
   const size_t history_segments_size = segments->history_segments_size();
   for (size_t i = 0; i < history_segments_size; ++i) {
-    history_key += segments->segment(i).key();
+    history_key.append(segments->segment(i).key());
   }
 
   for (size_t i = history_segments_size; i < segments->segments_size(); ++i) {
-    conversion_key += segments->segment(i).key();
+    conversion_key.append(segments->segment(i).key());
   }
 
   if (history_key.size() + conversion_key.size() >= kMaxCharLength) {
@@ -804,31 +923,79 @@ bool ImmutableConverterImpl::MakeLattice(Segments *segments) const {
     return false;
   }
 
+  Lattice *lattice = segments->lattice();
+  DCHECK(lattice);
+
   const string key = history_key + conversion_key;
   lattice->SetKey(key);
 
-  size_t segments_pos = 0;
+  if (is_reverse) {
+    // Reverse lookup for each prefix string in key is slow with current
+    // implementation, so run it for them at once and cache the result.
+    dictionary_->PopulateReverseLookupCache(key.c_str(), key.size(),
+                                            lattice->node_allocator());
+  }
+  const bool result = MakeLatticeNodesForHistorySegments(lattice, segments);
+  if (is_reverse) {
+    dictionary_->ClearReverseLookupCache(lattice->node_allocator());
+  }
+  if (!result) {
+    return false;
+  }
+
+  if (lattice->end_nodes(history_key.size()) == NULL) {
+    LOG(WARNING) << "cannot build lattice from input";
+    return false;
+  }
+
+  ApplyKeyCorrector(history_key, segments, lattice);
+
+  if (lattice->end_nodes(key.size()) == NULL) {
+    LOG(WARNING) << "cannot build lattice from input";
+    return false;
+  }
+
+  ApplyPrefixPenalty(conversion_key, lattice);
+
+  // Re-segment personal-names, numbers ...etc
+  const bool is_conversion =
+      (segments->request_type() == Segments::CONVERSION);
+  if (is_conversion) {
+    Resegment(history_key, conversion_key, segments, lattice);
+  }
+
+  return true;
+}
+
+bool ImmutableConverterImpl::MakeLatticeNodesForHistorySegments(
+    Lattice *lattice, Segments *segments) const {
+  const bool is_reverse =
+     (segments->request_type() == Segments::REVERSE_CONVERSION);
+  const size_t history_segments_size = segments->history_segments_size();
+  const string &key = lattice->key();
   const char *key_end = key.data() + key.size();
   const char *key_begin = key.data();
 
+  size_t segments_pos = 0;
   uint16 last_rid = 0;
+
   for (size_t s = 0; s < history_segments_size; ++s) {
-    const Segment &seg = segments->segment(s);
-    if (seg.segment_type() != Segment::HISTORY &&
-        seg.segment_type() != Segment::SUBMITTED) {
+    const Segment &segment = segments->segment(s);
+    if (segment.segment_type() != Segment::HISTORY &&
+        segment.segment_type() != Segment::SUBMITTED) {
       LOG(WARNING) << "inconsistent history";
       return false;
     }
-    const Segment::Candidate &c = seg.candidate(0);
+    const Segment::Candidate &candidate = segment.candidate(0);
 
     // Add a virtual nodes corresponding to HISTORY segments.
     Node *rnode = lattice->NewNode();
     CHECK(rnode);
-    rnode->lid = c.lid;
-    rnode->rid = c.rid;
+    rnode->lid = candidate.lid;
+    rnode->rid = candidate.rid;
     rnode->wcost = 0;
-    rnode->value = c.value;
-    rnode->key = seg.key();
+    rnode->value = candidate.value;
+    rnode->key = segment.key();
     rnode->node_type = Node::HIS_NODE;
     rnode->bnext = NULL;
     lattice->Insert(segments_pos, rnode);
@@ -838,15 +1005,15 @@ bool ImmutableConverterImpl::MakeLattice(Segments *segments) const {
     // best path from rnode(context) and rnode2(EOS).
     // Also, set negative word cost to this node so that EOS is
     // more likely selected than other contextual nodes.
-    if (s + 1 == history_segments_size && c.rid != 0) {
+    if (s + 1 == history_segments_size && candidate.rid != 0) {
       const int kEOSCostBounus = -1000;
       Node *rnode2 = lattice->NewNode();
       CHECK(rnode2);
-      rnode2->lid = c.lid;
+      rnode2->lid = candidate.lid;
       rnode2->rid = 0;   // 0 is EOS
       rnode2->wcost = kEOSCostBounus;
-      rnode2->value = c.value;
-      rnode2->key = seg.key();
+      rnode2->value = candidate.value;
+      rnode2->key = segment.key();
       rnode2->node_type = Node::HIS_NODE;
       rnode2->bnext = NULL;
       lattice->Insert(segments_pos, rnode2);
@@ -861,6 +1028,7 @@ bool ImmutableConverterImpl::MakeLattice(Segments *segments) const {
     // and insert "卓也" as a new word node with a modified cost
     if (s + 1 == history_segments_size) {
       const Node *node = Lookup(key_begin + segments_pos, key_end,
+                                is_reverse,
                                 lattice);
       for (const Node *compound_node = node; compound_node != NULL;
            compound_node = compound_node->bnext) {
@@ -875,7 +1043,7 @@ bool ImmutableConverterImpl::MakeLattice(Segments *segments) const {
 
         // Must be in the same POS group.
         // http://b/issue?id=2977618
-        if (GetPosGroup(c.lid) != GetPosGroup(compound_node->lid)) {
+        if (GetPosGroup(candidate.lid) != GetPosGroup(compound_node->lid)) {
           continue;
         }
 
@@ -903,29 +1071,31 @@ bool ImmutableConverterImpl::MakeLattice(Segments *segments) const {
 
         // New cost recalcuration:
         //
-        // trans(last_rid, c.lid) + c.wcost + trans(c.rid, new_node->lid)
+        // trans(last_rid, candidate.lid) + candidate.wcost
+        // + trans(candidate.rid, new_node->lid)
         // + new_node->wcost ==
         // trans(last_rid, compound_node->lid) + compound_node->wcost
         //
         // i.e.
         // new_node->wcost =
         // trans(last_rid, compound_node->lid) + compound_node->wcost
-        //   - trans(last_rid, c.lid) - c.wcost - trans(c.rid, new_node->lid)
+        //   - trans(last_rid, candidate.lid) - candidate.wcost -
+        // trans(candidate.rid, new_node->lid)
         new_node->wcost =
             connector_->GetTransitionCost(last_rid, compound_node->lid)
             + compound_node->wcost
-            - connector_->GetTransitionCost(last_rid, c.lid)
-            - c.wcost
-            - connector_->GetTransitionCost(c.rid, new_node->lid);
+            - connector_->GetTransitionCost(last_rid, candidate.lid)
+            - candidate.wcost
+            - connector_->GetTransitionCost(candidate.rid, new_node->lid);
 
         VLOG(2) << " compound_node->lid=" << compound_node->lid
                 << " compound_node->rid=" << compound_node->rid
                 << " compound_node->wcost=" << compound_node->wcost;
         VLOG(2) << " last_rid=" << last_rid
-                << " c.lid=" << c.lid
-                << " c.rid=" << c.rid
-                << " c.cost=" << c.cost
-                << " c.wcost=" << c.wcost;
+                << " candidate.lid=" << candidate.lid
+                << " candidate.rid=" << candidate.rid
+                << " candidate.cost=" << candidate.cost
+                << " candidate.wcost=" << candidate.wcost;
         VLOG(2) << " new_node->wcost=" << new_node->wcost;
 
         new_node->constrained_prev = rnode;
@@ -941,16 +1111,19 @@ bool ImmutableConverterImpl::MakeLattice(Segments *segments) const {
     segments_pos += rnode->key.size();
     last_rid = rnode->rid;
   }
+  return true;
+}
 
-  if (lattice->end_nodes(history_key.size()) == NULL) {
-    LOG(WARNING) << "cannot build lattice from input";
-    return false;
-  }
-
+void ImmutableConverterImpl::ApplyKeyCorrector(
+    const string &history_key,
+    Segments *segments, Lattice *lattice) const {
+  const string &key = lattice->key();
+  const bool is_conversion =
+      (segments->request_type() == Segments::CONVERSION);
   // Do not use KeyCorrector if user changes the boundary.
   // http://b/issue?id=2804996
   scoped_ptr<KeyCorrector> key_corrector;
-  if (!segments->resized()) {
+  if (is_conversion && !segments->resized()) {
     KeyCorrector::InputMode mode = KeyCorrector::ROMAN;
     if (GET_CONFIG(preedit_method) != config::Config::ROMAN) {
       mode = KeyCorrector::KANA;
@@ -958,9 +1131,13 @@ bool ImmutableConverterImpl::MakeLattice(Segments *segments) const {
     key_corrector.reset(new KeyCorrector(key, mode));
   }
 
+  const bool is_reverse =
+      (segments->request_type() == Segments::REVERSE_CONVERSION);
+  const char *key_end = key.data() + key.size();
+  const char *key_begin = key.data();
   for (size_t pos = history_key.size(); pos < key.size(); ++pos) {
     if (lattice->end_nodes(pos) != NULL) {
-      Node *rnode = Lookup(key_begin + pos, key_end, lattice);
+      Node *rnode = Lookup(key_begin + pos, key_end, is_reverse, lattice);
       CHECK(rnode != NULL);
       lattice->Insert(pos, rnode);
       // Insert corrected nodes like みんあ -> みんな
@@ -969,16 +1146,12 @@ bool ImmutableConverterImpl::MakeLattice(Segments *segments) const {
                            dictionary_, lattice);
     }
   }
+}
 
-  if (lattice->end_nodes(key.size()) == NULL) {
-    LOG(WARNING) << "cannot build lattice from input";
-    return false;
-  }
-
-  // Fix for "好む" vs "この|無", "大|代" vs "代々" preferences.
-  // If the last node ends with "prefix", give an extra
-  // wcost penalty. In this case  "無" doesn't tend to appear at
-  // user input.
+void ImmutableConverterImpl::ApplyPrefixPenalty(
+    const string &conversion_key,
+    Lattice *lattice) const {
+  const string &key = lattice->key();
   for (Node *node = lattice->end_nodes(key.size());
        node != NULL; node = node->enext) {
     // Add a special penalty to prefix.
@@ -990,58 +1163,44 @@ bool ImmutableConverterImpl::MakeLattice(Segments *segments) const {
       node->wcost += kPrefixPenalty;
     }
   }
-
-  // resegments
-  for (size_t pos = history_key.size(); pos < key.size(); ++pos) {
-    Resegment(pos, lattice);
-  }
-
-  return true;
 }
 
-bool ImmutableConverterImpl::ModifyLattice(Segments *segments) const {
-  Lattice *lattice = segments->lattice();
-  DCHECK(lattice);
-
-  const string &key = lattice->key();
-
-  // disable all CON_NODE
-  for (size_t pos = 0; pos <= key.size(); ++pos) {
-    for (Node *node = lattice->begin_nodes(pos);
-         node != NULL; node = node->bnext) {
-      node->cost = 0;  // reset cost
-      if (node->node_type == Node::CON_NODE) {
-        node->node_type = Node::UNU_NODE;
-      }
-    }
+void ImmutableConverterImpl::Resegment(
+    const string &history_key, const string &conversion_key,
+    Segments *segments, Lattice *lattice) const {
+  for (size_t pos = history_key.size();
+       pos < history_key.size() + conversion_key.size(); ++pos) {
+    ApplyResegmentRules(pos, lattice);
   }
 
-  // enable CON_NODE
+  // Enable constrained node.
   size_t segments_pos = 0;
   for (size_t s = 0; s < segments->segments_size(); ++s) {
-    const Segment &seg = segments->segment(s);
-    if (seg.segment_type() == Segment::FIXED_VALUE) {
-      const Segment::Candidate &c = seg.candidate(0);
+    const Segment &segment = segments->segment(s);
+    if (segment.segment_type() == Segment::FIXED_VALUE) {
+      const Segment::Candidate &candidate = segment.candidate(0);
       Node *rnode = lattice->NewNode();
       CHECK(rnode);
-      rnode->lid       = c.lid;
-      rnode->rid       = c.rid;
-      rnode->wcost     = -kMaxCost;
-      rnode->value     = c.value;
-      rnode->key       = seg.key();
+      rnode->lid       = candidate.lid;
+      rnode->rid       = candidate.rid;
+      rnode->wcost     = kMinCost;
+      rnode->value     = candidate.value;
+      rnode->key       = segment.key();
       rnode->node_type = Node::CON_NODE;
-      rnode->con_segment = &seg;
       rnode->bnext     = NULL;
       lattice->Insert(segments_pos, rnode);
     }
-    segments_pos += seg.key().size();
+    segments_pos += segment.key().size();
   }
-
-  return true;
 }
 
 bool ImmutableConverterImpl::MakeSegments(Segments *segments,
                                           const vector<uint16> &group) const {
+  if (segments == NULL) {
+    LOG(WARNING) << "Segments is NULL";
+    return false;
+  }
+
   Lattice *lattice = segments->lattice();
   DCHECK(lattice);
 
@@ -1053,55 +1212,63 @@ bool ImmutableConverterImpl::MakeSegments(Segments *segments,
     prev = node;
   }
 
+  size_t max_candidates_size = 0;
+  bool is_prediction = false;
+  switch (segments->request_type()) {
+    case Segments::PREDICTION:
+    case Segments::SUGGESTION:
+      max_candidates_size = segments->max_prediction_candidates_size();
+      is_prediction = true;
+      break;
+    case Segments::CONVERSION:
+      max_candidates_size = segments->max_conversion_candidates_size();
+      break;
+    case Segments::REVERSE_CONVERSION:
+      // Currently, we assume that REVERSE_CONVERSION only
+      // requires 1 result.
+      // TODO(taku): support to set the size on REVESER_CONVERSION mode.
+      max_candidates_size = 1;
+      break;
+    default:
+      break;
+  }
+
+  const size_t expand_size =
+      max(static_cast<size_t>(1),
+          min(static_cast<size_t>(512), max_candidates_size));
+
   const size_t history_segments_size = segments->history_segments_size();
   const size_t old_segments_size = segments->segments_size();
 
   string key;
   for (Node *node = prev->next; node->next != NULL; node = node->next) {
-    key += node->key;
-    const Segment &old_seg = segments->segment(group[node->begin_pos]);
+    key.append(node->key);
+    const Segment &old_segment = segments->segment(group[node->begin_pos]);
     // Condition 1: prev->next is NOT a boundary. Very strong constraint
     if (node->next->node_type != Node::EOS_NODE &&
-        old_seg.segment_type() == Segment::FIXED_BOUNDARY &&
+        old_segment.segment_type() == Segment::FIXED_BOUNDARY &&
         group[node->begin_pos] == group[node->next->begin_pos]) {
       // do nothing
       // Condition 2: prev->next is a boundary. Very strong constraint
     } else if (node->node_type == Node::CON_NODE ||
                (node->next->node_type != Node::EOS_NODE &&
                 group[node->begin_pos] != group[node->next->begin_pos]) ||
-               Segmenter::IsBoundary(node, node->next)) {
-      Segment *segment = segments->add_segment();
-      DCHECK(segment);
-      NBestGenerator *nbest = segment->nbest_generator();
-      DCHECK(nbest);
-      nbest->Init(prev, node->next, segments->lattice());
-      segment->set_key(key);
-      segment->GetCandidates(max(static_cast<size_t>(1),
-                                 old_seg.candidates_size()));
-      if (segment->candidates_size() == 0) {
-        LOG(WARNING) << "Segment::GetCandidates() returns 0 result";
-        {
-          Segment::Candidate *c = segment->push_back_candidate();
-          c->Init();
-          c->value = key;  // hiragana
-          c->content_value = key;
-          c->key = key;
-          c->content_key = key;
-        }
-        {
-          Segment::Candidate *c = segment->push_back_candidate();
-          c->Init();
-          Util::HiraganaToKatakana(key, &c->value);  // katakana
-          c->content_value = c->value;
-          c->key = key;
-          c->content_key = key;
-        }
+               Segmenter::IsBoundary(node, node->next, is_prediction)) {
+      Segment *segment = is_prediction ?
+          segments->mutable_segment(segments->segments_size() - 1) :
+          segments->add_segment();
+      scoped_ptr<NBestGenerator> nbest(new NBestGenerator);
+      CHECK(segment);
+      CHECK(nbest.get());
+      if (!is_prediction) {
+        segment->clear_candidates();
       }
-      if (node->node_type == Node::CON_NODE &&
-          node->con_segment != NULL) {
+      nbest->Init(prev, node->next, segments->lattice(),
+                  is_prediction);
+      segment->set_key(key);
+      ExpandCandidates(nbest.get(), segment, expand_size);
+      if (node->node_type == Node::CON_NODE) {
         segment->set_segment_type(Segment::FIXED_VALUE);
-        Segment::Candidate *c = segment->mutable_candidate(0);
-        *c = node->con_segment->candidate(0);
       } else {
         segment->set_segment_type(Segment::FREE);
       }
@@ -1112,25 +1279,19 @@ bool ImmutableConverterImpl::MakeSegments(Segments *segments,
   }
 
   // erase old segments
-  segments->erase_segments(history_segments_size,
-                           old_segments_size - history_segments_size);
+  if (!is_prediction &&
+      old_segments_size - history_segments_size > 0) {
+    segments->erase_segments(history_segments_size,
+                             old_segments_size -
+                             history_segments_size);
+  }
 
   return true;
 }
 
 bool ImmutableConverterImpl::Convert(Segments *segments) const {
-  if (segments == NULL) {
-    LOG(WARNING) << "segment is NULL";
-    return false;
-  }
-
   if (!MakeLattice(segments)) {
     LOG(WARNING) << "could not make lattice";
-    return false;
-  }
-
-  if (!ModifyLattice(segments)) {
-    LOG(WARNING) << "could not modify lattice";
     return false;
   }
 
@@ -1151,7 +1312,6 @@ bool ImmutableConverterImpl::Convert(Segments *segments) const {
 }
 
 ImmutableConverterInterface *g_immutable_converter = NULL;
-
 }   // anonymous namespace
 
 ImmutableConverterInterface *

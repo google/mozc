@@ -79,6 +79,7 @@
   NSRange expectedRange;
   string *selectedMode_;
   NSString *insertedText_;
+  NSString *overriddenLayout_;
   map<string, int> *counters_;
 }
 @property(readwrite, assign) NSString *bundleIdentifier;
@@ -86,6 +87,7 @@
 @property(readwrite, assign) NSRange expectedRange;
 @property(readonly) string *selectedMode;
 @property(readonly) NSString *insertedText;
+@property(readonly) NSString *overriddenLayout;
 @end
 
 @implementation MockClient
@@ -94,6 +96,7 @@
 @synthesize expectedRange;
 @synthesize selectedMode = selectedMode_;
 @synthesize insertedText = insertedText_;
+@synthesize overriddenLayout = overriddenLayout_;
 
 - (MockClient *)init {
   self = [super init];
@@ -109,6 +112,7 @@
   delete selectedMode_;
   [bundleIdentifier release];
   [insertedText_ release];
+  [overriddenLayout_ release];
   [super dealloc];
 }
 
@@ -148,6 +152,12 @@
   (*counters_)["insertText:replacementRange:"]++;
   [insertedText_ release];
   insertedText_ = [result retain];
+}
+
+- (void)overrideKeyboardWithKeyboardNamed:(NSString *)newLayout {
+  (*counters_)["overrideKeyboardWithKeyboardNamed:"]++;
+  [overriddenLayout_ release];
+  overriddenLayout_ = [newLayout retain];
 }
 @end
 
@@ -508,7 +518,7 @@ TEST_F(GoogleJapaneseInputControllerTest, ClearCandidates) {
 
 TEST_F(GoogleJapaneseInputControllerTest, UpdateCandidates) {
   // When output is null, same as ClearCandidate
-  [controller_ updateCandidates:NULL client:mock_client_];
+  [controller_ updateCandidates:NULL];
   EXPECT_EQ(1, mock_renderer_->counter_ExecCommand());
   EXPECT_FALSE(mock_renderer_->CalledCommand().visible());
   EXPECT_EQ(0,
@@ -529,7 +539,7 @@ TEST_F(GoogleJapaneseInputControllerTest, UpdateCandidates) {
 
   // setup the cursor position
   mock_client_.expectedCursor = NSMakeRect(50, 50, 1, 10);
-  [controller_ updateCandidates:&output client:mock_client_];
+  [controller_ updateCandidates:&output];
   EXPECT_EQ(1,
             [mock_client_
               getCounter:"attributesForCharacterIndex:lineHeightRectangle:"]);
@@ -548,7 +558,7 @@ TEST_F(GoogleJapaneseInputControllerTest, UpdateCandidates) {
 
   // reshow the candidate window again -- but cursor position has changed.
   mock_client_.expectedCursor = NSMakeRect(60, 50, 1, 10);
-  [controller_ updateCandidates:&output client:mock_client_];
+  [controller_ updateCandidates:&output];
   // Does not change: not call again
   EXPECT_EQ(1,
             [mock_client_
@@ -562,7 +572,7 @@ TEST_F(GoogleJapaneseInputControllerTest, UpdateCandidates) {
 
   // Then update without candidate entries -- goes invisible.
   output.Clear();
-  [controller_ updateCandidates:&output client:mock_client_];
+  [controller_ updateCandidates:&output];
   // Does not change: not call again
   EXPECT_EQ(1,
             [mock_client_
@@ -583,24 +593,6 @@ TEST_F(GoogleJapaneseInputControllerTest, OpenLink) {
   [controller_ openLink:[NSURL URLWithString:@"http://www.example.com/"]];
   // openURL is not invoked
   EXPECT_EQ(1, openURL_count);
-}
-
-TEST_F(GoogleJapaneseInputControllerTest, HandleInputMode) {
-  // Does not support multiple-calculation
-  mozc::config::Config config;
-  config.set_preedit_method(mozc::config::Config::KANA);
-  config.set_yen_sign_character(mozc::config::Config::BACKSLASH);
-  mock_session_->SetConfig(config);
-
-  [controller_ handleInputMode];
-  EXPECT_EQ(1, mock_session_->counter_GetConfig());
-  EXPECT_EQ(KANA, controller_.keyCodeMap.inputMode);
-  EXPECT_EQ(mozc::config::Config::BACKSLASH, controller_.yenSignCharacter);
-
-  // If called twice, it does not change the state to reduce the call
-  // of GetConfig().
-  [controller_ handleInputMode];
-  EXPECT_EQ(1, mock_session_->counter_GetConfig());
 }
 
 TEST_F(GoogleJapaneseInputControllerTest, SwitchModeToDirect) {
@@ -665,8 +657,39 @@ TEST_F(GoogleJapaneseInputControllerTest, SwitchModeInternal) {
 TEST_F(GoogleJapaneseInputControllerTest, SwitchDisplayMode) {
   EXPECT_TRUE(mock_client_.selectedMode->empty());
   EXPECT_EQ(mozc::commands::DIRECT, controller_.mode);
-  [controller_ switchDisplayMode:mock_client_];
+  [controller_ switchDisplayMode];
   EXPECT_EQ(1, [mock_client_ getCounter:"selectInputMode:"]);
   string expected = mozc::MacUtil::GetLabelForSuffix("Roman");
   EXPECT_EQ(expected, *(mock_client_.selectedMode));
+}
+
+TEST_F(GoogleJapaneseInputControllerTest, commitText) {
+  controller_.replacementRange = NSMakeRange(0, 1);
+  [controller_ commitText:"foo" client:mock_client_];
+
+  EXPECT_EQ(1, [mock_client_ getCounter:"insertText:replacementRange:"]);
+  EXPECT_TRUE([@"foo" isEqualToString:mock_client_.insertedText]);
+  // location has to be cleared after the commit.
+  // Do not use NSNotFound directly in EXPECT_EQ because type checker
+  // gets confused for the comparision of enums.
+  int expected = NSNotFound;
+  EXPECT_EQ(expected, [controller_ replacementRange].location);
+}
+
+TEST_F(GoogleJapaneseInputControllerTest, handleConfig) {
+  // Does not support multiple-calculation
+  mozc::config::Config config;
+  config.set_preedit_method(mozc::config::Config::KANA);
+  config.set_yen_sign_character(mozc::config::Config::BACKSLASH);
+  config.set_use_japanese_layout(true);
+  mock_session_->SetConfig(config);
+
+  [controller_ handleConfig];
+  EXPECT_EQ(1, mock_session_->counter_GetConfig());
+  EXPECT_EQ(KANA, controller_.keyCodeMap.inputMode);
+  EXPECT_EQ(mozc::config::Config::BACKSLASH, controller_.yenSignCharacter);
+  EXPECT_EQ(1, [mock_client_ getCounter:"overrideKeyboardWithKeyboardNamed:"]);
+  EXPECT_TRUE([@"com.apple.keylayout.US"
+                isEqualToString:mock_client_.overriddenLayout])
+      << [mock_client_.overriddenLayout UTF8String];
 }

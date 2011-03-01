@@ -88,7 +88,6 @@ void InsertCandidates(const EmbeddedDictionary::Value *value,
                       size_t initial_insert_size,
                       bool is_no_learning,
                       Segment *segment) {
-  segment->GetCandidates(initial_insert_pos);
   if (segment->candidates_size() == 0) {
     LOG(WARNING) << "candiadtes_size is 0";
     return;
@@ -138,10 +137,10 @@ void InsertCandidates(const EmbeddedDictionary::Value *value,
     c->key = base_candidate.key;
     c->content_key = base_candidate.content_key;
     // no full/half width normalizations
-    c->can_expand_alternative = false;
-    c->learning_type |= Segment::Candidate::CONTEXT_SENSITIVE;
+    c->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
+    c->attributes |= Segment::Candidate::CONTEXT_SENSITIVE;
     if (is_no_learning) {
-      c->learning_type |= Segment::Candidate::NO_LEARNING;
+      c->attributes |= Segment::Candidate::NO_LEARNING;
     }
 
     //  "顔文字";
@@ -149,14 +148,12 @@ void InsertCandidates(const EmbeddedDictionary::Value *value,
         = "\xE9\xA1\x94\xE6\x96\x87\xE5\xAD\x97";
 
     if (sorted_value[i]->description == NULL) {
-      c->SetDescription(Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER,
-                        kBaseEmoticonDescription);
+      c->description = kBaseEmoticonDescription;
     } else {
       string description = kBaseEmoticonDescription;
       description.append(" ");
       description.append(sorted_value[i]->description);
-      c->SetDescription(Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER,
-                        description);
+      c->description = description;
     }
   }
 }

@@ -40,17 +40,41 @@
 namespace mozc {
 namespace composer {
 
+// This is a bitmap representing Entry's additional attributes.
+enum TableAttribute {
+  NO_TABLE_ATTRIBUTE = 0,
+  // When the typing is beginning, the rule with this attribute is
+  // executed even if the previous characters can be a part of other
+  // rules.
+  NEW_CHUNK = 1,
+  // This flag suppresses any transliteration performed in CharChunk
+  // and treated as an as-is key event.
+  NO_TRANSLITERATION = 2,
+  // This flag indicates that the composition should be ended and commited.
+  DIRECT_INPUT = 4,
+
+  // This flag treats the next typing as a new input.  This flag is
+  // used with the NEW_CHUNK flag.
+  END_CHUNK = 8,
+};
+typedef uint32 TableAttributes;
+
 class Entry {
  public:
-  Entry(const string &input, const string &result, const string &pending);
+  Entry(const string &input,
+        const string &result,
+        const string &pending,
+        TableAttributes attributes);
   virtual ~Entry() {}
   const string &input() const { return input_; }
   const string &result() const { return result_; }
   const string &pending() const { return pending_; }
+  TableAttributes attributes() const { return attributes_; }
  private:
   const string input_;
   const string result_;
   const string pending_;
+  TableAttributes attributes_;
 };
 
 class Table {
@@ -61,9 +85,18 @@ class Table {
   bool Initialize();
   bool Reload();
 
-  void AddRule(const string &input,
-               const string &output,
-               const string &pending);
+  // Return true if adding the input-pending pair makes a loop of
+  // conversion rules.
+  bool IsLoopingEntry(const string &input, const string &pending) const;
+  const Entry *AddRule(const string &input,
+                       const string &output,
+                       const string &pending);
+
+  const Entry *AddRuleWithAttributes(const string &input,
+                                     const string &output,
+                                     const string &pending,
+                                     TableAttributes attributes);
+
   void DeleteRule(const string &input);
 
   bool LoadFromString(const string &str);
@@ -73,10 +106,21 @@ class Table {
   const Entry *LookUpPrefix(const string &input,
                             size_t *key_length,
                             bool *fixed) const;
+  // TODO(komatsu): Delete this function.
   bool HasSubRules(const string &input) const;
+
+  bool HasNewChunkEntry(const string &input) const;
 
   bool case_sensitive() const;
   void set_case_sensitive(bool case_sensitive);
+
+  // Parse special key strings escaped with the pair of "{" and "}"
+  // and return the parsed string.
+  static string ParseSpecialKey(const string &input);
+
+  // Delete invisible special keys wrapped with ("\x0F", "\x0E") and
+  // return the trimmed visible string.
+  static string DeleteSpecialKey(const string &input);
 
  private:
   bool LoadFromStream(istream *is);

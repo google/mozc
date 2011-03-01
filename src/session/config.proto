@@ -220,12 +220,23 @@ message Config {
   // undefined enum type is not correctly handled.
   optional uint32 auto_conversion_key = 62 [ default = 13 ];
 
-  // This config item is valid only with Mac OSX.
+  // Mac only config items: yen_sign_character and use_japanese_layout.
   enum YenSignCharacter {
     YEN_SIGN = 0;
     BACKSLASH = 1;
   };
+  // Mac-original JIS key layout has "yen-sign" key which generates
+  // U+00A5 instead of U+005C and sometimes users get troubles with
+  // them because they expect backslashes which are rendered as
+  // yen-sign.  If this configuration is BACKSLASH, Mozc will
+  // interpret U+005C even when the original key event is U+00A5.
   optional YenSignCharacter yen_sign_character = 63 [ default = YEN_SIGN ];
+
+  // Use Japanese keyboard layout even when the user uses other
+  // keyboard layouts.  In Mac OSX people can use several keyboard
+  // layouts such like French or Spanish but some people want to use
+  // Japanese layout for Japanese.  See http://b/2917320
+  optional bool use_japanese_layout = 64 [ default = false ];
 
   //////////////////////////////////////////////////////////////
   //
@@ -248,7 +259,11 @@ message Config {
   // use dictionary-based suggest feature
   optional bool use_dictionary_suggest = 101 [ default = true ];
 
+  // use realtime conversion feature (experimental)
+  optional bool use_realtime_conversion = 102 [ default = false ];
+
   // size of suggestions
   optional uint32 suggestions_size = 110 [ default = 3 ];
+
 };
 

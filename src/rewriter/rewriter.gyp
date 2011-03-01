@@ -47,27 +47,28 @@
         'collocation_util.cc',
         'date_rewriter.cc',
         'dictionary_generator.cc',
-        'version_rewriter.cc',
         'embedded_dictionary.cc',
         'emoticon_rewriter.cc',
         'fortune_rewriter.cc',
+        'english_variants_rewriter.cc',
         'number_rewriter.cc',
         'rewriter.cc',
         'single_kanji_rewriter.cc',
         'symbol_rewriter.cc',
+        'transliteration_rewriter.cc',
         'user_boundary_history_rewriter.cc',
         'user_segment_history_rewriter.cc',
+        'variants_rewriter.cc',
+        'version_rewriter.cc',
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        # Although rewriter actually depends on converter, the next line
-        # should be uncomment.  However the next line makes dependency
-        # circulation.
-        # TODO(taku): Fix the dependency circulation.
-        # '../converter/converter.gyp:converter',
-        '../session/session.gyp:config_handler',
-        '../storage/storage.gyp:storage',
+        '../composer/composer.gyp:composer',
+        '../converter/converter.gyp:immutable_converter',
         '../dictionary/dictionary.gyp:dictionary',
+        '../session/session.gyp:config_handler',
+        '../session/session.gyp:session_normalizer',
+        '../storage/storage.gyp:storage',
         '../usage_stats/usage_stats.gyp:usage_stats',
         'calculator/calculator.gyp:calculator',
         'gen_rewriter_files',
@@ -80,18 +81,21 @@
         {
           'action_name': 'gen_collocation_data',
           'variables': {
-            'input_files': [
+            'input_files%': [
               '../data/dictionary/collocation.txt',
             ],
           },
           'inputs': [
             '<@(input_files)',
           ],
-          'conditions': [['two_pass_build==0', {
-            'inputs': [
-              '<(mozc_build_tools_dir)/gen_collocation_data_main',
+          'conditions': [
+            ['two_pass_build==0', {
+                'inputs': [
+                    '<(mozc_build_tools_dir)/gen_collocation_data_main',
+                ],
+              },
             ],
-          }]],
+          ],
           'outputs': [
             '<(gen_out_dir)/embedded_collocation_data.h',
           ],
@@ -185,6 +189,7 @@
           'variables': {
             'input_files': [
               '../data/dictionary/id.def',
+              '../data/rules/special_pos.def',
               '../data/rules/user_segment_history_pos_group.def',
             ],
           },
@@ -308,10 +313,13 @@
         'dictionary_generator_test.cc',
         'emoticon_rewriter_test.cc',
         'fortune_rewriter_test.cc',
+        'english_variants_rewriter_test.cc',
         'number_rewriter_test.cc',
         'symbol_rewriter_test.cc',
+        'transliteration_rewriter_test.cc',
         'user_boundary_history_rewriter_test.cc',
         'user_segment_history_rewriter_test.cc',
+        'variants_rewriter_test.cc',
       ],
       'dependencies': [
         '../converter/converter.gyp:converter',

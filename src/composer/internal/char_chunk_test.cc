@@ -28,12 +28,21 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "composer/internal/char_chunk.h"
+#include "composer/internal/composition_input.h"
 #include "composer/internal/transliterators_ja.h"
 #include "composer/table.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
 namespace composer {
+
+namespace {
+const TransliteratorInterface *kNullT12r = NULL;
+const TransliteratorInterface *kRawT12r =
+  TransliteratorsJa::GetRawStringSelector();
+const TransliteratorInterface *kConvT12r =
+  TransliteratorsJa::GetConversionStringSelector();
+}  // anonymous namespace
 
 TEST(CharChunkTest, AddInput_CharByChar) {
   // Test against http://b/1547858
@@ -176,30 +185,24 @@ TEST(CharChunkTest, GetLength) {
   chunk1.set_conversion("\xe3\x81\xad");
   chunk1.set_pending("");
   chunk1.set_raw("ne");
-  EXPECT_EQ(1, chunk1.GetLength(
-      TransliteratorsJa::GetConversionStringSelector()));
-  EXPECT_EQ(2, chunk1.GetLength(
-      TransliteratorsJa::GetRawStringSelector()));
+  EXPECT_EQ(1, chunk1.GetLength(kConvT12r));
+  EXPECT_EQ(2, chunk1.GetLength(kRawT12r));
 
   CharChunk chunk2;
   // "っと"
   chunk2.set_conversion("\xe3\x81\xa3\xe3\x81\xa8");
   chunk2.set_pending("");
   chunk2.set_raw("tto");
-  EXPECT_EQ(2, chunk2.GetLength(
-      TransliteratorsJa::GetConversionStringSelector()));
-  EXPECT_EQ(3, chunk2.GetLength(
-      TransliteratorsJa::GetRawStringSelector()));
+  EXPECT_EQ(2, chunk2.GetLength(kConvT12r));
+  EXPECT_EQ(3, chunk2.GetLength(kRawT12r));
 
   CharChunk chunk3;
   // "が"
   chunk3.set_conversion("\xE3\x81\x8C");
   chunk3.set_pending("");
   chunk3.set_raw("ga");
-  EXPECT_EQ(1, chunk3.GetLength(
-      TransliteratorsJa::GetConversionStringSelector()));
-  EXPECT_EQ(2, chunk3.GetLength(
-      TransliteratorsJa::GetRawStringSelector()));
+  EXPECT_EQ(1, chunk3.GetLength(kConvT12r));
+  EXPECT_EQ(2, chunk3.GetLength(kRawT12r));
 
   chunk3.SetTransliterator(TransliteratorsJa::GetHalfKatakanaTransliterator());
   EXPECT_EQ(2, chunk3.GetLength(
@@ -322,19 +325,19 @@ TEST(CharChunkTest, OutputMode) {
   chunk.AddInputInternal(table, &input);
 
   string result;
-  chunk.AppendResult(table, NULL, &result);
+  chunk.AppendResult(table, kNullT12r, &result);
   // "あ"
   EXPECT_EQ("\xE3\x81\x82", result);
 
   chunk.SetTransliterator(TransliteratorsJa::GetFullKatakanaTransliterator());
   result.clear();
-  chunk.AppendResult(table, NULL, &result);
+  chunk.AppendResult(table, kNullT12r, &result);
   // "ア"
   EXPECT_EQ("\xE3\x82\xA2", result);
 
   chunk.SetTransliterator(TransliteratorsJa::GetHalfAsciiTransliterator());
   result.clear();
-  chunk.AppendResult(table, NULL, &result);
+  chunk.AppendResult(table, kNullT12r, &result);
   EXPECT_EQ("a", result);
 
   result.clear();
@@ -358,8 +361,7 @@ TEST(CharChunkTest, SplitChunk) {
   EXPECT_TRUE(input.empty());
 
   string output;
-  const TransliteratorInterface *kNullTransliterator = NULL;
-  chunk.AppendResult(table, kNullTransliterator, &output);
+  chunk.AppendResult(table, kNullT12r, &output);
   // "ｍ"
   EXPECT_EQ("\xEF\xBD\x8D", output);
 
@@ -368,22 +370,22 @@ TEST(CharChunkTest, SplitChunk) {
   EXPECT_TRUE(input.empty());
 
   output.clear();
-  chunk.AppendResult(table, kNullTransliterator, &output);
+  chunk.AppendResult(table, kNullT12r, &output);
   // "も"
   EXPECT_EQ("\xE3\x82\x82", output);
 
   chunk.SetTransliterator(TransliteratorsJa::GetHalfAsciiTransliterator());
   output.clear();
-  chunk.AppendResult(table, kNullTransliterator, &output);
+  chunk.AppendResult(table, kNullT12r, &output);
   EXPECT_EQ("mo", output);
 
   // Split "mo" to "m" and "o".
   CharChunk left_chunk;
-  chunk.SplitChunk(kNullTransliterator, 1, &left_chunk);
+  chunk.SplitChunk(kNullT12r, 1, &left_chunk);
 
   // The output should be half width "m" rather than full width "ｍ".
   output.clear();
-  left_chunk.AppendResult(table, kNullTransliterator, &output);
+  left_chunk.AppendResult(table, kNullT12r, &output);
   EXPECT_EQ("m", output);
 }
 
@@ -392,7 +394,6 @@ TEST(CharChunkTest, IsAppendable) {
   // "も"
   table.AddRule("mo", "\xE3\x82\x82", "");
 
-  const TransliteratorInterface *kNullT12r = NULL;
   const TransliteratorInterface *kHiraganaT12r =
       TransliteratorsJa::GetHiraganaTransliterator();
   const TransliteratorInterface *kKatakanaT12r =
@@ -541,13 +542,221 @@ TEST(CharChunkTest, AlphanumericOfSSH) {
   }
 }
 
+TEST(CharChunkTest, ShouldCommit) {
+  Table table;
+  table.AddRuleWithAttributes("ka", "[KA]", "", DIRECT_INPUT);
+  table.AddRuleWithAttributes("tt", "[X]", "t", DIRECT_INPUT);
+  table.AddRuleWithAttributes("ta", "[TA]", "", NO_TABLE_ATTRIBUTE);
+
+  {  // ka - DIRECT_INPUT
+    CharChunk chunk;
+    string input("k");
+    chunk.AddInput(table, &input);
+    EXPECT_TRUE(input.empty());
+    EXPECT_EQ("k", chunk.raw());
+    EXPECT_FALSE(chunk.ShouldCommit());
+
+    input = "a";
+    chunk.AddInput(table, &input);
+    EXPECT_TRUE(input.empty());
+    EXPECT_EQ("ka", chunk.raw());
+    EXPECT_EQ("[KA]", chunk.conversion());
+    EXPECT_TRUE(chunk.ShouldCommit());
+  }
+
+  {  // ta - NO_TABLE_ATTRIBUTE
+    CharChunk chunk;
+    string input("t");
+    chunk.AddInput(table, &input);
+    EXPECT_TRUE(input.empty());
+    EXPECT_EQ("t", chunk.raw());
+    EXPECT_FALSE(chunk.ShouldCommit());
+
+    input = "a";
+    chunk.AddInput(table, &input);
+    EXPECT_TRUE(input.empty());
+    EXPECT_EQ("ta", chunk.raw());
+    EXPECT_EQ("[TA]", chunk.conversion());
+    EXPECT_FALSE(chunk.ShouldCommit());
+  }
+
+  {  // tta - (tt: DIRECT_INPUT / ta: NO_TABLE_ATTRIBUTE)
+    CharChunk chunk;
+    string input("t");
+    chunk.AddInput(table, &input);
+    EXPECT_TRUE(input.empty());
+    EXPECT_EQ("t", chunk.raw());
+    EXPECT_FALSE(chunk.ShouldCommit());
+
+    input = "t";
+    chunk.AddInput(table, &input);
+    EXPECT_TRUE(input.empty());
+    EXPECT_EQ("tt", chunk.raw());
+    EXPECT_EQ("[X]", chunk.conversion());
+    EXPECT_EQ("t", chunk.pending());
+    EXPECT_FALSE(chunk.ShouldCommit());
+
+    input = "a";
+    chunk.AddInput(table, &input);
+    EXPECT_TRUE(input.empty());
+    EXPECT_EQ("tta", chunk.raw());
+    EXPECT_EQ("[X][TA]", chunk.conversion());
+    EXPECT_TRUE(chunk.pending().empty());
+    EXPECT_TRUE(chunk.ShouldCommit());
+  }
+}
+
+
+TEST(CharChunkTest, ShouldInsertNewChunk) {
+  Table table;
+  table.AddRuleWithAttributes("na", "[NA]", "", NO_TABLE_ATTRIBUTE);
+  table.AddRuleWithAttributes("a", "[A]", "", NEW_CHUNK);
+  table.AddRuleWithAttributes("ni", "[NI]", "", NO_TABLE_ATTRIBUTE);
+  table.AddRuleWithAttributes("i", "[I]", "", NO_TABLE_ATTRIBUTE);
+
+  CompositionInput input;
+  CharChunk chunk;
+
+  {
+    input.set_raw("a");
+    input.set_is_new_input(true);
+    EXPECT_FALSE(chunk.ShouldInsertNewChunk(table, input));
+  }
+
+  {
+    input.set_raw("a");
+    input.set_is_new_input(false);
+    EXPECT_FALSE(chunk.ShouldInsertNewChunk(table, input));
+  }
+
+  {
+    input.set_raw("n");
+    input.set_is_new_input(true);
+    EXPECT_FALSE(chunk.ShouldInsertNewChunk(table, input));
+  }
+
+  chunk.AddCompositionInput(table, &input);
+  EXPECT_TRUE(input.Empty());
+
+  {
+    input.set_raw("a");
+    input.set_is_new_input(false);
+    EXPECT_FALSE(chunk.ShouldInsertNewChunk(table, input));
+  }
+
+  {
+    input.set_raw("a");
+    input.set_is_new_input(true);
+    EXPECT_TRUE(chunk.ShouldInsertNewChunk(table, input));
+  }
+
+  {
+    input.set_raw("i");
+    input.set_is_new_input(false);
+    EXPECT_FALSE(chunk.ShouldInsertNewChunk(table, input));
+  }
+
+  {
+    input.set_raw("i");
+    input.set_is_new_input(true);
+    EXPECT_FALSE(chunk.ShouldInsertNewChunk(table, input));
+  }
+}
+
+TEST(CharChunkTest, AddCompositionInput) {
+  Table table;
+  table.AddRuleWithAttributes("na", "[NA]", "", NO_TABLE_ATTRIBUTE);
+  table.AddRuleWithAttributes("a", "[A]", "", NEW_CHUNK);
+
+  {
+    CompositionInput input;
+    CharChunk chunk;
+
+    input.set_raw("a");
+    input.set_is_new_input(true);
+    EXPECT_FALSE(chunk.ShouldInsertNewChunk(table, input));
+
+    chunk.AddCompositionInput(table, &input);
+    EXPECT_TRUE(input.Empty());
+    EXPECT_EQ("a", chunk.raw());
+    EXPECT_EQ("[A]", chunk.conversion());
+    EXPECT_EQ("", chunk.pending());
+  }
+
+  {
+    CompositionInput input;
+    CharChunk chunk;
+
+    input.set_raw("a");
+    input.set_is_new_input(false);
+    EXPECT_FALSE(chunk.ShouldInsertNewChunk(table, input));
+
+    chunk.AddCompositionInput(table, &input);
+    EXPECT_TRUE(input.Empty());
+    EXPECT_EQ("a", chunk.raw());
+    EXPECT_EQ("[A]", chunk.conversion());
+    EXPECT_EQ("", chunk.pending());
+  }
+
+  {
+    CompositionInput input;
+    CharChunk chunk;
+
+    input.set_raw("n");
+    input.set_is_new_input(true);
+    EXPECT_FALSE(chunk.ShouldInsertNewChunk(table, input));
+
+    chunk.AddCompositionInput(table, &input);
+    EXPECT_TRUE(input.Empty());
+    EXPECT_EQ("n", chunk.raw());
+    EXPECT_EQ("", chunk.conversion());
+    EXPECT_EQ("n", chunk.pending());
+
+    input.set_raw("a");
+    input.set_is_new_input(false);
+    EXPECT_FALSE(chunk.ShouldInsertNewChunk(table, input));
+
+    chunk.AddCompositionInput(table, &input);
+    EXPECT_TRUE(input.Empty());
+    EXPECT_EQ("na", chunk.raw());
+    EXPECT_EQ("[NA]", chunk.conversion());
+    EXPECT_EQ("", chunk.pending());
+  }
+
+  {
+    CompositionInput input;
+    CharChunk chunk;
+
+    input.set_raw("n");
+    input.set_is_new_input(true);
+    EXPECT_FALSE(chunk.ShouldInsertNewChunk(table, input));
+
+    chunk.AddCompositionInput(table, &input);
+    EXPECT_TRUE(input.Empty());
+    EXPECT_EQ("n", chunk.raw());
+    EXPECT_EQ("", chunk.conversion());
+    EXPECT_EQ("n", chunk.pending());
+
+    input.set_raw("a");
+    input.set_is_new_input(true);
+    EXPECT_TRUE(chunk.ShouldInsertNewChunk(table, input));
+
+    chunk.AddCompositionInput(table, &input);
+    EXPECT_FALSE(input.Empty());
+    EXPECT_EQ("n", chunk.raw());
+    EXPECT_EQ("", chunk.conversion());
+    EXPECT_EQ("n", chunk.pending());
+    EXPECT_EQ("a", input.raw());
+    EXPECT_FALSE(input.has_conversion());
+  }
+}
+
 TEST(CharChunkTest, Issue2190364) {
   // This is a unittest against http://b/2190364
   Table table;
   // "ち゛", "ぢ"
   table.AddRule("\xE3\x81\xA1\xE3\x82\x9B", "\xE3\x81\xA2", "");
 
-  const TransliteratorInterface *kNullT12r = NULL;
   const TransliteratorInterface *kFullAsciiT12r =
       TransliteratorsJa::GetFullAsciiTransliterator();
 
@@ -593,7 +802,6 @@ TEST(CharChunkTest, Issue2209634) {
   // "た@", "だ"
   table.AddRule("\xE3\x81\x9F\x40", "\xE3\x81\xA0", "");
 
-  const TransliteratorInterface *kNullT12r = NULL;
   const TransliteratorInterface *kHalfAsciiT12r =
       TransliteratorsJa::GetHalfAsciiTransliterator();
 
@@ -911,6 +1119,276 @@ TEST(CharChunkTest, IsConvertible) {
     chunk.AddInput(table, &input);
     EXPECT_EQ("n", chunk.pending());
     EXPECT_TRUE(chunk.IsConvertible(kHiraganaT12r, table, "a"));
+  }
+}
+
+TEST(CharChunkTest, SpecialKeys) {
+  Table table;
+  table.AddRule("4", "", "[ta]");
+  table.AddRule("[to]4", "", "[x]{#1}");
+  table.AddRule("[x]{#1}4", "", "[ta]");
+
+  table.AddRule("*", "", "");
+  table.AddRule("[tu]*", "", "[x]{#2}");
+  table.AddRule("[x]{#2}*", "", "[tu]");
+
+  {
+    CharChunk chunk;
+    chunk.set_raw(Table::ParseSpecialKey("[x]{#1}4"));
+    chunk.set_conversion("");
+    chunk.set_pending("[ta]");
+
+    string result;
+    chunk.AppendResult(table, kRawT12r, &result);
+    EXPECT_EQ("[x]4", result);
+
+    result.clear();
+    chunk.AppendTrimedResult(table, kRawT12r, &result);
+    EXPECT_EQ("[x]4", result);
+
+    result.clear();
+    chunk.AppendFixedResult(table, kRawT12r, &result);
+    EXPECT_EQ("[x]4", result);
+
+    EXPECT_EQ(4, chunk.GetLength(kRawT12r));
+
+    result.clear();
+    chunk.AppendResult(table, kConvT12r, &result);
+    EXPECT_EQ("[ta]", result);
+
+    result.clear();
+    chunk.AppendTrimedResult(table, kConvT12r, &result);
+    // Trimed result does not take pending value.
+    EXPECT_EQ("", result);
+
+    result.clear();
+    chunk.AppendFixedResult(table, kConvT12r, &result);
+    EXPECT_EQ("[ta]", result);
+
+    EXPECT_EQ(4, chunk.GetLength(kConvT12r));
+  }
+
+  {
+    CharChunk chunk;
+    chunk.set_raw("[tu]*");
+    chunk.set_conversion("");
+    chunk.set_pending(Table::ParseSpecialKey("[x]{#2}"));
+
+    string result;
+    chunk.AppendResult(table, kRawT12r, &result);
+    EXPECT_EQ("[tu]*", result);
+
+    result.clear();
+    chunk.AppendTrimedResult(table, kRawT12r, &result);
+    EXPECT_EQ("[tu]*", result);
+
+    result.clear();
+    chunk.AppendFixedResult(table, kRawT12r, &result);
+    EXPECT_EQ("[tu]*", result);
+
+    EXPECT_EQ(5, chunk.GetLength(kRawT12r));
+
+    result.clear();
+    chunk.AppendResult(table, kConvT12r, &result);
+    EXPECT_EQ("[x]", result);
+
+    result.clear();
+    chunk.AppendTrimedResult(table, kConvT12r, &result);
+    // Trimed result does not take pending value.
+    EXPECT_EQ("", result);
+
+    result.clear();
+    chunk.AppendFixedResult(table, kConvT12r, &result);
+    EXPECT_EQ("[x]", result);
+
+    EXPECT_EQ(3, chunk.GetLength(kConvT12r));
+  }
+}
+
+TEST(CharChunkTest, SplitChunkWithSpecialKeys) {
+  {
+    CharChunk chunk;
+    chunk.set_raw("a");
+    chunk.set_conversion(Table::ParseSpecialKey("ab{1}cd"));
+
+    CharChunk left_chunk;
+    EXPECT_FALSE(chunk.SplitChunk(kConvT12r, 0, &left_chunk));
+
+    EXPECT_EQ(4, chunk.GetLength(kConvT12r));
+    EXPECT_FALSE(chunk.SplitChunk(kConvT12r, 4, &left_chunk));
+  }
+
+  {
+    CharChunk chunk;
+    chunk.set_raw("a");
+    chunk.set_conversion(Table::ParseSpecialKey("ab{1}cd"));
+
+    CharChunk left_chunk;
+    EXPECT_TRUE(chunk.SplitChunk(kConvT12r, 1, &left_chunk));
+    EXPECT_EQ("a", left_chunk.conversion());
+    EXPECT_EQ("bcd", chunk.conversion());
+  }
+
+  {
+    CharChunk chunk;
+    chunk.set_raw("a");
+    chunk.set_conversion(Table::ParseSpecialKey("ab{1}cd"));
+
+    CharChunk left_chunk;
+    EXPECT_TRUE(chunk.SplitChunk(kConvT12r, 2, &left_chunk));
+    EXPECT_EQ("ab", left_chunk.conversion());
+    EXPECT_EQ("cd", chunk.conversion());
+  }
+
+  {
+    CharChunk chunk;
+    chunk.set_raw("a");
+    chunk.set_conversion(Table::ParseSpecialKey("ab{1}cd"));
+
+    CharChunk left_chunk;
+    EXPECT_TRUE(chunk.SplitChunk(kConvT12r, 3, &left_chunk));
+    EXPECT_EQ("abc", left_chunk.conversion());
+    EXPECT_EQ("d", chunk.conversion());
+  }
+}
+
+TEST(CharChunkTest, NoTransliterationAttribute) {
+  Table table;
+  table.AddRule("ka", "KA", "");
+  table.AddRuleWithAttributes("sa", "SA", "", NO_TRANSLITERATION);
+  table.AddRuleWithAttributes("kk", "x", "k", NO_TRANSLITERATION);
+  table.AddRule("ss", "x", "s");
+
+  {  // "ka" - Default normal behavior.
+    CharChunk chunk;
+    chunk.SetTransliterator(kRawT12r);
+    ASSERT_EQ(kRawT12r, chunk.GetTransliterator(kNullT12r));
+
+    string input = "ka";
+    chunk.AddInput(table, &input);
+    EXPECT_TRUE(input.empty());
+    EXPECT_EQ("KA", chunk.conversion());
+    EXPECT_EQ(kRawT12r, chunk.GetTransliterator(kNullT12r));
+  }
+
+  {  // "sa" - kConvT12r is set if NO_TRANSLITERATION is specified.
+    CharChunk chunk;
+    chunk.SetTransliterator(kRawT12r);
+
+    string input = "sa";
+    chunk.AddInput(table, &input);
+    EXPECT_TRUE(input.empty());
+    EXPECT_EQ("SA", chunk.conversion());
+    EXPECT_EQ(kConvT12r, chunk.GetTransliterator(kNullT12r));
+  }
+
+  {  // "s" + "a" - Same with the above.
+    CharChunk chunk;
+    chunk.SetTransliterator(kRawT12r);
+
+    string input = "s";
+    chunk.AddInput(table, &input);
+    EXPECT_TRUE(input.empty());
+    EXPECT_TRUE(chunk.conversion().empty());
+    EXPECT_EQ(kRawT12r, chunk.GetTransliterator(kNullT12r));
+
+    input = "a";
+    chunk.AddInput(table, &input);
+    EXPECT_TRUE(input.empty());
+    EXPECT_EQ("SA", chunk.conversion());
+    EXPECT_EQ(kConvT12r, chunk.GetTransliterator(kNullT12r));
+  }
+
+  {  // "kka" - The first attribute (NO_TRANSLITERATION) is used.
+    CharChunk chunk;
+    chunk.SetTransliterator(kRawT12r);
+
+    string input = "kk";
+    chunk.AddInput(table, &input);
+    EXPECT_TRUE(input.empty());
+    EXPECT_EQ("x", chunk.conversion());
+    EXPECT_EQ(kConvT12r, chunk.GetTransliterator(kNullT12r));
+
+    input = "a";
+    chunk.AddInput(table, &input);
+    EXPECT_TRUE(input.empty());
+    EXPECT_EQ("xKA", chunk.conversion());
+    EXPECT_EQ(kConvT12r, chunk.GetTransliterator(kNullT12r));
+  }
+
+  {  // "ssa" - The first attribute (default behavior) is used.
+    CharChunk chunk;
+    chunk.SetTransliterator(kRawT12r);
+
+    string input = "ss";
+    chunk.AddInput(table, &input);
+    EXPECT_TRUE(input.empty());
+    EXPECT_EQ("x", chunk.conversion());
+    EXPECT_EQ(kRawT12r, chunk.GetTransliterator(kNullT12r));
+
+    input = "a";
+    chunk.AddInput(table, &input);
+    EXPECT_TRUE(input.empty());
+    EXPECT_EQ("xSA", chunk.conversion());
+    EXPECT_EQ(kRawT12r, chunk.GetTransliterator(kNullT12r));
+  }
+}
+
+TEST(CharChunkTest, NoTransliterationAttributeForInputAndConvertedChar) {
+  Table table;
+  table.AddRuleWithAttributes("[ka]@", "[ga]", "", NO_TRANSLITERATION);
+  table.AddRuleWithAttributes("[sa]", "[sa]", "", NO_TRANSLITERATION);
+  table.AddRule("[sa]@", "[za]", "");
+
+  {  // "KA" - Default normal behavior.
+    CharChunk chunk;
+    chunk.SetTransliterator(kRawT12r);
+    ASSERT_EQ(kRawT12r, chunk.GetTransliterator(kNullT12r));
+
+    string input = "t";
+    string conv = "[ka]";
+    chunk.AddInputAndConvertedChar(table, &input, &conv);
+    EXPECT_TRUE(input.empty());
+    EXPECT_TRUE(conv.empty());
+    EXPECT_EQ("t", chunk.raw());
+    EXPECT_EQ("[ka]", chunk.pending());
+    EXPECT_EQ(kRawT12r, chunk.GetTransliterator(kNullT12r));
+
+    // "GA" - The first attribute (default behavior) is used.
+    input = "!";
+    conv = "@";
+    chunk.AddInputAndConvertedChar(table, &input, &conv);
+    EXPECT_TRUE(input.empty());
+    EXPECT_TRUE(conv.empty());
+    EXPECT_EQ("t!", chunk.raw());
+    EXPECT_EQ("", chunk.pending());
+    EXPECT_EQ("[ga]", chunk.conversion());
+    EXPECT_EQ(kRawT12r, chunk.GetTransliterator(kNullT12r));
+  }
+
+  {  // "SA" - kConvT12r is set if NO_TRANSLITERATION is specified.
+    CharChunk chunk;
+    chunk.SetTransliterator(kRawT12r);
+
+    string input = "x";
+    string conv = "[sa]";
+    chunk.AddInputAndConvertedChar(table, &input, &conv);
+    EXPECT_TRUE(input.empty());
+    EXPECT_TRUE(conv.empty());
+    EXPECT_EQ("x", chunk.raw());
+    EXPECT_EQ("[sa]", chunk.pending());
+    EXPECT_EQ(kConvT12r, chunk.GetTransliterator(kNullT12r));
+
+    // "ZA" - The first attribute (NO_TRANSLITERATION) is used.
+    input = "!";
+    conv = "@";
+    chunk.AddInputAndConvertedChar(table, &input, &conv);
+    EXPECT_TRUE(input.empty());
+    EXPECT_TRUE(conv.empty());
+    EXPECT_EQ("x!", chunk.raw());
+    EXPECT_EQ("", chunk.pending());
+    EXPECT_EQ("[za]", chunk.conversion());
+    EXPECT_EQ(kConvT12r, chunk.GetTransliterator(kNullT12r));
   }
 }
 

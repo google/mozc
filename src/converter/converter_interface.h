@@ -35,6 +35,10 @@
 
 namespace mozc {
 
+namespace composer {
+  class Composer;
+}  // namespace composer
+
 class Segments;
 
 class ConverterInterface {
@@ -43,6 +47,10 @@ class ConverterInterface {
   // key is a request writtein in Hiragana sequence
   virtual bool StartConversion(Segments *segments,
                                const string &key) const = 0;
+
+  // Start conversion with composer.
+  virtual bool StartConversionWithComposer(
+      Segments *segments, const composer::Composer *composer) const = 0;
 
   // Start reverse conversion with key.
   virtual bool StartReverseConversion(Segments *segments,
@@ -70,9 +78,13 @@ class ConverterInterface {
   virtual bool RevertConversion(Segments *segments) const = 0;
 
   // Expand the bunsetsu-segment at "segment_index" by candidate_size
+  // DEPRECATED: This method doesn't take any effect.
+  // TODO(taku): remove this method.
   virtual bool GetCandidates(Segments *segments,
                              size_t segment_index,
-                             size_t candidate_size) const = 0;
+                             size_t candidate_size) const {
+    return true;
+  }
 
   // Commit candidate
   virtual bool CommitSegmentValue(Segments *segments,

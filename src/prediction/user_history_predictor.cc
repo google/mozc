@@ -29,10 +29,12 @@
 
 #include "prediction/user_history_predictor.h"
 
+#include <time.h>
+
 #include <algorithm>
 #include <climits>
-#include <time.h>
 #include <string>
+
 #include "base/base.h"
 #include "base/encryptor.h"
 #include "base/mmap.h"
@@ -44,10 +46,13 @@
 #include "converter/segments.h"
 #include "prediction/predictor_interface.h"
 #include "prediction/user_history_predictor.pb.h"
+#include "rewriter/variants_rewriter.h"
 #include "storage/lru_cache.h"
+#include "session/commands.pb.h"
 #include "session/config_handler.h"
 #include "session/config.pb.h"
 #include "usage_stats/usage_stats.h"
+
 
 namespace mozc {
 
@@ -109,6 +114,30 @@ bool IsPunctuation(const string &value) {
 bool IsContentWord(const string &value) {
   return Util::CharsLen(value) > 1 ||
       Util::GetScriptType(value) != Util::UNKNOWN_SCRIPT;
+}
+
+// return true if prev_entry has a next_fp link to entry
+bool HasBigramEntry(const UserHistoryPredictor::Entry &entry,
+                    const UserHistoryPredictor::Entry &prev_entry) {
+  const uint32 fp = UserHistoryPredictor::EntryFingerprint(entry);
+  for (int i = 0; i < prev_entry.next_entries_size(); ++i) {
+    if (fp == prev_entry.next_entries(i).entry_fp()) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// Returns true if the input first candidate seems to be a privacy sensitive
+// such like password
+bool IsPrivacySensitive(const Segments *segments) {
+  // This is a very restricted rule and it will be relaxed.
+  if (segments->conversion_segments_size() != 1) {
+    return false;
+  }
+  const string &first_candidate_value =
+      segments->conversion_segment(0).candidate(0).value;
+  return (Util::GetCharacterSet(first_candidate_value) == Util::ASCII);
 }
 }  // namespace
 
@@ -512,6 +541,20 @@ bool UserHistoryPredictor::LookupEntry(
   const MatchType mtype = GetMatchType(input_key, entry->key());
   if (mtype == NO_MATCH) {
     return false;
+  } else if (mtype == LEFT_EMPTY_MATCH) {  // zero-query-suggestion
+    // if |input_key| is empty, the |prev_entry| and |entry| must
+    // have bigram relation.
+    if (prev_entry != NULL && HasBigramEntry(*entry, *prev_entry)) {
+      result = results->NewEntry();
+      result->Clear();
+      result->CopyFrom(*entry);
+      last_entry = entry;
+      left_last_access_time = entry->last_access_time();
+      left_most_last_access_time = IsContentWord(entry->value()) ?
+          left_last_access_time : 0;
+    } else {
+      return false;
+    }
   } else if (mtype == LEFT_PREFIX_MATCH) {
     // |input_key| is shorter than |entry->key()|
     // This scenario is a simple prefix match.
@@ -549,7 +592,7 @@ bool UserHistoryPredictor::LookupEntry(
         }
         const MatchType mtype2 = GetMatchType(key + tmp_entry->key(),
                                               input_key);
-        if (mtype2 == NO_MATCH) {
+        if (mtype2 == NO_MATCH || mtype2 == LEFT_EMPTY_MATCH) {
           continue;
         }
         if (latest_entry == NULL ||
@@ -637,16 +680,10 @@ bool UserHistoryPredictor::LookupEntry(
   // from |prev_entry| to |entry|.
   result->set_bigram_boost(false);
 
-  if (prev_entry != NULL) {
-    const uint32 fp = EntryFingerprint(*entry);
-    for (int i = 0; i < prev_entry->next_entries_size(); ++i) {
-      if (fp == prev_entry->next_entries(i).entry_fp()) {
-        // set bigram_boost flag so that this entry is boosted
-        // against LRU policy.
-        result->set_bigram_boost(true);
-        break;
-      }
-    }
+  if (prev_entry != NULL && HasBigramEntry(*entry, *prev_entry)) {
+    // set bigram_boost flag so that this entry is boosted
+    // against LRU policy.
+    result->set_bigram_boost(true);
   }
 
   results->Push(result);
@@ -729,20 +766,25 @@ bool UserHistoryPredictor::Predict(Segments *segments) const {
     return false;
   }
 
-  const string &input_key = segments->conversion_segment(0).key();
-  const size_t input_key_len = Util::CharsLen(input_key);
-  if (input_key_len == 0) {
-    VLOG(2) << "key length is 0";
-    return false;
-  }
-
   const DicElement *head = dic_->Head();
   if (head == NULL) {
     VLOG(2) << "dic head is NULL";
     return false;
   }
 
+  const string &input_key = segments->conversion_segment(0).key();
+  const size_t input_key_len = Util::CharsLen(input_key);
+
+  bool zero_query_suggestion = false;
+
+
+  if (input_key_len == 0 && !zero_query_suggestion) {
+    VLOG(2) << "key length is 0";
+    return false;
+  }
+
   if (segments->request_type() == Segments::SUGGESTION &&
+      !zero_query_suggestion &&
       IsPunctuation(Util::SubString(input_key, 0, 1))) {
     VLOG(2) << "input_key starts with punctuations";
     return false;
@@ -784,16 +826,19 @@ bool UserHistoryPredictor::Predict(Segments *segments) const {
         // match would be noisy.
         if (entry != prev_entry &&
             entry->next_entries_size() > 0 &&
-            entry->value().size() <= prev_value.size() &&
-            memcmp(prev_value.data() +
-                   prev_value.size() - entry->value().size(),
-                   entry->value().data(), entry->value().size()) == 0 &&
-            Util::CharsLen(entry->value()) >= 2) {
+            Util::CharsLen(entry->value()) >= 2 &&
+            (entry->value() == prev_value ||
+             Util::EndsWith(prev_value, entry->value()))) {
           prev_entry = entry;
           break;
         }
       }
     }
+  }
+
+  if (input_key_len == 0 && prev_entry == NULL) {
+    VLOG(1) << "If input_key_len is 0, prev_entry must be set";
+    return false;
   }
 
   const size_t max_results_size =
@@ -847,7 +892,8 @@ bool UserHistoryPredictor::Predict(Segments *segments) const {
       // "です" after that,  showing "デスノート" is annoying.
       // In this situation, "です" is in the LRU, but SuggestionTrigerFunc
       // returns false for "です", since it is short.
-      if (IsValidSuggestion(input_key_len, *result_entry)) {
+      if (IsValidSuggestion(zero_query_suggestion,
+                            input_key_len, *result_entry)) {
         is_valid_candidate = true;
       } else if (segment->candidates_size() == 0) {
         VLOG(2) << "candidates size is 0";
@@ -870,13 +916,14 @@ bool UserHistoryPredictor::Predict(Segments *segments) const {
     candidate->content_key = result_entry->key();
     candidate->value = result_entry->value();
     candidate->content_value = result_entry->value();
+    candidate->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
     const string &description = result_entry->description();
     // If we have stored description, set it exactly.
     if (!description.empty()) {
       candidate->description = description;
+      candidate->attributes |= Segment::Candidate::NO_EXTRA_DESCRIPTION;
     } else {
-      candidate->SetDefaultDescription(
-          Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER);
+      VariantsRewriter::SetDescriptionForPrediction(candidate);
     }
   }
 
@@ -1075,11 +1122,16 @@ void UserHistoryPredictor::Finish(Segments *segments) {
         return;
       }
       const Segment::Candidate &candidate = segment.candidate(0);
-      if (candidate.learning_type &
+      if (candidate.attributes &
           Segment::Candidate::NO_SUGGEST_LEARNING) {
         VLOG(2) << "NO_SUGGEST_LEARNING";
         return;
       }
+    }
+
+    if (IsPrivacySensitive(segments)) {
+      VLOG(2) << "do not remember privacy sensitive input";
+      return;
     }
 
     set<uint64> seen;
@@ -1174,6 +1226,10 @@ void UserHistoryPredictor::Revert(Segments *segments) {
 // type
 UserHistoryPredictor::MatchType
 UserHistoryPredictor::GetMatchType(const string &lstr, const string &rstr) {
+  if (lstr.empty() && !rstr.empty()) {
+    return LEFT_EMPTY_MATCH;
+  }
+
   const size_t size = min(lstr.size(), rstr.size());
   if (size == 0) {
     return NO_MATCH;
@@ -1232,11 +1288,15 @@ uint32 UserHistoryPredictor::StringToUint32(const string &input) {
 
 // static
 bool UserHistoryPredictor::IsValidSuggestion(
+    bool is_zero_query_suggestion,
     uint32 prefix_len,
     const UserHistoryPredictor::Entry &entry) {
   // when bigram_boost is true, that means that previous user input
   // and current input have bigram relation.
   if (entry.bigram_boost()) {
+    return true;
+  }
+  if (is_zero_query_suggestion) {
     return true;
   }
   // Handle suggestion_freq and conversion_freq differently.

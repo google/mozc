@@ -33,6 +33,7 @@
 #define MOZC_SESSION_SESSION_CONVERTER_H_
 
 #include <string>
+#include <vector>
 
 #include "session/session_converter_interface.h"
 
@@ -47,10 +48,8 @@ class SessionConverter : public SessionConverterInterface {
   explicit SessionConverter(const ConverterInterface *converter);
   virtual ~SessionConverter();
 
-  // Reload the global configuration variables.
-  void ReloadConfig();
-  // Update the configuration.
-  void UpdateConfig(const config::Config &config);
+  // Update OperationPreferences.
+  void SetOperationPreferences(const OperationPreferences &preferences);
 
   typedef int States;
   enum State {
@@ -77,6 +76,11 @@ class SessionConverter : public SessionConverterInterface {
   bool Convert(const composer::Composer *composer);
   bool ConvertWithPreferences(const composer::Composer *composer,
                               const ConversionPreferences &preferences);
+
+  // Send a reverse conversion request to the converter.
+  // This uses composer instance to start conversion and stores reading of
+  // source_text into composer.
+  bool ConvertReverse(const string &source_text, composer::Composer *composer);
 
   // Send a transliteration request to the converter.
   bool ConvertToTransliteration(const composer::Composer *composer,
@@ -126,6 +130,7 @@ class SessionConverter : public SessionConverterInterface {
   void SegmentFocusLast();
   void SegmentFocusLeft();
   void SegmentFocusLeftEdge();
+  void SegmentFocusRightOrCommit();
 
   // Resize the focused segment.
   void SegmentWidthExpand();
@@ -156,6 +161,10 @@ class SessionConverter : public SessionConverterInterface {
 
   // Fill context information
   void FillContext(commands::Context *context) const;
+
+  // Get/Set history segments of the converter.
+  void GetHistorySegments(vector<string> *history) const;
+  void SetHistorySegments(const vector<string> &history);
 
   // Remove tail part of history segments
   void RemoveTailOfHistorySegments(size_t num_of_characters);
@@ -190,7 +199,6 @@ class SessionConverter : public SessionConverterInterface {
   // Update internal states
   void UpdateResult(size_t index, size_t size);
   void UpdateCandidateList();
-  void InitSegment(const size_t segment_index);
 
   // Return the candidate index to be used by the converter.
   int GetCandidateIndexForConverter(const size_t segment_index) const;

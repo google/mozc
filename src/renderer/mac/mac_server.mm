@@ -27,6 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#import <Cocoa/Cocoa.h>
+
 #include <Carbon/Carbon.h>
 #include <pthread.h>
 
@@ -98,6 +100,9 @@ int MacServer::StartMessageLoop() {
   return 0;
 }
 
+ void MacServer::Init() {
+   NSApplicationLoad();
+ }
 }  // namespace mozc::renderer::mac
 }  // namespace mozc::renderer
 }  // namespace mozc

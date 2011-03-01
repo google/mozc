@@ -33,11 +33,12 @@
 #include <string>
 #include "base/base.h"
 #include "base/util.h"
-#include "converter/converter_interface.h"
 #include "composer/table.h"
-#include "session/internal/keymap.h"
+#include "converter/converter_interface.h"
+#include "rewriter/rewriter_interface.h"
 #include "session/config.pb.h"
 #include "session/config_handler.h"
+#include "session/internal/keymap.h"
 #include "session/key_parser.h"
 #include "session/session.h"
 #include "session/session_handler.h"
@@ -45,6 +46,7 @@
 #include "testing/base/public/googletest.h"
 
 DECLARE_string(test_tmpdir);
+DECLARE_bool(use_history_rewriter);
 
 namespace mozc {
 
@@ -61,7 +63,7 @@ string GetComposition(const commands::Command &command) {
   return preedit;
 }
 
-void InitSessionToPrecomposition(Session* session) {
+void InitSessionToPrecomposition(session::Session* session) {
 #ifdef OS_WINDOWS
   // Session is created with direct mode on Windows
   // Direct status
@@ -75,6 +77,11 @@ class SessionRegressionTest : public testing::Test {
  protected:
   virtual void SetUp() {
     Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+
+    orig_use_history_rewriter_ = FLAGS_use_history_rewriter;
+    FLAGS_use_history_rewriter = true;
+    RewriterFactory::SetRewriter(NULL);
+
     config::Config config;
     config::ConfigHandler::GetDefaultConfig(&config);
     config::ConfigHandler::SetConfig(config);
@@ -87,6 +94,8 @@ class SessionRegressionTest : public testing::Test {
     config::Config config;
     config::ConfigHandler::GetDefaultConfig(&config);
     config::ConfigHandler::SetConfig(config);
+
+    FLAGS_use_history_rewriter = orig_use_history_rewriter_;
   }
 
   bool SendKey(const string &key, commands::Command *command) {
@@ -111,8 +120,9 @@ class SessionRegressionTest : public testing::Test {
     }
   }
 
+  bool orig_use_history_rewriter_;
   scoped_ptr<SessionHandler> handler_;
-  scoped_ptr<Session> session_;
+  scoped_ptr<session::Session> session_;
 };
 
 
@@ -180,6 +190,70 @@ TEST_F(SessionRegressionTest,
     EXPECT_EQ(commands::HIRAGANA, command.output().status().mode());
     EXPECT_EQ(commands::HIRAGANA, command.output().mode());  // obsolete
   }
+}
+
+TEST_F(SessionRegressionTest, HistoryLearning) {
+  InitSessionToPrecomposition(session_.get());
+  commands::Command command;
+  string candidate1;
+  string candidate2;
+
+  {  // First session.  Second candidate is commited.
+    InsertCharacterChars("kanji", &command);
+
+    command.Clear();
+    session_->Convert(&command);
+    candidate1 = GetComposition(command);
+
+    command.Clear();
+    session_->ConvertNext(&command);
+    candidate2 = GetComposition(command);
+    EXPECT_NE(candidate1, candidate2);
+
+    command.Clear();
+    session_->Commit(&command);
+    EXPECT_FALSE(command.output().has_preedit());
+    EXPECT_EQ(candidate2, command.output().result().value());
+  }
+  {  // Second session.  The previous second candidate should be promoted.
+    command.Clear();
+    InsertCharacterChars("kanji", &command);
+
+    command.Clear();
+    session_->Convert(&command);
+    EXPECT_NE(candidate1, GetComposition(command));
+    EXPECT_EQ(candidate2, GetComposition(command));
+  }
+}
+
+TEST_F(SessionRegressionTest, Undo) {
+  InitSessionToPrecomposition(session_.get());
+
+  commands::Capability capability;
+  capability.set_text_deletion(commands::Capability::DELETE_PRECEDING_TEXT);
+  session_->set_client_capability(capability);
+
+  commands::Command command;
+  InsertCharacterChars("kanji", &command);
+
+  command.Clear();
+  session_->Convert(&command);
+  const string candidate1 = GetComposition(command);
+
+  command.Clear();
+  session_->ConvertNext(&command);
+  const string candidate2 = GetComposition(command);
+  EXPECT_NE(candidate1, candidate2);
+
+  command.Clear();
+  session_->Commit(&command);
+  EXPECT_FALSE(command.output().has_preedit());
+  EXPECT_EQ(candidate2, command.output().result().value());
+
+  command.Clear();
+  session_->Undo(&command);
+  EXPECT_NE(candidate1, GetComposition(command));
+  EXPECT_EQ(candidate2, GetComposition(command));
 }
 
 }  // namespace mozc

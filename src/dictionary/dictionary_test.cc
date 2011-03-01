@@ -28,10 +28,36 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "dictionary/dictionary_interface.h"
+#include "dictionary/suppression_dictionary.h"
 #include "base/base.h"
+#include "converter/node.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
+
+namespace {
+class TestNodeAllocator : public NodeAllocatorInterface {
+ public:
+  TestNodeAllocator() {}
+  virtual ~TestNodeAllocator() {
+    for (size_t i = 0; i < nodes_.size(); ++i) {
+      delete nodes_[i];
+    }
+    nodes_.clear();
+  }
+
+  Node *NewNode() {
+    Node *node = new Node;
+    CHECK(node);
+    node->Init();
+    nodes_.push_back(node);
+    return node;
+  }
+
+ private:
+  vector<Node *> nodes_;
+};
+}  // namespace
 
 TEST(Dictionary_test, basic) {
   // delete without Open()
@@ -42,5 +68,56 @@ TEST(Dictionary_test, basic) {
   EXPECT_TRUE(d2 != NULL);
 
   EXPECT_EQ(d1, d2);
+}
+
+TEST(Dictionary_test, WordSuppressionTest) {
+  DictionaryInterface *d = DictionaryFactory::GetDictionary();
+  SuppressionDictionary *s =
+      SuppressionDictionary::GetSuppressionDictionary();
+
+  TestNodeAllocator allocator;
+
+  // "ぐーぐるは"
+  const char kQuery[] = "\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90"
+      "\xE3\x82\x8B\xE3\x81\xAF";
+
+  // "ぐーぐる"
+  const char kKey[]  = "\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90"
+      "\xE3\x82\x8B";
+
+  // "グーグル"
+  const char kValue[] = "\xE3\x82\xB0\xE3\x83\xBC\xE3"
+      "\x82\xB0\xE3\x83\xAB";
+
+  {
+    s->Lock();
+    s->Clear();
+    s->AddEntry(kKey, kValue);
+    s->UnLock();
+    Node *node = d->LookupPrefix(kQuery, strlen(kQuery), &allocator);
+    bool found = false;
+    for (; node != NULL; node = node->bnext) {
+      if (node->key == kKey && node->value == kValue) {
+        found = true;
+      }
+    }
+
+    EXPECT_FALSE(found);
+  }
+
+  {
+    s->Lock();
+    s->Clear();
+    s->UnLock();
+    Node *node = d->LookupPrefix(kQuery, strlen(kQuery), &allocator);
+    bool found = false;
+    for (; node != NULL; node = node->bnext) {
+      if (node->key == kKey && node->value == kValue) {
+        found = true;
+      }
+    }
+
+    EXPECT_TRUE(found);
+  }
 }
 }  // namespace mozc

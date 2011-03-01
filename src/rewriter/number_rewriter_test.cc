@@ -37,28 +37,23 @@
 namespace mozc {
 
 namespace {
-// const char kFullKanjiDescription[]  = "[全] 漢数字";
-// const char kFullArabicDescription[] = "[全] 数字";
-// const char kHalfArabicDescription[] = "[半] 数字";
-// const char kOldKanjiDescription[]  = "[全] 大字";
-// const char kMaruNumberDescription[] = "[全] 丸数字 <機種依存文字>";
-// const char kRomanCapitalDescription[] = "[全] ローマ数字(大文字) <機種依存文字>";
-// const char kRomanNoCapitalDescription[] = "[全] ローマ数字(小文字) <機種依存文字>";
+// const char kKanjiDescription[]  = 漢数字";
+// const char kArabicDescription[] = "数字";
+// const char kOldKanjiDescription[]  = "大字";
+// const char kMaruNumberDescription[] = "丸数字";
+// const char kRomanCapitalDescription[] = "ローマ数字(大文字)";
+// const char kRomanNoCapitalDescription[] = "ローマ数字(小文字)";
 
-const char kFullKanjiDescription[]  = "[\xE5\x85\xA8] \xE6\xBC\xA2\xE6\x95\xB0\xE5\xAD\x97";
-const char kFullArabicDescription[] = "[\xE5\x85\xA8] \xE6\x95\xB0\xE5\xAD\x97";
-const char kHalfArabicDescription[] = "[\xE5\x8D\x8A] \xE6\x95\xB0\xE5\xAD\x97";
-const char kOldKanjiDescription[]  = "[\xE5\x85\xA8] \xE5\xA4\xA7\xE5\xAD\x97";
-const char kMaruNumberDescription[] = "[\xE5\x85\xA8] \xE4\xB8\xB8\xE6\x95\xB0\xE5\xAD\x97 "
-    "<\xE6\xA9\x9F\xE7\xA8\xAE\xE4\xBE\x9D\xE5\xAD\x98\xE6\x96\x87\xE5\xAD\x97>";
-const char kRomanCapitalDescription[] = "[\xE5\x85\xA8] "
+const char kKanjiDescription[]  = "\xE6\xBC\xA2\xE6\x95\xB0\xE5\xAD\x97";
+const char kArabicDescription[] = "\xE6\x95\xB0\xE5\xAD\x97";
+const char kOldKanjiDescription[]  = "\xE5\xA4\xA7\xE5\xAD\x97";
+const char kMaruNumberDescription[] = "\xE4\xB8\xB8\xE6\x95\xB0\xE5\xAD\x97";
+const char kRomanCapitalDescription[] =
     "\xE3\x83\xAD\xE3\x83\xBC\xE3\x83\x9E\xE6\x95\xB0\xE5\xAD\x97"
-    "(\xE5\xA4\xA7\xE6\x96\x87\xE5\xAD\x97) "
-    "<\xE6\xA9\x9F\xE7\xA8\xAE\xE4\xBE\x9D\xE5\xAD\x98\xE6\x96\x87\xE5\xAD\x97>";
-const char kRomanNoCapitalDescription[] = "[\xE5\x85\xA8] "
+    "(\xE5\xA4\xA7\xE6\x96\x87\xE5\xAD\x97)";
+const char kRomanNoCapitalDescription[] =
     "\xE3\x83\xAD\xE3\x83\xBC\xE3\x83\x9E\xE6\x95\xB0\xE5\xAD\x97"
-    "(\xE5\xB0\x8F\xE6\x96\x87\xE5\xAD\x97) "
-    "<\xE6\xA9\x9F\xE7\xA8\xAE\xE4\xBE\x9D\xE5\xAD\x98\xE6\x96\x87\xE5\xAD\x97>";
+    "(\xE5\xB0\x8F\xE6\x96\x87\xE5\xAD\x97)";
 
 bool FindValue(const Segment &segment, const string &value) {
   for (size_t i = 0; i < segment.candidates_size(); ++i) {
@@ -117,17 +112,17 @@ TEST(NumberRewriterTest, BasicTest) {
   // "〇一二"
   EXPECT_EQ("\xE3\x80\x87\xE4\xB8\x80\xE4\xBA\x8C", seg->candidate(1).value);
   EXPECT_EQ("\xE3\x80\x87\xE4\xB8\x80\xE4\xBA\x8C", seg->candidate(1).content_value);
-  EXPECT_EQ(kFullKanjiDescription, seg->candidate(1).description);
+  EXPECT_EQ(kKanjiDescription, seg->candidate(1).description);
 
   // "０１２"
   EXPECT_EQ("\xEF\xBC\x90\xEF\xBC\x91\xEF\xBC\x92", seg->candidate(2).value);
   EXPECT_EQ("\xEF\xBC\x90\xEF\xBC\x91\xEF\xBC\x92", seg->candidate(2).content_value);
-  EXPECT_EQ(kFullArabicDescription, seg->candidate(2).description);
+  EXPECT_EQ(kArabicDescription, seg->candidate(2).description);
 
   // "十二"
   EXPECT_EQ("\xE5\x8D\x81\xE4\xBA\x8C", seg->candidate(3).value);
   EXPECT_EQ("\xE5\x8D\x81\xE4\xBA\x8C", seg->candidate(3).content_value);
-  EXPECT_EQ(kFullKanjiDescription, seg->candidate(3).description);
+  EXPECT_EQ(kKanjiDescription, seg->candidate(3).description);
 
   // "壱拾弐"
   EXPECT_EQ("\xE5\xA3\xB1\xE6\x8B\xBE\xE5\xBC\x90", seg->candidate(4).value);
@@ -152,19 +147,19 @@ TEST(NumberRewriterTest, BasicTest) {
   EXPECT_EQ("0xc", seg->candidate(8).value);
   EXPECT_EQ("0xc", seg->candidate(8).content_value);
   // "16進数"
-  EXPECT_EQ("[\xE5\x8D\x8A] \x31\x36\xE9\x80\xB2\xE6\x95\xB0",
+  EXPECT_EQ("\x31\x36\xE9\x80\xB2\xE6\x95\xB0",
             seg->candidate(8).description);
 
   EXPECT_EQ("014", seg->candidate(9).value);
   EXPECT_EQ("014", seg->candidate(9).content_value);
   // "8進数"
-  EXPECT_EQ("[\xE5\x8D\x8A] \x38\xE9\x80\xB2\xE6\x95\xB0",
+  EXPECT_EQ("\x38\xE9\x80\xB2\xE6\x95\xB0",
             seg->candidate(9).description);
 
   EXPECT_EQ("0b1100", seg->candidate(10).value);
   EXPECT_EQ("0b1100", seg->candidate(10).content_value);
   // "2進数"
-  EXPECT_EQ("[\xE5\x8D\x8A] \x32\xE9\x80\xB2\xE6\x95\xB0",
+  EXPECT_EQ("\x32\xE9\x80\xB2\xE6\x95\xB0",
             seg->candidate(10).description);
 
   seg->clear_candidates();
@@ -194,17 +189,17 @@ TEST(NumberRewriterTest, BasicTestWithSuffix) {
   // "〇一二"
   EXPECT_EQ("\xE3\x80\x87\xE4\xB8\x80\xE4\xBA\x8C\xE3\x81\x8C", seg->candidate(1).value);
   EXPECT_EQ("\xE3\x80\x87\xE4\xB8\x80\xE4\xBA\x8C", seg->candidate(1).content_value);
-  EXPECT_EQ(kFullKanjiDescription, seg->candidate(1).description);
+  EXPECT_EQ(kKanjiDescription, seg->candidate(1).description);
 
   // "０１２"
   EXPECT_EQ("\xEF\xBC\x90\xEF\xBC\x91\xEF\xBC\x92\xE3\x81\x8C", seg->candidate(2).value);
   EXPECT_EQ("\xEF\xBC\x90\xEF\xBC\x91\xEF\xBC\x92", seg->candidate(2).content_value);
-  EXPECT_EQ(kFullArabicDescription, seg->candidate(2).description);
+  EXPECT_EQ(kArabicDescription, seg->candidate(2).description);
 
   // "十二"
   EXPECT_EQ("\xE5\x8D\x81\xE4\xBA\x8C\xE3\x81\x8C", seg->candidate(3).value);
   EXPECT_EQ("\xE5\x8D\x81\xE4\xBA\x8C", seg->candidate(3).content_value);
-  EXPECT_EQ(kFullKanjiDescription, seg->candidate(3).description);
+  EXPECT_EQ(kKanjiDescription, seg->candidate(3).description);
 
   // "壱拾弐"
   EXPECT_EQ("\xE5\xA3\xB1\xE6\x8B\xBE\xE5\xBC\x90\xE3\x81\x8C", seg->candidate(4).value);
@@ -329,13 +324,13 @@ TEST(NumberRewriterTest, OneOfCandidatesIsEmpty) {
   EXPECT_EQ("\xE3\x80\x87",
             seg->candidate(2).value);
   EXPECT_EQ("\xE3\x80\x87", seg->candidate(2).content_value);
-  EXPECT_EQ(kFullKanjiDescription, seg->candidate(2).description);
+  EXPECT_EQ(kKanjiDescription, seg->candidate(2).description);
 
   // "０"
   EXPECT_EQ("\xEF\xBC\x90",
             seg->candidate(3).value);
   EXPECT_EQ("\xEF\xBC\x90", seg->candidate(3).content_value);
-  EXPECT_EQ(kFullArabicDescription, seg->candidate(3).description);
+  EXPECT_EQ(kArabicDescription, seg->candidate(3).description);
 
   // "零"
   EXPECT_EQ("\xE9\x9B\xB6",
@@ -392,13 +387,13 @@ TEST(NumberRewriterTest, NumberIsZero) {
   EXPECT_EQ("\xE3\x80\x87",
             seg->candidate(1).value);
   EXPECT_EQ("\xE3\x80\x87", seg->candidate(1).content_value);
-  EXPECT_EQ(kFullKanjiDescription, seg->candidate(1).description);
+  EXPECT_EQ(kKanjiDescription, seg->candidate(1).description);
 
   // "０"
   EXPECT_EQ("\xEF\xBC\x90",
             seg->candidate(2).value);
   EXPECT_EQ("\xEF\xBC\x90", seg->candidate(2).content_value);
-  EXPECT_EQ(kFullArabicDescription, seg->candidate(2).description);
+  EXPECT_EQ(kArabicDescription, seg->candidate(2).description);
 
   // "零"
   EXPECT_EQ("\xE9\x9B\xB6",
@@ -434,13 +429,13 @@ TEST(NumberRewriterTest, NumberIsZeroZero) {
   EXPECT_EQ("\xE3\x80\x87\xE3\x80\x87",
             seg->candidate(1).value);
   EXPECT_EQ("\xE3\x80\x87\xE3\x80\x87", seg->candidate(1).content_value);
-  EXPECT_EQ(kFullKanjiDescription, seg->candidate(1).description);
+  EXPECT_EQ(kKanjiDescription, seg->candidate(1).description);
 
   // "００"
   EXPECT_EQ("\xEF\xBC\x90\xEF\xBC\x90",
             seg->candidate(2).value);
   EXPECT_EQ("\xEF\xBC\x90\xEF\xBC\x90", seg->candidate(2).content_value);
-  EXPECT_EQ(kFullArabicDescription, seg->candidate(2).description);
+  EXPECT_EQ(kArabicDescription, seg->candidate(2).description);
 
   // "零"
   EXPECT_EQ("\xE9\x9B\xB6",
@@ -485,7 +480,7 @@ TEST(NumberRewriterTest, NumberIs19Digit) {
             "\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3"
             "\x80\x87\xE3\x80\x87",
             seg->candidate(1).content_value);
-  EXPECT_EQ(kFullKanjiDescription, seg->candidate(1).description);
+  EXPECT_EQ(kKanjiDescription, seg->candidate(1).description);
 
   // "１００００００００００００００００００"
   EXPECT_EQ("\xEF\xBC\x91\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF"
@@ -500,12 +495,12 @@ TEST(NumberRewriterTest, NumberIs19Digit) {
             "\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF"
             "\xBC\x90\xEF\xBC\x90",
             seg->candidate(2).content_value);
-  EXPECT_EQ(kFullArabicDescription, seg->candidate(2).description);
+  EXPECT_EQ(kArabicDescription, seg->candidate(2).description);
 
   // "1,000,000,000,000,000,000"
   EXPECT_EQ("1,000,000,000,000,000,000", seg->candidate(3).value);
   EXPECT_EQ("1,000,000,000,000,000,000", seg->candidate(3).content_value);
-  EXPECT_EQ(kHalfArabicDescription, seg->candidate(3).description);
+  EXPECT_EQ(kArabicDescription, seg->candidate(3).description);
 
   // "１，０００，０００，０００，０００，０００，０００"
   EXPECT_EQ("\xEF\xBC\x91\xEF\xBC\x8C\xEF\xBC\x90\xEF\xBC\x90"
@@ -524,14 +519,14 @@ TEST(NumberRewriterTest, NumberIs19Digit) {
             "\xEF\xBC\x90\xEF\xBC\x8C\xEF\xBC\x90\xEF\xBC\x90"
             "\xEF\xBC\x90",
             seg->candidate(4).content_value);
-  EXPECT_EQ(kFullArabicDescription, seg->candidate(4).description);
+  EXPECT_EQ(kArabicDescription, seg->candidate(4).description);
 
   // "百京"
   EXPECT_EQ("\xE7\x99\xBE\xE4\xBA\xAC",
             seg->candidate(5).value);
   EXPECT_EQ("\xE7\x99\xBE\xE4\xBA\xAC",
             seg->candidate(5).content_value);
-  EXPECT_EQ(kFullKanjiDescription, seg->candidate(5).description);
+  EXPECT_EQ(kKanjiDescription, seg->candidate(5).description);
 
   // "壱百京",
   EXPECT_EQ("\xE5\xA3\xB1\xE7\x99\xBE\xE4\xBA\xAC",
@@ -543,13 +538,13 @@ TEST(NumberRewriterTest, NumberIs19Digit) {
   EXPECT_EQ("0xde0b6b3a7640000", seg->candidate(7).value);
   EXPECT_EQ("0xde0b6b3a7640000", seg->candidate(7).content_value);
   // "16進数"
-  EXPECT_EQ("[\xE5\x8D\x8A] \x31\x36\xE9\x80\xB2\xE6\x95\xB0",
+  EXPECT_EQ("\x31\x36\xE9\x80\xB2\xE6\x95\xB0",
             seg->candidate(7).description);
 
   EXPECT_EQ("067405553164731000000", seg->candidate(8).value);
   EXPECT_EQ("067405553164731000000", seg->candidate(8).content_value);
   // "8進数"
-  EXPECT_EQ("[\xE5\x8D\x8A] \x38\xE9\x80\xB2\xE6\x95\xB0",
+  EXPECT_EQ("\x38\xE9\x80\xB2\xE6\x95\xB0",
             seg->candidate(8).description);
 
   EXPECT_EQ("0b"
@@ -561,7 +556,7 @@ TEST(NumberRewriterTest, NumberIs19Digit) {
             "100111011001000000000000000000",
             seg->candidate(9).content_value);
   // "2進数"
-  EXPECT_EQ("[\xE5\x8D\x8A] \x32\xE9\x80\xB2\xE6\x95\xB0",
+  EXPECT_EQ("\x32\xE9\x80\xB2\xE6\x95\xB0",
             seg->candidate(9).description);
 
   seg->clear_candidates();
@@ -601,7 +596,7 @@ TEST(NumberRewriterTest, NumberIs20Digit) {
             "\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3"
             "\x80\x87\xE3\x80\x87\xE3\x80\x87",
             seg->candidate(1).content_value);
-  EXPECT_EQ(kFullKanjiDescription, seg->candidate(1).description);
+  EXPECT_EQ(kKanjiDescription, seg->candidate(1).description);
 
   // "１０００００００００００００００００００"
   EXPECT_EQ("\xEF\xBC\x91\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF"
@@ -616,12 +611,12 @@ TEST(NumberRewriterTest, NumberIs20Digit) {
             "\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF"
             "\xBC\x90\xEF\xBC\x90\xEF\xBC\x90",
             seg->candidate(2).content_value);
-  EXPECT_EQ(kFullArabicDescription, seg->candidate(2).description);
+  EXPECT_EQ(kArabicDescription, seg->candidate(2).description);
 
   // "10,000,000,000,000,000,000"
   EXPECT_EQ("10,000,000,000,000,000,000", seg->candidate(3).value);
   EXPECT_EQ("10,000,000,000,000,000,000", seg->candidate(3).content_value);
-  EXPECT_EQ(kHalfArabicDescription, seg->candidate(3).description);
+  EXPECT_EQ(kArabicDescription, seg->candidate(3).description);
 
   // "１０，０００，０００，０００，０００，０００，０００"
   EXPECT_EQ("\xEF\xBC\x91\xEF\xBC\x90\xEF\xBC\x8C\xEF\xBC\x90"
@@ -640,14 +635,14 @@ TEST(NumberRewriterTest, NumberIs20Digit) {
             "\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x8C\xEF\xBC\x90"
             "\xEF\xBC\x90\xEF\xBC\x90",
             seg->candidate(4).content_value);
-  EXPECT_EQ(kFullArabicDescription, seg->candidate(4).description);
+  EXPECT_EQ(kArabicDescription, seg->candidate(4).description);
 
   // "一千京"
   EXPECT_EQ("\xE4\xB8\x80\xE5\x8D\x83\xE4\xBA\xAC",
             seg->candidate(5).value);
   EXPECT_EQ("\xE4\xB8\x80\xE5\x8D\x83\xE4\xBA\xAC",
             seg->candidate(5).content_value);
-  EXPECT_EQ(kFullKanjiDescription, seg->candidate(5).description);
+  EXPECT_EQ(kKanjiDescription, seg->candidate(5).description);
 
   // "壱千京"
   EXPECT_EQ("\xE5\xA3\xB1\xE5\x8D\x83\xE4\xBA\xAC",
@@ -700,7 +695,7 @@ TEST(NumberRewriterTest, NumberIsGreaterThanUInt64Max) {
             "\xE4\xB9\x9D\xE4\xBA\x94\xE4\xBA\x94\xE4\xB8\x80\xE5"
             "\x85\xAD\xE4\xB8\x80\xE5\x85\xAD",
             seg->candidate(1).content_value);
-  EXPECT_EQ(kFullKanjiDescription, seg->candidate(1).description);
+  EXPECT_EQ(kKanjiDescription, seg->candidate(1).description);
 
   // "１８４４６７４４０７３７０９５５１６１６"
   EXPECT_EQ("\xEF\xBC\x91\xEF\xBC\x98\xEF\xBC\x94\xEF\xBC\x94\xEF"
@@ -715,12 +710,12 @@ TEST(NumberRewriterTest, NumberIsGreaterThanUInt64Max) {
             "\xEF\xBC\x99\xEF\xBC\x95\xEF\xBC\x95\xEF\xBC\x91\xEF"
             "\xBC\x96\xEF\xBC\x91\xEF\xBC\x96",
             seg->candidate(2).content_value);
-  EXPECT_EQ(kFullArabicDescription, seg->candidate(2).description);
+  EXPECT_EQ(kArabicDescription, seg->candidate(2).description);
 
   // "18,446,744,073,709,551,616"
   EXPECT_EQ("18,446,744,073,709,551,616", seg->candidate(3).value);
   EXPECT_EQ("18,446,744,073,709,551,616", seg->candidate(3).content_value);
-  EXPECT_EQ(kHalfArabicDescription, seg->candidate(3).description);
+  EXPECT_EQ(kArabicDescription, seg->candidate(3).description);
 
   // "１８，４４６，７４４，０７３，７０９，５５１，６１６"
   EXPECT_EQ("\xEF\xBC\x91\xEF\xBC\x98\xEF\xBC\x8C\xEF\xBC\x94"
@@ -739,7 +734,7 @@ TEST(NumberRewriterTest, NumberIsGreaterThanUInt64Max) {
             "\xEF\xBC\x95\xEF\xBC\x91\xEF\xBC\x8C\xEF\xBC\x96"
             "\xEF\xBC\x91\xEF\xBC\x96",
             seg->candidate(4).content_value);
-  EXPECT_EQ(kFullArabicDescription, seg->candidate(4).description);
+  EXPECT_EQ(kArabicDescription, seg->candidate(4).description);
 
   // "千八百四十四京六千七百四十四兆"
   // "七百三十七億九百五十五万千六百十六"
@@ -761,7 +756,7 @@ TEST(NumberRewriterTest, NumberIsGreaterThanUInt64Max) {
             "\xE4\xB8\x87\xE5\x8D\x83\xE5\x85\xAD\xE7\x99\xBE\xE5"
             "\x8D\x81\xE5\x85\xAD",
             seg->candidate(5).content_value);
-  EXPECT_EQ(kFullKanjiDescription, seg->candidate(5).description);
+  EXPECT_EQ(kKanjiDescription, seg->candidate(5).description);
 
   // "一千八百四十四京六千七百四十四兆"
   // "七百三十七億九百五十五万千六百十六"
@@ -785,7 +780,7 @@ TEST(NumberRewriterTest, NumberIsGreaterThanUInt64Max) {
             "\xE4\xBA\x94\xE4\xB8\x87\xE5\x8D\x83\xE5\x85\xAD\xE7"
             "\x99\xBE\xE5\x8D\x81\xE5\x85\xAD",
             seg->candidate(6).content_value);
-  EXPECT_EQ(kFullKanjiDescription, seg->candidate(6).description);
+  EXPECT_EQ(kKanjiDescription, seg->candidate(6).description);
 
   // "千八百四十四京六千七百四十四兆"
   // "七百三十七億九百五十五万一千六百十六"
@@ -809,7 +804,7 @@ TEST(NumberRewriterTest, NumberIsGreaterThanUInt64Max) {
             "\xE4\xB8\x87\xE4\xB8\x80\xE5\x8D\x83\xE5\x85\xAD\xE7"
             "\x99\xBE\xE5\x8D\x81\xE5\x85\xAD",
             seg->candidate(7).content_value);
-  EXPECT_EQ(kFullKanjiDescription, seg->candidate(7).description);
+  EXPECT_EQ(kKanjiDescription, seg->candidate(7).description);
 
   // "一千八百四十四京六千七百四十四兆"
   // "七百三十七億九百五十五万一千六百十六"
@@ -833,7 +828,7 @@ TEST(NumberRewriterTest, NumberIsGreaterThanUInt64Max) {
             "\xE4\xBA\x94\xE4\xB8\x87\xE4\xB8\x80\xE5\x8D\x83\xE5"
             "\x85\xAD\xE7\x99\xBE\xE5\x8D\x81\xE5\x85\xAD",
             seg->candidate(8).content_value);
-  EXPECT_EQ(kFullKanjiDescription, seg->candidate(8).description);
+  EXPECT_EQ(kKanjiDescription, seg->candidate(8).description);
 
   // "壱千八百四拾四京六千七百四拾四兆"
   // "七百参拾七億九百五拾五万壱千六百壱拾六"
@@ -964,7 +959,7 @@ TEST(NumberRewriterTest, NumberIsGoogol) {
   }
   EXPECT_EQ(expected2, seg->candidate(1).value);
   EXPECT_EQ(expected2, seg->candidate(1).content_value);
-  EXPECT_EQ(kFullKanjiDescription, seg->candidate(1).description);
+  EXPECT_EQ(kKanjiDescription, seg->candidate(1).description);
 
   // 10^100 as "１０００００ ... ０"
   string expected3 = "\xEF\xBC\x91";  // "１"
@@ -973,7 +968,7 @@ TEST(NumberRewriterTest, NumberIsGoogol) {
   }
   EXPECT_EQ(expected3, seg->candidate(2).value);
   EXPECT_EQ(expected3, seg->candidate(2).content_value);
-  EXPECT_EQ(kFullArabicDescription, seg->candidate(2).description);
+  EXPECT_EQ(kArabicDescription, seg->candidate(2).description);
 
   // 10,000, ... ,000
   string expected1 = "10";
@@ -982,7 +977,7 @@ TEST(NumberRewriterTest, NumberIsGoogol) {
   }
   EXPECT_EQ(expected1, seg->candidate(3).value);
   EXPECT_EQ(expected1, seg->candidate(3).content_value);
-  EXPECT_EQ(kHalfArabicDescription, seg->candidate(3).description);
+  EXPECT_EQ(kArabicDescription, seg->candidate(3).description);
 
   // "１０，０００， ... ，０００"
   string expected4 = "\xEF\xBC\x91\xEF\xBC\x90";  // "１０"
@@ -992,12 +987,12 @@ TEST(NumberRewriterTest, NumberIsGoogol) {
   }
   EXPECT_EQ(expected4, seg->candidate(4).value);
   EXPECT_EQ(expected4, seg->candidate(4).content_value);
-  EXPECT_EQ(kFullArabicDescription, seg->candidate(4).description);
+  EXPECT_EQ(kArabicDescription, seg->candidate(4).description);
 
   EXPECT_EQ("Googol",
             seg->candidate(5).value);
   EXPECT_EQ("Googol", seg->candidate(5).content_value);
-  EXPECT_EQ("[\xE5\x8D\x8A]", seg->candidate(5).description);
+  EXPECT_EQ("", seg->candidate(5).description);
 
   seg->clear_candidates();
 }

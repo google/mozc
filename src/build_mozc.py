@@ -365,6 +365,13 @@ def GypMain(deps_file_name):
     command_line.extend(['-D', 'channel_dev=1'])
 
 
+  # Dictionary configuration
+  if options.target_platform == 'ChromeOS':
+    # Note that the OSS version of mozc ignores the dictionary variable.
+    command_line.extend(['-D', 'dictionary=small'])
+  else:
+    command_line.extend(['-D', 'dictionary=desktop'])
+
   RunOrDie(command_line)
 
 
@@ -523,9 +530,18 @@ def ParseGypOptions():
   parser.add_option('--version_file', dest='version_file',
                     help='use the specified version template file',
                     default='mozc_version_template.txt')
+  parser.add_option('--rsync', dest='rsync', default=False, action='store_true',
+                    help='use rsync to copy files instead of builtin function')
 
   parser.add_option('--build_base', dest='build_base',
                     help='specify the base directory of the built binaries.')
+
+
+  # Linux environment can build both for Linux and ChromeOS.
+  # This option enable this script to know which build (Linux or ChromeOS)
+  # should be done. If you want ChromeOS build, specify "ChromeOS".
+  parser.add_option('--target_platform', dest='target_platform',
+                    help='if you want ChromeOS build, specify "ChromeOS"')
 
   (options, unused_args) = parser.parse_args()
   return options
@@ -750,7 +766,6 @@ def BuildMain(original_directory_name):
         options.qtdir = os.path.join(os.getcwd(), options.qtdir)
       print 'export $QTDIR = %s' % options.qtdir
       os.environ['QTDIR'] = options.qtdir
-
 
   if IsMac():
     BuildOnMac(options, targets, original_directory_name)

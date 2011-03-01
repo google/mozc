@@ -31,15 +31,16 @@
 
 #include "session/session_converter.h"
 
+#include <vector>
+
 #include "base/util.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
 #include "composer/composer.h"
-#include "session/config_handler.h"
-#include "session/config.pb.h"
 #include "session/internal/candidate_list.h"
 #include "session/internal/session_normalizer.h"
 #include "session/internal/session_output.h"
+#include "transliteration/transliteration.h"
 
 namespace mozc {
 namespace session {
@@ -65,39 +66,12 @@ SessionConverter::SessionConverter(const ConverterInterface *converter)
 
 SessionConverter::~SessionConverter() {}
 
-void SessionConverter::ReloadConfig() {
-  UpdateConfig(config::ConfigHandler::GetConfig());
-}
-
-void SessionConverter::UpdateConfig(const config::Config &config) {
-  // Keyboard shortcut for candidates.
-  const char kShortcut123456789[] = "123456789";
-  const char kShortcutASDFGHJKL[] = "asdfghjkl";
-  switch (config.selection_shortcut()) {
-    case config::Config::SHORTCUT_123456789:
-      operation_preferences_.candidate_shortcuts = kShortcut123456789;
-      break;
-    case config::Config::SHORTCUT_ASDFGHJKL:
-      operation_preferences_.candidate_shortcuts = kShortcutASDFGHJKL;
-      break;
-    case config::Config::NO_SHORTCUT:
-      operation_preferences_.candidate_shortcuts.clear();
-      break;
-    default:
-      LOG(WARNING) << "Unkown shortcuts type: "
-                   << GET_CONFIG(selection_shortcut);
-      break;
-  }
-
-  // Cascading Window.
-#ifdef OS_LINUX
-  // TODO(komatsu): Move this logic to the client code.
-  operation_preferences_.use_cascading_window = false;
-#else
-  if (config.has_use_cascading_window()) {
-    operation_preferences_.use_cascading_window = config.use_cascading_window();
-  }
-#endif
+void SessionConverter::SetOperationPreferences(
+    const OperationPreferences &preferences) {
+  operation_preferences_.use_cascading_window =
+      preferences.use_cascading_window;
+  operation_preferences_.candidate_shortcuts =
+      preferences.candidate_shortcuts;
 }
 
 bool SessionConverter::CheckState(States states) const {
@@ -129,26 +103,53 @@ bool SessionConverter::ConvertWithPreferences(
   segments_->set_request_type(Segments::CONVERSION);
   SetConversionPreferences(preferences, segments_.get());
 
-  string preedit;
-  composer_->GetQueryForConversion(&preedit);
-  if (!converter_->StartConversion(segments_.get(), preedit)) {
-    LOG(WARNING) << "StartConversion() failed";
+  if (!converter_->StartConversionWithComposer(segments_.get(), composer_)) {
+    LOG(WARNING) << "StartConversionWithComposer() failed";
     return false;
   }
 
   segment_index_ = 0;
   state_ = CONVERSION;
-  UpdateCandidateList();
   candidate_list_visible_ = false;
+  UpdateCandidateList();
   GetPreeditAndConversion(0, segments_->conversion_segments_size(),
                           &composition_, &default_result_);
+  return true;
+}
+
+bool SessionConverter::ConvertReverse(const string &source_text,
+                                      composer::Composer *composer) {
+  Segments reverse_segments;
+  if (!converter_->StartReverseConversion(&reverse_segments, source_text)) {
+    return false;
+  }
+  if (reverse_segments.segments_size() == 0) {
+    LOG(WARNING) << "no segments from reverse conversion";
+    return false;
+  }
+  string reading;
+  for (int i = 0; i < reverse_segments.segments_size(); ++i) {
+    const mozc::Segment &segment = reverse_segments.segment(i);
+    if (segment.candidates_size() == 0) {
+      LOG(WARNING) << "got an empty segment from reverse conversion";
+      return false;
+    }
+    reading.append(segment.candidate(0).value);
+  }
+
+  composer->InsertCharacterPreedit(reading);
+  // start conversion here.
+  if (!Convert(composer)) {
+    LOG(ERROR) << "Failed to start conversion for reverse conversion";
+    return false;
+  }
   return true;
 }
 
 namespace {
 Attributes GetT13nAttributes(const transliteration::TransliterationType type) {
   Attributes attributes = NO_ATTRIBUTES;
-  switch(type) {
+  switch (type) {
     case transliteration::HIRAGANA:  // "ひらがな"
       attributes = HIRAGANA;
       break;
@@ -256,7 +257,6 @@ bool SessionConverter::ConvertToHalfWidth(const composer::Composer *composer) {
       LOG(ERROR) << "Conversion failed";
       return false;
     }
-
     // TODO(komatsu): This is a workaround to transliterate the whole
     // preedit as a single segment.  We should modify
     // converter/converter.cc to enable to accept mozc::Segment::FIXED
@@ -361,11 +361,11 @@ void PrependCandidates(const vector<Segment::Candidate> &candidates,
   if (segments->conversion_segments_size() == 0) {
     segments->clear_conversion_segments();
     Segment *segment = segments->add_segment();
-    segment->clear();
+    segment->Clear();
     segment->set_key(preedit);
   }
 
-  DCHECK(segments->conversion_segments_size() == 1);
+  DCHECK_EQ(1, segments->conversion_segments_size());
   Segment *segment = segments->mutable_conversion_segment(0);
   DCHECK(segment);
 
@@ -412,7 +412,7 @@ bool SessionConverter::SuggestWithPreferences(
     converter_->CancelConversion(segments_.get());
     return false;
   }
-  DCHECK(segments_->conversion_segments_size() == 1);
+  DCHECK_EQ(1, segments_->conversion_segments_size());
 
   // Copy current suggestions so that we can merge
   // prediction/suggestions later
@@ -573,7 +573,7 @@ void SessionConverter::CommitSuggestion(const size_t index) {
 
 void SessionConverter::CommitFirstSegment(composer::Composer *composer) {
   DCHECK(CheckState(PREDICTION | CONVERSION));
-  DCHECK(composer == composer_);
+  DCHECK_EQ(composer, composer_);
   ResetResult();
   candidate_list_visible_ = false;
 
@@ -598,7 +598,7 @@ void SessionConverter::CommitFirstSegment(composer::Composer *composer) {
     composer->DeleteAt(0);
   }
   // The number of segments should be more than one.
-  DCHECK(composer->GetLength() > 0);
+  DCHECK_GT(composer->GetLength(), 0);
 
   // Adjust the segment_index, since the first segment disappeared.
   if (segment_index_ > 0) {
@@ -704,6 +704,22 @@ void SessionConverter::SegmentFocusLeftEdge() {
   SegmentFix();
   segment_index_ = 0;
   UpdateCandidateList();
+}
+
+void SessionConverter::SegmentFocusRightOrCommit() {
+  DCHECK(CheckState(PREDICTION | CONVERSION));
+  candidate_list_visible_ = false;
+
+  if (segment_index_ + 1 >= segments_->conversion_segments_size()) {
+    // If |segment_index_| is at the tail of the segments,
+    // commit all segments.
+    Commit();
+  } else {
+    ResetResult();
+    SegmentFix();
+    ++segment_index_;
+    UpdateCandidateList();
+  }
 }
 
 void SessionConverter::SegmentWidthExpand() {
@@ -855,7 +871,7 @@ void SessionConverter::FillOutput(commands::Output *output) const {
 
   // Composition on Suggestion
   if (CheckState(SUGGESTION)) {
-    DCHECK(composer_ != NULL);
+    DCHECK(composer_);
     session::SessionOutput::FillPreedit(*composer_, output->mutable_preedit());
   } else if (CheckState(PREDICTION | CONVERSION)) {
     // Conversion on Prediction or Conversion
@@ -888,6 +904,30 @@ void SessionConverter::FillContext(commands::Context *context) const {
   }
 }
 
+void SessionConverter::GetHistorySegments(vector<string> *history) const {
+  DCHECK(history);
+  history->clear();
+  for (size_t i = 0; i < segments_->history_segments_size(); ++i) {
+    history->push_back(segments_->history_segment(i).candidate(0).value);
+  }
+}
+
+void SessionConverter::SetHistorySegments(const vector<string> &history) {
+  segments_->erase_segments(0, segments_->history_segments_size());
+
+  for (size_t i = 0; i < history.size(); ++i) {
+    Segment *segment = segments_->insert_segment(i);
+    segment->set_segment_type(Segment::HISTORY);
+    segment->set_key(history[i]);
+
+    Segment::Candidate *candidate = segment->add_candidate();
+    candidate->value = history[i];
+    candidate->content_value = history[i];
+    candidate->key = history[i];
+    candidate->content_key = history[i];
+  }
+}
+
 void SessionConverter::RemoveTailOfHistorySegments(size_t num_of_characters) {
   segments_->RemoveTailOfHistorySegments(num_of_characters);
 }
@@ -900,11 +940,7 @@ const string &SessionConverter::GetDefaultResult() const {
 void SessionConverter::SetConversionPreferences(
     const ConversionPreferences &preferences,
     Segments *segments) {
-  if (preferences.use_history) {
-    segments->enable_user_history();
-  } else {
-    segments->disable_user_history();
-  }
+  segments->set_user_history_enabled(preferences.use_history);
   segments->set_max_history_segments_size(preferences.max_history_size);
 }
 
@@ -979,20 +1015,26 @@ int GetT13nId(const transliteration::TransliterationType type) {
 
 void SessionConverter::UpdateCandidateList() {
   DCHECK(CheckState(SUGGESTION | PREDICTION | CONVERSION));
-  InitSegment(segment_index_);
   candidate_list_->Clear();
 
   const Segment &segment = segments_->conversion_segment(segment_index_);
   for (size_t i = 0; i < segment.candidates_size(); ++i) {
     candidate_list_->AddCandidate(i, segment.candidate(i).value);
+    // if candidate has spelling correction attribute,
+    // always display the candidate to let user know the
+    // miss spelled candidate.
+    if (i < 10 &&
+        (segment.candidate(i).attributes &
+         Segment::Candidate::SPELLING_CORRECTION)) {
+      candidate_list_visible_ = true;
+    }
   }
 
   const bool focused = (segments_->request_type() != Segments::SUGGESTION);
   candidate_list_->set_focused(focused);
 
-  // If the session status is not conversion (it means suggestion or
-  // prediction), translitaration should not be included.
-  if (segments_->request_type() != Segments::CONVERSION) {
+  if (segment.meta_candidates_size() == 0) {
+    LOG(WARNING) << "T13N is not initialized: " << segment.key();
     return;
   }
 
@@ -1022,56 +1064,6 @@ void SessionConverter::UpdateCandidateList() {
         GetT13nAttributes(type));
   }
 }
-
-// TODO(komatsu): The number should be flexible.
-// This number should be equal to kMaxCandidatesSize of
-// converter/nbest_generator.cc
-static const size_t kMaxCandidatesSize = 200;
-
-void SessionConverter::InitSegment(const size_t segment_index) {
-  DCHECK(CheckState(SUGGESTION | PREDICTION | CONVERSION));
-  Segment *segment = segments_->mutable_conversion_segment(segment_index);
-  if (segment == NULL) {
-    LOG(ERROR) << "The segment is not available: " << segment_index;
-    return;
-  }
-
-  // If the available candidates are already expanded, do nothing any more.
-  if (segment->requested_candidates_size() >= kMaxCandidatesSize) {
-    return;
-  }
-
-  // Initialize candidates at most kMaxCandidatesSize.
-  converter_->GetCandidates(segments_.get(),
-                            segment_index,
-                            kMaxCandidatesSize);
-
-  // Initialize transliterations.
-  if (segment->initialized_transliterations()) {
-    return;
-  }
-
-  size_t composition_pos = 0;
-  for (size_t i = 0; i < segment_index; ++i) {
-    composition_pos += Util::CharsLen(segments_->conversion_segment(i).key());
-  }
-  const size_t composition_size = Util::CharsLen(segment->key());
-
-  vector<string> t13ns;
-  composer_->GetSubTransliterations(composition_pos, composition_size, &t13ns);
-
-  // Normalize the output.  Hiragana VU and wave-dash characters are
-  // normalized to platform preferable characters.
-  vector<string> normalized_t13ns;
-  string normalized;
-  for (size_t i = 0; i < t13ns.size(); ++i) {
-    normalized.clear();
-    SessionNormalizer::NormalizeTransliterationText(t13ns[i], &normalized);
-    normalized_t13ns.push_back(normalized);
-  }
-  segment->SetTransliterations(normalized_t13ns);
-}
-
 
 int SessionConverter::GetCandidateIndexForConverter(
     const size_t segment_index) const {

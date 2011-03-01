@@ -389,10 +389,11 @@ TEST_F(SystemDictionaryTest, spelling_correction_tokens) {
                                           NULL);
     while (node) {
       if (node->key == t->key) {
-        EXPECT_EQ(node->is_spelling_correction,
+        EXPECT_EQ(static_cast<bool>(
+            node->attributes & Node::SPELLING_CORRECTION),
                   t->lid >= SystemDictionary::kSpellingCorrectionPosOffset);
 
-        if (node->is_spelling_correction) {
+        if (node->attributes & Node::SPELLING_CORRECTION) {
           EXPECT_EQ(node->lid,
                     t->lid - SystemDictionary::kSpellingCorrectionPosOffset);
         } else {

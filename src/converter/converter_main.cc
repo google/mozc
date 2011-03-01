@@ -36,6 +36,9 @@
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
 
+DEFINE_int32(max_conversion_candidates_size, 200,
+             "maximum candidates size");
+
 namespace {
 bool ExecCommand(const mozc::ConverterInterface &converter,
                  mozc::Segments *segments,
@@ -51,6 +54,9 @@ bool ExecCommand(const mozc::ConverterInterface &converter,
   CHECK_FIELDS_LENGTH(1);
 
   const string &func = fields[0];
+
+  segments->set_max_conversion_candidates_size(
+      FLAGS_max_conversion_candidates_size);
 
   if (func == "startconversion" || func == "start" || func == "s") {
     CHECK_FIELDS_LENGTH(2);
@@ -70,11 +76,6 @@ bool ExecCommand(const mozc::ConverterInterface &converter,
     return converter.ResetConversion(segments);
   } else if (func == "cancelconversion" || func == "cancel") {
     return converter.CancelConversion(segments);
-  } else if (func == "getcandidates" || func == "get") {
-    CHECK_FIELDS_LENGTH(3);
-    return converter.GetCandidates(segments,
-                                   atoi32(fields[1].c_str()),
-                                   atoi32(fields[2].c_str()));
   } else if (func == "commitsegmentvalue" || func == "commit") {
     CHECK_FIELDS_LENGTH(3);
     return converter.CommitSegmentValue(segments,
@@ -111,9 +112,9 @@ bool ExecCommand(const mozc::ConverterInterface &converter,
                                      new_arrays.size());
     }
   } else if (func == "disableuserhistory") {
-    segments->disable_user_history();
+    segments->set_user_history_enabled(false);
   } else if (func == "enableuserhistory") {
-    segments->enable_user_history();
+    segments->set_user_history_enabled(true);
   } else {
     LOG(WARNING) << "Unknown command: " <<  func;
     return false;

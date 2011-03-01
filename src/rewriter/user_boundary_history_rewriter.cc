@@ -124,8 +124,8 @@ void UserBoundaryHistoryRewriter::Finish(Segments *segments) {
     return;
   }
 
-  if (!segments->use_user_history()) {
-    VLOG(2) << "no use_user_history";
+  if (!segments->user_history_enabled()) {
+    VLOG(2) << "!user_history_enabled";
     return;
   }
 
@@ -154,8 +154,8 @@ bool UserBoundaryHistoryRewriter::Rewrite(Segments *segments) const {
     return false;
   }
 
-  if (!segments->use_user_history()) {
-    VLOG(2) << "no use_user_history";
+  if (!segments->user_history_enabled()) {
+    VLOG(2) << "!user_history_enabled";
     return false;
   }
 

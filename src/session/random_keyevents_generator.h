@@ -37,6 +37,13 @@ namespace mozc {
 namespace session {
 class RandomKeyEventsGenerator {
  public:
+  // return test sentence set embedded in RandomKeyEventsGenerator.
+  // Example:
+  // const char **sentences = GetTestSentences(&size);
+  // const char *s = sentences[10];
+  static const char **GetTestSentences(size_t *test_size);
+
+
   // Generate a random test keyevents sequence for
   static void GenerateSequence(vector<commands::KeyEvent> *keys);
 };

@@ -52,6 +52,11 @@ int RunDictionaryTool(int argc, char *argv[]) {
   mozc::gui::LocaleUtil::InstallTranslationMessageAndFont("dictionary_tool");
   mozc::gui::DictionaryTool window;
 
+  if (!window.IsAvailable()) {
+    LOG(ERROR) << "DictionaryTool is not available.";
+    return -1;
+  }
+
   window.show();
   window.raise();
   return app.exec();

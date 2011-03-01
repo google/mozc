@@ -32,11 +32,13 @@
 #include "composer/composer.h"
 
 #include "base/util.h"
-#include "converter/character_form_manager.h"
+#include "base/singleton.h"
 #include "composer/internal/composition.h"
+#include "composer/internal/composition_input.h"
 #include "composer/internal/mode_switching_handler.h"
 #include "composer/internal/transliterators_ja.h"
 #include "composer/table.h"
+#include "converter/character_form_manager.h"
 #include "session/commands.pb.h"
 #include "session/config_handler.h"
 #include "session/config.pb.h"
@@ -187,14 +189,16 @@ transliteration::TransliterationType GetTransliterationTypeFromCompositionMode(
 }  // namespace
 
 static const size_t kMaxPreeditLength = 256;
-Composer::Composer(CompositionInterface *composition)
+Composer::Composer()
     : position_(0),
+      is_new_input_(true),
       input_mode_(transliteration::HIRAGANA),
       output_mode_(transliteration::HIRAGANA),
       comeback_input_mode_(transliteration::HIRAGANA),
       capital_sequence_count_(0),
+      composition_(new Composition),
       max_length_(kMaxPreeditLength) {
-  composition_.reset(composition);
+  composition_->SetTable(Singleton<Table>::get());
   SetInputMode(transliteration::HIRAGANA);
   Reset();
 }
@@ -226,6 +230,7 @@ void Composer::SetInputMode(transliteration::TransliterationType mode) {
   comeback_input_mode_ = mode;
   input_mode_ = mode;
   capital_sequence_count_ = 0;
+  is_new_input_ = true;
   composition_->SetInputMode(GetTransliterator(mode));
 }
 
@@ -235,6 +240,7 @@ void Composer::SetTemporaryInputMode(
   comeback_input_mode_ = input_mode_;
   input_mode_ = mode;
   capital_sequence_count_ = 0;
+  is_new_input_ = true;
   composition_->SetInputMode(GetTransliterator(mode));
 }
 
@@ -255,6 +261,7 @@ void Composer::UpdateInputMode() {
     //   "A|B" and "あ|い", the input mode follows the character type.
     input_mode_ = GetTransliterationType(current_t12r, comeback_input_mode_);
     capital_sequence_count_ = 0;
+    is_new_input_ = true;
     composition_->SetInputMode(GetTransliterator(input_mode_));
     return;
   }
@@ -287,20 +294,15 @@ void Composer::SetOutputMode(transliteration::TransliterationType mode) {
   position_ = composition_->GetLength();
 }
 
-// This function is not used.
-// TODO(komatsu): Remove this function.
-void Composer::InsertCharacterAt(size_t pos, const string &input) {
+void Composer::InsertCharacter(const string &key) {
   if (!EnableInsert()) {
     return;
   }
-  position_ = composition_->InsertAt(pos, input);
-}
-
-void Composer::InsertCharacter(const string &input) {
-  if (!EnableInsert()) {
-    return;
-  }
-  position_ = composition_->InsertAt(position_, input);
+  CompositionInput input;
+  input.set_raw(key);
+  input.set_is_new_input(is_new_input_);
+  position_ = composition_->InsertInput(position_, input);
+  is_new_input_ = false;
 }
 
 void Composer::InsertCharacterPreedit(const string &input) {
@@ -308,11 +310,16 @@ void Composer::InsertCharacterPreedit(const string &input) {
 }
 
 void Composer::InsertCharacterKeyAndPreedit(const string &key,
-                                       const string &preedit) {
+                                            const string &preedit) {
   if (!EnableInsert()) {
     return;
   }
-  position_ = composition_->InsertKeyAndPreeditAt(position_, key, preedit);
+  CompositionInput input;
+  input.set_raw(key);
+  input.set_conversion(preedit);
+  input.set_is_new_input(is_new_input_);
+  position_ = composition_->InsertInput(position_, input);
+  is_new_input_ = false;
 }
 
 void Composer::InsertCharacterPreeditAt(size_t pos, const string &input) {
@@ -329,9 +336,14 @@ void Composer::InsertCharacterKeyAndPreeditAt(size_t pos,
   composition_->SetInputMode(
       Transliterators::GetConversionStringSelector());
 
-  composition_->InsertKeyAndPreeditAt(pos, key, preedit);
-  DCHECK(insertion_length ==
-             composition_->GetLength() - length_before_insertion);
+  CompositionInput input;
+  input.set_raw(key);
+  input.set_conversion(preedit);
+  input.set_is_new_input(true);
+  composition_->InsertInput(pos, input);
+
+  DCHECK_EQ(insertion_length,
+            composition_->GetLength() - length_before_insertion);
 
   composition_->SetInputMode(GetTransliterator(input_mode_));
 
@@ -339,6 +351,7 @@ void Composer::InsertCharacterKeyAndPreeditAt(size_t pos,
   if (position_before_insertion >= pos) {
     position_ += insertion_length;
   }
+  is_new_input_ = false;
 }
 
 bool Composer::InsertCharacterKeyEvent(const commands::KeyEvent &key) {
@@ -446,8 +459,8 @@ void Composer::DeleteAt(size_t pos) {
 }
 
 void Composer::Delete() {
-    position_ = composition_->DeleteAt(position_);
-    UpdateInputMode();
+  position_ = composition_->DeleteAt(position_);
+  UpdateInputMode();
 }
 
 void Composer::EditErase() {
@@ -763,12 +776,8 @@ void Composer::AutoSwitchMode() {
   }
 }
 
-// static
-Composer *Composer::Create(const Table *table) {
-  Composition *composition = new Composition;
-  composition->SetTable(table);
-  Composer *composer = new Composer(composition);
-  return composer;
+bool Composer::ShouldCommit() const {
+  return composition_->ShouldCommit();
 }
 
 namespace {

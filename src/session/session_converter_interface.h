@@ -42,16 +42,14 @@
 namespace mozc {
 class ConverterInterface;
 
-namespace config {
-class Config;
-}
-
 namespace session {
 struct ConversionPreferences {
   bool use_history;
   int max_history_size;
 };
 
+// Do not forget to update SessionConverter::SetOperationPreferences()
+// when update this struct.
 struct OperationPreferences {
   bool use_cascading_window;
   string candidate_shortcuts;
@@ -64,10 +62,9 @@ class SessionConverterInterface {
   SessionConverterInterface() {}
   virtual ~SessionConverterInterface() {}
 
-  // Reload the global configuration variables.
-  virtual void ReloadConfig() ABSTRACT;
-  // Update the configuration.
-  virtual void UpdateConfig(const config::Config &config) ABSTRACT;
+  // Update OperationPreferences.
+  virtual void SetOperationPreferences(const OperationPreferences &preferences)
+      ABSTRACT;
 
   typedef int States;
   enum State {
@@ -95,6 +92,10 @@ class SessionConverterInterface {
   virtual bool ConvertWithPreferences(
       const composer::Composer *composer,
       const ConversionPreferences &preferences) ABSTRACT;
+
+  // Send a reverse conversion request to the converter.
+  virtual bool ConvertReverse(const string &str,
+                              composer::Composer *composer) ABSTRACT;
 
   // Send a transliteration request to the converter.
   virtual bool ConvertToTransliteration(
@@ -149,6 +150,7 @@ class SessionConverterInterface {
   virtual void SegmentFocusLast() ABSTRACT;
   virtual void SegmentFocusLeft() ABSTRACT;
   virtual void SegmentFocusLeftEdge() ABSTRACT;
+  virtual void SegmentFocusRightOrCommit() ABSTRACT;
 
   // Resize the focused segment.
   virtual void SegmentWidthExpand() ABSTRACT;
@@ -179,6 +181,9 @@ class SessionConverterInterface {
 
   // Fill context information
   virtual void FillContext(commands::Context *context) const ABSTRACT;
+
+  virtual void GetHistorySegments(vector<string> *history) const ABSTRACT;
+  virtual void SetHistorySegments(const vector<string> &history) ABSTRACT;
 
   // Remove tail part of history segments
   virtual void RemoveTailOfHistorySegments(size_t num_of_characters) ABSTRACT;

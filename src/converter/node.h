@@ -30,6 +30,7 @@
 #ifndef MOZC_CONVERTER_NODE_H_
 #define MOZC_CONVERTER_NODE_H_
 
+#include <map>
 #include <string>
 #include "base/base.h"
 
@@ -39,23 +40,20 @@ class Segment;
 
 struct Node {
   enum NodeType {
+    NOR_NODE,  // normal node
     BOS_NODE,  // BOS (beginning of sentence)
     EOS_NODE,  // EOS (end of sentence)
-    NOR_NODE,  // normal node in dictionary
-    UNK_NODE,  // unknown node not in dictionary
     CON_NODE,  // constrained node
     HIS_NODE,  // history node
-    UNU_NODE   // unused node
   };
 
-  // CharacterForm setting.
-  // if you don't want to modify the form
-  // of this node, please set NO_NORMALIZATION.
-  // Basically, the words registered in user dictionary should
-  // have NO_NORMALIZATION
-  enum NormalizationType {
-    DEFAULT_NORMALIZATION,
-    NO_NORMALIZATION
+  enum Attribute {
+    DEFAULT_ATTRIBUTE     = 0,
+    SYSTEM_DICTIONARY     = 1,  // system dictionary (not used now)
+    USER_DICTIONARY       = 2,  // user dictionary (not used now)
+    NO_VARIANTS_EXPANSION = 4,  // no need to expand full/half
+    WEAK_CONNECTED        = 8,  // internally used in the converter
+    SPELLING_CORRECTION   = 16,  // "did you mean"
   };
 
   Node     *prev;
@@ -66,7 +64,7 @@ struct Node {
   // from constrained_prev to current node is defined,
   // other transition is set to be infinite
   Node     *constrained_prev;
-  const Segment  *con_segment;
+
   uint16    rid;
   uint16    lid;
   uint16    begin_pos;
@@ -74,25 +72,70 @@ struct Node {
   int16     wcost;
   int32     cost;
   NodeType  node_type;
-  NormalizationType normalization_type;
-  bool      is_weak_connected;
+  uint32    attributes;
   string    key;
   string    value;
-  bool      is_spelling_correction;
 
   inline void Init() {
-    prev = next = bnext = enext = constrained_prev = NULL;
-    key.clear();
-    value.clear();
-    rid = lid = begin_pos = end_pos = 0;
+    prev = NULL;
+    next = NULL;
+    bnext = NULL;
+    enext = NULL;
+    constrained_prev = NULL;
+    rid = 0;
+    lid = 0;
+    begin_pos = 0;
+    end_pos = 0;
     node_type = NOR_NODE;
-    normalization_type = DEFAULT_NORMALIZATION;
-    con_segment = NULL;
     wcost = 0;
     cost = 0;
-    is_weak_connected = false;
-    is_spelling_correction = false;
+    attributes = 0;
+    key.clear();
+    value.clear();
   }
+};
+
+// this class keep multiple types of data.
+// each type should inherit NodeAllocatorData::Data
+class NodeAllocatorData {
+ public:
+  ~NodeAllocatorData() {
+    clear();
+  }
+
+  bool has(const char *name) const {
+    return (data_.find(name) != data_.end());
+  }
+
+  void erase(const char *name) {
+    if (has(name)) {
+      delete data_[name];
+      data_.erase(name);
+    }
+  }
+
+  void clear() {
+    for (map<const char *, Data *>::iterator it = data_.begin();
+         it != data_.end(); ++it) {
+      delete it->second;
+    }
+    data_.clear();
+  }
+
+  template<typename Type> Type *get(const char *name) {
+    if (!has(name)) {
+      data_[name] = new Type;
+    }
+    return reinterpret_cast<Type *>(data_[name]);
+  }
+
+  class Data {
+   public:
+    virtual ~Data() {}
+  };
+
+ private:
+  map<const char *, Data *> data_;
 };
 
 class NodeAllocatorInterface {
@@ -110,8 +153,17 @@ class NodeAllocatorInterface {
     max_nodes_size_ = max_nodes_size;
   }
 
+  // Backend specific data, like cache for look up.
+  NodeAllocatorData *mutable_data() {
+    return &data_;
+  }
+  const NodeAllocatorData &data() {
+    return data_;
+  }
+
  private:
   size_t max_nodes_size_;
+  NodeAllocatorData data_;
 };
 }
 #endif  // MOZC_CONVERTER_NODE_H_;

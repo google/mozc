@@ -119,7 +119,6 @@ class FortuneData {
 bool InsertCandidate(FortuneType fortune_type,
                      size_t insert_pos,
                      Segment *segment) {
-  segment->GetCandidates(insert_pos);
   if (segment->candidates_size() == 0) {
     LOG(WARNING) << "candidates_size is 0";
     return false;
@@ -168,11 +167,11 @@ bool InsertCandidate(FortuneType fortune_type,
   c->content_value = value;
   c->key = base_candidate.key;
   c->content_key = base_candidate.content_key;
-  c->can_expand_alternative = false;
-  c->learning_type |= Segment::Candidate::NO_LEARNING;
+  c->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
+  c->attributes |= Segment::Candidate::NO_LEARNING;
   // discription "今日の運勢"
-  c->SetDescription(0,
-      "\xE4\xBB\x8A\xE6\x97\xA5\xE3\x81\xAE\xE9\x81\x8B\xE5\x8B\xA2");
+  c->description =
+      "\xE4\xBB\x8A\xE6\x97\xA5\xE3\x81\xAE\xE9\x81\x8B\xE5\x8B\xA2";
   return true;
 }
 

@@ -48,17 +48,20 @@ NBestGenerator::NBestGenerator()
       begin_node_(NULL), end_node_(NULL),
       connector_(ConnectorFactory::GetConnector()),
       lattice_(NULL),
-      viterbi_result_inserted_(false) {}
+      viterbi_result_inserted_(false),
+      is_prediction_(false) {}
 
 NBestGenerator::~NBestGenerator() {}
 
 void NBestGenerator::Init(const Node *begin_node, const Node *end_node,
-                          const Lattice *lattice) {
+                          const Lattice *lattice,
+                          bool is_prediction) {
   Reset();
 
   begin_node_ = begin_node;
   end_node_ = end_node;
   lattice_ = lattice;
+  is_prediction_ = is_prediction;
 
   if (lattice_ == NULL || !lattice_->has_lattice()) {
     LOG(ERROR) << "lattice is not available";
@@ -89,6 +92,7 @@ void NBestGenerator::Reset() {
   filter_.reset(new CandidateFilter);
   freelist_.Free();
   viterbi_result_inserted_ = false;
+  is_prediction_ = false;
 }
 
 void NBestGenerator::MakeCandidate(Segment::Candidate *candidate,
@@ -104,8 +108,6 @@ void NBestGenerator::MakeCandidate(Segment::Candidate *candidate,
   candidate->value.clear();
   candidate->content_value.clear();
   candidate->content_key.clear();
-  candidate->is_spelling_correction = false;
-  candidate->can_expand_alternative = true;
   candidate->lid = nodes.front()->lid;
   candidate->rid = nodes.back()->rid;
   candidate->cost = cost;
@@ -129,9 +131,11 @@ void NBestGenerator::MakeCandidate(Segment::Candidate *candidate,
 
     candidate->key += node->key;
     candidate->value += node->value;
-    candidate->is_spelling_correction |= node->is_spelling_correction;
-    if (node->normalization_type == Node::NO_NORMALIZATION) {
-      candidate->can_expand_alternative = false;
+    if (node->attributes & Node::SPELLING_CORRECTION) {
+      candidate->attributes |= Segment::Candidate::SPELLING_CORRECTION;
+    }
+    if (node->attributes & Node::NO_VARIANTS_EXPANSION) {
+      candidate->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
     }
   }
 
@@ -146,7 +150,7 @@ void NBestGenerator::MakeCandidate(Segment::Candidate *candidate,
   //  a) compound node and resegmented via personal name resegmentation
   //  b) compound-based reranking.
   if (has_constrained_node) {
-    candidate->learning_type |= Segment::Candidate::CONTEXT_SENSITIVE;
+    candidate->attributes |= Segment::Candidate::CONTEXT_SENSITIVE;
   }
 }
 
@@ -264,14 +268,15 @@ bool NBestGenerator::Next(Segment::Candidate *candidate) {
         // is_boundary is true if there is a grammer-based boundary
         // between lnode and rnode
         const bool is_boundary = (lnode->node_type == Node::HIS_NODE ||
-                                  Segmenter::IsBoundary(lnode, rnode));
+                                  Segmenter::IsBoundary(lnode, rnode,
+                                                        is_prediction_));
 
         // is_valid_boudnary is true if the word connection from
         // lnode to rnode has a gramatically correct relation.
         const bool is_valid_boundary =
             (lnode->node_type == Node::CON_NODE ||
              rnode->node_type == Node::CON_NODE ||
-             rnode->is_weak_connected ||
+             (rnode->attributes & Node::WEAK_CONNECTED) ||
              (is_edge && is_boundary) ||   // on the edge, have a boudnary.
              (!is_boundary && !is_edge));  // not on the edge, not the case.
 
@@ -295,9 +300,7 @@ bool NBestGenerator::Next(Segment::Candidate *candidate) {
         // can_expand_more is true if we can expand candidates from
         // |rnode| to |lnode|.
         const bool can_expand_more  =
-            (is_valid_boundary && is_valid_cost && is_valid_position &&
-             lnode->node_type != Node::UNU_NODE &&
-             rnode->node_type != Node::UNU_NODE);
+            (is_valid_boundary && is_valid_cost && is_valid_position);
 
         if (can_expand_more) {
           const int transition_cost = GetTransitionCost(lnode, rnode);
@@ -327,7 +330,7 @@ bool NBestGenerator::Next(Segment::Candidate *candidate) {
             wcost_diff = transition_cost + rnode->wcost;
           }
 
-          if (rnode->is_weak_connected) {
+          if (rnode->attributes & Node::WEAK_CONNECTED) {
             const int kWeakConnectedPenalty = 3453;   // log prob of 1/1000
             cost_diff += kWeakConnectedPenalty;
             structure_cost_diff += kWeakConnectedPenalty / 2;

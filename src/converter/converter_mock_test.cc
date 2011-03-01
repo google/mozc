@@ -27,10 +27,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "converter/converter_mock.h"
-
 #include <string>
 
+#include "composer/composer.h"
+#include "composer/table.h"
+#include "converter/converter_mock.h"
 #include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
 #include "testing/base/public/googletest.h"
@@ -44,6 +45,11 @@ void SetSegments(Segments *segments, const string &cand_value) {
   segment->set_key("\x54\x65\x73\x74\xe3\x81\xa6\xe3\x81\x99\xe3\x81\xa8");
   Segment::Candidate *candidate = segment->add_candidate();
   candidate->value = cand_value;
+
+  // Add meta candidates
+  Segment::Candidate *meta_cand = segment->add_meta_candidate();
+  meta_cand->Init();
+  meta_cand->value = "TestT13N";
 }
 }
 
@@ -78,6 +84,24 @@ TEST_F(ConverterMockTest, SetConverter) {
   EXPECT_EQ(&mock, converter_mock);
 }
 
+TEST_F(ConverterMockTest, CopySegment) {
+  ConverterInterface *converter = ConverterFactory::GetConverter();
+
+  Segments output, expect;
+  SetSegments(&expect, "StartConvert");
+  GetMock()->SetStartConversion(&expect, true);
+  EXPECT_TRUE(converter->StartConversion(&output, "dummy"));
+  EXPECT_EQ(expect.DebugString(), output.DebugString());
+  EXPECT_EQ(1, output.segments_size());
+  const Segment &seg = output.segment(0);
+  // "Testてすと"
+  EXPECT_EQ("\x54\x65\x73\x74\xe3\x81\xa6\xe3\x81\x99\xe3\x81\xa8", seg.key());
+  EXPECT_EQ(1, seg.candidates_size());
+  EXPECT_EQ("StartConvert", seg.candidate(0).value);
+  EXPECT_EQ(1, seg.meta_candidates_size());
+  EXPECT_EQ("TestT13N", seg.meta_candidate(0).value);
+}
+
 TEST_F(ConverterMockTest, SetStartConvert) {
   ConverterInterface *converter = ConverterFactory::GetConverter();
 
@@ -85,6 +109,16 @@ TEST_F(ConverterMockTest, SetStartConvert) {
   SetSegments(&expect, "StartConvert");
   GetMock()->SetStartConversion(&expect, true);
   EXPECT_TRUE(converter->StartConversion(&output, "dummy"));
+  EXPECT_EQ(expect.DebugString(), output.DebugString());
+}
+
+TEST_F(ConverterMockTest, SetStartConvertWithComposer) {
+  ConverterInterface *converter = ConverterFactory::GetConverter();
+
+  Segments output, expect;
+  SetSegments(&expect, "StartConvertWithComposer");
+  GetMock()->SetStartConversionWithComposer(&expect, true);
+  EXPECT_TRUE(converter->StartConversionWithComposer(&output, NULL));
   EXPECT_EQ(expect.DebugString(), output.DebugString());
 }
 
@@ -145,16 +179,6 @@ TEST_F(ConverterMockTest, SetResetConversion) {
   SetSegments(&expect, "ResetConversion");
   GetMock()->SetResetConversion(&expect, true);
   EXPECT_TRUE(converter->ResetConversion(&output));
-  EXPECT_EQ(expect.DebugString(), output.DebugString());
-}
-
-TEST_F(ConverterMockTest, SetGetCandidates) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
-
-  Segments output, expect;
-  SetSegments(&expect, "GetCandidates");
-  GetMock()->SetGetCandidates(&expect, true);
-  EXPECT_TRUE(converter->GetCandidates(&output, 10, 100));
   EXPECT_EQ(expect.DebugString(), output.DebugString());
 }
 
@@ -268,6 +292,24 @@ TEST_F(ConverterMockTest, GetStartConversion) {
   EXPECT_EQ(input_key, last_key);
 }
 
+TEST_F(ConverterMockTest, GetStartConversionWithComposer) {
+  ConverterInterface *converter = ConverterFactory::GetConverter();
+
+  Segments input;
+  composer::Composer input_composer;
+  SetSegments(&input, "StartConversionWithComposer");
+  const string input_str = input.DebugString();
+  converter->StartConversionWithComposer(&input, &input_composer);
+
+  Segments last_segment;
+  const composer::Composer *last_composer;
+  GetMock()->GetStartConversionWithComposer(&last_segment, &last_composer);
+  const string last_segment_str = last_segment.DebugString();
+
+  EXPECT_EQ(input_str, last_segment_str);
+  EXPECT_EQ(&input_composer, last_composer);
+}
+
 TEST_F(ConverterMockTest, GetStartReverseConversion) {
   ConverterInterface *converter = ConverterFactory::GetConverter();
 
@@ -365,25 +407,6 @@ TEST_F(ConverterMockTest, GetResetConversion) {
   const string last_segment_str = last_segment.DebugString();
 
   EXPECT_EQ(input_str, last_segment_str);
-}
-
-TEST_F(ConverterMockTest, GetGetCandidates) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
-
-  Segments input;
-  size_t input_idx = 2, input_size = 10;
-  SetSegments(&input, "GetCandidates");
-  const string input_str = input.DebugString();
-  converter->GetCandidates(&input, input_idx, input_size);
-
-  Segments last_segment;
-  size_t last_idx, last_size;
-  GetMock()->GetGetCandidates(&last_segment, &last_idx, &last_size);
-  const string last_segment_str = last_segment.DebugString();
-
-  EXPECT_EQ(input_str, last_segment_str);
-  EXPECT_EQ(input_idx, last_idx);
-  EXPECT_EQ(input_size, last_size);
 }
 
 TEST_F(ConverterMockTest, GetCommitSegmentValue) {

@@ -98,14 +98,9 @@ bool QualityRegressionUtil::ConvertAndTest(const string &key,
   converter_->ResetConversion(segments_.get());
   actual_value->clear();
 
-  const size_t expand_size = expected_rank + 200;
-
   if (command == kConversionExpect ||
       command == kConversionNotExpect) {
     converter_->StartConversion(segments_.get(), key);
-    if (expected_rank > 0) {
-      converter_->GetCandidates(segments_.get(), 0, expand_size);
-    }
   } else if (command == kPredictionExpect ||
              command == kPredictionNotExpect) {
     converter_->StartPrediction(segments_.get(), key);

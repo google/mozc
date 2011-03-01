@@ -40,9 +40,12 @@
 #include "base/file_stream.h"
 #include "base/util.h"
 #include "converter/node.h"
+#include "dictionary/suppression_dictionary.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
 #include "dictionary/user_pos.h"
+#include "session/config_handler.h"
+#include "session/config.pb.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
@@ -417,6 +420,34 @@ TEST_F(UserDictionaryTest, TestLookupPrefix) {
   TestLookupPrefixHelper(NULL, 0, "starting", 8, *dic.get());
 }
 
+TEST_F(UserDictionaryTest, IncognitoModeTest) {
+  config::Config config;
+  config::ConfigHandler::GetConfig(&config);
+  config.set_incognito_mode(true);
+  config::ConfigHandler::SetConfig(config);
+
+  scoped_ptr<UserDictionary> dic(CreateDictionary());
+  // Wait for async reload called from the constructor.
+  dic->WaitForReloader();
+
+  {
+    UserDictionaryStorage storage("");
+    UserDictionaryTest::LoadFromString(kUserDictionary0, &storage);
+    dic->Load(storage);
+  }
+
+  TestNodeAllocator allocator;
+
+  EXPECT_EQ(NULL, dic->LookupPrefix("start", 4, &allocator));
+  EXPECT_EQ(NULL, dic->LookupPredictive("s", 1, &allocator));
+
+  config.set_incognito_mode(false);
+  config::ConfigHandler::SetConfig(config);
+
+  EXPECT_FALSE(NULL == dic->LookupPrefix("start", 4, &allocator));
+  EXPECT_FALSE(NULL == dic->LookupPredictive("s", 1, &allocator));
+}
+
 TEST_F(UserDictionaryTest, AsyncLoadTest) {
   const string filename = Util::JoinPath(FLAGS_test_tmpdir, "test.db");
   Util::Unlink(filename);
@@ -443,6 +474,7 @@ TEST_F(UserDictionaryTest, AsyncLoadTest) {
       keys.push_back(entry->key());
     }
     EXPECT_TRUE(storage.Save());
+    EXPECT_TRUE(storage.UnLock());
   }
 
   {
@@ -459,6 +491,80 @@ TEST_F(UserDictionaryTest, AsyncLoadTest) {
         dic->LookupPrefix(keys[i].c_str(),
                           keys[i].size(), &allocator);
       }
+    }
+  }
+}
+
+TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
+  SuppressionDictionary *suppression_dictionary =
+      SuppressionDictionary::GetSuppressionDictionary();
+
+  scoped_ptr<UserDictionary> user_dic(CreateDictionary());
+  user_dic->WaitForReloader();
+
+  const string filename = Util::JoinPath(FLAGS_test_tmpdir, "test.db");
+  Util::Unlink(filename);
+
+  UserDictionaryStorage storage(filename);
+
+  // Create dictionary
+  {
+    uint64 id = 0;
+    EXPECT_TRUE(storage.CreateDictionary("test", &id));
+    UserDictionaryStorage::UserDictionary *dic =
+        storage.mutable_dictionaries(0);
+    for (size_t j = 0; j < 10000; ++j) {
+      UserDictionaryStorage::UserDictionaryEntry *entry =
+          dic->add_entries();
+      entry->set_key("no_suppress_key" + Util::SimpleItoa(j));
+      entry->set_value("no_suppress_value" + Util::SimpleItoa(j));
+      entry->set_pos("noun");
+    }
+
+    for (size_t j = 0; j < 10; ++j) {
+      UserDictionaryStorage::UserDictionaryEntry *entry =
+          dic->add_entries();
+      entry->set_key("suppress_key" + Util::SimpleItoa(j));
+      entry->set_value("suppress_value" + Util::SimpleItoa(j));
+      // entry->set_pos("抑制単語");
+      entry->set_pos("\xE6\x8A\x91\xE5\x88\xB6\xE5\x8D\x98\xE8\xAA\x9E");
+    }
+
+    suppression_dictionary->Lock();
+    EXPECT_TRUE(suppression_dictionary->IsLocked());
+    user_dic->Load(storage);
+    EXPECT_FALSE(suppression_dictionary->IsLocked());
+
+    for (size_t j = 0; j < 10; ++j) {
+      EXPECT_TRUE(suppression_dictionary->SuppressEntry(
+          "suppress_key" + Util::SimpleItoa(j),
+          "suppress_value" + Util::SimpleItoa(j)));
+    }
+  }
+
+  // Remove suppression entry
+  {
+    storage.Clear();
+    uint64 id = 0;
+    EXPECT_TRUE(storage.CreateDictionary("test", &id));
+    UserDictionaryStorage::UserDictionary *dic =
+        storage.mutable_dictionaries(0);
+    for (size_t j = 0; j < 10000; ++j) {
+      UserDictionaryStorage::UserDictionaryEntry *entry =
+          dic->add_entries();
+      entry->set_key("no_suppress_key" + Util::SimpleItoa(j));
+      entry->set_value("no_suppress_value" + Util::SimpleItoa(j));
+      entry->set_pos("noun");
+    }
+
+    suppression_dictionary->Lock();
+    user_dic->Load(storage);
+    EXPECT_FALSE(suppression_dictionary->IsLocked());
+
+    for (size_t j = 0; j < 10; ++j) {
+      EXPECT_FALSE(suppression_dictionary->SuppressEntry(
+          "suppress_key" + Util::SimpleItoa(j),
+          "suppress_value" + Util::SimpleItoa(j)));
     }
   }
 }

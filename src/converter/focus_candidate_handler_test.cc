@@ -303,10 +303,25 @@ TEST_F(FocusCandidateHandlerTest, FocusCandidateHandlerMetaCandidate) {
     seg[i] = segments.add_segment();
   }
 
-
   // set key
   // "「"
   seg[0]->set_key("\xe3\x80\x8c");
+  // set meta candidates
+  {
+    EXPECT_EQ(0, seg[0]->meta_candidates_size());
+    vector<Segment::Candidate> *meta_cands = seg[0]->mutable_meta_candidates();
+    meta_cands->resize(transliteration::NUM_T13N_TYPES);
+    for (size_t i = 0; i < transliteration::NUM_T13N_TYPES; ++i) {
+      meta_cands->at(i).Init();
+      // "「"
+      meta_cands->at(i).value = "\xe3\x80\x8c";
+      meta_cands->at(i).content_value = "\xe3\x80\x8c";
+    }
+    meta_cands->at(transliteration::HALF_KATAKANA).value = "\xef\xbd\xa2";
+    meta_cands->at(transliteration::HALF_KATAKANA).content_value =
+        "\xef\xbd\xa2";
+    EXPECT_EQ(transliteration::NUM_T13N_TYPES, seg[0]->meta_candidates_size());
+  }
   // "｢"
   EXPECT_EQ(
       "\xef\xbd\xa2",
@@ -323,6 +338,23 @@ TEST_F(FocusCandidateHandlerTest, FocusCandidateHandlerMetaCandidate) {
   // set key
   // "」"
   seg[2]->set_key("\xe3\x80\x8d");
+  // set meta candidates
+  {
+    EXPECT_EQ(0, seg[2]->meta_candidates_size());
+    vector<Segment::Candidate> *meta_cands = seg[2]->mutable_meta_candidates();
+    meta_cands->resize(transliteration::NUM_T13N_TYPES);
+    for (size_t i = 0; i < transliteration::NUM_T13N_TYPES; ++i) {
+      meta_cands->at(i).Init();
+      // "」"
+      meta_cands->at(i).value = "\xe3\x80\x8d";
+      meta_cands->at(i).content_value = "\xe3\x80\x8d";
+    }
+    // "｣"
+    meta_cands->at(transliteration::HALF_KATAKANA).value = "\xef\xbd\xa3";
+    meta_cands->at(transliteration::HALF_KATAKANA).content_value =
+        "\xef\xbd\xa3";
+    EXPECT_EQ(transliteration::NUM_T13N_TYPES, seg[2]->meta_candidates_size());
+  }
   // "｣"
   EXPECT_EQ(
       "\xef\xbd\xa3",

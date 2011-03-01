@@ -63,7 +63,14 @@
 #include <vector>
 #include "base/util.h"
 
-#ifndef OS_WINDOWS
+#ifdef OS_MACOSX
+// We do not use the global environ variable because it is unavailable
+// in Mac Framework/dynamic libraries.  Instead call _NSGetEnviron().
+// See the "PROGRAMMING" section of http://goo.gl/4Hq0D for the
+// detailed information.
+#include <crt_externs.h>
+static char **environ = *_NSGetEnviron();
+#elif !defined(OS_WINDOWS)
 // Defined somewhere in libc. We can't pass NULL as the 6th argument of
 // posix_spawn() since Qt applications use (at least) DISPLAY and QT_IM_MODULE
 // environment variables.

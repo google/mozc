@@ -94,6 +94,17 @@ string NormalizeSymbol(const string &symbol);
 // Control characters, including newline('\n'), in a given string remain as is.
 string QuoteString(const string &str);
 
+// Unquotes and unescapes a double-quoted string.
+// The input string must begin and end with double quotes.
+bool UnquoteString(const string &input, string *output);
+
+// Tokenizes the given string as S expression.  Returns true if success.
+//
+// This function implements very simple tokenization and is NOT conforming to
+// the definition of S expression.  For example, this function does not return
+// an error for the input "\'".
+bool TokenizeSExpr(const string &input, vector<string> *output);
+
 // Prints an error message in S-expression and terminates with status code 1.
 void ErrorExit(const string &error, const string &message);
 

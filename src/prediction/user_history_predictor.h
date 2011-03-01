@@ -104,6 +104,7 @@ class UserHistoryPredictor: public PredictorInterface {
     NO_MATCH,            // no match
     LEFT_PREFIX_MATCH,   // left string is a prefix of right string
     RIGHT_PREFIX_MATCH,  // right string is a prefix of left string
+    LEFT_EMPTY_MATCH,    // left string is empty (for zero_query_suggestion)
     EXACT_MATCH,         // right string == left string
   };
 
@@ -120,7 +121,8 @@ class UserHistoryPredictor: public PredictorInterface {
 
   // return true |result_entry| can be handled as
   // a valid result if the length of user input is |prefix_len|.
-  static bool IsValidSuggestion(uint32 prefix_len,
+  static bool IsValidSuggestion(bool zero_query_suggestion,
+                                uint32 prefix_len,
                                 const Entry &result_entry);
 
   // return "tweaked" score of result_entry.
@@ -156,6 +158,7 @@ class UserHistoryPredictor: public PredictorInterface {
   typedef LRUCache<uint32, Entry>::Element DicElement;
 
   bool CheckSyncerAndDelete() const;
+
 
   bool Lookup(Segments *segments) const;
 

@@ -94,6 +94,8 @@ class RendererInterface;
   // the controller communicates with.
   NSString *clientBundle_;
 
+  NSRange replacementRange_;
+
   // |candidateController_| controls the candidate windows.
   mozc::renderer::RendererInterface *candidateController_;
 
@@ -115,13 +117,21 @@ class RendererInterface;
 // in candidate windows.
 - (void)candidateClicked:(int)id;
 
+// reconversionClicked: is called when the user clicks "Reconversion"
+// menu item.
+- (IBAction)reconversionClicked:(id)sender;
+
 // configClicked: is called when the user clicks "Configure Mozc..."
 // menu item.
 - (IBAction)configClicked:(id)sender;
 
-// registerWordClicked: is called when the user clicks "Register words"
-// menu item.
+// dictionaryToolClicked: is called when the user clicks "Dictionary
+// Tool..."  menu item.
 - (IBAction)dictionaryToolClicked:(id)sender;
+
+// registerWordClicked: is called when the user clicks "Add a word..."
+// menu item.
+- (IBAction)registerWordClicked:(id)sender;
 
 // characterPadClicked: is called when the user clicks "Character Pad..."
 // menu item.

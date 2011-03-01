@@ -30,6 +30,7 @@
 #include "composer/internal/char_chunk.h"
 
 #include "base/util.h"
+#include "composer/internal/composition_input.h"
 #include "composer/internal/transliterators.h"
 #include "composer/table.h"
 
@@ -46,11 +47,12 @@ bool DeleteEnd(const string &end, string *target) {
   target->erase(rindex);
   return true;
 }
-};
+}  // anonymous namespace
 
 CharChunk::CharChunk()
     : transliterator_(Transliterators::GetConversionStringSelector()),
-      status_mask_(0) {}
+      status_mask_(0),
+      attributes_(NO_TABLE_ATTRIBUTE) {}
 
 void CharChunk::Clear() {
   raw_.clear();
@@ -62,7 +64,9 @@ void CharChunk::Clear() {
 
 size_t CharChunk::GetLength(const TransliteratorInterface *t12r) const {
   const string t13n =
-      GetTransliterator(t12r)->Transliterate(raw_, conversion_ + pending_);
+    GetTransliterator(t12r)->Transliterate(
+        Table::DeleteSpecialKey(raw_),
+        Table::DeleteSpecialKey(conversion_ + pending_));
   return Util::CharsLen(t13n);
 }
 
@@ -70,10 +74,12 @@ void CharChunk::AppendResult(const Table &table,
                              const TransliteratorInterface *t12r,
                              string *result) const {
   if (has_status(NO_CONVERSION)) {
-    result->append(raw_);
+    result->append(Table::DeleteSpecialKey(raw_));
   } else {
     const string t13n =
-        GetTransliterator(t12r)->Transliterate(raw_, conversion_ + pending_);
+      GetTransliterator(t12r)->Transliterate(
+          Table::DeleteSpecialKey(raw_),
+          Table::DeleteSpecialKey(conversion_ + pending_));
     result->append(t13n);
   }
 }
@@ -82,19 +88,21 @@ void CharChunk::AppendTrimedResult(const Table &table,
                                    const TransliteratorInterface *t12r,
                                    string *result) const {
   if (has_status(NO_CONVERSION)) {
-    result->append(raw_);
+    result->append(Table::DeleteSpecialKey(raw_));
   } else {
     // Only determined value (e.g. |conversion_| only) is added.
     string converted = conversion_;
     if (!pending_.empty()) {
       size_t key_length = 0;
       bool fixed = false;
-      const Entry* entry = table.LookUpPrefix(pending_, &key_length, &fixed);
+      const Entry *entry = table.LookUpPrefix(pending_, &key_length, &fixed);
       if (entry != NULL && entry->input() == entry->result()) {
         converted.append(entry->result());
       }
     }
-    result->append(GetTransliterator(t12r)->Transliterate(raw_, converted));
+    result->append(GetTransliterator(t12r)->Transliterate(
+                       Table::DeleteSpecialKey(raw_),
+                       Table::DeleteSpecialKey(converted)));
   }
 }
 
@@ -102,7 +110,7 @@ void CharChunk::AppendFixedResult(const Table &table,
                                   const TransliteratorInterface *t12r,
                                   string *result) const {
   if (has_status(NO_CONVERSION)) {
-    result->append(raw_);
+    result->append(Table::DeleteSpecialKey(raw_));
   } else {
     string converted = conversion_;
     if (!ambiguous_.empty()) {
@@ -117,7 +125,9 @@ void CharChunk::AppendFixedResult(const Table &table,
       // appended.
       converted.append(pending_);
     }
-    result->append(GetTransliterator(t12r)->Transliterate(raw_, converted));
+    result->append(GetTransliterator(t12r)->Transliterate(
+                       Table::DeleteSpecialKey(raw_),
+                       Table::DeleteSpecialKey(converted)));
   }
 }
 
@@ -140,12 +150,12 @@ bool CharChunk::IsConvertible(
   size_t key_length = 0;
   bool fixed = false;
   string key = pending_ + input;
-  const Entry* entry = table.LookUpPrefix(key, &key_length, &fixed);
+  const Entry *entry = table.LookUpPrefix(key, &key_length, &fixed);
 
   return entry && (key.size() == key_length) && fixed;
 }
 
-void CharChunk::Combine(const CharChunk& left_chunk) {
+void CharChunk::Combine(const CharChunk &left_chunk) {
   conversion_ = left_chunk.conversion_ + conversion_;
   raw_ = left_chunk.raw_ + raw_;
   // TODO(komatsu): This is a hacky way.  We should look up the
@@ -168,8 +178,8 @@ bool CharChunk::AddInputInternal(const Table &table, string *input) {
   size_t key_length = 0;
   bool fixed = false;
   string key = pending_ + *input;
-  const Entry* entry = table.LookUpPrefix(key, &key_length, &fixed);
-
+  const Entry *entry = table.LookUpPrefix(key, &key_length, &fixed);
+  
   if (entry == NULL) {
     if (key_length == 0) {
       // No prefix character is not contained in the table, fallback
@@ -198,6 +208,7 @@ bool CharChunk::AddInputInternal(const Table &table, string *input) {
     input->erase(0, key_length);
     return kNoLoop;
   }
+
   // The prefix of key reached a conversion result, thus entry is not NULL.
 
   if (key.size() == key_length) {
@@ -209,6 +220,13 @@ bool CharChunk::AddInputInternal(const Table &table, string *input) {
       conversion_.append(entry->result());
       pending_ = entry->pending();
       ambiguous_.clear();
+
+      // If this entry is the first entry, the table attributes are
+      // applied to this chunk.
+      if (raw_.size() == entry->input().size() &&
+          conversion_.size() == entry->result().size()) {
+        attributes_ = entry->attributes();
+      }
     } else {  // !fixed
       // The whole string of key reached a conversion result, but the
       // result is ambiguous (like "n" with "n->ん and na->な").
@@ -264,13 +282,20 @@ void CharChunk::AddInputAndConvertedChar(const Table &table,
     // preedit on Kana input is always dropped.
     ambiguous_ = *converted_char;
     converted_char->clear();
+
+    // If this entry is the first entry, the table attributes are
+    // applied to this chunk.
+    const Entry *entry = table.LookUp(pending_);
+    if (entry != NULL) {
+      attributes_ = entry->attributes();
+    }
     return;
   }
 
   const string input = pending_ + *converted_char;
   size_t key_length = 0;
   bool fixed = false;
-  const Entry* entry = table.LookUpPrefix(input, &key_length, &fixed);
+  const Entry *entry = table.LookUpPrefix(input, &key_length, &fixed);
   if (entry == NULL) {
     // Do not modify this char_chunk, all key and converted_char
     // values will be used by the next char_chunk.
@@ -284,7 +309,7 @@ void CharChunk::AddInputAndConvertedChar(const Table &table,
       conversion_.append(entry->result());
       pending_ = entry->pending();
       ambiguous_.clear();
-    } else {
+    } else {  // !fixed
       // |conversion_| remains the current value.
       pending_ = entry->result();
       ambiguous_ = entry->result();
@@ -312,6 +337,40 @@ void CharChunk::AddInputAndConvertedChar(const Table &table,
   // better way to work around this limitation.
   key->clear();
   converted_char->assign(input.substr(key_length));
+}
+
+bool CharChunk::ShouldCommit() const {
+  return (attributes_ & DIRECT_INPUT) && pending_.empty();
+}
+
+bool CharChunk::ShouldInsertNewChunk(const Table &table,
+                                     const CompositionInput &input) const {
+  if (raw_.empty() && conversion_.empty() && pending_.empty()) {
+    return false;
+  }
+
+  const bool is_new_input =
+      input.is_new_input() ||
+      ((attributes_ & END_CHUNK) && pending_.empty());
+  if (is_new_input && table.HasNewChunkEntry(input.raw())) {
+    return true;
+  }
+  return false;
+}
+
+void CharChunk::AddCompositionInput(const Table &table,
+                                    CompositionInput *input) {
+  if (input->has_conversion()) {
+    AddInputAndConvertedChar(table,
+                             input->mutable_raw(),
+                             input->mutable_conversion());
+    return;
+  }
+
+  if (ShouldInsertNewChunk(table, *input)) {
+    return;
+  }
+  AddInput(table, input->mutable_raw());
 }
 
 void CharChunk::SetTransliterator(
@@ -372,7 +431,7 @@ void CharChunk::clear_status() {
 
 bool CharChunk::SplitChunk(const TransliteratorInterface *t12r,
                            const size_t position,
-                           CharChunk* left_new_chunk) {
+                           CharChunk *left_new_chunk) {
   if (position <= 0 || position >= GetLength(t12r)) {
     LOG(WARNING) << "Invalid position: " << position;
     return false;
@@ -380,7 +439,9 @@ bool CharChunk::SplitChunk(const TransliteratorInterface *t12r,
 
   string raw_lhs, raw_rhs, converted_lhs, converted_rhs;
   GetTransliterator(t12r)->Split(
-      position, raw_, conversion_ + pending_,
+      position,
+      Table::DeleteSpecialKey(raw_),
+      Table::DeleteSpecialKey(conversion_ + pending_),
       &raw_lhs, &raw_rhs, &converted_lhs, &converted_rhs);
 
   left_new_chunk->SetTransliterator(transliterator_);
@@ -409,8 +470,16 @@ bool CharChunk::SplitChunk(const TransliteratorInterface *t12r,
 
 const TransliteratorInterface *CharChunk::GetTransliterator(
     const TransliteratorInterface *transliterator) const {
+  if (transliterator != NULL) {
+    return transliterator;
+  }
+
+  if (attributes_ & NO_TRANSLITERATION) {
+    return Transliterators::GetConversionStringSelector();
+  }
+
   DCHECK(transliterator_);
-  return transliterator != NULL ? transliterator : transliterator_;
+  return transliterator_;
 }
 
 

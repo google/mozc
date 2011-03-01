@@ -689,6 +689,16 @@
          </property>
         </widget>
        </item>
+       <item row="3" column="0" colspan="7">
+        <widget class="QCheckBox" name="useJapaneseLayout">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="text">
+          <string>Always use Ja keyboard layout for Japanese input</string>
+         </property>
+        </widget>
+       </item>
       </layout>
      </widget>
     </widget>
@@ -732,7 +742,7 @@
       <property name="geometry">
        <rect>
         <x>20</x>
-        <y>170</y>
+        <y>180</y>
         <width>381</width>
         <height>21</height>
        </rect>
@@ -764,7 +774,7 @@
       <property name="geometry">
        <rect>
         <x>30</x>
-        <y>190</y>
+        <y>200</y>
         <width>361</width>
         <height>31</height>
        </rect>
@@ -814,7 +824,7 @@
         <x>30</x>
         <y>40</y>
         <width>361</width>
-        <height>101</height>
+        <height>121</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_4">
@@ -883,6 +893,13 @@
           </size>
          </property>
         </spacer>
+       </item>
+       <item row="4" column="0" colspan="3">
+        <widget class="QCheckBox" name="realtimeConversionCheckBox">
+         <property name="text">
+          <string>Use realtime conversion (experimental)</string>
+         </property>
+        </widget>
        </item>
       </layout>
      </widget>
@@ -1191,7 +1208,7 @@
        <rect>
         <x>30</x>
         <y>134</y>
-        <width>371</width>
+        <width>386</width>
         <height>32</height>
        </rect>
       </property>
@@ -1386,11 +1403,13 @@
   <tabstop>questionMarkCheckBox</tabstop>
   <tabstop>exclamationMarkCheckBox</tabstop>
   <tabstop>shiftKeyModeSwitchComboBox</tabstop>
+  <tabstop>useJapaneseLayout</tabstop>
   <tabstop>characterFormEditor</tabstop>
   <tabstop>historySuggestCheckBox</tabstop>
   <tabstop>clearUnusedUserPredictionButton</tabstop>
   <tabstop>clearUserPredictionButton</tabstop>
   <tabstop>dictionarySuggestCheckBox</tabstop>
+  <tabstop>realtimeConversionCheckBox</tabstop>
   <tabstop>suggestionsSizeSpinBox</tabstop>
   <tabstop>incognitoModeCheckBox</tabstop>
   <tabstop>usageStatsCheckBox</tabstop>

@@ -36,8 +36,8 @@
 #include "base/mutex.h"
 #include "base/singleton.h"
 #include "base/util.h"
+#include "composer/composer.h"
 #include "transliteration/transliteration.h"
-#include "converter/character_form_manager.h"
 #include "converter/focus_candidate_handler.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/segments.h"
@@ -57,6 +57,8 @@ class ConverterImpl : public ConverterInterface {
 
   bool StartConversion(Segments *segments,
                        const string &key) const;
+  bool StartConversionWithComposer(Segments *segments,
+                                   const composer::Composer *composer) const;
   bool StartReverseConversion(Segments *segments,
                               const string &key) const;
   bool StartPrediction(Segments *segments,
@@ -67,9 +69,6 @@ class ConverterImpl : public ConverterInterface {
   bool CancelConversion(Segments *segments) const;
   bool ResetConversion(Segments *segments) const;
   bool RevertConversion(Segments *segments) const;
-  bool GetCandidates(Segments *segments,
-                     size_t segment_index,
-                     size_t candidate_size) const;
   bool CommitSegmentValue(Segments *segments,
                           size_t segment_index,
                           int    candidate_index) const;
@@ -114,11 +113,12 @@ void SetKey(Segments *segments, const string &key) {
   segments->clear_conversion_segments();
   segments->clear_lattice();
   segments->clear_revert_entries();
+  segments->set_composer(NULL);
 
   mozc::Segment *seg = segments->add_segment();
   DCHECK(seg);
 
-  seg->clear();
+  seg->Clear();
   seg->set_key(key);
   seg->set_segment_type(mozc::Segment::FREE);
 
@@ -161,11 +161,47 @@ bool ConverterImpl::StartConversion(Segments *segments,
   }
   return false;
 }
-bool ConverterImpl::StartReverseConversion(Segments *segments,
-                                           const string &key) const {
-  LOG(WARNING) << "StartReverseConversion is not implemented";
+
+bool ConverterImpl::StartConversionWithComposer(
+    Segments *segments, const composer::Composer *composer) const {
+  string conversion_key;
+  if (composer != NULL) {
+    composer->GetQueryForConversion(&conversion_key);
+  }
+  SetKey(segments, conversion_key);
+  segments->set_composer(composer);
+  segments->set_request_type(Segments::CONVERSION);
+  if (immutable_converter_->Convert(segments)) {
+    rewriter_->Rewrite(segments);
+    return true;
+  }
   return false;
 }
+
+bool ConverterImpl::StartReverseConversion(Segments *segments,
+                                           const string &key) const {
+  segments->Clear();
+  SetKey(segments, key);
+  segments->set_request_type(Segments::REVERSE_CONVERSION);
+  if (!immutable_converter_->Convert(segments)) {
+    return false;
+  }
+  if (segments->segments_size() == 0) {
+    LOG(WARNING) << "no segments from reverse conversion";
+    return false;
+  }
+  for (int i = 0; i < segments->segments_size(); ++i) {
+    const mozc::Segment &seg = segments->segment(i);
+    if (seg.candidates_size() == 0 ||
+        seg.candidate(0).value.empty()) {
+      segments->Clear();
+      LOG(WARNING) << "got an empty segment from reverse conversion";
+      return false;
+    }
+  }
+  return true;
+}
+
 bool ConverterImpl::StartPrediction(Segments *segments,
                                     const string &key) const {
   SetKey(segments, key);
@@ -184,38 +220,9 @@ bool ConverterImpl::FinishConversion(Segments *segments) const {
   // revert SUBMITTED segments to FIXED_VALUE
   for (int i = 0; i < segments->segments_size(); ++i) {
     Segment *seg = segments->mutable_segment(i);
+    DCHECK(seg);
     if (seg->segment_type() == Segment::SUBMITTED) {
       seg->set_segment_type(Segment::FIXED_VALUE);
-    }
-  }
-
-  // save character form
-  for (int i = 0; i < segments->conversion_segments_size(); ++i) {
-    const Segment &seg = segments->conversion_segment(i);
-    if (seg.candidates_size() == 0) {
-      continue;
-    }
-
-    const Segment::Candidate &cand = seg.candidate(0);
-    if (!cand.can_expand_alternative) {
-      continue;
-    }
-
-    switch (cand.style) {
-      case Segment::Candidate::NUMBER_SEPARATED_ARABIC_HALFWIDTH:
-        // treat NUMBER_SEPARATED_ARABIC as half_width num
-        CharacterFormManager::GetCharacterFormManager()->
-            SetCharacterForm("0", config::Config::HALF_WIDTH);
-        break;
-      case Segment::Candidate::NUMBER_SEPARATED_ARABIC_FULLWIDTH:
-        // treat NUMBER_SEPARATED_WIDE_ARABIC as full_width num
-        CharacterFormManager::GetCharacterFormManager()->
-            SetCharacterForm("0", config::Config::FULL_WIDTH);
-        break;
-      default:
-        CharacterFormManager::GetCharacterFormManager()->
-            GuessAndSetCharacterForm(cand.value);
-        break;
     }
   }
 
@@ -227,7 +234,8 @@ bool ConverterImpl::FinishConversion(Segments *segments) const {
 
   segments->clear_lattice();
 
-  const int start_index = max(0, static_cast<int>(
+  const int start_index = max(0,
+                              static_cast<int>(
                                   segments->segments_size() -
                                   segments->max_history_segments_size()));
   for (int i = 0; i < start_index; ++i) {
@@ -236,6 +244,7 @@ bool ConverterImpl::FinishConversion(Segments *segments) const {
 
   for (size_t i = 0; i < segments->segments_size(); ++i) {
     Segment *seg = segments->mutable_segment(i);
+    DCHECK(seg);
     seg->set_segment_type(Segment::HISTORY);
   }
 
@@ -262,24 +271,6 @@ bool ConverterImpl::RevertConversion(Segments *segments) const {
   return true;
 }
 
-bool ConverterImpl::GetCandidates(Segments *segments,
-                                  size_t segment_index,
-                                  size_t candidate_size) const {
-  if (segments->request_type() != Segments::CONVERSION) {
-    return true;
-  }
-
-  segment_index = GetSegmentIndex(segments, segment_index);
-  if (segment_index == kErrorIndex) {
-    return false;
-  }
-
-  Segment *segment = segments->mutable_segment(segment_index);
-  segment->GetCandidates(candidate_size);
-
-  return true;
-}
-
 bool ConverterImpl::CommitSegmentValue(Segments *segments,
                                        size_t segment_index,
                                        int candidate_index) const {
@@ -299,7 +290,7 @@ bool ConverterImpl::CommitSegmentValue(Segments *segments,
   segment->move_candidate(candidate_index, 0);
 
   if (candidate_index != 0) {
-    segment->mutable_candidate(0)->learning_type
+    segment->mutable_candidate(0)->attributes
         |= Segment::Candidate::RERANKED;
   }
 
@@ -401,7 +392,7 @@ bool ConverterImpl::ResizeSegment(Segments *segments,
     }
 
     Segment *segment = segments->mutable_segment(segment_index);
-    segment->clear();
+    segment->Clear();
     segment->set_segment_type(Segment::FIXED_BOUNDARY);
     segment->set_key(new_key);
 
@@ -417,7 +408,7 @@ bool ConverterImpl::ResizeSegment(Segments *segments,
   } else if (offset_length < 0) {
     if (cur_length + offset_length > 0) {
       Segment *segment1 = segments->mutable_segment(segment_index);
-      segment1->clear();
+      segment1->Clear();
       segment1->set_segment_type(Segment::FIXED_BOUNDARY);
       string new_key;
       Util::SubString(cur_segment_key,
@@ -528,11 +519,6 @@ bool ConverterImpl::Sync() const {
 
 bool ConverterImpl::ClearUserHistory() const {
   rewriter_->Clear();
-
-  // TODO(taku): It's not the best timing to clear the character form
-  // manager's data.
-  CharacterFormManager::GetCharacterFormManager()->ClearHistory();
-
   return true;
 }
 
@@ -555,7 +541,7 @@ void ConverterUtil::InitSegmentsFromString(const string &key,
   // CONVERSION from SUGGESTION now.
   segments->set_request_type(Segments::CONVERSION);
   Segment *segment = segments->add_segment();
-  segment->clear();
+  segment->Clear();
   segment->set_key(key);
   segment->set_segment_type(Segment::FIXED_VALUE);
   Segment::Candidate *c = segment->add_candidate();

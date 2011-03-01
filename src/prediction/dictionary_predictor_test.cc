@@ -29,14 +29,18 @@
 
 #include "prediction/dictionary_predictor.h"
 
+#include <utility>
+
 #include "base/util.h"
 #include "converter/converter_interface.h"
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
+#include "session/commands.pb.h"
 #include "session/config.pb.h"
 #include "session/config_handler.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+
 
 DECLARE_string(test_tmpdir);
 
@@ -51,9 +55,6 @@ class DictionaryPredictorTest : public testing::Test {
     config::ConfigHandler::SetConfig(default_config_);
   }
 
-  virtual void TearDown() {
-    config::ConfigHandler::SetConfig(default_config_);
-  }
  private:
   config::Config default_config_;
 };
@@ -104,6 +105,10 @@ TEST_F(DictionaryPredictorTest, OnOffTest) {
       ("\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90\xE3\x82\x8B\xE3\x81\x82",
        &segments);
   EXPECT_TRUE(predictor.Predict(&segments));
+
+  // empty query
+  MakeSegmentsForSuggestion("", &segments);
+  EXPECT_FALSE(predictor.Predict(&segments));
 }
 
 TEST_F(DictionaryPredictorTest, BigramTest) {
@@ -124,6 +129,7 @@ TEST_F(DictionaryPredictorTest, BigramTest) {
   // "グーグルアドセンス" will be returned.
   EXPECT_TRUE(predictor.Predict(&segments));
 }
+
 
 // Check that previous candidate never be shown at the current candidate.
 TEST_F(DictionaryPredictorTest, Regression3042706) {
@@ -249,7 +255,10 @@ TEST_F(DictionaryPredictorTest, GetPredictionTypeTest) {
   }
 }
 
+
 TEST_F(DictionaryPredictorTest, IsZipCodeRequestTest) {
+  EXPECT_FALSE(DictionaryPredictor::IsZipCodeRequest(""));
+  EXPECT_TRUE(DictionaryPredictor::IsZipCodeRequest("000"));
   EXPECT_TRUE(DictionaryPredictor::IsZipCodeRequest("000"));
   EXPECT_FALSE(DictionaryPredictor::IsZipCodeRequest("ABC"));
   EXPECT_TRUE(DictionaryPredictor::IsZipCodeRequest("---"));
@@ -361,7 +370,7 @@ TEST_F(DictionaryPredictorTest, GetSVMScoreTest) {
   EXPECT_EQ(INT_MIN, DictionaryPredictor::GetSVMScore(
       // "それでも",
       // "それでもぼくはやっていない",
-      //"それでもボクはやってない",
+      // "それでもボクはやってない",
       "\xE3\x81\x9D\xE3\x82\x8C\xE3\x81\xA7\xE3\x82\x82",
       "\xE3\x81\x9D\xE3\x82\x8C\xE3\x81\xA7\xE3\x82\x82"
       "\xE3\x81\xBC\xE3\x81\x8F\xE3\x81\xAF\xE3\x82\x84"
@@ -380,7 +389,7 @@ TEST_F(DictionaryPredictorTest, GetSVMScoreTest) {
   EXPECT_NE(INT_MIN, DictionaryPredictor::GetSVMScore(
       // "それでも",
       // "それでもぼくはやっていない",
-      //"それでもボクはやってない",
+      // "それでもボクはやってない",
       "\xE3\x81\x9D\xE3\x82\x8C\xE3\x81\xA7\xE3\x82\x82",
       "\xE3\x81\x9D\xE3\x82\x8C\xE3\x81\xA7\xE3\x82\x82"
       "\xE3\x81\xBC\xE3\x81\x8F\xE3\x81\xAF\xE3\x82\x84"

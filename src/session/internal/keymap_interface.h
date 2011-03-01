@@ -79,6 +79,9 @@ enum Commands {
   INPUT_MODE_HALF_KATAKANA,
   INPUT_MODE_FULL_ALPHANUMERIC,
   INPUT_MODE_HALF_ALPHANUMERIC,
+  LAUNCH_CONFIG_DIALOG,
+  LAUNCH_DICTIONARY_TOOL,
+  LAUNCH_WORD_REGISTER_DIALOG,
   REVERT,  // revert last operation (preedit still remains)
   UNDO,    // undo last operation (preedit is restored)
   ABORT,   // Abort the server.  The process is killed.
@@ -142,6 +145,7 @@ enum Commands {
   CANCEL,  // Back to Composition status.
   SEGMENT_FOCUS_LEFT,
   SEGMENT_FOCUS_RIGHT,
+  SEGMENT_FOCUS_RIGHT_OR_COMMIT,
   SEGMENT_FOCUS_FIRST,
   SEGMENT_FOCUS_LAST,
   SEGMENT_WIDTH_EXPAND,

@@ -1,0 +1,12 @@
+# Special POS set which are added to
+# id.def. All the transition cost is set to 30000
+# except for the transition from/to BOS/EOS.
+#
+# These POSs are supposed to be handled in
+# POSMatcher as well.
+
+# 郵便番号
+特殊,郵便番号
+
+# 短縮よみ for user dictionary
+特殊,短縮よみ

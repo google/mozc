@@ -29,6 +29,8 @@
 
 #include "unix/emacs/mozc_emacs_helper_lib.h"
 
+#include <algorithm>
+
 #include "base/protobuf/message.h"
 #include "base/util.h"
 #include "session/commands.pb.h"
@@ -58,6 +60,18 @@ class MozcEmacsHelperLibTest : public testing::Test {
     string output;
     mozc::Util::JoinStrings(buffer, "", &output);
     EXPECT_EQ(sexpr, output);
+  }
+
+  void TestUnquoteString(const string &expected, const string &input) {
+    string output;
+    EXPECT_TRUE(mozc::emacs::UnquoteString("\"" + input + "\"", &output));
+    EXPECT_EQ(expected, output);
+  }
+
+  void ExpectUnquoteStringFails(const string &input) {
+    string output = "output string must become empty.";
+    EXPECT_FALSE(mozc::emacs::UnquoteString(input, &output));
+    EXPECT_TRUE(output.empty());
   }
 };
 
@@ -113,6 +127,24 @@ TEST_F(MozcEmacsHelperLibTest, ParseInputLine) {
             "modifier_keys: ALT "
             "modifier_keys: ALT "
           "}");
+  // Key and string literal
+  ParseAndTestInputLine("(10 SendKey 8 97 \"\343\201\241\")", 10, 8,
+      "type: SEND_KEY "
+      "key { key_code: 97 "
+            // ShortDebugString() prints escape sequences in octal format.
+            "key_string: \"\\343\\201\\241\" }");  // "ち"
+  ParseAndTestInputLine("(11 SendKey 9 72 \"Hello, World!\")", 11, 9,
+      "type: SEND_KEY "
+      "key { key_code: 72 "
+            "key_string: \"Hello, World!\" }");
+  ParseAndTestInputLine("(12 SendKey 10 72 \"\t\n\v\f\r \")", 12, 10,
+      "type: SEND_KEY "
+      "key { key_code: 72 "
+            "key_string: \"\\t\\n\\013\\014\\r \" }");
+  ParseAndTestInputLine("(13 SendKey 11 72 \"\\a\\b\\t\\n\\s\\d\")", 13, 11,
+      "type: SEND_KEY "
+      "key { key_code: 72 "
+            "key_string: \"\\007\\010\\t\\n \\177\" }");
 }
 
 TEST_F(MozcEmacsHelperLibTest, PrintMessage) {
@@ -204,4 +236,43 @@ TEST_F(MozcEmacsHelperLibTest, QuoteString) {
   EXPECT_EQ("\"\\\"abc\\\"\"", QuoteString("\"abc\""));
   EXPECT_EQ("\"\\\\\\\"\"", QuoteString("\\\""));
   EXPECT_EQ("\"\t\n\v\f\r \"", QuoteString("\t\n\v\f\r "));
+}
+
+TEST_F(MozcEmacsHelperLibTest, UnquoteString) {
+  TestUnquoteString("", "");
+  TestUnquoteString("abc", "abc");
+  TestUnquoteString("\"abc\"", "\\\"abc\\\"");
+  TestUnquoteString(" \n\\", "\\s\\n\\\\");
+  TestUnquoteString("\t\n\v\f\r  ", "\\t\\n\\v\\f\\r \\ ");
+  TestUnquoteString("\t\n\v\f\r", "\t\n\v\f\r");
+
+  ExpectUnquoteStringFails("");  // no double quotes
+  ExpectUnquoteStringFails("abc");
+  ExpectUnquoteStringFails("\"");
+  ExpectUnquoteStringFails("[\"\"]");
+  ExpectUnquoteStringFails("\"\"\"");  // unquoted double quote
+  ExpectUnquoteStringFails("\"\\\"");  // No character follows backslash.
+}
+
+TEST_F(MozcEmacsHelperLibTest, TokenizeSExpr) {
+  using mozc::emacs::TokenizeSExpr;
+  const string input = " ('abc \" \t\\r\\\n\\\"\"\t-x0\"\xE3\x81\x84\"p)\n";
+  vector<string> output;
+  bool result = TokenizeSExpr(input, &output);
+
+  const char *golden[] = {
+    "(", "'", "abc", "\" \t\\r\\\n\\\"\"", "-x0", "\"\xE3\x81\x84\"", "p", ")"
+  };
+
+  EXPECT_TRUE(result);
+  EXPECT_EQ(arraysize(golden), output.size());
+  int len = min(arraysize(golden), output.size());
+  for (int i =0; i < len; ++i) {
+    EXPECT_EQ(golden[i], output[i]);
+  }
+
+  // control character
+  EXPECT_FALSE(TokenizeSExpr("\x7f", &output));
+  // unclosed double quote
+  EXPECT_FALSE(TokenizeSExpr("\"", &output));
 }

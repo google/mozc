@@ -25,7 +25,7 @@ Number      名詞,数,アラビア数字
 KanjiNumber 名詞,数,漢数字
 
 # used in CandidateFilter
-NounPrefix 接頭詞,名詞接続
+WeakCompoundPrefix ^(接頭詞,名詞接続|フィラー)
 
 # used in ImmutableConverter
 Prefix 接頭詞,
@@ -36,3 +36,9 @@ JapanesePunctuations 記号,(句点|読点)
 # used in SymbolRewriter
 OpenBracket 記号,括弧開
 CloseBracket 記号,括弧閉
+
+# zipcode
+Zipcode 特殊,郵便番号
+
+# 短縮よみ
+IsolatedWord 特殊,短縮よみ

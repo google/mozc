@@ -62,8 +62,13 @@ void SetSegment(const string &key, const string &value, Segments *segments) {
 }
 
 // "の計算結果"
-static const string kPartOfCalculationDescription(
-    "\xE3\x81\xAE\xE8\xA8\x88\xE7\xAE\x97\xE7\xB5\x90\xE6\x9E\x9C");
+const char kPartOfCalculationDescription[] =
+    "\xE3\x81\xAE\xE8\xA8\x88\xE7\xAE\x97\xE7\xB5\x90\xE6\x9E\x9C";
+
+bool ContainsCalculatedResult(const Segment::Candidate &candidate) {
+  return candidate.description.find(kPartOfCalculationDescription) !=
+      string::npos;
+}
 
 // If the segment has a candidate which was inserted by CalculatorRewriter,
 // then return its index. Otherwise return -1.
@@ -72,8 +77,7 @@ int GetIndexOfCalculatedCandidate(const Segments &segments) {
   for (size_t i = 0; i < segments.segment(0).candidates_size(); ++i) {
     const Segment::Candidate &candidate = segments.segment(0).candidate(i);
     // Description includes "の計算結果"
-    if (candidate.description.find(kPartOfCalculationDescription) !=
-        string::npos) {
+    if (ContainsCalculatedResult(candidate)) {
       return i;
     }
   }
@@ -138,9 +142,10 @@ TEST_F(CalculatorRewriterTest, InsertCandidateTest) {
     EXPECT_EQ(candidate.value, "value");
     EXPECT_EQ(candidate.content_value, "value");
     EXPECT_EQ(candidate.content_key, "key");
-    EXPECT_TRUE(candidate.learning_type & Segment::Candidate::NO_LEARNING);
+    EXPECT_TRUE(candidate.attributes & Segment::Candidate::NO_LEARNING);
     // Description should be "key の計算結果"
-    EXPECT_EQ(candidate.description, "key " + kPartOfCalculationDescription);
+    EXPECT_EQ(candidate.description, "key " +
+              string(kPartOfCalculationDescription));
   }
 }
 
@@ -185,6 +190,13 @@ TEST_F(CalculatorRewriterTest, SeparatedSegmentsTest) {
 
   int index = GetIndexOfCalculatedCandidate(segments);
   EXPECT_NE(index, -1);
+
+  // Secondary result with expression (description: "1+1=2");
+  EXPECT_TRUE(ContainsCalculatedResult(
+      segments.segment(0).candidate(index + 1)));
+
+  EXPECT_EQ("2", segments.segment(0).candidate(index).value);
+  EXPECT_EQ("1+1=2", segments.segment(0).candidate(index + 1).value);
 }
 
 // Verify the description of calculator candidate.
@@ -197,7 +209,7 @@ TEST_F(CalculatorRewriterTest, DescriptionCheckTest) {
       "\xEF\xBC\x91\xEF\xBC\x8A\xEF\xBC\x99\xEF\xBC\x9D";
   // Expected description
   const string description =
-      "5/(8/4)-7%3+6^-1*9= " + kPartOfCalculationDescription;
+      "5/(8/4)-7%3+6^-1*9= " + string(kPartOfCalculationDescription);
 
   // Pretend kExpression is calculated to "3"
   calculator_mock().SetCalculatePair(kExpression, "3", true);
@@ -211,6 +223,8 @@ TEST_F(CalculatorRewriterTest, DescriptionCheckTest) {
   const int index = GetIndexOfCalculatedCandidate(segments);
 
   EXPECT_EQ(segments.segment(0).candidate(index).description, description);
+  EXPECT_TRUE(ContainsCalculatedResult(
+      segments.segment(0).candidate(index + 1)));
 }
 
 TEST_F(CalculatorRewriterTest, ConfigTest) {

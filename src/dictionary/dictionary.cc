@@ -37,10 +37,10 @@
 #include "converter/node.h"
 #include "dictionary/system/system_dictionary.h"
 #include "dictionary/dictionary_preloader.h"
+#include "dictionary/suppression_dictionary.h"
 #include "dictionary/user_dictionary.h"
 
 namespace mozc {
-
 namespace {
 #include "dictionary/embedded_dictionary_data.h"
 
@@ -58,8 +58,15 @@ class DictionaryImpl : public DictionaryInterface {
   virtual Node *LookupReverse(const char *str, int size,
                               NodeAllocatorInterface *allocator) const;
 
+  virtual void PopulateReverseLookupCache(
+      const char *str, int size, NodeAllocatorInterface *allocator) const;
+
+  virtual void ClearReverseLookupCache(NodeAllocatorInterface *allocator) const;
+
  private:
   vector<DictionaryInterface *> dics_;
+  SuppressionDictionary *suppression_dictionary_;
+
   enum LookupType {
     PREDICTIVE,
     PREFIX,
@@ -71,7 +78,11 @@ class DictionaryImpl : public DictionaryInterface {
                        NodeAllocatorInterface *allocator) const;
 };
 
-DictionaryImpl::DictionaryImpl() {
+DictionaryImpl::DictionaryImpl() :
+    suppression_dictionary_(
+        SuppressionDictionary::GetSuppressionDictionary()) {
+  CHECK(suppression_dictionary_);
+
   {
     SystemDictionary *dic = SystemDictionary::GetSystemDictionary();
     CHECK(dic->OpenFromArray(kDictionaryData_data, kDictionaryData_size));
@@ -106,6 +117,20 @@ Node *DictionaryImpl::LookupReverse(const char *str, int size,
   return LookupInternal(str, size, REVERSE, allocator);
 }
 
+void DictionaryImpl::PopulateReverseLookupCache(
+    const char *str, int size, NodeAllocatorInterface *allocator) const {
+  for (size_t i = 0; i < dics_.size(); ++i) {
+    dics_[i]->PopulateReverseLookupCache(str, size, allocator);
+  }
+}
+
+void DictionaryImpl::ClearReverseLookupCache(
+    NodeAllocatorInterface *allocator) const {
+  for (size_t i = 0; i < dics_.size(); ++i) {
+    dics_[i]->ClearReverseLookupCache(allocator);
+  }
+}
+
 Node *DictionaryImpl::LookupInternal(const char *str, int size,
                                      LookupType type,
                                      NodeAllocatorInterface *allocator) const {
@@ -133,6 +158,8 @@ Node *DictionaryImpl::LookupInternal(const char *str, int size,
       head = nodes;
     }
   }
+
+  head = suppression_dictionary_->SuppressNodes(head);
 
   return head;
 }

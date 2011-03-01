@@ -41,6 +41,7 @@
       'dependencies': [
         '../../base/base.gyp:base',
         '../../ipc/ipc.gyp:ipc',
+        '../../session/session.gyp:config_handler',
         '../../session/session.gyp:genproto_session',
         'mozc_emacs_helper_lib',
       ],

@@ -127,6 +127,26 @@ TEST(DateRewriteTest, DateRewriteTest) {
         "\xE6\x98\x8E\xE5\xBE\x8C\xE6\x97\xA5"
         "\xE3\x81\xAE\xE6\x97\xA5\xE4\xBB\x98"));
   }
+
+  // "にちじ/日時/現在の日時"
+  {
+    InitSegment("\xE3\x81\xAB\xE3\x81\xA1\xE3\x81\x98",
+                "\xE6\x97\xA5\xE6\x99\x82", &segments);
+    EXPECT_TRUE(rewriter.Rewrite(&segments));
+    EXPECT_EQ(1, CountDescription(
+        segments,
+        "\xE7\x8F\xBE\xE5\x9C\xA8\xE3\x81\xAE\xE6\x97\xA5\xE6\x99\x82"));
+  }
+
+  // "いま/今/現在の時刻"
+  {
+    InitSegment("\xE3\x81\x84\xE3\x81\xBE",
+                "\xE4\xBB\x8A", &segments);
+    EXPECT_TRUE(rewriter.Rewrite(&segments));
+    EXPECT_EQ(3, CountDescription(
+        segments,
+        "\xE7\x8F\xBE\xE5\x9C\xA8\xE3\x81\xAE\xE6\x99\x82\xE5\x88\xBB"));
+  }
 }
 
 TEST(DateRewriterTest, ADToERA) {

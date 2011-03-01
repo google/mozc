@@ -37,7 +37,14 @@ namespace mozc {
 
 class Segmenter {
  public:
-  static bool IsBoundary(const Node *lnode, const Node *rnode);
+  // return true if there is a segment boundary between
+  // |lnode| and |rnode|.
+  // if |is_single_segment| is true, this function basically
+  // reutrns false unless |lnode| or |rnode| is BOS/EOS.
+  // |is_single_segment| is used for prediction/suggestion mode.
+  static bool IsBoundary(const Node *lnode, const Node *rnode,
+                         bool is_single_segment);
+
   static bool IsBoundary(uint16 rid, uint16 lid);
 
  private:

@@ -76,7 +76,22 @@ const int   kMinStructureCostOffset  = 1151;
 const int32 kNoFilterRank            = 3;
 const int32 kNoFilterIfSameIdRank    = 10;
 const int32 kStopEnmerationCacheSize = 15;
+
+// TODO(taku): move it to Util
+bool IsEnglishT13NValue(const string &value) {
+  for (size_t i = 0; i < value.size(); ++i) {
+    if (value[i] == 0x20 || value[i] == 0x21 || value[i] == 0x2D ||
+        // " ", "!", "-"
+        (value[i] >= 0x41 && value[i] <= 0x5A) ||  // A..Z
+        (value[i] >= 0x61 && value[i] <= 0x7A)) {  // a..z
+      // do nothing
+    } else {
+      return false;
+    }
+  }
+  return true;
 }
+}  // anonymous namespace
 
 CandidateFilter::CandidateFilter()
     : top_candidate_(NULL) {}
@@ -97,7 +112,7 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
   // If the top candidate has constrained node, we skip the main body
   // of CandidateFilter, meaning that the node is not treated as the top
   // node for CandidateFilter.
-  if (candidate->learning_type & Segment::Candidate::CONTEXT_SENSITIVE) {
+  if (candidate->attributes & Segment::Candidate::CONTEXT_SENSITIVE) {
     return CandidateFilter::GOOD_CANDIDATE;
   }
 
@@ -120,6 +135,18 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
 
   CHECK(!nodes.empty());
 
+  // "短縮よみ" must only have 1 node.
+  if (POSMatcher::IsIsolatedWord(nodes[0]->lid) &&
+      (nodes.size() > 1 ||
+       nodes[0]->prev == NULL ||
+       nodes[0]->prev->node_type == Node::NOR_NODE ||
+       nodes[0]->prev->node_type == Node::CON_NODE ||
+       nodes[0]->next == NULL ||
+       nodes[0]->next->node_type == Node::NOR_NODE ||
+       nodes[0]->next->node_type == Node::CON_NODE)) {
+    return CandidateFilter::BAD_CANDIDATE;
+  }
+
   // The candidate consists of only one token
   if (nodes.size() == 1) {
     VLOG(1) << "don't filter single segment";
@@ -134,17 +161,16 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
 
   // Check Katakana transliterations
   {
-    const bool is_top_katakana_t13n =
-        Segment::IsKatakanaT13NValue(nodes[0]->value);
+    const bool is_top_english_t13n = IsEnglishT13NValue(nodes[0]->value);
     for (size_t i = 1; i < nodes.size(); ++i) {
-      // KatakanaT13N must be the prefix of the candidate.
-      if (Segment::IsKatakanaT13NValue(nodes[i]->value)) {
+      // EnglishT13N must be the prefix of the candidate.
+      if (IsEnglishT13NValue(nodes[i]->value)) {
         return CandidateFilter::BAD_CANDIDATE;
       }
       // nodes[1..] are non-functional candidates.
       // In other words, the node just after KatakanaT13n candidate should
       // be a functional word.
-      if (is_top_katakana_t13n && !POSMatcher::IsFunctional(nodes[i]->lid)) {
+      if (is_top_english_t13n && !POSMatcher::IsFunctional(nodes[i]->lid)) {
         return CandidateFilter::BAD_CANDIDATE;
       }
     }
@@ -170,7 +196,7 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
   // TODO(taku): remove it after intorducing a word clustering for noun.
   if (candidate_size >= 3 && nodes.size() > 1 &&
       nodes[0]->lid == nodes[0]->rid &&
-      POSMatcher::IsNounPrefix(nodes[0]->lid)) {
+      POSMatcher::IsWeakCompoundPrefix(nodes[0]->lid)) {
     VLOG(1) << "removing noisy prefix pattern";
     return CandidateFilter::BAD_CANDIDATE;
   }

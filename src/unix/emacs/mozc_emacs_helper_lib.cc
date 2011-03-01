@@ -75,36 +75,20 @@ void ParseInputLine(
   CHECK(session_id);
   CHECK(input);
 
-  // Skip left parenthesis.
-  int i = 0;
-  while (i < line.length() && isspace(line[i])) {
-    ++i;  // Skip white spaces.
-  }
-  if (!(i < line.length() && line[i] == '(')) {
-    ErrorExit(kErrScanError, "No left parenthesis");
-  }
-  ++i;
-
-  // Skip right parenthesis.
-  int j = line.length() - 1;
-  while (0 <= j && isspace(line[j])) {
-    --j;  // Skip white spaces.
-  }
-  if (!(0 <= j && line[j] == ')')) {
-    ErrorExit(kErrScanError, "No right parenthesis");
-  }
-  DCHECK(i <= j);
-
   vector<string> tokens;
-  mozc::Util::SplitStringUsing(line.substr(i, j - i), "\t\n\v\f\r ", &tokens);
+  if (!TokenizeSExpr(line, &tokens) ||
+      tokens.size() < 4 ||  // Must be at least '(' EVENT_ID COMMAND ')'.
+      tokens.front() != "(" || tokens.back() != ")") {
+    ErrorExit(kErrScanError, "S expression in the wrong format");
+  }
 
   // Read an event ID (a sequence number).
-  if (!mozc::Util::SafeStrToUInt32(tokens[0], event_id)) {
+  if (!mozc::Util::SafeStrToUInt32(tokens[1], event_id)) {
     ErrorExit(kErrWrongTypeArgument, "Event ID is not an integer");
   }
 
   // Read a command.
-  const string &func = tokens[1];
+  const string &func = tokens[2];
   if (func == "SendKey") {  // SendKey is a most-frequently-used command.
     input->set_type(mozc::commands::Input::SEND_KEY);
   } else if (func == "CreateSession") {
@@ -118,54 +102,65 @@ void ParseInputLine(
   }
 
   switch (input->type()) {
-  case mozc::commands::Input::CREATE_SESSION: {
-    // Suppose: (EVENT_ID CreateSession)
-    if (tokens.size() != 2) {
-      ErrorExit(kErrWrongNumberOfArguments, "Wrong number of arguments");
-    }
-    break;
-  }
-  case mozc::commands::Input::DELETE_SESSION: {
-    // Suppose: (EVENT_ID DeleteSession SESSION_ID)
-    if (tokens.size() != 3) {
-      ErrorExit(kErrWrongNumberOfArguments, "Wrong number of arguments");
-    }
-    // Parse session ID.
-    if (!mozc::Util::SafeStrToUInt32(tokens[2], session_id)) {
-      ErrorExit(kErrWrongTypeArgument, "Session ID is not an integer");
-    }
-    break;
-  }
-  case mozc::commands::Input::SEND_KEY: {
-    // Suppose: (EVENT_ID SendKey SESSION_ID KEY...)
-    if (tokens.size() < 4) {
-      ErrorExit(kErrWrongNumberOfArguments, "Wrong number of arguments");
-    }
-    // Parse session ID.
-    if (!mozc::Util::SafeStrToUInt32(tokens[2], session_id)) {
-      ErrorExit(kErrWrongTypeArgument, "Session ID is not an integer");
-    }
-    // Parse keys.
-    vector<string> keys;
-    for (int i = 3; i < tokens.size(); ++i) {
-      if (isdigit(tokens[i][0])) {  // Numeric key code
-        uint32 key_code;
-        if (!mozc::Util::SafeStrToUInt32(tokens[i], &key_code) ||
-            key_code > 255) {
-          ErrorExit(kErrWrongTypeArgument, "Wrong character code");
-        }
-        keys.push_back(string(1, static_cast<char>(key_code)));
-      } else {  // Key symbol
-        keys.push_back(tokens[i]);
+    case mozc::commands::Input::CREATE_SESSION: {
+      // Suppose: (EVENT_ID CreateSession)
+      if (tokens.size() != 4) {
+        ErrorExit(kErrWrongNumberOfArguments, "Wrong number of arguments");
       }
+      break;
     }
-    if (!mozc::KeyParser::ParseKeyVector(keys, input->mutable_key())) {
-      ErrorExit(kErrWrongTypeArgument, "Unknown key symbol");
+    case mozc::commands::Input::DELETE_SESSION: {
+      // Suppose: (EVENT_ID DeleteSession SESSION_ID)
+      if (tokens.size() != 5) {
+        ErrorExit(kErrWrongNumberOfArguments, "Wrong number of arguments");
+      }
+      // Parse session ID.
+      if (!mozc::Util::SafeStrToUInt32(tokens[3], session_id)) {
+        ErrorExit(kErrWrongTypeArgument, "Session ID is not an integer");
+      }
+      break;
     }
-    break;
-  }
-  default:
-    DCHECK(false);  // Code must not reach here.
+    case mozc::commands::Input::SEND_KEY: {
+      // Suppose: (EVENT_ID SendKey SESSION_ID KEY...)
+      if (tokens.size() < 6) {
+        ErrorExit(kErrWrongNumberOfArguments, "Wrong number of arguments");
+      }
+      // Parse session ID.
+      if (!mozc::Util::SafeStrToUInt32(tokens[3], session_id)) {
+        ErrorExit(kErrWrongTypeArgument, "Session ID is not an integer");
+      }
+      // Parse keys.
+      vector<string> keys;
+      string key_string;
+      for (int i = 4; i < tokens.size() - 1; ++i) {
+        if (isdigit(tokens[i][0])) {  // Numeric key code
+          uint32 key_code;
+          if (!mozc::Util::SafeStrToUInt32(tokens[i], &key_code) ||
+              key_code > 255) {
+            ErrorExit(kErrWrongTypeArgument, "Wrong character code");
+          }
+          keys.push_back(string(1, static_cast<char>(key_code)));
+        } else if (tokens[i][0] == '\"') {  // String literal
+          if (!key_string.empty()) {
+            ErrorExit(kErrWrongTypeArgument, "Wrong number of key strings");
+          }
+          if (!UnquoteString(tokens[i], &key_string)) {
+            ErrorExit(kErrWrongTypeArgument, "Wrong key string literal");
+          }
+        } else {  // Key symbol
+          keys.push_back(tokens[i]);
+        }
+      }
+      if (!mozc::KeyParser::ParseKeyVector(keys, input->mutable_key())) {
+        ErrorExit(kErrWrongTypeArgument, "Unknown key symbol");
+      }
+      if (!key_string.empty()) {
+        input->mutable_key()->set_key_string(key_string);
+      }
+      break;
+    }
+    default:
+      DCHECK(false);  // Code must not reach here.
   }
 }
 
@@ -218,6 +213,135 @@ string QuoteString(const string &str) {
   mozc::Util::StringReplace(str, "\\", "\\\\", true, &tmp);
   mozc::Util::StringReplace(tmp, "\"", "\\\"", true, &escaped_body);
   return "\"" + escaped_body + "\"";
+}
+
+// Unquotes and unescapes a double-quoted string.
+// The input string must begin and end with double quotes.
+bool UnquoteString(const string &input, string *output) {
+  DCHECK(output);
+  output->clear();
+
+  if (input.length() < 2 ||
+      *input.begin() != '\"' || *input.rbegin() != '\"') {
+    return false;  // wrong format
+  }
+
+  string result;
+  result.reserve(input.size());
+
+  bool escape = false;
+  for (string::const_iterator i = ++input.begin(), end = --input.end();
+       i != end; ++i) {
+    if (escape) {
+      char c = *i;
+      switch (*i) {
+        case 'a': c = '\x07'; break;  // control-g
+        case 'b': c = '\x08'; break;  // backspace
+        case 't': c = '\x09'; break;  // tab
+        case 'n': c = '\x0a'; break;  // newline
+        case 'v': c = '\x0b'; break;  // vertical tab
+        case 'f': c = '\x0c'; break;  // formfeed
+        case 'r': c = '\x0d'; break;  // carriage return
+        case 'e': c = '\x1b'; break;  // escape
+        case 's': c = '\x20'; break;  // space
+        case 'd': c = '\x7f'; break;  // delete
+      }
+      result.push_back(c);
+      escape = false;
+    } else if (*i == '\\') {
+      escape = true;
+    } else if (*i == '\"') {
+      // Double-quote w/o the escape sign must not appear inside a quoted
+      // string.
+      return false;
+    } else {
+      result.push_back(*i);
+    }
+  }
+
+  if (escape) {  // wrong format
+    return false;
+  }
+  output->swap(result);
+  return true;
+}
+
+// Tokenizes the given string as S expression.  Returns true if success.
+//
+// This function implements very simple tokenization and is NOT conforming to
+// the definition of S expression.  For example, this function does not return
+// an error for the input "\'".
+bool TokenizeSExpr(const string &input, vector<string> *output) {
+  DCHECK(output);
+
+  vector<string> results;
+
+  for (string::const_iterator i = input.begin(); i != input.end(); ++i) {
+    if (isspace(*i)) { continue; }  // Skip white space.
+
+    if (!isgraph(*i)) {
+      return false;  // unrecognized control character
+    }
+
+    switch (*i) {
+      case ';':  // comment
+        while (i != input.end() && *i != '\n') { ++i; }
+        break;
+      case '(': case ')':  // list parantheses
+      case '[': case ']':  // vector parantheses
+      case '\'':  // quote
+      case '`':  // quasiquote
+        results.push_back(string(1, *i));
+        break;
+      case '\"': {  // string
+        string::const_iterator start = i++;
+        for (bool escape = false; ; ++i) {
+          if (i == input.end()) {
+            return false;  // unexpected end of string
+          }
+          if (escape) {
+            escape = false;
+          } else if (*i == '\\') {
+            escape = true;
+          } else if (*i == '\"') {
+            break;
+          }
+        }
+        results.push_back(string(start, i + 1));
+        break;
+      }
+      default: {  // must be atom
+        string::const_iterator start = i++;
+        for (;; ++i) {
+          if (i == input.end()) {
+            break;
+          }
+          if (!isgraph(*i)) {
+            break;
+          }
+          bool is_special_char = false;
+          switch (*i) {
+            case ';':  // comment
+            case '(': case ')':  // list parantheses
+            case '[': case ']':  // vector parantheses
+            case '\'':  // quote
+            case '`':  // quasiquote
+            case '\"':  // string
+              is_special_char = true;
+          }
+          if (is_special_char) {
+            break;
+          }
+        }
+        results.push_back(string(start, i));
+        --i;  // Put the last char back.
+        break;
+      }
+    }
+  }
+
+  output->swap(results);
+  return true;
 }
 
 // Prints an error message in S-expression and terminates with status code 1.

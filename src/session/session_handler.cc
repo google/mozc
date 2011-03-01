@@ -36,6 +36,7 @@
 
 #include "base/base.h"
 #include "base/process.h"
+#include "base/singleton.h"
 #include "base/stopwatch.h"
 #include "converter/converter_interface.h"
 #include "composer/table.h"
@@ -78,7 +79,7 @@ DEFINE_bool(restricted, false,
 namespace mozc {
 
 namespace {
-bool IsApplicationAlive(const Session &session) {
+bool IsApplicationAlive(const session::Session &session) {
   const commands::ApplicationInfo &info = session.application_info();
   // When the thread/process's current status is unknown, i.e.,
   // if IsThreadAlive/IsProcessAlive functions failed to know the
@@ -102,9 +103,7 @@ bool IsApplicationAlive(const Session &session) {
 }  // namespace
 
 SessionHandler::SessionHandler()
-    : preedit_table_(new composer::Table()),
-      keymap_(new keymap::KeyMapManager()),
-      converter_(NULL),
+    : keymap_(new keymap::KeyMapManager()),
       is_available_(false),
       keyevent_counter_(0),
       max_session_size_(0),
@@ -133,12 +132,7 @@ SessionHandler::SessionHandler()
   max_session_size_ = max(2, min(FLAGS_max_session_size, 128));
   session_map_.reset(new SessionMap(max_session_size_));
 
-  if (!preedit_table_->Initialize()) {
-    return;
-  }
-
-  converter_ = ConverterFactory::GetConverter();
-  if (converter_ == NULL) {
+  if (!Singleton<composer::Table>::get()->Initialize()) {
     return;
   }
 
@@ -183,7 +177,7 @@ void SessionHandler::ReloadSession() {
 
 bool SessionHandler::SyncData(commands::Command *command) {
   VLOG(1) << "Syncing user data";
-  converter_->Sync();
+  ConverterFactory::GetConverter()->Sync();
   command->mutable_output()->set_id(command->input().id());
   return true;
 }
@@ -200,7 +194,7 @@ bool SessionHandler::Reload(commands::Command *command) {
   VLOG(1) << "Reloading server";
   ReloadSession();
   keymap_->Reload();
-  preedit_table_->Reload();
+  Singleton<composer::Table>::get()->Reload();
   RunReloaders();  // call all reloaders defined in .cc file
   command->mutable_output()->set_id(command->input().id());
   return true;
@@ -208,21 +202,21 @@ bool SessionHandler::Reload(commands::Command *command) {
 
 bool SessionHandler::ClearUserHistory(commands::Command *command) {
   VLOG(1) << "Clearing user history";
-  converter_->ClearUserHistory();
+  ConverterFactory::GetConverter()->ClearUserHistory();
   command->mutable_output()->set_id(command->input().id());
   return true;
 }
 
 bool SessionHandler::ClearUserPrediction(commands::Command *command) {
   VLOG(1) << "Clearing user prediction";
-  converter_->ClearUserPrediction();
+  ConverterFactory::GetConverter()->ClearUserPrediction();
   command->mutable_output()->set_id(command->input().id());
   return true;
 }
 
 bool SessionHandler::ClearUnusedUserPrediction(commands::Command *command) {
   VLOG(1) << "Clearing unused user prediction";
-  converter_->ClearUnusedUserPrediction();
+  ConverterFactory::GetConverter()->ClearUnusedUserPrediction();
   command->mutable_output()->set_id(command->input().id());
   return true;
 }
@@ -257,6 +251,7 @@ bool SessionHandler::SetConfig(commands::Command *command) {
 
   return true;
 }
+
 
 bool SessionHandler::EvalCommand(commands::Command *command) {
   if (!is_available_) {
@@ -340,8 +335,8 @@ bool SessionHandler::EvalCommand(commands::Command *command) {
   return is_available_;
 }
 
-Session *SessionHandler::NewSession() {
-  return new Session(preedit_table_.get(), converter_, keymap_.get());
+session::Session *SessionHandler::NewSession() {
+  return new session::Session(keymap_.get());
 }
 
 void SessionHandler::AddObserver(session::SessionObserverInterface *observer) {
@@ -352,7 +347,7 @@ bool SessionHandler::SendKey(commands::Command *command) {
   const SessionID id = command->input().id();
   command->mutable_output()->set_id(id);
 
-  Session **session = session_map_->MutableLookup(id);
+  session::Session **session = session_map_->MutableLookup(id);
   if (session == NULL || *session == NULL) {
     LOG(WARNING) << "SessionID " << id << " is not available";
     return false;
@@ -364,7 +359,7 @@ bool SessionHandler::SendKey(commands::Command *command) {
 bool SessionHandler::TestSendKey(commands::Command *command) {
   const SessionID id = command->input().id();
   command->mutable_output()->set_id(id);
-  Session **session = session_map_->MutableLookup(id);
+  session::Session **session = session_map_->MutableLookup(id);
   if (session == NULL || *session == NULL) {
     LOG(WARNING) << "SessionID " << id << " is not available";
     return false;
@@ -376,7 +371,8 @@ bool SessionHandler::TestSendKey(commands::Command *command) {
 bool SessionHandler::SendCommand(commands::Command *command) {
   const SessionID id = command->input().id();
   command->mutable_output()->set_id(id);
-  Session **session = const_cast<Session **>(session_map_->Lookup(id));
+  session::Session **session =
+    const_cast<session::Session **>(session_map_->Lookup(id));
   if (session == NULL || *session == NULL) {
     LOG(WARNING) << "SessionID " << id << " is not available";
     return false;
@@ -416,7 +412,7 @@ bool SessionHandler::CreateSession(commands::Command *command) {
             << oldest_element->key << " is removed";
   };
 
-  Session *session = NewSession();
+  session::Session *session = NewSession();
   if (session == NULL) {
     LOG(ERROR) << "Cannot allocate new Session";
     return false;
@@ -448,7 +444,7 @@ bool SessionHandler::DeleteSession(commands::Command *command) {
   const SessionID id = command->input().id();
   command->mutable_output()->set_id(id);
   DeleteSessionID(id);
-  converter_->Sync();
+  ConverterFactory::GetConverter()->Sync();
   return true;
 }
 
@@ -491,7 +487,7 @@ bool SessionHandler::Cleanup(commands::Command *command) {
   for (SessionElement *element =
            const_cast<SessionElement *>(session_map_->Head());
        element != NULL; element = element->next) {
-    Session *session = element->value;
+    session::Session *session = element->value;
     if (!IsApplicationAlive(*session)) {
       VLOG(2) << "Application is not alive. Removing: " << element->key;
       remove_ids.push_back(element->key);
@@ -516,7 +512,7 @@ bool SessionHandler::Cleanup(commands::Command *command) {
 
   // Sync all data.
   // This is a regression bug fix http://b/issue?id=3033708
-  converter_->Sync();
+  ConverterFactory::GetConverter()->Sync();
 
   // timeout is enabled.
   if (FLAGS_timeout > 0 &&
@@ -560,7 +556,7 @@ SessionID SessionHandler::CreateNewSessionID() {
 }
 
 bool SessionHandler::DeleteSessionID(SessionID id) {
-  Session **session = session_map_->MutableLookup(id);
+  session::Session **session = session_map_->MutableLookup(id);
   if (session == NULL || *session == NULL) {
     LOG_IF(WARNING, id != 0) << "cannot find SessionID " << id;
     return false;

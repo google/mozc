@@ -1627,9 +1627,9 @@ UserProfileDirectoryImpl::UserProfileDirectoryImpl() {
   CHECK_LT(0, strlen(pw.pw_dir))
       << "Home directory for uid " << uid << " is not set.";
 #if defined(OS_CHROMEOS)
-  dir =  Util::JoinPath(pw.pw_dir, "user/.mozc");
+  dir = Util::JoinPath(pw.pw_dir, "user/.mozc");
 #else
-  dir =  Util::JoinPath(pw.pw_dir, ".mozc");
+  dir = Util::JoinPath(pw.pw_dir, ".mozc");
 #endif  // OS_CHROMEOS
 #endif
 
@@ -2109,11 +2109,8 @@ Util::FormType Util::GetFormType(uint16 w) {
   if (INRANGE(w, 0x0020, 0x007F) ||  // ascii
       INRANGE(w, 0xFF61, 0xFF9F)) {  // half-width katakana
     return HALF_WIDTH;
-  } else {
-    return FULL_WIDTH;
   }
-
-  return UNKNOWN_FORM;
+  return FULL_WIDTH;
 }
 
 #undef INRANGE

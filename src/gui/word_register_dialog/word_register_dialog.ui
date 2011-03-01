@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>WordRegisterDialog</class>
+ <widget class="QDialog" name="WordRegisterDialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>340</width>
+    <height>180</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>340</width>
+    <height>180</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>340</width>
+    <height>180</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>Mozc Word Register Dialog</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout_2">
+   <property name="margin">
+    <number>6</number>
+   </property>
+   <item row="0" column="0">
+    <layout class="QGridLayout" name="gridLayout">
+     <property name="margin">
+      <number>6</number>
+     </property>
+     <item row="0" column="1" colspan="3">
+      <widget class="QLineEdit" name="WordlineEdit"/>
+     </item>
+     <item row="1" column="1" colspan="3">
+      <widget class="QLineEdit" name="ReadinglineEdit"/>
+     </item>
+     <item row="2" column="1" colspan="2">
+      <widget class="QComboBox" name="PartOfSpeechcomboBox"/>
+     </item>
+     <item row="3" column="1" colspan="3">
+      <widget class="QComboBox" name="DictionarycomboBox"/>
+     </item>
+     <item row="0" column="0">
+      <widget class="QLabel" name="Wordlabel">
+       <property name="text">
+        <string>Word</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="ReadingLabel">
+       <property name="text">
+        <string>Reading</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="PartOfSpeechlabel">
+       <property name="text">
+        <string>Part of Speech</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="0">
+      <widget class="QLabel" name="Dictionarylabel">
+       <property name="text">
+        <string>Dictionary</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="3">
+      <spacer name="horizontalSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item row="4" column="0" colspan="4">
+      <spacer name="verticalSpacer">
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>20</width>
+         <height>40</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item row="5" column="2" colspan="2">
+      <widget class="QDialogButtonBox" name="WordRegisterDialogbuttonBox">
+       <property name="standardButtons">
+        <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="0" colspan="2">
+      <widget class="QPushButton" name="LaunchDictionaryToolpushButton">
+       <property name="minimumSize">
+        <size>
+         <width>140</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>200</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>Edit user dictionary...</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <tabstops>
+  <tabstop>WordlineEdit</tabstop>
+  <tabstop>ReadinglineEdit</tabstop>
+  <tabstop>PartOfSpeechcomboBox</tabstop>
+  <tabstop>DictionarycomboBox</tabstop>
+  <tabstop>LaunchDictionaryToolpushButton</tabstop>
+  <tabstop>WordRegisterDialogbuttonBox</tabstop>
+ </tabstops>
+ <resources/>
+ <connections/>
+</ui>

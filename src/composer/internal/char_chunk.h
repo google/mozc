@@ -32,14 +32,13 @@
 
 #include <string>
 
-// Only DisplayMode is used.
-#include "composer/composition_interface.h"
-
 #include "base/base.h"
+#include "composer/table.h"  // For TableAttributes
 
 namespace mozc {
 namespace composer {
 
+class CompositionInput;
 class TransliteratorInterface;
 
 // This class contains a unit of composition string.  The unit consists of
@@ -91,11 +90,18 @@ class CharChunk {
                   size_t position,
                   CharChunk* left_new_chunk);
 
+  // Return true if this chunk should be commited immediately.  This
+  // function refers DIRECT_INPUT attribute.
+  bool ShouldCommit() const;
+
+  bool ShouldInsertNewChunk(const Table &table,
+                            const CompositionInput &input) const;
   void AddInput(const Table &table, string *input);
   void AddConvertedChar(string *input);
   void AddInputAndConvertedChar(const Table &table,
                                 string *key,
                                 string *converted_char);
+  void AddCompositionInput(const Table &table, CompositionInput *input);
 
   void SetTransliterator(const TransliteratorInterface *transliterator);
   const TransliteratorInterface *GetTransliterator(
@@ -121,8 +127,6 @@ class CharChunk {
   // Test only
   void set_ambiguous(const string &ambiguous);
 
-
-
   enum Status {
     NO_CONVERSION = 1,
     NO_RAW = 2,
@@ -143,6 +147,7 @@ class CharChunk {
   string pending_;
   string ambiguous_;
   uint32 status_mask_;
+  TableAttributes attributes_;
 };
 
 }  // namespace composer

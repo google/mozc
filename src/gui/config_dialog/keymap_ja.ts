@@ -223,5 +223,25 @@
         <source>ToggleAlphanumericMode</source>
         <translation>英数入力切り替え</translation>
     </message>
+    <message>
+        <source>LaunchConfigDialog</source>
+        <translation>プロパティを起動</translation>
+    </message>
+    <message>
+        <source>LaunchDictionaryTool</source>
+        <translation>辞書ツールを起動</translation>
+    </message>
+    <message>
+        <source>LaunchWordRegisterDialog</source>
+        <translation>単語登録を起動</translation>
+    </message>
+    <message>
+        <source>Undo</source>
+        <translation>確定取り消し</translation>
+    </message>
+    <message>
+        <source>SegmentFocusRightOrCommit</source>
+        <translation>文節を右に移動または確定</translation>
+    </message>
 </context>
 </TS>

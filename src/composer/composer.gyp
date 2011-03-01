@@ -35,6 +35,7 @@
       'sources': [
         'internal/char_chunk.cc',
         'internal/composition.cc',
+        'internal/composition_input.cc',
         'internal/converter.cc',
         'internal/mode_switching_handler.cc',
         'internal/transliterators.cc',
@@ -59,6 +60,7 @@
       'type': 'executable',
       'sources': [
         'internal/char_chunk_test.cc',
+        'internal/composition_input_test.cc',
         'internal/composition_test.cc',
         'internal/converter_test.cc',
         'internal/mode_switching_handler_test.cc',

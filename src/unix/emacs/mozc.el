@@ -53,7 +53,7 @@
 ;; `set-input-method' and set "japanese-mozc" anytime you have loaded
 ;; mozc.el.
 ;;
-;;   (require 'mozc)  ; or (load-file "path-to-mozc.el")
+;;   (require 'mozc)  ; or (load-file "/path/to/mozc.el")
 ;;   (set-language-environment "Japanese")
 ;;   (setq default-input-method "japanese-mozc")
 ;;
@@ -141,7 +141,7 @@ string, for instance, \" [Mozc]\"."
 
 
 
-;;;; Key map
+;;;; Keymap
 
 (defvar mozc-mode-map
   (let ((map (make-sparse-keymap)))
@@ -153,7 +153,7 @@ string, for instance, \" [Mozc]\"."
      (lambda (command)
        (mapc
         (lambda (key-sequence)
-          (and (eq (length key-sequence) 1)
+          (and (= (length key-sequence) 1)
                (integerp (aref key-sequence 0))
                (define-key map key-sequence command)))
         (where-is-internal command global-map)))
@@ -196,8 +196,7 @@ EVENT is the last input event, which is usually passed by the command loop."
   (cond
    ;; Keyboard event
    ((or (integerp event) (symbolp event))
-    (let ((output (mozc-session-sendkey
-                   (mozc-key-event-to-key-and-modifiers event))))
+    (let ((output (mozc-send-key-event event)))
       (cond
        ((null output)  ; Error occurred.
         (mozc-clean-up-session)  ; Discard the current session.
@@ -217,7 +216,7 @@ EVENT is the last input event, which is usually passed by the command loop."
                 (error "Unknown result type"))
               (insert (mozc-protobuf-get result 'value)))
             (if preedit  ; Update the preedit.
-                (mozc-preedit-update preedit)
+                (mozc-preedit-update preedit candidates)
               (mozc-preedit-clear))
             (if candidates  ; Update the candidate window.
                 (mozc-candidate-update candidates)
@@ -234,16 +233,44 @@ EVENT is the last input event, which is usually passed by the command loop."
     ;; Leave the current preedit and candidate window as it is.
     (mozc-fall-back-on-default-binding event))))
 
+(defun mozc-send-key-event (event)
+  "Send a key event EVENT and return the resulting protobuf.
+The resulting protocol buffer, which is represented as alist, is
+mozc::commands::Output."
+  (let* ((key-and-modifiers (mozc-key-event-to-key-and-modifiers event))
+         (key (car key-and-modifiers))
+         (keymap (mozc-keymap-current-active-keymap))
+         (str (and (null (cdr key-and-modifiers))
+                   (mozc-keymap-get-entry keymap key))))
+    (mozc-session-sendkey (if str
+                              (list key str)
+                            key-and-modifiers))))
+
 (defun mozc-key-event-to-key-and-modifiers (event)
   "Convert a keyboard event EVENT to a list of key and modifiers and return it.
 Key code and symbols are renamed so that the helper process understands them."
-  (let ((basic-type (event-basic-type event)))
-    (cons (case basic-type
-            ;; TODO(yuizumi): Supports Kana input.
-            (?\s 'space)
-            (127 'backspace)
-            (t basic-type))
-          (event-modifiers event))))
+  (let* ((basic-type (event-basic-type event))
+         (key (case basic-type
+                (?\b 'backspace)
+                (?\s 'space)
+                (?\d 'backspace)
+                (t basic-type))))
+    ;; `event-basic-type' always returns a lowercase character
+    ;; so reconstruct the original uppercase if any.
+    (mozc-reconstruct-uppercase-key-event key (event-modifiers event))))
+
+(defun mozc-reconstruct-uppercase-key-event (key modifiers)
+  "Reconstruct an uppercase character and return it with modifiers.
+If KEY is a key code and it has the corresponding uppercase and 'shift is
+included in MODIFIERS, this function reconstructs the uppercase character
+and returns a list of the uppercase character and modifiers excluding 'shift.
+Otherwise, return a list of the same key and modifiers."
+  (if (and (mozc-characterp key) (equal modifiers '(shift))
+           (/= key (upcase key)))
+      ;; Return the uppercase of the key and modifiers excluding shift.
+      (cons (upcase key) nil)
+    ;; Return the same key and modifiers.
+    (cons key modifiers)))
 
 (defun mozc-fall-back-on-default-binding (last-event)
   "Execute a command as if the command loop does.
@@ -258,15 +285,13 @@ back and treated as if it's the first event of a next key sequence."
         (mozc-disable-keymap)
         ;; Push back the last event on the event queue.
         (and last-event (push last-event unread-command-events))
-        ;; Simulate the command loop.
-        (run-hooks 'post-command-hook)
-        (setq last-command this-command)
         ;; Read and execute a command.
         (let* ((keys (read-key-sequence-vector nil))
                (bind (key-binding keys t)))
+          ;; Pretend `mozc-handle-event' command was not running and just
+          ;; the default binding is running.
           (setq last-command-event (aref keys (1- (length keys))))
           (setq this-command bind)
-          (run-hooks 'pre-command-hook)
           (if bind
               (call-interactively bind nil keys)
             (let (message-log-max)
@@ -333,32 +358,84 @@ If you want to finish a preedit session, call `mozc-preedit-clean-up'."
   (when mozc-preedit-in-session-flag
     (overlay-put mozc-preedit-overlay 'before-string nil)))
 
-(defun mozc-preedit-update (preedit)
+(defun mozc-preedit-update (preedit &optional candidates)
   "Update the current preedit.
-PREEDIT must be the preedit field in a response protobuf."
+PREEDIT must be the preedit field in a response protobuf.
+CANDIDATES must be the candidates field in a response protobuf if any."
   (unless mozc-preedit-in-session-flag
     (mozc-preedit-init))  ; Initialize if necessary.
 
-  (overlay-put mozc-preedit-overlay 'before-string
-               (if (memq 'fence mozc-preedit-style)
-                   (concat "|" (mozc-preedit-make-text preedit " ")
-                           (propertize "|" 'cursor t))
-                 (mozc-preedit-make-text preedit))))
+  (let ((text
+         (apply
+          (if (and (not (eq (mozc-protobuf-get candidates 'category)
+                            'conversion))
+                   (= (length (mozc-protobuf-get preedit 'segment)) 1))
+              ;; Show the unsegmented preedit with the cursor highlighted.
+              'mozc-preedit-make-text
+            ;; Show the segmented preedit.
+            'mozc-preedit-make-segmented-text)
+          preedit
+          (when (memq 'fence mozc-preedit-style)
+            '("|" "|" " ")))))
+    (if (or (not buffer-read-only)
+            (= (length text) 0))
+        (overlay-put mozc-preedit-overlay 'before-string text)
+      ;; Reset the session and throw away the current preedit, but keep
+      ;; the helper process running and connected.
+      (mozc-clean-up-session)
+      (barf-if-buffer-read-only))))
 
-(defun mozc-preedit-make-text (preedit &optional separator)
-  "Make a preedit text and set its text properties.
+(defun mozc-preedit-make-text (preedit &optional decor-left decor-right
+                                       separator)
+  "Compose a preedit text and set its text properties.
+Return the composed preedit text.
+
 PREEDIT must be the preedit field in a response protobuf.
-Non-nil SEPARATOR is inserted between each piece of segments."
-  (mapconcat
-   (lambda (segment)
-     (apply 'propertize (mozc-protobuf-get segment 'value)
-            (case (mozc-protobuf-get segment 'annotation)
-              (highlight
-               '(face mozc-preedit-selected-face))
-              (t
-               '(face mozc-preedit-face)))))
-   (mozc-protobuf-get preedit 'segment)
-   separator))
+DECOR-LEFT and DECOR-RIGHT are added at both ends of the text.
+SEPARATOR will never be used.  This unused parameter exists just to have
+the compatible parameter list as `mozc-preedit-make-segmented-text'."
+  (let* ((text (mozc-protobuf-get preedit 'segment 0 'value))
+         (cursor (max 0 (min (mozc-protobuf-get preedit 'cursor)
+                             (length text)))))
+    (concat decor-left  ; left decoration
+            (propertize (mozc-preedit-put-cursor-at text cursor)  ; preedit text
+                        'face 'mozc-preedit-face)
+            (if (= cursor (length text))  ; right decoration
+                (mozc-preedit-put-cursor-at decor-right 0)
+              decor-right))))
+
+(defun mozc-preedit-make-segmented-text (preedit
+                                         &optional decor-left decor-right
+                                         separator)
+  "Compose a preedit text and set its text properties.
+Return the composed preedit text.
+
+PREEDIT must be the preedit field in a response protobuf.
+DECOR-LEFT and DECOR-RIGHT are added at both ends of the text and
+Non-nil SEPARATOR is inserted between each segment."
+  (let ((segmented-text
+         (mapconcat
+          (lambda (segment)
+            (apply 'propertize (mozc-protobuf-get segment 'value)
+                   (case (mozc-protobuf-get segment 'annotation)
+                     (highlight
+                      '(face mozc-preedit-selected-face))
+                     (t
+                      '(face mozc-preedit-face)))))
+          (mozc-protobuf-get preedit 'segment)
+          separator)))
+    (concat decor-left segmented-text
+            (mozc-preedit-put-cursor-at decor-right 0))))
+
+(defun mozc-preedit-put-cursor-at (text cursor-pos)
+  "Put the cursor on TEXT's CURSOR-POSth character (0-origin).
+Return the modified text.  If CURSOR-POS is over the TEXT length, do nothing
+and return the same text as is."
+  (if (and (<= 0 cursor-pos) (< cursor-pos (length text)))
+      (let ((text (copy-sequence text)))  ; Do not modify the original string.
+        (put-text-property cursor-pos (1+ cursor-pos) 'cursor t text)
+        text)
+    text))
 
 (defvar mozc-preedit-style nil
   "Visual style of preedit.
@@ -586,8 +663,9 @@ create a new session."
 The resulting protocol buffer, which is represented as alist, is
 mozc::commands::Output in C++.  Return nil on error.
 
-KEY-LIST is a list of key code(97 = ?a) and/or key symbols('space, 'shift,
-'meta and so on)."
+KEY-LIST is a list of a key code (97 = ?a), key symbols ('space, 'shift,
+'meta and so on), and/or a string which represents the preedit to be
+inserted (\"\\u3061\")."
   (when (mozc-session-create)
     (apply 'mozc-session-execute-command 'SendKey key-list)))
 
@@ -651,11 +729,18 @@ Return the new value of `mozc-session-seq'."
 
 
 
+;;;; Server side configuration
+
+(defvar mozc-config-protobuf nil
+  "Mozc server side configuration in the form of mozc::config::Config.")
+
+
+
 ;;;; Communication with Mozc server through the helper process
 
 (defvar mozc-helper-program-name "mozc_emacs_helper"
   "Helper program's name or path to the helper program.
-Helper program helps Emacs to communicate with Mozc server,
+The helper program helps Emacs communicate with Mozc server,
 which doesn't understand S-expression.")
 
 (defvar mozc-helper-process-timeout-sec 1
@@ -723,13 +808,14 @@ version           -- should be version string"
   ;; the greeting message of the helper process.
   (let* ((mozc-helper-process proc)
          (resp (mozc-helper-process-recv-sexpr)))
-    (and (listp resp)
-         ;; The value of mozc-emacs-helper must be t.
-         (cdr (assq 'mozc-emacs-helper resp))
-         ;; The version string is optional.
-         (or (setq mozc-helper-process-version
-                   (cdr (assq 'version resp)))
-             t))))
+    (when (and (listp resp)
+               ;; The value of mozc-emacs-helper must be t.
+               (cdr (assq 'mozc-emacs-helper resp)))
+      ;; Set the optional version string.
+      (setq mozc-helper-process-version (cdr (assq 'version resp)))
+      ;; Set the optional server side configuration.
+      (setq mozc-config-protobuf (cdr (assq 'config resp)))
+      t)))
 
 (defun mozc-helper-process-stop ()
   "Stop the helper process if running and under the control."
@@ -854,14 +940,176 @@ and LIST.  The default value of N is 1."
       (setcdr pre-boundary nil)  ; Drop the rest of list.
       (cons list post-boundary))))
 
+(defmacro mozc-characterp (object)
+  "Return non-nil if OBJECT is a character.
+
+This macro is equivalent to `characterp' or `char-valid-p' depending on
+the Emacs version.  `char-valid-p' is obsolete since Emacs 23."
+  (if (fboundp #'characterp)
+      `(characterp ,object)
+    `(char-valid-p ,object)))
+
 (defsubst mozc-string-match-p (regexp string &optional start)
   "Same as `string-match' except this function never change the match data.
 REGEXP, STRING and optional START are the same as for `string-match'.
 
-This function is equivalent to `string-match-p', which is available from
+This function is equivalent to `string-match-p', which is available since
 Emacs 23."
   (let ((inhibit-changing-match-data t))
     (string-match regexp string start)))
+
+
+
+;;;; Custom keymap
+
+(defvar mozc-keymap-preedit-method-to-keymap-name-map
+  '((roman . nil)
+    (kana . mozc-keymap-kana))
+  "Mapping from preedit methods (roman or kana) to keymaps.
+The preedit method is taken from the server side configuration.")
+
+(defun mozc-keymap-current-active-keymap ()
+  "Return the current active keymap."
+  (let* ((preedit-method
+          (mozc-protobuf-get mozc-config-protobuf 'preedit-method))
+         (keymap-name
+          (cdr (assq preedit-method
+                     mozc-keymap-preedit-method-to-keymap-name-map)))
+         (keymap (and keymap-name (boundp keymap-name)
+                      (symbol-value keymap-name))))
+    (and (hash-table-p keymap) keymap)))
+
+(defun mozc-keymap-make-keymap ()
+  "Create a new empty keymap and return it."
+  (make-hash-table :size 128 :test #'eq))
+
+(defun mozc-keymap-make-keymap-from-flat-list (list)
+  "Create a new keymap and fill it with entries in LIST.
+LIST must be a flat list which contains keys and mapped strings alternately."
+  (mozc-keymap-fill-entries-from-flat-list (mozc-keymap-make-keymap) list))
+
+(defun mozc-keymap-fill-entries-from-flat-list (keymap list)
+  "Fill KEYMAP with entries in LIST and return KEYMAP.
+KEYMAP must be a key table from keycodes to mapped strings.
+LIST must be a flat list which contains keys and mapped strings alternately."
+  (if (not (and (car list) (cadr list)))
+      keymap  ; Return the keymap.
+    (mozc-keymap-put-entry keymap (car list) (cadr list))
+    (mozc-keymap-fill-entries-from-flat-list keymap (cddr list))))
+
+(defun mozc-keymap-get-entry (keymap keycode &optional default)
+  "Return a mapped string if the entry for the keycode exists.
+Otherwise, the default value, which must be a string.
+KEYMAP must be a key table from keycodes to mapped strings.
+KEYCODE must be an integer representing a key code to look up.
+DEFAULT is returned if it's a string and no entry for KEYCODE is found."
+  (let ((value (and (hash-table-p keymap)
+                    (gethash keycode keymap default))))
+    (and (stringp value) value)))
+
+(defun mozc-keymap-put-entry (keymap keycode mapped-string)
+  "Add a new key mapping to a keymap.
+KEYMAP must be a key table from keycodes to mapped strings.
+KEYCODE must be an integer representing a key code.
+MAPPED-STRING must be a string representing a preedit string to be inserted."
+  (when (and (hash-table-p keymap)
+             (integerp keycode) (stringp mapped-string))
+    (puthash keycode mapped-string keymap)
+    (cons keycode mapped-string)))
+
+(defun mozc-keymap-remove-entry (keymap keycode)
+  "Remove an entry from a keymap.  If no entry for keycode exists, do nothing.
+KEYMAP must be a key table from keycodes to mapped strings.
+KEYCODE must be an integer representing a key code to remove."
+  (when (hash-table-p keymap)
+    (remhash keycode keymap)))
+
+(defvar mozc-keymap-kana-106jp
+  (mozc-keymap-make-keymap-from-flat-list
+   '(;; 1st row
+     ;; ?1 "ぬ" ?2 "ふ" ?3 "あ" ?4 "う" ?5 "え"
+     ?1 "\u306c" ?2 "\u3075" ?3 "\u3042" ?4 "\u3046" ?5 "\u3048"
+     ;; ?6 "お" ?7 "や" ?8 "ゆ" ?9 "よ" ?0 "わ"
+     ?6 "\u304a" ?7 "\u3084" ?8 "\u3086" ?9 "\u3088" ?0 "\u308f"
+     ;; ?- "ほ" ?^ "へ" ?| "ー"
+     ?- "\u307b" ?^ "\u3078" ?| "\u30fc"
+     ;; 2nd row
+     ;; ?q "た" ?w "て" ?e "い" ?r "す" ?t "か"
+     ?q "\u305f" ?w "\u3066" ?e "\u3044" ?r "\u3059" ?t "\u304b"
+     ;; ?y "ん" ?u "な" ?i "に" ?o "ら" ?p "せ"
+     ?y "\u3093" ?u "\u306a" ?i "\u306b" ?o "\u3089" ?p "\u305b"
+     ;; ?@ "゛" ?\[ "゜"
+     ?@ "\u309b" ?\[ "\u309c"
+     ;; 3rd row
+     ;; ?a "ち" ?s "と" ?d "し" ?f "は" ?g "き"
+     ?a "\u3061" ?s "\u3068" ?d "\u3057" ?f "\u306f" ?g "\u304d"
+     ;; ?h "く" ?j "ま" ?k "の" ?l "り" ?\; "れ"
+     ?h "\u304f" ?j "\u307e" ?k "\u306e" ?l "\u308a" ?\; "\u308c"
+     ;; ?: "け" ?\] "む"
+     ?: "\u3051" ?\] "\u3080"
+     ;; 4th row
+     ;; ?z "つ" ?x "さ" ?c "そ" ?v "ひ" ?b "こ"
+     ?z "\u3064" ?x "\u3055" ?c "\u305d" ?v "\u3072" ?b "\u3053"
+     ;; ?n "み" ?m "も" ?, "ね" ?. "る" ?/ "め"
+     ?n "\u307f" ?m "\u3082" ?, "\u306d" ?. "\u308b" ?/ "\u3081"
+     ;; ?\\ "ろ"
+     ?\\ "\u308d"
+     ;; shift
+     ;; ?# "ぁ" ?E "ぃ" ?$ "ぅ" ?% "ぇ" ?& "ぉ"
+     ?# "\u3041" ?E "\u3043" ?$ "\u3045" ?% "\u3047" ?& "\u3049"
+     ;; ?' "ゃ" ?\( "ゅ" ?\) "ょ" ?~ "を" ?Z "っ"
+     ?' "\u3083" ?\( "\u3085" ?\) "\u3087" ?~ "\u3092" ?Z "\u3063"
+     ;; ?< "、" ?> "。" ?? "・" ?{ "「" ?} "」"
+     ?< "\u3001" ?> "\u3002" ?? "\u30fb" ?{ "\u300c" ?} "\u300d"
+     ;; ?P "『" ?+ "』" ?_ "ろ"
+     ?P "\u300e" ?+ "\u300f" ?_ "\u308d"
+     ;; ?F "ゎ" ?T "ヵ" ?* "ヶ"
+     ?F "\u308e" ?T "\u30f5" ?* "\u30f6"))
+  "Key mapping from key codes to Kana strings based on 106-JP keyboard.")
+
+(defvar mozc-keymap-kana-101us
+  (mozc-keymap-make-keymap-from-flat-list
+   '(;; 1st row
+     ;; ?1 "ぬ" ?2 "ふ" ?3 "あ" ?4 "う" ?5 "え"
+     ?1 "\u306c" ?2 "\u3075" ?3 "\u3042" ?4 "\u3046" ?5 "\u3048"
+     ;; ?6 "お" ?7 "や" ?8 "ゆ" ?9 "よ" ?0 "わ"
+     ?6 "\u304a" ?7 "\u3084" ?8 "\u3086" ?9 "\u3088" ?0 "\u308f"
+     ;; ?- "ほ" ?= "へ" ?` "ろ"
+     ?- "\u307b" ?= "\u3078" ?` "\u308d"
+     ;; 2nd row
+     ;; ?q "た" ?w "て" ?e "い" ?r "す" ?t "か"
+     ?q "\u305f" ?w "\u3066" ?e "\u3044" ?r "\u3059" ?t "\u304b"
+     ;; ?y "ん" ?u "な" ?i "に" ?o "ら" ?p "せ"
+     ?y "\u3093" ?u "\u306a" ?i "\u306b" ?o "\u3089" ?p "\u305b"
+     ;; ?\[ "゛" ?\] "゜" ?\\ "む"
+     ?\[ "\u309b" ?\] "\u309c" ?\\ "\u3080"
+     ;; 3rd row
+     ;; ?a "ち" ?s "と" ?d "し" ?f "は" ?g "き"
+     ?a "\u3061" ?s "\u3068" ?d "\u3057" ?f "\u306f" ?g "\u304d"
+     ;; ?h "く" ?j "ま" ?k "の" ?l "り" ?\; "れ"
+     ?h "\u304f" ?j "\u307e" ?k "\u306e" ?l "\u308a" ?\; "\u308c"
+     ;; ?' "け"
+     ?' "\u3051"
+     ;; 4th row
+     ;; ?z "つ" ?x "さ" ?c "そ" ?v "ひ" ?b "こ"
+     ?z "\u3064" ?x "\u3055" ?c "\u305d" ?v "\u3072" ?b "\u3053"
+     ;; ?n "み" ?m "も" ?, "ね" ?. "る" ?/ "め"
+     ?n "\u307f" ?m "\u3082" ?, "\u306d" ?. "\u308b" ?/ "\u3081"
+     ;; shift
+     ;; ?# "ぁ" ?E "ぃ" ?$ "ぅ" ?% "ぇ" ?^ "ぉ"
+     ?# "\u3041" ?E "\u3043" ?$ "\u3045" ?% "\u3047" ?^ "\u3049"
+     ;; ?& "ゃ" ?* "ゅ" ?\( "ょ" ?\) "を" ?Z "っ"
+     ?& "\u3083" ?* "\u3085" ?\( "\u3087" ?\) "\u3092" ?Z "\u3063"
+     ;; ?< "、" ?> "。" ?? "・" ?{ "「" ?} "」"
+     ?< "\u3001" ?> "\u3002" ?? "\u30fb" ?{ "\u300c" ?} "\u300d"
+     ;; ?P "『" ?: "』" ?_ "ー" ?| "ー"
+     ?P "\u300e" ?: "\u300f" ?_ "\u30fc" ?| "\u30fc"
+     ;; ?F "ゎ" ?V "ゐ" ?+ "ゑ" ?T "ヵ" ?\" "ヶ"
+     ?F "\u308e" ?V "\u3090" ?+ "\u3091" ?T "\u30f5" ?\" "\u30f6"))
+  "Key mapping from key codes to Kana strings based on 101-US keyboard.")
+
+(defvar mozc-keymap-kana mozc-keymap-kana-106jp
+  "The default key mapping for Kana input method.")
 
 
 
@@ -896,5 +1144,9 @@ This indicator is not shown when you don't use LEIM."
 
 
 (provide 'mozc)
+
+;; Local Variables:
+;; coding: utf-8
+;; End:
 
 ;;; mozc.el ends here

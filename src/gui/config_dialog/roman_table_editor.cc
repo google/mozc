@@ -178,6 +178,7 @@ bool RomanTableEditorDialog::Update() {
     return false;
   }
 
+  bool contains_capital = false;
   string *table = mutable_table();
   table->clear();
   for (int i = 0; i < mutable_table_widget()->rowCount(); ++i) {
@@ -198,6 +199,24 @@ bool RomanTableEditorDialog::Update() {
       *table += pending;
     }
     *table += '\n';
+
+    if (!contains_capital) {
+      string lower = input;
+      Util::LowerString(&lower);
+      contains_capital = (lower != input);
+    }
+  }
+
+  if (contains_capital) {
+    // TODO(taku):
+    // Want to see the current setting and suppress this
+    // dialog if the shift-mode-switch is already off.
+    QMessageBox::information(
+        this,
+        tr("Mozc settings"),
+        tr("Input fields contain capital characters. "
+           "\"Shift-mode-switch\" function is disabled "
+           "with this new mapping."));
   }
 
   return true;
@@ -245,6 +264,7 @@ bool RomanTableEditorDialog::Show(QWidget *parent,
                                   const string &current_roman_table,
                                   string *new_roman_table) {
   RomanTableEditorDialog window(parent);
+
   if (current_roman_table.empty()) {
     window.LoadDefaultRomanTable();
   } else {

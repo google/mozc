@@ -30,6 +30,7 @@
 #ifndef MOZC_REWRITER_SYMBOL_REWRITER_H_
 #define MOZC_REWRITER_SYMBOL_REWRITER_H_
 
+#include <string>
 #include "rewriter/embedded_dictionary.h"
 #include "rewriter/rewriter_interface.h"
 // for FRIEND_TEST()
@@ -56,10 +57,6 @@ private:
   static const string GetDescription(const string &value,
                                      const char *description,
                                      const char *additional_description);
-
-  // return true if all the characters in value should have
-  // Half/Fullwidth description
-  static bool HasHalfFullWidthDescription(const string &value);
 
   // return true key has no-hiragana
   static bool IsSymbol(const string &key);

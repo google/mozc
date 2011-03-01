@@ -35,6 +35,7 @@
 #import <InputMethodKit/IMKInputController.h>
 
 #include <unistd.h>
+#include <stdlib.h>
 
 #import "mac/GoogleJapaneseInputControllerInterface.h"
 #import "mac/GoogleJapaneseInputServer.h"
@@ -68,6 +69,7 @@ using mozc::config::ImeSwitchUtil;
 using mozc::kProductNameInEnglish;
 using mozc::once_t;
 using mozc::CallOnce;
+using mozc::MacProcess;
 
 namespace {
 // set of bundle IDs of applications on which Mozc should not open urls.
@@ -75,6 +77,7 @@ NSSet *gNoOpenLinkApps = nil;
 // The mapping from the CompositionMode enum to the actual id string
 // of composition modes.
 const map<CompositionMode, NSString *> *gModeIdMap = NULL;
+NSSet *gNoSelectedRangeApps = nil;
 
 NSString *GetLabelForSuffix(const string &suffix) {
   string label = mozc::MacUtil::GetLabelForSuffix(suffix);
@@ -137,6 +140,7 @@ CompositionMode GetCompositionMode(NSString *modeID) {
 @synthesize yenSignCharacter = yenSignCharacter_;
 @synthesize mode = mode_;
 @synthesize rendererCommand = rendererCommand_;
+@synthesize replacementRange = replacementRange_;
 - (mozc::client::SessionInterface *)session {
   return session_;
 }
@@ -166,6 +170,7 @@ CompositionMode GetCompositionMode(NSString *modeID) {
   }
   keyCodeMap_ = [[KeyCodeMap alloc] init];
   clientBundle_ = [[inputClient bundleIdentifier] copy];
+  replacementRange_ = NSMakeRange(NSNotFound, 0);
   originalString_ = [[NSMutableString alloc] init];
   composedString_ = [[NSMutableAttributedString alloc] init];
   cursorPosition_ = NSNotFound;
@@ -234,6 +239,14 @@ CompositionMode GetCompositionMode(NSString *modeID) {
   (*newMap)[mozc::commands::HALF_KATAKANA] =
       GetLabelForSuffix("FullWidthRoman");
   gModeIdMap = newMap;
+
+  // Do not call selectedRange: method for the following applications
+  // because it could lead to application crash.
+  gNoSelectedRangeApps =
+    [NSSet setWithObjects:@"com.microsoft.Excel",
+           @"com.microsoft.Powerpoint",
+           @"com.microsoft.Word",
+           nil];
 }
 
 #pragma mark IMKStateSetting Protocol
@@ -250,6 +263,7 @@ CompositionMode GetCompositionMode(NSString *modeID) {
   if (rendererCommand_->visible() && candidateController_) {
     candidateController_->ExecCommand(*rendererCommand_);
   }
+  [self handleConfig];
   [server_ setCurrentController:self];
   DLOG(INFO) << [[NSString stringWithFormat:
                              @"%s client (%@): activated for %@",
@@ -267,8 +281,8 @@ CompositionMode GetCompositionMode(NSString *modeID) {
     candidateController_->ExecCommand(clearCommand);
   }
   DLOG(INFO) << [[NSString stringWithFormat:
-                             @"%s client (%@): activated for %@",
-                           kProductNameInEnglish, self, sender] UTF8String];
+                             @"%s client (%@): deactivated",
+                           kProductNameInEnglish, self] UTF8String];
   DLOG(INFO) << [[NSString stringWithFormat:
                              @"sender bundleID: %@", clientBundle_] UTF8String];
   [super deactivateServer:sender];
@@ -289,7 +303,34 @@ CompositionMode GetCompositionMode(NSString *modeID) {
   }
 
   [self switchMode:new_mode client:sender];
+  [self handleConfig];
   [super setValue:value forTag:tag client:sender];
+}
+
+
+#pragma mark internal methods
+
+- (void)handleConfig {
+  // Get the config and set client-side behaviors
+  Config config;
+  if (!session_->GetConfig(&config)) {
+    LOG(ERROR) << "Cannot obtain the current config";
+    return;
+  }
+
+  InputMode input_mode = ASCII;
+  if (config.preedit_method() == Config::KANA) {
+    input_mode = KANA;
+  }
+  [keyCodeMap_ setInputMode:input_mode];
+  yenSignCharacter_ = config.yen_sign_character();
+
+  if (config.use_japanese_layout()) {
+    // Apple does not have "Japanese" layout actually -- here sets
+    // "US" layout, which means US-ASCII layout or JIS layout
+    // depending on which type of keyboard is actually connected.
+    [[self client] overrideKeyboardWithKeyboardNamed:@"com.apple.keylayout.US"];
+  }
 }
 
 // Mode changes to direct and clean up the status.
@@ -301,11 +342,7 @@ CompositionMode GetCompositionMode(NSString *modeID) {
   keyEvent.set_special_key(mozc::commands::KeyEvent::OFF);
   session_->SendKey(keyEvent, &output);
   if (output.has_result()) {
-    NSString *result_text =
-        [NSString
-            stringWithUTF8String:output.result().value().c_str()];
-    [sender insertText:result_text
-      replacementRange:NSMakeRange(NSNotFound, 0)];
+    [self commitText:output.result().value().c_str() client:sender];
   }
   if ([composedString_ length] > 0) {
     [self updateComposedString:NULL];
@@ -344,7 +381,7 @@ CompositionMode GetCompositionMode(NSString *modeID) {
   }
 }
 
-- (void)switchDisplayMode:(id)sender {
+- (void)switchDisplayMode {
   if (gModeIdMap == NULL) {
     LOG(ERROR) << "gModeIdMap is not initialized correctly.";
     return;
@@ -356,28 +393,82 @@ CompositionMode GetCompositionMode(NSString *modeID) {
     return;
   }
 
-  [sender selectInputMode:it->second];
+  [[self client] selectInputMode:it->second];
 }
 
-- (void)handleInputMode {
-  if (!checkInputMode_) {
+- (void)commitText:(const char *)text client:(id)sender {
+  if (text == NULL) {
     return;
   }
 
-  // Get the config and set client-side behaviors
-  Config config;
-  if (!session_->GetConfig(&config)) {
-    LOG(ERROR) << "Cannot obtain the current config";
+  [sender insertText:[NSString stringWithUTF8String:text]
+    replacementRange:replacementRange_];
+  replacementRange_ = NSMakeRange(NSNotFound, 0);
+}
+
+- (void)launchWordRegisterTool:(id)client {
+  ::setenv(mozc::kWordRegisterEnvironmentName, "", 1);
+  if (![gNoSelectedRangeApps containsObject:clientBundle_]) {
+    NSRange selectedRange = [client selectedRange];
+    if (selectedRange.location != NSNotFound &&
+        selectedRange.length != NSNotFound) {
+      NSString *text =
+        [[client attributedSubstringFromRange:selectedRange] string];
+     :: setenv(mozc::kWordRegisterEnvironmentName, [text UTF8String], 1);
+    }
+  }
+  MacProcess::LaunchMozcTool("word_register_dialog");
+}
+
+- (void)processOutput:(const mozc::commands::Output *)output client:(id)sender {
+  if (output == NULL) {
     return;
   }
 
-  InputMode input_mode = ASCII;
-  if (config.preedit_method() == Config::KANA) {
-    input_mode = KANA;
+  DLOG(INFO) << output->DebugString();
+  if (output->has_url()) {
+    NSString *url = [NSString stringWithUTF8String:output->url().c_str()];
+    [self openLink:[NSURL URLWithString:url]];
   }
-  [keyCodeMap_ setInputMode:input_mode];
-  yenSignCharacter_ = config.yen_sign_character();
-  checkInputMode_ = NO;
+
+  if (output->has_result()) {
+    [self commitText:output->result().value().c_str() client:sender];
+  }
+
+  [self updateComposedString:&(output->preedit())];
+  [self updateCandidates:output];
+
+  if (output->has_mode()) {
+    CompositionMode new_mode = output->mode();
+    // Do not allow HALF_ASCII with empty composition.  This should be
+    // handled in the converter, but just in case.
+    if (new_mode == mozc::commands::HALF_ASCII &&
+        (!output->has_preedit() || output->preedit().segment_size() == 0)) {
+      new_mode = mozc::commands::DIRECT;
+      [self switchMode:new_mode client:sender];
+    }
+    if (new_mode != mode_) {
+      mode_ = new_mode;
+      [self switchDisplayMode];
+    }
+  }
+
+  if (output->has_launch_tool_mode()) {
+    switch (output->launch_tool_mode()) {
+    case mozc::commands::Output::CONFIG_DIALOG:
+      MacProcess::LaunchMozcTool("config_dialog");
+      break;
+    case mozc::commands::Output::DICTIONARY_TOOL:
+      MacProcess::LaunchMozcTool("dictionary_tool");
+      break;
+    case mozc::commands::Output::WORD_REGISTER_DIALOG:
+      [self launchWordRegisterTool:sender];
+      break;
+    default:
+      // do nothing
+      break;
+    }
+  }
 }
 
 #pragma mark Mozc Server methods
@@ -425,6 +516,7 @@ CompositionMode GetCompositionMode(NSString *modeID) {
   }
   if ([composedString_ length] == 0) {
     [originalString_ setString:@""];
+    replacementRange_ = NSMakeRange(NSNotFound, 0);
   }
 
   // Make composed string visible to the client applications.
@@ -436,8 +528,7 @@ CompositionMode GetCompositionMode(NSString *modeID) {
     DLOG(INFO) << "Nothing is committed.";
     return;
   }
-  [sender insertText:[composedString_ string]
-          replacementRange:NSMakeRange(NSNotFound, 0)];
+  [self commitText:[[composedString_ string] UTF8String] client:sender];
 
   SessionCommand command;
   Output output;
@@ -468,7 +559,7 @@ CompositionMode GetCompositionMode(NSString *modeID) {
       NSMakeRange(cursorPosition_, 0);
 }
 
-- (void)updateCandidates:(const Output *)output client:(id)sender {
+- (void)updateCandidates:(const Output *)output {
   if (output == NULL) {
     [self clearCandidates];
     return;
@@ -487,8 +578,8 @@ CompositionMode GetCompositionMode(NSString *modeID) {
   //  - Kotoeri does this too.
   if (!rendererCommand_->visible()) {
     NSRect preeditRect = NSZeroRect;
-    [sender attributesForCharacterIndex:output->candidates().position()
-            lineHeightRectangle:&preeditRect];
+    [[self client] attributesForCharacterIndex:output->candidates().position()
+                           lineHeightRectangle:&preeditRect];
     NSScreen *baseScreen = nil;
     NSRect baseFrame = NSZeroRect;
     for (baseScreen in [NSScreen screens]) {
@@ -542,8 +633,6 @@ CompositionMode GetCompositionMode(NSString *modeID) {
     return YES;
   }
 
-  [self handleInputMode];
-
   // Get the Mozc key event
   KeyEvent keyEvent;
   if (![keyCodeMap_ getMozcKeyCodeFromKeyEvent:event
@@ -563,7 +652,7 @@ CompositionMode GetCompositionMode(NSString *modeID) {
     if ([event keyCode] == kVK_JIS_Yen &&
         [event modifierFlags] == 0 &&
         yenSignCharacter_ == mozc::config::Config::BACKSLASH) {
-      [sender insertText:@"\\" replacementRange:NSMakeRange(NSNotFound, 0)];
+      [self commitText:"\\" client:sender];
       return YES;
     }
     return NO;
@@ -581,39 +670,7 @@ CompositionMode GetCompositionMode(NSString *modeID) {
     return NO;
   }
 
-  DLOG(INFO) << output.DebugString();
-  if (output.has_url()) {
-    NSString *url = [NSString stringWithUTF8String:output.url().c_str()];
-    [self openLink:[NSURL URLWithString:url]];
-    output.clear_url();
-  }
-
-  if (output.has_result()) {
-    NSString *resultText =
-        [NSString
-          stringWithUTF8String:output.result().value().c_str()];
-    [sender insertText:resultText
-      replacementRange:NSMakeRange(NSNotFound, 0)];
-  }
-  if (output.consumed()) {
-    [self updateComposedString:&(output.preedit())];
-    [self updateCandidates:&output client:sender];
-  }
-  if (output.has_mode()) {
-    CompositionMode new_mode = output.mode();
-    // Do not allow HALF_ASCII with empty composition.  This should be
-    // handled in the converter, but just in case.
-    if (new_mode == mozc::commands::HALF_ASCII &&
-        (!output.has_preedit() || output.preedit().segment_size() == 0)) {
-      new_mode = mozc::commands::DIRECT;
-      [self switchMode:new_mode client:sender];
-    }
-    if (new_mode != mode_) {
-      mode_ = new_mode;
-      [self switchDisplayMode:sender];
-    }
-  }
-
+  [self processOutput:&output client:sender];
   return output.consumed();
 }
 
@@ -627,33 +684,58 @@ CompositionMode GetCompositionMode(NSString *modeID) {
     return;
   }
 
-  [self updateComposedString:&(output.preedit())];
-  [self updateCandidates:&output client:[self client]];
+  [self processOutput:&output client:[self client]];
+}
+
+- (IBAction)reconversionClicked:(id)sender {
+  id client = [self client];
+  NSRange selectedRange = NSMakeRange(NSNotFound, NSNotFound);
+  if (![gNoSelectedRangeApps containsObject:clientBundle_]) {
+    selectedRange = [client selectedRange];
+  }
+  if (selectedRange.location == NSNotFound ||
+      selectedRange.length == NSNotFound) {
+    // the application does not support reconversion.
+    return;
+  }
+
+  DLOG(INFO) << selectedRange.location << ", " << selectedRange.length;
+  NSAttributedString *text =
+      [client attributedSubstringFromRange:selectedRange];
+  SessionCommand command;
+  Output output;
+  command.set_type(SessionCommand::CONVERT_REVERSE);
+  command.set_text([[text string] UTF8String]);
+  if (session_->SendCommand(command, &output)) {
+    replacementRange_ = selectedRange;
+    [self processOutput:&output client:[self client]];
+  }
 }
 
 - (IBAction)configClicked:(id)sender {
-  mozc::MacProcess::LaunchMozcTool("config_dialog");
+  MacProcess::LaunchMozcTool("config_dialog");
 }
 
 - (IBAction)dictionaryToolClicked:(id)sender {
-  mozc::MacProcess::LaunchMozcTool("dictionary_tool");
+  MacProcess::LaunchMozcTool("dictionary_tool");
+}
+
+- (IBAction)registerWordClicked:(id)sender {
+  [self launchWordRegisterTool:[self client]];
 }
 
 - (IBAction)characterPadClicked:(id)sender {
-  mozc::MacProcess::LaunchMozcTool("character_pad");
+  MacProcess::LaunchMozcTool("character_pad");
 }
 
 - (IBAction)aboutDialogClicked:(id)sender {
-  mozc::MacProcess::LaunchMozcTool("about_dialog");
+  MacProcess::LaunchMozcTool("about_dialog");
 }
 
 - (void)outputResult:(mozc::commands::Output *)output {
   if (output == NULL || !output->has_result()) {
     return;
   }
-  NSString *resultText =
-      [NSString stringWithUTF8String:output->result().value().c_str()];
-  [[self client] insertText:resultText
-           replacementRange:NSMakeRange(NSNotFound, 0)];
+  [self commitText:output->result().value().c_str() client:[self client]];
 }
 @end

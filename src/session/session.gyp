@@ -38,8 +38,8 @@
       'type': 'static_library',
       'sources': [
         'internal/candidate_list.cc',
+        'internal/ime_context.cc',
         'internal/keymap.cc',
-        'internal/session_normalizer.cc',
         'internal/session_output.cc',
         'session.cc',
         'session_converter.cc',
@@ -56,13 +56,25 @@
         '../composer/composer.gyp:composer',
         '../converter/converter.gyp:converter',
         '../rewriter/calculator/calculator.gyp:calculator',
+        '../transliteration/transliteration.gyp:transliteration',
         '../usage_stats/usage_stats.gyp:usage_stats',
         'config_handler',
         'genproto_session',
         'ime_switch_util',
         'key_parser',
         'keymap',
+        'session_normalizer',
         'session_protocol',
+      ],
+    },
+    {
+      'target_name': 'session_normalizer',
+      'type': 'static_library',
+      'sources': [
+        'internal/session_normalizer.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
       ],
     },
     {
@@ -176,6 +188,7 @@
       ],
       'dependencies': [
         'session',
+        '../rewriter/rewriter.gyp:rewriter',
         '../testing/testing.gyp:gtest_main',
       ],
       'variables': {
@@ -265,6 +278,7 @@
       'type': 'executable',
       'sources': [
         'internal/candidate_list_test.cc',
+        'internal/ime_context_test.cc',
         'internal/keymap_test.cc',
         'internal/session_normalizer_test.cc',
         'internal/session_output_test.cc',
@@ -349,7 +363,6 @@
       'dependencies': [
         'random_keyevents_generator_test',
         'session_test',
-        'session_internal_test',
         'session_internal_test',
         'session_handler_test',
         'session_handler_stress_test',

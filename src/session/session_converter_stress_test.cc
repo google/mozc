@@ -50,11 +50,10 @@ DEFINE_int32(test_srand_seed, 0,
 namespace mozc {
 namespace session {
 
-
 class SessionConverterStressTest : public testing::Test {
  public:
   SessionConverterStressTest() {
-    if(!FLAGS_test_deterministic) {
+    if (!FLAGS_test_deterministic) {
       FLAGS_test_srand_seed = static_cast<int32>(::time(NULL));
     }
     ::srand(static_cast<uint32>(FLAGS_test_srand_seed));
@@ -72,25 +71,24 @@ void GenerateRandomInput(
   output->reserve(length);
   char tmp[2];
   tmp[1] = '\0';
-  for(int i = 0; i < length; ++i) {
+  for (int i = 0; i < length; ++i) {
     tmp[0] = static_cast<unsigned char>(
         min_code + GetRandom(max_code - min_code + 1));
     output->append(tmp);
   }
 }
 
-} // namespace
-
+}  // namespace
 
 TEST_F(SessionConverterStressTest, ConvertToHalfWidthForRandomAsciiInput) {
   // ConvertToHalfWidth has to return the same string as the input.
 
   const int kTestCaseSize = 2;
-  struct TestCase{
+  struct TestCase {
     int min, max;
   } kTestCases[] = {
-      {' ', '~'}, // All printable characters
-      {'a', 'z'}, // Alphabets
+      {' ', '~'},  // All printable characters
+      {'a', 'z'},  // Alphabets
   };
 
   const string kRomajiHiraganaTable = "system://romanji-hiragana.tsv";
@@ -99,26 +97,27 @@ TEST_F(SessionConverterStressTest, ConvertToHalfWidthForRandomAsciiInput) {
   SessionConverter sconverter(converter);
   composer::Table table;
   table.LoadFromFile(kRomajiHiraganaTable.c_str());
-  scoped_ptr<composer::Composer> composer(composer::Composer::Create(&table));
+  composer::Composer composer;
+  composer.SetTable(&table);
   commands::Output output;
   string input;
 
-  for(int test = 0; test < kTestCaseSize; ++test){
+  for (int test = 0; test < kTestCaseSize; ++test) {
     const int kLoopLimit = 100;
     for (int i = 0; i < kLoopLimit; ++i) {
-      composer->Reset();
+      composer.Reset();
       sconverter.Reset();
       output.Clear();
       input.clear();
 
       // Limited by kMaxCharLength in immutable_converter.cc
-      const int kInputStringLength = 1023;
+      const int kInputStringLength = 32;
       GenerateRandomInput(
-          kInputStringLength, kTestCases[test].min, kTestCases[test].min,
+          kInputStringLength, kTestCases[test].min, kTestCases[test].max,
           &input);
 
-      composer->InsertCharacterPreedit(input);
-      sconverter.ConvertToHalfWidth(composer.get());
+      composer.InsertCharacterPreedit(input);
+      sconverter.ConvertToHalfWidth(&composer);
       sconverter.FillOutput(&output);
 
       const commands::Preedit &conversion = output.preedit();

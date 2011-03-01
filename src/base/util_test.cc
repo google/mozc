@@ -450,10 +450,10 @@ TEST(UtilTest, SafeStrToDouble) {
 #endif
 }
 
+#pragma GCC diagnostic ignored "-Wformat-zero-length"
 TEST(UtilTest, StringPrintf) {
   // strings
-  // NB: GCC warns an empty format string, so uses string().c_str() instead.
-  EXPECT_EQ("", Util::StringPrintf(string().c_str()));
+  EXPECT_EQ("", Util::StringPrintf(""));
   EXPECT_EQ("", Util::StringPrintf("%s", ""));
   EXPECT_EQ("hello, world", Util::StringPrintf("hello, world"));
   EXPECT_EQ("hello, world", Util::StringPrintf("%s", "hello, world"));

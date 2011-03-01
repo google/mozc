@@ -118,11 +118,21 @@ class UserPOSImpl : public UserPOS::UserPOSInterface {
     // TODO(taku)  Change the cost by seeing cost_type
     const int16 kDefaultCost = 5000;
 
+    // Set smaller cost for "短縮よみ" in order to make
+    // the rank of the word higher than others.
+    const int16 kIsolatedWordCost = 200;
+    const char kIsolatedWordPOS[]
+        = "\xE7\x9F\xAD\xE7\xB8\xAE\xE3\x82\x88\xE3\x81\xBF";
+
     if (size == 1) {  // no conjugation
       (*tokens)[0].key = key;
       (*tokens)[0].value = value;
       (*tokens)[0].id = conjugation_form[0].id;
-      (*tokens)[0].cost= kDefaultCost;
+      if (pos == kIsolatedWordPOS) {
+        (*tokens)[0].cost= kIsolatedWordCost;
+      } else {
+        (*tokens)[0].cost= kDefaultCost;
+      }
     } else {
       // expand all other forms
       // TOOD(taku): Currently, user has to pass "word stem"

@@ -28,25 +28,26 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 {
+  'variables': {
+    # this variable can be updated when an app needs additional
+    # frameworks to be copied.  One example is mozc_tool (see
+    # gui/gui.gyp).
+    'copying_frameworks%': [],
+  },
   'conditions': [
     ['branding=="GoogleJapaneseInput"', {
-      'variables': {
-        'mac_breakpad_dir': '<(DEPTH)/../mac/Releases/GoogleBreakpad/',
-        'mac_breakpad_framework': '<(mac_breakpad_dir)/GoogleBreakpad.framework',
-      },
+      'includes': [
+        'breakpad_mac.gypi',
+      ],
       'copies': [
         {
           'files': [
             '<(mac_breakpad_framework)',
+            '<@(copying_frameworks)',
           ],
           'destination': '<(PRODUCT_DIR)/<(product_name).app/Contents/Frameworks',
         },
       ],
-      'link_settings': {
-        'libraries': [
-          '<(mac_breakpad_framework)',
-        ],
-      },
       'postbuilds': [
         {
           'postbuild_name': 'dump symbols',
@@ -67,6 +68,14 @@
         },
       ],
     }, {  # branding != GoogleJapaneseInput
+      'copies': [
+        {
+          'files': [
+            '<@(copying_frameworks)',
+          ],
+          'destination': '<(PRODUCT_DIR)/<(product_name).app/Contents/Frameworks',
+        },
+      ],
       'postbuilds': [
         {
           'postbuild_name': 'strip binary',

@@ -92,6 +92,8 @@ bool LaunchMozcToolInternal(const string &tool_name, const string &error_type) {
     appName = @"DictionaryTool.app";
   } else if (tool_name == "error_message_dialog") {
     appName = @"ErrorMessageDialog.app";
+  } else if (tool_name == "word_register_dialog") {
+    appName = @"WordRegisterDialog.app";
   }
 
   if (appName != nil) {

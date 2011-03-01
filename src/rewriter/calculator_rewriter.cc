@@ -107,28 +107,12 @@ bool CalculatorRewriter::Rewrite(Segments *segments) const {
 bool CalculatorRewriter::InsertCandidate(const string &value,
                                          size_t insert_pos,
                                          Segment *segment) const {
-  segment->GetCandidates(insert_pos);
   if (segment->candidates_size() == 0) {
     LOG(WARNING) << "candidates_size is 0";
     return false;
   }
 
   const Segment::Candidate &base_candidate = segment->candidate(0);
-  size_t offset = min(insert_pos, segment->candidates_size());
-
-  Segment::Candidate *candidate = segment->insert_candidate(offset);
-  if (candidate == NULL) {
-    LOG(ERROR) << "cannot insert candidate at " << offset;
-    return false;
-  }
-  // Simply sets some member variables of the new candidate to ones of the
-  // existing candidate next to it.
-  size_t reference_index = offset + 1;
-  if (reference_index >= segment->candidates_size()) {
-    reference_index = offset - 1;
-  }
-  const Segment::Candidate &reference_candidate =
-      segment->candidate(reference_index);
 
   // Normalize the expression, used in description.
   string temp, temp2, expression;
@@ -138,20 +122,47 @@ bool CalculatorRewriter::InsertCandidate(const string &value,
   // "ー", onbiki
   Util::StringReplace(temp2, "\xE3\x83\xBC", "-", true, &expression);
 
-  candidate->Init();
-  candidate->lid = reference_candidate.lid;
-  candidate->rid = reference_candidate.rid;
-  candidate->cost = reference_candidate.cost;
-  candidate->value = value;
-  candidate->content_value = value;
-  candidate->key = base_candidate.key;
-  candidate->content_key = base_candidate.content_key;
-  candidate->can_expand_alternative = false;
-  candidate->learning_type |= Segment::Candidate::NO_LEARNING;
-  // description "[expression] の計算結果"
-  const string description = expression +
-      " \xE3\x81\xAE\xE8\xA8\x88\xE7\xAE\x97\xE7\xB5\x90\xE6\x9E\x9C";
-  candidate->SetDescription(0, description);
+  size_t offset = min(insert_pos, segment->candidates_size());
+
+  for (int n = 0; n < 2; ++n) {
+    int current_offset = offset + n;
+    Segment::Candidate *candidate = segment->insert_candidate(
+        current_offset);
+    if (candidate == NULL) {
+      LOG(ERROR) << "cannot insert candidate at " << current_offset;
+      return false;
+    }
+
+    // Simply sets some member variables of the new candidate to ones of the
+    // existing candidate next to it.
+    size_t reference_index = current_offset + 1;
+    if (reference_index >= segment->candidates_size()) {
+      reference_index = current_offset - 1;
+    }
+    const Segment::Candidate &reference_candidate =
+        segment->candidate(reference_index);
+
+    candidate->Init();
+    candidate->lid = reference_candidate.lid;
+    candidate->rid = reference_candidate.rid;
+    candidate->cost = reference_candidate.cost;
+    candidate->key = base_candidate.key;
+    candidate->content_key = base_candidate.content_key;
+    candidate->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
+    candidate->attributes |= Segment::Candidate::NO_LEARNING;
+    // description "[expression] の計算結果"
+    candidate->description = expression +
+        " \xE3\x81\xAE\xE8\xA8\x88\xE7\xAE\x97\xE7\xB5\x90\xE6\x9E\x9C";
+
+    if (n == 0) {   // without expression
+      candidate->value = value;
+      candidate->content_value = value;
+    } else {       // with expression
+      candidate->value = expression + value;
+      candidate->content_value = expression + value;
+    }
+  }
+
   return true;
 }
 }  // namespace mozc

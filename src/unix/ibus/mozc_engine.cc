@@ -512,11 +512,13 @@ void MozcEngine::FocusOut(IBusEngine *engine) {
 }
 
 void MozcEngine::PageDown(IBusEngine *engine) {
-  // TODO(mazda): Implement this.
+  // TODO(mazda,yusukes): Implement this to support arrow icons inside the Gtk+
+  // candidate window.
 }
 
 void MozcEngine::PageUp(IBusEngine *engine) {
-  // TODO(mazda): Implement this.
+  // TODO(mazda,yusukes): Implement this to support arrow icons inside the Gtk+
+  // candidate window.
 }
 
 gboolean MozcEngine::ProcessKeyEvent(
@@ -700,12 +702,12 @@ void MozcEngine::PropertyActivate(IBusEngine *engine,
 
 void MozcEngine::PropertyHide(IBusEngine *engine,
                               const gchar *property_name) {
-  // TODO(mazda): Implement this.
+  // We can ignore the signal.
 }
 
 void MozcEngine::PropertyShow(IBusEngine *engine,
                               const gchar *property_name) {
-  // TODO(mazda): Implement this.
+  // We can ignore the signal.
 }
 
 void MozcEngine::Reset(IBusEngine *engine) {
@@ -724,7 +726,9 @@ void MozcEngine::Reset(IBusEngine *engine) {
 
 void MozcEngine::SetCapabilities(IBusEngine *engine,
                                  guint capabilities) {
-  // TODO(mazda): Implement this.
+  // TODO(mazda,yusukes): For now, there's nothing to do here. If mozc starts to
+  // support the reconversion feature, we should checkIBUS_CAP_SURROUNDING_TEXT
+  // here to see if the current client can provide surrounding text information.
 }
 
 void MozcEngine::SetCursorLocation(IBusEngine *engine,
@@ -732,7 +736,7 @@ void MozcEngine::SetCursorLocation(IBusEngine *engine,
                                    gint y,
                                    gint w,
                                    gint h) {
-  // TODO(mazda): Implement this.
+  // We can ignore the signal.
 }
 
 GType MozcEngine::GetType() {

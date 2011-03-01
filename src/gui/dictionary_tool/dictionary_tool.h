@@ -58,6 +58,11 @@ class DictionaryTool : public QMainWindow,
   explicit DictionaryTool(QWidget *parent = 0);
   virtual ~DictionaryTool();
 
+  // return true DictionaryTool is available.
+  bool IsAvailable() const {
+    return is_available_;
+  }
+
  protected:
   // Override the default implementation to check unsaved
   // modifications on data before closing the window.
@@ -215,6 +220,8 @@ class DictionaryTool : public QMainWindow,
   QString statusbar_message_;
 
   scoped_ptr<client::Session> session_;
+
+  bool is_available_;
 };
 }  // namespace gui
 }  // namespace mozc

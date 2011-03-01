@@ -54,21 +54,35 @@ def LoadRewriteMapRule(filename):
     rule.append([fields[0], fields[1]])
   return rule
 
-def main():
-  # read rule file
-  rules = LoadRewriteMapRule(sys.argv[2])
-  current_id = 1
 
+def ReadPOSID(id_file, special_pos_file):
+  pos_list = []
+  max_id = 0
+
+  for line in open(id_file, "r"):
+    fields = line.split()
+    pos_list.append(fields[1])
+
+  for line in open(special_pos_file, "r"):
+    if len(line) <= 1 or line[0] == '#':
+      continue
+    fields = line.split()
+    pos_list.append(fields[0])
+
+  return pos_list
+
+def main():
   # read lid file
-  lid = 0
+  pos_list = ReadPOSID(sys.argv[1], sys.argv[2])
+
+  # read rule file
+  rules = LoadRewriteMapRule(sys.argv[3])
+
+  current_id = 1
   id_map = {}
   ids = []
 
-  for line in open(sys.argv[1], "r"):
-    fields = line.split()
-    target = fields[1]
-    assert(int(fields[0]) == lid)
-    lid = lid + 1;
+  for target in pos_list:
     id = 0
     for rule in rules:
       if IsPrefix(target, rule[0]):
@@ -80,9 +94,6 @@ def main():
           current_id = current_id + 1
         pass
     ids.append(str(id))
-
-  # add default id for Zip code
-  ids.append("0")
 
   print "const uint8 kLidGroup[] = {"
   print ',\n'.join(ids)

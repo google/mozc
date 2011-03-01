@@ -114,7 +114,7 @@
           'product_name': '<(branding)Renderer',
           'sources': [
             'mozc_renderer_main.cc',
-            'mac/mac_server.cc',
+            'mac/mac_server.mm',
             'mac/mac_server_send_command.mm',
             'mac/CandidateController.mm',
             'mac/CandidateWindow.mm',

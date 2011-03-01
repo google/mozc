@@ -48,24 +48,29 @@ class ConverterTest : public testing::Test {
     Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
     config::Config config;
     config::ConfigHandler::GetDefaultConfig(&config);
+    config::ConfigHandler::SetConfig(config);
   }
 
-  virtual void TearDown() {}
+  virtual void TearDown() {
+    // just in case, reset the config in test_tmpdir
+    config::Config config;
+    config::ConfigHandler::GetDefaultConfig(&config);
+    config::ConfigHandler::SetConfig(config);
+  }
 };
 
 // test for issue:2209644
 // just checking whether this causes segmentation fault or not.
 // TODO(toshiyuki): make dictionary mock and test strictly.
 TEST_F(ConverterTest, CanConvertTest) {
-  mozc::ConverterInterface *converter
-      = mozc::ConverterFactory::GetConverter();
+  ConverterInterface *converter = ConverterFactory::GetConverter();
   CHECK(converter);
   {
-    mozc::Segments segments;
+    Segments segments;
     EXPECT_TRUE(converter->StartConversion(&segments, string("-")));
   }
   {
-    mozc::Segments segments;
+    Segments segments;
     // "おきておきて"
     EXPECT_TRUE(converter->StartConversion(
         &segments,
@@ -78,14 +83,12 @@ namespace {
 string ContextAwareConvert(const string &first_key,
                            const string &first_value,
                            const string &second_key) {
-  ConverterInterface *converter
-      = ConverterFactory::GetConverter();
+  ConverterInterface *converter = ConverterFactory::GetConverter();
   CHECK(converter);
   converter->ClearUserHistory();
 
   Segments segments;
   EXPECT_TRUE(converter->StartConversion(&segments, first_key));
-  EXPECT_TRUE(segments.mutable_segment(0)->GetCandidates(100));
 
   int position = -1;
   for (size_t i = 0; i < segments.segment(0).candidates_size(); ++i) {
@@ -148,10 +151,9 @@ TEST_F(ConverterTest, ContextAwareConversionTest) {
 }
 
 TEST_F(ConverterTest, CandidateKeyTest) {
-  mozc::ConverterInterface *converter
-      = mozc::ConverterFactory::GetConverter();
+  ConverterInterface *converter = ConverterFactory::GetConverter();
   CHECK(converter);
-  mozc::Segments segments;
+  Segments segments;
   // "わたしは"
   EXPECT_TRUE(converter->StartConversion(
       &segments,
@@ -163,5 +165,42 @@ TEST_F(ConverterTest, CandidateKeyTest) {
   // "わたし"
   EXPECT_EQ("\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97",
             segments.segment(0).candidate(0).content_key);
+}
+
+TEST_F(ConverterTest, QueryOfDeathTest) {
+  ConverterInterface *converter = ConverterFactory::GetConverter();
+  CHECK(converter);
+  Segments segments;
+  // "りゅきゅけmぽ"
+  EXPECT_TRUE(converter->StartConversion(
+      &segments,
+      "\xE3\x82\x8A\xE3\x82\x85"
+      "\xE3\x81\x8D\xE3\x82\x85"
+      "\xE3\x81\x91"
+      "m"
+      "\xE3\x81\xBD"));
+}
+
+TEST_F(ConverterTest, Regression3323108) {
+  ConverterInterface *converter = ConverterFactory::GetConverter();
+  Segments segments;
+
+  // "ここではきものをぬぐ"
+  EXPECT_TRUE(converter->StartConversion(
+      &segments,
+      "\xE3\x81\x93\xE3\x81\x93\xE3\x81\xA7"
+      "\xE3\x81\xAF\xE3\x81\x8D\xE3\x82\x82"
+      "\xE3\x81\xAE\xE3\x82\x92\xE3\x81\xAC"
+      "\xE3\x81\x90"));
+  EXPECT_EQ(3, segments.conversion_segments_size());
+  EXPECT_TRUE(converter->ResizeSegment(
+      &segments, 1, 2));
+  EXPECT_EQ(2, segments.conversion_segments_size());
+
+  // "きものをぬぐ"
+  EXPECT_EQ("\xE3\x81\x8D\xE3\x82\x82"
+            "\xE3\x81\xAE\xE3\x82\x92"
+            "\xE3\x81\xAC\xE3\x81\x90",
+            segments.conversion_segment(1).key());
 }
 }  // namespace mozc

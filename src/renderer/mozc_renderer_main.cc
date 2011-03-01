@@ -75,6 +75,7 @@ int main(int argc, char *argv[]) {
   server.SetRendererInterface(&server);
   result_code = server.StartServer();
 #elif defined(OS_MACOSX)
+  mozc::renderer::mac::MacServer::Init();
   mozc::renderer::mac::MacServer server;
   mozc::renderer::mac::CandidateController renderer;
   mozc::renderer::mac::MacServerSendCommand send_command;

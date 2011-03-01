@@ -38,14 +38,18 @@
       'type': 'static_library',
       'sources': [
         '<(proto_out_dir)/<(relative_dir)/user_history_predictor.pb.cc',
+        'conversion_predictor.cc',
         'suggestion_filter.cc',
         'dictionary_predictor.cc',
         'predictor.cc',
         'user_history_predictor.cc',
+        '../rewriter/variants_rewriter.cc',
       ],
       'dependencies': [
         '../base/base.gyp:base',
         '../converter/converter.gyp:segments',
+        '../converter/converter.gyp:immutable_converter',
+        '../session/session.gyp:config_handler',
         '../usage_stats/usage_stats.gyp:usage_stats',
         'genproto_prediction',
       ],
@@ -86,6 +90,7 @@
           'variables': {
             'input_files': [
               '../data/dictionary/id.def',
+              '../data/rules/special_pos.def',
               '../data/rules/suggestion_feature_pos_group.def',
             ],
           },
@@ -160,11 +165,14 @@
       'target_name': 'prediction_test',
       'type': 'executable',
       'sources': [
-        'suggestion_filter_test.cc',
+        'conversion_predictor_test.cc',
         'dictionary_predictor_test.cc',
+        'suggestion_filter_test.cc',
         'user_history_predictor_test.cc',
+        'predictor_test.cc',
       ],
       'dependencies': [
+        '../session/session.gyp:config_handler',
         '../testing/testing.gyp:gtest_main',
         'prediction',
       ],

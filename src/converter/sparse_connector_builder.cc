@@ -42,9 +42,56 @@ DEFINE_int32(cost_resolution, 64,
              "resolution*256.");
 
 namespace mozc {
-void SparseConnectorBuilder::Compile(const char *text_file,
-                                     const char *binary_file) {
-  InputFileStream ifs(text_file);
+
+namespace {
+
+size_t LoadIDSize(const string &filename) {
+  InputFileStream ifs(filename.c_str());
+  CHECK(ifs);
+  string line;
+  vector<string> fields;
+  int max_id = 0;
+  int line_num = 0;
+  while (getline(ifs, line)) {
+    fields.clear();
+    Util::SplitStringUsing(line, "\t ", &fields);
+    CHECK_GE(fields.size(), 2);
+    const int id = atoi32(fields[0].c_str());
+    max_id = max(id, max_id);
+    ++line_num;
+  }
+  ++max_id;
+
+  CHECK_EQ(line_num, max_id);
+
+  return max_id;
+}
+
+size_t LoadSpecialPOSSize(const string &filename) {
+  InputFileStream ifs(filename.c_str());
+  CHECK(ifs);
+  string line;
+  int line_num = 0;
+  while (getline(ifs, line)) {
+    if (line.empty() || line[0] == '#') {
+      continue;
+    }
+    ++line_num;
+  }
+
+  return line_num;
+}
+}  // namespace
+
+void SparseConnectorBuilder::Compile(
+    const string &text_connection_file,
+    const string &id_file,
+    const string &special_pos_file,
+    const string &output_file) {
+  const size_t id_size = LoadIDSize(id_file);
+  const size_t special_pos_size = LoadSpecialPOSSize(special_pos_file);
+
+  InputFileStream ifs(text_connection_file.c_str());
   CHECK(ifs);
   string line;
   vector<string> fields;
@@ -52,10 +99,16 @@ void SparseConnectorBuilder::Compile(const char *text_file,
   Util::SplitStringUsing(line, "\t ", &fields);
   CHECK_GE(fields.size(), 2);
 
-  // workaround:
-  // prepare for invalid POS
-  const uint16 lsize = atoi32(fields[0].c_str()) + 1;
-  const uint16 rsize = atoi32(fields[1].c_str()) + 1;
+  const uint16 original_lsize = atoi32(fields[0].c_str());
+  const uint16 original_rsize = atoi32(fields[1].c_str());
+
+  CHECK_EQ(id_size, original_lsize);
+  CHECK_EQ(id_size, original_rsize);
+
+  const uint16 lsize = original_lsize + special_pos_size;
+  const uint16 rsize = original_rsize + special_pos_size;
+
+  CHECK_EQ(lsize, rsize);
 
   LOG(INFO) << "Making " << lsize << " x " << rsize << " matrix";
   vector<int16> matrix(lsize * rsize);
@@ -71,7 +124,6 @@ void SparseConnectorBuilder::Compile(const char *text_file,
     const int r = atoi32(fields[1].c_str());
     int       c = atoi32(fields[2].c_str());
     CHECK(l < lsize && r < rsize) << "index values are out of range";
-
     // BOS->EOS connection cost is always 0
     if (l == 0 && r == 0) {
       c = 0;
@@ -79,22 +131,17 @@ void SparseConnectorBuilder::Compile(const char *text_file,
     matrix[(l + lsize * r)] = static_cast<int16>(c);
   }
 
-  // cost for invalid POS
-  // TODO(toshiyuki): remove this after defining new POS.
-  for (int l = 0; l < lsize; ++l) {
-    const int index = l + lsize * (rsize - 1);
-    if (l == 0) {
-      matrix[index] = 0;
-    } else {
-      matrix[index] = ConnectorInterface::kInvalidCost;
+  for (int l = original_lsize; l < lsize; ++l) {
+    for (int r = 1; r < rsize; ++r) {   // SKIP EOS (r == 0)
+      CHECK(l < lsize && r < rsize) << "index values are out of range";
+      matrix[(l + lsize * r)] = ConnectorInterface::kInvalidCost;
     }
   }
-  for (int r = 0; r < rsize; ++r) {
-    const int index = ((lsize - 1) + lsize * r);
-    if (r == 0) {
-      matrix[index] = 0;
-    } else {
-      matrix[index] = ConnectorInterface::kInvalidCost;
+
+  for (int r = original_rsize; r < rsize; ++r) {
+    for (int l = 1; l < lsize; ++l) {   // SKIP BOS (r == 0)
+      CHECK(l < lsize && r < rsize) << "index values are out of range";
+      matrix[(l + lsize * r)] = ConnectorInterface::kInvalidCost;
     }
   }
 
@@ -136,8 +183,8 @@ void SparseConnectorBuilder::Compile(const char *text_file,
 
     builder.Build();
 
-    OutputFileStream ofs(binary_file, ios::binary|ios::out);
-    CHECK(ofs) << "permission denied: " << binary_file;
+    OutputFileStream ofs(output_file.c_str(), ios::binary|ios::out);
+    CHECK(ofs) << "permission denied: " << output_file;
 
     CHECK_EQ(lsize, default_cost.size());
 
@@ -159,7 +206,7 @@ void SparseConnectorBuilder::Compile(const char *text_file,
   // verify connector
   {
     Mmap<char> mmap;
-    CHECK(mmap.Open(binary_file, "r"));
+    CHECK(mmap.Open(output_file.c_str(), "r"));
 
     scoped_ptr<SparseConnector> connector(
         new SparseConnector(mmap.begin(), mmap.GetFileSize()));

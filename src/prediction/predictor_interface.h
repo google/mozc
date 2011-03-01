@@ -68,14 +68,20 @@ class PredictorInterface {
   virtual ~PredictorInterface() {}
 };
 
-// factory for making "default" predictor
+// factory for making "default" predictors
 class PredictorFactory {
  public:
   // return singleton object
   static PredictorInterface *GetPredictor();
+  static PredictorInterface *GetUserHistoryPredictor();
+  static PredictorInterface *GetDictionaryPredictor();
+  static PredictorInterface *GetConversionPredictor();
 
   // dependency injection for unittesting
   static void SetPredictor(PredictorInterface *predictor);
+  static void SetUserHistoryPredictor(PredictorInterface *predictor);
+  static void SetDictionaryPredictor(PredictorInterface *predictor);
+  static void SetConversionPredictor(PredictorInterface *predictor);
 
  private:
   PredictorFactory() {}

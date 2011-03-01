@@ -37,6 +37,7 @@
 // Input: id.def, user-pos.def, cforms.def
 // Output: pos_data.h
 DEFINE_string(id_file, "", "");
+DEFINE_string(special_pos_file, "", "");
 DEFINE_string(user_pos_file, "", "");
 DEFINE_string(cforms_file, "", "");
 DEFINE_string(output, "", "");
@@ -48,21 +49,41 @@ namespace {
 class POSUtil {
  public:
   // load data/dictioanry/id.def
-  void Open(const string &id_file) {
+  void Open(const string &id_file, const string &special_pos_file) {
     ids_.clear();
-    InputFileStream ifs(id_file.c_str());
-    CHECK(ifs);
-    string line;
-    vector<string> fields;
-    while (getline(ifs, line)) {
-      if (line.empty() || line[0] == '#') {
-        continue;
+    int max_id = 0;
+
+    {
+      InputFileStream ifs(id_file.c_str());
+      CHECK(ifs);
+      string line;
+      vector<string> fields;
+      while (getline(ifs, line)) {
+        if (line.empty() || line[0] == '#') {
+          continue;
+        }
+        fields.clear();
+        Util::SplitStringUsing(line, "\t ", &fields);
+        CHECK_GE(fields.size(), 2);
+        const int id = atoi32(fields[0].c_str());
+        max_id = max(max_id, id);
+        ids_.push_back(make_pair(fields[1], static_cast<uint16>(id)));
       }
-      fields.clear();
-      Util::SplitStringUsing(line, "\t ", &fields);
-      CHECK_GE(fields.size(), 2);
-      const int id = atoi32(fields[0].c_str());
-      ids_.push_back(make_pair(fields[1], static_cast<uint16>(id)));
+    }
+
+    {
+      ++max_id;
+      InputFileStream ifs(special_pos_file.c_str());
+      CHECK(ifs);
+      string line;
+      vector<string> fields;
+      while (getline(ifs, line)) {
+        if (line.empty() || line[0] == '#') {
+          continue;
+        }
+        ids_.push_back(make_pair(line, static_cast<uint16>(max_id)));
+        ++max_id;
+      }
     }
   }
 
@@ -119,7 +140,7 @@ void LoadConjugation(const string &filename,
 
 void Convert() {
   POSUtil util;
-  util.Open(FLAGS_id_file);
+  util.Open(FLAGS_id_file, FLAGS_special_pos_file);
 
   map<string, vector<ConjugationType> > inflection_map;
   LoadConjugation(FLAGS_cforms_file, &inflection_map);
@@ -206,15 +227,18 @@ int main(int argc, char **argv) {
   InitGoogle(argv[0], &argc, &argv, false);
 
   if (FLAGS_id_file.empty() &&
+      FLAGS_special_pos_file.empty() &&
       FLAGS_user_pos_file.empty() &&
       FLAGS_cforms_file.empty() &&
-      argc > 3) {
+      argc > 4) {
     FLAGS_id_file = argv[1];
-    FLAGS_user_pos_file = argv[2];
-    FLAGS_cforms_file = argv[3];
+    FLAGS_special_pos_file = argv[2];
+    FLAGS_user_pos_file = argv[3];
+    FLAGS_cforms_file = argv[4];
   }
 
   LOG(INFO) << FLAGS_id_file;
+  LOG(INFO) << FLAGS_special_pos_file;
   LOG(INFO) << FLAGS_user_pos_file;
   LOG(INFO) << FLAGS_cforms_file;
 

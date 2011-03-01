@@ -37,6 +37,7 @@
 #include "base/mutex.h"
 #include "base/singleton.h"
 #include "converter/node.h"
+#include "dictionary/suppression_dictionary.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
 #include "session/config.pb.h"
@@ -152,6 +153,10 @@ Node *UserDictionary::LookupPredictive(const char *str, int size,
     return NULL;
   }
 
+  if (GET_CONFIG(incognito_mode)) {
+    return NULL;
+  }
+
   if (!CheckReloaderAndDelete()) {
     LOG(WARNING) << "Reloader is running";
     return NULL;
@@ -179,7 +184,7 @@ Node *UserDictionary::LookupPredictive(const char *str, int size,
     new_node->key = (*it)->key;
     new_node->value = (*it)->value;
     new_node->node_type = Node::NOR_NODE;
-    new_node->normalization_type = Node::NO_NORMALIZATION;
+    new_node->attributes |= Node::NO_VARIANTS_EXPANSION;
     new_node->bnext = result_node;
     result_node = new_node;
   }
@@ -194,6 +199,10 @@ Node *UserDictionary::LookupPrefix(const char *str, int size,
   }
 
   if (tokens_.empty()) {
+    return NULL;
+  }
+
+  if (GET_CONFIG(incognito_mode)) {
     return NULL;
   }
 
@@ -227,7 +236,7 @@ Node *UserDictionary::LookupPrefix(const char *str, int size,
     new_node->key = (*it)->key;
     new_node->value = (*it)->value;
     new_node->node_type = Node::NOR_NODE;
-    new_node->normalization_type = Node::NO_NORMALIZATION;
+    new_node->attributes |= Node::NO_VARIANTS_EXPANSION;
     new_node->bnext = result_node;
     result_node = new_node;
   }
@@ -242,15 +251,15 @@ Node *UserDictionary::LookupReverse(const char *str, int size,
     return NULL;
   }
 
+  if (GET_CONFIG(incognito_mode)) {
+    return NULL;
+  }
+
   return NULL;
 }
 
 bool UserDictionary::Reload() {
   Clear();
-
-  if (GET_CONFIG(incognito_mode)) {
-    return true;
-  }
 
   scoped_ptr<UserDictionaryStorage>
       storage(
@@ -261,18 +270,19 @@ bool UserDictionary::Reload() {
     return false;
   }
 
+  SuppressionDictionary::GetSuppressionDictionary()->Lock();
+
   return Load(*(storage.get()));
 }
 
 bool UserDictionary::AsyncReload() {
-  if (GET_CONFIG(incognito_mode)) {
-    return true;
-  }
-
   // now loading
   if (!CheckReloaderAndDelete()) {
     return true;
   }
+
+  SuppressionDictionary::GetSuppressionDictionary()->Lock();
+  DCHECK(SuppressionDictionary::GetSuppressionDictionary()->IsLocked());
 
   reloader_.reset(new UserDictionaryReloader(this));
   reloader_->Start();
@@ -293,6 +303,14 @@ bool UserDictionary::Load(const UserDictionaryStorage &storage) {
   set<uint64> seen;
   vector<UserPOS::Token> tokens;
 
+  SuppressionDictionary *suppression_dictionary =
+      SuppressionDictionary::GetSuppressionDictionary();
+  DCHECK(suppression_dictionary);
+  if (!suppression_dictionary->IsLocked()) {
+    LOG(ERROR) << "SuppressionDictionary must be locked first";
+  }
+  suppression_dictionary->Clear();
+
   for (size_t i = 0; i < storage.dictionaries_size(); ++i) {
     const UserDictionaryStorage::UserDictionary &dic =
         storage.dictionaries(i);
@@ -303,6 +321,7 @@ bool UserDictionary::Load(const UserDictionaryStorage &storage) {
     for (size_t j = 0; j < dic.entries_size(); ++j) {
       const UserDictionaryStorage::UserDictionaryEntry &entry =
           dic.entries(j);
+
       if (!UserDictionaryUtil::IsValidEntry(entry)) {
         continue;
       }
@@ -325,16 +344,24 @@ bool UserDictionary::Load(const UserDictionaryStorage &storage) {
         continue;
       }
 
-      tokens.clear();
-      UserPOS::GetTokens(reading, entry.value(), entry.pos(),
-                         UserPOS::DEFAULT, &tokens);
-      for (size_t k = 0; k < tokens.size(); ++k) {
-        tokens_.push_back(new UserPOS::Token(tokens[k]));
+
+      // "抑制単語"
+      if (entry.pos() == "\xE6\x8A\x91\xE5\x88\xB6\xE5\x8D\x98\xE8\xAA\x9E") {
+        suppression_dictionary->AddEntry(reading, entry.value());
+      } else {
+        tokens.clear();
+        UserPOS::GetTokens(reading, entry.value(), entry.pos(),
+                           UserPOS::DEFAULT, &tokens);
+        for (size_t k = 0; k < tokens.size(); ++k) {
+          tokens_.push_back(new UserPOS::Token(tokens[k]));
+        }
       }
     }
   }
 
   sort(tokens_.begin(), tokens_.end(), POSTokenLess());
+
+  suppression_dictionary->UnLock();
 
   VLOG(1) << tokens_.size() << " user dic entries loaded";
 

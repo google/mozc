@@ -39,9 +39,12 @@ namespace mozc {
 
 struct Node;
 class NodeAllocatorInterface;
-class NBestGenerator;
 class Lattice;
 template <class T> class ObjectPool;
+
+namespace composer {
+  class Composer;
+}  // namespace composer
 
 class Segment {
  public:
@@ -55,22 +58,21 @@ class Segment {
   };
 
   struct Candidate {
-    // reading
-    string key;
-    // surface form
-    string value;
-    string content_value;
+    string key;         // reading
+    string value;       // surface form
     string content_key;
+    string content_value;
+
+    // Meta information
     string prefix;
     string suffix;
     // Description including description type and message
     string description;
-    // Description message
-    string description_message;
     // Title of the usage containing basic form of this candidate.
     string usage_title;
     // Content of the usage.
     string usage_description;
+
     // Context "sensitive" candidate cost.
     // Taking adjacent words/nodes into consideration.
     // Basically, canidate is sorted by this cost.
@@ -81,12 +83,19 @@ class Segment {
     // (cost without transition cost between left/right boundaries)
     // Cost of only transitions (cost without word cost adjacent context)
     int32  structure_cost;
+
+    // lid of left-most node
     uint16 lid;
+    // rid of right-most node
     uint16 rid;
-    uint8  learning_type;
-    uint8  style;  // candidate style added by rewriters
-    bool can_expand_alternative;  // Can expand full/half width form
-    bool is_spelling_correction;
+
+    // Attributes of this candidate. Can set multiple attributes
+    // defined in enum |Attribute|.
+    uint32 attributes;
+
+    // Candidate style. This is not a bit-field.
+    // The style is defined in enum |Style|.
+    uint32 style;
 
     void Init() {
       key.clear();
@@ -103,45 +112,29 @@ class Segment {
       wcost = 0;
       lid = 0;
       rid = 0;
-      learning_type = 0;
+      attributes = 0;
       style = 0;
-      can_expand_alternative = true;
-      is_spelling_correction = false;
     }
 
-    Candidate()
-        : cost(0), lid(0), rid(0),
-          learning_type(0), style(0),
-          can_expand_alternative(true),
-          is_spelling_correction(false) {}
+    Candidate() : cost(0), wcost(0), structure_cost(0),
+                  lid(0), rid(0),
+                  attributes(0), style(0) {}
 
-    enum LearningType {
-      DEFAULT_LEARNING = 0,
-      BEST_CANDIDATE = 1,     // this was the best candidate before learning
-      RERANKED = 2,           // this candidate was reranked by user
-      NO_HISTORY_LEARNING = 4,   // don't save it in history
-      NO_SUGGEST_LEARNING = 8,   // don't save it in suggestion
-      NO_LEARNING = (4 | 8),     // NO_HISTORY_LEARNING | NO_SUGGEST_LEARNING
-      CONTEXT_SENSITIVE = 16,    // learn it with left/right context
+    enum Attribute {
+      DEFAULT_ATTRIBUTE = 0,
+      BEST_CANDIDATE = 1,        // this was the best candidate before learning
+      RERANKED = 2,                // this candidate was reranked by user
+      NO_HISTORY_LEARNING = 4,     // don't save it in history
+      NO_SUGGEST_LEARNING = 8,     // don't save it in suggestion
+      NO_LEARNING = (4 | 8),       // NO_HISTORY_LEARNING | NO_SUGGEST_LEARNING
+      CONTEXT_SENSITIVE = 16,      // learn it with left/right context
+      SPELLING_CORRECTION = 32,    // has "did you mean"
+      NO_VARIANTS_EXPANSION = 64,  // No need to have full/half width expansion
+      NO_EXTRA_DESCRIPTION = 128   // No need to have extra descriptions.
     };
 
-    // 1) Full width / half width description
-    // 2) CharForm (hiragana/katakana) description
-    // 3) Platform dependent char (JISX0213..etc) description
-    // 4) Zipcode description (XXX-XXXX)
-    //     * note that this overrides other descriptions
-    enum DescriptionType {
-      FULL_HALF_WIDTH = 1,   // automatically detect full/haflwidth.
-      HALF_WIDTH = 2,        // always set half width description.
-      FULL_WIDTH = 4,        // always set full width description.
-      CHARACTER_FORM = 8,
-      PLATFORM_DEPENDENT_CHARACTER = 16,
-      ZIPCODE = 32,
-    };
-
-    // Candidate types
     enum Style {
-      DEFAULT = 0,
+      DEFAULT_STYLE= 0,
       NUMBER_SEPARATED_ARABIC_HALFWIDTH,
       NUMBER_SEPARATED_ARABIC_FULLWIDTH,
       NUMBER_KANJI,
@@ -154,26 +147,6 @@ class Segment {
       NUMBER_BIN,
       NUMBER_KANJI_ARABIC,  // "ニ〇〇"
     };
-
-    // Set description:
-    // Can specify which types of descriptions is added with type argument.
-    // e.g, type = FULL_HALF_WIDTH | PLATFORM_DEPENDENT_CHARACTER;
-    // Note that internal description is cleared.
-    void SetDefaultDescription(int type);
-
-    // Set description for transliterations:
-    void SetTransliterationDescription();
-
-    // Instead of setting CHARACTER_FORM description,
-    // you can set any message with this method. CHARACTER_FORM is
-    // ignored. For instance, symbol_rewriter can use this
-    // method to display description "矢印" to "→" by passing
-    // message = "矢印"
-    void SetDescription(int type,
-                        const string &message);
-
-    // Reset description keeping description_message
-    void ResetDescription(int type);
 
     // return functional key
     // functional_key =
@@ -193,19 +166,9 @@ class Segment {
   const string& key() const;
   void set_key(const string &key);
 
-  // Set transliterations which is ordered by
-  // transliteration::TransliterationTypes (HIRAGANA, FULL_KATAKAKA,
-  // HALF_ASCII, FULL_ASCII and HALF_KATAKANA).
-  void SetTransliterations(const vector<string> &transliterations);
-
-  // Return true if transliterations has been initialized by the above
-  // SetTransliterations.
-  bool initialized_transliterations() { return initialized_transliterations_; }
-
   // Candidate manupluations
   // getter
   const Candidate &candidate(int i) const;
-  const Candidate &meta_candidate(size_t i) const;
 
   // setter
   Candidate *mutable_candidate(int i);
@@ -222,8 +185,6 @@ class Segment {
 
   // get size of candidates
   size_t candidates_size() const;
-  size_t meta_candidates_size() const;
-  size_t requested_candidates_size() const;
 
   // erase candidate
   void pop_front_candidate();
@@ -232,46 +193,26 @@ class Segment {
   void erase_candidates(int i, size_t size);
 
   // erase all candidates
+  // do not erase meta candidates
   void clear_candidates();
+
+  // meta candidates
+  // TODO(toshiyuki): Integrate meta candidates to candidate and delete these
+  size_t meta_candidates_size() const;
+  void clear_meta_candidates();
+  const vector<Candidate> &meta_candidates() const;
+  vector<Candidate> *mutable_meta_candidates();
+  const Candidate &meta_candidate(size_t i) const;
+  Candidate *mutable_meta_candidate(size_t i);
+  Candidate *add_meta_candidate();
 
   // move old_idx-th-candidate to new_index
   void move_candidate(int old_idx, int new_idx);
 
-  NBestGenerator *nbest_generator() const;
-
-  bool GetCandidates(size_t size);
-
-  // When candidate(i).value() has both halfwidth and fullwidth
-  // form, insert an alternate candidate at i + 1.
-  // The preference of halfwidth/fullwidth is determined
-  // by CharacterFormManager. For example, candidate(i).value is
-  // HALF_WIDTH, and the character form preference is FULL_WIDTH,
-  // this method does
-  //   1. make a copy of candidate at i and insert it at i + 1
-  //   2. change the candidate at i to be FULL WIDTH
-  //   3. change the candidate at i + 1 to be HALF WIDTH
-  // return true if the candidate is expanded.
-  bool ExpandAlternative(int i);
-
-  // Given English word, expand its variants by changing
-  // lower case/upper cases. If the original input has mixed
-  // upper/lower case characters, it only expands lower case pattern.
-  // Example:
-  // input="English" => [english, ENGLISH], and return true
-  // input="SELECT" => [select, Select], and return true
-  // input="foo" => [Foo, FOO], and return true
-  // input="MeCab => [mecab], and return true (mixed lower/upper)
-  // input="Foo Bar" => [], and return fasle (multi word expressions)
-  // input="グーグル" => [] and return fasle (non-ascii)
-  static bool ExpandEnglishVariants(const string &input,
-                                    vector<string> *variants);
-
-  // return true if |value| is katakana to English transliteration.
-  // TODO(taku): move it to base/util.h
-  static bool IsKatakanaT13NValue(const string &value);
-
-  void clear();
   void Clear();
+
+  // Keep clear() method as other modules are still using the old method
+  void clear() { Clear(); }
 
   Segment();
   virtual ~Segment();
@@ -281,10 +222,7 @@ class Segment {
   string key_;
   deque<Candidate *> candidates_;
   vector<Candidate>  meta_candidates_;
-  size_t requested_candidates_size_;
   bool initialized_transliterations_;
-  bool all_expanded_;
-  scoped_ptr<NBestGenerator> nbest_generator_;
   scoped_ptr<ObjectPool<Candidate> > pool_;
   DISALLOW_COPY_AND_ASSIGN(Segment);
 };
@@ -338,9 +276,8 @@ class Segments {
   void set_request_type(RequestType request_type);
 
   // enable/disable user history
-  void enable_user_history();
-  void disable_user_history();
-  bool use_user_history() const;
+  void set_user_history_enabled(bool user_history_enabled);
+  bool user_history_enabled() const;
 
   // getter
   const Segment &segment(size_t i) const;
@@ -382,8 +319,19 @@ class Segments {
   void set_max_prediction_candidates_size(size_t size);
   size_t max_prediction_candidates_size() const;
 
+  // Let converter know the maximum size of
+  // candidates converter can generate.
+  // NOTE: This field is used as an "optional" field.
+  // Rewriter might insert more than |size| candiates.
+  // Default setting is 200.
+  void set_max_conversion_candidates_size(size_t size);
+  size_t max_conversion_candidates_size() const;
+
   bool resized() const;
   void set_resized(bool resized);
+
+  const composer::Composer *composer() const;
+  void set_composer(const composer::Composer *composer);
 
   // Removes specified number of characters at the end of history segments.
   void RemoveTailOfHistorySegments(size_t num_of_characters);
@@ -392,7 +340,6 @@ class Segments {
   void clear_lattice();
 
   // clear segments and lattice
-  void clear();
   void Clear();
 
   // Dump Segments structure
@@ -416,13 +363,16 @@ class Segments {
  private:
   size_t max_history_segments_size_;
   size_t max_prediction_candidates_size_;
+  size_t max_conversion_candidates_size_;
   bool resized_;
-  bool use_user_history_;
+  bool user_history_enabled_;
+
   RequestType request_type_;
   scoped_ptr<Lattice> lattice_;
   scoped_ptr<ObjectPool<Segment> > pool_;
   deque<Segment *> segments_;
   vector<RevertEntry> revert_entries_;
+  const composer::Composer *composer_;
 
   DISALLOW_COPY_AND_ASSIGN(Segments);
 };

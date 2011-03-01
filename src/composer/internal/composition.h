@@ -45,6 +45,8 @@ typedef list<CharChunk*> CharChunkList;
 
 class TransliteratorInterface;
 
+class CompositionInput;
+
 class Composition : public CompositionInterface {
  public:
   Composition();
@@ -55,6 +57,10 @@ class Composition : public CompositionInterface {
   size_t InsertKeyAndPreeditAt(size_t position,
                                const string &key,
                                const string &preedit);
+  // Insert the given |input| to the composition at the given |position|
+  // and return the new position.
+  size_t InsertInput(size_t position, const CompositionInput &input);
+
   void Erase();
 
   // Get the position on mode_to from position_from on mode_from.
@@ -104,7 +110,8 @@ class Composition : public CompositionInterface {
   //      into [pending='q']+[pending='ky'] because [pending='ky']+[input='o']
   //      can turn to be a fixed chunk.
   // e.g. [pending='k']+[pending='y']+[input='q'] are not combined.
-  void CombinePendingChunks(CharChunkList::iterator it, const string &input);
+  void CombinePendingChunks(CharChunkList::iterator it,
+                            const CompositionInput &input);
 
   void GetStringWithModes(const TransliteratorInterface *transliterator,
                           TrimMode trim_mode,
@@ -119,9 +126,11 @@ class Composition : public CompositionInterface {
 
   const CharChunkList &GetCharChunkList() const;
 
+  // Return true if the composition is adviced to be committed immediately.
+  bool ShouldCommit() const;
+
  private:
   const Table *table_;
-  const Table *rev_table_;
   CharChunkList chunks_;
   const TransliteratorInterface *input_t12r_;
 

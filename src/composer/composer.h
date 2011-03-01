@@ -52,7 +52,7 @@ class Table;
 
 class Composer {
  public:
-  explicit Composer(CompositionInterface *composition);
+  Composer();
   virtual ~Composer();
 
   // Reset all composing data except table.
@@ -112,7 +112,6 @@ class Composer {
   size_t GetCursor() const;
   void EditErase();
 
-  void InsertCharacterAt(size_t pos, const string &input);
   void DeleteAt(size_t pos);
   void InsertCharacter(const string &input);
   void InsertCharacterPreedit(const string &input);
@@ -160,7 +159,9 @@ class Composer {
   // NOTE: Do not call this function if client cannot delete preceding text.
   size_t InsertPrecedingText(const commands::Context &context);
 
-  static Composer *Create(const Table *table);
+  // Return true if the composition is adviced to be committed immediately.
+  bool ShouldCommit() const;
+
   // Transform characters for preferred number format.  If any
   // characters are transformed true is returned.
   // For example, if the query is "ー１、０００。５", it should be
@@ -169,6 +170,12 @@ class Composer {
 
  private:
   size_t position_;
+  // Whether the next insertion is the beginning of typing after an
+  // editing command like SetInputMode or not.  Some conversion rules
+  // refer this state.  Assuming the input events are
+  // "abc<left-cursor>d", when "a" or "d" is typed, this value should
+  // be true.  When "b" or "c" is typed, the value should be false.
+  bool is_new_input_;
   transliteration::TransliterationType input_mode_;
   transliteration::TransliterationType output_mode_;
   // On reset, comeback_input_mode_ is used as the input mode.

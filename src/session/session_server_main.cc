@@ -36,31 +36,34 @@
 static const int kMaxBufSize = 1024;
 
 namespace mozc {
-SessionServer server;
-
-void SendCommand(const commands::Input &input, commands::Output *output) {
+void SendCommand(SessionServer *server,
+                 const commands::Input &input,
+                 commands::Output *output) {
   char buf[kMaxBufSize];
   size_t buf_len = kMaxBufSize;
 
-  printf("input command:\n%s\n", input.DebugString().c_str());
+  printf("input command:\n%s\n", input.Utf8DebugString().c_str());
 
-  server.Process(input.SerializeAsString().c_str(),
-                 input.SerializeAsString().size(),
-                 buf, &buf_len);
+  string input_str = input.SerializeAsString();
+  server->Process(input_str.c_str(), input_str.size(),
+                  buf, &buf_len);
 
   output->ParseFromArray(buf, buf_len);
-  printf("output command:\n%s\n", output->DebugString().c_str());
+  printf("output command:\n%s\n", output->Utf8DebugString().c_str());
 }
 }  // namespace mozc
 
 int main(int argc, char **argv) {
+  InitGoogle(argv[0], &argc, &argv, false);
+
+  mozc::SessionServer server;
   mozc::commands::Input input;
   mozc::commands::Output output;
 
   // create session
   {
     input.set_type(mozc::commands::Input::CREATE_SESSION);
-    mozc::SendCommand(input, &output);
+    mozc::SendCommand(&server, input, &output);
   }
 
   uint64 id = output.id();
@@ -70,7 +73,7 @@ int main(int argc, char **argv) {
     input.set_type(mozc::commands::Input::SEND_KEY);
     input.mutable_key()->set_special_key(
         mozc::commands::KeyEvent::SPACE);
-    mozc::SendCommand(input, &output);
+    mozc::SendCommand(&server, input, &output);
   }
 
   return 0;

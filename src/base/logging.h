@@ -118,7 +118,7 @@ class LogFinalizer {
 
   void operator&(ostream&) {}
 
- public:
+ private:
   LogSeverity  severity_;
 };
 

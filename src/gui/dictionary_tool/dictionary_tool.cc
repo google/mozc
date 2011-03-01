@@ -31,7 +31,6 @@
 
 #include <QtCore/QTimer>
 #include <QtGui/QtGui>
-#include <QtGui/QApplication>
 #include <QtGui/QProgressDialog>
 
 #include <algorithm>
@@ -286,7 +285,8 @@ DictionaryTool::DictionaryTool(QWidget *parent)
       new_action_(NULL), rename_action_(NULL), delete_action_(NULL),
       import_create_action_(NULL), import_append_action_(NULL),
       export_action_(NULL), import_default_ime_action_(NULL),
-      session_(new client::Session) {
+      session_(new client::Session),
+      is_available_(true) {
   setupUi(this);
 
   session_->set_timeout(kSessionTimeout);
@@ -299,7 +299,8 @@ DictionaryTool::DictionaryTool(QWidget *parent)
     QMessageBox::information(
         this, window_title_,
         tr("Another process is accessing the user dictionary file."));
-    QApplication::quit();
+    is_available_ = false;
+    return;
   }
 
   // main window
@@ -1300,13 +1301,11 @@ void DictionaryTool::SaveAndReloadServer() {
     return;
   }
 
-#ifndef OS_MACOSX
   // Update server version if need be.
   if (!session_->CheckVersionOrRestartServer()) {
     LOG(ERROR) << "CheckVersionOrRestartServer failed";
     return;
   }
-#endif
 
   // We don't show any dialog even when an error happens, since
   // dictionary serialization is finished correctly.

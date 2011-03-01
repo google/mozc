@@ -38,14 +38,19 @@
 #include "rewriter/collocation_rewriter.h"
 #include "rewriter/date_rewriter.h"
 #include "rewriter/emoticon_rewriter.h"
+#include "rewriter/english_variants_rewriter.h"
 #include "rewriter/fortune_rewriter.h"
 #include "rewriter/number_rewriter.h"
 #include "rewriter/rewriter_interface.h"
 #include "rewriter/single_kanji_rewriter.h"
 #include "rewriter/symbol_rewriter.h"
+#include "rewriter/transliteration_rewriter.h"
 #include "rewriter/user_segment_history_rewriter.h"
 #include "rewriter/user_boundary_history_rewriter.h"
+#include "rewriter/variants_rewriter.h"
 #include "rewriter/version_rewriter.h"
+
+DEFINE_bool(use_history_rewriter, true, "Use history rewriter or not.");
 
 namespace mozc {
 namespace {
@@ -67,57 +72,81 @@ class RewriterImpl: public RewriterInterface {
   virtual void Clear();
 
  private:
+  EnglishVariantsRewriter *english_variants_rewriter_;
   SingleKanjiRewriter *single_kanji_rewriter_;
   SymbolRewriter *symbol_rewriter_;
   NumberRewriter *number_rewriter_;
   CollocationRewriter *collocation_rewriter_;
   DateRewriter *date_rewriter_;
+  VariantsRewriter *variants_rewriter_;
   UserBoundaryHistoryRewriter *user_boundary_history_rewriter_;
   UserSegmentHistoryRewriter  *user_segment_history_rewriter_;
   VersionRewriter *version_rewriter_;
   EmoticonRewriter *emoticon_rewriter_;
   CalculatorRewriter *calculator_rewriter_;
   FortuneRewriter *fortune_rewriter_;
+  TransliterationRewriter *t13n_rewriter_;
   vector<RewriterInterface *> rewriters_;
 };
 
 RewriterImpl::RewriterImpl()
-    : single_kanji_rewriter_(new SingleKanjiRewriter),
+    : english_variants_rewriter_(new EnglishVariantsRewriter),
+      single_kanji_rewriter_(new SingleKanjiRewriter),
       symbol_rewriter_(new SymbolRewriter),
       number_rewriter_(new NumberRewriter),
       collocation_rewriter_(new CollocationRewriter),
       date_rewriter_(new DateRewriter),
-      user_boundary_history_rewriter_(new UserBoundaryHistoryRewriter),
-      user_segment_history_rewriter_(new UserSegmentHistoryRewriter),
+      variants_rewriter_(new VariantsRewriter),
+      // These two rewriters are initialized later following the
+      // use_history_rewriter flag.  because it will access to the
+      // local files at the initialization timing.  See comments below
+      // for more details.
+      user_boundary_history_rewriter_(NULL),
+      user_segment_history_rewriter_(NULL),
       version_rewriter_(new VersionRewriter),
       emoticon_rewriter_(new EmoticonRewriter),
       calculator_rewriter_(new CalculatorRewriter),
-      fortune_rewriter_(new FortuneRewriter) {
+      fortune_rewriter_(new FortuneRewriter),
+      t13n_rewriter_(new TransliterationRewriter) {
+  rewriters_.push_back(t13n_rewriter_);
+  rewriters_.push_back(english_variants_rewriter_);
   rewriters_.push_back(single_kanji_rewriter_);
   rewriters_.push_back(symbol_rewriter_);
   rewriters_.push_back(calculator_rewriter_);
   rewriters_.push_back(emoticon_rewriter_);
   rewriters_.push_back(number_rewriter_);
   rewriters_.push_back(collocation_rewriter_);
+
   rewriters_.push_back(date_rewriter_);
-  rewriters_.push_back(user_boundary_history_rewriter_);
-  rewriters_.push_back(user_segment_history_rewriter_);
+
+  rewriters_.push_back(variants_rewriter_);
+
+  if (FLAGS_use_history_rewriter) {
+    user_boundary_history_rewriter_ = new UserBoundaryHistoryRewriter;
+    user_segment_history_rewriter_ = new UserSegmentHistoryRewriter;
+    rewriters_.push_back(user_boundary_history_rewriter_);
+    rewriters_.push_back(user_segment_history_rewriter_);
+  }
+
   rewriters_.push_back(fortune_rewriter_);
   rewriters_.push_back(version_rewriter_);
 }
 
 RewriterImpl::~RewriterImpl() {
+  delete english_variants_rewriter_;
   delete single_kanji_rewriter_;
   delete symbol_rewriter_;
   delete number_rewriter_;
   delete collocation_rewriter_;
   delete date_rewriter_;
+  delete variants_rewriter_;
   delete user_boundary_history_rewriter_;
   delete user_segment_history_rewriter_;
   delete version_rewriter_;
   delete emoticon_rewriter_;
   delete fortune_rewriter_;
   delete calculator_rewriter_;
+  delete t13n_rewriter_;
   rewriters_.clear();
 }
 

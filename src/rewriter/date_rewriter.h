@@ -60,6 +60,7 @@ class DateRewriter: public RewriterInterface  {
   bool RewriteMonth(Segment *segment) const;
   bool RewriteYear(Segment *segment) const;
   bool RewriteCurrentTime(Segment *segment) const;
+  bool RewriteDateAndCurrentTime(Segment *segment) const;
   bool RewriteEra(Segment *current_segment,
                   const Segment &next_segment) const;
   bool RewriteWeekday(Segment *segment) const;

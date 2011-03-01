@@ -114,6 +114,8 @@ const char kMozcServerName[] = "mozc_server";
 const char kEventPathPrefix[] = "mozc.event.";
 const char kMozcTool[] = "mozc_tool";
 #endif
+
+const char kWordRegisterEnvironmentName[] = "default_entry_of_word_register";
 }  // namespace mozc
 
 #endif  // MOZC_BASE_CONST_H_

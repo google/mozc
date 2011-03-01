@@ -34,15 +34,40 @@
 #include "converter/converter_interface.h"
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
+#include "session/commands.pb.h"
 #include "session/config.pb.h"
 #include "session/config_handler.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
+
 DECLARE_string(test_tmpdir);
 
 namespace mozc {
 namespace {
+
+class UserHistoryPredictorTest : public testing::Test {
+ protected:
+  virtual void SetUp() {
+    kUseMockPasswordManager = true;
+    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    config::ConfigHandler::GetDefaultConfig(&default_config_);
+    config::ConfigHandler::SetConfig(default_config_);
+  }
+
+  virtual void TearDown() {
+    config::ConfigHandler::SetConfig(default_config_);
+  }
+
+  virtual void EnableZeroQuerySuggestion() {
+  }
+
+  virtual void DisableZeroQuerySuggestion() {
+  }
+
+ private:
+  config::Config default_config_;
+};
 
 void MakeSegmentsForSuggestion(const string key,
                                Segments *segments) {
@@ -56,7 +81,7 @@ void MakeSegmentsForSuggestion(const string key,
 void MakeSegmentsForPrediction(const string key,
                                Segments *segments) {
   segments->set_max_prediction_candidates_size(10);
-  segments->set_request_type(Segments::SUGGESTION);
+  segments->set_request_type(Segments::PREDICTION);
   Segment *seg = segments->add_segment();
   seg->set_key(key);
   seg->set_segment_type(Segment::FIXED_VALUE);
@@ -106,10 +131,20 @@ void AddCandidateWithDescription(const string &value,
   AddCandidateWithDescription(0, value, desc, segments);
 }
 
-TEST(UserHistoryPredictor, UserHistoryPredictorTest) {
-  kUseMockPasswordManager = true;
-  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+void PrependHistorySegments(const string &key,
+                            const string &value,
+                            Segments *segments) {
+  Segment *seg = segments->push_front_segment();
+  seg->set_segment_type(Segment::HISTORY);
+  seg->set_key(key);
+  Segment::Candidate *c = seg->add_candidate();
+  c->key = key;
+  c->content_key = key;
+  c->value = value;
+  c->content_value = value;
+}
 
+TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
   {
     UserHistoryPredictor predictor;
     predictor.WaitForSyncer();
@@ -192,7 +227,7 @@ TEST(UserHistoryPredictor, UserHistoryPredictorTest) {
 
       // "わたしの"
       MakeSegmentsForSuggestion(
-        "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE", &segments);
+          "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE", &segments);
       EXPECT_FALSE(predictor.Predict(&segments));
 
       config.set_use_history_suggest(true);
@@ -201,7 +236,7 @@ TEST(UserHistoryPredictor, UserHistoryPredictorTest) {
 
       // "わたしの"
       MakeSegmentsForSuggestion(
-        "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE", &segments);
+          "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE", &segments);
       EXPECT_FALSE(predictor.Predict(&segments));
     }
 
@@ -231,7 +266,7 @@ TEST(UserHistoryPredictor, UserHistoryPredictorTest) {
               "\xE7\xA7\x81\xE3\x81\xAE\xE5\x90\x8D\xE5\x89\x8D"
               "\xE3\x81\xAF\xE4\xB8\xAD\xE9\x87\x8E\xE3\x81\xA7\xE3\x81\x99");
 
-    //Exact Match
+    // Exact Match
     segments.Clear();
     // "わたしのなまえはなかのです"
     MakeSegmentsForSuggestion(
@@ -298,10 +333,7 @@ TEST(UserHistoryPredictor, UserHistoryPredictorTest) {
   }
 }
 
-TEST(UserHistoryPredictor, DescriptionTest) {
-  kUseMockPasswordManager = true;
-  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
-
+TEST_F(UserHistoryPredictorTest, DescriptionTest) {
   {
     UserHistoryPredictor predictor;
     predictor.WaitForSyncer();
@@ -374,7 +406,7 @@ TEST(UserHistoryPredictor, DescriptionTest) {
 
       // "わたしの"
       MakeSegmentsForSuggestion(
-        "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE", &segments);
+          "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE", &segments);
       EXPECT_FALSE(predictor.Predict(&segments));
 
       config.set_use_history_suggest(true);
@@ -383,7 +415,7 @@ TEST(UserHistoryPredictor, DescriptionTest) {
 
       // "わたしの"
       MakeSegmentsForSuggestion(
-        "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE", &segments);
+          "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE", &segments);
       EXPECT_FALSE(predictor.Predict(&segments));
     }
 
@@ -420,7 +452,7 @@ TEST(UserHistoryPredictor, DescriptionTest) {
               // "テスト"
               "\xe3\x83\x86\xe3\x82\xb9\xe3\x83\x88");
 
-    //Exact Match
+    // Exact Match
     segments.Clear();
     // "わたしのなまえはなかのです"
     MakeSegmentsForSuggestion(
@@ -493,10 +525,7 @@ TEST(UserHistoryPredictor, DescriptionTest) {
   }
 }
 
-TEST(UserHistoryPredictor, UserHistoryPredictorUnusedHistoryTest) {
-  kUseMockPasswordManager = true;
-  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
-
+TEST_F(UserHistoryPredictorTest, UserHistoryPredictorUnusedHistoryTest) {
   {
     UserHistoryPredictor predictor;
     predictor.WaitForSyncer();
@@ -602,9 +631,7 @@ TEST(UserHistoryPredictor, UserHistoryPredictorUnusedHistoryTest) {
   }
 }
 
-TEST(UserHistoryPredictor, UserHistoryPredictorRevertTest) {
-  kUseMockPasswordManager = true;
-  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+TEST_F(UserHistoryPredictorTest, UserHistoryPredictorRevertTest) {
   UserHistoryPredictor predictor;
   predictor.WaitForSyncer();
   predictor.ClearAllHistory();
@@ -638,7 +665,7 @@ TEST(UserHistoryPredictor, UserHistoryPredictorRevertTest) {
   predictor.Revert(&segments);
 
   segments.Clear();
-    // "わたしの"
+  // "わたしの"
   MakeSegmentsForSuggestion("\xE3\x82\x8F\xE3\x81\x9F"
                             "\xE3\x81\x97\xE3\x81\xAE", &segments);
 
@@ -649,47 +676,46 @@ TEST(UserHistoryPredictor, UserHistoryPredictorRevertTest) {
   EXPECT_EQ(segments.segment(0).candidates_size(), 0);
 }
 
-TEST(UserHistoryPredictor, UserHistoryPredictorClearTest) {
-  kUseMockPasswordManager = true;
-  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
-
+TEST_F(UserHistoryPredictorTest, UserHistoryPredictorClearTest) {
   UserHistoryPredictor predictor;
   predictor.WaitForSyncer();
 
-  // input "012-3456" 10 times
+  // input "testtest" 10 times
   for (int i = 0; i < 10; ++i) {
     Segments segments;
-    MakeSegmentsForConversion("012-3456", &segments);
-    AddCandidate("012-3456", &segments);
+    MakeSegmentsForConversion("testtest", &segments);
+    // "テストテスト"
+    AddCandidate("\xe3\x83\x86\xe3\x82\xb9\xe3\x83\x88"
+                 "\xe3\x83\x86\xe3\x82\xb9\xe3\x83\x88", &segments);
     predictor.Finish(&segments);
   }
 
   predictor.ClearAllHistory();
   predictor.WaitForSyncer();
 
-  // input "012-3456" 1 time
+  // input "testtest" 1 time
   for (int i = 0; i < 1; ++i) {
     Segments segments;
-    MakeSegmentsForConversion("012-3456", &segments);
-    AddCandidate("012-3456", &segments);
+    MakeSegmentsForConversion("testtest", &segments);
+    // "テストテスト"
+    AddCandidate("\xe3\x83\x86\xe3\x82\xb9\xe3\x83\x88"
+                 "\xe3\x83\x86\xe3\x82\xb9\xe3\x83\x88", &segments);
     predictor.Finish(&segments);
   }
 
   // frequency is cleared as well.
   {
     Segments segments;
-    MakeSegmentsForSuggestion("0", &segments);
+    MakeSegmentsForSuggestion("t", &segments);
     EXPECT_FALSE(predictor.Predict(&segments));
 
-    segments.clear();
-    MakeSegmentsForSuggestion("012-345", &segments);
+    segments.Clear();
+    MakeSegmentsForSuggestion("testte", &segments);
     EXPECT_TRUE(predictor.Predict(&segments));
   }
 }
 
-TEST(UserHistoryPredictor, UserHistoryPredictorTailingPunctuation) {
-  kUseMockPasswordManager = true;
-  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTailingPunctuation) {
   UserHistoryPredictor predictor;
   predictor.WaitForSyncer();
   predictor.ClearAllHistory();
@@ -750,9 +776,7 @@ TEST(UserHistoryPredictor, UserHistoryPredictorTailingPunctuation) {
             "\xE3\x80\x82");
 }
 
-TEST(UserHistoryPredictor, UserHistoryPredictorPreceedingPunctuation) {
-  kUseMockPasswordManager = true;
-  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+TEST_F(UserHistoryPredictorTest, UserHistoryPredictorPreceedingPunctuation) {
   UserHistoryPredictor predictor;
   predictor.WaitForSyncer();
   predictor.ClearAllHistory();
@@ -804,9 +828,8 @@ TEST(UserHistoryPredictor, UserHistoryPredictorPreceedingPunctuation) {
             "\xE3\x81\xAF\xE4\xB8\xAD\xE9\x87\x8E\xE3\x81\xA7\xE3\x81\x99");
 }
 
-TEST(UserHistoryPredictor, MultiSegmentsMultiInput) {
-  kUseMockPasswordManager = true;
-  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+
+TEST_F(UserHistoryPredictorTest, MultiSegmentsMultiInput) {
   UserHistoryPredictor predictor;
   predictor.WaitForSyncer();
   predictor.ClearAllHistory();
@@ -929,9 +952,7 @@ TEST(UserHistoryPredictor, MultiSegmentsMultiInput) {
             "\xE8\x89\xAF\xE5\xAD\x90\xE3\x81\xAB");
 }
 
-TEST(UserHistoryPredictor, MultiSegmentsSingleInput) {
-  kUseMockPasswordManager = true;
-  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+TEST_F(UserHistoryPredictorTest, MultiSegmentsSingleInput) {
   UserHistoryPredictor predictor;
   predictor.WaitForSyncer();
   predictor.ClearAllHistory();
@@ -1044,9 +1065,7 @@ TEST(UserHistoryPredictor, MultiSegmentsSingleInput) {
             "\xE8\x89\xAF\xE5\xAD\x90\xE3\x81\xAB");
 }
 
-TEST(UserHistoryPredictor, Regression2843371_Case1) {
-  kUseMockPasswordManager = true;
-  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+TEST_F(UserHistoryPredictorTest, Regression2843371_Case1) {
   UserHistoryPredictor predictor;
   predictor.WaitForSyncer();
   predictor.ClearAllHistory();
@@ -1124,12 +1143,9 @@ TEST(UserHistoryPredictor, Regression2843371_Case1) {
             "\xE3\x81\xAF\xE3\x80\x81"
             "\xE6\x97\xA5\xE6\x9C\xAC"
             "\xE3\x81\xA7\xE3\x81\x99");
-
 }
 
-TEST(UserHistoryPredictor, Regression2843371_Case2) {
-  kUseMockPasswordManager = true;
-  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+TEST_F(UserHistoryPredictorTest, Regression2843371_Case2) {
   UserHistoryPredictor predictor;
   predictor.WaitForSyncer();
   predictor.ClearAllHistory();
@@ -1145,7 +1161,9 @@ TEST(UserHistoryPredictor, Regression2843371_Case2) {
   AddCandidate(1, "(", &segments);
 
   // "とうきょう/東京"
-  MakeSegmentsForConversion("\xE3\x81\xA8\xE3\x81\x86\xE3\x81\x8D\xE3\x82\x87\xE3\x81\x86", &segments);
+  MakeSegmentsForConversion(
+      "\xE3\x81\xA8\xE3\x81\x86\xE3\x81\x8D\xE3\x82\x87\xE3\x81\x86",
+      &segments);
   AddCandidate(2, "\xE6\x9D\xB1\xE4\xBA\xAC", &segments);
 
   // ")"
@@ -1202,9 +1220,7 @@ TEST(UserHistoryPredictor, Regression2843371_Case2) {
             "\xE6\xB1\x9F\xE6\x88\xB8(\xE6\x9D\xB1\xE4\xBA\xAC");
 }
 
-TEST(UserHistoryPredictor, Regression2843371_Case3) {
-  kUseMockPasswordManager = true;
-  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+TEST_F(UserHistoryPredictorTest, Regression2843371_Case3) {
   UserHistoryPredictor predictor;
   predictor.WaitForSyncer();
   predictor.ClearAllHistory();
@@ -1282,9 +1298,7 @@ TEST(UserHistoryPredictor, Regression2843371_Case3) {
             "\xE3\x81\xAF\xE9\xAB\x98\xE3\x81\x84");
 }
 
-TEST(UserHistoryPredictor, Regression2843775) {
-  kUseMockPasswordManager = true;
-  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+TEST_F(UserHistoryPredictorTest, Regression2843775) {
   UserHistoryPredictor predictor;
   predictor.WaitForSyncer();
   predictor.ClearAllHistory();
@@ -1350,9 +1364,7 @@ int Random(int size) {
   return static_cast<int> (1.0 * size * rand() / (RAND_MAX + 1.0));
 }
 
-TEST(UserHistoryPredictor, SyncTest) {
-  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
-
+TEST_F(UserHistoryPredictorTest, SyncTest) {
   UserHistoryPredictor predictor;
   predictor.WaitForSyncer();
 
@@ -1383,13 +1395,13 @@ TEST(UserHistoryPredictor, SyncTest) {
         predictor.WaitForSyncer();
         break;
       case Command::INSERT:
-        segments.clear();
+        segments.Clear();
         MakeSegmentsForConversion(commands[i].key, &segments);
         AddCandidate(commands[i].value, &segments);
         predictor.Finish(&segments);
         break;
       case Command::LOOKUP:
-        segments.clear();
+        segments.Clear();
         MakeSegmentsForSuggestion(commands[i].key, &segments);
         predictor.Predict(&segments);
       default:
@@ -1398,15 +1410,15 @@ TEST(UserHistoryPredictor, SyncTest) {
   }
 }
 
-TEST(UserHistoryPredictor, GetMatchTypeTest) {
-  EXPECT_EQ(UserHistoryPredictor::NO_MATCH,
-            UserHistoryPredictor::GetMatchType("", "test"));
-
+TEST_F(UserHistoryPredictorTest, GetMatchTypeTest) {
   EXPECT_EQ(UserHistoryPredictor::NO_MATCH,
             UserHistoryPredictor::GetMatchType("test", ""));
 
   EXPECT_EQ(UserHistoryPredictor::NO_MATCH,
             UserHistoryPredictor::GetMatchType("", ""));
+
+  EXPECT_EQ(UserHistoryPredictor::LEFT_EMPTY_MATCH,
+            UserHistoryPredictor::GetMatchType("", "test"));
 
   EXPECT_EQ(UserHistoryPredictor::NO_MATCH,
             UserHistoryPredictor::GetMatchType("foo", "bar"));
@@ -1421,7 +1433,7 @@ TEST(UserHistoryPredictor, GetMatchTypeTest) {
             UserHistoryPredictor::GetMatchType("foobar", "foo"));
 }
 
-TEST(UserHistoryPredictor, FingerPrintTest) {
+TEST_F(UserHistoryPredictorTest, FingerPrintTest) {
   const char kKey[] = "abc";
   const char kValue[] = "ABC";
 
@@ -1462,7 +1474,7 @@ TEST(UserHistoryPredictor, FingerPrintTest) {
   EXPECT_EQ(segment_fp, segment_fp2);
 }
 
-TEST(UserHistoryPredictor, Uint32ToStringTest) {
+TEST_F(UserHistoryPredictorTest, Uint32ToStringTest) {
   EXPECT_EQ(123,
             UserHistoryPredictor::StringToUint32(
                 UserHistoryPredictor::Uint32ToString(123)));
@@ -1484,7 +1496,7 @@ TEST(UserHistoryPredictor, Uint32ToStringTest) {
   EXPECT_EQ(0, UserHistoryPredictor::StringToUint32("abcdef"));
 }
 
-TEST(UserHistoryPredictor, GetScore) {
+TEST_F(UserHistoryPredictorTest, GetScore) {
   // latest value has higher score.
   {
     UserHistoryPredictor::Entry entry1, entry2;
@@ -1552,20 +1564,23 @@ TEST(UserHistoryPredictor, GetScore) {
   }
 }
 
-TEST(UserHistoryPredictor, IsValidSuggestion) {
+TEST_F(UserHistoryPredictorTest, IsValidSuggestion) {
   UserHistoryPredictor::Entry entry;
 
-  EXPECT_FALSE(UserHistoryPredictor::IsValidSuggestion(1, entry));
+  EXPECT_FALSE(UserHistoryPredictor::IsValidSuggestion(false, 1, entry));
 
   entry.set_bigram_boost(true);
-  EXPECT_TRUE(UserHistoryPredictor::IsValidSuggestion(1, entry));
+  EXPECT_TRUE(UserHistoryPredictor::IsValidSuggestion(false, 1, entry));
+
+  entry.set_bigram_boost(false);
+  EXPECT_TRUE(UserHistoryPredictor::IsValidSuggestion(true, 1, entry));
 
   entry.set_bigram_boost(false);
   entry.set_conversion_freq(10);
-  EXPECT_TRUE(UserHistoryPredictor::IsValidSuggestion(1, entry));
+  EXPECT_TRUE(UserHistoryPredictor::IsValidSuggestion(false, 1, entry));
 }
 
-TEST(UserHistoryPredictor, EntryPriorityQueueTest) {
+TEST_F(UserHistoryPredictorTest, EntryPriorityQueueTest) {
   // removed automatically
   const int kSize = 10000;
   {
@@ -1617,6 +1632,68 @@ TEST(UserHistoryPredictor, EntryPriorityQueueTest) {
     }
 
     EXPECT_EQ(2, queue.size());
+  }
+}
+
+TEST_F(UserHistoryPredictorTest, PrivacySensitiveTest) {
+  UserHistoryPredictor predictor;
+  predictor.WaitForSyncer();
+
+  {
+    Segments segments;
+    MakeSegmentsForConversion("123abc!", &segments);
+    AddCandidate("123abc!", &segments);
+    predictor.Finish(&segments);
+  }
+
+  // no suggestion for password-like input
+  {
+    Segments segments;
+    MakeSegmentsForSuggestion("123abc", &segments);
+    EXPECT_FALSE(predictor.Predict(&segments));
+    segments.Clear();
+    MakeSegmentsForSuggestion("123abc!", &segments);
+    EXPECT_FALSE(predictor.Predict(&segments));
+  }
+
+  // no prediction for password-like input
+  {
+    Segments segments;
+    MakeSegmentsForPrediction("123abc", &segments);
+    EXPECT_FALSE(predictor.Predict(&segments));
+    segments.Clear();
+    MakeSegmentsForPrediction("123abc!", &segments);
+    EXPECT_FALSE(predictor.Predict(&segments));
+  }
+
+  predictor.ClearAllHistory();
+  predictor.WaitForSyncer();
+  {
+    Segments segments;
+    MakeSegmentsForConversion("123", &segments);
+    MakeSegmentsForConversion("abc!", &segments);
+    AddCandidate(0, "123", &segments);
+    AddCandidate(1, "abc!", &segments);
+    predictor.Finish(&segments);
+  }
+
+  // treat as not privacy sensitive but conversion result
+  {
+    Segments segments;
+    MakeSegmentsForSuggestion("123abc", &segments);
+    EXPECT_TRUE(predictor.Predict(&segments));
+    segments.Clear();
+    MakeSegmentsForSuggestion("123abc!", &segments);
+    EXPECT_TRUE(predictor.Predict(&segments));
+  }
+
+  {
+    Segments segments;
+    MakeSegmentsForPrediction("123abc", &segments);
+    EXPECT_TRUE(predictor.Predict(&segments));
+    segments.Clear();
+    MakeSegmentsForPrediction("123abc!", &segments);
+    EXPECT_TRUE(predictor.Predict(&segments));
   }
 }
 }  // namespace

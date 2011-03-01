@@ -31,8 +31,6 @@
 #include "base/base.h"
 #include "base/file_stream.h"
 #include "base/util.h"
-#include "converter/converter_interface.h"
-#include "composer/table.h"
 #include "session/commands.pb.h"
 #include "session/internal/keymap.h"
 #include "session/key_parser.h"
@@ -45,11 +43,8 @@ DEFINE_string(profile_dir, "", "Profile dir");
 namespace mozc {
 void Loop(istream *input, ostream *output) {
   // Initialize session.
-  composer::Table table;
-  table.Initialize();
-  ConverterInterface *converter = ConverterFactory::GetConverter();
   keymap::KeyMapManager *keymap = new keymap::KeyMapManager();
-  scoped_ptr<Session> session(new Session(&table, converter, keymap));
+  scoped_ptr<session::Session> session(new session::Session(keymap));
 
   commands::Command command;
   string line;
@@ -59,7 +54,7 @@ void Loop(istream *input, ostream *output) {
       continue;
     }
     if (line.empty()) {
-      session.reset(new Session(&table, converter, keymap));
+      session.reset(new session::Session(keymap));
       *output << endl << "## New session" << endl << endl;
       continue;
     }
@@ -80,7 +75,7 @@ void Loop(istream *input, ostream *output) {
   }
 }
 
-}  // mozc
+}  // namespace mozc
 
 int main(int argc, char **argv) {
   InitGoogle(argv[0], &argc, &argv, false);

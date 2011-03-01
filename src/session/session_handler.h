@@ -44,23 +44,20 @@
 namespace mozc {
 class SessionWatchDog;
 class Stopwatch;
+
 namespace commands {
 class Command;
-}
+} // namespace commands
+
 namespace keymap {
 class KeyMapManager;
-}
-namespace composer {
-class Table;
-}
+}  // namespace keymap
 
 namespace session {
 class SessionObserverHandler;
 class SessionObserverInterface;
-}
-
 class Session;
-class ConverterInterface;
+}  // namespace session
 
 class SessionHandler : public SessionHandlerInterface {
  public:
@@ -77,7 +74,7 @@ class SessionHandler : public SessionHandlerInterface {
 
   // NewSession returns new Sessoin.
   // Client needs to delete it properly
-  Session *NewSession();
+  session::Session *NewSession();
 
   virtual void AddObserver(session::SessionObserverInterface *observer);
 
@@ -104,13 +101,11 @@ class SessionHandler : public SessionHandlerInterface {
   SessionID CreateNewSessionID();
   bool DeleteSessionID(SessionID id);
 
-  scoped_ptr<composer::Table> preedit_table_;
-  typedef LRUCache<SessionID, Session*> SessionMap;
-  typedef LRUCache<SessionID, Session*>::Element SessionElement;
+  typedef LRUCache<SessionID, session::Session*> SessionMap;
+  typedef LRUCache<SessionID, session::Session*>::Element SessionElement;
   scoped_ptr<SessionMap> session_map_;
   scoped_ptr<keymap::KeyMapManager> keymap_;
   scoped_ptr<SessionWatchDog> session_watch_dog_;
-  ConverterInterface *converter_;
   bool is_available_;
   int keyevent_counter_;
   uint32 max_session_size_;

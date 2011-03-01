@@ -56,6 +56,9 @@ class MacServer : public RendererServer {
   // arrives.  This is public because it will be called from carbon
   // event handler.  You should not call this directly.
   void RunExecCommand();
+
+  // Initialize the application status.
+  static void Init();
  private:
   Mutex mutex_;
   pthread_cond_t event_;

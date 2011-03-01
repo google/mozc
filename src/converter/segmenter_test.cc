@@ -54,7 +54,8 @@ TEST(SegmenterTest, SegmenterLNodeTest) {
     for (size_t lid = 0; lid < kRSize; ++lid) {
       lnode.rid = rid;
       lnode.lid = lid;
-      EXPECT_TRUE(Segmenter::IsBoundary(&lnode, &rnode));
+      EXPECT_TRUE(Segmenter::IsBoundary(&lnode, &rnode, false));
+      EXPECT_TRUE(Segmenter::IsBoundary(&lnode, &rnode, true));
     }
   }
 }
@@ -68,7 +69,8 @@ TEST(SegmenterTest, SegmenterRNodeTest) {
     for (size_t lid = 0; lid < kRSize; ++lid) {
       lnode.rid = rid;
       lnode.lid = lid;
-      EXPECT_TRUE(Segmenter::IsBoundary(&lnode, &rnode));
+      EXPECT_TRUE(Segmenter::IsBoundary(&lnode, &rnode, false));
+      EXPECT_TRUE(Segmenter::IsBoundary(&lnode, &rnode, true));
     }
   }
 }
@@ -82,7 +84,8 @@ TEST(SegmenterTest, SegmenterNodeTest) {
       lnode.rid = rid;
       rnode.lid = lid;
       EXPECT_EQ(Segmenter::IsBoundary(rid, lid),
-                Segmenter::IsBoundary(&lnode, &rnode));
+                Segmenter::IsBoundary(&lnode, &rnode, false));
+      EXPECT_FALSE(Segmenter::IsBoundary(&lnode, &rnode, true));
     }
   }
 }

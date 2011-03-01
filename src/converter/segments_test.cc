@@ -28,7 +28,8 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "base/util.h"
-#include "transliteration/transliteration.h"
+#include "composer/composer.h"
+#include "composer/table.h"
 #include "converter/converter_interface.h"
 #include "converter/character_form_manager.h"
 #include "converter/segments.h"
@@ -92,11 +93,11 @@ TEST_F(SegmentsTest, BasicTest) {
   segments.set_request_type(Segments::SUGGESTION);
   EXPECT_EQ(Segments::SUGGESTION, segments.request_type());
 
-  segments.enable_user_history();
-  EXPECT_TRUE(segments.use_user_history());
+  segments.set_user_history_enabled(true);
+  EXPECT_TRUE(segments.user_history_enabled());
 
-  segments.disable_user_history();
-  EXPECT_FALSE(segments.use_user_history());
+  segments.set_user_history_enabled(false);
+  EXPECT_FALSE(segments.user_history_enabled());
 
   EXPECT_EQ(0, segments.segments_size());
   EXPECT_TRUE(NULL != segments.lattice());
@@ -140,7 +141,7 @@ TEST_F(SegmentsTest, BasicTest) {
   segments.pop_front_segment();
   EXPECT_EQ(seg[1], segments.mutable_segment(0));
 
-  segments.clear();
+  segments.Clear();
   EXPECT_EQ(0, segments.segments_size());
 
   for (int i = 0; i < kSegmentsSize; ++i) {
@@ -163,7 +164,7 @@ TEST_F(SegmentsTest, BasicTest) {
   EXPECT_EQ(seg[1], segments.mutable_segment(1));
   EXPECT_EQ(seg[4], segments.mutable_segment(2));
 
-  segments.clear();
+  segments.Clear();
   for (int i = 0; i < kSegmentsSize; ++i) {
     seg[i] = segments.push_back_segment();
     if (i < 2) {
@@ -216,8 +217,8 @@ TEST_F(CandidateTest, BasicTest) {
     EXPECT_EQ(i, segment.indexOf(segment.mutable_candidate(i)));
   }
 
-  for (int i = -static_cast<int>
-           (segment.meta_candidates_size() - 1); i >= 0; ++i) {
+  for (int i = -static_cast<int>(segment.meta_candidates_size()) - 1;
+       i >= 0; ++i) {
     EXPECT_EQ(i, segment.indexOf(segment.mutable_candidate(i)));
   }
 
@@ -230,7 +231,7 @@ TEST_F(CandidateTest, BasicTest) {
   segment.pop_front_candidate();
   EXPECT_EQ(cand[1], segment.mutable_candidate(0));
 
-  segment.clear();
+  segment.Clear();
   EXPECT_EQ(0, segment.candidates_size());
 
   for (int i = 0; i < kCandidatesSize; ++i) {
@@ -253,7 +254,7 @@ TEST_F(CandidateTest, BasicTest) {
   EXPECT_EQ(cand[4], segment.mutable_candidate(2));
 
   // move
-  segment.clear();
+  segment.Clear();
   for (int i = 0; i < kCandidatesSize; ++i) {
     cand[i] = segment.push_back_candidate();
   }
@@ -336,202 +337,12 @@ TEST_F(SegmentsTest, RemoveTailOfHistorySegments) {
   EXPECT_EQ("Moz", segments.history_segment(0).candidate(0).value);
 }
 
-TEST_F(CandidateTest, SetDefaultDescription) {
-  {
-    Segment::Candidate candidate;
-    candidate.Init();
-    candidate.value = "HalfASCII";
-    candidate.content_value = candidate.value;
-    candidate.content_key = "halfascii";
-    candidate.SetDefaultDescription(
-        Segment::Candidate::FULL_HALF_WIDTH |
-        Segment::Candidate::CHARACTER_FORM |
-        Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER);
-    // "[半] アルファベット"
-    EXPECT_EQ("\x5b\xe5\x8d\x8a\x5d\x20\xe3\x82\xa2\xe3\x83\xab\xe3\x83\x95\xe3"
-              "\x82\xa1\xe3\x83\x99\xe3\x83\x83\xe3\x83\x88",
-              candidate.description);
-  }
-  // containing symbols
-  {
-    Segment::Candidate candidate;
-    candidate.Init();
-    candidate.value = "Half ASCII";
-    candidate.content_value = candidate.value;
-    candidate.content_key = "half ascii";
-    candidate.SetDefaultDescription(
-        Segment::Candidate::FULL_HALF_WIDTH |
-        Segment::Candidate::CHARACTER_FORM |
-        Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER);
-    // "[半] アルファベット"
-    EXPECT_EQ("\x5b\xe5\x8d\x8a\x5d\x20\xe3\x82\xa2\xe3\x83\xab\xe3\x83\x95\xe3"
-              "\x82\xa1\xe3\x83\x99\xe3\x83\x83\xe3\x83\x88",
-              candidate.description);
-  }
-  {
-    Segment::Candidate candidate;
-    candidate.Init();
-    candidate.value = "Half!ASCII!";
-    candidate.content_value = candidate.value;
-    candidate.content_key = "half!ascii!";
-    candidate.SetDefaultDescription(
-        Segment::Candidate::FULL_HALF_WIDTH |
-        Segment::Candidate::CHARACTER_FORM |
-        Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER);
-    // "[半] アルファベット"
-    EXPECT_EQ("\x5b\xe5\x8d\x8a\x5d\x20\xe3\x82\xa2\xe3\x83\xab\xe3\x83\x95\xe3"
-              "\x82\xa1\xe3\x83\x99\xe3\x83\x83\xe3\x83\x88",
-              candidate.description);
-  }
-  {
-    Segment::Candidate candidate;
-    candidate.Init();
-    candidate.value = "CD-ROM";
-    candidate.content_value = candidate.value;
-    // "しーでぃーろむ"
-    candidate.content_key =
-        "\xe3\x81\x97\xe3\x83\xbc\xe3\x81\xa7\xe3\x81\x83\xe3"
-        "\x83\xbc\xe3\x82\x8d\xe3\x82\x80";
-    candidate.SetDefaultDescription(
-        Segment::Candidate::FULL_HALF_WIDTH |
-        Segment::Candidate::CHARACTER_FORM |
-        Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER);
-    // "[半] アルファベット"
-    EXPECT_EQ("\x5b\xe5\x8d\x8a\x5d\x20\xe3\x82\xa2\xe3\x83\xab\xe3\x83\x95\xe3"
-              "\x82\xa1\xe3\x83\x99\xe3\x83\x83\xe3\x83\x88",
-              candidate.description);
-  }
-  {
-    Segment::Candidate candidate;
-    candidate.Init();
-    // "コギト・エルゴ・スム"
-    candidate.value = "\xe3\x82\xb3\xe3\x82\xae\xe3\x83\x88\xe3\x83\xbb\xe3\x82"
-        "\xa8\xe3\x83\xab\xe3\x82\xb4\xe3\x83\xbb\xe3\x82\xb9\xe3\x83\xa0";
-    candidate.content_value = candidate.value;
-    // "こぎとえるごすむ"
-    candidate.content_key =
-        "\xe3\x81\x93\xe3\x81\x8e\xe3\x81\xa8\xe3\x81\x88\xe3\x82\x8b\xe3\x81"
-        "\x94\xe3\x81\x99\xe3\x82\x80";
-    candidate.SetDefaultDescription(
-        Segment::Candidate::FULL_HALF_WIDTH |
-        Segment::Candidate::CHARACTER_FORM |
-        Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER);
-    // "[全] カタカナ"
-    EXPECT_EQ(
-        "\x5b\xe5\x85\xa8\x5d\x20\xe3\x82\xab\xe3\x82\xbf\xe3\x82\xab"
-        "\xe3\x83\x8a",
-        candidate.description);
-  }
-  {
-    Segment::Candidate candidate;
-    candidate.Init();
-    candidate.value = "!@#";
-    candidate.content_value = candidate.value;
-    candidate.content_key = "!@#";
-    candidate.SetDefaultDescription(
-        Segment::Candidate::FULL_HALF_WIDTH |
-        Segment::Candidate::CHARACTER_FORM |
-        Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER);
-    // TODO(komatsu): Make sure this is an expected behavior.
-    EXPECT_TRUE(candidate.description.empty());
-  }
-  {
-    Segment::Candidate candidate;
-    candidate.Init();
-    // "「ＡＢＣ」"
-    candidate.value = "\xe3\x80\x8c\xef\xbc\xa1\xef\xbc\xa2\xef\xbc\xa3\xe3"
-                      "\x80\x8d";
-    candidate.content_value = candidate.value;
-    candidate.content_key = "[ABC]";
-    candidate.SetDefaultDescription(
-        Segment::Candidate::FULL_HALF_WIDTH |
-        Segment::Candidate::CHARACTER_FORM |
-        Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER);
-    // "[全] アルファベット"
-    EXPECT_EQ("\x5b\xe5\x85\xa8\x5d\x20\xe3\x82\xa2\xe3\x83\xab\xe3\x83\x95"
-              "\xe3\x82\xa1\xe3\x83\x99\xe3\x83\x83\xe3\x83\x88",
-              candidate.description);
-  }
-}
-
-TEST_F(CandidateTest, SetTransliterationDescription) {
-  {
-    Segment::Candidate candidate;
-    candidate.Init();
-    candidate.value = "HalfASCII";
-    candidate.content_value = candidate.value;
-    candidate.content_key = "halfascii";
-    candidate.SetTransliterationDescription();
-    // "[半] アルファベット"
-    EXPECT_EQ("\x5b\xe5\x8d\x8a\x5d\x20\xe3\x82\xa2\xe3\x83\xab\xe3\x83\x95\xe3"
-              "\x82\xa1\xe3\x83\x99\xe3\x83\x83\xe3\x83\x88",
-              candidate.description);
-  }
-  {
-    Segment::Candidate candidate;
-    candidate.Init();
-    candidate.value = "!@#";
-    candidate.content_value = candidate.value;
-    candidate.content_key = "!@#";
-    candidate.SetTransliterationDescription();
-    // "[半]"
-    EXPECT_EQ("\x5b\xe5\x8d\x8a\x5d", candidate.description);
-  }
-  {
-    Segment::Candidate candidate;
-    candidate.Init();
-    // "「ＡＢＣ」"
-    candidate.value = "\xe3\x80\x8c\xef\xbc\xa1\xef\xbc\xa2\xef\xbc\xa3\xe3"
-                      "\x80\x8d";
-    candidate.content_value = candidate.value;
-    candidate.content_key = "[ABC]";
-    candidate.SetTransliterationDescription();
-    // "[全]"
-    EXPECT_EQ("\x5b\xe5\x85\xa8\x5d", candidate.description);
-  }
-}
-
-TEST_F(CandidateTest, SetDescription) {
-  {
-    Segment::Candidate candidate;
-    candidate.Init();
-    candidate.value = "!";
-    candidate.content_value = candidate.value;
-    candidate.content_key = "!";
-    candidate.SetDescription(Segment::Candidate::FULL_HALF_WIDTH,
-                             "\xe3\x81\xb3\xe3\x81\xa3\xe3\x81\x8f"
-                             "\xe3\x82\x8a");  // "びっくり"
-    EXPECT_EQ("[\xe5\x8d\x8a] \xe3\x81\xb3\xe3\x81\xa3"
-              "\xe3\x81\x8f\xe3\x82\x8a",  // "[半] びっくり"
-              candidate.description);
-  }
-}
-
-TEST_F(CandidateTest, ResetDescription) {
-  {
-    Segment::Candidate candidate;
-    candidate.Init();
-    candidate.value = "!";
-    candidate.content_value = candidate.value;
-    candidate.content_key = "!";
-    candidate.SetDescription(Segment::Candidate::FULL_HALF_WIDTH,
-                             "[\xe3\x81\xaa\xe3\x82\x93\xe3\x81\xa8"
-                             "]\xe3\x81\xb3\xe3\x81\xa3\xe3\x81\x8f"
-                             "\xe3\x82\x8a(\xe3\x81\xaa\xe3\x82\x93"
-                             "\xe3\x81\xa8)");  // "[なんと]びっくり(なんと)"
-    EXPECT_EQ("[\xe5\x8d\x8a] [\xe3\x81\xaa\xe3\x82\x93\xe3\x81\xa8]"
-              "\xe3\x81\xb3\xe3\x81\xa3\xe3\x81\x8f\xe3\x82\x8a("
-              "\xe3\x81\xaa\xe3\x82\x93\xe3\x81\xa8)",
-              // "[半] [なんと]びっくり(なんと)"
-              candidate.description);
-    candidate.value = "\xef\xbc\x81";  // "！"
-    candidate.ResetDescription(Segment::Candidate::FULL_HALF_WIDTH);
-    EXPECT_EQ("[\xe5\x85\xa8] [\xe3\x81\xaa\xe3\x82\x93\xe3\x81\xa8]"
-              "\xe3\x81\xb3\xe3\x81\xa3\xe3\x81\x8f\xe3\x82\x8a("
-              "\xe3\x81\xaa\xe3\x82\x93\xe3\x81\xa8)",
-              // "[全] [なんと]びっくり(なんと)",
-              candidate.description);
-  }
+TEST_F(SegmentsTest, ComposerAccessorTest) {
+  Segments segments;
+  EXPECT_TRUE(segments.composer() == NULL);
+  composer::Composer composer;
+  segments.set_composer(&composer);
+  EXPECT_EQ(&composer, segments.composer());
 }
 
 TEST_F(CandidateTest, functional_key) {
@@ -596,274 +407,84 @@ TEST_F(CandidateTest, functional_value) {
   EXPECT_EQ("", candidate.functional_value());
 }
 
-TEST_F(SegmentTest, ExpandAlternative) {
-  Segments segments;
+TEST_F(SegmentTest, MetaCandidateTest) {
+  Segment segment;
 
-  Segment *seg = segments.push_back_segment();
+  EXPECT_EQ(0, segment.meta_candidates_size());
 
-  {
-    Segment::Candidate *candidate = seg->add_candidate();
-    candidate->Init();
-    // "あいう"
-    candidate->value = "\xe3\x81\x82\xe3\x81\x84\xe3\x81\x86";
-    // "あいう"
-    candidate->content_value = "\xe3\x81\x82\xe3\x81\x84\xe3\x81\x86";
-    EXPECT_FALSE(seg->ExpandAlternative(0));
-    seg->clear_candidates();
+  const int kCandidatesSize = 5;
+  vector<string> values;
+  for (size_t i = 0; i < kCandidatesSize; ++i) {
+    values.push_back(string('a' + i, 1));
   }
 
-  {
-    Segment::Candidate *candidate = seg->add_candidate();
-    candidate->Init();
-    candidate->value = "012";
-    candidate->content_value = "012";
-    CharacterFormManager::GetCharacterFormManager()->
-      SetCharacterForm("012", config::Config::FULL_WIDTH);
-
-    EXPECT_TRUE(seg->ExpandAlternative(0));
-    EXPECT_EQ(2, seg->candidates_size());
-    // "０１２"
-    EXPECT_EQ("\xef\xbc\x90\xef\xbc\x91\xef\xbc\x92", seg->candidate(0).value);
-    // "０１２"
-    EXPECT_EQ("\xef\xbc\x90\xef\xbc\x91\xef\xbc\x92",
-              seg->candidate(0).content_value);
-    EXPECT_EQ("012", seg->candidate(1).value);
-    EXPECT_EQ("012", seg->candidate(1).content_value);
-    seg->clear_candidates();
+  // add_meta_candidate()
+  for (size_t i = 0; i < kCandidatesSize; ++i) {
+    EXPECT_EQ(i, segment.meta_candidates_size());
+    Segment::Candidate *cand = segment.add_meta_candidate();
+    cand->value = values[i];
+    EXPECT_EQ(i + 1, segment.meta_candidates_size());
   }
 
-  {
-    Segment::Candidate *candidate = seg->add_candidate();
-    candidate->Init();
-    candidate->value = "Google";
-    candidate->content_value = "Google";
-    CharacterFormManager::GetCharacterFormManager()->
-      SetCharacterForm("abc", config::Config::FULL_WIDTH);
-
-    EXPECT_TRUE(seg->ExpandAlternative(0));
-    EXPECT_EQ(2, seg->candidates_size());
-    // "Ｇｏｏｇｌｅ"
-    EXPECT_EQ("\xef\xbc\xa7\xef\xbd\x8f\xef\xbd\x8f\xef\xbd\x87\xef\xbd\x8c\xef"
-              "\xbd\x85", seg->candidate(0).value);
-    // "Ｇｏｏｇｌｅ"
-    EXPECT_EQ("\xef\xbc\xa7\xef\xbd\x8f\xef\xbd\x8f\xef\xbd\x87\xef\xbd\x8c\xef"
-              "\xbd\x85", seg->candidate(0).content_value);
-    EXPECT_EQ("Google", seg->candidate(1).value);
-    EXPECT_EQ("Google", seg->candidate(1).content_value);
-    seg->clear_candidates();
+  // mutable_candidate()
+  for (size_t i = 0; i < kCandidatesSize; ++i) {
+    const int meta_idx = -static_cast<int>(i)-1;
+    Segment::Candidate *cand = segment.mutable_candidate(meta_idx);
+    EXPECT_EQ(values[i], cand->value);
   }
 
-
-  {
-    Segment::Candidate *candidate = seg->add_candidate();
-    candidate->Init();
-    candidate->value = "@";
-    candidate->content_value = "@";
-    CharacterFormManager::GetCharacterFormManager()->
-      SetCharacterForm("@", config::Config::FULL_WIDTH);
-
-    EXPECT_TRUE(seg->ExpandAlternative(0));
-    EXPECT_EQ(2, seg->candidates_size());
-    // "＠"
-    EXPECT_EQ("\xef\xbc\xa0", seg->candidate(0).value);
-    // "＠"
-    EXPECT_EQ("\xef\xbc\xa0", seg->candidate(0).content_value);
-    EXPECT_EQ("@", seg->candidate(1).value);
-    EXPECT_EQ("@", seg->candidate(1).content_value);
-    seg->clear_candidates();
+  // mutable_meta_candidate()
+  for (size_t i = 0; i < kCandidatesSize; ++i) {
+    Segment::Candidate *cand = segment.mutable_meta_candidate(i);
+    EXPECT_EQ(values[i], cand->value);
   }
 
-  {
-    Segment::Candidate *candidate = seg->add_candidate();
-    candidate->Init();
-    // "グーグル"
-    candidate->value = "\xe3\x82\xb0\xe3\x83\xbc\xe3\x82\xb0\xe3\x83\xab";
-    // "グーグル"
-    candidate->content_value = "\xe3\x82\xb0\xe3\x83\xbc\xe3\x82\xb0\xe3\x83"
-                               "\xab";
-    CharacterFormManager::GetCharacterFormManager()->
-      // "アイウ"
-      SetCharacterForm("\xe3\x82\xa2\xe3\x82\xa4\xe3\x82\xa6",
-                       config::Config::FULL_WIDTH);
-
-    EXPECT_FALSE(seg->ExpandAlternative(0));
-    seg->clear_candidates();
+  // candidate()
+  for (size_t i = 0; i < kCandidatesSize; ++i) {
+    const int meta_idx = -static_cast<int>(i)-1;
+    const Segment::Candidate &cand = segment.candidate(meta_idx);
+    EXPECT_EQ(values[i], cand.value);
   }
 
-  {
-     Segment::Candidate *candidate = seg->add_candidate();
-     candidate->Init();
-     // "グーグル"
-     candidate->value = "\xe3\x82\xb0\xe3\x83\xbc\xe3\x82\xb0\xe3\x83\xab";
-     // "グーグル"
-     candidate->content_value = "\xe3\x82\xb0\xe3\x83\xbc\xe3\x82\xb0\xe3\x83"
-                                "\xab";
-     CharacterFormManager::GetCharacterFormManager()->Clear();
-     CharacterFormManager::GetCharacterFormManager()->
-         // "アイウ"
-         AddConversionRule("\xe3\x82\xa2\xe3\x82\xa4\xe3\x82\xa6",
-                           config::Config::HALF_WIDTH);
-
-     EXPECT_TRUE(seg->ExpandAlternative(0));
-     EXPECT_EQ(2, seg->candidates_size());
-     // "ｸﾞｰｸﾞﾙ"
-     EXPECT_EQ("\xef\xbd\xb8\xef\xbe\x9e\xef\xbd\xb0\xef\xbd\xb8\xef\xbe\x9e"
-               "\xef\xbe\x99", seg->candidate(0).value);
-     // "ｸﾞｰｸﾞﾙ"
-     EXPECT_EQ("\xef\xbd\xb8\xef\xbe\x9e\xef\xbd\xb0\xef\xbd\xb8\xef\xbe\x9e"
-               "\xef\xbe\x99", seg->candidate(0).content_value);
-     // "グーグル"
-     EXPECT_EQ("\xe3\x82\xb0\xe3\x83\xbc\xe3\x82\xb0\xe3\x83\xab",
-               seg->candidate(1).value);
-     // "グーグル"
-     EXPECT_EQ("\xe3\x82\xb0\xe3\x83\xbc\xe3\x82\xb0\xe3\x83\xab",
-               seg->candidate(1).content_value);
-     seg->clear_candidates();
+  // meta_candidate()
+  for (size_t i = 0; i < kCandidatesSize; ++i) {
+    const Segment::Candidate &cand = segment.meta_candidate(i);
+    EXPECT_EQ(values[i], cand.value);
   }
 
-  {
-    Segment::Candidate *candidate = seg->add_candidate();
-    candidate->Init();
-    candidate->value = "Google";
-    candidate->content_value = "Google";
-    candidate->can_expand_alternative = false;
-    CharacterFormManager::GetCharacterFormManager()->
-      SetCharacterForm("abc", config::Config::FULL_WIDTH);
-
-    EXPECT_EQ(1, seg->candidates_size());
-    EXPECT_EQ("Google", seg->candidate(0).value);
-    EXPECT_EQ("Google", seg->candidate(0).content_value);
-    seg->clear_candidates();
+  // indexOf
+  for (size_t i = 0; i < kCandidatesSize; ++i) {
+    const int meta_idx = -static_cast<int>(i)-1;
+    EXPECT_EQ(meta_idx, segment.indexOf(segment.mutable_candidate(meta_idx)));
   }
-}
 
-TEST_F(SegmentTest, ExpandEnglishVariants) {
-  vector<string> variants;
+  EXPECT_EQ(segment.candidates_size(),
+            segment.indexOf(NULL));
 
-  EXPECT_TRUE(
-      Segment::ExpandEnglishVariants(
-          "foo",
-          &variants));
-  EXPECT_EQ(2, variants.size());
-  EXPECT_EQ("Foo", variants[0]);
-  EXPECT_EQ("FOO", variants[1]);
+  // mutable_meta_candidates
+  {
+    vector<Segment::Candidate> *meta_candidates =
+        segment.mutable_meta_candidates();
+    EXPECT_EQ(kCandidatesSize, meta_candidates->size());
+    Segment::Candidate cand;
+    cand.Init();
+    cand.value = "Test";
+    meta_candidates->push_back(cand);
+  }
 
-  EXPECT_TRUE(
-      Segment::ExpandEnglishVariants(
-          "Bar",
-          &variants));
-  EXPECT_EQ(2, variants.size());
-  EXPECT_EQ("bar", variants[0]);
-  EXPECT_EQ("BAR", variants[1]);
-
-  EXPECT_TRUE(
-      Segment::ExpandEnglishVariants(
-          "HOGE",
-          &variants));
-  EXPECT_EQ(2, variants.size());
-  EXPECT_EQ("hoge", variants[0]);
-  EXPECT_EQ("Hoge", variants[1]);
-
-  EXPECT_FALSE(
-      Segment::ExpandEnglishVariants(
-          "Foo Bar",
-          &variants));
-
-  EXPECT_TRUE(
-      Segment::ExpandEnglishVariants(
-          "iPhone",
-          &variants));
-  EXPECT_EQ(1, variants.size());
-  EXPECT_EQ("iphone", variants[0]);
-
-  EXPECT_TRUE(
-      Segment::ExpandEnglishVariants(
-          "MeCab",
-          &variants));
-  EXPECT_EQ(1, variants.size());
-  EXPECT_EQ("mecab", variants[0]);
-
-  EXPECT_FALSE(
-      Segment::ExpandEnglishVariants(
-          "\xe3\x82\xb0\xe3\x83\xbc\xe3\x82\xb0\xe3\x83\xab",
-          &variants));
-}
-
-TEST_F(SegmentTest, IsKatakanaT13NValue) {
-  EXPECT_TRUE(Segment::IsKatakanaT13NValue("ABC"));
-  EXPECT_TRUE(Segment::IsKatakanaT13NValue("Google"));
-  EXPECT_TRUE(Segment::IsKatakanaT13NValue("Google Map"));
-  EXPECT_TRUE(Segment::IsKatakanaT13NValue("ABC-DEF"));
-  EXPECT_TRUE(Segment::IsKatakanaT13NValue("Foo-bar"));
-  EXPECT_TRUE(Segment::IsKatakanaT13NValue("Foo!"));
-  EXPECT_TRUE(Segment::IsKatakanaT13NValue("!"));
-  EXPECT_TRUE(Segment::IsKatakanaT13NValue("  "));
-  //  EXPECT_FALSE(Segment::IsKatakanaT13NValue("てすと"));
-  //  EXPECT_FALSE(Segment::IsKatakanaT13NValue("テスト"));
-  //  EXPECT_FALSE(Segment::IsKatakanaT13NValue("東京"));
-  EXPECT_FALSE(Segment::IsKatakanaT13NValue(
-      "\xE3\x81\xA6\xE3\x81\x99\xE3\x81\xA8"));
-  EXPECT_FALSE(Segment::IsKatakanaT13NValue(
-      "\xE3\x83\x86\xE3\x82\xB9\xE3\x83\x88"));
-  EXPECT_FALSE(Segment::IsKatakanaT13NValue(
-      "\xE6\x9D\xB1\xE4\xBA\xAC"));
-}
-
-TEST_F(SegmentTest, SetTransliterations) {
-  Segments segments;
-  Segment *seg = segments.push_back_segment();
-
-  // "じしん"
-  seg->set_key("\xe3\x81\x98\xe3\x81\x97\xe3\x82\x93");
-  // "じしん"
-  EXPECT_EQ("\xe3\x81\x98\xe3\x81\x97\xe3\x82\x93",
-            seg->meta_candidate(transliteration::HIRAGANA).value);
-  // "ジシン"
-  EXPECT_EQ("\xe3\x82\xb8\xe3\x82\xb7\xe3\x83\xb3",
-            seg->meta_candidate(transliteration::FULL_KATAKANA).value);
-  EXPECT_EQ("zisin", seg->meta_candidate(transliteration::HALF_ASCII).value);
-  // "ｚｉｓｉｎ"
-  EXPECT_EQ("\xef\xbd\x9a\xef\xbd\x89\xef\xbd\x93\xef\xbd\x89\xef\xbd\x8e",
-            seg->meta_candidate(transliteration::FULL_ASCII).value);
-  // "ｼﾞｼﾝ"
-  EXPECT_EQ("\xef\xbd\xbc\xef\xbe\x9e\xef\xbd\xbc\xef\xbe\x9d",
-            seg->meta_candidate(transliteration::HALF_KATAKANA).value);
-  EXPECT_FALSE(seg->initialized_transliterations());
-
-  vector<string> t13ns(transliteration::NUM_T13N_TYPES);
-  // "じしん"
-  t13ns[transliteration::HIRAGANA] = "\xe3\x81\x98\xe3\x81\x97\xe3\x82\x93";
-  // "ジシン"
-  t13ns[transliteration::FULL_KATAKANA] = "\xe3\x82\xb8\xe3\x82\xb7"
-                                          "\xe3\x83\xb3";
-  t13ns[transliteration::HALF_ASCII] = "jishinn";
-  // "ｊｉｓｈｉｎｎ"
-  t13ns[transliteration::FULL_ASCII] = "\xef\xbd\x8a\xef\xbd\x89\xef\xbd\x93"
-                                       "\xef\xbd\x88\xef\xbd\x89\xef\xbd\x8e"
-                                       "\xef\xbd\x8e";
-  // "ｼﾞｼﾝ"
-  t13ns[transliteration::HALF_KATAKANA] = "\xef\xbd\xbc\xef\xbe\x9e"
-                                          "\xef\xbd\xbc\xef\xbe\x9d";
-
-  seg->SetTransliterations(t13ns);
-  // "じしん"
-  EXPECT_EQ("\xe3\x81\x98\xe3\x81\x97\xe3\x82\x93",
-            seg->meta_candidate(transliteration::HIRAGANA).value);
-  // "ジシン"
-  EXPECT_EQ("\xe3\x82\xb8\xe3\x82\xb7\xe3\x83\xb3",
-            seg->meta_candidate(transliteration::FULL_KATAKANA).value);
-  EXPECT_EQ("jishinn", seg->meta_candidate(transliteration::HALF_ASCII).value);
-  // "ｊｉｓｈｉｎｎ"
-  EXPECT_EQ("\xef\xbd\x8a\xef\xbd\x89\xef\xbd\x93\xef\xbd\x88\xef\xbd\x89\xef"
-            "\xbd\x8e\xef\xbd\x8e",
-            seg->meta_candidate(transliteration::FULL_ASCII).value);
-  // "ｼﾞｼﾝ"
-  EXPECT_EQ("\xef\xbd\xbc\xef\xbe\x9e\xef\xbd\xbc\xef\xbe\x9d",
-            seg->meta_candidate(transliteration::HALF_KATAKANA).value);
-  EXPECT_TRUE(seg->initialized_transliterations());
-
-  seg->Clear();
-  EXPECT_FALSE(seg->initialized_transliterations());
+  // meta_candidates
+  {
+    const vector<Segment::Candidate> &meta_candidates =
+        segment.meta_candidates();
+    EXPECT_EQ(kCandidatesSize + 1, meta_candidates.size());
+    for (size_t i = 0; i < kCandidatesSize; ++i) {
+      EXPECT_EQ(values[i], meta_candidates[i].value);
+    }
+    EXPECT_EQ("Test", meta_candidates[kCandidatesSize].value);
+  }
+  // clear
+  segment.clear_meta_candidates();
+  EXPECT_EQ(0, segment.meta_candidates_size());
 }
 
 TEST_F(SegmentTest, ExpandArabicNumber) {
@@ -880,24 +501,7 @@ TEST_F(SegmentTest, ExpandArabicNumber) {
   EXPECT_GT(seg.candidates_size(), 2);
   // "三百"
   EXPECT_EQ(seg.candidate(0).value, "\xE4\xB8\x89\xE7\x99\xBE");
-  EXPECT_EQ(seg.candidate(1).value, "300");  // Arabic number is added
-}
-
-TEST_F(SegmentTest, RequestedCandidatesSizeTest) {
-  const size_t kExpandSize[] = { 5, 10, 15, 20, 100, 150, 250, 1024 };
-  ConverterInterface *converter = ConverterFactory::GetConverter();
-  DCHECK(converter);
-  for (size_t i = 0; i < arraysize(kExpandSize); ++i) {
-    const size_t size = kExpandSize[i];
-    mozc::Segments segments;
-    // "よろしく"
-    converter->StartConversion(
-        &segments,
-        "\xE3\x82\x88\xE3\x82\x8D\xE3\x81\x97\xE3\x81\x8F");
-    EXPECT_EQ(1, segments.segments_size());
-    const size_t result_size = segments.segment(0).candidates_size() + size;
-    segments.mutable_segment(0)->GetCandidates(result_size);
-    EXPECT_EQ(result_size, segments.segment(0).requested_candidates_size());
-  }
+  // "３００"
+  EXPECT_EQ(seg.candidate(1).value, "\xEF\xBC\x93\xEF\xBC\x90\xEF\xBC\x90");
 }
 }  // namespace

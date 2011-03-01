@@ -68,8 +68,6 @@ void InsertCandidate(Segment *segment,
                      bool is_single_segment,
                      const EmbeddedDictionary::Value *dict_values,
                      size_t dict_values_size) {
-  const int kOffsetSize = 50;    // Expand 50 candidates
-  segment->GetCandidates(kOffsetSize);
   if (segment->candidates_size() == 0) {
     LOG(WARNING) << "candidates_size is 0";
     return;
@@ -121,11 +119,11 @@ void InsertCandidate(Segment *segment,
       c->key = base_candidate.key;
       c->content_key = base_candidate.content_key;
       c->value = dict_values[idx_j].value;
-      c->learning_type |= Segment::Candidate::CONTEXT_SENSITIVE;
-      const string &desc = (dict_values[idx_j].description == NULL)?
-          "" : dict_values[idx_j].description;
-      c->SetDescription(Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER,
-                        desc);
+      c->attributes |= Segment::Candidate::CONTEXT_SENSITIVE;
+      c->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
+      if (dict_values[idx_j].description != NULL) {
+        c->description = dict_values[idx_j].description;
+      }
       ++idx_i;
       ++idx_j;
     }
@@ -140,12 +138,11 @@ void InsertCandidate(Segment *segment,
     c->content_value = dict_values[idx_j].value;
     c->content_key = base_candidate.content_key;
     c->value = dict_values[idx_j].value;
-    c->learning_type |= Segment::Candidate::CONTEXT_SENSITIVE;
-    const string &desc = (dict_values[idx_j].description == NULL)?
-        "" : dict_values[idx_j].description;
-    c->SetDescription(Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER,
-                      desc);
-
+    c->attributes |= Segment::Candidate::CONTEXT_SENSITIVE;
+    c->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
+    if (dict_values[idx_j].description != NULL) {
+      c->description = dict_values[idx_j].description;
+    }
     ++idx_j;
   }
 }

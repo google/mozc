@@ -77,7 +77,7 @@ bool IsValidSegment(const Segment &segment) {
 }
 
 bool IsNumberCandidate(const Segment::Candidate &candidate) {
-  return (candidate.style != Segment::Candidate::DEFAULT ||
+  return (candidate.style != Segment::Candidate::DEFAULT_STYLE ||
           Util::GetScriptType(candidate.value) == Util::NUMBER);
 }
 
@@ -90,7 +90,7 @@ bool IsNumberSegment(const Segment &segment) {
 bool IsSameNumberType(const Segment::Candidate &candidate1,
                       const Segment::Candidate &candidate2) {
   if (candidate1.style == candidate2.style) {
-    if (candidate1.style == Segment::Candidate::DEFAULT) {
+    if (candidate1.style == Segment::Candidate::DEFAULT_STYLE) {
       if (IsNumberCandidate(candidate1) && IsNumberCandidate(candidate2) &&
           Util::GetFormType(candidate1.value) ==
           Util::GetFormType(candidate2.value)) {

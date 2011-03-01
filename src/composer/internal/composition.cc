@@ -31,6 +31,7 @@
 
 #include "base/util.h"
 #include "composer/internal/char_chunk.h"
+#include "composer/internal/composition_input.h"
 #include "composer/internal/transliterators.h"
 #include "composer/table.h"
 
@@ -57,50 +58,43 @@ void Composition::Erase() {
 }
 
 size_t Composition::InsertAt(size_t pos, const string &input) {
-  if (input.empty()) {
-    return pos;
-  }
-
-  CharChunkList::iterator it;
-  MaybeSplitChunkAt(pos, &it);
-
-  CharChunkList::iterator chunk_it = GetInsertionChunk(&it);
-  CombinePendingChunks(chunk_it, input);
-
-  string key = input;
-  while (true) {
-    (*chunk_it)->AddInput(*table_, &key);
-    if (key.empty()) {
-      break;
-    }
-    chunk_it = InsertChunk(&it);
-  }
-  return GetPosition(kNullT12r, it);
+  CompositionInput composition_input;
+  composition_input.set_raw(input);
+  return InsertInput(pos, composition_input);
 }
 
 size_t Composition::InsertKeyAndPreeditAt(const size_t pos,
                                           const string &key,
                                           const string &preedit) {
-  if (key.empty() && preedit.empty()) {
+  CompositionInput composition_input;
+  composition_input.set_raw(key);
+  composition_input.set_conversion(preedit);
+  return InsertInput(pos, composition_input);
+}
+
+size_t Composition::InsertInput(size_t pos, const CompositionInput &input) {
+  if (input.Empty()) {
     return pos;
   }
 
-  CharChunkList::iterator it;
-  MaybeSplitChunkAt(pos, &it);
+  CharChunkList::iterator right_chunk;
+  MaybeSplitChunkAt(pos, &right_chunk);
 
-  CharChunkList::iterator chunk_it = GetInsertionChunk(&it);
-  CombinePendingChunks(chunk_it, preedit);
+  CharChunkList::iterator left_chunk = GetInsertionChunk(&right_chunk);
+  CombinePendingChunks(left_chunk, input);
 
-  string raw_char = key;
-  string converted_char = preedit;
+  CompositionInput mutable_input;
+  mutable_input.CopyFrom(input);
   while (true) {
-    (*chunk_it)->AddInputAndConvertedChar(*table_, &raw_char, &converted_char);
-    if (raw_char.empty() && converted_char.empty()) {
+    (*left_chunk)->AddCompositionInput(*table_, &mutable_input);
+    if (mutable_input.Empty()) {
       break;
     }
-    chunk_it = InsertChunk(&it);
+    left_chunk = InsertChunk(&right_chunk);
+    mutable_input.set_is_new_input(false);
   }
-  return GetPosition(kNullT12r, it);
+
+  return GetPosition(kNullT12r, right_chunk);
 }
 
 // Deletes a right-hand character of the composition.
@@ -191,6 +185,10 @@ void Composition::SetTransliterator(
     const TransliteratorInterface *transliterator) {
   if (position_from > position_to) {
     LOG(ERROR) << "position_from should not be greater than position_to.";
+    return;
+  }
+
+  if (chunks_.empty()) {
     return;
   }
 
@@ -352,13 +350,16 @@ CharChunk *Composition::MaybeSplitChunkAt(const size_t pos,
 }
 
 void Composition::CombinePendingChunks(
-    CharChunkList::iterator it, const string &input) {
+    CharChunkList::iterator it, const CompositionInput &input) {
   // Combine |**it| and |**(--it)| into |**it| as long as possible.
-  while(it != chunks_.begin()) {
+  const string &next_input =
+    input.has_conversion() ? input.conversion() : input.raw();
+
+  while (it != chunks_.begin()) {
     CharChunkList::iterator left_it = it;
     --left_it;
-    if(!(*left_it)->IsConvertible(
-        input_t12r_, *table_, (*it)->pending() + input)) {
+    if (!(*left_it)->IsConvertible(
+            input_t12r_, *table_, (*it)->pending() + next_input)) {
       return;
     }
 
@@ -377,6 +378,17 @@ CharChunkList::iterator Composition::InsertChunk(CharChunkList::iterator *it) {
 
 const CharChunkList &Composition::GetCharChunkList() const {
   return chunks_;
+}
+
+bool Composition::ShouldCommit() const {
+  for (CharChunkList::const_iterator it = chunks_.begin();
+       it != chunks_.end();
+       ++it) {
+    if (!(*it)->ShouldCommit()) {
+      return false;
+    }
+  }
+  return true;
 }
 
 // Return charchunk to be inserted and iterator of the *next* char chunk.

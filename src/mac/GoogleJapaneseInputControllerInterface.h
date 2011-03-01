@@ -37,8 +37,7 @@
 - (void)updateComposedString:(const mozc::commands::Preedit *)preedit;
 
 // Updates |candidates_| from the result of a key event.
-- (void)updateCandidates:(const mozc::commands::Output *)output
-                  client:(id)sender;
+- (void)updateCandidates:(const mozc::commands::Output *)output;
 
 // Clear all candidate data in |candidates_|.
 - (void)clearCandidates;
@@ -47,19 +46,30 @@
 - (void)openLink:(NSURL *)url;
 
 
-// Ask the converter to the current input mode and update roman/kana
-// input.
-- (void)handleInputMode;
-
-// Auxiliary methods for switchMode:client: below.
+// Auxiliary methods for switchMode: below.
 - (void)switchModeToDirect:(id)sender;
 - (void)switchModeInternal:(mozc::commands::CompositionMode)new_mode;
 
 // Switches to a new mode and sync the current mode with the converter.
-- (void)switchMode:(mozc::commands::CompositionMode)new_mode client:(id)sender;
+- (void)switchMode:(mozc::commands::CompositionMode)new_mode
+            client:(id)sender;
 
 // Switch the mode icon in the task bar according to |mode_|.
-- (void)switchDisplayMode:(id)sender;
+- (void)switchDisplayMode;
+
+// Commit the specified text to the current client.
+- (void)commitText:(const char *)text client:(id)sender;
+
+// Process output fields such as preedit, output text, candidates, and
+// modes and calls methods above.
+- (void)processOutput:(const mozc::commands::Output *)output client:(id)sender;
+
+// Obtain the current configuration from the server and update
+// client-specific configurations.
+- (void)handleConfig;
+
+// Launch the word register tool with the current selection range.
+- (void)launchWordRegisterTool:(id)client;
 
 // They are externally accessible to achieve tests.
 @property(readwrite, assign, nonatomic) mozc::client::SessionInterface *session;
@@ -69,4 +79,5 @@
 @property(readonly) mozc::config::Config::YenSignCharacter  yenSignCharacter;
 @property(readwrite, assign) mozc::commands::CompositionMode mode;
 @property(readonly) mozc::commands::RendererCommand *rendererCommand;
+@property(readwrite, assign) NSRange replacementRange;
 @end

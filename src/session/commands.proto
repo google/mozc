@@ -193,6 +193,10 @@ message SessionCommand {
 
     // Return the current status such as composition mode, preedit method, etc.
     GET_STATUS = 6;
+
+
+    // Perform reverse conversion.
+    CONVERT_REVERSE = 8;
   };
   required CommandType type = 1;
 
@@ -201,6 +205,9 @@ message SessionCommand {
 
   // This is used with SWITCH_INPUT_MODE.
   optional CompositionMode composition_mode = 3;
+
+  // Text argument.  This is used by CONVERT_REVERSE at this moment.
+  optional string text = 4;
 };
 
 message Context {
@@ -253,6 +260,7 @@ message Input {
     // Set & Config
     GET_CONFIG = 6;
     SET_CONFIG = 7;
+
 
     // sync dictionary/history data to local file
     SYNC_DATA = 8;
@@ -578,6 +586,16 @@ message Output {
 
   // Range of characters to be deleted by client.
   optional DeletionRange deletion_range = 16;
+
+  // if launch_tool_mode is set, MozcTool is supposed to be launched
+  // by client.
+  enum ToolMode {
+    NO_TOOL = 0;   // no need to launch tool
+    CONFIG_DIALOG = 1;
+    DICTIONARY_TOOL = 2;
+    WORD_REGISTER_DIALOG = 3;
+  };
+  optional ToolMode launch_tool_mode = 17 [ default = NO_TOOL ];
 };
 
 message Command {

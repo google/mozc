@@ -52,6 +52,7 @@ namespace {
 const uint32 kValueSize = 4;
 const uint32 kLRUSize   = 20000;
 const uint32 kSeedValue = 0xf28defe3;
+const uint32 kMaxCandidatesSize = 255;
 
 class FeatureValue {
  public:
@@ -104,7 +105,7 @@ class KeyTriggerValue {
   }
 
   void set_candidates_size(uint32 size) {
-    candidates_size_ = min(size, static_cast<uint32>(256));
+    candidates_size_ = min(size, kMaxCandidatesSize);
   }
 
  private:
@@ -135,7 +136,7 @@ class ScoreTypeCompare {
 inline int GetDefaultCandidateIndex(const Segment &segment) {
   const int size = min(static_cast<int>(segment.candidates_size()), 5);
   for (int i = 0; i < size; ++i) {
-    if (segment.candidate(i).learning_type &
+    if (segment.candidate(i).attributes &
         Segment::Candidate::BEST_CANDIDATE) {
       return i;
     }
@@ -326,14 +327,14 @@ void NormalizeCandidate(const Segment *segment, int n,
   const Segment::Candidate &candidate = segment->candidate(n);
 
   // use "AS IS"
-  if (!candidate.can_expand_alternative) {
+  if (candidate.attributes & Segment::Candidate::NO_VARIANTS_EXPANSION) {
     *normalized_value = candidate.value;
     return;
   }
 
   string result = candidate.value;
   switch (candidate.style) {
-    case Segment::Candidate::DEFAULT:
+    case Segment::Candidate::DEFAULT_STYLE:
       CharacterFormManager::GetCharacterFormManager()->
           ConvertConversionString(candidate.value, &result);
       break;
@@ -381,7 +382,7 @@ bool GetSameValueCandidatePosition(const Segment *segment,
   }
   for (size_t i = 0; i < segment->meta_candidates_size(); ++i) {
     if (segment->meta_candidate(i).value == candidate->value) {
-      *position = (-i-1);  // meta candidate index
+      *position = (-static_cast<int>(i)-1);  // meta candidate index
       return true;
     }
   }
@@ -446,9 +447,6 @@ bool SortCandidates(const vector<ScoreType> &sorted_scores, Segment *segment) {
         CharacterFormManager::GetCharacterFormManager()->
             ConvertConversionString(candidate->content_value,
                                     &(new_candidate->content_value));
-        new_candidate->ResetDescription(
-            (Segment::Candidate::FULL_HALF_WIDTH |
-             Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER));
         ++next_pos;
         seen.insert(normalized_value);
       }
@@ -525,8 +523,8 @@ bool UserSegmentHistoryRewriter::GetScore(const Segments &segments,
   // don't apply UNIGRAM model
   const bool context_sensitive =
       segments.resized() ||
-      (candidate.learning_type & Segment::Candidate::CONTEXT_SENSITIVE) ||
-      (segments.segment(segment_index).candidate(0).learning_type &
+      (candidate.attributes & Segment::Candidate::CONTEXT_SENSITIVE) ||
+      (segments.segment(segment_index).candidate(0).attributes &
        Segment::Candidate::CONTEXT_SENSITIVE);
   const bool is_replaceable =
       top_functional_value == candidate.functional_value() &&
@@ -602,7 +600,7 @@ void UserSegmentHistoryRewriter::RememberNumberPreference(
     // separated and default is learned at same time
     // This problem is solved by workaround on lookup.
     string default_feature_key;
-    GetFeatureN(Segment::Candidate::DEFAULT, &default_feature_key);
+    GetFeatureN(Segment::Candidate::DEFAULT_STYLE, &default_feature_key);
     FeatureValue v;
     DCHECK(v.IsValid());
     storage_->Insert(default_feature_key, reinterpret_cast<const char *>(&v));
@@ -633,7 +631,7 @@ void UserSegmentHistoryRewriter::RememberFirstCandidate(
   }
 
   const bool context_sensitive = segments.resized() ||
-      (candidate.learning_type & Segment::Candidate::CONTEXT_SENSITIVE);
+      (candidate.attributes & Segment::Candidate::CONTEXT_SENSITIVE);
   const string &all_value = candidate.value;
   const string &content_value = candidate.content_value;
   const string &all_key = seg.key();
@@ -642,7 +640,7 @@ void UserSegmentHistoryRewriter::RememberFirstCandidate(
   // even if the candiate was the top (default) candidate,
   // ERANKED will be set when user changes the ranking
   const bool force_insert =
-      (candidate.learning_type & Segment::Candidate::RERANKED);
+      (candidate.attributes & Segment::Candidate::RERANKED);
 
   // Compare the POS group and Functional value.
   // if "is_replaceable" is true, it means that  the target candidate can
@@ -651,11 +649,11 @@ void UserSegmentHistoryRewriter::RememberFirstCandidate(
   const bool is_replaceable =
       (top_index == 0) ||
       (GetPosGroup(seg.candidate(top_index)) == GetPosGroup(candidate) &&
-       seg.candidate(top_index).functional_value() == candidate.functional_value());
+       (seg.candidate(top_index).functional_value() ==
+        candidate.functional_value()));
 
   // |feature_key| is used inside INSERT_FEATURE
   string feature_key;
-
   INSERT_FEATURE(GetFeatureLR, all_key, all_value, force_insert);
   INSERT_FEATURE(GetFeatureLL, all_key, all_value, force_insert);
   INSERT_FEATURE(GetFeatureRR, all_key, all_value, force_insert);
@@ -704,8 +702,8 @@ bool UserSegmentHistoryRewriter::IsAvailable(const Segments &segments) const {
     return false;
   }
 
-  if (!segments.use_user_history()) {
-    VLOG(2) << "no use_user_history";
+  if (!segments.user_history_enabled()) {
+    VLOG(2) << "!user_history_enabled";
     return false;
   }
 
@@ -741,9 +739,8 @@ void UserSegmentHistoryRewriter::Finish(Segments *segments) {
     const Segment &segment = segments->segment(i);
     if (segment.candidates_size() <= 0 ||
         segment.segment_type() != Segment::FIXED_VALUE ||
-        segment.candidate(0).learning_type &
+        segment.candidate(0).attributes &
         Segment::Candidate::NO_HISTORY_LEARNING) {
-      VLOG(2) << i << " cannot be remembered";
       continue;
     }
     if (IsNumberSegment(segment)) {
@@ -788,7 +785,7 @@ bool UserSegmentHistoryRewriter::ShouldRewrite(
 }
 
 void UserSegmentHistoryRewriter::InsertTriggerKey(const Segment &segment) {
-  if (!(segment.candidate(0).learning_type & Segment::Candidate::RERANKED)) {
+  if (!(segment.candidate(0).attributes & Segment::Candidate::RERANKED)) {
     VLOG(2) << "InsertTriggerKey is skipped";
     return;
   }
@@ -875,7 +872,7 @@ bool UserSegmentHistoryRewriter::Rewrite(Segments *segments) const {
     Segment *segment = segments->mutable_segment(i);
     DCHECK(segment);
     DCHECK_GT(segment->candidates_size(), 0);
-    segment->mutable_candidate(0)->learning_type |=
+    segment->mutable_candidate(0)->attributes |=
         Segment::Candidate::BEST_CANDIDATE;
   }
 
@@ -903,10 +900,6 @@ bool UserSegmentHistoryRewriter::Rewrite(Segments *segments) const {
     if (!ShouldRewrite(*segment, &max_candidates_size)) {
       continue;
     }
-
-    // max_candidates_size == 0 means that answer is in META candidate
-    static const size_t kMaxCandidatesSizeReserved = 10;
-    segment->GetCandidates(max_candidates_size + kMaxCandidatesSizeReserved);
 
     if (segment->candidates_size() < max_candidates_size) {
       LOG(WARNING) << "cannot expand candidates. ignored."

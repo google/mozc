@@ -56,9 +56,8 @@
 その他自立語    名詞
 慣用句  独立語
 独立語  独立語
-
-# not supported
-抑制単語
+短縮よみ 短縮よみ
+抑制単語 抑制単語
 
 # Internal POS used in msime.h
 さ変形動        名詞形動

@@ -62,7 +62,7 @@
       '-fno-omit-frame-pointer',
       '-fno-strict-aliasing',
       '-funsigned-char',
-      '-include base/namespace.h',
+      '-include', 'base/namespace.h',
       '-pipe',
     ],
     'msvc_disabled_warnings': [
@@ -182,12 +182,11 @@
       'Debug_Base': {
         'abstract': 1,
         'defines': [
-	  'DEBUG',
-	],
+          'DEBUG',
+        ],
         'xcode_settings': {
           'COPY_PHASE_STRIP': 'NO',
           'GCC_OPTIMIZATION_LEVEL': '<(mac_debug_optimization)',
-          'GCC_SYMBOLS_PRIVATE_EXTERN': 'YES',
           'GCC_INLINES_ARE_PRIVATE_EXTERN': 'YES',
           'OTHER_CFLAGS': [ '<@(debug_extra_cflags)', ],
         },
@@ -389,7 +388,6 @@
               'oleaut32.lib',
               'psapi.lib',
               'shell32.lib',
-              'shlwapi.lib',
               'user32.lib',
               'uuid.lib',
               'version.lib',
@@ -466,6 +464,7 @@
         ],
         'mac_framework_dirs': [
           '<(DEPTH)/../mac/Releases/GoogleBreakpad',
+          '<(DEPTH)/mozc_build_tools/mac',
         ],
         'xcode_settings': {
           'GCC_ENABLE_CPP_EXCEPTIONS': 'NO',  # -fno-exceptions
@@ -534,6 +533,5 @@
   'xcode_settings': {
    'SYMROOT': '<(build_base)',
    'GCC_INLINES_ARE_PRIVATE_EXTERN': 'YES',
-   'GCC_SYMBOLS_PRIVATE_EXTERN': 'YES',
   },
 }

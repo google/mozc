@@ -48,6 +48,7 @@
         '../session/session.gyp:config_handler',
         '../session/session.gyp:genproto_session',
         '../usage_stats/usage_stats.gyp:usage_stats',
+        'suppression_dictionary',
         'user_pos_data',
         'pos_map',
         'genproto_dictionary',
@@ -69,6 +70,16 @@
       ],
     },
     {
+      'target_name': 'suppression_dictionary',
+      'type': 'static_library',
+      'sources': [
+        'suppression_dictionary.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+      ],
+    },
+    {
       'target_name': 'dictionary',
       'type': 'static_library',
       'sources': [
@@ -82,6 +93,7 @@
         'file/dictionary_file.gyp:dictionary_file',
         'user_dictionary',
         'genproto_dictionary',
+        'suppression_dictionary',
         'system/system_dictionary.gyp:system_dictionary_builder',
         'text_dictionary_loader',
       ],
@@ -94,29 +106,31 @@
         {
           'action_name': 'gen_embedded_dictionary_data',
           'variables': {
-            'input_files': [
-              '../data/dictionary/dictionary00.txt',
-              '../data/dictionary/dictionary01.txt',
-              '../data/dictionary/dictionary02.txt',
-              '../data/dictionary/dictionary03.txt',
-              '../data/dictionary/dictionary04.txt',
-              '../data/dictionary/dictionary05.txt',
-              '../data/dictionary/dictionary06.txt',
-              '../data/dictionary/dictionary07.txt',
-              '../data/dictionary/dictionary08.txt',
-              '../data/dictionary/dictionary09.txt',
-              '../data/dictionary/zip_code_seed.tsv',
-              '../data/dictionary/spelling_correction_dictionary.txt',
-            ],
+             'input_files%': [
+               '../data/dictionary/dictionary00.txt',
+               '../data/dictionary/dictionary01.txt',
+               '../data/dictionary/dictionary02.txt',
+               '../data/dictionary/dictionary03.txt',
+               '../data/dictionary/dictionary04.txt',
+               '../data/dictionary/dictionary05.txt',
+               '../data/dictionary/dictionary06.txt',
+               '../data/dictionary/dictionary07.txt',
+               '../data/dictionary/dictionary08.txt',
+               '../data/dictionary/dictionary09.txt',
+               '../data/dictionary/zip_code_seed.tsv',
+               '../data/dictionary/spelling_correction_dictionary.txt',
+             ],
           },
           'inputs': [
             '<@(input_files)',
           ],
-          'conditions': [['two_pass_build==0', {
-            'inputs': [
-              '<(mozc_build_tools_dir)/gen_system_dictionary_data_main',
+          'conditions': [
+            ['two_pass_build==0',
+              { 'inputs':
+                [ '<(mozc_build_tools_dir)/gen_system_dictionary_data_main', ],
+              },
             ],
-          }]],
+          ],
           'outputs': [
             '<(gen_out_dir)/embedded_dictionary_data.h',
           ],
@@ -172,6 +186,7 @@
           'variables': {
             'input_files': [
                '../data/dictionary/id.def',
+               '../data/rules/special_pos.def',
                '../data/rules/user_pos.def',
                '../data/rules/cforms.def',
             ],
@@ -266,6 +281,7 @@
       'sources': [
         'dictionary_preloader_test.cc',
         'dictionary_test.cc',
+        'suppression_dictionary_test.cc',
         'text_dictionary_loader_test.cc',
         'user_dictionary_importer_test.cc',
         'user_dictionary_storage_test.cc',
@@ -278,6 +294,7 @@
         '../protobuf/protobuf.gyp:protobuf',
         '../testing/testing.gyp:gtest_main',
         'dictionary',
+        'suppression_dictionary',
         'text_dictionary_loader',
         'user_dictionary',
       ],

@@ -31,11 +31,15 @@
 
 #include "base/base.h"
 #include "base/util.h"
+#include "composer/internal/composition_input.h"
 #include "testing/base/public/gunit.h"
 #include "session/config.pb.h"
 #include "session/config_handler.h"
 
 DECLARE_string(test_tmpdir);
+
+namespace mozc {
+namespace composer {
 
 // This macro is ported from base/basictypes.h.  Due to WinNT.h has
 // the same macro, this macro should be undefined at the end of this
@@ -48,7 +52,7 @@ DECLARE_string(test_tmpdir);
     static_cast<size_t>(!(sizeof(a) % sizeof(*(a)))))
 #endif  // ARRAYSIZE
 
-static void InitTable(mozc::composer::Table* table) {
+static void InitTable(Table* table) {
   // "あ"
   table->AddRule("a",  "\xe3\x81\x82", "");
   // "い"
@@ -75,16 +79,16 @@ static void InitTable(mozc::composer::Table* table) {
   table->AddRule("nn", "\xe3\x82\x93", "");
 }
 
-string GetResult(const mozc::composer::Table &table, const string &key) {
-  const mozc::composer::Entry *entry = table.LookUp(key);
+string GetResult(const Table &table, const string &key) {
+  const Entry *entry = table.LookUp(key);
   if (entry == NULL) {
     return "<NULL>";
   }
   return entry->result();
 }
 
-string GetInput(const mozc::composer::Table &table, const string &key) {
-  const mozc::composer::Entry *entry = table.LookUp(key);
+string GetInput(const Table &table, const string &key) {
+  const Entry *entry = table.LookUp(key);
   if (entry == NULL) {
     return "<NULL>";
   }
@@ -96,16 +100,16 @@ class TableTest : public testing::Test {
   TableTest() {}
 
   virtual void SetUp() {
-    mozc::Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    mozc::config::ConfigHandler::GetDefaultConfig(&default_config_);
-    mozc::config::ConfigHandler::SetConfig(default_config_);
+    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    config::ConfigHandler::GetDefaultConfig(&default_config_);
+    config::ConfigHandler::SetConfig(default_config_);
   }
 
   virtual void TearDown() {
-    mozc::config::ConfigHandler::SetConfig(default_config_);
+    config::ConfigHandler::SetConfig(default_config_);
   }
 
-  mozc::config::Config default_config_;
+  config::Config default_config_;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(TableTest);
@@ -139,14 +143,14 @@ TEST_F(TableTest, LookUp) {
   };
   static const int size = ARRAYSIZE(test_cases);
 
-  mozc::composer::Table table;
+  Table table;
   InitTable(&table);
 
   for (int i = 0; i < size; ++i) {
     const TestCase& test = test_cases[i];
     string output;
     string pending;
-    const mozc::composer::Entry* entry;
+    const Entry* entry;
     entry = table.LookUp(test.input);
 
     EXPECT_EQ(test.expected_result, (entry != NULL));
@@ -160,41 +164,41 @@ TEST_F(TableTest, LookUp) {
 
 TEST_F(TableTest, Puncutations) {
   static const struct TestCase {
-    mozc::config::Config::PunctuationMethod method;
+    config::Config::PunctuationMethod method;
     const char *input;
     const char *expected;
   } test_cases[] = {
     // "、"
-    { mozc::config::Config::KUTEN_TOUTEN, ",",  "\xe3\x80\x81" },
+    { config::Config::KUTEN_TOUTEN, ",",  "\xe3\x80\x81" },
     // "。"
-    { mozc::config::Config::KUTEN_TOUTEN, ".",  "\xe3\x80\x82" },
+    { config::Config::KUTEN_TOUTEN, ".",  "\xe3\x80\x82" },
     // "，"
-    { mozc::config::Config::COMMA_PERIOD, ",",  "\xef\xbc\x8c" },
+    { config::Config::COMMA_PERIOD, ",",  "\xef\xbc\x8c" },
     // "．"
-    { mozc::config::Config::COMMA_PERIOD, ".",  "\xef\xbc\x8e" },
+    { config::Config::COMMA_PERIOD, ".",  "\xef\xbc\x8e" },
     // "、"
-    { mozc::config::Config::KUTEN_PERIOD, ",",  "\xe3\x80\x81" },
+    { config::Config::KUTEN_PERIOD, ",",  "\xe3\x80\x81" },
     // "．"
-    { mozc::config::Config::KUTEN_PERIOD, ".",  "\xef\xbc\x8e" },
+    { config::Config::KUTEN_PERIOD, ".",  "\xef\xbc\x8e" },
     // "，"
-    { mozc::config::Config::COMMA_TOUTEN, ",",  "\xef\xbc\x8c" },
+    { config::Config::COMMA_TOUTEN, ",",  "\xef\xbc\x8c" },
     // "。"
-    { mozc::config::Config::COMMA_TOUTEN, ".",  "\xe3\x80\x82" },
+    { config::Config::COMMA_TOUTEN, ".",  "\xe3\x80\x82" },
   };
 
-  const string config_file = mozc::Util::JoinPath(FLAGS_test_tmpdir,
+  const string config_file = Util::JoinPath(FLAGS_test_tmpdir,
                                                   "mozc_config_test_tmp");
-  mozc::Util::Unlink(config_file);
-  mozc::config::ConfigHandler::SetConfigFileName(config_file);
-  mozc::config::ConfigHandler::Reload();
+  Util::Unlink(config_file);
+  config::ConfigHandler::SetConfigFileName(config_file);
+  config::ConfigHandler::Reload();
 
   for (int i = 0; i < ARRAYSIZE(test_cases); ++i) {
-    mozc::config::Config config;
+    config::Config config;
     config.set_punctuation_method(test_cases[i].method);
-    EXPECT_TRUE(mozc::config::ConfigHandler::SetConfig(config));
-    mozc::composer::Table table;
+    EXPECT_TRUE(config::ConfigHandler::SetConfig(config));
+    Table table;
     table.Initialize();
-    const mozc::composer::Entry *entry = table.LookUp(test_cases[i].input);
+    const Entry *entry = table.LookUp(test_cases[i].input);
     EXPECT_TRUE(entry != NULL);
     EXPECT_EQ(test_cases[i].expected, entry->result());
   }
@@ -202,61 +206,65 @@ TEST_F(TableTest, Puncutations) {
 
 TEST_F(TableTest, Symbols) {
   static const struct TestCase {
-    mozc::config::Config::SymbolMethod method;
+    config::Config::SymbolMethod method;
     const char *input;
     const char *expected;
   } test_cases[] = {
     // "「"
-    { mozc::config::Config::CORNER_BRACKET_MIDDLE_DOT, "[",  "\xe3\x80\x8c" },
+    { config::Config::CORNER_BRACKET_MIDDLE_DOT, "[",  "\xe3\x80\x8c" },
     // "」"
-    { mozc::config::Config::CORNER_BRACKET_MIDDLE_DOT, "]",  "\xe3\x80\x8d" },
+    { config::Config::CORNER_BRACKET_MIDDLE_DOT, "]",  "\xe3\x80\x8d" },
     // "・"
-    { mozc::config::Config::CORNER_BRACKET_MIDDLE_DOT, "/",  "\xe3\x83\xbb" },
-    { mozc::config::Config::SQUARE_BRACKET_SLASH, "[",  "["      },
-    { mozc::config::Config::SQUARE_BRACKET_SLASH, "]",  "]"      },
+    { config::Config::CORNER_BRACKET_MIDDLE_DOT, "/",  "\xe3\x83\xbb" },
+    { config::Config::SQUARE_BRACKET_SLASH, "[",  "["      },
+    { config::Config::SQUARE_BRACKET_SLASH, "]",  "]"      },
     // "／"
-    { mozc::config::Config::SQUARE_BRACKET_SLASH, "/",  "\xef\xbc\x8f"      },
+    { config::Config::SQUARE_BRACKET_SLASH, "/",  "\xef\xbc\x8f"      },
     // "「"
-    { mozc::config::Config::CORNER_BRACKET_SLASH, "[",  "\xe3\x80\x8c"      },
+    { config::Config::CORNER_BRACKET_SLASH, "[",  "\xe3\x80\x8c"      },
     // "」"
-    { mozc::config::Config::CORNER_BRACKET_SLASH, "]",  "\xe3\x80\x8d"      },
+    { config::Config::CORNER_BRACKET_SLASH, "]",  "\xe3\x80\x8d"      },
     // "／"
-    { mozc::config::Config::CORNER_BRACKET_SLASH, "/",  "\xef\xbc\x8f"      },
-    { mozc::config::Config::SQUARE_BRACKET_MIDDLE_DOT, "[",  "[" },
-    { mozc::config::Config::SQUARE_BRACKET_MIDDLE_DOT, "]",  "]" },
+    { config::Config::CORNER_BRACKET_SLASH, "/",  "\xef\xbc\x8f"      },
+    { config::Config::SQUARE_BRACKET_MIDDLE_DOT, "[",  "[" },
+    { config::Config::SQUARE_BRACKET_MIDDLE_DOT, "]",  "]" },
     // "・"
-    { mozc::config::Config::SQUARE_BRACKET_MIDDLE_DOT, "/",  "\xe3\x83\xbb" },
+    { config::Config::SQUARE_BRACKET_MIDDLE_DOT, "/",  "\xe3\x83\xbb" },
   };
 
-  const string config_file = mozc::Util::JoinPath(FLAGS_test_tmpdir,
+  const string config_file = Util::JoinPath(FLAGS_test_tmpdir,
                                                   "mozc_config_test_tmp");
-  mozc::Util::Unlink(config_file);
-  mozc::config::ConfigHandler::SetConfigFileName(config_file);
-  mozc::config::ConfigHandler::Reload();
+  Util::Unlink(config_file);
+  config::ConfigHandler::SetConfigFileName(config_file);
+  config::ConfigHandler::Reload();
 
   for (int i = 0; i < ARRAYSIZE(test_cases); ++i) {
-    mozc::config::Config config;
+    config::Config config;
     config.set_symbol_method(test_cases[i].method);
-    EXPECT_TRUE(mozc::config::ConfigHandler::SetConfig(config));
-    mozc::composer::Table table;
+    EXPECT_TRUE(config::ConfigHandler::SetConfig(config));
+    Table table;
     table.Initialize();
-    const mozc::composer::Entry *entry = table.LookUp(test_cases[i].input);
+    const Entry *entry = table.LookUp(test_cases[i].input);
     EXPECT_TRUE(entry != NULL);
     EXPECT_EQ(test_cases[i].expected, entry->result());
   }
 }
 
+#ifdef UNDEFINE_ARRAYSIZE
+#undef ARRAYSIZE
+#endif  // UNDEFINE_ARRAYSIZE
+
 TEST_F(TableTest, KanaSuppressed) {
-  mozc::config::Config config;
-  mozc::config::ConfigHandler::GetConfig(&config);
+  config::Config config;
+  config::ConfigHandler::GetConfig(&config);
 
-  config.set_preedit_method(mozc::config::Config::KANA);
-  mozc::config::ConfigHandler::SetConfig(config);
+  config.set_preedit_method(config::Config::KANA);
+  config::ConfigHandler::SetConfig(config);
 
-  mozc::composer::Table table;
+  Table table;
   table.Initialize();
 
-  const mozc::composer::Entry *entry = table.LookUp("a");
+  const Entry *entry = table.LookUp("a");
   EXPECT_TRUE(entry != NULL);
   // "あ"
   EXPECT_EQ("\xE3\x81\x82", entry->result());
@@ -264,10 +272,10 @@ TEST_F(TableTest, KanaSuppressed) {
 }
 
 TEST_F(TableTest, KanaCombination) {
-  mozc::composer::Table table;
+  Table table;
   ASSERT_TRUE(table.Initialize());
   // "か゛"
-  const mozc::composer::Entry *entry = table.LookUp("\xE3\x81\x8B\xE3\x82\x9B");
+  const Entry *entry = table.LookUp("\xE3\x81\x8B\xE3\x82\x9B");
   EXPECT_TRUE(entry != NULL);
   // "が"
   EXPECT_EQ("\xE3\x81\x8C", entry->result());
@@ -276,32 +284,86 @@ TEST_F(TableTest, KanaCombination) {
 
 TEST_F(TableTest, InvalidEntryTest) {
   {
-    mozc::composer::Table table;
-    table.AddRule("a", "aa", "");
+    Table table;
+    EXPECT_FALSE(table.IsLoopingEntry("a", "b"));
+    table.AddRule("a", "aa", "b");
+
+    EXPECT_TRUE(table.IsLoopingEntry("b", "a"));
     table.AddRule("b", "aa", "a");  // looping
+
     EXPECT_TRUE(table.LookUp("a") != NULL);
     EXPECT_TRUE(table.LookUp("b") == NULL);
   }
 
   {
-    mozc::composer::Table table;
-    table.AddRule("a", "aa", "c");
-    table.AddRule("c", "aa", "b");
-    table.AddRule("d", "aa", "a");  // looping
+    Table table;
+    EXPECT_FALSE(table.IsLoopingEntry("a", "ba"));
+    table.AddRule("a", "aa", "ba");
+
+    EXPECT_TRUE(table.IsLoopingEntry("b", "a"));
+    table.AddRule("b", "aa", "a");  // looping
+
     EXPECT_TRUE(table.LookUp("a") != NULL);
+    EXPECT_TRUE(table.LookUp("b") == NULL);
+  }
+
+  {
+    Table table;
+    EXPECT_FALSE(table.IsLoopingEntry("a", "b"));
+    table.AddRule("a", "aa", "b");
+
+    EXPECT_FALSE(table.IsLoopingEntry("b", "c"));
+    table.AddRule("b", "aa", "c");
+
+    EXPECT_FALSE(table.IsLoopingEntry("c", "d"));
+    table.AddRule("c", "aa", "d");
+
+    EXPECT_TRUE(table.IsLoopingEntry("d", "a"));
+    table.AddRule("d", "aa", "a");  // looping
+
+    EXPECT_TRUE(table.LookUp("a") != NULL);
+    EXPECT_TRUE(table.LookUp("b") != NULL);
     EXPECT_TRUE(table.LookUp("c") != NULL);
     EXPECT_TRUE(table.LookUp("d") == NULL);
   }
 
   {
-    mozc::composer::Table table;
-    table.AddRule("a", "aa", "a");
+    Table table;
+    table.AddRule("wa", "WA", "");
+    table.AddRule("ww", "X", "w");
+
+    EXPECT_FALSE(table.IsLoopingEntry("www", "ww"));
+    table.AddRule("www", "W", "ww");  // not looping
+
+    EXPECT_TRUE(table.LookUp("wa") != NULL);
+    EXPECT_TRUE(table.LookUp("ww") != NULL);
+    EXPECT_TRUE(table.LookUp("www") != NULL);
+  }
+
+  {
+    Table table;
+    table.AddRule("wa", "WA", "");
+    table.AddRule("www", "W", "ww");
+
+    EXPECT_FALSE(table.IsLoopingEntry("ww", "w"));
+    table.AddRule("ww", "X", "w");
+
+    EXPECT_TRUE(table.LookUp("wa") != NULL);
+    EXPECT_TRUE(table.LookUp("ww") != NULL);
+    EXPECT_TRUE(table.LookUp("www") != NULL);
+  }
+
+  {
+    Table table;
+    EXPECT_TRUE(table.IsLoopingEntry("a", "a"));
+    table.AddRule("a", "aa", "a");  // looping
+
     EXPECT_TRUE(table.LookUp("a") == NULL);
   }
 
   // Too long input
   {
-    mozc::composer::Table table;
+    Table table;
     string too_long;
     // Maximum size is 300 now.
     for (int i = 0; i < 1024; ++i) {
@@ -319,7 +381,7 @@ TEST_F(TableTest, InvalidEntryTest) {
 
   // reasonably long
   {
-    mozc::composer::Table table;
+    Table table;
     string reasonably_long;
     // Maximum size is 300 now.
     for (int i = 0; i < 200; ++i) {
@@ -346,14 +408,14 @@ TEST_F(TableTest, CustomPunctuationsAndSymbols) {
   custom_roman_table.append("[\tOPEN\n");
   custom_roman_table.append("]\tCLOSE\n");
 
-  mozc::config::Config config;
+  config::Config config;
   config.set_custom_roman_table(custom_roman_table);
-  EXPECT_TRUE(mozc::config::ConfigHandler::SetConfig(config));
+  EXPECT_TRUE(config::ConfigHandler::SetConfig(config));
 
-  mozc::composer::Table table;
+  Table table;
   table.Initialize();
 
-  const mozc::composer::Entry *entry = NULL;
+  const Entry *entry = NULL;
   entry = table.LookUp("mozc");
   ASSERT_TRUE(entry != NULL);
   EXPECT_EQ("MOZC", entry->result());
@@ -380,7 +442,7 @@ TEST_F(TableTest, CustomPunctuationsAndSymbols) {
 }
 
 TEST_F(TableTest, CaseSensitive) {
-  mozc::composer::Table table;
+  Table table;
   table.AddRule("a", "[a]", "");
   table.AddRule("A", "[A]", "");
   table.AddRule("ba", "[ba]", "");
@@ -390,8 +452,8 @@ TEST_F(TableTest, CaseSensitive) {
   // table.AddRule("bA",  "[bA]", "");
   table.AddRule("za", "[za]", "");
 
-  // case insensitive (default)
-  EXPECT_FALSE(table.case_sensitive());
+  // case insensitive
+  table.set_case_sensitive(false);
   EXPECT_EQ("[a]", GetResult(table, "a"));
   EXPECT_EQ("[a]", GetResult(table, "A"));
   EXPECT_EQ("[ba]", GetResult(table, "ba"));
@@ -410,7 +472,7 @@ TEST_F(TableTest, CaseSensitive) {
   EXPECT_TRUE(table.HasSubRules("Z"));
 
   {  // Test for LookUpPrefix
-    const mozc::composer::Entry *entry = NULL;
+    const Entry *entry = NULL;
     size_t key_length = 0;
     bool fixed = false;
     entry = table.LookUpPrefix("bA", &key_length, &fixed);
@@ -441,7 +503,7 @@ TEST_F(TableTest, CaseSensitive) {
   EXPECT_FALSE(table.HasSubRules("Z"));
 
   {  // Test for LookUpPrefix
-    const mozc::composer::Entry *entry = NULL;
+    const Entry *entry = NULL;
     size_t key_length = 0;
     bool fixed = false;
     entry = table.LookUpPrefix("bA", &key_length, &fixed);
@@ -451,14 +513,55 @@ TEST_F(TableTest, CaseSensitive) {
   }
 }
 
-TEST_F(TableTest, CaseSensitiveByConfiguration) {
-  mozc::config::Config config;
-  mozc::composer::Table table;
-
-  // mozc::config::Config::OFF (case sensitive)
+TEST_F(TableTest, CaseSensitivity) {
   {
-    config.set_shift_key_mode_switch(mozc::config::Config::OFF);
-    EXPECT_TRUE(mozc::config::ConfigHandler::SetConfig(config));
+    Table table;
+    table.Initialize();
+    EXPECT_FALSE(table.case_sensitive());
+  }
+  {
+    Table table;
+    table.Initialize();
+    table.AddRule("", "", "");
+    EXPECT_FALSE(table.case_sensitive());
+  }
+  {
+    Table table;
+    table.Initialize();
+    table.AddRule("a", "", "");
+    EXPECT_FALSE(table.case_sensitive());
+  }
+  {
+    Table table;
+    table.Initialize();
+    table.AddRule("A", "", "");
+    EXPECT_TRUE(table.case_sensitive());
+  }
+  {
+    Table table;
+    table.Initialize();
+    table.AddRule("a{A}a", "", "");
+    EXPECT_FALSE(table.case_sensitive());
+  }
+  {
+    Table table;
+    table.Initialize();
+    table.AddRule("A{A}A", "", "");
+    EXPECT_TRUE(table.case_sensitive());
+  }
+}
+
+// This test case was needed because the case sensitivity was configured
+// by the configuration.
+// Currently the case sensitivity is independent from the configuration.
+TEST_F(TableTest, CaseSensitiveByConfiguration) {
+  config::Config config;
+  Table table;
+
+  // config::Config::OFF
+  {
+    config.set_shift_key_mode_switch(config::Config::OFF);
+    EXPECT_TRUE(config::ConfigHandler::SetConfig(config));
     table.Initialize();
 
     table.AddRule("a", "[a]", "");
@@ -486,7 +589,7 @@ TEST_F(TableTest, CaseSensitiveByConfiguration) {
     EXPECT_FALSE(table.HasSubRules("Z"));
 
     { // Test for LookUpPrefix
-      const mozc::composer::Entry *entry = NULL;
+      const Entry *entry = NULL;
       size_t key_length = 0;
       bool fixed = false;
       entry = table.LookUpPrefix("bA", &key_length, &fixed);
@@ -496,10 +599,10 @@ TEST_F(TableTest, CaseSensitiveByConfiguration) {
     }
   }
 
-  // mozc::config::Config::ASCII_INPUT_MODE (case insensitive)
+  // config::Config::ASCII_INPUT_MODE
   {
-    config.set_shift_key_mode_switch(mozc::config::Config::ASCII_INPUT_MODE);
-    EXPECT_TRUE(mozc::config::ConfigHandler::SetConfig(config));
+    config.set_shift_key_mode_switch(config::Config::ASCII_INPUT_MODE);
+    EXPECT_TRUE(config::ConfigHandler::SetConfig(config));
     table.Initialize();
 
     table.AddRule("a", "[a]", "");
@@ -508,40 +611,39 @@ TEST_F(TableTest, CaseSensitiveByConfiguration) {
     table.AddRule("BA", "[BA]", "");
     table.AddRule("Ba", "[Ba]", "");
 
-    EXPECT_FALSE(table.case_sensitive());
+    EXPECT_TRUE(table.case_sensitive());
     EXPECT_EQ("[a]", GetResult(table, "a"));
-    EXPECT_EQ("[a]", GetResult(table, "A"));
+    EXPECT_EQ("[A]", GetResult(table, "A"));
     EXPECT_EQ("[ba]", GetResult(table, "ba"));
-    EXPECT_EQ("[ba]", GetResult(table, "BA"));
-    EXPECT_EQ("[ba]", GetResult(table, "Ba"));
-    EXPECT_EQ("[ba]", GetResult(table, "bA"));
+    EXPECT_EQ("[BA]", GetResult(table, "BA"));
+    EXPECT_EQ("[Ba]", GetResult(table, "Ba"));
+    EXPECT_EQ("<NULL>", GetResult(table, "bA"));
 
     EXPECT_EQ("a", GetInput(table, "a"));
-    EXPECT_EQ("a", GetInput(table, "A"));
+    EXPECT_EQ("A", GetInput(table, "A"));
     EXPECT_EQ("ba", GetInput(table, "ba"));
-    EXPECT_EQ("ba", GetInput(table, "BA"));
-    EXPECT_EQ("ba", GetInput(table, "Ba"));
-    EXPECT_EQ("ba", GetInput(table, "bA"));
+    EXPECT_EQ("BA", GetInput(table, "BA"));
+    EXPECT_EQ("Ba", GetInput(table, "Ba"));
+    EXPECT_EQ("<NULL>", GetInput(table, "bA"));
 
     // Test for HasSubRules
-    EXPECT_TRUE(table.HasSubRules("Z"));
+    EXPECT_FALSE(table.HasSubRules("Z"));
 
-    {  // Test for LookUpPrefix
-      const mozc::composer::Entry *entry = NULL;
+    { // Test for LookUpPrefix
+      const Entry *entry = NULL;
       size_t key_length = 0;
       bool fixed = false;
       entry = table.LookUpPrefix("bA", &key_length, &fixed);
-      EXPECT_TRUE(entry != NULL);
-      EXPECT_EQ("[ba]", entry->result());
-      EXPECT_EQ(2, key_length);
+      EXPECT_TRUE(entry == NULL);
+      EXPECT_EQ(1, key_length);
       EXPECT_TRUE(fixed);
     }
   }
 
-  // mozc::config::Config::KATAKANA_INPUT_MODE (case insensitive)
+  // config::Config::KATAKANA_INPUT_MODE
   {
-    config.set_shift_key_mode_switch(mozc::config::Config::KATAKANA_INPUT_MODE);
-    EXPECT_TRUE(mozc::config::ConfigHandler::SetConfig(config));
+    config.set_shift_key_mode_switch(config::Config::KATAKANA_INPUT_MODE);
+    EXPECT_TRUE(config::ConfigHandler::SetConfig(config));
     table.Initialize();
 
     table.AddRule("a", "[a]", "");
@@ -550,39 +652,319 @@ TEST_F(TableTest, CaseSensitiveByConfiguration) {
     table.AddRule("BA", "[BA]", "");
     table.AddRule("Ba", "[Ba]", "");
 
-    EXPECT_FALSE(table.case_sensitive());
+    EXPECT_TRUE(table.case_sensitive());
     EXPECT_EQ("[a]", GetResult(table, "a"));
-    EXPECT_EQ("[a]", GetResult(table, "A"));
+    EXPECT_EQ("[A]", GetResult(table, "A"));
     EXPECT_EQ("[ba]", GetResult(table, "ba"));
-    EXPECT_EQ("[ba]", GetResult(table, "BA"));
-    EXPECT_EQ("[ba]", GetResult(table, "Ba"));
-    EXPECT_EQ("[ba]", GetResult(table, "bA"));
+    EXPECT_EQ("[BA]", GetResult(table, "BA"));
+    EXPECT_EQ("[Ba]", GetResult(table, "Ba"));
+    EXPECT_EQ("<NULL>", GetResult(table, "bA"));
 
     EXPECT_EQ("a", GetInput(table, "a"));
-    EXPECT_EQ("a", GetInput(table, "A"));
+    EXPECT_EQ("A", GetInput(table, "A"));
     EXPECT_EQ("ba", GetInput(table, "ba"));
-    EXPECT_EQ("ba", GetInput(table, "BA"));
-    EXPECT_EQ("ba", GetInput(table, "Ba"));
-    EXPECT_EQ("ba", GetInput(table, "bA"));
+    EXPECT_EQ("BA", GetInput(table, "BA"));
+    EXPECT_EQ("Ba", GetInput(table, "Ba"));
+    EXPECT_EQ("<NULL>", GetInput(table, "bA"));
 
     // Test for HasSubRules
-    EXPECT_TRUE(table.HasSubRules("Z"));
+    EXPECT_FALSE(table.HasSubRules("Z"));
 
-    {  // Test for LookUpPrefix
-      const mozc::composer::Entry *entry = NULL;
+    { // Test for LookUpPrefix
+      const Entry *entry = NULL;
       size_t key_length = 0;
       bool fixed = false;
       entry = table.LookUpPrefix("bA", &key_length, &fixed);
-      EXPECT_TRUE(entry != NULL);
-      EXPECT_EQ("[ba]", entry->result());
-      EXPECT_EQ(2, key_length);
+      EXPECT_TRUE(entry == NULL);
+      EXPECT_EQ(1, key_length);
       EXPECT_TRUE(fixed);
     }
   }
 }
 
+TEST_F(TableTest, MobileMode) {
+  mozc::composer::Table table;
+  mozc::commands::Request request;
+  request.set_zero_query_suggestion(true);
+  request.set_mixed_conversion(true);
+  request.set_combine_all_segments(true);
 
+  // To 12keys -> Hiragana mode
+  request.set_special_romanji_table(
+      mozc::commands::Request::TWELVE_KEYS_TO_HIRAGANA);
+  mozc::commands::RequestHandler::SetRequest(request);
+  table.Reload();
+  {
+    const mozc::composer::Entry *entry = NULL;
+    size_t key_length = 0;
+    bool fixed = false;
+    entry = table.LookUpPrefix("2", &key_length, &fixed);
+    EXPECT_EQ("2", entry->input());
+    EXPECT_EQ("", entry->result());
+    // "か"
+    EXPECT_EQ("\xE3\x81\x8B", entry->pending());
+    EXPECT_EQ(1, key_length);
+    EXPECT_TRUE(fixed);
+  }
+  {
+    const mozc::composer::Entry *entry = NULL;
+    size_t key_length = 0;
+    bool fixed = false;
+    // "し*"
+    entry = table.LookUpPrefix("\xE3\x81\x97*", &key_length, &fixed);
+    // "し*"
+    EXPECT_EQ("\xE3\x81\x97*", entry->input());
+    EXPECT_EQ("", entry->result());
+    // "じ"
+    EXPECT_EQ("\xE3\x81\x98", entry->pending());
+    EXPECT_EQ(4, key_length);
+    EXPECT_TRUE(fixed);
+  }
 
-#ifdef UNDEFINE_ARRAYSIZE
-#undef ARRAYSIZE
-#endif  // UNDEFINE_ARRAYSIZE
+  // To 12keys -> Halfwidth Ascii mode
+  request.set_special_romanji_table(
+      mozc::commands::Request::TWELVE_KEYS_TO_HALFWIDTHASCII);
+  mozc::commands::RequestHandler::SetRequest(request);
+  table.Reload();
+  {
+    const mozc::composer::Entry *entry = NULL;
+    size_t key_length = 0;
+    bool fixed = false;
+    entry = table.LookUpPrefix("2", &key_length, &fixed);
+    EXPECT_EQ("a", entry->pending());
+  }
+
+  // To Quinque -> Hiragana mode
+  request.set_special_romanji_table(
+      mozc::commands::Request::QUINQUE_TO_HIRAGANA);
+  mozc::commands::RequestHandler::SetRequest(request);
+  table.Reload();
+  {
+    const mozc::composer::Entry *entry = NULL;
+    size_t key_length = 0;
+    bool fixed = false;
+    // "しゃ*"
+    entry =
+        table.LookUpPrefix("\xE3\x81\x97\xE3\x82\x83*", &key_length, &fixed);
+    // "じゃ"
+    EXPECT_EQ("\xE3\x81\x98\xE3\x82\x83", entry->pending());
+  }
+
+  // To Flick -> Hiragana mode.
+  request.set_special_romanji_table(
+      mozc::commands::Request::FLICK_TO_HIRAGANA);
+  mozc::commands::RequestHandler::SetRequest(request);
+  table.Reload();
+  {
+    size_t key_length = 0;
+    bool fixed = false;
+    const mozc::composer::Entry *entry =
+        table.LookUpPrefix("a", &key_length, &fixed);
+    // "き"
+    EXPECT_EQ("\xE3\x81\x8D", entry->pending());
+  }
+
+  // Reset the request.
+  mozc::commands::RequestHandler::SetRequest(mozc::commands::Request());
+}
+
+TEST_F(TableTest, OrderOfAddRule) {
+  // The order of AddRule should not be sensitive.
+  {
+    Table table;
+    table.AddRule("www", "w", "ww");
+    table.AddRule("ww", "[X]", "w");
+    table.AddRule("we", "[WE]", "");
+    EXPECT_TRUE(table.HasSubRules("ww"));
+
+    const Entry *entry;
+    entry = table.LookUp("ww");
+    EXPECT_TRUE(NULL != entry);
+
+    size_t key_length;
+    bool fixed;
+    entry = table.LookUpPrefix("ww", &key_length, &fixed);
+    EXPECT_TRUE(NULL != entry);
+    EXPECT_EQ(2, key_length);
+    EXPECT_FALSE(fixed);
+  }
+  {
+    Table table;
+    table.AddRule("ww", "[X]", "w");
+    table.AddRule("we", "[WE]", "");
+    table.AddRule("www", "w", "ww");
+    EXPECT_TRUE(table.HasSubRules("ww"));
+
+    const Entry *entry = NULL;
+    entry = table.LookUp("ww");
+    EXPECT_TRUE(NULL != entry);
+
+    size_t key_length = 0;
+    bool fixed = false;
+    entry = table.LookUpPrefix("ww", &key_length, &fixed);
+    EXPECT_TRUE(NULL != entry);
+    EXPECT_EQ(2, key_length);
+    EXPECT_FALSE(fixed);
+  }
+}
+
+TEST_F(TableTest, AddRuleWithAttributes) {
+  const string kInput = "1";
+  Table table;
+  table.AddRuleWithAttributes(kInput, "", "a", NEW_CHUNK);
+
+  EXPECT_TRUE(table.HasNewChunkEntry(kInput));
+
+  size_t key_length = 0;
+  bool fixed = false;
+  const Entry *entry = table.LookUpPrefix(kInput, &key_length, &fixed);
+  EXPECT_EQ(1, key_length);
+  EXPECT_TRUE(fixed);
+  ASSERT_TRUE(NULL != entry);
+  EXPECT_EQ(kInput, entry->input());
+  EXPECT_EQ("", entry->result());
+  EXPECT_EQ("a", entry->pending());
+  EXPECT_EQ(NEW_CHUNK, entry->attributes());
+
+  const string kInput2 = "22";
+  table.AddRuleWithAttributes(kInput2, "", "b", NEW_CHUNK | NO_TRANSLITERATION);
+
+  EXPECT_TRUE(table.HasNewChunkEntry(kInput2));
+
+  key_length = 0;
+  fixed = false;
+  entry = table.LookUpPrefix(kInput2, &key_length, &fixed);
+  EXPECT_EQ(2, key_length);
+  EXPECT_TRUE(fixed);
+  ASSERT_TRUE(NULL != entry);
+  EXPECT_EQ(kInput2, entry->input());
+  EXPECT_EQ("", entry->result());
+  EXPECT_EQ("b", entry->pending());
+  EXPECT_EQ((NEW_CHUNK | NO_TRANSLITERATION), entry->attributes());
+}
+
+TEST_F(TableTest, LoadFromString) {
+  const string kRule =
+    "# This is a comment\n"
+    "\n"  // Empty line to be ignored.
+    "a\t[A]\n"  // 2 entry rule
+    "kk\t[X]\tk\n"  // 3 entry rule
+    "ww\t[W]\tw\tNewChunk\n"  // 3 entry rule + attribute rule
+    "xx\t[X]\tx\tNewChunk NoTransliteration\n"  // multiple attribute rules
+    // all attributes
+    "yy\t[Y]\ty\tNewChunk NoTransliteration DirectInput EndChunk\n"
+    "#\t[#]\n";  // This line starts with '#' but should be a rule.
+  Table table;
+  table.LoadFromString(kRule);
+
+  const Entry *entry = NULL;
+  // Test for "a\t[A]\n"  -- 2 entry rule
+  EXPECT_FALSE(table.HasNewChunkEntry("a"));
+  entry = table.LookUp("a");
+  ASSERT_TRUE(NULL != entry);
+  EXPECT_EQ("[A]", entry->result());
+  EXPECT_EQ("", entry->pending());
+
+  // Test for "kk\t[X]\tk\n"  -- 3 entry rule
+  EXPECT_FALSE(table.HasNewChunkEntry("kk"));
+  entry = table.LookUp("kk");
+  ASSERT_TRUE(NULL != entry);
+  EXPECT_EQ("[X]", entry->result());
+  EXPECT_EQ("k", entry->pending());
+
+  // Test for "ww\t[W]\tw\tNewChunk\n"  -- 3 entry rule + attribute rule
+  EXPECT_TRUE(table.HasNewChunkEntry("ww"));
+  entry = table.LookUp("ww");
+  ASSERT_TRUE(NULL != entry);
+  EXPECT_EQ("[W]", entry->result());
+  EXPECT_EQ("w", entry->pending());
+  EXPECT_EQ(NEW_CHUNK, entry->attributes());
+
+  // Test for "xx\t[X]\tx\tNewChunk NoTransliteration\n" -- multiple
+  // attribute rules
+  EXPECT_TRUE(table.HasNewChunkEntry("xx"));
+  entry = table.LookUp("xx");
+  ASSERT_TRUE(NULL != entry);
+  EXPECT_EQ("[X]", entry->result());
+  EXPECT_EQ("x", entry->pending());
+  EXPECT_EQ((NEW_CHUNK | NO_TRANSLITERATION), entry->attributes());
+
+  // Test for "yy\t[Y]\ty\tNewChunk NoTransliteration DirectInput EndChunk\n"
+  // -- all attributes
+  EXPECT_TRUE(table.HasNewChunkEntry("yy"));
+  entry = table.LookUp("yy");
+  ASSERT_TRUE(NULL != entry);
+  EXPECT_EQ("[Y]", entry->result());
+  EXPECT_EQ("y", entry->pending());
+  EXPECT_EQ((NEW_CHUNK | NO_TRANSLITERATION | DIRECT_INPUT | END_CHUNK),
+            entry->attributes());
+
+  // Test for "#\t[#]\n"  -- This line starts with '#' but should be a rule.
+  entry = table.LookUp("#");
+  ASSERT_TRUE(NULL != entry);
+  EXPECT_EQ("[#]", entry->result());
+  EXPECT_EQ("", entry->pending());
+}
+
+TEST_F(TableTest, SpecialKeys) {
+  {
+    Table table;
+    table.AddRule("x{#1}y", "X1Y", "");
+    table.AddRule("x{#2}y", "X2Y", "");
+    table.AddRule("x{{}", "X{", "");
+    table.AddRule("xy", "XY", "");
+
+    const Entry *entry = NULL;
+    entry = table.LookUp("x{#1}y");
+    EXPECT_TRUE(NULL == entry);
+
+    string key;
+    key = Table::ParseSpecialKey("x{#1}y");
+    entry = table.LookUp(key);
+    ASSERT_TRUE(NULL != entry);
+    EXPECT_EQ(key, entry->input());
+    EXPECT_EQ("X1Y", entry->result());
+
+    key = Table::ParseSpecialKey("x{#2}y");
+    entry = table.LookUp(key);
+    ASSERT_TRUE(NULL != entry);
+    EXPECT_EQ(key, entry->input());
+    EXPECT_EQ("X2Y", entry->result());
+
+    key = "x{";
+    entry = table.LookUp(key);
+    ASSERT_TRUE(NULL != entry);
+    EXPECT_EQ(key, entry->input());
+    EXPECT_EQ("X{", entry->result());
+  }
+
+  {
+    // "{{}" is replaced with "{".
+    // "{*}" is replaced with "\x0F*\x0E".
+    Table table;
+    EXPECT_EQ("\x0F" "\x0E", table.AddRule("{}", "", "")->input());
+    EXPECT_EQ("{", table.AddRule("{", "", "")->input());
+    EXPECT_EQ("}", table.AddRule("}", "", "")->input());
+    EXPECT_EQ("{", table.AddRule("{{}", "", "")->input());
+    EXPECT_EQ("{}", table.AddRule("{{}}", "", "")->input());
+    EXPECT_EQ("a{", table.AddRule("a{", "", "")->input());
+    EXPECT_EQ("{a", table.AddRule("{a", "", "")->input());
+    EXPECT_EQ("a{a", table.AddRule("a{a", "", "")->input());
+    EXPECT_EQ("a}", table.AddRule("a}", "", "")->input());
+    EXPECT_EQ("}a", table.AddRule("}a", "", "")->input());
+    EXPECT_EQ("a}a", table.AddRule("a}a", "", "")->input());
+    EXPECT_EQ("a" "\x0F" "b" "\x0E" "c",
+              table.AddRule("a{b}c", "", "")->input());
+    EXPECT_EQ("a" "\x0F" "b" "\x0E" "c" "\x0F" "d" "\x0E" "\x0F" "e" "\x0E",
+              table.AddRule("a{b}c{d}{e}", "", "")->input());
+    EXPECT_EQ("}-{", table.AddRule("}-{", "", "")->input());
+    EXPECT_EQ("a{bc", table.AddRule("a{bc", "", "")->input());
+
+    // This is not a fixed specification, but a current behavior.
+    EXPECT_EQ("\x0F" "{-" "\x0E" "}",
+              table.AddRule("{{-}}", "", "")->input());
+  }
+}
+
+}  // namespace composer
+}  // namespace mozc

@@ -37,16 +37,24 @@ __author__ = "taku"
 import sys
 import re
 
-def ReadPOSID(file):
+def ReadPOSID(id_file, special_pos_file):
   pos = {}
-  try:
-    for line in open(file, "r"):
-      fields = line.split()
-      pos[fields[1]] = fields[0]
-    return pos
-  except:
-    print "cannot open %s" % (file)
-    sys.exit(1)
+  max_id = 0
+
+  for line in open(id_file, "r"):
+    fields = line.split()
+    pos[fields[1]] = fields[0]
+    max_id = max(int(fields[0]), max_id)
+
+  max_id = max_id + 1
+  for line in open(special_pos_file, "r"):
+    if len(line) <= 1 or line[0] == '#':
+      continue
+    fields = line.split()
+    pos[fields[0]] = ("%d" % max_id)
+    max_id = max_id + 1
+
+  return pos
 
 def PatternToRegexp(pattern):
   return pattern.replace("*", "[^,]+")
@@ -92,24 +100,14 @@ def GetRange(pos, pattern):
   return (range[0][0], " || ".join(tmp))
 
 def main():
-  pos = ReadPOSID(sys.argv[1])
+  pos = ReadPOSID(sys.argv[1], sys.argv[2])
   print "#include \"base/base.h\""
   print "namespace mozc {"
   print "namespace {"
   print "class POSMatcher {"
   print " public:"
 
-  # Special rule for Zipcode:
-  # TODO(taku): remove this rule after introducuing
-  # a specail POS for handling Zipcode
-  print "  static uint16 GetZipcodeId() {"
-  print "    return %s;" % (len(pos))
-  print "  }"
-  print "  static bool IsZipcode(uint16 id) {"
-  print "    return (id == %s);" % (len(pos))
-  print "  }"
-
-  for line in open(sys.argv[2], "r"):
+  for line in open(sys.argv[3], "r"):
     if len(line) <= 1 or line[0] == '#':
       continue
     (func, pattern) = line.split()

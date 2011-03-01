@@ -79,7 +79,8 @@ class ComposerTest : public testing::Test {
     config::ConfigHandler::GetDefaultConfig(&config);
     config::ConfigHandler::SetConfig(config);
     table_.reset(new Table);
-    composer_.reset(Composer::Create(table_.get()));
+    composer_.reset(new Composer);
+    composer_->SetTable(table_.get());
     CharacterFormManager::GetCharacterFormManager()->SetDefaultRule();
   }
 
@@ -252,6 +253,8 @@ TEST_F(ComposerTest, OutputMode) {
   table_->AddRule("i", "\xe3\x81\x84", "");
   // "う"
   table_->AddRule("u", "\xe3\x81\x86", "");
+
+  composer_->SetOutputMode(transliteration::HIRAGANA);
 
   composer_->InsertCharacter("a");
   composer_->InsertCharacter("i");
@@ -827,7 +830,8 @@ TEST_F(ComposerTest, InsertCharacterKeyEventWithInputMode) {
     EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
   }
 
-  composer_.reset(Composer::Create(table_.get()));
+  composer_.reset(new Composer);
+  composer_->SetTable(table_.get());
 
   {
     // "a" → "あ" (Hiragana)
@@ -1043,7 +1047,8 @@ TEST_F(ComposerTest, AutoIMETurnOffEnabled) {
     EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
   }
 
-  composer_.reset(Composer::Create(table_.get()));
+  composer_.reset(new Composer);
+  composer_->SetTable(table_.get());
 
   {  // google
     InsertKey("g", composer_.get());
@@ -1116,7 +1121,8 @@ TEST_F(ComposerTest, AutoIMETurnOffEnabled) {
 
   config.set_shift_key_mode_switch(config::Config::OFF);
   config::ConfigHandler::SetConfig(config);
-  composer_.reset(Composer::Create(table_.get()));
+  composer_.reset(new Composer);
+  composer_->SetTable(table_.get());
 
   {  // Google
     InsertKey("G", composer_.get());
@@ -2344,6 +2350,40 @@ TEST_F(ComposerTest, CursorMoving) {
     // "Gi"
     EXPECT_EQ("Gi", result);
   }
+}
+
+TEST_F(ComposerTest, ShuoldCommit) {
+  table_->AddRuleWithAttributes("ka", "[KA]", "", DIRECT_INPUT);
+  table_->AddRuleWithAttributes("tt", "[X]", "t", DIRECT_INPUT);
+  table_->AddRuleWithAttributes("ta", "[TA]", "", NO_TABLE_ATTRIBUTE);
+
+  // k
+  composer_->InsertCharacter("k");
+  EXPECT_FALSE(composer_->ShouldCommit());
+
+  // k + a
+  composer_->InsertCharacter("a");
+  EXPECT_TRUE(composer_->ShouldCommit());
+
+  // ka + t
+  composer_->InsertCharacter("t");
+  EXPECT_FALSE(composer_->ShouldCommit());
+
+  // kat + t
+  composer_->InsertCharacter("t");
+  EXPECT_FALSE(composer_->ShouldCommit());
+
+  // katt + a
+  composer_->InsertCharacter("a");
+  EXPECT_TRUE(composer_->ShouldCommit());
+
+  // katta + t
+  composer_->InsertCharacter("t");
+  EXPECT_FALSE(composer_->ShouldCommit());
+
+  // kattat + a
+  composer_->InsertCharacter("a");
+  EXPECT_FALSE(composer_->ShouldCommit());
 }
 
 }  // namespace composer

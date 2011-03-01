@@ -119,7 +119,6 @@ bool VersionRewriter::Rewrite(Segments *segments) const {
     const VersionDataImpl::VersionEntry *ent
         = Singleton<VersionDataImpl>::get()->Lookup(seg->key());
     if (ent != NULL) {
-      seg->GetCandidates(10);
       for (size_t j = 0; j < seg->candidates_size(); ++j) {
         const Segment::Candidate& c = seg->candidate(static_cast<int>(j));
         if (c.value == ent->base_candidate_) {
@@ -136,7 +135,7 @@ bool VersionRewriter::Rewrite(Segments *segments) const {
             new_cand->key = seg->key();
             new_cand->content_key = seg->key();
             // we don't learn version
-            new_cand->learning_type |= Segment::Candidate::NO_LEARNING;
+            new_cand->attributes |= Segment::Candidate::NO_LEARNING;
             result = true;
           }
           break;

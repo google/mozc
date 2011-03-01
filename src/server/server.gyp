@@ -108,6 +108,18 @@
         }],
       ],
     },
+    {
+      'target_name': 'mozc_rpc_server_main',
+      'type': 'executable',
+      'sources': [
+        'mozc_rpc_server_main.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        '../session/session.gyp:session',
+        '../session/session.gyp:random_keyevents_generator',
+      ],
+    },
   ],
   'conditions': [
     ['OS=="win"', {
@@ -169,6 +181,16 @@
             'cache_service_manager',
             'gen_mozc_cache_service_resource_header',
           ],
+          'msvs_settings': {
+            'VCLinkerTool': {
+              'AdditionalDependencies': [
+                'shlwapi.lib',
+              ],
+              'DelayLoadDLLs': [
+                'shlwapi.dll',
+              ],
+            },
+          },
         },
       ],
     }],

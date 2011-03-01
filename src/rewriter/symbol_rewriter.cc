@@ -101,40 +101,14 @@ const string SymbolRewriter::GetDescription(
         "\xE3\x83\x90\xE3\x83\x83\xE3\x82\xAF"
         "\xE3\x82\xB9\xE3\x83\xA9\xE3\x83\x83\xE3\x82\xB7\xE3\x83\xA5";
   }
-  string ret = description;
+  string result = description;
   // Merge description
   if (additional_description != NULL) {
-    ret += string("(") + string(additional_description) + string(")");
+    result.append("(");
+    result.append(additional_description);
+    result.append(")");
   }
-  return ret;
-}
-
-// return true if all the characters in value should have
-// Half/Fullwidth description
-// static function
-bool SymbolRewriter::HasHalfFullWidthDescription(const string &value) {
-  if (value.empty()) {
-    return false;
-  }
-  // Horizontal bar, Hyphen and Backslash
-  // "‐","―","＼","“","”","‘","’"
-  // TODO(taku): find out other characters if need be
-  const uint16 kFullHalfWidthList[] =
-      { 0x2010, 0x2015, 0xFF3C, 0x201C, 0x201D, 0x2018, 0x2019};
-  const uint16 *listbegin = kFullHalfWidthList;
-  const uint16 *listend = kFullHalfWidthList + arraysize(kFullHalfWidthList);
-
-  const char *begin = value.data();
-  const char *end = value.data() + value.size();
-  while (begin < end) {
-    size_t mblen = 0;
-    const uint16 ucs2 = Util::UTF8ToUCS2(begin, end, &mblen);
-    if (find(listbegin, listend, ucs2) == listend) {
-      return false;
-    }
-    begin += mblen;
-  }
-  return true;
+  return result;
 }
 
 // return true key has no-hiragana
@@ -161,12 +135,14 @@ void SymbolRewriter::ExpandSpace(Segment *segment) {
       *c = segment->candidate(i);
       // "　"
       c->value = "\xe3\x80\x80";
+      c->content_value = "\xe3\x80\x80";
       return;
     // "　"
     } else if (segment->candidate(i).value == "\xe3\x80\x80") {
       Segment::Candidate *c = segment->insert_candidate(i + 1);
       *c = segment->candidate(i);
       c->value = " ";
+      c->content_value = " ";
       return;
     }
   }
@@ -204,7 +180,6 @@ void SymbolRewriter::InsertCandidates(const EmbeddedDictionary::Value *value,
                                       size_t size,
                                       bool context_sensitive,
                                       Segment *segment) {
-  segment->GetCandidates(kOffsetSize);
   if (segment->candidates_size() == 0) {
     LOG(WARNING) << "candiadtes_size is 0";
     return;
@@ -219,42 +194,30 @@ void SymbolRewriter::InsertCandidates(const EmbeddedDictionary::Value *value,
 
   // If the original candidates given by ImmutableConveter already
   // include the target symbols, do assign description to these candidates.
-  set<string> added;
   for (size_t i = 0; i < segment->candidates_size(); ++i) {
-    Segment::Candidate *c = segment->mutable_candidate(i);
+    Segment::Candidate *candidate = segment->mutable_candidate(i);
     string full_width_value, half_width_value;
-    Util::HalfWidthToFullWidth(c->value, &full_width_value);
-    Util::FullWidthToHalfWidth(c->value, &half_width_value);
-
-    // This candidate has both form, so it should have half/full annotation
-    int type = Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER;
-    if (full_width_value != half_width_value ||
-        HasHalfFullWidthDescription(full_width_value)) {
-      type |= Segment::Candidate::FULL_HALF_WIDTH;
-    }
+    Util::HalfWidthToFullWidth(candidate->value, &full_width_value);
+    Util::FullWidthToHalfWidth(candidate->value, &half_width_value);
 
     for (size_t j = 0; j < size; ++j) {
-      if (c->value == value[j].value ||
+      if (candidate->value == value[j].value ||
           full_width_value == value[j].value ||
           half_width_value == value[j].value) {
-        // ovewrite description
-        c->SetDescription(type,
-                          GetDescription(c->value,
-                                         value[j].description,
-                                         value[j].additional_description));
-        added.insert(c->value);
-        added.insert(full_width_value);
-        added.insert(half_width_value);
+        candidate->description =
+            GetDescription(candidate->value,
+                           value[j].description,
+                           value[j].additional_description);
         break;
       }
     }
   }
 
-  const Segment::Candidate &base_candidate = segment->candidate(0);
-  size_t offset = min(kOffsetSize, segment->candidates_size());
   // Find the position wehere we start to insert the symbols
   // We want to skip the single-kanji we inserted by single-kanji rewriter.
   // We also skip transliterated key candidates.
+  const Segment::Candidate &base_candidate = segment->candidate(0);
+  size_t offset = min(kOffsetSize, segment->candidates_size());
 
   for (size_t i = offset; i < segment->candidates_size(); ++i) {
     const string &value = segment->candidate(i).value;
@@ -270,72 +233,36 @@ void SymbolRewriter::InsertCandidates(const EmbeddedDictionary::Value *value,
 
   size_t inserted_count = 0;
   bool finish_first_part = false;
-
   for (size_t i = 0; i < size; ++i) {
-    if (added.find(value[i].value) != added.end()) {
-      continue;
-    }
+    Segment::Candidate *candidate = segment->insert_candidate(offset);
+    DCHECK(candidate);
 
-    Segment::Candidate *c = segment->insert_candidate(offset);
-    if (c == NULL) {
-      LOG(ERROR) << "cannot insert candidate at " << offset;
-      continue;
-    }
-
-    c->Init();
-    c->lid = value[i].lid;
-    c->rid = value[i].rid;
-    c->cost = base_candidate.cost;
-    c->value = value[i].value;
-    c->content_value = value[i].value;
-    c->key = base_candidate.key;
-    c->content_key = base_candidate.content_key;
+    candidate->Init();
+    candidate->lid = value[i].lid;
+    candidate->rid = value[i].rid;
+    candidate->cost = base_candidate.cost;
+    candidate->structure_cost = base_candidate.structure_cost;
+    candidate->value = value[i].value;
+    candidate->content_value = value[i].value;
+    candidate->key = base_candidate.key;
+    candidate->content_key = base_candidate.content_key;
 
     if (context_sensitive) {
-      c->learning_type |= Segment::Candidate::CONTEXT_SENSITIVE;
+      candidate->attributes |= Segment::Candidate::CONTEXT_SENSITIVE;
     }
 
-    bool should_expand = true;
     // they have two characters and the one of characters doesn't have
     // alternative character.
-    if (c->value == "\xE2\x80\x9C\xE2\x80\x9D" ||  // "“”"
-        c->value == "\xE2\x80\x98\xE2\x80\x99") {  // "‘’"
-      should_expand = false;
+    if (candidate->value == "\xE2\x80\x9C\xE2\x80\x9D" ||  // "“”"
+        candidate->value == "\xE2\x80\x98\xE2\x80\x99") {  // "‘’"
+      candidate->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
     }
 
-    if (should_expand && segment->ExpandAlternative(offset)) {
-      Segment::Candidate *c1 = segment->mutable_candidate(offset);
-      Segment::Candidate *c2 = segment->mutable_candidate(offset + 1);
-      if (c1 != NULL) {
-        c1->description.clear();
-        c1->SetDescription(Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER |
-                           Segment::Candidate::FULL_HALF_WIDTH,
-                           GetDescription(c1->value,
-                                          value[i].description,
-                                          value[i].additional_description));
-      }
-      if (c2 != NULL) {
-        c2->description.clear();
-        c2->SetDescription(Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER |
-                           Segment::Candidate::FULL_HALF_WIDTH,
-                           GetDescription(c2->value,
-                                          value[i].description,
-                                          value[i].additional_description));
-      }
-      offset += 2;
-      inserted_count += 2;
-    } else {
-      c->description.clear();
-      int type = Segment::Candidate::PLATFORM_DEPENDENT_CHARACTER;
-      if (HasHalfFullWidthDescription(c->value)) {
-        type |= Segment::Candidate::FULL_HALF_WIDTH;
-      }
-      c->SetDescription(type, GetDescription(c->value,
-                                             value[i].description,
-                                             value[i].additional_description));
-      ++offset;
-      ++inserted_count;
-    }
+    candidate->description = GetDescription(candidate->value,
+                                            value[i].description,
+                                            value[i].additional_description);
+    ++offset;
+    ++inserted_count;
 
     // Insert to latter position
     // If number of rest symbols is small, insert current position.
@@ -344,10 +271,9 @@ void SymbolRewriter::InsertCandidates(const EmbeddedDictionary::Value *value,
         inserted_count >= kMaxInsertToMedium &&
         size - inserted_count >= 5 &&
         // Do not divide symbols which seem to be in the same group
-        // prividing that they are not platform dependent characters.
+        // providing that they are not platform dependent characters.
         (!InSameSymbolGroup(value[i], value[i + 1]) ||
          IsPlatformDependent(value[i + 1]))) {
-      segment->GetCandidates(kInsertRestSymbolsPos);
       offset = segment->candidates_size();
       finish_first_part = true;
     }
@@ -356,7 +282,7 @@ void SymbolRewriter::InsertCandidates(const EmbeddedDictionary::Value *value,
 
 // static function
 bool SymbolRewriter::RewriteEachCandidate(Segments *segments) {
-  bool rewrite = false;
+  bool modified = false;
   for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
     const string &key = segments->conversion_segment(i).key();
     const EmbeddedDictionary::Token *token =
@@ -372,10 +298,10 @@ bool SymbolRewriter::RewriteEachCandidate(Segments *segments) {
                      context_sensitive,
                      segments->mutable_conversion_segment(i));
 
-    rewrite = true;
+    modified = true;
   }
 
-  return rewrite;
+  return modified;
 }
 
 // static function
@@ -405,16 +331,11 @@ bool SymbolRewriter::RewriteEntireCandidate(Segments *segments) {
     if (diff > 0) {
       ConverterFactory::GetConverter()->ResizeSegment(segments, 0, diff);
     }
-
-    // ignore if the size of segments != 1 even with Resize
-    if (segments->conversion_segments_size() != 1) {
-      return false;
-    }
+  } else {
+    InsertCandidates(token->value, token->value_size,
+                     false,   // not context sensitive
+                     segments->mutable_conversion_segment(0));
   }
-
-  InsertCandidates(token->value, token->value_size,
-                   false,   // not context sensitive
-                   segments->mutable_conversion_segment(0));
 
   return true;
 }

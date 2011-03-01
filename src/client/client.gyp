@@ -62,6 +62,40 @@
         'test_size': 'small',
       },
     },
+    {
+      'target_name': 'session_quality_test_main',
+      'type': 'executable',
+      'sources': [
+        'session_quality_test_main.cc',
+      ],
+      'dependencies': [
+        'client',
+        '../session/session.gyp:genproto_session',
+        '../base/base.gyp:base',
+      ],
+      'actions': [
+        {
+          'action_name': 'gen_session_quality_test_data',
+          'variables' : {
+            'input_files': [
+            ],
+          },
+          'inputs': [
+            '<@(input_files)',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/session_quality_test_data.h',
+          ],
+          'action': [
+            'python', '../build_tools/redirect.py',
+            '<(gen_out_dir)/session_quality_test_data.h',
+            'gen_session_quality_test_data.py',
+            '<@(input_files)',
+          ],
+          'message': 'Generating <(gen_out_dir)/session_quality_test_data.h',
+        },
+      ],
+    },
     # Test cases meta target: this target is referred from gyp/tests.gyp
     {
       'target_name': 'client_all_test',

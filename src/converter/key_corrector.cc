@@ -480,8 +480,11 @@ bool KeyCorrector::CorrectKey(const string &key, InputMode mode) {
     ++key_pos;
   }
 
-  DCHECK_EQ(original_key_.size(), alignment_.size());
-  DCHECK_EQ(corrected_key_.size(), rev_alignment_.size());
+  if (original_key_.size() != alignment_.size() ||
+      corrected_key_.size() != rev_alignment_.size()) {
+    LOG(ERROR) << "Incositent alignment. maybe due to UCS4 string";
+    return false;
+  }
 
   available_ = true;
   return true;

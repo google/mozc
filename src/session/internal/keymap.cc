@@ -188,7 +188,11 @@ void KeyMapManager::CheckIMEOnOffKeymap() {
 }
 
 bool KeyMapManager::Reload() {
-  const config::Config::SessionKeymap new_keymap = GET_CONFIG(session_keymap);
+  return ReloadWithKeymap(GET_CONFIG(session_keymap));
+}
+
+bool KeyMapManager::ReloadWithKeymap(
+    const config::Config::SessionKeymap new_keymap) {
   // If the current keymap is the same with the new keymap and not
   // CUSTOM, do nothing.
   if (new_keymap == keymap_ && new_keymap != config::Config::CUSTOM) {
@@ -511,8 +515,16 @@ void KeyMapManager::InitCommandData() {
       "InputModeHalfAlphanumeric",
       PrecompositionState::INPUT_MODE_HALF_ALPHANUMERIC);
 #endif  // OS_WINDOWS
+
+  RegisterPrecompositionCommand("LaunchConfigDialog",
+                                PrecompositionState::LAUNCH_CONFIG_DIALOG);
+  RegisterPrecompositionCommand("LaunchDictionaryTool",
+                                PrecompositionState::LAUNCH_DICTIONARY_TOOL);
+  RegisterPrecompositionCommand("LaunchWordRegisterDialog",
+                                PrecompositionState::LAUNCH_WORD_REGISTER_DIALOG);
+
   RegisterPrecompositionCommand("Revert", PrecompositionState::REVERT);
-//  RegisterPrecompositionCommand("Undo", PrecompositionState::UNDO);
+  RegisterPrecompositionCommand("Undo", PrecompositionState::UNDO);
 
 #ifdef _DEBUG  // only for debugging
   RegisterPrecompositionCommand("Abort", PrecompositionState::ABORT);
@@ -602,6 +614,8 @@ void KeyMapManager::InitCommandData() {
   RegisterConversionCommand("Cancel", ConversionState::CANCEL);
   RegisterConversionCommand("SegmentFocusLeft",
                             ConversionState::SEGMENT_FOCUS_LEFT);
+  RegisterConversionCommand("SegmentFocusRightOrCommit",
+                            ConversionState::SEGMENT_FOCUS_RIGHT_OR_COMMIT);
   RegisterConversionCommand("SegmentFocusRight",
                             ConversionState::SEGMENT_FOCUS_RIGHT);
   RegisterConversionCommand("SegmentFocusFirst",
