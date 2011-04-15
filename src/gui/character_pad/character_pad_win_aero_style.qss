@@ -1,0 +1,36 @@
+QPushButton {
+  background-color: rgb(213,228,246);
+  border-color: rgb(183,196,225);
+  color: rgb(18,50,114);
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 5px;
+  min-height: 16px;
+  min-width: 50px;
+  padding: 4px;
+}
+
+QPushButton:pressed {
+  background-color: rgb(221,228,235);
+  border-style: solid;
+  border-width: 1px;
+  padding-left: 6px;
+  padding-top: 6px;
+}
+
+QPushButton:hover {
+  border-width: 1px;
+  border-style: solid;
+  background-color: rgb(238,243,250);
+}
+
+QPushButton:disabled {
+  background-color: rgb(211,220,230);
+  color: rgb(96,100,104);
+}
+
+QPushButton::menu-indicator {
+  subcontrol-position: right center;
+  subcontrol-origin: padding;
+  left: -2px;
+}

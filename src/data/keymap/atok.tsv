@@ -108,7 +108,7 @@ DirectInput	Henkan	IMEOn
 DirectInput	Kanji	IMEOn
 DirectInput	Muhenkan	IMEOn
 DirectInput	ON	IMEOn
-DirectInput	Shift Henkan	IMEOn
+DirectInput	Shift Henkan	Reconvert
 Precomposition	Backspace	Revert
 Precomposition	Ctrl 0	ToggleAlphanumericMode
 Precomposition	Ctrl Alt F11	Abort
@@ -125,6 +125,7 @@ Precomposition	Kanji	IMEOff
 Precomposition	Muhenkan	IMEOff
 Precomposition	OFF	IMEOff
 Precomposition	ON	IMEOn
+Precomposition	Shift Henkan	Reconvert
 Precomposition	Shift Muhenkan	ToggleAlphanumericMode
 Precomposition	Shift Space	InsertAlternateSpace
 Precomposition	Space	InsertSpace

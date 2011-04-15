@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,6 +35,7 @@
 #include "base/port.h"
 #include "base/scoped_ptr.h"
 #include "session/commands.pb.h"
+#include "session/session_factory.h"
 #include "client/session_interface.h"
 
 namespace mozc {
@@ -120,6 +121,8 @@ class Session : public client::SessionInterface {
 
   // Does nothing.
   virtual bool OpenBrowser(const string &url);
+
+  static void SetSessionFactory(session::SessionFactoryInterface *new_factory);
 
  private:
   bool CreateSession();

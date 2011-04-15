@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -124,16 +124,184 @@ class LRUStorageTest : public testing::Test {
 };
 
 TEST_F(LRUStorageTest, LRUStorageTest) {
-  static const int kSize[] = {10, 100, 1000, 10000};
+  const int kSize[] = {10, 100, 1000, 10000};
   const string file = GetTemporaryFilePath();
   for (int i = 0; i < arraysize(kSize); ++i) {
     LRUStorage::CreateStorageFile(file.c_str(), 4, kSize[i], 0x76fef);
     LRUStorage storage;
     EXPECT_TRUE(storage.Open(file.c_str()));
-    EXPECT_EQ(storage.size(), kSize[i]);
-    EXPECT_EQ(storage.value_size(), 4);
+    EXPECT_EQ(file, storage.filename());
+    EXPECT_EQ(kSize[i], storage.size());
+    EXPECT_EQ(4, storage.value_size());
+    EXPECT_EQ(0x76fef, storage.seed());
     RunTest(&storage, kSize[i]);
   }
+}
+
+struct Entry {
+  uint64 key;
+  uint32 last_access_time;
+  string value;
+};
+
+TEST_F(LRUStorageTest, ReadWriteTest) {
+  const int kSize[] = {10, 100, 1000, 10000};
+  const string file = GetTemporaryFilePath();
+  for (int i = 0; i < arraysize(kSize); ++i) {
+    LRUStorage::CreateStorageFile(file.c_str(), 4, kSize[i], 0x76fef);
+    LRUStorage storage;
+    EXPECT_TRUE(storage.Open(file.c_str()));
+    EXPECT_EQ(file, storage.filename());
+    EXPECT_EQ(kSize[i], storage.size());
+    EXPECT_EQ(4, storage.value_size());
+    EXPECT_EQ(0x76fef, storage.seed());
+
+    vector<Entry> entries;
+
+    const size_t size = kSize[i];
+    for (int j = 0; j < size; ++j) {
+      Entry entry;
+      entry.key = rand();
+      const int n = rand();
+      entry.value.assign(reinterpret_cast<const char *>(&n), 4);
+      entry.last_access_time = Random(100000);
+      entries.push_back(entry);
+      storage.Write(j, entry.key, entry.value, entry.last_access_time);
+    }
+
+    for (int j = 0; j < size; ++j) {
+      uint64 key;
+      string value;
+      uint32 last_access_time;
+      storage.Read(j, &key, &value, &last_access_time);
+      EXPECT_EQ(entries[j].key, key);
+      EXPECT_EQ(entries[j].value, value);
+      EXPECT_EQ(entries[j].last_access_time, last_access_time);
+    }
+  }
+}
+
+TEST_F(LRUStorageTest, Merge) {
+  const string file1 = GetTemporaryFilePath() + ".tmp1";
+  const string file2 = GetTemporaryFilePath() + ".tmp2";
+
+  // Can merge
+  {
+    LRUStorage::CreateStorageFile(file1.c_str(), 4, 100, 0x76fef);
+    LRUStorage::CreateStorageFile(file2.c_str(), 4, 100, 0x76fef);
+    LRUStorage storage;
+    EXPECT_TRUE(storage.Open(file1.c_str()));
+    EXPECT_TRUE(storage.Merge(file2.c_str()));
+  }
+
+  // different entry size
+  {
+    LRUStorage::CreateStorageFile(file1.c_str(), 4, 100, 0x76fef);
+    LRUStorage::CreateStorageFile(file2.c_str(), 4, 200, 0x76fef);
+    LRUStorage storage;
+    EXPECT_TRUE(storage.Open(file1.c_str()));
+    EXPECT_TRUE(storage.Merge(file2.c_str()));
+  }
+
+  // seed is different
+  {
+    LRUStorage::CreateStorageFile(file1.c_str(), 4, 100, 0x76fef);
+    LRUStorage::CreateStorageFile(file2.c_str(), 4, 200, 0x76fee);
+    LRUStorage storage;
+    EXPECT_TRUE(storage.Open(file1.c_str()));
+    EXPECT_FALSE(storage.Merge(file2.c_str()));
+  }
+
+  // value size is different
+  {
+    LRUStorage::CreateStorageFile(file1.c_str(), 4, 100, 0x76fef);
+    LRUStorage::CreateStorageFile(file2.c_str(), 8, 200, 0x76fef);
+    LRUStorage storage;
+    EXPECT_TRUE(storage.Open(file1.c_str()));
+    EXPECT_FALSE(storage.Merge(file2.c_str()));
+  }
+
+  {
+    LRUStorage::CreateStorageFile(file1.c_str(), 4, 8, 0x76fef);
+    LRUStorage::CreateStorageFile(file2.c_str(), 4, 4, 0x76fef);
+    LRUStorage storage1;
+    EXPECT_TRUE(storage1.Open(file1.c_str()));
+    storage1.Write(0, 0, "test", 0);
+    storage1.Write(1, 1, "test", 10);
+    storage1.Write(2, 2, "test", 20);
+    storage1.Write(3, 3, "test", 30);
+
+    LRUStorage storage2;
+    EXPECT_TRUE(storage2.Open(file2.c_str()));
+    storage2.Write(0, 4, "test", 0);
+    storage2.Write(1, 5, "test", 50);
+
+    EXPECT_TRUE(storage1.Merge(storage2));
+
+    uint64 fp;
+    string value;
+    uint32 last_access_time;
+
+    storage1.Read(0, &fp, &value, &last_access_time);
+    EXPECT_EQ(5, fp);
+    EXPECT_EQ(50, last_access_time);
+
+    storage1.Read(1, &fp, &value, &last_access_time);
+    EXPECT_EQ(3, fp);
+    EXPECT_EQ(30, last_access_time);
+
+    storage1.Read(2, &fp, &value, &last_access_time);
+    EXPECT_EQ(2, fp);
+    EXPECT_EQ(20, last_access_time);
+
+    storage1.Read(3, &fp, &value, &last_access_time);
+    EXPECT_EQ(1, fp);
+    EXPECT_EQ(10, last_access_time);
+  }
+
+  // same FP
+  {
+    LRUStorage::CreateStorageFile(file1.c_str(), 4, 8, 0x76fef);
+    LRUStorage::CreateStorageFile(file2.c_str(), 4, 4, 0x76fef);
+    LRUStorage storage1;
+    EXPECT_TRUE(storage1.Open(file1.c_str()));
+    storage1.Write(0, 0, "test", 0);
+    storage1.Write(1, 1, "test", 10);
+    storage1.Write(2, 2, "test", 20);
+    storage1.Write(3, 3, "test", 30);
+
+    LRUStorage storage2;
+    EXPECT_TRUE(storage2.Open(file2.c_str()));
+    storage2.Write(0, 2, "new1", 0);
+    storage2.Write(1, 3, "new2", 50);
+
+    EXPECT_TRUE(storage1.Merge(storage2));
+
+    uint64 fp;
+    string value;
+    uint32 last_access_time;
+
+    storage1.Read(0, &fp, &value, &last_access_time);
+    EXPECT_EQ(3, fp);
+    EXPECT_EQ(50, last_access_time);
+    EXPECT_EQ("new2", value);
+
+    storage1.Read(1, &fp, &value, &last_access_time);
+    EXPECT_EQ(2, fp);
+    EXPECT_EQ(20, last_access_time);
+    EXPECT_EQ("test", value);
+
+    storage1.Read(2, &fp, &value, &last_access_time);
+    EXPECT_EQ(1, fp);
+    EXPECT_EQ(10, last_access_time);
+
+    storage1.Read(3, &fp, &value, &last_access_time);
+    EXPECT_EQ(0, fp);
+    EXPECT_EQ(0, last_access_time);
+  }
+
+  Util::Unlink(file1);
+  Util::Unlink(file2);
 }
 
 class LRUStoragOpenOrCreateTest : public testing::Test {

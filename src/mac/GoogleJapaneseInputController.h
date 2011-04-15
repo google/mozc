@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -92,7 +92,7 @@ class RendererInterface;
 
   // |clientBundle_| is the Bundle ID of the client application which
   // the controller communicates with.
-  NSString *clientBundle_;
+  string *clientBundle_;
 
   NSRange replacementRange_;
 

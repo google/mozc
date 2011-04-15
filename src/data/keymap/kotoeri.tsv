@@ -135,6 +135,7 @@ Conversion	Shift Up	ConvertPrevPage
 Conversion	Space	ConvertNext
 Conversion	Tab	PredictAndConvert
 Conversion	Up	ConvertPrev
+DirectInput	Ctrl Shift r	Reconvert
 DirectInput	Hankaku/Zenkaku	IMEOn
 DirectInput	Kanji	IMEOn
 DirectInput	ON	IMEOn
@@ -142,6 +143,7 @@ Precomposition	Backspace	Revert
 Precomposition	Ctrl Alt F11	Abort
 Precomposition	Ctrl Backspace	Undo
 Precomposition	Ctrl Eisu	ToggleAlphanumericMode
+Precomposition	Ctrl Shift r	Reconvert
 Precomposition	Eisu	ToggleAlphanumericMode
 Precomposition	Hankaku/Zenkaku	IMEOff
 Precomposition	Kanji	IMEOff

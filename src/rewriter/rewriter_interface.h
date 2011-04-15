@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -42,8 +42,11 @@ class RewriterInterface {
   // Hook(s) for all mutable operations
   virtual void Finish(Segments *segments) {}
 
-  // sync internal data to local file system if any
-  virtual bool Sync() {  return true; }
+  // sync internal data to local file system.
+  virtual bool Sync() { return true; }
+
+  // reload internal data from local file system.
+  virtual bool Reload() { return true; }
 
   // clear internal data
   virtual void Clear() {}

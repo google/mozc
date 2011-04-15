@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,7 +35,6 @@
 #include "session/commands.pb.h"
 #include "session/config_handler.h"
 #include "session/config.pb.h"
-#include "prediction/conversion_predictor.h"
 #include "prediction/dictionary_predictor.h"
 #include "prediction/predictor_interface.h"
 #include "prediction/user_history_predictor.h"
@@ -44,12 +43,13 @@ namespace mozc {
 namespace {
 const int kPredictionSize = 100;
 
-class PredictorImpl : public PredictorInterface {
+class BasePredictor : public PredictorInterface {
  public:
-  PredictorImpl();
-  virtual ~PredictorImpl();
+  BasePredictor();
+  virtual ~BasePredictor();
 
-  virtual bool Predict(Segments *segments) const;
+  // Overwrite predictor
+  virtual bool Predict(Segments *segments) const = 0;
 
   // Hook(s) for all mutable operations
   virtual void Finish(Segments *segments);
@@ -66,10 +66,15 @@ class PredictorImpl : public PredictorInterface {
   // Sync user history
   virtual bool Sync();
 
- private:
-  // Load predictors
-  void LoadPredictors(vector<PredictorInterface *> *predictors) const;
+  // Reload usre history
+  virtual bool Reload();
 };
+
+class DefaultPredictor : public BasePredictor {
+ public:
+  virtual bool Predict(Segments *segments) const;
+};
+
 
 size_t GetCandidatesSize(const Segments &segments) {
   if (segments.conversion_segments_size() <= 0) {
@@ -79,27 +84,14 @@ size_t GetCandidatesSize(const Segments &segments) {
   return segments.conversion_segment(0).candidates_size();
 }
 
-PredictorImpl::PredictorImpl() {}
+BasePredictor::BasePredictor() {}
 
-PredictorImpl::~PredictorImpl() {}
+BasePredictor::~BasePredictor() {}
 
-void PredictorImpl::LoadPredictors(
-    vector<PredictorInterface *> *predictors) const {
-  predictors->clear();
-  predictors->push_back(PredictorFactory::GetUserHistoryPredictor());
-  predictors->push_back(PredictorFactory::GetDictionaryPredictor());
-  predictors->push_back(PredictorFactory::GetConversionPredictor());
-  for (size_t i = 0; i < predictors->size(); ++i) {
-    DCHECK(predictors->at(i) != NULL);
-  }
-}
+void BasePredictor::Finish(Segments *segments) {
+  PredictorFactory::GetUserHistoryPredictor()->Finish(segments);
+  PredictorFactory::GetDictionaryPredictor()->Finish(segments);
 
-void PredictorImpl::Finish(Segments *segments) {
-  vector<PredictorInterface *> predictors;
-  LoadPredictors(&predictors);
-  for (size_t i = 0; i < predictors.size(); ++i) {
-    predictors[i]->Finish(segments);
-  }
   if (segments->conversion_segments_size() < 1 ||
       segments->request_type() == Segments::CONVERSION) {
     return;
@@ -116,81 +108,91 @@ void PredictorImpl::Finish(Segments *segments) {
   segment->set_key(segment->candidate(0).key);
 }
 
-void PredictorImpl::Revert(Segments *segments) {
-  vector<PredictorInterface *> predictors;
-  LoadPredictors(&predictors);
-  for (size_t i = 0; i < predictors.size(); ++i) {
-    predictors[i]->Revert(segments);
-  }
+// Since DictionaryPredictor is immutable, no need
+// to call DictionaryPredictor::Revert/Clear*/Finish methods.
+void BasePredictor::Revert(Segments *segments) {
+  PredictorInterface *user_history_predictor =
+      PredictorFactory::GetUserHistoryPredictor();
+  DCHECK(user_history_predictor != NULL);
+  user_history_predictor->Revert(segments);
 }
 
-bool PredictorImpl::Predict(Segments *segments) const {
-  vector<PredictorInterface *> predictors;
-  LoadPredictors(&predictors);
-  bool result = false;
-
-  int size = kPredictionSize;
-  if (segments->request_type() == Segments::SUGGESTION) {
-    size = min(9, max(1, static_cast<int>(GET_CONFIG(suggestions_size))));
-  }
-
-  bool suppress_conversion_prediction = true;
-  for (size_t i = 0; i < predictors.size(); ++i) {
-    if (size <= 0) {
-      break;
-    }
-    if (predictors[i] == PredictorFactory::GetConversionPredictor() &&
-        suppress_conversion_prediction) {
-      // Only requires one result from conversion predictor.
-      // Showing multiple conversion results would not be useful.
-      segments->set_max_prediction_candidates_size(1);
-    } else {
-      segments->set_max_prediction_candidates_size(static_cast<size_t>(size));
-    }
-    result |= predictors[i]->Predict(segments);
-    size -= static_cast<int>(GetCandidatesSize(*segments));
-  }
-
-  // TODO(toshiyuki): It's nice if we have the system to rewrite
-  // the ranking of candidates from predictors
-
-  return result;
-}
-
-bool PredictorImpl::ClearAllHistory() {
+bool BasePredictor::ClearAllHistory() {
   PredictorInterface *user_history_predictor =
       PredictorFactory::GetUserHistoryPredictor();
   DCHECK(user_history_predictor != NULL);
   return user_history_predictor->ClearAllHistory();
 }
 
-bool PredictorImpl::ClearUnusedHistory() {
+bool BasePredictor::ClearUnusedHistory() {
   PredictorInterface *user_history_predictor =
       PredictorFactory::GetUserHistoryPredictor();
   DCHECK(user_history_predictor);
   return user_history_predictor->ClearUnusedHistory();
 }
 
-bool PredictorImpl::Sync() {
+bool BasePredictor::Sync() {
   PredictorInterface *user_history_predictor =
       PredictorFactory::GetUserHistoryPredictor();
   DCHECK(user_history_predictor);
   return user_history_predictor->Sync();
 }
 
-PredictorInterface *g_predictor = NULL;
+bool BasePredictor::Reload() {
+  PredictorInterface *user_history_predictor =
+      PredictorFactory::GetUserHistoryPredictor();
+  DCHECK(user_history_predictor);
+  return user_history_predictor->Reload();
+}
 
+bool DefaultPredictor::Predict(Segments *segments) const {
+  int size = kPredictionSize;
+  if (segments->request_type() == Segments::SUGGESTION) {
+    size = min(9, max(1, static_cast<int>(GET_CONFIG(suggestions_size))));
+  }
+
+  bool result = false;
+
+  PredictorInterface *user_history_predictor =
+      PredictorFactory::GetUserHistoryPredictor();
+  PredictorInterface *dictionary_predictor =
+      PredictorFactory::GetDictionaryPredictor();
+  DCHECK(user_history_predictor);
+  DCHECK(dictionary_predictor);
+
+  segments->set_max_prediction_candidates_size(static_cast<size_t>(size));
+  result |= user_history_predictor->Predict(segments);
+  size -= static_cast<int>(GetCandidatesSize(*segments));
+
+  // Do not call dictionary_predictor if the size of candidates get
+  // >= suggestions_size.
+  if (size <= 0) {
+    return result;
+  }
+
+  segments->set_max_prediction_candidates_size(static_cast<size_t>(size));
+  result |= dictionary_predictor->Predict(segments);
+
+  return result;
+}
+
+
+PredictorInterface *g_predictor = NULL;
 PredictorInterface *g_user_history_predictor = NULL;
 PredictorInterface *g_dictionary_predictor = NULL;
-PredictorInterface *g_conversion_predictor = NULL;
+
 }  // namespace
 
+#define GET_PREDICTOR(PredictorClass, predictor_instance) do { \
+  if (predictor_instance == NULL) { \
+    return Singleton<PredictorClass>::get(); \
+  } else { \
+    return predictor_instance; \
+  } \
+} while (0)
+
 PredictorInterface *PredictorFactory::GetPredictor() {
-  if (g_predictor == NULL) {
-    return Singleton<PredictorImpl>::get();
-  } else {
-    return g_predictor;
-  }
+    GET_PREDICTOR(DefaultPredictor, g_predictor);
 }
 
 void PredictorFactory::SetPredictor(PredictorInterface *predictor) {
@@ -198,11 +200,7 @@ void PredictorFactory::SetPredictor(PredictorInterface *predictor) {
 }
 
 PredictorInterface *PredictorFactory::GetUserHistoryPredictor() {
-  if (g_user_history_predictor == NULL) {
-    return Singleton<UserHistoryPredictor>::get();
-  } else {
-    return g_user_history_predictor;
-  }
+  GET_PREDICTOR(UserHistoryPredictor, g_user_history_predictor);
 }
 
 void PredictorFactory::SetUserHistoryPredictor(PredictorInterface *predictor) {
@@ -210,26 +208,11 @@ void PredictorFactory::SetUserHistoryPredictor(PredictorInterface *predictor) {
 }
 
 PredictorInterface *PredictorFactory::GetDictionaryPredictor() {
-  if (g_dictionary_predictor == NULL) {
-    return Singleton<DictionaryPredictor>::get();
-  } else {
-    return g_dictionary_predictor;
-  }
+  GET_PREDICTOR(DictionaryPredictor, g_dictionary_predictor);
 }
 
 void PredictorFactory::SetDictionaryPredictor(PredictorInterface *predictor) {
   g_dictionary_predictor = predictor;
 }
-
-PredictorInterface *PredictorFactory::GetConversionPredictor() {
-  if (g_conversion_predictor == NULL) {
-    return Singleton<ConversionPredictor>::get();
-  } else {
-    return g_conversion_predictor;
-  }
-}
-
-void PredictorFactory::SetConversionPredictor(PredictorInterface *predictor) {
-  g_conversion_predictor = predictor;
-}
+#undef GET_PREDICTOR
 }  // namespace mozc

@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,6 +34,7 @@
 #include "base/util.h"
 #include "converter/converter_interface.h"
 #include "converter/converter_mock.h"
+#include "converter/node.h"
 #include "converter/segments.h"
 #include "session/commands.pb.h"
 #include "session/config.pb.h"
@@ -45,7 +46,6 @@
 DECLARE_string(test_tmpdir);
 
 namespace mozc {
-namespace {
 
 class DictionaryPredictorTest : public testing::Test {
  protected:
@@ -66,7 +66,7 @@ void MakeSegmentsForSuggestion(const string key,
   segments->set_request_type(Segments::SUGGESTION);
   Segment *seg = segments->add_segment();
   seg->set_key(key);
-  seg->set_segment_type(Segment::FIXED_VALUE);
+  seg->set_segment_type(Segment::FREE);
 }
 
 void PrependHistorySegments(const string &key,
@@ -89,6 +89,7 @@ TEST_F(DictionaryPredictorTest, OnOffTest) {
   Segments segments;
   config::Config config;
   config.set_use_dictionary_suggest(false);
+  config.set_use_realtime_conversion(false);
   config::ConfigHandler::SetConfig(config);
 
   // "ぐーぐるあ"
@@ -161,17 +162,20 @@ TEST_F(DictionaryPredictorTest, Regression3042706) {
   }
 }
 
-TEST_F(DictionaryPredictorTest, GetPredictionTypeTest) {
+TEST_F(DictionaryPredictorTest, GetPredictionType) {
   Segments segments;
   config::Config config;
   config.set_use_dictionary_suggest(true);
+  config.set_use_realtime_conversion(false);
   config::ConfigHandler::SetConfig(config);
+
+  DictionaryPredictor predictor;
 
   // empty segments
   {
     EXPECT_EQ(
         DictionaryPredictor::NO_PREDICTION,
-        DictionaryPredictor::GetPredictionType(segments));
+        predictor.GetPredictionType(segments));
   }
 
   // normal segments
@@ -182,17 +186,17 @@ TEST_F(DictionaryPredictorTest, GetPredictionTypeTest) {
                               &segments);
     EXPECT_EQ(
         DictionaryPredictor::UNIGRAM,
-        DictionaryPredictor::GetPredictionType(segments));
+        predictor.GetPredictionType(segments));
 
     segments.set_request_type(Segments::PREDICTION);
     EXPECT_EQ(
         DictionaryPredictor::UNIGRAM,
-        DictionaryPredictor::GetPredictionType(segments));
+        predictor.GetPredictionType(segments));
 
     segments.set_request_type(Segments::CONVERSION);
     EXPECT_EQ(
         DictionaryPredictor::NO_PREDICTION,
-        DictionaryPredictor::GetPredictionType(segments));
+        predictor.GetPredictionType(segments));
   }
 
   // short key
@@ -202,13 +206,13 @@ TEST_F(DictionaryPredictorTest, GetPredictionTypeTest) {
                               &segments);
     EXPECT_EQ(
         DictionaryPredictor::NO_PREDICTION,
-        DictionaryPredictor::GetPredictionType(segments));
+        predictor.GetPredictionType(segments));
 
     // on prediction mode, return UNIGRAM
     segments.set_request_type(Segments::PREDICTION);
     EXPECT_EQ(
         DictionaryPredictor::UNIGRAM,
-        DictionaryPredictor::GetPredictionType(segments));
+        predictor.GetPredictionType(segments));
   }
 
   // zipcode-like key
@@ -216,7 +220,7 @@ TEST_F(DictionaryPredictorTest, GetPredictionTypeTest) {
     MakeSegmentsForSuggestion("0123", &segments);
     EXPECT_EQ(
         DictionaryPredictor::NO_PREDICTION,
-        DictionaryPredictor::GetPredictionType(segments));
+        predictor.GetPredictionType(segments));
   }
 
   // History is short => UNIGRAM
@@ -227,7 +231,7 @@ TEST_F(DictionaryPredictorTest, GetPredictionTypeTest) {
     PrependHistorySegments("A", "A", &segments);
     EXPECT_EQ(
         DictionaryPredictor::UNIGRAM,
-        DictionaryPredictor::GetPredictionType(segments));
+        predictor.GetPredictionType(segments));
   }
 
   // both History and current segment are long => UNIGRAM|BIGRAM
@@ -239,7 +243,7 @@ TEST_F(DictionaryPredictorTest, GetPredictionTypeTest) {
                            "\xE3\x81\xA0\xE3\x82\x88", "abc", &segments);
     EXPECT_EQ(
         DictionaryPredictor::UNIGRAM | DictionaryPredictor::BIGRAM,
-        DictionaryPredictor::GetPredictionType(segments));
+        predictor.GetPredictionType(segments));
   }
 
   // Current segment is short => BIGRAM
@@ -251,30 +255,165 @@ TEST_F(DictionaryPredictorTest, GetPredictionTypeTest) {
                            "abc", &segments);
     EXPECT_EQ(
         DictionaryPredictor::BIGRAM,
-        DictionaryPredictor::GetPredictionType(segments));
+        predictor.GetPredictionType(segments));
   }
 }
 
 
-TEST_F(DictionaryPredictorTest, IsZipCodeRequestTest) {
-  EXPECT_FALSE(DictionaryPredictor::IsZipCodeRequest(""));
-  EXPECT_TRUE(DictionaryPredictor::IsZipCodeRequest("000"));
-  EXPECT_TRUE(DictionaryPredictor::IsZipCodeRequest("000"));
-  EXPECT_FALSE(DictionaryPredictor::IsZipCodeRequest("ABC"));
-  EXPECT_TRUE(DictionaryPredictor::IsZipCodeRequest("---"));
-  EXPECT_TRUE(DictionaryPredictor::IsZipCodeRequest("0124-"));
-  EXPECT_TRUE(DictionaryPredictor::IsZipCodeRequest("0124-0"));
-  EXPECT_TRUE(DictionaryPredictor::IsZipCodeRequest("012-0"));
-  EXPECT_TRUE(DictionaryPredictor::IsZipCodeRequest("012-3456"));
+TEST_F(DictionaryPredictorTest,
+       AggregateUnigramPrediction) {
+  Segments segments;
+  DictionaryPredictor predictor;
+
+  // "ぐーぐるあ"
+  const char kKey[] = "\xE3\x81\x90\xE3\x83\xBC"
+      "\xE3\x81\x90\xE3\x82\x8B\xE3\x81\x82";
+
+  MakeSegmentsForSuggestion(kKey, &segments);
+
+  vector<DictionaryPredictor::Result> results;
+
+  predictor.AggregateUnigramPrediction(
+      DictionaryPredictor::BIGRAM,
+      &segments, &results);
+  EXPECT_TRUE(results.empty());
+
+  predictor.AggregateUnigramPrediction(
+      DictionaryPredictor::REALTIME,
+      &segments, &results);
+  EXPECT_TRUE(results.empty());
+
+  predictor.AggregateUnigramPrediction(
+      DictionaryPredictor::UNIGRAM,
+      &segments, &results);
+  EXPECT_FALSE(results.empty());
+
+  for (size_t i = 0; i < results.size(); ++i) {
+    EXPECT_EQ(DictionaryPredictor::UNIGRAM, results[i].type);
+    EXPECT_TRUE(Util::StartsWith(results[i].node->key, kKey));
+  }
+
+  EXPECT_EQ(1, segments.conversion_segments_size());
+}
+
+TEST_F(DictionaryPredictorTest,
+       AggregateBigramPrediction) {
+  DictionaryPredictor predictor;
+  Segments segments;
+
+  // "あ"
+  MakeSegmentsForSuggestion("\xE3\x81\x82", &segments);
+
+  // history is "グーグル"
+  const char kHistoryKey[] =
+      "\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90\xE3\x82\x8B";
+  const char kHistoryValue[] =
+      "\xE3\x82\xB0\xE3\x83\xBC\xE3\x82\xB0\xE3\x83\xAB";
+
+  PrependHistorySegments(kHistoryKey, kHistoryValue,
+                         &segments);
+
+  vector<DictionaryPredictor::Result> results;
+
+  predictor.AggregateBigramPrediction(
+      DictionaryPredictor::UNIGRAM,
+      &segments, &results);
+  EXPECT_TRUE(results.empty());
+
+  predictor.AggregateBigramPrediction(
+      DictionaryPredictor::REALTIME,
+      &segments, &results);
+  EXPECT_TRUE(results.empty());
+
+  predictor.AggregateBigramPrediction(
+      DictionaryPredictor::BIGRAM,
+      &segments, &results);
+  EXPECT_FALSE(results.empty());
+
+  for (size_t i = 0; i < results.size(); ++i) {
+    EXPECT_EQ(DictionaryPredictor::BIGRAM, results[i].type);
+    EXPECT_TRUE(Util::StartsWith(results[i].node->key, kHistoryKey));
+    EXPECT_TRUE(Util::StartsWith(results[i].node->value, kHistoryValue));
+  }
+
+  EXPECT_EQ(1, segments.conversion_segments_size());
+}
+
+TEST_F(DictionaryPredictorTest,
+       AggregateRealtimeConversion) {
+  Segments segments;
+  DictionaryPredictor predictor;
+
+  // "わたしのなまえはなかのです"
+  const char kKey[] =
+      "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97"
+      "\xE3\x81\xAE\xE3\x81\xAA\xE3\x81\xBE"
+      "\xE3\x81\x88\xE3\x81\xAF\xE3\x81\xAA"
+      "\xE3\x81\x8B\xE3\x81\xAE\xE3\x81\xA7\xE3\x81\x99";
+
+  MakeSegmentsForSuggestion(kKey, &segments);
+
+  vector<DictionaryPredictor::Result> results;
+
+  predictor.AggregateRealtimeConversion(
+      DictionaryPredictor::UNIGRAM,
+      &segments, &results);
+  EXPECT_TRUE(results.empty());
+
+  predictor.AggregateRealtimeConversion(
+      DictionaryPredictor::BIGRAM,
+      &segments, &results);
+  EXPECT_TRUE(results.empty());
+
+  predictor.AggregateRealtimeConversion(
+      DictionaryPredictor::REALTIME,
+      &segments, &results);
+  EXPECT_FALSE(results.empty());
+
+  for (size_t i = 0; i < results.size(); ++i) {
+    EXPECT_EQ(DictionaryPredictor::REALTIME, results[i].type);
+    EXPECT_EQ(kKey, results[i].node->key);
+  }
+
+  EXPECT_EQ(1, segments.conversion_segments_size());
+}
+
+TEST_F(DictionaryPredictorTest, GetHistoryKeyAndValue) {
+  Segments segments;
+  DictionaryPredictor predictor;
+
+  MakeSegmentsForSuggestion("test", &segments);
+
+  string key, value;
+  EXPECT_FALSE(predictor.GetHistoryKeyAndValue(segments, &key, &value));
+
+  PrependHistorySegments("key", "value", &segments);
+  EXPECT_TRUE(predictor.GetHistoryKeyAndValue(segments, &key, &value));
+  EXPECT_EQ("key", key);
+  EXPECT_EQ("value", value);
+}
+
+TEST_F(DictionaryPredictorTest, IsZipCodeRequest) {
+  DictionaryPredictor predictor;
+  EXPECT_FALSE(predictor.IsZipCodeRequest(""));
+  EXPECT_TRUE(predictor.IsZipCodeRequest("000"));
+  EXPECT_TRUE(predictor.IsZipCodeRequest("000"));
+  EXPECT_FALSE(predictor.IsZipCodeRequest("ABC"));
+  EXPECT_TRUE(predictor.IsZipCodeRequest("---"));
+  EXPECT_TRUE(predictor.IsZipCodeRequest("0124-"));
+  EXPECT_TRUE(predictor.IsZipCodeRequest("0124-0"));
+  EXPECT_TRUE(predictor.IsZipCodeRequest("012-0"));
+  EXPECT_TRUE(predictor.IsZipCodeRequest("012-3456"));
   // "０１２-０"
-  EXPECT_FALSE(DictionaryPredictor::IsZipCodeRequest(
+  EXPECT_FALSE(predictor.IsZipCodeRequest(
       "\xef\xbc\x90\xef\xbc\x91\xef\xbc\x92\x2d\xef\xbc\x90"));
 }
 
-TEST_F(DictionaryPredictorTest, GetSVMScoreTest) {
+TEST_F(DictionaryPredictorTest, GetSVMScore) {
   vector<pair<int, double> > feature;
+  DictionaryPredictor predictor;
 
-  EXPECT_EQ(INT_MIN, DictionaryPredictor::GetSVMScore(
+  EXPECT_EQ(INT_MIN, predictor.GetSVMScore(
       // "ただしい",
       // "ただしいけめんにかぎる",
       // "ただしイケメンに限る",
@@ -293,7 +432,7 @@ TEST_F(DictionaryPredictorTest, GetSVMScoreTest) {
       &feature));
 
   // cost <= 4000
-  EXPECT_NE(INT_MIN, DictionaryPredictor::GetSVMScore(
+  EXPECT_NE(INT_MIN, predictor.GetSVMScore(
       // "ただしい",
       // "ただしいけめんにかぎる",
       // "ただしイケメンに限る",
@@ -312,7 +451,7 @@ TEST_F(DictionaryPredictorTest, GetSVMScoreTest) {
       &feature));
 
   // not suggestion
-  EXPECT_NE(INT_MIN, DictionaryPredictor::GetSVMScore(
+  EXPECT_NE(INT_MIN, predictor.GetSVMScore(
       // "ただしい",
       // "ただしいけめんにかぎる",
       // "ただしイケメンに限る",
@@ -331,7 +470,7 @@ TEST_F(DictionaryPredictorTest, GetSVMScoreTest) {
       &feature));
 
   // total_candidates_size is small
-  EXPECT_NE(INT_MIN, DictionaryPredictor::GetSVMScore(
+  EXPECT_NE(INT_MIN, predictor.GetSVMScore(
       // "ただしい",
       // "ただしいけめんにかぎる",
       // "ただしイケメンに限る",
@@ -349,7 +488,7 @@ TEST_F(DictionaryPredictorTest, GetSVMScoreTest) {
       5,
       &feature));
 
-  EXPECT_NE(INT_MIN, DictionaryPredictor::GetSVMScore(
+  EXPECT_NE(INT_MIN, predictor.GetSVMScore(
       // "ただしい",
       // "ただしいけめんにかぎる",
       // "ただしイケメンに限る",
@@ -367,7 +506,7 @@ TEST_F(DictionaryPredictorTest, GetSVMScoreTest) {
       20,
       &feature));
 
-  EXPECT_EQ(INT_MIN, DictionaryPredictor::GetSVMScore(
+  EXPECT_EQ(INT_MIN, predictor.GetSVMScore(
       // "それでも",
       // "それでもぼくはやっていない",
       // "それでもボクはやってない",
@@ -386,7 +525,7 @@ TEST_F(DictionaryPredictorTest, GetSVMScoreTest) {
       &feature));
 
   // cost <= 4000
-  EXPECT_NE(INT_MIN, DictionaryPredictor::GetSVMScore(
+  EXPECT_NE(INT_MIN, predictor.GetSVMScore(
       // "それでも",
       // "それでもぼくはやっていない",
       // "それでもボクはやってない",
@@ -404,5 +543,4 @@ TEST_F(DictionaryPredictorTest, GetSVMScoreTest) {
       20,
       &feature));
 }
-}  // namespace
 }  // mozc

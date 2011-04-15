@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,7 @@
 #include "base/util.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
+#include "dictionary/suppression_dictionary.h"
 #include "session/config.pb.h"
 #include "session/config_handler.h"
 #include "testing/base/public/gunit.h"
@@ -202,5 +203,43 @@ TEST_F(ConverterTest, Regression3323108) {
             "\xE3\x81\xAE\xE3\x82\x92"
             "\xE3\x81\xAC\xE3\x81\x90",
             segments.conversion_segment(1).key());
+}
+
+TEST_F(ConverterTest, Regression3437022) {
+  ConverterInterface *converter = ConverterFactory::GetConverter();
+  Segments segments;
+
+  // "しっこうゆうよ"
+  const char kKey[] = "\xE3\x81\x97\xE3\x81\xA3\xE3\x81\x93"
+      "\xE3\x81\x86\xE3\x82\x86\xE3\x81\x86\xE3\x82\x88";
+
+  // "執行猶予"
+  const char kValue[] = "\xE5\x9F\xB7\xE8\xA1\x8C"
+      "\xE7\x8C\xB6\xE4\xBA\x88";
+
+  EXPECT_TRUE(converter->StartConversion(
+      &segments, kKey));
+  EXPECT_EQ(1, segments.conversion_segments_size());
+  EXPECT_EQ(kValue, segments.conversion_segment(0).candidate(0).value);
+
+  SuppressionDictionary *dic
+      = SuppressionDictionary::GetSuppressionDictionary();
+  dic->Lock();
+  dic->AddEntry(kKey, kValue);
+  dic->UnLock();
+
+  EXPECT_TRUE(converter->StartConversion(
+      &segments, kKey));
+
+  EXPECT_NE(1, segments.conversion_segments_size());
+  EXPECT_TRUE(converter->ResizeSegment(
+      &segments, 0, 3));
+
+  EXPECT_EQ(1, segments.conversion_segments_size());
+  EXPECT_NE(kValue, segments.conversion_segment(0).candidate(0).value);
+
+  dic->Lock();
+  dic->Clear();
+  dic->UnLock();
 }
 }  // namespace mozc

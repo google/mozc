@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -252,6 +252,16 @@ TEST_F(ConverterMockTest, SetSync) {
 
   GetMock()->SetSync(false);
   EXPECT_FALSE(converter->Sync());
+}
+
+TEST_F(ConverterMockTest, SetReload) {
+  ConverterInterface *converter = ConverterFactory::GetConverter();
+
+  GetMock()->SetReload(true);
+  EXPECT_TRUE(converter->Reload());
+
+  GetMock()->SetReload(false);
+  EXPECT_FALSE(converter->Reload());
 }
 
 TEST_F(ConverterMockTest, SetClearUserHistory) {

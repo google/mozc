@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -162,6 +162,10 @@ void ConverterMock::SetResizeSegment2(Segments *segments, bool result) {
 
 void ConverterMock::SetSync(bool result) {
   sync_output_ = result;
+}
+
+void ConverterMock::SetReload(bool result) {
+  reload_output_ = result;
 }
 
 void ConverterMock::SetClearUserHistory(bool result) {
@@ -487,6 +491,11 @@ bool ConverterMock::ResizeSegment(Segments *segments,
 bool ConverterMock::Sync() const {
   VLOG(2) << "mock function: Sync";
   return sync_output_;
+}
+
+bool ConverterMock::Reload() const {
+  VLOG(2) << "mock function: Reload";
+  return reload_output_;
 }
 
 bool ConverterMock::ClearUserHistory() const {

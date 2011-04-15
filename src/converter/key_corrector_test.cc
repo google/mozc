@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -680,16 +680,13 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanGetOriginalOffsetTest) {
   }
 }
 
-// When Unicode strings in UCS4 range is given,
-// Simply give up the processing, as Mozc
-// currently doesn't support UCS4.
-// TODO(taku): Remove this test after migrating
-// UCS2 to UCS4. http://b/issue?id=3177634
-TEST(KeyCorrectorTest, Regression3386634) {
+// Check if UCS4 is supported.
+// Note that Mozc 1.0 did not support UCS4 (b/3386634).
+TEST(KeyCorrectorTest, UCS4IsAvailable) {
   {
     const string input = "\xF0\xA0\xAE\x9F";  // UCS4 char in UTF8
     KeyCorrector corrector(input, KeyCorrector::ROMAN);
-    EXPECT_FALSE(corrector.IsAvailable());
+    EXPECT_TRUE(corrector.IsAvailable());
   }
 
   {

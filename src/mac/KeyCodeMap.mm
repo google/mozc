@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -202,8 +202,13 @@ static const unichar kYenMark = 0xA5;
     return NO;
   }
 
-  DLOG(INFO) << [[NSString stringWithFormat:@"%@", event] UTF8String]
-             << " -> " << keyEvent->DebugString();
+#ifdef DEBUG
+  // We enclose this logging with DEBUG explicitly because we found
+  // that stringWithFormat is sometimes not trustworthy and DLOG(INFO)
+  // will compute the string-to-be-logged even in production.
+  LOG(INFO) << [[NSString stringWithFormat:@"%@", event] UTF8String]
+            << " -> " << keyEvent->DebugString();
+#endif
 
   if (nsModifiers == NSShiftKeyMask && !keyEvent->has_special_key()) {
     // If only the modifier is Shift and |keyEvent| is not normal key,

@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -522,7 +522,7 @@ TEST_F(SessionUsageObserverTest, IMEActivationKeyCustomizedTest) {
   config.set_custom_keymap_table(custom_keymap_table);
   config::ConfigHandler::SetConfig(config);
 
-  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);;
+  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
   observer->SetInterval(1);
   string reg_str;
 

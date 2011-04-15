@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -52,6 +52,11 @@ public:
     // multiple instances.
     scoped_lock l(&mutex_);
     return handler_->EvalCommand(command);
+  }
+
+  void SetSessionFactory(session::SessionFactoryInterface *new_factory) {
+    scoped_lock l(&mutex_);
+    handler_->SetSessionFactory(new_factory);
   }
 
 private:
@@ -276,6 +281,11 @@ bool Session::Call(const commands::Input &input,
 
 void Session::Reset() {
   // TODO(mazda): Implement this
+}
+
+void Session::SetSessionFactory(
+    session::SessionFactoryInterface *new_factory) {
+  Singleton<StandaloneSessionHandler>::get()->SetSessionFactory(new_factory);
 }
 
 }  // namespace ibus

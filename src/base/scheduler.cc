@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,15 +29,15 @@
 
 #include "base/scheduler.h"
 
-#include <cstdlib>
-
-#include <map>
-
 #ifdef OS_WINDOWS
 #include <time.h>  // time()
 #else
 #include <sys/time.h>  // time()
 #endif
+
+#include <cstdlib>
+#include <map>
+#include <utility>
 
 #include "base/mutex.h"
 #include "base/singleton.h"
@@ -73,20 +73,71 @@ class QueueTimer : public Timer {
   uint32 period_;
 };
 
-struct Job {
-  uint32 default_interval;
-  uint32 max_interval;
-  uint32 delay_start;
-  uint32 random_delay;
-  bool (*callback)(void *);
-  void *data;
-  uint32 skip_count;
-  uint32 backoff_count;
-  QueueTimer* timer;
-  bool running;
+class Job {
+ public:
+  explicit Job(const Scheduler::JobSetting &setting) :
+      setting_(setting),
+      skip_count_(0),
+      backoff_count_(0),
+      timer_(NULL),
+      running_(false) {}
+
+  virtual ~Job() {
+    if (timer_ != NULL) {
+      timer_->Stop();
+      delete timer_;
+    }
+  }
+
+  const Scheduler::JobSetting setting() const {
+    return setting_;
+  }
+
+  void set_skip_count(uint32 skip_count) {
+    skip_count_ = skip_count;
+  }
+
+  uint32 skip_count() const {
+    return skip_count_;
+  }
+
+  void set_backoff_count(uint32 backoff_count) {
+    backoff_count_ = backoff_count;
+  }
+
+  uint32 backoff_count() const {
+    return backoff_count_;
+  }
+
+  void set_timer(QueueTimer *timer) {
+    timer_ = timer;
+  }
+
+  const QueueTimer *timer() const {
+    return timer_;
+  }
+
+  QueueTimer *mutable_timer() {
+    return timer_;
+  }
+
+  void set_running(bool running) {
+    running_ = running;
+  }
+
+  bool running() const {
+    return running_;
+  }
+
+ private:
+  Scheduler::JobSetting setting_;
+  uint32 skip_count_;
+  uint32 backoff_count_;
+  QueueTimer *timer_;
+  bool running_;
 };
 
-class SchedulerImpl {
+class SchedulerImpl : public Scheduler::SchedulerInterface {
  public:
   SchedulerImpl() {
     srand(static_cast<uint32>(time(NULL)));
@@ -98,140 +149,134 @@ class SchedulerImpl {
 
   void RemoveAllJobs() {
     scoped_lock l(&mutex_);
-    for (map<string, Job>::iterator itr = jobs_.begin();
-         itr != jobs_.end();
-         ++itr) {
-      Job *job = &itr->second;
-      if (job->timer) {
-        job->timer->Stop();
-        delete job->timer;
-      }
-    }
     jobs_.clear();
   }
 
-  bool AddJob(const string &name, uint32 default_interval, uint32 max_interval,
-              uint32 delay_start, uint32 random_delay, bool (*callback)(void *),
-              void *data) {
+  void ValidateSetting(const Scheduler::JobSetting &job_setting) const {
+    DCHECK_GT(job_setting.name().size(), 0);
+    DCHECK_NE(0, job_setting.default_interval());
+    DCHECK_NE(0, job_setting.max_interval());
+    // do not use DCHECK_NE as a type checker raises an error.
+    DCHECK(job_setting.callback() != NULL);
+  }
+
+  bool AddJob(const Scheduler::JobSetting &job_setting) {
     scoped_lock l(&mutex_);
-    map<string, Job>::iterator find_itr = jobs_.find(name);
-    if (find_itr != jobs_.end()) {
-      LOG(WARNING) << "Job " << name << " is already registered";
+
+    ValidateSetting(job_setting);
+    if (HasJob(job_setting.name())) {
+      LOG(WARNING) << "Job " << job_setting.name() << " is already registered";
       return false;
     }
 
-    DCHECK(default_interval);
-    DCHECK(max_interval);
-    DCHECK(callback);
-    Job newjob;
-    newjob.default_interval = default_interval;
-    newjob.max_interval = max_interval;
-    newjob.delay_start = delay_start;
-    newjob.random_delay = random_delay;
-    newjob.callback = callback;
-    newjob.data = data;
-    newjob.skip_count = 0;
-    newjob.backoff_count = 0;
-    newjob.timer = NULL;
-    newjob.running = false;
-
-    pair<map<string, Job>::iterator, bool> result
-      = jobs_.insert(make_pair(name, newjob));
-    if (!result.second) {
+    pair<map<string, Job>::iterator, bool> insert_result
+        = jobs_.insert(make_pair(job_setting.name(), Job(job_setting)));
+    if (!insert_result.second) {
       LOG(ERROR) << "insert failed";
       return false;
     }
-    Job *job = &result.first->second;
+    Job *job = &insert_result.first->second;
     DCHECK(job);
 
-    uint32 delay = job->delay_start;
-    if (job->random_delay != 0) {
-      const uint64 r = rand();
-      const uint64 d = job->random_delay * r;
-      const uint64 random_delay = d / RAND_MAX;
-      delay += random_delay;
-    }
-    job->timer = new QueueTimer(&TimerCallback, job, delay,
-                                job->default_interval);
-    if (job->timer == NULL) {
+    const uint32 delay = CalcDelay(job_setting);
+    job->set_timer(new QueueTimer(&TimerCallback, job, delay,
+                                  job_setting.default_interval()));
+    if (job->timer() == NULL) {
       LOG(ERROR) << "failed to create QueueTimer";
+      return false;
     }
-    const bool started =  job->timer->Start();
+    const bool started = job->mutable_timer()->Start();
     if (started) {
       return true;
     } else {
-      delete job->timer;
+      delete job->mutable_timer();
       return false;
     }
   }
 
   bool RemoveJob(const string &name) {
     scoped_lock l(&mutex_);
-    map<string, Job>::iterator itr = jobs_.find(name);
-    if (itr == jobs_.end()) {
+    if (!HasJob(name)) {
       LOG(WARNING) << "Job " << name << " is not registered";
       return false;
-    } else {
-      Job *job = &itr->second;
-      if (job->timer != NULL) {
-        job->timer->Stop();
-        delete job->timer;
-      }
-      jobs_.erase(itr);
-      return true;
     }
+    return (jobs_.erase(name) != 0);
   }
 
  private:
   static void TimerCallback(void *param) {
     Job *job = reinterpret_cast<Job *>(param);
     DCHECK(job);
-    if (job->running) {
+    if (job->running()) {
       return;
     }
-    if (job->skip_count) {
-      job->skip_count--;
-      VLOG(3) << "Backoff = " << job->backoff_count
-              << " skip_count = " << job->skip_count;
+    if (job->skip_count()) {
+      job->set_skip_count(job->skip_count() - 1);
+      VLOG(3) << "Backoff = " << job->backoff_count()
+              << " skip_count = " << job->skip_count();
       return;
     }
-    job->running = true;
-    const bool success = job->callback(job->data);
-    job->running = false;
+    job->set_running(true);
+    Scheduler::JobSetting::CallbackFunc callback = job->setting().callback();
+    DCHECK(callback != NULL);
+    const bool success = callback(job->setting().data());
+    job->set_running(false);
     if (success) {
-      job->backoff_count = 0;
+      job->set_backoff_count(0);
     } else {
-      const uint32 new_backoff_count = (job->backoff_count == 0) ?
-          1 : job->backoff_count * 2;
-      if (new_backoff_count * job->default_interval < job->max_interval) {
-        job->backoff_count = new_backoff_count;
+      const uint32 new_backoff_count = (job->backoff_count() == 0) ?
+          1 : job->backoff_count() * 2;
+      if (new_backoff_count * job->setting().default_interval()
+          < job->setting().max_interval()) {
+        job->set_backoff_count(new_backoff_count);
       }
-      job->skip_count = job->backoff_count;
+      job->set_skip_count(job->backoff_count());
     }
+  }
+
+  bool HasJob(const string &name) const {
+    return (jobs_.find(name) != jobs_.end());
+  }
+
+  uint32 CalcDelay(const Scheduler::JobSetting &job_setting) {
+    uint32 delay = job_setting.delay_start();
+    if (job_setting.random_delay() != 0) {
+      const uint64 r = rand();
+      const uint64 d = job_setting.random_delay() * r;
+      const uint64 random_delay = d / RAND_MAX;
+      delay += random_delay;
+    }
+    return delay;
   }
 
   map<string, Job> jobs_;
   Mutex mutex_;
 };
 
+Scheduler::SchedulerInterface *g_scheduler_handler = NULL;
+
+Scheduler::SchedulerInterface *GetSchedulerHandler() {
+  if (g_scheduler_handler != NULL) {
+    return g_scheduler_handler;
+  } else {
+    return Singleton<SchedulerImpl>::get();
+  }
+}
 }  // namespace
 
-bool Scheduler::AddJob(const string &name, uint32 default_interval,
-                       uint32 max_interval, uint32 delay_start,
-                       uint32 random_delay,
-                       bool (*callback)(void *), void *data) {
-  return Singleton<SchedulerImpl>::get()->AddJob(name, default_interval,
-                                                 max_interval, delay_start,
-                                                 random_delay,
-                                                 callback, data);
+bool Scheduler::AddJob(const Scheduler::JobSetting &job_setting) {
+  return GetSchedulerHandler()->AddJob(job_setting);
 }
 
 bool Scheduler::RemoveJob(const string &name) {
-  return Singleton<SchedulerImpl>::get()->RemoveJob(name);
+  return GetSchedulerHandler()->RemoveJob(name);
 }
 
 void Scheduler::RemoveAllJobs() {
-  Singleton<SchedulerImpl>::get()->RemoveAllJobs();
+  GetSchedulerHandler()->RemoveAllJobs();
 }
 
+void Scheduler::SetSchedulerHandler(SchedulerInterface *handler) {
+  g_scheduler_handler = handler;
+}
 }  // namespace mozc

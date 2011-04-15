@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,9 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <string>
+#include <vector>
 #include "base/base.h"
+#include "base/singleton.h"
 #include "base/util.h"
 #include "composer/composer.h"
 #include "composer/table.h"
@@ -125,7 +127,6 @@ class SessionTest : public testing::Test {
     convertermock_.reset(new ConverterMock());
     ConverterFactory::SetConverter(convertermock_.get());
     handler_.reset(new SessionHandler());
-
     t13n_rewriter_.reset(new TransliterationRewriter());
   }
 
@@ -288,16 +289,61 @@ class SessionTest : public testing::Test {
     input->mutable_command()->set_type(
         commands::SessionCommand::CONVERT_REVERSE);
     input->mutable_command()->set_text(text);
+  }
 
+  void SetupZeroQuerySuggestionReady(Session *session, bool enable) {
+    InitSessionToPrecomposition(session);
+
+    // Enable zero query suggest.
+    commands::Request request;
+    request.set_zero_query_suggestion(enable);
+    commands::RequestHandler::SetRequest(request);
+
+    // Type "google".
+    commands::Command command;
+    InsertCharacterChars("google", session, &command);
+
+    {
+      // Set up a mock conversion result.
+      Segments segments;
+      segments.set_request_type(Segments::CONVERSION);
+      Segment *segment;
+      segment = segments.add_segment();
+      segment->set_key("google");
+      segment->add_candidate()->value = "GOOGLE";
+      convertermock_->SetStartConversionWithComposer(&segments, true);
+    }
+    command.Clear();
+    session->Convert(&command);
+
+    {
+      // Set up a mock suggestion result.
+      Segments segments;
+      segments.set_request_type(Segments::SUGGESTION);
+      Segment *segment;
+      segment = segments.add_segment();
+      segment->set_key("");
+      segment->add_candidate()->value = "search";
+      segment->add_candidate()->value = "input";
+      convertermock_->SetStartSuggestion(&segments, true);
+    }
+  }
+
+  void SetupZeroQuerySuggestion(Session *session,
+                                commands::Command *command) {
+    SetupZeroQuerySuggestionReady(session, true);
+    command->Clear();
+    session->Commit(command);
   }
 
   scoped_ptr<SessionHandler> handler_;
   scoped_ptr<ConverterMock> convertermock_;
   scoped_ptr<TransliterationRewriter> t13n_rewriter_;
+  keymap::KeyMapManager keymap_;
 };
 
 TEST_F(SessionTest, TestSendKey) {
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -345,7 +391,7 @@ TEST_F(SessionTest, TestSendKey) {
 }
 
 TEST_F(SessionTest, SendCommand) {
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -406,7 +452,7 @@ TEST_F(SessionTest, SendCommand) {
 
 TEST_F(SessionTest, SwitchInputMode) {
   {
-    scoped_ptr<Session> session(handler_->NewSession());
+    scoped_ptr<Session> session(new Session(&keymap_));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
 
@@ -443,7 +489,7 @@ TEST_F(SessionTest, SwitchInputMode) {
   {
     // Confirm that we can change the mode from DIRECT
     // to other modes directly (without IMEOn command).
-    scoped_ptr<Session> session(handler_->NewSession());
+    scoped_ptr<Session> session(new Session(&keymap_));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
     session->IMEOff(&command);
@@ -491,7 +537,7 @@ TEST_F(SessionTest, SwitchInputMode) {
 
 TEST_F(SessionTest, RevertComposition) {
   // Issue#2237323
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -524,7 +570,7 @@ TEST_F(SessionTest, RevertComposition) {
 }
 
 TEST_F(SessionTest, InputMode) {
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   EXPECT_TRUE(session->InputModeHalfASCII(&command));
@@ -544,7 +590,7 @@ TEST_F(SessionTest, InputMode) {
 }
 
 TEST_F(SessionTest, SelectCandidate) {
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -577,7 +623,7 @@ TEST_F(SessionTest, SelectCandidate) {
 }
 
 TEST_F(SessionTest, HighlightCandidate) {
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -620,7 +666,7 @@ TEST_F(SessionTest, HighlightCandidate) {
 }
 
 TEST_F(SessionTest, Conversion) {
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -664,7 +710,7 @@ TEST_F(SessionTest, Conversion) {
 
 
 TEST_F(SessionTest, SegmentWidthShrink) {
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -689,7 +735,7 @@ TEST_F(SessionTest, SegmentWidthShrink) {
 }
 
 TEST_F(SessionTest, ConvertPrev) {
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -717,7 +763,7 @@ TEST_F(SessionTest, ResetFocusedSegmentAfterCommit) {
   Segments segments;
   Segment *segment;
   Segment::Candidate *candidate;
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -841,7 +887,7 @@ TEST_F(SessionTest, ResetFocusedSegmentAfterCancel) {
   Segments segments;
   Segment *segment;
   Segment::Candidate *candidate;
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -940,7 +986,7 @@ TEST_F(SessionTest, KeepFixedCandidateAfterSegmentWidthExpand) {
   Segments segments;
   Segment *segment;
   Segment::Candidate *candidate;
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -1034,7 +1080,7 @@ TEST_F(SessionTest, CommitSegment) {
   Segment::Candidate *candidate;
 
   // Issue#1560608
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -1096,7 +1142,7 @@ TEST_F(SessionTest, CommitSegmentAt2ndSegment) {
   Segments segments;
   Segment *segment;
   Segment::Candidate *candidate;
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -1160,7 +1206,7 @@ TEST_F(SessionTest, SegmentFocusRightOrCommit) {
   Segment *segment;
   Segment::Candidate *candidate;
 
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   const ImeContext &context = session->context();
   InitSessionToPrecomposition(session.get());
   EXPECT_EQ(ImeContext::PRECOMPOSITION, context.state());
@@ -1225,7 +1271,7 @@ TEST_F(SessionTest, Transliterations) {
   Segments segments;
   Segment *segment;
   Segment::Candidate *candidate;
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   InsertCharacterChars("jishin", session.get(), &command);
@@ -1280,7 +1326,7 @@ TEST_F(SessionTest, ConvertToTransliteration) {
   Segment *segment;
   Segment::Candidate *candidate;
 
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   InsertCharacterChars("jishin", session.get(), &command);
@@ -1325,7 +1371,7 @@ TEST_F(SessionTest, ConvertToTransliteration) {
 }
 
 TEST_F(SessionTest, ConvertToTransliterationWithMultipleSegments) {
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -1370,7 +1416,7 @@ TEST_F(SessionTest, ConvertToTransliterationWithMultipleSegments) {
 }
 
 TEST_F(SessionTest, ConvertToHalfWidth) {
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   InsertCharacterChars("abc", session.get(), &command);
@@ -1415,7 +1461,7 @@ TEST_F(SessionTest, ConvertConsonantsToFullAlphanumeric) {
   Segment *segment;
   Segment::Candidate *candidate;
 
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   InsertCharacterChars("dvd", session.get(), &command);
@@ -1467,19 +1513,15 @@ TEST_F(SessionTest, ConvertConsonantsToFullAlphanumeric) {
 
 TEST_F(SessionTest, ConvertConsonantsToFullAlphanumericWithoutCascadingWindow) {
   config::Config config;
-  config::ConfigHandler::GetConfig(&config);
   config.set_use_cascading_window(false);
+  SetConfig(config);
 
   commands::Command command;
-  command.mutable_input()->set_type(commands::Input::SET_CONFIG);
-  command.mutable_input()->mutable_config()->CopyFrom(config);
-  handler_->EvalCommand(&command);
-
   Segments segments;
   Segment *segment;
   Segment::Candidate *candidate;
 
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
   command.Clear();
   InsertCharacterChars("dvd", session.get(), &command);
@@ -1531,7 +1573,7 @@ TEST_F(SessionTest, ConvertConsonantsToFullAlphanumericWithoutCascadingWindow) {
 
 TEST_F(SessionTest, SwitchKanaType) {
   {  // From composition mode.
-    scoped_ptr<Session> session(handler_->NewSession());
+    scoped_ptr<Session> session(new Session(&keymap_));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
     InsertCharacterChars("abc", session.get(), &command);
@@ -1591,7 +1633,7 @@ TEST_F(SessionTest, SwitchKanaType) {
   }
 
   {  // From conversion mode.
-    scoped_ptr<Session> session(handler_->NewSession());
+    scoped_ptr<Session> session(new Session(&keymap_));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
     InsertCharacterChars("kanji", session.get(), &command);
@@ -1662,7 +1704,7 @@ TEST_F(SessionTest, SwitchKanaType) {
 }
 
 TEST_F(SessionTest, TranslateHalfWidth) {
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   InsertCharacterChars("abc", session.get(), &command);
@@ -1691,7 +1733,7 @@ TEST_F(SessionTest, TranslateHalfWidth) {
 }
 
 TEST_F(SessionTest, UpdatePreferences) {
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   InsertCharacterChars("aiueo", session.get(), &command);
@@ -1871,7 +1913,7 @@ TEST_F(SessionTest, ExceededComposition) {
   Segments segments;
   Segment *segment;
   Segment::Candidate *candidate;
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -1907,7 +1949,7 @@ TEST_F(SessionTest, ExceededComposition) {
 }
 
 TEST_F(SessionTest, OutputAllCandidateWords) {
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -1976,7 +2018,7 @@ TEST_F(SessionTest, OutputAllCandidateWords) {
 }
 
 TEST_F(SessionTest, Undo) {
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
 
   commands::Capability capability;
@@ -2098,7 +2140,15 @@ TEST_F(SessionTest, Undo) {
 
     command.Clear();
     SendKey("Ctrl Backspace", session.get(), &command);
-    //    session->Undo(&command);
+    EXPECT_FALSE(command.output().has_result());
+    EXPECT_FALSE(command.output().has_deletion_range());
+    EXPECT_TRUE(command.output().has_callback());
+    EXPECT_TRUE(command.output().callback().has_session_command());
+    EXPECT_EQ(commands::SessionCommand::UNDO,
+              command.output().callback().session_command().type());
+
+    command.Clear();
+    session->Undo(&command);
     EXPECT_FALSE(command.output().has_result());
     EXPECT_TRUE(command.output().has_deletion_range());
     EXPECT_EQ(-5, command.output().deletion_range().offset());
@@ -2140,7 +2190,7 @@ TEST_F(SessionTest, Issue1805239) {
   Segments segments;
   Segment *segment;
   Segment::Candidate *candidate;
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -2198,7 +2248,7 @@ TEST_F(SessionTest, Issue1816861) {
   Segments segments;
   Segment *segment;
   Segment::Candidate *candidate;
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -2265,7 +2315,7 @@ TEST_F(SessionTest, Issue1816861) {
 TEST_F(SessionTest, T13NWithResegmentation) {
   // This is a unittest against http://b/3272827
   Segment::Candidate *candidate;
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -2357,14 +2407,12 @@ TEST_F(SessionTest, T13NWithResegmentation) {
 
 TEST_F(SessionTest, Shortcut) {
   config::Config config;
-  config::ConfigHandler::GetConfig(&config);
   config.set_selection_shortcut(config::Config::SHORTCUT_123456789);
-  config::ConfigHandler::SetConfig(config);
+  SetConfig(config);
   ASSERT_EQ(config::Config::SHORTCUT_123456789, GET_CONFIG(selection_shortcut));
 
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
-  session->ReloadConfig();
 
   Segments segments;
   SetAiueo(&segments);
@@ -2387,14 +2435,13 @@ TEST_F(SessionTest, Shortcut) {
 }
 
 TEST_F(SessionTest, NumpadKey) {
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
   config::Config config;
-  config::ConfigHandler::GetConfig(&config);
   config.set_numpad_character_form(config::Config::NUMPAD_DIRECT_INPUT);
-  config::ConfigHandler::SetConfig(config);
+  SetConfig(config);
   ASSERT_EQ(config::Config::NUMPAD_DIRECT_INPUT,
             GET_CONFIG(numpad_character_form));
 
@@ -2422,7 +2469,7 @@ TEST_F(SessionTest, NumpadKey) {
   EXPECT_TRUE(GetComposition(command).empty());
 
   config.set_numpad_character_form(config::Config::NUMPAD_HALF_WIDTH);
-  config::ConfigHandler::SetConfig(config);
+  SetConfig(config);
   ASSERT_EQ(config::Config::NUMPAD_HALF_WIDTH,
             GET_CONFIG(numpad_character_form));
 
@@ -2534,16 +2581,14 @@ TEST_F(SessionTest, NumpadKey) {
 
 TEST_F(SessionTest, KanaSymbols) {
   config::Config config;
-  config::ConfigHandler::GetConfig(&config);
   config.set_punctuation_method(config::Config::COMMA_PERIOD);
   config.set_symbol_method(config::Config::CORNER_BRACKET_SLASH);
-  config::ConfigHandler::SetConfig(config);
+  SetConfig(config);
   ASSERT_EQ(config::Config::COMMA_PERIOD, GET_CONFIG(punctuation_method));
   ASSERT_EQ(config::Config::CORNER_BRACKET_SLASH, GET_CONFIG(symbol_method));
 
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
-  session->ReloadConfig();
 
   {
     commands::Command command;
@@ -2577,7 +2622,7 @@ TEST_F(SessionTest, KanaSymbols) {
 
 TEST_F(SessionTest, InsertCharacterWithShiftKey) {
   {  // Basic behavior
-    scoped_ptr<Session> session(handler_->NewSession());
+    scoped_ptr<Session> session(new Session(&keymap_));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
     EXPECT_TRUE(SendKey("a", session.get(), &command));
@@ -2595,7 +2640,7 @@ TEST_F(SessionTest, InsertCharacterWithShiftKey) {
   }
 
   {  // Revert back to the previous input mode.
-    scoped_ptr<Session> session(handler_->NewSession());
+    scoped_ptr<Session> session(new Session(&keymap_));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
     session->InputModeFullKatakana(&command);
@@ -2618,7 +2663,7 @@ TEST_F(SessionTest, InsertCharacterWithShiftKey) {
 TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommitingSugesstion) {
   // This is a unittest against http://b/2977131.
   {
-    scoped_ptr<Session> session(handler_->NewSession());
+    scoped_ptr<Session> session(new Session(&keymap_));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
     EXPECT_TRUE(SendKey("N", session.get(), &command));
@@ -2649,7 +2694,7 @@ TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommitingSugesstion) {
   }
 
   {
-    scoped_ptr<Session> session(handler_->NewSession());
+    scoped_ptr<Session> session(new Session(&keymap_));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
     EXPECT_TRUE(SendKey("N", session.get(), &command));
@@ -2678,7 +2723,7 @@ TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommitingSugesstion) {
   }
 
   {
-    scoped_ptr<Session> session(handler_->NewSession());
+    scoped_ptr<Session> session(new Session(&keymap_));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
     EXPECT_TRUE(SendKey("N", session.get(), &command));
@@ -2703,7 +2748,7 @@ TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommitingSugesstion) {
 
 TEST_F(SessionTest, StatusOutput) {
   {  // Basic behavior
-    scoped_ptr<Session> session(handler_->NewSession());
+    scoped_ptr<Session> session(new Session(&keymap_));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
     EXPECT_TRUE(SendKey("a", session.get(), &command));  // "あ"
@@ -2751,7 +2796,7 @@ TEST_F(SessionTest, StatusOutput) {
   }
 
   {  // Katakana mode + Shift key
-    scoped_ptr<Session> session(handler_->NewSession());
+    scoped_ptr<Session> session(new Session(&keymap_));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
     session->InputModeFullKatakana(&command);
@@ -2812,7 +2857,7 @@ TEST_F(SessionTest, Suggest) {
     segment->add_candidate()->value = "MOZUKU";
   }
 
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   SendKey("M", session.get(), &command);
@@ -2904,7 +2949,7 @@ TEST_F(SessionTest, Suggest) {
 }
 
 TEST_F(SessionTest, ToggleAlphanumericMode) {
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -3012,7 +3057,7 @@ TEST_F(SessionTest, ToggleAlphanumericMode) {
 }
 
 TEST_F(SessionTest, InsertSpace) {
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -3047,7 +3092,7 @@ TEST_F(SessionTest, InsertSpace) {
 }
 
 TEST_F(SessionTest, InsertSpaceToggled) {
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -3081,7 +3126,7 @@ TEST_F(SessionTest, InsertSpaceToggled) {
 }
 
 TEST_F(SessionTest, InsertSpaceHalfWidth) {
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -3119,7 +3164,7 @@ TEST_F(SessionTest, InsertSpaceHalfWidth) {
 }
 
 TEST_F(SessionTest, InsertSpaceFullWidth) {
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -3160,7 +3205,7 @@ TEST_F(SessionTest, InsertSpaceFullWidth) {
 }
 
 TEST_F(SessionTest, InsertSpaceFullWidthOnHalfKanaInput) {
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -3179,7 +3224,7 @@ TEST_F(SessionTest, InsertSpaceFullWidthOnHalfKanaInput) {
 TEST_F(SessionTest, Issue1951385) {
   // This is a unittest against http://b/1951385
   Segments segments;
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -3219,7 +3264,7 @@ TEST_F(SessionTest, Issue1978201) {
   segment->add_candidate()->value = "\xe9\x99\xb0\xe8\xac\x80\xe8\xaa\xac";
   convertermock_->SetStartPrediction(&segments, true);
 
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   EXPECT_TRUE(session->SegmentWidthShrink(&command));
@@ -3238,7 +3283,7 @@ TEST_F(SessionTest, Issue1978201) {
 
 TEST_F(SessionTest, Issue1975771) {
   // This is a unittest against http://b/1975771
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
 
   // Trigger suggest by pressing "a".
@@ -3280,7 +3325,7 @@ TEST_F(SessionTest, Issue2029466) {
   // "a<tab><ctrl-N>a" raised an exception because CommitFirstSegment
   // did not check if the current status is in conversion or
   // precomposition.
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
 
   // "a"
@@ -3312,7 +3357,7 @@ TEST_F(SessionTest, Issue2034943) {
   //
   // The composition should have been reset if CommitSegment submitted
   // the all segments (e.g. the size of segments is one).
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   InsertCharacterChars("mozu", session.get(), &command);
@@ -3344,7 +3389,7 @@ TEST_F(SessionTest, Issue2034943) {
 
 TEST_F(SessionTest, Issue2026354) {
   // This is a unittest against http://b/2026354
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -3375,7 +3420,7 @@ TEST_F(SessionTest, Issue2066906) {
   Segments segments;
   Segment *segment;
   Segment::Candidate *candidate;
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
 
   segment = segments.add_segment();
@@ -3404,7 +3449,7 @@ TEST_F(SessionTest, Issue2066906) {
 
 TEST_F(SessionTest, Issue2187132) {
   // This is a unittest against http://b/2187132
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -3432,14 +3477,12 @@ TEST_F(SessionTest, Issue2187132) {
 TEST_F(SessionTest, Issue2190364) {
   // This is a unittest against http://b/2190364
   config::Config config;
-  config::ConfigHandler::GetConfig(&config);
   config.set_preedit_method(config::Config::KANA);
-  config::ConfigHandler::SetConfig(config);
+  SetConfig(config);
   ASSERT_EQ(config::Config::KANA, GET_CONFIG(preedit_method));
 
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
-  session->ReloadConfig();
 
   commands::Command command;
   session->ToggleAlphanumericMode(&command);
@@ -3460,7 +3503,7 @@ TEST_F(SessionTest, Issue2190364) {
 
 TEST_F(SessionTest, Issue1556649) {
   // This is a unittest against http://b/1556649
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   InsertCharacterChars("kudoudesu", session.get(), &command);
@@ -3488,7 +3531,7 @@ TEST_F(SessionTest, Issue1518994) {
   // This is a unittest against http://b/1518994.
   // - Can't input space in ascii mode.
   {
-    scoped_ptr<Session> session(handler_->NewSession());
+    scoped_ptr<Session> session(new Session(&keymap_));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
     EXPECT_TRUE(SendKey("a", session.get(), &command));
@@ -3504,7 +3547,7 @@ TEST_F(SessionTest, Issue1518994) {
   }
 
   {
-    scoped_ptr<Session> session(handler_->NewSession());
+    scoped_ptr<Session> session(new Session(&keymap_));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
     EXPECT_TRUE(SendKey("a", session.get(), &command));
@@ -3521,7 +3564,7 @@ TEST_F(SessionTest, Issue1518994) {
 TEST_F(SessionTest, Issue1571043) {
   // This is a unittest against http://b/1571043.
   // - Underline of composition is separated.
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   InsertCharacterChars("aiu", session.get(), &command);
@@ -3539,7 +3582,7 @@ TEST_F(SessionTest, Issue1571043) {
 TEST_F(SessionTest, Issue1799384) {
   // This is a unittest against http://b/1571043.
   // - ConvertToHiragana converts Vu to U+3094 "ゔ"
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   InsertCharacterChars("ravu", session.get(), &command);
@@ -3574,7 +3617,7 @@ TEST_F(SessionTest, Issue2217250) {
   // This is a unittest against http://b/2217250.
   // Temporary direct input mode through a special sequence such as
   // www. continues even after committing them
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   InsertCharacterChars("www.", session.get(), &command);
@@ -3590,7 +3633,7 @@ TEST_F(SessionTest, Issue2223823) {
   // This is a unittest against http://b/2223823
   // Input mode does not recover like MS-IME by single shift key down
   // and up.
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   SendKey("G", session.get(), &command);
@@ -3606,7 +3649,7 @@ TEST_F(SessionTest, Issue2223823) {
 TEST_F(SessionTest, Issue2223762) {
   // This is a unittest against http://b/2223762.
   // - The first space in half-width alphanumeric mode is full-width.
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -3624,7 +3667,7 @@ TEST_F(SessionTest, Issue2223755) {
   // - F6 and F7 convert space to half-width.
 
   {  // DisplayAsFullKatakana
-    scoped_ptr<Session> session(handler_->NewSession());
+    scoped_ptr<Session> session(new Session(&keymap_));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
 
@@ -3645,7 +3688,7 @@ TEST_F(SessionTest, Issue2223755) {
   }
 
   {  // ConvertToFullKatakana
-    scoped_ptr<Session> session(handler_->NewSession());
+    scoped_ptr<Session> session(new Session(&keymap_));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
 
@@ -3686,7 +3729,7 @@ TEST_F(SessionTest, Issue2269058) {
   // This is a unittest against http://b/2269058.
   // - Temporary input mode should not be overridden by a permanent
   //   input mode change.
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -3705,7 +3748,7 @@ TEST_F(SessionTest, Issue2272745) {
   // This is a unittest against http://b/2272745.
   // A temporary input mode remains when a composition is canceled.
   {
-    scoped_ptr<Session> session(handler_->NewSession());
+    scoped_ptr<Session> session(new Session(&keymap_));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
 
@@ -3717,7 +3760,7 @@ TEST_F(SessionTest, Issue2272745) {
   }
 
   {
-    scoped_ptr<Session> session(handler_->NewSession());
+    scoped_ptr<Session> session(new Session(&keymap_));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
 
@@ -3733,18 +3776,14 @@ TEST_F(SessionTest, Issue2297060) {
   // This is a unittest against http://b/2297060.
   // Ctrl-Space is not working
   config::Config config;
-  config::ConfigHandler::GetConfig(&config);
   config.set_session_keymap(config::Config::MSIME);
+  SetConfig(config);
 
-  commands::Command command;
-  command.mutable_input()->set_type(commands::Input::SET_CONFIG);
-  command.mutable_input()->mutable_config()->CopyFrom(config);
-  handler_->EvalCommand(&command);
-
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
   ASSERT_EQ(config::Config::MSIME, GET_CONFIG(session_keymap));
 
+  commands::Command command;
   EXPECT_TRUE(SendKey("Ctrl Space", session.get(), &command));
   EXPECT_FALSE(command.output().consumed());
 }
@@ -3752,15 +3791,14 @@ TEST_F(SessionTest, Issue2297060) {
 TEST_F(SessionTest, Issue2379374) {
   // This is a unittest against http://b/2379374.
   // Numpad ignores Direct input style when typing after conversion.
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
   {  // Set numpad_character_form with NUMPAD_DIRECT_INPUT
     config::Config config;
-    config::ConfigHandler::GetConfig(&config);
     config.set_numpad_character_form(config::Config::NUMPAD_DIRECT_INPUT);
-    config::ConfigHandler::SetConfig(config);
+    SetConfig(config);
     ASSERT_EQ(config::Config::NUMPAD_DIRECT_INPUT,
               GET_CONFIG(numpad_character_form));
   }
@@ -3808,7 +3846,7 @@ TEST_F(SessionTest, Issue2569789) {
   // After typing "google", the input mode does not come back to the
   // previous input mode.
   {
-    scoped_ptr<Session> session(handler_->NewSession());
+    scoped_ptr<Session> session(new Session(&keymap_));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
 
@@ -3823,7 +3861,7 @@ TEST_F(SessionTest, Issue2569789) {
   }
 
   {
-    scoped_ptr<Session> session(handler_->NewSession());
+    scoped_ptr<Session> session(new Session(&keymap_));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
 
@@ -3837,7 +3875,7 @@ TEST_F(SessionTest, Issue2569789) {
   }
 
   {
-    scoped_ptr<Session> session(handler_->NewSession());
+    scoped_ptr<Session> session(new Session(&keymap_));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
 
@@ -3855,7 +3893,7 @@ TEST_F(SessionTest, Issue2569789) {
   }
 
   {
-    scoped_ptr<Session> session(handler_->NewSession());
+    scoped_ptr<Session> session(new Session(&keymap_));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
 
@@ -3873,7 +3911,7 @@ TEST_F(SessionTest, Issue2555503) {
   // This is a unittest against http://b/2555503.
   // Mode respects the previous character too much.
 
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   SendKey("a", session.get(), &command);
@@ -3895,7 +3933,7 @@ TEST_F(SessionTest, Issue2791640) {
   // This is a unittest against http://b/2791640.
   // Existing preedit should be committed when IME is turned off.
 
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -3920,7 +3958,7 @@ TEST_F(SessionTest, CommitExistingPreeditWhenIMEIsTurnedOff) {
 
   // Check "hankaku/zenkaku"
   {
-    scoped_ptr<Session> session(handler_->NewSession());
+    scoped_ptr<Session> session(new Session(&keymap_));
     InitSessionToPrecomposition(session.get());
 
     commands::Command command;
@@ -3942,7 +3980,7 @@ TEST_F(SessionTest, CommitExistingPreeditWhenIMEIsTurnedOff) {
 
   // Check "kanji"
   {
-    scoped_ptr<Session> session(handler_->NewSession());
+    scoped_ptr<Session> session(new Session(&keymap_));
     InitSessionToPrecomposition(session.get());
 
     commands::Command command;
@@ -3968,21 +4006,18 @@ TEST_F(SessionTest, SendKeyDirectInputStateTest) {
   // InputModeChange commands from direct mode are supported only for Windows
   // for now.
 #ifdef OS_WINDOWS
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   session->IMEOff(&command);
 
   config::Config config;
-  config::ConfigHandler::GetConfig(&config);
   const string custom_keymap_table =
       "status\tkey\tcommand\n"
       "DirectInput\tHiragana\tInputModeHiragana\n";
   config.set_session_keymap(config::Config::CUSTOM);
   config.set_custom_keymap_table(custom_keymap_table);
-  config::ConfigHandler::SetConfig(config);
-
-  session->ReloadConfig();
+  SetConfig(config);
 
   command.Clear();
   EXPECT_TRUE(SendKey("Hiragana", session.get(), &command));
@@ -4038,7 +4073,7 @@ TEST_F(SessionTest, HandlingDirectInputTableAttribute) {
 
 TEST_F(SessionTest, IMEOnWithModeTest) {
   {
-    scoped_ptr<Session> session(handler_->NewSession());
+    scoped_ptr<Session> session(new Session(&keymap_));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
     session->IMEOff(&command);
@@ -4058,7 +4093,7 @@ TEST_F(SessionTest, IMEOnWithModeTest) {
     EXPECT_EQ("\xE3\x81\x82", command.output().preedit().segment(0).key());
   }
   {
-    scoped_ptr<Session> session(handler_->NewSession());
+    scoped_ptr<Session> session(new Session(&keymap_));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
     session->IMEOff(&command);
@@ -4076,7 +4111,7 @@ TEST_F(SessionTest, IMEOnWithModeTest) {
     EXPECT_EQ("\xE3\x82\xA2", command.output().preedit().segment(0).key());
   }
   {
-    scoped_ptr<Session> session(handler_->NewSession());
+    scoped_ptr<Session> session(new Session(&keymap_));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
     session->IMEOff(&command);
@@ -4094,7 +4129,7 @@ TEST_F(SessionTest, IMEOnWithModeTest) {
     EXPECT_EQ("\xEF\xBD\xB1", command.output().preedit().segment(0).key());
   }
   {
-    scoped_ptr<Session> session(handler_->NewSession());
+    scoped_ptr<Session> session(new Session(&keymap_));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
     session->IMEOff(&command);
@@ -4112,7 +4147,7 @@ TEST_F(SessionTest, IMEOnWithModeTest) {
     EXPECT_EQ("\xEF\xBD\x81", command.output().preedit().segment(0).key());
   }
   {
-    scoped_ptr<Session> session(handler_->NewSession());
+    scoped_ptr<Session> session(new Session(&keymap_));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
     session->IMEOff(&command);
@@ -4132,7 +4167,7 @@ TEST_F(SessionTest, IMEOnWithModeTest) {
 }
 
 TEST_F(SessionTest, InputModeConsumed) {
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   EXPECT_TRUE(session->InputModeHiragana(&command));
@@ -4161,11 +4196,10 @@ TEST_F(SessionTest, InputModeConsumedForTestSendKey) {
   // with Hiragana key is only supported on Windows yet.
 #ifdef OS_WINDOWS
   config::Config config;
-  config::ConfigHandler::GetConfig(&config);
   config.set_session_keymap(config::Config::MSIME);
-  config::ConfigHandler::SetConfig(config);
+  SetConfig(config);
 
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
   ASSERT_EQ(config::Config::MSIME, GET_CONFIG(session_keymap));
   // In MSIME keymap, Hiragana is assigned for
@@ -4178,7 +4212,7 @@ TEST_F(SessionTest, InputModeConsumedForTestSendKey) {
 }
 
 TEST_F(SessionTest, InputModeOutputHasComposition) {
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   SendKey("a", session.get(), &command);
@@ -4234,7 +4268,7 @@ TEST_F(SessionTest, InputModeOutputHasComposition) {
 }
 
 TEST_F(SessionTest, InputModeOutputHasCandidates) {
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
 
   Segments segments;
@@ -4289,7 +4323,7 @@ TEST_F(SessionTest, InputModeOutputHasCandidates) {
 }
 
 TEST_F(SessionTest, PerformedCommand) {
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
 
   {
@@ -4389,8 +4423,8 @@ class ConverterMockForRevert : public ConverterMock {
 TEST(SessionResetTest, IssueResetConversion) {
   scoped_ptr<ConverterMockForReset> convertermock(new ConverterMockForReset);
   ConverterFactory::SetConverter(convertermock.get());
-  scoped_ptr<SessionHandler> handler(new SessionHandler);
-  scoped_ptr<Session> session(handler->NewSession());
+  keymap::KeyMapManager keymap;
+  scoped_ptr<Session> session(new Session(&keymap));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -4408,8 +4442,8 @@ TEST(SessionResetTest, IssueResetConversion) {
 TEST(SessionRevertTest, IssueRevert) {
   scoped_ptr<ConverterMockForRevert> convertermock(new ConverterMockForRevert);
   ConverterFactory::SetConverter(convertermock.get());
-  scoped_ptr<SessionHandler> handler(new SessionHandler);
-  scoped_ptr<Session> session(handler->NewSession());
+  keymap::KeyMapManager keymap;
+  scoped_ptr<Session> session(new Session(&keymap));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -4422,20 +4456,62 @@ TEST(SessionRevertTest, IssueRevert) {
   EXPECT_TRUE(convertermock->revert_conversion_called());
 }
 
-TEST_F(SessionTest, AutoConversion) {
-  config::Config config;
-  config::ConfigHandler::GetDefaultConfig(&config);
+// Undo command must call RerverConversion
+TEST_F(SessionTest, Issue3428520) {
+  scoped_ptr<ConverterMockForRevert> convertermock(new ConverterMockForRevert);
+  ConverterFactory::SetConverter(convertermock.get());
+  scoped_ptr<Session> session(new Session(&keymap_));
+  InitSessionToPrecomposition(session.get());
 
+  commands::Capability capability;
+  capability.set_text_deletion(commands::Capability::DELETE_PRECEDING_TEXT);
+  session->set_client_capability(capability);
+
+  commands::Command command;
+  Segments segments;
+
+  InsertCharacterChars("aiueo", session.get(), &command);
+  SetComposer(session.get(), &segments);
+  SetAiueo(&segments);
+  FillT13Ns(&segments);
+  convertermock->SetStartConversionWithComposer(&segments, true);
+
+  command.Clear();
+  session->Convert(&command);
+  EXPECT_FALSE(command.output().has_result());
+  EXPECT_TRUE(command.output().has_preedit());
+  // "あいうえお"
+  EXPECT_EQ("\xE3\x81\x82\xE3\x81\x84\xE3\x81\x86\xE3\x81\x88\xE3\x81\x8A",
+            GetComposition(command));
+
+  convertermock->SetCommitSegmentValue(&segments, true);
+  command.Clear();
+  session->Commit(&command);
+  EXPECT_TRUE(command.output().has_result());
+  EXPECT_FALSE(command.output().has_preedit());
+  // "あいうえお"
+  EXPECT_EQ("\xE3\x81\x82\xE3\x81\x84\xE3\x81\x86\xE3\x81\x88\xE3\x81\x8A",
+            command.output().result().value());
+
+  command.Clear();
+  session->Undo(&command);
+
+  // After check the status of revert_conversion_called.
+  EXPECT_TRUE(convertermock->revert_conversion_called());
+}
+
+TEST_F(SessionTest, AutoConversion) {
   Segments segments;
   SetAiueo(&segments);
   FillT13Ns(&segments);
   convertermock_->SetStartConversionWithComposer(&segments, true);
 
   // Auto Off
+  config::Config config;
   config.set_use_auto_conversion(false);
-  config::ConfigHandler::SetConfig(config);
+  SetConfig(config);
   {
-    scoped_ptr<Session> session(handler_->NewSession());
+    scoped_ptr<Session> session(new Session(&keymap_));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
 
@@ -4451,7 +4527,7 @@ TEST_F(SessionTest, AutoConversion) {
               command.output().preedit().segment(0).key());
   }
   {
-    scoped_ptr<Session> session(handler_->NewSession());
+    scoped_ptr<Session> session(new Session(&keymap_));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
 
@@ -4469,12 +4545,11 @@ TEST_F(SessionTest, AutoConversion) {
               command.output().preedit().segment(0).key());
   }
 
-
   // Auto On
   config.set_use_auto_conversion(true);
-  config::ConfigHandler::SetConfig(config);
+  SetConfig(config);
   {
-    scoped_ptr<Session> session(handler_->NewSession());
+    scoped_ptr<Session> session(new Session(&keymap_));
     InitSessionToPrecomposition(session.get());
 
     commands::Command command;
@@ -4504,7 +4579,7 @@ TEST_F(SessionTest, AutoConversion) {
               key);
   }
   {
-    scoped_ptr<Session> session(handler_->NewSession());
+    scoped_ptr<Session> session(new Session(&keymap_));
     InitSessionToPrecomposition(session.get());
 
     commands::Command command;
@@ -4538,7 +4613,7 @@ TEST_F(SessionTest, AutoConversion) {
 
   // Don't trigger auto conversion for the pattern number + "."
   {
-    scoped_ptr<Session> session(handler_->NewSession());
+    scoped_ptr<Session> session(new Session(&keymap_));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
 
@@ -4558,7 +4633,7 @@ TEST_F(SessionTest, AutoConversion) {
 
   // Don't trigger auto conversion for the ".."
   {
-    scoped_ptr<Session> session(handler_->NewSession());
+    scoped_ptr<Session> session(new Session(&keymap_));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
 
@@ -4577,7 +4652,7 @@ TEST_F(SessionTest, AutoConversion) {
   }
 
   {
-    scoped_ptr<Session> session(handler_->NewSession());
+    scoped_ptr<Session> session(new Session(&keymap_));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
 
@@ -4599,7 +4674,7 @@ TEST_F(SessionTest, AutoConversion) {
 
   // Don't trigger auto conversion for "." only.
   {
-    scoped_ptr<Session> session(handler_->NewSession());
+    scoped_ptr<Session> session(new Session(&keymap_));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
 
@@ -4618,7 +4693,7 @@ TEST_F(SessionTest, AutoConversion) {
   }
 
   {
-    scoped_ptr<Session> session(handler_->NewSession());
+    scoped_ptr<Session> session(new Session(&keymap_));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
 
@@ -4663,7 +4738,7 @@ TEST_F(SessionTest, AutoConversion) {
               config::Config::AUTO_CONVERSION_EXCLAMATION_MARK);
 
           for (int i = 0; i < 4; ++i) {
-            scoped_ptr<Session> session(handler_->NewSession());
+            scoped_ptr<Session> session(new Session(&keymap_));
             InitSessionToPrecomposition(session.get());
             commands::Command command;
 
@@ -4701,7 +4776,7 @@ TEST_F(SessionTest, AutoConversion) {
 }
 
 TEST_F(SessionTest, FillHistoryContext) {
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -4756,7 +4831,7 @@ TEST_F(SessionTest, FillHistoryContext) {
 }
 
 TEST_F(SessionTest, ExpandCompositionForNestedCalculation) {
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
 
   commands::Context context;
@@ -4798,7 +4873,7 @@ TEST_F(SessionTest, ExpandCompositionForNestedCalculation) {
 TEST_F(SessionTest, InputSpaceWithKatakanaMode) {
   // This is a unittest against http://b/3203944.
   // Input mode should not be changed when a space key is typed.
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -4821,7 +4896,7 @@ TEST_F(SessionTest, InputSpaceWithKatakanaMode) {
 TEST_F(SessionTest, AlphanumericOfSSH) {
   // This is a unittest against http://b/3199626
   // 'ssh' (っｓｈ) + F10 should be 'ssh'.
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -4855,8 +4930,24 @@ TEST_F(SessionTest, AlphanumericOfSSH) {
 
 
 
+
+
+TEST_F(SessionTest, RequestConvertReverse) {
+  scoped_ptr<Session> session(new Session(&keymap_));
+  InitSessionToPrecomposition(session.get());
+
+  commands::Command command;
+  EXPECT_TRUE(session->RequestConvertReverse(&command));
+  EXPECT_FALSE(command.output().has_result());
+  EXPECT_FALSE(command.output().has_deletion_range());
+  EXPECT_TRUE(command.output().has_callback());
+  EXPECT_TRUE(command.output().callback().has_session_command());
+  EXPECT_EQ(commands::SessionCommand::CONVERT_REVERSE,
+            command.output().callback().session_command().type());
+}
+
 TEST_F(SessionTest, ConvertReverse) {
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
   // "阿伊宇江於"
   const string kanji_aiueo =
@@ -4870,6 +4961,7 @@ TEST_F(SessionTest, ConvertReverse) {
   SetupMockForReverseConversion(kanji_aiueo, hiragana_aiueo);
 
   EXPECT_TRUE(session->SendCommand(&command));
+  EXPECT_TRUE(command.output().consumed());
   EXPECT_EQ(kanji_aiueo,
             command.output().preedit().segment(0).value());
   EXPECT_EQ(kanji_aiueo,
@@ -4879,7 +4971,7 @@ TEST_F(SessionTest, ConvertReverse) {
 }
 
 TEST_F(SessionTest, ConvertReverseFromOffState) {
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
   InitSessionToPrecomposition(session.get());
   // "阿伊宇江於"
   const string kanji_aiueo =
@@ -4898,10 +4990,11 @@ TEST_F(SessionTest, ConvertReverseFromOffState) {
   SetupCommandForReverseConversion(kanji_aiueo, command.mutable_input());
   SetupMockForReverseConversion(kanji_aiueo, hiragana_aiueo);
   EXPECT_TRUE(session->SendCommand(&command));
+  EXPECT_TRUE(command.output().consumed());
 }
 
 TEST_F(SessionTest, LaunchTool) {
-  scoped_ptr<Session> session(handler_->NewSession());
+  scoped_ptr<Session> session(new Session(&keymap_));
 
   {
     commands::Command command;
@@ -4927,5 +5020,6 @@ TEST_F(SessionTest, LaunchTool) {
     EXPECT_TRUE(command.output().consumed());
   }
 }
+
 }  // namespace session
 }  // namespace mozc

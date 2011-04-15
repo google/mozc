@@ -1,5 +1,6 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Copyright 2010, Google Inc.
+# Copyright 2010-2011, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -112,7 +113,7 @@ def GetBuildBaseName(options):
   elif IsLinux():
     # On Linux, seems there is no way to specify the build_base directory
     # inside common.gypi
-    build_base = './out_linux'
+    build_base = 'out_linux'
   else:
     logging.error('Unsupported platform: %s', os.name)
 
@@ -264,7 +265,7 @@ def CleanBuildFilesAndDirectories():
   # Collect stuff in the top-level directory.
   directory_names.append('mozc_build_tools')
 
-  (options, args) = ParseCleanOptions()
+  (options, unused_args) = ParseCleanOptions()
   directory_names.append(GetBuildBaseName(options))
   if IsLinux():
     file_names.append('Makefile')
@@ -325,6 +326,11 @@ def GypMain(deps_file_name):
 
   # Get and show the list of .gyp file names.
   gyp_file_names = GetGypFileNames()
+  if not options.chewing:
+    # chewing/chewing.gyp is automatically included because of the
+    # policy.  We explicitly exclude it here.
+    gyp_file_names = [gyp_file for gyp_file in gyp_file_names
+                      if not gyp_file.endswith('chewing.gyp')]
   print 'GYP files:'
   for file_name in gyp_file_names:
     print '- %s' % file_name
@@ -359,7 +365,7 @@ def GypMain(deps_file_name):
   # version number.
   (template_path, unused_version_path) = GetVersionFileNames(options)
   version = mozc_version.MozcVersion(template_path, expand_daily=False)
-  if options.channel_dev == None:
+  if options.channel_dev is None:
     options.channel_dev = version.IsDevChannel()
   if options.channel_dev:
     command_line.extend(['-D', 'channel_dev=1'])
@@ -379,12 +385,15 @@ def GypMain(deps_file_name):
   print 'Done'
 
 
-def RunTests(configuration, calculate_coverage):
+def RunTests(configuration, unused_calculate_coverage):
   """Run built tests actually.
 
   Args:
     configuration: build configuration ('Release' or 'Debug')
-    calculate_coverage: True if runtests calculates the test coverage.
+    unused_calculate_coverage: True if runtests calculates the test coverage.
+
+  Raises:
+    RunOrDieError: One or more tests have failed.
   """
   # Currently we don't check calculate at all -- just run tests.
   if IsMac():
@@ -421,7 +430,7 @@ def RunTests(configuration, calculate_coverage):
     except RunOrDieError, e:
       print e
       failed_tests.append(binary)
-  if len(failed_tests) > 0:
+  if failed_tests:
     raise RunOrDieError('\n'.join(['following tests failed'] + failed_tests))
 
 
@@ -536,6 +545,11 @@ def ParseGypOptions():
   parser.add_option('--build_base', dest='build_base',
                     help='specify the base directory of the built binaries.')
 
+  parser.add_option('--chewing', dest='chewing', action='store_true',
+                    default=False, help='include chewing gyp recipe.  '
+                    'This flag is false by default because it may require you '
+                    'to install libchewing in your environment.')
+
 
   # Linux environment can build both for Linux and ChromeOS.
   # This option enable this script to know which build (Linux or ChromeOS)
@@ -557,6 +571,9 @@ def ParseMetaTarget(meta_target_name):
 
   Args:
     meta_target_name: meta target name to be expanded.
+
+  Returns:
+    A list of build targets with meta target names expanded.
   """
   if meta_target_name != 'package':
     return [meta_target_name]
@@ -627,17 +644,19 @@ def ParseRuntestsOptions():
 
   return (options, args)
 
+
 def ParseCleanOptions():
   """Parse command line options for the clean command."""
   parser = optparse.OptionParser(
       usage='Usage: %prog clean [-- build options]')
-  
+
   parser.add_option('--build_base', dest='build_base',
                     help='specify the base directory of the built binaries.')
 
   (options, args) = parser.parse_args()
 
   return (options, args)
+
 
 def ParseTarget(target):
   """Parses the target string."""

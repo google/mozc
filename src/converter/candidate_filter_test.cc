@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,6 +38,7 @@
 #include "converter/node.h"
 #include "converter/pos_matcher.h"
 #include "converter/segments.h"
+#include "dictionary/suppression_dictionary.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
@@ -272,5 +273,42 @@ TEST_F(CandidateFilterTest, MayHaveMoreCandidates) {
   c5->value = "ghi2";
   EXPECT_EQ(CandidateFilter::STOP_ENUMERATION,
             filter.FilterCandidate(c5, n));
+}
+
+TEST_F(CandidateFilterTest, Regression3437022) {
+  CandidateFilter filter;
+  vector<const Node *> n;
+  GetDefaultNodes(&n);
+
+  Segment::Candidate *c1 = NewCandidate();
+  c1->key = "test_key";
+  c1->value = "test_value";
+
+  EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
+            filter.FilterCandidate(c1, n));
+
+  SuppressionDictionary *dic
+      = SuppressionDictionary::GetSuppressionDictionary();
+  dic->Lock();
+  dic->AddEntry("test_key", "test_value");
+  dic->UnLock();
+
+  EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
+            filter.FilterCandidate(c1, n));
+
+  c1->key = "test_key_suffix";
+  c1->value = "test_value_suffix";
+  c1->content_key = "test_key";
+  c1->content_value = "test_value";
+
+  EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
+            filter.FilterCandidate(c1, n));
+
+  dic->Lock();
+  dic->Clear();
+  dic->UnLock();
+
+  EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
+            filter.FilterCandidate(c1, n));
 }
 }  // namespace mozc

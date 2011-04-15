@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -88,14 +88,10 @@ class ConverterImpl : public ConverterInterface {
                      const uint8 *new_size_array,
                      size_t array_size) const;
   bool Sync() const;
+  bool Reload() const;
   bool ClearUserHistory() const;
   bool ClearUserPrediction() const;
   bool ClearUnusedUserPrediction() const;
-
- private:
-  RewriterInterface *rewriter_;
-  PredictorInterface *predictor_;
-  ImmutableConverterInterface *immutable_converter_;
 };
 
 size_t GetSegmentIndex(const Segments *segments,
@@ -126,7 +122,6 @@ void SetKey(Segments *segments, const string &key) {
 }
 
 ConverterInterface *g_converter = NULL;
-
 }  // namespace
 
 ConverterInterface *ConverterFactory::GetConverter() {
@@ -141,22 +136,15 @@ void ConverterFactory::SetConverter(ConverterInterface *converter) {
   g_converter = converter;
 }
 
-ConverterImpl::ConverterImpl()
-    : rewriter_(RewriterFactory::GetRewriter()),
-      predictor_(PredictorFactory::GetPredictor()),
-      immutable_converter_(
-          ImmutableConverterFactory::GetImmutableConverter()) {
-  VLOG(1) << "ConverterImpl is created";
-}
-
+ConverterImpl::ConverterImpl() {}
 ConverterImpl::~ConverterImpl() {}
 
 bool ConverterImpl::StartConversion(Segments *segments,
                                     const string &key) const {
   SetKey(segments, key);
   segments->set_request_type(Segments::CONVERSION);
-  if (immutable_converter_->Convert(segments)) {
-    rewriter_->Rewrite(segments);
+  if (ImmutableConverterFactory::GetImmutableConverter()->Convert(segments)) {
+    RewriterFactory::GetRewriter()->Rewrite(segments);
     return true;
   }
   return false;
@@ -171,8 +159,8 @@ bool ConverterImpl::StartConversionWithComposer(
   SetKey(segments, conversion_key);
   segments->set_composer(composer);
   segments->set_request_type(Segments::CONVERSION);
-  if (immutable_converter_->Convert(segments)) {
-    rewriter_->Rewrite(segments);
+  if (ImmutableConverterFactory::GetImmutableConverter()->Convert(segments)) {
+    RewriterFactory::GetRewriter()->Rewrite(segments);
     return true;
   }
   return false;
@@ -183,7 +171,7 @@ bool ConverterImpl::StartReverseConversion(Segments *segments,
   segments->Clear();
   SetKey(segments, key);
   segments->set_request_type(Segments::REVERSE_CONVERSION);
-  if (!immutable_converter_->Convert(segments)) {
+  if (!ImmutableConverterFactory::GetImmutableConverter()->Convert(segments)) {
     return false;
   }
   if (segments->segments_size() == 0) {
@@ -206,14 +194,14 @@ bool ConverterImpl::StartPrediction(Segments *segments,
                                     const string &key) const {
   SetKey(segments, key);
   segments->set_request_type(Segments::PREDICTION);
-  return predictor_->Predict(segments);
+  return PredictorFactory::GetPredictor()->Predict(segments);
 }
 
 bool ConverterImpl::StartSuggestion(Segments *segments,
                                     const string &key) const {
   SetKey(segments, key);
   segments->set_request_type(Segments::SUGGESTION);
-  return predictor_->Predict(segments);
+  return PredictorFactory::GetPredictor()->Predict(segments);
 }
 
 bool ConverterImpl::FinishConversion(Segments *segments) const {
@@ -228,9 +216,9 @@ bool ConverterImpl::FinishConversion(Segments *segments) const {
 
   segments->clear_revert_entries();
   if (segments->request_type() == Segments::CONVERSION) {
-    rewriter_->Finish(segments);
+    RewriterFactory::GetRewriter()->Finish(segments);
   }
-  predictor_->Finish(segments);
+  PredictorFactory::GetPredictor()->Finish(segments);
 
   segments->clear_lattice();
 
@@ -266,7 +254,7 @@ bool ConverterImpl::RevertConversion(Segments *segments) const {
   if (segments->revert_entries_size() == 0) {
     return true;
   }
-  predictor_->Revert(segments);
+  PredictorFactory::GetPredictor()->Revert(segments);
   segments->clear_revert_entries();
   return true;
 }
@@ -325,7 +313,7 @@ bool ConverterImpl::FreeSegmentValue(Segments *segments,
     return false;
   }
 
-  return immutable_converter_->Convert(segments);
+  return ImmutableConverterFactory::GetImmutableConverter()->Convert(segments);
 }
 
 bool ConverterImpl::SubmitFirstSegment(Segments *segments,
@@ -442,11 +430,11 @@ bool ConverterImpl::ResizeSegment(Segments *segments,
 
   segments->set_resized(true);
 
-  if (!immutable_converter_->Convert(segments)) {
+  if (!ImmutableConverterFactory::GetImmutableConverter()->Convert(segments)) {
     return false;
   }
 
-  rewriter_->Rewrite(segments);
+  RewriterFactory::GetRewriter()->Rewrite(segments);
 
   return true;
 }
@@ -504,31 +492,39 @@ bool ConverterImpl::ResizeSegment(Segments *segments,
 
   segments->set_resized(true);
 
-  if (!immutable_converter_->Convert(segments)) {
+  if (!ImmutableConverterFactory::GetImmutableConverter()->Convert(segments)) {
     return false;
   }
 
-  rewriter_->Rewrite(segments);
+  RewriterFactory::GetRewriter()->Rewrite(segments);
 
   return true;
 }
 
 bool ConverterImpl::Sync() const {
-  return (rewriter_->Sync() && predictor_->Sync());
+  return (RewriterFactory::GetRewriter()->Sync() &&
+          PredictorFactory::GetPredictor()->Sync() &&
+          DictionaryFactory::GetDictionary()->Sync());
+}
+
+bool ConverterImpl::Reload() const {
+  return (RewriterFactory::GetRewriter()->Reload() &&
+          PredictorFactory::GetPredictor()->Reload() &&
+          DictionaryFactory::GetDictionary()->Reload());
 }
 
 bool ConverterImpl::ClearUserHistory() const {
-  rewriter_->Clear();
+  RewriterFactory::GetRewriter()->Clear();
   return true;
 }
 
 bool ConverterImpl::ClearUserPrediction() const {
-  predictor_->ClearAllHistory();
+  PredictorFactory::GetPredictor()->ClearAllHistory();
   return true;
 }
 
 bool ConverterImpl::ClearUnusedUserPrediction() const {
-  predictor_->ClearUnusedHistory();
+  PredictorFactory::GetPredictor()->ClearUnusedHistory();
   return true;
 }
 

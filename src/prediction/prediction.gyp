@@ -1,4 +1,4 @@
-# Copyright 2010, Google Inc.
+# Copyright 2010-2011, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,6 @@
       'type': 'static_library',
       'sources': [
         '<(proto_out_dir)/<(relative_dir)/user_history_predictor.pb.cc',
-        'conversion_predictor.cc',
         'suggestion_filter.cc',
         'dictionary_predictor.cc',
         'predictor.cc',
@@ -165,7 +164,6 @@
       'target_name': 'prediction_test',
       'type': 'executable',
       'sources': [
-        'conversion_predictor_test.cc',
         'dictionary_predictor_test.cc',
         'suggestion_filter_test.cc',
         'user_history_predictor_test.cc',

@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -69,6 +69,8 @@ class RewriterImpl: public RewriterInterface {
 
   virtual bool Sync();
 
+  virtual bool Reload();
+
   virtual void Clear();
 
  private:
@@ -110,12 +112,12 @@ RewriterImpl::RewriterImpl()
       t13n_rewriter_(new TransliterationRewriter) {
   rewriters_.push_back(t13n_rewriter_);
   rewriters_.push_back(english_variants_rewriter_);
+  rewriters_.push_back(number_rewriter_);
+  rewriters_.push_back(collocation_rewriter_);
   rewriters_.push_back(single_kanji_rewriter_);
   rewriters_.push_back(symbol_rewriter_);
   rewriters_.push_back(calculator_rewriter_);
   rewriters_.push_back(emoticon_rewriter_);
-  rewriters_.push_back(number_rewriter_);
-  rewriters_.push_back(collocation_rewriter_);
 
   rewriters_.push_back(date_rewriter_);
 
@@ -168,6 +170,14 @@ bool RewriterImpl::Sync() {
   bool result = false;
   for (size_t i = 0; i < rewriters_.size(); ++i) {
     result |= rewriters_[i]->Sync();
+  }
+  return result;
+}
+
+bool RewriterImpl::Reload() {
+  bool result = false;
+  for (size_t i = 0; i < rewriters_.size(); ++i) {
+    result |= rewriters_[i]->Reload();
   }
   return result;
 }

@@ -1,4 +1,4 @@
-# Copyright 2010, Google Inc.
+# Copyright 2010-2011, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -39,20 +39,14 @@
       'sources': [
         'internal/candidate_list.cc',
         'internal/ime_context.cc',
-        'internal/keymap.cc',
         'internal/session_output.cc',
         'session.cc',
         'session_converter.cc',
-        'session_handler.cc',
-        'session_observer_handler.cc',
-        'session_server.cc',
-        'session_usage_observer.cc',
-        'session_watch_dog.cc',
+        'session_factory.cc',
       ],
       'dependencies': [
         '../protobuf/protobuf.gyp:protobuf',
         '../base/base.gyp:base',
-        '../client/client.gyp:client',
         '../composer/composer.gyp:composer',
         '../converter/converter.gyp:converter',
         '../rewriter/calculator/calculator.gyp:calculator',
@@ -64,6 +58,25 @@
         'key_parser',
         'keymap',
         'session_normalizer',
+        'session_protocol',
+        'session_server',
+      ],
+    },
+    {
+      'target_name': 'session_server',
+      'type': 'static_library',
+      'sources': [
+        'internal/keymap.cc',
+        'session_handler.cc',
+        'session_observer_handler.cc',
+        'session_server.cc',
+        'session_usage_observer.cc',
+        'session_watch_dog.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        '../client/client.gyp:client',
+        'ime_switch_util',
         'session_protocol',
       ],
     },
@@ -179,6 +192,20 @@
         'session',
         'session_protocol',
       ],
+    },
+    {
+      'target_name': 'session_server_test',
+      'type': 'executable',
+      'sources': [
+        'session_server_test.cc',
+      ],
+      'dependencies': [
+        'session',
+        '../testing/testing.gyp:gtest_main',
+      ],
+      'variables': {
+        'test_size': 'small',
+      },
     },
     {
       'target_name': 'session_test',
@@ -370,6 +397,7 @@
         'session_converter_test',
         'session_converter_stress_test',
         'session_regression_test',
+        'session_server_test',
       ],
     },
   ],

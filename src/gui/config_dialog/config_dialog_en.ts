@@ -792,8 +792,8 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="427"/>
-        <source>The keymaps for IME ON/OFF will be applied after new applications.</source>
+        <location filename="keymap_editor.cc" line="428"/>
+        <source>The keymaps for IME ON and Reconversion will be applied after new applications.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

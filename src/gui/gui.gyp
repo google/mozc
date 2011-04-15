@@ -1,4 +1,4 @@
-# Copyright 2010, Google Inc.
+# Copyright 2010-2011, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -171,6 +171,224 @@
       'dependencies': [
         'gui_base',
         'administration_dialog_lib',
+      ],
+      'includes': [
+        'qt_libraries.gypi',
+      ],
+    },
+    {
+      'target_name': 'gen_character_pad_files',
+      'type': 'none',
+      'variables': {
+        'subdir': 'character_pad',
+        'qrc_base_name': 'character_pad',
+      },
+      'sources': [
+        '<(subdir)/character_pad.qrc',
+        '<(subdir)/character_palette.h',
+        '<(subdir)/character_palette_table_widget.h',
+        '<(subdir)/character_palette.ui',
+        '<(subdir)/hand_writing.h',
+        '<(subdir)/hand_writing.ui',
+        '<(subdir)/hand_writing_canvas.h',
+        '<(subdir)/result_list.h',
+      ],
+      'includes': [
+        'qt_moc.gypi',
+        'qt_rcc.gypi',
+        'qt_uic.gypi',
+      ],
+    },
+    {
+      'target_name': 'gen_character_pad_cp932_data',
+      'type': 'none',
+      'actions': [
+        {
+          'action_name': 'gen_cp932_map_data',
+          'variables': {
+            'input_files': [
+              '../data/unicode/CP932.TXT',
+            ],
+          },
+          'inputs': [
+            'character_pad/data/gen_cp932_map.py',
+            '<@(input_files)',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/character_pad/data/cp932_map.h',
+          ],
+          'action': [
+            'python', '../build_tools/redirect.py',
+            '<(gen_out_dir)/character_pad/data/cp932_map.h',
+            'character_pad/data/gen_cp932_map.py',
+            '<@(input_files)',
+          ],
+          'message': 'Generating <(gen_out_dir)/character_pad/data/cp932_map.h.',
+        },
+      ],
+    },
+    {
+      'target_name': 'gen_character_pad_data',
+      'type': 'none',
+      'actions': [
+        {
+          'action_name': 'gen_unihan_data',
+          'variables': {
+            'input_files': [
+              '../data/unicode/RadicalIndex.txt',
+              '../data/unicode/Unihan.txt',
+            ],
+          },
+          'inputs': [
+            'character_pad/data/gen_unihan_data.py',
+            '<@(input_files)',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/character_pad/data/unihan_data.h',
+          ],
+          'action': [
+            'python', '../build_tools/redirect.py',
+            '<(gen_out_dir)/character_pad/data/unihan_data.h',
+            'character_pad/data/gen_unihan_data.py',
+            '<@(input_files)',
+          ],
+          'message': 'Generating <(gen_out_dir)/character_pad/data/unihan_data.h.',
+        },
+        {
+          'action_name': 'gen_unicode_blocks',
+          'variables': {
+            'input_files': [
+              '../data/unicode/Blocks.txt',
+            ],
+          },
+          'inputs': [
+            'character_pad/data/gen_unicode_blocks.py',
+            '<@(input_files)',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/character_pad/data/unicode_blocks.h',
+          ],
+          'action': [
+            'python', '../build_tools/redirect.py',
+            '<(gen_out_dir)/character_pad/data/unicode_blocks.h',
+            'character_pad/data/gen_unicode_blocks.py',
+            '<@(input_files)',
+          ],
+          'message': 'Generating <(gen_out_dir)/character_pad/data/unicode_blocks.h.',
+        },
+        {
+          'action_name': 'gen_unicode_data',
+          'variables': {
+            'input_files': [
+              '../data/unicode/UnicodeData.txt',
+            ],
+          },
+          'inputs': [
+            'character_pad/data/gen_unicode_data.py',
+            '<@(input_files)',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/character_pad/data/unicode_data.h',
+          ],
+          'action': [
+            'python', '../build_tools/redirect.py',
+            '<(gen_out_dir)/character_pad/data/unicode_data.h',
+            'character_pad/data/gen_unicode_data.py',
+            '<@(input_files)',
+          ],
+          'message': 'Generating <(gen_out_dir)/character_pad/data/unicode_data.h.',
+        },
+        {
+          'action_name': 'gen_local_character_map',
+          'variables': {
+            'input_files': [
+              '../data/unicode/JIS0201.TXT',
+              '../data/unicode/JIS0208.TXT',
+              '../data/unicode/JIS0212.TXT',
+              '../data/unicode/CP932.TXT',
+            ],
+          },
+          'inputs': [
+            'character_pad/data/gen_local_character_map.py',
+            '<@(input_files)',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/character_pad/data/local_character_map.h',
+          ],
+          'action': [
+            'python', '../build_tools/redirect.py',
+            '<(gen_out_dir)/character_pad/data/local_character_map.h',
+            'character_pad/data/gen_local_character_map.py',
+            '<@(input_files)',
+          ],
+          'message': 'Generating <(gen_out_dir)/character_pad/data/local_character_map.h.',
+        },
+      ],
+    },
+    {
+      'target_name': 'character_pad_lib',
+      'type': 'static_library',
+      'sources': [
+        '<(gen_out_dir)/character_pad/moc_character_palette.cc',
+        '<(gen_out_dir)/character_pad/moc_hand_writing.cc',
+        '<(gen_out_dir)/character_pad/moc_hand_writing_canvas.cc',
+        '<(gen_out_dir)/character_pad/moc_character_palette_table_widget.cc',
+        '<(gen_out_dir)/character_pad/moc_result_list.cc',
+        '<(gen_out_dir)/character_pad/qrc_character_pad.cc',
+        '<(gen_out_dir)/character_pad/data/cp932_map.h',
+        '<(gen_out_dir)/character_pad/data/unihan_data.h',
+        '<(gen_out_dir)/character_pad/data/unicode_blocks.h',
+        '<(gen_out_dir)/character_pad/data/unicode_data.h',
+        '<(gen_out_dir)/character_pad/data/local_character_map.h',
+        '<(gen_out_dir)/dictionary_tool/moc_zero_width_splitter.cc',
+        'character_pad/character_pad_libmain.cc',
+        'character_pad/character_palette_table_widget.cc',
+        'character_pad/character_palette.cc',
+        'character_pad/hand_writing_canvas.cc',
+        'character_pad/hand_writing.cc',
+        'character_pad/result_list.cc',
+        'character_pad/selection_handler.cc',
+        'character_pad/unicode_util.cc',
+        'character_pad/windows_selection_handler.cc',
+        'dictionary_tool/zero_width_splitter.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        'zinnia.gyp:zinnia',
+        'gen_character_pad_files',
+        'gen_character_pad_cp932_data',
+        'gen_character_pad_data',
+        'gen_dictionary_tool_files',
+      ],
+      'conditions': [['use_libzinnia==1', {
+        'defines': [
+          'USE_LIBZINNIA',
+        ],
+      }]],
+    },
+    {
+      'target_name': 'character_palette_main',
+      'type': 'executable',
+      'sources': [
+        'character_pad/character_palette_main.cc',
+      ],
+      'dependencies': [
+        'gui_base',
+        'character_pad_lib',
+      ],
+      'includes': [
+        'qt_libraries.gypi',
+      ],
+    },
+    {
+      'target_name': 'hand_writing_main',
+      'type': 'executable',
+      'sources': [
+        'character_pad/hand_writing_main.cc',
+      ],
+      'dependencies': [
+        'gui_base',
+        'character_pad_lib',
       ],
       'includes': [
         'qt_libraries.gypi',
@@ -604,6 +822,7 @@
       'dependencies': [
         'about_dialog_lib',
         'administration_dialog_lib',
+        'character_pad_lib',
         'config_dialog_lib',
         'confirmation_dialog_lib',
         'dictionary_tool_lib',

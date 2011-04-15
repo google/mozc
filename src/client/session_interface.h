@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -142,6 +142,27 @@ class SessionInterface {
 
   // Launches browser and pass |url|
   virtual bool OpenBrowser(const string &url) = 0;
+};
+
+class SessionFactoryInterface {
+ public:
+  virtual ~SessionFactoryInterface() {}
+  virtual SessionInterface *NewSession() = 0;
+};
+
+class SessionFactory {
+ public:
+  // Return a new session.
+  // TODO(taku): replace "new Session" with
+  // SessionFactory::NewSession();
+  static SessionInterface *NewSession();
+
+  // Set a SessionFactoryInterface for unittesting.
+  static void SetSessionFactory(SessionFactoryInterface *session_factory);
+
+ private:
+  SessionFactory() {}
+  ~SessionFactory() {}
 };
 
 class SendCommandInterface {

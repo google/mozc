@@ -41,7 +41,7 @@
 	<key>GoogleBreakpadVersion</key>
 	<string>${GOOGLE_VERSIONINFO_LONG}</string>
 	<key>GoogleBreakpadURL</key>
-	<string>https://client2.google.com/cr/report</string>
+	<string>https://clients2.google.com/cr/report</string>
 	<key>GoogleBreakpadReportInterval</key>
 	<string>86400</string>
 	<key>GoogleBreakpadSkipConfirm</key>

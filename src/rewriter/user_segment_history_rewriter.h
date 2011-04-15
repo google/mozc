@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,11 +32,9 @@
 
 #include "rewriter/rewriter_interface.h"
 #include "base/base.h"
+#include "converter/segments.h"
 
 namespace mozc {
-
-class Segments;
-class Segment;
 class LRUStorage;
 
 class UserSegmentHistoryRewriter: public RewriterInterface {
@@ -48,17 +46,25 @@ class UserSegmentHistoryRewriter: public RewriterInterface {
 
   virtual void Finish(Segments *segments);
 
+  virtual bool Reload();
+
   virtual void Clear();
+
+  // Return the current active storage.
+  // UserSegmentHistoryRewriter is basically singleton in converter thread.
+  // GetStorage() returns the current active storage managed by converter.
+  // TODO(taku): This design is ad-hoc. Needs refactoring.
+  static LRUStorage *GetStorage();
 
  private:
   bool IsAvailable(const Segments &segments) const;
   bool GetScore(const Segments &segments,
                 size_t segment_index,
                 int candidate_index,
-                const string &top_functional_value,
-                uint16 top_pos_group,
                 uint32 *score,
                 uint32 *last_access_time) const;
+  bool Replaceable(const Segment::Candidate &lhs,
+                   const Segment::Candidate &rhs) const;
   void RememberFirstCandidate(const Segments &segments,
                               size_t segment_index);
   void RememberNumberPreference(const Segment &segment);

@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -58,8 +58,10 @@ class UserDictionary : public DictionaryInterface {
   // mainly for unittesting
   bool Load(const UserDictionaryStorage &storage);
 
-  // Reload
   bool Reload();
+
+  // Reload synchronously.
+  bool SyncReload();
 
   // Reload dictionary asynchronously
   bool AsyncReload();

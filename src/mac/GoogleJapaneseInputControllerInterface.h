@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -60,6 +60,17 @@
 // Commit the specified text to the current client.
 - (void)commitText:(const char *)text client:(id)sender;
 
+// Conduct the reconvert event.  It could have several tricks such
+// like invoking UNDO instead if nothing is selected.  |sender| has to
+// be the proxy object to the client application, which might not be
+// same as the sender of the click event itself when the user clicks
+// the menu item.
+- (void)invokeReconvert:(const mozc::commands::SessionCommand *)command
+                 client:(id)sender;
+
+// Conduct the undo command.
+- (void)invokeUndo:(id)sender;
+
 // Process output fields such as preedit, output text, candidates, and
 // modes and calls methods above.
 - (void)processOutput:(const mozc::commands::Output *)output client:(id)sender;
@@ -67,6 +78,11 @@
 // Obtain the current configuration from the server and update
 // client-specific configurations.
 - (void)handleConfig;
+
+// Set up the client capability
+- (void)setupCapability;
+// Set up the cilent bundle for the sender.
+- (void)setupClientBundle:(id)sender;
 
 // Launch the word register tool with the current selection range.
 - (void)launchWordRegisterTool:(id)client;

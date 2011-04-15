@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,6 +37,7 @@
 #include "base/mutex.h"
 #include "base/singleton.h"
 #include "converter/node.h"
+#include "converter/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
@@ -51,7 +52,7 @@ void ReloadUserDictionary() {
   VLOG(1) << "Reloading user dictionary";
   UserDictionary::GetUserDictionary()->AsyncReload();
   // Sync version:
-  // UserDictionary::GetUserDictionary()->Reload();
+  // UserDictionary::GetUserDictionary()->SyncReload();
 }
 
 // ReloadUserDictionary() is called by Session::Reload()
@@ -173,13 +174,19 @@ Node *UserDictionary::LookupPredictive(const char *str, int size,
       lower_bound(tokens_.begin(), tokens_.end(), &key_token, POSTokenLess());
 
   for (; it != tokens_.end(); ++it) {
-    if ((*it)->key.find(key) != 0) {
+    if (!Util::StartsWith((*it)->key, key)) {
       break;
     }
 
     Node *new_node = allocator->NewNode();
-    new_node->lid = (*it)->id;
-    new_node->rid = (*it)->id;
+    DCHECK(new_node);
+    if (POSMatcher::IsSuggestOnlyWord((*it)->id)) {
+      new_node->lid = POSMatcher::GetUnknownId();
+      new_node->rid = POSMatcher::GetUnknownId();
+    } else {
+      new_node->lid = (*it)->id;
+      new_node->rid = (*it)->id;
+    }
     new_node->wcost = (*it)->cost;
     new_node->key = (*it)->key;
     new_node->value = (*it)->value;
@@ -221,15 +228,22 @@ Node *UserDictionary::LookupPrefix(const char *str, int size,
   vector<UserPOS::Token *>::const_iterator it =
       lower_bound(tokens_.begin(), tokens_.end(), &key_token, POSTokenLess());
 
+
   for (; it != tokens_.end(); ++it) {
     if ((*it)->key > key) {
       break;
     }
-    if (key.find((*it)->key) != 0) {
+
+    if (POSMatcher::IsSuggestOnlyWord((*it)->id)) {
+      continue;
+    }
+
+    if (!Util::StartsWith(key, (*it)->key)) {
       continue;
     }
 
     Node *new_node = allocator->NewNode();
+    DCHECK(new_node);
     new_node->lid = (*it)->id;
     new_node->rid = (*it)->id;
     new_node->wcost = (*it)->cost;
@@ -259,6 +273,10 @@ Node *UserDictionary::LookupReverse(const char *str, int size,
 }
 
 bool UserDictionary::Reload() {
+  return AsyncReload();
+}
+
+bool UserDictionary::SyncReload() {
   Clear();
 
   scoped_ptr<UserDictionaryStorage>
@@ -343,7 +361,6 @@ bool UserDictionary::Load(const UserDictionaryStorage &storage) {
         VLOG(1) << "Found dup item";
         continue;
       }
-
 
       // "抑制単語"
       if (entry.pos() == "\xE6\x8A\x91\xE5\x88\xB6\xE5\x8D\x98\xE8\xAA\x9E") {

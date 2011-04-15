@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -88,6 +88,7 @@ class UserDictionaryStorage : public user_dictionary::UserDictionaryStorage {
     INVALID_DICTIONARY_ID,
     INVALID_CHARACTERS_IN_DICTIONARY_NAME,
     EMPTY_DICTIONARY_NAME,
+    DUPLICATED_DICTIONARY_NAME,
     TOO_LONG_DICTIONARY_NAME,
     TOO_MANY_DICTIONARIES,
     TOO_MANY_ENTRIES,

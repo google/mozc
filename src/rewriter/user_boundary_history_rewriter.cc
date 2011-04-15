@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -43,10 +43,14 @@
 #include "session/config.pb.h"
 #include "usage_stats/usage_stats.h"
 
+namespace mozc {
 namespace {
-static const int kValueSize  = 4;
-static const uint32 kLRUSize = 5000;
-static const uint32 kSeedValue = 0x761fea81;
+const int kValueSize  = 4;
+const uint32 kLRUSize = 5000;
+const uint32 kSeedValue = 0x761fea81;
+
+const char kFileName[] = "user://boundary.db";
+LRUStorage *g_lru_storage = NULL;
 
 enum { INSERT, RESIZE };
 
@@ -95,19 +99,12 @@ class LengthArray {
   uint8 length6_ : 4;
   uint8 length7_ : 4;
 };
-}
-
-namespace mozc {
+}  // namespace
 
 UserBoundaryHistoryRewriter::UserBoundaryHistoryRewriter()
     : storage_(new LRUStorage) {
-  static const char kFileName[] = "user://boundary.db";
-  const string filename = ConfigFileStream::GetFileName(kFileName);
-  if (!storage_->OpenOrCreate(filename.c_str(),
-                              kValueSize, kLRUSize, kSeedValue)) {
-    LOG(WARNING) << "cannot initialize UserBoundaryHistoryRewriter";
-    storage_.reset(NULL);
-  }
+  g_lru_storage = storage_.get();
+  Reload();
 }
 
 UserBoundaryHistoryRewriter::~UserBoundaryHistoryRewriter() {}
@@ -171,6 +168,22 @@ bool UserBoundaryHistoryRewriter::Rewrite(Segments *segments) const {
   return false;
 }
 
+bool UserBoundaryHistoryRewriter::Reload() {
+  const string filename = ConfigFileStream::GetFileName(kFileName);
+  if (!storage_->OpenOrCreate(filename.c_str(),
+                              kValueSize, kLRUSize, kSeedValue)) {
+    LOG(WARNING) << "cannot initialize UserBoundaryHistoryRewriter";
+    return false;
+  }
+
+  const char kFileSuffix[] = ".merge_pending";
+  const string merge_pending_file = filename + kFileSuffix;
+  storage_->Merge(merge_pending_file.c_str());
+  Util::Unlink(merge_pending_file);
+
+  return true;
+}
+
 //TODO(taku): split Reize/Insert into different functions
 bool UserBoundaryHistoryRewriter::ResizeOrInsert(Segments *segments,
                                                  int type) const {
@@ -215,7 +228,7 @@ bool UserBoundaryHistoryRewriter::ResizeOrInsert(Segments *segments,
   }
 
   for (size_t i = history_segments_size; i < target_segments_size; ++i) {
-    static const size_t kMaxKeysSize = 5;
+    const size_t kMaxKeysSize = 5;
     const size_t keys_size = min(kMaxKeysSize, keys.size());
     string key;
     memset(length_array, 0, sizeof(length_array));
@@ -275,5 +288,10 @@ void UserBoundaryHistoryRewriter::Clear() {
     VLOG(1) << "Clearing user segment data";
     storage_->Clear();
   }
+}
+
+// static
+LRUStorage *UserBoundaryHistoryRewriter::GetStorage() {
+  return g_lru_storage;
 }
 }  // namespace mozc

@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -87,9 +87,10 @@ class WordRegisterDialog : public QDialog,
   // Load text from clipboard.
   void SetDefaultEntryFromClipboard();
 
-  // Load text from environment variable.  Currently this method works
-  // only with Mac OSX.
-  void SetDefaultEntryFromEnvironmentVariable();
+  // Load text from environment variable.  Currently this method is
+  // tested only on Mac OSX and Windows.
+  // Return false if source environment variable is not found.
+  bool SetDefaultEntryFromEnvironmentVariable();
 
   // Return reading of value with reverse conversion feature.
   const QString GetReading(const QString &value);
@@ -97,6 +98,10 @@ class WordRegisterDialog : public QDialog,
   // remove "\n" "\r" from |value|.
   // remove whitespace from the start and the end.
   const QString TrimValue(const QString &value) const;
+
+  // turn on IME.
+  // When the dialog is shown, it is better to turn on IME.
+  void EnableIME();
 
   bool is_available_;
   scoped_ptr<UserDictionaryStorage> storage_;

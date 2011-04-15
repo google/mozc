@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -49,6 +49,25 @@ class Segment;
 
 class UserHistoryPredictorSyncer;
 
+// Added serialization method for UserHistory.
+class UserHistoryStorage : public mozc::user_history_predictor::UserHistory {
+ public:
+  explicit UserHistoryStorage(const string &filename);
+  ~UserHistoryStorage();
+
+  // return failename
+  string filename() const;
+
+  // Load from encrypted file.
+  bool Load();
+
+  // Save history into encrypted file.
+  bool Save() const;
+
+ private:
+  string filename_;
+};
+
 // UserHistoryPredictor is NOT thread safe.
 // Currently, all methods of UserHistoryPredictor is called
 // by single thread. Although AsyncSave() and AsyncLoad() make
@@ -70,6 +89,10 @@ class UserHistoryPredictor: public PredictorInterface {
   // Sync user history data to local file.
   // You can call either Save() or AsyncSave().
   bool Sync();
+
+  // Reload from local disk.
+  // Do not call Sync() before Reload().
+  bool Reload();
 
   // Load user history data to LRU from local file
   bool Load();
@@ -94,11 +117,21 @@ class UserHistoryPredictor: public PredictorInterface {
   // Wait until syncer finishes
   void WaitForSyncer();
 
+  // Get user history filename.
+  static string GetUserHistoryFileName();
+
   // return id for RevertEntry
   static uint16 revert_id();
 
+  // return the size of cache.
+  static uint32 cache_size();
+
+  // return the size of next entries.
+  static uint32 max_next_entries_size();
+
   typedef user_history_predictor::UserHistory::Entry Entry;
   typedef user_history_predictor::UserHistory::NextEntry NextEntry;
+  typedef user_history_predictor::UserHistory::Entry::EntryType EntryType;
 
   enum MatchType {
     NO_MATCH,            // no match
@@ -112,6 +145,8 @@ class UserHistoryPredictor: public PredictorInterface {
 
   // return fingerprints from various object.
   static uint32 Fingerprint(const string &key, const string &value);
+  static uint32 Fingerprint(const string &key, const string &value,
+                            EntryType type);
   static uint32 EntryFingerprint(const Entry &entry);
   static uint32 SegmentFingerprint(const Segment &segment);
 
@@ -124,6 +159,9 @@ class UserHistoryPredictor: public PredictorInterface {
   static bool IsValidSuggestion(bool zero_query_suggestion,
                                 uint32 prefix_len,
                                 const Entry &result_entry);
+
+  // return true if entry is DEFAULT_ENTRY and doesn't have removed flag.
+  static bool IsValidEntry(const Entry &entry);
 
   // return "tweaked" score of result_entry.
   // the score is basically determined by "last_access_time", (a.k.a,
@@ -183,6 +221,9 @@ class UserHistoryPredictor: public PredictorInterface {
               uint32 next_fp,
               uint32 last_access_time,
               Segments *segments);
+
+  // Insert event entry (CLEAN_ALL_EVENT|CLEAN_UNUSED_EVENT).
+  void InsertEvent(EntryType type);
 
   // Insert a new |next_entry| into |entry|.
   // it makes a bigram connection from entry to next_entry.

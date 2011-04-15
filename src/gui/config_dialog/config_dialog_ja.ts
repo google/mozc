@@ -829,9 +829,9 @@ Mozcの機能向上に役立てる（再ログイン後に変更は完了しま�
 %1</translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="427"/>
-        <source>The keymaps for IME ON/OFF will be applied after new applications.</source>
-        <translation>IME の有効化、無効化に対するキー設定は、新しいアプリケーションから有効になります。</translation>
+        <location filename="keymap_editor.cc" line="428"/>
+        <source>The keymaps for IME ON and Reconversion will be applied after new applications.</source>
+        <translation>IME の有効化と再変換に対するキー設定は、新しいアプリケーションから有効になります。</translation>
     </message>
     <message>
         <location filename="keymap_editor.cc" line="463"/>

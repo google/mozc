@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -55,7 +55,6 @@ class StorageInitializer {
                                        kRegistryFileName))) {
       LOG(ERROR) << "cannot open registry";
     }
-    current_storage_ = default_storage_.get();
   }
 
   StorageInterface *GetStorage() const {

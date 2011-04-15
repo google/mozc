@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -28,6 +28,8 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "base/scheduler.h"
+
+#include <algorithm>
 
 #include "base/util.h"
 #include "base/mutex.h"
@@ -101,7 +103,8 @@ TEST(SchedulerTest, SchedulerTestData) {
   const string kTestJob = "Test";
   g_num = 0;
   int num = 10;
-  Scheduler::AddJob(kTestJob, 100000, 100000, 500, 0, &TestFunc, &num);
+  Scheduler::AddJob(Scheduler::JobSetting(
+      kTestJob, 100000, 100000, 500, 0, &TestFunc, &num));
   EXPECT_EQ(0, g_num);
   Util::Sleep(1000);
   EXPECT_EQ(10, g_num);
@@ -111,7 +114,8 @@ TEST(SchedulerTest, SchedulerTestData) {
 TEST(SchedulerTest, SchedulerTestDelay) {
   const string kTestJob = "Test";
   g_counter1 = 0;
-  Scheduler::AddJob(kTestJob, 100000, 100000, 500, 0, &TestFuncOk1, NULL);
+  Scheduler::AddJob(Scheduler::JobSetting(
+      kTestJob, 100000, 100000, 500, 0, &TestFuncOk1, NULL));
   EXPECT_EQ(0, g_counter1);
   Util::Sleep(1000);
   EXPECT_EQ(1, g_counter1);
@@ -135,8 +139,9 @@ TEST(SchedulerTest, SchedulerTestRandomDelay) {
     uint32 usec;
     Util::GetTimeOfDay(&sec, &usec);
     uint64 start_time = sec * 1000000 + usec;
-    Scheduler::AddJob(kTestJob, 100000, 100000, 100, 500,
-                      &TestFuncForRandomDelay, &start_time);
+    Scheduler::AddJob(Scheduler::JobSetting(
+        kTestJob, 100000, 100000, 100, 500,
+        &TestFuncForRandomDelay, &start_time));
     // Wait 700 msec for the task. This is 100ms longer than the expected
     // maximum duration to absorb smaller errors of the system.
     Util::Sleep(700);
@@ -155,7 +160,8 @@ TEST(SchedulerTest, SchedulerTestRandomDelay) {
 TEST(SchedulerTest, SchedulerTestNoDelay) {
   const string kTestJob = "Test";
   g_counter1 = 0;
-  Scheduler::AddJob(kTestJob, 1000, 1000, 0, 0, &TestFuncOk1, NULL);
+  Scheduler::AddJob(Scheduler::JobSetting(
+      kTestJob, 1000, 1000, 0, 0, &TestFuncOk1, NULL));
   Util::Sleep(500);
   EXPECT_EQ(1, g_counter1);
   Scheduler::RemoveJob(kTestJob);
@@ -168,7 +174,8 @@ TEST(SchedulerTest, SchedulerTestInterval) {
   const string kTestJob2 = "Test2";
   {
     g_counter1 = 0;
-    Scheduler::AddJob(kTestJob1, 1000, 1000, 500, 0, &TestFuncOk1, NULL);
+    Scheduler::AddJob(Scheduler::JobSetting(
+        kTestJob1, 1000, 1000, 500, 0, &TestFuncOk1, NULL));
 
     Util::Sleep(3000);
     EXPECT_EQ(3, g_counter1);
@@ -179,13 +186,15 @@ TEST(SchedulerTest, SchedulerTestInterval) {
   }
   {
     g_counter1 = 0;
-    Scheduler::AddJob(kTestJob1, 1000, 1000, 500, 0, &TestFuncOk1, NULL);
+    Scheduler::AddJob(Scheduler::JobSetting(
+        kTestJob1, 1000, 1000, 500, 0, &TestFuncOk1, NULL));
 
     Util::Sleep(3000);
     EXPECT_EQ(3, g_counter1);
 
     g_counter2 = 0;
-    Scheduler::AddJob(kTestJob2, 1000, 1000, 500, 0, &TestFuncOk2, NULL);
+    Scheduler::AddJob(Scheduler::JobSetting(
+        kTestJob2, 1000, 1000, 500, 0, &TestFuncOk2, NULL));
 
     Util::Sleep(3000);
     EXPECT_EQ(6, g_counter1);
@@ -209,8 +218,10 @@ TEST(SchedulerTest, SchedulerTestRemoveAll) {
 
   g_counter1 = 0;
   g_counter2 = 0;
-  Scheduler::AddJob(kTestJob1, 1000, 1000, 500, 0, &TestFuncOk1, NULL);
-  Scheduler::AddJob(kTestJob2, 1000, 1000, 500, 0, &TestFuncOk2, NULL);
+  Scheduler::AddJob(Scheduler::JobSetting(
+      kTestJob1, 1000, 1000, 500, 0, &TestFuncOk1, NULL));
+  Scheduler::AddJob(Scheduler::JobSetting(
+      kTestJob2, 1000, 1000, 500, 0, &TestFuncOk2, NULL));
   Util::Sleep(3000);
   EXPECT_EQ(3, g_counter1);
   EXPECT_EQ(3, g_counter2);
@@ -225,7 +236,8 @@ TEST(SchedulerTest, SchedulerTestRemoveAll) {
 TEST(SchedulerTest, SchedulerTestFailed) {
   const string kTestJob = "Test";
   g_counter_ng = 0;
-  Scheduler::AddJob(kTestJob, 1000, 5000, 500, 0, &TestFuncNg, NULL);
+  Scheduler::AddJob(Scheduler::JobSetting(
+      kTestJob, 1000, 5000, 500, 0, &TestFuncNg, NULL));
 
   Util::Sleep(1000);  // 1000 count=1 next 2000
   EXPECT_EQ(1, g_counter_ng);
@@ -241,5 +253,32 @@ TEST(SchedulerTest, SchedulerTestFailed) {
   EXPECT_EQ(5, g_counter_ng);
 
   Scheduler::RemoveJob(kTestJob);
+}
+
+class NameCheckScheduler : public Scheduler::SchedulerInterface {
+ public:
+  explicit NameCheckScheduler(const string &expected_name)
+      : expected_name_(expected_name) {}
+
+  void RemoveAllJobs() {}
+  bool RemoveJob(const string &name) { return true; }
+  bool AddJob(const Scheduler::JobSetting &job_setting) {
+    return (expected_name_ == job_setting.name());
+  }
+
+ private:
+  const string expected_name_;
+};
+
+TEST(SchedulerTest, SchedulerHandler) {
+  scoped_ptr<NameCheckScheduler> scheduler_mock(new NameCheckScheduler("test"));
+  Scheduler::SetSchedulerHandler(scheduler_mock.get());
+  EXPECT_TRUE(Scheduler::AddJob(
+      Scheduler::JobSetting("test", 0, 0, 0, 0, NULL, NULL)));
+  EXPECT_FALSE(Scheduler::AddJob(
+      Scheduler::JobSetting("not_test", 0, 0, 0, 0, NULL, NULL)));
+  EXPECT_TRUE(Scheduler::RemoveJob("not_have"));
+  Scheduler::RemoveAllJobs();
+  Scheduler::SetSchedulerHandler(NULL);
 }
 }  // namespace mozc

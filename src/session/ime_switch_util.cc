@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -55,6 +55,7 @@ const char kCommandFullKatakana[] = "InputModeFullKatakana";
 const char kCommandHalfKatakana[] = "InputModeHalfKatakana";
 const char kCommandFullAlphanumeric[] = "InputModeFullAlphanumeric";
 const char kCommandHalfAlphanumeric[] = "InputModeHalfAlphanumeric";
+const char kCommandReconvert[] = "Reconvert";
 
 class ImeSwitchUtilImpl {
  public:
@@ -173,7 +174,8 @@ class ImeSwitchUtilImpl {
              rules[2] == kCommandFullKatakana ||
              rules[2] == kCommandHalfKatakana ||
              rules[2] == kCommandFullAlphanumeric ||
-             rules[2] == kCommandHalfAlphanumeric))) {
+             rules[2] == kCommandHalfAlphanumeric ||
+             rules[2] == kCommandReconvert))) {
         continue;
       }
       commands::KeyEvent key_event;

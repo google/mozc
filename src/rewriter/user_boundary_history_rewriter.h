@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -50,7 +50,15 @@ class UserBoundaryHistoryRewriter: public RewriterInterface {
 
   virtual void Finish(Segments *segments);
 
+  virtual bool Reload();
+
   virtual void Clear();
+
+  // Return the current active storage.
+  // UserBoundaryHistoryRewriter is basically singleton in converter thread.
+  // GetStorage() returns the current active storage managed by converter.
+  // TODO(taku): This design is ad-hoc. Needs refactoring.
+  static LRUStorage *GetStorage();
 
  private:
   bool ResizeOrInsert(Segments *segments, int type) const;

@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,6 +36,7 @@
 
 #include "base/base.h"
 #include "session/commands.pb.h"
+#include "session/session_interface.h"
 // Need to include it for "ImeContext::State".
 #include "session/internal/ime_context.h"
 #include "transliteration/transliteration.h"
@@ -46,18 +47,18 @@ class KeyMapManager;
 }  // namespace keymap
 
 namespace session {
-class Session {
+class Session : public SessionInterface {
  public:
   Session(const keymap::KeyMapManager *keymap);
   virtual ~Session();
 
-  bool SendKey(commands::Command *command);
+  virtual bool SendKey(commands::Command *command);
 
   // Check if the input key event will be consumed by the session.
-  bool TestSendKey(commands::Command *command);
+  virtual bool TestSendKey(commands::Command *command);
 
   // Perform the SEND_COMMAND command defined commands.proto.
-  bool SendCommand(commands::Command *command);
+  virtual bool SendCommand(commands::Command *command);
 
   bool IMEOn(commands::Command *command);
   bool IMEOff(commands::Command *command);
@@ -71,8 +72,25 @@ class Session {
   // Return the current status such as a composition string, input mode, etc.
   bool GetStatus(commands::Command *command);
 
-  // Begins reverse conversion for the given session.
+  // Fill Output::Callback with the CONVERT_REVERSE SessionCommand to
+  // ask the client to send back the SessionCommand to the server.
+  // This function is called when the key event representing the
+  // ConvertReverse keybinding is called.
+  bool RequestConvertReverse(commands::Command *command);
+
+  // Begins reverse conversion for the given session.  This function
+  // is called when the CONVERT_REVERSE SessionCommand is called.
   bool ConvertReverse(commands::Command *command);
+
+  // Fill Output::Callback with the Undo SessionCommand to ask the
+  // client to send back the SessionCommand to the server.
+  // This function is called when the key event representing the
+  // Undo keybinding is called.
+  bool RequestUndo(commands::Command *command);
+
+  // Undo the commitment.  This function is called when the
+  // UNDO SessionCommand is called.
+  bool Undo(commands::Command *command);
 
   bool InsertSpace(commands::Command *command);
   bool InsertSpaceToggled(commands::Command *command);
@@ -103,9 +121,6 @@ class Session {
 
   // Commit only the first segment.
   bool CommitSegment(commands::Command *command);
-
-  // Undo the commitment.
-  bool Undo(commands::Command *command);
 
   bool SetComposition(const string &composition);
 
@@ -165,23 +180,23 @@ class Session {
 
   bool ReportBug(commands::Command *command);
 
-  void ReloadConfig();
+  virtual void ReloadConfig();
 
   // Set client capability for this session.  Used by unittest.
-  void set_client_capability(const commands::Capability &capability);
+  virtual void set_client_capability(const commands::Capability &capability);
 
   // Set application information for this session.
-  void set_application_info(const commands::ApplicationInfo
-                            &application_info);
+  virtual void set_application_info(const commands::ApplicationInfo
+                                    &application_info);
 
   // Get application information
-  const commands::ApplicationInfo &application_info() const;
+  virtual const commands::ApplicationInfo &application_info() const;
 
   // Return the time when this instance was created.
-  uint64 create_session_time() const;
+  virtual uint64 create_session_time() const;
 
   // return 0 (default value) if no command is executed in this session.
-  uint64 last_command_time() const;
+  virtual uint64 last_command_time() const;
 
   // TODO(komatsu): delete this funciton.
   // For unittest only

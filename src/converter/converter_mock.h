@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -80,6 +80,7 @@ class ConverterMock : public ConverterInterface {
   void SetResizeSegment1(Segments *segments, bool result);
   void SetResizeSegment2(Segments *segments, bool result);
   void SetSync(bool result);
+  void SetReload(bool result);
   void SetClearUserHistory(bool result);
   void SetClearUserPrediction(bool result);
   void SetClearUnusedUserPrediction(bool result);
@@ -141,6 +142,7 @@ class ConverterMock : public ConverterInterface {
                      const uint8 *new_size_array,
                      size_t array_size) const;
   bool Sync() const;
+  bool Reload() const;
   bool ClearUserHistory() const;
   bool ClearUserPrediction() const;
   bool ClearUnusedUserPrediction() const;
@@ -179,6 +181,7 @@ class ConverterMock : public ConverterInterface {
   ConverterOutput resizesegment1_output_;
   ConverterOutput resizesegment2_output_;
   bool sync_output_;
+  bool reload_output_;
   bool clearuserhistory_output_;
   bool clearuserprediction_output_;
   bool clearunuseduserprediction_output_;

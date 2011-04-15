@@ -1,4 +1,4 @@
-;; Copyright 2010, Google Inc.
+;; Copyright 2010-2011, Google Inc.
 ;; All rights reserved.
 ;;
 ;; Redistribution and use in source and binary forms, with or without
@@ -77,6 +77,19 @@
 (defgroup mozc-faces nil
   "Faces for showing the preedit and candidates."
   :group 'mozc)
+
+
+
+;;;; Macros
+
+(defmacro mozc-characterp (object)
+  "Return non-nil if OBJECT is a character.
+
+This macro is equivalent to `characterp' or `char-valid-p' depending on
+the Emacs version.  `char-valid-p' is obsolete since Emacs 23."
+  (if (fboundp #'characterp)
+      `(characterp ,object)
+    `(char-valid-p ,object)))
 
 
 
@@ -939,15 +952,6 @@ and LIST.  The default value of N is 1."
         (cons nil list)
       (setcdr pre-boundary nil)  ; Drop the rest of list.
       (cons list post-boundary))))
-
-(defmacro mozc-characterp (object)
-  "Return non-nil if OBJECT is a character.
-
-This macro is equivalent to `characterp' or `char-valid-p' depending on
-the Emacs version.  `char-valid-p' is obsolete since Emacs 23."
-  (if (fboundp #'characterp)
-      `(characterp ,object)
-    `(char-valid-p ,object)))
 
 (defsubst mozc-string-match-p (regexp string &optional start)
   "Same as `string-match' except this function never change the match data.

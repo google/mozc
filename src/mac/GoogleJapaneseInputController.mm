@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,6 +37,8 @@
 #include <unistd.h>
 #include <stdlib.h>
 
+#include <set>
+
 #import "mac/GoogleJapaneseInputControllerInterface.h"
 #import "mac/GoogleJapaneseInputServer.h"
 #import "mac/KeyCodeMap.h"
@@ -73,11 +75,12 @@ using mozc::MacProcess;
 
 namespace {
 // set of bundle IDs of applications on which Mozc should not open urls.
-NSSet *gNoOpenLinkApps = nil;
+const set<string> *gNoOpenLinkApps = NULL;
 // The mapping from the CompositionMode enum to the actual id string
 // of composition modes.
 const map<CompositionMode, NSString *> *gModeIdMap = NULL;
-NSSet *gNoSelectedRangeApps = nil;
+const set<string> *gNoSelectedRangeApps = NULL;
+const set<string> *gNoDisplayModeSwitchApps = NULL;
 
 NSString *GetLabelForSuffix(const string &suffix) {
   string label = mozc::MacUtil::GetLabelForSuffix(suffix);
@@ -131,6 +134,11 @@ CompositionMode GetCompositionMode(NSString *modeID) {
   return mozc::commands::DIRECT;
 }
 
+bool IsBannedApplication(const set<string>* bundleIdSet,
+                         const string& bundleId) {
+  return bundleIdSet == NULL || bundleId.empty() ||
+      bundleIdSet->find(bundleId) != bundleIdSet->end();
+}
 }  // anonymous namespace
 
 
@@ -169,7 +177,7 @@ CompositionMode GetCompositionMode(NSString *modeID) {
     return self;
   }
   keyCodeMap_ = [[KeyCodeMap alloc] init];
-  clientBundle_ = [[inputClient bundleIdentifier] copy];
+  clientBundle_ = new(nothrow) string;
   replacementRange_ = NSMakeRange(NSNotFound, 0);
   originalString_ = [[NSMutableString alloc] init];
   composedString_ = [[NSMutableAttributedString alloc] init];
@@ -185,7 +193,7 @@ CompositionMode GetCompositionMode(NSString *modeID) {
   // We don't check the return value of NSBundle because it fails during tests.
   [NSBundle loadNibNamed:@"Config" owner:self];
   if (!originalString_ || !composedString_ || !candidateController_ ||
-      !rendererCommand_ || !session_) {
+      !rendererCommand_ || !session_ || !clientBundle_) {
     [self release];
     self = nil;
   } else {
@@ -196,6 +204,8 @@ CompositionMode GetCompositionMode(NSString *modeID) {
       delete candidateController_;
       candidateController_ = NULL;
     }
+    [self setupClientBundle:inputClient];
+    [self setupCapability];
     RendererCommand::ApplicationInfo *applicationInfo =
         rendererCommand_->mutable_application_info();
     applicationInfo->set_process_id(::getpid());
@@ -212,7 +222,7 @@ CompositionMode GetCompositionMode(NSString *modeID) {
   [keyCodeMap_ release];
   [originalString_ release];
   [composedString_ release];
-  [clientBundle_ release];
+  delete clientBundle_;
   delete candidateController_;
   delete session_;
   delete rendererCommand_;
@@ -225,28 +235,48 @@ CompositionMode GetCompositionMode(NSString *modeID) {
 }
 
 + (void)initializeConstants {
-  // should not open links during screensaver.
-  gNoOpenLinkApps =
-      [NSSet setWithObjects:@"com.apple.securityagent", nil];
+  set<string> *noOpenlinkApps = new(nothrow) set<string>;
+  if (noOpenlinkApps) {
+    // should not open links during screensaver.
+    noOpenlinkApps->insert("com.apple.securityagent");
+    gNoOpenLinkApps = noOpenlinkApps;
+  }
 
   map<CompositionMode, NSString *> *newMap =
-      new map<CompositionMode, NSString *>;
-  (*newMap)[mozc::commands::DIRECT] = GetLabelForSuffix("Roman");
-  (*newMap)[mozc::commands::HIRAGANA] = GetLabelForSuffix("base");
-  (*newMap)[mozc::commands::FULL_KATAKANA] = GetLabelForSuffix("Katakana");
-  (*newMap)[mozc::commands::HALF_ASCII] = GetLabelForSuffix("Roman");
-  (*newMap)[mozc::commands::FULL_ASCII] = GetLabelForSuffix("FullWidthRoman");
-  (*newMap)[mozc::commands::HALF_KATAKANA] =
-      GetLabelForSuffix("FullWidthRoman");
-  gModeIdMap = newMap;
+      new(nothrow) map<CompositionMode, NSString *>;
+  if (newMap) {
+    (*newMap)[mozc::commands::DIRECT] = GetLabelForSuffix("Roman");
+    (*newMap)[mozc::commands::HIRAGANA] = GetLabelForSuffix("base");
+    (*newMap)[mozc::commands::FULL_KATAKANA] = GetLabelForSuffix("Katakana");
+    (*newMap)[mozc::commands::HALF_ASCII] = GetLabelForSuffix("Roman");
+    (*newMap)[mozc::commands::FULL_ASCII] = GetLabelForSuffix("FullWidthRoman");
+    (*newMap)[mozc::commands::HALF_KATAKANA] =
+        GetLabelForSuffix("FullWidthRoman");
+    gModeIdMap = newMap;
+  }
 
-  // Do not call selectedRange: method for the following applications
-  // because it could lead to application crash.
-  gNoSelectedRangeApps =
-    [NSSet setWithObjects:@"com.microsoft.Excel",
-           @"com.microsoft.Powerpoint",
-           @"com.microsoft.Word",
-           nil];
+  set<string> *noSelectedRangeApps = new(nothrow) set<string>;
+  if (noSelectedRangeApps) {
+    // Do not call selectedRange: method for the following
+    // applications because it could lead to application crash.
+    noSelectedRangeApps->insert("com.microsoft.Excel");
+    noSelectedRangeApps->insert("com.microsoft.Powerpoint");
+    noSelectedRangeApps->insert("com.microsoft.Word");
+    gNoSelectedRangeApps = noSelectedRangeApps;
+  }
+
+  // Do not call selectInputMode: method for the following
+  // applications because it could cause some unexpected behavior.
+  // MS-Word: When the display mode goes to ASCII but there is no
+  // compositions, it goes to direct input mode instead of Half-ASCII
+  // mode.  When the first composition character is alphanumeric (such
+  // like pressing Shift-A at first), that character is directly
+  // inserted into application instead of composition starting "A".
+  set<string> *noDisplayModeSwitchApps = new(nothrow) set<string>;
+  if (noDisplayModeSwitchApps) {
+    noDisplayModeSwitchApps->insert("com.microsoft.Word");
+    gNoDisplayModeSwitchApps = noDisplayModeSwitchApps;
+  }
 }
 
 #pragma mark IMKStateSetting Protocol
@@ -257,19 +287,15 @@ CompositionMode GetCompositionMode(NSString *modeID) {
 
 - (void)activateServer:(id)sender {
   [super activateServer:sender];
-  [clientBundle_ release];
-  clientBundle_ = [[sender bundleIdentifier] copy];
   checkInputMode_ = YES;
   if (rendererCommand_->visible() && candidateController_) {
     candidateController_->ExecCommand(*rendererCommand_);
   }
   [self handleConfig];
   [server_ setCurrentController:self];
-  DLOG(INFO) << [[NSString stringWithFormat:
-                             @"%s client (%@): activated for %@",
-                           kProductNameInEnglish, self, sender] UTF8String];
-  DLOG(INFO) << [[NSString stringWithFormat:
-                             @"sender bundleID: %@", clientBundle_] UTF8String];
+  DLOG(INFO) << kProductNameInEnglish << " client (" << self
+             << "): activated for " << sender;
+  DLOG(INFO) << "sender bundleID: " << *clientBundle_;
 }
 
 - (void)deactivateServer:(id)sender {
@@ -280,11 +306,9 @@ CompositionMode GetCompositionMode(NSString *modeID) {
   if (candidateController_) {
     candidateController_->ExecCommand(clearCommand);
   }
-  DLOG(INFO) << [[NSString stringWithFormat:
-                             @"%s client (%@): deactivated",
-                           kProductNameInEnglish, self] UTF8String];
-  DLOG(INFO) << [[NSString stringWithFormat:
-                             @"sender bundleID: %@", clientBundle_] UTF8String];
+  DLOG(INFO) << kProductNameInEnglish << " client (" << self
+             << "): deactivated";
+  DLOG(INFO) << "sender bundleID: " << *clientBundle_;
   [super deactivateServer:sender];
 }
 
@@ -331,6 +355,25 @@ CompositionMode GetCompositionMode(NSString *modeID) {
     // depending on which type of keyboard is actually connected.
     [[self client] overrideKeyboardWithKeyboardNamed:@"com.apple.keylayout.US"];
   }
+}
+
+- (void)setupClientBundle:(id)sender {
+  NSString *bundleIdentifier = [sender bundleIdentifier];
+  if (bundleIdentifier != nil && [bundleIdentifier length] > 0) {
+    clientBundle_->assign([bundleIdentifier UTF8String]);
+  }
+}
+
+- (void)setupCapability {
+  Capability capability;
+
+  if (IsBannedApplication(gNoSelectedRangeApps, *clientBundle_)) {
+    capability.set_text_deletion(Capability::NO_TEXT_DELETION_CAPABILITY);
+  } else {
+    capability.set_text_deletion(Capability::DELETE_PRECEDING_TEXT);
+  }
+
+  session_->set_client_capability(capability);
 }
 
 // Mode changes to direct and clean up the status.
@@ -386,6 +429,9 @@ CompositionMode GetCompositionMode(NSString *modeID) {
     LOG(ERROR) << "gModeIdMap is not initialized correctly.";
     return;
   }
+  if (IsBannedApplication(gNoDisplayModeSwitchApps, *clientBundle_)) {
+    return;
+  }
 
   map<CompositionMode, NSString *>::const_iterator it = gModeIdMap->find(mode_);
   if (it == gModeIdMap->end()) {
@@ -408,16 +454,77 @@ CompositionMode GetCompositionMode(NSString *modeID) {
 
 - (void)launchWordRegisterTool:(id)client {
   ::setenv(mozc::kWordRegisterEnvironmentName, "", 1);
-  if (![gNoSelectedRangeApps containsObject:clientBundle_]) {
+  if (!IsBannedApplication(gNoSelectedRangeApps, *clientBundle_)) {
     NSRange selectedRange = [client selectedRange];
     if (selectedRange.location != NSNotFound &&
-        selectedRange.length != NSNotFound) {
+        selectedRange.length != NSNotFound &&
+        selectedRange.length > 0) {
       NSString *text =
         [[client attributedSubstringFromRange:selectedRange] string];
      :: setenv(mozc::kWordRegisterEnvironmentName, [text UTF8String], 1);
     }
   }
   MacProcess::LaunchMozcTool("word_register_dialog");
+}
+
+- (void)invokeReconvert:(const SessionCommand *)command client:(id)sender {
+  if (IsBannedApplication(gNoSelectedRangeApps, *clientBundle_)) {
+    return;
+  }
+
+  NSRange selectedRange = [sender selectedRange];
+  if (selectedRange.location == NSNotFound ||
+      selectedRange.length == NSNotFound) {
+    // the application does not support reconversion.
+    return;
+  }
+
+  DLOG(INFO) << selectedRange.location << ", " << selectedRange.length;
+  SessionCommand sending_command;
+  Output output;
+  sending_command.CopyFrom(*command);
+
+  if (selectedRange.length == 0) {
+    // Currently no range is selected for reconversion.  Tries to
+    // invoke UNDO instead.
+    [self invokeUndo:sender];
+    return;
+  }
+
+  NSAttributedString *text =
+      [sender attributedSubstringFromRange:selectedRange];
+  if (!sending_command.has_text()) {
+    sending_command.set_text([[text string] UTF8String]);
+  }
+
+  if (session_->SendCommand(sending_command, &output)) {
+    replacementRange_ = selectedRange;
+    [self processOutput:&output client:sender];
+  }
+}
+
+- (void)invokeUndo:(id)sender {
+  if (IsBannedApplication(gNoSelectedRangeApps, *clientBundle_)) {
+    return;
+  }
+
+  NSRange selectedRange = [sender selectedRange];
+  if (selectedRange.location == NSNotFound ||
+      selectedRange.length == NSNotFound ||
+      // Some applications such like iTunes does not return NSNotFound
+      // range but (0, 0).  However, the range starting with negative
+      // location has to be invalid, then we can reject such apps.
+      selectedRange.location == 0) {
+    return;
+  }
+
+  DLOG(INFO) << selectedRange.location << ", " << selectedRange.length;
+  SessionCommand command;
+  Output output;
+  command.set_type(SessionCommand::UNDO);
+  if (session_->SendCommand(command, &output)) {
+    [self processOutput:&output client:sender];
+  }
 }
 
 - (void)processOutput:(const mozc::commands::Output *)output client:(id)sender {
@@ -433,6 +540,34 @@ CompositionMode GetCompositionMode(NSString *modeID) {
 
   if (output->has_result()) {
     [self commitText:output->result().value().c_str() client:sender];
+  }
+
+  // Handles deletion range.  We do not even handle it for some
+  // applications to prevent application crashes.
+  if (output->has_deletion_range() &&
+      !IsBannedApplication(gNoSelectedRangeApps, *clientBundle_)) {
+    if ([composedString_ length] == 0 &&
+        replacementRange_.location == NSNotFound) {
+      NSRange selectedRange = [sender selectedRange];
+      const mozc::commands::DeletionRange &deletion_range =
+          output->deletion_range();
+      if (selectedRange.location != NSNotFound ||
+          selectedRange.length != NSNotFound ||
+          selectedRange.location + deletion_range.offset() > 0) {
+        // The offset is a negative value.  See session/commands.proto for
+        // the details.
+        selectedRange.location += deletion_range.offset();
+        selectedRange.length += deletion_range.length();
+        replacementRange_ = selectedRange;
+      }
+    } else {
+      // We have to consider the case that there is already
+      // composition and/or we already set the position of the
+      // composition by replacementRange_.  We do nothing here at this
+      // time because we already found that it will involve several
+      // buggy behaviors with Carbon apps and MS Office.
+      // TODO(mukai): find the right behavior.
+    }
   }
 
   [self updateComposedString:&(output->preedit())];
@@ -455,18 +590,34 @@ CompositionMode GetCompositionMode(NSString *modeID) {
 
   if (output->has_launch_tool_mode()) {
     switch (output->launch_tool_mode()) {
-    case mozc::commands::Output::CONFIG_DIALOG:
-      MacProcess::LaunchMozcTool("config_dialog");
-      break;
-    case mozc::commands::Output::DICTIONARY_TOOL:
-      MacProcess::LaunchMozcTool("dictionary_tool");
-      break;
-    case mozc::commands::Output::WORD_REGISTER_DIALOG:
-      [self launchWordRegisterTool:sender];
-      break;
-    default:
-      // do nothing
-      break;
+      case mozc::commands::Output::CONFIG_DIALOG:
+        MacProcess::LaunchMozcTool("config_dialog");
+        break;
+      case mozc::commands::Output::DICTIONARY_TOOL:
+        MacProcess::LaunchMozcTool("dictionary_tool");
+        break;
+      case mozc::commands::Output::WORD_REGISTER_DIALOG:
+        [self launchWordRegisterTool:sender];
+        break;
+      default:
+        // do nothing
+        break;
+    }
+  }
+
+  // Handle callbacks.
+  if (output->has_callback() && output->callback().has_session_command()) {
+    const SessionCommand &callback_command =
+        output->callback().session_command();
+    if (callback_command.type() == SessionCommand::CONVERT_REVERSE) {
+      [self invokeReconvert:&callback_command client:sender];
+    } else if (callback_command.type() == SessionCommand::UNDO) {
+      [self invokeUndo:sender];
+    } else {
+      Output output_for_callback;
+      if (session_->SendCommand(callback_command, &output_for_callback)) {
+        [self processOutput:&output_for_callback client:sender];
+      }
     }
   }
 }
@@ -611,7 +762,7 @@ CompositionMode GetCompositionMode(NSString *modeID) {
   // On some application like login window of screensaver, opening
   // link behavior should not happen because it can cause some
   // security issues.
-  if (!clientBundle_ || [gNoOpenLinkApps containsObject:clientBundle_]) {
+  if (!clientBundle_ || IsBannedApplication(gNoOpenLinkApps, *clientBundle_)) {
     return;
   }
   [[NSWorkspace sharedWorkspace] openURL:url];
@@ -658,7 +809,6 @@ CompositionMode GetCompositionMode(NSString *modeID) {
     return NO;
   }
 
-
   // Send the key event to the server actually
   Output output;
 
@@ -688,28 +838,9 @@ CompositionMode GetCompositionMode(NSString *modeID) {
 }
 
 - (IBAction)reconversionClicked:(id)sender {
-  id client = [self client];
-  NSRange selectedRange = NSMakeRange(NSNotFound, NSNotFound);
-  if (![gNoSelectedRangeApps containsObject:clientBundle_]) {
-    selectedRange = [client selectedRange];
-  }
-  if (selectedRange.location == NSNotFound ||
-      selectedRange.length == NSNotFound) {
-    // the application does not support reconversion.
-    return;
-  }
-
-  DLOG(INFO) << selectedRange.location << ", " << selectedRange.length;
-  NSAttributedString *text =
-      [client attributedSubstringFromRange:selectedRange];
   SessionCommand command;
-  Output output;
   command.set_type(SessionCommand::CONVERT_REVERSE);
-  command.set_text([[text string] UTF8String]);
-  if (session_->SendCommand(command, &output)) {
-    replacementRange_ = selectedRange;
-    [self processOutput:&output client:[self client]];
-  }
+  [self invokeReconvert:&command client:[self client]];
 }
 
 - (IBAction)configClicked:(id)sender {

@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -49,14 +49,11 @@ namespace commands {
 class Command;
 } // namespace commands
 
-namespace keymap {
-class KeyMapManager;
-}  // namespace keymap
-
 namespace session {
+class SessionFactoryInterface;
+class SessionInterface;
 class SessionObserverHandler;
 class SessionObserverInterface;
-class Session;
 }  // namespace session
 
 class SessionHandler : public SessionHandlerInterface {
@@ -74,13 +71,17 @@ class SessionHandler : public SessionHandlerInterface {
 
   // NewSession returns new Sessoin.
   // Client needs to delete it properly
-  session::Session *NewSession();
+  session::SessionInterface *NewSession();
 
   virtual void AddObserver(session::SessionObserverInterface *observer);
+
+  void SetSessionFactory(session::SessionFactoryInterface *new_factory);
 
  private:
   // Reload settings which are managed by SessionHandler
   void ReloadSession();
+  // Reload the configurations on the current sessions.
+  void ReloadConfig();
 
   bool CreateSession(commands::Command *command);
   bool DeleteSession(commands::Command *command);
@@ -101,10 +102,10 @@ class SessionHandler : public SessionHandlerInterface {
   SessionID CreateNewSessionID();
   bool DeleteSessionID(SessionID id);
 
-  typedef LRUCache<SessionID, session::Session*> SessionMap;
-  typedef LRUCache<SessionID, session::Session*>::Element SessionElement;
+  typedef LRUCache<SessionID, session::SessionInterface*> SessionMap;
+  typedef LRUCache<SessionID,
+                   session::SessionInterface*>::Element SessionElement;
   scoped_ptr<SessionMap> session_map_;
-  scoped_ptr<keymap::KeyMapManager> keymap_;
   scoped_ptr<SessionWatchDog> session_watch_dog_;
   bool is_available_;
   int keyevent_counter_;
@@ -113,6 +114,7 @@ class SessionHandler : public SessionHandlerInterface {
   uint64 last_cleanup_time_;
   uint64 last_create_session_time_;
 
+  session::SessionFactoryInterface *session_factory_;
   scoped_ptr<session::SessionObserverHandler> observer_handler_;
   scoped_ptr<Stopwatch> stopwatch_;
 

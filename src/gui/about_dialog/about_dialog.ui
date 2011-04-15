@@ -77,7 +77,7 @@
         </font>
        </property>
        <property name="text">
-        <string>Copyright © 2010 Google Inc. All Rights Reserved.</string>
+        <string>Copyright © 2011 Google Inc. All Rights Reserved.</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>

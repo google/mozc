@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -83,7 +83,7 @@ static void Compile(const string &files,
       }
       CHECK_LT(rewind_len, 256) << "rewind length must be < 256";
       CHECK_GT(key.size(), rewind_len) << "rewind_length < key.size()";
-      dic.push_back(make_pair<string, int>
+      dic.push_back(pair<string, int>
                     (key,
                      static_cast<int>(output.size())));
       output += value;

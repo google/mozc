@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -311,12 +311,12 @@ void Util::LowerString(string *str) {
   string utf8;
   size_t pos = 0;
   while (pos < str->size()) {
-    uint16 ucs2 = Util::UTF8ToUCS2(begin + pos, begin + str->size(), &mblen);
-    // ('A' <= ucs2 && ucs2 <= 'Z') || ('Ａ' <= ucs2 && ucs2 <= 'Ｚ')
-    if ((0x0041 <= ucs2 && ucs2 <= 0x005A) ||
-        (0xFF21 <= ucs2 && ucs2 <= 0xFF3A)) {
-      ucs2 += kOffsetFromUpperToLower;
-      UCS2ToUTF8(ucs2, &utf8);
+    char32 ucs4 = Util::UTF8ToUCS4(begin + pos, begin + str->size(), &mblen);
+    // ('A' <= ucs4 && ucs4 <= 'Z') || ('Ａ' <= ucs4 && ucs4 <= 'Ｚ')
+    if ((0x0041 <= ucs4 && ucs4 <= 0x005A) ||
+        (0xFF21 <= ucs4 && ucs4 <= 0xFF3A)) {
+      ucs4 += kOffsetFromUpperToLower;
+      UCS4ToUTF8(ucs4, &utf8);
       // The size of upper case character must be equal to the source
       // lower case character.  The following check asserts it.
       if (utf8.size() != mblen) {
@@ -336,12 +336,12 @@ void Util::UpperString(string *str) {
   string utf8;
   size_t pos = 0;
   while (pos < str->size()) {
-    uint16 ucs2 = Util::UTF8ToUCS2(begin + pos, begin + str->size(), &mblen);
-    // ('a' <= ucs2 && ucs2 <= 'z') || ('ａ' <= ucs2 && ucs2 <= 'ｚ')
-    if ((0x0061 <= ucs2 && ucs2 <= 0x007A) ||
-        (0xFF41 <= ucs2 && ucs2 <= 0xFF5A)) {
-      ucs2 -= kOffsetFromUpperToLower;
-      UCS2ToUTF8(ucs2, &utf8);
+    char32 ucs4 = Util::UTF8ToUCS4(begin + pos, begin + str->size(), &mblen);
+    // ('a' <= ucs4 && ucs4 <= 'z') || ('ａ' <= ucs4 && ucs4 <= 'ｚ')
+    if ((0x0061 <= ucs4 && ucs4 <= 0x007A) ||
+        (0xFF41 <= ucs4 && ucs4 <= 0xFF5A)) {
+      ucs4 -= kOffsetFromUpperToLower;
+      UCS4ToUTF8(ucs4, &utf8);
       // The size of upper case character must be equal to the source
       // lower case character.  The following check asserts it.
       if (utf8.size() != mblen) {
@@ -382,38 +382,57 @@ size_t Util::CharsLen(const char *src, size_t length) {
   return result;
 }
 
-uint16 Util::UTF8ToUCS2(const char *begin,
+char32 Util::UTF8ToUCS4(const char *begin,
                         const char *end,
                         size_t *mblen) {
-  const uint32 len = static_cast<uint32>(end - begin);
+  DCHECK_LE(begin, end);
+  const size_t len = static_cast<size_t>(end - begin);
+  if (begin == end) {
+    *mblen = 0;
+    return 0;
+  }
+
   if (static_cast<unsigned char>(begin[0]) < 0x80) {
     *mblen = 1;
     return static_cast<unsigned char>(begin[0]);
   } else if (len >= 2 && (begin[0] & 0xe0) == 0xc0) {
     *mblen = 2;
-    return ((begin[0] & 0x1f) << 6) |(begin[1] & 0x3f);
+    return ((begin[0] & 0x1f) << 6) | (begin[1] & 0x3f);
   } else if (len >= 3 && (begin[0] & 0xf0) == 0xe0) {
     *mblen = 3;
     return ((begin[0] & 0x0f) << 12) |
-        ((begin[1] & 0x3f) << 6) |(begin[2] & 0x3f);
-    /* belows are out of UCS2 */
+        ((begin[1] & 0x3f) << 6) | (begin[2] & 0x3f);
   } else if (len >= 4 && (begin[0] & 0xf8) == 0xf0) {
     *mblen = 4;
-    return 0;
+    return ((begin[0] & 0x07) << 18) |
+        ((begin[1] & 0x3f) << 12) | ((begin[2] & 0x3f) << 6) |
+        (begin[3] & 0x3f);
+  // Below is out of UCS4 but acceptable in 32-bit.
   } else if (len >= 5 && (begin[0] & 0xfc) == 0xf8) {
     *mblen = 5;
-    return 0;
+    return ((begin[0] & 0x03) << 24) |
+        ((begin[1] & 0x3f) << 18) | ((begin[2] & 0x3f) << 12) |
+        ((begin[3] & 0x3f) << 6) | (begin[4] & 0x3f);
   } else if (len >= 6 && (begin[0] & 0xfe) == 0xfc) {
     *mblen = 6;
-    return 0;
+    return ((begin[0] & 0x01) << 30) |
+        ((begin[1] & 0x3f) << 24) | ((begin[2] & 0x3f) << 18) |
+        ((begin[3] & 0x3f) << 12) | ((begin[4] & 0x3f) << 6) |
+        (begin[5] & 0x3f);
   } else {
     *mblen = 1;
     return 0;
   }
 }
 
+uint16 Util::UTF8ToUCS2(const char *begin,
+                        const char *end,
+                        size_t *mblen) {
+  return static_cast<uint16>(UTF8ToUCS4(begin, end, mblen));
+}
+
 namespace {
-void UCS2ToUTF8Internal(uint16 c, char *output) {
+void UCS4ToUTF8Internal(char32 c, char *output) {
   if (c < 0x00080) {
     output[0] = static_cast<char>(c & 0xFF);
     output[1] = '\0';
@@ -421,38 +440,70 @@ void UCS2ToUTF8Internal(uint16 c, char *output) {
     output[0] = static_cast<char>(0xC0 + ((c >> 6) & 0x1F));
     output[1] = static_cast<char>(0x80 + (c & 0x3F));
     output[2] = '\0';
-  } else {
+  } else if (c < 0x10000) {
     output[0] = static_cast<char>(0xE0 + ((c >> 12) & 0x0F));
     output[1] = static_cast<char>(0x80 + ((c >> 6) & 0x3F));
     output[2] = static_cast<char>(0x80 + (c & 0x3F));
     output[3] = '\0';
+  } else if (c < 0x200000) {
+    output[0] = static_cast<char>(0xF0 + ((c >> 18) & 0x07));
+    output[1] = static_cast<char>(0x80 + ((c >> 12) & 0x3F));
+    output[2] = static_cast<char>(0x80 + ((c >> 6)  & 0x3F));
+    output[3] = static_cast<char>(0x80 + (c & 0x3F));
+    output[4] = '\0';
+  // below is not in UCS4 but in 32bit int.
+  } else if (c < 0x8000000) {
+    output[0] = static_cast<char>(0xF8 + ((c >> 24) & 0x03));
+    output[1] = static_cast<char>(0x80 + ((c >> 18) & 0x3F));
+    output[2] = static_cast<char>(0x80 + ((c >> 12) & 0x3F));
+    output[3] = static_cast<char>(0x80 + ((c >> 6)  & 0x3F));
+    output[4] = static_cast<char>(0x80 + (c & 0x3F));
+    output[5] = '\0';
+  } else {
+    output[0] = static_cast<char>(0xFC + ((c >> 30) & 0x01));
+    output[1] = static_cast<char>(0x80 + ((c >> 24) & 0x3F));
+    output[2] = static_cast<char>(0x80 + ((c >> 18) & 0x3F));
+    output[3] = static_cast<char>(0x80 + ((c >> 12) & 0x3F));
+    output[4] = static_cast<char>(0x80 + ((c >> 6)  & 0x3F));
+    output[5] = static_cast<char>(0x80 + (c & 0x3F));
+    output[6] = '\0';
   }
-
-  // UCS4 range
-  // output[0] = static_cast<char>(0xF0 + ((c >> 18) & 0x07));
-  // output[1] = static_cast<char>(0x80 + ((c >> 12) & 0x3F));
-  // output[2] = static_cast<char>(0x80 + ((c >> 6) & 0x3F));
-  // output[3] = static_cast<char>(0x80 + (c & 0x3F));
-  // output[4] = '\0';
 }
 }   // namespace
 
-void Util::UCS2ToUTF8(uint16 c, string *output) {
-  char buf[4];
-  UCS2ToUTF8Internal(c, buf);
+void Util::UCS4ToUTF8(char32 c, string *output) {
   output->clear();
-  *output = buf;
+  UCS4ToUTF8Append(c, output);
+}
+
+void Util::UCS4ToUTF8Append(char32 c, string *output) {
+  char buf[6];
+  UCS4ToUTF8Internal(c, buf);
+  *output += buf;
+}
+void Util::UCS2ToUTF8(uint16 c, string *output) {
+  UCS4ToUTF8(c, output);
 }
 
 void Util::UCS2ToUTF8Append(uint16 c, string *output) {
-  char buf[4];
-  UCS2ToUTF8Internal(c, buf);
-  *output += buf;
+  UCS4ToUTF8Append(c, output);
 }
 
 #ifdef OS_WINDOWS
+size_t Util::WideCharsLen(const char *src) {
+  const int len = ::MultiByteToWideChar(CP_UTF8, 0, src, -1, NULL, 0);
+  if (len <= 0) {
+    return 0;
+  }
+  return len - 1;  // -1 represents Null termination.
+}
+
+size_t Util::WideCharsLen(const string &src) {
+  return WideCharsLen(src.c_str());
+}
+
 int Util::UTF8ToWide(const char *input, wstring *output) {
-  const int output_length = MultiByteToWideChar(CP_UTF8, 0, input, -1, NULL, 0);
+  const int output_length = WideCharsLen(input);
   if (output_length == 0) {
     return 0;
   }
@@ -721,6 +772,10 @@ bool Util::GetSecureRandomAsciiSequence(char *buf, size_t buf_size) {
   return true;
 }
 
+int Util::Random(int size) {
+  return static_cast<int> (1.0 * size * rand() / (RAND_MAX + 1.0));
+}
+
 void Util::GetTimeOfDay(uint64 *sec, uint32 *usec) {
 #ifdef OS_WINDOWS
   FILETIME file_time;
@@ -871,6 +926,14 @@ bool NormalizeNumbersHelper(const vector<uint64>::const_iterator &begin,
         && AddAndCheckOverflow(*number_output, rest, number_output);
   }
 }
+
+void EscapeInternal(char input, const string &prefix, string *output) {
+  const int hi = ((static_cast<int>(input) & 0xF0) >> 4);
+  const int lo = (static_cast<int>(input) & 0x0F);
+  *output += prefix;
+  *output += static_cast<char>(hi >= 10 ? hi - 10 + 'A' : hi + '0');
+  *output += static_cast<char>(lo >= 10 ? lo - 10 + 'A' : lo + '0');
+}
 }  // end of anonymous namespace
 
 // Convert Kanji numbers into Arabic numbers:
@@ -896,7 +959,7 @@ bool Util::NormalizeNumbers(const string &input,
   kanji_output->clear();
   while (begin < end) {
     size_t mblen = 0;
-    const uint16 wchar = UTF8ToUCS2(begin, end, &mblen);
+    const char32 wchar = UTF8ToUCS4(begin, end, &mblen);
     string w(begin, mblen);
     if (wchar >= 0x0030 && wchar <= 0x0039) {
       *kanji_output += kNumKanjiDigits[wchar - 0x0030];
@@ -1171,7 +1234,7 @@ bool Util::IsFullWidthSymbolInHalfWidthKatakana(const string &input) {
   const char *end = begin + input.size();
   while (begin < end) {
     size_t mblen = 0;
-    uint16 w = UTF8ToUCS2(begin, end, &mblen);
+    char32 w = UTF8ToUCS4(begin, end, &mblen);
     switch (w) {
       case 0x3002:  // FULLSTOP "。"
       case 0x300C:  // LEFT CORNER BRACKET "「"
@@ -1196,7 +1259,7 @@ bool Util::IsHalfWidthKatakanaSymbol(const string &input) {
   const char *end = begin + input.size();
   while (begin < end) {
     size_t mblen = 0;
-    uint16 w = UTF8ToUCS2(begin, end, &mblen);
+    char32 w = UTF8ToUCS4(begin, end, &mblen);
     switch (w) {
       case 0xFF61:  // FULLSTOP "｡"
       case 0xFF62:  // LEFT CORNER BRACKET "｢"
@@ -1220,7 +1283,7 @@ bool Util::IsKanaSymbolContained(const string &input) {
   const char *end = begin + input.size();
   while (begin < end) {
     size_t mblen = 0;
-    uint16 w = UTF8ToUCS2(begin, end, &mblen);
+    char32 w = UTF8ToUCS4(begin, end, &mblen);
     switch (w) {
       case 0x3002:  // FULLSTOP "。"
       case 0x300C:  // LEFT CORNER BRACKET "「"
@@ -1461,6 +1524,50 @@ bool Util::CopyTextFile(const string &from, const string &to) {
   }
 
   return true;
+}
+
+bool Util::CopyFile(const string &from, const string &to) {
+  Mmap<char> input;
+  if (!input.Open(from.c_str(), "r")) {
+    LOG(ERROR) << "Can't open input file. " << from;
+    return false;
+  }
+
+  OutputFileStream ofs(to.c_str(), ios::binary);
+  if (!ofs) {
+    LOG(ERROR) << "Can't open output file. " << to;
+    return false;
+  }
+
+  // TOOD(taku): opening file with mmap could not be
+  // a best solution. Also, we have to check disk quota
+  // in advance.
+  ofs.write(input.begin(), input.GetFileSize());
+
+  return true;
+}
+
+// Return true if |filename1| and |filename2| are identical.
+bool Util::IsEqualFile(const string &filename1,
+                       const string &filename2) {
+  Mmap<char> mmap1, mmap2;
+
+  if (!mmap1.Open(filename1.c_str(), "r")) {
+    LOG(ERROR) << "Cannot open: " << filename1;
+    return false;
+  }
+
+  if (!mmap2.Open(filename2.c_str(), "r")) {
+    LOG(ERROR) << "Cannot open: " << filename2;
+    return false;
+  }
+
+  if (mmap1.GetFileSize() != mmap2.GetFileSize()) {
+    return false;
+  }
+
+  return 0 == memcmp(mmap1.begin(), mmap2.begin(),
+                     mmap1.GetFileSize());
 }
 
 // TODO(taku):  This value is defined in KnownFolders.h
@@ -1751,8 +1858,8 @@ string Util::GetUserNameAsString() {
   DCHECK_NE(FALSE, result);
   Util::WideToUTF8(&wusername[0], &username);
 #else  // OS_WINDOWS
-  char buf[1024];
   struct passwd pw, *ppw;
+  char buf[1024];
   CHECK_EQ(0, getpwuid_r(geteuid(), &pw, buf, sizeof(buf), &ppw));
   username.append(pw.pw_name);
 #endif  // OS_WINDOWS
@@ -2055,11 +2162,14 @@ void Util::AppendCGIParams(const vector<pair<string, string> > &params,
 void Util::Escape(const string &input, string *output) {
   output->clear();
   for (size_t i = 0; i < input.size(); ++i) {
-    const int hi = ((static_cast<int>(input[i]) & 0xF0) >> 4);
-    const int lo = (static_cast<int>(input[i]) & 0x0F);
-    *output += "\\x";
-    *output += static_cast<char>(hi >= 10 ? hi - 10 + 'A' : hi + '0');
-    *output += static_cast<char>(lo >= 10 ? lo - 10 + 'A' : lo + '0');
+    EscapeInternal(input[i], "\\x", output);
+  }
+}
+
+void Util::EscapeUrl(const string &input, string *output) {
+  output->clear();
+  for (size_t i = 0; i < input.size(); ++i) {
+    EscapeInternal(input[i], "%", output);
   }
 }
 
@@ -2081,31 +2191,52 @@ void Util::EscapeCss(const string &plain, string *escaped) {
 #define INRANGE(w, a, b) ((w) >= (a) && (w) <= (b))
 
 // script type
-Util::ScriptType Util::GetScriptType(uint16 w) {
-  if (INRANGE(w, 0x0030, 0x0039) ||   // ascii number
-      INRANGE(w, 0xFF10, 0xFF19)) {   // full width number
+// TODO(yukawa, team): Make a mechanism to keep this classifier up-to-date
+//   based on the original data from Unicode.org.
+Util::ScriptType Util::GetScriptType(char32 w) {
+  if (INRANGE(w, 0x0030, 0x0039) ||    // ascii number
+      INRANGE(w, 0xFF10, 0xFF19)) {    // full width number
     return NUMBER;
-  } else if (INRANGE(w, 0x0041, 0x005A) ||  // ascii upper
-             INRANGE(w, 0x0061, 0x007A) ||  // ascii lower
-             INRANGE(w, 0xFF21, 0xFF3A) ||  // fullwidth ascii upper
-             INRANGE(w, 0xFF41, 0xFF5A)) {  // fullwidth ascii lower
+  } else if (
+      INRANGE(w, 0x0041, 0x005A) ||    // ascii upper
+      INRANGE(w, 0x0061, 0x007A) ||    // ascii lower
+      INRANGE(w, 0xFF21, 0xFF3A) ||    // fullwidth ascii upper
+      INRANGE(w, 0xFF41, 0xFF5A)) {    // fullwidth ascii lower
     return ALPHABET;
-  } else if (INRANGE(w, 0x4E00, 0x9FA5) ||  // CJK Unified Ideographs
-             INRANGE(w, 0x3400, 0x4DBF) ||  // CJK Unified Ideographs ExtentionA
-             INRANGE(w, 0xF900, 0xFA2D) ||  // CJK Compatibility Ideographs
-             w == 0x305) {  // 々 (repetition)
+  } else if (
+      w == 0x3005 ||                   // IDEOGRAPHIC ITERATION MARK "々"
+      INRANGE(w, 0x3400, 0x4DBF) ||    // CJK Unified Ideographs Extention A
+      INRANGE(w, 0x4E00, 0x9FFF) ||    // CJK Unified Ideographs
+      INRANGE(w, 0xF900, 0xFAFF) ||    // CJK Compatibility Ideographs
+      INRANGE(w, 0x20000, 0x2A6DF) ||  // CJK Unified Ideographs Extention B
+      INRANGE(w, 0x2A700, 0x2B73F) ||  // CJK Unified Ideographs Extention C
+      INRANGE(w, 0x2B740, 0x2B81F) ||  // CJK Unified Ideographs Extention D
+      INRANGE(w, 0x2F800, 0x2FA1F)) {  // CJK Compatibility Ideographs
+    // As of Unicode 6.0.2, each block has the following characters assigned.
+    // [U+3400, U+4DB5]:   CJK Unified Ideographs Extention A
+    // [U+4E00, U+9FCB]:   CJK Unified Ideographs
+    // [U+4E00, U+FAD9]:   CJK Compatibility Ideographs
+    // [U+20000, U+2A6D6]: CJK Unified Ideographs Extention B
+    // [U+2A700, U+2B734]: CJK Unified Ideographs Extention C
+    // [U+2B740, U+2B81D]: CJK Unified Ideographs Extention D
+    // [U+2F800, U+2FA1D]: CJK Compatibility Ideographs
     return KANJI;
-  } else if (INRANGE(w, 0x3041, 0x309F)) {  // hiragana
+  } else if (
+      INRANGE(w, 0x3041, 0x309F) ||    // hiragana
+      w == 0x1B001) {                  // HIRAGANA LETTER ARCHAIC YE
     return HIRAGANA;
-  } else if (INRANGE(w, 0x30A1, 0x30FE) ||  // full width katakana
-             INRANGE(w, 0xFF65, 0xFF9F)) {  // half width katakana
+  } else if (
+      INRANGE(w, 0x30A1, 0x30FF) ||    // full width katakana
+      INRANGE(w, 0x31F0, 0x31FF) ||    // Katakana Phonetic Extensions for Ainu
+      INRANGE(w, 0xFF65, 0xFF9F) ||    // half width katakana
+      w == 0x1B000) {                  // KATAKANA LETTER ARCHAIC E
     return KATAKANA;
   }
 
   return UNKNOWN_SCRIPT;
 }
 
-Util::FormType Util::GetFormType(uint16 w) {
+Util::FormType Util::GetFormType(char32 w) {
   if (INRANGE(w, 0x0020, 0x007F) ||  // ascii
       INRANGE(w, 0xFF61, 0xFF9F)) {  // half-width katakana
     return HALF_WIDTH;
@@ -2118,7 +2249,7 @@ Util::FormType Util::GetFormType(uint16 w) {
 // return script type of first character in str
 Util::ScriptType Util::GetScriptType(const char *begin,
                                      const char *end, size_t *mblen) {
-  const uint16 w = Util::UTF8ToUCS2(begin, end, mblen);
+  const char32 w = Util::UTF8ToUCS4(begin, end, mblen);
   return Util::GetScriptType(w);
 }
 
@@ -2131,7 +2262,7 @@ Util::ScriptType GetScriptTypeInternal(const string &str,
   Util::ScriptType result = Util::SCRIPT_TYPE_SIZE;
 
   while (begin < end) {
-    const uint16 w = Util::UTF8ToUCS2(begin, end, &mblen);
+    const char32 w = Util::UTF8ToUCS4(begin, end, &mblen);
     Util::ScriptType type = Util::GetScriptType(w);
     if ((w == 0x30FC || w == 0x30FB ||
          (w >= 0x3099 && w <= 0x309C)) &&
@@ -2180,7 +2311,7 @@ bool Util::IsScriptType(const string &str, Util::ScriptType type) {
   const char *end = str.data() + str.size();
   size_t mblen = 0;
   while (begin < end) {
-    const uint16 w = Util::UTF8ToUCS2(begin, end, &mblen);
+    const char32 w = Util::UTF8ToUCS4(begin, end, &mblen);
     // Exception: 30FC (PROLONGEDSOUND MARK is categorized as HIRAGANA as well)
     if ((w == 0x30FC && type == HIRAGANA) || type == GetScriptType(w)) {
       begin += mblen;
@@ -2197,7 +2328,7 @@ bool Util::ContainsScriptType(const string &str, ScriptType type) {
   const char *end = str.data() + str.size();
   while (begin < end) {
     size_t mblen;
-    const uint16 w = Util::UTF8ToUCS2(begin, end, &mblen);
+    const char32 w = Util::UTF8ToUCS4(begin, end, &mblen);
     if (type == Util::GetScriptType(w)) {
       return true;
     }
@@ -2214,7 +2345,7 @@ Util::FormType Util::GetFormType(const string &str) {
   Util::FormType result = Util::UNKNOWN_FORM;
 
   while (begin < end) {
-    const uint16 w = Util::UTF8ToUCS2(begin, end, &mblen);
+    const char32 w = Util::UTF8ToUCS4(begin, end, &mblen);
     const Util::FormType type = GetFormType(w);
     if (type == UNKNOWN_FORM || (str.data() != begin && type != result)) {
       return UNKNOWN_FORM;
@@ -2226,7 +2357,7 @@ Util::FormType Util::GetFormType(const string &str) {
   return result;
 }
 
-// Util::CharcterSet Util::GetCharacterSet(uint16 ucs2);
+// Util::CharcterSet Util::GetCharacterSet(char32 ucs4);
 #include "base/character_set.h"
 
 Util::CharacterSet Util::GetCharacterSet(const string &str) {
@@ -2236,7 +2367,7 @@ Util::CharacterSet Util::GetCharacterSet(const string &str) {
   Util::CharacterSet result = Util::ASCII;
 
   while (begin < end) {
-    const uint16 w = Util::UTF8ToUCS2(begin, end, &mblen);
+    const char32 w = Util::UTF8ToUCS4(begin, end, &mblen);
     result = max(result, GetCharacterSet(w));
     begin += mblen;
   }

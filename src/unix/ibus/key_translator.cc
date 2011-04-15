@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -115,6 +115,7 @@ const struct SpecialKeyMap {
   {IBUS_KP_End, mozc::commands::KeyEvent::END},
   {IBUS_KP_Delete, mozc::commands::KeyEvent::DEL},
   {IBUS_KP_Insert, mozc::commands::KeyEvent::INSERT},
+  {IBUS_Caps_Lock, mozc::commands::KeyEvent::CAPS_LOCK},
 
   // Shift+TAB.
   {IBUS_ISO_Left_Tab, mozc::commands::KeyEvent::TAB},

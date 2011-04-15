@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -53,6 +53,10 @@ const uint32 kValueSize = 4;
 const uint32 kLRUSize   = 20000;
 const uint32 kSeedValue = 0xf28defe3;
 const uint32 kMaxCandidatesSize = 255;
+
+const char kFileName[] = "user://segment.db";
+
+LRUStorage *g_lru_storage = NULL;
 
 class FeatureValue {
  public:
@@ -464,13 +468,8 @@ bool SortCandidates(const vector<ScoreType> &sorted_scores, Segment *segment) {
 
 UserSegmentHistoryRewriter::UserSegmentHistoryRewriter()
     : storage_(new LRUStorage) {
-  static const char kFileName[] = "user://segment.db";
-  const string filename = ConfigFileStream::GetFileName(kFileName);
-  if (!storage_->OpenOrCreate(filename.c_str(),
-                              kValueSize, kLRUSize, kSeedValue)) {
-    LOG(WARNING) << "cannot initialize UserSegmentHistoryRewriter";
-    storage_.reset(NULL);
-  }
+  Reload();
+  g_lru_storage = storage_.get();
 
   CHECK_EQ(sizeof(uint32), sizeof(FeatureValue));
   CHECK_EQ(sizeof(uint32), sizeof(KeyTriggerValue));
@@ -507,11 +506,11 @@ do { \
 bool UserSegmentHistoryRewriter::GetScore(const Segments &segments,
                                           size_t segment_index,
                                           int candidate_index,
-                                          const string &top_functional_value,
-                                          uint16 top_pos_group,
                                           uint32 *score,
                                           uint32 *last_access_time) const {
   const size_t segments_size = segments.conversion_segments_size();
+  const Segment::Candidate &top_candidate =
+      segments.segment(segment_index).candidate(0);
   const Segment::Candidate &candidate =
       segments.segment(segment_index).candidate(candidate_index);
   const string &all_value = candidate.value;
@@ -526,10 +525,6 @@ bool UserSegmentHistoryRewriter::GetScore(const Segments &segments,
       (candidate.attributes & Segment::Candidate::CONTEXT_SENSITIVE) ||
       (segments.segment(segment_index).candidate(0).attributes &
        Segment::Candidate::CONTEXT_SENSITIVE);
-  const bool is_replaceable =
-      top_functional_value == candidate.functional_value() &&
-      top_pos_group == GetPosGroup(candidate);
-
   DCHECK(score);
   DCHECK(last_access_time);
 
@@ -554,6 +549,8 @@ bool UserSegmentHistoryRewriter::GetScore(const Segments &segments,
   FETCH_FEATURE(GetFeatureS,  all_key, all_value, single_score);
   FETCH_FEATURE(GetFeatureLN, content_key, content_value, bigram_number_score);
   FETCH_FEATURE(GetFeatureRN, content_key, content_value, bigram_number_score);
+
+  const bool is_replaceable = Replaceable(top_candidate, candidate);
 
   if (!context_sensitive && is_replaceable) {
     FETCH_FEATURE(GetFeatureC,  all_key, all_value, unigram_score);
@@ -580,6 +577,24 @@ bool UserSegmentHistoryRewriter::GetScore(const Segments &segments,
 
   return (*score > 0);
 }
+
+namespace {
+bool IsT13NCandidate(const Segment::Candidate &cand) {
+  // Regard the cand with 0-id as the transliterated candidate.
+  return (cand.lid == 0 && cand.rid == 0);
+}
+}  // namespace
+
+// Returns true if |lhs| candidate can be replaceable with |rhs|.
+bool UserSegmentHistoryRewriter::Replaceable(
+    const Segment::Candidate &lhs, const Segment::Candidate &rhs) const {
+  const bool same_functional_value =
+      (lhs.functional_value() == rhs.functional_value());
+  const bool same_pos_group = (GetPosGroup(lhs) == GetPosGroup(rhs));
+  return (same_functional_value &&
+          (same_pos_group || IsT13NCandidate(lhs) || IsT13NCandidate(rhs)));
+}
+
 
 void UserSegmentHistoryRewriter::RememberNumberPreference(
     const Segment &segment) {
@@ -646,11 +661,8 @@ void UserSegmentHistoryRewriter::RememberFirstCandidate(
   // if "is_replaceable" is true, it means that  the target candidate can
   // "SAFELY" be replaceable with the top candidate.
   const int top_index = GetDefaultCandidateIndex(seg);
-  const bool is_replaceable =
-      (top_index == 0) ||
-      (GetPosGroup(seg.candidate(top_index)) == GetPosGroup(candidate) &&
-       (seg.candidate(top_index).functional_value() ==
-        candidate.functional_value()));
+  const bool is_replaceable_with_top =
+      ((top_index == 0) || Replaceable(seg.candidate(top_index), candidate));
 
   // |feature_key| is used inside INSERT_FEATURE
   string feature_key;
@@ -663,12 +675,14 @@ void UserSegmentHistoryRewriter::RememberFirstCandidate(
   INSERT_FEATURE(GetFeatureRN, all_key, all_value, force_insert);
   INSERT_FEATURE(GetFeatureS,  all_key, all_value, force_insert);
 
-  if (!context_sensitive && is_replaceable) {
+  if (!context_sensitive && is_replaceable_with_top) {
     INSERT_FEATURE(GetFeatureC, all_key, all_value, force_insert);
   }
 
   // save content value
-  if (all_value != content_value && all_key != content_key && is_replaceable) {
+  if (all_value != content_value &&
+      all_key != content_key &&
+      is_replaceable_with_top) {
     INSERT_FEATURE(GetFeatureLR, content_key, content_value, force_insert);
     INSERT_FEATURE(GetFeatureLL, content_key, content_value, force_insert);
     INSERT_FEATURE(GetFeatureRR, content_key, content_value, force_insert);
@@ -753,6 +767,22 @@ void UserSegmentHistoryRewriter::Finish(Segments *segments) {
   // update usage stats here
   usage_stats::UsageStats::SetInteger("UserSegmentHistoryEntrySize",
                                       static_cast<int>(storage_->used_size()));
+}
+
+bool UserSegmentHistoryRewriter::Reload() {
+  const string filename = ConfigFileStream::GetFileName(kFileName);
+  if (!storage_->OpenOrCreate(filename.c_str(),
+                              kValueSize, kLRUSize, kSeedValue)) {
+    LOG(WARNING) << "cannot initialize UserSegmentHistoryRewriter";
+    return false;
+  }
+
+  const char kFileSuffix[] = ".merge_pending";
+  const string merge_pending_file = filename + kFileSuffix;
+  storage_->Merge(merge_pending_file.c_str());
+  Util::Unlink(merge_pending_file);
+
+  return true;
 }
 
 bool UserSegmentHistoryRewriter::ShouldRewrite(
@@ -906,10 +936,6 @@ bool UserSegmentHistoryRewriter::Rewrite(Segments *segments) const {
                    << "rewrite may be failed ";
     }
 
-    const string top_functional_value =
-        segment->candidate(0).functional_value();
-    const uint16 top_pos_group = GetPosGroup(segment->candidate(0));
-
     // for each all candidates expanded
     vector<ScoreType> scores;
     for (size_t l = 0;
@@ -923,8 +949,7 @@ bool UserSegmentHistoryRewriter::Rewrite(Segments *segments) const {
 
       uint32 score = 0;
       uint32 last_access_time = 0;
-      if (GetScore(*segments, i, j, top_functional_value, top_pos_group,
-                   &score, &last_access_time)) {
+      if (GetScore(*segments, i, j, &score, &last_access_time)) {
         scores.resize(scores.size() + 1);
         scores.back().score = score;
         scores.back().last_access_time = last_access_time;
@@ -947,5 +972,10 @@ void UserSegmentHistoryRewriter::Clear() {
     VLOG(1) << "Clearing user segment data";
     storage_->Clear();
   }
+}
+
+// static
+LRUStorage *UserSegmentHistoryRewriter::GetStorage() {
+  return g_lru_storage;
 }
 }  // namespace

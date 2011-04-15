@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,7 +39,9 @@
 #include "base/base.h"
 #include "base/init.h"
 #include "base/util.h"
+#include "converter/connector_interface.h"
 #include "converter/converter_interface.h"
+#include "converter/immutable_converter_interface.h"
 #include "converter/node.h"
 #include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
@@ -55,48 +57,20 @@
 namespace mozc {
 
 namespace {
+
+// Note that PREDICTION mode is much slower than SUGGESTION.
+// Number of prediction calls should be minimized.
+const size_t kSuggestionMaxNodesSize = 256;
+const size_t kPredictionMaxNodesSize = 100000;
+
 // define kLidGroup[]
 #include "prediction/suggestion_feature_pos_group.h"
-
-class Result {
- public:
-  Result() : node_(NULL), score_(0), is_bigram_(false) {}
-  Result(const Node *node, int score, bool is_bigram)
-      : node_(node), score_(score), is_bigram_(is_bigram) {}
-  ~Result() {}
-
-  const Node *node() const {
-    return node_;
-  }
-
-  void set_score(int score) {
-    score_ = score;
-  }
-
-  int score() const {
-    return score_;
-  }
-
-  bool is_bigram() const {
-    return is_bigram_;
-  }
-
- private:
-  const Node *node_;
-  int score_;
-  bool is_bigram_;
-};
-
-class ResultCompare {
- public:
-  bool operator() (const Result &a, const Result &b) const {
-    return a.score() < b.score();
-  }
-};
 }  // namespace
 
 DictionaryPredictor::DictionaryPredictor()
-    : dictionary_(DictionaryFactory::GetDictionary()) {}
+    : dictionary_(DictionaryFactory::GetDictionary()),
+      immutable_converter_(
+          ImmutableConverterFactory::GetImmutableConverter()) {}
 
 DictionaryPredictor::~DictionaryPredictor() {}
 
@@ -110,98 +84,22 @@ bool DictionaryPredictor::Predict(Segments *segments) const {
     return false;
   }
 
-  // TODO(taku): 256 are just heuristics.
-  size_t max_nodes_size = 256;
-
-  // set max_nodes_size to be 100000.
-  // Note that PREDICTION mode is much slower than SUGGESTION.
-  // Number of prediction calls should be minimized.
-  if (segments->request_type() == Segments::PREDICTION) {
-    max_nodes_size = 100000;
-  }
-
-  if (max_nodes_size == 0) {  // should never happen
-    LOG(WARNING) << "max_nodes_size is 0";
-    return false;
-  }
-
-  NodeAllocatorInterface *allocator = segments->node_allocator();
-  allocator->set_max_nodes_size(max_nodes_size);
-
-  const string &input_key = segments->conversion_segment(0).key();
-
   vector<Result> results;
-  if (prediction_type & UNIGRAM) {
-    const size_t prev_results_size = results.size();
-    const Node *unigram_node = dictionary_->LookupPredictive(input_key.c_str(),
-                                                             input_key.size(),
-                                                             allocator);
-    size_t unigram_results_size = 0;
-    for (; unigram_node != NULL; unigram_node = unigram_node->bnext) {
-      results.push_back(Result(unigram_node, 0, false));
-      ++unigram_results_size;
-    }
-
-    // if size reaches max_nodes_size.
-    // we don't show the candidates, since disambiguation from
-    // 256 candidates is hard. (It may exceed max_nodes_size, because this is
-    // just a limit for each backend, so total number may be larger)
-    if (unigram_results_size >= max_nodes_size) {
-      results.resize(prev_results_size);
-    }
-  }
-
-  string bigram_key, bigram_prefix_key, bigram_prefix_value;
-  if (prediction_type & BIGRAM) {
-    const Segment &history_segment =
-        segments->history_segment(segments->history_segments_size() - 1);
-    bigram_prefix_key = history_segment.candidate(0).key;
-    bigram_prefix_value = history_segment.candidate(0).value;
-    bigram_key = bigram_prefix_key + input_key;
-    const Node *bigram_node = dictionary_->LookupPredictive(bigram_key.c_str(),
-                                                            bigram_key.size(),
-                                                            allocator);
-    const size_t prev_results_size = results.size();
-    size_t bigram_results_size  = 0;
-    for (; bigram_node != NULL; bigram_node = bigram_node->bnext) {
-      // filter out the output (value)'s prefix doesn't match to
-      // the history value.
-      if (Util::StartsWith(bigram_node->value, bigram_prefix_value)) {
-        results.push_back(Result(bigram_node, 0, true));
-        ++bigram_results_size;
-      }
-    }
-
-    // if size reaches max_nodes_size.
-    // we don't show the candidates, since disambiguation from
-    // 256 candidates is hard. (It may exceed max_nodes_size, because this is
-    // just a limit for each backend, so total number may be larger)
-    if (bigram_results_size >= max_nodes_size) {
-      results.resize(prev_results_size);
-    }
-  }
+  AggregateRealtimeConversion(prediction_type, segments, &results);
+  AggregateUnigramPrediction(prediction_type, segments, &results);
+  AggregateBigramPrediction(prediction_type, segments, &results);
 
   if (results.empty()) {
     VLOG(2) << "|result| is empty";
     return false;
   }
 
-  // ranking
-  const bool is_zip_code = DictionaryPredictor::IsZipCodeRequest(input_key);
-  const bool is_suggestion = (segments->request_type() ==
-                              Segments::SUGGESTION);
+  bool mixed_conversion = false;
 
-  vector<pair<int, double> > feature;
-  for (size_t i = 0; i < results.size(); ++i) {
-    // use the same scoring function for both unigram/bigram.
-    // Bigram will be boosted because we pass the previous
-    // key as a context information.
-    const Node *node = results[i].node();
-    results[i].set_score(
-        GetSVMScore(
-            results[i].is_bigram() ? bigram_key : input_key,
-            node->key, node->value, node->wcost, node->lid,
-            is_zip_code, is_suggestion, results.size(), &feature));
+  if (mixed_conversion) {
+    SetLMScore(*segments, &results);
+  } else {
+    SetSVMScore(*segments, &results);
   }
 
   const size_t size = min(segments->max_prediction_candidates_size(),
@@ -221,7 +119,7 @@ bool DictionaryPredictor::Predict(Segments *segments) const {
   // TODO(takiba): this may cause bad performance
   set<string> non_spelling_correction_values;
   for (size_t i = 0; i < results.size(); ++i) {
-    const Node *node = results[i].node();
+    const Node *node = results[i].node;
     if (!(node->attributes & Node::SPELLING_CORRECTION)) {
       non_spelling_correction_values.insert(node->value);
     }
@@ -233,38 +131,49 @@ bool DictionaryPredictor::Predict(Segments *segments) const {
   make_heap(results.begin(), results.end(), ResultCompare());
 
   Segment *segment = segments->mutable_conversion_segment(0);
-  if (segment == NULL) {
-    LOG(ERROR) << "conversion segment is NULL";
-    return false;
-  }
+  DCHECK(segment);
 
   int added = 0;
+  set<string> seen;
+  const string &input_key = segments->conversion_segment(0).key();
   const size_t key_length = Util::CharsLen(input_key);
+
+  string history_key, history_value;
+  GetHistoryKeyAndValue(*segments, &history_key, &history_value);
+  const string bigram_key = history_key + input_key;
+
   for (size_t i = 0; i < results.size(); ++i) {
-    if (added >= size || results[i].score() == INT_MIN) {
+    if (added >= size || results[i].score == INT_MIN) {
       break;
     }
 
     pop_heap(results.begin(), results.end() - i, ResultCompare());
     const Result &result = results[results.size() - i - 1];
-    const Node *node = result.node();
+    const Node *node = result.node;
+    DCHECK(node);
 
-    string value = node->value;
-    Util::LowerString(&value);
-    if (SuggestionFilter::IsBadSuggestion(value)) {
+    string lower_value = node->value;
+    Util::LowerString(&lower_value);
+    // TODO(taku): do we have to use BadSuggestion for mixed conversion?
+    if (SuggestionFilter::IsBadSuggestion(lower_value)) {
       continue;
     }
 
-    // don't suggest exactly the same candidate as key
-    if ((result.is_bigram() && bigram_key == node->value) ||
-        (!result.is_bigram() && input_key == node->value)) {
+    // don't suggest exactly the same candidate as key.
+    // if |mixed_conversion| is true, that's not the case.
+    if (!mixed_conversion &&
+        !(result.type & REALTIME) &&
+        (((result.type & BIGRAM) &&
+          bigram_key == node->value) ||
+         (!(result.type & BIGRAM) &&
+          input_key == node->value))) {
       continue;
     }
 
     // The below conditions should never happen
-    if (result.is_bigram() &&
-        (node->key.size() <= bigram_prefix_key.size() ||
-         (node->value.size() <= bigram_prefix_value.size()))) {
+    if ((result.type & DictionaryPredictor::BIGRAM) &&
+        (node->key.size() <= history_key.size() ||
+         (node->value.size() <= history_value.size()))) {
       LOG(ERROR) << "Invalid bigram key/value";
       continue;
     }
@@ -280,35 +189,37 @@ bool DictionaryPredictor::Predict(Segments *segments) const {
       }
     }
 
-    Segment::Candidate *candidate = segment->push_back_candidate();
-    if (candidate == NULL) {
-      LOG(ERROR) << "candidate is NULL";
-      break;
+    // TODO(taku): call CharacterFormManager for these values
+    string key, value;
+    if (result.type & BIGRAM) {
+      // remove the prefix of history key and history value.
+      key = node->key.substr(history_key.size(),
+                             node->key.size() - history_key.size());
+      value = node->value.substr(history_value.size(),
+                                 node->value.size() - history_value.size());
+    } else {
+      key = node->key;
+      value = node->value;
     }
+
+    if (!seen.insert(value).second) {
+      continue;
+    }
+
+    Segment::Candidate *candidate = segment->push_back_candidate();
+    DCHECK(candidate);
 
     candidate->Init();
-    VLOG(2) << "DictionarySuggest: " << node->wcost << " "
-            << node->value;
+    VLOG(2) << "DictionarySuggest: " << node->wcost << " " << value;
 
-    // TODO(taku): call CharacterFormManager for these values
-    if (result.is_bigram()) {
-      // remove the prefix of history key and history value.
-      candidate->key =
-          node->key.substr(bigram_prefix_key.size(),
-                           node->key.size() - bigram_prefix_key.size());
-      candidate->value =
-          node->value.substr(bigram_prefix_value.size(),
-                             node->value.size() - bigram_prefix_value.size());
-    } else {
-      candidate->key = node->key;
-      candidate->value = node->value;
-    }
-
-    candidate->content_key = candidate->key;
-    candidate->content_value = candidate->value;
+    candidate->content_key = key;
+    candidate->content_value = value;
+    candidate->key = key;
+    candidate->value = value;
     candidate->lid = node->lid;
     candidate->rid = node->rid;
-    candidate->cost = node->wcost;
+    candidate->wcost = node->wcost;
+    candidate->cost = node->wcost;  // This cost is not correct.
     candidate->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
     if (node->attributes & Node::SPELLING_CORRECTION) {
       candidate->attributes |= Segment::Candidate::SPELLING_CORRECTION;
@@ -328,8 +239,243 @@ bool DictionaryPredictor::Predict(Segments *segments) const {
   return added > 0;
 }
 
-namespace {
+bool DictionaryPredictor::GetHistoryKeyAndValue(
+    const Segments &segments,
+    string *key, string *value) const {
+  DCHECK(key);
+  DCHECK(value);
+  if (segments.history_segments_size() > 0) {
+    const Segment &history_segment =
+        segments.history_segment(segments.history_segments_size() - 1);
+    if (history_segment.candidates_size() > 0) {
+      key->assign(history_segment.candidate(0).key);
+      value->assign(history_segment.candidate(0).value);
+      return true;
+    }
+  }
+  return false;
+}
 
+void DictionaryPredictor::SetLMScore(const Segments &segments,
+                                     vector<Result> *results) const {
+  DCHECK(results);
+
+  int rid = 0;  // 0 (BOS) is default
+  int prev_cost = 0;
+  if (segments.history_segments_size() > 0) {
+    const Segment &history_segment =
+        segments.history_segment(segments.history_segments_size() - 1);
+    if (history_segment.candidates_size() > 0) {
+      rid = history_segment.candidate(0).rid;  // use history segment's id
+      prev_cost = history_segment.candidate(0).cost;
+      if (prev_cost == 0) {
+        // if prev_cost is set to be 0 for some reason, use default cost.
+        prev_cost = 5000;
+      }
+    }
+  }
+
+  for (size_t i = 0; i < results->size(); ++i) {
+    const Node *node = (*results)[i].node;
+    DCHECK(node);
+    int cost = node->wcost;
+    if ((*results)[i].type & BIGRAM) {
+      cost -= prev_cost;
+    } else {
+      cost += ConnectorFactory::GetConnector()->GetTransitionCost(rid,
+                                                                  node->lid);
+    }
+    (*results)[i].score = -cost;
+  }
+}
+
+void DictionaryPredictor::SetSVMScore(const Segments &segments,
+                                      vector<Result> *results) const {
+  DCHECK(results);
+  const string &input_key = segments.conversion_segment(0).key();
+  string history_key, history_value;
+  GetHistoryKeyAndValue(segments, &history_key, &history_value);
+  const string bigram_key = history_key + input_key;
+
+  const bool is_zip_code = DictionaryPredictor::IsZipCodeRequest(input_key);
+  const bool is_suggestion = (segments.request_type() ==
+                              Segments::SUGGESTION);
+  vector<pair<int, double> > feature;
+  for (size_t i = 0; i < results->size(); ++i) {
+    // use the same scoring function for both unigram/bigram.
+    // Bigram will be boosted because we pass the previous
+    // key as a context information.
+    const Node *node = (*results)[i].node;
+    DCHECK(node);
+    (*results)[i].score = GetSVMScore(
+        ((*results)[i].type & BIGRAM) ? bigram_key : input_key,
+        node->key, node->value, node->wcost, node->lid,
+        is_zip_code, is_suggestion, results->size(), &feature);
+  }
+}
+
+void DictionaryPredictor::AggregateRealtimeConversion(
+    PredictionType type,
+    Segments *segments,
+    vector<Result> *results) const {
+  if (!(type & REALTIME)) {
+    return;
+  }
+
+  DCHECK(immutable_converter_);
+  DCHECK(segments);
+  DCHECK(results);
+
+  NodeAllocatorInterface *allocator = segments->node_allocator();
+  DCHECK(allocator);
+
+  Segment *segment = segments->mutable_conversion_segment(0);
+  DCHECK(segment);
+
+  // preserve the previous max_prediction_candidates_size,
+  // and candidates_size.
+  const size_t prev_candidates_size = segment->candidates_size();
+  const size_t prev_max_prediction_candidates_size =
+      segments->max_prediction_candidates_size();
+
+  // set how many candidates we want to obtain with
+  // immutable converter.
+  size_t realtime_candidates_size = 1;
+  bool mixed_conversion = false;
+
+  if (mixed_conversion ||
+      segments->request_type() == Segments::PREDICTION) {
+    // obtain 10 results from realtime conversion when
+    // mixed_conversion or PREDICTION mode.
+    // TODO(taku): want to change the size more adaptivly.
+    // For example, if key_len is long, we don't need to
+    // obtain 10 results.
+    realtime_candidates_size = 10;
+  }
+
+  segments->set_max_prediction_candidates_size(prev_candidates_size +
+                                               realtime_candidates_size);
+
+  if (immutable_converter_->Convert(segments) &&
+      prev_candidates_size < segment->candidates_size()) {
+    // A little tricky treatment:
+    // Since ImmutableConverter::Converter creates a set of new candidates,
+    // copy them into the array of Results.
+    for (size_t i = prev_candidates_size;
+         i < segment->candidates_size(); ++i) {
+      const Segment::Candidate &candidate = segment->candidate(i);
+      Node *node= allocator->NewNode();
+      DCHECK(node);
+      node->Init();
+      node->lid = candidate.lid;
+      node->rid = candidate.rid;
+      node->wcost = candidate.wcost;
+      node->key = candidate.key;
+      node->value = candidate.value;
+      results->push_back(Result(node, REALTIME));
+    }
+    // remove candidates created by ImmutableConverter.
+    segment->erase_candidates(prev_candidates_size,
+                              segment->candidates_size() -
+                              prev_candidates_size);
+    // restore the max_prediction_candidates_size.
+    segments->set_max_prediction_candidates_size(
+        prev_max_prediction_candidates_size);
+  } else {
+    LOG(WARNING) << "Convert failed";
+  }
+}
+
+void DictionaryPredictor::AggregateUnigramPrediction(
+    PredictionType type,
+    Segments *segments,
+    vector<Result> *results) const {
+  if (!(type & UNIGRAM)) {
+    return;
+  }
+
+  DCHECK(segments);
+  DCHECK(results);
+  DCHECK(dictionary_);
+
+  const string &input_key = segments->conversion_segment(0).key();
+  NodeAllocatorInterface *allocator = segments->node_allocator();
+  DCHECK(allocator);
+
+  const size_t max_nodes_size =
+      (segments->request_type() == Segments::PREDICTION) ?
+      kPredictionMaxNodesSize : kSuggestionMaxNodesSize;
+  allocator->set_max_nodes_size(max_nodes_size);
+
+  const size_t prev_results_size = results->size();
+  const Node *unigram_node = dictionary_->LookupPredictive(input_key.c_str(),
+                                                           input_key.size(),
+                                                           allocator);
+  size_t unigram_results_size = 0;
+  for (; unigram_node != NULL; unigram_node = unigram_node->bnext) {
+    results->push_back(Result(unigram_node, UNIGRAM));
+    ++unigram_results_size;
+  }
+
+  // if size reaches max_nodes_size.
+  // we don't show the candidates, since disambiguation from
+  // 256 candidates is hard. (It may exceed max_nodes_size, because this is
+  // just a limit for each backend, so total number may be larger)
+  if (unigram_results_size >= allocator->max_nodes_size()) {
+    results->resize(prev_results_size);
+  }
+}
+
+void DictionaryPredictor::AggregateBigramPrediction(
+    PredictionType type,
+    Segments *segments,
+    vector<Result> *results) const {
+  if (!(type & BIGRAM)) {
+    return;
+  }
+
+  DCHECK(segments);
+  DCHECK(results);
+  DCHECK(dictionary_);
+
+  const string &input_key = segments->conversion_segment(0).key();
+  NodeAllocatorInterface *allocator = segments->node_allocator();
+  DCHECK(allocator);
+
+  const size_t max_nodes_size =
+      (segments->request_type() == Segments::PREDICTION) ?
+      kPredictionMaxNodesSize : kSuggestionMaxNodesSize;
+  allocator->set_max_nodes_size(max_nodes_size);
+
+  string history_key, history_value;
+  GetHistoryKeyAndValue(*segments, &history_key, &history_value);
+  const string bigram_key = history_key + input_key;
+
+  const size_t prev_results_size = results->size();
+
+  const Node *bigram_node = dictionary_->LookupPredictive(bigram_key.c_str(),
+                                                          bigram_key.size(),
+                                                          allocator);
+  size_t bigram_results_size  = 0;
+  for (; bigram_node != NULL; bigram_node = bigram_node->bnext) {
+    // filter out the output (value)'s prefix doesn't match to
+    // the history value.
+    if (Util::StartsWith(bigram_node->value, history_value)) {
+      results->push_back(Result(bigram_node, BIGRAM));
+      ++bigram_results_size;
+    }
+  }
+
+  // if size reaches max_nodes_size.
+  // we don't show the candidates, since disambiguation from
+  // 256 candidates is hard. (It may exceed max_nodes_size, because this is
+  // just a limit for each backend, so total number may be larger)
+  if (bigram_results_size >= allocator->max_nodes_size()) {
+    results->resize(prev_results_size);
+  }
+}
+
+namespace {
 enum {
   BIAS           = 1,
   QUERY_LEN      = 2,
@@ -342,20 +488,21 @@ enum {
   POS_BASE       = 10,
   MAX_FEATURE_ID = 2000,
 };
-}
+}   // namespace
 
 #define ADD_FEATURE(i, v) \
-  { feature->push_back(make_pair<int, double>(i, v)); } while (0)
+  { feature->push_back(pair<int, double>(i, v)); } while (0)
 
-int DictionaryPredictor::GetSVMScore(const string &query,
-                                     const string &key,
-                                     const string &value,
-                                     uint16 cost,
-                                     uint16 lid,
-                                     bool is_zip_code,
-                                     bool is_suggestion,
-                                     size_t total_candidates_size,
-                                     vector<pair<int, double> > *feature) {
+int DictionaryPredictor::GetSVMScore(
+    const string &query,
+    const string &key,
+    const string &value,
+    uint16 cost,
+    uint16 lid,
+    bool is_zip_code,
+    bool is_suggestion,
+    size_t total_candidates_size,
+    vector<pair<int, double> > *feature) const {
   feature->clear();
 
   // We use the cost for ranking if query looks like zip code
@@ -398,7 +545,7 @@ int DictionaryPredictor::GetSVMScore(const string &query,
 }
 #undef ADD_FEATURE
 
-bool DictionaryPredictor::IsZipCodeRequest(const string &key) {
+bool DictionaryPredictor::IsZipCodeRequest(const string &key) const {
   if (key.empty()) {
     return false;
   }
@@ -421,13 +568,7 @@ bool DictionaryPredictor::IsZipCodeRequest(const string &key) {
 }
 
 DictionaryPredictor::PredictionType
-DictionaryPredictor::GetPredictionType(const Segments &segments) {
-  if (!GET_CONFIG(use_dictionary_suggest) &&
-      segments.request_type() == Segments::SUGGESTION) {
-    VLOG(2) << "no_dictionary_suggest";
-    return NO_PREDICTION;
-  }
-
+DictionaryPredictor::GetPredictionType(const Segments &segments) const {
   if (segments.request_type() == Segments::CONVERSION) {
     VLOG(2) << "request type is CONVERSION";
     return NO_PREDICTION;
@@ -443,23 +584,41 @@ DictionaryPredictor::GetPredictionType(const Segments &segments) {
     return NO_PREDICTION;
   }
 
+  const string &key = segments.conversion_segment(0).key();
+
+  // default setting
+  int result = NO_PREDICTION;
+
+  // support realtime conversion.
+  const size_t kMaxKeySize = 300;   // 300 bytes in UTF8
+
+  bool mixed_conversion = false;
+
+  if ((GET_CONFIG(use_realtime_conversion) || mixed_conversion) &&
+      key.size() > 0 && key.size() < kMaxKeySize) {
+    result |= REALTIME;
+  }
+
+  if (!GET_CONFIG(use_dictionary_suggest) &&
+      segments.request_type() == Segments::SUGGESTION) {
+    VLOG(2) << "no_dictionary_suggest";
+    return static_cast<PredictionType>(result);
+  }
+
   bool zero_query_suggestion = false;
 
-  const string &key = segments.conversion_segment(0).key();
   const size_t key_len = Util::CharsLen(key);
   if (key_len == 0 && !zero_query_suggestion) {
-    return NO_PREDICTION;
+    return static_cast<PredictionType>(result);
   }
 
+  // Never trigger prediction if key looks like zip code.
   const bool is_zip_code = DictionaryPredictor::IsZipCodeRequest(key);
 
-  // Never trigger prediction if key looks like pzip code.
   if (segments.request_type() == Segments::SUGGESTION &&
       is_zip_code && key_len < 6) {
-    return NO_PREDICTION;
+    return static_cast<PredictionType>(result);
   }
-
-  int result = NO_PREDICTION;
 
   const int kMinUnigramKeyLen = zero_query_suggestion ? 1 : 3;
 

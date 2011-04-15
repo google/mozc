@@ -10,3 +10,6 @@
 
 # 短縮よみ for user dictionary
 特殊,短縮よみ
+
+# サジェストのみ for user dictionary
+特殊,サジェストのみ

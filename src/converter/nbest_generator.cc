@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -48,7 +48,7 @@ NBestGenerator::NBestGenerator()
       begin_node_(NULL), end_node_(NULL),
       connector_(ConnectorFactory::GetConnector()),
       lattice_(NULL),
-      viterbi_result_inserted_(false),
+      viterbi_result_checked_(false),
       is_prediction_(false) {}
 
 NBestGenerator::~NBestGenerator() {}
@@ -91,7 +91,7 @@ void NBestGenerator::Reset() {
   agenda_.reset(new Agenda);
   filter_.reset(new CandidateFilter);
   freelist_.Free();
-  viterbi_result_inserted_ = false;
+  viterbi_result_checked_ = false;
   is_prediction_ = false;
 }
 
@@ -187,7 +187,7 @@ bool NBestGenerator::Next(Segment::Candidate *candidate) {
 
   // Insert Viterbi best result here to make sure that
   // the top result is Viterbi best result.
-  if (!viterbi_result_inserted_) {
+  if (!viterbi_result_checked_) {
     vector<const Node *> nodes;
     int total_wcost = 0;
     for (const Node *node = begin_node_->next;
@@ -208,12 +208,20 @@ bool NBestGenerator::Next(Segment::Candidate *candidate) {
 
     MakeCandidate(candidate, cost, structure_cost, wcost, nodes);
 
-    // User CandiadteFilter so that filter is initialized with the
+    // Use CandiadteFilter so that filter is initialized with the
     // Viterbi-best path.
-    filter_->FilterCandidate(candidate, nodes);
-    viterbi_result_inserted_ = true;
-
-    return true;
+    viterbi_result_checked_ = true;
+    switch (filter_->FilterCandidate(candidate, nodes)) {
+      case CandidateFilter::GOOD_CANDIDATE:
+        return true;
+      case CandidateFilter::STOP_ENUMERATION:
+        return false;
+        // Viterbi best result was tried to be inserted but reverted.
+      case CandidateFilter::BAD_CANDIDATE:
+      default:
+        // do nothing
+        break;
+    }
   }
 
   const int KMaxTrial = 500;

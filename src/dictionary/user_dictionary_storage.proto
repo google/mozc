@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,8 +36,13 @@ message UserDictionaryStorage {
     // ID of this dictionary
     optional uint64 id = 1 [ default = 0 ];
 
-    // set false if this dictionary is not used
+    // set false if this dictionary is not used.
+    // Even if |enabled| is false, the dictionary
+    // it self is visible to user.
     optional bool enabled = 2 [ default = true ];
+
+    // set true if this dictionary is removed.
+    optional bool removed = 5 [ default = false ];
 
     // name of dictionary
     optional string name = 3 [ default = "" ];
@@ -48,6 +53,9 @@ message UserDictionaryStorage {
       optional string value   = 2 [ default = "" ];
       optional string pos     = 3 [ default = "" ];
       optional string comment = 4 [ default = "" ];
+
+      // set true if this entry is removed.
+      optional bool  removed  = 10 [ default = false ];
     };
 
     repeated Entry entries = 4;
@@ -58,4 +66,5 @@ message UserDictionaryStorage {
 
   // dictionary body
   repeated UserDictionary dictionaries = 2;
+
 };

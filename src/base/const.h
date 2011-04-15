@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -52,8 +52,6 @@ const char kProductNameLocalized[] = "Mozc";
 const int kSafeIMENameLengthForNTInTchars = 64;
 
 const char kCompanyNameInEnglish[] = "Google";
-const char kCharacterPadMailslotPrefix[]
-    = "\\\\.\\mailslot\\googlejapaneseinput.character_pad.";
 const char kEventPathPrefix[] = "Global\\GoogleJapaneseInput.event.";
 const char kMutexPathPrefix[] = "Global\\GoogleJapaneseInput.mutex.";
 const char kMozcServerName[] = "GoogleIMEJaConverter.exe";
@@ -116,6 +114,8 @@ const char kMozcTool[] = "mozc_tool";
 #endif
 
 const char kWordRegisterEnvironmentName[] = "default_entry_of_word_register";
+const char kWordRegisterEnvironmentReadingName[] =
+    "default_reading_entry_of_word_register";
 }  // namespace mozc
 
 #endif  // MOZC_BASE_CONST_H_

@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -53,6 +53,12 @@ class DictionaryInterface {
       const char *str, int size, NodeAllocatorInterface *allocator) const {}
   virtual void ClearReverseLookupCache(
       NodeAllocatorInterface *allocator) const {}
+
+  // Sync mutable dictionary data into local disk.
+  virtual bool Sync() { return true; }
+
+  // Reload dictionary data from local disk.
+  virtual bool Reload() { return true; }
 
  protected:
   // Do not allow instantiation/destruction

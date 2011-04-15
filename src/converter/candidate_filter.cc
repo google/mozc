@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,6 +44,7 @@
 #include "converter/node.h"
 #include "converter/pos_matcher.h"
 #include "converter/segments.h"
+#include "dictionary/suppression_dictionary.h"
 
 namespace mozc {
 
@@ -94,7 +95,11 @@ bool IsEnglishT13NValue(const string &value) {
 }  // anonymous namespace
 
 CandidateFilter::CandidateFilter()
-    : top_candidate_(NULL) {}
+    : top_candidate_(NULL),
+      suppression_dictionary_(
+          SuppressionDictionary::GetSuppressionDictionary()) {
+  CHECK(suppression_dictionary_);
+}
 
 CandidateFilter::~CandidateFilter() {}
 
@@ -144,6 +149,16 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
        nodes[0]->next == NULL ||
        nodes[0]->next->node_type == Node::NOR_NODE ||
        nodes[0]->next->node_type == Node::CON_NODE)) {
+    return CandidateFilter::BAD_CANDIDATE;
+  }
+
+  // Remove "抑制単語" just in case.
+  if (suppression_dictionary_->SuppressEntry(candidate->key,
+                                             candidate->value) ||
+      (candidate->key != candidate->content_key &&
+       candidate->value != candidate->content_value &&
+       suppression_dictionary_->SuppressEntry(candidate->content_key,
+                                              candidate->content_value))) {
     return CandidateFilter::BAD_CANDIDATE;
   }
 

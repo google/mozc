@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -255,7 +255,9 @@ bool ProcessMutex::LockAndWrite(const string &message) {
 }
 
 bool ProcessMutex::UnLock() {
-  Singleton<FileLockManager>::get()->UnLock(filename_);
+  if (locked_) {
+    Singleton<FileLockManager>::get()->UnLock(filename_);
+  }
   locked_ = false;
   return true;
 }

@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -56,11 +56,11 @@ class PredictorInterface {
   // clear unused history data of UserHistoryPredictor
   virtual bool ClearUnusedHistory() { return true; }
 
-  // Sync user history
+  // Sync user history to local disk.
   virtual bool Sync() { return true; }
 
-  // clear internal data
-  virtual void Clear() {}
+  // Reload user history data from local disk.
+  virtual bool Reload() { return true; }
 
  protected:
   // don't allow users to call constructor and destructor
@@ -75,13 +75,11 @@ class PredictorFactory {
   static PredictorInterface *GetPredictor();
   static PredictorInterface *GetUserHistoryPredictor();
   static PredictorInterface *GetDictionaryPredictor();
-  static PredictorInterface *GetConversionPredictor();
 
   // dependency injection for unittesting
   static void SetPredictor(PredictorInterface *predictor);
   static void SetUserHistoryPredictor(PredictorInterface *predictor);
   static void SetDictionaryPredictor(PredictorInterface *predictor);
-  static void SetConversionPredictor(PredictorInterface *predictor);
 
  private:
   PredictorFactory() {}

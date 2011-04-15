@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -872,7 +872,12 @@ void SessionConverter::FillOutput(commands::Output *output) const {
   // Composition on Suggestion
   if (CheckState(SUGGESTION)) {
     DCHECK(composer_);
-    session::SessionOutput::FillPreedit(*composer_, output->mutable_preedit());
+    // When the suggestion comes from zero query suggestion, the
+    // composer is empty.  In that case, preedit is not rendered.
+    if (!composer_->Empty()) {
+      session::SessionOutput::FillPreedit(*composer_,
+                                          output->mutable_preedit());
+    }
   } else if (CheckState(PREDICTION | CONVERSION)) {
     // Conversion on Prediction or Conversion
     FillConversion(output->mutable_preedit());

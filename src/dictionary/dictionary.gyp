@@ -1,4 +1,4 @@
-# Copyright 2010, Google Inc.
+# Copyright 2010-2011, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -45,6 +45,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        '../converter/converter.gyp:gen_pos_matcher',
         '../session/session.gyp:config_handler',
         '../session/session.gyp:genproto_session',
         '../usage_stats/usage_stats.gyp:usage_stats',

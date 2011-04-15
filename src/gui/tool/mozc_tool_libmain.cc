@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -48,6 +48,8 @@ int RunConfigDialog(int argc, char *argv[]);
 int RunDictionaryTool(int argc, char *argv[]);
 int RunWordRegisterDialog(int argc, char *argv[]);
 int RunErrorMessageDialog(int argc, char *argv[]);
+int RunCharacterPalette(int argc, char *argv[]);
+int RunHandWriting(int argc, char *argv[]);
 
 #ifdef OS_WINDOWS
 // (SetDefault|PostInstall|RunAdministartion)Dialog are used for Windows only.
@@ -130,6 +132,10 @@ int RunMozcTool(int argc, char *argv[]) {
     return RunErrorMessageDialog(argc, argv);
   } else if (FLAGS_mode == "about_dialog") {
     return RunAboutDialog(argc, argv);
+  } else if (FLAGS_mode == "character_palette") {
+    return RunCharacterPalette(argc, argv);
+  } else if (FLAGS_mode == "hand_writing") {
+    return RunHandWriting(argc, argv);
 #ifdef OS_WINDOWS
   } else if (FLAGS_mode == "set_default_dialog") {
     // set_default_dialog is used on Windows only.

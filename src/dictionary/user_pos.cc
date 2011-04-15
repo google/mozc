@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,7 @@
 #include <map>
 #include <algorithm>
 #include "base/base.h"
+#include "base/mutex.h"
 #include "base/singleton.h"
 
 namespace mozc {
@@ -158,8 +159,12 @@ class UserPOSImpl : public UserPOS::UserPOSInterface {
 };
 
 const UserPOS::UserPOSInterface *g_pos_impl= NULL;
+// Make this thread-safe.
+// UserPOS can be called from another thread for aync reload.
+Mutex g_pos_mutex;
 
 const UserPOS::UserPOSInterface &GetPOSHandler() {
+  scoped_lock l(&g_pos_mutex);
   if (g_pos_impl != NULL) {
     return *g_pos_impl;
   }
@@ -188,6 +193,7 @@ bool UserPOS::GetTokens(const string &key,
 }
 
 void UserPOS::SetUserPOSInterface(const UserPOSInterface *impl) {
+  scoped_lock l(&g_pos_mutex);
   g_pos_impl = impl;
 }
 }  // namespace mozc

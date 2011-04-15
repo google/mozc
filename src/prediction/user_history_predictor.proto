@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,10 +39,9 @@ message UserHistory {
   };
 
   message Entry {
-    // don't use string as key/value might be encrypted
-    required bytes key = 1;
-    required bytes value = 2;
-    optional bytes description = 6;
+    optional string key = 1 [ default = "" ];
+    optional string value = 2 [ default = "" ];
+    optional string description = 6 [ default = ""] ;
 
     // how many times the candidate is selected via suggestion
     optional uint32 suggestion_freq = 3 [ default = 0 ];
@@ -57,6 +56,17 @@ message UserHistory {
 
     // internally used in UserHistoryPredictor.
     optional bool bigram_boost = 20 [ default = false ];
+
+    // This entry is removed.
+    optional bool removed = 8 [ default = false ];
+
+    enum EntryType {
+      DEFAULT_ENTRY = 0;
+      CLEAN_ALL_EVENT = 1;
+      CLEAN_UNUSED_EVENT = 2;
+    };
+
+    optional EntryType entry_type = 9 [ default = DEFAULT_ENTRY ];
   };
 
   repeated Entry entries = 6;

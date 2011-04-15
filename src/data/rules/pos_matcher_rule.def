@@ -42,3 +42,6 @@ Zipcode 特殊,郵便番号
 
 # 短縮よみ
 IsolatedWord 特殊,短縮よみ
+
+# サジェストのみ
+SuggestOnlyWord 特殊,サジェストのみ

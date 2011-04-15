@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -1553,6 +1553,7 @@ TEST_F(CompositionTest, NoTransliteration) {
             "\xE3\x81\xA3\xE3\x81\x9F",
             GetString(*composition_));
 }
+
 
 TEST_F(CompositionTest, SetTransliteratorOnEmpty) {
   composition_->SetTransliterator(0, 0, kHiraganaT12r);

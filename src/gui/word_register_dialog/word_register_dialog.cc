@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,8 @@
 #include "gui/word_register_dialog/word_register_dialog.h"
 
 #ifdef OS_WINDOWS
-#include <windows.h>
+# include <windows.h>
+# include <imm.h>
 #endif  // OS_WINDOWS
 
 #include <QtGui/QtGui>
@@ -40,6 +41,7 @@
 
 #include "base/base.h"
 #include "base/const.h"
+#include "base/scoped_ptr.h"
 #include "base/util.h"
 #include "client/session.h"
 #include "dictionary/user_dictionary_storage.h"
@@ -52,7 +54,32 @@ namespace gui {
 namespace {
 const int kSessionTimeout = 100000;
 const int kMaxEditLength = 100;
+const int kMaxReverseConversionLength = 30;
+
+QString GetEnv(const char *envname) {
+#if defined(OS_WINDOWS)
+  wstring wenvname;
+  mozc::Util::UTF8ToWide(envname, &wenvname);
+  const DWORD buffer_size =
+      ::GetEnvironmentVariable(wenvname.c_str(), NULL, 0);
+  if (buffer_size == 0) {
+    return "";
+  }
+  scoped_array<wchar_t> buffer(new wchar_t[buffer_size]);
+  const DWORD num_copied =
+      ::GetEnvironmentVariable(wenvname.c_str(), buffer.get(), buffer_size);
+  if (num_copied > 0) {
+    return QString::fromWCharArray(buffer.get());
+  }
+  return "";
+#endif  // OS_WINDOWS
+#if defined(OS_MACOSX) || defined(OS_LINUX)
+  return ::getenv(envname);
+#endif  // OS_MACOSX or OS_LINUX
+  // TODO(team): Support other platforms.
+  return "";
 }
+}  // anonymous namespace
 
 WordRegisterDialog::WordRegisterDialog()
     : is_available_(true),
@@ -68,11 +95,12 @@ WordRegisterDialog::WordRegisterDialog()
   ReadinglineEdit->setMaxLength(kMaxEditLength);
   WordlineEdit->setMaxLength(kMaxEditLength);
 
+  if (!SetDefaultEntryFromEnvironmentVariable()) {
 #ifdef OS_WINDOWS
-  SetDefaultEntryFromClipboard();
-#else
-  SetDefaultEntryFromEnvironmentVariable();
-#endif
+    // On Windows, try to use clipboard as a fallback.
+    SetDefaultEntryFromClipboard();
+#endif  // OS_WINDOWS
+  }
 
   session_->set_timeout(kSessionTimeout);
 
@@ -135,6 +163,9 @@ WordRegisterDialog::WordRegisterDialog()
   }
 
   UpdateUIStatus();
+
+  // Turn on IME
+  EnableIME();
 }
 
 WordRegisterDialog::~WordRegisterDialog() {}
@@ -280,7 +311,7 @@ const QString WordRegisterDialog::GetReading(const QString &str) {
     return "";
   }
 
-  if (str.count() >= kMaxEditLength) {
+  if (str.count() >= kMaxReverseConversionLength) {
     LOG(ERROR) << "too long input";
     return "";
   }
@@ -380,26 +411,35 @@ void WordRegisterDialog::CopyCurrentSelectionToClipboard() {
   return;
 }
 
-void WordRegisterDialog::SetDefaultEntryFromEnvironmentVariable() {
-  char *env_value = NULL;
-#ifdef OS_MACOSX
-  env_value = ::getenv(mozc::kWordRegisterEnvironmentName);
-#endif
-  if (env_value == NULL) {
-    return;
+bool WordRegisterDialog::SetDefaultEntryFromEnvironmentVariable() {
+  const QString entry = TrimValue(GetEnv(mozc::kWordRegisterEnvironmentName));
+  if (entry.isEmpty()) {
+    return false;
   }
+  WordlineEdit->setText(entry);
 
-  const QString value = TrimValue(env_value);
-  if (value.size() == 0) {
-    return;
+  QString reading_string =
+      TrimValue(GetEnv(mozc::kWordRegisterEnvironmentReadingName));
+  if (reading_string.isEmpty()) {
+    reading_string = GetReading(entry);
   }
+  ReadinglineEdit->setText(reading_string);
 
-  WordlineEdit->setText(value);
-  ReadinglineEdit->setText(GetReading(value));
+  return true;
 }
 
 const QString WordRegisterDialog::TrimValue(const QString &str) const {
   return str.trimmed().replace('\r', "").replace('\n', "");
+}
+
+void WordRegisterDialog::EnableIME() {
+#ifdef OS_WINDOWS
+  // TODO(taku): implement it for other platform.
+  HIMC himc = ::ImmGetContext(winId());
+  if (himc != NULL) {
+    ::ImmSetOpenStatus(himc, TRUE);
+  }
+#endif  // OS_WINDOWS
 }
 }  // namespace gui
 }  // namespace mozc

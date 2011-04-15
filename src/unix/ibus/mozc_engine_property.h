@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,98 +32,36 @@
 
 #include <ibus.h>
 
-#include "base/base.h"
 #include "session/commands.pb.h"
 
 namespace mozc {
 namespace ibus {
 
 // The list of properties used in ibus-mozc.
-const struct MozcEngineProperty {
+struct MozcEngineProperty {
   commands::CompositionMode composition_mode;
   const char *key;  // IBus property key for the mode.
   const char *label;  // text for the radio menu (ibus-anthy compatible).
   const char *label_for_panel;  // text for the language panel.
   const char *icon;
-} kMozcEngineProperties[] = {
-  {
-    commands::DIRECT,
-    "CompositionMode.Direct",
-    "Direct input",
-    "A",
-    "direct.png",
-  },
-  {
-    commands::HIRAGANA,
-    "CompositionMode.Hiragana",
-    "Hiragana",
-    "\xe3\x81\x82",  // Hiragana letter A
-    "hiragana.png",
-  },
-  {
-    commands::FULL_KATAKANA,
-    "CompositionMode.Katakana",
-    "Katakana",
-    "\xe3\x82\xa2",  // Katakana letter A
-    "katakana_full.png",
-  },
-  {
-    commands::HALF_ASCII,
-    "CompositionMode.Latin",
-    "Latin",
-    "_A",
-    "alpha_half.png",
-  },
-  {
-    commands::FULL_ASCII,
-    "CompositionMode.WideLatin",
-    "Wide Latin",
-    "\xef\xbc\xa1",  // Full width ASCII letter A
-    "alpha_full.png",
-  },
-  {
-    commands::HALF_KATAKANA,
-    "CompositionMode.HalfWidthKatakana",
-    "Half width katakana",
-    "_\xef\xbd\xb1",  // Half width Katakana letter A
-    "katakana_half.png",
-  },
 };
 
-const size_t kMozcEnginePropertiesSize = arraysize(kMozcEngineProperties);
-COMPILE_ASSERT(commands::NUM_OF_COMPOSITIONS == kMozcEnginePropertiesSize,
-               bad_number_of_props);
-const commands::CompositionMode kMozcEngineInitialCompositionMode =
-    commands::HIRAGANA;
+extern const MozcEngineProperty kMozcEngineProperties[];
+extern const size_t kMozcEnginePropertiesSize;
 
-const struct MozcEngineToolProperty {
+extern const commands::CompositionMode kMozcEngineInitialCompositionMode;
+
+struct MozcEngineToolProperty {
   const char *key;    // IBus property key for the MozcTool.
   const char *mode;   // command line passed as --mode=
   const char *label;  // text for the menu.
   const char *icon;   // icon
-} kMozcEngineToolProperties[] = {
-  {
-    "Tool.ConfigDialog",
-    "config_dialog",
-    "Property",
-    "properties.png",
-  },
-  {
-    "Tool.DictionaryTool",
-    "dictionary_tool",
-    "Dictionary tool",
-    "dictionary.png",
-  },
-  {
-    "Tool.AboutDialog",
-    "about_dialog",
-    "About Mozc",
-    NULL,
-  },
 };
 
-const size_t kMozcEngineToolPropertiesSize =
-    arraysize(kMozcEngineToolProperties);
+extern const MozcEngineToolProperty kMozcEngineToolProperties[];
+extern const size_t kMozcEngineToolPropertiesSize;
+
+extern const unsigned int kPageSize;
 }  // namespace ibus
 }  // namespace mozc
 

@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,8 +37,9 @@
 //
 // usage:
 // // start scheduled job
-// Scheduler::AddJob("TimerName", 60*1000, 60*60*1000, 30*1000,
-//                   60*1000, &Callback);
+// Scheduler::AddJob(Scheduler::JobSetting(
+//     "TimerName", 60*1000, 60*60*1000, 30*1000, 60*1000, &Callback, NULL));
+// (NULL is the args for Callback)
 // // stop job
 // Scheduler::RemoveJob("TimerName");
 
@@ -54,19 +55,72 @@ class Timer;
 
 class Scheduler {
  public:
+  // simple container class for the job setting to be scheduled.
+  class JobSetting {
+   public:
+    typedef bool (*CallbackFunc)(void *);
+
+    JobSetting(const string &name,
+            uint32 default_interval,
+            uint32 max_interval,
+            uint32 delay_start,
+            uint32 random_delay,
+            CallbackFunc callback,
+            void *data) :
+        name_(name),
+        default_interval_(default_interval),
+        max_interval_(max_interval),
+        delay_start_(delay_start),
+        random_delay_(random_delay),
+        callback_(callback),
+        data_(data) {}
+
+    virtual ~JobSetting() {}
+
+    string name() const { return name_; }
+    uint32 default_interval() const { return default_interval_; }
+    uint32 max_interval() const { return max_interval_; }
+    uint32 delay_start() const { return delay_start_; }
+    uint32 random_delay() const { return random_delay_; }
+    CallbackFunc callback() const { return callback_; }
+    void *data() const { return data_; }
+
+   private:
+    string name_;
+    uint32 default_interval_;
+    uint32 max_interval_;
+    uint32 delay_start_;
+    uint32 random_delay_;
+    CallbackFunc callback_;
+    void *data_;
+  };
+
   // start scheduled job
   // return false if timer is already existed.
   // job will start after (delay_start + random_delay*rand()) msec
-  static bool AddJob(const string &name, uint32 default_interval,
-                     uint32 max_interval, uint32 delay_start,
-                     uint32 random_delay,
-                     bool (*callback)(void *), void *data);
+  static bool AddJob(const JobSetting &job_setting);
 
-  // stop scheduled job
+  // stop scheduled job specified by neme.
   static bool RemoveJob(const string &name);
 
   // stop all jobs
   static void RemoveAllJobs();
+
+  // This function is provided for test.
+  // The behavior of scheduler can be customized by replacing an underlying
+  // helper class inside this.
+  class SchedulerInterface;
+  static void SetSchedulerHandler(SchedulerInterface *handler);
+
+  // Interface of the helper class.
+  // Default implementation is defined in the .cc file.
+  class SchedulerInterface {
+   public:
+    virtual ~SchedulerInterface() {}
+    virtual bool AddJob(const JobSetting &job_setting) = 0;
+    virtual bool RemoveJob(const string &name) = 0;
+    virtual void RemoveAllJobs() = 0;
+  };
 
   // should never be allocated.
  private:

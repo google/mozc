@@ -1,4 +1,4 @@
-# Copyright 2010, Google Inc.
+# Copyright 2010-2011, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,6 @@
     'relative_dir': 'unix/ibus',
     'gen_out_dir': '<(SHARED_INTERMEDIATE_DIR)/<(relative_dir)',
     'pkg_config_libs': [
-      'dbus-1',
       'glib-2.0',
       'gobject-2.0',
       'ibus-1.0',
@@ -65,6 +64,7 @@
         'engine_registrar.cc',
         'key_translator.cc',
         'mozc_engine.cc',
+        'mozc_engine_property.cc',
         'path_util.cc',
       ],
       'actions': [
@@ -109,7 +109,10 @@
       ],
       'conditions': [
         ['chromeos==1', {
-         'sources': [ 'session.cc' ],
+         'sources': [
+           'session.cc',
+           'config_util.cc',
+         ],
         }],
        ],
       'cflags': [
@@ -198,11 +201,8 @@
         'key_translator_test.cc',
         'mozc_engine_test.cc',
         'path_util_test.cc',
-      ],
-      'conditions': [
-        ['chromeos==1', {
-           'sources': [ 'session_test.cc' ],
-        }],
+        'session_test.cc',
+        'config_util_test.cc',
       ],
       'dependencies': [
         '../../base/base.gyp:base',

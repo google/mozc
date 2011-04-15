@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -48,9 +48,6 @@
 
 namespace mozc {
 namespace {
-// Mutex name
-const char kUserDictionaryStorageMutex[] = "user_dictionary_storage";
-
 // Maximum number of dictionary entries per dictionary.
 const size_t kMaxEntrySize          = 1000000;
 const size_t kMaxDictionarySize     =     100;
@@ -85,7 +82,7 @@ uint64 CreateID() {
 UserDictionaryStorage::UserDictionaryStorage(const string &file_name)
     : file_name_(file_name),
       last_error_type_(USER_DICTIONARY_STORAGE_NO_ERROR),
-      mutex_(new ProcessMutex(kUserDictionaryStorageMutex)) {}
+      mutex_(new ProcessMutex(Util::Basename(file_name).c_str())) {}
 
 UserDictionaryStorage::~UserDictionaryStorage() {
   UnLock();
@@ -124,6 +121,13 @@ bool UserDictionaryStorage::Load() {
     LOG(ERROR) << "ParseFromStream failed: file seems broken";
     last_error_type_ = BROKEN_FILE;
     return false;
+  }
+
+  // Check dictionary id here. if id is 0, assign random ID.
+  for (int i = 0; i < dictionaries_size(); ++i) {
+    if (dictionaries(i).id() == 0) {
+      mutable_dictionaries(i)->set_id(CreateID());
+    }
   }
 
   return true;
@@ -230,6 +234,14 @@ bool UserDictionaryStorage::CreateDictionary(
     return false;
   }
 
+  for (int i = 0; i < dictionaries_size(); ++i) {
+    if (dic_name == dictionaries(i).name()) {
+      last_error_type_ = DUPLICATED_DICTIONARY_NAME;
+      LOG(ERROR) << "duplicated dictionary name";
+      return false;
+    }
+  }
+
   if (new_dic_id == NULL) {
     last_error_type_ = UNKNOWN_ERROR;
     LOG(ERROR) << "new_dic_id is NULL";
@@ -328,6 +340,19 @@ bool UserDictionaryStorage::RenameDictionary(uint64 dic_id,
     last_error_type_ = INVALID_DICTIONARY_ID;
     LOG(ERROR) << "Invalid dictionary id: " << dic_id;
     return false;
+  }
+
+  // same name
+  if (dic->name() == dic_name) {
+    return true;
+  }
+
+  for (int i = 0; i < dictionaries_size(); ++i) {
+    if (dic_name == dictionaries(i).name()) {
+      last_error_type_ = DUPLICATED_DICTIONARY_NAME;
+      LOG(ERROR) << "duplicated dictionary name";
+      return false;
+    }
   }
 
   dic->set_name(dic_name);

@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -220,13 +220,7 @@ TEST(KeyMap, LoadStreamWithErrors) {
   errors.clear();
   is.reset(ConfigFileStream::Open("system://ms-ime.tsv"));
   EXPECT_TRUE(manager.LoadStreamWithErrors(is.get(), &errors));
-#ifdef OS_WINDOWS
-  // Now we have invalid commands for Mac
-  // Input mode change commands are not allowed on Mac.
   EXPECT_TRUE(errors.empty());
-#else
-  EXPECT_FALSE(errors.empty());
-#endif  // OS_WINDOWS
 
   errors.clear();
   is.reset(ConfigFileStream::Open("system://kotoeri.tsv"));
@@ -291,6 +285,9 @@ TEST(KeyMap, GetName) {
     EXPECT_TRUE(manager.GetNameFromCommandDirect(DirectInputState::IME_ON,
                                                  &name));
     EXPECT_EQ("IMEOn", name);
+    EXPECT_TRUE(manager.GetNameFromCommandDirect(DirectInputState::RECONVERT,
+                                                 &name));
+    EXPECT_EQ("Reconvert", name);
   }
   {
     // Precomposition
@@ -304,6 +301,9 @@ TEST(KeyMap, GetName) {
     EXPECT_TRUE(manager.GetNameFromCommandPrecomposition(
         PrecompositionState::INSERT_CHARACTER, &name));
     EXPECT_EQ("InsertCharacter", name);
+    EXPECT_TRUE(manager.GetNameFromCommandPrecomposition(
+        PrecompositionState::RECONVERT, &name));
+    EXPECT_EQ("Reconvert", name);
   }
   {
     // Composition
@@ -658,6 +658,18 @@ TEST(KeyMap, LaunchToolTest) {
     EXPECT_TRUE(manager.GetCommandPrecomposition(key_event, &conv_command));
     EXPECT_EQ(PrecompositionState::LAUNCH_CONFIG_DIALOG, conv_command);
   }
+
+  // http://b/3432829
+  // MS-IME does not have the key-binding "Ctrl F7" in precomposition mode.
+  {
+    config.CopyFrom(config::ConfigHandler::GetConfig());
+    config.set_session_keymap(config::Config::MSIME);
+    config::ConfigHandler::SetConfig(config);
+    manager.Reload();
+
+    KeyParser::ParseKey("Ctrl F7", &key_event);
+    EXPECT_FALSE(manager.GetCommandPrecomposition(key_event, &conv_command));
+  }
 }
 
 TEST(KeyMap, Undo) {
@@ -681,6 +693,37 @@ TEST(KeyMap, Undo) {
   EXPECT_EQ(PrecompositionState::UNDO, command);
 }
 
+TEST(KeyMap, Reconvert) {
+  KeyMapManager manager;
+  DirectInputState::Commands direct_command;
+  PrecompositionState::Commands precomposition_command;
+  commands::KeyEvent key_event;
+
+  manager.ReloadWithKeymap(config::Config::ATOK);
+  KeyParser::ParseKey("Shift Henkan", &key_event);
+  EXPECT_TRUE(manager.GetCommandDirect(key_event, &direct_command));
+  EXPECT_EQ(DirectInputState::RECONVERT, direct_command);
+  EXPECT_TRUE(manager.GetCommandPrecomposition(
+      key_event, &precomposition_command));
+  EXPECT_EQ(PrecompositionState::RECONVERT, precomposition_command);
+
+  manager.ReloadWithKeymap(config::Config::MSIME);
+  KeyParser::ParseKey("Henkan", &key_event);
+  EXPECT_TRUE(manager.GetCommandDirect(key_event, &direct_command));
+  EXPECT_EQ(DirectInputState::RECONVERT, direct_command);
+  EXPECT_TRUE(manager.GetCommandPrecomposition(
+      key_event, &precomposition_command));
+  EXPECT_EQ(PrecompositionState::RECONVERT, precomposition_command);
+
+  manager.ReloadWithKeymap(config::Config::KOTOERI);
+  KeyParser::ParseKey("Ctrl Shift r", &key_event);
+  EXPECT_TRUE(manager.GetCommandDirect(key_event, &direct_command));
+  EXPECT_EQ(DirectInputState::RECONVERT, direct_command);
+  EXPECT_TRUE(manager.GetCommandPrecomposition(
+      key_event, &precomposition_command));
+  EXPECT_EQ(PrecompositionState::RECONVERT, precomposition_command);
+}
+
 TEST(KeyMap, ReloadWithKeymap) {
   KeyMapManager manager;
   config::Config::SessionKeymap keymap_setting;
@@ -700,6 +743,61 @@ TEST(KeyMap, ReloadWithKeymap) {
     EXPECT_TRUE(manager.GetCommandConversion(key_event, &conv_command));
     EXPECT_EQ(ConversionState::SEGMENT_FOCUS_RIGHT, conv_command);
   }
+}
+
+TEST(KeyMap, AddCommand) {
+  KeyMapManager manager;
+  commands::KeyEvent key_event;
+  const char kKeyEvent[] = "Ctrl Shift Insert";
+
+  KeyParser::ParseKey(kKeyEvent, &key_event);
+
+  {  // Add command
+    CompositionState::Commands command;
+    EXPECT_FALSE(manager.GetCommandComposition(key_event, &command));
+
+    EXPECT_TRUE(manager.AddCommand("Composition", kKeyEvent, "Cancel"));
+
+    EXPECT_TRUE(manager.GetCommandComposition(key_event, &command));
+    EXPECT_EQ(CompositionState::CANCEL, command);
+  }
+
+  {  // Error detections
+    EXPECT_FALSE(manager.AddCommand("void", kKeyEvent, "Cancel"));
+    EXPECT_FALSE(manager.AddCommand("Composition", kKeyEvent, "Unknown"));
+    EXPECT_FALSE(manager.AddCommand("Composition", "INVALID", "Cancel"));
+  }
+}
+
+TEST(KeyMap, ZeroQuerySuggestion) {
+  KeyMapManager manager;
+  EXPECT_TRUE(manager.AddCommand("ZeroQuerySuggestion",
+                                 "ESC", "Cancel"));
+  EXPECT_TRUE(manager.AddCommand("ZeroQuerySuggestion",
+                                 "Tab", "PredictAndConvert"));
+  EXPECT_TRUE(manager.AddCommand("ZeroQuerySuggestion",
+                                 "Shift Enter", "CommitFirstSuggestion"));
+  // For fallback testing
+  EXPECT_TRUE(manager.AddCommand("Precomposition", "Ctrl Backspace", "Revert"));
+
+  commands::KeyEvent key_event;
+  PrecompositionState::Commands command;
+
+  KeyParser::ParseKey("ESC", &key_event);
+  EXPECT_TRUE(manager.GetCommandZeroQuerySuggestion(key_event, &command));
+  EXPECT_EQ(PrecompositionState::CANCEL, command);
+
+  KeyParser::ParseKey("Tab", &key_event);
+  EXPECT_TRUE(manager.GetCommandZeroQuerySuggestion(key_event, &command));
+  EXPECT_EQ(PrecompositionState::PREDICT_AND_CONVERT, command);
+
+  KeyParser::ParseKey("Shift Enter", &key_event);
+  EXPECT_TRUE(manager.GetCommandZeroQuerySuggestion(key_event, &command));
+  EXPECT_EQ(PrecompositionState::COMMIT_FIRST_SUGGESTION, command);
+
+  KeyParser::ParseKey("Ctrl Backspace", &key_event);
+  EXPECT_TRUE(manager.GetCommandZeroQuerySuggestion(key_event, &command));
+  EXPECT_EQ(PrecompositionState::REVERT, command);
 }
 
 }  // namespace keymap

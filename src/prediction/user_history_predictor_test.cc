@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -294,6 +294,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
 
     // clear
     predictor.ClearAllHistory();
+    predictor.WaitForSyncer();
   }
 
   // nothing happen
@@ -486,6 +487,7 @@ TEST_F(UserHistoryPredictorTest, DescriptionTest) {
 
     // clear
     predictor.ClearAllHistory();
+    predictor.WaitForSyncer();
   }
 
   // nothing happen
@@ -635,6 +637,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorRevertTest) {
   UserHistoryPredictor predictor;
   predictor.WaitForSyncer();
   predictor.ClearAllHistory();
+  predictor.WaitForSyncer();
 
   Segments segments, segments2;
   // "わたしのなまえはなかのです"
@@ -719,6 +722,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTailingPunctuation) {
   UserHistoryPredictor predictor;
   predictor.WaitForSyncer();
   predictor.ClearAllHistory();
+  predictor.WaitForSyncer();
 
   Segments segments;
 
@@ -780,6 +784,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorPreceedingPunctuation) {
   UserHistoryPredictor predictor;
   predictor.WaitForSyncer();
   predictor.ClearAllHistory();
+  predictor.WaitForSyncer();
 
   Segments segments;
 
@@ -833,6 +838,7 @@ TEST_F(UserHistoryPredictorTest, MultiSegmentsMultiInput) {
   UserHistoryPredictor predictor;
   predictor.WaitForSyncer();
   predictor.ClearAllHistory();
+  predictor.WaitForSyncer();
 
   Segments segments;
 
@@ -956,6 +962,7 @@ TEST_F(UserHistoryPredictorTest, MultiSegmentsSingleInput) {
   UserHistoryPredictor predictor;
   predictor.WaitForSyncer();
   predictor.ClearAllHistory();
+  predictor.WaitForSyncer();
 
   Segments segments;
 
@@ -1069,6 +1076,7 @@ TEST_F(UserHistoryPredictorTest, Regression2843371_Case1) {
   UserHistoryPredictor predictor;
   predictor.WaitForSyncer();
   predictor.ClearAllHistory();
+  predictor.WaitForSyncer();
 
   Segments segments;
 
@@ -1149,6 +1157,7 @@ TEST_F(UserHistoryPredictorTest, Regression2843371_Case2) {
   UserHistoryPredictor predictor;
   predictor.WaitForSyncer();
   predictor.ClearAllHistory();
+  predictor.WaitForSyncer();
 
   Segments segments;
 
@@ -1224,6 +1233,7 @@ TEST_F(UserHistoryPredictorTest, Regression2843371_Case3) {
   UserHistoryPredictor predictor;
   predictor.WaitForSyncer();
   predictor.ClearAllHistory();
+  predictor.WaitForSyncer();
 
   Segments segments;
 
@@ -1302,6 +1312,7 @@ TEST_F(UserHistoryPredictorTest, Regression2843775) {
   UserHistoryPredictor predictor;
   predictor.WaitForSyncer();
   predictor.ClearAllHistory();
+  predictor.WaitForSyncer();
 
   Segments segments;
 
@@ -1446,6 +1457,21 @@ TEST_F(UserHistoryPredictorTest, FingerPrintTest) {
   const uint32 entry_fp2 =
       UserHistoryPredictor::EntryFingerprint(entry);
 
+  const uint32 entry_fp3 =
+      UserHistoryPredictor::Fingerprint(
+          kKey, kValue,
+          UserHistoryPredictor::Entry::DEFAULT_ENTRY);
+
+  const uint32 entry_fp4 =
+      UserHistoryPredictor::Fingerprint(
+          kKey, kValue,
+          UserHistoryPredictor::Entry::CLEAN_ALL_EVENT);
+
+  const uint32 entry_fp5 =
+      UserHistoryPredictor::Fingerprint(
+          kKey, kValue,
+          UserHistoryPredictor::Entry::CLEAN_UNUSED_EVENT);
+
   Segment segment;
   segment.set_key(kKey);
   Segment::Candidate *c = segment.add_candidate();
@@ -1469,6 +1495,10 @@ TEST_F(UserHistoryPredictorTest, FingerPrintTest) {
       UserHistoryPredictor::SegmentFingerprint(segment2);
 
   EXPECT_EQ(entry_fp1, entry_fp2);
+  EXPECT_EQ(entry_fp1, entry_fp3);
+  EXPECT_NE(entry_fp1, entry_fp4);
+  EXPECT_NE(entry_fp1, entry_fp5);
+  EXPECT_NE(entry_fp4, entry_fp5);
   EXPECT_EQ(segment_fp, entry_fp2);
   EXPECT_EQ(segment_fp, entry_fp1);
   EXPECT_EQ(segment_fp, segment_fp2);
@@ -1562,6 +1592,35 @@ TEST_F(UserHistoryPredictorTest, GetScore) {
     EXPECT_GT(UserHistoryPredictor::GetScore(entry1),
               UserHistoryPredictor::GetScore(entry2));
   }
+}
+
+TEST_F(UserHistoryPredictorTest, IsValidEntry) {
+  UserHistoryPredictor::Entry entry;
+
+  EXPECT_TRUE(UserHistoryPredictor::IsValidEntry(entry));
+
+  entry.set_key("key");
+  entry.set_key("value");
+
+  EXPECT_TRUE(UserHistoryPredictor::IsValidEntry(entry));
+
+  entry.set_removed(true);
+  EXPECT_FALSE(UserHistoryPredictor::IsValidEntry(entry));
+
+  entry.set_removed(false);
+  EXPECT_TRUE(UserHistoryPredictor::IsValidEntry(entry));
+
+  entry.set_entry_type(UserHistoryPredictor::Entry::CLEAN_ALL_EVENT);
+  EXPECT_FALSE(UserHistoryPredictor::IsValidEntry(entry));
+
+  entry.set_entry_type(UserHistoryPredictor::Entry::CLEAN_UNUSED_EVENT);
+  EXPECT_FALSE(UserHistoryPredictor::IsValidEntry(entry));
+
+  entry.set_removed(true);
+  EXPECT_FALSE(UserHistoryPredictor::IsValidEntry(entry));
+
+  entry.Clear();
+  EXPECT_TRUE(UserHistoryPredictor::IsValidEntry(entry));
 }
 
 TEST_F(UserHistoryPredictorTest, IsValidSuggestion) {
@@ -1695,6 +1754,25 @@ TEST_F(UserHistoryPredictorTest, PrivacySensitiveTest) {
     MakeSegmentsForPrediction("123abc!", &segments);
     EXPECT_TRUE(predictor.Predict(&segments));
   }
+}
+
+TEST_F(UserHistoryPredictorTest, UserHistoryStorage) {
+  const string filename =
+      Util::JoinPath(Util::GetUserProfileDirectory(), "test");
+
+  UserHistoryStorage storage1(filename);
+  EXPECT_EQ(filename, storage1.filename());
+
+  UserHistoryPredictor::Entry *entry = storage1.add_entries();
+  CHECK(entry);
+  entry->set_key("key");
+  entry->set_key("value");
+  storage1.Save();
+  UserHistoryStorage storage2(filename);
+  storage2.Load();
+
+  EXPECT_EQ(storage1.DebugString(), storage2.DebugString());
+  Util::Unlink(filename);
 }
 }  // namespace
 }  // namespace mozc

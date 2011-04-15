@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -53,6 +53,14 @@ struct ConversionPreferences {
 struct OperationPreferences {
   bool use_cascading_window;
   string candidate_shortcuts;
+  OperationPreferences() {
+#ifdef OS_LINUX
+    // TODO(komatsu): Move this logic to the client code.
+    use_cascading_window = false;
+#else
+    use_cascading_window = true;
+#endif
+  }
 };
 
 // Class handling ConverterInterface with a session state.  This class

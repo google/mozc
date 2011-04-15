@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -77,6 +77,15 @@ class Util {
     return CharsLen(str.c_str(), str.size());
   }
 
+  static char32 UTF8ToUCS4(const char *begin,
+                           const char *end,
+                           size_t *mblen);
+
+  static void UCS4ToUTF8(char32 c, string *output);
+  static void UCS4ToUTF8Append(char32 c, string *output);
+
+  // The return value overflow if the UTF8-bytes represent the
+  // character with code point >0xFFFF.
   static uint16 UTF8ToUCS2(const char *begin,
                            const char *end,
                            size_t *mblen);
@@ -86,6 +95,12 @@ class Util {
   static void UCS2ToUTF8Append(uint16 c, string *output);
 
 #ifdef OS_WINDOWS
+  // Returns how many wide characters are necessary in UTF-16 to represent
+  // given UTF-8 string. Note that the result of this method becomes greater
+  // than that of Util::CharsLen if |src| contains any character which is
+  // encoded by the surrogate-pair in UTF-16.
+  static size_t WideCharsLen(const char *src);
+  static size_t WideCharsLen(const string &src);
   // Converts the encoding of the specified string from UTF-8 to UTF-16, and
   // vice versa.
   static int UTF8ToWide(const char *input, wstring *output);
@@ -175,6 +190,11 @@ class Util {
   // Fill a given buffer with random characters
   static bool GetSecureRandomSequence(char *buf, size_t buf_size);
   static bool GetSecureRandomAsciiSequence(char *buf, size_t buf_size);
+
+  // return random variable whose range is [0..size-1].
+  // This function uses rand() internally, so don't use it for
+  // security-sensitive purpose.
+  static int Random(int size);
 
   // Get the current time info using gettimeofday-like functions.
   // sec: number of seconds from epoch
@@ -295,8 +315,20 @@ class Util {
   static bool FileExists(const string &filename);
   static bool DirectoryExists(const string &filename);
   static bool Rename(const string &from, const string &to);
+
   // This function has a limitation. See comment in the .cc file.
+  // This function opens a file with text mode. The return code
+  // may be different between |from| and |to|.
   static bool CopyTextFile(const string &from, const string &to);
+
+  // CopyFile uses mmap internally. |from| and |to| should
+  // be identical.
+  static bool CopyFile(const string &from, const string &to);
+
+  // Return true if |filename1| and |filename2|
+  // are identical.
+  static bool IsEqualFile(const string &filename1,
+                          const string &filename2);
 
   // Move/Rename file atomically.
   // Vista or Later: use Transactional NTFS API, which guarantees atomic
@@ -420,6 +452,10 @@ class Util {
   // ex.  "ABC" => "\x41\x42\x43".
   static void Escape(const string &input, string *output);
 
+  // Escape any characters into % prefixed hex digits.
+  // ex. "ABC" => "%41%42%43"
+  static void EscapeUrl(const string &input, string *output);
+
   // Escape unsafe html characters such as <, > and &.
   static void EscapeHtml(const string &text, string *res);
 
@@ -438,7 +474,7 @@ class Util {
   };
 
   // return script type of w
-  static ScriptType GetScriptType(uint16 w);
+  static ScriptType GetScriptType(char32 w);
 
   // return script type of first character in [begin, end)
   static ScriptType GetScriptType(const char *begin, const char *end,
@@ -467,14 +503,14 @@ class Util {
   };
 
   // return Form type of single character
-  static FormType GetFormType(uint16 w);
+  static FormType GetFormType(char32 w);
 
   // return FormType of string
   static FormType GetFormType(const string &str);
 
   // Basically, if chraset >= JIX0212, the char is platform dependent char.
   enum CharacterSet {
-    ASCII,         // ASCII (simply ucs2 <= 0x007F)
+    ASCII,         // ASCII (simply ucs4 <= 0x007F)
     JISX0201,      // defined at least in 0201 (can be in 0208/0212/0213/CP9232)
     JISX0208,      // defined at least in 0208 (can be in 0212/0213/CP932)
     JISX0212,      // defined at least in 0212 (can be in 0213/CP932)
@@ -485,7 +521,7 @@ class Util {
   };
 
   // return CharacterSet
-  static CharacterSet GetCharacterSet(uint16 ucs2);
+  static CharacterSet GetCharacterSet(char32 ucs4);
 
   // return CharacterSet of string.
   // if the given string contains multiple charasets, return

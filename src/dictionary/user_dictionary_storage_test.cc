@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -119,8 +119,22 @@ TEST(UserDictionaryStorage, BasicOperationsTest) {
   // empty
   EXPECT_FALSE(storage.RenameDictionary(id[0], ""));
 
+  // duplicated
+  uint64 tmp_id = 0;
+  EXPECT_FALSE(storage.CreateDictionary("test0", &tmp_id));
+  EXPECT_EQ(UserDictionaryStorage::DUPLICATED_DICTIONARY_NAME,
+            storage.GetLastError());
+
   // invalid id
   EXPECT_FALSE(storage.RenameDictionary(0, ""));
+
+  // duplicated
+  EXPECT_FALSE(storage.RenameDictionary(id[0], "test1"));
+  EXPECT_EQ(UserDictionaryStorage::DUPLICATED_DICTIONARY_NAME,
+            storage.GetLastError());
+
+  // no name
+  EXPECT_TRUE(storage.RenameDictionary(id[0], "test0"));
 
   EXPECT_TRUE(storage.RenameDictionary(id[0], "renamed0"));
   EXPECT_EQ("renamed0", storage.dictionaries(0).name());
@@ -144,7 +158,8 @@ TEST(UserDictionaryStorage, DeleteTest) {
     storage.Clear();
     vector<uint64> ids(100);
     for (size_t i = 0; i < ids.size(); ++i) {
-      EXPECT_TRUE(storage.CreateDictionary("test", &ids[i]));
+      EXPECT_TRUE(storage.CreateDictionary("test" + Util::SimpleItoa(i),
+                                           &ids[i]));
     }
 
     vector<uint64> alive;
@@ -221,7 +236,7 @@ TEST(UserDictionaryStorage, SerializeTest) {
 
       for (size_t i = 0; i < dic_size; ++i) {
         uint64 id = 0;
-        EXPECT_TRUE(storage1.CreateDictionary(GenRandomString(10),
+        EXPECT_TRUE(storage1.CreateDictionary("test" + Util::SimpleItoa(i),
                                              &id));
         const size_t entry_size = Random(100) + 1;
         for (size_t j = 0; j < entry_size; ++j) {

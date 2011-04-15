@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010, Google Inc.
+# Copyright 2010-2011, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -36,8 +36,17 @@ import sys
 
 kUnicodePat = re.compile(r'[0-9A-Fa-f]{2,4}')
 
-def IsValidUnicode(n):
-  return kUnicodePat.match(n)
+def IsValidUCS2(n):
+  try:
+    return 0 <= int(n, 16) <= 0xFFFF
+  except ValueError:
+    return False
+
+def IsValidUCS4(n):
+  try:
+    return 0 <= int(n, 16) <= 0x7FFFFFFF
+  except ValueError:
+    return False
 
 def LoadJISX0201(filename):
   fh = open(filename)
@@ -47,7 +56,7 @@ def LoadJISX0201(filename):
       continue
     array = string.split(line)
     ucs2 = array[1].replace('0x', '')
-    if IsValidUnicode(ucs2):
+    if IsValidUCS2(ucs2):
       result.add(ucs2)
 
   return result
@@ -60,7 +69,7 @@ def LoadJISX0208(filename):
       continue
     array = line.split()
     ucs2 = array[2].replace('0x', '')
-    if IsValidUnicode(ucs2):
+    if IsValidUCS2(ucs2):
       result.add(ucs2)
 
   # FF3C (FULLWIDTH REVERSE SOLIDS) should be in JISX0208
@@ -79,7 +88,7 @@ def LoadJISX0212(filename):
       continue
     array = line.split()
     ucs2 = array[1].replace('0x', '')
-    if IsValidUnicode(ucs2):
+    if IsValidUCS2(ucs2):
       result.add(ucs2)
 
   return result
@@ -92,7 +101,7 @@ def LoadCP932(filename):
       continue
     array = line.split()
     ucs2 = array[1].replace('0x', '')
-    if IsValidUnicode(ucs2):
+    if IsValidUCS2(ucs2):
       result.add(ucs2)
 
   return result
@@ -104,9 +113,10 @@ def LoadJISX0213(filename):
     if line.startswith('#'):
       continue
     array = line.split()
-    ucs2 = array[1].replace('U+', '')
-    if IsValidUnicode(ucs2):
-      result.add(ucs2)
+    # Some JIS X 0213 characters are described as 'U+xxxx+xxxx'.
+    ucs4 = array[1].replace('U+', '').split('+')[0]
+    if IsValidUCS4(ucs4):
+      result.add(ucs4)
 
   return result
 
@@ -161,52 +171,55 @@ def Categorize(key, pattern):
   raise 'Cannot find pattern %s ' % (pattern)
 
 def OutputTable():
-  exceptions = LoadExceptions()
-  cp932      = LoadCP932(sys.argv[1])
-  jisx0201   = LoadJISX0201(sys.argv[2])
-  jisx0208   = LoadJISX0208(sys.argv[3])
-  jisx0212   = LoadJISX0212(sys.argv[4])
-  jisx0213   = LoadJISX0213(sys.argv[5])
+  charset = { 'exceptions' : LoadExceptions(),
+              'cp932'      : LoadCP932(sys.argv[1]),
+              'jisx0201'   : LoadJISX0201(sys.argv[2]),
+              'jisx0208'   : LoadJISX0208(sys.argv[3]),
+              'jisx0212'   : LoadJISX0212(sys.argv[4]),
+              'jisx0213'   : LoadJISX0213(sys.argv[5])}
+
+  max_char = 0
+  for chars in charset.values():
+    max_char = max(max_char, max([int(c, 16) for c in chars]))
+
+  char_range = xrange(0, max_char + 1)
 
   cat = []
-  for i in xrange(0, 65536):
-    key = "%4.4X" % (i)
+  for i in char_range:
+    key = ("%5.4X" % (i)).lstrip(' ')
     pattern = "%s %s %s %s %s %s" % (
-        Lookup(key, exceptions),
-        Lookup(key, cp932),
-        Lookup(key, jisx0201),
-        Lookup(key, jisx0208),
-        Lookup(key, jisx0212),
-        Lookup(key, jisx0213))
+        Lookup(key, charset['exceptions']),
+        Lookup(key, charset['cp932']),
+        Lookup(key, charset['jisx0201']),
+        Lookup(key, charset['jisx0208']),
+        Lookup(key, charset['jisx0212']),
+        Lookup(key, charset['jisx0213']))
     cat.append(Categorize(key, pattern))
 
   # Grouping
   prev = ""
-  start = -1
-  end = 0
+  ucs4s = []
   group = []
-  for i in xrange(0, 65536):
+  for i in char_range:
     if prev != cat[i]:
-      if start == -1:
-        start = i
-      else:
-        end = i
-        group.append([prev, start, end])
-        start = i
-    prev = cat[i]
+      if len(ucs4s) > 0:
+        group.append([prev, ucs4s])
+      prev = cat[i]
+      ucs4s = []
+    ucs4s.append(i)
 
-  group.append([prev, start, 65536])
+  if len(ucs4s) > 0:
+    group.append([prev, ucs4s])
 
-  print "Util::CharacterSet Util::GetCharacterSet(uint16 ucs2) {"
-  print "  switch (ucs2) {";
+  print "Util::CharacterSet Util::GetCharacterSet(char32 ucs4) {"
+  print "  switch (ucs4) {";
   for g in group:
     cat = g[0]
-    start = g[1]
-    end = g[2]
+    chars = g[1]
     if cat == "UNICODE_ONLY":
       continue
-    for i in xrange(start, end):
-      print  "    case 0x%4.4X:" % (i)
+    for i in chars:
+      print  "    case 0x%8.8X:" % (i)
     print "      return %s;" % (cat)
     print "      break;";
 

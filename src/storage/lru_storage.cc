@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,7 @@
 #include <time.h>
 #include <stdlib.h>
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 #include <algorithm>
@@ -261,21 +262,14 @@ void LRUStorage::Clear() {
 }
 
 bool LRUStorage::Merge(const char *filename) {
-  Mmap<char> target_mmap;
-  if (!target_mmap.Open(filename)) {
-    LOG(ERROR) << "could not open merging file";
+  LRUStorage target_storage;
+  if (!target_storage.Open(filename)) {
     return false;
   }
-  return Merge(target_mmap.begin(),
-               target_mmap.GetFileSize());
+  return Merge(target_storage);
 }
 
-bool LRUStorage::Merge(const char *ptr, size_t ptr_size) {
-  LRUStorage storage;
-  if (!storage.Open(const_cast<char *>(ptr), ptr_size)) {
-    return false;
-  }
-
+bool LRUStorage::Merge(const LRUStorage &storage) {
   if (storage.value_size() !=  value_size()) {
     return false;
   }
@@ -284,44 +278,45 @@ bool LRUStorage::Merge(const char *ptr, size_t ptr_size) {
     return false;
   }
 
-  vector<char *> ary;
+  vector<const char *> ary;
 
   // this file
   {
-    char *begin = begin_;
-    char *end = end_;
-    while (begin < end) {
-      begin += (value_size_ + 12);
-    }
-  }
-
-  // target file
-  {
-    char *begin = storage.begin_;
-    char *end = storage.end_;
+    const char *begin = begin_;
+    const char *end = end_;
     while (begin < end) {
       ary.push_back(begin);
       begin += (value_size_ + 12);
     }
   }
 
-  stable_sort(ary.begin(), ary.end(),
-              CompareByTimeStamp());
-
-  string buf;
-  uint64 old_fp = 0;
-  uint64 fp = 0;
-  for (size_t i = 0; i < ary.size(); ++i) {
-    fp = GetFP(ary[i]);
-    if (old_fp != fp) {
-      buf.append(const_cast<const char *>(ary[i]), value_size_ + 12);
+  // target file
+  {
+    const char *begin = storage.begin_;
+    const char *end = storage.end_;
+    while (begin < end) {
+      ary.push_back(begin);
+      begin += (value_size_ + 12);
     }
-    old_fp = fp;
   }
 
-  const int old_size = static_cast<int>(end_ - begin_);
-  const int new_size = min(static_cast<int>(buf.size()), old_size);
+  stable_sort(ary.begin(), ary.end(), CompareByTimeStamp());
 
+  string buf;
+  set<uint64> seen;   // remove duplicated entries.
+  for (size_t i = 0; i < ary.size(); ++i) {
+    if (!seen.insert(GetFP(ary[i])).second) {
+      continue;
+    }
+    buf.append(const_cast<const char *>(ary[i]), value_size_ + 12);
+  }
+
+  const size_t old_size = static_cast<size_t>(end_ - begin_);
+  const size_t new_size = min(buf.size(), old_size);
+
+  // TODO(taku): this part is not atomic.
+  // If the converter process is killed while memcpy or memset is running,
+  // the storage data will be broken.
   memcpy(begin_, buf.data(), new_size);
   if (new_size < old_size) {
     memset(begin_ + new_size, '\0', old_size - new_size);
@@ -405,6 +400,7 @@ bool LRUStorage::Open(const char *filename) {
     return false;
   }
 
+  filename_ = filename;
   return Open(mmap_->begin(), mmap_->GetFileSize());
 }
 
@@ -469,6 +465,7 @@ bool LRUStorage::Open(char *ptr, size_t ptr_size) {
 }
 
 void LRUStorage::Close() {
+  filename_.clear();
   mmap_.reset(NULL);
   lru_list_.reset(NULL);
   map_.clear();
@@ -554,7 +551,51 @@ bool LRUStorage::TryInsert(const string &key, const char *value) {
   return true;
 }
 
+size_t LRUStorage::value_size() const {
+  return value_size_;
+}
+
+size_t LRUStorage::size() const {
+  return size_;
+}
+
 size_t LRUStorage::used_size() const {
   return lru_list_.get() == NULL ? 0 : lru_list_->size();
+}
+
+uint32 LRUStorage::seed() const {
+  return seed_;
+}
+
+const string &LRUStorage::filename() const {
+  return filename_;
+}
+
+void LRUStorage::Write(size_t i,
+                       uint64 fp,
+                       const string &value,
+                       uint32 last_access_time) {
+  DCHECK_GE(i, 0);
+  DCHECK_LT(i, size_);
+  char *ptr = begin_ + (i * (value_size_ + 12));
+  memcpy(ptr,     reinterpret_cast<const char *>(&fp), 8);
+  memcpy(ptr + 8, reinterpret_cast<const char *>(&last_access_time), 4);
+  if (value.size() == value_size_) {
+    memcpy(ptr + 12, value.data(), value_size_);
+  } else {
+    LOG(ERROR) << "value size is not " << value_size_ << " byte.";
+  }
+}
+
+void LRUStorage::Read(size_t i,
+                      uint64 *fp,
+                      string *value,
+                      uint32 *last_access_time) const {
+  DCHECK_GE(i, 0);
+  DCHECK_LT(i, size_);
+  const char *ptr = begin_ + (i * (value_size_ + 12));
+  *fp = GetFP(ptr);
+  value->assign(GetValue(ptr), value_size_);
+  *last_access_time = GetTimeStamp(ptr);
 }
 }   // end of mozc

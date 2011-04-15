@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -47,7 +47,7 @@ void CreateKeyValue(map<string, string> *output, int size) {
     char value[64];
     snprintf(key, sizeof(key), "key%d", i);
     snprintf(value, sizeof(value), "value%d", i);
-    output->insert(make_pair<string, string>(key, value));
+    output->insert(pair<string, string>(key, value));
   }
 }
 }  // anonymous namespace

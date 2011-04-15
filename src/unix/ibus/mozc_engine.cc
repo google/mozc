@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -43,6 +43,7 @@
 #include "session/commands.pb.h"
 #include "session/config.pb.h"
 #include "session/ime_switch_util.h"
+#include "unix/ibus/config_util.h"
 #include "unix/ibus/engine_registrar.h"
 #include "unix/ibus/key_translator.h"
 #include "unix/ibus/mozc_engine_property.h"
@@ -86,60 +87,6 @@ bool IsMozcToolAvailable() {
   return mozc::Util::FileExists(
       mozc::Util::JoinPath(mozc::Util::GetServerDirectory(), mozc::kMozcTool));
 }
-
-#ifdef OS_CHROMEOS
-#if IBUS_CHECK_VERSION(1, 3, 99)
-// IBus-1.4 uses Glib's GVariant for configration.
-bool GetStringConfig(GVariant *value, const gchar **out_string) {
-  if (g_variant_classify(value) != G_VARIANT_CLASS_STRING) {
-    return false;
-  }
-  *out_string = g_variant_get_string(value, NULL);
-  return true;
-}
-
-bool GetIntegerConfig(GVariant *value, gint *out_integer) {
-  if (g_variant_classify(value) != G_VARIANT_CLASS_INT32) {
-    return false;
-  }
-  *out_integer = g_variant_get_int32(value);
-  return true;
-}
-
-bool GetBooleanConfig(GVariant *value, gboolean *out_boolean) {
-  if (g_variant_classify(value) != G_VARIANT_CLASS_BOOLEAN) {
-    return false;
-  }
-  *out_boolean = g_variant_get_boolean(value);
-  return true;
-}
-#else
-// IBus-1.2 and 1.3 use GValue for configration.
-bool GetStringConfig(GValue *value, const gchar **out_string) {
-  if (!G_VALUE_HOLDS_STRING(value)) {
-    return false;
-  }
-  *out_string = g_value_get_string(value);
-  return true;
-}
-
-bool GetIntegerConfig(GValue *value, gint *out_integer) {
-  if (!G_VALUE_HOLDS_INT(value)) {
-    return false;
-  }
-  *out_integer = g_value_get_int(value);
-  return true;
-}
-
-bool GetBooleanConfig(GValue *value, gboolean *out_boolean) {
-  if (!G_VALUE_HOLDS_BOOLEAN(value)) {
-    return false;
-  }
-  *out_boolean = g_value_get_boolean(value);
-  return true;
-}
-#endif
-#endif  // OS_CHROMEOS
 
 struct IBusMozcEngineClass {
   IBusEngineClass parent;
@@ -911,7 +858,6 @@ bool MozcEngine::UpdateCandidates(IBusEngine *engine,
     return true;
   }
 
-  const guint kPageSize = 9;
   const gboolean kRound = TRUE;
   const commands::Candidates &candidates = output.candidates();
   const gboolean cursor_visible = candidates.has_focused_index() ?
@@ -929,7 +875,11 @@ bool MozcEngine::UpdateCandidates(IBusEngine *engine,
                                                  cursor_visible,
                                                  kRound);
 #if IBUS_CHECK_VERSION(1, 3, 0)
-  ibus_lookup_table_set_orientation(table, IBUS_ORIENTATION_VERTICAL);
+  if (candidates.direction() == commands::Candidates::VERTICAL) {
+    ibus_lookup_table_set_orientation(table, IBUS_ORIENTATION_VERTICAL);
+  } else {
+    ibus_lookup_table_set_orientation(table, IBUS_ORIENTATION_HORIZONTAL);
+  }
 #endif
 
   for (int i = 0; i < candidates.candidate_size(); ++i) {
@@ -1030,67 +980,8 @@ void MozcEngine::UpdateConfig(const gchar *section,
   }
 
   config::Config mozc_config;
-  const google::protobuf::Descriptor *descriptor = mozc_config.GetDescriptor();
-  const google::protobuf::Reflection *reflection = mozc_config.GetReflection();
-  const google::protobuf::FieldDescriptor *field_to_update =
-      descriptor->FindFieldByName(name);
-
-  if (!field_to_update) {
-    LOG(ERROR) << "Unknown config name: " << name;
-    return;
-  }
-
-  // Set |value| to |mozc_config|.
-  switch (field_to_update->cpp_type()) {
-    case google::protobuf::FieldDescriptor::CPPTYPE_ENUM: {
-      // |value| should be STRING.
-      const gchar *string_value = NULL;
-      if (!GetStringConfig(value, &string_value)) {
-        LOG(ERROR) << "Bad value type for " << name;
-        return;
-      }
-      DCHECK(string_value);
-      const google::protobuf::EnumValueDescriptor *enum_value =
-          descriptor->FindEnumValueByName(string_value);
-      if (!enum_value) {
-        LOG(ERROR) << "Bad value for " << name << ": " << string_value;
-        return;
-      }
-      reflection->SetEnum(&mozc_config, field_to_update, enum_value);
-      VLOG(2) << "setting mozc config: " << name << " = " << string_value;
-      break;
-    }
-    case google::protobuf::FieldDescriptor::CPPTYPE_UINT32: {
-      // unsigned int is not supported as chrome's preference type and int is
-      // used as an alternative type, so |value| should be INT.
-      gint int_value = -1;
-      if (!GetIntegerConfig(value, &int_value)) {
-        LOG(ERROR) << "Bad value type for " << name;
-        return;
-      }
-      reflection->SetUInt32(&mozc_config, field_to_update, int_value);
-      VLOG(2) << "setting mozc config: " << name << " = " << int_value;
-      break;
-    }
-    case google::protobuf::FieldDescriptor::CPPTYPE_BOOL: {
-      // |value| should be BOOLEAN.
-      gboolean boolean_value = FALSE;
-      if (!GetBooleanConfig(value, &boolean_value)) {
-        LOG(ERROR) << "Bad value type for " << name;
-        return;
-      }
-      reflection->SetBool(&mozc_config, field_to_update, boolean_value);
-      VLOG(2) << "setting mozc config: " << name << " = "
-              << (boolean_value ? "true" : "false");
-      break;
-    }
-    default: {
-      // TODO(yusukes): Support other types.
-      LOG(ERROR) << "Unknown or unsupported type: " << name << ": "
-                 << field_to_update->cpp_type();
-      return;
-    }
-  }
+  session_->GetConfig(&mozc_config);
+  ConfigUtil::SetFieldForName(name, value, &mozc_config);
 
   // Update config1.db.
   session_->SetConfig(mozc_config);

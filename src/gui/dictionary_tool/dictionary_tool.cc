@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -225,6 +225,7 @@ class MultiByteTextLineIterator
 
   void Reset() {
     ifs_->seekg(0, ios_base::beg);
+    first_line_ = true;
   }
 
  private:
@@ -1260,6 +1261,11 @@ void DictionaryTool::ReportError() {
       LOG(ERROR) << "Dictionary name is too long.";
       QMessageBox::critical(this, window_title_,
                             tr("Dictionary name is too long."));
+      break;
+    case UserDictionaryStorage::DUPLICATED_DICTIONARY_NAME:
+      LOG(ERROR) << "duplicated dictionary name";
+      QMessageBox::critical(this, window_title_,
+                            tr("Dictionary already exists."));
       break;
     default:
       LOG(ERROR) << "A fatal error occurred";

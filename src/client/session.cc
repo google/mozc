@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,6 +39,7 @@
 #include "base/file_stream.h"
 #include "base/process.h"
 #include "base/run_level.h"
+#include "base/singleton.h"
 #include "base/util.h"
 #include "base/version.h"
 #include "ipc/ipc.h"
@@ -884,5 +885,28 @@ bool Session::OpenBrowser(const string &url) {
   return true;
 }
 
+namespace {
+class DefaultSessionFactory : public SessionFactoryInterface {
+ public:
+  virtual SessionInterface *NewSession() {
+    return new Session;
+  }
+};
+
+SessionFactoryInterface *g_session_factory = NULL;
+}  // namespace
+
+SessionInterface *SessionFactory::NewSession() {
+  if (g_session_factory == NULL) {
+    return Singleton<DefaultSessionFactory>::get()->NewSession();
+  } else {
+    return g_session_factory->NewSession();
+  }
+}
+
+void SessionFactory::SetSessionFactory(
+    SessionFactoryInterface *session_factory) {
+  g_session_factory = session_factory;
+}
 }  // namespace client
 }  // namespace mozc

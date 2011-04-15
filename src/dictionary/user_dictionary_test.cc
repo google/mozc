@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -449,7 +449,8 @@ TEST_F(UserDictionaryTest, IncognitoModeTest) {
 }
 
 TEST_F(UserDictionaryTest, AsyncLoadTest) {
-  const string filename = Util::JoinPath(FLAGS_test_tmpdir, "test.db");
+  const string filename = Util::JoinPath(FLAGS_test_tmpdir,
+                                         "async_load_test.db");
   Util::Unlink(filename);
 
   // Create dictionary
@@ -492,7 +493,9 @@ TEST_F(UserDictionaryTest, AsyncLoadTest) {
                           keys[i].size(), &allocator);
       }
     }
+    dic->WaitForReloader();
   }
+  Util::Unlink(filename);
 }
 
 TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
@@ -502,7 +505,8 @@ TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
   scoped_ptr<UserDictionary> user_dic(CreateDictionary());
   user_dic->WaitForReloader();
 
-  const string filename = Util::JoinPath(FLAGS_test_tmpdir, "test.db");
+  const string filename = Util::JoinPath(FLAGS_test_tmpdir,
+                                         "suppression_test.db");
   Util::Unlink(filename);
 
   UserDictionaryStorage storage(filename);
@@ -567,6 +571,72 @@ TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
           "suppress_value" + Util::SimpleItoa(j)));
     }
   }
+  Util::Unlink(filename);
+}
+
+TEST_F(UserDictionaryTest, TestSuggestionOnlyWord) {
+  scoped_ptr<UserDictionary> user_dic(CreateDictionary());
+  user_dic->WaitForReloader();
+  UserPOS::SetUserPOSInterface(NULL);
+
+  const string filename = Util::JoinPath(FLAGS_test_tmpdir,
+                                         "suggestion_only_test.db");
+  Util::Unlink(filename);
+
+  UserDictionaryStorage storage(filename);
+
+  // Create dictionary
+  {
+    uint64 id = 0;
+    EXPECT_TRUE(storage.CreateDictionary("test", &id));
+    UserDictionaryStorage::UserDictionary *dic =
+        storage.mutable_dictionaries(0);
+
+    for (size_t j = 0; j < 10; ++j) {
+      UserDictionaryStorage::UserDictionaryEntry *entry =
+          dic->add_entries();
+      entry->set_key("key" + Util::SimpleItoa(j));
+      entry->set_value("default");
+      // "名詞"
+      entry->set_pos("\xE5\x90\x8D\xE8\xA9\x9E");
+    }
+
+    for (size_t j = 0; j < 10; ++j) {
+      UserDictionaryStorage::UserDictionaryEntry *entry =
+          dic->add_entries();
+      entry->set_key("key" + Util::SimpleItoa(j));
+      entry->set_value("suggest_only");
+      // "サジェストのみ"
+      entry->set_pos("\xE3\x82\xB5\xE3\x82\xB8\xE3\x82\xA7"
+                     "\xE3\x82\xB9\xE3\x83\x88\xE3\x81\xAE\xE3\x81\xBF");
+    }
+
+    user_dic->Load(storage);
+  }
+
+  TestNodeAllocator allocator;
+
+  {
+    const char kKey[] = "key0123";
+    const Node *node = user_dic->LookupPrefix(kKey, strlen(kKey),
+                                              &allocator);
+    CHECK(node);
+    for (; node != NULL; node = node->bnext) {
+      EXPECT_TRUE("suggest_only" != node->value && "default" == node->value);
+    }
+  }
+
+  {
+    const char kKey[] = "key";
+    const Node *node = user_dic->LookupPredictive(kKey, strlen(kKey),
+                                                  &allocator);
+    CHECK(node);
+    for (; node != NULL; node = node->bnext) {
+      EXPECT_TRUE("suggest_only" == node->value || "default" == node->value);
+    }
+  }
+
+  Util::Unlink(filename);
 }
 }  // namespace
 }  // namespace mozc

@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -212,6 +212,10 @@ bool CharChunk::AddInputInternal(const Table &table, string *input) {
   // The prefix of key reached a conversion result, thus entry is not NULL.
 
   if (key.size() == key_length) {
+    const bool is_following_entry = (
+        !conversion_.empty() ||
+        (!raw_.empty() && !pending_.empty() && raw_ != pending_));
+
     raw_.append(*input);
     input->clear();
     if (fixed) {
@@ -223,8 +227,7 @@ bool CharChunk::AddInputInternal(const Table &table, string *input) {
 
       // If this entry is the first entry, the table attributes are
       // applied to this chunk.
-      if (raw_.size() == entry->input().size() &&
-          conversion_.size() == entry->result().size()) {
+      if (!is_following_entry) {
         attributes_ = entry->attributes();
       }
     } else {  // !fixed

@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,6 +40,7 @@ typedef int                 int32;
 typedef unsigned char      uint8;
 typedef unsigned short     uint16;
 typedef unsigned int       uint32;
+typedef unsigned int       char32;
 #ifdef OS_WINDOWS
 typedef unsigned __int64   uint64;
 typedef __int64             int64;

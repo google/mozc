@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -77,7 +77,6 @@ class PredictorTest : public testing::Test {
     config::ConfigHandler::SetConfig(config);
     PredictorFactory::SetUserHistoryPredictor(NULL);
     PredictorFactory::SetDictionaryPredictor(NULL);
-    PredictorFactory::SetConversionPredictor(NULL);
   }
 };
 
@@ -87,7 +86,6 @@ TEST_F(PredictorTest, AllPredictorsReturnTrue) {
   NullPredictor predictor3(true);
   PredictorFactory::SetUserHistoryPredictor(&predictor1);
   PredictorFactory::SetDictionaryPredictor(&predictor2);
-  PredictorFactory::SetConversionPredictor(&predictor3);
   Segments segments;
   {
     segments.set_request_type(Segments::SUGGESTION);
@@ -102,10 +100,8 @@ TEST_F(PredictorTest, AllPredictorsReturnTrue) {
 TEST_F(PredictorTest, MixedReturnValue) {
   NullPredictor predictor1(true);
   NullPredictor predictor2(false);
-  NullPredictor predictor3(true);
   PredictorFactory::SetUserHistoryPredictor(&predictor1);
   PredictorFactory::SetDictionaryPredictor(&predictor2);
-  PredictorFactory::SetConversionPredictor(&predictor3);
   Segments segments;
   {
     segments.set_request_type(Segments::SUGGESTION);
@@ -120,10 +116,8 @@ TEST_F(PredictorTest, MixedReturnValue) {
 TEST_F(PredictorTest, AllPredictorsReturnFalse) {
   NullPredictor predictor1(false);
   NullPredictor predictor2(false);
-  NullPredictor predictor3(false);
   PredictorFactory::SetUserHistoryPredictor(&predictor1);
   PredictorFactory::SetDictionaryPredictor(&predictor2);
-  PredictorFactory::SetConversionPredictor(&predictor3);
   Segments segments;
   {
     segments.set_request_type(Segments::SUGGESTION);
@@ -138,10 +132,8 @@ TEST_F(PredictorTest, AllPredictorsReturnFalse) {
 TEST_F(PredictorTest, CallPredictorsForSuggestion) {
   CheckCandSizePredictor predictor1(GET_CONFIG(suggestions_size));
   CheckCandSizePredictor predictor2(GET_CONFIG(suggestions_size));
-  CheckCandSizePredictor predictor3(1);
   PredictorFactory::SetUserHistoryPredictor(&predictor1);
   PredictorFactory::SetDictionaryPredictor(&predictor2);
-  PredictorFactory::SetConversionPredictor(&predictor3);
   Segments segments;
   {
     segments.set_request_type(Segments::SUGGESTION);
@@ -157,10 +149,8 @@ TEST_F(PredictorTest, CallPredictorsForPrediction) {
   const int kPredictionSize = 100;
   CheckCandSizePredictor predictor1(kPredictionSize);
   CheckCandSizePredictor predictor2(kPredictionSize);
-  CheckCandSizePredictor predictor3(1);
   PredictorFactory::SetUserHistoryPredictor(&predictor1);
   PredictorFactory::SetDictionaryPredictor(&predictor2);
-  PredictorFactory::SetConversionPredictor(&predictor3);
   Segments segments;
   {
     segments.set_request_type(Segments::PREDICTION);
@@ -171,4 +161,6 @@ TEST_F(PredictorTest, CallPredictorsForPrediction) {
   PredictorInterface *predictor = PredictorFactory::GetPredictor();
   EXPECT_TRUE(predictor->Predict(&segments));
 }
+
+
 }  // namespace mozc

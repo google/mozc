@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,7 +44,6 @@ struct LRUList_Node;
 class LRUStorage {
  public:
   bool Open(const char *filename);
-  bool Open(char *ptr, size_t ptr_size);  // load from memory buffer
   void Close();
 
   // Try to open exisiting database
@@ -56,10 +55,10 @@ class LRUStorage {
                     uint32 seed);
 
   // Lookup key
-  const char * Lookup(const string &key,
-                      uint32 *last_access_time) const;
+  const char *Lookup(const string &key,
+                     uint32 *last_access_time) const;
 
-  const char * Lookup(const string &key) const;
+  const char *Lookup(const string &key) const;
 
   // clear all LRU cache;
   // mapped file is also initialized
@@ -67,7 +66,7 @@ class LRUStorage {
 
   // Merge from other data
   bool Merge(const char *filename);
-  bool Merge(const char *ptr, size_t ptr_size);
+  bool Merge(const LRUStorage &storage);
 
   // update timestamp
   bool Touch(const string &key);
@@ -81,15 +80,26 @@ class LRUStorage {
   bool TryInsert(const string &key,
                  const char *value);
 
-  size_t value_size() const {
-    return value_size_;
-  }
-
-  size_t size() const {
-    return size_;
-  }
-
+  size_t value_size() const;
+  size_t size() const;
   size_t used_size() const;
+  uint32 seed() const;
+  const string &filename() const;
+
+  // Write one entry at |i| th index.
+  // i must be 0 <= i < size.
+  // This data will not update the index of the storage.
+  void Write(size_t i,
+             uint64 fp,
+             const string &value,
+             uint32 last_access_time);
+
+  // Read one entry from |i| th index.
+  // i must be 0 <= i < size.
+  void Read(size_t i,
+            uint64 *fp,
+            string *value,
+            uint32 *last_access_time) const;
 
   // Create Instance from file. Call Open internally
   static LRUStorage *Create(const char *filename);
@@ -110,12 +120,16 @@ class LRUStorage {
   virtual ~LRUStorage();
 
  private:
+  // load from memory buffer
+  bool Open(char *ptr, size_t ptr_size);
+
   size_t value_size_;
   size_t size_;
   uint32 seed_;
   char *last_item_;
   char *begin_;
   char *end_;
+  string filename_;
   map<uint64, LRUList_Node *> map_;
   scoped_ptr<LRUList> lru_list_;
   scoped_ptr<Mmap<char> > mmap_;

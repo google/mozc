@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,11 +34,15 @@
 #include <vector>
 #include "base/base.h"
 #include "prediction/predictor_interface.h"
+// for FRIEND_TEST()
+#include "testing/base/public/gunit_prod.h"
 
 namespace mozc {
 
 class Segments;
 class DictionaryInterface;
+class ImmutableConverterInterface;
+struct Node;
 
 // Dictioanry-based predictor
 class DictionaryPredictor: public PredictorInterface {
@@ -48,20 +52,17 @@ class DictionaryPredictor: public PredictorInterface {
 
   bool Predict(Segments *segments) const;
 
-  // return SVM score from feature.
-  // |feature| is used as an internal buffer for calculating SVM score.
-  static int GetSVMScore(const string &query,
-                         const string &key,
-                         const string &value,
-                         uint16 cost,
-                         uint16 lid,
-                         bool is_zip_code,
-                         bool is_suggestion,
-                         size_t total_candidates_size,
-                         vector<pair<int, double> > *feature);
+ private:
+  FRIEND_TEST(DictionaryPredictorTest, GetPredictionType);
+  FRIEND_TEST(DictionaryPredictorTest,
+              GetPredictionTypeTestWithZeroQuerySuggestion);
+  FRIEND_TEST(DictionaryPredictorTest, IsZipCodeRequest);
+  FRIEND_TEST(DictionaryPredictorTest, GetSVMScore);
+  FRIEND_TEST(DictionaryPredictorTest, AggregateRealtimeConversion);
+  FRIEND_TEST(DictionaryPredictorTest, AggregateUnigramPrediction);
+  FRIEND_TEST(DictionaryPredictorTest, AggregateBigramPrediction);
+  FRIEND_TEST(DictionaryPredictorTest, GetHistoryKeyAndValue);
 
-  // return true if key consistes of '0'-'9' or '-'
-  static bool IsZipCodeRequest(const string &key);
 
   enum PredictionType {
     // don't need to show any suggestions.
@@ -70,14 +71,69 @@ class DictionaryPredictor: public PredictorInterface {
     UNIGRAM = 1,
     // suggests from the previous history key user typed before.
     BIGRAM = 2,
+    // suggests from immutable_converter
+    REALTIME = 4,
   };
+
+  struct Result {
+    Result() : node(NULL), type(NO_PREDICTION), score(0) {}
+    Result(const Node *node_, PredictionType type_)
+        : node(node_), type(type_), score(0) {}
+    const Node *node;
+    PredictionType type;
+    int score;
+  };
+
+  class ResultCompare {
+   public:
+    bool operator() (const Result &a, const Result &b) const {
+      return a.score < b.score;
+    }
+  };
+
+  void AggregateRealtimeConversion(PredictionType type,
+                                   Segments *segments,
+                                   vector<Result> *results) const;
+  void AggregateUnigramPrediction(PredictionType type,
+                                  Segments *segments,
+                                  vector<Result> *results) const;
+  void AggregateBigramPrediction(PredictionType type,
+                                 Segments *segments,
+                                 vector<Result> *results) const;
+
+  // SVM-based scoring function.
+  void SetSVMScore(const Segments &segments,
+                   vector<Result> *results) const;
+
+  // Language model-based scoring function.
+  void SetLMScore(const Segments &segments,
+                  vector<Result> *results) const;
+
+  // return true if key consistes of '0'-'9' or '-'
+  bool IsZipCodeRequest(const string &key) const;
+
+  // return history key/value.
+  bool GetHistoryKeyAndValue(const Segments &segments,
+                             string *key, string *value) const;
 
   // return PredictionType.
   // return value may be UNIGRAM | BIGRAM.
-  static PredictionType GetPredictionType(const Segments &segments);
+  PredictionType GetPredictionType(const Segments &segments) const;
 
- private:
+  // return SVM score from feature.
+  // |feature| is used as an internal buffer for calculating SVM score.
+  int GetSVMScore(const string &query,
+                  const string &key,
+                  const string &value,
+                  uint16 cost,
+                  uint16 lid,
+                  bool is_zip_code,
+                  bool is_suggestion,
+                  size_t total_candidates_size,
+                  vector<pair<int, double> > *feature) const;
+
   DictionaryInterface *dictionary_;
+  ImmutableConverterInterface *immutable_converter_;
 };
 }  // namespace mozc
 

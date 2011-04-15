@@ -1,4 +1,4 @@
-# Copyright 2010, Google Inc.
+# Copyright 2010-2011, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -108,6 +108,10 @@
     # use_libprotobuf represents if protobuf library is used or not.
     # This option is only for Linux.
     'use_libprotobuf%': 1,
+
+    # use_libzinnia represents if zinnia library is used or not.
+    # This option is only for Linux.
+    'use_libzinnia%': 1,
 
     # a flag whether the current build is dev-channel or not.
     'channel_dev%': '0',

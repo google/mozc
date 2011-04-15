@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -72,6 +72,7 @@ const char kAbortCommand[] = "Abort";
 const char kInsertCharacterCommand[] = "InsertCharacter";
 const char kIMEOnCommand[] = "IMEOn";
 const char kIMEOffCommand[] = "IMEOff";
+const char kReconvertCommand[] = "Reconvert";
 const char kReportBugCommand[] = "ReportBug";
 // Old command name
 const char kEditInsertCommand[] = "EditInsert";
@@ -364,7 +365,7 @@ bool KeyMapEditorDialog::LoadFromStream(istream *is) {
       continue;
     }
 
-    if (fields[2] == kIMEOnCommand || fields[2] == kIMEOffCommand) {
+    if (fields[2] == kIMEOnCommand || fields[2] == kReconvertCommand) {
       ime_switch_keymap_.insert(line);
     }
 
@@ -439,7 +440,7 @@ bool KeyMapEditorDialog::Update() {
     *keymap_table += keymap_line;
     *keymap_table += '\n';
 
-    if (command == kIMEOnCommand || command == kIMEOffCommand) {
+    if (command == kIMEOnCommand || command == kReconvertCommand) {
       new_ime_switch_keymap.insert(keymap_line);
     }
   }
@@ -450,7 +451,7 @@ bool KeyMapEditorDialog::Update() {
     QMessageBox::information(
         this,
         tr("Mozc settings"),
-        tr("The keymaps for IME ON/OFF will be "
+        tr("The keymaps for IME ON and Reconversion will be "
            "applied after new applications."));
 #endif  // OS_WINDOWS || OS_LINUX
     ime_switch_keymap_ = new_ime_switch_keymap;

@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -260,10 +260,62 @@ message Config {
   optional bool use_dictionary_suggest = 101 [ default = true ];
 
   // use realtime conversion feature (experimental)
-  optional bool use_realtime_conversion = 102 [ default = false ];
+  optional bool use_realtime_conversion = 102 [ default = true ];
 
   // size of suggestions
   optional uint32 suggestions_size = 110 [ default = 3 ];
 
+
+  // Config for chewing.  It resides here for historical reason.
+  // TODO(mukai): apply extension for multilingual config.
+  optional ChewingConfig chewing_config = 999;
 };
 
+// Config for Taiwanese chewing input.  Those items are based on the
+// libchewing configurations and current ChromeOS ibus-chewing config
+// items.
+message ChewingConfig {
+  optional bool automatic_shift_cursor = 1 [ default = false ];
+  optional bool add_phrase_direction = 2 [ default = false ];
+  optional bool easy_symbol_input = 3 [ default = false ];
+  optional bool escape_cleans_all_buffer = 4 [ default = false ];
+  optional bool force_lowercase_english = 5 [ default = false ];
+  // does not make sense with the current code because libchewing does
+  // not care this item.
+  // TODO(mukai): implement it.
+  optional bool plain_zhuyin = 6 [ default = false ];
+  optional bool phrase_choice_rearward = 7 [ default = true ];
+  optional bool space_as_selection = 8 [ default = true ];
+  optional uint32 maximum_chinese_character_length = 9 [ default = 40 ];
+  optional uint32 candidates_per_page = 10 [ default = 10 ];
+  enum KeyboardType {
+    DEFAULT = 0;
+    HSU = 1;
+    IBM = 2;
+    GIN_YIEH = 3;
+    ETEN = 4;
+    ETEN26 = 5;
+    DVORAK = 6;
+    DVORAK_HSU = 7;
+    DACHEN_26 = 8;
+    HANYU = 9;
+  };
+  optional KeyboardType keyboard_type = 11 [ default = DEFAULT ];
+  enum SelectionKeys {
+    SELECTION_1234567890 = 0;
+    SELECTION_asdfghjkl = 1;
+    SELECTION_asdfzxcv89 = 2;
+    SELECTION_asdfjkl789 = 3;
+    SELECTION_aoeuqjkix = 4;
+    SELECTION_aoeuhtnsid = 5;
+    SELECTION_aoeuidhtns = 6;
+    SELECTION_1234qweras = 7;
+  };
+  optional SelectionKeys selection_keys = 12 [ default = SELECTION_1234567890 ];
+  enum HsuSelectionKeys {
+    HSU_asdfjkl789 = 0;
+    HSU_asdfzxcv89 = 1;
+  };
+  optional HsuSelectionKeys hsu_selection_keys = 13
+      [ default = HSU_asdfjkl789 ];
+};

@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,9 +39,21 @@ namespace composer {
 namespace {
 const TransliteratorInterface *kNullT12r = NULL;
 const TransliteratorInterface *kRawT12r =
-  TransliteratorsJa::GetRawStringSelector();
+    TransliteratorsJa::GetRawStringSelector();
 const TransliteratorInterface *kConvT12r =
-  TransliteratorsJa::GetConversionStringSelector();
+    TransliteratorsJa::GetConversionStringSelector();
+const TransliteratorInterface *kHalfKatakanaT12r =
+    TransliteratorsJa::GetHalfKatakanaTransliterator();
+const TransliteratorInterface *kFullKatakanaT12r =
+    TransliteratorsJa::GetFullKatakanaTransliterator();
+const TransliteratorInterface *kHalfAsciiT12r =
+    TransliteratorsJa::GetHalfAsciiTransliterator();
+const TransliteratorInterface *kFullAsciiT12r =
+    TransliteratorsJa::GetFullAsciiTransliterator();
+const TransliteratorInterface *kHiraganaT12r =
+    TransliteratorsJa::GetHiraganaTransliterator();
+const TransliteratorInterface *kDefaultT12r =
+    Transliterators::GetConversionStringSelector();
 }  // anonymous namespace
 
 TEST(CharChunkTest, AddInput_CharByChar) {
@@ -204,12 +216,10 @@ TEST(CharChunkTest, GetLength) {
   EXPECT_EQ(1, chunk3.GetLength(kConvT12r));
   EXPECT_EQ(2, chunk3.GetLength(kRawT12r));
 
-  chunk3.SetTransliterator(TransliteratorsJa::GetHalfKatakanaTransliterator());
-  EXPECT_EQ(2, chunk3.GetLength(
-      TransliteratorsJa::GetHalfKatakanaTransliterator()));
-  chunk3.SetTransliterator(TransliteratorsJa::GetHalfAsciiTransliterator());
-  EXPECT_EQ(2, chunk3.GetLength(
-      TransliteratorsJa::GetHalfAsciiTransliterator()));
+  chunk3.SetTransliterator(kHalfKatakanaT12r);
+  EXPECT_EQ(2, chunk3.GetLength(kHalfKatakanaT12r));
+  chunk3.SetTransliterator(kHalfAsciiT12r);
+  EXPECT_EQ(2, chunk3.GetLength(kHalfAsciiT12r));
 }
 
 TEST(CharChunkTest, AddInputAndConvertedChar) {
@@ -329,21 +339,19 @@ TEST(CharChunkTest, OutputMode) {
   // "あ"
   EXPECT_EQ("\xE3\x81\x82", result);
 
-  chunk.SetTransliterator(TransliteratorsJa::GetFullKatakanaTransliterator());
+  chunk.SetTransliterator(kFullKatakanaT12r);
   result.clear();
   chunk.AppendResult(table, kNullT12r, &result);
   // "ア"
   EXPECT_EQ("\xE3\x82\xA2", result);
 
-  chunk.SetTransliterator(TransliteratorsJa::GetHalfAsciiTransliterator());
+  chunk.SetTransliterator(kHalfAsciiT12r);
   result.clear();
   chunk.AppendResult(table, kNullT12r, &result);
   EXPECT_EQ("a", result);
 
   result.clear();
-  chunk.AppendResult(table,
-                     TransliteratorsJa::GetHalfKatakanaTransliterator(),
-                     &result);
+  chunk.AppendResult(table, kHalfKatakanaT12r, &result);
   // "ｱ"
   EXPECT_EQ("\xEF\xBD\xB1", result);
 }
@@ -354,7 +362,7 @@ TEST(CharChunkTest, SplitChunk) {
   table.AddRule("mo", "\xE3\x82\x82", "");
 
   CharChunk chunk;
-  chunk.SetTransliterator(TransliteratorsJa::GetHiraganaTransliterator());
+  chunk.SetTransliterator(kHiraganaT12r);
 
   string input = "m";
   chunk.AddInputInternal(table, &input);
@@ -374,7 +382,7 @@ TEST(CharChunkTest, SplitChunk) {
   // "も"
   EXPECT_EQ("\xE3\x82\x82", output);
 
-  chunk.SetTransliterator(TransliteratorsJa::GetHalfAsciiTransliterator());
+  chunk.SetTransliterator(kHalfAsciiT12r);
   output.clear();
   chunk.AppendResult(table, kNullT12r, &output);
   EXPECT_EQ("mo", output);
@@ -394,11 +402,6 @@ TEST(CharChunkTest, IsAppendable) {
   // "も"
   table.AddRule("mo", "\xE3\x82\x82", "");
 
-  const TransliteratorInterface *kHiraganaT12r =
-      TransliteratorsJa::GetHiraganaTransliterator();
-  const TransliteratorInterface *kKatakanaT12r =
-      TransliteratorsJa::GetFullKatakanaTransliterator();
-
   CharChunk chunk;
   chunk.SetTransliterator(kHiraganaT12r);
 
@@ -407,14 +410,14 @@ TEST(CharChunkTest, IsAppendable) {
   EXPECT_TRUE(input.empty());
   EXPECT_TRUE(chunk.IsAppendable(kNullT12r));
   EXPECT_TRUE(chunk.IsAppendable(kHiraganaT12r));
-  EXPECT_FALSE(chunk.IsAppendable(kKatakanaT12r));
+  EXPECT_FALSE(chunk.IsAppendable(kFullKatakanaT12r));
 
   input = "o";
   chunk.AddInputInternal(table, &input);
   EXPECT_TRUE(input.empty());
   EXPECT_FALSE(chunk.IsAppendable(kNullT12r));
   EXPECT_FALSE(chunk.IsAppendable(kHiraganaT12r));
-  EXPECT_FALSE(chunk.IsAppendable(kKatakanaT12r));
+  EXPECT_FALSE(chunk.IsAppendable(kFullKatakanaT12r));
 }
 
 TEST(CharChunkTest, AddInputInternal) {
@@ -476,8 +479,6 @@ TEST(CharChunkTest, CaseSensitive) {
 TEST(CharChunkTest, AlphanumericOfSSH) {
   // This is a unittest against http://b/3199626
   // 'ssh' (っｓｈ) + F10 should be 'ssh'.
-  const TransliteratorInterface *kHiraganaT12r =
-      TransliteratorsJa::GetHiraganaTransliterator();
   Table table;
   // "っ"
   table.AddRule("ss", "\xE3\x81\xA3", "s");
@@ -757,9 +758,6 @@ TEST(CharChunkTest, Issue2190364) {
   // "ち゛", "ぢ"
   table.AddRule("\xE3\x81\xA1\xE3\x82\x9B", "\xE3\x81\xA2", "");
 
-  const TransliteratorInterface *kFullAsciiT12r =
-      TransliteratorsJa::GetFullAsciiTransliterator();
-
   CharChunk chunk;
   chunk.SetTransliterator(kFullAsciiT12r);
   string key = "a";
@@ -802,9 +800,6 @@ TEST(CharChunkTest, Issue2209634) {
   // "た@", "だ"
   table.AddRule("\xE3\x81\x9F\x40", "\xE3\x81\xA0", "");
 
-  const TransliteratorInterface *kHalfAsciiT12r =
-      TransliteratorsJa::GetHalfAsciiTransliterator();
-
   CharChunk chunk;
   chunk.SetTransliterator(kHalfAsciiT12r);
 
@@ -820,10 +815,6 @@ TEST(CharChunkTest, Issue2209634) {
 TEST(CharChunkTest, Issue2819580) {
   // This is an unittest against http://b/2819580.
   // 'y' after 'n' disappears.
-
-  const TransliteratorInterface *kHiraganaT12r =
-      TransliteratorsJa::GetHiraganaTransliterator();
-
   Table table;
   // "ぽ"
   table.AddRule("po", "\xe3\x81\xbd", "");
@@ -966,10 +957,6 @@ TEST(CharChunkTest, Issue2990253) {
   // http://b/2990253
   // SplitChunk fails.
   // Ambiguous text is left in rhs CharChunk invalidly.
-
-  const TransliteratorInterface *kHiraganaT12r =
-      TransliteratorsJa::GetHiraganaTransliterator();
-
   Table table;
   // "ん"
   table.AddRule("n", "\xe3\x82\x93", "");
@@ -1069,10 +1056,6 @@ TEST(CharChunkTest, Combine) {
 
 TEST(CharChunkTest, IsConvertible) {
   CharChunk chunk;
-  const TransliteratorInterface *kHiraganaT12r =
-      TransliteratorsJa::GetHiraganaTransliterator();
-  const TransliteratorInterface *kFullAsciiT12r =
-      TransliteratorsJa::GetFullAsciiTransliterator();
   Table table;
   // "ん"
   table.AddRule("n", "\xe3\x82\x93", "");
@@ -1391,6 +1374,7 @@ TEST(CharChunkTest, NoTransliterationAttributeForInputAndConvertedChar) {
     EXPECT_EQ(kConvT12r, chunk.GetTransliterator(kNullT12r));
   }
 }
+
 
 }  // namespace composer
 }  // namespace mozc

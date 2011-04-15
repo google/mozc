@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -141,6 +141,155 @@ bool IsPrivacySensitive(const Segments *segments) {
 }
 }  // namespace
 
+UserHistoryStorage::UserHistoryStorage(const string &filename)
+    : filename_(filename) {}
+
+UserHistoryStorage::~UserHistoryStorage() {}
+
+string UserHistoryStorage::filename() const {
+  return filename_;
+}
+
+bool UserHistoryStorage::Load() {
+  string input, salt;
+
+  // read encrypted message and salt from local file
+  {
+    Mmap<char> mmap;
+    if (!mmap.Open(filename_.c_str(), "r")) {
+      LOG(ERROR) << "cannot open user history file";
+      return false;
+    }
+
+    if (mmap.GetFileSize() < kSaltSize) {
+      LOG(ERROR) << "file size is too small";
+      return false;
+    }
+
+    if (mmap.GetFileSize() > kMaxFileSize) {
+      LOG(ERROR) << "file size is too big.";
+      return false;
+    }
+
+    // copy salt
+    char tmp[kSaltSize];
+    memcpy(tmp, mmap.begin(), kSaltSize);
+    salt.assign(tmp, kSaltSize);
+
+    // copy body
+    input.assign(mmap.begin() + kSaltSize,
+                 mmap.GetFileSize() - kSaltSize);
+  }
+
+  string password;
+  if (!PasswordManager::GetPassword(&password)) {
+    LOG(ERROR) << "PasswordManager::GetPassword() failed";
+    return false;
+  }
+
+  if (password.empty()) {
+    LOG(ERROR) << "password is empty";
+    return false;
+  }
+
+  // Decrypt message
+  Encryptor::Key key;
+  if (!key.DeriveFromPassword(password, salt)) {
+    LOG(ERROR) << "Encryptor::Key::DeriveFromPassword failed";
+    return false;
+  }
+
+  if (!Encryptor::DecryptString(key, &input)) {
+    LOG(ERROR) << "Encryptor::DecryptString() failed";
+    return false;
+  }
+
+  if (!ParseFromString(input)) {
+    LOG(ERROR) << "ParseFromString failed. message looks broken";
+    return false;
+  }
+
+  VLOG(1) << "Loaded user histroy, size=" << entries_size();
+
+  return true;
+}
+
+bool UserHistoryStorage::Save() const {
+  string salt, output;
+  {
+    if (entries_size() == 0) {
+      LOG(WARNING) << "etries size is 0. Not saved";
+      return false;
+    }
+
+    if (!AppendToString(&output)) {
+      LOG(ERROR) << "AppendToString failed";
+      return false;
+    }
+  }
+
+  {
+    string password;
+    if (!PasswordManager::GetPassword(&password)) {
+      LOG(ERROR) << "PasswordManager::GetPassword() failed";
+      return false;
+    }
+
+    if (password.empty()) {
+      LOG(ERROR) << "password is empty";
+      return false;
+    }
+
+    char tmp[kSaltSize];
+    memset(tmp, '\0', sizeof(tmp));
+    Util::GetSecureRandomSequence(tmp, sizeof(tmp));
+    salt.assign(tmp, sizeof(tmp));
+
+    Encryptor::Key key;
+    if (!key.DeriveFromPassword(password, salt)) {
+      LOG(ERROR) << "Encryptor::Key::DeriveFromPassword() failed";
+      return false;
+    }
+
+    if (!Encryptor::EncryptString(key, &output)) {
+      LOG(ERROR) << "Encryptor::EncryptString() failed";
+      return false;
+    }
+  }
+
+  // Even if histoy is empty, save to them into a file to
+  // make the file empty
+  const string tmp_filename = filename_ + ".tmp";
+  {
+    OutputFileStream ofs(tmp_filename.c_str(), ios::out | ios::binary);
+    if (!ofs) {
+      LOG(ERROR) << "failed to write: " << tmp_filename;
+      return false;
+    }
+
+    VLOG(1) << "Syncing user history to: " << filename_;
+    ofs.write(salt.data(), salt.size());
+    ofs.write(output.data(), output.size());
+  }
+
+  if (!Util::AtomicRename(tmp_filename, filename_)) {
+    LOG(ERROR) << "AtomicRename failed";
+  }
+
+#ifdef OS_WINDOWS
+  wstring wfilename;
+  Util::UTF8ToWide(filename_.c_str(), &wfilename);
+  if (!::SetFileAttributes(wfilename.c_str(),
+                           FILE_ATTRIBUTE_HIDDEN |
+                           FILE_ATTRIBUTE_SYSTEM)) {
+    LOG(ERROR) << "Cannot make hidden: " << filename_
+               << " " << ::GetLastError();
+  }
+#endif
+
+  return true;
+}
+
 UserHistoryPredictor::EntryPriorityQueue::EntryPriorityQueue()
     : pool_(kEntryPoolSize) {}
 
@@ -211,7 +360,7 @@ class UserHistoryPredictorSyncer : public Thread {
 };
 
 UserHistoryPredictor::UserHistoryPredictor()
-    : updated_(false), dic_(new DicCache(kLRUCacheSize)) {
+    : updated_(false), dic_(new DicCache(UserHistoryPredictor::cache_size())) {
   AsyncLoad();  // non-blocking
   // Load()  blocking version can be used if any
 }
@@ -220,6 +369,10 @@ UserHistoryPredictor::~UserHistoryPredictor() {
   // In destructor, must call blocking version
   WaitForSyncer();
   Save();   // blocking
+}
+
+string UserHistoryPredictor::GetUserHistoryFileName() {
+  return ConfigFileStream::GetFileName(kFileName);
 }
 
 // return revert id
@@ -249,6 +402,11 @@ bool UserHistoryPredictor::CheckSyncerAndDelete() const {
 bool UserHistoryPredictor::Sync() {
   return AsyncSave();
   // return Save();   blocking version
+}
+
+bool UserHistoryPredictor::Reload() {
+  WaitForSyncer();
+  return AsyncLoad();
 }
 
 bool UserHistoryPredictor::AsyncLoad() {
@@ -282,66 +440,12 @@ bool UserHistoryPredictor::AsyncSave() {
 }
 
 bool UserHistoryPredictor::Load() {
-  mozc::user_history_predictor::UserHistory history;
-  {
-    string input, salt;
+  const string filename = GetUserHistoryFileName();
 
-    // read encrypted message and salt from local file
-    {
-      const string filename = ConfigFileStream::GetFileName(kFileName);
-      Mmap<char> mmap;
-      if (!mmap.Open(filename.c_str(), "r")) {
-        LOG(ERROR) << "cannot open user history file";
-        return false;
-      }
-
-      if (mmap.GetFileSize() < kSaltSize) {
-        LOG(ERROR) << "file size is too small";
-        return false;
-      }
-
-      if (mmap.GetFileSize() > kMaxFileSize) {
-        LOG(ERROR) << "file size is too big.";
-        return false;
-      }
-
-      // copy salt
-      char tmp[kSaltSize];
-      memcpy(tmp, mmap.begin(), kSaltSize);
-      salt.assign(tmp, kSaltSize);
-
-      // copy body
-      input.assign(mmap.begin() + kSaltSize,
-                   mmap.GetFileSize() - kSaltSize);
-    }
-
-    string password;
-    if (!PasswordManager::GetPassword(&password)) {
-      LOG(ERROR) << "PasswordManager::GetPassword() failed";
-      return false;
-    }
-
-    if (password.empty()) {
-      LOG(ERROR) << "password is empty";
-      return false;
-    }
-
-    // Decrypt message
-    Encryptor::Key key;
-    if (!key.DeriveFromPassword(password, salt)) {
-      LOG(ERROR) << "Encryptor::Key::DeriveFromPassword failed";
-      return false;
-    }
-
-    if (!Encryptor::DecryptString(key, &input)) {
-      LOG(ERROR) << "Encryptor::DecryptString() failed";
-      return false;
-    }
-
-    if (!history.ParseFromString(input)) {
-      LOG(ERROR) << "ParseFromString failed. message looks broken";
-      return false;
-    }
+  UserHistoryStorage history(filename);
+  if (!history.Load()) {
+    LOG(ERROR) << "UserHistoryStorage::Load() failed";
+    return false;
   }
 
   for (size_t i = 0; i < history.entries_size(); ++i) {
@@ -374,89 +478,22 @@ bool UserHistoryPredictor::Save() {
     return true;
   }
 
-  string salt, output;
-  {
-    mozc::user_history_predictor::UserHistory history;
-    for (const DicElement *elm = tail; elm != NULL; elm = elm->prev) {
-      history.add_entries()->CopyFrom(elm->value);
-    }
+  const string filename = GetUserHistoryFileName();
 
-    // update usage stats here.
-    usage_stats::UsageStats::SetInteger(
-        "UserHistoryPredictorEntrySize",
-        static_cast<int>(history.entries_size()));
-
-    if (history.entries_size() == 0) {
-      LOG(WARNING) << "etries size is 0. Not saved";
-      return false;
-    }
-
-    if (!history.AppendToString(&output)) {
-      LOG(ERROR) << "AppendToString failed";
-      return false;
-    }
+  UserHistoryStorage history(filename);
+  for (const DicElement *elm = tail; elm != NULL; elm = elm->prev) {
+    history.add_entries()->CopyFrom(elm->value);
   }
 
-  {
-    string password;
-    if (!PasswordManager::GetPassword(&password)) {
-      LOG(ERROR) << "PasswordManager::GetPassword() failed";
-      return false;
-    }
+  // update usage stats here.
+  usage_stats::UsageStats::SetInteger(
+      "UserHistoryPredictorEntrySize",
+      static_cast<int>(history.entries_size()));
 
-    if (password.empty()) {
-      LOG(ERROR) << "password is empty";
-      return false;
-    }
-
-    char tmp[kSaltSize];
-    memset(tmp, '\0', sizeof(tmp));
-    Util::GetSecureRandomSequence(tmp, sizeof(tmp));
-    salt.assign(tmp, sizeof(tmp));
-
-    Encryptor::Key key;
-    if (!key.DeriveFromPassword(password, salt)) {
-      LOG(ERROR) << "Encryptor::Key::DeriveFromPassword() failed";
-      return false;
-    }
-
-    if (!Encryptor::EncryptString(key, &output)) {
-      LOG(ERROR) << "Encryptor::EncryptString() failed";
-      return false;
-    }
+  if (!history.Save()) {
+    LOG(ERROR) << "UserHistoryStorage::Save() failed";
+    return false;
   }
-
-  // Even if histoy is empty, save to them into a file to
-  // make the file empty
-  const string filename = ConfigFileStream::GetFileName(kFileName);
-  const string tmp_filename = filename + ".tmp";
-
-  {
-    OutputFileStream ofs(tmp_filename.c_str(), ios::out | ios::binary);
-    if (!ofs) {
-      LOG(ERROR) << "failed to write: " << tmp_filename;
-      return false;
-    }
-
-    VLOG(1) << "Syncing user history to: " << filename;
-    ofs.write(salt.data(), salt.size());
-    ofs.write(output.data(), output.size());
-  }
-
-  if (!Util::AtomicRename(tmp_filename, filename)) {
-    LOG(ERROR) << "AtomicRename failed";
-  }
-
-#ifdef OS_WINDOWS
-  wstring wfilename;
-  Util::UTF8ToWide(filename.c_str(), &wfilename);
-  if (!::SetFileAttributes(wfilename.c_str(),
-                           FILE_ATTRIBUTE_HIDDEN |
-                           FILE_ATTRIBUTE_SYSTEM)) {
-    LOG(ERROR) << "Cannot make hidden: " << filename
-               << " " << ::GetLastError();
-  }
-#endif
 
   updated_ = false;
 
@@ -470,9 +507,15 @@ bool UserHistoryPredictor::ClearAllHistory() {
   VLOG(1) << "Clearing user prediction";
   // renew DicCache as LRUCache tries to reuse the internal value by
   // using FreeList
-  dic_.reset(new DicCache(kLRUCacheSize));
-  // remove file
-  Util::Unlink(ConfigFileStream::GetFileName(kFileName));
+  dic_.reset(new DicCache(UserHistoryPredictor::cache_size()));
+
+  // insert a dummy event entry.
+  InsertEvent(Entry::CLEAN_ALL_EVENT);
+
+  updated_ = true;
+
+  Sync();
+
   return true;
 }
 
@@ -502,11 +545,12 @@ bool UserHistoryPredictor::ClearUnusedHistory() {
     }
   }
 
-  if (!keys.empty()) {
-    VLOG(1) << "Syncing to file";
-    updated_ = true;
-    Sync();
-  }
+  // insert a dummy event entry.
+  InsertEvent(Entry::CLEAN_UNUSED_EVENT);
+
+  updated_ = true;
+
+  Sync();
 
   VLOG(1) << keys.size() << " removed";
 
@@ -824,7 +868,8 @@ bool UserHistoryPredictor::Predict(Segments *segments) const {
         // entry->value() is a SUFFIX of prev_value.
         // length of entry->value() must be >= 2, as single-length
         // match would be noisy.
-        if (entry != prev_entry &&
+        if (IsValidEntry(*entry) &&
+            entry != prev_entry &&
             entry->next_entries_size() > 0 &&
             Util::CharsLen(entry->value()) >= 2 &&
             (entry->value() == prev_value ||
@@ -848,6 +893,10 @@ bool UserHistoryPredictor::Predict(Segments *segments) const {
   EntryPriorityQueue results;
 
   for (const DicElement *elm = head; elm != NULL; elm = elm->next) {
+    if (!IsValidEntry(elm->value)) {
+      continue;
+    }
+
     if (segments->request_type() == Segments::SUGGESTION &&
         trial++ >= kMaxSuggestionTrial) {
       VLOG(2) << "too many trials";
@@ -941,7 +990,7 @@ void UserHistoryPredictor::InsertNextEntry(
 
   // If next_entries_size is less than kMaxNextEntriesSize,
   // we simply allocate a new entry.
-  if (entry->next_entries_size() < kMaxNextEntriesSize) {
+  if (entry->next_entries_size() < max_next_entries_size()) {
     target_next_entry = entry->add_next_entries();
   } else {
     // Otherwise, find the oldest next_entry.
@@ -974,6 +1023,32 @@ void UserHistoryPredictor::InsertNextEntry(
   }
 
   target_next_entry->CopyFrom(next_entry);
+}
+
+bool UserHistoryPredictor::IsValidEntry(const Entry &entry) {
+  return !entry.removed() && entry.entry_type() == Entry::DEFAULT_ENTRY;
+}
+
+void UserHistoryPredictor::InsertEvent(EntryType type) {
+  if (type == Entry::DEFAULT_ENTRY) {
+    return;
+  }
+
+  const uint32 last_access_time = static_cast<uint32>(time(NULL));
+  const uint32 dic_key = Fingerprint("", "", type);
+
+  CHECK(dic_.get());
+  DicElement *e = dic_->Insert(dic_key);
+  if (e == NULL) {
+    VLOG(2) << "insert failed";
+    return;
+  }
+
+  Entry *entry = &(e->value);
+  DCHECK(entry);
+  entry->Clear();
+  entry->set_entry_type(type);
+  entry->set_last_access_time(last_access_time);
 }
 
 void UserHistoryPredictor::Insert(const string &key,
@@ -1018,6 +1093,7 @@ void UserHistoryPredictor::Insert(const string &key,
 
   entry->set_key(key);
   entry->set_value(value);
+  entry->set_removed(false);
 
   if (description.empty()) {
     entry->clear_description();
@@ -1253,8 +1329,22 @@ UserHistoryPredictor::GetMatchType(const string &lstr, const string &rstr) {
 
 // static
 uint32 UserHistoryPredictor::Fingerprint(const string &key,
+                                         const string &value,
+                                         EntryType type) {
+  if (type == Entry::DEFAULT_ENTRY) {
+    // Since we have already used the fingerprint function for next entries and
+    // next entries are saved in user's local machine, we are not able
+    // to change the Fingerprint function for the old key/value type.
+    return Util::Fingerprint32(key + kDelimiter + value);
+  } else {
+    uint8 id = static_cast<uint8>(type);
+    return Util::Fingerprint32(reinterpret_cast<char *>(&id), sizeof(id));
+  }
+}
+
+uint32 UserHistoryPredictor::Fingerprint(const string &key,
                                          const string &value) {
-  return Util::Fingerprint32(key + kDelimiter + value);
+  return Fingerprint(key, value, Entry::DEFAULT_ENTRY);
 }
 
 // static
@@ -1321,4 +1411,17 @@ uint32 UserHistoryPredictor::GetScore(
       entry.last_access_time() - Util::CharsLen(entry.value()) +
       (entry.bigram_boost() ? kBigramBoostAsTime : 0);
 }
+
+// return the size of cache.
+// staitc
+uint32 UserHistoryPredictor::cache_size() {
+  return kLRUCacheSize;
+}
+
+// return the size of next entries.
+// static
+uint32 UserHistoryPredictor::max_next_entries_size() {
+  return kMaxNextEntriesSize;
+}
+
 }  // namespace mozc

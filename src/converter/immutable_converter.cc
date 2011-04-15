@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -935,20 +935,28 @@ bool ImmutableConverterImpl::MakeLattice(Segments *segments) const {
     dictionary_->PopulateReverseLookupCache(key.c_str(), key.size(),
                                             lattice->node_allocator());
   }
-  const bool result = MakeLatticeNodesForHistorySegments(lattice, segments);
+
+  bool is_valid_lattice = true;
+  // Perform the main part of lattice construction.
+  if (!MakeLatticeNodesForHistorySegments(lattice, segments) ||
+      lattice->end_nodes(history_key.size()) == NULL) {
+    is_valid_lattice = false;
+  }
+
+  // Can not apply key corrector to invalid lattice.
+  if (is_valid_lattice) {
+    ApplyKeyCorrector(history_key, segments, lattice);
+  }
+
   if (is_reverse) {
-    dictionary_->ClearReverseLookupCache(lattice->node_allocator());
-  }
-  if (!result) {
-    return false;
+    // No reverse look up will happen afterwards.
+    dictionary_->ClearReverseLookupCache(segments->lattice()->node_allocator());
   }
 
-  if (lattice->end_nodes(history_key.size()) == NULL) {
-    LOG(WARNING) << "cannot build lattice from input";
+  if (!is_valid_lattice) {
+    // Safely bail out, since reverse look up cache was released already.
     return false;
   }
-
-  ApplyKeyCorrector(history_key, segments, lattice);
 
   if (lattice->end_nodes(key.size()) == NULL) {
     LOG(WARNING) << "cannot build lattice from input";

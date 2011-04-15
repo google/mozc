@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,7 @@
 #include <string>
 #include "base/file_stream.h"
 #include "base/util.h"
+#include "base/mmap.h"
 #include "base/mutex.h"
 #include "base/thread.h"
 #include "testing/base/public/googletest.h"
@@ -228,6 +229,49 @@ TEST(UtilTest, CapitalizeString) {
             "\xbd\x81\xef\xbd\x82\xef\xbd\x83\xef\xbd\x98\xef\xbd\x99\xef\xbd"
             "\x9a\xef\xbc\xbb\xef\xbd\x80\xef\xbd\x81\xef\xbd\x82\xef\xbd\x83"
             "\xef\xbd\x98\xef\xbd\x99\xef\xbd\x9a\xef\xbd\x9b", s2);
+}
+
+void VerifyUTF8ToUCS4(const string &text, char32 expected_ucs4,
+                      size_t expected_len) {
+  const char *begin = text.data();
+  const char *end = begin + text.size();
+  size_t mblen = 0;
+  char32 result = Util::UTF8ToUCS4(begin, end, &mblen);
+  EXPECT_EQ(expected_ucs4, result) << text << " " << expected_ucs4;
+  EXPECT_EQ(expected_len, mblen) << text << " " << expected_len;
+}
+
+TEST(UtilTest, UTF8ToUCS4) {
+  VerifyUTF8ToUCS4("", 0, 0);
+  VerifyUTF8ToUCS4("\x01", 1, 1);
+  VerifyUTF8ToUCS4("\x7F", 0x7F, 1);
+  VerifyUTF8ToUCS4("\xC2\x80", 0x80, 2);
+  VerifyUTF8ToUCS4("\xDF\xBF", 0x7FF, 2);
+  VerifyUTF8ToUCS4("\xE0\xA0\x80", 0x800, 3);
+  VerifyUTF8ToUCS4("\xEF\xBF\xBF", 0xFFFF, 3);
+  VerifyUTF8ToUCS4("\xF0\x90\x80\x80", 0x10000, 4);
+  VerifyUTF8ToUCS4("\xF7\xBF\xBF\xBF", 0x1FFFFF, 4);
+  // do not test 5-6 bytes because it's out of spec of UTF8.
+}
+
+TEST(UtilTest, UCS4ToUTF8) {
+  string output;
+  Util::UCS4ToUTF8(0, &output);
+  EXPECT_EQ("\0", output);
+  Util::UCS4ToUTF8(0x7F, &output);
+  EXPECT_EQ("\x7F", output);
+  Util::UCS4ToUTF8(0x80, &output);
+  EXPECT_EQ("\xC2\x80", output);
+  Util::UCS4ToUTF8(0x7FF, &output);
+  EXPECT_EQ("\xDF\xBF", output);
+  Util::UCS4ToUTF8(0x800, &output);
+  EXPECT_EQ("\xE0\xA0\x80", output);
+  Util::UCS4ToUTF8(0xFFFF, &output);
+  EXPECT_EQ("\xEF\xBF\xBF", output);
+  Util::UCS4ToUTF8(0x10000, &output);
+  EXPECT_EQ("\xF0\x90\x80\x80", output);
+  Util::UCS4ToUTF8(0x1FFFFF, &output);
+  EXPECT_EQ("\xF7\xBF\xBF\xBF", output);
 }
 
 TEST(UtilTest, CharsLen) {
@@ -450,7 +494,9 @@ TEST(UtilTest, SafeStrToDouble) {
 #endif
 }
 
+#ifdef __GNUC__
 #pragma GCC diagnostic ignored "-Wformat-zero-length"
+#endif  // __GNUC__
 TEST(UtilTest, StringPrintf) {
   // strings
   EXPECT_EQ("", Util::StringPrintf(""));
@@ -1349,6 +1395,13 @@ TEST(UtilTest, Escape) {
   EXPECT_EQ("\\xE3\\x82\\x89\\xE3\\x82\\x80\\xE3\\x81\\xA0", escaped);
 }
 
+TEST(UtilTest, EscapeUrl) {
+  string escaped;
+  // "らむだ"
+  Util::EscapeUrl("\xe3\x82\x89\xe3\x82\x80\xe3\x81\xa0", &escaped);
+  EXPECT_EQ("%E3%82%89%E3%82%80%E3%81%A0", escaped);
+}
+
 TEST(UnitTest, EscapeHtml) {
   string escaped;
   Util::EscapeHtml("<>&'\"abc", &escaped);
@@ -1367,6 +1420,8 @@ TEST(UtilTest, ScriptType) {
                                  Util::HIRAGANA));
   // "京都"
   EXPECT_TRUE(Util::IsScriptType("\xe4\xba\xac\xe9\x83\xbd", Util::KANJI));
+  // "人々" (b/4201140)
+  EXPECT_TRUE(Util::IsScriptType("\xE4\xBA\xBA\xE3\x80\x85", Util::KANJI));
   // "モズク"
   EXPECT_TRUE(Util::IsScriptType("\xe3\x83\xa2\xe3\x82\xba\xe3\x82\xaf",
                                  Util::KATAKANA));
@@ -1380,6 +1435,21 @@ TEST(UtilTest, ScriptType) {
   // "グーグル"
   EXPECT_TRUE(Util::IsScriptType("\xe3\x82\xb0\xe3\x83\xbc\xe3\x82\xb0\xe3\x83"
                                  "\xab", Util::KATAKANA));
+  // "ゟ" U+309F: HIRAGANA DIGRAPH YORI
+  EXPECT_TRUE(Util::IsScriptType("\xE3\x82\x9F", Util::HIRAGANA));
+  // "ヿ" U+30FF: KATAKANA DIGRAPH KOTO
+  EXPECT_TRUE(Util::IsScriptType("\xE3\x83\xBF", Util::KATAKANA));
+  // "ヷヸヹヺㇰㇱㇲㇳㇴㇵㇶㇷㇸㇹㇺㇻㇼㇽㇾㇿ"
+  EXPECT_TRUE(Util::IsScriptType(
+      "\xE3\x83\xB7\xE3\x83\xB8\xE3\x83\xB9\xE3\x83\xBA\xE3\x87\xB0"
+      "\xE3\x87\xB1\xE3\x87\xB2\xE3\x87\xB3\xE3\x87\xB4\xE3\x87\xB5"
+      "\xE3\x87\xB6\xE3\x87\xB7\xE3\x87\xB8\xE3\x87\xB9\xE3\x87\xBA"
+      "\xE3\x87\xBB\xE3\x87\xBC\xE3\x87\xBD\xE3\x87\xBE\xE3\x87\xBF",
+      Util::KATAKANA));
+  // "𛀀" U+1B000: KATAKANA LETTER ARCHAIC E
+  EXPECT_TRUE(Util::IsScriptType("\xF0\x9B\x80\x80", Util::KATAKANA));
+  // "𛀁" U+1B001: HIRAGANA LETTER ARCHAIC YE
+  EXPECT_TRUE(Util::IsScriptType("\xF0\x9B\x80\x81", Util::HIRAGANA));
 
   EXPECT_TRUE(Util::IsScriptType("012", Util::NUMBER));
   // "０１２012"
@@ -1437,6 +1507,8 @@ TEST(UtilTest, ScriptType) {
                                                 "\x81\x86"));
   // "京都"
   EXPECT_EQ(Util::KANJI, Util::GetScriptType("\xe4\xba\xac\xe9\x83\xbd"));
+  // "人々" (b/4201140)
+  EXPECT_EQ(Util::KANJI, Util::GetScriptType("\xE4\xBA\xBA\xE3\x80\x85"));
   // "モズク"
   EXPECT_EQ(Util::KATAKANA, Util::GetScriptType("\xe3\x83\xa2\xe3\x82\xba\xe3"
                                                 "\x82\xaf"));
@@ -1451,6 +1523,21 @@ TEST(UtilTest, ScriptType) {
   // "グーグル"
   EXPECT_EQ(Util::KATAKANA, Util::GetScriptType("\xe3\x82\xb0\xe3\x83\xbc\xe3"
                                                 "\x82\xb0\xe3\x83\xab"));
+  // "ゟ" U+309F HIRAGANA DIGRAPH YORI
+  EXPECT_EQ(Util::HIRAGANA, Util::GetScriptType("\xE3\x82\x9F"));
+  // "ヿ" U+30FF KATAKANA DIGRAPH KOTO
+  EXPECT_EQ(Util::KATAKANA, Util::GetScriptType("\xE3\x83\xBF"));
+  // "ヷヸヹヺㇰㇱㇲㇳㇴㇵㇶㇷㇸㇹㇺㇻㇼㇽㇾㇿ"
+  EXPECT_EQ(Util::KATAKANA, Util::GetScriptType(
+      "\xE3\x83\xB7\xE3\x83\xB8\xE3\x83\xB9\xE3\x83\xBA\xE3\x87\xB0"
+      "\xE3\x87\xB1\xE3\x87\xB2\xE3\x87\xB3\xE3\x87\xB4\xE3\x87\xB5"
+      "\xE3\x87\xB6\xE3\x87\xB7\xE3\x87\xB8\xE3\x87\xB9\xE3\x87\xBA"
+      "\xE3\x87\xBB\xE3\x87\xBC\xE3\x87\xBD\xE3\x87\xBE\xE3\x87\xBF"));
+  // "𛀀" U+1B000 KATAKANA LETTER ARCHAIC E
+  EXPECT_EQ(Util::KATAKANA, Util::GetScriptType("\xF0\x9B\x80\x80"));
+  // "𛀁" U+1B001 HIRAGANA LETTER ARCHAIC YE
+  EXPECT_EQ( Util::HIRAGANA, Util::GetScriptType("\xF0\x9B\x80\x81"));
+
   // "!グーグル"
   EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptType("\x21\xe3\x82\xb0\xe3\x83"
                                                       "\xbc\xe3\x82\xb0\xe3\x83"
@@ -1555,6 +1642,19 @@ TEST(UtilTest, ScriptType) {
   EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptType("\xe3\x82\xb0\xe3\x83\xbc"
                                                       "\xe3\x82\xb0\xe3\x83\xab"
                                                       "\xe3\x81\x90"));
+
+  // "龦" U+9FA6
+  EXPECT_EQ(Util::KANJI, Util::GetScriptType("\xE9\xBE\xA6"));
+  // "龻" U+9FBB
+  EXPECT_EQ(Util::KANJI, Util::GetScriptType("\xE9\xBE\xBB"));
+  // U+9FFF is not assigned yet but reserved for CJK Unified Ideographs.
+  EXPECT_EQ(Util::KANJI, Util::GetScriptType("\xE9\xBE\xFF"));
+  // "𠮟咤" U+20B9F U+54A4
+  EXPECT_EQ(Util::KANJI, Util::GetScriptType("\xF0\xA0\xAE\x9F\xE5\x92\xA4"));
+  // "𠮷野" U+20BB7 U+91CE
+  EXPECT_EQ(Util::KANJI, Util::GetScriptType("\xF0\xA0\xAE\xB7\xE9\x87\x8E"));
+  // "巽" U+2F884
+  EXPECT_EQ(Util::KANJI, Util::GetScriptType("\xF0\xAF\xA2\x84"));
 }
 
 
@@ -1680,6 +1780,40 @@ TEST(UtilTest, FormType) {
   EXPECT_EQ(Util::HALF_WIDTH, Util::GetFormType("@!#"));
 }
 
+
+TEST(UtilTest, CharacterSet_gen_character_set) {
+  // [0x00, 0x7f] are ASCII
+  for (size_t i = 0; i <= 0x7f; ++i) {
+    EXPECT_EQ(Util::ASCII, Util::GetCharacterSet(i));
+  }
+  // [0x80, 0xff] are not ASCII
+  for (size_t i = 0x80; i <= 0xff; ++i) {
+    EXPECT_NE(Util::ASCII, Util::GetCharacterSet(i));
+  }
+
+  // 0213
+  // "Ⅰ"
+  EXPECT_EQ(Util::JISX0213, Util::GetCharacterSet(0x2160));
+  // "①"
+  EXPECT_EQ(Util::JISX0213, Util::GetCharacterSet(0x2460));
+  // "㊤"
+  EXPECT_EQ(Util::JISX0213, Util::GetCharacterSet(0x32A4));
+  // "𠮟" from UCS4 ragne (b/4176888)
+  EXPECT_EQ(Util::JISX0213, Util::GetCharacterSet(0x20B9F));
+  // "𪚲" from UCS4 ragne (b/4176888)
+  EXPECT_EQ(Util::JISX0213, Util::GetCharacterSet(0x2A6B2));
+
+  // only in CP932
+  // "凬"
+  EXPECT_EQ(Util::CP932, Util::GetCharacterSet(0x51EC));
+
+  // only in Unicode
+  // "￦"
+  EXPECT_EQ(Util::UNICODE_ONLY, Util::GetCharacterSet(0xFFE6));
+  // "𠮷" from UCS4 ragne (b/4176888)
+  EXPECT_EQ(Util::UNICODE_ONLY, Util::GetCharacterSet(0x20BB7));
+}
+
 TEST(UtilTest, CharacterSet) {
   // "あいうえお"
   EXPECT_EQ(Util::JISX0208, Util::GetCharacterSet("\xe3\x81\x82\xe3\x81\x84\xe3"
@@ -1707,6 +1841,10 @@ TEST(UtilTest, CharacterSet) {
   EXPECT_EQ(Util::JISX0213, Util::GetCharacterSet("\xe2\x91\xa0"));
   // "㊤"
   EXPECT_EQ(Util::JISX0213, Util::GetCharacterSet("\xe3\x8a\xa4"));
+  // "𠮟" from UCS4 ragne (b/4176888)
+  EXPECT_EQ(Util::JISX0213, Util::GetCharacterSet("\xF0\xA0\xAE\x9F"));
+  // "𪚲" from UCS4 ragne (b/4176888)
+  EXPECT_EQ(Util::JISX0213, Util::GetCharacterSet("\xF0\xAA\x9A\xB2"));
 
   // only in CP932
   // "凬"
@@ -1715,6 +1853,8 @@ TEST(UtilTest, CharacterSet) {
   // only in Unicode
   // "￦"
   EXPECT_EQ(Util::UNICODE_ONLY, Util::GetCharacterSet("\xef\xbf\xa6"));
+  // "𠮷" from UCS4 ragne (b/4176888)
+  EXPECT_EQ(Util::UNICODE_ONLY, Util::GetCharacterSet("\xF0\xA0\xAE\xB7"));
 }
 
 TEST(UtilTest, WriteByteArray) {
@@ -1870,6 +2010,16 @@ TEST(UtilTest, GetFileVersionStringTest) {
   ASSERT_TRUE(Util::SafeStrToUInt32(numbers[3], &dummy));
 }
 
+TEST(UtilTest, WideCharsLen) {
+  // "a𠮟b"
+  const string input_utf8 = "a\360\240\256\237b";
+  EXPECT_EQ(4, Util::WideCharsLen(input_utf8));
+  EXPECT_EQ(0, Util::WideCharsLen(Util::SubString(input_utf8, 0, 0)));
+  EXPECT_EQ(1, Util::WideCharsLen(Util::SubString(input_utf8, 0, 1)));
+  EXPECT_EQ(3, Util::WideCharsLen(Util::SubString(input_utf8, 0, 2)));
+  EXPECT_EQ(4, Util::WideCharsLen(Util::SubString(input_utf8, 0, 3)));
+}
+
 TEST(UtilTest, UTF8ToWide) {
   const string input_utf8 = "abc";
   wstring output_wide;
@@ -1879,7 +2029,89 @@ TEST(UtilTest, UTF8ToWide) {
   Util::WideToUTF8(output_wide, &output_utf8);
   EXPECT_EQ("abc", output_utf8);
 }
+
+TEST(UtilTest, WideToUTF8_SurrogatePairSupport) {
+  // Visual C++ 2008 does not support embedding surrogate pair in string
+  // literals like L"\uD842\uDF9F". This is why we use wchar_t array instead.
+  // "𠮟"
+  const wchar_t input_wide[] = {0xD842, 0xDF9F, 0};
+  string output_utf8;
+  Util::WideToUTF8(input_wide, &output_utf8);
+
+  wstring output_wide;
+  Util::UTF8ToWide(output_utf8, &output_wide);
+
+  EXPECT_EQ("\360\240\256\237", output_utf8);
+  EXPECT_EQ(input_wide, output_wide);
+}
 #endif  // OS_WINDOWS
+
+TEST(UtilTest, CopyFile) {
+  // just test rename operation works as intended
+  const string from = Util::JoinPath(FLAGS_test_tmpdir,
+                                     "copy_from");
+  const string to = Util::JoinPath(FLAGS_test_tmpdir,
+                                   "copy_to");
+  Util::Unlink(from);
+  Util::Unlink(to);
+
+  const char kData[] = "This is a test";
+
+  {
+    OutputFileStream ofs(from.c_str(), ios::binary);
+    ofs.write(kData, arraysize(kData));
+  }
+
+  EXPECT_TRUE(Util::CopyFile(from, to));
+  Mmap<char> mmap;
+  EXPECT_TRUE(mmap.Open(to.c_str()));
+
+  EXPECT_EQ(arraysize(kData), mmap.GetFileSize());
+  EXPECT_EQ(0, memcmp(mmap.begin(), kData, mmap.GetFileSize()));
+
+  Util::Unlink(from);
+  Util::Unlink(to);
+}
+
+TEST(UtilTest, IsEqualFile) {
+  const string filename1 = Util::JoinPath(FLAGS_test_tmpdir, "test1");
+  const string filename2 = Util::JoinPath(FLAGS_test_tmpdir, "test2");
+  Util::Unlink(filename1);
+  Util::Unlink(filename2);
+  EXPECT_FALSE(Util::IsEqualFile(filename1, filename2));
+
+  const char kTestData1[] = "test data1";
+  const char kTestData2[] = "test data2";
+
+  {
+    OutputFileStream ofs1(filename1.c_str());
+    ofs1 << kTestData1;
+  }
+  EXPECT_FALSE(Util::IsEqualFile(filename1, filename2));
+
+  {
+    OutputFileStream ofs2(filename2.c_str());
+    ofs2 << kTestData1;
+  }
+
+  EXPECT_TRUE(Util::IsEqualFile(filename1, filename2));
+
+  {
+    OutputFileStream ofs2(filename2.c_str());
+    ofs2 << kTestData1;
+    ofs2 << kTestData1;
+  }
+  EXPECT_FALSE(Util::IsEqualFile(filename1, filename2));
+
+  {
+    OutputFileStream ofs2(filename2.c_str());
+    ofs2 << kTestData2;
+  }
+  EXPECT_FALSE(Util::IsEqualFile(filename1, filename2));
+
+  Util::Unlink(filename1);
+  Util::Unlink(filename2);
+}
 
 TEST(UtilTest, AtomicRename) {
   // just test rename operation works as intended

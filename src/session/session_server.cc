@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -62,10 +62,11 @@ SessionServer::SessionServer()
   // start usage stats timer
   // send usage stats within 5 min later
   // attempt to send every 5 min -- 2 hours.
-  Scheduler::AddJob("UsageStatsTimer", kScheduleInterval,
-                    kScheduleMaxInterval, kSchedulerDelay,
-                    kSchedulerRandomDelay,
-                    &usage_stats::UsageStats::Send, NULL);
+  Scheduler::AddJob(Scheduler::JobSetting(
+      "UsageStatsTimer", kScheduleInterval,
+      kScheduleMaxInterval, kSchedulerDelay,
+      kSchedulerRandomDelay,
+      &usage_stats::UsageStats::Send, NULL));
 
   // Send a notification event to the UI.
   NamedEventNotifier notifier(kEventName);

@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -159,10 +159,13 @@ TEST_F(SegmentsTest, BasicTest) {
 
   EXPECT_EQ(2, segments.segments_size());
 
+  segments.erase_segments(0, 1);
+  EXPECT_EQ(1, segments.segments_size());
+  EXPECT_EQ(seg[4], segments.mutable_segment(0));
+
   // insert
   seg[1] = segments.insert_segment(1);
   EXPECT_EQ(seg[1], segments.mutable_segment(1));
-  EXPECT_EQ(seg[4], segments.mutable_segment(2));
 
   segments.Clear();
   for (int i = 0; i < kSegmentsSize; ++i) {

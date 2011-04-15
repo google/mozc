@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -125,7 +125,8 @@ message KeyEvent {
     HANKAKU = 65;
     KANJI = 66;
     KATAKANA = 67; // VK_DBE_KATAKANA(Win)
-    NUM_SPECIALKEYS = 68;
+    CAPS_LOCK = 68;
+    NUM_SPECIALKEYS = 69;
   };
 
   // CTRL, ALT and SHIFT covers both LEFT and RIGHT keys.  If the
@@ -197,6 +198,9 @@ message SessionCommand {
 
     // Perform reverse conversion.
     CONVERT_REVERSE = 8;
+
+    // Perform Undo.
+    UNDO = 9;
   };
   required CommandType type = 1;
 
@@ -507,6 +511,14 @@ message Candidates {
 
   // Footer of the GUI window.
   optional Footer footer = 13;
+
+  // The direction of candidates in the window.  This is just a
+  // suggestion from the server and client does not have to follow.
+  enum Direction {
+    VERTICAL = 0;
+    HORIZONTAL = 1;
+  };
+  optional Direction direction = 14 [ default = VERTICAL ];
 };
 
 message Status {
@@ -596,6 +608,15 @@ message Output {
     WORD_REGISTER_DIALOG = 3;
   };
   optional ToolMode launch_tool_mode = 17 [ default = NO_TOOL ];
+
+  // Callback request to the client.
+  message Callback {
+    // Callback command to be sent from the client to the server.  The
+    // optional values such as id and composition_mode can be modified
+    // or added by the client.
+    optional SessionCommand session_command = 1;
+  };
+  optional Callback callback = 18;
 };
 
 message Command {

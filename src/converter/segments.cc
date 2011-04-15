@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -194,7 +194,7 @@ void Segment::erase_candidate(int i) {
 
 void Segment::erase_candidates(int i, size_t size) {
   const size_t end = i + size;
-  if (i <= 0 ||
+  if (i < 0 ||
       i >= static_cast<int>(candidates_size()) ||
       end > candidates_size()) {
     LOG(WARNING) << "invalid index";
@@ -572,7 +572,7 @@ string Segments::DebugString() const {
                               seg.meta_candidates_size());
          ++l) {
       int j = 0;
-      if (j < seg.meta_candidates_size()) {
+      if (l < seg.meta_candidates_size()) {
         j = -l-1;
       } else {
         j = l - seg.meta_candidates_size();

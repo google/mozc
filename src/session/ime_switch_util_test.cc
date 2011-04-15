@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -71,6 +71,12 @@ TEST_F(ImeSwitchUtilTest, PresetTest) {
     KeyParser::ParseKey("ON", &key);
     EXPECT_TRUE(ImeSwitchUtil::IsTurnOnInDirectMode(key));
   }
+  {
+    // Reconcersion
+    commands::KeyEvent key;
+    KeyParser::ParseKey("Shift HENKAN", &key);
+    EXPECT_TRUE(ImeSwitchUtil::IsTurnOnInDirectMode(key));
+  }
 
   config.set_session_keymap(Config::MSIME);
   ConfigHandler::SetConfig(config);
@@ -107,6 +113,12 @@ TEST_F(ImeSwitchUtilTest, PresetTest) {
   {
     commands::KeyEvent key;
     KeyParser::ParseKey("ON", &key);
+    EXPECT_TRUE(ImeSwitchUtil::IsTurnOnInDirectMode(key));
+  }
+  {
+    // Reconcersion
+    commands::KeyEvent key;
+    KeyParser::ParseKey("Ctrl Shift r", &key);
     EXPECT_TRUE(ImeSwitchUtil::IsTurnOnInDirectMode(key));
   }
 }

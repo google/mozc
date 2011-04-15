@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,11 +33,14 @@
 #include <sstream>
 #include "base/base.h"
 #include "base/util.h"
+#include "session/commands.pb.h"
+#include "session/request_handler.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
 
 DEFINE_int32(max_conversion_candidates_size, 200,
              "maximum candidates size");
+
 
 namespace {
 bool ExecCommand(const mozc::ConverterInterface &converter,
@@ -65,11 +68,17 @@ bool ExecCommand(const mozc::ConverterInterface &converter,
     CHECK_FIELDS_LENGTH(2);
     return converter.StartReverseConversion(segments, fields[1]);
   } else if (func == "startprediction" || func == "predict" || func == "p") {
-    CHECK_FIELDS_LENGTH(2);
-    return converter.StartPrediction(segments, fields[1]);
+    if (fields.size() >= 2) {
+      return converter.StartPrediction(segments, fields[1]);
+    } else {
+      return converter.StartPrediction(segments, "");
+    }
   } else if (func == "startsuggestion" || func == "suggest") {
-    CHECK_FIELDS_LENGTH(2);
-    return converter.StartSuggestion(segments, fields[1]);
+    if (fields.size() >= 2) {
+      return converter.StartSuggestion(segments, fields[1]);
+    } else {
+      return converter.StartSuggestion(segments, "");
+    }
   } else if (func == "finishconversion" || func == "finish") {
     return converter.FinishConversion(segments);
   } else if (func == "resetconversion" || func == "reset") {
@@ -127,6 +136,8 @@ bool ExecCommand(const mozc::ConverterInterface &converter,
 
 int main(int argc, char **argv) {
   InitGoogle(argv[0], &argc, &argv, false);
+
+
   mozc::ConverterInterface *converter
       = mozc::ConverterFactory::GetConverter();
   CHECK(converter);

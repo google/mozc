@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -126,8 +126,13 @@ class ConverterInterface {
                              const uint8 *new_size_array,
                              size_t array_size) const = 0;
 
-  // Sync user history data to local file system.
+  // Sync mutable user data to local file system.
   virtual bool Sync() const = 0;
+
+  // Reload mutable data from local file system.
+  virtual bool Reload() const = 0;
+
+  // TODO(taku): Remove below methods as they are too specific.
 
   // clear user history data
   virtual bool ClearUserHistory() const = 0;

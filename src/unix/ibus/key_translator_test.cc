@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -112,6 +112,7 @@ const guint special_keys[] = {
   IBUS_KP_End,
   IBUS_KP_Delete,
   IBUS_KP_Insert,
+  IBUS_Caps_Lock,
   IBUS_ISO_Left_Tab,
 };
 
@@ -190,6 +191,7 @@ const commands::KeyEvent::SpecialKey mapped_special_keys[] = {
   commands::KeyEvent::END,
   commands::KeyEvent::DEL,
   commands::KeyEvent::INSERT,
+  commands::KeyEvent::CAPS_LOCK,
   commands::KeyEvent::TAB,
 };
 
@@ -315,6 +317,15 @@ TEST_F(KeyTranslatorTest, TranslateUnknow) {
                                       true, &out));
   EXPECT_FALSE(translator_->Translate(IBUS_F35, 0, 0, config::Config::ROMAN,
                                       true, &out));
+}
+
+TEST_F(KeyTranslatorTest, TranslateModiferOnly) {
+  // Just tap shift key
+  commands::KeyEvent out;
+  EXPECT_TRUE(translator_->Translate(
+      IBUS_Shift_L, 0, 0, config::Config::ROMAN, true, &out));
+  EXPECT_EQ(1, out.modifier_keys_size());
+  EXPECT_EQ(commands::KeyEvent::SHIFT, out.modifier_keys(0));
 }
 
 }  // namespace ibus

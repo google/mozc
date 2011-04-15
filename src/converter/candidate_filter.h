@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,6 +39,7 @@
 namespace mozc {
 
 struct Node;
+class SuppressionDictionary;
 
 class CandidateFilter {
  public:
@@ -65,6 +66,7 @@ class CandidateFilter {
 
   set<string> seen_;
   const Segment::Candidate *top_candidate_;
+  SuppressionDictionary *suppression_dictionary_;
 
   DISALLOW_COPY_AND_ASSIGN(CandidateFilter);
 };

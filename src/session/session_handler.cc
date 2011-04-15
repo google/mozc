@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,16 +35,17 @@
 #include <vector>
 
 #include "base/base.h"
+#include "base/util.h"
 #include "base/process.h"
 #include "base/singleton.h"
 #include "base/stopwatch.h"
 #include "converter/converter_interface.h"
-#include "composer/table.h"
 #include "session/commands.pb.h"
 #include "session/config_handler.h"
 #include "session/config.pb.h"
 #include "session/internal/keymap.h"
-#include "session/session.h"
+#include "session/session_factory.h"
+#include "session/session_interface.h"
 #include "session/session_observer_handler.h"
 #include "session/session_watch_dog.h"
 
@@ -79,8 +80,8 @@ DEFINE_bool(restricted, false,
 namespace mozc {
 
 namespace {
-bool IsApplicationAlive(const session::Session &session) {
-  const commands::ApplicationInfo &info = session.application_info();
+bool IsApplicationAlive(const session::SessionInterface *session) {
+  const commands::ApplicationInfo &info = session->application_info();
   // When the thread/process's current status is unknown, i.e.,
   // if IsThreadAlive/IsProcessAlive functions failed to know the
   // status of the thread/process, return true just in case.
@@ -103,13 +104,14 @@ bool IsApplicationAlive(const session::Session &session) {
 }  // namespace
 
 SessionHandler::SessionHandler()
-    : keymap_(new keymap::KeyMapManager()),
-      is_available_(false),
+    : is_available_(false),
       keyevent_counter_(0),
       max_session_size_(0),
       last_session_empty_time_(Util::GetTime()),
       last_cleanup_time_(0),
       last_create_session_time_(0),
+      session_factory_(
+          session::SessionFactory::GetDefaultSessionFactory()),
       observer_handler_(new session::SessionObserverHandler()),
       stopwatch_(new Stopwatch) {
   if (FLAGS_restricted) {
@@ -132,7 +134,7 @@ SessionHandler::SessionHandler()
   max_session_size_ = max(2, min(FLAGS_max_session_size, 128));
   session_map_.reset(new SessionMap(max_session_size_));
 
-  if (!Singleton<composer::Table>::get()->Initialize()) {
+  if (session_factory_ == NULL || !session_factory_->IsAvailable()) {
     return;
   }
 
@@ -166,6 +168,10 @@ bool SessionHandler::StartWatchDog() {
 
 void SessionHandler::ReloadSession() {
   observer_handler_->Reload();
+  ReloadConfig();
+}
+
+void SessionHandler::ReloadConfig() {
   for (SessionElement *element =
            const_cast<SessionElement *>(session_map_->Head());
        element != NULL; element = element->next) {
@@ -193,8 +199,7 @@ bool SessionHandler::Shutdown(commands::Command *command) {
 bool SessionHandler::Reload(commands::Command *command) {
   VLOG(1) << "Reloading server";
   ReloadSession();
-  keymap_->Reload();
-  Singleton<composer::Table>::get()->Reload();
+  session_factory_->Reload();
   RunReloaders();  // call all reloaders defined in .cc file
   command->mutable_output()->set_id(command->input().id());
   return true;
@@ -223,6 +228,10 @@ bool SessionHandler::ClearUnusedUserPrediction(commands::Command *command) {
 
 bool SessionHandler::GetConfig(commands::Command *command) {
   VLOG(1) << "Getting user config";
+  // Ensure the onmemory config is same as the locally stored one
+  // because the local data could be changed by sync.
+  ReloadConfig();
+
   if (!config::ConfigHandler::GetConfig(
           command->mutable_output()->mutable_config())) {
     LOG(WARNING) << "cannot get config";
@@ -335,8 +344,13 @@ bool SessionHandler::EvalCommand(commands::Command *command) {
   return is_available_;
 }
 
-session::Session *SessionHandler::NewSession() {
-  return new session::Session(keymap_.get());
+session::SessionInterface *SessionHandler::NewSession() {
+  return session_factory_->NewSession();
+}
+
+void SessionHandler::SetSessionFactory(
+    session::SessionFactoryInterface *new_factory) {
+  session_factory_ = new_factory;
 }
 
 void SessionHandler::AddObserver(session::SessionObserverInterface *observer) {
@@ -347,7 +361,7 @@ bool SessionHandler::SendKey(commands::Command *command) {
   const SessionID id = command->input().id();
   command->mutable_output()->set_id(id);
 
-  session::Session **session = session_map_->MutableLookup(id);
+  session::SessionInterface **session = session_map_->MutableLookup(id);
   if (session == NULL || *session == NULL) {
     LOG(WARNING) << "SessionID " << id << " is not available";
     return false;
@@ -359,7 +373,7 @@ bool SessionHandler::SendKey(commands::Command *command) {
 bool SessionHandler::TestSendKey(commands::Command *command) {
   const SessionID id = command->input().id();
   command->mutable_output()->set_id(id);
-  session::Session **session = session_map_->MutableLookup(id);
+  session::SessionInterface **session = session_map_->MutableLookup(id);
   if (session == NULL || *session == NULL) {
     LOG(WARNING) << "SessionID " << id << " is not available";
     return false;
@@ -371,8 +385,8 @@ bool SessionHandler::TestSendKey(commands::Command *command) {
 bool SessionHandler::SendCommand(commands::Command *command) {
   const SessionID id = command->input().id();
   command->mutable_output()->set_id(id);
-  session::Session **session =
-    const_cast<session::Session **>(session_map_->Lookup(id));
+  session::SessionInterface **session =
+    const_cast<session::SessionInterface **>(session_map_->Lookup(id));
   if (session == NULL || *session == NULL) {
     LOG(WARNING) << "SessionID " << id << " is not available";
     return false;
@@ -412,7 +426,7 @@ bool SessionHandler::CreateSession(commands::Command *command) {
             << oldest_element->key << " is removed";
   };
 
-  session::Session *session = NewSession();
+  session::SessionInterface *session = NewSession();
   if (session == NULL) {
     LOG(ERROR) << "Cannot allocate new Session";
     return false;
@@ -433,6 +447,10 @@ bool SessionHandler::CreateSession(commands::Command *command) {
   if (command->input().has_application_info()) {
     session->set_application_info(command->input().application_info());
   }
+
+  // Ensure the onmemory config is same as the locally stored one
+  // because the local data could be changed by sync.
+  ReloadConfig();
 
   // session is not empty.
   last_session_empty_time_ = 0;
@@ -487,8 +505,8 @@ bool SessionHandler::Cleanup(commands::Command *command) {
   for (SessionElement *element =
            const_cast<SessionElement *>(session_map_->Head());
        element != NULL; element = element->next) {
-    session::Session *session = element->value;
-    if (!IsApplicationAlive(*session)) {
+    session::SessionInterface *session = element->value;
+    if (!IsApplicationAlive(session)) {
       VLOG(2) << "Application is not alive. Removing: " << element->key;
       remove_ids.push_back(element->key);
     } else if (session->last_command_time() == 0) {
@@ -556,7 +574,7 @@ SessionID SessionHandler::CreateNewSessionID() {
 }
 
 bool SessionHandler::DeleteSessionID(SessionID id) {
-  session::Session **session = session_map_->MutableLookup(id);
+  session::SessionInterface **session = session_map_->MutableLookup(id);
   if (session == NULL || *session == NULL) {
     LOG_IF(WARNING, id != 0) << "cannot find SessionID " << id;
     return false;

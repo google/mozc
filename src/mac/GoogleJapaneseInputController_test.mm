@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -660,6 +660,17 @@ TEST_F(GoogleJapaneseInputControllerTest, SwitchDisplayMode) {
   [controller_ switchDisplayMode];
   EXPECT_EQ(1, [mock_client_ getCounter:"selectInputMode:"]);
   string expected = mozc::MacUtil::GetLabelForSuffix("Roman");
+  EXPECT_EQ(expected, *(mock_client_.selectedMode));
+
+  // Does not change the display mode for MS Word.  See
+  // GoogleJapaneseInputController.mm for the detailed information.
+  ResetClientBundleIdentifier(@"com.microsoft.Word");
+  [controller_ switchMode:mozc::commands::HIRAGANA client:mock_client_];
+  EXPECT_EQ(mozc::commands::HIRAGANA, controller_.mode);
+  [controller_ switchDisplayMode];
+  // still remains 1 and display mode does not change.
+  EXPECT_EQ(1, [mock_client_ getCounter:"selectInputMode:"]);
+  expected = mozc::MacUtil::GetLabelForSuffix("Roman");
   EXPECT_EQ(expected, *(mock_client_.selectedMode));
 }
 

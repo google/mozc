@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -58,6 +58,7 @@ enum Commands {
   INPUT_MODE_HALF_KATAKANA,
   INPUT_MODE_FULL_ALPHANUMERIC,
   INPUT_MODE_HALF_ALPHANUMERIC,
+  RECONVERT,
 };
 };
 
@@ -85,6 +86,12 @@ enum Commands {
   REVERT,  // revert last operation (preedit still remains)
   UNDO,    // undo last operation (preedit is restored)
   ABORT,   // Abort the server.  The process is killed.
+  RECONVERT,
+
+  // For ZeroQuerySuggestion
+  CANCEL,  // Back to Composition status.
+  COMMIT_FIRST_SUGGESTION,   // ATOK's Shift-Enter style
+  PREDICT_AND_CONVERT,
 };
 };
 

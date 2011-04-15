@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -82,6 +82,11 @@ class KeyMapManager {
   bool LoadStream(istream *is);
   bool LoadStreamWithErrors(istream *ifs, vector<string> *errors);
 
+  // Add a command bound with state and key_event.
+  bool AddCommand(const string &state_name,
+                  const string &key_event_name,
+                  const string &command_name);
+
   bool GetCommandDirect(const commands::KeyEvent &key_event,
                         DirectInputState::Commands *command) const;
 
@@ -93,6 +98,10 @@ class KeyMapManager {
 
   bool GetCommandConversion(const commands::KeyEvent &key_event,
                             ConversionState::Commands *command) const;
+
+  bool GetCommandZeroQuerySuggestion(
+      const commands::KeyEvent &key_event,
+      PrecompositionState::Commands *command) const;
 
   bool GetCommandSuggestion(const commands::KeyEvent &key_event,
                             CompositionState::Commands *command) const;
@@ -114,6 +123,8 @@ class KeyMapManager {
   void GetAvailableCommandNamePrecomposition(set<string> *command_names) const;
   void GetAvailableCommandNameComposition(set<string> *command_names) const;
   void GetAvailableCommandNameConversion(set<string> *command_names) const;
+  void GetAvailableCommandNameZeroQuerySuggestion(
+      set<string> *command_names) const;
   void GetAvailableCommandNameSuggestion(set<string> *command_names) const;
   void GetAvailableCommandNamePrediction(set<string> *command_names) const;
 
@@ -159,7 +170,8 @@ class KeyMapManager {
   map<string, ConversionState::Commands> command_conversion_map_;
 
   map<DirectInputState::Commands, string> reverse_command_direct_map_;
-  map<PrecompositionState::Commands, string> reverse_command_precomposition_map_;
+  map<PrecompositionState::Commands, string>
+      reverse_command_precomposition_map_;
   map<CompositionState::Commands, string> reverse_command_composition_map_;
   map<ConversionState::Commands, string> reverse_command_conversion_map_;
 
@@ -169,8 +181,13 @@ class KeyMapManager {
   keymap::KeyMap<keymap::CompositionState::Commands> keymap_composition_;
   keymap::KeyMap<keymap::ConversionState::Commands> keymap_conversion_;
 
+  // enabled only if zero query suggestion is shown. Otherwise, inherit from
+  // keymap_precomposition
+  keymap::KeyMap<keymap::PrecompositionState::Commands>
+      keymap_zero_query_suggestion_;
+
   // enabled only if suggestion is shown. Otherwise, inherit from
-  // keymap_preedit
+  // keymap_composition
   keymap::KeyMap<keymap::CompositionState::Commands> keymap_suggestion_;
 
   // enabled only if prediction is shown. Otherwise, inherit from

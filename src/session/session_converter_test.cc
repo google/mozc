@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -2152,6 +2152,38 @@ TEST_F(SessionConverterTest, ConvertReverse) {
             output.preedit().segment(0).value());
   EXPECT_EQ(kanji_aiueo,
             output.all_candidate_words().candidates(0).value());
+}
+
+TEST_F(SessionConverterTest, ZeroQuerySuggestion) {
+  SessionConverter converter(convertermock_.get());
+
+  // Set up a mock suggestion result.
+  Segments segments;
+  segments.set_request_type(Segments::SUGGESTION);
+  Segment *segment;
+  segment = segments.add_segment();
+  segment->set_key("");
+  segment->add_candidate()->value = "search";
+  segment->add_candidate()->value = "input";
+  convertermock_->SetStartSuggestion(&segments, true);
+
+  EXPECT_TRUE(composer_->Empty());
+  EXPECT_TRUE(converter.Suggest(composer_.get()));
+  EXPECT_TRUE(converter.IsCandidateListVisible());
+  EXPECT_TRUE(converter.IsActive());
+
+  {  // Check the output
+    commands::Output output;
+    converter.FillOutput(&output);
+    EXPECT_FALSE(output.has_result());
+    EXPECT_FALSE(output.has_preedit());
+    EXPECT_TRUE(output.has_candidates());
+
+    const commands::Candidates &candidates = output.candidates();
+    EXPECT_EQ(2, candidates.size());
+    EXPECT_EQ("search", candidates.candidate(0).value());
+    EXPECT_EQ("input", candidates.candidate(1).value());
+  }
 }
 
 // since History segments are almost hidden from

@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -84,9 +84,13 @@ class SessionRegressionTest : public testing::Test {
 
     config::Config config;
     config::ConfigHandler::GetDefaultConfig(&config);
+    // TOOD(all): Add a test for the case where
+    // use_realtime_conversion is true.
+    config.set_use_realtime_conversion(false);
     config::ConfigHandler::SetConfig(config);
     handler_.reset(new SessionHandler());
-    session_.reset(handler_->NewSession());
+    session_.reset(dynamic_cast<session::Session *>(handler_->NewSession()));
+    CHECK(session_.get());
   }
 
   virtual void TearDown() {

@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,6 +34,8 @@
 #include "base/util.h"
 #include "client/session.h"
 #include "session/commands.pb.h"
+#include "session/config.pb.h"
+#include "session/config_handler.h"
 #include "session/random_keyevents_generator.h"
 #include "session/session_handler.h"
 #include "testing/base/public/gunit.h"
@@ -103,6 +105,13 @@ class TestSessionClient {
 
 TEST(SessionHandlerStressTest, BasicStressTest) {
   Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+
+  config::Config config;
+  config::ConfigHandler::GetDefaultConfig(&config);
+  // TOOD(all): Add a test for the case where
+  // use_realtime_conversion is true.
+  config.set_use_realtime_conversion(false);
+  config::ConfigHandler::SetConfig(config);
 
   vector<mozc::commands::KeyEvent> keys;
   mozc::commands::Output output;

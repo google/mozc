@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -161,11 +161,13 @@ void KeyMapManager::CheckIMEOnOffKeymap() {
     KeyParser::ParseKey("Hankaku/Zenkaku", &key_event_hankaku);
     KeyParser::ParseKey("Kanji", &key_event_kanji);
     keymap_direct_.AddRule(key_event_hankaku, DirectInputState::IME_ON);
-    keymap_precomposition_.AddRule(key_event_hankaku, PrecompositionState::IME_OFF);
+    keymap_precomposition_.AddRule(key_event_hankaku,
+                                   PrecompositionState::IME_OFF);
     keymap_composition_.AddRule(key_event_hankaku, CompositionState::IME_OFF);
     keymap_conversion_.AddRule(key_event_hankaku, ConversionState::IME_OFF);
     keymap_direct_.AddRule(key_event_kanji, DirectInputState::IME_ON);
-    keymap_precomposition_.AddRule(key_event_kanji, PrecompositionState::IME_OFF);
+    keymap_precomposition_.AddRule(key_event_kanji,
+                                   PrecompositionState::IME_OFF);
     keymap_composition_.AddRule(key_event_kanji, CompositionState::IME_OFF);
     keymap_conversion_.AddRule(key_event_kanji, ConversionState::IME_OFF);
 
@@ -207,6 +209,7 @@ bool KeyMapManager::ReloadWithKeymap(
   keymap_precomposition_.Clear();
   keymap_composition_.Clear();
   keymap_conversion_.Clear();
+  keymap_zero_query_suggestion_.Clear();
   keymap_suggestion_.Clear();
   keymap_prediction_.Clear();
 
@@ -311,84 +314,9 @@ bool KeyMapManager::LoadStreamWithErrors(istream *ifs, vector<string> *errors) {
       continue;
     }
 
-#ifdef NO_LOGGING  // means RELEASE BUILD
-    // On the release build, we do not support the Abort and ReportBug
-    // commands.
-    if (rules[2] == "Abort" || rules[2] == "ReportBug") {
-      continue;
-    }
-#endif  // NO_LOGGING
-
-#ifndef _DEBUG
-    // Only debug build supports the Abort command.
-    if (rules[2] == "Abort") {
-      continue;
-    }
-#endif  // NO_LOGGING
-
-    commands::KeyEvent key_event;
-    KeyParser::ParseKey(rules[1], &key_event);
-
-    // Migration code:
-    // check key events for IME ON/OFF
-    {
-      if (rules[2] == "IMEOn" ||
-          rules[2] == "IMEOff") {
-        uint64 key;
-        if (KeyEventNormalizer::ToUint64(key_event, &key)) {
-          ime_on_off_keys_.insert(key);
-        }
-      }
-    }
-
-    if (rules[0] == "DirectInput" || rules[0] == "Direct") {
-      DirectInputState::Commands command;
-      if (ParseCommandDirect(rules[2], &command)) {
-        keymap_direct_.AddRule(key_event, command);
-      } else {
-        LOG(ERROR) << "Unknown command: " << line;
-        errors->push_back(line);
-      }
-    } else if (rules[0] == "Precomposition") {
-      PrecompositionState::Commands command;
-      if (ParseCommandPrecomposition(rules[2], &command)) {
-        keymap_precomposition_.AddRule(key_event, command);
-      } else {
-        LOG(ERROR) << "Unknown command: " << line;
-        errors->push_back(line);
-      }
-    } else if (rules[0] == "Composition") {
-      CompositionState::Commands command;
-      if (ParseCommandComposition(rules[2], &command)) {
-        keymap_composition_.AddRule(key_event, command);
-      } else {
-        LOG(ERROR) << "Unknown command: " << line;
-        errors->push_back(line);
-      }
-    } else if (rules[0] == "Conversion") {
-      ConversionState::Commands command;
-      if (ParseCommandConversion(rules[2], &command)) {
-        keymap_conversion_.AddRule(key_event, command);
-      } else {
-        LOG(ERROR) << "Unknown command: " << line;
-        errors->push_back(line);
-      }
-    } else if (rules[0] == "Suggestion") {
-      CompositionState::Commands command;
-      if (ParseCommandComposition(rules[2], &command)) {
-        keymap_suggestion_.AddRule(key_event, command);
-      } else {
-        LOG(ERROR) << "Unknown command: " << line;
-        errors->push_back(line);
-      }
-    } else if (rules[0] == "Prediction") {
-      ConversionState::Commands command;
-      if (ParseCommandConversion(rules[2], &command)) {
-        keymap_prediction_.AddRule(key_event, command);
-      } else {
-        LOG(ERROR) << "Unknown command: " << line;
-        errors->push_back(line);
-      }
+    if (!AddCommand(rules[0], rules[1], rules[2])) {
+      errors->push_back(line);
+      LOG(ERROR) << "Unknown command: " << line;
     }
   }
 
@@ -403,6 +331,116 @@ bool KeyMapManager::LoadStreamWithErrors(istream *ifs, vector<string> *errors) {
   KeyParser::ParseKey("Shift", &key_event);
   keymap_composition_.AddRule(key_event, CompositionState::INSERT_CHARACTER);
   return true;
+}
+
+bool KeyMapManager::AddCommand(const string &state_name,
+                               const string &key_event_name,
+                               const string &command_name) {
+#ifdef NO_LOGGING  // means RELEASE BUILD
+  // On the release build, we do not support the Abort and ReportBug
+  // commands.  Note, true is returned as the arguments are
+  // interpreted properly.
+  if (command_name == "Abort" || command_name == "ReportBug") {
+    return true;
+  }
+#endif  // NO_LOGGING
+
+#ifndef _DEBUG
+  // Only debug build supports the Abort command.  Note, true is
+  // returned as the arguments are interpreted properly.
+  if (command_name == "Abort") {
+    return true;
+  }
+#endif  // NO_LOGGING
+
+  commands::KeyEvent key_event;
+  if (!KeyParser::ParseKey(key_event_name, &key_event)) {
+    return false;
+  }
+
+  // Migration code:
+  // check key events for IME ON/OFF
+  {
+    if (command_name == "IMEOn" ||
+        command_name == "IMEOff") {
+      uint64 key;
+      if (KeyEventNormalizer::ToUint64(key_event, &key)) {
+        ime_on_off_keys_.insert(key);
+      }
+    }
+  }
+
+  if (state_name == "DirectInput" || state_name == "Direct") {
+    DirectInputState::Commands command;
+    if (!ParseCommandDirect(command_name, &command)) {
+      return false;
+    }
+
+    keymap_direct_.AddRule(key_event, command);
+    return true;
+  }
+
+  if (state_name == "Precomposition") {
+    PrecompositionState::Commands command;
+    if (!ParseCommandPrecomposition(command_name, &command)) {
+      return false;
+    }
+
+    keymap_precomposition_.AddRule(key_event, command);
+    return true;
+  }
+
+  if (state_name == "Composition") {
+    CompositionState::Commands command;
+    if (!ParseCommandComposition(command_name, &command)) {
+      return false;
+    }
+
+    keymap_composition_.AddRule(key_event, command);
+    return true;
+  }
+
+  if (state_name == "Conversion") {
+    ConversionState::Commands command;
+    if (!ParseCommandConversion(command_name, &command)) {
+      return false;
+    }
+
+    keymap_conversion_.AddRule(key_event, command);
+    return true;
+  }
+
+  if (state_name == "ZeroQuerySuggestion") {
+    PrecompositionState::Commands command;
+    if (!ParseCommandPrecomposition(command_name, &command)) {
+      return false;
+    }
+
+    keymap_zero_query_suggestion_.AddRule(key_event, command);
+    return true;
+  }
+
+  if (state_name == "Suggestion") {
+    CompositionState::Commands command;
+    if (!ParseCommandComposition(command_name, &command)) {
+      return false;
+    }
+
+    keymap_suggestion_.AddRule(key_event, command);
+    return true;
+  }
+
+  if (state_name == "Prediction") {
+    ConversionState::Commands command;
+    if (!ParseCommandConversion(command_name, &command)) {
+      return false;
+    }
+
+    keymap_prediction_.AddRule(key_event, command);
+    return true;
+  }
+
+  return false;
 }
 
 namespace {
@@ -484,7 +522,20 @@ void KeyMapManager::InitCommandData() {
                         DirectInputState::INPUT_MODE_FULL_ALPHANUMERIC);
   RegisterDirectCommand("InputModeHalfAlphanumeric",
                         DirectInputState::INPUT_MODE_HALF_ALPHANUMERIC);
+#else
+  RegisterDirectCommand("InputModeHiragana",
+                        DirectInputState::NONE);
+  RegisterDirectCommand("InputModeFullKatakana",
+                        DirectInputState::NONE);
+  RegisterDirectCommand("InputModeHalfKatakana",
+                        DirectInputState::NONE);
+  RegisterDirectCommand("InputModeFullAlphanumeric",
+                        DirectInputState::NONE);
+  RegisterDirectCommand("InputModeHalfAlphanumeric",
+                        DirectInputState::NONE);
 #endif  // OS_WINDOWS
+  RegisterDirectCommand("Reconvert",
+                        DirectInputState::RECONVERT);
 
   // Precomposition
   RegisterPrecompositionCommand("IMEOff", PrecompositionState::IME_OFF);
@@ -514,17 +565,36 @@ void KeyMapManager::InitCommandData() {
   RegisterPrecompositionCommand(
       "InputModeHalfAlphanumeric",
       PrecompositionState::INPUT_MODE_HALF_ALPHANUMERIC);
+#else
+  RegisterPrecompositionCommand("InputModeHiragana",
+                                PrecompositionState::NONE);
+  RegisterPrecompositionCommand("InputModeFullKatakana",
+                                PrecompositionState::NONE);
+  RegisterPrecompositionCommand("InputModeHalfKatakana",
+                                PrecompositionState::NONE);
+  RegisterPrecompositionCommand("InputModeFullAlphanumeric",
+                                PrecompositionState::NONE);
+  RegisterPrecompositionCommand("InputModeHalfAlphanumeric",
+                                PrecompositionState::NONE);
 #endif  // OS_WINDOWS
 
   RegisterPrecompositionCommand("LaunchConfigDialog",
                                 PrecompositionState::LAUNCH_CONFIG_DIALOG);
   RegisterPrecompositionCommand("LaunchDictionaryTool",
                                 PrecompositionState::LAUNCH_DICTIONARY_TOOL);
-  RegisterPrecompositionCommand("LaunchWordRegisterDialog",
-                                PrecompositionState::LAUNCH_WORD_REGISTER_DIALOG);
+  RegisterPrecompositionCommand(
+      "LaunchWordRegisterDialog",
+      PrecompositionState::LAUNCH_WORD_REGISTER_DIALOG);
 
   RegisterPrecompositionCommand("Revert", PrecompositionState::REVERT);
   RegisterPrecompositionCommand("Undo", PrecompositionState::UNDO);
+  RegisterPrecompositionCommand("Reconvert", PrecompositionState::RECONVERT);
+
+  RegisterPrecompositionCommand("Cancel", PrecompositionState::CANCEL);
+  RegisterPrecompositionCommand("CommitFirstSuggestion",
+                                PrecompositionState::COMMIT_FIRST_SUGGESTION);
+  RegisterPrecompositionCommand("PredictAndConvert",
+                                PrecompositionState::PREDICT_AND_CONVERT);
 
 #ifdef _DEBUG  // only for debugging
   RegisterPrecompositionCommand("Abort", PrecompositionState::ABORT);
@@ -597,6 +667,17 @@ void KeyMapManager::InitCommandData() {
                              CompositionState::INPUT_MODE_FULL_ALPHANUMERIC);
   RegisterCompositionCommand("InputModeHalfAlphanumeric",
                              CompositionState::INPUT_MODE_HALF_ALPHANUMERIC);
+#else
+  RegisterCompositionCommand("InputModeHiragana",
+                             CompositionState::NONE);
+  RegisterCompositionCommand("InputModeFullKatakana",
+                             CompositionState::NONE);
+  RegisterCompositionCommand("InputModeHalfKatakana",
+                             CompositionState::NONE);
+  RegisterCompositionCommand("InputModeFullAlphanumeric",
+                             CompositionState::NONE);
+  RegisterCompositionCommand("InputModeHalfAlphanumeric",
+                             CompositionState::NONE);
 #endif  // OS_WINDOWS
 #ifdef _DEBUG  // only for debugging
   RegisterCompositionCommand("Abort", CompositionState::ABORT);
@@ -676,6 +757,17 @@ void KeyMapManager::InitCommandData() {
                             ConversionState::INPUT_MODE_FULL_ALPHANUMERIC);
   RegisterConversionCommand("InputModeHalfAlphanumeric",
                             ConversionState::INPUT_MODE_HALF_ALPHANUMERIC);
+#else
+  RegisterConversionCommand("InputModeHiragana",
+                            ConversionState::NONE);
+  RegisterConversionCommand("InputModeFullKatakana",
+                            ConversionState::NONE);
+  RegisterConversionCommand("InputModeHalfKatakana",
+                            ConversionState::NONE);
+  RegisterConversionCommand("InputModeFullAlphanumeric",
+                            ConversionState::NONE);
+  RegisterConversionCommand("InputModeHalfAlphanumeric",
+                            ConversionState::NONE);
 #endif  // OS_WINDOWS
 #ifndef NO_LOGGING  // means NOT RELEASE build
   RegisterConversionCommand("ReportBug", ConversionState::REPORT_BUG);
@@ -705,6 +797,17 @@ bool KeyMapManager::GetCommandComposition(
   return keymap_composition_.GetCommand(key_event, command);
 }
 
+bool KeyMapManager::GetCommandZeroQuerySuggestion(
+    const commands::KeyEvent &key_event,
+    PrecompositionState::Commands *command) const {
+  // try zero query suggestion rule first
+  if (keymap_zero_query_suggestion_.GetCommand(key_event, command)) {
+    return true;
+  }
+  // use precomposition rule
+  return keymap_precomposition_.GetCommand(key_event, command);
+}
+
 bool KeyMapManager::GetCommandSuggestion(
     const commands::KeyEvent &key_event,
     CompositionState::Commands *command) const {
@@ -712,7 +815,7 @@ bool KeyMapManager::GetCommandSuggestion(
   if (keymap_suggestion_.GetCommand(key_event, command)) {
     return true;
   }
-  // use preedit rule
+  // use composition rule
   return keymap_composition_.GetCommand(key_event, command);
 }
 
@@ -813,6 +916,11 @@ void KeyMapManager::GetAvailableCommandNameConversion(
        itr != command_conversion_map_.end(); ++itr) {
     command_names->insert(itr->first);
   }
+}
+
+void KeyMapManager::GetAvailableCommandNameZeroQuerySuggestion(
+    set<string> *command_names) const {
+  GetAvailableCommandNamePrecomposition(command_names);
 }
 
 void KeyMapManager::GetAvailableCommandNameSuggestion(

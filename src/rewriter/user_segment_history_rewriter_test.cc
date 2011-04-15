@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -83,10 +83,19 @@ void InitSegments(Segments *segments, size_t size) {
 
 void AppendCandidateSuffix(Segment *segment, size_t index,
                            const string &suffix,
-                           uint16 lid) {
+                           uint16 lid, uint16 rid) {
   segment->set_key(segment->key() + suffix);
   segment->mutable_candidate(index)->value += suffix;
   segment->mutable_candidate(index)->lid = lid;
+  segment->mutable_candidate(index)->rid = rid;
+}
+
+void AppendCandidateSuffixWithLid(Segment *segment, size_t index,
+                                  const string &suffix,
+                                  uint16 lid) {
+  // if lid == 0 and rid == 0, we assume that candidate is t13n.
+  // we set 1 as rid to avoid this.
+  AppendCandidateSuffix(segment, index, suffix, lid, 1);
 }
 
 void SetIncognito(bool incognito) {
@@ -677,8 +686,8 @@ TEST_F(UserSegmentHistoryRewriterTest, ContentValueLearning) {
   rewriter.Clear();
   {
     InitSegments(&segments, 1);
-    AppendCandidateSuffix(segments.mutable_segment(0), 0, ":all", 0);
-    AppendCandidateSuffix(segments.mutable_segment(0), 2, ":all", 0);
+    AppendCandidateSuffixWithLid(segments.mutable_segment(0), 0, ":all", 0);
+    AppendCandidateSuffixWithLid(segments.mutable_segment(0), 2, ":all", 0);
     segments.mutable_segment(0)->move_candidate(2, 0);
     segments.mutable_segment(0)->mutable_candidate(0)->attributes
         |= Segment::Candidate::RERANKED;
@@ -687,8 +696,8 @@ TEST_F(UserSegmentHistoryRewriterTest, ContentValueLearning) {
     rewriter.Finish(&segments);
 
     InitSegments(&segments, 1);
-    AppendCandidateSuffix(segments.mutable_segment(0), 0, ":all", 0);
-    AppendCandidateSuffix(segments.mutable_segment(0), 2, ":all", 0);
+    AppendCandidateSuffixWithLid(segments.mutable_segment(0), 0, ":all", 0);
+    AppendCandidateSuffixWithLid(segments.mutable_segment(0), 2, ":all", 0);
 
     rewriter.Rewrite(&segments);
 
@@ -706,8 +715,8 @@ TEST_F(UserSegmentHistoryRewriterTest, ContentValueLearning) {
               segments.segment(0).candidate(0).value);
 
     InitSegments(&segments, 1);
-    AppendCandidateSuffix(segments.mutable_segment(0), 0, ":other", 0);
-    AppendCandidateSuffix(segments.mutable_segment(0), 2, ":other", 0);
+    AppendCandidateSuffixWithLid(segments.mutable_segment(0), 0, ":other", 0);
+    AppendCandidateSuffixWithLid(segments.mutable_segment(0), 2, ":other", 0);
 
     rewriter.Rewrite(&segments);
 
@@ -719,8 +728,8 @@ TEST_F(UserSegmentHistoryRewriterTest, ContentValueLearning) {
   rewriter.Clear();
   {
     InitSegments(&segments, 1);
-    AppendCandidateSuffix(segments.mutable_segment(0), 0, ":all", 0);
-    AppendCandidateSuffix(segments.mutable_segment(0), 2, ":all", 1);
+    AppendCandidateSuffixWithLid(segments.mutable_segment(0), 0, ":all", 0);
+    AppendCandidateSuffixWithLid(segments.mutable_segment(0), 2, ":all", 1);
     segments.mutable_segment(0)->move_candidate(2, 0);
     segments.mutable_segment(0)->mutable_candidate(0)->attributes
         |= Segment::Candidate::RERANKED;
@@ -736,8 +745,8 @@ TEST_F(UserSegmentHistoryRewriterTest, ContentValueLearning) {
   rewriter.Clear();
   {
     InitSegments(&segments, 1);
-    AppendCandidateSuffix(segments.mutable_segment(0), 0, "", 0);
-    AppendCandidateSuffix(segments.mutable_segment(0), 2, ":other", 1);
+    AppendCandidateSuffixWithLid(segments.mutable_segment(0), 0, "", 0);
+    AppendCandidateSuffixWithLid(segments.mutable_segment(0), 2, ":other", 1);
     segments.mutable_segment(0)->move_candidate(2, 0);
     segments.mutable_segment(0)->mutable_candidate(0)->attributes
         |= Segment::Candidate::RERANKED;
@@ -753,16 +762,16 @@ TEST_F(UserSegmentHistoryRewriterTest, ContentValueLearning) {
   rewriter.Clear();
   {
     InitSegments(&segments, 1);
-    AppendCandidateSuffix(segments.mutable_segment(0), 0, ":all", 0);
-    AppendCandidateSuffix(segments.mutable_segment(0), 2, ":all", 0);
+    AppendCandidateSuffixWithLid(segments.mutable_segment(0), 0, ":all", 0);
+    AppendCandidateSuffixWithLid(segments.mutable_segment(0), 2, ":all", 0);
     segments.mutable_segment(0)->move_candidate(2, 0);
     segments.mutable_segment(0)->mutable_candidate(0)->attributes
         |= Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
     rewriter.Finish(&segments);
     InitSegments(&segments, 1);
-    AppendCandidateSuffix(segments.mutable_segment(0), 0, ":other", 0);
-    AppendCandidateSuffix(segments.mutable_segment(0), 2, ":other", 1);
+    AppendCandidateSuffixWithLid(segments.mutable_segment(0), 0, ":other", 0);
+    AppendCandidateSuffixWithLid(segments.mutable_segment(0), 2, ":other", 1);
     rewriter.Rewrite(&segments);
     EXPECT_EQ("candidate0:other",
               segments.segment(0).candidate(0).value);
@@ -772,23 +781,23 @@ TEST_F(UserSegmentHistoryRewriterTest, ContentValueLearning) {
   rewriter.Clear();
   {
     InitSegments(&segments, 1);
-    AppendCandidateSuffix(segments.mutable_segment(0), 0, ":all", 0);
-    AppendCandidateSuffix(segments.mutable_segment(0), 2, ":all", 0);
+    AppendCandidateSuffixWithLid(segments.mutable_segment(0), 0, ":all", 0);
+    AppendCandidateSuffixWithLid(segments.mutable_segment(0), 2, ":all", 0);
     segments.mutable_segment(0)->move_candidate(2, 0);
     segments.mutable_segment(0)->mutable_candidate(0)->attributes
         |= Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
     rewriter.Finish(&segments);
     InitSegments(&segments, 1);
-    AppendCandidateSuffix(segments.mutable_segment(0), 0, "", 0);
-    AppendCandidateSuffix(segments.mutable_segment(0), 2, ":other", 0);
+    AppendCandidateSuffixWithLid(segments.mutable_segment(0), 0, "", 0);
+    AppendCandidateSuffixWithLid(segments.mutable_segment(0), 2, ":other", 0);
     rewriter.Rewrite(&segments);
     EXPECT_EQ("candidate0",
               segments.segment(0).candidate(0).value);
   }
 }
 
-TEST_F(UserSegmentHistoryRewriterTest, ReplacableTest) {
+TEST_F(UserSegmentHistoryRewriterTest, ReplaceableTest) {
   SetLearningLevel(config::Config::DEFAULT_HISTORY);
   Segments segments;
   UserSegmentHistoryRewriter rewriter;
@@ -796,8 +805,8 @@ TEST_F(UserSegmentHistoryRewriterTest, ReplacableTest) {
   rewriter.Clear();
   {
     InitSegments(&segments, 2);
-    AppendCandidateSuffix(segments.mutable_segment(0), 0, ":all", 0);
-    AppendCandidateSuffix(segments.mutable_segment(0), 2, ":all", 0);
+    AppendCandidateSuffixWithLid(segments.mutable_segment(0), 0, ":all", 0);
+    AppendCandidateSuffixWithLid(segments.mutable_segment(0), 2, ":all", 0);
     segments.mutable_segment(0)->move_candidate(2, 0);
     segments.mutable_segment(0)->mutable_candidate(0)->attributes
         |= Segment::Candidate::RERANKED;
@@ -806,8 +815,8 @@ TEST_F(UserSegmentHistoryRewriterTest, ReplacableTest) {
     rewriter.Finish(&segments);
 
     InitSegments(&segments, 1);
-    AppendCandidateSuffix(segments.mutable_segment(0), 0, ":all", 0);
-    AppendCandidateSuffix(segments.mutable_segment(0), 2, ":all", 0);
+    AppendCandidateSuffixWithLid(segments.mutable_segment(0), 0, ":all", 0);
+    AppendCandidateSuffixWithLid(segments.mutable_segment(0), 2, ":all", 0);
 
     rewriter.Rewrite(&segments);
 
@@ -821,8 +830,8 @@ TEST_F(UserSegmentHistoryRewriterTest, ReplacableTest) {
   rewriter.Clear();
   {
     InitSegments(&segments, 1);
-    AppendCandidateSuffix(segments.mutable_segment(0), 0, ":all", 0);
-    AppendCandidateSuffix(segments.mutable_segment(0), 2, ":all", 0);
+    AppendCandidateSuffixWithLid(segments.mutable_segment(0), 0, ":all", 0);
+    AppendCandidateSuffixWithLid(segments.mutable_segment(0), 2, ":all", 0);
     segments.mutable_segment(0)->move_candidate(2, 0);
     segments.mutable_segment(0)->mutable_candidate(0)->attributes
         |= Segment::Candidate::RERANKED;
@@ -831,8 +840,8 @@ TEST_F(UserSegmentHistoryRewriterTest, ReplacableTest) {
     rewriter.Finish(&segments);
 
     InitSegments(&segments, 2);
-    AppendCandidateSuffix(segments.mutable_segment(0), 0, ":all", 0);
-    AppendCandidateSuffix(segments.mutable_segment(0), 2, ":all", 0);
+    AppendCandidateSuffixWithLid(segments.mutable_segment(0), 0, ":all", 0);
+    AppendCandidateSuffixWithLid(segments.mutable_segment(0), 2, ":all", 0);
 
     rewriter.Rewrite(&segments);
 
@@ -846,16 +855,16 @@ TEST_F(UserSegmentHistoryRewriterTest, ReplacableTest) {
   rewriter.Clear();
   {
     InitSegments(&segments, 2);
-    AppendCandidateSuffix(segments.mutable_segment(0), 0, ":all", 0);
-    AppendCandidateSuffix(segments.mutable_segment(0), 2, ":all", 1);
+    AppendCandidateSuffixWithLid(segments.mutable_segment(0), 0, ":all", 0);
+    AppendCandidateSuffixWithLid(segments.mutable_segment(0), 2, ":all", 1);
     segments.mutable_segment(0)->move_candidate(2, 0);
     segments.mutable_segment(0)->mutable_candidate(0)->attributes
         |= Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
     rewriter.Finish(&segments);
     InitSegments(&segments, 1);
-    AppendCandidateSuffix(segments.mutable_segment(0), 0, ":all", 0);
-    AppendCandidateSuffix(segments.mutable_segment(0), 2, ":all", 0);
+    AppendCandidateSuffixWithLid(segments.mutable_segment(0), 0, ":all", 0);
+    AppendCandidateSuffixWithLid(segments.mutable_segment(0), 2, ":all", 0);
     rewriter.Rewrite(&segments);
     EXPECT_EQ("candidate0:all",
               segments.segment(0).candidate(0).value);
@@ -864,16 +873,16 @@ TEST_F(UserSegmentHistoryRewriterTest, ReplacableTest) {
   rewriter.Clear();
   {
     InitSegments(&segments, 2);
-    AppendCandidateSuffix(segments.mutable_segment(0), 0, ":all", 0);
-    AppendCandidateSuffix(segments.mutable_segment(0), 2, ":all", 0);
+    AppendCandidateSuffixWithLid(segments.mutable_segment(0), 0, ":all", 0);
+    AppendCandidateSuffixWithLid(segments.mutable_segment(0), 2, ":all", 0);
     segments.mutable_segment(0)->move_candidate(2, 0);
     segments.mutable_segment(0)->mutable_candidate(0)->attributes
         |= Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
     rewriter.Finish(&segments);
     InitSegments(&segments, 1);
-    AppendCandidateSuffix(segments.mutable_segment(0), 0, ":all", 0);
-    AppendCandidateSuffix(segments.mutable_segment(0), 2, ":all", 1);
+    AppendCandidateSuffixWithLid(segments.mutable_segment(0), 0, ":all", 0);
+    AppendCandidateSuffixWithLid(segments.mutable_segment(0), 2, ":all", 1);
     rewriter.Rewrite(&segments);
     EXPECT_EQ("candidate0:all",
               segments.segment(0).candidate(0).value);
@@ -882,16 +891,16 @@ TEST_F(UserSegmentHistoryRewriterTest, ReplacableTest) {
   rewriter.Clear();
   {
     InitSegments(&segments, 1);
-    AppendCandidateSuffix(segments.mutable_segment(0), 0, ":all", 0);
-    AppendCandidateSuffix(segments.mutable_segment(0), 2, ":all", 1);
+    AppendCandidateSuffixWithLid(segments.mutable_segment(0), 0, ":all", 0);
+    AppendCandidateSuffixWithLid(segments.mutable_segment(0), 2, ":all", 1);
     segments.mutable_segment(0)->move_candidate(2, 0);
     segments.mutable_segment(0)->mutable_candidate(0)->attributes
         |= Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
     rewriter.Finish(&segments);
     InitSegments(&segments, 2);
-    AppendCandidateSuffix(segments.mutable_segment(0), 0, ":all", 0);
-    AppendCandidateSuffix(segments.mutable_segment(0), 2, ":all", 0);
+    AppendCandidateSuffixWithLid(segments.mutable_segment(0), 0, ":all", 0);
+    AppendCandidateSuffixWithLid(segments.mutable_segment(0), 2, ":all", 0);
     rewriter.Rewrite(&segments);
     EXPECT_EQ("candidate0:all",
               segments.segment(0).candidate(0).value);
@@ -900,18 +909,109 @@ TEST_F(UserSegmentHistoryRewriterTest, ReplacableTest) {
   rewriter.Clear();
   {
     InitSegments(&segments, 1);
-    AppendCandidateSuffix(segments.mutable_segment(0), 0, ":all", 0);
-    AppendCandidateSuffix(segments.mutable_segment(0), 2, ":all", 0);
+    AppendCandidateSuffixWithLid(segments.mutable_segment(0), 0, ":all", 0);
+    AppendCandidateSuffixWithLid(segments.mutable_segment(0), 2, ":all", 0);
     segments.mutable_segment(0)->move_candidate(2, 0);
     segments.mutable_segment(0)->mutable_candidate(0)->attributes
         |= Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
     rewriter.Finish(&segments);
     InitSegments(&segments, 2);
-    AppendCandidateSuffix(segments.mutable_segment(0), 0, ":all", 0);
-    AppendCandidateSuffix(segments.mutable_segment(0), 2, ":all", 1);
+    AppendCandidateSuffixWithLid(segments.mutable_segment(0), 0, ":all", 0);
+    AppendCandidateSuffixWithLid(segments.mutable_segment(0), 2, ":all", 1);
     rewriter.Rewrite(&segments);
     EXPECT_EQ("candidate0:all",
+              segments.segment(0).candidate(0).value);
+  }
+}
+
+TEST_F(UserSegmentHistoryRewriterTest, NotReplaceableForDifferentId) {
+  SetLearningLevel(config::Config::DEFAULT_HISTORY);
+  Segments segments;
+  UserSegmentHistoryRewriter rewriter;
+
+  rewriter.Clear();
+  {
+    InitSegments(&segments, 2);
+    AppendCandidateSuffix(segments.mutable_segment(0), 0, ":all", 1, 1);
+    AppendCandidateSuffix(segments.mutable_segment(0), 2, ":all", 200, 300);
+    segments.mutable_segment(0)->move_candidate(2, 0);
+    segments.mutable_segment(0)->mutable_candidate(0)->attributes
+        |= Segment::Candidate::RERANKED;
+    segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
+
+    rewriter.Finish(&segments);
+
+    InitSegments(&segments, 2);
+    AppendCandidateSuffix(segments.mutable_segment(0), 0, ":all", 1, 1);
+    AppendCandidateSuffix(segments.mutable_segment(0), 2, ":all", 200, 300);
+    segments.mutable_segment(1)->mutable_candidate(0)->value =
+        "not_same_as_before";
+
+    rewriter.Rewrite(&segments);
+
+    EXPECT_NE("candidate2:all",
+              segments.segment(0).candidate(0).value);
+  }
+}
+
+TEST_F(UserSegmentHistoryRewriterTest, ReplaceableForSameId) {
+  SetLearningLevel(config::Config::DEFAULT_HISTORY);
+  Segments segments;
+  UserSegmentHistoryRewriter rewriter;
+
+  rewriter.Clear();
+  {
+    InitSegments(&segments, 2);
+    AppendCandidateSuffix(segments.mutable_segment(0), 0, ":all", 1, 1);
+    AppendCandidateSuffix(segments.mutable_segment(0), 2, ":all", 1, 1);
+    segments.mutable_segment(0)->move_candidate(2, 0);
+    segments.mutable_segment(0)->mutable_candidate(0)->attributes
+        |= Segment::Candidate::RERANKED;
+    segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
+
+    rewriter.Finish(&segments);
+
+    InitSegments(&segments, 2);
+    AppendCandidateSuffix(segments.mutable_segment(0), 0, ":all", 1, 1);
+    AppendCandidateSuffix(segments.mutable_segment(0), 2, ":all", 1, 1);
+    segments.mutable_segment(1)->mutable_candidate(0)->value =
+        "not_same_as_before";
+
+    rewriter.Rewrite(&segments);
+
+    EXPECT_EQ("candidate2:all",
+              segments.segment(0).candidate(0).value);
+  }
+}
+
+TEST_F(UserSegmentHistoryRewriterTest, ReplaceableT13NTest) {
+  SetLearningLevel(config::Config::DEFAULT_HISTORY);
+  Segments segments;
+  UserSegmentHistoryRewriter rewriter;
+
+  rewriter.Clear();
+  {
+    InitSegments(&segments, 2);
+    AppendCandidateSuffix(segments.mutable_segment(0), 0, ":all", 1, 1);
+    // Prepare candidate2 as T13N candidate.
+    AppendCandidateSuffix(segments.mutable_segment(0), 2, ":all", 0, 0);
+    segments.mutable_segment(0)->move_candidate(2, 0);
+    segments.mutable_segment(0)->mutable_candidate(0)->attributes
+        |= Segment::Candidate::RERANKED;
+    segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
+
+    rewriter.Finish(&segments);
+
+    InitSegments(&segments, 2);
+    AppendCandidateSuffix(segments.mutable_segment(0), 0, ":all", 1, 1);
+    AppendCandidateSuffix(segments.mutable_segment(0), 2, ":all", 0, 0);
+    segments.mutable_segment(1)->mutable_candidate(0)->value =
+        "not_same_as_before";
+
+    rewriter.Rewrite(&segments);
+
+    EXPECT_EQ("candidate2:all",
               segments.segment(0).candidate(0).value);
   }
 }
@@ -1198,7 +1298,7 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberFullWidth) {
     segments.Clear();
     segments.add_segment();
     {
-    segments.mutable_segment(0)->set_key("1234");
+      segments.mutable_segment(0)->set_key("1234");
       Segment::Candidate *candidate =
           segments.mutable_segment(0)->insert_candidate(0);
       candidate->value = "1234";

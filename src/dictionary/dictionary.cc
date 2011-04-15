@@ -1,4 +1,4 @@
-// Copyright 2010, Google Inc.
+// Copyright 2010-2011, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -58,6 +58,8 @@ class DictionaryImpl : public DictionaryInterface {
   virtual Node *LookupReverse(const char *str, int size,
                               NodeAllocatorInterface *allocator) const;
 
+  virtual bool Reload();
+
   virtual void PopulateReverseLookupCache(
       const char *str, int size, NodeAllocatorInterface *allocator) const;
 
@@ -115,6 +117,10 @@ Node *DictionaryImpl::LookupPrefix(const char *str, int size,
 Node *DictionaryImpl::LookupReverse(const char *str, int size,
                                     NodeAllocatorInterface *allocator) const {
   return LookupInternal(str, size, REVERSE, allocator);
+}
+
+bool DictionaryImpl::Reload() {
+  return UserDictionary::GetUserDictionary()->Reload();
 }
 
 void DictionaryImpl::PopulateReverseLookupCache(
