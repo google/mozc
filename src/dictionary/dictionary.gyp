@@ -37,6 +37,7 @@
       'target_name': 'user_dictionary',
       'type': 'static_library',
       'sources': [
+        '<(gen_out_dir)/pos_map.h',
         '<(proto_out_dir)/<(relative_dir)/user_dictionary_storage.pb.cc',
         'user_dictionary.cc',
         'user_dictionary_importer.cc',
@@ -45,30 +46,20 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        '../converter/converter.gyp:gen_pos_matcher',
-        '../session/session.gyp:config_handler',
-        '../session/session.gyp:genproto_session',
+        '../session/session_base.gyp:config_handler',
+        '../session/session_base.gyp:genproto_session',
         '../usage_stats/usage_stats.gyp:usage_stats',
+        'dictionary_base.gyp:gen_pos_matcher',
+        'gen_pos_map',
+        'genproto_dictionary',
         'suppression_dictionary',
         'user_pos_data',
-        'pos_map',
-        'genproto_dictionary',
       ],
       'conditions': [['two_pass_build==0', {
         'dependencies': [
           'install_gen_user_pos_data_main',
         ],
       }]],
-    },
-    {
-      'target_name': 'text_dictionary_loader',
-      'type': 'static_library',
-      'sources': [
-        'text_dictionary_loader.cc',
-      ],
-      'dependencies': [
-        '../base/base.gyp:base',
-      ],
     },
     {
       'target_name': 'suppression_dictionary',
@@ -88,21 +79,24 @@
         'dictionary_preloader.cc',
       ],
       'dependencies': [
-        '<(DEPTH)/third_party/rx/rx.gyp:rx',
         '../base/base.gyp:base',
-        '../session/session.gyp:genproto_session',
+        '<(DEPTH)/third_party/rx/rx.gyp:rx',
         'file/dictionary_file.gyp:dictionary_file',
-        'user_dictionary',
+        'gen_embedded_dictionary_data',
         'genproto_dictionary',
         'suppression_dictionary',
         'system/system_dictionary.gyp:system_dictionary_builder',
-        'text_dictionary_loader',
+        'user_dictionary',
       ],
       'conditions': [['two_pass_build==0', {
         'dependencies': [
           'install_gen_system_dictionary_data_main',
         ],
       }]],
+    },
+    {
+      'target_name': 'gen_embedded_dictionary_data',
+      'type': 'none',
       'actions': [
         {
           'action_name': 'gen_embedded_dictionary_data',
@@ -118,8 +112,6 @@
                '../data/dictionary/dictionary07.txt',
                '../data/dictionary/dictionary08.txt',
                '../data/dictionary/dictionary09.txt',
-               '../data/dictionary/zip_code_seed.tsv',
-               '../data/dictionary/spelling_correction_dictionary.txt',
              ],
           },
           'inputs': [
@@ -165,7 +157,7 @@
       },
       'includes' : [
         '../gyp/install_build_tool.gypi'
-      ]
+      ],
     },
     {
       'target_name': 'user_pos_data',
@@ -175,12 +167,17 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        'gen_user_pos_data',
       ],
       'conditions': [['two_pass_build==0', {
         'dependencies': [
           'install_gen_user_pos_data_main',
         ],
       }]],
+    },
+    {
+      'target_name': 'gen_user_pos_data',
+      'type': 'none',
       'actions': [
         {
           'action_name': 'gen_user_pos_data',
@@ -214,7 +211,7 @@
       ],
     },
     {
-      'target_name': 'pos_map',
+      'target_name': 'gen_pos_map',
       'type': 'none',
       'actions': [
         {
@@ -256,14 +253,11 @@
       'type': 'executable',
       'sources': [
         'gen_system_dictionary_data_main.cc',
-        'zip_code_dictionary_builder.cc',
-        'spelling_correction_dictionary_builder.cc',
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        '../converter/converter.gyp:gen_pos_matcher',
+        'dictionary_base.gyp:gen_pos_matcher',
         'system/system_dictionary.gyp:system_dictionary_builder',
-        'text_dictionary_loader',
       ],
     },
     {
@@ -274,44 +268,6 @@
       },
       'includes' : [
         '../gyp/install_build_tool.gypi'
-      ],
-    },
-    {
-      'target_name': 'dictionary_test',
-      'type': 'executable',
-      'sources': [
-        'dictionary_preloader_test.cc',
-        'dictionary_test.cc',
-        'suppression_dictionary_test.cc',
-        'text_dictionary_loader_test.cc',
-        'user_dictionary_importer_test.cc',
-        'user_dictionary_storage_test.cc',
-        'user_dictionary_test.cc',
-        'user_dictionary_util_test.cc',
-        'user_pos_test.cc',
-      ],
-      'dependencies': [
-        '../base/base.gyp:base',
-        '../protobuf/protobuf.gyp:protobuf',
-        '../testing/testing.gyp:gtest_main',
-        'dictionary',
-        'suppression_dictionary',
-        'text_dictionary_loader',
-        'user_dictionary',
-      ],
-      'variables': {
-        'test_size': 'small',
-      },
-    },
-    # Test cases meta target: this target is referred from gyp/tests.gyp
-    {
-      'target_name': 'dictionary_all_test',
-      'type': 'none',
-      'dependencies': [
-        'dictionary_test',
-        'file/dictionary_file.gyp:dictionary_file_test',
-        'system/system_dictionary.gyp:system_dictionary_test',
-        'system/system_dictionary.gyp:system_dictionary_builder_test',
       ],
     },
   ],

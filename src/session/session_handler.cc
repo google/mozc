@@ -43,7 +43,6 @@
 #include "session/commands.pb.h"
 #include "session/config_handler.h"
 #include "session/config.pb.h"
-#include "session/internal/keymap.h"
 #include "session/session_factory.h"
 #include "session/session_interface.h"
 #include "session/session_observer_handler.h"

@@ -44,6 +44,12 @@
 namespace mozc {
 class WinUtil {
  public:
+  // Retrieve whether the calling thread hold loader lock or not.
+  // Return true if the state is retrieved successfuly.
+  // Otherwise, the state of loader lock is unknown.
+  // NOTE: |lock_held| may be false if the DLL is loaded as
+  // implicit link.
+  static bool IsDLLSynchronizationHeld(bool *lock_held);
 
   // Log off the current user.
   // Return true if the operation successfully finished.

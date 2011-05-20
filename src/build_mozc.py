@@ -240,6 +240,8 @@ def RecursiveRemoveDirectory(directory):
 
 def CleanBuildFilesAndDirectories():
   """Cleans build files and directories."""
+  (options, unused_args) = ParseCleanOptions()
+
   # File and directory names to be removed.
   file_names = []
   directory_names = []
@@ -260,12 +262,13 @@ def CleanBuildFilesAndDirectories():
     elif IsLinux():
       file_names.extend(glob.glob(os.path.join(gyp_directory_name,
                                                '*.target.mk')))
+      file_names.extend(glob.glob(os.path.join(gyp_directory_name,
+                                               '*/*.target.mk')))
   file_names.append('%s/mozc_version.txt' % SRC_DIR)
   file_names.append('third_party/rx/rx.gyp')
   # Collect stuff in the top-level directory.
   directory_names.append('mozc_build_tools')
 
-  (options, unused_args) = ParseCleanOptions()
   directory_names.append(GetBuildBaseName(options))
   if IsLinux():
     file_names.append('Makefile')
@@ -344,7 +347,6 @@ def GypMain(deps_file_name):
   # Run GYP.
   print 'Running GYP...'
   command_line = [sys.executable, gyp_script,
-                  '--no-circular-check',
                   '--depth=.',
                   '--include=%s/gyp/common.gypi' % SRC_DIR]
   if options.onepass:
@@ -370,6 +372,10 @@ def GypMain(deps_file_name):
   if options.channel_dev:
     command_line.extend(['-D', 'channel_dev=1'])
 
+
+  # For Mac, we don't use libzinnia
+  if IsMac():
+    command_line.extend(['-D', 'use_libzinnia=0'])
 
   # Dictionary configuration
   if options.target_platform == 'ChromeOS':

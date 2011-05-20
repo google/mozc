@@ -138,12 +138,86 @@ class Util {
   // Convert the string to a number and return it.
   static int SimpleAtoi(const string &str);
 
-  // Convert the string to a 32-/64-bit unsigned int.  Returns true if success
+  struct NumberString {
+   public:
+    enum Style {
+        DEFAULT_STYLE = 0,
+        // 123,456,789
+        NUMBER_SEPARATED_ARABIC_HALFWIDTH,
+        // "１２３，４５６，７８９"
+        NUMBER_SEPARATED_ARABIC_FULLWIDTH,
+        // "一億二千三百四十五万六千七百八十九"
+        NUMBER_KANJI,
+        // "壱億弐千参百四拾五万六千七百八拾九"
+        NUMBER_OLD_KANJI,
+        // "ⅠⅡⅢ"
+        NUMBER_ROMAN_CAPITAL,
+        // "ⅰⅱⅲ"
+        NUMBER_ROMAN_SMALL,
+        // "①②③"
+        NUMBER_CIRCLED,
+        // "0x4d2" (1234 in decimal)
+        NUMBER_HEX,
+        // "02322" (1234 in decimal)
+        NUMBER_OCT,
+        // "0b10011010010" (1234 in decimal)
+        NUMBER_BIN,
+        // "ニ〇〇"
+        NUMBER_KANJI_ARABIC,
+    };
+
+    NumberString(const string &value, const string &description, Style style)
+        : value(value),
+          description(description),
+          style(style) {}
+
+    // Converted string
+    string value;
+
+    // Description of Converted String
+    string description;
+
+    // Converted Number Style
+    Style style;
+  };
+
+  // Converts half-width Arabic number string to Kan-su-ji string
+  //    - input_num: a string which *must* be half-width number string
+  //    - output: function appends new representation into output vector.
+  // value, desc and style are stored same size and same order.
+  // if invalid string is set, this function do nothing.
+  static bool ArabicToKanji(const string &input_num,
+                            vector<Util::NumberString> *output);
+
+  // Converts half-width Arabic number string to Separated Arabic string
+  //  (e.g. 1234567890 are converted to 1,234,567,890)
+  // Arguments are same as ArabicToKanji (above)
+  static bool ArabicToSeparatedArabic(const string &input_num,
+                                      vector<Util::NumberString> *output);
+
+  // Converts half-width Arabic number string to full-width Arabic number string
+  // Arguments are same as ArabicToKanji (above)
+  static bool ArabicToWideArabic(const string &input_num,
+                                 vector<Util::NumberString> *output);
+
+  // Converts half-width Arabic number to various styles
+  // Arguments are same as ArabicToKanji (above)
+  //    - Roman style (i) (ii) ...
+  static bool ArabicToOtherForms(const string &input_num,
+                                 vector<Util::NumberString> *output);
+
+  // Converts half-width Arabic number to various radices (2,8,16)
+  // Arguments are same as ArabicToKanji (above)
+  //   except input digits is smaller than 20
+  static bool ArabicToOtherRadixes(const string &input_num,
+                                   vector<Util::NumberString> *output);
+
+  // Converts the string to a 32-/64-bit unsigned int.  Returns true if success
   // or false if the string is in the wrong format.
   static bool SafeStrToUInt32(const string &str, uint32 *value);
   static bool SafeStrToUInt64(const string &str, uint64 *value);
 
-  // Convert the string to a double.  Returns true if success or false if the
+  // Converts the string to a double.  Returns true if success or false if the
   // string is in the wrong format.
   // If |str| is a hexadecimal number like "0x1234", the result depends on
   // compiler.  It returns false when compiled by VisualC++.  On the other hand
@@ -152,7 +226,7 @@ class Util {
 
 #ifndef SWIG
   // C++ string version of sprintf.
-  static string StringPrintf(const char* format, ...)
+  static string StringPrintf(const char *format, ...)
       // Tell the compiler to do printf format string checking.
       PRINTF_ATTRIBUTE(1, 2);
 #endif
@@ -211,6 +285,19 @@ class Util {
   // Get local time, which is offset_sec seconds after now. Returns true if
   // succeeded.
   static bool GetTmWithOffsetSecond(tm *time_with_offset, int offset_sec);
+
+  // Interface of the helper class.
+  // Default implementation is defined in the .cc file.
+  class ClockInterface {
+   public:
+    virtual ~ClockInterface() {}
+    virtual void GetTimeOfDay(uint64 *sec, uint32 *usec) = 0;
+    virtual uint64 GetTime() = 0;
+  };
+
+  // This function is provided for test.
+  // The behavior of system clock can be customized by replacing this handler.
+  static void SetClockHandler(Util::ClockInterface *handler);
 
   // Suspends the execution of the current thread until
   // the time-out interval elapses.

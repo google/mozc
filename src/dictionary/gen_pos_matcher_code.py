@@ -28,76 +28,106 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+"""A tool to generate POS matcher."""
+
 __author__ = "taku"
 
+import re
 import sys
-
-def IsPrefix(str, key):
-  try:
-    n = str.index(key)
-  except:
-    n = -1
-
-  if n == 0:
-    return True
-  else:
-    return False
-
-def LoadRewriteMapRule(filename):
-  fh = open(filename)
-  rule = []
-  for line in fh.readlines():
-    line = line.rstrip("\n")
-    if not line or line.startswith('#'):
-      continue
-    fields = line.split();
-    rule.append([fields[0], fields[1]])
-  return rule
 
 
 def ReadPOSID(id_file, special_pos_file):
-  pos_list = []
+  pos = {}
   max_id = 0
 
   for line in open(id_file, "r"):
     fields = line.split()
-    pos_list.append(fields[1])
+    pos[fields[1]] = fields[0]
+    max_id = max(int(fields[0]), max_id)
 
+  max_id += 1
   for line in open(special_pos_file, "r"):
-    if len(line) <= 1 or line[0] == '#':
+    if len(line) <= 1 or line[0] == "#":
       continue
     fields = line.split()
-    pos_list.append(fields[0])
+    pos[fields[0]] = ("%d" % max_id)
+    max_id += 1
 
-  return pos_list
+  return pos
+
+
+def PatternToRegexp(pattern):
+  return pattern.replace("*", "[^,]+")
+
+
+def GetRange(pos, pattern):
+  if pattern == "*":
+    return ""
+
+  pat = re.compile(PatternToRegexp(pattern))
+  min = -1
+  max = -1
+  keys = pos.keys()
+  keys.sort()
+
+  range = []
+
+  for p in keys:
+    id = pos[p]
+    if pat.match(p):
+      if min == -1:
+        min = id
+        max = id
+      else:
+        max = id
+    else:
+      if min != -1:
+        range.append([min, max])
+        min = -1
+  if min != -1:
+    range.append([min, max])
+
+  tmp = []
+  for r in range:
+    if r[0] == r[1]:
+      tmp.append("(id == %s)" % (r[0]))
+    else:
+      tmp.append("(id >= %s && id <= %s)" % (r[0], r[1]))
+
+  if not tmp:
+    print "FATAL: No rule fiind %s" % (pattern)
+    sys.exit(-1)
+
+  return (range[0][0], " || ".join(tmp))
+
 
 def main():
-  # read lid file
-  pos_list = ReadPOSID(sys.argv[1], sys.argv[2])
+  pos = ReadPOSID(sys.argv[1], sys.argv[2])
+  print "#include \"base/base.h\""
+  print "namespace mozc {"
+  print "namespace {"
+  print "class POSMatcher {"
+  print " public:"
 
-  # read rule file
-  rules = LoadRewriteMapRule(sys.argv[3])
+  for line in open(sys.argv[3], "r"):
+    if len(line) <= 1 or line[0] == "#":
+      continue
+    (func, pattern) = line.split()
+    (init_id, cond) = GetRange(pos, pattern)
+    print "  // %s \"%s\"" % (func, pattern)
+    print "  static uint16 Get%sId() {" % (func)
+    print "    return %s;" % (init_id)
+    print "  }"
+    print "  static bool Is%s(uint16 id) {" % (func)
+    print "    return (%s);" % (cond)
+    print "  }"
 
-  current_id = 1
-  id_map = {}
-  ids = []
-
-  for target in pos_list:
-    id = 0
-    for rule in rules:
-      if IsPrefix(target, rule[0]):
-        if id_map.has_key(rule[1]):
-          id = id_map[rule[1]]
-        else:
-          id = current_id
-          id_map[rule[1]] = current_id
-          current_id = current_id + 1
-        pass
-    ids.append(str(id))
-
-  print "const uint8 kLidGroup[] = {"
-  print ',\n'.join(ids)
+  print " private:"
+  print "  POSMatcher() {}"
+  print "  ~POSMatcher() {}"
   print "};"
+  print "}  // namespace"
+  print "}  // mozc"
 
 if __name__ == "__main__":
   main()

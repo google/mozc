@@ -30,10 +30,11 @@
 #include "converter/lattice.h"
 
 #include <string>
+
 #include "base/base.h"
 #include "converter/boundary_data.h"
 #include "converter/node.h"
-#include "converter/pos_matcher.h"
+#include "dictionary/pos_matcher.h"
 
 namespace mozc {
 
@@ -95,7 +96,7 @@ class NodeAllocator : public NodeAllocatorInterface {
   }
 
   // Free all nodes allocateed by NewNode()
-  void Free(){
+  void Free() {
     node_freelist_.Free();
   }
 

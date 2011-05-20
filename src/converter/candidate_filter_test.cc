@@ -32,12 +32,13 @@
 #include <climits>
 #include <string>
 #include <vector>
+
 #include "base/base.h"
 #include "base/freelist.h"
 #include "base/util.h"
 #include "converter/node.h"
-#include "converter/pos_matcher.h"
 #include "converter/segments.h"
+#include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
 #include "testing/base/public/gunit.h"
 
@@ -308,6 +309,36 @@ TEST_F(CandidateFilterTest, Regression3437022) {
   dic->Clear();
   dic->UnLock();
 
+  EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
+            filter.FilterCandidate(c1, n));
+}
+
+TEST_F(CandidateFilterTest, FilterRealtimeConversionTest) {
+  CandidateFilter filter;
+  vector<const Node *> n;
+
+  n.clear();
+  Node *n1 = NewNode();
+
+  n1->key = "PC";
+  n1->value = "PC";
+  n1->lid = POSMatcher::GetUnknownId();
+  n1->rid = POSMatcher::GetUnknownId();
+  n.push_back(n1);
+
+  Node *n2 = NewNode();
+  // "てすと"
+  n2->value = "\xE3\x81\xA6\xE3\x81\x99\xE3\x81\xA8";
+  n2->lid = POSMatcher::GetUnknownId();
+  n2->rid = POSMatcher::GetUnknownId();
+  n.push_back(n2);
+
+  Segment::Candidate *c1 = NewCandidate();
+  c1->attributes |= Segment::Candidate::REALTIME_CONVERSION;
+  // "PCテスト"
+  c1->value = "PC\xE3\x83\x86\xE3\x82\xB9\xE3\x83\x88";
+  // Don't filter a candidate because it starts with alphabets and
+  // is followed by a non-functional word.
   EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
             filter.FilterCandidate(c1, n));
 }

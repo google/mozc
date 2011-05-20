@@ -37,6 +37,7 @@
 #include <objc/objc-class.h>
 
 #include "base/mac_util.h"
+#include "base/util.h"
 #include "client/session_interface.h"
 #include "renderer/renderer_interface.h"
 #include "testing/base/public/googletest.h"
@@ -178,6 +179,7 @@
 @end
 
 namespace {
+const NSTimeInterval kDoubleTapInterval = 0.5;
 int openURL_count = 0;
 BOOL openURL_test(id self, SEL selector, NSURL *url) {
   openURL_count++;
@@ -463,6 +465,27 @@ bool ComparePreedit(NSAttributedString *expected, NSAttributedString *actual) {
   return true;
 }
 
+NSTimeInterval GetDoubleTapInterval() {
+  // TODO(horo): This value should be get from system configuration.
+  return kDoubleTapInterval;
+}
+
+BOOL SendKanaKeyEvent(GoogleJapaneseInputController *controller,
+                      MockClient *client) {
+  // tap Kana-key
+  NSEvent *kanaKeyEvent = [NSEvent keyEventWithType:NSKeyDown
+                                           location:NSZeroPoint
+                                      modifierFlags:0
+                                          timestamp:0
+                                       windowNumber:0
+                                            context:nil
+                                         characters:@" "
+                        charactersIgnoringModifiers:@" "
+                                          isARepeat:NO
+                                            keyCode:kVK_JIS_Kana];
+  return [controller handleEvent:kanaKeyEvent client:client];
+}
+
 TEST_F(GoogleJapaneseInputControllerTest, UpdateComposedString) {
   // If preedit is NULL, it still calls setMarkedText, with an empty string.
   NSMutableAttributedString *expected =
@@ -703,4 +726,188 @@ TEST_F(GoogleJapaneseInputControllerTest, handleConfig) {
   EXPECT_TRUE([@"com.apple.keylayout.US"
                 isEqualToString:mock_client_.overriddenLayout])
       << [mock_client_.overriddenLayout UTF8String];
+}
+
+TEST_F(GoogleJapaneseInputControllerTest, DoubleTapKanaUndo) {
+  // tap (short) tap -> emit undo command
+  controller_.mode = mozc::commands::HIRAGANA;
+
+  // set expectedRange for Undo
+  mock_client_.expectedRange = NSMakeRange(1, 0);
+
+  // Send Kana-key.
+  // Because of special hack for Eisu/Kana keys, it returns YES.
+  EXPECT_EQ(YES, SendKanaKeyEvent(controller_, mock_client_));
+  // Check if it did not send key.
+  EXPECT_EQ(0, mock_session_->counter_SendKey());
+  // Check if it did not send command.
+  EXPECT_EQ(0, mock_session_->counter_SendCommand());
+
+  // Sleep less than DoubleTapInterval (sec)
+  mozc::Util::Sleep(GetDoubleTapInterval() * 1000.0 / 2.0);
+
+  // Send Kana-key.
+  EXPECT_EQ(YES, SendKanaKeyEvent(controller_, mock_client_));
+  // Check if it did not send key.
+  EXPECT_EQ(0, mock_session_->counter_SendKey());
+  // Check if it sent an undo command.
+  EXPECT_EQ(1, mock_session_->counter_SendCommand());
+  EXPECT_EQ(mozc::commands::SessionCommand::UNDO,
+            mock_session_->called_SendCommand().type());
+}
+
+TEST_F(GoogleJapaneseInputControllerTest, DoubleTapKanaUndoTimeOver) {
+ // tap (long) tap -> don't emit undo command
+  controller_.mode = mozc::commands::HIRAGANA;
+
+  // set expectedRange for Undo
+  mock_client_.expectedRange = NSMakeRange(1, 0);
+
+  // Send Kana-key.
+  // Because of special hack for Eisu/Kana keys, it returns YES.
+  EXPECT_EQ(YES, SendKanaKeyEvent(controller_, mock_client_));
+  // Check if it did not send key.
+  EXPECT_EQ(0, mock_session_->counter_SendKey());
+  // Check if it did not send command.
+  EXPECT_EQ(0, mock_session_->counter_SendCommand());
+
+  // Sleep more than DoubleTapInterval (sec)
+  mozc::Util::Sleep(GetDoubleTapInterval() * 1000.0 * 2.0);
+
+  // Send Kana-key.
+  EXPECT_EQ(YES, SendKanaKeyEvent(controller_, mock_client_));
+  // Check if it did not send key.
+  EXPECT_EQ(0, mock_session_->counter_SendKey());
+  // Check if it did not send command.
+  EXPECT_EQ(0, mock_session_->counter_SendCommand());
+}
+
+TEST_F(GoogleJapaneseInputControllerTest, SingleAndDoubleTapKanaUndo) {
+  // tap (long) tap (short) tap -> emit once
+  controller_.mode = mozc::commands::HIRAGANA;
+
+  // set expectedRange for Undo
+  mock_client_.expectedRange = NSMakeRange(1, 0);
+
+  // Send Kana-key.
+  // Because of special hack for Eisu/Kana keys, it returns YES.
+  EXPECT_EQ(YES, SendKanaKeyEvent(controller_, mock_client_));
+  // Check if it did not send key.
+  EXPECT_EQ(0, mock_session_->counter_SendKey());
+  // Check if it did not send command.
+  EXPECT_EQ(0, mock_session_->counter_SendCommand());
+
+  // Sleep more than DoubleTapInterval (sec)
+  mozc::Util::Sleep(GetDoubleTapInterval() * 1000.0 * 2.0);
+
+  // Send Kana-key.
+  EXPECT_EQ(YES, SendKanaKeyEvent(controller_, mock_client_));
+  // Check if it did not send key.
+  EXPECT_EQ(0, mock_session_->counter_SendKey());
+  // Check if it did not send command.
+  EXPECT_EQ(0, mock_session_->counter_SendCommand());
+
+  // Sleep less than DoubleTapInterval (sec)
+  mozc::Util::Sleep(GetDoubleTapInterval() * 1000.0 / 2.0);
+
+  // Send Kana-key.
+  EXPECT_EQ(YES, SendKanaKeyEvent(controller_, mock_client_));
+  // Check if it did not send key.
+  EXPECT_EQ(0, mock_session_->counter_SendKey());
+  // Check if it sent an undo command.
+  EXPECT_EQ(1, mock_session_->counter_SendCommand());
+  EXPECT_EQ(mozc::commands::SessionCommand::UNDO,
+            mock_session_->called_SendCommand().type());
+}
+
+TEST_F(GoogleJapaneseInputControllerTest, TripleTapKanaUndo) {
+  // tap (short) tap (short) tap -> emit twice
+  controller_.mode = mozc::commands::HIRAGANA;
+
+  // set expectedRange for Undo
+  mock_client_.expectedRange = NSMakeRange(1, 0);
+
+  // Send Kana-key.
+  // Because of special hack for Eisu/Kana keys, it returns YES.
+  EXPECT_EQ(YES, SendKanaKeyEvent(controller_, mock_client_));
+  // Check if it did not send key.
+  EXPECT_EQ(0, mock_session_->counter_SendKey());
+  // Check if it did not send command.
+  EXPECT_EQ(0, mock_session_->counter_SendCommand());
+
+  // Sleep less than DoubleTapInterval (sec)
+  mozc::Util::Sleep(GetDoubleTapInterval() * 1000.0 / 2.0);
+
+  // Send Kana-key.
+  EXPECT_EQ(YES, SendKanaKeyEvent(controller_, mock_client_));
+  // Check if it did not send key.
+  EXPECT_EQ(0, mock_session_->counter_SendKey());
+  // Check if it sent an undo command.
+  EXPECT_EQ(1, mock_session_->counter_SendCommand());
+  EXPECT_EQ(mozc::commands::SessionCommand::UNDO,
+            mock_session_->called_SendCommand().type());
+
+  // Sleep less than DoubleTapInterval (sec)
+  mozc::Util::Sleep(GetDoubleTapInterval() * 1000.0 / 2.0);
+
+  // Send Kana-key.
+  EXPECT_EQ(YES, SendKanaKeyEvent(controller_, mock_client_));
+  // Check if it did not send key.
+  EXPECT_EQ(0, mock_session_->counter_SendKey());
+  // Check if it sent an undo command.
+  EXPECT_EQ(2, mock_session_->counter_SendCommand());
+  EXPECT_EQ(mozc::commands::SessionCommand::UNDO,
+            mock_session_->called_SendCommand().type());
+}
+
+TEST_F(GoogleJapaneseInputControllerTest, QuadrupleTapKanaUndo) {
+  // tap (short) tap (short) tap (short) tap -> emit thrice
+  controller_.mode = mozc::commands::HIRAGANA;
+
+  // set expectedRange for Undo
+  mock_client_.expectedRange = NSMakeRange(1, 0);
+
+  // Send Kana-key.
+  // Because of special hack for Eisu/Kana keys, it returns YES.
+  EXPECT_EQ(YES, SendKanaKeyEvent(controller_, mock_client_));
+  // Check if it did not send key.
+  EXPECT_EQ(0, mock_session_->counter_SendKey());
+  // Check if it did not send command.
+  EXPECT_EQ(0, mock_session_->counter_SendCommand());
+
+  // Sleep less than DoubleTapInterval (sec)
+  mozc::Util::Sleep(GetDoubleTapInterval() * 1000.0 / 2.0);
+
+  // Send Kana-key.
+  EXPECT_EQ(YES, SendKanaKeyEvent(controller_, mock_client_));
+  // Check if it did not send key.
+  EXPECT_EQ(0, mock_session_->counter_SendKey());
+  // Check if it sent an undo command.
+  EXPECT_EQ(1, mock_session_->counter_SendCommand());
+  EXPECT_EQ(mozc::commands::SessionCommand::UNDO,
+            mock_session_->called_SendCommand().type());
+
+  // Sleep less than DoubleTapInterval (sec)
+  mozc::Util::Sleep(GetDoubleTapInterval() * 1000.0 / 2.0);
+
+  // Send Kana-key.
+  EXPECT_EQ(YES, SendKanaKeyEvent(controller_, mock_client_));
+  // Check if it did not send key.
+  EXPECT_EQ(0, mock_session_->counter_SendKey());
+  // Check if it sent an undo command.
+  EXPECT_EQ(2, mock_session_->counter_SendCommand());
+  EXPECT_EQ(mozc::commands::SessionCommand::UNDO,
+            mock_session_->called_SendCommand().type());
+
+  // Sleep less than DoubleTapInterval (sec)
+  mozc::Util::Sleep(GetDoubleTapInterval() * 1000.0 / 2.0);
+
+  // Send Kana-key.
+  EXPECT_EQ(YES, SendKanaKeyEvent(controller_, mock_client_));
+  // Check if it did not send key.
+  EXPECT_EQ(0, mock_session_->counter_SendKey());
+  // Check if it sent an undo command.
+  EXPECT_EQ(3, mock_session_->counter_SendCommand());
+  EXPECT_EQ(mozc::commands::SessionCommand::UNDO,
+            mock_session_->called_SendCommand().type());  
 }

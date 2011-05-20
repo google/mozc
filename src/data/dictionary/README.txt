@@ -23,7 +23,7 @@ You can add zip code dictionary by follows:
 2. Extract them
 3. Update zip_code_seed.tsv by
   ../../dictionary/gen_zip_code_seed.py \
-   --zip_code=KEN_ALL.CSV --jigyosyo=JIGYOSYO.CSV > ./zip_code_seed.tsv
+   --zip_code=KEN_ALL.CSV --jigyosyo=JIGYOSYO.CSV >> dictionary09.txt
 
 
 -------------------------------------------------------------------------------

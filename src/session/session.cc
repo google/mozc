@@ -34,6 +34,7 @@
 #include "base/crash_report_util.h"
 #include "base/port.h"
 #include "base/process.h"
+#include "base/singleton.h"
 #include "base/url.h"
 #include "base/util.h"
 #include "base/version.h"
@@ -283,11 +284,9 @@ void SwitchInputMode(const transliteration::TransliterationType mode,
 }  // namespace
 
 // TODO(komatsu): Remove these argument by using/making singletons.
-Session::Session(const keymap::KeyMapManager *keymap)
-    : keymap_(keymap),
-      context_(new ImeContext),
+Session::Session()
+    : context_(new ImeContext),
       prev_context_(NULL) {
-  DCHECK(keymap);
   InitContext(context_.get());
 }
 
@@ -299,7 +298,7 @@ void Session::InitContext(ImeContext *context) const {
   context->set_composer(new composer::Composer);
   context->set_converter(
       new SessionConverter(ConverterFactory::GetConverter()));
-  context->set_keymap(keymap_);
+  context->set_keymap(Singleton<keymap::KeyMapManager>::get());
 #ifdef OS_WINDOWS
   // On Windows session is started with direct mode.
   // FIXME(toshiyuki): Ditto for Mac after verifying on Mac.
@@ -1138,11 +1137,13 @@ bool Session::ConvertReverse(commands::Command *command) {
     return DoNothing(command);
   }
   context_->mutable_composer()->Reset();
+  const string &composition = command->input().command().text();
   if (!context_->mutable_converter()->ConvertReverse(
-          command->input().command().text(), context_->mutable_composer())) {
+          composition, context_->mutable_composer())) {
     LOG(ERROR) << "Failed to get reverse conversion";
     return DoNothing(command);
   }
+  context_->set_initial_composition(composition);
   command->mutable_output()->set_consumed(true);
 
   SetSessionState(ImeContext::CONVERSION);
@@ -1459,6 +1460,7 @@ bool Session::EditCancel(commands::Command *command) {
 
   SetSessionState(ImeContext::PRECOMPOSITION);
   OutputMode(command);
+  OutputInitialComposition(command);
   return true;
 }
 
@@ -2136,6 +2138,19 @@ void Session::OutputKey(commands::Command *command) const {
   OutputMode(command);
   commands::KeyEvent *key = command->mutable_output()->mutable_key();
   key->CopyFrom(command->input().key());
+}
+
+void Session::OutputInitialComposition(commands::Command *command) const {
+  const string &composition = context_->initial_composition();
+  if (composition.empty()) {
+    return;
+  }
+
+  // Output composition string
+  commands::Result *result = command->mutable_output()->mutable_result();
+  DCHECK(result != NULL);
+  result->set_type(commands::Result::STRING);
+  result->set_value(composition);
 }
 
 namespace {

@@ -29,14 +29,15 @@
 
 // Classes managing dictionary entries.
 
+#include "rewriter/dictionary_generator.h"
+
 #include <algorithm>
 
 #include "base/file_stream.h"
 #include "base/freelist.h"
 #include "base/util.h"
+#include "dictionary/pos_matcher.h"
 #include "dictionary/user_pos.h"
-#include "rewriter/dictionary_generator.h"
-#include "converter/pos_matcher.h"
 
 namespace mozc {
 namespace rewriter {

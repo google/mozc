@@ -64,7 +64,12 @@ class ConfigUpdater {
 #endif
                     );
 
+  // Initializes mozc chewing config.
+  static void InitConfig(IBusConfig *config);
+
  private:
+  const map<string, const char*>& name_to_field();
+
   map<string, const char *> name_to_field_;
   map<string, config::ChewingConfig::KeyboardType> name_to_keyboard_type_;
   map<string, config::ChewingConfig::SelectionKeys> name_to_selection_keys_;

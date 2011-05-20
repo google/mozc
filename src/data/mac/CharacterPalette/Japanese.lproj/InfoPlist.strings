@@ -1,0 +1,4 @@
+/* Localized versions of Info.plist keys */
+
+CFBundleName = "文字入力パレット";
+NSHumanReadableCopyright = "© Google Inc., 2011";

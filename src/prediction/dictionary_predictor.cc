@@ -227,8 +227,13 @@ bool DictionaryPredictor::Predict(Segments *segments) const {
 
     // Don't provide any descriptions for dictionary suggests
 #ifdef _DEBUG
-    const char kDescription[] = "Dictionary Suggest";
-    candidate->description = kDescription;
+    const char kRealtimeConversionDescription[] = "Real-time Conversion";
+    const char kDictionarySuggestDescription[] = "Dictionary Suggest";
+    if (result.type & REALTIME) {
+      candidate->description = kRealtimeConversionDescription;
+    } else {
+      candidate->description = kDictionarySuggestDescription;
+    }
 #endif
 
     VariantsRewriter::SetDescriptionForPrediction(candidate);

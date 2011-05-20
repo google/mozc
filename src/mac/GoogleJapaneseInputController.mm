@@ -82,6 +82,10 @@ const map<CompositionMode, NSString *> *gModeIdMap = NULL;
 const set<string> *gNoSelectedRangeApps = NULL;
 const set<string> *gNoDisplayModeSwitchApps = NULL;
 
+// TODO(horo): This value should be get from system configuration.
+//  DoubleClickInterval can be get from NSEvent (MacOSX ver >= 10.6)
+const NSTimeInterval kDoubleTapInterval = 0.5;
+
 NSString *GetLabelForSuffix(const string &suffix) {
   string label = mozc::MacUtil::GetLabelForSuffix(suffix);
   return [[NSString stringWithUTF8String:label.c_str()] retain];
@@ -189,6 +193,7 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
   rendererCommand_ = new(nothrow)RendererCommand;
   session_ = new(nothrow) mozc::client::Session();
   server_ = reinterpret_cast<id<ServerCallback> >(server);
+  lastKanaKeyTime_ = 0;
 
   // We don't check the return value of NSBundle because it fails during tests.
   [NSBundle loadNibNamed:@"Config" owner:self];
@@ -777,6 +782,26 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
     return NO;
   }
 
+  // UNDO by double tapping Kana-key
+  if ([event type] == NSKeyDown) {
+    if ([event keyCode] == kVK_JIS_Kana) {
+      NSTimeInterval currentTime = [[NSDate date] timeIntervalSince1970];
+      if (lastKanaKeyTime_ == 0){
+        lastKanaKeyTime_ = currentTime;
+      } else {
+        NSTimeInterval elapsedTime = currentTime - lastKanaKeyTime_;
+        lastKanaKeyTime_ = currentTime;
+        if (elapsedTime < kDoubleTapInterval) {
+          DLOG(INFO) << "UNDO";
+          [self invokeUndo:sender];
+          return YES;
+        }
+      }
+    } else {
+      lastKanaKeyTime_ = 0;
+    }
+  }
+ 
   if ([keyCodeMap_ isModeSwitchingKey:event]) {
     // Special hack for Eisu/Kana keys.  Sometimes those key events
     // come to this method but we should ignore them because some

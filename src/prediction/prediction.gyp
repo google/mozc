@@ -46,10 +46,14 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        '../converter/converter.gyp:segments',
-        '../converter/converter.gyp:immutable_converter',
-        '../session/session.gyp:config_handler',
+        '../converter/converter_base.gyp:segments',
+        '../converter/converter_base.gyp:immutable_converter',
+        '../dictionary/dictionary.gyp:dictionary',
+        '../session/session_base.gyp:config_handler',
         '../usage_stats/usage_stats.gyp:usage_stats',
+        'gen_suggestion_feature_pos_group',
+        'gen_suggestion_filter_data',
+        'gen_svm_model',
         'genproto_prediction',
       ],
       'conditions': [['two_pass_build==0', {
@@ -57,6 +61,10 @@
           'install_gen_suggestion_filter_main',
         ],
       }]],
+    },
+    {
+      'target_name': 'gen_suggestion_filter_data',
+      'type': 'none',
       'actions': [
         {
           'action_name': 'gen_suggestion_filter_data',
@@ -84,6 +92,12 @@
             '--logtostderr',
           ],
         },
+      ],
+    },
+    {
+      'target_name': 'gen_suggestion_feature_pos_group',
+      'type': 'none',
+      'actions': [
         {
           'action_name': 'gen_suggestion_feature_pos_group',
           'variables': {
@@ -94,7 +108,7 @@
             ],
           },
           'inputs': [
-            '../converter/gen_pos_rewrite_rule.py',
+            '../dictionary/gen_pos_rewrite_rule.py',
             '<@(input_files)',
           ],
           'outputs': [
@@ -103,10 +117,16 @@
           'action': [
             'python', '../build_tools/redirect.py',
             '<(gen_out_dir)/suggestion_feature_pos_group.h',
-            '../converter/gen_pos_rewrite_rule.py',
+            '../dictionary/gen_pos_rewrite_rule.py',
             '<@(input_files)',
           ],
         },
+      ],
+    },
+    {
+      'target_name': 'gen_svm_model',
+      'type': 'none',
+      'actions': [
         {
           'action_name': 'gen_svm_model',
           'variables': {
@@ -170,28 +190,14 @@
         'predictor_test.cc',
       ],
       'dependencies': [
-        '../session/session.gyp:config_handler',
+        '../dictionary/dictionary_base.gyp:install_dictionary_test_data',
+        '../session/session_base.gyp:config_handler',
         '../testing/testing.gyp:gtest_main',
         'prediction',
       ],
       'variables': {
         'test_size': 'small',
-        'test_data_subdir': 'data/dictionary',
-        'test_data': [
-          '../<(test_data_subdir)/suggestion_filter.txt',
-          '../<(test_data_subdir)/dictionary00.txt',
-          '../<(test_data_subdir)/dictionary01.txt',
-          '../<(test_data_subdir)/dictionary02.txt',
-          '../<(test_data_subdir)/dictionary03.txt',
-          '../<(test_data_subdir)/dictionary04.txt',
-          '../<(test_data_subdir)/dictionary05.txt',
-          '../<(test_data_subdir)/dictionary06.txt',
-          '../<(test_data_subdir)/dictionary07.txt',
-          '../<(test_data_subdir)/dictionary08.txt',
-          '../<(test_data_subdir)/dictionary09.txt',
-        ],
       },
-      'includes': [ '../gyp/install_testdata.gypi' ],
     },
     # Test cases meta target: this target is referred from gyp/tests.gyp
     {

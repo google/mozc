@@ -34,6 +34,7 @@
 #include "base/base.h"
 #include "base/logging.h"
 #include "base/version.h"
+#include "session/config_handler.h"
 #include "unix/ibus/main.h"
 #include "unix/ibus/mozc_engine.h"
 #include "unix/ibus/path_util.h"
@@ -138,12 +139,16 @@ int main(gint argc, gchar **argv) {
   InitGoogle(argv[0], &argc, &argv, true);
   ibus_init();
   InitIBusComponent(FLAGS_ibus);
-#ifndef OS_CHROMEOS
+#ifdef OS_CHROMEOS
+  // On Chrome OS, mozc does not store the config data to a local file.
+  mozc::config::ConfigHandler::SetConfigFileName("memory://config.1.db");
+  mozc::ibus::MozcEngine::InitConfig(g_config);
+#else
 #ifndef NO_LOGGING
   EnableVerboseLog();
-#endif
+#endif  // NO_LOGGING
   IgnoreSigChild();
-#endif
+#endif  // OS_CHROMEOS
   ibus_main();
 
 #ifdef OS_CHROMEOS

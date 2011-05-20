@@ -33,6 +33,8 @@
 #import <Foundation/Foundation.h>
 
 #include <launch.h>
+#include <CoreFoundation/CoreFoundation.h>
+#include <IOKit/IOKitLib.h>
 
 #include "base/const.h"
 #include "base/util.h"
@@ -96,8 +98,50 @@ string MacUtil::GetServerDirectory() {
   return kServerDirectory;
 }
 
-bool MacUtil::StartLaunchdServce(const string &service_name,
-                                 pid_t *pid) {
+string MacUtil::GetResourcesDirectory() {
+  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+  string result;
+
+  NSBundle *mainBundle = [NSBundle mainBundle];
+  if (mainBundle) {
+    NSString *resourcePath = [mainBundle resourcePath];
+    if (resourcePath) {
+      result.assign([resourcePath fileSystemRepresentation]);
+    }
+  }
+  [pool drain];
+  return result;
+}
+
+string MacUtil::GetSerialNumber() {
+  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+  // Please refer to TN1103 for the details
+  // http://developer.apple.com/library/mac/#technotes/tn/tn1103.html
+  string result;
+  io_service_t platformExpert = IOServiceGetMatchingService(
+      kIOMasterPortDefault, IOServiceMatching("IOPlatformExpertDevice"));
+
+  if (platformExpert) {
+    CFTypeRef serialNumberAsCFString =
+        IORegistryEntryCreateCFProperty(
+            platformExpert, CFSTR(kIOPlatformSerialNumberKey),
+            kCFAllocatorDefault, 0);
+    if (serialNumberAsCFString) {
+      const NSString *serialNumberNSString = reinterpret_cast<const NSString *>(
+          serialNumberAsCFString);
+      result.assign([serialNumberNSString UTF8String]);
+    }
+
+    IOObjectRelease(platformExpert);
+  }
+
+  [pool drain];
+  // Return the empty string if failed.
+  return result;
+}
+
+bool MacUtil::StartLaunchdService(const string &service_name,
+                                  pid_t *pid) {
   int dummy_pid = 0;
   if (pid == NULL) {
     pid = &dummy_pid;

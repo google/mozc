@@ -31,6 +31,15 @@
   'variables': {
     'relative_dir': 'server',
     'gen_out_dir': '<(SHARED_INTERMEDIATE_DIR)/<(relative_dir)',
+    'conditions': [
+      ['branding=="GoogleJapaneseInput"', {
+        'converter_product_name_win': 'GoogleIMEJaConverter',
+        'cache_service_product_name_win': 'GoogleIMEJaCacheService',
+      }, {  # else
+        'converter_product_name_win': 'mozc_server',
+        'cache_service_product_name_win': 'mozc_cache_service',
+      }],
+    ],
   },
   'targets': [
     {
@@ -51,6 +60,7 @@
         '../prediction/prediction.gyp:prediction',
         '../rewriter/rewriter.gyp:rewriter',
         '../session/session.gyp:session',
+        '../session/session.gyp:session_server',
         '../storage/storage.gyp:storage',
         '../transliteration/transliteration.gyp:transliteration',
         '../usage_stats/usage_stats.gyp:usage_stats',
@@ -85,7 +95,7 @@
           ],
         }],
         ['OS=="win"', {
-          'product_name': 'GoogleIMEJaConverter',
+          'product_name': '<(converter_product_name_win)',
           'includes': [
             '../gyp/postbuilds_win.gypi',
           ],
@@ -167,7 +177,7 @@
         },
         {
           'target_name': 'mozc_cache_service',
-          'product_name': 'GoogleIMEJaCacheService',
+          'product_name': '<(cache_service_product_name_win)',
           'type': 'executable',
           'includes': [
             '../gyp/postbuilds_win.gypi',

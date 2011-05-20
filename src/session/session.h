@@ -40,16 +40,14 @@
 // Need to include it for "ImeContext::State".
 #include "session/internal/ime_context.h"
 #include "transliteration/transliteration.h"
+// for FRIEND_TEST()
+#include "testing/base/public/gunit_prod.h"
 
 namespace mozc {
-namespace keymap {
-class KeyMapManager;
-}  // namespace keymap
-
 namespace session {
 class Session : public SessionInterface {
  public:
-  Session(const keymap::KeyMapManager *keymap);
+  Session();
   virtual ~Session();
 
   virtual bool SendKey(commands::Command *command);
@@ -212,8 +210,7 @@ class Session : public SessionInterface {
                                          ImeContext *context);
 
  private:
-  // TODO(komatsu): Delete them.
-  const keymap::KeyMapManager *keymap_;
+  FRIEND_TEST(SessionTest, OutputInitialComposition);
 
   scoped_ptr<ImeContext> context_;
   scoped_ptr<ImeContext> prev_context_;
@@ -259,6 +256,7 @@ class Session : public SessionInterface {
   void OutputMode(commands::Command *command) const;
   void OutputComposition(commands::Command *command) const;
   void OutputKey(commands::Command *command) const;
+  void OutputInitialComposition(commands::Command *command) const;
 
   bool SendKeyDirectInputState(commands::Command *command);
   bool SendKeyPrecompositionState(commands::Command *command);

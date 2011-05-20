@@ -2,7 +2,7 @@ Source: mozc
 Section: utils
 Priority: extra
 Maintainer: Yusuke Sato <yusukes>
-Build-Depends: debhelper (>= 4.0.0), libibus-dev, libcurl4-openssl-dev, pkg-config, libprotobuf-dev, protobuf-compiler, libgtest-dev, libqt4-dev, scim, libscim-dev, gyp
+Build-Depends: debhelper (>= 4.0.0), libibus-dev, libcurl4-openssl-dev, pkg-config, libprotobuf-dev, protobuf-compiler, libgtest-dev, libqt4-dev, scim, libscim-dev, gyp, libzinnia-dev
 Standards-Version: 3.6.2
 
 Package: ibus-mozc

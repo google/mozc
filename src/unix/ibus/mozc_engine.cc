@@ -78,6 +78,33 @@ const guint kBackSpaceKeyCode = 14;
 // Left shift key code
 const guint kShiftLeftKeyCode = 42;
 
+#ifdef OS_CHROMEOS
+// IBus config names for Mozc.
+// This list must match the preference names of ibus-mozc for Chrome OS.
+// Check the following file in the chrome repository when you modify this list.
+// chrome/browser/chromeos/language_preferences.cc
+const gchar* kMozcConfigNames[] = {
+  "incognito_mode",
+  "use_auto_ime_turn_off",
+  "use_date_conversion",
+  "use_single_kanji_conversion",
+  "use_symbol_conversion",
+  "use_number_conversion",
+  "use_history_suggest",
+  "use_dictionary_suggest",
+  "preedit_method",
+  "session_keymap",
+  "punctuation_method",
+  "symbol_method",
+  "space_character_form",
+  "history_learning_level",
+  //  "selection_shortcut",  // currently not supported
+  "shift_key_mode_switch",
+  "numpad_character_form",
+  "suggestions_size",
+};
+#endif  // OS_CHROMEOS
+
 uint64 GetTime() {
   return static_cast<uint64>(time(NULL));
 }
@@ -604,7 +631,7 @@ void MozcEngine::PropertyActivate(IBusEngine *engine,
 
 #ifndef OS_CHROMEOS
   if (prop_mozc_tool_) {
-    while (prop = ibus_prop_list_get(prop_mozc_tool_->sub_props, i++)) {
+    while ((prop = ibus_prop_list_get(prop_mozc_tool_->sub_props, i++))) {
       if (!g_strcmp0(property_name, prop->key)) {
         const MozcEngineToolProperty *entry =
             reinterpret_cast<const MozcEngineToolProperty*>(
@@ -624,7 +651,7 @@ void MozcEngine::PropertyActivate(IBusEngine *engine,
   }
 
   i = 0;
-  while (prop = ibus_prop_list_get(prop_composition_mode_->sub_props, i++)) {
+  while ((prop = ibus_prop_list_get(prop_composition_mode_->sub_props, i++))) {
     if (!g_strcmp0(property_name, prop->key)) {
       const MozcEngineProperty *entry =
           reinterpret_cast<const MozcEngineProperty*>(
@@ -742,6 +769,20 @@ void MozcEngine::ConfigValueChanged(IBusConfig *config,
   engine->UpdateConfig(section, name, value);
 }
 #endif
+
+// TODO(mazda): Move the impelementation to an appropriate file.
+void MozcEngine::InitConfig(IBusConfig *config) {
+  map<string, const char*> name_to_field;
+  for (size_t i = 0; i < arraysize(kMozcConfigNames); ++i) {
+    // Mozc uses identical names for ibus config names and protobuf config
+    // field names.
+    name_to_field.insert(make_pair(kMozcConfigNames[i], kMozcConfigNames[i]));
+  }
+  // Initialize the mozc config with the config loaded from ibus-memconf, which
+  // is the primary config storage on Chrome OS.
+  ConfigUtil::InitConfig(config, kMozcSectionName, name_to_field);
+}
+
 #endif  // OS_CHROMEOS
 
 // static
@@ -821,6 +862,7 @@ bool MozcEngine::UpdateAll(IBusEngine *engine, const commands::Output &output) {
   if (output.has_mode()) {
     UpdateCompositionMode(engine, output.mode());
   }
+  LaunchTool(output);
   return true;
 }
 
@@ -988,7 +1030,7 @@ void MozcEngine::UpdateConfig(const gchar *section,
   session_->SyncData();  // TODO(yusukes): remove this call?
   VLOG(2) << "Session::SetConfig() is called: " << name;
 }
-#endif
+#endif  // OS_CHROMEOS
 
 void MozcEngine::UpdateCompositionMode(
     IBusEngine *engine, const commands::CompositionMode new_composition_mode) {
@@ -1026,6 +1068,37 @@ void MozcEngine::SyncData(bool force) {
     session_->SyncData();
     last_sync_time_ = current_time;
   }
+}
+
+bool MozcEngine::LaunchTool(const commands::Output &output) const {
+  if (!output.has_launch_tool_mode()) {
+    return false;
+  }
+
+  string mode = "";
+  switch (output.launch_tool_mode()) {
+    case commands::Output::CONFIG_DIALOG:
+      mode = "config_dialog";
+      break;
+    case commands::Output::DICTIONARY_TOOL:
+      mode = "dictionary_tool";
+      break;
+    case commands::Output::WORD_REGISTER_DIALOG:
+      mode = "word_register_dialog";
+      break;
+    case commands::Output::NO_TOOL:
+    default:
+      // do nothing
+      return false;
+      break;
+  }
+
+  if (!session_->LaunchTool(mode, "")) {
+    VLOG(2) << mode << " Launch Failed";
+    return false;
+  }
+
+  return true;
 }
 
 void MozcEngine::RevertSession(IBusEngine *engine) {

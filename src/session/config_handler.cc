@@ -128,34 +128,14 @@ bool ConfigHandlerImpl::SetConfig(const Config &config) {
   ConfigHandler::SetMetaData(&output_config);
 
   VLOG(1) << "Setting new config: " << filename_;
-  // We should save the new config first,
-  // as we may rewrite the original config according to platform.
-  // The original config should be platform independent.
-  const string filename = ConfigFileStream::GetFileName(filename_);
-  const string tmp_filename = filename + ".tmp";
-  {
-    OutputFileStream ofs(tmp_filename.c_str(), ios::out | ios::binary);
-    if (!ofs) {
-      LOG(ERROR) << "cannot open " << tmp_filename;
-      return false;
-    }
-    output_config.SerializeToOstream(&ofs);
-  }
-
-  if (!Util::AtomicRename(tmp_filename, filename)) {
-    LOG(ERROR) << "Util::AtomicRename failed";
-  }
+  ConfigFileStream::AtomicUpdate(filename_, output_config.SerializeAsString());
 
 #ifndef NO_LOGGING
-  {
-    const string filename = ConfigFileStream::GetFileName(filename_ + ".txt");
-    OutputFileStream ofs(filename.c_str());
-    if (ofs) {
-      ofs << "# This is a text-based config file for debugging." << endl;
-      ofs << "# Nothing happens when you edit this file manually." << endl;
-      ofs << output_config.DebugString();
-    }
-  }
+  string debug_content(
+      "# This is a text-based config file for debugging.\n"
+      "# Nothing happens when you edit this file manually.\n");
+  debug_content += output_config.DebugString();
+  ConfigFileStream::AtomicUpdate(filename_ + ".txt", debug_content);
 #endif
 
   return SetConfigInternal(output_config);

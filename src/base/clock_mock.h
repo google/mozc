@@ -27,55 +27,33 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "dictionary/spelling_correction_dictionary_builder.h"
+#ifndef MOZC_BASE_CLOCK_MOCK_H_
+#define MOZC_BASE_CLOCK_MOCK_H_
 
-#include <cmath>
-#include <string>
-#include <vector>
-
-#include "base/base.h"
 #include "base/util.h"
-#include "base/file_stream.h"
-#include "dictionary/system/system_dictionary.h"
 
 namespace mozc {
 
-SpellingCorrectionDictionaryBuilder::SpellingCorrectionDictionaryBuilder(
-    const string &input, const string &output)
-    : input_filename_(input), output_filename_(output) {
-}
+// Standard mock clock implementation.
+class ClockMock : public Util::ClockInterface {
+ public:
+  ClockMock(uint64 sec, uint32 usec);
+  virtual ~ClockMock();
 
-SpellingCorrectionDictionaryBuilder::~SpellingCorrectionDictionaryBuilder() {}
+  void GetTimeOfDay(uint64 *sec, uint32 *usec);
+  uint64 GetTime();
 
-void SpellingCorrectionDictionaryBuilder::Build() {
-  InputFileStream ifs(input_filename_.c_str());
-  CHECK(ifs);
-  string line;
-  vector<string> tokens;
+  // Put this clock forward.
+  // This function is NOT contained in Util::ClockInterface.
+  void PutClockForward(uint64 delta_sec, uint32 delta_usec);
 
-  OutputFileStream ofs(output_filename_.c_str());
-  CHECK(ofs);
+ private:
+  uint64 seconds_;
+  uint32 micro_seconds_;
 
-  while (getline(ifs, line)) {
-    if (line.size() <= 0 || line[0] == '#') {
-      continue;
-    }
+  DISALLOW_COPY_AND_ASSIGN(ClockMock);
+};
 
-    tokens.clear();
-    Util::SplitStringUsing(line, "\t", &tokens);
-    if (tokens.size() < 5) {
-      LOG(ERROR) << "format error: " << line;
-      continue;
-    }
-
-    const int lid = SystemDictionary::kSpellingCorrectionPosOffset
-        + strtod(tokens[1].c_str(), NULL);
-
-    ofs << tokens[0] << "\t"
-        << lid       << "\t"
-        << tokens[2] << "\t"
-        << tokens[3] << "\t"
-        << tokens[4] << endl;
-  }
-}
 }  // namespace mozc
+
+#endif  // MOZC_BASE_CLOCK_MOCK_H_

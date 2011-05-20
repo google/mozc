@@ -207,6 +207,17 @@ const commands::KeyEvent::ModifierKey mapped_modifiers[] = {
   commands::KeyEvent::ALT,
 };
 
+// Checks "container" contains "key" value or not
+bool IsContained(commands::KeyEvent_ModifierKey key,
+                 const ::google::protobuf::RepeatedField<int>& container) {
+  for (int i = 0; i< container.size(); ++i) {
+    if (container.Get(i) == key) {
+      return true;
+    }
+  }
+  return false;
+}
+
 class KeyTranslatorTest : public testing::Test {
  protected:
   KeyTranslatorTest() {}
@@ -250,43 +261,128 @@ TEST_F(KeyTranslatorTest, TranslateSpecial) {
   }
 }
 
-TEST_F(KeyTranslatorTest, TranslateModifierMasks) {
-  const int mask_combination_size = (1 << arraysize(modifier_masks));
+TEST_F(KeyTranslatorTest, TranslateSingleModifierMasks) {
   commands::KeyEvent out;
-  for (int i = 0; i < mask_combination_size; ++i) {
-    guint modifier = 0;
-    set<commands::KeyEvent::ModifierKey> mapped_modifier;
-    for (int j = 0; j < arraysize(modifier_masks); ++j) {
-      if ((1 << j) & i) {
-        modifier |= modifier_masks[j];
-        mapped_modifier.insert(mapped_modifiers[j]);
-      }
-    }
 
-    EXPECT_TRUE(translator_->Translate(IBUS_F1, 0, modifier,
-                                       config::Config::ROMAN, true, &out));
-    EXPECT_EQ(mapped_modifier.size(), out.modifier_keys_size());
+  // CTRL modifier
+  // C-F1
+  EXPECT_TRUE(translator_->Translate(IBUS_F1, 0, IBUS_CONTROL_MASK,
+                                     config::Config::ROMAN, true, &out));
+  ASSERT_EQ(1, out.modifier_keys_size());
 
-    set<commands::KeyEvent::ModifierKey> actual_modifier;
-    for (int j = 0; j < out.modifier_keys_size(); ++j) {
-      actual_modifier.insert(out.modifier_keys(j));
-    }
-    EXPECT_TRUE(mapped_modifier == actual_modifier);
+  // C-a
+  EXPECT_TRUE(translator_->Translate(IBUS_A, 'a', IBUS_CONTROL_MASK,
+                                     config::Config::ROMAN, true, &out));
+  ASSERT_EQ(1, out.modifier_keys_size());
+  EXPECT_EQ(commands::KeyEvent::CTRL, out.modifier_keys(0));
 
-    // Shift modifier key is dropped for ascii characters.
-    EXPECT_TRUE(translator_->Translate(IBUS_A, 0, modifier,
-                                       config::Config::ROMAN, true, &out));
-    if (mapped_modifier.find(commands::KeyEvent::SHIFT) !=
-        mapped_modifier.end()) {
-      mapped_modifier.erase(commands::KeyEvent::SHIFT);
-    }
-    EXPECT_EQ(mapped_modifier.size(), out.modifier_keys_size());
-    set<commands::KeyEvent::ModifierKey> actual_modifier2;
-    for (int j = 0; j < out.modifier_keys_size(); ++j) {
-      actual_modifier2.insert(out.modifier_keys(j));
-    }
-    EXPECT_TRUE(mapped_modifier == actual_modifier2);
-  }
+  // SHIFT modifier
+  // S-F1
+  EXPECT_TRUE(translator_->Translate(IBUS_F1, 0, IBUS_SHIFT_MASK,
+                                     config::Config::ROMAN, true, &out));
+  ASSERT_EQ(1, out.modifier_keys_size());
+  EXPECT_EQ(commands::KeyEvent::SHIFT, out.modifier_keys(0));
+
+  // S-a
+  EXPECT_TRUE(translator_->Translate(IBUS_A, 'a', IBUS_SHIFT_MASK,
+                                     config::Config::ROMAN, true, &out));
+  EXPECT_EQ(0, out.modifier_keys_size());
+
+  // S-0
+  // TODO(nona): Resolve Shift-0 problem (b/4338394)
+  // We have to check the behavior of Shift-0, because most of japanese
+  // keyboard are not assigned Shift-0 character. So that, we expect the client
+  // send keycode='0'(\x30) with shift modifier, but currently only send
+  // keycode='0'. There are few difficulties because the mapping of Shift-0 are
+  // controled xkb in X11, but the way to get the mapping is unclear.
+
+  // ALT modifier
+  // M-F1
+  EXPECT_TRUE(translator_->Translate(IBUS_F1, 0, IBUS_MOD1_MASK,
+                                     config::Config::ROMAN, true, &out));
+  ASSERT_EQ(1, out.modifier_keys_size());
+  EXPECT_EQ(commands::KeyEvent::ALT, out.modifier_keys(0));
+
+  // M-a
+  EXPECT_TRUE(translator_->Translate(IBUS_A, 'a', IBUS_MOD1_MASK,
+                                     config::Config::ROMAN, true, &out));
+  ASSERT_EQ(1, out.modifier_keys_size());
+  EXPECT_EQ(commands::KeyEvent::ALT, out.modifier_keys(0));
+}
+
+TEST_F(KeyTranslatorTest, TranslateMultipleModifierMasks) {
+  commands::KeyEvent out;
+  guint modifier;
+
+  // CTRL + SHIFT modifier
+  // C-S-F1 (CTRL + SHIFT + SpecialKey)
+  modifier = IBUS_CONTROL_MASK | IBUS_SHIFT_MASK;
+  EXPECT_TRUE(translator_->Translate(IBUS_F1, 0, modifier,
+                                     config::Config::ROMAN, true, &out));
+  EXPECT_EQ(2, out.modifier_keys_size());
+  IsContained(commands::KeyEvent::SHIFT, out.modifier_keys());
+  IsContained(commands::KeyEvent::CTRL, out.modifier_keys());
+
+  // C-S-a (CTRL + SHIFT + OtherKey)
+  modifier = IBUS_CONTROL_MASK | IBUS_SHIFT_MASK;
+  EXPECT_TRUE(translator_->Translate(IBUS_A, 'a', modifier,
+                                     config::Config::ROMAN, true, &out));
+  EXPECT_EQ(2, out.modifier_keys_size());
+  IsContained(commands::KeyEvent::SHIFT, out.modifier_keys());
+  IsContained(commands::KeyEvent::CTRL, out.modifier_keys());
+
+  // CTRL + ALT modifier
+  // C-M-F1 (CTRL + ALT + SpecialKey)
+  modifier = IBUS_CONTROL_MASK | IBUS_MOD1_MASK;
+  EXPECT_TRUE(translator_->Translate(IBUS_F1, 0, modifier,
+                                     config::Config::ROMAN, true, &out));
+  EXPECT_EQ(2, out.modifier_keys_size());
+  IsContained(commands::KeyEvent::ALT, out.modifier_keys());
+  IsContained(commands::KeyEvent::CTRL, out.modifier_keys());
+
+  // C-M-a (CTRL + ALT + OtherKey)
+  modifier = IBUS_CONTROL_MASK | IBUS_MOD1_MASK;
+  EXPECT_TRUE(translator_->Translate(IBUS_A, 'a', modifier,
+                                     config::Config::ROMAN, true, &out));
+  EXPECT_EQ(2, out.modifier_keys_size());
+  IsContained(commands::KeyEvent::ALT, out.modifier_keys());
+  IsContained(commands::KeyEvent::CTRL, out.modifier_keys());
+
+  // SHIFT + ALT modifier
+  // S-M-F1 (CTRL + ALT + SpecialKey)
+  modifier = IBUS_SHIFT_MASK | IBUS_MOD1_MASK;
+  EXPECT_TRUE(translator_->Translate(IBUS_F1, 0, modifier,
+                                     config::Config::ROMAN, true, &out));
+  EXPECT_EQ(2, out.modifier_keys_size());
+  IsContained(commands::KeyEvent::ALT, out.modifier_keys());
+  IsContained(commands::KeyEvent::CTRL, out.modifier_keys());
+
+  // S-M-a (CTRL + ALT + OtherKey)
+  modifier = IBUS_SHIFT_MASK | IBUS_MOD1_MASK;
+  EXPECT_TRUE(translator_->Translate(IBUS_A, 'a', modifier,
+                                     config::Config::ROMAN, true, &out));
+  EXPECT_EQ(2, out.modifier_keys_size());
+  IsContained(commands::KeyEvent::ALT, out.modifier_keys());
+  IsContained(commands::KeyEvent::CTRL, out.modifier_keys());
+
+  // CTRL + SHIFT + ALT modifier
+  // C-S-M-F1 (CTRL + SHIFT + ALT + SpecialKey)
+  modifier = IBUS_SHIFT_MASK | IBUS_MOD1_MASK | IBUS_CONTROL_MASK;
+  EXPECT_TRUE(translator_->Translate(IBUS_F1, 0, modifier,
+                                     config::Config::ROMAN, true, &out));
+  EXPECT_EQ(3, out.modifier_keys_size());
+  IsContained(commands::KeyEvent::CTRL, out.modifier_keys());
+  IsContained(commands::KeyEvent::ALT, out.modifier_keys());
+  IsContained(commands::KeyEvent::SHIFT, out.modifier_keys());
+
+  // C-S-M-a (CTRL + SHFIT + ALT + OtherKey)
+  modifier = IBUS_SHIFT_MASK | IBUS_MOD1_MASK | IBUS_CONTROL_MASK;
+  EXPECT_TRUE(translator_->Translate(IBUS_A, 'a', modifier,
+                                     config::Config::ROMAN, true, &out));
+  EXPECT_EQ(3, out.modifier_keys_size());
+  IsContained(commands::KeyEvent::CTRL, out.modifier_keys());
+  IsContained(commands::KeyEvent::ALT, out.modifier_keys());
+  IsContained(commands::KeyEvent::SHIFT, out.modifier_keys());
 }
 
 TEST_F(KeyTranslatorTest, TranslateUnknow) {

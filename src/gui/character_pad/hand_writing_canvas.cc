@@ -33,6 +33,10 @@
 #include "base/base.h"
 #include "gui/character_pad/hand_writing.h"
 
+#ifdef OS_MACOSX
+#include "base/mac_util.h"
+#endif
+
 #ifdef USE_LIBZINNIA
 // Use default zinnia installed in /usr/include
 #include <zinnia.h>
@@ -45,7 +49,13 @@ namespace gui {
 
 namespace {
 string GetModelFileName() {
-#ifdef USE_LIBZINNIA
+#ifdef OS_MACOSX
+  // TODO(komatsu): Fix the file name to "handwriting-ja.model" like the
+  // Windows implementation regardless which data file is actually
+  // used.  See also gui.gyp:hand_writing_mac.
+  const char kModelFile[] = "handwriting-light-ja.model";
+  return Util::JoinPath(MacUtil::GetResourcesDirectory(), kModelFile);
+#elif defined(USE_LIBZINNIA)
   // On Linux, use the model for tegaki-zinnia.
   const char kModelFile[] =
       "/usr/share/tegaki/models/zinnia/handwriting-ja.model";
@@ -53,7 +63,7 @@ string GetModelFileName() {
 #else
   const char kModelFile[] = "handwriting-ja.model";
   return Util::JoinPath(Util::GetServerDirectory(), kModelFile);
-#endif
+#endif  // OS_MACOSX
 }
 }  // namespace
 

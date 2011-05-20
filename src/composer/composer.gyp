@@ -46,12 +46,12 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../base/base.gyp:config_file_stream',
-        '../converter/converter.gyp:character_form_manager',
-        '../session/session.gyp:config_handler',
-        '../session/session.gyp:key_parser',
+        '../converter/converter_base.gyp:character_form_manager',
+        '../session/session_base.gyp:config_handler',
+        '../session/session_base.gyp:key_parser',
         # This is needed. GYP is not smart enough about indirect dependencies.
-        '../session/session.gyp:genproto_session',
-        '../session/session.gyp:session_protocol',
+        '../session/session_base.gyp:genproto_session',
+        '../session/session_base.gyp:session_protocol',
         '../transliteration/transliteration.gyp:transliteration',
       ],
     },
@@ -71,8 +71,8 @@
         'table_test.cc',
       ],
       'dependencies': [
-        'composer',
         '../testing/testing.gyp:gtest_main',
+        'composer',
       ],
       'variables': {
         'test_size': 'small',

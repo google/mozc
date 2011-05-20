@@ -206,6 +206,7 @@ bool SessionFactory::IsAvailable() const {
 namespace chewing {
 Session::Session()
     : context_(::chewing_new()),
+      state_(PRECOMPOSITION),
       create_session_time_(Util::GetTime()),
       last_command_time_(0),
       last_config_updated_(0) {
@@ -299,7 +300,12 @@ void Session::FillOutput(commands::Command *command) {
   commands::Output *output = command->mutable_output();
   output->mutable_key()->CopyFrom(command->input().key());
 
-  output->set_consumed(!::chewing_keystroke_CheckIgnore(context_));
+  if (!output->consumed() && state_ == PRECOMPOSITION) {
+    // Do not fill the result if the key is not consumed and current
+    // status is PRECOMPOSITION (means not during the input).  In such
+    // case it will fill the output of the previous status.
+    return;
+  }
 
   // Fill the result
   if (::chewing_commit_Check(context_)) {
@@ -347,7 +353,6 @@ void Session::FillOutput(commands::Command *command) {
     if (buffer_len > 0) {
       if (cursor < buffer_len) {
         int bytes = BytesForChars(buffer, cursor);
-        LOG(INFO) << bytes;
         pre_text = buffer.substr(0, bytes);
         trailing_text = buffer.substr(bytes);
         pre_len = cursor;
@@ -383,6 +388,12 @@ void Session::FillOutput(commands::Command *command) {
     }
   }
 
+  if (output->preedit().segment_size() == 0) {
+    state_ = PRECOMPOSITION;
+  } else {
+    state_ = IN_CONVERSION;
+  }
+
   // Fill the candidates
   // TODO(mukai): Fill the all_candidates too.
   if (!::chewing_cand_CheckDone(context_)) {
@@ -407,7 +418,10 @@ void Session::FillOutput(commands::Command *command) {
       new_mode = commands::HALF_ASCII;
     }
   }
-  output->mutable_status()->set_mode(new_mode);
+  if (new_mode != commands::NUM_OF_COMPOSITIONS) {
+    output->mutable_status()->set_mode(new_mode);
+    output->set_mode(new_mode);
+  }
 
   DLOG(INFO) << command->DebugString();
 }
@@ -420,14 +434,19 @@ bool Session::SendKey(commands::Command *command) {
 
   // Check the modifier keys at first.
   const KeyEvent &key_event = command->input().key();
+  bool status_updated = false;
+
   if (key_event.modifiers() == KeyEvent::SHIFT) {
     if (key_event.has_special_key()) {
       if (key_event.special_key() == KeyEvent::LEFT) {
         ::chewing_handle_ShiftLeft(context_);
+        status_updated = true;
       } else if (key_event.special_key() == KeyEvent::RIGHT) {
         ::chewing_handle_ShiftRight(context_);
+        status_updated = true;
       } else if (key_event.special_key() == KeyEvent::SPACE) {
         ::chewing_handle_ShiftSpace(context_);
+        status_updated = true;
       }
     }
   } if (key_event.modifiers() == KeyEvent::CTRL) {
@@ -437,8 +456,10 @@ bool Session::SendKey(commands::Command *command) {
       ::chewing_handle_CtrlNum(
           context_,
           '0' + key_event.special_key() - KeyEvent::NUMPAD0);
+      status_updated = true;
     } else if ('0' <= key_event.key_code() && key_event.key_code() <= '9') {
       ::chewing_handle_CtrlNum(context_, key_event.key_code());
+      status_updated = true;
     }
   } else {
     // normal key event.
@@ -447,56 +468,74 @@ bool Session::SendKey(commands::Command *command) {
       switch (key_event.special_key()) {
         case KeyEvent::SPACE:
           ::chewing_handle_Space(context_);
+          status_updated = true;
           break;
         case KeyEvent::ESCAPE:
           ::chewing_handle_Esc(context_);
+          status_updated = true;
           break;
         case KeyEvent::ENTER:
           ::chewing_handle_Enter(context_);
+          status_updated = true;
           break;
         case KeyEvent::DEL:
           ::chewing_handle_Del(context_);
+          status_updated = true;
           break;
         case KeyEvent::BACKSPACE:
           ::chewing_handle_Backspace(context_);
+          status_updated = true;
           break;
         case KeyEvent::TAB:
           ::chewing_handle_Tab(context_);
+          status_updated = true;
           break;
         case KeyEvent::LEFT:
           ::chewing_handle_Left(context_);
+          status_updated = true;
           break;
         case KeyEvent::RIGHT:
           ::chewing_handle_Right(context_);
+          status_updated = true;
           break;
         case KeyEvent::UP:
           ::chewing_handle_Up(context_);
+          status_updated = true;
           break;
         case KeyEvent::HOME:
           ::chewing_handle_Home(context_);
+          status_updated = true;
           break;
         case KeyEvent::END:
           ::chewing_handle_End(context_);
+          status_updated = true;
           break;
         case KeyEvent::PAGE_UP:
           ::chewing_handle_PageUp(context_);
+          status_updated = true;
           break;
         case KeyEvent::PAGE_DOWN:
           ::chewing_handle_PageDown(context_);
+          status_updated = true;
           break;
         case KeyEvent::CAPS_LOCK:
           ::chewing_handle_Capslock(context_);
+          status_updated = true;
+          break;
         default:
           // do nothing
           // Currently we don't handle the following keys:
           //   CapsLock, NumLock, DblTab.
           break;
       }
-    } else {
+    } else if (key_event.modifier_keys_size() == 0) {
       ::chewing_handle_Default(context_, key_event.key_code());
+      status_updated = true;
     }
   }
 
+  command->mutable_output()->set_consumed(
+      status_updated && !::chewing_keystroke_CheckIgnore(context_));
   FillOutput(command);
   return true;
 }
@@ -504,6 +543,7 @@ bool Session::SendKey(commands::Command *command) {
 bool Session::TestSendKey(commands::Command *command) {
   // TODO(mukai): implement this.
   last_command_time_ = Util::GetTime();
+  command->mutable_output()->set_consumed(true);
   FillOutput(command);
   return true;
 }
@@ -575,9 +615,7 @@ bool Session::SendCommand(commands::Command *command) {
       break;
   }
 
-  if (consumed) {
-    command->mutable_output()->set_consumed(true);
-  }
+  command->mutable_output()->set_consumed(consumed);
   FillOutput(command);
   return true;
 }
@@ -611,7 +649,6 @@ uint64 Session::last_command_time() const {
 #ifdef OS_CHROMEOS
 void Session::UpdateConfig(const config::ChewingConfig &config) {
   config::Config mozc_config;
-  config::ConfigHandler::GetConfig(&mozc_config);
   mozc_config.mutable_chewing_config()->MergeFrom(config);
   config::ConfigHandler::SetConfig(mozc_config);
   g_last_config_updated = Util::GetTime();

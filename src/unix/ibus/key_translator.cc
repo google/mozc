@@ -357,6 +357,7 @@ KeyTranslator::KeyTranslator() {
 KeyTranslator::~KeyTranslator() {
 }
 
+// TODO(nona): Fix 'Shift-0' behavior b/4338394
 bool KeyTranslator::Translate(guint keyval,
                               guint keycode,
                               guint modifiers,
@@ -392,9 +393,9 @@ bool KeyTranslator::Translate(guint keyval,
     // Do not set a SHIFT modifier when |keyval| is a printable key by following
     // the Mozc's rule.
     if (((*i).second == commands::KeyEvent::SHIFT) &&
-        IsAscii(keyval, keycode, modifiers)) {
-      continue;
-    }
+        IsPrintable(keyval, keycode, modifiers)) {
+        continue;
+     }
 
     if ((*i).first & modifiers) {
       out_event->add_modifier_keys((*i).second);
@@ -474,9 +475,17 @@ bool KeyTranslator::IsKanaAvailable(guint keyval,
   return true;
 }
 
-bool KeyTranslator::IsAscii(guint keyval,
-                            guint keycode,
-                            guint modifiers) {
+// TODO(nona): resolve S-'0' problem (b/4338394).
+// TODO(nona): Current printable detection is weak. To enhance accuracy, use xkb
+// key map
+bool KeyTranslator::IsPrintable(guint keyval, guint keycode, guint modifiers) {
+  if ((modifiers & IBUS_CONTROL_MASK) || (modifiers & IBUS_MOD1_MASK)) {
+    return false;
+  }
+  return IsAscii(keyval, keycode, modifiers);
+}
+
+bool KeyTranslator::IsAscii(guint keyval, guint keycode, guint modifiers) {
   return (keyval > IBUS_space &&
           // Note: Space key (0x20) is a special key in Mozc.
           keyval <= IBUS_asciitilde);  // 0x7e.

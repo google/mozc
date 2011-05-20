@@ -32,12 +32,13 @@
 #include <algorithm>
 #include <set>
 #include <string>
+
 #include "base/base.h"
 #include "base/config_file_stream.h"
 #include "base/mutex.h"
 #include "base/singleton.h"
 #include "converter/node.h"
-#include "converter/pos_matcher.h"
+#include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"

@@ -40,7 +40,6 @@
     ],
     'scim_dependencies': [
       '../../client/client.gyp:client',
-      '../../session/session.gyp:genproto_session',
       '../../session/session.gyp:session',
     ],
     'scim_defines': [

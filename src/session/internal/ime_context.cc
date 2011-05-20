@@ -130,6 +130,13 @@ commands::Output *ImeContext::mutable_output() {
   return &output_;
 }
 
+const string &ImeContext::initial_composition() const {
+  return initial_composition_;
+}
+void ImeContext::set_initial_composition(const string &composition) {
+  initial_composition_ = composition;
+}
+
 // static
 void ImeContext::CopyContext(const ImeContext &src, ImeContext *dest) {
   DCHECK(dest);
@@ -148,6 +155,9 @@ void ImeContext::CopyContext(const ImeContext &src, ImeContext *dest) {
 
   // Copy state
   dest->set_state(src.state());
+
+  // Copy initial composition in reverse conversion
+  dest->set_initial_composition(src.initial_composition());
 
   string composition;
   switch (dest->state()) {

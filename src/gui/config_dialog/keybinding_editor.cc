@@ -379,8 +379,8 @@ KeyBindingFilter::KeyState KeyBindingFilter::AddKey(
   }
 
   // printable command, which requires modifier keys
-  if (qt_key >= 0x21 && qt_key <= 0x60 ||
-      qt_key >= 0x7B && qt_key <= 0x7E) {
+  if ((qt_key >= 0x21 && qt_key <= 0x60) ||
+      (qt_key >= 0x7B && qt_key <= 0x7E)) {
     if (qt_key >= 0x41 && qt_key <= 0x5A) {
       modifier_required_key_ = static_cast<char>(qt_key - 'A' + 'a');
     } else {

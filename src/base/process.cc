@@ -102,86 +102,6 @@ bool ShellExecuteInSystemDir(const wchar_t *verb,
       << ", parameters: " << parameters;
   return result > 32;
 }
-
-bool BeginBackgroundProcessModeWin32(
-    mozc::ProsessPriorityClass *previous_mode) {
-  // GetCurrentProcess returns a pseudo handle, which is currently (HANDLE)-1.
-  // Unfortunately, (HANDLE)-1 is same to INVALID_HANDLE_VALUE so that we do
-  // not use mozc::ScopedHandle to avoid confusion.
-  const HANDLE current_process_handle = ::GetCurrentProcess();
-
-  // If |previous_mode| is NULL, set dummy address to it.
-  mozc::ProsessPriorityClass dummy;
-  if (previous_mode == NULL) {
-    previous_mode = &dummy;
-  }
-
-  bool succeeded = false;
-  *previous_mode = ::GetPriorityClass(current_process_handle);
-  if (*previous_mode == 0) {
-    LOG(ERROR) << "GetPriorityClass failed. error = " << GetLastError();
-    succeeded = false;
-  } else {
-    // Set process priority low
-    if (mozc::Util::IsVistaOrLater()) {
-      // Windows Vista introduced PROCESS_MODE_BACKGROUND_BEGIN, which can be
-      // specified only if |hProcess| parameter is a handle to the current
-      // process.
-      const DWORD error = ::SetPriorityClass(current_process_handle,
-                                             PROCESS_MODE_BACKGROUND_BEGIN);
-
-      succeeded = (error != 0 &&
-                   error != ERROR_PROCESS_MODE_ALREADY_BACKGROUND);
-      DLOG_IF(INFO, error == ERROR_PROCESS_MODE_ALREADY_BACKGROUND)
-          << "Already in background mode";
-      LOG_IF(ERROR, !succeeded)
-          << "SetPriorityClass failed. error = " << error;
-    } else {
-      const DWORD error = ::SetPriorityClass(current_process_handle,
-                                             BELOW_NORMAL_PRIORITY_CLASS);
-      succeeded = (error != 0);
-      LOG_IF(ERROR, !succeeded) << "SetPriorityClass failed. error = " << error;
-    }
-  }
-
-  // Actually CloseHandle with a pseudo handle has no effect.
-  ::CloseHandle(current_process_handle);
-
-  return succeeded;
-}
-
-bool EndBackgroundProcessModeWin32(
-    const mozc::ProsessPriorityClass *previous_mode) {
-  // GetCurrentProcess returns a pseudo handle, which is currently (HANDLE)-1.
-  // Unfortunately, (HANDLE)-1 is same to INVALID_HANDLE_VALUE so that we do
-  // not use mozc::ScopedHandle to avoid confusion.
-  const HANDLE current_process_handle = ::GetCurrentProcess();
-  bool succeeded = false;
-
-  // Set process priority to the previous one
-  if (mozc::Util::IsVistaOrLater()) {
-    const DWORD error = ::SetPriorityClass(current_process_handle,
-                                           PROCESS_MODE_BACKGROUND_END);
-    succeeded = (error != 0);
-    LOG_IF(ERROR, !succeeded) << "SetPriorityClass failed. error = " << error;
-  } else {
-    // Restore priority class
-    if (previous_mode == NULL) {
-      DLOG(INFO) << "previous_mode is NULL";
-      succeeded = false;
-    } else {
-      const DWORD error = ::SetPriorityClass(current_process_handle,
-                                             *previous_mode);
-      succeeded = (error != 0);
-      LOG_IF(ERROR, !succeeded) << "SetPriorityClass failed. error = " << error;
-    }
-  }
-
-  // Actually CloseHandle with a pseudo handle has no effect.
-  ::CloseHandle(current_process_handle);
-
-  return succeeded;
-}
 }  // anonymous namespace
 #endif  // OS_WINDOWS
 
@@ -420,25 +340,6 @@ bool Process::SpawnProcessAs(const string &path,
   return ERROR_SUCCESS == err_code;
 }
 #endif  // OS_WINDOWS
-
-bool Process::BeginBackgroundProcessMode(
-    ProsessPriorityClass *previous_mode) {
-#ifdef OS_WINDOWS
-  return BeginBackgroundProcessModeWin32(previous_mode);
-#else  // OS_WINDOWS
-  // TODO(yukawa): Implement for MacOS and Linux
-  return true;
-#endif
-}
-bool Process::EndBackgroundProcessMode(
-    const ProsessPriorityClass *previous_mode) {
-#ifdef OS_WINDOWS
-  return EndBackgroundProcessModeWin32(previous_mode);
-#else  // OS_WINDOWS
-  // TODO(yukawa): Implement for MacOS and Linux
-  return true;
-#endif
-}
 
 bool Process::WaitProcess(size_t pid, int timeout) {
   if (pid == 0) {

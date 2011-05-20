@@ -35,6 +35,7 @@
 #include "base/port.h"
 #include "base/scoped_ptr.h"
 #include "session/commands.pb.h"
+#include "testing/base/public/gunit_prod.h"
 #include "unix/ibus/engine_interface.h"
 
 namespace mozc {
@@ -46,6 +47,7 @@ class SessionInterface;
 namespace ibus {
 
 class KeyTranslator;
+class LaunchToolTest;
 
 // Implements EngineInterface and handles signals from IBus daemon.
 // This class mainly does the two things:
@@ -58,6 +60,7 @@ class MozcEngine : public EngineInterface {
   MozcEngine();
   virtual ~MozcEngine();
 
+  // EngineInterface functions
   void CandidateClicked(IBusEngine *engine,
                         guint index,
                         guint button,
@@ -109,6 +112,10 @@ class MozcEngine : public EngineInterface {
                                  GValue *value,
                                  gpointer user_data);
 #endif
+
+  // Initializes mozc config.
+  // Currenly this cannot be used for Mozc Chewing.
+  static void InitConfig(IBusConfig *config);
 #endif  // OS_CHROMEOS
 
   // Manages modifier keys.  Returns false if it should not be sent to server.
@@ -141,6 +148,9 @@ class MozcEngine : public EngineInterface {
       const gchar *section, const gchar *name, GValue *gvalue);
 #endif
 #endif  // OS_CHROMEOS
+
+  // Launches Mozc tool with appropriate arguments.
+  bool LaunchTool(const commands::Output &output) const;
 
   // Updates the composition mode based on the content of |output|.
   void UpdateCompositionMode(
@@ -185,6 +195,8 @@ class MozcEngine : public EngineInterface {
   bool ignore_reset_for_deletion_range_workaround_;
 
   DISALLOW_COPY_AND_ASSIGN(MozcEngine);
+  friend class LaunchToolTest;
+  FRIEND_TEST(LaunchToolTest, LaunchToolTest);
 };
 
 }  // namespace ibus

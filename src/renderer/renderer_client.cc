@@ -162,7 +162,7 @@ class RendererLauncher : public RendererLauncherInterface,
 #elif defined(OS_MACOSX)
     // Start renderer process by using launch_msg API.
     pid_t pid = 0;
-    const bool result = MacUtil::StartLaunchdServce("Renderer", &pid);
+    const bool result = MacUtil::StartLaunchdService("Renderer", &pid);
 #else
     size_t tmp = 0;
     const bool result = Process::SpawnProcess(path_, "", &tmp);

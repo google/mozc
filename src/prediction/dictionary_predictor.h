@@ -62,6 +62,8 @@ class DictionaryPredictor: public PredictorInterface {
   FRIEND_TEST(DictionaryPredictorTest, AggregateUnigramPrediction);
   FRIEND_TEST(DictionaryPredictorTest, AggregateBigramPrediction);
   FRIEND_TEST(DictionaryPredictorTest, GetHistoryKeyAndValue);
+  FRIEND_TEST(DictionaryPredictorTest,
+              RealtimeConversionStartingWithAlphabets);
 
 
   enum PredictionType {

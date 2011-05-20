@@ -30,13 +30,14 @@
 #include "converter/nbest_generator.h"
 
 #include <string>
+
 #include "base/base.h"
 #include "converter/candidate_filter.h"
 #include "converter/connector_interface.h"
 #include "converter/lattice.h"
-#include "converter/pos_matcher.h"
 #include "converter/segmenter.h"
 #include "converter/segments.h"
+#include "dictionary/pos_matcher.h"
 
 namespace mozc {
 
@@ -104,10 +105,7 @@ void NBestGenerator::MakeCandidate(Segment::Candidate *candidate,
   bool has_constrained_node = false;
   bool is_functional = false;
 
-  candidate->key.clear();
-  candidate->value.clear();
-  candidate->content_value.clear();
-  candidate->content_key.clear();
+  candidate->Init();
   candidate->lid = nodes.front()->lid;
   candidate->rid = nodes.back()->rid;
   candidate->cost = cost;
@@ -154,7 +152,8 @@ void NBestGenerator::MakeCandidate(Segment::Candidate *candidate,
   }
 }
 
-bool NBestGenerator::Next(Segment::Candidate *candidate) {
+bool NBestGenerator::Next(Segment::Candidate *candidate,
+                          Segments::RequestType request_type) {
   if (lattice_ == NULL || !lattice_->has_lattice()) {
     LOG(ERROR) << "Must create lattice in advance";
     return false;
@@ -207,6 +206,9 @@ bool NBestGenerator::Next(Segment::Candidate *candidate) {
         begin_node_->next->cost + begin_node_->next->wcost;
 
     MakeCandidate(candidate, cost, structure_cost, wcost, nodes);
+    if (request_type == Segments::SUGGESTION) {
+      candidate->attributes |= Segment::Candidate::REALTIME_CONVERSION;
+    }
 
     // Use CandiadteFilter so that filter is initialized with the
     // Viterbi-best path.

@@ -42,19 +42,24 @@
         'usage_stats.cc',
       ],
       'dependencies': [
-        '../protobuf/protobuf.gyp:protobuf',
         '../base/base.gyp:base',
         '../net/net.gyp:net',
+        '../protobuf/protobuf.gyp:protobuf',
         '../storage/storage.gyp:storage',
+        'gen_usage_stats_list',
         'genproto_usage_stats',
       ],
       'conditions': [
         ['OS=="win"', {
           'dependencies': [
-            '../win32/win32.gyp:imm_util',
+            '../win32/base/win32_base.gyp:imm_util',
           ],
         }],
       ],
+    },
+    {
+      'target_name': 'gen_usage_stats_list',
+      'type': 'none',
       'actions': [
         {
           'action_name': 'gen_usage_stats_list',

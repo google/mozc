@@ -40,6 +40,7 @@
 
 DEFINE_int32(max_conversion_candidates_size, 200,
              "maximum candidates size");
+DEFINE_string(user_profile_dir, "", "path to user profile directory");
 
 
 namespace {
@@ -85,11 +86,19 @@ bool ExecCommand(const mozc::ConverterInterface &converter,
     return converter.ResetConversion(segments);
   } else if (func == "cancelconversion" || func == "cancel") {
     return converter.CancelConversion(segments);
-  } else if (func == "commitsegmentvalue" || func == "commit") {
+  } else if (func == "commitsegmentvalue" || func == "commit" || func == "c") {
     CHECK_FIELDS_LENGTH(3);
     return converter.CommitSegmentValue(segments,
                                         atoi32(fields[1].c_str()),
                                         atoi32(fields[2].c_str()));
+  } else if (func == "commitallandfinish") {
+    for (int i = 0; i < segments->conversion_segments_size(); ++i) {
+      if (segments->conversion_segment(i).segment_type() !=
+            mozc::Segment::FIXED_VALUE) {
+        if (!(converter.CommitSegmentValue(segments, i, 0))) return false;
+      }
+    }
+    return converter.FinishConversion(segments);
   } else if (func == "focussegmentvalue" || func == "focus") {
     CHECK_FIELDS_LENGTH(3);
     return converter.FocusSegmentValue(segments,
@@ -136,6 +145,10 @@ bool ExecCommand(const mozc::ConverterInterface &converter,
 
 int main(int argc, char **argv) {
   InitGoogle(argv[0], &argc, &argv, false);
+
+  if (!FLAGS_user_profile_dir.empty()) {
+    mozc::Util::SetUserProfileDirectory(FLAGS_user_profile_dir);
+  }
 
 
   mozc::ConverterInterface *converter

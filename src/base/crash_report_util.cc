@@ -49,7 +49,7 @@ namespace mozc {
 
 string CrashReportUtil::GetCrashReportDirectory() {
   const char kCrashReportDirectory[] = "CrashReports";
-  return Util::JoinPath(Util::GetUserProfileDirectory().c_str(),
+  return Util::JoinPath(Util::GetUserProfileDirectory(),
                         kCrashReportDirectory);
 }
 

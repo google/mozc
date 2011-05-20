@@ -39,12 +39,6 @@
 #endif  // OS_WINDOWS
 
 namespace mozc {
-#ifdef OS_WINDOWS
-typedef DWORD ProsessPriorityClass;
-#else // OS_WINDOWS
-// TODO(yukawa): MacOS and Linux definition
-typedef int ProsessPriorityClass;
-#endif
 class Process {
  public:
   // Open the URL with the default browser.  If this function is not
@@ -115,19 +109,6 @@ class Process {
                              const SecurityInfo &info,
                              DWORD *pid);
 #endif  // OS_WINDOWS
-
-  // Change process mode to backgroud mode in which file I/O or network I/O of
-  // the process is scheduled by the OS not to interference foreground tasks.
-  // Return true if process successfully entered to the background mode.
-  // It also returns previous mode via |previous_mode|, which should be passed
-  // to EndBackgroundProcessMode;
-  static bool BeginBackgroundProcessMode(
-      ProsessPriorityClass *previous_mode);
-
-  // Restore process mode to the previous mode.
-  // Return true if process successfully returned to the previous mode.
-  static bool EndBackgroundProcessMode(
-      const ProsessPriorityClass *previous_mode);
 
   // launch error message dialog
   static bool LaunchErrorMessageDialog(const string &type);

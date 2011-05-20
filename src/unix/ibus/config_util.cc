@@ -29,7 +29,10 @@
 
 #include "unix/ibus/config_util.h"
 
+#include <map>
+
 #include "base/base.h"
+#include "base/singleton.h"
 #include "base/protobuf/descriptor.h"
 
 namespace mozc {
@@ -161,6 +164,32 @@ void ConfigUtil::SetFieldForName(const gchar *name,
     }
   }
 }
+
+#ifdef OS_CHROMEOS
+
+void ConfigUtil::InitConfig(IBusConfig* config,
+                            const char *section_name,
+                            const map<string, const char*> &name_to_field) {
+#if IBUS_CHECK_VERSION(1, 3, 99)
+  for (map<string, const char*>::const_iterator i = name_to_field.begin();
+       i != name_to_field.end(); ++i) {
+    const gchar *name = i->first.c_str();
+    GVariant *value = ibus_config_get_value(config, section_name, name);
+    if (!value) {
+      LOG(WARNING) << "ibus_config_get_value failed for " << name;
+      continue;
+    }
+    // Invoke the signal handler for the "value-changed" message.
+    g_signal_emit_by_name(config, "value-changed", section_name, name,
+                          value);
+    g_variant_unref(value);
+  }
+#else
+#error ibus version 1.3.99 or higher required
+#endif
+}
+
+#endif  // OS_CHROMEOS
 
 }  // namespace ibus
 }  // namespace mozc

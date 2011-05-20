@@ -38,6 +38,7 @@
 // embedded_collocation_data.h
 
 #include <algorithm>
+#include <iostream>
 #include <vector>
 
 #include "base/util.h"

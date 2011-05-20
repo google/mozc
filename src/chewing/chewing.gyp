@@ -40,11 +40,11 @@
     ],
     'ibus_client_dependencies' : [
       '../client/client.gyp:client',
-      '../session/session.gyp:ime_switch_util',
+      '../session/session_base.gyp:ime_switch_util',
     ],
     'ibus_standalone_dependencies' : [
       '../net/net.gyp:net',
-      '../session/session.gyp:genproto_session',
+      '../session/session_base.gyp:genproto_session',
       '../usage_stats/usage_stats.gyp:usage_stats',
     ],
   },
@@ -57,8 +57,31 @@
         'dummy_converter.cc',
       ],
       'dependencies': [
-        '../session/session.gyp:session_server',
         '../base/base.gyp:base',
+        'chewing_session_server',
+      ],
+    },
+    # This is a copy of session.gyp:session_server but does not depend
+    # on session.gyp:session not to link language model/dictionary of
+    # Japanese.
+    {
+      'target_name': 'chewing_session_server',
+      'type': 'static_library',
+      'sources': [
+        '../session/session_handler.cc',
+        '../session/session_observer_handler.cc',
+        '../session/session_server.cc',
+        '../session/session_usage_observer.cc',
+        '../session/session_watch_dog.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        '../client/client.gyp:client',
+        '../session/session_base.gyp:config_handler',
+        '../session/session_base.gyp:genproto_session',
+        '../session/session_base.gyp:ime_switch_util',
+        '../session/session_base.gyp:keymap',
+        '../session/session_base.gyp:session_protocol',
       ],
     },
   ],
@@ -74,6 +97,9 @@
             '../unix/ibus/mozc_engine.cc',
             '../unix/ibus/path_util.cc',
             'unix/ibus/mozc_engine_property.cc',
+          ],
+          'dependencies': [
+            '../session/session_base.gyp:ime_switch_util',
           ],
           'conditions': [
             ['chromeos==1', {

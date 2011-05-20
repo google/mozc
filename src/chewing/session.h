@@ -46,6 +46,11 @@ class Session: public mozc::session::SessionInterface {
   Session();
   ~Session();
 
+  enum State {
+    PRECOMPOSITION = 0,
+    IN_CONVERSION = 1,
+  };
+
   virtual bool SendKey(commands::Command *command);
 
   // Check if the input key event will be consumed by the session.
@@ -81,7 +86,9 @@ class Session: public mozc::session::SessionInterface {
   // Fill the candidates with the current context.
   void FillCandidates(commands::Candidates *candidates);
 
-  // Fill the output with the current context.
+  // Fill the output with the current context.  This does not update
+  // 'consumed' field.  The caller has the responsibility to fill it
+  // before calling this method.
   void FillOutput(commands::Command *command);
 
   // Set configurations.
@@ -92,6 +99,7 @@ class Session: public mozc::session::SessionInterface {
   void RenewContext();
 
   ChewingContext *context_;
+  State state_;
   commands::ApplicationInfo application_info_;
   uint64 create_session_time_;
   uint64 last_command_time_;

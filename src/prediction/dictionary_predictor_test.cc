@@ -543,4 +543,34 @@ TEST_F(DictionaryPredictorTest, GetSVMScore) {
       20,
       &feature));
 }
+
+TEST_F(DictionaryPredictorTest,
+       RealtimeConversionStartingWithAlphabets) {
+  Segments segments;
+  // turn on real-time conversion
+  config::Config config;
+  config.set_use_dictionary_suggest(false);
+  config.set_use_realtime_conversion(true);
+  config::ConfigHandler::SetConfig(config);
+  DictionaryPredictor predictor;
+
+  // "PCてすと"
+  const char kKey[] = "PC\xE3\x81\xA6\xE3\x81\x99\xE3\x81\xA8";
+  // "PCテスト"
+  const char kExpectedSuggestionValue[] =
+      "PC\xE3\x83\x86\xE3\x82\xB9\xE3\x83\x88";
+
+  MakeSegmentsForSuggestion(kKey, &segments);
+
+  vector<DictionaryPredictor::Result> results;
+
+  predictor.AggregateRealtimeConversion(
+      DictionaryPredictor::REALTIME,
+      &segments, &results);
+  EXPECT_FALSE(results.empty());
+
+  EXPECT_EQ(DictionaryPredictor::REALTIME, results[0].type);
+  EXPECT_EQ(kExpectedSuggestionValue, results[0].node->value);
+  EXPECT_EQ(1, segments.conversion_segments_size());
+}
 }  // mozc

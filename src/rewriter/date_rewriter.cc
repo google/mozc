@@ -96,6 +96,20 @@ const struct DateData kDateData[] = {
     -2
   },
   {
+    // おとつい will show the date of 2 days ago
+    "\xE3\x81\x8A\xE3\x81\xA8\xE3\x81\xA4\xE3\x81\x84",
+    "\xE4\xB8\x80\xE6\x98\xA8\xE6\x97\xA5",
+    "2\xE6\x97\xA5\xE5\x89\x8D\xE3\x81\xAE\xE6\x97\xA5\xE4\xBB\x98",
+    -2
+  },
+  {
+    // いっさくじつ will show the date of 2 days ago
+    "\xE3\x81\x84\xE3\x81\xA3\xE3\x81\x95\xE3\x81\x8F\xE3\x81\x98\xE3\x81\xA4",
+    "\xE4\xB8\x80\xE6\x98\xA8\xE6\x97\xA5",
+    "2\xE6\x97\xA5\xE5\x89\x8D\xE3\x81\xAE\xE6\x97\xA5\xE4\xBB\x98",
+    -2
+  },
+  {
     // さきおととい will show the date of 3 days ago
     "\xe3\x81\x95\xe3\x81\x8d\xe3\x81\x8a\xe3\x81\xa8"
     "\xe3\x81\xa8\xe3\x81\x84",
@@ -608,6 +622,53 @@ const YearData kNorthEraData[] = {
   { 1390, "\xE6\x98\x8E\xE5\xBE\xB3" },   // "明徳"
 };
 
+const char *kWeekDayString[] = {
+  "\xE6\x97\xA5",   // "日"
+  "\xE6\x9C\x88",   // "月"
+  "\xE7\x81\xAB",   // "火"
+  "\xE6\xB0\xB4",   // "水"
+  "\xE6\x9C\xA8",   // "木"
+  "\xE9\x87\x91",   // "金"
+  "\xE5\x9C\x9F",   // "土"
+};
+
+// Converts a prefix and year number to Japanese Kanji Representation
+// arguments :
+//      - input "prefix" : a japanese style year counter prefix.
+//      - input "year" : represent integer must be smaller than 100.
+//      - output "result" : will be stored candidate strings
+// If the input year is invalid ( accept only [ 1 - 99 ] ) , this function
+// returns false and clear output vector.
+bool ExpandYear(const string &prefix, int year, vector<string> *result) {
+  DCHECK(result);
+  if (year <= 0 || year >= 100) {
+    result->clear();
+    return false;
+  }
+
+  if (year == 1) {
+    //  "元年"
+    result->push_back(prefix + "\xE5\x85\x83");
+    return true;
+  }
+
+  result->push_back(prefix + Util::SimpleItoa(year));
+
+  string arabic = Util::SimpleItoa(year);
+
+  vector<Util::NumberString> output;
+
+  Util::ArabicToKanji(arabic, &output);
+
+  for (int i = 0; i < output.size(); i++) {
+    if (output[i].style == Util::NumberString::NUMBER_KANJI) {
+      result->push_back(prefix + output[i].value);
+    }
+  }
+
+  return true;
+}
+
 void Insert(Segment *segment,
             const Segment::Candidate &base_candidate,
             int position,
@@ -630,17 +691,6 @@ void Insert(Segment *segment,
   }
   if (prefix != NULL) {
     c->prefix = prefix;
-  }
-}
-
-void ExpandYear(const string &prefix,
-                int year,
-                vector<string> *results) {
-  if (year == 1) {
-    results->push_back(prefix + "\xE5\x85\x83");       // "元"年
-  } else {
-    // TODO(taku) add Kansuji as well
-    results->push_back(prefix + Util::SimpleItoa(year));
   }
 }
 
@@ -763,26 +813,31 @@ bool DateRewriter::RewriteTime(Segment *segment,
         return false;
       }
       if (ADtoERA(t_st.tm_year + 1900, &era) && !era.empty()) {
-        // 平成YY年MM月DD日
+        // "平成YY年MM月DD日"
         snprintf(tmp, sizeof(tmp),
                  "%s\xE5\xB9\xB4%d\xE6\x9C\x88%d\xE6\x97\xA5",
                  era[0].c_str(), t_st.tm_mon + 1, t_st.tm_mday);
         Insert(segment, cand, i + 1, tmp, description, kDatePrefix);
       }
-      // YYYY年MM月DD日
+      // "YYYY年MM月DD日"
       snprintf(tmp, sizeof(tmp),
                "%d\xE5\xB9\xB4%d\xE6\x9C\x88%d\xE6\x97\xA5",
                t_st.tm_year + 1900, t_st.tm_mon + 1, t_st.tm_mday);
       Insert(segment, cand, i + 1, tmp, description, kDatePrefix);
-      // YYYY-MM-DD
+      // "YYYY-MM-DD"
       snprintf(tmp, sizeof(tmp),
                "%d-%2.2d-%2.2d",
                t_st.tm_year + 1900, t_st.tm_mon + 1, t_st.tm_mday);
       Insert(segment, cand, i + 1, tmp, description, kDatePrefix);
-      // YYYY/MM/DD
+      // "YYYY/MM/DD"
       snprintf(tmp, sizeof(tmp),
                "%d/%2.2d/%2.2d",
                t_st.tm_year + 1900, t_st.tm_mon + 1, t_st.tm_mday);
+      Insert(segment, cand, i + 1, tmp, description, kDatePrefix);
+      // "WDAY曜日"
+      snprintf(tmp, sizeof(tmp),
+               "%s\xE6\x9B\x9C\xE6\x97\xA5",
+               kWeekDayString[t_st.tm_wday]);
       Insert(segment, cand, i + 1, tmp, description, kDatePrefix);
       return true;
     } else if (type == REWRITE_MONTH) {

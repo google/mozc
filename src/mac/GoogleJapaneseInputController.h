@@ -96,6 +96,10 @@ class RendererInterface;
 
   NSRange replacementRange_;
 
+  // |lastKanaKeyTime_| is set to the time when Kana-key is tapped,
+  // and is set to 0 when other key is tapped.
+  NSTimeInterval lastKanaKeyTime_;
+
   // |candidateController_| controls the candidate windows.
   mozc::renderer::RendererInterface *candidateController_;
 

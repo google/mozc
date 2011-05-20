@@ -77,7 +77,7 @@ TEST(SupressionDictionary, BasicTest) {
     // Not locked
     EXPECT_FALSE(dic->AddEntry("test", "test"));
 
-    // locked now => SuppressEntry always returns true
+    // locked now => SuppressEntry always returns false
     dic->Lock();
     EXPECT_FALSE(dic->SuppressEntry("key1", "value1"));
     dic->UnLock();
@@ -109,8 +109,7 @@ TEST(SupressionDictionary, BasicTest) {
   }
 }
 
-namespace {
-Node *MakeNodes(const vector<Node *> nodes) {
+Node *MakeNodes(const vector<Node *>& nodes) {
   Node *head = nodes[0];
   Node *prev = NULL;
   for (int i = 0; i < nodes.size(); ++i) {
@@ -125,7 +124,6 @@ Node *MakeNodes(const vector<Node *> nodes) {
   prev->bnext = NULL;
   return head;
 }
-}
 
 TEST(SupressionDictionary, SuppressNodesTest) {
   vector<Node *> nodes;
@@ -137,11 +135,9 @@ TEST(SupressionDictionary, SuppressNodesTest) {
       SuppressionDictionary::GetSuppressionDictionary();
   CHECK(dic);
 
-  {
-    EXPECT_TRUE(NULL == dic->SuppressNodes(NULL));
-  }
+  EXPECT_EQ(static_cast<Node*>(NULL), dic->SuppressNodes(NULL));
 
-  // head item is deleated
+  // head item is deleted
   {
     dic->Lock();
     dic->Clear();
@@ -149,7 +145,7 @@ TEST(SupressionDictionary, SuppressNodesTest) {
     dic->UnLock();
     Node *head = MakeNodes(nodes);
     Node *result = dic->SuppressNodes(head);
-    EXPECT_TRUE(NULL != result);
+    EXPECT_NE(static_cast<Node*>(NULL), result);
     int size = 0;
     for (Node *node = result; node != NULL; node = node->bnext) {
       ++size;
@@ -168,7 +164,7 @@ TEST(SupressionDictionary, SuppressNodesTest) {
     dic->UnLock();
     Node *head = MakeNodes(nodes);
     Node *result = dic->SuppressNodes(head);
-    EXPECT_TRUE(NULL != result);
+    EXPECT_NE(static_cast<Node*>(NULL), result);
     int size = 0;
     for (Node *node = result; node != NULL; node = node->bnext) {
       ++size;
@@ -180,7 +176,7 @@ TEST(SupressionDictionary, SuppressNodesTest) {
     EXPECT_EQ(8, size);
   }
 
-  // tail item is deleated
+  // tail item is deleted
   {
     dic->Lock();
     dic->Clear();
@@ -188,7 +184,7 @@ TEST(SupressionDictionary, SuppressNodesTest) {
     dic->UnLock();
     Node *head = MakeNodes(nodes);
     Node *result = dic->SuppressNodes(head);
-    EXPECT_TRUE(NULL != result);
+    EXPECT_NE(static_cast<Node*>(NULL), result);
     int size = 0;
     for (Node *node = result; node != NULL; node = node->bnext) {
       ++size;
@@ -207,7 +203,7 @@ TEST(SupressionDictionary, SuppressNodesTest) {
     dic->UnLock();
     Node *head = MakeNodes(nodes);
     Node *result = dic->SuppressNodes(head);
-    EXPECT_TRUE(NULL != result);
+    EXPECT_NE(static_cast<Node*>(NULL), result);
     int size = 0;
     for (Node *node = result; node != NULL; node = node->bnext) {
       ++size;
@@ -228,7 +224,7 @@ TEST(SupressionDictionary, SuppressNodesTest) {
     dic->UnLock();
     Node *head = MakeNodes(nodes);
     Node *result = dic->SuppressNodes(head);
-    EXPECT_TRUE(NULL != result);
+    EXPECT_NE(static_cast<Node*>(NULL), result);
     int size = 0;
     for (Node *node = result; node != NULL; node = node->bnext) {
       ++size;
@@ -249,7 +245,7 @@ TEST(SupressionDictionary, SuppressNodesTest) {
     dic->UnLock();
     Node *head = MakeNodes(nodes);
     Node *result = dic->SuppressNodes(head);
-    EXPECT_TRUE(NULL != result);
+    EXPECT_NE(static_cast<Node*>(NULL), result);
     int size = 0;
     for (Node *node = result; node != NULL; node = node->bnext) {
       ++size;
@@ -270,7 +266,7 @@ TEST(SupressionDictionary, SuppressNodesTest) {
     dic->UnLock();
     Node *head = MakeNodes(nodes);
     Node *result = dic->SuppressNodes(head);
-    EXPECT_TRUE(NULL != result);
+    EXPECT_NE(static_cast<Node*>(NULL), result);
     int size = 0;
     for (Node *node = result; node != NULL; node = node->bnext) {
       ++size;
@@ -293,7 +289,7 @@ TEST(SupressionDictionary, SuppressNodesTest) {
     dic->UnLock();
     Node *head = MakeNodes(nodes);
     Node *result = dic->SuppressNodes(head);
-    EXPECT_TRUE(NULL == result);
+    EXPECT_EQ(static_cast<Node*>(NULL), result);
   }
 
   for (int i = 0; i < nodes.size(); ++i) {
@@ -301,10 +297,9 @@ TEST(SupressionDictionary, SuppressNodesTest) {
   }
 }
 
-namespace {
 class DictionaryLoaderThread : public Thread {
  public:
-  void Run() {
+  virtual void Run() {
     SuppressionDictionary *dic =
         SuppressionDictionary::GetSuppressionDictionary();
     CHECK(dic);
@@ -319,16 +314,16 @@ class DictionaryLoaderThread : public Thread {
     dic->UnLock();
   }
 };
-}   // namespace
 
 TEST(SupressionDictionary, ThreadTest) {
   SuppressionDictionary *dic =
       SuppressionDictionary::GetSuppressionDictionary();
   CHECK(dic);
 
+  dic->Lock();
+
   for (int iter = 0; iter < 3; ++iter)  {
     DictionaryLoaderThread thread;
-    dic->Lock();
 
     // Load dictionary in another thread.
     thread.Start();
@@ -340,7 +335,12 @@ TEST(SupressionDictionary, ThreadTest) {
         EXPECT_TRUE(dic->SuppressEntry(key, value));
       }
     }
+
+    thread.Join();
   }
+
+  dic->UnLock();
 }
+
 }  // namespace
 }  // namespace mozc

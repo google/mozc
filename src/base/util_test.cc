@@ -31,6 +31,7 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include "base/clock_mock.h"
 #include "base/file_stream.h"
 #include "base/util.h"
 #include "base/mmap.h"
@@ -1217,6 +1218,81 @@ TEST(UtilTest, ChopReturns) {
   EXPECT_EQ("line", line);
 }
 
+// 2020-12-23 13:24:35 (Wed)
+// 123456 [usec]
+namespace {
+const uint64 kTestSeconds = 1608758675uLL;
+const uint32 kTestMicroSeconds = 123456u;
+}
+
+// time utility test with mock clock
+TEST(UtilTest, TimeTestWithMock) {
+  scoped_ptr<ClockMock> mock_clock(
+      new ClockMock(kTestSeconds, kTestMicroSeconds));
+  Util::SetClockHandler(mock_clock.get());
+
+  // GetTime,
+  {
+    EXPECT_EQ(kTestSeconds, Util::GetTime());
+  }
+
+  // GetTimeOfDay
+  {
+    uint64 current_sec;
+    uint32 current_usec;
+    Util::GetTimeOfDay(&current_sec, &current_usec);
+    EXPECT_EQ(kTestSeconds, current_sec);
+    EXPECT_EQ(kTestMicroSeconds, current_usec);
+  }
+
+  // GetCurrentTm
+  // 2020-12-23 13:24:35 (Wed)
+  {
+    tm current_tm;
+    Util::GetCurrentTm(&current_tm);
+    EXPECT_EQ(120, current_tm.tm_year);
+    EXPECT_EQ(11,  current_tm.tm_mon);
+    EXPECT_EQ(23,  current_tm.tm_mday);
+    EXPECT_EQ(13,  current_tm.tm_hour);
+    EXPECT_EQ(24,  current_tm.tm_min);
+    EXPECT_EQ(35,  current_tm.tm_sec);
+    EXPECT_EQ(3,   current_tm.tm_wday);
+  }
+
+  // GetTmWithoutOffsetSecond
+  // 2024/02/23 23:11:15 (Fri)
+  {
+    const int offset_seconds = 100000000;
+    tm offset_tm;
+    Util::GetTmWithOffsetSecond(&offset_tm, offset_seconds);
+    EXPECT_EQ(124, offset_tm.tm_year);
+    EXPECT_EQ(1,   offset_tm.tm_mon);
+    EXPECT_EQ(23,  offset_tm.tm_mday);
+    EXPECT_EQ(23,  offset_tm.tm_hour);
+    EXPECT_EQ(11,  offset_tm.tm_min);
+    EXPECT_EQ(15,  offset_tm.tm_sec);
+    EXPECT_EQ(5,   offset_tm.tm_wday);
+  }
+
+  // unset clock handler
+  Util::SetClockHandler(NULL);
+}
+
+// time utility test without mock clock
+TEST(UtilTest, TimeTestWithoutMock) {
+  uint64 get_time_of_day_sec, get_time_sec;
+  uint32 get_time_of_day_usec;
+
+  Util::GetTimeOfDay(&get_time_of_day_sec, &get_time_of_day_usec);
+  get_time_sec = Util::GetTime();
+
+  // hmm, unstable test.
+  const int margin = 1;
+  EXPECT_NEAR(get_time_of_day_sec, get_time_sec, margin)
+      << ": This test have possibilities to fail "
+      << "when system is busy and slow.";
+}
+
 // Initialize argc and argv for unittest.
 class Arguments {
  public:
@@ -2196,6 +2272,360 @@ TEST(UtilTest, Fingerprint32WithSeed_uint32) {
   const uint32 str_hash = Util::Fingerprint32WithSeed(str, 4, seed);
 
   EXPECT_EQ(num_hash, str_hash) << num_hash << " != " << str_hash;
+}
+
+  // ArabicToWideArabic TEST
+TEST(UtilTest, ArabicToWideArabicTest) {
+  string arabic;
+  vector<Util::NumberString> output;
+
+  arabic = "12345";
+  output.clear();
+  EXPECT_TRUE(Util::ArabicToWideArabic(arabic, &output));
+  ASSERT_EQ(output.size(), 2);
+  // "１２３４５"
+  EXPECT_EQ("\xE4\xB8\x80\xE4\xBA\x8C"
+            "\xE4\xB8\x89\xE5\x9B\x9B\xE4\xBA\x94", output[0].value);
+  EXPECT_EQ(Util::NumberString::NUMBER_KANJI_ARABIC, output[0].style);
+  // "一二三四五"
+  EXPECT_EQ("\xEF\xBC\x91\xEF\xBC\x92"
+            "\xEF\xBC\x93\xEF\xBC\x94\xEF\xBC\x95", output[1].value);
+  EXPECT_EQ(Util::NumberString::DEFAULT_STYLE, output[1].style);
+
+  arabic = "00123";
+  output.clear();
+  EXPECT_TRUE(Util::ArabicToWideArabic(arabic, &output));
+  ASSERT_EQ(output.size(), 2);
+  // "００１２３"
+  EXPECT_EQ("\xE3\x80\x87\xE3\x80\x87"
+            "\xE4\xB8\x80\xE4\xBA\x8C\xE4\xB8\x89", output[0].value);
+  EXPECT_EQ(Util::NumberString::NUMBER_KANJI_ARABIC, output[0].style);
+  // "〇〇一二三"
+  EXPECT_EQ("\xEF\xBC\x90\xEF\xBC\x90"
+            "\xEF\xBC\x91\xEF\xBC\x92\xEF\xBC\x93", output[1].value);
+  EXPECT_EQ(Util::NumberString::DEFAULT_STYLE, output[1].style);
+
+  arabic = "abcde";
+  output.clear();
+  EXPECT_FALSE(Util::ArabicToWideArabic(arabic, &output));
+  EXPECT_EQ(output.size(), 0);
+
+  arabic = "012abc345";
+  output.clear();
+  EXPECT_FALSE(Util::ArabicToWideArabic(arabic, &output));
+  EXPECT_EQ(output.size(), 0);
+
+  arabic = "0.001";
+  output.clear();
+  EXPECT_FALSE(Util::ArabicToWideArabic(arabic, &output));
+  EXPECT_EQ(output.size(), 0);
+
+  arabic = "-100";
+  output.clear();
+  EXPECT_FALSE(Util::ArabicToWideArabic(arabic, &output));
+  EXPECT_EQ(output.size(), 0);
+
+  arabic = "18446744073709551616";  // UINT_MAX + 1
+  EXPECT_TRUE(Util::ArabicToWideArabic(arabic, &output));
+  // "１８４４６７４４０７３７０９５５１６１６"
+  EXPECT_EQ("\xE4\xB8\x80\xE5\x85\xAB\xE5\x9B\x9B\xE5\x9B\x9B\xE5\x85"
+            "\xAD\xE4\xB8\x83\xE5\x9B\x9B\xE5\x9B\x9B\xE3\x80\x87\xE4"
+            "\xB8\x83\xE4\xB8\x89\xE4\xB8\x83\xE3\x80\x87\xE4\xB9\x9D"
+            "\xE4\xBA\x94\xE4\xBA\x94\xE4\xB8\x80\xE5\x85\xAD\xE4\xB8"
+            "\x80\xE5\x85\xAD",
+            output[0].value);
+  EXPECT_EQ(Util::NumberString::NUMBER_KANJI_ARABIC, output[0].style);
+}
+
+  // ArabicToKanji TEST
+TEST(UtilTest, ArabicToKanjiTest) {
+  string arabic;
+  vector<Util::NumberString> output;
+
+  arabic = "2";
+  output.clear();
+  EXPECT_TRUE(Util::ArabicToKanji(arabic, &output));
+  ASSERT_EQ(output.size(), 2);
+  // "二"
+  EXPECT_EQ("\xE4\xBA\x8C", output[0].value);
+  EXPECT_EQ(Util::NumberString::NUMBER_KANJI, output[0].style);
+  // "弐"
+  EXPECT_EQ("\xE5\xBC\x90", output[1].value);
+  EXPECT_EQ(Util::NumberString::NUMBER_OLD_KANJI, output[1].style);
+
+  arabic = "10";
+  output.clear();
+  EXPECT_TRUE(Util::ArabicToKanji(arabic, &output));
+  ASSERT_EQ(output.size(), 3);
+  // "十"
+  EXPECT_EQ("\xE5\x8D\x81", output[0].value);
+  // "壱拾"
+  EXPECT_EQ("\xE5\xA3\xB1\xE6\x8B\xBE", output[1].value);
+  // "拾"
+  EXPECT_EQ("\xE6\x8B\xBE", output[2].value);
+
+  arabic = "15";
+  output.clear();
+  EXPECT_TRUE(Util::ArabicToKanji(arabic, &output));
+  ASSERT_EQ(output.size(), 2);
+  // "十五"
+  EXPECT_EQ("\xE5\x8D\x81\xE4\xBA\x94", output[0].value);
+  EXPECT_EQ(Util::NumberString::NUMBER_KANJI, output[0].style);
+  // "壱拾五"
+  EXPECT_EQ("\xE5\xA3\xB1\xE6\x8B\xBE\xE4\xBA\x94", output[1].value);
+  EXPECT_EQ(Util::NumberString::NUMBER_OLD_KANJI, output[1].style);
+
+  arabic = "20";
+  output.clear();
+  EXPECT_TRUE(Util::ArabicToKanji(arabic, &output));
+  ASSERT_EQ(output.size(), 3);
+  // "二十"
+  EXPECT_EQ("\xE4\xBA\x8C\xE5\x8D\x81", output[0].value);
+  EXPECT_EQ(Util::NumberString::NUMBER_KANJI, output[0].style);
+  // "弐拾"
+  EXPECT_EQ("\xE5\xBC\x90\xE6\x8B\xBE", output[1].value);
+  EXPECT_EQ(Util::NumberString::NUMBER_OLD_KANJI, output[1].style);
+  // "廿"
+  EXPECT_EQ("\xE5\xBB\xBF", output[2].value);
+  EXPECT_EQ(Util::NumberString::NUMBER_OLD_KANJI, output[2].style);
+
+  arabic = "25";
+  output.clear();
+  EXPECT_TRUE(Util::ArabicToKanji(arabic, &output));
+  ASSERT_EQ(output.size(), 3);
+  // "二十五"
+  EXPECT_EQ("\xE4\xBA\x8C\xE5\x8D\x81\xE4\xBA\x94", output[0].value);
+  EXPECT_EQ(Util::NumberString::NUMBER_KANJI, output[0].style);
+  // "弐拾五"
+  EXPECT_EQ("\xE5\xBC\x90\xE6\x8B\xBE\xE4\xBA\x94", output[1].value);
+  EXPECT_EQ(Util::NumberString::NUMBER_OLD_KANJI, output[1].style);
+  // "廿五"
+  EXPECT_EQ("\xE5\xBB\xBF\xE4\xBA\x94", output[2].value);
+  EXPECT_EQ(Util::NumberString::NUMBER_OLD_KANJI, output[2].style);
+
+  arabic = "12345";
+  output.clear();
+  EXPECT_TRUE(Util::ArabicToKanji(arabic, &output));
+  ASSERT_EQ(output.size(), 5);
+  // "一万二千三百四十五"
+  EXPECT_EQ("\xE4\xB8\x80\xE4\xB8\x87\xE4\xBA\x8C\xE5\x8D\x83"
+            "\xE4\xB8\x89\xE7\x99\xBE\xE5\x9B\x9B\xE5\x8D\x81"
+            "\xE4\xBA\x94", output[0].value);
+  EXPECT_EQ(Util::NumberString::NUMBER_KANJI, output[0].style);
+
+  // "壱万弐千参百四拾五"
+  EXPECT_EQ("\xE5\xA3\xB1\xE4\xB8\x87\xE5\xBC\x90\xE5\x8D\x83"
+            "\xE5\x8F\x82\xE7\x99\xBE\xE5\x9B\x9B\xE6\x8B\xBE"
+            "\xE4\xBA\x94", output[1].value);
+  EXPECT_EQ(Util::NumberString::NUMBER_OLD_KANJI, output[1].style);
+
+  // "壱万弐阡参百四拾五"
+  EXPECT_EQ("\xE5\xA3\xB1\xE4\xB8\x87\xE5\xBC\x90\xE9\x98\xA1"
+            "\xE5\x8F\x82\xE7\x99\xBE\xE5\x9B\x9B\xE6\x8B\xBE"
+            "\xE4\xBA\x94", output[2].value);
+  EXPECT_EQ(Util::NumberString::NUMBER_OLD_KANJI, output[2].style);
+
+  // "壱萬弐千参百四拾五"
+  EXPECT_EQ("\xE5\xA3\xB1\xE8\x90\xAC\xE5\xBC\x90\xE5\x8D\x83"
+            "\xE5\x8F\x82\xE7\x99\xBE\xE5\x9B\x9B\xE6\x8B\xBE"
+            "\xE4\xBA\x94", output[3].value);
+  EXPECT_EQ(Util::NumberString::NUMBER_OLD_KANJI, output[3].style);
+
+  // "壱萬弐阡参百四拾五"
+  EXPECT_EQ("\xE5\xA3\xB1\xE8\x90\xAC\xE5\xBC\x90\xE9\x98\xA1"
+            "\xE5\x8F\x82\xE7\x99\xBE\xE5\x9B\x9B\xE6\x8B\xBE"
+            "\xE4\xBA\x94", output[4].value);
+  EXPECT_EQ(Util::NumberString::NUMBER_OLD_KANJI, output[4].style);
+
+  arabic = "asf56789";
+  output.clear();
+  EXPECT_FALSE(Util::ArabicToKanji(arabic, &output));
+  ASSERT_EQ(output.size(), 0);
+
+  arabic = "0.001";
+  output.clear();
+  EXPECT_FALSE(Util::ArabicToKanji(arabic, &output));
+  ASSERT_EQ(output.size(), 0);
+
+  arabic = "-100";
+  output.clear();
+  EXPECT_FALSE(Util::ArabicToKanji(arabic, &output));
+  ASSERT_EQ(output.size(), 0);
+
+  arabic = "18446744073709551615";  // UINT64_MAX  + 1
+  output.clear();
+  EXPECT_TRUE(Util::ArabicToKanji(arabic, &output));
+  // "千八百四十四京六千七百四十四兆七百三十七億九百五十五万千六百十五"
+  EXPECT_EQ("\xE5\x8D\x83\xE5\x85\xAB\xE7\x99\xBE\xE5\x9B\x9B"
+            "\xE5\x8D\x81\xE5\x9B\x9B\xE4\xBA\xAC\xE5\x85\xAD"
+            "\xE5\x8D\x83\xE4\xB8\x83\xE7\x99\xBE\xE5\x9B\x9B"
+            "\xE5\x8D\x81\xE5\x9B\x9B\xE5\x85\x86\xE4\xB8\x83"
+            "\xE7\x99\xBE\xE4\xB8\x89\xE5\x8D\x81\xE4\xB8\x83"
+            "\xE5\x84\x84\xE4\xB9\x9D\xE7\x99\xBE\xE4\xBA\x94"
+            "\xE5\x8D\x81\xE4\xBA\x94\xE4\xB8\x87\xE5\x8D\x83"
+            "\xE5\x85\xAD\xE7\x99\xBE\xE5\x8D\x81\xE4\xBA\x94",
+            output[0].value);
+}
+
+  // ArabicToSeparatedArabic TEST
+TEST(UtilTest, ArabicToSeparatedArabicTest) {
+  string arabic;
+  vector<Util::NumberString> output;
+
+  arabic = "4";
+  output.clear();
+  EXPECT_TRUE(Util::ArabicToSeparatedArabic(arabic, &output));
+  ASSERT_EQ(output.size(), 2);
+
+  EXPECT_EQ("4", output[0].value);
+  EXPECT_EQ(Util::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH,
+            output[0].style);
+  // "４"
+  EXPECT_EQ("\xEF\xBC\x94", output[1].value);
+  EXPECT_EQ(Util::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH,
+            output[1].style);
+
+  arabic = "123456789";
+  output.clear();
+  EXPECT_TRUE(Util::ArabicToSeparatedArabic(arabic, &output));
+  ASSERT_EQ(output.size(), 2);
+
+  EXPECT_EQ("123,456,789", output[0].value);
+  EXPECT_EQ(Util::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH,
+            output[0].style);
+  // "１２３，４５６，７８９"
+  EXPECT_EQ("\xEF\xBC\x91\xEF\xBC\x92\xEF\xBC\x93\xEF\xBC\x8C"
+            "\xEF\xBC\x94\xEF\xBC\x95\xEF\xBC\x96\xEF\xBC\x8C"
+            "\xEF\xBC\x97\xEF\xBC\x98\xEF\xBC\x99", output[1].value);
+  EXPECT_EQ(Util::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH,
+            output[1].style);
+
+  arabic = "0123456789";
+  output.clear();
+  EXPECT_FALSE(Util::ArabicToSeparatedArabic(arabic, &output));
+  ASSERT_EQ(output.size(), 0);
+
+  arabic = "asdf0123456789";
+  output.clear();
+  EXPECT_FALSE(Util::ArabicToSeparatedArabic(arabic, &output));
+  ASSERT_EQ(output.size(), 0);
+
+  arabic = "0.001";
+  output.clear();
+  EXPECT_FALSE(Util::ArabicToSeparatedArabic(arabic, &output));
+  ASSERT_EQ(output.size(), 0);
+
+  arabic = "-100";
+  output.clear();
+  EXPECT_FALSE(Util::ArabicToSeparatedArabic(arabic, &output));
+  ASSERT_EQ(output.size(), 0);
+
+  arabic = "18446744073709551616";  // UINT64_MAX + 1
+  output.clear();
+  EXPECT_TRUE(Util::ArabicToSeparatedArabic(arabic, &output));
+  EXPECT_EQ("18,446,744,073,709,551,616", output[0].value);
+}
+
+  // ArabicToOtherForms
+TEST(UtilTest, ArabicToOtherFormsTest) {
+  string arabic;
+  vector<Util::NumberString> output;
+
+  arabic = "5";
+  output.clear();
+  EXPECT_TRUE(Util::ArabicToOtherForms(arabic, &output));
+  ASSERT_EQ(output.size(), 3);
+
+  // "Ⅴ"
+  EXPECT_EQ("\xE2\x85\xA4", output[0].value);
+  EXPECT_EQ(Util::NumberString::NUMBER_ROMAN_CAPITAL, output[0].style);
+
+  // "ⅴ"
+  EXPECT_EQ("\xE2\x85\xB4", output[1].value);
+  EXPECT_EQ(Util::NumberString::NUMBER_ROMAN_SMALL, output[1].style);
+
+  // "⑤"
+  EXPECT_EQ("\xE2\x91\xA4", output[2].value);
+  EXPECT_EQ(Util::NumberString::NUMBER_CIRCLED, output[2].style);
+
+  arabic = "0123456789";
+  output.clear();
+  EXPECT_FALSE(Util::ArabicToOtherForms(arabic, &output));
+  ASSERT_EQ(output.size(), 0);
+
+  arabic = "asdf0123456789";
+  output.clear();
+  EXPECT_FALSE(Util::ArabicToOtherForms(arabic, &output));
+  ASSERT_EQ(output.size(), 0);
+
+  arabic = "0.001";
+  output.clear();
+  EXPECT_FALSE(Util::ArabicToOtherForms(arabic, &output));
+  ASSERT_EQ(output.size(), 0);
+
+  arabic = "-100";
+  output.clear();
+  EXPECT_FALSE(Util::ArabicToOtherForms(arabic, &output));
+  ASSERT_EQ(output.size(), 0);
+
+  arabic = "18446744073709551616";  // UINT64_MAX + 1
+  output.clear();
+  EXPECT_FALSE(Util::ArabicToOtherForms(arabic, &output));
+}
+
+  // ArabicToOtherRadixes
+TEST(UtilTest, ArabicToOtherRadixesTest) {
+  string arabic;
+  vector<Util::NumberString> output;
+
+  arabic = "1";
+  output.clear();
+  EXPECT_TRUE(Util::ArabicToOtherRadixes(arabic, &output));
+  ASSERT_EQ(output.size(), 0);
+
+  arabic = "2";
+  output.clear();
+  EXPECT_TRUE(Util::ArabicToOtherRadixes(arabic, &output));
+  ASSERT_EQ(output.size(), 1);
+
+  arabic = "8";
+  output.clear();
+  EXPECT_TRUE(Util::ArabicToOtherRadixes(arabic, &output));
+  ASSERT_EQ(output.size(), 2);
+  EXPECT_EQ("010", output[0].value);
+  EXPECT_EQ(Util::NumberString::NUMBER_OCT, output[0].style);
+  EXPECT_EQ("0b1000", output[1].value);
+  EXPECT_EQ(Util::NumberString::NUMBER_BIN, output[1].style);
+
+  arabic = "16";
+  output.clear();
+  EXPECT_TRUE(Util::ArabicToOtherRadixes(arabic, &output));
+  ASSERT_EQ(output.size(), 3);
+  EXPECT_EQ("0x10", output[0].value);
+  EXPECT_EQ(Util::NumberString::NUMBER_HEX, output[0].style);
+  EXPECT_EQ("020", output[1].value);
+  EXPECT_EQ(Util::NumberString::NUMBER_OCT, output[1].style);
+  EXPECT_EQ("0b10000", output[2].value);
+  EXPECT_EQ(Util::NumberString::NUMBER_BIN, output[2].style);
+
+  arabic = "asdf0123456789";
+  output.clear();
+  EXPECT_FALSE(Util::ArabicToOtherRadixes(arabic, &output));
+  ASSERT_EQ(output.size(), 0);
+
+  arabic = "0.001";
+  output.clear();
+  EXPECT_FALSE(Util::ArabicToOtherRadixes(arabic, &output));
+  ASSERT_EQ(output.size(), 0);
+
+  arabic = "-100";
+  output.clear();
+  EXPECT_FALSE(Util::ArabicToOtherRadixes(arabic, &output));
+  ASSERT_EQ(output.size(), 0);
+
+  arabic = "18446744073709551616";  // UINT64_MAX + 1
+  output.clear();
+  EXPECT_FALSE(Util::ArabicToOtherRadixes(arabic, &output));
 }
 
 }  // namespace mozc

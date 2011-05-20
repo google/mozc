@@ -34,6 +34,9 @@
 
 #include <ibus.h>
 
+#include <map>
+#include <string>
+
 #include "base/base.h"
 #include "base/protobuf/message.h"
 
@@ -61,6 +64,13 @@ class ConfigUtil {
                               GValue *value,
 #endif
                               protobuf::Message *result);
+
+#ifdef OS_CHROMEOS
+  // Load config from ibus-memconf.
+  static void InitConfig(IBusConfig* config,
+                         const char *section_name,
+                         const map<string, const char*> &name_to_field);
+#endif
 
  private:
   // Disallow instantiation

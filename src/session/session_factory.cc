@@ -34,14 +34,14 @@
 #include "base/singleton.h"
 #include "composer/table.h"
 #include "converter/converter_interface.h"
+#include "session/internal/keymap.h"
 #include "session/session.h"
 
 namespace mozc {
 namespace session {
 
 SessionFactory::SessionFactory()
-    : keymap_(new keymap::KeyMapManager()),
-      is_available_(false) {
+    : is_available_(false) {
 
   if (!Singleton<composer::Table>::get()->Initialize()) {
     return;
@@ -53,12 +53,12 @@ SessionFactory::~SessionFactory() {
 }
 
 void SessionFactory::Reload() {
-  keymap_->Reload();
+  Singleton<keymap::KeyMapManager>::get()->Reload();
   Singleton<composer::Table>::get()->Reload();
 }
 
 SessionInterface *SessionFactory::NewSession() {
-  return new Session(keymap_.get());
+  return new Session();
 }
 
 bool SessionFactory::IsAvailable() const {

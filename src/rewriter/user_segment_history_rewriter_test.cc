@@ -30,18 +30,19 @@
 #include "rewriter/user_segment_history_rewriter.h"
 
 #include <string>
+
 #include "base/init.h"
 #include "base/util.h"
 #include "converter/character_form_manager.h"
 #include "converter/converter_interface.h"
 #include "converter/converter_mock.h"
-#include "converter/pos_matcher.h"
 #include "converter/segments.h"
+#include "dictionary/pos_matcher.h"
+#include "rewriter/number_rewriter.h"
 #include "session/config.pb.h"
 #include "session/config_handler.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-#include "rewriter/number_rewriter.h"
 
 DECLARE_string(test_tmpdir);
 
@@ -1538,6 +1539,57 @@ TEST_F(UserSegmentHistoryRewriterTest, RandomTest) {
     EXPECT_EQ(expected,
               segments.segment(0).candidate(0).value);
     Util::Sleep(2000);   // update LRU timer
+  }
+}
+
+TEST_F(UserSegmentHistoryRewriterTest, AnnotationAfterLearning) {
+  SetLearningLevel(config::Config::DEFAULT_HISTORY);
+  Segments segments;
+  UserSegmentHistoryRewriter rewriter;
+
+  {
+    segments.Clear();
+    InitSegments(&segments, 1, 2);
+    segments.mutable_segment(0)->set_key("abc");
+    Segment::Candidate *candidate =
+        segments.mutable_segment(0)->mutable_candidate(1);
+    // "ａｂｃ"
+    candidate->value = "\xEF\xBD\x81\xEF\xBD\x82\xEF\xBD\x83";
+    // "ａｂｃ"
+    candidate->content_value = "\xEF\xBD\x81\xEF\xBD\x82\xEF\xBD\x83";
+    candidate->content_key = "abc";
+    // "[全] アルファベット"
+    candidate->description = "[\xE5\x85\xA8] \xE3\x82\xA2\xE3\x83\xAB"
+        "\xE3\x83\x95\xE3\x82\xA1\xE3\x83\x99\xE3\x83\x83\xE3\x83\x88";
+    segments.mutable_segment(0)->move_candidate(1, 0);
+    segments.mutable_segment(0)->mutable_candidate(0)->attributes
+        |= Segment::Candidate::RERANKED;
+    segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
+    rewriter.Finish(&segments);
+  }
+
+  {
+    segments.Clear();
+    InitSegments(&segments, 1, 2);
+    segments.mutable_segment(0)->set_key("abc");
+    Segment::Candidate *candidate =
+        segments.mutable_segment(0)->mutable_candidate(1);
+    // "ａｂｃ"
+    candidate->value = "\xEF\xBD\x81\xEF\xBD\x82\xEF\xBD\x83";
+    // "ａｂｃ"
+    candidate->content_value = "\xEF\xBD\x81\xEF\xBD\x82\xEF\xBD\x83";
+    candidate->content_key = "abc";
+    // "[全] アルファベット"
+    candidate->description = "[\xE5\x85\xA8]\xE3\x82\xA2\xE3\x83\xAB"
+        "\xE3\x83\x95\xE3\x82\xA1\xE3\x83\x99\xE3\x83\x83\xE3\x83\x88";
+    candidate->content_key = "abc";
+    rewriter.Rewrite(&segments);
+    EXPECT_EQ("abc", segments.segment(0).candidate(0).content_value);
+    // "[半] アルファベット"
+    EXPECT_EQ("[\xE5\x8D\x8A] \xE3\x82\xA2\xE3\x83\xAB\xE3\x83\x95\xE3\x82\xA1"
+              "\xE3\x83\x99\xE3\x83\x83\xE3\x83\x88",
+              segments.segment(0).candidate(0).description);
+    rewriter.Finish(&segments);
   }
 }
 }  // namespace mozc

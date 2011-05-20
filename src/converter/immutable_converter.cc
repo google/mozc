@@ -34,20 +34,21 @@
 #include <string>
 #include <utility>
 #include <vector>
+
 #include "base/base.h"
 #include "base/config_file_stream.h"
 #include "base/singleton.h"
 #include "base/util.h"
+#include "converter/connector_interface.h"
 #include "converter/key_corrector.h"
 #include "converter/lattice.h"
-#include "converter/segments.h"
-#include "converter/connector_interface.h"
 #include "converter/nbest_generator.h"
-#include "converter/pos_matcher.h"
 #include "converter/segmenter.h"
+#include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
-#include "session/config_handler.h"
+#include "dictionary/pos_matcher.h"
 #include "session/config.pb.h"
+#include "session/config_handler.h"
 
 namespace mozc {
 namespace {
@@ -75,7 +76,7 @@ uint16 GetPosGroup(uint16 lid) {
 }
 
 void ExpandCandidates(NBestGenerator *nbest, Segment *segment,
-                      size_t expand_size) {
+                      Segments::RequestType request_type, size_t expand_size) {
   DCHECK(nbest);
   DCHECK(segment);
   CHECK_GT(expand_size, 0);
@@ -87,7 +88,7 @@ void ExpandCandidates(NBestGenerator *nbest, Segment *segment,
 
     // if NBestGenerator::Next() returns NULL,
     // no more entries are generated.
-    if (!nbest->Next(candidate)) {
+    if (!nbest->Next(candidate, request_type)) {
       segment->pop_back_candidate();
       break;
     }
@@ -1274,7 +1275,8 @@ bool ImmutableConverterImpl::MakeSegments(Segments *segments,
       nbest->Init(prev, node->next, segments->lattice(),
                   is_prediction);
       segment->set_key(key);
-      ExpandCandidates(nbest.get(), segment, expand_size);
+      ExpandCandidates(nbest.get(), segment, segments->request_type(),
+                       expand_size);
       if (node->node_type == Node::CON_NODE) {
         segment->set_segment_type(Segment::FIXED_VALUE);
       } else {

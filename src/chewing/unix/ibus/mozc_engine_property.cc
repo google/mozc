@@ -40,7 +40,7 @@ namespace ibus {
 // The list of properties used in ibus-mozc.
 const MozcEngineProperty kMozcEngineProperties[] = {
   {
-    commands::DIRECT,
+    commands::HALF_ASCII,
     "CompositionMode.English",
     "English",
     "A",

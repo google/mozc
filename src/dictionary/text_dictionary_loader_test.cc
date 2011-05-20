@@ -27,13 +27,17 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "dictionary/text_dictionary_loader.h"
+
 #include <string>
 #include <vector>
+
 #include "base/base.h"
 #include "base/file_stream.h"
 #include "base/util.h"
 #include "dictionary/dictionary_token.h"
-#include "dictionary/text_dictionary_loader.h"
+#include "dictionary/pos_matcher.h"
+#include "dictionary/system/system_dictionary.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
@@ -130,6 +134,29 @@ TEST(TextDictionaryLoaderText, BasicTest) {
   }
 
   Util::Unlink(filename);
+}
+
+TEST(TextDictionaryLoaderTest,  RewriteSpecialTokenTest) {
+  Token token;
+  token.lid = 100;
+  token.rid = 200;
+
+  EXPECT_TRUE(TextDictionaryLoader::RewriteSpecialToken(&token, ""));
+  EXPECT_EQ(100, token.lid);
+  EXPECT_EQ(200, token.rid);
+
+  EXPECT_TRUE(TextDictionaryLoader::RewriteSpecialToken(&token,
+                                                        "SPELLING_CORRECTION"));
+  EXPECT_EQ(100 + SystemDictionary::kSpellingCorrectionPosOffset, token.lid);
+  EXPECT_EQ(200, token.rid);
+
+  EXPECT_TRUE(TextDictionaryLoader::RewriteSpecialToken(&token,
+                                                        "ZIP_CODE"));
+  EXPECT_EQ(POSMatcher::GetZipcodeId(), token.lid);
+  EXPECT_EQ(POSMatcher::GetZipcodeId(), token.rid);
+
+  EXPECT_FALSE(TextDictionaryLoader::RewriteSpecialToken(&token,
+                                                         "foo"));
 }
 
 TEST(TextDictionaryLoaderText, LoadMultipleFilesTest) {

@@ -54,6 +54,8 @@ TEST(ImeContextTest, DefaultValues) {
   EXPECT_EQ(ImeContext::NONE, context.state());
 
   EXPECT_TRUE(context.transform_table().empty());
+
+  EXPECT_EQ("", context.initial_composition());
 }
 
 TEST(ImeContextTest, BasicTest) {
@@ -99,6 +101,11 @@ TEST(ImeContextTest, BasicTest) {
 
   context.mutable_output()->set_id(1414);
   EXPECT_EQ(1414, context.output().id());
+
+  // "家"
+  const string house = "\xE5\xAE\xB6";
+  context.set_initial_composition(house);
+  EXPECT_EQ(house, context.initial_composition());
 }
 
 TEST(ImeContextTest, CopyContext) {
@@ -170,6 +177,8 @@ TEST(ImeContextTest, CopyContext) {
     source.mutable_composer()->InsertCharacter("a");
     source.mutable_composer()->InsertCharacter("n");
     source.mutable_converter()->Convert(&source.composer());
+    // "早い"
+    source.set_initial_composition("\xE6\x97\xA9\xE3\x81\x84");
 
     string composition;
     source.composer().GetQueryForConversion(&composition);
@@ -194,8 +203,11 @@ TEST(ImeContextTest, CopyContext) {
     EXPECT_EQ(1, output.preedit().segment_size());
     // "庵"
     EXPECT_EQ("\xE5\xBA\xB5", output.preedit().segment(0).value());
+
+    // "早い"
+    EXPECT_EQ("\xE6\x97\xA9\xE3\x81\x84", destination.initial_composition());
   }
 }
 
-}  // nsmaespace session
+}  // namespace session
 }  // namespace mozc

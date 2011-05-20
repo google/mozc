@@ -84,6 +84,9 @@ class KeyTranslator {
                       guint keycode,
                       guint modifiers);
 
+  // Returns true iff key is printable.
+  static bool IsPrintable(guint keyval, guint keycode, guint modifiers);
+
   // Initializes private fields.
   void Init();
 

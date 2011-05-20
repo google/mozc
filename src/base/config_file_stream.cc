@@ -29,11 +29,13 @@
 
 #include "base/config_file_stream.h"
 
+#include <map>
 #include <string.h>
 #include <fstream>
 #include <sstream>
 #include "base/base.h"
 #include "base/file_stream.h"
+#include "base/singleton.h"
 
 namespace mozc {
 
@@ -42,6 +44,7 @@ namespace {
 static const char kSystemPrefix[] = "system://";
 static const char kUserPrefix[]   = "user://";
 static const char kFilePrefix[]   = "file://";
+static const char kMemoryPrefix[] = "memory://";
 
 struct FileData {
   const char *name;
@@ -57,13 +60,31 @@ string RemovePrefix(const char *prefix, const string &filename) {
   return filename.substr(size, filename.size() - size);
 }
 
+class OnMemoryFileMap {
+ public:
+  string get(const string &key) const {
+    map<string, string>::const_iterator it = map_.find(key);
+    if (it != map_.end()) {
+      return it->second;
+    }
+    return string("");
+  }
+
+  void set(const string &key, const string &value) {
+    map_[key] = value;
+  }
+
+ private:
+  map<string, string> map_;
+};
+
 #include "base/config_file_stream_data.h"
 }  // namespace
 
 istream *ConfigFileStream::Open(const string &filename,
                                 ios_base::openmode mode) {
   // system://foo.bar.txt
-  if (filename.find(kSystemPrefix) == 0) {
+  if (Util::StartsWith(filename, kSystemPrefix)) {
     const string new_filename = RemovePrefix(kSystemPrefix, filename);
     for (size_t i = 0; i < arraysize(kFileData); ++i) {
       if (new_filename == kFileData[i].name) {
@@ -78,7 +99,7 @@ istream *ConfigFileStream::Open(const string &filename,
       }
     }
   // user://foo.bar.txt
-  } else if (filename.find(kUserPrefix) == 0) {
+  } else if (Util::StartsWith(filename, kUserPrefix)) {
     const string new_filename =
         Util::JoinPath(Util::GetUserProfileDirectory(),
                        RemovePrefix(kUserPrefix, filename));
@@ -90,9 +111,18 @@ istream *ConfigFileStream::Open(const string &filename,
     delete ifs;
     return NULL;
   // file:///foo.map
-  } else if (filename.find(kFilePrefix) == 0) {
+  } else if (Util::StartsWith(filename, kFilePrefix)) {
     const string new_filename = RemovePrefix(kFilePrefix, filename);
     InputFileStream *ifs = new InputFileStream(new_filename.c_str(), mode);
+    CHECK(ifs);
+    if (*ifs) {
+      return ifs;
+    }
+    delete ifs;
+    return NULL;
+  } else if (Util::StartsWith(filename, kMemoryPrefix)) {
+    istringstream *ifs = new istringstream(
+        Singleton<OnMemoryFileMap>::get()->get(filename), mode);
     CHECK(ifs);
     if (*ifs) {
       return ifs;
@@ -113,13 +143,49 @@ istream *ConfigFileStream::Open(const string &filename,
   return NULL;
 }
 
+bool ConfigFileStream::AtomicUpdate(const string &filename,
+                                    const string &new_contents) {
+  if (Util::StartsWith(filename, kMemoryPrefix)) {
+    Singleton<OnMemoryFileMap>::get()->set(filename, new_contents);
+    return true;
+  } else if (Util::StartsWith(filename, kSystemPrefix)) {
+    LOG(ERROR) << "Cannot update system:// files.";
+    return false;
+  }
+
+  // We should save the new config first,
+  // as we may rewrite the original config according to platform.
+  // The original config should be platform independent.
+  const string real_filename = GetFileName(filename);
+  if (real_filename.empty()) {
+    return false;
+  }
+
+  const string tmp_filename = real_filename + ".tmp";
+  {
+    OutputFileStream ofs(tmp_filename.c_str(), ios::out | ios::binary);
+    if (!ofs) {
+      LOG(ERROR) << "cannot open " << tmp_filename;
+      return false;
+    }
+    ofs << new_contents;
+  }
+
+  if (!Util::AtomicRename(tmp_filename, real_filename)) {
+    LOG(ERROR) << "Util::AtomicRename failed";
+    return false;
+  }
+  return true;
+}
+
 string ConfigFileStream::GetFileName(const string &filename) {
-  if (filename.find(kSystemPrefix) == 0) {
+  if (Util::StartsWith(filename, kSystemPrefix) ||
+      Util::StartsWith(filename, kMemoryPrefix)) {
     return "";
-  } else if (filename.find(kUserPrefix) == 0) {
+  } else if (Util::StartsWith(filename, kUserPrefix)) {
     return Util::JoinPath(Util::GetUserProfileDirectory(),
                           RemovePrefix(kUserPrefix, filename));
-  } else if (filename.find(kFilePrefix) == 0) {
+  } else if (Util::StartsWith(filename, kFilePrefix)) {
     return RemovePrefix(kUserPrefix, filename);
   } else {
     LOG(WARNING) << filename << " has no prefix. open from localfile";

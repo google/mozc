@@ -43,6 +43,8 @@ namespace {
 
 const char kConversionExpect[]    = "Conversion Expect";
 const char kConversionNotExpect[] = "Conversion Not Expect";
+const char kReverseConversionExpect[]    = "ReverseConversion Expect";
+const char kReverseConversionNotExpect[] = "ReverseConversion Not Expect";
 const char kPredictionExpect[]    = "Prediction Expect";
 const char kPredictionNotExpect[] = "Prediction Not Expect";
 
@@ -101,6 +103,9 @@ bool QualityRegressionUtil::ConvertAndTest(const string &key,
   if (command == kConversionExpect ||
       command == kConversionNotExpect) {
     converter_->StartConversion(segments_.get(), key);
+  } else if (command == kReverseConversionExpect ||
+    command == kReverseConversionNotExpect) {
+    converter_->StartReverseConversion(segments_.get(), key);
   } else if (command == kPredictionExpect ||
              command == kPredictionNotExpect) {
     converter_->StartPrediction(segments_.get(), key);
@@ -126,6 +131,7 @@ bool QualityRegressionUtil::ConvertAndTest(const string &key,
   bool result = (actual_rank >= 0 && actual_rank <= expected_rank);
 
   if (command == kConversionNotExpect ||
+      command == kReverseConversionNotExpect ||
       command == kPredictionNotExpect) {
     result = !result;
   }

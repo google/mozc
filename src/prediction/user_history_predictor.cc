@@ -135,9 +135,14 @@ bool IsPrivacySensitive(const Segments *segments) {
   if (segments->conversion_segments_size() != 1) {
     return false;
   }
-  const string &first_candidate_value =
-      segments->conversion_segment(0).candidate(0).value;
-  return (Util::GetCharacterSet(first_candidate_value) == Util::ASCII);
+  const Segment &first_segment = segments->conversion_segment(0);
+  const string &first_candidate_value = first_segment.candidate(0).value;
+  // if key looks like hiragana, the candidate is Katakana to English
+  // transliteration. Don't suppress transliterated candidates.
+  // http://b/issue?id=4394325
+  return (Util::GetCharacterSet(first_candidate_value) == Util::ASCII &&
+          (Util::ContainsScriptType(first_segment.key(), Util::ALPHABET) ||
+           Util::GetScriptType(first_segment.key()) == Util::NUMBER));
 }
 }  // namespace
 
@@ -1211,20 +1216,35 @@ void UserHistoryPredictor::Finish(Segments *segments) {
     }
 
     set<uint64> seen;
+    bool this_was_seen = false;
     for (size_t i = history_segments_size; i < segments->segments_size(); ++i) {
       const Segment &segment = segments->segment(i);
       all_key += segment.key();
       all_value += segment.candidate(0).value;
       uint32 next_fp = (i == segments->segments_size() - 1) ?
           0 : SegmentFingerprint(segments->segment(i + 1));
+      // remember the first segment
+      if (i == history_segments_size) {
+        seen.insert(SegmentFingerprint(segment));
+      }
+      uint32 next_fp_to_set = next_fp;
       // If two duplicate segments exist, kills the link
-      // to the next candidate to prevent unexceptional loops.
-      if (!seen.insert(SegmentFingerprint(segment)).second) {
-        next_fp = 0;
+      // TO/FROM the second one to prevent loops.
+      // Only killing "TO" link caused bug #2982886:
+      // after converting "らいおん（もうじゅう）とぞうりむし（びせいぶつ）"
+      // and typing "ぞうりむし", "ゾウリムシ（猛獣" was suggested.
+      if (this_was_seen) {
+        next_fp_to_set = 0;
+      }
+      if (!seen.insert(next_fp).second) {
+        next_fp_to_set = 0;
+        this_was_seen = true;
+      } else {
+        this_was_seen = false;
       }
       Insert(segment.key(), segment.candidate(0).value,
              segment.candidate(0).description,
-             kInsertConversion, next_fp,
+             kInsertConversion, next_fp_to_set,
              last_access_time, segments);
     }
 

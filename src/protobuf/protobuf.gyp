@@ -163,6 +163,9 @@
         ['OS=="linux"', {
           'conditions': [
             ['use_libprotobuf!=1', {
+              'cflags': [
+                '-Wno-unused-result',  # protoc has unused result.
+              ],
               'sources': ['<@(protoc_sources)'],
             }],
           ],

@@ -49,6 +49,10 @@ class TextDictionaryLoader {
   // You can pass multiple filenames delimiterd by ",".
   bool OpenWithLineLimit(const char *filename, int lines_limit);
 
+  // Encode special information into |token| with the |label|.
+  // Currently, label must be empty, "SPELLINC_CORRECITON" or "ZIP_CODE".
+  static bool RewriteSpecialToken(Token *token, const string &label);
+
   void Close();
 
   virtual void CollectTokens(vector<Token *> *res);

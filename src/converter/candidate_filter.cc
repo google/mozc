@@ -32,18 +32,18 @@
 
 #include "converter/candidate_filter.h"
 
-#include <limits.h>
 #include <algorithm>
+#include <climits>
 #include <map>
 #include <set>
-#include <vector>
 #include <utility>
+#include <vector>
 
-#include "base/util.h"
 #include "base/singleton.h"
+#include "base/util.h"
 #include "converter/node.h"
-#include "converter/pos_matcher.h"
 #include "converter/segments.h"
+#include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
 
 namespace mozc {
@@ -175,7 +175,10 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
   }
 
   // Check Katakana transliterations
-  {
+  // Skip this check when the conversion mode is real-time;
+  // otherwise this ruins the whole sentence
+  // that starts with alphabets.
+  if (!(candidate->attributes & Segment::Candidate::REALTIME_CONVERSION)) {
     const bool is_top_english_t13n = IsEnglishT13NValue(nodes[0]->value);
     for (size_t i = 1; i < nodes.size(); ++i) {
       // EnglishT13N must be the prefix of the candidate.

@@ -47,7 +47,7 @@
     # GYP_DEFINES='extra_linux_libs="-lfoo -lbar"' python build_mozc.py gyp
     'extra_linux_libs%': [],
 
-    # warning_cflags_cflags will be shared with Mac and Linux.
+    # warning_cflags will be shared with Mac and Linux.
     'warning_cflags': [
       '-Wall',
       '-Werror',
@@ -56,7 +56,7 @@
       '-Wno-deprecated-declarations',
       '-Wwrite-strings',
     ],
-    # gcc_cflags_cflags will be shared with Mac and Linux.
+    # gcc_cflags will be shared with Mac and Linux.
     'gcc_cflags': [
       '-fmessage-length=0',
       '-fno-omit-frame-pointer',
@@ -161,10 +161,15 @@
            'defines': ['GOOGLE_JAPANESE_INPUT_BUILD'],
           }, {  # else
            'defines': ['MOZC_BUILD'],
-          },],
+          }],
           ['channel_dev==1', {
            'defines': ['CHANNEL_DEV'],
-          },],
+          }],
+          ['not(OS=="linux" and use_libprotobuf!=0)', {
+            'include_dirs': [
+              '../protobuf/files/src',
+            ],
+          }],
         ],
       },
       'x86_Base': {
@@ -338,7 +343,6 @@
           '_WINDOWS',
         ],
         'include_dirs': [
-          '../protobuf/files/src',
           '<(DEPTH)/third_party/gtest',
           '<(DEPTH)/third_party/gtest/include',
         ],
@@ -426,12 +430,15 @@
         ],
         'cflags': [
           '<@(gcc_cflags)',
+          '<@(warning_cflags)',
+          '-Wno-array-bounds',  # Probably GCC's bug 43949 causes trouble
+          '-Wno-deprecated',
           '-fPIC',
           '-fno-exceptions',
         ],
         'libraries': [
-          '-lcurl',
           '-lcrypto',
+          '-lcurl',
           '-lpthread',
           '-lrt',
           '-lssl',
@@ -443,11 +450,6 @@
             'include_dirs': [
               '<(DEPTH)/third_party/gtest',
               '<(DEPTH)/third_party/gtest/include',
-            ],
-          }],
-          ['use_libprotobuf==0', {
-            'include_dirs': [
-              '../protobuf/files/src',
             ],
           }],
           ['chromeos==1', {
@@ -462,7 +464,6 @@
           'OS_MACOSX',
         ],
         'include_dirs': [
-          '../protobuf/files/src',
           '<(DEPTH)/third_party/gtest',
           '<(DEPTH)/third_party/gtest/include',
         ],
@@ -482,6 +483,7 @@
           'libraries': [
             '$(SDKROOT)/System/Library/Frameworks/Cocoa.framework',
             '$(SDKROOT)/System/Library/Frameworks/CoreFoundation.framework',
+            '$(SDKROOT)/System/Library/Frameworks/IOKit.framework',
             '$(SDKROOT)/System/Library/Frameworks/Security.framework',
             '$(SDKROOT)/System/Library/Frameworks/SystemConfiguration.framework',
             '/usr/lib/libcrypto.dylib',

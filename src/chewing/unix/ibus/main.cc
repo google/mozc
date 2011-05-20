@@ -37,6 +37,7 @@
 #include "chewing/unix/ibus/config_updater.h"
 #include "chewing/unix/ibus/main.h"
 #include "session/config_handler.h"
+#include "unix/ibus/config_util.h"
 #include "unix/ibus/mozc_engine.h"
 #include "unix/ibus/path_util.h"
 
@@ -133,18 +134,17 @@ void InitIBusComponent(bool executed_by_ibus_daemon) {
 
 int main(gint argc, gchar **argv) {
   InitGoogle(argv[0], &argc, &argv, true);
-#ifdef OS_CHROMEOS
-  // Use a different file name
-  mozc::config::ConfigHandler::SetConfigFileName("user://chewing_config.1.db");
-  mozc::config::ConfigHandler::Reload();
-#endif
   ibus_init();
   InitIBusComponent(FLAGS_ibus);
-#ifndef OS_CHROMEOS
+#ifdef OS_CHROMEOS
+  // On Chrome OS, mozc does not store the config data to a local file.
+  mozc::config::ConfigHandler::SetConfigFileName("memory://chewing_config.1.db");
+  mozc::chewing::ConfigUpdater::InitConfig(g_config);
+#else
 #ifndef NO_LOGGING
   EnableVerboseLog();
-#endif
-#endif
+#endif  // NO_LOGGING
+#endif  // OS_CHROMEOS
   ibus_main();
 
 #ifdef OS_CHROMEOS

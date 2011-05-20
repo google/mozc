@@ -44,26 +44,27 @@ const char kProductNameLocalized[] = "Mozc";
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
 #if defined(OS_WINDOWS)
-#ifdef GOOGLE_JAPANESE_INPUT_BUILD
-// Most of constants for Windows have not been branding-aware yet.
-
 // Safe length of IME name in terms of IME_ESC_IME_NAME request.
 // See http://msdn.microsoft.com/en-us/library/dd318166.aspx for details.
 const int kSafeIMENameLengthForNTInTchars = 64;
 
+// UIWnd class name (including the null terminator) for the IMM32 can be up to
+// 16 TCHARs.
+const int kIMEUIwndClassNameLimitInTchars = 16;
+
+const wchar_t kDefaultKeyboardLayout[] = L"00000411";
+
+#ifdef GOOGLE_JAPANESE_INPUT_BUILD
 const char kCompanyNameInEnglish[] = "Google";
 const char kEventPathPrefix[] = "Global\\GoogleJapaneseInput.event.";
 const char kMutexPathPrefix[] = "Global\\GoogleJapaneseInput.mutex.";
 const char kMozcServerName[] = "GoogleIMEJaConverter.exe";
 const char kOldIMEFile[] = "GoogleIMEJa.ime";
 const char kIMEFile[] = "GIMEJa.ime";
-const char kMozcTIP32[] = "GoogleIMEJaTIP32.dll";
-const char kMozcTIP64[] = "GoogleIMEJaTIP64.dll";
 const char kMozcBroker32[] = "GoogleIMEJaBroker32.exe";
 const char kMozcBroker64[] = "GoogleIMEJaBroker64.exe";
 const char kMozcTool[] = "GoogleIMEJaTool.exe";
 const char kMozcRenderer[] = "GoogleIMEJaRenderer.exe";
-const char kCrashReportApp[] = "GoogleIMEJaCrashReporter.exe";
 const wchar_t kMessageReceiverMessageName[]
     = L"googlejapaneseinput.renderer.message";
 const wchar_t kMessageReceiverClassName[]
@@ -72,11 +73,6 @@ const wchar_t kCandidateWindowClassName[]
     = L"GoogleJapaneseInputCandidateWindow";
 const wchar_t kCompositionWindowClassName[]
     = L"GoogleJapaneseInputCompositionWindow";
-// This UIWnd class name has been used by the helper ime module which does some
-// workarounds against some problematic versions of msctf.dll on Windows XP.
-// Please note IMM32 caches UIWnd class name (probably per window station).
-// Whenever you rename it, restart Windows before testing.
-const wchar_t kDummyIMEUIWndClassName[] = L"GIMEJaUIWnd";
 // This UIWnd class name should be used by and only by the actual IMM32
 // version.  Make sure that |kIMEUIWndClassName| is different from
 // |kDummyIMEUIWndClassName| so that the dummy IME and the actual IME can
@@ -85,9 +81,6 @@ const wchar_t kDummyIMEUIWndClassName[] = L"GIMEJaUIWnd";
 // Please note IMM32 caches UIWnd class name (probably per window station).
 // Whenever you rename it, restart Windows before testing.
 const wchar_t kIMEUIWndClassName[] = L"GIMEJaUIWindow";
-// UIWnd class name (including the null terminator) for the IMM32 can be up to
-// 16 TCHARs.
-const int kIMEUIwndClassNameLimitInTchars = 16;
 const char kIPCPrefix[] = "\\\\.\\pipe\\googlejapaneseinput.";
 const wchar_t kCandidateUIDescription[] = L"GoogleJapaneseInputCandidateUI";
 const wchar_t kConfigurationDisplayname[]
@@ -95,10 +88,32 @@ const wchar_t kConfigurationDisplayname[]
 const wchar_t kMozcRegKey[] = L"Software\\Google\\Google Japanese Input";
 const wchar_t kElevatedProcessDisabledKey[]
     = L"Software\\Policies\\Google\\Google Japanese Input\\Preferences";
-const wchar_t kDefaultKeyboardLayout[] = L"00000411";
 #else
+const char kCompanyNameInEnglish[] = "Mozc Project";
 const char kEventPathPrefix[] = "Global\\Mozc.event.";
 const char kMutexPathPrefix[] = "Global\\Mozc.mutex.";
+const char kMozcServerName[] = "mozc_server.exe";
+const char kOldIMEFile[] = "";
+const char kIMEFile[] = "mozc.ime";
+const char kMozcBroker32[] = "mozc_broker32.exe";
+const char kMozcBroker64[] = "mozc_broker64.exe";
+const char kMozcTool[] = "mozc_tool.exe";
+const char kMozcRenderer[] = "mozc_renderer.exe";
+const wchar_t kMessageReceiverMessageName[]
+    = L"mozc.renderer.message";
+const wchar_t kMessageReceiverClassName[]
+    = L"mozc.renderer.window";
+const wchar_t kCandidateWindowClassName[]
+    = L"MozcCandidateWindow";
+const wchar_t kCompositionWindowClassName[]
+    = L"MozcCompositionWindow";
+const wchar_t kIMEUIWndClassName[] = L"MozcUIWindow";
+const wchar_t kCandidateUIDescription[] = L"MozcCandidateUI";
+const wchar_t kConfigurationDisplayname[]
+    = L"Mozc Configuration";
+const wchar_t kMozcRegKey[] = L"Software\\Mozc Project\\Mozc";
+const wchar_t kElevatedProcessDisabledKey[]
+    = L"Software\\Policies\\Mozc Project\\Mozc\\Preferences";
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 #elif defined(OS_MACOSX)
 const char kMozcServerName[] = kProductPrefix "Converter.app";

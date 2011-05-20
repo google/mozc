@@ -37,25 +37,31 @@ class MacUtil {
   // Returns the label commonly used in the project for specified suffix.
   static string GetLabelForSuffix(const string &suffix);
 
-  // returns (basicaly) "~/Library/Application Support".
+  // Returns (basicaly) "~/Library/Application Support".
   static string GetApplicationSupportDirectory();
 
-  // returns (basically) ~/Library/Logs
+  // Returns (basically) ~/Library/Logs
   static string GetLoggingDirectory();
 
-  // returns os version string like, "Version 10.x (Build xXxxx)".
+  // Returns OS version string like, "Version 10.x (Build xXxxx)".
   static string GetOSVersionString();
 
-  // returns server directory using OS-specific API.
+  // Returns server directory using OS-specific API.
   static string GetServerDirectory();
+
+  // Returns the "Resouces/" directory in the current application.
+  static string GetResourcesDirectory();
+
+  // Returns the machine serial number.
+  static string GetSerialNumber();
 
   // Starts the specified service by using launchd.  "service_name" is
   // a suffix for the service label (like "Converter" or "Renderer").
   // If "pid" is non-null, it will store the pid of the launched
   // process in it.  Returns true if it successfully launches the
   // process.
-  static bool StartLaunchdServce(const string &service_name,
-                                 pid_t *pid);
+  static bool StartLaunchdService(const string &service_name,
+                                  pid_t *pid);
  private:
   MacUtil() {}
   ~MacUtil() {}

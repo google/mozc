@@ -39,7 +39,7 @@
     ],
     'ibus_client_dependencies' : [
       '../../client/client.gyp:client',
-      '../../session/session.gyp:ime_switch_util',
+      '../../session/session_base.gyp:ime_switch_util',
     ],
     'ibus_standalone_dependencies' : [
       '../../base/base.gyp:config_file_stream',
@@ -49,8 +49,9 @@
       '../../net/net.gyp:net',
       '../../prediction/prediction.gyp:prediction',
       '../../rewriter/rewriter.gyp:rewriter',
-      '../../session/session.gyp:genproto_session',
-      '../../session/session.gyp:session',
+      '../../session/session.gyp:session_server',
+      '../../session/session_base.gyp:config_handler',
+      '../../session/session_base.gyp:ime_switch_util',
       '../../storage/storage.gyp:storage',
       '../../transliteration/transliteration.gyp:transliteration',
       '../../usage_stats/usage_stats.gyp:usage_stats',
@@ -198,25 +199,30 @@
       'target_name': 'ibus_mozc_test',
       'type': 'executable',
       'sources': [
+        'config_util_test.cc',
         'key_translator_test.cc',
         'mozc_engine_test.cc',
         'path_util_test.cc',
-        'session_test.cc',
-        'config_util_test.cc',
       ],
       'dependencies': [
         '../../base/base.gyp:base',
         '../../testing/testing.gyp:gtest_main',
         'ibus_mozc_lib',
+        '<@(ibus_client_dependencies)',
+        '<@(ibus_standalone_dependencies)',
       ],
       'conditions': [
-        ['chromeos==1', {
-         'dependencies+': [
-           '<@(ibus_standalone_dependencies)',
+        ['chromeos!=1', {
+         # config_util.cc is included in ibus_mozc_lib only for chromeos==1
+         'sources': [
+           '../../client/session_mock.cc',
+           'config_util.cc',
          ],
-        }, {
-         'dependencies+': [
-           '<@(ibus_client_dependencies)',
+        },{
+         'sources': [
+        # ibus::Session is only for chromeos
+        # use client::Session in non-Chrome OS ibus
+           'session_test.cc',
          ],
         }],
        ],

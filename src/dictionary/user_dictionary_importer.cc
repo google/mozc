@@ -31,7 +31,9 @@
 
 #ifdef OS_WINDOWS
 #include <windows.h>
-#include "third_party/mozc/msime/msime.h"
+#ifdef HAS_MSIME_HEADER
+#indlude <msime.h>
+#endif  // HAS_MSIME_HEADER
 #endif  // OS_WINDOWS
 
 #include <algorithm>
@@ -161,7 +163,7 @@ bool ConvertEntryInternal(
 }
 }  // namespace
 
-#ifdef OS_WINDOWS
+#if defined(OS_WINDOWS) && defined(HAS_MSIME_HEADER)
 namespace {
 typedef BOOL (WINAPI *FPCreateIFEDictionaryInstance)(VOID **);
 
@@ -380,21 +382,17 @@ class MSIMEImportIterator
   ULONG index_;
 };
 }  // namespace
+#endif  // OS_WINDOWS && HAS_MSIME_HEADER
 
 UserDictionaryImporter::ErrorType UserDictionaryImporter::ImportFromMSIME(
     UserDictionaryStorage::UserDictionary *user_dic) {
   DCHECK(user_dic);
+#if defined(OS_WINDOWS) && defined(HAS_MSIME_HEADER)
   MSIMEImportIterator iter;
   return ImportFromIterator(&iter, user_dic);
-}
-
-#else
-UserDictionaryImporter::ErrorType UserDictionaryImporter::ImportFromMSIME(
-    UserDictionaryStorage::UserDictionary *user_dic) {
-  DCHECK(user_dic);
+#endif  // OS_WINDOWS && HAS_MSIME_HEADER
   return UserDictionaryImporter::IMPORT_NOT_SUPPORTED;
 }
-#endif  // OS_WINDOWS
 
 UserDictionaryImporter::ErrorType
 UserDictionaryImporter::ImportFromIterator(

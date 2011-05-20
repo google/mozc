@@ -106,6 +106,10 @@ int RunMozcTool(int argc, char *argv[]) {
     FLAGS_mode = "error_message_dialog";
   } else if (binary_name == "WordRegisterDialog") {
     FLAGS_mode = "word_register_dialog";
+  } else if (binary_name == "HandWriting") {
+    FLAGS_mode = "hand_writing";
+  } else if (binary_name == "CharacterPalette") {
+    FLAGS_mode = "character_palette";
   }
 #endif
 

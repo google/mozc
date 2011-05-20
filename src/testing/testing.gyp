@@ -47,7 +47,10 @@
       'sources': [
         'base/internal/googletest.cc',
         'base/internal/gtest_main.cc',
-       ],
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+      ],
       'conditions': [
         ['OS!="linux"', {
           'dependencies': [

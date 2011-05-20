@@ -33,13 +33,15 @@
 
 #include "dictionary/text_dictionary_loader.h"
 
-#include <string.h>
 #include <climits>
+#include <cstring>
 
 #include "base/base.h"
 #include "base/file_stream.h"
 #include "base/util.h"
 #include "dictionary/dictionary_token.h"
+#include "dictionary/pos_matcher.h"
+#include "dictionary/system/system_dictionary.h"
 
 namespace mozc {
 
@@ -48,6 +50,25 @@ TextDictionaryLoader::TextDictionaryLoader() {
 
 TextDictionaryLoader::~TextDictionaryLoader() {
   Close();
+}
+
+bool TextDictionaryLoader::RewriteSpecialToken(Token *token,
+                                               const string &label) {
+  CHECK(token);
+  if (label.empty()) {
+    return true;
+  }
+  if (Util::StartsWith(label, "SPELLING_CORRECTION")) {
+    token->lid += SystemDictionary::kSpellingCorrectionPosOffset;
+    return true;
+  }
+  if (Util::StartsWith(label, "ZIP_CODE")) {
+    token->lid = POSMatcher::GetZipcodeId();
+    token->rid = POSMatcher::GetZipcodeId();
+    return true;
+  }
+
+  return false;
 }
 
 bool TextDictionaryLoader::Open(const char *filename) {
@@ -117,6 +138,11 @@ void TextDictionaryLoader::ParseTSV(const string &line) {
   token->rid = atoi(fields[2].c_str());
   token->cost = atoi(fields[3].c_str());
   Util::NormalizeVoicedSoundMark(fields[4], &token->value);
+
+  const string label = fields.size() > 5 ? fields[5] : "";
+  CHECK(RewriteSpecialToken(token, label))
+      << "invalid label: " << line;
+
   tokens_.push_back(token);
 }
 }  // namespace mozc

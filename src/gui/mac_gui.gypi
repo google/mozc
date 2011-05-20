@@ -30,21 +30,32 @@
 # This include file adds actions to create symbolic link applications for GUIs.
 {
   'product_name': '<(product_name)',
-  'sources': [
-    'tool/mozc_tool_main.cc',
-  ],
-  'dependencies': [
-    'gen_mozc_tool_info_plist',
-    'mozc_tool_lib',
-  ],
-  'postbuilds': [
-    {
-      'postbuild_name': 'create symbolic link to frameworks',
-      'action': [
-        '/bin/ln', '-fs',
-        '/Library/Input Methods/<(branding).app/Contents/Resources/<(branding)Tool.app/Contents/Frameworks',
-        '${BUILT_PRODUCTS_DIR}/<(product_name).app/Contents',
+  'conditions': [
+    ['use_qt=="YES"', {
+      'sources': [
+        'tool/mozc_tool_main.cc',
       ],
-    },
+      'dependencies': [
+        'gen_mozc_tool_info_plist',
+        'mozc_tool_lib',
+      ],
+      'postbuilds': [
+        {
+          'postbuild_name': 'create symbolic link to frameworks',
+          'action': [
+            '/bin/ln', '-fs',
+            '/Library/Input Methods/<(branding).app/Contents/Resources/<(branding)Tool.app/Contents/Frameworks',
+            '${BUILT_PRODUCTS_DIR}/<(product_name).app/Contents',
+          ],
+        },
+      ],
+    }, { # else
+      'sources': [
+        'tool/mozc_tool_main_noqt.cc',
+      ],
+      'dependencies': [
+        'gen_mozc_tool_info_plist',
+      ],
+    }],
   ],
 }

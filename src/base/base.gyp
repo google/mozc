@@ -39,6 +39,7 @@
       'sources': [
         '<(gen_out_dir)/character_set.h',
         '<(gen_out_dir)/version_def.cc',
+        'clock_mock.cc',
         'cpu_stats.cc',
         'crash_report_handler.cc',
         'crash_report_util.cc',
@@ -66,6 +67,10 @@
         'util.cc',
         'version.cc',
       ],
+      'dependencies': [
+        'gen_character_set',
+        'gen_version_def',
+      ],
       'conditions': [
         ['OS=="mac"', {
           'sources': [
@@ -84,6 +89,10 @@
           'sources': [ 'win_util.cc' ],
         }],
       ],
+    },
+    {
+      'target_name': 'gen_character_set',
+      'type': 'none',
       'actions': [
         {
           'action_name': 'gen_character_set',
@@ -109,6 +118,12 @@
             'gen_character_set.py', '<@(input_files)',
           ],
         },
+      ],
+    },
+    {
+      'target_name': 'gen_version_def',
+      'type': 'none',
+      'actions': [
         {
           'action_name': 'gen_version_def',
           'inputs': [
@@ -135,6 +150,18 @@
         '<(gen_out_dir)/config_file_stream_data.h',
         'config_file_stream.cc',
       ],
+      'dependencies': [
+        'gen_config_file_stream_data',
+      ],
+      'conditions': [['two_pass_build==0', {
+        'dependencies': [
+          'install_gen_config_file_stream_data_main',
+        ],
+      }]],
+    },
+    {
+      'target_name': 'gen_config_file_stream_data',
+      'type': 'none',
       'actions': [
         {
           'action_name': 'gen_config_file_stream_data',
@@ -162,11 +189,6 @@
           ],
         },
       ],
-      'conditions': [['two_pass_build==0', {
-        'dependencies': [
-          'install_gen_config_file_stream_data_main',
-        ],
-      }]],
     },
     {
       'target_name': 'gen_config_file_stream_data_main',
@@ -186,68 +208,23 @@
       },
       'includes' : [
         '../gyp/install_build_tool.gypi',
-      ]
-    },
-    {
-      'target_name': 'base_test',
-      'type': 'executable',
-      'sources': [
-        'bitarray_test.cc',
-        'cpu_stats_test.cc',
-        'crash_report_util_test.cc',
-        'encryptor_test.cc',
-        'flags_test.cc',
-        'hash_tables_test.cc',
-        'logging_test.cc',
-        'mmap_test.cc',
-        'mutex_test.cc',
-        'password_manager_test.cc',
-        'process_mutex_test.cc',
-        'scheduler_test.cc',
-        'singleton_test.cc',
-        'stopwatch_test.cc',
-        'svm_test.cc',
-        'thread_test.cc',
-        'timer_test.cc',
-        'unnamed_event_test.cc',
-        'update_util_test.cc',
-        'stats_config_util_test.cc',
-        'url_test.cc',
-        'util_test.cc',
-        'version_test.cc',
-      ],
-      'dependencies': [
-        'base',
-        '../testing/testing.gyp:gtest_main',
-      ],
-      'variables': {
-        'test_size': 'small',
-      },
-    },
-    # init_test.cc is separated from all other base_test because it
-    # calls finalizers.
-    {
-      'target_name': 'base_init_test',
-      'type': 'executable',
-      'sources': [
-        'init_test.cc',
-      ],
-      'dependencies': [
-        'base',
-        '../testing/testing.gyp:gtest_main',
-      ],
-      'variables': {
-        'test_size': 'small',
-      },
-    },
-    # Test cases meta target: this target is referred from gyp/tests.gyp
-    {
-      'target_name': 'base_all_test',
-      'type': 'none',
-      'dependencies': [
-        'base_test',
-        'base_init_test',
       ],
     },
+  ],
+  'conditions': [
+    ['OS=="mac"', {
+      'targets': [
+        {
+          'target_name': 'mac_util_main',
+          'type': 'executable',
+          'sources': [
+            'mac_util_main.cc',
+          ],
+          'dependencies': [
+            'base',
+          ],
+        },
+      ]},
+    ]
   ],
 }

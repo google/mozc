@@ -171,6 +171,19 @@ void ConfigUpdater::UpdateConfig(const gchar *section,
   Session::UpdateConfig(config);
 }
 
+const map<string, const char*>& ConfigUpdater::name_to_field() {
+  return name_to_field_;
+}
+
+void ConfigUpdater::InitConfig(IBusConfig *config) {
+  // Initialize the mozc config with the config loaded from ibus-memconf, which
+  // is the primary config storage on Chrome OS.
+  ibus::ConfigUtil::InitConfig(
+      config,
+      kChewingSectionName,
+      Singleton<ConfigUpdater>::get()->name_to_field());
+}
+
 #endif  // OS_CHROMEOS
 
 }  // namespace chewing

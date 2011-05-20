@@ -33,7 +33,6 @@
 #define MOZC_SESSION_SESSION_FACTORY_H_
 
 #include "base/base.h"
-#include "session/internal/keymap.h"
 #include "session/commands.pb.h"
 
 namespace mozc {
@@ -68,7 +67,6 @@ class SessionFactory : public SessionFactoryInterface {
 
   static SessionFactoryInterface *GetDefaultSessionFactory();
  private:
-  scoped_ptr<keymap::KeyMapManager> keymap_;
   bool is_available_;
 };
 

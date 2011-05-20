@@ -30,6 +30,7 @@
 #include "unix/emacs/mozc_emacs_helper_lib.h"
 
 #include <cstdio>
+#include <iostream>
 
 #include "base/protobuf/descriptor.h"
 #include "base/protobuf/message.h"

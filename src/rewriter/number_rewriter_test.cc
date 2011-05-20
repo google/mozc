@@ -27,11 +27,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "rewriter/number_rewriter.h"
+
 #include <string>
 
-#include "converter/pos_matcher.h"
 #include "converter/segments.h"
-#include "rewriter/number_rewriter.h"
+#include "dictionary/pos_matcher.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {

@@ -304,6 +304,18 @@ TEST_F(LRUStorageTest, Merge) {
   Util::Unlink(file2);
 }
 
+TEST_F(LRUStorageTest, InvalidFileOpenTest) {
+  LRUStorage storage;
+  EXPECT_FALSE(storage.Insert("test", NULL));
+
+  const string filename = GetTemporaryFilePath();
+  Util::Unlink(filename);
+
+  // cannot open
+  EXPECT_FALSE(storage.Open(filename.c_str()));
+  EXPECT_FALSE(storage.Insert("test", NULL));
+}
+
 class LRUStoragOpenOrCreateTest : public testing::Test {
  protected:
   LRUStoragOpenOrCreateTest() {}

@@ -1,0 +1,4 @@
+/* Localized versions of Info.plist keys */
+
+CFBundleName = "Handwriting Recognition";
+NSHumanReadableCopyright = "© Google Inc., 2011";

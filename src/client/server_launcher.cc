@@ -161,7 +161,7 @@ bool ServerLauncher::StartServer(SessionInterface *session) {
 #elif defined(OS_MACOSX)
   // Use launchd API instead of spawning process.  It doesn't use
   // server_program() at all.
-  const bool result = MacUtil::StartLaunchdServce(
+  const bool result = MacUtil::StartLaunchdService(
       "Converter", reinterpret_cast<pid_t *>(&pid));
   if (!result) {
       LOG(ERROR) << "Can't start process";

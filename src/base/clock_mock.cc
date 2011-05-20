@@ -27,26 +27,35 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// Convert the correction dictionary
-
-#ifndef MOZC_DICTIONARY_CORRECTION_DICTIONARY_BUILDER_H_
-#define MOZC_DICTIONARY_CORRECTION_DICTIONARY_BUILDER_H_
-
-#include <string>
+#include "base/clock_mock.h"
 
 namespace mozc {
-class SpellingCorrectionDictionaryBuilder {
- public:
-  // This constructor sets input/output file names.
-  SpellingCorrectionDictionaryBuilder(const string &input,
-                                      const string &output);
-  virtual ~SpellingCorrectionDictionaryBuilder();
 
-  // Build and write dictionary file
-  void Build();
- private:
-  const string input_filename_;
-  const string output_filename_;
-};
+ClockMock::ClockMock(uint64 sec, uint32 usec)
+  : seconds_(sec), micro_seconds_(usec) {
+}
+
+ClockMock::~ClockMock() {}
+
+void ClockMock::GetTimeOfDay(uint64 *sec, uint32 *usec) {
+  *sec = seconds_;
+  *usec = micro_seconds_;
+}
+
+uint64 ClockMock::GetTime() {
+  return seconds_;
+}
+
+void ClockMock::PutClockForward(uint64 delta_sec, uint32 delta_usec) {
+  const uint32 one_second = 1000000u;
+
+  if (micro_seconds_ + delta_usec < one_second) {
+    seconds_ += delta_sec;
+    micro_seconds_ += delta_usec;
+  } else {
+    seconds_ += delta_sec + 1uLL;
+    micro_seconds_ += delta_usec - one_second;
+  }
+}
+
 }  // namespace mozc
-#endif  // MOZC_DICTIONARY_CORRECTION_DICTIONARY_BUILDER_H_

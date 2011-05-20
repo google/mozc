@@ -29,18 +29,18 @@
 
 #include "converter/segments.h"
 
-#include <string>
 #include <algorithm>
 #include <sstream>  // For DebugString()
+#include <string>
 
 #include "base/base.h"
+#include "base/freelist.h"
 #include "base/mutex.h"
 #include "base/util.h"
-#include "base/freelist.h"
 #include "converter/character_form_manager.h"
 #include "converter/lattice.h"
 #include "converter/node.h"
-#include "converter/pos_matcher.h"
+#include "dictionary/pos_matcher.h"
 
 namespace mozc {
 namespace {

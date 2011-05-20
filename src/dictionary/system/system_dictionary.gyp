@@ -49,6 +49,7 @@
       ],
       'dependencies': [
         '../../base/base.gyp:base',
+        '../dictionary_base.gyp:text_dictionary_loader',
         '../file/dictionary_file.gyp:dictionary_file',
         '<(DEPTH)/third_party/rx/rx.gyp:rx',
         'system_dictionary',

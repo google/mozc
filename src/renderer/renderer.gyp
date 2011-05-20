@@ -64,8 +64,8 @@
         '../base/base.gyp:base',
         '../client/client.gyp:client',
         '../ipc/ipc.gyp:ipc',
-        '../session/session.gyp:config_handler',
-        '../session/session.gyp:genproto_session'
+        '../session/session_base.gyp:config_handler',
+        '../session/session_base.gyp:genproto_session'
       ],
     },
     {
@@ -124,14 +124,14 @@
             '../data/images/mac/product_icon.icns'
           ],
           'dependencies': [
+            '../base/base.gyp:base',
+            '../client/client.gyp:client',
+            '../ipc/ipc.gyp:ipc',
+            '../session/session_base.gyp:genproto_session',
             'gen_renderer_files',
             'renderer',
             'table_layout',
             'window_util',
-            '../base/base.gyp:base',
-            '../client/client.gyp:client',
-            '../ipc/ipc.gyp:ipc',
-            '../session/session.gyp:genproto_session',
           ],
           'xcode_settings': {
             'INFOPLIST_FILE': '<(gen_out_dir)/Info.plist',

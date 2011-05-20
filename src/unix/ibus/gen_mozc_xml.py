@@ -165,6 +165,9 @@ def OutputCpp(product_name, component, engine_common, engines):
   for key in engine_common:
     OutputCppVariable(product_name, 'Engine', key, engine_common[key])
   for key in engines:
+    if key == 'hotkeys':
+      # Skip hotkeys because it is not used from C++ code.
+      continue
     print 'const char* kEngine%sArray[] = {' % key.capitalize()
     for i in range(len(engines[key])):
       print '"%s",' % EmbedProductName(product_name, engines[key][i])

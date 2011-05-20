@@ -31,11 +31,12 @@
 
 #include <string>
 #include <vector>
+
 #include "base/base.h"
 #include "base/util.h"
-#include "converter/segments.h"
-#include "converter/pos_matcher.h"
 #include "converter/character_form_manager.h"
+#include "converter/segments.h"
+#include "dictionary/pos_matcher.h"
 
 namespace mozc {
 namespace {

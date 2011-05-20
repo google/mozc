@@ -71,7 +71,8 @@ class NBestGenerator {
   //  have exactly same nodes with begin/end_node_.
   //  note that candidate_begin_node is inclusive
   //  and candidate_end_node is exclusive.
-  bool Next(Segment::Candidate *candiadte);
+  bool Next(Segment::Candidate *candidate,
+            Segments::RequestType request_type);
 
  private:
   void MakeCandidate(Segment::Candidate *candidate,

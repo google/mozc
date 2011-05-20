@@ -490,6 +490,10 @@ const char* LRUStorage::Lookup(const string &key,
 }
 
 bool LRUStorage::Touch(const string &key) {
+  if (lru_list_.get() == NULL) {
+    return false;
+  }
+
   const uint64 fp = Util::FingerprintWithSeed(key.data(),
                                               key.size(),
                                               seed_);
@@ -503,6 +507,10 @@ bool LRUStorage::Touch(const string &key) {
 }
 
 bool LRUStorage::Insert(const string &key, const char *value) {
+  if (lru_list_.get() == NULL) {
+    return false;
+  }
+
   const uint64 fp = Util::FingerprintWithSeed(key.data(),
                                               key.size(),
                                               seed_);
@@ -539,6 +547,10 @@ bool LRUStorage::Insert(const string &key, const char *value) {
 }
 
 bool LRUStorage::TryInsert(const string &key, const char *value) {
+  if (lru_list_.get() == NULL) {
+    return false;
+  }
+
   const uint64 fp = Util::FingerprintWithSeed(key.data(),
                                               key.size(),
                                               seed_);

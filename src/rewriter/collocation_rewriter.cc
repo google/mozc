@@ -33,12 +33,13 @@
 #include <map>
 #include <string>
 #include <vector>
+
 #include "base/base.h"
 #include "base/mmap.h"
 #include "base/singleton.h"
 #include "base/util.h"
 #include "converter/segments.h"
-#include "converter/pos_matcher.h"
+#include "dictionary/pos_matcher.h"
 #include "rewriter/collocation_util.h"
 #include "rewriter/rewriter_interface.h"
 #include "storage/existence_filter.h"
@@ -627,7 +628,7 @@ bool RewriteCollocation(Segments *segments) {
   return changed;
 }
 
-} // namespace
+}  // namespace
 
 CollocationRewriter::CollocationRewriter() {}
 
@@ -637,4 +638,4 @@ bool CollocationRewriter::Rewrite(Segments *segments) const {
   return RewriteCollocation(segments);
 }
 
-} // namespace mozc
+}  // namespace mozc

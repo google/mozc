@@ -30,20 +30,22 @@
 #include "rewriter/user_segment_history_rewriter.h"
 
 #include <algorithm>
+#include <cctype>
 #include <set>
 #include <string>
 #include <vector>
 
 #include "base/config_file_stream.h"
 #include "base/util.h"
-#include "transliteration/transliteration.h"
 #include "converter/character_form_manager.h"
-#include "converter/pos_matcher.h"
 #include "converter/segments.h"
-#include "storage/lru_storage.h"
+#include "dictionary/pos_matcher.h"
 #include "rewriter/rewriter_interface.h"
-#include "session/config_handler.h"
+#include "rewriter/variants_rewriter.h"
 #include "session/config.pb.h"
+#include "session/config_handler.h"
+#include "storage/lru_storage.h"
+#include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"
 
 namespace mozc {
@@ -451,6 +453,11 @@ bool SortCandidates(const vector<ScoreType> &sorted_scores, Segment *segment) {
         CharacterFormManager::GetCharacterFormManager()->
             ConvertConversionString(candidate->content_value,
                                     &(new_candidate->content_value));
+        // Update description so it matches candidate's current value.
+        // This fix addresses Bug #3493644.
+        // (Wrong character width annotation after learning alphabet)
+        new_candidate->description.clear();
+        VariantsRewriter::SetDescriptionForCandidate(new_candidate);
         ++next_pos;
         seen.insert(normalized_value);
       }
@@ -774,6 +781,7 @@ bool UserSegmentHistoryRewriter::Reload() {
   if (!storage_->OpenOrCreate(filename.c_str(),
                               kValueSize, kLRUSize, kSeedValue)) {
     LOG(WARNING) << "cannot initialize UserSegmentHistoryRewriter";
+    storage_.reset(NULL);
     return false;
   }
 

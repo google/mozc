@@ -50,11 +50,6 @@ const char* kEngineLayoutArray[] = {
 const char* kEngineNameArray[] = {
 "mozc-chewing",
 };
-const char* kEngineHotkeysArray[] = {
-"",
-"",
-"",
-};
 const char* kEngineLongnameArray[] = {
 "Mozc Chewing (Chewing)",
 };

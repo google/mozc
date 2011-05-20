@@ -1358,6 +1358,90 @@ TEST_F(UserHistoryPredictorTest, Regression2843775) {
             "\xE3\x81\x99");
 }
 
+TEST_F(UserHistoryPredictorTest, DuplicateString) {
+  UserHistoryPredictor predictor;
+  predictor.WaitForSyncer();
+  predictor.ClearAllHistory();
+  predictor.WaitForSyncer();
+
+  Segments segments;
+
+  // "らいおん/ライオン"
+  MakeSegmentsForConversion("\xE3\x82\x89\xE3\x81\x84\xE3\x81\x8A\xE3\x82\x93",
+                            &segments);
+  AddCandidate(0, "\xE3\x83\xA9\xE3\x82\xA4\xE3\x82\xAA\xE3\x83\xB3",
+               &segments);
+
+  // "（/（"
+  MakeSegmentsForConversion("\xEF\xBC\x88", &segments);
+  AddCandidate(1, "\xEF\xBC\x88", &segments);
+
+  // "もうじゅう/猛獣"
+  MakeSegmentsForConversion(
+      "\xE3\x82\x82\xE3\x81\x86\xE3\x81\x98\xE3\x82\x85\xE3\x81\x86",
+      &segments);
+  AddCandidate(2, "\xE7\x8C\x9B\xE7\x8D\xA3", &segments);
+
+  // "）と/）と"
+  MakeSegmentsForConversion("\xEF\xBC\x89\xE3\x81\xA8", &segments);
+  AddCandidate(3, "\xEF\xBC\x89\xE3\x81\xA8", &segments);
+
+  // "ぞうりむし/ゾウリムシ"
+  MakeSegmentsForConversion(
+      "\xE3\x81\x9E\xE3\x81\x86\xE3\x82\x8A\xE3\x82\x80\xE3\x81\x97",
+      &segments);
+  AddCandidate(
+      4,
+      "\xE3\x82\xBE\xE3\x82\xA6\xE3\x83\xAA\xE3\x83\xA0\xE3\x82\xB7",
+      &segments);
+
+  // "（/（"
+  MakeSegmentsForConversion("\xEF\xBC\x88", &segments);
+  AddCandidate(5, "\xEF\xBC\x88", &segments);
+
+  // "びせいぶつ/微生物"
+  MakeSegmentsForConversion(
+      "\xE3\x81\xB3\xE3\x81\x9B\xE3\x81\x84\xE3\x81\xB6\xE3\x81\xA4",
+      &segments);
+  AddCandidate(6, "\xE5\xBE\xAE\xE7\x94\x9F\xE7\x89\xA9", &segments);
+
+  // "）/）"
+  MakeSegmentsForConversion("\xEF\xBC\x89", &segments);
+  AddCandidate(7, "\xEF\xBC\x89", &segments);
+
+  predictor.Finish(&segments);
+
+  segments.Clear();
+
+  // "ぞうりむし"
+  MakeSegmentsForSuggestion(
+      "\xE3\x81\x9E\xE3\x81\x86\xE3\x82\x8A\xE3\x82\x80\xE3\x81\x97",
+      &segments);
+  EXPECT_TRUE(predictor.Predict(&segments));
+
+  for (int i = 0; i < segments.segment(0).candidates_size(); ++i) {
+    EXPECT_EQ(string::npos,
+              segments.segment(0).candidate(i).value.find(
+                  "\xE7\x8C\x9B\xE7\x8D\xA3"));  // "猛獣" should not be found
+  }
+
+  segments.Clear();
+
+  // "らいおん"
+  MakeSegmentsForSuggestion(
+      "\xE3\x82\x89\xE3\x81\x84\xE3\x81\x8A\xE3\x82\x93",
+      &segments);
+  EXPECT_TRUE(predictor.Predict(&segments));
+
+  // "ライオン（微生物" should not be found
+  for (int i = 0; i < segments.segment(0).candidates_size(); ++i) {
+    EXPECT_EQ(string::npos,
+              segments.segment(0).candidate(i).value.find(
+                  "\xE3\x83\xA9\xE3\x82\xA4\xE3\x82\xAA\xE3\x83\xB3"
+                  "\xEF\xBC\x88\xE5\xBE\xAE\xE7\x94\x9F\xE7\x89\xA9"));
+  }
+}
+
 struct Command {
   enum Type {
     LOOKUP,
@@ -1752,6 +1836,27 @@ TEST_F(UserHistoryPredictorTest, PrivacySensitiveTest) {
     EXPECT_TRUE(predictor.Predict(&segments));
     segments.Clear();
     MakeSegmentsForPrediction("123abc!", &segments);
+    EXPECT_TRUE(predictor.Predict(&segments));
+  }
+
+  predictor.ClearAllHistory();
+  predictor.WaitForSyncer();
+  {
+    Segments segments;
+    // "ぐーぐる"
+    MakeSegmentsForConversion(
+        "\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90\xE3\x82\x8B",
+        &segments);
+    AddCandidate(0, "Google", &segments);
+    predictor.Finish(&segments);
+  }
+
+  // treat as not privacy sensitive but conversion result
+  {
+    Segments segments;
+    // "ぐーぐ"
+    MakeSegmentsForSuggestion(
+        "\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90", &segments);
     EXPECT_TRUE(predictor.Predict(&segments));
   }
 }

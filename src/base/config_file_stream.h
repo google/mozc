@@ -52,6 +52,10 @@ namespace mozc {
 // C) file -- should only be enabled in debug build
 //   file:///foo/bar/foo.tsv
 //
+// D) on-memory -- for debug.  Does not store to the disk at all.
+//   memory://foo.tsv
+//   memory://foo.bar
+//
 class ConfigFileStream {
  public:
   static istream *Open(const string &filename) {
@@ -61,7 +65,13 @@ class ConfigFileStream {
   static istream *Open(const string &filename,
                        ios_base::openmode mode);
 
-  // if prefix is system:// return "";
+  // Update the specified config filename (formatted as above) with
+  // the |new_contents| atomically.  Returns true if the update
+  // succeeds.
+  static bool AtomicUpdate(const string &filename,
+                           const string &new_contents);
+
+  // if prefix is system:// or memory:// return "";
   static string GetFileName(const string &filename);
 };
 }  // namespace mozc

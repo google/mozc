@@ -93,7 +93,7 @@ TEST_F(TinyStorageTest, TinyStorageTest) {
     map<string, string> target;
     CreateKeyValue(&target,  kSize[i]);
     {
-      EXPECT_TRUE(storage.Open(filename.c_str()));
+      EXPECT_TRUE(storage.Open(filename));
       for (map<string, string>::const_iterator it = target.begin();
            it != target.end(); ++it) {
         EXPECT_TRUE(storage.Insert(it->first, it->second));
@@ -118,7 +118,7 @@ TEST_F(TinyStorageTest, TinyStorageTest) {
     storage.Sync();
 
     TinyStorage storage2;
-    EXPECT_TRUE(storage2.Open(filename.c_str()));
+    EXPECT_TRUE(storage2.Open(filename));
     EXPECT_EQ(storage.Size(), storage2.Size());
 
     // Lookup

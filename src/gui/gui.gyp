@@ -51,7 +51,7 @@
       'dependencies': [
         '../ipc/ipc.gyp:genproto_ipc',
         '../ipc/ipc.gyp:ipc',
-        '../session/session.gyp:genproto_session',
+        '../session/session_base.gyp:genproto_session',
         'gen_base_files',
       ],
       'includes': [
@@ -99,8 +99,8 @@
         'about_dialog/about_dialog_libmain.cc',
       ],
       'dependencies': [
-        'gen_about_dialog_files',
         '../base/base.gyp:base',
+        'gen_about_dialog_files',
       ],
       'includes': [
         'qt_libraries.gypi',
@@ -113,8 +113,8 @@
         'about_dialog/about_dialog_main.cc',
       ],
       'dependencies': [
-        'gui_base',
         'about_dialog_lib',
+        'gui_base',
       ],
       'includes': [
         'qt_libraries.gypi',
@@ -169,8 +169,8 @@
         'administration_dialog/administration_dialog_main.cc',
       ],
       'dependencies': [
-        'gui_base',
         'administration_dialog_lib',
+        'gui_base',
       ],
       'includes': [
         'qt_libraries.gypi',
@@ -445,13 +445,13 @@
         'config_dialog/roman_table_editor.cc',
       ],
       'dependencies': [
-        'gen_config_dialog_files',
         '../base/base.gyp:base',
         '../client/client.gyp:client',
-        '../session/session.gyp:config_handler',
-        '../session/session.gyp:genproto_session',
-        '../session/session.gyp:keymap',
-        '../session/session.gyp:key_parser',
+        '../session/session_base.gyp:config_handler',
+        '../session/session_base.gyp:genproto_session',
+        '../session/session_base.gyp:key_parser',
+        '../session/session_base.gyp:keymap',
+        'gen_config_dialog_files',
       ],
       'includes': [
         'qt_libraries.gypi',
@@ -464,8 +464,8 @@
         'config_dialog/config_dialog_main.cc',
       ],
       'dependencies': [
-        'gui_base',
         'config_dialog_lib',
+        'gui_base',
       ],
       'includes': [
         'qt_libraries.gypi',
@@ -494,8 +494,8 @@
         'confirmation_dialog/confirmation_dialog_libmain.cc',
       ],
       'dependencies': [
-        'gen_confirmation_dialog_files',
         '../base/base.gyp:base',
+        'gen_confirmation_dialog_files',
       ],
       'includes': [
         'qt_libraries.gypi',
@@ -508,8 +508,8 @@
         'confirmation_dialog/confirmation_dialog_main.cc',
       ],
       'dependencies': [
-        'gui_base',
         'confirmation_dialog_lib',
+        'gui_base',
       ],
       'includes': [
         'qt_libraries.gypi',
@@ -555,12 +555,12 @@
         'dictionary_tool/zero_width_splitter.cc',
       ],
       'dependencies': [
-        'gen_config_dialog_files',
-        'gen_dictionary_tool_files',
         '../base/base.gyp:base',
         '../client/client.gyp:client',
-        '../dictionary/dictionary.gyp:user_dictionary',
         '../dictionary/dictionary.gyp:genproto_dictionary',
+        '../dictionary/dictionary.gyp:user_dictionary',
+        'gen_config_dialog_files',
+        'gen_dictionary_tool_files',
       ],
       'includes': [
         'qt_libraries.gypi',
@@ -573,8 +573,8 @@
         'dictionary_tool/dictionary_tool_main.cc',
       ],
       'dependencies': [
-        'gui_base',
         'dictionary_tool_lib',
+        'gui_base',
       ],
       'includes': [
         'qt_libraries.gypi',
@@ -608,11 +608,11 @@
         'word_register_dialog/word_register_dialog_libmain.cc',
       ],
       'dependencies': [
-        'gen_word_register_dialog_files',
         '../base/base.gyp:base',
         '../client/client.gyp:client',
-        '../dictionary/dictionary.gyp:user_dictionary',
         '../dictionary/dictionary.gyp:genproto_dictionary',
+        '../dictionary/dictionary.gyp:user_dictionary',
+        'gen_word_register_dialog_files',
       ],
       'includes': [
         'qt_libraries.gypi',
@@ -658,8 +658,8 @@
         'error_message_dialog/error_message_dialog_libmain.cc',
       ],
       'dependencies': [
-        'gen_error_message_dialog_files',
         '../base/base.gyp:base',
+        'gen_error_message_dialog_files',
       ],
       'includes': [
         'qt_libraries.gypi',
@@ -672,8 +672,8 @@
         'error_message_dialog/error_message_dialog_main.cc',
       ],
       'dependencies': [
-        'gui_base',
         'error_message_dialog_lib',
+        'gui_base',
       ],
       'includes': [
         'qt_libraries.gypi',
@@ -707,19 +707,19 @@
         'post_install_dialog/post_install_dialog_libmain.cc',
       ],
       'dependencies': [
-        'gen_post_install_dialog_files',
-        '../dictionary/dictionary.gyp:user_dictionary',
+        '../base/base.gyp:base',
         '../dictionary/dictionary.gyp:genproto_dictionary',
+        '../dictionary/dictionary.gyp:user_dictionary',
         '../ipc/ipc.gyp:ipc',
-        '../session/session.gyp:genproto_session',
+        '../session/session_base.gyp:genproto_session',
         '../usage_stats/usage_stats.gyp:genproto_usage_stats',
         '../usage_stats/usage_stats.gyp:usage_stats',
-        '../base/base.gyp:base',
+        'gen_post_install_dialog_files',
       ],
       'conditions': [
         ['OS=="win"', {
           'dependencies': [
-            '../win32/win32.gyp:ime_base',
+            '../win32/base/win32_base.gyp:ime_base',
           ],
         }],
       ],
@@ -769,15 +769,15 @@
         'set_default_dialog/set_default_dialog_libmain.cc',
       ],
       'dependencies': [
-        'gen_set_default_dialog_files',
         '../client/client.gyp:client',
         '../ipc/ipc.gyp:ipc',
-        '../session/session.gyp:genproto_session',
+        '../session/session_base.gyp:genproto_session',
+        'gen_set_default_dialog_files',
       ],
       'conditions': [
         ['OS=="win"', {
           'dependencies': [
-            '../win32/win32.gyp:ime_base',
+            '../win32/base/win32_base.gyp:ime_base',
           ],
         }],
       ],
@@ -841,9 +841,6 @@
           'type': 'shared_library',
           'product_name': '<(branding)Tool_lib',
           'mac_bundle': 1,
-          'includes': [
-            '../gyp/breakpad_mac.gypi',
-          ],
           'xcode_settings': {
             'INSTALL_PATH': '@executable_path/../Frameworks',
           },
@@ -910,7 +907,7 @@
           ],
           'dependencies': [
             '../base/base.gyp:base',
-            '../win32/win32.gyp:ime_base',
+            '../win32/base/win32_base.gyp:ime_base',
             'gen_mozc_tool_header',
           ],
           'includes': [
@@ -1055,6 +1052,44 @@
           'xcode_settings': {
             'INFOPLIST_FILE': '<(gen_out_dir)/hidden_mozc_tool_info',
           },
+          'includes': [
+            'mac_gui.gypi',
+          ],
+        },
+        {
+          'target_name': 'hand_writing_mac',
+          'type': 'executable',
+          'mac_bundle': 1,
+          'variables': {
+            'product_name': 'HandWriting',
+          },
+          'xcode_settings': {
+            'INFOPLIST_FILE': '<(gen_out_dir)/mozc_tool_info',
+          },
+          'mac_bundle_resources': [
+            '../data/images/mac/product_icon.icns',
+            '../data/mac/HandWriting/English.lproj/InfoPlist.strings',
+            '../data/mac/HandWriting/Japanese.lproj/InfoPlist.strings',
+          ],
+          'includes': [
+            'mac_gui.gypi',
+          ],
+        },
+        {
+          'target_name': 'character_palette_mac',
+          'type': 'executable',
+          'mac_bundle': 1,
+          'variables': {
+            'product_name': 'CharacterPalette',
+          },
+          'xcode_settings': {
+            'INFOPLIST_FILE': '<(gen_out_dir)/mozc_tool_info',
+          },
+          'mac_bundle_resources': [
+            '../data/images/mac/product_icon.icns',
+            '../data/mac/CharacterPalette/English.lproj/InfoPlist.strings',
+            '../data/mac/CharacterPalette/Japanese.lproj/InfoPlist.strings',
+          ],
           'includes': [
             'mac_gui.gypi',
           ],

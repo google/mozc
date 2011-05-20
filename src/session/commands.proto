@@ -129,9 +129,54 @@ message KeyEvent {
     NUM_SPECIALKEYS = 69;
   };
 
-  // CTRL, ALT and SHIFT covers both LEFT and RIGHT keys.  If the
-  // different of LEFT and RIGHT is no matter, using CTRL (or ALT, SHIFT)
+  // CTRL, ALT and SHIFT cover both LEFT and RIGHT keys.  If the
+  // difference between LEFT and RIGHT is no matter, using CTRL (or ALT, SHIFT)
   // is preferred.
+  // Mozc key translation logic is as follows
+  //
+  //             ---- Modifier Keys -----
+  //             |                      |
+  //             |         B            |
+  //    ---------+------        -- -----+-------
+  //    |        |  D  |        |   E   |      |
+  //    |    A   +---- +--------+--------  C   |
+  //    |              |   F    |              |
+  //    --Special Keys--        ---Other Keys---
+  //
+  // A:Press only a special key
+  //   => Send special key event with no modifier.
+  // B:Press only modifier keys
+  //   => If only shift key is pressed, send to shift key. Otherwise, do nothing.
+  // C:Press an other key
+  //   => Send KeyEvent with no modifier.
+  // D:Press a special key with one or more modifier keys
+  //   => Send special key event with modifiers.
+  // E:Press an other key with one or more modifier keys
+  //   => If combined key is printable, replace keycodes. Otherwise, just send
+  //   with modifier keys. Note that, unless the whole combined key is
+  //   printable, keycodes are not replaced even if a subset of combined key is
+  //   printable.
+  // F:Otherwise
+  //   => Send nothing.
+  //
+  // Following example shows expected behaviours.
+  // E.g. )
+  //    case   |  Pressed Key  |   translated key event
+  //  ----------------------------------------------------
+  //     A     |      SP       |  special_key = 4
+  //     A     |      F1       |  special_key = 19
+  //     B     |     CTRL      |  send nothing
+  //     B     |     SHIFT     |  modifier_key = {SHIFT}
+  //     B     |   CTRL+SHIFT  |  send nothing
+  //     C     |      'a'      |  key_code = \x61
+  //     D     |    CTRL+BS    |  special_key = 12, modifier_key = {CTRL}
+  //     D     | CTRL+SHIFT+BS |  special_key = 12, modifier_key = {CTRL,SHIFT}
+  //     E     |   SHIFT+'a'   |  key_code = \x41
+  //     E     |   CTRL+'a'    |  key_code = \x61, modifier_key = {CTRL}
+  //     E     | CTRL+ALT+'a'  |  key_code = \x61, modifier_key = {CTRL,ALT}
+  //     E     | CTRL+SHIFT+'a'|  key_code = \x61, modifier_key = {CTRL,SHIFT}
+  //     F     | CTRL+BS+SP    |  send nothing
+  //
   enum ModifierKey {
     CTRL = 1;
     ALT = 2;
