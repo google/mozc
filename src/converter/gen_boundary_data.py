@@ -28,39 +28,80 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-"""
+'''
 A tool to generate EOS data
-"""
+'''
 
 __author__ = "taku"
 
 import sys
+import re
 
-def ReadBoundary(file):
-  data = []
-  for line in open(file, "r"):
+def PatternToRegexp(pattern):
+  return '^' + pattern.replace('*', '[^,]+')
+
+def LoadPatterns(file):
+  prefix = []
+  suffix = []
+  for line in open(file, 'r'):
+    if len(line) <= 1 or line[0] == '#':
+      continue
     fields = line.split()
-    data.append([int(fields[0]), int(fields[1])])
+    label = fields[0]
+    feature = fields[1]
+    cost = int(fields[2])
+    if cost < 0 or cost > 0xffff:
+      sys.exit(-1)
+    if label == 'PREFIX':
+      prefix.append([re.compile(PatternToRegexp(feature)), cost])
+    elif label == 'SUFFIX':
+      suffix.append([re.compile(PatternToRegexp(feature)), cost])
+    else:
+      print 'format error %s' % (line)
+      sys.exit(0)
+  return (prefix, suffix)
 
-  # sort by score field.
-  data.sort(lambda x, y: cmp(x[1], y[1]))
-  return data
+
+def GetCost(patterns, feature):
+  for p in patterns:
+    pat = p[0]
+    cost = p[1]
+    if pat.match(feature):
+      return cost
+  return 0
+
+
+def LoadFeatures(file):
+  features = []
+  for line in open(file, 'r'):
+    fields = line.split()
+    features.append(fields[1])
+  return features
 
 
 def main():
-  data = ReadBoundary(sys.argv[1])
-  print "namespace {"
-  print "struct BoundaryData {"
-  print "  uint16 id;";
-  print "  int16  wcost;";
-  print "};"
-  print "const BoundaryData kBoundaryData[] = {"
-  for n in range(len(data)):
-    if n != 0:
-      print ","
-    print  " { %d, %d }" % (data[n][0], data[n][1]),
-  print "};"
-  print "}  // namespace"
+  (prefix, suffix) = LoadPatterns(sys.argv[1])
+  features = LoadFeatures(sys.argv[2])
+  print 'namespace {'
+  print 'struct BoundaryData {'
+  print '  uint16 prefix_penalty;';
+  print '  uint16 suffix_penalty;';
+  print '};'
+  print 'const BoundaryData kBoundaryData[] = {'
 
-if __name__ == "__main__":
+  for n in range(len(features)):
+    print ' { %d, %d }, // "%s"' % \
+        (GetCost(prefix, features[n]),
+         GetCost(suffix, features[n]),
+         features[n])
+
+  # TODO(team): assume that we have up to 10 special POSes.
+  for n in range(10):
+    print ' { 0, 0 },'
+
+  print '};'
+  print '}  // namespace'
+
+
+if __name__ == '__main__':
   main()

@@ -662,6 +662,18 @@ TEST(CharChunkTest, ShouldInsertNewChunk) {
     input.set_is_new_input(true);
     EXPECT_FALSE(chunk.ShouldInsertNewChunk(table, input));
   }
+
+  {
+    input.set_raw("z");
+    input.set_is_new_input(false);
+    EXPECT_FALSE(chunk.ShouldInsertNewChunk(table, input));
+  }
+
+  {
+    input.set_raw("z");
+    input.set_is_new_input(true);
+    EXPECT_TRUE(chunk.ShouldInsertNewChunk(table, input));
+  }
 }
 
 TEST(CharChunkTest, AddCompositionInput) {

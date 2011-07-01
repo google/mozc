@@ -248,6 +248,9 @@ message Config {
   optional bool use_number_conversion = 83 [ default = true ];
   optional bool use_emoticon_conversion = 84 [ default = true ];
   optional bool use_calculator = 85 [ default = true ];
+  optional bool use_t13n_conversion = 86 [ default = true ];
+  optional bool use_zip_code_conversion = 87  [ default = true ];
+  optional bool use_spelling_correction = 88  [ default = true ];
 
   //////////////////////////////////////////////////////////////
   //
@@ -261,6 +264,7 @@ message Config {
 
   // use realtime conversion feature (experimental)
   optional bool use_realtime_conversion = 102 [ default = true ];
+
 
   // size of suggestions
   optional uint32 suggestions_size = 110 [ default = 3 ];

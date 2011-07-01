@@ -55,22 +55,12 @@ class UserPOS {
     int16  cost;
   };
 
-  // CostType:
-  // We don't allow user to set cost directly.
-  enum CostType {
-    DEFAULT,   // default cost.
-    STRONG,    // cost is almost. 0
-    WEAK,      // weak, close to 10000
-    NEVER,     // this word is never shown
-  };
-
   // Convert from key/value/pos pair to Token.
   // If pos has inflection, this function expands possible
   // inflections automatically.
   static bool GetTokens(const string &key,
                         const string &value,
                         const string &pos,
-                        CostType cost_type,
                         vector<Token> *tokens);
 
   // This function is provided for test code to use mock version of
@@ -91,7 +81,6 @@ class UserPOS {
     virtual bool GetTokens(const string &key,
                            const string &value,
                            const string &pos,
-                           CostType cost_type,
                            vector<Token> *tokens) const = 0;
   };
 

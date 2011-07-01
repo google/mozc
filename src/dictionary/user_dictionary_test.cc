@@ -140,7 +140,6 @@ class UserPOSMock : public UserPOS::UserPOSInterface {
   virtual bool GetTokens(const string &key,
                          const string &value,
                          const string &pos,
-                         UserPOS::CostType cost_type,
                          vector<UserPOS::Token> *tokens) const {
     if (key.empty() ||
         value.empty() ||

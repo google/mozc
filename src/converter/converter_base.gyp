@@ -61,10 +61,12 @@
         '<(gen_out_dir)/pos_matcher.h',
         '<(gen_out_dir)/segmenter_data.h',
         '<(gen_out_dir)/segmenter_inl.h',
+        '<(gen_out_dir)/segmenter_inl.h',
         'candidate_filter.cc',
         'connector.cc',
         'lattice.cc',
         'nbest_generator.cc',
+        'node_allocator.h',
         'segmenter.cc',
         'segments.cc',
         'sparse_connector.cc',
@@ -74,10 +76,10 @@
         '../dictionary/dictionary_base.gyp:gen_pos_matcher',
         '../transliteration/transliteration.gyp:transliteration',
         'character_form_manager',
-        'gen_boundary_data',
         'gen_embedded_connection_data',
         'gen_segmenter_data',
         'gen_segmenter_inl',
+        'gen_boundary_data',
       ],
       'conditions': [['two_pass_build==0', {
         'dependencies': [
@@ -249,7 +251,8 @@
           'action_name': 'gen_boundary_data',
           'variables': {
             'input_files': [
-              '../data/dictionary/boundary.txt',
+              '../data/rules/boundary.def',
+              '../data/dictionary/id.def',
             ],
           },
           'inputs': [

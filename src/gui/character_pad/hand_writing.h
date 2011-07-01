@@ -47,6 +47,7 @@ class HandWriting : public QMainWindow,
   void updateFont(const QFont &font);
   void clear();
   void revert();
+  void updateUIStatus();
 
  protected:
   void resizeEvent(QResizeEvent *event);

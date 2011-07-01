@@ -34,14 +34,21 @@
 #include "base/logging.h"
 #include "base/mutex.h"
 #include "client/session_interface.h"
+#include "renderer/mac/mac_view_util.h"
 #include "renderer/table_layout.h"
 #include "session/commands.pb.h"
+#include "renderer/renderer_style.pb.h"
+#include "renderer/renderer_style_handler.h"
+
 
 using mozc::client::SendCommandInterface;
 using mozc::commands::Candidates;
 using mozc::commands::Output;
 using mozc::commands::SessionCommand;
 using mozc::renderer::TableLayout;
+using mozc::renderer::RendererStyle;
+using mozc::renderer::RendererStyleHandler;
+using mozc::renderer::mac::MacViewUtil;
 using mozc::once_t;
 using mozc::CallOnce;
 
@@ -50,235 +57,44 @@ using mozc::CallOnce;
 // TODO(mukai): integrate and share the code among Win and Mac.
 
 namespace {
-#pragma mark conversions between mozc-specific ones and Cocoa ones.
-NSPoint ToNSPoint(const mozc::renderer::Point &point) {
-  return NSMakePoint(point.x, point.y);
-}
-
-mozc::renderer::Point ToPoint(const NSPoint &nspoint) {
-  return mozc::renderer::Point(nspoint.x, nspoint.y);
-}
-
-NSSize ToNSSize(const mozc::renderer::Size &size) {
-  return NSMakeSize(size.width, size.height);
-}
-
-mozc::renderer::Size ToSize(const NSSize &nssize) {
-  return mozc::renderer::Size(nssize.width, nssize.height);
-}
-
-NSRect ToNSRect(const mozc::renderer::Rect &rect) {
-  return NSMakeRect(rect.origin.x, rect.origin.y,
-                    rect.size.width, rect.size.height);
-}
-
-mozc::renderer::Rect ToRect(const NSRect &nsrect) {
-  return mozc::renderer::Rect(ToPoint(nsrect.origin), ToSize(nsrect.size));
-}
-
-#pragma mark layout utilities and constants
-struct TextStyle {
-  NSDictionary *attributes;
-  int leftPadding;
-  int rightPadding;
-  NSColor *background;
-  TextStyle()
-   : attributes(nil), leftPadding(0), rightPadding(0), background(nil) {}
-  ~TextStyle() {
-    [attributes release];
-    [background release];
-  }
-
-  void Retain() {
-    [attributes retain];
-    [background retain];
-  }
-};
-
-struct LayoutStyle {
-  int windowBorder;
-  int footerHeight;
-  int rowRectPadding;
-  NSColor *borderColor;
-  int columnMinimumWidth;
-
-  // Text Styles
-  scoped_array<TextStyle> textStyles;
-  NSArray *footerBorderColors;
-  TextStyle footerStyle;
-  TextStyle footerSubLabelStyle;
-
-  // Focus colors
-  NSColor *focusedBackground;
-  NSColor *focusedBorder;
-
-  // scrollbar
-  NSColor *scrollBarBackground;
-  NSColor *scrollBarIndicatorColor;
-  int scrollBarWidth;
-
-  // footer
-  NSColor *footerTopColor;
-  NSColor *footerBottomColor;
-  NSImage *googleLogo;
-
-  LayoutStyle()
-   : borderColor(nil), footerBorderColors(nil), focusedBackground(nil),
-    focusedBorder(nil), scrollBarBackground(nil), scrollBarIndicatorColor(nil),
-    footerTopColor(nil), footerBottomColor(nil), googleLogo(nil) {
-  }
-
-  ~LayoutStyle() {
-    [borderColor release];
-    [footerBorderColors release];
-    [focusedBackground release];
-    [focusedBorder release];
-    [scrollBarBackground release];
-    [scrollBarIndicatorColor release];
-    [footerTopColor release];
-    [footerBottomColor release];
-    [googleLogo release];
-  }
-
-  void Retain() {
-    [borderColor retain];
-    [footerBorderColors retain];
-    [focusedBackground retain];
-    [focusedBorder retain];
-    [scrollBarBackground retain];
-    [scrollBarIndicatorColor retain];
-    [footerTopColor retain];
-    [footerBottomColor retain];
-    [googleLogo retain];
-    for (int i = COLUMN_SHORTCUT; i < NUMBER_OF_COLUMNS; ++i) {
-      textStyles[i].Retain();
-    }
-    footerStyle.Retain();
-    footerSubLabelStyle.Retain();
-  }
-};
-
-const LayoutStyle *kDefaultStyle = NULL;
-once_t kOnceForDefaultStyle = MOZC_ONCE_INIT;
-
-NSColor *colorWithRGB(uint8 r, uint8 g, uint8 b) {
-  return [NSColor colorWithCalibratedRed:r / 255.0
-                                   green:g / 255.0
-                                    blue:b / 255.0
-                                   alpha:1.0];
-}
-
-NSAttributedString *getAttributedString(const string &str, NSDictionary *attr) {
-  NSString *nsstr = [NSString stringWithUTF8String:str.c_str()];
-  return [[[NSAttributedString alloc] initWithString:nsstr attributes:attr]
-           autorelease];
-}
-
-NSSize applyTheme(const NSSize &size, const TextStyle &style) {
-  return NSMakeSize(size.width + style.leftPadding + style.rightPadding,
-                    size.height);
-}
+const NSImage *g_LogoImage = NULL;
+int g_column_minimum_width = 0;
+once_t g_OnceForInitializeStyle = MOZC_ONCE_INIT;
 
 void InitializeDefaultStyle() {
-  LayoutStyle *newStyle = new(nothrow)LayoutStyle;
-  if (!newStyle) {
-    return;
-  }
-
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+  
+  RendererStyle style;
+  RendererStyleHandler::GetRendererStyle(&style);
 
-  newStyle->windowBorder = 1;
-  newStyle->scrollBarWidth = 4;
-  newStyle->rowRectPadding = 0;
-  newStyle->borderColor = colorWithRGB(0x96, 0x96, 0x96);
-
-  newStyle->textStyles.reset(new TextStyle[NUMBER_OF_COLUMNS]);
-
-  TextStyle &shortcutStyle = newStyle->textStyles[COLUMN_SHORTCUT];
-  shortcutStyle.attributes =
-      [NSDictionary dictionaryWithObjectsAndKeys:
-                    [NSFont boldSystemFontOfSize:14],
-                    NSFontAttributeName,
-                    colorWithRGB(0x77, 0x77, 0x77),
-                    NSForegroundColorAttributeName,
-                    nil];
-  shortcutStyle.leftPadding = 8;
-  shortcutStyle.rightPadding = 8;
-  shortcutStyle.background = colorWithRGB(0xf3, 0xf4, 0xff);
-
-  TextStyle &gap1Style = newStyle->textStyles[COLUMN_GAP1];
-  gap1Style.attributes =
-      [NSDictionary dictionaryWithObject:[NSFont messageFontOfSize:14]
-                                  forKey:NSFontAttributeName];
-
-  TextStyle &candidateStyle = newStyle->textStyles[COLUMN_CANDIDATE];
-  candidateStyle.attributes =
-      [NSDictionary dictionaryWithObject:[NSFont messageFontOfSize:14]
-                                  forKey:NSFontAttributeName];
-
-  TextStyle &descriptionStyle = newStyle->textStyles[COLUMN_DESCRIPTION];
-  descriptionStyle.attributes =
-      [NSDictionary dictionaryWithObjectsAndKeys:[NSFont messageFontOfSize:12],
-                    NSFontAttributeName,
-                    colorWithRGB(0x88, 0x88, 0x88),
-                    NSForegroundColorAttributeName,
-                    nil];
-  descriptionStyle.rightPadding = 8;
-
-  // We want to ensure that the candidate window is at least wide
-  // enough to render "そのほかの文字種" as a candidate.
-  NSAttributedString *defaultMessage =
-      getAttributedString("そのほかの文字種  ", candidateStyle.attributes);
-  newStyle->columnMinimumWidth = [defaultMessage size].width;
-
-  // Footer text style
-  newStyle->footerStyle.attributes =
-      [NSDictionary dictionaryWithObject:[NSFont messageFontOfSize:14]
-                                  forKey:NSFontAttributeName];
-  newStyle->footerStyle.leftPadding = 4;
-  newStyle->footerStyle.rightPadding = 4;
-
-  // Footer sub-label text style
-  newStyle->footerSubLabelStyle.attributes =
-      [NSDictionary dictionaryWithObjectsAndKeys:[NSFont messageFontOfSize:10],
-                    NSFontAttributeName,
-                    colorWithRGB(167, 167, 167),
-                    NSForegroundColorAttributeName,
-                    nil];
-  newStyle->footerSubLabelStyle.leftPadding = 4;
-  newStyle->footerSubLabelStyle.rightPadding = 4;
-
-  newStyle->footerBorderColors =
-      [NSArray arrayWithObjects:colorWithRGB(96, 96, 96), nil];
-  newStyle->footerTopColor = colorWithRGB(0xff, 0xff, 0xff);
-  newStyle->footerBottomColor = colorWithRGB(0xee, 0xee, 0xee);
-  newStyle->googleLogo =
-      [NSImage imageNamed:@"google_logo_dark_with_margin.png"];
-  if (newStyle->googleLogo) {
+  string logo_file_name = style.logo_file_name();
+  g_LogoImage =
+    [NSImage imageNamed:[NSString stringWithUTF8String:logo_file_name.c_str()]];
+  if (g_LogoImage) {
     // setFlipped is deprecated at Snow Leopard, but we use this because
     // it works well with Snow Leopard and new method to deal with
     // flipped view doesn't work with Leopard.
-    [newStyle->googleLogo setFlipped:YES];
+    [g_LogoImage setFlipped:YES];
 
     // Fix the image size.  Sometimes the size can be smaller than the
     // actual size because of blank margin.
-    NSArray *logoReps = [newStyle->googleLogo representations];
+    NSArray *logoReps = [g_LogoImage representations];
     if (logoReps && [logoReps count] > 0) {
       NSImageRep *representation = [logoReps objectAtIndex:0];
-      [newStyle->googleLogo setSize:NSMakeSize([representation pixelsWide],
-                                               [representation pixelsHigh])];
+      [g_LogoImage setSize:NSMakeSize([representation pixelsWide],
+                                      [representation pixelsHigh])];
     }
   }
 
-  newStyle->focusedBackground = colorWithRGB(0xd1, 0xea, 0xff);
-  newStyle->focusedBorder = colorWithRGB(0x7f, 0xac, 0xdd);
-
-  newStyle->scrollBarBackground = colorWithRGB(0xe0, 0xe0, 0xe0);
-  newStyle->scrollBarIndicatorColor = colorWithRGB(0x75, 0x90, 0xb8);
-  newStyle->scrollBarWidth = 4;
-
-  newStyle->Retain();
-  kDefaultStyle = newStyle;
+  NSString *nsstr =
+    [NSString stringWithUTF8String:style.column_minimum_width_string().c_str()];
+  NSDictionary *attr =
+    [NSDictionary dictionaryWithObject:[NSFont messageFontOfSize:14]
+                                forKey:NSFontAttributeName];
+  NSAttributedString *defaultMessage =
+    [[[NSAttributedString alloc] initWithString:nsstr attributes:attr]
+     autorelease];
+  g_column_minimum_width = [defaultMessage size].width;
 
   // default line width is specified as 1.0 *pt*, but we want to draw
   // it as 1.0 px.
@@ -304,13 +120,18 @@ void InitializeDefaultStyle() {
 #pragma mark initialization
 
 - (id)initWithFrame:(NSRect)frame {
-  CallOnce(&kOnceForDefaultStyle, InitializeDefaultStyle);
+  CallOnce(&g_OnceForInitializeStyle, InitializeDefaultStyle);
   self = [super initWithFrame:frame];
   if (self) {
     tableLayout_ = new(nothrow)TableLayout;
+    RendererStyle *style = new(nothrow)RendererStyle;
+    if (style) {
+      RendererStyleHandler::GetRendererStyle(style);
+    }
+    style_ = style;
     focusedRow_ = -1;
   }
-  if (!kDefaultStyle || !tableLayout_) {
+  if (!tableLayout_ || !style_) {
     [self release];
     self = nil;
   }
@@ -332,6 +153,7 @@ void InitializeDefaultStyle() {
 - (void)dealloc {
   [candidateStringsCache_ release];
   delete tableLayout_;
+  delete style_;
   [super dealloc];
 }
 
@@ -346,7 +168,7 @@ void InitializeDefaultStyle() {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   [candidateStringsCache_ release];
   tableLayout_->Initialize(candidates_->candidate_size(), NUMBER_OF_COLUMNS);
-  tableLayout_->SetWindowBorder(kDefaultStyle->windowBorder);
+  tableLayout_->SetWindowBorder(style_->window_border());
 
   // calculating focusedRow_
   if (candidates_->has_focused_index() && candidates_->candidate_size() > 0) {
@@ -363,27 +185,25 @@ void InitializeDefaultStyle() {
     const mozc::commands::Footer &footer = candidates_->footer();
 
     if (footer.has_label()) {
-      NSAttributedString *footerLabel = getAttributedString(
-          footer.label(),
-          kDefaultStyle->footerStyle.attributes);
+      NSAttributedString *footerLabel = MacViewUtil::ToNSAttributedString(
+          footer.label(), style_->footer_style());
       NSSize footerLabelSize =
-          applyTheme([footerLabel size], kDefaultStyle->footerStyle);
+          MacViewUtil::applyTheme([footerLabel size], style_->footer_style());
       footerSize.width += footerLabelSize.width;
       footerSize.height = max(footerSize.height, footerLabelSize.height);
     }
 
     if (footer.has_sub_label()) {
-      NSAttributedString *footerSubLabel = getAttributedString(
-          footer.sub_label(),
-          kDefaultStyle->footerSubLabelStyle.attributes);
+      NSAttributedString *footerSubLabel = MacViewUtil::ToNSAttributedString(
+          footer.sub_label(), style_->footer_sub_label_style());
       NSSize footerSubLabelSize =
-          applyTheme([footerSubLabel size], kDefaultStyle->footerSubLabelStyle);
+          MacViewUtil::applyTheme([footerSubLabel size], style_->footer_sub_label_style());
       footerSize.width += footerSubLabelSize.width;
       footerSize.height = max(footerSize.height, footerSubLabelSize.height);
     }
 
-    if (footer.logo_visible() && kDefaultStyle->googleLogo) {
-      NSSize logoSize = [kDefaultStyle->googleLogo size];
+    if (footer.logo_visible() && g_LogoImage) {
+      NSSize logoSize = [g_LogoImage size];
       footerSize.width += logoSize.width;
       footerSize.height = max(footerSize.height, logoSize.height);
     }
@@ -391,42 +211,37 @@ void InitializeDefaultStyle() {
     if (footer.index_visible()) {
       const int focusedIndex = candidates_->focused_index();
       const int totalItems = candidates_->size();
-
       NSString *footerIndex =
           [NSString stringWithFormat:@"%d/%d", focusedIndex + 1, totalItems];
-      NSAttributedString *footerAttributedIndex =
-          [[[NSAttributedString alloc]
-             initWithString:footerIndex
-                 attributes:kDefaultStyle->footerStyle.attributes]
-          autorelease];
+      NSAttributedString *footerAttributedIndex = 
+          MacViewUtil::ToNSAttributedString([footerIndex UTF8String],
+                                            style_->footer_style());
       NSSize footerIndexSize =
-          applyTheme([footerAttributedIndex size], kDefaultStyle->footerStyle);
+          MacViewUtil::applyTheme([footerAttributedIndex size],
+                                  style_->footer_style());
       footerSize.width += footerIndexSize.width;
       footerSize.height = max(footerSize.height, footerIndexSize.height);
     }
 
-    footerSize.height += [kDefaultStyle->footerBorderColors count];
-    tableLayout_->EnsureFooterSize(ToSize(footerSize));
+    footerSize.height += style_->footer_border_colors_size();
+    tableLayout_->EnsureFooterSize(MacViewUtil::ToSize(footerSize));
   }
 
-  tableLayout_->SetRowRectPadding(kDefaultStyle->rowRectPadding);
+  tableLayout_->SetRowRectPadding(style_->row_rect_padding());
   if (candidates_->candidate_size() < candidates_->size()) {
-    tableLayout_->SetVScrollBar(kDefaultStyle->scrollBarWidth);
+    tableLayout_->SetVScrollBar(style_->scrollbar_width());
   }
 
-  NSAttributedString *gap1 =
-      [[[NSAttributedString alloc]
-        initWithString:@" "
-            attributes:kDefaultStyle->textStyles[COLUMN_GAP1].attributes]
-        autorelease];
-  tableLayout_->EnsureCellSize(COLUMN_GAP1, ToSize([gap1 size]));
+  NSAttributedString *gap1 = MacViewUtil::ToNSAttributedString(
+      " ", style_->text_styles(COLUMN_GAP1));
+  tableLayout_->EnsureCellSize(COLUMN_GAP1, MacViewUtil::ToSize([gap1 size]));
 
   NSMutableArray *newCache = [[NSMutableArray array] retain];
   for (size_t i = 0; i < candidates_->candidate_size(); ++i) {
     const Candidates::Candidate &candidate = candidates_->candidate(i);
-    NSAttributedString *shortcut = getAttributedString(
+    NSAttributedString *shortcut = MacViewUtil::ToNSAttributedString(
        candidate.annotation().shortcut(),
-       kDefaultStyle->textStyles[COLUMN_SHORTCUT].attributes);
+       style_->text_styles(COLUMN_SHORTCUT));
     string value = candidate.value();
     if (candidate.annotation().has_prefix()) {
       value = candidate.annotation().prefix() + value;
@@ -438,25 +253,28 @@ void InitializeDefaultStyle() {
       value.append("  ");
     }
 
-    NSAttributedString *candidateValue = getAttributedString(
-        value, kDefaultStyle->textStyles[COLUMN_CANDIDATE].attributes);
-    NSAttributedString *description = getAttributedString(
+    NSAttributedString *candidateValue = MacViewUtil::ToNSAttributedString(
+        value, style_->text_styles(COLUMN_CANDIDATE));
+    NSAttributedString *description = MacViewUtil::ToNSAttributedString(
        candidate.annotation().description(),
-       kDefaultStyle->textStyles[COLUMN_DESCRIPTION].attributes);
+       style_->text_styles(COLUMN_DESCRIPTION));
     if ([shortcut length] > 0) {
-      NSSize shortcutSize = applyTheme(
-          [shortcut size], kDefaultStyle->textStyles[COLUMN_SHORTCUT]);
-      tableLayout_->EnsureCellSize(COLUMN_SHORTCUT, ToSize(shortcutSize));
+      NSSize shortcutSize = MacViewUtil::applyTheme(
+          [shortcut size], style_->text_styles(COLUMN_SHORTCUT));
+      tableLayout_->EnsureCellSize(COLUMN_SHORTCUT,
+                                   MacViewUtil::ToSize(shortcutSize));
     }
     if ([candidateValue length] > 0) {
-      NSSize valueSize = applyTheme(
-          [candidateValue size], kDefaultStyle->textStyles[COLUMN_CANDIDATE]);
-      tableLayout_->EnsureCellSize(COLUMN_CANDIDATE, ToSize(valueSize));
+      NSSize valueSize = MacViewUtil::applyTheme(
+          [candidateValue size], style_->text_styles(COLUMN_CANDIDATE));
+      tableLayout_->EnsureCellSize(COLUMN_CANDIDATE,
+                                   MacViewUtil::ToSize(valueSize));
     }
     if ([description length] > 0) {
-      NSSize descriptionSize = applyTheme(
-          [description size], kDefaultStyle->textStyles[COLUMN_DESCRIPTION]);
-      tableLayout_->EnsureCellSize(COLUMN_DESCRIPTION, ToSize(descriptionSize));
+      NSSize descriptionSize = MacViewUtil::applyTheme(
+          [description size], style_->text_styles(COLUMN_DESCRIPTION));
+      tableLayout_->EnsureCellSize(COLUMN_DESCRIPTION,
+                                   MacViewUtil::ToSize(descriptionSize));
     }
 
     [newCache addObject:[NSArray arrayWithObjects:shortcut, gap1,
@@ -464,18 +282,19 @@ void InitializeDefaultStyle() {
   }
 
   tableLayout_->EnsureColumnsWidth(COLUMN_CANDIDATE, COLUMN_DESCRIPTION,
-                                   kDefaultStyle->columnMinimumWidth);
+                                   g_column_minimum_width);
 
   candidateStringsCache_ = newCache;
   tableLayout_->FreezeLayout();
   [pool drain];
-  return ToNSSize(tableLayout_->GetTotalSize());
+  return MacViewUtil::ToNSSize(tableLayout_->GetTotalSize());
 }
 
 - (void)drawRect:(NSRect)rect {
   if (!candidates_) {
     return;
   }
+
   if (!Category_IsValid(candidates_->category())) {
     LOG(WARNING) << "Unknown candidates category: " << candidates_->category();
     return;
@@ -491,7 +310,7 @@ void InitializeDefaultStyle() {
   [self drawFooter];
 
   // Draw the window border at last
-  [kDefaultStyle->borderColor set];
+  [MacViewUtil::ToNSColor(style_->border_color()) set];
   mozc::renderer::Size windowSize = tableLayout_->GetTotalSize();
   [NSBezierPath strokeRect:NSMakeRect(
       0.5, 0.5, windowSize.width - 1, windowSize.height - 1)];
@@ -502,10 +321,10 @@ void InitializeDefaultStyle() {
 - (void)drawRow:(int)row {
   if (row == focusedRow_) {
     // Draw focused background
-    NSRect focusedRect = ToNSRect(tableLayout_->GetRowRect(focusedRow_));
-    [kDefaultStyle->focusedBackground set];
+    NSRect focusedRect = MacViewUtil::ToNSRect(tableLayout_->GetRowRect(focusedRow_));
+    [MacViewUtil::ToNSColor(style_->focused_background_color()) set];
     [NSBezierPath fillRect:focusedRect];
-    [kDefaultStyle->focusedBorder set];
+    [MacViewUtil::ToNSColor(style_->focused_border_color()) set];
     // Fix the border position.  Because a line should be drawn at the
     // middle point of the pixel, origin should be shifted by 0.5 unit
     // and the size should be shrinked by 1.0 unit.
@@ -518,11 +337,10 @@ void InitializeDefaultStyle() {
     // Draw normal background
     for (int i = COLUMN_SHORTCUT; i < NUMBER_OF_COLUMNS; ++i) {
       mozc::renderer::Rect cellRect = tableLayout_->GetCellRect(row, i);
-      NSColor *backgroundColor = kDefaultStyle->textStyles[i].background;
       if (cellRect.size.width > 0 && cellRect.size.height > 0 &&
-          backgroundColor) {
-        [backgroundColor set];
-        [NSBezierPath fillRect:ToNSRect(cellRect)];
+          style_->text_styles(i).has_background_color()) {
+        [MacViewUtil::ToNSColor(style_->text_styles(i).background_color()) set];
+        [NSBezierPath fillRect:MacViewUtil::ToNSRect(cellRect)];
       }
     }
   }
@@ -530,12 +348,22 @@ void InitializeDefaultStyle() {
   NSArray *candidate = [candidateStringsCache_ objectAtIndex:row];
   for (int i = COLUMN_SHORTCUT; i < NUMBER_OF_COLUMNS; ++i) {
     NSAttributedString *text = [candidate objectAtIndex:i];
-    NSRect cellRect = ToNSRect(tableLayout_->GetCellRect(row, i));
+    NSRect cellRect = MacViewUtil::ToNSRect(tableLayout_->GetCellRect(row, i));
     NSPoint &candidatePosition = cellRect.origin;
     // Adjust the positions
-    candidatePosition.x += kDefaultStyle->textStyles[i].leftPadding;
+    candidatePosition.x += style_->text_styles(i).left_padding();
     candidatePosition.y += (cellRect.size.height - [text size].height) / 2;
     [text drawAtPoint:candidatePosition];
+  }
+
+  if (candidates_->candidate(row).has_information_id()) {
+      NSRect rect = MacViewUtil::ToNSRect(tableLayout_->GetRowRect(row));
+      [MacViewUtil::ToNSColor(style_->focused_border_color()) set];
+      rect.origin.x += rect.size.width - 6.0;
+      rect.size.width = 4.0;
+      rect.origin.y += 2.0;
+      rect.size.height -= 4.0;
+      [NSBezierPath fillRect:rect];
   }
 }
 
@@ -543,12 +371,11 @@ void InitializeDefaultStyle() {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   if (candidates_->has_footer()) {
     const mozc::commands::Footer &footer = candidates_->footer();
-    NSRect footerRect = ToNSRect(tableLayout_->GetFooterRect());
+    NSRect footerRect = MacViewUtil::ToNSRect(tableLayout_->GetFooterRect());
 
     // Draw footer border
-    for (int i = 0; i < [kDefaultStyle->footerBorderColors count]; ++i) {
-      NSColor *lineColor = [kDefaultStyle->footerBorderColors objectAtIndex:i];
-      [lineColor set];
+    for (int i = 0; i < style_->footer_border_colors_size(); ++i) {
+      [MacViewUtil::ToNSColor(style_->footer_border_colors(i)) set];
       NSPoint fromPoint = NSMakePoint(footerRect.origin.x,
                                       footerRect.origin.y + 0.5);
       NSPoint toPoint = NSMakePoint(footerRect.origin.x + footerRect.size.width,
@@ -559,30 +386,28 @@ void InitializeDefaultStyle() {
 
     // Draw Footer background and data if necessary
     NSGradient *footerBackground =
-        [[[NSGradient alloc]
-           initWithStartingColor:kDefaultStyle->footerTopColor
-                     endingColor:kDefaultStyle->footerBottomColor]
-          autorelease];
+      [[[NSGradient alloc]
+        initWithStartingColor:MacViewUtil::ToNSColor(style_->footer_top_color())
+        endingColor:MacViewUtil::ToNSColor(style_->footer_bottom_color())]
+       autorelease];
     [footerBackground drawInRect:footerRect angle:90.0];
 
     // Draw logo
-    if (footer.logo_visible() && kDefaultStyle->googleLogo) {
-      [kDefaultStyle->googleLogo
-                    drawAtPoint:footerRect.origin
-                       fromRect:NSZeroRect /* means draw entire image */
-                      operation:NSCompositeSourceOver
-                       fraction:1.0 /* opacity */];
-      NSSize logoSize = [kDefaultStyle->googleLogo size];
+    if (footer.logo_visible() && g_LogoImage) {
+      [g_LogoImage drawAtPoint:footerRect.origin
+                      fromRect:NSZeroRect /* means draw entire image */
+                     operation:NSCompositeSourceOver
+                      fraction:1.0 /* opacity */];
+      NSSize logoSize = [g_LogoImage size];
       footerRect.origin.x += logoSize.width;
       footerRect.size.width -= logoSize.width;
     }
 
     // Draw label
     if (footer.has_label()) {
-      NSAttributedString *footerLabel = getAttributedString(
-          footer.label(),
-          kDefaultStyle->footerStyle.attributes);
-      footerRect.origin.x += kDefaultStyle->footerStyle.leftPadding;
+      NSAttributedString *footerLabel = MacViewUtil::ToNSAttributedString(
+          footer.label(), style_->footer_style());
+      footerRect.origin.x += style_->footer_style().left_padding();
       NSSize labelSize = [footerLabel size];
       NSPoint labelPosition = footerRect.origin;
       labelPosition.y += (footerRect.size.height - labelSize.height) / 2;
@@ -591,10 +416,9 @@ void InitializeDefaultStyle() {
 
     // Draw sub_label
     if (footer.has_sub_label()) {
-      NSAttributedString *footerSubLabel = getAttributedString(
-          footer.sub_label(),
-          kDefaultStyle->footerSubLabelStyle.attributes);
-      footerRect.origin.x += kDefaultStyle->footerSubLabelStyle.leftPadding;
+      NSAttributedString *footerSubLabel = MacViewUtil::ToNSAttributedString(
+          footer.sub_label(), style_->footer_sub_label_style());
+      footerRect.origin.x += style_->footer_sub_label_style().left_padding();
       NSSize subLabelSize = [footerSubLabel size];
       NSPoint subLabelPosition = footerRect.origin;
       subLabelPosition.y += (footerRect.size.height - subLabelSize.height) / 2;
@@ -608,14 +432,12 @@ void InitializeDefaultStyle() {
       NSString *footerIndex =
           [NSString stringWithFormat:@"%d/%d", focusedIndex + 1, totalItems];
       NSAttributedString *footerAttributedIndex =
-          [[[NSAttributedString alloc]
-             initWithString:footerIndex
-                 attributes:kDefaultStyle->footerStyle.attributes]
-            autorelease];
+        MacViewUtil::ToNSAttributedString(
+          [footerIndex UTF8String], style_->footer_style());
       NSSize footerSize = [footerAttributedIndex size];
       NSPoint footerPosition = footerRect.origin;
       footerPosition.x = footerPosition.x + footerRect.size.width -
-          footerSize.width - kDefaultStyle->footerStyle.rightPadding;
+          footerSize.width - style_->footer_style().right_padding();
       [footerAttributedIndex drawAtPoint:footerPosition];
     }
   }
@@ -631,14 +453,14 @@ void InitializeDefaultStyle() {
     const int endIndex =
         candidates_->candidate(candidates_->candidate_size() - 1).index();
 
-    [kDefaultStyle->scrollBarBackground set];
-    [NSBezierPath fillRect:ToNSRect(vscrollRect)];
+    [MacViewUtil::ToNSColor(style_->scrollbar_background_color()) set];
+    [NSBezierPath fillRect:MacViewUtil::ToNSRect(vscrollRect)];
 
     const mozc::renderer::Rect &indicatorRect =
         tableLayout_->GetVScrollIndicatorRect(
             beginIndex, endIndex, candidatesTotal);
-    [kDefaultStyle->scrollBarIndicatorColor set];
-    [NSBezierPath fillRect:ToNSRect(indicatorRect)];
+    [MacViewUtil::ToNSColor(style_->scrollbar_indicator_color()) set];
+    [NSBezierPath fillRect:MacViewUtil::ToNSRect(indicatorRect)];
   }
 }
 
@@ -649,7 +471,7 @@ const char *Inspect(id obj) {
 }
 
 - (void)mouseDown:(NSEvent *)event {
-  mozc::renderer::Point localPos = ToPoint(
+  mozc::renderer::Point localPos = MacViewUtil::ToPoint(
       [self convertPoint:[event locationInWindow] fromView:nil]);
   int clickedRow = -1;
   for (int i = 0; i < tableLayout_->number_of_rows(); ++i) {
@@ -667,7 +489,7 @@ const char *Inspect(id obj) {
 }
 
 - (void)mouseUp:(NSEvent *)event {
-  mozc::renderer::Point localPos = ToPoint(
+  mozc::renderer::Point localPos = MacViewUtil::ToPoint(
       [self convertPoint:[event locationInWindow] fromView:nil]);
   if (command_sender_ == NULL) {
     return;

@@ -401,32 +401,5 @@ TEST(TransliterationRewriterTest, RewriteWithSameComposerTest) {
   }
 }
 
-TEST(TransliterationRewriterTest, NormalizedTransliterations) {
-  TransliterationRewriter t13n_rewriter;
 
-  composer::Table table;
-  table.Initialize();
-  composer::Composer composer;
-  composer.SetTable(&table);
-
-  // "らゔ"
-  composer.InsertCharacterPreedit("\xE3\x82\x89\xE3\x82\x94");
-
-  Segments segments;
-  {  // Initialize segments.
-    Segment *segment = segments.add_segment();
-    CHECK(segment);
-    // "らゔ"
-    segment->set_key("\xE3\x82\x89\xE3\x82\x94");
-    segment->add_candidate()->value = "LOVE";
-  }
-
-  segments.set_composer(&composer);
-  EXPECT_TRUE(t13n_rewriter.Rewrite(&segments));
-  EXPECT_EQ(1, segments.segments_size());
-  const Segment &seg = segments.segment(0);
-  // "らヴ"
-  EXPECT_EQ("\xE3\x82\x89\xE3\x83\xB4",
-            seg.meta_candidate(transliteration::HIRAGANA).value);
-}
 }  // namespace mozc

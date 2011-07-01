@@ -74,15 +74,21 @@ void RunTest(LRUStorage *storage, uint32 size) {
 
   reverse(values.begin(), values.end());
 
+  vector<string> value_list;
+  EXPECT_TRUE(storage->GetAllValues(&value_list));
+
   uint32 last_access_time;
   for (int i = 0; i < size; ++i) {
     const uint32 *v1 = cache.Lookup(values[i].first);
     const uint32 *v2 = reinterpret_cast<const uint32*>(
         storage->Lookup(values[i].first, &last_access_time));
+    const uint32 *v3 = reinterpret_cast<const uint32*>(value_list[i].data());
     EXPECT_TRUE(v1 != NULL);
     EXPECT_EQ(*v1, values[i].second);
     EXPECT_TRUE(v2 != NULL);
     EXPECT_EQ(*v2, values[i].second);
+    EXPECT_TRUE(v3 != NULL);
+    EXPECT_EQ(*v3, values[i].second);
   }
 
   for (int i = size; i < values.size(); ++i) {

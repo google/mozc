@@ -32,6 +32,7 @@
 #include "base/util.h"
 #include "converter/segments.h"
 #include "rewriter/english_variants_rewriter.h"
+#include "session/commands.pb.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
@@ -40,27 +41,6 @@ class EnglishVariantsRewriterTest : public testing::Test {
  protected:
   virtual void SetUp() {}
 };
-
-TEST_F(EnglishVariantsRewriterTest, IsEnglishValue) {
-  EnglishVariantsRewriter rewriter;
-  EXPECT_TRUE(rewriter.IsEnglishValue("ABC"));
-  EXPECT_TRUE(rewriter.IsEnglishValue("Google"));
-  EXPECT_TRUE(rewriter.IsEnglishValue("Google Map"));
-  EXPECT_TRUE(rewriter.IsEnglishValue("ABC-DEF"));
-  EXPECT_TRUE(rewriter.IsEnglishValue("Foo-bar"));
-  EXPECT_TRUE(rewriter.IsEnglishValue("Foo!"));
-  EXPECT_TRUE(rewriter.IsEnglishValue("!"));
-  EXPECT_TRUE(rewriter.IsEnglishValue("  "));
-  //  EXPECT_FALSE(rewriter.IsEnglishValue("てすと"));
-  //  EXPECT_FALSE(rewriter.IsEnglishValue("テスト"));
-  //  EXPECT_FALSE(rewriter.IsEnglishValue("東京"));
-  EXPECT_FALSE(rewriter.IsEnglishValue(
-      "\xE3\x81\xA6\xE3\x81\x99\xE3\x81\xA8"));
-  EXPECT_FALSE(rewriter.IsEnglishValue(
-      "\xE3\x83\x86\xE3\x82\xB9\xE3\x83\x88"));
-  EXPECT_FALSE(rewriter.IsEnglishValue(
-      "\xE6\x9D\xB1\xE4\xBA\xAC"));
-}
 
 TEST_F(EnglishVariantsRewriterTest, ExpandEnglishVariants) {
   EnglishVariantsRewriter rewriter;
@@ -217,4 +197,6 @@ TEST_F(EnglishVariantsRewriterTest, Regression3242753) {
                 Segment::Candidate::NO_VARIANTS_EXPANSION);
   }
 }
+
+
 }  // namespace mozc

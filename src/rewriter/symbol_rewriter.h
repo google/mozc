@@ -45,11 +45,15 @@ class SymbolRewriter: public RewriterInterface  {
  public:
   SymbolRewriter();
   virtual ~SymbolRewriter();
+
+  virtual int capability() const;
+
   virtual bool Rewrite(Segments *segments) const;
 
 private:
   FRIEND_TEST(SymbolRewriterTest, TriggerRewriteEntireTest);
   FRIEND_TEST(SymbolRewriterTest, TriggerRewriteEachTest);
+  FRIEND_TEST(SymbolRewriterTest, TriggerRewriteDescriptionTest);
   FRIEND_TEST(SymbolRewriterTest, SplitDescriptionTest);
 
   // Some characters may have different description for full/half width forms.

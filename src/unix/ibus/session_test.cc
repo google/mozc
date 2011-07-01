@@ -30,6 +30,7 @@
 #include "base/scoped_ptr.h"
 #include "testing/base/public/gunit.h"
 #include "unix/ibus/session.h"
+#include "client/session.h"
 
 namespace mozc {
 namespace ibus {
@@ -39,10 +40,14 @@ class SessionTest : public testing::Test {
   SessionTest() {}
 
   virtual void SetUp() {
-    session_.reset(new Session);
+#ifdef OS_CHROMEOS
+    session_.reset(new ibus::Session);
+#else
+    session_.reset(new client::Session);
+#endif
   }
 
-  scoped_ptr<Session> session_;
+  scoped_ptr<client::SessionInterface> session_;
 };
 
 TEST_F(SessionTest, EnsureSession) {
@@ -116,7 +121,9 @@ TEST_F(SessionTest, ClearUnusedUserPrediction) {
 }
 
 TEST_F(SessionTest, Shutdown) {
+#ifndef OS_CHROMEOS
   EXPECT_TRUE(session_->Shutdown());
+#endif
 }
 
 TEST_F(SessionTest, SyncData) {

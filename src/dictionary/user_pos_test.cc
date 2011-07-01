@@ -56,15 +56,15 @@ TEST(UserPOSTest, UserPOSGetTokensTest) {
   vector<UserPOS::Token> tokens;
   EXPECT_FALSE(UserPOS::GetTokens("", "test",
                                   pos_list[0],
-                                  UserPOS::DEFAULT, &tokens));
+                                  &tokens));
   EXPECT_FALSE(UserPOS::GetTokens("test", "",
                                   pos_list[0],
-                                  UserPOS::DEFAULT, &tokens));
+                                  &tokens));
   EXPECT_FALSE(UserPOS::GetTokens("test", "test",
-                                  "", UserPOS::DEFAULT,
+                                  "",
                                   &tokens));
   EXPECT_TRUE(UserPOS::GetTokens("test", "test",
-                                 pos_list[0], UserPOS::DEFAULT,
+                                 pos_list[0],
                                  &tokens));
 
   // http://b/2674666
@@ -72,13 +72,11 @@ TEST(UserPOSTest, UserPOSGetTokensTest) {
   EXPECT_TRUE(UserPOS::GetTokens("\xE3\x81\x82\xE3\x81\x8B",
                                  "\xE8\xB5\xA4",
                                  "\xE5\xBD\xA2\xE5\xAE\xB9\xE8\xA9\x9E",
-                                 UserPOS::DEFAULT,
                                  &tokens));
 
   for (size_t i = 0; i < pos_list.size(); ++i) {
     EXPECT_TRUE(UserPOS::GetTokens("test", "test",
                                    pos_list[i],
-                                   UserPOS::DEFAULT,
                                    &tokens));
   }
 }

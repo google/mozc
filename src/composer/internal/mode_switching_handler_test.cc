@@ -58,6 +58,17 @@ TEST_F(ModeSwitchingHandlerTest, GetModeSwitchingRule) {
   EXPECT_EQ(ModeSwitchingHandler::PREFERRED_ALPHANUMERIC, display_mode);
   EXPECT_EQ(ModeSwitchingHandler::REVERT_TO_PREVIOUS_MODE, input_mode);
 
+  EXPECT_TRUE(handler_->GetModeSwitchingRule("Chrome",
+                                             &display_mode, &input_mode));
+  EXPECT_EQ(ModeSwitchingHandler::PREFERRED_ALPHANUMERIC, display_mode);
+  EXPECT_EQ(ModeSwitchingHandler::REVERT_TO_PREVIOUS_MODE, input_mode);
+
+  EXPECT_TRUE(handler_->GetModeSwitchingRule("chrome",
+                                             &display_mode, &input_mode));
+  EXPECT_EQ(ModeSwitchingHandler::PREFERRED_ALPHANUMERIC, display_mode);
+  EXPECT_EQ(ModeSwitchingHandler::REVERT_TO_PREVIOUS_MODE, input_mode);
+
+
   EXPECT_TRUE(handler_->GetModeSwitchingRule("http",
                                              &display_mode, &input_mode));
   EXPECT_EQ(ModeSwitchingHandler::HALF_ALPHANUMERIC, display_mode);

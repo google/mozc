@@ -34,29 +34,13 @@
 #include "base/base.h"
 #include "base/util.h"
 #include "converter/segments.h"
+#include "session/commands.pb.h"
 
 namespace mozc {
 
 EnglishVariantsRewriter::EnglishVariantsRewriter() {}
 
 EnglishVariantsRewriter::~EnglishVariantsRewriter() {}
-
-// TODO(taku): move it to Util. We have the same function in
-// converter/candidate_filter.cc
-bool EnglishVariantsRewriter::IsEnglishValue(
-    const string &value) const {
-  for (size_t i = 0; i < value.size(); ++i) {
-    if (value[i] == 0x20 || value[i] == 0x21 || value[i] == 0x2D ||
-        // " ", "!", "-"
-        (value[i] >= 0x41 && value[i] <= 0x5A) ||  // A..Z
-        (value[i] >= 0x61 && value[i] <= 0x7A)) {  // a..z
-      // do nothing
-    } else {
-      return false;
-    }
-  }
-  return true;
-}
 
 bool EnglishVariantsRewriter::ExpandEnglishVariants(
     const string &input,
@@ -121,7 +105,7 @@ bool EnglishVariantsRewriter::ExpandEnglishVariantsWithSegment(
     }
 
     // Expand English T13N variants
-    if (IsEnglishValue(original_candidate->content_value) &&
+    if (Util::IsEnglishTransliteration(original_candidate->content_value) &&
         Util::GetScriptType(original_candidate->content_key) ==
         Util::HIRAGANA) {
       modified = true;
@@ -155,6 +139,10 @@ bool EnglishVariantsRewriter::ExpandEnglishVariantsWithSegment(
   }
 
   return modified;
+}
+
+int EnglishVariantsRewriter::capability() const {
+  return RewriterInterface::CONVERSION;
 }
 
 bool EnglishVariantsRewriter::Rewrite(Segments *segments) const {

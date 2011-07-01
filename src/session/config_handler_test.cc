@@ -44,9 +44,10 @@ TEST(ConfigHandlerTest, SetConfig) {
   config::Config output;
 
   const string config_file = Util::JoinPath(FLAGS_test_tmpdir,
-                                                  "mozc_config_test_tmp");
+                                            "mozc_config_test_tmp");
   Util::Unlink(config_file);
   config::ConfigHandler::SetConfigFileName(config_file);
+  EXPECT_EQ(config_file, config::ConfigHandler::GetConfigFileName());
   config::ConfigHandler::Reload();
 
   config::ConfigHandler::GetDefaultConfig(&input);
@@ -84,7 +85,7 @@ TEST(ConfigHandlerTest, ConfigFileNameConfig) {
       + Util::SimpleItoa(config::CONFIG_VERSION);
 
   const string filename = Util::JoinPath(FLAGS_test_tmpdir,
-                                               config_file);
+                                         config_file);
   Util::Unlink(filename);
   config::Config input;
   config::ConfigHandler::SetConfig(input);

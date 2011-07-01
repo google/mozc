@@ -466,7 +466,9 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
         selectedRange.length > 0) {
       NSString *text =
         [[client attributedSubstringFromRange:selectedRange] string];
-     :: setenv(mozc::kWordRegisterEnvironmentName, [text UTF8String], 1);
+      if (text != nil) {
+        :: setenv(mozc::kWordRegisterEnvironmentName, [text UTF8String], 1);
+      }
     }
   }
   MacProcess::LaunchMozcTool("word_register_dialog");
@@ -534,6 +536,9 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
 
 - (void)processOutput:(const mozc::commands::Output *)output client:(id)sender {
   if (output == NULL) {
+    return;
+  }
+  if (!output->consumed()) {
     return;
   }
 
@@ -841,6 +846,7 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
     [originalString_ appendFormat:@"%c", keyEvent.key_code()];
   }
 
+  keyEvent.set_mode(mode_);
   if (!session_->SendKey(keyEvent, &output)) {
     return NO;
   }

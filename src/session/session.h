@@ -161,6 +161,7 @@ class Session : public SessionInterface {
   bool InputModeHalfKatakana(commands::Command *command);
   bool InputModeFullASCII(commands::Command *command);
   bool InputModeHalfASCII(commands::Command *command);
+  bool InputModeSwitchKanaType(commands::Command *command);
 
   // Let client launch config dialog
   bool LaunchConfigDialog(commands::Command *command);
@@ -211,6 +212,7 @@ class Session : public SessionInterface {
 
  private:
   FRIEND_TEST(SessionTest, OutputInitialComposition);
+  FRIEND_TEST(SessionTest, IsFullWidthInsertSpace);
 
   scoped_ptr<ImeContext> context_;
   scoped_ptr<ImeContext> prev_context_;
@@ -250,6 +252,9 @@ class Session : public SessionInterface {
   // Process it and return true, otherwise return false.
   bool MaybeSelectCandidate(commands::Command *command);
 
+  // Make boundary to separate conversion streams in the session.
+  void BoundSession() const;
+
   // Fill command's output according to the current state.
   void OutputFromState(commands::Command *command);
   void Output(commands::Command *command);
@@ -267,7 +272,7 @@ class Session : public SessionInterface {
   void UpdateTime();
 
   // update preferences only affecting this session.
-  bool UpdatePreferences(commands::Command *command);
+  void UpdatePreferences(commands::Command *command);
 
   // Modify input of SendKey, TestSendKey, and SendCommand.
   void TransformInput(commands::Input *input);

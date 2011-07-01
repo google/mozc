@@ -47,6 +47,8 @@
       ],
       'action': [
         '<(moc_path)',
+        # Specify include path as a workaround of b/4905149
+        '-p', '<(relative_dir)/<(subdir)',
         '-o', '<(gen_out_dir)/<(subdir)/moc_<(RULE_INPUT_ROOT).cc',
         '<(RULE_INPUT_PATH)',
       ],

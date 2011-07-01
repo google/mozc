@@ -40,12 +40,14 @@
 #include "base/util.h"
 #include "converter/converter_interface.h"
 #include "converter/converter_mock.h"
+#include "converter/segments.h"
 #include "composer/composer.h"
 #include "composer/table.h"
 #include "session/internal/keymap.h"
 #include "session/config.pb.h"
 #include "session/config_handler.h"
 #include "session/session_converter.h"
+#include "session/internal/candidate_list.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/googletest.h"
 #include "transliteration/transliteration.h"
@@ -217,6 +219,71 @@ class SessionConverterTest : public testing::Test {
       key.set_key_code(text[i]);
       composer->InsertCharacterKeyEvent(key);
     }
+  }
+
+  void ExpectSameSessionConverter(const SessionConverter &lhs,
+                                  const SessionConverter &rhs) {
+    EXPECT_EQ(lhs.IsActive(), rhs.IsActive());
+    EXPECT_EQ(lhs.IsCandidateListVisible(), rhs.IsCandidateListVisible());
+    EXPECT_EQ(lhs.GetSegmentIndex(), rhs.GetSegmentIndex());
+    EXPECT_EQ(lhs.GetDefaultResult(), rhs.GetDefaultResult());
+    EXPECT_EQ(lhs.GetComposition(), rhs.GetComposition());
+
+    EXPECT_EQ(lhs.GetOperationPreferences().use_cascading_window,
+              rhs.GetOperationPreferences().use_cascading_window);
+    EXPECT_EQ(lhs.GetOperationPreferences().candidate_shortcuts,
+              rhs.GetOperationPreferences().candidate_shortcuts);
+    EXPECT_EQ(lhs.conversion_preferences().use_history,
+              rhs.conversion_preferences().use_history);
+    EXPECT_EQ(lhs.conversion_preferences().max_history_size,
+              rhs.conversion_preferences().max_history_size);
+    EXPECT_EQ(lhs.IsCandidateListVisible(),
+              rhs.IsCandidateListVisible());
+
+    Segments segments_lhs, segments_rhs;
+    lhs.GetSegments(&segments_lhs);
+    rhs.GetSegments(&segments_rhs);
+    EXPECT_EQ(segments_lhs.segments_size(),
+              segments_rhs.segments_size());
+    for (size_t i = 0; i < segments_lhs.segments_size(); ++i) {
+      Segment segment_lhs, segment_rhs;
+      segment_lhs.CopyFrom(segments_lhs.segment(i));
+      segment_rhs.CopyFrom(segments_rhs.segment(i));
+      EXPECT_EQ(segment_lhs.key(), segment_rhs.key()) << " i=" << i;
+      EXPECT_EQ(segment_lhs.segment_type(),
+                segment_rhs.segment_type()) << " i=" << i;
+      EXPECT_EQ(segment_lhs.candidates_size(), segment_rhs.candidates_size());
+    }
+
+    const CandidateList &candidate_list_lhs = lhs.GetCandidateList();
+    const CandidateList &candidate_list_rhs = rhs.GetCandidateList();
+    EXPECT_EQ(candidate_list_lhs.name(), candidate_list_rhs.name());
+    EXPECT_EQ(candidate_list_lhs.page_size(), candidate_list_rhs.page_size());
+    EXPECT_EQ(candidate_list_lhs.size(), candidate_list_rhs.size());
+    EXPECT_EQ(candidate_list_lhs.last_index(), candidate_list_rhs.last_index());
+    EXPECT_EQ(candidate_list_lhs.focused_id(), candidate_list_rhs.focused_id());
+    EXPECT_EQ(candidate_list_lhs.focused_index(),
+              candidate_list_rhs.focused_index());
+    EXPECT_EQ(candidate_list_lhs.focused(), candidate_list_rhs.focused());
+
+    for (int i = 0; i < candidate_list_lhs.size(); ++i) {
+      const Candidate &candidate_lhs = candidate_list_lhs.candidate(i);
+      const Candidate &candidate_rhs = candidate_list_rhs.candidate(i);
+      EXPECT_EQ(candidate_lhs.id(), candidate_rhs.id());
+      EXPECT_EQ(candidate_lhs.attributes(), candidate_rhs.attributes());
+      EXPECT_EQ(candidate_lhs.IsSubcandidateList(),
+                candidate_rhs.IsSubcandidateList());
+      if (candidate_lhs.IsSubcandidateList()) {
+        EXPECT_EQ(candidate_lhs.subcandidate_list().size(),
+                  candidate_rhs.subcandidate_list().size());
+      }
+    }
+
+    const commands::Result result_lhs = lhs.GetResult();
+    const commands::Result result_rhs = rhs.GetResult();
+    EXPECT_EQ(result_lhs.type(), result_rhs.type());
+    EXPECT_EQ(result_lhs.value(), result_rhs.value());
+    EXPECT_EQ(result_lhs.key(), result_rhs.key());
   }
 
   scoped_ptr<ConverterMock> convertermock_;
@@ -1732,7 +1799,7 @@ TEST_F(SessionConverterTest, FillContext) {
   EXPECT_EQ(kPrecedingText, context.preceding_text());
 }
 
-TEST_F(SessionConverterTest, GetHistorySegments) {
+TEST_F(SessionConverterTest, GetAndSetSegments) {
   SessionConverter converter(convertermock_.get());
   Segments segments;
 
@@ -1751,27 +1818,87 @@ TEST_F(SessionConverterTest, GetHistorySegments) {
   convertermock_->SetFinishConversion(&segments, true);
   converter.CommitPreedit(*composer_);
 
-  vector<string> history;
-  converter.GetHistorySegments(&history);
-  ASSERT_EQ(2, history.size());
+  Segments src;
+  converter.GetSegments(&src);
+  ASSERT_EQ(2, src.history_segments_size());
   // "車で"
-  EXPECT_EQ("\xE8\xBB\x8A\xE3\x81\xA7", history[0]);
+  EXPECT_EQ("\xE8\xBB\x8A\xE3\x81\xA7",
+            src.history_segment(0).candidate(0).value);
   // "行く"
-  EXPECT_EQ("\xE8\xA1\x8C\xE3\x81\x8F", history[1]);
+  EXPECT_EQ("\xE8\xA1\x8C\xE3\x81\x8F",
+            src.history_segment(1).candidate(0).value);
 
   // "歩いて"
-  history[0] = "\xE6\xAD\xA9\xE3\x81\x84\xE3\x81\xA6";
-  history.push_back("?");
-  ASSERT_EQ(3, history.size());
-  converter.SetHistorySegments(history);
+  src.mutable_history_segment(0)->mutable_candidate(0)->value
+      = "\xE6\xAD\xA9\xE3\x81\x84\xE3\x81\xA6";
+  Segment *segment = src.add_segment();
+  segment->set_segment_type(Segment::FREE);
+  Segment::Candidate *candidate = segment->add_candidate();
+  candidate->value = "?";
 
-  converter.GetHistorySegments(&history);
-  ASSERT_EQ(3, history.size());
+  converter.SetSegments(src);
+
+  Segments dest;
+  converter.GetSegments(&dest);
+
+  ASSERT_EQ(2, dest.history_segments_size());
+  ASSERT_EQ(1, dest.conversion_segments_size());
   // "歩いて"
-  EXPECT_EQ("\xE6\xAD\xA9\xE3\x81\x84\xE3\x81\xA6", history[0]);
+  EXPECT_EQ(src.history_segment(0).candidate(0).value,
+            dest.history_segment(0).candidate(0).value);
   // "行く"
-  EXPECT_EQ("\xE8\xA1\x8C\xE3\x81\x8F", history[1]);
-  EXPECT_EQ("?", history[2]);
+  EXPECT_EQ(src.history_segment(1).candidate(0).value,
+            dest.history_segment(1).candidate(0).value);
+  // "?"
+  EXPECT_EQ(src.history_segment(2).candidate(0).value,
+            dest.history_segment(2).candidate(0).value);
+}
+
+TEST_F(SessionConverterTest, CopyFrom) {
+  SessionConverter src(convertermock_.get());
+
+  // "かまぼこの"
+  const string kKamabokono =
+      "\xe3\x81\x8b\xe3\x81\xbe\xe3\x81\xbc\xe3\x81\x93\xe3\x81\xae";
+  // "いんぼう"
+  const string kInbou =
+      "\xe3\x81\x84\xe3\x82\x93\xe3\x81\xbc\xe3\x81\x86";
+  // "陰謀"
+  const string kInbouKanji = "\xE9\x99\xB0\xE8\xAC\x80";
+  const char *kShortcut = "987654321";
+
+  {  // create source converter
+    Segments segments;
+    SetKamaboko(&segments);
+
+    convertermock_->SetStartConversionWithComposer(&segments, true);
+
+    OperationPreferences operation_preferences;
+    operation_preferences.use_cascading_window = false;
+    operation_preferences.candidate_shortcuts = kShortcut;
+    src.SetOperationPreferences(operation_preferences);
+  }
+
+  {  // validation
+    // Copy and validate
+    SessionConverter dest(convertermock_.get());
+    dest.CopyFrom(src);
+    ExpectSameSessionConverter(src, dest);
+
+    // Convert source
+    EXPECT_TRUE(src.Convert(composer_.get()));
+    EXPECT_TRUE(src.IsActive());
+    EXPECT_EQ(kKamabokono + kInbouKanji, src.GetDefaultResult());
+    EXPECT_EQ(kKamabokono + kInbou, src.GetComposition());
+
+    // Convert destination and validate
+    EXPECT_TRUE(dest.Convert(composer_.get()));
+    ExpectSameSessionConverter(src, dest);
+
+    // Copy converted and validate
+    dest.CopyFrom(src);
+    ExpectSameSessionConverter(src, dest);
+  }
 }
 
 // Suggest() in the suggestion state was not accepted.  (http://b/1948334)

@@ -34,6 +34,9 @@
 #include "converter/segmenter_data.h"
 
 namespace mozc {
+namespace {
+#include "converter/boundary_data.h"
+}  // namespace
 
 bool Segmenter::IsBoundary(const Node *lnode, const Node *rnode,
                            bool is_single_segment) {
@@ -41,11 +44,28 @@ bool Segmenter::IsBoundary(const Node *lnode, const Node *rnode,
       rnode->node_type == Node::EOS_NODE) {
     return true;
   }
+
   // return always false in prediction mode.
   // This implies that converter always returns single-segment-result
   // in prediction mode.
-  return is_single_segment ?
-      false : Segmenter::IsBoundary(lnode->rid, rnode->lid);
+  if (is_single_segment) {
+    return false;
+  }
+
+  const bool is_boundary = Segmenter::IsBoundary(lnode->rid, rnode->lid);
+
+  // Concatenate particle and content word into one segment,
+  // if lnode locates at the beginning of user input.
+  // This hack is for handling ambiguous bunsetsu segmentation.
+  // e.g. "かみ|にかく" => "紙|に書く" or "紙二角".
+  // If we segment "に書く" into two segments, "二角" is never be shown.
+  // There exits some implicit assumpution that user expects that his/her input
+  // becomes one bunsetu. So, it would be better to keep "二角" even after "紙".
+  if (is_boundary && (lnode->attributes & Node::STARTS_WITH_PARTICLE)) {
+    return false;
+  }
+
+  return is_boundary;
 }
 
 // use only for gen_segmenter_bitarrray.
@@ -56,5 +76,15 @@ bool Segmenter::IsBoundary(uint16 rid, uint16 lid) {
                             kCompressedLIDTable[rid] +
                             kCompressedLSize *
                             kCompressedRIDTable[lid]);
+}
+
+// static
+int32 Segmenter::GetPrefixPenalty(uint16 lid) {
+  return kBoundaryData[lid].prefix_penalty;
+}
+
+// static
+int32 Segmenter::GetSuffixPenalty(uint16 rid) {
+  return kBoundaryData[rid].suffix_penalty;
 }
 }  // namespace mozc

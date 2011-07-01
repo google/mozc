@@ -28,6 +28,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "net/http_client.h"
+#include "net/http_client_common.h"
 
 #ifdef OS_WINDOWS
 #include <windows.h>
@@ -36,22 +37,21 @@
 #include "curl/curl.h"
 #include "net/proxy_manager.h"
 #endif  // OS_WINDOWS
+#ifdef OS_MACOSX
+#include "net/http_client_mac.h"
+#endif  // OS_MACOSX
 
 #include "base/base.h"
 #include "base/singleton.h"
 #include "base/util.h"
 
+
 namespace mozc {
+// We use a dummy user agent.
+const char *kUserAgent = "Mozilla/5.0";
+const int kOKResponseCode = 200;
 
 namespace {
-
-enum MethodType {
-  GET, HEAD, POST,
-};
-
-const int kOKResponseCode = 200;
-const char kUserAgent[] = "Mozilla/5.0";
-
 class HTTPStream {
  public:
   HTTPStream(string *output_string, ostream *output_stream,
@@ -151,7 +151,7 @@ bool CheckTimeout(HANDLE event, DWORD target_time) {
   return false;
 }
 
-bool RequestInternal(MethodType type,
+bool RequestInternal(HTTPMethodType type,
                      const string &url,
                      const char *post_data,
                      size_t post_size,
@@ -284,8 +284,8 @@ bool RequestInternal(MethodType type,
 
   if (!::HttpSendRequest(handle.get(),
                          NULL, 0,
-                         (type == POST) ? (LPVOID)post_data : NULL,
-                         (type == POST) ? post_size : 0)) {
+                         (type == HTTP_POST) ? (LPVOID)post_data : NULL,
+                         (type == HTTP_POST) ? post_size : 0)) {
     if (!CheckTimeout(event, target_time)) {
       LOG(ERROR) << "HttpSendRequest() failed: "
                  << ::GetLastError() << " " << url;
@@ -330,7 +330,7 @@ bool RequestInternal(MethodType type,
   HTTPStream stream(output_string, output_stream,
                     option.max_data_size);
 
-  if (option.include_header || type == HEAD) {
+  if (option.include_header || type == HTTP_HEAD) {
     char buf[8192];
     DWORD size = sizeof(buf);
     if (!::HttpQueryInfoA(handle.get(),
@@ -347,12 +347,12 @@ bool RequestInternal(MethodType type,
       return false;
     }
 
-    if (type == HEAD) {
+    if (type == HTTP_HEAD) {
       return true;
     }
   }
 
-  if (type == POST || type == GET) {
+  if (type == HTTP_POST || type == HTTP_GET) {
     char buf[8129];
     INTERNET_BUFFERSA ibuf;
     ::ZeroMemory(&ibuf, sizeof(ibuf));
@@ -382,7 +382,21 @@ bool RequestInternal(MethodType type,
   return true;
 }
 
-#else   // #ifdef OS_WINDOWS
+#elif defined(OS_MACOSX)
+
+bool RequestInternal(HTTPMethodType type,
+                     const string &url,
+                     const char *post_data,
+                     size_t post_size,
+                     const HTTPClient::Option &option,
+                     string *output_string,
+                     ostream *output_stream) {
+  return MacHTTPRequestHandler::Request(type, url,
+                                        post_data, post_size, option,
+                                        output_string, output_stream);
+}
+
+#else   // !defined(OS_WINDOWS) && !defined(OS_MACOSX)
 
 class CurlInitializer {
  public:
@@ -412,7 +426,7 @@ int HTTPDebugCallback(CURL *curl, curl_infotype type,
   return 0;
 }
 
-bool RequestInternal(MethodType type,
+bool RequestInternal(HTTPMethodType type,
                      const string &url,
                      const char *post_data,
                      size_t post_size,
@@ -480,15 +494,15 @@ bool RequestInternal(MethodType type,
   }
 
   switch (type) {
-    case GET:
+    case HTTP_GET:
       curl_easy_setopt(curl, CURLOPT_HTTPGET, 1);
       break;
-    case POST:
+    case HTTP_POST:
       curl_easy_setopt(curl, CURLOPT_HTTPPOST, 1);
       curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post_data);
       curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, post_size);
       break;
-    case HEAD:
+    case HTTP_HEAD:
       curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "HEAD");
       curl_easy_setopt(curl, CURLOPT_NOBODY, 1);
       curl_easy_setopt(curl, CURLOPT_HEADER, 1);
@@ -534,39 +548,39 @@ class HTTPClientImpl: public HTTPClientInterface {
  public:
   virtual bool Get(const string &url, string *output_string) const {
     HTTPClient::Option option;
-    return RequestInternal(GET, url, NULL, 0, option,
+    return RequestInternal(HTTP_GET, url, NULL, 0, option,
                            output_string, NULL);
   }
 
   virtual bool Head(const string &url, string *output_string) const {
     HTTPClient::Option option;
-    return RequestInternal(HEAD, url, NULL, 0, option,
+    return RequestInternal(HTTP_HEAD, url, NULL, 0, option,
                            output_string, NULL);
   }
 
   virtual bool Post(const string &url, const string &data,
                     string *output_string) const {
     HTTPClient::Option option;
-    return RequestInternal(POST, url, data.data(), data.size(),
+    return RequestInternal(HTTP_POST, url, data.data(), data.size(),
                            option, output_string, NULL);
   }
 
   virtual bool Get(const string &url, const HTTPClient::Option &option,
                    string *output_string) const {
-    return RequestInternal(GET, url, NULL, 0, option,
+    return RequestInternal(HTTP_GET, url, NULL, 0, option,
                            output_string, NULL);
   }
 
   virtual bool Head(const string &url, const HTTPClient::Option &option,
                     string *output_string) const {
-    return RequestInternal(HEAD, url, NULL, 0, option,
+    return RequestInternal(HTTP_HEAD, url, NULL, 0, option,
                            output_string, NULL);
   }
 
   virtual bool Post(const string &url, const string &data,
                     const HTTPClient::Option &option,
                     string *output_string) const {
-    return RequestInternal(POST, url, data.data(), data.size(),
+    return RequestInternal(HTTP_POST, url, data.data(), data.size(),
                            option, output_string, NULL);
   }
 
@@ -574,46 +588,46 @@ class HTTPClientImpl: public HTTPClientInterface {
                     size_t data_size,
                     const HTTPClient::Option &option,
                     string *output_string) const {
-    return RequestInternal(POST, url, data, data_size, option,
+    return RequestInternal(HTTP_POST, url, data, data_size, option,
                            output_string, NULL);
   }
 
   // stream
   virtual bool Get(const string &url, ostream *output_stream) const {
     HTTPClient::Option option;
-    return RequestInternal(GET, url, NULL, 0, option,
+    return RequestInternal(HTTP_GET, url, NULL, 0, option,
                            NULL, output_stream);
   }
 
   virtual bool Head(const string &url, ostream *output_stream) const {
     HTTPClient::Option option;
-    return RequestInternal(HEAD, url, NULL, 0, option,
+    return RequestInternal(HTTP_HEAD, url, NULL, 0, option,
                            NULL, output_stream);
   }
 
   virtual bool Post(const string &url, const string &data,
                     ostream *output_stream) const {
     HTTPClient::Option option;
-    return RequestInternal(POST, url, data.data(), data.size(),
+    return RequestInternal(HTTP_POST, url, data.data(), data.size(),
                            option, NULL, output_stream);
   }
 
   virtual bool Get(const string &url, const HTTPClient::Option &option,
                    ostream *output_stream) const {
-    return RequestInternal(GET, url, NULL, 0, option,
+    return RequestInternal(HTTP_GET, url, NULL, 0, option,
                            NULL, output_stream);
   }
 
   virtual bool Head(const string &url, const HTTPClient::Option &option,
                     ostream *output_stream) const {
-    return RequestInternal(HEAD, url, NULL, 0, option,
+    return RequestInternal(HTTP_HEAD, url, NULL, 0, option,
                            NULL, output_stream);
   }
 
   virtual bool Post(const string &url, const string &data,
                     const HTTPClient::Option &option,
                     ostream *output_stream) const {
-    return RequestInternal(POST, url, data.data(), data.size(), option,
+    return RequestInternal(HTTP_POST, url, data.data(), data.size(), option,
                            NULL, output_stream);
   }
 
@@ -621,7 +635,7 @@ class HTTPClientImpl: public HTTPClientInterface {
                     size_t data_size,
                     const HTTPClient::Option &option,
                     ostream *output_stream) const {
-    return RequestInternal(POST, url, data, data_size, option,
+    return RequestInternal(HTTP_POST, url, data, data_size, option,
                            NULL, output_stream);
   }
 };

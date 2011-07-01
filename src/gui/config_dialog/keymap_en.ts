@@ -136,6 +136,10 @@
         <translation>Activate IME</translation>
     </message>
     <message>
+        <source>InputModeSwitchKanaType</source>
+        <translation>Set input mode to next kana type</translation>
+    </message>
+    <message>
         <source>InputModeFullAlphanumeric</source>
         <translation>Set input mode to full-width alphanumeric</translation>
     </message>

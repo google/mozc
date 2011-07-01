@@ -73,6 +73,9 @@ class ConfigFileStream {
 
   // if prefix is system:// or memory:// return "";
   static string GetFileName(const string &filename);
+
+  // Clear all memory:// files.  This is a utility method for testing.
+  static void ClearOnMemoryFiles();
 };
 }  // namespace mozc
 

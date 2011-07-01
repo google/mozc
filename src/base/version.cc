@@ -28,21 +28,18 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "base/version.h"
+
 #include "base/util.h"
 
-namespace mozc {
-namespace version {
+// Import the generated version_def.h.
+#include "base/version_def.h"
 
-extern const char *kMozcVersion;
-}  // namespace mozc::version
+namespace mozc {
 
 namespace {
-class StringAsIntegerComparator {
- public:
-  bool operator() (const string &lhs, const string &rhs) {
-    return mozc::Util::SimpleAtoi(lhs) < mozc::Util::SimpleAtoi(rhs);
-  }
-};
+bool StringAsIntegerComparator(const string &lhs, const string &rhs) {
+  return mozc::Util::SimpleAtoi(lhs) < mozc::Util::SimpleAtoi(rhs);
+}
 }  // namespace
 
 string Version::GetMozcVersion() {
@@ -56,6 +53,22 @@ wstring Version::GetMozcVersionW() {
   return version;
 }
 #endif
+
+int Version::GetMozcVersionMajor() {
+  return version::kMozcVersionMajor;
+}
+
+int Version::GetMozcVersionMinor() {
+  return version::kMozcVersionMinor;
+}
+
+int Version::GetMozcVersionBuildNumber() {
+  return version::kMozcVersionBuildNumber;
+}
+
+int Version::GetMozcVersionRevision() {
+  return version::kMozcVersionRevision;
+}
 
 bool Version::CompareVersion(const string &lhs, const string &rhs) {
   if (lhs == rhs) {
@@ -72,6 +85,11 @@ bool Version::CompareVersion(const string &lhs, const string &rhs) {
   Util::SplitStringUsing(rhs, ".", &vrhs);
   return lexicographical_compare(vlhs.begin(), vlhs.end(),
                                  vrhs.begin(), vrhs.end(),
-                                 StringAsIntegerComparator());
+                                 StringAsIntegerComparator);
 }
+
+Version::BuildType Version::GetMozcBuildType() {
+  return version::kMozcBuildType;
+}
+
 }  // namespace mozc

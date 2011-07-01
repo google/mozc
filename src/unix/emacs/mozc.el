@@ -82,6 +82,18 @@
 
 ;;;; Macros
 
+(defmacro mozc-define-error (symbol-name message &rest conditions)
+  "Define an error symbol.
+SYMBOL-NAME is the name of an error symbol and MESSAGE is its error message.
+CONDITIONS is a list of error conditions and shouldn't include 'error',
+'mozc-error' and symbol-name itself.  They are included by default."
+  (let ((conditions-list (if (eq symbol-name 'mozc-error)
+                             `(error mozc-error ,@conditions)
+                           `(error mozc-error ,@conditions ,symbol-name))))
+    `(progn
+       (put ',symbol-name 'error-conditions ',conditions-list)
+       (put ',symbol-name 'error-message ,message))))
+
 (defmacro mozc-characterp (object)
   "Return non-nil if OBJECT is a character.
 
@@ -214,7 +226,7 @@ EVENT is the last input event, which is usually passed by the command loop."
        ((null output)  ; Error occurred.
         (mozc-clean-up-session)  ; Discard the current session.
         (mozc-abort)
-        (error "Connection error"))
+        (signal 'mozc-response-error output))
 
        ;; Mozc server consumed the key event.
        ((mozc-protobuf-get output 'consumed)
@@ -226,7 +238,9 @@ EVENT is the last input event, which is usually passed by the command loop."
             (when result  ; Insert the result first.
               (mozc-clean-up-changes-on-buffer)
               (unless (eq (mozc-protobuf-get result 'type) 'string)
-                (error "Unknown result type"))
+                (message "mozc.el: Unknown result type")
+                (signal 'mozc-type-error `('string
+                                           ,(mozc-protobuf-get result 'type))))
               (insert (mozc-protobuf-get result 'value)))
             (if preedit  ; Update the preedit.
                 (mozc-preedit-update preedit candidates)
@@ -384,9 +398,9 @@ CANDIDATES must be the candidates field in a response protobuf if any."
                             'conversion))
                    (= (length (mozc-protobuf-get preedit 'segment)) 1))
               ;; Show the unsegmented preedit with the cursor highlighted.
-              'mozc-preedit-make-text
+              #'mozc-preedit-make-text
             ;; Show the segmented preedit.
-            'mozc-preedit-make-segmented-text)
+            #'mozc-preedit-make-segmented-text)
           preedit
           (when (memq 'fence mozc-preedit-style)
             '("|" "|" " ")))))
@@ -429,7 +443,7 @@ Non-nil SEPARATOR is inserted between each segment."
   (let ((segmented-text
          (mapconcat
           (lambda (segment)
-            (apply 'propertize (mozc-protobuf-get segment 'value)
+            (apply #'propertize (mozc-protobuf-get segment 'value)
                    (case (mozc-protobuf-get segment 'annotation)
                      (highlight
                       '(face mozc-preedit-selected-face))
@@ -536,7 +550,7 @@ Return a string formatted to suit for the echo area."
         (size (mozc-protobuf-get candidates 'size))
         (index-visible (mozc-protobuf-get candidates 'footer 'index-visible)))
     (apply
-     'concat
+     #'concat
      ;; Show "focused-index/#total-candidates".
      (when (and index-visible focused-index size)
        (propertize
@@ -545,17 +559,16 @@ Return a string formatted to suit for the echo area."
      ;; Show each candidate.
      (mapcar
       (lambda (candidate)
-        (let ((shortcut (mozc-protobuf-get candidate 'annotation 'shortcut))
+        (let ((index (mozc-protobuf-get candidate 'index))
               (value (mozc-protobuf-get candidate 'value))
               (desc (mozc-protobuf-get candidate 'annotation 'description))
-              (index (mozc-protobuf-get candidate 'index)))
+              (shortcut (mozc-protobuf-get candidate 'annotation 'shortcut)))
           (concat
            " "
-           (propertize  ; shortcut
-            (if shortcut
-                (format "%s." shortcut)
-              (format "%d." (1+ index)))
-            'face 'mozc-cand-echo-area-shortcut-face)
+           (propertize (if shortcut  ; shortcut
+                           (format "%s." shortcut)
+                         (format "%d." (1+ index)))
+                       'face 'mozc-cand-echo-area-shortcut-face)
            " "
            (propertize value  ; candidate
                        'face (if (eq index focused-index)
@@ -680,7 +693,7 @@ KEY-LIST is a list of a key code (97 = ?a), key symbols ('space, 'shift,
 'meta and so on), and/or a string which represents the preedit to be
 inserted (\"\\u3061\")."
   (when (mozc-session-create)
-    (apply 'mozc-session-execute-command 'SendKey key-list)))
+    (apply #'mozc-session-execute-command 'SendKey key-list)))
 
 (defun mozc-session-execute-command (command &rest args)
   "Send a COMMAND and receive a corresponding response.
@@ -694,7 +707,7 @@ ARGS must suit to a COMMAND.  See the document of the helper process."
     (mozc-session-seq-inc)
     ;; Send a command in the form of:
     ;;   EVENT-ID COMMAND [SESSION-ID] [ARGS]...
-    (apply 'mozc-helper-process-send-sexpr
+    (apply #'mozc-helper-process-send-sexpr
            seq command
            ;; Only CreateSession command doesn't need a session ID.
            (if (eq command 'CreateSession)
@@ -711,8 +724,8 @@ ARGS must suit to a COMMAND.  See the document of the helper process."
         (if (setq mozc-session-id session-id)
             output
           (mozc-abort)
-          (error "Failed to start a new session")
-          nil))
+          (message "mozc.el: Failed to start a new session.")
+          (signal 'mozc-session-error resp)))
        ((eq session-id mozc-session-id)
         output)
        ;; Otherwise, return nil.
@@ -756,6 +769,9 @@ Return the new value of `mozc-session-seq'."
 The helper program helps Emacs communicate with Mozc server,
 which doesn't understand S-expression.")
 
+(defvar mozc-helper-program-args '("--suppress_stderr")
+  "A list of arguments passed to the helper program.")
+
 (defvar mozc-helper-process-timeout-sec 1
   "Time-out in second to wait a response from Mozc server.")
 
@@ -787,8 +803,9 @@ Return the process object on success.  Otherwise return nil."
     (message "mozc.el: Starting mozc-helper-process...")
     (condition-case nil
         (let* ((process-connection-type nil)  ; We don't need pty. Use pipe.
-               (proc (start-process "mozc-helper-process" nil
-                                    mozc-helper-program-name)))
+               (proc (apply #'start-process "mozc-helper-process" nil
+                            mozc-helper-program-name
+                            mozc-helper-program-args)))
           ;; Set up the helper process.
           (set-process-query-on-exit-flag proc nil)
           (set-process-sentinel proc 'mozc-helper-process-sentinel)
@@ -802,11 +819,12 @@ Return the process object on success.  Otherwise return nil."
               (progn  ; Everything looks good.
                 (setq mozc-helper-process proc)
                 (message "mozc.el: Starting mozc-helper-process...done"))
-            (message "mozc.el: Wrong start-up message from the helper process.")
-            (signal 'error nil)))
+            (message "mozc.el: Wrong start-up message from the helper process")
+            (signal 'mozc-helper-process-error nil)))
       (error  ; Abort unless the helper process successfully runs.
        (mozc-abort)
-       (error "Failed to start mozc-helper-process"))))
+       (message "mozc.el: Failed to start mozc-helper-process.")
+       (signal 'mozc-helper-process-error nil))))
   mozc-helper-process)
 
 (defun mozc-helper-process-recv-greeting (proc)
@@ -885,7 +903,9 @@ a single line."
 A returned object is alist on success.  Otherwise, an error symbol."
   (let ((response (mozc-helper-process-recv-response)))
     (if (not response)
-        'no-data-available  ; No data received.
+        (progn  ; No data has been received.
+          (message "mozc.el: No response from the server")
+          'no-data-available)
       (condition-case nil
           (let ((obj-index
                  (read-from-string response)))  ; may signal end-of-file.
@@ -918,7 +938,7 @@ If timed out, return nil."
 ;;;; Utilities
 
 (defun mozc-protobuf-get (alist key &rest keys)
-  "Look for a series of keys in ALIST recursively.
+  "Look for a sequence of keys in ALIST recursively.
 Return a found value, or nil if not found.
 KEY and KEYS can be a symbol or integer.
 
@@ -935,7 +955,7 @@ in C++."
                         (nth key alist)
                       (cdr (assq key alist)))))
          (if keys
-             (apply 'mozc-protobuf-get value keys)
+             (apply #'mozc-protobuf-get value keys)
            value))))
 
 (defun mozc-split-at-last (list &optional n)
@@ -1114,6 +1134,21 @@ KEYCODE must be an integer representing a key code to remove."
 
 (defvar mozc-keymap-kana mozc-keymap-kana-106jp
   "The default key mapping for Kana input method.")
+
+
+
+;;;; Errors
+
+(mozc-define-error mozc-error "Error happened inside Mozc")
+
+(mozc-define-error mozc-response-error "Wrong response from the server")
+
+(mozc-define-error mozc-type-error "Type mismatched" mozc-response-error)
+
+(mozc-define-error mozc-session-error "Failed to establish a session")
+
+(mozc-define-error mozc-helper-process-error
+                   "Communication error with the helper process")
 
 
 

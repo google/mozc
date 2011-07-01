@@ -68,6 +68,9 @@ void SessionOutput::FillCandidate(
     candidate_proto->mutable_annotation()->set_description(
         candidate_value.description);
   }
+  if (!candidate_value.usage_title.empty()) {
+    candidate_proto->set_information_id(candidate_value.usage_id);
+  }
 }
 
 // static
@@ -167,8 +170,22 @@ void SessionOutput::FillAllCandidateWords(
 // static
 bool SessionOutput::ShouldShowUsages(const Segment &segment,
                                      const CandidateList &cand_list) {
-  // Check if the focused candidate have the usage data.
-  return !(segment.candidate(cand_list.focused_id()).usage_title.empty());
+  // Check if the shown candidate have the usage data.
+  size_t c_begin = 0;
+  size_t c_end = 0;
+  cand_list.GetPageRange(cand_list.focused_index(), &c_begin, &c_end);
+  for (size_t i = c_begin; i <= c_end; ++i) {
+    if (cand_list.candidate(i).IsSubcandidateList()) {
+      continue;
+    }
+    const Segment::Candidate &candidate =
+      segment.candidate(cand_list.candidate(i).id());
+    if (candidate.usage_title.empty()) {
+      continue;
+    }
+    return true;
+  }
+  return false;
 }
 
 
@@ -185,24 +202,40 @@ void SessionOutput::FillUsages(const Segment &segment,
   size_t c_begin = 0;
   size_t c_end = 0;
   cand_list.GetPageRange(cand_list.focused_index(), &c_begin, &c_end);
+  usages->set_focused_index(-1);
+  size_t focused_index = -1;
 
-  size_t focused_index = 0;
+  map<int32, commands::Information *> usageid_information_map;
   // Store usages.
   for (size_t i = c_begin; i <= c_end; ++i) {
+    if (cand_list.candidate(i).IsSubcandidateList()) {
+      continue;
+    }
     const Segment::Candidate &candidate =
       segment.candidate(cand_list.candidate(i).id());
     if (candidate.usage_title.empty()) {
       continue;
     }
-    commands::Information *info = usages->add_information();
-    info->set_id(cand_list.candidate(i).id());
-    info->set_title(candidate.usage_title);
-    info->set_description(candidate.usage_description);
 
+    commands::Information *info;
+    map<int32, commands::Information *>::iterator itr =
+      usageid_information_map.find(candidate.usage_id);
+    if (itr == usageid_information_map.end()) {
+      info = usages->add_information();
+      info->set_id(candidate.usage_id);
+      info->set_title(candidate.usage_title);
+      info->set_description(candidate.usage_description);
+      info->add_candidate_id(cand_list.candidate(i).id());
+      usageid_information_map.insert(
+        pair<int32, commands::Information *>(candidate.usage_id, info));
+      ++focused_index;
+    } else {
+      info = itr->second;
+      info->add_candidate_id(cand_list.candidate(i).id());
+    }
     if (cand_list.candidate(i).id() == cand_list.focused_id()) {
       usages->set_focused_index(focused_index);
     }
-    ++focused_index;
   }
 }
 

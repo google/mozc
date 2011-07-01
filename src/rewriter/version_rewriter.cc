@@ -37,6 +37,7 @@
 #include "base/version.h"
 #include "base/singleton.h"
 #include "converter/segments.h"
+#include "session/commands.pb.h"
 
 namespace mozc {
 namespace {
@@ -109,6 +110,10 @@ class VersionDataImpl {
 VersionRewriter::VersionRewriter() {}
 
 VersionRewriter::~VersionRewriter() {}
+
+int VersionRewriter::capability() const {
+  return RewriterInterface::CONVERSION;
+}
 
 bool VersionRewriter::Rewrite(Segments *segments) const {
   bool result = false;

@@ -38,6 +38,7 @@ REVISION=0
 """
 
 import datetime
+import logging
 import os
 import re
 import sys
@@ -58,11 +59,13 @@ def IsLinux():
   return os.name == 'posix' and os.uname()[0] == 'Linux'
 
 
-def CalculateRevisionForPlatform(revision):
+def CalculateRevisionForPlatform(revision, target_platform):
   """Returns the revision for the current platform."""
   if not revision:
     return revision
-  if IsWindows():
+  if target_platform == 'ChromeOS':
+    last_digit = '4'
+  elif IsWindows():
     last_digit = '0'
   elif IsMac():
     last_digit = '1'
@@ -76,17 +79,18 @@ def CalculateRevisionForPlatform(revision):
 
 
 class MozcVersion(object):
-  """A class to parse the version definition file and maintain the
-  version data.
-  """
-  def __init__(self, path, expand_daily):
-    self.ParseVersionFile(path, expand_daily)
+  """A class to parse and maintain the version definition data."""
 
-  def ParseVersionFile(self, path, expand_daily):
+  def __init__(self, path, expand_daily=False, target_platform=None):
+    self.ParseVersionFile(path, expand_daily, target_platform)
+
+  def ParseVersionFile(self, path, expand_daily, target_platform):
     """Parses a version definition file.
 
     Args:
-      path: A filename which has the version definition
+      path: A filename which has the version definition.
+      expand_daily: True if 'daily' is expanded to the build number.
+      target_platform: The target platform on which the programs run.
     """
     self._dict = {}
     for line in open(path):
@@ -94,18 +98,23 @@ class MozcVersion(object):
       if matchobj:
         var = matchobj.group(1)
         val = matchobj.group(2)
-        if not self._dict.has_key(var):
+        if var not in self._dict:
           self._dict[var] = val
 
     # Set the actual version from the parsed data.
     self._major = self._dict['MAJOR']
     self._minor = self._dict['MINOR']
     self._build = self._dict['BUILD']
-    self._revision = CalculateRevisionForPlatform(self._dict['REVISION'])
-    if expand_daily and self._build == 'daily':
+    self._revision = CalculateRevisionForPlatform(self._dict['REVISION'],
+                                                  target_platform)
+    self._flag = self._dict.get('FLAG', 'RELEASE')
+    if expand_daily:
       zero_day = datetime.date(2009, 5, 24)
-      self._build = str(
-          datetime.date.today().toordinal() - zero_day.toordinal())
+      num_of_days = datetime.date.today().toordinal() - zero_day.toordinal()
+      if self._build == 'daily':
+        self._build = str(num_of_days)
+        if 'FLAG' not in self._dict:
+          self._flag = 'CONTINUOUS'
 
   def IsDevChannel(self):
     """Returns true if the parsed version is dev-channel."""
@@ -136,7 +145,8 @@ class MozcVersion(object):
       Return the version string in the format of format.
     """
     replacements = [('@MAJOR@', self._major), ('@MINOR@', self._minor),
-                    ('@BUILD@', self._build), ('@REVISION@', self._revision)]
+                    ('@BUILD@', self._build), ('@REVISION@', self._revision),
+                    ('@FLAG@', self._flag)]
     result = format
     for r in replacements:
       result = result.replace(r[0], r[1])
@@ -144,7 +154,7 @@ class MozcVersion(object):
 
 
 def main():
-  """A sample main function"""
+  """A sample main function."""
   if len(sys.argv) < 2:
     logging.error('The number of argument is not enough')
     exit(1)

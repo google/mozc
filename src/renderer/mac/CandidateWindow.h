@@ -27,21 +27,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-//  CandidateWindow.h
-//  Mozc
-//
-//  Created by Jun Mukai on 2009/08/30.
-//  Copyright 2009 Google Inc. All rights reserved.
-//
-
 #ifndef MOZC_RENDERER_MAC_CANDIDATE_WINDOW_H_
 #define MOZC_RENDERER_MAC_CANDIDATE_WINDOW_H_
 
 #import <Carbon/Carbon.h>
 
 #include "base/scoped_nsobject.h"
-
-@class CandidateView;
+#include "renderer/mac/RendererBaseWindow.h"
 
 namespace mozc {
 namespace client {
@@ -57,7 +49,7 @@ struct Point;
 namespace mac {
 // CandidateWindow holds a carbon window and maintains the connection
 // between a window and a CandidateView.
-class CandidateWindow {
+class CandidateWindow : public RendererBaseWindow {
  public:
   explicit CandidateWindow();
   ~CandidateWindow();
@@ -65,16 +57,9 @@ class CandidateWindow {
       client::SendCommandInterface *send_command_interface);
   void SetCandidates(const commands::Candidates &candidates);
   const renderer::TableLayout *GetTableLayout() const;
-  renderer::Size GetWindowSize() const;
-  void Hide();
-  void Show();
-  void MoveWindow(const renderer::Point &point);
-
  private:
-  void InitCandidateWindow();
-
-  scoped_nsobject<CandidateView> view_;
-  WindowRef window_;
+  void InitWindow();
+  void ResetView();
   mozc::client::SendCommandInterface *command_sender_;
   DISALLOW_COPY_AND_ASSIGN(CandidateWindow);
 };

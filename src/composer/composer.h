@@ -168,6 +168,11 @@ class Composer {
   // transformed to "−１，０００．５".  and true is returned.
   static bool TransformCharactersForNumbers(string *query);
 
+  // Set new input flag.
+  // By calling this method, next inserted character will introduce
+  // new chunk if the character has NewChunk attribute.
+  void SetNewInput();
+
  private:
   size_t position_;
   // Whether the next insertion is the beginning of typing after an

@@ -166,6 +166,8 @@ void HandWritingCanvas::paintEvent(QPaintEvent *) {
       painter.drawLine(x1, y1, x2, y2);
     }
   }
+
+  emit canvasUpdated();
 }
 
 void HandWritingCanvas::recognize() {
@@ -225,6 +227,10 @@ void HandWritingCanvas::mouseReleaseEvent(QMouseEvent *event) {
   is_drawing_ = false;
   update();
   recognize();
+}
+
+size_t HandWritingCanvas::strokes_size() const {
+  return strokes_.size();
 }
 }  // namespace gui
 }  // namespace mozc

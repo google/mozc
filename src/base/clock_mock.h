@@ -32,9 +32,12 @@
 
 #include "base/util.h"
 
+#include <ctime>
+
 namespace mozc {
 
 // Standard mock clock implementation.
+// This mock behaves in UTC
 class ClockMock : public Util::ClockInterface {
  public:
   ClockMock(uint64 sec, uint32 usec);
@@ -42,6 +45,7 @@ class ClockMock : public Util::ClockInterface {
 
   void GetTimeOfDay(uint64 *sec, uint32 *usec);
   uint64 GetTime();
+  bool GetTmWithOffsetSecond(time_t offset_sec, tm *output);
 
   // Put this clock forward.
   // This function is NOT contained in Util::ClockInterface.

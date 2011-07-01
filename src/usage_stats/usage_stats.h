@@ -51,6 +51,12 @@ class ClientIdInterface {
 
 class UsageStats {
  public:
+  // Default values for scheduler.
+  static const uint32 kDefaultSchedulerDelay;
+  static const uint32 kDefaultSchedulerRandomDelay;
+  static const uint32 kDefaultScheduleInterval;
+  static const uint32 kDefaultScheduleMaxInterval;
+
   UsageStats();
   virtual ~UsageStats();
 

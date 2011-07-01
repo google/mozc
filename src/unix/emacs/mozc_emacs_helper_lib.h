@@ -46,6 +46,7 @@ namespace emacs {
 // Error symbols used to call ErrorExit()
 // These symbols are taken from error symbols of GNU Emacs
 // except for ipc-error.
+const char kErrFileError[] = "file-error";
 const char kErrScanError[] = "scan-error";
 const char kErrWrongNumberOfArguments[] = "wrong-number-of-arguments";
 const char kErrWrongTypeArgument[] = "wrong-type-argument";

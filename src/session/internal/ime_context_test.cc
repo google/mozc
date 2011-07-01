@@ -33,7 +33,6 @@
 #include "composer/table.h"
 #include "converter/converter_interface.h"
 #include "converter/converter_mock.h"
-#include "session/internal/keymap.h"
 #include "session/session_converter.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/googletest.h"
@@ -49,7 +48,6 @@ TEST(ImeContextTest, DefaultValues) {
 
   EXPECT_TRUE(NULL == context.mutable_composer());
   EXPECT_TRUE(NULL == context.mutable_converter());
-  EXPECT_TRUE(NULL == context.mutable_private_keymap());
 
   EXPECT_EQ(ImeContext::NONE, context.state());
 
@@ -79,15 +77,6 @@ TEST(ImeContextTest, BasicTest) {
   EXPECT_EQ(converter, &context.converter());
   EXPECT_EQ(converter, context.mutable_converter());
 
-  keymap::KeyMapManager keymap;
-  context.set_keymap(&keymap);
-  EXPECT_EQ(&keymap, &context.keymap());
-
-  keymap::KeyMapManager *private_keymap = new keymap::KeyMapManager;
-  context.set_private_keymap(private_keymap);
-  EXPECT_EQ(private_keymap, &context.private_keymap());
-  EXPECT_EQ(private_keymap, context.mutable_private_keymap());
-
   context.set_state(ImeContext::COMPOSITION);
   EXPECT_EQ(ImeContext::COMPOSITION, context.state());
 
@@ -106,6 +95,12 @@ TEST(ImeContextTest, BasicTest) {
   const string house = "\xE5\xAE\xB6";
   context.set_initial_composition(house);
   EXPECT_EQ(house, context.initial_composition());
+
+  // Get/Set keymap
+  context.set_keymap(config::Config::ATOK);
+  EXPECT_EQ(config::Config::ATOK, context.keymap());
+  context.set_keymap(config::Config::MSIME);
+  EXPECT_EQ(config::Config::MSIME, context.keymap());
 }
 
 TEST(ImeContextTest, CopyContext) {

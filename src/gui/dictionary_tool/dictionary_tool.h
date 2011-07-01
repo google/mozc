@@ -158,6 +158,13 @@ class DictionaryTool : public QMainWindow,
   // send Reload command to the server.
   void SaveAndReloadServer();
 
+  // 1. Shows a dialog box and get new |commnet|.
+  // 2. Changes the comemnt of all selected.
+  void EditComment();
+
+  // Changes the POS of all selected items to |pos|.
+  void EditPOS(const string &pos);
+
   // Helper functions to check if a file with given name is readable
   // to import or writable to export without trying to open it.
   static bool IsWritableToExport(const string &file_name);

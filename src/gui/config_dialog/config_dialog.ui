@@ -277,7 +277,7 @@
         <x>30</x>
         <y>30</y>
         <width>371</width>
-        <height>91</height>
+        <height>81</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_5">
@@ -327,7 +327,7 @@
       <property name="geometry">
        <rect>
         <x>30</x>
-        <y>150</y>
+        <y>140</y>
         <width>351</width>
         <height>32</height>
        </rect>
@@ -419,6 +419,27 @@
          </property>
         </widget>
        </item>
+       <item row="3" column="1">
+        <widget class="QCheckBox" name="spellingCorrectionCheckBox">
+         <property name="text">
+          <string>Spelling correction</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="0">
+        <widget class="QCheckBox" name="t13nDictionaryCheckBox">
+         <property name="text">
+          <string>Katakana to English dictionary</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="0">
+        <widget class="QCheckBox" name="zipcodeDictionaryCheckBox">
+         <property name="text">
+          <string>Zip code dictionary</string>
+         </property>
+        </widget>
+       </item>
       </layout>
      </widget>
      <widget class="QWidget" name="horizontalLayoutWidget_5">
@@ -457,7 +478,7 @@
       <property name="geometry">
        <rect>
         <x>20</x>
-        <y>190</y>
+        <y>180</y>
         <width>391</width>
         <height>21</height>
        </rect>
@@ -489,7 +510,7 @@
       <property name="geometry">
        <rect>
         <x>20</x>
-        <y>131</y>
+        <y>120</y>
         <width>391</width>
         <height>20</height>
        </rect>
@@ -897,7 +918,7 @@
        <item row="4" column="0" colspan="3">
         <widget class="QCheckBox" name="realtimeConversionCheckBox">
          <property name="text">
-          <string>Use realtime conversion (experimental)</string>
+          <string>Use realtime conversion</string>
          </property>
         </widget>
        </item>
@@ -1208,8 +1229,8 @@
        <rect>
         <x>30</x>
         <y>134</y>
-        <width>386</width>
-        <height>32</height>
+        <width>371</width>
+        <height>31</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_10">
@@ -1397,6 +1418,9 @@
   <tabstop>emoticonDictionaryCheckBox</tabstop>
   <tabstop>useAutoImeTurnOff</tabstop>
   <tabstop>calculatorCheckBox</tabstop>
+  <tabstop>t13nDictionaryCheckBox</tabstop>
+  <tabstop>spellingCorrectionCheckBox</tabstop>
+  <tabstop>zipcodeDictionaryCheckBox</tabstop>
   <tabstop>useAutoConversion</tabstop>
   <tabstop>kutenCheckBox</tabstop>
   <tabstop>toutenCheckBox</tabstop>

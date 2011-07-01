@@ -27,168 +27,59 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <string>
-#include <vector>
-#include "base/util.h"
 #include "base/singleton.h"
-#include "converter/segments.h"
 #include "rewriter/calculator_rewriter.h"
 #include "rewriter/collocation_rewriter.h"
 #include "rewriter/date_rewriter.h"
 #include "rewriter/emoticon_rewriter.h"
 #include "rewriter/english_variants_rewriter.h"
+#include "rewriter/focus_candidate_rewriter.h"
 #include "rewriter/fortune_rewriter.h"
+#include "rewriter/merger_rewriter.h"
 #include "rewriter/number_rewriter.h"
 #include "rewriter/rewriter_interface.h"
 #include "rewriter/single_kanji_rewriter.h"
 #include "rewriter/symbol_rewriter.h"
 #include "rewriter/transliteration_rewriter.h"
-#include "rewriter/user_segment_history_rewriter.h"
+#include "rewriter/unicode_rewriter.h"
 #include "rewriter/user_boundary_history_rewriter.h"
+#include "rewriter/user_segment_history_rewriter.h"
 #include "rewriter/variants_rewriter.h"
 #include "rewriter/version_rewriter.h"
-
 DEFINE_bool(use_history_rewriter, true, "Use history rewriter or not.");
 
 namespace mozc {
 namespace {
 
-class RewriterImpl: public RewriterInterface {
+class RewriterImpl : public MergerRewriter {
  public:
   RewriterImpl();
-  virtual ~RewriterImpl();
-
-  // Rewrite request and/or result.
-  // Can call converter if need be
-  virtual bool Rewrite(Segments *segments) const;
-
-  // Hook(s) for all mutable operations
-  virtual void Finish(Segments *segments);
-
-  virtual bool Sync();
-
-  virtual bool Reload();
-
-  virtual void Clear();
-
- private:
-  EnglishVariantsRewriter *english_variants_rewriter_;
-  SingleKanjiRewriter *single_kanji_rewriter_;
-  SymbolRewriter *symbol_rewriter_;
-  NumberRewriter *number_rewriter_;
-  CollocationRewriter *collocation_rewriter_;
-  DateRewriter *date_rewriter_;
-  VariantsRewriter *variants_rewriter_;
-  UserBoundaryHistoryRewriter *user_boundary_history_rewriter_;
-  UserSegmentHistoryRewriter  *user_segment_history_rewriter_;
-  VersionRewriter *version_rewriter_;
-  EmoticonRewriter *emoticon_rewriter_;
-  CalculatorRewriter *calculator_rewriter_;
-  FortuneRewriter *fortune_rewriter_;
-  TransliterationRewriter *t13n_rewriter_;
-  vector<RewriterInterface *> rewriters_;
 };
 
-RewriterImpl::RewriterImpl()
-    : english_variants_rewriter_(new EnglishVariantsRewriter),
-      single_kanji_rewriter_(new SingleKanjiRewriter),
-      symbol_rewriter_(new SymbolRewriter),
-      number_rewriter_(new NumberRewriter),
-      collocation_rewriter_(new CollocationRewriter),
-      date_rewriter_(new DateRewriter),
-      variants_rewriter_(new VariantsRewriter),
-      // These two rewriters are initialized later following the
-      // use_history_rewriter flag.  because it will access to the
-      // local files at the initialization timing.  See comments below
-      // for more details.
-      user_boundary_history_rewriter_(NULL),
-      user_segment_history_rewriter_(NULL),
-      version_rewriter_(new VersionRewriter),
-      emoticon_rewriter_(new EmoticonRewriter),
-      calculator_rewriter_(new CalculatorRewriter),
-      fortune_rewriter_(new FortuneRewriter),
-      t13n_rewriter_(new TransliterationRewriter) {
-  rewriters_.push_back(t13n_rewriter_);
-  rewriters_.push_back(english_variants_rewriter_);
-  rewriters_.push_back(number_rewriter_);
-  rewriters_.push_back(collocation_rewriter_);
-  rewriters_.push_back(single_kanji_rewriter_);
-  rewriters_.push_back(symbol_rewriter_);
-  rewriters_.push_back(calculator_rewriter_);
-  rewriters_.push_back(emoticon_rewriter_);
-
-  rewriters_.push_back(date_rewriter_);
-
-  rewriters_.push_back(variants_rewriter_);
+RewriterImpl::RewriterImpl() {
+  AddRewriter(new FocusCandidateRewriter);
+  AddRewriter(new TransliterationRewriter);
+  AddRewriter(new EnglishVariantsRewriter);
+  AddRewriter(new NumberRewriter);
+  AddRewriter(new CollocationRewriter);
+  AddRewriter(new SingleKanjiRewriter);
+  AddRewriter(new SymbolRewriter);
+  AddRewriter(new CalculatorRewriter);
+  AddRewriter(new EmoticonRewriter);
+  AddRewriter(new UnicodeRewriter);
+  AddRewriter(new VariantsRewriter);
 
   if (FLAGS_use_history_rewriter) {
-    user_boundary_history_rewriter_ = new UserBoundaryHistoryRewriter;
-    user_segment_history_rewriter_ = new UserSegmentHistoryRewriter;
-    rewriters_.push_back(user_boundary_history_rewriter_);
-    rewriters_.push_back(user_segment_history_rewriter_);
+    AddRewriter(new UserBoundaryHistoryRewriter);
+    AddRewriter(new UserSegmentHistoryRewriter);
   }
-
-  rewriters_.push_back(fortune_rewriter_);
-  rewriters_.push_back(version_rewriter_);
-}
-
-RewriterImpl::~RewriterImpl() {
-  delete english_variants_rewriter_;
-  delete single_kanji_rewriter_;
-  delete symbol_rewriter_;
-  delete number_rewriter_;
-  delete collocation_rewriter_;
-  delete date_rewriter_;
-  delete variants_rewriter_;
-  delete user_boundary_history_rewriter_;
-  delete user_segment_history_rewriter_;
-  delete version_rewriter_;
-  delete emoticon_rewriter_;
-  delete fortune_rewriter_;
-  delete calculator_rewriter_;
-  delete t13n_rewriter_;
-  rewriters_.clear();
-}
-
-void RewriterImpl::Finish(Segments *segments) {
-  for (size_t i = 0; i < rewriters_.size(); ++i) {
-    rewriters_[i]->Finish(segments);
-  }
-}
-
-bool RewriterImpl::Rewrite(Segments *segments) const {
-  bool result = false;
-  for (size_t i = 0; i < rewriters_.size(); ++i) {
-    result |= rewriters_[i]->Rewrite(segments);
-  }
-  return result;
-}
-
-bool RewriterImpl::Sync() {
-  bool result = false;
-  for (size_t i = 0; i < rewriters_.size(); ++i) {
-    result |= rewriters_[i]->Sync();
-  }
-  return result;
-}
-
-bool RewriterImpl::Reload() {
-  bool result = false;
-  for (size_t i = 0; i < rewriters_.size(); ++i) {
-    result |= rewriters_[i]->Reload();
-  }
-  return result;
-}
-
-void RewriterImpl::Clear() {
-  for (size_t i = 0; i < rewriters_.size(); ++i) {
-    rewriters_[i]->Clear();
-  }
+  AddRewriter(new DateRewriter);
+  AddRewriter(new FortuneRewriter);
+  AddRewriter(new VersionRewriter);
 }
 
 RewriterInterface *g_rewriter = NULL;
+
 }  // namespace
 
 RewriterInterface *RewriterFactory::GetRewriter() {
@@ -202,4 +93,5 @@ RewriterInterface *RewriterFactory::GetRewriter() {
 void RewriterFactory::SetRewriter(RewriterInterface *rewriter) {
   g_rewriter = rewriter;
 }
+
 }  // namespace mozc

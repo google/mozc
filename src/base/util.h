@@ -216,6 +216,8 @@ class Util {
   // or false if the string is in the wrong format.
   static bool SafeStrToUInt32(const string &str, uint32 *value);
   static bool SafeStrToUInt64(const string &str, uint64 *value);
+  static bool SafeHexStrToUInt32(const string &str, uint32 *value);
+  static bool SafeOctStrToUInt32(const string &str, uint32 *value);
 
   // Converts the string to a double.  Returns true if success or false if the
   // string is in the wrong format.
@@ -265,10 +267,13 @@ class Util {
   static bool GetSecureRandomSequence(char *buf, size_t buf_size);
   static bool GetSecureRandomAsciiSequence(char *buf, size_t buf_size);
 
-  // return random variable whose range is [0..size-1].
+  // Return random variable whose range is [0..size-1].
   // This function uses rand() internally, so don't use it for
   // security-sensitive purpose.
   static int Random(int size);
+
+  // Set the seed of Util::Random().
+  static void SetRandomSeed(uint32 seed);
 
   // Get the current time info using gettimeofday-like functions.
   // sec: number of seconds from epoch
@@ -293,6 +298,7 @@ class Util {
     virtual ~ClockInterface() {}
     virtual void GetTimeOfDay(uint64 *sec, uint32 *usec) = 0;
     virtual uint64 GetTime() = 0;
+    virtual bool GetTmWithOffsetSecond(time_t offset_sec, tm *output) = 0;
   };
 
   // This function is provided for test.
@@ -367,6 +373,9 @@ class Util {
   // return true if one or more Kana-symbol characters are
   // in the input.
   static bool IsKanaSymbolContained(const string &input);
+
+  // return true if |input| looks like a pure English word.
+  static bool IsEnglishTransliteration(const string &input);
 
   static void NormalizeVoicedSoundMark(const string &input,
                                        string *output);
@@ -493,6 +502,11 @@ class Util {
   // return the path of the mozc server.
   static string GetServerPath();
 
+  // Returns the directory name which holds some documents bundled to
+  // the installed application package.  Typically it's
+  // <server directory>/documents but it can change among platforms.
+  static string GetDocumentDirectory();
+
   // return the username.  This function's name was GetUserName.
   // Since Windows reserves GetUserName as a macro, we have changed
   // the name to GetUserNameAsString.
@@ -543,8 +557,9 @@ class Util {
   // ex. "ABC" => "%41%42%43"
   static void EscapeUrl(const string &input, string *output);
 
-  // Escape unsafe html characters such as <, > and &.
+  // Escape/Unescape unsafe html characters such as <, > and &.
   static void EscapeHtml(const string &text, string *res);
+  static void UnescapeHtml(const string &text, string *res);
 
   // Escape unsafe CSS characters like <.  Note > and & are not
   // escaped becaused they are operands of CSS.

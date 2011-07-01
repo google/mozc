@@ -38,7 +38,7 @@
 
 #include "base/mac_util.h"
 #include "base/util.h"
-#include "client/session_interface.h"
+#include "client/session_mock.h"
 #include "renderer/renderer_interface.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
@@ -192,96 +192,6 @@ NSArray *dummy_screens(id self, SEL selector) {
 }  // anonymous namespace
 
 
-class MockSession : public mozc::client::SessionInterface {
- public:
-  MockSession() {}
-#define MockMethod(return_type, method_name, arg, body) \
-  virtual return_type method_name(arg) { \
-    call_counters_[#method_name]++; body; \
-  } \
-  int counter_##method_name() const { return call_counters_[#method_name]; }
-#define BoolMethod(method_name, arg) \
-  MockMethod(bool, method_name, arg, return true)
-#define VoidMethod(method_name, arg) \
-  MockMethod(void, method_name, arg, ;)
-
-  bool IsValidRunLevel() const { return true; }
-  BoolMethod(EnsureSession, void);
-  BoolMethod(EnsureConnection, void);
-  BoolMethod(CheckVersionOrRestartServer, void);
-  BoolMethod(ClearUserHistory, void);
-  BoolMethod(ClearUserPrediction, void);
-  BoolMethod(ClearUnusedUserPrediction, void);
-  BoolMethod(Shutdown, void);
-  BoolMethod(SyncData, void);
-  BoolMethod(Reload, void);
-  BoolMethod(NoOperation, void);
-  VoidMethod(set_timeout, int timeout);
-  VoidMethod(set_restricted, bool restricted);
-  VoidMethod(set_server_program, const string &server_program);
-  VoidMethod(Reset, void);
-  VoidMethod(EnableCascadingWindow, bool enable);
-  BoolMethod(Cleanup, void);
-
-  MockMethod(bool, GetConfig, mozc::config::Config *config, {
-      config->CopyFrom(expected_config_); return true;
-    });
-  MockMethod(bool, SetConfig, const mozc::config::Config &config, {
-      expected_config_.CopyFrom(config); return true;
-    });
-
-  MockMethod(void, set_client_capability,
-             const mozc::commands::Capability &capability, {
-               actual_capability_.CopyFrom(capability);
-             });
-  const mozc::commands::Capability &actual_capability() {
-    return actual_capability_;
-  }
-
-#undef VoidMethod
-#undef BoolMethod
-#undef MockMethod
-
-#define OutputMethod(method_name, arg_type) \
-  virtual bool method_name(arg_type arg, mozc::commands::Output *output) {   \
-      call_counters_[#method_name]++; \
-      called_##method_name##_.CopyFrom(arg); \
-      output->CopyFrom(outputs_[#method_name]); \
-      return true; \
-  } \
-  arg_type called_##method_name() const { return called_##method_name##_; } \
-  int counter_##method_name() const { return call_counters_[#method_name]; } \
-  void set_output_##method_name(const mozc::commands::Output &output) {   \
-      outputs_[#method_name].CopyFrom(output); \
-  }
-
-  OutputMethod(SendKey, const mozc::commands::KeyEvent &);
-  OutputMethod(TestSendKey, const mozc::commands::KeyEvent &);
-  OutputMethod(SendCommand, const mozc::commands::SessionCommand &);
-
-  bool LaunchTool(const string &mode, const string &extra_arg) {
-    return true;
-  }
-  bool OpenBrowser(const string &url) {
-    return true;
-  }
-
-  bool PingServer() const {
-    call_counters_["PingServer"]++;
-    return true;
-  }
-  int counter_PingServer() const { return call_counters_["PingServer"]; }
-
- private:
-  mutable map<string, int> call_counters_;
-  map<string, mozc::commands::Output> outputs_;
-  mozc::config::Config expected_config_;
-  mozc::commands::Capability actual_capability_;
-  mozc::commands::KeyEvent called_SendKey_;
-  mozc::commands::KeyEvent called_TestSendKey_;
-  mozc::commands::SessionCommand called_SendCommand_;
-};
-
 class MockRenderer : public mozc::renderer::RendererInterface {
  public:
   MockRenderer()
@@ -349,7 +259,7 @@ class GoogleJapaneseInputControllerTest : public testing::Test {
   void TearDown() {
     [controller_ release];
     [mock_server_ release];
-    // MockSession and MockRenderer are released during the release of
+    // SessionMock and MockRenderer are released during the release of
     // |controller_|.
     [pool_ release];
   }
@@ -360,7 +270,7 @@ class GoogleJapaneseInputControllerTest : public testing::Test {
                           delegate:nil
                             client:mock_client_];
     mock_server_.expectedController = controller_;
-    mock_session_ = new MockSession;
+    mock_session_ = new mozc::client::SessionMock;
     controller_.session = mock_session_;
     mock_renderer_ = new MockRenderer;
     controller_.renderer = mock_renderer_;
@@ -372,7 +282,7 @@ class GoogleJapaneseInputControllerTest : public testing::Test {
     SetUpController();
   }
 
-  MockSession *mock_session_;
+  mozc::client::SessionMock *mock_session_;
   MockClient *mock_client_;
   MockRenderer *mock_renderer_;
 
@@ -634,7 +544,7 @@ TEST_F(GoogleJapaneseInputControllerTest, SwitchModeToDirect) {
 
   [controller_ switchModeToDirect:mock_client_];
   EXPECT_EQ(mozc::commands::DIRECT, controller_.mode);
-  EXPECT_EQ(1, mock_session_->counter_SendKey());
+  EXPECT_EQ(1, mock_session_->GetFunctionCallCount("SendKey"));
   EXPECT_TRUE(mock_session_->called_SendKey().has_special_key());
   EXPECT_EQ(mozc::commands::KeyEvent::OFF,
             mock_session_->called_SendKey().special_key());
@@ -649,11 +559,11 @@ TEST_F(GoogleJapaneseInputControllerTest, SwitchModeInternal) {
   controller_.mode = mozc::commands::DIRECT;
   [controller_ switchModeInternal:mozc::commands::HIRAGANA];
   EXPECT_EQ(mozc::commands::HIRAGANA, controller_.mode);
-  EXPECT_EQ(1, mock_session_->counter_SendKey());
+  EXPECT_EQ(1, mock_session_->GetFunctionCallCount("SendKey"));
   EXPECT_TRUE(mock_session_->called_SendKey().has_special_key());
   EXPECT_EQ(mozc::commands::KeyEvent::ON,
             mock_session_->called_SendKey().special_key());
-  EXPECT_EQ(1, mock_session_->counter_SendCommand());
+  EXPECT_EQ(1, mock_session_->GetFunctionCallCount("SendCommand"));
   EXPECT_EQ(mozc::commands::SessionCommand::SWITCH_INPUT_MODE,
             mock_session_->called_SendCommand().type());
   EXPECT_EQ(mozc::commands::HIRAGANA,
@@ -663,8 +573,8 @@ TEST_F(GoogleJapaneseInputControllerTest, SwitchModeInternal) {
   controller_.mode = mozc::commands::HIRAGANA;
   [controller_ switchModeInternal:mozc::commands::HALF_KATAKANA];
   EXPECT_EQ(mozc::commands::HALF_KATAKANA, controller_.mode);
-  EXPECT_EQ(1, mock_session_->counter_SendKey());
-  EXPECT_EQ(2, mock_session_->counter_SendCommand());
+  EXPECT_EQ(1, mock_session_->GetFunctionCallCount("SendKey"));
+  EXPECT_EQ(2, mock_session_->GetFunctionCallCount("SendCommand"));
   EXPECT_EQ(mozc::commands::SessionCommand::SWITCH_INPUT_MODE,
             mock_session_->called_SendCommand().type());
   EXPECT_EQ(mozc::commands::HALF_KATAKANA,
@@ -673,8 +583,8 @@ TEST_F(GoogleJapaneseInputControllerTest, SwitchModeInternal) {
   // going to same mode does not cause sendcommand
   [controller_ switchModeInternal:mozc::commands::HALF_KATAKANA];
   EXPECT_EQ(mozc::commands::HALF_KATAKANA, controller_.mode);
-  EXPECT_EQ(1, mock_session_->counter_SendKey());
-  EXPECT_EQ(2, mock_session_->counter_SendCommand());
+  EXPECT_EQ(1, mock_session_->GetFunctionCallCount("SendKey"));
+  EXPECT_EQ(2, mock_session_->GetFunctionCallCount("SendCommand"));
 }
 
 TEST_F(GoogleJapaneseInputControllerTest, SwitchDisplayMode) {
@@ -717,9 +627,10 @@ TEST_F(GoogleJapaneseInputControllerTest, handleConfig) {
   config.set_yen_sign_character(mozc::config::Config::BACKSLASH);
   config.set_use_japanese_layout(true);
   mock_session_->SetConfig(config);
+  mock_session_->SetBoolFunctionReturn("GetConfig", true);
 
   [controller_ handleConfig];
-  EXPECT_EQ(1, mock_session_->counter_GetConfig());
+  EXPECT_EQ(1, mock_session_->GetFunctionCallCount("GetConfig"));
   EXPECT_EQ(KANA, controller_.keyCodeMap.inputMode);
   EXPECT_EQ(mozc::config::Config::BACKSLASH, controller_.yenSignCharacter);
   EXPECT_EQ(1, [mock_client_ getCounter:"overrideKeyboardWithKeyboardNamed:"]);
@@ -739,9 +650,9 @@ TEST_F(GoogleJapaneseInputControllerTest, DoubleTapKanaUndo) {
   // Because of special hack for Eisu/Kana keys, it returns YES.
   EXPECT_EQ(YES, SendKanaKeyEvent(controller_, mock_client_));
   // Check if it did not send key.
-  EXPECT_EQ(0, mock_session_->counter_SendKey());
+  EXPECT_EQ(0, mock_session_->GetFunctionCallCount("SendKey"));
   // Check if it did not send command.
-  EXPECT_EQ(0, mock_session_->counter_SendCommand());
+  EXPECT_EQ(0, mock_session_->GetFunctionCallCount("SendCommand"));
 
   // Sleep less than DoubleTapInterval (sec)
   mozc::Util::Sleep(GetDoubleTapInterval() * 1000.0 / 2.0);
@@ -749,9 +660,9 @@ TEST_F(GoogleJapaneseInputControllerTest, DoubleTapKanaUndo) {
   // Send Kana-key.
   EXPECT_EQ(YES, SendKanaKeyEvent(controller_, mock_client_));
   // Check if it did not send key.
-  EXPECT_EQ(0, mock_session_->counter_SendKey());
+  EXPECT_EQ(0, mock_session_->GetFunctionCallCount("SendKey"));
   // Check if it sent an undo command.
-  EXPECT_EQ(1, mock_session_->counter_SendCommand());
+  EXPECT_EQ(1, mock_session_->GetFunctionCallCount("SendCommand"));
   EXPECT_EQ(mozc::commands::SessionCommand::UNDO,
             mock_session_->called_SendCommand().type());
 }
@@ -767,9 +678,9 @@ TEST_F(GoogleJapaneseInputControllerTest, DoubleTapKanaUndoTimeOver) {
   // Because of special hack for Eisu/Kana keys, it returns YES.
   EXPECT_EQ(YES, SendKanaKeyEvent(controller_, mock_client_));
   // Check if it did not send key.
-  EXPECT_EQ(0, mock_session_->counter_SendKey());
+  EXPECT_EQ(0, mock_session_->GetFunctionCallCount("SendKey"));
   // Check if it did not send command.
-  EXPECT_EQ(0, mock_session_->counter_SendCommand());
+  EXPECT_EQ(0, mock_session_->GetFunctionCallCount("SendCommand"));
 
   // Sleep more than DoubleTapInterval (sec)
   mozc::Util::Sleep(GetDoubleTapInterval() * 1000.0 * 2.0);
@@ -777,9 +688,9 @@ TEST_F(GoogleJapaneseInputControllerTest, DoubleTapKanaUndoTimeOver) {
   // Send Kana-key.
   EXPECT_EQ(YES, SendKanaKeyEvent(controller_, mock_client_));
   // Check if it did not send key.
-  EXPECT_EQ(0, mock_session_->counter_SendKey());
+  EXPECT_EQ(0, mock_session_->GetFunctionCallCount("SendKey"));
   // Check if it did not send command.
-  EXPECT_EQ(0, mock_session_->counter_SendCommand());
+  EXPECT_EQ(0, mock_session_->GetFunctionCallCount("SendCommand"));
 }
 
 TEST_F(GoogleJapaneseInputControllerTest, SingleAndDoubleTapKanaUndo) {
@@ -793,9 +704,9 @@ TEST_F(GoogleJapaneseInputControllerTest, SingleAndDoubleTapKanaUndo) {
   // Because of special hack for Eisu/Kana keys, it returns YES.
   EXPECT_EQ(YES, SendKanaKeyEvent(controller_, mock_client_));
   // Check if it did not send key.
-  EXPECT_EQ(0, mock_session_->counter_SendKey());
+  EXPECT_EQ(0, mock_session_->GetFunctionCallCount("SendKey"));
   // Check if it did not send command.
-  EXPECT_EQ(0, mock_session_->counter_SendCommand());
+  EXPECT_EQ(0, mock_session_->GetFunctionCallCount("SendCommand"));
 
   // Sleep more than DoubleTapInterval (sec)
   mozc::Util::Sleep(GetDoubleTapInterval() * 1000.0 * 2.0);
@@ -803,9 +714,9 @@ TEST_F(GoogleJapaneseInputControllerTest, SingleAndDoubleTapKanaUndo) {
   // Send Kana-key.
   EXPECT_EQ(YES, SendKanaKeyEvent(controller_, mock_client_));
   // Check if it did not send key.
-  EXPECT_EQ(0, mock_session_->counter_SendKey());
+  EXPECT_EQ(0, mock_session_->GetFunctionCallCount("SendKey"));
   // Check if it did not send command.
-  EXPECT_EQ(0, mock_session_->counter_SendCommand());
+  EXPECT_EQ(0, mock_session_->GetFunctionCallCount("SendCommand"));
 
   // Sleep less than DoubleTapInterval (sec)
   mozc::Util::Sleep(GetDoubleTapInterval() * 1000.0 / 2.0);
@@ -813,9 +724,9 @@ TEST_F(GoogleJapaneseInputControllerTest, SingleAndDoubleTapKanaUndo) {
   // Send Kana-key.
   EXPECT_EQ(YES, SendKanaKeyEvent(controller_, mock_client_));
   // Check if it did not send key.
-  EXPECT_EQ(0, mock_session_->counter_SendKey());
+  EXPECT_EQ(0, mock_session_->GetFunctionCallCount("SendKey"));
   // Check if it sent an undo command.
-  EXPECT_EQ(1, mock_session_->counter_SendCommand());
+  EXPECT_EQ(1, mock_session_->GetFunctionCallCount("SendCommand"));
   EXPECT_EQ(mozc::commands::SessionCommand::UNDO,
             mock_session_->called_SendCommand().type());
 }
@@ -831,9 +742,9 @@ TEST_F(GoogleJapaneseInputControllerTest, TripleTapKanaUndo) {
   // Because of special hack for Eisu/Kana keys, it returns YES.
   EXPECT_EQ(YES, SendKanaKeyEvent(controller_, mock_client_));
   // Check if it did not send key.
-  EXPECT_EQ(0, mock_session_->counter_SendKey());
+  EXPECT_EQ(0, mock_session_->GetFunctionCallCount("SendKey"));
   // Check if it did not send command.
-  EXPECT_EQ(0, mock_session_->counter_SendCommand());
+  EXPECT_EQ(0, mock_session_->GetFunctionCallCount("SendCommand"));
 
   // Sleep less than DoubleTapInterval (sec)
   mozc::Util::Sleep(GetDoubleTapInterval() * 1000.0 / 2.0);
@@ -841,9 +752,9 @@ TEST_F(GoogleJapaneseInputControllerTest, TripleTapKanaUndo) {
   // Send Kana-key.
   EXPECT_EQ(YES, SendKanaKeyEvent(controller_, mock_client_));
   // Check if it did not send key.
-  EXPECT_EQ(0, mock_session_->counter_SendKey());
+  EXPECT_EQ(0, mock_session_->GetFunctionCallCount("SendKey"));
   // Check if it sent an undo command.
-  EXPECT_EQ(1, mock_session_->counter_SendCommand());
+  EXPECT_EQ(1, mock_session_->GetFunctionCallCount("SendCommand"));
   EXPECT_EQ(mozc::commands::SessionCommand::UNDO,
             mock_session_->called_SendCommand().type());
 
@@ -853,9 +764,9 @@ TEST_F(GoogleJapaneseInputControllerTest, TripleTapKanaUndo) {
   // Send Kana-key.
   EXPECT_EQ(YES, SendKanaKeyEvent(controller_, mock_client_));
   // Check if it did not send key.
-  EXPECT_EQ(0, mock_session_->counter_SendKey());
+  EXPECT_EQ(0, mock_session_->GetFunctionCallCount("SendKey"));
   // Check if it sent an undo command.
-  EXPECT_EQ(2, mock_session_->counter_SendCommand());
+  EXPECT_EQ(2, mock_session_->GetFunctionCallCount("SendCommand"));
   EXPECT_EQ(mozc::commands::SessionCommand::UNDO,
             mock_session_->called_SendCommand().type());
 }
@@ -871,9 +782,9 @@ TEST_F(GoogleJapaneseInputControllerTest, QuadrupleTapKanaUndo) {
   // Because of special hack for Eisu/Kana keys, it returns YES.
   EXPECT_EQ(YES, SendKanaKeyEvent(controller_, mock_client_));
   // Check if it did not send key.
-  EXPECT_EQ(0, mock_session_->counter_SendKey());
+  EXPECT_EQ(0, mock_session_->GetFunctionCallCount("SendKey"));
   // Check if it did not send command.
-  EXPECT_EQ(0, mock_session_->counter_SendCommand());
+  EXPECT_EQ(0, mock_session_->GetFunctionCallCount("SendCommand"));
 
   // Sleep less than DoubleTapInterval (sec)
   mozc::Util::Sleep(GetDoubleTapInterval() * 1000.0 / 2.0);
@@ -881,9 +792,9 @@ TEST_F(GoogleJapaneseInputControllerTest, QuadrupleTapKanaUndo) {
   // Send Kana-key.
   EXPECT_EQ(YES, SendKanaKeyEvent(controller_, mock_client_));
   // Check if it did not send key.
-  EXPECT_EQ(0, mock_session_->counter_SendKey());
+  EXPECT_EQ(0, mock_session_->GetFunctionCallCount("SendKey"));
   // Check if it sent an undo command.
-  EXPECT_EQ(1, mock_session_->counter_SendCommand());
+  EXPECT_EQ(1, mock_session_->GetFunctionCallCount("SendCommand"));
   EXPECT_EQ(mozc::commands::SessionCommand::UNDO,
             mock_session_->called_SendCommand().type());
 
@@ -893,9 +804,9 @@ TEST_F(GoogleJapaneseInputControllerTest, QuadrupleTapKanaUndo) {
   // Send Kana-key.
   EXPECT_EQ(YES, SendKanaKeyEvent(controller_, mock_client_));
   // Check if it did not send key.
-  EXPECT_EQ(0, mock_session_->counter_SendKey());
+  EXPECT_EQ(0, mock_session_->GetFunctionCallCount("SendKey"));
   // Check if it sent an undo command.
-  EXPECT_EQ(2, mock_session_->counter_SendCommand());
+  EXPECT_EQ(2, mock_session_->GetFunctionCallCount("SendCommand"));
   EXPECT_EQ(mozc::commands::SessionCommand::UNDO,
             mock_session_->called_SendCommand().type());
 
@@ -905,9 +816,9 @@ TEST_F(GoogleJapaneseInputControllerTest, QuadrupleTapKanaUndo) {
   // Send Kana-key.
   EXPECT_EQ(YES, SendKanaKeyEvent(controller_, mock_client_));
   // Check if it did not send key.
-  EXPECT_EQ(0, mock_session_->counter_SendKey());
+  EXPECT_EQ(0, mock_session_->GetFunctionCallCount("SendKey"));
   // Check if it sent an undo command.
-  EXPECT_EQ(3, mock_session_->counter_SendCommand());
+  EXPECT_EQ(3, mock_session_->GetFunctionCallCount("SendCommand"));
   EXPECT_EQ(mozc::commands::SessionCommand::UNDO,
             mock_session_->called_SendCommand().type());  
 }

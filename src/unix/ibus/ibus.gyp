@@ -206,6 +206,7 @@
       ],
       'dependencies': [
         '../../base/base.gyp:base',
+        '../../client/client.gyp:session_mock',
         '../../testing/testing.gyp:gtest_main',
         'ibus_mozc_lib',
         '<@(ibus_client_dependencies)',
@@ -215,8 +216,10 @@
         ['chromeos!=1', {
          # config_util.cc is included in ibus_mozc_lib only for chromeos==1
          'sources': [
-           '../../client/session_mock.cc',
            'config_util.cc',
+         ],
+         'dependencies': [
+           '../../client/client.gyp:session_mock',
          ],
         },{
          'sources': [

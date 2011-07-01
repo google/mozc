@@ -49,7 +49,9 @@ void ReadWords(const string &name, vector<uint64> *words) {
     if (line.empty() || line[0] == '#') {
       continue;
     }
-    words->push_back(mozc::Util::Fingerprint(line));
+    string lower_value = line;
+    mozc::Util::LowerString(&lower_value);
+    words->push_back(mozc::Util::Fingerprint(lower_value));
   }
 }
 }  // namespace

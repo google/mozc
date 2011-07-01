@@ -353,6 +353,24 @@ commands {
         sub_label: "build 15"
       }
     }
+    all_candidate_words {
+      candidates {
+        index: 0
+        value: "\343\203\242\343\202\272\343\202\257"
+        annotation {
+          description: "Dictionary Suggest"
+        }
+        id: 0
+      }
+      candidates {
+        index: 1
+        value: "\343\202\202\343\201\232\343\201\217\351\205\242"
+        annotation {
+          description: "Dictionary Suggest"
+        }
+        id: 1
+      }
+    }
     elapsed_time: 4142
   }
 }

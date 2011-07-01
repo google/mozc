@@ -473,6 +473,9 @@ void ConfigDialog::ConvertFromProto(const config::Config &config) {
   SET_CHECKBOX(dateConversionCheckBox, use_date_conversion);
   SET_CHECKBOX(numberConversionCheckBox, use_number_conversion);
   SET_CHECKBOX(calculatorCheckBox, use_calculator);
+  SET_CHECKBOX(t13nDictionaryCheckBox, use_t13n_conversion);
+  SET_CHECKBOX(zipcodeDictionaryCheckBox, use_zip_code_conversion);
+  SET_CHECKBOX(spellingCorrectionCheckBox, use_spelling_correction);
 
   // tab3
   SET_CHECKBOX(useAutoImeTurnOff, use_auto_ime_turn_off);
@@ -547,6 +550,9 @@ void ConfigDialog::ConvertToProto(config::Config *config) const {
   GET_CHECKBOX(dateConversionCheckBox, use_date_conversion);
   GET_CHECKBOX(numberConversionCheckBox, use_number_conversion);
   GET_CHECKBOX(calculatorCheckBox, use_calculator);
+  GET_CHECKBOX(t13nDictionaryCheckBox, use_t13n_conversion);
+  GET_CHECKBOX(zipcodeDictionaryCheckBox, use_zip_code_conversion);
+  GET_CHECKBOX(spellingCorrectionCheckBox, use_spelling_correction);
 
   // tab3
   GET_CHECKBOX(useAutoImeTurnOff, use_auto_ime_turn_off);

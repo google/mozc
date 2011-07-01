@@ -43,6 +43,8 @@ namespace mozc {
 class ConverterInterface;
 
 namespace session {
+class CandidateList;
+
 struct ConversionPreferences {
   bool use_history;
   int max_history_size;
@@ -190,13 +192,25 @@ class SessionConverterInterface {
   // Fill context information
   virtual void FillContext(commands::Context *context) const ABSTRACT;
 
-  virtual void GetHistorySegments(vector<string> *history) const ABSTRACT;
-  virtual void SetHistorySegments(const vector<string> &history) ABSTRACT;
+  // Get/Set segments
+  virtual void GetSegments(Segments *dest) const ABSTRACT;
+  virtual void SetSegments(const Segments &src) ABSTRACT;
 
   // Remove tail part of history segments
   virtual void RemoveTailOfHistorySegments(size_t num_of_characters) ABSTRACT;
 
+  // Accessor
+  virtual const commands::Result &GetResult() const ABSTRACT;
   virtual const string &GetDefaultResult() const ABSTRACT;
+  virtual const string &GetComposition() const ABSTRACT;
+  virtual const CandidateList &GetCandidateList() const ABSTRACT;
+  virtual const OperationPreferences &GetOperationPreferences() const ABSTRACT;
+  virtual State GetState() const ABSTRACT;
+  virtual size_t GetSegmentIndex() const ABSTRACT;
+  virtual const vector<Segment::Candidate> &GetPreviousSuggestions()
+      const ABSTRACT;
+
+  virtual void CopyFrom(const SessionConverterInterface &src) ABSTRACT;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(SessionConverterInterface);

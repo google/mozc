@@ -51,13 +51,14 @@
         'process_mutex_test.cc',
         'scheduler_test.cc',
         'singleton_test.cc',
+        'stats_config_util_test.cc',
+        'stl_util_test.cc',
         'stopwatch_test.cc',
         'svm_test.cc',
         'thread_test.cc',
         'timer_test.cc',
         'unnamed_event_test.cc',
         'update_util_test.cc',
-        'stats_config_util_test.cc',
         'url_test.cc',
         'util_test.cc',
         'version_test.cc',
@@ -86,6 +87,20 @@
         'test_size': 'small',
       },
     },
+    {
+      'target_name': 'config_file_stream_test',
+      'type': 'executable',
+      'sources': [
+        'config_file_stream_test.cc',
+      ],
+      'dependencies': [
+        '../testing/testing.gyp:gtest_main',
+        'base.gyp:config_file_stream',
+      ],
+      'variables': {
+        'test_size': 'small',
+      },
+    },
     # Test cases meta target: this target is referred from gyp/tests.gyp
     {
       'target_name': 'base_all_test',
@@ -93,6 +108,7 @@
       'dependencies': [
         'base_test',
         'base_init_test',
+        'config_file_stream_test',
       ],
     },
   ],

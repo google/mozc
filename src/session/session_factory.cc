@@ -53,7 +53,6 @@ SessionFactory::~SessionFactory() {
 }
 
 void SessionFactory::Reload() {
-  Singleton<keymap::KeyMapManager>::get()->Reload();
   Singleton<composer::Table>::get()->Reload();
 }
 

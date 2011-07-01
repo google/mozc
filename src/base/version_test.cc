@@ -28,20 +28,30 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "base/version.h"
+
+#include "base/util.h"
 #include "testing/base/public/gunit.h"
 
-namespace mozc {
-namespace version {
-
-extern const char *kMozcVersion;
-
-}  // namespace mozc::version
-}  // namespace mozc
+// Import the generated version_def.h.
+#include "base/version_def.h"
 
 namespace mozc {
 
 TEST(VersionTest, BasicTest) {
   EXPECT_EQ(version::kMozcVersion, Version::GetMozcVersion());
+}
+
+TEST(VersionTest, VersionNumberTest) {
+  const int major = Version::GetMozcVersionMajor();
+  const int minor = Version::GetMozcVersionMinor();
+  const int build_number = Version::GetMozcVersionBuildNumber();
+  const int revision = Version::GetMozcVersionRevision();
+  EXPECT_EQ(Version::GetMozcVersion(), Util::StringPrintf(
+      "%d.%d.%d.%d", major, minor, build_number, revision));
+}
+
+TEST(VersionTest, BuildTypeTest) {
+  EXPECT_EQ(version::kMozcBuildType, Version::GetMozcBuildType());
 }
 
 TEST(VersionTest, CompareVersion) {
@@ -74,4 +84,5 @@ TEST(VersionTest, CompareVersion) {
   EXPECT_FALSE(Version::CompareVersion("(Unknown)", "(Unknown)"));
   EXPECT_FALSE(Version::CompareVersion("(Unknown)", "0.0.0.0"));
 }
+
 }  // namespace mozc

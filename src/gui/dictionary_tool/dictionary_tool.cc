@@ -469,9 +469,9 @@ DictionaryTool::DictionaryTool(QWidget *parent)
                       << static_cast<int>(width() * 0.75));
 
   // adjust column width
-  dic_content_->setColumnWidth(0, static_cast<int>(width() * 0.20));
-  dic_content_->setColumnWidth(1, static_cast<int>(width() * 0.20));
-  dic_content_->setColumnWidth(2, static_cast<int>(width() * 0.15));
+  dic_content_->setColumnWidth(0, static_cast<int>(width() * 0.18));
+  dic_content_->setColumnWidth(1, static_cast<int>(width() * 0.18));
+  dic_content_->setColumnWidth(2, static_cast<int>(width() * 0.18));
 
   sort_state_.sorted = false;
 
@@ -1046,6 +1046,52 @@ void DictionaryTool::DeleteWord() {
   modified_ = true;
 }
 
+void DictionaryTool::EditPOS(const string &pos) {
+  const QList<QTableWidgetItem *> items =
+      dic_content_->selectedItems();
+  if (items.empty()) {
+    return;
+  }
+
+  const QString new_pos = QString::fromUtf8(pos.c_str());
+  setUpdatesEnabled(false);
+
+  for (int i = 0; i < items.size(); ++i) {
+    const int row = items[i]->row();
+    dic_content_->setItem(row, 2, new QTableWidgetItem(new_pos));
+  }
+
+  setUpdatesEnabled(true);
+  dic_content_->setEnabled(true);
+}
+
+void DictionaryTool::EditComment() {
+  const QList<QTableWidgetItem *> items =
+      dic_content_->selectedItems();
+  if (items.empty()) {
+    return;
+  }
+
+  bool ok = false;
+  const QString new_comment = QInputDialog::getText(
+      this, window_title_, tr("New comment"),
+      QLineEdit::Normal, "", &ok,
+      Qt::WindowTitleHint | Qt::WindowSystemMenuHint);
+
+  if (!ok) {
+    return;
+  }
+
+  setUpdatesEnabled(false);
+  for (int i = 0; i < items.size(); ++i) {
+    const int row = items[i]->row();
+    dic_content_->setItem(row, 3, new QTableWidgetItem(new_comment));
+  }
+
+  setUpdatesEnabled(true);
+  dic_content_->setEnabled(true);
+}
+
 void DictionaryTool::CloseWindow() {
   // move the focus to the close button to submit all incomplete inputs in
   // the word cells. http://b/211766
@@ -1112,12 +1158,30 @@ void DictionaryTool::OnContextMenuRequestedForContent(const QPoint &pos) {
   }
   QAction *delete_action = menu->addAction(delete_menu_text);
 
+  menu->addSeparator();
+  QMenu *sub_menu = menu->addMenu(tr("Change category to"));
+  vector<string> pos_list;
+  UserPOS::GetPOSList(&pos_list);
+  vector<QAction *> change_pos_actions(pos_list.size());
+  for (size_t i = 0; i < pos_list.size(); ++i) {
+    change_pos_actions[i] = sub_menu->addAction(
+        QString::fromUtf8(pos_list[i].c_str()));
+  }
+  QAction *edit_comment_action = menu->addAction(tr("Edit comment"));
   QAction *selected_action = menu->exec(QCursor::pos());
 
   if (selected_action == add_action) {
     AddWord();
   } else if (selected_action == delete_action) {
     DeleteWord();
+  } else if (selected_action == edit_comment_action) {
+    EditComment();
+  } else {
+    for (int i = 0; i < change_pos_actions.size(); ++i) {
+      if (selected_action == change_pos_actions[i]) {
+        EditPOS(pos_list[i]);
+      }
+    }
   }
 }
 

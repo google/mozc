@@ -53,9 +53,8 @@ bool AddLocalPath(string *str) {
   for (size_t i = 0; i < arraysize(filenames); ++i) {
     if (str->find(filenames[i]) != string::npos) {
       string tmp;
-      const string documents_dir = Util::JoinPath(Util::GetServerDirectory(),
-                                                  "documents");
-      const string file_path = Util::JoinPath(documents_dir, filenames[i]);
+      const string file_path = Util::JoinPath(Util::GetDocumentDirectory(),
+                                              filenames[i]);
       Util::StringReplace(*str, filenames[i], file_path, false, &tmp);
       *str = tmp;
       return true;

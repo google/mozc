@@ -35,6 +35,7 @@
 #include "session/commands.pb.h"
 #include "renderer/mac/CandidateController.h"
 #include "renderer/mac/CandidateWindow.h"
+#include "renderer/mac/InfolistWindow.h"
 
 namespace mozc {
 using client::SendCommandInterface;
@@ -99,12 +100,14 @@ renderer::Rect GetNearestDisplayRect(int x, int y) {
 
 CandidateController::CandidateController()
     : candidate_window_(new mac::CandidateWindow),
-      cascading_window_(new mac::CandidateWindow) {
+      cascading_window_(new mac::CandidateWindow),
+      infolist_window_(new mac::InfolistWindow) {
 }
 
 CandidateController::~CandidateController() {
   delete candidate_window_;
   delete cascading_window_;
+  delete infolist_window_;
 }
 
 bool CandidateController::Activate() {
@@ -131,6 +134,7 @@ bool CandidateController::ExecCommand(const RendererCommand &command) {
   if (!command_.visible()) {
     candidate_window_->Hide();
     cascading_window_->Hide();
+    infolist_window_->Hide();
     return true;
   }
 
@@ -144,12 +148,39 @@ bool CandidateController::ExecCommand(const RendererCommand &command) {
     cascading_visible = true;
   }
 
+  bool infolist_visible = false;
+  if (command_.output().has_candidates() &&
+      command_.output().candidates().has_usages() &&
+      command_.output().candidates().usages().information_size() > 0) {
+    infolist_window_->SetCandidates(command_.output().candidates());
+    infolist_visible = true;
+  }
+
   AlignWindows();
   candidate_window_->Show();
   if (cascading_visible) {
     cascading_window_->Show();
   } else {
     cascading_window_->Hide();
+  }
+
+  if (infolist_visible && !cascading_visible) {
+    const Candidates &candidates = command_.output().candidates();
+    if (candidates.has_focused_index() && candidates.candidate_size() > 0) {
+      const int focused_row =
+        candidates.focused_index() - candidates.candidate(0).index();
+      if (candidates.candidate_size() >= focused_row &&
+          candidates.candidate(focused_row).has_information_id()) {
+        infolist_window_->DelayShow();
+      } else {
+        infolist_window_->DelayHide();
+      }
+    } else {
+      infolist_window_->DelayHide();
+    }
+  } else {
+    // Hide infolist window immediately.
+    infolist_window_->Hide();
   }
 
   return true;
@@ -194,6 +225,23 @@ void CandidateController::AlignWindows() {
           candidate_zero_point, display_rect);
   candidate_window_->MoveWindow(renderer::Point(candidate_rect.Left(),
                                                 candidate_rect.Top()));
+
+  // Align infolist window
+  const renderer::Size infolist_size = infolist_window_->GetWindowSize();
+  renderer::Point infolist_pos;
+  if (candidate_rect.Left() + candidate_rect.Width() + infolist_size.width >
+      display_rect.Right()) {
+    infolist_pos.x = candidate_rect.Left() - infolist_size.width;
+  } else {
+    infolist_pos.x = candidate_rect.Left() + candidate_rect.Width();
+  }
+  if (candidate_rect.Top() + infolist_size.height > display_rect.Bottom()) {
+    infolist_pos.y = display_rect.Bottom() - infolist_size.height;
+  } else {
+    infolist_pos.y = candidate_rect.Top();
+  }
+
+  infolist_window_->MoveWindow(infolist_pos);
 
   // If there is no need to show cascading window, we just finish the
   // function here.

@@ -32,6 +32,7 @@
 #include "base/util.h"
 #include "converter/segmenter_inl.h"
 #include "converter/segmenter.h"
+#include "dictionary/pos_matcher.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
@@ -90,4 +91,19 @@ TEST(SegmenterTest, SegmenterNodeTest) {
   }
 }
 
+TEST(SegmenterTest, ParticleTest) {
+  Node lnode, rnode;
+  lnode.Init();
+  rnode.Init();
+  lnode.node_type = Node::NOR_NODE;
+  rnode.node_type = Node::NOR_NODE;
+  // "助詞"
+  lnode.rid = POSMatcher::GetAcceptableParticleAtBeginOfSegmentId();
+  // "名詞,サ変".
+  rnode.lid = POSMatcher::GetUnknownId();
+  EXPECT_TRUE(Segmenter::IsBoundary(&lnode, &rnode, false));
+
+  lnode.attributes |= Node::STARTS_WITH_PARTICLE;
+  EXPECT_FALSE(Segmenter::IsBoundary(&lnode, &rnode, false));
+}
 }  // mozc

@@ -35,6 +35,7 @@
 #include <string>
 #include <vector>
 
+#include "session/commands.pb.h"
 #include "session/session_converter_interface.h"
 
 namespace mozc {
@@ -50,15 +51,6 @@ class SessionConverter : public SessionConverterInterface {
 
   // Update OperationPreferences.
   void SetOperationPreferences(const OperationPreferences &preferences);
-
-  typedef int States;
-  enum State {
-    NO_STATE = 0,
-    COMPOSITION = 1,
-    SUGGESTION = 2,
-    PREDICTION = 4,
-    CONVERSION = 8,
-  };
 
   // Check if the current state is in the state bitmap.
   bool CheckState(States) const;
@@ -162,9 +154,9 @@ class SessionConverter : public SessionConverterInterface {
   // Fill context information
   void FillContext(commands::Context *context) const;
 
-  // Get/Set history segments of the converter.
-  void GetHistorySegments(vector<string> *history) const;
-  void SetHistorySegments(const vector<string> &history);
+  // Get/Set segments
+  void GetSegments(Segments *dest) const;
+  void SetSegments(const Segments &src);
 
   // Remove tail part of history segments
   void RemoveTailOfHistorySegments(size_t num_of_characters);
@@ -172,12 +164,25 @@ class SessionConverter : public SessionConverterInterface {
   // Fill protocol buffers with all flatten candidate words.
   void FillAllCandidateWords(commands::CandidateList *candidates) const;
 
+  // Accessor
+  const commands::Result &GetResult() const;
   const string &GetDefaultResult() const;
+  const string &GetComposition() const;
+  const CandidateList &GetCandidateList() const;
+  const OperationPreferences &GetOperationPreferences() const;
+  SessionConverterInterface::State GetState() const;
+  size_t GetSegmentIndex() const;
+  const vector<Segment::Candidate> &GetPreviousSuggestions() const;
 
   // Fill segments with the conversion preferences.
   static void SetConversionPreferences(
       const ConversionPreferences &preferences,
       Segments *segments);
+
+  // Copy SessionConverter
+  // TODO(hsumita): Copy all member variables.
+  // Currently, composer_ and converter_ is not copied.
+  void CopyFrom(const SessionConverterInterface &src);
 
  private:
   // Reset the result value stored at the previous command.
@@ -214,9 +219,7 @@ class SessionConverter : public SessionConverterInterface {
   void FillResult(commands::Result *result) const;
   void FillCandidates(commands::Candidates *candidates) const;
 
-  State state_;
-
-  bool active_;
+  SessionConverterInterface::State state_;
 
   const composer::Composer *composer_;
   const ConverterInterface *converter_;

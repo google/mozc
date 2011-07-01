@@ -92,6 +92,7 @@ const gchar* kMozcConfigNames[] = {
   "use_number_conversion",
   "use_history_suggest",
   "use_dictionary_suggest",
+  "use_realtime_conversion",
   "preedit_method",
   "session_keymap",
   "punctuation_method",
@@ -547,6 +548,8 @@ gboolean MozcEngine::ProcessKeyEvent(
     return FALSE;
   }
 
+  key.set_mode(current_composition_mode_);
+
   commands::Output output;
   if (!session_->SendKey(key, &output)) {
     LOG(ERROR) << "SendKey failed";
@@ -912,7 +915,14 @@ bool MozcEngine::UpdateCandidates(IBusEngine *engine,
       }
     }
   }
-  IBusLookupTable *table = ibus_lookup_table_new(kPageSize,
+
+  size_t page_size = kPageSize;
+  if (candidates.has_category() &&
+      candidates.category() == commands::SUGGESTION &&
+      page_size > candidates.candidate_size()) {
+    page_size = candidates.candidate_size();
+  }
+  IBusLookupTable *table = ibus_lookup_table_new(page_size,
                                                  cursor_pos,
                                                  cursor_visible,
                                                  kRound);
@@ -1071,30 +1081,8 @@ void MozcEngine::SyncData(bool force) {
 }
 
 bool MozcEngine::LaunchTool(const commands::Output &output) const {
-  if (!output.has_launch_tool_mode()) {
-    return false;
-  }
-
-  string mode = "";
-  switch (output.launch_tool_mode()) {
-    case commands::Output::CONFIG_DIALOG:
-      mode = "config_dialog";
-      break;
-    case commands::Output::DICTIONARY_TOOL:
-      mode = "dictionary_tool";
-      break;
-    case commands::Output::WORD_REGISTER_DIALOG:
-      mode = "word_register_dialog";
-      break;
-    case commands::Output::NO_TOOL:
-    default:
-      // do nothing
-      return false;
-      break;
-  }
-
-  if (!session_->LaunchTool(mode, "")) {
-    VLOG(2) << mode << " Launch Failed";
+  if (!session_->LaunchToolWithProtoBuf(output)) {
+    VLOG(2) << output.DebugString() << " Launch Failed";
     return false;
   }
 

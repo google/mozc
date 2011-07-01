@@ -32,141 +32,117 @@
 namespace mozc {
 namespace client {
 
+// Most of methods in SessionMock looks almost same.  Here defines the
+// boilerplates for those methods.
+#define MockConstBoolImplementation(method_name, argument) \
+  bool SessionMock::method_name(argument) const {      \
+    function_counter_[#method_name]++;                 \
+    map<string, bool>::const_iterator it =             \
+        return_bool_values_.find(#method_name);        \
+    if (it != return_bool_values_.end()) {             \
+      return it->second;                               \
+    }                                                  \
+    return false;                                      \
+  }
+#define MockBoolImplementation(method_name, argument)      \
+  bool SessionMock::method_name(argument) {            \
+    function_counter_[#method_name]++;                 \
+    map<string, bool>::const_iterator it =             \
+        return_bool_values_.find(#method_name);        \
+    if (it != return_bool_values_.end()) {             \
+      return it->second;                               \
+    }                                                  \
+    return false;                                      \
+  }
+#define MockVoidImplementation(method_name, argument) \
+  void SessionMock::method_name(argument) {           \
+    function_counter_[#method_name]++;                \
+    return;                                           \
+  }
 
-bool SessionMock::IsValidRunLevel() const {
-  function_counter_["IsValidRunLevel"]++;
-  return return_bool_values_["IsValidRunLevel"];
-}
+MockConstBoolImplementation(IsValidRunLevel, void);
+MockBoolImplementation(EnsureConnection, void);
+MockBoolImplementation(EnsureSession, void);
+MockBoolImplementation(CheckVersionOrRestartServer, void);
+MockBoolImplementation(ClearUserHistory, void);
+MockBoolImplementation(ClearUserPrediction, void);
+MockBoolImplementation(ClearUnusedUserPrediction, void);
+MockBoolImplementation(Shutdown, void);
+MockBoolImplementation(SyncData, void);
+MockBoolImplementation(Reload, void);
+MockBoolImplementation(Cleanup, void);
+MockVoidImplementation(Reset, void);
+MockConstBoolImplementation(PingServer, void);
+MockBoolImplementation(NoOperation, void);
+MockVoidImplementation(EnableCascadingWindow, bool enable);
+MockVoidImplementation(set_timeout, int timeout);
+MockVoidImplementation(set_restricted, bool restricted);
+MockVoidImplementation(set_server_program, const string &program_path);
+MockVoidImplementation(set_client_capability,
+                       const commands::Capability &capability);
+MockBoolImplementation(LaunchToolWithProtoBuf, const commands::Output &output);
+MockBoolImplementation(OpenBrowser, const string &url);
 
-bool SessionMock::EnsureConnection() {
-  function_counter_["EnsureConnection"]++;
-  return return_bool_values_["EnsureConnection"];
-}
+#undef MockConstImplementation
+#undef MockBoolImplementation
+#undef MockVoidImplementation
 
-bool SessionMock::EnsureSession() {
-  function_counter_["EnsureSession"]++;
-  return return_bool_values_["EnsureSession"];
-}
+// Another boilerplate for the method with an "output" as its second
+// argument.
+#define MockImplementationWithOutput(method_name, argtype)                \
+  bool SessionMock::method_name(argtype argument, commands::Output *output) { \
+    function_counter_[#method_name]++;                                    \
+    called_##method_name##_.CopyFrom(argument);                         \
+    map<string, commands::Output>::const_iterator it =                  \
+        outputs_.find(#method_name);                                    \
+    if (it != outputs_.end()) {                                         \
+      output->CopyFrom(it->second);                                     \
+    }                                                                   \
+    map<string, bool>::const_iterator retval =                          \
+        return_bool_values_.find(#method_name);                         \
+    if (retval != return_bool_values_.end()) {                          \
+      return retval->second;                                            \
+    }                                                                   \
+    return false;                                                       \
+  }
 
-bool SessionMock::CheckVersionOrRestartServer() {
-  function_counter_["CheckVersionOrRestartServer"]++;
-  return return_bool_values_["CheckVersionOrRestartServer"];
-}
+MockImplementationWithOutput(SendKey, const commands::KeyEvent &);
+MockImplementationWithOutput(TestSendKey, const commands::KeyEvent &);
+MockImplementationWithOutput(SendCommand, const commands::SessionCommand &);
 
-bool SessionMock::SendKey(const commands::KeyEvent &key,
-                          commands::Output *output) {
-  function_counter_["SendKey"]++;
-  return return_bool_values_["SendKey"];
-}
+#undef MockImplementationWithOutput
 
-bool SessionMock::TestSendKey(const commands::KeyEvent &key,
-                          commands::Output *output) {
-  function_counter_["TestSendKey"]++;
-  return return_bool_values_["TestSendKey"];
-}
-
-bool SessionMock::SendCommand(const commands::SessionCommand &command,
-                          commands::Output *output) {
-  function_counter_["SendCommand"]++;
-  return return_bool_values_["SendCommand"];
-}
-
+// Exceptional methods.
+// GetConfig needs to obtain the "called_config_".
 bool SessionMock::GetConfig(config::Config *config) {
   function_counter_["GetConfig"]++;
-  return return_bool_values_["GetConfig"];
+  config->CopyFrom(called_config_);
+  map<string, bool>::const_iterator it = return_bool_values_.find("GetConfig");
+  if (it != return_bool_values_.end()) {
+    return it->second;
+  }
+  return false;
 }
 
+// SetConfig needs to set the "called_config_".
 bool SessionMock::SetConfig(const config::Config &config) {
   function_counter_["SetConfig"]++;
-  return return_bool_values_["SetConfig"];
+  called_config_.CopyFrom(config);
+  map<string, bool>::const_iterator it = return_bool_values_.find("SetConfig");
+  if (it != return_bool_values_.end()) {
+    return it->second;
+  }
+  return false;
 }
 
-bool SessionMock::ClearUserHistory() {
-  function_counter_["ClearUserHistory"]++;
-  return return_bool_values_["ClearUserHistory"];
-}
-
-bool SessionMock::ClearUserPrediction() {
-  function_counter_["ClearUserPrediction"]++;
-  return return_bool_values_["ClearUserPrediction"];
-}
-
-bool SessionMock::ClearUnusedUserPrediction() {
-  function_counter_["ClearUnusedUserPrediction"]++;
-  return return_bool_values_["ClearUnusedUserPrediction"];
-}
-
-bool SessionMock::Shutdown() {
-  function_counter_["Shutdown"]++;
-  return return_bool_values_["Shutdown"];
-}
-
-bool SessionMock::SyncData() {
-  function_counter_["SyncData"]++;
-  return return_bool_values_["SyncData"];
-}
-
-bool SessionMock::Reload() {
-  function_counter_["Reload"]++;
-  return return_bool_values_["Reload"];
-}
-
-bool SessionMock::Cleanup() {
-  function_counter_["Cleanup"]++;
-  return return_bool_values_["Cleanup"];
-}
-
-void SessionMock::Reset() {
-  function_counter_["Reset"]++;
-  return;
-}
-
-bool SessionMock::PingServer() const {
-  function_counter_["PingServer"]++;
-  return return_bool_values_["PingServer"];
-}
-
-bool SessionMock::NoOperation() {
-  function_counter_["NoOperation"]++;
-  return return_bool_values_["NoOperation"];
-}
-
-void SessionMock::EnableCascadingWindow(bool enable) {
-  function_counter_["EnableCascadingWindow"]++;
-  return;
-}
-
-void SessionMock::set_timeout(int timeout) {
-  function_counter_["set_timeout"]++;
-  return;
-}
-
-void SessionMock::set_restricted(bool restricted) {
-  function_counter_["set_restricted"]++;
-  return;
-}
-
-void SessionMock::set_server_program(const string &program_path) {
-  function_counter_["set_server_program"]++;
-  return;
-}
-
-void SessionMock::set_client_capability(
-    const commands::Capability &capability) {
-  function_counter_["set_client_capability"]++;
-  return;
-}
-
+// LaunchTool arguments are quite different from other methods.
 bool SessionMock::LaunchTool(const string &mode, const string &extra_arg) {
   function_counter_["LaunchTool"]++;
   return return_bool_values_["LaunchTool"];
 }
 
-bool SessionMock::OpenBrowser(const string &url) {
-  function_counter_["OpenBrowser"]++;
-  return return_bool_values_["OpenBrowser"];
-}
-
+// Other methods to deal with internal data such like operations over
+// function counters or setting the expected return values.
 void SessionMock::ClearFunctionCounter() {
   for (map<string, int>::iterator it = function_counter_.begin();
        it != function_counter_.end(); it++) {
@@ -181,9 +157,5 @@ void SessionMock::SetBoolFunctionReturn(string func_name, bool value) {
 int SessionMock::GetFunctionCallCount(string key) {
   return function_counter_[key];
 }
-
-map<string, int> SessionMock::function_counter_;
-map<string, bool> SessionMock::return_bool_values_;
-
 }  // namespace mozc
 }  // namespace ibus

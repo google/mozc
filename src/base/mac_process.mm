@@ -38,11 +38,12 @@
 
 namespace mozc {
 namespace {
-  const char kFileSchema[] = "file://";
+const char kFileSchema[] = "file://";
 }  // namespace
 
 bool MacProcess::OpenBrowserForMac(const string &url) {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+  bool success = false;
   NSURL *nsURL = nil;
   if (url.find(kFileSchema) == 0) {
     // for making URL from "file://...", use fileURLWithPath
@@ -58,10 +59,12 @@ bool MacProcess::OpenBrowserForMac(const string &url) {
     nsURL = [NSURL URLWithString:nsStr];
   }
   if (nsURL) {
-    [[NSWorkspace sharedWorkspace] openURL:nsURL];
+    success = [[NSWorkspace sharedWorkspace] openURL:nsURL];
+  } else {
+    DLOG(ERROR) << "NSURL is not initialized";
   }
   [pool drain];
-  return true;
+  return success;
 }
 
 bool MacProcess::OpenApplication(const string &path) {

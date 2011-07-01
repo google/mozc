@@ -67,7 +67,8 @@ message SessionState {
 
   // last candidates state
   optional mozc.commands.Candidates candidates = 21;
+  optional mozc.commands.CandidateList all_candidate_words = 22;
 
   // last candidates result
-  optional mozc.commands.Result result = 22;
+  optional mozc.commands.Result result = 23;
 };

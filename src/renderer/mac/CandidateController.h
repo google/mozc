@@ -27,13 +27,6 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-//  CandidateController.h
-//  Mozc
-//
-//  Created by Jun Mukai on 09/08/01.
-//  Copyright 2009 Google Inc. All rights reserved.
-//
-
 #ifndef MOZC_RENDERER_MAC_CANDIDATE_CONTROLLER_H_
 #define MOZC_RENDERER_MAC_CANDIDATE_CONTROLLER_H_
 
@@ -51,6 +44,7 @@ class Rect;
 
 namespace mac {
 class CandidateWindow;
+class InfolistWindow;
 
 // CandidateController implements the renderer interface for Mac.  For
 // the detailed information of renderer interface, see
@@ -71,11 +65,12 @@ class CandidateController : public RendererInterface {
 
   // We don't use scoped_ptr<> for those two pointers because we don't
   // want to include CandidateWindow.h when the user of this class
-  // includes this file.  Because CandidateWindow.h is in
+  // includes this file.  Because CandidateWindow.h and InfolistWindow.h are in
   // Objective-C++, the user file must be .mm files if we use
   // scoped_ptr<>.
   CandidateWindow *candidate_window_;
   CandidateWindow *cascading_window_;
+  InfolistWindow *infolist_window_;
   mozc::commands::RendererCommand command_;
   DISALLOW_COPY_AND_ASSIGN(CandidateController);
 };

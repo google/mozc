@@ -29,8 +29,9 @@
 
 #include "prediction/dictionary_predictor.h"
 
-#include <limits.h>   // INT_MIN
+#include <limits.h>   // INT_MAX
 #include <cmath>
+#include <map>
 #include <set>
 #include <string>
 #include <utility>
@@ -43,9 +44,11 @@
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/node.h"
+#include "converter/node_allocator.h"
+#include "converter/segmenter.h"
 #include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
-#include "prediction/svm_model.h"
+#include "dictionary/suffix_dictionary.h"
 #include "prediction/suggestion_filter.h"
 #include "prediction/predictor_interface.h"
 #include "rewriter/variants_rewriter.h"
@@ -55,7 +58,6 @@
 
 
 namespace mozc {
-
 namespace {
 
 // Note that PREDICTION mode is much slower than SUGGESTION.
@@ -63,12 +65,25 @@ namespace {
 const size_t kSuggestionMaxNodesSize = 256;
 const size_t kPredictionMaxNodesSize = 100000;
 
-// define kLidGroup[]
-#include "prediction/suggestion_feature_pos_group.h"
+void UTF8ToUCS4Array(const string &input,
+                     vector<char32> *output) {
+  DCHECK(output);
+  const char *begin = input.data();
+  const char *end = input.data() + input.size();
+  while (begin < end) {
+    size_t mblen = 0;
+    const char32 ucs4 = Util::UTF8ToUCS4(begin, end, &mblen);
+    DCHECK_GT(mblen, 0);
+    output->push_back(ucs4);
+    begin += mblen;
+  }
+}
 }  // namespace
 
 DictionaryPredictor::DictionaryPredictor()
     : dictionary_(DictionaryFactory::GetDictionary()),
+      suffix_dictionary_(SuffixDictionaryFactory::GetSuffixDictionary()),
+      connector_(ConnectorFactory::GetConnector()),
       immutable_converter_(
           ImmutableConverterFactory::GetImmutableConverter()) {}
 
@@ -84,10 +99,17 @@ bool DictionaryPredictor::Predict(Segments *segments) const {
     return false;
   }
 
+  scoped_ptr<NodeAllocatorInterface> allocator(new NodeAllocator);
+
   vector<Result> results;
-  AggregateRealtimeConversion(prediction_type, segments, &results);
-  AggregateUnigramPrediction(prediction_type, segments, &results);
-  AggregateBigramPrediction(prediction_type, segments, &results);
+  AggregateRealtimeConversion(prediction_type, segments,
+                              allocator.get(), &results);
+  AggregateUnigramPrediction(prediction_type, segments,
+                             allocator.get(), &results);
+  AggregateBigramPrediction(prediction_type, segments,
+                            allocator.get(), &results);
+  AggregateSuffixPrediction(prediction_type, segments,
+                            allocator.get(), &results);
 
   if (results.empty()) {
     VLOG(2) << "|result| is empty";
@@ -97,33 +119,20 @@ bool DictionaryPredictor::Predict(Segments *segments) const {
   bool mixed_conversion = false;
 
   if (mixed_conversion) {
-    SetLMScore(*segments, &results);
+    SetLMCost(*segments, &results);
   } else {
-    SetSVMScore(*segments, &results);
+    SetPredictionCost(*segments, &results);
+  }
+
+  const string &input_key = segments->conversion_segment(0).key();
+  const size_t input_key_len = Util::CharsLen(input_key);
+
+  if (!mixed_conversion) {
+    RemoveMissSpelledCandidates(input_key_len, &results);
   }
 
   const size_t size = min(segments->max_prediction_candidates_size(),
                           results.size());
-
-  // Collect values of non-spelling correction predictions.
-  // This is to stop showing inadequate <did you mean?> notations.
-  //
-  // ex. When the key is "あぼ", the following candidates are contained:
-  // - "アボカド"
-  // - "アボカド" <did you mean?>
-  // but we should not show ["アボカド" <did you mean?>].
-  //
-  // So we don't allow spelling correction predictions that
-  // there are non-spelling correction predictions with the same values.
-  //
-  // TODO(takiba): this may cause bad performance
-  set<string> non_spelling_correction_values;
-  for (size_t i = 0; i < results.size(); ++i) {
-    const Node *node = results[i].node;
-    if (!(node->attributes & Node::SPELLING_CORRECTION)) {
-      non_spelling_correction_values.insert(node->value);
-    }
-  }
 
   // Instead of sorting all the results, we construct a heap.
   // This is done in linear time and
@@ -135,15 +144,13 @@ bool DictionaryPredictor::Predict(Segments *segments) const {
 
   int added = 0;
   set<string> seen;
-  const string &input_key = segments->conversion_segment(0).key();
-  const size_t key_length = Util::CharsLen(input_key);
 
   string history_key, history_value;
   GetHistoryKeyAndValue(*segments, &history_key, &history_value);
   const string bigram_key = history_key + input_key;
 
   for (size_t i = 0; i < results.size(); ++i) {
-    if (added >= size || results[i].score == INT_MIN) {
+    if (added >= size || results[i].cost == INT_MAX) {
       break;
     }
 
@@ -152,10 +159,18 @@ bool DictionaryPredictor::Predict(Segments *segments) const {
     const Node *node = result.node;
     DCHECK(node);
 
+    if (result.type == NO_PREDICTION) {
+      continue;
+    }
+
     string lower_value = node->value;
     Util::LowerString(&lower_value);
-    // TODO(taku): do we have to use BadSuggestion for mixed conversion?
-    if (SuggestionFilter::IsBadSuggestion(lower_value)) {
+    // We don't filter the results from realtime conversion if mixed_conversion
+    // is true.
+    // TODO(manabe): Add a unit test. For that, we'll need a mock class for
+    //               SuppressionDictionary.
+    if (SuggestionFilter::IsBadSuggestion(lower_value) &&
+        !(mixed_conversion && result.type & REALTIME)) {
       continue;
     }
 
@@ -168,25 +183,6 @@ bool DictionaryPredictor::Predict(Segments *segments) const {
          (!(result.type & BIGRAM) &&
           input_key == node->value))) {
       continue;
-    }
-
-    // The below conditions should never happen
-    if ((result.type & DictionaryPredictor::BIGRAM) &&
-        (node->key.size() <= history_key.size() ||
-         (node->value.size() <= history_value.size()))) {
-      LOG(ERROR) << "Invalid bigram key/value";
-      continue;
-    }
-
-    // filter bad spelling correction
-    if (node->attributes & Node::SPELLING_CORRECTION) {
-      if (non_spelling_correction_values.count(node->value)) {
-        continue;
-      }
-      // TODO(takiba): 0.75 is just heurestics.
-      if (key_length < Util::CharsLen(node->key) * 0.75) {
-        continue;
-      }
     }
 
     // TODO(taku): call CharacterFormManager for these values
@@ -206,6 +202,14 @@ bool DictionaryPredictor::Predict(Segments *segments) const {
       continue;
     }
 
+    // User input: "おーすとり" (len = 5)
+    // key/value:  "おーすとりら" "オーストラリア" (miss match pos = 4)
+    if ((node->attributes & Node::SPELLING_CORRECTION) &&
+        key != input_key &&
+        input_key_len <= GetMissSpelledPosition(key, value) + 1) {
+      continue;
+    }
+
     Segment::Candidate *candidate = segment->push_back_candidate();
     DCHECK(candidate);
 
@@ -219,7 +223,7 @@ bool DictionaryPredictor::Predict(Segments *segments) const {
     candidate->lid = node->lid;
     candidate->rid = node->rid;
     candidate->wcost = node->wcost;
-    candidate->cost = node->wcost;  // This cost is not correct.
+    candidate->cost = results[i].cost;
     candidate->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
     if (node->attributes & Node::SPELLING_CORRECTION) {
       candidate->attributes |= Segment::Candidate::SPELLING_CORRECTION;
@@ -244,6 +248,39 @@ bool DictionaryPredictor::Predict(Segments *segments) const {
   return added > 0;
 }
 
+// return transition_cost[rid][node.lid] + node.wcost (+ penalties).
+int DictionaryPredictor::GetLMCost(PredictionType type,
+                                   const Node &node,
+                                   int rid) const {
+  int lm_cost = connector_->GetTransitionCost(rid, node.lid) + node.wcost;
+  if (!(type & REALTIME)) {
+    // Relatime conversion already adds perfix/suffix penalties to the nodes.
+    // Note that we don't add prefix penalty the role of "bunsetsu" is
+    // ambigous on zero-query suggestion.
+    lm_cost += Segmenter::GetSuffixPenalty(node.rid);
+  }
+
+  return lm_cost;
+}
+
+// return dictionary node whose value/key are |key| and |value|.
+// return NULL no words are foudn in the dictionary.
+const Node *DictionaryPredictor::LookupKeyValueFromDictionary(
+    const string &key,
+    const string &value,
+    NodeAllocatorInterface *allocator) const {
+  DCHECK(allocator);
+  const Node *node = dictionary_->LookupPrefix(key.data(), key.size(),
+                                               allocator);
+  for (; node != NULL; node = node->bnext) {
+    if (value == node->value) {
+      return node;
+    }
+  }
+
+  return NULL;
+}
+
 bool DictionaryPredictor::GetHistoryKeyAndValue(
     const Segments &segments,
     string *key, string *value) const {
@@ -261,8 +298,92 @@ bool DictionaryPredictor::GetHistoryKeyAndValue(
   return false;
 }
 
-void DictionaryPredictor::SetLMScore(const Segments &segments,
-                                     vector<Result> *results) const {
+void DictionaryPredictor::SetPredictionCost(const Segments &segments,
+                                            vector<Result> *results) const {
+  int rid = 0;  // 0 (BOS) is default
+  if (segments.history_segments_size() > 0) {
+    const Segment &history_segment =
+        segments.history_segment(segments.history_segments_size() - 1);
+    if (history_segment.candidates_size() > 0) {
+      rid = history_segment.candidate(0).rid;  // use history segment's id
+    }
+  }
+
+  DCHECK(results);
+  const string &input_key = segments.conversion_segment(0).key();
+  string history_key, history_value;
+  GetHistoryKeyAndValue(segments, &history_key, &history_value);
+  const string bigram_key = history_key + input_key;
+  const bool is_suggestion = (segments.request_type() ==
+                              Segments::SUGGESTION);
+
+  // use the same scoring function for both unigram/bigram.
+  // Bigram will be boosted because we pass the previous
+  // key as a context information.
+  const size_t bigram_key_len = Util::CharsLen(bigram_key);
+  const size_t unigram_key_len = Util::CharsLen(input_key);
+
+  for (size_t i = 0; i < results->size(); ++i) {
+    const Node *node = (*results)[i].node;
+    const PredictionType type = (*results)[i].type;
+    const int32 cost = GetLMCost(type, *node, rid);
+    DCHECK(node);
+
+    const size_t query_len =
+        ((*results)[i].type & BIGRAM) ? bigram_key_len : unigram_key_len;
+    const size_t key_len = Util::CharsLen(node->key);
+
+    if (IsAggressiveSuggestion(query_len, key_len, cost,
+                               is_suggestion, results->size())) {
+      (*results)[i].cost = INT_MAX;
+      continue;
+    }
+
+    // cost = -500 * log(lang_prob(w) * (1 + remain_length))    -- (1)
+    // where lang_prob(w) is a language model probability of the word "w", and
+    // remain_length the length of key user must type to input "w".
+    //
+    // Example:
+    // key/value = "とうきょう/東京"
+    // user_input = "とう"
+    // remain_length = len("とうきょう") - len("とう") = 3
+    //
+    // By taking the log of (1),
+    // cost  = -500 [log(lang_prob(w)) + log(1 + ramain_length)]
+    //       = -500 * log(lang_prob(w)) + 500 * log(1 + remain_length)
+    //       = cost - 500 * log(1 + remain_length)
+    // Because 500 * log(lang_prob(w)) = -cost.
+    //
+    // lang_prob(w) * (1 + remain_length) represents how user can reduce
+    // the total types by choosing this candidate.
+    // Before this simple algorithm, we have been using an SVM-base scoring,
+    // but we stop usign it with the following reasons.
+    // 1) Hard to maintain the ranking.
+    // 2) Hard to control the final results of SVM.
+    // 3) Hard to debug.
+    // 4) Since we used the log(remain_length) as a feature,
+    //    the new ranking algorithm and SVM algorithm was essentially
+    //    the same.
+    // 5) Since we used the length of value as a feature, we find
+    //    inconsistencies between the conversion and the prediction
+    //    -- the results of top prediction and the top conversion
+    //    (the candidate shown after the space key) may differ.
+    //
+    // The new function brings consistent results. If two candidate
+    // have the same reading (key), they should have the same cost bonus
+    // from the length part. This implies that the result is reranked by
+    // the language model probability as long as the key part is the same.
+    // This behavior is baisically the same as the converter.
+    //
+    // TODO(team): want find the best parameter instread of kCostFactor.
+    const int kCostFactor = 500;
+    (*results)[i].cost = cost -
+        kCostFactor * log(1.0 + max(0, static_cast<int>(key_len - query_len)));
+  }
+}
+
+void DictionaryPredictor::SetLMCost(const Segments &segments,
+                                    vector<Result> *results) const {
   DCHECK(results);
 
   int rid = 0;  // 0 (BOS) is default
@@ -282,46 +403,137 @@ void DictionaryPredictor::SetLMScore(const Segments &segments,
 
   for (size_t i = 0; i < results->size(); ++i) {
     const Node *node = (*results)[i].node;
+    const PredictionType type = (*results)[i].type;
     DCHECK(node);
-    int cost = node->wcost;
-    if ((*results)[i].type & BIGRAM) {
-      cost -= prev_cost;
-    } else {
-      cost += ConnectorFactory::GetConnector()->GetTransitionCost(rid,
-                                                                  node->lid);
+    int cost = GetLMCost(type, *node, rid);
+    if (type & BIGRAM) {
+      // When user inputs "六本木" and there is an entry
+      // "六本木ヒルズ" in the dictionary, we can suggest
+      // "ヒルズ" as a ZeroQuery suggestion. In this case,
+      // We can't calcurate the transition cost between "六本木"
+      // and "ヒルズ". If we ignore the transition cost,
+      // bigram-based suggestion will be overestimated.
+      // Here we use |default_transition_cost| as an
+      // transition cost between "六本木" and "ヒルズ". Currently,
+      // the cost is basically the same as the cost between
+      // "名詞,一般" and "名詞,一般".
+      const int kDefaultTransitionCost = 1347;
+      cost += (kDefaultTransitionCost - prev_cost);
     }
-    (*results)[i].score = -cost;
+    (*results)[i].cost = cost;
   }
 }
 
-void DictionaryPredictor::SetSVMScore(const Segments &segments,
-                                      vector<Result> *results) const {
-  DCHECK(results);
-  const string &input_key = segments.conversion_segment(0).key();
-  string history_key, history_value;
-  GetHistoryKeyAndValue(segments, &history_key, &history_value);
-  const string bigram_key = history_key + input_key;
-
-  const bool is_zip_code = DictionaryPredictor::IsZipCodeRequest(input_key);
-  const bool is_suggestion = (segments.request_type() ==
-                              Segments::SUGGESTION);
-  vector<pair<int, double> > feature;
-  for (size_t i = 0; i < results->size(); ++i) {
-    // use the same scoring function for both unigram/bigram.
-    // Bigram will be boosted because we pass the previous
-    // key as a context information.
-    const Node *node = (*results)[i].node;
-    DCHECK(node);
-    (*results)[i].score = GetSVMScore(
-        ((*results)[i].type & BIGRAM) ? bigram_key : input_key,
-        node->key, node->value, node->wcost, node->lid,
-        is_zip_code, is_suggestion, results->size(), &feature);
+size_t DictionaryPredictor::GetMissSpelledPosition(
+    const string &key, const string &value) const {
+  string hiragana_value;
+  Util::KatakanaToHiragana(value, &hiragana_value);
+  // value is mixed type. return true if key == request_key.
+  if (Util::GetScriptType(hiragana_value) != Util::HIRAGANA) {
+    return Util::CharsLen(key);
   }
+
+  vector<char32> ucs4_hiragana_values, ucs4_keys;
+  UTF8ToUCS4Array(hiragana_value, &ucs4_hiragana_values);
+  UTF8ToUCS4Array(key, &ucs4_keys);
+
+  // Find the first position of character where miss spell occurs.
+  const size_t size = min(ucs4_hiragana_values.size(), ucs4_keys.size());
+  for (size_t i = 0; i < size; ++i) {
+    if (ucs4_hiragana_values[i] != ucs4_keys[i]) {
+      return i;
+    }
+  }
+
+  // not find. return the length of key.
+  return ucs4_keys.size();
+}
+
+void DictionaryPredictor::RemoveMissSpelledCandidates(
+    size_t request_key_len,
+    vector<Result> *results) const {
+  DCHECK(results);
+
+  if (results->size() <= 1) {
+    return;
+  }
+
+  int spelling_correction_size = 5;
+  for (size_t i = 0; i < results->size(); ++i) {
+    const Result &result = (*results)[i];
+    DCHECK(result.node);
+    if (!(result.node->attributes & Node::SPELLING_CORRECTION)) {
+      continue;
+    }
+
+    // Only checks at most 5 spelling corrections to avoid the case
+    // like all candidates have SPELLING_CORRECTION.
+    if (--spelling_correction_size == 0) {
+      return;
+    }
+
+    vector<size_t> same_key_index, same_value_index;
+    for (size_t j = 0; j < results->size(); ++j) {
+      if (i == j) {
+        continue;
+      }
+      const Result &target_result = (*results)[j];
+      if (target_result.node->attributes & Node::SPELLING_CORRECTION) {
+        continue;
+      }
+      if (target_result.node->key == result.node->key) {
+        same_key_index.push_back(j);
+      }
+      if (target_result.node->value == result.node->value) {
+        same_value_index.push_back(j);
+      }
+    }
+
+    // delete same_key_index and same_value_index
+    if (!same_key_index.empty() && !same_value_index.empty()) {
+      (*results)[i].type = NO_PREDICTION;
+      for (size_t k = 0; k < same_key_index.size(); ++k) {
+        (*results)[same_key_index[k]].type = NO_PREDICTION;
+      }
+    } else if (same_key_index.empty() && !same_value_index.empty()) {
+      (*results)[i].type = NO_PREDICTION;
+    } else if (!same_key_index.empty() && same_value_index.empty()) {
+      for (size_t k = 0; k < same_key_index.size(); ++k) {
+        (*results)[same_key_index[k]].type = NO_PREDICTION;
+      }
+      if (request_key_len <=
+          GetMissSpelledPosition(result.node->key,
+                                 result.node->value)) {
+        (*results)[i].type = NO_PREDICTION;
+      }
+    }
+  }
+}
+
+bool DictionaryPredictor::IsAggressiveSuggestion(
+    size_t query_len, size_t key_len, int32 cost,
+    bool is_suggestion, size_t total_candidates_size) const {
+  // Temporal workaround for fixing the problem where longer sentence-like
+  // suggestions are shown when user input is very short.
+  // "ただしい" => "ただしいけめんにかぎる"
+  // "それでもぼ" => "それでもぼくはやっていない".
+  // If total_candidates_size is small enough, we don't perform
+  // special filtering. e.g., "せんとち" has only two candidates, so
+  // showing "千と千尋の神隠し" is OK.
+  // Also, if the cost is too small (< 5000), we allow to display
+  // long phrases. Examples include "よろしくおねがいします".
+  if (is_suggestion && total_candidates_size >= 10 && key_len >= 8 &&
+      cost >= 5000 && query_len <= static_cast<size_t>(0.4 * key_len)) {
+    return true;
+  }
+
+  return false;
 }
 
 void DictionaryPredictor::AggregateRealtimeConversion(
     PredictionType type,
     Segments *segments,
+    NodeAllocatorInterface *allocator,
     vector<Result> *results) const {
   if (!(type & REALTIME)) {
     return;
@@ -330,8 +542,6 @@ void DictionaryPredictor::AggregateRealtimeConversion(
   DCHECK(immutable_converter_);
   DCHECK(segments);
   DCHECK(results);
-
-  NodeAllocatorInterface *allocator = segments->node_allocator();
   DCHECK(allocator);
 
   Segment *segment = segments->mutable_conversion_segment(0);
@@ -377,6 +587,9 @@ void DictionaryPredictor::AggregateRealtimeConversion(
       node->wcost = candidate.wcost;
       node->key = candidate.key;
       node->value = candidate.value;
+      if (candidate.attributes & Segment::Candidate::SPELLING_CORRECTION) {
+        node->attributes |= Node::SPELLING_CORRECTION;
+      }
       results->push_back(Result(node, REALTIME));
     }
     // remove candidates created by ImmutableConverter.
@@ -394,6 +607,7 @@ void DictionaryPredictor::AggregateRealtimeConversion(
 void DictionaryPredictor::AggregateUnigramPrediction(
     PredictionType type,
     Segments *segments,
+    NodeAllocatorInterface *allocator,
     vector<Result> *results) const {
   if (!(type & UNIGRAM)) {
     return;
@@ -402,10 +616,9 @@ void DictionaryPredictor::AggregateUnigramPrediction(
   DCHECK(segments);
   DCHECK(results);
   DCHECK(dictionary_);
+  DCHECK(allocator);
 
   const string &input_key = segments->conversion_segment(0).key();
-  NodeAllocatorInterface *allocator = segments->node_allocator();
-  DCHECK(allocator);
 
   const size_t max_nodes_size =
       (segments->request_type() == Segments::PREDICTION) ?
@@ -413,6 +626,7 @@ void DictionaryPredictor::AggregateUnigramPrediction(
   allocator->set_max_nodes_size(max_nodes_size);
 
   const size_t prev_results_size = results->size();
+
   const Node *unigram_node = dictionary_->LookupPredictive(input_key.c_str(),
                                                            input_key.size(),
                                                            allocator);
@@ -434,6 +648,7 @@ void DictionaryPredictor::AggregateUnigramPrediction(
 void DictionaryPredictor::AggregateBigramPrediction(
     PredictionType type,
     Segments *segments,
+    NodeAllocatorInterface *allocator,
     vector<Result> *results) const {
   if (!(type & BIGRAM)) {
     return;
@@ -442,26 +657,37 @@ void DictionaryPredictor::AggregateBigramPrediction(
   DCHECK(segments);
   DCHECK(results);
   DCHECK(dictionary_);
+  DCHECK(allocator);
 
   const string &input_key = segments->conversion_segment(0).key();
-  NodeAllocatorInterface *allocator = segments->node_allocator();
-  DCHECK(allocator);
+  const bool is_zero_query = input_key.empty();
+
+  string history_key, history_value;
+  GetHistoryKeyAndValue(*segments, &history_key, &history_value);
+
+  // Check that history_key/history_value are in the dictionary.
+  const Node *history_node = LookupKeyValueFromDictionary(
+      history_key, history_value, allocator);
+
+  // History value is not found in the dictionary.
+  // User may create this the history candidate from T13N or segment
+  // expand/shrinkg operations.
+  if (history_node == NULL) {
+    return;
+  }
 
   const size_t max_nodes_size =
       (segments->request_type() == Segments::PREDICTION) ?
       kPredictionMaxNodesSize : kSuggestionMaxNodesSize;
   allocator->set_max_nodes_size(max_nodes_size);
 
-  string history_key, history_value;
-  GetHistoryKeyAndValue(*segments, &history_key, &history_value);
-  const string bigram_key = history_key + input_key;
-
   const size_t prev_results_size = results->size();
 
+  const string bigram_key = history_key + input_key;
   const Node *bigram_node = dictionary_->LookupPredictive(bigram_key.c_str(),
                                                           bigram_key.size(),
                                                           allocator);
-  size_t bigram_results_size  = 0;
+  size_t bigram_results_size = 0;
   for (; bigram_node != NULL; bigram_node = bigram_node->bnext) {
     // filter out the output (value)'s prefix doesn't match to
     // the history value.
@@ -471,84 +697,102 @@ void DictionaryPredictor::AggregateBigramPrediction(
     }
   }
 
-  // if size reaches max_nodes_size.
+  // if size reaches max_nodes_size,
   // we don't show the candidates, since disambiguation from
   // 256 candidates is hard. (It may exceed max_nodes_size, because this is
   // just a limit for each backend, so total number may be larger)
   if (bigram_results_size >= allocator->max_nodes_size()) {
     results->resize(prev_results_size);
+    return;
   }
-}
 
-namespace {
-enum {
-  BIAS           = 1,
-  QUERY_LEN      = 2,
-  KEY_LEN        = 3,
-  KEY_LEN1       = 4,
-  REMAIN_LEN0    = 5,
-  VALUE_LEN      = 6,
-  COST           = 7,
-  CONTAINS_ALPHABET = 8,
-  POS_BASE       = 10,
-  MAX_FEATURE_ID = 2000,
-};
-}   // namespace
+  // Obtain the character type of the last history value.
+  const size_t history_value_size = Util::CharsLen(history_value);
+  if (history_value_size == 0) {
+    return;
+  }
 
-#define ADD_FEATURE(i, v) \
-  { feature->push_back(pair<int, double>(i, v)); } while (0)
+  const Util::ScriptType last_history_ctype =
+      Util::GetScriptType(Util::SubString(history_value,
+                                          history_value_size - 1, 1));
 
-int DictionaryPredictor::GetSVMScore(
-    const string &query,
-    const string &key,
-    const string &value,
-    uint16 cost,
-    uint16 lid,
-    bool is_zip_code,
-    bool is_suggestion,
-    size_t total_candidates_size,
-    vector<pair<int, double> > *feature) const {
-  feature->clear();
-
-  // We use the cost for ranking if query looks like zip code
-  // TODO(taku): find out better and more sophisicated way instead of this
-  // huristics.
-  if (is_zip_code) {
-    ADD_FEATURE(COST, cost / 500.0);
-  } else {
-    const size_t query_len = Util::CharsLen(query);
-    const size_t key_len = Util::CharsLen(key);
-
-    // Temporal workaround for fixing the problem where longer sentence-like
-    // suggestions are shown when user input is very short.
-    // "ただしい" => "ただしいけめんにかぎる"
-    // "それでもぼ" => "それでもぼくはやっていない".
-    // If total_candidates_size is small enough, we don't perform
-    // special filtering. e.g., "せんとち" has only two candidates, so
-    // showing "千と千尋の神隠し" is OK.
-    // Also, if the cost is too small (< 5000), we allow to display
-    // long phrases. Examples include "よろしくおねがいします".
-    if (is_suggestion && total_candidates_size >= 10 && key_len >= 8 &&
-        cost >= 5000 && query_len <= static_cast<size_t>(0.4 * key_len)) {
-      return INT_MIN;
+  // Filter out irrelevant bigrams. For example, we don't want to
+  // suggest "リカ" from the history "アメ".
+  for (size_t i = prev_results_size; i < results->size(); ++i) {
+    const Node *node = (*results)[i].node;
+    DCHECK(node);
+    const string key = node->key.substr(history_key.size(),
+                                        node->key.size() -
+                                        history_key.size());
+    const string value = node->value.substr(history_value.size(),
+                                            node->value.size() -
+                                            history_value.size());
+    // Don't suggest 0-length key/value.
+    if (key.empty() || value.empty()) {
+      (*results)[i].type = NO_PREDICTION;
+      continue;
     }
 
-    const bool contains_alphabet =
-        Util::ContainsScriptType(value, Util::ALPHABET);
-    ADD_FEATURE(BIAS, 1.0);
-    ADD_FEATURE(QUERY_LEN, log(1.0 + query_len));
-    ADD_FEATURE(KEY_LEN, log(1.0 + key_len));
-    ADD_FEATURE(KEY_LEN1, key_len == 1 ? 1 : 0);
-    ADD_FEATURE(REMAIN_LEN0, query_len == key_len ? 1 : 0);
-    ADD_FEATURE(VALUE_LEN, log(1.0 + Util::CharsLen(value)));
-    ADD_FEATURE(COST, cost / 500.0);
-    ADD_FEATURE(CONTAINS_ALPHABET, contains_alphabet ? 1 : 0);
-    ADD_FEATURE(POS_BASE + kLidGroup[lid], 1.0);
+    // If freq("アメ") < freq("アメリカ"), we don't
+    // need to suggest it. As "アメリカ" should already be
+    // suggested when user type "アメ".
+    // Note that wcost = -500 * log(prob).
+    if (history_node->wcost > node->wcost) {
+      (*results)[i].type = NO_PREDICTION;
+      continue;
+    }
+
+    // If character type doesn't change, this boundary might NOT
+    // be a word boundary. If character type is HIRAGANA,
+    // we don't trust it. If Katakana, only trust iif the
+    // entire key is reasonably long.
+    const Util::ScriptType ctype =
+        Util::GetScriptType(Util::SubString(value, 0, 1));
+    if (ctype == last_history_ctype &&
+        (ctype == Util::HIRAGANA ||
+         (ctype == Util::KATAKANA && Util::CharsLen(node->key) <= 5))) {
+      (*results)[i].type = NO_PREDICTION;
+      continue;
+    }
+
+    // The suggested key/value pair must exist in the dictionary.
+    // For example, we don't want to suggest "ターネット" from
+    // the history "イン".
+    // If character type is Kanji and the suggestion is not a
+    // zero_query_suggestion, we relax this condition, as there are
+    // many Kanji-compounds which may not in the dictionary. For example,
+    // we want to suggest "霊長類研究所" from the history "京都大学".
+    if (ctype == Util::KANJI && is_zero_query) {
+      // Do not filter this.
+      continue;
+    }
+
+    if (NULL == LookupKeyValueFromDictionary(key, value, allocator)) {
+      (*results)[i].type = NO_PREDICTION;
+      continue;
+    }
+  }
+}
+
+void DictionaryPredictor::AggregateSuffixPrediction(
+    PredictionType type,
+    Segments *segments,
+    NodeAllocatorInterface *allocator,
+    vector<Result> *results) const {
+  if (!(type & SUFFIX)) {
+    return;
   }
 
-  return static_cast<int>(1000 * SVMClassify(*feature));
+  DCHECK(allocator);
+
+  const string &input_key = segments->conversion_segment(0).key();
+  Node *node = suffix_dictionary_->LookupPredictive(input_key.data(),
+                                                    input_key.size(),
+                                                    allocator);
+  for (; node != NULL; node = node->bnext) {
+    results->push_back(Result(node, SUFFIX));
+  }
 }
-#undef ADD_FEATURE
 
 bool DictionaryPredictor::IsZipCodeRequest(const string &key) const {
   if (key.empty()) {
@@ -576,11 +820,6 @@ DictionaryPredictor::PredictionType
 DictionaryPredictor::GetPredictionType(const Segments &segments) const {
   if (segments.request_type() == Segments::CONVERSION) {
     VLOG(2) << "request type is CONVERSION";
-    return NO_PREDICTION;
-  }
-
-  if (segments.node_allocator() == NULL) {
-    LOG(WARNING) << "NodeAllocator is NULL";
     return NO_PREDICTION;
   }
 
@@ -638,7 +877,7 @@ DictionaryPredictor::GetPredictionType(const Segments &segments) const {
   if (history_segments_size > 0) {
     const Segment &history_segment =
         segments.history_segment(history_segments_size - 1);
-    const int kMinBigramKeyLen = zero_query_suggestion ? 2 : 3;
+    const int kMinHistoryKeyLen = zero_query_suggestion ? 2 : 3;
     // even in PREDICTION mode, bigram-based suggestion requires that
     // the length of previous key is >= kMinBigramKeyLen.
     // It also implies that bigram-based suggestion will be triggered,
@@ -648,9 +887,13 @@ DictionaryPredictor::GetPredictionType(const Segments &segments) const {
     // If the current key looks like particle, we can make the behavior
     // less aggressive.
     if (history_segment.candidates_size() > 0 &&
-        Util::CharsLen(history_segment.candidate(0).key) >= kMinBigramKeyLen) {
+        Util::CharsLen(history_segment.candidate(0).key) >= kMinHistoryKeyLen) {
       result |= BIGRAM;
     }
+  }
+
+  if (history_segments_size > 0 && zero_query_suggestion) {
+    result |= SUFFIX;
   }
 
   return static_cast<PredictionType>(result);

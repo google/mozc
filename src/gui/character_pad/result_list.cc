@@ -47,6 +47,7 @@ ResultList::ResultList(QWidget *parent)
   setMouseTracking(true);
   setSelectionMode(QAbstractItemView::SingleSelection);
   setSelectionBehavior(QAbstractItemView::SelectItems);
+  setAutoScroll(false);
 }
 
 // redaraw items

@@ -193,6 +193,7 @@ Node *UserDictionary::LookupPredictive(const char *str, int size,
     new_node->value = (*it)->value;
     new_node->node_type = Node::NOR_NODE;
     new_node->attributes |= Node::NO_VARIANTS_EXPANSION;
+    new_node->attributes |= Node::USER_DICTIONARY;
     new_node->bnext = result_node;
     result_node = new_node;
   }
@@ -252,6 +253,7 @@ Node *UserDictionary::LookupPrefix(const char *str, int size,
     new_node->value = (*it)->value;
     new_node->node_type = Node::NOR_NODE;
     new_node->attributes |= Node::NO_VARIANTS_EXPANSION;
+    new_node->attributes |= Node::USER_DICTIONARY;
     new_node->bnext = result_node;
     result_node = new_node;
   }
@@ -369,7 +371,7 @@ bool UserDictionary::Load(const UserDictionaryStorage &storage) {
       } else {
         tokens.clear();
         UserPOS::GetTokens(reading, entry.value(), entry.pos(),
-                           UserPOS::DEFAULT, &tokens);
+                           &tokens);
         for (size_t k = 0; k < tokens.size(); ++k) {
           tokens_.push_back(new UserPOS::Token(tokens[k]));
         }

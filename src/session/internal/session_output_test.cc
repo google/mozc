@@ -303,19 +303,21 @@ TEST(SessionOutputTest, FillUsages) {
   // Make 5 candidates
   static const struct DummySegment {
     const char *value;
+    const int32 usage_id;
     const char *usage_title;
     const char *usage_description;
   } dummy_segments[] = {
-    { "val0", "title0", "desc0" },
-    { "val1", "", "" },
-    { "val2", "title2", "desc2" },
-    { "val3", "title3", "desc3" },
-    { "val4", "", "" },
+    { "val0", 100, "title0", "desc0" },
+    { "val1", 0, "", "" },
+    { "val2", 200, "title2", "desc2" },
+    { "val3", 300, "title3", "desc3" },
+    { "val4", 0, "", "" },
   };
   for (size_t i = 0; i < 5; ++i) {
     Segment::Candidate *cand = segment.push_back_candidate();
     candidate_list.AddCandidate(i, dummy_segments[i].value);
     cand->value = dummy_segments[i].value;
+    cand->usage_id = dummy_segments[i].usage_id;
     cand->usage_title = dummy_segments[i].usage_title;
     cand->usage_description = dummy_segments[i].usage_description;
   }
@@ -330,21 +332,21 @@ TEST(SessionOutputTest, FillUsages) {
   EXPECT_EQ(3, candidates_proto.usages().information_size());
 
   // Usage:0 should be dummy_segment:0
-  EXPECT_EQ(0, candidates_proto.usages().information(0).id());
+  EXPECT_EQ(100, candidates_proto.usages().information(0).id());
   EXPECT_EQ(dummy_segments[0].usage_title,
             candidates_proto.usages().information(0).title());
   EXPECT_EQ(dummy_segments[0].usage_description,
             candidates_proto.usages().information(0).description());
 
   // Usage:1 should be dummy_segment:2
-  EXPECT_EQ(2, candidates_proto.usages().information(1).id());
+  EXPECT_EQ(200, candidates_proto.usages().information(1).id());
   EXPECT_EQ(dummy_segments[2].usage_title,
             candidates_proto.usages().information(1).title());
   EXPECT_EQ(dummy_segments[2].usage_description,
             candidates_proto.usages().information(1).description());
 
   // Usage:2 should be dummy_segment:3
-  EXPECT_EQ(3, candidates_proto.usages().information(2).id());
+  EXPECT_EQ(300, candidates_proto.usages().information(2).id());
   EXPECT_EQ(dummy_segments[3].usage_title,
             candidates_proto.usages().information(2).title());
   EXPECT_EQ(dummy_segments[3].usage_description,

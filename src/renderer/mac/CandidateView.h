@@ -39,6 +39,7 @@ class Candidates;
 
 namespace renderer {
 class TableLayout;
+class RendererStyle;
 }  // namespace mozc::renderer
 }  // namespace mozc
 
@@ -57,6 +58,7 @@ enum COLUMN_TYPE {
  @private
   const mozc::commands::Candidates *candidates_;
   mozc::renderer::TableLayout *tableLayout_;
+  const mozc::renderer::RendererStyle *style_;
 
   // The row which has focused background.
   int focusedRow_;

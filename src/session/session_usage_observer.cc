@@ -181,16 +181,9 @@ void SetConfigStats() {
 
 // Return true if the value is in the candidate.
 bool FindInCandidates(const string &value,
-                      const commands::Candidates &candidates) {
-  if (candidates.has_subcandidates()) {
-    for (size_t i = 0; i < candidates.subcandidates().candidate_size(); ++i) {
-      if (value == candidates.subcandidates().candidate(i).value()) {
-        return true;
-      }
-    }
-  }
-  for (size_t i = 0; i < candidates.candidate_size(); ++i) {
-    if (value == candidates.candidate(i).value()) {
+                      const commands::CandidateList &candidates) {
+  for (size_t i = 0; i < candidates.candidates_size(); ++i) {
+    if (value == candidates.candidates(i).value()) {
       return true;
     }
   }
@@ -379,28 +372,28 @@ void SessionUsageObserver::SetInterval(uint32 val) {
 }
 
 void SessionUsageObserver::SaveStats() {
-  for (map<string, uint32>::const_iterator itr = count_cache_.begin();
-       itr != count_cache_.end(); ++itr) {
-    usage_stats::UsageStats::IncrementCountBy(itr->first, itr->second);
+  for (map<string, uint32>::const_iterator iter = count_cache_.begin();
+       iter != count_cache_.end(); ++iter) {
+    usage_stats::UsageStats::IncrementCountBy(iter->first, iter->second);
   }
   count_cache_.clear();
 
-  for (map<string, vector<uint32> >::const_iterator itr
+  for (map<string, vector<uint32> >::const_iterator iter
            = timing_cache_.begin();
-       itr != timing_cache_.end(); ++itr) {
-    usage_stats::UsageStats::UpdateTimingBy(itr->first, itr->second);
+       iter != timing_cache_.end(); ++iter) {
+    usage_stats::UsageStats::UpdateTimingBy(iter->first, iter->second);
   }
   timing_cache_.clear();
 
-  for (map<string, int>::const_iterator itr = integer_cache_.begin();
-       itr != integer_cache_.end(); ++itr) {
-    usage_stats::UsageStats::SetInteger(itr->first, itr->second);
+  for (map<string, int>::const_iterator iter = integer_cache_.begin();
+       iter != integer_cache_.end(); ++iter) {
+    usage_stats::UsageStats::SetInteger(iter->first, iter->second);
   }
   integer_cache_.clear();
 
-  for (map<string, bool>::const_iterator itr = boolean_cache_.begin();
-       itr != boolean_cache_.end(); ++itr) {
-    usage_stats::UsageStats::SetBoolean(itr->first, itr->second);
+  for (map<string, bool>::const_iterator iter = boolean_cache_.begin();
+       iter != boolean_cache_.end(); ++iter) {
+    usage_stats::UsageStats::SetBoolean(iter->first, iter->second);
   }
   boolean_cache_.clear();
 
@@ -685,6 +678,12 @@ void SessionUsageObserver::UpdateState(const commands::Input &input,
   } else {
     state->clear_candidates();
   }
+  if (output.has_all_candidate_words()) {
+    state->mutable_all_candidate_words()->
+        CopyFrom(output.all_candidate_words());
+  } else {
+    state->clear_all_candidate_words();
+  }
 
   if ((!state->has_result() ||
        state->result().type() != commands::Result::STRING) &&
@@ -713,10 +712,10 @@ void SessionUsageObserver::EvalSendKey(const commands::Input &input,
     IncrementCount("NonASCIITyping");
     const map<uint32, string> special_key_map =
         Singleton<EventConverter>::get()->GetSpecialKeyMap();
-    map<uint32, string>::const_iterator itr =
+    map<uint32, string>::const_iterator iter =
         special_key_map.find(input.key().special_key());
-    if (itr != special_key_map.end()) {
-      IncrementCount(itr->second);
+    if (iter != special_key_map.end()) {
+      IncrementCount(iter->second);
     }
   }
 }
@@ -748,17 +747,22 @@ void SessionUsageObserver::CheckOutput(const commands::Input &input,
 
   if (state->mode() == session::SessionState::SUGGESTION ||
       (CheckCandidateCategory(state, commands::SUGGESTION) &&
-       FindInCandidates(submit_value, state->candidates()))) {
+       FindInCandidates(submit_value, state->all_candidate_words()))) {
     // We should check the candidate contents because suggestion
     // candidates are shown automatically.
     IncrementCount("CommitFromSuggestion");
-    DCHECK(state->selected_indices_size() == 1);
-    const uint32 index = state->selected_indices(0);
-    if (index == kSelectDirectly) {
-      // Treat as top candidate
-      UpdateCandidateStats("SuggestionCandidates", 0);
+    if (state->selected_indices_size() == 0) {
+      // Committed zero-query suggest candidate
+      // by using SEGMENT_FOCUS_RIGHT_OR_COMMIT command.
+      UpdateCandidateStats("SuggestionCandidates", input.command().id());
     } else {
-      UpdateCandidateStats("SuggestionCandidates", index);
+      const uint32 index = state->selected_indices(0);
+      if (index == kSelectDirectly) {
+        // Treat as top candidate
+        UpdateCandidateStats("SuggestionCandidates", 0);
+      } else {
+        UpdateCandidateStats("SuggestionCandidates", index);
+      }
     }
   } else if (state->mode() == session::SessionState::PREDICTION ||
              CheckCandidateCategory(state, commands::PREDICTION)) {
@@ -858,13 +862,13 @@ void SessionUsageObserver::EvalCommandHandler(
     return;
   }
 
-  map<uint64, SessionState>::iterator itr = states_.find(input.id());
-  if (itr == states_.end()) {
+  map<uint64, SessionState>::iterator iter = states_.find(input.id());
+  if (iter == states_.end()) {
     LOG(WARNING) << "unknown session";
     // Unknown session
     return;
   }
-  SessionState *state = &itr->second;
+  SessionState *state = &iter->second;
   DCHECK(state);
 
   if (input.type() == commands::Input::DELETE_SESSION) {
@@ -872,7 +876,7 @@ void SessionUsageObserver::EvalCommandHandler(
     const uint64 duration = time(NULL) - state->created_time();
     UpdateTiming("SessionDuration", duration);
 
-    states_.erase(itr);
+    states_.erase(iter);
     SaveStats();
     return;
   }

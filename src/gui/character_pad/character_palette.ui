@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>650</width>
+    <width>670</width>
     <height>250</height>
    </rect>
   </property>
@@ -118,16 +118,6 @@
            <string/>
           </property>
          </column>
-         <item>
-          <property name="text">
-           <string>JIS</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>Unicode</string>
-          </property>
-         </item>
         </widget>
         <widget class="CharacterPaletteTableWidget" name="tableWidget"/>
        </widget>

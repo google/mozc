@@ -31,6 +31,13 @@
   'variables': {
     'relative_dir': 'renderer',
     'gen_out_dir': '<(SHARED_INTERMEDIATE_DIR)/<(relative_dir)',
+    'conditions': [
+      ['branding=="GoogleJapaneseInput"', {
+        'renderer_product_name_win': 'GoogleIMEJaRenderer',
+      }, {  # else
+        'renderer_product_name_win': 'mozc_renderer',
+      }],
+    ],
   },
   'targets': [
     {
@@ -101,10 +108,86 @@
             'win32_renderer_util_test',
           ],
         }],
+        ['OS=="mac"', {
+          'dependencies': [
+            'renderer_style_handler_test',
+          ],
+        }],
       ],
     },
   ],
   'conditions': [
+    ['OS=="win"', {
+      'targets': [
+        {
+          'target_name': 'gen_mozc_renderer_resource_header',
+          'variables': {
+            'gen_resource_proj_name': 'mozc_renderer',
+            'gen_main_resource_path': 'renderer/mozc_renderer.rc',
+            'gen_output_resource_path':
+                '<(gen_out_dir)/mozc_renderer_autogen.rc',
+          },
+          'includes': [
+            '../gyp/gen_win32_resource_header.gypi',
+          ],
+        },
+        {
+          'target_name': 'win32_renderer_util',
+          'type': 'static_library',
+          'sources': [
+            'win32/win32_renderer_util.cc',
+          ],
+          'dependencies': [
+            '../base/base.gyp:base',
+            '../session/session_base.gyp:session_protocol',
+            '../win32/base/win32_base.gyp:ime_base',
+          ],
+        },
+        {
+          'target_name': 'win32_renderer_util_test',
+          'type': 'executable',
+          'sources': [
+            'win32/win32_renderer_util_test.cc',
+          ],
+          'dependencies': [
+            '../testing/testing.gyp:gtest_main',
+            'win32_renderer_util',
+          ],
+          'variables': {
+            'test_size': 'small',
+          },
+        },
+        {
+          'target_name': 'mozc_renderer',
+          'product_name': '<(renderer_product_name_win)',
+          'type': 'executable',
+          'sources': [
+            'mozc_renderer_main.cc',
+            'mozc_renderer.exe.manifest',
+            'win32/win32_server.cc',
+            'win32/window_manager.cc',
+            'win32/candidate_window.cc',
+            'win32/composition_window.cc',
+            'win32/text_renderer.cc',
+            '<(gen_out_dir)/mozc_renderer_autogen.rc',
+          ],
+          'dependencies': [
+            '../base/base.gyp:base',
+            '../client/client.gyp:client',
+            '../ipc/ipc.gyp:ipc',
+            '../session/session_base.gyp:genproto_session',
+            'gen_mozc_renderer_resource_header',
+            'renderer',
+            'table_layout',
+            'win32_renderer_util',
+            'window_util',
+          ],
+          'includes': [
+            '../gyp/postbuilds_win.gypi',
+          ],
+        },
+      ],
+    }],
     ['OS=="mac"', {
       'targets': [
         {
@@ -119,9 +202,15 @@
             'mac/CandidateController.mm',
             'mac/CandidateWindow.mm',
             'mac/CandidateView.mm',
+            'mac/InfolistWindow.mm',
+            'mac/InfolistView.mm',
+            'mac/RendererBaseWindow.mm',
+            'mac/mac_view_util.mm',
+            'renderer_style_handler.cc',
+            '<(proto_out_dir)/<(relative_dir)/renderer_style.pb.cc',
           ],
           'mac_bundle_resources': [
-            '../data/images/mac/product_icon.icns'
+            '../data/images/mac/product_icon.icns',
           ],
           'dependencies': [
             '../base/base.gyp:base',
@@ -132,6 +221,7 @@
             'renderer',
             'table_layout',
             'window_util',
+            'genproto_renderer',
           ],
           'xcode_settings': {
             'INFOPLIST_FILE': '<(gen_out_dir)/Info.plist',
@@ -149,6 +239,23 @@
           'includes': [
             '../gyp/postbuilds_mac.gypi',
           ],
+        },
+        {
+          'target_name': 'renderer_style_handler_test',
+          'type': 'executable',
+          'sources': [
+            'renderer_style_handler_test.cc',
+            'renderer_style_handler.cc',
+            '<(proto_out_dir)/<(relative_dir)/renderer_style.pb.cc',
+          ],
+          'dependencies': [
+            '../testing/testing.gyp:gtest_main',
+            'renderer',
+            'genproto_renderer',
+          ],
+          'variables': {
+            'test_size': 'small',
+          },
         },
         {
           'target_name': 'gen_renderer_files',
@@ -172,6 +279,16 @@
             },
           ],
         },
+        {
+          'target_name': 'genproto_renderer',
+          'type': 'none',
+          'sources': [
+            'renderer_style.proto',
+          ],
+          'includes': [
+            '../protobuf/genproto.gypi',
+          ],
+        }
       ],
     }],
   ],

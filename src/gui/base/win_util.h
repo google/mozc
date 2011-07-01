@@ -87,9 +87,15 @@ class WinUtil {
   //  Default setting is used.
   static bool SetIMEHotKeyDisabled(bool disabled);
 
+  // This method keeps JumpList to be up-to-date on Windows 7.
+  // Does nothing on any other platform.
+  static void KeepJumpListUpToDate();
+
  private:
   WinUtil() {}
   ~WinUtil() {}
+
+  DISALLOW_COPY_AND_ASSIGN(WinUtil);
 };
 }  // namespace gui
 }  // namespace mozc

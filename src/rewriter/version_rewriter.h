@@ -42,6 +42,8 @@ class VersionRewriter: public RewriterInterface  {
   VersionRewriter();
   virtual ~VersionRewriter();
 
+  virtual int capability() const;
+
   virtual bool Rewrite(Segments *segments) const;
 };
 }

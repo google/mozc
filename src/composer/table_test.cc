@@ -32,25 +32,14 @@
 #include "base/base.h"
 #include "base/util.h"
 #include "composer/internal/composition_input.h"
-#include "testing/base/public/gunit.h"
 #include "session/config.pb.h"
 #include "session/config_handler.h"
+#include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
 
 namespace mozc {
 namespace composer {
-
-// This macro is ported from base/basictypes.h.  Due to WinNT.h has
-// the same macro, this macro should be undefined at the end of this
-// file.
-// TODO(komatsu): Move this macro to base or testing.
-#ifndef ARRAYSIZE
-#define UNDEFINE_ARRAYSIZE
-#define ARRAYSIZE(a) \
-  ((sizeof(a) / sizeof(*(a))) / \
-    static_cast<size_t>(!(sizeof(a) % sizeof(*(a)))))
-#endif  // ARRAYSIZE
 
 static void InitTable(Table* table) {
   // "あ"
@@ -249,10 +238,6 @@ TEST_F(TableTest, Symbols) {
     EXPECT_EQ(test_cases[i].expected, entry->result());
   }
 }
-
-#ifdef UNDEFINE_ARRAYSIZE
-#undef ARRAYSIZE
-#endif  // UNDEFINE_ARRAYSIZE
 
 TEST_F(TableTest, KanaSuppressed) {
   config::Config config;

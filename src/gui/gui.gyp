@@ -360,7 +360,7 @@
         'gen_character_pad_data',
         'gen_dictionary_tool_files',
       ],
-      'conditions': [['use_libzinnia==1', {
+      'conditions': [['use_libzinnia==1 and OS=="linux"', {
         'defines': [
           'USE_LIBZINNIA',
         ],
@@ -933,6 +933,9 @@
             'gen_output_resource_path':
                 '<(gen_out_dir)/tool/mozc_tool_autogen.rc',
           },
+          'includes': [
+            '../gyp/gen_win32_resource_header.gypi',
+          ],
         },
       ],
     }],

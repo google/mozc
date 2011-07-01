@@ -40,6 +40,9 @@ class SingleKanjiRewriter: public RewriterInterface  {
  public:
   SingleKanjiRewriter();
   virtual ~SingleKanjiRewriter();
+
+  virtual int capability() const;
+
   virtual bool Rewrite(Segments *segments) const;
 };
 }  // namespace mozc

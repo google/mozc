@@ -30,81 +30,19 @@
 #include <string>
 #include "base/util.h"
 #include "net/http_client.h"
+#include "net/http_client_mock.h"
 #include "testing/base/public/gunit.h"
 #include "usage_stats/upload_util.h"
 
 namespace mozc {
 namespace usage_stats {
 
-class TestHTTPClient : public HTTPClientInterface {
- public:
-  bool Get(const string &url, string *output) const { return true; }
-  bool Head(const string &url, string *output) const { return true; }
-  bool Post(const string &url, const string &data,
-            string *output) const { return true; }
-
-  bool Get(const string &url, const HTTPClient::Option &option,
-           string *output) const { return true; }
-  bool Head(const string &url, const HTTPClient::Option &option,
-            string *output) const { return true; }
-  bool Post(const string &url, const char *data,
-            size_t data_size, const HTTPClient::Option &option,
-            string *output) const { return true; }
-
-  bool Get(const string &url, ostream *output)  const { return true; }
-  bool Head(const string &url, ostream *output)  const { return true; }
-  bool Post(const string &url, const string &data,
-            ostream *output) const { return true; }
-
-  bool Get(const string &url, const HTTPClient::Option &option,
-           ostream *output)  const { return true; }
-  bool Head(const string &url, const HTTPClient::Option &option,
-            ostream *output)  const { return true; }
-  bool Post(const string &url, const string &data,
-            const HTTPClient::Option & option,
-            std::ostream *outptu) const { return true; }
-  bool Post(const string &url, const char *data,
-            size_t data_size, const HTTPClient::Option &option,
-            std::ostream *output) const { return true; }
-
-  bool Post(const string &url, const string &data,
-            const HTTPClient::Option &option, string *output) const {
-    LOG(INFO) << "url: " << url;
-    LOG(INFO) << "data: " << data;
-    if (result_.expected_url != url) {
-      LOG(INFO) << "expected_url: " << result_.expected_url;
-      return false;
-    }
-
-    if (result_.expected_request != data) {
-      LOG(INFO) << "expected_request: " << result_.expected_request;
-      return false;
-    }
-
-    *output = result_.expected_result;
-    return true;
-  }
-
-  struct Result {
-    string expected_url;
-    string expected_request;
-    string expected_result;
-  };
-
-  void set_result(const Result &result) {
-    result_ = result;
-  }
-
- private:
-  Result result_;
-};
-
 TEST(UploadUtilTest, UploadTest) {
-  TestHTTPClient client;
+  HTTPClientMock client;
   HTTPClient::SetHTTPClientHandler(&client);
   const string base_url = "http://clients4.google.com/tbproxy/usagestats";
   {
-    TestHTTPClient::Result result;
+    HTTPClientMock::Result result;
     result.expected_url = base_url + "?sourceid=ime&hl=ja&v=test";
     result.expected_request = "Test&100&Count:c=100";
     client.set_result(result);
@@ -127,7 +65,7 @@ TEST(UploadUtilTest, UploadTest) {
   }
 
   {
-    TestHTTPClient::Result result;
+    HTTPClientMock::Result result;
     result.expected_url = base_url + "?sourceid=ime&hl=ja&v=test";
     result.expected_request = "Test&100&Timing:t=20;20;10;30";
     client.set_result(result);
@@ -142,7 +80,7 @@ TEST(UploadUtilTest, UploadTest) {
   }
 
   {
-    TestHTTPClient::Result result;
+    HTTPClientMock::Result result;
     result.expected_url = base_url + "?sourceid=ime&hl=ja&v=test";
     result.expected_request = "Test&100&Integer:i=-10";
     client.set_result(result);
@@ -157,7 +95,7 @@ TEST(UploadUtilTest, UploadTest) {
   }
 
   {
-    TestHTTPClient::Result result;
+    HTTPClientMock::Result result;
     result.expected_url = base_url + "?sourceid=ime&hl=ja&v=test";
     result.expected_request = "Test&100&Boolean:b=f";
     client.set_result(result);
@@ -172,7 +110,7 @@ TEST(UploadUtilTest, UploadTest) {
   }
 
   {
-    TestHTTPClient::Result result;
+    HTTPClientMock::Result result;
     result.expected_url = base_url + "?sourceid=ime&hl=ja&v=test";
     result.expected_request = "Test&100&C:c=1&T:t=1;1;1;1&I:i=1&B:b=t";
     client.set_result(result);

@@ -27,13 +27,17 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <limits.h>
+#include "base/util.h"
+
+#include <climits>
+#include <cstdlib>
+#include <ctime>
 #include <fstream>
 #include <sstream>
 #include <string>
+
 #include "base/clock_mock.h"
 #include "base/file_stream.h"
-#include "base/util.h"
 #include "base/mmap.h"
 #include "base/mutex.h"
 #include "base/thread.h"
@@ -416,10 +420,16 @@ TEST(UtilTest, SafeStrToUInt32) {
 
   EXPECT_TRUE(Util::SafeStrToUInt32("0", &value));
   EXPECT_EQ(0, value);
+
+  value = 0xDEADBEEF;
   EXPECT_TRUE(Util::SafeStrToUInt32(" \t\r\n\v\f0 \t\r\n\v\f", &value));
   EXPECT_EQ(0, value);
+
+  value = 0xDEADBEEF;
   EXPECT_TRUE(Util::SafeStrToUInt32("012345678", &value));
   EXPECT_EQ(12345678, value);
+
+  value = 0xDEADBEEF;
   EXPECT_TRUE(Util::SafeStrToUInt32("4294967295", &value));
   EXPECT_EQ(4294967295u, value);  // max of 32-bit unsigned integer
 
@@ -430,6 +440,66 @@ TEST(UtilTest, SafeStrToUInt32) {
   EXPECT_FALSE(Util::SafeStrToUInt32("0.", &value));
   EXPECT_FALSE(Util::SafeStrToUInt32(".0", &value));
   EXPECT_FALSE(Util::SafeStrToUInt32("", &value));
+}
+
+TEST(UnitTest, SafeHexStrToUInt32) {
+  uint32 value = 0xDEADBEEF;
+
+  EXPECT_TRUE(Util::SafeHexStrToUInt32("0", &value));
+  EXPECT_EQ(0, value);
+
+  value = 0xDEADBEEF;
+  EXPECT_TRUE(Util::SafeHexStrToUInt32(" \t\r\n\v\f0 \t\r\n\v\f", &value));
+  EXPECT_EQ(0, value);
+
+  value = 0xDEADBEEF;
+  EXPECT_TRUE(Util::SafeHexStrToUInt32("0ABCDE", &value));
+  EXPECT_EQ(0xABCDE, value);
+
+  value = 0xDEADBEEF;
+  EXPECT_TRUE(Util::SafeHexStrToUInt32("0abcde", &value));
+  EXPECT_EQ(0xABCDE, value);
+
+  value = 0xDEADBEEF;
+  EXPECT_TRUE(Util::SafeHexStrToUInt32("FFFFFFFF", &value));
+  EXPECT_EQ(0xFFFFFFFF, value);  // max of 32-bit unsigned integer
+
+  value = 0xDEADBEEF;
+  EXPECT_TRUE(Util::SafeHexStrToUInt32("ffffffff", &value));
+  EXPECT_EQ(0xFFFFFFFF, value);  // max of 32-bit unsigned integer
+
+  EXPECT_FALSE(Util::SafeHexStrToUInt32("-0", &value));
+  EXPECT_FALSE(Util::SafeHexStrToUInt32("100000000", &value));  // overflow
+  EXPECT_FALSE(Util::SafeHexStrToUInt32("GHIJK", &value));
+  EXPECT_FALSE(Util::SafeHexStrToUInt32("0.", &value));
+  EXPECT_FALSE(Util::SafeHexStrToUInt32(".0", &value));
+  EXPECT_FALSE(Util::SafeHexStrToUInt32("", &value));
+}
+
+TEST(UnitTest, SafeOctStrToUInt32) {
+  uint32 value = 0xDEADBEEF;
+
+  EXPECT_TRUE(Util::SafeOctStrToUInt32("0", &value));
+  EXPECT_EQ(0, value);
+
+  value = 0xDEADBEEF;
+  EXPECT_TRUE(Util::SafeOctStrToUInt32(" \t\r\n\v\f0 \t\r\n\v\f", &value));
+  EXPECT_EQ(0, value);
+
+  value = 0xDEADBEEF;
+  EXPECT_TRUE(Util::SafeOctStrToUInt32("012345", &value));
+  EXPECT_EQ(012345, value);
+
+  value = 0xDEADBEEF;
+  EXPECT_TRUE(Util::SafeOctStrToUInt32("37777777777", &value));
+  EXPECT_EQ(0xFFFFFFFF, value);  // max of 32-bit unsigned integer
+
+  EXPECT_FALSE(Util::SafeOctStrToUInt32("-0", &value));
+  EXPECT_FALSE(Util::SafeOctStrToUInt32("40000000000", &value));  // overflow
+  EXPECT_FALSE(Util::SafeOctStrToUInt32("9AB", &value));
+  EXPECT_FALSE(Util::SafeOctStrToUInt32("0.", &value));
+  EXPECT_FALSE(Util::SafeOctStrToUInt32(".0", &value));
+  EXPECT_FALSE(Util::SafeOctStrToUInt32("", &value));
 }
 
 TEST(UtilTest, SafeStrToUInt64) {
@@ -1123,6 +1193,26 @@ TEST(UtilTest, NormalizeNumbers) {
   }
 }
 
+TEST(UtilTest, IsEnglishTransliteration) {
+  EXPECT_TRUE(Util::IsEnglishTransliteration("ABC"));
+  EXPECT_TRUE(Util::IsEnglishTransliteration("Google"));
+  EXPECT_TRUE(Util::IsEnglishTransliteration("Google Map"));
+  EXPECT_TRUE(Util::IsEnglishTransliteration("ABC-DEF"));
+  EXPECT_TRUE(Util::IsEnglishTransliteration("Foo-bar"));
+  EXPECT_TRUE(Util::IsEnglishTransliteration("Foo!"));
+  EXPECT_TRUE(Util::IsEnglishTransliteration("!"));
+  EXPECT_TRUE(Util::IsEnglishTransliteration("  "));
+  //  EXPECT_FALSE(Util::IsEnglishTransliteration("てすと"));
+  //  EXPECT_FALSE(Util::IsEnglishTransliteration("テスト"));
+  //  EXPECT_FALSE(Util::IsEnglishTransliteration("東京"));
+  EXPECT_FALSE(Util::IsEnglishTransliteration(
+      "\xE3\x81\xA6\xE3\x81\x99\xE3\x81\xA8"));
+  EXPECT_FALSE(Util::IsEnglishTransliteration(
+      "\xE3\x83\x86\xE3\x82\xB9\xE3\x83\x88"));
+  EXPECT_FALSE(Util::IsEnglishTransliteration(
+      "\xE6\x9D\xB1\xE4\xBA\xAC"));
+}
+
 TEST(UtilTest, Basename) {
 #ifdef OS_WINDOWS
   EXPECT_EQ("bar", Util::Basename("\\foo\\bar"));
@@ -1218,12 +1308,10 @@ TEST(UtilTest, ChopReturns) {
   EXPECT_EQ("line", line);
 }
 
-// 2020-12-23 13:24:35 (Wed)
+// 2020-12-23 13:24:35 (Wed) UTC
 // 123456 [usec]
-namespace {
-const uint64 kTestSeconds = 1608758675uLL;
+const uint64 kTestSeconds = 1608729875uLL;
 const uint32 kTestMicroSeconds = 123456u;
-}
 
 // time utility test with mock clock
 TEST(UtilTest, TimeTestWithMock) {
@@ -2626,6 +2714,18 @@ TEST(UtilTest, ArabicToOtherRadixesTest) {
   arabic = "18446744073709551616";  // UINT64_MAX + 1
   output.clear();
   EXPECT_FALSE(Util::ArabicToOtherRadixes(arabic, &output));
+}
+
+
+TEST(UtilTGest, RandomSeedTest) {
+  Util::SetRandomSeed(0);
+  const int first_try = Util::Random(INT_MAX);
+  const int second_try = Util::Random(INT_MAX);
+  EXPECT_NE(first_try, second_try);
+
+  // Reset the seed.
+  Util::SetRandomSeed(0);
+  EXPECT_EQ(first_try, Util::Random(INT_MAX));
 }
 
 }  // namespace mozc

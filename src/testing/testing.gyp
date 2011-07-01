@@ -39,6 +39,7 @@
         '<(DEPTH)/third_party/gtest/src/gtest-port.cc',
         '<(DEPTH)/third_party/gtest/src/gtest-printers.cc',
         '<(DEPTH)/third_party/gtest/src/gtest-test-part.cc',
+        '<(DEPTH)/third_party/gtest/src/gtest-typed-test.cc',
       ],
     },
     {

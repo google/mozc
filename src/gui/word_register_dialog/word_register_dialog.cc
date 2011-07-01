@@ -148,6 +148,8 @@ WordRegisterDialog::WordRegisterDialog()
           this, SLOT(LineEditChanged(const QString &)));
   connect(ReadinglineEdit, SIGNAL(textChanged(const QString &)),
           this, SLOT(LineEditChanged(const QString &)));
+  connect(WordlineEdit, SIGNAL(editingFinished()),
+          this, SLOT(CompleteReading()));
   connect(WordRegisterDialogbuttonBox,
           SIGNAL(clicked(QAbstractButton *)),
           this,
@@ -175,6 +177,14 @@ bool WordRegisterDialog::IsAvailable() const {
 }
 
 void WordRegisterDialog::LineEditChanged(const QString &str) {
+  UpdateUIStatus();
+}
+
+void WordRegisterDialog::CompleteReading() {
+  if (ReadinglineEdit->text().isEmpty()) {
+    ReadinglineEdit->setText(GetReading(WordlineEdit->text()));
+    ReadinglineEdit->selectAll();
+  }
   UpdateUIStatus();
 }
 
@@ -333,6 +343,10 @@ const QString WordRegisterDialog::GetReading(const QString &str) {
       LOG(ERROR) << "SendCommand failed";
       return "";
     }
+
+    commands::Output dummy_output;
+    command.set_type(commands::SessionCommand::REVERT);
+    session_->SendCommand(command, &dummy_output);
   }
 
   if (!output.has_preedit()) {

@@ -37,13 +37,6 @@
       'sources': [
         'v1_0rc2/rx.c',
       ],
-      'conditions': [
-        ['chromeos==1', {
-          'cflags!': [
-            '-Wno-deprecated',
-          ],
-        }],
-      ],
     },
   ],
 }

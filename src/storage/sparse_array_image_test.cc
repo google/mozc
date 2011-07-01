@@ -45,17 +45,17 @@ TEST(SparseArray, basic) {
   builder.AddValue(0xffff0001, 50);
   builder.Build();
   SparseArrayImage image(builder.GetImage(), builder.GetSize());
-  EXPECT_EQ(image.Peek(0), 0);
-  EXPECT_EQ(image.Peek(10), 1);
-  EXPECT_EQ(image.Peek(100), 2);
-  EXPECT_EQ(image.Peek(10100), 102);
-  EXPECT_EQ(image.Peek(0x1ffff), 103);
+  EXPECT_EQ(image.PeekFromArray(0), 0);
+  EXPECT_EQ(image.PeekFromArray(10), 1);
+  EXPECT_EQ(image.PeekFromArray(100), 2);
+  EXPECT_EQ(image.PeekFromArray(10100), 102);
+  EXPECT_EQ(image.PeekFromArray(0x1ffff), 103);
   // check signedness issue.
-  EXPECT_EQ(image.Peek(0xffff0001), 104);
+  EXPECT_EQ(image.PeekFromArray(0xffff0001), 104);
 
 
-  EXPECT_EQ(image.Peek(1), -1);
-  EXPECT_EQ(image.Peek(99), -1);
+  EXPECT_EQ(image.PeekFromArray(1), -1);
+  EXPECT_EQ(image.PeekFromArray(99), -1);
   EXPECT_EQ(image.GetValue(0), 10);
   EXPECT_EQ(image.GetValue(1), 20);
   EXPECT_EQ(image.GetValue(2), 30);
@@ -70,8 +70,21 @@ TEST(SparseArray, use_1byte_value) {
   builder.Build();
   SparseArrayImage image(builder.GetImage(), builder.GetSize());
   for (int i = 0; i <= 100; ++i) {
-    EXPECT_EQ(i, image.Peek(100 + i * i));
+    EXPECT_EQ(i, image.PeekFromArray(100 + i * i));
     EXPECT_EQ(i, image.GetValue(i));
+  }
+}
+
+TEST(SparseArray, cache) {
+  SparseArrayBuilder builder;
+  // Cache bucket eviction should happen because 300 > kCacheSize.
+  for (int i = 0; i <= 300; ++i) {
+    builder.AddValue(100 + i * i, 0);
+  }
+  builder.Build();
+  SparseArrayImage image(builder.GetImage(), builder.GetSize());
+  for (int i = 0; i <= 300; ++i) {
+    EXPECT_EQ(i, image.Peek(100 + i * i));
   }
 }
 }  // namespace mozc

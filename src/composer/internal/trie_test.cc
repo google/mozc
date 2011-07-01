@@ -27,20 +27,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "base/base.h"
 #include "composer/internal/trie.h"
-#include "testing/base/public/gunit.h"
 
-// This macro is ported from base/basictypes.h.  Due to WinNT.h has
-// the same macro, this macro should be undefined at the end of this
-// file.
-// TODO(komatsu): Move this macro to base or testing.
-#ifndef ARRAYSIZE
-#define UNDEFINE_ARRAYSIZE
-#define ARRAYSIZE(a) \
-  ((sizeof(a) / sizeof(*(a))) / \
-  static_cast<size_t>(!(sizeof(a) % sizeof(*(a)))))
-#endif  // ARRAYSIZE
+#include "base/base.h"
+#include "testing/base/public/gunit.h"
 
 TEST(TrieTest, Trie) {
   mozc::composer::Trie<string> trie;
@@ -133,7 +123,3 @@ TEST(TrieTest, LookUpPrefix) {
   key_length = 0;
   EXPECT_FALSE(trie.LookUpPrefix("xyz", &value, &key_length, &has_subtrie));
 }
-
-#ifdef UNDEFINE_ARRAYSIZE
-#undef ARRAYSIZE
-#endif  // UNDEFINE_ARRAYSIZE

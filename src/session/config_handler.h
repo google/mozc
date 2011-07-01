@@ -65,6 +65,9 @@ class ConfigHandler {
   // Set config file. (for unittesting)
   static void SetConfigFileName(const string &filename);
 
+  // Get config file name.
+  static string GetConfigFileName();
+
   // Utilitiy function to put config meta data
   static void SetMetaData(Config *config);
 

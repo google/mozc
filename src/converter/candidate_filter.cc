@@ -77,21 +77,6 @@ const int   kMinStructureCostOffset  = 1151;
 const int32 kNoFilterRank            = 3;
 const int32 kNoFilterIfSameIdRank    = 10;
 const int32 kStopEnmerationCacheSize = 15;
-
-// TODO(taku): move it to Util
-bool IsEnglishT13NValue(const string &value) {
-  for (size_t i = 0; i < value.size(); ++i) {
-    if (value[i] == 0x20 || value[i] == 0x21 || value[i] == 0x2D ||
-        // " ", "!", "-"
-        (value[i] >= 0x41 && value[i] <= 0x5A) ||  // A..Z
-        (value[i] >= 0x61 && value[i] <= 0x7A)) {  // a..z
-      // do nothing
-    } else {
-      return false;
-    }
-  }
-  return true;
-}
 }  // anonymous namespace
 
 CandidateFilter::CandidateFilter()
@@ -174,15 +159,25 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
     return CandidateFilter::GOOD_CANDIDATE;
   }
 
+  // don't drop lid/rid are the same as those
+  // of top candidate.
+  // http://b/issue?id=4285213
+  if (top_candidate_->structure_cost == 0 &&
+      candidate->lid == top_candidate_->lid &&
+      candidate->rid == top_candidate_->rid) {
+    VLOG(1) << "don't filter lid/rid are the same";
+    return CandidateFilter::GOOD_CANDIDATE;
+  }
+
   // Check Katakana transliterations
   // Skip this check when the conversion mode is real-time;
   // otherwise this ruins the whole sentence
   // that starts with alphabets.
   if (!(candidate->attributes & Segment::Candidate::REALTIME_CONVERSION)) {
-    const bool is_top_english_t13n = IsEnglishT13NValue(nodes[0]->value);
+    const bool is_top_english_t13n = Util::IsEnglishTransliteration(nodes[0]->value);
     for (size_t i = 1; i < nodes.size(); ++i) {
       // EnglishT13N must be the prefix of the candidate.
-      if (IsEnglishT13NValue(nodes[i]->value)) {
+      if (Util::IsEnglishTransliteration(nodes[i]->value)) {
         return CandidateFilter::BAD_CANDIDATE;
       }
       // nodes[1..] are non-functional candidates.
@@ -209,10 +204,10 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
   }
 
   // if candidate starts with prefix "お", we'd like to demote
-  // the candidate if the rank of the candidate is below 3.
+  // the candidate if the rank of the candidate is below 1 (0-origin).
   // This is a temporal workaround for fixing "おそう" => "御|総"
   // TODO(taku): remove it after intorducing a word clustering for noun.
-  if (candidate_size >= 3 && nodes.size() > 1 &&
+  if (candidate_size >= 1 && nodes.size() > 1 &&
       nodes[0]->lid == nodes[0]->rid &&
       POSMatcher::IsWeakCompoundPrefix(nodes[0]->lid)) {
     VLOG(1) << "removing noisy prefix pattern";

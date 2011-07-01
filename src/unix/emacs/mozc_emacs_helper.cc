@@ -41,6 +41,9 @@
 #include "session/config_handler.h"
 #include "unix/emacs/session_pool.h"
 
+DEFINE_bool(suppress_stderr, false,
+            "Discards all the output to stderr.");
+
 namespace {
 
 // Prints a greeting message when a process starts.
@@ -121,6 +124,18 @@ void ProcessLoop() {
 
 int main(int argc, char **argv) {
   InitGoogle(argv[0], &argc, &argv, true);
+
+  if (FLAGS_suppress_stderr) {
+#ifdef OS_WINDOWS
+    const char path[] = "NUL";
+#else
+    const char path[] = "/dev/null";
+#endif
+    if (!freopen(path, "a", stderr)) {
+      mozc::emacs::ErrorExit(mozc::emacs::kErrFileError,
+                             "freopen for stderr failed");
+    }
+  }
 
   PrintGreetingMessage();
 

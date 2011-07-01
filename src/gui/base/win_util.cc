@@ -29,6 +29,24 @@
 
 #include "gui/base/win_util.h"
 
+#ifdef OS_WINDOWS
+#define NTDDI_VERSION NTDDI_WIN7  // for JumpList.
+#include <dwmapi.h>
+#include <tmschema.h>
+#include <uxtheme.h>
+#include <windows.h>
+#include <winuser.h>
+#include <atlbase.h>
+#include <atlcom.h>
+
+#include <objectarray.h>
+#include <shobjidl.h>
+#include <propkey.h>
+#include <propvarutil.h>
+#include <knownfolders.h>
+#include <shlobj.h>
+#endif  // OS_WINDOWS
+
 #include <QtCore/QFile>
 #include <QtCore/QLibrary>
 #include <QtCore/QList>
@@ -38,19 +56,21 @@
 #include <QtGui/QPainter>
 #include <QtGui/QPaintEngine>
 #include <QtGui/QWidget>
+#ifdef OS_WINDOWS
+#include <Qt/qt_windows.h>
+#endif  // OS_WINDOWS
 
 #include "base/base.h"
+#ifdef OS_WINDOWS
+#include "base/const.h"
+#endif  // OS_WINDOWS
 #include "base/util.h"
 #include "base/singleton.h"
+#ifdef OS_WINDOWS
+#include "base/win_util.h"
+#endif  // OS_WINDOWS
 
 #ifdef OS_WINDOWS
-#include <dwmapi.h>
-#include <tmschema.h>
-#include <uxtheme.h>
-#include <windows.h>
-#include <winuser.h>
-#include <Qt/qt_windows.h>
-
 #ifndef WM_DWMCOMPOSITIONCHANGED
 #define WM_DWMCOMPOSITIONCHANGED        0x031E
 #endif  // WM_DWMCOMPOSITIONCHANGED
@@ -182,6 +202,177 @@ class DwmResolver {
   HMODULE dwmlib_;
   HMODULE themelib_;
 };
+
+CComPtr<IShellLink> InitializeShellLinkItem(const char *argument,
+                                            const char *item_title) {
+  HRESULT hr = S_OK;
+  CComPtr<IShellLink> link;
+  hr = link.CoCreateInstance(CLSID_ShellLink);
+  if (FAILED(hr)) {
+    DLOG(INFO) << "Failed to instanciate CLSID_ShellLink. hr = " << hr;
+    return NULL;
+  }
+
+  {
+    wstring mozc_tool_path_wide;
+    Util::UTF8ToWide(Util::JoinPath(Util::GetServerDirectory(), kMozcTool),
+                     &mozc_tool_path_wide);
+    hr = link->SetPath(mozc_tool_path_wide.c_str());
+    if (FAILED(hr)) {
+      DLOG(ERROR) << "SetPath failed. hr = " << hr;
+      return NULL;
+    }
+  }
+
+  {
+    wstring argument_wide;
+    Util::UTF8ToWide(argument, &argument_wide);
+    hr = link->SetArguments(argument_wide.c_str());
+    if (FAILED(hr)) {
+      DLOG(ERROR) << "SetArguments failed. hr = " << hr;
+      return NULL;
+    }
+  }
+
+  CComQIPtr<IPropertyStore> property_store(link);
+  if (property_store == NULL) {
+    DLOG(ERROR) << "QueryInterface failed.";
+    return NULL;
+  }
+
+  {
+    wstring item_title_wide;
+    Util::UTF8ToWide(item_title, &item_title_wide);
+    PROPVARIANT prop_variant;
+    hr = ::InitPropVariantFromString(item_title_wide.c_str(), &prop_variant);
+    if (FAILED(hr)) {
+      DLOG(ERROR) << "QueryInterface failed. hr = " << hr;
+      return NULL;
+    }
+    hr = property_store->SetValue(PKEY_Title, prop_variant);
+    ::PropVariantClear(&prop_variant);
+  }
+
+  if (FAILED(hr)) {
+    DLOG(ERROR) << "SetValue failed. hr = " << hr;
+    return NULL;
+  }
+
+  hr = property_store->Commit();
+  if (FAILED(hr)) {
+    DLOG(ERROR) << "Commit failed. hr = " << hr;
+    return NULL;
+  }
+
+  return link;
+}
+
+bool AddTasksToList(CComPtr<ICustomDestinationList> destination_list) {
+  HRESULT hr = S_OK;
+  CComPtr<IObjectCollection> object_collection;
+
+  hr = object_collection.CoCreateInstance(CLSID_EnumerableObjectCollection);
+  if (FAILED(hr)) {
+    DLOG(INFO) << "Failed to instanciate CLSID_EnumerableObjectCollection."
+                  " hr = " << hr;
+    return false;
+  }
+
+  struct LinkInfo {
+    const char *argument;
+    const char *title_english;
+    const char *title_japanese;
+  };
+
+  // TODO(yukawa): Investigate better way to localize strings.
+  const LinkInfo kLinks[] = {
+    // "手書き文字入力"
+    {"--mode=hand_writing",
+     "Character Palette",
+     "\xE6\x89\x8B\xE6\x9B\xB8\xE3\x81\x8D\xE6\x96\x87\xE5\xAD\x97"
+     "\xE5\x85\xA5\xE5\x8A\x9B"},
+    // "文字パレット"
+    {"--mode=character_palette",
+     "Hand Wrinting",
+     "\xE6\x96\x87\xE5\xAD\x97\xE3\x83\x91\xE3\x83\xAC\xE3\x83\x83"
+     "\xE3\x83\x88"},
+    // "辞書ツール"
+    {"--mode=dictionary_tool",
+     "Dictionary Tool",
+     "\xE8\xBE\x9E\xE6\x9B\xB8\xE3\x83\x84\xE3\x83\xBC\xE3\x83\xAB"},
+    // "単語登録"
+    {"--mode=word_register_dialog",
+     "Add Word",
+     "\xE5\x8D\x98\xE8\xAA\x9E\xE7\x99\xBB\xE9\x8C\xB2"},
+    // "プロパティ"
+    {"--mode=config_dialog",
+     "Properties",
+     "\xE3\x83\x97\xE3\x83\xAD\xE3\x83\x91\xE3\x83\x86\xE3\x82\xA3"},
+  };
+
+  const LANGID kJapaneseLangId = MAKELANGID(LANG_JAPANESE,
+                                            SUBLANG_JAPANESE_JAPAN);
+  const bool use_japanese_ui =
+      (kJapaneseLangId == ::GetUserDefaultUILanguage());
+
+  for (size_t i = 0; i < ARRAYSIZE(kLinks); ++i) {
+    CComPtr<IShellLink> link;
+    if (use_japanese_ui) {
+      link = InitializeShellLinkItem(kLinks[i].argument,
+                                     kLinks[i].title_japanese);
+    } else {
+      link = InitializeShellLinkItem(kLinks[i].argument,
+                                     kLinks[i].title_english);
+    }
+    if (link != NULL) {
+      object_collection->AddObject(link);
+    }
+  }
+
+  CComQIPtr<IObjectArray> object_array(object_collection);
+  if (object_array == NULL) {
+    DLOG(ERROR) << "QueryInterface failed.";
+    return false;
+  }
+
+  hr = destination_list->AddUserTasks(object_array);
+  if (FAILED(hr)) {
+    DLOG(ERROR) << "AddUserTasks failed. hr = " << hr;
+    return false;
+  }
+
+  return true;
+}
+
+void InitializeJumpList() {
+  HRESULT hr = S_OK;
+
+  CComPtr<ICustomDestinationList> destination_list;
+  hr = destination_list.CoCreateInstance(CLSID_DestinationList);
+  if (FAILED(hr)) {
+    DLOG(INFO) << "Failed to instanciate CLSID_DestinationList. hr = " << hr;
+    return;
+  }
+
+  UINT min_slots = 0;
+  CComPtr<IObjectArray> removed_objects;
+  hr = destination_list->BeginList(&min_slots, IID_IObjectArray,
+                                   reinterpret_cast<void **>(&removed_objects));
+  if (FAILED(hr)) {
+    DLOG(INFO) << "BeginList failed. hr = " << hr;
+    return;
+  }
+
+  if (!AddTasksToList(destination_list)) {
+    return;
+  }
+
+  hr = destination_list->CommitList();
+  if (FAILED(hr)) {
+    DLOG(INFO) << "Commit failed. hr = " << hr;
+    return;
+  }
+}
 }  //namespace
 #endif  // OS_WINDOWS
 
@@ -520,6 +711,21 @@ bool WinUtil::SetIMEHotKeyDisabled(bool disabled) {
 #endif  // OS_WINDOWS
 
   return false;
+}
+
+void WinUtil::KeepJumpListUpToDate() {
+#ifdef OS_WINDOWS
+  HRESULT hr = S_OK;
+
+  hr = ::CoInitializeEx(NULL,
+                        COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+  if (FAILED(hr)) {
+    DLOG(INFO) << "CoInitializeEx failed. hr = " << hr;
+    return;
+  }
+  InitializeJumpList();
+  ::CoUninitialize();
+#endif  // OS_WINDOWS
 }
 }  // namespace gui
 }  // namespace mozc

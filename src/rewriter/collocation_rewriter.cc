@@ -575,7 +575,6 @@ bool RewriteCollocation(Segments *segments) {
   for (size_t i = segments->history_segments_size();
        i < segments->segments_size(); ++i) {
     bool rewrited_next = false;
-    bool rewrited_prev = false;
 
     if (IsKeyUnknown(segments->segment(i))) {
       continue;
@@ -596,7 +595,6 @@ bool RewriteCollocation(Segments *segments) {
         RewriteFromPrevSegment(segments->segment(i - 1).candidate(0),
                                segments->mutable_segment(i))) {
       changed = true;
-      rewrited_prev =true;
       segs_changed[i - 1] = true;
       segs_changed[i] = true;
     }

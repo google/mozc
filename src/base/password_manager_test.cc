@@ -34,18 +34,9 @@
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
-DECLARE_bool(use_mock_password_manager);
 
 namespace mozc {
 TEST(PasswordManager, PasswordManagerTest) {
-// NOTE(komatsu, mukai): Since DefaultPasswordManager on Mac requires
-// keychain access with a dialog window, we use mock password manager
-// instead only for Mac.
-#ifdef OS_MACOSX
-  kUseMockPasswordManager = true;
-#else
-  kUseMockPasswordManager = false;
-#endif
   Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
 
   string password1, password2;

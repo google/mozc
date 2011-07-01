@@ -117,6 +117,7 @@ class SessionInterface {
   // call this method.
   virtual bool NoOperation() = 0;
 
+
   // Enables or disables using cascading window.
   virtual void EnableCascadingWindow(bool enable) = 0;
 
@@ -139,6 +140,10 @@ class SessionInterface {
   // e,g,. "config_dialog", "dictionary_tool".
   virtual bool LaunchTool(const string &mode,
                           const string &extra_arg) = 0;
+  // Launches mozc_tool with output message.
+  // If launch_tool_mode has no value or is set as NO_TOOL, this function will
+  // do nothing and return false.
+  virtual bool LaunchToolWithProtoBuf(const commands::Output &output) = 0;
 
   // Launches browser and pass |url|
   virtual bool OpenBrowser(const string &url) = 0;

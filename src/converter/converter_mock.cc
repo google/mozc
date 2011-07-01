@@ -33,35 +33,6 @@
 #include "converter/segments.h"
 
 namespace mozc {
-namespace {
-void CopySegment(const Segment &src, Segment *dest) {
-  dest->set_segment_type(src.segment_type());
-  dest->set_key(src.key());
-  for (size_t i = 0; i < src.candidates_size(); ++i) {
-    Segment::Candidate *candidate = dest->add_candidate();
-    *candidate = src.candidate(i);
-  }
-  // Copy T13N
-  {
-    vector<Segment::Candidate> *meta_cands = dest->mutable_meta_candidates();
-    *meta_cands = src.meta_candidates();
-  }
-}
-
-void CopySegments(const Segments &src, Segments *dest) {
-  if (dest == NULL) {
-    return;
-  }
-  dest->Clear();
-  dest->set_request_type(src.request_type());
-  for (size_t i = 0; i < src.segments_size(); ++i) {
-    Segment *seg = dest->add_segment();
-    const Segment &src_seg = src.segment(i);
-    CopySegment(src_seg, seg);
-  }
-  dest->set_max_history_segments_size(src.max_history_segments_size());
-}
-}  // namespace
 
 ConverterMock::ConverterMock() {
   LOG(INFO) << "ConverterMock is created";
@@ -71,92 +42,92 @@ ConverterMock::~ConverterMock() {}
 
 void ConverterMock::SetStartConversion(Segments *segments, bool result) {
   startconversion_output_.initialized = true;
-  CopySegments(*segments, &startconversion_output_.segments);
+  startconversion_output_.segments.CopyFrom(*segments);
   startconversion_output_.return_value = result;
 }
 
 void ConverterMock::SetStartConversionWithComposer(Segments *segments,
                                                    bool result) {
   startconversionwithcomposer_output_.initialized = true;
-  CopySegments(*segments, &startconversionwithcomposer_output_.segments);
+  startconversionwithcomposer_output_.segments.CopyFrom(*segments);
   startconversionwithcomposer_output_.return_value = result;
 }
 
 void ConverterMock::SetStartReverseConversion(Segments *segments, bool result) {
   startreverseconversion_output_.initialized = true;
-  CopySegments(*segments, &startreverseconversion_output_.segments);
+  startreverseconversion_output_.segments.CopyFrom(*segments);
   startreverseconversion_output_.return_value = result;
 }
 
 void ConverterMock::SetStartPrediction(Segments *segments, bool result) {
   startprediction_output_.initialized = true;
-  CopySegments(*segments, &startprediction_output_.segments);
+  startprediction_output_.segments.CopyFrom(*segments);
   startprediction_output_.return_value = result;
 }
 
 void ConverterMock::SetStartSuggestion(Segments *segments, bool result) {
   startsuggestion_output_.initialized = true;
-  CopySegments(*segments, &startsuggestion_output_.segments);
+  startsuggestion_output_.segments.CopyFrom(*segments);
   startsuggestion_output_.return_value = result;
 }
 
 void ConverterMock::SetFinishConversion(Segments *segments, bool result) {
   finishconversion_output_.initialized = true;
-  CopySegments(*segments, &finishconversion_output_.segments);
+  finishconversion_output_.segments.CopyFrom(*segments);
   finishconversion_output_.return_value = result;
 }
 
 void ConverterMock::SetCancelConversion(Segments *segments, bool result) {
   cancelconversion_output_.initialized = true;
-  CopySegments(*segments, &cancelconversion_output_.segments);
+  cancelconversion_output_.segments.CopyFrom(*segments);
   cancelconversion_output_.return_value = result;
 }
 
 void ConverterMock::SetResetConversion(Segments *segments, bool result) {
   resetconversion_output_.initialized = true;
-  CopySegments(*segments, &resetconversion_output_.segments);
+  resetconversion_output_.segments.CopyFrom(*segments);
   resetconversion_output_.return_value = result;
 }
 
 void ConverterMock::SetRevertConversion(Segments *segments, bool result) {
   revertconversion_output_.initialized = true;
-  CopySegments(*segments, &revertconversion_output_.segments);
+  revertconversion_output_.segments.CopyFrom(*segments);
   revertconversion_output_.return_value = result;
 }
 
 void ConverterMock::SetCommitSegmentValue(Segments *segments, bool result) {
   commitsegmentvalue_output_.initialized = true;
-  CopySegments(*segments, &commitsegmentvalue_output_.segments);
+  commitsegmentvalue_output_.segments.CopyFrom(*segments);
   commitsegmentvalue_output_.return_value = result;
 }
 
 void ConverterMock::SetFocusSegmentValue(Segments *segments, bool result) {
   focussegmentvalue_output_.initialized = true;
-  CopySegments(*segments, &focussegmentvalue_output_.segments);
+  focussegmentvalue_output_.segments.CopyFrom(*segments);
   focussegmentvalue_output_.return_value = result;
 }
 
 void ConverterMock::SetFreeSegmentValue(Segments *segments, bool result) {
   freesegmentvalue_output_.initialized = true;
-  CopySegments(*segments, &freesegmentvalue_output_.segments);
+  freesegmentvalue_output_.segments.CopyFrom(*segments);
   freesegmentvalue_output_.return_value = result;
 }
 
 void ConverterMock::SetSubmitFirstSegment(Segments *segments, bool result) {
   submitfirstsegment_output_.initialized = true;
-  CopySegments(*segments, &submitfirstsegment_output_.segments);
+  submitfirstsegment_output_.segments.CopyFrom(*segments);
   submitfirstsegment_output_.return_value = result;
 }
 
 void ConverterMock::SetResizeSegment1(Segments *segments, bool result) {
   resizesegment1_output_.initialized = true;
-  CopySegments(*segments, &resizesegment1_output_.segments);
+  resizesegment1_output_.segments.CopyFrom(*segments);
   resizesegment1_output_.return_value = result;
 }
 
 void ConverterMock::SetResizeSegment2(Segments *segments, bool result) {
   resizesegment2_output_.initialized = true;
-  CopySegments(*segments, &resizesegment2_output_.segments);
+  resizesegment2_output_.segments.CopyFrom(*segments);
   resizesegment2_output_.return_value = result;
 }
 
@@ -182,52 +153,52 @@ void ConverterMock::SetClearUnusedUserPrediction(bool result) {
 
 
 void ConverterMock::GetStartConversion(Segments *segments, string *key) {
-  CopySegments(startconversion_input_.segments, segments);
+  segments->CopyFrom(startconversion_input_.segments);
   *key = startconversion_input_.key;
 }
 
 void ConverterMock::GetStartConversionWithComposer(
     Segments *segments, const composer::Composer **composer) {
-  CopySegments(startconversionwithcomposer_input_.segments, segments);
+  segments->CopyFrom(startconversionwithcomposer_input_.segments);
   *composer = startconversionwithcomposer_input_.composer;
 }
 
 void ConverterMock::GetStartReverseConversion(Segments *segments,
                                               string *key) {
-  CopySegments(startreverseconversion_input_.segments, segments);
+  segments->CopyFrom(startreverseconversion_input_.segments);
   *key = startreverseconversion_input_.key;
 }
 
 void ConverterMock::GetStartPrediction(Segments *segments, string *key) {
-  CopySegments(startprediction_input_.segments, segments);
+  segments->CopyFrom(startprediction_input_.segments);
   *key = startprediction_input_.key;
 }
 
 void ConverterMock::GetStartSuggestion(Segments *segments, string *key) {
-  CopySegments(startsuggestion_input_.segments, segments);
+  segments->CopyFrom(startsuggestion_input_.segments);
   *key = startsuggestion_input_.key;
 }
 
 void ConverterMock::GetFinishConversion(Segments *segments) {
-  CopySegments(finishconversion_input_.segments, segments);
+  segments->CopyFrom(finishconversion_input_.segments);
 }
 
 void ConverterMock::GetCancelConversion(Segments *segments) {
-  CopySegments(cancelconversion_input_.segments, segments);
+  segments->CopyFrom(cancelconversion_input_.segments);
 }
 
 void ConverterMock::GetResetConversion(Segments *segments) {
-  CopySegments(resetconversion_input_.segments, segments);
+  segments->CopyFrom(resetconversion_input_.segments);
 }
 
 void ConverterMock::GetRevertConversion(Segments *segments) {
-  CopySegments(revertconversion_input_.segments, segments);
+  segments->CopyFrom(revertconversion_input_.segments);
 }
 
 void ConverterMock::GetCommitSegmentValue(Segments *segments,
                                            size_t *segment_index,
                                            int *candidate_index) {
-  CopySegments(commitsegmentvalue_input_.segments, segments);
+  segments->CopyFrom(commitsegmentvalue_input_.segments);
   *segment_index = commitsegmentvalue_input_.segment_index;
   *candidate_index = commitsegmentvalue_input_.candidate_index;
 }
@@ -235,26 +206,26 @@ void ConverterMock::GetCommitSegmentValue(Segments *segments,
 void ConverterMock::GetFocusSegmentValue(Segments *segments,
                                           size_t *segment_index,
                                           int *candidate_index) {
-  CopySegments(focussegmentvalue_input_.segments, segments);
+  segments->CopyFrom(focussegmentvalue_input_.segments);
   *segment_index = focussegmentvalue_input_.segment_index;
   *candidate_index = focussegmentvalue_input_.candidate_index;
 }
 
 void ConverterMock::GetFreeSegmentValue(Segments *segments,
                                          size_t *segment_index) {
-  CopySegments(freesegmentvalue_input_.segments, segments);
+  segments->CopyFrom(freesegmentvalue_input_.segments);
   *segment_index = freesegmentvalue_input_.segment_index;
 }
 
 void ConverterMock::GetSubmitFirstSegment(Segments *segments,
                                           size_t *candidate_index) {
-  CopySegments(submitfirstsegment_input_.segments, segments);
+  segments->CopyFrom(submitfirstsegment_input_.segments);
   *candidate_index = submitfirstsegment_input_.candidate_index;
 }
 
 void ConverterMock::GetResizeSegment1(Segments *segments, size_t *segment_index,
                                      int *offset_length) {
-  CopySegments(resizesegment1_input_.segments, segments);
+  segments->CopyFrom(resizesegment1_input_.segments);
   *segment_index = resizesegment1_input_.segment_index;
   *offset_length = resizesegment1_input_.offset_length;
 }
@@ -264,7 +235,7 @@ void ConverterMock::GetResizeSegment2(Segments *segments,
                                      size_t *segments_size,
                                      uint8 **new_size_array,
                                      size_t *array_size) {
-  CopySegments(resizesegment2_input_.segments, segments);
+  segments->CopyFrom(resizesegment2_input_.segments);
   *start_segment_index = resizesegment2_input_.start_segment_index;
   *segments_size = resizesegment2_input_.segments_size;
   *new_size_array = &resizesegment2_input_.new_size_array[0];
@@ -274,13 +245,13 @@ void ConverterMock::GetResizeSegment2(Segments *segments,
 bool ConverterMock::StartConversion(Segments *segments,
                                     const string &key) const {
   VLOG(2) << "mock function: StartConversion";
-  CopySegments(*segments, &startconversion_input_.segments);
+  startconversion_input_.segments.CopyFrom(*segments);
   startconversion_input_.key = key;
 
   if (!startconversion_output_.initialized) {
     return false;
   } else {
-    CopySegments(startconversion_output_.segments, segments);
+    segments->CopyFrom(startconversion_output_.segments);
     return startconversion_output_.return_value;
   }
 }
@@ -288,13 +259,13 @@ bool ConverterMock::StartConversion(Segments *segments,
 bool ConverterMock::StartConversionWithComposer(
     Segments *segments, const composer::Composer *composer) const {
   VLOG(2) << "mock function: StartConversionWithComposer";
-  CopySegments(*segments, &startconversionwithcomposer_input_.segments);
+  startconversionwithcomposer_input_.segments.CopyFrom(*segments);
   startconversionwithcomposer_input_.composer = composer;
 
   if (!startconversionwithcomposer_output_.initialized) {
     return false;
   } else {
-    CopySegments(startconversionwithcomposer_output_.segments, segments);
+    segments->CopyFrom(startconversionwithcomposer_output_.segments);
     return startconversionwithcomposer_output_.return_value;
   }
 }
@@ -302,13 +273,13 @@ bool ConverterMock::StartConversionWithComposer(
 bool ConverterMock::StartReverseConversion(Segments *segments,
                                            const string &key) const {
   VLOG(2) << "mock function: StartReverseConversion";
-  CopySegments(*segments, &startreverseconversion_input_.segments);
+  startreverseconversion_input_.segments.CopyFrom(*segments);
   startreverseconversion_input_.key = key;
 
   if (!startreverseconversion_output_.initialized) {
     return false;
   } else {
-    CopySegments(startreverseconversion_output_.segments, segments);
+    segments->CopyFrom(startreverseconversion_output_.segments);
     return startreverseconversion_output_.return_value;
   }
   return false;
@@ -317,13 +288,13 @@ bool ConverterMock::StartReverseConversion(Segments *segments,
 bool ConverterMock::StartPrediction(Segments *segments,
                                     const string &key) const {
   VLOG(2) << "mock function: StartPrediction";
-  CopySegments(*segments, &startprediction_input_.segments);
+  startprediction_input_.segments.CopyFrom(*segments);
   startprediction_input_.key = key;
 
   if (!startprediction_output_.initialized) {
     return false;
   } else {
-    CopySegments(startprediction_output_.segments, segments);
+    segments->CopyFrom(startprediction_output_.segments);
     return startprediction_output_.return_value;
   }
 }
@@ -331,61 +302,61 @@ bool ConverterMock::StartPrediction(Segments *segments,
 bool ConverterMock::StartSuggestion(Segments *segments,
                                     const string &key) const {
   VLOG(2) << "mock function: StartSuggestion";
-  CopySegments(*segments, &startsuggestion_input_.segments);
+  startsuggestion_input_.segments.CopyFrom(*segments);
   startsuggestion_input_.key = key;
 
   if (!startsuggestion_output_.initialized) {
     return false;
   } else {
-    CopySegments(startsuggestion_output_.segments, segments);
+    segments->CopyFrom(startsuggestion_output_.segments);
     return startsuggestion_output_.return_value;
   }
 }
 
 bool ConverterMock::FinishConversion(Segments *segments) const {
   VLOG(2) << "mock function: FinishConversion";
-  CopySegments(*segments, &finishconversion_input_.segments);
+  finishconversion_input_.segments.CopyFrom(*segments);
 
   if (!finishconversion_output_.initialized) {
     return false;
   } else {
-    CopySegments(finishconversion_output_.segments, segments);
+    segments->CopyFrom(finishconversion_output_.segments);
     return finishconversion_output_.return_value;
   }
 }
 
 bool ConverterMock::CancelConversion(Segments *segments) const {
   VLOG(2) << "mock function: CancelConversion";
-  CopySegments(*segments, &cancelconversion_input_.segments);
+  cancelconversion_input_.segments.CopyFrom(*segments);
 
   if (!cancelconversion_output_.initialized) {
     return false;
   } else {
-    CopySegments(cancelconversion_output_.segments, segments);
+    segments->CopyFrom(cancelconversion_output_.segments);
     return cancelconversion_output_.return_value;
   }
 }
 
 bool ConverterMock::ResetConversion(Segments *segments) const {
   VLOG(2) << "mock function: ResetConversion";
-  CopySegments(*segments, &resetconversion_input_.segments);
+  resetconversion_input_.segments.CopyFrom(*segments);
 
   if (!resetconversion_output_.initialized) {
     return false;
   } else {
-    CopySegments(resetconversion_output_.segments, segments);
+    segments->CopyFrom(resetconversion_output_.segments);
     return resetconversion_output_.return_value;
   }
 }
 
 bool ConverterMock::RevertConversion(Segments *segments) const {
   VLOG(2) << "mock function: RevertConversion";
-  CopySegments(*segments, &revertconversion_input_.segments);
+  revertconversion_input_.segments.CopyFrom(*segments);
 
   if (!revertconversion_output_.initialized) {
     return false;
   } else {
-    CopySegments(revertconversion_output_.segments, segments);
+    segments->CopyFrom(revertconversion_output_.segments);
     return revertconversion_output_.return_value;
   }
 }
@@ -394,14 +365,14 @@ bool ConverterMock::CommitSegmentValue(Segments *segments,
                                        size_t segment_index,
                                        int candidate_index) const {
   VLOG(2) << "mock function: CommitSegmentValue";
-  CopySegments(*segments, &commitsegmentvalue_input_.segments);
+  commitsegmentvalue_input_.segments.CopyFrom(*segments);
   commitsegmentvalue_input_.segment_index = segment_index;
   commitsegmentvalue_input_.candidate_index = candidate_index;
 
   if (!commitsegmentvalue_output_.initialized) {
     return false;
   } else {
-    CopySegments(commitsegmentvalue_output_.segments, segments);
+    segments->CopyFrom(commitsegmentvalue_output_.segments);
     return commitsegmentvalue_output_.return_value;
   }
 }
@@ -410,14 +381,14 @@ bool ConverterMock::FocusSegmentValue(Segments *segments,
                                       size_t segment_index,
                                       int    candidate_index) const {
   VLOG(2) << "mock function: FocusSegmentValue";
-  CopySegments(*segments, &focussegmentvalue_input_.segments);
+  focussegmentvalue_input_.segments.CopyFrom(*segments);
   focussegmentvalue_input_.segment_index = segment_index;
   focussegmentvalue_input_.candidate_index = candidate_index;
 
   if (!focussegmentvalue_output_.initialized) {
     return false;
   } else {
-    CopySegments(focussegmentvalue_output_.segments, segments);
+    segments->CopyFrom(focussegmentvalue_output_.segments);
     return focussegmentvalue_output_.return_value;
   }
 }
@@ -426,13 +397,13 @@ bool ConverterMock::FocusSegmentValue(Segments *segments,
 bool ConverterMock::FreeSegmentValue(Segments *segments,
                                      size_t segment_index) const {
   VLOG(2) << "mock function: FreeSegmentValue";
-  CopySegments(*segments, &freesegmentvalue_input_.segments);
+  freesegmentvalue_input_.segments.CopyFrom(*segments);
   freesegmentvalue_input_.segment_index = segment_index;
 
   if (!freesegmentvalue_output_.initialized) {
     return false;
   } else {
-    CopySegments(freesegmentvalue_output_.segments, segments);
+    segments->CopyFrom(freesegmentvalue_output_.segments);
     return freesegmentvalue_output_.return_value;
   }
 }
@@ -440,13 +411,13 @@ bool ConverterMock::FreeSegmentValue(Segments *segments,
 bool ConverterMock::SubmitFirstSegment(Segments *segments,
                                        size_t candidate_index) const {
   VLOG(2) << "mock function: SubmitFirstSegment";
-  CopySegments(*segments, &submitfirstsegment_input_.segments);
+  submitfirstsegment_input_.segments.CopyFrom(*segments);
   submitfirstsegment_input_.candidate_index = candidate_index;
 
   if (!submitfirstsegment_output_.initialized) {
     return false;
   } else {
-    CopySegments(submitfirstsegment_output_.segments, segments);
+    segments->CopyFrom(submitfirstsegment_output_.segments);
     return submitfirstsegment_output_.return_value;
   }
 }
@@ -455,14 +426,14 @@ bool ConverterMock::ResizeSegment(Segments *segments,
                                   size_t segment_index,
                                   int offset_length) const {
   VLOG(2) << "mock function: ResizeSegment";
-  CopySegments(*segments, &resizesegment1_input_.segments);
+  resizesegment1_input_.segments.CopyFrom(*segments);
   resizesegment1_input_.segment_index = segment_index;
   resizesegment1_input_.offset_length = offset_length;
 
   if (!resizesegment1_output_.initialized) {
     return false;
   } else {
-    CopySegments(resizesegment1_output_.segments, segments);
+    segments->CopyFrom(resizesegment1_output_.segments);
     return resizesegment1_output_.return_value;
   }
 }
@@ -473,7 +444,7 @@ bool ConverterMock::ResizeSegment(Segments *segments,
                                   const uint8 *new_size_array,
                                   size_t array_size) const {
   VLOG(2) << "mock function: ResizeSegmnet";
-  CopySegments(*segments, &resizesegment2_input_.segments);
+  resizesegment2_input_.segments.CopyFrom(*segments);
   resizesegment2_input_.start_segment_index = start_segment_index;
   resizesegment2_input_.segments_size = segments_size;
   vector<uint8> size_array(new_size_array,
@@ -483,7 +454,7 @@ bool ConverterMock::ResizeSegment(Segments *segments,
   if (!resizesegment2_output_.initialized) {
     return false;
   } else {
-    CopySegments(resizesegment2_output_.segments, segments);
+    segments->CopyFrom(resizesegment2_output_.segments);
     return resizesegment2_output_.return_value;
   }
 }

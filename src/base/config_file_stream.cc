@@ -74,6 +74,10 @@ class OnMemoryFileMap {
     map_[key] = value;
   }
 
+  void clear() {
+    map_.clear();
+  }
+
  private:
   map<string, string> map_;
 };
@@ -192,5 +196,9 @@ string ConfigFileStream::GetFileName(const string &filename) {
     return filename;
   }
   return "";
+}
+
+void ConfigFileStream::ClearOnMemoryFiles() {
+  Singleton<OnMemoryFileMap>::get()->clear();
 }
 }  // namespace mozc

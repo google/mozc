@@ -28,7 +28,6 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <iostream>
-#include <sstream>
 #include "base/base.h"
 #include "transliteration/transliteration.h"
 #include "composer/composition_interface.h"
@@ -41,7 +40,7 @@ DEFINE_string(table, "system://romanji-hiragana.tsv",
 int main(int argc, char **argv) {
   InitGoogle(argv[0], &argc, &argv, false);
 
-  scoped_ptr<mozc::composer::Composer> composer;
+  scoped_ptr<mozc::composer::Composer> composer(new mozc::composer::Composer);
   mozc::composer::Table table;
   table.LoadFromFile(FLAGS_table.c_str());
   composer->SetTable(&table);

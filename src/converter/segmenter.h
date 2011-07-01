@@ -47,6 +47,16 @@ class Segmenter {
 
   static bool IsBoundary(uint16 rid, uint16 lid);
 
+  // return cost penalty of the word prefix.
+  // we can add cost penalty if a node->lid
+  // exists at the begging of user input.
+  static int32 GetPrefixPenalty(uint16 lid);
+
+  // return cost penalty of the word suffix.
+  // we can add cost penalty if a node->rid
+  // exists at the end of user input.
+  static int32 GetSuffixPenalty(uint16 rid);
+
  private:
   Segmenter() {}
   virtual ~Segmenter() {}

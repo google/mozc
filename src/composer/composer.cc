@@ -944,5 +944,9 @@ bool Composer::TransformCharactersForNumbers(string *query) {
   return true;
 }
 
+void Composer::SetNewInput() {
+  is_new_input_ = true;
+}
+
 }  // namespace composer
 }  // namespace mozc

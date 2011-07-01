@@ -33,6 +33,7 @@
 #include "converter/segments.h"
 #include "rewriter/emoticon_rewriter.h"
 #include "testing/base/public/gunit.h"
+#include "session/commands.pb.h"
 #include "session/config_handler.h"
 #include "session/config.pb.h"
 
@@ -152,4 +153,6 @@ TEST_F(EmoticonRewriterTest, BasicTest) {
     EXPECT_FALSE(HasEmoticon(segments));
   }
 }
+
+
 }  // namespace mozc

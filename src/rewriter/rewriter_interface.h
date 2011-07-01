@@ -30,14 +30,44 @@
 #ifndef MOZC_REWRITER_REWRITER_INTERFACE_H_
 #define MOZC_REWRITER_REWRITER_INTERFACE_H_
 
+#include <cstddef>  // for size_t
+
 namespace mozc {
 
 class Segments;
 
 class RewriterInterface {
  public:
+  virtual ~RewriterInterface() {}
+
+  enum CapabilityType {
+    NOT_AVAILABLE = 0,
+    CONVERSION = 1,
+    PREDICTION = 2,
+    SUGGESTION = 4,
+    ALL = (1 | 2 | 4),
+  };
+
+  // return capablity of this rewriter.
+  // If (capability() & CONVERSION), this rewriter
+  // is called after StartConversion().
+  virtual int capability() const {
+    return CONVERSION;
+  }
+
   // Rewrite request and/or result.
   virtual bool Rewrite(Segments *segments) const = 0;
+
+  // This method is mainly called when user puts SPACE key
+  // and changes the focused candidate.
+  // In this method, Converter will find bracketing matching.
+  // e.g., when user selects "「",  corresponding closing bracket "」"
+  // is chosen in the preedit.
+  virtual bool Focus(Segments *segments,
+                     size_t segment_index,
+                     int candidate_index) const {
+    return true;
+  }
 
   // Hook(s) for all mutable operations
   virtual void Finish(Segments *segments) {}
@@ -53,7 +83,6 @@ class RewriterInterface {
 
  protected:
   RewriterInterface() {}
-  virtual ~RewriterInterface() {}
 };
 
 // factory for making "default" rewriter
@@ -66,8 +95,10 @@ class RewriterFactory {
   static void SetRewriter(RewriterInterface *rewriter);
 
  private:
-  RewriterFactory() {}
-  ~RewriterFactory() {}
+  RewriterFactory();
+  ~RewriterFactory();
 };
+
 }  // mozc
+
 #endif  // MOZC_REWRITER_REWRITER_INTERFACE_H_

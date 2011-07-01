@@ -355,7 +355,11 @@ bool CharChunk::ShouldInsertNewChunk(const Table &table,
   const bool is_new_input =
       input.is_new_input() ||
       ((attributes_ & END_CHUNK) && pending_.empty());
-  if (is_new_input && table.HasNewChunkEntry(input.raw())) {
+
+  if (is_new_input &&
+      (table.HasNewChunkEntry(input.raw()) ||
+          !table.HasSubRules(input.raw()))) {
+    // Such input which is not on the table is treated as NewChunk entry.
     return true;
   }
   return false;

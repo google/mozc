@@ -336,6 +336,7 @@ bool MacStatsConfigUtilImpl::SetEnabled(bool val) {
 }
 #endif  // MACOSX
 
+
 #ifdef OS_LINUX
 class LinuxStatsConfigUtilImpl : public StatsConfigUtilInterface {
   // TODO(toshiyuki): implement this

@@ -94,7 +94,6 @@ class UserPOSImpl : public UserPOS::UserPOSInterface {
   virtual bool GetTokens(const string &key,
                          const string &value,
                          const string &pos,
-                         UserPOS::CostType cost_type,
                          vector<UserPOS::Token> *tokens) const {
     if (key.empty() ||
         value.empty() ||
@@ -187,9 +186,8 @@ bool UserPOS::GetPOSIDs(const string &pos, uint16 *id) {
 bool UserPOS::GetTokens(const string &key,
                     const string &value,
                     const string &pos,
-                    UserPOS::CostType cost_type,
                     vector<UserPOS::Token> *tokens) {
-  return GetPOSHandler().GetTokens(key, value, pos, cost_type, tokens);
+  return GetPOSHandler().GetTokens(key, value, pos, tokens);
 }
 
 void UserPOS::SetUserPOSInterface(const UserPOSInterface *impl) {

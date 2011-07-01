@@ -60,6 +60,8 @@ class HandWritingCanvas : public QWidget {
     list_widget_ = list_widget;
   }
 
+  size_t strokes_size() const;
+
  public slots:
   void clear();
   void revert();
@@ -78,6 +80,9 @@ class HandWritingCanvas : public QWidget {
   scoped_ptr<Mmap<char> > mmap_;
   QListWidget *list_widget_;
   bool is_drawing_;
+
+ signals:
+  void canvasUpdated();
 };
 }   // namespace gui
 }   // namespace mozc

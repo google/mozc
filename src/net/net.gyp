@@ -39,6 +39,24 @@
       'dependencies': [
         '../base/base.gyp:base',
       ],
+      'conditions': [
+        ['OS=="mac"', {
+          'sources': [
+            'http_client_mac.mm',
+          ],
+        }],
+      ],
+    },
+    {
+      'target_name': 'http_client_mock',
+      'type': 'static_library',
+      'sources': [
+        'http_client_mock.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        'net',
+      ],
     },
     {
       'target_name': 'http_client_main',
@@ -49,6 +67,28 @@
       'dependencies': [
         '../base/base.gyp:base',
         'net',
+      ],
+    },
+    {
+      'target_name': 'http_client_mock_test',
+      'type': 'executable',
+      'sources': [
+        'http_client_mock_test.cc',
+      ],
+      'dependencies': [
+        '../testing/testing.gyp:gtest_main',
+        'http_client_mock',
+      ],
+      'variables': {
+        'test_size': 'small',
+      },
+    },
+    # Test cases meta target: this target is referred from gyp/tests.gyp
+    {
+      'target_name': 'net_all_test',
+      'type': 'none',
+      'dependencies': [
+        'http_client_mock_test',
       ],
     },
   ],

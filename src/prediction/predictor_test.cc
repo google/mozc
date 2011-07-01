@@ -62,6 +62,7 @@ class NullPredictor : public PredictorInterface {
   bool return_value_;
 };
 }  // namespace
+
 class PredictorTest : public testing::Test {
  protected:
   virtual void SetUp() {
@@ -83,7 +84,6 @@ class PredictorTest : public testing::Test {
 TEST_F(PredictorTest, AllPredictorsReturnTrue) {
   NullPredictor predictor1(true);
   NullPredictor predictor2(true);
-  NullPredictor predictor3(true);
   PredictorFactory::SetUserHistoryPredictor(&predictor1);
   PredictorFactory::SetDictionaryPredictor(&predictor2);
   Segments segments;

@@ -32,8 +32,8 @@
 #include <string>
 
 #include "base/base.h"
-#include "converter/boundary_data.h"
 #include "converter/node.h"
+#include "converter/node_allocator.h"
 #include "dictionary/pos_matcher.h"
 
 namespace mozc {
@@ -52,57 +52,26 @@ Node *InitBOSNode(Lattice *lattice, uint16 length) {
   bos_node->cost = 0;
   bos_node->begin_pos = length;
   bos_node->end_pos = length;
+  bos_node->enext = NULL;
   return bos_node;
 }
 
 Node *InitEOSNode(Lattice *lattice, uint16 length) {
-  Node *result = NULL;
-  const int kCostOffset = 2000;
-  for (int i = 0; i < arraysize(kBoundaryData); ++i) {
-    if (kBoundaryData[i].wcost - kBoundaryData[0].wcost > kCostOffset) {
-      break;
-    }
-    Node *eos_node = lattice->NewNode();
-    DCHECK(eos_node);
-    eos_node->rid = kBoundaryData[i].id;
-    eos_node->lid = kBoundaryData[i].id;
-    eos_node->key.clear();
-    eos_node->value = "EOS";
-    eos_node->node_type = Node::EOS_NODE;
-    eos_node->wcost = kBoundaryData[i].wcost;
-    eos_node->cost = 0;
-    eos_node->begin_pos = length;
-    eos_node->end_pos = length;
-    eos_node->bnext = result;
-    // chain nodes
-    result = eos_node;
-  }
-
-  CHECK(result);
-  return result;
+  Node *eos_node = lattice->NewNode();
+  DCHECK(eos_node);
+  eos_node->rid = 0;  // 0 is reserved for EOS/BOS
+  eos_node->lid = 0;
+  eos_node->key.clear();
+  eos_node->value = "EOS";
+  eos_node->node_type = Node::EOS_NODE;
+  eos_node->wcost = 0;
+  eos_node->cost = 0;
+  eos_node->begin_pos = length;
+  eos_node->end_pos = length;
+  eos_node->bnext = NULL;
+  return eos_node;
 }
 }  // namespace
-
-class NodeAllocator : public NodeAllocatorInterface {
- public:
-  NodeAllocator(): node_freelist_(1024) {}
-  virtual ~NodeAllocator() {}
-
-  virtual Node *NewNode() {
-    Node *node = node_freelist_.Alloc();
-    DCHECK(node);
-    node->Init();
-    return node;
-  }
-
-  // Free all nodes allocateed by NewNode()
-  void Free() {
-    node_freelist_.Free();
-  }
-
- private:
-  FreeList<Node> node_freelist_;
-};
 
 Lattice::Lattice() : node_allocator_(new NodeAllocator) {}
 

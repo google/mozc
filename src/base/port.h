@@ -57,6 +57,7 @@ typedef long long           int64;
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>  // time()
 #define snprintf _snprintf_s
 #define strtoull _strtoui64
 #define strtoll  _strtoi64
@@ -81,6 +82,21 @@ char (&ArraySizeHelper(T (&array)[N]))[N];
 #ifndef OS_WINDOWS
 template <typename T, size_t N>
 char (&ArraySizeHelper(const T (&array)[N]))[N];
+#endif
+
+#define arraysize(array) (sizeof(ArraySizeHelper(array)))
+
+// ARRAYSIZE performs essentially the same calculation as arraysize,
+// but can be used on anonymous types or types defined inside
+// functions.  It's less safe than arraysize as it accepts some
+// (although not all) pointers.  Therefore, you should use arraysize
+// whenever possible.
+//
+// Starting with Visual C++ 2005, WinNT.h includes ARRAYSIZE.
+#if !defined(COMPILER_MSVC) || (defined(_MSC_VER) && _MSC_VER < 1400)
+#define ARRAYSIZE(a) \
+  ((sizeof(a) / sizeof(*(a))) / \
+   static_cast<size_t>(!(sizeof(a) % sizeof(*(a)))))
 #endif
 
 #ifdef OS_WINDOWS
@@ -119,8 +135,6 @@ static const  int32 kint32min  = (( int32) 0x80000000);
 static const  int32 kint32max  = (( int32) 0x7FFFFFFF);
 static const  int64 kint64min  = (( int64) GG_LONGLONG(0x8000000000000000));
 static const  int64 kint64max  = (( int64) GG_LONGLONG(0x7FFFFFFFFFFFFFFF));
-
-#define arraysize(array) (sizeof(ArraySizeHelper(array)))
 
 #define DISALLOW_COPY_AND_ASSIGN(TypeName)    \
   TypeName(const TypeName&);                    \

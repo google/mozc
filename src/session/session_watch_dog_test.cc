@@ -107,6 +107,9 @@ class TestSession : public client::SessionInterface {
   bool LaunchTool(const string &mode, const string &extra_arg) {
     return true;
   }
+  bool LaunchToolWithProtoBuf(const commands::Output &output) {
+    return true;
+  }
   bool OpenBrowser(const string &url) {
     return true;
   }

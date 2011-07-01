@@ -136,6 +136,10 @@
         <translation>IME を有効化</translation>
     </message>
     <message>
+        <source>InputModeSwitchKanaType</source>
+        <translation>次のかな文字種に入力切替</translation>
+    </message>
+    <message>
         <source>InputModeFullAlphanumeric</source>
         <translation>全角英数に入力切替</translation>
     </message>

@@ -43,6 +43,7 @@ namespace mozc {
 namespace {
 const int kPredictionSize = 100;
 
+
 class BasePredictor : public PredictorInterface {
  public:
   BasePredictor();
@@ -160,18 +161,21 @@ bool DefaultPredictor::Predict(Segments *segments) const {
   DCHECK(user_history_predictor);
   DCHECK(dictionary_predictor);
 
+  int remained_size = size;
   segments->set_max_prediction_candidates_size(static_cast<size_t>(size));
   result |= user_history_predictor->Predict(segments);
-  size -= static_cast<int>(GetCandidatesSize(*segments));
+  remained_size = size - static_cast<size_t>(GetCandidatesSize(*segments));
 
   // Do not call dictionary_predictor if the size of candidates get
   // >= suggestions_size.
-  if (size <= 0) {
+  if (remained_size <= 0) {
     return result;
   }
 
-  segments->set_max_prediction_candidates_size(static_cast<size_t>(size));
+  segments->set_max_prediction_candidates_size(remained_size);
   result |= dictionary_predictor->Predict(segments);
+  remained_size = size - static_cast<size_t>(GetCandidatesSize(*segments));
+
 
   return result;
 }
@@ -214,5 +218,7 @@ PredictorInterface *PredictorFactory::GetDictionaryPredictor() {
 void PredictorFactory::SetDictionaryPredictor(PredictorInterface *predictor) {
   g_dictionary_predictor = predictor;
 }
+
+
 #undef GET_PREDICTOR
 }  // namespace mozc

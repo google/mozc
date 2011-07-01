@@ -346,7 +346,7 @@ bool TokenizeSExpr(const string &input, vector<string> *output) {
 
 // Prints an error message in S-expression and terminates with status code 1.
 void ErrorExit(const string &error, const string &message) {
-  fprintf(stderr, "((error . %s)(message . %s))\n",
+  fprintf(stdout, "((error . %s)(message . %s))\n",
           error.c_str(), QuoteString(message).c_str());
   exit(1);
 }
@@ -360,7 +360,7 @@ namespace {
 // 'reflection' must be a reflection object of 'message'.  'field' is
 // a field descriptor in 'message' to be output.  'field' can have both of
 // a single value and repeated values.
-// 'os' is an output stream to output field's key and value(s).
+// 'output' is a pseudo output stream to output field's key and value(s).
 void PrintField(
     const protobuf::Message &message,
     const protobuf::Reflection &reflection,
@@ -400,7 +400,7 @@ void PrintField(
 // a field descriptor in 'message' to be output.  'field' can have both of
 // a single value and repeated values.  If 'field' has repeated values,
 // 'index' specifies its index to be output.  Otherwise, 'index' is ignored.
-// 'os' is an output stream to output the value.
+// 'output' is a pseudo output stream to output the value.
 void PrintFieldValue(
     const protobuf::Message &message,
     const protobuf::Reflection &reflection,

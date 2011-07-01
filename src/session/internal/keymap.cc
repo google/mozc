@@ -112,11 +112,10 @@ bool MaybeGetKeyStub(const commands::KeyEvent &key_event, Key *key) {
   return true;
 }
 
-
 KeyMapManager::KeyMapManager()
     : keymap_(config::Config::NONE) {
   InitCommandData();
-  Reload();
+  ReloadWithKeymap(GET_CONFIG(session_keymap));
 }
 
 KeyMapManager::~KeyMapManager() {}
@@ -145,9 +144,9 @@ void KeyMapManager::CheckIMEOnOffKeymap() {
   }
 
   bool need_to_be_migrated = true;
-  for (set<uint64>::const_iterator itr = ime_on_off_keys_.begin();
-       itr != ime_on_off_keys_.end(); ++itr) {
-    if (*itr != key_on && *itr != key_off && *itr != key_eisu) {
+  for (set<uint64>::const_iterator iter = ime_on_off_keys_.begin();
+       iter != ime_on_off_keys_.end(); ++iter) {
+    if (*iter != key_on && *iter != key_off && *iter != key_eisu) {
       // This seems to have own settings.
       need_to_be_migrated = false;
       break;
@@ -187,10 +186,6 @@ void KeyMapManager::CheckIMEOnOffKeymap() {
     config.set_custom_keymap_table(oss.str());
     config::ConfigHandler::SetConfig(config);
   }
-}
-
-bool KeyMapManager::Reload() {
-  return ReloadWithKeymap(GET_CONFIG(session_keymap));
 }
 
 bool KeyMapManager::ReloadWithKeymap(
@@ -447,12 +442,12 @@ namespace {
 template<typename T> bool GetNameInternal(
     const map<T, string> &reverse_command_map, T command, string *name) {
   DCHECK(name);
-  typename map<T, string>::const_iterator itr =
+  typename map<T, string>::const_iterator iter =
       reverse_command_map.find(command);
-  if (itr == reverse_command_map.end()) {
+  if (iter == reverse_command_map.end()) {
     return false;
   } else {
-    *name = itr->second;
+    *name = iter->second;
     return true;
   }
 }
@@ -565,6 +560,9 @@ void KeyMapManager::InitCommandData() {
   RegisterPrecompositionCommand(
       "InputModeHalfAlphanumeric",
       PrecompositionState::INPUT_MODE_HALF_ALPHANUMERIC);
+  RegisterPrecompositionCommand(
+      "InputModeSwitchKanaType",
+      PrecompositionState::INPUT_MODE_SWITCH_KANA_TYPE);
 #else
   RegisterPrecompositionCommand("InputModeHiragana",
                                 PrecompositionState::NONE);
@@ -575,6 +573,8 @@ void KeyMapManager::InitCommandData() {
   RegisterPrecompositionCommand("InputModeFullAlphanumeric",
                                 PrecompositionState::NONE);
   RegisterPrecompositionCommand("InputModeHalfAlphanumeric",
+                                PrecompositionState::NONE);
+  RegisterPrecompositionCommand("InputModeSwitchKanaType",
                                 PrecompositionState::NONE);
 #endif  // OS_WINDOWS
 
@@ -881,40 +881,40 @@ bool KeyMapManager::ParseCommandConversion(
 void KeyMapManager::GetAvailableCommandNameDirect(
     set<string> *command_names) const {
   DCHECK(command_names);
-  for (map<string, DirectInputState::Commands>::const_iterator itr
+  for (map<string, DirectInputState::Commands>::const_iterator iter
            = command_direct_map_.begin();
-       itr != command_direct_map_.end(); ++itr) {
-    command_names->insert(itr->first);
+       iter != command_direct_map_.end(); ++iter) {
+    command_names->insert(iter->first);
   }
 }
 
 void KeyMapManager::GetAvailableCommandNamePrecomposition(
     set<string> *command_names) const {
   DCHECK(command_names);
-  for (map<string, PrecompositionState::Commands>::const_iterator itr
+  for (map<string, PrecompositionState::Commands>::const_iterator iter
            = command_precomposition_map_.begin();
-       itr != command_precomposition_map_.end(); ++itr) {
-    command_names->insert(itr->first);
+       iter != command_precomposition_map_.end(); ++iter) {
+    command_names->insert(iter->first);
   }
 }
 
 void KeyMapManager::GetAvailableCommandNameComposition(
     set<string> *command_names) const {
   DCHECK(command_names);
-  for (map<string, CompositionState::Commands>::const_iterator itr
+  for (map<string, CompositionState::Commands>::const_iterator iter
            = command_composition_map_.begin();
-       itr != command_composition_map_.end(); ++itr) {
-    command_names->insert(itr->first);
+       iter != command_composition_map_.end(); ++iter) {
+    command_names->insert(iter->first);
   }
 }
 
 void KeyMapManager::GetAvailableCommandNameConversion(
     set<string> *command_names) const {
   DCHECK(command_names);
-  for (map<string, ConversionState::Commands>::const_iterator itr
+  for (map<string, ConversionState::Commands>::const_iterator iter
            = command_conversion_map_.begin();
-       itr != command_conversion_map_.end(); ++itr) {
-    command_names->insert(itr->first);
+       iter != command_conversion_map_.end(); ++iter) {
+    command_names->insert(iter->first);
   }
 }
 

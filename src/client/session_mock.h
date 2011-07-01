@@ -33,6 +33,7 @@
 #include <map>
 #include <string>
 #include "client/session_interface.h"
+#include "session/commands.pb.h"
 
 namespace mozc {
 namespace client {
@@ -67,17 +68,38 @@ class SessionMock : public client::SessionInterface {
   virtual void set_server_program(const string &program_path);
   virtual void set_client_capability(const commands::Capability &capability);
   bool LaunchTool(const string &mode, const string &extra_arg);
+  bool LaunchToolWithProtoBuf(const commands::Output &output);
   bool OpenBrowser(const string &url);
 
-  static void ClearFunctionCounter();
-  static void SetBoolFunctionReturn(string func_name, bool value);
-  static int GetFunctionCallCount(string key);
+  void ClearFunctionCounter();
+  void SetBoolFunctionReturn(string func_name, bool value);
+  int GetFunctionCallCount(string key);
+
+#define TEST_METHODS(method_name, arg_type)                             \
+ private:                                                               \
+  arg_type called_##method_name##_;                                     \
+ public:                                                                \
+  arg_type called_##method_name() const { return called_##method_name##_; } \
+  void set_output_##method_name(const commands::Output &output) {       \
+    outputs_[#method_name].CopyFrom(output);                            \
+  }
+  TEST_METHODS(SendKey, commands::KeyEvent);
+  TEST_METHODS(TestSendKey, commands::KeyEvent);
+  TEST_METHODS(SendCommand, commands::SessionCommand);
+#undef TEST_METHODS
+
  private:
-  // Counter increments each time the function called.
-  static map<string, int> function_counter_;
+  // Counter increments each time the function called.  This method is
+  // marked as 'mutable' because it has to accumulate the counter even
+  // with const methods.
+  mutable map<string, int> function_counter_;
 
   // Stores return values when corresponding function is called.
-  static map<string, bool> return_bool_values_;
+  map<string, bool> return_bool_values_;
+
+  map<string, commands::Output> outputs_;
+
+  config::Config called_config_;
 };
 }  // namespace ibus
 }  // namespace mozc

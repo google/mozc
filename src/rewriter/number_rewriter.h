@@ -40,6 +40,9 @@ class NumberRewriter: public RewriterInterface  {
  public:
   NumberRewriter();
   virtual ~NumberRewriter();
+
+  virtual int capability() const;
+
   virtual bool Rewrite(Segments *segments) const;
 };
 }

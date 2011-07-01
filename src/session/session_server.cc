@@ -39,22 +39,21 @@
 #include "session/session_usage_observer.h"
 #include "usage_stats/usage_stats.h"
 
+
 namespace {
 const int kNumConnections = 10;
 const int kTimeOut = 5000;  // 5000msec
 const char kSessionName[] = "session";
 const char kEventName[] = "session";
-const uint32 kSchedulerDelay = 60*1000;  // 1 min
-const uint32 kSchedulerRandomDelay = 5*60*1000;  // 5 min
-const uint32 kScheduleInterval = 5*60*1000;  // 5 min
-const uint32 kScheduleMaxInterval = 2*60*60*1000;  // 2 hours
 }
 
 namespace mozc {
+
 SessionServer::SessionServer()
     : IPCServer(kSessionName, kNumConnections, kTimeOut),
       handler_(new SessionHandler()),
       usage_observer_(new session::SessionUsageObserver()) {
+  using usage_stats::UsageStats;
   // start session watch dog timer
   handler_->StartWatchDog();
   handler_->AddObserver(usage_observer_.get());
@@ -63,10 +62,14 @@ SessionServer::SessionServer()
   // send usage stats within 5 min later
   // attempt to send every 5 min -- 2 hours.
   Scheduler::AddJob(Scheduler::JobSetting(
-      "UsageStatsTimer", kScheduleInterval,
-      kScheduleMaxInterval, kSchedulerDelay,
-      kSchedulerRandomDelay,
-      &usage_stats::UsageStats::Send, NULL));
+      "UsageStatsTimer",
+      UsageStats::kDefaultScheduleInterval,
+      UsageStats::kDefaultScheduleMaxInterval,
+      UsageStats::kDefaultSchedulerDelay,
+      UsageStats::kDefaultSchedulerRandomDelay,
+      &UsageStats::Send,
+      NULL));
+
 
   // Send a notification event to the UI.
   NamedEventNotifier notifier(kEventName);

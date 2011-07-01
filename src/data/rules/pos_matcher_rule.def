@@ -25,10 +25,14 @@ Number      名詞,数,アラビア数字
 KanjiNumber 名詞,数,漢数字
 
 # used in CandidateFilter
-WeakCompoundPrefix ^(接頭詞,名詞接続|フィラー)
+WeakCompoundPrefix ^(接頭詞,名詞接続|接頭詞,丁寧連用形接続|フィラー)
 
-# used in ImmutableConverter
-Prefix 接頭詞,
+# use in Segmenter
+# if the following particles exist at the beggining of a segment,
+# concat them with the next content word.
+# ex.
+# にかく => に書く, not に|書く
+AcceptableParticleAtBeginOfSegment ^助詞,*,*,*,*,*,(が|で|と|に|にて|の|へ|より|も|と|から|は|や)$
 
 # used in UserHistoryRewriter
 JapanesePunctuations 記号,(句点|読点)

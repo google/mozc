@@ -33,6 +33,7 @@
 
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
+#include "session/commands.pb.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
@@ -1087,6 +1088,5 @@ TEST(NumberRewriterTest, SeparatedArabicsTest) {
                           "\xef\xbc\x97\xef\xbc\x98"));
   }
 }
-
 
 }  // namespace mozc

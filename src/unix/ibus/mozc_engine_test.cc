@@ -80,11 +80,12 @@ class LaunchToolTest : public testing::Test {
   }
  protected:
   virtual void SetUp() {
-    mock_.ClearFunctionCounter();
-    mozc_engine_->session_.reset(new client::SessionMock());
+    mock_ = new client::SessionMock();
+    mock_->ClearFunctionCounter();
+    mozc_engine_->session_.reset(mock_);
   }
 
-  client::SessionMock mock_;
+  client::SessionMock* mock_;
   scoped_ptr<MozcEngine> mozc_engine_;
  private:
   DISALLOW_COPY_AND_ASSIGN(LaunchToolTest);
@@ -94,39 +95,34 @@ TEST_F(LaunchToolTest, LaunchToolTest) {
   commands::Output output;
 
   // Launch config dialog
-  mock_.ClearFunctionCounter();
-  mock_.SetBoolFunctionReturn("LaunchTool", true);
+  mock_->ClearFunctionCounter();
+  mock_->SetBoolFunctionReturn("LaunchToolWithProtoBuf", true);
   output.set_launch_tool_mode(commands::Output::CONFIG_DIALOG);
   EXPECT_TRUE(mozc_engine_->LaunchTool(output));
-  EXPECT_EQ(1, mock_.GetFunctionCallCount("LaunchTool"));
 
   // Launch dictionary tool
-  mock_.ClearFunctionCounter();
-  mock_.SetBoolFunctionReturn("LaunchTool", true);
+  mock_->ClearFunctionCounter();
+  mock_->SetBoolFunctionReturn("LaunchToolWithProtoBuf", true);
   output.set_launch_tool_mode(commands::Output::DICTIONARY_TOOL);
   EXPECT_TRUE(mozc_engine_->LaunchTool(output));
-  EXPECT_EQ(1, mock_.GetFunctionCallCount("LaunchTool"));
 
   // Launch word register dialog
-  mock_.ClearFunctionCounter();
-  mock_.SetBoolFunctionReturn("LaunchTool", true);
+  mock_->ClearFunctionCounter();
+  mock_->SetBoolFunctionReturn("LaunchToolWithProtoBuf", true);
   output.set_launch_tool_mode(commands::Output::WORD_REGISTER_DIALOG);
   EXPECT_TRUE(mozc_engine_->LaunchTool(output));
-  EXPECT_EQ(1, mock_.GetFunctionCallCount("LaunchTool"));
 
   // Launch no tool(means do nothing)
-  mock_.ClearFunctionCounter();
-  mock_.SetBoolFunctionReturn("LaunchTool", true);
+  mock_->ClearFunctionCounter();
+  mock_->SetBoolFunctionReturn("LaunchToolWithProtoBuf", false);
   output.set_launch_tool_mode(commands::Output::NO_TOOL);
   EXPECT_FALSE(mozc_engine_->LaunchTool(output));
-  EXPECT_EQ(0, mock_.GetFunctionCallCount("LaunchTool"));
 
   // Something occurring in client::Session::LaunchTool
-  mock_.ClearFunctionCounter();
-  mock_.SetBoolFunctionReturn("LaunchTool", false);
+  mock_->ClearFunctionCounter();
+  mock_->SetBoolFunctionReturn("LaunchToolWithProtoBuf", false);
   output.set_launch_tool_mode(commands::Output::CONFIG_DIALOG);
   EXPECT_FALSE(mozc_engine_->LaunchTool(output));
-  EXPECT_EQ(1, mock_.GetFunctionCallCount("LaunchTool"));
 }
 
 TEST_F(MozcEngineTest, ProcessShiftModifiers) {

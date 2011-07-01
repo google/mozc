@@ -33,6 +33,10 @@
 #include <windows.h>
 #include <wincrypt.h>
 #else
+#ifdef OS_MACOSX
+#include <unistd.h>
+#include <sys/types.h>
+#endif
 #include <string.h>
 #include <openssl/sha.h>   // Use default openssl
 #include <openssl/aes.h>
@@ -40,6 +44,10 @@
 
 #include "base/password_manager.h"
 #include "base/util.h"
+
+#ifdef OS_MACOSX
+#include "base/mac_util.h"
+#endif
 
 #include <string>
 
@@ -67,7 +75,7 @@ const size_t kBlockSize = 16;  // 128bit
 const size_t kKeySize = 256;    // key length in bit
 
 #ifndef OS_WINDOWS
-// Retrun SHA1 digest
+// Return SHA1 digest
 string HashSHA1(const string &data) {
   uint8 buf[SHA_DIGEST_LENGTH];   // 160bit
   SHA1(reinterpret_cast<const uint8 *>(data.data()), data.size(), buf);
@@ -530,7 +538,59 @@ bool Encryptor::UnprotectData(const string &cipher_text,
   return true;
 }
 
-#else  // OS_WINDOWS
+#elif defined(OS_MACOSX)
+
+// ProtectData for Mac uses the serial number and the current pid as the key.
+bool Encryptor::ProtectData(const string &plain_text,
+                            string *cipher_text) {
+  DCHECK(cipher_text);
+  Encryptor::Key key;
+  const string serial_number = MacUtil::GetSerialNumber();
+  const string salt = Util::StringPrintf("%x", ::getuid());
+  if (serial_number.empty()) {
+    LOG(ERROR) << "Cannot get the serial number";
+    return false;
+  }
+  if (!key.DeriveFromPassword(serial_number, salt)) {
+    LOG(ERROR) << "Cannot prepare the internal key";
+    return false;
+  }
+
+  cipher_text->assign(plain_text);
+  if (!EncryptString(key, cipher_text)) {
+    cipher_text->clear();
+    LOG(ERROR) << "Cannot encrypt the text";
+    return false;
+  }
+  return true;
+}
+
+// Same as ProtectData.
+bool Encryptor::UnprotectData(const string &cipher_text,
+                              string *plain_text) {
+  DCHECK(plain_text);
+  Encryptor::Key key;
+  const string serial_number = MacUtil::GetSerialNumber();
+  const string salt = Util::StringPrintf("%x", ::getuid());
+  if (serial_number.empty()) {
+    LOG(ERROR) << "Cannot get the serial number";
+    return false;
+  }
+  if (!key.DeriveFromPassword(serial_number, salt)) {
+    LOG(ERROR) << "Cannot prepare the internal key";
+    return false;
+  }
+
+  plain_text->assign(cipher_text);
+  if (!DecryptString(key, plain_text)) {
+    plain_text->clear();
+    LOG(ERROR) << "Cannot encrypt the text";
+    return false;
+  }
+  return true;
+}
+
+#else  // OS_WINDOWS | OS_MACOSX
 
 namespace {
 const size_t kSaltSize = 32;

@@ -215,15 +215,16 @@ bool PlainPasswordManager::RemovePassword() const {
 
 //////////////////////////////////////////////////////////////////
 // WinPasswordManager
-#ifdef OS_WINDOWS
-class WinPasswordManager : public PasswordManagerInterface {
+// We use this manager with both Windows and Mac
+#if (defined(OS_WINDOWS) || defined(OS_MACOSX))
+class WinMacPasswordManager : public PasswordManagerInterface {
  public:
   virtual bool SetPassword(const string &password) const;
   virtual bool GetPassword(string *password) const;
   virtual bool RemovePassword() const;
 };
 
-bool WinPasswordManager::SetPassword(const string &password) const {
+bool WinMacPasswordManager::SetPassword(const string &password) const {
   if (password.size() != kPasswordSize) {
     LOG(ERROR) << "password size is invalid";
     return false;
@@ -238,7 +239,7 @@ bool WinPasswordManager::SetPassword(const string &password) const {
   return SavePassword(enc_password);
 }
 
-bool WinPasswordManager::GetPassword(string *password) const {
+bool WinMacPasswordManager::GetPassword(string *password) const {
   if (password == NULL) {
     LOG(ERROR) << "password is NULL";
     return false;
@@ -264,21 +265,25 @@ bool WinPasswordManager::GetPassword(string *password) const {
   return true;
 }
 
-bool WinPasswordManager::RemovePassword() const {
+bool WinMacPasswordManager::RemovePassword() const {
   return RemovePasswordFile();
 }
-#endif  // OS_WINDOWS
+#endif  // OS_WINDOWS | OS_MACOSX
 
 #ifdef OS_MACOSX
 //////////////////////////////////////////////////////////////////
-// MacPasswordManager
+// DeprecatedMacPasswordManager
 namespace {
 static const char kMacPasswordManagerName[] = kProductPrefix;
 }  // anonymous namespace
 
-class MacPasswordManager : public PasswordManagerInterface {
+// This is a deprecated Mac's keychain-based PasswordManager.  We
+// still don't remove it because it is used by the data transition
+// tool.
+// TODO(MUKAI): remove this class after the transition.
+class DeprecatedMacPasswordManager : public PasswordManagerInterface {
  public:
-  MacPasswordManager(const string &key = kProductPrefix)
+  DeprecatedMacPasswordManager(const string &key = kProductPrefix)
       : key_(key) {}
 
   bool FindKeychainItem(string *password, SecKeychainItemRef *item_ref) const {
@@ -362,14 +367,9 @@ class MacPasswordManager : public PasswordManagerInterface {
 typedef PlainPasswordManager DefaultPasswordManager;
 #endif
 
-// Windows
-#if defined OS_WINDOWS
-typedef WinPasswordManager DefaultPasswordManager;
-#endif
-#ifdef OS_MACOSX
-// If a binary is not codesigned, MacPasswordManager in the binary
-// opens a confirmation dialog which grabs key focuses.
-typedef MacPasswordManager DefaultPasswordManager;
+// Windows or Mac
+#if (defined(OS_WINDOWS) || defined(OS_MACOSX))
+typedef WinMacPasswordManager DefaultPasswordManager;
 #endif
 
 namespace {
@@ -407,14 +407,8 @@ class MockPasswordManager : public PasswordManagerInterface {
 namespace {
 class PasswordManagerImpl {
  public:
-  PasswordManagerImpl() : password_manager_(NULL) {
-    if (kUseMockPasswordManager) {
-      password_manager_impl_.reset(new MockPasswordManager);
-    } else {
-      password_manager_impl_.reset(new DefaultPasswordManager);
-    }
-
-    password_manager_ = password_manager_impl_.get();
+  PasswordManagerImpl() {
+    password_manager_ = Singleton<DefaultPasswordManager>::get();
     DCHECK(password_manager_ != NULL);
   }
 
@@ -456,12 +450,10 @@ class PasswordManagerImpl {
 
   void SetPasswordManagerHandler(PasswordManagerInterface *handler) {
     scoped_lock l(&mutex_);
-    password_manager_impl_.reset(NULL);
     password_manager_ = handler;
   }
 
  public:
-  scoped_ptr<PasswordManagerInterface> password_manager_impl_;
   PasswordManagerInterface *password_manager_;
   Mutex mutex_;
 };

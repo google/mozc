@@ -40,7 +40,7 @@
       'type': 'executable',
       'dependencies': [
         '../base/base.gyp:base',
-        '../client/client.gyp:client',
+        '../client/client.gyp:session_mock',
         '../renderer/renderer.gyp:renderer',
         '../renderer/renderer.gyp:table_layout',
         '../renderer/renderer.gyp:window_util',
@@ -262,6 +262,8 @@
             '../data/images/mac/half_katakana.png',
             '../data/images/mac/hiragana.png',
             '../data/images/mac/product_icon.icns',
+            '../data/installer/credits_en.html',
+            '../data/installer/credits_ja.html',
             'English.lproj/Config.xib',
             '<(gen_out_dir)/English.lproj/InfoPlist.strings',
             'Japanese.lproj/Config.xib',

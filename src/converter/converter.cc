@@ -29,6 +29,7 @@
 
 #include "converter/converter_interface.h"
 
+#include <climits>
 #include <string>
 #include <utility>
 #include <vector>
@@ -38,10 +39,13 @@
 #include "base/util.h"
 #include "composer/composer.h"
 #include "transliteration/transliteration.h"
-#include "converter/focus_candidate_handler.h"
+#include "converter/connector_interface.h"
 #include "converter/immutable_converter_interface.h"
+#include "converter/node_allocator.h"
 #include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
+#include "dictionary/suffix_dictionary.h"
+#include "dictionary/pos_matcher.h"
 #include "prediction/predictor_interface.h"
 #include "rewriter/rewriter_interface.h"
 
@@ -107,7 +111,6 @@ size_t GetSegmentIndex(const Segments *segments,
 void SetKey(Segments *segments, const string &key) {
   segments->set_max_history_segments_size(4);
   segments->clear_conversion_segments();
-  segments->clear_lattice();
   segments->clear_revert_entries();
   segments->set_composer(NULL);
 
@@ -194,14 +197,22 @@ bool ConverterImpl::StartPrediction(Segments *segments,
                                     const string &key) const {
   SetKey(segments, key);
   segments->set_request_type(Segments::PREDICTION);
-  return PredictorFactory::GetPredictor()->Predict(segments);
+  if (PredictorFactory::GetPredictor()->Predict(segments)) {
+    RewriterFactory::GetRewriter()->Rewrite(segments);
+    return true;
+  }
+  return false;
 }
 
 bool ConverterImpl::StartSuggestion(Segments *segments,
                                     const string &key) const {
   SetKey(segments, key);
   segments->set_request_type(Segments::SUGGESTION);
-  return PredictorFactory::GetPredictor()->Predict(segments);
+  if (PredictorFactory::GetPredictor()->Predict(segments)) {
+    RewriterFactory::GetRewriter()->Rewrite(segments);
+    return true;
+  }
+  return false;
 }
 
 bool ConverterImpl::FinishConversion(Segments *segments) const {
@@ -212,6 +223,9 @@ bool ConverterImpl::FinishConversion(Segments *segments) const {
     if (seg->segment_type() == Segment::SUBMITTED) {
       seg->set_segment_type(Segment::FIXED_VALUE);
     }
+    if (seg->candidates_size() > 0) {
+      ConverterUtil::CompletePOSIds(seg->mutable_candidate(0));
+    }
   }
 
   segments->clear_revert_entries();
@@ -219,8 +233,6 @@ bool ConverterImpl::FinishConversion(Segments *segments) const {
     RewriterFactory::GetRewriter()->Finish(segments);
   }
   PredictorFactory::GetPredictor()->Finish(segments);
-
-  segments->clear_lattice();
 
   const int start_index = max(0,
                               static_cast<int>(
@@ -240,7 +252,6 @@ bool ConverterImpl::FinishConversion(Segments *segments) const {
 }
 
 bool ConverterImpl::CancelConversion(Segments *segments) const {
-  segments->clear_lattice();
   segments->clear_conversion_segments();
   return true;
 }
@@ -293,11 +304,9 @@ bool ConverterImpl::FocusSegmentValue(Segments *segments,
     return false;
   }
 
-  return FocusCandidateHandler::FocusSegmentValue(segments,
-                                                  segment_index,
-                                                  candidate_index);
+  return RewriterFactory::GetRewriter()->Focus(segments,
+                                               segment_index, candidate_index);
 }
-
 
 bool ConverterImpl::FreeSegmentValue(Segments *segments,
                                      size_t segment_index) const {
@@ -546,5 +555,80 @@ void ConverterUtil::InitSegmentsFromString(const string &key,
   c->content_value = preedit;
   c->key = key;
   c->content_key = key;
+}
+
+// static
+void ConverterUtil::CompletePOSIds(Segment::Candidate *candidate) {
+  DCHECK(candidate);
+  if (candidate->value.empty()) {
+    return;
+  }
+
+  if (candidate->lid == 0) {
+    candidate->lid = POSMatcher::GetUnknownId();
+    VLOG(1) << "Set LID: " << candidate->lid;
+  }
+
+  if (candidate->rid == 0) {
+    const ConnectorInterface *connector =
+        ConnectorFactory::GetConnector();
+    const DictionaryInterface *dictionary =
+        SuffixDictionaryFactory::GetSuffixDictionary();
+
+    DCHECK(connector);
+    DCHECK(dictionary);
+
+    const string &value = candidate->value;
+
+    NodeAllocator allocator;
+    Node *node = dictionary->LookupPredictive("", 0, &allocator);
+    DCHECK(node);
+
+    const Node *best_node = NULL;
+    int best_cost = INT_MAX;
+
+    // Find a entry which is the suffix of |value|.
+    // Suffix dictionary supposes to have frequent suffix patterns,
+    // like particle, auxiliary verbs and functional verbs.
+    // Since hiragana-sequence which were not passed to the converter tend
+    // to be functional expressions, it is reasonable to use suffix
+    // dictionary to guess POS ids.
+    for (; node != NULL; node = node->bnext) {
+      if (!Util::EndsWith(value, node->value)) {
+        continue;
+      }
+
+      // Preserve the longest suffix match.
+      if (best_node == NULL ||
+          best_node->value.size() < node->value.size()) {
+        best_node = node;
+        best_cost = connector->GetTransitionCost(0, node->lid) +
+            node->wcost;
+        continue;
+      }
+
+      // If there are multiple nodes which have the
+      // same suffix length, select one who has the minimum
+      // language model cost.
+      if (best_node->value.size() == node->value.size()) {
+        const int cost = connector->GetTransitionCost(0, node->lid) +
+            node->wcost;
+        if (cost < best_cost) {
+          best_cost = cost;
+          best_node = node;
+        }
+      }
+    }
+
+    if (best_node != NULL) {
+      candidate->rid = best_node->rid;
+    } else {
+      // Cannot find suffix match. Use UnkownId just in case.
+      // TODO(team): we might want to call reverse conversion.
+      candidate->rid = POSMatcher::GetUnknownId();
+    }
+
+    VLOG(1) << "Set RID: " << candidate->rid << " " << value;
+  }
 }
 }  // namespace mozc

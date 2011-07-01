@@ -60,6 +60,10 @@ class LRUStorage {
 
   const char *Lookup(const string &key) const;
 
+  // Returns all values.
+  // The order is new to old (*values->begin() is the newest).
+  bool GetAllValues(vector<string> *values) const;
+
   // clear all LRU cache;
   // mapped file is also initialized
   void Clear();

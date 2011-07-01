@@ -30,19 +30,8 @@
 #include "composer/internal/converter.h"
 
 #include "base/base.h"
-#include "testing/base/public/gunit.h"
 #include "composer/table.h"
-
-// This macro is ported from base/basictypes.h.  Due to WinNT.h has
-// the same macro, this macro should be undefined at the end of this
-// file.
-// TODO(komatsu): Move this macro to base or testing.
-#ifndef ARRAYSIZE
-#define UNDEFINE_ARRAYSIZE
-#define ARRAYSIZE(a) \
-  ((sizeof(a) / sizeof(*(a))) / \
-   static_cast<size_t>(!(sizeof(a) % sizeof(*(a)))))
-#endif  // ARRAYSIZE
+#include "testing/base/public/gunit.h"
 
 static void InitTable(mozc::composer::Table* table) {
   // "あ"
@@ -113,7 +102,3 @@ TEST(ConverterTest, Converter) {
     EXPECT_EQ(test.expected_output, output);
   }
 }
-
-#ifdef UNDEFINE_ARRAYSIZE
-#undef ARRAYSIZE
-#endif  // UNDEFINE_ARRAYSIZE

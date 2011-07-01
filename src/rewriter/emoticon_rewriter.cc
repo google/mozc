@@ -39,6 +39,7 @@
 #include "converter/segments.h"
 #include "rewriter/rewriter_interface.h"
 #include "rewriter/embedded_dictionary.h"
+#include "session/commands.pb.h"
 #include "session/config_handler.h"
 #include "session/config.pb.h"
 
@@ -248,6 +249,10 @@ bool RewriteCandidate(Segments *segments) {
 EmoticonRewriter::EmoticonRewriter() {}
 
 EmoticonRewriter::~EmoticonRewriter() {}
+
+int EmoticonRewriter::capability() const {
+  return RewriterInterface::CONVERSION;
+}
 
 bool EmoticonRewriter::Rewrite(Segments *segments) const {
   if (!GET_CONFIG(use_emoticon_conversion)) {

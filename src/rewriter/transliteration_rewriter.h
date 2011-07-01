@@ -40,6 +40,9 @@ class TransliterationRewriter: public RewriterInterface  {
  public:
   TransliterationRewriter();
   virtual ~TransliterationRewriter();
+
+  virtual int capability() const;
+
   virtual bool Rewrite(Segments *segments) const;
 };
 }

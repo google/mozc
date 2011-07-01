@@ -49,11 +49,12 @@ struct Node {
 
   enum Attribute {
     DEFAULT_ATTRIBUTE     = 0,
-    SYSTEM_DICTIONARY     = 1,  // system dictionary (not used now)
-    USER_DICTIONARY       = 2,  // user dictionary (not used now)
-    NO_VARIANTS_EXPANSION = 4,  // no need to expand full/half
-    WEAK_CONNECTED        = 8,  // internally used in the converter
-    SPELLING_CORRECTION   = 16,  // "did you mean"
+    SYSTEM_DICTIONARY     = 1,   // system dictionary (not used now)
+    USER_DICTIONARY       = 2,   // user dictionary (not used now)
+    NO_VARIANTS_EXPANSION = 4,   // no need to expand full/half
+    WEAK_CONNECTED        = 8,   // internally used in the converter
+    STARTS_WITH_PARTICLE  = 16,  // user input starts with particle
+    SPELLING_CORRECTION   = 32,  // "did you mean"
   };
 
   Node     *prev;
@@ -69,12 +70,16 @@ struct Node {
   uint16    lid;
   uint16    begin_pos;
   uint16    end_pos;
-  int16     wcost;
+  int32     wcost;
   int32     cost;
   NodeType  node_type;
   uint32    attributes;
   string    key;
   string    value;
+
+  Node() {
+    Init();
+  }
 
   inline void Init() {
     prev = NULL;

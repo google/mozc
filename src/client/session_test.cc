@@ -536,6 +536,32 @@ TEST_F(SessionTest, ServerUpdateFail) {
             (ServerLauncherInterface::SERVER_BROKEN_MESSAGE));
 }
 
+TEST_F(SessionTest, TranslateProtoBufToMozcToolArgTest) {
+  commands::Output output;
+  string mode = "";
+
+  // If no value is set, we expect to return false
+  EXPECT_FALSE(client::Session::TranslateProtoBufToMozcToolArg(output, &mode));
+  EXPECT_EQ("", mode);
+
+  // If NO_TOOL is set, we  expect to return false
+  output.set_launch_tool_mode(commands::Output::NO_TOOL);
+  EXPECT_FALSE(client::Session::TranslateProtoBufToMozcToolArg(output, &mode));
+  EXPECT_EQ("", mode);
+
+  output.set_launch_tool_mode(commands::Output::CONFIG_DIALOG);
+  EXPECT_TRUE(client::Session::TranslateProtoBufToMozcToolArg(output, &mode));
+  EXPECT_EQ("config_dialog", mode);
+
+  output.set_launch_tool_mode(commands::Output::DICTIONARY_TOOL);
+  EXPECT_TRUE(client::Session::TranslateProtoBufToMozcToolArg(output, &mode));
+  EXPECT_EQ("dictionary_tool", mode);
+
+  output.set_launch_tool_mode(commands::Output::WORD_REGISTER_DIALOG);
+  EXPECT_TRUE(client::Session::TranslateProtoBufToMozcToolArg(output, &mode));
+  EXPECT_EQ("word_register_dialog", mode);
+}
+
 class SessionPlaybackTestServerLauncher :
       public ServerLauncherInterface {
  public:

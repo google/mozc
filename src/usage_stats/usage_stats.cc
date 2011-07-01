@@ -129,6 +129,11 @@ ClientIdInterface &GetClientIdHandler() {
 }
 }  // namespace
 
+const uint32 UsageStats::kDefaultSchedulerDelay = 60*1000;  // 1 min
+const uint32 UsageStats::kDefaultSchedulerRandomDelay = 5*60*1000;  // 5 min
+const uint32 UsageStats::kDefaultScheduleInterval = 5*60*1000;  // 5 min
+const uint32 UsageStats::kDefaultScheduleMaxInterval = 2*60*60*1000;  // 2 hours
+
 UsageStats::UsageStats() {
 }
 

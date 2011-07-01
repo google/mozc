@@ -34,7 +34,6 @@
 #include "base/base.h"
 #include "base/util.h"
 #include "session/commands.pb.h"
-#include "session/request_handler.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
 
@@ -159,10 +158,10 @@ int main(int argc, char **argv) {
   string line;
 
   while (getline(cin, line)) {
-    string tmp;
     if (ExecCommand(*converter, &segments, line)) {
-      string output;
-      cout << segments.DebugString();
+      if (FLAGS_output_debug_string) {
+	cout << segments.DebugString();
+      }
     } else {
       cout << "ExecCommand() return false" << endl;
     }

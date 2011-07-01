@@ -29,6 +29,8 @@
 
 #include "base/clock_mock.h"
 
+#include <ctime>
+
 namespace mozc {
 
 ClockMock::ClockMock(uint64 sec, uint32 usec)
@@ -44,6 +46,22 @@ void ClockMock::GetTimeOfDay(uint64 *sec, uint32 *usec) {
 
 uint64 ClockMock::GetTime() {
   return seconds_;
+}
+
+bool ClockMock::GetTmWithOffsetSecond(time_t offset_sec, tm *output) {
+  const time_t current_sec = static_cast<time_t>(seconds_);
+  const time_t modified_sec = current_sec + offset_sec;
+
+#ifdef OS_WINDOWS
+  if (_gmtime64_s(output, &modified_sec) != 0) {
+    return false;
+  }
+#else
+  if (gmtime_r(&modified_sec, output) == NULL) {
+    return false;
+  }
+#endif
+  return true;
 }
 
 void ClockMock::PutClockForward(uint64 delta_sec, uint32 delta_usec) {

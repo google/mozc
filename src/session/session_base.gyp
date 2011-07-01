@@ -85,6 +85,19 @@
       ],
     },
     {
+      'target_name': 'keymap_factory',
+      'type': 'static_library',
+      'sources': [
+        'internal/keymap_factory.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        'genproto_session',
+        'keymap',
+        'session_protocol',
+      ],
+    },
+    {
       'target_name': 'ime_switch_util',
       'type': 'static_library',
       'sources': [

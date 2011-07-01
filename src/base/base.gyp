@@ -38,7 +38,7 @@
       'type': 'static_library',
       'sources': [
         '<(gen_out_dir)/character_set.h',
-        '<(gen_out_dir)/version_def.cc',
+        '<(gen_out_dir)/version_def.h',
         'clock_mock.cc',
         'cpu_stats.cc',
         'crash_report_handler.cc',
@@ -129,16 +129,17 @@
           'inputs': [
             '../mozc_version.txt',
             '../build_tools/replace_version.py',
-            'version_def_template.cc',
+            'version_def_template.h',
           ],
           'outputs': [
-            '<(gen_out_dir)/version_def.cc',
+            '<(gen_out_dir)/version_def.h',
           ],
           'action': [
             'python', '../build_tools/replace_version.py',
             '--version_file', '../mozc_version.txt',
-            '--input', 'version_def_template.cc',
-            '--output', '<(gen_out_dir)/version_def.cc',
+            '--input', 'version_def_template.h',
+            '--output', '<(gen_out_dir)/version_def.h',
+            '--target_platform', '<(target_platform)',
           ],
         },
       ],

@@ -58,7 +58,7 @@ TEST(SessionServerTest, SetSchedulerJobTest) {
   scoped_ptr<mozc::SessionServer> session_server(new mozc::SessionServer);
   const vector<mozc::Scheduler::JobSetting> &job_settings =
       job_recorder->job_settings();
-  EXPECT_EQ(1, job_settings.size());
-  EXPECT_EQ(2*60*60*1000, job_settings[0].max_interval());
+  EXPECT_GE(job_settings.size(), 1);
+  EXPECT_EQ("UsageStatsTimer", job_settings[0].name());
   mozc::Scheduler::SetSchedulerHandler(NULL);
 }

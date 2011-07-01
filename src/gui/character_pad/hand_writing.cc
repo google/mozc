@@ -70,10 +70,15 @@ HandWriting::HandWriting(QWidget *parent)
                    SIGNAL(clicked()),
                    this, SLOT(revert()));
 
+  QObject::connect(handWritingCanvas,
+                   SIGNAL(canvasUpdated()),
+                   this, SLOT(updateUIStatus()));
+
   // "4" means smallest.
   sizeComboBox->setCurrentIndex(4);
   fontComboBox->setCurrentFont(resultListWidget->font());
 
+  updateUIStatus();
   repaint();
   update();
 }
@@ -93,11 +98,27 @@ void HandWriting::resizeEvent(QResizeEvent *event) {
 void HandWriting::clear() {
   resultListWidget->clear();
   handWritingCanvas->clear();
+  updateUIStatus();
 }
 
 void HandWriting::revert() {
   resultListWidget->clear();
   handWritingCanvas->revert();
+  updateUIStatus();
+}
+
+void HandWriting::updateUIStatus() {
+#ifdef OS_MACOSX
+  // Due to a bug of Qt?, the appearance of these buttons
+  // doesn't change on Mac. To fix this issue, always set
+  // true on Mac.
+  clearButton->setEnabled(true);
+  revertButton->setEnabled(true);
+#else
+  const bool enabled = handWritingCanvas->strokes_size() > 0;
+  clearButton->setEnabled(enabled);
+  revertButton->setEnabled(enabled);
+#endif
 }
 
 #ifdef OS_WINDOWS

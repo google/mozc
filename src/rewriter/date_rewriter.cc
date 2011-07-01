@@ -27,6 +27,14 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+// Date comment style are following.
+//  - If the input number converts strictly 2 character with padding, comment
+//  format is like "HH" or "MM".
+//   e.g.) "YYYY/MM/DD HH:MM" ->  "2011/01/30 03:20"
+//  - If the input number converts string without padding, comment format is
+//  like "H" or "M"
+//   e.g.) "Y/M/D H:M" -> "645/2/3 9:2"
+
 #include "rewriter/date_rewriter.h"
 
 #include <stdio.h>
@@ -36,6 +44,7 @@
 #include <vector>
 #include "base/util.h"
 #include "converter/segments.h"
+#include "session/commands.pb.h"
 #include "session/config_handler.h"
 #include "session/config.pb.h"
 
@@ -710,7 +719,7 @@ bool ADtoERAforCourt(const YearData *data, int size,
       return true;
     } else if (i > 0 && data[i-1].ad < year && year <= data[i].ad) {
       // have two representations:
-      // 1989 -> 昭和64 and 平成元
+      // 1989 -> "昭和64" and "平成元"
       if (year == data[i].ad) {
         ExpandYear(data[i].era, 1, results);
       }
@@ -727,6 +736,75 @@ bool ADtoERAforCourt(const YearData *data, int size,
   }
 
   return false;
+}
+
+// Checkes given date is valid or not.
+// Over 24 hour expression is allowed in this function.
+// Acceptable hour is between 0 and 29.
+bool IsValidTime(uint32 hour, uint32 minute) {
+  if (hour >= 30 || minute >= 60) {
+    return false;
+  } else {
+    return true;
+  }
+}
+
+// Returns February last day.
+// This function deals with leap year with Gregorian calendar.
+uint32 GetFebruaryLastDay(uint32 year) {
+  uint32 february_end = (year % 4 == 0) ? 29 : 28;
+  if (year % 100 == 0 && year % 400 != 0) {
+    february_end = 28;
+  }
+  return february_end;
+}
+
+// Checkes given date is valid or not.
+bool IsValidDate(uint32 year, uint32 month, uint32 day) {
+  if (day < 1) {
+    return false;
+  }
+
+  if (year == 0 || year > 2100) {
+    return false;
+  }
+
+  switch (month) {
+    case 2: {
+      if (day > GetFebruaryLastDay(year)) {
+        return false;
+      } else {
+        return true;
+      }
+    }
+    case 4: case 6: case 9: case 11: {
+      if (day > 30) {
+        return false;
+      } else {
+        return true;
+      }
+    }
+    case 1: case 3: case 5: case 7: case 8: case 10: case 12: {
+      if (day > 31) {
+        return false;
+      } else {
+        return true;
+      }
+    }
+    default: {
+      return false;
+    }
+  }
+}
+
+// Checks given date is valid or not in this year
+bool IsValidDateInThisYear(uint32 month, uint32 day) {
+  struct tm t_st;
+  if (!Util::GetTmWithOffsetSecond(&t_st, 0)) {
+    LOG(ERROR) << "GetTmWithOffsetSecond() failed";
+    return false;
+  }
+  return IsValidDate(t_st.tm_year + 1900, month, day);
 }
 }  // namespace
 
@@ -760,30 +838,89 @@ bool DateRewriter::ADtoERA(int year, vector<string> *results) const {
   return r;
 }
 
-bool DateRewriter::ConvertTime(int hour, int min,
+bool DateRewriter::ConvertTime(uint32 hour, uint32 min,
                                vector<string> *results) const {
-  char tmp[64];
-  snprintf(tmp, sizeof(tmp), "%d:%2.2d", hour, min);
-  results->push_back(tmp);
-
-  snprintf(tmp, sizeof(tmp), "%d\xE6\x99\x82%2.2d\xE5\x88\x86",
-           hour, min);
-  results->push_back(tmp);
-
-  if (hour * 60 + min < 720) {   // 0:00 -- 11:59
-    // "午前x時x分"
-    snprintf(tmp, sizeof(tmp),
-             "\xE5\x8D\x88\xE5\x89\x8D%d\xE6\x99\x82%d\xE5\x88\x86",
-             hour, min);
-  } else {
-    // "午後x時x分"
-    snprintf(tmp, sizeof(tmp),
-             "\xE5\x8D\x88\xE5\xBE\x8C%d\xE6\x99\x82%d\xE5\x88\x86",
-             hour - 12, min);
+  DCHECK(results);
+  if (!IsValidTime(hour, min)) {
+    return false;
   }
-  results->push_back(tmp);
 
-  return !results->empty();
+  results->push_back(Util::StringPrintf("%d:%2.2d", hour, min));
+
+  // "H時MM分"
+  results->push_back(Util::StringPrintf("%d\xE6\x99\x82%2.2d\xE5\x88\x86",
+                                        hour, min));
+
+  if (min == 30) {
+    // "H時半"
+    results->push_back(Util::StringPrintf("%d\xE6\x99\x82\xE5\x8D\x8A", hour));
+  }
+
+  if ((hour % 24) * 60 + min < 720) {   // 0:00 -- 11:59
+    // "午前H時MM分"
+    results->push_back(Util::StringPrintf(
+        "\xE5\x8D\x88\xE5\x89\x8D%d\xE6\x99\x82%d\xE5\x88\x86",
+        hour % 24, min));
+
+    if (min == 30) {
+      // "午前H時半"
+      results->push_back(Util::StringPrintf(
+          "\xE5\x8D\x88\xE5\x89\x8D%d\xE6\x99\x82\xE5\x8D\x8A",
+          hour % 24));
+    }
+  } else {
+    // "午後H時MM分"
+    results->push_back(Util::StringPrintf(
+        "\xE5\x8D\x88\xE5\xBE\x8C%d\xE6\x99\x82%d\xE5\x88\x86",
+        (hour - 12) % 24, min));
+
+    if (min == 30) {
+      // "午後H時半"
+      results->push_back(Util::StringPrintf(
+          "\xE5\x8D\x88\xE5\xBE\x8C%d\xE6\x99\x82\xE5\x8D\x8A",
+          (hour - 12) % 24));
+    }
+  }
+
+  return true;
+}
+
+bool DateRewriter::ConvertDateWithYear(uint32 year, uint32 month, uint32 day,
+                                       vector<string> *results) const {
+    DCHECK(results);
+    if (!IsValidDate(year, month, day)) {
+      return false;
+    }
+
+    // "Y/MM/DD"
+    results->push_back(Util::StringPrintf("%d/%2.2d/%2.2d", year, month, day));
+
+    // "Y-MM-DD"
+    results->push_back(Util::StringPrintf("%d-%2.2d-%2.2d", year, month, day));
+
+    // "Y年M月D日"
+    results->push_back(Util::StringPrintf(
+        "%d\xE5\xB9\xB4%d\xE6\x9C\x88%d\xE6\x97\xA5",
+        year, month, day));
+
+    return true;
+}
+
+bool DateRewriter::ConvertDateWithoutYear(uint32 month, uint32 day,
+                                          vector<string> *results) const {
+    DCHECK(results);
+    if (!IsValidDateInThisYear(month, day)) {
+      return false;
+    }
+
+    // "MM/DD"
+    results->push_back(Util::StringPrintf("%2.2d/%2.2d", month, day));
+
+    // "M月D日"
+    results->push_back(Util::StringPrintf("%d\xE6\x9C\x88%d\xE6\x97\xA5",
+                                          month, day));
+
+    return true;
 }
 
 bool DateRewriter::RewriteTime(Segment *segment,
@@ -798,47 +935,46 @@ bool DateRewriter::RewriteTime(Segment *segment,
   const size_t kMinSize = 10;
   const size_t size = min(kMinSize, segment->candidates_size());
 
-  for (int i = 0; i < static_cast<int>(size); ++i) {
-    const Segment::Candidate &cand = segment->candidate(i);
+  for (size_t cand_idx = 0; cand_idx < size; ++cand_idx) {
+    const Segment::Candidate &cand = segment->candidate(cand_idx);
     if (cand.value != value) {
       continue;
     }
+    // Date candidates are too many, therefore highest candidate show at most
+    // 3rd.
+    // TODO(nona): learn date candidate even if the date is chaned.
+    const size_t kMinimumDateCandidateIdx = 3;
+    const size_t insert_idx = (size < kMinimumDateCandidateIdx) ?
+        size : max(cand_idx + 1, kMinimumDateCandidateIdx);
 
     struct tm t_st;
-    char tmp[64];
+    string tmp;
     vector<string> era;
     if (type == REWRITE_DATE) {
       if (!Util::GetTmWithOffsetSecond(&t_st, diff * 86400)) {
         LOG(ERROR) << "GetTmWithOffsetSecond() failed";
         return false;
       }
+      vector<string> results;
+      ConvertDateWithYear(t_st.tm_year + 1900, t_st.tm_mon + 1, t_st.tm_mday,
+                          &results);
+
       if (ADtoERA(t_st.tm_year + 1900, &era) && !era.empty()) {
-        // "平成YY年MM月DD日"
-        snprintf(tmp, sizeof(tmp),
-                 "%s\xE5\xB9\xB4%d\xE6\x9C\x88%d\xE6\x97\xA5",
-                 era[0].c_str(), t_st.tm_mon + 1, t_st.tm_mday);
-        Insert(segment, cand, i + 1, tmp, description, kDatePrefix);
+        // "平成Y年M月D日"
+        results.push_back(Util::StringPrintf(
+            "%s\xE5\xB9\xB4%d\xE6\x9C\x88%d\xE6\x97\xA5",
+            era[0].c_str(), t_st.tm_mon + 1, t_st.tm_mday));
       }
-      // "YYYY年MM月DD日"
-      snprintf(tmp, sizeof(tmp),
-               "%d\xE5\xB9\xB4%d\xE6\x9C\x88%d\xE6\x97\xA5",
-               t_st.tm_year + 1900, t_st.tm_mon + 1, t_st.tm_mday);
-      Insert(segment, cand, i + 1, tmp, description, kDatePrefix);
-      // "YYYY-MM-DD"
-      snprintf(tmp, sizeof(tmp),
-               "%d-%2.2d-%2.2d",
-               t_st.tm_year + 1900, t_st.tm_mon + 1, t_st.tm_mday);
-      Insert(segment, cand, i + 1, tmp, description, kDatePrefix);
-      // "YYYY/MM/DD"
-      snprintf(tmp, sizeof(tmp),
-               "%d/%2.2d/%2.2d",
-               t_st.tm_year + 1900, t_st.tm_mon + 1, t_st.tm_mday);
-      Insert(segment, cand, i + 1, tmp, description, kDatePrefix);
+
       // "WDAY曜日"
-      snprintf(tmp, sizeof(tmp),
-               "%s\xE6\x9B\x9C\xE6\x97\xA5",
-               kWeekDayString[t_st.tm_wday]);
-      Insert(segment, cand, i + 1, tmp, description, kDatePrefix);
+      results.push_back(Util::StringPrintf("%s\xE6\x9B\x9C\xE6\x97\xA5",
+                                            kWeekDayString[t_st.tm_wday]));
+
+      for (vector<string>::reverse_iterator rit = results.rbegin();
+           rit != results.rend(); ++rit) {
+        Insert(segment, cand, insert_idx , *rit, description, kDatePrefix);
+      }
+
       return true;
     } else if (type == REWRITE_MONTH) {
       if (!Util::GetCurrentTm(&t_st)) {
@@ -846,10 +982,11 @@ bool DateRewriter::RewriteTime(Segment *segment,
         return false;
       }
       const int month = (t_st.tm_mon + diff + 12) % 12 + 1;
-      snprintf(tmp, sizeof(tmp), "%d\xE6\x9C\x88", month);
-      Insert(segment, cand, i + 1, tmp, description, kDatePrefix);
-      snprintf(tmp, sizeof(tmp), "%d", month);
-      Insert(segment, cand, i + 1, tmp, description, kDatePrefix);
+      // "月"
+      tmp = Util::StringPrintf("%d\xE6\x9C\x88", month);
+      Insert(segment, cand, insert_idx, tmp, description, kDatePrefix);
+      tmp = Util::StringPrintf("%d", month);
+      Insert(segment, cand, insert_idx, tmp, description, kDatePrefix);
       return true;
     } else if (type == REWRITE_YEAR) {
       if (!Util::GetCurrentTm(&t_st)) {
@@ -858,13 +995,15 @@ bool DateRewriter::RewriteTime(Segment *segment,
       }
       const int year = (t_st.tm_year + diff + 1900);
       if (ADtoERA(year, &era) && !era.empty()) {
-        snprintf(tmp, sizeof(tmp), "%s\xE5\xB9\xB4", era[0].c_str());
-        Insert(segment, cand, i + 1, tmp, description, kDatePrefix);
+        // "年"
+        tmp = Util::StringPrintf("%s\xE5\xB9\xB4", era[0].c_str());
+        Insert(segment, cand, insert_idx, tmp, description, kDatePrefix);
       }
-      snprintf(tmp, sizeof(tmp), "%d\xE5\xB9\xB4", year);
-      Insert(segment, cand, i + 1, tmp, description, kDatePrefix);
-      snprintf(tmp, sizeof(tmp), "%d", year);
-      Insert(segment, cand, i + 1, tmp, description, kDatePrefix);
+      // "年"
+      tmp = Util::StringPrintf("%d\xE5\xB9\xB4", year);
+      Insert(segment, cand, insert_idx, tmp, description, kDatePrefix);
+      tmp = Util::StringPrintf("%d", year);
+      Insert(segment, cand, insert_idx, tmp, description, kDatePrefix);
       return true;
     } else if (type == REWRITE_CURRENT_TIME) {
       if (!Util::GetCurrentTm(&t_st)) {
@@ -873,8 +1012,9 @@ bool DateRewriter::RewriteTime(Segment *segment,
       }
       vector<string> times;
       ConvertTime(t_st.tm_hour, t_st.tm_min, &times);
-      for (int j = static_cast<int>(times.size()) - 1; j >= 0; --j) {
-        Insert(segment, cand, i + 1, times[j], description, kDatePrefix);
+      for (vector<string>::reverse_iterator rit = times.rbegin();
+           rit != times.rend(); ++rit) {
+        Insert(segment, cand, insert_idx, *rit, description, kDatePrefix);
       }
       return true;
     } else if (type == REWRITE_DATE_AND_CURRENT_TIME) {
@@ -882,17 +1022,14 @@ bool DateRewriter::RewriteTime(Segment *segment,
         LOG(ERROR) << "GetCurrentTm failed";
         return false;
       }
-      vector<string> times;
-      ConvertTime(t_st.tm_hour, t_st.tm_min, &times);
-      if (times.empty()) {
-        return false;
-      }
-      // YYYY/MM/DD HH::MM
-      snprintf(tmp, sizeof(tmp),
-               "%d/%2.2d/%2.2d %s",
-               t_st.tm_year + 1900, t_st.tm_mon + 1, t_st.tm_mday,
-               times[0].c_str());
-      Insert(segment, cand, i + 1, tmp, description, kDatePrefix);
+      // Y/MM/DD H:MM
+      tmp = Util::StringPrintf("%d/%2.2d/%2.2d %2d:%2.2d",
+                               t_st.tm_year + 1900,
+                               t_st.tm_mon + 1,
+                               t_st.tm_mday,
+                               t_st.tm_hour,
+                               t_st.tm_min);
+      Insert(segment, cand, insert_idx, tmp, description, kDatePrefix);
     }
     return true;
   }
@@ -1059,8 +1196,59 @@ bool DateRewriter::RewriteEra(Segment *current_segment,
   return true;
 }
 
+bool DateRewriter::RewriteFourDigits(Segment *segment) const {
+  const string &current_value = segment->key();
+
+  if (Util::GetScriptType(current_value) != Util::NUMBER) {
+    return false;
+  }
+
+  const size_t len = Util::CharsLen(current_value);
+  if (len != 4) {
+    return false;
+  }
+
+  string number_str;
+  Util::FullWidthAsciiToHalfWidthAscii(current_value,
+                                       &number_str);
+
+  const uint32 number = atoi32(number_str.c_str());
+  const uint32 upper_number = number / 100;
+  const uint32 lower_number = number % 100;
+
+  const Segment::Candidate &cand = segment->candidate(0);
+
+  bool is_modified = false;
+  vector<string> result;
+  is_modified |= ConvertDateWithoutYear(upper_number, lower_number, &result);
+
+  for (size_t i = 0; i < result.size(); ++i) {
+    // Always insert after last candidate.
+    const int position = static_cast<int>(segment->candidates_size());
+    // "日付"
+    Insert(segment, cand, position, result[i], "\xE6\x97\xA5\xE4\xBB\x98",
+           kDatePrefix);
+  }
+
+  result.clear();
+  is_modified |= ConvertTime(upper_number, lower_number, &result);
+
+  for (size_t i = 0; i < result.size(); ++i) {
+    // Always insert after last candidate.
+    const int position = static_cast<int>(segment->candidates_size());
+    // "時刻"
+    Insert(segment, cand, position, result[i], "\xE6\x99\x82\xE5\x88\xBB",
+           kDatePrefix);
+  }
+  return is_modified;
+}
+
 DateRewriter::DateRewriter() {}
 DateRewriter::~DateRewriter() {}
+
+int DateRewriter::capability() const {
+  return RewriterInterface::CONVERSION;
+}
 
 bool DateRewriter::Rewrite(Segments *segments) const {
   if (!GET_CONFIG(use_date_conversion)) {
@@ -1080,7 +1268,8 @@ bool DateRewriter::Rewrite(Segments *segments) const {
     if (RewriteDate(seg) || RewriteWeekday(seg) ||
         RewriteMonth(seg) || RewriteYear(seg) ||
         RewriteCurrentTime(seg) ||
-        RewriteDateAndCurrentTime(seg)) {
+        RewriteDateAndCurrentTime(seg) ||
+        RewriteFourDigits(seg)) {
       modified = true;
     } else if (i + 1 < segments->segments_size() &&
                RewriteEra(seg, segments->segment(i + 1))) {

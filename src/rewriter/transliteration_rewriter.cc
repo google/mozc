@@ -35,6 +35,7 @@
 #include "base/util.h"
 #include "composer/composer.h"
 #include "converter/segments.h"
+#include "session/commands.pb.h"
 // For T13N normalize
 #include "session/internal/session_normalizer.h"
 #include "transliteration/transliteration.h"
@@ -206,6 +207,10 @@ bool FillT13NsFromKey(Segments *segments) {
 
 TransliterationRewriter::TransliterationRewriter() {}
 TransliterationRewriter::~TransliterationRewriter() {}
+
+int TransliterationRewriter::capability() const {
+  return RewriterInterface::CONVERSION;
+}
 
 bool TransliterationRewriter::Rewrite(Segments *segments) const {
   if (!IsValidComposer(segments)) {

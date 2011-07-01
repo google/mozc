@@ -38,6 +38,7 @@
 #include "base/util.h"
 #include "dictionary/pos_matcher.h"
 #include "converter/segments.h"
+#include "session/commands.pb.h"
 #include "session/config_handler.h"
 #include "session/config.pb.h"
 
@@ -132,6 +133,10 @@ bool GetNumericCandidatePositions(Segment *seg, int *base_candidate_pos,
 
 NumberRewriter::NumberRewriter() {}
 NumberRewriter::~NumberRewriter() {}
+
+int NumberRewriter::capability() const {
+  return RewriterInterface::CONVERSION;
+}
 
 bool NumberRewriter::Rewrite(Segments *segments) const {
   if (!GET_CONFIG(use_number_conversion)) {

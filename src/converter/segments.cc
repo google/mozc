@@ -38,8 +38,8 @@
 #include "base/mutex.h"
 #include "base/util.h"
 #include "converter/character_form_manager.h"
-#include "converter/lattice.h"
 #include "converter/node.h"
+#include "converter/node_allocator.h"
 #include "dictionary/pos_matcher.h"
 
 namespace mozc {
@@ -64,9 +64,34 @@ string Segment::Candidate::functional_value() const {
                       value.size() - content_value.size());
 }
 
+void Segment::Candidate::CopyFrom(const Candidate &src) {
+  Init();
+
+  key = src.key;
+  value = src.value;
+  content_key = src.content_key;
+  content_value = src.content_value;
+
+  prefix = src.prefix;
+  suffix = src.suffix;
+  description = src.description;
+  usage_title = src.usage_title;
+  usage_description = src.usage_description;
+
+  cost = src.cost;
+  wcost = src.wcost;
+  structure_cost = src.structure_cost;
+
+  lid = src.lid;
+  rid = src.rid;
+
+  attributes = src.attributes;
+
+  style = src. style;
+}
+
 Segment::Segment()
     : segment_type_(FREE),
-      initialized_transliterations_(false),
       pool_(new ObjectPool<Candidate>(16)) {}
 
 Segment::~Segment() {}
@@ -281,8 +306,31 @@ void Segment::Clear() {
   clear_candidates();
   key_.clear();
   meta_candidates_.clear();
-  initialized_transliterations_ = false;
   segment_type_ = FREE;
+}
+
+void Segment::CopyFrom(const Segment &src) {
+  Clear();
+
+  key_ = src.key();
+  segment_type_ = src.segment_type();
+
+  for (size_t i = 0; i < src.candidates_size(); ++i) {
+    Candidate *candidate = add_candidate();
+    candidate->CopyFrom(src.candidate(i));
+  }
+
+  for (size_t i = 0; i < src.meta_candidates_size(); ++i) {
+    Candidate *meta_candidate = add_meta_candidate();
+    meta_candidate->CopyFrom(src.meta_candidate(i));
+  }
+}
+
+void Segments::RevertEntry::CopyFrom(const RevertEntry &src) {
+  revert_entry_type = src.revert_entry_type;
+  id = src.id;
+  timestamp = src.timestamp;
+  key = src.key;
 }
 
 Segments::Segments()
@@ -292,7 +340,6 @@ Segments::Segments()
     resized_(false),
     user_history_enabled_(true),
     request_type_(Segments::CONVERSION),
-    lattice_(new Lattice),
     pool_(new ObjectPool<Segment>(32)),
     composer_(NULL) {}
 
@@ -449,8 +496,31 @@ void Segments::RemoveTailOfHistorySegments(size_t num_of_characters) {
 
 void Segments::Clear() {
   clear_segments();
-  clear_lattice();
   clear_revert_entries();
+}
+
+void Segments::CopyFrom(const Segments &src) {
+  Clear();
+  max_history_segments_size_ = src.max_history_segments_size();
+  max_prediction_candidates_size_ = src.max_prediction_candidates_size();
+  max_conversion_candidates_size_ = src.max_conversion_candidates_size();
+  resized_ = src.resized();
+  user_history_enabled_ = src.user_history_enabled();
+
+  request_type_ = src.request_type();
+
+  for (size_t i = 0; i < src.segments_size(); ++i) {
+    Segment *segment = add_segment();
+    segment->CopyFrom(src.segment(i));
+  }
+
+  for (size_t i = 0; i < src.revert_entries_size(); ++i) {
+    RevertEntry *revert_entry = push_back_revert_entry();
+    revert_entry->CopyFrom(src.revert_entry(i));
+  }
+
+  // TODO(hsumita): Copy composer_ correctly.
+  composer_ = NULL;
 }
 
 void Segments::clear_segments() {
@@ -478,18 +548,6 @@ void Segments::clear_conversion_segments() {
   clear_revert_entries();
   resized_ = false;
   segments_.resize(size);
-}
-
-void Segments::clear_lattice() {
-  lattice_->Clear();
-}
-
-Lattice *Segments::lattice() const {
-  return lattice_.get();
-}
-
-NodeAllocatorInterface *Segments::node_allocator() const {
-  return lattice_->node_allocator();
 }
 
 size_t Segments::max_history_segments_size() const {

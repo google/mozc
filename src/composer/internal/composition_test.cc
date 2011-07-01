@@ -27,8 +27,9 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "composer/internal/char_chunk.h"
 #include "composer/internal/composition.h"
+
+#include "composer/internal/char_chunk.h"
 #include "composer/internal/composition_input.h"
 #include "composer/internal/transliterators_ja.h"
 #include "composer/table.h"
@@ -36,17 +37,6 @@
 
 namespace mozc {
 namespace composer {
-
-// This macro is ported from base/basictypes.h.  Due to WinNT.h has
-// the same macro, this macro should be undefined at the end of this
-// file.
-// TODO(komatsu): Move this macro to base or testing.
-#ifndef ARRAYSIZE
-#define UNDEFINE_ARRAYSIZE
-#define ARRAYSIZE(a) \
-  ((sizeof(a) / sizeof(*(a))) / \
-   static_cast<size_t>(!(sizeof(a) % sizeof(*(a)))))
-#endif  // ARRAYSIZE
 
 namespace {
 const TransliteratorInterface *kNullT12r = NULL;
@@ -1562,10 +1552,6 @@ TEST_F(CompositionTest, SetTransliteratorOnEmpty) {
   composition_->InsertInput(0, input);
   EXPECT_EQ(1, composition_->GetLength());
 }
-
-#ifdef UNDEFINE_ARRAYSIZE
-#undef ARRAYSIZE
-#endif  // UNDEFINE_ARRAYSIZE
 
 }  // namespace composer
 }  // namespace mozc

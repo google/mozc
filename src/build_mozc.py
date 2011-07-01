@@ -142,7 +142,11 @@ def GenerateVersionFile(version_template_path, version_path):
   """
   version = mozc_version.MozcVersion(version_template_path, expand_daily=True)
   version_definition = version.GetVersionInFormat(
-      'MAJOR=@MAJOR@\nMINOR=@MINOR@\nBUILD=@BUILD@\nREVISION=@REVISION@\n')
+      'MAJOR=@MAJOR@\n'
+      'MINOR=@MINOR@\n'
+      'BUILD=@BUILD@\n'
+      'REVISION=@REVISION@\n'
+      'FLAG=@FLAG@\n')
   old_content = ''
   if os.path.exists(version_path):
     # if the target file already exists, need to check the necessity of update.
@@ -264,6 +268,10 @@ def CleanBuildFilesAndDirectories():
                                                '*.target.mk')))
       file_names.extend(glob.glob(os.path.join(gyp_directory_name,
                                                '*/*.target.mk')))
+      file_names.extend(glob.glob(os.path.join(gyp_directory_name,
+                                               '*.Makefile')))
+      file_names.extend(glob.glob(os.path.join(gyp_directory_name,
+                                               '*/*.Makefile')))
   file_names.append('%s/mozc_version.txt' % SRC_DIR)
   file_names.append('third_party/rx/rx.gyp')
   # Collect stuff in the top-level directory.
@@ -329,11 +337,20 @@ def GypMain(deps_file_name):
 
   # Get and show the list of .gyp file names.
   gyp_file_names = GetGypFileNames()
+  banned_gyp_files = []
   if not options.chewing:
     # chewing/chewing.gyp is automatically included because of the
     # policy.  We explicitly exclude it here.
+    banned_gyp_files.append('chewing.gyp')
+
+  if not options.hangul:
+    # hangul/hangul.gyp is automatically included because of the
+    # policy.  We explicitly exclude it here.
+    banned_gyp_files.append('hangul.gyp')
+
+  if banned_gyp_files:
     gyp_file_names = [gyp_file for gyp_file in gyp_file_names
-                      if not gyp_file.endswith('chewing.gyp')]
+                      if os.path.basename(gyp_file) not in banned_gyp_files]
   print 'GYP files:'
   for file_name in gyp_file_names:
     print '- %s' % file_name
@@ -349,6 +366,8 @@ def GypMain(deps_file_name):
   command_line = [sys.executable, gyp_script,
                   '--depth=.',
                   '--include=%s/gyp/common.gypi' % SRC_DIR]
+  command_line.extend(['-D', 'python_executable=%s' % sys.executable])
+
   if options.onepass:
     command_line.extend(['-D', 'two_pass_build=0'])
   command_line.extend(gyp_file_names)
@@ -372,10 +391,8 @@ def GypMain(deps_file_name):
   if options.channel_dev:
     command_line.extend(['-D', 'channel_dev=1'])
 
+  command_line.extend(['-D', 'target_platform=%s' % options.target_platform])
 
-  # For Mac, we don't use libzinnia
-  if IsMac():
-    command_line.extend(['-D', 'use_libzinnia=0'])
 
   # Dictionary configuration
   if options.target_platform == 'ChromeOS':
@@ -556,6 +573,11 @@ def ParseGypOptions():
                     'This flag is false by default because it may require you '
                     'to install libchewing in your environment.')
 
+  parser.add_option('--hangul', dest='hangul', action='store_true',
+                    default=False, help='include hangul gyp recipe.  '
+                    'This flag is false by default because it may require you '
+                    'to install libhangul in your environment.')
+
 
   # Linux environment can build both for Linux and ChromeOS.
   # This option enable this script to know which build (Linux or ChromeOS)
@@ -567,7 +589,7 @@ def ParseGypOptions():
   return options
 
 
-def ParseMetaTarget(meta_target_name):
+def ParseMetaTarget(meta_target_name, target_platform):
   """Returns a list of build targets with expanding meta target name.
 
   If the specified name is 'package', returns a list of build targets for
@@ -577,6 +599,7 @@ def ParseMetaTarget(meta_target_name):
 
   Args:
     meta_target_name: meta target name to be expanded.
+    target_platform: The target platform.
 
   Returns:
     A list of build targets with meta target names expanded.
@@ -584,7 +607,11 @@ def ParseMetaTarget(meta_target_name):
   if meta_target_name != 'package':
     return [meta_target_name]
 
-  if IsLinux():
+  if target_platform == 'ChromeOS':
+    targets = ['%s/unix/ibus/ibus.gyp:ibus_mozc',
+               '%s/server/server.gyp:mozc_server',
+               '%s/gui/gui.gyp:mozc_tool']
+  elif IsLinux():
     targets = ['%s/unix/ibus/ibus.gyp:ibus_mozc',
                '%s/server/server.gyp:mozc_server',
                '%s/gui/gui.gyp:mozc_tool']
@@ -608,6 +635,8 @@ def ParseBuildOptions():
   parser.add_option('--version_file', dest='version_file',
                     help='use the specified version template file',
                     default='mozc_version_template.txt')
+  parser.add_option('--target_platform', dest='target_platform',
+                    help='specify target platform.')
 
   # On Linux, seems there is no way to set build_base in the ParseGyp section
   if IsLinux():
@@ -630,7 +659,7 @@ def ParseBuildOptions():
 
   targets = []
   for target in original_targets:
-    targets.extend(ParseMetaTarget(target))
+    targets.extend(ParseMetaTarget(target, options.target_platform))
 
   return (options, targets)
 
@@ -698,7 +727,9 @@ def BuildOnLinux(options, targets):
   # set output directory
   os.environ['builddir_name'] = 'out_linux'
 
-  build_args = ['-j%s' % options.jobs, 'BUILDTYPE=%s' % options.configuration]
+  build_args = ['-j%s' % options.jobs,
+                'MAKE_JOBS=%s' % options.jobs,
+                'BUILDTYPE=%s' % options.configuration]
   if options.build_base:
     build_args.append('builddir_name=%s' % options.build_base)
 

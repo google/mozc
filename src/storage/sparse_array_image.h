@@ -99,6 +99,9 @@ class SparseArrayBuilder {
   int tree_depth_;
 };
 
+class Mutex;
+class SparseArrayCache;
+
 class SparseArrayImage {
  public:
   static const int kInvalidValueIndex = -1;
@@ -109,11 +112,18 @@ class SparseArrayImage {
   // Returns index in values. kInvalidValueIndex will be returned
   // if the value is not available.
   int Peek(uint32 index) const;
+
+  // Directly access the array without using the cache.
+  int PeekFromArray(uint32 index) const;
+
   // Returns nth value.
   int GetValue(int nth) const;
 
  private:
   int ReadInt(const char *p) const;
+
+  // Initialize cache object.
+  void InitCache(SparseArrayCache *cache) const;
 
   const char *image_;
   int size_;
@@ -125,6 +135,9 @@ class SparseArrayImage {
 
   int values_size_;
   const char *values_;
+
+  scoped_ptr<SparseArrayCache> cache_;
+  scoped_ptr<Mutex> cache_lock_;
 };
 }  // namespace mozc
 

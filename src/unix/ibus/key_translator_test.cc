@@ -114,6 +114,7 @@ const guint special_keys[] = {
   IBUS_KP_Insert,
   IBUS_Caps_Lock,
   IBUS_ISO_Left_Tab,
+  IBUS_Hangul_Hanja,
 };
 
 const commands::KeyEvent::SpecialKey mapped_special_keys[] = {
@@ -193,6 +194,7 @@ const commands::KeyEvent::SpecialKey mapped_special_keys[] = {
   commands::KeyEvent::INSERT,
   commands::KeyEvent::CAPS_LOCK,
   commands::KeyEvent::TAB,
+  commands::KeyEvent::HANJA,
 };
 
 const guint modifier_masks[] = {

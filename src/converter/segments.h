@@ -38,8 +38,6 @@
 namespace mozc {
 
 struct Node;
-class NodeAllocatorInterface;
-class Lattice;
 template <class T> class ObjectPool;
 
 namespace composer {
@@ -68,6 +66,9 @@ class Segment {
     string suffix;
     // Description including description type and message
     string description;
+
+    // Usage ID
+    int32 usage_id;
     // Title of the usage containing basic form of this candidate.
     string usage_title;
     // Content of the usage.
@@ -112,6 +113,7 @@ class Segment {
       wcost = 0;
       lid = 0;
       rid = 0;
+      usage_id = 0;
       attributes = 0;
       style = 0;
     }
@@ -158,6 +160,8 @@ class Segment {
     // functional_value =
     // value.substr(content_value.size(), value.size() - content_value.size());
     string functional_value() const;
+
+    void CopyFrom(const Candidate &src);
   };
 
   const SegmentType segment_type() const;
@@ -211,6 +215,7 @@ class Segment {
   void move_candidate(int old_idx, int new_idx);
 
   void Clear();
+  void CopyFrom(const Segment &src);
 
   // Keep clear() method as other modules are still using the old method
   void clear() { Clear(); }
@@ -223,7 +228,6 @@ class Segment {
   string key_;
   deque<Candidate *> candidates_;
   vector<Candidate>  meta_candidates_;
-  bool initialized_transliterations_;
   scoped_ptr<ObjectPool<Candidate> > pool_;
   DISALLOW_COPY_AND_ASSIGN(Segment);
 };
@@ -271,6 +275,8 @@ class Segments {
     uint32 timestamp;
     string key;
     RevertEntry() : revert_entry_type(0), id(0), timestamp(0) {}
+
+    void CopyFrom(const RevertEntry &src);
   };
 
   RequestType request_type() const;
@@ -337,19 +343,14 @@ class Segments {
   // Removes specified number of characters at the end of history segments.
   void RemoveTailOfHistorySegments(size_t num_of_characters);
 
-  // lattice
-  void clear_lattice();
-
-  // clear segments and lattice
+  // clear segments
   void Clear();
+
+  // Copy segments from src
+  void CopyFrom(const Segments &src);
 
   // Dump Segments structure
   string DebugString() const;
-
-  // return lattice instance
-  Lattice *lattice() const;
-
-  NodeAllocatorInterface *node_allocator() const;
 
   // Revert entries
   void clear_revert_entries();
@@ -369,7 +370,6 @@ class Segments {
   bool user_history_enabled_;
 
   RequestType request_type_;
-  scoped_ptr<Lattice> lattice_;
   scoped_ptr<ObjectPool<Segment> > pool_;
   deque<Segment *> segments_;
   vector<RevertEntry> revert_entries_;

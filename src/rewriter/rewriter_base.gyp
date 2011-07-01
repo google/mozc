@@ -169,6 +169,36 @@
             '<@(input_files)',
           ],
         },
+        {
+          'action_name': 'gen_usage_rewriter_data',
+          'variables': {
+            'usage_data_file': [
+              '../data/usage/usage_data.txt',
+            ],
+            'cforms_file': [
+              '../data/rules/cforms.def',
+            ],
+          },
+          'inputs': [
+            '<@(usage_data_file)',
+            '<@(cforms_file)',
+          ],
+          'conditions': [['two_pass_build==0', {
+            'inputs': [
+              '<(mozc_build_tools_dir)/gen_usage_rewriter_dictionary_main',
+            ],
+          }]],
+          'outputs': [
+            '<(gen_out_dir)/usage_rewriter_data.h',
+          ],
+          'action': [
+            '<(mozc_build_tools_dir)/gen_usage_rewriter_dictionary_main',
+            '--usage_data_file=<@(usage_data_file)',
+            '--cforms_file=<@(cforms_file)',
+            '--logtostderr',
+            '--output=<(gen_out_dir)/usage_rewriter_data.h',
+          ],
+        },
       ],
       'conditions': [['two_pass_build==0', {
         'dependencies': [
@@ -176,6 +206,7 @@
           'install_gen_emoticon_rewriter_dictionary_main',
           'install_gen_single_kanji_rewriter_dictionary_main',
           'install_gen_symbol_rewriter_dictionary_main',
+          'install_gen_usage_rewriter_dictionary_main',
         ],
       }]],
     },
@@ -260,6 +291,26 @@
       'type': 'none',
       'variables': {
         'bin_name': 'gen_emoticon_rewriter_dictionary_main'
+      },
+      'includes' : [
+        '../gyp/install_build_tool.gypi',
+      ]
+    },
+    {
+      'target_name': 'gen_usage_rewriter_dictionary_main',
+      'type': 'executable',
+      'sources': [
+        'gen_usage_rewriter_dictionary_main.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+      ],
+    },
+    {
+      'target_name': 'install_gen_usage_rewriter_dictionary_main',
+      'type': 'none',
+      'variables': {
+        'bin_name': 'gen_usage_rewriter_dictionary_main'
       },
       'includes' : [
         '../gyp/install_build_tool.gypi',

@@ -36,6 +36,7 @@
 #include "session/commands.pb.h"
 #include "session/config_handler.h"
 #include "session/internal/keymap.h"
+#include "session/internal/keymap_factory.h"
 #include "session/session_usage_observer.h"
 #include "storage/registry.h"
 #include "testing/base/public/gunit.h"
@@ -148,7 +149,7 @@ class SessionUsageObserverTest : public testing::Test {
 };
 
 TEST_F(SessionUsageObserverTest, SaveWhenDeleted) {
-  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);;
+  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
   string reg_str;
 
   // Add command
@@ -173,7 +174,7 @@ TEST_F(SessionUsageObserverTest, SaveWhenDeleted) {
 }
 
 TEST_F(SessionUsageObserverTest, SavePeriodically) {
-  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);;
+  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
   string reg_str;
 
   // Add command
@@ -199,7 +200,7 @@ TEST_F(SessionUsageObserverTest, SavePeriodically) {
 }
 
 TEST_F(SessionUsageObserverTest, SetInterval) {
-  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);;
+  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
   observer->SetInterval(1);
   string reg_str;
 
@@ -213,7 +214,7 @@ TEST_F(SessionUsageObserverTest, SetInterval) {
 }
 
 TEST_F(SessionUsageObserverTest, SaveSpecialKeys) {
-  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);;
+  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
   observer->SetInterval(1);
   string reg_str;
 
@@ -283,7 +284,7 @@ TEST_F(SessionUsageObserverTest, SaveSpecialKeys) {
 }
 
 TEST_F(SessionUsageObserverTest, AllSpecialKeysTest) {
-  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);;
+  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
   observer->SetInterval(1);
   string reg_str;
 
@@ -316,64 +317,66 @@ TEST_F(SessionUsageObserverTest, PerformedCommandTest) {
   scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
   observer->SetInterval(1);
   string reg_str;
-  scoped_ptr<keymap::KeyMapManager> keymap_manager(new keymap::KeyMapManager);
+  config::Config::SessionKeymap keymap = config::Config::MSIME;
+  keymap::KeyMapManager *keymap_manager =
+      keymap::KeyMapFactory::GetKeyMapManager(keymap);
+
   {
     set<string> command_names;
     keymap_manager->GetAvailableCommandNameDirect(&command_names);
-    for (set<string>::const_iterator itr = command_names.begin();
-         itr != command_names.end(); ++itr) {
+    for (set<string>::const_iterator iter = command_names.begin();
+         iter != command_names.end(); ++iter) {
       commands::Command command;
       command.mutable_input()->set_type(commands::Input::SEND_KEY);
       command.mutable_output()->set_id(1);
-      command.mutable_output()->set_performed_command("Direct_" + *itr);
+      command.mutable_output()->set_performed_command("Direct_" + *iter);
       observer->EvalCommandHandler(command);
-      ExpectStatsCount("Performed_Direct_" + *itr, 1);
+      ExpectStatsCount("Performed_Direct_" + *iter, 1);
     }
   }
   {
     set<string> command_names;
     keymap_manager->GetAvailableCommandNamePrecomposition(&command_names);
-    for (set<string>::const_iterator itr = command_names.begin();
-         itr != command_names.end(); ++itr) {
+    for (set<string>::const_iterator iter = command_names.begin();
+         iter != command_names.end(); ++iter) {
       commands::Command command;
       command.mutable_input()->set_type(commands::Input::SEND_KEY);
       command.mutable_output()->set_id(1);
-      command.mutable_output()->set_performed_command("Precomposition_" + *itr);
+      command.mutable_output()->set_performed_command("Precomposition_" + *iter);
       observer->EvalCommandHandler(command);
-      ExpectStatsCount("Performed_Precomposition_" + *itr, 1);
+      ExpectStatsCount("Performed_Precomposition_" + *iter, 1);
     }
   }
   {
     set<string> command_names;
     keymap_manager->GetAvailableCommandNameComposition(&command_names);
-    for (set<string>::const_iterator itr = command_names.begin();
-         itr != command_names.end(); ++itr) {
+    for (set<string>::const_iterator iter = command_names.begin();
+         iter != command_names.end(); ++iter) {
       commands::Command command;
       command.mutable_input()->set_type(commands::Input::SEND_KEY);
       command.mutable_output()->set_id(1);
-      command.mutable_output()->set_performed_command("Composition_" + *itr);
+      command.mutable_output()->set_performed_command("Composition_" + *iter);
       observer->EvalCommandHandler(command);
-      ExpectStatsCount("Performed_Composition_" + *itr, 1);
+      ExpectStatsCount("Performed_Composition_" + *iter, 1);
     }
   }
   {
     set<string> command_names;
     keymap_manager->GetAvailableCommandNameConversion(&command_names);
-    for (set<string>::const_iterator itr = command_names.begin();
-         itr != command_names.end(); ++itr) {
+    for (set<string>::const_iterator iter = command_names.begin();
+         iter != command_names.end(); ++iter) {
       commands::Command command;
       command.mutable_input()->set_type(commands::Input::SEND_KEY);
       command.mutable_output()->set_id(1);
-      command.mutable_output()->set_performed_command("Conversion_" + *itr);
+      command.mutable_output()->set_performed_command("Conversion_" + *iter);
       observer->EvalCommandHandler(command);
-      ExpectStatsCount("Performed_Conversion_" + *itr, 1);
+      ExpectStatsCount("Performed_Conversion_" + *iter, 1);
     }
   }
 }
 
 TEST_F(SessionUsageObserverTest, ConfigTest) {
-
-  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);;
+  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
   observer->SetInterval(1);
   string reg_str;
 
@@ -541,7 +544,7 @@ TEST_F(SessionUsageObserverTest, IMEActivationKeyDefaultTest) {
   config::Config config;
   config::ConfigHandler::GetDefaultConfig(&config);
   config::ConfigHandler::SetConfig(config);
-  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);;
+  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
   observer->SetInterval(1);
   string reg_str;
 
@@ -563,12 +566,12 @@ TEST_F(SessionUsageObserverTest, IMEActivationKeyNoCustomTest) {
       "DirectInput\tON\tIMEOn\n"
       "DirectInput\tHankaku/Zenkaku\tIMEOn\n"
       "Precomposition\tOFF\tIMEOff\n"
-      "Precomposition\tHankaku/Zenkaku\tIMEOff\n";;
+      "Precomposition\tHankaku/Zenkaku\tIMEOff\n";
   config.set_session_keymap(config::Config::CUSTOM);
   config.set_custom_keymap_table(custom_keymap_table);
 
   config::ConfigHandler::SetConfig(config);
-  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);;
+  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
   observer->SetInterval(1);
   string reg_str;
 
@@ -594,7 +597,7 @@ TEST_F(SessionUsageObserverTest, ConvertOneSegment) {
   ReadCommandListFromFile("session_usage_observer_testcase1.txt",
                           &command_list);
 
-  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);;
+  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
   observer->SetInterval(1);
 
   for (size_t i =0; i < command_list.commands_size(); ++i) {
@@ -666,7 +669,7 @@ TEST_F(SessionUsageObserverTest, Prediction) {
   ReadCommandListFromFile("session_usage_observer_testcase2.txt",
                           &command_list);
 
-  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);;
+  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
   observer->SetInterval(1);
 
   for (size_t i =0; i < command_list.commands_size(); ++i) {
@@ -740,7 +743,7 @@ TEST_F(SessionUsageObserverTest, Suggestion) {
   ReadCommandListFromFile("session_usage_observer_testcase3.txt",
                           &command_list);
 
-  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);;
+  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
   observer->SetInterval(1);
 
   for (size_t i =0; i < command_list.commands_size(); ++i) {
@@ -813,7 +816,7 @@ TEST_F(SessionUsageObserverTest, SelectPrediction) {
   ReadCommandListFromFile("session_usage_observer_testcase4.txt",
                           &command_list);
 
-  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);;
+  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
   observer->SetInterval(1);
 
   for (size_t i =0; i < command_list.commands_size(); ++i) {
@@ -885,7 +888,7 @@ TEST_F(SessionUsageObserverTest, MouseSelectFromSuggestion) {
   ReadCommandListFromFile("session_usage_observer_testcase5.txt",
                           &command_list);
 
-  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);;
+  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
   observer->SetInterval(1);
 
   for (size_t i =0; i < command_list.commands_size(); ++i) {
@@ -955,7 +958,7 @@ TEST_F(SessionUsageObserverTest, Composition) {
   ReadCommandListFromFile("session_usage_observer_testcase6.txt",
                           &command_list);
 
-  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);;
+  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
   observer->SetInterval(1);
 
   for (size_t i =0; i < command_list.commands_size(); ++i) {
@@ -1026,7 +1029,7 @@ TEST_F(SessionUsageObserverTest, SelectConversion) {
   ReadCommandListFromFile("session_usage_observer_testcase7.txt",
                           &command_list);
 
-  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);;
+  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
   observer->SetInterval(1);
 
   for (size_t i =0; i < command_list.commands_size(); ++i) {
@@ -1098,7 +1101,7 @@ TEST_F(SessionUsageObserverTest, SelectMinorPrediction) {
   ReadCommandListFromFile("session_usage_observer_testcase8.txt",
                           &command_list);
 
-  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);;
+  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
   observer->SetInterval(1);
 
   for (size_t i =0; i < command_list.commands_size(); ++i) {
@@ -1170,7 +1173,7 @@ TEST_F(SessionUsageObserverTest, SelectT13N) {
   ReadCommandListFromFile("session_usage_observer_testcase9.txt",
                           &command_list);
 
-  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);;
+  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
   observer->SetInterval(1);
 
   for (size_t i =0; i < command_list.commands_size(); ++i) {
@@ -1241,7 +1244,7 @@ TEST_F(SessionUsageObserverTest, T13NbyKey) {
   ReadCommandListFromFile("session_usage_observer_testcase10.txt",
                           &command_list);
 
-  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);;
+  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
   observer->SetInterval(1);
 
   for (size_t i =0; i < command_list.commands_size(); ++i) {
@@ -1311,7 +1314,7 @@ TEST_F(SessionUsageObserverTest, MultiSegments) {
   ReadCommandListFromFile("session_usage_observer_testcase11.txt",
                           &command_list);
 
-  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);;
+  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
   observer->SetInterval(1);
 
   for (size_t i =0; i < command_list.commands_size(); ++i) {
@@ -1382,7 +1385,7 @@ TEST_F(SessionUsageObserverTest, SelectCandidatesInMultiSegments) {
   ReadCommandListFromFile("session_usage_observer_testcase12.txt",
                           &command_list);
 
-  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);;
+  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
   observer->SetInterval(1);
 
   for (size_t i =0; i < command_list.commands_size(); ++i) {
@@ -1454,7 +1457,7 @@ TEST_F(SessionUsageObserverTest, ContinueInput) {
   ReadCommandListFromFile("session_usage_observer_testcase13.txt",
                           &command_list);
 
-  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);;
+  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
   observer->SetInterval(1);
 
   for (size_t i =0; i < command_list.commands_size(); ++i) {
@@ -1526,7 +1529,7 @@ TEST_F(SessionUsageObserverTest, MultiInputSession) {
   ReadCommandListFromFile("session_usage_observer_testcase12.txt",
                           &command_list);
 
-  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);;
+  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
   observer->SetInterval(1);
 
   for (size_t i =0; i < command_list.commands_size(); ++i) {
@@ -1608,7 +1611,7 @@ TEST_F(SessionUsageObserverTest, ContinuousInput) {
   ReadCommandListFromFile("session_usage_observer_testcase14.txt",
                           &command_list);
 
-  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);;
+  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
   observer->SetInterval(1);
 
   for (size_t i =0; i < command_list.commands_size(); ++i) {
@@ -1678,7 +1681,7 @@ TEST_F(SessionUsageObserverTest, BackSpaceAfterCommit) {
   ReadCommandListFromFile("session_usage_observer_testcase15.txt",
                           &command_list);
 
-  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);;
+  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
   observer->SetInterval(1);
 
   for (size_t i =0; i < command_list.commands_size(); ++i) {
@@ -1750,7 +1753,7 @@ TEST_F(SessionUsageObserverTest, MultipleBackSpaceAfterCommit) {
   ReadCommandListFromFile("session_usage_observer_testcase16.txt",
                           &command_list);
 
-  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);;
+  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
   observer->SetInterval(1);
 
   for (size_t i =0; i < command_list.commands_size(); ++i) {
@@ -1829,7 +1832,7 @@ TEST_F(SessionUsageObserverTest, MultipleSessions) {
   ReadCommandListFromFile("session_usage_observer_testcase17.txt",
                           &command_list);
 
-  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);;
+  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
   observer->SetInterval(1);
 
   for (size_t i =0; i < command_list.commands_size(); ++i) {
@@ -1888,5 +1891,76 @@ TEST_F(SessionUsageObserverTest, MultipleSessions) {
   ExpectStatsTiming("SubmittedLength", 3, 6, 4, 10);
   ExpectStatsCount("SubmittedTotalLength", 20);
 }
+
+TEST_F(SessionUsageObserverTest, ZeroQuerySuggestion) {
+  // "た"
+  // select suggested candidate.
+  // select zero query suggestion candidate.
+
+  commands::CommandList command_list;
+  ReadCommandListFromFile("session_usage_observer_testcase18.txt",
+                          &command_list);
+
+  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
+  observer->SetInterval(1);
+
+  for (size_t i =0; i < command_list.commands_size(); ++i) {
+    observer->EvalCommandHandler(command_list.commands(i));
+  }
+
+  int consumed_sendkey = 0;
+  int unconsumed_sendkey = 0;
+  CountSendKeyStats(command_list, &consumed_sendkey, &unconsumed_sendkey);
+
+  ExpectStatsCount("ConsumedSendKey", consumed_sendkey);
+  ExpectStatsCount("UnconsumedSendKey", unconsumed_sendkey);
+
+  ExpectStatsCount("Commit", 2);
+  ExpectStatsCount("CommitFromConversion", 0);
+  ExpectStatsCount("CommitFromSuggestion", 2);
+  ExpectStatsCount("CommitFromPrediction", 0);
+  ExpectStatsCount("CommitFromComposition", 0);
+
+  ExpectStatsCount("ConversionCandidates0", 0);
+  ExpectStatsCount("ConversionCandidates1", 0);
+  ExpectStatsCount("ConversionCandidates2", 0);
+  ExpectStatsCount("ConversionCandidates3", 0);
+  ExpectStatsCount("ConversionCandidates4", 0);
+  ExpectStatsCount("ConversionCandidates5", 0);
+  ExpectStatsCount("ConversionCandidatesGE10", 0);
+
+  ExpectStatsCount("TransliterationCandidates0", 0);
+  ExpectStatsCount("TransliterationCandidates1", 0);
+  ExpectStatsCount("TransliterationCandidates2", 0);
+  ExpectStatsCount("TransliterationCandidates3", 0);
+  ExpectStatsCount("TransliterationCandidates4", 0);
+  ExpectStatsCount("TransliterationCandidates5", 0);
+  ExpectStatsCount("TransliterationCandidatesGE10", 0);
+
+  ExpectStatsCount("PredictionCandidates0", 0);
+  ExpectStatsCount("PredictionCandidates1", 0);
+  ExpectStatsCount("PredictionCandidates2", 0);
+  ExpectStatsCount("PredictionCandidates3", 0);
+  ExpectStatsCount("PredictionCandidates4", 0);
+  ExpectStatsCount("PredictionCandidates5", 0);
+  ExpectStatsCount("PredictionCandidatesGE10", 0);
+
+  ExpectStatsCount("SuggestionCandidates0", 1);
+  ExpectStatsCount("SuggestionCandidates1", 0);
+  ExpectStatsCount("SuggestionCandidates2", 0);
+  ExpectStatsCount("SuggestionCandidates3", 0);
+  ExpectStatsCount("SuggestionCandidates4", 0);
+  ExpectStatsCount("SuggestionCandidates5", 0);
+  ExpectStatsCount("SuggestionCandidatesGE10", 1);
+
+  ExpectStatsCount("MouseSelect", 0);
+  ExpectStatsCount("BackSpaceAfterCommit", 0);
+
+  ExpectStatsTiming("SubmittedSegmentLength", 1, 1, 1, 1);
+  ExpectStatsTiming("SubmittedSegmentNumber", 1, 1, 1, 1);
+  ExpectStatsTiming("SubmittedLength", 1, 1, 1, 1);
+  ExpectStatsCount("SubmittedTotalLength", 1);
+}
+
 }  // namespace session
 }  // namespace mozc

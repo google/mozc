@@ -31,11 +31,15 @@
 
 #include <utility>
 
+#include "base/freelist.h"
 #include "base/util.h"
 #include "converter/converter_interface.h"
 #include "converter/converter_mock.h"
 #include "converter/node.h"
+#include "converter/node_allocator.h"
 #include "converter/segments.h"
+#include "dictionary/dictionary_mock.h"
+#include "dictionary/suffix_dictionary.h"
 #include "session/commands.pb.h"
 #include "session/config.pb.h"
 #include "session/config_handler.h"
@@ -53,6 +57,111 @@ class DictionaryPredictorTest : public testing::Test {
     Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
     config::ConfigHandler::GetDefaultConfig(&default_config_);
     config::ConfigHandler::SetConfig(default_config_);
+    GetMockDic()->ClearAll();
+    AddWordsToMockDic();
+    DictionaryFactory::SetDictionary(GetMockDic());
+  }
+
+  DictionaryMock *GetMockDic() {
+    return DictionaryMock::GetDictionaryMock();
+  }
+
+  void AddWordsToMockDic() {
+    // "ぐーぐるあ"
+    const char kGoogleA[] = "\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90\xE3\x82\x8B"
+        "\xE3\x81\x82";
+
+    const char kGoogleAdsenseHiragana[] = "\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90"
+        "\xE3\x82\x8B\xE3\x81\x82\xE3\x81\xA9"
+        "\xE3\x81\x9B\xE3\x82\x93\xE3\x81\x99";
+    // "グーグルアドセンス"
+    const char kGoogleAdsenseKatakana[] = "\xE3\x82\xB0\xE3\x83\xBC\xE3\x82\xB0"
+        "\xE3\x83\xAB\xE3\x82\xA2\xE3\x83\x89"
+        "\xE3\x82\xBB\xE3\x83\xB3\xE3\x82\xB9";
+    GetMockDic()->AddLookupPredictive(kGoogleA, kGoogleAdsenseHiragana,
+                                      kGoogleAdsenseKatakana,
+                                      Node::DEFAULT_ATTRIBUTE);
+
+    // "ぐーぐるあどわーず"
+    const char kGoogleAdwordsHiragana[] =
+        "\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90\xE3\x82\x8B"
+        "\xE3\x81\x82\xE3\x81\xA9\xE3\x82\x8F\xE3\x83\xBC\xE3\x81\x9A";
+    const char kGoogleAdwordsKatakana[] =
+        "\xE3\x82\xB0\xE3\x83\xBC\xE3\x82\xB0\xE3\x83\xAB"
+        "\xE3\x82\xA2\xE3\x83\x89\xE3\x83\xAF\xE3\x83\xBC\xE3\x82\xBA";
+    GetMockDic()->AddLookupPredictive(kGoogleA, kGoogleAdwordsHiragana,
+                                      kGoogleAdwordsKatakana,
+                                      Node::DEFAULT_ATTRIBUTE);
+
+    // "ぐーぐる"
+    const char kGoogle[] = "\xE3\x81\x90\xE3\x83\xBC"
+        "\xE3\x81\x90\xE3\x82\x8B";
+    GetMockDic()->AddLookupPredictive(kGoogle, kGoogleAdsenseHiragana,
+                                      kGoogleAdsenseKatakana,
+                                      Node::DEFAULT_ATTRIBUTE);
+    GetMockDic()->AddLookupPredictive(kGoogle, kGoogleAdwordsHiragana,
+                                      kGoogleAdwordsKatakana,
+                                      Node::DEFAULT_ATTRIBUTE);
+
+    // "グーグル"
+    const char kGoogleKatakana[] = "\xE3\x82\xB0\xE3\x83\xBC"
+        "\xE3\x82\xB0\xE3\x83\xAB";
+    GetMockDic()->AddLookupPrefix(kGoogle, kGoogleKatakana,
+                                  kGoogleKatakana,
+                                  Node::DEFAULT_ATTRIBUTE);
+
+    // "あどせんす"
+    const char kAdsense[] = "\xE3\x81\x82\xE3\x81\xA9\xE3\x81\x9B"
+        "\xE3\x82\x93\xE3\x81\x99";
+    const char kAdsenseKatakana[] = "\xE3\x82\xA2\xE3\x83\x89"
+        "\xE3\x82\xBB\xE3\x83\xB3\xE3\x82\xB9";
+    GetMockDic()->AddLookupPrefix(kAdsense, kAdsenseKatakana,
+                                  kAdsenseKatakana,
+                                  Node::DEFAULT_ATTRIBUTE);
+
+    // "てすと"
+    const char kTestHiragana[] = "\xE3\x81\xA6\xE3\x81\x99\xE3\x81\xA8";
+
+    // "テスト"
+    const char kTestKatakana[] = "\xE3\x83\x86\xE3\x82\xB9\xE3\x83\x88";
+
+    GetMockDic()->AddLookupPrefix(kTestHiragana, kTestHiragana,
+                                  kTestKatakana, Node::DEFAULT_ATTRIBUTE);
+
+    // "かぷりちょうざ"
+    const char kWrongCapriHiragana[] = "\xE3\x81\x8B\xE3\x81\xB7\xE3\x82\x8A"
+        "\xE3\x81\xA1\xE3\x82\x87\xE3\x81\x86\xE3\x81\x96";
+
+    // "かぷりちょーざ"
+    const char kRightCapriHiragana[] = "\xE3\x81\x8B\xE3\x81\xB7\xE3\x82\x8A"
+        "\xE3\x81\xA1\xE3\x82\x87\xE3\x83\xBC\xE3\x81\x96";
+
+    // "カプリチョーザ"
+    const char kCapriKatakana[] = "\xE3\x82\xAB\xE3\x83\x97\xE3\x83\xAA"
+        "\xE3\x83\x81\xE3\x83\xA7\xE3\x83\xBC\xE3\x82\xB6";
+
+    GetMockDic()->AddLookupPrefix(kWrongCapriHiragana,
+                                  kRightCapriHiragana,
+                                  kCapriKatakana,
+                                  Node::SPELLING_CORRECTION);
+
+    GetMockDic()->AddLookupPredictive(kWrongCapriHiragana,
+                                      kRightCapriHiragana,
+                                      kCapriKatakana,
+                                      Node::SPELLING_CORRECTION);
+    // "で"
+    const char kDe[] = "\xE3\x81\xA7";
+
+    GetMockDic()->AddLookupPrefix(kDe, kDe, kDe, Node::DEFAULT_ATTRIBUTE);
+
+    // "ひろすえ/広末"
+    const char kHirosueHiragana[] = "\xE3\x81\xB2\xE3\x82\x8D"
+        "\xE3\x81\x99\xE3\x81\x88";
+    const char kHirosue[] = "\xE5\xBA\x83\xE6\x9C\xAB";
+
+    GetMockDic()->AddLookupPrefix(kHirosueHiragana,
+                                  kHirosueHiragana,
+                                  kHirosue, Node::DEFAULT_ATTRIBUTE);
   }
 
  private:
@@ -272,20 +381,21 @@ TEST_F(DictionaryPredictorTest,
   MakeSegmentsForSuggestion(kKey, &segments);
 
   vector<DictionaryPredictor::Result> results;
+  NodeAllocator allocator;
 
   predictor.AggregateUnigramPrediction(
       DictionaryPredictor::BIGRAM,
-      &segments, &results);
+      &segments, &allocator, &results);
   EXPECT_TRUE(results.empty());
 
   predictor.AggregateUnigramPrediction(
       DictionaryPredictor::REALTIME,
-      &segments, &results);
+      &segments, &allocator, &results);
   EXPECT_TRUE(results.empty());
 
   predictor.AggregateUnigramPrediction(
       DictionaryPredictor::UNIGRAM,
-      &segments, &results);
+      &segments, &allocator, &results);
   EXPECT_FALSE(results.empty());
 
   for (size_t i = 0; i < results.size(); ++i) {
@@ -299,6 +409,178 @@ TEST_F(DictionaryPredictorTest,
 TEST_F(DictionaryPredictorTest,
        AggregateBigramPrediction) {
   DictionaryPredictor predictor;
+  NodeAllocator allocator;
+
+  {
+    Segments segments;
+
+    // "あ"
+    MakeSegmentsForSuggestion("\xE3\x81\x82", &segments);
+
+    // history is "グーグル"
+    const char kHistoryKey[] =
+        "\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90\xE3\x82\x8B";
+    const char kHistoryValue[] =
+        "\xE3\x82\xB0\xE3\x83\xBC\xE3\x82\xB0\xE3\x83\xAB";
+
+    PrependHistorySegments(kHistoryKey, kHistoryValue,
+                           &segments);
+
+    vector<DictionaryPredictor::Result> results;
+
+    predictor.AggregateBigramPrediction(
+        DictionaryPredictor::UNIGRAM,
+        &segments, &allocator, &results);
+    EXPECT_TRUE(results.empty());
+
+    predictor.AggregateBigramPrediction(
+        DictionaryPredictor::REALTIME,
+        &segments, &allocator, &results);
+    EXPECT_TRUE(results.empty());
+
+    predictor.AggregateBigramPrediction(
+        DictionaryPredictor::BIGRAM,
+        &segments, &allocator, &results);
+    EXPECT_FALSE(results.empty());
+
+    for (size_t i = 0; i < results.size(); ++i) {
+      // only "グーグルアドセンス" is in the dictionary.
+      if (results[i].node->value == "\xE3\x82\xB0\xE3\x83\xBC\xE3\x82\xB0"
+          "\xE3\x83\xAB\xE3\x82\xA2\xE3\x83\x89"
+          "\xE3\x82\xBB\xE3\x83\xB3\xE3\x82\xB9") {
+        EXPECT_EQ(DictionaryPredictor::BIGRAM, results[i].type);
+      } else {
+        EXPECT_EQ(DictionaryPredictor::NO_PREDICTION, results[i].type);
+      }
+      EXPECT_TRUE(Util::StartsWith(results[i].node->key, kHistoryKey));
+      EXPECT_TRUE(Util::StartsWith(results[i].node->value, kHistoryValue));
+    }
+
+    EXPECT_EQ(1, segments.conversion_segments_size());
+  }
+
+  {
+    Segments segments;
+
+    // "と"
+    MakeSegmentsForSuggestion("\xE3\x81\x82", &segments);
+
+    // history is "てす"
+    const char kHistoryKey[] = "てす";
+    const char kHistoryValue[] = "テス";
+
+    PrependHistorySegments(kHistoryKey, kHistoryValue,
+                           &segments);
+
+    vector<DictionaryPredictor::Result> results;
+
+    predictor.AggregateBigramPrediction(
+        DictionaryPredictor::BIGRAM,
+        &segments, &allocator, &results);
+    EXPECT_TRUE(results.empty());
+  }
+}
+
+TEST_F(DictionaryPredictorTest,
+       AggregateRealtimeConversion) {
+  Segments segments;
+  DictionaryPredictor predictor;
+  NodeAllocator allocator;
+
+  // "わたしのなまえはなかのです"
+  const char kKey[] =
+      "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97"
+      "\xE3\x81\xAE\xE3\x81\xAA\xE3\x81\xBE"
+      "\xE3\x81\x88\xE3\x81\xAF\xE3\x81\xAA"
+      "\xE3\x81\x8B\xE3\x81\xAE\xE3\x81\xA7\xE3\x81\x99";
+
+  MakeSegmentsForSuggestion(kKey, &segments);
+
+  vector<DictionaryPredictor::Result> results;
+
+  predictor.AggregateRealtimeConversion(
+      DictionaryPredictor::UNIGRAM,
+      &segments, &allocator, &results);
+  EXPECT_TRUE(results.empty());
+
+  predictor.AggregateRealtimeConversion(
+      DictionaryPredictor::BIGRAM,
+      &segments, &allocator, &results);
+  EXPECT_TRUE(results.empty());
+
+  predictor.AggregateRealtimeConversion(
+      DictionaryPredictor::REALTIME,
+      &segments, &allocator, &results);
+  EXPECT_FALSE(results.empty());
+
+  for (size_t i = 0; i < results.size(); ++i) {
+    EXPECT_EQ(DictionaryPredictor::REALTIME, results[i].type);
+    EXPECT_EQ(kKey, results[i].node->key);
+  }
+
+  EXPECT_EQ(1, segments.conversion_segments_size());
+}
+
+namespace {
+struct SuffixToken {
+  const char *key;
+  const char *value;
+};
+
+const SuffixToken kSuffixTokens[] = {
+  //  { "いか",   "以下" }
+  { "\xE3\x81\x84\xE3\x81\x8B",   "\xE4\xBB\xA5\xE4\xB8\x8B" }
+};
+
+class TestSuffixDictionary : public DictionaryInterface {
+ public:
+  TestSuffixDictionary() {}
+  virtual ~TestSuffixDictionary() {}
+
+  virtual Node *LookupPredictive(const char *str, int size,
+                                 NodeAllocatorInterface *allocator) const {
+    string input_key(str, size);
+    Node *result = NULL;
+    for (size_t i = 0; i < arraysize(kSuffixTokens); ++i) {
+      const SuffixToken *token = &kSuffixTokens[i];
+      DCHECK(token);
+      DCHECK(token->key);
+      if (!input_key.empty() && !Util::StartsWith(token->key, input_key)) {
+        continue;
+      }
+      Node *node = allocator->NewNode();
+      DCHECK(node);
+      node->Init();
+      node->wcost = 1000;
+      node->key = token->key;
+      node->value = token->value;
+      node->lid = 0;
+      node->rid = 0;
+      node->bnext = result;
+      result = node;
+    }
+    return result;
+  }
+
+  virtual Node *LookupPrefix(const char *str, int size,
+                             NodeAllocatorInterface *allocator) const {
+    return NULL;
+  }
+
+  virtual Node *LookupReverse(const char *str, int size,
+                              NodeAllocatorInterface *allocator) const {
+    return NULL;
+  }
+};
+}  // namespace
+
+TEST_F(DictionaryPredictorTest,
+       AggregateSuffixPrediction) {
+  TestSuffixDictionary dictionary;
+  SuffixDictionaryFactory::SetSuffixDictionary(&dictionary);
+  DictionaryPredictor predictor;
+  NodeAllocator allocator;
+
   Segments segments;
 
   // "あ"
@@ -315,67 +597,37 @@ TEST_F(DictionaryPredictorTest,
 
   vector<DictionaryPredictor::Result> results;
 
-  predictor.AggregateBigramPrediction(
-      DictionaryPredictor::UNIGRAM,
-      &segments, &results);
+  // Since SuffixDictionary only returns when key is "い".
+  // result should be empty.
+  predictor.AggregateSuffixPrediction(
+      DictionaryPredictor::SUFFIX,
+      &segments, &allocator, &results);
   EXPECT_TRUE(results.empty());
 
-  predictor.AggregateBigramPrediction(
-      DictionaryPredictor::REALTIME,
-      &segments, &results);
-  EXPECT_TRUE(results.empty());
-
-  predictor.AggregateBigramPrediction(
-      DictionaryPredictor::BIGRAM,
-      &segments, &results);
+  results.clear();
+  segments.mutable_conversion_segment(0)->set_key("");
+  predictor.AggregateSuffixPrediction(
+      DictionaryPredictor::SUFFIX,
+      &segments, &allocator, &results);
   EXPECT_FALSE(results.empty());
 
-  for (size_t i = 0; i < results.size(); ++i) {
-    EXPECT_EQ(DictionaryPredictor::BIGRAM, results[i].type);
-    EXPECT_TRUE(Util::StartsWith(results[i].node->key, kHistoryKey));
-    EXPECT_TRUE(Util::StartsWith(results[i].node->value, kHistoryValue));
-  }
-
-  EXPECT_EQ(1, segments.conversion_segments_size());
-}
-
-TEST_F(DictionaryPredictorTest,
-       AggregateRealtimeConversion) {
-  Segments segments;
-  DictionaryPredictor predictor;
-
-  // "わたしのなまえはなかのです"
-  const char kKey[] =
-      "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97"
-      "\xE3\x81\xAE\xE3\x81\xAA\xE3\x81\xBE"
-      "\xE3\x81\x88\xE3\x81\xAF\xE3\x81\xAA"
-      "\xE3\x81\x8B\xE3\x81\xAE\xE3\x81\xA7\xE3\x81\x99";
-
-  MakeSegmentsForSuggestion(kKey, &segments);
-
-  vector<DictionaryPredictor::Result> results;
-
-  predictor.AggregateRealtimeConversion(
+  results.clear();
+  predictor.AggregateSuffixPrediction(
       DictionaryPredictor::UNIGRAM,
-      &segments, &results);
+      &segments, &allocator, &results);
   EXPECT_TRUE(results.empty());
 
-  predictor.AggregateRealtimeConversion(
-      DictionaryPredictor::BIGRAM,
-      &segments, &results);
-  EXPECT_TRUE(results.empty());
-
-  predictor.AggregateRealtimeConversion(
+  predictor.AggregateSuffixPrediction(
       DictionaryPredictor::REALTIME,
-      &segments, &results);
-  EXPECT_FALSE(results.empty());
+      &segments, &allocator, &results);
+  EXPECT_TRUE(results.empty());
 
-  for (size_t i = 0; i < results.size(); ++i) {
-    EXPECT_EQ(DictionaryPredictor::REALTIME, results[i].type);
-    EXPECT_EQ(kKey, results[i].node->key);
-  }
+  predictor.AggregateSuffixPrediction(
+      DictionaryPredictor::BIGRAM,
+      &segments, &allocator, &results);
+  EXPECT_TRUE(results.empty());
 
-  EXPECT_EQ(1, segments.conversion_segments_size());
+  SuffixDictionaryFactory::SetSuffixDictionary(NULL);
 }
 
 TEST_F(DictionaryPredictorTest, GetHistoryKeyAndValue) {
@@ -409,144 +661,72 @@ TEST_F(DictionaryPredictorTest, IsZipCodeRequest) {
       "\xef\xbc\x90\xef\xbc\x91\xef\xbc\x92\x2d\xef\xbc\x90"));
 }
 
-TEST_F(DictionaryPredictorTest, GetSVMScore) {
-  vector<pair<int, double> > feature;
+TEST_F(DictionaryPredictorTest, IsAggressiveSuggestion) {
   DictionaryPredictor predictor;
 
-  EXPECT_EQ(INT_MIN, predictor.GetSVMScore(
-      // "ただしい",
-      // "ただしいけめんにかぎる",
-      // "ただしイケメンに限る",
-      "\xE3\x81\x9F\xE3\x81\xA0\xE3\x81\x97\xE3\x81\x84",
-      "\xE3\x81\x9F\xE3\x81\xA0\xE3\x81\x97\xE3\x81\x84"
-      "\xE3\x81\x91\xE3\x82\x81\xE3\x82\x93\xE3\x81\xAB"
-      "\xE3\x81\x8B\xE3\x81\x8E\xE3\x82\x8B",
-      "\xE3\x81\x9F\xE3\x81\xA0\xE3\x81\x97\xE3\x82\xA4"
-      "\xE3\x82\xB1\xE3\x83\xA1\xE3\x83\xB3\xE3\x81\xAB"
-      "\xE9\x99\x90\xE3\x82\x8B",
-      6000,
-      0,
-      false,
-      true,
-      20,
-      &feature));
+  // "ただしい",
+  // "ただしいけめんにかぎる",
+  EXPECT_TRUE(predictor.IsAggressiveSuggestion(
+      4,      // query_len
+      11,     // key_len
+      6000,   // cost
+      true,   // is_suggestion
+      20));   // total_candidates_size
 
   // cost <= 4000
-  EXPECT_NE(INT_MIN, predictor.GetSVMScore(
-      // "ただしい",
-      // "ただしいけめんにかぎる",
-      // "ただしイケメンに限る",
-      "\xE3\x81\x9F\xE3\x81\xA0\xE3\x81\x97\xE3\x81\x84",
-      "\xE3\x81\x9F\xE3\x81\xA0\xE3\x81\x97\xE3\x81\x84"
-      "\xE3\x81\x91\xE3\x82\x81\xE3\x82\x93\xE3\x81\xAB"
-      "\xE3\x81\x8B\xE3\x81\x8E\xE3\x82\x8B",
-      "\xE3\x81\x9F\xE3\x81\xA0\xE3\x81\x97\xE3\x82\xA4"
-      "\xE3\x82\xB1\xE3\x83\xA1\xE3\x83\xB3\xE3\x81\xAB"
-      "\xE9\x99\x90\xE3\x82\x8B",
+  EXPECT_FALSE(predictor.IsAggressiveSuggestion(
+      4,
+      11,
       4000,
-      0,
-      false,
       true,
-      20,
-      &feature));
+      20));
 
   // not suggestion
-  EXPECT_NE(INT_MIN, predictor.GetSVMScore(
-      // "ただしい",
-      // "ただしいけめんにかぎる",
-      // "ただしイケメンに限る",
-      "\xE3\x81\x9F\xE3\x81\xA0\xE3\x81\x97\xE3\x81\x84",
-      "\xE3\x81\x9F\xE3\x81\xA0\xE3\x81\x97\xE3\x81\x84"
-      "\xE3\x81\x91\xE3\x82\x81\xE3\x82\x93\xE3\x81\xAB"
-      "\xE3\x81\x8B\xE3\x81\x8E\xE3\x82\x8B",
-      "\xE3\x81\x9F\xE3\x81\xA0\xE3\x81\x97\xE3\x82\xA4"
-      "\xE3\x82\xB1\xE3\x83\xA1\xE3\x83\xB3\xE3\x81\xAB"
-      "\xE9\x99\x90\xE3\x82\x8B",
-      6000,
-      0,
+  EXPECT_FALSE(predictor.IsAggressiveSuggestion(
+      4,
+      11,
+      4000,
       false,
-      false,
-      20,
-      &feature));
+      20));
 
   // total_candidates_size is small
-  EXPECT_NE(INT_MIN, predictor.GetSVMScore(
-      // "ただしい",
-      // "ただしいけめんにかぎる",
-      // "ただしイケメンに限る",
-      "\xE3\x81\x9F\xE3\x81\xA0\xE3\x81\x97\xE3\x81\x84",
-      "\xE3\x81\x9F\xE3\x81\xA0\xE3\x81\x97\xE3\x81\x84"
-      "\xE3\x81\x91\xE3\x82\x81\xE3\x82\x93\xE3\x81\xAB"
-      "\xE3\x81\x8B\xE3\x81\x8E\xE3\x82\x8B",
-      "\xE3\x81\x9F\xE3\x81\xA0\xE3\x81\x97\xE3\x82\xA4"
-      "\xE3\x82\xB1\xE3\x83\xA1\xE3\x83\xB3\xE3\x81\xAB"
-      "\xE9\x99\x90\xE3\x82\x8B",
-      6000,
-      0,
-      false,
+  EXPECT_FALSE(predictor.IsAggressiveSuggestion(
+      4,
+      11,
+      4000,
       true,
+      5));
+
+  // query_length = 5
+  EXPECT_FALSE(predictor.IsAggressiveSuggestion(
       5,
-      &feature));
-
-  EXPECT_NE(INT_MIN, predictor.GetSVMScore(
-      // "ただしい",
-      // "ただしいけめんにかぎる",
-      // "ただしイケメンに限る",
-      "\xE3\x81\x9F\xE3\x81\xA0\xE3\x81\x97\xE3\x81\x84\xE3\x81\x91",
-      "\xE3\x81\x9F\xE3\x81\xA0\xE3\x81\x97\xE3\x81\x84"
-      "\xE3\x81\x91\xE3\x82\x81\xE3\x82\x93\xE3\x81\xAB"
-      "\xE3\x81\x8B\xE3\x81\x8E\xE3\x82\x8B",
-      "\xE3\x81\x9F\xE3\x81\xA0\xE3\x81\x97\xE3\x82\xA4"
-      "\xE3\x82\xB1\xE3\x83\xA1\xE3\x83\xB3\xE3\x81\xAB"
-      "\xE9\x99\x90\xE3\x82\x8B",
+      11,
       6000,
-      0,
-      false,
       true,
-      20,
-      &feature));
+      20));
 
-  EXPECT_EQ(INT_MIN, predictor.GetSVMScore(
-      // "それでも",
-      // "それでもぼくはやっていない",
-      // "それでもボクはやってない",
-      "\xE3\x81\x9D\xE3\x82\x8C\xE3\x81\xA7\xE3\x82\x82",
-      "\xE3\x81\x9D\xE3\x82\x8C\xE3\x81\xA7\xE3\x82\x82"
-      "\xE3\x81\xBC\xE3\x81\x8F\xE3\x81\xAF\xE3\x82\x84"
-      "\xE3\x81\xA3\xE3\x81\xA6\xE3\x81\x84\xE3\x81\xAA\xE3\x81\x84",
-      "\xE3\x81\x9D\xE3\x82\x8C\xE3\x81\xA7\xE3\x82\x82"
-      "\xE3\x83\x9C\xE3\x82\xAF\xE3\x81\xAF\xE3\x82\x84"
-      "\xE3\x81\xA3\xE3\x81\xA6\xE3\x81\xAA\xE3\x81\x84",
+  // "それでも",
+  // "それでもぼくはやっていない",
+  EXPECT_TRUE(predictor.IsAggressiveSuggestion(
+      4,
+      13,
       6000,
-      0,
-      false,
       true,
-      20,
-      &feature));
+      20));
 
   // cost <= 4000
-  EXPECT_NE(INT_MIN, predictor.GetSVMScore(
-      // "それでも",
-      // "それでもぼくはやっていない",
-      // "それでもボクはやってない",
-      "\xE3\x81\x9D\xE3\x82\x8C\xE3\x81\xA7\xE3\x82\x82",
-      "\xE3\x81\x9D\xE3\x82\x8C\xE3\x81\xA7\xE3\x82\x82"
-      "\xE3\x81\xBC\xE3\x81\x8F\xE3\x81\xAF\xE3\x82\x84"
-      "\xE3\x81\xA3\xE3\x81\xA6\xE3\x81\x84\xE3\x81\xAA\xE3\x81\x84",
-      "\xE3\x81\x9D\xE3\x82\x8C\xE3\x81\xA7\xE3\x82\x82"
-      "\xE3\x83\x9C\xE3\x82\xAF\xE3\x81\xAF\xE3\x82\x84"
-      "\xE3\x81\xA3\xE3\x81\xA6\xE3\x81\xAA\xE3\x81\x84",
-      3000,
-      0,
-      false,
+  EXPECT_FALSE(predictor.IsAggressiveSuggestion(
+      4,
+      13,
+      4000,
       true,
-      20,
-      &feature));
+      20));
 }
 
 TEST_F(DictionaryPredictorTest,
        RealtimeConversionStartingWithAlphabets) {
   Segments segments;
+  NodeAllocator allocator;
   // turn on real-time conversion
   config::Config config;
   config.set_use_dictionary_suggest(false);
@@ -566,11 +746,260 @@ TEST_F(DictionaryPredictorTest,
 
   predictor.AggregateRealtimeConversion(
       DictionaryPredictor::REALTIME,
-      &segments, &results);
+      &segments, &allocator, &results);
   EXPECT_FALSE(results.empty());
 
   EXPECT_EQ(DictionaryPredictor::REALTIME, results[0].type);
   EXPECT_EQ(kExpectedSuggestionValue, results[0].node->value);
   EXPECT_EQ(1, segments.conversion_segments_size());
+}
+
+TEST_F(DictionaryPredictorTest,
+       RealtimeConversionWithSpellingCorrection) {
+  Segments segments;
+  NodeAllocator allocator;
+  // turn on real-time conversion
+  config::Config config;
+  config.set_use_dictionary_suggest(false);
+  config.set_use_realtime_conversion(true);
+  config::ConfigHandler::SetConfig(config);
+  DictionaryPredictor predictor;
+
+  // "かぷりちょうざ"
+  const char kCapriHiragana[] = "\xE3\x81\x8B\xE3\x81\xB7\xE3\x82\x8A"
+      "\xE3\x81\xA1\xE3\x82\x87\xE3\x81\x86\xE3\x81\x96";
+
+  MakeSegmentsForSuggestion(kCapriHiragana, &segments);
+
+  vector<DictionaryPredictor::Result> results;
+
+  predictor.AggregateUnigramPrediction(
+      DictionaryPredictor::UNIGRAM,
+      &segments, &allocator, &results);
+
+  EXPECT_FALSE(results.empty());
+  EXPECT_TRUE(results[0].node->attributes & Node::SPELLING_CORRECTION);
+
+  results.clear();
+
+  // "かぷりちょうざで"
+  const char kKeyWithDe[] = "\xE3\x81\x8B\xE3\x81\xB7\xE3\x82\x8A"
+      "\xE3\x81\xA1\xE3\x82\x87\xE3\x81\x86\xE3\x81\x96\xE3\x81\xA7";
+  // "カプリチョーザで"
+  const char kExpectedSuggestionValueWithDe[] = "\xE3\x82\xAB\xE3\x83\x97"
+      "\xE3\x83\xAA\xE3\x83\x81\xE3\x83\xA7\xE3\x83\xBC\xE3\x82\xB6"
+      "\xE3\x81\xA7";
+
+  MakeSegmentsForSuggestion(kKeyWithDe, &segments);
+  predictor.AggregateRealtimeConversion(
+      DictionaryPredictor::REALTIME,
+      &segments, &allocator, &results);
+  EXPECT_FALSE(results.empty());
+
+  EXPECT_EQ(results[0].type, DictionaryPredictor::REALTIME);
+  EXPECT_TRUE(results[0].node->attributes &
+              Node::SPELLING_CORRECTION);
+  EXPECT_EQ(kExpectedSuggestionValueWithDe, results[0].node->value);
+  EXPECT_EQ(1, segments.conversion_segments_size());
+}
+
+TEST_F(DictionaryPredictorTest, GetMissSpelledPosition) {
+  DictionaryPredictor predictor;
+
+  EXPECT_EQ(0, predictor.GetMissSpelledPosition("", ""));
+
+  // EXPECT_EQ(3, predictor.GetMissSpelledPosition(
+  //              "れみおめろん",
+  //              "レミオロメン"));
+  EXPECT_EQ(3, predictor.GetMissSpelledPosition(
+      "\xE3\x82\x8C\xE3\x81\xBF\xE3\x81\x8A"
+      "\xE3\x82\x81\xE3\x82\x8D\xE3\x82\x93",
+      "\xE3\x83\xAC\xE3\x83\x9F\xE3\x82\xAA"
+      "\xE3\x83\xAD\xE3\x83\xA1\xE3\x83\xB3"));
+
+  // EXPECT_EQ(5, predictor.GetMissSpelledPosition
+  //              "とーとばっく",
+  //              "トートバッグ"));
+  EXPECT_EQ(5, predictor.GetMissSpelledPosition(
+      "\xE3\x81\xA8\xE3\x83\xBC\xE3\x81\xA8\xE3\x81\xB0"
+      "\xE3\x81\xA3\xE3\x81\x8F",
+      "\xE3\x83\x88\xE3\x83\xBC\xE3\x83\x88\xE3\x83\x90"
+      "\xE3\x83\x83\xE3\x82\xB0"));
+
+  // EXPECT_EQ(4, predictor.GetMissSpelledPosition(
+  //               "おーすとりらあ",
+  //               "オーストラリア"));
+  EXPECT_EQ(4, predictor.GetMissSpelledPosition(
+      "\xE3\x81\x8A\xE3\x83\xBC\xE3\x81\x99\xE3\x81\xA8"
+      "\xE3\x82\x8A\xE3\x82\x89\xE3\x81\x82",
+      "\xE3\x82\xAA\xE3\x83\xBC\xE3\x82\xB9\xE3\x83\x88"
+      "\xE3\x83\xA9\xE3\x83\xAA\xE3\x82\xA2"));
+
+  // EXPECT_EQ(7, predictor.GetMissSpelledPosition(
+  //               "じきそうしょう",
+  //               "時期尚早"));
+  EXPECT_EQ(7, predictor.GetMissSpelledPosition(
+      "\xE3\x81\x98\xE3\x81\x8D\xE3\x81\x9D\xE3\x81\x86"
+      "\xE3\x81\x97\xE3\x82\x87\xE3\x81\x86",
+      "\xE6\x99\x82\xE6\x9C\x9F\xE5\xB0\x9A\xE6\x97\xA9"));
+}
+
+TEST_F(DictionaryPredictorTest, RemoveMissSpelledCandidates) {
+  DictionaryPredictor predictor;
+  FreeList<Node> freelist(64);
+  Node *node;
+
+  {
+    vector<DictionaryPredictor::Result> results;
+    DictionaryPredictor::Result result;
+    node = freelist.Alloc(1);
+    node->Init();
+    // node->key = "ばっく";
+    // node->value = "バッグ";
+    node->key = "\xE3\x81\xB0\xE3\x81\xA3\xE3\x81\x8F";
+    node->value = "\xE3\x83\x90\xE3\x83\x83\xE3\x82\xB0";
+    node->attributes = Node::SPELLING_CORRECTION;
+    results.push_back(DictionaryPredictor::Result(
+        node, DictionaryPredictor::UNIGRAM));
+
+    node = freelist.Alloc(1);
+    node->Init();
+    // node->key = "ばっぐ";
+    // node->value = "バッグ";
+    node->key = "\xE3\x81\xB0\xE3\x81\xA3\xE3\x81\x90";
+    node->value = "\xE3\x83\x90\xE3\x83\x83\xE3\x82\xB0";
+    results.push_back(DictionaryPredictor::Result(
+        node, DictionaryPredictor::UNIGRAM));
+
+    node = freelist.Alloc(1);
+    node->Init();
+    // node->key = "ばっく";
+    // node->value = "バック";
+    node->key = "\xE3\x81\xB0\xE3\x81\xA3\xE3\x81\x8F";
+    node->value = "\xE3\x83\x90\xE3\x83\x83\xE3\x82\xAF";
+    results.push_back(DictionaryPredictor::Result(
+        node, DictionaryPredictor::UNIGRAM));
+
+    predictor.RemoveMissSpelledCandidates(1, &results);
+    CHECK_EQ(3, results.size());
+
+    EXPECT_EQ(DictionaryPredictor::NO_PREDICTION,
+              results[0].type);
+    EXPECT_EQ(DictionaryPredictor::UNIGRAM,
+              results[1].type);
+    EXPECT_EQ(DictionaryPredictor::NO_PREDICTION,
+              results[2].type);
+  }
+
+  {
+    vector<DictionaryPredictor::Result> results;
+    DictionaryPredictor::Result result;
+    node = freelist.Alloc(1);
+    node->Init();
+    // node->key = "ばっく";
+    // node->value = "バッグ";
+    node->key = "\xE3\x81\xB0\xE3\x81\xA3\xE3\x81\x8F";
+    node->value = "\xE3\x83\x90\xE3\x83\x83\xE3\x82\xB0";
+    node->attributes = Node::SPELLING_CORRECTION;
+    results.push_back(DictionaryPredictor::Result(
+        node, DictionaryPredictor::UNIGRAM));
+
+    node = freelist.Alloc(1);
+    node->Init();
+    // node->key = "てすと";
+    // node->value = "テスト";
+    node->key = "\xE3\x81\xA6\xE3\x81\x99\xE3\x81\xA8";
+    node->value = "\xE3\x83\x86\xE3\x82\xB9\xE3\x83\x88";
+    results.push_back(DictionaryPredictor::Result(
+        node, DictionaryPredictor::UNIGRAM));
+
+    predictor.RemoveMissSpelledCandidates(1, &results);
+    CHECK_EQ(2, results.size());
+
+    EXPECT_EQ(DictionaryPredictor::UNIGRAM,
+              results[0].type);
+    EXPECT_EQ(DictionaryPredictor::UNIGRAM,
+              results[1].type);
+  }
+
+  {
+    vector<DictionaryPredictor::Result> results;
+    DictionaryPredictor::Result result;
+    node = freelist.Alloc(1);
+    node->Init();
+    // node->key = "ばっく";
+    // node->value = "バッグ";
+    node->key = "\xE3\x81\xB0\xE3\x81\xA3\xE3\x81\x8F";
+    node->value = "\xE3\x83\x90\xE3\x83\x83\xE3\x82\xB0";
+    node->attributes = Node::SPELLING_CORRECTION;
+    results.push_back(DictionaryPredictor::Result(
+        node, DictionaryPredictor::UNIGRAM));
+
+    node = freelist.Alloc(1);
+    node->Init();
+    // node->key = "ばっく";
+    // node->value = "バック";
+    node->key = "\xE3\x81\xB0\xE3\x81\xA3\xE3\x81\x8F";
+    node->value = "\xE3\x83\x90\xE3\x83\x83\xE3\x82\xAF";
+    results.push_back(DictionaryPredictor::Result(
+        node, DictionaryPredictor::UNIGRAM));
+
+    predictor.RemoveMissSpelledCandidates(1, &results);
+    CHECK_EQ(2, results.size());
+
+    EXPECT_EQ(DictionaryPredictor::NO_PREDICTION,
+              results[0].type);
+    EXPECT_EQ(DictionaryPredictor::NO_PREDICTION,
+              results[1].type);
+  }
+
+  {
+    vector<DictionaryPredictor::Result> results;
+    DictionaryPredictor::Result result;
+    node = freelist.Alloc(1);
+    node->Init();
+    // node->key = "ばっく";
+    // node->value = "バッグ";
+    node->key = "\xE3\x81\xB0\xE3\x81\xA3\xE3\x81\x8F";
+    node->value = "\xE3\x83\x90\xE3\x83\x83\xE3\x82\xB0";
+    node->attributes = Node::SPELLING_CORRECTION;
+    results.push_back(DictionaryPredictor::Result(
+        node, DictionaryPredictor::UNIGRAM));
+
+    node = freelist.Alloc(1);
+    node->Init();
+    // node->key = "ばっく";
+    // node->value = "バック";
+    node->key = "\xE3\x81\xB0\xE3\x81\xA3\xE3\x81\x8F";
+    node->value = "\xE3\x83\x90\xE3\x83\x83\xE3\x82\xAF";
+    results.push_back(DictionaryPredictor::Result(
+        node, DictionaryPredictor::UNIGRAM));
+
+    predictor.RemoveMissSpelledCandidates(3, &results);
+    CHECK_EQ(2, results.size());
+
+    EXPECT_EQ(DictionaryPredictor::UNIGRAM,
+              results[0].type);
+    EXPECT_EQ(DictionaryPredictor::NO_PREDICTION,
+              results[1].type);
+  }
+}
+
+TEST_F(DictionaryPredictorTest, LookupKeyValueFromDictionary) {
+  Segments segments;
+  DictionaryPredictor predictor;
+  NodeAllocator allocator;
+
+  // "てすと/テスト"
+  EXPECT_TRUE(NULL != predictor.LookupKeyValueFromDictionary(
+      "\xE3\x81\xA6\xE3\x81\x99\xE3\x81\xA8",
+      "\xE3\x83\x86\xE3\x82\xB9\xE3\x83\x88",
+      &allocator));
+
+  // "て/テ"
+  EXPECT_TRUE(NULL == predictor.LookupKeyValueFromDictionary(
+      "\xE3\x81\xA6",
+      "\xE3\x83\x86",
+      &allocator));
 }
 }  // mozc

@@ -475,7 +475,20 @@ bool Session::SendKey(commands::Command *command) {
           status_updated = true;
           break;
         case KeyEvent::ENTER:
-          ::chewing_handle_Enter(context_);
+          if (!::chewing_cand_CheckDone(context_) &&
+              ::chewing_cand_TotalChoice(context_) > 0) {
+            // Special hack: if candidate window pops up, Enter-key
+            // means the commit of the first candidate instead of
+            // doing nothing.
+            // other implementations behaviors:
+            //   ibus-chewing: do nothing
+            //   Mac Zhuyin: select candidate, not commit
+            // The current code is same as Mac Zhuyin behavior.
+            // TODO(mukai): verify the correct behavior.
+            ::chewing_handle_Default(context_, '1');
+          } else {
+            ::chewing_handle_Enter(context_);
+          }
           status_updated = true;
           break;
         case KeyEvent::DEL:

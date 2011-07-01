@@ -102,7 +102,11 @@ GenericTableEditorDialog::GenericTableEditorDialog(QWidget *parent,
           this, SLOT(OnContextMenuRequested(const QPoint &)));
 
   editorTableWidget->horizontalHeader()->setStretchLastSection(true);
+  editorTableWidget->horizontalHeader()->setSortIndicatorShown(true);
+  editorTableWidget->horizontalHeader()->setHighlightSections(false);
   editorTableWidget->setEditTriggers(QAbstractItemView::AllEditTriggers);
+  editorTableWidget->setSortingEnabled(true);
+
   editorTableWidget->verticalHeader()->setResizeMode(QHeaderView::Fixed);
   editorTableWidget->verticalHeader()->setDefaultSectionSize(
       GetTableHeight(editorTableWidget));

@@ -42,18 +42,17 @@
         'dictionary_predictor.cc',
         'predictor.cc',
         'user_history_predictor.cc',
-        '../rewriter/variants_rewriter.cc',
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        '../converter/converter_base.gyp:segments',
         '../converter/converter_base.gyp:immutable_converter',
+        '../converter/converter_base.gyp:segments',
         '../dictionary/dictionary.gyp:dictionary',
+        '../dictionary/dictionary.gyp:suffix_dictionary',
+        '../rewriter/rewriter.gyp:rewriter',
         '../session/session_base.gyp:config_handler',
         '../usage_stats/usage_stats.gyp:usage_stats',
-        'gen_suggestion_feature_pos_group',
         'gen_suggestion_filter_data',
-        'gen_svm_model',
         'genproto_prediction',
       ],
       'conditions': [['two_pass_build==0', {
@@ -90,62 +89,6 @@
             '<(gen_out_dir)/suggestion_filter_data.h',
             '--header',
             '--logtostderr',
-          ],
-        },
-      ],
-    },
-    {
-      'target_name': 'gen_suggestion_feature_pos_group',
-      'type': 'none',
-      'actions': [
-        {
-          'action_name': 'gen_suggestion_feature_pos_group',
-          'variables': {
-            'input_files': [
-              '../data/dictionary/id.def',
-              '../data/rules/special_pos.def',
-              '../data/rules/suggestion_feature_pos_group.def',
-            ],
-          },
-          'inputs': [
-            '../dictionary/gen_pos_rewrite_rule.py',
-            '<@(input_files)',
-          ],
-          'outputs': [
-            '<(gen_out_dir)/suggestion_feature_pos_group.h',
-          ],
-          'action': [
-            'python', '../build_tools/redirect.py',
-            '<(gen_out_dir)/suggestion_feature_pos_group.h',
-            '../dictionary/gen_pos_rewrite_rule.py',
-            '<@(input_files)',
-          ],
-        },
-      ],
-    },
-    {
-      'target_name': 'gen_svm_model',
-      'type': 'none',
-      'actions': [
-        {
-          'action_name': 'gen_svm_model',
-          'variables': {
-            'input_files': [
-              '../data/prediction/svm_model.txt',
-            ],
-          },
-          'inputs': [
-            '../base/svmmodel2func.py',
-            '<@(input_files)',
-          ],
-          'outputs': [
-            '<(gen_out_dir)/svm_model.h',
-          ],
-          'action': [
-            'python', '../build_tools/redirect.py',
-            '<(gen_out_dir)/svm_model.h',
-            '../base/svmmodel2func.py',
-            '<@(input_files)',
           ],
         },
       ],
@@ -190,7 +133,7 @@
         'predictor_test.cc',
       ],
       'dependencies': [
-        '../dictionary/dictionary_base.gyp:install_dictionary_test_data',
+        '../dictionary/dictionary.gyp:dictionary_mock',
         '../session/session_base.gyp:config_handler',
         '../testing/testing.gyp:gtest_main',
         'prediction',

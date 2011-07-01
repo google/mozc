@@ -142,7 +142,8 @@ class PreeditCharacterFormManagerImpl : public CharacterFormManagerImpl {
     AddRule("\xE3\x83\xBB\xE3\x80\x8C\xE3\x80\x8D", config::Config::FULL_WIDTH);
     AddRule("\"'",    config::Config::FULL_WIDTH);
     AddRule(":;",     config::Config::FULL_WIDTH);
-    AddRule("#%&@$^_|`~\\", config::Config::FULL_WIDTH);
+    AddRule("#%&@$^_|`\\", config::Config::FULL_WIDTH);
+    AddRule("~", config::Config::FULL_WIDTH);
     AddRule("<>=+-/*", config::Config::FULL_WIDTH);
     AddRule("?!", config::Config::FULL_WIDTH);
 
@@ -171,7 +172,8 @@ class ConversionCharacterFormManagerImpl : public CharacterFormManagerImpl {
     AddRule("\xE3\x83\xBB\xE3\x80\x8C\xE3\x80\x8D", config::Config::FULL_WIDTH);
     AddRule("\"'",    config::Config::LAST_FORM);
     AddRule(":;",     config::Config::LAST_FORM);
-    AddRule("#%&@$^_|`~\\", config::Config::LAST_FORM);
+    AddRule("#%&@$^_|`\\", config::Config::LAST_FORM);
+    AddRule("~", config::Config::LAST_FORM);
     AddRule("<>=+-/*", config::Config::LAST_FORM);
     AddRule("?!", config::Config::LAST_FORM);
 

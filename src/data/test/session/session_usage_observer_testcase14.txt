@@ -380,6 +380,25 @@ commands {
         sub_label: "build 15"
       }
     }
+    all_candidate_words {
+      candidates {
+        index: 0
+        value: "\343\203\242\343\202\272\343\202\257"
+        annotation {
+          description: "Dictionary Suggest"
+        }
+        id: 0
+      }
+      candidates {
+        index: 1
+        value: "\343\202\202\343\201\232\343\201\217\351\205\242"
+        annotation {
+          description: "Dictionary Suggest"
+        }
+        id: 1
+      }
+      category: SUGGESTION
+    }
     elapsed_time: 4045
   }
 }
@@ -740,6 +759,25 @@ commands {
       footer {
         sub_label: "build 15"
       }
+    }
+    all_candidate_words {
+      candidates {
+        index: 0
+        value: "\343\203\242\343\202\272\343\202\257"
+        annotation {
+          description: "Dictionary Suggest"
+        }
+        id: 0
+      }
+      candidates {
+        index: 1
+        value: "\343\202\202\343\201\232\343\201\217\351\205\242"
+        annotation {
+          description: "Dictionary Suggest"
+        }
+        id: 1
+      }
+      category: SUGGESTION
     }
     elapsed_time: 3281
   }
@@ -1154,6 +1192,25 @@ commands {
         sub_label: "build 15"
       }
     }
+    all_candidate_words {
+      candidates {
+        index: 0
+        value: "\343\203\242\343\202\272\343\202\257"
+        annotation {
+          description: "Dictionary Suggest"
+        }
+        id: 0
+      }
+      candidates {
+        index: 1
+        value: "\343\202\202\343\201\232\343\201\217\351\205\242"
+        annotation {
+          description: "Dictionary Suggest"
+        }
+        id: 1
+      }
+      category: SUGGESTION
+    }
     elapsed_time: 3295
   }
 }
@@ -1319,6 +1376,59 @@ commands {
         sub_label: "build 15"
       }
     }
+    all_candidate_words {
+      candidates {
+        index: 0
+        value: "\343\202\202\343\201\232\343\201\217"
+        annotation {
+          description: "\343\201\262\343\202\211\343\201\214\343\201\252"
+          shortcut: "1"
+        }
+        id: 0
+      }
+      candidates {
+        index: 1
+        value: "\343\203\242\343\202\272\343\202\257"
+        annotation {
+          description: "[\345\205\250] \343\202\253\343\202\277\343\202\253\343\203\212"
+          shortcut: "2"
+        }
+        id: 1
+      }
+      candidates {
+        index: 2
+        value: "\346\260\264\351\233\262"
+        annotation {
+          shortcut: "3"
+        }
+        id: 2
+      }
+      candidates {
+        index: 3
+        value: "\346\265\267\350\230\212"
+        annotation {
+          shortcut: "4"
+        }
+        id: 3
+      }
+      candidates {
+        index: 4
+        value: "\346\234\200\347\264\240\344\271\235"
+        annotation {
+          shortcut: "5"
+        }
+        id: 4
+      }
+      candidates {
+        index: 5
+        value: "\343\201\235\343\201\256\343\201\273\343\201\213\343\201\256\346\226\207\345\255\227\347\250\256"
+        annotation {
+          shortcut: "6"
+        }
+        id: -1
+      }
+      category: CONVERSION
+    }
     elapsed_time: 589
   }
 }
@@ -1406,6 +1516,59 @@ commands {
         logo_visible: true
         sub_label: "build 15"
       }
+    }
+    all_candidate_words {
+      candidates {
+        index: 0
+        value: "\343\202\202\343\201\232\343\201\217"
+        annotation {
+          description: "\343\201\262\343\202\211\343\201\214\343\201\252"
+          shortcut: "1"
+        }
+        id: 0
+      }
+      candidates {
+        index: 1
+        value: "\343\203\242\343\202\272\343\202\257"
+        annotation {
+          description: "[\345\205\250] \343\202\253\343\202\277\343\202\253\343\203\212"
+          shortcut: "2"
+        }
+        id: 1
+      }
+      candidates {
+        index: 2
+        value: "\346\260\264\351\233\262"
+        annotation {
+          shortcut: "3"
+        }
+        id: 2
+      }
+      candidates {
+        index: 3
+        value: "\346\265\267\350\230\212"
+        annotation {
+          shortcut: "4"
+        }
+        id: 3
+      }
+      candidates {
+        index: 4
+        value: "\346\234\200\347\264\240\344\271\235"
+        annotation {
+          shortcut: "5"
+        }
+        id: 4
+      }
+      candidates {
+        index: 5
+        value: "\343\201\235\343\201\256\343\201\273\343\201\213\343\201\256\346\226\207\345\255\227\347\250\256"
+        annotation {
+          shortcut: "6"
+        }
+        id: -1
+      }
+      category: CONVERSION
     }
     elapsed_time: 163
   }
@@ -1742,6 +1905,25 @@ commands {
       footer {
         sub_label: "build 15"
       }
+    }
+    all_candidate_words {
+      candidates {
+        index: 0
+        value: "\343\203\242\343\202\272\343\202\257"
+        annotation {
+          description: "Dictionary Suggest"
+        }
+        id: 0
+      }
+      candidates {
+        index: 1
+        value: "\343\202\202\343\201\232\343\201\217\351\205\242"
+        annotation {
+          description: "Dictionary Suggest"
+        }
+        id: 1
+      }
+      category: SUGGESTION
     }
     elapsed_time: 3306
   }
@@ -2106,6 +2288,25 @@ commands {
         sub_label: "build 15"
       }
     }
+    all_candidate_words {
+      candidates {
+        index: 0
+        value: "\343\203\242\343\202\272\343\202\257"
+        annotation {
+          description: "Dictionary Suggest"
+        }
+        id: 0
+      }
+      candidates {
+        index: 1
+        value: "\343\202\202\343\201\232\343\201\217\351\205\242"
+        annotation {
+          description: "Dictionary Suggest"
+        }
+        id: 1
+      }
+      category: SUGGESTION
+    }
     elapsed_time: 3318
   }
 }
@@ -2187,6 +2388,27 @@ commands {
         sub_label: "build 15"
       }
     }
+    all_candidate_words {
+      candidates {
+        index: 0
+        value: "\343\203\242\343\202\272\343\202\257"
+        annotation {
+          description: "Dictionary Suggest"
+          shortcut: "1"
+        }
+        id: 0
+      }
+      candidates {
+        index: 1
+        value: "\343\202\202\343\201\232\343\201\217\351\205\242"
+        annotation {
+          description: "Dictionary Suggest"
+          shortcut: "2"
+        }
+        id: 1
+      }
+      category: PREDICTION
+    }
     elapsed_time: 2347
   }
 }
@@ -2242,6 +2464,27 @@ commands {
         logo_visible: true
         sub_label: "build 15"
       }
+    }
+    all_candidate_words {
+      candidates {
+        index: 0
+        value: "\343\203\242\343\202\272\343\202\257"
+        annotation {
+          description: "Dictionary Suggest"
+          shortcut: "1"
+        }
+        id: 0
+      }
+      candidates {
+        index: 1
+        value: "\343\202\202\343\201\232\343\201\217\351\205\242"
+        annotation {
+          description: "Dictionary Suggest"
+          shortcut: "2"
+        }
+        id: 1
+      }
+      category: PREDICTION
     }
     elapsed_time: 147
   }
@@ -2578,6 +2821,25 @@ commands {
       footer {
         sub_label: "build 15"
       }
+    }
+    all_candidate_words {
+      candidates {
+        index: 0
+        value: "\343\203\242\343\202\272\343\202\257"
+        annotation {
+          description: "Dictionary Suggest"
+        }
+        id: 0
+      }
+      candidates {
+        index: 1
+        value: "\343\202\202\343\201\232\343\201\217\351\205\242"
+        annotation {
+          description: "Dictionary Suggest"
+        }
+        id: 1
+      }
+      category: SUGGESTION
     }
     elapsed_time: 3323
   }
@@ -2961,6 +3223,25 @@ commands {
         sub_label: "build 15"
       }
     }
+    all_candidate_words {
+      candidates {
+        index: 0
+        value: "\343\203\242\343\202\272\343\202\257"
+        annotation {
+          description: "Dictionary Suggest"
+        }
+        id: 0
+      }
+      candidates {
+        index: 1
+        value: "\343\202\202\343\201\232\343\201\217\351\205\242"
+        annotation {
+          description: "Dictionary Suggest"
+        }
+        id: 1
+      }
+      category: SUGGESTION
+    }
     elapsed_time: 3235
   }
 }
@@ -3042,6 +3323,27 @@ commands {
         sub_label: "build 15"
       }
     }
+    all_candidate_words {
+      candidates {
+        index: 0
+        value: "\343\203\242\343\202\272\343\202\257"
+        annotation {
+          description: "Dictionary Suggest"
+          shortcut: "1"
+        }
+        id: 0
+      }
+      candidates {
+        index: 1
+        value: "\343\202\202\343\201\232\343\201\217\351\205\242"
+        annotation {
+          description: "Dictionary Suggest"
+          shortcut: "2"
+        }
+        id: 1
+      }
+      category: PREDICTION
+    }
     elapsed_time: 2195
   }
 }
@@ -3097,6 +3399,27 @@ commands {
         logo_visible: true
         sub_label: "build 15"
       }
+    }
+    all_candidate_words {
+      candidates {
+        index: 0
+        value: "\343\203\242\343\202\272\343\202\257"
+        annotation {
+          description: "Dictionary Suggest"
+          shortcut: "1"
+        }
+        id: 0
+      }
+      candidates {
+        index: 1
+        value: "\343\202\202\343\201\232\343\201\217\351\205\242"
+        annotation {
+          description: "Dictionary Suggest"
+          shortcut: "2"
+        }
+        id: 1
+      }
+      category: PREDICTION
     }
     elapsed_time: 219
   }
@@ -3403,6 +3726,25 @@ commands {
         sub_label: "build 15"
       }
     }
+    all_candidate_words {
+      candidates {
+        index: 0
+        value: "\343\203\242\343\202\272\343\202\257"
+        annotation {
+          description: "Dictionary Suggest"
+        }
+        id: 0
+      }
+      candidates {
+        index: 1
+        value: "\343\202\202\343\201\232\343\201\217\351\205\242"
+        annotation {
+          description: "Dictionary Suggest"
+        }
+        id: 1
+      }
+      category: SUGGESTION
+    }
     elapsed_time: 3201
   }
 }
@@ -3484,6 +3826,27 @@ commands {
         sub_label: "build 15"
       }
     }
+    all_candidate_words {
+      candidates {
+        index: 0
+        value: "\343\203\242\343\202\272\343\202\257"
+        annotation {
+          description: "Dictionary Suggest"
+          shortcut: "1"
+        }
+        id: 0
+      }
+      candidates {
+        index: 1
+        value: "\343\202\202\343\201\232\343\201\217\351\205\242"
+        annotation {
+          description: "Dictionary Suggest"
+          shortcut: "2"
+        }
+        id: 1
+      }
+      category: PREDICTION
+    }
     elapsed_time: 2327
   }
 }
@@ -3539,6 +3902,27 @@ commands {
         logo_visible: true
         sub_label: "build 15"
       }
+    }
+    all_candidate_words {
+      candidates {
+        index: 0
+        value: "\343\203\242\343\202\272\343\202\257"
+        annotation {
+          description: "Dictionary Suggest"
+          shortcut: "1"
+        }
+        id: 0
+      }
+      candidates {
+        index: 1
+        value: "\343\202\202\343\201\232\343\201\217\351\205\242"
+        annotation {
+          description: "Dictionary Suggest"
+          shortcut: "2"
+        }
+        id: 1
+      }
+      category: PREDICTION
     }
     elapsed_time: 134
   }
@@ -3844,6 +4228,25 @@ commands {
       footer {
         sub_label: "build 15"
       }
+    }
+    all_candidate_words {
+      candidates {
+        index: 0
+        value: "\343\203\242\343\202\272\343\202\257"
+        annotation {
+          description: "Dictionary Suggest"
+        }
+        id: 0
+      }
+      candidates {
+        index: 1
+        value: "\343\202\202\343\201\232\343\201\217\351\205\242"
+        annotation {
+          description: "Dictionary Suggest"
+        }
+        id: 1
+      }
+      category: SUGGESTION
     }
     elapsed_time: 3127
   }

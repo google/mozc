@@ -151,6 +151,10 @@ bool Session::LaunchTool(const string &mode,
   return true;
 }
 
+bool Session::LaunchToolWithProtoBuf(const commands::Output &output) {
+  return true;
+}
+
 bool Session::OpenBrowser(const string &url) {
   return true;
 }
@@ -256,6 +260,7 @@ bool Session::NoOperation() {
 bool Session::PingServer() const {
   return true;
 }
+
 
 bool Session::CallCommand(commands::Input::CommandType type) {
   commands::Input input;

@@ -126,7 +126,8 @@ message KeyEvent {
     KANJI = 66;
     KATAKANA = 67; // VK_DBE_KATAKANA(Win)
     CAPS_LOCK = 68;
-    NUM_SPECIALKEYS = 69;
+    HANJA = 69;
+    NUM_SPECIALKEYS = 70;
   };
 
   // CTRL, ALT and SHIFT cover both LEFT and RIGHT keys.  If the
@@ -217,6 +218,7 @@ message KeyEvent {
   optional CompositionMode mode = 7;
 };
 
+
 message SessionCommand {
   enum CommandType {
     // Revert the session, this is usually similar to type ESC several times.
@@ -246,6 +248,13 @@ message SessionCommand {
 
     // Perform Undo.
     UNDO = 9;
+
+    // Reset convert history and revert current composition.
+    // This is usually used by moving cursor with mouse clicking.
+    RESET_CONTEXT = 10;
+
+    // Change cursor position in preedit.
+    MOVE_CURSOR = 11;
   };
   required CommandType type = 1;
 
@@ -257,6 +266,9 @@ message SessionCommand {
 
   // Text argument.  This is used by CONVERT_REVERSE at this moment.
   optional string text = 4;
+
+  // New cursor position in preedit. Used with MOVE_CURSOR.
+  optional uint32 cursor_position = 5;
 };
 
 message Context {
@@ -337,6 +349,8 @@ message Input {
     // no operation
     // can be used for pinging the server
     NO_OPERATION = 14;
+
+
   };
   required CommandType type = 1;
 
@@ -362,6 +376,7 @@ message Input {
   // Server may be able to change the behavior by seeing the
   // the program name.
   optional ApplicationInfo application_info = 8;
+
 
 };
 
@@ -433,8 +448,7 @@ message Annotation {
 // Additional information to a candidate word.  This message is
 // used for describing a word usage for instance.
 message Information {
-  // Unique number specifing the candidate.  This id and Candidate::id
-  // must be numbered for the same candidate.
+  // Unique number specifying the information.
   optional int32 id = 1;
 
   // Title string of the information.  For usage, this value is
@@ -444,6 +458,9 @@ message Information {
   // The content of the information.  For usage, this value actually
   // describes how to use the word.
   optional string description = 3;
+
+  // The IDs of candidates which connect with the information.
+  repeated int32 candidate_id = 4;
 };
 
 // Category describes the attribute of the words.
@@ -536,6 +553,7 @@ message Candidates {
     required string value = 5;
     optional int32 id = 9;  // Unique number specifing the candidate.
     optional Annotation annotation = 7;
+    optional int32 information_id = 10;
   };
   // The position on the preedit.  The number represents the left edge
   // of the candidate window.
@@ -662,6 +680,7 @@ message Output {
     optional SessionCommand session_command = 1;
   };
   optional Callback callback = 18;
+
 };
 
 message Command {
@@ -841,4 +860,5 @@ message RendererCommand {
 
   optional ApplicationInfo application_info = 5;
 };
+
 

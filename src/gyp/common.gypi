@@ -65,6 +65,15 @@
       '-include', 'base/namespace.h',
       '-pipe',
     ],
+    # Libraries for GNU/Linux environment.
+    'linux_libs': [
+      '-lcrypto',
+      '-lcurl',
+      '-lpthread',
+      '-lrt',
+      '-lssl',
+      '-lz',
+    ],
     'msvc_disabled_warnings': [
       # 'expression' : signed/unsigned mismatch
       # http://msdn.microsoft.com/en-us/library/y92ktdf2.aspx
@@ -122,7 +131,7 @@
     # project file called "coverage".
     'coverage%': 0,
 
-    'mozc_data_dir': '<(SHARED_INTERMEDIATE_DIR)',
+    'mozc_data_dir': '<(SHARED_INTERMEDIATE_DIR)/',
   },
   'target_defaults': {
     'variables': {
@@ -168,6 +177,12 @@
           ['not(OS=="linux" and use_libprotobuf!=0)', {
             'include_dirs': [
               '../protobuf/files/src',
+            ],
+          }],
+          ['OS=="linux"', {
+            'ldflags': [
+              '<@(linux_libs)',
+              '<@(extra_linux_libs)',
             ],
           }],
         ],
@@ -394,6 +409,7 @@
               'odbccp32.lib',
               'ole32.lib',
               'oleaut32.lib',
+              'propsys.lib',
               'psapi.lib',
               'shell32.lib',
               'user32.lib',
@@ -418,8 +434,8 @@
               'MOZC_RES_USE_TEMPLATE=1',
             ],
             'AdditionalIncludeDirectories': [
-              '<(SHARED_INTERMEDIATE_DIR)',
-              '<(DEPTH)',
+              '<(SHARED_INTERMEDIATE_DIR)/',
+              '<(DEPTH)/',
             ],
           },
         },
@@ -431,19 +447,14 @@
         'cflags': [
           '<@(gcc_cflags)',
           '<@(warning_cflags)',
-          '-Wno-array-bounds',  # Probably GCC's bug 43949 causes trouble
-          '-Wno-deprecated',
+          '-Wno-array-bounds',  # Probably GCC's bug 43949 causes trouble.
           '-fPIC',
           '-fno-exceptions',
         ],
-        'libraries': [
-          '-lcrypto',
-          '-lcurl',
-          '-lpthread',
-          '-lrt',
-          '-lssl',
-          '-lz',
-          '<@(extra_linux_libs)',
+        'cflags_cc': [
+          # We use deprecated <hash_map> and <hash_set> instead of upcoming
+          # <unordered_map> and <unordered_set>.
+          '-Wno-deprecated',
         ],
         'conditions': [
           ['use_libgtest==0', {
@@ -487,7 +498,6 @@
             '$(SDKROOT)/System/Library/Frameworks/Security.framework',
             '$(SDKROOT)/System/Library/Frameworks/SystemConfiguration.framework',
             '/usr/lib/libcrypto.dylib',
-            '/usr/lib/libcurl.dylib',
             '/usr/lib/libiconv.dylib',
             '/usr/lib/libssl.dylib',
             '/usr/lib/libz.dylib',

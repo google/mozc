@@ -32,7 +32,10 @@
 #include "base/base.h"
 #include "base/util.h"
 #include "converter/converter_interface.h"
+#include "converter/node_allocator.h"
 #include "converter/segments.h"
+#include "dictionary/pos_matcher.h"
+#include "dictionary/suffix_dictionary.h"
 #include "dictionary/suppression_dictionary.h"
 #include "session/config.pb.h"
 #include "session/config_handler.h"
@@ -57,6 +60,7 @@ class ConverterTest : public testing::Test {
     config::Config config;
     config::ConfigHandler::GetDefaultConfig(&config);
     config::ConfigHandler::SetConfig(config);
+    SuffixDictionaryFactory::SetSuffixDictionary(NULL);
   }
 };
 
@@ -241,5 +245,134 @@ TEST_F(ConverterTest, Regression3437022) {
   dic->Lock();
   dic->Clear();
   dic->UnLock();
+}
+
+namespace {
+struct Token {
+  const char *key;
+  const char *value;
+  uint16 rid;
+  int32 cost;
+};
+
+const Token kTestTokens[] = {
+  // { "です", "です", 1, 100 },
+  // { "そうです", "そうです", 2, 100 },
+  // { "す", "す", 3, 100 },
+  // { "です", "です", 4, 50 }
+  { "\xE3\x81\xA7\xE3\x81\x99", "\xE3\x81\xA7\xE3\x81\x99", 1, 100 },
+  { "\xE3\x81\x9D\xE3\x81\x86\xE3\x81\xA7\xE3\x81\x99",
+    "\xE3\x81\x9D\xE3\x81\x86\xE3\x81\xA7\xE3\x81\x99", 2, 100 },
+  { "\xE3\x81\x99", "\xE3\x81\x99", 3, 100 },
+  { "\xE3\x81\xA7\xE3\x81\x99", "\xE3\x81\xA7\xE3\x81\x99", 4, 50 }
+};
+
+class TestDictionary : public DictionaryInterface {
+ public:
+  TestDictionary() {}
+  virtual ~TestDictionary() {}
+
+  virtual Node *LookupPredictive(const char *str, int size,
+                                 NodeAllocatorInterface *allocator) const {
+    Node *result = NULL;
+    for (int i = 0; i < arraysize(kTestTokens); ++i) {
+      Node *n = allocator->NewNode();
+      n->Init();
+      const Token *token = &kTestTokens[i];
+      n->value = token->value;
+      n->key = token->key;
+      n->lid = 0;
+      n->rid = token->rid;
+      n->cost = token->cost;
+      n->bnext = result;
+      result = n;
+    }
+
+    return result;
+  }
+
+  virtual Node *LookupPrefix(const char *str, int size,
+                             NodeAllocatorInterface *allocator) const {
+    return NULL;
+  }
+
+  virtual Node *LookupReverse(const char *str, int size,
+                              NodeAllocatorInterface *allocator) const {
+    return NULL;
+  }
+};
+}   // namespace
+
+TEST_F(ConverterTest, CompletePOSIds) {
+  Segment::Candidate candidate;
+
+  TestDictionary test_dictionary;
+  SuffixDictionaryFactory::SetSuffixDictionary(&test_dictionary);
+
+  // NO rewrite
+  {
+    candidate.lid = 1;
+    candidate.rid = 2;
+    candidate.value = "test";
+    ConverterUtil::CompletePOSIds(&candidate);
+    EXPECT_EQ(1, candidate.lid);
+    EXPECT_EQ(2, candidate.rid);
+  }
+
+  {
+    candidate.lid = 0;
+    candidate.rid = 0;
+    //    candidate.value = "たべそうです";
+    candidate.value =
+        "\xE3\x81\x9F\xE3\x81\xB9\xE3\x81\x9D\xE3\x81\x86"
+        "\xE3\x81\xA7\xE3\x81\x99";
+    ConverterUtil::CompletePOSIds(&candidate);
+    EXPECT_EQ(POSMatcher::GetUnknownId(), candidate.lid);
+    // "そうです" is the longest match.
+    EXPECT_EQ(2, candidate.rid);
+  }
+
+  {
+    candidate.lid = 0;
+    candidate.rid = 0;
+    //    candidate.value = "おす";
+    candidate.value = "\xE3\x81\x8A\xE3\x81\x99";
+    ConverterUtil::CompletePOSIds(&candidate);
+    EXPECT_EQ(POSMatcher::GetUnknownId(), candidate.lid);
+    EXPECT_EQ(3, candidate.rid);
+  }
+
+  {
+    candidate.lid = 0;
+    candidate.rid = 0;
+    //    candidate.value = "です";
+    candidate.value = "\xE3\x81\xA7\xE3\x81\x99";
+    ConverterUtil::CompletePOSIds(&candidate);
+    EXPECT_EQ(POSMatcher::GetUnknownId(), candidate.lid);
+    // Have two "です". Select one who has the minimum cost.
+    EXPECT_EQ(4, candidate.rid);
+  }
+
+  {
+    candidate.lid = 0;
+    candidate.rid = 0;
+    //    candidate.value = "うごくです";
+    candidate.value = "\xE3\x81\x86\xE3\x81\x94\xE3\x81\x8F"
+        "\xE3\x81\xA7\xE3\x81\x99";
+    ConverterUtil::CompletePOSIds(&candidate);
+    EXPECT_EQ(POSMatcher::GetUnknownId(), candidate.lid);
+    EXPECT_EQ(4, candidate.rid);
+  }
+
+  // completely unknown.
+  {
+    candidate.lid = 0;
+    candidate.rid = 0;
+    // candidate.value = "京都";
+    candidate.value = "\xE4\xBA\xAC\xE9\x83\xBD";
+    ConverterUtil::CompletePOSIds(&candidate);
+    EXPECT_EQ(POSMatcher::GetUnknownId(), candidate.lid);
+    EXPECT_EQ(POSMatcher::GetUnknownId(), candidate.rid);
+  }
 }
 }  // namespace mozc

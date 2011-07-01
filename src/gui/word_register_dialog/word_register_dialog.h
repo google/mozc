@@ -57,6 +57,7 @@ class WordRegisterDialog : public QDialog,
  protected slots:
   void Clicked(QAbstractButton *button);
   void LineEditChanged(const QString &str);
+  void CompleteReading();
   void LaunchDictionaryTool();
 
  private:

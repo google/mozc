@@ -342,6 +342,34 @@ void StringAppendV(string *dst, const char *format, va_list ap) {
   }
 }
 
+bool SafeStrToUInt32WithBase(const string &str, int base, uint32 *value) {
+  DCHECK(value);
+
+  const char *s = str.c_str();
+
+  // strtoul does not give any errors on negative numbers, so we have to
+  // search the string for '-' manually.
+  while (isspace(*s)) {
+    ++s;
+  }
+  if (*s == '-') {
+    return false;
+  }
+
+  char *endptr;
+  errno = 0;  // errno only gets set on errors
+  const unsigned long ul = strtoul(s, &endptr, base);
+  if (endptr != s) {
+    while (isspace(*endptr)) {
+      ++endptr;
+    }
+  }
+
+  *value = static_cast<uint32>(ul);
+  return *s != 0 && *endptr == 0 && errno == 0 &&
+      static_cast<unsigned long>(*value) == ul;  // no overflow
+}
+
 }   // namespace
 
 namespace mozc {
@@ -373,7 +401,7 @@ void Util::SplitCSV(const string &input, vector<string> *output) {
     while (*str == ' ' || *str == '\t') {
       ++str;
     }
-    bool inquote = false;
+
     if (*str == '"') {
       start = ++str;
       end = start;
@@ -385,7 +413,6 @@ void Util::SplitCSV(const string &input, vector<string> *output) {
         }
         *end++ = *str;
       }
-      inquote = true;
       str = find(str, eos, ',');
     } else {
       start = str;
@@ -1075,31 +1102,15 @@ bool Util::ArabicToOtherRadixes(const string &input_num,
 }
 
 bool Util::SafeStrToUInt32(const string &str, uint32 *value) {
-  DCHECK(value);
+  return SafeStrToUInt32WithBase(str, 10, value);
+}
 
-  const char *s = str.c_str();
+bool Util::SafeHexStrToUInt32(const string &str, uint32 *value) {
+  return SafeStrToUInt32WithBase(str, 16, value);
+}
 
-  // strtoul does not give any errors on negative numbers, so we have to
-  // search the string for '-' manually.
-  while (isspace(*s)) {
-    ++s;
-  }
-  if (*s == '-') {
-    return false;
-  }
-
-  char *endptr;
-  errno = 0;  // errno only gets set on errors
-  unsigned long ul = strtoul(s, &endptr, 10);
-  if (endptr != s) {
-    while (isspace(*endptr)) {
-      ++endptr;
-    }
-  }
-
-  *value = static_cast<uint32>(ul);
-  return *s != 0 && *endptr == 0 && errno == 0 &&
-      static_cast<unsigned long>(*value) == ul;  // no overflow
+bool Util::SafeOctStrToUInt32(const string &str, uint32 *value) {
+  return SafeStrToUInt32WithBase(str, 8, value);
 }
 
 bool Util::SafeStrToUInt64(const string &str, uint64 *value) {
@@ -1234,6 +1245,10 @@ int Util::Random(int size) {
   return static_cast<int> (1.0 * size * rand() / (RAND_MAX + 1.0));
 }
 
+void Util::SetRandomSeed(uint32 seed) {
+  ::srand(seed);
+}
+
 namespace {
 class ClockImpl : public Util::ClockInterface {
  public:
@@ -1274,6 +1289,22 @@ class ClockImpl : public Util::ClockInterface {
     return static_cast<uint64>(time(NULL));
 # endif
   }
+
+  bool GetTmWithOffsetSecond(time_t offset_sec, tm *output) {
+    const time_t current_sec = static_cast<time_t>(this->GetTime());
+    const time_t modified_sec = current_sec + offset_sec;
+
+#ifdef OS_WINDOWS
+    if (_localtime64_s(output, &modified_sec) != 0) {
+      return false;
+    }
+#else
+    if (localtime_r(&modified_sec, output) == NULL) {
+      return false;
+    }
+#endif
+    return true;
+  }
 };
 
 Util::ClockInterface *g_clock_handler = NULL;
@@ -1304,19 +1335,7 @@ bool Util::GetCurrentTm(tm *current_time) {
 }
 
 bool Util::GetTmWithOffsetSecond(tm *time_with_offset, int offset_sec) {
-  time_t now = static_cast<time_t>(GetClockHandler()->GetTime());
-
-  const time_t unixtime_with_offset = now + offset_sec;
-#ifdef OS_WINDOWS
-  if (_localtime64_s(time_with_offset, &unixtime_with_offset) != 0) {
-    return false;
-  }
-#else
-  if (localtime_r(&unixtime_with_offset, time_with_offset) == NULL) {
-    return false;
-  }
-#endif
-  return true;
+  return GetClockHandler()->GetTmWithOffsetSecond(offset_sec, time_with_offset);
 }
 
 void Util::Sleep(uint32 msec) {
@@ -1795,6 +1814,20 @@ bool Util::IsKanaSymbolContained(const string &input) {
     }
   }
   return false;
+}
+
+bool Util::IsEnglishTransliteration(const string &value) {
+  for (size_t i = 0; i < value.size(); ++i) {
+    if (value[i] == 0x20 || value[i] == 0x21 || value[i] == 0x2D ||
+        // " ", "!", "-"
+        (value[i] >= 0x41 && value[i] <= 0x5A) ||  // A..Z
+        (value[i] >= 0x61 && value[i] <= 0x7A)) {  // a..z
+      // do nothing
+    } else {
+      return false;
+    }
+  }
+  return true;
 }
 
 bool Util::Unlink(const string &filename) {
@@ -2333,6 +2366,14 @@ string Util::GetServerPath() {
   return mozc::Util::JoinPath(server_path, kMozcServerName);
 }
 
+string Util::GetDocumentDirectory() {
+#ifdef OS_MACOSX
+  return Util::GetServerDirectory();
+#else
+  return Util::JoinPath(Util::GetServerDirectory(), "documents");
+#endif
+}
+
 string Util::GetUserNameAsString() {
   string username;
 #ifdef OS_WINDOWS
@@ -2668,6 +2709,15 @@ void Util::EscapeHtml(const string &plain, string *escaped) {
   Util::StringReplace(tmp2, ">", "&gt;", true, &tmp3);
   Util::StringReplace(tmp3, "\"", "&quot;", true, &tmp4);
   Util::StringReplace(tmp4, "'", "&#39;", true, escaped);
+}
+
+void Util::UnescapeHtml(const string &escaped, string *plain) {
+  string tmp1, tmp2, tmp3, tmp4;
+  Util::StringReplace(escaped, "&amp;", "&", true, &tmp1);
+  Util::StringReplace(tmp1, "&lt;", "<", true, &tmp2);
+  Util::StringReplace(tmp2, "&gt;", ">", true, &tmp3);
+  Util::StringReplace(tmp3, "&quot;", "\"", true, &tmp4);
+  Util::StringReplace(tmp4, "&#39;", "'", true, plain);
 }
 
 void Util::EscapeCss(const string &plain, string *escaped) {

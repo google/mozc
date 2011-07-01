@@ -45,13 +45,14 @@ class EnglishVariantsRewriter: public RewriterInterface  {
  public:
   EnglishVariantsRewriter();
   virtual ~EnglishVariantsRewriter();
+
+  virtual int capability() const;
+
   virtual bool Rewrite(Segments *segments) const;
 
  private:
-  FRIEND_TEST(EnglishVariantsRewriterTest, IsEnglishValue);
   FRIEND_TEST(EnglishVariantsRewriterTest, ExpandEnglishVariants);
 
-  bool IsEnglishValue(const string &value) const;
   bool ExpandEnglishVariants(const string &input,
                              vector<string> *variants) const;
   bool ExpandEnglishVariantsWithSegment(Segment *seg) const;

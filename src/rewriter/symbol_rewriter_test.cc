@@ -33,6 +33,7 @@
 #include "converter/segments.h"
 #include "rewriter/symbol_rewriter.h"
 #include "testing/base/public/gunit.h"
+#include "session/commands.pb.h"
 #include "session/config_handler.h"
 #include "session/config.pb.h"
 
@@ -60,15 +61,29 @@ void AddCandidate(const string &value, Segment *segment) {
   candidate->content_value = value;
 }
 
-bool HasCandidate(const Segments &segments, int index, const string &value) {
+bool HasCandidateAndDescription(const Segments &segments,
+                                int index,
+                                const string &key,
+                                const string &description) {
   CHECK_GT(segments.segments_size(), index);
+  bool check_description = !description.empty();
+
   for (size_t i = 0; i < segments.segment(index).candidates_size(); ++i) {
     const Segment::Candidate &candidate = segments.segment(index).candidate(i);
-    if (candidate.value == value) {
-      return true;
+    if (candidate.value == key) {
+      if (check_description) {
+        bool result = candidate.description == description;
+        return result;
+      } else {
+        return true;
+      }
     }
   }
   return false;
+}
+
+bool HasCandidate(const Segments &segments, int index, const string &value) {
+  return HasCandidateAndDescription(segments, index, value, "");
 }
 }  // namespace
 
@@ -163,6 +178,25 @@ TEST_F(SymbolRewriterTest, TriggerRewriteEachTest) {
   }
 }
 
+TEST_F(SymbolRewriterTest, TriggerRewriteDescriptionTest) {
+  SymbolRewriter symbol_rewriter;
+  {
+    Segments segments;
+    // "したつき"
+    AddSegment("\xE3\x81\x97\xE3\x81\x9F\xE3\x81\xA4\xE3\x81\x8D",
+               "test", &segments);
+    EXPECT_TRUE(symbol_rewriter.RewriteEachCandidate(&segments));
+    EXPECT_EQ(1, segments.segments_size());
+    // "₍"
+    EXPECT_TRUE(HasCandidateAndDescription(segments, 0, "\xE2\x82\x8D",
+        // "下付き文字(始め丸括弧)"
+        "\xE4\xB8\x8B\xE4\xBB\x98\xE3\x81\x8D\xE6\x96\x87\xE5\xAD\x97"
+        "("
+        "\xE5\xA7\x8B\xE3\x82\x81\xE4\xB8\xB8\xE6\x8B\xAC\xE5\xBC\xA7"
+        ")"));
+  }
+}
+
 TEST_F(SymbolRewriterTest, InsertAfterSingleKanjiAndT13n) {
   SymbolRewriter symbol_rewriter;
   {
@@ -212,4 +246,6 @@ TEST_F(SymbolRewriterTest, InsertAfterSingleKanjiAndT13n) {
     }
   }
 }
+
+
 }  // namespace mozc

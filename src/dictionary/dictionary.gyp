@@ -72,6 +72,17 @@
       ],
     },
     {
+      'target_name': 'suffix_dictionary',
+      'type': 'static_library',
+      'sources': [
+        'suffix_dictionary.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        'gen_suffix_data',
+      ],
+    },
+    {
       'target_name': 'dictionary',
       'type': 'static_library',
       'sources': [
@@ -87,6 +98,7 @@
         'suppression_dictionary',
         'system/system_dictionary.gyp:system_dictionary_builder',
         'user_dictionary',
+        'suffix_dictionary',
       ],
       'conditions': [['two_pass_build==0', {
         'dependencies': [
@@ -239,6 +251,33 @@
       ],
     },
     {
+      'target_name': 'gen_suffix_data',
+      'type': 'none',
+      'actions': [
+        {
+          'action_name': 'gen_suffix_data',
+          'variables': {
+            'input_files': [
+              '../data/dictionary/suffix.txt',
+            ],
+          },
+          'inputs': [
+            'gen_suffix_data.py',
+            '<@(input_files)',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/suffix_data.h',
+          ],
+          'action': [
+            'python', '../build_tools/redirect.py',
+            '<(gen_out_dir)/suffix_data.h',
+            'gen_suffix_data.py',
+            '<@(input_files)',
+          ],
+        },
+      ],
+    },
+    {
       'target_name': 'genproto_dictionary',
       'type': 'none',
       'sources': [
@@ -269,6 +308,33 @@
       'includes' : [
         '../gyp/install_build_tool.gypi'
       ],
+    },
+    {
+      'target_name': 'dictionary_mock',
+      'type': 'static_library',
+      'sources': [
+        'dictionary_mock.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        '<(DEPTH)/third_party/rx/rx.gyp:rx',
+      ],
+    },
+    {
+      'target_name': 'dictionary_mock_test',
+      'type': 'executable',
+      'sources': [
+        'dictionary_mock_test.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        '../testing/testing.gyp:gtest_main',
+        'dictionary',
+        'dictionary_mock',
+      ],
+      'variables': {
+        'test_size': 'small',
+      },
     },
   ],
 }

@@ -98,6 +98,8 @@ TEST_F(CandidateFilterTest, FilterTest) {
 
   GetDefaultNodes(&n);
   Segment::Candidate *c1 = NewCandidate();
+  c1->lid = 1;
+  c1->rid = 1;
   c1->value = "abc";
   EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
             filter.FilterCandidate(c1, n));
@@ -119,6 +121,15 @@ TEST_F(CandidateFilterTest, FilterTest) {
   // Checks if a canidate is active before appending many candidates.
   EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
             filter.FilterCandidate(c4, n));
+
+  // Don't filter if lid/rid the same as the top candidate.
+  Segment::Candidate *c5 = NewCandidate();
+  c5->value = "foo";
+  c5->lid = 1;
+  c5->rid = 1;
+  EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
+            filter.FilterCandidate(c5, n));
+
 
   // Though CandidateFilter may change its limit, 1000 should
   // be always above the limit.

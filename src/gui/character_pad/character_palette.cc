@@ -44,7 +44,6 @@ namespace {
 const int kHexBase = 16;
 
 const char kUNICODEName[]  = "Unicode";
-const char kJISName[]      = "JIS";
 const char kCP932Name[]    = "Shift JIS";
 const char kJISX0201Name[] = "JISX 0201";
 const char kJISX0208Name[] = "JISX 0208";
@@ -140,21 +139,36 @@ CharacterPalette::CharacterPalette(QWidget *parent)
                    SIGNAL(itemClicked(QTreeWidgetItem *, int)),
                    SLOT(categorySelected(QTreeWidgetItem *, int)));
 
-  QTreeWidgetItem *jis_item = categoryTreeWidget->topLevelItem(0);
-  QTreeWidgetItem *sjis_item = AddItem(jis_item, kCP932Name);
-  AddItem(jis_item, kJISX0201Name);
-  AddItem(jis_item, kJISX0208Name);
-  AddItem(jis_item, kJISX0212Name);
+  QTreeWidgetItem *unicode_item = new QTreeWidgetItem;
+  unicode_item->setText(0, QString::fromUtf8(kUNICODEName));
+  QTreeWidgetItem *sjis_item = new QTreeWidgetItem;
+  sjis_item->setText(0, QString::fromUtf8(kCP932Name));
+  QTreeWidgetItem *jisx0201_item = new QTreeWidgetItem;
+  jisx0201_item->setText(0, QString::fromUtf8(kJISX0201Name));
+  QTreeWidgetItem *jisx0208_item = new QTreeWidgetItem;
+  jisx0208_item->setText(0, QString::fromUtf8(kJISX0208Name));
+  QTreeWidgetItem *jisx0212_item = new QTreeWidgetItem;
+  jisx0212_item->setText(0, QString::fromUtf8(kJISX0212Name));
+
+  // Because almost all users use Shift-JIS table instead of
+  // Unicode table, Shift-JIS table is selected and child
+  // items of Shift-JIS table are expanded by default.
+  // In order to let user know the existence of the Unicode table,
+  // shows Unicode table at first, but don't expands the child items.
+  categoryTreeWidget->addTopLevelItem(unicode_item);
+  categoryTreeWidget->addTopLevelItem(sjis_item);
+  categoryTreeWidget->addTopLevelItem(jisx0201_item);
+  categoryTreeWidget->addTopLevelItem(jisx0208_item);
+  categoryTreeWidget->addTopLevelItem(jisx0212_item);
 
   for (int i = 0; kCP932JumpTo[i].name != NULL; ++i) {
     AddItem(sjis_item, kCP932JumpTo[i].name);
   }
 
   // Make Unicode Block children
-  QTreeWidgetItem *unicode_item = categoryTreeWidget->topLevelItem(1);
   for (int i = 0; kUnicodeBlockTable[i].name != NULL; ++i) {
     QTreeWidgetItem *item = new QTreeWidgetItem(unicode_item);
-    item->setText(0, QString(kUnicodeBlockTable[i].name));
+    item->setText(0, QObject::tr(kUnicodeBlockTable[i].name));
     unicode_item->addChild(item);
   }
 
@@ -167,14 +181,15 @@ CharacterPalette::CharacterPalette(QWidget *parent)
   showLocalTable(kCP932Map, kCP932MapSize);
   categoryTreeWidget->setCurrentItem(sjis_item);
 
-  categoryTreeWidget->setItemExpanded(categoryTreeWidget->topLevelItem(0),
-                                      true);
   categoryTreeWidget->setItemExpanded(
       categoryTreeWidget->topLevelItem(0)->parent(),
       true);
 
-  categoryTreeWidget->setCurrentItem
-      (categoryTreeWidget->topLevelItem(0)->child(0));
+  // Select "Shift-JIS" item as a default.
+  categoryTreeWidget->setCurrentItem(sjis_item);
+  sjis_item->setExpanded(true);
+
+  tableWidget->setAutoScroll(false);
 
   repaint();
   update();
@@ -222,8 +237,15 @@ void CharacterPalette::updateTableSize() {
   const char kHexBaseChar[]= "\xE9\xBE\x8D";
   const QRect rect =
       QFontMetrics(tableWidget->font()).boundingRect(trUtf8(kHexBaseChar));
+
+#ifdef OS_MACOSX
+  const int width = static_cast<int>(rect.width() * 2.2);
+  const int height = static_cast<int>(rect.height() * 2.0);
+#else
   const int width = static_cast<int>(rect.width() * 1.6);
   const int height = static_cast<int>(rect.height() * 1.2);
+#endif
+
   for (int j = 0; j < tableWidget->columnCount(); ++j) {
     tableWidget->setColumnWidth(j, width);
   }
@@ -238,10 +260,10 @@ void CharacterPalette::categorySelected(QTreeWidgetItem *item,
   const QString &text = item->text(column);
   const QTreeWidgetItem *parent = item->parent();
 
+  item->setExpanded(!item->isExpanded());
+
   if (text == kUNICODEName) {     // TOP Unicode
     showUnicodeAllTable();
-  } else if (text == kJISName) {  // TOP JIS
-    showLocalTable(kCP932Map, kCP932MapSize);
   } else if (parent != NULL && parent->text(0) == kUNICODEName) {
     showUnicodeBlockTable(text);
   } else if (parent != NULL && parent->text(0) == kCP932Name) {
@@ -335,7 +357,8 @@ void CharacterPalette::showUnicodeBlockTable(const QString &name) {
 
   const UnicodeBlock *block = NULL;
   for (int i = 0; kUnicodeBlockTable[i].name != NULL; ++i) {
-    if (name == kUnicodeBlockTable[i].name) {
+    if (name == kUnicodeBlockTable[i].name ||
+        name == QObject::tr(kUnicodeBlockTable[i].name)) {
       block = &kUnicodeBlockTable[i];
       break;
     }

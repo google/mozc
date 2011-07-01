@@ -74,7 +74,8 @@ void SessionConverter::SetOperationPreferences(
       preferences.candidate_shortcuts;
 }
 
-bool SessionConverter::CheckState(States states) const {
+bool SessionConverter::CheckState(
+    SessionConverterInterface::States states) const {
   return ((state_ & states) != NO_STATE);
 }
 
@@ -909,36 +910,52 @@ void SessionConverter::FillContext(commands::Context *context) const {
   }
 }
 
-void SessionConverter::GetHistorySegments(vector<string> *history) const {
-  DCHECK(history);
-  history->clear();
-  for (size_t i = 0; i < segments_->history_segments_size(); ++i) {
-    history->push_back(segments_->history_segment(i).candidate(0).value);
-  }
+void SessionConverter::GetSegments(Segments *dest) const {
+  DCHECK(dest);
+  dest->Clear();
+  dest->CopyFrom(*segments_.get());
 }
 
-void SessionConverter::SetHistorySegments(const vector<string> &history) {
-  segments_->erase_segments(0, segments_->history_segments_size());
-
-  for (size_t i = 0; i < history.size(); ++i) {
-    Segment *segment = segments_->insert_segment(i);
-    segment->set_segment_type(Segment::HISTORY);
-    segment->set_key(history[i]);
-
-    Segment::Candidate *candidate = segment->add_candidate();
-    candidate->value = history[i];
-    candidate->content_value = history[i];
-    candidate->key = history[i];
-    candidate->content_key = history[i];
-  }
+void SessionConverter::SetSegments(const Segments &src) {
+  segments_->Clear();
+  segments_->CopyFrom(src);
 }
 
 void SessionConverter::RemoveTailOfHistorySegments(size_t num_of_characters) {
   segments_->RemoveTailOfHistorySegments(num_of_characters);
 }
 
+const commands::Result &SessionConverter::GetResult() const {
+  return result_;
+}
+
 const string &SessionConverter::GetDefaultResult() const {
   return default_result_;
+}
+
+const string &SessionConverter::GetComposition() const {
+  return composition_;
+}
+
+const CandidateList &SessionConverter::GetCandidateList() const {
+  return *candidate_list_;
+}
+
+const OperationPreferences &SessionConverter::GetOperationPreferences() const {
+  return operation_preferences_;
+}
+
+SessionConverterInterface::State SessionConverter::GetState() const {
+  return state_;
+}
+
+size_t SessionConverter::GetSegmentIndex() const {
+  return segment_index_;
+}
+
+const vector<Segment::Candidate> &SessionConverter::GetPreviousSuggestions()
+    const {
+  return previous_suggestions_;
 }
 
 // static
@@ -947,6 +964,38 @@ void SessionConverter::SetConversionPreferences(
     Segments *segments) {
   segments->set_user_history_enabled(preferences.use_history);
   segments->set_max_history_segments_size(preferences.max_history_size);
+}
+
+void SessionConverter::CopyFrom(const SessionConverterInterface &src) {
+  Reset();
+
+  // TODO(hsumita): copy composer_ and converter_
+  Segments segments;
+  src.GetSegments(&segments);
+  SetSegments(segments);
+
+  state_ = src.GetState();
+  composition_ = src.GetComposition();
+  segment_index_ = src.GetSegmentIndex();
+  conversion_preferences_ = src.conversion_preferences();
+  operation_preferences_ = src.GetOperationPreferences();
+  result_.CopyFrom(src.GetResult());
+  default_result_ = src.GetDefaultResult();
+
+  const vector<Segment::Candidate> &previous_suggestions =
+      src.GetPreviousSuggestions();
+  const int size = previous_suggestions.size();
+  previous_suggestions_.clear();
+  previous_suggestions_.resize(size);
+  for (int i = 0; i < size; ++i) {
+    previous_suggestions_[i].CopyFrom(previous_suggestions[i]);
+  }
+
+  if (CheckState(SUGGESTION | PREDICTION | CONVERSION)) {
+    UpdateCandidateList();
+    candidate_list_->MoveToId(src.GetCandidateList().focused_id());
+    SetCandidateListVisible(src.IsCandidateListVisible());
+  }
 }
 
 void SessionConverter::ResetResult() {

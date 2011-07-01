@@ -36,9 +36,10 @@
 #include <QtGui/QtGui>
 #include "base/base.h"
 #include "base/password_manager.h"
+#include "base/run_level.h"
 #include "base/util.h"
 #include "gui/base/debug_util.h"
-#include "base/run_level.h"
+#include "gui/base/win_util.h"
 
 DEFINE_string(mode, "about_dialog", "mozc_tool mode");
 
@@ -125,6 +126,11 @@ int RunMozcTool(int argc, char *argv[]) {
 
   // we cannot install the translation of qt_ja_JP here.
   // as Qpplication is initialized inside Run* function
+
+#ifdef OS_WINDOWS
+  // Update JumpList if available.
+  mozc::gui::WinUtil::KeepJumpListUpToDate();
+#endif  // OS_WINDOWS
 
   if (FLAGS_mode == "config_dialog") {
     return RunConfigDialog(argc, argv);

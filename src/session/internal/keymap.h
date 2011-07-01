@@ -72,9 +72,6 @@ class KeyMapManager {
 
   bool Initialize();
 
-  // Reloads the key map by using the system config.
-  bool Reload();
-
   // Reloads the key map by using given configuration.
   bool ReloadWithKeymap(const config::Config::SessionKeymap new_keymap);
 

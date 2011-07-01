@@ -32,14 +32,13 @@
 
 #include <string>
 #include "base/base.h"
+#include "converter/segments.h"
 
 namespace mozc {
 
 namespace composer {
   class Composer;
 }  // namespace composer
-
-class Segments;
 
 class ConverterInterface {
  public:
@@ -176,6 +175,14 @@ class ConverterUtil {
   static void InitSegmentsFromString(const string &key,
                                      const string &preedit,
                                      Segments *segments);
+
+  // Complete Left id/Right id if they are not defined.
+  // Some users don't push conversion button but directly
+  // input hiragana sequence only with composition mode. Converter
+  // cannot know which POS ids should be used for these directly-
+  // input strings. This function estimates IDs from value heuristically.
+  static void CompletePOSIds(Segment::Candidate *candidate);
+
  private:
   ConverterUtil() {}
   ~ConverterUtil() {}

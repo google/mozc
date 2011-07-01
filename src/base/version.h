@@ -37,19 +37,32 @@ namespace mozc {
 
 class Version {
  public:
-  // get current mozc version (former called MOZC_VERSION)
+  enum BuildType {
+    CONTINUOUS = 1,
+    RELEASE = 2,
+  };
+
+  // Get current mozc version (former called MOZC_VERSION)
   static string GetMozcVersion();
 
 #ifdef OS_WINDOWS
-  // get current mozc version (former called MOZC_VERSION) by wstring
+  // Get current mozc version (former called MOZC_VERSION) by wstring
   static wstring GetMozcVersionW();
 #endif
+
+  static int GetMozcVersionMajor();
+  static int GetMozcVersionMinor();
+  static int GetMozcVersionBuildNumber();
+  static int GetMozcVersionRevision();
 
   // Returns true if lhs is less than rhs in the lexical order.
   // CompareVersion("1.2.3.4", "1.2.3.4") => false
   // CompareVersion("1.2.3.4", "5.2.3.4") => true
   // CompareVersion("1.25.3.4", "1.2.3.4") => false
   static bool CompareVersion(const string &lhs, const string &rhs);
+
+  // Get the current build type.
+  static BuildType GetMozcBuildType();
 
  private:
   DISALLOW_COPY_AND_ASSIGN(Version);

@@ -45,10 +45,6 @@ namespace composer {
 class Composer;
 }  // namespace composer
 
-namespace keymap {
-class KeyMapManager;
-}  // namespace keymap
-
 namespace session {
 class SessionConverterInterface;
 
@@ -72,13 +68,6 @@ class ImeContext {
   SessionConverterInterface *mutable_converter();
   void set_converter(SessionConverterInterface *converter);
 
-  const keymap::KeyMapManager &keymap() const;
-  void set_keymap(const keymap::KeyMapManager *keymap);
-
-  const keymap::KeyMapManager &private_keymap() const;
-  keymap::KeyMapManager *mutable_private_keymap();
-  void set_private_keymap(keymap::KeyMapManager *keymap);
-
   enum State {
     NONE = 0,
     DIRECT = 1,
@@ -92,6 +81,9 @@ class ImeContext {
   const TransformTable &transform_table() const;
   TransformTable *mutable_transform_table();
 
+  config::Config::SessionKeymap keymap() const;
+  void set_keymap(config::Config::SessionKeymap keymap);
+
   const commands::Capability &client_capability() const;
   commands::Capability *mutable_client_capability();
 
@@ -102,6 +94,7 @@ class ImeContext {
   commands::Output *mutable_output();
 
   const string &initial_composition() const;
+  string *mutable_initial_composition();
   void set_initial_composition(const string &composition);
 
   // Copy |source| context to |destination| context.  This function
@@ -116,12 +109,9 @@ class ImeContext {
 
   scoped_ptr<SessionConverterInterface> converter_;
 
-  const keymap::KeyMapManager *keymap_;
-
-  scoped_ptr<keymap::KeyMapManager> private_keymap_;
-
   State state_;
   TransformTable transform_table_;
+  config::Config::SessionKeymap keymap_;
 
   commands::Capability client_capability_;
 

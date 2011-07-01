@@ -70,6 +70,7 @@ class ConfigHandlerImpl {
   bool SetConfig(const Config &config);
   bool Reload();
   void SetConfigFileName(const string &filename);
+  string GetConfigFileName();
 
  private:
   // copy config to config_ and do some
@@ -117,6 +118,13 @@ bool ConfigHandlerImpl::SetConfigInternal(const Config &config) {
     config_.set_session_keymap(Config::MSIME);
 #endif  // OS_MACOSX
   }
+
+#ifdef OS_CHROMEOS
+  if (!config_.has_use_realtime_conversion()) {
+    // Realtime conversion is off by default in Chrome OS.
+    config_.set_use_realtime_conversion(false);
+  }
+#endif  // OS_CHROMEOS
 
   return true;
 }
@@ -169,6 +177,10 @@ void ConfigHandlerImpl::SetConfigFileName(const string &filename) {
   VLOG(1) << "set new config file name: " << filename;
   filename_ = filename;
 }
+
+string ConfigHandlerImpl::GetConfigFileName() {
+  return filename_;
+}
 }  // namespace
 
 const Config &ConfigHandler::GetConfig() {
@@ -214,12 +226,18 @@ void ConfigHandler::GetDefaultConfig(Config *config) {
                        config::Config::FULL_WIDTH, config::Config::LAST_FORM);
   AddCharacterFormRule(config, ":;",
                        config::Config::FULL_WIDTH, config::Config::LAST_FORM);
-  AddCharacterFormRule(config, "#%&@$^_|`~\\",
+  AddCharacterFormRule(config, "#%&@$^_|`\\",
+                       config::Config::FULL_WIDTH, config::Config::LAST_FORM);
+  AddCharacterFormRule(config, "~",
                        config::Config::FULL_WIDTH, config::Config::LAST_FORM);
   AddCharacterFormRule(config, "<>=+-/*",
                        config::Config::FULL_WIDTH, config::Config::LAST_FORM);
   AddCharacterFormRule(config, "?!",
                        config::Config::FULL_WIDTH, config::Config::LAST_FORM);
+
+#ifdef OS_CHROMEOS
+  config->set_use_auto_conversion(false);
+#endif
 }
 
 // Reload from file
@@ -229,6 +247,10 @@ bool ConfigHandler::Reload() {
 
 void ConfigHandler::SetConfigFileName(const string &filename) {
   GetConfigHandlerImpl()->SetConfigFileName(filename);
+}
+
+string ConfigHandler::GetConfigFileName() {
+  return GetConfigHandlerImpl()->GetConfigFileName();
 }
 
 // static

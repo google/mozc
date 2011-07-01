@@ -35,12 +35,14 @@
 #include "base/util.h"
 #include "composer/table.h"
 #include "converter/converter_interface.h"
+#include "converter/segments.h"
 #include "rewriter/rewriter_interface.h"
 #include "session/config.pb.h"
 #include "session/config_handler.h"
 #include "session/internal/keymap.h"
 #include "session/key_parser.h"
 #include "session/session.h"
+#include "session/session_converter_interface.h"
 #include "session/session_handler.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/googletest.h"
@@ -258,6 +260,135 @@ TEST_F(SessionRegressionTest, Undo) {
   session_->Undo(&command);
   EXPECT_NE(candidate1, GetComposition(command));
   EXPECT_EQ(candidate2, GetComposition(command));
+}
+
+// TODO(hsumita): This test may be moved to session_test.cc.
+// New converter mock is required if move this test.
+TEST_F(SessionRegressionTest, ConverterHandleHistorySegmentAfterUndo) {
+  // This is an unittest against http://b/3427618
+  InitSessionToPrecomposition(session_.get());
+
+  commands::Capability capability;
+  capability.set_text_deletion(commands::Capability::DELETE_PRECEDING_TEXT);
+  session_->set_client_capability(capability);
+
+  commands::Command command;
+  InsertCharacterChars("kiki", &command);
+  // "危機"
+  const char *kKikiString = "\xE5\x8D\xB1\xE6\xA9\x9F";
+
+  command.Clear();
+  session_->Convert(&command);
+  EXPECT_EQ(1, command.output().preedit().segment_size());
+
+  // Candidate contain "危機" or NOT
+  bool is_convert_success = false;
+  for (size_t i = 0; i < 10; ++i) {
+    if (GetComposition(command) == kKikiString) {
+      is_convert_success = true;
+      break;
+    }
+
+    command.Clear();
+    session_->ConvertNext(&command);
+  }
+  EXPECT_TRUE(is_convert_success);
+  EXPECT_EQ(kKikiString, GetComposition(command));
+
+  command.Clear();
+  session_->Commit(&command);
+  EXPECT_FALSE(command.output().has_preedit());
+  EXPECT_EQ(kKikiString, command.output().result().value());
+
+  Segments segments;
+  session_->context().converter().GetSegments(&segments);
+  EXPECT_EQ(1, segments.history_segments_size());
+  EXPECT_EQ(0, segments.conversion_segments_size());
+  EXPECT_EQ(kKikiString, segments.segment(0).candidate(0).value);
+
+  command.Clear();
+  InsertCharacterChars("ippatsu", &command);
+  // "一髪"
+  const string kIppatsuString = "\xE4\xB8\x80\xE9\xAB\xAA";
+
+  command.Clear();
+  session_->Convert(&command);
+  const string candidate = GetComposition(command);
+  // "一髪"
+  EXPECT_EQ(kIppatsuString, candidate);
+
+  command.Clear();
+  session_->Commit(&command);
+  EXPECT_FALSE(command.output().has_preedit());
+  EXPECT_EQ(kIppatsuString, command.output().result().value());
+
+  command.Clear();
+  session_->Undo(&command);
+
+  session_->context().converter().GetSegments(&segments);
+  EXPECT_EQ(1, segments.history_segments_size());
+  EXPECT_EQ(1, segments.conversion_segments_size());
+  EXPECT_EQ(kKikiString, segments.segment(0).candidate(0).value);
+  // Confirm the result contains suggestion which consider history segments.
+  EXPECT_EQ(candidate, GetComposition(command));
+}
+
+// TODO(hsumita): This test may be moved to session_test.cc.
+// New converter mock is required if move this test.
+TEST_F(SessionRegressionTest, PredictionAfterUndo) {
+  // This is a unittest against http://b/3427619
+  InitSessionToPrecomposition(session_.get());
+
+  commands::Capability capability;
+  capability.set_text_deletion(commands::Capability::DELETE_PRECEDING_TEXT);
+  session_->set_client_capability(capability);
+
+  commands::Command command;
+  InsertCharacterChars("yoroshi", &command);
+  // "よろしくお願いします"
+  const string kYoroshikuString =
+      "\xE3\x82\x88\xE3\x82\x8D\xE3\x81\x97\xE3\x81\x8F"
+      "\xE3\x81\x8A\xE9\xA1\x98\xE3\x81\x84"
+      "\xE3\x81\x97\xE3\x81\xBE\xE3\x81\x99";
+
+  command.Clear();
+  session_->PredictAndConvert(&command);
+  EXPECT_EQ(1, command.output().preedit().segment_size());
+
+  // Candidate contain "よろしくお願いします" or NOT
+  bool is_convert_success = false;
+  for (size_t i = 0; i < 10; ++i) {
+    if (GetComposition(command) == kYoroshikuString) {
+      is_convert_success = true;
+      break;
+    }
+
+    command.Clear();
+    session_->ConvertNext(&command);
+  }
+  EXPECT_TRUE(is_convert_success);
+  EXPECT_EQ(kYoroshikuString, GetComposition(command));
+
+  command.Clear();
+  session_->Commit(&command);
+  EXPECT_FALSE(command.output().has_preedit());
+  EXPECT_EQ(kYoroshikuString, command.output().result().value());
+
+  Segments segments;
+  session_->context().converter().GetSegments(&segments);
+  EXPECT_EQ(1, segments.history_segments_size());
+  EXPECT_EQ(0, segments.conversion_segments_size());
+  EXPECT_EQ(kYoroshikuString, segments.segment(0).candidate(0).value);
+
+  command.Clear();
+  session_->Undo(&command);
+
+  session_->context().converter().GetSegments(&segments);
+  EXPECT_EQ(0, segments.history_segments_size());
+  EXPECT_EQ(1, segments.conversion_segments_size());
+  // Confirm the result contains suggestion candidates from "よろし"
+  EXPECT_EQ(kYoroshikuString, segments.segment(0).candidate(0).value);
+  EXPECT_EQ(kYoroshikuString, GetComposition(command));
 }
 
 }  // namespace mozc

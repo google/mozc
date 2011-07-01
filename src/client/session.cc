@@ -57,7 +57,7 @@ namespace mozc {
 namespace client {
 
 namespace {
-const char kServerAddress[]    = "session"; // name for the IPC connection.
+const char kServerAddress[]    = "session";  // name for the IPC connection.
 const int    kResultBufferSize = 8192 * 32;   // size of IPC buffer
 const size_t kMaxPlayBackSize  = 512;   // size of maximum history
 
@@ -537,7 +537,7 @@ bool Session::PingServer() const {
   InitInput(&input);
   input.set_type(commands::Input::NO_OPERATION);
 
- // Call IPC
+  // Call IPC
   scoped_ptr<IPCClientInterface> client(
       client_factory_->NewClient(kServerAddress,
                                  server_launcher_->server_program()));
@@ -565,6 +565,7 @@ bool Session::PingServer() const {
 
   return true;
 }
+
 
 bool Session::CallCommand(commands::Input::CommandType type) {
   commands::Input input;
@@ -798,6 +799,42 @@ bool Session::IsAbortKey(const commands::KeyEvent &key) {
         key.modifier_keys(1) == commands::KeyEvent::ALT) ||
        (key.modifier_keys(0) == commands::KeyEvent::ALT &&
         key.modifier_keys(1) == commands::KeyEvent::CTRL));
+}
+
+bool Session::TranslateProtoBufToMozcToolArg(const commands::Output &output,
+                                             string *mode) {
+  if (!output.has_launch_tool_mode() || mode == NULL) {
+    return false;
+  }
+
+  switch (output.launch_tool_mode()) {
+    case commands::Output::CONFIG_DIALOG:
+      mode->assign("config_dialog");
+      break;
+    case commands::Output::DICTIONARY_TOOL:
+      mode->assign("dictionary_tool");
+      break;
+    case commands::Output::WORD_REGISTER_DIALOG:
+      mode->assign("word_register_dialog");
+      break;
+    case commands::Output::NO_TOOL:
+    default:
+      // do nothing
+      return false;
+      break;
+  }
+
+  return true;
+}
+
+bool Session::LaunchToolWithProtoBuf(const commands::Output &output) {
+  string mode;
+  if (!TranslateProtoBufToMozcToolArg(output, &mode)) {
+    return false;
+  }
+
+  // TODO(nona): extends output message to support extra argument.
+  return LaunchTool(mode, "");
 }
 
 bool Session::LaunchTool(const string &mode, const string &extra_arg) {

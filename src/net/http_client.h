@@ -44,13 +44,13 @@ namespace mozc {
 // CHECK(mozc::HTTPClient::Get("http://www.google.com/", &output));
 //
 // 2) GET with some manual options.
-// mozc::HTTPClient::option;
+// mozc::HTTPClient::Option option;
 // option.timeout = 200;     // get data within 200msec
 // option.headers.push_back("Host: foo.bar.com"); // replace/add header
 // CHECK(mozc::HTTPClient::Get("http://www.google.com/", option, &output));
 //
 // 3) output to ofstream
-// ostrema ofs("foo.txt")
+// ostrem ofs("foo.txt")
 // mozc::HTTPClient::Get("http://www.google.com/", &ofs);
 // mozc::HTTPClient::Get("http://www.google.com/", option, &ofs);
 //

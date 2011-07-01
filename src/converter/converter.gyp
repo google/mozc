@@ -37,12 +37,13 @@
       'target_name': 'converter',
       'type': 'static_library',
       'sources': [
+        '<(gen_out_dir)/pos_matcher.h',
         'converter.cc',
         'converter_mock.cc',
-        'focus_candidate_handler.cc',
       ],
       'dependencies': [
         '../composer/composer.gyp:composer',
+        '../dictionary/dictionary_base.gyp:gen_pos_matcher',
         '../prediction/prediction.gyp:prediction',
         '../rewriter/rewriter.gyp:rewriter',
         '../session/session_base.gyp:session_protocol',

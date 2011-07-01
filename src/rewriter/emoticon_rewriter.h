@@ -41,6 +41,8 @@ class EmoticonRewriter: public RewriterInterface  {
   EmoticonRewriter();
   virtual ~EmoticonRewriter();
 
+  virtual int capability() const;
+
   virtual bool Rewrite(Segments *segments) const;
 };
 }  // namespace mozc

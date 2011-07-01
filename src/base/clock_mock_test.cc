@@ -35,10 +35,9 @@
 namespace mozc {
 
 namespace {
-// 2020-12-23 13:24:35 (Wed)
+// 2020-12-23 13:24:35 (Wed) UTC
 // 123456 [usec]
-// This time is chosen to exceed 32bit signed integer.
-const uint64 kTestSeconds = 1608758675uLL;
+const uint64 kTestSeconds = 1608729875uLL;
 const uint32 kTestMicroSeconds = 123456u;
 }
 
@@ -58,6 +57,22 @@ TEST(ClockMockTest, ClockMockTest) {
     mock.GetTimeOfDay(&current_sec, &current_usec);
     EXPECT_EQ(kTestSeconds, current_sec);
     EXPECT_EQ(kTestMicroSeconds, current_usec);
+  }
+
+  // GetCurrentTmWithOffset
+  {  // 2020-12-23 13:24:00 (Wed)
+    ClockMock mock(kTestSeconds, kTestMicroSeconds);
+    const int offset = -35;
+    tm current_tm;
+
+    EXPECT_TRUE(mock.GetTmWithOffsetSecond(offset, &current_tm));
+    EXPECT_EQ(120, current_tm.tm_year);
+    EXPECT_EQ(11, current_tm.tm_mon);
+    EXPECT_EQ(23, current_tm.tm_mday);
+    EXPECT_EQ(13, current_tm.tm_hour);
+    EXPECT_EQ(24, current_tm.tm_min);
+    EXPECT_EQ(00, current_tm.tm_sec);
+    EXPECT_EQ(3, current_tm.tm_wday);
   }
 
   // PutClockForward

@@ -163,6 +163,7 @@ class Session : public SessionInterface {
   bool NoOperation();
   bool PingServer() const;
 
+
   void Reset();
 
   void EnableCascadingWindow(bool enable);
@@ -173,6 +174,12 @@ class Session : public SessionInterface {
   void set_client_capability(const commands::Capability &capability);
 
   bool LaunchTool(const string &mode, const string &arg);
+  bool LaunchToolWithProtoBuf(const commands::Output &output);
+  // Converts Output message from server to corresponding mozc_tool arguments
+  // If launch_tool_mode is not set or NO_TOOL is set or an invalid value is
+  // set, this function will return false and do nothing.
+  static bool TranslateProtoBufToMozcToolArg(const commands::Output &output,
+                                             string *mode);
 
   bool OpenBrowser(const string &url);
 

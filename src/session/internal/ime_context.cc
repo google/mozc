@@ -33,7 +33,6 @@
 #include "session/internal/ime_context.h"
 
 #include "composer/composer.h"
-#include "session/internal/keymap.h"
 #include "session/session_converter_interface.h"
 
 namespace mozc {
@@ -44,8 +43,6 @@ ImeContext::ImeContext()
       last_command_time_(0),
       composer_(NULL),
       converter_(NULL),
-      keymap_(NULL),
-      private_keymap_(NULL),
       state_(NONE) {}
 ImeContext::~ImeContext() {}
 
@@ -78,23 +75,6 @@ void ImeContext::set_converter(SessionConverterInterface *converter) {
   converter_.reset(converter);
 }
 
-const keymap::KeyMapManager &ImeContext::keymap() const {
-  return *keymap_;
-}
-void ImeContext::set_keymap(const keymap::KeyMapManager *keymap) {
-  keymap_ = keymap;
-}
-
-const keymap::KeyMapManager &ImeContext::private_keymap() const {
-  return *private_keymap_;
-}
-keymap::KeyMapManager *ImeContext::mutable_private_keymap() {
-  return private_keymap_.get();
-}
-void ImeContext::set_private_keymap(keymap::KeyMapManager *keymap) {
-  private_keymap_.reset(keymap);
-}
-
 ImeContext::State ImeContext::state() const {
   return state_;
 }
@@ -107,6 +87,14 @@ const TransformTable &ImeContext::transform_table() const {
 }
 TransformTable *ImeContext::mutable_transform_table() {
   return &transform_table_;
+}
+
+config::Config::SessionKeymap ImeContext::keymap() const {
+  return keymap_;
+}
+
+void ImeContext::set_keymap(config::Config::SessionKeymap keymap) {
+  keymap_ = keymap;
 }
 
 const commands::Capability &ImeContext::client_capability() const {
@@ -133,6 +121,9 @@ commands::Output *ImeContext::mutable_output() {
 const string &ImeContext::initial_composition() const {
   return initial_composition_;
 }
+string *ImeContext::mutable_initial_composition() {
+  return &initial_composition_;
+}
 void ImeContext::set_initial_composition(const string &composition) {
   initial_composition_ = composition;
 }
@@ -144,10 +135,8 @@ void ImeContext::CopyContext(const ImeContext &src, ImeContext *dest) {
   // Copy output
   dest->mutable_output()->CopyFrom(src.output());
 
-  // Copy history segments
-  vector<string> history;
-  src.converter().GetHistorySegments(&history);
-  dest->mutable_converter()->SetHistorySegments(history);
+  // Copy session converter
+  dest->mutable_converter()->CopyFrom(src.converter());
 
   // Copy composition modes
   dest->mutable_composer()->SetInputMode(src.composer().GetInputMode());
@@ -173,11 +162,9 @@ void ImeContext::CopyContext(const ImeContext &src, ImeContext *dest) {
       return;
 
     case CONVERSION:
+      // Copy composition
       src.composer().GetQueryForConversion(&composition);
       dest->mutable_composer()->InsertCharacterPreedit(composition);
-
-      // TODO(komatsu): Consider prediction.
-      dest->mutable_converter()->Convert(&dest->composer());
       return;
 
     default:

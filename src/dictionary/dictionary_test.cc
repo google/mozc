@@ -27,11 +27,15 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "base/base.h"
+#include "base/util.h"
+#include "converter/node.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/suppression_dictionary.h"
-#include "base/base.h"
-#include "converter/node.h"
+#include "dictionary/pos_matcher.h"
 #include "testing/base/public/gunit.h"
+#include "session/config.pb.h"
+#include "session/config_handler.h"
 
 namespace mozc {
 
@@ -118,6 +122,91 @@ TEST(Dictionary_test, WordSuppressionTest) {
     }
 
     EXPECT_TRUE(found);
+  }
+}
+
+TEST(Dictionary_test, DisableSpellingCorrectionTest) {
+  DictionaryInterface *d = DictionaryFactory::GetDictionary();
+  TestNodeAllocator allocator;
+
+  // "しゅみれーしょん"
+  const char kQuery[] = "\xE3\x81\x97\xE3\x82\x85\xE3\x81\xBF"
+      "\xE3\x82\x8C\xE3\x83\xBC\xE3\x81\x97\xE3\x82\x87\xE3\x82\x93";
+
+  {
+    config::Config config;
+    config.set_use_spelling_correction(true);
+    config::ConfigHandler::SetConfig(config);
+
+    Node *node = d->LookupPrefix(kQuery, strlen(kQuery), &allocator);
+    for (; node != NULL; node = node->bnext) {
+      if (node->attributes & Node::SPELLING_CORRECTION) {
+        EXPECT_TRUE(GET_CONFIG(use_spelling_correction));
+      }
+    }
+
+    config.set_use_spelling_correction(false);
+    config::ConfigHandler::SetConfig(config);;
+    node = d->LookupPrefix(kQuery, strlen(kQuery), &allocator);
+    for (; node != NULL; node = node->bnext) {
+      EXPECT_FALSE(node->attributes & Node::SPELLING_CORRECTION);
+    }
+  }
+}
+
+TEST(Dictionary_test, DisableZipCodeConversionTest) {
+  DictionaryInterface *d = DictionaryFactory::GetDictionary();
+  TestNodeAllocator allocator;
+
+  const char kQuery[] = "154-0000";
+
+  {
+    config::Config config;
+    config.set_use_zip_code_conversion(true);
+    config::ConfigHandler::SetConfig(config);
+
+    Node *node = d->LookupPrefix(kQuery, strlen(kQuery), &allocator);
+    for (; node != NULL; node = node->bnext) {
+      if (POSMatcher::IsZipcode(node->lid)) {
+        EXPECT_TRUE(GET_CONFIG(use_zip_code_conversion));
+      }
+    }
+
+    config.set_use_zip_code_conversion(false);
+    config::ConfigHandler::SetConfig(config);;
+    node = d->LookupPrefix(kQuery, strlen(kQuery), &allocator);
+    for (; node != NULL; node = node->bnext) {
+      EXPECT_FALSE(POSMatcher::IsZipcode(node->lid));
+    }
+  }
+}
+
+TEST(Dictionary_test, DisableT13nConversionTest) {
+  DictionaryInterface *d = DictionaryFactory::GetDictionary();
+  TestNodeAllocator allocator;
+
+  // "いんたーねっと"
+  const char kQuery[] = "\xE3\x81\x84\xE3\x82\x93\xE3\x81\x9F"
+      "\xE3\x83\xBC\xE3\x81\xAD\xE3\x81\xA3\xE3\x81\xA8";
+
+  {
+    config::Config config;
+    config.set_use_t13n_conversion(true);
+    config::ConfigHandler::SetConfig(config);
+
+    Node *node = d->LookupPrefix(kQuery, strlen(kQuery), &allocator);
+    for (; node != NULL; node = node->bnext) {
+      if (Util::IsEnglishTransliteration(node->value)) {
+        EXPECT_TRUE(GET_CONFIG(use_t13n_conversion));
+      }
+    }
+
+    config.set_use_t13n_conversion(false);
+    config::ConfigHandler::SetConfig(config);;
+    node = d->LookupPrefix(kQuery, strlen(kQuery), &allocator);
+    for (; node != NULL; node = node->bnext) {
+      EXPECT_FALSE(Util::IsEnglishTransliteration(node->value));
+    }
   }
 }
 }  // namespace mozc

@@ -95,6 +95,7 @@ class Session : public client::SessionInterface {
   virtual bool Cleanup();
   virtual void Reset();
 
+
   // Does nothing.
   virtual bool PingServer() const;
 
@@ -118,6 +119,9 @@ class Session : public client::SessionInterface {
   // Does nothing.
   virtual bool LaunchTool(const string &mode,
                           const string &extra_arg);
+
+  // Does nothing
+  bool LaunchToolWithProtoBuf(const commands::Output &output);
 
   // Does nothing.
   virtual bool OpenBrowser(const string &url);

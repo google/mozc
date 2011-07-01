@@ -117,6 +117,10 @@ const struct SpecialKeyMap {
   {IBUS_KP_Insert, mozc::commands::KeyEvent::INSERT},
   {IBUS_Caps_Lock, mozc::commands::KeyEvent::CAPS_LOCK},
 
+  // This key event is for hangul IME. Do not handle this key event on Japanese
+  // IME.
+  {IBUS_Hangul_Hanja, mozc::commands::KeyEvent::HANJA},
+
   // Shift+TAB.
   {IBUS_ISO_Left_Tab, mozc::commands::KeyEvent::TAB},
 

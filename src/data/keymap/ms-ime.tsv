@@ -159,6 +159,7 @@ Precomposition	Hiragana	InputModeHiragana
 Precomposition	Henkan	Reconvert
 Precomposition	Kanji	IMEOff
 Precomposition	Katakana	InputModeFullKatakana
+Precomposition	Muhenkan	InputModeSwitchKanaType
 Precomposition	OFF	IMEOff
 Precomposition	ON	IMEOn
 Precomposition	Shift Muhenkan	ToggleAlphanumericMode

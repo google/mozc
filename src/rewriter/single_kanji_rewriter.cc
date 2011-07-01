@@ -38,6 +38,7 @@
 #include "converter/segments.h"
 #include "rewriter/rewriter_interface.h"
 #include "rewriter/embedded_dictionary.h"
+#include "session/commands.pb.h"
 #include "session/config_handler.h"
 #include "session/config.pb.h"
 
@@ -151,6 +152,10 @@ void InsertCandidate(Segment *segment,
 SingleKanjiRewriter::SingleKanjiRewriter() {}
 
 SingleKanjiRewriter::~SingleKanjiRewriter() {}
+
+int SingleKanjiRewriter::capability() const {
+  return RewriterInterface::CONVERSION;
+}
 
 bool SingleKanjiRewriter::Rewrite(Segments *segments) const {
   if (!GET_CONFIG(use_single_kanji_conversion)) {

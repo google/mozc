@@ -44,7 +44,9 @@
 #include "rewriter/calculator/calculator_interface.h"
 #include "session/config_handler.h"
 #include "session/config.pb.h"
+#include "session/internal/keymap.h"
 #include "session/internal/keymap-inl.h"
+#include "session/internal/keymap_factory.h"
 #include "session/internal/session_normalizer.h"
 #include "session/internal/session_output.h"
 #include "session/session_converter.h"
@@ -280,6 +282,7 @@ void SwitchInputMode(const transliteration::TransliterationType mode,
   if (composer->GetInputMode() != mode) {
     composer->SetInputMode(mode);
   }
+  composer->SetNewInput();
 }
 }  // namespace
 
@@ -298,7 +301,6 @@ void Session::InitContext(ImeContext *context) const {
   context->set_composer(new composer::Composer);
   context->set_converter(
       new SessionConverter(ConverterFactory::GetConverter()));
-  context->set_keymap(Singleton<keymap::KeyMapManager>::get());
 #ifdef OS_WINDOWS
   // On Windows session is started with direct mode.
   // FIXME(toshiyuki): Ditto for Mac after verifying on Mac.
@@ -411,6 +413,11 @@ bool Session::SendCommand(commands::Command *command) {
     case commands::SessionCommand::UNDO:
       result = Undo(command);
       break;
+    case commands::SessionCommand::RESET_CONTEXT:
+      // TODO(yoichio) : Revert() is coarse to process this command.
+      // Define more appropriate function.
+      result = Revert(command);
+      break;
     default:
       LOG(WARNING) << "Unkown command" << command->DebugString();
       result = DoNothing(command);
@@ -431,11 +438,13 @@ bool Session::TestSendKey(commands::Command *command) {
     return false;
   }
 
+  const keymap::KeyMapManager *keymap =
+      keymap::KeyMapFactory::GetKeyMapManager(context_->keymap());
+
   // Direct input
   if (context_->state() == ImeContext::DIRECT) {
     keymap::DirectInputState::Commands key_command;
-    if (!context_->keymap().GetCommandDirect(command->input().key(),
-                                             &key_command) ||
+    if (!keymap->GetCommandDirect(command->input().key(), &key_command) ||
         key_command == keymap::DirectInputState::NONE) {
       return EchoBack(command);
     }
@@ -454,9 +463,9 @@ bool Session::TestSendKey(commands::Command *command) {
     const bool result =
         context_->converter().CheckState(
             SessionConverterInterface::SUGGESTION) ?
-        context_->keymap().GetCommandZeroQuerySuggestion(
+        keymap->GetCommandZeroQuerySuggestion(
             command->input().key(), &key_command) :
-        context_->keymap().GetCommandPrecomposition(
+        keymap->GetCommandPrecomposition(
             command->input().key(), &key_command);
     if (!result || key_command == keymap::PrecompositionState::NONE) {
       return EchoBack(command);
@@ -526,13 +535,13 @@ bool Session::SendKey(commands::Command *command) {
 
 bool Session::SendKeyDirectInputState(commands::Command *command) {
   keymap::DirectInputState::Commands key_command;
-  if (!context_->keymap().GetCommandDirect(command->input().key(),
-                                           &key_command)) {
+  const keymap::KeyMapManager *keymap =
+      keymap::KeyMapFactory::GetKeyMapManager(context_->keymap());
+  if (!keymap->GetCommandDirect(command->input().key(), &key_command)) {
     return EchoBack(command);
   }
   string command_name;
-  if (context_->keymap().GetNameFromCommandDirect(key_command,
-                                                  &command_name)) {
+  if (keymap->GetNameFromCommandDirect(key_command, &command_name)) {
     const string name = "Direct_" + command_name;
     command->mutable_output()->set_performed_command(name);
   }
@@ -563,19 +572,19 @@ bool Session::SendKeyDirectInputState(commands::Command *command) {
 
 bool Session::SendKeyPrecompositionState(commands::Command *command) {
   keymap::PrecompositionState::Commands key_command;
+  const keymap::KeyMapManager *keymap =
+      keymap::KeyMapFactory::GetKeyMapManager(context_->keymap());
   const bool result =
       context_->converter().CheckState(SessionConverterInterface::SUGGESTION) ?
-      context_->keymap().GetCommandZeroQuerySuggestion(command->input().key(),
-                                                       &key_command) :
-      context_->keymap().GetCommandPrecomposition(command->input().key(),
-                                                  &key_command);
+      keymap->GetCommandZeroQuerySuggestion(command->input().key(),
+                                            &key_command) :
+      keymap->GetCommandPrecomposition(command->input().key(), &key_command);
 
   if (!result) {
     return EchoBack(command);
   }
   string command_name;
-  if (context_->keymap().GetNameFromCommandPrecomposition(key_command,
-                                                          &command_name)) {
+  if (keymap->GetNameFromCommandPrecomposition(key_command, &command_name)) {
     const string name = "Precomposition_" + command_name;
     command->mutable_output()->set_performed_command(name);
   }
@@ -611,6 +620,8 @@ bool Session::SendKeyPrecompositionState(commands::Command *command) {
       return InputModeFullASCII(command);
     case keymap::PrecompositionState::INPUT_MODE_HALF_ALPHANUMERIC:
       return InputModeHalfASCII(command);
+    case keymap::PrecompositionState::INPUT_MODE_SWITCH_KANA_TYPE:
+      return InputModeSwitchKanaType(command);
 
     case keymap::PrecompositionState::LAUNCH_CONFIG_DIALOG:
       return LaunchConfigDialog(command);
@@ -644,19 +655,18 @@ bool Session::SendKeyPrecompositionState(commands::Command *command) {
 
 bool Session::SendKeyCompositionState(commands::Command *command) {
   keymap::CompositionState::Commands key_command;
+  const keymap::KeyMapManager *keymap =
+      keymap::KeyMapFactory::GetKeyMapManager(context_->keymap());
   const bool result =
-    context_->converter().CheckState(SessionConverterInterface::SUGGESTION) ?
-    context_->keymap().GetCommandSuggestion(command->input().key(),
-                                            &key_command) :
-    context_->keymap().GetCommandComposition(command->input().key(),
-                                             &key_command);
+      context_->converter().CheckState(SessionConverterInterface::SUGGESTION) ?
+      keymap->GetCommandSuggestion(command->input().key(), &key_command) :
+      keymap->GetCommandComposition(command->input().key(), &key_command);
 
   if (!result) {
     return DoNothing(command);
   }
   string command_name;
-  if (context_->keymap().GetNameFromCommandComposition(key_command,
-                                                       &command_name)) {
+  if (keymap->GetNameFromCommandComposition(key_command, &command_name)) {
     const string name = "Composition_" + command_name;
     command->mutable_output()->set_performed_command(name);
   }
@@ -780,19 +790,19 @@ bool Session::SendKeyCompositionState(commands::Command *command) {
 
 bool Session::SendKeyConversionState(commands::Command *command) {
   keymap::ConversionState::Commands key_command;
+  const keymap::KeyMapManager *keymap =
+      keymap::KeyMapFactory::GetKeyMapManager(context_->keymap());
   const bool result =
-    context_->converter().CheckState(SessionConverterInterface::PREDICTION) ?
-    context_->keymap().GetCommandPrediction(command->input().key(),
-                                            &key_command) :
-    context_->keymap().GetCommandConversion(command->input().key(),
-                                            &key_command);
+      context_->converter().CheckState(SessionConverterInterface::PREDICTION) ?
+      keymap->GetCommandPrediction(command->input().key(), &key_command) :
+      keymap->GetCommandConversion(command->input().key(), &key_command);
 
   if (!result) {
     return DoNothing(command);
   }
   string command_name;
-  if (context_->keymap().GetNameFromCommandConversion(key_command,
-                                                      &command_name)) {
+  if (keymap->GetNameFromCommandConversion(key_command,
+                                           &command_name)) {
     const string name = "Conversion_" + command_name;
     command->mutable_output()->set_performed_command(name);
   }
@@ -926,21 +936,22 @@ bool Session::SendKeyConversionState(commands::Command *command) {
   return false;
 }
 
-bool Session::UpdatePreferences(commands::Command *command) {
-  if (command == NULL) {
-    return false;
+void Session::UpdatePreferences(commands::Command *command) {
+  DCHECK(command);
+
+  const config::Config &config = command->input().config();
+  if (config.has_session_keymap()) {
+    context_->set_keymap(config.session_keymap());
+  } else {
+    context_->set_keymap(GET_CONFIG(session_keymap));
   }
-  bool result = false;
-  if (command->input().has_config()) {
-    UpdateConfig(command->input().config(), context_.get());
-    result = true;
-  }
+
   if (command->input().has_capability()) {
     context_->mutable_client_capability()->CopyFrom(
         command->input().capability());
-    result = true;
   }
-  return result;
+
+  UpdateOperationPreferences(config, context_.get());
 }
 
 bool Session::IMEOn(commands::Command *command) {
@@ -1054,6 +1065,7 @@ bool Session::Revert(commands::Command *command) {
 
   SetSessionState(ImeContext::PRECOMPOSITION);
   OutputMode(command);
+  BoundSession();
   return true;
 }
 
@@ -1063,16 +1075,7 @@ void Session::ReloadConfig() {
 
 // static
 void Session::UpdateConfig(const config::Config &config, ImeContext *context) {
-  // TODO(komatsu): Do refactoring this block by introcuding
-  // KeyMapManagerFactory.
-  if (config.has_session_keymap()) {
-    if (!context->mutable_private_keymap()) {
-      context->set_private_keymap(new mozc::keymap::KeyMapManager);
-    }
-    context->mutable_private_keymap()->ReloadWithKeymap(
-        config.session_keymap());
-    context->set_keymap(context->mutable_private_keymap());
-  }
+  context->set_keymap(config.session_keymap());
 
   InitTransformTable(config, context->mutable_transform_table());
   context->mutable_composer()->ReloadConfig();
@@ -1086,7 +1089,13 @@ void Session::UpdateOperationPreferences(const config::Config &config,
   // Keyboard shortcut for candidates.
   const char kShortcut123456789[] = "123456789";
   const char kShortcutASDFGHJKL[] = "asdfghjkl";
-  switch (config.selection_shortcut()) {
+  config::Config::SelectionShortcut shortcut;
+  if (config.has_selection_shortcut()) {
+    shortcut = config.selection_shortcut();
+  } else {
+    shortcut = GET_CONFIG(selection_shortcut);
+  }
+  switch (shortcut) {
     case config::Config::SHORTCUT_123456789:
       operation_preferences.candidate_shortcuts = kShortcut123456789;
       break;
@@ -1331,6 +1340,7 @@ bool Session::InsertCharacter(commands::Command *command) {
 
       SetSessionState(ImeContext::PRECOMPOSITION);
       Output(command);
+      BoundSession();
       return true;
     }
   }
@@ -1357,27 +1367,33 @@ bool Session::InsertCharacter(commands::Command *command) {
 }
 
 bool Session::IsFullWidthInsertSpace() const {
-  // If the current input mode is full-width Ascii, half-width Ascii
-  // or half-width Katakana, the width type of space should follow the
-  // input mode.
-  if (context_->state() == ImeContext::PRECOMPOSITION ||
-      context_->state() == ImeContext::COMPOSITION) {
-    const transliteration::TransliterationType input_mode =
-      context_->composer().GetInputMode();
-    if (transliteration::T13n::IsInFullAsciiTypes(input_mode)) {
-      return true;
-    } else if (transliteration::T13n::IsInHalfAsciiTypes(input_mode) ||
-               transliteration::T13n::IsInHalfKatakanaTypes(input_mode)) {
-      return false;
-    }
-    // Hiragana and Full-width Katakana come here.
+  // If IME is off, any space has to be half-width.
+  if (context_->state() == ImeContext::DIRECT) {
+    return false;
   }
 
+  // PRECOMPOSITION and current mode is HALF_ASCII: situation is same
+  // as DIRECT.
+  if (context_->state() == ImeContext::PRECOMPOSITION &&
+      transliteration::T13n::IsInHalfAsciiTypes(
+          context_->composer().GetInputMode())) {
+    return false;
+  }
+
+  // Otherwise, check the current config and the current input status.
   bool is_full_width = false;
   switch (GET_CONFIG(space_character_form)) {
-    case config::Config::FUNDAMENTAL_INPUT_MODE:
-      is_full_width = (context_->state() != ImeContext::DIRECT);
+    case config::Config::FUNDAMENTAL_INPUT_MODE: {
+      const transliteration::TransliterationType input_mode =
+          context_->composer().GetInputMode();
+      if (transliteration::T13n::IsInHalfAsciiTypes(input_mode) ||
+          transliteration::T13n::IsInHalfKatakanaTypes(input_mode)) {
+        is_full_width = false;
+      } else {
+        is_full_width = true;
+      }
       break;
+    }
     case config::Config::FUNDAMENTAL_FULL_WIDTH:
       is_full_width = true;
       break;
@@ -1461,6 +1477,7 @@ bool Session::EditCancel(commands::Command *command) {
   SetSessionState(ImeContext::PRECOMPOSITION);
   OutputMode(command);
   OutputInitialComposition(command);
+  BoundSession();
   return true;
 }
 
@@ -1485,6 +1502,7 @@ bool Session::Commit(commands::Command *command) {
 
   Output(command);
   context_->mutable_output()->CopyFrom(command->output());
+  BoundSession();
   return true;
 }
 
@@ -1508,6 +1526,7 @@ bool Session::CommitFirstSuggestion(commands::Command *command) {
 
 
   Output(command);
+  BoundSession();
   return true;
 }
 
@@ -1526,10 +1545,15 @@ bool Session::CommitSegment(commands::Command *command) {
     // If the converter is not active (ie. the segment size was one.),
     // the state should be switched to precomposition.
     SetSessionState(ImeContext::PRECOMPOSITION);
+    BoundSession();
 
   }
   Output(command);
   return true;
+}
+
+void Session::BoundSession() const {
+  context_->mutable_initial_composition()->clear();
 }
 
 bool Session::ConvertToTransliteration(
@@ -1697,6 +1721,49 @@ bool Session::InputModeHalfASCII(commands::Command *command) {
   EnsureIMEIsOn();
   // The temporary mode should not be overridden.
   SwitchInputMode(transliteration::HALF_ASCII, context_->mutable_composer());
+  OutputFromState(command);
+  return true;
+}
+
+bool Session::InputModeSwitchKanaType(commands::Command *command) {
+  if (context_->state() != ImeContext::PRECOMPOSITION) {
+    return DoNothing(command);
+  }
+
+  command->mutable_output()->set_consumed(true);
+  ClearUndoContext();
+
+  transliteration::TransliterationType current_type =
+      context_->composer().GetInputMode();
+  transliteration::TransliterationType next_type;
+
+  switch (current_type) {
+  case transliteration::HIRAGANA:
+    next_type = transliteration::FULL_KATAKANA;
+    break;
+
+  case transliteration::FULL_KATAKANA:
+    next_type = transliteration::HALF_KATAKANA;
+    break;
+
+  case transliteration::HALF_KATAKANA:
+    next_type = transliteration::HIRAGANA;
+    break;
+
+  case transliteration::HALF_ASCII:
+  case transliteration::FULL_ASCII:
+    next_type = current_type;
+    break;
+
+  default:
+    LOG(ERROR) << "Unknown input mode: " << current_type;
+    // don't change input mode
+    next_type = current_type;
+    break;
+  }
+
+  // The temporary mode should not be overridden.
+  SwitchInputMode(next_type, context_->mutable_composer());
   OutputFromState(command);
   return true;
 }
@@ -1893,6 +1960,7 @@ bool Session::Delete(commands::Command *command) {
   if (context_->mutable_composer()->Empty()) {
     SetSessionState(ImeContext::PRECOMPOSITION);
     OutputMode(command);
+    BoundSession();
   } else if (context_->mutable_converter()->Suggest(&context_->composer())) {
     DCHECK(context_->converter().IsActive());
     Output(command);
@@ -1910,6 +1978,7 @@ bool Session::Backspace(commands::Command *command) {
   if (context_->mutable_composer()->Empty()) {
     SetSessionState(ImeContext::PRECOMPOSITION);
     OutputMode(command);
+    BoundSession();
   } else if (context_->mutable_converter()->Suggest(&context_->composer())) {
     DCHECK(context_->converter().IsActive());
     Output(command);
@@ -1945,6 +2014,7 @@ bool Session::SegmentFocusRightOrCommit(commands::Command *command) {
   // so reset current state to PRECOMPOSITION.
   if (!context_->converter().IsActive()) {
     SetSessionState(ImeContext::PRECOMPOSITION);
+    BoundSession();
 
   }
   Output(command);
@@ -2151,6 +2221,7 @@ void Session::OutputInitialComposition(commands::Command *command) const {
   DCHECK(result != NULL);
   result->set_type(commands::Result::STRING);
   result->set_value(composition);
+  BoundSession();
 }
 
 namespace {
@@ -2223,26 +2294,16 @@ bool Session::CanStartAutoConversion(
     return false;
   }
 
-  const config::Config &config = config::ConfigHandler::GetConfig();
-  const uint32 key_code = key_event.key_code();
-  const string &key_string = key_event.key_string();
-
-  // first, check raw user key encoded in |key_code| and |key_string|.
-  // At this moment, we don't check the preedit string.
-  // We'd like to return this function as early as possible, since
-  // auto_conversion feature isn't a default feature and will not
-  // be activated often.
-  // We can suppose that this function returns false here in almost all case,
-  // even when auto_convesion is true.
-  if (!IsValidKey(config, key_code, key_string)) {
-    return false;
-  }
+  // We should NOT check key_string. http://b/issue?id=3217992
 
   // now evaluate preedit string and preedit length.
   const size_t length = context_->composer().GetLength();
   if (length <= 1) {
     return false;
   }
+
+  const config::Config &config = config::ConfigHandler::GetConfig();
+  const uint32 key_code = key_event.key_code();
 
   string preedit;
   context_->composer().GetStringForPreedit(&preedit);

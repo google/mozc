@@ -42,9 +42,9 @@
 #include "converter/character_form_manager.h"
 #include "rewriter/rewriter_interface.h"
 #include "rewriter/embedded_dictionary.h"
+#include "session/commands.pb.h"
 #include "session/config_handler.h"
 #include "session/config.pb.h"
-
 
 // SymbolRewriter:
 // When updating the rule
@@ -343,6 +343,10 @@ bool SymbolRewriter::RewriteEntireCandidate(Segments *segments) {
 SymbolRewriter::SymbolRewriter() {}
 
 SymbolRewriter::~SymbolRewriter() {}
+
+int SymbolRewriter::capability() const {
+  return RewriterInterface::CONVERSION;
+}
 
 bool SymbolRewriter::Rewrite(Segments *segments) const {
   if (!GET_CONFIG(use_symbol_conversion)) {

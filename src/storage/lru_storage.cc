@@ -489,6 +489,24 @@ const char* LRUStorage::Lookup(const string &key,
   return GetValue(it->second->value);
 }
 
+bool LRUStorage::GetAllValues(vector<string> *values) const {
+  if (lru_list_.get() == NULL) {
+    return false;
+  }
+  DCHECK(values);
+  values->clear();
+  for (const LRUList_Node *node = lru_list_->GetLastNode();
+       node != NULL;
+       node = node->prev) {
+    // Default constructor of string is not applicable
+    // because value's size() must return value_size_.
+    DCHECK(node->value);
+    values->push_back(string(GetValue(node->value), value_size_));
+  }
+  reverse(values->begin(), values->end());
+  return true;
+}
+
 bool LRUStorage::Touch(const string &key) {
   if (lru_list_.get() == NULL) {
     return false;

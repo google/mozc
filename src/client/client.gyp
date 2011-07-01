@@ -47,5 +47,17 @@
         '../session/session_base.gyp:session_protocol',
       ],
     },
+    {
+      'target_name': 'session_mock',
+      'type': 'static_library',
+      'sources': [
+        'session_mock.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        '../session/session_base.gyp:genproto_session',
+        '../session/session_base.gyp:session_protocol',
+      ],
+    },
   ],
 }

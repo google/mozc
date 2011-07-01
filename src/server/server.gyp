@@ -152,6 +152,9 @@
             'gen_output_resource_path':
                 '<(gen_out_dir)/mozc_server_autogen.rc',
           },
+          'includes': [
+            '../gyp/gen_win32_resource_header.gypi',
+          ],
         },
         {
           'target_name': 'gen_mozc_cache_service_resource_header',
@@ -161,6 +164,9 @@
             'gen_output_resource_path':
                 '<(gen_out_dir)/mozc_cache_service_autogen.rc',
           },
+          'includes': [
+            '../gyp/gen_win32_resource_header.gypi',
+          ],
         },
         {
           'target_name': 'cache_service_manager',

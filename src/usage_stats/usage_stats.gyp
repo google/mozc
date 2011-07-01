@@ -102,6 +102,7 @@
         'usage_stats_test.cc',
       ],
       'dependencies': [
+        '../net/net.gyp:http_client_mock',
         '../testing/testing.gyp:gtest_main',
         'usage_stats',
       ],

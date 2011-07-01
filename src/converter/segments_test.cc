@@ -100,7 +100,6 @@ TEST_F(SegmentsTest, BasicTest) {
   EXPECT_FALSE(segments.user_history_enabled());
 
   EXPECT_EQ(0, segments.segments_size());
-  EXPECT_TRUE(NULL != segments.lattice());
 
   const int kSegmentsSize = 5;
   Segment *seg[kSegmentsSize];
@@ -268,6 +267,47 @@ TEST_F(CandidateTest, BasicTest) {
   EXPECT_EQ(cand[1], segment.mutable_candidate(2));
 }
 
+TEST_F(CandidateTest, CopyFrom) {
+  Segment::Candidate src, dest;
+  src.Init();
+
+  src.key = "key";
+  src.value = "value";
+  src.content_key = "content_key";
+  src.content_value = "content_value";
+  src.prefix = "prefix";
+  src.suffix = "suffix";
+  src.description = "description";
+  src.usage_title = "usage_title";
+  src.usage_description = "usage_description";
+  src.cost = 1;
+  src.wcost = 2;
+  src.structure_cost = 3;
+  src.lid = 4;
+  src.rid = 5;
+  src.attributes = 6;
+  src.style = 7;
+
+  dest.CopyFrom(src);
+
+  EXPECT_EQ(src.key, dest.key);
+  EXPECT_EQ(src.value, dest.value);
+  EXPECT_EQ(src.content_key, dest.content_key);
+  EXPECT_EQ(src.content_value, dest.content_value);
+  EXPECT_EQ(src.prefix, dest.prefix);
+  EXPECT_EQ(src.suffix, dest.suffix);
+  EXPECT_EQ(src.description, dest.description);
+  EXPECT_EQ(src.usage_title, dest.usage_title);
+  EXPECT_EQ(src.usage_description, dest.usage_description);
+  EXPECT_EQ(src.cost, dest.cost);
+  EXPECT_EQ(src.wcost, dest.wcost);
+  EXPECT_EQ(src.structure_cost, dest.structure_cost);
+  EXPECT_EQ(src.lid, dest.lid);
+  EXPECT_EQ(src.rid, dest.rid);
+  EXPECT_EQ(src.attributes, dest.attributes);
+  EXPECT_EQ(src.style, dest.style);
+}
+
 TEST_F(SegmentsTest, RevertEntryTest) {
   Segments segments;
   EXPECT_EQ(0, segments.revert_entries_size());
@@ -304,6 +344,16 @@ TEST_F(SegmentsTest, RevertEntryTest) {
     const Segments::RevertEntry &e = segments.revert_entry(i);
     EXPECT_EQ(string("test2") + Util::SimpleItoa(i), e.key);
     EXPECT_EQ(kSize - i, e.id);
+  }
+
+  {
+    const Segments::RevertEntry &src = segments.revert_entry(0);
+    Segments::RevertEntry dest;
+    dest.CopyFrom(src);
+    EXPECT_EQ(src.revert_entry_type, dest.revert_entry_type);
+    EXPECT_EQ(src.id, dest.id);
+    EXPECT_EQ(src.timestamp, dest.timestamp);
+    EXPECT_EQ(src.key, dest.key);
   }
 
   segments.clear_revert_entries();
@@ -346,6 +396,56 @@ TEST_F(SegmentsTest, ComposerAccessorTest) {
   composer::Composer composer;
   segments.set_composer(&composer);
   EXPECT_EQ(&composer, segments.composer());
+}
+
+TEST_F(SegmentsTest, CopyFromTest) {
+  Segments src;
+
+  src.set_max_history_segments_size(1);
+  src.set_max_prediction_candidates_size(2);
+  src.set_max_conversion_candidates_size(2);
+  src.set_resized(true);
+  src.set_user_history_enabled(true);
+  src.set_request_type(Segments::PREDICTION);
+
+  const int kSegmentsSize = 3;
+  const int kCandidatesSize = 2;
+
+  for (int i = 0; i < kSegmentsSize; ++i) {
+    Segment *segment = src.add_segment();
+    segment->set_key("segment_" + i);
+    for (int j = 0; j < kCandidatesSize; ++j) {
+      Segment::Candidate *candidate = segment->add_candidate();
+      candidate->key = "candidate" + i;
+    }
+  }
+  EXPECT_EQ(kSegmentsSize, src.segments_size());
+  EXPECT_EQ(kCandidatesSize, src.segment(0).candidates_size());
+
+  Segments dest;
+  dest.CopyFrom(src);
+  EXPECT_EQ(src.max_history_segments_size(), dest.max_history_segments_size());
+  EXPECT_EQ(src.max_prediction_candidates_size(),
+            dest.max_prediction_candidates_size());
+  EXPECT_EQ(src.max_conversion_candidates_size(),
+            dest.max_conversion_candidates_size());
+  EXPECT_EQ(src.resized(), dest.resized());
+  EXPECT_EQ(src.user_history_enabled(), dest.user_history_enabled());
+  EXPECT_EQ(src.request_type(), dest.request_type());
+
+  EXPECT_EQ(kSegmentsSize, dest.segments_size());
+  EXPECT_EQ(kCandidatesSize, dest.segment(0).candidates_size());
+
+  for (int i = 0; i < kSegmentsSize; ++i) {
+    EXPECT_EQ(src.segment(i).key(), dest.segment(i).key());
+    for (int j = 0; j < kCandidatesSize; ++j) {
+      EXPECT_EQ(src.segment(i).candidate(j).key,
+                dest.segment(i).candidate(j).key);
+    }
+  }
+
+  // TODO(hsumita) copy composer correctly
+  EXPECT_EQ(reinterpret_cast<composer::Composer *>(NULL), src.composer());
 }
 
 TEST_F(CandidateTest, functional_key) {
@@ -408,6 +508,27 @@ TEST_F(CandidateTest, functional_value) {
   candidate.value = "";
   candidate.content_value = "";
   EXPECT_EQ("", candidate.functional_value());
+}
+
+TEST_F(SegmentTest, CopyFrom) {
+  Segment src, dest;
+
+  src.set_key("key");
+  src.set_segment_type(Segment::FIXED_VALUE);
+  Segment::Candidate *candidate1 = src.add_candidate();
+  candidate1->key = "candidate1->key";
+  Segment::Candidate *candidate2 = src.add_candidate();
+  candidate2->key = "candidate2->key";
+  Segment::Candidate *meta_candidate = src.add_meta_candidate();
+  meta_candidate->key = "meta_candidate->key";
+
+  dest.CopyFrom(src);
+
+  EXPECT_EQ(src.key(), dest.key());
+  EXPECT_EQ(src.segment_type(), dest.segment_type());
+  EXPECT_EQ(src.candidate(0).key, dest.candidate(0).key);
+  EXPECT_EQ(src.candidate(1).key, dest.candidate(1).key);
+  EXPECT_EQ(src.meta_candidate(0).key, dest.meta_candidate(0).key);
 }
 
 TEST_F(SegmentTest, MetaCandidateTest) {

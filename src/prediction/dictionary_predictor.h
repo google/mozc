@@ -41,7 +41,9 @@ namespace mozc {
 
 class Segments;
 class DictionaryInterface;
+class ConnectorInterface;
 class ImmutableConverterInterface;
+class NodeAllocatorInterface;
 struct Node;
 
 // Dictioanry-based predictor
@@ -57,14 +59,22 @@ class DictionaryPredictor: public PredictorInterface {
   FRIEND_TEST(DictionaryPredictorTest,
               GetPredictionTypeTestWithZeroQuerySuggestion);
   FRIEND_TEST(DictionaryPredictorTest, IsZipCodeRequest);
-  FRIEND_TEST(DictionaryPredictorTest, GetSVMScore);
   FRIEND_TEST(DictionaryPredictorTest, AggregateRealtimeConversion);
   FRIEND_TEST(DictionaryPredictorTest, AggregateUnigramPrediction);
   FRIEND_TEST(DictionaryPredictorTest, AggregateBigramPrediction);
+  FRIEND_TEST(DictionaryPredictorTest, AggregateSuffixPrediction);
   FRIEND_TEST(DictionaryPredictorTest, GetHistoryKeyAndValue);
+  FRIEND_TEST(DictionaryPredictorTest, RealtimeConversionStartingWithAlphabets);
   FRIEND_TEST(DictionaryPredictorTest,
-              RealtimeConversionStartingWithAlphabets);
-
+              IsAggressiveSuggestion);
+  FRIEND_TEST(DictionaryPredictorTest,
+              LookupKeyValueFromDictionary);
+  FRIEND_TEST(DictionaryPredictorTest,
+              RealtimeConversionWithSpellingCorrection);
+  FRIEND_TEST(DictionaryPredictorTest,
+              GetMissSpelledPosition);
+  FRIEND_TEST(DictionaryPredictorTest,
+              RemoveMissSpelledCandidates);
 
   enum PredictionType {
     // don't need to show any suggestions.
@@ -75,66 +85,140 @@ class DictionaryPredictor: public PredictorInterface {
     BIGRAM = 2,
     // suggests from immutable_converter
     REALTIME = 4,
+    // add suffixes like "さん", "が" which matches to the pevious context.
+    SUFFIX =  8,
   };
 
   struct Result {
-    Result() : node(NULL), type(NO_PREDICTION), score(0) {}
+    Result() : node(NULL), type(NO_PREDICTION), cost(0) {}
     Result(const Node *node_, PredictionType type_)
-        : node(node_), type(type_), score(0) {}
+        : node(node_), type(type_), cost(0) {}
     const Node *node;
     PredictionType type;
-    int score;
+    int cost;
   };
 
   class ResultCompare {
    public:
     bool operator() (const Result &a, const Result &b) const {
-      return a.score < b.score;
+      return a.cost > b.cost;
     }
   };
 
   void AggregateRealtimeConversion(PredictionType type,
                                    Segments *segments,
+                                   NodeAllocatorInterface *allocator,
                                    vector<Result> *results) const;
   void AggregateUnigramPrediction(PredictionType type,
                                   Segments *segments,
+                                  NodeAllocatorInterface *allocator,
                                   vector<Result> *results) const;
   void AggregateBigramPrediction(PredictionType type,
                                  Segments *segments,
+                                 NodeAllocatorInterface *allocator,
+                                 vector<Result> *results) const;
+  void AggregateSuffixPrediction(PredictionType type,
+                                 Segments *segments,
+                                 NodeAllocatorInterface *allocator,
                                  vector<Result> *results) const;
 
-  // SVM-based scoring function.
-  void SetSVMScore(const Segments &segments,
-                   vector<Result> *results) const;
+  // return the position of mis-spelled character position
+  //
+  // Example1:
+  // key: "れみおめろん"
+  // value: "レミオロメン"
+  // returns 3
+  //
+  // Example3:
+  // key: "ろっぽんぎ"5
+  // value: "六本木"
+  // returns 5 (charslen("六本木"))
+  size_t GetMissSpelledPosition(const string &key,
+                                const string &value) const;
+
+  // return true if key/value is in dictionary.
+  const Node *LookupKeyValueFromDictionary(
+      const string &key,
+      const string &value,
+      NodeAllocatorInterface *allocator) const;
+
+  // return language model cost of |node|
+  // |rid| is the right id of previous word (node).
+  // if |rid| is uknown, set 0 as a default value.
+  int GetLMCost(PredictionType type, const Node &node, int rid) const;
+
+  // Given the results aggregated by aggregates, remove
+  // miss-spelled results from the |results|.
+  // we don't directly remove miss-spelled result but set
+  // result[i].type = NO_PREDICTION.
+  //
+  // Here's the basic step of removal:
+  // Case1:
+  // result1: "あぼがど" => "アボガド"
+  // result2: "あぼがど" => "アボカド" (spelling correction)
+  // result3: "あぼかど" => "アボカド"
+  // In this case, we can remove result 1 and 2.
+  // If there exists the same result2.key in result1,3 and
+  // the same result2.value in result1,3, we can remove the
+  // 1) spelling correction candidate 2) candidate having
+  // the same key as the spelling correction candidate.
+  //
+  // Case2:
+  // result1: "あぼかど" => "アボカド"
+  // result2: "あぼがど" => "アボカド" (spelling correction)
+  // In this case, remove result2.
+  //
+  // Case3:
+  // result1: "あぼがど" => "アボガド"
+  // result2: "あぼがど" => "アボカド" (spelling correction)
+  // In this case,
+  //   a) user input: あ,あぼ,あぼ => remove result1, result2
+  //   b) user input: あぼが,あぼがど  => remove result1
+  //
+  // let |same_key_size| and |same_value_size| be the number of
+  // non-spelling-correction-candidates who have the same key/value as
+  // spelling-correction-candidate respectively.
+  //
+  // if (same_key_size > 0 && same_value_size > 0) {
+  //   remove spelling correction and candidates having the
+  //   same key as the spelling correction.
+  // } else if (same_key_size == 0 && same_value_size > 0) {
+  //   remove spelling correction
+  // } else {
+  //   do nothing.
+  // }
+  void RemoveMissSpelledCandidates(size_t request_key_len,
+                                   vector<Result> *results) const;
+
+  // Scoring function which takes prediction bounus into account.
+  // It basically reranks the candidate by lang_prob * (1 + remain_len).
+  void SetPredictionCost(const Segments &segments,
+                         vector<Result> *results) const;
 
   // Language model-based scoring function.
-  void SetLMScore(const Segments &segments,
-                  vector<Result> *results) const;
+  void SetLMCost(const Segments &segments,
+                 vector<Result> *results) const;
 
   // return true if key consistes of '0'-'9' or '-'
   bool IsZipCodeRequest(const string &key) const;
+
+  // return true if the suggestion is classified
+  // as "aggressive".
+  bool IsAggressiveSuggestion(
+      size_t query_len, size_t key_len, int32 cost,
+      bool is_suggestion, size_t total_candidates_size) const;
 
   // return history key/value.
   bool GetHistoryKeyAndValue(const Segments &segments,
                              string *key, string *value) const;
 
   // return PredictionType.
-  // return value may be UNIGRAM | BIGRAM.
+  // return value may be UNIGRAM | BIGRAM | REALTIME | SUFFIX.
   PredictionType GetPredictionType(const Segments &segments) const;
 
-  // return SVM score from feature.
-  // |feature| is used as an internal buffer for calculating SVM score.
-  int GetSVMScore(const string &query,
-                  const string &key,
-                  const string &value,
-                  uint16 cost,
-                  uint16 lid,
-                  bool is_zip_code,
-                  bool is_suggestion,
-                  size_t total_candidates_size,
-                  vector<pair<int, double> > *feature) const;
-
   DictionaryInterface *dictionary_;
+  DictionaryInterface *suffix_dictionary_;
+  ConnectorInterface *connector_;
   ImmutableConverterInterface *immutable_converter_;
 };
 }  // namespace mozc
