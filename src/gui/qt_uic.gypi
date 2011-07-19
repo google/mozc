@@ -31,10 +31,16 @@
 {
   'variables': {
     'conditions': [
-      ['OS=="linux"', {
-       'uic_path': '<!(pkg-config --variable=uic_location QtGui)',
-      },{  # OS!="linux"
-       'uic_path': '<(qt_basepath)/bin/uic<(EXECUTABLE_SUFFIX)',
+      ['qt_dir', {
+        'uic_path': '<(qt_dir)/bin/uic<(EXECUTABLE_SUFFIX)',
+      }, {
+        'conditions': [
+          ['OS=="linux"', {
+            'uic_path': '<!(pkg-config --variable=uic_location QtGui)',
+          }, {
+            'uic_path': '<(qt_dir_env)/bin/uic<(EXECUTABLE_SUFFIX)',
+          }],
+        ],
       }],
     ],
   },
@@ -53,8 +59,7 @@
             '-o', '<(gen_out_dir)/<(subdir)/ui_<(RULE_INPUT_ROOT).h',
             '"<(RULE_INPUT_PATH)"'
           ],
-        }],
-        ['OS!="win"', {
+        }, {
           'action': [
             '<(uic_path)',
             '-o', '<(gen_out_dir)/<(subdir)/ui_<(RULE_INPUT_ROOT).h',

@@ -647,7 +647,7 @@ void Util::UCS4ToUTF8(char32 c, string *output) {
 }
 
 void Util::UCS4ToUTF8Append(char32 c, string *output) {
-  char buf[6];
+  char buf[7];
   UCS4ToUTF8Internal(c, buf);
   *output += buf;
 }

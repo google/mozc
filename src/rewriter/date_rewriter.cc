@@ -1147,7 +1147,7 @@ bool DateRewriter::RewriteEra(Segment *current_segment,
     return false;
   }
 
-  const string &current_value = current_segment->candidate(0).value;
+  const string &current_key = current_segment->key();
   const string &next_value = next_segment.candidate(0).value;
 
   // "年"
@@ -1155,18 +1155,18 @@ bool DateRewriter::RewriteEra(Segment *current_segment,
     return false;
   }
 
-  if (Util::GetScriptType(current_value) != Util::NUMBER) {
+  if (Util::GetScriptType(current_key) != Util::NUMBER) {
     return false;
   }
 
-  const size_t len = Util::CharsLen(current_value);
+  const size_t len = Util::CharsLen(current_key);
   if (len < 3 || len > 4) {
     LOG(WARNING) << "Too long year";
     return false;
   }
 
   string year_str;
-  Util::FullWidthAsciiToHalfWidthAscii(current_value,
+  Util::FullWidthAsciiToHalfWidthAscii(current_key,
                                        &year_str);
 
   const uint32 year = atoi32(year_str.c_str());
@@ -1268,14 +1268,14 @@ bool DateRewriter::Rewrite(Segments *segments) const {
     if (RewriteDate(seg) || RewriteWeekday(seg) ||
         RewriteMonth(seg) || RewriteYear(seg) ||
         RewriteCurrentTime(seg) ||
-        RewriteDateAndCurrentTime(seg) ||
-        RewriteFourDigits(seg)) {
+        RewriteDateAndCurrentTime(seg)) {
       modified = true;
     } else if (i + 1 < segments->segments_size() &&
                RewriteEra(seg, segments->segment(i + 1))) {
       modified = true;
       ++i;  // skip one more
     }
+    modified |= RewriteFourDigits(seg);
   }
 
   return modified;

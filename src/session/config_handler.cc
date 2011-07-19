@@ -119,13 +119,6 @@ bool ConfigHandlerImpl::SetConfigInternal(const Config &config) {
 #endif  // OS_MACOSX
   }
 
-#ifdef OS_CHROMEOS
-  if (!config_.has_use_realtime_conversion()) {
-    // Realtime conversion is off by default in Chrome OS.
-    config_.set_use_realtime_conversion(false);
-  }
-#endif  // OS_CHROMEOS
-
   return true;
 }
 
@@ -234,10 +227,6 @@ void ConfigHandler::GetDefaultConfig(Config *config) {
                        config::Config::FULL_WIDTH, config::Config::LAST_FORM);
   AddCharacterFormRule(config, "?!",
                        config::Config::FULL_WIDTH, config::Config::LAST_FORM);
-
-#ifdef OS_CHROMEOS
-  config->set_use_auto_conversion(false);
-#endif
 }
 
 // Reload from file

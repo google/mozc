@@ -27,80 +27,54 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# This include file add various settings for Qt as
-# target_defaults.
+# This include file adds various settings for Qt as target_defaults.
 {
+  'variables': {
+    'qt_dir_env': '$(QTDIR)',
+  },
+  # MSVS specific settings
   'target_defaults': {
     'configurations': {
       'Common_Base': {
-        'include_dirs': [
-          '<(qt_cflags)',
-        ],
-      },
-    },
-  },
-  'conditions': [
-    ['OS=="win"', {
-      'target_defaults': {
-        'configurations': {
-          'Common_Base': {
-            'msvs_settings': {
-              'VCLinkerTool': {
-                'AdditionalDependencies': [
-                  'Ws2_32.lib',
-                ],
+        'msvs_settings': {
+          'VCLinkerTool': {
+            'AdditionalDependencies': [
+              'Ws2_32.lib',
+            ],
+            'conditions': [
+              ['qt_dir', {
                 'AdditionalLibraryDirectories': [
-                  '<(qt_basepath)/lib',
+                  '<(qt_dir)/lib',
                 ],
-              },
-            },
-          },
-          'Debug_Base': {
-            'msvs_settings': {
-              'VCLinkerTool': {
-                'AdditionalDependencies': [
-                  'QtCored.lib',
-                  'QtGuid.lib',
+              }, {
+                'AdditionalLibraryDirectories': [
+                  '<(qt_dir_env)/lib',
                 ],
-              },
-            },
-          },
-          'Optimize_Base': {
-            'msvs_settings': {
-              'VCLinkerTool': {
-                'AdditionalDependencies': [
-                  'QtCore.lib',
-                  'QtGui.lib',
-                ],
-              },
-            },
-          },
-        },
-      },
-    }],
-    ['OS=="mac"', {
-      'target_defaults': {
-        'configurations': {
-          'Common_Base': {
-            'xcode_settings': {
-              'LIBRARY_SEARCH_PATHS': [
-                '<(qt_basepath)/lib',
-              ],
-            },
-          },
-        },
-      },
-    }],
-    ['OS=="linux"', {
-      'target_defaults': {
-        'configurations': {
-          'Common_Base': {
-            'ldflags': [
-            ' <!@(pkg-config --libs-only-L QtCore QtGui)',
+              }],
             ],
           },
         },
       },
-    }],
-  ],
+      'Debug_Base': {
+        'msvs_settings': {
+          'VCLinkerTool': {
+            'AdditionalDependencies': [
+              'QtCored.lib',
+              'QtGuid.lib',
+            ],
+          },
+        },
+      },
+      'Optimize_Base': {
+        'msvs_settings': {
+          'VCLinkerTool': {
+            'AdditionalDependencies': [
+              'QtCore.lib',
+              'QtGui.lib',
+            ],
+          },
+        },
+      },
+    },
+  },
 }

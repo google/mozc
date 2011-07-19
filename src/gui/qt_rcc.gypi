@@ -31,11 +31,17 @@
 {
   'variables': {
     'conditions': [
-      ['OS=="linux"', {
-       # seems that --variable=rcc_location is not supported
-       'rcc_path': '<!(pkg-config --variable=exec_prefix QtGui)/bin/rcc',
-      },{  # OS!="linux"
-       'rcc_path': '<(qt_basepath)/bin/rcc<(EXECUTABLE_SUFFIX)',
+      ['qt_dir', {
+        'rcc_path': '<(qt_dir)/bin/rcc<(EXECUTABLE_SUFFIX)',
+      }, {
+        'conditions': [
+          ['OS=="linux"', {
+            # seems that --variable=rcc_location is not supported
+            'rcc_path': '<!(pkg-config --variable=exec_prefix QtGui)/bin/rcc',
+          }, {
+            'rcc_path': '<(qt_dir_env)/bin/rcc<(EXECUTABLE_SUFFIX)',
+          }],
+        ],
       }],
     ],
   },

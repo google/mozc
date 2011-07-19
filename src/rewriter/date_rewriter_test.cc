@@ -103,15 +103,20 @@ void Expect5Results(const vector<string> &src,
   }
 }
 
-void InitSegment(const string &key, const string &value,
-                 Segments *segments) {
-  segments->Clear();
+void AppendSegment(const string &key, const string &value,
+                   Segments *segments) {
   Segment *seg = segments->add_segment();
   Segment::Candidate *candidate = seg->add_candidate();
   seg->set_key(key);
   candidate->content_key = key;
   candidate->value = value;
   candidate->content_value = value;
+}
+
+void InitSegment(const string &key, const string &value,
+                 Segments *segments) {
+  segments->Clear();
+  AppendSegment(key, value, segments);
 }
 
 void InsertCandidate(const string &key,
@@ -862,4 +867,35 @@ TEST(DateRewriterTest, NumberRewriterTest) {
 }
 
 
+TEST(DateRewriterTest, RewriteYearTest) {
+  DateRewriter rewriter;
+  Segments segments;
+
+  InitSegment("2010", "2010", &segments);
+  // "年"
+  AppendSegment("nenn", "\xE5\xB9\xB4", &segments);
+
+  EXPECT_TRUE(rewriter.Rewrite(&segments));
+  // "平成22"
+  EXPECT_TRUE(ContainCandidate(segments, "\xE5\xB9\xB3\xE6\x88\x90\x32\x32"));
+}
+
+// This test treats the situation that if UserHistoryRewriter or other like
+// Rewriter moves up a candidate which is actually a number but can not be
+// converted integer easily.
+TEST(DateRewriterTest, RelationWithUserHistoryRewriterTest) {
+  DateRewriter rewriter;
+  Segments segments;
+
+  // "二千十一"
+  InitSegment("2011",
+              "\xE4\xBA\x8C\xE5\x8D\x83\xE5\x8D\x81\xE4\xB8\x80",
+              &segments);
+  // "年"
+  AppendSegment("nenn", "\xE5\xB9\xB4", &segments);
+
+  EXPECT_TRUE(rewriter.Rewrite(&segments));
+  // "平成23"
+  EXPECT_TRUE(ContainCandidate(segments, "\xE5\xB9\xB3\xE6\x88\x90\x32\x33"));
+}
 }  // namespace mozc

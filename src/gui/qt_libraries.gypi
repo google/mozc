@@ -29,27 +29,87 @@
 
 # You can include this file in a target block to add Qt-related
 # libraries to the target.
-# Currently debug libraries in Mac (e.g. libQtCore_debug.dylib)
-# are not supported.
-# For Windows developers, you need not to include this file.
-# Use common_qt.gypi instead.
+# Currently debug libraries are not supported on Mac
+# (e.g. libQtCore_debug.dylib) and GNU/Linux.
 {
+  'variables': {
+    'conditions': [
+      ['qt_dir', {
+        'qt_cflags': [],
+        'qt_include_dirs': ['<(qt_dir)/include'],
+      }, {
+        'conditions': [
+          ['OS=="linux"', {
+            'qt_cflags': ['<!@(pkg-config --cflags QtGui QtCore)'],
+            'qt_include_dirs': [],
+          }, {
+            'qt_cflags': [],
+            'qt_include_dirs': ['<(qt_dir_env)/include'],
+          }],
+        ],
+      }],
+    ],
+  },
+  # compilation settings
+  'cflags': ['<@(qt_cflags)'],
+  'include_dirs': ['<@(qt_include_dirs)'],
+  # link settings
   'conditions': [
     ['OS=="mac"', {
-      'link_settings': {
-        'libraries': [
-          'libQtCore.dylib',
-          'libQtGui.dylib',
-          '$(SDKROOT)/System/Library/Frameworks/Carbon.framework',
-        ],
-      },
+      'conditions': [
+        ['qt_dir', {
+          'xcode_settings': {
+            'LIBRARY_SEARCH_PATHS': [
+              '<(qt_dir)/lib',
+            ],
+          },
+          'libraries': [
+            '<(qt_dir)/lib/libQtCore.a',
+            '<(qt_dir)/lib/libQtGui.a',
+          ],
+        }, {
+          'xcode_settings': {
+            'LIBRARY_SEARCH_PATHS': [
+              '<(qt_dir_env)/lib',
+            ],
+          },
+          'libraries': [
+            '<(qt_dir_env)/lib/libQtCore.a',
+            '<(qt_dir_env)/lib/libQtGui.a',
+          ],
+        }],
+      ],
+      'libraries': [
+        '$(SDKROOT)/System/Library/Frameworks/Carbon.framework',
+      ]
     }],
     ['OS=="linux"', {
-      'link_settings': {
-        'libraries': [
-          ' <!@(pkg-config --libs QtCore QtGui)',
-        ],
-      },
+      'conditions': [
+        ['qt_dir', {
+          'libraries': [
+            '-L<(qt_dir)/lib',
+            '-lQtGui',
+            '-lQtCore',
+            # Supposing Qt libraries in qt_dir will be built as static libraries
+            # without support of pkg-config, we need to list all the
+            # dependencies of QtGui.
+            # See http://doc.qt.nokia.com/4.7/requirements-x11.html
+            # pthread library is removed because it must not be specific to Qt,
+            # and libpng12, which is missing on the list, is added because we
+            # use PNG images.
+            '<!@(pkg-config --libs-only-L --libs-only-l'
+            ' xrender xrandr xcursor xfixes xinerama fontconfig freetype2'
+            ' xi xt xext x11'
+            ' sm ice'
+            ' gobject-2.0'
+            ' libpng12)',
+          ],
+        }, {
+          'libraries': [
+            '<!@(pkg-config --libs QtGui QtCore)',
+          ],
+        }],
+      ],
     }],
   ],
 }

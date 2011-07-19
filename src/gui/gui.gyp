@@ -32,9 +32,6 @@
     'relative_dir': 'gui',
     'gen_out_dir': '<(SHARED_INTERMEDIATE_DIR)/<(relative_dir)',
   },
-  'includes': [
-    'qt_common.gypi',
-  ],
   'targets': [
     {
       'target_name': 'gui_base',
@@ -359,6 +356,9 @@
         'gen_character_pad_cp932_data',
         'gen_character_pad_data',
         'gen_dictionary_tool_files',
+      ],
+      'includes': [
+        'qt_libraries.gypi',
       ],
       'conditions': [['use_libzinnia==1 and OS=="linux"', {
         'defines': [
@@ -920,9 +920,9 @@
   'conditions': [
     ['use_qt=="YES"', {
       'includes': [
-        'qt_target_default.gypi',
+        'qt_target_defaults.gypi',
       ],
-    },],
+    }],
     ['OS=="win"', {
       'targets': [
         {

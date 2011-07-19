@@ -85,7 +85,7 @@ IBUS_ENGINES_PROPS = {
         'layout': ['jp', 'us', 'us(dvorak)'],
         # hotkeys property is Chrome/Chromium OS specific. Upstream ibus-daemon
         # doesn't support this.
-        'hotkeys': ['Henkan', '', ''],
+        'hotkeys': ['Henkan,Zenkaku_Hankaku', '', ''],
     },
 }
 

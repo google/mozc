@@ -31,10 +31,16 @@
 {
   'variables': {
     'conditions': [
-      ['OS=="linux"', {
-       'moc_path': '<!(pkg-config --variable=moc_location QtGui)',
-      },{  # OS!="linux"
-       'moc_path': '<(qt_basepath)/bin/moc<(EXECUTABLE_SUFFIX)',
+      ['qt_dir', {
+        'moc_path': '<(qt_dir)/bin/moc<(EXECUTABLE_SUFFIX)',
+      }, {
+        'conditions': [
+          ['OS=="linux"', {
+            'moc_path': '<!(pkg-config --variable=moc_location QtGui)',
+          }, {
+            'moc_path': '<(qt_dir_env)/bin/moc<(EXECUTABLE_SUFFIX)',
+          }],
+        ],
       }],
     ],
   },

@@ -392,16 +392,12 @@ MozcEngine::MozcEngine()
   }
 #endif
 
-  // We don't enable the DELETE_PRECEDING_TEXT feature on Chrome OS for now
-  // since it's highly experimental.
-#ifndef OS_CHROMEOS
   // Currently client capability is fixed.
   commands::Capability capability;
   capability.set_text_deletion(commands::Capability::DELETE_PRECEDING_TEXT);
   session_->set_client_capability(capability);
   // TODO(yusukes): write a unit test to check if the capability is set
   // as expected.
-#endif
 }
 
 MozcEngine::~MozcEngine() {

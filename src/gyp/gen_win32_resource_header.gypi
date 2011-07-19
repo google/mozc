@@ -33,7 +33,7 @@
     {
       'action_name': 'gen_<(gen_resource_proj_name)_resource_header',
       'variables': {
-        'base_path': '<(DEPTH)/',
+        'base_path': '<(DEPTH)',
         'version_file_path': '<(base_path)/mozc_version.txt',
         'script_path': '<(base_path)/build_tools/gen_win32_resource_header.py',
       },

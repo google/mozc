@@ -165,7 +165,7 @@ def GetVersionFileNames(options):
   return (template_path, version_path)
 
 
-def GetGypFileNames():
+def GetGypFileNames(options):
   """Gets the list of gyp file names."""
   gyp_file_names = []
   mozc_top_level_names = glob.glob('%s/*' % SRC_DIR)
@@ -195,16 +195,24 @@ def GetGypFileNames():
     try:
       RunOrDie(['pkg-config', '--exists', 'ibus-1.0'])
     except RunOrDieError:
+      print 'ibus-1.0 was not found.'
       gyp_file_names.remove('%s/unix/ibus/ibus.gyp' % SRC_DIR)
     # Add gui.gyp if Qt libraries are installed.
     try:
       RunOrDie(['pkg-config', '--exists', 'QtCore', 'QtGui'])
+      qt_found = True
     except RunOrDieError:
+      print 'QtCore or QtGui was not found.'
+      qt_found = False
+    if options.ensure_value('qtdir', None):
+      qt_found = True
+    if options.ensure_value('noqt', None) or not qt_found:
       gyp_file_names.remove('%s/gui/gui.gyp' % SRC_DIR)
     # Add scim.gyp if SCIM is installed.
     try:
       RunOrDie(['pkg-config', '--exists', 'scim'])
     except RunOrDieError:
+      print 'scim was not found.'
       gyp_file_names.remove('%s/unix/scim/scim.gyp' % SRC_DIR)
   gyp_file_names.extend(glob.glob('third_party/rx/*.gyp'))
   gyp_file_names.sort()
@@ -251,7 +259,7 @@ def CleanBuildFilesAndDirectories():
   directory_names = []
 
   # Collect stuff in the gyp directories.
-  gyp_directory_names = [os.path.dirname(f) for f in GetGypFileNames()]
+  gyp_directory_names = [os.path.dirname(f) for f in GetGypFileNames(options)]
   for gyp_directory_name in gyp_directory_names:
     if IsWindows():
       for pattern in ['*.rules', '*.sln', '*.vcproj']:
@@ -336,7 +344,7 @@ def GypMain(deps_file_name):
   print 'Build tool: %s' % generator
 
   # Get and show the list of .gyp file names.
-  gyp_file_names = GetGypFileNames()
+  gyp_file_names = GetGypFileNames(options)
   banned_gyp_files = []
   if not options.chewing:
     # chewing/chewing.gyp is automatically included because of the
@@ -376,6 +384,12 @@ def GypMain(deps_file_name):
     command_line.extend(['-D', 'branding=%s' % options.branding])
   if options.noqt:
     command_line.extend(['-D', 'use_qt=NO'])
+  else:
+    command_line.extend(['-D', 'use_qt=YES'])
+  if options.qtdir:
+    command_line.extend(['-D', 'qt_dir=%s' % os.path.abspath(options.qtdir)])
+  else:
+    command_line.extend(['-D', 'qt_dir='])
   if options.coverage:
     command_line.extend(['-D', 'coverage=1'])
 
@@ -550,6 +564,9 @@ def ParseGypOptions():
   parser.add_option('--branding', dest='branding', default='Mozc')
   parser.add_option('--gypdir', dest='gypdir', default='third_party/gyp')
   parser.add_option('--noqt', action='store_true', dest='noqt', default=False)
+  parser.add_option('--qtdir', dest='qtdir',
+                    default=os.getenv('QTDIR', None),
+                    help='Qt base directory to be used.')
   parser.add_option('--coverage', action='store_true', dest='coverage',
                     help='use code coverage analysis build options',
                     default=False)
@@ -631,7 +648,6 @@ def ParseBuildOptions():
                     help='run jobs in parallel')
   parser.add_option('--configuration', '-c', dest='configuration',
                     default='Debug', help='specify the build configuration.')
-  parser.add_option('--noqt', action='store_true', dest='noqt', default=False)
   parser.add_option('--version_file', dest='version_file',
                     help='use the specified version template file',
                     default='mozc_version_template.txt')
@@ -642,14 +658,6 @@ def ParseBuildOptions():
   if IsLinux():
     parser.add_option('--build_base', dest='build_base',
                       help='specify the base directory of the built binaries.')
-
-  # default Qt dir to support the current build procedure for Debian.
-  default_qtdir = '/usr/local/Trolltech/Qt-4.6.3'
-  if IsWindows():
-    default_qtdir = None
-  parser.add_option('--qtdir', dest='qtdir',
-                    default=os.getenv('QTDIR', default_qtdir),
-                    help='Qt base directory to be used.')
 
   (options, args) = parser.parse_args()
 
@@ -814,14 +822,6 @@ def BuildMain(original_directory_name):
   (template_path, version_path) = GetVersionFileNames(options)
   GenerateVersionFile(template_path, version_path)
 
-
-  if not options.noqt:
-    # Set $QTDIR for mozc_tool
-    if options.qtdir:
-      if not options.qtdir.startswith('/'):
-        options.qtdir = os.path.join(os.getcwd(), options.qtdir)
-      print 'export $QTDIR = %s' % options.qtdir
-      os.environ['QTDIR'] = options.qtdir
 
   if IsMac():
     BuildOnMac(options, targets, original_directory_name)

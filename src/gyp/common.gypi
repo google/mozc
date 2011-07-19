@@ -131,7 +131,7 @@
     # project file called "coverage".
     'coverage%': 0,
 
-    'mozc_data_dir': '<(SHARED_INTERMEDIATE_DIR)/',
+    'mozc_data_dir': '<(SHARED_INTERMEDIATE_DIR)',
   },
   'target_defaults': {
     'variables': {
@@ -434,8 +434,8 @@
               'MOZC_RES_USE_TEMPLATE=1',
             ],
             'AdditionalIncludeDirectories': [
-              '<(SHARED_INTERMEDIATE_DIR)/',
-              '<(DEPTH)/',
+              '<(SHARED_INTERMEDIATE_DIR)',
+              '<(DEPTH)',
             ],
           },
         },
