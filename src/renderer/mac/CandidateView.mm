@@ -33,7 +33,7 @@
 
 #include "base/logging.h"
 #include "base/mutex.h"
-#include "client/session_interface.h"
+#include "client/client_interface.h"
 #include "renderer/mac/mac_view_util.h"
 #include "renderer/table_layout.h"
 #include "session/commands.pb.h"

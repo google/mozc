@@ -31,6 +31,7 @@
 #include "base/base.h"
 #include "base/file_stream.h"
 #include "base/mmap.h"
+#include "base/thread.h"
 #include "base/util.h"
 #include "converter/connector_interface.h"
 #include "converter/sparse_connector.h"
@@ -122,5 +123,100 @@ TEST(SparseConnectorTest, key_coding) {
 
   key = SparseConnector::EncodeKey(0xaabb, 0xccdd);
   EXPECT_EQ(key, 0xccddaabb);
+}
+
+namespace {
+class TestConnector : public ConnectorInterface {
+ public:
+  TestConnector(int offset) : offset_(offset) {}
+  ~TestConnector() {}
+
+  int GetTransitionCost(uint16 rid, uint16 lid) const {
+    return offset_ + SparseConnector::EncodeKey(rid, lid);
+  }
+
+  int GetResolution() const {
+    return 0;
+  }
+
+  int offset_;
+};
+
+class CachedConnectorThread : public Thread {
+ public:
+  CachedConnectorThread(int offset) :
+      test_(offset), cached_(&test_) {}
+
+  void Run() {
+    // Clear Cache just in case.
+    CachedConnector::ClearCache();
+
+    // With TLS, the different cache is used when a new
+    // thread is created.
+    for (int trial = 0; trial < 100; ++trial) {
+      for (int i = 0; i < 100; ++i) {
+        for (int j = 0; j < 100; ++j) {
+          EXPECT_EQ(test_.GetTransitionCost(i, j),
+                    cached_.GetTransitionCost(i, j));
+        }
+      }
+    }
+
+    // Clear Cache just in case.
+    CachedConnector::ClearCache();
+  }
+
+ private:
+  TestConnector test_;
+  CachedConnector cached_;
+};
+}  // namespace
+
+class CachedConnectorTest : public testing::Test {
+ protected:
+  static void SetUpTestCase() {
+    // Clear the chach on this thread.  b/5119167.
+    CachedConnector::ClearCache();
+  }
+
+  static void TearDownTestCase() {
+    // Clear the chach on this thread just in case.
+    CachedConnector::ClearCache();
+  }
+};
+
+TEST_F(CachedConnectorTest, CacheTest) {
+  TestConnector test(0);
+  CachedConnector cached(&test);
+  for (int trial = 0; trial < 100; ++trial) {
+    for (int i = 0; i < 100; ++i) {
+      for (int j = 0; j < 100; ++j) {
+        EXPECT_EQ(test.GetTransitionCost(i, j),
+                  cached.GetTransitionCost(i, j));
+      }
+    }
+  }
+}
+
+TEST_F(CachedConnectorTest, CacheTestWithThread) {
+#ifdef HAVE_TLS
+  const int kSize = 10;
+  vector<CachedConnectorThread *> threads;
+  for (int i = 0; i < kSize; ++i) {
+    threads.push_back(new CachedConnectorThread(kSize));
+  }
+
+  for (int i = 0; i < kSize; ++i) {
+    threads[i]->Start();
+  }
+
+  for (int i = 0; i < kSize; ++i) {
+    threads[i]->Join();
+  }
+
+  for (int i = 0; i < kSize; ++i) {
+    delete threads[i];
+  }
+#endif
 }
 }  // namespace mozc

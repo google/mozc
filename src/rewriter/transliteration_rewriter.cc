@@ -32,12 +32,12 @@
 #include <string>
 #include <vector>
 
+#include "base/text_normalizer.h"
 #include "base/util.h"
 #include "composer/composer.h"
 #include "converter/segments.h"
 #include "session/commands.pb.h"
 // For T13N normalize
-#include "session/internal/session_normalizer.h"
 #include "transliteration/transliteration.h"
 
 namespace mozc {
@@ -68,7 +68,7 @@ void NormalizeT13Ns(const vector<string> &t13ns,
   string normalized;
   for (size_t j = 0; j < t13ns.size(); ++j) {
     normalized.clear();
-    session::SessionNormalizer::NormalizeTransliterationText(
+    TextNormalizer::NormalizeTransliterationText(
         t13ns[j], &normalized);
     t13ns_normalized->push_back(normalized);
   }

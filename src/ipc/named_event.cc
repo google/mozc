@@ -30,8 +30,8 @@
 #include "ipc/named_event.h"
 
 #ifdef OS_WINDOWS
-#include <windows.h>
-#include "third_party/mozc/sandbox/security_attributes.h"
+#include <Windows.h>
+#include <Sddl.h>
 #else
 #include <errno.h>
 #include <fcntl.h>
@@ -47,6 +47,9 @@
 #include "base/base.h"
 #include "base/const.h"
 #include "base/util.h"
+#ifdef OS_WINDOWS
+#include "base/win_sandbox.h"
+#endif  // OS_WINDOWS
 
 namespace mozc {
 namespace {
@@ -102,7 +105,7 @@ NamedEventListener::NamedEventListener(const char *name)
 
   if (handle_ == NULL) {
     SECURITY_ATTRIBUTES SecurityAttributes;
-    if (!sandbox::MakeSecurityAttributes(&SecurityAttributes)) {
+    if (!WinSandbox::MakeSecurityAttributes(&SecurityAttributes)) {
       LOG(ERROR) << "Cannot make SecurityAttributes";
       return;
     }
@@ -118,7 +121,8 @@ NamedEventListener::NamedEventListener(const char *name)
 
     // permit the access from a process runinning with low integrity level
     if (Util::IsVistaOrLater()) {
-      sandbox::SetMandatoryLabelW(handle_, SE_KERNEL_OBJECT, L"NX", L"LW");
+      WinSandbox::SetMandatoryLabelW(handle_, SE_KERNEL_OBJECT,
+                                     SDDL_NO_EXECUTE_UP, SDDL_ML_LOW);
     }
 
     is_owner_ = true;

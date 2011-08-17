@@ -34,54 +34,36 @@
 #define MOZC_DICTIONARY_DICTIONARY_FILE_H_
 
 #include <string>
-#include <list>
+#include <vector>
+
 #include "base/base.h"
-#include "base/file_stream.h"
 #include "base/mmap.h"
+#include "dictionary/file/section.h"
 
 namespace mozc {
-
-class OutputFileStream;
-
-struct DictionaryFileSection {
-  const char *ptr;
-  int len;
-  string name;
-  bool isExternal;
-};
-
 class DictionaryFile {
  public:
   DictionaryFile();
   virtual ~DictionaryFile();
 
-  bool Open(const char* fn, bool to_write);
-  bool SetPtr(const char* ptr, int len);
+  // Open from file
+  bool OpenFromFile(const string &file);
 
-  void AddSection(const char* sec, const char* fn);
-  void Write();
+  // Open from memory
+  bool OpenFromImage(const char* image, int len);
 
-  const char* GetSection(const char* sec, int *len);
+  // Get pointer section from name
+  // Image size is set to |len|
+  // Return NULL when not found
+  const char *GetSection(const string &section_name, int *len) const;
+
  private:
-  bool ScanSections();
-
-  void WriteSection(OutputFileStream &ofs, DictionaryFileSection *s);
-  void WriteInt(OutputFileStream &ofs, int n);
-  int ReadInt(const char *ptr);
-  // Write padding bytes.
-  void Pad4(OutputFileStream &ofs, int len);
-  // Round up by 4 bytes.
-  int Rup4(int len);
-
   // This will be NULL if the mapping source is given as a pointer.
   scoped_ptr<Mmap<char> > mapping_;
 
-  const char *ptr_;
-  int mapping_len_;
+  vector<DictionaryFileSection> sections_;
 
-  list<DictionaryFileSection *> sections_;
-  string filename_;
-  static const int filemagic_ = 20080808;
+  DISALLOW_COPY_AND_ASSIGN(DictionaryFile);
 };
 }
 

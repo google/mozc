@@ -37,7 +37,7 @@
 #include <map>
 #include <string>
 
-#include "session/config.pb.h"
+#include "config/config.pb.h"
 
 namespace mozc {
 namespace chewing {

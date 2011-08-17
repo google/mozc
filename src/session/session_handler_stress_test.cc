@@ -32,10 +32,10 @@
 #include <vector>
 #include "base/base.h"
 #include "base/util.h"
-#include "client/session.h"
+#include "config/config.pb.h"
+#include "config/config_handler.h"
 #include "session/commands.pb.h"
-#include "session/config.pb.h"
-#include "session/config_handler.h"
+#include "session/japanese_session_factory.h"
 #include "session/random_keyevents_generator.h"
 #include "session/session_handler.h"
 #include "testing/base/public/gunit.h"
@@ -103,9 +103,27 @@ class TestSessionClient {
 };
 }   // namespace
 
-TEST(SessionHandlerStressTest, BasicStressTest) {
-  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+class SessionHandlerStressTest : public testing::Test {
+ protected:
+  virtual void SetUp() {
+    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    config::Config config;
+    config::ConfigHandler::GetDefaultConfig(&config);
+    config::ConfigHandler::SetConfig(config);
+    session::SessionFactoryManager::SetSessionFactory(&session_factory_);
+  }
 
+  virtual void TearDown() {
+    config::Config config;
+    config::ConfigHandler::GetDefaultConfig(&config);
+    config::ConfigHandler::SetConfig(config);
+  }
+
+ private:
+  session::JapaneseSessionFactory session_factory_;
+};
+
+TEST_F(SessionHandlerStressTest, BasicStressTest) {
   config::Config config;
   config::ConfigHandler::GetDefaultConfig(&config);
   // TOOD(all): Add a test for the case where

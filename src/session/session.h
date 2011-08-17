@@ -61,6 +61,7 @@ class Session : public SessionInterface {
   bool IMEOn(commands::Command *command);
   bool IMEOff(commands::Command *command);
   bool EchoBack(commands::Command *command);
+  bool EchoBackAndClearUndoContext(commands::Command *command);
   bool DoNothing(commands::Command *command);
   // Kill itself without any finalization.  It only works on debug builds.
   bool Abort(commands::Command *command);
@@ -103,6 +104,7 @@ class Session : public SessionInterface {
   bool MoveCursorLeft(commands::Command *command);
   bool MoveCursorToEnd(commands::Command *command);
   bool MoveCursorToBeginning(commands::Command *command);
+  bool MoveCursorTo(commands::Command *command);
   bool Convert(commands::Command *command);
   // Start converion not using user history.  This is used for debugging.
   bool ConvertWithoutHistory(commands::Command *command);
@@ -119,6 +121,10 @@ class Session : public SessionInterface {
 
   // Commit only the first segment.
   bool CommitSegment(commands::Command *command);
+  // Commit some characters at the head of the preedit.
+  bool CommitHead(size_t count, commands::Command *command);
+  // Commit preedit if in password mode.
+  bool CommitIfPassword(commands::Command *command);
 
   bool SetComposition(const string &composition);
 
@@ -162,6 +168,9 @@ class Session : public SessionInterface {
   bool InputModeFullASCII(commands::Command *command);
   bool InputModeHalfASCII(commands::Command *command);
   bool InputModeSwitchKanaType(commands::Command *command);
+
+  // Specify the input field type.
+  bool SwitchInputFieldType(commands::Command *command);
 
   // Let client launch config dialog
   bool LaunchConfigDialog(commands::Command *command);
@@ -252,16 +261,12 @@ class Session : public SessionInterface {
   // Process it and return true, otherwise return false.
   bool MaybeSelectCandidate(commands::Command *command);
 
-  // Make boundary to separate conversion streams in the session.
-  void BoundSession() const;
-
   // Fill command's output according to the current state.
   void OutputFromState(commands::Command *command);
   void Output(commands::Command *command);
   void OutputMode(commands::Command *command) const;
   void OutputComposition(commands::Command *command) const;
   void OutputKey(commands::Command *command) const;
-  void OutputInitialComposition(commands::Command *command) const;
 
   bool SendKeyDirectInputState(commands::Command *command);
   bool SendKeyPrecompositionState(commands::Command *command);

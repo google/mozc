@@ -34,8 +34,9 @@
 #include <sstream>
 
 #include "base/util.h"
-#include "client/session_interface.h"
+#include "client/client_interface.h"
 #include "renderer/coordinates.h"
+#include "renderer/renderer_style_handler.h"
 #include "renderer/table_layout.h"
 #include "renderer/win_resource.h"
 #include "renderer/win32/text_renderer.h"
@@ -238,24 +239,21 @@ CandidateWindow::CandidateWindow()
       text_renderer_(new TextRenderer),
       table_layout_(new TableLayout),
       send_command_interface_(NULL) {
-  CDC desktop_dc(::GetDC(NULL));
-  const int dpi_x = desktop_dc.GetDeviceCaps(LOGPIXELSX);
-  const int dpi_y = desktop_dc.GetDeviceCaps(LOGPIXELSY);
+  double scale_factor_x = 1.0;
+  double scale_factor_y = 1.0;
+  RendererStyleHandler::GetDPIScalingFactor(&scale_factor_x,
+                                            &scale_factor_y);
 
   // If DPI is not default value, re-calculate the size based on the DPI.
   if (!footer_logo_.IsNull()) {
     CSize size;
     footer_logo_.GetSize(size);
-
-    if (dpi_x != kDefaultDPI || dpi_y != kDefaultDPI) {
-      size.cx = ::MulDiv(size.cx, dpi_x, kDefaultDPI);
-      size.cy = ::MulDiv(size.cy, dpi_y, kDefaultDPI);
-    }
-
+    size.cx *= scale_factor_x;
+    size.cy *= scale_factor_y;
     footer_logo_display_size_ = Size(size);
   }
 
-  indicator_width_ = ::MulDiv(kIndicatorWidthInDefaultDPI, dpi_x, kDefaultDPI);
+  indicator_width_ = kIndicatorWidthInDefaultDPI * scale_factor_x;
 
   text_renderer_->Init();
 }
@@ -292,6 +290,13 @@ BOOL CandidateWindow::OnEraseBkgnd(CDCHandle dc) {
   return TRUE;
 }
 
+void CandidateWindow::OnGetMinMaxInfo(MINMAXINFO *min_max_info) {
+  // Do not restrict the window size in case the candidate window must be
+  // very small size.
+  min_max_info->ptMinTrackSize.x = 1;
+  min_max_info->ptMinTrackSize.y = 1;
+  SetMsgHandled(TRUE);
+}
 
 void CandidateWindow::HandleMouseEvent(
     UINT nFlags, const WTL::CPoint &point, bool close_candidatewindow) {
@@ -396,6 +401,7 @@ void CandidateWindow::DoPaint(CDCHandle dc) {
   DrawShortcutBackground(dc);
   DrawSelectedRect(dc);
   DrawCells(dc);
+  DrawInformationIcon(dc);
   DrawVScrollBar(dc);
   DrawFooter(dc);
   DrawFrame(dc);
@@ -828,6 +834,27 @@ void CandidateWindow::DrawSelectedRect(CDCHandle dc) {
     dc.SetDCBrushColor(kSelectedRowFrameColor);
     dc.FrameRect(&selected_rect,
                  static_cast<HBRUSH>(GetStockObject(DC_BRUSH)));
+  }
+}
+
+void CandidateWindow::DrawInformationIcon(CDCHandle dc) {
+  DCHECK(table_layout_->IsLayoutFrozen()) << "Table layout is not frozen.";
+  double scale_factor_x = 1.0;
+  double scale_factor_y = 1.0;
+  RendererStyleHandler::GetDPIScalingFactor(&scale_factor_x,
+                                            &scale_factor_y);
+  for (size_t i = 0; i < candidates_->candidate_size(); ++i) {
+    if (candidates_->candidate(i).has_information_id()) {
+      CRect rect = table_layout_->GetRowRect(i).ToCRect();
+      rect.left = rect.right - (6.0 * scale_factor_x);
+      rect.right = rect.right - (2.0 * scale_factor_x);
+      rect.top += (2.0 * scale_factor_y);
+      rect.bottom -= (2.0 * scale_factor_y);
+      dc.FillSolidRect(&rect, kIndicatorColor);
+      dc.SetDCBrushColor(kIndicatorColor);
+      dc.FrameRect(&rect,
+                   static_cast<HBRUSH>(GetStockObject(DC_BRUSH)));
+    }
   }
 }
 

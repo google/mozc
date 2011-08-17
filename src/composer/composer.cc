@@ -38,10 +38,10 @@
 #include "composer/internal/mode_switching_handler.h"
 #include "composer/internal/transliterators_ja.h"
 #include "composer/table.h"
+#include "config/config_handler.h"
+#include "config/config.pb.h"
 #include "converter/character_form_manager.h"
 #include "session/commands.pb.h"
-#include "session/config_handler.h"
-#include "session/config.pb.h"
 
 namespace mozc {
 namespace composer {
@@ -195,6 +195,7 @@ Composer::Composer()
       input_mode_(transliteration::HIRAGANA),
       output_mode_(transliteration::HIRAGANA),
       comeback_input_mode_(transliteration::HIRAGANA),
+      input_field_type_(commands::SessionCommand::NORMAL),
       capital_sequence_count_(0),
       composition_(new Composition),
       max_length_(kMaxPreeditLength) {
@@ -208,6 +209,7 @@ Composer::~Composer() {}
 void Composer::Reset() {
   EditErase();
   ResetInputMode();
+  source_text_.assign("");
 }
 
 void Composer::ResetInputMode() {
@@ -274,8 +276,8 @@ transliteration::TransliterationType Composer::GetInputMode() const {
   return input_mode_;
 }
 
-transliteration::TransliterationType Composer::GetOutputMode() const {
-  return output_mode_;
+transliteration::TransliterationType Composer::GetComebackInputMode() const {
+  return comeback_input_mode_;
 }
 
 void Composer::ToggleInputMode() {
@@ -285,6 +287,10 @@ void Composer::ToggleInputMode() {
   } else {
     SetInputMode(transliteration::HIRAGANA);
   }
+}
+
+transliteration::TransliterationType Composer::GetOutputMode() const {
+  return output_mode_;
 }
 
 void Composer::SetOutputMode(transliteration::TransliterationType mode) {
@@ -329,6 +335,9 @@ void Composer::InsertCharacterPreeditAt(size_t pos, const string &input) {
 void Composer::InsertCharacterKeyAndPreeditAt(size_t pos,
                                               const string &key,
                                               const string &preedit) {
+  if (!EnableInsert()) {
+    return;
+  }
   const size_t position_before_insertion = position_;
   const size_t length_before_insertion = composition_->GetLength();
   const size_t insertion_length = Util::CharsLen(preedit);
@@ -355,6 +364,9 @@ void Composer::InsertCharacterKeyAndPreeditAt(size_t pos,
 }
 
 bool Composer::InsertCharacterKeyEvent(const commands::KeyEvent &key) {
+  if (!EnableInsert()) {
+    return false;
+  }
   if (key.has_mode()) {
     const transliteration::TransliterationType new_input_mode =
         GetTransliterationTypeFromCompositionMode(key.mode());
@@ -454,8 +466,14 @@ bool Composer::InsertCharacterKeyEvent(const commands::KeyEvent &key) {
 }
 
 void Composer::DeleteAt(size_t pos) {
-  position_ = composition_->DeleteAt(pos);
-  UpdateInputMode();
+  composition_->DeleteAt(pos);
+  // Adjust cursor position for composition mode.
+  if (position_ > pos) {
+    position_--;
+  }
+  // We do not call UpdateInputMode() here.
+  // 1. In composition mode, UpdateInputMode finalizes pending chunk.
+  // 2. In conversion mode, InputMode needs not to change.
 }
 
 void Composer::Delete() {
@@ -515,6 +533,13 @@ void Composer::MoveCursorToEnd() {
   // Behavior between MoveCursorToEnd and MoveCursorToRight is different.
   // MoveCursorToEnd always makes current input mode default.
   SetInputMode(comeback_input_mode_);
+}
+
+void Composer::MoveCursorTo(uint32 new_position) {
+  if (new_position <= composition_->GetLength()) {
+    position_ = new_position;
+    UpdateInputMode();
+  }
 }
 
 void Composer::GetPreedit(string *left, string *focused, string *right) const {
@@ -633,7 +658,6 @@ size_t Composer::GetCursor() const {
   return position_;
 }
 
-
 void Composer::GetTransliterations(
     transliteration::Transliterations *t13ns) const {
   GetSubTransliterations(0, GetLength(), t13ns);
@@ -681,14 +705,6 @@ bool Composer::EnableInsert() const {
     return false;
   }
   return true;
-}
-
-void Composer::set_max_length(size_t length) {
-  max_length_ = length;
-}
-
-size_t Composer::max_length() const {
-  return max_length_;
 }
 
 void Composer::AutoSwitchMode() {
@@ -778,6 +794,16 @@ void Composer::AutoSwitchMode() {
 
 bool Composer::ShouldCommit() const {
   return composition_->ShouldCommit();
+}
+
+bool Composer::ShouldCommitHead(size_t *length_to_commit) const {
+  if (GetInputFieldType() == commands::SessionCommand::PASSWORD &&
+      GetLength() > 1) {
+    *length_to_commit = GetLength() - 1;
+    return true;
+  } else {
+    return false;
+  }
 }
 
 namespace {
@@ -948,5 +974,79 @@ void Composer::SetNewInput() {
   is_new_input_ = true;
 }
 
+void Composer::CopyFromInternal(const Composer &src, const string &query) {
+  Reset();
+
+  // Currently, InsertCharacterPreedit can't deal multiple characters
+  // at the same time.
+  // So we should split query to UTF-8 chars to avoid DCHECK failure.
+  // http://b/3437358
+  //
+  // See also http://b/5094684, http://b/5094642
+  vector<string> chars;
+  Util::SplitStringToUtf8Chars(query, &chars);
+  for (size_t i = 0; i < chars.size(); ++i) {
+    InsertCharacterPreedit(chars[i]);
+  }
+
+  SetInputMode(src.GetComebackInputMode());
+  SetTemporaryInputMode(src.GetInputMode());
+  SetOutputMode(src.GetOutputMode());
+  SetInputFieldType(src.GetInputFieldType());
+
+  position_ = src.GetCursor();
+  is_new_input_ = src.is_new_input();
+  capital_sequence_count_ = src.capital_sequence_count();
+  source_text_.assign(src.source_text());
+  max_length_ = src.max_length();
+}
+
+void Composer::CopyFromForSubmission(const Composer &src) {
+  // TODO(hsumita): Copy composition correctly.
+  string composition;
+  src.GetStringForSubmission(&composition);
+  CopyFromInternal(src, composition);
+}
+
+void Composer::CopyFromForConversion(const Composer &src) {
+  // TODO(hsumita): Copy composition correctly.
+  string composition;
+  src.GetQueryForConversion(&composition);
+  CopyFromInternal(src, composition);
+}
+
+bool Composer::is_new_input() const {
+  return is_new_input_;
+}
+
+size_t Composer::capital_sequence_count() const {
+  return capital_sequence_count_;
+}
+
+const string &Composer::source_text() const {
+  return source_text_;
+}
+string *Composer::mutable_source_text() {
+  return &source_text_;
+}
+void Composer::set_source_text(const string &source_text) {
+  source_text_.assign(source_text);
+}
+
+size_t Composer::max_length() const {
+  return max_length_;
+}
+void Composer::set_max_length(size_t length) {
+  max_length_ = length;
+}
+
+void Composer::SetInputFieldType(
+    commands::SessionCommand::InputFieldType type) {
+  input_field_type_ = type;
+}
+
+commands::SessionCommand::InputFieldType Composer::GetInputFieldType() const {
+  return input_field_type_;
+}
 }  // namespace composer
 }  // namespace mozc

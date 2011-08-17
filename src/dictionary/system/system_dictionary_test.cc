@@ -32,6 +32,7 @@
 #include "base/base.h"
 #include "base/util.h"
 #include "converter/node.h"
+#include "converter/node_allocator.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/text_dictionary_loader.h"
@@ -50,28 +51,6 @@ DECLARE_string(test_srcdir);
 
 namespace mozc {
 namespace {
-
-class TestNodeAllocator : public NodeAllocatorInterface {
- public:
-  TestNodeAllocator() {}
-  virtual ~TestNodeAllocator() {
-    for (size_t i = 0; i < nodes_.size(); ++i) {
-      delete nodes_[i];
-    }
-    nodes_.clear();
-  }
-
-  virtual Node *NewNode() {
-    Node *node = new Node;
-    CHECK(node);
-    node->Init();
-    nodes_.push_back(node);
-    return node;
-  }
-
- private:
-  vector<Node *> nodes_;
-};
 
 
 class SystemDictionaryTest : public testing::Test {
@@ -326,7 +305,7 @@ TEST_F(SystemDictionaryTest, nodes_size) {
   const int kNumNodes = 5;
 
   // Tests LookupPrefix
-  TestNodeAllocator allocator1;
+  NodeAllocator allocator1;
   allocator1.set_max_nodes_size(kNumNodes);
   Node *node = rx_dic->LookupPrefix(s.c_str(), s.size(), &allocator1);
   int count = 0;
@@ -401,7 +380,7 @@ TEST_F(SystemDictionaryTest, spelling_correction_tokens) {
         }
 
         EXPECT_EQ(node->rid, t->rid);
-        EXPECT_TRUE(CompareCost(, t->cost));
+        EXPECT_TRUE(CompareCost(node->wcost, t->cost));
         EXPECT_EQ(node->key, t->key);
         EXPECT_EQ(node->value, t->value);
       }

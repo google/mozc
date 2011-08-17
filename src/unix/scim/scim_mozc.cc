@@ -221,7 +221,7 @@ void ScimMozc::focus_out() {
   }
   ClearAll();  // just in case.
   DrawAll();
-  // TODO(yusukes): Call session::SyncData() like ibus-mozc.
+  // TODO(yusukes): Call client::SyncData() like ibus-mozc.
 }
 
 // This function is called from SCIM framework when Mozc related icon in the
@@ -266,7 +266,7 @@ void ScimMozc::trigger_property(const scim::String &property) {
   }
 
   // Spawn mozc_tool.
-  // TODO(yusukes): Use session::LaunchTool().
+  // TODO(yusukes): Use client::LaunchTool().
   mozc::Process::SpawnMozcProcess("mozc_tool", args);
 }
 

@@ -46,6 +46,10 @@ class RendererStyleHandler{
   // get default Style
   static void GetDefaultRendererStyle(RendererStyle *style);
 
+  // Returns DPI scaling factor on Windows.
+  // On other platforms, always returns 1.0.
+  static void GetDPIScalingFactor(double *factor_x, double *factor_y);
+
   // Do not allow instantiation
  private:
   RendererStyleHandler() {}

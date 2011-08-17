@@ -30,7 +30,7 @@
 #ifndef MOZC_NET_HTTP_CLIENT_H_
 #define MOZC_NET_HTTP_CLIENT_H_
 
-#include <iomanip>
+#include <ostream>
 #include <string>
 #include <vector>
 

@@ -30,12 +30,12 @@
 #include <string>
 
 #include "base/util.h"
+#include "config/config_handler.h"
+#include "config/config.pb.h"
 #include "converter/segments.h"
 #include "converter/character_form_manager.h"
 #include "rewriter/variants_rewriter.h"
 #include "testing/base/public/gunit.h"
-#include "session/config_handler.h"
-#include "session/config.pb.h"
 
 DECLARE_string(test_tmpdir);
 
@@ -355,7 +355,8 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
     candidate.content_value = candidate.value;
     candidate.content_key = "!@#";
     VariantsRewriter::SetDescriptionForCandidate(&candidate);
-    EXPECT_EQ("[半]", candidate.description);
+    // "[半]"
+    EXPECT_EQ("\x5b\xe5\x8d\x8a\x5d", candidate.description);
   }
   {
     Segment::Candidate candidate;

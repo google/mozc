@@ -37,11 +37,11 @@
 #include "base/base.h"
 #include "base/const.h"
 #include "base/util.h"
-#include "client/session_interface.h"
+#include "client/client_interface.h"
+#include "config/config_handler.h"
 #include "ipc/ipc.h"
 #include "ipc/named_event.h"
 #include "ipc/process_watch_dog.h"
-#include "session/config_handler.h"
 #include "session/commands.pb.h"
 
 #include "base/logging.h"

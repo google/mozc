@@ -50,6 +50,27 @@ class ConnectorInterface {
   DISALLOW_COPY_AND_ASSIGN(ConnectorInterface);
 };
 
+// The result of GetTransitionCost() is cached with TLS.
+// Note that the cache is created as a global variable. If you
+// pass two different connectors, the cache variable will be shared.
+// Since we can assume that real Connector is a singleton object,
+// this restriction will not be a big issue.
+class CachedConnector : public ConnectorInterface {
+ public:
+  CachedConnector(ConnectorInterface *connector);
+  ~CachedConnector();
+
+  virtual int GetTransitionCost(uint16 rid, uint16 lid) const;
+  virtual int GetResolution() const;
+
+  // Clear cache explicitly.
+  static void ClearCache();
+
+ private:
+  void InitializeCache() const;
+  ConnectorInterface *connector_;
+};
+
 class ConnectorFactory {
  public:
   // return singleton object

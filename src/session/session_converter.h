@@ -114,6 +114,11 @@ class SessionConverter : public SessionConverterInterface {
   // Commit the preedit string represented by Composer.
   void CommitPreedit(const composer::Composer &composer);
 
+  // Commit the specified number of characters at the head of the preedit
+  // string represented by Composer.
+  // TODO(yamaguchi): Enhance to support the conversion mode.
+  void CommitHead(size_t count, composer::Composer *composer);
+
   // Revert the last "Commit" operation
   void Revert();
 
@@ -122,7 +127,8 @@ class SessionConverter : public SessionConverterInterface {
   void SegmentFocusLast();
   void SegmentFocusLeft();
   void SegmentFocusLeftEdge();
-  void SegmentFocusRightOrCommit();
+
+  bool IsLastSegmentFocused() const;
 
   // Resize the focused segment.
   void SegmentWidthExpand();
@@ -172,7 +178,7 @@ class SessionConverter : public SessionConverterInterface {
   const OperationPreferences &GetOperationPreferences() const;
   SessionConverterInterface::State GetState() const;
   size_t GetSegmentIndex() const;
-  const vector<Segment::Candidate> &GetPreviousSuggestions() const;
+  const Segment &GetPreviousSuggestions() const;
 
   // Fill segments with the conversion preferences.
   static void SetConversionPreferences(
@@ -219,6 +225,8 @@ class SessionConverter : public SessionConverterInterface {
   void FillResult(commands::Result *result) const;
   void FillCandidates(commands::Candidates *candidates) const;
 
+  bool IsEmptySegment(const Segment &segment) const;
+
   SessionConverterInterface::State state_;
 
   const composer::Composer *composer_;
@@ -227,7 +235,7 @@ class SessionConverter : public SessionConverterInterface {
   size_t segment_index_;
 
   // Previous suggestions to be merged with the current predictions.
-  vector<Segment::Candidate> previous_suggestions_;
+  Segment previous_suggestions_;
 
   // Default conversion preferences.
   ConversionPreferences conversion_preferences_;
@@ -248,6 +256,8 @@ class SessionConverter : public SessionConverterInterface {
 
   DISALLOW_COPY_AND_ASSIGN(SessionConverter);
 };
+
 }  // namespace session
 }  // namespace mozc
+
 #endif  // MOZC_SESSION_SESSION_CONVERTER_H_

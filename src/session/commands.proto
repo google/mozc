@@ -36,7 +36,7 @@
 
 syntax = "proto2";
 
-import "session/config.proto";
+import "config/config.proto";
 
 package mozc.commands;
 
@@ -147,7 +147,7 @@ message KeyEvent {
   // A:Press only a special key
   //   => Send special key event with no modifier.
   // B:Press only modifier keys
-  //   => If only shift key is pressed, send to shift key. Otherwise, do nothing.
+  //   => Send modifier key event with no key_code.
   // C:Press an other key
   //   => Send KeyEvent with no modifier.
   // D:Press a special key with one or more modifier keys
@@ -166,18 +166,35 @@ message KeyEvent {
   //  ----------------------------------------------------
   //     A     |      SP       |  special_key = 4
   //     A     |      F1       |  special_key = 19
-  //     B     |     CTRL      |  send nothing
+  //     B     |     CTRL      |  modifier_key = {CTRL}
   //     B     |     SHIFT     |  modifier_key = {SHIFT}
-  //     B     |   CTRL+SHIFT  |  send nothing
-  //     C     |      'a'      |  key_code = \x61
+  //     B     |   CTRL+SHIFT  |  modifier_key = {CTRL,SHIFT}
+  //     C     |      'a'      |  key_code = \x61 = 'a'
   //     D     |    CTRL+BS    |  special_key = 12, modifier_key = {CTRL}
   //     D     | CTRL+SHIFT+BS |  special_key = 12, modifier_key = {CTRL,SHIFT}
-  //     E     |   SHIFT+'a'   |  key_code = \x41
+  //     E     |   SHIFT+'a'   |  key_code = \x41 = 'A'
   //     E     |   CTRL+'a'    |  key_code = \x61, modifier_key = {CTRL}
   //     E     | CTRL+ALT+'a'  |  key_code = \x61, modifier_key = {CTRL,ALT}
   //     E     | CTRL+SHIFT+'a'|  key_code = \x61, modifier_key = {CTRL,SHIFT}
   //     F     | CTRL+BS+SP    |  send nothing
   //
+  // In addition, we treat CAPS lock independently besides alphabet keys,
+  // though it is a member of modifier keys. Following example shows currently
+  // expected behaviours with Caps lock set.
+  //
+  // E.g. ) While CAPS is set on.
+  //    Pressed Key  |   translated key event
+  //  ----------------------------------------------------
+  //       'a'       |  key_code = \x41 = 'A', modifier_key = {CAPS}
+  //     SHIFT+'a'   |  key_code = \x61 = 'a', modifier_key = {CAPS}
+  //     CTRL+'a'    |  key_code = \x41, modifier_key = {CTRL,CAPS}
+  //   CTRL+ALT+'a'  |  key_code = \x41, modifier_key = {CTRL,ALT,CAPS}
+  //   CTRL+SHIFT+'a'|  key_code = \x41, modifier_key = {CTRL,SHIFT,CAPS}
+  //
+  // However, only in short-cut judgement, we should convert capital characters
+  // into lower cases.
+  // TODO(peria): Specify exceptions with CAPS, and unify with the above table.
+
   enum ModifierKey {
     CTRL = 1;
     ALT = 2;
@@ -190,6 +207,7 @@ message KeyEvent {
     RIGHT_CTRL = 256;
     RIGHT_ALT = 512;
     RIGHT_SHIFT = 1024;
+    CAPS = 2048;
   };
 
   optional uint32 key_code = 1;  // Printable key in ASCII.
@@ -255,6 +273,9 @@ message SessionCommand {
 
     // Change cursor position in preedit.
     MOVE_CURSOR = 11;
+
+    // Specify the input field type.
+    SWITCH_INPUT_FIELD_TYPE = 12;
   };
   required CommandType type = 1;
 
@@ -269,6 +290,20 @@ message SessionCommand {
 
   // New cursor position in preedit. Used with MOVE_CURSOR.
   optional uint32 cursor_position = 5;
+
+  // Input field type.
+  // The types are based on the input types defined in HTML5.
+  // http://dev.w3.org/html5/spec/Overview.html#attr-input-type
+  // Other types are to be added later.
+  enum InputFieldType {
+    // No restrictions nor special functions. The IME operates as usual.
+    NORMAL = 1;
+
+    // Password field. Text is hidden after input.
+    PASSWORD = 2;
+  };
+  // Type of the input field being focused.
+  optional InputFieldType input_field_type = 6;
 };
 
 message Context {
@@ -318,9 +353,28 @@ message Input {
     // format should be the same with an output of a SEND_KEY command.
     SEND_COMMAND = 5;
 
-    // Set & Config
+    // Config accessors.
+    // There are three configurations.
+    // Stored config, Imposed config, One-shot config.
+    // Stored config : Set by SET_CONFIG command.
+    // Its lifetime is permanent (stored into a storage).
+    // GET_CONFIG returns stored config.
+    // Imposed config : Set by SET_IMPOSED_CONFIG. Its lifetime is the
+    // same as the process (*not* stored into a storage as opposed to Stored
+    // config).
+    // Imposed config is prioritized over Stored config.
+    // Only the values explicitly set are effective and override ones in Stored
+    // config. In typical usage, most fields are not set.
+    // GET_CONFIG's result is *not* affected by imposed config
+    // (stored config returns).
+    // One-shot config : Set by each key events.
+    // It is effective while the key event is processed.
+    // This is prioritized over Imposed config.
+    // Like as Imposed config, some fields can be omitted.
+    // TODO(matsuzakit): Rename (GET|SET)_CONFIG to (GET|SET)_STORED_CONFIG
     GET_CONFIG = 6;
     SET_CONFIG = 7;
+    SET_IMPOSED_CONFIG = 22;
 
 
     // sync dictionary/history data to local file
@@ -351,6 +405,11 @@ message Input {
     NO_OPERATION = 14;
 
 
+
+    // Number of commands.
+    // When new command is added, the command should use below number
+    // and NUM_OF_COMMANDS should be incremented.
+    NUM_OF_COMMANDS = 24;
   };
   required CommandType type = 1;
 
@@ -607,6 +666,7 @@ message DeletionRange {
   // Length of the range.
   optional int32 length = 2;
 };
+
 
 message Output {
   optional uint64 id = 1;

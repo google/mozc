@@ -65,18 +65,28 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        '../base/base.gyp:config_file_stream',
         '../composer/composer.gyp:composer',
+        '../config/config.gyp:config_handler',
+        '../config/config.gyp:genproto_config',
         '../converter/converter_base.gyp:immutable_converter',
         '../dictionary/dictionary.gyp:dictionary',
         '../dictionary/dictionary_base.gyp:gen_pos_matcher',
-        '../session/session_base.gyp:config_handler',
         '../session/session_base.gyp:genproto_session',
         '../session/session_base.gyp:session_protocol',
-        '../session/session_base.gyp:session_normalizer',
         '../storage/storage.gyp:storage',
         '../usage_stats/usage_stats.gyp:usage_stats',
         'calculator/calculator.gyp:calculator',
         'rewriter_base.gyp:gen_rewriter_files',
+      ],
+      # TODO(horo): usage is available only in Mac and Win now.
+      'conditions': [
+        ['OS=="mac" or OS=="win"', {
+          'sources': [
+            '<(gen_out_dir)/usage_rewriter_data.h',
+            'usage_rewriter.cc',
+          ],
+        }],
       ],
     },
   ],

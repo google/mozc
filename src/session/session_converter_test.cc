@@ -38,14 +38,14 @@
 
 #include "base/base.h"
 #include "base/util.h"
+#include "config/config.pb.h"
+#include "config/config_handler.h"
 #include "converter/converter_interface.h"
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
 #include "composer/composer.h"
 #include "composer/table.h"
 #include "session/internal/keymap.h"
-#include "session/config.pb.h"
-#include "session/config_handler.h"
 #include "session/session_converter.h"
 #include "session/internal/candidate_list.h"
 #include "testing/base/public/gunit.h"
@@ -841,7 +841,8 @@ TEST_F(SessionConverterTest, SegmentFocusRightOrCommit) {
   EXPECT_EQ(0, output.preedit().highlighted_position());
   output.Clear();
 
-  converter.SegmentFocusRightOrCommit();
+  EXPECT_FALSE(converter.IsLastSegmentFocused());
+  converter.SegmentFocusRight();
   converter.FillOutput(&output);
   EXPECT_FALSE(output.has_result());
   EXPECT_TRUE(output.has_preedit());
@@ -850,7 +851,8 @@ TEST_F(SessionConverterTest, SegmentFocusRightOrCommit) {
   EXPECT_EQ(5, output.preedit().highlighted_position());
   output.Clear();
 
-  converter.SegmentFocusRightOrCommit();
+  EXPECT_TRUE(converter.IsLastSegmentFocused());
+  converter.Commit();
   converter.FillOutput(&output);
   EXPECT_TRUE(output.has_result());
 
@@ -2372,6 +2374,40 @@ TEST(SessionConverterRevertTest, Revert) {
   EXPECT_FALSE(convertermock.revert_conversion_called());
   converter.Revert();
   EXPECT_TRUE(convertermock.revert_conversion_called());
+}
+
+TEST_F(SessionConverterTest, CommitHead) {
+  SessionConverter converter(convertermock_.get());
+  // "あいうえお"
+  composer_->InsertCharacterPreedit(aiueo_);
+
+  converter.CommitHead(1, composer_.get());
+
+  commands::Output output;
+  converter.FillOutput(&output);
+  EXPECT_TRUE(output.has_result());
+  EXPECT_FALSE(output.has_candidates());
+
+  const commands::Result &result = output.result();
+  EXPECT_EQ("\xe3\x81\x82", result.value());  // "あ"
+  EXPECT_EQ("\xe3\x81\x82", result.key());    // "あ"
+  string preedit;
+  composer_->GetStringForPreedit(&preedit);
+  // "いうえお"
+  EXPECT_EQ("\xe3\x81\x84\xe3\x81\x86\xe3\x81\x88\xe3\x81\x8a", preedit);
+
+  converter.CommitHead(3, composer_.get());
+  converter.FillOutput(&output);
+  EXPECT_TRUE(output.has_result());
+  EXPECT_FALSE(output.has_candidates());
+
+  const commands::Result &result2 = output.result();
+  // "いうえ"
+  EXPECT_EQ("\xe3\x81\x84\xe3\x81\x86\xe3\x81\x88", result2.value());
+  // "いうえ"
+  EXPECT_EQ("\xe3\x81\x84\xe3\x81\x86\xe3\x81\x88", result2.key());
+  composer_->GetStringForPreedit(&preedit);
+  EXPECT_EQ("\xe3\x81\x8a", preedit);         // "お"
 }
 }  // namespace session
 }  // namespace mozc

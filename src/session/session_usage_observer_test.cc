@@ -33,8 +33,8 @@
 #include "base/protobuf/protobuf.h"
 #include "base/protobuf/text_format.h"
 #include "base/protobuf/zero_copy_stream_impl.h"
+#include "config/config_handler.h"
 #include "session/commands.pb.h"
-#include "session/config_handler.h"
 #include "session/internal/keymap.h"
 #include "session/internal/keymap_factory.h"
 #include "session/session_usage_observer.h"
@@ -402,6 +402,16 @@ TEST_F(SessionUsageObserverTest, ConfigTest) {
   EXPECT_TRUE(storage::Registry::Lookup(
       "usage_stats.ConfigUseNumberConversion", &reg_str));
   EXPECT_TRUE(storage::Registry::Lookup(
+      "usage_stats.ConfigUseEmoticonConversion", &reg_str));
+  EXPECT_TRUE(storage::Registry::Lookup(
+      "usage_stats.ConfigUseCalculator", &reg_str));
+  EXPECT_TRUE(storage::Registry::Lookup(
+      "usage_stats.ConfigUseT13nConversion", &reg_str));
+  EXPECT_TRUE(storage::Registry::Lookup(
+      "usage_stats.ConfigUseZipCodeConversion", &reg_str));
+  EXPECT_TRUE(storage::Registry::Lookup(
+      "usage_stats.ConfigUseSpellingCorrection", &reg_str));
+  EXPECT_TRUE(storage::Registry::Lookup(
       "usage_stats.ConfigIncognito", &reg_str));
   EXPECT_TRUE(storage::Registry::Lookup(
       "usage_stats.ConfigSelectionShortcut", &reg_str));
@@ -410,11 +420,23 @@ TEST_F(SessionUsageObserverTest, ConfigTest) {
   EXPECT_TRUE(storage::Registry::Lookup(
       "usage_stats.ConfigUseDictionarySuggest", &reg_str));
   EXPECT_TRUE(storage::Registry::Lookup(
+      "usage_stats.ConfigUseRealtimeConversion", &reg_str));
+  EXPECT_TRUE(storage::Registry::Lookup(
       "usage_stats.ConfigSuggestionsSize", &reg_str));
   EXPECT_TRUE(storage::Registry::Lookup(
       "usage_stats.ConfigUseAutoIMETurnOff", &reg_str));
   EXPECT_TRUE(storage::Registry::Lookup(
+      "usage_stats.ConfigUseCascadingWindow", &reg_str));
+  EXPECT_TRUE(storage::Registry::Lookup(
       "usage_stats.ConfigShiftKeyModeSwitch", &reg_str));
+  EXPECT_TRUE(storage::Registry::Lookup(
+      "usage_stats.ConfigUseAutoConversion", &reg_str));
+  EXPECT_TRUE(storage::Registry::Lookup(
+      "usage_stats.ConfigAutoConversionKey", &reg_str));
+  EXPECT_TRUE(storage::Registry::Lookup(
+      "usage_stats.ConfigYenSignCharacter", &reg_str));
+  EXPECT_TRUE(storage::Registry::Lookup(
+      "usage_stats.ConfigUseJapaneseLayout", &reg_str));
   EXPECT_TRUE(storage::Registry::Lookup(
       "usage_stats.ConfigSpaceCharacterForm", &reg_str));
   EXPECT_TRUE(storage::Registry::Lookup(
@@ -445,6 +467,16 @@ TEST_F(SessionUsageObserverTest, ConfigTest) {
   EXPECT_FALSE(storage::Registry::Lookup(
       "usage_stats.ConfigUseNumberConversion", &reg_str));
   EXPECT_FALSE(storage::Registry::Lookup(
+      "usage_stats.ConfigUseEmoticonConversion", &reg_str));
+  EXPECT_FALSE(storage::Registry::Lookup(
+      "usage_stats.ConfigUseCalculator", &reg_str));
+  EXPECT_FALSE(storage::Registry::Lookup(
+      "usage_stats.ConfigUseT13nConversion", &reg_str));
+  EXPECT_FALSE(storage::Registry::Lookup(
+      "usage_stats.ConfigUseZipCodeConversion", &reg_str));
+  EXPECT_FALSE(storage::Registry::Lookup(
+      "usage_stats.ConfigUseSpellingCorrection", &reg_str));
+  EXPECT_FALSE(storage::Registry::Lookup(
       "usage_stats.ConfigIncognito", &reg_str));
   EXPECT_FALSE(storage::Registry::Lookup(
       "usage_stats.ConfigSelectionShortcut", &reg_str));
@@ -453,9 +485,23 @@ TEST_F(SessionUsageObserverTest, ConfigTest) {
   EXPECT_FALSE(storage::Registry::Lookup(
       "usage_stats.ConfigUseDictionarySuggest", &reg_str));
   EXPECT_FALSE(storage::Registry::Lookup(
+      "usage_stats.ConfigUseRealtimeConversion", &reg_str));
+  EXPECT_FALSE(storage::Registry::Lookup(
       "usage_stats.ConfigSuggestionsSize", &reg_str));
   EXPECT_FALSE(storage::Registry::Lookup(
       "usage_stats.ConfigUseAutoIMETurnOff", &reg_str));
+  EXPECT_FALSE(storage::Registry::Lookup(
+      "usage_stats.ConfigUseCascadingWindow", &reg_str));
+  EXPECT_FALSE(storage::Registry::Lookup(
+      "usage_stats.ConfigShiftKeyModeSwitch", &reg_str));
+  EXPECT_FALSE(storage::Registry::Lookup(
+      "usage_stats.ConfigUseAutoConversion", &reg_str));
+  EXPECT_FALSE(storage::Registry::Lookup(
+      "usage_stats.ConfigAutoConversionKey", &reg_str));
+  EXPECT_FALSE(storage::Registry::Lookup(
+      "usage_stats.ConfigYenSignCharacter", &reg_str));
+  EXPECT_FALSE(storage::Registry::Lookup(
+      "usage_stats.ConfigUseJapaneseLayout", &reg_str));
   EXPECT_FALSE(storage::Registry::Lookup(
       "usage_stats.ConfigCapitalInputBehavior", &reg_str));
   EXPECT_FALSE(storage::Registry::Lookup(
@@ -493,6 +539,16 @@ TEST_F(SessionUsageObserverTest, ConfigTest) {
   EXPECT_TRUE(storage::Registry::Lookup(
       "usage_stats.ConfigUseNumberConversion", &reg_str));
   EXPECT_TRUE(storage::Registry::Lookup(
+      "usage_stats.ConfigUseEmoticonConversion", &reg_str));
+  EXPECT_TRUE(storage::Registry::Lookup(
+      "usage_stats.ConfigUseCalculator", &reg_str));
+  EXPECT_TRUE(storage::Registry::Lookup(
+      "usage_stats.ConfigUseT13nConversion", &reg_str));
+  EXPECT_TRUE(storage::Registry::Lookup(
+      "usage_stats.ConfigUseZipCodeConversion", &reg_str));
+  EXPECT_TRUE(storage::Registry::Lookup(
+      "usage_stats.ConfigUseSpellingCorrection", &reg_str));
+  EXPECT_TRUE(storage::Registry::Lookup(
       "usage_stats.ConfigIncognito", &reg_str));
   EXPECT_TRUE(storage::Registry::Lookup(
       "usage_stats.ConfigSelectionShortcut", &reg_str));
@@ -501,11 +557,23 @@ TEST_F(SessionUsageObserverTest, ConfigTest) {
   EXPECT_TRUE(storage::Registry::Lookup(
       "usage_stats.ConfigUseDictionarySuggest", &reg_str));
   EXPECT_TRUE(storage::Registry::Lookup(
+      "usage_stats.ConfigUseRealtimeConversion", &reg_str));
+  EXPECT_TRUE(storage::Registry::Lookup(
       "usage_stats.ConfigSuggestionsSize", &reg_str));
   EXPECT_TRUE(storage::Registry::Lookup(
       "usage_stats.ConfigUseAutoIMETurnOff", &reg_str));
   EXPECT_TRUE(storage::Registry::Lookup(
+      "usage_stats.ConfigUseCascadingWindow", &reg_str));
+  EXPECT_TRUE(storage::Registry::Lookup(
       "usage_stats.ConfigShiftKeyModeSwitch", &reg_str));
+  EXPECT_TRUE(storage::Registry::Lookup(
+      "usage_stats.ConfigUseAutoConversion", &reg_str));
+  EXPECT_TRUE(storage::Registry::Lookup(
+      "usage_stats.ConfigAutoConversionKey", &reg_str));
+  EXPECT_TRUE(storage::Registry::Lookup(
+      "usage_stats.ConfigYenSignCharacter", &reg_str));
+  EXPECT_TRUE(storage::Registry::Lookup(
+      "usage_stats.ConfigUseJapaneseLayout", &reg_str));
   EXPECT_TRUE(storage::Registry::Lookup(
       "usage_stats.ConfigSpaceCharacterForm", &reg_str));
   EXPECT_TRUE(storage::Registry::Lookup(
@@ -1892,75 +1960,6 @@ TEST_F(SessionUsageObserverTest, MultipleSessions) {
   ExpectStatsCount("SubmittedTotalLength", 20);
 }
 
-TEST_F(SessionUsageObserverTest, ZeroQuerySuggestion) {
-  // "た"
-  // select suggested candidate.
-  // select zero query suggestion candidate.
-
-  commands::CommandList command_list;
-  ReadCommandListFromFile("session_usage_observer_testcase18.txt",
-                          &command_list);
-
-  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
-  observer->SetInterval(1);
-
-  for (size_t i =0; i < command_list.commands_size(); ++i) {
-    observer->EvalCommandHandler(command_list.commands(i));
-  }
-
-  int consumed_sendkey = 0;
-  int unconsumed_sendkey = 0;
-  CountSendKeyStats(command_list, &consumed_sendkey, &unconsumed_sendkey);
-
-  ExpectStatsCount("ConsumedSendKey", consumed_sendkey);
-  ExpectStatsCount("UnconsumedSendKey", unconsumed_sendkey);
-
-  ExpectStatsCount("Commit", 2);
-  ExpectStatsCount("CommitFromConversion", 0);
-  ExpectStatsCount("CommitFromSuggestion", 2);
-  ExpectStatsCount("CommitFromPrediction", 0);
-  ExpectStatsCount("CommitFromComposition", 0);
-
-  ExpectStatsCount("ConversionCandidates0", 0);
-  ExpectStatsCount("ConversionCandidates1", 0);
-  ExpectStatsCount("ConversionCandidates2", 0);
-  ExpectStatsCount("ConversionCandidates3", 0);
-  ExpectStatsCount("ConversionCandidates4", 0);
-  ExpectStatsCount("ConversionCandidates5", 0);
-  ExpectStatsCount("ConversionCandidatesGE10", 0);
-
-  ExpectStatsCount("TransliterationCandidates0", 0);
-  ExpectStatsCount("TransliterationCandidates1", 0);
-  ExpectStatsCount("TransliterationCandidates2", 0);
-  ExpectStatsCount("TransliterationCandidates3", 0);
-  ExpectStatsCount("TransliterationCandidates4", 0);
-  ExpectStatsCount("TransliterationCandidates5", 0);
-  ExpectStatsCount("TransliterationCandidatesGE10", 0);
-
-  ExpectStatsCount("PredictionCandidates0", 0);
-  ExpectStatsCount("PredictionCandidates1", 0);
-  ExpectStatsCount("PredictionCandidates2", 0);
-  ExpectStatsCount("PredictionCandidates3", 0);
-  ExpectStatsCount("PredictionCandidates4", 0);
-  ExpectStatsCount("PredictionCandidates5", 0);
-  ExpectStatsCount("PredictionCandidatesGE10", 0);
-
-  ExpectStatsCount("SuggestionCandidates0", 1);
-  ExpectStatsCount("SuggestionCandidates1", 0);
-  ExpectStatsCount("SuggestionCandidates2", 0);
-  ExpectStatsCount("SuggestionCandidates3", 0);
-  ExpectStatsCount("SuggestionCandidates4", 0);
-  ExpectStatsCount("SuggestionCandidates5", 0);
-  ExpectStatsCount("SuggestionCandidatesGE10", 1);
-
-  ExpectStatsCount("MouseSelect", 0);
-  ExpectStatsCount("BackSpaceAfterCommit", 0);
-
-  ExpectStatsTiming("SubmittedSegmentLength", 1, 1, 1, 1);
-  ExpectStatsTiming("SubmittedSegmentNumber", 1, 1, 1, 1);
-  ExpectStatsTiming("SubmittedLength", 1, 1, 1, 1);
-  ExpectStatsCount("SubmittedTotalLength", 1);
-}
 
 }  // namespace session
 }  // namespace mozc

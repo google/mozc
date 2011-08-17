@@ -30,9 +30,9 @@
 #include <string>
 #include "base/base.h"
 #include "base/util.h"
+#include "config/config.pb.h"
+#include "config/config_handler.h"
 #include "converter/character_form_manager.h"
-#include "session/config.pb.h"
-#include "session/config_handler.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/googletest.h"
 

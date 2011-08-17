@@ -27,10 +27,30 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "base/util.h"
+#include "config/config_handler.h"
+#include "config/config.pb.h"
 #include "rewriter/single_kanji_rewriter.h"
-
 #include "session/commands.pb.h"
 #include "testing/base/public/gunit.h"
 
+DECLARE_string(test_tmpdir);
+
 namespace mozc {
+
+class SingleKanjiRewriterTest : public testing::Test {
+ protected:
+  virtual void SetUp() {
+    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    config::Config default_config;
+    config::ConfigHandler::GetDefaultConfig(&default_config);
+    config::ConfigHandler::SetConfig(default_config);
+  }
+};
+
+TEST_F(SingleKanjiRewriterTest, CapabilityTest) {
+  SingleKanjiRewriter rewriter;
+  EXPECT_EQ(RewriterInterface::CONVERSION, rewriter.capability());
+}
+
 }  // namespace mozc

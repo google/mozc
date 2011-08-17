@@ -30,11 +30,11 @@
 #include "rewriter/user_boundary_history_rewriter.h"
 
 #include "base/util.h"
+#include "config/config.pb.h"
+#include "config/config_handler.h"
 #include "converter/converter_interface.h"
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
-#include "session/config.pb.h"
-#include "session/config_handler.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 

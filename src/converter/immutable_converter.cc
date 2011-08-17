@@ -36,9 +36,10 @@
 #include <vector>
 
 #include "base/base.h"
-#include "base/config_file_stream.h"
 #include "base/singleton.h"
 #include "base/util.h"
+#include "config/config.pb.h"
+#include "config/config_handler.h"
 #include "converter/connector_interface.h"
 #include "converter/key_corrector.h"
 #include "converter/lattice.h"
@@ -47,8 +48,6 @@
 #include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
-#include "session/config.pb.h"
-#include "session/config_handler.h"
 
 namespace mozc {
 namespace {
@@ -403,7 +402,6 @@ class ImmutableConverterImpl: public ImmutableConverterInterface {
   }
 
   ConnectorInterface *connector_;
-  DictionaryInterface *dictionary_;
 
   int32 last_to_first_name_transition_cost_;
   DISALLOW_COPY_AND_ASSIGN(ImmutableConverterImpl);
@@ -411,7 +409,6 @@ class ImmutableConverterImpl: public ImmutableConverterInterface {
 
 ImmutableConverterImpl::ImmutableConverterImpl()
     : connector_(ConnectorFactory::GetConnector()),
-      dictionary_(DictionaryFactory::GetDictionary()),
       last_to_first_name_transition_cost_(0) {
   last_to_first_name_transition_cost_
       = connector_->GetTransitionCost(
@@ -733,15 +730,11 @@ Node *ImmutableConverterImpl::Lookup(const char *begin,
   lattice->node_allocator()->set_max_nodes_size(8192);
   Node *result_node = NULL;
   if (is_reverse) {
-    result_node =
-        dictionary_->LookupReverse(begin,
-                                   static_cast<int>(end - begin),
-                                   lattice->node_allocator());
+    result_node = DictionaryFactory::GetDictionary()->LookupReverse(
+        begin, static_cast<int>(end - begin), lattice->node_allocator());
   } else {
-    result_node =
-        dictionary_->LookupPrefix(begin,
-                                  static_cast<int>(end - begin),
-                                  lattice->node_allocator());
+    result_node = DictionaryFactory::GetDictionary()->LookupPrefix(
+        begin, static_cast<int>(end - begin), lattice->node_allocator());
   }
   return AddCharacterTypeBasedNodes(begin, end, lattice, result_node);
 }
@@ -836,7 +829,7 @@ bool ImmutableConverterImpl::Viterbi(Segments *segments,
     for (Node *rnode = lattice.begin_nodes(pos);
          rnode != NULL; rnode = rnode->bnext) {
       int best_cost = INT_MAX;
-      Node* best_node = NULL;
+      Node *best_node = NULL;
       for (Node *lnode = lattice.end_nodes(pos);
            lnode != NULL; lnode = lnode->enext) {
         int cost = 0;
@@ -958,8 +951,8 @@ bool ImmutableConverterImpl::MakeLattice(Lattice *lattice,
   if (is_reverse) {
     // Reverse lookup for each prefix string in key is slow with current
     // implementation, so run it for them at once and cache the result.
-    dictionary_->PopulateReverseLookupCache(key.c_str(), key.size(),
-                                            lattice->node_allocator());
+    DictionaryFactory::GetDictionary()->PopulateReverseLookupCache(
+        key.c_str(), key.size(), lattice->node_allocator());
   }
 
   bool is_valid_lattice = true;
@@ -976,7 +969,8 @@ bool ImmutableConverterImpl::MakeLattice(Lattice *lattice,
 
   if (is_reverse) {
     // No reverse look up will happen afterwards.
-    dictionary_->ClearReverseLookupCache(lattice->node_allocator());
+    DictionaryFactory::GetDictionary()->ClearReverseLookupCache(
+        lattice->node_allocator());
   }
 
   if (!is_valid_lattice) {
@@ -1184,9 +1178,12 @@ void ImmutableConverterImpl::MakeLatticeNodesForConversionSegments(
       CHECK(rnode != NULL);
       lattice->Insert(pos, rnode);
       // Insert corrected nodes like みんあ -> みんな
-      InsertCorrectedNodes(pos, key,
-                           key_corrector.get(),
-                           dictionary_, lattice);
+      // Bug #3046266: Don't insert them at the beginning of the sentence
+      if (pos > history_key.size()) {
+        InsertCorrectedNodes(pos, key,
+                             key_corrector.get(),
+                             DictionaryFactory::GetDictionary(), lattice);
+      }
     }
   }
 }
@@ -1351,6 +1348,8 @@ bool ImmutableConverterImpl::Convert(Segments *segments) const {
     LOG(WARNING) << "viterbi failed";
     return false;
   }
+
+  VLOG(2) << lattice.DebugString();
 
   if (!MakeSegments(segments, lattice, group)) {
     LOG(WARNING) << "make segments failed";

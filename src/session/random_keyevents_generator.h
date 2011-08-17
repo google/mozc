@@ -37,12 +37,15 @@ namespace mozc {
 namespace session {
 class RandomKeyEventsGenerator {
  public:
+  // Load all data to avoid a increse of memory usage
+  // during memory leak tests.
+  static void PrepareForMemoryLeakTest();
+
   // return test sentence set embedded in RandomKeyEventsGenerator.
   // Example:
   // const char **sentences = GetTestSentences(&size);
   // const char *s = sentences[10];
   static const char **GetTestSentences(size_t *test_size);
-
 
   // Generate a random test keyevents sequence for
   static void GenerateSequence(vector<commands::KeyEvent> *keys);
@@ -50,4 +53,4 @@ class RandomKeyEventsGenerator {
 }  // namespace session
 }  // namespace mozc
 
-#endif // MOZC_SESSION_RANDOM_KEYEVENTS_GENERATOR_H_
+#endif  // MOZC_SESSION_RANDOM_KEYEVENTS_GENERATOR_H_

@@ -30,12 +30,12 @@
 #include <string>
 
 #include "base/util.h"
+#include "config/config_handler.h"
+#include "config/config.pb.h"
 #include "converter/segments.h"
 #include "rewriter/calculator_rewriter.h"
 #include "rewriter/calculator/calculator_interface.h"
 #include "rewriter/calculator/calculator_mock.h"
-#include "session/config_handler.h"
-#include "session/config.pb.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);

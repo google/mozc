@@ -37,7 +37,6 @@
       'target_name': 'dictionary_test',
       'type': 'executable',
       'sources': [
-        'dictionary_preloader_test.cc',
         'dictionary_test.cc',
         'suppression_dictionary_test.cc',
         'user_dictionary_importer_test.cc',

@@ -40,8 +40,8 @@
 #include "base/protobuf/message.h"
 #include "base/singleton.h"
 #include "base/util.h"
+#include "config/config.pb.h"
 #include "session/commands.pb.h"
-#include "session/config.pb.h"
 #include "session/ime_switch_util.h"
 #include "unix/ibus/config_util.h"
 #include "unix/ibus/engine_registrar.h"
@@ -51,10 +51,10 @@
 
 #ifdef OS_CHROMEOS
 // use standalone (in-process) session
-#include "unix/ibus/session.h"
+#include "unix/ibus/client.h"
 #else
 // use server/client session
-#include "client/session.h"
+#include "client/client.h"
 #endif
 
 namespace {
@@ -164,6 +164,21 @@ void MozcEngineInstanceInit(GTypeInstance *instance, gpointer klass) {
 }  // namespace
 
 namespace mozc {
+namespace {
+bool IsModifierToBeSentOnKeyUp(const commands::KeyEvent &key_event) {
+  if (key_event.modifier_keys_size() == 0) {
+    return false;
+  }
+
+  if (key_event.modifier_keys_size() == 1 &&
+      key_event.modifier_keys(0) == commands::KeyEvent::CAPS) {
+    return false;
+  }
+
+  return true;
+}
+}  // namespace
+
 namespace ibus {
 
 // Returns an IBusText composed from |preedit| to render preedit text.
@@ -283,9 +298,9 @@ MozcEngine::MozcEngine()
     : last_sync_time_(GetTime()),
       key_translator_(new KeyTranslator),
 #ifdef OS_CHROMEOS
-      session_(new ibus::Session),
+      client_(new ibus::Client),
 #else
-      session_(new client::Session),
+      client_(client::ClientFactory::NewClient()),
 #endif
       prop_root_(NULL),
       prop_composition_mode_(NULL),
@@ -395,7 +410,7 @@ MozcEngine::MozcEngine()
   // Currently client capability is fixed.
   commands::Capability capability;
   capability.set_text_deletion(commands::Capability::DELETE_PRECEDING_TEXT);
-  session_->set_client_capability(capability);
+  client_->set_client_capability(capability);
   // TODO(yusukes): write a unit test to check if the capability is set
   // as expected.
 }
@@ -435,7 +450,7 @@ void MozcEngine::CandidateClicked(
   commands::SessionCommand command;
   command.set_type(commands::SessionCommand::SELECT_CANDIDATE);
   command.set_id(id);
-  session_->SendCommand(command, &output);
+  client_->SendCommand(command, &output);
   UpdateAll(engine, output);
 }
 
@@ -459,7 +474,7 @@ void MozcEngine::Enable(IBusEngine *engine) {
   ignore_reset_for_deletion_range_workaround_ = false;
 
   // Launch mozc_server
-  session_->EnsureConnection();
+  client_->EnsureConnection();
   UpdatePreeditMethod();
 
   // When ibus-mozc is disabled by the "next input method" hot key, ibus-daemon
@@ -478,7 +493,7 @@ void MozcEngine::FocusOut(IBusEngine *engine) {
   // Stop ignoring "reset" signal.  See ProcessKeyevent().
   ignore_reset_for_deletion_range_workaround_ = false;
 
-  RevertSession(engine);
+  SubmitSession(engine);
   SyncData(false);
 }
 
@@ -547,7 +562,7 @@ gboolean MozcEngine::ProcessKeyEvent(
   key.set_mode(current_composition_mode_);
 
   commands::Output output;
-  if (!session_->SendKey(key, &output)) {
+  if (!client_->SendKey(key, &output)) {
     LOG(ERROR) << "SendKey failed";
     return FALSE;
   }
@@ -612,14 +627,16 @@ void MozcEngine::SetCompositionMode(
   if (composition_mode == commands::DIRECT) {
     // Commit a preedit string.
     command.set_type(commands::SessionCommand::SUBMIT);
-    session_->SendCommand(command, &output);
-    UpdateAll(engine, output);
+    client_->SendCommand(command, &output);
   } else {
     command.set_type(commands::SessionCommand::SWITCH_INPUT_MODE);
     command.set_composition_mode(composition_mode);
-    session_->SendCommand(command, &output);
+    client_->SendCommand(command, &output);
+    // To esacpe infinity loop, remove mode entry.
+    output.clear_mode();
   }
   current_composition_mode_ = composition_mode;
+  UpdateAll(engine, output);
 }
 
 void MozcEngine::PropertyActivate(IBusEngine *engine,
@@ -636,7 +653,7 @@ void MozcEngine::PropertyActivate(IBusEngine *engine,
             reinterpret_cast<const MozcEngineToolProperty*>(
                 g_object_get_data(G_OBJECT(prop), kGObjectDataKey));
         DCHECK(entry->mode);
-        if (!session_->LaunchTool(entry->mode, "")) {
+        if (!client_->LaunchTool(entry->mode, "")) {
           LOG(ERROR) << "cannot launch: " << entry->mode;
         }
         return;
@@ -847,7 +864,7 @@ bool MozcEngine::ProcessModifiers(
     return false;
   }
   // Clear modifier data just in case if |key| has no modifier keys.
-  if (key->modifier_keys_size() == 0) {
+  if (!IsModifierToBeSentOnKeyUp(*key)) {
     currently_pressed_modifiers->clear();
     modifiers_to_be_sent->clear();
   }
@@ -1028,13 +1045,13 @@ void MozcEngine::UpdateConfig(const gchar *section,
   }
 
   config::Config mozc_config;
-  session_->GetConfig(&mozc_config);
+  client_->GetConfig(&mozc_config);
   ConfigUtil::SetFieldForName(name, value, &mozc_config);
 
   // Update config1.db.
-  session_->SetConfig(mozc_config);
-  session_->SyncData();  // TODO(yusukes): remove this call?
-  VLOG(2) << "Session::SetConfig() is called: " << name;
+  client_->SetConfig(mozc_config);
+  client_->SyncData();  // TODO(yusukes): remove this call?
+  VLOG(2) << "Client::SetConfig() is called: " << name;
 }
 #endif  // OS_CHROMEOS
 
@@ -1053,7 +1070,7 @@ void MozcEngine::UpdateCompositionMode(
 
 void MozcEngine::UpdatePreeditMethod() {
   config::Config config;
-  if (!session_->GetConfig(&config)) {
+  if (!client_->GetConfig(&config)) {
     LOG(ERROR) << "GetConfig failed";
     return;
   }
@@ -1062,7 +1079,7 @@ void MozcEngine::UpdatePreeditMethod() {
 }
 
 void MozcEngine::SyncData(bool force) {
-  if (session_.get() == NULL) {
+  if (client_.get() == NULL) {
     return;
   }
 
@@ -1071,13 +1088,13 @@ void MozcEngine::SyncData(bool force) {
       (current_time >= last_sync_time_ &&
        current_time - last_sync_time_ >= kSyncDataInterval)) {
     VLOG(1) << "Syncing data";
-    session_->SyncData();
+    client_->SyncData();
     last_sync_time_ = current_time;
   }
 }
 
 bool MozcEngine::LaunchTool(const commands::Output &output) const {
-  if (!session_->LaunchToolWithProtoBuf(output)) {
+  if (!client_->LaunchToolWithProtoBuf(output)) {
     VLOG(2) << output.DebugString() << " Launch Failed";
     return false;
   }
@@ -1092,7 +1109,7 @@ void MozcEngine::RevertSession(IBusEngine *engine) {
   commands::SessionCommand command;
   command.set_type(commands::SessionCommand::REVERT);
   commands::Output output;
-  if (!session_->SendCommand(command, &output)) {
+  if (!client_->SendCommand(command, &output)) {
     LOG(ERROR) << "RevertSession() failed";
     return;
   }
@@ -1102,6 +1119,17 @@ void MozcEngine::RevertSession(IBusEngine *engine) {
   if (original_composition_mode == commands::DIRECT) {
     UpdateCompositionMode(engine, original_composition_mode);
   }
+}
+
+void MozcEngine::SubmitSession(IBusEngine *engine) {
+  commands::SessionCommand command;
+  command.set_type(commands::SessionCommand::SUBMIT);
+  commands::Output output;
+  if (!client_->SendCommand(command, &output)) {
+    LOG(ERROR) << "SubmitSession() failed";
+    return;
+  }
+  UpdateAll(engine, output);
 }
 
 }  // namespace ibus

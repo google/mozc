@@ -39,13 +39,14 @@
 #include "base/base.h"
 #include "base/file_stream.h"
 #include "base/util.h"
+#include "config/config_handler.h"
+#include "config/config.pb.h"
 #include "converter/node.h"
+#include "converter/node_allocator.h"
 #include "dictionary/suppression_dictionary.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
 #include "dictionary/user_pos.h"
-#include "session/config_handler.h"
-#include "session/config.pb.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
@@ -53,28 +54,6 @@ DECLARE_string(test_tmpdir);
 
 namespace mozc {
 namespace {
-
-class TestNodeAllocator : public NodeAllocatorInterface {
- public:
-  TestNodeAllocator() {}
-  virtual ~TestNodeAllocator() {
-    for (size_t i = 0; i < nodes_.size(); ++i) {
-      delete nodes_[i];
-    }
-    nodes_.clear();
-  }
-
-  Node *NewNode() {
-    Node *node = new Node;
-    CHECK(node);
-    node->Init();
-    nodes_.push_back(node);
-    return node;
-  }
-
- private:
-  vector<Node *> nodes_;
-};
 
 const char kUserDictionary0[] =
     "start\tstart\tverb\n"
@@ -216,7 +195,7 @@ class UserDictionaryTest : public testing::Test {
                                          const char *key,
                                          size_t key_size,
                                          const UserDictionary &dic) {
-    TestNodeAllocator allocator;
+    NodeAllocator allocator;
     Node *node = dic.LookupPredictive(key, key_size, &allocator);
 
     if (expected == NULL || expected_size == 0) {
@@ -232,7 +211,7 @@ class UserDictionaryTest : public testing::Test {
                                      const char *key,
                                      size_t key_size,
                                      const UserDictionary &dic) {
-    TestNodeAllocator allocator;
+    NodeAllocator allocator;
     Node *node = dic.LookupPrefix(key, key_size, &allocator);
 
     if (expected == NULL || expected_size == 0) {
@@ -435,7 +414,7 @@ TEST_F(UserDictionaryTest, IncognitoModeTest) {
     dic->Load(storage);
   }
 
-  TestNodeAllocator allocator;
+  NodeAllocator allocator;
 
   EXPECT_EQ(NULL, dic->LookupPrefix("start", 4, &allocator));
   EXPECT_EQ(NULL, dic->LookupPredictive("s", 1, &allocator));
@@ -483,7 +462,7 @@ TEST_F(UserDictionaryTest, AsyncLoadTest) {
     dic->WaitForReloader();
     dic->SetUserDictionaryName(filename);
 
-    TestNodeAllocator allocator;
+    NodeAllocator allocator;
     for (int i = 0; i < 32; ++i) {
       random_shuffle(keys.begin(), keys.end());
       dic->AsyncReload();
@@ -613,7 +592,7 @@ TEST_F(UserDictionaryTest, TestSuggestionOnlyWord) {
     user_dic->Load(storage);
   }
 
-  TestNodeAllocator allocator;
+  NodeAllocator allocator;
 
   {
     const char kKey[] = "key0123";

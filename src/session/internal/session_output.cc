@@ -31,12 +31,12 @@
 
 #include "session/internal/session_output.h"
 
+#include "base/text_normalizer.h"
 #include "base/util.h"
 #include "base/version.h"
 #include "converter/segments.h"
 #include "composer/composer.h"
 #include "session/internal/candidate_list.h"
-#include "session/internal/session_normalizer.h"
 
 namespace mozc {
 namespace session {
@@ -53,8 +53,8 @@ void SessionOutput::FillCandidate(
   }
 
   const Segment::Candidate &candidate_value = segment.candidate(candidate.id());
-  SessionNormalizer::NormalizeCandidateText(candidate_value.value,
-                                            candidate_proto->mutable_value());
+  TextNormalizer::NormalizeCandidateText(candidate_value.value,
+                                         candidate_proto->mutable_value());
 
   candidate_proto->set_id(candidate.id());
   // Set annotations
@@ -145,7 +145,7 @@ static void FillAllCandidateWordsInternal(
       candidate_word_proto->set_key(segment_candidate.content_key);
     }
     // value
-    SessionNormalizer::NormalizeCandidateText(
+    TextNormalizer::NormalizeCandidateText(
         segment_candidate.value, candidate_word_proto->mutable_value());
 
     // annotations are not set.
@@ -202,7 +202,6 @@ void SessionOutput::FillUsages(const Segment &segment,
   size_t c_begin = 0;
   size_t c_end = 0;
   cand_list.GetPageRange(cand_list.focused_index(), &c_begin, &c_end);
-  usages->set_focused_index(-1);
   size_t focused_index = -1;
 
   map<int32, commands::Information *> usageid_information_map;
@@ -310,13 +309,13 @@ bool SessionOutput::AddSegment(const string &key,
                                commands::Preedit *preedit) {
   // Key is always normalized as a preedit text.
   string normalized_key;
-  SessionNormalizer::NormalizePreeditText(key, &normalized_key);
+  TextNormalizer::NormalizePreeditText(key, &normalized_key);
 
   string normalized_value;
   if (segment_type_mask & PREEDIT) {
-    SessionNormalizer::NormalizePreeditText(value, &normalized_value);
+    TextNormalizer::NormalizePreeditText(value, &normalized_value);
   } else if (segment_type_mask & CONVERSION) {
-    SessionNormalizer::NormalizeConversionText(value, &normalized_value);
+    TextNormalizer::NormalizeConversionText(value, &normalized_value);
   } else {
     LOG(WARNING) << "Unknown segment type" << segment_type_mask;
     normalized_value = value;
@@ -384,11 +383,11 @@ void SessionOutput::FillConversionResult(const string &key,
 
   // Key should be normalized as a preedit text.
   string normalized_key;
-  SessionNormalizer::NormalizePreeditText(key, &normalized_key);
+  TextNormalizer::NormalizePreeditText(key, &normalized_key);
   result_proto->set_key(normalized_key);
 
   string normalized_result;
-  SessionNormalizer::NormalizeConversionText(result, &normalized_result);
+  TextNormalizer::NormalizeConversionText(result, &normalized_result);
   result_proto->set_value(normalized_result);
 }
 
@@ -399,7 +398,7 @@ void SessionOutput::FillPreeditResult(const string &preedit,
 
 
   string normalized_preedit;
-  SessionNormalizer::NormalizePreeditText(preedit, &normalized_preedit);
+  TextNormalizer::NormalizePreeditText(preedit, &normalized_preedit);
   result_proto->set_key(normalized_preedit);
   result_proto->set_value(normalized_preedit);
 }

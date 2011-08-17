@@ -31,6 +31,7 @@
 
 #include <climits>
 #include <cstdlib>
+#include <cstring>
 #include <ctime>
 #include <fstream>
 #include <sstream>
@@ -114,6 +115,38 @@ TEST(UtilTest, SplitStringAllowEmpty) {
     EXPECT_EQ("", output[2]);
     EXPECT_EQ("c", output[3]);
     EXPECT_EQ("", output[4]);
+  }
+}
+
+TEST(UtilTest, SplitStringToUtf8Chars) {
+  {
+    vector<string> output;
+    Util::SplitStringToUtf8Chars("", &output);
+    EXPECT_EQ(0, output.size());
+  }
+
+  {
+    // "a" "あ" "Ａ" "亜" "\n" "a"
+    const string kInputs[] = {
+      "a",
+      "\xE3\x81\x82",
+      "\xEF\xBC\xA1",
+      "\xE4\xBA\x9C",
+      "\n",
+      "a",
+    };
+    string joined_string;
+    for (int i = 0; i < arraysize(kInputs); ++i) {
+      joined_string += kInputs[i];
+    }
+
+    vector<string> output;
+    Util::SplitStringToUtf8Chars(joined_string, &output);
+    EXPECT_EQ(arraysize(kInputs), output.size());
+
+    for (size_t i = 0; i < output.size(); ++i) {
+      EXPECT_EQ(kInputs[i], output[i]);
+    }
   }
 }
 
@@ -1191,6 +1224,381 @@ TEST(UtilTest, NormalizeNumbers) {
     EXPECT_FALSE(Util::NormalizeNumbers(input, true,
                                         &kanji_output, &arabic_output));
   }
+
+  // Tests for numbers less than 10.
+  {
+    // "零"
+    const string input = "\xE9\x9B\xB6";
+    string arabic_output, kanji_output;
+    EXPECT_TRUE(Util::NormalizeNumbers(input, true,
+                                       &kanji_output, &arabic_output));
+    EXPECT_EQ(input, kanji_output);
+    EXPECT_EQ(arabic_output, "0");
+  }
+
+  {
+    // "一"
+    const string input = "\xE4\xB8\x80";
+    string arabic_output, kanji_output;
+    EXPECT_TRUE(Util::NormalizeNumbers(input, true,
+                                       &kanji_output, &arabic_output));
+    EXPECT_EQ(input, kanji_output);
+    EXPECT_EQ(arabic_output, "1");
+  }
+
+  {
+    // "九"
+    const string input = "\xE4\xB9\x9D";
+    string arabic_output, kanji_output;
+    EXPECT_TRUE(Util::NormalizeNumbers(input, true,
+                                       &kanji_output, &arabic_output));
+    EXPECT_EQ(input, kanji_output);
+    EXPECT_EQ(arabic_output, "9");
+  }
+
+  // Tests for numbers in [10, 100).
+  {
+    // "十"
+    const string input = "\xE5\x8D\x81";
+    string arabic_output, kanji_output;
+    EXPECT_TRUE(Util::NormalizeNumbers(input, true,
+                                       &kanji_output, &arabic_output));
+    EXPECT_EQ(input, kanji_output);
+    EXPECT_EQ(arabic_output, "10");
+  }
+
+  {
+    // "一十"
+    const string input = "\xE4\xB8\x80\xE5\x8D\x81";
+    string arabic_output, kanji_output;
+    EXPECT_FALSE(Util::NormalizeNumbers(input, true,
+                                       &kanji_output, &arabic_output));
+  }
+
+  {
+    // "二十"
+    const string input = "\xE4\xBA\x8C\xE5\x8D\x81";
+    string arabic_output, kanji_output;
+    EXPECT_TRUE(Util::NormalizeNumbers(input, true,
+                                       &kanji_output, &arabic_output));
+    EXPECT_EQ(input, kanji_output);
+    EXPECT_EQ(arabic_output, "20");
+  }
+
+  {
+    // "廿"
+    const string input = "\xE5\xBB\xBF";
+    string arabic_output, kanji_output;
+    EXPECT_TRUE(Util::NormalizeNumbers(input, true,
+                                       &kanji_output, &arabic_output));
+    EXPECT_EQ(input, kanji_output);
+    EXPECT_EQ(arabic_output, "20");
+  }
+
+  {
+    // "廿八"
+    const string input = "\xE5\xBB\xBF\xE5\x85\xAB";
+    string arabic_output, kanji_output;
+    EXPECT_TRUE(Util::NormalizeNumbers(input, true,
+                                       &kanji_output, &arabic_output));
+    EXPECT_EQ(input, kanji_output);
+    EXPECT_EQ(arabic_output, "28");
+  }
+
+  {
+    // "九０"
+    const string input = "\xE4\xB9\x9D\xEF\xBC\x90";
+    string arabic_output, kanji_output;
+    EXPECT_TRUE(Util::NormalizeNumbers(input, true,
+                                       &kanji_output, &arabic_output));
+    EXPECT_EQ("\xE4\xB9\x9D\xE3\x80\x87", kanji_output);  // "九〇"
+    EXPECT_EQ(arabic_output, "90");
+  }
+
+  {
+    // "三十五"
+    const string input = "\xE4\xB8\x89\xE5\x8D\x81\xE4\xBA\x94";
+    string arabic_output, kanji_output;
+    EXPECT_TRUE(Util::NormalizeNumbers(input, true,
+                                       &kanji_output, &arabic_output));
+    EXPECT_EQ(input, kanji_output);
+    EXPECT_EQ(arabic_output, "35");
+  }
+
+  {
+    // "三五"
+    const string input = "\xE4\xB8\x89\xE4\xBA\x94";
+    string arabic_output, kanji_output;
+    EXPECT_TRUE(Util::NormalizeNumbers(input, true,
+                                       &kanji_output, &arabic_output));
+    EXPECT_EQ(input, kanji_output);
+    EXPECT_EQ(arabic_output, "35");
+  }
+
+  // Tests for numbers in [100, 1000).
+  {
+    // "百"
+    const string input = "\xE7\x99\xBE";
+    string arabic_output, kanji_output;
+    EXPECT_TRUE(Util::NormalizeNumbers(input, true,
+                                       &kanji_output, &arabic_output));
+    EXPECT_EQ(input, kanji_output);
+    EXPECT_EQ(arabic_output, "100");
+  }
+
+  {
+    // "一百"
+    const string input = "\xE4\xB8\x80\xE7\x99\xBE";
+    string arabic_output, kanji_output;
+    EXPECT_FALSE(Util::NormalizeNumbers(input, true,
+                                        &kanji_output, &arabic_output));
+  }
+
+  {
+    // "二百"
+    const string input = "\xE4\xBA\x8C\xE7\x99\xBE";
+    string arabic_output, kanji_output;
+    EXPECT_TRUE(Util::NormalizeNumbers(input, true,
+                                       &kanji_output, &arabic_output));
+    EXPECT_EQ(input, kanji_output);
+    EXPECT_EQ(arabic_output, "200");
+  }
+
+  {
+    // "二百十"
+    const string input = "\xE4\xBA\x8C\xE7\x99\xBE\xE5\x8D\x81";
+    string arabic_output, kanji_output;
+    EXPECT_TRUE(Util::NormalizeNumbers(input, true,
+                                       &kanji_output, &arabic_output));
+    EXPECT_EQ(input, kanji_output);
+    EXPECT_EQ(arabic_output, "210");
+  }
+
+  {
+    // "二百五十"
+    const string input = "\xE4\xBA\x8C\xE7\x99\xBE\xE4\xBA\x94\xE5\x8D\x81";
+    string arabic_output, kanji_output;
+    EXPECT_TRUE(Util::NormalizeNumbers(input, true,
+                                       &kanji_output, &arabic_output));
+    EXPECT_EQ(input, kanji_output);
+    EXPECT_EQ(arabic_output, "250");
+  }
+
+  {
+    // "七百七十七"
+    const string input =
+        "\xE4\xB8\x83\xE7\x99\xBE\xE4\xB8\x83\xE5\x8D\x81\xE4\xB8\x83";
+    string arabic_output, kanji_output;
+    EXPECT_TRUE(Util::NormalizeNumbers(input, true,
+                                       &kanji_output, &arabic_output));
+    EXPECT_EQ(input, kanji_output);
+    EXPECT_EQ(arabic_output, "777");
+  }
+
+  {
+    // "七七七"
+    const string input = "\xE4\xB8\x83\xE4\xB8\x83\xE4\xB8\x83";
+    string arabic_output, kanji_output;
+    EXPECT_TRUE(Util::NormalizeNumbers(input, true,
+                                       &kanji_output, &arabic_output));
+    EXPECT_EQ(input, kanji_output);
+    EXPECT_EQ(arabic_output, "777");
+  }
+
+  // Tests for numbers in [1000, 10000).
+  {
+    // "千"
+    const string input = "\xE5\x8D\x83";
+    string arabic_output, kanji_output;
+    EXPECT_TRUE(Util::NormalizeNumbers(input, true,
+                                       &kanji_output, &arabic_output));
+    EXPECT_EQ(input, kanji_output);
+    EXPECT_EQ(arabic_output, "1000");
+  }
+
+  {
+    // "一千"
+    const string input = "\xE4\xB8\x80\xE5\x8D\x83";
+    string arabic_output, kanji_output;
+    EXPECT_TRUE(Util::NormalizeNumbers(input, true,
+                                       &kanji_output, &arabic_output));
+    EXPECT_EQ(input, kanji_output);
+    EXPECT_EQ(arabic_output, "1000");
+  }
+
+  {
+    // "八千"
+    const string input = "\xE5\x85\xAB\xE5\x8D\x83";
+    string arabic_output, kanji_output;
+    EXPECT_TRUE(Util::NormalizeNumbers(input, true,
+                                       &kanji_output, &arabic_output));
+    EXPECT_EQ(input, kanji_output);
+    EXPECT_EQ(arabic_output, "8000");
+  }
+
+  {
+    // "八千七百"
+    const string input = "\xE5\x85\xAB\xE5\x8D\x83\xE4\xB8\x83\xE7\x99\xBE";
+    string arabic_output, kanji_output;
+    EXPECT_TRUE(Util::NormalizeNumbers(input, true,
+                                       &kanji_output, &arabic_output));
+    EXPECT_EQ(input, kanji_output);
+    EXPECT_EQ(arabic_output, "8700");
+  }
+
+  {
+    // "八千七百十"
+    const string input =
+        "\xE5\x85\xAB\xE5\x8D\x83\xE4\xB8\x83\xE7\x99\xBE\xE5\x8D\x81";
+    string arabic_output, kanji_output;
+    EXPECT_TRUE(Util::NormalizeNumbers(input, true,
+                                       &kanji_output, &arabic_output));
+    EXPECT_EQ(input, kanji_output);
+    EXPECT_EQ(arabic_output, "8710");
+  }
+
+  {
+    // "八千七百十九"
+    const string input = ("\xE5\x85\xAB\xE5\x8D\x83\xE4\xB8\x83"
+                          "\xE7\x99\xBE\xE5\x8D\x81\xE4\xB9\x9D");
+    string arabic_output, kanji_output;
+    EXPECT_TRUE(Util::NormalizeNumbers(input, true,
+                                       &kanji_output, &arabic_output));
+    EXPECT_EQ(input, kanji_output);
+    EXPECT_EQ(arabic_output, "8719");
+  }
+
+  {
+    // "八千七百三十九"
+    const string input = ("\xE5\x85\xAB\xE5\x8D\x83\xE4\xB8\x83"
+                          "\xE7\x99\xBE\xE4\xB8\x89\xE5\x8D\x81\xE4\xB9\x9D");
+    string arabic_output, kanji_output;
+    EXPECT_TRUE(Util::NormalizeNumbers(input, true,
+                                       &kanji_output, &arabic_output));
+    EXPECT_EQ(input, kanji_output);
+    EXPECT_EQ(arabic_output, "8739");
+  }
+
+  {
+    // "二零一一"
+    const string input = "\xE4\xBA\x8C\xE9\x9B\xB6\xE4\xB8\x80\xE4\xB8\x80";
+    string arabic_output, kanji_output;
+    EXPECT_TRUE(Util::NormalizeNumbers(input, true,
+                                       &kanji_output, &arabic_output));
+    EXPECT_EQ(input, kanji_output);
+    EXPECT_EQ(arabic_output, "2011");
+  }
+
+  // Tests for numbers greater than or equal to 10000.
+  {
+    // "一万二千三百四十五"
+    const string input =
+        "\xE4\xB8\x80\xE4\xB8\x87\xE4\xBA\x8C\xE5\x8D\x83"
+        "\xE4\xB8\x89\xE7\x99\xBE\xE5\x9B\x9B\xE5\x8D\x81\xE4\xBA\x94";
+    string arabic_output, kanji_output;
+    EXPECT_TRUE(Util::NormalizeNumbers(input, true,
+                                       &kanji_output, &arabic_output));
+    EXPECT_EQ(input, kanji_output);
+    EXPECT_EQ(arabic_output, "12345");
+  }
+
+  {
+    // "万二千三百四十五" (lack of number before "万")
+    const string input =
+        "\xE4\xB8\x87\xE4\xBA\x8C\xE5\x8D\x83\xE4\xB8\x89"
+        "\xE7\x99\xBE\xE5\x9B\x9B\xE5\x8D\x81\xE4\xBA\x94";
+    string arabic_output, kanji_output;
+    EXPECT_FALSE(Util::NormalizeNumbers(input, true,
+                                       &kanji_output, &arabic_output));
+  }
+
+  {
+    // "一千二百三十四兆五千六百七十八億九千十二万三千四百五十六"
+    const string input =
+        "\xE4\xB8\x80\xE5\x8D\x83\xE4\xBA\x8C\xE7\x99\xBE\xE4\xB8\x89"
+        "\xE5\x8D\x81\xE5\x9B\x9B\xE5\x85\x86\xE4\xBA\x94\xE5\x8D\x83"
+        "\xE5\x85\xAD\xE7\x99\xBE\xE4\xB8\x83\xE5\x8D\x81\xE5\x85\xAB"
+        "\xE5\x84\x84\xE4\xB9\x9D\xE5\x8D\x83\xE5\x8D\x81\xE4\xBA\x8C"
+        "\xE4\xB8\x87\xE4\xB8\x89\xE5\x8D\x83\xE5\x9B\x9B\xE7\x99\xBE"
+        "\xE4\xBA\x94\xE5\x8D\x81\xE5\x85\xAD";
+    string arabic_output, kanji_output;
+    EXPECT_TRUE(Util::NormalizeNumbers(input, true,
+                                       &kanji_output, &arabic_output));
+    EXPECT_EQ(input, kanji_output);
+    EXPECT_EQ(arabic_output, "1234567890123456");
+  }
+
+  {
+    // "百万百"
+    const string input = "\xE7\x99\xBE\xE4\xB8\x87\xE7\x99\xBE";
+    string arabic_output, kanji_output;
+    EXPECT_TRUE(Util::NormalizeNumbers(input, true,
+                                       &kanji_output, &arabic_output));
+    EXPECT_EQ(input, kanji_output);
+    EXPECT_EQ(arabic_output, "1000100");
+  }
+
+  // Tests for invalid number patterns.
+  {
+    // "三億一京" (large base, "京", after small one, "億")
+    const string input = "\xE4\xB8\x89\xE5\x84\x84\xE4\xB8\x80\xE4\xBA\xAC";
+    string arabic_output, kanji_output;
+    EXPECT_FALSE(Util::NormalizeNumbers(input, true,
+                                        &kanji_output, &arabic_output));
+  }
+
+  {
+    // "三百四百" (same base appears twice)
+    const string input = "\xE4\xB8\x89\xE7\x99\xBE\xE5\x9B\x9B\xE7\x99\xBE";
+    string arabic_output, kanji_output;
+    EXPECT_FALSE(Util::NormalizeNumbers(input, true,
+                                        &kanji_output, &arabic_output));
+  }
+
+  {
+    // "五億六億" (same base appears twice)
+    const string input = "\xE4\xBA\x94\xE5\x84\x84\xE5\x85\xAD\xE5\x84\x84";
+    string arabic_output, kanji_output;
+    EXPECT_FALSE(Util::NormalizeNumbers(input, true,
+                                        &kanji_output, &arabic_output));
+  }
+
+  {
+    // "二十三十" (same base appears twice)
+    const string input = "\xE4\xBA\x8C\xE5\x8D\x81\xE4\xB8\x89\xE5\x8D\x81";
+    string arabic_output, kanji_output;
+    EXPECT_FALSE(Util::NormalizeNumbers(input, true,
+                                        &kanji_output, &arabic_output));
+  }
+
+  {
+    // "三百二十百" (relatively large base "百" after "十")
+    const string input =
+        "\xE4\xB8\x89\xE7\x99\xBE\xE4\xBA\x8C\xE5\x8D\x81\xE7\x99\xBE";
+    string arabic_output, kanji_output;
+    EXPECT_FALSE(Util::NormalizeNumbers(input, true,
+                                        &kanji_output, &arabic_output));
+  }
+
+  {
+    // "一二三四五六七八九十"
+    const string input =
+        "\xe4\xb8\x80\xe4\xba\x8c\xe4\xb8\x89\xe5\x9b\x9b"
+        "\xe4\xba\x94\xe5\x85\xad\xe4\xb8\x83\xe5\x85\xab"
+        "\xe4\xb9\x9d\xe5\x8d\x81";
+    string arabic_output, kanji_output;
+    EXPECT_FALSE(Util::NormalizeNumbers(input, true,
+                                        &kanji_output, &arabic_output));
+  }
+
+  {
+    // "九九八十一"
+    const string input =
+        "\xE4\xB9\x9D\xE4\xB9\x9D\xE5\x85\xAB\xE5\x8D\x81\xE4\xB8\x80";
+    string arabic_output, kanji_output;
+    EXPECT_FALSE(Util::NormalizeNumbers(input, true,
+                                        &kanji_output, &arabic_output));
+  }
 }
 
 TEST(UtilTest, IsEnglishTransliteration) {
@@ -1610,9 +2018,9 @@ TEST(UtilTest, ScriptType) {
       "\xE3\x87\xB6\xE3\x87\xB7\xE3\x87\xB8\xE3\x87\xB9\xE3\x87\xBA"
       "\xE3\x87\xBB\xE3\x87\xBC\xE3\x87\xBD\xE3\x87\xBE\xE3\x87\xBF",
       Util::KATAKANA));
-  // "𛀀" U+1B000: KATAKANA LETTER ARCHAIC E
+  // "ð" U+1B000: KATAKANA LETTER ARCHAIC E
   EXPECT_TRUE(Util::IsScriptType("\xF0\x9B\x80\x80", Util::KATAKANA));
-  // "𛀁" U+1B001: HIRAGANA LETTER ARCHAIC YE
+  // "ð" U+1B001: HIRAGANA LETTER ARCHAIC YE
   EXPECT_TRUE(Util::IsScriptType("\xF0\x9B\x80\x81", Util::HIRAGANA));
 
   EXPECT_TRUE(Util::IsScriptType("012", Util::NUMBER));
@@ -1697,10 +2105,10 @@ TEST(UtilTest, ScriptType) {
       "\xE3\x87\xB1\xE3\x87\xB2\xE3\x87\xB3\xE3\x87\xB4\xE3\x87\xB5"
       "\xE3\x87\xB6\xE3\x87\xB7\xE3\x87\xB8\xE3\x87\xB9\xE3\x87\xBA"
       "\xE3\x87\xBB\xE3\x87\xBC\xE3\x87\xBD\xE3\x87\xBE\xE3\x87\xBF"));
-  // "𛀀" U+1B000 KATAKANA LETTER ARCHAIC E
+  // "ð" U+1B000 KATAKANA LETTER ARCHAIC E
   EXPECT_EQ(Util::KATAKANA, Util::GetScriptType("\xF0\x9B\x80\x80"));
-  // "𛀁" U+1B001 HIRAGANA LETTER ARCHAIC YE
-  EXPECT_EQ( Util::HIRAGANA, Util::GetScriptType("\xF0\x9B\x80\x81"));
+  // "ð" U+1B001 HIRAGANA LETTER ARCHAIC YE
+  EXPECT_EQ(Util::HIRAGANA, Util::GetScriptType("\xF0\x9B\x80\x81"));
 
   // "!グーグル"
   EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptType("\x21\xe3\x82\xb0\xe3\x83"
@@ -1813,11 +2221,11 @@ TEST(UtilTest, ScriptType) {
   EXPECT_EQ(Util::KANJI, Util::GetScriptType("\xE9\xBE\xBB"));
   // U+9FFF is not assigned yet but reserved for CJK Unified Ideographs.
   EXPECT_EQ(Util::KANJI, Util::GetScriptType("\xE9\xBE\xFF"));
-  // "𠮟咤" U+20B9F U+54A4
+  // "ð ®咤" U+20B9F U+54A4
   EXPECT_EQ(Util::KANJI, Util::GetScriptType("\xF0\xA0\xAE\x9F\xE5\x92\xA4"));
-  // "𠮷野" U+20BB7 U+91CE
+  // "ð ®·野" U+20BB7 U+91CE
   EXPECT_EQ(Util::KANJI, Util::GetScriptType("\xF0\xA0\xAE\xB7\xE9\x87\x8E"));
-  // "巽" U+2F884
+  // "ð¯¢" U+2F884
   EXPECT_EQ(Util::KANJI, Util::GetScriptType("\xF0\xAF\xA2\x84"));
 }
 
@@ -1962,9 +2370,9 @@ TEST(UtilTest, CharacterSet_gen_character_set) {
   EXPECT_EQ(Util::JISX0213, Util::GetCharacterSet(0x2460));
   // "㊤"
   EXPECT_EQ(Util::JISX0213, Util::GetCharacterSet(0x32A4));
-  // "𠮟" from UCS4 ragne (b/4176888)
+  // "ð ®" from UCS4 ragne (b/4176888)
   EXPECT_EQ(Util::JISX0213, Util::GetCharacterSet(0x20B9F));
-  // "𪚲" from UCS4 ragne (b/4176888)
+  // "ðª²" from UCS4 ragne (b/4176888)
   EXPECT_EQ(Util::JISX0213, Util::GetCharacterSet(0x2A6B2));
 
   // only in CP932
@@ -1974,7 +2382,7 @@ TEST(UtilTest, CharacterSet_gen_character_set) {
   // only in Unicode
   // "￦"
   EXPECT_EQ(Util::UNICODE_ONLY, Util::GetCharacterSet(0xFFE6));
-  // "𠮷" from UCS4 ragne (b/4176888)
+  // "ð ®·" from UCS4 ragne (b/4176888)
   EXPECT_EQ(Util::UNICODE_ONLY, Util::GetCharacterSet(0x20BB7));
 }
 
@@ -2005,9 +2413,9 @@ TEST(UtilTest, CharacterSet) {
   EXPECT_EQ(Util::JISX0213, Util::GetCharacterSet("\xe2\x91\xa0"));
   // "㊤"
   EXPECT_EQ(Util::JISX0213, Util::GetCharacterSet("\xe3\x8a\xa4"));
-  // "𠮟" from UCS4 ragne (b/4176888)
+  // "ð ®" from UCS4 ragne (b/4176888)
   EXPECT_EQ(Util::JISX0213, Util::GetCharacterSet("\xF0\xA0\xAE\x9F"));
-  // "𪚲" from UCS4 ragne (b/4176888)
+  // "ðª²" from UCS4 ragne (b/4176888)
   EXPECT_EQ(Util::JISX0213, Util::GetCharacterSet("\xF0\xAA\x9A\xB2"));
 
   // only in CP932
@@ -2017,7 +2425,7 @@ TEST(UtilTest, CharacterSet) {
   // only in Unicode
   // "￦"
   EXPECT_EQ(Util::UNICODE_ONLY, Util::GetCharacterSet("\xef\xbf\xa6"));
-  // "𠮷" from UCS4 ragne (b/4176888)
+  // "ð ®·" from UCS4 ragne (b/4176888)
   EXPECT_EQ(Util::UNICODE_ONLY, Util::GetCharacterSet("\xF0\xA0\xAE\xB7"));
 }
 
@@ -2175,7 +2583,7 @@ TEST(UtilTest, GetFileVersionStringTest) {
 }
 
 TEST(UtilTest, WideCharsLen) {
-  // "a𠮟b"
+  // "að ®b"
   const string input_utf8 = "a\360\240\256\237b";
   EXPECT_EQ(4, Util::WideCharsLen(input_utf8));
   EXPECT_EQ(0, Util::WideCharsLen(Util::SubString(input_utf8, 0, 0)));
@@ -2197,7 +2605,7 @@ TEST(UtilTest, UTF8ToWide) {
 TEST(UtilTest, WideToUTF8_SurrogatePairSupport) {
   // Visual C++ 2008 does not support embedding surrogate pair in string
   // literals like L"\uD842\uDF9F". This is why we use wchar_t array instead.
-  // "𠮟"
+  // "ð ®"
   const wchar_t input_wide[] = {0xD842, 0xDF9F, 0};
   string output_utf8;
   Util::WideToUTF8(input_wide, &output_utf8);
@@ -2327,7 +2735,7 @@ TEST(UtilTest, AtomicRename) {
 }
 
 TEST(UtilTest, IsKanaSymbolContained) {
-  const string kFullstop("\xe3\x80\x82"); // "。"
+  const string kFullstop("\xe3\x80\x82");  // "。"
   const string kSpace(" ");
   EXPECT_TRUE(Util::IsKanaSymbolContained(kFullstop));
   EXPECT_TRUE(Util::IsKanaSymbolContained(kSpace + kFullstop));
@@ -2729,3 +3137,4 @@ TEST(UtilTGest, RandomSeedTest) {
 }
 
 }  // namespace mozc
+

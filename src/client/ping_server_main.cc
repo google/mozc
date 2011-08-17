@@ -29,12 +29,12 @@
 
 #include <iostream>
 #include "base/base.h"
-#include "client/session.h"
+#include "client/client.h"
 
 // Simple command line tool to ping mozc server
 int main(int argc, char **argv) {
   InitGoogle(argv[0], &argc, &argv, false);
-  mozc::client::Session client;
+  mozc::client::Client client;
 
   if (client.PingServer()) {
     LOG(INFO) << "mozc_server is running";

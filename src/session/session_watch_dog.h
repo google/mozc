@@ -40,7 +40,7 @@ namespace mozc {
 class CPUStatsInterface;
 class UnnamedEvent;
 namespace client {
-class SessionInterface;
+class ClientInterface;
 }
 
 // SessionWatchDog class sends Cleanup command to Sessionhandler
@@ -52,9 +52,9 @@ class SessionWatchDog : public Thread {
     return interval_sec_;
   }
 
-  // Set Session interface. This method doesn't take the owership.
+  // Set client interface. This method doesn't take the owership.
   // mainly for unittesting.
-  void SetSessionInterface(client::SessionInterface *session);
+  void SetClientInterface(client::ClientInterface *client);
 
   // Set CPUStats interface. This method doesn't take the owership.
   // mainly for unittesting.
@@ -83,11 +83,12 @@ class SessionWatchDog : public Thread {
                              int cpu_load_index,
                              uint64 current_time,
                              uint64 last_cleanup_time) const;
+
  private:
   virtual void Run();
 
   int32 interval_sec_;
-  client::SessionInterface *session_;
+  client::ClientInterface *client_;
   CPUStatsInterface *cpu_stats_;
   scoped_ptr<UnnamedEvent> event_;
 };

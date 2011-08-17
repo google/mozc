@@ -36,6 +36,11 @@
 #include "base/base.h"
 #include "gui/about_dialog/ui_about_dialog.h"
 
+#if defined(OS_WINDOWS) && defined(GOOGLE_JAPANESE_INPUT_BUILD) \
+    && defined(_DEBUG)
+#define USE_UPDATE_CHECKER
+#endif  // OS_WINDOWS && GOOGLE_JAPANESE_INPUT_BUILD && _DEBUG
+
 class QImage;
 
 namespace mozc {
@@ -58,6 +63,12 @@ class AboutDialog : public QDialog,
 
  public slots:
   void linkActivated(const QString &link);
+  void updateButtonPushed();
+
+ protected:
+#ifdef USE_UPDATE_CHECKER
+  bool winEvent(MSG *message, long *result);
+#endif  // USE_UPDATE_CHECKER
 
  private:
   LinkCallbackInterface *callback_;

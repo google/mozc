@@ -32,6 +32,8 @@
 
 #include <map>
 #include <list>
+#include <string>
+
 #include "base/base.h"
 
 namespace mozc {

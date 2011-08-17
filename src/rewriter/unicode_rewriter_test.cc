@@ -29,10 +29,14 @@
 
 #include <cstdlib>
 #include "base/util.h"
+#include "config/config_handler.h"
+#include "config/config.pb.h"
 #include "converter/segments.h"
 #include "rewriter/unicode_rewriter.h"
 
 #include "testing/base/public/gunit.h"
+
+DECLARE_string(test_tmpdir);
 
 namespace mozc {
 namespace {
@@ -61,7 +65,16 @@ bool ContainCandidate(const Segments &segments, const string &candidate) {
   return false;
 }
 
-TEST(UnicodeRewriterTest, UnicodeConvertionTest) {
+class UnicodeRewriterTest : public testing::Test {
+  virtual void SetUp() {
+    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    config::Config config;
+    config::ConfigHandler::GetDefaultConfig(&config);
+    config::ConfigHandler::SetConfig(config);
+  }
+};
+
+TEST_F(UnicodeRewriterTest, UnicodeConvertionTest) {
   Segments segments;
   UnicodeRewriter rewriter;
 
@@ -140,7 +153,7 @@ TEST(UnicodeRewriterTest, UnicodeConvertionTest) {
   EXPECT_FALSE(rewriter.Rewrite(&segments));
 }
 
-TEST(UnicodeRewriterTest, MultipleSegment) {
+TEST_F(UnicodeRewriterTest, MultipleSegment) {
   Segments segments;
   UnicodeRewriter rewriter;
 

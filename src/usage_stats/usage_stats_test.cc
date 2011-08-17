@@ -42,7 +42,7 @@
 #include "base/util.h"
 #include "base/version.h"
 #include "base/singleton.h"
-#include "base/stats_config_util.h"
+#include "config/stats_config_util.h"
 #include "net/http_client.h"
 #include "storage/registry.h"
 #include "storage/tiny_storage.h"

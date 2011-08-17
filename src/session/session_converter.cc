@@ -33,12 +33,12 @@
 
 #include <vector>
 
+#include "base/text_normalizer.h"
 #include "base/util.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
 #include "composer/composer.h"
 #include "session/internal/candidate_list.h"
-#include "session/internal/session_normalizer.h"
 #include "session/internal/session_output.h"
 #include "transliteration/transliteration.h"
 
@@ -138,7 +138,19 @@ bool SessionConverter::ConvertReverse(const string &source_text,
     reading.append(segment.candidate(0).value);
   }
 
-  composer->InsertCharacterPreedit(reading);
+  composer->Reset();
+  vector<string> reading_characters;
+  // TODO(hsumita): Currently, InsertCharacterPreedit can't deal multiple
+  // characters at the same time.
+  // So we should split query to UTF-8 chars to avoid DCHECK failure.
+  // http://b/3437358
+  //
+  // See also http://b/5094684, http://b/5094642
+  Util::SplitStringToUtf8Chars(reading, &reading_characters);
+  for (size_t i = 0; i < reading_characters.size(); ++i) {
+    composer->InsertCharacterPreedit(reading_characters[i]);
+  }
+  composer->set_source_text(source_text);
   // start conversion here.
   if (!Convert(composer)) {
     LOG(ERROR) << "Failed to start conversion for reverse conversion";
@@ -324,7 +336,7 @@ bool SessionConverter::SwitchKanaType(const composer::Composer *composer) {
   } else {
     const Attributes current_attributes =
         candidate_list_->GetDeepestFocusedCandidate().attributes();
-    // 漢字→かんじ→カンジ→ｶﾝｼﾞ→かんじ→...
+    // "漢字" -> "かんじ" -> "カンジ" -> "ｶﾝｼﾞ" -> "かんじ" -> ...
     if (current_attributes & HIRAGANA) {
       attributes = (FULL_WIDTH | KATAKANA);
     } else if ((current_attributes & KATAKANA) &&
@@ -343,17 +355,9 @@ bool SessionConverter::SwitchKanaType(const composer::Composer *composer) {
 }
 
 namespace {
-// Copy the candidates of the segment.
-void CopyCandidates(const Segment &segment,
-                    vector<Segment::Candidate> *candidates) {
-  candidates->clear();
-  for (size_t i = 0; i < segment.candidates_size(); ++i) {
-    candidates->push_back(segment.candidate(i));
-  }
-}
 
 // Prepend the candidates to the first conversion segment.
-void PrependCandidates(const vector<Segment::Candidate> &candidates,
+void PrependCandidates(const Segment &previous_segment,
                        const string &preedit,
                        Segments *segments) {
   DCHECK(segments);
@@ -370,11 +374,12 @@ void PrependCandidates(const vector<Segment::Candidate> &candidates,
   Segment *segment = segments->mutable_conversion_segment(0);
   DCHECK(segment);
 
-  const size_t cands_size = candidates.size();
+  const size_t cands_size = previous_segment.candidates_size();
   for (size_t i = 0; i < cands_size; ++i) {
     Segment::Candidate *candidate = segment->push_front_candidate();
-    *candidate = candidates[cands_size - i - 1];  // copy
+    *candidate = previous_segment.candidate(cands_size - i - 1);  // copy
   }
+  *(segment->mutable_meta_candidates()) = previous_segment.meta_candidates();
 }
 }  // namespace
 
@@ -417,7 +422,7 @@ bool SessionConverter::SuggestWithPreferences(
 
   // Copy current suggestions so that we can merge
   // prediction/suggestions later
-  CopyCandidates(segments_->conversion_segment(0), &previous_suggestions_);
+  previous_suggestions_.CopyFrom(segments_->conversion_segment(0));
 
   // TODO(komatsu): the next line can be deleted.
   segment_index_ = 0;
@@ -430,6 +435,11 @@ bool SessionConverter::SuggestWithPreferences(
 
 bool SessionConverter::Predict(const composer::Composer *composer) {
   return PredictWithPreferences(composer, conversion_preferences_);
+}
+
+bool SessionConverter::IsEmptySegment(const Segment &segment) const {
+  return ((segment.candidates_size() == 0) &&
+          (segment.meta_candidates_size() == 0));
 }
 
 bool SessionConverter::PredictWithPreferences(
@@ -451,11 +461,11 @@ bool SessionConverter::PredictWithPreferences(
   SetConversionPreferences(preferences, segments_.get());
 
   const bool predict_first =
-      !CheckState(PREDICTION) && previous_suggestions_.empty();
+      !CheckState(PREDICTION) && IsEmptySegment(previous_suggestions_);
 
   const bool predict_expand =
       (CheckState(PREDICTION) &&
-       !previous_suggestions_.empty() &&
+       !IsEmptySegment(previous_suggestions_) &&
        candidate_list_->size() > 0 &&
        candidate_list_->focused() &&
        candidate_list_->focused_index() == candidate_list_->last_index());
@@ -498,7 +508,7 @@ void SessionConverter::MaybeExpandPrediction() {
 
   // Expand the current suggestions and fill with Prediction results.
   if (!CheckState(PREDICTION) ||
-      previous_suggestions_.empty() ||
+      IsEmptySegment(previous_suggestions_) ||
       !candidate_list_->focused() ||
       candidate_list_->focused_index() != candidate_list_->last_index()) {
     return;
@@ -619,7 +629,7 @@ void SessionConverter::CommitPreedit(const composer::Composer &composer) {
   string key, preedit, normalized_preedit;
   composer.GetQueryForConversion(&key);
   composer.GetStringForSubmission(&preedit);
-  SessionNormalizer::NormalizePreeditText(preedit, &normalized_preedit);
+  TextNormalizer::NormalizePreeditText(preedit, &normalized_preedit);
   SessionOutput::FillPreeditResult(preedit, &result_);
 
   ConverterUtil::InitSegmentsFromString(key, normalized_preedit,
@@ -627,6 +637,24 @@ void SessionConverter::CommitPreedit(const composer::Composer &composer) {
 
   converter_->FinishConversion(segments_.get());
   ResetState();
+}
+
+void SessionConverter::CommitHead(
+    size_t count, composer::Composer *composer) {
+  // If the conversion is active, composer should be equal to composer_.
+  DCHECK(!IsActive() || composer == composer_);
+
+  string preedit, normalized_preedit;
+  composer->GetStringForSubmission(&preedit);
+  if (count > preedit.length()) {
+    count = preedit.length();
+  }
+  preedit = Util::SubString(preedit, 0, count);
+  TextNormalizer::NormalizePreeditText(preedit, &normalized_preedit);
+  SessionOutput::FillPreeditResult(normalized_preedit, &result_);
+  for (size_t i = 0; i < count; ++i) {
+    composer->DeleteAt(0);
+  }
 }
 
 void SessionConverter::Revert() {
@@ -707,20 +735,8 @@ void SessionConverter::SegmentFocusLeftEdge() {
   UpdateCandidateList();
 }
 
-void SessionConverter::SegmentFocusRightOrCommit() {
-  DCHECK(CheckState(PREDICTION | CONVERSION));
-  candidate_list_visible_ = false;
-
-  if (segment_index_ + 1 >= segments_->conversion_segments_size()) {
-    // If |segment_index_| is at the tail of the segments,
-    // commit all segments.
-    Commit();
-  } else {
-    ResetResult();
-    SegmentFix();
-    ++segment_index_;
-    UpdateCandidateList();
-  }
+bool SessionConverter::IsLastSegmentFocused() const {
+  return (segment_index_ + 1 >= segments_->conversion_segments_size());
 }
 
 void SessionConverter::SegmentWidthExpand() {
@@ -866,6 +882,12 @@ void SessionConverter::FillOutput(commands::Output *output) const {
   if (result_.has_value()) {
     FillResult(output->mutable_result());
   }
+  if (CheckState(COMPOSITION)) {
+    if (composer_ && !composer_->Empty()) {
+      session::SessionOutput::FillPreedit(*composer_,
+                                          output->mutable_preedit());
+    }
+  }
   if (!IsActive()) {
     return;
   }
@@ -953,7 +975,7 @@ size_t SessionConverter::GetSegmentIndex() const {
   return segment_index_;
 }
 
-const vector<Segment::Candidate> &SessionConverter::GetPreviousSuggestions()
+const Segment &SessionConverter::GetPreviousSuggestions()
     const {
   return previous_suggestions_;
 }
@@ -982,14 +1004,9 @@ void SessionConverter::CopyFrom(const SessionConverterInterface &src) {
   result_.CopyFrom(src.GetResult());
   default_result_ = src.GetDefaultResult();
 
-  const vector<Segment::Candidate> &previous_suggestions =
+  const Segment &previous_suggestions =
       src.GetPreviousSuggestions();
-  const int size = previous_suggestions.size();
-  previous_suggestions_.clear();
-  previous_suggestions_.resize(size);
-  for (int i = 0; i < size; ++i) {
-    previous_suggestions_[i].CopyFrom(previous_suggestions[i]);
-  }
+  previous_suggestions_.CopyFrom(previous_suggestions);
 
   if (CheckState(SUGGESTION | PREDICTION | CONVERSION)) {
     UpdateCandidateList();

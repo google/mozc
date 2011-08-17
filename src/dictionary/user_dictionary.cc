@@ -34,16 +34,15 @@
 #include <string>
 
 #include "base/base.h"
-#include "base/config_file_stream.h"
 #include "base/mutex.h"
 #include "base/singleton.h"
+#include "config/config.pb.h"
+#include "config/config_handler.h"
 #include "converter/node.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
-#include "session/config.pb.h"
-#include "session/config_handler.h"
 #include "usage_stats/usage_stats.h"
 
 namespace mozc {

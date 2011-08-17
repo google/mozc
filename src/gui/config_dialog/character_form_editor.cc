@@ -29,9 +29,9 @@
 
 #include <QtGui/QtGui>
 #include "base/base.h"
+#include "config/config_handler.h"
 #include "gui/config_dialog/character_form_editor.h"
 #include "gui/config_dialog/combobox_delegate.h"
-#include "session/config_handler.h"
 
 namespace mozc {
 namespace gui {

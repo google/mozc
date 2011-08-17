@@ -106,6 +106,21 @@ class WindowUtilTest : public testing::Test {
     EXPECT_EQ(expected_top, result.Top()) << message;
   }
 
+  void VerifyInfolistWindow(
+      int infolist_width, int infolist_height,
+      int candidate_left, int candidate_top,
+      int candidate_width, int candidate_height,
+      int expected_left, int expected_top,
+      const char *message) {
+    Size window_size(infolist_width, infolist_height);
+    Rect candidate_rect(candidate_left, candidate_top,
+        candidate_width, candidate_height);
+    Rect result = WindowUtil::GetWindowRectForInfolistWindow(
+        window_size, candidate_rect, working_area_);
+    EXPECT_EQ(expected_left, result.Left()) << message;
+    EXPECT_EQ(expected_top, result.Top()) << message;
+  }
+
  private:
   Rect working_area_;
   Size window_size_;
@@ -196,6 +211,15 @@ TEST_F(WindowUtilTest, CascadingWindow) {
                         69, 0, "On the top edge");
 }
 
+TEST_F(WindowUtilTest, InfolistWindow) {
+  VerifyInfolistWindow(10, 20, 20, 30, 11, 12,
+                       31, 30, "Right of the candidate window");
+  VerifyInfolistWindow(10, 10, 160, 30, 40, 12,
+                       150, 30, "Left of the candidate window");
+  VerifyInfolistWindow(10, 20, 20, 85, 11, 12,
+                       31, 80, "On the bottom edge");
+}
+
 TEST_F(WindowUtilTest, MonitorErrors) {
   // Error! monitor doesn't have width nor height.
   Rect working_area(0, 0, 0, 0);
@@ -221,6 +245,13 @@ TEST_F(WindowUtilTest, MonitorErrors) {
       preedit_rect, window_size, zero_point_offset, working_area);
   EXPECT_EQ(69, result.Left());
   EXPECT_EQ(52, result.Top());
+
+  // Same as infolist window.
+  Rect candidate_rect(50, 32, 20, 5);
+  result = WindowUtil::GetWindowRectForInfolistWindow(
+      window_size, candidate_rect, working_area);
+  EXPECT_EQ(70, result.Left());
+  EXPECT_EQ(32, result.Top());
 }
 }  // namespace mozc::renderer
 }  // namespace mozc

@@ -32,12 +32,12 @@
 #ifndef MOZC_SESSION_INTERNAL_KEYMAP_H_
 #define MOZC_SESSION_INTERNAL_KEYMAP_H_
 
-#include <iomanip>
+#include <istream>
 #include <map>
 #include <set>
 #include <string>
+#include "config/config.pb.h"
 #include "session/internal/keymap_interface.h"
-#include "session/config.pb.h"
 
 namespace mozc {
 

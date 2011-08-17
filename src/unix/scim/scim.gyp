@@ -38,12 +38,8 @@
       'scim',
       'gtk+-2.0',
     ],
-    'scim_dependencies': [
-      '../../client/client.gyp:client',
-      '../../session/session.gyp:session',
-    ],
     'scim_defines': [
-      'SCIM_ICONDIR="<!@(pkg-config --variable=icondir scim)"',
+      'SCIM_ICONDIR="<!@(<(pkg_config_command) --variable=icondir scim)"',
     ]
   },
   'targets': [
@@ -60,10 +56,15 @@
         'scim_mozc_entry.cc',
       ],
       'dependencies': [
-        '<@(scim_dependencies)',
+        '../../base/base.gyp:base',
+        '../../client/client.gyp:client',
+        '../../ipc/ipc.gyp:ipc',
+        '../../session/session_base.gyp:genproto_session',
+        '../../session/session_base.gyp:ime_switch_util',
+        '../../session/session_base.gyp:session_protocol',
       ],
       'cflags': [
-        '<!@(pkg-config --cflags <@(pkg_config_libs))',
+        '<!@(<(pkg_config_command) --cflags <@(pkg_config_libs))',
       ],
       'defines': [
         '<@(scim_defines)',
@@ -76,10 +77,10 @@
         'scim_mozc_setup.cc',
       ],
       'dependencies': [
-        '<@(scim_dependencies)',
+        '../../base/base.gyp:base',
       ],
       'cflags': [
-        '<!@(pkg-config --cflags <@(pkg_config_libs))',
+        '<!@(<(pkg_config_command) --cflags <@(pkg_config_libs))',
       ],
       'defines': [
         '<@(scim_defines)',
@@ -94,18 +95,20 @@
         'scim_key_translator_test.cc',
       ],
       'dependencies': [
-        '<@(scim_dependencies)',
+        '../../base/base.gyp:base',
+        '../../session/session_base.gyp:genproto_session',
+        '../../session/session_base.gyp:session_protocol',
         '../../testing/testing.gyp:gtest_main',
         'scim_mozc',
       ],
       'cflags': [
-        '<!@(pkg-config --cflags <@(pkg_config_libs))',
+        '<!@(<(pkg_config_command) --cflags <@(pkg_config_libs))',
       ],
       'libraries': [
-        '<!@(pkg-config --libs-only-l <@(pkg_config_libs))',
+        '<!@(<(pkg_config_command) --libs-only-l <@(pkg_config_libs))',
       ],
       'ldflags': [
-        '<!@(pkg-config --libs-only-L <@(pkg_config_libs))',
+        '<!@(<(pkg_config_command) --libs-only-L <@(pkg_config_libs))',
         # Add a library path to the directory of libscim_mozc.so.
         '-Wl,-rpath,<(PRODUCT_DIR)/lib.target',
       ],

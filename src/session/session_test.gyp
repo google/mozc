@@ -105,13 +105,13 @@
       'target_name': 'session_module_test',
       'type': 'executable',
       'sources': [
-        'config_handler_test.cc',
         'ime_switch_util_test.cc',
         'session_observer_handler_test.cc',
         'session_usage_observer_test.cc',
         'session_watch_dog_test.cc',
       ],
       'dependencies': [
+        '../client/client.gyp:client_mock',
         '../testing/testing.gyp:gtest_main',
         'session.gyp:session_server',
         'session_base.gyp:ime_switch_util',
@@ -150,7 +150,6 @@
         'internal/ime_context_test.cc',
         'internal/keymap_test.cc',
         'internal/keymap_factory_test.cc',
-        'internal/session_normalizer_test.cc',
         'internal/session_output_test.cc',
       ],
       'dependencies': [

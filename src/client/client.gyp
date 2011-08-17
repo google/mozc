@@ -37,24 +37,26 @@
       'target_name': 'client',
       'type': 'static_library',
       'sources': [
-        'session.cc',
+        'client.cc',
         'server_launcher.cc',
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        '../config/config.gyp:genproto_config',
         '../ipc/ipc.gyp:ipc',
         '../session/session_base.gyp:genproto_session',
         '../session/session_base.gyp:session_protocol',
       ],
     },
     {
-      'target_name': 'session_mock',
+      'target_name': 'client_mock',
       'type': 'static_library',
       'sources': [
-        'session_mock.cc',
+        'client_mock.cc',
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        '../config/config.gyp:genproto_config',
         '../session/session_base.gyp:genproto_session',
         '../session/session_base.gyp:session_protocol',
       ],

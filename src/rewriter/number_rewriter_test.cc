@@ -27,14 +27,18 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "rewriter/number_rewriter.h"
-
 #include <string>
 
+#include "base/util.h"
+#include "config/config_handler.h"
+#include "config/config.pb.h"
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
+#include "rewriter/number_rewriter.h"
 #include "session/commands.pb.h"
 #include "testing/base/public/gunit.h"
+
+DECLARE_string(test_tmpdir);
 
 namespace mozc {
 
@@ -90,7 +94,17 @@ bool HasDescription(const Segment &segment, const string &description) {
 
 }  // namespace
 
-TEST(NumberRewriterTest, BasicTest) {
+class NumberRewriterTest : public testing::Test {
+ protected:
+  virtual void SetUp() {
+    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    config::Config default_config;
+    config::ConfigHandler::GetDefaultConfig(&default_config);
+    config::ConfigHandler::SetConfig(default_config);
+  }
+};
+
+TEST_F(NumberRewriterTest, BasicTest) {
   NumberRewriter number_rewriter;
 
   Segments segments;
@@ -167,7 +181,7 @@ TEST(NumberRewriterTest, BasicTest) {
   seg->clear_candidates();
 }
 
-TEST(NumberRewriterTest, BasicTestWithSuffix) {
+TEST_F(NumberRewriterTest, BasicTestWithSuffix) {
   NumberRewriter number_rewriter;
 
   Segments segments;
@@ -244,7 +258,7 @@ TEST(NumberRewriterTest, BasicTestWithSuffix) {
   seg->clear_candidates();
 }
 
-TEST(NumberRewriterTest, SpecialFormBoundaries) {
+TEST_F(NumberRewriterTest, SpecialFormBoundaries) {
   NumberRewriter number_rewriter;
   Segments segments;
 
@@ -291,7 +305,7 @@ TEST(NumberRewriterTest, SpecialFormBoundaries) {
   EXPECT_FALSE(HasDescription(*seg, kRomanNoCapitalDescription));
 }
 
-TEST(NumberRewriterTest, OneOfCandidatesIsEmpty) {
+TEST_F(NumberRewriterTest, OneOfCandidatesIsEmpty) {
   NumberRewriter number_rewriter;
 
   Segments segments;
@@ -343,7 +357,7 @@ TEST(NumberRewriterTest, OneOfCandidatesIsEmpty) {
   seg->clear_candidates();
 }
 
-TEST(NumberRewriterTest, RewriteDoesNotHappen) {
+TEST_F(NumberRewriterTest, RewriteDoesNotHappen) {
   NumberRewriter number_rewriter;
 
   Segments segments;
@@ -364,7 +378,7 @@ TEST(NumberRewriterTest, RewriteDoesNotHappen) {
   seg->clear_candidates();
 }
 
-TEST(NumberRewriterTest, NumberIsZero) {
+TEST_F(NumberRewriterTest, NumberIsZero) {
   NumberRewriter number_rewriter;
 
   Segments segments;
@@ -406,7 +420,7 @@ TEST(NumberRewriterTest, NumberIsZero) {
   seg->clear_candidates();
 }
 
-TEST(NumberRewriterTest, NumberIsZeroZero) {
+TEST_F(NumberRewriterTest, NumberIsZeroZero) {
   NumberRewriter number_rewriter;
 
   Segments segments;
@@ -448,7 +462,7 @@ TEST(NumberRewriterTest, NumberIsZeroZero) {
   seg->clear_candidates();
 }
 
-TEST(NumberRewriterTest, NumberIs19Digit) {
+TEST_F(NumberRewriterTest, NumberIs19Digit) {
   NumberRewriter number_rewriter;
 
   Segments segments;
@@ -564,7 +578,7 @@ TEST(NumberRewriterTest, NumberIs19Digit) {
   seg->clear_candidates();
 }
 
-TEST(NumberRewriterTest, NumberIs20Digit) {
+TEST_F(NumberRewriterTest, NumberIs20Digit) {
   NumberRewriter number_rewriter;
 
   Segments segments;
@@ -663,7 +677,7 @@ TEST(NumberRewriterTest, NumberIs20Digit) {
   seg->clear_candidates();
 }
 
-TEST(NumberRewriterTest, NumberIsGreaterThanUInt64Max) {
+TEST_F(NumberRewriterTest, NumberIsGreaterThanUInt64Max) {
   NumberRewriter number_rewriter;
 
   Segments segments;
@@ -927,7 +941,7 @@ TEST(NumberRewriterTest, NumberIsGreaterThanUInt64Max) {
   seg->clear_candidates();
 }
 
-TEST(NumberRewriterTest, NumberIsGoogol) {
+TEST_F(NumberRewriterTest, NumberIsGoogol) {
   NumberRewriter number_rewriter;
 
   Segments segments;
@@ -1000,7 +1014,7 @@ TEST(NumberRewriterTest, NumberIsGoogol) {
 }
 
 
-TEST(NumberRewriterTest, SeparatedArabicsTest) {
+TEST_F(NumberRewriterTest, SeparatedArabicsTest) {
   NumberRewriter number_rewriter;
 
   {

@@ -1,0 +1,22 @@
+<component>
+  <version>0.0.0.0</version>
+  <name>com.google.IBus.Hangul</name>
+  <license>New BSD</license>
+  <exec>/usr/libexec/ibus-engine-mozc-hangul --ibus</exec>
+  <textdomain>ibus-mozc-hangul</textdomain>
+  <author>Google Inc.</author>
+  <homepage>http://code.google.com/p/mozc/</homepage>
+  <description>Mozc Hangul Component</description>
+<engines>
+<engine>
+  <rank>0</rank>
+  <description>Mozc Hangul (Hangul Input Method)</description>
+  <language>ko</language>
+  <icon>/usr/share/ibus-mozc-hangul/product_icon.png</icon>
+  <layout>kr(kr104)</layout>
+  <name>mozc-hangul</name>
+  <longname>Mozc Hangul</longname>
+  <hotkeys>Shift+space,Hangul</hotkeys>
+</engine>
+</engines>
+</component>

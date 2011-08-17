@@ -39,6 +39,7 @@
 #include "base/base.h"
 #include "transliteration/transliteration.h"
 #include "composer/composition_interface.h"
+#include "session/commands.pb.h"
 
 namespace mozc {
 namespace commands {
@@ -79,6 +80,8 @@ class Composer {
 
   void SetInputMode(transliteration::TransliterationType mode);
   void SetTemporaryInputMode(transliteration::TransliterationType mode);
+  void SetInputFieldType(commands::SessionCommand::InputFieldType type);
+  commands::SessionCommand::InputFieldType GetInputFieldType() const;
 
   // Update the input mode considering the input modes of the
   // surrounding characters.
@@ -87,6 +90,7 @@ class Composer {
   void UpdateInputMode();
 
   transliteration::TransliterationType GetInputMode() const;
+  transliteration::TransliterationType GetComebackInputMode() const;
   void ToggleInputMode();
 
   transliteration::TransliterationType GetOutputMode() const;
@@ -112,7 +116,9 @@ class Composer {
   size_t GetCursor() const;
   void EditErase();
 
+  // Deletes a character at specified position.
   void DeleteAt(size_t pos);
+
   void InsertCharacter(const string &input);
   void InsertCharacterPreedit(const string &input);
   void InsertCharacterKeyAndPreedit(const string &key, const string &preedit);
@@ -129,6 +135,7 @@ class Composer {
   void MoveCursorRight();
   void MoveCursorToBeginning();
   void MoveCursorToEnd();
+  void MoveCursorTo(uint32 new_position);
 
   // Generate transliterations.
   void GetTransliterations(transliteration::Transliterations *t13ns) const;
@@ -146,8 +153,6 @@ class Composer {
 
   // Check if the preedit is can be modified.
   bool EnableInsert() const;
-  void set_max_length(size_t length);
-  size_t max_length() const;
 
   // Automatically switch the composition mode according to the current
   // status and user's settings.
@@ -162,6 +167,10 @@ class Composer {
   // Return true if the composition is adviced to be committed immediately.
   bool ShouldCommit() const;
 
+  // Returns true if characters at the head of the preedit should be committed
+  // immediately.
+  bool ShouldCommitHead(size_t *length_to_commit) const;
+
   // Transform characters for preferred number format.  If any
   // characters are transformed true is returned.
   // For example, if the query is "ー１、０００。５", it should be
@@ -173,7 +182,24 @@ class Composer {
   // new chunk if the character has NewChunk attribute.
   void SetNewInput();
 
+  // These methods cannot copy composition_ correctly.
+  // TODO(hsumita): Do deep copy composition_ and add CopyFrom() method.
+  void CopyFromForSubmission(const Composer &src);
+  void CopyFromForConversion(const Composer &src);
+
+  bool is_new_input() const;
+  size_t capital_sequence_count() const;
+  const string &source_text() const;
+  string *mutable_source_text();
+  void set_source_text(const string &source_text);
+  size_t max_length() const;
+  void set_max_length(size_t length);
+
  private:
+  // Copy composer except for composition_.
+  // Arguments are Source composer and query string for composition.
+  void CopyFromInternal(const Composer &src, const string &query);
+
   size_t position_;
   // Whether the next insertion is the beginning of typing after an
   // editing command like SetInputMode or not.  Some conversion rules
@@ -185,8 +211,15 @@ class Composer {
   transliteration::TransliterationType output_mode_;
   // On reset, comeback_input_mode_ is used as the input mode.
   transliteration::TransliterationType comeback_input_mode_;
+  // Type of the input field to input texts.
+  commands::SessionCommand::InputFieldType input_field_type_;
+
   size_t capital_sequence_count_;
   scoped_ptr<CompositionInterface> composition_;
+
+  // The original text for the composition.  The value is usually
+  // empty, and used for reverse conversion.
+  string source_text_;
 
   size_t max_length_;
 

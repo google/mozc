@@ -30,11 +30,11 @@
 #include "base/util.h"
 #include "composer/composer.h"
 #include "composer/table.h"
+#include "config/config.pb.h"
+#include "config/config_handler.h"
 #include "converter/converter_interface.h"
 #include "converter/character_form_manager.h"
 #include "converter/segments.h"
-#include "session/config.pb.h"
-#include "session/config_handler.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);

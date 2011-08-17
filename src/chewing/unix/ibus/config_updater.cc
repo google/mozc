@@ -34,8 +34,8 @@
 #include "base/protobuf/message.h"
 #include "base/singleton.h"
 #include "chewing/session.h"
-#include "session/config_handler.h"
-#include "session/config.pb.h"
+#include "config/config_handler.h"
+#include "config/config.pb.h"
 #include "unix/ibus/config_util.h"
 
 using mozc::config::ChewingConfig;

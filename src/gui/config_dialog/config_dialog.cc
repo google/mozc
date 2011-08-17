@@ -41,15 +41,15 @@
 #include "base/const.h"
 #include "base/util.h"
 #include "base/run_level.h"
-#include "base/stats_config_util.h"
+#include "config/config_handler.h"
+#include "config/config.pb.h"
+#include "config/stats_config_util.h"
 #include "gui/config_dialog/keymap_editor.h"
 #include "gui/config_dialog/roman_table_editor.h"
 #include "gui/base/win_util.h"
 #include "ipc/ipc.h"
 #include "session/commands.pb.h"
-#include "session/config_handler.h"
-#include "session/config.pb.h"
-#include "client/session.h"
+#include "client/client.h"
 
 namespace mozc {
 
@@ -60,7 +60,7 @@ static const char kServerName[] = "session";
 namespace gui {
 
 ConfigDialog::ConfigDialog()
-    : client_(new client::Session),
+    : client_(client::ClientFactory::NewClient()),
       initial_preedit_method_(0),
       initial_use_keyboard_to_change_preedit_method_(false) {
   setupUi(this);

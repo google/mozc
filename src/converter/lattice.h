@@ -30,8 +30,9 @@
 #ifndef MOZC_CONVERTER_LATTICE_H_
 #define MOZC_CONVERTER_LATTICE_H_
 
-#include <vector>
+#include <sstream>  // For DebugString()
 #include <string>
+#include <vector>
 #include "base/base.h"
 #include "base/freelist.h"
 #include "converter/node.h"
@@ -79,8 +80,18 @@ class Lattice {
   // return true if this instance has a valid lattice.
   bool has_lattice() const;
 
+  // Dump the best path and the path that contains the designated string.
+  string DebugString() const;
+
   Lattice();
   virtual ~Lattice();
+
+  // Set the node info that should be used in DebugString() (For debug use).
+  static void SetDebugDisplayNode(size_t start_pos, size_t end_pos,
+                             const string &str);
+
+  // Reset the debug info.
+  static void ResetDebugDisplayNode();
 
  private:
   string key_;

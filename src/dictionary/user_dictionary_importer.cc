@@ -99,6 +99,8 @@ bool ConvertEntryInternal(
     return false;
   }
 
+  to->Clear();
+
   if (from.pos().empty()) {
     return false;
   }

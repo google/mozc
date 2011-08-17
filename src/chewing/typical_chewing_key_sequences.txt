@@ -1,0 +1,4 @@
+(w, no_mods) (l, no_mods) (space, no_mods) (w, no_mods) (l, no_mods) (space, no_mods) (Return, no_mods) (w, no_mods) (l, no_mods) (space, no_mods) (Return, no_mods)
+(w, no_mods) (l, no_mods) (space, no_mods) (w, no_mods) (l, no_mods) (space, no_mods) (space, no_mods) (space, no_mods) (3, no_mods) (Return, no_mods)
+(g, no_mods) (k, no_mods) (space, no_mods) (space, no_mods) (plus, CONTROL) (plus, CONTROL)
+(t, CONTROL)

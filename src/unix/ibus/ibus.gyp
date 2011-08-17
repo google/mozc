@@ -31,43 +31,23 @@
   'variables': {
     'relative_dir': 'unix/ibus',
     'gen_out_dir': '<(SHARED_INTERMEDIATE_DIR)/<(relative_dir)',
-    'pkg_config_libs': [
-      'glib-2.0',
-      'gobject-2.0',
-      'ibus-1.0',
-      'libcurl',
+    'additional_packages': [
     ],
-    'ibus_client_dependencies' : [
-      '../../client/client.gyp:client',
-      '../../session/session_base.gyp:ime_switch_util',
-    ],
-    'ibus_standalone_dependencies' : [
-      '../../base/base.gyp:config_file_stream',
+    'ibus_japanese_standalone_dependencies': [
       '../../composer/composer.gyp:composer',
       '../../converter/converter.gyp:converter',
       '../../dictionary/dictionary.gyp:dictionary',
-      '../../net/net.gyp:net',
       '../../prediction/prediction.gyp:prediction',
       '../../rewriter/rewriter.gyp:rewriter',
       '../../session/session.gyp:session_server',
-      '../../session/session_base.gyp:config_handler',
-      '../../session/session_base.gyp:ime_switch_util',
       '../../storage/storage.gyp:storage',
       '../../transliteration/transliteration.gyp:transliteration',
-      '../../usage_stats/usage_stats.gyp:usage_stats',
     ],
   },
   'targets': [
     {
-      'target_name': 'ibus_mozc_lib',
-      'type': 'static_library',
-      'sources': [
-        'engine_registrar.cc',
-        'key_translator.cc',
-        'mozc_engine.cc',
-        'mozc_engine_property.cc',
-        'path_util.cc',
-      ],
+      'target_name': 'gen_mozc_xml',
+      'type': 'none',
       'actions': [
         {
           'action_name': 'gen_mozc_xml',
@@ -108,16 +88,45 @@
           ],
         },
       ],
+    },
+    {
+      'target_name': 'ibus_mozc_metadata',
+      'type': 'static_library',
+      'sources': [
+        'mozc_engine_property.cc',
+      ],
+      'dependencies': [
+        '../../base/base.gyp:base',
+        '../../session/session_base.gyp:genproto_session',
+      ],
+      'includes': [
+        'ibus_libraries.gypi',
+      ],
+    },
+    {
+      'target_name': 'ibus_mozc_lib',
+      'type': 'static_library',
+      'sources': [
+        'engine_registrar.cc',
+        'key_translator.cc',
+        'mozc_engine.cc',
+        'path_util.cc',
+      ],
       'conditions': [
         ['chromeos==1', {
          'sources': [
-           'session.cc',
+           'client.cc',
            'config_util.cc',
          ],
         }],
        ],
-      'cflags': [
-        '<!@(pkg-config --cflags <@(pkg_config_libs))',
+      'includes': [
+        'ibus_libraries.gypi',
+      ],
+      'dependencies': [
+        '../../config/config.gyp:genproto_config',
+        '../../session/session_base.gyp:genproto_session',
+        '../../session/session_base.gyp:ime_switch_util',
       ],
     },
     {
@@ -170,14 +179,20 @@
           ],
         },
       ],
+      'includes': [
+        'ibus_libraries.gypi',
+      ],
       'dependencies': [
         '../../base/base.gyp:base',
+        'gen_mozc_xml',
         'ibus_mozc_lib',
+        'ibus_mozc_metadata',
       ],
       'conditions': [
         ['chromeos==1', {
          'dependencies+': [
            '<@(ibus_standalone_dependencies)',
+           '<@(ibus_japanese_standalone_dependencies)',
          ],
         }, {
          'dependencies+': [
@@ -185,15 +200,6 @@
          ],
         }],
        ],
-      'cflags': [
-        '<!@(pkg-config --cflags <@(pkg_config_libs))',
-      ],
-      'libraries': [
-        '<!@(pkg-config --libs-only-l <@(pkg_config_libs))',
-      ],
-      'ldflags': [
-        '<!@(pkg-config --libs-only-L <@(pkg_config_libs))',
-      ],
     },
     {
       'target_name': 'ibus_mozc_test',
@@ -206,11 +212,13 @@
       ],
       'dependencies': [
         '../../base/base.gyp:base',
-        '../../client/client.gyp:session_mock',
+        '../../client/client.gyp:client_mock',
         '../../testing/testing.gyp:gtest_main',
         'ibus_mozc_lib',
+        'ibus_mozc_metadata',
         '<@(ibus_client_dependencies)',
         '<@(ibus_standalone_dependencies)',
+        '<@(ibus_japanese_standalone_dependencies)',
       ],
       'conditions': [
         ['chromeos!=1', {
@@ -219,28 +227,42 @@
            'config_util.cc',
          ],
          'dependencies': [
-           '../../client/client.gyp:session_mock',
-         ],
-        },{
-         'sources': [
-        # ibus::Session is only for chromeos
-        # use client::Session in non-Chrome OS ibus
-           'session_test.cc',
+           '../../client/client.gyp:client_mock',
          ],
         }],
-       ],
-      'cflags': [
-        '<!@(pkg-config --cflags <@(pkg_config_libs))',
       ],
-      'libraries': [
-        '<!@(pkg-config --libs-only-l <@(pkg_config_libs))',
-      ],
-      'ldflags': [
-        '<!@(pkg-config --libs-only-L <@(pkg_config_libs))',
+      'includes': [
+        'ibus_libraries.gypi',
       ],
       'variables': {
         'test_size': 'small',
       },
     },
+  ],
+  'conditions': [
+    ['chromeos==1', {
+      'targets': [
+        {
+          'target_name': 'chromeos_client_test',
+          'type': 'executable',
+          'sources': [
+            'client_test.cc',
+          ],
+          'dependencies': [
+            '../../base/base.gyp:base',
+            '../../testing/testing.gyp:testing',
+            'ibus_mozc_lib',
+            'ibus_mozc_metadata',
+            '<@(ibus_standalone_dependencies)',
+            '<@(ibus_japanese_standalone_dependencies)',
+          ],
+          'includes': [
+            'ibus_libraries.gypi',
+          ],
+          'variables': {
+            'test_size': 'small',
+          },
+        }],
+    }],
   ],
 }

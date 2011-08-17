@@ -1,0 +1,7 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+<qresource>
+  <file>update_dialog_ja.qm</file>
+  <file>update_dialog_en.qm</file>
+</qresource>
+</RCC>

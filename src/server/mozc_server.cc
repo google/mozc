@@ -38,6 +38,8 @@
 #include "base/singleton.h"
 #include "base/util.h"
 #include "ipc/ipc.h"
+#include "session/japanese_session_factory.h"
+#include "session/session_factory_manager.h"
 #include "session/session_server.h"
 
 DECLARE_bool(restricted);   // in SessionHandler
@@ -113,6 +115,8 @@ int main(int argc, char *argv[]) {
   }
 
   {
+    mozc::session::JapaneseSessionFactory session_factory;
+    mozc::session::SessionFactoryManager::SetSessionFactory(&session_factory);
     scoped_ptr<mozc::SessionServer> session_server
         (new mozc::SessionServer);
     g_session_server = session_server.get();

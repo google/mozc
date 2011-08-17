@@ -29,16 +29,35 @@
 
 #include <string>
 #include "base/base.h"
+#include "base/text_normalizer.h"
 #include "base/util.h"
 #include "converter/segments.h"
 #include "session/commands.pb.h"
 #include "session/internal/candidate_list.h"
-#include "session/internal/session_normalizer.h"
 #include "session/internal/session_output.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
 namespace session {
+
+struct DummySegment {
+  const char *value;
+  const int32 usage_id;
+  const char *usage_title;
+  const char *usage_description;
+};
+
+void FillDummySegment(const DummySegment *dummy_segments, const size_t num,
+                      Segment *segment, CandidateList *candidate_list) {
+  for (size_t i = 0; i < num; ++i) {
+    Segment::Candidate *cand = segment->push_back_candidate();
+    candidate_list->AddCandidate(i, dummy_segments[i].value);
+    cand->value = dummy_segments[i].value;
+    cand->usage_id = dummy_segments[i].usage_id;
+    cand->usage_title = dummy_segments[i].usage_title;
+    cand->usage_description = dummy_segments[i].usage_description;
+  }
+}
 
 TEST(SessionOutputTest, FillCandidate) {
   Segment segment;
@@ -295,62 +314,216 @@ TEST(SessionOutputTest, FillAllCandidateWords) {
   EXPECT_FALSE(candidates_proto.candidates(6).has_annotation());
 }
 
+TEST(SessionOutputTest, ShouldShowUsages) {
+  {
+    Segment segment;
+    CandidateList candidate_list(true);
+    CandidateList sub(true);
+    static const DummySegment dummy_segments[] = {
+      { "val0", 0, "", "" },
+      { "val1", 0, "", "" },
+      { "val2", 0, "", "" },
+      { "val3", 0, "", "" },
+      { "val4", 0, "", "" },
+    };
+    FillDummySegment(dummy_segments, 5, &segment, &candidate_list);
+    candidate_list.AddSubCandidateList(&sub);
+    candidate_list.set_focused(true);
+    ASSERT_TRUE(candidate_list.MoveToId(0));
+    ASSERT_FALSE(SessionOutput::ShouldShowUsages(segment, candidate_list));
+  }
+  {
+    Segment segment;
+    CandidateList candidate_list(true);
+    CandidateList sub(true);
+    static const DummySegment dummy_segments[] = {
+      { "val0", 0, "", "" },
+      { "val1", 10, "title1", "" },
+      { "val2", 0, "", "" },
+      { "val3", 0, "", "" },
+      { "val4", 0, "", "" },
+    };
+    FillDummySegment(dummy_segments, 5, &segment, &candidate_list);
+    candidate_list.AddSubCandidateList(&sub);
+    candidate_list.set_focused(true);
+    ASSERT_TRUE(candidate_list.MoveToId(0));
+    ASSERT_TRUE(SessionOutput::ShouldShowUsages(segment, candidate_list));
+  }
+  {
+    Segment segment;
+    CandidateList candidate_list(true);
+    CandidateList sub(true);
+    static const DummySegment dummy_segments[] = {
+      { "val00", 10, "title00", "" },
+      { "val01", 0, "", "" },
+      { "val02", 0, "", "" },
+      { "val03", 0, "", "" },
+      { "val04", 0, "", "" },
+      { "val05", 0, "", "" },
+      { "val06", 0, "", "" },
+      { "val07", 0, "", "" },
+      { "val08", 0, "", "" },
+      { "val09", 0, "", "" },
+      { "val10", 20, "title10", "" },
+      { "val11", 0, "", "" },
+      { "val12", 0, "", "" },
+      { "val13", 30, "title13", "" },
+      { "val14", 0, "", "" },
+      { "val15", 0, "", "" },
+      { "val16", 0, "", "" },
+      { "val17", 0, "", "" },
+      { "val18", 0, "", "" },
+      { "val19", 0, "", "" },
+      { "val20", 0, "", "" },
+      { "val21", 0, "", "" },
+      { "val22", 0, "", "" },
+      { "val23", 0, "", "" },
+      { "val24", 0, "", "" },
+      { "val25", 0, "", "" },
+      { "val26", 0, "", "" },
+      { "val27", 0, "", "" },
+      { "val28", 0, "", "" },
+      { "val29", 0, "", "" },
+    };
+    FillDummySegment(dummy_segments, 30, &segment, &candidate_list);
+    candidate_list.AddSubCandidateList(&sub);
+    // pages of candidate_list:
+    //  [00-08],[09-17],[18-26],[27-29]+subcandidate
+    candidate_list.set_focused(true);
+    ASSERT_TRUE(candidate_list.MoveToId(0));
+    ASSERT_TRUE(SessionOutput::ShouldShowUsages(segment, candidate_list));
+    ASSERT_TRUE(candidate_list.MoveToId(8));
+    ASSERT_TRUE(SessionOutput::ShouldShowUsages(segment, candidate_list));
+    ASSERT_TRUE(candidate_list.MoveToId(9));
+    ASSERT_TRUE(SessionOutput::ShouldShowUsages(segment, candidate_list));
+    ASSERT_TRUE(candidate_list.MoveToId(17));
+    ASSERT_TRUE(SessionOutput::ShouldShowUsages(segment, candidate_list));
+    ASSERT_TRUE(candidate_list.MoveToId(18));
+    ASSERT_FALSE(SessionOutput::ShouldShowUsages(segment, candidate_list));
+    ASSERT_TRUE(candidate_list.MoveToId(26));
+    ASSERT_FALSE(SessionOutput::ShouldShowUsages(segment, candidate_list));
+    ASSERT_TRUE(candidate_list.MoveToId(27));
+    ASSERT_FALSE(SessionOutput::ShouldShowUsages(segment, candidate_list));
+  }
+}
+
 TEST(SessionOutputTest, FillUsages) {
   Segment segment;
   CandidateList candidate_list(true);
+  CandidateList sub(true);
   commands::Candidates candidates_proto;
-
-  // Make 5 candidates
-  static const struct DummySegment {
-    const char *value;
-    const int32 usage_id;
-    const char *usage_title;
-    const char *usage_description;
-  } dummy_segments[] = {
-    { "val0", 100, "title0", "desc0" },
-    { "val1", 0, "", "" },
-    { "val2", 200, "title2", "desc2" },
-    { "val3", 300, "title3", "desc3" },
-    { "val4", 0, "", "" },
+  static const DummySegment dummy_segments[] = {
+    { "val00", 10, "title00", "desc00" },
+    { "val01", 0, "", "" },
+    { "val02", 0, "", "" },
+    { "val03", 0, "", "" },
+    { "val04", 20, "title04", "desc04" },
+    { "val05", 0, "", "" },
+    { "val06", 0, "", "" },
+    { "val07", 0, "", "" },
+    { "val08", 0, "", "" },
+    { "val09", 0, "", "" },
+    { "val10", 30, "title10", "desc10" },
+    { "val11", 40, "title11", "desc11" },
+    { "val12", 50, "title12", "desc12" },
+    { "val13", 60, "title13", "desc13" },
+    { "val14", 0, "", "" },
+    { "val15", 0, "", "" },
+    { "val16", 0, "", "" },
+    { "val17", 0, "", "" },
+    { "val18", 0, "", "" },
+    { "val19", 100, "title100", "desc100" },
+    { "val20", 110, "title110", "desc110" },
+    { "val21", 100, "title100", "desc100" },
+    { "val22", 0, "", "" },
+    { "val23", 0, "", "" },
+    { "val24", 0, "", "" },
+    { "val25", 0, "", "" },
+    { "val26", 0, "", "" },
+    { "val27", 0, "", "" },
+    { "val28", 0, "", "" },
+    { "val29", 0, "", "" },
   };
-  for (size_t i = 0; i < 5; ++i) {
-    Segment::Candidate *cand = segment.push_back_candidate();
-    candidate_list.AddCandidate(i, dummy_segments[i].value);
-    cand->value = dummy_segments[i].value;
-    cand->usage_id = dummy_segments[i].usage_id;
-    cand->usage_title = dummy_segments[i].usage_title;
-    cand->usage_description = dummy_segments[i].usage_description;
-  }
+  FillDummySegment(dummy_segments, 30, &segment, &candidate_list);
+  candidate_list.AddSubCandidateList(&sub);
+
+  // pages of candidate_list:
+  //  [00-08],[09-17],[18-26],[27-29]+subcandidate
 
   candidate_list.set_focused(true);
-  candidate_list.MoveToId(2);
 
+  candidate_list.MoveToId(2);
+  candidates_proto.Clear();
   SessionOutput::FillUsages(segment, candidate_list, &candidates_proto);
   ASSERT_TRUE(candidates_proto.has_usages());
-  // The focused id is 2, it should be index:1 on the usages information list.
-  EXPECT_EQ(1, candidates_proto.usages().focused_index());
-  EXPECT_EQ(3, candidates_proto.usages().information_size());
-
-  // Usage:0 should be dummy_segment:0
-  EXPECT_EQ(100, candidates_proto.usages().information(0).id());
+  // There is no focused usage.
+  EXPECT_FALSE(candidates_proto.usages().has_focused_index());
+  EXPECT_EQ(2, candidates_proto.usages().information_size());
+  EXPECT_EQ(10, candidates_proto.usages().information(0).id());
   EXPECT_EQ(dummy_segments[0].usage_title,
             candidates_proto.usages().information(0).title());
   EXPECT_EQ(dummy_segments[0].usage_description,
             candidates_proto.usages().information(0).description());
-
-  // Usage:1 should be dummy_segment:2
-  EXPECT_EQ(200, candidates_proto.usages().information(1).id());
-  EXPECT_EQ(dummy_segments[2].usage_title,
+  EXPECT_EQ(20, candidates_proto.usages().information(1).id());
+  EXPECT_EQ(dummy_segments[4].usage_title,
             candidates_proto.usages().information(1).title());
-  EXPECT_EQ(dummy_segments[2].usage_description,
+  EXPECT_EQ(dummy_segments[4].usage_description,
             candidates_proto.usages().information(1).description());
 
-  // Usage:2 should be dummy_segment:3
-  EXPECT_EQ(300, candidates_proto.usages().information(2).id());
-  EXPECT_EQ(dummy_segments[3].usage_title,
+  candidate_list.MoveToId(12);
+  candidates_proto.Clear();
+  SessionOutput::FillUsages(segment, candidate_list, &candidates_proto);
+  ASSERT_TRUE(candidates_proto.has_usages());
+  // Focused usage index is 20
+  EXPECT_TRUE(candidates_proto.usages().has_focused_index());
+  EXPECT_EQ(2, candidates_proto.usages().focused_index());
+
+  EXPECT_EQ(4, candidates_proto.usages().information_size());
+  EXPECT_EQ(30, candidates_proto.usages().information(0).id());
+  EXPECT_EQ(dummy_segments[10].usage_title,
+            candidates_proto.usages().information(0).title());
+  EXPECT_EQ(dummy_segments[10].usage_description,
+            candidates_proto.usages().information(0).description());
+  EXPECT_EQ(40, candidates_proto.usages().information(1).id());
+  EXPECT_EQ(dummy_segments[11].usage_title,
+            candidates_proto.usages().information(1).title());
+  EXPECT_EQ(dummy_segments[11].usage_description,
+            candidates_proto.usages().information(1).description());
+  EXPECT_EQ(50, candidates_proto.usages().information(2).id());
+  EXPECT_EQ(dummy_segments[12].usage_title,
             candidates_proto.usages().information(2).title());
-  EXPECT_EQ(dummy_segments[3].usage_description,
+  EXPECT_EQ(dummy_segments[12].usage_description,
             candidates_proto.usages().information(2).description());
+  EXPECT_EQ(60, candidates_proto.usages().information(3).id());
+  EXPECT_EQ(dummy_segments[13].usage_title,
+            candidates_proto.usages().information(3).title());
+  EXPECT_EQ(dummy_segments[13].usage_description,
+            candidates_proto.usages().information(3).description());
+
+  candidate_list.MoveToId(19);
+  candidates_proto.Clear();
+  SessionOutput::FillUsages(segment, candidate_list, &candidates_proto);
+  ASSERT_TRUE(candidates_proto.has_usages());
+  EXPECT_TRUE(candidates_proto.usages().has_focused_index());
+  EXPECT_EQ(0, candidates_proto.usages().focused_index());
+  // usages(id:100) of "val19" and "val21" are merged
+  EXPECT_EQ(2, candidates_proto.usages().information_size());
+
+  EXPECT_EQ(100, candidates_proto.usages().information(0).id());
+  EXPECT_EQ(dummy_segments[19].usage_title,
+            candidates_proto.usages().information(0).title());
+  EXPECT_EQ(dummy_segments[19].usage_description,
+            candidates_proto.usages().information(0).description());
+  EXPECT_EQ(110, candidates_proto.usages().information(1).id());
+  EXPECT_EQ(dummy_segments[20].usage_title,
+            candidates_proto.usages().information(1).title());
+  EXPECT_EQ(dummy_segments[20].usage_description,
+            candidates_proto.usages().information(1).description());
+
+  candidate_list.MoveToId(28);
+  candidates_proto.Clear();
+  SessionOutput::FillUsages(segment, candidate_list, &candidates_proto);
+  ASSERT_FALSE(candidates_proto.has_usages());
 }
 
 
@@ -444,8 +617,8 @@ TEST(SessionOutputTest, AddSegment) {
   int index = 0;
   {
     // "ゔ" and "〜" are characters to be processed by
-    // SessionNormalizer::NormalizePreeditText and
-    // SessionNormalizer::NormalizeCandidateText
+    // TextNormalizer::NormalizePreeditText and
+    // TextNormalizer::NormalizeCandidateText
     const string kKey = "ゔ〜 preedit focused";
     const string kValue = "ゔ〜 PREEDIT FOCUSED";
     const int types = SessionOutput::PREEDIT | SessionOutput::FOCUSED;
@@ -454,10 +627,10 @@ TEST(SessionOutputTest, AddSegment) {
     const commands::Preedit::Segment &segment = preedit.segment(index);
 
     string normalized_key;
-    SessionNormalizer::NormalizePreeditText(kKey, &normalized_key);
+    TextNormalizer::NormalizePreeditText(kKey, &normalized_key);
     EXPECT_EQ(normalized_key, segment.key());
     string normalized_value;
-    SessionNormalizer::NormalizePreeditText(kValue, &normalized_value);
+    TextNormalizer::NormalizePreeditText(kValue, &normalized_value);
     EXPECT_EQ(normalized_value, segment.value());
     EXPECT_EQ(Util::CharsLen(normalized_value), segment.value_length());
     EXPECT_EQ(commands::Preedit::Segment::UNDERLINE, segment.annotation());
@@ -473,10 +646,10 @@ TEST(SessionOutputTest, AddSegment) {
     const commands::Preedit::Segment &segment = preedit.segment(index);
 
     string normalized_key;
-    SessionNormalizer::NormalizePreeditText(kKey, &normalized_key);
+    TextNormalizer::NormalizePreeditText(kKey, &normalized_key);
     EXPECT_EQ(normalized_key, segment.key());
     string normalized_value;
-    SessionNormalizer::NormalizePreeditText(kValue, &normalized_value);
+    TextNormalizer::NormalizePreeditText(kValue, &normalized_value);
     EXPECT_EQ(normalized_value, segment.value());
     EXPECT_EQ(Util::CharsLen(normalized_value), segment.value_length());
     EXPECT_EQ(commands::Preedit::Segment::UNDERLINE, segment.annotation());
@@ -492,10 +665,10 @@ TEST(SessionOutputTest, AddSegment) {
     const commands::Preedit::Segment &segment = preedit.segment(index);
 
     string normalized_key;
-    SessionNormalizer::NormalizePreeditText(kKey, &normalized_key);
+    TextNormalizer::NormalizePreeditText(kKey, &normalized_key);
     EXPECT_EQ(normalized_key, segment.key());
     string normalized_value;
-    SessionNormalizer::NormalizeCandidateText(kValue, &normalized_value);
+    TextNormalizer::NormalizeCandidateText(kValue, &normalized_value);
     EXPECT_EQ(normalized_value, segment.value());
     EXPECT_EQ(Util::CharsLen(normalized_value), segment.value_length());
     EXPECT_EQ(commands::Preedit::Segment::HIGHLIGHT, segment.annotation());
@@ -511,10 +684,10 @@ TEST(SessionOutputTest, AddSegment) {
     const commands::Preedit::Segment &segment = preedit.segment(index);
 
     string normalized_key;
-    SessionNormalizer::NormalizePreeditText(kKey, &normalized_key);
+    TextNormalizer::NormalizePreeditText(kKey, &normalized_key);
     EXPECT_EQ(normalized_key, segment.key());
     string normalized_value;
-    SessionNormalizer::NormalizeCandidateText(kValue, &normalized_value);
+    TextNormalizer::NormalizeCandidateText(kValue, &normalized_value);
     EXPECT_EQ(normalized_value, segment.value());
     EXPECT_EQ(Util::CharsLen(normalized_value), segment.value_length());
     EXPECT_EQ(commands::Preedit::Segment::UNDERLINE, segment.annotation());

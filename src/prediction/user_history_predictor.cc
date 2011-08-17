@@ -32,6 +32,7 @@
 #include <time.h>
 
 #include <algorithm>
+#include <cctype>
 #include <climits>
 #include <string>
 
@@ -43,14 +44,14 @@
 #include "base/util.h"
 #include "base/password_manager.h"
 #include "base/config_file_stream.h"
+#include "config/config_handler.h"
+#include "config/config.pb.h"
 #include "converter/segments.h"
 #include "prediction/predictor_interface.h"
 #include "prediction/user_history_predictor.pb.h"
 #include "rewriter/variants_rewriter.h"
 #include "storage/lru_cache.h"
 #include "session/commands.pb.h"
-#include "session/config_handler.h"
-#include "session/config.pb.h"
 #include "usage_stats/usage_stats.h"
 
 
@@ -109,6 +110,13 @@ bool IsPunctuation(const string &value) {
           value == "\xEF\xBC\x8C" || value == "\xEF\xBC\x8E");
 }
 
+// Return romanaized string.
+string ToRoman(const string &str) {
+  string result;
+  Util::HiraganaToRomanji(str, &result);
+  return result;
+}
+
 // return true if value looks like a content word.
 // Currently, just checks the script type.
 bool IsContentWord(const string &value) {
@@ -116,16 +124,14 @@ bool IsContentWord(const string &value) {
       Util::GetScriptType(value) != Util::UNKNOWN_SCRIPT;
 }
 
-// return true if prev_entry has a next_fp link to entry
-bool HasBigramEntry(const UserHistoryPredictor::Entry &entry,
-                    const UserHistoryPredictor::Entry &prev_entry) {
-  const uint32 fp = UserHistoryPredictor::EntryFingerprint(entry);
-  for (int i = 0; i < prev_entry.next_entries_size(); ++i) {
-    if (fp == prev_entry.next_entries(i).entry_fp()) {
-      return true;
-    }
+// Return candidate description.
+// If candidate is spelling correction, don't use the description, since
+// "did you mean" must be provided at an appropriate timing and context.
+string GetDescription(const Segment::Candidate &candidate) {
+  if (candidate.attributes & Segment::Candidate::SPELLING_CORRECTION) {
+    return "";
   }
-  return false;
+  return candidate.description;
 }
 
 // Returns true if the input first candidate seems to be a privacy sensitive
@@ -381,6 +387,7 @@ string UserHistoryPredictor::GetUserHistoryFileName() {
 }
 
 // return revert id
+// static
 uint16 UserHistoryPredictor::revert_id() {
   return kRevertId;
 }
@@ -558,6 +565,144 @@ bool UserHistoryPredictor::ClearUnusedHistory() {
   Sync();
 
   VLOG(1) << keys.size() << " removed";
+
+  return true;
+}
+
+// return true if prev_entry has a next_fp link to entry
+// static
+bool UserHistoryPredictor::HasBigramEntry(
+    const UserHistoryPredictor::Entry &entry,
+    const UserHistoryPredictor::Entry &prev_entry) {
+  const uint32 fp = EntryFingerprint(entry);
+  for (int i = 0; i < prev_entry.next_entries_size(); ++i) {
+    if (fp == prev_entry.next_entries(i).entry_fp()) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// static
+string UserHistoryPredictor::GetRomanMisspelledKey(
+    const Segments &segments) {
+  if (GET_CONFIG(preedit_method) != config::Config::ROMAN) {
+    return "";
+  }
+
+  const string &preedit = segments.conversion_segment(0).key();
+  // TODO(team): Use composer if it is available.
+  // segments.composer()->GetQueryForConversion(&preedit);
+  // Since ConverterInterface doesn't have StartPredictionWithComposer,
+  // we cannot use composer currently.
+  if (!preedit.empty() && MaybeRomanMisspelledKey(preedit)) {
+    return ToRoman(preedit);
+  }
+
+  return "";
+}
+
+// static
+bool UserHistoryPredictor::MaybeRomanMisspelledKey(const string &key) {
+  const char *begin = key.data();
+  const char *end = key.data() + key.size();
+  int num_alpha = 0;
+  int num_hiragana = 0;
+  int num_unknown = 0;
+  while (begin < end) {
+    size_t mblen = 0;
+    const char32 w = Util::UTF8ToUCS4(begin, end, &mblen);
+    begin += mblen;
+    const Util::ScriptType type = Util::GetScriptType(w);
+    if (type == Util::HIRAGANA || w == 0x30FC) {  // "ー".
+      ++num_hiragana;
+      continue;
+    } else if (type == Util::UNKNOWN_SCRIPT && num_unknown <= 0) {
+      ++num_unknown;
+      continue;
+    } else if (type == Util::ALPHABET && num_alpha <= 0) {
+      ++num_alpha;
+      continue;
+    }
+    return false;
+  }
+
+  return (num_hiragana > 0 &&
+          ((num_alpha == 1 && num_unknown == 0) ||
+           (num_alpha == 0 && num_unknown == 1)));
+}
+
+// static
+bool UserHistoryPredictor::RomanFuzzyPrefixMatch(
+    const string &str, const string &prefix) {
+  if (prefix.empty() || prefix.size() > str.size()) {
+    return false;
+  }
+
+  // 1. allow one character delete in Romanji sequence.
+  // 2. allow one swap in Romanji sequence.
+  for (size_t i = 0; i < prefix.size(); ++i) {
+    if (prefix[i] == str[i]) {
+      continue;
+    }
+
+    if (str[i] == '-') {
+      // '-' voice sound mark can be matched to any
+      // non-alphanum character.
+      if (!isalnum(prefix[i])) {
+        string replaced_prefix = prefix;
+        replaced_prefix[i] = str[i];
+        if (Util::StartsWith(str, replaced_prefix)) {
+          return true;
+        }
+      }
+    } else {
+      // deletion.
+      string inserted_prefix = prefix;
+      inserted_prefix.insert(i, 1, str[i]);
+      if (Util::StartsWith(str, inserted_prefix)) {
+        return true;
+      }
+
+      // swap.
+      if (i + 1 < prefix.size()) {
+        string swapped_prefix = prefix;
+        swap(swapped_prefix[i], swapped_prefix[i + 1]);
+        if (Util::StartsWith(str, swapped_prefix)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  // |prefix| is an exact suffix of |str|.
+  return false;
+}
+
+bool UserHistoryPredictor::RomanFuzzyLookupEntry(
+    const string &roman_input_key,
+    const UserHistoryPredictor::Entry *entry,
+    EntryPriorityQueue *results) const {
+  if (roman_input_key.empty()) {
+    return false;
+  }
+
+  DCHECK(entry);
+  DCHECK(results);
+
+  if (!RomanFuzzyPrefixMatch(ToRoman(entry->key()),
+                             roman_input_key)) {
+    return false;
+  }
+
+  Entry *result = results->NewEntry();
+  DCHECK(result);
+  result->Clear();
+  result->CopyFrom(*entry);
+  result->set_spelling_correction(true);
+  results->Push(result);
 
   return true;
 }
@@ -891,6 +1036,12 @@ bool UserHistoryPredictor::Predict(Segments *segments) const {
     return false;
   }
 
+  // Get romanized input key if the given preedit looks misspelled.
+  const string roman_input_key = GetRomanMisspelledKey(*segments);
+
+  // TODO(team): make GetKanaMisspelledKey(*segments);
+  // const string kana_input_key = GetKanaMisspelledKey(*segments);
+
   const size_t max_results_size =
       5 * segments->max_prediction_candidates_size();
 
@@ -910,7 +1061,9 @@ bool UserHistoryPredictor::Predict(Segments *segments) const {
 
     // lookup input_key from elm_value and prev_entry.
     // If a new entry is found, the entry is pushed to the results.
-    if (!LookupEntry(input_key, &(elm->value), prev_entry, &results)) {
+    // TODO(team): make KanaFuzzyLookupEntry().
+    if (!LookupEntry(input_key, &(elm->value), prev_entry, &results) &&
+        !RomanFuzzyLookupEntry(roman_input_key, &(elm->value), &results)) {
       continue;
     }
 
@@ -971,6 +1124,9 @@ bool UserHistoryPredictor::Predict(Segments *segments) const {
     candidate->value = result_entry->value();
     candidate->content_value = result_entry->value();
     candidate->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
+    if (result_entry->spelling_correction()) {
+      candidate->attributes |= Segment::Candidate::SPELLING_CORRECTION;
+    }
     const string &description = result_entry->description();
     // If we have stored description, set it exactly.
     if (!description.empty()) {
@@ -1030,6 +1186,7 @@ void UserHistoryPredictor::InsertNextEntry(
   target_next_entry->CopyFrom(next_entry);
 }
 
+// static
 bool UserHistoryPredictor::IsValidEntry(const Entry &entry) {
   return !entry.removed() && entry.entry_type() == Entry::DEFAULT_ENTRY;
 }
@@ -1219,7 +1376,7 @@ void UserHistoryPredictor::Finish(Segments *segments) {
     bool this_was_seen = false;
     for (size_t i = history_segments_size; i < segments->segments_size(); ++i) {
       const Segment &segment = segments->segment(i);
-      all_key += segment.key();
+      all_key += segment.candidate(0).key;
       all_value += segment.candidate(0).value;
       uint32 next_fp = (i == segments->segments_size() - 1) ?
           0 : SegmentFingerprint(segments->segment(i + 1));
@@ -1242,8 +1399,9 @@ void UserHistoryPredictor::Finish(Segments *segments) {
       } else {
         this_was_seen = false;
       }
-      Insert(segment.key(), segment.candidate(0).value,
-             segment.candidate(0).description,
+      Insert(segment.candidate(0).key,
+             segment.candidate(0).value,
+             GetDescription(segment.candidate(0)),
              kInsertConversion, next_fp_to_set,
              last_access_time, segments);
     }
@@ -1268,9 +1426,8 @@ void UserHistoryPredictor::Finish(Segments *segments) {
 
     all_key = segment.candidate(0).key;
     all_value = segment.candidate(0).value;
-    const string &description = segment.candidate(0).description;
-
-    Insert(all_key, all_value, description,
+    Insert(all_key, all_value,
+           GetDescription(segment.candidate(0)),
            kInsertSuggestion, 0, last_access_time, segments);
   }
 
@@ -1320,8 +1477,10 @@ void UserHistoryPredictor::Revert(Segments *segments) {
 }
 
 // type
+// static
 UserHistoryPredictor::MatchType
-UserHistoryPredictor::GetMatchType(const string &lstr, const string &rstr) {
+UserHistoryPredictor::GetMatchType(const string &lstr,
+                                   const string &rstr) {
   if (lstr.empty() && !rstr.empty()) {
     return LEFT_EMPTY_MATCH;
   }
@@ -1362,12 +1521,12 @@ uint32 UserHistoryPredictor::Fingerprint(const string &key,
   }
 }
 
+// static
 uint32 UserHistoryPredictor::Fingerprint(const string &key,
                                          const string &value) {
   return Fingerprint(key, value, Entry::DEFAULT_ENTRY);
 }
 
-// static
 uint32 UserHistoryPredictor::EntryFingerprint(
     const UserHistoryPredictor::Entry &entry) {
   return Fingerprint(entry.key(), entry.value());
@@ -1433,7 +1592,7 @@ uint32 UserHistoryPredictor::GetScore(
 }
 
 // return the size of cache.
-// staitc
+// static
 uint32 UserHistoryPredictor::cache_size() {
   return kLRUCacheSize;
 }
@@ -1443,5 +1602,4 @@ uint32 UserHistoryPredictor::cache_size() {
 uint32 UserHistoryPredictor::max_next_entries_size() {
   return kMaxNextEntriesSize;
 }
-
 }  // namespace mozc

@@ -89,6 +89,7 @@ class CandidateWindow : public ATL::CWindowImpl<CandidateWindow,
     MSG_WM_CREATE(OnCreate)
     MSG_WM_DESTROY(OnDestroy)
     MSG_WM_ERASEBKGND(OnEraseBkgnd)
+    MSG_WM_GETMINMAXINFO(OnGetMinMaxInfo)
     MSG_WM_LBUTTONDOWN(OnLButtonDown)
     MSG_WM_LBUTTONUP(OnLButtonUp)
     MSG_WM_MOUSEMOVE(OnMouseMove)
@@ -102,6 +103,7 @@ class CandidateWindow : public ATL::CWindowImpl<CandidateWindow,
   LRESULT OnCreate(LPCREATESTRUCT create_struct);
   void OnDestroy();
   BOOL OnEraseBkgnd(WTL::CDCHandle dc);
+  void OnGetMinMaxInfo(MINMAXINFO *min_max_info);
   void OnLButtonDown(UINT nFlags, WTL::CPoint point);
   void OnLButtonUp(UINT nFlags, WTL::CPoint point);
   void OnMouseMove(UINT nFlags, WTL::CPoint point);
@@ -129,6 +131,7 @@ class CandidateWindow : public ATL::CWindowImpl<CandidateWindow,
   void DrawShortcutBackground(WTL::CDCHandle dc);
   void DrawFooter(WTL::CDCHandle dc);
   void DrawSelectedRect(WTL::CDCHandle dc);
+  void DrawInformationIcon(WTL::CDCHandle dc);
   void DrawBackground(WTL::CDCHandle dc);
   void DrawFrame(WTL::CDCHandle dc);
 

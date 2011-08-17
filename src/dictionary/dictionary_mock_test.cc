@@ -32,34 +32,11 @@
 #include "base/base.h"
 #include "base/util.h"
 #include "converter/node.h"
+#include "converter/node_allocator.h"
 #include "dictionary/dictionary_token.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 namespace mozc {
-
-namespace {
-class TestNodeAllocator : public NodeAllocatorInterface {
- public:
-  TestNodeAllocator() {}
-  virtual ~TestNodeAllocator() {
-    for (size_t i = 0; i < nodes_.size(); ++i) {
-      delete nodes_[i];
-    }
-    nodes_.clear();
-  }
-
-  Node *NewNode() {
-    Node *node = new Node;
-    CHECK(node);
-    node->Init();
-    nodes_.push_back(node);
-    return node;
-  }
-
- private:
-  vector<Node *> nodes_;
-};
-}  // namespace
 
 class DictionaryMockTest : public testing::Test {
  protected:
@@ -81,7 +58,6 @@ class DictionaryMockTest : public testing::Test {
                           const string &value,
                           uint32 attributes,
                           const Node *node);
-  void DeleteNodes(Node *node);
   scoped_ptr<DictionaryMock> mock_;
 };
 
@@ -108,14 +84,6 @@ Token *DictionaryMockTest::CreateToken(const string &key, const string &value) {
   return token;
 }
 
-void DictionaryMockTest::DeleteNodes(Node *node) {
-  while (node) {
-    Node *next_node = node->bnext;
-    delete node;
-    node = next_node;
-  }
-}
-
 TEST_F(DictionaryMockTest, test_prefix) {
   DictionaryInterface *dic = DictionaryFactory::GetDictionary();
 
@@ -137,13 +105,13 @@ TEST_F(DictionaryMockTest, test_prefix) {
     GetMock()->AddLookupPrefix(it->key, it->key, it->value, 0);
   }
 
-  Node *node = dic->LookupPrefix(k1.c_str(), k1.size(), NULL);
+  NodeAllocator allocator;
+  Node *node = dic->LookupPrefix(k1.c_str(), k1.size(), &allocator);
   CHECK(node) << "no nodes found";
   EXPECT_TRUE(SearchMatchingNode(t1->key, t1->value, 0, node))
               << "Failed to find " << t1->key;
   EXPECT_TRUE(SearchMatchingNode(t0->key, t0->value, 0, node))
               << "Failed to find " << t0->key;
-  DeleteNodes(node);
 }
 
 TEST_F(DictionaryMockTest, test_reverse) {
@@ -163,18 +131,19 @@ TEST_F(DictionaryMockTest, test_reverse) {
   tokens.push_back(*t0.get());
   tokens.push_back(*t1.get());
 
+  NodeAllocator allocator;
+
   vector<Token>::iterator it = tokens.begin();
   for (; it != tokens.end(); ++it) {
     GetMock()->AddLookupReverse(it->key, it->key, it->value, 0);
   }
 
-  Node *node = dic->LookupReverse(k1.c_str(), k1.size(), NULL);
+  Node *node = dic->LookupReverse(k1.c_str(), k1.size(), &allocator);
   CHECK(node) << "No nodes found";
   EXPECT_TRUE(SearchMatchingNode(t1->key, t1->value, 0, node))
               << "Failed to find: " << t1->key;
   EXPECT_TRUE(SearchMatchingNode(t0->key, t0->value, 0, node))
               << "Failed to find: " << t0->key;
-  DeleteNodes(node);
 }
 
 TEST_F(DictionaryMockTest, test_predictive) {
@@ -198,13 +167,12 @@ TEST_F(DictionaryMockTest, test_predictive) {
     GetMock()->AddLookupPredictive(k0, it->key, it->value, 0);
   }
 
-  Node *node = dic->LookupPredictive(k0.c_str(), k0.size(), NULL);
+  NodeAllocator allocator;
+  Node *node = dic->LookupPredictive(k0.c_str(), k0.size(), &allocator);
   CHECK(node) << "no nodes found";
   EXPECT_TRUE(SearchMatchingNode(t1->key, t1->value, 0, node))
               << "Failed to find " << t1->key;
   EXPECT_TRUE(SearchMatchingNode(t2->key, t2->value, 0, node))
               << "Failed to find " << t2->key;
-  DeleteNodes(node);
 }
-
 }  // namespace mozc

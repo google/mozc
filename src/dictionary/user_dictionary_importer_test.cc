@@ -113,10 +113,12 @@ TEST(UserDictionaryImporter, ImportFromNormalTextTest) {
 //   EXPECT_EQ("きょうと", user_dic.entries(0).key());
 //   EXPECT_EQ("京都", user_dic.entries(0).value());
 //   EXPECT_EQ("名詞", user_dic.entries(0).pos());
+//   EXPECT_EQ("", user_dic.entries(0).comment());
 
 //   EXPECT_EQ("おおさか", user_dic.entries(1).key());
 //   EXPECT_EQ("大阪", user_dic.entries(1).value());
 //   EXPECT_EQ("地名", user_dic.entries(1).pos());
+//   EXPECT_EQ("", user_dic.entries(1).comment());
 
 //   EXPECT_EQ("とうきょう", user_dic.entries(2).key());
 //   EXPECT_EQ("東京", user_dic.entries(2).value());
@@ -126,16 +128,19 @@ TEST(UserDictionaryImporter, ImportFromNormalTextTest) {
 //   EXPECT_EQ("すずき", user_dic.entries(3).key());
 //   EXPECT_EQ("鈴木", user_dic.entries(3).value());
 //   EXPECT_EQ("人名", user_dic.entries(3).pos());
+//   EXPECT_EQ("", user_dic.entries(3).comment());
 
   EXPECT_EQ("\xE3\x81\x8D\xE3\x82\x87\xE3\x81\x86\xE3\x81\xA8",
             user_dic.entries(0).key());
   EXPECT_EQ("\xE4\xBA\xAC\xE9\x83\xBD", user_dic.entries(0).value());
   EXPECT_EQ("\xE5\x90\x8D\xE8\xA9\x9E", user_dic.entries(0).pos());
+  EXPECT_EQ("", user_dic.entries(0).comment());
 
   EXPECT_EQ("\xE3\x81\x8A\xE3\x81\x8A\xE3\x81\x95\xE3\x81\x8B",
             user_dic.entries(1).key());
   EXPECT_EQ("\xE5\xA4\xA7\xE9\x98\xAA", user_dic.entries(1).value());
   EXPECT_EQ("\xE5\x9C\xB0\xE5\x90\x8D", user_dic.entries(1).pos());
+  EXPECT_EQ("", user_dic.entries(1).comment());
 
   EXPECT_EQ("\xE3\x81\xA8\xE3\x81\x86\xE3\x81\x8D\xE3\x82\x87\xE3\x81\x86",
             user_dic.entries(2).key());
@@ -147,6 +152,7 @@ TEST(UserDictionaryImporter, ImportFromNormalTextTest) {
   EXPECT_EQ("\xE3\x81\x99\xE3\x81\x9A\xE3\x81\x8D", user_dic.entries(3).key());
   EXPECT_EQ("\xE9\x88\xB4\xE6\x9C\xA8", user_dic.entries(3).value());
   EXPECT_EQ("\xE4\xBA\xBA\xE5\x90\x8D", user_dic.entries(3).pos());
+  EXPECT_EQ("", user_dic.entries(3).comment());
 }
 
 TEST(UserDictionaryImporter, ImportFromKotoeriTextTest) {

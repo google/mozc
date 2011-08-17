@@ -38,8 +38,8 @@
 #include "base/config_file_stream.h"
 #include "base/file_stream.h"
 #include "base/util.h"
-#include "session/config.pb.h"
-#include "session/config_handler.h"
+#include "config/config.pb.h"
+#include "config/config_handler.h"
 
 namespace mozc {
 namespace composer {

@@ -34,19 +34,20 @@
   },
   'targets': [
     {
-      'target_name': 'session_quality_test_main',
+      'target_name': 'client_quality_test_main',
       'type': 'executable',
       'sources': [
-        'session_quality_test_main.cc',
+        'client_quality_test_main.cc',
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        '../config/config.gyp:genproto_config',
         '../session/session_base.gyp:genproto_session',
         'client.gyp:client',
       ],
       'actions': [
         {
-          'action_name': 'gen_session_quality_test_data',
+          'action_name': 'gen_client_quality_test_data',
           'variables' : {
             'input_files': [
             ],
@@ -55,15 +56,15 @@
             '<@(input_files)',
           ],
           'outputs': [
-            '<(gen_out_dir)/session_quality_test_data.h',
+            '<(gen_out_dir)/client_quality_test_data.h',
           ],
           'action': [
             'python', '../build_tools/redirect.py',
-            '<(gen_out_dir)/session_quality_test_data.h',
-            'gen_session_quality_test_data.py',
+            '<(gen_out_dir)/client_quality_test_data.h',
+            'gen_client_quality_test_data.py',
             '<@(input_files)',
           ],
-          'message': 'Generating <(gen_out_dir)/session_quality_test_data.h',
+          'message': 'Generating <(gen_out_dir)/client_quality_test_data.h',
         },
       ],
     },
@@ -71,7 +72,7 @@
       'target_name': 'client_test',
       'type': 'executable',
       'sources': [
-        'session_test.cc',
+        'client_test.cc',
       ],
       'dependencies': [
         'client.gyp:client',

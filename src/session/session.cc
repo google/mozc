@@ -39,15 +39,15 @@
 #include "base/util.h"
 #include "base/version.h"
 #include "composer/composer.h"
+#include "config/config_handler.h"
+#include "config/config.pb.h"
 // TODO(komatsu): Delete the next line by refactoring of the initializer.
 #include "converter/converter_interface.h"
 #include "rewriter/calculator/calculator_interface.h"
-#include "session/config_handler.h"
-#include "session/config.pb.h"
 #include "session/internal/keymap.h"
 #include "session/internal/keymap-inl.h"
 #include "session/internal/keymap_factory.h"
-#include "session/internal/session_normalizer.h"
+
 #include "session/internal/session_output.h"
 #include "session/session_converter.h"
 
@@ -418,6 +418,12 @@ bool Session::SendCommand(commands::Command *command) {
       // Define more appropriate function.
       result = Revert(command);
       break;
+    case commands::SessionCommand::MOVE_CURSOR:
+      result = MoveCursorTo(command);
+      break;
+    case commands::SessionCommand::SWITCH_INPUT_FIELD_TYPE:
+      result = SwitchInputFieldType(command);
+      break;
     default:
       LOG(WARNING) << "Unkown command" << command->DebugString();
       result = DoNothing(command);
@@ -538,7 +544,7 @@ bool Session::SendKeyDirectInputState(commands::Command *command) {
   const keymap::KeyMapManager *keymap =
       keymap::KeyMapFactory::GetKeyMapManager(context_->keymap());
   if (!keymap->GetCommandDirect(command->input().key(), &key_command)) {
-    return EchoBack(command);
+    return EchoBackAndClearUndoContext(command);
   }
   string command_name;
   if (keymap->GetNameFromCommandDirect(key_command, &command_name)) {
@@ -563,7 +569,7 @@ bool Session::SendKeyDirectInputState(commands::Command *command) {
     case keymap::DirectInputState::INPUT_MODE_HALF_ALPHANUMERIC:
       return InputModeHalfASCII(command);
     case keymap::DirectInputState::NONE:
-      return EchoBack(command);
+      return EchoBackAndClearUndoContext(command);
     case keymap::DirectInputState::RECONVERT:
       return RequestConvertReverse(command);
   }
@@ -581,7 +587,7 @@ bool Session::SendKeyPrecompositionState(commands::Command *command) {
       keymap->GetCommandPrecomposition(command->input().key(), &key_command);
 
   if (!result) {
-    return EchoBack(command);
+    return EchoBackAndClearUndoContext(command);
   }
   string command_name;
   if (keymap->GetNameFromCommandPrecomposition(key_command, &command_name)) {
@@ -646,7 +652,7 @@ bool Session::SendKeyPrecompositionState(commands::Command *command) {
     case keymap::PrecompositionState::ABORT:
       return Abort(command);
     case keymap::PrecompositionState::NONE:
-      return EchoBack(command);
+      return EchoBackAndClearUndoContext(command);
     case keymap::PrecompositionState::RECONVERT:
       return RequestConvertReverse(command);
   }
@@ -1009,11 +1015,29 @@ bool Session::IMEOff(commands::Command *command) {
 
 bool Session::EchoBack(commands::Command *command) {
   command->mutable_output()->set_consumed(false);
-  ClearUndoContext();
-
   context_->mutable_converter()->Reset();
   OutputKey(command);
   return true;
+}
+
+bool Session::EchoBackAndClearUndoContext(commands::Command *command) {
+  command->mutable_output()->set_consumed(false);
+
+  // Don't clear undo context when KeyEvent has a shift key only.
+  // TODO(hsumita): SHIFT may be assigned to another functions.
+  //                ex) InsertSpace
+  //                We need to check it outside of this function.
+  const commands::KeyEvent &key_event = command->input().key();
+  const int mask = (commands::KeyEvent::SHIFT |
+                    commands::KeyEvent::LEFT_SHIFT |
+                    commands::KeyEvent::RIGHT_SHIFT);
+  if (key_event.has_key_code() ||
+      key_event.modifier_keys_size() != 1 ||
+      key_event.modifier_keys(0) != (key_event.modifier_keys(0) & mask)) {
+    ClearUndoContext();
+  }
+
+  return EchoBack(command);
 }
 
 bool Session::DoNothing(commands::Command *command) {
@@ -1065,7 +1089,6 @@ bool Session::Revert(commands::Command *command) {
 
   SetSessionState(ImeContext::PRECOMPOSITION);
   OutputMode(command);
-  BoundSession();
   return true;
 }
 
@@ -1145,14 +1168,12 @@ bool Session::ConvertReverse(commands::Command *command) {
       context_->state() != ImeContext::DIRECT) {
     return DoNothing(command);
   }
-  context_->mutable_composer()->Reset();
   const string &composition = command->input().command().text();
   if (!context_->mutable_converter()->ConvertReverse(
           composition, context_->mutable_composer())) {
     LOG(ERROR) << "Failed to get reverse conversion";
     return DoNothing(command);
   }
-  context_->set_initial_composition(composition);
   command->mutable_output()->set_consumed(true);
 
   SetSessionState(ImeContext::CONVERSION);
@@ -1233,7 +1254,6 @@ bool Session::SelectCandidateInternal(commands::Command *command) {
   }
 
   command->mutable_output()->set_consumed(true);
-  ClearUndoContext();
 
   context_->mutable_converter()->CandidateMoveToId(
       command->input().command().id());
@@ -1272,7 +1292,6 @@ bool Session::MaybeSelectCandidate(commands::Command *command) {
   return context_->mutable_converter()->CandidateMoveToShortcut(shortcut);
 }
 
-
 void Session::set_client_capability(const commands::Capability &capability) {
   context_->mutable_client_capability()->CopyFrom(capability);
 }
@@ -1308,7 +1327,7 @@ bool Session::InsertCharacter(commands::Command *command) {
     // consumed and done echo back.
     if (key.key_string().size() == 1 &&
         key.key_code() == key.key_string()[0]) {
-      return EchoBack(command);
+      return EchoBackAndClearUndoContext(command);
     }
 
     context_->mutable_composer()->InsertCharacterKeyEvent(key);
@@ -1317,7 +1336,6 @@ bool Session::InsertCharacter(commands::Command *command) {
   }
 
   command->mutable_output()->set_consumed(true);
-  ClearUndoContext();
 
   // Handle shortcut keys selecting a candidate from a list.
   if (MaybeSelectCandidate(command)) {
@@ -1328,6 +1346,9 @@ bool Session::InsertCharacter(commands::Command *command) {
   if (context_->state() == ImeContext::CONVERSION) {
     Commit(command);
     if (key.input_style() == commands::KeyEvent::DIRECT_INPUT) {
+      // Do ClearUndoContext() because it is a direct input.
+      ClearUndoContext();
+
       context_->mutable_composer()->InsertCharacterKeyEvent(key);
       string composition, conversion;
       context_->composer().GetQueryForConversion(&composition);
@@ -1340,7 +1361,6 @@ bool Session::InsertCharacter(commands::Command *command) {
 
       SetSessionState(ImeContext::PRECOMPOSITION);
       Output(command);
-      BoundSession();
       return true;
     }
   }
@@ -1348,6 +1368,10 @@ bool Session::InsertCharacter(commands::Command *command) {
   context_->mutable_composer()->InsertCharacterKeyEvent(key);
   if (context_->mutable_composer()->ShouldCommit()) {
     return Commit(command);
+  }
+  size_t length_to_commit = 0;
+  if (context_->mutable_composer()->ShouldCommitHead(&length_to_commit)) {
+    return CommitHead(length_to_commit, command);
   }
 
   ExpandCompositionForCalculator(command);
@@ -1433,7 +1457,7 @@ bool Session::InsertSpaceHalfWidth(commands::Command *command) {
   }
 
   if (context_->state() == ImeContext::PRECOMPOSITION) {
-    return EchoBack(command);
+    return EchoBackAndClearUndoContext(command);
   }
 
   const commands::CompositionMode mode = command->input().key().mode();
@@ -1471,13 +1495,37 @@ bool Session::InsertSpaceFullWidth(commands::Command *command) {
 }
 
 bool Session::EditCancel(commands::Command *command) {
+  if (CommitIfPassword(command)) {
+    command->mutable_output()->set_consumed(false);
+    return true;
+  }
+
   command->mutable_output()->set_consumed(true);
-  ClearUndoContext();
+
+  // If source_text is set, it usually means this session started by a
+  // reverse conversion.  In this case EditCancel should restore the
+  // string used for the reverse conversion.
+  if (!context_->composer().source_text().empty()) {
+    // The value of source_text is reset at the below Reset
+    // command, so this variable cannot be a reference.
+    const string source_text = context_->composer().source_text();
+    context_->mutable_composer()->Reset();
+    context_->mutable_composer()->InsertCharacterPreedit(source_text);
+    context_->mutable_converter()->CommitPreedit(context_->composer());
+
+    SetSessionState(ImeContext::PRECOMPOSITION);
+    Output(command);
+    return true;
+  }
 
   SetSessionState(ImeContext::PRECOMPOSITION);
+  // It is nice to use Output() instead of OutputMode().  However, if
+  // Output() is used, unnecessary candidate words are shown because
+  // the previous candidate state is not cleared here.  To fix it, we
+  // should carefully modify SessionConverter.
+  //
+  // TODO(komatsu): Use Output() instead of OutputMode.
   OutputMode(command);
-  OutputInitialComposition(command);
-  BoundSession();
   return true;
 }
 
@@ -1487,8 +1535,8 @@ bool Session::Commit(commands::Command *command) {
     return DoNothing(command);
   }
   command->mutable_output()->set_consumed(true);
-  ClearUndoContext();
 
+  ClearUndoContext();
   PushUndoContext();
 
   if (context_->state() == ImeContext::COMPOSITION) {
@@ -1501,8 +1549,23 @@ bool Session::Commit(commands::Command *command) {
 
 
   Output(command);
+  // Copy the previous output for Undo.
   context_->mutable_output()->CopyFrom(command->output());
-  BoundSession();
+  return true;
+}
+
+bool Session::CommitHead(size_t count, commands::Command *command) {
+  if (!(context_->state() & ImeContext::COMPOSITION)) {
+    return DoNothing(command);
+  }
+  command->mutable_output()->set_consumed(true);
+
+  // TODO(yamaguchi): Support undo feature.
+  ClearUndoContext();
+
+  context_->mutable_converter()->
+            CommitHead(count, context_->mutable_composer());
+  Output(command);
   return true;
 }
 
@@ -1526,7 +1589,6 @@ bool Session::CommitFirstSuggestion(commands::Command *command) {
 
 
   Output(command);
-  BoundSession();
   return true;
 }
 
@@ -1545,15 +1607,10 @@ bool Session::CommitSegment(commands::Command *command) {
     // If the converter is not active (ie. the segment size was one.),
     // the state should be switched to precomposition.
     SetSessionState(ImeContext::PRECOMPOSITION);
-    BoundSession();
 
   }
   Output(command);
   return true;
-}
-
-void Session::BoundSession() const {
-  context_->mutable_initial_composition()->clear();
 }
 
 bool Session::ConvertToTransliteration(
@@ -1564,7 +1621,6 @@ bool Session::ConvertToTransliteration(
     return DoNothing(command);
   }
   command->mutable_output()->set_consumed(true);
-  ClearUndoContext();
 
   if (!context_->mutable_converter()->ConvertToTransliteration(
           &context_->composer(), type)) {
@@ -1601,7 +1657,6 @@ bool Session::SwitchKanaType(commands::Command *command) {
     return DoNothing(command);
   }
   command->mutable_output()->set_consumed(true);
-  ClearUndoContext();
 
   if (!context_->mutable_converter()->SwitchKanaType(&context_->composer())) {
     return false;
@@ -1613,7 +1668,6 @@ bool Session::SwitchKanaType(commands::Command *command) {
 
 bool Session::DisplayAsHiragana(commands::Command *command) {
   command->mutable_output()->set_consumed(true);
-  ClearUndoContext();
   if (context_->state() == ImeContext::CONVERSION) {
     return ConvertToHiragana(command);
   } else {  // context_->state() == ImeContext::COMPOSITION
@@ -1625,7 +1679,6 @@ bool Session::DisplayAsHiragana(commands::Command *command) {
 
 bool Session::DisplayAsFullKatakana(commands::Command *command) {
   command->mutable_output()->set_consumed(true);
-  ClearUndoContext();
   if (context_->state() == ImeContext::CONVERSION) {
     return ConvertToFullKatakana(command);
   } else {  // context_->state() == ImeContext::COMPOSITION
@@ -1637,7 +1690,6 @@ bool Session::DisplayAsFullKatakana(commands::Command *command) {
 
 bool Session::DisplayAsHalfKatakana(commands::Command *command) {
   command->mutable_output()->set_consumed(true);
-  ClearUndoContext();
   if (context_->state() == ImeContext::CONVERSION) {
     return ConvertToHalfKatakana(command);
   } else {  // context_->state() == ImeContext::COMPOSITION
@@ -1649,7 +1701,6 @@ bool Session::DisplayAsHalfKatakana(commands::Command *command) {
 
 bool Session::TranslateFullASCII(commands::Command *command) {
   command->mutable_output()->set_consumed(true);
-  ClearUndoContext();
   if (context_->state() == ImeContext::CONVERSION) {
     return ConvertToFullASCII(command);
   } else {  // context_->state() == ImeContext::COMPOSITION
@@ -1663,7 +1714,6 @@ bool Session::TranslateFullASCII(commands::Command *command) {
 
 bool Session::TranslateHalfASCII(commands::Command *command) {
   command->mutable_output()->set_consumed(true);
-  ClearUndoContext();
   if (context_->state() == ImeContext::CONVERSION) {
     return ConvertToHalfASCII(command);
   } else {  // context_->state() == ImeContext::COMPOSITION
@@ -1677,7 +1727,6 @@ bool Session::TranslateHalfASCII(commands::Command *command) {
 
 bool Session::InputModeHiragana(commands::Command *command) {
   command->mutable_output()->set_consumed(true);
-  ClearUndoContext();
   EnsureIMEIsOn();
   // The temporary mode should not be overridden.
   SwitchInputMode(transliteration::HIRAGANA, context_->mutable_composer());
@@ -1687,7 +1736,6 @@ bool Session::InputModeHiragana(commands::Command *command) {
 
 bool Session::InputModeFullKatakana(commands::Command *command) {
   command->mutable_output()->set_consumed(true);
-  ClearUndoContext();
   EnsureIMEIsOn();
   // The temporary mode should not be overridden.
   SwitchInputMode(transliteration::FULL_KATAKANA, context_->mutable_composer());
@@ -1697,7 +1745,6 @@ bool Session::InputModeFullKatakana(commands::Command *command) {
 
 bool Session::InputModeHalfKatakana(commands::Command *command) {
   command->mutable_output()->set_consumed(true);
-  ClearUndoContext();
   EnsureIMEIsOn();
   // The temporary mode should not be overridden.
   SwitchInputMode(transliteration::HALF_KATAKANA, context_->mutable_composer());
@@ -1707,7 +1754,6 @@ bool Session::InputModeHalfKatakana(commands::Command *command) {
 
 bool Session::InputModeFullASCII(commands::Command *command) {
   command->mutable_output()->set_consumed(true);
-  ClearUndoContext();
   EnsureIMEIsOn();
   // The temporary mode should not be overridden.
   SwitchInputMode(transliteration::FULL_ASCII, context_->mutable_composer());
@@ -1717,7 +1763,6 @@ bool Session::InputModeFullASCII(commands::Command *command) {
 
 bool Session::InputModeHalfASCII(commands::Command *command) {
   command->mutable_output()->set_consumed(true);
-  ClearUndoContext();
   EnsureIMEIsOn();
   // The temporary mode should not be overridden.
   SwitchInputMode(transliteration::HALF_ASCII, context_->mutable_composer());
@@ -1731,7 +1776,6 @@ bool Session::InputModeSwitchKanaType(commands::Command *command) {
   }
 
   command->mutable_output()->set_consumed(true);
-  ClearUndoContext();
 
   transliteration::TransliterationType current_type =
       context_->composer().GetInputMode();
@@ -1774,7 +1818,6 @@ bool Session::ConvertToHalfWidth(commands::Command *command) {
     return DoNothing(command);
   }
   command->mutable_output()->set_consumed(true);
-  ClearUndoContext();
 
   if (!context_->mutable_converter()->ConvertToHalfWidth(
           &context_->composer())) {
@@ -1787,7 +1830,6 @@ bool Session::ConvertToHalfWidth(commands::Command *command) {
 
 bool Session::TranslateHalfWidth(commands::Command *command) {
   command->mutable_output()->set_consumed(true);
-  ClearUndoContext();
   if (context_->state() == ImeContext::CONVERSION) {
     return ConvertToHalfWidth(command);
   } else {  // context_->state() == ImeContext::COMPOSITION
@@ -1838,7 +1880,6 @@ bool Session::LaunchWordRegisterDialog(commands::Command *command) {
 
 bool Session::ToggleAlphanumericMode(commands::Command *command) {
   command->mutable_output()->set_consumed(true);
-  ClearUndoContext();
   context_->mutable_composer()->ToggleInputMode();
 
   OutputFromState(command);
@@ -1847,7 +1888,6 @@ bool Session::ToggleAlphanumericMode(commands::Command *command) {
 
 bool Session::Convert(commands::Command *command) {
   command->mutable_output()->set_consumed(true);
-  ClearUndoContext();
   string composition;
   context_->composer().GetQueryForConversion(&composition);
 
@@ -1884,7 +1924,6 @@ bool Session::Convert(commands::Command *command) {
 
 bool Session::ConvertWithoutHistory(commands::Command *command) {
   command->mutable_output()->set_consumed(true);
-  ClearUndoContext();
 
   ConversionPreferences preferences =
     context_->converter().conversion_preferences();
@@ -1901,9 +1940,20 @@ bool Session::ConvertWithoutHistory(commands::Command *command) {
   return true;
 }
 
+bool Session::CommitIfPassword(commands::Command *command) {
+  if (context_->composer().GetInputFieldType() ==
+      commands::SessionCommand::PASSWORD) {
+    Commit(command);
+    return true;
+  }
+  return false;
+}
+
 bool Session::MoveCursorRight(commands::Command *command) {
   command->mutable_output()->set_consumed(true);
-  ClearUndoContext();
+  if (CommitIfPassword(command)) {
+    return true;
+  }
   context_->mutable_composer()->MoveCursorRight();
   if (context_->mutable_converter()->Suggest(&context_->composer())) {
     DCHECK(context_->converter().IsActive());
@@ -1916,7 +1966,9 @@ bool Session::MoveCursorRight(commands::Command *command) {
 
 bool Session::MoveCursorLeft(commands::Command *command) {
   command->mutable_output()->set_consumed(true);
-  ClearUndoContext();
+  if (CommitIfPassword(command)) {
+    return true;
+  }
   context_->mutable_composer()->MoveCursorLeft();
   if (context_->mutable_converter()->Suggest(&context_->composer())) {
     DCHECK(context_->converter().IsActive());
@@ -1929,8 +1981,29 @@ bool Session::MoveCursorLeft(commands::Command *command) {
 
 bool Session::MoveCursorToEnd(commands::Command *command) {
   command->mutable_output()->set_consumed(true);
-  ClearUndoContext();
+  if (CommitIfPassword(command)) {
+    return true;
+  }
   context_->mutable_composer()->MoveCursorToEnd();
+  if (context_->mutable_converter()->Suggest(&context_->composer())) {
+    DCHECK(context_->converter().IsActive());
+    Output(command);
+    return true;
+  }
+  OutputComposition(command);
+  return true;
+}
+
+bool Session::MoveCursorTo(commands::Command *command) {
+  if (context_->state() != ImeContext::COMPOSITION) {
+    return DoNothing(command);
+  }
+  command->mutable_output()->set_consumed(true);
+  if (CommitIfPassword(command)) {
+    return true;
+  }
+  context_->mutable_composer()->
+      MoveCursorTo(command->input().command().cursor_position());
   if (context_->mutable_converter()->Suggest(&context_->composer())) {
     DCHECK(context_->converter().IsActive());
     Output(command);
@@ -1942,7 +2015,9 @@ bool Session::MoveCursorToEnd(commands::Command *command) {
 
 bool Session::MoveCursorToBeginning(commands::Command *command) {
   command->mutable_output()->set_consumed(true);
-  ClearUndoContext();
+  if (CommitIfPassword(command)) {
+    return true;
+  }
   context_->mutable_composer()->MoveCursorToBeginning();
   if (context_->mutable_converter()->Suggest(&context_->composer())) {
     DCHECK(context_->converter().IsActive());
@@ -1955,12 +2030,10 @@ bool Session::MoveCursorToBeginning(commands::Command *command) {
 
 bool Session::Delete(commands::Command *command) {
   command->mutable_output()->set_consumed(true);
-  ClearUndoContext();
   context_->mutable_composer()->Delete();
   if (context_->mutable_composer()->Empty()) {
     SetSessionState(ImeContext::PRECOMPOSITION);
     OutputMode(command);
-    BoundSession();
   } else if (context_->mutable_converter()->Suggest(&context_->composer())) {
     DCHECK(context_->converter().IsActive());
     Output(command);
@@ -1973,12 +2046,10 @@ bool Session::Delete(commands::Command *command) {
 
 bool Session::Backspace(commands::Command *command) {
   command->mutable_output()->set_consumed(true);
-  ClearUndoContext();
   context_->mutable_composer()->Backspace();
   if (context_->mutable_composer()->Empty()) {
     SetSessionState(ImeContext::PRECOMPOSITION);
     OutputMode(command);
-    BoundSession();
   } else if (context_->mutable_converter()->Suggest(&context_->composer())) {
     DCHECK(context_->converter().IsActive());
     Output(command);
@@ -1994,7 +2065,6 @@ bool Session::SegmentFocusRight(commands::Command *command) {
     return DoNothing(command);
   }
   command->mutable_output()->set_consumed(true);
-  ClearUndoContext();
   context_->mutable_converter()->SegmentFocusRight();
   Output(command);
   return true;
@@ -2006,19 +2076,11 @@ bool Session::SegmentFocusRightOrCommit(commands::Command *command) {
   }
   command->mutable_output()->set_consumed(true);
 
-  // TODO(komatsu): Support undo feature.
-  ClearUndoContext();
-
-  context_->mutable_converter()->SegmentFocusRightOrCommit();
-  // Commit is done in SegmentFocusRightOrCommit
-  // so reset current state to PRECOMPOSITION.
-  if (!context_->converter().IsActive()) {
-    SetSessionState(ImeContext::PRECOMPOSITION);
-    BoundSession();
-
+  if (context_->converter().IsLastSegmentFocused()) {
+    return Commit(command);
+  } else {
+    return SegmentFocusRight(command);
   }
-  Output(command);
-  return true;
 }
 
 bool Session::SegmentFocusLast(commands::Command *command) {
@@ -2026,7 +2088,6 @@ bool Session::SegmentFocusLast(commands::Command *command) {
     return DoNothing(command);
   }
   command->mutable_output()->set_consumed(true);
-  ClearUndoContext();
   context_->mutable_converter()->SegmentFocusLast();
   Output(command);
   return true;
@@ -2037,7 +2098,6 @@ bool Session::SegmentFocusLeft(commands::Command *command) {
     return DoNothing(command);
   }
   command->mutable_output()->set_consumed(true);
-  ClearUndoContext();
   context_->mutable_converter()->SegmentFocusLeft();
   Output(command);
   return true;
@@ -2048,7 +2108,6 @@ bool Session::SegmentFocusLeftEdge(commands::Command *command) {
     return DoNothing(command);
   }
   command->mutable_output()->set_consumed(true);
-  ClearUndoContext();
   context_->mutable_converter()->SegmentFocusLeftEdge();
   Output(command);
   return true;
@@ -2059,7 +2118,6 @@ bool Session::SegmentWidthExpand(commands::Command *command) {
     return DoNothing(command);
   }
   command->mutable_output()->set_consumed(true);
-  ClearUndoContext();
   context_->mutable_converter()->SegmentWidthExpand();
   Output(command);
   return true;
@@ -2070,7 +2128,6 @@ bool Session::SegmentWidthShrink(commands::Command *command) {
     return DoNothing(command);
   }
   command->mutable_output()->set_consumed(true);
-  ClearUndoContext();
   context_->mutable_converter()->SegmentWidthShrink();
   Output(command);
   return true;
@@ -2082,7 +2139,6 @@ bool Session::ReportBug(commands::Command *command) {
 
 bool Session::ConvertNext(commands::Command *command) {
   command->mutable_output()->set_consumed(true);
-  ClearUndoContext();
   context_->mutable_converter()->CandidateNext();
   Output(command);
   return true;
@@ -2090,7 +2146,6 @@ bool Session::ConvertNext(commands::Command *command) {
 
 bool Session::ConvertNextPage(commands::Command *command) {
   command->mutable_output()->set_consumed(true);
-  ClearUndoContext();
   context_->mutable_converter()->CandidateNextPage();
   Output(command);
   return true;
@@ -2098,7 +2153,6 @@ bool Session::ConvertNextPage(commands::Command *command) {
 
 bool Session::ConvertPrev(commands::Command *command) {
   command->mutable_output()->set_consumed(true);
-  ClearUndoContext();
   context_->mutable_converter()->CandidatePrev();
   Output(command);
   return true;
@@ -2106,7 +2160,6 @@ bool Session::ConvertPrev(commands::Command *command) {
 
 bool Session::ConvertPrevPage(commands::Command *command) {
   command->mutable_output()->set_consumed(true);
-  ClearUndoContext();
   context_->mutable_converter()->CandidatePrevPage();
   Output(command);
   return true;
@@ -2114,7 +2167,6 @@ bool Session::ConvertPrevPage(commands::Command *command) {
 
 bool Session::ConvertCancel(commands::Command *command) {
   command->mutable_output()->set_consumed(true);
-  ClearUndoContext();
 
   SetSessionState(ImeContext::COMPOSITION);
   context_->mutable_converter()->Cancel();
@@ -2134,7 +2186,6 @@ bool Session::PredictAndConvert(commands::Command *command) {
   }
 
   command->mutable_output()->set_consumed(true);
-  ClearUndoContext();
   if (context_->mutable_converter()->Predict(&context_->composer())) {
     SetSessionState(ImeContext::CONVERSION);
     Output(command);
@@ -2208,20 +2259,6 @@ void Session::OutputKey(commands::Command *command) const {
   OutputMode(command);
   commands::KeyEvent *key = command->mutable_output()->mutable_key();
   key->CopyFrom(command->input().key());
-}
-
-void Session::OutputInitialComposition(commands::Command *command) const {
-  const string &composition = context_->initial_composition();
-  if (composition.empty()) {
-    return;
-  }
-
-  // Output composition string
-  commands::Result *result = command->mutable_output()->mutable_result();
-  DCHECK(result != NULL);
-  result->set_type(commands::Result::STRING);
-  result->set_value(composition);
-  BoundSession();
 }
 
 namespace {
@@ -2381,6 +2418,14 @@ void Session::ExpandCompositionForCalculator(commands::Command *command) {
   context_->mutable_converter()->RemoveTailOfHistorySegments(expansion_length);
 }
 
+bool Session::SwitchInputFieldType(commands::Command *command) {
+  command->mutable_output()->set_consumed(true);
+  context_->mutable_composer()->SetInputFieldType(
+       command->input().command().input_field_type());
+  Output(command);
+  return true;
+}
+
 // TODO(komatsu): delete this funciton.
 composer::Composer *Session::get_internal_composer_only_for_unittest() {
   return context_->mutable_composer();
@@ -2390,5 +2435,5 @@ const ImeContext &Session::context() const {
   return *context_;
 }
 
-}  // nsmaespace session
+}  // namespace session
 }  // namespace mozc

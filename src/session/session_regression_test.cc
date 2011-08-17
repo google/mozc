@@ -34,12 +34,13 @@
 #include "base/base.h"
 #include "base/util.h"
 #include "composer/table.h"
+#include "config/config.pb.h"
+#include "config/config_handler.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
 #include "rewriter/rewriter_interface.h"
-#include "session/config.pb.h"
-#include "session/config_handler.h"
 #include "session/internal/keymap.h"
+#include "session/japanese_session_factory.h"
 #include "session/key_parser.h"
 #include "session/session.h"
 #include "session/session_converter_interface.h"
@@ -79,6 +80,7 @@ class SessionRegressionTest : public testing::Test {
  protected:
   virtual void SetUp() {
     Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    session::SessionFactoryManager::SetSessionFactory(&session_factory_);
 
     orig_use_history_rewriter_ = FLAGS_use_history_rewriter;
     FLAGS_use_history_rewriter = true;
@@ -129,6 +131,7 @@ class SessionRegressionTest : public testing::Test {
   bool orig_use_history_rewriter_;
   scoped_ptr<SessionHandler> handler_;
   scoped_ptr<session::Session> session_;
+  session::JapaneseSessionFactory session_factory_;
 };
 
 
@@ -345,29 +348,27 @@ TEST_F(SessionRegressionTest, PredictionAfterUndo) {
 
   commands::Command command;
   InsertCharacterChars("yoroshi", &command);
-  // "よろしくお願いします"
+  // "よろしく"
   const string kYoroshikuString =
-      "\xE3\x82\x88\xE3\x82\x8D\xE3\x81\x97\xE3\x81\x8F"
-      "\xE3\x81\x8A\xE9\xA1\x98\xE3\x81\x84"
-      "\xE3\x81\x97\xE3\x81\xBE\xE3\x81\x99";
+      "\xe3\x82\x88\xe3\x82\x8d\xe3\x81\x97\xe3\x81\x8f";
 
   command.Clear();
   session_->PredictAndConvert(&command);
   EXPECT_EQ(1, command.output().preedit().segment_size());
 
-  // Candidate contain "よろしくお願いします" or NOT
-  bool is_convert_success = false;
+  // Candidate contain "よろしく" or NOT
+  int yoroshiku_id = -1;
   for (size_t i = 0; i < 10; ++i) {
     if (GetComposition(command) == kYoroshikuString) {
-      is_convert_success = true;
+      yoroshiku_id = i;
       break;
     }
 
     command.Clear();
     session_->ConvertNext(&command);
   }
-  EXPECT_TRUE(is_convert_success);
   EXPECT_EQ(kYoroshikuString, GetComposition(command));
+  EXPECT_GE(yoroshiku_id, 0);
 
   command.Clear();
   session_->Commit(&command);
@@ -378,7 +379,7 @@ TEST_F(SessionRegressionTest, PredictionAfterUndo) {
   session_->context().converter().GetSegments(&segments);
   EXPECT_EQ(1, segments.history_segments_size());
   EXPECT_EQ(0, segments.conversion_segments_size());
-  EXPECT_EQ(kYoroshikuString, segments.segment(0).candidate(0).value);
+  EXPECT_EQ(kYoroshikuString, segments.history_segment(0).candidate(0).value);
 
   command.Clear();
   session_->Undo(&command);
@@ -387,7 +388,8 @@ TEST_F(SessionRegressionTest, PredictionAfterUndo) {
   EXPECT_EQ(0, segments.history_segments_size());
   EXPECT_EQ(1, segments.conversion_segments_size());
   // Confirm the result contains suggestion candidates from "よろし"
-  EXPECT_EQ(kYoroshikuString, segments.segment(0).candidate(0).value);
+  EXPECT_EQ(kYoroshikuString,
+            segments.conversion_segment(0).candidate(yoroshiku_id).value);
   EXPECT_EQ(kYoroshikuString, GetComposition(command));
 }
 

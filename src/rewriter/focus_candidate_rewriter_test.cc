@@ -30,13 +30,15 @@
 #include <string>
 #include "base/base.h"
 #include "base/util.h"
-#include "transliteration/transliteration.h"
+#include "config/config.pb.h"
+#include "config/config_handler.h"
 #include "converter/segments.h"
 #include "rewriter/focus_candidate_rewriter.h"
-#include "session/config.pb.h"
-#include "session/config_handler.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/googletest.h"
+#include "transliteration/transliteration.h"
+
+DECLARE_string(test_tmpdir);
 
 namespace mozc {
 namespace {
@@ -474,6 +476,28 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterNumber) {
   //  EXPECT_EQ("参", seg[2]->candidate(0).content_value);
   EXPECT_EQ("\xE5\x8F\x82", seg[2]->candidate(0).content_value);
   EXPECT_EQ("4",  seg[6]->candidate(0).content_value);  // far from
+}
+
+// Bug #4596846: Non-number characters are changed to numbers
+TEST_F(FocusCandidateRewriterTest, DontChangeNonNumberSegment) {
+  Segments segments;
+  Segment *seg[2];
+  for (int i = 0; i < arraysize(seg); ++i) {
+    seg[i] = segments.add_segment();
+  }
+
+  // set key
+  seg[0]->set_key("1");
+  AddCandidate(seg[0], "1");
+  AddCandidate(seg[0], "\xEF\xBC\x91");  // "１"
+  AddCandidate(seg[1], "\xE8\xAA\x9E");  // "語"
+  AddCandidate(seg[1], "\xEF\xBC\x95");  // "５"
+
+  // Should not change a segment that doesn't have a number as its first
+  // candidate.
+  EXPECT_FALSE(GetRewriter()->Focus(&segments, 0,
+                                   1));
+  EXPECT_NE("\xEF\xBC\x95", seg[1]->candidate(0).content_value);
 }
 
 TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterSuffix) {

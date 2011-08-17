@@ -50,7 +50,7 @@
             ['use_libzinnia==1', {
               'link_settings': {
                 'libraries': [
-                  ' <!@(pkg-config --libs zinnia)',
+                  ' <!@(<(pkg_config_command) --libs zinnia)',
                 ],
               },
             }, {  # OS=="linux" and use_libzinnia==0

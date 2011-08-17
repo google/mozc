@@ -37,7 +37,7 @@
 #include "base/base.h"
 #include "base/const.h"
 #include "base/run_level.h"
-#include "client/session.h"
+#include "client/client.h"
 
 int main(int argc, char *argv[]) {
   if (!mozc::RunLevel::IsValidClientRunLevel()) {
@@ -58,8 +58,8 @@ int main(int argc, char *argv[]) {
   // Start the converter server at this time explicitly to prevent the
   // slow-down of the response for initial key event.
   {
-    scoped_ptr<mozc::client::Session> session(new mozc::client::Session);
-    session->PingServer();
+    scoped_ptr<mozc::client::Client> client(new mozc::client::Client);
+    client->PingServer();
   }
   RunApplicationEventLoop();
   [pool drain];

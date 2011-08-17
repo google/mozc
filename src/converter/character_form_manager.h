@@ -34,7 +34,7 @@
 #include <vector>
 #include <utility>
 #include "base/base.h"
-#include "session/config.pb.h"
+#include "config/config.pb.h"
 
 namespace mozc {
 

@@ -107,6 +107,15 @@ void InitSeed() {
 once_t seed_init_once = MOZC_ONCE_INIT;
 }  // namespace
 
+void RandomKeyEventsGenerator::PrepareForMemoryLeakTest() {
+  // Read all kTestSentences and load these to memory.
+  const int size = arraysize(kTestSentences);
+  for (int i = 0; i < size; ++i) {
+    const char *sentence = kTestSentences[i];
+    CHECK_GT(strlen(sentence), 0);
+  }
+}
+
 void RandomKeyEventsGenerator::GenerateSequence(
     vector<commands::KeyEvent> *keys) {
   CHECK(keys);

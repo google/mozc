@@ -82,4 +82,47 @@ TEST(ThreadTest, BasicThreadTest) {
     EXPECT_FALSE(t.IsRunning());
   }
 }
+
+namespace {
+TLS_KEYWORD int g_tls_value = 0;
+TLS_KEYWORD int g_tls_values[100] =  { 0 };
+
+class TLSThread : public Thread {
+ public:
+  void Run() {
+    ++g_tls_value;
+    ++g_tls_value;
+    ++g_tls_value;
+    for (int i = 0; i < 100; ++i) {
+      g_tls_values[i] = i;
+    }
+    for (int i = 0; i < 100; ++i) {
+      g_tls_values[i] += i;
+    }
+    int result = 0;
+    for (int i = 0; i < 100; ++i) {
+      result += g_tls_values[i];
+    }
+    EXPECT_EQ(3, g_tls_value);
+    EXPECT_EQ(9900, result);
+  }
+};
+}
+
+TEST(ThreadTest, TLSTest) {
+#ifdef HAVE_TLS
+  vector<TLSThread *> threads;
+  for (int i = 0; i < 10; ++i) {
+    threads.push_back(new TLSThread);
+  }
+  for (int i = 0; i < 10; ++i) {
+    threads[i]->Start();
+  }
+
+  for (int i = 0; i < 10; ++i) {
+    threads[i]->Join();
+    delete threads[i];
+  }
+#endif
+}
 }  // namespace mozc

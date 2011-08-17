@@ -42,6 +42,10 @@
 namespace mozc {
 
 bool UpdateUtil::WriteActiveUsageInfo() {
+#ifndef GOOGLE_JAPANESE_INPUT_BUILD
+  return false;
+#endif  // !GOOGLE_JAPANESE_INPUT_BUILD
+
 #ifdef OS_WINDOWS
   const wchar_t kOmahaUsageKey[] = L"Software\\Google\\Update\\ClientState\\"
                                    L"{DDCCD2A9-025E-4142-BCEB-F467B88CF830}";
@@ -75,6 +79,10 @@ bool UpdateUtil::WriteActiveUsageInfo() {
 }
 
 string UpdateUtil::GetAvailableVersion() {
+#ifndef GOOGLE_JAPANESE_INPUT_BUILD
+  return "";
+#endif  // !GOOGLE_JAPANESE_INPUT_BUILD
+
 #ifdef OS_WINDOWS
   const wchar_t kOmahaClientsKey[] = L"Software\\Google\\Update\\Clients\\"
                                      L"{DDCCD2A9-025E-4142-BCEB-F467B88CF830}";
@@ -121,6 +129,10 @@ bool UpdateUtil::CompareVersion(const string &lhs, const string &rhs) {
 }
 
 bool UpdateUtil::IsNewVersionAvailable() {
+#ifndef GOOGLE_JAPANESE_INPUT_BUILD
+  return false;
+#endif  // !GOOGLE_JAPANESE_INPUT_BUILD
+
 #ifdef OS_WINDOWS
   const string available_version = GetAvailableVersion();
   if (available_version.empty()) {

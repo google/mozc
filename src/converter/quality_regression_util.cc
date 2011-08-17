@@ -29,24 +29,26 @@
 
 #include <string>
 #include <vector>
+#include <sstream>
 #include "base/base.h"
+#include "base/file_stream.h"
 #include "base/util.h"
+#include "config/config_handler.h"
+#include "config/config.pb.h"
 #include "converter/segments.h"
 #include "converter/converter_interface.h"
 #include "converter/quality_regression_util.h"
-#include "session/config_handler.h"
-#include "session/config.pb.h"
 
 namespace mozc {
 namespace quality_regression {
 namespace {
 
-const char kConversionExpect[]    = "Conversion Expect";
-const char kConversionNotExpect[] = "Conversion Not Expect";
-const char kReverseConversionExpect[]    = "ReverseConversion Expect";
-const char kReverseConversionNotExpect[] = "ReverseConversion Not Expect";
-const char kPredictionExpect[]    = "Prediction Expect";
-const char kPredictionNotExpect[] = "Prediction Not Expect";
+const char kConversionExpect[]    = "Conversion Expected";
+const char kConversionNotExpect[] = "Conversion Not Expected";
+const char kReverseConversionExpect[]    = "ReverseConversion Expected";
+const char kReverseConversionNotExpect[] = "ReverseConversion Not Expected";
+const char kPredictionExpect[]    = "Prediction Expected";
+const char kPredictionNotExpect[] = "Prediction Not Expected";
 
 // copied from evaluation/quality_regression/evaluator.cc
 int GetRank(const string &value, const Segments *segments,
@@ -80,6 +82,35 @@ int GetRank(const string &value, const Segments *segments,
 }
 }   // namespace
 
+string QualityRegressionUtil::TestItem::OutputAsTSV() const {
+  ostringstream os;
+  os << label << '\t' << key << '\t' << expected_value << '\t'
+     << command << '\t' << expected_rank << '\t' << accuracy;
+  if (!comment.empty()) {
+    os << '\t' << accuracy;
+  }
+  return os.str();
+}
+
+bool QualityRegressionUtil::TestItem::ParseFromTSV(const string &line) {
+  vector<string> tokens;
+  Util::SplitStringUsing(line, "\t", &tokens);
+  if (tokens.size() < 6) {
+    return false;
+  }
+  label          = tokens[0];
+  key            = tokens[1];
+  expected_value = tokens[2];
+  command        = tokens[3];
+  expected_rank  = atoi(tokens[4].c_str());
+  accuracy       = atof(tokens[5].c_str());
+  comment.clear();
+  if (tokens.size() >= 7) {
+    comment = tokens[6];
+  }
+  return true;
+}
+
 QualityRegressionUtil::QualityRegressionUtil()
     : converter_(ConverterFactory::GetConverter()),
       segments_(new Segments) {
@@ -90,11 +121,39 @@ QualityRegressionUtil::QualityRegressionUtil()
 
 QualityRegressionUtil::~QualityRegressionUtil() {}
 
-bool QualityRegressionUtil::ConvertAndTest(const string &key,
-                                           const string &expected_value,
-                                           const string &command,
-                                           int expected_rank,
+// static
+bool QualityRegressionUtil::ParseFile(const string &filename,
+                                      vector<TestItem> *outputs) {
+  // TODO(taku): support an XML file of Mozcsu.
+  outputs->clear();
+  InputFileStream ifs(filename.c_str());
+  if (!ifs) {
+    return false;
+  }
+  string line;
+  while (getline(ifs, line)) {
+    if (line.empty() || line.c_str()[0] == '#') {
+      continue;
+    }
+    TestItem item;
+    if (!item.ParseFromTSV(line)) {
+      LOG(ERROR) << "Cannot parse: " << line;
+      return false;
+    }
+    outputs->push_back(item);
+  }
+  return true;
+}
+
+// static
+
+bool QualityRegressionUtil::ConvertAndTest(const TestItem &item,
                                            string *actual_value) {
+  const string &key = item.key;
+  const string &expected_value = item.expected_value;
+  const string &command = item.command;
+  const int expected_rank = item.expected_rank;
+
   CHECK(actual_value);
   segments_->Clear();
   converter_->ResetConversion(segments_.get());

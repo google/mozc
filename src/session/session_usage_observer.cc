@@ -46,9 +46,9 @@
 #include "base/base.h"
 #include "base/config_file_stream.h"
 #include "base/singleton.h"
+#include "config/config_handler.h"
+#include "config/config.pb.h"
 #include "session/commands.pb.h"
-#include "session/config_handler.h"
-#include "session/config.pb.h"
 #include "session/internal/keymap.h"
 #include "session/state.pb.h"
 #include "usage_stats/usage_stats.h"
@@ -148,6 +148,19 @@ void SetConfigStats() {
   usage_stats::UsageStats::SetBoolean("ConfigUseSymbolConversion", use_symbol);
   const bool use_number = GET_CONFIG(use_number_conversion);
   usage_stats::UsageStats::SetBoolean("ConfigUseNumberConversion", use_number);
+  const bool use_emoticon = GET_CONFIG(use_emoticon_conversion);
+  usage_stats::UsageStats::SetBoolean("ConfigUseEmoticonConversion",
+                                      use_emoticon);
+  const bool use_calculator = GET_CONFIG(use_calculator);
+  usage_stats::UsageStats::SetBoolean("ConfigUseCalculator", use_calculator);
+  const bool use_t13n = GET_CONFIG(use_t13n_conversion);
+  usage_stats::UsageStats::SetBoolean("ConfigUseT13nConversion", use_t13n);
+  const bool use_zip_code = GET_CONFIG(use_zip_code_conversion);
+  usage_stats::UsageStats::SetBoolean("ConfigUseZipCodeConversion",
+                                      use_zip_code);
+  const bool use_spelling_correction = GET_CONFIG(use_spelling_correction);
+  usage_stats::UsageStats::SetBoolean("ConfigUseSpellingCorrection",
+                                      use_spelling_correction);
   const bool incognito = GET_CONFIG(incognito_mode);
   usage_stats::UsageStats::SetBoolean("ConfigIncognito", incognito);
 
@@ -159,6 +172,9 @@ void SetConfigStats() {
   const bool use_dictionary = GET_CONFIG(use_dictionary_suggest);
   usage_stats::UsageStats::SetBoolean("ConfigUseDictionarySuggest",
                                       use_dictionary);
+  const bool use_realtime_conversion = GET_CONFIG(use_realtime_conversion);
+  usage_stats::UsageStats::SetBoolean("ConfigUseRealtimeConversion",
+                                      use_realtime_conversion);
 
   const uint32 suggest_size = GET_CONFIG(suggestions_size);
   usage_stats::UsageStats::SetInteger("ConfigSuggestionsSize", suggest_size);
@@ -166,6 +182,9 @@ void SetConfigStats() {
   const bool use_auto_ime_turn_off = GET_CONFIG(use_auto_ime_turn_off);
   usage_stats::UsageStats::SetBoolean("ConfigUseAutoIMETurnOff",
                                       use_auto_ime_turn_off);
+  const bool use_cascading_window = GET_CONFIG(use_cascading_window);
+  usage_stats::UsageStats::SetBoolean("ConfigUseCascadingWindow",
+                                      use_cascading_window);
 
   const uint32 shift = GET_CONFIG(shift_key_mode_switch);
   usage_stats::UsageStats::SetInteger("ConfigShiftKeyModeSwitch", shift);
@@ -173,6 +192,21 @@ void SetConfigStats() {
   usage_stats::UsageStats::SetInteger("ConfigSpaceCharacterForm", space);
   const uint32 numpad = GET_CONFIG(numpad_character_form);
   usage_stats::UsageStats::SetInteger("ConfigNumpadCharacterForm", numpad);
+
+  const bool use_auto_conversion = GET_CONFIG(use_auto_conversion);
+  usage_stats::UsageStats::SetBoolean("ConfigUseAutoConversion",
+                                      use_auto_conversion);
+  const uint32 auto_conversion_key = GET_CONFIG(auto_conversion_key);
+  usage_stats::UsageStats::SetInteger("ConfigAutoConversionKey",
+                                      auto_conversion_key);
+
+  const uint32 yen_sign_character = GET_CONFIG(yen_sign_character);
+  usage_stats::UsageStats::SetInteger("ConfigYenSignCharacter",
+                                      yen_sign_character);
+
+  const bool use_japanese_layout = GET_CONFIG(use_japanese_layout);
+  usage_stats::UsageStats::SetBoolean("ConfigUseJapaneseLayout",
+                                       use_japanese_layout);
 
   const bool ime_activation_key_customized = IMEActivationKeyCustomized();
   usage_stats::UsageStats::SetBoolean("IMEActivationKeyCustomized",

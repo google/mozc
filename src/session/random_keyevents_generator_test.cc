@@ -39,6 +39,8 @@ namespace session {
 
 // This is not a deterministic test.
 TEST(RandomKeyEventsGeneratorTest, BasicTest) {
+  RandomKeyEventsGenerator::PrepareForMemoryLeakTest();
+
   vector<mozc::commands::KeyEvent> keys;
   for (int i = 0; i < 1000; ++i) {
     keys.clear();
@@ -46,5 +48,6 @@ TEST(RandomKeyEventsGeneratorTest, BasicTest) {
     EXPECT_TRUE(!keys.empty());
   }
 }
+
 }  // namespace session
 }  // namespace mozc

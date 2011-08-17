@@ -29,6 +29,9 @@
 
 #include "renderer/win32/text_renderer.h"
 
+#include "renderer/renderer_style.pb.h"
+#include "renderer/renderer_style_handler.h"
+
 namespace mozc {
 namespace renderer {
 namespace win32 {
@@ -36,6 +39,8 @@ using WTL::CLogFont;
 using WTL::CPoint;
 using WTL::CRect;
 using WTL::CSize;
+using mozc::renderer::RendererStyle;
+using mozc::renderer::RendererStyleHandler;
 
 namespace {
 // Font color scheme
@@ -102,6 +107,48 @@ void TextRenderer::Init() {
   fonts_[FONTSET_FOOTER_LABEL].color = kFooterLabelColor;
   fonts_[FONTSET_FOOTER_SUBLABEL].color = kFooterSubLabelColor;
   fonts_[FONTSET_SHORTCUT].color = kShortcutColor;
+
+  // TODO(horo): Not only infolist fonts but also candidate fonts
+  //             should be created from RendererStyle
+  RendererStyle style;
+  RendererStyleHandler::GetRendererStyle(&style);
+  const RendererStyle::InfolistStyle infostyle = style.infolist_style();
+
+  CLogFont tmp_font;
+  tmp_font.SetMessageBoxFont();
+
+  // Negative |lfHeight| means the character height.
+  // See http://support.microsoft.com/kb/32667/en for details.
+  tmp_font.lfHeight = -infostyle.caption_style().font_size();
+  fonts_[FONTSET_INFOLIST_CAPTION].font.CreateFontIndirectW(&tmp_font);
+  fonts_[FONTSET_INFOLIST_CAPTION].style = DT_LEFT | DT_VCENTER |
+      DT_SINGLELINE | DT_NOPREFIX;
+  fonts_[FONTSET_INFOLIST_CAPTION].color = RGB(
+      infostyle.caption_style().foreground_color().r(),
+      infostyle.caption_style().foreground_color().g(),
+      infostyle.caption_style().foreground_color().b());
+
+  // Negative |lfHeight| means the character height.
+  // See http://support.microsoft.com/kb/32667/en for details.
+  tmp_font.lfHeight = -infostyle.title_style().font_size();
+  fonts_[FONTSET_INFOLIST_TITLE].font.CreateFontIndirectW(&tmp_font);
+  fonts_[FONTSET_INFOLIST_TITLE].style = DT_LEFT | DT_SINGLELINE |
+      DT_NOPREFIX | DT_WORDBREAK | DT_EDITCONTROL;
+  fonts_[FONTSET_INFOLIST_TITLE].color = RGB(
+      infostyle.title_style().foreground_color().r(),
+      infostyle.title_style().foreground_color().g(),
+      infostyle.title_style().foreground_color().b());
+
+  // Negative |lfHeight| means the character height.
+  // See http://support.microsoft.com/kb/32667/en for details.
+  tmp_font.lfHeight = -infostyle.description_style().font_size();
+  fonts_[FONTSET_INFOLIST_DESCRIPTION].font.CreateFontIndirectW(&tmp_font);
+  fonts_[FONTSET_INFOLIST_DESCRIPTION].style = DT_LEFT | DT_NOPREFIX |
+      DT_WORDBREAK | DT_EDITCONTROL;
+  fonts_[FONTSET_INFOLIST_DESCRIPTION].color = RGB(
+      infostyle.description_style().foreground_color().r(),
+      infostyle.description_style().foreground_color().g(),
+      infostyle.description_style().foreground_color().b());
 }
 
 // Retrive the font handle
@@ -129,6 +176,14 @@ Size TextRenderer::MeasureString(
   CRect rect;
   mem_dc_.DrawTextW(str.c_str(), str.length(), &rect,
                     DT_NOPREFIX | DT_LEFT | DT_SINGLELINE | DT_CALCRECT);
+  return Size(rect.Size());
+}
+Size TextRenderer::MeasureStringMultiLine(
+    FONT_TYPE font_type, const wstring &str, const int width) const {
+  mem_dc_.SelectFont(GetFont(font_type));
+  CRect rect(0, 0, width, 0);
+  mem_dc_.DrawTextW(str.c_str(), str.length(), &rect,
+      DT_NOPREFIX | DT_LEFT | DT_WORDBREAK | DT_CALCRECT);
   return Size(rect.Size());
 }
 

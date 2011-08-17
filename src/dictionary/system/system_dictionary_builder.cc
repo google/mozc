@@ -29,6 +29,7 @@
 
 #include "dictionary/system/system_dictionary_builder.h"
 
+#include <memory.h>
 #include <algorithm>
 #include <climits>
 #include <sstream>
@@ -36,10 +37,10 @@
 #include "base/base.h"
 #include "base/file_stream.h"
 #include "base/util.h"
-#include "dictionary/file/dictionary_file.h"
 #include "dictionary/dictionary_token.h"
-#include "dictionary/text_dictionary_loader.h"
+#include "dictionary/file/dictionary_file_builder.h"
 #include "dictionary/system/system_dictionary.h"
+#include "dictionary/text_dictionary_loader.h"
 
 DEFINE_bool(preserve_intermediate_dictionary, false,
             "preserve inetemediate dictionary file.");
@@ -257,7 +258,7 @@ void SystemDictionaryBuilder::WriteToken(const RxKeyStringInfo &key, int n,
   uint8 b[12];
   b[0] = flags;
   int offset;
-  CHECK(t->cost < 32768) << "Assuming cost is within 15bits.";
+  CHECK_LT(t->cost, 32768) << "Assuming cost is within 15bits.";
   b[1] = t->cost >> 8;
   b[2] = t->cost & 0xff;
   offset = 3;
@@ -364,13 +365,12 @@ bool SystemDictionaryBuilder::BuildIndexRxMap(
 }
 
 void SystemDictionaryBuilder::ConcatFiles() {
-  scoped_ptr<DictionaryFile> f(new DictionaryFile());
-  f->Open(output_filename_.c_str(), true);
-  f->AddSection("f", frequent_pos_filename_.c_str());
-  f->AddSection("i", index_rx_filename_.c_str());
-  f->AddSection("T", tokens_filename_.c_str());
-  f->AddSection("R", token_rx_filename_.c_str());
-  f->Write();
+  DictionaryFileBuilder builder;
+  builder.AddSectionFromFile("f", frequent_pos_filename_);
+  builder.AddSectionFromFile("i", index_rx_filename_);
+  builder.AddSectionFromFile("T", tokens_filename_);
+  builder.AddSectionFromFile("R", token_rx_filename_);
+  builder.WriteImageToFile(output_filename_);
 }
 
 void SystemDictionaryBuilder::CollectFrequentPos(

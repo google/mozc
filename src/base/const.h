@@ -59,7 +59,6 @@ const char kCompanyNameInEnglish[] = "Google";
 const char kEventPathPrefix[] = "Global\\GoogleJapaneseInput.event.";
 const char kMutexPathPrefix[] = "Global\\GoogleJapaneseInput.mutex.";
 const char kMozcServerName[] = "GoogleIMEJaConverter.exe";
-const char kOldIMEFile[] = "GoogleIMEJa.ime";
 const char kIMEFile[] = "GIMEJa.ime";
 const char kMozcBroker32[] = "GoogleIMEJaBroker32.exe";
 const char kMozcBroker64[] = "GoogleIMEJaBroker64.exe";
@@ -73,6 +72,8 @@ const wchar_t kCandidateWindowClassName[]
     = L"GoogleJapaneseInputCandidateWindow";
 const wchar_t kCompositionWindowClassName[]
     = L"GoogleJapaneseInputCompositionWindow";
+const wchar_t kInfolistWindowClassName[]
+    = L"GoogleJapaneseInpuInfolistWindow";
 // This UIWnd class name should be used by and only by the actual IMM32
 // version.  Make sure that |kIMEUIWndClassName| is different from
 // |kDummyIMEUIWndClassName| so that the dummy IME and the actual IME can
@@ -93,8 +94,7 @@ const char kCompanyNameInEnglish[] = "Mozc Project";
 const char kEventPathPrefix[] = "Global\\Mozc.event.";
 const char kMutexPathPrefix[] = "Global\\Mozc.mutex.";
 const char kMozcServerName[] = "mozc_server.exe";
-const char kOldIMEFile[] = "";
-const char kIMEFile[] = "mozc.ime";
+const char kIMEFile[] = "mozc_ja.ime";
 const char kMozcBroker32[] = "mozc_broker32.exe";
 const char kMozcBroker64[] = "mozc_broker64.exe";
 const char kMozcTool[] = "mozc_tool.exe";
@@ -107,7 +107,10 @@ const wchar_t kCandidateWindowClassName[]
     = L"MozcCandidateWindow";
 const wchar_t kCompositionWindowClassName[]
     = L"MozcCompositionWindow";
+const wchar_t kInfolistWindowClassName[]
+    = L"MozcInfolistWindow";
 const wchar_t kIMEUIWndClassName[] = L"MozcUIWindow";
+const char kIPCPrefix[] = "\\\\.\\pipe\\mozc.";
 const wchar_t kCandidateUIDescription[] = L"MozcCandidateUI";
 const wchar_t kConfigurationDisplayname[]
     = L"Mozc Configuration";

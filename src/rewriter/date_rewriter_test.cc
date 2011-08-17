@@ -31,12 +31,15 @@
 
 #include "base/clock_mock.h"
 #include "base/util.h"
+#include "config/config_handler.h"
+#include "config/config.pb.h"
 #include "converter/segments.h"
 #include "session/commands.pb.h"
 #include "testing/base/public/gunit.h"
 
-namespace mozc {
+DECLARE_string(test_tmpdir);
 
+namespace mozc {
 namespace {
 
 void Expect2Results(const vector<string> &src,
@@ -171,7 +174,23 @@ const uint32 kTestMicroSeconds = 588377u;
 
 }  // namespace
 
-TEST(DateRewriteTest, DateRewriteTest) {
+class DateRewriterTest : public testing::Test {
+ protected:
+  virtual void SetUp() {
+    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    config::Config default_config;
+    config::ConfigHandler::GetDefaultConfig(&default_config);
+    config::ConfigHandler::SetConfig(default_config);
+  }
+
+  virtual void TearDown() {
+    config::Config default_config;
+    config::ConfigHandler::GetDefaultConfig(&default_config);
+    config::ConfigHandler::SetConfig(default_config);
+  }
+};
+
+TEST_F(DateRewriterTest, DateRewriteTest) {
   scoped_ptr<ClockMock> mock_clock(
       new ClockMock(kTestSeconds, kTestMicroSeconds));
   Util::SetClockHandler(mock_clock.get());
@@ -425,7 +444,7 @@ TEST(DateRewriteTest, DateRewriteTest) {
   Util::SetClockHandler(NULL);
 }
 
-TEST(DateRewriterTest, ADToERA) {
+TEST_F(DateRewriterTest, ADToERA) {
   DateRewriter rewriter;
   vector<string> results;
 
@@ -568,7 +587,7 @@ TEST(DateRewriterTest, ADToERA) {
   EXPECT_FALSE(rewriter.ADtoERA(-100, &results));
 }
 
-TEST(DateRewriterTest, ConvertTime) {
+TEST_F(DateRewriterTest, ConvertTime) {
   DateRewriter rewriter;
   vector<string> results;
 
@@ -705,7 +724,7 @@ TEST(DateRewriterTest, ConvertTime) {
   EXPECT_FALSE(rewriter.ConvertTime(30, 80, &results));
 }
 
-TEST(DateRewriterTest, ConvertDateTest) {
+TEST_F(DateRewriterTest, ConvertDateTest) {
   DateRewriter rewriter;
   vector<string> results;
 
@@ -806,7 +825,7 @@ TEST(DateRewriterTest, ConvertDateTest) {
   EXPECT_FALSE(rewriter.ConvertDateWithoutYear(0, 0, &results));
 }
 
-TEST(DateRewriterTest, NumberRewriterTest) {
+TEST_F(DateRewriterTest, NumberRewriterTest) {
   Segments segments;
   DateRewriter rewriter;
 
@@ -867,7 +886,7 @@ TEST(DateRewriterTest, NumberRewriterTest) {
 }
 
 
-TEST(DateRewriterTest, RewriteYearTest) {
+TEST_F(DateRewriterTest, RewriteYearTest) {
   DateRewriter rewriter;
   Segments segments;
 
@@ -883,7 +902,7 @@ TEST(DateRewriterTest, RewriteYearTest) {
 // This test treats the situation that if UserHistoryRewriter or other like
 // Rewriter moves up a candidate which is actually a number but can not be
 // converted integer easily.
-TEST(DateRewriterTest, RelationWithUserHistoryRewriterTest) {
+TEST_F(DateRewriterTest, RelationWithUserHistoryRewriterTest) {
   DateRewriter rewriter;
   Segments segments;
 
@@ -898,4 +917,5 @@ TEST(DateRewriterTest, RelationWithUserHistoryRewriterTest) {
   // "平成23"
   EXPECT_TRUE(ContainCandidate(segments, "\xE5\xB9\xB3\xE6\x88\x90\x32\x33"));
 }
+
 }  // namespace mozc

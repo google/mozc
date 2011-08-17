@@ -33,6 +33,7 @@
 #define MOZC_SESSION_SESSION_INTERFACE_H_
 
 #include "base/base.h"
+#include "session/commands.pb.h"
 
 namespace mozc {
 namespace commands {

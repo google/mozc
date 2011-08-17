@@ -49,7 +49,7 @@
       ],
       'dependencies': [
         '../composer/composer.gyp:composer',
-        '../session/session_base.gyp:config_handler',
+        '../config/config.gyp:config_handler',
         '../testing/testing.gyp:gtest_main',
         '../transliteration/transliteration.gyp:transliteration',
         'converter.gyp:converter',
@@ -67,9 +67,6 @@
           'action_name': 'quality_regression_test_data',
           'variables': {
             'input_files': [
-              '../data/test/quality_regression_test/anthy_corpus.tsv',
-              '../data/test/quality_regression_test/regression_test_auto.tsv',
-              '../data/test/quality_regression_test/regression_test_manual.tsv',
             ],
           },
           'inputs': [
@@ -98,7 +95,7 @@
         'quality_regression_util.cc'
       ],
       'dependencies': [
-        '../session/session_base.gyp:config_handler',
+        '../config/config.gyp:config_handler',
         '../testing/testing.gyp:gtest_main',
         'converter.gyp:converter',
         'converter_base.gyp:segments',

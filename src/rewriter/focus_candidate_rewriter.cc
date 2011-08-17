@@ -242,7 +242,10 @@ bool FocusCandidateRewriter::Focus(Segments *segments,
         if (!IsValidSegment(*target_right_seg)) {
           continue;
         }
-        if (RewriteNumber(target_right_seg,
+
+        // Make sure the first candidate of the segment is number.
+        if (IsNumberSegment(*target_right_seg) &&
+            RewriteNumber(target_right_seg,
                           seg.candidate(candidate_index))) {
           modified = true;
           distance = 0;

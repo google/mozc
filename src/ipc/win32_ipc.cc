@@ -32,15 +32,17 @@
 
 #include "ipc/ipc.h"
 
-#include <windows.h>
+#include <Windows.h>
+#include <Sddl.h>
+
 #include <string>
 #include "base/base.h"
 #include "base/const.h"
 #include "base/mutex.h"
 #include "base/singleton.h"
 #include "base/util.h"
+#include "base/win_sandbox.h"
 #include "ipc/ipc_path_manager.h"
-#include "third_party/mozc/sandbox/security_attributes.h"
 
 namespace mozc {
 namespace {
@@ -90,7 +92,7 @@ class IPCClientMutex {
 
     LPSECURITY_ATTRIBUTES security_attributes_ptr = NULL;
     SECURITY_ATTRIBUTES security_attributes;
-    if (!sandbox::MakeSecurityAttributes(&security_attributes)) {
+    if (!WinSandbox::MakeSecurityAttributes(&security_attributes)) {
       LOG(ERROR) << "Cannot make SecurityAttributes";
     } else {
       security_attributes_ptr = &security_attributes;
@@ -116,8 +118,8 @@ class IPCClientMutex {
 
     // permit the access from a process runinning with low integrity level
     if (Util::IsVistaOrLater()) {
-      sandbox::SetMandatoryLabelW(ipc_mutex_.get(),
-                                  SE_KERNEL_OBJECT, L"NX", L"LW");
+      WinSandbox::SetMandatoryLabelW(ipc_mutex_.get(), SE_KERNEL_OBJECT,
+                                     SDDL_NO_EXECUTE_UP, SDDL_ML_LOW);
     }
   }
 
@@ -279,8 +281,8 @@ IPCServer::IPCServer(const string &name,
     return;
   }
 
-  SECURITY_ATTRIBUTES SecurityAttributes;
-  if (!sandbox::MakeSecurityAttributes(&SecurityAttributes)) {
+  SECURITY_ATTRIBUTES security_attributes;
+  if (!WinSandbox::MakeSecurityAttributes(&security_attributes)) {
     LOG(ERROR) << "Cannot make SecurityAttributes";
     return;
   }
@@ -299,7 +301,7 @@ IPCServer::IPCServer(const string &name,
                                     sizeof(request_),
                                     sizeof(response_),
                                     0,
-                                    &SecurityAttributes);
+                                    &security_attributes);
 
   if (INVALID_HANDLE_VALUE == handle) {
     LOG(FATAL) << "CreateNamedPipe failed" << ::GetLastError();
@@ -308,7 +310,7 @@ IPCServer::IPCServer(const string &name,
 
   handle_.reset(handle);
 
-  ::LocalFree(SecurityAttributes.lpSecurityDescriptor);
+  ::LocalFree(security_attributes.lpSecurityDescriptor);
 
   if (!manager->SavePathName()) {
     LOG(ERROR) << "Cannot save IPC path name";

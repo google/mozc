@@ -38,6 +38,41 @@
 #endif
 
 
+#ifndef TLS_KEYWORD
+
+// Definition of TLS (Thread Local Storage) keyword.
+// Use VC's keyword on Windows.
+
+// On Windows XP, thread local has a limitation. Since thread local
+// is now used inside converter and converter is a stand alone program,
+// it's not a issue at this moment.
+//
+// http://msdn.microsoft.com/en-us/library/9w1sdazb%28VS.80%29.aspx
+// Thread-local variables work for EXEs and DLLs that are statically
+// linked to the main executable (directly or via another DLL) -
+// i.e. the DLL has to load before the main executable code starts
+//  running.
+#ifdef OS_WINDOWS
+#define TLS_KEYWORD __declspec(thread)
+#define HAVE_TLS 1
+#endif // OS_WINDOWS
+
+// Use GCC's keyword on Linux.
+#ifdef OS_LINUX
+#define TLS_KEYWORD __thread
+#define HAVE_TLS 1
+#endif  // OS_LINUX
+
+
+// OSX doesn't support Thread Local Storage.
+#ifdef OS_MACOSX
+#define TLS_KEYWORD
+#undef HAVE_TLS
+#endif  // OS_MACOSX
+
+
+#endif  // TLS_KEYWORD
+
 namespace mozc {
 
 class Thread {

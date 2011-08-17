@@ -27,11 +27,29 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "base/util.h"
+#include "config/config_handler.h"
+#include "config/config.pb.h"
 #include "rewriter/version_rewriter.h"
-
 #include "session/commands.pb.h"
-#include "session/request_handler.h"
 #include "testing/base/public/gunit.h"
 
+DECLARE_string(test_tmpdir);
+
 namespace mozc {
+
+class VersionRewriterTest : public testing::Test {
+  virtual void SetUp() {
+    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    config::Config config;
+    config::ConfigHandler::GetDefaultConfig(&config);
+    config::ConfigHandler::SetConfig(config);
+  }
+};
+
+TEST_F(VersionRewriterTest, CapavilityTest) {
+  VersionRewriter rewriter;
+  EXPECT_EQ(RewriterInterface::CONVERSION, rewriter.capability());
+}
+
 }  // namespace mozc

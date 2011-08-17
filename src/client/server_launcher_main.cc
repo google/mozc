@@ -29,7 +29,7 @@
 
 #include <iostream>
 #include "base/base.h"
-#include "client/session.h"
+#include "client/client.h"
 
 DEFINE_bool(shutdown, false,
             "shutdown server if mozc_server is running");
@@ -37,7 +37,7 @@ DEFINE_bool(shutdown, false,
 // simple command line tool to launch mozc server
 int main(int argc, char **argv) {
   InitGoogle(argv[0], &argc, &argv, false);
-  mozc::client::Session client;
+  mozc::client::Client client;
 
   if (FLAGS_shutdown) {
     client.Shutdown();

@@ -40,6 +40,9 @@
 #include "base/base.h"
 #include "base/init.h"
 #include "base/util.h"
+#include "config/config_handler.h"
+#include "config/config.pb.h"
+#include "converter/character_form_manager.h"
 #include "converter/connector_interface.h"
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter_interface.h"
@@ -53,8 +56,6 @@
 #include "prediction/predictor_interface.h"
 #include "rewriter/variants_rewriter.h"
 #include "session/commands.pb.h"
-#include "session/config_handler.h"
-#include "session/config.pb.h"
 
 
 namespace mozc {
@@ -163,13 +164,11 @@ bool DictionaryPredictor::Predict(Segments *segments) const {
       continue;
     }
 
-    string lower_value = node->value;
-    Util::LowerString(&lower_value);
     // We don't filter the results from realtime conversion if mixed_conversion
     // is true.
     // TODO(manabe): Add a unit test. For that, we'll need a mock class for
     //               SuppressionDictionary.
-    if (SuggestionFilter::IsBadSuggestion(lower_value) &&
+    if (SuggestionFilter::IsBadSuggestion(node->value) &&
         !(mixed_conversion && result.type & REALTIME)) {
       continue;
     }
@@ -185,7 +184,6 @@ bool DictionaryPredictor::Predict(Segments *segments) const {
       continue;
     }
 
-    // TODO(taku): call CharacterFormManager for these values
     string key, value;
     if (result.type & BIGRAM) {
       // remove the prefix of history key and history value.
@@ -214,12 +212,16 @@ bool DictionaryPredictor::Predict(Segments *segments) const {
     DCHECK(candidate);
 
     candidate->Init();
-    VLOG(2) << "DictionarySuggest: " << node->wcost << " " << value;
+    string rewritten_value;
+    CharacterFormManager::GetCharacterFormManager()->ConvertConversionString(
+        value, &rewritten_value);
+
+    VLOG(2) << "DictionarySuggest: " << node->wcost << " " << rewritten_value;
 
     candidate->content_key = key;
-    candidate->content_value = value;
+    candidate->content_value = rewritten_value;
     candidate->key = key;
-    candidate->value = value;
+    candidate->value = rewritten_value;
     candidate->lid = node->lid;
     candidate->rid = node->rid;
     candidate->wcost = node->wcost;

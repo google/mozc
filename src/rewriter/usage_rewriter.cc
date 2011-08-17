@@ -77,7 +77,7 @@ bool UsageRewriter::Rewrite(Segments *segments) const {
     for (size_t j = 0; j < segment->candidates_size(); ++j) {
       const string &content_key = segment->candidate(j).content_key;
       const string &content_value = segment->candidate(j).content_value;
-      const UsageDictItem* usage = LookupUsage(content_key, content_value);
+      const UsageDictItem *usage = LookupUsage(content_key, content_value);
 
       if (usage != NULL) {
         Segment::Candidate *candidate = segment->mutable_candidate(j);

@@ -100,7 +100,11 @@ void LoadUsage(const string &filename,
                vector<UsageItem> *usage_entries,
                vector<string> *conjugation_list) {
   mozc::InputFileStream ifs(filename.c_str());
-  CHECK(ifs);
+
+  if (!ifs) {
+    LOG(WARNING) << "Can't open file:" << filename;
+    return;
+  }
 
   string line;
   vector<string> fields;

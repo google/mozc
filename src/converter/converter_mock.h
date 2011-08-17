@@ -35,6 +35,7 @@
 #include <string>
 #include <vector>
 #include "converter/segments.h"
+#include "converter/user_data_manager_interface.h"
 
 namespace mozc {
 class ConverterMock : public ConverterInterface {
@@ -79,11 +80,6 @@ class ConverterMock : public ConverterInterface {
   void SetSubmitFirstSegment(Segments *segments, bool result);
   void SetResizeSegment1(Segments *segments, bool result);
   void SetResizeSegment2(Segments *segments, bool result);
-  void SetSync(bool result);
-  void SetReload(bool result);
-  void SetClearUserHistory(bool result);
-  void SetClearUserPrediction(bool result);
-  void SetClearUnusedUserPrediction(bool result);
 
   // get last input of respective functions
   void GetStartConversion(Segments *segments, string *key);
@@ -141,11 +137,8 @@ class ConverterMock : public ConverterInterface {
                      size_t segments_size,
                      const uint8 *new_size_array,
                      size_t array_size) const;
-  bool Sync() const;
-  bool Reload() const;
-  bool ClearUserHistory() const;
-  bool ClearUserPrediction() const;
-  bool ClearUnusedUserPrediction() const;
+  UserDataManagerInterface *GetUserDataManager();
+  void SetUserDataManager(UserDataManagerInterface *user_data_manager);
 
  private:
   // mutable for recode input in const functions
@@ -180,11 +173,8 @@ class ConverterMock : public ConverterInterface {
   ConverterOutput submitfirstsegment_output_;
   ConverterOutput resizesegment1_output_;
   ConverterOutput resizesegment2_output_;
-  bool sync_output_;
-  bool reload_output_;
-  bool clearuserhistory_output_;
-  bool clearuserprediction_output_;
-  bool clearunuseduserprediction_output_;
+
+  scoped_ptr<UserDataManagerInterface> user_data_manager_;
 };
 
 }  // namespace mozc

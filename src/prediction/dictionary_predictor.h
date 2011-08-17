@@ -75,6 +75,8 @@ class DictionaryPredictor: public PredictorInterface {
               GetMissSpelledPosition);
   FRIEND_TEST(DictionaryPredictorTest,
               RemoveMissSpelledCandidates);
+  FRIEND_TEST(DictionaryPredictorTest,
+              ConformCharacterWidthToPreference);
 
   enum PredictionType {
     // don't need to show any suggestions.

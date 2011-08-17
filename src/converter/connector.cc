@@ -29,38 +29,96 @@
 
 #include "base/base.h"
 #include "base/singleton.h"
+#include "base/thread.h"
 #include "converter/connector_interface.h"
 #include "converter/sparse_connector.h"
 
 namespace mozc {
-
 namespace {
 
 #include "converter/embedded_connection_data.h"
 
-class SparseConnectorInitializer {
- public:
-  SparseConnectorInitializer()
-      : connector_(new SparseConnector(
-          kConnectionData_data, kConnectionData_size)) {}
-  virtual ~SparseConnectorInitializer() {
-    delete connector_;
-  }
+const int kCacheSize = 1024;
 
-  SparseConnector *Get() const {
-    return connector_;
+const int kInvalidCacheKey = -1;
+
+// Use Thread Local Storage for Cache of the Connector.
+TLS_KEYWORD bool g_cache_initialized = false;
+TLS_KEYWORD int  g_cache_key[kCacheSize];
+TLS_KEYWORD int  g_cache_value[kCacheSize];
+
+inline int GetHashValue(uint16 rid, uint16 lid) {
+  // multiplying '3' makes the conversion speed faster.
+  return (3 * rid + lid) % kCacheSize;
+}
+
+class ConnectorInitializer {
+ public:
+  ConnectorInitializer()
+      : sparse_connector_(new SparseConnector(
+          kConnectionData_data, kConnectionData_size)),
+        cached_connector_(new CachedConnector(
+            sparse_connector_.get())) {}
+
+  ConnectorInterface *Get() const {
+    return cached_connector_.get();
   }
 
  private:
-  SparseConnector *connector_;
+  scoped_ptr<SparseConnector> sparse_connector_;
+  scoped_ptr<CachedConnector> cached_connector_;
 };
 
 ConnectorInterface *g_connector = NULL;
 }  // namespace
 
+CachedConnector::CachedConnector(ConnectorInterface *connector)
+    : connector_(connector) {}
+CachedConnector::~CachedConnector() {}
+
+int CachedConnector::GetTransitionCost(uint16 rid, uint16 lid) const {
+  InitializeCache();
+
+  // We should mutex lock if HAVE_TLS is false. Mac OS doesn't support TLS.
+  // However, we don't call it at this moment with the following reason.
+  // 1) On desktop, we can assume that converter is executed on
+  // single thread environment
+  // 2) Can see about 20% performance drop with Mutex lock.
+
+  const uint32 index = SparseConnector::EncodeKey(rid, lid);
+  const int bucket = GetHashValue(rid, lid);
+  if (g_cache_key[bucket] != index) {
+    // Simply overwrite previous key/value.
+    g_cache_key[bucket] = index;
+    g_cache_value[bucket] = connector_->GetTransitionCost(rid, lid);
+  }
+
+  return g_cache_value[bucket];
+}
+
+void CachedConnector::InitializeCache() const {
+  if (g_cache_initialized) {
+    return;
+  }
+  VLOG(2) << "Initializing Cache for CachedConnector.";
+  for (int i = 0; i < kCacheSize; ++i) {
+    g_cache_key[i] = kInvalidCacheKey;
+  }
+  g_cache_initialized = true;
+}
+
+// Test code can use this method to get acceptable error.
+int CachedConnector::GetResolution() const {
+  return connector_->GetResolution();
+}
+
+void CachedConnector::ClearCache() {
+  g_cache_initialized = false;
+}
+
 ConnectorInterface *ConnectorFactory::GetConnector() {
   if (g_connector == NULL) {
-    return Singleton<SparseConnectorInitializer>::get()->Get();
+    return Singleton<ConnectorInitializer>::get()->Get();
   } else {
     return g_connector;
   }

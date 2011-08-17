@@ -152,6 +152,10 @@ class SessionConverterInterface {
   // Commit the preedit string represented by Composer.
   virtual void CommitPreedit(const composer::Composer &composer) ABSTRACT;
 
+  // Commit prefix of the preedit string represented by Composer.
+  virtual void CommitHead(size_t count,
+                          composer::Composer *composer) ABSTRACT;
+
   // Revert the last "Commit" operation
   virtual void Revert() ABSTRACT;
 
@@ -160,7 +164,8 @@ class SessionConverterInterface {
   virtual void SegmentFocusLast() ABSTRACT;
   virtual void SegmentFocusLeft() ABSTRACT;
   virtual void SegmentFocusLeftEdge() ABSTRACT;
-  virtual void SegmentFocusRightOrCommit() ABSTRACT;
+
+  virtual bool IsLastSegmentFocused() const ABSTRACT;
 
   // Resize the focused segment.
   virtual void SegmentWidthExpand() ABSTRACT;
@@ -207,7 +212,7 @@ class SessionConverterInterface {
   virtual const OperationPreferences &GetOperationPreferences() const ABSTRACT;
   virtual State GetState() const ABSTRACT;
   virtual size_t GetSegmentIndex() const ABSTRACT;
-  virtual const vector<Segment::Candidate> &GetPreviousSuggestions()
+  virtual const Segment &GetPreviousSuggestions()
       const ABSTRACT;
 
   virtual void CopyFrom(const SessionConverterInterface &src) ABSTRACT;

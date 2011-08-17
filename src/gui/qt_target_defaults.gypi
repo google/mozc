@@ -29,8 +29,10 @@
 
 # This include file adds various settings for Qt as target_defaults.
 {
+  'conditions': [['use_qt=="YES"', {
+
   'variables': {
-    'qt_dir_env': '$(QTDIR)',
+    'includes': ['qt_vars.gypi'],
   },
   # MSVS specific settings
   'target_defaults': {
@@ -77,4 +79,6 @@
       },
     },
   },
+
+  }]],  # End of use_qt=="YES"
 }

@@ -53,6 +53,7 @@
         '../base/base.gyp:config_file_stream',
         '../client/client.gyp:client',
         '../composer/composer.gyp:composer',
+        '../config/config.gyp:stats_config_util',
         '../converter/converter.gyp:converter',
         '../dictionary/dictionary.gyp:dictionary',
         '../ipc/ipc.gyp:ipc',

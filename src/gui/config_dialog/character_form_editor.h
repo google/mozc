@@ -32,7 +32,7 @@
 
 #include <QtGui/QTableWidget>
 #include "base/base.h"
-#include "session/config.pb.h"
+#include "config/config.pb.h"
 
 namespace mozc {
 namespace config {

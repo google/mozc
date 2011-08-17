@@ -40,8 +40,9 @@
       ],
       'dependencies': [
         '../../base/base.gyp:base',
+        '../../config/config.gyp:config_handler',
+        '../../config/config.gyp:genproto_config',
         '../../ipc/ipc.gyp:ipc',
-        '../../session/session_base.gyp:config_handler',
         '../../session/session_base.gyp:genproto_session',
         'mozc_emacs_helper_lib',
       ],
@@ -51,11 +52,12 @@
       'type': 'static_library',
       'sources': [
         'mozc_emacs_helper_lib.cc',
-        'session_pool.cc',
+        'client_pool.cc',
       ],
       'dependencies': [
         '../../base/base.gyp:base',
         '../../client/client.gyp:client',
+        '../../config/config.gyp:genproto_config',
         '../../session/session_base.gyp:genproto_session',
         '../../session/session_base.gyp:key_parser',
         '../../storage/storage.gyp:storage',

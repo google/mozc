@@ -33,7 +33,9 @@
 {
   'variables': {
     'relative_dir': 'converter',
+    'relative_mozc_dir': '',
     'gen_out_dir': '<(SHARED_INTERMEDIATE_DIR)/<(relative_dir)',
+    'gen_out_mozc_dir': '<(SHARED_INTERMEDIATE_DIR)/<(relative_mozc_dir)',
   },
   'targets': [
     {
@@ -44,8 +46,9 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        '../session/session_base.gyp:config_handler',
-        # This is needed. GYP is not smart enough about indirect dependencies.
+        '../base/base.gyp:config_file_stream',
+        '../config/config.gyp:config_handler',
+        '../config/config.gyp:genproto_config',
         '../session/session_base.gyp:genproto_session',
         # storage.gyp:storage is depended by character_form_manager.
         # TODO(komatsu): delete this line.
@@ -58,10 +61,9 @@
       'sources': [
         '<(gen_out_dir)/boundary_data.h',
         '<(gen_out_dir)/embedded_connection_data.h',
-        '<(gen_out_dir)/pos_matcher.h',
         '<(gen_out_dir)/segmenter_data.h',
         '<(gen_out_dir)/segmenter_inl.h',
-        '<(gen_out_dir)/segmenter_inl.h',
+        '<(gen_out_mozc_dir)/dictionary/pos_matcher.h',
         'candidate_filter.cc',
         'connector.cc',
         'lattice.cc',
@@ -76,10 +78,10 @@
         '../dictionary/dictionary_base.gyp:gen_pos_matcher',
         '../transliteration/transliteration.gyp:transliteration',
         'character_form_manager',
+        'gen_boundary_data',
         'gen_embedded_connection_data',
         'gen_segmenter_data',
         'gen_segmenter_inl',
-        'gen_boundary_data',
       ],
       'conditions': [['two_pass_build==0', {
         'dependencies': [
@@ -98,6 +100,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        '../config/config.gyp:genproto_config',
         '../dictionary/dictionary_base.gyp:gen_pos_matcher',
         '../rewriter/rewriter_base.gyp:gen_rewriter_files',
         '../session/session_base.gyp:genproto_session',
@@ -112,11 +115,11 @@
           'action_name': 'gen_embedded_connection_data',
           'variables': {
             'input_files': [
-               '../data/dictionary/connection.txt',
-               '../data/dictionary/id.def',
-               '../data/rules/special_pos.def',
-             ],
-             'use_1byte_cost_flag': 'false',
+              '../data/dictionary/connection.txt',
+              '../data/dictionary/id.def',
+              '../data/rules/special_pos.def',
+            ],
+            'use_1byte_cost_flag': 'false',
           },
           'inputs': [
             '<@(input_files)',
@@ -128,11 +131,11 @@
           # input on Windows.
           'conditions': [['two_pass_build==0 and OS!="win"', {
             'inputs': [
-               '<(mozc_build_tools_dir)/gen_connection_data_main',
+              '<(mozc_build_tools_dir)/gen_connection_data_main',
             ],
           }],['dictionary=="small"', {
             'variables': {
-               'use_1byte_cost_flag': 'true',
+              'use_1byte_cost_flag': 'true',
             },
           }]],
           'outputs': [
@@ -195,7 +198,7 @@
       'target_name': 'install_gen_connection_data_main',
       'type': 'none',
       'variables': {
-       'bin_name': 'gen_connection_data_main'
+        'bin_name': 'gen_connection_data_main'
       },
       'includes' : [
         '../gyp/install_build_tool.gypi'
@@ -280,7 +283,7 @@
       },
       'includes' : [
         '../gyp/install_build_tool.gypi',
-      ]
+      ],
     },
   ],
 }

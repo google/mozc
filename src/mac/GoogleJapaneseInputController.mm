@@ -50,11 +50,11 @@
 #include "base/mutex.h"
 #include "base/process.h"
 #include "base/util.h"
-#include "client/session.h"
+#include "client/client.h"
+#include "config/config.pb.h"
 #include "ipc/ipc.h"
 #include "renderer/renderer_client.h"
 #include "session/commands.pb.h"
-#include "session/config.pb.h"
 #include "session/ime_switch_util.h"
 
 using mozc::commands::Candidates;
@@ -153,12 +153,12 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
 @synthesize mode = mode_;
 @synthesize rendererCommand = rendererCommand_;
 @synthesize replacementRange = replacementRange_;
-- (mozc::client::SessionInterface *)session {
-  return session_;
+- (mozc::client::ClientInterface *)mozcClient {
+  return mozcClient_;
 }
-- (void)setSession:(mozc::client::SessionInterface *)newSession {
-  delete session_;
-  session_ = newSession;
+- (void)setMozcClient:(mozc::client::ClientInterface *)newMozcClient {
+  delete mozcClient_;
+  mozcClient_ = newMozcClient;
 }
 - (mozc::renderer::RendererInterface *)renderer {
   return candidateController_;
@@ -191,14 +191,14 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
   yenSignCharacter_ = mozc::config::Config::YEN_SIGN;
   candidateController_ = new(nothrow) mozc::renderer::RendererClient;
   rendererCommand_ = new(nothrow)RendererCommand;
-  session_ = new(nothrow) mozc::client::Session();
-  server_ = reinterpret_cast<id<ServerCallback> >(server);
+  mozcClient_ = mozc::client::ClientFactory::NewClient();
+  imkServer_ = reinterpret_cast<id<ServerCallback> >(server);
   lastKanaKeyTime_ = 0;
 
   // We don't check the return value of NSBundle because it fails during tests.
   [NSBundle loadNibNamed:@"Config" owner:self];
   if (!originalString_ || !composedString_ || !candidateController_ ||
-      !rendererCommand_ || !session_ || !clientBundle_) {
+      !rendererCommand_ || !mozcClient_ || !clientBundle_) {
     [self release];
     self = nil;
   } else {
@@ -229,7 +229,7 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
   [composedString_ release];
   delete clientBundle_;
   delete candidateController_;
-  delete session_;
+  delete mozcClient_;
   delete rendererCommand_;
   DLOG(INFO) << "dealloc server";
   [super dealloc];
@@ -297,7 +297,7 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
     candidateController_->ExecCommand(*rendererCommand_);
   }
   [self handleConfig];
-  [server_ setCurrentController:self];
+  [imkServer_ setCurrentController:self];
   DLOG(INFO) << kProductNameInEnglish << " client (" << self
              << "): activated for " << sender;
   DLOG(INFO) << "sender bundleID: " << *clientBundle_;
@@ -342,7 +342,7 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
 - (void)handleConfig {
   // Get the config and set client-side behaviors
   Config config;
-  if (!session_->GetConfig(&config)) {
+  if (!mozcClient_->GetConfig(&config)) {
     LOG(ERROR) << "Cannot obtain the current config";
     return;
   }
@@ -378,7 +378,7 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
     capability.set_text_deletion(Capability::DELETE_PRECEDING_TEXT);
   }
 
-  session_->set_client_capability(capability);
+  mozcClient_->set_client_capability(capability);
 }
 
 // Mode changes to direct and clean up the status.
@@ -388,7 +388,7 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
   KeyEvent keyEvent;
   Output output;
   keyEvent.set_special_key(mozc::commands::KeyEvent::OFF);
-  session_->SendKey(keyEvent, &output);
+  mozcClient_->SendKey(keyEvent, &output);
   if (output.has_result()) {
     [self commitText:output.result().value().c_str() client:sender];
   }
@@ -406,7 +406,7 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
     KeyEvent keyEvent;
     Output output;
     keyEvent.set_special_key(mozc::commands::KeyEvent::ON);
-    session_->SendKey(keyEvent, &output);
+    mozcClient_->SendKey(keyEvent, &output);
   }
 
   if (mode_ != new_mode) {
@@ -416,7 +416,7 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
     command.set_type(mozc::commands::SessionCommand::SWITCH_INPUT_MODE);
     command.set_composition_mode(new_mode);
     Output output;
-    session_->SendCommand(command, &output);
+    mozcClient_->SendCommand(command, &output);
     mode_ = new_mode;
   }
 }
@@ -504,7 +504,7 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
     sending_command.set_text([[text string] UTF8String]);
   }
 
-  if (session_->SendCommand(sending_command, &output)) {
+  if (mozcClient_->SendCommand(sending_command, &output)) {
     replacementRange_ = selectedRange;
     [self processOutput:&output client:sender];
   }
@@ -529,7 +529,7 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
   SessionCommand command;
   Output output;
   command.set_type(SessionCommand::UNDO);
-  if (session_->SendCommand(command, &output)) {
+  if (mozcClient_->SendCommand(command, &output)) {
     [self processOutput:&output client:sender];
   }
 }
@@ -625,7 +625,7 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
       [self invokeUndo:sender];
     } else {
       Output output_for_callback;
-      if (session_->SendCommand(callback_command, &output_for_callback)) {
+      if (mozcClient_->SendCommand(callback_command, &output_for_callback)) {
         [self processOutput:&output_for_callback client:sender];
       }
     }
@@ -694,7 +694,7 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
   SessionCommand command;
   Output output;
   command.set_type(SessionCommand::SUBMIT);
-  session_->SendCommand(command, &output);
+  mozcClient_->SendCommand(command, &output);
   [self clearCandidates];
   [self updateComposedString:NULL];
 }
@@ -847,7 +847,7 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
   }
 
   keyEvent.set_mode(mode_);
-  if (!session_->SendKey(keyEvent, &output)) {
+  if (!mozcClient_->SendKey(keyEvent, &output)) {
     return NO;
   }
 
@@ -861,7 +861,7 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
   command.set_type(SessionCommand::SELECT_CANDIDATE);
   command.set_id(id);
   Output output;
-  if (!session_->SendCommand(command, &output)) {
+  if (!mozcClient_->SendCommand(command, &output)) {
     return;
   }
 

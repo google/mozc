@@ -27,11 +27,15 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "rewriter/merger_rewriter.h"
-
 #include <string>
 
+#include "base/util.h"
+#include "config/config_handler.h"
+#include "config/config.pb.h"
+#include "rewriter/merger_rewriter.h"
 #include "testing/base/public/gunit.h"
+
+DECLARE_string(test_tmpdir);
 
 // Tests in which order methods of each instance should be called
 // and what value should be returned.
@@ -91,7 +95,17 @@ class TestRewriter : public mozc::RewriterInterface {
   int capability_;
 };
 
-TEST(MergerRewriterTest, Rewrite) {
+class MergerRewriterTest : public testing::Test {
+ protected:
+  virtual void SetUp() {
+    mozc::Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    mozc::config::Config default_config;
+    mozc::config::ConfigHandler::GetDefaultConfig(&default_config);
+    mozc::config::ConfigHandler::SetConfig(default_config);
+  }
+};
+
+TEST_F(MergerRewriterTest, Rewrite) {
   string call_result;
   mozc::MergerRewriter merger;
   mozc::Segments segments;
@@ -114,7 +128,7 @@ TEST(MergerRewriterTest, Rewrite) {
             call_result);
 }
 
-TEST(MergerRewriterTest, RewriteCheckTest) {
+TEST_F(MergerRewriterTest, RewriteCheckTest) {
   string call_result;
   mozc::MergerRewriter merger;
   mozc::Segments segments;
@@ -158,7 +172,7 @@ TEST(MergerRewriterTest, RewriteCheckTest) {
             call_result);
 }
 
-TEST(MergerRewriterTest, Focus) {
+TEST_F(MergerRewriterTest, Focus) {
   string call_result;
   mozc::MergerRewriter merger;
   merger.AddRewriter(new TestRewriter(&call_result, "a", false));
@@ -179,7 +193,7 @@ TEST(MergerRewriterTest, Focus) {
             call_result);
 }
 
-TEST(MergerRewriterTest, Finish) {
+TEST_F(MergerRewriterTest, Finish) {
   string call_result;
   mozc::MergerRewriter merger;
   merger.AddRewriter(new TestRewriter(&call_result, "a", false));
@@ -192,7 +206,7 @@ TEST(MergerRewriterTest, Finish) {
             call_result);
 }
 
-TEST(MergerRewriterTest, Sync) {
+TEST_F(MergerRewriterTest, Sync) {
   string call_result;
   mozc::MergerRewriter merger;
   merger.AddRewriter(new TestRewriter(&call_result, "a", false));
@@ -213,7 +227,7 @@ TEST(MergerRewriterTest, Sync) {
             call_result);
 }
 
-TEST(MergerRewriterTest, Reload) {
+TEST_F(MergerRewriterTest, Reload) {
   string call_result;
   mozc::MergerRewriter merger;
   merger.AddRewriter(new TestRewriter(&call_result, "a", false));
@@ -234,7 +248,7 @@ TEST(MergerRewriterTest, Reload) {
             call_result);
 }
 
-TEST(MergerRewriterTest, Clear) {
+TEST_F(MergerRewriterTest, Clear) {
   string call_result;
   mozc::MergerRewriter merger;
   merger.AddRewriter(new TestRewriter(&call_result, "a", false));

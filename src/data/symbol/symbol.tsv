@@ -10,6 +10,9 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 句読点	！	かんたんふ . ! ！ えくすくらめーしょん びっくり	感嘆符		GENERAL		
 記号	゛	だくてん "　てん てんてん きごう	濁点		OTHER		
 記号	゜	はんだくてん まる ' てん きごう	半濁点		OTHER		
+記号	"	" だぶるくおーと だぶるくおーてーしょん くぉーと だぶるくぉーてしょん きごう	ダブルクオーテーション		GENERAL		
+記号	'	あぽすとろふぃ くぉーと きごう '	アポストロフィ		GENERAL		
+記号	~	ちるだ きごう	チルダ		GENERAL		
 記号	´	あきゅーと ' きごう	アキュートアクセント				
 記号	｀	ぐらーぶ  ` きごう	グラーブアクセント				
 記号	¨	うむらうと きごう	ウムラウト				

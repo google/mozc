@@ -38,6 +38,20 @@
       'conditions': [
         ['OS=="win"', {
           'type': 'static_library',
+          'variables': {
+            'sidestep_path%': '<(DEPTH)/third_party/sidestep',
+          },
+          'sources': [
+            'sidestep_helper.cc',
+            '<(sidestep_path)/ia32_modrm_map.cc',
+            '<(sidestep_path)/ia32_opcode_map.cc',
+            '<(sidestep_path)/mini_disassembler.cc',
+            '<(sidestep_path)/preamble_patcher.cc',
+            '<(sidestep_path)/preamble_patcher_with_stub.cc',
+          ],
+          'dependencies': [
+            '../../base/base.gyp:base',
+          ],
         }, {  # else
           # This block is needed because this is an element of 'targets' block.
           # Gyp assumes that each child element has 'target_name' and 'type'.

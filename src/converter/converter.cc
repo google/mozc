@@ -38,16 +38,17 @@
 #include "base/singleton.h"
 #include "base/util.h"
 #include "composer/composer.h"
-#include "transliteration/transliteration.h"
 #include "converter/connector_interface.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/node_allocator.h"
 #include "converter/segments.h"
+#include "converter/user_data_manager_interface.h"
 #include "dictionary/dictionary_interface.h"
-#include "dictionary/suffix_dictionary.h"
 #include "dictionary/pos_matcher.h"
+#include "dictionary/suffix_dictionary.h"
 #include "prediction/predictor_interface.h"
 #include "rewriter/rewriter_interface.h"
+#include "transliteration/transliteration.h"
 
 namespace mozc {
 namespace {
@@ -91,11 +92,22 @@ class ConverterImpl : public ConverterInterface {
                      size_t segments_size,
                      const uint8 *new_size_array,
                      size_t array_size) const;
-  bool Sync() const;
-  bool Reload() const;
-  bool ClearUserHistory() const;
-  bool ClearUserPrediction() const;
-  bool ClearUnusedUserPrediction() const;
+  UserDataManagerInterface *GetUserDataManager();
+
+ private:
+  scoped_ptr<UserDataManagerInterface> user_data_manager_;
+};
+
+class UserDataManagerImpl : public UserDataManagerInterface {
+ public:
+  UserDataManagerImpl();
+  ~UserDataManagerImpl();
+
+  virtual bool Sync();
+  virtual bool Reload();
+  virtual bool ClearUserHistory();
+  virtual bool ClearUserPrediction();
+  virtual bool ClearUnusedUserPrediction();
 };
 
 size_t GetSegmentIndex(const Segments *segments,
@@ -139,7 +151,10 @@ void ConverterFactory::SetConverter(ConverterInterface *converter) {
   g_converter = converter;
 }
 
-ConverterImpl::ConverterImpl() {}
+ConverterImpl::ConverterImpl()
+    : user_data_manager_(new UserDataManagerImpl) {
+}
+
 ConverterImpl::~ConverterImpl() {}
 
 bool ConverterImpl::StartConversion(Segments *segments,
@@ -510,29 +525,36 @@ bool ConverterImpl::ResizeSegment(Segments *segments,
   return true;
 }
 
-bool ConverterImpl::Sync() const {
+UserDataManagerInterface *ConverterImpl::GetUserDataManager() {
+  return user_data_manager_.get();
+}
+
+UserDataManagerImpl::UserDataManagerImpl() {}
+UserDataManagerImpl::~UserDataManagerImpl() {}
+
+bool UserDataManagerImpl::Sync() {
   return (RewriterFactory::GetRewriter()->Sync() &&
           PredictorFactory::GetPredictor()->Sync() &&
           DictionaryFactory::GetDictionary()->Sync());
 }
 
-bool ConverterImpl::Reload() const {
+bool UserDataManagerImpl::Reload() {
   return (RewriterFactory::GetRewriter()->Reload() &&
           PredictorFactory::GetPredictor()->Reload() &&
           DictionaryFactory::GetDictionary()->Reload());
 }
 
-bool ConverterImpl::ClearUserHistory() const {
+bool UserDataManagerImpl::ClearUserHistory() {
   RewriterFactory::GetRewriter()->Clear();
   return true;
 }
 
-bool ConverterImpl::ClearUserPrediction() const {
+bool UserDataManagerImpl::ClearUserPrediction() {
   PredictorFactory::GetPredictor()->ClearAllHistory();
   return true;
 }
 
-bool ConverterImpl::ClearUnusedUserPrediction() const {
+bool UserDataManagerImpl::ClearUnusedUserPrediction() {
   PredictorFactory::GetPredictor()->ClearUnusedHistory();
   return true;
 }

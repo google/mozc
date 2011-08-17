@@ -46,7 +46,6 @@
 
 #ifdef OS_WINDOWS
 #include "win32/base/imm_util.h"
-#include "win32/base/migration_util.h"
 #include "base/win_util.h"
 #endif
 
@@ -143,10 +142,6 @@ PostInstallDialog::PostInstallDialog()
 
   // import MS-IME by default
   migrateDefaultIMEUserDictionaryCheckBox->setChecked(true);
-
-#ifdef OS_WINDOWS
-  win32::MigrationUtil::LaunchBrokerForPostInstallCleanup();
-#endif  // OS_WINDOWS
 }
 
 PostInstallDialog::~PostInstallDialog() {

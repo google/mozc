@@ -34,13 +34,13 @@
 #include <vector>
 #include "base/config_file_stream.h"
 #include "base/util.h"
+#include "config/config_handler.h"
+#include "config/config.pb.h"
 #include "converter/segments.h"
 #include "converter/converter_interface.h"
 #include "storage/lru_storage.h"
 #include "rewriter/rewriter_interface.h"
 #include "rewriter/user_boundary_history_rewriter.h"
-#include "session/config_handler.h"
-#include "session/config.pb.h"
 #include "usage_stats/usage_stats.h"
 
 namespace mozc {

@@ -338,6 +338,16 @@ ConfigUseSingleKanjiConversion
 ConfigUseSymbolConversion
 # Special number conversion
 ConfigUseNumberConversion
+# Emotion conversion
+ConfigUseEmoticonConversion
+# Calculator conversion
+ConfigUseCalculator
+# T13n conversion
+ConfigUseT13nConversion
+# Zip code conversion
+ConfigUseZipCodeConversion
+# Spelling correction
+ConfigUseSpellingCorrection
 # Secret mode
 ConfigIncognito
 # Selection shortcut
@@ -346,14 +356,26 @@ ConfigSelectionShortcut
 ConfigUseHistorySuggest
 # Use system dictionary
 ConfigUseDictionarySuggest
+# Use realtime conversion
+ConfigUseRealtimeConversion
 # Maximum number of suggestions
 ConfigSuggestionsSize
 # Automatically switch to halfwidth
 ConfigUseAutoIMETurnOff
+# Use cascanding window
+ConfigUseCascadingWindow
 # Composition Editor's behavior with Shift key
 ConfigShiftKeyModeSwitch
 # Numpad character style
 ConfigNumpadCharacterForm
+# Use auto conversion
+ConfigUseAutoConversion
+# Auto conversion key
+ConfigAutoConversionKey
+# Yen sign character
+ConfigYenSignCharacter
+# Use Japanese layout
+ConfigUseJapaneseLayout
 # Space input style
 ConfigSpaceCharacterForm
 

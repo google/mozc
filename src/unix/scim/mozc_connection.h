@@ -33,7 +33,6 @@
 #include <string>
 
 #include "base/base.h"
-#include "client/session_interface.h"
 #include "session/commands.pb.h"
 
 namespace scim {
@@ -48,9 +47,8 @@ class IPCClientInterface;
 class IPCClientFactoryInterface;
 
 namespace client {
-
+class ClientInterface;
 class ServerLauncherInterface;
-
 }  // namespace client
 
 }  // namespace mozc
@@ -125,7 +123,9 @@ class MozcConnection : public MozcConnectionInterface {
       string *out_error) const;
 
   const scoped_ptr<ScimKeyTranslator> translator_;
-  scoped_ptr<mozc::client::SessionInterface> session_;
+  scoped_ptr<mozc::client::ClientInterface> client_;
+  mozc::client::ServerLauncherInterface *server_launcher_;
+  scoped_ptr<mozc::IPCClientFactoryInterface> client_factory_;
   mozc::config::Config::PreeditMethod preedit_method_;
 
   DISALLOW_COPY_AND_ASSIGN(MozcConnection);

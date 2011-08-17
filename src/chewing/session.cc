@@ -32,24 +32,15 @@
 #include <cctype>
 #include <chewing/mod_aux.h>
 #include <chewing/global.h>  // for constants
-#include <pwd.h>
 
 #include "base/base.h"
 #include "base/singleton.h"
 #include "base/util.h"
 #include "chewing/scoped_chewing_ptr.h"
-#include "session/config_handler.h"
+#include "config/config_handler.h"
 
 using mozc::commands::KeyEvent;
 using mozc::config::ChewingConfig;
-
-#if defined(OS_CHROMEOS)
-DEFINE_string(datapath, "/usr/share/chewing",
-              "the default path of libchewing");
-#else
-DEFINE_string(datapath, "/usr/share/libchewing3/chewing",
-              "the default path of libchewing");
-#endif
 
 namespace mozc {
 namespace {
@@ -65,24 +56,6 @@ int BytesForChars(const string &utf8_text, int characters) {
     ++counted;
   }
   return result;
-}
-
-string GetHashPath() {
-  // The logic below is copied from Util::GetUserProfileDirectory().
-  string dir;
-  char buf[1024];
-  struct passwd pw, *ppw;
-  const uid_t uid = geteuid();
-  CHECK_EQ(0, getpwuid_r(uid, &pw, buf, sizeof(buf), &ppw))
-      << "Can't get passwd entry for uid " << uid << ".";
-  CHECK_LT(0, strlen(pw.pw_dir))
-      << "Home directory for uid " << uid << " is not set.";
-#if defined(OS_CHROMEOS)
-  dir = Util::JoinPath(pw.pw_dir, "user/.chewing");
-#else
-  dir = Util::JoinPath(pw.pw_dir, ".chewing");
-#endif
-  return dir;
 }
 
 // Holds the mapping between mozc ChewingConfig enum and libchewing
@@ -162,46 +135,6 @@ class ChewingConfigMap {
 
 uint64 g_last_config_updated = 0;
 }  // anonymous namespace
-
-namespace session {
-// The default session factory implementation for chewing.  We do not
-// use the implementation in session/session_factory.cc.  We do not
-// even link to it because the default session factory refers to the
-// Japanese language models / Japanese vocabulary which we don't want
-// here.
-SessionFactory::SessionFactory() {
-  string hash_path = GetHashPath();
-  if (!Util::DirectoryExists(hash_path)) {
-    string hash_dir = Util::Dirname(hash_path);
-    // In Chrome OS, hash_dir would be ~/user, which might not exist.
-    if (Util::DirectoryExists(hash_dir) ||
-        Util::CreateDirectory(hash_dir)) {
-      Util::CreateDirectory(hash_path);
-    }
-  }
-  ::chewing_Init(FLAGS_datapath.c_str(), hash_path.c_str());
-}
-
-SessionFactory::~SessionFactory() {
-  ::chewing_Terminate();
-}
-
-mozc::session::SessionInterface *SessionFactory::NewSession() {
-  return new mozc::chewing::Session();
-}
-
-// Intercept the default factory.
-SessionFactoryInterface *SessionFactory::GetDefaultSessionFactory() {
-  return Singleton<SessionFactory>::get();
-}
-
-void SessionFactory::Reload() {
-}
-
-bool SessionFactory::IsAvailable() const {
-  return true;
-}
-}  // namespace session
 
 namespace chewing {
 Session::Session()

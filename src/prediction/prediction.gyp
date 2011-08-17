@@ -45,12 +45,14 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        '../base/base.gyp:config_file_stream',
+        '../config/config.gyp:config_handler',
         '../converter/converter_base.gyp:immutable_converter',
         '../converter/converter_base.gyp:segments',
         '../dictionary/dictionary.gyp:dictionary',
         '../dictionary/dictionary.gyp:suffix_dictionary',
         '../rewriter/rewriter.gyp:rewriter',
-        '../session/session_base.gyp:config_handler',
+        '../session/session_base.gyp:genproto_session',
         '../usage_stats/usage_stats.gyp:usage_stats',
         'gen_suggestion_filter_data',
         'genproto_prediction',
@@ -68,7 +70,7 @@
         {
           'action_name': 'gen_suggestion_filter_data',
           'variables': {
-            'input_files': [
+            'input_files%': [
               '../data/dictionary/suggestion_filter.txt',
             ],
           },
@@ -134,7 +136,8 @@
       ],
       'dependencies': [
         '../dictionary/dictionary.gyp:dictionary_mock',
-        '../session/session_base.gyp:config_handler',
+        '../dictionary/dictionary_base.gyp:install_dictionary_test_data',
+        '../config/config.gyp:config_handler',
         '../testing/testing.gyp:gtest_main',
         'prediction',
       ],

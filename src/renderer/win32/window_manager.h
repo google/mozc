@@ -51,6 +51,7 @@ namespace win32 {
 
 class CandidateWindow;
 class CompositionWindowList;
+class InfolistWindow;
 
 // This class is the controller of the candidate windows.
 class WindowManager {
@@ -63,7 +64,6 @@ class WindowManager {
   void DestroyAllWindows();
   void HideAllWindows();
   void UpdateLayout(const commands::RendererCommand &command);
-  void UpdateLayoutIMM32(const commands::RendererCommand &command);
   bool Activate();
   bool IsAvailable() const;
   void SetSendCommandInterface(
@@ -74,6 +74,7 @@ class WindowManager {
   scoped_ptr<CandidateWindow> main_window_;
   scoped_ptr<CandidateWindow> cascading_window_;
   scoped_ptr<CompositionWindowList> composition_window_list_;
+  scoped_ptr<InfolistWindow> infolist_window_;
   client::SendCommandInterface *send_command_interface_;
   POINT last_position_;
   int candidates_finger_print_;

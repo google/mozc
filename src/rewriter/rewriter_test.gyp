@@ -66,6 +66,14 @@
       'variables': {
         'test_size': 'small',
       },
+      # TODO(horo): usage is available only in Mac and Win now.
+      'conditions': [
+        ['OS=="mac" or OS=="win"', {
+          'sources': [
+            'usage_rewriter_test.cc',
+          ],
+        }],
+      ],
     },
     # Test cases meta target: this target is referred from gyp/tests.gyp
     {

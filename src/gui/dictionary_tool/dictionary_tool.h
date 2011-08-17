@@ -43,12 +43,13 @@
 namespace mozc {
 
 namespace client {
-class Session;
+class ClientInterface;
 }
 
 namespace gui {
 
 class ImportDialog;
+class FindDialog;
 
 class DictionaryTool : public QMainWindow,
                        private Ui::DictionaryTool {
@@ -170,7 +171,8 @@ class DictionaryTool : public QMainWindow,
   static bool IsWritableToExport(const string &file_name);
   static bool IsReadableToImport(const string &file_name);
 
-  ImportDialog *dialog_;
+  ImportDialog *import_dialog_;
+  FindDialog   *find_dialog_;
   scoped_ptr<UserDictionaryStorage> storage_;
 
   // ID of current selected dictionary. This needs to be maintained
@@ -218,6 +220,7 @@ class DictionaryTool : public QMainWindow,
   QAction *new_action_;
   QAction *rename_action_;
   QAction *delete_action_;
+  QAction *find_action_;
   QAction *import_create_action_;
   QAction *import_append_action_;
   QAction *export_action_;
@@ -226,7 +229,7 @@ class DictionaryTool : public QMainWindow,
   // status message
   QString statusbar_message_;
 
-  scoped_ptr<client::Session> session_;
+  scoped_ptr<client::ClientInterface> client_;
 
   bool is_available_;
 };

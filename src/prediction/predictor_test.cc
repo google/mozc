@@ -28,10 +28,10 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "base/util.h"
+#include "config/config.pb.h"
+#include "config/config_handler.h"
 #include "converter/segments.h"
 #include "prediction/predictor_interface.h"
-#include "session/config.pb.h"
-#include "session/config_handler.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/googletest.h"
 

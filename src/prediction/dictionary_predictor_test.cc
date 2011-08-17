@@ -33,6 +33,9 @@
 
 #include "base/freelist.h"
 #include "base/util.h"
+#include "config/config.pb.h"
+#include "config/config_handler.h"
+#include "converter/character_form_manager.h"
 #include "converter/converter_interface.h"
 #include "converter/converter_mock.h"
 #include "converter/node.h"
@@ -41,8 +44,6 @@
 #include "dictionary/dictionary_mock.h"
 #include "dictionary/suffix_dictionary.h"
 #include "session/commands.pb.h"
-#include "session/config.pb.h"
-#include "session/config_handler.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
@@ -149,6 +150,17 @@ class DictionaryPredictorTest : public testing::Test {
                                       kRightCapriHiragana,
                                       kCapriKatakana,
                                       Node::SPELLING_CORRECTION);
+    // "とくだね"
+    const char kTokudaneHiragana[] = "\xE3\x81\xA8\xE3\x81\x8F\xE3\x81\xA0"
+        "\xE3\x81\xAD";
+
+    // "とくダネ!"
+    const char kTokudaneKatakana[] = "\xE3\x81\xA8\xE3\x81\x8F\xE3\x83\x80"
+        "\xE3\x83\x8D!";
+
+    GetMockDic()->AddLookupPredictive(kTokudaneHiragana, kTokudaneHiragana,
+                                  kTokudaneKatakana, Node::DEFAULT_ATTRIBUTE);
+
     // "で"
     const char kDe[] = "\xE3\x81\xA7";
 
@@ -465,9 +477,10 @@ TEST_F(DictionaryPredictorTest,
     // "と"
     MakeSegmentsForSuggestion("\xE3\x81\x82", &segments);
 
-    // history is "てす"
-    const char kHistoryKey[] = "てす";
-    const char kHistoryValue[] = "テス";
+    // "てす"
+    const char kHistoryKey[] = "\xE3\x81\xA6\xE3\x81\x99";
+    // "テス"
+    const char kHistoryValue[] = "\xE3\x83\x86\xE3\x82\xB9";
 
     PrependHistorySegments(kHistoryKey, kHistoryValue,
                            &segments);
@@ -1001,5 +1014,48 @@ TEST_F(DictionaryPredictorTest, LookupKeyValueFromDictionary) {
       "\xE3\x81\xA6",
       "\xE3\x83\x86",
       &allocator));
+}
+
+TEST_F(DictionaryPredictorTest, ConformCharacterWidthToPreference) {
+  Segments segments;
+  NodeAllocator allocator;
+
+  config::Config config;
+  config.set_use_dictionary_suggest(true);
+  config.set_use_realtime_conversion(true);
+  config::ConfigHandler::SetConfig(config);
+  DictionaryPredictor predictor;
+
+  // "とくだね"
+  const char kTokudaneHiragana[] = "\xE3\x81\xA8\xE3\x81\x8F\xE3\x81\xA0"
+      "\xE3\x81\xAD";
+  // "とくダネ!"
+  const char kTokudaneHalf[] = "\xE3\x81\xA8\xE3\x81\x8F\xE3\x83\x80"
+      "\xE3\x83\x8D!";
+  // "とくダネ！"
+  const char kTokudaneFull[] = "\xE3\x81\xA8\xE3\x81\x8F\xE3\x83\x80"
+      "\xE3\x83\x8D\xEF\xBC\x81";
+
+  {
+    MakeSegmentsForSuggestion(kTokudaneHiragana, &segments);
+    CharacterFormManager::GetCharacterFormManager()->
+        SetCharacterForm("!", config::Config::HALF_WIDTH);
+    EXPECT_TRUE(predictor.Predict(&segments));
+
+    EXPECT_EQ(segments.segments_size(), 1);
+    EXPECT_GE(segments.segment(0).candidates_size(), 1);
+    EXPECT_EQ(kTokudaneHalf, segments.segment(0).candidate(0).value);
+  }
+
+  {
+    MakeSegmentsForSuggestion(kTokudaneHiragana, &segments);
+    CharacterFormManager::GetCharacterFormManager()->
+        SetCharacterForm("!", config::Config::FULL_WIDTH);
+    EXPECT_TRUE(predictor.Predict(&segments));
+
+    EXPECT_EQ(segments.segments_size(), 1);
+    EXPECT_GE(segments.segment(0).candidates_size(), 1);
+    EXPECT_EQ(kTokudaneFull, segments.segment(0).candidate(0).value);
+  }
 }
 }  // mozc

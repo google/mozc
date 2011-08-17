@@ -36,9 +36,9 @@
 #include <QtGui/QtGui>
 #include "base/base.h"
 #include "base/util.h"
-#include "client/session.h"
-#include "session/config_handler.h"
-#include "session/config.pb.h"
+#include "client/client.h"
+#include "config/config_handler.h"
+#include "config/config.pb.h"
 
 #ifdef OS_WINDOWS
 #include "win32/base/migration_util.h"
@@ -89,8 +89,9 @@ void SetDefaultDialog::reject() {
 }
 
 bool SetDefaultDialog::SetCheckDefault(bool check_default) {
-  mozc::client::Session client;
-  if (!client.PingServer() && !client.EnsureConnection()) {
+  scoped_ptr<mozc::client::ClientInterface> client(
+      mozc::client::ClientFactory::NewClient());
+  if (!client->PingServer() && !client->EnsureConnection()) {
     LOG(ERROR) << "Cannot connect to server";
     return false;
   }
@@ -100,7 +101,7 @@ bool SetDefaultDialog::SetCheckDefault(bool check_default) {
     return false;
   }
   config.set_check_default(check_default);
-  if (!client.SetConfig(config)) {
+  if (!client->SetConfig(config)) {
     LOG(ERROR) << "Cannot set config";
     return false;
   }

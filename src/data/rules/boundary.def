@@ -23,7 +23,7 @@ PREFIX 名詞,非自立,副詞可能,*,*,*,際 1000
 # want to premote "件"
 PREFIX 名詞,接尾,地域,*,*,*,県       1500
 # user may input 123回 as 123|回
-PREFIX 名詞,接尾,助数詞,*,*,*,*      500
+PREFIX 名詞,接尾,助数詞,*,*,*,*      1000
 PREFIX 名詞,接尾,特殊                2000
 PREFIX 名詞,接尾,                    1000
 PREFIX 助詞,格助詞,引用,*,*,*,と     2000

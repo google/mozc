@@ -41,7 +41,7 @@
 namespace mozc {
 
 namespace client {
-class SessionInterface;
+class ClientInterface;
 }
 
 namespace ibus {
@@ -172,9 +172,13 @@ class MozcEngine : public EngineInterface {
   // message, then hides a preedit string and the candidate window.
   void RevertSession(IBusEngine *engine);
 
+  // Submits preedit inside of mozc_server by sending SessionCommand::SUBMIT IPC
+  // message.
+  void SubmitSession(IBusEngine *engine);
+
   uint64 last_sync_time_;
   scoped_ptr<KeyTranslator> key_translator_;
-  scoped_ptr<client::SessionInterface> session_;
+  scoped_ptr<client::ClientInterface> client_;
 
   IBusPropList *prop_root_;
   IBusProperty *prop_composition_mode_;
@@ -194,9 +198,10 @@ class MozcEngine : public EngineInterface {
   // This is a workaround.  See the implementation of ProcessKeyEvent().
   bool ignore_reset_for_deletion_range_workaround_;
 
-  DISALLOW_COPY_AND_ASSIGN(MozcEngine);
   friend class LaunchToolTest;
   FRIEND_TEST(LaunchToolTest, LaunchToolTest);
+
+  DISALLOW_COPY_AND_ASSIGN(MozcEngine);
 };
 
 }  // namespace ibus

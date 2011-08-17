@@ -27,32 +27,30 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "client/session.h"
-
 #ifdef OS_WINDOWS
 #include <string.h>
 #include <windows.h>
 #include <sddl.h>
 #include <shlobj.h>
-#include "third_party/mozc/sandbox/restricted_token_utils.h"
 #else
-#include <spawn.h>  // for posix_spawnp().
 #include <unistd.h>
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#endif
+#endif  // OS_WINDOWS
+
 #include "base/base.h"
 #include "base/const.h"
 #include "base/file_stream.h"
 #include "base/process.h"
 #include "base/run_level.h"
 #include "base/util.h"
+#include "client/client.h"
 #include "ipc/ipc.h"
 #include "ipc/named_event.h"
 #ifdef OS_MACOSX
 #include "base/mac_util.h"
-#endif
+#endif  // OS_MACOSX
 
 namespace mozc {
 namespace client {
@@ -93,14 +91,14 @@ ServerLauncher::ServerLauncher()
 
 ServerLauncher::~ServerLauncher() {}
 
-bool ServerLauncher::StartServer(SessionInterface *session) {
+bool ServerLauncher::StartServer(ClientInterface *client) {
   if (server_program().empty()) {
     LOG(ERROR) << "Server path is empty";
     return false;
   }
 
   // ping first
-  if (session->PingServer()) {
+  if (client->PingServer()) {
     return true;
   }
 
@@ -139,18 +137,19 @@ bool ServerLauncher::StartServer(SessionInterface *session) {
 
   size_t pid = 0;
 #ifdef OS_WINDOWS
-  mozc::Process::SecurityInfo info;
-  info.primary_level = sandbox::USER_INTERACTIVE;
-  info.impersonation_level = sandbox::USER_RESTRICTED_SAME_ACCESS;
-  info.job_level =  process_in_job ?
-      sandbox::JOB_NO_JOB : sandbox::JOB_LOCKDOWN;
-  info.integrity_level = sandbox::INTEGRITY_LEVEL_LOW;
+  mozc::WinSandbox::SecurityInfo info;
+  info.primary_level = WinSandbox::USER_INTERACTIVE;
+  info.impersonation_level = WinSandbox::USER_RESTRICTED_SAME_ACCESS;
+  info.integrity_level = WinSandbox::INTEGRITY_LEVEL_LOW;
+  // If the current process is in a job, you cannot use
+  // CREATE_BREAKAWAY_FROM_JOB. b/1571395
+  info.use_locked_down_job = !process_in_job;
   info.allow_ui_operation = false;
   info.in_system_dir = true;  // use system dir not to lock current directory
   info.creation_flags = CREATE_DEFAULT_ERROR_MODE | CREATE_NO_WINDOW;
 
   DWORD tmp_pid = 0;
-  const bool result = mozc::Process::SpawnProcessAs(
+  const bool result = mozc::WinSandbox::SpawnSandboxedProcess(
       server_program(), arg, info, &tmp_pid);
   pid = static_cast<size_t>(tmp_pid);
 
@@ -178,7 +177,7 @@ bool ServerLauncher::StartServer(SessionInterface *session) {
 #endif  // OS_WINDOWS
 
   // maybe another process will launch mozc_server at the same time.
-  if (session->PingServer()) {
+  if (client->PingServer()) {
     VLOG(1) << "Another process has launched the server";
     return true;
   }
@@ -199,7 +198,7 @@ bool ServerLauncher::StartServer(SessionInterface *session) {
       case NamedEventListener::PROCESS_SIGNALED:
         LOG(ERROR) << "Mozc server is terminated";
         // Mozc may be terminated because another client launches mozc_server
-        if (session->PingServer()) {
+        if (client->PingServer()) {
           return true;
         }
         return false;
@@ -212,7 +211,7 @@ bool ServerLauncher::StartServer(SessionInterface *session) {
 
   // Try to connect mozc_server just in case.
   for (int trial = 0; trial < kTrial; ++trial) {
-    if (session->PingServer()) {
+    if (client->PingServer()) {
       return true;
     }
     Util::Sleep(kRetryIntervalForServer);

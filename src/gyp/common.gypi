@@ -64,12 +64,15 @@
       '-funsigned-char',
       '-include', 'base/namespace.h',
       '-pipe',
+      '-pthread',
     ],
     # Libraries for GNU/Linux environment.
+    'linux_ldflags': [
+      '-pthread',
+    ],
     'linux_libs': [
       '-lcrypto',
       '-lcurl',
-      '-lpthread',
       '-lrt',
       '-lssl',
       '-lz',
@@ -131,23 +134,28 @@
     # project file called "coverage".
     'coverage%': 0,
 
-    'mozc_data_dir': '<(SHARED_INTERMEDIATE_DIR)',
+    # The pkg-config command to get the cflags/ldflags for Linux
+    # builds.  We make it customizable to allow building in a special
+    # environment such like cross-platform build.
+    'pkg_config_command%': 'pkg-config',
+
+    'mozc_data_dir': '<(SHARED_INTERMEDIATE_DIR)/',
   },
   'target_defaults': {
     'variables': {
       # See http://gcc.gnu.org/onlinedocs/gcc-4.4.2/gcc/Optimize-Options.html
-      'mac_release_optimization%': '2', # Use -O2 unless overridden
-      'mac_debug_optimization%': '0',   # Use -O0 unless overridden
+      'mac_release_optimization%': '2',  # Use -O2 unless overridden
+      'mac_debug_optimization%': '0',    # Use -O0 unless overridden
       # See http://msdn.microsoft.com/en-us/library/aa652360(VS.71).aspx
-      'win_optimization_debug%': '0',   # 0 = /Od
-      'win_optimization_release%': '2', # 2 = /Og /Oi /Ot /Oy /Ob2 /Gs /GF /Gy
-      'win_optimization_custom%': '4',  # 4 = None but prevents vcbuild from
-                                        # inheriting default optimization.
+      'win_optimization_debug%': '0',    # 0 = /Od
+      'win_optimization_release%': '2',  # 2 = /Og /Oi /Ot /Oy /Ob2 /Gs /GF /Gy
+      'win_optimization_custom%': '4',   # 4 = None but prevents vcbuild from
+                                         # inheriting default optimization.
       # See http://msdn.microsoft.com/en-us/library/aa652367(VS.71).aspx
-      'win_release_static_crt%': '0',  # 0 = /MT (nondebug static)
-      'win_debug_static_crt%': '1',    # 1 = /MTd (debug static)
-      'win_release_dynamic_crt%': '2', # 2 = /MD (nondebug dynamic)
-      'win_debug_dynamic_crt%': '3',   # 3 = /MDd (debug dynamic)
+      'win_release_static_crt%': '0',   # 0 = /MT (nondebug static)
+      'win_debug_static_crt%': '1',     # 1 = /MTd (debug static)
+      'win_release_dynamic_crt%': '2',  # 2 = /MD (nondebug dynamic)
+      'win_debug_dynamic_crt%': '3',    # 3 = /MDd (debug dynamic)
       # See http://msdn.microsoft.com/en-us/library/aa652352(VS.71).aspx
       'win_target_machine_x86%': '1',
       'win_target_machine_x64%': '17',
@@ -167,12 +175,12 @@
         },
         'conditions': [
           ['branding=="GoogleJapaneseInput"', {
-           'defines': ['GOOGLE_JAPANESE_INPUT_BUILD'],
-          }, {  # else
-           'defines': ['MOZC_BUILD'],
+            'defines': ['GOOGLE_JAPANESE_INPUT_BUILD'],
+          }, {
+            'defines': ['MOZC_BUILD'],
           }],
           ['channel_dev==1', {
-           'defines': ['CHANNEL_DEV'],
+            'defines': ['CHANNEL_DEV'],
           }],
           ['not(OS=="linux" and use_libprotobuf!=0)', {
             'include_dirs': [
@@ -181,8 +189,7 @@
           }],
           ['OS=="linux"', {
             'ldflags': [
-              '<@(linux_libs)',
-              '<@(extra_linux_libs)',
+              '<@(linux_ldflags)',
             ],
           }],
         ],
@@ -267,7 +274,7 @@
         'conditions': [
           ['OS=="linux"', {
             'cflags': [
-             '<@(release_extra_cflags)',
+              '<@(release_extra_cflags)',
             ],
           }],
         ],
@@ -279,9 +286,29 @@
           'IGNORE_HELP_FLAG',
           'IGNORE_INVALID_FLAG'
         ],
-        'msvs_configuration_attributes': {
-          'WholeProgramOptimization': '1',
-        },
+        'conditions': [
+          ['OS=="win"', {
+            # MSVS_VERSION is available on Windows only.
+            'conditions': [
+              ['MSVS_VERSION=="2010"', {
+                'msvs_settings': {
+                  'VCCLCompilerTool': {
+                    'WholeProgramOptimization': 'true',
+                  },
+                  'VCLinkerTool': {
+                    # 1 = 'LinkTimeCodeGenerationOptionUse'
+                    'LinkTimeCodeGeneration': '1',
+                  },
+                },
+              }],
+              ['MSVS_VERSION=="2008"', {
+                'msvs_configuration_attributes': {
+                  'WholeProgramOptimization': '1',
+                },
+              }],
+            ],
+          }],
+        ],
         'msvs_settings': {
           'VCLinkerTool': {
             # /PDBALTPATH is documented in Visual C++ 2010
@@ -321,8 +348,6 @@
       # For gtest
       'GTEST_HAS_TR1_TUPLE=0',
       # For gtest
-      # For gtest
-      'MOZC_DATA_DIR="<(mozc_data_dir)"',
     ],
     'include_dirs': [
       '<(DEPTH)',
@@ -332,6 +357,16 @@
       '<(SHARED_INTERMEDIATE_DIR)/proto_out',
     ],
     'conditions': [
+      # Define MOZC_DATA_DIR.
+      ['OS=="linux"', {
+        # <(mozc_data_dir) may include make-variables.  However, 'defines'
+        # escapes make-variables so they won't be replaced unexpectedly.  Since
+        # we would like replacements in the source code, we use 'cflags' for
+        # MOZC_DATA_DIR, which doesn't escape make-variables.
+        'cflags': ['-DMOZC_DATA_DIR="<(mozc_data_dir)"'],
+      }, {
+        'defines': ['MOZC_DATA_DIR="<(mozc_data_dir)"'],
+      }],
       ['OS=="win"', {
         'defines': [
           'COMPILER_MSVC',
@@ -360,6 +395,7 @@
         'include_dirs': [
           '<(DEPTH)/third_party/gtest',
           '<(DEPTH)/third_party/gtest/include',
+          '<(DEPTH)/third_party/wtl/include',
         ],
         # We don't have cygwin in our tree, but we need to have
         # setup_env.bat in the directory specified in 'msvs_cygwin_dirs'
@@ -369,28 +405,40 @@
         ],
         'msvs_settings': {
           'VCCLCompilerTool': {
-            'BufferSecurityCheck': 'True',         # /GS
+            'BufferSecurityCheck': 'true',         # /GS
             'CompileAs': '2',                      # /TP
-            'CompileOnly': 'True',                 # /c
             'DebugInformationFormat': '3',         # /Zi
-            'DefaultCharIsUnsigned': 'True',       # /J
+            'DefaultCharIsUnsigned': 'true',       # /J
             'DisableSpecificWarnings': ['<@(msvc_disabled_warnings)'],  # /wdXXXX
-            'EnableFunctionLevelLinking': 'True',  # /Gy
-            'EnableIntrinsicFunctions': 'True',    # /Oi
+            'EnableFunctionLevelLinking': 'true',  # /Gy
+            'EnableIntrinsicFunctions': 'true',    # /Oi
             'ExceptionHandling': '2',              # /EHs
             'ForcedIncludeFiles': ['base/namespace.h'],
                                                    # /FI<header_file.h>
-            'OptimizeForWindows98': '1',           # /OPT:NOWIN98
-            'SuppressStartupBanner': 'True',       # /nologo
-            'TreatWChar_tAsBuiltInType': 'False',  # /Zc:wchar_t-
+            'SuppressStartupBanner': 'true',       # /nologo
+            'TreatWChar_tAsBuiltInType': 'false',  # /Zc:wchar_t-
             'WarningLevel': '3',                   # /W3
-
-            # Unfortunately, 'OmitFramePointers': 'false' does not mean
-            # /Oy- on Visual C++ 2008 or prior.  You need to use
-            # 'AdditionalOptions' option to specify /Oy- instead.
-            'OmitFramePointers': 'False',          # /Oy- (for Visual C++ 2010)
-            'AdditionalOptions': ['/Oy-'],         # /Oy-
           },
+          'conditions': [
+            ['OS=="win"', {
+              # MSVS_VERSION is available on Windows only.
+              'conditions': [
+                ['MSVS_VERSION=="2010"', {
+                  'VCCLCompilerTool': {
+                    'OmitFramePointers': 'false',  # /Oy- (for Visual C++ 2010)
+                  },
+                }],
+                # Unfortunately, 'OmitFramePointers': 'false' does not mean
+                # /Oy- on Visual C++ 2008 or prior.  You need to use
+                # 'AdditionalOptions' option to specify /Oy- instead.
+                ['MSVS_VERSION=="2008"', {
+                  'VCCLCompilerTool': {
+                    'AdditionalOptions': ['/Oy-'],  # /Oy-
+                  },
+                }],
+              ],
+            }],
+          ],
           'VCLinkerTool': {
             # TODO(satorux): Reduce the number of libraries. We should
             # only have common libraries here.
@@ -420,11 +468,11 @@
               'winspool.lib',
             ],
             'AdditionalOptions': [
-              '/DYNAMICBASE',  # 'RandomizedBaseAddress': 'True'
+              '/DYNAMICBASE',  # 'RandomizedBaseAddress': 'true'
               '/NXCOMPAT',
             ],
             'EnableCOMDATFolding': '2',            # /OPT:ICF
-            'GenerateDebugInformation': 'True',    # /DEBUG
+            'GenerateDebugInformation': 'true',    # /DEBUG
             'LinkIncremental': '1',                # /INCREMENTAL:NO
             'OptimizeReferences': '2',             # /OPT:REF
             'TerminalServerAware': '2',            # /TSAWARE
@@ -434,8 +482,8 @@
               'MOZC_RES_USE_TEMPLATE=1',
             ],
             'AdditionalIncludeDirectories': [
-              '<(SHARED_INTERMEDIATE_DIR)',
-              '<(DEPTH)',
+              '<(SHARED_INTERMEDIATE_DIR)/',
+              '<(DEPTH)/',
             ],
           },
         },
@@ -447,7 +495,6 @@
         'cflags': [
           '<@(gcc_cflags)',
           '<@(warning_cflags)',
-          '-Wno-array-bounds',  # Probably GCC's bug 43949 causes trouble.
           '-fPIC',
           '-fno-exceptions',
         ],
@@ -456,6 +503,12 @@
           # <unordered_map> and <unordered_set>.
           '-Wno-deprecated',
         ],
+        'link_settings': {
+          'libraries': [
+            '<@(linux_libs)',
+            '<@(extra_linux_libs)',
+          ],
+        },
         'conditions': [
           ['use_libgtest==0', {
             'include_dirs': [
@@ -541,13 +594,13 @@
                 'AdditionalOptions': ['/Yd'],
               }
             }
-         }],  # OS==win
+          }],  # OS==win
         ],  # conditions for coverage
       }],  # coverage!=0
     ],
   },
   'xcode_settings': {
-   'SYMROOT': '<(build_base)',
-   'GCC_INLINES_ARE_PRIVATE_EXTERN': 'YES',
+    'SYMROOT': '<(build_base)',
+    'GCC_INLINES_ARE_PRIVATE_EXTERN': 'YES',
   },
 }

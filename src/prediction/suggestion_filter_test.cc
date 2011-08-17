@@ -32,6 +32,7 @@
 #include <string>
 #include "base/base.h"
 #include "base/file_stream.h"
+#include "base/hash_tables.h"
 #include "base/util.h"
 #include "prediction/suggestion_filter.h"
 #include "testing/base/public/googletest.h"
@@ -63,7 +64,7 @@ const double kErrorRatio = 0.0001;
 
 TEST(SuggestionFilter, IsBadSuggestionTest) {
   // Load suggestion_filter
-  set<string> suggestion_filter_set;
+  hash_set<string> suggestion_filter_set;
 
   vector<string> files;
   Util::SplitStringUsing(FLAGS_suggestion_filter_files, ",", &files);
@@ -76,9 +77,12 @@ TEST(SuggestionFilter, IsBadSuggestionTest) {
       if (line.empty() || line[0] == '#') {
         continue;
       }
+      Util::LowerString(&line);
       suggestion_filter_set.insert(line);
     }
   }
+
+  LOG(INFO) << "Filter word size:\t" << suggestion_filter_set.size();
 
   vector<string> dic_files;
   Util::SplitStringUsing(FLAGS_dictionary_file, ",", &dic_files);
@@ -95,7 +99,8 @@ TEST(SuggestionFilter, IsBadSuggestionTest) {
       fields.clear();
       Util::SplitStringUsing(line, "\t", &fields);
       CHECK_GE(fields.size(), 5);
-      const string &value = fields[4];
+      string value = fields[4];
+      Util::LowerString(&value);
 
       const bool true_result =
           (suggestion_filter_set.find(value) != suggestion_filter_set.end());
@@ -104,7 +109,7 @@ TEST(SuggestionFilter, IsBadSuggestionTest) {
 
       // never emits false negative
       if (true_result) {
-        EXPECT_TRUE(bloom_filter_result);
+        EXPECT_TRUE(bloom_filter_result) << value;
       } else {
         if (bloom_filter_result) {
           ++false_positives;

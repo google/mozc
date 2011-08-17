@@ -30,17 +30,20 @@
 # You can include this file in a target block to add Qt-related
 # libraries to the target.
 # Currently debug libraries are not supported on Mac
-# (e.g. libQtCore_debug.dylib) and GNU/Linux.
+# (e.g. libQtCore_debug.a) and GNU/Linux.
 {
+  'conditions': [['use_qt=="YES"', {
+
   'variables': {
+    'includes': ['qt_vars.gypi'],
     'conditions': [
       ['qt_dir', {
         'qt_cflags': [],
         'qt_include_dirs': ['<(qt_dir)/include'],
       }, {
         'conditions': [
-          ['OS=="linux"', {
-            'qt_cflags': ['<!@(pkg-config --cflags QtGui QtCore)'],
+          ['pkg_config_command', {
+            'qt_cflags': ['<!@(<(pkg_config_command) --cflags QtGui QtCore)'],
             'qt_include_dirs': [],
           }, {
             'qt_cflags': [],
@@ -94,22 +97,21 @@
             # without support of pkg-config, we need to list all the
             # dependencies of QtGui.
             # See http://doc.qt.nokia.com/4.7/requirements-x11.html
-            # pthread library is removed because it must not be specific to Qt,
-            # and libpng12, which is missing on the list, is added because we
-            # use PNG images.
-            '<!@(pkg-config --libs-only-L --libs-only-l'
+            # pthread library is removed because it must not be specific to Qt.
+            '<!@(<(pkg_config_command) --libs-only-L --libs-only-l'
             ' xrender xrandr xcursor xfixes xinerama fontconfig freetype2'
             ' xi xt xext x11'
             ' sm ice'
-            ' gobject-2.0'
-            ' libpng12)',
+            ' gobject-2.0)',
           ],
         }, {
           'libraries': [
-            '<!@(pkg-config --libs QtGui QtCore)',
+            '<!@(<(pkg_config_command) --libs QtGui QtCore)',
           ],
         }],
       ],
     }],
   ],
+
+  }]],  # End of use_qt=="YES"
 }

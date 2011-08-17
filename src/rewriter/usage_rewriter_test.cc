@@ -30,9 +30,13 @@
 #include <string>
 
 #include "base/util.h"
+#include "config/config_handler.h"
+#include "config/config.pb.h"
 #include "converter/segments.h"
 #include "rewriter/usage_rewriter.h"
 #include "testing/base/public/gunit.h"
+
+DECLARE_string(test_tmpdir);
 
 namespace mozc {
 namespace {
@@ -51,12 +55,14 @@ void AddCandidate(const string &key, const string &value,
 class UsageRewriterTest : public testing::Test {
  protected:
   virtual void SetUp() {
-  }
-  virtual void TearDown() {
+    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    config::Config config;
+    config::ConfigHandler::GetDefaultConfig(&config);
+    config::ConfigHandler::SetConfig(config);
   }
 };
 
-TEST(UsageRewriterTest, ConjugationTest) {
+TEST_F(UsageRewriterTest, ConjugationTest) {
   Segments segments;
   UsageRewriter rewriter;
   Segment *seg;
@@ -86,7 +92,7 @@ TEST(UsageRewriterTest, ConjugationTest) {
   EXPECT_NE("", segments.conversion_segment(0).candidate(1).usage_description);
 }
 
-TEST(UsageRewriterTest, SingleSegmentSingleCandidateTest) {
+TEST_F(UsageRewriterTest, SingleSegmentSingleCandidateTest) {
   Segments segments;
   UsageRewriter rewriter;
   Segment *seg;
@@ -120,7 +126,7 @@ TEST(UsageRewriterTest, SingleSegmentSingleCandidateTest) {
   EXPECT_EQ("", segments.conversion_segment(0).candidate(0).usage_description);
 }
 
-TEST(UsageRewriterTest, SingleSegmentMultiCandidatesTest) {
+TEST_F(UsageRewriterTest, SingleSegmentMultiCandidatesTest) {
   Segments segments;
   UsageRewriter rewriter;
   Segment *seg;
@@ -214,7 +220,7 @@ TEST(UsageRewriterTest, SingleSegmentMultiCandidatesTest) {
   EXPECT_EQ("", segments.conversion_segment(0).candidate(1).usage_description);
 }
 
-TEST(UsageRewriterTest, MultiSegmentsTest) {
+TEST_F(UsageRewriterTest, MultiSegmentsTest) {
   Segments segments;
   UsageRewriter rewriter;
   Segment *seg;
@@ -272,7 +278,7 @@ TEST(UsageRewriterTest, MultiSegmentsTest) {
   EXPECT_NE("", segments.conversion_segment(1).candidate(1).usage_description);
 }
 
-TEST(UsageRewriterTest, SameUsageTest) {
+TEST_F(UsageRewriterTest, SameUsageTest) {
   Segments segments;
   UsageRewriter rewriter;
   Segment *seg;

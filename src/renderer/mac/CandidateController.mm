@@ -227,21 +227,12 @@ void CandidateController::AlignWindows() {
                                                 candidate_rect.Top()));
 
   // Align infolist window
-  const renderer::Size infolist_size = infolist_window_->GetWindowSize();
-  renderer::Point infolist_pos;
-  if (candidate_rect.Left() + candidate_rect.Width() + infolist_size.width >
-      display_rect.Right()) {
-    infolist_pos.x = candidate_rect.Left() - infolist_size.width;
-  } else {
-    infolist_pos.x = candidate_rect.Left() + candidate_rect.Width();
-  }
-  if (candidate_rect.Top() + infolist_size.height > display_rect.Bottom()) {
-    infolist_pos.y = display_rect.Bottom() - infolist_size.height;
-  } else {
-    infolist_pos.y = candidate_rect.Top();
-  }
-
-  infolist_window_->MoveWindow(infolist_pos);
+  const renderer::Rect infolist_rect =
+      WindowUtil::GetWindowRectForInfolistWindow(
+          infolist_window_->GetWindowSize(),
+          candidate_rect, display_rect);
+  infolist_window_->MoveWindow(renderer::Point(infolist_rect.Left(),
+                                               infolist_rect.Top()));
 
   // If there is no need to show cascading window, we just finish the
   // function here.

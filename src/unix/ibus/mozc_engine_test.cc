@@ -28,7 +28,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <map>
-#include "client/session_mock.h"
+#include "client/client_mock.h"
 #include "testing/base/public/gunit.h"
 #include "unix/ibus/mozc_engine.h"
 
@@ -55,11 +55,18 @@ class MozcEngineTest : public testing::Test {
     } else {
       key->set_key_code(keyval);
     }
+
     return MozcEngine::ProcessModifiers(is_key_up,
                                         keyval,
                                         key,
                                         &currently_pressed_modifiers_,
                                         &modifiers_to_be_sent_);
+  }
+
+  bool ProcessKeyWithCapsLock(bool is_key_up, gint keyval,
+                              commands::KeyEvent *key) {
+    key->add_modifier_keys(commands::KeyEvent::CAPS);
+    return ProcessKey(is_key_up, keyval, key);
   }
 
   bool IsPressed(gint keyval) const {
@@ -80,12 +87,12 @@ class LaunchToolTest : public testing::Test {
   }
  protected:
   virtual void SetUp() {
-    mock_ = new client::SessionMock();
+    mock_ = new client::ClientMock();
     mock_->ClearFunctionCounter();
-    mozc_engine_->session_.reset(mock_);
+    mozc_engine_->client_.reset(mock_);
   }
 
-  client::SessionMock* mock_;
+  client::ClientMock* mock_;
   scoped_ptr<MozcEngine> mozc_engine_;
  private:
   DISALLOW_COPY_AND_ASSIGN(LaunchToolTest);
@@ -118,7 +125,7 @@ TEST_F(LaunchToolTest, LaunchToolTest) {
   output.set_launch_tool_mode(commands::Output::NO_TOOL);
   EXPECT_FALSE(mozc_engine_->LaunchTool(output));
 
-  // Something occurring in client::Session::LaunchTool
+  // Something occurring in client::Client::LaunchTool
   mock_->ClearFunctionCounter();
   mock_->SetBoolFunctionReturn("LaunchToolWithProtoBuf", false);
   output.set_launch_tool_mode(commands::Output::CONFIG_DIALOG);
@@ -254,6 +261,36 @@ TEST_F(MozcEngineTest, ProcessCtrlModifiers) {
   EXPECT_TRUE(modifiers_to_be_sent_.empty());
 }
 
+TEST_F(MozcEngineTest, ProcessShiftModifiersWithCapsLockOn) {
+  commands::KeyEvent key;
+
+  // 'Shift-a' senario
+  // Shift down
+  EXPECT_FALSE(ProcessKeyWithCapsLock(false, IBUS_Shift_L, &key));
+  EXPECT_TRUE(IsPressed(IBUS_Shift_L));
+  EXPECT_NE(modifiers_to_be_sent_.end(),
+            modifiers_to_be_sent_.find(commands::KeyEvent::SHIFT));
+  EXPECT_EQ(modifiers_to_be_sent_.size(), 2);
+
+  // "a" down
+  key.Clear();
+  EXPECT_TRUE(ProcessKeyWithCapsLock(false, 'a', &key));
+  EXPECT_FALSE(IsPressed(IBUS_Shift_L));
+  EXPECT_EQ(modifiers_to_be_sent_.size(), 0);
+
+  // "a" up
+  key.Clear();
+  EXPECT_FALSE(ProcessKeyWithCapsLock(true, 'a', &key));
+  EXPECT_FALSE(IsPressed(IBUS_Shift_L));
+  EXPECT_EQ(modifiers_to_be_sent_.size(), 0);
+
+  // Shift up
+  key.Clear();
+  EXPECT_FALSE(ProcessKeyWithCapsLock(true, IBUS_Shift_L, &key));
+  EXPECT_TRUE(currently_pressed_modifiers_.empty());
+  EXPECT_TRUE(modifiers_to_be_sent_.empty());
+}
+
 TEST_F(MozcEngineTest, ProcessModifiers) {
   commands::KeyEvent key;
 
@@ -295,6 +332,8 @@ TEST_F(MozcEngineTest, ProcessModifiers) {
         case commands::KeyEvent::ALT:
           has_alt = true;
           break;
+        case commands::KeyEvent::CAPS:
+          break;
         case commands::KeyEvent::KEY_DOWN:
         case commands::KeyEvent::KEY_UP:
         case commands::KeyEvent::LEFT_CTRL:
@@ -305,6 +344,8 @@ TEST_F(MozcEngineTest, ProcessModifiers) {
         case commands::KeyEvent::RIGHT_SHIFT:
           ADD_FAILURE() << "Incorrect modifier key: " << key.modifier_keys(i);
           break;
+        default:
+          ADD_FAILURE() << "Invalid modifier key id: " << key.modifier_keys(i);
       }
     }
     EXPECT_TRUE(has_shift);

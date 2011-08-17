@@ -40,7 +40,7 @@
 namespace mozc {
 
 namespace client {
-class Session;
+class ClientInterface;
 }
 
 namespace config {
@@ -83,7 +83,7 @@ class ConfigDialog : public QDialog,
   void ConvertToProto(config::Config *config) const;
   void ConvertFromProto(const config::Config &config);
   bool Update();
-  scoped_ptr<client::Session> client_;
+  scoped_ptr<client::ClientInterface> client_;
   string custom_keymap_table_;
   string custom_roman_table_;
   int initial_preedit_method_;

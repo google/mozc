@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
+  <!--
+    The namespace alias 'compat' below is added as a workaround for b/3034589.
+    If there is no alias, Manifest Tool version 6.1.7716.0 may add multiple
+    xmlns declarations, which might cause a heap corruption in sxs.dll on
+    Windows XP SP2 as shown in http://support.microsoft.com/kb/921337
+  -->
+  <compat:compatibility
+       xmlns:compat="urn:schemas-microsoft-com:compatibility.v1">
+    <compat:application>
+      <!--The ID below indicates application support for Windows 7 -->
+      <compat:supportedOS Id="{35138b9a-5d96-4fbd-8e2d-a2440225f93a}"/>
+      <!--The ID below indicates application support for Windows Vista -->
+      <compat:supportedOS Id="{e2011457-1546-43c5-a5fe-008deee3d3f0}"/>
+    </compat:application>
+  </compat:compatibility>
+  <asmv3:application xmlns:asmv3="urn:schemas-microsoft-com:asm.v3">
+    <asmv3:windowsSettings xmlns="http://schemas.microsoft.com/SMI/2005/WindowsSettings">
+      <dpiAware>true</dpiAware>
+    </asmv3:windowsSettings>
+  </asmv3:application>
+</assembly>

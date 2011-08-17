@@ -31,12 +31,12 @@
 
 #include "base/password_manager.h"
 #include "base/util.h"
+#include "config/config.pb.h"
+#include "config/config_handler.h"
 #include "converter/converter_interface.h"
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
 #include "session/commands.pb.h"
-#include "session/config.pb.h"
-#include "session/config_handler.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
@@ -45,29 +45,6 @@ DECLARE_string(test_tmpdir);
 
 namespace mozc {
 namespace {
-
-class UserHistoryPredictorTest : public testing::Test {
- protected:
-  virtual void SetUp() {
-    kUseMockPasswordManager = true;
-    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    config::ConfigHandler::GetDefaultConfig(&default_config_);
-    config::ConfigHandler::SetConfig(default_config_);
-  }
-
-  virtual void TearDown() {
-    config::ConfigHandler::SetConfig(default_config_);
-  }
-
-  virtual void EnableZeroQuerySuggestion() {
-  }
-
-  virtual void DisableZeroQuerySuggestion() {
-  }
-
- private:
-  config::Config default_config_;
-};
 
 void MakeSegmentsForSuggestion(const string key,
                                Segments *segments) {
@@ -143,6 +120,30 @@ void PrependHistorySegments(const string &key,
   c->value = value;
   c->content_value = value;
 }
+}   // anonymous namespace
+
+class UserHistoryPredictorTest : public testing::Test {
+ protected:
+  virtual void SetUp() {
+    kUseMockPasswordManager = true;
+    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    config::ConfigHandler::GetDefaultConfig(&default_config_);
+    config::ConfigHandler::SetConfig(default_config_);
+  }
+
+  virtual void TearDown() {
+    config::ConfigHandler::SetConfig(default_config_);
+  }
+
+  virtual void EnableZeroQuerySuggestion() {
+  }
+
+  virtual void DisableZeroQuerySuggestion() {
+  }
+
+ private:
+  config::Config default_config_;
+};
 
 TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
   {
@@ -1506,26 +1507,27 @@ TEST_F(UserHistoryPredictorTest, SyncTest) {
 }
 
 TEST_F(UserHistoryPredictorTest, GetMatchTypeTest) {
+  UserHistoryPredictor predictor;
   EXPECT_EQ(UserHistoryPredictor::NO_MATCH,
-            UserHistoryPredictor::GetMatchType("test", ""));
+            predictor.GetMatchType("test", ""));
 
   EXPECT_EQ(UserHistoryPredictor::NO_MATCH,
-            UserHistoryPredictor::GetMatchType("", ""));
+            predictor.GetMatchType("", ""));
 
   EXPECT_EQ(UserHistoryPredictor::LEFT_EMPTY_MATCH,
-            UserHistoryPredictor::GetMatchType("", "test"));
+            predictor.GetMatchType("", "test"));
 
   EXPECT_EQ(UserHistoryPredictor::NO_MATCH,
-            UserHistoryPredictor::GetMatchType("foo", "bar"));
+            predictor.GetMatchType("foo", "bar"));
 
   EXPECT_EQ(UserHistoryPredictor::EXACT_MATCH,
-            UserHistoryPredictor::GetMatchType("foo", "foo"));
+            predictor.GetMatchType("foo", "foo"));
 
   EXPECT_EQ(UserHistoryPredictor::LEFT_PREFIX_MATCH,
-            UserHistoryPredictor::GetMatchType("foo", "foobar"));
+            predictor.GetMatchType("foo", "foobar"));
 
   EXPECT_EQ(UserHistoryPredictor::RIGHT_PREFIX_MATCH,
-            UserHistoryPredictor::GetMatchType("foobar", "foo"));
+            predictor.GetMatchType("foobar", "foo"));
 }
 
 TEST_F(UserHistoryPredictorTest, FingerPrintTest) {
@@ -1589,6 +1591,7 @@ TEST_F(UserHistoryPredictorTest, FingerPrintTest) {
 }
 
 TEST_F(UserHistoryPredictorTest, Uint32ToStringTest) {
+  UserHistoryPredictor predictor;
   EXPECT_EQ(123,
             UserHistoryPredictor::StringToUint32(
                 UserHistoryPredictor::Uint32ToString(123)));
@@ -1611,6 +1614,7 @@ TEST_F(UserHistoryPredictorTest, Uint32ToStringTest) {
 }
 
 TEST_F(UserHistoryPredictorTest, GetScore) {
+  UserHistoryPredictor predictor;
   // latest value has higher score.
   {
     UserHistoryPredictor::Entry entry1, entry2;
@@ -1708,6 +1712,7 @@ TEST_F(UserHistoryPredictorTest, IsValidEntry) {
 }
 
 TEST_F(UserHistoryPredictorTest, IsValidSuggestion) {
+  UserHistoryPredictor predictor;
   UserHistoryPredictor::Entry entry;
 
   EXPECT_FALSE(UserHistoryPredictor::IsValidSuggestion(false, 1, entry));
@@ -1879,5 +1884,185 @@ TEST_F(UserHistoryPredictorTest, UserHistoryStorage) {
   EXPECT_EQ(storage1.DebugString(), storage2.DebugString());
   Util::Unlink(filename);
 }
-}  // namespace
+
+TEST_F(UserHistoryPredictorTest, RomanFuzzyPrefixMatch) {
+  // same
+  EXPECT_FALSE(UserHistoryPredictor::RomanFuzzyPrefixMatch("abc", "abc"));
+  EXPECT_FALSE(UserHistoryPredictor::RomanFuzzyPrefixMatch("a", "a"));
+
+  // exact prefix
+  EXPECT_FALSE(UserHistoryPredictor::RomanFuzzyPrefixMatch("abc", "a"));
+  EXPECT_FALSE(UserHistoryPredictor::RomanFuzzyPrefixMatch("abc", "ab"));
+  EXPECT_FALSE(UserHistoryPredictor::RomanFuzzyPrefixMatch("abc", ""));
+
+  // swap
+  EXPECT_TRUE(UserHistoryPredictor::RomanFuzzyPrefixMatch("ab", "ba"));
+  EXPECT_TRUE(UserHistoryPredictor::RomanFuzzyPrefixMatch("abfoo", "bafoo"));
+  EXPECT_TRUE(UserHistoryPredictor::RomanFuzzyPrefixMatch("fooab", "fooba"));
+  EXPECT_TRUE(UserHistoryPredictor::RomanFuzzyPrefixMatch("fooabfoo",
+                                                          "foobafoo"));
+
+  // swap + prefix
+  EXPECT_TRUE(UserHistoryPredictor::RomanFuzzyPrefixMatch("fooabfoo",
+                                                          "fooba"));
+
+  // deletion
+  EXPECT_TRUE(UserHistoryPredictor::RomanFuzzyPrefixMatch("abcd", "acd"));
+  EXPECT_TRUE(UserHistoryPredictor::RomanFuzzyPrefixMatch("abcd", "bcd"));
+
+  // deletion + prefix
+  EXPECT_TRUE(UserHistoryPredictor::RomanFuzzyPrefixMatch("abcdf",   "acd"));
+  EXPECT_TRUE(UserHistoryPredictor::RomanFuzzyPrefixMatch("abcdfoo", "bcd"));
+
+  // voice sound mark
+  EXPECT_TRUE(UserHistoryPredictor::RomanFuzzyPrefixMatch("gu-guru",
+                                                          "gu^guru"));
+  EXPECT_TRUE(UserHistoryPredictor::RomanFuzzyPrefixMatch("gu-guru",
+                                                          "gu=guru"));
+  EXPECT_TRUE(UserHistoryPredictor::RomanFuzzyPrefixMatch("gu-guru",
+                                                          "gu^gu"));
+  EXPECT_FALSE(UserHistoryPredictor::RomanFuzzyPrefixMatch("gu-guru",
+                                                           "gugu"));
+
+  // Invalid
+  EXPECT_FALSE(UserHistoryPredictor::RomanFuzzyPrefixMatch("", ""));
+  EXPECT_FALSE(UserHistoryPredictor::RomanFuzzyPrefixMatch("", "a"));
+  EXPECT_FALSE(UserHistoryPredictor::RomanFuzzyPrefixMatch("abcde",
+                                                           "defe"));
+}
+
+TEST_F(UserHistoryPredictorTest, MaybeRomanMisspelledKey) {
+  // EXPECT_TRUE(UserHistoryPredictor::MaybeRomanMisspelledKey(
+  // "こんぴゅーｔ"));
+  EXPECT_TRUE(UserHistoryPredictor::MaybeRomanMisspelledKey(
+      "\xE3\x81\x93\xE3\x82\x93\xE3\x81\xB4"
+      "\xE3\x82\x85\xE3\x83\xBC\xEF\xBD\x94"));
+
+  // EXPECT_TRUE(UserHistoryPredictor::MaybeRomanMisspelledKey(
+  // "こんぴゅーt"));
+  EXPECT_TRUE(UserHistoryPredictor::MaybeRomanMisspelledKey(
+      "\xE3\x81\x93\xE3\x82\x93\xE3\x81\xB4"
+      "\xE3\x82\x85\xE3\x83\xBCt"));
+
+  // EXPECT_FALSE(UserHistoryPredictor::MaybeRomanMisspelledKey(
+  // "こんぴゅーた"));
+  EXPECT_FALSE(UserHistoryPredictor::MaybeRomanMisspelledKey(
+      "\xE3\x81\x93\xE3\x82\x93\xE3\x81\xB4"
+      "\xE3\x82\x85\xE3\x83\xBC\xE3\x81\x9F"));
+
+  // EXPECT_TRUE(UserHistoryPredictor::MaybeRomanMisspelledKey(
+  // "ぱｓこん"));
+  EXPECT_TRUE(UserHistoryPredictor::MaybeRomanMisspelledKey(
+      "\xE3\x81\xB1\xEF\xBD\x93\xE3\x81\x93\xE3\x82\x93"));
+
+  // EXPECT_FALSE(UserHistoryPredictor::MaybeRomanMisspelledKey(
+  // "ぱそこん"));
+  EXPECT_FALSE(UserHistoryPredictor::MaybeRomanMisspelledKey(
+      "\xE3\x81\xB1\xE3\x81\x9D\xE3\x81\x93\xE3\x82\x93"));
+
+  // EXPECT_TRUE(UserHistoryPredictor::MaybeRomanMisspelledKey(
+  // "おねがいしまうｓ"));
+  EXPECT_TRUE(UserHistoryPredictor::MaybeRomanMisspelledKey(
+      "\xE3\x81\x8A\xE3\x81\xAD\xE3\x81\x8C"
+      "\xE3\x81\x84\xE3\x81\x97\xE3\x81\xBE"
+      "\xE3\x81\x86\xEF\xBD\x93"));
+
+  // EXPECT_FALSE(UserHistoryPredictor::MaybeRomanMisspelledKey(
+  // "おねがいします"));
+  EXPECT_FALSE(UserHistoryPredictor::MaybeRomanMisspelledKey(
+      "\xE3\x81\x8A\xE3\x81\xAD\xE3\x81\x8C"
+      "\xE3\x81\x84\xE3\x81\x97\xE3\x81\xBE\xE3\x81\x99"));
+
+  // EXPECT_TRUE(UserHistoryPredictor::MaybeRomanMisspelledKey(
+  // "いんた=ねっと"));
+  EXPECT_TRUE(UserHistoryPredictor::MaybeRomanMisspelledKey(
+      "\xE3\x81\x84\xE3\x82\x93\xE3\x81\x9F"
+      "="
+      "\xE3\x81\xAD\xE3\x81\xA3\xE3\x81\xA8"));
+
+  // EXPECT_FALSE(UserHistoryPredictor::MaybeRomanMisspelledKey("ｔ"));
+  EXPECT_FALSE(UserHistoryPredictor::MaybeRomanMisspelledKey(
+      "\xEF\xBD\x94"));
+
+  // EXPECT_TRUE(UserHistoryPredictor::MaybeRomanMisspelledKey("ーｔ"));
+  EXPECT_TRUE(UserHistoryPredictor::MaybeRomanMisspelledKey(
+      "\xE3\x83\xBC\xEF\xBD\x94"));
+
+  // Two alphas
+  // EXPECT_FALSE(UserHistoryPredictor::MaybeRomanMisspelledKey(
+  // "おｎがいしまうｓ"));
+  EXPECT_FALSE(UserHistoryPredictor::MaybeRomanMisspelledKey(
+      "\xE3\x81\x8A\xEF\xBD\x8E\xE3\x81\x8C\xE3\x81\x84"
+      "\xE3\x81\x97\xE3\x81\xBE\xE3\x81\x86\xEF\xBD\x93"));
+  // Two unknowns
+  // EXPECT_FALSE(UserHistoryPredictor::MaybeRomanMisspelledKey(
+  // "お＆がい＄しまう"));
+  EXPECT_FALSE(UserHistoryPredictor::MaybeRomanMisspelledKey(
+      "\xE3\x81\x8A\xEF\xBC\x86\xE3\x81\x8C"
+      "\xE3\x81\x84\xEF\xBC\x84\xE3\x81\x97\xE3\x81\xBE\xE3\x81\x86"));
+  // One alpha and one unknown
+  // EXPECT_FALSE(UserHistoryPredictor::MaybeRomanMisspelledKey(
+  // "お＆がいしまうｓ"));
+  EXPECT_FALSE(UserHistoryPredictor::MaybeRomanMisspelledKey(
+      "\xE3\x81\x8A\xEF\xBC\x86\xE3\x81\x8C\xE3\x81\x84"
+      "\xE3\x81\x97\xE3\x81\xBE\xE3\x81\x86\xEF\xBD\x93"));
+}
+
+TEST_F(UserHistoryPredictorTest, GetRomanMisspelledKey) {
+  Segments segments;
+  Segment *seg = segments.add_segment();
+  seg->set_segment_type(Segment::FREE);
+  Segment::Candidate *candidate = seg->add_candidate();
+  candidate->value = "test";
+
+  config::Config config;
+  config.set_preedit_method(config::Config::ROMAN);
+  config::ConfigHandler::SetConfig(config);
+
+  seg->set_key("");
+  EXPECT_EQ("", UserHistoryPredictor::GetRomanMisspelledKey(segments));
+
+  //  seg->set_key("おねがいしまうs");
+  seg->set_key("\xE3\x81\x8A\xE3\x81\xAD\xE3\x81\x8C"
+               "\xE3\x81\x84\xE3\x81\x97\xE3\x81\xBE\xE3\x81\x86s");
+  EXPECT_EQ("onegaisimaus",
+            UserHistoryPredictor::GetRomanMisspelledKey(segments));
+
+  //  seg->set_key("おねがいします");
+  seg->set_key("\xE3\x81\x8A\xE3\x81\xAD\xE3\x81\x8C"
+               "\xE3\x81\x84\xE3\x81\x97\xE3\x81\xBE\xE3\x81\x99");
+  EXPECT_EQ("", UserHistoryPredictor::GetRomanMisspelledKey(segments));
+
+  config.set_preedit_method(config::Config::KANA);
+  config::ConfigHandler::SetConfig(config);
+
+  //  seg->set_key("おねがいします");
+  seg->set_key("\xE3\x81\x8A\xE3\x81\xAD\xE3\x81\x8C"
+               "\xE3\x81\x84\xE3\x81\x97\xE3\x81\xBE\xE3\x81\x99");
+  EXPECT_EQ("", UserHistoryPredictor::GetRomanMisspelledKey(segments));
+}
+
+
+TEST_F(UserHistoryPredictorTest, RomanFuzzyLookupEntry) {
+  UserHistoryPredictor predictor;
+  UserHistoryPredictor::Entry entry;
+  UserHistoryPredictor::EntryPriorityQueue results;
+
+  entry.set_key("");
+  EXPECT_FALSE(predictor.RomanFuzzyLookupEntry("", &entry, &results));
+
+  //  entry.set_key("よろしく");
+  entry.set_key("\xE3\x82\x88\xE3\x82\x8D\xE3\x81\x97\xE3\x81\x8F");
+  EXPECT_TRUE(predictor.RomanFuzzyLookupEntry("yorosku", &entry, &results));
+  EXPECT_TRUE(predictor.RomanFuzzyLookupEntry("yrosiku", &entry, &results));
+  EXPECT_TRUE(predictor.RomanFuzzyLookupEntry("yorsiku", &entry, &results));
+  EXPECT_FALSE(predictor.RomanFuzzyLookupEntry("yrsk", &entry, &results));
+  EXPECT_FALSE(predictor.RomanFuzzyLookupEntry("yorosiku", &entry, &results));
+
+  // entry.set_key("ぐーぐる");
+  entry.set_key("\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90\xE3\x82\x8B");
+  EXPECT_TRUE(predictor.RomanFuzzyLookupEntry("gu=guru", &entry, &results));
+  EXPECT_FALSE(predictor.RomanFuzzyLookupEntry("gu-guru", &entry, &results));
+  EXPECT_FALSE(predictor.RomanFuzzyLookupEntry("g=guru", &entry, &results));
+}
 }  // namespace mozc

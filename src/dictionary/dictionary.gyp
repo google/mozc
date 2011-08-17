@@ -46,7 +46,9 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        '../session/session_base.gyp:config_handler',
+        '../base/base.gyp:config_file_stream',
+        '../config/config.gyp:config_handler',
+        '../config/config.gyp:genproto_config',
         '../session/session_base.gyp:genproto_session',
         '../usage_stats/usage_stats.gyp:usage_stats',
         'dictionary_base.gyp:gen_pos_matcher',
@@ -87,18 +89,41 @@
       'type': 'static_library',
       'sources': [
         'dictionary.cc',
-        'dictionary_preloader.cc',
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        '<(DEPTH)/third_party/rx/rx.gyp:rx',
-        'file/dictionary_file.gyp:dictionary_file',
+        'dictionary_impl',
         'gen_embedded_dictionary_data',
         'genproto_dictionary',
-        'suppression_dictionary',
-        'system/system_dictionary.gyp:system_dictionary_builder',
-        'user_dictionary',
         'suffix_dictionary',
+        'suppression_dictionary',
+        'system/system_dictionary.gyp:system_dictionary',
+        'user_dictionary',
+      ],
+      'conditions': [['two_pass_build==0', {
+        'dependencies': [
+          'install_gen_system_dictionary_data_main',
+        ],
+      }]],
+    },
+    {
+      'target_name': 'dictionary_impl',
+      'type': 'static_library',
+      'sources': [
+        'dictionary_impl.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        '../config/config.gyp:config_handler',
+        '../config/config.gyp:genproto_config',
+        '<(DEPTH)/third_party/rx/rx.gyp:rx',
+        'dictionary_base.gyp:gen_pos_matcher',
+        'gen_embedded_dictionary_data',
+        'genproto_dictionary',
+        'suffix_dictionary',
+        'suppression_dictionary',
+        'system/system_dictionary.gyp:system_dictionary',
+        'user_dictionary',
       ],
       'conditions': [['two_pass_build==0', {
         'dependencies': [

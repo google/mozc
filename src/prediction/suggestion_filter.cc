@@ -45,7 +45,10 @@ class SuggestionFilterImpl {
     if (filter_.get() == NULL) {
       return false;
     }
-    return filter_->Exists(Util::Fingerprint(text.data(), text.size()));
+    string lower_text = text;
+    Util::LowerString(&lower_text);
+    return filter_->Exists(Util::Fingerprint(lower_text.data(),
+                                             lower_text.size()));
   }
 
   SuggestionFilterImpl() : filter_(NULL) {

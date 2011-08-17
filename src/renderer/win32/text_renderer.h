@@ -75,6 +75,9 @@ class TextRenderer {
     FONTSET_FOOTER_INDEX,
     FONTSET_FOOTER_LABEL,
     FONTSET_FOOTER_SUBLABEL,
+    FONTSET_INFOLIST_CAPTION,
+    FONTSET_INFOLIST_TITLE,
+    FONTSET_INFOLIST_DESCRIPTION,
     SIZE_OF_FONT_TYPE,  // DO NOT DELETE THIS
   };
 
@@ -89,6 +92,8 @@ class TextRenderer {
   DWORD GetFontStyle(FONT_TYPE font_type) const;
   // Retrieves the bounding box for a given string.
   Size MeasureString(FONT_TYPE font_type, const wstring &str) const;
+  Size MeasureStringMultiLine(FONT_TYPE font_type, const wstring &str,
+      const int width) const;
   void RenderText(CDCHandle dc, const wstring &text, const Rect &rect,
                   FONT_TYPE font_type) const;
   void RenderText(CDCHandle dc, const vector<TextRenderingInfo> &display_list,

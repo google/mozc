@@ -33,7 +33,7 @@
 
 #include "base/logging.h"
 #include "base/mutex.h"
-#include "client/session_interface.h"
+#include "client/client_interface.h"
 #include "renderer/mac/mac_view_util.h"
 #include "renderer/table_layout.h"
 #include "session/commands.pb.h"
@@ -137,7 +137,7 @@ using mozc::CallOnce;
   desc_rect.origin.y = ypos + infostyle.row_rect_padding() +
                        title_rect.size.height;
 
-  if (row == usages.focused_index()) {
+  if (usages.has_focused_index() && (row == usages.focused_index())) {
     NSRect focused_rect = NSMakeRect(infostyle.window_border(), ypos, 
         infostyle.window_width() - infostyle.window_border() * 2,
         title_rect.size.height + desc_rect.size.height

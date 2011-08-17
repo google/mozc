@@ -32,39 +32,28 @@
 #include <iostream>
 #include "base/base.h"
 #include "base/util.h"
-#include "base/file_stream.h"
 #include "converter/quality_regression_util.h"
 
 DEFINE_string(test_file, "", "regression test file");
 
+using mozc::quality_regression::QualityRegressionUtil;
+
 int main(int argc, char **argv) {
   InitGoogle(argv[0], &argc, &argv, false);
 
-  mozc::quality_regression::QualityRegressionUtil util;
-  mozc::InputFileStream is(FLAGS_test_file.c_str());
+  QualityRegressionUtil util;
 
-  CHECK(is) << "Cannot open: " << FLAGS_test_file;
+  vector<QualityRegressionUtil::TestItem> items;
+  QualityRegressionUtil::ParseFile(FLAGS_test_file, &items);
 
-  string line;
-  while (getline(is, line)) {
-    vector<string> tokens;
-    mozc::Util::SplitStringUsing(line, "\t", &tokens);
-    CHECK_GE(tokens.size(), 6);
-    const string &key            = tokens[1];
-    const string &expected_value = tokens[2];
-    const string &command        = tokens[3];
-    const uint32  expected_rank  = atoi(tokens[4].c_str());
-
+  for (size_t i = 0; i < items.size(); ++i) {
     string actual_value;
-    const  bool result = util.ConvertAndTest(key,
-                                             expected_value,
-                                             command,
-                                             expected_rank,
-                                             &actual_value);
+    const  bool result = util.ConvertAndTest(items[i], &actual_value);
     if (result) {
-      cout << "OK:\t" << line << endl;
+      cout << "OK:\t" << items[i].OutputAsTSV() << endl;
     } else {
-      cout << "FAILED:\t" << line << "\t" << actual_value << endl;
+      cout << "FAILED:\t" << items[i].OutputAsTSV() << "\t"
+           << actual_value << endl;
     }
   }
 

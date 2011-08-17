@@ -30,7 +30,6 @@
 #include "base/base.h"
 #include "base/bitarray.h"
 #include "converter/segmenter.h"
-#include "converter/segmenter_inl.h"
 #include "converter/segmenter_data.h"
 
 namespace mozc {

@@ -35,7 +35,7 @@
 #ifdef OS_WINDOWS
 #include "base/port.h"
 #include "base/scoped_handle.h"
-#include "third_party/mozc/sandbox/restricted_token_utils.h"
+#include "base/win_sandbox.h"
 #endif  // OS_WINDOWS
 
 namespace mozc {
@@ -87,28 +87,6 @@ class Process {
   // The caller might want to use another technique like comparing process
   // creation time if this kind of false-positive matters.
   static bool IsThreadAlive(size_t thread_id, bool default_result);
-
-#ifdef OS_WINDOWS
-  // Spawn a process specified by path as the specified integriy level and job
-  // level.
-  // Return true if process is successfully launched.
-  // if pid is specified, pid of child process is set.
-  struct SecurityInfo {
-    SecurityInfo();
-    sandbox::TokenLevel primary_level;
-    sandbox::TokenLevel impersonation_level;
-    sandbox::JobLevel job_level;
-    sandbox::IntegrityLevel integrity_level;
-    bool allow_ui_operation;
-    bool in_system_dir;
-    uint32 creation_flags;
-  };
-
-  static bool SpawnProcessAs(const string &path,
-                             const string &arg,
-                             const SecurityInfo &info,
-                             DWORD *pid);
-#endif  // OS_WINDOWS
 
   // launch error message dialog
   static bool LaunchErrorMessageDialog(const string &type);

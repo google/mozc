@@ -72,7 +72,7 @@ SystemDictionary::SystemDictionary()
 bool SystemDictionary::Open(const char *filename) {
   VLOG(1) << "Opening Rx dictionary" << filename;
   DictionaryFile *df = new DictionaryFile();
-  if (!df->Open(filename, false)) {
+  if (!df->OpenFromFile(filename)) {
     delete df;
     return false;
   }
@@ -81,7 +81,7 @@ bool SystemDictionary::Open(const char *filename) {
 
 bool SystemDictionary::OpenFromArray(const char *ptr, int len) {
   DictionaryFile *df = new DictionaryFile();
-  if (!df->SetPtr(ptr, len)) {
+  if (!df->OpenFromImage(ptr, len)) {
     delete df;
     return false;
   }
@@ -96,8 +96,9 @@ void SystemDictionary::Close() {
   }
 }
 
-Node *SystemDictionary::LookupPredictive(const char *str, int size,
-                                         NodeAllocatorInterface *allocator) const {
+Node *SystemDictionary::LookupPredictive(
+    const char *str, int size,
+    NodeAllocatorInterface *allocator) const {
   // Predictive lookup. Gets all tokens matche the key.
   return LookupInternal(str, size, allocator, true, NULL);
 }

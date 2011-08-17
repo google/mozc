@@ -173,7 +173,7 @@
           'action_name': 'gen_usage_rewriter_data',
           'variables': {
             'usage_data_file': [
-              '../data/usage/usage_data.txt',
+              '<(DEPTH)/third_party/japanese_usage_dictionary/usage_dict.txt',
             ],
             'cforms_file': [
               '../data/rules/cforms.def',

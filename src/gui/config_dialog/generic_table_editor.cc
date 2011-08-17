@@ -39,7 +39,7 @@
 #include <string>
 #include <vector>
 #include "base/base.h"
-#include "base/config_file_stream.h"
+#include "base/file_stream.h"
 #include "base/util.h"
 #include "session/commands.pb.h"
 

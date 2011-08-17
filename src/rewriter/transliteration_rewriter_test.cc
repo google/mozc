@@ -29,6 +29,9 @@
 
 #include <string>
 
+#include "base/util.h"
+#include "config/config_handler.h"
+#include "config/config.pb.h"
 #include "composer/composer.h"
 #include "composer/table.h"
 #include "converter/segments.h"
@@ -36,6 +39,8 @@
 #include "session/commands.pb.h"
 #include "testing/base/public/gunit.h"
 #include "transliteration/transliteration.h"
+
+DECLARE_string(test_tmpdir);
 
 namespace mozc {
 
@@ -67,7 +72,17 @@ void SetKamaboko(composer::Composer *composer) {
 }
 }  // namespace
 
-TEST(TransliterationRewriterTest, T13NFromKeyTest) {
+class TransliterationRewriterTest : public testing::Test {
+ protected:
+  virtual void SetUp() {
+    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    config::Config config;
+    config::ConfigHandler::GetDefaultConfig(&config);
+    config::ConfigHandler::SetConfig(config);
+  }
+};
+
+TEST_F(TransliterationRewriterTest, T13NFromKeyTest) {
   TransliterationRewriter t13n_rewriter;
   Segments segments;
   Segment *segment = segments.add_segment();
@@ -111,7 +126,7 @@ TEST(TransliterationRewriterTest, T13NFromKeyTest) {
   }
 }
 
-TEST(TransliterationRewriterTest, T13NFromComposerTest) {
+TEST_F(TransliterationRewriterTest, T13NFromComposerTest) {
   TransliterationRewriter t13n_rewriter;
 
   composer::Table table;
@@ -165,7 +180,7 @@ TEST(TransliterationRewriterTest, T13NFromComposerTest) {
   }
 }
 
-TEST(TransliterationRewriterTest, T13NWithMultiSegmentsTest) {
+TEST_F(TransliterationRewriterTest, T13NWithMultiSegmentsTest) {
   TransliterationRewriter t13n_rewriter;
 
   composer::Table table;
@@ -208,7 +223,7 @@ TEST(TransliterationRewriterTest, T13NWithMultiSegmentsTest) {
   }
 }
 
-TEST(TransliterationRewriterTest, ComposerValidationTest) {
+TEST_F(TransliterationRewriterTest, ComposerValidationTest) {
   TransliterationRewriter t13n_rewriter;
 
   composer::Table table;
@@ -262,7 +277,7 @@ TEST(TransliterationRewriterTest, ComposerValidationTest) {
   }
 }
 
-TEST(TransliterationRewriterTest, RewriteWithSameComposerTest) {
+TEST_F(TransliterationRewriterTest, RewriteWithSameComposerTest) {
   TransliterationRewriter t13n_rewriter;
 
   composer::Table table;

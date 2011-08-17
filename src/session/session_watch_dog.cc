@@ -29,18 +29,20 @@
 
 #include "session/session_watch_dog.h"
 
-#include <algorithm>
-#include <numeric>
-
 #ifdef OS_WINDOWS
 #include <windows.h>
 #endif  // OS_WINDOWS
+
+#include <algorithm>
+#include <cstring>
+#include <numeric>
+#include <string>
 
 #include "base/base.h"
 #include "base/cpu_stats.h"
 #include "base/unnamed_event.h"
 #include "base/util.h"
-#include "client/session.h"
+#include "client/client_interface.h"
 
 namespace mozc {
 namespace {
@@ -64,7 +66,7 @@ const float kMinimumLatestCPULoad = 0.66f;
 
 SessionWatchDog::SessionWatchDog(int32 interval_sec)
     : interval_sec_(interval_sec),
-      session_(NULL), cpu_stats_(NULL), event_(new UnnamedEvent) {
+      client_(NULL), cpu_stats_(NULL), event_(new UnnamedEvent) {
   // allow [1..600].
   interval_sec_ = max(1, min(interval_sec_, 600));
   DCHECK(event_->IsAvailable())
@@ -75,8 +77,8 @@ SessionWatchDog::~SessionWatchDog() {
   Terminate();
 }
 
-void SessionWatchDog::SetSessionInterface(client::SessionInterface *session) {
-  session_ = session;
+void SessionWatchDog::SetClientInterface(client::ClientInterface *client) {
+  client_ = client;
 }
 
 void SessionWatchDog::SetCPUStatsInterface(CPUStatsInterface *cpu_stats) {
@@ -97,11 +99,11 @@ void SessionWatchDog::Terminate() {
 }
 
 void SessionWatchDog::Run() {
-  scoped_ptr<client::Session> session_impl(NULL);
-  if (session_ == NULL) {
-    VLOG(2) << "default session is used";
-    session_impl.reset(new client::Session);
-    session_ = session_impl.get();
+  scoped_ptr<client::ClientInterface> client_impl(NULL);
+  if (client_ == NULL) {
+    VLOG(2) << "default client is used";
+    client_impl.reset(client::ClientFactory::NewClient());
+    client_ = client_impl.get();
   }
 
   scoped_ptr<CPUStatsInterface> cpu_stats_impl(NULL);
@@ -184,8 +186,8 @@ void SessionWatchDog::Run() {
     last_cleanup_time = current_cleanup_time;
 
     VLOG(2) << "Sending Cleanup command";
-    session_->set_timeout(kCleanupTimeout);
-    if (session_->Cleanup()) {
+    client_->set_timeout(kCleanupTimeout);
+    if (client_->Cleanup()) {
       VLOG(2) << "Cleanup command succeeded";
       continue;
     }
@@ -194,14 +196,14 @@ void SessionWatchDog::Run() {
                  << "execute PingCommand to check server is running";
 
     bool failed = true;
-    session_->Reset();
-    session_->set_timeout(kPingTimeout);
+    client_->Reset();
+    client_->set_timeout(kPingTimeout);
     for (int i = 0; i < kPingTrial; ++i) {
       if (event_->Wait(kPingInterval)) {
         VLOG(1) << "Received stop signal";
         return;
       }
-      if (session_->PingServer()) {
+      if (client_->PingServer()) {
         VLOG(2) << "Ping command succeeded";
         failed = false;
         break;

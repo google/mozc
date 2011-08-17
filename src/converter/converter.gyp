@@ -29,15 +29,15 @@
 
 {
   'variables': {
-    'relative_dir': 'converter',
-    'gen_out_dir': '<(SHARED_INTERMEDIATE_DIR)/<(relative_dir)',
+    'relative_mozc_dir': '',
+    'gen_out_mozc_dir': '<(SHARED_INTERMEDIATE_DIR)/<(relative_mozc_dir)',
   },
   'targets': [
     {
       'target_name': 'converter',
       'type': 'static_library',
       'sources': [
-        '<(gen_out_dir)/pos_matcher.h',
+        '<(gen_out_mozc_dir)/dictionary/pos_matcher.h',
         'converter.cc',
         'converter_mock.cc',
       ],
@@ -46,6 +46,7 @@
         '../dictionary/dictionary_base.gyp:gen_pos_matcher',
         '../prediction/prediction.gyp:prediction',
         '../rewriter/rewriter.gyp:rewriter',
+        '../session/session_base.gyp:genproto_session',
         '../session/session_base.gyp:session_protocol',
         'converter_base.gyp:immutable_converter',
         'converter_base.gyp:segments',

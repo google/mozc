@@ -63,8 +63,13 @@ def CalculateRevisionForPlatform(revision, target_platform):
   """Returns the revision for the current platform."""
   if not revision:
     return revision
+
+  # ChromeOS build uses a tar ball of OSS version named in the manner
+  # of 'mozc-1.1.773.102.tar.bz2' and depends on the revision number,
+  # so we'd like to use the same revision number between ChromeOS and
+  # OSS GNU/Linux version.
   if target_platform == 'ChromeOS':
-    last_digit = '4'
+    last_digit = '2'
   elif IsWindows():
     last_digit = '0'
   elif IsMac():

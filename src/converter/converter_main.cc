@@ -33,9 +33,10 @@
 #include <sstream>
 #include "base/base.h"
 #include "base/util.h"
-#include "session/commands.pb.h"
 #include "converter/converter_interface.h"
+#include "converter/lattice.h"
 #include "converter/segments.h"
+#include "session/commands.pb.h"
 
 DEFINE_int32(max_conversion_candidates_size, 200,
              "maximum candidates size");
@@ -64,6 +65,14 @@ bool ExecCommand(const mozc::ConverterInterface &converter,
   if (func == "startconversion" || func == "start" || func == "s") {
     CHECK_FIELDS_LENGTH(2);
     return converter.StartConversion(segments, fields[1]);
+  } else if (func == "convertwithnodeinfo" || func == "cn") {
+    CHECK_FIELDS_LENGTH(5);
+    mozc::Lattice::SetDebugDisplayNode(atoi32(fields[2].c_str()),  // begin pos
+                                       atoi32(fields[3].c_str()),  // end pos
+                                       fields[4]);
+    const bool result = converter.StartConversion(segments, fields[1]);
+    mozc::Lattice::ResetDebugDisplayNode();
+    return result;
   } else if (func == "reverseconversion" || func == "reverse" || func == "r") {
     CHECK_FIELDS_LENGTH(2);
     return converter.StartReverseConversion(segments, fields[1]);
@@ -160,7 +169,7 @@ int main(int argc, char **argv) {
   while (getline(cin, line)) {
     if (ExecCommand(*converter, &segments, line)) {
       if (FLAGS_output_debug_string) {
-	cout << segments.DebugString();
+        cout << segments.DebugString();
       }
     } else {
       cout << "ExecCommand() return false" << endl;

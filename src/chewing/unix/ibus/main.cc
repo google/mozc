@@ -34,16 +34,17 @@
 #include "base/base.h"
 #include "base/logging.h"
 #include "base/version.h"
+#include "chewing/chewing_session_factory.h"
 #include "chewing/unix/ibus/config_updater.h"
 #include "chewing/unix/ibus/main.h"
-#include "session/config_handler.h"
+#include "config/config_handler.h"
+#include "session/session_factory_manager.h"
 #include "unix/ibus/config_util.h"
 #include "unix/ibus/mozc_engine.h"
 #include "unix/ibus/path_util.h"
 
 #ifdef OS_CHROMEOS
 #include "chewing/session.h"
-#include "unix/ibus/session.h"
 #endif  // OS_CHROMEOS
 
 DEFINE_bool(ibus, false, "The engine is started by ibus-daemon");
@@ -145,6 +146,8 @@ int main(gint argc, gchar **argv) {
   EnableVerboseLog();
 #endif  // NO_LOGGING
 #endif  // OS_CHROMEOS
+  mozc::chewing::ChewingSessionFactory session_factory;
+  mozc::session::SessionFactoryManager::SetSessionFactory(&session_factory);
   ibus_main();
 
 #ifdef OS_CHROMEOS

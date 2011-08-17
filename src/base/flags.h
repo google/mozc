@@ -41,7 +41,7 @@
 
 #include <string>
 #include "base/port.h"
-#include "base/stats_config_util.h"
+#include "config/stats_config_util.h"
 
 namespace mozc_flags {
 
@@ -71,7 +71,6 @@ extern void InitGoogleInternal(const char *arg0,
                                int *argc, char ***argv,
                                bool remove_flags);
 
-namespace {
 // We define InstallBreakpad() here,
 // so that CrashReportHandler() is resovled in link time
 inline void InstallBreakpad() {
@@ -85,18 +84,16 @@ inline void InstallBreakpad() {
 #endif  // OS_LINUX
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 }
-}  // namespace
 }  // mozc
 
 #ifdef OS_WINDOWS
-namespace {
-LONG CALLBACK ExitProcessExceptionFilter(EXCEPTION_POINTERS *ExceptionInfo) {
+inline LONG CALLBACK ExitProcessExceptionFilter(
+    EXCEPTION_POINTERS *ExceptionInfo) {
   // Currently, we haven't found good way to perform both
   // "send mininump" and "exit the process gracefully".
   ::ExitProcess(static_cast<UINT>(-1));
   return EXCEPTION_EXECUTE_HANDLER;
 }
-}  // namespace
 #endif  // OS_WINDOWS
 
 // class for holding argc, and argv
@@ -110,7 +107,6 @@ class Flags {
 };
 }
 
-namespace {
 // not install breakpad
 inline void InitGoogle(const char *arg0,
                        int *argc, char ***argv,
@@ -134,7 +130,6 @@ inline void InitGoogleWithBreakPad(const char *arg0,
   mozc::InstallBreakpad();
   mozc::InitGoogleInternal(arg0, argc, argv, remove_flags);
 }
-}  // namespace
 
 #define DEFINE_VARIABLE(type, shorttype, name, value, help) \
 namespace fL##shorttype { \

@@ -31,14 +31,15 @@
 #include <vector>
 #include "base/base.h"
 #include "base/util.h"
+#include "config/config.pb.h"
+#include "config/config_handler.h"
 #include "converter/converter_interface.h"
 #include "converter/node_allocator.h"
 #include "converter/segments.h"
+#include "converter/user_data_manager_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suffix_dictionary.h"
 #include "dictionary/suppression_dictionary.h"
-#include "session/config.pb.h"
-#include "session/config_handler.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
@@ -90,7 +91,7 @@ string ContextAwareConvert(const string &first_key,
                            const string &second_key) {
   ConverterInterface *converter = ConverterFactory::GetConverter();
   CHECK(converter);
-  converter->ClearUserHistory();
+  converter->GetUserDataManager()->ClearUserHistory();
 
   Segments segments;
   EXPECT_TRUE(converter->StartConversion(&segments, first_key));
@@ -119,7 +120,7 @@ TEST_F(ConverterTest, ContextAwareConversionTest) {
   // EXPECT_EQ("一髪", ContextAwareConvert("きき", "危機", "いっぱつ"));
   // EXPECT_EQ("大", ContextAwareConvert("きょうと", "京都", "だい"));
   // EXPECT_EQ("点", ContextAwareConvert("もんだい", "問題", "てん"));
-  // EXPECT_EQ("來未", ContextAwareConvert("こうだ", "倖田", "くみ"));
+  // EXPECT_EQ("陽水", ContextAwareConvert("いのうえ", "井上", "ようすい"));
   // EXPECT_EQ("々", ContextAwareConvert("ねん", "年", "ねん"));
   // EXPECT_EQ("々", ContextAwareConvert("ひと", "人", "びと"));
 
@@ -138,11 +139,11 @@ TEST_F(ConverterTest, ContextAwareConversionTest) {
                 "\xE3\x82\x82\xE3\x82\x93\xE3\x81\xA0\xE3\x81\x84",
                 "\xE5\x95\x8F\xE9\xA1\x8C",
                 "\xE3\x81\xA6\xE3\x82\x93"));
-  EXPECT_EQ("\xE4\xBE\x86\xE6\x9C\xAA",
+  EXPECT_EQ("\xE9\x99\xBD\xE6\xB0\xB4",
             ContextAwareConvert(
-                "\xE3\x81\x93\xE3\x81\x86\xE3\x81\xA0",
-                "\xE5\x80\x96\xE7\x94\xB0",
-                "\xE3\x81\x8F\xE3\x81\xBF"));
+                "\xE3\x81\x84\xE3\x81\xAE\xE3\x81\x86\xE3\x81\x88",
+                "\xE4\xBA\x95\xE4\xB8\x8A",
+                "\xE3\x82\x88\xE3\x81\x86\xE3\x81\x99\xE3\x81\x84"));
   EXPECT_EQ("\xE3\x80\x85",
             ContextAwareConvert(
                 "\xE3\x81\xAD\xE3\x82\x93",
@@ -373,6 +374,38 @@ TEST_F(ConverterTest, CompletePOSIds) {
     ConverterUtil::CompletePOSIds(&candidate);
     EXPECT_EQ(POSMatcher::GetUnknownId(), candidate.lid);
     EXPECT_EQ(POSMatcher::GetUnknownId(), candidate.rid);
+  }
+}
+
+TEST_F(ConverterTest, Regression3046266) {
+  // Shouldn't correct nodes at the beginning of a sentence.
+  ConverterInterface *converter = ConverterFactory::GetConverter();
+  Segments segments;
+
+  // Can be any string that has "ん" at the end
+  // "かん"
+  const char kKey1[] = "\xE3\x81\x8B\xE3\x82\x93";
+
+  // Can be any string that has a vowel at the beginning
+  // "あか"
+  const char kKey2[] = "\xE3\x81\x82\xE3\x81\x8B";
+
+  // "中"
+  const char kValueNotExpected[] = "\xE4\xB8\xAD";
+
+  EXPECT_TRUE(converter->StartConversion(
+      &segments, kKey1));
+  EXPECT_EQ(1, segments.conversion_segments_size());
+  EXPECT_TRUE(converter->CommitSegmentValue(
+      &segments, 0, 0));
+  EXPECT_TRUE(converter->FinishConversion(&segments));
+
+  EXPECT_TRUE(converter->StartConversion(
+      &segments, kKey2));
+  EXPECT_EQ(1, segments.conversion_segments_size());
+  const Segment &segment = segments.conversion_segment(0);
+  for (size_t i = 0; i < segment.candidates_size(); ++i) {
+    EXPECT_NE(segment.candidate(i).value, kValueNotExpected);
   }
 }
 }  // namespace mozc

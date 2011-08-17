@@ -36,7 +36,6 @@
 
 #include "base/base.h"
 #include "session/commands.pb.h"
-#include "session/session_factory.h"
 #include "session/session_interface.h"
 
 namespace mozc {

@@ -43,7 +43,7 @@
 #include "base/const.h"
 #include "base/scoped_ptr.h"
 #include "base/util.h"
-#include "client/session.h"
+#include "client/client.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
 #include "dictionary/user_pos.h"
@@ -86,7 +86,7 @@ WordRegisterDialog::WordRegisterDialog()
       storage_(
           new UserDictionaryStorage(
               UserDictionaryUtil::GetUserDictionaryFileName())),
-      session_(new client::Session),
+      client_(client::ClientFactory::NewClient()),
   window_title_(tr("Mozc")) {
   setupUi(this);
   setWindowFlags(Qt::WindowSystemMenuHint | Qt::WindowStaysOnTopHint);
@@ -102,7 +102,7 @@ WordRegisterDialog::WordRegisterDialog()
 #endif  // OS_WINDOWS
   }
 
-  session_->set_timeout(kSessionTimeout);
+  client_->set_timeout(kSessionTimeout);
 
   if (!storage_->Load()) {
     LOG(WARNING) << "UserDictionaryStorage::Load() failed";
@@ -288,20 +288,20 @@ WordRegisterDialog::ErrorCode WordRegisterDialog::SaveEntry() {
     return SAVE_FAILURE;
   }
 
-  if (!session_->PingServer()) {
+  if (!client_->PingServer()) {
     LOG(WARNING) << "Server is not running. Do nothing";
     return SAVE_SUCCESS;
   }
 
 #ifndef OS_MACOSX
   // Update server version if need be.
-  if (!session_->CheckVersionOrRestartServer()) {
+  if (!client_->CheckVersionOrRestartServer()) {
     LOG(ERROR) << "CheckVersionOrRestartServer failed";
     return SAVE_SUCCESS;
   }
 #endif  // OS_MACOSX
 
-  if (!session_->Reload()) {
+  if (!client_->Reload()) {
     LOG(ERROR) << "Reload command failed";
     return SAVE_SUCCESS;
   }
@@ -311,7 +311,7 @@ WordRegisterDialog::ErrorCode WordRegisterDialog::SaveEntry() {
 
 void WordRegisterDialog::LaunchDictionaryTool() {
   storage_->UnLock();
-  session_->LaunchTool("dictionary_tool", "");
+  client_->LaunchTool("dictionary_tool", "");
   QWidget::close();
 }
 
@@ -330,7 +330,7 @@ const QString WordRegisterDialog::GetReading(const QString &str) {
   {
     commands::KeyEvent key;
     key.set_special_key(commands::KeyEvent::ON);
-    if (!session_->SendKey(key, &output)) {
+    if (!client_->SendKey(key, &output)) {
       LOG(ERROR) << "SendKey failed";
       return "";
     }
@@ -339,14 +339,14 @@ const QString WordRegisterDialog::GetReading(const QString &str) {
     command.set_type(commands::SessionCommand::CONVERT_REVERSE);
     command.set_text(str.toStdString());
 
-    if (!session_->SendCommand(command, &output)) {
+    if (!client_->SendCommand(command, &output)) {
       LOG(ERROR) << "SendCommand failed";
       return "";
     }
 
     commands::Output dummy_output;
     command.set_type(commands::SessionCommand::REVERT);
-    session_->SendCommand(command, &dummy_output);
+    client_->SendCommand(command, &dummy_output);
   }
 
   if (!output.has_preedit()) {

@@ -37,8 +37,8 @@
 #include "base/singleton.h"
 #include "base/util.h"
 #include "base/config_file_stream.h"
-#include "session/config.pb.h"
-#include "session/config_handler.h"
+#include "config/config.pb.h"
+#include "config/config_handler.h"
 #include "storage/lru_storage.h"
 
 namespace mozc {

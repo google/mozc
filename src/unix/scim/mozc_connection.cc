@@ -33,7 +33,7 @@
 
 #include "base/logging.h"
 #include "base/util.h"
-#include "client/session.h"
+#include "client/client.h"
 #include "ipc/ipc.h"
 #include "session/commands.pb.h"
 #include "session/ime_switch_util.h"
@@ -48,16 +48,19 @@ MozcConnection::MozcConnection(
     mozc::client::ServerLauncherInterface *server_launcher,
     mozc::IPCClientFactoryInterface *client_factory)
     : translator_(new ScimKeyTranslator),
+      server_launcher_(server_launcher),
+      client_factory_(client_factory),
       preedit_method_(mozc::config::Config::ROMAN) {
   VLOG(1) << "MozcConnection is created";
-  mozc::client::Session *session = new mozc::client::Session;
-  session->SetServerLauncher(server_launcher);
-  session->SetIPCClientFactory(client_factory);
-  session_.reset(session);
+  mozc::client::ClientInterface *client =
+      mozc::client::ClientFactory::NewClient();
+  client->SetServerLauncher(server_launcher_);
+  client->SetIPCClientFactory(client_factory_.get());
+  client_.reset(client);
 
   mozc::config::Config config;
-  if (session_->EnsureConnection() &&
-      session_->GetConfig(&config) && config.has_preedit_method()) {
+  if (client_->EnsureConnection() &&
+      client_->GetConfig(&config) && config.has_preedit_method()) {
     preedit_method_ = config.preedit_method();
   }
   VLOG(1)
@@ -66,7 +69,7 @@ MozcConnection::MozcConnection(
 }
 
 MozcConnection::~MozcConnection() {
-  session_->SyncData();
+  client_->SyncData();
   VLOG(1) << "MozcConnection is destroyed";
 }
 
@@ -80,7 +83,7 @@ bool MozcConnection::TrySendKeyEvent(
 
   // Call EnsureConnection just in case MozcConnection::MozcConnection() fails
   // to establish the server connection.
-  if (!session_->EnsureConnection()) {
+  if (!client_->EnsureConnection()) {
     *out_error = "EnsureConnection failed";
     VLOG(1) << "EnsureConnection failed";
     return false;
@@ -96,7 +99,7 @@ bool MozcConnection::TrySendKeyEvent(
   }
 
   VLOG(1) << "TrySendKeyEvent: " << endl << event.DebugString();
-  if (!session_->SendKey(event, out)) {
+  if (!client_->SendKey(event, out)) {
     *out_error = "SendKey failed";
     VLOG(1) << "ERROR";
     return false;
@@ -146,7 +149,7 @@ bool MozcConnection::TrySendCommandInternal(
     mozc::commands::Output *out,
     string *out_error) const {
   VLOG(1) << "TrySendCommandInternal: " << endl << command.DebugString();
-  if (!session_->SendCommand(command, out)) {
+  if (!client_->SendCommand(command, out)) {
     *out_error = "SendCommand failed";
     VLOG(1) << "ERROR";
     return false;

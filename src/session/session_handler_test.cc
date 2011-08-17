@@ -32,10 +32,13 @@
 #include <vector>
 #include "base/base.h"
 #include "base/util.h"
-#include "client/session.h"
+#include "config/config_handler.h"
+#include "config/config.pb.h"
 #include "session/commands.pb.h"
+#include "session/japanese_session_factory.h"
 #include "session/session_handler.h"
 #include "converter/converter_mock.h"
+#include "converter/user_data_manager_mock.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/googletest.h"
 
@@ -44,6 +47,7 @@ DECLARE_int32(max_session_size);
 DECLARE_int32(create_session_min_interval);
 DECLARE_int32(last_command_timeout);
 DECLARE_int32(last_create_session_timeout);
+DECLARE_string(test_tmpdir);
 
 namespace mozc {
 
@@ -71,7 +75,21 @@ bool Cleanup(SessionHandler *handler) {
   return handler->EvalCommand(&command);
 }
 
-TEST(SessionHandlerTest, MaxSessionSizeTest) {
+class SessionHandlerTest : public testing::Test {
+ protected:
+  virtual void SetUp() {
+    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    config::Config config;
+    config::ConfigHandler::GetDefaultConfig(&config);
+    config::ConfigHandler::SetConfig(config);
+    session::SessionFactoryManager::SetSessionFactory(&session_factory_);
+  }
+
+ private:
+  session::JapaneseSessionFactory session_factory_;
+};
+
+TEST_F(SessionHandlerTest, MaxSessionSizeTest) {
   FLAGS_create_session_min_interval = 1;
 
   // The oldest item is remvoed
@@ -126,7 +144,7 @@ TEST(SessionHandlerTest, MaxSessionSizeTest) {
   }
 }
 
-TEST(SessionHandlerTest, CreateSessionMinInterval) {
+TEST_F(SessionHandlerTest, CreateSessionMinInterval) {
   const size_t timeout = 2;
   FLAGS_create_session_min_interval = static_cast<int32>(timeout);
   SessionHandler handler;
@@ -148,7 +166,7 @@ TEST(SessionHandlerTest, CreateSessionMinInterval) {
   EXPECT_TRUE(CreateSession(&handler, &id));
 }
 
-TEST(SessionHandlerTest, LastCreateSessionTimeout) {
+TEST_F(SessionHandlerTest, LastCreateSessionTimeout) {
   FLAGS_last_create_session_timeout = 2;  // 2 sec
   SessionHandler handler;
   uint64 id = 0;
@@ -162,7 +180,7 @@ TEST(SessionHandlerTest, LastCreateSessionTimeout) {
   EXPECT_FALSE(IsGoodSession(&handler, id));
 }
 
-TEST(SessionHandlerTest, LastCommandTimeout) {
+TEST_F(SessionHandlerTest, LastCommandTimeout) {
   FLAGS_last_command_timeout = 10;  // 10 sec
   SessionHandler handler;
   uint64 id = 0;
@@ -184,45 +202,39 @@ TEST(SessionHandlerTest, LastCommandTimeout) {
   EXPECT_FALSE(IsGoodSession(&handler, id));
 }
 
-class SyncCheckConverterMock : public ConverterMock {
- public:
-  SyncCheckConverterMock() : sync_is_called_(false) {}
-  ~SyncCheckConverterMock() {}
-
-  bool Sync() const {
-    sync_is_called_ = true;
-    return true;
-  }
-
-  bool sync_is_called() const {
-    return sync_is_called_;
-  }
-
- private:
-  mutable bool sync_is_called_;
-};
-
-TEST(SessionHandlerTest, VerifySyncIsCalled) {
+TEST_F(SessionHandlerTest, VerifySyncIsCalled) {
   {
-    SyncCheckConverterMock mock;
-    ConverterFactory::SetConverter(&mock);
+    // This Mock is released inside of ConverterMock
+    UserDataManagerMock *user_data_manager_mock = new UserDataManagerMock();
+    ConverterMock converter_mock;
+    converter_mock.SetUserDataManager(user_data_manager_mock);
+    ConverterFactory::SetConverter(&converter_mock);
     SessionHandler handler;
     commands::Command command;
     command.mutable_input()->set_type(commands::Input::DELETE_SESSION);
-    EXPECT_FALSE(mock.sync_is_called());
+    EXPECT_EQ(0, user_data_manager_mock->GetFunctionCallCount("Sync"));
     handler.EvalCommand(&command);
-    EXPECT_TRUE(mock.sync_is_called());
+    EXPECT_EQ(1, user_data_manager_mock->GetFunctionCallCount("Sync"));
   }
 
   {
-    SyncCheckConverterMock mock;
-    ConverterFactory::SetConverter(&mock);
+    // This Mock is released inside of ConverterMock
+    UserDataManagerMock *user_data_manager_mock = new UserDataManagerMock();
+    ConverterMock converter_mock;
+    converter_mock.SetUserDataManager(user_data_manager_mock);
+    ConverterFactory::SetConverter(&converter_mock);
     SessionHandler handler;
     commands::Command command;
     command.mutable_input()->set_type(commands::Input::CLEANUP);
-    EXPECT_FALSE(mock.sync_is_called());
+    EXPECT_EQ(0, user_data_manager_mock->GetFunctionCallCount("Sync"));
     handler.EvalCommand(&command);
-    EXPECT_TRUE(mock.sync_is_called());
+    EXPECT_EQ(1, user_data_manager_mock->GetFunctionCallCount("Sync"));
   }
 }
-}
+
+const char *kStorageTestData[] = {
+  "angel", "bishop", "chariot", "dragon",
+};
+
+
+}  // namespace mozc

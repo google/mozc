@@ -34,9 +34,10 @@ A tool to embedded tsv file into test binary for quality regression test.
 
 __author__ = "taku"
 
+import xml.dom.minidom
 import sys
 
-def escape_string(s):
+def EscapeString(s):
   """ escape the string with "\\xXX" format.
 
   We don't use encode('string_escape') because it doesn't escape ascii
@@ -55,21 +56,58 @@ def escape_string(s):
     result += '\\x' + hexstr[2:]
   return result
 
+
+def ParseTSV(file):
+  result = []
+  for line in open(file, "r"):
+    if line.startswith('#'):
+      continue
+    line = line.rstrip('\r\n')
+    if not line:
+      continue
+    result.append(line)
+  return result
+
+
+def GetText(node):
+  return node[0].firstChild.nodeValue.strip().replace('\t', ' ')
+
+
+def ParseXML(file):
+  result = []
+  dom = xml.dom.minidom.parse(file)
+  for issue in dom.getElementsByTagName('issue'):
+    status = GetText(issue.getElementsByTagName('status'))
+    if status != 'Fixed' and status != 'Verified':
+      continue
+    id = issue.attributes['id'].value
+    for detail in issue.getElementsByTagName(u'detail'):
+      fields = []
+      fields.append('mozcsu_%s' % id)
+      for key in ('reading', 'output', 'actionStatus', 'rank', 'accuracy'):
+        fields.append(GetText(detail.getElementsByTagName(key)))
+      result.append(('\t'.join(fields)).encode('utf-8'))
+  return result
+
+
+def ParseFile(file):
+  if file.endswith('.xml'):
+    return ParseXML(file)
+  else:
+    return ParseTSV(file)
+
+
 def GenerateHeader(files):
   try:
     print "const char *kTestData[] = {"
     for file in files:
-      for line in open(file, "r"):
-        if line.startswith('#'):
-          continue
-        line = line.rstrip('\r\n')
-        if not line:
-          continue
-        print " \"%s\"," % escape_string(line)
+      for line in ParseFile(file):
+        print " \"%s\"," % EscapeString(line)
     print "};"
   except:
     print "cannot open %s" % (file)
     sys.exit(1)
+
 
 def main():
   GenerateHeader(sys.argv[1:])

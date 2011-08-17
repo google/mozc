@@ -212,5 +212,29 @@ Rect WindowUtil::GetWindowRectForCascadingWindow(
 
   return window_rect;
 }
+
+Rect WindowUtil::GetWindowRectForInfolistWindow(
+    const Size &window_size, const Rect &candidate_rect,
+    const Rect &working_area) {
+  renderer::Point infolist_pos;
+
+  if (working_area.Height() == 0 || working_area.Width() == 0) {
+    infolist_pos.x = candidate_rect.Left() + candidate_rect.Width();
+    infolist_pos.y = candidate_rect.Top();
+    return Rect(infolist_pos, window_size);
+  }
+  if (candidate_rect.Left() + candidate_rect.Width() + window_size.width >
+      working_area.Right()) {
+    infolist_pos.x = candidate_rect.Left() - window_size.width;
+  } else {
+    infolist_pos.x = candidate_rect.Left() + candidate_rect.Width();
+  }
+  if (candidate_rect.Top() + window_size.height > working_area.Bottom()) {
+    infolist_pos.y = working_area.Bottom() - window_size.height;
+  } else {
+    infolist_pos.y = candidate_rect.Top();
+  }
+  return Rect(infolist_pos, window_size);
+}
 }  // namespace mozc::renderer
 }  // namespace mozc

@@ -43,12 +43,13 @@
 #include "base/run_level.h"
 #include "base/util.h"
 #include "gui/base/win_util.h"
-#include "client/session.h"
+#include "client/client.h"
 #include "dictionary/user_dictionary_importer.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
 #include "dictionary/user_pos.h"
 #include "gui/config_dialog/combobox_delegate.h"
+#include "gui/dictionary_tool/find_dialog.h"
 #include "gui/dictionary_tool/import_dialog.h"
 
 namespace mozc {
@@ -89,11 +90,13 @@ QProgressDialog *CreateProgressDialog(
   return progress;
 }
 
+#if defined(OS_WINDOWS) || defined(OS_MACOSX)
 void InstallStyleSheet(const QString &filename) {
   QFile file(filename);
   file.open(QFile::ReadOnly);
   qApp->setStyleSheet(QLatin1String(file.readAll()));
 }
+#endif
 
 // Use QTextStream to read UTF16 text -- we can't use ifstream,
 // since ifstream cannot handle Wide character.
@@ -276,21 +279,29 @@ UserDictionaryImporter::TextLineIteratorInterface *CreateTextLineIterator(
 }  // namespace
 
 DictionaryTool::DictionaryTool(QWidget *parent)
-    : QMainWindow(parent), dialog_(NULL),
+    : QMainWindow(parent),
+      import_dialog_(NULL), find_dialog_(NULL),
       storage_(
           new UserDictionaryStorage(
               UserDictionaryUtil::GetUserDictionaryFileName())),
       current_dic_id_(0), modified_(false), monitoring_user_edit_(false),
       window_title_(tr("Mozc")),
       dic_menu_(new QMenu),
-      new_action_(NULL), rename_action_(NULL), delete_action_(NULL),
+      new_action_(NULL), rename_action_(NULL),
+      delete_action_(NULL), find_action_(NULL),
       import_create_action_(NULL), import_append_action_(NULL),
       export_action_(NULL), import_default_ime_action_(NULL),
-      session_(new client::Session),
+      client_(client::ClientFactory::NewClient()),
       is_available_(true) {
   setupUi(this);
 
-  session_->set_timeout(kSessionTimeout);
+  // Create and set up ImportDialog object.
+  import_dialog_ = new ImportDialog(this);
+
+  // Create and set up FindDialog object.
+  find_dialog_ = new FindDialog(this, dic_content_);
+
+  client_->set_timeout(kSessionTimeout);
 
   if (!storage_->Load()) {
     LOG(WARNING) << "UserDictionaryStorage::Load() failed";
@@ -400,6 +411,7 @@ DictionaryTool::DictionaryTool(QWidget *parent)
   new_action_    = dic_menu_->addAction(tr("New dictionary..."));
   rename_action_ = dic_menu_->addAction(tr("Rename dictionary..."));
   delete_action_ = dic_menu_->addAction(tr("Delete dictionary"));
+  find_action_   = dic_menu_->addAction(tr("Find..."));
   dic_menu_->addSeparator();
   import_create_action_ =
       dic_menu_->addAction(tr("Import as new dictionary..."));
@@ -422,6 +434,8 @@ DictionaryTool::DictionaryTool(QWidget *parent)
           this, SLOT(RenameDictionary()));
   connect(delete_action_, SIGNAL(triggered()),
           this, SLOT(DeleteDictionary()));
+  connect(find_action_, SIGNAL(triggered()),
+          find_dialog_, SLOT(show()));
   connect(import_create_action_, SIGNAL(triggered()),
           this, SLOT(ImportAndCreateDictionary()));
   connect(import_append_action_, SIGNAL(triggered()),
@@ -449,9 +463,6 @@ DictionaryTool::DictionaryTool(QWidget *parent)
   // response to change of selection/data of items.
   connect(dic_list_, SIGNAL(itemSelectionChanged()),
           this, SLOT(OnDictionarySelectionChanged()));
-
-  // Create and set up ImportDialog object.
-  dialog_ = new ImportDialog(this);
 
   // Initialize the list widget for a list of dictionaries.
   InitDictionaryList();
@@ -723,16 +734,16 @@ void DictionaryTool::ImportAndCreateDictionary() {
   }
 
   // Get necessary information from the user.
-  if (dialog_->ExecInCreateMode() != QDialog::Accepted) {
+  if (import_dialog_->ExecInCreateMode() != QDialog::Accepted) {
     LOG(WARNING) << "Cancele by the user.";
     return;
   }
 
   ImportHelper(0,   // dic_id == 0 means that "CreateNewDictonary" mode
-               dialog_->dic_name().toStdString(),
-               dialog_->file_name().toStdString(),
-               dialog_->ime_type(),
-               dialog_->encoding_type());
+               import_dialog_->dic_name().toStdString(),
+               import_dialog_->file_name().toStdString(),
+               import_dialog_->ime_type(),
+               import_dialog_->encoding_type());
 }
 
 void DictionaryTool::ImportAndAppendDictionary() {
@@ -752,16 +763,16 @@ void DictionaryTool::ImportAndAppendDictionary() {
     return;
   }
 
-  if (dialog_->ExecInAppendMode() != QDialog::Accepted) {
+  if (import_dialog_->ExecInAppendMode() != QDialog::Accepted) {
     LOG(WARNING) << "Cancele by the user.";
     return;
   }
 
   ImportHelper(dic_info.id,
                dic_info.item->text().toStdString(),
-               dialog_->file_name().toStdString(),
-               dialog_->ime_type(),
-               dialog_->encoding_type());
+               import_dialog_->file_name().toStdString(),
+               import_dialog_->ime_type(),
+               import_dialog_->encoding_type());
 }
 
 void DictionaryTool::ReportImportError(UserDictionaryImporter::ErrorType error,
@@ -1366,20 +1377,20 @@ void DictionaryTool::SaveAndReloadServer() {
 
   // If server is not running, we don't need to
   // execute Reload command.
-  if (!session_->PingServer()) {
+  if (!client_->PingServer()) {
     LOG(WARNING) << "Server is not running. Do nothing";
     return;
   }
 
   // Update server version if need be.
-  if (!session_->CheckVersionOrRestartServer()) {
+  if (!client_->CheckVersionOrRestartServer()) {
     LOG(ERROR) << "CheckVersionOrRestartServer failed";
     return;
   }
 
   // We don't show any dialog even when an error happens, since
   // dictionary serialization is finished correctly.
-  if (!session_->Reload()) {
+  if (!client_->Reload()) {
     LOG(ERROR) << "Reload command failed";
   }
 }

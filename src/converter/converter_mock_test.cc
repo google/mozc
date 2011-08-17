@@ -243,47 +243,6 @@ TEST_F(ConverterMockTest, SetResizeSegment2) {
                                        size_array, arraysize(size_array)));
   EXPECT_EQ(expect.DebugString(), output.DebugString());
 }
-
-TEST_F(ConverterMockTest, SetSync) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
-
-  GetMock()->SetSync(true);
-  EXPECT_TRUE(converter->Sync());
-
-  GetMock()->SetSync(false);
-  EXPECT_FALSE(converter->Sync());
-}
-
-TEST_F(ConverterMockTest, SetReload) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
-
-  GetMock()->SetReload(true);
-  EXPECT_TRUE(converter->Reload());
-
-  GetMock()->SetReload(false);
-  EXPECT_FALSE(converter->Reload());
-}
-
-TEST_F(ConverterMockTest, SetClearUserHistory) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
-
-  GetMock()->SetClearUserHistory(true);
-  EXPECT_TRUE(converter->ClearUserHistory());
-
-  GetMock()->SetClearUserHistory(false);
-  EXPECT_FALSE(converter->ClearUserHistory());
-}
-
-TEST_F(ConverterMockTest, SetClearUserPrediction) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
-
-  GetMock()->SetClearUserPrediction(true);
-  EXPECT_TRUE(converter->ClearUserPrediction());
-
-  GetMock()->SetClearUserPrediction(false);
-  EXPECT_FALSE(converter->ClearUserPrediction());
-}
-
 TEST_F(ConverterMockTest, GetStartConversion) {
   ConverterInterface *converter = ConverterFactory::GetConverter();
 

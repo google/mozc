@@ -32,11 +32,15 @@
 #include "base/base.h"
 #include "base/util.h"
 #include "composer/composer.h"
+#include "config/config_handler.h"
+#include "config/config.pb.h"
 #include "converter/converter_interface.h"
 #include "session/session_converter.h"
 #include "composer/table.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/googletest.h"
+
+DECLARE_string(test_tmpdir);
 
 DEFINE_bool(test_deterministic, true,
              "if true, srand() is initialized by \"test_srand_seed\"."
@@ -57,6 +61,13 @@ class SessionConverterStressTest : public testing::Test {
       FLAGS_test_srand_seed = static_cast<int32>(::time(NULL));
     }
     ::srand(static_cast<uint32>(FLAGS_test_srand_seed));
+  }
+
+  virtual void SetUp() {
+    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    config::Config config;
+    config::ConfigHandler::GetDefaultConfig(&config);
+    config::ConfigHandler::SetConfig(config);
   }
 };
 

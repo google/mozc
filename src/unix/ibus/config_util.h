@@ -42,6 +42,11 @@
 
 namespace mozc {
 namespace ibus {
+// The following class is only used for Chrome OS.  The reason is that, in
+// Linux, configuration is modified by Mozc's own GUI tool which does
+// not rely on IBus and not by IBus signal. In ChromeOS, configuration is
+// modified by ChromeOS configuration page and IBus send signal to each IME.
+// Each IME read IBus's memconf and update their configuration.
 class ConfigUtil {
  public:
 #if IBUS_CHECK_VERSION(1, 3, 99)

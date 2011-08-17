@@ -31,7 +31,17 @@
   'variables': {
     'relative_dir': 'gui',
     'gen_out_dir': '<(SHARED_INTERMEDIATE_DIR)/<(relative_dir)',
+    'conditions': [
+      ['branding=="GoogleJapaneseInput"', {
+        'tool_product_name_win': 'GoogleIMEJaTool',
+      }, {  # else
+        'tool_product_name_win': 'mozc_tool',
+      }],
+    ],
   },
+  'includes': [
+    'qt_target_defaults.gypi',
+  ],
   'targets': [
     {
       'target_name': 'gui_base',
@@ -46,6 +56,7 @@
         'base/window_title_modifier.cc',
       ],
       'dependencies': [
+        '../config/config.gyp:genproto_config',
         '../ipc/ipc.gyp:genproto_ipc',
         '../ipc/ipc.gyp:ipc',
         '../session/session_base.gyp:genproto_session',
@@ -153,6 +164,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        '../config/config.gyp:stats_config_util',
         'gen_administration_dialog_files',
       ],
       'includes': [
@@ -446,8 +458,11 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        '../base/base.gyp:config_file_stream',
         '../client/client.gyp:client',
-        '../session/session_base.gyp:config_handler',
+        '../config/config.gyp:config_handler',
+        '../config/config.gyp:genproto_config',
+        '../config/config.gyp:stats_config_util',
         '../session/session_base.gyp:genproto_session',
         '../session/session_base.gyp:key_parser',
         '../session/session_base.gyp:keymap',
@@ -527,6 +542,8 @@
         '<(subdir)/dictionary_tool.h',
         '<(subdir)/dictionary_tool.qrc',
         '<(subdir)/dictionary_tool.ui',
+        '<(subdir)/find_dialog.h',
+        '<(subdir)/find_dialog.ui',
         '<(subdir)/import_dialog.h',
         '<(subdir)/import_dialog.ui',
         '<(subdir)/zero_width_splitter.h',
@@ -545,20 +562,24 @@
         '<(gen_out_dir)/dictionary_tool/moc_dictionary_content_table_widget.cc',
         '<(gen_out_dir)/dictionary_tool/moc_dictionary_tool.cc',
         '<(gen_out_dir)/dictionary_tool/qrc_dictionary_tool.cc',
+        '<(gen_out_dir)/dictionary_tool/moc_find_dialog.cc',
         '<(gen_out_dir)/dictionary_tool/moc_import_dialog.cc',
         '<(gen_out_dir)/dictionary_tool/moc_zero_width_splitter.cc',
         'config_dialog/combobox_delegate.cc',
         'dictionary_tool/dictionary_tool.cc',
         'dictionary_tool/dictionary_content_table_widget.cc',
         'dictionary_tool/dictionary_tool_libmain.cc',
+        'dictionary_tool/find_dialog.cc',
         'dictionary_tool/import_dialog.cc',
         'dictionary_tool/zero_width_splitter.cc',
       ],
       'dependencies': [
         '../base/base.gyp:base',
         '../client/client.gyp:client',
+        '../config/config.gyp:genproto_config',
         '../dictionary/dictionary.gyp:genproto_dictionary',
         '../dictionary/dictionary.gyp:user_dictionary',
+        '../session/session_base.gyp:genproto_session',
         'gen_config_dialog_files',
         'gen_dictionary_tool_files',
       ],
@@ -708,6 +729,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        '../config/config.gyp:genproto_config',
         '../dictionary/dictionary.gyp:genproto_dictionary',
         '../dictionary/dictionary.gyp:user_dictionary',
         '../ipc/ipc.gyp:ipc',
@@ -770,6 +792,7 @@
       ],
       'dependencies': [
         '../client/client.gyp:client',
+        '../config/config.gyp:genproto_config',
         '../ipc/ipc.gyp:ipc',
         '../session/session_base.gyp:genproto_session',
         'gen_set_default_dialog_files',
@@ -794,6 +817,55 @@
       'dependencies': [
         'gui_base',
         'set_default_dialog_lib',
+      ],
+      'includes': [
+        'qt_libraries.gypi',
+      ],
+    },
+    {
+      'target_name': 'gen_update_dialog_files',
+      'type': 'none',
+      'variables': {
+        'subdir': 'update_dialog',
+        'qrc_base_name': 'update_dialog',
+      },
+      'sources': [
+        '<(subdir)/update_dialog.ui',
+        '<(subdir)/update_dialog.h',
+        '<(subdir)/update_dialog.qrc',
+      ],
+      'includes': [
+        'qt_moc.gypi',
+        'qt_rcc.gypi',
+        'qt_uic.gypi',
+      ],
+    },
+    {
+      'target_name': 'update_dialog_lib',
+      'type': 'static_library',
+      'sources': [
+        '<(gen_out_dir)/update_dialog/moc_update_dialog.cc',
+        '<(gen_out_dir)/update_dialog/qrc_update_dialog.cc',
+        'update_dialog/update_dialog.cc',
+        'update_dialog/update_dialog_libmain.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        'gen_update_dialog_files',
+      ],
+      'includes': [
+        'qt_libraries.gypi',
+      ],
+    },
+    {
+      'target_name': 'update_dialog_main',
+      'type': 'executable',
+      'sources': [
+        'update_dialog/update_dialog_main.cc',
+      ],
+      'dependencies': [
+        'gui_base',
+        'update_dialog_lib',
       ],
       'includes': [
         'qt_libraries.gypi',
@@ -831,7 +903,9 @@
         'gui_base',
         'post_install_dialog_lib',
         'set_default_dialog_lib',
+        'update_dialog_lib',
         'word_register_dialog_lib',
+        '../config/config.gyp:stats_config_util',
       ],
       'includes': [
         'qt_libraries.gypi',
@@ -844,7 +918,7 @@
           'xcode_settings': {
             'INSTALL_PATH': '@executable_path/../Frameworks',
           },
-        }, { # else
+        }, {
           'type': 'static_library',
         }],
       ],
@@ -863,18 +937,21 @@
           'includes': [
             'qt_libraries.gypi',
           ],
-        }, { # else
+        }, {
           # if you don't use Qt, you will use a mock main file for tool
           # and do not have dependencies to _lib.
           'sources': [
             'tool/mozc_tool_main_noqt.cc',
           ],
-        },],
+        }],
         ['OS=="mac"', {
           'product_name': '<(product_name)',
           'variables': {
             'product_name': '<(branding)Tool',
           },
+          'dependencies': [
+            'gen_mozc_tool_info_plist',
+          ],
           'conditions': [
             ['use_qt=="YES"', {
               'variables': {
@@ -882,17 +959,18 @@
                   '<(PRODUCT_DIR)/<(branding)Tool_lib.framework',
                 ],
               },
+              # We include this gypi file here because the variables
+              # in a condition cannot be refferred from the gypi file
+              # included outside from the condition.
               'includes': [
                 '../gyp/postbuilds_mac.gypi',
               ],
-            }, {  # else
+            }, {
+              # So we include the same file explicitly here.
               'includes': [
                 '../gyp/postbuilds_mac.gypi',
               ],
             }]
-          ],
-          'dependencies': [
-            'gen_mozc_tool_info_plist',
           ],
           'mac_bundle': 1,
           'xcode_settings': {
@@ -900,7 +978,7 @@
           },
         }],
         ['OS=="win"', {
-          'product_name': 'GoogleIMEJaTool',
+          'product_name': '<(tool_product_name_win)',
           'sources': [
             'tool/mozc_tool.exe.manifest',
             '<(gen_out_dir)/tool/mozc_tool_autogen.rc',
@@ -918,11 +996,6 @@
     },
   ],
   'conditions': [
-    ['use_qt=="YES"', {
-      'includes': [
-        'qt_target_defaults.gypi',
-      ],
-    }],
     ['OS=="win"', {
       'targets': [
         {

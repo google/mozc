@@ -42,6 +42,7 @@ class DictionaryContentTableWidget : public QTableWidget {
   // overwrite paintEvent to draw a striped pattern to all
   // view port area This makes the view port Mac style.
   void paintEvent(QPaintEvent *event);
+  void focusInEvent(QFocusEvent *event);
 
   // overwrite mouseDoubleClickEvent to catch click event
   // when user double-clicked empty area in viewport

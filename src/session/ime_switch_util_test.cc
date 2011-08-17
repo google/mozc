@@ -32,7 +32,7 @@
 #include <string>
 
 #include "base/util.h"
-#include "session/config_handler.h"
+#include "config/config_handler.h"
 #include "session/key_event_normalizer.h"
 #include "session/key_parser.h"
 #include "session/internal/keymap.h"

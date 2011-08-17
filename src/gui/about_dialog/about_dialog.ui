@@ -149,6 +149,25 @@
      </item>
     </layout>
    </widget>
+   <widget class="QPushButton" name="updateButton">
+    <property name="enabled">
+     <bool>true</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>270</x>
+      <y>90</y>
+      <width>111</width>
+      <height>32</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Update</string>
+    </property>
+    <property name="autoDefault">
+     <bool>false</bool>
+    </property>
+   </widget>
   </widget>
   <widget class="QWidget" name="gridLayoutWidget">
    <property name="geometry">
@@ -217,7 +236,6 @@
    </layout>
   </widget>
  </widget>
- <customwidgets/>
  <resources/>
  <connections>
   <connection>
@@ -265,6 +283,22 @@
     <hint type="destinationlabel">
      <x>128</x>
      <y>101</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>updateButton</sender>
+   <signal>clicked()</signal>
+   <receiver>AboutDialog</receiver>
+   <slot>updateButtonPushed()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>305</x>
+     <y>225</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>244</x>
+     <y>124</y>
     </hint>
    </hints>
   </connection>

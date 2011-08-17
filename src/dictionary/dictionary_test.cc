@@ -29,39 +29,16 @@
 
 #include "base/base.h"
 #include "base/util.h"
+#include "config/config.pb.h"
+#include "config/config_handler.h"
 #include "converter/node.h"
+#include "converter/node_allocator.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/suppression_dictionary.h"
 #include "dictionary/pos_matcher.h"
 #include "testing/base/public/gunit.h"
-#include "session/config.pb.h"
-#include "session/config_handler.h"
 
 namespace mozc {
-
-namespace {
-class TestNodeAllocator : public NodeAllocatorInterface {
- public:
-  TestNodeAllocator() {}
-  virtual ~TestNodeAllocator() {
-    for (size_t i = 0; i < nodes_.size(); ++i) {
-      delete nodes_[i];
-    }
-    nodes_.clear();
-  }
-
-  Node *NewNode() {
-    Node *node = new Node;
-    CHECK(node);
-    node->Init();
-    nodes_.push_back(node);
-    return node;
-  }
-
- private:
-  vector<Node *> nodes_;
-};
-}  // namespace
 
 TEST(Dictionary_test, basic) {
   // delete without Open()
@@ -79,7 +56,7 @@ TEST(Dictionary_test, WordSuppressionTest) {
   SuppressionDictionary *s =
       SuppressionDictionary::GetSuppressionDictionary();
 
-  TestNodeAllocator allocator;
+  NodeAllocator allocator;
 
   // "ぐーぐるは"
   const char kQuery[] = "\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90"
@@ -127,7 +104,7 @@ TEST(Dictionary_test, WordSuppressionTest) {
 
 TEST(Dictionary_test, DisableSpellingCorrectionTest) {
   DictionaryInterface *d = DictionaryFactory::GetDictionary();
-  TestNodeAllocator allocator;
+  NodeAllocator allocator;
 
   // "しゅみれーしょん"
   const char kQuery[] = "\xE3\x81\x97\xE3\x82\x85\xE3\x81\xBF"
@@ -156,7 +133,7 @@ TEST(Dictionary_test, DisableSpellingCorrectionTest) {
 
 TEST(Dictionary_test, DisableZipCodeConversionTest) {
   DictionaryInterface *d = DictionaryFactory::GetDictionary();
-  TestNodeAllocator allocator;
+  NodeAllocator allocator;
 
   const char kQuery[] = "154-0000";
 
@@ -183,7 +160,7 @@ TEST(Dictionary_test, DisableZipCodeConversionTest) {
 
 TEST(Dictionary_test, DisableT13nConversionTest) {
   DictionaryInterface *d = DictionaryFactory::GetDictionary();
-  TestNodeAllocator allocator;
+  NodeAllocator allocator;
 
   // "いんたーねっと"
   const char kQuery[] = "\xE3\x81\x84\xE3\x82\x93\xE3\x81\x9F"

@@ -59,6 +59,7 @@ import unicodedata
 
 
 ZIP_CODE_LABEL = 'ZIP_CODE'
+ZIP_CODE_COST = 7000
 
 
 class ZipEntry (object):
@@ -77,8 +78,8 @@ class ZipEntry (object):
     """Output entry."""
     zip_code = self.FormatZip(self.zip_code)
     address = unicodedata.normalize('NFKC', self.address)
-    line = '\t'.join([zip_code, '0', '0', '0', address,
-                      address, '*', ZIP_CODE_LABEL])
+    line = '\t'.join([zip_code, '0', '0', str(ZIP_CODE_COST),
+                      address, ZIP_CODE_LABEL])
     print line.encode('utf-8')
 
 

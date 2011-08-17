@@ -40,6 +40,7 @@
 #include "renderer/window_util.h"
 #include "renderer/win32/candidate_window.h"
 #include "renderer/win32/composition_window.h"
+#include "renderer/win32/infolist_window.h"
 #include "renderer/win32/win32_renderer_util.h"
 #include "session/commands.pb.h"
 
@@ -78,6 +79,7 @@ WindowManager::WindowManager()
       last_position_(kInvalidMousePosition),
       main_window_(new CandidateWindow),
       cascading_window_(new CandidateWindow),
+      infolist_window_(new InfolistWindow),
       composition_window_list_(CompositionWindowList::CreateInstance()) {
 }
 
@@ -86,23 +88,28 @@ WindowManager::~WindowManager() {}
 void WindowManager::Initialize() {
   DCHECK(!main_window_->IsWindow());
   DCHECK(!cascading_window_->IsWindow());
+  DCHECK(!infolist_window_->IsWindow());
 
   main_window_->Create(NULL);
   main_window_->ShowWindow(SW_HIDE);
   cascading_window_->Create(NULL);
   cascading_window_->ShowWindow(SW_HIDE);
+  infolist_window_->Create(NULL);
+  infolist_window_->ShowWindow(SW_HIDE);
   composition_window_list_->Initialize();
 }
 
 void WindowManager::AsyncHideAllWindows() {
   cascading_window_->ShowWindowAsync(SW_HIDE);
   main_window_->ShowWindowAsync(SW_HIDE);
+  infolist_window_->ShowWindowAsync(SW_HIDE);
   composition_window_list_->AsyncHide();
 }
 
 void WindowManager::AsyncQuitAllWindows() {
   cascading_window_->PostMessage(WM_CLOSE, 0, 0);
   main_window_->PostMessage(WM_CLOSE, 0, 0);
+  infolist_window_->PostMessage(WM_CLOSE, 0, 0);
   composition_window_list_->AsyncQuit();
 }
 
@@ -113,146 +120,23 @@ void WindowManager::DestroyAllWindows() {
   if (cascading_window_->IsWindow()) {
     cascading_window_->DestroyWindow();
   }
+  if (infolist_window_->IsWindow()) {
+    infolist_window_->DestroyWindow();
+  }
   composition_window_list_->Destroy();
 }
 
 void WindowManager::HideAllWindows() {
   main_window_->ShowWindow(SW_HIDE);
   cascading_window_->ShowWindow(SW_HIDE);
+  infolist_window_->DelayHide(0);
   composition_window_list_->Hide();
-}
-
-// TODO(yukawa): need to rearrange this candidate window when the desktop
-//               theme or the display setting has changed.
-void WindowManager::UpdateLayout(const commands::RendererCommand &command) {
-  const commands::Candidates &candidates = command.output().candidates();
-
-  // Force updating the finger print of our candidate strings
-  // when this command comes from another thread.
-  if (command.has_application_info() &&
-      command.application_info().has_thread_id()) {
-      if (command.application_info().thread_id() != thread_id_) {
-        candidates_finger_print_ = 0;
-      }
-      thread_id_ = command.application_info().thread_id();
-  }
-
-  // calculate the candidate finger print.
-  string buf;
-  command.output().candidates().SerializeToString(&buf);
-  const uint32 fp = Util::Fingerprint32(buf);
-
-  bool candidate_changed = false;
-  if (fp != candidates_finger_print_) {
-    candidate_changed = true;
-    candidates_finger_print_ = fp;
-  }
-
-  if (candidate_changed && candidates.display_type() == commands::MAIN) {
-    main_window_->UpdateLayout(candidates);
-  }
-
-  DWORD set_windows_pos_flags = 0;
-  if (!candidate_changed) {
-    // Update the size of this candidate window only when the finger print of
-    // the given candidate strings isn't equal to the saved one.
-    set_windows_pos_flags |= SWP_NOSIZE;
-  }
-
-  const Size main_window_size = main_window_->GetLayoutSize();
-  const Rect preedit_rect(GetPreeditRect(command));
-  const Size preedit_size(preedit_rect.Width(), preedit_rect.Height());
-
-  // Obtain the monitor's working area
-  Rect working_area;
-  // Candidate window is placed on the monitor where the bottom left corner of
-  // preedit is displayed.
-  const Point preedit_bottom_left(preedit_rect.Left(), preedit_rect.Bottom());
-  HMONITOR monitor = ::MonitorFromPoint(preedit_bottom_left.ToCPoint(),
-                                        MONITOR_DEFAULTTONEAREST);
-
-  MONITORINFO monitor_info;
-  ZeroMemory(&monitor_info, sizeof(monitor_info));
-  monitor_info.cbSize = CCSIZEOF_STRUCT(MONITORINFO, dwFlags);
-  if (::GetMonitorInfo(monitor, &monitor_info) == 0) {
-    LOG(ERROR) << "GetMonitorInfo failed. last error = " << GetLastError();
-    working_area.size.height = 0;
-    working_area.size.width = 0;
-  } else {
-    working_area = Rect(monitor_info.rcWork);
-  }
-
-  // We prefer the left position of candidate strings is aligned to
-  // that of preedit.
-  const Point main_window_zero_point(
-      main_window_->GetCandidateColumnInClientCord().Left(), 0);
-
-  const Rect main_window_rect =
-      WindowUtil::GetWindowRectForMainWindowFromPreeditRect(
-          preedit_rect, main_window_size, main_window_zero_point, working_area);
-
-  main_window_->SetWindowPos(HWND_TOPMOST,
-                             main_window_rect.Left(),
-                             main_window_rect.Top(),
-                             main_window_rect.Width(),
-                             main_window_rect.Height(),
-                             set_windows_pos_flags);
-
-  if (candidates.has_subcandidates() &&
-      candidates.subcandidates().display_type() == commands::CASCADE) {
-    const commands::Candidates &subcandidates = candidates.subcandidates();
-
-    if (candidate_changed) {
-      cascading_window_->UpdateLayout(subcandidates);
-    }
-
-    // Put the cascading window right to the selected row of this candidate
-    // window.
-    const Rect selected_row = main_window_->GetSelectionRectInScreenCord();
-    const Rect selected_row_with_window_border(
-        Point(main_window_rect.Left(), selected_row.Top()),
-        Size(main_window_rect.Right() - main_window_rect.Left(),
-             selected_row.Top() - selected_row.Bottom()));
-
-    // We prefer the top of client area of the cascading window is
-    // aligned to the top of selected candidate in the candidate window.
-    const Point cascading_window_zero_point(
-        0, cascading_window_->GetFirstRowInClientCord().Top());
-
-    const Size cascading_window_size = cascading_window_->GetLayoutSize();
-
-    // cascading window should be in the same working area as the main window.
-    const Rect cascading_window_rect =
-        WindowUtil::GetWindowRectForCascadingWindow(
-            selected_row_with_window_border, cascading_window_size,
-            cascading_window_zero_point, working_area);
-
-    cascading_window_->SetWindowPos(HWND_TOPMOST,
-                                    cascading_window_rect.Left(),
-                                    cascading_window_rect.Top(),
-                                    cascading_window_rect.Width(),
-                                    cascading_window_rect.Height(),
-                                    set_windows_pos_flags);
-    if (candidate_changed) {
-      main_window_->Invalidate();
-      cascading_window_->Invalidate(FALSE);
-    }
-    main_window_->ShowWindow(SW_SHOWNA);
-    cascading_window_->ShowWindow(SW_SHOWNA);
-  } else {
-    // no cascading window
-    if (candidate_changed) {
-      main_window_->Invalidate();
-    }
-    cascading_window_->ShowWindow(SW_HIDE);
-    main_window_->ShowWindow(SW_SHOWNA);
-  }
 }
 
 // TODO(yukawa): Refactor this method by making a new method in LayoutManager
 //   with unit tests so that LayoutManager can handle both composition windows
 //   and candidate windows.
-void WindowManager::UpdateLayoutIMM32(
+void WindowManager::UpdateLayout(
     const commands::RendererCommand &command) {
   typedef mozc::commands::RendererCommand::CandidateForm CandidateForm;
   typedef mozc::commands::RendererCommand::ApplicationInfo ApplicationInfo;
@@ -262,6 +146,7 @@ void WindowManager::UpdateLayoutIMM32(
     composition_window_list_->Hide();
     cascading_window_->ShowWindow(SW_HIDE);
     main_window_->ShowWindow(SW_HIDE);
+    infolist_window_->DelayHide(0);
     return;
   }
 
@@ -309,6 +194,7 @@ void WindowManager::UpdateLayoutIMM32(
     // Hide candidate windows because there is no candidate to be displayed.
     cascading_window_->ShowWindow(SW_HIDE);
     main_window_->ShowWindow(SW_HIDE);
+    infolist_window_->DelayHide(0);
     return;
   }
 
@@ -333,6 +219,7 @@ void WindowManager::UpdateLayoutIMM32(
     // The candidate list is for suggestion but the visibility bit is off.
     cascading_window_->ShowWindow(SW_HIDE);
     main_window_->ShowWindow(SW_HIDE);
+    infolist_window_->DelayHide(0);
     return;
   }
 
@@ -341,6 +228,7 @@ void WindowManager::UpdateLayoutIMM32(
     // bit is off.
     cascading_window_->ShowWindow(SW_HIDE);
     main_window_->ShowWindow(SW_HIDE);
+    infolist_window_->DelayHide(0);
     return;
   }
 
@@ -348,6 +236,7 @@ void WindowManager::UpdateLayoutIMM32(
   if (candidates.candidate_size() == 0) {
     cascading_window_->ShowWindow(SW_HIDE);
     main_window_->ShowWindow(SW_HIDE);
+    infolist_window_->DelayHide(0);
     return;
   }
 
@@ -367,6 +256,7 @@ void WindowManager::UpdateLayoutIMM32(
   if (!candidate_layout.initialized()) {
     cascading_window_->ShowWindow(SW_HIDE);
     main_window_->ShowWindow(SW_HIDE);
+    infolist_window_->DelayHide(0);
     return;
   }
 
@@ -428,16 +318,68 @@ void WindowManager::UpdateLayoutIMM32(
             working_area);
   }
 
-  DWORD set_windows_pos_flags = 0;
+  DWORD set_windows_pos_flags = SWP_NOACTIVATE | SWP_SHOWWINDOW;
   main_window_->SetWindowPos(HWND_TOPMOST,
                              main_window_rect.Left(),
                              main_window_rect.Top(),
                              main_window_rect.Width(),
                              main_window_rect.Height(),
                              set_windows_pos_flags);
+  // This trick ensures that the window is certainly shown as 'inactivated'
+  // in terms of visual effect on DWM-enabled desktop.
+  main_window_->SendMessageW(WM_NCACTIVATE, FALSE);
+
+  bool cascading_visible = false;
 
   if (candidates.has_subcandidates() &&
       candidates.subcandidates().display_type() == commands::CASCADE) {
+    const commands::Candidates &subcandidates = candidates.subcandidates();
+    cascading_visible = true;
+  }
+
+  bool infolist_visible = false;
+  if (command.output().has_candidates() &&
+      command.output().candidates().has_usages() &&
+      command.output().candidates().usages().information_size() > 0) {
+    infolist_visible = true;
+  }
+
+  if (infolist_visible && !cascading_visible) {
+    if (candidate_changed) {
+      infolist_window_->UpdateLayout(candidates);
+      infolist_window_->Invalidate();
+    }
+
+    // Align infolist window
+    const renderer::Rect infolist_rect =
+        WindowUtil::GetWindowRectForInfolistWindow(
+            infolist_window_->GetLayoutSize(),
+            main_window_rect, working_area);
+    infolist_window_->MoveWindow(infolist_rect.Left(),
+                                 infolist_rect.Top(),
+                                 infolist_rect.Width(),
+                                 infolist_rect.Height(),
+                                 TRUE);
+    infolist_window_->SetWindowPos(HWND_TOPMOST, 0, 0, 0, 0,
+        SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+    if (candidates.has_focused_index() && candidates.candidate_size() > 0) {
+      const int focused_row =
+        candidates.focused_index() - candidates.candidate(0).index();
+      if (candidates.candidate_size() >= focused_row &&
+          candidates.candidate(focused_row).has_information_id()) {
+        infolist_window_->DelayShow(500);
+      } else {
+        infolist_window_->DelayHide(500);
+      }
+    } else {
+      infolist_window_->DelayHide(500);
+    }
+  } else {
+    // Hide infolist window immediately.
+    infolist_window_->DelayHide(0);
+  }
+
+  if (cascading_visible) {
     const commands::Candidates &subcandidates = candidates.subcandidates();
 
     if (candidate_changed) {
@@ -471,19 +413,19 @@ void WindowManager::UpdateLayoutIMM32(
                                     cascading_window_rect.Width(),
                                     cascading_window_rect.Height(),
                                     set_windows_pos_flags);
+    // This trick ensures that the window is certainly shown as 'inactivated'
+    // in terms of visual effect on DWM-enabled desktop.
+    cascading_window_->SendMessageW(WM_NCACTIVATE, FALSE);
     if (candidate_changed) {
       main_window_->Invalidate();
-      cascading_window_->Invalidate(FALSE);
+      cascading_window_->Invalidate();
     }
-    main_window_->ShowWindow(SW_SHOWNA);
-    cascading_window_->ShowWindow(SW_SHOWNA);
   } else {
     // no cascading window
     if (candidate_changed) {
       main_window_->Invalidate();
     }
     cascading_window_->ShowWindow(SW_HIDE);
-    main_window_->ShowWindow(SW_SHOWNA);
   }
 }
 

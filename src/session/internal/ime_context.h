@@ -93,10 +93,6 @@ class ImeContext {
   const commands::Output &output() const;
   commands::Output *mutable_output();
 
-  const string &initial_composition() const;
-  string *mutable_initial_composition();
-  void set_initial_composition(const string &composition);
-
   // Copy |source| context to |destination| context.  This function
   // does not perform compele copying at this moment.
   static void CopyContext(const ImeContext &src, ImeContext *dest);
@@ -120,9 +116,6 @@ class ImeContext {
   // Storing the last output consisting of the last result and the
   // last performed command.
   commands::Output output_;
-
-  // Storing the initial composition in reverse conversion.
-  string initial_composition_;
 };
 
 }  // namespace session

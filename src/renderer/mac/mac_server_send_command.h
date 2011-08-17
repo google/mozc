@@ -32,7 +32,7 @@
 
 #include <string>
 
-#include "client/session_interface.h"
+#include "client/client_interface.h"
 
 namespace mozc {
 namespace renderer {

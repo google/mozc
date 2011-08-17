@@ -70,8 +70,9 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../client/client.gyp:client',
+        '../config/config.gyp:config_handler',
+        '../config/config.gyp:genproto_config',
         '../ipc/ipc.gyp:ipc',
-        '../session/session_base.gyp:config_handler',
         '../session/session_base.gyp:genproto_session'
       ],
     },
@@ -94,6 +95,33 @@
       'variables': {
         'test_size': 'small',
       },
+    },
+    {
+      'target_name': 'renderer_style_handler_test',
+      'type': 'executable',
+      'sources': [
+        'renderer_style_handler_test.cc',
+        'renderer_style_handler.cc',
+        '<(proto_out_dir)/<(relative_dir)/renderer_style.pb.cc',
+      ],
+      'dependencies': [
+        '../testing/testing.gyp:gtest_main',
+        'renderer',
+        'genproto_renderer',
+      ],
+      'variables': {
+        'test_size': 'small',
+      },
+    },
+    {
+      'target_name': 'genproto_renderer',
+      'type': 'none',
+      'sources': [
+        'renderer_style.proto',
+      ],
+      'includes': [
+        '../protobuf/genproto.gypi',
+      ],
     },
     # Test cases meta target: this target is referred from gyp/tests.gyp
     {
@@ -139,7 +167,11 @@
           ],
           'dependencies': [
             '../base/base.gyp:base',
+            '../config/config.gyp:genproto_config',
+            '../session/session_base.gyp:genproto_session',
             '../session/session_base.gyp:session_protocol',
+            '../config/config.gyp:genproto_config',
+            '../config/config.gyp:config_protocol',
             '../win32/base/win32_base.gyp:ime_base',
           ],
         },
@@ -164,16 +196,21 @@
           'sources': [
             'mozc_renderer_main.cc',
             'mozc_renderer.exe.manifest',
+            'renderer_style_handler.cc',
             'win32/win32_server.cc',
             'win32/window_manager.cc',
             'win32/candidate_window.cc',
             'win32/composition_window.cc',
+            'win32/infolist_window.cc',
             'win32/text_renderer.cc',
             '<(gen_out_dir)/mozc_renderer_autogen.rc',
+            '<(proto_out_dir)/<(relative_dir)/renderer_style.pb.cc',
           ],
           'dependencies': [
             '../base/base.gyp:base',
             '../client/client.gyp:client',
+            '../config/config.gyp:genproto_config',
+            '../config/config.gyp:stats_config_util',
             '../ipc/ipc.gyp:ipc',
             '../session/session_base.gyp:genproto_session',
             'gen_mozc_renderer_resource_header',
@@ -181,6 +218,7 @@
             'table_layout',
             'win32_renderer_util',
             'window_util',
+            'genproto_renderer',
           ],
           'includes': [
             '../gyp/postbuilds_win.gypi',
@@ -210,11 +248,14 @@
             '<(proto_out_dir)/<(relative_dir)/renderer_style.pb.cc',
           ],
           'mac_bundle_resources': [
+            '../data/images/mac/candidate_window_logo.png',
             '../data/images/mac/product_icon.icns',
           ],
           'dependencies': [
             '../base/base.gyp:base',
             '../client/client.gyp:client',
+            '../config/config.gyp:genproto_config',
+            '../config/config.gyp:stats_config_util',
             '../ipc/ipc.gyp:ipc',
             '../session/session_base.gyp:genproto_session',
             'gen_renderer_files',
@@ -241,23 +282,6 @@
           ],
         },
         {
-          'target_name': 'renderer_style_handler_test',
-          'type': 'executable',
-          'sources': [
-            'renderer_style_handler_test.cc',
-            'renderer_style_handler.cc',
-            '<(proto_out_dir)/<(relative_dir)/renderer_style.pb.cc',
-          ],
-          'dependencies': [
-            '../testing/testing.gyp:gtest_main',
-            'renderer',
-            'genproto_renderer',
-          ],
-          'variables': {
-            'test_size': 'small',
-          },
-        },
-        {
           'target_name': 'gen_renderer_files',
           'type': 'none',
           'actions': [
@@ -279,16 +303,6 @@
             },
           ],
         },
-        {
-          'target_name': 'genproto_renderer',
-          'type': 'none',
-          'sources': [
-            'renderer_style.proto',
-          ],
-          'includes': [
-            '../protobuf/genproto.gypi',
-          ],
-        }
       ],
     }],
   ],

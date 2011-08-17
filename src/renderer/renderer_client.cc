@@ -145,20 +145,20 @@ class RendererLauncher : public RendererLauncherInterface,
     const bool process_in_job = RunLevel::IsProcessInJob();
     const string arg = process_in_job ? "--restricted" : "";
 
-    Process::SecurityInfo info;
-    // use NON_ADMIN as Qt fails in some functions.
-    // http://b/192020
-    info.primary_level = sandbox::USER_NON_ADMIN;
-    info.impersonation_level = sandbox::USER_RESTRICTED_SAME_ACCESS;
-    info.job_level =  process_in_job ?
-        sandbox::JOB_NO_JOB : sandbox::JOB_LOCKDOWN,
-        info.integrity_level = sandbox::INTEGRITY_LEVEL_LOW;
+    WinSandbox::SecurityInfo info;
+    info.primary_level = WinSandbox::USER_INTERACTIVE;
+    info.impersonation_level = WinSandbox::USER_RESTRICTED_SAME_ACCESS;
+    info.integrity_level = WinSandbox::INTEGRITY_LEVEL_LOW;
+    // If the current process is in a job, you cannot use
+    // CREATE_BREAKAWAY_FROM_JOB. b/1571395
+    info.use_locked_down_job = !process_in_job;
     info.allow_ui_operation = true;   // skip UI protection
     info.in_system_dir = true;  // use system dir not to lock current directory
     info.creation_flags = CREATE_DEFAULT_ERROR_MODE;
 
     // start renreder process
-    const bool result = Process::SpawnProcessAs(path_, arg, info, &pid);
+    const bool result = WinSandbox::SpawnSandboxedProcess(path_, arg, info,
+                                                          &pid);
 #elif defined(OS_MACOSX)
     // Start renderer process by using launch_msg API.
     pid_t pid = 0;

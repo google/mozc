@@ -57,6 +57,9 @@ message UserHistory {
     // internally used in UserHistoryPredictor.
     optional bool bigram_boost = 20 [ default = false ];
 
+    // internally used in UserHistoryPredictor.
+    optional bool spelling_correction = 21 [ default = false ];
+
     // This entry is removed.
     optional bool removed = 8 [ default = false ];
 

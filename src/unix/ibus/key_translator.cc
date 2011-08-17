@@ -138,6 +138,7 @@ const struct ModifierKeyMap {
   {IBUS_Control_R, mozc::commands::KeyEvent::CTRL},
   {IBUS_Alt_L, mozc::commands::KeyEvent::ALT},
   {IBUS_Alt_R, mozc::commands::KeyEvent::ALT},
+  {IBUS_LOCK_MASK, mozc::commands::KeyEvent::CAPS},
 };
 
 const struct ModifierMaskMap {
@@ -377,32 +378,34 @@ bool KeyTranslator::Translate(guint keyval,
     out_event->set_key_code(keyval);
     out_event->set_key_string(kana_key_string);
   } else if (IsAscii(keyval, keycode, modifiers)) {
+    if (IBUS_LOCK_MASK & modifiers) {
+      out_event->add_modifier_keys(commands::KeyEvent::CAPS);
+    }
     out_event->set_key_code(keyval);
   } else if (IsModifierKey(keyval, keycode, modifiers)) {
     ModifierKeyMap::const_iterator i = modifier_key_map_.find(keyval);
     DCHECK(i != modifier_key_map_.end());
-    out_event->add_modifier_keys((*i).second);
+    out_event->add_modifier_keys(i->second);
   } else if (IsSpecialKey(keyval, keycode, modifiers)) {
     SpecialKeyMap::const_iterator i = special_key_map_.find(keyval);
     DCHECK(i != special_key_map_.end());
-    out_event->set_special_key((*i).second);
+    out_event->set_special_key(i->second);
   } else {
     VLOG(1) << "Unknown keyval: " << keyval;
     return false;
   }
 
   for (ModifierKeyMap::const_iterator i = modifier_mask_map_.begin();
-       i != modifier_mask_map_.end();
-       ++i) {
+       i != modifier_mask_map_.end(); ++i) {
     // Do not set a SHIFT modifier when |keyval| is a printable key by following
     // the Mozc's rule.
-    if (((*i).second == commands::KeyEvent::SHIFT) &&
+    if ((i->second == commands::KeyEvent::SHIFT) &&
         IsPrintable(keyval, keycode, modifiers)) {
-        continue;
-     }
+      continue;
+    }
 
-    if ((*i).first & modifiers) {
-      out_event->add_modifier_keys((*i).second);
+    if (i->first & modifiers) {
+      out_event->add_modifier_keys(i->second);
     }
   }
 

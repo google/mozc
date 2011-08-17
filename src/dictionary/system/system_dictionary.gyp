@@ -50,7 +50,7 @@
       'dependencies': [
         '../../base/base.gyp:base',
         '../dictionary_base.gyp:text_dictionary_loader',
-        '../file/dictionary_file.gyp:dictionary_file',
+        '../file/dictionary_file.gyp:dictionary_file_builder',
         '<(DEPTH)/third_party/rx/rx.gyp:rx',
         'system_dictionary',
       ],
@@ -63,6 +63,7 @@
       ],
       'dependencies': [
         'system_dictionary',
+        'system_dictionary_builder',
         '../../base/base.gyp:base',
         '../../testing/testing.gyp:gtest_main',
       ],

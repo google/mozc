@@ -34,7 +34,8 @@
 #include "base/base.h"
 #include "base/logging.h"
 #include "base/version.h"
-#include "session/config_handler.h"
+#include "config/config_handler.h"
+#include "session/japanese_session_factory.h"
 #include "unix/ibus/main.h"
 #include "unix/ibus/mozc_engine.h"
 #include "unix/ibus/path_util.h"
@@ -50,12 +51,14 @@ IBusConfig *g_config = NULL;
 #endif
 
 #ifndef OS_CHROMEOS
+#ifndef NO_LOGGING
 void EnableVerboseLog() {
   const int kDefaultVerboseLevel = 1;
   if (mozc::Logging::GetVerboseLevel() < kDefaultVerboseLevel) {
     mozc::Logging::SetVerboseLevel(kDefaultVerboseLevel);
   }
 }
+#endif
 
 void IgnoreSigChild() {
   // Don't wait() child process termination.
@@ -143,6 +146,8 @@ int main(gint argc, gchar **argv) {
   // On Chrome OS, mozc does not store the config data to a local file.
   mozc::config::ConfigHandler::SetConfigFileName("memory://config.1.db");
   mozc::ibus::MozcEngine::InitConfig(g_config);
+  mozc::session::JapaneseSessionFactory session_factory;
+  mozc::session::SessionFactoryManager::SetSessionFactory(&session_factory);
 #else
 #ifndef NO_LOGGING
   EnableVerboseLog();

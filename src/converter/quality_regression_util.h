@@ -41,10 +41,23 @@ class QualityRegressionUtil {
   QualityRegressionUtil();
   virtual ~QualityRegressionUtil();
 
-  bool ConvertAndTest(const string &key,
-                      const string &expected_value,
-                      const string &command,
-                      int expected_rank,
+  struct TestItem {
+    string label;
+    string key;
+    string expected_value;
+    string command;
+    int    expected_rank;
+    double accuracy;
+    string comment;
+    string OutputAsTSV() const;
+    bool ParseFromTSV(const string &tsv_line);
+  };
+
+  // Pase |filename| and save the all test items into |outputs|.
+  static bool ParseFile(const string &filename,
+                        vector<TestItem> *outputs);
+
+  bool ConvertAndTest(const TestItem &item,
                       string *actual_value);
 
  private:

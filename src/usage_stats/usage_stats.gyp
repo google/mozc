@@ -43,6 +43,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        '../config/config.gyp:stats_config_util',
         '../net/net.gyp:net',
         '../protobuf/protobuf.gyp:protobuf',
         '../storage/storage.gyp:storage',

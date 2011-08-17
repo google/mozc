@@ -33,7 +33,7 @@
 #include "base/cpu_stats.h"
 #include "base/mutex.h"
 #include "base/util.h"
-#include "client/session.h"
+#include "client/client_mock.h"
 #include "session/commands.pb.h"
 #include "session/session_watch_dog.h"
 #include "testing/base/public/gunit.h"
@@ -41,6 +41,7 @@
 
 namespace mozc {
 namespace {
+
 class TestCPUStats : public CPUStatsInterface {
  public:
   TestCPUStats() : cpu_loads_index_(0) {}
@@ -71,73 +72,24 @@ class TestCPUStats : public CPUStatsInterface {
   int cpu_loads_index_;
 };
 
-class TestSession : public client::SessionInterface {
- public:
-  TestSession(): cleanup_counter_(0) {}
-
-  bool IsValidRunLevel() const { return true; }
-  bool EnsureSession() { return true; }
-  bool EnsureConnection() { return true; }
-
-  bool CheckVersionOrRestartServer() { return true; }
-
-  bool SendKey(const commands::KeyEvent &key,
-               commands::Output *output) { return true; }
-  bool TestSendKey(const commands::KeyEvent &key,
-                   commands::Output *output) { return true; }
-  bool SendCommand(const commands::SessionCommand &command,
-                   commands::Output *output) { return true; }
-  bool GetConfig(config::Config *config) { return true; }
-  bool SetConfig(const config::Config &config) { return true; }
-  bool ClearUserHistory() { return true; }
-  bool ClearUserPrediction() { return true; }
-  bool ClearUnusedUserPrediction() { return true; }
-  bool Shutdown() { return true; }
-  bool SyncData() { return true; }
-  bool Reload() { return true; }
-  bool NoOperation() { return true; }
-  bool PingServer() const { return true; }
-  void EnableCascadingWindow(bool enable) {}
-
-  void set_timeout(int timeout) {}
-  void set_restricted(bool restricted) {}
-  void set_server_program(const string &server_program) {}
-  void set_client_capability(const commands::Capability &capability) {}
-
-  bool LaunchTool(const string &mode, const string &extra_arg) {
-    return true;
-  }
-  bool LaunchToolWithProtoBuf(const commands::Output &output) {
-    return true;
-  }
-  bool OpenBrowser(const string &url) {
-    return true;
-  }
-
-  void Reset() {}
-
-  bool Cleanup()  {
-    ++cleanup_counter_;
-    return true;
-  }
-
-  int cleanup_counter() const {
-    return cleanup_counter_;
-  }
-
- private:
-  int cleanup_counter_;
-};
 }  // namespace
-}  // mozc
 
-TEST(SessionWatchDogTest, SessionWatchDog) {
+class SessionWatchDogTest : public testing::Test {
+ protected:
+  void InitializeClient(mozc::client::ClientMock *client) {
+    client->SetBoolFunctionReturn("PingServer", true);
+    client->SetBoolFunctionReturn("Cleanup", true);
+  }
+};
+
+TEST_F(SessionWatchDogTest, SessionWatchDogTest) {
   static const int32 kInterval = 1;  // for every 1sec
   mozc::SessionWatchDog watchdog(kInterval);
   EXPECT_FALSE(watchdog.IsRunning());  // not running
   EXPECT_EQ(kInterval, watchdog.interval());
 
-  mozc::TestSession session;
+  mozc::client::ClientMock client;
+  InitializeClient(&client);
   mozc::TestCPUStats stats;
 
   vector<float> cpu_loads;
@@ -147,10 +99,10 @@ TEST(SessionWatchDogTest, SessionWatchDog) {
   }
   stats.SetCPULoads(cpu_loads);
 
-  watchdog.SetSessionInterface(&session);
+  watchdog.SetClientInterface(&client);
   watchdog.SetCPUStatsInterface(&stats);
 
-  EXPECT_EQ(0, session.cleanup_counter());
+  EXPECT_EQ(0, client.GetFunctionCallCount("Cleanup"));
 
   watchdog.Start();  // start
 
@@ -160,22 +112,23 @@ TEST(SessionWatchDogTest, SessionWatchDog) {
 
   mozc::Util::Sleep(5500);  // 5.5 sec
 
-  EXPECT_EQ(5, session.cleanup_counter());
+  EXPECT_EQ(5, client.GetFunctionCallCount("Cleanup"));
 
   mozc::Util::Sleep(5000);  // 10.5 sec
 
-  EXPECT_EQ(10, session.cleanup_counter());
+  EXPECT_EQ(10, client.GetFunctionCallCount("Cleanup"));
 
   watchdog.Terminate();
 }
 
-TEST(SessionWatchDogCPUStatsTest, SessionWatchDog) {
+TEST_F(SessionWatchDogTest, SessionWatchDogCPUStatsTest) {
   static const int32 kInterval = 1;  // for every 1sec
   mozc::SessionWatchDog watchdog(kInterval);
   EXPECT_FALSE(watchdog.IsRunning());  // not running
   EXPECT_EQ(kInterval, watchdog.interval());
 
-  mozc::TestSession session;
+  mozc::client::ClientMock client;
+  InitializeClient(&client);
   mozc::TestCPUStats stats;
 
   vector<float> cpu_loads;
@@ -185,10 +138,10 @@ TEST(SessionWatchDogCPUStatsTest, SessionWatchDog) {
   }
   stats.SetCPULoads(cpu_loads);
 
-  watchdog.SetSessionInterface(&session);
+  watchdog.SetClientInterface(&client);
   watchdog.SetCPUStatsInterface(&stats);
 
-  EXPECT_EQ(0, session.cleanup_counter());
+  EXPECT_EQ(0, client.GetFunctionCallCount("Cleanup"));
 
   watchdog.Start();  // start
 
@@ -198,7 +151,7 @@ TEST(SessionWatchDogCPUStatsTest, SessionWatchDog) {
   mozc::Util::Sleep(5500);  // 5.5 sec
 
   // not called
-  EXPECT_EQ(0, session.cleanup_counter());
+  EXPECT_EQ(0, client.GetFunctionCallCount("Cleanup"));
 
   // cup loads become low
   cpu_loads.clear();
@@ -209,12 +162,12 @@ TEST(SessionWatchDogCPUStatsTest, SessionWatchDog) {
 
   mozc::Util::Sleep(5000);  // 5 sec
   // called
-  EXPECT_EQ(5, session.cleanup_counter());
+  EXPECT_EQ(5, client.GetFunctionCallCount("Cleanup"));
 
   watchdog.Terminate();
 }
 
-TEST(SessionCanSendCleanupCommandTest, SessionWatchDog) {
+TEST_F(SessionWatchDogTest, SessionCanSendCleanupCommandTest) {
   volatile float cpu_loads[16];
 
   mozc::SessionWatchDog watchdog(2);
@@ -260,3 +213,5 @@ TEST(SessionCanSendCleanupCommandTest, SessionWatchDog) {
   cpu_loads[3] = 0.1;
   EXPECT_TRUE(watchdog.CanSendCleanupCommand(cpu_loads, 4, 1, 0));
 }
+
+}  // namespace mozc

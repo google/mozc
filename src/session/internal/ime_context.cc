@@ -118,37 +118,14 @@ commands::Output *ImeContext::mutable_output() {
   return &output_;
 }
 
-const string &ImeContext::initial_composition() const {
-  return initial_composition_;
-}
-string *ImeContext::mutable_initial_composition() {
-  return &initial_composition_;
-}
-void ImeContext::set_initial_composition(const string &composition) {
-  initial_composition_ = composition;
-}
-
 // static
 void ImeContext::CopyContext(const ImeContext &src, ImeContext *dest) {
   DCHECK(dest);
 
-  // Copy output
   dest->mutable_output()->CopyFrom(src.output());
-
-  // Copy session converter
   dest->mutable_converter()->CopyFrom(src.converter());
-
-  // Copy composition modes
-  dest->mutable_composer()->SetInputMode(src.composer().GetInputMode());
-  dest->mutable_composer()->SetOutputMode(src.composer().GetOutputMode());
-
-  // Copy state
   dest->set_state(src.state());
 
-  // Copy initial composition in reverse conversion
-  dest->set_initial_composition(src.initial_composition());
-
-  string composition;
   switch (dest->state()) {
     case DIRECT:
     case PRECOMPOSITION:
@@ -156,15 +133,11 @@ void ImeContext::CopyContext(const ImeContext &src, ImeContext *dest) {
       return;
 
     case COMPOSITION:
-      // Copy composition
-      src.composer().GetStringForSubmission(&composition);
-      dest->mutable_composer()->InsertCharacterPreedit(composition);
+      dest->mutable_composer()->CopyFromForSubmission(src.composer());
       return;
 
     case CONVERSION:
-      // Copy composition
-      src.composer().GetQueryForConversion(&composition);
-      dest->mutable_composer()->InsertCharacterPreedit(composition);
+      dest->mutable_composer()->CopyFromForConversion(src.composer());
       return;
 
     default:

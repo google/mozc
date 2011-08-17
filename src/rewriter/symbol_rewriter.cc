@@ -37,14 +37,14 @@
 #include "base/base.h"
 #include "base/singleton.h"
 #include "base/util.h"
+#include "config/config_handler.h"
+#include "config/config.pb.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
 #include "converter/character_form_manager.h"
 #include "rewriter/rewriter_interface.h"
 #include "rewriter/embedded_dictionary.h"
 #include "session/commands.pb.h"
-#include "session/config_handler.h"
-#include "session/config.pb.h"
 
 // SymbolRewriter:
 // When updating the rule

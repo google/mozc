@@ -386,6 +386,18 @@ void Util::SplitStringAllowEmpty(const string &full, const char *delim,
   SplitStringToIteratorAllowEmpty(full, delim, it);
 }
 
+void Util::SplitStringToUtf8Chars(const string &str, vector<string> *output) {
+  size_t begin = 0;
+  const size_t end = str.size();
+
+  while (begin < end) {
+    const size_t mblen = OneCharLen(str.c_str() + begin);
+    output->push_back(str.substr(begin, mblen));
+    begin += mblen;
+  }
+  DCHECK_EQ(begin, end);
+}
+
 void Util::SplitCSV(const string &input, vector<string> *output) {
   scoped_array<char> tmp(new char[input.size() + 1]);
   char *str = tmp.get();
@@ -1350,7 +1362,7 @@ namespace {
 // TODO(yukawa): this should be moved into ports.h
 const uint64 kUInt64Max = 0xFFFFFFFFFFFFFFFFull;
 
-// There is a informative discuttion about the overflow detection in
+// There is an informative discussion about the overflow detection in
 // "Hacker's Delight" (http://www.hackersdelight.org/basics.pdf)
 //   2-12 'Overflow Detection'
 
@@ -1369,69 +1381,248 @@ bool AddAndCheckOverflow(uint64 arg1, uint64 arg2, uint64 *output) {
 // return false when an integer overflow happens.
 bool MultiplyAndCheckOverflow(uint64 arg1, uint64 arg2, uint64 *output) {
   *output = arg1 * arg2;
-  if (arg1 !=0 && arg2 > (kUInt64Max / arg1)) {
+  if (arg1 != 0 && arg2 > (kUInt64Max / arg1)) {
     // overflow happens
     return false;
   }
   return true;
 }
 
-// Decode decimal number sequence into one number,
-// considering scalind number.
-//  [5,4,3] => 543
-//  [5,100,4,10,3] => 543
-// Return
-//  ture: conversion is successful.
-bool NormalizeNumbersHelper(const vector<uint64>::const_iterator &begin,
-                            const vector<uint64>::const_iterator &end,
-                            uint64 *number_output) {
-  *number_output = 0;
-
-  if (begin >= end) {
-    return true;
+// Reduces leading digits less than 10 as their base10 interpretation, e.g.,
+//   [1, 2, 3, 10, 100] => begin points to [10, 100], output = 123
+// Returns false when overflow happened.
+bool ReduceLeadingNumbersAsBase10System(
+    vector<uint64>::const_iterator *begin,
+    const vector<uint64>::const_iterator &end,
+    uint64 *output) {
+  *output = 0;
+  for (; *begin < end; ++*begin) {
+    if (**begin >= 10) {
+      return true;
+    }
+    // *output = *output * 10 + *it
+    if (!MultiplyAndCheckOverflow(*output, 10, output) ||
+        !AddAndCheckOverflow(*output, **begin, output)) {
+      return false;
+    }
   }
+  return true;
+}
 
-  vector<uint64>::const_iterator it = max_element(begin, end);
+// Interprets digits as base10 system, e.g.,
+//   [1, 2, 3] => 123
+//   [1, 2, 3, 10] => false
+// Returns false if a number greater than 10 was found or overflow happened.
+bool InterpretNumbersAsBase10System(const vector<uint64> &numbers,
+                                    uint64 *output) {
+  vector<uint64>::const_iterator begin = numbers.begin();
+  const bool success =
+      ReduceLeadingNumbersAsBase10System(&begin, numbers.end(), output);
+  // Check if the whole numbers were reduced.
+  return (success && begin == numbers.end());
+}
 
-  // 20, 30 and 40 are treated as a special case
-  const bool is_special_number = (*it > 10 && *it < 100);
-  const bool is_regular_number = (*it < 10);
+// Reads a leading number in a sequence and advances the iterator. Returns false
+// if the range is empty or the leading number is not less than 10.
+bool ReduceOnesDigit(vector<uint64>::const_iterator *begin,
+                     const vector<uint64>::const_iterator &end,
+                     uint64 *num) {
+  if (*begin == end || **begin >= 10) {
+    return false;
+  }
+  *num = **begin;
+  ++*begin;
+  return true;
+}
 
-  if (is_regular_number) {
-    // when no scaling number is found and digit size is >= 2,
-    // convert number directly. i.e, [5,4,3] => 543
-    uint64 n = 0;
-    for (vector<uint64>::const_iterator it = begin;
-         it < end; ++it) {
-      // n = n * 10 + *it
-      if (!MultiplyAndCheckOverflow(n, 10, &n)
-          || !AddAndCheckOverflow(n, *it, &n)) {
+// Given expected_base, 10, 100, or 1000, reads leading one or two numbers and
+// calculates the number in the follwoing way:
+//   Case: expected_base == 10
+//     [10, ...] => 10
+//     [2, 10, ...] => 20
+//     [1, 10, ...] => error because we don't write "一十" in Japanese.
+//     [20, ...] => 20 because "廿" is interpreted as 20.
+//     [2, 0, ...] => 20
+//   Case: expected_base == 100
+//     [100, ...] => 100
+//     [2, 100, ...] => 200
+//     [1, 100, ...] => error because we don't write "一百" in Japanese.
+//     [1, 2, 3, ...] => 123
+//   Case: expected_base == 1000
+//     [1000, ...] => 1000
+//     [2, 1000, ...] => 2000
+//     [1, 1000, ...] => 1000
+//     [1, 2, 3, 4, ...] => 1234
+bool ReduceDigitsHelper(vector<uint64>::const_iterator *begin,
+                        const vector<uint64>::const_iterator &end,
+                        uint64 *num,
+                        const uint64 expected_base) {
+  // Skip leading zero(s).
+  while (*begin != end && **begin == 0) {
+    ++*begin;
+  }
+  if (*begin == end) {
+    return false;
+  }
+  const uint64 leading_number = **begin;
+
+  // If the leading number is less than 10, e.g., patterns like [2, 10], we need
+  // to check the next number.
+  if (leading_number < 10) {
+    if (end - *begin < 2) {
+      return false;
+    }
+    const uint64 next_number = *(*begin + 1);
+
+    // If the next number is also less than 10, this pattern is like
+    // [1, 2, ...] => 12. In this case, the result must be less than
+    // 10 * expected_base.
+    if (next_number < 10) {
+      if (!ReduceLeadingNumbersAsBase10System(begin, end, num) ||
+          *num >= expected_base * 10 ||
+          (*begin != end && **begin < 10000)) {
+        *begin = end;  // Force to ignore the rest of the sequence.
         return false;
       }
+      return true;
     }
-    *number_output = n;
+
+    // Patterns like [2, 10, ...] and [1, 1000, ...].
+    if (next_number != expected_base ||
+        (leading_number == 1 && expected_base != 1000)) {
+      return false;
+    }
+    *num = leading_number * expected_base;
+    *begin += 2;
     return true;
   }
 
-  if (is_special_number) {
-    *number_output = *it;
+  // Patterns like [10, ...], [100, ...], [1000, ...], [20, ...]. The leading 20
+  // is a special case for Kanji "廿".
+  if (leading_number == expected_base ||
+      (expected_base == 10 && leading_number == 20)) {
+    *num = leading_number;
+    ++*begin;
     return true;
   }
+  return false;
+}
 
-  if (begin == it) {
-    uint64 rest = 0;
-    return NormalizeNumbersHelper(it + 1, end, &rest)
-        && AddAndCheckOverflow(*it, rest, number_output);
+inline bool ReduceTensDigit(vector<uint64>::const_iterator *begin,
+                            const vector<uint64>::const_iterator &end,
+                            uint64 *num) {
+  return ReduceDigitsHelper(begin, end, num, 10);
+}
+
+inline bool ReduceHundredsDigit(vector<uint64>::const_iterator *begin,
+                                const vector<uint64>::const_iterator &end,
+                                uint64 *num) {
+  return ReduceDigitsHelper(begin, end, num, 100);
+}
+
+inline bool ReduceThousandsDigit(vector<uint64>::const_iterator *begin,
+                                 const vector<uint64>::const_iterator &end,
+                                 uint64 *num) {
+  return ReduceDigitsHelper(begin, end, num, 1000);
+}
+
+// Reduces leading digits as a number less than 10000 and advances the
+// iterator. For example:
+//   [1, 1000, 2, 100, 3, 10, 4, 10000, ...]
+//        => begin points to [10000, ...], num = 1234
+//   [3, 100, 4, 100]
+//        => error because same base number appears twice
+bool ReduceNumberLessThan10000(vector<uint64>::const_iterator *begin,
+                               const vector<uint64>::const_iterator &end,
+                               uint64 *num) {
+  *num = 0;
+  bool success = false;
+  uint64 n = 0;
+  // Note: the following additions never overflow.
+  if (ReduceThousandsDigit(begin, end, &n)) {
+    *num += n;
+    success = true;
+  }
+  if (ReduceHundredsDigit(begin, end, &n)) {
+    *num += n;
+    success = true;
+  }
+  if (ReduceTensDigit(begin, end, &n)) {
+    *num += n;
+    success = true;
+  }
+  if (ReduceOnesDigit(begin, end, &n)) {
+    *num += n;
+    success = true;
+  }
+  // If at least one reduce was successful, no number remains in the sequence or
+  // the next number should be a base number greater than 1000 (e.g., 10000,
+  // 100000, etc.). Strictly speaking, better to check **begin % 10 == 0.
+  return success && (*begin == end || **begin >= 10000);
+}
+
+// Interprets a sequence of numbers in a Japanese reading way. For example:
+//   "一万二千三百四十五" = [1, 10000, 2, 1000, 3, 100, 4, 10, 5] => 12345
+// Base-10 numbers must be decreasing, i.e.,
+//   "一十二百" = [1, 10, 2, 100] => error
+bool InterpretNumbersInJapaneseWay(const vector<uint64> &numbers,
+                                   uint64 *output) {
+  uint64 last_base = kUInt64Max;
+  vector<uint64>::const_iterator begin = numbers.begin();
+  *output = 0;
+  do {
+    uint64 coef = 0;
+    if (!ReduceNumberLessThan10000(&begin, numbers.end(), &coef)) {
+      return false;
+    }
+    if (begin == numbers.end()) {
+      return AddAndCheckOverflow(*output, coef, output);
+    }
+    if (*begin >= last_base) {
+      return false;  // Increasing order of base-10 numbers.
+    }
+    // Safely performs *output += coef * *begin.
+    uint64 delta = 0;
+    if (!MultiplyAndCheckOverflow(coef, *begin, &delta) ||
+        !AddAndCheckOverflow(*output, delta, output)) {
+      return false;
+    }
+    last_base = *begin++;
+  } while (begin != numbers.end());
+
+  return true;
+}
+
+// Interprets a sequence of numbers directly or in a Japanese reading way
+// depending on the maximum number in the sequence.
+bool NormalizeNumbersHelper(const vector<uint64> &numbers,
+                            uint64 *number_output) {
+  const vector<uint64>::const_iterator itr_max = max_element(numbers.begin(),
+                                                             numbers.end());
+  if (itr_max == numbers.end()) {
+    return false;  // numbers is empty
   }
 
-  {
-    uint64 scaled_number = 0;
-    uint64 rest = 0;
-    return NormalizeNumbersHelper(begin, it, &scaled_number)
-        && NormalizeNumbersHelper(it + 1, end, &rest)
-        && MultiplyAndCheckOverflow(scaled_number, *it, number_output)
-        && AddAndCheckOverflow(*number_output, rest, number_output);
+  // When no scaling number is found, convert number directly.
+  // For example, [5,4,3] => 543
+  if (*itr_max < 10) {
+    return InterpretNumbersAsBase10System(numbers, number_output);
   }
+  return InterpretNumbersInJapaneseWay(numbers, number_output);
+}
+
+bool SafeStringToUInt64(const string &number_string, uint64 *val) {
+  for (size_t i = 0; i < number_string.size(); ++i) {
+    if (!isdigit(number_string[i])) {   // non-number is included
+      return false;
+    }
+    const uint64 val_of_char = static_cast<uint64>(number_string[i] - '0');
+    if (!MultiplyAndCheckOverflow(*val, 10, val) ||
+        !AddAndCheckOverflow(*val, val_of_char, val)) {
+      return false;
+    }
+  }
+  return true;
 }
 
 void EscapeInternal(char input, const string &prefix, string *output) {
@@ -1463,43 +1654,39 @@ bool Util::NormalizeNumbers(const string &input,
   };
   //   "〇", "一", "二", "三", "四", "五", "六", "七", "八", "九", NULL
 
+  // Maps Kanji number string to digits, e.g., "二百十一" -> [2, 100, 10, 1].
+  // Simultaneously, constructs a Kanji number string.
   kanji_output->clear();
+  string kanji_char;
   while (begin < end) {
     size_t mblen = 0;
     const char32 wchar = UTF8ToUCS4(begin, end, &mblen);
-    string w(begin, mblen);
-    if (wchar >= 0x0030 && wchar <= 0x0039) {
+    kanji_char.assign(begin, mblen);
+    if (wchar >= 0x0030 && wchar <= 0x0039) {  // '0' <= wchar <= '9'
       *kanji_output += kNumKanjiDigits[wchar - 0x0030];
-    } else if (wchar >= 0xFF10 && wchar <= 0xFF19) {
+    } else if (wchar >= 0xFF10 && wchar <= 0xFF19) {  // '０' <= wchar <= '９'
       *kanji_output += kNumKanjiDigits[wchar - 0xFF10];
     } else {
-      *kanji_output += w;
+      *kanji_output += kanji_char;
     }
 
     string tmp;
-    KanjiNumberToArabicNumber(w, &tmp);
+    KanjiNumberToArabicNumber(kanji_char, &tmp);
 
     uint64 n = 0;
-    for (size_t i = 0; i < tmp.size(); ++i) {
-      if (!isdigit(tmp[i])) {   // non-number is included
-        return false;
-      }
-      if (!MultiplyAndCheckOverflow(n, 10, &n)
-          || !AddAndCheckOverflow(n, static_cast<uint64>(tmp[i] - '0'),
-                                  &n)) {
-        return false;
-      }
+    if (!SafeStringToUInt64(tmp, &n)) {
+      return false;
     }
     numbers.push_back(n);
     begin += mblen;
   }
-
   if (numbers.empty()) {
     return false;
   }
 
+  // Tries interpreting the sequence of digits.
   uint64 n = 0;
-  if (!NormalizeNumbersHelper(numbers.begin(), numbers.end(), &n)) {
+  if (!NormalizeNumbersHelper(numbers, &n)) {
     return false;
   }
 
@@ -2341,10 +2528,15 @@ string Util::GetLoggingDirectory() {
 string Util::GetServerDirectory() {
 #ifdef OS_WINDOWS
   DCHECK(SUCCEEDED(Singleton<ProgramFilesX86Cache>::get()->result()));
+#if defined(GOOGLE_JAPANESE_INPUT_BUILD)
   return Util::JoinPath(
       Util::JoinPath(Singleton<ProgramFilesX86Cache>::get()->path(),
                      kCompanyNameInEnglish),
       kProductNameInEnglish);
+#else
+  return Util::JoinPath(Singleton<ProgramFilesX86Cache>::get()->path(),
+                        kProductNameInEnglish);
+#endif
 #endif  // OS_WINDOWS
 
 // TODO(mazda): Not to use hardcoded path.
@@ -3003,57 +3195,68 @@ bool Util::IsPlatformSupported() {
 #ifdef OS_WINDOWS
 namespace {
 // TODO(yukawa): Use API wrapper so that unit test can emulate any case.
-class IsVistaOrLaterCache {
+template<DWORD MajorVersion, DWORD MinorVersion>
+class IsWindowsVerXOrLaterCache {
  public:
-  IsVistaOrLaterCache()
+  IsWindowsVerXOrLaterCache()
     : succeeded_(false),
-      is_vista_or_later_(true) {
-    // Examine if this system is greater than or equal to WinNT 6.0.
+      is_ver_x_or_later_(true) {
+    // Examine if this system is greater than or equal to WinNT ver. X
     {
       OSVERSIONINFOEX osvi = {};
       osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
-      osvi.dwMajorVersion = 6;
+      osvi.dwMajorVersion = MajorVersion;
+      osvi.dwMinorVersion = MinorVersion;
       DWORDLONG conditional = 0;
       VER_SET_CONDITION(conditional, VER_MAJORVERSION, VER_GREATER_EQUAL);
+      VER_SET_CONDITION(conditional, VER_MINORVERSION, VER_GREATER_EQUAL);
       const BOOL result =
-        ::VerifyVersionInfo(&osvi, VER_MAJORVERSION, conditional);
+        ::VerifyVersionInfo(&osvi, VER_MAJORVERSION | VER_MINORVERSION,
+                            conditional);
       if (result != FALSE) {
         succeeded_ = true;
-        is_vista_or_later_ = true;
+        is_ver_x_or_later_ = true;
         return;
       }
     }
 
-    // Examine if this system is less than WinNT 6.0.
+    // Examine if this system is less than WinNT ver. X
     {
       OSVERSIONINFOEX osvi = {};
       osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
-      osvi.dwMajorVersion = 6;
+      osvi.dwMajorVersion = MajorVersion;
+      osvi.dwMinorVersion = MinorVersion;
       DWORDLONG conditional = 0;
       VER_SET_CONDITION(conditional, VER_MAJORVERSION, VER_LESS);
+      VER_SET_CONDITION(conditional, VER_MINORVERSION, VER_LESS);
       const BOOL result =
-        ::VerifyVersionInfo(&osvi, VER_MAJORVERSION, conditional);
+        ::VerifyVersionInfo(&osvi, VER_MAJORVERSION | VER_MINORVERSION,
+                            conditional);
       if (result != FALSE) {
         succeeded_ = true;
-        is_vista_or_later_ = false;
+        is_ver_x_or_later_ = false;
         return;
       }
     }
 
     // Unexpected situation.
     succeeded_ = false;
-    is_vista_or_later_ = false;
+    is_ver_x_or_later_ = false;
   }
   const bool succeeded() const {
     return succeeded_;
   }
-  const bool is_vista_or_later() const {
-    return is_vista_or_later_;
+  const bool is_ver_x_or_later() const {
+    return is_ver_x_or_later_;
   }
+
  private:
   bool succeeded_;
-  bool is_vista_or_later_;
+  bool is_ver_x_or_later_;
 };
+
+typedef IsWindowsVerXOrLaterCache<6, 0> IsWindowsVistaOrLaterCache;
+typedef IsWindowsVerXOrLaterCache<6, 1> IsWindows7OrLaterCache;
 
 // TODO(yukawa): Use API wrapper so that unit test can emulate any case.
 class IsWindowsX64Cache {
@@ -3118,8 +3321,13 @@ class SystemDirectoryCache {
 }  // anonymous namespace
 
 bool Util::IsVistaOrLater() {
-  DCHECK(Singleton<IsVistaOrLaterCache>::get()->succeeded());
-  return Singleton<IsVistaOrLaterCache>::get()->is_vista_or_later();
+  DCHECK(Singleton<IsWindowsVistaOrLaterCache>::get()->succeeded());
+  return Singleton<IsWindowsVistaOrLaterCache>::get()->is_ver_x_or_later();
+}
+
+bool Util::IsWindows7OrLater() {
+  DCHECK(Singleton<IsWindows7OrLaterCache>::get()->succeeded());
+  return Singleton<IsWindows7OrLaterCache>::get()->is_ver_x_or_later();
 }
 
 bool Util::IsWindowsX64() {
@@ -3197,10 +3405,27 @@ HMODULE Util::GetSystemModuleHandle(const wstring &base_filename) {
   fullpath += L"\\";
   fullpath += base_filename;
 
-  const HMODULE module = ::GetModuleHandleW(fullpath.c_str());
-  if (NULL == module) {
+  HMODULE module = NULL;
+  if (GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                         fullpath.c_str(), &module) == FALSE) {
     const int last_error = ::GetLastError();
-    DLOG(WARNING) << "GetModuleHandle failed."
+    DLOG(WARNING) << "GetModuleHandleExW failed."
+                  << " fullpath = " << fullpath.c_str()
+                  << " error = " << last_error;
+  }
+  return module;
+}
+
+HMODULE Util::GetSystemModuleHandleAndIncrementRefCount(
+    const wstring &base_filename) {
+  wstring fullpath = Util::GetSystemDir();
+  fullpath += L"\\";
+  fullpath += base_filename;
+
+  HMODULE module = NULL;
+  if (GetModuleHandleExW(0, fullpath.c_str(), &module) == FALSE) {
+    const int last_error = ::GetLastError();
+    DLOG(WARNING) << "GetModuleHandleExW failed."
                   << " fullpath = " << fullpath.c_str()
                   << " error = " << last_error;
   }
@@ -3459,7 +3684,10 @@ bool Util::IsLittleEndian() {
 #ifdef OS_WINDOWS
 // TODO(team): Support other platforms.
 bool Util::EnsureVitalImmutableDataIsAvailable() {
-  if (!Singleton<IsVistaOrLaterCache>::get()->succeeded()) {
+  if (!Singleton<IsWindowsVistaOrLaterCache>::get()->succeeded()) {
+    return false;
+  }
+  if (!Singleton<IsWindows7OrLaterCache>::get()->succeeded()) {
     return false;
   }
   if (!Singleton<SystemDirectoryCache>::get()->succeeded()) {
@@ -3475,3 +3703,4 @@ bool Util::EnsureVitalImmutableDataIsAvailable() {
 }
 #endif  // OS_WINDOWS
 }  // namespace mozc
+

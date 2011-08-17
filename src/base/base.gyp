@@ -56,13 +56,14 @@
         'run_level.cc',
         'scheduler.cc',
         'singleton.cc',
-        'stats_config_util.cc',
         'stopwatch.cc',
         'svm.cc',
         'text_converter.cc',
+        'text_normalizer.cc',
         'timer.cc',
         'unnamed_event.cc',
         'update_util.cc',
+        'update_checker.cc',
         'url.cc',
         'util.cc',
         'version.cc',
@@ -86,7 +87,17 @@
           ],
         }],
         ['OS=="win"', {
-          'sources': [ 'win_util.cc' ],
+          'sources': [
+            'win_sandbox.cc',
+            'win_util.cc',
+          ],
+          'conditions': [
+            ['branding=="GoogleJapaneseInput"', {
+              'dependencies': [
+                '<(DEPTH)/third_party/breakpad/breakpad.gyp:breakpad',
+              ],
+            }],
+          ],
         }],
       ],
     },

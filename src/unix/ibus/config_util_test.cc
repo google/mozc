@@ -31,8 +31,8 @@
 
 #include "unix/ibus/config_util.h"
 
+#include "config/config.pb.h"
 #include "testing/base/public/gunit.h"
-#include "session/config.pb.h"
 
 TEST(ConfigUtilTest, IntValue) {
   mozc::config::Config config;
@@ -48,9 +48,9 @@ TEST(ConfigUtilTest, IntValue) {
   g_value_set_int(value, 42);
 #endif
   mozc::ibus::ConfigUtil::SetFieldForName(
-      "config_version", value, &config);
+      "suggestions_size", value, &config);
 
-  EXPECT_EQ("config_version: 42\n",
+  EXPECT_EQ("suggestions_size: 42\n",
             config.DebugString());
 #if IBUS_CHECK_VERSION(1, 3, 99)
   g_variant_unref(value);

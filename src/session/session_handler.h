@@ -41,13 +41,16 @@
 #include "session/session_handler_interface.h"
 #include "storage/lru_cache.h"
 
+// for FRIEND_TEST()
+#include "testing/base/public/gunit_prod.h"
+
 namespace mozc {
 class SessionWatchDog;
 class Stopwatch;
 
 namespace commands {
 class Command;
-} // namespace commands
+}  // namespace commands
 
 namespace session {
 class SessionFactoryInterface;
@@ -78,6 +81,8 @@ class SessionHandler : public SessionHandlerInterface {
   void SetSessionFactory(session::SessionFactoryInterface *new_factory);
 
  private:
+  FRIEND_TEST(SessionHandlerTest, StorageTest);
+
   // Reload settings which are managed by SessionHandler
   void ReloadSession();
   // Reload the configurations on the current sessions.
@@ -94,8 +99,9 @@ class SessionHandler : public SessionHandlerInterface {
   bool ClearUnusedUserPrediction(commands::Command *command);
   bool Shutdown(commands::Command *command);
   bool Reload(commands::Command *command);
-  bool GetConfig(commands::Command *command);
-  bool SetConfig(commands::Command *command);
+  bool GetStoredConfig(commands::Command *command);
+  bool SetStoredConfig(commands::Command *command);
+  bool SetImposedConfig(commands::Command *command);
   bool Cleanup(commands::Command *command);
   bool NoOperation(commands::Command *command);
 

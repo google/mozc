@@ -35,11 +35,15 @@
 #include "session/commands.pb.h"
 #include "testing/base/public/gunit.h"
 
+DECLARE_string(test_tmpdir);
+
 namespace mozc {
 
 class EnglishVariantsRewriterTest : public testing::Test {
  protected:
-  virtual void SetUp() {}
+  virtual void SetUp() {
+    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+  }
 };
 
 TEST_F(EnglishVariantsRewriterTest, ExpandEnglishVariants) {

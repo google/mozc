@@ -84,3 +84,7 @@ void DictionaryContentTableWidget::mouseDoubleClickEvent(QMouseEvent *event) {
   }
 #endif  // OS_MACOSX
 }
+
+void DictionaryContentTableWidget::focusInEvent(QFocusEvent *event) {
+  setStyleSheet("");
+}

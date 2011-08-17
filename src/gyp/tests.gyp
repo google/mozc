@@ -35,6 +35,7 @@
       'dependencies': [
         "../base/base_test.gyp:base_all_test",
         "../client/client_test.gyp:client_all_test",
+        "../config/config_test.gyp:config_all_test",
         "../composer/composer.gyp:composer_all_test",
         "../converter/converter_test.gyp:converter_all_test",
         "../dictionary/dictionary_test.gyp:dictionary_all_test",

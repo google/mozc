@@ -32,9 +32,9 @@
 #include <sstream>
 #include <vector>
 #include "base/config_file_stream.h"
+#include "config/config.pb.h"
+#include "config/config_handler.h"
 #include "session/commands.pb.h"
-#include "session/config.pb.h"
-#include "session/config_handler.h"
 #include "session/internal/keymap.h"
 #include "session/internal/keymap-inl.h"
 #include "session/internal/keymap_factory.h"

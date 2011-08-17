@@ -53,6 +53,7 @@
 #include "base/process_mutex.h"
 #include "base/util.h"
 #include "session/commands.pb.h"
+#include "session/japanese_session_factory.h"
 #include "session/session_handler.h"
 #include "session/random_keyevents_generator.h"
 
@@ -377,6 +378,8 @@ int main(int argc, char *argv[]) {
     CHECK(client.DeleteSession());
     return 0;
   } else if (FLAGS_server) {
+    static mozc::session::JapaneseSessionFactory session_factory;
+    mozc::session::SessionFactoryManager::SetSessionFactory(&session_factory);
     mozc::RPCServer server;
     server.Loop();
   } else {

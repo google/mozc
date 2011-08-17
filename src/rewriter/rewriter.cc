@@ -46,6 +46,10 @@
 #include "rewriter/user_segment_history_rewriter.h"
 #include "rewriter/variants_rewriter.h"
 #include "rewriter/version_rewriter.h"
+#if defined(OS_MACOSX) || defined(OS_WINDOWS)
+// TODO(horo): Usage is available only in Mac and Windows now.
+#include "rewriter/usage_rewriter.h"
+#endif
 DEFINE_bool(use_history_rewriter, true, "Use history rewriter or not.");
 
 namespace mozc {
@@ -76,6 +80,12 @@ RewriterImpl::RewriterImpl() {
   AddRewriter(new DateRewriter);
   AddRewriter(new FortuneRewriter);
   AddRewriter(new VersionRewriter);
+#if defined(OS_MACOSX) || defined(OS_WINDOWS)
+  // TODO(horo): Because infolist renderer window is implimented
+  //             only in Mac and Windows, usage is available only
+  //             in Mac and Winnows.
+  AddRewriter(new UsageRewriter);
+#endif  // defined(OS_MACOSX) || defined(OS_WINDOWS)
 }
 
 RewriterInterface *g_rewriter = NULL;

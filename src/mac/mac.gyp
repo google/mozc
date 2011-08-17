@@ -40,7 +40,7 @@
       'type': 'executable',
       'dependencies': [
         '../base/base.gyp:base',
-        '../client/client.gyp:session_mock',
+        '../client/client.gyp:client_mock',
         '../renderer/renderer.gyp:renderer',
         '../renderer/renderer.gyp:table_layout',
         '../renderer/renderer.gyp:window_util',
@@ -73,7 +73,7 @@
             'VCLinkerTool': {
               # W/O this flag, an error occurs during building mac_test
               # on Windows.
-              'GenerateManifest': 'False',
+              'GenerateManifest': 'false',
             },
           },
         }],
@@ -237,6 +237,7 @@
           'product_name': '<(branding)',
           'dependencies': [
             '../client/client.gyp:client',
+            '../config/config.gyp:stats_config_util',
             '../gui/gui.gyp:mozc_tool',
             '../gui/gui.gyp:about_dialog_mac',
             '../gui/gui.gyp:character_palette_mac',

@@ -37,29 +37,6 @@
   },
   'targets': [
     {
-      'target_name': 'session_normalizer',
-      'type': 'static_library',
-      'sources': [
-        'internal/session_normalizer.cc',
-      ],
-      'dependencies': [
-        '../base/base.gyp:base',
-      ],
-    },
-    {
-      'target_name': 'config_handler',
-      'type': 'static_library',
-      'sources': [
-        'config_handler.cc',
-      ],
-      'dependencies': [
-        '../base/base.gyp:base',
-        '../base/base.gyp:config_file_stream',
-        'genproto_session',
-        'session_protocol',
-      ],
-    },
-    {
       'target_name': 'key_parser',
       'type': 'static_library',
       'sources': [
@@ -67,6 +44,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        '../config/config.gyp:genproto_config',
         'genproto_session',
         'session_protocol',
       ],
@@ -79,6 +57,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        '../config/config.gyp:genproto_config',
         'genproto_session',
         'key_parser',
         'session_protocol',
@@ -92,6 +71,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        '../config/config.gyp:genproto_config',
         'genproto_session',
         'keymap',
         'session_protocol',
@@ -106,7 +86,8 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../base/base.gyp:config_file_stream',
-        'config_handler',
+        '../config/config.gyp:config_handler',
+        '../config/config.gyp:genproto_config',
         'genproto_session',
         'key_parser',
         'keymap',
@@ -118,11 +99,13 @@
       'type': 'none',
       'sources': [
         'commands.proto',
-        'config.proto',
         'state.proto',
       ],
       'includes': [
         '../protobuf/genproto.gypi',
+      ],
+      'dependencies': [
+        '../config/config.gyp:genproto_config',
       ],
     },
     {
@@ -130,12 +113,12 @@
       'type': 'static_library',
       'sources': [
         '<(proto_out_dir)/<(relative_dir)/commands.pb.cc',
-        '<(proto_out_dir)/<(relative_dir)/config.pb.cc',
         '<(proto_out_dir)/<(relative_dir)/state.pb.cc',
       ],
       'dependencies': [
         '../protobuf/protobuf.gyp:protobuf',
-        'genproto_session'
+        'genproto_session',
+        '../config/config.gyp:config_protocol',
       ],
     },
   ],

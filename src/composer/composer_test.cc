@@ -30,9 +30,9 @@
 #include "converter/character_form_manager.h"
 #include "composer/composer.h"
 #include "composer/table.h"
+#include "config/config_handler.h"
+#include "config/config.pb.h"
 #include "session/commands.pb.h"
-#include "session/config_handler.h"
-#include "session/config.pb.h"
 #include "session/key_parser.h"
 #include "testing/base/public/gunit.h"
 
@@ -65,6 +65,19 @@ string GetPreedit(const Composer *composer) {
   string preedit;
   composer->GetStringForPreedit(&preedit);
   return preedit;
+}
+
+void ExpectSameComposer(const Composer &lhs, const Composer &rhs) {
+  // TODO(hsumita): Check composition_
+  EXPECT_EQ(lhs.GetCursor(), rhs.GetCursor());
+  EXPECT_EQ(lhs.is_new_input(), rhs.is_new_input());
+  EXPECT_EQ(lhs.GetInputMode(), rhs.GetInputMode());
+  EXPECT_EQ(lhs.GetOutputMode(), rhs.GetOutputMode());
+  EXPECT_EQ(lhs.GetComebackInputMode(), rhs.GetComebackInputMode());
+  EXPECT_EQ(lhs.capital_sequence_count(), rhs.capital_sequence_count());
+  EXPECT_EQ(lhs.source_text(), rhs.source_text());
+  EXPECT_EQ(lhs.max_length(), rhs.max_length());
+  EXPECT_EQ(lhs.GetInputFieldType(), rhs.GetInputFieldType());
 }
 
 }  // namespace
@@ -105,11 +118,14 @@ TEST_F(ComposerTest, Reset) {
   composer_->InsertCharacter("mozuku");
 
   composer_->SetInputMode(transliteration::HALF_ASCII);
+  composer_->SetInputFieldType(commands::SessionCommand::PASSWORD);
   composer_->Reset();
 
   EXPECT_TRUE(composer_->Empty());
   // The input mode ramains the previous mode.
   EXPECT_EQ(transliteration::HALF_ASCII, composer_->GetInputMode());
+  EXPECT_EQ(commands::SessionCommand::PASSWORD,
+            composer_->GetInputFieldType());
 }
 
 TEST_F(ComposerTest, ResetInputMode) {
@@ -185,7 +201,6 @@ TEST_F(ComposerTest, BackSpace) {
   composer_->GetQueryForConversion(&result);
   EXPECT_EQ("ab", result);
 }
-
 
 TEST_F(ComposerTest, InsertCharacterPreeditAt) {
   // "あ"
@@ -509,7 +524,6 @@ TEST_F(ComposerTest, GetSubTransliterations) {
             transliterations[transliteration::HALF_KATAKANA]);
 }
 
-
 TEST_F(ComposerTest, GetStringFunctions) {
   // "か"
   table_->AddRule("ka", "\xe3\x81\x8b", "");
@@ -656,7 +670,6 @@ TEST_F(ComposerTest, GetStringFunctions_ForN) {
   EXPECT_EQ("ny[NYA][N][KA]", prediction2);
 }
 
-
 TEST_F(ComposerTest, InsertCharacterKeyEvent) {
   commands::KeyEvent key;
   // "あ"
@@ -695,7 +708,6 @@ TEST_F(ComposerTest, InsertCharacterKeyEvent) {
   // "あ"
   EXPECT_EQ("\xE3\x81\x82", preedit);
 
-
   // Typing "A" temporarily switch the input mode.  The input mode
   // should be reverted back after reset.
   composer_->SetInputMode(transliteration::FULL_KATAKANA);
@@ -720,7 +732,6 @@ TEST_F(ComposerTest, InsertCharacterKeyEvent) {
   // "ア"
   EXPECT_EQ("\xE3\x82\xA2", preedit);
 }
-
 
 TEST_F(ComposerTest, InsertCharacterKeyEventWithAsIs) {
   commands::KeyEvent key;
@@ -871,6 +882,80 @@ TEST_F(ComposerTest, InsertCharacterKeyEventWithInputMode) {
     // "あイU"
     EXPECT_EQ("\xE3\x81\x82\xE3\x82\xA4\x55", GetPreedit(composer_.get()));
     EXPECT_EQ(transliteration::HALF_ASCII, composer_->GetInputMode());
+  }
+}
+
+TEST_F(ComposerTest, CopyFrom) {
+  // "あ"
+  table_->AddRule("a", "\xE3\x81\x82", "");
+  // "ん"
+  table_->AddRule("n", "\xE3\x82\x93", "");
+  // "な"
+  table_->AddRule("na", "\xE3\x81\xAA", "");
+
+  {  // for Precomposition
+    string src_composition;
+    composer_->GetStringForSubmission(&src_composition);
+    EXPECT_EQ("", src_composition);
+
+    Composer dest;
+    string dest_composition;
+    dest.CopyFromForSubmission(*composer_);
+    dest.GetStringForSubmission(&dest_composition);
+    EXPECT_EQ(dest_composition, src_composition);
+
+    ExpectSameComposer(*composer_, dest);
+  }
+
+  {  // for Composition
+    composer_->InsertCharacter("a");
+    composer_->InsertCharacter("n");
+    string src_composition;
+    composer_->GetStringForSubmission(&src_composition);
+    // "あｎ"
+    EXPECT_EQ("\xE3\x81\x82\xEF\xBD\x8E", src_composition);
+
+    Composer dest;
+    string dest_composition;
+    dest.CopyFromForSubmission(*composer_);
+    dest.GetStringForSubmission(&dest_composition);
+    EXPECT_EQ(dest_composition, src_composition);
+
+    ExpectSameComposer(*composer_, dest);
+  }
+
+  {  // for Conversion
+    string src_composition;
+    composer_->GetQueryForConversion(&src_composition);
+    // "あん"
+    EXPECT_EQ("\xE3\x81\x82\xE3\x82\x93", src_composition);
+
+    Composer dest;
+    string dest_composition;
+    dest.CopyFromForConversion(*composer_);
+    dest.GetStringForSubmission(&dest_composition);
+    EXPECT_EQ(dest_composition, src_composition);
+
+    ExpectSameComposer(*composer_, dest);
+  }
+
+  {  // for Composition, password mode
+    composer_->Reset();
+    composer_->SetInputFieldType(commands::SessionCommand::PASSWORD);
+    composer_->SetInputMode(transliteration::HALF_ASCII);
+    composer_->SetOutputMode(transliteration::HALF_ASCII);
+    composer_->InsertCharacter("M");
+    string src_composition;
+    composer_->GetStringForSubmission(&src_composition);
+    EXPECT_EQ("M", src_composition);
+
+    Composer dest;
+    string dest_composition;
+    dest.CopyFromForSubmission(*composer_);
+    dest.GetStringForSubmission(&dest_composition);
+    EXPECT_EQ(dest_composition, src_composition);
+
+    ExpectSameComposer(*composer_, dest);
   }
 }
 
@@ -2225,7 +2310,7 @@ TEST_F(ComposerTest,
   }
 }
 
-TEST_F(ComposerTest, CursorMoving) {
+TEST_F(ComposerTest, InputModesChangeWhenCursorMoves) {
   // The expectation of this test is the same as MS-IME's
 
   table_->Initialize();
@@ -2386,5 +2471,120 @@ TEST_F(ComposerTest, ShuoldCommit) {
   EXPECT_FALSE(composer_->ShouldCommit());
 }
 
+TEST_F(ComposerTest, ShouldCommitHead) {
+  size_t length_to_commit;
+  composer_->SetInputFieldType(
+      commands::SessionCommand::PASSWORD);
+
+  composer_->InsertCharacter("A");
+  EXPECT_FALSE(composer_->ShouldCommitHead(&length_to_commit));
+
+  composer_->InsertCharacter("B");
+  EXPECT_TRUE(composer_->ShouldCommitHead(&length_to_commit));
+  EXPECT_EQ(1, length_to_commit);
+
+  composer_->InsertCharacter("CDEFGHI");
+  EXPECT_TRUE(composer_->ShouldCommitHead(&length_to_commit));
+  EXPECT_EQ(8, length_to_commit);
+
+  composer_->Reset();
+  composer_->SetInputFieldType(
+      commands::SessionCommand::NORMAL);
+  EXPECT_FALSE(composer_->ShouldCommitHead(&length_to_commit));
+
+  composer_->InsertCharacter("A");
+  EXPECT_FALSE(composer_->ShouldCommitHead(&length_to_commit));
+}
+
+TEST_F(ComposerTest, CursorMovements) {
+  composer_->InsertCharacter("mozuku");
+  EXPECT_EQ(6, composer_->GetLength());
+  EXPECT_EQ(6, composer_->GetCursor());
+
+  composer_->MoveCursorRight();
+  EXPECT_EQ(6, composer_->GetCursor());
+  composer_->MoveCursorLeft();
+  EXPECT_EQ(5, composer_->GetCursor());
+
+  composer_->MoveCursorToBeginning();
+  EXPECT_EQ(0, composer_->GetCursor());
+  composer_->MoveCursorLeft();
+  EXPECT_EQ(0, composer_->GetCursor());
+  composer_->MoveCursorRight();
+  EXPECT_EQ(1, composer_->GetCursor());
+
+  composer_->MoveCursorTo(0);
+  EXPECT_EQ(0, composer_->GetCursor());
+  composer_->MoveCursorTo(6);
+  EXPECT_EQ(6, composer_->GetCursor());
+  composer_->MoveCursorTo(3);
+  EXPECT_EQ(3, composer_->GetCursor());
+  composer_->MoveCursorTo(10);
+  EXPECT_EQ(3, composer_->GetCursor());
+  composer_->MoveCursorTo(-1);
+  EXPECT_EQ(3, composer_->GetCursor());
+}
+
+TEST_F(ComposerTest, SourceText) {
+  composer_->SetInputMode(transliteration::HALF_ASCII);
+  composer_->InsertCharacterPreedit("mozc");
+  composer_->mutable_source_text()->assign("MOZC");
+  EXPECT_FALSE(composer_->Empty());
+  EXPECT_EQ("mozc", GetPreedit(composer_.get()));
+  EXPECT_EQ("MOZC", composer_->source_text());
+
+  composer_->Backspace();
+  composer_->Backspace();
+  EXPECT_FALSE(composer_->Empty());
+  EXPECT_EQ("mo", GetPreedit(composer_.get()));
+  EXPECT_EQ("MOZC", composer_->source_text());
+
+  composer_->Reset();
+  EXPECT_TRUE(composer_->Empty());
+  EXPECT_TRUE(composer_->source_text().empty());
+}
+
+TEST_F(ComposerTest, DeleteAt) {
+  // "も"
+  table_->AddRule("mo", "\xE3\x82\x82", "");
+  // "ず"
+  table_->AddRule("zu", "\xE3\x81\x9a", "");
+
+  composer_->InsertCharacter("z");
+  // "ｚ"
+  EXPECT_EQ("\xef\xbd\x9a", GetPreedit(composer_.get()));
+  EXPECT_EQ(1, composer_->GetCursor());
+  composer_->DeleteAt(0);
+  EXPECT_EQ("", GetPreedit(composer_.get()));
+  EXPECT_EQ(0, composer_->GetCursor());
+
+  composer_->InsertCharacter("mmoz");
+  // "ｍもｚ"
+  EXPECT_EQ("\xef\xbd\x8d\xe3\x82\x82\xef\xbd\x9a",
+            GetPreedit(composer_.get()));
+  EXPECT_EQ(3, composer_->GetCursor());
+  composer_->DeleteAt(0);
+  // "もｚ"
+  EXPECT_EQ("\xe3\x82\x82\xef\xbd\x9a", GetPreedit(composer_.get()));
+  EXPECT_EQ(2, composer_->GetCursor());
+  composer_->InsertCharacter("u");
+  // "もず"
+  EXPECT_EQ("\xe3\x82\x82\xe3\x81\x9a", GetPreedit(composer_.get()));
+  EXPECT_EQ(2, composer_->GetCursor());
+
+  composer_->InsertCharacter("m");
+  // "もずｍ"
+  EXPECT_EQ("\xe3\x82\x82\xe3\x81\x9a\xef\xbd\x8d",
+            GetPreedit(composer_.get()));
+  EXPECT_EQ(3, composer_->GetCursor());
+  composer_->DeleteAt(1);
+  // "もｍ"
+  EXPECT_EQ("\xe3\x82\x82\xef\xbd\x8d", GetPreedit(composer_.get()));
+  EXPECT_EQ(2, composer_->GetCursor());
+  composer_->InsertCharacter("o");
+  // "もも"
+  EXPECT_EQ("\xe3\x82\x82\xe3\x82\x82", GetPreedit(composer_.get()));
+  EXPECT_EQ(2, composer_->GetCursor());
+}
 }  // namespace composer
 }  // namespace mozc

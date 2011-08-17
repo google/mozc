@@ -88,7 +88,8 @@
 - (void)launchWordRegisterTool:(id)client;
 
 // They are externally accessible to achieve tests.
-@property(readwrite, assign, nonatomic) mozc::client::SessionInterface *session;
+@property(readwrite, assign, nonatomic)
+    mozc::client::ClientInterface *mozcClient;
 @property(readwrite, retain, nonatomic) KeyCodeMap *keyCodeMap;
 @property(readwrite, assign, nonatomic)
     mozc::renderer::RendererInterface *renderer;

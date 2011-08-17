@@ -37,7 +37,7 @@
 
 namespace mozc {
 namespace client {
-class SessionInterface;
+class ClientInterface;
 }  // namespace mozc::client
 
 namespace commands {
@@ -106,11 +106,11 @@ class RendererInterface;
   // |rendererCommand_| stores the command sent to |candidateController_|
   mozc::commands::RendererCommand *rendererCommand_;
 
-  // |session_| manages connection to the mozc server.
-  mozc::client::SessionInterface *session_;
+  // |mozcClient_| manages connection to the mozc server.
+  mozc::client::ClientInterface *mozcClient_;
 
-  // |server_| holds the reference to GoogleJapaneseInputServer.
-  id<ServerCallback> server_;
+  // |imkServer_| holds the reference to GoogleJapaneseInputServer.
+  id<ServerCallback> imkServer_;
 
   // |menu_| is the NSMenu to be shown in the pulldown menu-list of
   // the IME.

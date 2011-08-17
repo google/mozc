@@ -36,10 +36,10 @@
 #include "base/protobuf/message.h"
 #include "base/util.h"
 #include "base/version.h"
-#include "client/session.h"
+#include "client/client.h"
+#include "config/config_handler.h"
 #include "session/commands.pb.h"
-#include "session/config_handler.h"
-#include "unix/emacs/session_pool.h"
+#include "unix/emacs/client_pool.h"
 
 DEFINE_bool(suppress_stderr, false,
             "Discards all the output to stderr.");
@@ -72,7 +72,7 @@ void PrintGreetingMessage() {
 void ProcessLoop() {
   using mozc::emacs::ErrorExit;
 
-  mozc::emacs::SessionPool session_pool;
+  mozc::emacs::ClientPool client_pool;
   mozc::commands::Command command;
   string line;
 
@@ -88,16 +88,16 @@ void ProcessLoop() {
 
     switch (command.input().type()) {
       case mozc::commands::Input::CREATE_SESSION:
-        session_id = session_pool.CreateSession();
+        session_id = client_pool.CreateClient();
         break;
       case mozc::commands::Input::DELETE_SESSION:
-        session_pool.DeleteSession(session_id);
+        client_pool.DeleteClient(session_id);
         break;
       case mozc::commands::Input::SEND_KEY: {
-        linked_ptr<mozc::client::Session> session =
-            session_pool.GetSession(session_id);
-        CHECK(session.get());
-        if (!session->SendKey(command.input().key(),
+        linked_ptr<mozc::client::Client> client =
+            client_pool.GetClient(session_id);
+        CHECK(client.get());
+        if (!client->SendKey(command.input().key(),
                               command.mutable_output())) {
           ErrorExit(mozc::emacs::kErrSessionError, "Session failed");
         }

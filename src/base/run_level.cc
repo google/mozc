@@ -32,8 +32,8 @@
 
 #ifdef OS_WINDOWS
 #include "base/const.h"
+#include "base/win_sandbox.h"
 #include "base/win_util.h"
-#include "third_party/mozc/sandbox/acl.h"
 #include <aclapi.h>
 #include <windows.h>
 #endif
@@ -168,7 +168,7 @@ RunLevel::RunLevelType RunLevel::GetRunLevel(RunLevel::RequestType type) {
   // Get thread token (if any)
   HANDLE hThreadToken = NULL;
   if (!::OpenThreadToken(::GetCurrentThread(),
-                        TOKEN_QUERY, TRUE, &hThreadToken) &&
+                         TOKEN_QUERY, TRUE, &hThreadToken) &&
       ERROR_NO_TOKEN != ::GetLastError()) {
     return RunLevel::DENY;
   }
@@ -230,11 +230,9 @@ RunLevel::RunLevelType RunLevel::GetRunLevel(RunLevel::RequestType type) {
         // In such a case, Mozc wouldn't work because Administrators identity
         // is removed by sandboxing so we should recover the permission here.
         // See http://b/2317718 for details.
-        sandbox::AddKnownSidToKernelObject(dir_handle.get(),
-                                           reinterpret_cast<SID *>(
-                                               ptoken_user->User.Sid),
-                                           SUB_CONTAINERS_AND_OBJECTS_INHERIT,
-                                           GENERIC_ALL);
+        WinSandbox::AddKnownSidToKernelObject(
+            dir_handle.get(), static_cast<SID *>(ptoken_user->User.Sid),
+            SUB_CONTAINERS_AND_OBJECTS_INHERIT, GENERIC_ALL);
       }
     }
 

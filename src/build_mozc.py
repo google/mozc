@@ -46,6 +46,7 @@ import optparse
 import os
 import re
 import shutil
+import stat
 import subprocess
 import sys
 
@@ -53,7 +54,6 @@ from build_tools import mozc_version
 
 
 SRC_DIR = '.'
-EXTRA_SRC_DIR = '..'
 
 sys.path.append(SRC_DIR)
 
@@ -99,7 +99,7 @@ def GetNumberOfProcessors():
 
 
 def GetBuildBaseName(options):
-  """Returns the buildb ase directory."""
+  """Returns the build base directory."""
   if options.build_base:
     return options.build_base
   # For some reason, xcodebuild does not accept absolute path names for
@@ -120,14 +120,25 @@ def GetBuildBaseName(options):
   return build_base
 
 
-def GetGeneratorName():
+def GetGeneratorName(generator):
   """Gets the generator name based on the platform."""
-  generator = 'make'
-  if IsWindows():
-    generator = 'msvs'
+  if generator:
+    return generator
+  elif IsWindows():
+    return 'msvs'
   elif IsMac():
-    generator = 'xcode'
-  return generator
+    return 'xcode'
+  else:
+    return 'make'
+
+
+def GetPkgConfigCommand():
+  """Get the pkg-config command name.
+
+  Returns:
+    pkg-config config command name.
+  """
+  return os.environ.get('PKG_CONFIG', 'pkg-config')
 
 
 def GenerateVersionFile(version_template_path, version_path):
@@ -187,32 +198,34 @@ def GetGypFileNames(options):
   if IsWindows():
     gyp_file_names.extend(glob.glob('%s/win32/*/*.gyp' % SRC_DIR))
     gyp_file_names.extend(glob.glob('third_party/breakpad/*.gyp'))
-    gyp_file_names.append('third_party/mozc/sandbox/sandbox.gyp')
   elif IsLinux():
     gyp_file_names.extend(glob.glob('%s/unix/*/*.gyp' % SRC_DIR))
     # Add ibus.gyp if ibus is installed.
     # Ubuntu 8.04 (Hardy) does not contain ibus package.
     try:
-      RunOrDie(['pkg-config', '--exists', 'ibus-1.0'])
+      RunOrDie([GetPkgConfigCommand(), '--exists', 'ibus-1.0'])
     except RunOrDieError:
-      print 'ibus-1.0 was not found.'
+      print 'ibus-1.0 was not found with pkg-config.'
       gyp_file_names.remove('%s/unix/ibus/ibus.gyp' % SRC_DIR)
-    # Add gui.gyp if Qt libraries are installed.
+    # Check if Qt libraries are installed.
     try:
-      RunOrDie(['pkg-config', '--exists', 'QtCore', 'QtGui'])
+      RunOrDie([GetPkgConfigCommand(), '--exists', 'QtCore', 'QtGui'])
       qt_found = True
     except RunOrDieError:
-      print 'QtCore or QtGui was not found.'
+      print 'QtCore or QtGui was not found with pkg-config.'
       qt_found = False
     if options.ensure_value('qtdir', None):
       qt_found = True
-    if options.ensure_value('noqt', None) or not qt_found:
-      gyp_file_names.remove('%s/gui/gui.gyp' % SRC_DIR)
+    if not qt_found:
+      # Fall back to --noqt mode.  Ensure options.noqt is available and
+      # force it to be True.
+      options.ensure_value('noqt', True)
+      options.noqt = True
     # Add scim.gyp if SCIM is installed.
     try:
-      RunOrDie(['pkg-config', '--exists', 'scim'])
+      RunOrDie([GetPkgConfigCommand(), '--exists', 'scim'])
     except RunOrDieError:
-      print 'scim was not found.'
+      print 'scim was not found with pkg-config.'
       gyp_file_names.remove('%s/unix/scim/scim.gyp' % SRC_DIR)
   gyp_file_names.extend(glob.glob('third_party/rx/*.gyp'))
   gyp_file_names.sort()
@@ -238,7 +251,7 @@ def CopyFile(source, destination):
   shutil.copy(source, destination)
 
 
-def RecursiveRemoveDirectory(directory):
+def RemoveDirectoryRecursively(directory):
   """Removes the specified directory recursively."""
   if os.path.isdir(directory):
     print 'Removing directory: %s' % directory
@@ -250,52 +263,12 @@ def RecursiveRemoveDirectory(directory):
       shutil.rmtree(directory, ignore_errors=True)
 
 
-def CleanBuildFilesAndDirectories():
-  """Cleans build files and directories."""
-  (options, unused_args) = ParseCleanOptions()
-
-  # File and directory names to be removed.
-  file_names = []
-  directory_names = []
-
-  # Collect stuff in the gyp directories.
-  gyp_directory_names = [os.path.dirname(f) for f in GetGypFileNames(options)]
-  for gyp_directory_name in gyp_directory_names:
-    if IsWindows():
-      for pattern in ['*.rules', '*.sln', '*.vcproj']:
-        file_names.extend(glob.glob(os.path.join(gyp_directory_name,
-                                                 pattern)))
-      for build_type in ['Debug', 'Optimize', 'Release']:
-        directory_names.append(os.path.join(gyp_directory_name,
-                                            build_type))
-    elif IsMac():
-      directory_names.extend(glob.glob(os.path.join(gyp_directory_name,
-                                                    '*.xcodeproj')))
-    elif IsLinux():
-      file_names.extend(glob.glob(os.path.join(gyp_directory_name,
-                                               '*.target.mk')))
-      file_names.extend(glob.glob(os.path.join(gyp_directory_name,
-                                               '*/*.target.mk')))
-      file_names.extend(glob.glob(os.path.join(gyp_directory_name,
-                                               '*.Makefile')))
-      file_names.extend(glob.glob(os.path.join(gyp_directory_name,
-                                               '*/*.Makefile')))
-  file_names.append('%s/mozc_version.txt' % SRC_DIR)
-  file_names.append('third_party/rx/rx.gyp')
-  # Collect stuff in the top-level directory.
-  directory_names.append('mozc_build_tools')
-
-  directory_names.append(GetBuildBaseName(options))
-  if IsLinux():
-    file_names.append('Makefile')
-  elif IsWindows():
-    file_names.append('third_party/breakpad/breakpad.gyp')
-  # Remove files.
-  for file_name in file_names:
-    RemoveFile(file_name)
-  # Remove directories.
-  for directory_name in directory_names:
-    RecursiveRemoveDirectory(directory_name)
+def MakeFileWritableRecursively(path):
+  """Make files (including directories) writable recursively."""
+  for root, dirs, files in os.walk(path):
+    for name in dirs + files:
+      path = os.path.join(root, name)
+      os.chmod(path, os.lstat(path).st_mode | stat.S_IWRITE)
 
 
 def GetTopLevelSourceDirectoryName():
@@ -304,8 +277,7 @@ def GetTopLevelSourceDirectoryName():
     return SRC_DIR
   script_file_directory_name = os.path.dirname(sys.argv[0])
   num_components = len(SRC_DIR.split('/'))
-  dots = ['..'] * num_components
-  return os.path.join(script_file_directory_name, '/'.join(dots))
+  return os.path.join(script_file_directory_name, *(['..'] * num_components))
 
 
 def MoveToTopLevelSourceDirectory():
@@ -327,9 +299,192 @@ def GetGypSvnUrl(deps_file_name):
     PrintErrorAndExit('GYP URL not found in %s:' % deps_file_name)
 
 
-def GypMain(deps_file_name):
+class RunOrDieError(StandardError):
+  """The exception class for RunOrDie."""
+
+  def __init__(self, message):
+    StandardError.__init__(self, message)
+
+
+def RunOrDie(argv):
+  """Run the command, or die if it failed."""
+  # Rest are the target program name and the parameters, but we special
+  # case if the target program name ends with '.py'
+  if argv[0].endswith('.py'):
+    argv.insert(0, sys.executable)  # Inject the python interpreter path.
+  # We don't capture stdout and stderr from Popen. The output will just
+  # be emitted to a terminal or console.
+  print 'Running: ' + ' '.join(argv)
+  process = subprocess.Popen(argv)
+
+  if process.wait() != 0:
+    raise RunOrDieError('\n'.join(['',
+                                   '==========',
+                                   ' ERROR: %s' % ' '.join(argv),
+                                   '==========']))
+
+
+def PrintErrorAndExit(error_message):
+  """Prints the error message and exists."""
+  print '\n==========\n ERROR: %s\n==========\n' % error_message
+  sys.exit(1)
+
+
+def RunPackageVerifiers(build_dir):
+  """Runs script to verify created packages/binaries.
+
+  Args:
+    build_dir: the directory where build results are.
+  """
+  binary_size_checker = os.path.join('build_tools', 'binary_size_checker.py')
+  RunOrDie([binary_size_checker, '--target_directory', build_dir])
+
+
+def AddCommonOptions(parser):
+  """Adds the options common among the commands."""
+  parser.add_option('--build_base', dest='build_base',
+                    help='Specifies the base directory of the built binaries.')
+  # Linux environment can build both for Linux and ChromeOS.
+  # This option enable this script to know which build (Linux or ChromeOS)
+  # should be done. If you want ChromeOS build, specify "ChromeOS".
+  parser.add_option('--target_platform', dest='target_platform', default='',
+                    help='If you want ChromeOS build, specify "ChromeOS"')
+  return parser
+
+
+def ParseGypOptions(args=None, values=None):
+  """Parses command line options for the gyp command."""
+  parser = optparse.OptionParser(usage='Usage: %prog gyp [options]')
+  AddCommonOptions(parser)
+  # DEPS file should exist in the same directory of the script.
+  default_deps_file = os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]),
+                                                   'DEPS'))
+  parser.add_option('--deps_file', dest='deps_file', default=default_deps_file,
+                    help='Specifies the DEPS file.')
+  parser.add_option('--gyp_generator', dest='gyp_generator',
+                    help='Specifies the generator for GYP.')
+  parser.add_option('--onepass', '-1', dest='onepass', action='store_true',
+                    default=False, help='Builds mozc in one pass. '
+                    'Not recommended, intended to use only for Debug build.')
+  parser.add_option('--branding', dest='branding', default='Mozc')
+  parser.add_option('--gypdir', dest='gypdir', default='third_party/gyp')
+  parser.add_option('--noqt', action='store_true', dest='noqt', default=False)
+  parser.add_option('--qtdir', dest='qtdir',
+                    default=os.getenv('QTDIR', None),
+                    help='Qt base directory to be used.')
+  parser.add_option('--coverage', action='store_true', dest='coverage',
+                    help='use code coverage analysis build options',
+                    default=False)
+  parser.add_option('--channel_dev', action='store', dest='channel_dev',
+                    type='int',
+                    help='Pass --channel_dev=1 if you need to build mozc with '
+                    'the CHANNEL_DEV macro enabled. Pass 0 if you don\'t need '
+                    'the macro. If --channel_dev= flag is not passed, Mozc '
+                    'version is used to deretmine if the macro is necessary.')
+  parser.add_option('--version_file', dest='version_file',
+                    help='use the specified version template file',
+                    default='mozc_version_template.txt')
+  parser.add_option('--rsync', dest='rsync', default=False, action='store_true',
+                    help='use rsync to copy files instead of builtin function')
+
+  parser.add_option('--chewing', dest='chewing', action='store_true',
+                    default=False, help='include chewing gyp recipe.  '
+                    'This flag is false by default because it may require you '
+                    'to install libchewing in your environment.')
+
+  parser.add_option('--hangul', dest='hangul', action='store_true',
+                    default=False, help='include hangul gyp recipe.  '
+                    'This flag is false by default because it may require you '
+                    'to install libhangul in your environment.')
+
+  # For internal Windows builds, gyp is expected to generate solution files for
+  # Visual Studio 2008, which is a default compiler for Mozc.  However, you can
+  # specify the target version explicitly via 'msvs_version' option as follows.
+  parser.add_option('--msvs_version', dest='msvs_version', default='2008',
+                    help='Specifies the target MSVS version.')
+
+  return parser.parse_args(args, values)
+
+
+def ExpandMetaTarget(meta_target_name, target_platform):
+  """Returns a list of build targets with expanding meta target name.
+
+  If the specified name is 'package', returns a list of build targets for
+  building production package.
+
+  If the specified name is not a meta target name, returns it as a list.
+
+  Args:
+    meta_target_name: meta target name to be expanded.
+    target_platform: The target platform.
+
+  Returns:
+    A list of build targets with meta target names expanded.
+  """
+  if meta_target_name != 'package':
+    return [meta_target_name]
+
+  if target_platform == 'ChromeOS':
+    targets = ['%s/unix/ibus/ibus.gyp:ibus_mozc',
+               '%s/server/server.gyp:mozc_server',
+               '%s/gui/gui.gyp:mozc_tool']
+  elif IsLinux():
+    targets = ['%s/unix/ibus/ibus.gyp:ibus_mozc',
+               '%s/server/server.gyp:mozc_server',
+               '%s/gui/gui.gyp:mozc_tool']
+  elif IsMac():
+    targets = ['%s/mac/mac.gyp:DiskImage']
+  elif IsWindows():
+    targets = ['%s/win32/build32/build32.gyp:',
+               '%s/win32/build64/build64.gyp:']
+  return [(target % SRC_DIR) for target in targets]
+
+
+def ParseBuildOptions(args=None, values=None):
+  """Parses command line options for the build command."""
+  parser = optparse.OptionParser(usage='Usage: %prog build [options]')
+  AddCommonOptions(parser)
+  parser.add_option('--jobs', '-j', dest='jobs', default='4', metavar='N',
+                    help='run jobs in parallel')
+  parser.add_option('--configuration', '-c', dest='configuration',
+                    default='Debug', help='specify the build configuration.')
+  parser.add_option('--version_file', dest='version_file',
+                    help='use the specified version template file',
+                    default='mozc_version_template.txt')
+
+  (options, args) = parser.parse_args(args, values)
+  targets = []
+  for arg in args:
+    targets.extend(ExpandMetaTarget(arg, options.target_platform))
+  return (options, targets)
+
+
+def ParseRunTestsOptions(args=None, values=None):
+  """Parses command line options for the runtests command."""
+  parser = optparse.OptionParser(
+      usage='Usage: %prog runtests [options] [test_targets] [-- build options]')
+  AddCommonOptions(parser)
+  parser.add_option('--test_size', dest='test_size', default='small')
+  parser.add_option('--calculate_coverage', dest='calculate_coverage',
+                    default=False, action='store_true',
+                    help='specify if you want to calculate test coverage.')
+  parser.add_option('--configuration', '-c', dest='configuration',
+                    default='Debug', help='specify the build configuration.')
+
+  return parser.parse_args(args, values)
+
+
+def ParseCleanOptions(args=None, values=None):
+  """Parses command line options for the clean command."""
+  parser = optparse.OptionParser(
+      usage='Usage: %prog clean [-- build options]')
+  AddCommonOptions(parser)
+
+  return parser.parse_args(args, values)
+
+
+def GypMain(options, unused_args):
   """The main function for the 'gyp' command."""
-  options = ParseGypOptions()
   # Copy rx.gyp to the third party directory.
   CopyFile('%s/gyp/rx.gyp' % SRC_DIR,
            'third_party/rx/rx.gyp')
@@ -339,7 +494,7 @@ def GypMain(deps_file_name):
              'third_party/breakpad/breakpad.gyp')
 
   # Determine the generator name.
-  generator = GetGeneratorName()
+  generator = GetGeneratorName(options.gyp_generator)
   os.environ['GYP_GENERATORS'] = generator
   print 'Build tool: %s' % generator
 
@@ -350,12 +505,10 @@ def GypMain(deps_file_name):
     # chewing/chewing.gyp is automatically included because of the
     # policy.  We explicitly exclude it here.
     banned_gyp_files.append('chewing.gyp')
-
   if not options.hangul:
     # hangul/hangul.gyp is automatically included because of the
     # policy.  We explicitly exclude it here.
     banned_gyp_files.append('hangul.gyp')
-
   if banned_gyp_files:
     gyp_file_names = [gyp_file for gyp_file in gyp_file_names
                       if os.path.basename(gyp_file) not in banned_gyp_files]
@@ -363,11 +516,11 @@ def GypMain(deps_file_name):
   for file_name in gyp_file_names:
     print '- %s' % file_name
   # We use the one in third_party/gyp
-  gyp_script = '%s/gyp' % options.gypdir
+  gyp_script = os.path.join(options.gypdir, 'gyp')
   # If we don't have a copy of gyp, download it.
   if not os.path.isfile(gyp_script):
     # SVN creates mozc_build_tools directory if it's not present.
-    gyp_svn_url = GetGypSvnUrl(deps_file_name)
+    gyp_svn_url = GetGypSvnUrl(options.deps_file)
     RunOrDie(['svn', 'checkout', gyp_svn_url, options.gypdir])
   # Run GYP.
   print 'Running GYP...'
@@ -407,6 +560,9 @@ def GypMain(deps_file_name):
 
   command_line.extend(['-D', 'target_platform=%s' % options.target_platform])
 
+  if IsWindows():
+    command_line.extend(['-G', 'msvs_version=%s' % options.msvs_version])
+
 
   # Dictionary configuration
   if options.target_platform == 'ChromeOS':
@@ -415,6 +571,16 @@ def GypMain(deps_file_name):
   else:
     command_line.extend(['-D', 'dictionary=desktop'])
 
+  # Specifying pkg-config command.  Some environment (such like
+  # cross-platform ChromeOS build) requires us to call a different
+  # command for pkg-config.  Here we catch the environment variable
+  # and use the specified command instead of actual pkg-config
+  # command.
+  if IsLinux():
+    command_line.extend(['-D', 'pkg_config_command=%s' % GetPkgConfigCommand()])
+  else:
+    command_line.extend(['-D', 'pkg_config_command='])
+
   RunOrDie(command_line)
 
 
@@ -422,26 +588,215 @@ def GypMain(deps_file_name):
   print 'Done'
 
 
-def RunTests(configuration, unused_calculate_coverage):
+def GetRelPath(path, start):
+  """Return a relative path to |path| from |start|."""
+  # NOTE: Python 2.6 provides os.path.relpath, which has almost the same
+  # functionality as this function. Since Python 2.6 is not the internal
+  # official version, we reimplement it.
+  path_list = os.path.abspath(os.path.normpath(path)).split(os.sep)
+  start_list = os.path.abspath(os.path.normpath(start)).split(os.sep)
+
+  common_prefix_count = 0
+  for i in range(0, min(len(path_list), len(start_list))):
+    if path_list[i] != start_list[i]:
+      break
+    common_prefix_count += 1
+
+  return os.sep.join(['..'] * (len(start_list) - common_prefix_count) +
+                     path_list[common_prefix_count:])
+
+
+def BuildToolsMain(options, unused_args, original_directory_name):
+  """The main function for 'build_tools' command."""
+  build_tools_dir = os.path.join(GetRelPath(os.getcwd(),
+                                            original_directory_name),
+                                 SRC_DIR, 'build_tools')
+  # Build targets in this order.
+  gyp_files = [
+      os.path.join(build_tools_dir, 'primitive_tools', 'primitive_tools.gyp'),
+      os.path.join(build_tools_dir, 'build_tools.gyp')
+      ]
+
+  for gyp_file in gyp_files:
+    (target, _) = os.path.splitext(os.path.basename(gyp_file))
+    BuildMain(options, ['%s:%s' % (gyp_file, target)], original_directory_name)
+
+
+def CanonicalTargetToGypFileAndTargetName(target):
+  """Parses the target string."""
+  if not ':' in target:
+    PrintErrorAndExit('Invalid target: ' + target)
+  (gyp_file_name, target_name) = target.split(':')
+  return (gyp_file_name, target_name)
+
+
+def BuildOnLinux(options, targets, unused_original_directory_name):
+  """Build the targets on Linux."""
+  target_names = []
+  for target in targets:
+    (unused_gyp_file_name, target_name) = (
+        CanonicalTargetToGypFileAndTargetName(target))
+    target_names.append(target_name)
+
+  make_command = os.getenv('BUILD_COMMAND', 'make')
+  # flags for building in Chrome OS chroot environment
+  envvars = [
+      'CFLAGS',
+      'CXXFLAGS',
+      'CXX',
+      'CC',
+      'AR',
+      'AS',
+      'RANLIB',
+      'LD',
+  ]
+  for envvar in envvars:
+    if envvar in os.environ:
+      os.environ[envvar] = os.getenv(envvar)
+
+  build_args = ['-j%s' % options.jobs,
+                'MAKE_JOBS=%s' % options.jobs,
+                'BUILDTYPE=%s' % options.configuration]
+  build_args.append('builddir_name=%s' % GetBuildBaseName(options))
+
+  RunOrDie([make_command] + build_args + target_names)
+
+
+def CheckFileOrDie(file_name):
+  """Check the file exists or dies if not."""
+  if not os.path.isfile(file_name):
+    PrintErrorAndExit('No such file: ' + file_name)
+
+
+def BuildOnMac(options, targets, original_directory_name):
+  """Build the targets on Mac."""
+  original_directory_relpath = GetRelPath(original_directory_name, os.getcwd())
+  for target in targets:
+    (gyp_file_name, target_name) = CanonicalTargetToGypFileAndTargetName(target)
+    gyp_file_name = os.path.join(original_directory_relpath, gyp_file_name)
+    CheckFileOrDie(gyp_file_name)
+    (xcode_base_name, _) = os.path.splitext(gyp_file_name)
+    RunOrDie(['xcodebuild',
+              '-project', '%s.xcodeproj' % xcode_base_name,
+              '-configuration', options.configuration,
+              '-target', target_name,
+              '-parallelizeTargets',
+              'BUILD_WITH_GYP=1'])
+
+
+def LocateVCBuildDir():
+  """Locate the directory where vcbuild.exe exists.
+
+  Returns:
+    A string of absolute directory path where vcbuild.exe exists.
+  """
+  if not IsWindows():
+    PrintErrorAndExit('vcbuild.exe is not supported on this platform')
+
+
+  program_files_x86 = ''
+  if os.getenv('ProgramFiles(x86)'):
+    program_files_x86 = os.getenv('ProgramFiles(x86)')
+  elif os.getenv('ProgramFiles'):
+    program_files_x86 = os.getenv('ProgramFiles')
+
+  if not program_files_x86:
+    PrintErrorAndExit('Failed to locate vcbuild.exe')
+
+  # TODO(yukawa): Support Visual C++ 2010
+  vcbuild_path = os.path.join(program_files_x86, 'Microsoft Visual Studio 9.0',
+                              'VC','vcpackages')
+
+  if os.path.exists(os.path.join(vcbuild_path, 'vcbuild.exe')):
+    return os.path.abspath(vcbuild_path)
+
+  PrintErrorAndExit('Failed to locate vcbuild.exe')
+
+
+
+
+def BuildOnWindows(options, targets, original_directory_name):
+  """Build the target on Windows."""
+  # TODO(yukawa): make a python module to set up environment for vcbuild.
+  abs_vcbuild_dir = LocateVCBuildDir()
+
+  CheckFileOrDie(os.path.join(abs_vcbuild_dir, 'vcbuild.exe'))
+
+  if os.getenv('PATH'):
+    os.environ['PATH'] = os.pathsep.join([abs_vcbuild_dir, os.getenv('PATH')])
+  else:
+    os.environ['PATH'] = abs_vcbuild_dir
+
+
+  build_concurrency = GetNumberOfProcessors()
+
+  for target in targets:
+    # TODO(yukawa): target name is currently ignored.
+    (gyp_file_name, _) = CanonicalTargetToGypFileAndTargetName(target)
+    gyp_file_name = os.path.join(original_directory_name, gyp_file_name)
+    CheckFileOrDie(gyp_file_name)
+    (base_sln_path, _) = os.path.splitext(gyp_file_name)
+    abs_sln_path = os.path.abspath('%s.sln' % base_sln_path)
+    base_sln_file_name = os.path.basename(abs_sln_path)
+
+    target_platform = 'Win32'
+    # We are using very ad-hoc way to determine which target platform
+    # should be needed for the given target.  If and only if the target
+    # solution file name is 'build64.sln', invoke vcbuild to build x64
+    # binaries.
+    if base_sln_file_name.lower() == 'build64.sln':
+      target_platform = 'x64'
+    # Create a new instance with copying rel_paths.
+
+    # To use different toolsets for vcbuild, we set %PATH%, %INCLUDE%, %LIB%,
+    # %LIBPATH% and specify /useenv option here.  See the following article
+    # for details.
+    # http://blogs.msdn.com/vcblog/archive/2007/12/30/using-different-toolsets-
+    #   for-vc-build.aspx
+    RunOrDie(['vcbuild',
+              '/M%d' % build_concurrency,  # Use concurrent build
+              '/time',    # Show build time
+              '/platform:%s' % target_platform,
+              abs_sln_path,
+              '%s|%s' % (options.configuration, target_platform)])
+
+
+def BuildMain(options, targets, original_directory_name):
+  """The main function for the 'build' command."""
+  if not targets:
+    PrintErrorAndExit('No build target is specified.')
+
+  # Generate a version definition file.
+  print 'Generating version definition file...'
+  (template_path, version_path) = GetVersionFileNames(options)
+  GenerateVersionFile(template_path, version_path)
+
+
+  if IsMac():
+    BuildOnMac(options, targets, original_directory_name)
+  elif IsLinux():
+    BuildOnLinux(options, targets, original_directory_name)
+  elif IsWindows():
+    BuildOnWindows(options, targets, original_directory_name)
+  else:
+    print 'Unsupported platform: ', os.name
+    return
+  RunPackageVerifiers(
+      os.path.join(GetBuildBaseName(options), options.configuration))
+
+
+def RunTests(build_base, configuration, unused_calculate_coverage):
   """Run built tests actually.
 
   Args:
+    build_base: the base directory ('out_linux', 'out_mac', etc.)
     configuration: build configuration ('Release' or 'Debug')
     unused_calculate_coverage: True if runtests calculates the test coverage.
 
   Raises:
     RunOrDieError: One or more tests have failed.
   """
-  # Currently we don't check calculate at all -- just run tests.
-  if IsMac():
-    base_path = os.path.join('out_mac', configuration)
-  elif IsLinux():
-    base_path = os.path.join('out_linux', configuration)
-  elif IsWindows():
-    base_path = os.path.join('out_win', configuration)
-  else:
-    logging.error('Unsupported platform: %s', os.name)
-    return
+  base_path = os.path.join(build_base, configuration)
 
   options = []
 
@@ -471,12 +826,12 @@ def RunTests(configuration, unused_calculate_coverage):
     raise RunOrDieError('\n'.join(['following tests failed'] + failed_tests))
 
 
-def RuntestsMain(original_directory_name):
-  """The main function for 'runtests' command."""
-  (options, args) = ParseRuntestsOptions()
 
+
+def RunTestsMain(options, args, original_directory_name):
+  """The main function for 'runtests' command."""
   # extracting test targets and build flags.  To avoid parsing build
-  # options from ParseRuntestsOptions(), user has to specify the test
+  # options from ParseRunTestsOptions(), user has to specify the test
   # targets at first, and then add '--' and build flags.  Although
   # optparse removes the '--' argument itself, the first element of
   # build options has to start with '-' character because they are
@@ -493,8 +848,8 @@ def RuntestsMain(original_directory_name):
       build_options = args[i:]
       break
     target = args[i]
-    # If the a directory name is specified as a target, it builds
-    # _all_test target instead.
+    # If a directory name is specified as a target, it builds
+    # *_all_test target instead.
     if args[i].endswith('/'):
       matched = re.search(r'([^/]+)/$', args[i])
       if matched:
@@ -502,353 +857,78 @@ def RuntestsMain(original_directory_name):
         target = '%s%s.gyp:%s_all_test' % (args[i], dirname, dirname)
     targets.append(target)
 
-  # configuration flag is shared among runtests options and build
-  # options.
+  # configuration and build_base flags are shared among runtests options and
+  # build options.
   if options.configuration:
     build_options.extend(['-c', options.configuration])
+  if options.build_base:
+    build_options.extend(['--build_base', options.build_base])
+  if options.target_platform:
+    build_options.extend(['--target_platform', options.target_platform])
+
 
   if not targets:
     targets.append('%s/gyp/tests.gyp:unittests' % SRC_DIR)
 
   # Build the test targets
-  sys.argv = [sys.argv[0]] + build_options + targets
-  BuildMain(original_directory_name)
+  (build_opts, build_args) = ParseBuildOptions(build_options + targets)
+  BuildMain(build_opts, build_args, original_directory_name)
 
   # Run tests actually
-  RunTests(options.configuration, options.calculate_coverage)
+  RunTests(GetBuildBaseName(options), options.configuration,
+           options.calculate_coverage)
 
 
-def CleanMain():
-  """The main function for the 'clean' command."""
-  CleanBuildFilesAndDirectories()
+def CleanBuildFilesAndDirectories(options, unused_args):
+  """Cleans build files and directories."""
+  # File and directory names to be removed.
+  file_names = []
+  directory_names = []
 
+  # Collect stuff in the gyp directories.
+  gyp_directory_names = [os.path.dirname(f) for f in GetGypFileNames(options)]
+  for gyp_directory_name in gyp_directory_names:
+    if IsWindows():
+      for pattern in ['*.ncb', '*.rules', '*.sln', '*.suo', '*.vcproj',
+                      '*.vcproj.*.user']:
+        file_names.extend(glob.glob(os.path.join(gyp_directory_name,
+                                                 pattern)))
+      for build_type in ['Debug', 'Optimize', 'Release']:
+        directory_names.append(os.path.join(gyp_directory_name,
+                                            build_type))
+    elif IsMac():
+      directory_names.extend(glob.glob(os.path.join(gyp_directory_name,
+                                                    '*.xcodeproj')))
+    elif IsLinux():
+      file_names.extend(glob.glob(os.path.join(gyp_directory_name,
+                                               '*.target.mk')))
+      file_names.extend(glob.glob(os.path.join(gyp_directory_name,
+                                               '*/*.target.mk')))
+      file_names.extend(glob.glob(os.path.join(gyp_directory_name,
+                                               '*.Makefile')))
+      file_names.extend(glob.glob(os.path.join(gyp_directory_name,
+                                               '*/*.Makefile')))
+  file_names.append('%s/mozc_version.txt' % SRC_DIR)
+  file_names.append('third_party/rx/rx.gyp')
+  # Collect stuff in the top-level directory.
+  directory_names.append('mozc_build_tools')
 
-class RunOrDieError(StandardError):
-  """The exception class for RunOrDie."""
-
-  def __init__(self, message):
-    StandardError.__init__(self, message)
-
-
-def RunOrDie(argv):
-  """Run the command, or die if it failed."""
-
-  # Rest are the target program name and the parameters, but we special
-  # case if the target program name ends with '.py'
-  if argv[0].endswith('.py'):
-    argv.insert(0, sys.executable)  # Inject the python interpreter path.
-  # We don't capture stdout and stderr from Popen. The output will just
-  # be emitted to a terminal or console.
-  print 'Running: ' + ' '.join(argv)
-  process = subprocess.Popen(argv)
-
-  if process.wait() != 0:
-    raise RunOrDieError('\n'.join(['',
-                                   '==========',
-                                   ' ERROR: %s' % ' '.join(argv),
-                                   '==========']))
-
-
-def PrintErrorAndExit(error_message):
-  """Prints the error message and exists."""
-  print error_message
-  sys.exit(1)
-
-
-def ParseGypOptions():
-  """Parse command line options for the gyp command."""
-  parser = optparse.OptionParser(usage='Usage: %prog gyp [options]')
-  parser.add_option('--onepass', '-1', dest='onepass', action='store_true',
-                    default=False, help='build mozc in one pass. '
-                    'Not recommended for Debug build.')
-  parser.add_option('--branding', dest='branding', default='Mozc')
-  parser.add_option('--gypdir', dest='gypdir', default='third_party/gyp')
-  parser.add_option('--noqt', action='store_true', dest='noqt', default=False)
-  parser.add_option('--qtdir', dest='qtdir',
-                    default=os.getenv('QTDIR', None),
-                    help='Qt base directory to be used.')
-  parser.add_option('--coverage', action='store_true', dest='coverage',
-                    help='use code coverage analysis build options',
-                    default=False)
-  parser.add_option('--channel_dev', action='store', dest='channel_dev',
-                    type='int',
-                    help='Pass --channel_dev=1 if you need to build mozc with '
-                    'the CHANNEL_DEV macro enabled. Pass 0 if you don\'t need '
-                    'the macro. If --channel_dev= flag is not passed, Mozc '
-                    'version is used to deretmine if the macro is necessary.')
-  parser.add_option('--version_file', dest='version_file',
-                    help='use the specified version template file',
-                    default='mozc_version_template.txt')
-  parser.add_option('--rsync', dest='rsync', default=False, action='store_true',
-                    help='use rsync to copy files instead of builtin function')
-
-  parser.add_option('--build_base', dest='build_base',
-                    help='specify the base directory of the built binaries.')
-
-  parser.add_option('--chewing', dest='chewing', action='store_true',
-                    default=False, help='include chewing gyp recipe.  '
-                    'This flag is false by default because it may require you '
-                    'to install libchewing in your environment.')
-
-  parser.add_option('--hangul', dest='hangul', action='store_true',
-                    default=False, help='include hangul gyp recipe.  '
-                    'This flag is false by default because it may require you '
-                    'to install libhangul in your environment.')
-
-
-  # Linux environment can build both for Linux and ChromeOS.
-  # This option enable this script to know which build (Linux or ChromeOS)
-  # should be done. If you want ChromeOS build, specify "ChromeOS".
-  parser.add_option('--target_platform', dest='target_platform',
-                    help='if you want ChromeOS build, specify "ChromeOS"')
-
-  (options, unused_args) = parser.parse_args()
-  return options
-
-
-def ParseMetaTarget(meta_target_name, target_platform):
-  """Returns a list of build targets with expanding meta target name.
-
-  If the specified name is 'package', returns a list of build targets for
-  building production package.
-
-  If the specified name is not a meta target name, returns it as a list.
-
-  Args:
-    meta_target_name: meta target name to be expanded.
-    target_platform: The target platform.
-
-  Returns:
-    A list of build targets with meta target names expanded.
-  """
-  if meta_target_name != 'package':
-    return [meta_target_name]
-
-  if target_platform == 'ChromeOS':
-    targets = ['%s/unix/ibus/ibus.gyp:ibus_mozc',
-               '%s/server/server.gyp:mozc_server',
-               '%s/gui/gui.gyp:mozc_tool']
-  elif IsLinux():
-    targets = ['%s/unix/ibus/ibus.gyp:ibus_mozc',
-               '%s/server/server.gyp:mozc_server',
-               '%s/gui/gui.gyp:mozc_tool']
-  elif IsMac():
-    targets = ['%s/mac/mac.gyp:DiskImage']
-  elif IsWindows():
-    targets = ['%s/win32/build32/build32.gyp:',
-               '%s/win32/build64/build64.gyp:',
-               '%s/win32/installer/installer.gyp:']
-  return [(target % SRC_DIR) for target in targets]
-
-
-def ParseBuildOptions():
-  """Parse command line options for the build command."""
-  parser = optparse.OptionParser(usage='Usage: %prog build [options]')
-  parser.add_option('--jobs', '-j', dest='jobs', default='4', metavar='N',
-                    help='run jobs in parallel')
-  parser.add_option('--configuration', '-c', dest='configuration',
-                    default='Debug', help='specify the build configuration.')
-  parser.add_option('--version_file', dest='version_file',
-                    help='use the specified version template file',
-                    default='mozc_version_template.txt')
-  parser.add_option('--target_platform', dest='target_platform',
-                    help='specify target platform.')
-
-  # On Linux, seems there is no way to set build_base in the ParseGyp section
+  directory_names.append(GetBuildBaseName(options))
   if IsLinux():
-    parser.add_option('--build_base', dest='build_base',
-                      help='specify the base directory of the built binaries.')
-
-  (options, args) = parser.parse_args()
-
-  original_targets = args
-  if not original_targets:
-    PrintErrorAndExit('No build target is specified.')
-
-  targets = []
-  for target in original_targets:
-    targets.extend(ParseMetaTarget(target, options.target_platform))
-
-  return (options, targets)
-
-
-def ParseRuntestsOptions():
-  """Parse command line options for the runtests command."""
-  parser = optparse.OptionParser(
-      usage='Usage: %prog runtests [options] [test_targets] [-- build options]')
-  parser.add_option('--test_size', dest='test_size', default='small')
-  parser.add_option('--calculate_coverage', dest='calculate_coverage',
-                    default=False, action='store_true',
-                    help='specify if you want to calculate test coverage.')
-  parser.add_option('--configuration', '-c', dest='configuration',
-                    default='Debug', help='specify the build configuration.')
-
-  (options, args) = parser.parse_args()
-
-  return (options, args)
-
-
-def ParseCleanOptions():
-  """Parse command line options for the clean command."""
-  parser = optparse.OptionParser(
-      usage='Usage: %prog clean [-- build options]')
-
-  parser.add_option('--build_base', dest='build_base',
-                    help='specify the base directory of the built binaries.')
-
-  (options, args) = parser.parse_args()
-
-  return (options, args)
-
-
-def ParseTarget(target):
-  """Parses the target string."""
-  if not ':' in target:
-    PrintErrorAndExit('Invalid target: ' + target)
-  (gyp_file_name, target_name) = target.split(':')
-  return (gyp_file_name, target_name)
-
-
-def BuildOnLinux(options, targets):
-  """Build the targets on Linux."""
-  target_names = []
-  for target in targets:
-    (unused_gyp_file_name, target_name) = ParseTarget(target)
-    target_names.append(target_name)
-
-  make_command = os.getenv('BUILD_COMMAND', 'make')
-  # flags for building in Chrome OS chroot environment
-  envvars = [
-      'CFLAGS',
-      'CXXFLAGS',
-      'CXX',
-      'CC',
-      'AR',
-      'AS',
-      'RANLIB',
-      'LD',
-  ]
-  for envvar in envvars:
-    if envvar in os.environ:
-      os.environ[envvar] = os.getenv(envvar)
-
-  # set output directory
-  os.environ['builddir_name'] = 'out_linux'
-
-  build_args = ['-j%s' % options.jobs,
-                'MAKE_JOBS=%s' % options.jobs,
-                'BUILDTYPE=%s' % options.configuration]
-  if options.build_base:
-    build_args.append('builddir_name=%s' % options.build_base)
-
-  RunOrDie([make_command] + build_args + target_names)
-
-
-def CheckFileOrDie(file_name):
-  """Check the file exists or dies if not."""
-  if not os.path.isfile(file_name):
-    PrintErrorAndExit('No such file: ' + file_name)
-
-
-def GetRelpath(path, start):
-  """Return a relative path to |path| from |start|."""
-  # NOTE: Python 2.6 provides os.path.relpath, which has almost the same
-  # functionality as this function. Since Python 2.6 is not the internal
-  # official version, we reimplement it.
-  path_list = os.path.abspath(os.path.normpath(path)).split(os.sep)
-  start_list = os.path.abspath(os.path.normpath(start)).split(os.sep)
-
-  common_prefix_count = 0
-  for i in range(0, min(len(path_list), len(start_list))):
-    if path_list[i] != start_list[i]:
-      break
-    common_prefix_count += 1
-
-  return os.sep.join(['..'] * (len(start_list) - common_prefix_count) +
-                     path_list[common_prefix_count:])
-
-
-def BuildOnMac(options, targets, original_directory_name):
-  """Build the targets on Mac."""
-  original_directory_relpath = GetRelpath(original_directory_name, os.getcwd())
-  for target in targets:
-    (gyp_file_name, target_name) = ParseTarget(target)
-    gyp_file_name = os.path.join(original_directory_relpath, gyp_file_name)
-    CheckFileOrDie(gyp_file_name)
-    (xcode_base_name, _) = os.path.splitext(gyp_file_name)
-    RunOrDie(['xcodebuild',
-              '-project', '%s.xcodeproj' % xcode_base_name,
-              '-configuration', options.configuration,
-              '-target', target_name,
-              '-parallelizeTargets',
-              'BUILD_WITH_GYP=1'])
-
-
-def LocateVCBuildDir():
-  """Locate the directory where vcbuild.exe exists.
-
-  Returns:
-    A string of absolute directory path where vcbuild.exe exists.
-  """
-  if not IsWindows():
-    PrintErrorAndExit('vcbuild.exe is not supported on this platform')
-
-  # TODO(yukawa): Implement this.
-  PrintErrorAndExit('Failed to locate vcbuild.exe')
-
-
-
-
-def BuildOnWindows(options, targets, original_directory_name):
-  """Build the target on Windows."""
-  # TODO(yukawa): make a python module to set up environment for vcbuild.
-  abs_vcbuild_dir = LocateVCBuildDir()
-
-  CheckFileOrDie(os.path.join(abs_vcbuild_dir, 'vcbuild.exe'))
-
-  if os.getenv('PATH'):
-    os.environ['PATH'] = os.pathsep.join([abs_vcbuild_dir, os.getenv('PATH')])
-  else:
-    os.environ['PATH'] = abs_vcbuild_dir
-
-
-
-def BuildMain(original_directory_name):
-  """The main function for the 'build' command."""
-  (options, targets) = ParseBuildOptions()
-
-  # Generate a version definition file.
-  print 'Generating version definition file...'
-  (template_path, version_path) = GetVersionFileNames(options)
-  GenerateVersionFile(template_path, version_path)
-
-
-  if IsMac():
-    BuildOnMac(options, targets, original_directory_name)
-  elif IsLinux():
-    BuildOnLinux(options, targets)
+    file_names.append('Makefile')
   elif IsWindows():
-    BuildOnWindows(options, targets, original_directory_name)
-  else:
-    print 'Unsupported platform: ', os.name
+    file_names.append('third_party/breakpad/breakpad.gyp')
+  # Remove files.
+  for file_name in file_names:
+    RemoveFile(file_name)
+  # Remove directories.
+  for directory_name in directory_names:
+    RemoveDirectoryRecursively(directory_name)
 
 
-def BuildToolsMain(original_directory_name):
-  """The main function for 'build_tools' command."""
-  build_tools_dir = os.path.join(GetRelpath(os.getcwd(),
-                                            original_directory_name),
-                                 '%s/build_tools' % SRC_DIR)
-  # build targets in this order
-  gyp_files = [
-      os.path.join(build_tools_dir, 'primitive_tools', 'primitive_tools.gyp'),
-      os.path.join(build_tools_dir, 'build_tools.gyp')
-      ]
-
-  for gyp_file in gyp_files:
-    (target, _) = os.path.splitext(os.path.basename(gyp_file))
-    sys.argv.append('%s:%s' % (gyp_file, target))
-    BuildMain(original_directory_name)
-    sys.argv.pop()
+def CleanMain(options, args):
+  """The main function for the 'clean' command."""
+  CleanBuildFilesAndDirectories(options, args)
 
 
 def ShowHelpAndExit():
@@ -869,9 +949,6 @@ def main():
   if len(sys.argv) < 2:
     ShowHelpAndExit()
 
-  # DEPS files should exist in the same directory of the script.
-  deps_file_name = os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]),
-                                                'DEPS'))
   # Remember the original current directory name.
   original_directory_name = os.getcwd()
   # Move to the top level source directory only once since os.chdir
@@ -879,17 +956,22 @@ def main():
   MoveToTopLevelSourceDirectory()
 
   command = sys.argv[1]
-  del(sys.argv[1])  # Delete the command.
-  if command == 'build':
-    BuildMain(original_directory_name)
+  args = sys.argv[2:]
+  if command == 'gyp':
+    (cmd_opts, cmd_args) = ParseGypOptions(args)
+    GypMain(cmd_opts, cmd_args)
   elif command == 'build_tools':
-    BuildToolsMain(original_directory_name)
-  elif command == 'clean':
-    CleanMain()
-  elif command == 'gyp':
-    GypMain(deps_file_name)
+    (cmd_opts, cmd_args) = ParseBuildOptions(args)
+    BuildToolsMain(cmd_opts, cmd_args, original_directory_name)
+  elif command == 'build':
+    (cmd_opts, cmd_args) = ParseBuildOptions(args)
+    BuildMain(cmd_opts, cmd_args, original_directory_name)
   elif command == 'runtests':
-    RuntestsMain(original_directory_name)
+    (cmd_opts, cmd_args) = ParseRunTestsOptions(args)
+    RunTestsMain(cmd_opts, cmd_args, original_directory_name)
+  elif command == 'clean':
+    (cmd_opts, cmd_args) = ParseCleanOptions(args)
+    CleanMain(cmd_opts, cmd_args)
   else:
     print 'Unknown command: ' + command
     ShowHelpAndExit()

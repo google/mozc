@@ -303,15 +303,6 @@ void SparseArrayBuilder::Concatenate() {
   main_stream_->PushInt(kTrailerMagic);
 }
 
-// Really simple cache.
-struct SparseArrayCache {
-  static const int kCacheSize = 256;
-  static const int kInvalidCacheKey = -1;
-
-  int key[kCacheSize];
-  int value[kCacheSize];
-};
-
 SparseArrayImage::SparseArrayImage(const char *image, int size)
     : image_(image), size_(size) {
   DCHECK(image) << "got empty image";
@@ -342,10 +333,6 @@ SparseArrayImage::SparseArrayImage(const char *image, int size)
       << "trailer magic mismatch";
   VLOG(1) << "SparseArrayImage: "
           << values_size_ / 2 << " values";
-
-  cache_.reset(new SparseArrayCache);
-  InitCache(cache_.get());
-  cache_lock_.reset(new Mutex);
 }
 
 SparseArrayImage::~SparseArrayImage() {
@@ -360,19 +347,6 @@ int SparseArrayImage::ReadInt(const char *p) const {
 }
 
 int SparseArrayImage::Peek(uint32 index) const {
-  // This lock prevents inconsistent state between keys and values.
-  // TODO(tabata): Investigate the penalty of this lock.
-  scoped_lock l(cache_lock_.get());
-  const int bucket = index % SparseArrayCache::kCacheSize;
-  if (cache_->key[bucket] != index) {
-    // Simply overwrite previous key/value.
-    cache_->key[bucket] = index;
-    cache_->value[bucket] = PeekFromArray(index);
-  }
-  return cache_->value[bucket];
-}
-
-int SparseArrayImage::PeekFromArray(uint32 index) const {
   int byte_offset = 0;
   for (int level = 0; level < num_levels_; ++level) {
     int shift_count = num_bits_per_level_ * (num_levels_ - level - 1);
@@ -395,11 +369,5 @@ int SparseArrayImage::GetValue(int nth) const {
   }
   const uint16 *v = reinterpret_cast<const uint16 *>(&values_[nth * 2]);
   return *v;
-}
-
-void SparseArrayImage::InitCache(SparseArrayCache *cache) const {
-  for (int i = 0; i < SparseArrayCache::kCacheSize; ++i) {
-    cache->key[i] = SparseArrayCache::kInvalidCacheKey;
-  }
 }
 }  // namespace mozc

@@ -36,7 +36,6 @@
 #include <shellapi.h>
 #include <shlobj.h>
 #include "base/util.h"
-#include "third_party/mozc/sandbox/restricted_token_utils.h"
 #else
 #include <string.h>
 #include <sys/stat.h>
@@ -258,88 +257,6 @@ bool Process::SpawnMozcProcess(
       mozc::Util::JoinPath(mozc::Util::GetServerDirectory(), filename),
       arg, pid);
 }
-
-#ifdef OS_WINDOWS
-Process::SecurityInfo::SecurityInfo()
-    : primary_level(sandbox::USER_LOCKDOWN),
-      impersonation_level(sandbox::USER_LOCKDOWN),
-      job_level(sandbox::JOB_LOCKDOWN),
-      integrity_level(sandbox::INTEGRITY_LEVEL_SYSTEM),
-      allow_ui_operation(false),
-      in_system_dir(false),
-      creation_flags(0) {}
-
-bool Process::SpawnProcessAs(const string &path,
-                             const string &arg,
-                             const Process::SecurityInfo &info,
-                             DWORD *pid) {
-  wstring wpath;
-  Util::UTF8ToWide(path.c_str(), &wpath);
-  wpath = L"\"" + wpath + L"\"";
-  if (!arg.empty()) {
-    wstring warg;
-    Util::UTF8ToWide(arg.c_str(), &warg);
-    wpath += L" ";
-    wpath += warg;
-  }
-
-  scoped_array<wchar_t> wpath2(new wchar_t[wpath.size() + 1]);
-  if (0 != wcscpy_s(wpath2.get(), wpath.size() + 1, wpath.c_str())) {
-    return false;
-  }
-
-  HANDLE job_handle = 0;
-  // Create a Job inside restricted sandbox environment.
-  // Child job inherits the environment of the caller.
-  // (http://b/2048754)
-  const DWORD err_code = sandbox::StartRestrictedProcessInJob(
-      wpath2.get(),
-      info.primary_level,
-      info.impersonation_level,
-      info.job_level,
-      // If info.in_system_dir is true, we set the initial directory of the
-      // process to system directory.
-      info.in_system_dir ? Util::GetSystemDir() : NULL,
-      info.integrity_level,
-      info.allow_ui_operation ? JOB_OBJECT_UILIMIT_ALL : 0,
-      info.creation_flags,
-      &job_handle,
-      pid);
-
-  // Remove JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE to allow the
-  // child process to continue running even after the parent is terminated
-  // TODO(taku): better to add new paramenter to pass
-  // JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
-  if (NULL != job_handle) {
-    JOBOBJECT_EXTENDED_LIMIT_INFORMATION jeli;
-    if (!::QueryInformationJobObject(job_handle,
-                                     JobObjectExtendedLimitInformation,
-                                     &jeli, sizeof(jeli), NULL)) {
-      LOG(ERROR) << "QueryInformationJobObject failed: "
-                 << ::GetLastError();
-      ::CloseHandle(job_handle);
-      return false;
-    }
-
-    jeli.BasicLimitInformation.LimitFlags
-        &= ~JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
-    if (!::SetInformationJobObject(job_handle,
-                                   JobObjectExtendedLimitInformation,
-                                   &jeli, sizeof(jeli))) {
-      LOG(ERROR) << "SetQueryInformationJobObject failed: "
-                 << ::GetLastError();
-      ::CloseHandle(job_handle);
-      return false;
-    }
-    ::CloseHandle(job_handle);
-  }
-
-  LOG_IF(ERROR, err_code != ERROR_SUCCESS) <<
-      "sandbox::StartRestrictedProcessInJob failed: " << ::GetLastError();
-
-  return ERROR_SUCCESS == err_code;
-}
-#endif  // OS_WINDOWS
 
 bool Process::WaitProcess(size_t pid, int timeout) {
   if (pid == 0) {

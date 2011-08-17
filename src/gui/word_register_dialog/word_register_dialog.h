@@ -40,7 +40,7 @@
 namespace mozc {
 
 namespace client {
-class Session;
+class ClientInterface;
 }
 
 namespace gui {
@@ -106,7 +106,7 @@ class WordRegisterDialog : public QDialog,
 
   bool is_available_;
   scoped_ptr<UserDictionaryStorage> storage_;
-  scoped_ptr<client::Session> session_;
+  scoped_ptr<client::ClientInterface> client_;
   QString window_title_;
 };
 }  // namespace mozc::gui

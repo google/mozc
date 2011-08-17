@@ -29,14 +29,17 @@
 
 # This file provides a common rule for Qt moc command.
 {
+  'conditions': [['use_qt=="YES"', {
+
   'variables': {
+    'includes': ['qt_vars.gypi'],
     'conditions': [
       ['qt_dir', {
         'moc_path': '<(qt_dir)/bin/moc<(EXECUTABLE_SUFFIX)',
       }, {
         'conditions': [
-          ['OS=="linux"', {
-            'moc_path': '<!(pkg-config --variable=moc_location QtGui)',
+          ['pkg_config_command', {
+            'moc_path': '<!(<(pkg_config_command) --variable=moc_location QtGui)',
           }, {
             'moc_path': '<(qt_dir_env)/bin/moc<(EXECUTABLE_SUFFIX)',
           }],
@@ -61,4 +64,6 @@
       'message': 'Generatinc moc files from <(RULE_INPUT_PATH)',
     },
   ],
+
+  }]],  # End of use_qt=="YES"
 }

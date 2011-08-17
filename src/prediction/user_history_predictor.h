@@ -94,6 +94,70 @@ class UserHistoryPredictor: public PredictorInterface {
   // Do not call Sync() before Reload().
   bool Reload();
 
+  // clear LRU data
+  bool ClearAllHistory();
+
+  // clear unused data
+  bool ClearUnusedHistory();
+
+  // Get user history filename.
+  static string GetUserHistoryFileName();
+
+  // Used in user_history_sync_util.
+  typedef user_history_predictor::UserHistory::Entry Entry;
+  typedef user_history_predictor::UserHistory::NextEntry NextEntry;
+  typedef user_history_predictor::UserHistory::Entry::EntryType EntryType;
+
+  // return fingerprints from various object.
+  static uint32 Fingerprint(const string &key, const string &value);
+  static uint32 Fingerprint(const string &key, const string &value,
+                            EntryType type);
+  static uint32 EntryFingerprint(const Entry &entry);
+  static uint32 SegmentFingerprint(const Segment &segment);
+
+  // return the size of cache.
+  static uint32 cache_size();
+
+  // return the size of next entries.
+  static uint32 max_next_entries_size();
+
+ private:
+  //  friend class UserHistoryStorage;
+  friend class UserHistoryPredictorSyncer;
+
+  FRIEND_TEST(UserHistoryPredictorTest, UserHistoryPredictorTest);
+  FRIEND_TEST(UserHistoryPredictorTest, DescriptionTest);
+  FRIEND_TEST(UserHistoryPredictorTest,
+              UserHistoryPredictorUnusedHistoryTest);
+  FRIEND_TEST(UserHistoryPredictorTest, UserHistoryPredictorRevertTest);
+  FRIEND_TEST(UserHistoryPredictorTest, UserHistoryPredictorClearTest);
+  FRIEND_TEST(UserHistoryPredictorTest,
+              UserHistoryPredictorTailingPunctuation);
+  FRIEND_TEST(UserHistoryPredictorTest,
+              UserHistoryPredictorPreceedingPunctuation);
+  FRIEND_TEST(UserHistoryPredictorTest, ZeroQuerySuggestionTest);
+  FRIEND_TEST(UserHistoryPredictorTest, MultiSegmentsMultiInput);
+  FRIEND_TEST(UserHistoryPredictorTest, MultiSegmentsSingleInput);
+  FRIEND_TEST(UserHistoryPredictorTest, Regression2843371_Case1);
+  FRIEND_TEST(UserHistoryPredictorTest, Regression2843371_Case2);
+  FRIEND_TEST(UserHistoryPredictorTest, Regression2843371_Case3);
+  FRIEND_TEST(UserHistoryPredictorTest, Regression2843775);
+  FRIEND_TEST(UserHistoryPredictorTest, DuplicateString);
+  FRIEND_TEST(UserHistoryPredictorTest, SyncTest);
+  FRIEND_TEST(UserHistoryPredictorTest, GetMatchTypeTest);
+  FRIEND_TEST(UserHistoryPredictorTest, FingerPrintTest);
+  FRIEND_TEST(UserHistoryPredictorTest, Uint32ToStringTest);
+  FRIEND_TEST(UserHistoryPredictorTest, GetScore);
+  FRIEND_TEST(UserHistoryPredictorTest, IsValidEntry);
+  FRIEND_TEST(UserHistoryPredictorTest, IsValidSuggestion);
+  FRIEND_TEST(UserHistoryPredictorTest, EntryPriorityQueueTest);
+  FRIEND_TEST(UserHistoryPredictorTest, PrivacySensitiveTest);
+  FRIEND_TEST(UserHistoryPredictorTest, UserHistoryStorage);
+  FRIEND_TEST(UserHistoryPredictorTest, RomanFuzzyPrefixMatch);
+  FRIEND_TEST(UserHistoryPredictorTest, MaybeRomanMisspelledKey);
+  FRIEND_TEST(UserHistoryPredictorTest, GetRomanMisspelledKey);
+  FRIEND_TEST(UserHistoryPredictorTest, RomanFuzzyLookupEntry);
+
   // Load user history data to LRU from local file
   bool Load();
 
@@ -108,30 +172,11 @@ class UserHistoryPredictor: public PredictorInterface {
   // This makes a new thread and call Save()
   bool AsyncLoad();
 
-  // clear LRU data
-  bool ClearAllHistory();
-
-  // clear unused data
-  bool ClearUnusedHistory();
-
   // Wait until syncer finishes
   void WaitForSyncer();
 
-  // Get user history filename.
-  static string GetUserHistoryFileName();
-
   // return id for RevertEntry
   static uint16 revert_id();
-
-  // return the size of cache.
-  static uint32 cache_size();
-
-  // return the size of next entries.
-  static uint32 max_next_entries_size();
-
-  typedef user_history_predictor::UserHistory::Entry Entry;
-  typedef user_history_predictor::UserHistory::NextEntry NextEntry;
-  typedef user_history_predictor::UserHistory::Entry::EntryType EntryType;
 
   enum MatchType {
     NO_MATCH,            // no match
@@ -143,16 +188,13 @@ class UserHistoryPredictor: public PredictorInterface {
 
   static MatchType GetMatchType(const string &lstr, const string &rstr);
 
-  // return fingerprints from various object.
-  static uint32 Fingerprint(const string &key, const string &value);
-  static uint32 Fingerprint(const string &key, const string &value,
-                            EntryType type);
-  static uint32 EntryFingerprint(const Entry &entry);
-  static uint32 SegmentFingerprint(const Segment &segment);
-
   // Uint32 <=> string conversion
   static string Uint32ToString(uint32 fp);
   static uint32 StringToUint32(const string &input);
+
+  // return true if prev_entry has a next_fp link to entry
+  static bool HasBigramEntry(const Entry &entry,
+                             const Entry &prev_entry);
 
   // return true |result_entry| can be handled as
   // a valid result if the length of user input is |prefix_len|.
@@ -184,6 +226,7 @@ class UserHistoryPredictor: public PredictorInterface {
     Entry *Pop();
     Entry *NewEntry();
    private:
+    friend class UserHistoryPredictor;
     typedef pair<uint32, Entry *> QueueElement;
     typedef priority_queue<QueueElement> Agenda;
     Agenda agenda_;
@@ -191,16 +234,15 @@ class UserHistoryPredictor: public PredictorInterface {
     set<uint32> seen_;
   };
 
- private:
   typedef LRUCache<uint32, Entry>  DicCache;
   typedef LRUCache<uint32, Entry>::Element DicElement;
 
   bool CheckSyncerAndDelete() const;
 
-
   bool Lookup(Segments *segments) const;
 
-  // Lookup with a key |input_key|.
+  // If input_key can be a target key of entry->key(), creat a new
+  // result and insert it to |results|.
   // Can set |prev_entry| if there is a history segment just before |input_key|.
   // |prev_entry| is an optional field. If set NULL, this field is just ignored.
   // This method adds a new result entry with score, pair<score, entry>, to
@@ -209,6 +251,35 @@ class UserHistoryPredictor: public PredictorInterface {
                    const Entry *entry,
                    const Entry *prev_entry,
                    EntryPriorityQueue *results) const;
+
+  // return true if |prefix| is a fuzzy-prefix of |str|.
+  // 'Fuzzy' means that
+  // 1) Allows one character deletation in the |prefix|.
+  // 2) Allows one character swap in the |prefix|.
+  static bool RomanFuzzyPrefixMatch(const string &str,
+                                    const string &prefix);
+
+  // return romanized preedit string if the preedit looks
+  // misspelled. It first tries to get the preedit string with
+  // composer() if composer is available. If not, use the key
+  // directory. It also use MaybeRomanMisspelledKey() defined
+  // below to check the preedit looks missspelled or not.
+  static string GetRomanMisspelledKey(const Segments &segments);
+
+  // return true if |key| may contain miss spelling.
+  // Currently, this function returns true if
+  // 1) key contains only one alphabet.
+  // 2) other characters of key are all hiragana.
+  static bool MaybeRomanMisspelledKey(const string &key);
+
+  // If roman_input_key can be a target key of entry->key(), creat a new
+  // result and insert it to |results|.
+  // This method adds a new result entry with score, pair<score, entry>, to
+  // |results|.
+  bool RomanFuzzyLookupEntry(
+      const string &roman_input_key,
+      const Entry *entry,
+      EntryPriorityQueue *results) const;
 
   // insert |key,value,description| to the internal dictionary database.
   // |is_suggestion_selected|: key/value is suggestion or conversion.

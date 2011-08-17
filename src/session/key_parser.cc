@@ -67,6 +67,7 @@ class KeyParserData {
     modifiers_map_["super"] = commands::KeyEvent::ALT;
     modifiers_map_["hyper"] = commands::KeyEvent::ALT;
     modifiers_map_["shift"] = commands::KeyEvent::SHIFT;
+    modifiers_map_["caps"] = commands::KeyEvent::CAPS;
     modifiers_map_["keydown"] = commands::KeyEvent::KEY_DOWN;
     modifiers_map_["keyup"] = commands::KeyEvent::KEY_UP;
 

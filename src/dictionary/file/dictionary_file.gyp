@@ -30,12 +30,49 @@
 {
   'targets': [
     {
+      'target_name': 'codec',
+      'type': 'static_library',
+      'sources': [
+        'codec.cc',
+      ],
+      'dependencies': [
+        '../../base/base.gyp:base',
+      ],
+    },
+    {
+      'target_name': 'codec_test',
+      'type': 'executable',
+      'sources': [
+        'codec_test.cc',
+      ],
+      'dependencies': [
+        'codec',
+        '../../base/base.gyp:base',
+        '../../testing/testing.gyp:gtest_main',
+      ],
+      'variables': {
+        'test_size': 'small',
+      },
+    },
+    {
       'target_name': 'dictionary_file',
       'type': 'static_library',
       'sources': [
         'dictionary_file.cc',
       ],
       'dependencies': [
+        'codec',
+        '../../base/base.gyp:base',
+      ],
+    },
+    {
+      'target_name': 'dictionary_file_builder',
+      'type': 'static_library',
+      'sources': [
+        'dictionary_file_builder.cc',
+      ],
+      'dependencies': [
+        'codec',
         '../../base/base.gyp:base',
       ],
     },
@@ -47,12 +84,21 @@
       ],
       'dependencies': [
         'dictionary_file',
+        'dictionary_file_builder',
         '../../base/base.gyp:base',
         '../../testing/testing.gyp:gtest_main',
       ],
       'variables': {
         'test_size': 'small',
       },
+    },
+    {
+      'target_name': 'dictionary_file_all_test',
+      'type': 'none',
+      'dependencies': [
+        'codec_test',
+        'dictionary_file_test',
+      ],
     },
   ],
 }

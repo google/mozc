@@ -31,21 +31,8 @@
   'variables': {
     'relative_dir': 'chewing',
     'gen_out_dir': '<(SHARED_INTERMEDIATE_DIR)/<(relative_dir)',
-    'pkg_config_libs': [
-      'glib-2.0',
-      'gobject-2.0',
-      'ibus-1.0',
-      'libcurl',
+    'additional_packages': [
       'chewing',
-    ],
-    'ibus_client_dependencies' : [
-      '../client/client.gyp:client',
-      '../session/session_base.gyp:ime_switch_util',
-    ],
-    'ibus_standalone_dependencies' : [
-      '../net/net.gyp:net',
-      '../session/session_base.gyp:genproto_session',
-      '../usage_stats/usage_stats.gyp:usage_stats',
     ],
   },
   'targets': [
@@ -54,64 +41,49 @@
       'type': 'static_library',
       'sources': [
         'session.cc',
-        'dummy_converter.cc',
+        'chewing_session_factory.cc',
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        'chewing_session_server',
-      ],
-    },
-    # This is a copy of session.gyp:session_server but does not depend
-    # on session.gyp:session not to link language model/dictionary of
-    # Japanese.
-    {
-      'target_name': 'chewing_session_server',
-      'type': 'static_library',
-      'sources': [
-        '../session/session_handler.cc',
-        '../session/session_observer_handler.cc',
-        '../session/session_server.cc',
-        '../session/session_usage_observer.cc',
-        '../session/session_watch_dog.cc',
-      ],
-      'dependencies': [
-        '../base/base.gyp:base',
-        '../client/client.gyp:client',
-        '../session/session_base.gyp:config_handler',
+        '../config/config.gyp:genproto_config',
         '../session/session_base.gyp:genproto_session',
-        '../session/session_base.gyp:ime_switch_util',
-        '../session/session_base.gyp:keymap',
-        '../session/session_base.gyp:session_protocol',
+        '../session/session.gyp:session_handler',
       ],
     },
   ],
   'conditions': [
+    ['chromeos==1', {
+      'targets': [
+        {
+          'target_name': 'config_updater',
+          'type': 'static_library',
+          'sources': [
+            'unix/ibus/config_updater.cc',
+          ],
+          'dependencies': [
+            '../base/base.gyp:base',
+            '../config/config.gyp:genproto_config',
+            '../session/session_base.gyp:genproto_session',
+          ],
+          'includes': [
+            '../unix/ibus/ibus_libraries.gypi',
+          ],
+        },
+      ],
+    }],
     ['OS=="linux"', {
       'targets': [
         {
-          'target_name': 'ibus_mozc_chewing_lib',
+          'target_name': 'ibus_mozc_chewing_metadata',
           'type': 'static_library',
           'sources': [
-            '../unix/ibus/engine_registrar.cc',
-            '../unix/ibus/key_translator.cc',
-            '../unix/ibus/mozc_engine.cc',
-            '../unix/ibus/path_util.cc',
             'unix/ibus/mozc_engine_property.cc',
           ],
           'dependencies': [
-            '../session/session_base.gyp:ime_switch_util',
+            '../session/session_base.gyp:genproto_session',
           ],
-          'conditions': [
-            ['chromeos==1', {
-             'sources': [
-               '../unix/ibus/session.cc',
-               '../unix/ibus/config_util.cc',
-               'unix/ibus/config_updater.cc',
-            ],
-            }],
-           ],
-          'cflags': [
-            '<!@(pkg-config --cflags <@(pkg_config_libs))',
+          'includes': [
+            '../unix/ibus/ibus_libraries.gypi',
           ],
         },
         {
@@ -122,28 +94,24 @@
           ],
           'dependencies': [
             '../base/base.gyp:base',
+            '../unix/ibus/ibus.gyp:ibus_mozc_lib',
             'chewing_session',
-            'ibus_mozc_chewing_lib',
+            'ibus_mozc_chewing_metadata',
           ],
           'conditions': [
             ['chromeos==1', {
              'dependencies+': [
                '<@(ibus_standalone_dependencies)',
+               'config_updater',
              ],
             }, {
              'dependencies+': [
                '<@(ibus_client_dependencies)',
              ],
             }],
-           ],
-          'cflags': [
-            '<!@(pkg-config --cflags <@(pkg_config_libs))',
           ],
-          'libraries': [
-            '<!@(pkg-config --libs-only-l <@(pkg_config_libs))',
-          ],
-          'ldflags': [
-            '<!@(pkg-config --libs-only-L <@(pkg_config_libs))',
+          'includes': [
+            '../unix/ibus/ibus_libraries.gypi',
           ],
         },
       ],

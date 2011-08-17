@@ -54,7 +54,8 @@ class UsageRewriter: public RewriterInterface  {
  private:
   typedef pair<string, string> StrPair;
   map<StrPair, const UsageDictItem *> key_value_usageitem_map_;
-  const UsageDictItem* LookupUsage(const string &key, const string &value) const;
+  const UsageDictItem *LookupUsage(const string &key,
+                                   const string &value) const;
 };
 }  // namespace mozc
 #endif  // MOZC_REWRITER_USAGE_REWRITER_H_

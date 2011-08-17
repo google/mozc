@@ -27,6 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <algorithm>
 #include <string>
 
 #include "base/base.h"
@@ -54,6 +55,8 @@ void ReadWords(const string &name, vector<uint64> *words) {
     words->push_back(mozc::Util::Fingerprint(lower_value));
   }
 }
+
+const size_t kMinimumFilterBytes = 100 * 1000;
 }  // namespace
 
 // read per-line word list and generate
@@ -74,9 +77,10 @@ int main(int argc, char **argv) {
   LOG(INFO) << words.size() << " words found";
 
   static const float kErrorRate = 0.00001;
-  const size_t num_bytes =
+  const size_t num_bytes = max(
       mozc::ExistenceFilter::MinFilterSizeInBytesForErrorRate(
-          kErrorRate, words.size());
+          kErrorRate, words.size()),
+      kMinimumFilterBytes);
 
   LOG(INFO) << "num_bytes: " << num_bytes;
 

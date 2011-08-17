@@ -31,9 +31,9 @@
 
 #include <QtGui/QMessageBox>
 #include "base/base.h"
-#include "base/stats_config_util.h"
 #include "base/util.h"
 #include "base/run_level.h"
+#include "config/stats_config_util.h"
 #include "server/cache_service_manager.h"
 
 namespace mozc {

@@ -35,6 +35,7 @@
 #include "converter/segments.h"
 
 namespace mozc {
+class UserDataManagerInterface;
 
 namespace composer {
   class Composer;
@@ -125,22 +126,7 @@ class ConverterInterface {
                              const uint8 *new_size_array,
                              size_t array_size) const = 0;
 
-  // Sync mutable user data to local file system.
-  virtual bool Sync() const = 0;
-
-  // Reload mutable data from local file system.
-  virtual bool Reload() const = 0;
-
-  // TODO(taku): Remove below methods as they are too specific.
-
-  // clear user history data
-  virtual bool ClearUserHistory() const = 0;
-
-  // clear user prediction data
-  virtual bool ClearUserPrediction() const = 0;
-
-  // clear unused user prediction data
-  virtual bool ClearUnusedUserPrediction() const = 0;
+  virtual UserDataManagerInterface *GetUserDataManager() = 0;
 
  protected:
   virtual ~ConverterInterface() {}

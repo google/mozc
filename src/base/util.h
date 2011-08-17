@@ -51,6 +51,9 @@ class Util {
                                     const char *delm,
                                     vector<string> *output);
 
+  static void SplitStringToUtf8Chars(const string &str,
+                                     vector<string> *output);
+
   static void SplitCSV(const string &str, vector<string> *output);
 
   static void JoinStrings(const vector<string> &str,
@@ -640,6 +643,9 @@ class Util {
   // return true if the version of Windows is Vista or later.
   static bool IsVistaOrLater();
 
+  // return true if the version of Windows is 6.1 or later.
+  static bool IsWindows7OrLater();
+
   // return true if the version of Windows is x64 Edition.
   static bool IsWindowsX64();
 
@@ -678,6 +684,11 @@ class Util {
   // FreeLibrary with the handle.
   // If the function fails, the return value is NULL.
   static HMODULE GetSystemModuleHandle(const wstring &base_filename);
+
+  // A variant ot GetSystemModuleHandle except that this method increments
+  // reference count of the target DLL.
+  static HMODULE GetSystemModuleHandleAndIncrementRefCount(
+      const wstring &base_filename);
 
   // Retrieves version of the specified file.
   // If the function fails, returns false.

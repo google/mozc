@@ -27,14 +27,19 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "dictionary/dictionary_file.h"
-
 #include <cstdio>
+
 #include "base/base.h"
+#include "base/util.h"
+#include "dictionary/file/dictionary_file.h"
+#include "dictionary/file/dictionary_file_builder.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
+DECLARE_string(test_tmpdir);
+
 namespace mozc {
+namespace {
 TEST(DictionaryFileTest, Basic) {
   const string dfn = FLAGS_test_tmpdir + "/test-dictionary";
   const string fn1 = FLAGS_test_tmpdir + "/sec1";
@@ -49,18 +54,35 @@ TEST(DictionaryFileTest, Basic) {
   fwrite("9876543210", 10, 1, fp2);
   fclose(fp2);
 
-  DictionaryFile dfw;
-  dfw.Open(dfn.c_str(), true);
-  dfw.AddSection("sec1", fn1.c_str());
-  dfw.AddSection("sec2", fn2.c_str());
-  dfw.Write();
+  {
+    DictionaryFileBuilder builder;
+    EXPECT_TRUE(builder.AddSectionFromFile("sec1", fn1.c_str()));
+    EXPECT_TRUE(builder.AddSectionFromFile("sec2", fn2.c_str()));
+    EXPECT_FALSE(builder.AddSectionFromFile("sec2", fn2.c_str()));
+    builder.WriteImageToFile(dfn);
+  }
 
-  DictionaryFile dfr;
-  dfr.Open(dfn.c_str(), false);
-  int len;
-  dfr.GetSection("sec1", &len);
-  EXPECT_EQ(10, len);
-  dfr.GetSection("sec2", &len);
-  EXPECT_EQ(10, len);
+  EXPECT_TRUE(Util::FileExists(dfn));
+
+  {
+    DictionaryFile df;
+    df.OpenFromFile(dfn);
+    int len;
+    const char* ptr = df.GetSection("sec1", &len);
+    EXPECT_EQ(10, len);
+    string content(ptr, len);
+    EXPECT_EQ("0123456789", content);
+    ptr = df.GetSection("sec2", &len);
+    EXPECT_EQ(10, len);
+    content.assign(ptr, len);
+    EXPECT_EQ("9876543210", content);
+    ptr = df.GetSection("sec3", &len);
+    EXPECT_TRUE(ptr == NULL);
+  }
+
+  Util::Unlink(dfn);
+  Util::Unlink(fn1);
+  Util::Unlink(fn2);
 }
+}  // namespace
 }  // namespace mozc

@@ -108,15 +108,7 @@ bool Win32Server::ExecCommand(const commands::RendererCommand &command) {
       if (!command.visible()) {
         window_manager_->HideAllWindows();
       } else if (IsIMM32Message(command)) {
-        window_manager_->UpdateLayoutIMM32(command);
-      } else if (command.visible() &&
-                 command.has_output() &&
-                 command.has_preedit_rectangle() &&
-                 command.preedit_rectangle().has_left() &&
-                 command.preedit_rectangle().has_right() &&
-                 command.preedit_rectangle().has_top() &&
-                 command.preedit_rectangle().has_bottom()) {
-          window_manager_->UpdateLayout(command);
+        window_manager_->UpdateLayout(command);
       } else {
         LOG(WARNING) << "output/left/bottom are not set";
       }

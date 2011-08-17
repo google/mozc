@@ -1,0 +1,20 @@
+EXPORTS
+    RefreshPolicy
+    InstallIME
+    InstallIMERollback
+    UninstallIME
+    UninstallIMERollback
+    OpenUninstallSurveyPage
+    ShutdownServer
+    RestoreUserIMEEnvironment
+    EnsureIMEIsDisabledForServiceAccount
+    HideCancelButton
+    SaveCustomActionData
+    RestoreServiceState
+    StopCacheService
+    InitialInstallation
+    InitialInstallationCommit
+    WriteApValue
+    WriteApValueRollback
+    INTERNALONLY_DisableErrorReporting__
+    INTERNALONLY_Failure__

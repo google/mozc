@@ -30,8 +30,10 @@
 #include "converter/lattice.h"
 
 #include <string>
+#include <vector>
 
 #include "base/base.h"
+#include "base/singleton.h"
 #include "converter/node.h"
 #include "converter/node_allocator.h"
 #include "dictionary/pos_matcher.h"
@@ -71,7 +73,56 @@ Node *InitEOSNode(Lattice *lattice, uint16 length) {
   eos_node->bnext = NULL;
   return eos_node;
 }
+
+bool PathContainsString(const Node *node, size_t begin_pos, size_t end_pos,
+                        const string &str) {
+  CHECK(node);
+  for (; node->prev != NULL; node = node->prev) {
+    if (node->begin_pos == begin_pos && node->end_pos == end_pos &&
+        node->value == str) {
+      return true;
+    }
+  }
+  return false;
+}
+
+string GetDebugStringForNode(const Node *node, const Node *prev_node) {
+  CHECK(node);
+  stringstream os;
+  os << "[con:" << node->cost - (prev_node ? prev_node->cost : 0) -
+      node->wcost << "]";
+  os << "[lid:" << node->lid << "]";
+  os << "\"" << node->value << "\"";
+  os << "[wcost:" << node->wcost << "]";
+  os << "[cost:" << node->cost << "]";
+  os << "[rid:" << node->rid << "]";
+  return os.str();
+}
+
+string GetDebugStringForPath(const Node *end_node) {
+  CHECK(end_node);
+  stringstream os;
+  vector<const Node *> node_vector;
+
+  for (const Node *node = end_node; node; node = node->prev) {
+    node_vector.push_back(node);
+  }
+  const Node *prev_node = NULL;
+
+  for (int i = static_cast<int>(node_vector.size()) - 1; i >= 0; --i) {
+    const Node *node = node_vector[i];
+    os << GetDebugStringForNode(node, prev_node);
+    prev_node = node;
+  }
+  return os.str();
+}
 }  // namespace
+
+struct LatticeDisplayNodeInfo {
+  size_t display_node_begin_pos_;
+  size_t display_node_end_pos_;
+  string display_node_str_;
+};
 
 Lattice::Lattice() : node_allocator_(new NodeAllocator) {}
 
@@ -157,5 +208,71 @@ void Lattice::Clear() {
   begin_nodes_.clear();
   end_nodes_.clear();
   node_allocator_->Free();
+}
+
+void Lattice::SetDebugDisplayNode(size_t begin_pos, size_t end_pos,
+                                         const string &str) {
+  LatticeDisplayNodeInfo *info = Singleton<LatticeDisplayNodeInfo>::get();
+  info->display_node_begin_pos_ = begin_pos;
+  info->display_node_end_pos_ = end_pos;
+  info->display_node_str_ = str;
+}
+
+void Lattice::ResetDebugDisplayNode() {
+  LatticeDisplayNodeInfo *info = Singleton<LatticeDisplayNodeInfo>::get();
+  info->display_node_str_.clear();
+}
+
+string Lattice::DebugString() const {
+  stringstream os;
+  if (!has_lattice()) {
+    return "";
+  }
+
+  vector<const Node *> best_path_nodes;
+
+  const Node *node = eos_nodes();
+  // Print the best path
+  os << "Best path: ";
+  os << GetDebugStringForPath(node);
+  os << endl;
+
+  LatticeDisplayNodeInfo *info = Singleton<LatticeDisplayNodeInfo>::get();
+
+  if (info->display_node_str_.empty()) {
+    return os.str();
+  }
+
+  for (; node != NULL; node = node->prev) {
+    best_path_nodes.push_back(node);
+  }
+
+  // Print tha path that contains the designated node
+  for (vector<const Node *>::const_iterator it = best_path_nodes.begin();
+       it != best_path_nodes.end(); ++it) {
+    const Node *best_path_node = *it;
+    if (best_path_node->begin_pos < info->display_node_end_pos_) {
+      break;
+    }
+    for (const Node *prev_node = end_nodes(best_path_node->begin_pos);
+         prev_node; prev_node = prev_node->enext) {
+      if (!PathContainsString(prev_node,
+                              info->display_node_begin_pos_,
+                              info->display_node_end_pos_,
+                              info->display_node_str_)) {
+        continue;
+      }
+      os << "The path " << GetDebugStringForPath(prev_node) <<
+          " ( + connection cost + wcost: " << best_path_node->wcost << ")"
+         << endl << "was defeated"
+         << " by the path " << endl
+         << GetDebugStringForPath(best_path_node->prev)
+         << " connecting to the node "
+         << GetDebugStringForNode(best_path_node, best_path_node->prev)
+         << endl;
+    }
+  }
+
+  return os.str();
 }
 }  // namespace mozc

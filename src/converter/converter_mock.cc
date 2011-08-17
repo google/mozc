@@ -31,10 +31,12 @@
 
 #include <string>
 #include "converter/segments.h"
+#include "converter/user_data_manager_mock.h"
 
 namespace mozc {
 
-ConverterMock::ConverterMock() {
+ConverterMock::ConverterMock()
+    : user_data_manager_(new UserDataManagerMock) {
   LOG(INFO) << "ConverterMock is created";
 }
 
@@ -130,27 +132,6 @@ void ConverterMock::SetResizeSegment2(Segments *segments, bool result) {
   resizesegment2_output_.segments.CopyFrom(*segments);
   resizesegment2_output_.return_value = result;
 }
-
-void ConverterMock::SetSync(bool result) {
-  sync_output_ = result;
-}
-
-void ConverterMock::SetReload(bool result) {
-  reload_output_ = result;
-}
-
-void ConverterMock::SetClearUserHistory(bool result) {
-  clearuserhistory_output_ = result;
-}
-
-void ConverterMock::SetClearUserPrediction(bool result) {
-  clearuserprediction_output_ = result;
-}
-
-void ConverterMock::SetClearUnusedUserPrediction(bool result) {
-  clearunuseduserprediction_output_ = result;
-}
-
 
 void ConverterMock::GetStartConversion(Segments *segments, string *key) {
   segments->CopyFrom(startconversion_input_.segments);
@@ -459,28 +440,12 @@ bool ConverterMock::ResizeSegment(Segments *segments,
   }
 }
 
-bool ConverterMock::Sync() const {
-  VLOG(2) << "mock function: Sync";
-  return sync_output_;
+UserDataManagerInterface *ConverterMock::GetUserDataManager() {
+  return user_data_manager_.get();
 }
 
-bool ConverterMock::Reload() const {
-  VLOG(2) << "mock function: Reload";
-  return reload_output_;
-}
-
-bool ConverterMock::ClearUserHistory() const {
-  VLOG(2) << "mock function: ClearUserHistory";
-  return clearuserhistory_output_;
-}
-
-bool ConverterMock::ClearUserPrediction() const {
-  VLOG(2) << "mock function: ClearUserPrediction";
-  return clearuserprediction_output_;
-}
-
-bool ConverterMock::ClearUnusedUserPrediction() const {
-  VLOG(2) << "mock function: ClearUserPrediction";
-  return clearunuseduserprediction_output_;
+void ConverterMock::SetUserDataManager(
+    UserDataManagerInterface *user_data_manager) {
+  user_data_manager_.reset(user_data_manager);
 }
 }  // namespace mozc

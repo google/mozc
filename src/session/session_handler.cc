@@ -39,11 +39,11 @@
 #include "base/process.h"
 #include "base/singleton.h"
 #include "base/stopwatch.h"
-#include "converter/converter_interface.h"
+#include "config/config_handler.h"
+#include "config/config.pb.h"
+#include "converter/user_data_manager_interface.h"
 #include "session/commands.pb.h"
-#include "session/config_handler.h"
-#include "session/config.pb.h"
-#include "session/session_factory.h"
+#include "session/session_factory_manager.h"
 #include "session/session_interface.h"
 #include "session/session_observer_handler.h"
 #include "session/session_watch_dog.h"
@@ -110,7 +110,7 @@ SessionHandler::SessionHandler()
       last_cleanup_time_(0),
       last_create_session_time_(0),
       session_factory_(
-          session::SessionFactory::GetDefaultSessionFactory()),
+          session::SessionFactoryManager::GetSessionFactory()),
       observer_handler_(new session::SessionObserverHandler()),
       stopwatch_(new Stopwatch) {
   if (FLAGS_restricted) {
@@ -182,7 +182,7 @@ void SessionHandler::ReloadConfig() {
 
 bool SessionHandler::SyncData(commands::Command *command) {
   VLOG(1) << "Syncing user data";
-  ConverterFactory::GetConverter()->Sync();
+  session_factory_->GetUserDataManager()->Sync();
   command->mutable_output()->set_id(command->input().id());
   return true;
 }
@@ -206,32 +206,35 @@ bool SessionHandler::Reload(commands::Command *command) {
 
 bool SessionHandler::ClearUserHistory(commands::Command *command) {
   VLOG(1) << "Clearing user history";
-  ConverterFactory::GetConverter()->ClearUserHistory();
+  session_factory_->GetUserDataManager()->ClearUserHistory();
   command->mutable_output()->set_id(command->input().id());
   return true;
 }
 
 bool SessionHandler::ClearUserPrediction(commands::Command *command) {
   VLOG(1) << "Clearing user prediction";
-  ConverterFactory::GetConverter()->ClearUserPrediction();
+  session_factory_->GetUserDataManager()->ClearUserPrediction();
   command->mutable_output()->set_id(command->input().id());
   return true;
 }
 
 bool SessionHandler::ClearUnusedUserPrediction(commands::Command *command) {
   VLOG(1) << "Clearing unused user prediction";
-  ConverterFactory::GetConverter()->ClearUnusedUserPrediction();
+  session_factory_->GetUserDataManager()->ClearUnusedUserPrediction();
   command->mutable_output()->set_id(command->input().id());
   return true;
 }
 
-bool SessionHandler::GetConfig(commands::Command *command) {
-  VLOG(1) << "Getting user config";
+bool SessionHandler::GetStoredConfig(commands::Command *command) {
+  VLOG(1) << "Getting stored config";
   // Ensure the onmemory config is same as the locally stored one
   // because the local data could be changed by sync.
   ReloadConfig();
 
-  if (!config::ConfigHandler::GetConfig(
+  // Use GetStoredConfig instead of GetConfig because GET_CONFIG
+  // command should return raw stored config, which is not
+  // affected by imposed config.
+  if (!config::ConfigHandler::GetStoredConfig(
           command->mutable_output()->mutable_config())) {
     LOG(WARNING) << "cannot get config";
     return false;
@@ -240,7 +243,7 @@ bool SessionHandler::GetConfig(commands::Command *command) {
   return true;
 }
 
-bool SessionHandler::SetConfig(commands::Command *command) {
+bool SessionHandler::SetStoredConfig(commands::Command *command) {
   VLOG(1) << "Setting user config";
   if (!command->input().has_config()) {
     LOG(WARNING) << "config is empty";
@@ -253,7 +256,21 @@ bool SessionHandler::SetConfig(commands::Command *command) {
   }
 
   command->mutable_output()->mutable_config()->CopyFrom(config);
-  command->mutable_output()->set_id(command->input().id());
+
+  Reload(command);
+
+  return true;
+}
+
+bool SessionHandler::SetImposedConfig(commands::Command *command) {
+  VLOG(1) << "Setting imposed config";
+  if (!command->input().has_config()) {
+    LOG(WARNING) << "config is empty";
+    return false;
+  }
+
+  const mozc::config::Config &config = command->input().config();
+  config::ConfigHandler::SetImposedConfig(config);
 
   Reload(command);
 
@@ -299,10 +316,13 @@ bool SessionHandler::EvalCommand(commands::Command *command) {
       eval_succeeded = ClearUnusedUserPrediction(command);
       break;
     case commands::Input::GET_CONFIG:
-      eval_succeeded = GetConfig(command);
+      eval_succeeded = GetStoredConfig(command);
       break;
     case commands::Input::SET_CONFIG:
-      eval_succeeded = SetConfig(command);
+      eval_succeeded = SetStoredConfig(command);
+      break;
+    case commands::Input::SET_IMPOSED_CONFIG:
+      eval_succeeded = SetImposedConfig(command);
       break;
     case commands::Input::SHUTDOWN:
       eval_succeeded = Shutdown(command);
@@ -461,7 +481,7 @@ bool SessionHandler::DeleteSession(commands::Command *command) {
   const SessionID id = command->input().id();
   command->mutable_output()->set_id(id);
   DeleteSessionID(id);
-  ConverterFactory::GetConverter()->Sync();
+  session_factory_->GetUserDataManager()->Sync();
   return true;
 }
 
@@ -529,7 +549,7 @@ bool SessionHandler::Cleanup(commands::Command *command) {
 
   // Sync all data.
   // This is a regression bug fix http://b/issue?id=3033708
-  ConverterFactory::GetConverter()->Sync();
+  session_factory_->GetUserDataManager()->Sync();
 
   // timeout is enabled.
   if (FLAGS_timeout > 0 &&
