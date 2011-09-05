@@ -46,6 +46,7 @@
 #include "rewriter/user_segment_history_rewriter.h"
 #include "rewriter/variants_rewriter.h"
 #include "rewriter/version_rewriter.h"
+#include "rewriter/zipcode_rewriter.h"
 #if defined(OS_MACOSX) || defined(OS_WINDOWS)
 // TODO(horo): Usage is available only in Mac and Windows now.
 #include "rewriter/usage_rewriter.h"
@@ -72,6 +73,7 @@ RewriterImpl::RewriterImpl() {
   AddRewriter(new EmoticonRewriter);
   AddRewriter(new UnicodeRewriter);
   AddRewriter(new VariantsRewriter);
+  AddRewriter(new ZipcodeRewriter);
 
   if (FLAGS_use_history_rewriter) {
     AddRewriter(new UserBoundaryHistoryRewriter);

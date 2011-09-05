@@ -49,3 +49,6 @@ IsolatedWord 特殊,短縮よみ
 
 # サジェストのみ
 SuggestOnlyWord 特殊,サジェストのみ
+
+# Used in UsageRewriter
+ContentWordWithConjugation ^(動詞,自立,*,*,五段|動詞,自立,*,*,一段|形容詞,自立)

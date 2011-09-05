@@ -918,6 +918,27 @@
           'xcode_settings': {
             'INSTALL_PATH': '@executable_path/../Frameworks',
           },
+          'conditions': [
+            ['use_qt=="YES" and branding=="GoogleJapaneseInput"', {
+              'postbuilds': [
+                {
+                  'postbuild_name': 'make Resources directory',
+                  'action': [
+                    'mkdir', '-p',
+                    '${BUILT_PRODUCTS_DIR}/<(branding)Tool_lib.framework/Contents/Resources',
+                  ],
+                },
+                {
+                  'postbuild_name': 'copy qt_menu.nib to Resources directory',
+                  'action': [
+                    'cp', '-rf',
+                     '<(qt_dir)/src/gui/mac/qt_menu.nib',
+                     '${BUILT_PRODUCTS_DIR}/<(branding)Tool_lib.framework/Contents/Resources/qt_menu.nib',
+                  ],
+                },
+              ],
+            }],
+          ],
         }, {
           'type': 'static_library',
         }],

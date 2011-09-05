@@ -263,7 +263,8 @@ void GenericTableEditorDialog::Export() {
 
   const QString filename =
       QFileDialog::getSaveFileName(this, tr("export to file"),
-                                   QDir::homePath());
+          QDir::homePath() + QDir::separator() +
+          QString(GetDefaultFilename().c_str()));
   if (filename.isEmpty()) {
     return;
   }

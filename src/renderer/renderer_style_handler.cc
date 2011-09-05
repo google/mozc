@@ -183,7 +183,7 @@ void RendererStyleHandlerImpl::GetDefaultRendererStyle(
   infostyle->set_window_width(200 * scale_factor_x);
   infostyle->mutable_title_style()->set_font_size(15 * scale_factor_y);
   infostyle->mutable_title_style()->set_left_padding(5 * scale_factor_x);
-  infostyle->mutable_description_style()->set_font_size(11 * scale_factor_y);
+  infostyle->mutable_description_style()->set_font_size(12 * scale_factor_y);
   infostyle->mutable_description_style()->set_left_padding(
       15 * scale_factor_x);
   infostyle->mutable_border_color()->set_r(0x96);

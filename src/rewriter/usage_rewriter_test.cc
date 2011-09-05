@@ -318,4 +318,50 @@ TEST_F(UsageRewriterTest, SameUsageTest) {
   EXPECT_EQ(segments.conversion_segment(0).candidate(1).usage_id,
             segments.conversion_segment(0).candidate(2).usage_id);
 }
+
+TEST_F(UsageRewriterTest, GetKanjiPrefixAndOneHiragana) {
+  //  EXPECT_EQ("合わ",
+  // UsageRewriter::GetKanjiPrefixAndOneHiragana("合わせる"));
+  EXPECT_EQ("\xE5\x90\x88\xE3\x82\x8F",
+            UsageRewriter::GetKanjiPrefixAndOneHiragana(
+                "\xE5\x90\x88\xE3\x82\x8F\xE3\x81\x9B\xE3\x82\x8B"));
+
+  // EXPECT_EQ("合う",
+  // UsageRewriter::GetKanjiPrefixAndOneHiragana("合う"));
+  EXPECT_EQ("\xE5\x90\x88\xE3\x81\x86",
+            UsageRewriter::GetKanjiPrefixAndOneHiragana(
+                "\xE5\x90\x88\xE3\x81\x86"));
+
+  // EXPECT_EQ("合合わ",
+  // UsageRewriter::GetKanjiPrefixAndOneHiragana("合合わせる"));
+  EXPECT_EQ("\xE5\x90\x88\xE5\x90\x88\xE3\x82\x8F",
+            UsageRewriter::GetKanjiPrefixAndOneHiragana(
+                "\xE5\x90\x88\xE5\x90\x88\xE3\x82\x8F\xE3\x81\x9B"
+                "\xE3\x82\x8B"));
+
+  // EXPECT_EQ("", UsageRewriter::GetKanjiPrefixAndOneHiragana("合"));
+  EXPECT_EQ("", UsageRewriter::GetKanjiPrefixAndOneHiragana("\xE5\x90\x88"));
+
+  // EXPECT_EQ("", UsageRewriter::GetKanjiPrefixAndOneHiragana("京都"));
+  EXPECT_EQ("", UsageRewriter::GetKanjiPrefixAndOneHiragana(
+      "\xE4\xBA\xAC\xE9\x83\xBD"));
+
+  // EXPECT_EQ("",
+  // UsageRewriter::GetKanjiPrefixAndOneHiragana("合合合わせる"));
+  EXPECT_EQ("", UsageRewriter::GetKanjiPrefixAndOneHiragana(
+      "\xE5\x90\x88\xE5\x90\x88\xE5\x90\x88\xE3\x82\x8F"
+      "\xE3\x81\x9B\xE3\x82\x8B"));
+
+  // EXPECT_EQ("",
+  // UsageRewriter::GetKanjiPrefixAndOneHiragana("カタカナ"));
+  EXPECT_EQ("", UsageRewriter::GetKanjiPrefixAndOneHiragana(
+      "\xE3\x82\xAB\xE3\x82\xBF\xE3\x82\xAB\xE3\x83\x8A"));
+
+  EXPECT_EQ("", UsageRewriter::GetKanjiPrefixAndOneHiragana("abc"));
+
+  // EXPECT_EQ("",
+  // UsageRewriter::GetKanjiPrefixAndOneHiragana("あ合わせる"));
+  EXPECT_EQ("", UsageRewriter::GetKanjiPrefixAndOneHiragana(
+      "\xE3\x81\x82\xE5\x90\x88\xE3\x82\x8F\xE3\x81\x9B\xE3\x82\x8B"));
+}
 }  // mozc namespace

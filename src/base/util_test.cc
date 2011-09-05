@@ -2018,9 +2018,9 @@ TEST(UtilTest, ScriptType) {
       "\xE3\x87\xB6\xE3\x87\xB7\xE3\x87\xB8\xE3\x87\xB9\xE3\x87\xBA"
       "\xE3\x87\xBB\xE3\x87\xBC\xE3\x87\xBD\xE3\x87\xBE\xE3\x87\xBF",
       Util::KATAKANA));
-  // "ð" U+1B000: KATAKANA LETTER ARCHAIC E
+  // "𛀀" U+1B000: KATAKANA LETTER ARCHAIC E
   EXPECT_TRUE(Util::IsScriptType("\xF0\x9B\x80\x80", Util::KATAKANA));
-  // "ð" U+1B001: HIRAGANA LETTER ARCHAIC YE
+  // "𛀁" U+1B001: HIRAGANA LETTER ARCHAIC YE
   EXPECT_TRUE(Util::IsScriptType("\xF0\x9B\x80\x81", Util::HIRAGANA));
 
   EXPECT_TRUE(Util::IsScriptType("012", Util::NUMBER));
@@ -2105,9 +2105,9 @@ TEST(UtilTest, ScriptType) {
       "\xE3\x87\xB1\xE3\x87\xB2\xE3\x87\xB3\xE3\x87\xB4\xE3\x87\xB5"
       "\xE3\x87\xB6\xE3\x87\xB7\xE3\x87\xB8\xE3\x87\xB9\xE3\x87\xBA"
       "\xE3\x87\xBB\xE3\x87\xBC\xE3\x87\xBD\xE3\x87\xBE\xE3\x87\xBF"));
-  // "ð" U+1B000 KATAKANA LETTER ARCHAIC E
+  // "𛀀" U+1B000 KATAKANA LETTER ARCHAIC E
   EXPECT_EQ(Util::KATAKANA, Util::GetScriptType("\xF0\x9B\x80\x80"));
-  // "ð" U+1B001 HIRAGANA LETTER ARCHAIC YE
+  // "𛀁" U+1B001 HIRAGANA LETTER ARCHAIC YE
   EXPECT_EQ(Util::HIRAGANA, Util::GetScriptType("\xF0\x9B\x80\x81"));
 
   // "!グーグル"
@@ -2221,11 +2221,11 @@ TEST(UtilTest, ScriptType) {
   EXPECT_EQ(Util::KANJI, Util::GetScriptType("\xE9\xBE\xBB"));
   // U+9FFF is not assigned yet but reserved for CJK Unified Ideographs.
   EXPECT_EQ(Util::KANJI, Util::GetScriptType("\xE9\xBE\xFF"));
-  // "ð ®咤" U+20B9F U+54A4
+  // "𠮟咤" U+20B9F U+54A4
   EXPECT_EQ(Util::KANJI, Util::GetScriptType("\xF0\xA0\xAE\x9F\xE5\x92\xA4"));
-  // "ð ®·野" U+20BB7 U+91CE
+  // "𠮷野" U+20BB7 U+91CE
   EXPECT_EQ(Util::KANJI, Util::GetScriptType("\xF0\xA0\xAE\xB7\xE9\x87\x8E"));
-  // "ð¯¢" U+2F884
+  // "巽" U+2F884
   EXPECT_EQ(Util::KANJI, Util::GetScriptType("\xF0\xAF\xA2\x84"));
 }
 

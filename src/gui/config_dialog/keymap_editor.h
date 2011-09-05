@@ -61,6 +61,9 @@ class KeyMapEditorDialog : public GenericTableEditorDialog {
   virtual void OnEditMenuAction(QAction *action);
 
  protected:
+  virtual string GetDefaultFilename() const {
+    return "keymap.txt";
+  }
   virtual bool LoadFromStream(istream *is);
   virtual bool Update();
 

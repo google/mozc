@@ -1,3 +1,10 @@
+mozc (1.2.831.102) lucid; urgency=low
+
+  * Updated dictionary.
+  * Fixed some bugs.
+
+ -- Tatsuhisa Yamaguchi <yamaguchi>  Thu, 01 Sep 2011 15:37:09 +0900
+
 mozc (1.2.809.102) lucid; urgency=low
 
   * Ver. 1.2.809.102 on 2011-08-12

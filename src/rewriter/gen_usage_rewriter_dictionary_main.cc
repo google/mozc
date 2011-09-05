@@ -278,7 +278,7 @@ void Convert() {
         << i->value << "(" << i->key << ")" << endl;
     ++usage_id;
   }
-  *ofs << "  { NULL, NULL, NULL, NULL, NULL }" << endl;
+  *ofs << "  { 0, NULL, NULL, 0, NULL }" << endl;
   *ofs << "};" << endl;
 
   if (ofs != &cout) {

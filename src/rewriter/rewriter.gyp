@@ -62,6 +62,7 @@
         'user_segment_history_rewriter.cc',
         'variants_rewriter.cc',
         'version_rewriter.cc',
+        'zipcode_rewriter.cc',
       ],
       'dependencies': [
         '../base/base.gyp:base',

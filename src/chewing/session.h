@@ -32,7 +32,7 @@
 #ifndef MOZC_CHEWING_SESSION_H_
 #define MOZC_CHEWING_SESSION_H_
 
-#include <chewing/chewing.h>
+#include <chewing.h>
 
 #include "base/base.h"
 #include "session/commands.pb.h"

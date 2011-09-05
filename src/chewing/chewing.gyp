@@ -49,6 +49,9 @@
         '../session/session_base.gyp:genproto_session',
         '../session/session.gyp:session_handler',
       ],
+      'includes': [
+        '../unix/ibus/ibus_libraries.gypi',
+      ],
     },
   ],
   'conditions': [

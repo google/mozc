@@ -34,28 +34,37 @@
 #include <string>
 
 #include "base/base.h"
+#include "converter/segments.h"
 #include "rewriter/rewriter_interface.h"
+#include "testing/base/public/gunit_prod.h"  // for FRIEND_TEST()
 
 namespace mozc {
-  struct UsageDictItem {
-    const int32 id;
-    const char *key;
-    const char *value;
-    const int32 conjugation_id;
-    const char *meaning;
-  };
+struct UsageDictItem {
+  const int32 id;
+  const char *key;
+  const char *value;
+  const int32 conjugation_id;
+  const char *meaning;
+};
 
-class Segments;
 class UsageRewriter: public RewriterInterface  {
  public:
   UsageRewriter();
   virtual ~UsageRewriter();
   virtual bool Rewrite(Segments *segments) const;
+
  private:
+  FRIEND_TEST(UsageRewriterTest, GetKanjiPrefixAndOneHiragana);
+
   typedef pair<string, string> StrPair;
+  static string GetKanjiPrefixAndOneHiragana(const string &word);
+
+  const UsageDictItem *LookupUnmatchedUsageHeuristically(
+      const Segment::Candidate &candidate) const;
+  const UsageDictItem *LookupUsage(
+      const Segment::Candidate &candidate) const;
+
   map<StrPair, const UsageDictItem *> key_value_usageitem_map_;
-  const UsageDictItem *LookupUsage(const string &key,
-                                   const string &value) const;
 };
 }  // namespace mozc
 #endif  // MOZC_REWRITER_USAGE_REWRITER_H_

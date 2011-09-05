@@ -422,6 +422,9 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
 }
 
 - (void)switchMode:(CompositionMode)new_mode client:(id)sender {
+  if (mode_ == new_mode) {
+    return;
+  }
   if (mode_ != mozc::commands::DIRECT && new_mode == mozc::commands::DIRECT) {
     [self switchModeToDirect:sender];
   } else if (new_mode != mozc::commands::DIRECT) {
@@ -785,6 +788,27 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
   }
   if ([event type] != NSKeyDown && [event type] != NSFlagsChanged) {
     return NO;
+  }
+
+  // Handle KANA key and EISU key.  We explicitly handles this here
+  // for mode switch because some text area such like iPhoto person
+  // name editor does not call setValue:forTag:client: method.
+  // see: http://www.google.com/support/forum/p/ime/thread?tid=3aafb74ff71a1a69&hl=ja&fid=3aafb74ff71a1a690004aa3383bc9f5d
+  if ([event type] == NSKeyDown) {
+    // these calling of switchMode: can be duplicated if the
+    // application sends the setValue:forTag:client: and handleEvent:
+    // at the same key event, but that's okay because switchMode:
+    // method does nothing if the new mode is same as the current
+    // mode.
+    if ([event keyCode] == kVK_JIS_Kana) {
+      [self switchMode:mozc::commands::HIRAGANA client:sender];
+      [self switchDisplayMode];
+    } else if ([event keyCode] == kVK_JIS_Eisu) {
+      CompositionMode new_mode = ([composedString_ length] == 0) ?
+          mozc::commands::DIRECT : mozc::commands::HALF_ASCII;
+      [self switchMode:new_mode client:sender];
+      [self switchDisplayMode];
+    }
   }
 
   // UNDO by double tapping Kana-key

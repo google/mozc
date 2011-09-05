@@ -32,7 +32,7 @@
 #ifndef MOZC_CHEWING_SCOPED_CHEWING_PTR_H_
 #define MOZC_CHEWING_SCOPED_CHEWING_PTR_H_
 
-#include <chewing/chewingio.h>
+#include <chewingio.h>
 
 #include "base/port.h"
 

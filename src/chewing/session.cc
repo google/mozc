@@ -30,8 +30,6 @@
 #include "chewing/session.h"
 
 #include <cctype>
-#include <chewing/mod_aux.h>
-#include <chewing/global.h>  // for constants
 
 #include "base/base.h"
 #include "base/singleton.h"

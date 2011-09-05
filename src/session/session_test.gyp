@@ -136,7 +136,6 @@
           '../<(test_data_subdir)/session_usage_observer_testcase15.txt',
           '../<(test_data_subdir)/session_usage_observer_testcase16.txt',
           '../<(test_data_subdir)/session_usage_observer_testcase17.txt',
-          '../<(test_data_subdir)/session_usage_observer_testcase18.txt',
         ],
         'test_data_subdir': 'data/test/session',
       },

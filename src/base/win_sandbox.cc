@@ -537,7 +537,7 @@ bool CreateSuspendedRestrictedProcess(scoped_array<wchar_t> *command_line,
 
   PSECURITY_ATTRIBUTES security_attributes_ptr = NULL;
   SECURITY_ATTRIBUTES security_attributes = {};
-  if (!WinSandbox::MakeSecurityAttributes(&security_attributes)) {
+  if (WinSandbox::MakeSecurityAttributes(&security_attributes)) {
     security_attributes_ptr = &security_attributes;
     // Override the impersonation thread token's DACL to avoid http://b/1728895
     // On Windows Server, the objects created by a member of
