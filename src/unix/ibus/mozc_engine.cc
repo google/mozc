@@ -949,43 +949,7 @@ bool MozcEngine::UpdateCandidates(IBusEngine *engine,
 
   for (int i = 0; i < candidates.candidate_size(); ++i) {
     const commands::Candidates::Candidate &candidate = candidates.candidate(i);
-
-#ifdef OS_CHROMEOS
-    const bool has_description = candidate.has_annotation() &&
-                                 candidate.annotation().has_description();
-    IBusText *text = NULL;
-    if (has_description) {
-      // |kDelimiter| divides a candidate and an annotation.
-      static const char kDelimiter[] = " ";
-
-      // Append an annotation to a candidate word. Both are separated
-      // by |kDelimiter|.
-      text = ibus_text_new_from_string(
-                 (candidate.value() + kDelimiter +
-                  candidate.annotation().description()).c_str());
-
-      // The candidate window on Chrome OS will know
-      // the start index of an annotation by specific number (e.g. 0x888888).
-      // TODO(nhiroki): We should modify the way when iBus supports annotations.
-      const guint kAnnotationForegroundColor = 0x888888;
-
-      // Insert an attribute. It incidates annotation's
-      // start and end index.
-      const guint start = Util::CharsLen(candidate.value() + kDelimiter);
-      const guint end = start +
-          Util::CharsLen(candidate.annotation().description());
-      ibus_text_append_attribute(text,
-                                 IBUS_ATTR_TYPE_FOREGROUND,
-                                 kAnnotationForegroundColor,
-                                 start,
-                                 end);
-    } else {
-      text = ibus_text_new_from_string(candidate.value().c_str());
-    }
-#else
     IBusText *text = ibus_text_new_from_string(candidate.value().c_str());
-#endif
-
     ibus_lookup_table_append_candidate(table, text);
     // |text| is released by ibus_engine_update_lookup_table along with |table|.
 
@@ -1003,6 +967,34 @@ bool MozcEngine::UpdateCandidates(IBusEngine *engine,
     // |label| is released by ibus_engine_update_lookup_table along with
     // |table|.
   }
+
+#if defined(OS_CHROMEOS) and IBUS_CHECK_VERSION(1, 3, 99)
+  // The function ibus_serializable_set_attachment() had been changed
+  // to use GVariant in ibus-1.3.99.
+  // https://github.com/ibus/ibus/commit/ac9dfac13cef34288440a2ecdf067cd827fb2f8f
+  // But these codes are valid only for ChromeOS since:
+  //  1) IBus's default panel (main.py) does not support the attachment.
+  //  2) Ubuntu 10.10 uses ibus-1.3.99, but the version of ibus it uses is
+  //     very old.
+  // If we only use IBUS_CHECK_VERSION, ibus-mozc does not compile on
+  // Ubuntu 10.10.
+  // Also we do not use only OS_CHROMEOS, because we will compile ibus-mozc for
+  // ChromeOS on Ubuntu for debugging even if following feature is missed.
+  if (output.has_candidates()) {
+    string buf;
+    output.candidates().SerializeToString(&buf);
+
+    GByteArray *bytearray = g_byte_array_sized_new(buf.length());
+    g_byte_array_append(bytearray,
+        reinterpret_cast<const guint8*>(buf.c_str()), buf.length());
+    GVariant* variant = g_variant_new_from_data(G_VARIANT_TYPE("ay"),
+        bytearray->data, bytearray->len, TRUE,
+        reinterpret_cast<GDestroyNotify>(g_byte_array_unref), bytearray);
+    ibus_serializable_set_attachment(
+        IBUS_SERIALIZABLE(table), "mozc.candidates", variant);
+  }
+#endif
+
   ibus_engine_update_lookup_table(engine, table, TRUE);
   // |table| is released by ibus_engine_update_lookup_table.
 

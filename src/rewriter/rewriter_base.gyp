@@ -169,46 +169,38 @@
             '<@(input_files)',
           ],
         },
-        {
-          'action_name': 'gen_usage_rewriter_data',
-          'variables': {
-            'usage_data_file': [
-              '<(DEPTH)/third_party/japanese_usage_dictionary/usage_dict.txt',
-            ],
-            'cforms_file': [
-              '../data/rules/cforms.def',
-            ],
-          },
-          'inputs': [
-            '<@(usage_data_file)',
-            '<@(cforms_file)',
-          ],
-          'conditions': [['two_pass_build==0', {
-            'inputs': [
-              '<(mozc_build_tools_dir)/gen_usage_rewriter_dictionary_main',
-            ],
-          }]],
-          'outputs': [
-            '<(gen_out_dir)/usage_rewriter_data.h',
-          ],
-          'action': [
-            '<(mozc_build_tools_dir)/gen_usage_rewriter_dictionary_main',
-            '--usage_data_file=<@(usage_data_file)',
-            '--cforms_file=<@(cforms_file)',
-            '--logtostderr',
-            '--output=<(gen_out_dir)/usage_rewriter_data.h',
-          ],
-        },
       ],
-      'conditions': [['two_pass_build==0', {
-        'dependencies': [
-          'install_gen_collocation_data_main',
-          'install_gen_emoticon_rewriter_dictionary_main',
-          'install_gen_single_kanji_rewriter_dictionary_main',
-          'install_gen_symbol_rewriter_dictionary_main',
-          'install_gen_usage_rewriter_dictionary_main',
-        ],
-      }]],
+      'conditions': [
+        ['OS=="mac" or OS=="win" or chromeos==1', {
+          'actions': [
+            {
+              'action_name': 'gen_usage_rewriter_data',
+              'variables': {
+                'usage_data_file': [
+                  '<(DEPTH)/third_party/japanese_usage_dictionary/usage_dict.txt',
+                ],
+                'cforms_file': [
+                  '../data/rules/cforms.def',
+                ],
+              },
+              'inputs': [
+                '<@(usage_data_file)',
+                '<@(cforms_file)',
+              ],
+              'outputs': [
+                '<(gen_out_dir)/usage_rewriter_data.h',
+              ],
+              'action': [
+                '<(mozc_build_tools_dir)/gen_usage_rewriter_dictionary_main',
+                '--usage_data_file=<@(usage_data_file)',
+                '--cforms_file=<@(cforms_file)',
+                '--logtostderr',
+                '--output=<(gen_out_dir)/usage_rewriter_data.h',
+              ],
+            },
+          ],
+        }],
+      ],
     },
     {
       'target_name': 'gen_collocation_data_main',

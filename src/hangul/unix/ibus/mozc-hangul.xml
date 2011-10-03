@@ -16,7 +16,6 @@
   <layout>kr(kr104)</layout>
   <name>mozc-hangul</name>
   <longname>Mozc Hangul</longname>
-  <hotkeys>Shift+space,Hangul</hotkeys>
 </engine>
 </engines>
 </component>

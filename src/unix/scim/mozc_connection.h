@@ -124,8 +124,6 @@ class MozcConnection : public MozcConnectionInterface {
 
   const scoped_ptr<ScimKeyTranslator> translator_;
   scoped_ptr<mozc::client::ClientInterface> client_;
-  mozc::client::ServerLauncherInterface *server_launcher_;
-  scoped_ptr<mozc::IPCClientFactoryInterface> client_factory_;
   mozc::config::Config::PreeditMethod preedit_method_;
 
   DISALLOW_COPY_AND_ASSIGN(MozcConnection);

@@ -363,9 +363,10 @@ def ParseGypOptions(args=None, values=None):
                     help='Specifies the DEPS file.')
   parser.add_option('--gyp_generator', dest='gyp_generator',
                     help='Specifies the generator for GYP.')
-  parser.add_option('--onepass', '-1', dest='onepass', action='store_true',
-                    default=False, help='Builds mozc in one pass. '
-                    'Not recommended, intended to use only for Debug build.')
+  parser.add_option('--deprecated_onepass', '-1', dest='onepass',
+                    action='store_true',
+                    default=False,
+                    help='Not supported. Builds mozc in one pass.')
   parser.add_option('--branding', dest='branding', default='Mozc')
   parser.add_option('--gypdir', dest='gypdir', default='third_party/gyp')
   parser.add_option('--noqt', action='store_true', dest='noqt', default=False)

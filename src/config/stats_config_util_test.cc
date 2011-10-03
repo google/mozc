@@ -40,6 +40,7 @@
 #endif
 
 
+#ifdef GOOGLE_JAPANESE_INPUT_BUILD
 #ifdef OS_WINDOWS
 
 namespace {
@@ -504,46 +505,8 @@ TEST_F(StatsConfigUtilTestWin, SetEnabledForRunLevelHigh) {
   EXPECT_EQ(1, value);
   EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
 
-  // Check if SetEnabled(true) merges kHKLM_ClientStateMedium.
-  test.ClearUsagestatsValue();
-  test.SetUsagestatsValue(kHKLM_ClientStateMedium, 1);
-  EXPECT_TRUE(StatsConfigUtil::SetEnabled(true));
-  EXPECT_FALSE(test.HasUsagestatsValue(kHKCU_ClientState));
-  EXPECT_TRUE(test.HasUsagestatsValue(kHKLM_ClientState));
-  test.GetUsagestatsValue(kHKLM_ClientState, &value);
-  EXPECT_EQ(1, value);
-  EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
-
-  test.ClearUsagestatsValue();
-  test.SetUsagestatsValue(kHKLM_ClientStateMedium, 0);
-  EXPECT_TRUE(StatsConfigUtil::SetEnabled(true));
-  EXPECT_FALSE(test.HasUsagestatsValue(kHKCU_ClientState));
-  EXPECT_TRUE(test.HasUsagestatsValue(kHKLM_ClientState));
-  test.GetUsagestatsValue(kHKLM_ClientState, &value);
-  EXPECT_EQ(1, value);
-  EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
-
   // Check if SetEnabled(false) works as expected.
   test.ClearUsagestatsValue();
-  EXPECT_TRUE(StatsConfigUtil::SetEnabled(false));
-  EXPECT_FALSE(test.HasUsagestatsValue(kHKCU_ClientState));
-  EXPECT_TRUE(test.HasUsagestatsValue(kHKLM_ClientState));
-  test.GetUsagestatsValue(kHKLM_ClientState, &value);
-  EXPECT_EQ(0, value);
-  EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
-
-  // Check if SetEnabled(false) works as expected.
-  test.ClearUsagestatsValue();
-  test.SetUsagestatsValue(kHKLM_ClientStateMedium, 1);
-  EXPECT_TRUE(StatsConfigUtil::SetEnabled(false));
-  EXPECT_FALSE(test.HasUsagestatsValue(kHKCU_ClientState));
-  EXPECT_TRUE(test.HasUsagestatsValue(kHKLM_ClientState));
-  test.GetUsagestatsValue(kHKLM_ClientState, &value);
-  EXPECT_EQ(0, value);
-  EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
-
-  test.ClearUsagestatsValue();
-  test.SetUsagestatsValue(kHKLM_ClientStateMedium, 0);
   EXPECT_TRUE(StatsConfigUtil::SetEnabled(false));
   EXPECT_FALSE(test.HasUsagestatsValue(kHKCU_ClientState));
   EXPECT_TRUE(test.HasUsagestatsValue(kHKLM_ClientState));
@@ -720,35 +683,6 @@ TEST_F(StatsConfigUtilTestWin, IsEnabled) {
 }
 #endif  // !CHANNEL_DEV
 
-TEST_F(StatsConfigUtilTestWin, IsEnabledForRunLevelLow) {
-  RegistryEmulator<__COUNTER__> test;
-
-  test.SetRunLevel(kRunLevelHigh);
-  // Enabling usagestats with proper style.
-  test.SetUsagestatsValue(kHKLM_ClientState, 1);
-  // Disable usagestats with wrong style.
-  test.SetUsagestatsValue(kHKCU_ClientState, 0);
-
-  test.SetRunLevel(kRunLevelLow);
-
-#if defined(CHANNEL_DEV)
-  // In dev channel, IsEnabled always returns true regardless of the registry
-  // settings.
-  EXPECT_TRUE(StatsConfigUtil::IsEnabled());
-#else
-  // In beta and stable channels, disabling entry with wrong style should be
-  // honored even if it is enabled in |kHKLM_ClientState|
-  EXPECT_FALSE(StatsConfigUtil::IsEnabled());
-#endif
-
-  // If the runlevel is low, we cannot remove the entry under HKCU.
-  // The previous states should remain as it were.
-  EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
-  EXPECT_TRUE(test.HasUsagestatsValue(kHKCU_ClientState));
-  DWORD value = 0;
-  test.GetUsagestatsValue(kHKCU_ClientState, &value);
-  EXPECT_EQ(0, value);
-}
 }  // namespace mozc
 #endif  // OS_WINDOWS
 
@@ -761,3 +695,9 @@ TEST(StatsConfigUtilTestLinux, DefaultValueTest) {
   EXPECT_FALSE(mozc::StatsConfigUtil::IsEnabled());
 }
 #endif  // OS_LINUX
+
+#else  // !GOOGLE_JAPANESE_INPUT_BUILD
+TEST(StatsConfigUtilTestNonOfficialBuild, DefaultValueTest) {
+  EXPECT_FALSE(mozc::StatsConfigUtil::IsEnabled());
+}
+#endif

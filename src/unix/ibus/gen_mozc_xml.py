@@ -83,9 +83,6 @@ IBUS_ENGINES_PROPS = {
         'longname': ['%s (Japanese keyboard layout)', '%s (US keyboard layout)',
                      '%s (US Dvorak keyboard layout)'],
         'layout': ['jp', 'us', 'us(dvorak)'],
-        # hotkeys property is Chrome/Chromium OS specific. Upstream ibus-daemon
-        # doesn't support this.
-        'hotkeys': ['Henkan,Zenkaku_Hankaku', '', ''],
     },
 }
 
@@ -165,9 +162,6 @@ def OutputCpp(product_name, component, engine_common, engines):
   for key in engine_common:
     OutputCppVariable(product_name, 'Engine', key, engine_common[key])
   for key in engines:
-    if key == 'hotkeys':
-      # Skip hotkeys because it is not used from C++ code.
-      continue
     print 'const char* kEngine%sArray[] = {' % key.capitalize()
     for i in range(len(engines[key])):
       print '"%s",' % EmbedProductName(product_name, engines[key][i])

@@ -2441,11 +2441,7 @@ UserProfileDirectoryImpl::UserProfileDirectoryImpl() {
       << "Can't get passwd entry for uid " << uid << ".";
   CHECK_LT(0, strlen(pw.pw_dir))
       << "Home directory for uid " << uid << " is not set.";
-#if defined(OS_CHROMEOS)
-  dir = Util::JoinPath(pw.pw_dir, "user/.mozc");
-#else
   dir = Util::JoinPath(pw.pw_dir, ".mozc");
-#endif  // OS_CHROMEOS
 #endif
 
   Util::CreateDirectory(dir);

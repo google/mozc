@@ -140,14 +140,16 @@ void InitIBusComponent(bool executed_by_ibus_daemon) {
 
 int main(gint argc, gchar **argv) {
   InitGoogle(argv[0], &argc, &argv, true);
-  ibus_init();
-  InitIBusComponent(FLAGS_ibus);
 #ifdef OS_CHROMEOS
   // On Chrome OS, mozc does not store the config data to a local file.
   mozc::config::ConfigHandler::SetConfigFileName("memory://config.1.db");
-  mozc::ibus::MozcEngine::InitConfig(g_config);
   mozc::session::JapaneseSessionFactory session_factory;
   mozc::session::SessionFactoryManager::SetSessionFactory(&session_factory);
+#endif  // OS_CHROMEOS
+  ibus_init();
+  InitIBusComponent(FLAGS_ibus);
+#ifdef OS_CHROMEOS
+  mozc::ibus::MozcEngine::InitConfig(g_config);
 #else
 #ifndef NO_LOGGING
   EnableVerboseLog();

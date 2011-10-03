@@ -1,3 +1,9 @@
+mozc (1.2.855.102) lucid; urgency=low
+
+  * Ver. 1.2.855.102 on 2011-09-27
+
+ -- Tsuyoshi Horo <horo>  Tue, 27 Sep 2011 15:55:43 +0900
+
 mozc (1.2.831.102) lucid; urgency=low
 
   * Updated dictionary.

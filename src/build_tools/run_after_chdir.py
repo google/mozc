@@ -58,7 +58,7 @@ def main():
   # We don't capture stdout and stderr from Popen. The output will just
   # be emitted to a terminal or console.
   print sys.argv
-  process = subprocess.Popen(sys.argv)
+  sys.exit(subprocess.call(sys.argv))
 
 if __name__ == '__main__':
   main()

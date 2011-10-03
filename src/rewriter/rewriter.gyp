@@ -80,9 +80,9 @@
         'calculator/calculator.gyp:calculator',
         'rewriter_base.gyp:gen_rewriter_files',
       ],
-      # TODO(horo): usage is available only in Mac and Win now.
+      # TODO(horo): usage is available only in Mac and Win and ChromeOS now.
       'conditions': [
-        ['OS=="mac" or OS=="win"', {
+        ['OS=="mac" or OS=="win" or chromeos==1', {
           'sources': [
             '<(gen_out_dir)/usage_rewriter_data.h',
             'usage_rewriter.cc',

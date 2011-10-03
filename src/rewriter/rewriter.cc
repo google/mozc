@@ -47,8 +47,8 @@
 #include "rewriter/variants_rewriter.h"
 #include "rewriter/version_rewriter.h"
 #include "rewriter/zipcode_rewriter.h"
-#if defined(OS_MACOSX) || defined(OS_WINDOWS)
-// TODO(horo): Usage is available only in Mac and Windows now.
+#if defined(OS_MACOSX) || defined(OS_WINDOWS) || defined(OS_CHROMEOS)
+// TODO(horo): Usage is available only in Mac and Windows and ChromeOS now.
 #include "rewriter/usage_rewriter.h"
 #endif
 DEFINE_bool(use_history_rewriter, true, "Use history rewriter or not.");
@@ -82,12 +82,12 @@ RewriterImpl::RewriterImpl() {
   AddRewriter(new DateRewriter);
   AddRewriter(new FortuneRewriter);
   AddRewriter(new VersionRewriter);
-#if defined(OS_MACOSX) || defined(OS_WINDOWS)
+#if defined(OS_MACOSX) || defined(OS_WINDOWS) || defined(OS_CHROMEOS)
   // TODO(horo): Because infolist renderer window is implimented
-  //             only in Mac and Windows, usage is available only
-  //             in Mac and Winnows.
+  //             only in Mac and Windows and ChromeOS,
+  //             usage is available only in these OS.
   AddRewriter(new UsageRewriter);
-#endif  // defined(OS_MACOSX) || defined(OS_WINDOWS)
+#endif  // defined(OS_MACOSX) || defined(OS_WINDOWS) || defined(OS_CHROMEOS)
 }
 
 RewriterInterface *g_rewriter = NULL;

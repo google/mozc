@@ -48,14 +48,12 @@ MozcConnection::MozcConnection(
     mozc::client::ServerLauncherInterface *server_launcher,
     mozc::IPCClientFactoryInterface *client_factory)
     : translator_(new ScimKeyTranslator),
-      server_launcher_(server_launcher),
-      client_factory_(client_factory),
       preedit_method_(mozc::config::Config::ROMAN) {
   VLOG(1) << "MozcConnection is created";
   mozc::client::ClientInterface *client =
       mozc::client::ClientFactory::NewClient();
-  client->SetServerLauncher(server_launcher_);
-  client->SetIPCClientFactory(client_factory_.get());
+  client->SetServerLauncher(server_launcher);
+  client->SetIPCClientFactory(client_factory);
   client_.reset(client);
 
   mozc::config::Config config;

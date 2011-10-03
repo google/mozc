@@ -57,9 +57,11 @@
 #include "base/util.h"
 
 namespace mozc {
-
 namespace {
+
+#ifdef GOOGLE_JAPANESE_INPUT_BUILD
 #ifdef OS_WINDOWS
+
 const wchar_t kOmahaGUID[] = L"{DDCCD2A9-025E-4142-BCEB-F467B88CF830}";
 const wchar_t kOmahaUsageKey[] =
     L"Software\\Google\\Update\\ClientState\\"
@@ -218,39 +220,34 @@ bool MacStatsConfigUtilImpl::SetEnabled(bool val) {
 #endif  // MACOSX
 
 
-#ifdef OS_LINUX
-class LinuxStatsConfigUtilImpl : public StatsConfigUtilInterface {
-  // TODO(toshiyuki): implement this
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
+
+class NullStatsConfigUtilImpl : public StatsConfigUtilInterface {
  public:
-  LinuxStatsConfigUtilImpl();
-  virtual ~LinuxStatsConfigUtilImpl();
-  bool IsEnabled();
-  bool SetEnabled(bool val);
+  NullStatsConfigUtilImpl() {}
+  virtual ~NullStatsConfigUtilImpl() {}
+  bool IsEnabled() {
+    return false;
+  }
+  bool SetEnabled(bool val) {
+    return true;
+  }
 };
-
-LinuxStatsConfigUtilImpl::LinuxStatsConfigUtilImpl() {}
-
-LinuxStatsConfigUtilImpl::~LinuxStatsConfigUtilImpl() {}
-
-bool LinuxStatsConfigUtilImpl::IsEnabled() {
-  return false;
-}
-
-bool LinuxStatsConfigUtilImpl::SetEnabled(bool val) {
-  return true;
-}
-#endif  // OS_LINUX
 
 StatsConfigUtilInterface *g_stats_config_util_handler = NULL;
 
 // GetStatsConfigUtil and SetHandler are not thread safe.
 
-#ifdef OS_WINDOWS
+#if !defined(GOOGLE_JAPANESE_INPUT_BUILD)
+// For non-official build, use null implementation.
+typedef NullStatsConfigUtilImpl DefaultConfigUtilImpl;
+#elif defined(OS_WINDOWS)
 typedef WinStatsConfigUtilImpl DefaultConfigUtilImpl;
 #elif defined(OS_MACOSX)
 typedef MacStatsConfigUtilImpl DefaultConfigUtilImpl;
 #else
-typedef LinuxStatsConfigUtilImpl DefaultConfigUtilImpl;
+// Fall back mode.  Use null implementation.
+typedef NullStatsConfigUtilImpl DefaultConfigUtilImpl;
 #endif
 
 StatsConfigUtilInterface &GetStatsConfigUtil() {
