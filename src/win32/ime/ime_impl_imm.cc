@@ -45,6 +45,8 @@
 #include "base/update_util.h"
 #include "base/util.h"
 #include "config/stats_config_util.h"
+#include "languages/global_language_spec.h"
+#include "languages/japanese/lang_dep_spec.h"
 #include "win32/base/conversion_mode_util.h"
 #include "win32/base/immdev.h"
 #include "win32/base/string_util.h"
@@ -57,6 +59,7 @@
 #include "win32/ime/ime_mouse_tracker.h"
 #include "win32/ime/ime_private_context.h"
 #include "win32/ime/ime_scoped_context.h"
+#include "win32/ime/ime_surrogate_pair_observer.h"
 #include "win32/ime/ime_trace.h"
 #include "win32/ime/ime_ui_context.h"
 #include "win32/ime/ime_ui_visibility_tracker.h"
@@ -66,17 +69,16 @@
 namespace {
 HINSTANCE g_instance = NULL;
 DWORD g_ime_system_info = MAXDWORD;
+mozc::language::LanguageDependentSpecInterface *g_lang_spec_ptr = NULL;
 // True if the boot mode is safe mode.
 bool g_in_safe_mode = true;
 // True when Util::EnsureVitalImmutableDataIsAvailable() returns false.
 bool g_fundamental_data_is_not_available = false;
 
-// We skip breakpad initialization on 64 bit applications since
-// GoogleCrashHandler.exe does not support them.
-// TODO(yukawa): enable breakpad in x64 env when it is supported.
-#if !defined(_M_X64) && defined(GOOGLE_JAPANESE_INPUT_BUILD)
+// Breakpad never be enabled except for official builds.
+#if defined(GOOGLE_JAPANESE_INPUT_BUILD)
 #define USE_BREAKPAD
-#endif  // !_M_X64 && GOOGLE_JAPANESE_INPUT_BUILD
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
 #if defined(USE_BREAKPAD)
 // A critical section object for breakpad because its initialization routine is
@@ -195,6 +197,9 @@ BOOL OnDllProcessAttach(HINSTANCE instance, bool static_loading) {
       &g_critical_section_for_breakpad);
 #endif  // USE_BREAKPAD
 
+  g_lang_spec_ptr = new mozc::japanese::LangDepSpecJapanese();
+  mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(g_lang_spec_ptr);
+
   ATOM atom = INVALID_ATOM;
   if (!UIWindowManager::OnDllProcessAttach(instance, static_loading)) {
     return FALSE;
@@ -227,6 +232,10 @@ BOOL OnDllProcessDetach(HINSTANCE instance, bool process_shutdown) {
   mozc::CrashReportHandler::SetCriticalSection(NULL);
   ::DeleteCriticalSection(&g_critical_section_for_breakpad);
 #endif  // USE_BREAKPAD
+
+  mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(NULL);
+  delete g_lang_spec_ptr;
+  g_lang_spec_ptr = NULL;
   return TRUE;
 }
 }  // namespace win32
@@ -451,17 +460,18 @@ BOOL WINAPI ImeProcessKey(HIMC himc,
   // Because of IME_PROP_ACCEPT_WIDE_VKEY, |HIWORD(virtual_key)| contains an
   // Unicode character if |HIWORD(virtual_key) == VK_PACKET|.
   // You cannot assume that |virtual_key| is in [0, 255].
-  const mozc::win32::VirtualKey vk(virtual_key);
+  mozc::win32::VirtualKey vk =
+      mozc::win32::VirtualKey::FromCombinedVirtualKey(virtual_key);
 
   const mozc::win32::KeyboardStatus keyboard_status(key_state);
   const mozc::win32::LParamKeyInfo key_info(lParam);
 
   // Check if this key event is handled by VKBackBasedDeleter to support
   // *deletion_range* rule.
-  const mozc::win32::VKBackBasedDeleter::ClientAction action =
+  const mozc::win32::VKBackBasedDeleter::ClientAction vk_back_action =
       private_context->deleter->OnKeyEvent(
           vk.virtual_key(), key_info.IsKeyDownInImeProcessKey(), true);
-  switch (action) {
+  switch (vk_back_action) {
     case mozc::win32::VKBackBasedDeleter::DO_DEFAULT_ACTION:
       // do nothing.
       break;
@@ -477,8 +487,28 @@ BOOL WINAPI ImeProcessKey(HIMC himc,
              CALL_END_DELETION_BUT_NEVER_SEND_TO_SERVER:
     case mozc::win32::VKBackBasedDeleter::APPLY_PENDING_STATUS:
     default:
-      DCHECK(false) << "this action is not applicable to ImeProcessKey.";
+      DLOG(FATAL) << "this action is not applicable to ImeProcessKey.";
       break;
+  }
+
+  if (context->fOpen) {
+    const mozc::win32::SurrogatePairObserver::ClientAction surrogate_action =
+        private_context->surrogate_pair_observer->OnTestKeyEvent(
+            vk, key_info.IsKeyDownInImeProcessKey());
+    switch (surrogate_action.type) {
+      case mozc::win32::SurrogatePairObserver::DO_DEFAULT_ACTION:
+        break;
+      case mozc::win32::SurrogatePairObserver::
+          DO_DEFAULT_ACTION_WITH_RETURNED_UCS4:
+        vk = mozc::win32::VirtualKey::FromUnicode(surrogate_action.ucs4);
+        break;
+      case mozc::win32::SurrogatePairObserver::
+          CONSUME_KEY_BUT_NEVER_SEND_TO_SERVER:
+        return TRUE;  // Consume this key but do not send this key to server.
+      default:
+        DLOG(FATAL) << "this action is not applicable to ImeProcessKey.";
+        break;
+    }
   }
 
   mozc::win32::ImeState ime_state = *private_context->ime_state;
@@ -716,7 +746,7 @@ BOOL WINAPI ImeSelect(HIMC himc, BOOL select) {
   // If the private area of the input context is not initialized,
   // allocate the new region in which new client management object is
   // stored.
-  if (!mozc::win32::PrivateContextUtil::EmsurePrivateContextIsInitialized(
+  if (!mozc::win32::PrivateContextUtil::EnsurePrivateContextIsInitialized(
            &context->hPrivate)) {
     return FALSE;
   }
@@ -754,8 +784,6 @@ BOOL WINAPI ImeSelect(HIMC himc, BOOL select) {
 
   // Send the local status to the server when IME is ON.
   if (context->fOpen) {
-    mozc::win32::ScopedHIMCC<mozc::win32::PrivateContext>
-        private_context(context->hPrivate);
     if ((context->fdwInit & INIT_CONVERSION) != INIT_CONVERSION) {
       return FALSE;
     }
@@ -839,7 +867,8 @@ UINT WINAPI ImeToAsciiEx(UINT virtual_key,
   mozc::win32::ScopedHIMCC<mozc::win32::PrivateContext>
       private_context(context->hPrivate);
 
-  const mozc::win32::VirtualKey vk(virtual_key);
+  mozc::win32::VirtualKey vk =
+      mozc::win32::VirtualKey::FromCombinedVirtualKey(virtual_key);
   const mozc::win32::KeyboardStatus keyboard_status(key_state);
   const mozc::win32::ImeBehavior behavior = *private_context->ime_behavior;
   mozc::win32::ImeState ime_state = *private_context->ime_state;
@@ -850,7 +879,7 @@ UINT WINAPI ImeToAsciiEx(UINT virtual_key,
   const bool is_key_down = ((scan_code & 0x8000) == 0);
   mozc::commands::Output temporal_output;
 
-  const mozc::win32::VKBackBasedDeleter::ClientAction action =
+  const mozc::win32::VKBackBasedDeleter::ClientAction vk_back_action =
       private_context->deleter->OnKeyEvent(
           vk.virtual_key(), is_key_down, false);
 
@@ -858,7 +887,7 @@ UINT WINAPI ImeToAsciiEx(UINT virtual_key,
   // *deletion_range* rule.
   bool use_pending_status = false;
   bool ignore_this_keyevent = false;
-  switch (action) {
+  switch (vk_back_action) {
     case mozc::win32::VKBackBasedDeleter::DO_DEFAULT_ACTION:
       // do nothing.
       break;
@@ -879,13 +908,38 @@ UINT WINAPI ImeToAsciiEx(UINT virtual_key,
       break;
     case mozc::win32::VKBackBasedDeleter::SEND_KEY_TO_APPLICATION:
     default:
-      DCHECK(false) << "this action is not applicable to ImeProcessKey.";
+      DLOG(FATAL) << "this action is not applicable to ImeProcessKey.";
       break;
   }
 
   if (ignore_this_keyevent) {
     // no message generated.
     return 0;
+  }
+
+  if (context->fOpen) {
+    ignore_this_keyevent = false;
+    const mozc::win32::SurrogatePairObserver::ClientAction surrogate_action =
+        private_context->surrogate_pair_observer->OnKeyEvent(vk, is_key_down);
+    switch (surrogate_action.type) {
+      case mozc::win32::SurrogatePairObserver::DO_DEFAULT_ACTION:
+        break;
+      case mozc::win32::SurrogatePairObserver::
+             DO_DEFAULT_ACTION_WITH_RETURNED_UCS4:
+        vk = mozc::win32::VirtualKey::FromUnicode(surrogate_action.ucs4);
+      break;
+      case mozc::win32::SurrogatePairObserver::
+          CONSUME_KEY_BUT_NEVER_SEND_TO_SERVER:
+        ignore_this_keyevent = true;
+        break;
+      default:
+        DLOG(FATAL) << "this action is not applicable to ImeProcessKey.";
+        break;
+    }
+    if (ignore_this_keyevent) {
+      // no message generated.
+      return 0;
+    }
   }
 
   if (use_pending_status) {

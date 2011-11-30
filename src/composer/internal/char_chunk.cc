@@ -29,6 +29,10 @@
 
 #include "composer/internal/char_chunk.h"
 
+#include <set>
+#include <string>
+#include <vector>
+
 #include "base/util.h"
 #include "composer/internal/composition_input.h"
 #include "composer/internal/transliterators.h"
@@ -38,6 +42,9 @@ namespace mozc {
 namespace composer {
 
 namespace {
+// Max recursion count for looking up pending loop.
+const int kMaxRecursion = 4;
+
 // Delete "end" from "target", if "target" ends with the "end".
 bool DeleteEnd(const string &end, string *target) {
   const string::size_type rindex = target->rfind(end);
@@ -45,6 +52,43 @@ bool DeleteEnd(const string &end, string *target) {
     return false;
   }
   target->erase(rindex);
+  return true;
+}
+
+// Get from pending rules recursively
+// The recursion will be stopped if recursion_count is 0.
+// When returns false, the caller doesn't append result entries.
+bool GetFromPending(const Table &table, const string &key,
+                       int recursion_count, set<string> *result) {
+  DCHECK(result);
+  if (recursion_count == 0) {
+    // Don't find the loop within the |recursion_count|.
+    return false;
+  }
+  if (result->find(key) != result->end()) {
+    // Found the entry that is already looked up.
+    // Return true because we found the loop.
+    return true;
+  }
+  result->insert(key);
+
+  vector<const Entry *> entries;
+  table.LookUpPredictiveAll(key, &entries);
+  for (size_t i = 0; i < entries.size(); ++i) {
+    if (!entries[i]->result().empty()) {
+      // skip rules with result, because this causes too many results.
+      // for example, if we have
+      //  'k' -> 'っ', 'k'
+      //  'ka' -> 'か', ''
+      // From the input 'k', this causes 'か', 'っ', 'っか', ...
+      // So here we stop calling recursion.
+      return false;
+    }
+    if (!GetFromPending(table, entries[i]->pending(),
+                        recursion_count - 1, result)) {
+      return false;
+    }
+  }
   return true;
 }
 }  // anonymous namespace
@@ -131,6 +175,61 @@ void CharChunk::AppendFixedResult(const Table &table,
   }
 }
 
+// If we have the rule (roman),
+// 1: 'ka' -> 'か', ''
+// 2: 'ki' -> 'き', ''
+// 3: 'ku' -> 'く', ''
+// 4: 'kk' -> 'っ', 'k'
+// From the input 'k', we want to correct 'k', 'か', 'き', 'く', 'っ'
+// We don't expand for next k for rule 4, because it causes
+// many useless looped results, like 'っか', 'っっか', 'っっ', etc
+//
+// If we have the input 'kk', we will get 'か', 'き', 'く', 'っ' from the
+// pending 'k' of rule 4.
+// With the result of AppendTrimedResult, 'っ', we can get
+// 'っか', 'っき', 'っく', 'っっ' from this input.
+//
+// If we have the rule (kana),
+// 'は゜' -> 'ぱ', ''
+// 'は゛' -> 'ば', ''
+// From the input 'は', we want 'は', 'ば', 'ぱ'
+void CharChunk::GetExpandedResults(const Table &table,
+                                   const TransliteratorInterface *t12r,
+                                   set<string> *results) const {
+  DCHECK(results);
+  if (has_status(NO_CONVERSION)) {
+    results->insert(Table::DeleteSpecialKey(raw_));
+    return;
+  }
+
+  if (pending_.empty()) {
+    return;
+  }
+  // Append current pending string
+  if (conversion_.empty()){
+    results->insert(Table::DeleteSpecialKey(pending_));
+  }
+  vector<const Entry *> entries;
+  table.LookUpPredictiveAll(pending_, &entries);
+  for (size_t i = 0; i < entries.size(); ++i) {
+    if (!entries[i]->result().empty()) {
+      results->insert(Table::DeleteSpecialKey(entries[i]->result()));
+    }
+    if (entries[i]->pending().empty()) {
+      continue;
+    }
+    set<string> loop_result;
+    if (!GetFromPending(table, entries[i]->pending(),
+                        kMaxRecursion, &loop_result)) {
+      continue;
+    }
+    for (set<string>::const_iterator itr = loop_result.begin();
+         itr != loop_result.end(); ++itr) {
+      results->insert(Table::DeleteSpecialKey(*itr));
+    }
+  }
+}
+
 bool CharChunk::IsFixed() const {
   return pending_.empty();
 }
@@ -179,7 +278,7 @@ bool CharChunk::AddInputInternal(const Table &table, string *input) {
   bool fixed = false;
   string key = pending_ + *input;
   const Entry *entry = table.LookUpPrefix(key, &key_length, &fixed);
-  
+
   if (entry == NULL) {
     if (key_length == 0) {
       // No prefix character is not contained in the table, fallback
@@ -191,9 +290,15 @@ bool CharChunk::AddInputInternal(const Table &table, string *input) {
       return kNoLoop;
     }
 
+    if (key_length < pending_.size()) {
+      // Do not modify this char_chunk, all key characters will be used
+      // by the next char_chunk.
+      return kNoLoop;
+    }
+
+    DCHECK_GE(key_length, pending_.size());
     // Some prefix character is contained in the table, but not
     // reached any conversion result (like "t" with "ta->た").
-    DCHECK_GE(key_length, pending_.size());
     key_length -= pending_.size();
 
     // Conversion data had only pending.

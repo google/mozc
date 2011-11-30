@@ -32,6 +32,7 @@
 #include <map>
 #include <algorithm>
 #include "base/base.h"
+#include "base/util.h"
 #include "base/mutex.h"
 #include "base/singleton.h"
 
@@ -135,17 +136,21 @@ class UserPOSImpl : public UserPOS::UserPOSInterface {
       }
     } else {
       // expand all other forms
-      // TOOD(taku): Currently, user has to pass "word stem"
-      // form if the word has conjugations.
-      // e.g., "ググる" must be registered as "ググ" with
-      // ラ行五段
-      // This is compatible with ATOK/MS-IME,
-      // but we think it is not friendly.
-      // We'd like to handle the case when a base form is passed
-      // to "key/value".
+      string key_stem = key;
+      string value_stem = value;
+      // assume that conjugation_form[0] contains the suffix of "base form".
+      const string base_key_suffix = conjugation_form[0].key_suffix;
+      const string base_value_suffix = conjugation_form[0].value_suffix;
+      if (base_key_suffix.size() < key.size() &&
+          base_value_suffix.size() < value.size() &&
+          Util::EndsWith(key, base_key_suffix) &&
+          Util::EndsWith(value, base_value_suffix)) {
+        key_stem = key.substr(0, key.size() - base_key_suffix.size());
+        value_stem = value.substr(0, value.size() - base_value_suffix.size());
+      }
       for (size_t i = 0; i < size; ++i) {
-        (*tokens)[i].key   = key   + conjugation_form[i].key_suffix;
-        (*tokens)[i].value = value + conjugation_form[i].value_suffix;
+        (*tokens)[i].key   = key_stem   + conjugation_form[i].key_suffix;
+        (*tokens)[i].value = value_stem + conjugation_form[i].value_suffix;
         (*tokens)[i].id    = conjugation_form[i].id;
         (*tokens)[i].cost  = kDefaultCost;
       }

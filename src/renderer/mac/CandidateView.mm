@@ -311,7 +311,7 @@ void InitializeDefaultStyle() {
 
   // Draw the window border at last
   [MacViewUtil::ToNSColor(style_->border_color()) set];
-  mozc::renderer::Size windowSize = tableLayout_->GetTotalSize();
+  mozc::Size windowSize = tableLayout_->GetTotalSize();
   [NSBezierPath strokeRect:NSMakeRect(
       0.5, 0.5, windowSize.width - 1, windowSize.height - 1)];
 }
@@ -336,7 +336,7 @@ void InitializeDefaultStyle() {
   } else {
     // Draw normal background
     for (int i = COLUMN_SHORTCUT; i < NUMBER_OF_COLUMNS; ++i) {
-      mozc::renderer::Rect cellRect = tableLayout_->GetCellRect(row, i);
+      mozc::Rect cellRect = tableLayout_->GetCellRect(row, i);
       if (cellRect.size.width > 0 && cellRect.size.height > 0 &&
           style_->text_styles(i).has_background_color()) {
         [MacViewUtil::ToNSColor(style_->text_styles(i).background_color()) set];
@@ -445,7 +445,7 @@ void InitializeDefaultStyle() {
 }
 
 - (void)drawVScrollBar {
-  const mozc::renderer::Rect &vscrollRect = tableLayout_->GetVScrollBarRect();
+  const mozc::Rect &vscrollRect = tableLayout_->GetVScrollBarRect();
 
   if (!vscrollRect.IsRectEmpty() && candidates_->candidate_size() > 0) {
     const int beginIndex = candidates_->candidate(0).index();
@@ -456,7 +456,7 @@ void InitializeDefaultStyle() {
     [MacViewUtil::ToNSColor(style_->scrollbar_background_color()) set];
     [NSBezierPath fillRect:MacViewUtil::ToNSRect(vscrollRect)];
 
-    const mozc::renderer::Rect &indicatorRect =
+    const mozc::Rect &indicatorRect =
         tableLayout_->GetVScrollIndicatorRect(
             beginIndex, endIndex, candidatesTotal);
     [MacViewUtil::ToNSColor(style_->scrollbar_indicator_color()) set];
@@ -471,11 +471,11 @@ const char *Inspect(id obj) {
 }
 
 - (void)mouseDown:(NSEvent *)event {
-  mozc::renderer::Point localPos = MacViewUtil::ToPoint(
+  mozc::Point localPos = MacViewUtil::ToPoint(
       [self convertPoint:[event locationInWindow] fromView:nil]);
   int clickedRow = -1;
   for (int i = 0; i < tableLayout_->number_of_rows(); ++i) {
-    mozc::renderer::Rect rowRect = tableLayout_->GetRowRect(i);
+    mozc::Rect rowRect = tableLayout_->GetRowRect(i);
     if (rowRect.PtrInRect(localPos)) {
       clickedRow = i;
       break;
@@ -489,14 +489,14 @@ const char *Inspect(id obj) {
 }
 
 - (void)mouseUp:(NSEvent *)event {
-  mozc::renderer::Point localPos = MacViewUtil::ToPoint(
+  mozc::Point localPos = MacViewUtil::ToPoint(
       [self convertPoint:[event locationInWindow] fromView:nil]);
   if (command_sender_ == NULL) {
     return;
   }
 
   for (int i = 0; i < tableLayout_->number_of_rows(); ++i) {
-    mozc::renderer::Rect rowRect = tableLayout_->GetRowRect(i);
+    mozc::Rect rowRect = tableLayout_->GetRowRect(i);
     if (rowRect.PtrInRect(localPos)) {
       SessionCommand command;
       command.set_type(SessionCommand::SELECT_CANDIDATE);

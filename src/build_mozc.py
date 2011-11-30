@@ -180,6 +180,13 @@ def GetGypFileNames(options):
   """Gets the list of gyp file names."""
   gyp_file_names = []
   mozc_top_level_names = glob.glob('%s/*' % SRC_DIR)
+
+  if not options.language == 'japanese':
+    language_path = '%s/languages/%s' % (SRC_DIR, options.language)
+    if not os.path.exists(language_path):
+      print >>sys.stderr, 'Can not find language directory: %s ' % language_path
+      sys.exit(1)
+    mozc_top_level_names.append(language_path)
   # Exclude the gyp directory where we have special gyp files like
   # breakpad.gyp that we should exclude.
   mozc_top_level_names = [x for x in mozc_top_level_names if
@@ -227,6 +234,10 @@ def GetGypFileNames(options):
     except RunOrDieError:
       print 'scim was not found with pkg-config.'
       gyp_file_names.remove('%s/unix/scim/scim.gyp' % SRC_DIR)
+    # Add chrome skk gyp scripts. If --chrome_skk option is not specified,
+    # These files will be excluded in GypMain().
+    gyp_file_names.append('%s/chrome/skk/skk.gyp' % SRC_DIR)
+    gyp_file_names.append('%s/chrome/skk/skk_util_test.gyp' % SRC_DIR)
   gyp_file_names.extend(glob.glob('third_party/rx/*.gyp'))
   gyp_file_names.sort()
   return gyp_file_names
@@ -349,7 +360,15 @@ def AddCommonOptions(parser):
   # should be done. If you want ChromeOS build, specify "ChromeOS".
   parser.add_option('--target_platform', dest='target_platform', default='',
                     help='If you want ChromeOS build, specify "ChromeOS"')
+  parser.add_option('--language', dest='language', default='japanese',
+                    help='Specify the target language to build.')
   return parser
+
+
+def GetDefaultWixPath():
+  """Returns the default Wix directory.."""
+  abs_path = ''
+  return abs_path
 
 
 def ParseGypOptions(args=None, values=None):
@@ -388,21 +407,32 @@ def ParseGypOptions(args=None, values=None):
   parser.add_option('--rsync', dest='rsync', default=False, action='store_true',
                     help='use rsync to copy files instead of builtin function')
 
-  parser.add_option('--chewing', dest='chewing', action='store_true',
-                    default=False, help='include chewing gyp recipe.  '
+  parser.add_option('--chrome_skk', dest='chrome_skk', action='store_true',
+                    default=False, help='include chrome-skk gyp recipe. '
                     'This flag is false by default because it may require you '
-                    'to install libchewing in your environment.')
+                    'to install Native Client SDK in your environment.')
 
-  parser.add_option('--hangul', dest='hangul', action='store_true',
-                    default=False, help='include hangul gyp recipe.  '
-                    'This flag is false by default because it may require you '
-                    'to install libhangul in your environment.')
+  parser.add_option('--mac_dir', dest='mac_dir',
+                    help='A path to the root directory of third party '
+                    'libraries for Mac build which will be passed to gyp '
+                    'files.')
 
-  # For internal Windows builds, gyp is expected to generate solution files for
-  # Visual Studio 2008, which is a default compiler for Mozc.  However, you can
-  # specify the target version explicitly via 'msvs_version' option as follows.
-  parser.add_option('--msvs_version', dest='msvs_version', default='2008',
-                    help='Specifies the target MSVS version.')
+  parser.add_option('--nacl_sdk_root', dest='nacl_sdk_root',
+                    default='',
+                    help='A path to the root directory of Native Client SDK. '
+                    'This is used when NaCl module build.')
+
+  if IsWindows():
+    parser.add_option('--wix_dir', dest='wix_dir',
+                      default=GetDefaultWixPath(),
+                      help='A path to the binary directory of wix.')
+
+    # For internal Windows builds, gyp is expected to generate solution files
+    # for Visual Studio 2008, which is a default compiler for Mozc.  However,
+    # you can specify the target version explicitly via 'msvs_version' option
+    # as follows.
+    parser.add_option('--msvs_version', dest='msvs_version', default='2008',
+                      help='Specifies the target MSVS version.')
 
   return parser.parse_args(args, values)
 
@@ -438,6 +468,7 @@ def ExpandMetaTarget(meta_target_name, target_platform):
   elif IsWindows():
     targets = ['%s/win32/build32/build32.gyp:',
                '%s/win32/build64/build64.gyp:']
+    targets += ['%s/win32/installer/installer.gyp:']
   return [(target % SRC_DIR) for target in targets]
 
 
@@ -502,14 +533,9 @@ def GypMain(options, unused_args):
   # Get and show the list of .gyp file names.
   gyp_file_names = GetGypFileNames(options)
   banned_gyp_files = []
-  if not options.chewing:
-    # chewing/chewing.gyp is automatically included because of the
-    # policy.  We explicitly exclude it here.
-    banned_gyp_files.append('chewing.gyp')
-  if not options.hangul:
-    # hangul/hangul.gyp is automatically included because of the
-    # policy.  We explicitly exclude it here.
-    banned_gyp_files.append('hangul.gyp')
+  if not options.chrome_skk:
+    banned_gyp_files.append('skk.gyp')
+    banned_gyp_files.append('skk_util_test.gyp')
   if banned_gyp_files:
     gyp_file_names = [gyp_file for gyp_file in gyp_file_names
                       if os.path.basename(gyp_file) not in banned_gyp_files]
@@ -547,7 +573,20 @@ def GypMain(options, unused_args):
   if options.coverage:
     command_line.extend(['-D', 'coverage=1'])
 
+  if IsWindows() and options.wix_dir:
+    command_line.extend(['-D', 'use_wix=YES'])
+    command_line.extend(['-D', 'wix_dir=%s' % options.wix_dir])
+  else:
+    command_line.extend(['-D', 'use_wix=NO'])
+
   command_line.extend(['-D', 'build_base=%s' % GetBuildBaseName(options)])
+
+
+
+  mac_dir = options.mac_dir or '../mac'
+  if not os.path.isabs(mac_dir):
+    mac_dir = os.path.join('<(DEPTH)', mac_dir)
+  command_line.extend(['-D', 'mac_dir=%s' % mac_dir])
 
   # Check the version and determine if the building version is dev-channel or
   # not. Note that if --channel_dev is explicitly set, we don't check the
@@ -582,7 +621,20 @@ def GypMain(options, unused_args):
   else:
     command_line.extend(['-D', 'pkg_config_command='])
 
+  command_line.extend(['-D', 'nacl_sdk_root=%s' % options.nacl_sdk_root])
+
+  command_line.extend(['-D', 'language=%s' % options.language])
+  command_line.extend([
+      '-D', 'language_define=LANGUAGE_%s' % options.language.upper()])
+
+  # Add options.gypdir/pylib to PYTHONPATH so gyp uses its own library modules,
+  # otherwise gyp can use ones of a different version.
+  original_python_path = os.environ.get('PYTHONPATH', '')
+  os.environ['PYTHONPATH'] = (os.path.abspath(os.path.join(options.gypdir,
+                                                           'pylib')) +
+                              os.pathsep + original_python_path)
   RunOrDie(command_line)
+  os.environ['PYTHONPATH'] = original_python_path
 
 
   # Done!
@@ -685,6 +737,24 @@ def BuildOnMac(options, targets, original_directory_name):
               'BUILD_WITH_GYP=1'])
 
 
+def LocateMSBuildDir():
+  """Locate the directory where vcbuild.exe exists.
+
+  Returns:
+    A string of absolute directory path where vcbuild.exe exists.
+  """
+  if not IsWindows():
+    PrintErrorAndExit('msbuild.exe is not supported on this platform')
+
+  msbuild_path = os.path.join(os.getenv('windir'), 'Microsoft.NET',
+                              'Framework', 'v4.0.30319')
+
+  if os.path.exists(os.path.join(msbuild_path, 'msbuild.exe')):
+    return os.path.abspath(msbuild_path)
+
+  PrintErrorAndExit('Failed to locate msbuild.exe')
+
+
 def LocateVCBuildDir():
   """Locate the directory where vcbuild.exe exists.
 
@@ -706,7 +776,7 @@ def LocateVCBuildDir():
 
   # TODO(yukawa): Support Visual C++ 2010
   vcbuild_path = os.path.join(program_files_x86, 'Microsoft Visual Studio 9.0',
-                              'VC','vcpackages')
+                              'VC', 'vcpackages')
 
   if os.path.exists(os.path.join(vcbuild_path, 'vcbuild.exe')):
     return os.path.abspath(vcbuild_path)
@@ -716,20 +786,57 @@ def LocateVCBuildDir():
 
 
 
-def BuildOnWindows(options, targets, original_directory_name):
-  """Build the target on Windows."""
-  # TODO(yukawa): make a python module to set up environment for vcbuild.
-  abs_vcbuild_dir = LocateVCBuildDir()
+def BuildOnWindowsVS2008(abs_solution_path, platform, configuration):
+  abs_command_dir = LocateVCBuildDir()
+  command = "vcbuild.exe"
 
-  CheckFileOrDie(os.path.join(abs_vcbuild_dir, 'vcbuild.exe'))
+  CheckFileOrDie(os.path.join(abs_command_dir, command))
 
-  if os.getenv('PATH'):
-    os.environ['PATH'] = os.pathsep.join([abs_vcbuild_dir, os.getenv('PATH')])
+  original_path = os.getenv('PATH')
+
+  if original_path:
+    os.environ['PATH'] = os.pathsep.join([abs_command_dir, original_path])
   else:
-    os.environ['PATH'] = abs_vcbuild_dir
-
+    os.environ['PATH'] = abs_command_dir
 
   build_concurrency = GetNumberOfProcessors()
+
+  RunOrDie(['vcbuild',
+            '/M%d' % build_concurrency,  # Use concurrent build
+            '/time',    # Show build time
+            '/platform:%s' % platform,
+            abs_solution_path,
+            '%s|%s' % (configuration, platform)])
+
+  os.environ['PATH'] = original_path
+
+
+def BuildOnWindowsVS2010(abs_solution_path, platform, configuration):
+  abs_command_dir = LocateMSBuildDir()
+  command = "msbuild.exe"
+
+  CheckFileOrDie(os.path.join(abs_command_dir, command))
+
+  original_path = os.getenv('PATH')
+
+  if original_path:
+    os.environ['PATH'] = os.pathsep.join([abs_command_dir, original_path])
+  else:
+    os.environ['PATH'] = abs_command_dir
+
+  build_concurrency = GetNumberOfProcessors()
+
+  RunOrDie(['msbuild',
+            '/m:%d' % build_concurrency,  # Use concurrent build
+            '/property:Platform=%s' % platform,
+            '/property:Configuration=%s' % configuration,
+            abs_solution_path])
+
+  os.environ['PATH'] = original_path
+
+
+def BuildOnWindows(options, targets, original_directory_name):
+  """Build the target on Windows."""
 
   for target in targets:
     # TODO(yukawa): target name is currently ignored.
@@ -740,26 +847,19 @@ def BuildOnWindows(options, targets, original_directory_name):
     abs_sln_path = os.path.abspath('%s.sln' % base_sln_path)
     base_sln_file_name = os.path.basename(abs_sln_path)
 
-    target_platform = 'Win32'
+    platform = 'Win32'
     # We are using very ad-hoc way to determine which target platform
     # should be needed for the given target.  If and only if the target
     # solution file name is 'build64.sln', invoke vcbuild to build x64
     # binaries.
     if base_sln_file_name.lower() == 'build64.sln':
-      target_platform = 'x64'
-    # Create a new instance with copying rel_paths.
+      platform = 'x64'
 
-    # To use different toolsets for vcbuild, we set %PATH%, %INCLUDE%, %LIB%,
-    # %LIBPATH% and specify /useenv option here.  See the following article
-    # for details.
-    # http://blogs.msdn.com/vcblog/archive/2007/12/30/using-different-toolsets-
-    #   for-vc-build.aspx
-    RunOrDie(['vcbuild',
-              '/M%d' % build_concurrency,  # Use concurrent build
-              '/time',    # Show build time
-              '/platform:%s' % target_platform,
-              abs_sln_path,
-              '%s|%s' % (options.configuration, target_platform)])
+    line = open(abs_sln_path).readline().rstrip("\n")
+    if line.endswith('Format Version 11.00'):
+      BuildOnWindowsVS2010(abs_sln_path, platform, options.configuration)
+    elif line.endswith('Format Version 10.00'):
+      BuildOnWindowsVS2008(abs_sln_path, platform, options.configuration)
 
 
 def BuildMain(options, targets, original_directory_name):
@@ -800,7 +900,6 @@ def RunTests(build_base, configuration, unused_calculate_coverage):
   base_path = os.path.join(build_base, configuration)
 
   options = []
-
 
   # Specify the log_dir directory.
   # base_path looks like out_mac/Debug.
@@ -891,7 +990,8 @@ def CleanBuildFilesAndDirectories(options, unused_args):
   for gyp_directory_name in gyp_directory_names:
     if IsWindows():
       for pattern in ['*.ncb', '*.rules', '*.sln', '*.suo', '*.vcproj',
-                      '*.vcproj.*.user']:
+                      '*.vcproj.*.user', '*.vcxproj', '*.vcxproj.filters',
+                      '*.vcxproj.user']:
         file_names.extend(glob.glob(os.path.join(gyp_directory_name,
                                                  pattern)))
       for build_type in ['Debug', 'Optimize', 'Release']:

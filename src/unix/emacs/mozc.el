@@ -85,14 +85,28 @@
 (defmacro mozc-define-error (symbol-name message &rest conditions)
   "Define an error symbol.
 SYMBOL-NAME is the name of an error symbol and MESSAGE is its error message.
-CONDITIONS is a list of error conditions and shouldn't include 'error',
-'mozc-error' and symbol-name itself.  They are included by default."
+CONDITIONS is a list of error conditions and shouldn't include symbol `error',
+`mozc-error' and SYMBOL-NAME itself.  They are included by default."
   (let ((conditions-list (if (eq symbol-name 'mozc-error)
                              `(error mozc-error ,@conditions)
                            `(error mozc-error ,@conditions ,symbol-name))))
     `(progn
        (put ',symbol-name 'error-conditions ',conditions-list)
        (put ',symbol-name 'error-message ,message))))
+
+(defmacro mozc-with-undo-list-unchanged (&rest body)
+  "Evaluate BODY forms without changing the undo list.
+Return value of last one."
+  `(let ((buffer-undo-list t))  ; Hide the original `buffer-undo-list'.
+     ,@body))
+
+(defmacro mozc-with-buffer-modified-p-unchanged (&rest body)
+  "Evaluate BODY forms without changing the buffer modified status."
+  `(let ((buffer-modified (buffer-modified-p)))
+     (unwind-protect
+         (progn ,@body)
+       (if (and (not buffer-modified) (buffer-modified-p))
+           (restore-buffer-modified-p nil)))))
 
 (defmacro mozc-characterp (object)
   "Return non-nil if OBJECT is a character.
@@ -113,7 +127,7 @@ the Emacs version.  `char-valid-p' is obsolete since Emacs 23."
 (make-variable-buffer-local 'mozc-mode)
 
 (defvar mozc-mode-hook nil
-  "A list of hooks called by `mozc-mode'.")
+  "A list of hooks called by the command `mozc-mode'.")
 
 ;; Mode functions
 (defun mozc-mode (&optional arg)
@@ -281,6 +295,7 @@ Key code and symbols are renamed so that the helper process understands them."
                 (?\b 'backspace)
                 (?\s 'space)
                 (?\d 'backspace)
+                ('eisu-toggle 'eisu)
                 (t basic-type))))
     ;; `event-basic-type' always returns a lowercase character
     ;; so reconstruct the original uppercase if any.
@@ -354,6 +369,10 @@ Clean up the preedit and candidate window."
   "This points to the insertion point in the current buffer.")
 (make-variable-buffer-local 'mozc-preedit-point-origin)
 
+(defvar mozc-preedit-posn-origin nil
+  "Position information at the insertion point in the current buffer.")
+(make-variable-buffer-local 'mozc-preedit-posn-origin)
+
 (defvar mozc-preedit-overlay nil
   "An overlay which shows preedit.")
 (make-variable-buffer-local 'mozc-preedit-overlay)
@@ -404,13 +423,18 @@ CANDIDATES must be the candidates field in a response protobuf if any."
           preedit
           (when (memq 'fence mozc-preedit-style)
             '("|" "|" " ")))))
-    (if (or (not buffer-read-only)
-            (= (length text) 0))
-        (overlay-put mozc-preedit-overlay 'before-string text)
-      ;; Reset the session and throw away the current preedit, but keep
-      ;; the helper process running and connected.
-      (mozc-clean-up-session)
-      (barf-if-buffer-read-only))))
+    (if (and buffer-read-only (> (length text) 0))
+        (progn
+          ;; Reset the session and throw away the current preedit, but keep
+          ;; the helper process running and connected.
+          (mozc-clean-up-session)
+          (barf-if-buffer-read-only))
+      ;; Update the position information at the beginning of the preedit.
+      (overlay-put mozc-preedit-overlay 'before-string nil)
+      (setq mozc-preedit-posn-origin
+            (mozc-posn-at-point mozc-preedit-point-origin))
+      ;; Show the preedit.
+      (overlay-put mozc-preedit-overlay 'before-string text))))
 
 (defun mozc-preedit-make-text (preedit &optional decor-left decor-right
                                        separator)
@@ -494,53 +518,87 @@ fence -- put vertical bars at both ends of preedit")
 
 ;;;; Candidate window
 
-(defvar mozc-candidate-in-session-flag nil
-  "Non-nil means the current buffer has a candidate session.")
-(make-variable-buffer-local 'mozc-candidate-in-session-flag)
+(defcustom mozc-candidate-style 'echo-area
+  "The selected type of candidate windows.
+Symbol `overlay' and `echo-area' are currently supported.
 
-(defsubst mozc-candidate-init ()
-  "Initialize a new candidate session."
-  (mozc-candidate-clean-up)
-  ;; The current implementation supports only an echo area candidate window
-  ;; and it doesn't need any initialization.  Nothing to do here.
-  (setq mozc-candidate-in-session-flag t))
+overlay   - Shows a candidate window in box style close to the point.
+echo-area - Shows a candidate list in the echo area."
+  :type '(choice (symbol :tag "overlaid box style" 'overlay)
+                 (symbol :tag "single line in echo area" 'echo-area))
+  :group 'mozc)
+
+(defvar mozc-candidate-dispatch-table
+  '((overlay (clean-up . mozc-cand-overlay-clean-up)
+             (clear . mozc-cand-overlay-clear)
+             (update . mozc-cand-overlay-update))
+    (echo-area (clean-up . mozc-cand-echo-area-clean-up)
+               (clear . mozc-cand-echo-area-clear)
+               (update . mozc-cand-echo-area-update)))
+  "Method dispatch table to support a variety of candidate windows.
+The table is an alist from types of candidate windows to alist of methods.
+Each type of candidate windows must support 3 methods; clean-up, clear and
+update.")
+
+(defsubst mozc-candidate-dispatch (method &rest args)
+  "Dispatch a method call according to `mozc-candidate-style'.
+METHOD is one of symbols `clean-up', `clear' and `update'.  For ARGS, see
+`mozc-candidate-clean-up', `mozc-candidate-clear' and `mozc-candidate-update'
+respectively."
+  (let* ((style (if (minibufferp)
+                    'echo-area
+                  mozc-candidate-style))
+         (method-table (cdr (assq style
+                                  mozc-candidate-dispatch-table)))
+         (func (cdr (assq method method-table))))
+    (if func
+        (apply func args)
+      (signal 'mozc-internal-error (list mozc-candidate-style method args)))))
 
 (defsubst mozc-candidate-clean-up ()
   "Clean up the current candidate session."
-  ;; The current implementation supports only an echo area candidate window
-  ;; and it doesn't need any clean-up process.  Nothing to do here.
-  (setq mozc-candidate-in-session-flag nil))
+  (mozc-candidate-dispatch 'clean-up))
 
 (defsubst mozc-candidate-clear ()
   "Clear the current candidate window.
 This function expects an update just after this call.
 If you want to finish a candidate session, call `mozc-candidate-clean-up'."
-  ;; The current implementation supports only an echo area candidate window
-  ;; and there is no need to clear it.  Nothing to do here.
-  (when mozc-candidate-in-session-flag
-    t))
+  (mozc-candidate-dispatch 'clear))
 
 (defsubst mozc-candidate-update (candidates)
   "Update the candidate window.
 CANDIDATES must be the candidates field in a response protobuf."
-  (unless mozc-candidate-in-session-flag
-    (mozc-candidate-init))  ; Initialize if necessary.
+  (mozc-candidate-dispatch 'update candidates))
 
-  (mozc-cand-echo-area-update candidates))
+
 
 ;;;; Candidate window (echo area version)
+
+(defun mozc-cand-echo-area-clean-up ()
+  "Clean up the current candidate session."
+  (mozc-cand-echo-area-clear))
+
+(defun mozc-cand-echo-area-clear ()
+  "Clear the candidate list."
+  (mozc-cand-echo-area-delete-temporary-region))
 
 (defun mozc-cand-echo-area-update (candidates)
   "Update the candidate list in the echo area.
 CANDIDATES must be the candidates field in a response protobuf."
-  ;; If the current buffer is a minibuffer, shows only conversion results
-  ;; to avoid hiding the original contents of the minibuffer as much as
-  ;; possible.  Despite not showing a candidate list for non-conversion
-  ;; results, suggestion and prediction are still available and work.
-  (when (or (not (minibufferp))
-            (eq (mozc-protobuf-get candidates 'category) 'conversion))
-    (let (message-log-max)
-      (message "%s" (mozc-cand-echo-area-make-contents candidates)))))
+  (let ((contents (mozc-cand-echo-area-make-contents candidates)))
+    (cond
+     ((not (minibufferp))
+      (let (message-log-max)
+        (message "%s" contents)))
+     ((null resize-mini-windows)
+      ;; Do not show a candidate list because the space in the minibuffer is
+      ;; very limited.  Show only the preedit.
+      )
+     (t
+      (mozc-cand-echo-area-delete-temporary-region)
+      (save-excursion
+        (goto-char (point-max))
+        (mozc-cand-echo-area-insert-temporary-region "\n" contents))))))
 
 (defun mozc-cand-echo-area-make-contents (candidates)
   "Make a list of candidates as an echo area message.
@@ -579,6 +637,35 @@ Return a string formatted to suit for the echo area."
              (propertize (format "(%s)" desc)
                          'face 'mozc-cand-echo-area-annotation-face)))))
       (mozc-protobuf-get candidates 'candidate)))))
+
+(defvar mozc-cand-echo-area-temporary-region nil
+  "A region which is temporarily added for showing a candidate list.
+This is a cons which holds two markers which point to the region of
+temporarily added characters.
+`mozc-cand-echo-area-delete-temporary-region' removes the region.")
+(make-variable-buffer-local 'mozc-cand-echo-area-temporary-region)
+
+(defun mozc-cand-echo-area-insert-temporary-region (&rest strings)
+  "Insert STRINGS temporarily.
+`mozc-cand-echo-area-delete-temporary-region' removes the strings.
+The function signals an error when the strings have already been added."
+  (if mozc-cand-echo-area-temporary-region
+      (signal 'mozc-internal-error mozc-cand-echo-area-temporary-region))
+  (let ((beg (point-marker)))
+    (mozc-with-undo-list-unchanged
+     (apply #'insert strings))
+    (let ((end (point-marker)))
+      (setq mozc-cand-echo-area-temporary-region (cons beg end)))))
+
+(defun mozc-cand-echo-area-delete-temporary-region ()
+  "Remove temporarily-added characters to show a candidate list.
+See also `mozc-cand-echo-area-temporary-region'."
+  (let ((region-to-be-removed mozc-cand-echo-area-temporary-region))
+    (when region-to-be-removed
+      (setq mozc-cand-echo-area-temporary-region nil)
+      (mozc-with-undo-list-unchanged
+       (delete-region (car region-to-be-removed)
+                      (cdr region-to-be-removed))))))
 
 (defface mozc-cand-echo-area-focused-face
   '((((type graphic x w32) (class color) (background dark))
@@ -626,6 +713,460 @@ Return a string formatted to suit for the echo area."
   "Face for the index of the focused candidate and the total number of
 candidates in the echo area candidate window."
   :group 'mozc-faces)
+
+
+
+;;;; Candidate window (overlay version)
+
+(defun mozc-cand-overlay-clean-up ()
+  "Clean up the current candidate session.
+Remove all overlays and temporary characters."
+  (mozc-cand-overlay-clear))
+
+(defun mozc-cand-overlay-clear ()
+  "Clear the candidate window.
+Remove all overlays and temporary characters."
+  (mozc-cand-overlay-delete-overlays)
+  (mozc-with-buffer-modified-p-unchanged
+   (mozc-cand-overlay-delete-temporary-regions)))
+
+(defun mozc-cand-overlay-update (candidates)
+  "Update the candidate window using overlays.
+CANDIDATES must be the candidates field in a response protobuf.
+
+If there is no enough space to show the candidate window,
+falls back to the echo area version."
+  (mozc-cand-overlay-clear)
+  (let ((contents (mozc-cand-overlay-make-contents candidates)))
+    (condition-case nil
+        (mozc-with-buffer-modified-p-unchanged
+         (mozc-cand-overlay-draw contents))
+      (error
+       (mozc-cand-overlay-clear)
+       ;; Fall back to the echo area version.
+       (mozc-cand-echo-area-update candidates)))))
+
+(defun mozc-cand-overlay-make-contents (candidates)
+  "Return text contents for a candidate window.
+This function returns a list of pairs of text (left- and right-aligned)
+and face for each row.
+CANDIDATES must be the candidates field in a response protobuf."
+  (let ((focused-index (mozc-protobuf-get candidates 'focused-index))
+        (size (mozc-protobuf-get candidates 'size))
+        (index-visible (mozc-protobuf-get candidates 'footer 'index-visible)))
+    (nconc
+     (mapcar
+      (lambda (candidate)
+        (let ((index (mozc-protobuf-get candidate 'index))
+              (value (mozc-protobuf-get candidate 'value))
+              (desc (mozc-protobuf-get candidate 'annotation 'description))
+              (shortcut (mozc-protobuf-get candidate 'annotation 'shortcut)))
+          (list
+           (concat (when shortcut  ; left-aligned text
+                     (format "%s. " shortcut))
+                   value)
+           desc  ; right-aligned text
+           (cond ((eq index focused-index)  ; face
+                  'mozc-cand-overlay-focused-face)
+                 ((and (integerp index) (= (logand index 1) 0))
+                  'mozc-cand-overlay-odd-face)
+                 ((and (integerp index) (= (logand index 1) 1))
+                  'mozc-cand-overlay-even-face)))))
+      (mozc-protobuf-get candidates 'candidate))
+     ;; Footer line in the form of "focused-index/#total-candidates"
+     (and index-visible focused-index size
+          `((nil ,(format "%d/%d" (1+ focused-index) size)
+                 mozc-cand-overlay-footer-face))))))
+
+(defun mozc-cand-overlay-draw (contents)
+  "Find the right place and draw a candidate window there.
+If there is no space to show a candidate window, signal the symbol
+`mozc-draw-error'.
+
+CONTENTS is text contents for a candidate window returned by
+`mozc-cand-overlay-make-contents'.
+
+The function may scroll up the window to make enough space."
+  (save-excursion
+    (goto-char mozc-preedit-point-origin)
+    (let* ((contents-lines (length contents))
+           (contents-width (mozc-cand-overlay-estimate-max-width contents))
+           (window-width (mozc-window-width))
+           (posn1 (mozc-posn-at-point))
+           (row0 (mozc-posn-row mozc-preedit-posn-origin))
+           (row1 (mozc-posn-row posn1))
+           (x0 (mozc-posn-x mozc-preedit-posn-origin))
+           (x (if (< (+ x0 contents-width) window-width)
+                  x0
+                (- window-width contents-width 1))))
+      (if (or (>= contents-width window-width)
+              truncate-lines)
+          ;; There is no enough space to show a candidate window or
+          ;; truncate-lines is enabled, which is not supported.
+          (signal 'mozc-draw-error "no space to show a candidate window")
+        (or
+         ;; Show below.
+         (mozc-cand-overlay-draw-internal contents x contents-width 1)
+         ;; Show above.
+         (and (<= contents-lines row0)
+              (mozc-cand-overlay-draw-internal contents x contents-width
+                                               (- 0 contents-lines
+                                                  (- row1 row0))))
+         ;; Scroll up and show below.
+         (mozc-cand-overlay-draw-internal contents x contents-width 1 row0)
+         ;; All trials have failed.
+         (signal 'mozc-draw-error "failed to show a candidate window"))))))
+
+(defun mozc-cand-overlay-estimate-max-width (contents &optional space-width)
+  "Return how many pixels in width are needed to show candidates.
+CONTENTS is text contents for a candidate window returned by
+`mozc-cand-overlay-make-contents'.
+Optional SPACE-WIDTH is width of padding space between text, and
+defaults to `frame-char-width'."
+  (mozc-with-undo-list-unchanged
+   (save-excursion
+     (insert ?*)
+     (let ((overlay (make-overlay (1- (point)) (point))))
+       (unwind-protect
+           (progn
+             (mozc-cand-overlay-put-space overlay 0)
+             (let ((posn-origin (mozc-posn-at-point))
+                   (space-width (or space-width (frame-char-width))))
+               (apply #'max
+                      (mapcar (lambda (content)
+                                (mozc-cand-overlay-estimate-width
+                                 (car content) (cadr content) space-width
+                                 (caddr content)
+                                 overlay posn-origin))
+                              contents))))
+         (delete-overlay overlay)
+         (delete-backward-char 1))))))
+
+(defun mozc-cand-overlay-estimate-width
+  (left-text right-text space-width face overlay posn-origin)
+  "Return how many pixels in width are needed to show a candidate.
+LEFT-TEXT and RIGHT-TEXT are left- and right-aligned text in a row
+respectively.  SPACE-WIDTH is width of padding space between text.
+Text is shown in FACE.
+
+OVERLAY is used as work space and the current point must be placed
+just after the overlay.  POSN-ORIGIN must be the position info
+just before the overlay.
+
+This function is called from `mozc-cand-overlay-estimate-max-width'."
+  (if (not (or left-text right-text))
+      0  ;; No text
+    (mozc-cand-overlay-put-text overlay (concat left-text right-text) face)
+    (let ((posn (mozc-posn-at-point)))
+      (let ((row0 (mozc-posn-row posn-origin))
+            (row1 (mozc-posn-row posn))
+            (x0 (mozc-posn-x posn-origin))
+            (x1 (mozc-posn-x posn)))
+        (+ (* (- row1 row0) (mozc-window-width))
+           (- x1 x0)
+           (if (and left-text right-text) space-width 0))))))
+
+(defun mozc-cand-overlay-draw-internal (contents x width relative-start-row
+                                                 &optional max-scroll-lines)
+  "Draw a candidate window using overlays.
+
+CONTENTS is text contents for a candidate window returned by
+`mozc-cand-overlay-make-contents'.  X and WIDTH are the x position at
+the left and the width of the candidate window.
+RELATIVE-START-ROW is the top row of the candidate window relative to
+the point.  Non-nil MAX-SCROLL-LINES scrolls up that number of lines
+at most if short of space to show the candidate window.
+
+The function returns non-nil on success, and nil on failure."
+  (let ((window-start-pos (and max-scroll-lines (window-start)))
+        (scrolled-lines 0))  ; the number of scrolled lines
+    (condition-case nil
+        (save-excursion
+          (when (>= relative-start-row 0)  ; Make sure there are enough lines.
+            (mozc-cand-overlay-insert-temporary-newlines (length contents)))
+          (vertical-motion relative-start-row)
+          (while contents
+            (while (and max-scroll-lines  ; Scroll up if necessary.
+                        (< scrolled-lines max-scroll-lines)
+                        (not (pos-visible-in-window-p)))
+              (save-excursion
+                ;; Put the point in the visible area because `scroll-up' doesn't
+                ;; work as expected if the point is off the screen.
+                (vertical-motion -1)
+                (scroll-up 1))
+              (incf scrolled-lines))
+            (let ((content (car contents)))
+              (let ((left-text (car content))
+                    (right-text (cadr content))
+                    (face (caddr content)))
+                (mozc-cand-overlay-draw-row left-text right-text face x width)))
+            (pop contents)
+            (vertical-motion 1))
+          t)  ; Return t on success.
+      (mozc-draw-error
+       (mozc-cand-overlay-clear)
+       (when window-start-pos
+         (set-window-start nil window-start-pos))
+       nil))))  ; Return nil on failure.
+
+(defun mozc-cand-overlay-insert-temporary-newlines (contents-lines)
+  "Insert newlines temporarily if necessary.
+CONTENTS-LINES is the number of lines needed below the point."
+  (save-excursion
+    (let ((lines-short (- contents-lines (vertical-motion contents-lines))))
+      (when (> lines-short 0)
+        (goto-char (point-max))
+        (mozc-cand-overlay-insert-temporary-char ?\n lines-short)))))
+
+(defun mozc-cand-overlay-draw-row (left-text right-text face x width)
+  "Draw a row of a candidate window.
+LEFT-TEXT and RIGHT-TEXT are left- and right-aligned text in a row
+respectively.  FACE is face for LEFT-TEXT, RIGHT-TEXT and padding
+space.  X is the x-position of the left-edge of the candidate window
+in pixel.  WIDTH is the width of the candidate window.
+
+This function may change the point."
+  ;; This function uses at most 6 overlays to draw a row, left- and
+  ;; right-margin, left- and right-text and the padding space between
+  ;; the texts, and optionally another overlay to break a wrapped line
+  ;; if any.
+  ;;
+  ;; Left-margin is used to align the left edge of the candidate window.
+  ;; Left- and right-text overlays are used to show each text, and
+  ;; the padding overlay is used to align right-text to the right edge of
+  ;; the candidate window.  Right-margin is used to keep the position of
+  ;; the text at the right of the candidate window unchanged.
+  ;;
+  ;; If X is close to the beginning of a wrapped row, the optional overlay
+  ;; is used to break the wrapped row, otherwise the wrapped position may
+  ;; change because a spacing overlay is treated as zero-width regardless
+  ;; of the width set to the overlay.
+  (let* ((x1 x)
+         (x2 (+ x width))
+         (y (or (mozc-posn-y (mozc-posn-at-point))
+                ;; If the current row is out of the visible area, signals
+                ;; an error.
+                (signal 'mozc-draw-error (list left-text right-text))))
+         (posn1 (posn-at-x-y x1 y))
+         (posn2 (posn-at-x-y x2 y))
+         (p1 (posn-point posn1))
+         (p2 (posn-point posn2))
+         (p1x (mozc-posn-x (mozc-posn-at-point p1)))
+         (p2x (mozc-posn-x (mozc-posn-at-point p2)))
+         ;; Unless p2x is at the right position, move p2 to right by 1 column
+         ;; and update p2x accordingly.
+         (just-in-pos (or (= p2 (line-end-position)) (= p2x x2)))
+         (p2 (if just-in-pos p2
+               (min (line-end-position) (1+ p2))))
+         (p2x (if just-in-pos p2x
+                (mozc-posn-x (mozc-posn-at-point p2))))
+         ;; If short of characters to replace with overlays, insert characters
+         ;; and update p2.
+         (cols (- p2 p1))
+         (min-cols 6)  ; 6 characters are needed for 6 overlays at most.
+         (p2 (if (>= cols min-cols)  ; Revise p2 if short of columns.
+                 p2
+               (goto-char p2)  ; Insert temporary characters.
+               (mozc-cand-overlay-insert-temporary-char ?s (- min-cols cols))
+               (+ p1 min-cols))))
+    ;; left margin
+    (if (or (/= (mozc-posn-col posn1) 0)
+            (progn (goto-char p1) (bolp)))
+        (let ((overlay (mozc-cand-overlay-make-overlay (+ p1 0) (+ p1 2))))
+          (mozc-cand-overlay-put-space overlay (- x1 p1x)))
+      ;; If p1 is the beginning of a wrapped row, replacing the char at p1 with
+      ;; a spacing overlay may change the wrapped position.  Since we wouldn't
+      ;; like to change the wrapped position, break a line explicitly.
+      (let ((overlay (mozc-cand-overlay-make-overlay (+ p1 0) (+ p1 1))))
+        (mozc-cand-overlay-put-text overlay "\n"))
+      (goto-char (1+ p1))  ; Put the point after the newline.
+      (let ((overlay (mozc-cand-overlay-make-overlay (+ p1 1) (+ p1 2))))
+        (mozc-cand-overlay-put-space overlay (- x1 p1x))))
+    ;; left text
+    (let ((overlay (mozc-cand-overlay-make-overlay (+ p1 2) (+ p1 3))))
+      (if left-text
+          (mozc-cand-overlay-put-text overlay left-text face)
+        (mozc-cand-overlay-put-space overlay 0 face)))
+    ;; right text
+    (let ((overlay (mozc-cand-overlay-make-overlay (+ p1 4) (+ p1 5))))
+      (if right-text
+          (mozc-cand-overlay-put-text overlay right-text face)
+        (mozc-cand-overlay-put-space overlay 0 face)))
+    ;; padding between left- and right-text
+    (let ((overlay (mozc-cand-overlay-make-overlay (+ p1 3) (+ p1 4))))
+      (mozc-cand-overlay-put-space overlay 0 face)
+      (let ((width (- x2 (mozc-posn-x (mozc-posn-at-point (+ 4 p1))))))
+        (mozc-cand-overlay-put-space overlay width face)))
+    ;; right margin
+    (let ((overlay (mozc-cand-overlay-make-overlay (+ p1 5) p2)))
+      (mozc-cand-overlay-put-space overlay (- p2x x2)))))
+
+(defvar mozc-cand-overlay-overlays nil
+  "Overlays which are put for showing candidate windows.")
+(make-variable-buffer-local 'mozc-cand-overlay-overlays)
+
+(defsubst mozc-cand-overlay-make-overlay (beg end)
+  "Create a new overlay with the range from BEG to END.
+`mozc-cand-overlay-delete-overlays' removes all overlays created by
+this function."
+  (let ((overlay (make-overlay beg end)))
+    (push overlay mozc-cand-overlay-overlays)
+    overlay))
+
+(defsubst mozc-cand-overlay-put-text (overlay text &optional face)
+  "Change the display property of OVERLAY to TEXT.
+Optionally change the face property of OVERLAY to FACE."
+  (overlay-put overlay 'display text)
+  (when face
+    (overlay-put overlay 'face face)))
+
+(defsubst mozc-cand-overlay-put-space (overlay width &optional face)
+  "Change the display property of OVERLAY to space of WIDTH pixel in width.
+Optionally change the face property of OVERLAY to FACE."
+  (overlay-put overlay 'display `(space . (:width (,(max 0 width)))))
+  (when face
+    (overlay-put overlay 'face face)))
+
+(defun mozc-cand-overlay-delete-overlays ()
+  "Remove overlays used for showing candidate windows."
+  (mapc 'delete-overlay mozc-cand-overlay-overlays)
+  (setq mozc-cand-overlay-overlays nil))
+
+(defvar mozc-cand-overlay-temporary-regions nil
+  "Regions which are temporarily added for showing candidate windows.
+This is a list of pairs of two markers which point to regions of
+temporarily added characters.
+`mozc-cand-overlay-delete-temporary-regions' removes these regions.")
+(make-variable-buffer-local 'mozc-cand-overlay-temporary-regions)
+
+(defun mozc-cand-overlay-insert-temporary-char (character count)
+  "Insert characters temporarily.
+CHARACTER is an integer specifying a character.  COUNT is the number of
+copies of a character.
+`mozc-cand-overlay-delete-temporary-regions' removes all characters
+added temporarily."
+  (let ((beg (point-marker)))
+    (mozc-with-undo-list-unchanged
+     (insert-char character count))
+    (let ((end (point-marker)))
+      (push (cons beg end) mozc-cand-overlay-temporary-regions))))
+
+(defun mozc-cand-overlay-delete-temporary-regions ()
+  "Remove temporarily-added characters to replace with overlays.
+See also `mozc-cand-overlay-temporary-regions'."
+  (let ((regions-to-be-removed mozc-cand-overlay-temporary-regions))
+    (setq mozc-cand-overlay-temporary-regions nil)
+    (mozc-with-undo-list-unchanged
+     (mapc (lambda (region) (delete-region (car region) (cdr region)))
+           regions-to-be-removed))))
+
+(defface mozc-cand-overlay-focused-face
+  '((((type graphic x w32) (class color) (background dark))
+     (:foreground "#191970" :background "#ffa500"))
+    (((type graphic x w32) (class color) (background light))
+     (:foreground "#0f0f0f" :background "#ffa500"))
+    (t
+     (:inverse-video t)))
+  "Face for the focused candidate in the overlay candidate window."
+  :group 'mozc-faces)
+
+(defface mozc-cand-overlay-odd-face
+  '((((type graphic x w32) (class color) (background dark))
+     (:foreground "#fffacd" :background "#27408b"))
+    (((type graphic x w32) (class color) (background light))
+     (:foreground "#0f0f0f" :background "#bfefff"))
+    (t
+     (:underline t)))
+  "Face for candidates on odd rows in the overlay candidate window."
+  :group 'mozc-faces)
+
+(defface mozc-cand-overlay-even-face
+  '((((type graphic x w32) (class color) (background dark))
+     (:foreground "#fffacd" :background "#27408b"))
+    (((type graphic x w32) (class color) (background light))
+     (:foreground "#0f0f0f" :background "#bfefff"))
+    (t
+     (:underline t)))
+  "Face for candidates on even rows in the overlay candidate window."
+  :group 'mozc-faces)
+
+(defface mozc-cand-overlay-footer-face
+  '((((type graphic x w32) (class color) (background dark))
+     (:foreground "#fffacd" :background "#4169e1"))
+    (((type graphic x w32) (class color) (background light))
+     (:foreground "#0f0f0f" :background "#b0e2ff"))
+    (t
+     (:inverse-video t)))
+  "Face for the footer line of the overlay candidate window."
+  :group 'mozc-faces)
+
+
+
+;;;; Utilities for position and window coordinates
+
+(defun mozc-posn-at-point (&optional pos window)
+  "Return the same position information as `posn-at-point'.
+The arguments POS and WINDOW are the same ones to `posn-at-point'.
+
+The difference is that, while `posn-at-point' returns position information
+at the previous point when it's on a terminal and the point is at the beginning
+of a wrapped line, this function returns the position information exactly
+at the point.
+
+For example, suppose the following line in the buffer and the point is at 'd'
+\(the beginning of character 'd'),
+    ....... abc[wrap]
+    def...
+\(cdr (posn-actual-col-row (posn-at-point AT_D))) is the same number at 'c' on
+a terminal.
+
+In a word, this function is a fixed version of `posn-at-point'."
+  (let ((posn (posn-at-point pos window)))
+    (if window-system
+        posn
+      (let* ((pos (cond ((numberp pos) pos)
+                        ((markerp pos) (marker-position pos))
+                        (t (point))))
+             (posn-next (posn-at-point (1+ pos) window))
+             (row (cdr (posn-actual-col-row posn)))
+             (row-next (cdr (posn-actual-col-row posn-next))))
+        (if (or (= pos (line-end-position))
+                (listp row)
+                (listp row-next)
+                (= row row-next)
+                (eq (car (posn-actual-col-row posn-next)) 0))
+            posn
+          ;; On a terminal, row and y-position at the beginning of
+          ;; a continued line are the ones at the previous position.
+          ;; Use the ones at the next position.
+          (setcar (nthcdr 5 posn) pos)  ; point
+          (setcar (nth 6 posn) 0)  ; col
+          (setcdr (nth 6 posn) (cdr (nth 6 posn-next)))  ; row
+          (setcar (nth 2 posn) 0)  ; x
+          (setcdr (nth 2 posn) (cdr (nth 2 posn-next)))  ; y
+          posn)))))
+
+(defsubst mozc-posn-col (position)
+  "Return the column in POSITION."
+  (car (posn-actual-col-row position)))
+
+(defsubst mozc-posn-row (position)
+  "Return the row in POSITION."
+  (cdr (posn-actual-col-row position)))
+
+(defsubst mozc-posn-x (position)
+  "Return the x coordinate in POSITION."
+  (car (posn-x-y position)))
+
+(defsubst mozc-posn-y (position)
+  "Return the y coordinate in POSITION."
+  (cdr (posn-x-y position)))
+
+(defsubst mozc-window-width (&optional window)
+  "Return the width of WINDOW in pixel.
+WINDOW defaults to the selected window."
+  (let ((rect (window-inside-pixel-edges window)))
+    (- (third rect) (first rect))))
 
 
 
@@ -1140,6 +1681,10 @@ KEYCODE must be an integer representing a key code to remove."
 ;;;; Errors
 
 (mozc-define-error mozc-error "Error happened inside Mozc")
+
+(mozc-define-error mozc-internal-error "Internal state error")
+
+(mozc-define-error mozc-draw-error "Drawing error")
 
 (mozc-define-error mozc-response-error "Wrong response from the server")
 

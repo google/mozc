@@ -37,23 +37,30 @@ namespace mozc {
 
 class NodeAllocator : public NodeAllocatorInterface {
  public:
-  NodeAllocator() : node_freelist_(1024) {}
+  NodeAllocator() : node_freelist_(1024), node_count_(0) {}
   virtual ~NodeAllocator() {}
 
   virtual Node *NewNode() {
     Node *node = node_freelist_.Alloc();
     DCHECK(node);
     node->Init();
+    ++node_count_;
     return node;
   }
 
   // Free all nodes allocateed by NewNode()
   void Free() {
     node_freelist_.Free();
+    node_count_ = 0;
+  }
+
+  size_t node_count() const {
+    return node_count_;
   }
 
  private:
   FreeList<Node> node_freelist_;
+  size_t node_count_;
 };
 
 }  // namespace mozc

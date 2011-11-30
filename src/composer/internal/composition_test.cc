@@ -519,6 +519,35 @@ TEST_F(CompositionTest, DeleteAt) {
   EXPECT_EQ("akykittatty", GetDeletedString(kRawT12r, -1));
 }
 
+TEST_F(CompositionTest, DeleteAt_InvisibleCharacter) {
+  Composition comp;
+  CharChunkList::iterator it;
+  CharChunk *chunk;
+
+  comp.MaybeSplitChunkAt(0, &it);
+
+  chunk = *comp.InsertChunk(&it);
+  chunk->set_raw("1");
+  chunk->set_pending(Table::ParseSpecialKey("{1}"));
+
+  chunk = *comp.InsertChunk(&it);
+  chunk->set_raw("2");
+  chunk->set_pending(Table::ParseSpecialKey("{2}2"));
+
+  chunk = *comp.InsertChunk(&it);
+  chunk->set_raw("3");
+  chunk->set_pending("3");
+
+  // Now the CharChunks in the comp are expected to be following;
+  // (raw, pending) = [ ("1", "{1}"), ("2", "{2}2"), ("3", "3") ]
+  // {} means invisible characters.
+
+  comp.DeleteAt(0);
+  string composition;
+  comp.GetString(&composition);
+  EXPECT_EQ("3", composition);
+}
+
 namespace {
 
 void InitTable(Table* table) {

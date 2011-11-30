@@ -46,7 +46,9 @@ TEST(ImeContextTest, DefaultValues) {
   EXPECT_EQ(0, context.create_time());
   EXPECT_EQ(0, context.last_command_time());
 
-  EXPECT_TRUE(NULL == context.mutable_composer());
+  // Don't access composer().
+  // Before using composer, set_composer() must be called with non-null-value.
+
   EXPECT_TRUE(NULL == context.mutable_converter());
 
   EXPECT_EQ(ImeContext::NONE, context.state());
@@ -164,7 +166,7 @@ TEST(ImeContextTest, CopyContext) {
     source.set_state(ImeContext::CONVERSION);
     source.mutable_composer()->InsertCharacter("a");
     source.mutable_composer()->InsertCharacter("n");
-    source.mutable_converter()->Convert(&source.composer());
+    source.mutable_converter()->Convert(source.composer());
     // "早い"
     const string &kQuick = "\xE6\x97\xA9\xE3\x81\x84";
     source.mutable_composer()->set_source_text(kQuick);
@@ -175,7 +177,7 @@ TEST(ImeContextTest, CopyContext) {
     EXPECT_EQ("\xE3\x81\x82\xE3\x82\x93", composition);
 
     commands::Output output;
-    source.converter().FillOutput(&output);
+    source.converter().FillOutput(source.composer(), &output);
     EXPECT_EQ(1, output.preedit().segment_size());
     // "庵"
     EXPECT_EQ("\xE5\xBA\xB5", output.preedit().segment(0).value());
@@ -188,7 +190,7 @@ TEST(ImeContextTest, CopyContext) {
     EXPECT_EQ("\xE3\x81\x82\xE3\x82\x93", composition);
 
     output.Clear();
-    destination.converter().FillOutput(&output);
+    destination.converter().FillOutput(source.composer(), &output);
     EXPECT_EQ(1, output.preedit().segment_size());
     // "庵"
     EXPECT_EQ("\xE5\xBA\xB5", output.preedit().segment(0).value());

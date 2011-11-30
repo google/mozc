@@ -52,6 +52,17 @@ const wchar_t kElevatedProcessDisabledName[]
 = L"elevated_process_disabled";
 
 #ifdef OS_WINDOWS
+// Returns true if both array have the same content.
+template <typename T, size_t ArraySize>
+bool AreEqualArray(const T (&lhs)[ArraySize], const T (&rhs)[ArraySize]) {
+  for (size_t i = 0; i < ArraySize; ++i) {
+    if (lhs[i] != rhs[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+
 // returns true if the token was created by Secondary Logon
 // (typically via RunAs command) or UAC (w/ alternative credential provided)
 //  or if failed to determine.
@@ -81,8 +92,11 @@ bool IsDifferentUser(const HANDLE hToken) {
   // Sacrifice the last character. That is practically ok for our purpose.
   src.SourceName[TOKEN_SOURCE_LENGTH - 1] = '\0';
 
-  return (!::lstrcmpiA("seclogo", src.SourceName) ||
-          !::lstrcmpiA("CredPro", src.SourceName));
+  const char kSeclogo[] = "seclogo";
+  const char kCredPro[] = "CredPro";
+
+  return (AreEqualArray(kSeclogo, src.SourceName) ||
+          AreEqualArray(kCredPro, src.SourceName));
 }
 
 // Returns true if UAC gave the high integrity level to the token
@@ -190,9 +204,9 @@ RunLevel::RunLevelType RunLevel::GetRunLevel(RunLevel::RequestType type) {
   // Check whether the server/renderer is running inside sandbox.
   if (type == SERVER || type == RENDERER) {
     // Restricted token must be created by sandbox.
-    // Renderer is launched with NON_ADMIN, so it doesn't have
-    // restricted token.
-    if (type != RENDERER && !::IsTokenRestricted(process_token.get())) {
+    // Server is launched with NON_ADMIN so that it can use SSL access.
+    // This is why it doesn't have restricted token. b/5502343
+    if (type != SERVER && !::IsTokenRestricted(process_token.get())) {
       return RunLevel::DENY;
     }
 

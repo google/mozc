@@ -58,8 +58,11 @@ class SuffixDictionary : public DictionaryInterface {
                                  NodeAllocatorInterface *allocator) const;
 
   // SuffixDictionary doesn't support Prefix/Revese Lookup.
-  virtual Node *LookupPrefix(const char *str, int size,
-                             NodeAllocatorInterface *allocator) const;
+  virtual Node *LookupPrefixWithLimit(
+      const char *str, int size,
+      const Limit &limit,
+      NodeAllocatorInterface *allocator) const;
+
   virtual Node *LookupReverse(const char *str, int size,
                               NodeAllocatorInterface *allocator) const;
 

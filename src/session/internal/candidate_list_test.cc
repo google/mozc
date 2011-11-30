@@ -457,5 +457,18 @@ TEST_F(CandidateListTest, GetDeepestFocusedCandidate) {
   EXPECT_FALSE(deepest_candidate.IsSubcandidateList());
 }
 
+TEST_F(CandidateListTest, NextAvailableId) {
+  EXPECT_EQ(213, main_list_->next_available_id());
+  EXPECT_EQ(0, sub_list_1_->next_available_id());
+  EXPECT_EQ(213, sub_list_2_->next_available_id());
+  EXPECT_EQ(213, sub_sub_list_2_1_->next_available_id());
+
+  // Append duplicate candidate.
+  // next_available_id should be incremented.
+  sub_sub_list_2_1_->AddCandidate(213, "212");
+  EXPECT_EQ(214, main_list_->next_available_id());
+  EXPECT_EQ(214, sub_sub_list_2_1_->next_available_id());
+}
+
 }  // namespace session
 }  // namespace mozc

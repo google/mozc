@@ -36,6 +36,7 @@
 #include "base/file_stream.h"
 #include "base/singleton.h"
 #include "base/util.h"
+#include "dictionary/file/codec_interface.h"
 #include "dictionary/file/section.h"
 
 

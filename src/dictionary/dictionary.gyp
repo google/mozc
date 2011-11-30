@@ -51,6 +51,7 @@
         '../config/config.gyp:genproto_config',
         '../session/session_base.gyp:genproto_session',
         '../usage_stats/usage_stats.gyp:usage_stats',
+        '../usage_stats/usage_stats.gyp:genproto_usage_stats',
         'dictionary_base.gyp:gen_pos_matcher',
         'gen_pos_map',
         'genproto_dictionary',
@@ -123,6 +124,7 @@
         'suffix_dictionary',
         'suppression_dictionary',
         'system/system_dictionary.gyp:system_dictionary',
+        'system/system_dictionary.gyp:value_dictionary',
         'user_dictionary',
       ],
       'conditions': [['two_pass_build==0', {

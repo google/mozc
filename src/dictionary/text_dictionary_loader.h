@@ -33,6 +33,9 @@
 #include <string>
 #include <vector>
 
+#include "testing/base/public/gunit_prod.h"
+// for FRIEND_TEST
+
 namespace mozc {
 
 struct Token;
@@ -42,23 +45,30 @@ class TextDictionaryLoader {
   TextDictionaryLoader();
   virtual ~TextDictionaryLoader();
 
-  virtual bool Open(const char *filename);
+  // Reads source dictionary file.
+  bool Open(const char *filename);
   // Reads source dictionary file at most lines_limit lines. No limit will
   // be applied when the limit is -1.
   // This is mainly used for test to reduce run time.
   // You can pass multiple filenames delimiterd by ",".
   bool OpenWithLineLimit(const char *filename, int lines_limit);
 
-  // Encode special information into |token| with the |label|.
-  // Currently, label must be empty, "SPELLINC_CORRECITON" or "ZIP_CODE".
-  static bool RewriteSpecialToken(Token *token, const string &label);
-
   void Close();
 
-  virtual void CollectTokens(vector<Token *> *res);
+  // Get the pointers to dictionary tokens.
+  // Note that tokens will be deleted when TextDictionaryLoader is deleted
+  // or Close is called.
+  void CollectTokens(vector<Token *> *res);
 
  private:
+  FRIEND_TEST(TextDictionaryLoaderTest, RewriteSpecialTokenTest);
+
+  // Encode special information into |token| with the |label|.
+  // Currently, label must be empty, "SPELLINC_CORRECITON" or "ZIP_CODE".
+  bool RewriteSpecialToken(Token *token, const string &label);
+
   void ParseTSV(const string &line);
+
   vector<Token *> tokens_;
 };
 }  // namespace mozc

@@ -341,7 +341,8 @@ Segments::Segments()
     user_history_enabled_(true),
     request_type_(Segments::CONVERSION),
     pool_(new ObjectPool<Segment>(32)),
-    composer_(NULL) {}
+    composer_(NULL),
+    cached_lattice_(new Lattice()) {}
 
 Segments::~Segments() {}
 
@@ -616,6 +617,10 @@ const composer::Composer *Segments::composer() const {
 
 void Segments::set_composer(const composer::Composer *composer) {
   composer_ = composer;
+}
+
+Lattice *Segments::mutable_cached_lattice() {
+  return cached_lattice_.get();
 }
 
 string Segments::DebugString() const {

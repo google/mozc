@@ -40,7 +40,8 @@
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
 #define _ATL_NO_HOSTING
-#include <atlbase.h>
+// Workaround against KB813540
+#include <atlbase_mozc.h>
 
 #include <string>
 

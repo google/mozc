@@ -77,13 +77,28 @@ class LParamKeyInfo {
 class VirtualKey {
  public:
   VirtualKey();
-  explicit VirtualKey(UINT combined_virtual_key);
-  wchar_t unicode_char() const;
+
+  // Construct an instance from a given |virtual_key|.
+  // You cannot specify VK_PACKET for |virtual_key|.
+  static VirtualKey FromVirtualKey(BYTE virtual_key);
+  // Construct an instance from a given |combined_virtual_key|.
+  // If the low word of |combined_virtual_key| is VK_PACKET,
+  // the high word will be used as |wide_char_|.
+  // Otherwise, the lowest byte of |combined_virtual_key| will be
+  // used as |virtual_key_|.
+  static VirtualKey FromCombinedVirtualKey(UINT combined_virtual_key);
+  // Construct an instance from a given ucs4 character.
+  // In this case, |virtual_key_| will be set to VK_PACKET.
+  static VirtualKey FromUnicode(char32 unicode);
+
+  wchar_t wide_char() const;
+  char32 unicode_char() const;
   BYTE virtual_key() const;
+
  private:
-  static BYTE ParseVirtualKey(UINT combined_virtual_key);
-  static wchar_t ParseUnicodeChar(UINT combined_virtual_key);
-  wchar_t unicode_char_;
+  VirtualKey(BYTE virtual_key, wchar_t wide_char, char32 unicode_char);
+  char32 unicode_char_;
+  wchar_t wide_char_;
   BYTE virtual_key_;
 };
 

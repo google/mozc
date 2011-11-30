@@ -59,6 +59,8 @@ class ConverterMock : public ConverterInterface {
     size_t start_segment_index;
     size_t segments_size;
     vector<uint8> new_size_array;
+    string current_segment_key;
+    string new_segment_key;
   };
 
   ConverterMock();
@@ -69,12 +71,19 @@ class ConverterMock : public ConverterInterface {
   void SetStartConversionWithComposer(Segments *segments, bool result);
   void SetStartReverseConversion(Segments *segments, bool result);
   void SetStartPrediction(Segments *segments, bool result);
+  void SetStartPredictionWithComposer(Segments *segments, bool result);
   void SetStartSuggestion(Segments *segments, bool result);
+  void SetStartSuggestionWithComposer(Segments *segments, bool result);
+  void SetStartPartialPrediction(Segments *segments, bool result);
+  void SetStartPartialPredictionWithComposer(Segments *segments, bool result);
+  void SetStartPartialSuggestion(Segments *segments, bool result);
+  void SetStartPartialSuggestionWithComposer(Segments *segments, bool result);
   void SetFinishConversion(Segments *segments, bool result);
   void SetCancelConversion(Segments *segments, bool result);
   void SetResetConversion(Segments *segments, bool result);
   void SetRevertConversion(Segments *segments, bool result);
   void SetCommitSegmentValue(Segments *segments, bool result);
+  void SetCommitPartialSuggestionSegmentValue(Segments *segments, bool result);
   void SetFocusSegmentValue(Segments *segments, bool result);
   void SetFreeSegmentValue(Segments *segments, bool result);
   void SetSubmitFirstSegment(Segments *segments, bool result);
@@ -87,13 +96,30 @@ class ConverterMock : public ConverterInterface {
                                       const composer::Composer **composer);
   void GetStartReverseConversion(Segments *segments, string *key);
   void GetStartPrediction(Segments *segments, string *key);
+  void GetStartPredictionWithComposer(Segments *segments,
+                                      const composer::Composer **composer);
   void GetStartSuggestion(Segments *segments, string *key);
+  void GetStartSuggestionWithComposer(Segments *segments,
+                                      const composer::Composer **composer);
+  void GetStartPartialPrediction(Segments *segments, string *key);
+  void GetStartPartialPredictionWithComposer(
+      Segments *segments,
+      const composer::Composer **composer);
+  void GetStartPartialSuggestion(Segments *segments, string *key);
+  void GetStartPartialSuggestionWithComposer(
+      Segments *segments,
+      const composer::Composer **composer);
   void GetFinishConversion(Segments *segments);
   void GetCancelConversion(Segments *segments);
   void GetResetConversion(Segments *segments);
   void GetRevertConversion(Segments *segments);
   void GetCommitSegmentValue(Segments *segments, size_t *segment_index,
                              int *candidate_index);
+  void GetCommitPartialSuggestionSegmentValue(Segments *segments,
+                                              size_t *segment_index,
+                                              int *candidate_index,
+                                              string *current_segment_key,
+                                              string *new_segment_key);
   void GetFocusSegmentValue(Segments *segments, size_t *segment_index,
                             int *candidate_index);
   void GetFreeSegmentValue(Segments *segments, size_t *segment_index);
@@ -113,8 +139,20 @@ class ConverterMock : public ConverterInterface {
                               const string &key) const;
   bool StartPrediction(Segments *segments,
                        const string &key) const;
+  bool StartPredictionWithComposer(
+      Segments *segments, const composer::Composer *composer) const;
   bool StartSuggestion(Segments *segments,
                        const string &key) const;
+  bool StartSuggestionWithComposer(
+      Segments *segments, const composer::Composer *composer) const;
+  bool StartPartialPrediction(Segments *segments,
+                              const string &key) const;
+  bool StartPartialPredictionWithComposer(
+      Segments *segments, const composer::Composer *composer) const;
+  bool StartPartialSuggestion(Segments *segments,
+                              const string &key) const;
+  bool StartPartialSuggestionWithComposer(
+      Segments *segments, const composer::Composer *composer) const;
   bool FinishConversion(Segments *segments) const;
   bool CancelConversion(Segments *segments) const;
   bool ResetConversion(Segments *segments) const;
@@ -122,6 +160,12 @@ class ConverterMock : public ConverterInterface {
   bool CommitSegmentValue(Segments *segments,
                           size_t segment_index,
                           int    candidate_index) const;
+  bool CommitPartialSuggestionSegmentValue(
+      Segments *segments,
+      size_t segment_index,
+      int candidate_index,
+      const string &current_segment_key,
+      const string &new_segment_key) const;
   bool FocusSegmentValue(Segments *segments,
                          size_t segment_index,
                          int candidate_index) const;
@@ -146,12 +190,19 @@ class ConverterMock : public ConverterInterface {
   mutable ConverterInput startconversionwithcomposer_input_;
   mutable ConverterInput startreverseconversion_input_;
   mutable ConverterInput startprediction_input_;
+  mutable ConverterInput startpredictionwithcomposer_input_;
   mutable ConverterInput startsuggestion_input_;
+  mutable ConverterInput startsuggestionwithcomposer_input_;
+  mutable ConverterInput startpartialprediction_input_;
+  mutable ConverterInput startpartialpredictionwithcomposer_input_;
+  mutable ConverterInput startpartialsuggestion_input_;
+  mutable ConverterInput startpartialsuggestionwithcomposer_input_;
   mutable ConverterInput finishconversion_input_;
   mutable ConverterInput cancelconversion_input_;
   mutable ConverterInput resetconversion_input_;
   mutable ConverterInput revertconversion_input_;
   mutable ConverterInput commitsegmentvalue_input_;
+  mutable ConverterInput commitpartialsuggestionsegmentvalue_input_;
   mutable ConverterInput focussegmentvalue_input_;
   mutable ConverterInput freesegmentvalue_input_;
   mutable ConverterInput submitfirstsegment_input_;
@@ -162,12 +213,19 @@ class ConverterMock : public ConverterInterface {
   ConverterOutput startconversionwithcomposer_output_;
   ConverterOutput startreverseconversion_output_;
   ConverterOutput startprediction_output_;
+  ConverterOutput startpredictionwithcomposer_output_;
   ConverterOutput startsuggestion_output_;
+  ConverterOutput startsuggestionwithcomposer_output_;
+  ConverterOutput startpartialprediction_output_;
+  ConverterOutput startpartialpredictionwithcomposer_output_;
+  ConverterOutput startpartialsuggestion_output_;
+  ConverterOutput startpartialsuggestionwithcomposer_output_;
   ConverterOutput finishconversion_output_;
   ConverterOutput cancelconversion_output_;
   ConverterOutput resetconversion_output_;
   ConverterOutput revertconversion_output_;
   ConverterOutput commitsegmentvalue_output_;
+  ConverterOutput commitpartialsuggestionsegmentvalue_output_;
   ConverterOutput focussegmentvalue_output_;
   ConverterOutput freesegmentvalue_output_;
   ConverterOutput submitfirstsegment_output_;
@@ -179,4 +237,4 @@ class ConverterMock : public ConverterInterface {
 
 }  // namespace mozc
 
-#endif  //MOZC_CONVERTER_CONVERTER_MOCK_H_
+#endif  // MOZC_CONVERTER_CONVERTER_MOCK_H_

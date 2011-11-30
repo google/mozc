@@ -74,11 +74,7 @@ Table::Table()
       case_sensitive_(false) {}
 
 Table::~Table() {
-  EntrySet::iterator it;
-  for (it = entry_set_.begin(); it != entry_set_.end(); ++it) {
-    const Entry *entry = *it;
-    delete entry;
-  }
+  ResetEntrySet();
 }
 
 static const char kKuten[]  = "\xE3\x80\x81";  // "、"
@@ -195,6 +191,7 @@ bool Table::Initialize() {
 }
 
 bool Table::Reload() {
+  ResetEntrySet();
   entries_.reset(new EntryTrie);
   return Initialize();
 }
@@ -278,10 +275,10 @@ const Entry *Table::AddRuleWithAttributes(const string &escaped_input,
     size_t pos = 0;
     size_t mblen = 0;
     while (pos < trimed_input.size()) {
-      const uint16 ucs2 = Util::UTF8ToUCS2(begin + pos,
+      const char32 ucs4 = Util::UTF8ToUCS4(begin + pos,
                                            begin + trimed_input.size(),
                                            &mblen);
-      if ('A' <= ucs2 && ucs2 <= 'Z') {
+      if ('A' <= ucs4 && ucs4 <= 'Z') {
         case_sensitive_ = true;
         break;
       }
@@ -401,6 +398,17 @@ const Entry *Table::LookUpPrefix(const string &input,
   return entry;
 }
 
+void Table::LookUpPredictiveAll(const string &input,
+                                vector<const Entry *> *results) const {
+  if (case_sensitive_) {
+    entries_->LookUpPredictiveAll(input, results);
+  } else {
+    string normalized_input = input;
+    Util::LowerString(&normalized_input);
+    entries_->LookUpPredictiveAll(normalized_input, results);
+  }
+}
+
 bool Table::HasNewChunkEntry(const string &input) const {
   if (input.empty()) {
     return false;
@@ -432,6 +440,14 @@ void Table::DeleteEntry(const Entry *entry) {
   delete entry;
 }
 
+void Table::ResetEntrySet() {
+  for (EntrySet::iterator it = entry_set_.begin(); it != entry_set_.end();
+       ++it) {
+    delete *it;
+  }
+  entry_set_.clear();
+}
+
 bool Table::case_sensitive() const {
   return case_sensitive_;
 }
@@ -455,7 +471,7 @@ bool FindBlock(const string &input, const string &open, const string &close,
   if (*close_pos == string::npos) {
     return false;
   }
-  
+
   return true;
 }
 }  // anonymous namespace

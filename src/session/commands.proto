@@ -37,6 +37,7 @@
 syntax = "proto2";
 
 import "config/config.proto";
+import "session/candidates.proto";
 
 package mozc.commands;
 
@@ -242,6 +243,11 @@ message SessionCommand {
     // Revert the session, this is usually similar to type ESC several times.
     REVERT = 1;
     // Commit the session, this is usually similar to type Enter.
+    // SUBMIT session command is accepted in any status.
+    // Pre-condition:
+    // - Any states of IME are acceptable.
+    // Post-condition:
+    // - Preedit text becomes empty.
     SUBMIT = 2;
     // Select the specified candidate word by id.  This command is
     // usually used with mouse clicking.
@@ -260,6 +266,7 @@ message SessionCommand {
     // Return the current status such as composition mode, preedit method, etc.
     GET_STATUS = 6;
 
+    SUBMIT_CANDIDATE = 7;
 
     // Perform reverse conversion.
     CONVERT_REVERSE = 8;
@@ -276,6 +283,30 @@ message SessionCommand {
 
     // Specify the input field type.
     SWITCH_INPUT_FIELD_TYPE = 12;
+
+    // Client side event information for collecting usage statistics
+    USAGE_STATS_EVENT = 13;
+
+
+    // Expand suggestion candidates.
+    // Usual suggestion algorithm is not "rich" but "fast" because suggestion
+    // is executed every key event (On the other hand predicition is "rich"
+    // because prediction is executed only when a user types TAB key).
+    // This command expands suggestion candidate but IME state is
+    // kept as is (Note : PredictAndConvert key command does almost the same
+    // thing but it changes IME state to prediction).
+    EXPAND_SUGGESTION = 15;
+
+    // The client can send the current caret position whenever the caret
+    // position is changed. The caret position is used for suggest window
+    // position calculation. This is an optional message. If client can show
+    // suggest window on the correct position, this message can be ignored.
+    SEND_CARET_LOCATION = 16;
+
+    // Number of commands.
+    // When new command is added, the command should use below number
+    // and NUM_OF_COMMANDS should be incremented.
+    NUM_OF_COMMANDS = 17;
   };
   required CommandType type = 1;
 
@@ -301,9 +332,26 @@ message SessionCommand {
 
     // Password field. Text is hidden after input.
     PASSWORD = 2;
+
+    // Telephone number
+    TEL = 3;
+
+    // Number
+    NUMBER = 4;
   };
   // Type of the input field being focused.
   optional InputFieldType input_field_type = 6;
+
+  // Client side event for collecting usage statistics
+  enum UsageStatsEvent {
+    INFOLIST_WINDOW_SHOW = 1;
+    INFOLIST_WINDOW_HIDE = 2;
+  }
+  optional UsageStatsEvent usage_stats_event = 7;
+
+  // Specify the current caret location, this is used for suggest window
+  // position calculation. Used with SEND_CARET_LOCATION.
+  optional Rectangle caret_rectangle = 8;
 };
 
 message Context {
@@ -409,7 +457,7 @@ message Input {
     // Number of commands.
     // When new command is added, the command should use below number
     // and NUM_OF_COMMANDS should be incremented.
-    NUM_OF_COMMANDS = 24;
+    NUM_OF_COMMANDS = 26;
   };
   required CommandType type = 1;
 
@@ -435,6 +483,8 @@ message Input {
   // Server may be able to change the behavior by seeing the
   // the program name.
   optional ApplicationInfo application_info = 8;
+
+
 
 
 };
@@ -491,157 +541,6 @@ message Preedit {
   optional uint32 highlighted_position = 3;
 };
 
-// Annotation against a candidate.
-message Annotation {
-  // Annotation prepended to the value.
-  optional string prefix = 1;
-  // Annotation appended to the value.
-  optional string suffix = 2;
-  // Type of the candidate such as [HALF][KATAKANA], [GREEK],
-  // [Black square], etc...
-  optional string description = 3;
-  // Shortcut key to select this candidate.
-  optional string shortcut = 4;
-};
-
-// Additional information to a candidate word.  This message is
-// used for describing a word usage for instance.
-message Information {
-  // Unique number specifying the information.
-  optional int32 id = 1;
-
-  // Title string of the information.  For usage, this value is
-  // probably equal to Candidate::value or its canonicalized value.
-  optional string title = 2;
-
-  // The content of the information.  For usage, this value actually
-  // describes how to use the word.
-  optional string description = 3;
-
-  // The IDs of candidates which connect with the information.
-  repeated int32 candidate_id = 4;
-};
-
-// Category describes the attribute of the words.
-enum Category {
-  CONVERSION = 0;
-  PREDICTION = 1;
-  SUGGESTION = 2;
-  TRANSLITERATION = 3;
-  USAGE = 4;
-};
-
-// DisplayType is a hint to UI renderers describing how the words are
-// displayed.
-enum DisplayType {
-  MAIN = 0;
-  CASCADE = 1;
-};
-
-message InformationList {
-  optional uint32 focused_index = 1;
-  repeated Information information = 2;
-  // Category of the infolist.
-  optional Category category = 3 [default = CONVERSION];
-
-  // Information to be used for rendering.
-  optional DisplayType display_type = 4 [default = CASCADE];
-};
-
-// Message representing the footer part of the candidate window.
-message Footer {
-  // Message shown like a status bar.
-  optional string label = 1;
-  // Whether index (e.g. 10/120) is visible or not.
-  optional bool index_visible = 2 [default = false];
-  // Whether the logo image is visible or not.
-  optional bool logo_visible = 3 [default = false];
-  // Message modestly shown.  It is used for displaying the version on
-  // dev-channel now.
-  optional string sub_label = 4;
-};
-
-message CandidateWord {
-  // Unique number specifing the candidate.  This may be a negative value.
-  optional int32 id = 1;
-  // The first index should be zero and index numbers should increase by one.
-  optional uint32 index = 2;
-  // Reading of the value.  The value is only used when the key is
-  // different from the input composition (e.g. suggestion/prediction).
-  optional string key = 3;
-  // Converted value.  (e.g. Kanji value).
-  optional string value = 4;
-  optional Annotation annotation = 5;
-};
-
-message CandidateList {
-  // This value represents the focused position of the next
-  // |candidates|.  If the |candidates| is a part of the whole
-  // candidate words (as a result of paging), this value indicates the
-  // position from the beginning of that part.  (ex. where
-  // |candidates| contatins 10th to 18th candidates, focused_index=0
-  // means the 10th candidate, but not 1st candidate.
-  //
-  // The existense of |focused_index| does not represents whether this
-  // candidate list is a 'suggestion' or not.  |category| represents
-  // it.
-  optional uint32 focused_index = 1;
-  repeated CandidateWord candidates = 2;
-  // Category of the candidates.
-  optional Category category = 3 [default = CONVERSION];
-};
-
-// TODO(komatsu) rename it to CandidateWindow.
-message Candidates {
-  // TODO(komatsu): Use CandidateList.
-  // When has_focused_index() is true, this message contains predicted and
-  // normally converted candidates. Otherwise, when the field is not set,
-  // this message contains a 'suggestion'.
-  optional uint32 focused_index = 1;
-
-  // The size of the total candidates in this candidate list.  The
-  // value does not include the size of subcandidate lists.  Note, the
-  // next repeated-Candidate=3 may not contain all candidates.
-  // all_candidates contains the values of subcandidate lists.
-  required uint32 size = 2;
-
-  // TODO(komatsu): Use CandidateList.
-  repeated group Candidate = 3 {
-    // The first index should be zero and index numbers should increase by one.
-    required uint32 index = 4;
-    required string value = 5;
-    optional int32 id = 9;  // Unique number specifing the candidate.
-    optional Annotation annotation = 7;
-    optional int32 information_id = 10;
-  };
-  // The position on the preedit.  The number represents the left edge
-  // of the candidate window.
-  required uint32 position = 6;
-
-  // Nested candidates aka cascading window.
-  optional Candidates subcandidates = 8;
-
-  // Usages of candidates.
-  optional InformationList usages = 10;
-
-  // TODO(komatsu): Use CandidateList.
-  // Category of the candidates
-  optional Category category = 11 [default = CONVERSION];
-
-  // Information to be used for rendering.
-  optional DisplayType display_type = 12 [default = MAIN];
-
-  // Footer of the GUI window.
-  optional Footer footer = 13;
-
-  // The direction of candidates in the window.  This is just a
-  // suggestion from the server and client does not have to follow.
-  enum Direction {
-    VERTICAL = 0;
-    HORIZONTAL = 1;
-  };
-  optional Direction direction = 14 [ default = VERTICAL ];
-};
 
 message Status {
   // Whether IME is ON or OFF
@@ -916,9 +815,15 @@ message RendererCommand {
     // used in Windows:
     // Represents caret information.
     optional CaretInfo caret_info = 11;
+
+    // Renderer sends RendererCommand to renderer itself in order to
+    // extend InfoList.
+    enum MessageSenderType {
+      CLIENT = 0;
+      RENDERER = 1;
+    };
+    optional MessageSenderType message_sender_type = 12 [ default = CLIENT ];
   };
 
   optional ApplicationInfo application_info = 5;
 };
-
-

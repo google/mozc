@@ -43,6 +43,7 @@ class ClientInterface;
 namespace commands {
 class Output;
 class RendererCommand;
+class SessionCommand;
 }
 
 namespace renderer {
@@ -117,9 +118,11 @@ class RendererInterface;
   IBOutlet NSMenu *menu_;
 }
 
-// candidateClicked: is called when the user clicks a candidate item
-// in candidate windows.
-- (void)candidateClicked:(int)id;
+// sendCommand: is called to send SessionCommand to the server
+// from the renderer, when the user clicks a candidate item
+// in candidate windows or when the renderer sends the usage stats
+// event information.
+- (void)sendCommand:(mozc::commands::SessionCommand&)command;
 
 // reconversionClicked: is called when the user clicks "Reconversion"
 // menu item.

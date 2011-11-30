@@ -29,7 +29,7 @@
 
 {
   'variables': {
-    'mac_breakpad_dir': '<(DEPTH)/../mac/Releases/GoogleBreakpad/',
+    'mac_breakpad_dir': '<(mac_dir)/Releases/GoogleBreakpad/',
     'mac_breakpad_framework': '<(mac_breakpad_dir)/GoogleBreakpad.framework',
   },
   'link_settings': {

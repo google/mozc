@@ -199,8 +199,11 @@ Node *UserDictionary::LookupPredictive(const char *str, int size,
   return result_node;
 }
 
-Node *UserDictionary::LookupPrefix(const char *str, int size,
-                                   NodeAllocatorInterface *allocator) const {
+Node *UserDictionary::LookupPrefixWithLimit(
+    const char *str,
+    int size,
+    const Limit &limit,
+    NodeAllocatorInterface *allocator) const {
   if (size == 0) {
     LOG(WARNING) << "string of length zero is passed.";
     return NULL;
@@ -240,6 +243,11 @@ Node *UserDictionary::LookupPrefix(const char *str, int size,
     }
 
     if (!Util::StartsWith(key, (*it)->key)) {
+      continue;
+    }
+
+    // check the lower limit of key length
+    if ((*it)->key.size() < limit.key_len_lower_limit) {
       continue;
     }
 

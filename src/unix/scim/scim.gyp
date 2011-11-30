@@ -59,6 +59,8 @@
         '../../base/base.gyp:base',
         '../../client/client.gyp:client',
         '../../ipc/ipc.gyp:ipc',
+        '../../languages/languages.gyp:global_language_spec',
+        '../../languages/japanese/japanese.gyp:language_dependent_spec_japanese',
         '../../session/session_base.gyp:genproto_session',
         '../../session/session_base.gyp:ime_switch_util',
         '../../session/session_base.gyp:session_protocol',

@@ -124,7 +124,8 @@ void LoadUsage(const string &filename,
     item.key = ((fields[0] == "*") ? "" : fields[0]);
     item.value = ((fields[1] == "*") ? "" : fields[1]);
     item.conjugation = ((fields[2] == "*") ? "" : fields[2]);
-    item.meaning = ((fields[3] == "*") ? "" : fields[3]);
+    string tmp = ((fields[3] == "*") ? "" : fields[3]);
+    Util::StringReplace(tmp, "\\n", "\n", true, &item.meaning);
 
     map<string, int>::iterator it = conjugation_id_map.find(item.conjugation);
     if (it == conjugation_id_map.end()) {

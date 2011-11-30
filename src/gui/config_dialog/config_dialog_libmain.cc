@@ -39,6 +39,8 @@
 #include "gui/base/locale_util.h"
 #include "gui/base/singleton_window_helper.h"
 #include "gui/config_dialog/config_dialog.h"
+#include "languages/global_language_spec.h"
+#include "languages/japanese/lang_dep_spec.h"
 
 int RunConfigDialog(int argc, char *argv[]) {
   Q_INIT_RESOURCE(qrc_config_dialog);
@@ -52,6 +54,9 @@ int RunConfigDialog(int argc, char *argv[]) {
     window_helper.ActivatePreviousWindow();
     return -1;
   }
+
+  mozc::japanese::LangDepSpecJapanese spec;
+  mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(&spec);
 
   QStringList resource_names;
   resource_names << "config_dialog" << "keymap";

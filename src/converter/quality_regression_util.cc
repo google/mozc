@@ -32,6 +32,7 @@
 #include <sstream>
 #include "base/base.h"
 #include "base/file_stream.h"
+#include "base/text_normalizer.h"
 #include "base/util.h"
 #include "config/config_handler.h"
 #include "config/config.pb.h"
@@ -100,7 +101,7 @@ bool QualityRegressionUtil::TestItem::ParseFromTSV(const string &line) {
   }
   label          = tokens[0];
   key            = tokens[1];
-  expected_value = tokens[2];
+  TextNormalizer::NormalizeCandidateText(tokens[2], &expected_value);
   command        = tokens[3];
   expected_rank  = atoi(tokens[4].c_str());
   accuracy       = atof(tokens[5].c_str());

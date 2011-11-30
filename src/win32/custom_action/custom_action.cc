@@ -30,7 +30,8 @@
 #include "win32/custom_action/custom_action.h"
 
 #include <windows.h>
-#include <atlbase.h>
+// Workaround against KB813540
+#include <atlbase_mozc.h>
 #if !defined(NO_LOGGING)
 #include <atlstr.h>
 #endif  // !NO_LOGGING
@@ -47,6 +48,8 @@
 #include "base/version.h"
 #include "client/client_interface.h"
 #include "config/stats_config_util.h"
+#include "languages/global_language_spec.h"
+#include "languages/japanese/lang_dep_spec.h"
 #include "renderer/renderer_client.h"
 #include "server/cache_service_manager.h"
 #include "session/commands.pb.h"
@@ -77,6 +80,7 @@ const char kIEFrameDll[] = "ieframe.dll";
 const wchar_t kSystemSharedKey[] = L"Software\\Microsoft\\CTF\\SystemShared";
 
 HMODULE g_module = NULL;
+mozc::language::LanguageDependentSpecInterface *g_lang_spec_ptr = NULL;
 
 HRESULT CallSystemDllFunction(const char* dll_name,
                               const char* function_name) {
@@ -240,9 +244,15 @@ BOOL APIENTRY DllMain(HMODULE module,
   switch (ul_reason_for_call) {
     case DLL_PROCESS_ATTACH:
       g_module = module;
+      g_lang_spec_ptr = new mozc::japanese::LangDepSpecJapanese();
+      mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(
+          g_lang_spec_ptr);
       break;
     case DLL_PROCESS_DETACH:
       g_module = NULL;
+      mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(NULL);
+      delete g_lang_spec_ptr;
+      g_lang_spec_ptr = NULL;
       break;
     case DLL_THREAD_ATTACH:
     case DLL_THREAD_DETACH:

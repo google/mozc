@@ -77,7 +77,9 @@ void InsertCandidate(Segment *segment,
   // Adding 5000 to the single kanji cost
   const int kOffsetDiff = 5000;
 
-  const Segment::Candidate &base_candidate = segment->candidate(0);
+  const string &candidate_key = ((!segment->key().empty()) ?
+                                 segment->key() :
+                                 segment->candidate(0).key);
   size_t idx_j = 0;
 
   if (is_single_segment) {
@@ -117,8 +119,8 @@ void InsertCandidate(Segment *segment,
       c->rid = dict_values[idx_j].rid;
       c->cost = dict_values[idx_j].cost + kOffsetDiff;
       c->content_value = dict_values[idx_j].value;
-      c->key = base_candidate.key;
-      c->content_key = base_candidate.content_key;
+      c->key = candidate_key;
+      c->content_key = candidate_key;
       c->value = dict_values[idx_j].value;
       c->attributes |= Segment::Candidate::CONTEXT_SENSITIVE;
       c->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
@@ -137,7 +139,8 @@ void InsertCandidate(Segment *segment,
     c->rid = dict_values[idx_j].rid;
     c->cost = dict_values[idx_j].cost + kOffsetDiff;
     c->content_value = dict_values[idx_j].value;
-    c->content_key = base_candidate.content_key;
+    c->key = candidate_key;
+    c->content_key = candidate_key;
     c->value = dict_values[idx_j].value;
     c->attributes |= Segment::Candidate::CONTEXT_SENSITIVE;
     c->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;

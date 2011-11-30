@@ -1,0 +1,13 @@
+/* 
+   Localizable.strings
+   GoogleJapaneseInput/ActivatePane
+
+   Created by Jun Mukai on 09/10/22.
+   Copyright 2009 Google Inc. All rights reserved.
+ */
+"Title" = "Enable Google Japanese Input";
+"mainMessage" = "Do you want to enable Google Japanese Input?";
+"activateLabel" = "Yes";
+"doNotActivateLabel" = "No, I will enable it later.";
+"upgradeMessage" = "Google Japanese Input has been updated.  Some features will not be available until you log out and log back in.";
+"usageStatsMessage" = "Help make Google Japanese Input better by automatically sending usage statistics and crash reports to Google.";

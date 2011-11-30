@@ -33,7 +33,6 @@
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
 #define _ATL_NO_HOSTING
-#include <atlbase.h>
 #include <atlcom.h>
 
 #include "base/util.h"

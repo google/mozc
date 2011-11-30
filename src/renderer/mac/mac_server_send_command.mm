@@ -46,14 +46,14 @@ bool MacServerSendCommand::SendCommand(
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   NSConnection *connection =
       [NSConnection
-        connectionWithRegisteredName:@ kProductPrefix "_1_Connection"
+        connectionWithRegisteredName:@ kProductPrefix "_Renderer_Connection"
                                 host:nil];
   const string command_string = command.SerializeAsString();
   NSData *sending_data = [NSData dataWithBytes:command_string.data()
                                         length:command_string.size()];
   id peer = [connection rootProxy];
   [peer setProtocolForProxy:@protocol(ServerCallback)];
-  [peer rendererClicked:sending_data];
+  [peer sendData:sending_data];
   [pool drain];
   return true;
 }

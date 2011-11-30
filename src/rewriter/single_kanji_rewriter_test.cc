@@ -30,6 +30,7 @@
 #include "base/util.h"
 #include "config/config_handler.h"
 #include "config/config.pb.h"
+#include "converter/segments.h"
 #include "rewriter/single_kanji_rewriter.h"
 #include "session/commands.pb.h"
 #include "testing/base/public/gunit.h"
@@ -50,7 +51,31 @@ class SingleKanjiRewriterTest : public testing::Test {
 
 TEST_F(SingleKanjiRewriterTest, CapabilityTest) {
   SingleKanjiRewriter rewriter;
+
   EXPECT_EQ(RewriterInterface::CONVERSION, rewriter.capability());
+}
+
+TEST_F(SingleKanjiRewriterTest, SetKeyTest) {
+  SingleKanjiRewriter rewriter;
+  Segments segments;
+  Segment *segment = segments.add_segment();
+  // "あ"
+  const string kKey = "\xe3\x81\x82";
+  segment->set_key(kKey);
+  Segment::Candidate *candidate = segment->add_candidate();
+  // First candidate may be inserted by other rewriters.
+  candidate->Init();
+  candidate->key = "strange key";
+  candidate->content_key = "starnge key";
+  candidate->value = "starnge value";
+  candidate->content_value = "strange value";
+
+  EXPECT_EQ(1, segment->candidates_size());
+  rewriter.Rewrite(&segments);
+  EXPECT_GT(segment->candidates_size(), 1);
+  for (size_t i = 1; i < segment->candidates_size(); ++i) {
+    EXPECT_EQ(kKey, segment->candidate(i).key);
+  }
 }
 
 }  // namespace mozc

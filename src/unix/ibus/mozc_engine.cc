@@ -493,7 +493,9 @@ void MozcEngine::FocusOut(IBusEngine *engine) {
   // Stop ignoring "reset" signal.  See ProcessKeyevent().
   ignore_reset_for_deletion_range_workaround_ = false;
 
-  SubmitSession(engine);
+  // Do not call SubmitSession or RevertSession. Preedit string will commit on
+  // Focus Out event automatically by ibus_engine_update_preedit_text_with_mode
+  // which called in UpdatePreedit method.
   SyncData(false);
 }
 
@@ -568,51 +570,6 @@ gboolean MozcEngine::ProcessKeyEvent(
   }
 
   VLOG(2) << output.DebugString();
-
-  if (output.has_deletion_range() &&
-      output.deletion_range().offset() < 0 &&
-      output.deletion_range().offset() + output.deletion_range().length() >=
-          0) {
-    // Delete some characters of preceding text.  We really want to use
-    // ibus_engine_delete_surrounding_text(), but it does not work on many
-    // applications, e.g. Chrome, Firefox.  So we currently forward backspaces
-    // to application.
-    // NOTE: There are some workarounds.  They must be maintained
-    // continuosly.
-    // NOTE: It cannot delete range of characters not adjacent to the left side
-    // of cursor.  If the range is not adjacent to the cursor, ignore it.  If
-    // the range contains the cursor, only characters on the left side of cursor
-    // are deleted.
-    const int length = -output.deletion_range().offset();
-
-    // Some applications, e.g. Chrome, delete preedit character when we forward
-    // a backspace.  We can avoid it by hiding preedit before forwarding
-    // backspaces.
-    ibus_engine_hide_preedit_text(engine);
-
-    // Forward backspaces.
-    for (size_t i = 0; i < length; ++i) {
-      ibus_engine_forward_key_event(
-          engine, IBUS_BackSpace, kBackSpaceKeyCode, 0);
-    }
-
-    // This is a workaround.  Some applications (e.g. Chrome, etc.) send
-    // strange signals such as "focus_out" and "focus_in" after forwarding
-    // Backspace key event.  However, such strange signals are not sent if we
-    // forward another key event after backspaces.  Here we choose Shift L,
-    // which is one of the most quiet key event.
-    ibus_engine_forward_key_event(engine, IBUS_Shift_L, kShiftLeftKeyCode, 0);
-
-    // This is also a workaround.  Some applications (e.g. gedit, etc.) send a
-    // "reset" signal after forwarding backspaces.  This signal is sent after
-    // this ProcessKeyEvent() returns, and we want to avoid reverting the
-    // session.
-    // See also Reset(), which calls RevertSession() only if
-    // ignore_reset_for_deletion_range_workaround_ is false.  This flag is
-    // reset on Disable(), FocusOut(), and ProcessKeyEvent().  Reset() also
-    // reset this flag, i.e. this flag does not work more than once.
-    ignore_reset_for_deletion_range_workaround_ = true;
-  }
 
   UpdateAll(engine, output);
 
@@ -726,7 +683,15 @@ void MozcEngine::SetCursorLocation(IBusEngine *engine,
                                    gint y,
                                    gint w,
                                    gint h) {
-  // We can ignore the signal.
+  commands::Output output;
+  commands::SessionCommand command;
+  command.set_type(commands::SessionCommand::SEND_CARET_LOCATION);
+  commands::Rectangle *caret_rectangle = command.mutable_caret_rectangle();
+  caret_rectangle->set_x(x);
+  caret_rectangle->set_y(y);
+  caret_rectangle->set_width(w);
+  caret_rectangle->set_height(h);
+  client_->SendCommand(command, &output);
 }
 
 GType MozcEngine::GetType() {
@@ -872,6 +837,7 @@ bool MozcEngine::ProcessModifiers(
 }
 
 bool MozcEngine::UpdateAll(IBusEngine *engine, const commands::Output &output) {
+  UpdateDeletionRange(engine, output);
   UpdateResult(engine, output);
   UpdatePreedit(engine, output);
   UpdateCandidates(engine, output);
@@ -879,6 +845,56 @@ bool MozcEngine::UpdateAll(IBusEngine *engine, const commands::Output &output) {
     UpdateCompositionMode(engine, output.mode());
   }
   LaunchTool(output);
+  ExecuteCallback(engine, output);
+  return true;
+}
+
+bool MozcEngine::UpdateDeletionRange(IBusEngine *engine,
+                                     const commands::Output &output) {
+  if (output.has_deletion_range() &&
+      output.deletion_range().offset() < 0 &&
+      output.deletion_range().offset() + output.deletion_range().length() >=
+          0) {
+    // Delete some characters of preceding text.  We really want to use
+    // ibus_engine_delete_surrounding_text(), but it does not work on many
+    // applications, e.g. Chrome, Firefox.  So we currently forward backspaces
+    // to application.
+    // NOTE: There are some workarounds.  They must be maintained
+    // continuosly.
+    // NOTE: It cannot delete range of characters not adjacent to the left side
+    // of cursor.  If the range is not adjacent to the cursor, ignore it.  If
+    // the range contains the cursor, only characters on the left side of cursor
+    // are deleted.
+    const int length = -output.deletion_range().offset();
+
+    // Some applications, e.g. Chrome, delete preedit character when we forward
+    // a backspace.  We can avoid it by hiding preedit before forwarding
+    // backspaces.
+    ibus_engine_hide_preedit_text(engine);
+
+    // Forward backspaces.
+    for (size_t i = 0; i < length; ++i) {
+      ibus_engine_forward_key_event(
+          engine, IBUS_BackSpace, kBackSpaceKeyCode, 0);
+    }
+
+    // This is a workaround.  Some applications (e.g. Chrome, etc.) send
+    // strange signals such as "focus_out" and "focus_in" after forwarding
+    // Backspace key event.  However, such strange signals are not sent if we
+    // forward another key event after backspaces.  Here we choose Shift L,
+    // which is one of the most quiet key event.
+    ibus_engine_forward_key_event(engine, IBUS_Shift_L, kShiftLeftKeyCode, 0);
+
+    // This is also a workaround.  Some applications (e.g. gedit, etc.) send a
+    // "reset" signal after forwarding backspaces.  This signal is sent after
+    // this ProcessKeyEvent() returns, and we want to avoid reverting the
+    // session.
+    // See also Reset(), which calls RevertSession() only if
+    // ignore_reset_for_deletion_range_workaround_ is false.  This flag is
+    // reset on Disable(), FocusOut(), and ProcessKeyEvent().  Reset() also
+    // reset this flag, i.e. this flag does not work more than once.
+    ignore_reset_for_deletion_range_workaround_ = true;
+  }
   return true;
 }
 
@@ -902,7 +918,12 @@ bool MozcEngine::UpdatePreedit(IBusEngine *engine,
     return true;
   }
   IBusText *text = ComposePreeditText(output.preedit());
+#if IBUS_CHECK_VERSION(1, 3, 99)
+  ibus_engine_update_preedit_text_with_mode(engine, text, CursorPos(output),
+                                            TRUE, IBUS_ENGINE_PREEDIT_COMMIT);
+#else
   ibus_engine_update_preedit_text(engine, text, CursorPos(output), TRUE);
+#endif
   // |text| is released by ibus_engine_update_preedit_text.
   return true;
 }
@@ -1113,15 +1134,88 @@ void MozcEngine::RevertSession(IBusEngine *engine) {
   }
 }
 
-void MozcEngine::SubmitSession(IBusEngine *engine) {
-  commands::SessionCommand command;
-  command.set_type(commands::SessionCommand::SUBMIT);
-  commands::Output output;
-  if (!client_->SendCommand(command, &output)) {
-    LOG(ERROR) << "SubmitSession() failed";
-    return;
+bool MozcEngine::ExecuteCallback(IBusEngine *engine,
+                                 const commands::Output &output) {
+  if (!output.has_callback()) {
+    return false;
   }
-  UpdateAll(engine, output);
+
+  // TODO(nona): Make IBus interface class and add unittest for ibus APIs.
+  if (!output.callback().has_session_command()) {
+    LOG(ERROR) << "callback does not have session_command";
+    return false;
+  }
+
+  const commands::SessionCommand &callback_command =
+      output.callback().session_command();
+
+  if (!callback_command.has_type()) {
+    LOG(ERROR) << "callback_command has no type";
+    return false;
+  }
+
+  commands::SessionCommand session_command;
+  session_command.set_type(callback_command.type());
+
+  switch (callback_command.type()) {
+    case commands::SessionCommand::UNDO:
+      // do nothing.
+      break;
+    case commands::SessionCommand::CONVERT_REVERSE: {
+#if IBUS_CHECK_VERSION(1, 4, 0)
+// ibus_engine_get_surrounding_text is supported by >= 1.4.0
+      IBusText *text = NULL;
+      guint cursor_pos = 0;
+      guint anchor_pos = 0;
+
+      ibus_engine_get_surrounding_text(engine, &text, &cursor_pos,
+                                         &anchor_pos);
+      if (cursor_pos == anchor_pos) {
+        // There are no selection texts.
+        return false;
+      }
+
+      const string surrounding_text(ibus_text_get_text(text));
+      g_object_unref(text);
+
+      string selection_text;
+      const uint32 selection_start = min(cursor_pos, anchor_pos);
+      const uint32 selection_length = abs(cursor_pos - anchor_pos);
+      Util::SubString(surrounding_text,
+                      selection_start,
+                      selection_length,
+                      &selection_text);
+
+      session_command.set_text(selection_text);
+      break;
+#else
+      return false;
+#endif  // IBUS_CHECK_VERSION(1, 4, 0)
+    }
+    default:
+      return false;
+  }
+
+  commands::Output new_output;
+  if (!client_->SendCommand(session_command, &new_output)) {
+    LOG(ERROR) << "Callback Command Failed";
+    return false;
+  }
+
+  if (callback_command.type() == commands::SessionCommand::CONVERT_REVERSE) {
+    // We need remove selection area, but "delete-surrounding-text" API is
+    // unstable. So we send backspace key event once to remove selection area.
+    // To set deletion range as follows, the engine forwards backspace key event
+    // once to the client application via ibus-daemon.
+    commands::DeletionRange *range = new_output.mutable_deletion_range();
+    range->set_offset(-1);
+    range->set_length(1);
+  }
+
+  // Here uses recursion of UpdateAll but it's okay because the converter
+  // ensures that the second output never contains callback.
+  UpdateAll(engine, new_output);
+  return true;
 }
 
 }  // namespace ibus

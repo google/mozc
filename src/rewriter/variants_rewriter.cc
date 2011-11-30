@@ -37,6 +37,7 @@
 #include "converter/character_form_manager.h"
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
+#include "session/commands.pb.h"
 
 namespace mozc {
 namespace {
@@ -93,12 +94,12 @@ bool HasCharacterFormDescription(const string &value) {
   Util::FormType prev = Util::UNKNOWN_FORM;
   while (begin < end) {
     size_t mblen = 0;
-    const uint16 ucs2 = Util::UTF8ToUCS2(begin, end, &mblen);
-    const Util::FormType type = Util::GetFormType(ucs2);
+    const char32 ucs4 = Util::UTF8ToUCS4(begin, end, &mblen);
+    const Util::FormType type = Util::GetFormType(ucs4);
     if (prev != Util::UNKNOWN_FORM && prev != type) {
       return false;
     }
-    if (Util::UNKNOWN_SCRIPT != Util::GetScriptType(ucs2)) {
+    if (Util::UNKNOWN_SCRIPT != Util::GetScriptType(ucs4)) {
       return false;
     }
     prev = type;
@@ -261,7 +262,11 @@ void VariantsRewriter::SetDescription(int description_type,
   candidate->attributes |= Segment::Candidate::NO_EXTRA_DESCRIPTION;
 }
 
-bool VariantsRewriter::RewriteSegment(Segment *seg) const {
+int VariantsRewriter::capability() const {
+  return RewriterInterface::ALL;
+}
+
+bool VariantsRewriter::RewriteSegment(RewriteType type, Segment *seg) const {
   CHECK(seg);
   bool modified = false;
 
@@ -347,29 +352,36 @@ bool VariantsRewriter::RewriteSegment(Segment *seg) const {
       alternative_description_type |= FULL_HALF_WIDTH;
     }
 
+    if (type == EXPAND_VARIANT) {
+      // Insert default candidate to position |i| and
+      // rewrite original(|i+1|) to altenative
+      Segment::Candidate *new_candidate = seg->insert_candidate(i);
+      DCHECK(new_candidate);
+
+      new_candidate->Init();
+      new_candidate->key = original_candidate->key;
+      new_candidate->value = default_value;
+      new_candidate->content_key = original_candidate->content_key;
+      new_candidate->content_value = default_content_value;
+      new_candidate->cost = original_candidate->cost;
+      new_candidate->structure_cost = original_candidate->structure_cost;
+      new_candidate->lid = original_candidate->lid;
+      new_candidate->rid = original_candidate->rid;
+      new_candidate->description = original_candidate->description;
+      SetDescription(default_description_type, new_candidate);
+
+      original_candidate->value = alternative_value;
+      original_candidate->content_value = alternative_content_value;
+      SetDescription(alternative_description_type, original_candidate);
+      ++i;  // skip inserted candidate
+    } else if (type == SELECT_VARIANT) {
+      // Rewrite original to default
+      original_candidate->value = default_value;
+      original_candidate->content_value = default_content_value;
+      SetDescription(default_description_type, original_candidate);
+    }
     modified = true;
-    Segment::Candidate *new_candidate = seg->insert_candidate(i);
-    DCHECK(new_candidate);
-
-    new_candidate->Init();
-    new_candidate->key = original_candidate->key;
-    new_candidate->value = default_value;
-    new_candidate->content_key = original_candidate->content_key;
-    new_candidate->content_value = default_content_value;
-    new_candidate->cost = original_candidate->cost;
-    new_candidate->structure_cost = original_candidate->structure_cost;
-    new_candidate->lid = original_candidate->lid;
-    new_candidate->rid = original_candidate->rid;
-    new_candidate->description = original_candidate->description;
-    SetDescription(default_description_type, new_candidate);
-
-    original_candidate->value = alternative_value;
-    original_candidate->content_value = alternative_content_value;
-    SetDescription(alternative_description_type, original_candidate);
-
-    ++i;  // skip one item
   }
-
   return modified;
 }
 
@@ -416,11 +428,14 @@ bool VariantsRewriter::Rewrite(Segments *segments) const {
   CHECK(segments);
   bool modified = false;
 
+  const RewriteType type = ((segments->request_type() == Segments::SUGGESTION) ?
+                            SELECT_VARIANT : EXPAND_VARIANT);
+
   for (size_t i = segments->history_segments_size();
        i < segments->segments_size(); ++i) {
     Segment *seg = segments->mutable_segment(i);
     DCHECK(seg);
-    modified |= RewriteSegment(seg);
+    modified |= RewriteSegment(type, seg);
   }
 
   return modified;

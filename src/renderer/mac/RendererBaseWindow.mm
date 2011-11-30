@@ -32,8 +32,8 @@
 #include <objc/message.h>
 
 #include "base/base.h"
+#include "base/coordinates.h"
 #include "session/commands.pb.h"
-#include "renderer/coordinates.h"
 #include "renderer/mac/RendererBaseWindow.h"
 
 
@@ -175,14 +175,14 @@ RendererBaseWindow::~RendererBaseWindow() {
     ::DisposeWindow(window_);
 }
 
-renderer::Size RendererBaseWindow::GetWindowSize() const {
+Size RendererBaseWindow::GetWindowSize() const {
   if (!window_) {
     LOG(ERROR) << "You have to intialize window beforehand";
-    return renderer::Size(0, 0);
+    return Size(0, 0);
   }
   ::Rect globalBounds;
   ::GetWindowBounds(window_, kWindowContentRgn, &globalBounds);
-  return renderer::Size(globalBounds.right - globalBounds.left,
+  return Size(globalBounds.right - globalBounds.left,
                         globalBounds.bottom - globalBounds.top);
 }
 
@@ -202,12 +202,19 @@ void RendererBaseWindow::Show() {
   ::ShowWindow(window_);
 }
 
+bool RendererBaseWindow::IsVisible() {
+  if (!window_) {
+    return false;
+  }
+  return (IsWindowVisible(window_) == YES);
+}
+
 void RendererBaseWindow::ResetView() {
   DLOG(INFO) << "RendererBaseWindow::ResetView()";
   view_.reset([[NSView alloc] initWithFrame:NSMakeRect(0, 0, 1, 1)]);
 }
 
-void RendererBaseWindow::MoveWindow(const renderer::Point &point) {
+void RendererBaseWindow::MoveWindow(const Point &point) {
   DLOG(INFO) << "RendererBaseWindow::MoveWindow()";
   pos_ = point;
   if (!window_) {

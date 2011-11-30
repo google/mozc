@@ -100,20 +100,33 @@ size_t Composition::InsertInput(size_t pos, const CompositionInput &input) {
 // Deletes a right-hand character of the composition.
 size_t Composition::DeleteAt(const size_t position) {
   CharChunkList::iterator chunk_it;
-  MaybeSplitChunkAt(position, &chunk_it);
-  const size_t new_position = GetPosition(kNullT12r, chunk_it);
-  if (chunk_it == chunks_.end()) {
-    return new_position;
-  }
+  const size_t original_size = GetLength();
+  size_t new_position = position;
+  // We have to perform deletion repeatedly because there might be 0-length
+  // chunk.
+  // For example,
+  // chunk0 : '{a}'  (invisible character only == 0-length)
+  // chunk1 : 'b'
+  // And DeleteAt(0) is invoked, we have to delete both chunks.
+  while (!chunks_.empty() && GetLength() == original_size) {
+    MaybeSplitChunkAt(position, &chunk_it);
+    new_position = GetPosition(kNullT12r, chunk_it);
+    if (chunk_it == chunks_.end()) {
+      break;
+    }
 
-  if ((*chunk_it)->GetLength(kNullT12r) == 1) {
-    delete *chunk_it;
-    chunks_.erase(chunk_it);
-    return new_position;
-  }
+    // We have to consider 0-length chunk.
+    // If a chunk contains only invisible characters,
+    // the result of GetLength is 0.
+    if ((*chunk_it)->GetLength(kNullT12r) <= 1) {
+      delete *chunk_it;
+      chunks_.erase(chunk_it);
+      continue;
+    }
 
-  CharChunk left_deleted_chunk;
-  (*chunk_it)->SplitChunk(kNullT12r, 1, &left_deleted_chunk);
+    CharChunk left_deleted_chunk;
+    (*chunk_it)->SplitChunk(kNullT12r, 1, &left_deleted_chunk);
+  }
   return new_position;
 }
 

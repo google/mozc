@@ -35,6 +35,8 @@
 #include <string>
 
 #include "base/base.h"
+#include "base/coordinates.h"
+#include "composer/composer.h"
 #include "session/commands.pb.h"
 #include "session/session_interface.h"
 // Need to include it for "ImeContext::State".
@@ -45,6 +47,7 @@
 
 namespace mozc {
 namespace session {
+class SessionCursorManageTest;
 class Session : public SessionInterface {
  public:
   Session();
@@ -66,7 +69,15 @@ class Session : public SessionInterface {
   // Kill itself without any finalization.  It only works on debug builds.
   bool Abort(commands::Command *command);
 
+  // Reset the composer and clear conversion segments.
+  // History segments will not be cleared.
+  // Therefore if a user commits "風"(かぜ) and Revert method is called,
+  // preedit "ひいた"  will be converted into "邪引いた".
   bool Revert(commands::Command *command);
+  // Reset the composer and clear all the segments (including history segments).
+  // Therefore preedit "ひいた"  will *not* be converted into "邪引いた"
+  // on the situation described above.
+  bool ResetContext(commands::Command *command);
 
   // Return the current status such as a composition string, input mode, etc.
   bool GetStatus(commands::Command *command);
@@ -119,6 +130,9 @@ class Session : public SessionInterface {
   bool Commit(commands::Command *command);
   bool CommitFirstSuggestion(commands::Command *command);
 
+  // Expands suggestion candidates.
+  bool ExpandSuggestion(commands::Command *command);
+
   // Commit only the first segment.
   bool CommitSegment(commands::Command *command);
   // Commit some characters at the head of the preedit.
@@ -129,7 +143,6 @@ class Session : public SessionInterface {
   bool SetComposition(const string &composition);
 
   bool SegmentFocusRight(commands::Command *command);
-  bool SegmentFocusRightOrCommit(commands::Command *command);
   bool SegmentFocusLeft(commands::Command *command);
   bool SegmentFocusLast(commands::Command *command);
   bool SegmentFocusLeftEdge(commands::Command *command);
@@ -181,6 +194,11 @@ class Session : public SessionInterface {
   // Let client launch word register dialog
   bool LaunchWordRegisterDialog(commands::Command *command);
 
+  // Send a command to the composer to append a special string.
+  bool SendComposerCommand(
+      const composer::Composer::InternalCommand composer_command,
+      commands::Command *command);
+
   // finalize the session.
   bool Finish(commands::Command *command);
 
@@ -222,6 +240,7 @@ class Session : public SessionInterface {
  private:
   FRIEND_TEST(SessionTest, OutputInitialComposition);
   FRIEND_TEST(SessionTest, IsFullWidthInsertSpace);
+  FRIEND_TEST(SessionTest, RequestUndo);
 
   scoped_ptr<ImeContext> context_;
   scoped_ptr<ImeContext> prev_context_;
@@ -246,6 +265,11 @@ class Session : public SessionInterface {
   // would not be used from SendKey but used from SendCommand because
   // it requires the argument id.
   bool SelectCandidate(commands::Command *command);
+
+  // Calls SessionConverter::ConmmitFirstSegment() and deletes characters
+  // from the composer.
+  void CommitFirstSegmentInternal();
+
   // Set the focus to the candidate located by input.command.id.  This
   // command would not be used from SendKey but used from SendCommand
   // because it requires the argument id.  The difference from
@@ -267,6 +291,7 @@ class Session : public SessionInterface {
   void OutputMode(commands::Command *command) const;
   void OutputComposition(commands::Command *command) const;
   void OutputKey(commands::Command *command) const;
+  void OutputWindowLocation(commands::Command *command) const;
 
   bool SendKeyDirectInputState(commands::Command *command);
   bool SendKeyPrecompositionState(commands::Command *command);
@@ -293,6 +318,12 @@ class Session : public SessionInterface {
   // Expand composition if required for nested calculation.
   void ExpandCompositionForCalculator(commands::Command *command);
 
+  // Stores received caret location into caret_rectangle_.
+  bool SetCaretLocation(commands::Command *command);
+
+  // TODO(nona): Move following rectangle state to ImeContext.
+  commands::Rectangle composition_rectangle_;
+  commands::Rectangle caret_rectangle_;
   DISALLOW_COPY_AND_ASSIGN(Session);
 };
 

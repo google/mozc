@@ -34,18 +34,6 @@
       'gobject-2.0',
       'ibus-1.0',
       'libcurl',
-      '<@(additional_packages)',
-    ],
-    'ibus_client_dependencies' : [
-      '<(DEPTH)/client/client.gyp:client',
-      '<(DEPTH)/session/session_base.gyp:ime_switch_util',
-    ],
-    'ibus_standalone_dependencies' : [
-      '<(DEPTH)/base/base.gyp:config_file_stream',
-      '<(DEPTH)/config/config.gyp:config_handler',
-      '<(DEPTH)/net/net.gyp:net',
-      '<(DEPTH)/session/session_base.gyp:ime_switch_util',
-      '<(DEPTH)/usage_stats/usage_stats.gyp:usage_stats',
     ],
   },
   'cflags': [

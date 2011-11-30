@@ -53,6 +53,11 @@ class UsageRewriter: public RewriterInterface  {
   virtual ~UsageRewriter();
   virtual bool Rewrite(Segments *segments) const;
 
+  // better to show usage when user type "tab" key.
+  virtual int capability() const {
+    return CONVERSION | PREDICTION;
+  }
+
  private:
   FRIEND_TEST(UsageRewriterTest, GetKanjiPrefixAndOneHiragana);
 

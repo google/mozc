@@ -56,4 +56,5 @@ message Stats {
 
   // boolean
   optional bool boolean_value = 9;
+
 };

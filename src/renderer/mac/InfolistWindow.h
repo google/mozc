@@ -37,21 +37,32 @@
 @class InfolistWindowTimerHandler;
 
 namespace mozc {
+namespace client {
+class SendCommandInterface;
+}  // namespace mozc::client
+namespace commands {
+class Candidates;
+}  // namespace mozc::commands
 namespace renderer {
 namespace mac {
 class InfolistWindow : public RendererBaseWindow {
  public:
   explicit InfolistWindow();
   ~InfolistWindow();
+  void SetSendCommandInterface(
+      client::SendCommandInterface *send_command_interface);
   void SetCandidates(const commands::Candidates &candidates);
-  void DelayHide();
-  void DelayShow();
+  void DelayHide(int delay);  // set duration in msecs.
+  void DelayShow(int delay);
+  virtual void Hide();
+  virtual void Show();
   void onTimer(NSTimer* timer);
  private:
   scoped_nsobject<InfolistWindowTimerHandler> timer_handler_;
   NSTimer* lasttimer_;
   bool visible_;
   void ResetView();
+  mozc::client::SendCommandInterface *command_sender_;
   DISALLOW_COPY_AND_ASSIGN(InfolistWindow);
 };
 

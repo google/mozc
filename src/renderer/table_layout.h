@@ -34,7 +34,7 @@
 #include <vector>
 
 #include "base/base.h"
-#include "renderer/coordinates.h"
+#include "base/coordinates.h"
 
 namespace mozc {
 namespace renderer {
@@ -46,21 +46,21 @@ namespace renderer {
 //     +++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //     +HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH+
 //     +HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH+
-//     +..................................................VVV+
-//     +.1111111112222233333333333333333333344444444     .VVV+
-//     +.1111111112222233333333333333333333344444444     .VVV+
-//     +.1111111112222233333333333333333333344444444     .VVV+
-//     +..................................................VVV+
-//     +..................................................VVV+
-//     +.1111111112222233333333333333333333344444444     .VVV+
-//     +.1111111112222233333333333333333333344444444     .VVV+
-//     +.1111111112222233333333333333333333344444444     .VVV+
-//     +..................................................VVV+
-//     +..................................................VVV+
-//     +.1111111112222233333333333333333333344444444     .VVV+
-//     +.1111111112222233333333333333333333344444444     .VVV+
-//     +.1111111112222233333333333333333333344444444     .VVV+
-//     +..................................................VVV+
+//     +...................................................II+
+//     +.0000000001111122222222222222222222233333333      .II+
+//     +.0000000001111122222222222222222222233333333      .II+
+//     +.0000000001111122222222222222222222233333333      .II+
+//     +...................................................II+
+//     +...................................................II+
+//     +.0000000001111122222222222222222222233333333      .II+
+//     +.0000000001111122222222222222222222233333333      .II+
+//     +.0000000001111122222222222222222222233333333      .II+
+//     +...................................................II+
+//     +...................................................II+
+//     +.0000000001111122222222222222222222233333333      .II+
+//     +.0000000001111122222222222222222222233333333      .II+
+//     +.0000000001111122222222222222222222233333333      .II+
+//     +...................................................II+
 //     +FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF+
 //     +FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF+
 //     +FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF+
@@ -69,15 +69,16 @@ namespace renderer {
 //   Legend:
 //   +: WindowBorder   (window_border_pixels_)
 //   .: RowRectPadding (row_rect_padding_pixels_)
+//   I: Position Indicator
 //   H: Header       width = total_size_.width - 2 * window_border_pixels_
 //                           >= minimum_header_size_.width
 //                   height = minimum_header_size_.height
 //   F: Footer       width = total_size_.width - 2 * window_border_pixels_
 //                           >= minimum_footer_size_.width
 //                   height = minimum_footer_size_.height
-//   1: First Cell   width = column_width_[0],
+//   1: First Cell   width = column_width_[0]
 //                   height = row_height_ - 2 * row_rect_padding_pixels_
-//   2: Second Cell  width = column_width_[1],
+//   2: Second Cell  width = column_width_[1]
 //                   height = row_height_ - 2 * row_rect_padding_pixels_
 //
 //   All cells have the same height.
@@ -85,26 +86,26 @@ namespace renderer {
 //
 //  GetRowRect(1)
 //     ..................................................
-//     .1111111112222233333333333333333333344444444     .
-//     .1111111112222233333333333333333333344444444     .
-//     .1111111112222233333333333333333333344444444     .
+//     .0000000001111122222222222222222222233333333     .
+//     .0000000001111122222222222222222222233333333     .
+//     .0000000001111122222222222222222222233333333     .
 //     ..................................................
 //
-//  GetColmunRect(1)
+//  GetColumnRect(1)
 //     .....
-//     22222
-//     22222
-//     22222
-//     .....
-//     .....
-//     22222
-//     22222
-//     22222
+//     11111
+//     11111
+//     11111
 //     .....
 //     .....
-//     22222
-//     22222
-//     22222
+//     11111
+//     11111
+//     11111
+//     .....
+//     .....
+//     11111
+//     11111
+//     11111
 //     .....
 
 class TableLayout {
@@ -122,22 +123,21 @@ class TableLayout {
   // Ensure the cell size is same to or larger than the specified size.
   // - size.width affects cells within the specified column.
   // - size.height affects all cells.
-  // You should not call this funtion when the layout is frozen.
+  // You should not call this function when the layout is frozen.
   void EnsureCellSize(int column, const Size &size);
 
   // Ensure the total width from "from_column" to "to_width" is at
   // least "width" or larger.  If total width is smaller than the
-  // "width", the last column (== "to_column") will extend.  This
-  // method guarantees only one ensurance.  If it is called twice, the
-  // second call will discard the ensurance for the first call.
-  // "to_column" should be bigger than "from_column".  Otherwise, the
-  // call will be ignored.  If you want to ensure a cell width, you
-  // should use EnsureCellSize instead.
+  // "width", the last column (== "to_column") will extend.  If this
+  // method is called twice, parameters specified by the second call
+  // will be used.  Note that "to_column" should be bigger than
+  // "from_column".  Otherwise, the call will be ignored.  If you
+  // want to ensure a cell width, you should use EnsureCellSize instead.
   void EnsureColumnsWidth(int from_column, int to_column, int width);
 
   // Ensure the size of header/footer is same to or larger than the
   // specified size.
-  // You should not call this funtion when the layout is frozen.
+  // You should not call this function when the layout is frozen.
   void EnsureFooterSize(const Size &size_in_pixels);
   void EnsureHeaderSize(const Size &size_in_pixels);
 
@@ -145,12 +145,12 @@ class TableLayout {
   void FreezeLayout();
   int IsLayoutFrozen() const;
 
-  // Get the rect which is bounding the speficied cell.
+  // Get the rect which is bounding the specified cell.
   // This rect does not include RowRectPadding.
   // You should call FreezeLayout prior to this function.
   Rect GetCellRect(int row, int column) const;
 
-  // Get speficied component rect.
+  // Get specified component rect.
   // You should call FreezeLayout prior to these function.
   Size GetTotalSize() const;
   Rect GetHeaderRect() const;
@@ -159,13 +159,13 @@ class TableLayout {
   Rect GetVScrollIndicatorRect(
       int begin_index, int end_index, int candidates_total) const;
 
-  // Get the rect which is bounding the speficied row.
-  // This rect includs RowRectPadding.
+  // Get the rect which is bounding the specified row.
+  // This rect includes RowRectPadding.
   // You should call FreezeLayout prior to these function.
   Rect GetRowRect(int row) const;
 
-  // Get speficied row rect.
-  // This rect includs RowRectPadding.
+  // Get specified row rect.
+  // This rect includes RowRectPadding.
   // You should call FreezeLayout prior to these function.
   Rect GetColumnRect(int column) const;
 

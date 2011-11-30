@@ -33,6 +33,28 @@
 
 namespace mozc {
 namespace win32 {
+
+namespace {
+
+BYTE ParseVirtualKey(UINT combined_virtual_key) {
+  const uint16 loword = LOWORD(combined_virtual_key);
+  if (loword <= 0xff) {
+    return loword;
+  }
+  DLOG(INFO) << "Unexpected VK found. VK = " << loword;
+  return 0;
+}
+
+wchar_t ParseWideChar(UINT combined_virtual_key) {
+  if (ParseVirtualKey(combined_virtual_key) == VK_PACKET) {
+    return HIWORD(combined_virtual_key);
+  } else {
+    return 0;
+  }
+}
+
+}  // namespace
+
 LParamKeyInfo::LParamKeyInfo()
     : lparam_(0) {}
 
@@ -77,12 +99,43 @@ LPARAM LParamKeyInfo::lparam() const {
 
 VirtualKey::VirtualKey()
     : virtual_key_(0),
-      unicode_char_(0) {}
-VirtualKey::VirtualKey(UINT combined_virtual_key)
-    : virtual_key_(ParseVirtualKey(combined_virtual_key)),
-      unicode_char_(ParseUnicodeChar(combined_virtual_key)) {}
+      wide_char_(L'\0'),
+      unicode_char_(L'\0') {}
 
-wchar_t VirtualKey::unicode_char() const {
+VirtualKey::VirtualKey(BYTE virtual_key, wchar_t wide_char,
+                       char32 unicode_char)
+    : virtual_key_(virtual_key),
+      wide_char_(wide_char),
+      unicode_char_(unicode_char) {}
+
+VirtualKey VirtualKey::FromVirtualKey(BYTE virtual_key) {
+  return VirtualKey(virtual_key, L'\0', L'\0');
+}
+
+VirtualKey VirtualKey::FromCombinedVirtualKey(UINT combined_virtual_key) {
+  const BYTE vk = ParseVirtualKey(combined_virtual_key);
+  const wchar_t wchar = ParseWideChar(combined_virtual_key);
+  char32 unicode_char = 0;
+  if (!IS_HIGH_SURROGATE(wchar) && !IS_LOW_SURROGATE(wchar)) {
+    unicode_char = wchar;
+  }
+
+  return VirtualKey(vk, wchar, unicode_char);
+}
+
+VirtualKey VirtualKey::FromUnicode(char32 unicode_char) {
+  wchar_t wchar = L'\0';
+  if (unicode_char <= 0xffff) {
+    wchar = static_cast<wchar_t>(unicode_char);
+  }
+  return VirtualKey(VK_PACKET, wchar, unicode_char);
+}
+
+wchar_t VirtualKey::wide_char() const {
+  return wide_char_;
+}
+
+char32 VirtualKey::unicode_char() const {
   return unicode_char_;
 }
 
@@ -90,22 +143,6 @@ BYTE VirtualKey::virtual_key() const {
   return virtual_key_;
 }
 
-BYTE VirtualKey::ParseVirtualKey(UINT combined_virtual_key) {
-  const uint16 loword = LOWORD(combined_virtual_key);
-  if (loword <= 0xff) {
-    return loword;
-  }
-  DLOG(INFO) << "Unexpected VK found. VK = " << loword;
-  return 0;
-}
-
-wchar_t VirtualKey::ParseUnicodeChar(UINT combined_virtual_key) {
-  if (ParseVirtualKey(combined_virtual_key) == VK_PACKET) {
-    return HIWORD(combined_virtual_key);
-  } else {
-    return 0;
-  }
-}
 
 class DefaultKeyboardInterface : public Win32KeyboardInterface {
  public:

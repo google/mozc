@@ -138,6 +138,11 @@ class MozcEngine : public EngineInterface {
   // Updates the candidate window based on the content of |output|.
   bool UpdateCandidates(IBusEngine *engine,
                         const commands::Output &output);
+  // Updates the deletion range message based on the content of |output|.
+  bool UpdateDeletionRange(IBusEngine *engine, const commands::Output &output);
+
+  // Updates the callback message based on the content of |output|.
+  bool ExecuteCallback(IBusEngine *engine, const commands::Output &output);
   // Updates the configuration.
 #ifdef OS_CHROMEOS
 #if IBUS_CHECK_VERSION(1, 3, 99)
@@ -171,10 +176,6 @@ class MozcEngine : public EngineInterface {
   // Reverts internal state of mozc_server by sending SessionCommand::REVERT IPC
   // message, then hides a preedit string and the candidate window.
   void RevertSession(IBusEngine *engine);
-
-  // Submits preedit inside of mozc_server by sending SessionCommand::SUBMIT IPC
-  // message.
-  void SubmitSession(IBusEngine *engine);
 
   uint64 last_sync_time_;
   scoped_ptr<KeyTranslator> key_translator_;

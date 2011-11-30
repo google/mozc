@@ -31,7 +31,8 @@
 #define PSAPI_VERSION 1  // for <psapi.h>
 #include <windows.h>
 #if !defined(NO_LOGGING)
-#include <atlbase.h>
+// Workaround against KB813540
+#include <atlbase_mozc.h>
 #include <atlstr.h>  // for CString
 #endif  // !NO_LOGGING
 #include <psapi.h>
@@ -40,6 +41,8 @@
 #include "base/singleton.h"
 #include "base/util.h"
 #include "base/winmain.h"   // use WinMain
+#include "languages/global_language_spec.h"
+#include "languages/japanese/lang_dep_spec.h"
 #include "server/cache_service_manager.h"
 
 namespace {
@@ -275,7 +278,9 @@ VOID WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv) {
   }
 
   wstring server_path;
-  mozc::Util::UTF8ToWide(mozc::Util::GetServerPath().c_str(),
+  const mozc::language::LanguageDependentSpecInterface *lang_spec =
+      mozc::language::GlobalLanguageSpec::GetLanguageDependentSpec();
+  mozc::Util::UTF8ToWide(lang_spec->GetServerPath().c_str(),
                          &server_path);
 
   mozc::ScopedHandle file_handle(::CreateFile(server_path.c_str(),
@@ -436,6 +441,8 @@ VOID WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv) {
 
 int main(int argc, char **argv) {
   if (argc <= 1) {
+    mozc::japanese::LangDepSpecJapanese spec;
+    mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(&spec);
     SERVICE_TABLE_ENTRY kDispatchTable[] = {
       { const_cast<wchar_t *>(
           mozc::CacheServiceManager::GetServiceName()), ServiceMain },
@@ -443,6 +450,7 @@ int main(int argc, char **argv) {
     };
 
     ::StartServiceCtrlDispatcher(kDispatchTable);
+    mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(NULL);
     return 0;
   }
   return 0;

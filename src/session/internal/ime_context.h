@@ -60,6 +60,8 @@ class ImeContext {
   uint64 last_command_time() const;
   void set_last_command_time(uint64 last_time);
 
+  // Note that before using getter methods,
+  // |composer_| must be set non-null value.
   const composer::Composer &composer() const;
   composer::Composer *mutable_composer();
   void set_composer(composer::Composer *composer);

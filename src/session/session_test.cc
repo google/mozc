@@ -40,12 +40,13 @@
 #include "converter/converter_mock.h"
 #include "rewriter/transliteration_rewriter.h"
 #include "session/commands.pb.h"
+#include "session/internal/ime_context.h"
 #include "session/internal/keymap.h"
 #include "session/japanese_session_factory.h"
 #include "session/key_parser.h"
 #include "session/session.h"
+#include "session/session_converter_interface.h"
 #include "session/session_handler.h"
-#include "session/internal/ime_context.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/googletest.h"
 
@@ -96,6 +97,24 @@ bool InsertCharacterCodeAndString(const char key_code,
   return session->InsertCharacter(command);
 }
 
+Segment::Candidate *AddCandidate(const string &key, const string &value,
+                                 Segment *segment) {
+  Segment::Candidate *candidate = segment->add_candidate();
+  candidate->key = key;
+  candidate->content_key = key;
+  candidate->value = value;
+  return candidate;
+}
+
+Segment::Candidate *AddMetaCandidate(const string &key, const string &value,
+                                     Segment *segment) {
+  Segment::Candidate *candidate = segment->add_meta_candidate();
+  candidate->key = key;
+  candidate->content_key = key;
+  candidate->value = value;
+  return candidate;
+}
+
 string GetComposition(const commands::Command &command) {
   if (!command.output().has_preedit()) {
     return "";
@@ -117,6 +136,15 @@ void InitSessionToPrecomposition(Session* session) {
 #endif  // OS_WINDOWS
 }
 
+void SetCaretLocation(const commands::Rectangle rectangle, Session *session) {
+  commands::Command command;
+  command.mutable_input()->set_type(commands::Input::SEND_COMMAND);
+  commands::SessionCommand *session_command =
+      command.mutable_input()->mutable_command();
+  session_command->set_type(commands::SessionCommand::SEND_CARET_LOCATION);
+  session_command->mutable_caret_rectangle()->CopyFrom(rectangle);
+  session->SendCommand(&command);
+}
 
 // since History segments are almost hidden from
 class ConverterMockForReset : public ConverterMock {
@@ -336,6 +364,44 @@ class SessionTest : public testing::Test {
   }
 
 
+  void SetUndoContext(Session *session) {
+    commands::Command command;
+    Segments segments;
+
+    {  // Create segments
+      InsertCharacterChars("aiueo", session, &command);
+      SetComposer(session, &segments);
+      SetAiueo(&segments);
+      // Don't use FillT13Ns(). It makes platform dependent segments.
+      // TODO(hsumita): Makes FillT13Ns() independent from platforms.
+      Segment::Candidate *candidate;
+      candidate = segments.mutable_segment(0)->add_candidate();
+      candidate->value = "aiueo";
+      candidate = segments.mutable_segment(0)->add_candidate();
+      candidate->value = "AIUEO";
+    }
+
+    {  // Commit the composition to make an undo context.
+      convertermock_->SetStartConversionWithComposer(&segments, true);
+      command.Clear();
+      session->Convert(&command);
+      EXPECT_FALSE(command.output().has_result());
+      EXPECT_TRUE(command.output().has_preedit());
+      // "あいうえお"
+      EXPECT_EQ("\xE3\x81\x82\xE3\x81\x84\xE3\x81\x86\xE3\x81\x88\xE3\x81\x8A",
+                GetComposition(command));
+
+      convertermock_->SetCommitSegmentValue(&segments, true);
+      command.Clear();
+      session->Commit(&command);
+      EXPECT_TRUE(command.output().has_result());
+      EXPECT_FALSE(command.output().has_preedit());
+      // "あいうえお"
+      EXPECT_EQ("\xE3\x81\x82\xE3\x81\x84\xE3\x81\x86\xE3\x81\x88\xE3\x81\x8A",
+                command.output().result().value());
+    }
+  }
+
   scoped_ptr<SessionHandler> handler_;
   scoped_ptr<ConverterMock> convertermock_;
   scoped_ptr<TransliterationRewriter> t13n_rewriter_;
@@ -461,7 +527,7 @@ TEST_F(SessionTest, SendCommand) {
   EXPECT_FALSE(command.output().has_preedit());
   EXPECT_FALSE(command.output().has_candidates());
   // test of reseting the history segements
-  scoped_ptr<ConverterMockForRevert> convertermock(new ConverterMockForRevert);
+  scoped_ptr<ConverterMockForReset> convertermock(new ConverterMockForReset);
   ConverterFactory::SetConverter(convertermock.get());
   session.reset(new Session);
   InitSessionToPrecomposition(session.get());
@@ -470,7 +536,15 @@ TEST_F(SessionTest, SendCommand) {
       commands::SessionCommand::RESET_CONTEXT);
   session->SendCommand(&command);
   EXPECT_FALSE(command.output().consumed());
-  EXPECT_TRUE(convertermock->revert_conversion_called());
+  EXPECT_TRUE(convertermock->reset_conversion_called());
+
+  // USAGE_STATS_EVENT
+  command.Clear();
+  command.mutable_input()->mutable_command()->set_type(
+      commands::SessionCommand::USAGE_STATS_EVENT);
+  EXPECT_TRUE(session->SendCommand(&command));
+  EXPECT_TRUE(command.output().has_consumed());
+  EXPECT_FALSE(command.output().consumed());
 }
 
 TEST_F(SessionTest, SwitchInputMode) {
@@ -1222,72 +1296,6 @@ TEST_F(SessionTest, CommitSegmentAt2ndSegment) {
   session->SegmentWidthShrink(&command);
   // "私の" + "[葉]は"
   EXPECT_EQ(2, command.output().preedit().segment_size());
-}
-
-TEST_F(SessionTest, SegmentFocusRightOrCommit) {
-  Segments segments;
-  Segment *segment;
-  Segment::Candidate *candidate;
-
-  scoped_ptr<Session> session(new Session);
-  const ImeContext &context = session->context();
-  InitSessionToPrecomposition(session.get());
-  EXPECT_EQ(ImeContext::PRECOMPOSITION, context.state());
-
-  commands::Command command;
-  InsertCharacterChars("watasinonamae", session.get(), &command);
-  // "わたしのなまえ[]"
-
-  segment = segments.add_segment();
-  // "わたしの"
-  segment->set_key("\xe3\x82\x8f\xe3\x81\x9f\xe3\x81\x97\xe3\x81\xae");
-  candidate = segment->add_candidate();
-  // "私の"
-  candidate->value = "\xe7\xa7\x81\xe3\x81\xae";
-  candidate = segment->add_candidate();
-  // "わたしの"
-  candidate->value = "\xe3\x82\x8f\xe3\x81\x9f\xe3\x81\x97\xe3\x81\xae";
-  candidate = segment->add_candidate();
-
-  segment = segments.add_segment();
-  // "なまえ"
-  segment->set_key("\xe3\x81\xaa\xe3\x81\xbe\xe3\x81\x88");
-  candidate = segment->add_candidate();
-  // "名前"
-  candidate->value = "\xe5\x90\x8d\xe5\x89\x8d";
-
-  SetComposer(session.get(), &segments);
-  convertermock_->SetStartConversionWithComposer(&segments, true);
-
-  command.Clear();
-  session->Convert(&command);
-  // "[私の]名前"
-  EXPECT_EQ(0, command.output().candidates().focused_index());
-
-  command.Clear();
-  session->ConvertNext(&command);
-  // "[わたしの]名前"
-  EXPECT_EQ(1, command.output().candidates().focused_index());
-  EXPECT_EQ(ImeContext::CONVERSION, context.state());
-
-  command.Clear();
-  session->SegmentFocusRightOrCommit(&command);
-  // "わたしの[名前]"
-  EXPECT_EQ(0, command.output().candidates().focused_index());
-  EXPECT_EQ(ImeContext::CONVERSION, context.state());
-
-  command.Clear();
-  session->SegmentFocusRightOrCommit(&command);
-  // "わたしの名前"
-  EXPECT_EQ(0, command.output().candidates().focused_index());
-  EXPECT_TRUE(command.output().has_result());
-  EXPECT_EQ(ImeContext::PRECOMPOSITION, context.state());
-
-  // Currently all the segments are committed.
-  // So additional SegmentFocusRightOrCommit does Nothing.
-  command.Clear();
-  session->SegmentFocusRightOrCommit(&command);
-  EXPECT_EQ(ImeContext::PRECOMPOSITION, context.state());
 }
 
 TEST_F(SessionTest, Transliterations) {
@@ -2129,7 +2137,93 @@ TEST_F(SessionTest, OutputAllCandidateWords) {
   }
 }
 
-TEST_F(SessionTest, Undo) {
+TEST_F(SessionTest, UndoForComposition) {
+  scoped_ptr<Session> session(new Session);
+  InitSessionToPrecomposition(session.get());
+
+  // Undo requires capability DELETE_PRECEDING_TEXT.
+  commands::Capability capability;
+  capability.set_text_deletion(commands::Capability::DELETE_PRECEDING_TEXT);
+  session->set_client_capability(capability);
+
+  commands::Command command;
+  Segments segments;
+
+  {  // Undo for CommitFirstSuggestion
+    SetAiueo(&segments);
+    convertermock_->SetStartSuggestionWithComposer(&segments, true);
+    InsertCharacterChars("ai", session.get(), &command);
+    SetComposer(session.get(), &segments);
+    // "あい"
+    EXPECT_EQ("\xE3\x81\x82\xE3\x81\x84", GetComposition(command));
+
+    command.Clear();
+    session->CommitFirstSuggestion(&command);
+    EXPECT_TRUE(command.output().has_result());
+    EXPECT_FALSE(command.output().has_preedit());
+    // "あいうえお"
+    EXPECT_EQ("\xE3\x81\x82\xE3\x81\x84\xE3\x81\x86\xE3\x81\x88\xE3\x81\x8A",
+              command.output().result().value());
+    EXPECT_EQ(ImeContext::PRECOMPOSITION, session->context().state());
+
+    command.Clear();
+    session->Undo(&command);
+    EXPECT_FALSE(command.output().has_result());
+    EXPECT_TRUE(command.output().has_deletion_range());
+    EXPECT_EQ(-5, command.output().deletion_range().offset());
+    EXPECT_EQ(5, command.output().deletion_range().length());
+    EXPECT_TRUE(command.output().has_preedit());
+    // "あい"
+    EXPECT_EQ("\xE3\x81\x82\xE3\x81\x84", GetComposition(command));
+    EXPECT_EQ(2, command.output().candidates().size());
+    EXPECT_EQ(ImeContext::COMPOSITION, session->context().state());
+  }
+}
+
+TEST_F(SessionTest, RequestUndo) {
+  scoped_ptr<Session> session(new Session);
+  commands::Command command;
+
+  class TestData {
+   public:
+    ImeContext::State state_;
+    bool expected_processed_;
+    TestData(ImeContext::State state, bool expected_consumed) :
+        state_(state), expected_processed_(expected_consumed) {}
+  };
+  const TestData test_data_list[] = {
+    TestData(ImeContext::DIRECT, false),
+    TestData(ImeContext::PRECOMPOSITION, true),
+    TestData(ImeContext::COMPOSITION, true),
+    TestData(ImeContext::CONVERSION, true),
+  };
+
+  for (size_t i = 0; i < ARRAYSIZE(test_data_list); ++i) {
+    const TestData &test_data = test_data_list[i];
+    command.Clear();
+
+    // Make sure that the undo context is not empty because RequestUndo is
+    // expected to ignore the key event when the undo context is empty and.
+    // the context state is ImeContext::PRECOMPOSITION.  See b/5553298.
+    SetUndoContext(session.get());
+
+    session->context_->set_state(test_data.state_);
+    session->RequestUndo(&command);
+    EXPECT_FALSE(command.output().has_result());
+    EXPECT_FALSE(command.output().has_deletion_range());
+    if (test_data.expected_processed_) {
+      EXPECT_TRUE(command.output().consumed());
+      EXPECT_TRUE(command.output().has_callback());
+      EXPECT_TRUE(command.output().callback().has_session_command());
+      EXPECT_EQ(commands::SessionCommand::UNDO,
+                command.output().callback().session_command().type());
+    } else {
+      EXPECT_FALSE(command.output().has_callback());
+    }
+  }
+}
+
+TEST_F(SessionTest, UndoForSingleSegment) {
   scoped_ptr<Session> session(new Session);
   InitSessionToPrecomposition(session.get());
 
@@ -2254,15 +2348,6 @@ TEST_F(SessionTest, Undo) {
     SetConfig(config);
 
     command.Clear();
-    SendKey("Ctrl Backspace", session.get(), &command);
-    EXPECT_FALSE(command.output().has_result());
-    EXPECT_FALSE(command.output().has_deletion_range());
-    EXPECT_TRUE(command.output().has_callback());
-    EXPECT_TRUE(command.output().callback().has_session_command());
-    EXPECT_EQ(commands::SessionCommand::UNDO,
-              command.output().callback().session_command().type());
-
-    command.Clear();
     session->Undo(&command);
     EXPECT_FALSE(command.output().has_result());
     EXPECT_TRUE(command.output().has_deletion_range());
@@ -2293,6 +2378,56 @@ TEST_F(SessionTest, Undo) {
     EXPECT_FALSE(command.output().has_preedit());
   }
 }
+
+TEST_F(SessionTest, ClearUndoContextByKeyEvent_Issue5529702) {
+  scoped_ptr<Session> session(new Session);
+  InitSessionToPrecomposition(session.get());
+
+  // Undo requires capability DELETE_PRECEDING_TEXT.
+  commands::Capability capability;
+  capability.set_text_deletion(commands::Capability::DELETE_PRECEDING_TEXT);
+  session->set_client_capability(capability);
+
+  SetUndoContext(session.get());
+
+  commands::Command command;
+
+  // Modifier key event does not clear undo context.
+  command.Clear();
+  command.mutable_input()->mutable_key()->add_modifier_keys(
+      commands::KeyEvent::SHIFT);
+  session->SendKey(&command);
+
+  // Ctrl+BS should be consumed as UNDO.
+  command.Clear();
+  command.mutable_input()->mutable_key()->add_modifier_keys(
+      commands::KeyEvent::CTRL);
+  command.mutable_input()->mutable_key()->set_special_key(
+      commands::KeyEvent::BACKSPACE);
+  command.mutable_input()->mutable_config()->set_session_keymap(
+      config::Config::MSIME);
+  session->TestSendKey(&command);
+  EXPECT_TRUE(command.output().consumed());
+
+  // Any other (test) send key event clears undo context.
+  command.Clear();
+  command.mutable_input()->mutable_key()->set_special_key(
+      commands::KeyEvent::LEFT);
+  session->TestSendKey(&command);
+  EXPECT_FALSE(command.output().consumed());
+
+  // Undo context is just cleared. Ctrl+BS should not be consumed b/5553298.
+  command.Clear();
+  command.mutable_input()->mutable_key()->add_modifier_keys(
+      commands::KeyEvent::CTRL);
+  command.mutable_input()->mutable_key()->set_special_key(
+      commands::KeyEvent::BACKSPACE);
+  command.mutable_input()->mutable_config()->set_session_keymap(
+      config::Config::MSIME);
+  session->TestSendKey(&command);
+  EXPECT_FALSE(command.output().consumed());
+}
+
 
 TEST_F(SessionTest, NeedlessClearUndoContext) {
   // This is a unittest against http://b/3423910.
@@ -2389,41 +2524,6 @@ TEST_F(SessionTest, NeedlessClearUndoContext) {
     EXPECT_EQ("\xE3\x81\x82\xE3\x81\x84\xE3\x81\x86\xE3\x81\x88\xE3\x81\x8A",
               GetComposition(command));
   }
-
-  {  // Type "aiueo" -> Convert -> SegmentFocusRightOrCommit -> Undo
-    Segments segments;
-    InsertCharacterChars("aiueo", session.get(), &command);
-    SetComposer(session.get(), &segments);
-    SetAiueo(&segments);
-    FillT13Ns(&segments);
-
-    command.Clear();
-    session->Convert(&command);
-    EXPECT_FALSE(command.output().has_result());
-    EXPECT_TRUE(command.output().has_preedit());
-    // "あいうえお"
-    EXPECT_EQ("\xE3\x81\x82\xE3\x81\x84\xE3\x81\x86\xE3\x81\x88\xE3\x81\x8A",
-              GetComposition(command));
-
-    command.Clear();
-    session->SegmentFocusRightOrCommit(&command);
-    EXPECT_TRUE(command.output().has_result());
-    EXPECT_FALSE(command.output().has_preedit());
-    // "あいうえお"
-    EXPECT_EQ("\xE3\x81\x82\xE3\x81\x84\xE3\x81\x86\xE3\x81\x88\xE3\x81\x8A",
-              command.output().result().value());
-
-    command.Clear();
-    session->Undo(&command);
-    EXPECT_FALSE(command.output().has_result());
-    EXPECT_TRUE(command.output().has_deletion_range());
-    EXPECT_EQ(-5, command.output().deletion_range().offset());
-    EXPECT_EQ(5, command.output().deletion_range().length());
-    EXPECT_TRUE(command.output().has_preedit());
-    // "あいうえお"
-    EXPECT_EQ("\xE3\x81\x82\xE3\x81\x84\xE3\x81\x86\xE3\x81\x88\xE3\x81\x8A",
-              GetComposition(command));
-  }
 }
 
 TEST_F(SessionTest, ClearUndoContextAfterDirectInputAfterConversion) {
@@ -2500,6 +2600,9 @@ TEST_F(SessionTest, TemporaryInputModeAfterUndo) {
   command.Clear();
   session->Undo(&command);
   EXPECT_EQ(commands::HALF_ASCII, command.output().mode());
+  EXPECT_TRUE(command.output().has_preedit());
+  EXPECT_FALSE(command.output().has_result());
+  EXPECT_EQ("A", GetComposition(command));
   command.Clear();
   SendKey("Enter", session.get(), &command);
   EXPECT_EQ(commands::HIRAGANA, command.output().mode());
@@ -2510,12 +2613,53 @@ TEST_F(SessionTest, TemporaryInputModeAfterUndo) {
   EXPECT_EQ(commands::HALF_ASCII, command.output().mode());
   command.Clear();
   SendKey("A", session.get(), &command);
+  EXPECT_TRUE(command.output().has_preedit());
+  EXPECT_FALSE(command.output().has_result());
+  EXPECT_EQ("AA", GetComposition(command));
   EXPECT_EQ(commands::HALF_ASCII, command.output().mode());
 
   // Input additional "a" with original input mode.
   command.Clear();
   SendKey("a", session.get(), &command);
   EXPECT_EQ(commands::HIRAGANA, command.output().mode());
+  EXPECT_TRUE(command.output().has_preedit());
+  EXPECT_FALSE(command.output().has_result());
+  // "AAあ"
+  EXPECT_EQ("AA\xE3\x81\x82", GetComposition(command));
+
+  // Submit and Undo
+  command.Clear();
+  SendKey("Enter", session.get(), &command);
+  EXPECT_EQ(commands::HIRAGANA, command.output().mode());
+  command.Clear();
+  session->Undo(&command);
+  EXPECT_EQ(commands::HIRAGANA, command.output().mode());
+  EXPECT_TRUE(command.output().has_preedit());
+  EXPECT_FALSE(command.output().has_result());
+  // "AAあ"
+  EXPECT_EQ("AA\xE3\x81\x82", GetComposition(command));
+
+  // Input additional "Aa"
+  command.Clear();
+  SendKey("A", session.get(), &command);
+  command.Clear();
+  SendKey("a", session.get(), &command);
+  EXPECT_TRUE(command.output().has_preedit());
+  EXPECT_FALSE(command.output().has_result());
+  EXPECT_EQ("AA\xE3\x81\x82" "Aa", GetComposition(command));
+  EXPECT_EQ(commands::HALF_ASCII, command.output().mode());
+
+  // Submit and Undo
+  command.Clear();
+  SendKey("Enter", session.get(), &command);
+  EXPECT_EQ(commands::HIRAGANA, command.output().mode());
+  command.Clear();
+  session->Undo(&command);
+  EXPECT_EQ(commands::HALF_ASCII, command.output().mode());
+  EXPECT_TRUE(command.output().has_preedit());
+  EXPECT_FALSE(command.output().has_result());
+  // "AAあAa"
+  EXPECT_EQ("AA\xE3\x81\x82" "Aa", GetComposition(command));
 }
 
 TEST_F(SessionTest, DCHECKFailureAfterUndo) {
@@ -2561,6 +2705,8 @@ TEST_F(SessionTest, DCHECKFailureAfterUndo) {
   // "あべし"
   EXPECT_EQ("\xE3\x81\x82\xE3\x81\xB9\xE3\x81\x97", GetComposition(command));
 }
+
+
 
 TEST_F(SessionTest, Issue1805239) {
   // This is a unittest against http://b/1805239.
@@ -2684,7 +2830,7 @@ TEST_F(SessionTest, Issue1816861) {
   // "陰謀説"
   candidate->value = "\xe9\x99\xb0\xe8\xac\x80\xe8\xaa\xac";
 
-  convertermock_->SetStartPrediction(&segments, true);
+  convertermock_->SetStartPredictionWithComposer(&segments, true);
 
   SendSpecialKey(commands::KeyEvent::TAB, session.get(), &command);
 }
@@ -2825,6 +2971,47 @@ TEST_F(SessionTest, Shortcut) {
     EXPECT_EQ(expected[0], candidates.candidate(0).annotation().shortcut());
     EXPECT_EQ(expected[1], candidates.candidate(1).annotation().shortcut());
   }
+}
+
+TEST_F(SessionTest, ShortcutWithCapsLock_Issue5655743) {
+  config::Config config;
+  config.set_selection_shortcut(config::Config::SHORTCUT_ASDFGHJKL);
+  SetConfig(config);
+  ASSERT_EQ(config::Config::SHORTCUT_ASDFGHJKL,
+            GET_CONFIG(selection_shortcut));
+
+  scoped_ptr<Session> session(new Session);
+  InitSessionToPrecomposition(session.get());
+
+  Segments segments;
+  SetAiueo(&segments);
+  SetComposer(session.get(), &segments);
+  FillT13Ns(&segments);
+  convertermock_->SetStartConversionWithComposer(&segments, true);
+
+  commands::Command command;
+  InsertCharacterChars("aiueo", session.get(), &command);
+
+  command.Clear();
+  session->Convert(&command);
+
+  command.Clear();
+  // Convert next
+  SendSpecialKey(commands::KeyEvent::SPACE, session.get(), &command);
+  ASSERT_TRUE(command.output().has_candidates());
+
+  const commands::Candidates &candidates = command.output().candidates();
+  EXPECT_EQ("a", candidates.candidate(0).annotation().shortcut());
+  EXPECT_EQ("s", candidates.candidate(1).annotation().shortcut());
+
+  // Select the second candidate by 's' key when the CapsLock is enabled.
+  // Note that "CAPS S" means that 's' key is pressed w/o shift key.
+  // See the description in command.proto.
+  EXPECT_TRUE(SendKey("CAPS S", session.get(), &command));
+  EXPECT_TRUE(command.output().consumed());
+  // "アイウエオ"
+  EXPECT_EQ("\xE3\x82\xA2\xE3\x82\xA4\xE3\x82\xA6\xE3\x82\xA8\xE3\x82\xAA",
+            GetComposition(command));
 }
 
 TEST_F(SessionTest, NumpadKey) {
@@ -3098,7 +3285,7 @@ TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommitingSugesstion) {
     Segment *segment = segments.add_segment();
     segment->set_key("NFL");
     segment->add_candidate()->value = "NFL";
-    convertermock_->SetStartPrediction(&segments, true);
+    convertermock_->SetStartPredictionWithComposer(&segments, true);
 
     EXPECT_TRUE(session->PredictAndConvert(&command));
     ASSERT_TRUE(command.output().has_candidates());
@@ -3256,14 +3443,14 @@ TEST_F(SessionTest, Suggest) {
   SendKey("M", session.get(), &command);
 
   command.Clear();
-  convertermock_->SetStartSuggestion(&segments_mo, true);
+  convertermock_->SetStartSuggestionWithComposer(&segments_mo, true);
   SendKey("O", session.get(), &command);
   ASSERT_TRUE(command.output().has_candidates());
   EXPECT_EQ(2, command.output().candidates().candidate_size());
   EXPECT_EQ("MOCHA", command.output().candidates().candidate(0).value());
 
   // moz|
-  convertermock_->SetStartSuggestion(&segments_moz, true);
+  convertermock_->SetStartSuggestionWithComposer(&segments_moz, true);
   command.Clear();
   SendKey("Z", session.get(), &command);
   ASSERT_TRUE(command.output().has_candidates());
@@ -3271,7 +3458,7 @@ TEST_F(SessionTest, Suggest) {
   EXPECT_EQ("MOZUKU", command.output().candidates().candidate(0).value());
 
   // mo|
-  convertermock_->SetStartSuggestion(&segments_mo, true);
+  convertermock_->SetStartSuggestionWithComposer(&segments_mo, true);
   command.Clear();
   SendKey("Backspace", session.get(), &command);
   ASSERT_TRUE(command.output().has_candidates());
@@ -3279,7 +3466,7 @@ TEST_F(SessionTest, Suggest) {
   EXPECT_EQ("MOCHA", command.output().candidates().candidate(0).value());
 
   // m|o
-  convertermock_->SetStartSuggestion(&segments_mo, true);
+  convertermock_->SetStartSuggestionWithComposer(&segments_mo, true);
   command.Clear();
   EXPECT_TRUE(session->MoveCursorLeft(&command));
   ASSERT_TRUE(command.output().has_candidates());
@@ -3287,7 +3474,7 @@ TEST_F(SessionTest, Suggest) {
   EXPECT_EQ("MOCHA", command.output().candidates().candidate(0).value());
 
   // mo|
-  convertermock_->SetStartSuggestion(&segments_mo, true);
+  convertermock_->SetStartSuggestionWithComposer(&segments_mo, true);
   command.Clear();
   EXPECT_TRUE(session->MoveCursorToEnd(&command));
   ASSERT_TRUE(command.output().has_candidates());
@@ -3295,7 +3482,7 @@ TEST_F(SessionTest, Suggest) {
   EXPECT_EQ("MOCHA", command.output().candidates().candidate(0).value());
 
   // |mo
-  convertermock_->SetStartSuggestion(&segments_mo, true);
+  convertermock_->SetStartSuggestionWithComposer(&segments_mo, true);
   command.Clear();
   EXPECT_TRUE(session->MoveCursorToBeginning(&command));
   ASSERT_TRUE(command.output().has_candidates());
@@ -3303,7 +3490,7 @@ TEST_F(SessionTest, Suggest) {
   EXPECT_EQ("MOCHA", command.output().candidates().candidate(0).value());
 
   // m|o
-  convertermock_->SetStartSuggestion(&segments_mo, true);
+  convertermock_->SetStartSuggestionWithComposer(&segments_mo, true);
   command.Clear();
   EXPECT_TRUE(session->MoveCursorRight(&command));
   ASSERT_TRUE(command.output().has_candidates());
@@ -3311,7 +3498,7 @@ TEST_F(SessionTest, Suggest) {
   EXPECT_EQ("MOCHA", command.output().candidates().candidate(0).value());
 
   // m|
-  convertermock_->SetStartSuggestion(&segments_m, true);
+  convertermock_->SetStartSuggestionWithComposer(&segments_m, true);
   command.Clear();
   EXPECT_TRUE(session->Delete(&command));
   ASSERT_TRUE(command.output().has_candidates());
@@ -3333,13 +3520,91 @@ TEST_F(SessionTest, Suggest) {
   command.Clear();
   EXPECT_TRUE(session->Convert(&command));
 
-  convertermock_->SetStartSuggestion(&segments_m, true);
+  convertermock_->SetStartSuggestionWithComposer(&segments_m, true);
   command.Clear();
   EXPECT_TRUE(session->ConvertCancel(&command));
   ASSERT_TRUE(command.output().has_candidates());
   EXPECT_EQ(2, command.output().candidates().candidate_size());
   EXPECT_EQ("MOCHA", command.output().candidates().candidate(0).value());
 }
+
+TEST_F(SessionTest, ExpandSuggestion) {
+  scoped_ptr<Session> session(new Session);
+  InitSessionToPrecomposition(session.get());
+  commands::Command command;
+
+  // Prepare suggestion candidates.
+  Segments segments_m;
+  {
+    segments_m.set_request_type(Segments::SUGGESTION);
+    Segment *segment;
+    segment = segments_m.add_segment();
+    segment->set_key("M");
+    segment->add_candidate()->value = "MOCHA";
+    segment->add_candidate()->value = "MOZUKU";
+  }
+  convertermock_->SetStartSuggestionWithComposer(&segments_m, true);
+
+  SendKey("M", session.get(), &command);
+  ASSERT_TRUE(command.output().has_candidates());
+  EXPECT_EQ(2, command.output().candidates().candidate_size());
+
+  // Prepare expanded suggestion candidates.
+  Segments segments_mo;
+  {
+    segments_mo.set_request_type(Segments::SUGGESTION);
+    Segment *segment;
+    segment = segments_mo.add_segment();
+    segment->set_key("MO");
+    segment->add_candidate()->value = "MOZUKU";
+    segment->add_candidate()->value = "MOZUKUSU";
+  }
+  convertermock_->SetStartPredictionWithComposer(&segments_mo, true);
+
+  command.Clear();
+  EXPECT_TRUE(session->ExpandSuggestion(&command));
+  ASSERT_TRUE(command.output().has_candidates());
+  // 3 == MOCHA, MOZUKU and MOZUKUSU (duplicate MOZUKU is not counted).
+  EXPECT_EQ(3, command.output().candidates().candidate_size());
+  EXPECT_EQ("MOCHA", command.output().candidates().candidate(0).value());
+}
+
+TEST_F(SessionTest, ExpandSuggestionDirectMode) {
+  // On direct mode, ExpandSuggestion() should do nothing.
+  scoped_ptr<Session> session(new Session);
+  commands::Command command;
+
+  session->IMEOff(&command);
+  EXPECT_TRUE(session->ExpandSuggestion(&command));
+  ASSERT_FALSE(command.output().has_candidates());
+
+  // This test expects that ConverterInterface.StartPrediction() is not called
+  // so SetStartPredictionWithComposer() is not called.
+}
+
+TEST_F(SessionTest, ExpandSuggestionConversionMode) {
+  // On conversion mode, ExpandSuggestion() should do nothing.
+  scoped_ptr<Session> session(new Session);
+  commands::Command command;
+
+  InsertCharacterChars("aiueo", session.get(), &command);
+  Segments segments;
+  SetComposer(session.get(), &segments);
+  SetAiueo(&segments);
+  FillT13Ns(&segments);
+  convertermock_->SetStartConversionWithComposer(&segments, true);
+
+  command.Clear();
+  session->Convert(&command);
+  command.Clear();
+  session->ConvertNext(&command);
+
+  EXPECT_TRUE(session->ExpandSuggestion(&command));
+
+  // This test expects that ConverterInterface.StartPrediction() is not called
+  // so SetStartPredictionWithComposer() is not called.
+}
+
 
 TEST_F(SessionTest, ToggleAlphanumericMode) {
   scoped_ptr<Session> session(new Session);
@@ -3752,7 +4017,7 @@ TEST_F(SessionTest, Issue1978201) {
   segment->add_candidate()->value = "\xe9\x99\xb0\xe8\xac\x80\xe8\xab\x96";
   // "陰謀説"
   segment->add_candidate()->value = "\xe9\x99\xb0\xe8\xac\x80\xe8\xaa\xac";
-  convertermock_->SetStartPrediction(&segments, true);
+  convertermock_->SetStartPredictionWithComposer(&segments, true);
 
   scoped_ptr<Session> session(new Session);
   InitSessionToPrecomposition(session.get());
@@ -3779,7 +4044,7 @@ TEST_F(SessionTest, Issue1975771) {
   // Trigger suggest by pressing "a".
   Segments segments;
   SetAiueo(&segments);
-  convertermock_->SetStartSuggestion(&segments, true);
+  convertermock_->SetStartSuggestionWithComposer(&segments, true);
 
   commands::Command command;
   commands::KeyEvent* key_event = command.mutable_input()->mutable_key();
@@ -3825,12 +4090,13 @@ TEST_F(SessionTest, Issue2029466) {
   // <tab>
   Segments segments;
   SetAiueo(&segments);
-  convertermock_->SetStartPrediction(&segments, true);
+  convertermock_->SetStartPredictionWithComposer(&segments, true);
   command.Clear();
   EXPECT_TRUE(session->PredictAndConvert(&command));
 
   // <ctrl-N>
   segments.Clear();
+  // FinishConversion is expected to return empty Segments.
   convertermock_->SetFinishConversion(&segments, true);
   command.Clear();
   EXPECT_TRUE(session->CommitSegment(&command));
@@ -3919,7 +4185,7 @@ TEST_F(SessionTest, Issue2066906) {
   candidate->value = "abc";
   candidate = segment->add_candidate();
   candidate->value = "abcdef";
-  convertermock_->SetStartPrediction(&segments, true);
+  convertermock_->SetStartPredictionWithComposer(&segments, true);
 
   // Prediction with "a"
   commands::Command command;
@@ -3931,7 +4197,7 @@ TEST_F(SessionTest, Issue2066906) {
   EXPECT_TRUE(session->Commit(&command));
   EXPECT_TRUE(command.output().has_result());
 
-  convertermock_->SetStartSuggestion(&segments, true);
+  convertermock_->SetStartSuggestionWithComposer(&segments, true);
   command.Clear();
   InsertCharacterChars("a", session.get(), &command);
   EXPECT_FALSE(command.output().has_result());
@@ -4866,6 +5132,80 @@ TEST_F(SessionTest, PerformedCommand) {
 }
 
 // Independent test
+TEST(SessionResetTest, ResetContext) {
+  scoped_ptr<ConverterMockForReset> convertermock(new ConverterMockForReset);
+  ConverterFactory::SetConverter(convertermock.get());
+  scoped_ptr<Session> session(new Session);
+  InitSessionToPrecomposition(session.get());
+  commands::Command command;
+
+  session->ResetContext(&command);
+  EXPECT_FALSE(command.output().consumed());
+  EXPECT_TRUE(convertermock->reset_conversion_called());
+
+  convertermock->Reset();
+  command.Clear();
+  EXPECT_TRUE(SendKey("A", session.get(), &command));
+  command.Clear();
+  session->ResetContext(&command);
+  EXPECT_TRUE(command.output().consumed());
+  EXPECT_TRUE(convertermock->reset_conversion_called());
+}
+
+TEST_F(SessionTest, ClearUndoOnResetContext) {
+  scoped_ptr<Session> session(new Session);
+  InitSessionToPrecomposition(session.get());
+
+  // Undo requires capability DELETE_PRECEDING_TEXT.
+  commands::Capability capability;
+  capability.set_text_deletion(commands::Capability::DELETE_PRECEDING_TEXT);
+  session->set_client_capability(capability);
+
+  commands::Command command;
+  Segments segments;
+
+  {  // Create segments
+    InsertCharacterChars("aiueo", session.get(), &command);
+    SetComposer(session.get(), &segments);
+    SetAiueo(&segments);
+    // Don't use FillT13Ns(). It makes platform dependent segments.
+    // TODO(hsumita): Makes FillT13Ns() independent from platforms.
+    Segment::Candidate *candidate;
+    candidate = segments.mutable_segment(0)->add_candidate();
+    candidate->value = "aiueo";
+    candidate = segments.mutable_segment(0)->add_candidate();
+    candidate->value = "AIUEO";
+  }
+
+  {
+    convertermock_->SetStartConversionWithComposer(&segments, true);
+    command.Clear();
+    session->Convert(&command);
+    EXPECT_FALSE(command.output().has_result());
+    EXPECT_TRUE(command.output().has_preedit());
+    // "あいうえお"
+    EXPECT_EQ("\xE3\x81\x82\xE3\x81\x84\xE3\x81\x86\xE3\x81\x88\xE3\x81\x8A",
+              GetComposition(command));
+
+    convertermock_->SetCommitSegmentValue(&segments, true);
+    command.Clear();
+    session->Commit(&command);
+    EXPECT_TRUE(command.output().has_result());
+    EXPECT_FALSE(command.output().has_preedit());
+    // "あいうえお"
+    EXPECT_EQ("\xE3\x81\x82\xE3\x81\x84\xE3\x81\x86\xE3\x81\x88\xE3\x81\x8A",
+              command.output().result().value());
+
+    command.Clear();
+    session->ResetContext(&command);
+
+    command.Clear();
+    session->Undo(&command);
+    // After reset, undo shouldn't run.
+    EXPECT_FALSE(command.output().has_preedit());
+  }
+}
+
 TEST(SessionResetTest, IssueResetConversion) {
   scoped_ptr<ConverterMockForReset> convertermock(new ConverterMockForReset);
   ConverterFactory::SetConverter(convertermock.get());
@@ -5273,6 +5613,7 @@ TEST_F(SessionTest, FillHistoryContext) {
     Segment::Candidate *candidate = segment->add_candidate();
     candidate->value = kHistory[0];
   }
+  // FinishConversion is expected to return empty Segments.
   convertermock_->SetFinishConversion(&segments, true);
 
   // dummy code to set segments above
@@ -5303,6 +5644,7 @@ TEST_F(SessionTest, FillHistoryContext) {
     Segment::Candidate *candidate = segment->add_candidate();
     candidate->value = kHistory[1];
   }
+  // FinishConversion is expected to return empty Segments.
   convertermock_->SetFinishConversion(&segments, true);
 
   // dummy code to set segments above
@@ -5398,9 +5740,7 @@ TEST_F(SessionTest, AlphanumericOfSSH) {
     // "っsh"
     segment->set_key("\xE3\x81\xA3sh");
 
-    Segment::Candidate *candidate;
-    candidate = segment->add_candidate();
-    candidate->value = "[SSH]";
+    segment->add_candidate()->value = "[SSH]";
   }
   SetComposer(session.get(), &segments);
   FillT13Ns(&segments);
@@ -5411,7 +5751,6 @@ TEST_F(SessionTest, AlphanumericOfSSH) {
   EXPECT_TRUE(command.output().has_preedit());
   EXPECT_EQ("ssh", GetComposition(command));
 }
-
 
 
 
@@ -5658,6 +5997,14 @@ TEST_F(SessionTest, MoveCursor) {
 
 TEST_F(SessionTest, CommitHead) {
   scoped_ptr<Session> session(new Session);
+  composer::Table table;
+  // "も"
+  table.AddRule("mo", "\xe3\x82\x82", "");
+  // "ず"
+  table.AddRule("zu", "\xe3\x81\x9a", "");
+
+  session->get_internal_composer_only_for_unittest()->SetTable(&table);
+
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -5695,7 +6042,7 @@ TEST_F(SessionTest, EditCancel) {
     SendKey("M", &session, &command);
 
     command.Clear();
-    convertermock_->SetStartSuggestion(&segments_mo, true);
+    convertermock_->SetStartSuggestionWithComposer(&segments_mo, true);
     SendKey("O", &session, &command);
     ASSERT_TRUE(command.output().has_candidates());
     EXPECT_EQ(2, command.output().candidates().candidate_size());
@@ -5718,7 +6065,7 @@ TEST_F(SessionTest, EditCancel) {
     EXPECT_TRUE(session.SendCommand(&command));
 
     command.Clear();
-    convertermock_->SetStartSuggestion(&segments_mo, true);
+    convertermock_->SetStartSuggestionWithComposer(&segments_mo, true);
     session.ConvertCancel(&command);
     ASSERT_TRUE(command.output().has_candidates());
     EXPECT_EQ(2, command.output().candidates().candidate_size());
@@ -5730,6 +6077,348 @@ TEST_F(SessionTest, EditCancel) {
     EXPECT_EQ(0, command.output().candidates().candidate_size());
     EXPECT_TRUE(command.output().has_result());
   }
+}
+
+TEST_F(SessionTest, ImeOff) {
+  scoped_ptr<ConverterMockForReset> convertermock(new ConverterMockForReset);
+  ConverterFactory::SetConverter(convertermock.get());
+
+  convertermock->Reset();
+  scoped_ptr<Session> session(new Session);
+  InitSessionToPrecomposition(session.get());
+  commands::Command command;
+  session->IMEOff(&command);
+
+  EXPECT_TRUE(convertermock->reset_conversion_called());
+}
+
+// We use following represenetaion for indicating all state-change pass.
+// State:
+//   [PRECOMP] : Precomposition state
+//   [COMP-L]  : Composition state with cursor at left most.
+//   [COMP-M]  : Composition state with cursor at middle of composition.
+//   [COMP-R]  : Composition state with cursor at right most.
+//   [CONV-L]  : Conversion state with cursor at left most.
+//   [CONV-M]  : Conversion state with cursor at middle of composition.
+// State Change:
+//  "abcdef" means composition characters.
+//  "^" means suggestion/conversion window left-top position
+//  "|" means caret position.
+// NOTE:
+//  It is not necessary to test in case as follows because they never occur.
+//   - [PRECOMP] -> [PRECOMP]
+//   - [PRECOMP] -> [COMP-M] or [COMP-L]
+//   - [PRECOMP] -> [CONV-L] or [CONV-R]
+//  Also it is not necessary to test in case of changing to CONVERSION state,
+//  because conversion window is always shown under current cursor.
+TEST_F(SessionTest, CaretManagePrecompositionToCompositionTest) {
+  scoped_ptr<Session> session(new Session);
+  InitSessionToPrecomposition(session.get());
+
+  commands::Command command;
+  Segments segments;
+  const int kCaretInitialXpos = 10;
+  commands::Rectangle rectangle;
+  rectangle.set_x(kCaretInitialXpos);
+  rectangle.set_y(0);
+  rectangle.set_width(0);
+  rectangle.set_height(0);
+
+  Segments segments_mo;
+  {
+    segments_mo.set_request_type(Segments::SUGGESTION);
+    Segment *segment;
+    segment = segments_mo.add_segment();
+    segment->set_key("MO");
+    segment->add_candidate()->value = "MOCHA";
+    segment->add_candidate()->value = "MOZUKU";
+  }
+
+  // [PRECOMP] -> [COMP-R]:
+  //  Expectation: -> ^a|
+  SetCaretLocation(rectangle, session.get());
+
+  SendKey("M", session.get(), &command);
+
+  rectangle.set_x(rectangle.x() + 5);
+  SetCaretLocation(rectangle, session.get());
+
+  command.Clear();
+  convertermock_->SetStartSuggestionWithComposer(&segments_mo, true);
+  SendKey("O", session.get(), &command);
+  EXPECT_EQ(kCaretInitialXpos,
+            command.output().candidates().composition_rectangle().x());
+}
+
+TEST_F(SessionTest, CaretManageCompositionToCompositionTest) {
+  Segments segments_m;
+  {
+    segments_m.set_request_type(Segments::SUGGESTION);
+    Segment *segment;
+    segment = segments_m.add_segment();
+    segment->set_key("M");
+    segment->add_candidate()->value = "MOCHA";
+    segment->add_candidate()->value = "MOZUKU";
+  }
+
+  Segments segments_mo;
+  {
+    segments_mo.set_request_type(Segments::SUGGESTION);
+    Segment *segment;
+    segment = segments_mo.add_segment();
+    segment->set_key("MO");
+    segment->add_candidate()->value = "MOCHA";
+    segment->add_candidate()->value = "MOZUKU";
+  }
+
+  Segments segments_moz;
+  {
+    segments_moz.set_request_type(Segments::SUGGESTION);
+    Segment *segment;
+    segment = segments_moz.add_segment();
+    segment->set_key("MOZ");
+    segment->add_candidate()->value = "MOZUKU";
+  }
+
+  scoped_ptr<Session> session(new Session);
+  InitSessionToPrecomposition(session.get());
+  commands::Command command;
+  const int kCaretInitialXpos = 10;
+  commands::Rectangle rectangle;
+  rectangle.set_x(kCaretInitialXpos);
+  rectangle.set_y(0);
+  rectangle.set_width(0);
+  rectangle.set_height(0);
+
+  SetCaretLocation(rectangle, session.get());
+
+  SendKey("M", session.get(), &command);
+
+  rectangle.set_x(rectangle.x() + 5);
+  SetCaretLocation(rectangle, session.get());
+
+  command.Clear();
+  convertermock_->SetStartSuggestionWithComposer(&segments_mo, true);
+  SendKey("O", session.get(), &command);
+  EXPECT_EQ(kCaretInitialXpos,
+            command.output().candidates().composition_rectangle().x());
+
+  rectangle.set_x(rectangle.x() + 5);
+  SetCaretLocation(rectangle, session.get());
+
+  // [COMP-R] -> [COMP-R]:
+  //  Expectation: ^mo| -> ^moz|
+  convertermock_->SetStartSuggestionWithComposer(&segments_moz, true);
+  command.Clear();
+  SendKey("Z", session.get(), &command);
+  EXPECT_EQ(kCaretInitialXpos,
+            command.output().candidates().composition_rectangle().x());
+
+  rectangle.set_x(rectangle.x() + 5);
+  SetCaretLocation(rectangle, session.get());
+
+  // [COMP-R] -> [COMP-R]:
+  //  Expectation: ^moz| -> ^mo|
+  convertermock_->SetStartSuggestionWithComposer(&segments_mo, true);
+  command.Clear();
+  SendKey("Backspace", session.get(), &command);
+  EXPECT_EQ(kCaretInitialXpos,
+            command.output().candidates().composition_rectangle().x());
+
+  rectangle.set_x(rectangle.x() + 5);
+  SetCaretLocation(rectangle, session.get());
+
+  // [COMP-R] -> [COMP-M]:
+  //  Expectation: ^mo| -> ^m|o
+  convertermock_->SetStartSuggestionWithComposer(&segments_mo, true);
+  command.Clear();
+  EXPECT_TRUE(session->MoveCursorLeft(&command));
+  EXPECT_EQ(kCaretInitialXpos,
+            command.output().candidates().composition_rectangle().x());
+
+  rectangle.set_x(rectangle.x() + 5);
+  SetCaretLocation(rectangle, session.get());
+
+  // [COMP-M] -> [COMP-R]:
+  //  Expectation: ^m|o -> ^mo|
+  convertermock_->SetStartSuggestionWithComposer(&segments_mo, true);
+  command.Clear();
+  EXPECT_TRUE(session->MoveCursorToEnd(&command));
+  EXPECT_EQ(kCaretInitialXpos,
+            command.output().candidates().composition_rectangle().x());
+
+  rectangle.set_x(rectangle.x() + 5);
+  SetCaretLocation(rectangle, session.get());
+
+  // [COMP-R] -> [COMP-L]:
+  //  Expectation: ^mo| -> ^|mo
+  convertermock_->SetStartSuggestionWithComposer(&segments_mo, true);
+  command.Clear();
+  EXPECT_TRUE(session->MoveCursorToBeginning(&command));
+  EXPECT_EQ(kCaretInitialXpos,
+            command.output().candidates().composition_rectangle().x());
+
+  rectangle.set_x(rectangle.x() + 5);
+  SetCaretLocation(rectangle, session.get());
+
+  // [COMP-L] -> [COMP-M]:
+  //  Expectation: ^|mo -> ^m|o
+  convertermock_->SetStartSuggestionWithComposer(&segments_mo, true);
+  command.Clear();
+  EXPECT_TRUE(session->MoveCursorRight(&command));
+  EXPECT_EQ(kCaretInitialXpos,
+            command.output().candidates().composition_rectangle().x());
+
+  rectangle.set_x(rectangle.x() + 5);
+  SetCaretLocation(rectangle, session.get());
+
+  // [COMP-M] -> [COMP-L]:
+  //  Expectation: ^m|o -> ^m|
+  convertermock_->SetStartSuggestionWithComposer(&segments_m, true);
+  command.Clear();
+  EXPECT_TRUE(session->Delete(&command));
+  EXPECT_EQ(kCaretInitialXpos,
+            command.output().candidates().composition_rectangle().x());
+}
+
+TEST_F(SessionTest, CaretManageConversionToCompositionTest) {
+  // There are two ways to change state from CONVERSION to COMPOSITION,
+  // One is canceling conversion with BS key. In this case cursor location
+  // becomes right most and suggest position is left most.
+  // The second is continuing typing under conversion. If user types key under
+  // conversion, the IME commits selected candidate and creates new composition
+  // at once.
+  // For example:
+  //    KeySequence: 'a' -> SP -> SP -> 'i'
+  //    Expectation: a^|i (a and i are corresponding japanese characters)
+  //    Actual: ^a|i
+  // In the session side, we can only support the former case.
+
+  scoped_ptr<Session> session(new Session);
+  InitSessionToPrecomposition(session.get());
+
+  commands::Command command;
+  Segments segments;
+  const int kCaretInitialXpos = 10;
+  commands::Rectangle rectangle;
+  rectangle.set_x(kCaretInitialXpos);
+  rectangle.set_y(0);
+  rectangle.set_width(0);
+  rectangle.set_height(0);
+
+  Segments segments_m;
+  {
+    segments_m.set_request_type(Segments::SUGGESTION);
+    Segment *segment;
+    segment = segments_m.add_segment();
+    segment->set_key("M");
+    segment->add_candidate()->value = "MOCHA";
+    segment->add_candidate()->value = "MOZUKU";
+  }
+
+  Segments segments_mo;
+  {
+    segments_mo.set_request_type(Segments::SUGGESTION);
+    Segment *segment;
+    segment = segments_mo.add_segment();
+    segment->set_key("MO");
+    segment->add_candidate()->value = "MOCHA";
+    segment->add_candidate()->value = "MOZUKU";
+  }
+
+  Segments segments_moz;
+  {
+    segments_moz.set_request_type(Segments::SUGGESTION);
+    Segment *segment;
+    segment = segments_moz.add_segment();
+    segment->set_key("MOZ");
+    segment->add_candidate()->value = "MOZUKU";
+  }
+
+  Segments segments_m_conv;
+  {
+    segments_m_conv.set_request_type(Segments::CONVERSION);
+    Segment *segment;
+    segment = segments_m_conv.add_segment();
+    segment->set_key("M");
+    segment->add_candidate()->value = "M";
+    segment->add_candidate()->value = "m";
+  }
+
+  // [CONV-L] -> [COMP-R]
+  //  Expectation: ^|a -> ^a|
+  SetCaretLocation(rectangle, session.get());
+
+  SendKey("M", session.get(), &command);
+
+  rectangle.set_x(rectangle.x() + 5);
+  SetCaretLocation(rectangle, session.get());
+
+  command.Clear();
+  convertermock_->SetStartSuggestionWithComposer(&segments_mo, true);
+  SendKey("O", session.get(), &command);
+  EXPECT_EQ(kCaretInitialXpos,
+            command.output().candidates().composition_rectangle().x());
+
+  rectangle.set_x(rectangle.x() + 5);
+  SetCaretLocation(rectangle, session.get());
+
+  command.Clear();
+  SetComposer(session.get(), &segments_m_conv);
+  FillT13Ns(&segments_m_conv);
+  convertermock_->SetStartConversionWithComposer(&segments_m_conv, true);
+  EXPECT_TRUE(session->Convert(&command));
+
+  rectangle.set_x(rectangle.x() + 5);
+  SetCaretLocation(rectangle, session.get());
+
+  command.Clear();
+  convertermock_->SetStartSuggestionWithComposer(&segments_m, true);
+  EXPECT_TRUE(session->ConvertCancel(&command));
+  EXPECT_EQ(kCaretInitialXpos,
+            command.output().candidates().composition_rectangle().x());
+
+  // [CONV-M] -> [COMP-R]
+  //  Expectation: ^a|b -> ^ab|
+  session.reset(new Session());
+  InitSessionToPrecomposition(session.get());
+  command.Clear();
+  rectangle.set_x(kCaretInitialXpos);
+
+  SetCaretLocation(rectangle, session.get());
+
+  SendKey("M", session.get(), &command);
+
+  rectangle.set_x(rectangle.x() + 5);
+  SetCaretLocation(rectangle, session.get());
+
+  command.Clear();
+  convertermock_->SetStartSuggestionWithComposer(&segments_mo, true);
+  SendKey("O", session.get(), &command);
+
+  rectangle.set_x(rectangle.x() + 5);
+  SetCaretLocation(rectangle, session.get());
+
+  command.Clear();
+  SetComposer(session.get(), &segments_m_conv);
+  FillT13Ns(&segments_m_conv);
+  convertermock_->SetStartConversionWithComposer(&segments_m_conv, true);
+  EXPECT_TRUE(session->Convert(&command));
+
+  rectangle.set_x(rectangle.x() + 5);
+  SetCaretLocation(rectangle, session.get());
+
+  command.Clear();
+  SendSpecialKey(commands::KeyEvent::LEFT, session.get(), &command);
+
+  rectangle.set_x(rectangle.x() + 5);
+  SetCaretLocation(rectangle, session.get());
+
+  command.Clear();
+  convertermock_->SetStartSuggestionWithComposer(&segments_m, true);
+  EXPECT_TRUE(session->ConvertCancel(&command));
+  EXPECT_EQ(kCaretInitialXpos,
+            command.output().candidates().composition_rectangle().x());
 }
 
 }  // namespace session

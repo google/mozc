@@ -83,13 +83,5 @@
         'test_size': 'small',
       },
     },
-    # Test cases meta target: this target is referred from gyp/tests.gyp
-    {
-      'target_name': 'net_all_test',
-      'type': 'none',
-      'dependencies': [
-        'http_client_mock_test',
-      ],
-    },
   ],
 }

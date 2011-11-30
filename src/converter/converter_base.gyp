@@ -102,6 +102,7 @@
         '../base/base.gyp:base',
         '../config/config.gyp:genproto_config',
         '../dictionary/dictionary_base.gyp:gen_pos_matcher',
+        '../dictionary/dictionary.gyp:suffix_dictionary',
         '../rewriter/rewriter_base.gyp:gen_rewriter_files',
         '../session/session_base.gyp:genproto_session',
         'segments',
@@ -114,7 +115,7 @@
         {
           'action_name': 'gen_embedded_connection_data',
           'variables': {
-            'input_files': [
+            'input_files%': [
               '../data/dictionary/connection.txt',
               '../data/dictionary/id.def',
               '../data/rules/special_pos.def',
@@ -129,15 +130,13 @@
           # excludes this action from executed actions for some reasons. Build
           # with vcbuild succeeds without specifying this input so we omit the
           # input on Windows.
-          'conditions': [['two_pass_build==0 and OS!="win"', {
-            'inputs': [
-              '<(mozc_build_tools_dir)/gen_connection_data_main',
+          'conditions': [
+            ['two_pass_build==0 and OS!="win"',
+              { 'inputs':
+                ['<(mozc_build_tools_dir)/gen_connection_data_main'],
+              },
             ],
-          }],['dictionary=="small"', {
-            'variables': {
-              'use_1byte_cost_flag': 'true',
-            },
-          }]],
+          ],
           'outputs': [
             '<(gen_out_dir)/embedded_connection_data.h',
           ],
@@ -223,7 +222,7 @@
         {
           'action_name': 'gen_segmenter_inl',
           'variables': {
-            'input_files': [
+            'input_files%': [
               '../data/dictionary/id.def',
               '../data/rules/special_pos.def',
               '../data/rules/segmenter.def',
@@ -253,7 +252,8 @@
         {
           'action_name': 'gen_boundary_data',
           'variables': {
-            'input_files': [
+            # ordering-sensitive
+            'input_files%': [
               '../data/rules/boundary.def',
               '../data/dictionary/id.def',
             ],

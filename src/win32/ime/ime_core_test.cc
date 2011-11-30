@@ -38,6 +38,8 @@
 #include "client/client.h"
 #include "config/config_handler.h"
 #include "ipc/ipc_mock.h"
+#include "languages/global_language_spec.h"
+#include "languages/japanese/lang_dep_spec.h"
 #include "session/commands.pb.h"
 #include "session/ime_switch_util.h"
 #include "testing/base/public/googletest.h"
@@ -162,7 +164,27 @@ class MockClient : public client::Client {
 };
 }  // anonymous namespace
 
-TEST(ImeCoreTest, OpenIME) {
+class ImeCoreTest : public testing::Test {
+ protected:
+  ImeCoreTest() {}
+  virtual ~ImeCoreTest() {}
+  virtual void SetUp() {
+    mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(
+        &language_dependency_spec_japanese_);
+  }
+
+  virtual void TearDown() {
+    mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(NULL);
+  }
+
+ private:
+  // We need to set a LangDepSpecJapanese to GlobalLanguageSpec on start up for
+  // testing, and the actual instance does not have to be LangDepSpecJapanese.
+  mozc::japanese::LangDepSpecJapanese language_dependency_spec_japanese_;
+  DISALLOW_COPY_AND_ASSIGN(ImeCoreTest);
+};
+
+TEST_F(ImeCoreTest, OpenIME) {
   commands::Output mock_output;
   mock_output.set_consumed(true);
   mock_output.set_elapsed_time(10);
@@ -190,7 +212,7 @@ TEST(ImeCoreTest, OpenIME) {
   }
 }
 
-TEST(ImeCoreTest, CloseIME) {
+TEST_F(ImeCoreTest, CloseIME) {
   commands::Output mock_output;
   mock_output.set_consumed(true);
   mock_output.set_elapsed_time(10);
@@ -217,7 +239,7 @@ TEST(ImeCoreTest, CloseIME) {
   }
 }
 
-TEST(ImeCoreTest, GetSupportableConversionMode) {
+TEST_F(ImeCoreTest, GetSupportableConversionMode) {
   EXPECT_EQ(IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE,
             ImeCore::GetSupportableConversionMode(
                 IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE));
@@ -227,7 +249,7 @@ TEST(ImeCoreTest, GetSupportableConversionMode) {
                 IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN));
 }
 
-TEST(ImeCoreTest, GetSupportableConversionMode_Issue2914115) {
+TEST_F(ImeCoreTest, GetSupportableConversionMode_Issue2914115) {
   // http://b/2914115
   // In some environment, its initial conversion mode is IME_CMODE_NATIVE
   // (only), which is not the one of the expected conversion modes for Mozc.
@@ -236,7 +258,7 @@ TEST(ImeCoreTest, GetSupportableConversionMode_Issue2914115) {
             ImeCore::GetSupportableConversionMode(IME_CMODE_NATIVE));
 }
 
-TEST(ImeCoreTest, GetSupportableSentenceMode) {
+TEST_F(ImeCoreTest, GetSupportableSentenceMode) {
   // Always returns IME_SMODE_PHRASEPREDICT.
   EXPECT_EQ(IME_SMODE_PHRASEPREDICT,
             ImeCore::GetSupportableSentenceMode(IME_SMODE_NONE));
@@ -263,7 +285,7 @@ TEST(ImeCoreTest, GetSupportableSentenceMode) {
             ImeCore::GetSupportableSentenceMode(MAXDWORD));
 }
 
-TEST(ImeCoreTest, GetSupportableSentenceMode_Issue2955175) {
+TEST_F(ImeCoreTest, GetSupportableSentenceMode_Issue2955175) {
   // b/2955175
   // If Mozc leaves the sentence mode IME_SMODE_NONE and switch to MS-IME in
   // Sylpheed, MS-IME cannot convert composition string because it's in
@@ -376,7 +398,7 @@ const UIMessage kMsgCloseCandidate(WM_IME_NOTIFY,
 
 // Check UI message order for
 //   "Hankaku/Zenkaku" -> "(Shift +)G" -> "Hankaku/Zenkaku"
-TEST(ImeCoreTest, TemporalConversionModeMessageOrderTest) {
+TEST_F(ImeCoreTest, TemporalConversionModeMessageOrderTest) {
   // "Hankaku/Zenkaku"
   {
     vector<UIMessage> composition_messages;
@@ -448,7 +470,7 @@ TEST(ImeCoreTest, TemporalConversionModeMessageOrderTest) {
 
 // Check UI message order for
 //   "Hankaku/Zenkaku" -> "(Shift +)G" -> "o" -> "Enter" -> "Hankaku/Zenkaku"
-TEST(ImeCoreTest, CompositionMessageOrderTest) {
+TEST_F(ImeCoreTest, CompositionMessageOrderTest) {
   // "Hankaku/Zenkaku"
   {
     vector<UIMessage> composition_messages;
@@ -562,7 +584,7 @@ TEST(ImeCoreTest, CompositionMessageOrderTest) {
 
 // Check UI message order for
 //   "Hankaku/Zenkaku" -> "a" -> "Space" -> "Space" -> "Space" -> "A"
-TEST(ImeCoreTest, CandidateMessageOrderTest) {
+TEST_F(ImeCoreTest, CandidateMessageOrderTest) {
   // "Hankaku/Zenkaku"
   {
     vector<UIMessage> composition_messages;

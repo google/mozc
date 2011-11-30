@@ -66,7 +66,7 @@ class LRUStorage {
 
   // clear all LRU cache;
   // mapped file is also initialized
-  void Clear();
+  bool Clear();
 
   // Merge from other data
   bool Merge(const char *filename);

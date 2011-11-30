@@ -594,7 +594,7 @@ bool Client::CallAndCheckVersion(const commands::Input &input,
 }
 
 bool Client::Call(const commands::Input &input,
-                   commands::Output *output) {
+                  commands::Output *output) {
   VLOG(2) << "commands::Input: " << endl << input.DebugString();
 
   // don't repeat Call() if the status is either

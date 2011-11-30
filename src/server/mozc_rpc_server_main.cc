@@ -51,10 +51,12 @@
 #include <string>
 #include "base/base.h"
 #include "base/process_mutex.h"
+#include "base/singleton.h"
 #include "base/util.h"
 #include "session/commands.pb.h"
 #include "session/japanese_session_factory.h"
 #include "session/session_handler.h"
+#include "session/session_usage_observer.h"
 #include "session/random_keyevents_generator.h"
 
 DEFINE_string(host, "localhost", "server host name");
@@ -159,6 +161,9 @@ class RPCServer {
 
     CHECK_GE(::listen(server_socket_, SOMAXCONN), 0) << "listen failed";
     CHECK_NE(server_socket_, 0);
+
+    handler_->AddObserver(
+        Singleton<session::SessionUsageObserver>::get());
   }
 
   ~RPCServer() {

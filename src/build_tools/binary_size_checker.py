@@ -50,7 +50,7 @@ EXPECTED_MAXIMUM_SIZES = {
     # Distribution package files:
     'GoogleJapaneseInput.dmg': 55,
     'GoogleJapaneseInput32.msi': 55,
-    'GoogleJapaneseInput64.msi': 55,
+    'GoogleJapaneseInput64.msi': 60,
     }
 
 

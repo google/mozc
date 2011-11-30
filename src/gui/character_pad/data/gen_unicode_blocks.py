@@ -33,7 +33,7 @@ __author__ = "taku"
 import sys
 import re
 
-re = re.compile('^(....)\.\.(....); (.+)')
+re = re.compile('^(.....?)\.\.(.....?); (.+)')
 
 def main():
   print "static const mozc::gui::CharacterPalette::UnicodeBlock kUnicodeBlockTable[] = {"
@@ -46,7 +46,7 @@ def main():
       start = int(m.group(1), 16)
       end   = int(m.group(2), 16)
       name = m.group(3)
-      if start <= 65536 and end <= 65536:
+      if start <= 0x2FFFF and end <= 0x2FFFF:
         print "  { \"%s\", %d, %d }," % (name, start, end)
 
   print "  { NULL, 0, 0 }"

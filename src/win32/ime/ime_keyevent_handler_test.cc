@@ -39,6 +39,8 @@
 #include "client/client.h"
 #include "config/config_handler.h"
 #include "ipc/ipc_mock.h"
+#include "languages/global_language_spec.h"
+#include "languages/japanese/lang_dep_spec.h"
 #include "session/commands.pb.h"
 #include "session/ime_switch_util.h"
 #include "testing/base/public/googletest.h"
@@ -50,6 +52,7 @@ namespace mozc {
 namespace win32 {
 namespace {
 const BYTE kPressed = 0x80;
+const BYTE kToggled = 0x01;
 LPARAM CreateLParam(uint16 repeat_count,
                     uint8 scan_code,
                     bool is_extended_key,
@@ -239,6 +242,8 @@ class ImeKeyEventHandlerTest : public testing::Test {
   ImeKeyEventHandlerTest() {}
   virtual ~ImeKeyEventHandlerTest() {}
   virtual void SetUp() {
+    mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(
+        &language_dependency_spec_japanese_);
     Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
     mozc::config::ConfigHandler::GetDefaultConfig(&default_config_);
     mozc::config::ConfigHandler::SetConfig(default_config_);
@@ -246,6 +251,7 @@ class ImeKeyEventHandlerTest : public testing::Test {
 
   virtual void TearDown() {
     mozc::config::ConfigHandler::SetConfig(default_config_);
+    mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(NULL);
   }
 
   void UpdateConfigToUseKanaAsPreeditMethod() {
@@ -283,6 +289,9 @@ class ImeKeyEventHandlerTest : public testing::Test {
 
   mozc::config::Config default_config_;
  private:
+  // We need to set a LangDepSpecJapanese to GlobalLanguageSpec on start up for
+  // testing, and the actual instance does not have to be LangDepSpecJapanese.
+  mozc::japanese::LangDepSpecJapanese language_dependency_spec_japanese_;
   DISALLOW_COPY_AND_ASSIGN(ImeKeyEventHandlerTest);
 };
 
@@ -318,7 +327,8 @@ TEST_F(ImeKeyEventHandlerTest, HankakuZenkakuTest) {
     KeyboardStatus keyboard_status;
     keyboard_status.SetState(VK_DBE_DBCSCHAR, kPressed);
 
-    const VirtualKey virtual_key(VK_DBE_DBCSCHAR);
+    const VirtualKey virtual_key =
+        VirtualKey::FromVirtualKey(VK_DBE_DBCSCHAR);
     const BYTE scan_code = 0;  // will be ignored in this test
     const bool is_key_down = true;
 
@@ -394,7 +404,7 @@ TEST_F(ImeKeyEventHandlerTest, ClearKanaLockInAlphanumericMode) {
     KeyboardStatus keyboard_status;
     keyboard_status.SetState(VK_ESCAPE, kPressed);
 
-    const VirtualKey virtual_key(VK_ESCAPE);
+    const VirtualKey virtual_key = VirtualKey::FromVirtualKey(VK_ESCAPE);
     const LParamKeyInfo lparam(CreateLParam(
         0x0001,   // repeat_count
         0x01,     // scan_code
@@ -459,7 +469,7 @@ TEST_F(ImeKeyEventHandlerTest, ClearKanaLockEvenWhenIMEIsDisabled) {
     KeyboardStatus keyboard_status;
     keyboard_status.SetState('A', kPressed);
 
-    const VirtualKey virtual_key('A');
+    const VirtualKey virtual_key = VirtualKey::FromVirtualKey('A');
     const LParamKeyInfo lparam(CreateLParam(
         0x0001,   // repeat_count
         0x1e,     // scan_code
@@ -518,7 +528,7 @@ TEST_F(ImeKeyEventHandlerTest, CustomActivationKeyTest) {
 
   // Ctrl+J
   {
-    const VirtualKey virtual_key('J');
+    const VirtualKey virtual_key = VirtualKey::FromVirtualKey('J');
     const BYTE scan_code = 0;  // will be ignored in this test
     const bool is_key_down = true;
     KeyboardStatus keyboard_status;
@@ -593,7 +603,8 @@ TEST_F(ImeKeyEventHandlerTest, Issue3033135_VK_OEM_102) {
 
   // Ctrl+\ (VK_OEM_102; Backslash in 106/109 Japanese Keyboard)
   {
-    const VirtualKey virtual_key(VK_OEM_102);
+    const VirtualKey virtual_key =
+        VirtualKey::FromVirtualKey(VK_OEM_102);
     const BYTE scan_code = 0;  // will be ignored in this test
     const bool is_key_down = true;
     KeyboardStatus keyboard_status;
@@ -668,7 +679,8 @@ TEST_F(ImeKeyEventHandlerTest, Issue3033135_VK_OEM_5) {
 
   // Ctrl+\ (VK_OEM_5; Yen in 106/109 Japanese Keyboard)
   {
-    const VirtualKey virtual_key(VK_OEM_5);
+    const VirtualKey virtual_key =
+        VirtualKey::FromVirtualKey(VK_OEM_5);
     const BYTE scan_code = 0;  // will be ignored in this test
     const bool is_key_down = true;
     KeyboardStatus keyboard_status;
@@ -742,7 +754,7 @@ TEST_F(ImeKeyEventHandlerTest, HandleCtrlH) {
 
   // Ctrl+H should be sent to the server as 'h' + |KeyEvent::CTRL|.
   {
-    const VirtualKey virtual_key('H');
+    const VirtualKey virtual_key = VirtualKey::FromVirtualKey('H');
     const BYTE scan_code = 0;  // will be ignored in this test
     const bool is_key_down = true;
     KeyboardStatus keyboard_status;
@@ -817,7 +829,7 @@ TEST_F(ImeKeyEventHandlerTest, HandleCtrlShiftH) {
   // Ctrl+Shift+H should be sent to the server as
   // 'h' + |KeyEvent::CTRL| + |KeyEvent::Shift|.
   {
-    const VirtualKey virtual_key('H');
+    const VirtualKey virtual_key = VirtualKey::FromVirtualKey('H');
     const BYTE scan_code = 0;  // will be ignored in this test
     const bool is_key_down = true;
     KeyboardStatus keyboard_status;
@@ -863,6 +875,288 @@ TEST_F(ImeKeyEventHandlerTest, HandleCtrlShiftH) {
   }
 }
 
+TEST_F(ImeKeyEventHandlerTest, HandleCapsH) {
+  // Force ImeSwitchUtil to reflect the config.
+  config::ImeSwitchUtil::Reload();
+  const bool kKanaLocked = false;
+
+  commands::Output mock_output;
+  mock_output.set_mode(commands::HIRAGANA);
+  mock_output.mutable_status()->set_activated(true);
+  mock_output.mutable_status()->set_mode(commands::HIRAGANA);
+  mock_output.set_consumed(true);
+  mock_output.set_elapsed_time(10);
+
+  MockState mock(mock_output);
+  KeyboardMock keyboard(kKanaLocked);
+
+  ImeState next_state;
+  KeyEventHandlerResult result;
+
+  ImeBehavior behavior;
+  behavior.prefer_kana_input = kKanaLocked;
+  behavior.disabled = false;
+
+  // [CapsLock] h should be sent to the server as 'H' + |KeyEvent::Caps|.
+  {
+    const VirtualKey virtual_key = VirtualKey::FromVirtualKey('H');
+    const BYTE scan_code = 0;  // will be ignored in this test
+    const bool is_key_down = true;
+    KeyboardStatus keyboard_status;
+    keyboard_status.SetState('H', kPressed);
+    keyboard_status.SetState(VK_CAPITAL, kToggled);
+
+    ImeState initial_state;
+    initial_state.conversion_status =
+        IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN;
+    initial_state.open = true;
+
+    commands::Output output;
+    result = KeyEventHandler::ImeToAsciiEx(
+        virtual_key, scan_code, is_key_down, keyboard_status, behavior,
+        initial_state, mock.mutable_client(), &keyboard, &next_state,
+        &output);
+
+    EXPECT_TRUE(result.succeeded);
+    EXPECT_TRUE(result.should_be_eaten);
+    EXPECT_TRUE(result.should_be_sent_to_server);
+    EXPECT_TRUE(next_state.open);
+    EXPECT_TRUE(mock.start_server_called());
+    EXPECT_EQ(IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN,
+              next_state.conversion_status);
+  }
+  {
+    commands::Input actual_input;
+    EXPECT_TRUE(mock.GetGeneratedRequest(&actual_input));
+    EXPECT_EQ(commands::Input::SEND_KEY, actual_input.type());
+    EXPECT_TRUE(actual_input.has_key());
+    EXPECT_FALSE(actual_input.key().has_input_style());
+    EXPECT_TRUE(actual_input.key().has_key_code());
+    EXPECT_EQ('H', actual_input.key().key_code());  // must be capitalized.
+    EXPECT_FALSE(actual_input.key().has_key_string());
+    EXPECT_TRUE(actual_input.key().has_mode());
+    EXPECT_EQ(commands::HIRAGANA, actual_input.key().mode());
+    EXPECT_FALSE(actual_input.key().has_modifiers());
+    EXPECT_EQ(1, actual_input.key().modifier_keys_size());
+    EXPECT_EQ(commands::KeyEvent::CAPS, actual_input.key().modifier_keys(0));
+    EXPECT_FALSE(actual_input.key().has_special_key());
+  }
+}
+
+TEST_F(ImeKeyEventHandlerTest, HandleCapsShiftH) {
+  // Force ImeSwitchUtil to reflect the config.
+  config::ImeSwitchUtil::Reload();
+  const bool kKanaLocked = false;
+
+  commands::Output mock_output;
+  mock_output.set_mode(commands::HIRAGANA);
+  mock_output.mutable_status()->set_activated(true);
+  mock_output.mutable_status()->set_mode(commands::HIRAGANA);
+  mock_output.set_consumed(true);
+  mock_output.set_elapsed_time(10);
+
+  MockState mock(mock_output);
+  KeyboardMock keyboard(kKanaLocked);
+
+  ImeState next_state;
+  KeyEventHandlerResult result;
+
+  ImeBehavior behavior;
+  behavior.prefer_kana_input = kKanaLocked;
+  behavior.disabled = false;
+
+  // [CapsLock] Shift+H should be sent to the server as
+  // 'h' + |KeyEvent::Caps|.
+  {
+    const VirtualKey virtual_key = VirtualKey::FromVirtualKey('H');
+    const BYTE scan_code = 0;  // will be ignored in this test
+    const bool is_key_down = true;
+    KeyboardStatus keyboard_status;
+    keyboard_status.SetState('H', kPressed);
+    keyboard_status.SetState(VK_SHIFT, kPressed);
+    keyboard_status.SetState(VK_CAPITAL, kToggled);
+
+    ImeState initial_state;
+    initial_state.conversion_status =
+        IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN;
+    initial_state.open = true;
+
+    commands::Output output;
+    result = KeyEventHandler::ImeToAsciiEx(
+        virtual_key, scan_code, is_key_down, keyboard_status, behavior,
+        initial_state, mock.mutable_client(), &keyboard, &next_state,
+        &output);
+
+    EXPECT_TRUE(result.succeeded);
+    EXPECT_TRUE(result.should_be_eaten);
+    EXPECT_TRUE(result.should_be_sent_to_server);
+    EXPECT_TRUE(next_state.open);
+    EXPECT_TRUE(mock.start_server_called());
+    EXPECT_EQ(IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN,
+              next_state.conversion_status);
+  }
+  {
+    commands::Input actual_input;
+    EXPECT_TRUE(mock.GetGeneratedRequest(&actual_input));
+    EXPECT_EQ(commands::Input::SEND_KEY, actual_input.type());
+    EXPECT_TRUE(actual_input.has_key());
+    EXPECT_FALSE(actual_input.key().has_input_style());
+    EXPECT_TRUE(actual_input.key().has_key_code());
+    EXPECT_EQ('h', actual_input.key().key_code());  // must be non-capitalized.
+    EXPECT_FALSE(actual_input.key().has_key_string());
+    EXPECT_TRUE(actual_input.key().has_mode());
+    EXPECT_EQ(commands::HIRAGANA, actual_input.key().mode());
+    EXPECT_FALSE(actual_input.key().has_modifiers());
+    EXPECT_EQ(1, actual_input.key().modifier_keys_size());
+    EXPECT_EQ(commands::KeyEvent::CAPS, actual_input.key().modifier_keys(0));
+    EXPECT_FALSE(actual_input.key().has_special_key());
+  }
+}
+
+TEST_F(ImeKeyEventHandlerTest, HandleCapsCtrlH) {
+  // Force ImeSwitchUtil to reflect the config.
+  config::ImeSwitchUtil::Reload();
+  const bool kKanaLocked = false;
+
+  commands::Output mock_output;
+  mock_output.set_mode(commands::HIRAGANA);
+  mock_output.mutable_status()->set_activated(true);
+  mock_output.mutable_status()->set_mode(commands::HIRAGANA);
+  mock_output.set_consumed(true);
+  mock_output.set_elapsed_time(10);
+
+  MockState mock(mock_output);
+  KeyboardMock keyboard(kKanaLocked);
+
+  ImeState next_state;
+  KeyEventHandlerResult result;
+
+  ImeBehavior behavior;
+  behavior.prefer_kana_input = kKanaLocked;
+  behavior.disabled = false;
+
+  // [CapsLock] Ctrl+H should be sent to the server as
+  // 'H' + |KeyEvent::CTRL| + |KeyEvent::Caps|.
+  {
+    const VirtualKey virtual_key = VirtualKey::FromVirtualKey('H');
+    const BYTE scan_code = 0;  // will be ignored in this test
+    const bool is_key_down = true;
+    KeyboardStatus keyboard_status;
+    keyboard_status.SetState('H', kPressed);
+    keyboard_status.SetState(VK_CONTROL, kPressed);
+    keyboard_status.SetState(VK_CAPITAL, kToggled);
+
+    ImeState initial_state;
+    initial_state.conversion_status =
+        IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN;
+    initial_state.open = true;
+
+    commands::Output output;
+    result = KeyEventHandler::ImeToAsciiEx(
+        virtual_key, scan_code, is_key_down, keyboard_status, behavior,
+        initial_state, mock.mutable_client(), &keyboard, &next_state,
+        &output);
+
+    EXPECT_TRUE(result.succeeded);
+    EXPECT_TRUE(result.should_be_eaten);
+    EXPECT_TRUE(result.should_be_sent_to_server);
+    EXPECT_TRUE(next_state.open);
+    EXPECT_TRUE(mock.start_server_called());
+    EXPECT_EQ(IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN,
+              next_state.conversion_status);
+  }
+  {
+    commands::Input actual_input;
+    EXPECT_TRUE(mock.GetGeneratedRequest(&actual_input));
+    EXPECT_EQ(commands::Input::SEND_KEY, actual_input.type());
+    EXPECT_TRUE(actual_input.has_key());
+    EXPECT_FALSE(actual_input.key().has_input_style());
+    EXPECT_TRUE(actual_input.key().has_key_code());
+    EXPECT_EQ('H', actual_input.key().key_code());  // must be capitalized.
+    EXPECT_FALSE(actual_input.key().has_key_string());
+    EXPECT_TRUE(actual_input.key().has_mode());
+    EXPECT_EQ(commands::HIRAGANA, actual_input.key().mode());
+    EXPECT_FALSE(actual_input.key().has_modifiers());
+    EXPECT_EQ(2, actual_input.key().modifier_keys_size());
+    EXPECT_EQ(commands::KeyEvent::CTRL, actual_input.key().modifier_keys(0));
+    EXPECT_EQ(commands::KeyEvent::CAPS, actual_input.key().modifier_keys(1));
+    EXPECT_FALSE(actual_input.key().has_special_key());
+  }
+}
+
+TEST_F(ImeKeyEventHandlerTest, HandleCapsShiftCtrlH) {
+  // Force ImeSwitchUtil to reflect the config.
+  config::ImeSwitchUtil::Reload();
+  const bool kKanaLocked = false;
+
+  commands::Output mock_output;
+  mock_output.set_mode(commands::HIRAGANA);
+  mock_output.mutable_status()->set_activated(true);
+  mock_output.mutable_status()->set_mode(commands::HIRAGANA);
+  mock_output.set_consumed(true);
+  mock_output.set_elapsed_time(10);
+
+  MockState mock(mock_output);
+  KeyboardMock keyboard(kKanaLocked);
+
+  ImeState next_state;
+  KeyEventHandlerResult result;
+
+  ImeBehavior behavior;
+  behavior.prefer_kana_input = kKanaLocked;
+  behavior.disabled = false;
+
+  // [CapsLock] Ctrl+Shift+H should be sent to the server as
+  // 'h' + |KeyEvent::CTRL| + |KeyEvent::Shift| + |KeyEvent::Caps|.
+  {
+    const VirtualKey virtual_key = VirtualKey::FromVirtualKey('H');
+    const BYTE scan_code = 0;  // will be ignored in this test
+    const bool is_key_down = true;
+    KeyboardStatus keyboard_status;
+    keyboard_status.SetState('H', kPressed);
+    keyboard_status.SetState(VK_SHIFT, kPressed);
+    keyboard_status.SetState(VK_CONTROL, kPressed);
+    keyboard_status.SetState(VK_CAPITAL, kToggled);
+
+    ImeState initial_state;
+    initial_state.conversion_status =
+        IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN;
+    initial_state.open = true;
+
+    commands::Output output;
+    result = KeyEventHandler::ImeToAsciiEx(
+        virtual_key, scan_code, is_key_down, keyboard_status, behavior,
+        initial_state, mock.mutable_client(), &keyboard, &next_state,
+        &output);
+
+    EXPECT_TRUE(result.succeeded);
+    EXPECT_TRUE(result.should_be_eaten);
+    EXPECT_TRUE(result.should_be_sent_to_server);
+    EXPECT_TRUE(next_state.open);
+    EXPECT_TRUE(mock.start_server_called());
+    EXPECT_EQ(IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN,
+              next_state.conversion_status);
+  }
+  {
+    commands::Input actual_input;
+    EXPECT_TRUE(mock.GetGeneratedRequest(&actual_input));
+    EXPECT_EQ(commands::Input::SEND_KEY, actual_input.type());
+    EXPECT_TRUE(actual_input.has_key());
+    EXPECT_FALSE(actual_input.key().has_input_style());
+    EXPECT_TRUE(actual_input.key().has_key_code());
+    EXPECT_EQ('h', actual_input.key().key_code());  // must be non-capitalized.
+    EXPECT_FALSE(actual_input.key().has_key_string());
+    EXPECT_TRUE(actual_input.key().has_mode());
+    EXPECT_EQ(commands::HIRAGANA, actual_input.key().mode());
+    EXPECT_FALSE(actual_input.key().has_modifiers());
+    EXPECT_EQ(3, actual_input.key().modifier_keys_size());
+    EXPECT_EQ(commands::KeyEvent::CTRL, actual_input.key().modifier_keys(0));
+    EXPECT_EQ(commands::KeyEvent::SHIFT, actual_input.key().modifier_keys(1));
+    EXPECT_EQ(commands::KeyEvent::CAPS, actual_input.key().modifier_keys(2));
+    EXPECT_FALSE(actual_input.key().has_special_key());
+  }
+}
+
 TEST_F(ImeKeyEventHandlerTest, HandleCtrlHat) {
   // When a user presses some keys with control key, keyboard-layout
   // drivers may not produce any character but the server expects a key event.
@@ -900,7 +1194,8 @@ TEST_F(ImeKeyEventHandlerTest, HandleCtrlHat) {
   // Ctrl+^ should be sent to the server as '^' + |KeyEvent::CTRL|.
   {
     // '^' on 106/109 Japanese keyboard.
-    const VirtualKey virtual_key(VK_OEM_7);
+    const VirtualKey virtual_key =
+        VirtualKey::FromVirtualKey(VK_OEM_7);
     const BYTE scan_code = 0;  // will be ignored in this test
     const bool is_key_down = true;
     KeyboardStatus keyboard_status;
@@ -978,7 +1273,7 @@ TEST_F(ImeKeyEventHandlerTest, HandleCtrlShift7) {
   // VK_7 + VK_SHIFT + VK_CONTROL must not be sent to the server as
   // '\'' + |KeyEvent::CTRL| nor '7' + |KeyEvent::CTRL| + |KeyEvent::SHIFT|.
   {
-    const VirtualKey virtual_key('7');
+    const VirtualKey virtual_key = VirtualKey::FromVirtualKey('7');
     const BYTE scan_code = 0;  // will be ignored in this test
     const bool is_key_down = true;
     KeyboardStatus keyboard_status;
@@ -1036,7 +1331,7 @@ TEST_F(ImeKeyEventHandlerTest, HandleCtrlShiftSpace) {
   // VK_SPACE + VK_SHIFT + VK_CONTROL must be sent to the server as
   // |KeyEvent::SPACE| + |KeyEvent::CTRL| + |KeyEvent::SHIFT|
   {
-    const VirtualKey virtual_key(VK_SPACE);
+    const VirtualKey virtual_key = VirtualKey::FromVirtualKey(VK_SPACE);
     const BYTE scan_code = 0;  // will be ignored in this test
     const bool is_key_down = true;
     KeyboardStatus keyboard_status;
@@ -1111,7 +1406,7 @@ TEST_F(ImeKeyEventHandlerTest, HandleCtrlShiftBackspace) {
   // VK_BACK + VK_SHIFT + VK_CONTROL must be sent to the server as
   // |KeyEvent::BACKSPACE| + |KeyEvent::CTRL| + |KeyEvent::SHIFT|
   {
-    const VirtualKey virtual_key(VK_BACK);
+    const VirtualKey virtual_key = VirtualKey::FromVirtualKey(VK_BACK);
     const BYTE scan_code = 0;  // will be ignored in this test
     const bool is_key_down = true;
     KeyboardStatus keyboard_status;
@@ -1184,8 +1479,9 @@ TEST_F(ImeKeyEventHandlerTest, Issue2903247_KeyUpShouldNotBeEaten) {
     KeyboardStatus keyboard_status;
     keyboard_status.SetState(VK_F6, kPressed);
 
-    const VirtualKey last_keydown_virtual_key(VK_F6);
-    const VirtualKey virtual_key(VK_F6);
+    const VirtualKey last_keydown_virtual_key =
+        VirtualKey::FromVirtualKey(VK_F6);
+    const VirtualKey virtual_key = VirtualKey::FromVirtualKey(VK_F6);
     const LParamKeyInfo lparam(CreateLParam(
         0x0001,  // repeat_count
         0x40,    // scan_code
@@ -1244,7 +1540,7 @@ TEST_F(ImeKeyEventHandlerTest, ProtocolAnomaly_ModiferKeyMayBeSentOnKeyUp) {
     KeyboardStatus keyboard_status;
     keyboard_status.SetState(VK_SHIFT, kPressed);
 
-    const VirtualKey virtual_key(VK_SHIFT);
+    const VirtualKey virtual_key = VirtualKey::FromVirtualKey(VK_SHIFT);
     const LParamKeyInfo lparam(CreateLParam(
         0x0001,   // repeat_count
         0x2a,     // scan_code
@@ -1275,8 +1571,9 @@ TEST_F(ImeKeyEventHandlerTest, ProtocolAnomaly_ModiferKeyMayBeSentOnKeyUp) {
     KeyboardStatus keyboard_status;
     keyboard_status.SetState(VK_SHIFT, kPressed);
 
-    const VirtualKey previous_virtual_key(VK_SHIFT);
-    const VirtualKey virtual_key(VK_SHIFT);
+    const VirtualKey previous_virtual_key =
+        VirtualKey::FromVirtualKey(VK_SHIFT);
+    const VirtualKey virtual_key = VirtualKey::FromVirtualKey(VK_SHIFT);
     const LParamKeyInfo lparam(CreateLParam(
         0x0001,  // repeat_count
         0x2a,    // scan_code
@@ -1356,7 +1653,7 @@ TEST_F(ImeKeyEventHandlerTest,
     keyboard_status.SetState(VK_SHIFT, kPressed);
     keyboard_status.SetState('A', kPressed);
 
-    const VirtualKey virtual_key('A');
+    const VirtualKey virtual_key = VirtualKey::FromVirtualKey('A');
     const LParamKeyInfo lparam(CreateLParam(
         0x0001,   // repeat_count
         0x1e,     // scan_code
@@ -1431,7 +1728,7 @@ TEST_F(ImeKeyEventHandlerTest,
     keyboard_status.SetState(VK_SHIFT, kPressed);
     keyboard_status.SetState(VK_DBE_KATAKANA, kPressed);
 
-    const VirtualKey virtual_key(VK_DBE_KATAKANA);
+    const VirtualKey virtual_key = VirtualKey::FromVirtualKey(VK_DBE_KATAKANA);
     const LParamKeyInfo lparam(CreateLParam(
         0x0001,   // repeat_count
         0x70,     // scan_code
@@ -1509,7 +1806,7 @@ TEST_F(ImeKeyEventHandlerTest,
 
     KeyboardStatus keyboard_status;
 
-    const VirtualKey virtual_key('A');
+    const VirtualKey virtual_key = VirtualKey::FromVirtualKey('A');
     const LParamKeyInfo lparam(CreateLParam(
         0x0001,   // repeat_count
         0x1e,     // scan_code
@@ -1584,7 +1881,7 @@ TEST_F(ImeKeyEventHandlerTest,
     keyboard_status.SetState(VK_CONTROL, kPressed);
     keyboard_status.SetState('A', kPressed);
 
-    const VirtualKey virtual_key('A');
+    const VirtualKey virtual_key = VirtualKey::FromVirtualKey('A');
     const LParamKeyInfo lparam(CreateLParam(
         0x0001,   // repeat_count
         0x1e,     // scan_code
@@ -1647,7 +1944,7 @@ TEST_F(ImeKeyEventHandlerTest,
     KeyboardStatus keyboard_status;
     keyboard_status.SetState(VK_DBE_DBCSCHAR, kPressed);
 
-    const VirtualKey virtual_key(VK_DBE_DBCSCHAR);
+    const VirtualKey virtual_key = VirtualKey::FromVirtualKey(VK_DBE_DBCSCHAR);
     const BYTE scan_code = 0;  // will be ignored in this test
     const bool is_key_down = true;
 
@@ -1704,7 +2001,7 @@ TEST_F(ImeKeyEventHandlerTest, Issue3029665_KanaLocked_WO) {
 
   // "を"
   {
-    const VirtualKey virtual_key('0');
+    const VirtualKey virtual_key = VirtualKey::FromVirtualKey('0');
     const BYTE scan_code = 0;  // will be ignored in this test
     const bool is_key_down = true;
     KeyboardStatus keyboard_status;
@@ -1774,7 +2071,7 @@ TEST_F(ImeKeyEventHandlerTest,
     keyboard_status.SetState(VK_SHIFT, kPressed);
     keyboard_status.SetState(VK_CONVERT, kPressed);
 
-    const VirtualKey virtual_key(VK_CONVERT);
+    const VirtualKey virtual_key = VirtualKey::FromVirtualKey(VK_CONVERT);
     const BYTE scan_code = 0;  // will be ignored in this test
     const bool is_key_down = true;
 
@@ -1831,7 +2128,7 @@ TEST_F(ImeKeyEventHandlerTest,
     keyboard_status.SetState(VK_SHIFT, kPressed);
     keyboard_status.SetState(VK_NONCONVERT, kPressed);
 
-    const VirtualKey virtual_key(VK_NONCONVERT);
+    const VirtualKey virtual_key = VirtualKey::FromVirtualKey(VK_NONCONVERT);
     const BYTE scan_code = 0;  // will be ignored in this test
     const bool is_key_down = true;
 
@@ -1880,8 +2177,9 @@ TEST(SimpleImeKeyEventHandlerTest, ToggleInputStyleByRomanKey) {
     false,    // is_previous_state_down,
     false));  // is_in_transition_state
 
-  const VirtualKey key_VK_DBE_ROMAN(VK_DBE_ROMAN);
-  const VirtualKey key_VK_DBE_NOROMAN(VK_DBE_NOROMAN);
+  const VirtualKey key_VK_DBE_ROMAN = VirtualKey::FromVirtualKey(VK_DBE_ROMAN);
+  const VirtualKey key_VK_DBE_NOROMAN =
+      VirtualKey::FromVirtualKey(VK_DBE_NOROMAN);
 
   // If you hit Alt+Hiragana/Katakana when VK_DBE_ROMAN has been pressed,
   // you will receive key events in the following order.
@@ -2169,9 +2467,10 @@ TEST_F(ImeKeyEventHandlerTest, Issue3504241_VKPacketByQuestionKey) {
     KeyboardStatus keyboard_status;
 
     const wchar_t kHiraganaA = L'\u3042';
-    const VirtualKey virtual_key(
+    const VirtualKey virtual_key = VirtualKey::FromCombinedVirtualKey(
         (static_cast<DWORD>(kHiraganaA) << 16) | VK_PACKET);
-    const VirtualKey last_keydown_virtual_key(VK_ESCAPE);
+    const VirtualKey last_keydown_virtual_key =
+        VirtualKey::FromVirtualKey(VK_ESCAPE);
 
     const BYTE scan_code = 36;  // for '?'. will be ignored in this test
     const bool is_key_down = true;
@@ -2232,7 +2531,7 @@ TEST_F(ImeKeyEventHandlerTest, CapsLock) {
   {
     KeyboardStatus keyboard_status;
 
-    const VirtualKey virtual_key(VK_CAPITAL);
+    const VirtualKey virtual_key = VirtualKey::FromVirtualKey(VK_CAPITAL);
 
     const BYTE scan_code = 0;  // will be ignored in this test;
     const bool is_key_down = true;

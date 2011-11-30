@@ -46,7 +46,7 @@
       'target_name': 'mozc_server',
       'type': 'executable',
       'sources': [
-        'mozc_server.cc',
+        'server_main.cc',
       ],
       'dependencies': [
         '../base/base.gyp:base',
@@ -57,14 +57,14 @@
         '../converter/converter.gyp:converter',
         '../dictionary/dictionary.gyp:dictionary',
         '../ipc/ipc.gyp:ipc',
+        '../languages/japanese/japanese.gyp:language_dependent_spec_japanese',
         '../net/net.gyp:net',
         '../prediction/prediction.gyp:prediction',
         '../rewriter/rewriter.gyp:rewriter',
         '../session/session.gyp:session',
-        '../session/session.gyp:session_server',
         '../storage/storage.gyp:storage',
         '../transliteration/transliteration.gyp:transliteration',
-        '../usage_stats/usage_stats.gyp:usage_stats',
+        'mozc_server_lib',
       ],
       'conditions': [
         ['OS=="mac"', {
@@ -117,6 +117,17 @@
             },
           }
         }],
+      ]
+    },
+    {
+      'target_name': 'mozc_server_lib',
+      'type': 'static_library',
+      'sources': [
+        'mozc_server.cc',
+      ],
+      'dependencies': [
+        '../session/session.gyp:session_server',
+        '../usage_stats/usage_stats.gyp:usage_stats',
       ],
     },
     {
@@ -128,6 +139,7 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../session/session.gyp:session',
+        '../session/session.gyp:session_server',
         '../session/session.gyp:random_keyevents_generator',
       ],
     },
@@ -195,6 +207,8 @@
             '<(gen_out_dir)/mozc_cache_service_autogen.rc',
           ],
           'dependencies': [
+            '../languages/japanese/japanese.gyp:language_dependent_spec_japanese',
+            '../languages/languages.gyp:global_language_spec',
             'cache_service_manager',
             'gen_mozc_cache_service_resource_header',
           ],

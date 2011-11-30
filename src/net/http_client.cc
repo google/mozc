@@ -310,16 +310,18 @@ bool RequestInternal(HTTPMethodType type,
   }
 
   DWORD code = 0;
-  DWORD size = sizeof(code);
-  if (!::HttpQueryInfoW(handle.get(),
-                        HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER,
-                        &code,
-                        &size,
-                        0)) {
-    LOG(ERROR) << "HttpQueryInfo() failed: "
-               << ::GetLastError() << " " << url;
-    return false;
-  }
+  {
+    DWORD code_size = sizeof(code);
+    if (!::HttpQueryInfoW(handle.get(),
+                          HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER,
+                          &code,
+                          &code_size,
+                          0)) {
+      LOG(ERROR) << "HttpQueryInfo() failed: "
+                 << ::GetLastError() << " " << url;
+      return false;
+    }
+  }  // scope out |size|
 
   if (kOKResponseCode != code) {
     LOG(WARNING) << "status code is not 200: " << code << " " << url;
@@ -332,18 +334,18 @@ bool RequestInternal(HTTPMethodType type,
 
   if (option.include_header || type == HTTP_HEAD) {
     char buf[8192];
-    DWORD size = sizeof(buf);
+    DWORD buf_size = sizeof(buf);
     if (!::HttpQueryInfoA(handle.get(),
                           HTTP_QUERY_RAW_HEADERS_CRLF,
                           buf,
-                          &size,
+                          &buf_size,
                           0)) {
       LOG(ERROR) << "HttpQueryInfo() failed: "
                  << ::GetLastError() << " " << url;
       return false;
     }
 
-    if (size != stream.Append(buf, size)) {
+    if (buf_size != stream.Append(buf, buf_size)) {
       return false;
     }
 

@@ -1,0 +1,12 @@
+/*
+   Localizable.strings
+   GoogleJapaneseInput/DevConfirmPanel
+
+   Created by Tsuyoshi Horo on 11/09/07.
+   Copyright 2011 Google Inc. All rights reserved.
+ */
+"Title" = "About an evaluation version";
+"mainMessage" = " This version of the Google IME is an evaluation version for testing features that may be included in the stable version. It is intended to be used by people who want to help Google test and debug new features, and who are not worried about software that may affect the stability of their computer. This version may be unstable compared to the stable version. For ordinary use, please use the stable version. If you are already using the stable version, installing this version will overwrite the existing stable version, because the stable versions cannot coexist with this version. To switch back to the stable version after installing this version, you will first need to uninstall this version and then reinstall the stable version. To use this version, you must allow usage statistics and crash reports to be sent automatically to Google.";
+"understandMessage" = "I understand that this version may be unstable compared to the stable version.";
+"agreeMessage" = "I agree to allow usage statistics and crash reports to be sent automatically to Google.";
+

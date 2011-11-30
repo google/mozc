@@ -47,6 +47,7 @@
 #include "config/config_handler.h"
 #include "config/config.pb.h"
 #include "converter/segments.h"
+#include "dictionary/suppression_dictionary.h"
 #include "prediction/predictor_interface.h"
 #include "prediction/user_history_predictor.pb.h"
 #include "rewriter/variants_rewriter.h"
@@ -1162,18 +1163,18 @@ void UserHistoryPredictor::InsertNextEntry(
         target_next_entry = entry->mutable_next_entries(i);
         break;
       }
-      const Entry *next_entry = dic_->LookupWithoutInsert(
+      const Entry *found_entry = dic_->LookupWithoutInsert(
           entry->next_entries(i).entry_fp());
       // reuse the entry if it is already removed from the LRU.
-      if (next_entry == NULL) {
+      if (found_entry == NULL) {
         target_next_entry = entry->mutable_next_entries(i);
         break;
       }
       // preserve the oldest entry
       if (target_next_entry == NULL ||
-          last_access_time > next_entry->last_access_time()) {
+          last_access_time > found_entry->last_access_time()) {
         target_next_entry = entry->mutable_next_entries(i);
-        last_access_time = next_entry->last_access_time();
+        last_access_time = found_entry->last_access_time();
       }
     }
   }
@@ -1188,7 +1189,10 @@ void UserHistoryPredictor::InsertNextEntry(
 
 // static
 bool UserHistoryPredictor::IsValidEntry(const Entry &entry) {
-  return !entry.removed() && entry.entry_type() == Entry::DEFAULT_ENTRY;
+  return !entry.removed() &&
+      entry.entry_type() == Entry::DEFAULT_ENTRY &&
+      !SuppressionDictionary::GetSuppressionDictionary()->SuppressEntry(
+          entry.key(), entry.value());
 }
 
 void UserHistoryPredictor::InsertEvent(EntryType type) {
@@ -1286,6 +1290,11 @@ void UserHistoryPredictor::Insert(const string &key,
 }
 
 void UserHistoryPredictor::Finish(Segments *segments) {
+  if (segments->request_type() == Segments::REVERSE_CONVERSION) {
+    // Do nothing for REVERSE_CONVERSION.
+    return;
+  }
+
   if (GET_CONFIG(incognito_mode)) {
     VLOG(2) << "incognito mode";
     return;
@@ -1301,9 +1310,7 @@ void UserHistoryPredictor::Finish(Segments *segments) {
     return;
   }
 
-  const bool kInsertSuggestion = true;
-  const bool kInsertConversion = false;
-
+  const bool is_suggestion = segments->request_type() != Segments::CONVERSION;
   const uint32 last_access_time = static_cast<uint32>(time(NULL));
 
   // If user inputs a punctuation just after some long sentence,
@@ -1338,97 +1345,78 @@ void UserHistoryPredictor::Finish(Segments *segments) {
       const string value = entry->value() + candidate.value;
       // use the same last_access_time stored in the top element
       // so that this item can be grouped together.
-      Insert(key, value, entry->description(), kInsertConversion, 0,
+      Insert(key, value, entry->description(), is_suggestion, 0,
              entry->last_access_time(), segments);
     }
   }
 
   string all_key, all_value;
+  const size_t history_segments_size = segments->history_segments_size();
 
-  if (segments->request_type() == Segments::CONVERSION) {
-    const size_t history_segments_size = segments->history_segments_size();
-
-    // Check every segment is valid.
-    for (size_t i = history_segments_size; i < segments->segments_size(); ++i) {
-      const Segment &segment = segments->segment(i);
-      if (segment.candidates_size() < 1) {
-        VLOG(2) << "candidates size < 1";
-        return;
-      }
-      if (segment.segment_type() != Segment::FIXED_VALUE) {
-        VLOG(2) << "segment is not FIXED_VALUE";
-        return;
-      }
-      const Segment::Candidate &candidate = segment.candidate(0);
-      if (candidate.attributes &
-          Segment::Candidate::NO_SUGGEST_LEARNING) {
-        VLOG(2) << "NO_SUGGEST_LEARNING";
-        return;
-      }
-    }
-
-    if (IsPrivacySensitive(segments)) {
-      VLOG(2) << "do not remember privacy sensitive input";
-      return;
-    }
-
-    set<uint64> seen;
-    bool this_was_seen = false;
-    for (size_t i = history_segments_size; i < segments->segments_size(); ++i) {
-      const Segment &segment = segments->segment(i);
-      all_key += segment.candidate(0).key;
-      all_value += segment.candidate(0).value;
-      uint32 next_fp = (i == segments->segments_size() - 1) ?
-          0 : SegmentFingerprint(segments->segment(i + 1));
-      // remember the first segment
-      if (i == history_segments_size) {
-        seen.insert(SegmentFingerprint(segment));
-      }
-      uint32 next_fp_to_set = next_fp;
-      // If two duplicate segments exist, kills the link
-      // TO/FROM the second one to prevent loops.
-      // Only killing "TO" link caused bug #2982886:
-      // after converting "らいおん（もうじゅう）とぞうりむし（びせいぶつ）"
-      // and typing "ぞうりむし", "ゾウリムシ（猛獣" was suggested.
-      if (this_was_seen) {
-        next_fp_to_set = 0;
-      }
-      if (!seen.insert(next_fp).second) {
-        next_fp_to_set = 0;
-        this_was_seen = true;
-      } else {
-        this_was_seen = false;
-      }
-      Insert(segment.candidate(0).key,
-             segment.candidate(0).value,
-             GetDescription(segment.candidate(0)),
-             kInsertConversion, next_fp_to_set,
-             last_access_time, segments);
-    }
-
-    // insert all_key/all_value
-    if (segments->conversion_segments_size() > 1 &&
-        !all_key.empty() && !all_value.empty()) {
-      Insert(all_key, all_value, "",
-             kInsertConversion,
-             0, last_access_time, segments);
-    }
-
-  } else {
-    // Store user-history from predictoin
-    if (segments->conversion_segments_size() < 1) {
-      return;
-    }
-    const Segment &segment = segments->conversion_segment(0);
+  // Check every segment is valid.
+  for (size_t i = history_segments_size; i < segments->segments_size(); ++i) {
+    const Segment &segment = segments->segment(i);
     if (segment.candidates_size() < 1) {
+      VLOG(2) << "candidates size < 1";
       return;
     }
+    if (segment.segment_type() != Segment::FIXED_VALUE) {
+      VLOG(2) << "segment is not FIXED_VALUE";
+      return;
+    }
+    const Segment::Candidate &candidate = segment.candidate(0);
+    if (candidate.attributes &
+        Segment::Candidate::NO_SUGGEST_LEARNING) {
+      VLOG(2) << "NO_SUGGEST_LEARNING";
+      return;
+    }
+  }
 
-    all_key = segment.candidate(0).key;
-    all_value = segment.candidate(0).value;
-    Insert(all_key, all_value,
+  if (IsPrivacySensitive(segments)) {
+    VLOG(2) << "do not remember privacy sensitive input";
+    return;
+  }
+
+  set<uint64> seen;
+  bool this_was_seen = false;
+  for (size_t i = history_segments_size; i < segments->segments_size(); ++i) {
+    const Segment &segment = segments->segment(i);
+    all_key += segment.candidate(0).key;
+    all_value += segment.candidate(0).value;
+    uint32 next_fp = (i == segments->segments_size() - 1) ?
+        0 : SegmentFingerprint(segments->segment(i + 1));
+    // remember the first segment
+    if (i == history_segments_size) {
+      seen.insert(SegmentFingerprint(segment));
+    }
+    uint32 next_fp_to_set = next_fp;
+    // If two duplicate segments exist, kills the link
+    // TO/FROM the second one to prevent loops.
+    // Only killing "TO" link caused bug #2982886:
+    // after converting "らいおん（もうじゅう）とぞうりむし（びせいぶつ）"
+    // and typing "ぞうりむし", "ゾウリムシ（猛獣" was suggested.
+    if (this_was_seen) {
+      next_fp_to_set = 0;
+    }
+    if (!seen.insert(next_fp).second) {
+      next_fp_to_set = 0;
+      this_was_seen = true;
+    } else {
+      this_was_seen = false;
+    }
+    Insert(segment.candidate(0).key,
+           segment.candidate(0).value,
            GetDescription(segment.candidate(0)),
-           kInsertSuggestion, 0, last_access_time, segments);
+           is_suggestion, next_fp_to_set,
+           last_access_time, segments);
+  }
+
+  // insert all_key/all_value
+  if (segments->conversion_segments_size() > 1 &&
+      !all_key.empty() && !all_value.empty()) {
+    Insert(all_key, all_value, "",
+           is_suggestion,
+           0, last_access_time, segments);
   }
 
   // make a link from the right most history_segment to

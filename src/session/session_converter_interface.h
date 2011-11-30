@@ -98,41 +98,46 @@ class SessionConverterInterface {
   virtual const ConversionPreferences &conversion_preferences() const ABSTRACT;
 
   // Send a conversion request to the converter.
-  virtual bool Convert(const composer::Composer *composer) ABSTRACT;
+  virtual bool Convert(const composer::Composer &composer) ABSTRACT;
   virtual bool ConvertWithPreferences(
-      const composer::Composer *composer,
+      const composer::Composer &composer,
       const ConversionPreferences &preferences) ABSTRACT;
 
-  // Send a reverse conversion request to the converter.
-  virtual bool ConvertReverse(const string &str,
-                              composer::Composer *composer) ABSTRACT;
+  // Get reading text (e.g. from "猫" to "ねこ").
+  virtual bool GetReadingText(const string &str, string *reading) ABSTRACT;
 
   // Send a transliteration request to the converter.
   virtual bool ConvertToTransliteration(
-      const composer::Composer *composer,
+      const composer::Composer &composer,
       transliteration::TransliterationType type) ABSTRACT;
 
   // Convert the current composition to half-width characters.
   // NOTE(komatsu): This function might be merged to ConvertToTransliteration.
-  virtual bool ConvertToHalfWidth(const composer::Composer *composer) ABSTRACT;
+  virtual bool ConvertToHalfWidth(const composer::Composer &composer) ABSTRACT;
 
   // Switch the composition to Hiragana, full-width Katakana or
   // half-width Katakana by rotation.
-  virtual bool SwitchKanaType(const composer::Composer *composer) ABSTRACT;
+  virtual bool SwitchKanaType(const composer::Composer &composer) ABSTRACT;
 
   // Send a suggestion request to the converter.
-  virtual bool Suggest(const composer::Composer *composer) ABSTRACT;
+  virtual bool Suggest(const composer::Composer &composer) ABSTRACT;
   virtual bool SuggestWithPreferences(
-      const composer::Composer *composer,
+      const composer::Composer &composer,
       const ConversionPreferences &preferences) ABSTRACT;
 
   // Send a prediction request to the converter.
-  virtual bool Predict(const composer::Composer *composer) ABSTRACT;
+  virtual bool Predict(const composer::Composer &composer) ABSTRACT;
   virtual bool PredictWithPreferences(
-      const composer::Composer *composer,
+      const composer::Composer &composer,
       const ConversionPreferences &preferences) ABSTRACT;
 
-
+  // Send a prediction request to the converter.
+  // The result is added at the tail of existing candidate list as "suggestion"
+  // candidates.
+  virtual bool ExpandSuggestion(const composer::Composer &composer) ABSTRACT;
+  virtual bool ExpandSuggestionWithPreferences(
+      const composer::Composer &composer,
+      const ConversionPreferences &preferences) ABSTRACT;
 
   // Clear conversion segments, but keep the context.
   virtual void Cancel() ABSTRACT;
@@ -143,18 +148,34 @@ class SessionConverterInterface {
   // Fix the conversion with the current status.
   virtual void Commit() ABSTRACT;
 
-  // Fix the suggestion candidate.
-  virtual void CommitSuggestion(size_t index) ABSTRACT;
+  // Fix the suggestion candidate.  True is returned if teh selected
+  // candidate is successfully commited.
+  virtual bool CommitSuggestionByIndex(
+      size_t index,
+      const composer::Composer &composer,
+      size_t *committed_key_size) ABSTRACT;
+
+  // Select a candidate and commit the selected candidate.  True is
+  // returned if teh selected candidate is successfully commited.
+  virtual bool CommitSuggestionById(
+      int id,
+      const composer::Composer &composer,
+      size_t *committed_key_size) ABSTRACT;
 
   // Fix only the conversion of the first segment, and keep the rest.
-  virtual void CommitFirstSegment(composer::Composer *composer) ABSTRACT;
+  // The caller should delete characters from composer based on returned
+  // |committed_key_size|.
+  virtual void CommitFirstSegment(size_t *committed_key_size) ABSTRACT;
 
   // Commit the preedit string represented by Composer.
   virtual void CommitPreedit(const composer::Composer &composer) ABSTRACT;
 
   // Commit prefix of the preedit string represented by Composer.
+  // The caller should delete characters from composer based on returned
+  // |commited_size|.
   virtual void CommitHead(size_t count,
-                          composer::Composer *composer) ABSTRACT;
+                          const composer::Composer &composer,
+                          size_t *commited_size) ABSTRACT;
 
   // Revert the last "Commit" operation
   virtual void Revert() ABSTRACT;
@@ -165,19 +186,18 @@ class SessionConverterInterface {
   virtual void SegmentFocusLeft() ABSTRACT;
   virtual void SegmentFocusLeftEdge() ABSTRACT;
 
-  virtual bool IsLastSegmentFocused() const ABSTRACT;
-
   // Resize the focused segment.
   virtual void SegmentWidthExpand() ABSTRACT;
   virtual void SegmentWidthShrink() ABSTRACT;
 
   // Move the focus of candidates.
-  virtual void CandidateNext() ABSTRACT;
+  virtual void CandidateNext(const composer::Composer &composer) ABSTRACT;
   virtual void CandidateNextPage() ABSTRACT;
   virtual void CandidatePrev() ABSTRACT;
   virtual void CandidatePrevPage() ABSTRACT;
   // Move the focus to the candidate represented by the id.
-  virtual void CandidateMoveToId(int id) ABSTRACT;
+  virtual void CandidateMoveToId(
+      int id, const composer::Composer &composer) ABSTRACT;
   // Move the focus to the index from the beginning of the current page.
   virtual void CandidateMoveToPageIndex(size_t index) ABSTRACT;
   // Move the focus to the candidate represented by the shortcut.  If
@@ -189,10 +209,13 @@ class SessionConverterInterface {
   virtual void SetCandidateListVisible(bool visible) ABSTRACT;
 
   // Fill protocol buffers and update internal status.
-  virtual void PopOutput(commands::Output *output) ABSTRACT;
+  virtual void PopOutput(
+      const composer::Composer &composer, commands::Output *output) ABSTRACT;
 
   // Fill protocol buffers
-  virtual void FillOutput(commands::Output *output) const ABSTRACT;
+  virtual void FillOutput(
+      const composer::Composer &composer,
+      commands::Output *output) const ABSTRACT;
 
   // Fill context information
   virtual void FillContext(commands::Context *context) const ABSTRACT;
@@ -206,8 +229,6 @@ class SessionConverterInterface {
 
   // Accessor
   virtual const commands::Result &GetResult() const ABSTRACT;
-  virtual const string &GetDefaultResult() const ABSTRACT;
-  virtual const string &GetComposition() const ABSTRACT;
   virtual const CandidateList &GetCandidateList() const ABSTRACT;
   virtual const OperationPreferences &GetOperationPreferences() const ABSTRACT;
   virtual State GetState() const ABSTRACT;

@@ -136,9 +136,13 @@ static const  int32 kint32max  = (( int32) 0x7FFFFFFF);
 static const  int64 kint64min  = (( int64) GG_LONGLONG(0x8000000000000000));
 static const  int64 kint64max  = (( int64) GG_LONGLONG(0x7FFFFFFFFFFFFFFF));
 
-#define DISALLOW_COPY_AND_ASSIGN(TypeName)    \
-  TypeName(const TypeName&);                    \
+#define DISALLOW_COPY_AND_ASSIGN(TypeName) \
+  TypeName(const TypeName&);               \
   void operator=(const TypeName&)
+
+#define DISALLOW_IMPLICIT_CONSTRUCTORS(TypeName) \
+  TypeName();                                    \
+  DISALLOW_COPY_AND_ASSIGN(TypeName)
 
 #if (defined(COMPILER_GCC3) || defined(COMPILER_ICC) || defined(OS_MACOSX)) && !defined(SWIG)
 // Tell the compiler to do printf format string checking if the
@@ -177,5 +181,17 @@ struct CompileAssert {
 
 #include "base/init.h"
 #include "base/flags.h"
+
+// Since Native Client does not provide mlock/munlock, we use dummy instead.
+// It is okay to include sys/mmap.h with this header file because NaCl version
+// of sys/mmap.h does not have prototypes for them.
+#ifdef __native_client__
+inline int mlock(const void *addr, size_t len) {
+  return -1;
+}
+inline int munlock(const void *addr, size_t len) {
+  return -1;
+}
+#endif  // __native_client__
 
 #endif  // MOZC_BASE_PORT_H_

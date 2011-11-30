@@ -41,6 +41,72 @@
 namespace mozc {
 namespace session {
 
+namespace {
+bool FillAnnotation(const Segment::Candidate &candidate_value,
+                           commands::Annotation *annotation) {
+  bool is_modified = false;
+  if (!candidate_value.prefix.empty()) {
+    annotation->set_prefix(candidate_value.prefix);
+    is_modified = true;
+  }
+  if (!candidate_value.suffix.empty()) {
+    annotation->set_suffix(candidate_value.suffix);
+    is_modified = true;
+  }
+  if (!candidate_value.description.empty()) {
+    annotation->set_description(
+        candidate_value.description);
+    is_modified = true;
+  }
+  return is_modified;
+}
+
+void FillAllCandidateWordsInternal(
+    const Segment &segment,
+    const CandidateList &candidate_list,
+    const int focused_id,
+    commands::CandidateList *candidate_list_proto) {
+  for (size_t i = 0; i < candidate_list.size(); ++i) {
+    const Candidate &candidate = candidate_list.candidate(i);
+    if (candidate.IsSubcandidateList()) {
+      FillAllCandidateWordsInternal(
+          segment, candidate.subcandidate_list(), focused_id,
+          candidate_list_proto);
+      continue;
+    }
+
+    commands::CandidateWord *candidate_word_proto =
+      candidate_list_proto->add_candidates();
+    // id
+    const int id = candidate.id();
+    candidate_word_proto->set_id(id);
+
+    // index
+    const int index = candidate_list_proto->candidates_size() - 1;
+    candidate_word_proto->set_index(index);
+
+    // check focused id
+    if (id == focused_id && candidate_list.focused()) {
+      candidate_list_proto->set_focused_index(index);
+    }
+
+    const Segment::Candidate &segment_candidate = segment.candidate(id);
+    // key
+    if (segment.key() != segment_candidate.content_key) {
+      candidate_word_proto->set_key(segment_candidate.content_key);
+    }
+    // value
+    candidate_word_proto->set_value(segment_candidate.value);
+
+    // annotations
+    commands::Annotation annotation;
+    if (FillAnnotation(segment_candidate, &annotation)) {
+      candidate_word_proto->mutable_annotation()->CopyFrom(annotation);
+    }
+  }
+}
+}  // namespace
+
 // static
 void SessionOutput::FillCandidate(
     const Segment &segment,
@@ -53,21 +119,15 @@ void SessionOutput::FillCandidate(
   }
 
   const Segment::Candidate &candidate_value = segment.candidate(candidate.id());
-  TextNormalizer::NormalizeCandidateText(candidate_value.value,
-                                         candidate_proto->mutable_value());
+  candidate_proto->set_value(candidate_value.value);
 
   candidate_proto->set_id(candidate.id());
   // Set annotations
-  if (!candidate_value.prefix.empty()) {
-    candidate_proto->mutable_annotation()->set_prefix(candidate_value.prefix);
+  commands::Annotation annotation;
+  if (FillAnnotation(candidate_value, &annotation)) {
+    candidate_proto->mutable_annotation()->CopyFrom(annotation);
   }
-  if (!candidate_value.suffix.empty()) {
-    candidate_proto->mutable_annotation()->set_suffix(candidate_value.suffix);
-  }
-  if (!candidate_value.description.empty()) {
-    candidate_proto->mutable_annotation()->set_description(
-        candidate_value.description);
-  }
+
   if (!candidate_value.usage_title.empty()) {
     candidate_proto->set_information_id(candidate_value.usage_id);
   }
@@ -108,50 +168,6 @@ void SessionOutput::FillCandidates(const Segment &segment,
   // Store usages.
   FillUsages(segment, candidate_list, candidates_proto);
 }
-
-namespace {
-static void FillAllCandidateWordsInternal(
-    const Segment &segment,
-    const CandidateList &candidate_list,
-    const int focused_id,
-    commands::CandidateList *candidate_list_proto) {
-  for (size_t i = 0; i < candidate_list.size(); ++i) {
-    const Candidate &candidate = candidate_list.candidate(i);
-    if (candidate.IsSubcandidateList()) {
-      FillAllCandidateWordsInternal(
-          segment, candidate.subcandidate_list(), focused_id,
-          candidate_list_proto);
-      continue;
-    }
-
-    commands::CandidateWord *candidate_word_proto =
-      candidate_list_proto->add_candidates();
-    // id
-    const int id = candidate.id();
-    candidate_word_proto->set_id(id);
-
-    // index
-    const int index = candidate_list_proto->candidates_size() - 1;
-    candidate_word_proto->set_index(index);
-
-    // check focused id
-    if (id == focused_id && candidate_list.focused()) {
-      candidate_list_proto->set_focused_index(index);
-    }
-
-    const Segment::Candidate &segment_candidate = segment.candidate(id);
-    // key
-    if (segment.key() != segment_candidate.content_key) {
-      candidate_word_proto->set_key(segment_candidate.content_key);
-    }
-    // value
-    TextNormalizer::NormalizeCandidateText(
-        segment_candidate.value, candidate_word_proto->mutable_value());
-
-    // annotations are not set.
-  }
-}
-}  // anonymous namespace
 
 // static
 void SessionOutput::FillAllCandidateWords(
@@ -202,9 +218,9 @@ void SessionOutput::FillUsages(const Segment &segment,
   size_t c_begin = 0;
   size_t c_end = 0;
   cand_list.GetPageRange(cand_list.focused_index(), &c_begin, &c_end);
-  size_t focused_index = -1;
 
-  map<int32, commands::Information *> usageid_information_map;
+  typedef pair<int32, commands::Information *> IndexInfoPair;
+  map<int32, IndexInfoPair> usageid_information_map;
   // Store usages.
   for (size_t i = c_begin; i <= c_end; ++i) {
     if (cand_list.candidate(i).IsSubcandidateList()) {
@@ -216,24 +232,27 @@ void SessionOutput::FillUsages(const Segment &segment,
       continue;
     }
 
+    int index;
     commands::Information *info;
-    map<int32, commands::Information *>::iterator itr =
+    map<int32, IndexInfoPair>::iterator info_itr =
       usageid_information_map.find(candidate.usage_id);
-    if (itr == usageid_information_map.end()) {
+
+    if (info_itr == usageid_information_map.end()) {
+      index = usages->information_size();
       info = usages->add_information();
       info->set_id(candidate.usage_id);
       info->set_title(candidate.usage_title);
       info->set_description(candidate.usage_description);
       info->add_candidate_id(cand_list.candidate(i).id());
       usageid_information_map.insert(
-        pair<int32, commands::Information *>(candidate.usage_id, info));
-      ++focused_index;
+          make_pair(candidate.usage_id, make_pair(index, info)));
     } else {
-      info = itr->second;
+      index = info_itr->second.first;
+      info = info_itr->second.second;
       info->add_candidate_id(cand_list.candidate(i).id());
     }
     if (cand_list.candidate(i).id() == cand_list.focused_id()) {
-      usages->set_focused_index(focused_index);
+      usages->set_focused_index(index);
     }
   }
 }
@@ -315,7 +334,7 @@ bool SessionOutput::AddSegment(const string &key,
   if (segment_type_mask & PREEDIT) {
     TextNormalizer::NormalizePreeditText(value, &normalized_value);
   } else if (segment_type_mask & CONVERSION) {
-    TextNormalizer::NormalizeConversionText(value, &normalized_value);
+    normalized_value = value;
   } else {
     LOG(WARNING) << "Unknown segment type" << segment_type_mask;
     normalized_value = value;
@@ -386,9 +405,8 @@ void SessionOutput::FillConversionResult(const string &key,
   TextNormalizer::NormalizePreeditText(key, &normalized_key);
   result_proto->set_key(normalized_key);
 
-  string normalized_result;
-  TextNormalizer::NormalizeConversionText(result, &normalized_result);
-  result_proto->set_value(normalized_result);
+  // value is already normalized by converter.
+  result_proto->set_value(result);
 }
 
 // static

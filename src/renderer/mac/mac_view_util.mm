@@ -27,37 +27,37 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "base/coordinates.h"
 #include "renderer/mac/mac_view_util.h"
 #include "renderer/renderer_style.pb.h"
-#include "renderer/coordinates.h"
 
 namespace mozc {
 namespace renderer {
 namespace mac {
 
-NSPoint MacViewUtil::ToNSPoint(const mozc::renderer::Point &point) {
+NSPoint MacViewUtil::ToNSPoint(const mozc::Point &point) {
   return NSMakePoint(point.x, point.y);
 }
 
-mozc::renderer::Point MacViewUtil::ToPoint(const NSPoint &nspoint) {
-  return mozc::renderer::Point(nspoint.x, nspoint.y);
+mozc::Point MacViewUtil::ToPoint(const NSPoint &nspoint) {
+  return mozc::Point(nspoint.x, nspoint.y);
 }
 
-NSSize MacViewUtil::ToNSSize(const mozc::renderer::Size &size) {
+NSSize MacViewUtil::ToNSSize(const mozc::Size &size) {
   return NSMakeSize(size.width, size.height);
 }
 
-mozc::renderer::Size MacViewUtil::ToSize(const NSSize &nssize) {
-  return mozc::renderer::Size(nssize.width, nssize.height);
+mozc::Size MacViewUtil::ToSize(const NSSize &nssize) {
+  return mozc::Size(nssize.width, nssize.height);
 }
 
-NSRect MacViewUtil::ToNSRect(const mozc::renderer::Rect &rect) {
+NSRect MacViewUtil::ToNSRect(const mozc::Rect &rect) {
   return NSMakeRect(rect.origin.x, rect.origin.y,
                     rect.size.width, rect.size.height);
 }
 
-mozc::renderer::Rect MacViewUtil::ToRect(const NSRect &nsrect) {
-  return mozc::renderer::Rect(ToPoint(nsrect.origin), ToSize(nsrect.size));
+mozc::Rect MacViewUtil::ToRect(const NSRect &nsrect) {
+  return mozc::Rect(ToPoint(nsrect.origin), ToSize(nsrect.size));
 }
 
 NSSize MacViewUtil::applyTheme(const NSSize &size,

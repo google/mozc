@@ -1,0 +1,4 @@
+# Here is the client id and secret key to access.
+#  see: http://code.google.com/intl/ja/apis/accounts/docs/OAuth2.html
+CLIENT_ID=
+CLIENT_SECRET=

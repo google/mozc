@@ -2,7 +2,7 @@ Source: mozc
 Section: utils
 Priority: extra
 Maintainer: Yusuke Sato <yusukes>
-Build-Depends: debhelper (>= 4.0.0), libibus-dev, libcurl4-openssl-dev, pkg-config, libprotobuf-dev, protobuf-compiler, libgtest-dev, libqt4-dev, scim, libscim-dev, gyp, libzinnia-dev
+Build-Depends: debhelper (>= 4.0.0), libibus-dev | libibus-1.0-dev, libcurl4-openssl-dev, pkg-config, libprotobuf-dev, protobuf-compiler, libgtest-dev, libqt4-dev, scim, libscim-dev, gyp, libzinnia-dev
 Standards-Version: 3.6.2
 
 Package: ibus-mozc
@@ -32,5 +32,5 @@ Description: Server part of the Mozc input method, used by Mozc clients such as 
 
 Package: mozc-utils-gui
 Architecture: any
-Depends: ${shlibs:Depends}, mozc-server (= ${Source-Version})
+Depends: ${shlibs:Depends}, mozc-server (= ${Source-Version}), tegaki-zinnia-japanese, libzinnia0
 Description: Mozc GUI uitilities, such as the configuration dialog, user dictionary tool and about dialog.

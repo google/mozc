@@ -135,6 +135,9 @@ void NBestGenerator::MakeCandidate(Segment::Candidate *candidate,
     if (node->attributes & Node::NO_VARIANTS_EXPANSION) {
       candidate->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
     }
+    if (node->attributes & Node::USER_DICTIONARY) {
+      candidate->attributes |= Segment::Candidate::USER_DICTIONARY;
+    }
   }
 
   if (candidate->content_value.empty() ||

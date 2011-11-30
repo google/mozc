@@ -81,6 +81,11 @@ private:
                                bool context_sensitive,
                                Segment *segment);
 
+  // Add symbol desc to exsisting candidates
+  static void AddDescForCurrentCandidates(
+      const EmbeddedDictionary::Value *value,
+      size_t size, Segment *segment);
+
   // Insert symbols using connected all segments.
   static bool RewriteEntireCandidate(Segments *segments);
 

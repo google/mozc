@@ -67,10 +67,50 @@ void ConverterMock::SetStartPrediction(Segments *segments, bool result) {
   startprediction_output_.return_value = result;
 }
 
+void ConverterMock::SetStartPredictionWithComposer(Segments *segments,
+                                                   bool result) {
+  startpredictionwithcomposer_output_.initialized = true;
+  startpredictionwithcomposer_output_.segments.CopyFrom(*segments);
+  startpredictionwithcomposer_output_.return_value = result;
+}
+
 void ConverterMock::SetStartSuggestion(Segments *segments, bool result) {
   startsuggestion_output_.initialized = true;
   startsuggestion_output_.segments.CopyFrom(*segments);
   startsuggestion_output_.return_value = result;
+}
+
+void ConverterMock::SetStartSuggestionWithComposer(Segments *segments,
+                                                   bool result) {
+  startsuggestionwithcomposer_output_.initialized = true;
+  startsuggestionwithcomposer_output_.segments.CopyFrom(*segments);
+  startsuggestionwithcomposer_output_.return_value = result;
+}
+
+void ConverterMock::SetStartPartialPrediction(Segments *segments, bool result) {
+  startpartialprediction_output_.initialized = true;
+  startpartialprediction_output_.segments.CopyFrom(*segments);
+  startpartialprediction_output_.return_value = result;
+}
+
+void ConverterMock::SetStartPartialPredictionWithComposer(Segments *segments,
+                                                          bool result) {
+  startpartialpredictionwithcomposer_output_.initialized = true;
+  startpartialpredictionwithcomposer_output_.segments.CopyFrom(*segments);
+  startpartialpredictionwithcomposer_output_.return_value = result;
+}
+
+void ConverterMock::SetStartPartialSuggestion(Segments *segments, bool result) {
+  startpartialsuggestion_output_.initialized = true;
+  startpartialsuggestion_output_.segments.CopyFrom(*segments);
+  startpartialsuggestion_output_.return_value = result;
+}
+
+void ConverterMock::SetStartPartialSuggestionWithComposer(Segments *segments,
+                                                          bool result) {
+  startpartialsuggestionwithcomposer_output_.initialized = true;
+  startpartialsuggestionwithcomposer_output_.segments.CopyFrom(*segments);
+  startpartialsuggestionwithcomposer_output_.return_value = result;
 }
 
 void ConverterMock::SetFinishConversion(Segments *segments, bool result) {
@@ -101,6 +141,13 @@ void ConverterMock::SetCommitSegmentValue(Segments *segments, bool result) {
   commitsegmentvalue_output_.initialized = true;
   commitsegmentvalue_output_.segments.CopyFrom(*segments);
   commitsegmentvalue_output_.return_value = result;
+}
+
+void ConverterMock::SetCommitPartialSuggestionSegmentValue(
+    Segments *segments, bool result) {
+  commitpartialsuggestionsegmentvalue_output_.initialized = true;
+  commitpartialsuggestionsegmentvalue_output_.segments.CopyFrom(*segments);
+  commitpartialsuggestionsegmentvalue_output_.return_value = result;
 }
 
 void ConverterMock::SetFocusSegmentValue(Segments *segments, bool result) {
@@ -155,9 +202,43 @@ void ConverterMock::GetStartPrediction(Segments *segments, string *key) {
   *key = startprediction_input_.key;
 }
 
+void ConverterMock::GetStartPredictionWithComposer(
+    Segments *segments, const composer::Composer **composer) {
+  segments->CopyFrom(startpredictionwithcomposer_input_.segments);
+  *composer = startpredictionwithcomposer_input_.composer;
+}
+
 void ConverterMock::GetStartSuggestion(Segments *segments, string *key) {
   segments->CopyFrom(startsuggestion_input_.segments);
   *key = startsuggestion_input_.key;
+}
+
+void ConverterMock::GetStartSuggestionWithComposer(
+    Segments *segments, const composer::Composer **composer) {
+  segments->CopyFrom(startsuggestionwithcomposer_input_.segments);
+  *composer = startsuggestionwithcomposer_input_.composer;
+}
+
+void ConverterMock::GetStartPartialPrediction(Segments *segments, string *key) {
+  segments->CopyFrom(startpartialprediction_input_.segments);
+  *key = startpartialprediction_input_.key;
+}
+
+void ConverterMock::GetStartPartialPredictionWithComposer(
+    Segments *segments, const composer::Composer **composer) {
+  segments->CopyFrom(startpartialpredictionwithcomposer_input_.segments);
+  *composer = startpartialpredictionwithcomposer_input_.composer;
+}
+
+void ConverterMock::GetStartPartialSuggestion(Segments *segments, string *key) {
+  segments->CopyFrom(startpartialsuggestion_input_.segments);
+  *key = startpartialsuggestion_input_.key;
+}
+
+void ConverterMock::GetStartPartialSuggestionWithComposer(
+    Segments *segments, const composer::Composer **composer) {
+  segments->CopyFrom(startpartialsuggestionwithcomposer_input_.segments);
+  *composer = startpartialsuggestionwithcomposer_input_.composer;
 }
 
 void ConverterMock::GetFinishConversion(Segments *segments) {
@@ -182,6 +263,17 @@ void ConverterMock::GetCommitSegmentValue(Segments *segments,
   segments->CopyFrom(commitsegmentvalue_input_.segments);
   *segment_index = commitsegmentvalue_input_.segment_index;
   *candidate_index = commitsegmentvalue_input_.candidate_index;
+}
+
+void ConverterMock::GetCommitPartialSuggestionSegmentValue(
+    Segments *segments, size_t *segment_index, int *candidate_index,
+    string *current_segment_key, string *new_segment_key) {
+  segments->CopyFrom(commitpartialsuggestionsegmentvalue_input_.segments);
+  *segment_index = commitpartialsuggestionsegmentvalue_input_.segment_index;
+  *candidate_index = commitpartialsuggestionsegmentvalue_input_.candidate_index;
+  *current_segment_key =
+      commitpartialsuggestionsegmentvalue_input_.current_segment_key;
+  *new_segment_key = commitpartialsuggestionsegmentvalue_input_.new_segment_key;
 }
 
 void ConverterMock::GetFocusSegmentValue(Segments *segments,
@@ -280,6 +372,20 @@ bool ConverterMock::StartPrediction(Segments *segments,
   }
 }
 
+bool ConverterMock::StartPredictionWithComposer(
+    Segments *segments, const composer::Composer *composer) const {
+  VLOG(2) << "mock function: StartPredictionWithComposer";
+  startpredictionwithcomposer_input_.segments.CopyFrom(*segments);
+  startpredictionwithcomposer_input_.composer = composer;
+
+  if (!startpredictionwithcomposer_output_.initialized) {
+    return false;
+  } else {
+    segments->CopyFrom(startpredictionwithcomposer_output_.segments);
+    return startpredictionwithcomposer_output_.return_value;
+  }
+}
+
 bool ConverterMock::StartSuggestion(Segments *segments,
                                     const string &key) const {
   VLOG(2) << "mock function: StartSuggestion";
@@ -291,6 +397,76 @@ bool ConverterMock::StartSuggestion(Segments *segments,
   } else {
     segments->CopyFrom(startsuggestion_output_.segments);
     return startsuggestion_output_.return_value;
+  }
+}
+
+bool ConverterMock::StartSuggestionWithComposer(
+    Segments *segments, const composer::Composer *composer) const {
+  VLOG(2) << "mock function: StartSuggestionWithComposer";
+  startsuggestionwithcomposer_input_.segments.CopyFrom(*segments);
+  startsuggestionwithcomposer_input_.composer = composer;
+
+  if (!startsuggestionwithcomposer_output_.initialized) {
+    return false;
+  } else {
+    segments->CopyFrom(startsuggestionwithcomposer_output_.segments);
+    return startsuggestionwithcomposer_output_.return_value;
+  }
+}
+
+bool ConverterMock::StartPartialPrediction(Segments *segments,
+                                           const string &key) const {
+  VLOG(2) << "mock function: StartParialPrediction";
+  startpartialprediction_input_.segments.CopyFrom(*segments);
+  startpartialprediction_input_.key = key;
+
+  if (!startpartialprediction_output_.initialized) {
+    return false;
+  } else {
+    segments->CopyFrom(startpartialprediction_output_.segments);
+    return startpartialprediction_output_.return_value;
+  }
+}
+
+bool ConverterMock::StartPartialPredictionWithComposer(
+    Segments *segments, const composer::Composer *composer) const {
+  VLOG(2) << "mock function: StartParialPredictionWithComposer";
+  startpartialpredictionwithcomposer_input_.segments.CopyFrom(*segments);
+  startpartialpredictionwithcomposer_input_.composer = composer;
+
+  if (!startpartialpredictionwithcomposer_output_.initialized) {
+    return false;
+  } else {
+    segments->CopyFrom(startpartialpredictionwithcomposer_output_.segments);
+    return startpartialpredictionwithcomposer_output_.return_value;
+  }
+}
+
+bool ConverterMock::StartPartialSuggestion(Segments *segments,
+                                           const string &key) const {
+  VLOG(2) << "mock function: StartParialSuggestion";
+  startpartialsuggestion_input_.segments.CopyFrom(*segments);
+  startpartialsuggestion_input_.key = key;
+
+  if (!startpartialsuggestion_output_.initialized) {
+    return false;
+  } else {
+    segments->CopyFrom(startpartialsuggestion_output_.segments);
+    return startpartialsuggestion_output_.return_value;
+  }
+}
+
+bool ConverterMock::StartPartialSuggestionWithComposer(
+    Segments *segments, const composer::Composer *composer) const {
+  VLOG(2) << "mock function: StartParialSuggestionWithComposer";
+  startpartialsuggestionwithcomposer_input_.segments.CopyFrom(*segments);
+  startpartialsuggestionwithcomposer_input_.composer = composer;
+
+  if (!startpartialsuggestionwithcomposer_output_.initialized) {
+    return false;
+  } else {
+    segments->CopyFrom(startpartialsuggestionwithcomposer_output_.segments);
+    return startpartialsuggestionwithcomposer_output_.return_value;
   }
 }
 
@@ -355,6 +531,28 @@ bool ConverterMock::CommitSegmentValue(Segments *segments,
   } else {
     segments->CopyFrom(commitsegmentvalue_output_.segments);
     return commitsegmentvalue_output_.return_value;
+  }
+}
+
+bool ConverterMock::CommitPartialSuggestionSegmentValue(
+    Segments *segments,
+    size_t segment_index,
+    int candidate_index,
+    const string &current_segment_key,
+    const string &new_segment_key) const {
+  VLOG(2) << "mock function: CommitPartialSuggestionSegmentValue";
+  commitpartialsuggestionsegmentvalue_input_.segments.CopyFrom(*segments);
+  commitpartialsuggestionsegmentvalue_input_.segment_index = segment_index;
+  commitpartialsuggestionsegmentvalue_input_.candidate_index = candidate_index;
+  commitpartialsuggestionsegmentvalue_input_.current_segment_key =
+      current_segment_key;
+  commitpartialsuggestionsegmentvalue_input_.new_segment_key = new_segment_key;
+
+  if (!commitpartialsuggestionsegmentvalue_output_.initialized) {
+    return false;
+  } else {
+    segments->CopyFrom(commitpartialsuggestionsegmentvalue_output_.segments);
+    return commitpartialsuggestionsegmentvalue_output_.return_value;
   }
 }
 

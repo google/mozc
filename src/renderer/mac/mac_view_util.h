@@ -31,8 +31,8 @@
 #define MOZC_RENDERER_MAC_MAC_VIEW_UTIL_H_
 
 #import <Cocoa/Cocoa.h>
+#include "base/coordinates.h"
 #include "renderer/renderer_style.pb.h"
-#include "renderer/coordinates.h"
 
 namespace mozc {
 namespace renderer {
@@ -47,17 +47,17 @@ class MacViewUtil {
   static NSAttributedString *ToNSAttributedString(const string &str,
       const mozc::renderer::RendererStyle::TextStyle &style);
 
-  static NSPoint ToNSPoint(const mozc::renderer::Point &point);
+  static NSPoint ToNSPoint(const mozc::Point &point);
 
-  static mozc::renderer::Point ToPoint(const NSPoint &nspoint);
+  static mozc::Point ToPoint(const NSPoint &nspoint);
 
-  static NSSize ToNSSize(const mozc::renderer::Size &size);
+  static NSSize ToNSSize(const mozc::Size &size);
 
-  static mozc::renderer::Size ToSize(const NSSize &nssize);
+  static mozc::Size ToSize(const NSSize &nssize);
 
-  static NSRect ToNSRect(const mozc::renderer::Rect &rect);
+  static NSRect ToNSRect(const mozc::Rect &rect);
 
-  static mozc::renderer::Rect ToRect(const NSRect &nsrect);
+  static mozc::Rect ToRect(const NSRect &nsrect);
 
   static NSSize applyTheme(const NSSize &size,
                            const RendererStyle::TextStyle &style);

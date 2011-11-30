@@ -76,6 +76,7 @@
       ],
       'dependencies': [
         'client.gyp:client',
+        '../languages/japanese/japanese.gyp:language_dependent_spec_japanese',
         '../testing/testing.gyp:gtest_main',
       ],
       'variables': {

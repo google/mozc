@@ -126,6 +126,7 @@ class UserHistoryPredictor: public PredictorInterface {
   friend class UserHistoryPredictorSyncer;
 
   FRIEND_TEST(UserHistoryPredictorTest, UserHistoryPredictorTest);
+  FRIEND_TEST(UserHistoryPredictorTest, UserHistoryPredictorTest_suggestion);
   FRIEND_TEST(UserHistoryPredictorTest, DescriptionTest);
   FRIEND_TEST(UserHistoryPredictorTest,
               UserHistoryPredictorUnusedHistoryTest);

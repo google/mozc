@@ -136,19 +136,19 @@
     </message>
     <message>
         <source>Basic Latin</source>
-        <translation>基本ラテン</translation>
+        <translation>基本ラテン文字</translation>
     </message>
     <message>
         <source>Latin-1 Supplement</source>
-        <translation>ラテン補助1</translation>
+        <translation>ラテン1補助</translation>
     </message>
     <message>
         <source>Latin Extended-A</source>
-        <translation>ラテン拡張A</translation>
+        <translation>ラテン文字拡張A</translation>
     </message>
     <message>
         <source>Latin Extended-B</source>
-        <translation>ラテン拡張B</translation>
+        <translation>ラテン文字拡張B</translation>
     </message>
     <message>
         <source>IPA Extensions</source>
@@ -160,7 +160,7 @@
     </message>
     <message>
         <source>Combining Diacritical Marks</source>
-        <translation>ダイアクリティカルマーク(合成可能)</translation>
+        <translation>ダイアクリティカルマーク (合成可能)</translation>
     </message>
     <message>
         <source>Greek and Coptic</source>
@@ -203,6 +203,14 @@
         <translation>ンコ文字</translation>
     </message>
     <message>
+        <source>Samaritan</source>
+        <translation>サマリア文字</translation>
+    </message>
+    <message>
+        <source>Mandaic</source>
+        <translation>マンダイック文字</translation>
+    </message>
+    <message>
         <source>Devanagari</source>
         <translation>デーヴァナーガリー文字</translation>
     </message>
@@ -216,7 +224,7 @@
     </message>
     <message>
         <source>Gujarati</source>
-        <translation>グジャラーティ文字</translation>
+        <translation>グジャラーティー文字</translation>
     </message>
     <message>
         <source>Oriya</source>
@@ -248,7 +256,7 @@
     </message>
     <message>
         <source>Lao</source>
-        <translation>ラオ文字</translation>
+        <translation>ラーオ文字</translation>
     </message>
     <message>
         <source>Tibetan</source>
@@ -284,7 +292,7 @@
     </message>
     <message>
         <source>Ogham</source>
-        <translation>オーム文字</translation>
+        <translation>オガム文字</translation>
     </message>
     <message>
         <source>Runic</source>
@@ -315,24 +323,32 @@
         <translation>モンゴル文字</translation>
     </message>
     <message>
+        <source>Unified Canadian Aboriginal Syllabics Extended</source>
+        <translation>統合カナダ先住民音節拡張</translation>
+    </message>
+    <message>
         <source>Limbu</source>
         <translation>リンブ文字</translation>
     </message>
     <message>
         <source>Tai Le</source>
-        <translation>タイ・ルー文字</translation>
+        <translation>タイ・ロ文字</translation>
     </message>
     <message>
         <source>New Tai Lue</source>
-        <translation>新タイ・ルー文字</translation>
+        <translation>新タイ・ロ文字</translation>
     </message>
     <message>
         <source>Khmer Symbols</source>
-        <translation>クメール記号</translation>
+        <translation>クメール文字用記号</translation>
     </message>
     <message>
         <source>Buginese</source>
-        <translation>ブギ文字</translation>
+        <translation>ブギス文字</translation>
+    </message>
+    <message>
+        <source>Tai Tham</source>
+        <translation>ラーンナー文字</translation>
     </message>
     <message>
         <source>Balinese</source>
@@ -343,24 +359,32 @@
         <translation>スンダ文字</translation>
     </message>
     <message>
+        <source>Batak</source>
+        <translation>バタク文字</translation>
+    </message>
+    <message>
         <source>Lepcha</source>
         <translation>レプチャ文字</translation>
     </message>
     <message>
         <source>Ol Chiki</source>
-        <translation>オル・チキ文字</translation>
+        <translation>オルチキ文字</translation>
+    </message>
+    <message>
+        <source>Vedic Extensions</source>
+        <translation>ヴェーダ文字拡張</translation>
     </message>
     <message>
         <source>Phonetic Extensions</source>
-        <translation>表音拡張</translation>
+        <translation>音声記号拡張</translation>
     </message>
     <message>
         <source>Phonetic Extensions Supplement</source>
-        <translation>表音拡張補助</translation>
+        <translation>音声記号拡張補助</translation>
     </message>
     <message>
         <source>Combining Diacritical Marks Supplement</source>
-        <translation>結合分音記号補助</translation>
+        <translation>ダイアクリティカルマーク補助 (合成可能)</translation>
     </message>
     <message>
         <source>Latin Extended Additional</source>
@@ -384,7 +408,7 @@
     </message>
     <message>
         <source>Combining Diacritical Marks for Symbols</source>
-        <translation>記号用結合分音記号</translation>
+        <translation>記号用ダイアクリティカルマーク (合成可能)</translation>
     </message>
     <message>
         <source>Letterlike Symbols</source>
@@ -412,7 +436,7 @@
     </message>
     <message>
         <source>Optical Character Recognition</source>
-        <translation>OCR</translation>
+        <translation>光学的文字認識 (OCR)</translation>
     </message>
     <message>
         <source>Enclosed Alphanumerics</source>
@@ -420,7 +444,7 @@
     </message>
     <message>
         <source>Box Drawing</source>
-        <translation>罫線素辺</translation>
+        <translation>罫線素片</translation>
     </message>
     <message>
         <source>Block Elements</source>
@@ -448,7 +472,7 @@
     </message>
     <message>
         <source>Braille Patterns</source>
-        <translation>点字図形</translation>
+        <translation>ブライユ点字</translation>
     </message>
     <message>
         <source>Supplemental Arrows-B</source>
@@ -464,11 +488,11 @@
     </message>
     <message>
         <source>Miscellaneous Symbols and Arrows</source>
-        <translation>その他の記号と矢印</translation>
+        <translation>その他の記号及び矢印</translation>
     </message>
     <message>
         <source>Glagolitic</source>
-        <translation>グラゴール文字</translation>
+        <translation>グラゴル文字</translation>
     </message>
     <message>
         <source>Latin Extended-C</source>
@@ -496,7 +520,7 @@
     </message>
     <message>
         <source>Supplemental Punctuation</source>
-        <translation>句読点補助</translation>
+        <translation>補助句読点</translation>
     </message>
     <message>
         <source>CJK Radicals Supplement</source>
@@ -504,23 +528,23 @@
     </message>
     <message>
         <source>Kangxi Radicals</source>
-        <translation>康煕部首</translation>
+        <translation>康熙部首</translation>
     </message>
     <message>
         <source>Ideographic Description Characters</source>
-        <translation>漢字構成記述文字</translation>
+        <translation>漢字構成記述文字 (IDC)</translation>
     </message>
     <message>
         <source>CJK Symbols and Punctuation</source>
-        <translation>CJK記号及び句読点</translation>
+        <translation>CJKの記号及び句読点</translation>
     </message>
     <message>
         <source>Hiragana</source>
-        <translation>ひらがな</translation>
+        <translation>平仮名</translation>
     </message>
     <message>
         <source>Katakana</source>
-        <translation>カタカナ</translation>
+        <translation>片仮名</translation>
     </message>
     <message>
         <source>Bopomofo</source>
@@ -540,11 +564,11 @@
     </message>
     <message>
         <source>CJK Strokes</source>
-        <translation>CJK字画</translation>
+        <translation>CJKの筆画</translation>
     </message>
     <message>
         <source>Katakana Phonetic Extensions</source>
-        <translation>カタカナ表音拡張</translation>
+        <translation>片仮名拡張</translation>
     </message>
     <message>
         <source>Enclosed CJK Letters and Months</source>
@@ -552,7 +576,7 @@
     </message>
     <message>
         <source>CJK Compatibility</source>
-        <translation>CJK互換文字</translation>
+        <translation>CJK互換用文字</translation>
     </message>
     <message>
         <source>CJK Unified Ideographs Extension A</source>
@@ -575,6 +599,10 @@
         <translation>イ文字部首</translation>
     </message>
     <message>
+        <source>Lisu</source>
+        <translation>リス文字</translation>
+    </message>
+    <message>
         <source>Vai</source>
         <translation>ヴァイ文字</translation>
     </message>
@@ -583,8 +611,12 @@
         <translation>キリール文字拡張B</translation>
     </message>
     <message>
+        <source>Bamum</source>
+        <translation>バムン文字</translation>
+    </message>
+    <message>
         <source>Modifier Tone Letters</source>
-        <translation>声調記号</translation>
+        <translation>声調修飾文字</translation>
     </message>
     <message>
         <source>Latin Extended-D</source>
@@ -592,7 +624,11 @@
     </message>
     <message>
         <source>Syloti Nagri</source>
-        <translation>シロティ・ナグリ文字</translation>
+        <translation>シロティナグリ文字</translation>
+    </message>
+    <message>
+        <source>Common Indic Number Forms</source>
+        <translation>共通インド数字に準じるもの</translation>
     </message>
     <message>
         <source>Phags-pa</source>
@@ -603,6 +639,10 @@
         <translation>サウラーシュトラ文字</translation>
     </message>
     <message>
+        <source>Devanagari Extended</source>
+        <translation>デーヴァーナーガリー文字拡張</translation>
+    </message>
+    <message>
         <source>Kayah Li</source>
         <translation>カヤー文字</translation>
     </message>
@@ -611,12 +651,40 @@
         <translation>ルジャン文字</translation>
     </message>
     <message>
+        <source>Hangul Jamo Extended-A</source>
+        <translation>ハングル字母拡張A</translation>
+    </message>
+    <message>
+        <source>Javanese</source>
+        <translation>ジャワ文字</translation>
+    </message>
+    <message>
         <source>Cham</source>
         <translation>チャム文字</translation>
     </message>
     <message>
+        <source>Myanmar Extended-A</source>
+        <translation>ミャンマー文字拡張A</translation>
+    </message>
+    <message>
+        <source>Tai Viet</source>
+        <translation>タイ・ヴェト文字</translation>
+    </message>
+    <message>
+        <source>Ethiopic Extended-A</source>
+        <translation>エチオピア文字拡張A</translation>
+    </message>
+    <message>
+        <source>Meetei Mayek</source>
+        <translation>マニプリ文字</translation>
+    </message>
+    <message>
         <source>Hangul Syllables</source>
-        <translation>ハングル音節</translation>
+        <translation>ハングル音節文字</translation>
+    </message>
+    <message>
+        <source>Hangul Jamo Extended-B</source>
+        <translation>ハングル字母拡張B</translation>
     </message>
     <message>
         <source>High Surrogates</source>
@@ -632,7 +700,7 @@
     </message>
     <message>
         <source>Private Use Area</source>
-        <translation>私用領域</translation>
+        <translation>私用領域 (外字領域)</translation>
     </message>
     <message>
         <source>CJK Compatibility Ideographs</source>
@@ -640,7 +708,7 @@
     </message>
     <message>
         <source>Alphabetic Presentation Forms</source>
-        <translation>アルファベット表示形A</translation>
+        <translation>アルファベット表示形</translation>
     </message>
     <message>
         <source>Arabic Presentation Forms-A</source>
@@ -652,11 +720,11 @@
     </message>
     <message>
         <source>Vertical Forms</source>
-        <translation>縦書用句読点</translation>
+        <translation>縦書き形</translation>
     </message>
     <message>
         <source>Combining Half Marks</source>
-        <translation>半記号(合成可能)</translation>
+        <translation>半記号 (合成可能)</translation>
     </message>
     <message>
         <source>CJK Compatibility Forms</source>
@@ -677,6 +745,214 @@
     <message>
         <source>Specials</source>
         <translation>特殊用途文字</translation>
+    </message>
+    <message>
+        <source>Linear B Syllabary</source>
+        <translation>線文字B音節文字</translation>
+    </message>
+    <message>
+        <source>Linear B Ideograms</source>
+        <translation>線文字B表意文字</translation>
+    </message>
+    <message>
+        <source>Aegean Numbers</source>
+        <translation>エーゲ数字</translation>
+    </message>
+    <message>
+        <source>Ancient Greek Numbers</source>
+        <translation>古代ギリシア数字</translation>
+    </message>
+    <message>
+        <source>Ancient Symbols</source>
+        <translation>古代記号</translation>
+    </message>
+    <message>
+        <source>Phaistos Disc</source>
+        <translation>ファイストスの円盤の文字</translation>
+    </message>
+    <message>
+        <source>Lycian</source>
+        <translation>リキア文字</translation>
+    </message>
+    <message>
+        <source>Carian</source>
+        <translation>カリア文字</translation>
+    </message>
+    <message>
+        <source>Old Italic</source>
+        <translation>古代イタリア文字</translation>
+    </message>
+    <message>
+        <source>Gothic</source>
+        <translation>ゴート文字</translation>
+    </message>
+    <message>
+        <source>Ugaritic</source>
+        <translation>ウガリト文字</translation>
+    </message>
+    <message>
+        <source>Old Persian</source>
+        <translation>古代ペルシャ文字</translation>
+    </message>
+    <message>
+        <source>Deseret</source>
+        <translation>デザレット文字</translation>
+    </message>
+    <message>
+        <source>Shavian</source>
+        <translation>シェイヴィアン文字</translation>
+    </message>
+    <message>
+        <source>Osmanya</source>
+        <translation>オスマニア文字</translation>
+    </message>
+    <message>
+        <source>Cypriot Syllabary</source>
+        <translation>キプロス音節文字</translation>
+    </message>
+    <message>
+        <source>Imperial Aramaic</source>
+        <translation>アラム文字</translation>
+    </message>
+    <message>
+        <source>Phoenician</source>
+        <translation>フェニキア文字</translation>
+    </message>
+    <message>
+        <source>Lydian</source>
+        <translation>リディア文字</translation>
+    </message>
+    <message>
+        <source>Kharoshthi</source>
+        <translation>カローシュティー文字</translation>
+    </message>
+    <message>
+        <source>Old South Arabian</source>
+        <translation>古典南アラビア文字</translation>
+    </message>
+    <message>
+        <source>Avestan</source>
+        <translation>アヴェスター文字</translation>
+    </message>
+    <message>
+        <source>Inscriptional Parthian</source>
+        <translation>碑文パルティア文字</translation>
+    </message>
+    <message>
+        <source>Inscriptional Pahlavi</source>
+        <translation>碑文パフラヴィー文字</translation>
+    </message>
+    <message>
+        <source>Old Turkic</source>
+        <translation>古テュルク文字</translation>
+    </message>
+    <message>
+        <source>Rumi Numeral Symbols</source>
+        <translation>ルーミー数字記号</translation>
+    </message>
+    <message>
+        <source>Brahmi</source>
+        <translation>ブラーフミー文字</translation>
+    </message>
+    <message>
+        <source>Kaithi</source>
+        <translation>カイティ文字</translation>
+    </message>
+    <message>
+        <source>Cuneiform</source>
+        <translation>楔形文字</translation>
+    </message>
+    <message>
+        <source>Cuneiform Numbers and Punctuation</source>
+        <translation>楔形文字の数字及び句読点</translation>
+    </message>
+    <message>
+        <source>Egyptian Hieroglyphs</source>
+        <translation>ヒエログリフ文字</translation>
+    </message>
+    <message>
+        <source>Bamum Supplement</source>
+        <translation>バムン文字補助</translation>
+    </message>
+    <message>
+        <source>Kana Supplement</source>
+        <translation>かな文字補助</translation>
+    </message>
+    <message>
+        <source>Byzantine Musical Symbols</source>
+        <translation>ビザンチン音楽記号</translation>
+    </message>
+    <message>
+        <source>Musical Symbols</source>
+        <translation>音楽記号</translation>
+    </message>
+    <message>
+        <source>Ancient Greek Musical Notation</source>
+        <translation>古代ギリシア音符記号</translation>
+    </message>
+    <message>
+        <source>Tai Xuan Jing Symbols</source>
+        <translation>太玄経記号</translation>
+    </message>
+    <message>
+        <source>Counting Rod Numerals</source>
+        <translation>算木用数字</translation>
+    </message>
+    <message>
+        <source>Mathematical Alphanumeric Symbols</source>
+        <translation>数学用英数字記号</translation>
+    </message>
+    <message>
+        <source>Mahjong Tiles</source>
+        <translation>麻雀牌</translation>
+    </message>
+    <message>
+        <source>Domino Tiles</source>
+        <translation>ドミノ牌</translation>
+    </message>
+    <message>
+        <source>Playing Cards</source>
+        <translation>トランプ</translation>
+    </message>
+    <message>
+        <source>Enclosed Alphanumeric Supplement</source>
+        <translation>囲み英数字補助</translation>
+    </message>
+    <message>
+        <source>Enclosed Ideographic Supplement</source>
+        <translation>囲み表意文字補助</translation>
+    </message>
+    <message>
+        <source>Miscellaneous Symbols And Pictographs</source>
+        <translation>その他の記号と絵文字</translation>
+    </message>
+    <message>
+        <source>Emoticons</source>
+        <translation>顔文字</translation>
+    </message>
+    <message>
+        <source>Transport And Map Symbols</source>
+        <translation>交通と地図の記号</translation>
+    </message>
+    <message>
+        <source>Alchemical Symbols</source>
+        <translation>錬金術記号</translation>
+    </message>
+    <message>
+        <source>CJK Unified Ideographs Extension B</source>
+        <translation>CJK統合漢字拡張B</translation>
+    </message>
+    <message>
+        <source>CJK Unified Ideographs Extension C</source>
+        <translation>CJK統合漢字拡張C</translation>
+    </message>
+    <message>
+        <source>CJK Unified Ideographs Extension D</source>
+        <translation>CJK統合漢字拡張D</translation>
+    </message>
+    <message>
+        <source>CJK Compatibility Ideographs Supplement</source>
+        <translation>CJK互換漢字補助</translation>
     </message>
 </context>
 <context>

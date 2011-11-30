@@ -27,6 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "server/mozc_server.h"
+
 #ifdef OS_WINDOWS
 #include <windows.h>
 #endif
@@ -38,7 +40,7 @@
 #include "base/singleton.h"
 #include "base/util.h"
 #include "ipc/ipc.h"
-#include "session/japanese_session_factory.h"
+#include "languages/global_language_spec.h"
 #include "session/session_factory_manager.h"
 #include "session/session_server.h"
 
@@ -51,6 +53,10 @@ mozc::SessionServer *g_session_server = NULL;
 namespace mozc {
 namespace {
 
+// Calling back a function when the mozc server is shutting down resulted in a
+// lot of crashes as filed in b/2696087.
+// TODO(yukawa): re-enable shutdown handler for Windows.
+#if !defined(OS_WINDOWS)
 // When OS is about to shutdown/logoff,
 // ShutdownSessionCallback is kicked.
 void ShutdownSessionCallback() {
@@ -60,31 +66,23 @@ void ShutdownSessionCallback() {
   }
 }
 
-// TOOD(taku): replace it with more generic class
-// http://www.google.com/codesearch/p?hl=ja#hfE6470xZHk/base/at_exit.h&q=base::AtExitManager%20package:chromium&sa=N&cd=1&ct=rc
-class ScopedRunFinalizer {
- public:
-  ScopedRunFinalizer() {}
-  ~ScopedRunFinalizer() {
-    mozc::RunFinalizers();
-  }
-};
-
-REGISTER_MODULE_SHUTDOWN_HANDLER(shudown_session,
+REGISTER_MODULE_SHUTDOWN_HANDLER(shutdown_session,
                                  ShutdownSessionCallback());
+#endif  // !OS_WINDOWS
 }  // namespace
-}  // mozc
 
-int main(int argc, char *argv[]) {
+namespace server {
+
+void InitGoogleAndMozcServer(const char *arg0,
+                             int *argc,
+                             char ***argv,
+                             bool remove_flags) {
   mozc::Util::DisableIME();
 
   // Big endian is not supported. The storage for user history is endian
   // dependent. If we want to sync the data via network sync feature, we
   // will see some problems.
   CHECK(mozc::Util::IsLittleEndian()) << "Big endian is not supported.";
-
-  mozc::ScopedRunFinalizer run_finalizer;
-
 #ifdef OS_WINDOWS
   // http://msdn.microsoft.com/en-us/library/ms686227.aspx
   // Make sure that mozc_server exits all after other processes.
@@ -98,25 +96,33 @@ int main(int argc, char *argv[]) {
       mozc::RunLevel::GetRunLevel(mozc::RunLevel::SERVER);
 
   if (run_level >= mozc::RunLevel::DENY) {
-    return -1;
+    LOG(FATAL) << "Do not execute Mozc server as high authority";
+    return;
   }
 
-  InitGoogleWithBreakPad(argv[0], &argc, &argv, false);
-
-  mozc::ProcessMutex mutex("server");
-  if (!mutex.Lock()) {
-    LOG(INFO) << "Mozc Server is already running";
-    return -1;
-  }
+  InitGoogleWithBreakPad(arg0, argc, argv, remove_flags);
 
   if (run_level == mozc::RunLevel::RESTRICTED) {
     VLOG(1) << "Mozc server starts with timeout mode";
     FLAGS_restricted = true;
   }
 
+  return;
+}
+
+int MozcServer::Run() {
+  const language::LanguageDependentSpecInterface *language_dependent_spec =
+      language::GlobalLanguageSpec::GetLanguageDependentSpec();
+
+  string mutex_name = "server_";
+  mutex_name.append(language_dependent_spec->GetLanguageName());
+  mozc::ProcessMutex mutex(mutex_name.c_str());
+  if (!mutex.Lock()) {
+    LOG(INFO) << "Mozc Server is already running";
+    return -1;
+  }
+
   {
-    mozc::session::JapaneseSessionFactory session_factory;
-    mozc::session::SessionFactoryManager::SetSessionFactory(&session_factory);
     scoped_ptr<mozc::SessionServer> session_server
         (new mozc::SessionServer);
     g_session_server = session_server.get();
@@ -126,6 +132,11 @@ int main(int argc, char *argv[]) {
       return -1;
     }
 
+#if defined(OS_WINDOWS)
+    // On Windows, ShutdownSessionCallback is not called intentionally in order
+    // to avoid crashes oritinates from it. See b/2696087.
+    g_session_server->Loop();
+#else
     // Create a new thread.
     // We can't call Loop() as Loop() doesn't make a thread.
     // We have to make a thread here so that ShutdownSessionCallback()
@@ -134,7 +145,16 @@ int main(int argc, char *argv[]) {
 
     // Wait until the session server thread finishes.
     g_session_server->Wait();
+#endif
   }
 
   return 0;
 }
+
+int MozcServer::Finalize() {
+  mozc::RunFinalizers();
+  return 0;
+}
+
+}  // namespace server
+}  // namespace mozc

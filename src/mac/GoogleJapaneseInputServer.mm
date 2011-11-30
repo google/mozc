@@ -33,6 +33,7 @@
 
 #include <string>
 
+#include "base/const.h"
 #include "base/mutex.h"
 #include "session/commands.pb.h"
 
@@ -55,12 +56,25 @@ void InitializeServer() {
                    initWithName:connectionName
                bundleIdentifier:[bundle bundleIdentifier]]
                   autorelease];
+  [g_imkServer registerRendererConnection];
 }
 mozc::once_t gOnceForServer = MOZC_ONCE_INIT;
 }
 
 @implementation GoogleJapaneseInputServer
-- (void)rendererClicked:(NSData *)data {
+- (void)dealloc {
+  [renderer_conection_ release];
+  [super dealloc];
+}
+
+- (BOOL)registerRendererConnection {
+  NSString *connectionName = @ kProductPrefix "_Renderer_Connection";
+  renderer_conection_ = [[NSConnection alloc] init];
+  [renderer_conection_ setRootObject:g_imkServer];
+  return [renderer_conection_ registerName:connectionName];
+}
+
+- (void)sendData:(NSData *)data {
   if (current_controller_ == nil) {
     return;
   }
@@ -70,7 +84,7 @@ mozc::once_t gOnceForServer = MOZC_ONCE_INIT;
     return;
   }
 
-  [current_controller_ candidateClicked:command.id()];
+  [current_controller_ sendCommand:command];
 }
 
 - (void)outputResult:(NSData *)data {

@@ -73,12 +73,14 @@ TEST(QualityRegressionTest, BasicTest) {
     vector<pair<float, string> > &values = it->second;
     sort(values.begin(), values.end());
     size_t correct = 0;
-    for (int n = values.size() - 1; n >= 0; --n) {
+    for (int n = 0; n < values.size(); ++n) {
       const float accuracy = values[n].first;
-      const float actual_ratio = 1.0 * n / values.size();
       if (accuracy < 0) {
         ++correct;
+        continue;
       }
+      // Print failed example for failed label
+      const float actual_ratio = 1.0 * correct / values.size();
       EXPECT_TRUE(accuracy < actual_ratio) << values[n].second
                                            << " " << accuracy
                                            << " " << actual_ratio;

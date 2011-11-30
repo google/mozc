@@ -44,11 +44,11 @@ def main():
     if desc == "<control>":
       desc = array[10]
     code = int(code, 16)
-    if code < 65536:
+    if code < 0x2FFFF:
       results.append("  { %d, \"%s\" }," % (code, desc))
 
   print "struct UnicodeData {";
-  print "  unsigned short int ucs2;";
+  print "  char32 ucs4;";
   print "  const char *description;";
   print "};";
   print ""

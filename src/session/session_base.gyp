@@ -98,6 +98,7 @@
       'target_name': 'genproto_session',
       'type': 'none',
       'sources': [
+        'candidates.proto',
         'commands.proto',
         'state.proto',
       ],
@@ -112,6 +113,7 @@
       'target_name': 'session_protocol',
       'type': 'static_library',
       'sources': [
+        '<(proto_out_dir)/<(relative_dir)/candidates.pb.cc',
         '<(proto_out_dir)/<(relative_dir)/commands.pb.cc',
         '<(proto_out_dir)/<(relative_dir)/state.pb.cc',
       ],

@@ -160,7 +160,7 @@ void ParseInputLine(
       break;
     }
     default:
-      DCHECK(false);  // Code must not reach here.
+      DLOG(FATAL);  // Code must not reach here.
   }
 }
 

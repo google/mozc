@@ -33,6 +33,7 @@
 // T13Ns. If you want to add test case related to T13Ns, please make sure
 // you set T13Ns to the result for a mock converter.
 
+#include <set>
 #include <string>
 #include <vector>
 
@@ -226,8 +227,6 @@ class SessionConverterTest : public testing::Test {
     EXPECT_EQ(lhs.IsActive(), rhs.IsActive());
     EXPECT_EQ(lhs.IsCandidateListVisible(), rhs.IsCandidateListVisible());
     EXPECT_EQ(lhs.GetSegmentIndex(), rhs.GetSegmentIndex());
-    EXPECT_EQ(lhs.GetDefaultResult(), rhs.GetDefaultResult());
-    EXPECT_EQ(lhs.GetComposition(), rhs.GetComposition());
 
     EXPECT_EQ(lhs.GetOperationPreferences().use_cascading_window,
               rhs.GetOperationPreferences().use_cascading_window);
@@ -302,11 +301,11 @@ TEST_F(SessionConverterTest, Convert) {
   convertermock_->SetStartConversionWithComposer(&segments, true);
 
   composer_->InsertCharacterPreedit(aiueo_);
-  EXPECT_TRUE(converter.Convert(composer_.get()));
+  EXPECT_TRUE(converter.Convert(*composer_));
   ASSERT_TRUE(converter.IsActive());
 
   commands::Output output;
-  converter.FillOutput(&output);
+  converter.FillOutput(*composer_, &output);
   EXPECT_FALSE(output.has_result());
   EXPECT_TRUE(output.has_preedit());
   EXPECT_FALSE(output.has_candidates());
@@ -323,8 +322,9 @@ TEST_F(SessionConverterTest, Convert) {
   EXPECT_FALSE(converter.IsCandidateListVisible());
 
   converter.Commit();
+  composer_->Reset();
   output.Clear();
-  converter.FillOutput(&output);
+  converter.FillOutput(*composer_, &output);
   EXPECT_TRUE(output.has_result());
   EXPECT_FALSE(output.has_preedit());
   EXPECT_FALSE(output.has_candidates());
@@ -348,7 +348,7 @@ TEST_F(SessionConverterTest, ConvertWithSpellingCorrection) {
   convertermock_->SetStartConversionWithComposer(&segments, true);
 
   composer_->InsertCharacterPreedit(aiueo_);
-  EXPECT_TRUE(converter.Convert(composer_.get()));
+  EXPECT_TRUE(converter.Convert(*composer_));
   ASSERT_TRUE(converter.IsActive());
   EXPECT_TRUE(converter.IsCandidateListVisible());
 }
@@ -362,11 +362,11 @@ TEST_F(SessionConverterTest, ConvertToTransliteration) {
   FillT13Ns(&segments, composer_.get());
   convertermock_->SetStartConversionWithComposer(&segments, true);
 
-  EXPECT_TRUE(converter.ConvertToTransliteration(composer_.get(),
+  EXPECT_TRUE(converter.ConvertToTransliteration(*composer_,
                                                  transliteration::HALF_ASCII));
   {  // Check the conversion #1
     commands::Output output;
-    converter.FillOutput(&output);
+    converter.FillOutput(*composer_, &output);
     EXPECT_FALSE(output.has_result());
     EXPECT_TRUE(output.has_preedit());
     EXPECT_FALSE(output.has_candidates());
@@ -377,11 +377,11 @@ TEST_F(SessionConverterTest, ConvertToTransliteration) {
     EXPECT_FALSE(converter.IsCandidateListVisible());
   }
 
-  EXPECT_TRUE(converter.ConvertToTransliteration(composer_.get(),
+  EXPECT_TRUE(converter.ConvertToTransliteration(*composer_,
                                                  transliteration::HALF_ASCII));
   {  // Check the conversion #2
     commands::Output output;
-    converter.FillOutput(&output);
+    converter.FillOutput(*composer_, &output);
     EXPECT_FALSE(output.has_result());
     EXPECT_TRUE(output.has_preedit());
     EXPECT_FALSE(output.has_candidates());
@@ -392,11 +392,11 @@ TEST_F(SessionConverterTest, ConvertToTransliteration) {
     EXPECT_FALSE(converter.IsCandidateListVisible());
   }
 
-  EXPECT_TRUE(converter.ConvertToTransliteration(composer_.get(),
+  EXPECT_TRUE(converter.ConvertToTransliteration(*composer_,
                                                  transliteration::FULL_ASCII));
   {  // Check the conversion #3
     commands::Output output;
-    converter.FillOutput(&output);
+    converter.FillOutput(*composer_, &output);
     EXPECT_FALSE(output.has_result());
     EXPECT_TRUE(output.has_preedit());
     EXPECT_FALSE(output.has_candidates());
@@ -415,10 +415,10 @@ TEST_F(SessionConverterTest, ConvertToTransliterationWithMultipleSegments) {
   SessionConverter converter(convertermock_.get());
 
   // Convert
-  EXPECT_TRUE(converter.Convert(composer_.get()));
+  EXPECT_TRUE(converter.Convert(*composer_));
   {  // Check the conversion #1
     commands::Output output;
-    converter.FillOutput(&output);
+    converter.FillOutput(*composer_, &output);
     EXPECT_FALSE(output.has_result());
     EXPECT_TRUE(output.has_preedit());
     EXPECT_FALSE(output.has_candidates());
@@ -433,11 +433,11 @@ TEST_F(SessionConverterTest, ConvertToTransliterationWithMultipleSegments) {
   }
 
   // Convert to half-width alphanumeric.
-  EXPECT_TRUE(converter.ConvertToTransliteration(composer_.get(),
+  EXPECT_TRUE(converter.ConvertToTransliteration(*composer_,
                                                  transliteration::HALF_ASCII));
   {  // Check the conversion #2
     commands::Output output;
-    converter.FillOutput(&output);
+    converter.FillOutput(*composer_, &output);
     EXPECT_FALSE(output.has_result());
     EXPECT_TRUE(output.has_preedit());
     EXPECT_FALSE(output.has_candidates());
@@ -474,11 +474,11 @@ TEST_F(SessionConverterTest, ConvertToTransliterationWithoutCascadigWindow) {
       "dvd", "\xEF\xBD\x84\xEF\xBD\x96\xEF\xBD\x84");
   FillT13Ns(&segments, composer_.get());
   convertermock_->SetStartConversionWithComposer(&segments, true);
-  EXPECT_TRUE(converter.ConvertToTransliteration(composer_.get(),
+  EXPECT_TRUE(converter.ConvertToTransliteration(*composer_,
                                                  transliteration::FULL_ASCII));
   {  // Check the conversion #1
     commands::Output output;
-    converter.FillOutput(&output);
+    converter.FillOutput(*composer_, &output);
     EXPECT_FALSE(output.has_result());
     EXPECT_TRUE(output.has_preedit());
     EXPECT_FALSE(output.has_candidates());
@@ -491,11 +491,11 @@ TEST_F(SessionConverterTest, ConvertToTransliterationWithoutCascadigWindow) {
     EXPECT_FALSE(converter.IsCandidateListVisible());
   }
 
-  EXPECT_TRUE(converter.ConvertToTransliteration(composer_.get(),
+  EXPECT_TRUE(converter.ConvertToTransliteration(*composer_,
                                                  transliteration::FULL_ASCII));
   {  // Check the conversion #2
     commands::Output output;
-    converter.FillOutput(&output);
+    converter.FillOutput(*composer_, &output);
     EXPECT_FALSE(output.has_result());
     EXPECT_TRUE(output.has_preedit());
     EXPECT_FALSE(output.has_candidates());
@@ -508,11 +508,11 @@ TEST_F(SessionConverterTest, ConvertToTransliterationWithoutCascadigWindow) {
     EXPECT_FALSE(converter.IsCandidateListVisible());
   }
 
-  EXPECT_TRUE(converter.ConvertToTransliteration(composer_.get(),
+  EXPECT_TRUE(converter.ConvertToTransliteration(*composer_,
                                                  transliteration::FULL_ASCII));
   {  // Check the conversion #3
     commands::Output output;
-    converter.FillOutput(&output);
+    converter.FillOutput(*composer_, &output);
     EXPECT_FALSE(output.has_result());
     EXPECT_TRUE(output.has_preedit());
     EXPECT_FALSE(output.has_candidates());
@@ -539,12 +539,12 @@ TEST_F(SessionConverterTest, MultiSegmentsConversion) {
   composer_->InsertCharacterPreedit(kKamabokono + kInbou);
   FillT13Ns(&segments, composer_.get());
   convertermock_->SetStartConversionWithComposer(&segments, true);
-  EXPECT_TRUE(converter.Convert(composer_.get()));
+  EXPECT_TRUE(converter.Convert(*composer_));
 
   // Test for conversion
   {
     commands::Output output;
-    converter.FillOutput(&output);
+    converter.FillOutput(*composer_, &output);
     EXPECT_FALSE(output.has_result());
     EXPECT_TRUE(output.has_preedit());
     EXPECT_FALSE(output.has_candidates());
@@ -564,7 +564,7 @@ TEST_F(SessionConverterTest, MultiSegmentsConversion) {
   }
 
   EXPECT_FALSE(converter.IsCandidateListVisible());
-  converter.CandidateNext();
+  converter.CandidateNext(*composer_);
   EXPECT_TRUE(converter.IsCandidateListVisible());
   converter.CandidatePrev();
   EXPECT_TRUE(converter.IsCandidateListVisible());
@@ -572,7 +572,7 @@ TEST_F(SessionConverterTest, MultiSegmentsConversion) {
   // Test for candidates
   {
     commands::Output output;
-    converter.FillOutput(&output);
+    converter.FillOutput(*composer_, &output);
     EXPECT_FALSE(output.has_result());
     EXPECT_TRUE(output.has_preedit());
     EXPECT_TRUE(output.has_candidates());
@@ -599,7 +599,7 @@ TEST_F(SessionConverterTest, MultiSegmentsConversion) {
     converter.SetCandidateListVisible(true);
 
     commands::Output output;
-    converter.FillOutput(&output);
+    converter.FillOutput(*composer_, &output);
     EXPECT_FALSE(output.has_result());
     EXPECT_TRUE(output.has_preedit());
     EXPECT_TRUE(output.has_candidates());
@@ -628,7 +628,7 @@ TEST_F(SessionConverterTest, MultiSegmentsConversion) {
     converter.SetCandidateListVisible(true);
 
     commands::Output output;
-    converter.FillOutput(&output);
+    converter.FillOutput(*composer_, &output);
     EXPECT_FALSE(output.has_result());
     EXPECT_TRUE(output.has_preedit());
     EXPECT_TRUE(output.has_candidates());
@@ -658,7 +658,7 @@ TEST_F(SessionConverterTest, MultiSegmentsConversion) {
     converter.SetCandidateListVisible(true);
 
     commands::Output output;
-    converter.FillOutput(&output);
+    converter.FillOutput(*composer_, &output);
     EXPECT_FALSE(output.has_result());
     EXPECT_TRUE(output.has_preedit());
     EXPECT_TRUE(output.has_candidates());
@@ -690,7 +690,7 @@ TEST_F(SessionConverterTest, MultiSegmentsConversion) {
     converter.SetCandidateListVisible(true);
 
     commands::Output output;
-    converter.FillOutput(&output);
+    converter.FillOutput(*composer_, &output);
     EXPECT_FALSE(output.has_result());
     EXPECT_TRUE(output.has_preedit());
     EXPECT_TRUE(output.has_candidates());
@@ -713,10 +713,10 @@ TEST_F(SessionConverterTest, MultiSegmentsConversion) {
   // Test for candidate motion. [CandidateNext]
   {
     converter.SegmentFocusRight();  // Focus to the last segment.
-    converter.CandidateNext();
+    converter.CandidateNext(*composer_);
     EXPECT_TRUE(converter.IsCandidateListVisible());
     commands::Output output;
-    converter.FillOutput(&output);
+    converter.FillOutput(*composer_, &output);
     EXPECT_FALSE(output.has_result());
     EXPECT_TRUE(output.has_preedit());
     EXPECT_TRUE(output.has_candidates());
@@ -771,7 +771,7 @@ TEST_F(SessionConverterTest, MultiSegmentsConversion) {
     converter.SetCandidateListVisible(true);
 
     commands::Output output;
-    converter.FillOutput(&output);
+    converter.FillOutput(*composer_, &output);
     EXPECT_FALSE(output.has_result());
     EXPECT_TRUE(output.has_preedit());
     EXPECT_TRUE(output.has_candidates());
@@ -796,18 +796,14 @@ TEST_F(SessionConverterTest, MultiSegmentsConversion) {
     // "印房"
     EXPECT_EQ("\xe5\x8d\xb0\xe6\x88\xbf", conversion.segment(1).value());
   }
-  // Check if GetDefaultResult returns the original conversion.
-  // "かまぼこの陰謀"
-  EXPECT_EQ("\xe3\x81\x8b\xe3\x81\xbe\xe3\x81\xbc\xe3\x81\x93\xe3\x81\xae"
-            "\xe9\x99\xb0\xe8\xac\x80",
-            converter.GetDefaultResult());
 
   {
     converter.Commit();
+    composer_->Reset();
     EXPECT_FALSE(converter.IsCandidateListVisible());
 
     commands::Output output;
-    converter.FillOutput(&output);
+    converter.FillOutput(*composer_, &output);
     EXPECT_TRUE(output.has_result());
     EXPECT_FALSE(output.has_preedit());
     EXPECT_FALSE(output.has_candidates());
@@ -822,47 +818,7 @@ TEST_F(SessionConverterTest, MultiSegmentsConversion) {
               "\xe3\x81\x84\xe3\x82\x93\xe3\x81\xbc\xe3\x81\x86",
               result.key());
     EXPECT_FALSE(converter.IsActive());
-
-    // Check if GetDefaultResult returns an empty string.
-    EXPECT_TRUE(converter.GetDefaultResult().empty());
   }
-}
-
-TEST_F(SessionConverterTest, SegmentFocusRightOrCommit) {
-  SessionConverter converter(convertermock_.get());
-  Segments segments;
-  commands::Output output;
-  SetKamaboko(&segments);
-  FillT13Ns(&segments, composer_.get());
-  convertermock_->SetStartConversionWithComposer(&segments, true);
-
-  EXPECT_TRUE(converter.Convert(composer_.get()));
-  converter.FillOutput(&output);
-  EXPECT_EQ(0, output.preedit().highlighted_position());
-  output.Clear();
-
-  EXPECT_FALSE(converter.IsLastSegmentFocused());
-  converter.SegmentFocusRight();
-  converter.FillOutput(&output);
-  EXPECT_FALSE(output.has_result());
-  EXPECT_TRUE(output.has_preedit());
-  EXPECT_FALSE(output.has_candidates());
-  // 5 is the length of "かまぼこの"
-  EXPECT_EQ(5, output.preedit().highlighted_position());
-  output.Clear();
-
-  EXPECT_TRUE(converter.IsLastSegmentFocused());
-  converter.Commit();
-  converter.FillOutput(&output);
-  EXPECT_TRUE(output.has_result());
-
-  // "かまぼこの陰謀"
-  EXPECT_EQ(
-      "\xe3\x81\x8b\xe3\x81\xbe\xe3\x81\xbc\xe3\x81\x93\xe3\x81\xae"
-          "\xe9\x99\xb0\xe8\xac\x80",
-      output.result().value());
-  EXPECT_FALSE(output.has_preedit());
-  EXPECT_FALSE(output.has_candidates());
 }
 
 TEST_F(SessionConverterTest, Transliterations) {
@@ -882,15 +838,15 @@ TEST_F(SessionConverterTest, Transliterations) {
   }
   FillT13Ns(&segments, composer_.get());
   convertermock_->SetStartConversionWithComposer(&segments, true);
-  EXPECT_TRUE(converter.Convert(composer_.get()));
+  EXPECT_TRUE(converter.Convert(*composer_));
   EXPECT_FALSE(converter.IsCandidateListVisible());
 
   // Move to the t13n list.
-  converter.CandidateNext();
+  converter.CandidateNext(*composer_);
   EXPECT_TRUE(converter.IsCandidateListVisible());
 
   commands::Output output;
-  converter.FillOutput(&output);
+  converter.FillOutput(*composer_, &output);
   EXPECT_FALSE(output.has_result());
   EXPECT_TRUE(output.has_preedit());
   EXPECT_TRUE(output.has_candidates());
@@ -945,7 +901,7 @@ TEST_F(SessionConverterTest, T13NWithResegmentation) {
     FillT13Ns(&segments, composer_.get());
     convertermock_->SetStartConversionWithComposer(&segments, true);
   }
-  EXPECT_TRUE(converter.Convert(composer_.get()));
+  EXPECT_TRUE(converter.Convert(*composer_));
   // Test for segment motion. [SegmentFocusRight]
   converter.SegmentFocusRight();
   // Shrink segment
@@ -989,12 +945,12 @@ TEST_F(SessionConverterTest, T13NWithResegmentation) {
   converter.SegmentWidthShrink();
 
   // Convert to half katakana
-  converter.ConvertToTransliteration(composer_.get(),
+  converter.ConvertToTransliteration(*composer_,
                                      transliteration::HALF_KATAKANA);
 
   {
     commands::Output output;
-    converter.FillOutput(&output);
+    converter.FillOutput(*composer_, &output);
     EXPECT_FALSE(output.has_result());
     EXPECT_TRUE(output.has_preedit());
     const commands::Preedit &preedit = output.preedit();
@@ -1024,12 +980,12 @@ TEST_F(SessionConverterTest, ConvertToHalfWidth) {
   }
   FillT13Ns(&segments, composer_.get());
   convertermock_->SetStartConversionWithComposer(&segments, true);
-  EXPECT_TRUE(converter.ConvertToHalfWidth(composer_.get()));
+  EXPECT_TRUE(converter.ConvertToHalfWidth(*composer_));
   EXPECT_FALSE(converter.IsCandidateListVisible());
 
   {  // Make sure the output
     commands::Output output;
-    converter.FillOutput(&output);
+    converter.FillOutput(*composer_, &output);
     EXPECT_FALSE(output.has_result());
     EXPECT_TRUE(output.has_preedit());
     EXPECT_FALSE(output.has_candidates());
@@ -1041,11 +997,11 @@ TEST_F(SessionConverterTest, ConvertToHalfWidth) {
   }
 
   // Composition will be transliterated to "ａｂｃ".
-  EXPECT_TRUE(converter.ConvertToTransliteration(composer_.get(),
+  EXPECT_TRUE(converter.ConvertToTransliteration(*composer_,
                                                  transliteration::FULL_ASCII));
   {  // Make sure the output
     commands::Output output;
-    converter.FillOutput(&output);
+    converter.FillOutput(*composer_, &output);
     EXPECT_FALSE(output.has_result());
     EXPECT_TRUE(output.has_preedit());
     EXPECT_FALSE(output.has_candidates());
@@ -1057,11 +1013,11 @@ TEST_F(SessionConverterTest, ConvertToHalfWidth) {
               conversion.segment(0).value());
   }
 
-  EXPECT_TRUE(converter.ConvertToHalfWidth(composer_.get()));
+  EXPECT_TRUE(converter.ConvertToHalfWidth(*composer_));
   EXPECT_FALSE(converter.IsCandidateListVisible());
   {  // Make sure the output
     commands::Output output;
-    converter.FillOutput(&output);
+    converter.FillOutput(*composer_, &output);
     EXPECT_FALSE(output.has_result());
     EXPECT_TRUE(output.has_preedit());
     EXPECT_FALSE(output.has_candidates());
@@ -1095,12 +1051,12 @@ TEST_F(SessionConverterTest, ConvertToHalfWidth_2) {
   }
   FillT13Ns(&segments, composer_.get());
   convertermock_->SetStartConversionWithComposer(&segments, true);
-  EXPECT_TRUE(converter.ConvertToHalfWidth(composer_.get()));
+  EXPECT_TRUE(converter.ConvertToHalfWidth(*composer_));
   EXPECT_FALSE(converter.IsCandidateListVisible());
 
   {  // Make sure the output
     commands::Output output;
-    converter.FillOutput(&output);
+    converter.FillOutput(*composer_, &output);
     EXPECT_FALSE(output.has_result());
     EXPECT_TRUE(output.has_preedit());
     EXPECT_FALSE(output.has_candidates());
@@ -1132,12 +1088,12 @@ TEST_F(SessionConverterTest, SwitchKanaType) {
     }
     FillT13Ns(&segments, composer_.get());
     convertermock_->SetStartConversionWithComposer(&segments, true);
-    EXPECT_TRUE(converter.SwitchKanaType(composer_.get()));
+    EXPECT_TRUE(converter.SwitchKanaType(*composer_));
     EXPECT_FALSE(converter.IsCandidateListVisible());
 
     {  // Make sure the output
       commands::Output output;
-      converter.FillOutput(&output);
+      converter.FillOutput(*composer_, &output);
       EXPECT_FALSE(output.has_result());
       EXPECT_TRUE(output.has_preedit());
       EXPECT_FALSE(output.has_candidates());
@@ -1149,11 +1105,11 @@ TEST_F(SessionConverterTest, SwitchKanaType) {
                 conversion.segment(0).value());
     }
 
-    EXPECT_TRUE(converter.SwitchKanaType(composer_.get()));
+    EXPECT_TRUE(converter.SwitchKanaType(*composer_));
     EXPECT_FALSE(converter.IsCandidateListVisible());
     {
       commands::Output output;
-      converter.FillOutput(&output);
+      converter.FillOutput(*composer_, &output);
       EXPECT_FALSE(output.has_result());
       EXPECT_TRUE(output.has_preedit());
       EXPECT_FALSE(output.has_candidates());
@@ -1164,11 +1120,11 @@ TEST_F(SessionConverterTest, SwitchKanaType) {
       EXPECT_EQ("\xEF\xBD\xB1\x62\x63", conversion.segment(0).value());
     }
 
-    EXPECT_TRUE(converter.SwitchKanaType(composer_.get()));
+    EXPECT_TRUE(converter.SwitchKanaType(*composer_));
     EXPECT_FALSE(converter.IsCandidateListVisible());
     {
       commands::Output output;
-      converter.FillOutput(&output);
+      converter.FillOutput(*composer_, &output);
       EXPECT_FALSE(output.has_result());
       EXPECT_TRUE(output.has_preedit());
       EXPECT_FALSE(output.has_candidates());
@@ -1201,12 +1157,12 @@ TEST_F(SessionConverterTest, SwitchKanaType) {
     }
     FillT13Ns(&segments, composer_.get());
     convertermock_->SetStartConversionWithComposer(&segments, true);
-    EXPECT_TRUE(converter.Convert(composer_.get()));
+    EXPECT_TRUE(converter.Convert(*composer_));
     EXPECT_FALSE(converter.IsCandidateListVisible());
 
     {  // Make sure the output
       commands::Output output;
-      converter.FillOutput(&output);
+      converter.FillOutput(*composer_, &output);
       EXPECT_FALSE(output.has_result());
       EXPECT_TRUE(output.has_preedit());
       EXPECT_FALSE(output.has_candidates());
@@ -1218,11 +1174,11 @@ TEST_F(SessionConverterTest, SwitchKanaType) {
                 conversion.segment(0).value());
     }
 
-    EXPECT_TRUE(converter.SwitchKanaType(composer_.get()));
+    EXPECT_TRUE(converter.SwitchKanaType(*composer_));
     EXPECT_FALSE(converter.IsCandidateListVisible());
     {
       commands::Output output;
-      converter.FillOutput(&output);
+      converter.FillOutput(*composer_, &output);
       EXPECT_FALSE(output.has_result());
       EXPECT_TRUE(output.has_preedit());
       EXPECT_FALSE(output.has_candidates());
@@ -1234,11 +1190,11 @@ TEST_F(SessionConverterTest, SwitchKanaType) {
                 conversion.segment(0).value());
     }
 
-    EXPECT_TRUE(converter.SwitchKanaType(composer_.get()));
+    EXPECT_TRUE(converter.SwitchKanaType(*composer_));
     EXPECT_FALSE(converter.IsCandidateListVisible());
     {
       commands::Output output;
-      converter.FillOutput(&output);
+      converter.FillOutput(*composer_, &output);
       EXPECT_FALSE(output.has_result());
       EXPECT_TRUE(output.has_preedit());
       EXPECT_FALSE(output.has_candidates());
@@ -1250,11 +1206,11 @@ TEST_F(SessionConverterTest, SwitchKanaType) {
                 conversion.segment(0).value());
     }
 
-    EXPECT_TRUE(converter.SwitchKanaType(composer_.get()));
+    EXPECT_TRUE(converter.SwitchKanaType(*composer_));
     EXPECT_FALSE(converter.IsCandidateListVisible());
     {
       commands::Output output;
-      converter.FillOutput(&output);
+      converter.FillOutput(*composer_, &output);
       EXPECT_FALSE(output.has_result());
       EXPECT_TRUE(output.has_preedit());
       EXPECT_FALSE(output.has_candidates());
@@ -1266,11 +1222,11 @@ TEST_F(SessionConverterTest, SwitchKanaType) {
                 conversion.segment(0).value());
     }
 
-    EXPECT_TRUE(converter.SwitchKanaType(composer_.get()));
+    EXPECT_TRUE(converter.SwitchKanaType(*composer_));
     EXPECT_FALSE(converter.IsCandidateListVisible());
     {
       commands::Output output;
-      converter.FillOutput(&output);
+      converter.FillOutput(*composer_, &output);
       EXPECT_FALSE(output.has_result());
       EXPECT_TRUE(output.has_preedit());
       EXPECT_FALSE(output.has_candidates());
@@ -1298,12 +1254,12 @@ TEST_F(SessionConverterTest, CommitFirstSegment) {
 
   // "かまぼこのいんぼう"
   composer_->InsertCharacterPreedit(kKamabokono + kInbou);
-  EXPECT_TRUE(converter.Convert(composer_.get()));
+  EXPECT_TRUE(converter.Convert(*composer_));
   EXPECT_FALSE(converter.IsCandidateListVisible());
 
   {  // Check the conversion before CommitFirstSegment.
     commands::Output output;
-    converter.FillOutput(&output);
+    converter.FillOutput(*composer_, &output);
     EXPECT_FALSE(output.has_result());
     EXPECT_TRUE(output.has_preedit());
     EXPECT_FALSE(output.has_candidates());
@@ -1324,27 +1280,11 @@ TEST_F(SessionConverterTest, CommitFirstSegment) {
     segment->add_candidate()->value = "\xe5\x8d\xb0\xe6\x88\xbf";  // "印房"
     convertermock_->SetSubmitFirstSegment(&segments_after_submit, true);
   }
-  converter.CommitFirstSegment(composer_.get());
+  size_t size;
+  converter.CommitFirstSegment(&size);
   EXPECT_FALSE(converter.IsCandidateListVisible());
-
-  {  // Check the conversion after CommitFirstSegment.
-    commands::Output output;
-    converter.FillOutput(&output);
-    EXPECT_TRUE(output.has_result());
-    EXPECT_TRUE(output.has_preedit());
-    EXPECT_FALSE(output.has_candidates());
-
-    const commands::Preedit &conversion = output.preedit();
-    // "陰謀"
-    EXPECT_EQ("\xe9\x99\xb0\xe8\xac\x80", conversion.segment(0).value());
-
-    // Check the result
-    const commands::Result &result = output.result();
-    // "かまぼこの"
-    EXPECT_EQ(kKamabokono, result.value());
-    // "かまぼこの"
-    EXPECT_EQ(kKamabokono, result.key());
-  }
+  // "かまぼこの"
+  EXPECT_EQ(Util::CharsLen(kKamabokono), size);
   EXPECT_TRUE(converter.IsActive());
 }
 
@@ -1352,11 +1292,12 @@ TEST_F(SessionConverterTest, CommitPreedit) {
   SessionConverter converter(convertermock_.get());
   composer_->InsertCharacterPreedit(aiueo_);
   converter.CommitPreedit(*composer_);
+  composer_->Reset();
   EXPECT_FALSE(converter.IsCandidateListVisible());
 
   {  // Check the result
     commands::Output output;
-    converter.FillOutput(&output);
+    converter.FillOutput(*composer_, &output);
     EXPECT_TRUE(output.has_result());
     EXPECT_FALSE(output.has_preedit());
     EXPECT_FALSE(output.has_candidates());
@@ -1368,7 +1309,7 @@ TEST_F(SessionConverterTest, CommitPreedit) {
   EXPECT_FALSE(converter.IsActive());
 }
 
-TEST_F(SessionConverterTest, CommitSuggestion) {
+TEST_F(SessionConverterTest, CommitSuggestionByIndex) {
   SessionConverter converter(convertermock_.get());
   Segments segments;
   {  // Initialize mock segments for suggestion
@@ -1389,14 +1330,14 @@ TEST_F(SessionConverterTest, CommitSuggestion) {
   composer_->InsertCharacterPreedit(kChars_Mo);
 
   // Suggestion
-  convertermock_->SetStartSuggestion(&segments, true);
-  EXPECT_TRUE(converter.Suggest(composer_.get()));
+  convertermock_->SetStartSuggestionWithComposer(&segments, true);
+  EXPECT_TRUE(converter.Suggest(*composer_));
   EXPECT_TRUE(converter.IsCandidateListVisible());
   EXPECT_TRUE(converter.IsActive());
 
   {  // Check the candidate list
     commands::Output output;
-    converter.FillOutput(&output);
+    converter.FillOutput(*composer_, &output);
     EXPECT_FALSE(output.has_result());
     EXPECT_TRUE(output.has_preedit());
     EXPECT_TRUE(output.has_candidates());
@@ -1411,13 +1352,20 @@ TEST_F(SessionConverterTest, CommitSuggestion) {
     EXPECT_FALSE(candidates.has_focused_index());
   }
 
-  converter.CommitSuggestion(0);
+  // FinishConversion is expected to return empty Segments.
+  convertermock_->SetFinishConversion(
+      scoped_ptr<Segments>(new Segments).get(), true);
+
+  size_t committed_key_size = 0;
+  converter.CommitSuggestionByIndex(0, *composer_.get(), &committed_key_size);
+  composer_->Reset();
   EXPECT_FALSE(converter.IsCandidateListVisible());
   EXPECT_FALSE(converter.IsActive());
+  EXPECT_EQ(4, committed_key_size);
 
   {  // Check the result
     commands::Output output;
-    converter.FillOutput(&output);
+    converter.FillOutput(*composer_, &output);
     EXPECT_TRUE(output.has_result());
     EXPECT_FALSE(output.has_preedit());
     EXPECT_FALSE(output.has_candidates());
@@ -1425,8 +1373,11 @@ TEST_F(SessionConverterTest, CommitSuggestion) {
     const commands::Result &result = output.result();
     EXPECT_EQ(kChars_Mozukusu, result.value());
     EXPECT_EQ(kChars_Mozukusu, result.key());
+    EXPECT_EQ(SessionConverterInterface::COMPOSITION,
+              converter.GetState());
   }
 }
+
 
 
 TEST_F(SessionConverterTest, SuggestAndPredict) {
@@ -1450,14 +1401,14 @@ TEST_F(SessionConverterTest, SuggestAndPredict) {
   composer_->InsertCharacterPreedit(kChars_Mo);
 
   // Suggestion
-  convertermock_->SetStartSuggestion(&segments, true);
-  EXPECT_TRUE(converter.Suggest(composer_.get()));
+  convertermock_->SetStartSuggestionWithComposer(&segments, true);
+  EXPECT_TRUE(converter.Suggest(*composer_));
   EXPECT_TRUE(converter.IsCandidateListVisible());
   EXPECT_TRUE(converter.IsActive());
 
   {  // Check the candidate list
     commands::Output output;
-    converter.FillOutput(&output);
+    converter.FillOutput(*composer_, &output);
     EXPECT_FALSE(output.has_result());
     EXPECT_TRUE(output.has_preedit());
     EXPECT_TRUE(output.has_candidates());
@@ -1504,15 +1455,15 @@ TEST_F(SessionConverterTest, SuggestAndPredict) {
   }
 
   // Prediction
-  convertermock_->SetStartPrediction(&segments, true);
-  EXPECT_TRUE(converter.Predict(composer_.get()));
+  convertermock_->SetStartPredictionWithComposer(&segments, true);
+  EXPECT_TRUE(converter.Predict(*composer_));
   EXPECT_TRUE(converter.IsCandidateListVisible());
   EXPECT_TRUE(converter.IsActive());
 
   // If there are suggestion results, the Prediction is not triggered.
   {
     commands::Output output;
-    converter.FillOutput(&output);
+    converter.FillOutput(*composer_, &output);
     EXPECT_FALSE(output.has_result());
     EXPECT_TRUE(output.has_preedit());
     EXPECT_TRUE(output.has_candidates());
@@ -1536,12 +1487,12 @@ TEST_F(SessionConverterTest, SuggestAndPredict) {
   }
 
   // Prediction is called
-  converter.CandidateNext();
-  converter.CandidateNext();
+  converter.CandidateNext(*composer_);
+  converter.CandidateNext(*composer_);
 
   {  // Check the candidate list
     commands::Output output;
-    converter.FillOutput(&output);
+    converter.FillOutput(*composer_, &output);
     EXPECT_FALSE(output.has_result());
     EXPECT_TRUE(output.has_preedit());
     EXPECT_TRUE(output.has_candidates());
@@ -1563,12 +1514,13 @@ TEST_F(SessionConverterTest, SuggestAndPredict) {
   }
 
   // Select to "モンドリアン".
-  converter.CandidateNext();
+  converter.CandidateNext(*composer_);
   converter.Commit();
+  composer_->Reset();
 
   {  // Check the submitted value
     commands::Output output;
-    converter.FillOutput(&output);
+    converter.FillOutput(*composer_, &output);
     EXPECT_TRUE(output.has_result());
     EXPECT_FALSE(output.has_preedit());
     EXPECT_FALSE(output.has_candidates());
@@ -1609,13 +1561,13 @@ TEST_F(SessionConverterTest, SuggestAndPredict) {
   }
 
   // Prediction without suggestion.
-  convertermock_->SetStartPrediction(&segments, true);
-  EXPECT_TRUE(converter.Predict(composer_.get()));
+  convertermock_->SetStartPredictionWithComposer(&segments, true);
+  EXPECT_TRUE(converter.Predict(*composer_));
   EXPECT_TRUE(converter.IsActive());
 
   {
     commands::Output output;
-    converter.FillOutput(&output);
+    converter.FillOutput(*composer_, &output);
     EXPECT_FALSE(output.has_result());
     EXPECT_TRUE(output.has_preedit());
     EXPECT_TRUE(output.has_candidates());
@@ -1642,6 +1594,196 @@ TEST_F(SessionConverterTest, SuggestAndPredict) {
   }
 }
 
+TEST_F(SessionConverterTest, SuppressSuggestionOnPasswordField) {
+  SessionConverter converter(convertermock_.get());
+  Segments segments;
+  {  // Initialize mock segments for suggestion
+    segments.set_request_type(Segments::SUGGESTION);
+    Segment *segment = segments.add_segment();
+    Segment::Candidate *candidate;
+    // "も"
+    segment->set_key(kChars_Mo);
+    candidate = segment->add_candidate();
+    // "もずくす"
+    candidate->value = kChars_Mozukusu;
+    candidate->content_key = kChars_Mozukusu;
+    candidate = segment->add_candidate();
+    // "ももんが"
+    candidate->value = kChars_Momonga;
+    candidate->content_key = kChars_Momonga;
+  }
+  composer_->SetInputFieldType(commands::SessionCommand::PASSWORD);
+  composer_->InsertCharacterPreedit(kChars_Mo);
+
+  // Suggestion
+  convertermock_->SetStartSuggestionWithComposer(&segments, true);
+  // No candidates should be visible because we are on password field.
+  EXPECT_FALSE(converter.Suggest(*composer_));
+  EXPECT_FALSE(converter.IsCandidateListVisible());
+  EXPECT_FALSE(converter.IsActive());
+}
+
+
+TEST_F(SessionConverterTest, ExpandSuggestion) {
+  SessionConverter converter(convertermock_.get());
+
+  const char *kSuggestionValues[] = {
+      "S0",
+      "S1",
+      "S2",
+  };
+  const char *kPredictionValues[] = {
+      "P0",
+      "P1",
+      "P2",
+      // Duplicate entry. Any dupulication should not exist
+      // in the candidate list.
+      "S1",
+      "P3",
+  };
+  const char kKey[] = "key";
+  const int kDupulicationIndex = 3;
+
+  Segments segments;
+  {  // Initialize mock segments for suggestion
+    segments.set_request_type(Segments::SUGGESTION);
+    Segment *segment = segments.add_segment();
+    Segment::Candidate *candidate;
+    segment->set_key(kKey);
+    for (size_t i = 0; i < arraysize(kSuggestionValues); ++i) {
+      candidate = segment->add_candidate();
+      candidate->value = kSuggestionValues[i];
+      candidate->content_key = kKey;
+    }
+  }
+  composer_->InsertCharacterPreedit(kKey);
+
+  // Suggestion
+  convertermock_->SetStartSuggestionWithComposer(&segments, true);
+  EXPECT_TRUE(converter.Suggest(*composer_));
+  EXPECT_TRUE(converter.IsCandidateListVisible());
+  EXPECT_TRUE(converter.IsActive());
+  {  // Check the candidate list
+    commands::Output output;
+    converter.FillOutput(*composer_, &output);
+    const commands::Candidates &candidates = output.candidates();
+    EXPECT_EQ(commands::SUGGESTION, candidates.category());
+    EXPECT_EQ(commands::SUGGESTION, output.all_candidate_words().category());
+    EXPECT_EQ(arraysize(kSuggestionValues), candidates.size());
+    for (size_t i = 0; i < arraysize(kSuggestionValues); ++i) {
+      EXPECT_EQ(kSuggestionValues[i], candidates.candidate(i).value());
+    }
+  }
+
+  segments.Clear();
+  {  // Initialize mock segments for prediction (== expanding suggestion)
+    segments.set_request_type(Segments::PREDICTION);
+    Segment *segment = segments.add_segment();
+    Segment::Candidate *candidate;
+    segment->set_key(kKey);
+    for (size_t i = 0; i < arraysize(kPredictionValues); ++i) {
+      candidate = segment->add_candidate();
+      candidate->value = kPredictionValues[i];
+      candidate->content_key = kKey;
+    }
+  }
+  // Expand suggestion candidate
+  convertermock_->SetStartPredictionWithComposer(&segments, true);
+  EXPECT_TRUE(converter.ExpandSuggestion(*composer_));
+  EXPECT_TRUE(converter.IsCandidateListVisible());
+  EXPECT_TRUE(converter.IsActive());
+  {  // Check the candidate list
+    commands::Output output;
+    converter.FillOutput(*composer_, &output);
+    const commands::Candidates &candidates = output.candidates();
+    EXPECT_EQ(commands::SUGGESTION, candidates.category());
+    EXPECT_EQ(commands::SUGGESTION, output.all_candidate_words().category());
+    // -1 is for duplicate entry.
+    EXPECT_EQ(arraysize(kSuggestionValues) + arraysize(kPredictionValues) - 1,
+              candidates.size());
+    size_t i;
+    for (i = 0; i < arraysize(kSuggestionValues); ++i) {
+      EXPECT_EQ(kSuggestionValues[i], candidates.candidate(i).value());
+    }
+
+    // -1 is for duplicate entry.
+    for (; i < candidates.size(); ++i) {
+      size_t index_in_prediction = i - arraysize(kSuggestionValues);
+      if (index_in_prediction >= kDupulicationIndex) {
+        ++index_in_prediction;
+      }
+      EXPECT_EQ(kPredictionValues[index_in_prediction],
+                candidates.candidate(i).value());
+    }
+  }
+}
+
+TEST_F(SessionConverterTest, AppendCandidateList) {
+  SessionConverter converter(convertermock_.get());
+  converter.state_ = SessionConverterInterface::CONVERSION;
+  converter.operation_preferences_.use_cascading_window = true;
+  Segments segments;
+
+  {
+    SetAiueo(&segments);
+    FillT13Ns(&segments, composer_.get());
+
+    converter.SetSegments(segments);
+    converter.AppendCandidateList();
+    const CandidateList &candidate_list = converter.GetCandidateList();
+    // 3 == hiragana cand, katakana cand and sub candidate list.
+    EXPECT_EQ(3, candidate_list.size());
+    size_t sub_cand_list_count = 0;
+    for (size_t i = 0; i < candidate_list.size(); ++i) {
+      if (candidate_list.candidate(i).IsSubcandidateList()) {
+        ++sub_cand_list_count;
+      }
+    }
+    // Sub candidate list for T13N.
+    EXPECT_EQ(1, sub_cand_list_count);
+  }
+  {
+    Segment *segment = segments.mutable_conversion_segment(0);
+    Segment::Candidate *candidate = segment->add_candidate();
+    // "あいうえお_2"
+    candidate->value =
+      "\xe3\x81\x82\xe3\x81\x84\xe3\x81\x86\xe3\x81\x88\xe3\x81\x8a_2";
+    // New meta candidates.
+    // They should be ignored.
+    vector<Segment::Candidate> *meta_candidates =
+        segment->mutable_meta_candidates();
+    meta_candidates->clear();
+    meta_candidates->resize(1);
+    meta_candidates->at(0).Init();
+    meta_candidates->at(0).value = "t13nValue";
+    meta_candidates->at(0).content_value = "t13nValue";
+    meta_candidates->at(0).content_key = segment->key();
+
+    converter.SetSegments(segments);
+    converter.AppendCandidateList();
+    const CandidateList &candidate_list = converter.GetCandidateList();
+    // 4 == hiragana cand, katakana cand, hiragana cand2
+    // and sub candidate list.
+    EXPECT_EQ(4, candidate_list.size());
+    size_t sub_cand_list_count = 0;
+    set<int> id_set;
+    for (size_t i = 0; i < candidate_list.size(); ++i) {
+      if (candidate_list.candidate(i).IsSubcandidateList()) {
+        ++sub_cand_list_count;
+      } else {
+        // No duplicate ids are expected.
+        int id = candidate_list.candidate(i).id();
+        // EXPECT_EQ(iterator, iterator) might cause compile error in specific
+        // environment.
+        EXPECT_TRUE(id_set.end() == id_set.find(id));
+        id_set.insert(id);
+      }
+    }
+    // Sub candidate list shouldn't be duplicated.
+    EXPECT_EQ(1, sub_cand_list_count);
+  }
+}
+
 TEST_F(SessionConverterTest, ReloadConfig) {
   SessionConverter converter(convertermock_.get());
   Segments segments;
@@ -1650,7 +1792,7 @@ TEST_F(SessionConverterTest, ReloadConfig) {
   convertermock_->SetStartConversionWithComposer(&segments, true);
 
   composer_->InsertCharacterPreedit("aiueo");
-  EXPECT_TRUE(converter.Convert(composer_.get()));
+  EXPECT_TRUE(converter.Convert(*composer_));
   converter.SetCandidateListVisible(true);
 
   {  // Set OperationPreferences
@@ -1663,7 +1805,7 @@ TEST_F(SessionConverterTest, ReloadConfig) {
   }
   {  // Check the config update
     commands::Output output;
-    converter.FillOutput(&output);
+    converter.FillOutput(*composer_, &output);
     EXPECT_FALSE(output.has_result());
     EXPECT_TRUE(output.has_preedit());
     EXPECT_TRUE(output.has_candidates());
@@ -1681,7 +1823,7 @@ TEST_F(SessionConverterTest, ReloadConfig) {
   }
   {  // Check the config update
     commands::Output output;
-    converter.FillOutput(&output);
+    converter.FillOutput(*composer_, &output);
     EXPECT_FALSE(output.has_result());
     EXPECT_TRUE(output.has_preedit());
     EXPECT_TRUE(output.has_candidates());
@@ -1709,13 +1851,13 @@ TEST_F(SessionConverterTest, OutputAllCandidateWords) {
 
   commands::Output output;
 
-  EXPECT_TRUE(converter.Convert(composer_.get()));
+  EXPECT_TRUE(converter.Convert(*composer_));
   {
     ASSERT_TRUE(converter.IsActive());
     EXPECT_FALSE(converter.IsCandidateListVisible());
 
     output.Clear();
-    converter.PopOutput(&output);
+    converter.PopOutput(*composer_, &output);
     EXPECT_FALSE(output.has_result());
     EXPECT_TRUE(output.has_preedit());
     EXPECT_FALSE(output.has_candidates());
@@ -1728,13 +1870,13 @@ TEST_F(SessionConverterTest, OutputAllCandidateWords) {
     EXPECT_EQ(5, output.all_candidate_words().candidates_size());
   }
 
-  converter.CandidateNext();
+  converter.CandidateNext(*composer_);
   {
     ASSERT_TRUE(converter.IsActive());
     EXPECT_TRUE(converter.IsCandidateListVisible());
 
     output.Clear();
-    converter.PopOutput(&output);
+    converter.PopOutput(*composer_, &output);
     EXPECT_FALSE(output.has_result());
     EXPECT_TRUE(output.has_preedit());
     EXPECT_TRUE(output.has_candidates());
@@ -1753,7 +1895,7 @@ TEST_F(SessionConverterTest, OutputAllCandidateWords) {
     EXPECT_FALSE(converter.IsCandidateListVisible());
 
     output.Clear();
-    converter.PopOutput(&output);
+    converter.PopOutput(*composer_, &output);
     EXPECT_FALSE(output.has_result());
     EXPECT_TRUE(output.has_preedit());
     EXPECT_FALSE(output.has_candidates());
@@ -1799,6 +1941,82 @@ TEST_F(SessionConverterTest, FillContext) {
   context.set_preceding_text(kPrecedingText);
   converter.FillContext(&context);
   EXPECT_EQ(kPrecedingText, context.preceding_text());
+}
+
+TEST_F(SessionConverterTest, GetPreeditAndGetConversion) {
+  Segments segments;
+
+  Segment *segment;
+  Segment::Candidate *candidate;
+
+  segment = segments.add_segment();
+  segment->set_segment_type(Segment::HISTORY);
+  segment->set_key("[key:history1]");
+  candidate = segment->add_candidate();
+  candidate->content_key = "[content_key:history1-1]";
+  candidate = segment->add_candidate();
+  candidate->content_key = "[content_key:history1-2]";
+
+  segment = segments.add_segment();
+  segment->set_segment_type(Segment::FREE);
+  segment->set_key("[key:conversion1]");
+  candidate = segment->add_candidate();
+  candidate->key = "[key:conversion1-1]";
+  candidate->content_key = "[content_key:conversion1-1]";
+  candidate->value = "[value:conversion1-1]";
+  candidate = segment->add_candidate();
+  candidate->key = "[key:conversion1-2]";
+  candidate->content_key = "[content_key:conversion1-2]";
+  candidate->value = "[value:conversion1-2]";
+  {
+    // PREDICTION
+    SessionConverter converter(convertermock_.get());
+    convertermock_->SetStartPredictionWithComposer(&segments, true);
+    converter.Predict(*composer_);
+    converter.CandidateNext(*composer_);
+    string preedit;
+    converter.GetPreedit(0, 1, &preedit);
+    EXPECT_EQ("[content_key:conversion1-2]", preedit);
+    string conversion;
+    converter.GetConversion(0, 1, &conversion);
+    EXPECT_EQ("[value:conversion1-2]", conversion);
+  }
+  {
+    // SUGGESTION
+    SessionConverter converter(convertermock_.get());
+    convertermock_->SetStartSuggestionWithComposer(&segments, true);
+    converter.Suggest(*composer_);
+    string preedit;
+    converter.GetPreedit(0, 1, &preedit);
+    EXPECT_EQ("[content_key:conversion1-1]", preedit);
+    string conversion;
+    converter.GetConversion(0, 1, &conversion);
+    EXPECT_EQ("[value:conversion1-1]", conversion);
+  }
+  segment = segments.add_segment();
+  segment->set_segment_type(Segment::FREE);
+  segment->set_key("[key:conversion2]");
+  candidate = segment->add_candidate();
+  candidate->key = "[key:conversion2-1]";
+  candidate->content_key = "[content_key:conversion2-1]";
+  candidate->value = "[value:conversion2-1]";
+  candidate = segment->add_candidate();
+  candidate->key = "[key:conversion2-2]";
+  candidate->content_key = "[content_key:conversion2-2]";
+  candidate->value = "[value:conversion2-2]";
+  {
+    // CONVERSION
+    SessionConverter converter(convertermock_.get());
+    convertermock_->SetStartConversionWithComposer(&segments, true);
+    converter.Convert(*composer_);
+    converter.CandidateNext(*composer_);
+    string preedit;
+    converter.GetPreedit(0, 2, &preedit);
+    EXPECT_EQ("[key:conversion1][key:conversion2]", preedit);
+    string conversion;
+    converter.GetConversion(0, 2, &conversion);
+    EXPECT_EQ("[value:conversion1-2][value:conversion2-1]", conversion);
+  }
 }
 
 TEST_F(SessionConverterTest, GetAndSetSegments) {
@@ -1888,13 +2106,11 @@ TEST_F(SessionConverterTest, CopyFrom) {
     ExpectSameSessionConverter(src, dest);
 
     // Convert source
-    EXPECT_TRUE(src.Convert(composer_.get()));
+    EXPECT_TRUE(src.Convert(*composer_));
     EXPECT_TRUE(src.IsActive());
-    EXPECT_EQ(kKamabokono + kInbouKanji, src.GetDefaultResult());
-    EXPECT_EQ(kKamabokono + kInbou, src.GetComposition());
 
     // Convert destination and validate
-    EXPECT_TRUE(dest.Convert(composer_.get()));
+    EXPECT_TRUE(dest.Convert(*composer_));
     ExpectSameSessionConverter(src, dest);
 
     // Copy converted and validate
@@ -1925,8 +2141,8 @@ TEST_F(SessionConverterTest, Issue1948334) {
   composer_->InsertCharacterPreedit(kChars_Mo);
 
   // Suggestion
-  convertermock_->SetStartSuggestion(&segments, true);
-  EXPECT_TRUE(converter.Suggest(composer_.get()));
+  convertermock_->SetStartSuggestionWithComposer(&segments, true);
+  EXPECT_TRUE(converter.Suggest(*composer_));
   EXPECT_TRUE(converter.IsActive());
 
   segments.Clear();
@@ -1944,13 +2160,13 @@ TEST_F(SessionConverterTest, Issue1948334) {
   composer_->InsertCharacterPreedit("\xE3\x82\x82\xE3\x81\x9A");
 
   // Suggestion
-  convertermock_->SetStartSuggestion(&segments, true);
-  EXPECT_TRUE(converter.Suggest(composer_.get()));
+  convertermock_->SetStartSuggestionWithComposer(&segments, true);
+  EXPECT_TRUE(converter.Suggest(*composer_));
   EXPECT_TRUE(converter.IsActive());
 
   {  // Check the candidate list
     commands::Output output;
-    converter.FillOutput(&output);
+    converter.FillOutput(*composer_, &output);
     EXPECT_FALSE(output.has_result());
     EXPECT_TRUE(output.has_preedit());
     EXPECT_TRUE(output.has_candidates());
@@ -2014,12 +2230,12 @@ TEST_F(SessionConverterTest, Issue1960362) {
   convertermock_->SetStartConversionWithComposer(&segments, true);
   FillT13Ns(&resized_segments, composer_.get());
   convertermock_->SetResizeSegment1(&resized_segments, true);
-  EXPECT_TRUE(converter.ConvertToTransliteration(composer_.get(),
+  EXPECT_TRUE(converter.ConvertToTransliteration(*composer_,
                                                  transliteration::HALF_ASCII));
   EXPECT_FALSE(converter.IsCandidateListVisible());
 
   commands::Output output;
-  converter.FillOutput(&output);
+  converter.FillOutput(*composer_, &output);
   EXPECT_FALSE(output.has_result());
   EXPECT_TRUE(output.has_preedit());
   EXPECT_FALSE(output.has_candidates());
@@ -2051,13 +2267,13 @@ TEST_F(SessionConverterTest, Issue1978201) {
   }
 
   // Prediction
-  convertermock_->SetStartPrediction(&segments, true);
-  EXPECT_TRUE(converter.Predict(composer_.get()));
+  convertermock_->SetStartPredictionWithComposer(&segments, true);
+  EXPECT_TRUE(converter.Predict(*composer_));
   EXPECT_TRUE(converter.IsActive());
 
   {  // Check the conversion
     commands::Output output;
-    converter.FillOutput(&output);
+    converter.FillOutput(*composer_, &output);
     EXPECT_FALSE(output.has_result());
     EXPECT_TRUE(output.has_preedit());
     EXPECT_TRUE(output.has_candidates());
@@ -2074,7 +2290,7 @@ TEST_F(SessionConverterTest, Issue1978201) {
 
   {  // Check the conversion again
     commands::Output output;
-    converter.FillOutput(&output);
+    converter.FillOutput(*composer_, &output);
     EXPECT_FALSE(output.has_result());
     EXPECT_TRUE(output.has_preedit());
     EXPECT_FALSE(output.has_candidates());
@@ -2111,8 +2327,8 @@ TEST_F(SessionConverterTest, Issue2029557) {
   // Prediction (as <tab>)
   Segments segments;
   SetAiueo(&segments);
-  convertermock_->SetStartPrediction(&segments, true);
-  EXPECT_TRUE(converter.Predict(composer_.get()));
+  convertermock_->SetStartPredictionWithComposer(&segments, true);
+  EXPECT_TRUE(converter.Predict(*composer_));
   EXPECT_TRUE(converter.IsActive());
 
   // Transliteration (as <F6>)
@@ -2124,7 +2340,7 @@ TEST_F(SessionConverterTest, Issue2029557) {
 
   FillT13Ns(&segments, composer_.get());
   convertermock_->SetStartConversionWithComposer(&segments, true);
-  EXPECT_TRUE(converter.ConvertToTransliteration(composer_.get(),
+  EXPECT_TRUE(converter.ConvertToTransliteration(*composer_,
                                                  transliteration::HIRAGANA));
   EXPECT_TRUE(converter.IsActive());
 }
@@ -2143,22 +2359,22 @@ TEST_F(SessionConverterTest, Issue2031986) {
     candidate->value = "AAAA";
     candidate = segment->add_candidate();
     candidate->value = "Aaaa";
-    convertermock_->SetStartSuggestion(&segments, true);
+    convertermock_->SetStartSuggestionWithComposer(&segments, true);
   }
   // Get suggestion
   composer_->InsertCharacterPreedit("aaaa");
-  EXPECT_TRUE(converter.Suggest(composer_.get()));
+  EXPECT_TRUE(converter.Suggest(*composer_));
   EXPECT_TRUE(converter.IsActive());
 
   {  // Initialize no suggest result triggered by "aaaaa".
     Segments segments;
     Segment *segment = segments.add_segment();
     segment->set_key("aaaaa");
-    convertermock_->SetStartSuggestion(&segments, false);
+    convertermock_->SetStartSuggestionWithComposer(&segments, false);
   }
   // Hide suggestion
   composer_->InsertCharacterPreedit("a");
-  EXPECT_FALSE(converter.Suggest(composer_.get()));
+  EXPECT_FALSE(converter.Suggest(*composer_));
   EXPECT_FALSE(converter.IsActive());
 }
 
@@ -2177,10 +2393,10 @@ TEST_F(SessionConverterTest, Issue2040116) {
     segments.set_request_type(Segments::PREDICTION);
     Segment *segment = segments.add_segment();
     segment->set_key("G");
-    convertermock_->SetStartPrediction(&segments, false);
+    convertermock_->SetStartPredictionWithComposer(&segments, false);
   }
   // Get prediction
-  EXPECT_FALSE(converter.Predict(composer_.get()));
+  EXPECT_FALSE(converter.Predict(*composer_));
   EXPECT_FALSE(converter.IsActive());
 
   {
@@ -2192,15 +2408,15 @@ TEST_F(SessionConverterTest, Issue2040116) {
     Segment::Candidate *candidate;
     candidate = segment->add_candidate();
     candidate->value = "GoogleSuggest";
-    convertermock_->SetStartPrediction(&segments, true);
+    convertermock_->SetStartPredictionWithComposer(&segments, true);
   }
   // Get prediction again
-  EXPECT_TRUE(converter.Predict(composer_.get()));
+  EXPECT_TRUE(converter.Predict(*composer_));
   EXPECT_TRUE(converter.IsActive());
 
   {  // Check the conversion.
     commands::Output output;
-    converter.FillOutput(&output);
+    converter.FillOutput(*composer_, &output);
     EXPECT_FALSE(output.has_result());
     EXPECT_TRUE(output.has_preedit());
     EXPECT_TRUE(output.has_candidates());
@@ -2217,15 +2433,15 @@ TEST_F(SessionConverterTest, Issue2040116) {
     segments.set_request_type(Segments::PREDICTION);
     Segment *segment = segments.add_segment();
     segment->set_key("G");
-    convertermock_->SetStartPrediction(&segments, false);
+    convertermock_->SetStartPredictionWithComposer(&segments, false);
   }
   // Hide prediction
-  converter.CandidateNext();
+  converter.CandidateNext(*composer_);
   EXPECT_TRUE(converter.IsActive());
 
   {  // Check the conversion.
     commands::Output output;
-    converter.FillOutput(&output);
+    converter.FillOutput(*composer_, &output);
     EXPECT_FALSE(output.has_result());
     EXPECT_TRUE(output.has_preedit());
     EXPECT_TRUE(output.has_candidates());
@@ -2239,7 +2455,7 @@ TEST_F(SessionConverterTest, Issue2040116) {
   }
 }
 
-TEST_F(SessionConverterTest, ConvertReverse) {
+TEST_F(SessionConverterTest, GetReadingText) {
   SessionConverter converter(convertermock_.get());
 
   // "阿伊宇江於"
@@ -2268,19 +2484,9 @@ TEST_F(SessionConverterTest, ConvertReverse) {
   candidate->value = kanji_aiueo;
   convertermock_->SetStartConversionWithComposer(&segments, true);
 
-  EXPECT_TRUE(converter.ConvertReverse(kanji_aiueo, composer_.get()));
-  string query;
-  composer_->GetQueryForConversion(&query);
-  EXPECT_EQ(hiragana_aiueo, query);
-
-  commands::Output output;
-  converter.FillOutput(&output);
-  EXPECT_EQ(hiragana_aiueo,
-            output.preedit().segment(0).key());
-  EXPECT_EQ(kanji_aiueo,
-            output.preedit().segment(0).value());
-  EXPECT_EQ(kanji_aiueo,
-            output.all_candidate_words().candidates(0).value());
+  string reading;
+  EXPECT_TRUE(converter.GetReadingText(kanji_aiueo, &reading));
+  EXPECT_EQ(hiragana_aiueo, reading);
 }
 
 TEST_F(SessionConverterTest, ZeroQuerySuggestion) {
@@ -2294,16 +2500,16 @@ TEST_F(SessionConverterTest, ZeroQuerySuggestion) {
   segment->set_key("");
   segment->add_candidate()->value = "search";
   segment->add_candidate()->value = "input";
-  convertermock_->SetStartSuggestion(&segments, true);
+  convertermock_->SetStartSuggestionWithComposer(&segments, true);
 
   EXPECT_TRUE(composer_->Empty());
-  EXPECT_TRUE(converter.Suggest(composer_.get()));
+  EXPECT_TRUE(converter.Suggest(*composer_));
   EXPECT_TRUE(converter.IsCandidateListVisible());
   EXPECT_TRUE(converter.IsActive());
 
   {  // Check the output
     commands::Output output;
-    converter.FillOutput(&output);
+    converter.FillOutput(*composer_, &output);
     EXPECT_FALSE(output.has_result());
     EXPECT_FALSE(output.has_preedit());
     EXPECT_TRUE(output.has_candidates());
@@ -2381,10 +2587,13 @@ TEST_F(SessionConverterTest, CommitHead) {
   // "あいうえお"
   composer_->InsertCharacterPreedit(aiueo_);
 
-  converter.CommitHead(1, composer_.get());
+  size_t committed_size;
+  converter.CommitHead(1, *composer_, &committed_size);
+  EXPECT_EQ(1, committed_size);
+  composer_->DeleteAt(0);
 
   commands::Output output;
-  converter.FillOutput(&output);
+  converter.FillOutput(*composer_, &output);
   EXPECT_TRUE(output.has_result());
   EXPECT_FALSE(output.has_candidates());
 
@@ -2396,8 +2605,12 @@ TEST_F(SessionConverterTest, CommitHead) {
   // "いうえお"
   EXPECT_EQ("\xe3\x81\x84\xe3\x81\x86\xe3\x81\x88\xe3\x81\x8a", preedit);
 
-  converter.CommitHead(3, composer_.get());
-  converter.FillOutput(&output);
+  converter.CommitHead(3, *composer_, &committed_size);
+  EXPECT_EQ(3, committed_size);
+  composer_->DeleteAt(0);
+  composer_->DeleteAt(0);
+  composer_->DeleteAt(0);
+  converter.FillOutput(*composer_, &output);
   EXPECT_TRUE(output.has_result());
   EXPECT_FALSE(output.has_candidates());
 
@@ -2409,5 +2622,110 @@ TEST_F(SessionConverterTest, CommitHead) {
   composer_->GetStringForPreedit(&preedit);
   EXPECT_EQ("\xe3\x81\x8a", preedit);         // "お"
 }
+
+TEST_F(SessionConverterTest, CommandCandidate) {
+  SessionConverter converter(convertermock_.get());
+  Segments segments;
+  SetAiueo(&segments);
+  FillT13Ns(&segments, composer_.get());
+  // set COMMAND_CANDIDATE.
+  segments.mutable_conversion_segment(0)->mutable_candidate(0)->attributes |=
+      Segment::Candidate::COMMAND_CANDIDATE;
+  convertermock_->SetStartConversionWithComposer(&segments, true);
+
+  composer_->InsertCharacterPreedit(aiueo_);
+  EXPECT_TRUE(converter.Convert(*composer_));
+
+  converter.Commit();
+  commands::Output output;
+  converter.FillOutput(*composer_, &output);
+  EXPECT_FALSE(output.has_result());
+}
+
+TEST_F(SessionConverterTest, CommandCandidateWithCommitCommands) {
+  const string kKamabokono =
+      "\xe3\x81\x8b\xe3\x81\xbe\xe3\x81\xbc\xe3\x81\x93\xe3\x81\xae";
+  const string kInbou =
+      "\xe3\x81\x84\xe3\x82\x93\xe3\x81\xbc\xe3\x81\x86";
+  composer_->InsertCharacterPreedit(kKamabokono + kInbou);
+
+  {
+    // The first candidate is a command candidate, so
+    // CommitFirstSegment resets all conversion.
+    SessionConverter converter(convertermock_.get());
+    Segments segments;
+    SetKamaboko(&segments);
+    segments.mutable_conversion_segment(0)->mutable_candidate(0)->attributes =
+        Segment::Candidate::COMMAND_CANDIDATE;
+    convertermock_->SetStartConversionWithComposer(&segments, true);
+    converter.Convert(*composer_);
+
+    size_t committed_size = 0;
+    converter.CommitFirstSegment(&committed_size);
+    EXPECT_EQ(0, committed_size);
+
+    commands::Output output;
+    converter.FillOutput(*composer_, &output);
+    EXPECT_FALSE(converter.IsActive());
+    EXPECT_FALSE(output.has_result());
+  }
+
+  {
+    // The second candidate is a command candidate, so
+    // CommitFirstSegment commits all conversion.
+    SessionConverter converter(convertermock_.get());
+    Segments segments;
+    SetKamaboko(&segments);
+
+    segments.mutable_conversion_segment(1)->mutable_candidate(0)->attributes =
+        Segment::Candidate::COMMAND_CANDIDATE;
+    convertermock_->SetStartConversionWithComposer(&segments, true);
+    converter.Convert(*composer_);
+
+    size_t committed_size = 0;
+    converter.CommitFirstSegment(&committed_size);
+    EXPECT_EQ(Util::CharsLen(kKamabokono), committed_size);
+
+    commands::Output output;
+    converter.FillOutput(*composer_, &output);
+    EXPECT_TRUE(converter.IsActive());
+    EXPECT_TRUE(output.has_result());
+  }
+
+  {
+    // The selected suggestion with Id is a command candidate.
+    SessionConverter converter(convertermock_.get());
+    Segments segments;
+    SetAiueo(&segments);
+
+    segments.mutable_conversion_segment(0)->mutable_candidate(0)->attributes =
+        Segment::Candidate::COMMAND_CANDIDATE;
+    convertermock_->SetStartSuggestionWithComposer(&segments, true);
+    converter.Suggest(*composer_);
+
+    size_t committed_size = 0;
+    EXPECT_FALSE(converter.CommitSuggestionById(
+        0, *composer_, &committed_size));
+    EXPECT_EQ(0, committed_size);
+  }
+
+  {
+    // The selected suggestion with Index is a command candidate.
+    SessionConverter converter(convertermock_.get());
+    Segments segments;
+    SetAiueo(&segments);
+
+    segments.mutable_conversion_segment(0)->mutable_candidate(1)->attributes =
+        Segment::Candidate::COMMAND_CANDIDATE;
+    convertermock_->SetStartSuggestionWithComposer(&segments, true);
+    converter.Suggest(*composer_);
+
+    size_t committed_size = 0;
+    EXPECT_FALSE(converter.CommitSuggestionByIndex(
+        1, *composer_, &committed_size));
+    EXPECT_EQ(0, committed_size);
+  }
+}
+
 }  // namespace session
 }  // namespace mozc

@@ -31,11 +31,14 @@
 #define MOZC_DICTIONARY_DICTIONARY_IMPL_H_
 
 #include <vector>
+#include "base/base.h"
 #include "dictionary/dictionary_interface.h"
 
 namespace mozc {
 
 class SuppressionDictionary;
+class SystemDictionary;
+class ValueDictionary;
 
 class DictionaryImpl : public DictionaryInterface {
  public:
@@ -44,8 +47,10 @@ class DictionaryImpl : public DictionaryInterface {
   virtual Node *LookupPredictive(const char *str, int size,
                                  NodeAllocatorInterface *allocator) const;
 
-  virtual Node *LookupPrefix(const char *str, int size,
-                             NodeAllocatorInterface *allocator) const;
+  virtual Node *LookupPrefixWithLimit(
+      const char *str, int size,
+      const Limit &limit,
+      NodeAllocatorInterface *allocator) const;
 
   virtual Node *LookupReverse(const char *str, int size,
                               NodeAllocatorInterface *allocator) const;
@@ -63,6 +68,8 @@ class DictionaryImpl : public DictionaryInterface {
  private:
   vector<DictionaryInterface *> dics_;
   SuppressionDictionary *suppression_dictionary_;
+  scoped_ptr<SystemDictionary> system_dictionary_;
+  scoped_ptr<ValueDictionary> value_dictionary_;
 
   enum LookupType {
     PREDICTIVE,
@@ -72,6 +79,7 @@ class DictionaryImpl : public DictionaryInterface {
 
   Node *LookupInternal(const char *str, int size,
                        LookupType type,
+                       const Limit &limit,
                        NodeAllocatorInterface *allocator) const;
 
   Node *MaybeRemvoeSpecialNodes(Node *node) const;

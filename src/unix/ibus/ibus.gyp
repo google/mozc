@@ -31,17 +31,28 @@
   'variables': {
     'relative_dir': 'unix/ibus',
     'gen_out_dir': '<(SHARED_INTERMEDIATE_DIR)/<(relative_dir)',
-    'additional_packages': [
-    ],
     'ibus_japanese_standalone_dependencies': [
       '../../composer/composer.gyp:composer',
       '../../converter/converter.gyp:converter',
       '../../dictionary/dictionary.gyp:dictionary',
+      '../../languages/japanese/japanese.gyp:language_dependent_spec_japanese',
       '../../prediction/prediction.gyp:prediction',
       '../../rewriter/rewriter.gyp:rewriter',
+      '../../session/session.gyp:session',
       '../../session/session.gyp:session_server',
       '../../storage/storage.gyp:storage',
       '../../transliteration/transliteration.gyp:transliteration',
+    ],
+    'ibus_client_dependencies' : [
+      '../../client/client.gyp:client',
+      '../../session/session_base.gyp:genproto_session',
+    ],
+    'ibus_standalone_dependencies' : [
+      '../../base/base.gyp:config_file_stream',
+      '../../config/config.gyp:config_handler',
+      '../../net/net.gyp:net',
+      '../../session/session.gyp:session_handler',
+      '../../usage_stats/usage_stats.gyp:usage_stats',
     ],
   },
   'targets': [
@@ -112,22 +123,28 @@
         'mozc_engine.cc',
         'path_util.cc',
       ],
-      'conditions': [
-        ['chromeos==1', {
-         'sources': [
-           'client.cc',
-           'config_util.cc',
-         ],
-        }],
-       ],
       'includes': [
         'ibus_libraries.gypi',
       ],
       'dependencies': [
-        '../../config/config.gyp:genproto_config',
         '../../session/session_base.gyp:genproto_session',
         '../../session/session_base.gyp:ime_switch_util',
       ],
+      'conditions': [
+        ['chromeos==1', {
+          'sources': [
+            'client.cc',
+            'config_util.cc',
+          ],
+          'dependencies+': [
+            '<@(ibus_standalone_dependencies)',
+          ],
+        },{
+          'dependencies+': [
+            '<@(ibus_client_dependencies)',
+          ]
+        }],
+       ],
     },
     {
       'target_name': 'ibus_mozc',
@@ -184,6 +201,7 @@
       ],
       'dependencies': [
         '../../base/base.gyp:base',
+        '../../languages/japanese/japanese.gyp:language_dependent_spec_japanese',
         'gen_mozc_xml',
         'ibus_mozc_lib',
         'ibus_mozc_metadata',

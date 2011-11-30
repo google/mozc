@@ -122,8 +122,8 @@ void ConvertEmoticonTsvToTextDictionary(
       const string &value = emoticon_data[i].first;
       const vector<string> &keys = emoticon_data[i].second;
       const string description = GetDescription(keys, key_count);
-      for (size_t i = 0; i < keys.size(); ++i) {
-        ofs << keys[i] << "\t0\t0\t" << cost << "\t" << value;
+      for (size_t j = 0; j < keys.size(); ++j) {
+        ofs << keys[j] << "\t0\t0\t" << cost << "\t" << value;
         if (!description.empty()) {
           ofs << '\t'  << description;
         }

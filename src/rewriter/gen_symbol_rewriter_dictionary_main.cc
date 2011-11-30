@@ -80,9 +80,9 @@ void GetSortingMap(const string &auto_file,
     vector<string> fields;
     mozc::Util::SplitStringUsing(line, "\t ", &fields);
     CHECK_GE(fields.size(), 2);
-    const uint32 ucs2 = strtol(fields[1].c_str(), NULL, 16);
+    const char32 ucs4 = strtol(fields[1].c_str(), NULL, 16);
     string utf8;
-    mozc::Util::UCS2ToUTF8(ucs2, &utf8);
+    mozc::Util::UCS4ToUTF8(ucs4, &utf8);
     if (sorting_map->find(utf8) != sorting_map->end()) {
       // ordered by rule
       continue;

@@ -31,6 +31,7 @@
 
 #include <QtGui/QtGui>
 #include <QtGui/QMessageBox>
+#include "base/util.h"
 #include "gui/base/win_util.h"
 #include "gui/character_pad/data/local_character_map.h"
 #include "gui/character_pad/data/unicode_blocks.h"
@@ -304,7 +305,12 @@ void CharacterPalette::showUnicodeTable(int start, int end) {
 
   const int offset = start / kHexBase;
   for (int i = start; i < end; ++i) {
-    QTableWidgetItem *item = new QTableWidgetItem(QString(QChar(i)));
+    // We do not use QString(QChar(i)) but Util::UCS4ToUTF8 because
+    // QChar is only 16-bit.
+    string utf8;
+    Util::UCS4ToUTF8(i, &utf8);
+    QTableWidgetItem *item = new QTableWidgetItem(
+        QString::fromUtf8(utf8.data(), utf8.size()));
     item->setTextAlignment(Qt::AlignCenter);
     tableWidget->setItem(i / kHexBase - offset, i % kHexBase, item);
     tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -401,8 +407,12 @@ void CharacterPalette::showLocalTable(const LocalCharacterMap *local_map,
 
   const int offset = from_start / kHexBase;
   for (size_t i = 0; i < local_map_size; ++i) {
-    QTableWidgetItem *item = new QTableWidgetItem
-        (QString(QChar(local_map[i].ucs2)));
+    // We do not use QString(QChar(i)) but Util::UCS4ToUTF8 because
+    // QChar is only 16-bit.
+    string utf8;
+    Util::UCS4ToUTF8(local_map[i].ucs2, &utf8);
+    QTableWidgetItem *item = new QTableWidgetItem(
+        QString::fromUtf8(utf8.data(), utf8.size()));
     item->setTextAlignment(Qt::AlignCenter);
     tableWidget->setItem(local_map[i].from / kHexBase - offset,
                          local_map[i].from % kHexBase, item);

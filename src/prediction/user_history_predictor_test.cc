@@ -36,7 +36,9 @@
 #include "converter/converter_interface.h"
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
+#include "dictionary/suppression_dictionary.h"
 #include "session/commands.pb.h"
+#include "storage/lru_cache.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
@@ -153,7 +155,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
     // Nothing happen
     {
       Segments segments;
-      // "わたしのなまえはなかのです"
+      // "てすと"
       MakeSegmentsForSuggestion(
           "\xE3\x81\xA6\xE3\x81\x99\xE3\x81\xA8", &segments);
       EXPECT_FALSE(predictor.Predict(&segments));
@@ -332,6 +334,62 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
     MakeSegmentsForPrediction(
         "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAE", &segments);
     EXPECT_FALSE(predictor.Predict(&segments));
+  }
+}
+
+// We did not support such Segments which has multiple segments and
+// has type != CONVERSION.
+// To support such Segments, this test case is created separately.
+TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest_suggestion) {
+  UserHistoryPredictor predictor;
+  predictor.WaitForSyncer();
+  predictor.ClearAllHistory();
+  predictor.WaitForSyncer();
+
+  // Register input histories via Finish method.
+  {
+    Segments segments;
+    // "かまた"
+    MakeSegmentsForSuggestion("\xE3\x81\x8B\xE3\x81\xBE\xE3\x81\x9F",
+                              &segments);
+    // "火魔汰"
+    AddCandidate(0, "\xE7\x81\xAB\xE9\xAD\x94\xE6\xB1\xB0", &segments);
+    // "ま"
+    MakeSegmentsForSuggestion("\xE3\x81\xBE", &segments);
+    // "摩"
+    AddCandidate(1, "\xE6\x91\xA9", &segments);
+    predictor.Finish(&segments);
+
+    // All added items must be suggestion entries.
+    const UserHistoryPredictor::DicCache::Element *element;
+    for (element = predictor.dic_->Head();
+         element->next;
+         element = element->next) {
+      const user_history_predictor::UserHistory::Entry &entry = element->value;
+      EXPECT_TRUE(entry.has_suggestion_freq() && entry.suggestion_freq() == 1);
+      EXPECT_TRUE(!entry.has_conversion_freq() && entry.conversion_freq() == 0);
+    }
+  }
+
+  // Obtain input histories via Predict method.
+  {
+    Segments segments;
+    // "かま"
+    MakeSegmentsForSuggestion("\xE3\x81\x8B\xE3\x81\xBE", &segments);
+    EXPECT_TRUE(predictor.Predict(&segments));
+    set<string> expected_candidates;
+    // "火魔汰"
+    expected_candidates.insert("\xE7\x81\xAB\xE9\xAD\x94\xE6\xB1\xB0");
+    // "火魔汰摩"
+    // We can get this entry even if Segmtnts's type is not CONVERSION.
+    expected_candidates.insert(
+        "\xE7\x81\xAB\xE9\xAD\x94\xE6\xB1\xB0\xE6\x91\xA9");
+    for (size_t i = 0; i < segments.segment(0).candidates_size(); ++i) {
+      SCOPED_TRACE(segments.segment(0).candidate(i).value);
+      EXPECT_EQ(
+          1,
+          expected_candidates.erase(segments.segment(0).candidate(i).value));
+    }
   }
 }
 
@@ -1688,7 +1746,7 @@ TEST_F(UserHistoryPredictorTest, IsValidEntry) {
   EXPECT_TRUE(UserHistoryPredictor::IsValidEntry(entry));
 
   entry.set_key("key");
-  entry.set_key("value");
+  entry.set_value("value");
 
   EXPECT_TRUE(UserHistoryPredictor::IsValidEntry(entry));
 
@@ -1709,6 +1767,24 @@ TEST_F(UserHistoryPredictorTest, IsValidEntry) {
 
   entry.Clear();
   EXPECT_TRUE(UserHistoryPredictor::IsValidEntry(entry));
+
+  SuppressionDictionary *d = SuppressionDictionary::GetSuppressionDictionary();
+  DCHECK(d);
+  d->Lock();
+  d->AddEntry("foo", "bar");
+  d->UnLock();
+
+  entry.set_key("key");
+  entry.set_value("value");
+  EXPECT_TRUE(UserHistoryPredictor::IsValidEntry(entry));
+
+  entry.set_key("foo");
+  entry.set_value("bar");
+  EXPECT_FALSE(UserHistoryPredictor::IsValidEntry(entry));
+
+  d->Lock();
+  d->Clear();
+  d->UnLock();
 }
 
 TEST_F(UserHistoryPredictorTest, IsValidSuggestion) {

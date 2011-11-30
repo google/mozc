@@ -118,8 +118,8 @@ bool SymbolRewriter::IsSymbol(const string &key) {
   const char *end = key.data() + key.size();
   while (begin < end) {
     size_t mblen = 0;
-    const uint16 ucs2 = Util::UTF8ToUCS2(begin, end, &mblen);
-    if (ucs2 >= 0x3041 && ucs2 <= 0x309F) {  // hiragana
+    const char32 ucs4 = Util::UTF8ToUCS4(begin, end, &mblen);
+    if (ucs4 >= 0x3041 && ucs4 <= 0x309F) {  // hiragana
       return false;
     }
     begin += mblen;
@@ -194,45 +194,39 @@ void SymbolRewriter::InsertCandidates(const EmbeddedDictionary::Value *value,
 
   // If the original candidates given by ImmutableConveter already
   // include the target symbols, do assign description to these candidates.
-  for (size_t i = 0; i < segment->candidates_size(); ++i) {
-    Segment::Candidate *candidate = segment->mutable_candidate(i);
-    string full_width_value, half_width_value;
-    Util::HalfWidthToFullWidth(candidate->value, &full_width_value);
-    Util::FullWidthToHalfWidth(candidate->value, &half_width_value);
+  AddDescForCurrentCandidates(value, size, segment);
 
-    for (size_t j = 0; j < size; ++j) {
-      if (candidate->value == value[j].value ||
-          full_width_value == value[j].value ||
-          half_width_value == value[j].value) {
-        candidate->description =
-            GetDescription(candidate->value,
-                           value[j].description,
-                           value[j].additional_description);
+  const string &candidate_key = ((!segment->key().empty()) ?
+                                 segment->key() :
+                                 segment->candidate(0).key);
+  size_t offset = 0;
+
+  // If the key is "かおもじ", set the insert position at the bottom,
+  // giving priority to emoticons inserted by EmoticonRewriter.
+  // "かおもじ"
+  if (candidate_key == "\xE3\x81\x8B\xE3\x81\x8A\xE3\x82\x82\xE3\x81\x98") {
+    offset = segment->candidates_size();
+  } else {
+    // Find the position wehere we start to insert the symbols
+    // We want to skip the single-kanji we inserted by single-kanji rewriter.
+    // We also skip transliterated key candidates.
+    offset = min(kOffsetSize, segment->candidates_size());
+    for (size_t i = offset; i < segment->candidates_size(); ++i) {
+      const string &target_value = segment->candidate(i).value;
+      if ((Util::CharsLen(target_value) == 1 &&
+           Util::IsScriptType(target_value, Util::KANJI)) ||
+          Util::IsScriptType(target_value, Util::HIRAGANA) ||
+          Util::IsScriptType(target_value, Util::KATAKANA)) {
+        ++offset;
+      } else {
         break;
       }
     }
   }
 
-  // Find the position wehere we start to insert the symbols
-  // We want to skip the single-kanji we inserted by single-kanji rewriter.
-  // We also skip transliterated key candidates.
-  const Segment::Candidate &base_candidate = segment->candidate(0);
-  size_t offset = min(kOffsetSize, segment->candidates_size());
-
-  for (size_t i = offset; i < segment->candidates_size(); ++i) {
-    const string &value = segment->candidate(i).value;
-    if ((Util::CharsLen(value) == 1 &&
-         Util::IsScriptType(value, Util::KANJI)) ||
-        Util::IsScriptType(value, Util::HIRAGANA) ||
-        Util::IsScriptType(value, Util::KATAKANA)) {
-      ++offset;
-    } else {
-      break;
-    }
-  }
-
   size_t inserted_count = 0;
   bool finish_first_part = false;
+  const Segment::Candidate &base_candidate = segment->candidate(0);
   for (size_t i = 0; i < size; ++i) {
     Segment::Candidate *candidate = segment->insert_candidate(offset);
     DCHECK(candidate);
@@ -244,8 +238,8 @@ void SymbolRewriter::InsertCandidates(const EmbeddedDictionary::Value *value,
     candidate->structure_cost = base_candidate.structure_cost;
     candidate->value = value[i].value;
     candidate->content_value = value[i].value;
-    candidate->key = base_candidate.key;
-    candidate->content_key = base_candidate.content_key;
+    candidate->key = candidate_key;
+    candidate->content_key = candidate_key;
 
     if (context_sensitive) {
       candidate->attributes |= Segment::Candidate::CONTEXT_SENSITIVE;
@@ -276,6 +270,29 @@ void SymbolRewriter::InsertCandidates(const EmbeddedDictionary::Value *value,
          IsPlatformDependent(value[i + 1]))) {
       offset = segment->candidates_size();
       finish_first_part = true;
+    }
+  }
+}
+
+// static
+void SymbolRewriter::AddDescForCurrentCandidates(
+    const EmbeddedDictionary::Value *value, size_t size, Segment *segment) {
+  for (size_t i = 0; i < segment->candidates_size(); ++i) {
+    Segment::Candidate *candidate = segment->mutable_candidate(i);
+    string full_width_value, half_width_value;
+    Util::HalfWidthToFullWidth(candidate->value, &full_width_value);
+    Util::FullWidthToHalfWidth(candidate->value, &half_width_value);
+
+    for (size_t j = 0; j < size; ++j) {
+      if (candidate->value == value[j].value ||
+          full_width_value == value[j].value ||
+          half_width_value == value[j].value) {
+        candidate->description =
+            GetDescription(candidate->value,
+                           value[j].description,
+                           value[j].additional_description);
+        break;
+      }
     }
   }
 }

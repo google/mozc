@@ -36,6 +36,7 @@
 #include "win32/ime/ime_core.h"
 #include "win32/ime/ime_deleter.h"
 #include "win32/ime/ime_scoped_context.h"
+#include "win32/ime/ime_surrogate_pair_observer.h"
 #include "win32/ime/ime_trace.h"
 #include "win32/ime/ime_ui_visibility_tracker.h"
 
@@ -75,6 +76,7 @@ bool PrivateContext::Initialize() {
   ui_visibility_tracker = new UIVisibilityTracker();
   last_output = new mozc::commands::Output();
   deleter = new VKBackBasedDeleter();
+  surrogate_pair_observer = new SurrogatePairObserver();
   return true;
 }
 
@@ -88,6 +90,7 @@ bool PrivateContext::Uninitialize() {
   delete ui_visibility_tracker;
   delete last_output;
   delete deleter;
+  delete surrogate_pair_observer;
   magic_number = 0;
   thread_id = 0;
   client = NULL;
@@ -96,6 +99,7 @@ bool PrivateContext::Uninitialize() {
   ui_visibility_tracker = NULL;
   last_output = NULL;
   deleter = NULL;
+  surrogate_pair_observer = NULL;
   return true;
 }
 
@@ -122,7 +126,7 @@ bool PrivateContextUtil::IsValidPrivateContext(HIMCC private_data_handle) {
   return private_context->Validate();
 }
 
-bool PrivateContextUtil::EmsurePrivateContextIsInitialized(
+bool PrivateContextUtil::EnsurePrivateContextIsInitialized(
     HIMCC *private_data_handle_pointer) {
   if (private_data_handle_pointer == NULL) {
     return false;

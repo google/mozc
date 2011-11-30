@@ -43,6 +43,8 @@
         '../../config/config.gyp:config_handler',
         '../../config/config.gyp:genproto_config',
         '../../ipc/ipc.gyp:ipc',
+        '../../languages/languages.gyp:global_language_spec',
+        '../../languages/japanese/japanese.gyp:language_dependent_spec_japanese',
         '../../session/session_base.gyp:genproto_session',
         'mozc_emacs_helper_lib',
       ],

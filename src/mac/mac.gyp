@@ -44,6 +44,8 @@
         '../renderer/renderer.gyp:renderer',
         '../renderer/renderer.gyp:table_layout',
         '../renderer/renderer.gyp:window_util',
+        '../languages/japanese/japanese.gyp:language_dependent_spec_japanese',
+        '../languages/languages.gyp:global_language_spec',
         '../session/session_base.gyp:ime_switch_util',
         '../session/session_base.gyp:session_protocol',
         '../testing/testing.gyp:gtest_main',
@@ -173,6 +175,50 @@
       ],
       'targets': [
         {
+          'target_name': 'UserHistoryTransition',
+          'type': 'executable',
+          'mac_bundle': 1,
+          'sources': [
+            'UserHistoryTransition/DialogsController.mm',
+            'UserHistoryTransition/deprecated_user_storage.cc',
+            'UserHistoryTransition/user_history_transition.cc',
+            'UserHistoryTransition/user_history_transition_gui_main.mm',
+            '../sync/sync_util.cc',  # for GenRandomString
+            '../sync/user_history_sync_util.cc',
+          ],
+          'dependencies': [
+            '../base/base.gyp:base',
+            '../prediction/prediction.gyp:prediction',
+            '../prediction/prediction.gyp:genproto_prediction',
+          ],
+          'mac_bundle_resources': [
+            '../data/images/mac/product_icon.icns',
+            'UserHistoryTransition/English.lproj/Dialogs.xib',
+            'UserHistoryTransition/English.lproj/InfoPlist.strings',
+            'UserHistoryTransition/Japanese.lproj/Dialogs.xib',
+            'UserHistoryTransition/Japanese.lproj/InfoPlist.strings',
+          ],
+          'xcode_settings': {
+            'INFOPLIST_FILE': 'UserHistoryTransition/Info.plist',
+          },
+        },
+        {
+          'target_name': 'UserHistoryTransitionCUI',
+          'type': 'executable',
+          'sources': [
+            'UserHistoryTransition/deprecated_user_storage.cc',
+            'UserHistoryTransition/user_history_transition.cc',
+            'UserHistoryTransition/user_history_transition_main.cc',
+            '../sync/sync_util.cc',  # for GenRandomString
+            '../sync/user_history_sync_util.cc',
+          ],
+          'dependencies': [
+            '../base/base.gyp:base',
+            '../prediction/prediction.gyp:prediction',
+            '../prediction/prediction.gyp:genproto_prediction',
+          ],
+        },
+        {
           'target_name': 'ActivatePane',
           'type': 'loadable_module',
           'mac_bundle': 1,
@@ -186,6 +232,29 @@
           ],
           'xcode_settings': {
             'INFOPLIST_FILE': 'ActivatePane/Info.plist',
+            'GCC_C_LANGUAGE_STANDARD': 'c99',
+          },
+          'link_settings': {
+            'libraries': [
+              '$(SDKROOT)/System/Library/Frameworks/Carbon.framework',
+              '$(SDKROOT)/System/Library/Frameworks/InstallerPlugins.framework',
+            ],
+          },
+        },
+        {
+          'target_name': 'DevConfirmPane',
+          'type': 'loadable_module',
+          'mac_bundle': 1,
+          'sources': [
+            'DevConfirmPane/DevConfirmPane.m',
+          ],
+          'mac_bundle_resources': [
+            'DevConfirmPane/DevConfirmPane.xib',
+            'DevConfirmPane/English.lproj/Localizable.strings',
+            'DevConfirmPane/Japanese.lproj/Localizable.strings',
+          ],
+          'xcode_settings': {
+            'INFOPLIST_FILE': 'DevConfirmPane/Info.plist',
             'GCC_C_LANGUAGE_STANDARD': 'c99',
           },
           'link_settings': {
@@ -246,6 +315,8 @@
             '../gui/gui.gyp:error_message_dialog_mac',
             '../gui/gui.gyp:hand_writing_mac',
             '../gui/gui.gyp:word_register_dialog_mac',
+            '../languages/japanese/japanese.gyp:language_dependent_spec_japanese',
+            '../languages/languages.gyp:global_language_spec',
             '../renderer/renderer.gyp:mozc_renderer',
             '../renderer/renderer.gyp:renderer',
             '../renderer/renderer.gyp:table_layout',

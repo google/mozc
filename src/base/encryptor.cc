@@ -341,13 +341,13 @@ bool Encryptor::EncryptString(const Encryptor::Key &key, string *data) {
     return false;
   }
   size_t size = data->size();
-  data->resize(key.GetEncryptedSize(data->size()));
-  char *buf = const_cast<char *>(data->data());
-  if (!Encryptor::EncryptArray(key, buf, &size)) {
+  scoped_array<char> buf(new char[key.GetEncryptedSize(data->size())]);
+  memcpy(buf.get(), data->data(), data->size());
+  if (!Encryptor::EncryptArray(key, buf.get(), &size)) {
     LOG(ERROR) << "EncryptArray() failed";
     return false;
   }
-  data->resize(size);
+  data->assign(buf.get(), size);
   return true;
 }
 
@@ -357,12 +357,13 @@ bool Encryptor::DecryptString(const Encryptor::Key &key, string *data) {
     return false;
   }
   size_t size = data->size();
-  char *buf = const_cast<char *>(data->data());
-  if (!Encryptor::DecryptArray(key, buf, &size)) {
+  scoped_array<char> buf(new char[data->size()]);
+  memcpy(buf.get(), data->data(), data->size());
+  if (!Encryptor::DecryptArray(key, buf.get(), &size)) {
     LOG(ERROR) << "DecryptArray() failed";
     return false;
   }
-  data->resize(size);
+  data->assign(buf.get(), size);
   return true;
 }
 

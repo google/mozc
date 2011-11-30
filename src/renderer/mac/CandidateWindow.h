@@ -44,7 +44,6 @@ class Candidates;
 }  // namespace mozc::commands
 namespace renderer {
 class TableLayout;
-struct Point;
 
 namespace mac {
 // CandidateWindow holds a carbon window and maintains the connection

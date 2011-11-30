@@ -40,6 +40,7 @@ class VariantsRewriter: public RewriterInterface  {
  public:
   VariantsRewriter();
   virtual ~VariantsRewriter();
+  virtual int capability() const;
   virtual bool Rewrite(Segments *segments) const;
   virtual void Finish(Segments *segments);
   virtual void Clear();
@@ -71,10 +72,15 @@ class VariantsRewriter: public RewriterInterface  {
     SPELLING_CORRECTION = 128
   };
 
+  enum RewriteType {
+    EXPAND_VARIANT = 0,  // Expand variants
+    SELECT_VARIANT = 1,  // Select preferred form
+  };
+
   static void SetDescription(int description_type,
                              Segment::Candidate *candidate);
 
-  bool RewriteSegment(Segment *seg) const;
+  bool RewriteSegment(RewriteType type, Segment *seg) const;
 };
 }
 

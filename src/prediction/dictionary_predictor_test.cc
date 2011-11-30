@@ -37,7 +37,7 @@
 #include "config/config_handler.h"
 #include "converter/character_form_manager.h"
 #include "converter/converter_interface.h"
-#include "converter/converter_mock.h"
+#include "converter/immutable_converter_interface.h"
 #include "converter/node.h"
 #include "converter/node_allocator.h"
 #include "converter/segments.h"
@@ -150,16 +150,6 @@ class DictionaryPredictorTest : public testing::Test {
                                       kRightCapriHiragana,
                                       kCapriKatakana,
                                       Node::SPELLING_CORRECTION);
-    // "とくだね"
-    const char kTokudaneHiragana[] = "\xE3\x81\xA8\xE3\x81\x8F\xE3\x81\xA0"
-        "\xE3\x81\xAD";
-
-    // "とくダネ!"
-    const char kTokudaneKatakana[] = "\xE3\x81\xA8\xE3\x81\x8F\xE3\x83\x80"
-        "\xE3\x83\x8D!";
-
-    GetMockDic()->AddLookupPredictive(kTokudaneHiragana, kTokudaneHiragana,
-                                  kTokudaneKatakana, Node::DEFAULT_ATTRIBUTE);
 
     // "で"
     const char kDe[] = "\xE3\x81\xA7";
@@ -232,6 +222,7 @@ TEST_F(DictionaryPredictorTest, OnOffTest) {
   MakeSegmentsForSuggestion("", &segments);
   EXPECT_FALSE(predictor.Predict(&segments));
 }
+
 
 TEST_F(DictionaryPredictorTest, BigramTest) {
   Segments segments;
@@ -494,8 +485,146 @@ TEST_F(DictionaryPredictorTest,
   }
 }
 
+TEST_F(DictionaryPredictorTest, GetRealtimeCandidateMaxSize) {
+  DictionaryPredictor predictor;
+  Segments segments;
+
+  // GetRealtimeCandidateMaxSize has some heuristics so here we test following
+  // conditions.
+  // - The result must be equal or less than kMaxSize;
+  // - If mixed_conversion is the same, the result of SUGGESTION is
+  //        equal or less than PREDICTION.
+  // - If mixed_conversion is the same, the result of PARTIAL_SUGGESTION is
+  //        equal or less than PARTIAL_PREDICTION.
+  // - Partial version has equal or greater than non-partial version.
+
+  const size_t kMaxSize = 100;
+
+  // non-partial, non-mixed-conversion
+  segments.set_request_type(Segments::PREDICTION);
+  const size_t prediction_no_mixed =
+      predictor.GetRealtimeCandidateMaxSize(segments, false, kMaxSize);
+  EXPECT_GE(kMaxSize, prediction_no_mixed);
+
+  segments.set_request_type(Segments::SUGGESTION);
+  const size_t suggestion_no_mixed =
+      predictor.GetRealtimeCandidateMaxSize(segments, false, kMaxSize);
+  EXPECT_GE(kMaxSize, suggestion_no_mixed);
+  EXPECT_LE(suggestion_no_mixed, prediction_no_mixed);
+
+  // non-partial, mixed-conversion
+  segments.set_request_type(Segments::PREDICTION);
+  const size_t prediction_mixed =
+      predictor.GetRealtimeCandidateMaxSize(segments, true, kMaxSize);
+  EXPECT_GE(kMaxSize, prediction_mixed);
+
+  segments.set_request_type(Segments::SUGGESTION);
+  const size_t suggestion_mixed =
+      predictor.GetRealtimeCandidateMaxSize(segments, true, kMaxSize);
+  EXPECT_GE(kMaxSize, suggestion_mixed);
+  EXPECT_EQ(kMaxSize, prediction_mixed + suggestion_mixed);
+
+  // partial, non-mixed-conversion
+  segments.set_request_type(Segments::PARTIAL_PREDICTION);
+  const size_t partial_prediction_no_mixed =
+      predictor.GetRealtimeCandidateMaxSize(segments, false, kMaxSize);
+  EXPECT_GE(kMaxSize, partial_prediction_no_mixed);
+
+  segments.set_request_type(Segments::PARTIAL_SUGGESTION);
+  const size_t partial_suggestion_no_mixed =
+      predictor.GetRealtimeCandidateMaxSize(segments, false, kMaxSize);
+  EXPECT_GE(kMaxSize, partial_suggestion_no_mixed);
+  EXPECT_LE(partial_suggestion_no_mixed, partial_prediction_no_mixed);
+
+  // partial, mixed-conversion
+  segments.set_request_type(Segments::PARTIAL_PREDICTION);
+  const size_t partial_prediction_mixed =
+      predictor.GetRealtimeCandidateMaxSize(segments, true, kMaxSize);
+  EXPECT_GE(kMaxSize, partial_prediction_mixed);
+
+  segments.set_request_type(Segments::PARTIAL_SUGGESTION);
+  const size_t partial_suggestion_mixed =
+      predictor.GetRealtimeCandidateMaxSize(segments, true, kMaxSize);
+  EXPECT_GE(kMaxSize, partial_suggestion_mixed);
+  EXPECT_LE(partial_suggestion_mixed, partial_prediction_mixed);
+
+  EXPECT_GE(partial_prediction_no_mixed, prediction_no_mixed);
+  EXPECT_GE(partial_prediction_mixed, prediction_mixed);
+  EXPECT_GE(partial_suggestion_no_mixed, suggestion_no_mixed);
+  EXPECT_GE(partial_suggestion_mixed, suggestion_mixed);
+}
+
+TEST_F(DictionaryPredictorTest, GetRealtimeCandidateMaxSizeForMixed) {
+  DictionaryPredictor predictor;
+  Segments segments;
+  Segment *segment = segments.add_segment();
+
+  const size_t kMaxSize = 100;
+
+  // for short key, try to provide many results as possible
+  segment->set_key("short");
+  segments.set_request_type(Segments::SUGGESTION);
+  const size_t short_suggestion_mixed =
+      predictor.GetRealtimeCandidateMaxSize(segments, true, kMaxSize);
+  EXPECT_GE(kMaxSize, short_suggestion_mixed);
+
+  segments.set_request_type(Segments::PREDICTION);
+  const size_t short_prediction_mixed =
+      predictor.GetRealtimeCandidateMaxSize(segments, true, kMaxSize);
+  EXPECT_GE(kMaxSize, short_prediction_mixed);
+  EXPECT_EQ(kMaxSize, short_prediction_mixed + short_suggestion_mixed);
+
+  // for long key, provide few results
+  segment->set_key("long_request_key");
+  segments.set_request_type(Segments::SUGGESTION);
+  const size_t long_suggestion_mixed =
+      predictor.GetRealtimeCandidateMaxSize(segments, true, kMaxSize);
+  EXPECT_GE(kMaxSize, long_suggestion_mixed);
+  EXPECT_GT(short_suggestion_mixed, long_suggestion_mixed);
+
+  segments.set_request_type(Segments::PREDICTION);
+  const size_t long_prediction_mixed =
+      predictor.GetRealtimeCandidateMaxSize(segments, true, kMaxSize);
+  EXPECT_GE(kMaxSize, long_prediction_mixed);
+  EXPECT_GT(kMaxSize, long_prediction_mixed + long_suggestion_mixed);
+  EXPECT_GT(short_prediction_mixed, long_prediction_mixed);
+}
+
 TEST_F(DictionaryPredictorTest,
        AggregateRealtimeConversion) {
+  // Simple immutable converte mock for the test
+  // TODO(toshiyuki): Implement proper mock under converter directory if needed.
+  class ImmutableConverterMock : public ImmutableConverterInterface {
+   public:
+    ImmutableConverterMock() {
+      Segment *segment = segments_.add_segment();
+      // "わたしのなまえはなかのです"
+      segment->set_key("\xe3\x82\x8f\xe3\x81\x9f\xe3\x81\x97\xe3\x81\xae"
+                       "\xe3\x81\xaa\xe3\x81\xbe\xe3\x81\x88\xe3\x81\xaf"
+                       "\xe3\x81\xaa\xe3\x81\x8b\xe3\x81\xae\xe3\x81\xa7"
+                       "\xe3\x81\x99");
+      Segment::Candidate *candidate = segment->add_candidate();
+      // "私の名前は中野です"
+      candidate->value = "\xe7\xa7\x81\xe3\x81\xae\xe5\x90\x8d\xe5\x89\x8d"
+          "\xe3\x81\xaf\xe4\xb8\xad\xe9\x87\x8e\xe3\x81\xa7\xe3\x81\x99";
+      // "わたしのなまえはなかのです"
+      candidate->key = ("\xe3\x82\x8f\xe3\x81\x9f\xe3\x81\x97\xe3\x81\xae"
+                        "\xe3\x81\xaa\xe3\x81\xbe\xe3\x81\x88\xe3\x81\xaf"
+                        "\xe3\x81\xaa\xe3\x81\x8b\xe3\x81\xae\xe3\x81\xa7"
+                        "\xe3\x81\x99");
+    }
+
+    virtual bool Convert(Segments *segments) const {
+      segments->CopyFrom(segments_);
+      return true;
+    }
+
+   private:
+    Segments segments_;
+  };
+
+  ImmutableConverterMock immutable_converter_mock;
+  ImmutableConverterFactory::SetImmutableConverter(&immutable_converter_mock);
   Segments segments;
   DictionaryPredictor predictor;
   NodeAllocator allocator;
@@ -532,6 +661,8 @@ TEST_F(DictionaryPredictorTest,
   }
 
   EXPECT_EQ(1, segments.conversion_segments_size());
+
+  ImmutableConverterFactory::SetImmutableConverter(NULL);
 }
 
 namespace {
@@ -575,8 +706,10 @@ class TestSuffixDictionary : public DictionaryInterface {
     return result;
   }
 
-  virtual Node *LookupPrefix(const char *str, int size,
-                             NodeAllocatorInterface *allocator) const {
+  virtual Node *LookupPrefixWithLimit(
+      const char *str, int size,
+      const Limit &limit,
+      NodeAllocatorInterface *allocator) const {
     return NULL;
   }
 
@@ -586,6 +719,38 @@ class TestSuffixDictionary : public DictionaryInterface {
   }
 };
 }  // namespace
+
+TEST_F(DictionaryPredictorTest, GetUnigramCandidateCutoffThreshold) {
+  DictionaryPredictor predictor;
+  Segments segments;
+
+  // GetUnigramCandidateCutoffThreshold has some heuristics so here we test
+  // following conditions.
+  // - The result of SUGGESTION is equal or less than PREDICTION.
+  //     - If this condition is broken, expanding suggestion will corrupt
+  //       because SessionConverter::AppendCandidateList doesn't expect
+  //       such situation.
+
+  // non-partial, mixed-conversion
+  segments.set_request_type(Segments::PREDICTION);
+  const size_t prediction_mixed =
+      predictor.GetUnigramCandidateCutoffThreshold(segments, true);
+
+  segments.set_request_type(Segments::SUGGESTION);
+  const size_t suggestion_mixed =
+      predictor.GetUnigramCandidateCutoffThreshold(segments, true);
+  EXPECT_LE(suggestion_mixed, prediction_mixed);
+
+  // non-partial, non-mixed-conversion
+  segments.set_request_type(Segments::PREDICTION);
+  const size_t prediction_no_mixed =
+      predictor.GetUnigramCandidateCutoffThreshold(segments, false);
+
+  segments.set_request_type(Segments::SUGGESTION);
+  const size_t suggestion_no_mixed =
+      predictor.GetUnigramCandidateCutoffThreshold(segments, false);
+  EXPECT_LE(suggestion_no_mixed, prediction_no_mixed);
+}
 
 TEST_F(DictionaryPredictorTest,
        AggregateSuffixPrediction) {
@@ -642,6 +807,7 @@ TEST_F(DictionaryPredictorTest,
 
   SuffixDictionaryFactory::SetSuffixDictionary(NULL);
 }
+
 
 TEST_F(DictionaryPredictorTest, GetHistoryKeyAndValue) {
   Segments segments;
@@ -1014,48 +1180,5 @@ TEST_F(DictionaryPredictorTest, LookupKeyValueFromDictionary) {
       "\xE3\x81\xA6",
       "\xE3\x83\x86",
       &allocator));
-}
-
-TEST_F(DictionaryPredictorTest, ConformCharacterWidthToPreference) {
-  Segments segments;
-  NodeAllocator allocator;
-
-  config::Config config;
-  config.set_use_dictionary_suggest(true);
-  config.set_use_realtime_conversion(true);
-  config::ConfigHandler::SetConfig(config);
-  DictionaryPredictor predictor;
-
-  // "とくだね"
-  const char kTokudaneHiragana[] = "\xE3\x81\xA8\xE3\x81\x8F\xE3\x81\xA0"
-      "\xE3\x81\xAD";
-  // "とくダネ!"
-  const char kTokudaneHalf[] = "\xE3\x81\xA8\xE3\x81\x8F\xE3\x83\x80"
-      "\xE3\x83\x8D!";
-  // "とくダネ！"
-  const char kTokudaneFull[] = "\xE3\x81\xA8\xE3\x81\x8F\xE3\x83\x80"
-      "\xE3\x83\x8D\xEF\xBC\x81";
-
-  {
-    MakeSegmentsForSuggestion(kTokudaneHiragana, &segments);
-    CharacterFormManager::GetCharacterFormManager()->
-        SetCharacterForm("!", config::Config::HALF_WIDTH);
-    EXPECT_TRUE(predictor.Predict(&segments));
-
-    EXPECT_EQ(segments.segments_size(), 1);
-    EXPECT_GE(segments.segment(0).candidates_size(), 1);
-    EXPECT_EQ(kTokudaneHalf, segments.segment(0).candidate(0).value);
-  }
-
-  {
-    MakeSegmentsForSuggestion(kTokudaneHiragana, &segments);
-    CharacterFormManager::GetCharacterFormManager()->
-        SetCharacterForm("!", config::Config::FULL_WIDTH);
-    EXPECT_TRUE(predictor.Predict(&segments));
-
-    EXPECT_EQ(segments.segments_size(), 1);
-    EXPECT_GE(segments.segment(0).candidates_size(), 1);
-    EXPECT_EQ(kTokudaneFull, segments.segment(0).candidate(0).value);
-  }
 }
 }  // mozc

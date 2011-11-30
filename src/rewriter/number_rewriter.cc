@@ -45,6 +45,18 @@
 namespace mozc {
 namespace {
 
+// If top candidate is Kanji numeric, we want to expand at least
+// 5 candidates apart from base candidate.
+// http://b/issue?id=2872048
+const int kArabicNumericOffset = 5;
+
+// Rewrite type
+enum RewriteType {
+  NO_REWRITE = 0,
+  ARABIC_FIRST,  // arabic candidates first ordering
+  KANJI_FIRST,  // kanji candidates first ordering
+};
+
 void PushBackCandidate(const string &value, const string &desc, uint16 style,
                        vector<Segment::Candidate> *results) {
   bool found = false;
@@ -65,69 +77,221 @@ void PushBackCandidate(const string &value, const string &desc, uint16 style,
 }
 
 bool IsNumber(uint16 lid) {
-  return
-      (POSMatcher::IsNumber(lid) ||
-       POSMatcher::IsKanjiNumber(lid));
+  // Number candidates sometimes categorized as general noun.
+  // TODO(toshiyuki): It's better if we can rewrite
+  // from general noun POS to number POS
+  // TODO(toshiyuki): We can remove general noun check if we can set
+  // correct POS.
+  return (POSMatcher::IsNumber(lid) || POSMatcher::IsKanjiNumber(lid) ||
+          POSMatcher::IsGeneralNoun(lid));
 }
 
-// Return true if rewriter should insert numerical variants.
-// *base_candidate_pos: candidate index of base_candidate. POS information
-// for numerical variants are coped from the base_candidate.
-// *insert_pos: the candidate index from which numerical variants
-// should be inserted.
-bool GetNumericCandidatePositions(Segment *seg, int *base_candidate_pos,
-                                  int *insert_pos) {
-  CHECK(base_candidate_pos);
-  CHECK(insert_pos);
-  for (size_t i = 0; i < seg->candidates_size(); ++i) {
-    const Segment::Candidate &c = seg->candidate(i);
+// Returns rewrite type for the given segment and base candidate information.
+// *base_candidate_pos: candidate index of starting insertion.
+// *arabic_candidate: arabic candidate using numeric style conversion.
+// POS information, cost, etc will be copied from base candidate.
+RewriteType GetRewriteTypeAndBase(const Segment &seg,
+                                  int *base_candidate_pos,
+                                  Segment::Candidate *arabic_candidate) {
+  DCHECK(base_candidate_pos);
+  DCHECK(arabic_candidate);
+  for (size_t i = 0; i < seg.candidates_size(); ++i) {
+    const Segment::Candidate &c = seg.candidate(i);
     if (!IsNumber(c.lid)) {
       continue;
     }
 
     if (Util::GetScriptType(c.content_value) == Util::NUMBER) {
       *base_candidate_pos = i;
-      // +2 as fullwidht/(or halfwidth) variant is on i + 1 postion.
-      *insert_pos = i + 2;
-      return true;
+      arabic_candidate->CopyFrom(c);
+      return ARABIC_FIRST;
     }
 
     string kanji_number, arabic_number, half_width_new_content_value;
     Util::FullWidthToHalfWidth(c.content_key, &half_width_new_content_value);
-    // try to get normalized kanji_number and arabic_number.
-    // if it failed, do nothing.
-    if (!Util::NormalizeNumbers(c.content_value, true, &kanji_number,
-                                &arabic_number) ||
+    // Try to get normalized kanji_number and arabic_number.
+    // If it failed, do nothing.
+    // Retain suffix for later use.
+    string number_suffix;
+    if (!Util::NormalizeNumbersWithSuffix(c.content_value,
+                                          true,  // trim_reading_zeros
+                                          &kanji_number,
+                                          &arabic_number,
+                                          &number_suffix) ||
         arabic_number == half_width_new_content_value) {
-      return false;
+      return NO_REWRITE;
     }
-
-    // Insert arabic number first
-    Segment::Candidate *arabic_c = seg->insert_candidate(i + 1);
-    DCHECK(arabic_c);
-    const string suffix =
-        c.value.substr(c.content_value.size(),
-                       c.value.size() - c.content_value.size());
-    arabic_c->Init();
-    arabic_c->value = arabic_number + suffix;
-    arabic_c->content_value = arabic_number;
-    arabic_c->key = c.key;
-    arabic_c->content_key = c.content_key;
-    arabic_c->cost = c.cost;
-    arabic_c->structure_cost = c.structure_cost;
-    arabic_c->lid = c.lid;
-    arabic_c->rid = c.rid;
-
-    // If top candidate is Kanji numeric, we want to expand at least
-    // 5 candidates here.
-    // http://b/issue?id=2872048
-    const int kArabicNumericOffset = 5;
-    *base_candidate_pos = i + 1;
-    *insert_pos = i + kArabicNumericOffset;
-    return true;
+    const string suffix = c.value.substr(
+        c.content_value.size(), c.value.size() - c.content_value.size());
+    arabic_candidate->Init();
+    arabic_candidate->value = arabic_number + number_suffix + suffix;
+    arabic_candidate->content_value = arabic_number + number_suffix;
+    arabic_candidate->key = c.key;
+    arabic_candidate->content_key = c.content_key;
+    arabic_candidate->cost = c.cost;
+    arabic_candidate->structure_cost = c.structure_cost;
+    arabic_candidate->lid = c.lid;
+    arabic_candidate->rid = c.rid;
+    *base_candidate_pos = i;
+    return KANJI_FIRST;
   }
 
-  return false;
+  return NO_REWRITE;
+}
+
+void SetCandidatesInfo(const Segment::Candidate &arabic_cand,
+                       vector<Segment::Candidate> *candidates) {
+  const string suffix =
+      arabic_cand.value.substr(arabic_cand.content_value.size(),
+                               arabic_cand.value.size() -
+                               arabic_cand.content_value.size());
+
+  for (vector<Segment::Candidate>::iterator it = candidates->begin();
+       it != candidates->end(); ++it) {
+    it->content_value.assign(it->value);
+    it->value.append(suffix);
+  }
+}
+
+class CheckValueOperator {
+ public:
+  explicit CheckValueOperator(const string &v) : find_value_(v) {}
+  bool operator() (const Segment::Candidate &cand) const {
+    return (cand.value == find_value_);
+  }
+
+ private:
+  const string &find_value_;
+};
+
+// If we have the candidates to be inserted before the base candidate,
+// delete them.
+// TODO(toshiyuki): Delete candidates between base pos and insert pos
+// if necessary.
+void EraseExistingCandidates(const vector<Segment::Candidate> &results,
+                             int base_candidate_pos,
+                             int *insert_pos, Segment *seg) {
+  // Remember base candidate value
+  const string &base_value = seg->candidate(base_candidate_pos).value;
+  size_t pos = 0;
+  while (pos < seg->candidates_size()) {
+    const string &value = seg->candidate(pos).value;
+    if (value == base_value) {
+      break;
+    }
+    // Simple liner search. |results| size is small. (at most 10 or so)
+    const vector<Segment::Candidate>::const_iterator itr =
+        find_if(results.begin(), results.end(), CheckValueOperator(value));
+    if (itr == results.end()) {
+      ++pos;
+      continue;
+    }
+    seg->erase_candidate(pos);
+    --(*insert_pos);
+  }
+}
+
+void SetCandidate(const Segment::Candidate &base_cand,
+                  const Segment::Candidate &result_cand,
+                  Segment::Candidate *cand) {
+  DCHECK(cand);
+  cand->Init();
+  cand->lid = base_cand.lid;
+  cand->rid = base_cand.rid;
+  cand->cost = base_cand.cost;
+  cand->value = result_cand.value;
+  cand->content_value = result_cand.content_value;
+  cand->key = base_cand.key;
+  cand->content_key = base_cand.content_key;
+  cand->style = result_cand.style;
+  cand->description = result_cand.description;
+  // Don't want to have FULL_WIDTH form for Hex/Oct/BIN..etc.
+  if (cand->style == Segment::Candidate::NUMBER_HEX ||
+      cand->style == Segment::Candidate::NUMBER_OCT ||
+      cand->style == Segment::Candidate::NUMBER_BIN) {
+    cand->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
+  }
+}
+
+void InsertConvertedCandidates(const vector<Segment::Candidate> &results,
+                               const Segment::Candidate &base_cand,
+                               int base_candidate_pos,
+                               int insert_pos, Segment *seg) {
+  if (results.empty()) {
+    return;
+  }
+  // First, insert top candidate
+  // If we find the base candidate is equal to the converted
+  // special form candidates, we will rewrite it.
+  // Otherwise, we will insert top candidate just below the base.
+  // Sometimes original base candidate is different from converted candidate
+  // For example, "千万" v.s. "一千万", or "一二三" v.s. "百二十三".
+  // We don't want to rewrite "千万" to "一千万".
+  {
+    const string &base_value = seg->candidate(base_candidate_pos).value;
+    vector<Segment::Candidate>::const_iterator itr =
+        find_if(results.begin(), results.end(), CheckValueOperator(base_value));
+    if (itr != results.end() &&
+        itr->style != Segment::Candidate::NUMBER_KANJI &&
+        itr->style != Segment::Candidate::NUMBER_KANJI_ARABIC) {
+      // Rewrite exsisting base candidate
+      Segment::Candidate *c = seg->mutable_candidate(base_candidate_pos);
+      SetCandidate(base_cand, results[0], c);
+    } else {
+      // Insert candidate just below the base candidate
+      Segment::Candidate *c = seg->insert_candidate(base_candidate_pos + 1);
+      SetCandidate(base_cand, results[0], c);
+      ++insert_pos;
+    }
+  }
+
+  // Insert others
+  for (size_t i = 1; i < results.size(); ++i) {
+    Segment::Candidate *c = seg->insert_candidate(insert_pos++);
+    SetCandidate(base_cand, results[i], c);
+  }
+}
+
+int GetInsertPos(int base_pos, const Segment &segment, RewriteType type) {
+  if (type == ARABIC_FIRST) {
+    // +2 for arabic half_width full_width expansion
+    return min(base_pos + 2, static_cast<int>(segment.candidates_size()));
+  } else {
+    return min(base_pos + kArabicNumericOffset,
+               static_cast<int>(segment.candidates_size()));
+  }
+}
+
+void InsertHalfArabic(const string &half_arabic,
+                      vector<Util::NumberString> *output) {
+  output->push_back(Util::NumberString(half_arabic, "",
+                                       Util::NumberString::DEFAULT_STYLE));
+}
+
+void GetNumbers(RewriteType type, const Segments &segments,
+                const string &arabic_content_value,
+                vector<Util::NumberString> *output) {
+  DCHECK(output);
+  if (type == ARABIC_FIRST) {
+    InsertHalfArabic(arabic_content_value, output);
+    Util::ArabicToWideArabic(arabic_content_value, output);
+    Util::ArabicToSeparatedArabic(arabic_content_value, output);
+    Util::ArabicToKanji(arabic_content_value, output);
+    Util::ArabicToOtherForms(arabic_content_value, output);
+  } else if (type == KANJI_FIRST) {
+    Util::ArabicToKanji(arabic_content_value, output);
+    InsertHalfArabic(arabic_content_value, output);
+    Util::ArabicToWideArabic(arabic_content_value, output);
+    Util::ArabicToSeparatedArabic(arabic_content_value, output);
+    Util::ArabicToOtherForms(arabic_content_value, output);
+  }
+
+  // Radix conversion is done only for conversion mode.
+  // Showing radix candidates is annoying for an user.
+  if (segments.conversion_segments_size() == 1 &&
+      segments.request_type() == Segments::CONVERSION) {
+    Util::ArabicToOtherRadixes(arabic_content_value, output);
+  }
 }
 }  // namespace
 
@@ -145,77 +309,53 @@ bool NumberRewriter::Rewrite(Segments *segments) const {
   }
 
   bool modified = false;
-  for (size_t i = segments->history_segments_size();
-       i < segments->segments_size(); ++i) {
-    Segment *seg = segments->mutable_segment(i);
+  for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
+    Segment *seg = segments->mutable_conversion_segment(i);
     DCHECK(seg);
     int base_candidate_pos = 0;
-    int insert_pos = 0;
-    if (!GetNumericCandidatePositions(seg, &base_candidate_pos, &insert_pos)) {
+    Segment::Candidate arabic_cand;
+    RewriteType type = GetRewriteTypeAndBase(
+        segments->conversion_segment(i), &base_candidate_pos, &arabic_cand);
+    if (type == NO_REWRITE) {
       continue;
     }
+    modified = true;
 
-    const Segment::Candidate &base_cand = seg->candidate(base_candidate_pos);
-
-    if (base_cand.content_value.size() > base_cand.value.size()) {
+    if (arabic_cand.content_value.size() > arabic_cand.value.size()) {
       LOG(ERROR) << "Invalid content_value/value: ";
       continue;
     }
 
-    string base_content_value;
-    Util::FullWidthToHalfWidth(base_cand.content_value, &base_content_value);
-
-    if (Util::GetScriptType(base_content_value) != Util::NUMBER) {
-      LOG(ERROR) << "base_content_value is not number: " << base_content_value;
+    string arabic_content_value;
+    Util::FullWidthToHalfWidth(
+        arabic_cand.content_value, &arabic_content_value);
+    if (Util::GetScriptType(arabic_content_value) != Util::NUMBER) {
+      if (Util::GetFirstScriptType(arabic_content_value) == Util::NUMBER) {
+        // Rewrite for number suffix
+        const int insert_pos = min(base_candidate_pos + 1,
+                                   static_cast<int>(seg->candidates_size()));
+        Segment::Candidate *c = seg->insert_candidate(insert_pos);
+        SetCandidate(arabic_cand, arabic_cand, c);
+        continue;  // It's normal for a candidate to have a suffix.
+      }
+      LOG(ERROR) << "arabic_content_value is not number: "
+                 << arabic_content_value;
       continue;
     }
-
-    insert_pos = min(insert_pos, static_cast<int>(seg->candidates_size()));
-
-    modified = true;
     vector<Util::NumberString> output;
+    GetNumbers(type, *segments, arabic_content_value, &output);
     vector<Segment::Candidate> converted_numbers;
-
-    Util::ArabicToWideArabic(base_content_value, &output);
-    Util::ArabicToSeparatedArabic(base_content_value, &output);
-    Util::ArabicToKanji(base_content_value, &output);
-    Util::ArabicToOtherForms(base_content_value, &output);
-
-    if (segments->conversion_segments_size() == 1) {
-      Util::ArabicToOtherRadixes(base_content_value, &output);
-    }
-
-    for (int i = 0; i < output.size(); i++) {
-      PushBackCandidate(output[i].value, output[i].description, output[i].style,
+    for (int j = 0; j < output.size(); j++) {
+      PushBackCandidate(output[j].value, output[j].description, output[j].style,
                         &converted_numbers);
     }
-
-    const string suffix =
-        base_cand.value.substr(base_cand.content_value.size(),
-                               base_cand.value.size() -
-                               base_cand.content_value.size());
-
-    for (vector<Segment::Candidate>::const_iterator iter =
-             converted_numbers.begin();
-         iter != converted_numbers.end(); ++iter) {
-      Segment::Candidate *c = seg->insert_candidate(insert_pos++);
-      DCHECK(c);
-      c->lid = base_cand.lid;
-      c->rid = base_cand.rid;
-      c->cost = base_cand.cost;
-      c->value = iter->value + suffix;
-      c->content_value = iter->value;
-      c->key = base_cand.key;
-      c->content_key = base_cand.content_key;
-      c->style = iter->style;
-      c->description = iter->description;
-      // Don't want to have FULL_WIDTH form for Hex/Oct/BIN..etc.
-      if (c->style == Segment::Candidate::NUMBER_HEX ||
-          c->style == Segment::Candidate::NUMBER_OCT ||
-          c->style == Segment::Candidate::NUMBER_BIN) {
-        c->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
-      }
-    }
+    SetCandidatesInfo(arabic_cand, &converted_numbers);
+    int insert_pos = GetInsertPos(base_candidate_pos, *seg, type);
+    EraseExistingCandidates(
+        converted_numbers, base_candidate_pos, &insert_pos, seg);
+    InsertConvertedCandidates(converted_numbers, arabic_cand,
+                              base_candidate_pos,
+                              insert_pos, seg);
   }
 
   return modified;

@@ -106,6 +106,34 @@ TEST(CharChunkTest, AddInput_CharByChar) {
   EXPECT_EQ("", input);
 }
 
+TEST(CharChunkTest, AddInput_NoEffectInput) {
+  Table table;
+  table.AddRule("2", "", "<*>2");
+  table.AddRule("<*>1", "", "1");
+  table.AddRule("*", "", "");
+
+  string input;
+
+  CharChunk chunk1;
+  input = "2";
+  EXPECT_FALSE(chunk1.AddInputInternal(table, &input));
+  EXPECT_FALSE(chunk1.IsFixed());
+  EXPECT_EQ("2", chunk1.raw());
+  EXPECT_EQ("", chunk1.conversion());
+  EXPECT_EQ("<*>2", chunk1.pending());
+  EXPECT_EQ("", input);
+
+  input = "*";
+  // "<*>2*" is used as a query but no such entry is in the table.
+  // Thus AddInputInternal() should not consume the input.
+  EXPECT_FALSE(chunk1.AddInputInternal(table, &input));
+  EXPECT_FALSE(chunk1.IsFixed());
+  EXPECT_EQ("2", chunk1.raw());
+  EXPECT_EQ("", chunk1.conversion());
+  EXPECT_EQ("<*>2", chunk1.pending());
+  EXPECT_EQ("*", input);
+}
+
 TEST(CharChunkTest, AddInput_ForN) {
   Table table;
   table.AddRule("a", "[A]", "");
@@ -1384,6 +1412,199 @@ TEST(CharChunkTest, NoTransliterationAttributeForInputAndConvertedChar) {
     EXPECT_EQ("", chunk.pending());
     EXPECT_EQ("[za]", chunk.conversion());
     EXPECT_EQ(kConvT12r, chunk.GetTransliterator(kNullT12r));
+  }
+}
+
+namespace {
+bool HasResult(const set<string> &results, const string &value) {
+  return (results.find(value) != results.end());
+}
+}  // namespace
+
+TEST(CharChunkTest, RomanGetExpandedResults) {
+  Table table;
+  // "きゃ"
+  table.AddRule("kya", "\xe3\x81\x8d\xe3\x82\x83", "");
+  // "きぃ"
+  table.AddRule("kyi", "\xe3\x81\x8d\xe3\x81\x83", "");
+  // "きゅ"
+  table.AddRule("kyu", "\xe3\x81\x8d\xe3\x82\x85", "");
+  // "きぇ"
+  table.AddRule("kye", "\xe3\x81\x8d\xe3\x81\x87", "");
+  // "きょ"
+  table.AddRule("kyo", "\xe3\x81\x8d\xe3\x82\x87", "");
+  // "っ"
+  table.AddRule("kk", "\xe3\x81\xa3", "k");
+  // "か"
+  table.AddRule("ka", "\xe3\x81\x8b", "");
+  // "き"
+  table.AddRule("ki", "\xe3\x81\x8d", "");
+  // "く"
+  table.AddRule("ku", "\xe3\x81\x8f", "");
+  // "け"
+  table.AddRule("ke", "\xe3\x81\x91", "");
+  // "こ"
+  table.AddRule("ko", "\xe3\x81\x93", "");
+
+  {
+    string input = "ka";  // AddInputInternal requires non-const string
+    CharChunk chunk;
+    chunk.AddInputInternal(table, &input);
+
+    string base;
+    chunk.AppendTrimedResult(table, kNullT12r, &base);
+    // "か"
+    EXPECT_EQ("\xe3\x81\x8b", base);
+
+    set<string> results;
+    chunk.GetExpandedResults(table, kNullT12r, &results);
+    EXPECT_EQ(0, results.size());  // no ambiguity
+  }
+  {
+    string input = "k";
+    CharChunk chunk;
+    chunk.AddInputInternal(table, &input);
+
+    string base;
+    chunk.AppendTrimedResult(table, kNullT12r, &base);
+    EXPECT_EQ("", base);
+
+    set<string> results;
+    chunk.GetExpandedResults(table, kNullT12r, &results);
+    EXPECT_EQ(12, results.size());
+    EXPECT_TRUE(HasResult(results, "k"));
+    // "か"
+    EXPECT_TRUE(HasResult(results, "\xe3\x81\x8b"));  // ka
+    // "き"
+    EXPECT_TRUE(HasResult(results, "\xe3\x81\x8d"));  // ki
+    // "きゃ"
+    EXPECT_TRUE(HasResult(results, "\xe3\x81\x8d\xe3\x82\x83"));  // kya
+    // "きぃ"
+    EXPECT_TRUE(HasResult(results, "\xe3\x81\x8d\xe3\x81\x83"));  // kyi
+    // "きゅ"
+    EXPECT_TRUE(HasResult(results, "\xe3\x81\x8d\xe3\x82\x85"));  // kyu
+    // "きぇ"
+    EXPECT_TRUE(HasResult(results, "\xe3\x81\x8d\xe3\x81\x87"));  // kye
+    // "きょ"
+    EXPECT_TRUE(HasResult(results, "\xe3\x81\x8d\xe3\x82\x87"));  // kyo
+    // "く"
+    EXPECT_TRUE(HasResult(results, "\xe3\x81\x8f"));  // ku
+    // "け"
+    EXPECT_TRUE(HasResult(results, "\xe3\x81\x91"));  // ke
+    // "こ"
+    EXPECT_TRUE(HasResult(results, "\xe3\x81\x93"));  // ko
+    // "っ"
+    EXPECT_TRUE(HasResult(results, "\xe3\x81\xa3"));  // kk
+  }
+  {
+    string input = "ky";
+    CharChunk chunk;
+    chunk.AddInputInternal(table, &input);
+
+    string base;
+    chunk.AppendTrimedResult(table, kNullT12r, &base);
+    EXPECT_EQ("", base);
+
+    set<string> results;
+    chunk.GetExpandedResults(table, kNullT12r, &results);
+    EXPECT_EQ(6, results.size());
+    EXPECT_TRUE(HasResult(results, "ky"));
+    // "きゃ"
+    EXPECT_TRUE(HasResult(results, "\xe3\x81\x8d\xe3\x82\x83"));
+    // "きぃ"
+    EXPECT_TRUE(HasResult(results, "\xe3\x81\x8d\xe3\x81\x83"));
+    // "きゅ"
+    EXPECT_TRUE(HasResult(results, "\xe3\x81\x8d\xe3\x82\x85"));
+    // "きぇ"
+    EXPECT_TRUE(HasResult(results, "\xe3\x81\x8d\xe3\x81\x87"));
+    // "きょ"
+    EXPECT_TRUE(HasResult(results, "\xe3\x81\x8d\xe3\x82\x87"));
+  }
+  {
+    string input = "kk";
+    CharChunk chunk;
+    chunk.AddInputInternal(table, &input);
+
+    string base;
+    chunk.AppendTrimedResult(table, kNullT12r, &base);
+    // "っ"
+    EXPECT_EQ("\xe3\x81\xa3", base);
+
+    set<string> results;
+    chunk.GetExpandedResults(table, kNullT12r, &results);
+    EXPECT_EQ(11, results.size());
+    // "か"
+    EXPECT_TRUE(HasResult(results, "\xe3\x81\x8b"));  // ka
+    // "き"
+    EXPECT_TRUE(HasResult(results, "\xe3\x81\x8d"));  // ki
+    // "きゃ"
+    EXPECT_TRUE(HasResult(results, "\xe3\x81\x8d\xe3\x82\x83"));  // kya
+    // "きぃ"
+    EXPECT_TRUE(HasResult(results, "\xe3\x81\x8d\xe3\x81\x83"));  // kyi
+    // "きゅ"
+    EXPECT_TRUE(HasResult(results, "\xe3\x81\x8d\xe3\x82\x85"));  // kyu
+    // "きぇ"
+    EXPECT_TRUE(HasResult(results, "\xe3\x81\x8d\xe3\x81\x87"));  // kye
+    // "きょ"
+    EXPECT_TRUE(HasResult(results, "\xe3\x81\x8d\xe3\x82\x87"));  // kyo
+    // "く"
+    EXPECT_TRUE(HasResult(results, "\xe3\x81\x8f"));  // ku
+    // "け"
+    EXPECT_TRUE(HasResult(results, "\xe3\x81\x91"));  // ke
+    // "こ"
+    EXPECT_TRUE(HasResult(results, "\xe3\x81\x93"));  // ko
+    // "っ"
+    EXPECT_TRUE(HasResult(results, "\xe3\x81\xa3"));  // kk
+  }
+}
+
+TEST(CharChunkTest, KanaGetExpandedResults) {
+  Table table;
+  // "か゛", "が"
+  table.AddRule("\xe3\x81\x8b\xe3\x82\x9b", "\xe3\x81\x8c", "");
+  // "は゛", "ば"
+  table.AddRule("\xe3\x81\xaf\xe3\x82\x9b", "\xe3\x81\xb0", "");
+  // "は゜", "ぱ"
+  table.AddRule("\xe3\x81\xaf\xe3\x82\x9c", "\xe3\x81\xb1", "");
+
+  {
+    // AddInputInternal requires non-const string
+    // "か"
+    string input = "\xe3\x81\x8b";
+    CharChunk chunk;
+    chunk.AddInputInternal(table, &input);
+
+    string base;
+    chunk.AppendTrimedResult(table, kNullT12r, &base);
+    EXPECT_EQ("", base);
+
+    set<string> results;
+    chunk.GetExpandedResults(table, kNullT12r, &results);
+    EXPECT_EQ(2, results.size());
+    // "か"
+    EXPECT_TRUE(HasResult(results, "\xe3\x81\x8b"));
+    // "が"
+    EXPECT_TRUE(HasResult(results, "\xe3\x81\x8c"));
+  }
+  {
+    // "は"
+    string input = "\xe3\x81\xaf";
+    CharChunk chunk;
+    chunk.AddInputInternal(table, &input);
+
+    string base;
+    chunk.AppendTrimedResult(table, kNullT12r, &base);
+    EXPECT_EQ("", base);
+
+    set<string> results;
+    chunk.GetExpandedResults(table, kNullT12r, &results);
+    EXPECT_EQ(3, results.size());
+    // "は"
+    EXPECT_TRUE(HasResult(results, "\xe3\x81\xaf"));
+    // "ば"
+    EXPECT_TRUE(HasResult(results, "\xe3\x81\xb0"));
+    // "ぱ"
+    EXPECT_TRUE(HasResult(results, "\xe3\x81\xb1"));
   }
 }
 

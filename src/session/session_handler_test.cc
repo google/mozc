@@ -204,11 +204,13 @@ TEST_F(SessionHandlerTest, LastCommandTimeout) {
 
 TEST_F(SessionHandlerTest, VerifySyncIsCalled) {
   {
+    // This test consumes much stack so to reduce the stack size
+    // here we use scoped_ptr instead of local variable.
+    scoped_ptr<ConverterMock> converter_mock(new ConverterMock);
     // This Mock is released inside of ConverterMock
     UserDataManagerMock *user_data_manager_mock = new UserDataManagerMock();
-    ConverterMock converter_mock;
-    converter_mock.SetUserDataManager(user_data_manager_mock);
-    ConverterFactory::SetConverter(&converter_mock);
+    converter_mock->SetUserDataManager(user_data_manager_mock);
+    ConverterFactory::SetConverter(converter_mock.get());
     SessionHandler handler;
     commands::Command command;
     command.mutable_input()->set_type(commands::Input::DELETE_SESSION);
@@ -218,11 +220,11 @@ TEST_F(SessionHandlerTest, VerifySyncIsCalled) {
   }
 
   {
+    scoped_ptr<ConverterMock> converter_mock(new ConverterMock);
     // This Mock is released inside of ConverterMock
     UserDataManagerMock *user_data_manager_mock = new UserDataManagerMock();
-    ConverterMock converter_mock;
-    converter_mock.SetUserDataManager(user_data_manager_mock);
-    ConverterFactory::SetConverter(&converter_mock);
+    converter_mock->SetUserDataManager(user_data_manager_mock);
+    ConverterFactory::SetConverter(converter_mock.get());
     SessionHandler handler;
     commands::Command command;
     command.mutable_input()->set_type(commands::Input::CLEANUP);

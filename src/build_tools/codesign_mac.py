@@ -76,10 +76,6 @@ def UnlockKeychain(keychain, password=None):
 
 
 
-def IsXcodeBuild():
-  """Return true if this script is called from XCode."""
-  return bool(os.getenv("XCODE_VERSION_ACTUAL"))
-
 def IsGYPBuild():
   """Return true if this script is called from XCode from GYP."""
   return bool(os.getenv("BUILD_WITH_GYP"))
@@ -123,19 +119,11 @@ def main():
     return
 
 
-  if IsXcodeBuild() and not IsGYPBuild() and opts.autoconf:
-    sign = opts.sign
-    keychain = os.path.join(os.getenv("SRCROOT"), "MacSigning.keychain")
-    keychain = os.path.abspath(keychain)
-    flags = "--keychain " + keychain
-    # Unlock Keychain for codesigning.
-    UnlockKeychain(keychain, opts.password)
-  else:
-    sign = opts.sign
-    keychain = os.path.abspath(opts.keychain)
-    flags = "--keychain " + keychain
-    # Unlock Keychain for codesigning.
-    UnlockKeychain(keychain, opts.password)
+  sign = opts.sign
+  keychain = os.path.abspath(opts.keychain)
+  flags = "--keychain " + keychain
+  # Unlock Keychain for codesigning.
+  UnlockKeychain(keychain, opts.password)
 
   Codesign(opts.target, sign, flags)
 

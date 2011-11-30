@@ -30,6 +30,7 @@
 // Protocol messages for session state
 syntax = "proto2";
 
+import "session/candidates.proto";
 import "session/commands.proto";
 
 package mozc.session;
@@ -61,6 +62,7 @@ message SessionState {
   optional uint64 start_conversion_window_time = 11;
   optional uint64 start_prediction_window_time = 12;
   optional uint64 start_suggestion_window_time = 13;
+  optional uint64 start_infolist_window_time = 14;
 
   // last preedit state
   optional mozc.commands.Preedit preedit = 20;
@@ -71,4 +73,5 @@ message SessionState {
 
   // last candidates result
   optional mozc.commands.Result result = 23;
+
 };

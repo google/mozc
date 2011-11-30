@@ -44,11 +44,34 @@ namespace mozc {
 class VariantsRewriterTest : public testing::Test {
  protected:
   virtual void SetUp() {
+    Reset();
+  }
+
+  virtual void TearDown() {
+    Reset();
+  }
+
+  void Reset() {
     Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
     config::Config config;
     config::ConfigHandler::GetDefaultConfig(&config);
     config::ConfigHandler::SetConfig(config);
     CharacterFormManager::GetCharacterFormManager()->SetDefaultRule();
+    CharacterFormManager::GetCharacterFormManager()->ClearHistory();
+  }
+
+  void InitSegmentsForAlphabetRewrite(const string &value,
+                                      Segments *segments) const {
+    Segment *segment = segments->push_back_segment();
+    CHECK(segment);
+    segment->set_key(value);
+    Segment::Candidate *candidate = segment->add_candidate();
+    CHECK(candidate);
+    candidate->Init();
+    candidate->key = value;
+    candidate->content_key = value;
+    candidate->value = value;
+    candidate->content_value = value;
   }
 };
 
@@ -517,5 +540,141 @@ TEST_F(VariantsRewriterTest, SetDescriptionForPrediction) {
     EXPECT_EQ("<\xE6\xA9\x9F\xE7\xA8\xAE\xE4\xBE\x9D"
               "\xE5\xAD\x98\xE6\x96\x87\xE5\xAD\x97>", candidate.description);
   }
+}
+
+TEST_F(VariantsRewriterTest, RewriteForConversion) {
+  CharacterFormManager *character_form_manager =
+      CharacterFormManager::GetCharacterFormManager();
+  VariantsRewriter rewriter;
+  {
+    Segments segments;
+    segments.set_request_type(Segments::CONVERSION);
+    {
+      Segment *segment = segments.push_back_segment();
+      segment->set_key("abc");
+      Segment::Candidate *candidate = segment->add_candidate();
+      candidate->Init();
+      candidate->key = "abc";
+      candidate->content_key = "abc";
+      candidate->value = "abc";
+      candidate->content_value = "abc";
+    }
+    EXPECT_TRUE(rewriter.Rewrite(&segments));
+    EXPECT_EQ(1, segments.segments_size());
+    EXPECT_EQ(2, segments.segment(0).candidates_size());
+
+    EXPECT_EQ(config::Config::FULL_WIDTH,
+              character_form_manager->GetConversionCharacterForm("abc"));
+
+    // "ａｂｃ"
+    EXPECT_EQ("\xef\xbd\x81\xef\xbd\x82\xef\xbd\x83",
+              segments.segment(0).candidate(0).value);
+    EXPECT_EQ("abc", segments.segment(0).candidate(1).value);
+  }
+  {
+    character_form_manager->SetCharacterForm("abc", config::Config::HALF_WIDTH);
+    Segments segments;
+    segments.set_request_type(Segments::CONVERSION);
+    {
+      Segment *segment = segments.push_back_segment();
+      segment->set_key("abc");
+      Segment::Candidate *candidate = segment->add_candidate();
+      candidate->Init();
+      candidate->key = "abc";
+      candidate->content_key = "abc";
+      candidate->value = "abc";
+      candidate->content_value = "abc";
+    }
+    EXPECT_TRUE(rewriter.Rewrite(&segments));
+    EXPECT_EQ(1, segments.segments_size());
+    EXPECT_EQ(2, segments.segment(0).candidates_size());
+
+    EXPECT_EQ(config::Config::HALF_WIDTH,
+              character_form_manager->GetConversionCharacterForm("abc"));
+
+    EXPECT_EQ("abc", segments.segment(0).candidate(0).value);
+    // "ａｂｃ"
+    EXPECT_EQ("\xef\xbd\x81\xef\xbd\x82\xef\xbd\x83",
+              segments.segment(0).candidate(1).value);
+  }
+}
+
+TEST_F(VariantsRewriterTest, RewriteForPrediction) {
+  CharacterFormManager *character_form_manager =
+      CharacterFormManager::GetCharacterFormManager();
+  VariantsRewriter rewriter;
+  {
+    Segments segments;
+    segments.set_request_type(Segments::PREDICTION);
+    InitSegmentsForAlphabetRewrite("abc", &segments);
+    EXPECT_TRUE(rewriter.Rewrite(&segments));
+    EXPECT_EQ(1, segments.segments_size());
+    EXPECT_EQ(2, segments.segment(0).candidates_size());
+
+    EXPECT_EQ(config::Config::FULL_WIDTH,
+              character_form_manager->GetConversionCharacterForm("abc"));
+
+    // "ａｂｃ"
+    EXPECT_EQ("\xef\xbd\x81\xef\xbd\x82\xef\xbd\x83",
+              segments.segment(0).candidate(0).value);
+    EXPECT_EQ("abc", segments.segment(0).candidate(1).value);
+  }
+  {
+    character_form_manager->SetCharacterForm("abc", config::Config::HALF_WIDTH);
+    Segments segments;
+    segments.set_request_type(Segments::PREDICTION);
+    InitSegmentsForAlphabetRewrite("abc", &segments);
+    EXPECT_TRUE(rewriter.Rewrite(&segments));
+    EXPECT_EQ(1, segments.segments_size());
+    EXPECT_EQ(2, segments.segment(0).candidates_size());
+
+    EXPECT_EQ(config::Config::HALF_WIDTH,
+              character_form_manager->GetConversionCharacterForm("abc"));
+
+    EXPECT_EQ("abc", segments.segment(0).candidate(0).value);
+    // "ａｂｃ"
+    EXPECT_EQ("\xef\xbd\x81\xef\xbd\x82\xef\xbd\x83",
+              segments.segment(0).candidate(1).value);
+  }
+}
+
+TEST_F(VariantsRewriterTest, RewriteForSuggestion) {
+  CharacterFormManager *character_form_manager =
+      CharacterFormManager::GetCharacterFormManager();
+  VariantsRewriter rewriter;
+  {
+    Segments segments;
+    segments.set_request_type(Segments::SUGGESTION);
+    InitSegmentsForAlphabetRewrite("abc", &segments);
+    EXPECT_TRUE(rewriter.Rewrite(&segments));
+    EXPECT_EQ(1, segments.segments_size());
+    EXPECT_EQ(1, segments.segment(0).candidates_size());
+
+    EXPECT_EQ(config::Config::FULL_WIDTH,
+              character_form_manager->GetConversionCharacterForm("abc"));
+
+    // "ａｂｃ"
+    EXPECT_EQ("\xef\xbd\x81\xef\xbd\x82\xef\xbd\x83",
+              segments.segment(0).candidate(0).value);
+  }
+  {
+    character_form_manager->SetCharacterForm("abc", config::Config::HALF_WIDTH);
+    Segments segments;
+    segments.set_request_type(Segments::SUGGESTION);
+    InitSegmentsForAlphabetRewrite("abc", &segments);
+    EXPECT_TRUE(rewriter.Rewrite(&segments));
+    EXPECT_EQ(1, segments.segments_size());
+    EXPECT_EQ(1, segments.segment(0).candidates_size());
+
+    EXPECT_EQ(config::Config::HALF_WIDTH,
+              character_form_manager->GetConversionCharacterForm("abc"));
+
+    EXPECT_EQ("abc", segments.segment(0).candidate(0).value);
+  }
+}
+
+TEST_F(VariantsRewriterTest, Capability) {
+  VariantsRewriter rewriter;
+  EXPECT_EQ(RewriterInterface::ALL, rewriter.capability());
 }
 }  // namespace mozc

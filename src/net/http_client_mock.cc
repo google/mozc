@@ -116,6 +116,10 @@ bool HTTPClientMock::DoRequest(const string &url, const bool check_data,
                                const string &data, const bool check_option,
                                const HTTPClient::Option &option,
                                string *output) const {
+  if (execution_time_ > 0) {
+    Util::Sleep(execution_time_);
+  }
+
   if (failure_mode_) {
     VLOG(2) << "failure mode";
     return false;

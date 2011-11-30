@@ -35,6 +35,8 @@
 #include <QtCore/QFile>
 #include "base/base.h"
 #include "base/util.h"
+#include "handwriting/handwriting_manager.h"
+#include "handwriting/zinnia_handwriting.h"
 #include "gui/base/locale_util.h"
 #include "gui/base/win_util.h"
 #include "gui/character_pad/character_palette.h"
@@ -79,14 +81,16 @@ int RunCharacterPad(int argc, char *argv[],
 
   window->setWindowFlags(Qt::WindowSystemMenuHint);
 
-  // Top Most
+  // Set Top-Most bit:
+  //   Use SWP_NOACTIVATE so that the GUI window will not get focus from the
+  //   application which is currently active. b/5516521
   ::SetWindowPos(window->winId(), HWND_TOPMOST, 0, 0, 0, 0,
-                 SWP_NOMOVE | SWP_NOSIZE);
+                 SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
 
-  // NO_ACTIVATE
-  const LONG style = ::GetWindowLong(window->winId(),
-                                     GWL_EXSTYLE)
-      | WS_EX_NOACTIVATE | WS_EX_APPWINDOW;
+  // Set WS_EX_NOACTIVATE so that the GUI window will not be activated by mouse
+  // click.
+  const LONG style = ::GetWindowLong(window->winId(), GWL_EXSTYLE)
+                     | WS_EX_NOACTIVATE | WS_EX_APPWINDOW;
   ::SetWindowLong(window->winId(), GWL_EXSTYLE, style);
 
   // Aero
@@ -115,5 +119,8 @@ int RunCharacterPalette(int argc, char *argv[]) {
 }
 
 int RunHandWriting(int argc, char *argv[]) {
+  mozc::handwriting::ZinniaHandwriting zinnia_handwriting;
+  mozc::handwriting::HandwritingManager::AddHandwritingModule(
+      &zinnia_handwriting);
   return RunCharacterPad(argc, argv, HAND_WRITING);
 }

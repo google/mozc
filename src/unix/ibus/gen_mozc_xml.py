@@ -61,7 +61,7 @@ IBUS_ENGINE_COMMON_PROPS = {
     'description': '%s (Japanese Input Method)',
     'language': 'ja',
     'icon': '/usr/share/ibus-mozc/product_icon.png',
-    'rank': '0',
+    'rank': '80',
 }
 
 # A dictionary from --platform to engines that are used in the platform. The

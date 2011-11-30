@@ -118,6 +118,56 @@ TEST(UtilTest, SplitStringAllowEmpty) {
   }
 }
 
+TEST(UtilTest, StripWhiteSpaces) {
+  // basic scenario.
+  {
+    const string input = "  foo   ";
+    string output;
+    Util::StripWhiteSpaces(input, &output);
+    EXPECT_EQ("foo", output);
+  }
+
+  // no space means just copy.
+  {
+    const string input = "foo";
+    string output;
+    Util::StripWhiteSpaces(input, &output);
+    EXPECT_EQ("foo", output);
+  }
+
+  // tabs and linebreaks are also spaces.
+  {
+    const string input = " \tfoo\n";
+    string output;
+    Util::StripWhiteSpaces(input, &output);
+    EXPECT_EQ("foo", output);
+  }
+
+  // spaces in the middle remains.
+  {
+    const string input = " foo bar baz ";
+    string output;
+    Util::StripWhiteSpaces(input, &output);
+    EXPECT_EQ("foo bar baz", output);
+  }
+
+  // all spaces means clear out output.
+  {
+    const string input = " \v \r ";
+    string output;
+    Util::StripWhiteSpaces(input, &output);
+    EXPECT_TRUE(output.empty());
+  }
+
+  // empty input.
+  {
+    const string input = "";
+    string output;
+    Util::StripWhiteSpaces(input, &output);
+    EXPECT_TRUE(output.empty());
+  }
+}
+
 TEST(UtilTest, SplitStringToUtf8Chars) {
   {
     vector<string> output;
@@ -1601,6 +1651,118 @@ TEST(UtilTest, NormalizeNumbers) {
   }
 }
 
+TEST(UtilTest, NormalizeNumbersWithSuffix) {
+  {
+    // "一万二十五個"
+    const string input = "\xe4\xb8\x80\xe4\xb8\x87\xe4\xba\x8c\xe5\x8d\x81\xe4"
+                         "\xba\x94\xE5\x80\x8B";
+    string arabic_output, kanji_output, suffix;
+    EXPECT_TRUE(Util::NormalizeNumbersWithSuffix(input, true,
+                                                 &kanji_output,
+                                                 &arabic_output,
+                                                 &suffix));
+    EXPECT_EQ("\xe4\xb8\x80\xe4\xb8\x87\xe4\xba\x8c\xe5\x8d\x81\xe4\xba\x94",
+              kanji_output);
+    EXPECT_EQ("10025", arabic_output);
+    // "個"
+    EXPECT_EQ("\xE5\x80\x8B", suffix);
+  }
+
+  {
+    // "二百三五万一番目"
+    const string input = "\xe4\xba\x8c\xe7\x99\xbe\xe4\xb8\x89\xe4\xba\x94\xe4"
+                         "\xb8\x87\xe4\xb8\x80\xE7\x95\xAA\xE7\x9B\xAE";
+    string arabic_output, kanji_output, suffix;
+    EXPECT_TRUE(Util::NormalizeNumbersWithSuffix(input, true,
+                                                 &kanji_output,
+                                                 &arabic_output,
+                                                 &suffix));
+    // "二百三五万一"
+    EXPECT_EQ("\xe4\xba\x8c\xe7\x99\xbe\xe4\xb8\x89\xe4\xba\x94\xe4"
+              "\xb8\x87\xe4\xb8\x80", kanji_output);
+    EXPECT_EQ("2350001", arabic_output);
+    // "番目"
+    EXPECT_EQ("\xE7\x95\xAA\xE7\x9B\xAE", suffix);
+  }
+
+  {
+    // "てすと"
+    const string input = "\xe3\x81\xa6\xe3\x81\x99\xe3\x81\xa8";
+    string arabic_output, kanji_output, suffix;
+    EXPECT_FALSE(Util::NormalizeNumbersWithSuffix(input, true,
+                                                  &kanji_output,
+                                                  &arabic_output,
+                                                  &suffix));
+  }
+
+  {
+    // "てすと２"
+    const string input = "\xe3\x81\xa6\xe3\x81\x99\xe3\x81\xa8\xef\xbc\x92";
+    string arabic_output, kanji_output, suffix;
+    EXPECT_FALSE(Util::NormalizeNumbersWithSuffix(input, true,
+                                                  &kanji_output,
+                                                  &arabic_output,
+                                                  &suffix));
+  }
+
+  // Tests for numbers less than 10.
+  {
+    // "零セット"
+    const string input = "\xE9\x9B\xB6\xE3\x82\xBB\xE3\x83\x83\xE3\x83\x88";
+    string arabic_output, kanji_output, suffix;
+    EXPECT_TRUE(Util::NormalizeNumbersWithSuffix(input, true,
+                                                 &kanji_output,
+                                                 &arabic_output,
+                                                 &suffix));
+    // "零"
+    EXPECT_EQ("\xE9\x9B\xB6", kanji_output);
+    EXPECT_EQ("0", arabic_output);
+    // "セット"
+    EXPECT_EQ("\xE3\x82\xBB\xE3\x83\x83\xE3\x83\x88", suffix);
+  }
+
+  {
+    // "九０ぷよ"
+    const string input = "\xE4\xB9\x9D\xEF\xBC\x90\xE3\x81\xB7\xE3\x82\x88";
+    string arabic_output, kanji_output, suffix;
+    EXPECT_TRUE(Util::NormalizeNumbersWithSuffix(input, true,
+                                                 &kanji_output,
+                                                 &arabic_output,
+                                                 &suffix));
+    // "九〇"
+    EXPECT_EQ("\xE4\xB9\x9D\xE3\x80\x87",
+              kanji_output);
+    EXPECT_EQ("90", arabic_output);
+    // "ぷよ"
+    EXPECT_EQ("\xE3\x81\xB7\xE3\x82\x88", suffix);
+  }
+
+  {
+    // "三五$"
+    const string input = "\xE4\xB8\x89\xE4\xBA\x94$";
+    string arabic_output, kanji_output, suffix;
+    EXPECT_TRUE(Util::NormalizeNumbersWithSuffix(input, true,
+                                                 &kanji_output,
+                                                 &arabic_output,
+                                                 &suffix));
+    // "三五"
+    EXPECT_EQ("\xE4\xB8\x89\xE4\xBA\x94", kanji_output);
+    EXPECT_EQ("35", arabic_output);
+    EXPECT_EQ("$", suffix);
+  }
+
+  {
+    // "二十三十に" (same base appears twice)
+    const string input = "\xE4\xBA\x8C\xE5\x8D\x81\xE4\xB8\x89\xE5\x8D\x81"
+        "\xE3\x81\xAB";
+    string arabic_output, kanji_output, suffix;
+    EXPECT_FALSE(Util::NormalizeNumbersWithSuffix(input, true,
+                                                  &kanji_output,
+                                                  &arabic_output,
+                                                  &suffix));
+  }
+}
+
 TEST(UtilTest, IsEnglishTransliteration) {
   EXPECT_TRUE(Util::IsEnglishTransliteration("ABC"));
   EXPECT_TRUE(Util::IsEnglishTransliteration("Google"));
@@ -1608,6 +1770,7 @@ TEST(UtilTest, IsEnglishTransliteration) {
   EXPECT_TRUE(Util::IsEnglishTransliteration("ABC-DEF"));
   EXPECT_TRUE(Util::IsEnglishTransliteration("Foo-bar"));
   EXPECT_TRUE(Util::IsEnglishTransliteration("Foo!"));
+  EXPECT_TRUE(Util::IsEnglishTransliteration("Who's"));
   EXPECT_TRUE(Util::IsEnglishTransliteration("!"));
   EXPECT_TRUE(Util::IsEnglishTransliteration("  "));
   //  EXPECT_FALSE(Util::IsEnglishTransliteration("てすと"));
@@ -2092,11 +2255,18 @@ TEST(UtilTest, ScriptType) {
   // "ぐーぐる"
   EXPECT_EQ(Util::HIRAGANA, Util::GetScriptType("\xe3\x81\x90\xe3\x83\xbc\xe3"
                                                 "\x81\x90\xe3\x82\x8b"));
+  EXPECT_EQ(Util::HIRAGANA, Util::GetFirstScriptType("\xe3\x81\x90\xe3\x83\xbc\xe3"
+                                                "\x81\x90\xe3\x82\x8b"));
+
   // "グーグル"
   EXPECT_EQ(Util::KATAKANA, Util::GetScriptType("\xe3\x82\xb0\xe3\x83\xbc\xe3"
                                                 "\x82\xb0\xe3\x83\xab"));
+  EXPECT_EQ(Util::KATAKANA, Util::GetFirstScriptType("\xe3\x82\xb0\xe3\x83\xbc\xe3"
+                                                "\x82\xb0\xe3\x83\xab"));
   // "ゟ" U+309F HIRAGANA DIGRAPH YORI
   EXPECT_EQ(Util::HIRAGANA, Util::GetScriptType("\xE3\x82\x9F"));
+  EXPECT_EQ(Util::HIRAGANA, Util::GetFirstScriptType("\xE3\x82\x9F"));
+
   // "ヿ" U+30FF KATAKANA DIGRAPH KOTO
   EXPECT_EQ(Util::KATAKANA, Util::GetScriptType("\xE3\x83\xBF"));
   // "ヷヸヹヺㇰㇱㇲㇳㇴㇵㇶㇷㇸㇹㇺㇻㇼㇽㇾㇿ"
@@ -2116,9 +2286,12 @@ TEST(UtilTest, ScriptType) {
                                                       "\xab"));
   // "ー"
   EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptType("\xe3\x83\xbc"));
+  EXPECT_EQ(Util::KATAKANA, Util::GetFirstScriptType("\xe3\x83\xbc"));
   // "ーー"
   EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptType("\xe3\x83\xbc\xe3\x83"
                                                       "\xbc"));
+  EXPECT_EQ(Util::KATAKANA, Util::GetFirstScriptType("\xe3\x83\xbc\xe3"
+                                                           "\x83\xbc"));
   // "゛"
   EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptType("\xe3\x82\x9b"));
   // "゜"
@@ -2141,6 +2314,9 @@ TEST(UtilTest, ScriptType) {
   EXPECT_EQ(Util::HIRAGANA, Util::GetScriptType("\xe3\x83\xbc\xe3\x81\xb2\xe3"
                                                 "\x82\x89\xe3\x81\x8c\xe3\x81"
                                                 "\xaa"));
+  EXPECT_EQ(Util::KATAKANA, Util::GetFirstScriptType("\xe3\x83\xbc\xe3\x81\xb2"
+                                                     "\xe3\x82\x89\xe3\x81\x8c"
+                                                     "\xe3\x81\xaa"));
   // "ーカタカナ"
   EXPECT_EQ(Util::KATAKANA, Util::GetScriptType("\xe3\x83\xbc\xe3\x82\xab\xe3"
                                                 "\x82\xbf\xe3\x82\xab\xe3\x83"
@@ -2182,10 +2358,17 @@ TEST(UtilTest, ScriptType) {
   // "京あ都"
   EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptType("\xe4\xba\xac\xe3\x81\x82"
                                                       "\xe9\x83\xbd"));
+  EXPECT_EQ(Util::KANJI, Util::GetFirstScriptType("\xe4\xba\xac\xe3\x81\x82"
+                                                  "\xe9\x83\xbd"));
+
   // "モズあク"
   EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptType("\xe3\x83\xa2\xe3\x82\xba"
                                                       "\xe3\x81\x82\xe3\x82"
                                                       "\xaf"));
+  EXPECT_EQ(Util::KATAKANA, Util::GetFirstScriptType("\xe3\x83\xa2\xe3\x82\xba"
+                                                     "\xe3\x81\x82\xe3\x82"
+                                                     "\xaf"));
+
   // "モあズクﾓｽﾞｸ"
   EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptType("\xe3\x83\xa2\xe3\x81\x82"
                                                       "\xe3\x82\xba\xe3\x82\xaf"
@@ -2195,10 +2378,15 @@ TEST(UtilTest, ScriptType) {
   // "012あ"
   EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptType("\x30\x31\x32\xe3\x81"
                                                       "\x82"));
+  EXPECT_EQ(Util::NUMBER, Util::GetFirstScriptType("\x30\x31\x32\xe3\x81"
+                                                   "\x82"));
   // "０１２あ012"
   EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptType("\xef\xbc\x90\xef\xbc\x91"
                                                       "\xef\xbc\x92\xe3\x81\x82"
                                                       "\x30\x31\x32"));
+  EXPECT_EQ(Util::NUMBER, Util::GetFirstScriptType("\xef\xbc\x90\xef\xbc\x91"
+                                                   "\xef\xbc\x92\xe3\x81\x82"
+                                                   "\x30\x31\x32"));
   // "abcABあC"
   EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptType("\x61\x62\x63\x41\x42\xe3"
                                                       "\x81\x82\x43"));
@@ -2227,6 +2415,9 @@ TEST(UtilTest, ScriptType) {
   EXPECT_EQ(Util::KANJI, Util::GetScriptType("\xF0\xA0\xAE\xB7\xE9\x87\x8E"));
   // "巽" U+2F884
   EXPECT_EQ(Util::KANJI, Util::GetScriptType("\xF0\xAF\xA2\x84"));
+
+  // U+1F466, BOY/smile emoji
+  EXPECT_EQ(Util::EMOJI, Util::GetScriptType("\xF0\x9F\x91\xA6"));
 }
 
 
@@ -3137,4 +3328,3 @@ TEST(UtilTGest, RandomSeedTest) {
 }
 
 }  // namespace mozc
-

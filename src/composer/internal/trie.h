@@ -115,6 +115,17 @@ template<typename T> class Trie {
     return sub_trie->LookUp(sub_key, data);
   }
 
+  // If key's prefix matches to trie with data, return true and set data
+  // For example, if a trie has data for 'abc', 'abd', and 'a';
+  //  - Return true for the key, 'abc'
+  //  -- Matches in exact
+  //  - Return true for the key, 'abcd'
+  //  -- Matches in prefix
+  //  - Return FALSE for the key, 'abe'
+  //  -- Matches in prefix by 'ab', and 'ab' does not have data in trie tree
+  //  -- Do not refer 'a' here.
+  //  - Return true for the key, 'ac'
+  //  -- Matches in prefix by 'a', and 'a' have data
   bool LookUpPrefix(const string &key,
                     T *data,
                     size_t *key_length,
@@ -136,7 +147,6 @@ template<typename T> class Trie {
     if (sub_trie->LookUpPrefix(sub_key, data, key_length, fixed)) {
       *key_length += GetKeyHeadLength(key);
       return true;
-
     } else if (HasSubTrie(GetKeyHead(key))) {
       *key_length += GetKeyHeadLength(key);
       return false;
@@ -147,6 +157,33 @@ template<typename T> class Trie {
     } else {
       *key_length += GetKeyHeadLength(key);
       return false;
+    }
+  }
+
+  // Return all result starts with key
+  // For example, if a trie has data for 'abc', 'abd', and 'a';
+  //  - Return 'abc', 'abd', 'a', for the key 'a'
+  //  - Return 'abc', 'abd' for the key 'ab'
+  //  - Return nothing for the key 'b'
+  void LookUpPredictiveAll(const string &key,
+                           vector<T> *data_list) const {
+    DCHECK(data_list);
+    if (!key.empty()) {
+      if (!HasSubTrie(GetKeyHead(key))) {
+        return;
+      }
+      const Trie *sub_trie = GetSubTrie(key);
+      const string sub_key = GetKeyTail(key);
+      return sub_trie->LookUpPredictiveAll(sub_key, data_list);
+    }
+
+    if (has_data_) {
+      data_list->push_back(data_);
+    }
+
+    for (typename SubTrie::const_iterator it = trie_.begin();
+         it != trie_.end(); ++it) {
+      it->second->LookUpPredictiveAll("", data_list);
     }
   }
 

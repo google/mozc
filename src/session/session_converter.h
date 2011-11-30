@@ -37,6 +37,8 @@
 
 #include "session/commands.pb.h"
 #include "session/session_converter_interface.h"
+// for FRIEND_TEST()
+#include "testing/base/public/gunit_prod.h"
 
 namespace mozc {
 namespace session {
@@ -65,36 +67,42 @@ class SessionConverter : public SessionConverterInterface {
   const ConversionPreferences &conversion_preferences() const;
 
   // Send a conversion request to the converter.
-  bool Convert(const composer::Composer *composer);
-  bool ConvertWithPreferences(const composer::Composer *composer,
+  bool Convert(const composer::Composer &composer);
+  bool ConvertWithPreferences(const composer::Composer &composer,
                               const ConversionPreferences &preferences);
 
-  // Send a reverse conversion request to the converter.
-  // This uses composer instance to start conversion and stores reading of
-  // source_text into composer.
-  bool ConvertReverse(const string &source_text, composer::Composer *composer);
+  // Get reading text (e.g. from "猫" to "ねこ").
+  bool GetReadingText(const string &source_text, string *reading);
 
   // Send a transliteration request to the converter.
-  bool ConvertToTransliteration(const composer::Composer *composer,
+  bool ConvertToTransliteration(const composer::Composer &composer,
                                 transliteration::TransliterationType type);
 
   // Convert the current composition to half-width characters.
   // NOTE(komatsu): This function might be merged to ConvertToTransliteration.
-  bool ConvertToHalfWidth(const composer::Composer *composer);
+  bool ConvertToHalfWidth(const composer::Composer &composer);
 
   // Switch the composition to Hiragana, full-width Katakana or
   // half-width Katakana by rotation.
-  bool SwitchKanaType(const composer::Composer *composer);
+  bool SwitchKanaType(const composer::Composer &composer);
 
   // Send a suggestion request to the converter.
-  bool Suggest(const composer::Composer *composer);
-  bool SuggestWithPreferences(const composer::Composer *composer,
+  bool Suggest(const composer::Composer &composer);
+  bool SuggestWithPreferences(const composer::Composer &composer,
                               const ConversionPreferences &preferences);
 
   // Send a prediction request to the converter.
-  bool Predict(const composer::Composer *composer);
-  bool PredictWithPreferences(const composer::Composer *composer,
+  bool Predict(const composer::Composer &composer);
+  bool PredictWithPreferences(const composer::Composer &composer,
                               const ConversionPreferences &preferences);
+
+  // Send a prediction request to the converter.
+  // The result is added at the tail of existing candidate list as "suggestion"
+  // candidates.
+  bool ExpandSuggestion(const composer::Composer &composer);
+  bool ExpandSuggestionWithPreferences(
+      const composer::Composer &composer,
+      const ConversionPreferences &preferences);
 
   // Clear conversion segments, but keep the context.
   void Cancel();
@@ -105,19 +113,41 @@ class SessionConverter : public SessionConverterInterface {
   // Fix the conversion with the current status.
   void Commit();
 
-  // Fix the suggestion candidate.
-  void CommitSuggestion(size_t index);
+  // Fix the suggestion candidate. Stores the number of characters in the key
+  // of the committed candidate to committed_key_size.
+  // For example, assume that "日本語" was suggested as a candidate for "にほ".
+  // The key of the candidate is "にほんご". Therefore, when the candidate is
+  // committed by this function, committed_key_size will be set to 4.
+  // True is returned if the suggestion is successfully committed.
+  bool CommitSuggestionByIndex(size_t index,
+                               const composer::Composer &composer,
+                               size_t *committed_key_size);
+
+  // Select a candidate and commit the selected candidate.  True is
+  // returned if the suggestion is successfully committed.
+  bool CommitSuggestionById(int id,
+                            const composer::Composer &composer,
+                            size_t *committed_key_size);
 
   // Fix only the conversion of the first segment, and keep the rest.
-  void CommitFirstSegment(composer::Composer *composer);
+  // The caller should delete characters from composer based on returned
+  // |committed_key_size|.
+  // If |committed_key_size| is 0, this means that there is only a segment
+  // so Commit() method is called instead. In this case, the caller
+  // should not delete any characters.
+  void CommitFirstSegment(size_t *committed_key_size);
 
   // Commit the preedit string represented by Composer.
   void CommitPreedit(const composer::Composer &composer);
 
   // Commit the specified number of characters at the head of the preedit
   // string represented by Composer.
+  // The caller should delete characters from composer based on returned
+  // |committed_size|.
   // TODO(yamaguchi): Enhance to support the conversion mode.
-  void CommitHead(size_t count, composer::Composer *composer);
+  void CommitHead(size_t count,
+                  const composer::Composer &composer,
+                  size_t *committed_size);
 
   // Revert the last "Commit" operation
   void Revert();
@@ -128,19 +158,17 @@ class SessionConverter : public SessionConverterInterface {
   void SegmentFocusLeft();
   void SegmentFocusLeftEdge();
 
-  bool IsLastSegmentFocused() const;
-
   // Resize the focused segment.
   void SegmentWidthExpand();
   void SegmentWidthShrink();
 
   // Move the focus of candidates.
-  void CandidateNext();
+  void CandidateNext(const composer::Composer &composer);
   void CandidateNextPage();
   void CandidatePrev();
   void CandidatePrevPage();
   // Move the focus to the candidate represented by the id.
-  void CandidateMoveToId(int id);
+  void CandidateMoveToId(int id, const composer::Composer &composer);
   // Move the focus to the index from the beginning of the current page.
   void CandidateMoveToPageIndex(size_t index);
   // Move the focus to the candidate represented by the shortcut.  If
@@ -152,10 +180,11 @@ class SessionConverter : public SessionConverterInterface {
   void SetCandidateListVisible(bool visible);
 
   // Fill protocol buffers and update the internal status.
-  void PopOutput(commands::Output *output);
+  void PopOutput(const composer::Composer &composer, commands::Output *output);
 
   // Fill protocol buffers
-  void FillOutput(commands::Output *output) const;
+  void FillOutput(
+      const composer::Composer &composer, commands::Output *output) const;
 
   // Fill context information
   void FillContext(commands::Context *context) const;
@@ -172,8 +201,6 @@ class SessionConverter : public SessionConverterInterface {
 
   // Accessor
   const commands::Result &GetResult() const;
-  const string &GetDefaultResult() const;
-  const string &GetComposition() const;
   const CandidateList &GetCandidateList() const;
   const OperationPreferences &GetOperationPreferences() const;
   SessionConverterInterface::State GetState() const;
@@ -187,10 +214,14 @@ class SessionConverter : public SessionConverterInterface {
 
   // Copy SessionConverter
   // TODO(hsumita): Copy all member variables.
-  // Currently, composer_ and converter_ is not copied.
+  // Currently, converter_ is not copied.
   void CopyFrom(const SessionConverterInterface &src);
 
  private:
+  FRIEND_TEST(SessionConverterTest, AppendCandidateList);
+  FRIEND_TEST(SessionConverterTest, GetPreeditAndGetConversion);
+  FRIEND_TEST(SessionConverterTest, PartialSuggestion);
+
   // Reset the result value stored at the previous command.
   void ResetResult();
 
@@ -203,12 +234,24 @@ class SessionConverter : public SessionConverterInterface {
   // Notify the converter that the current segment is fixed.
   void SegmentFix();
 
-  // Get preedit and conversion from segment(index) to segment(index + size).
-  void GetPreeditAndConversion(size_t index, size_t size,
-                               string *preedit, string *conversion) const;
+  // Get preedit from segment(index) to segment(index + size).
+  void GetPreedit(size_t index, size_t size, string *preedit) const;
+  // Get conversion from segment(index) to segment(index + size).
+  void GetConversion(size_t index, size_t size, string *conversion) const;
+
+  // Perform the command if the command candidate is selected.  True
+  // is returned if a command is performed.
+  bool MaybePerformCommandCandidate(size_t index, size_t size) const;
 
   // Update internal states
-  void UpdateResult(size_t index, size_t size);
+  bool UpdateResult(size_t index, size_t size);
+
+  // Fill the candidate list with the focused segment's candidates.
+  // This method does not clear the candidate list before processing.
+  // Only the candidates of which id is not existent in the candidate list
+  // are appended. Other candidates are ignored.
+  void AppendCandidateList();
+  // Clear the candidate list and fill it with the focused segment's candidates.
   void UpdateCandidateList();
 
   // Return the candidate index to be used by the converter.
@@ -216,10 +259,18 @@ class SessionConverter : public SessionConverterInterface {
 
   // if focus_id is pointing to the last of suggestions,
   // call StartPrediction().
-  void MaybeExpandPrediction();
+  void MaybeExpandPrediction(const composer::Composer &composer);
+
+  // Return the value of candidate to be used by the converter.
+  string GetSelectedCandidateValue(size_t segment_index) const;
 
   // Return the candidate to be used by the converter.
   const Segment::Candidate &GetSelectedCandidate(size_t segment_index) const;
+
+  // Returns the length of committed candidate's key in characters.
+  // True is returned if the selected candidate is successfully committed.
+  bool CommitSuggestionInternal(const composer::Composer &composer,
+                                size_t *committed_length);
 
   void FillConversion(commands::Preedit *preedit) const;
   void FillResult(commands::Result *result) const;
@@ -229,7 +280,6 @@ class SessionConverter : public SessionConverterInterface {
 
   SessionConverterInterface::State state_;
 
-  const composer::Composer *composer_;
   const ConverterInterface *converter_;
   scoped_ptr<Segments> segments_;
   size_t segment_index_;
@@ -243,13 +293,7 @@ class SessionConverter : public SessionConverterInterface {
   // Preferences for user's operation.
   OperationPreferences operation_preferences_;
 
-  string composition_;
   commands::Result result_;
-
-  // Default result the converter generated without user's
-  // modifactions.  Note, this result is considered with user's
-  // histroy when ConversionPreferences::use_history is true.
-  string default_result_;
 
   scoped_ptr<CandidateList> candidate_list_;
   bool candidate_list_visible_;

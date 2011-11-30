@@ -29,6 +29,8 @@
 
 #import "mac/GoogleJapaneseInputServer.h"
 
+#include "languages/global_language_spec.h"
+#include "languages/japanese/lang_dep_spec.h"
 #include "session/commands.pb.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
@@ -36,6 +38,7 @@
 class GoogleJapaneseInputServerTest : public testing::Test {
  protected:
   void SetUp() {
+    mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(&spec_);
     pool_ = [[NSAutoreleasePool alloc] init];
     // Although GoogleJapaneseInputServer is a subclass of IMKServer,
     // it does not use initWithName:... method to instantiate the
@@ -47,37 +50,42 @@ class GoogleJapaneseInputServerTest : public testing::Test {
   void TearDown() {
     [pool_ drain];
     [server_ release];
+    mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(NULL);
   }
 
  protected:
   NSAutoreleasePool *pool_;
   GoogleJapaneseInputServer *server_;
+  // We need to set a LangDepSpecJapanese to GlobalLanguageSpec on start up for
+  // testing, and the actual instance does not have to be LangDepSpecJapanese.
+  mozc::japanese::LangDepSpecJapanese spec_;
 };
 
 @interface MockController : NSObject<ControllerCallback> {
-  int numCandidateClicked_;
-  int expectedValue_;
+  int numSendData_;
+  mozc::commands::SessionCommand *expectedCommand_;
   int numOutputResult_;
   mozc::commands::Output *expectedData_;
 }
-@property(readonly) int numCandidateClicked;
-@property(readwrite, assign) int expectedValue;
+@property(readonly) int numSendData;
+@property(readwrite, assign) mozc::commands::SessionCommand *expectedCommand;
 @property(readonly) int numOutputResult;
 @property(readwrite, assign) mozc::commands::Output *expectedData;
 
-- (void)candidateClicked:(int)id;
+- (void)sendCommand:(mozc::commands::SessionCommand &)command;
 - (void)outputResult:(mozc::commands::Output *)data;
 @end
 
 @implementation MockController
-@synthesize numCandidateClicked = numCandidateClicked_;
-@synthesize expectedValue = expectedValue_;
+@synthesize numSendData = numSendData_;
+@synthesize expectedCommand = expectedCommand_;
 @synthesize numOutputResult = numOutputResult_;
 @synthesize expectedData = expectedData_;
 
-- (void)candidateClicked:(int)id {
-  EXPECT_EQ(expectedValue_, id);
-  ++numCandidateClicked_;
+- (void)sendCommand:(mozc::commands::SessionCommand &)command {
+  ASSERT_NE((void*)0, expectedCommand_);
+  EXPECT_EQ(expectedCommand_->DebugString(), command.DebugString());
+  ++numSendData_;
 }
 
 - (void)outputResult:(mozc::commands::Output *)data {
@@ -88,7 +96,7 @@ class GoogleJapaneseInputServerTest : public testing::Test {
 }
 @end
 
-TEST_F(GoogleJapaneseInputServerTest, rendererClicked) {
+TEST_F(GoogleJapaneseInputServerTest, sendData) {
   MockController *controller = [[[MockController alloc] init] autorelease];
   [server_ setCurrentController:controller];
 
@@ -96,12 +104,12 @@ TEST_F(GoogleJapaneseInputServerTest, rendererClicked) {
   command.Clear();
   command.set_type(mozc::commands::SessionCommand::SELECT_CANDIDATE);
   command.set_id(0);
-  controller.expectedValue = 0;
+  controller.expectedCommand = &command;
 
   string commandData = command.SerializeAsString();
-  [server_ rendererClicked:[NSData dataWithBytes:commandData.data()
-                                          length:commandData.size()]];
-  EXPECT_EQ(1, controller.numCandidateClicked);
+  [server_ sendData:[NSData dataWithBytes:commandData.data()
+                                   length:commandData.size()]];
+  EXPECT_EQ(1, controller.numSendData);
 }
 
 TEST_F(GoogleJapaneseInputServerTest, outputResult) {

@@ -35,11 +35,19 @@
 namespace mozc {
 
 struct Token {
+  // bit field
+  enum Attribute {
+    NONE = 0,
+    SPELLING_CORRECTION = 1,
+    LABEL_SIZE = 2,
+  };
   string key;
   string value;
   int    cost;
   int    lid;
   int    rid;
+  Attribute attributes;
+  Token() : cost(0), lid(0), rid(0), attributes(NONE) {}
 };
 }  // mozc
 

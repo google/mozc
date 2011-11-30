@@ -191,17 +191,17 @@ uint32 ParseCommandLineFlags(int *argc, char*** argv,
     if (key == "fromenv") {
       vector<string> keys;
       mozc::Util::SplitStringUsing(value, ",", &keys);
-      for (size_t i = 0; i < keys.size(); ++i) {
-        if (keys[i].empty() || keys[i] == "fromenv") {
+      for (size_t j = 0; j < keys.size(); ++j) {
+        if (keys[j].empty() || keys[j] == "fromenv") {
           continue;
         }
         string env_key = "FLAGS_";
-        env_key += keys[i];
+        env_key += keys[j];
         const char *env_value = getenv(env_key.c_str());
         if (env_value == NULL) {
           continue;
         }
-        if (!FlagUtil::SetFlag(keys[i], env_value)) {
+        if (!FlagUtil::SetFlag(keys[j], env_value)) {
 #ifndef IGNORE_INVALID_FLAG
           cerr << "Unknown/Invalid flag " << key << endl;
 #endif

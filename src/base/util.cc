@@ -548,6 +548,24 @@ void Util::CapitalizeString(string *str) {
   str->assign(first_str + tailing_str);
 }
 
+void Util::StripWhiteSpaces(const string &input, string *output) {
+  DCHECK(output);
+  output->clear();
+
+  if (input.empty()) {
+    return;
+  }
+
+  size_t start = 0;
+  size_t end = input.size() - 1;
+  for (; start < input.size() && isspace(input[start]); ++start);
+  for (; end > start && isspace(input[end]); --end);
+
+  if(end > start) {
+    output->assign(input.data() + start, end - start + 1);
+  }
+}
+
 // Return length of a single UTF-8 source character
 size_t Util::OneCharLen(const char *src) {
   return kUTF8LenTbl[*reinterpret_cast<const uint8*>(src)];
@@ -1632,14 +1650,13 @@ void EscapeInternal(char input, const string &prefix, string *output) {
   *output += static_cast<char>(hi >= 10 ? hi - 10 + 'A' : hi + '0');
   *output += static_cast<char>(lo >= 10 ? lo - 10 + 'A' : lo + '0');
 }
-}  // end of anonymous namespace
 
-// Convert Kanji numbers into Arabic numbers:
-// e.g. "百二十万" -> 1200000
-bool Util::NormalizeNumbers(const string &input,
-                            bool trim_leading_zeros,
-                            string *kanji_output,
-                            string *arabic_output) {
+bool NormalizeNumbersInternal(const string &input,
+                              bool trim_leading_zeros,
+                              bool allow_suffix,
+                              string *kanji_output,
+                              string *arabic_output,
+                              string *suffix) {
   DCHECK(kanji_output);
   DCHECK(arabic_output);
   const char *begin = input.data();
@@ -1647,36 +1664,38 @@ bool Util::NormalizeNumbers(const string &input,
   vector<uint64> numbers;
   numbers.reserve(input.size());
 
-  const char *const kNumKanjiDigits[] = {
-    "\xe3\x80\x87", "\xe4\xb8\x80", "\xe4\xba\x8c", "\xe4\xb8\x89",
-    "\xe5\x9b\x9b", "\xe4\xba\x94", "\xe5\x85\xad", "\xe4\xb8\x83",
-    "\xe5\x85\xab", "\xe4\xb9\x9d", NULL
-  };
-  //   "〇", "一", "二", "三", "四", "五", "六", "七", "八", "九", NULL
-
   // Maps Kanji number string to digits, e.g., "二百十一" -> [2, 100, 10, 1].
   // Simultaneously, constructs a Kanji number string.
   kanji_output->clear();
   string kanji_char;
+  string kanji_char_normalized;
+
   while (begin < end) {
     size_t mblen = 0;
-    const char32 wchar = UTF8ToUCS4(begin, end, &mblen);
+    const char32 wchar = Util::UTF8ToUCS4(begin, end, &mblen);
     kanji_char.assign(begin, mblen);
     if (wchar >= 0x0030 && wchar <= 0x0039) {  // '0' <= wchar <= '9'
-      *kanji_output += kNumKanjiDigits[wchar - 0x0030];
+      kanji_char_normalized = kNumKanjiDigits[wchar - 0x0030];
     } else if (wchar >= 0xFF10 && wchar <= 0xFF19) {  // '０' <= wchar <= '９'
-      *kanji_output += kNumKanjiDigits[wchar - 0xFF10];
+      kanji_char_normalized = kNumKanjiDigits[wchar - 0xFF10];
     } else {
-      *kanji_output += kanji_char;
+      kanji_char_normalized = kanji_char;
     }
 
     string tmp;
-    KanjiNumberToArabicNumber(kanji_char, &tmp);
+    Util::KanjiNumberToArabicNumber(kanji_char, &tmp);
 
     uint64 n = 0;
     if (!SafeStringToUInt64(tmp, &n)) {
-      return false;
+      if (!allow_suffix) {
+        return false;
+      }
+      DCHECK(suffix);
+      *suffix = "";
+      suffix->insert(0, begin, end - begin);
+      break;
     }
+    *kanji_output += kanji_char_normalized;
     numbers.push_back(n);
     begin += mblen;
   }
@@ -1705,6 +1724,34 @@ bool Util::NormalizeNumbers(const string &input,
   snprintf(buf, sizeof(buf), "%llu", n);
   *arabic_output += buf;
   return true;
+}
+}  // end of anonymous namespace
+
+// Convert Kanji numbers into Arabic numbers:
+// e.g. "百二十万" -> 1200000
+bool Util::NormalizeNumbers(const string &input,
+                            bool trim_leading_zeros,
+                            string *kanji_output,
+                            string *arabic_output) {
+  return NormalizeNumbersInternal(input,
+                                  trim_leading_zeros,
+                                  false,  // allow_suffix
+                                  kanji_output,
+                                  arabic_output,
+                                  NULL);
+}
+
+bool Util::NormalizeNumbersWithSuffix(const string &input,
+                                      bool trim_leading_zeros,
+                                      string *kanji_output,
+                                      string *arabic_output,
+                                      string *suffix) {
+  return NormalizeNumbersInternal(input,
+                                  trim_leading_zeros,
+                                  true,  // allow_suffix
+                                  kanji_output,
+                                  arabic_output,
+                                  suffix);
 }
 
 // Load  Rules
@@ -2005,8 +2052,9 @@ bool Util::IsKanaSymbolContained(const string &input) {
 
 bool Util::IsEnglishTransliteration(const string &value) {
   for (size_t i = 0; i < value.size(); ++i) {
-    if (value[i] == 0x20 || value[i] == 0x21 || value[i] == 0x2D ||
-        // " ", "!", "-"
+    if (value[i] == 0x20 || value[i] == 0x21 ||
+        value[i] == 0x27 || value[i] == 0x2D ||
+        // " ", "!", "'", "-"
         (value[i] >= 0x41 && value[i] <= 0x5A) ||  // A..Z
         (value[i] >= 0x61 && value[i] <= 0x7A)) {  // a..z
       // do nothing
@@ -2017,14 +2065,16 @@ bool Util::IsEnglishTransliteration(const string &value) {
   return true;
 }
 
+#ifndef __native_client__
+
 bool Util::Unlink(const string &filename) {
 #ifdef OS_WINDOWS
   wstring wide;
   return Util::UTF8ToWide(filename.c_str(), &wide) > 0 &&
       ::DeleteFileW(wide.c_str()) != 0;
-#else
+#else  // OS_WINDOWS
   return ::unlink(filename.c_str()) == 0;
-#endif
+#endif  // OS_WINDOWS
 }
 
 bool Util::RemoveDirectory(const string &dirname) {
@@ -2032,9 +2082,9 @@ bool Util::RemoveDirectory(const string &dirname) {
   wstring wide;
   return (Util::UTF8ToWide(dirname.c_str(), &wide) > 0 &&
           ::RemoveDirectoryW(wide.c_str()) != 0);
-#else
+#else  // OS_WINDOWS
   return ::rmdir(dirname.c_str()) == 0;
-#endif
+#endif  // OS_WINDOWS
 }
 
 bool Util::CreateDirectory(const string &path) {
@@ -2043,9 +2093,9 @@ bool Util::CreateDirectory(const string &path) {
   if (Util::UTF8ToWide(path.c_str(), &wide) <= 0)
     return false;
   ::CreateDirectoryW(wide.c_str(), NULL);
-#else
+#else  // OS_WINDOWS
   ::mkdir(path.c_str(), 0700);
-#endif
+#endif  // OS_WINDOWS
   return true;
 }
 
@@ -2054,10 +2104,10 @@ bool Util::FileExists(const string &filename) {
   wstring wide;
   return (Util::UTF8ToWide(filename.c_str(), &wide) > 0 &&
           ::GetFileAttributesW(wide.c_str()) != -1);
-#else
+#else  // OS_WINDOWS
   struct stat s;
   return ::stat(filename.c_str(), &s) == 0;
-#endif
+#endif  // OS_WINDOWS
 }
 
 bool Util::DirectoryExists(const string &dirname) {
@@ -2070,10 +2120,10 @@ bool Util::DirectoryExists(const string &dirname) {
   const DWORD attribute = ::GetFileAttributesW(wide.c_str());
   return ((attribute != -1) &&
           (attribute & FILE_ATTRIBUTE_DIRECTORY));
-#else
+#else  // OS_WINDOWS
   struct stat s;
   return (::stat(dirname.c_str(), &s) == 0 && S_ISDIR(s.st_mode));
-#endif
+#endif  // OS_WINDOWS
 }
 
 bool Util::Rename(const string &from, const string &to) {
@@ -2088,9 +2138,9 @@ bool Util::Rename(const string &from, const string &to) {
   return Util::UTF8ToWide(from.c_str(), &wfrom) > 0 &&
       Util::UTF8ToWide(to.c_str(), &wto) > 0 &&
       ::MoveFileW(wfrom.c_str(), wto.c_str());
-#else
+#else  // OS_WINDOWS
   return ::rename(from.c_str(), to.c_str()) == 0;
-#endif
+#endif  // OS_WINDOWS
 }
 
 #ifdef OS_WINDOWS
@@ -2418,8 +2468,10 @@ UserProfileDirectoryImpl::UserProfileDirectoryImpl() {
 #ifdef OS_WINDOWS
   DCHECK(SUCCEEDED(Singleton<LocalAppDataDirectoryCache>::get()->result()));
   dir = Singleton<LocalAppDataDirectoryCache>::get()->path();
+#ifdef GOOGLE_JAPANESE_INPUT_BUILD
   dir = Util::JoinPath(dir, kCompanyNameInEnglish);
   Util::CreateDirectory(dir);
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
   dir = Util::JoinPath(dir, kProductNameInEnglish);
 
 #elif defined(OS_MACOSX)
@@ -2543,15 +2595,6 @@ string Util::GetServerDirectory() {
 #ifdef OS_LINUX
   return "/usr/lib/mozc";
 #endif  // OS_LINUX
-}
-
-string Util::GetServerPath() {
-  const string server_path = mozc::Util::GetServerDirectory();
-  // if server path is empty, return empty path
-  if (server_path.empty()) {
-    return "";
-  }
-  return mozc::Util::JoinPath(server_path, kMozcServerName);
 }
 
 string Util::GetDocumentDirectory() {
@@ -2761,6 +2804,8 @@ string Util::NormalizeDirectorySeparator(const string &path) {
 #endif
 }
 
+#endif  // __native_client__
+
 // Command line flags
 bool Util::CommandLineGetFlag(int argc,
                               char **argv,
@@ -2957,6 +3002,16 @@ Util::ScriptType Util::GetScriptType(char32 w) {
       INRANGE(w, 0xFF65, 0xFF9F) ||    // half width katakana
       w == 0x1B000) {                  // KATAKANA LETTER ARCHAIC E
     return KATAKANA;
+  } else if (
+      INRANGE(w, 0x1F000, 0x1F02F) ||  // Mahjong tiles
+      INRANGE(w, 0x1F030, 0x1F09F) ||  // Domino tiles
+      INRANGE(w, 0x1F0A0, 0x1F0FF) ||  // Playing cards
+      INRANGE(w, 0x1F200, 0x1F2FF) ||  // Enclosed Ideographic Supplement
+      INRANGE(w, 0x1F300, 0x1F5FF) ||  // Miscellaneous Symbols And Pictographs
+      INRANGE(w, 0x1F600, 0x1F64F) ||  // Emoticons
+      INRANGE(w, 0x1F680, 0x1F6FF) ||  // Transport And Map Symbols
+      INRANGE(w, 0x1F700, 0x1F77F)) {  // Alchemical Symbols
+    return EMOJI;
   }
 
   return UNKNOWN_SCRIPT;
@@ -3025,6 +3080,13 @@ Util::ScriptType GetScriptTypeInternal(const string &str,
 
 Util::ScriptType Util::GetScriptType(const string &str) {
   return GetScriptTypeInternal(str, false);
+}
+
+Util::ScriptType Util::GetFirstScriptType(const string &str) {
+  size_t mblen = 0;
+  return Util::GetScriptType(str.c_str(),
+                             str.c_str() + str.size(),
+                             &mblen);
 }
 
 Util::ScriptType Util::GetScriptTypeWithoutSymbols(const string &str) {
@@ -3351,8 +3413,8 @@ bool Util::IsWindowsX64() {
     case IS_WINDOWS_X64_DEFAULT_MODE:
       return Singleton<IsWindowsX64Cache>::get()->is_x64();
     default:
-      DCHECK(false) << "Unexpected mode specified.  mode = "
-                    << g_is_windows_x64_mode;
+      DLOG(FATAL) << "Unexpected mode specified.  mode = "
+                  << g_is_windows_x64_mode;
       return Singleton<IsWindowsX64Cache>::get()->is_x64();
   }
 }
@@ -3366,8 +3428,8 @@ void Util::SetIsWindowsX64ModeForTest(IsWindowsX64Mode mode) {
       // Known mode. OK.
       break;
     default:
-      DCHECK(false) << "Unexpected mode specified.  mode = "
-                    << g_is_windows_x64_mode;
+      DLOG(FATAL) << "Unexpected mode specified.  mode = "
+                  << g_is_windows_x64_mode;
       break;
   }
 }
@@ -3715,4 +3777,3 @@ bool Util::EnsureVitalImmutableDataIsAvailable() {
 }
 #endif  // OS_WINDOWS
 }  // namespace mozc
-

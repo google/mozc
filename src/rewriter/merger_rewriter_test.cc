@@ -170,6 +170,22 @@ TEST_F(MergerRewriterTest, RewriteCheckTest) {
   EXPECT_EQ("b.Rewrite();"
             "e.Rewrite();",
             call_result);
+  call_result.clear();
+
+  segments.set_request_type(mozc::Segments::PARTIAL_SUGGESTION);
+  EXPECT_FALSE(merger.Rewrite(&segments));
+  EXPECT_EQ("b.Rewrite();"
+            "e.Rewrite();",
+            call_result);
+  call_result.clear();
+
+  segments.set_request_type(mozc::Segments::PARTIAL_PREDICTION);
+  EXPECT_FALSE(merger.Rewrite(&segments));
+  EXPECT_EQ("c.Rewrite();"
+            "d.Rewrite();"
+            "e.Rewrite();",
+            call_result);
+  call_result.clear();
 }
 
 TEST_F(MergerRewriterTest, Focus) {

@@ -115,6 +115,27 @@ def _ReplaceVariables(data, environment):
   return re.sub(r'\$\{(\w+)\}', Replacer, data)
 
 
+def _RemoveDevOnlyLines(data, build_type):
+  """Remove dev-only lines.
+
+  Args:
+    data: the original data string
+    build_type: build type ("dev" or "stable")
+
+  Returns:
+    if build_type == "dev"
+      the data string including dev-only lines.
+    else:
+      the data string excluding dev-only lines.
+  """
+  pat = re.compile("<!--DEV_ONLY_START-->\n(.*)<!--DEV_ONLY_END-->\n",
+                   re.DOTALL)
+  if build_type == "dev":
+    return re.sub(pat, r'\1', data)
+  else:
+    return re.sub(pat, '', data)
+
+
 def ParseOptions():
   """Parse command line options.
 
@@ -128,6 +149,7 @@ def ParseOptions():
   parser.add_option("--build_dir", dest="build_dir")
   parser.add_option("--gen_out_dir", dest="gen_out_dir")
   parser.add_option("--keystone_dir", dest="keystone_dir")
+  parser.add_option("--build_type", dest="build_type")
 
   (options, unused_args) = parser.parse_args()
   return options
@@ -137,7 +159,7 @@ def main():
   """The main function."""
   options = ParseOptions()
   required_flags = ["version_file", "output", "input", "build_dir",
-                    "gen_out_dir", "keystone_dir"]
+                    "gen_out_dir", "keystone_dir", "build_type"]
   for flag in required_flags:
     if getattr(options, flag) is None:
       logging.error("--%s is not specified." % flag)
@@ -171,7 +193,9 @@ def main():
     variables[keystone_var] = keystone_data[keystone_var]
 
   open(options.output, 'w').write(
-      _ReplaceVariables(open(options.input).read(), variables))
+      _RemoveDevOnlyLines(
+          _ReplaceVariables(open(options.input).read(), variables),
+          options.build_type))
 
 if __name__ == '__main__':
     main()

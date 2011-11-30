@@ -90,7 +90,7 @@ def main():
   keys = sorted(dic.keys())
 
   print "struct UnihanData {";
-  print "  unsigned short int ucs2;";
+  print "  unsigned int ucs4;";
 # Since the total strokes defined in Unihan data is Chinese-based
 # number, we can't use it.
 #  print "  unsigned char total_strokes;";

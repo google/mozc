@@ -33,8 +33,6 @@
 #include <windows.h>
 
 #include <deque>
-#include <utility>
-#include <vector>
 
 #include "base/port.h"
 #include "base/scoped_ptr.h"

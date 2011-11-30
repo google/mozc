@@ -151,7 +151,17 @@ TEST_F(TableTest, LookUp) {
   }
 }
 
-TEST_F(TableTest, Puncutations) {
+TEST_F(TableTest, LookUpPredictiveAll) {
+  Table table;
+  InitTable(&table);
+
+  vector<const Entry *> results;
+  table.LookUpPredictiveAll("k", &results);
+
+  EXPECT_EQ(6, results.size());
+}
+
+TEST_F(TableTest, Punctuations) {
   static const struct TestCase {
     config::Config::PunctuationMethod method;
     const char *input;
@@ -176,7 +186,7 @@ TEST_F(TableTest, Puncutations) {
   };
 
   const string config_file = Util::JoinPath(FLAGS_test_tmpdir,
-                                                  "mozc_config_test_tmp");
+                                            "mozc_config_test_tmp");
   Util::Unlink(config_file);
   config::ConfigHandler::SetConfigFileName(config_file);
   config::ConfigHandler::Reload();
@@ -186,10 +196,12 @@ TEST_F(TableTest, Puncutations) {
     config.set_punctuation_method(test_cases[i].method);
     EXPECT_TRUE(config::ConfigHandler::SetConfig(config));
     Table table;
-    table.Initialize();
+    ASSERT_TRUE(table.Initialize());
     const Entry *entry = table.LookUp(test_cases[i].input);
-    EXPECT_TRUE(entry != NULL);
-    EXPECT_EQ(test_cases[i].expected, entry->result());
+    EXPECT_TRUE(entry != NULL) << "Failed index = " << i;
+    if (entry) {
+      EXPECT_EQ(test_cases[i].expected, entry->result());
+    }
   }
 }
 
@@ -222,7 +234,7 @@ TEST_F(TableTest, Symbols) {
   };
 
   const string config_file = Util::JoinPath(FLAGS_test_tmpdir,
-                                                  "mozc_config_test_tmp");
+                                            "mozc_config_test_tmp");
   Util::Unlink(config_file);
   config::ConfigHandler::SetConfigFileName(config_file);
   config::ConfigHandler::Reload();
@@ -232,10 +244,12 @@ TEST_F(TableTest, Symbols) {
     config.set_symbol_method(test_cases[i].method);
     EXPECT_TRUE(config::ConfigHandler::SetConfig(config));
     Table table;
-    table.Initialize();
+    ASSERT_TRUE(table.Initialize());
     const Entry *entry = table.LookUp(test_cases[i].input);
-    EXPECT_TRUE(entry != NULL);
-    EXPECT_EQ(test_cases[i].expected, entry->result());
+    EXPECT_TRUE(entry != NULL) << "Failed index = " << i;
+    if (entry) {
+      EXPECT_EQ(test_cases[i].expected, entry->result());
+    }
   }
 }
 
@@ -247,10 +261,10 @@ TEST_F(TableTest, KanaSuppressed) {
   config::ConfigHandler::SetConfig(config);
 
   Table table;
-  table.Initialize();
+  ASSERT_TRUE(table.Initialize());
 
   const Entry *entry = table.LookUp("a");
-  EXPECT_TRUE(entry != NULL);
+  ASSERT_TRUE(entry != NULL);
   // "あ"
   EXPECT_EQ("\xE3\x81\x82", entry->result());
   EXPECT_TRUE(entry->pending().empty());
@@ -261,7 +275,7 @@ TEST_F(TableTest, KanaCombination) {
   ASSERT_TRUE(table.Initialize());
   // "か゛"
   const Entry *entry = table.LookUp("\xE3\x81\x8B\xE3\x82\x9B");
-  EXPECT_TRUE(entry != NULL);
+  ASSERT_TRUE(entry != NULL);
   // "が"
   EXPECT_EQ("\xE3\x81\x8C", entry->result());
   EXPECT_TRUE(entry->pending().empty());

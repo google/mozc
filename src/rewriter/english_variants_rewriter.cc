@@ -89,6 +89,18 @@ bool EnglishVariantsRewriter::ExpandEnglishVariants(
   return true;
 }
 
+bool EnglishVariantsRewriter::IsT13NCandidate(
+    Segment::Candidate *candidate) const {
+  return (Util::IsEnglishTransliteration(candidate->content_value) &&
+          Util::GetScriptType(candidate->content_key) == Util::HIRAGANA);
+}
+
+bool EnglishVariantsRewriter::IsEnglishCandidate(
+    Segment::Candidate *candidate) const {
+  return (Util::IsEnglishTransliteration(candidate->content_value) &&
+          Util::GetScriptType(candidate->content_key) == Util::ALPHABET);
+}
+
 bool EnglishVariantsRewriter::ExpandEnglishVariantsWithSegment(
     Segment *seg) const {
   CHECK(seg);
@@ -99,15 +111,18 @@ bool EnglishVariantsRewriter::ExpandEnglishVariantsWithSegment(
     Segment::Candidate *original_candidate = seg->mutable_candidate(i);
     DCHECK(original_candidate);
 
+    // http://b/issue?id=5137299
+    // If the entry is comming from user dictionary,
+    // expand English variants.
     if (original_candidate->attributes &
-        Segment::Candidate::NO_VARIANTS_EXPANSION) {
+        Segment::Candidate::NO_VARIANTS_EXPANSION &&
+        !(original_candidate->attributes &
+          Segment::Candidate::USER_DICTIONARY)) {
       continue;
     }
 
-    // Expand English T13N variants
-    if (Util::IsEnglishTransliteration(original_candidate->content_value) &&
-        Util::GetScriptType(original_candidate->content_key) ==
-        Util::HIRAGANA) {
+    if (IsT13NCandidate(original_candidate)) {
+      // Expand T13N candiadte variants
       modified = true;
       original_candidate->attributes |=
           Segment::Candidate::NO_VARIANTS_EXPANSION;
@@ -130,11 +145,17 @@ bool EnglishVariantsRewriter::ExpandEnglishVariantsWithSegment(
               original_candidate->structure_cost;
           new_candidate->lid = original_candidate->lid;
           new_candidate->rid = original_candidate->rid;
-          new_candidate->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
+          new_candidate->attributes |=
+              Segment::Candidate::NO_VARIANTS_EXPANSION;
         }
 
         i += variants.size();
       }
+    } else if (IsEnglishCandidate(original_candidate)) {
+      // Fix variants for English candidate
+      modified = true;
+      original_candidate->attributes |=
+          Segment::Candidate::NO_VARIANTS_EXPANSION;
     }
   }
 

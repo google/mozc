@@ -29,365 +29,185 @@
 
 #include "dictionary/system/system_dictionary_builder.h"
 
-#include <memory.h>
-#include <algorithm>
+#include <cstring>
 #include <climits>
+
+#include <algorithm>
 #include <sstream>
 
 #include "base/base.h"
 #include "base/file_stream.h"
+#include "base/hash_tables.h"
 #include "base/util.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/file/dictionary_file_builder.h"
-#include "dictionary/system/system_dictionary.h"
+#include "dictionary/rx/rx_trie_builder.h"
+#include "dictionary/rx/rbx_array_builder.h"
+#include "dictionary/system/codec_interface.h"
+#include "dictionary/system/codec.h"
+#include "dictionary/system/words_info.h"
 #include "dictionary/text_dictionary_loader.h"
 
 DEFINE_bool(preserve_intermediate_dictionary, false,
             "preserve inetemediate dictionary file.");
+DEFINE_int32(min_key_length_to_use_small_cost_encoding, 6,
+             "minimum key length to use 1 byte cost encoding.");
 
 namespace mozc {
-void SystemDictionaryBuilder::Compile(const char *text_file,
-                                      const char *binary_file) {
-  SystemDictionaryBuilder builder(text_file, binary_file);
-  builder.Build();
-}
-
-// This structure represents tokens with same index.
-struct RxKeyStringInfo {
-  RxKeyStringInfo();
-
-  vector<RxTokenInfo *> tokens;
-  int offset_in_index_rx;
-};
-
-RxKeyStringInfo::RxKeyStringInfo() : offset_in_index_rx(-1) {
-}
-
-struct RxTokenInfo {
-  RxTokenInfo(Token *t, bool frequent);
-
-  Token *token;
-  int offset_in_word_rx;
-  bool same_as_key;
-  bool same_as_katakana;
-  // POS of this token is in top 256.
-  bool is_frequent_pos;
-};
-
-RxTokenInfo::RxTokenInfo(Token *t,
-                         bool frequent_pos) : token(t),
-                                              offset_in_word_rx(0),
-                                              is_frequent_pos(frequent_pos) {
-  same_as_key = (t->key == t->value);
-  string s;
-  Util::HiraganaToKatakana(t->key, &s);
-  same_as_katakana = (s == t->value);
-}
+namespace dictionary {
 
 struct TokenGreaterThan {
-  inline bool operator()(const RxTokenInfo* lhs,
-                         const RxTokenInfo* rhs) const {
-    return ((lhs->token->lid > rhs->token->lid) ||
-            ((lhs->token->lid == rhs->token->lid) &&
-             (lhs->token->rid > rhs->token->rid)) ||
-            ((lhs->token->lid == rhs->token->lid) &&
-             (lhs->token->rid == rhs->token->rid) &&
-             (lhs->offset_in_word_rx < rhs->offset_in_word_rx)));
+  inline bool operator()(const TokenInfo& lhs,
+                         const TokenInfo& rhs) const {
+    if (lhs.token->lid != rhs.token->lid) {
+      return (lhs.token->lid > rhs.token->lid);
+    }
+    if (lhs.token->rid != rhs.token->rid) {
+      return (lhs.token->rid > rhs.token->rid);
+    }
+    if (lhs.id_in_value_trie != rhs.id_in_value_trie) {
+      return (lhs.id_in_value_trie < rhs.id_in_value_trie);
+    }
+    return lhs.token->attributes < rhs.token->attributes;
   }
 };
 
-SystemDictionaryBuilder::SystemDictionaryBuilder(const string& input,
-                                                 const string& output)
-    : input_filename_(input),
-      output_filename_(output) {
-  index_rx_filename_ = output_filename_ + ".index_rx";
-  tokens_filename_ = output_filename_ + ".tokens";
-  token_rx_filename_ = output_filename_ + ".token_rx";
-  frequent_pos_filename_ = output_filename_ + ".freq_pos";
+SystemDictionaryBuilder::SystemDictionaryBuilder()
+    : value_trie_builder_(new rx::RxTrieBuilder),
+      key_trie_builder_(new rx::RxTrieBuilder),
+      token_array_builder_(new rx::RbxArrayBuilder),
+      codec_(SystemDictionaryCodecFactory::GetCodec()) {}
+
+SystemDictionaryBuilder::~SystemDictionaryBuilder() {}
+
+void SystemDictionaryBuilder::BuildFromFile(const string &input_file) {
+  VLOG(1) << "load file: " << input_file;
+  TextDictionaryLoader loader;
+  loader.Open(input_file.c_str());
+  // Get all tokens
+  vector<Token *> tokens;
+  loader.CollectTokens(&tokens);
+
+  VLOG(1) << tokens.size() << " tokens";
+  BuildFromTokens(tokens);
 }
 
-SystemDictionaryBuilder::~SystemDictionaryBuilder() {
-  map<string, RxKeyStringInfo *>::iterator it;
-  for (it = key_info_.begin(); it != key_info_.end(); ++it) {
-    RxKeyStringInfo *ki = it->second;
-    vector<RxTokenInfo *>::iterator jt;
-    for (jt = ki->tokens.begin(); jt != ki->tokens.end(); ++jt) {
-      delete *jt;
-    }
-    delete it->second;
+void SystemDictionaryBuilder::BuildFromTokens(const vector<Token *> &tokens) {
+  KeyInfoMap key_info_map;
+  ReadTokens(tokens, &key_info_map);
+
+  BuildFrequentPos(key_info_map);
+  BuildValueTrie(key_info_map);
+  BuildKeyTrie(key_info_map);
+
+  SetIdForValue(&key_info_map);
+  SetIdForKey(&key_info_map);
+  SortTokenInfo(&key_info_map);
+  SetCostType(&key_info_map);
+  SetPosType(&key_info_map);
+  SetValueType(&key_info_map);
+
+  BuildTokenArray(key_info_map);
+}
+
+void SystemDictionaryBuilder::WriteToFile(const string &output_file) const {
+  const string value_trie_file = output_file + ".value";
+  const string key_trie_file = output_file + ".key";
+  const string token_array_file = output_file + ".tokens";
+  const string frequent_pos_file = output_file + ".freq_pos";
+
+  WriteValueTrie(value_trie_file);
+  WriteKeyTrie(key_trie_file);
+  WriteTokenArray(token_array_file);
+  WriteFrequentPos(frequent_pos_file);
+
+  scoped_ptr<DictionaryFileBuilder> builder(new DictionaryFileBuilder);
+  builder->AddSectionFromFile(codec_->GetSectionNameForValue(),
+                              value_trie_file);
+  builder->AddSectionFromFile(codec_->GetSectionNameForKey(),
+                              key_trie_file);
+  builder->AddSectionFromFile(codec_->GetSectionNameForTokens(),
+                              token_array_file);
+  builder->AddSectionFromFile(codec_->GetSectionNameForPos(),
+                              frequent_pos_file);
+  builder->WriteImageToFile(output_file);
+
+  if (!FLAGS_preserve_intermediate_dictionary) {
+    LOG(INFO) << "cleaning intermediate files";
+    Util::Unlink(value_trie_file);
+    Util::Unlink(key_trie_file);
+    Util::Unlink(token_array_file);
+    Util::Unlink(frequent_pos_file);
+    LOG(INFO) << "removed";
   }
 }
 
-bool SystemDictionaryBuilder::WriteIndexRx(const vector<Token *>& tokens,
-                                           hash_map<string, int>* mapping) {
-  vector<string> word_list;
-  vector<Token *>::const_iterator it;
-  for (it = tokens.begin(); it != tokens.end(); ++it) {
-    string key;
-    SystemDictionary::EncodeIndexString((*it)->key, &key);
-    word_list.push_back(key);
-  }
-
-  LOG(INFO) << "start to build index rx\n";
-  return BuildRxFile(word_list, index_rx_filename_, mapping);
+namespace {
+uint32 GetCombinedPos(uint16 lid, uint16 rid) {
+  return (lid << 16) | rid;
 }
 
-bool SystemDictionaryBuilder::BuildRxFile(const vector<string>& word_list,
-                                          const string& rx_fn,
-                                          hash_map<string, int>* mapping) {
-  rx_builder *b = rx_builder_create();
-  for (vector<string>::const_iterator it = word_list.begin();
-       it != word_list.end(); ++it) {
-    rx_builder_add(b, it->c_str());
+TokenInfo::ValueType GetValueType(const Token *token) {
+  if (token->value == token->key) {
+    return TokenInfo::AS_IS_HIRAGANA;
   }
-  rx_builder_build(b);
-  for (vector<string>::const_iterator it = word_list.begin();
-       it != word_list.end(); ++it) {
-    (*mapping)[*it] = rx_builder_get_key_index(b, it->c_str());
+  string katakana;
+  Util::HiraganaToKatakana(token->key, &katakana);
+  if (token->value == katakana) {
+    return TokenInfo::AS_IS_KATAKANA;
   }
-  unsigned char *image = rx_builder_get_image(b);
-  int size = rx_builder_get_size(b);
-  OutputFileStream ofs(rx_fn.c_str(), ios::binary|ios::out);
-  ofs.write(reinterpret_cast<const char *>(image), size);
-  rx_builder_release(b);
-  LOG(INFO) << "Wrote rx file to :" << rx_fn;
-  return true;
+  return TokenInfo::DEFAULT_VALUE;
 }
 
-bool SystemDictionaryBuilder::WriteTokenRx(hash_map<string, int>* mapping) {
-  vector<string> token_array;
-  for (map<string, RxKeyStringInfo *>::iterator it = key_info_.begin();
-       it != key_info_.end(); ++it) {
-    vector<RxTokenInfo *>::iterator jt;
-    for (jt = it->second->tokens.begin(); jt != it->second->tokens.end();
-         ++jt) {
-      RxTokenInfo *t = *jt;
-      if (!t->same_as_key &&
-          !t->same_as_katakana) {
-        // This token should be in token Rx
-        string token_str;
-        SystemDictionary::EncodeTokenString(t->token->value, &token_str);
-        token_array.push_back(token_str);
-        token_rx_map_[token_str] = 0;
-      }
-    }
-  }
-  LOG(INFO) << "start to build token rx\n";
-  return BuildRxFile(token_array, token_rx_filename_, mapping);
-}
-
-bool SystemDictionaryBuilder::BuildTokenRxMap(
-    const hash_map<string, int>& mapping) {
-  map<string, int>::iterator it;
-  for (it = token_rx_map_.begin(); it != token_rx_map_.end(); ++it) {
-    hash_map<string, int>::const_iterator jt = mapping.find(it->first);
-    if (jt != mapping.end()) {
-      it->second = jt->second;
-    }
-  }
-  return true;
-}
-
-void SystemDictionaryBuilder::SetIndexInTokenRx() {
-  map<string, RxKeyStringInfo *>::iterator it;
-  for (it = key_info_.begin(); it != key_info_.end(); ++it) {
-    for (vector<RxTokenInfo *>::iterator jt = it->second->tokens.begin();
-         jt != it->second->tokens.end(); ++jt) {
-      RxTokenInfo *t = *jt;
-      string token_str;
-      SystemDictionary::EncodeTokenString(t->token->value, &token_str);
-      t->offset_in_word_rx = token_rx_map_[token_str];
-    }
-  }
-}
-
-void SystemDictionaryBuilder::SortTokenInfo() {
-  map<string, RxKeyStringInfo *>::iterator it;
-  for (it = key_info_.begin(); it != key_info_.end(); ++it) {
-    RxKeyStringInfo *ki = it->second;
-    sort(ki->tokens.begin(), ki->tokens.end(), TokenGreaterThan());
-  }
-}
-
-void SystemDictionaryBuilder::WriteInt(int offset,
-                                       OutputFileStream *ofs) {
-  ofs->write(reinterpret_cast<const char *>(&offset), sizeof(offset));
-}
-
-// Each token is encoded as following.
-// Flags: 1 byte (see comments in rx_dictionary.h)
-// Cost:
-//  For words without homonyms, 1 bytes
-//  Other words, 2 bytes
-// Pos:
-//  For frequent pos, 1 byte
-//  For other pos-es left id+right id 2 byte
-// Index: 3 bytes (4 bytes when the offset is larger than 2^24)
-void SystemDictionaryBuilder::WriteToken(const RxKeyStringInfo &key, int n,
-                                         ostream *ofs) {
-  const RxTokenInfo *token_info = key.tokens[n];
-  const RxTokenInfo *prev_token = (n > 0 ? key.tokens[n - 1] : NULL);
-  // Determines the flags for this token.
-  uint8 flags = 0;
-  if (n == key.tokens.size() - 1) {
-    flags |= SystemDictionary::LAST_TOKEN_FLAG;
-  }
-  const Token *t = token_info->token;
-  uint32 pos = (t->lid << 16) | t->rid;
-  // Determines pos encoding.
-  if (frequent_pos_.find(pos) == frequent_pos_.end()) {
-    if (prev_token &&
-        prev_token->token->lid == t->lid &&
-        prev_token->token->rid == t->rid) {
-      flags |= SystemDictionary::SAME_POS_FLAG;
+bool HaveHomonymsInSamePos(const KeyInfo &key_info) {
+  hash_set<uint32> seen;
+  for (size_t i = 0; i < key_info.tokens.size(); ++i) {
+    const Token *token = key_info.tokens[i].token;
+    const uint32 pos = GetCombinedPos(token->lid, token->rid);
+    if (seen.find(pos) == seen.end()) {
+      seen.insert(pos);
     } else {
-      flags |= SystemDictionary::FULL_POS_FLAG;
+      return true;
     }
   }
-  // Determine key encoding.
-  if (token_info->same_as_key) {
-    flags |= SystemDictionary::AS_IS_TOKEN_FLAG;
-  } else if (token_info->same_as_katakana) {
-    flags |= SystemDictionary::KATAKANA_TOKEN_FLAG;
-  } else if (prev_token &&
-             prev_token->token->value == t->value) {
-    flags |= SystemDictionary::SAME_VALUE_FLAG;
-  }
+  return false;
+}
+}  // namespace
 
-  // Encodes token into bytes.
-  uint8 b[12];
-  b[0] = flags;
-  int offset;
-  CHECK_LT(t->cost, 32768) << "Assuming cost is within 15bits.";
-  b[1] = t->cost >> 8;
-  b[2] = t->cost & 0xff;
-  offset = 3;
-
-  if (flags & SystemDictionary::FULL_POS_FLAG) {
-    b[offset] = t->lid & 255;
-    b[offset + 1] = t->lid >> 8;
-    b[offset + 2] = t->rid & 255;
-    b[offset + 3] = t->rid >> 8;
-    offset += 4;
-  } else if (!(flags & SystemDictionary::SAME_POS_FLAG)) {
-    // Frequent 1 byte pos.
-    b[offset] = frequent_pos_[pos];
-    offset += 1;
-  }
-
-  if (!(flags & (SystemDictionary::AS_IS_TOKEN_FLAG |
-                 SystemDictionary::KATAKANA_TOKEN_FLAG |
-                 SystemDictionary::SAME_VALUE_FLAG))) {
-    uint32 idx = token_info->offset_in_word_rx;
-    if (idx >= 0x400000) {
-      // This code runs in dictionary_compiler. So, we can use
-      // LOG(FATAL) here.
-      LOG(FATAL) << "Too large word rx (should be less than 2^22).";
+void SystemDictionaryBuilder::ReadTokens(const vector<Token *> &tokens,
+                                         KeyInfoMap *key_info_map) const {
+  for (size_t i = 0; i < tokens.size(); ++i) {
+    Token *token = tokens[i];
+    CHECK(!token->key.empty()) << "empty key string in input";
+    CHECK(!token->value.empty()) << "empty value string in input";
+    if (key_info_map->find(token->key) == key_info_map->end()) {
+      KeyInfo key_info;
+      key_info_map->insert(make_pair(token->key, key_info));
     }
-    b[offset] = idx & 255;
-    b[offset + 1] = (idx >> 8) & 255;
-    b[offset + 2] = (idx >> 16) & 255;
-    offset += 3;
-  }
-
-  ofs->write(reinterpret_cast<char *>(b), offset);
-}
-
-void SystemDictionaryBuilder::WriteFrequentPos() {
-  OutputFileStream ofs(frequent_pos_filename_.c_str(),
-                       ios::binary|ios::out);
-  uint32 vec[256];
-  memset(vec, 0, sizeof(vec));
-  map<uint32, int>::iterator it;
-  for (it = frequent_pos_.begin(); it != frequent_pos_.end(); ++it) {
-    vec[it->second] = it->first;
-  }
-  int i;
-  for (i = 0; i < sizeof(vec) / sizeof(uint32); i++) {
-    WriteInt(vec[i], &ofs);
+    KeyInfoMap::iterator itr = key_info_map->find(token->key);
+    itr->second.tokens.push_back(TokenInfo(token));
+    itr->second.tokens.back().value_type = GetValueType(token);
   }
 }
 
-void SystemDictionaryBuilder::WriteTokenSection() {
-  map<string, RxKeyStringInfo *>::iterator it;
-  vector<string> id_map;
-  id_map.resize(key_info_.size());
-  for (it = key_info_.begin(); it != key_info_.end(); ++it) {
-    id_map[it->second->offset_in_index_rx] = it->first;
-  }
-
-  rbx_builder *rb = rbx_builder_create();
-  rbx_builder_set_length_coding(rb, SystemDictionary::kMinRBXBlobSize, 1);
-  // Appends token information ordered by index id.
-  for (vector<string>::const_iterator jt = id_map.begin();
-       jt != id_map.end(); ++jt) {
-    RxKeyStringInfo *ki = key_info_[*jt];
-    WriteTokensForKey(*ki, rb);
-  }
-  // Appends termination flag.
-  const char termination = SystemDictionary::TERMINATION_FLAG;
-  rbx_builder_push(rb, &termination, 1);
-
-  rbx_builder_build(rb);
-  LOG(INFO) << "rbx size=" << rbx_builder_get_size(rb);
-  unsigned char *image = rbx_builder_get_image(rb);
-  int size = rbx_builder_get_size(rb);
-  OutputFileStream ofs(tokens_filename_.c_str(), ios::binary|ios::out);
-  ofs.write(reinterpret_cast<const char *>(image), size);
-  rbx_builder_release(rb);
-}
-
-void SystemDictionaryBuilder::WriteTokensForKey(const RxKeyStringInfo &key,
-                                                rbx_builder *rb) {
-  ostringstream os;
-  for (int i = 0; i < key.tokens.size(); ++i) {
-    WriteToken(key, i, &os);
-  }
-  const string &output = os.str();
-  rbx_builder_push(rb, output.data(), output.size());
-}
-
-bool SystemDictionaryBuilder::BuildIndexRxMap(
-    const vector<Token *>& tokens,
-    const hash_map<string, int> &mapping) {
-  vector<Token *>::const_iterator it;
-  LOG(INFO) << "building index rx map for " << tokens.size();
-  for (it = tokens.begin(); it != tokens.end(); ++it) {
-    string s;
-    SystemDictionary::EncodeIndexString((*it)->key, &s);
-    int value = 0;
-    hash_map<string, int>::const_iterator jt = mapping.find(s);
-    if (jt != mapping.end()) value = jt->second;
-    key_info_[(*it)->key]->offset_in_index_rx = value;
-  }
-  LOG(INFO) << "done";
-  return true;
-}
-
-void SystemDictionaryBuilder::ConcatFiles() {
-  DictionaryFileBuilder builder;
-  builder.AddSectionFromFile("f", frequent_pos_filename_);
-  builder.AddSectionFromFile("i", index_rx_filename_);
-  builder.AddSectionFromFile("T", tokens_filename_);
-  builder.AddSectionFromFile("R", token_rx_filename_);
-  builder.WriteImageToFile(output_filename_);
-}
-
-void SystemDictionaryBuilder::CollectFrequentPos(
-    const vector<Token *>& tokens) {
+void SystemDictionaryBuilder::BuildFrequentPos(
+    const KeyInfoMap &key_info_map) {
   // Calculate frequency of each pos
+  // TODO(toshiyuki): It might be better to count frequency
+  // with considering same_as_prev_pos.
   map<uint32, int> pos_map;
-  for (vector<Token *>::const_iterator it = tokens.begin();
-       it != tokens.end(); ++it) {
-    uint32 pos = 0;
-    pos = (*it)->lid;
-    pos <<= 16;
-    pos |= (*it)->rid;
-    pos_map[pos]++;
+  for (KeyInfoMap::const_iterator itr = key_info_map.begin();
+       itr != key_info_map.end(); ++itr) {
+    const KeyInfo &key_info = itr->second;
+    for (size_t i = 0; i < key_info.tokens.size(); ++i) {
+      const Token *token = key_info.tokens[i].token;
+      pos_map[GetCombinedPos(token->lid, token->rid)]++;
+    }
   }
+
   // Get histgram of frequency
   map<int, int> freq_map;
-  for (map<uint32, int>::iterator jt = pos_map.begin();
+  for (map<uint32, int>::const_iterator jt = pos_map.begin();
        jt != pos_map.end(); ++jt) {
     freq_map[jt->second]++;
   }
@@ -404,8 +224,8 @@ void SystemDictionaryBuilder::CollectFrequentPos(
   }
 
   // Collect high frequent pos
-  LOG(INFO) << "num_freq_pos" << num_freq_pos;
-  LOG(INFO) << "POS threshold=" << freq_threshold;
+  VLOG(1) << "num_freq_pos" << num_freq_pos;
+  VLOG(1) << "Pos threshold=" << freq_threshold;
   int freq_pos_idx = 0;
   int num_tokens = 0;
   map<uint32, int>::iterator lt;
@@ -418,82 +238,186 @@ void SystemDictionaryBuilder::CollectFrequentPos(
   }
   CHECK(freq_pos_idx == num_freq_pos)
       << "inconsistent result to find frequent pos";
-  LOG(INFO) << freq_pos_idx << " high frequent POS has "
-            << num_tokens << " tokens";
+  VLOG(1) << freq_pos_idx << " high frequent Pos has "
+          << num_tokens << " tokens";
 }
 
-void SystemDictionaryBuilder::Build() {
-  LOG(INFO) << "reading file\n";
-  TextDictionaryLoader d;
-  d.Open(input_filename_.c_str());
-  // Get all tokens
-  vector<Token *> tokens;
-  d.CollectTokens(&tokens);
-  LOG(INFO) << tokens.size() << " tokens\n";
-  BuildFromTokenVector(tokens);
-}
 
-void SystemDictionaryBuilder::BuildFromTokenVector(
-    const vector<Token *>& tokens) {
-  CollectFrequentPos(tokens);
-  BuildTokenInfo(tokens);
-
-  // Token Rx
-  {
-    hash_map<string, int> token_mapping;
-    CHECK(WriteTokenRx(&token_mapping)) << "failed to write token Rx";
-    CHECK(BuildTokenRxMap(token_mapping)) << "failed to build token Rx map";
-    SetIndexInTokenRx();
-    SortTokenInfo();
-  }
-
-  // Index Rx
-  {
-    hash_map<string, int> index_mapping;
-    CHECK(WriteIndexRx(tokens, &index_mapping))
-        << "failed to write index Rx";
-    // mapping from index number in Rx to key string.
-    CHECK(BuildIndexRxMap(tokens, index_mapping))
-        << "failed to build index Rx map";
-  }
-
-  LOG(INFO) << "start to write dictionary\n";
-
-  // writes tokens
-  WriteTokenSection();
-
-  // writes frequent pos
-  WriteFrequentPos();
-
-  ConcatFiles();
-
-  if (!FLAGS_preserve_intermediate_dictionary) {
-    Util::Unlink(index_rx_filename_);
-    Util::Unlink(token_rx_filename_);
-    Util::Unlink(tokens_filename_);
-    Util::Unlink(frequent_pos_filename_);
-  }
-}
-
-void SystemDictionaryBuilder::BuildTokenInfo(const vector<Token *>& tokens) {
-  vector<Token *>::const_iterator it;
-  for (it = tokens.begin(); it != tokens.end(); ++it) {
-    CHECK(!(*it)->key.empty()) << "empty key string in input";
-    CHECK(!(*it)->value.empty()) << "empty value string in input";
-    const string &key = (*it)->key;
-    RxKeyStringInfo *ki = NULL;
-    map<string, RxKeyStringInfo*>::const_iterator jt = key_info_.find(key);
-    if (jt == key_info_.end()) {
-      ki = new RxKeyStringInfo;
-      key_info_[key] = ki;
-    } else {
-      ki = key_info_[key];
+void SystemDictionaryBuilder::BuildValueTrie(const KeyInfoMap &key_info_map) {
+  for (KeyInfoMap::const_iterator itr = key_info_map.begin();
+       itr != key_info_map.end(); ++itr) {
+    const KeyInfo &key_info = itr->second;
+    for (size_t i = 0; i < key_info.tokens.size(); ++i) {
+      const TokenInfo &token_info = key_info.tokens[i];
+      if (token_info.value_type == TokenInfo::AS_IS_HIRAGANA ||
+          token_info.value_type == TokenInfo::AS_IS_KATAKANA) {
+        // These values will be stored in token array as flags
+        continue;
+      }
+      string value_str;
+      codec_->EncodeValue(token_info.token->value, &value_str);
+      value_trie_builder_->AddKey(value_str);
     }
-    uint32 pos = ((*it)->lid << 16) | (*it)->rid;
-    bool is_frequent_pos = (frequent_pos_.find(pos) != frequent_pos_.end());
-    RxTokenInfo *t = new RxTokenInfo(*it, is_frequent_pos);
-    // inserts into map
-    ki->tokens.push_back(t);
+  }
+  value_trie_builder_->Build();
+}
+
+void SystemDictionaryBuilder::SetIdForValue(KeyInfoMap *key_info_map) const {
+  for (KeyInfoMap::iterator itr = key_info_map->begin();
+       itr != key_info_map->end(); ++itr) {
+    for (size_t i = 0; i < itr->second.tokens.size(); ++i) {
+      TokenInfo *token_info = &(itr->second.tokens[i]);
+      string value_str;
+      codec_->EncodeValue(token_info->token->value, &value_str);
+      token_info->id_in_value_trie =
+          value_trie_builder_->GetIdFromKey(value_str);
+    }
   }
 }
+
+void SystemDictionaryBuilder::SortTokenInfo(KeyInfoMap *key_info_map) const {
+  for (KeyInfoMap::iterator itr = key_info_map->begin();
+       itr != key_info_map->end(); ++itr) {
+    KeyInfo *key_info = &(itr->second);
+    sort(key_info->tokens.begin(), key_info->tokens.end(), TokenGreaterThan());
+  }
+}
+
+void SystemDictionaryBuilder::SetCostType(KeyInfoMap *key_info_map) const {
+  for (KeyInfoMap::iterator itr = key_info_map->begin();
+       itr != key_info_map->end(); ++itr) {
+    KeyInfo *key_info = &(itr->second);
+    if (HaveHomonymsInSamePos(*key_info)) {
+      continue;
+    }
+    for (size_t i = 0; i < key_info->tokens.size(); ++i) {
+      TokenInfo *token_info = &key_info->tokens[i];
+      const int key_len = Util::CharsLen(token_info->token->key);
+      if (key_len >= FLAGS_min_key_length_to_use_small_cost_encoding) {
+        token_info->cost_type = TokenInfo::CAN_USE_SMALL_ENCODING;
+      }
+    }
+  }
+}
+
+void SystemDictionaryBuilder::SetPosType(KeyInfoMap *key_info_map) const {
+  for (KeyInfoMap::iterator itr = key_info_map->begin();
+       itr != key_info_map->end(); ++itr) {
+    KeyInfo *key_info = &(itr->second);
+    for (size_t i = 0; i < key_info->tokens.size(); ++i) {
+      TokenInfo *token_info = &(key_info->tokens[i]);
+      const uint32 pos = GetCombinedPos(token_info->token->lid,
+                                        token_info->token->rid);
+      map<uint32, int>::const_iterator itr = frequent_pos_.find(pos);
+      if (itr != frequent_pos_.end()) {
+        token_info->pos_type = TokenInfo::FREQUENT_POS;
+        token_info->id_in_frequent_pos_map = itr->second;
+      }
+      if (i >= 1) {
+        const TokenInfo &prev_token_info = key_info->tokens[i - 1];
+        const uint32 prev_pos = GetCombinedPos(prev_token_info.token->lid,
+                                               prev_token_info.token->rid);
+        if (prev_pos == pos) {
+          // we can overwrite FREQUENT_POS
+          token_info->pos_type = TokenInfo::SAME_AS_PREV_POS;
+        }
+      }
+    }
+  }
+}
+
+void SystemDictionaryBuilder::SetValueType(KeyInfoMap *key_info_map) const {
+  for (KeyInfoMap::iterator itr = key_info_map->begin();
+       itr != key_info_map->end(); ++itr) {
+    KeyInfo *key_info = &(itr->second);
+    for (size_t i = 1; i < key_info->tokens.size(); ++i) {
+      const TokenInfo *prev_token_info = &(key_info->tokens[i - 1]);
+      TokenInfo *token_info = &(key_info->tokens[i]);
+      if (token_info->value_type != TokenInfo::AS_IS_HIRAGANA &&
+          token_info->value_type != TokenInfo::AS_IS_KATAKANA &&
+          (token_info->token->value == prev_token_info->token->value)) {
+        token_info->value_type = TokenInfo::SAME_AS_PREV_VALUE;
+      }
+    }
+  }
+}
+
+void SystemDictionaryBuilder::BuildKeyTrie(const KeyInfoMap &key_info_map) {
+  for (KeyInfoMap::const_iterator itr = key_info_map.begin();
+       itr != key_info_map.end(); ++itr) {
+    string key_str;
+    codec_->EncodeKey(itr->first, &key_str);
+    key_trie_builder_->AddKey(key_str);
+  }
+  key_trie_builder_->Build();
+}
+
+void SystemDictionaryBuilder::SetIdForKey(KeyInfoMap *key_info_map) const {
+  for (KeyInfoMap::iterator itr = key_info_map->begin();
+       itr != key_info_map->end(); ++itr) {
+    string key_str;
+    codec_->EncodeKey(itr->first, &key_str);
+    KeyInfo *key_info = &(itr->second);
+    key_info->id_in_key_trie =
+        key_trie_builder_->GetIdFromKey(key_str);
+  }
+}
+
+void SystemDictionaryBuilder::BuildTokenArray(const KeyInfoMap &key_info_map) {
+  // map from trie id to key string.
+  vector<string> id_map;
+  id_map.resize(key_info_map.size());
+  for (KeyInfoMap::const_iterator itr = key_info_map.begin();
+       itr != key_info_map.end(); ++itr) {
+    const KeyInfo &key_info = itr->second;
+    const int id = key_info.id_in_key_trie;
+    id_map[id] = itr->first;
+  }
+
+  for (size_t i = 0; i < id_map.size(); ++i) {
+    KeyInfoMap::const_iterator itr = key_info_map.find(id_map[i]);
+    CHECK(itr != key_info_map.end());
+    const KeyInfo &key_info = itr->second;
+    string tokens_str;
+    codec_->EncodeTokens(key_info.tokens, &tokens_str);
+    token_array_builder_->Push(tokens_str);
+  }
+  token_array_builder_->Push(string(1, codec_->GetTokensTerminationFlag()));
+  token_array_builder_->Build();
+}
+
+void SystemDictionaryBuilder::WriteValueTrie(const string &file) const {
+  OutputFileStream ofs(file.c_str(), ios::binary|ios::out);
+  value_trie_builder_->WriteImage(&ofs);
+}
+
+void SystemDictionaryBuilder::WriteKeyTrie(const string &file) const {
+  OutputFileStream ofs(file.c_str(), ios::binary|ios::out);
+  key_trie_builder_->WriteImage(&ofs);
+}
+
+void SystemDictionaryBuilder::WriteTokenArray(const string &file) const {
+  OutputFileStream ofs(file.c_str(), ios::binary|ios::out);
+  token_array_builder_->WriteImage(&ofs);
+}
+
+namespace {
+void WriteInt(int value, OutputFileStream *ofs) {
+  ofs->write(reinterpret_cast<const char *>(&value), sizeof(value));
+}
+}  // namespace
+
+void SystemDictionaryBuilder::WriteFrequentPos(const string &file) const {
+  OutputFileStream ofs(file.c_str(), ios::binary|ios::out);
+  uint32 pos_array[256];
+  memset(pos_array, 0, sizeof(pos_array));
+  for (map<uint32, int>::const_iterator itr = frequent_pos_.begin();
+       itr != frequent_pos_.end(); ++itr) {
+    pos_array[itr->second] = itr->first;
+  }
+  for (size_t i = 0; i < 256; ++i) {
+    WriteInt(pos_array[i], &ofs);
+  }
+}
+}  // namespace dictionary
 }  // namespace mozc

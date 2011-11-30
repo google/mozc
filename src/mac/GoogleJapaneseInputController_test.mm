@@ -39,6 +39,8 @@
 #include "base/mac_util.h"
 #include "base/util.h"
 #include "client/client_mock.h"
+#include "languages/global_language_spec.h"
+#include "languages/japanese/lang_dep_spec.h"
 #include "renderer/renderer_interface.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
@@ -61,7 +63,7 @@
   return self;
 }
 
-- (void)rendererClicked:(NSData *)data {
+- (void)sendData:(NSData *)data {
   // Do nothing
 }
 - (void)outputResult:(NSData *)data {
@@ -240,6 +242,7 @@ class MockRenderer : public mozc::renderer::RendererInterface {
 class GoogleJapaneseInputControllerTest : public testing::Test {
  protected:
   void SetUp() {
+    mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(&spec_);
     pool_ = [[NSAutoreleasePool alloc] init];
     mock_server_ = [[MockIMKServer alloc] init];
     mock_client_ = [[MockClient alloc] init];
@@ -262,6 +265,7 @@ class GoogleJapaneseInputControllerTest : public testing::Test {
     // mock_mozc_client and mock_renderer are released during the release of
     // |controller_|.
     [pool_ release];
+    mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(NULL);
   }
 
   void SetUpController() {
@@ -291,6 +295,7 @@ class GoogleJapaneseInputControllerTest : public testing::Test {
  private:
   MockIMKServer *mock_server_;
   NSAutoreleasePool *pool_;
+  mozc::japanese::LangDepSpecJapanese spec_;
 };
 
 // Because preedit has NSMarkedClauseSegment attribute which has to

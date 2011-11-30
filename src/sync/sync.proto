@@ -1,0 +1,132 @@
+// Copyright 2010-2011, Google Inc.
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+//     * Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//     * Redistributions in binary form must reproduce the above
+// copyright notice, this list of conditions and the following disclaimer
+// in the documentation and/or other materials provided with the
+// distribution.
+//     * Neither the name of Google Inc. nor the names of its
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+syntax = "proto2";
+package mozc.sync;
+
+
+// Mozc specific configuration data
+import "config/config.proto";
+import "dictionary/user_dictionary_storage.proto";
+import "prediction/user_history_predictor.proto";
+
+// sync_service.proto
+// MOZC_SETTING         = 100;
+// MOZC_USER_DICTIONARY = 101;
+// MOZC_USER_HISTORY_PREDICTION = 102;
+// MOZC_LEARNING_PREFERENCE = 103;
+
+message UserDictionaryKey {
+  optional uint32 bucket_id = 1 [ default = 0 ];
+  extend ime_sync.SyncKey {
+    optional UserDictionaryKey ext = 101;
+  }
+}
+
+message UserDictionaryValue {
+  // user_dictionary_storage contains UPDATE or SNAPSHOT.
+  // See UserDictionaryStorage::storage_type field.
+  optional mozc.user_dictionary.UserDictionaryStorage user_dictionary_storage = 1;
+  extend ime_sync.SyncValue {
+    optional UserDictionaryValue ext = 101;
+  }
+}
+
+message ConfigKey {
+  // ConfigKey is a single value, so no fields are here.
+  extend ime_sync.SyncKey {
+    optional ConfigKey ext = 100;
+  }
+}
+
+message ConfigValue {
+  optional mozc.config.Config config = 1;
+  extend ime_sync.SyncValue {
+    optional ConfigValue ext = 100;
+  }
+}
+
+message UserHistoryKey {
+  optional uint32 bucket_id = 1 [ default = 0 ];
+  extend ime_sync.SyncKey {
+    optional UserHistoryKey ext = 102;
+  }
+}
+
+message UserHistoryValue {
+  optional mozc.user_history_predictor.UserHistory user_history = 1;
+  extend ime_sync.SyncValue {
+    optional UserHistoryValue ext = 102;
+  }
+}
+
+message LearningPreferenceKey {
+  optional uint32 bucket_id = 1 [ default = 0 ];
+  extend ime_sync.SyncKey {
+    optional LearningPreferenceKey ext = 103;
+  }
+}
+
+message LearningPreference {
+  message Entry {
+    enum Type {
+      UNKNOWN = 0;
+      USER_SEGMENT_HISTORY = 1;
+      USER_BOUNDARY_HISTORY = 2;
+      CHARACTER_FORM = 3;
+    };
+    optional uint64 key = 1 [ default = 0 ];
+    optional bytes value = 2 [ default = "" ];
+    optional uint64 last_access_time = 3 [ default = 0 ];
+    optional Type type = 4 [ default = UNKNOWN ];
+  };
+  repeated Entry entries = 1;
+}
+
+message LearningPreferenceValue {
+  optional LearningPreference learning_preference = 1;
+  extend ime_sync.SyncValue {
+    optional LearningPreferenceValue ext = 103;
+  }
+}
+
+// Used only for unittesting
+message TestKey {
+  optional string key = 1;
+  extend ime_sync.SyncKey {
+    optional TestKey ext = 199;
+  }
+}
+
+message TestValue {
+  optional string value = 1;
+  extend ime_sync.SyncValue {
+    optional TestValue ext = 199;
+  }
+}

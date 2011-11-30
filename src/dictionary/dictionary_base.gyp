@@ -55,7 +55,7 @@
         {
           'action_name': 'gen_pos_matcher',
           'variables': {
-            'input_files': [
+            'input_files%': [
               '../data/dictionary/id.def',
               '../data/rules/special_pos.def',
               '../data/rules/pos_matcher_rule.def',

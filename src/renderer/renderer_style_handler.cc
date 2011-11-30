@@ -33,7 +33,8 @@
 #include <windows.h>
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
-#include <atlbase.h>
+// Workaround against KB813540
+#include <atlbase_mozc.h>
 #include <atlapp.h>
 #include <atlgdi.h>
 #endif  // OS_WINDOWS
@@ -180,7 +181,7 @@ void RendererStyleHandlerImpl::GetDefaultRendererStyle(
 
   infostyle->set_window_border(1);  // non-scalable
   infostyle->set_row_rect_padding(2 * scale_factor_x);
-  infostyle->set_window_width(200 * scale_factor_x);
+  infostyle->set_window_width(300 * scale_factor_x);
   infostyle->mutable_title_style()->set_font_size(15 * scale_factor_y);
   infostyle->mutable_title_style()->set_left_padding(5 * scale_factor_x);
   infostyle->mutable_description_style()->set_font_size(12 * scale_factor_y);

@@ -225,9 +225,9 @@ bool FindInCandidates(const string &value,
 }
 
 // Return session state mode from candidate mode
-session::SessionState::Mode GetSessionModeFromCandidates(
-    const commands::Candidates &candidates) {
-  switch (candidates.category()) {
+session::SessionState::Mode GetSessionModeFromCandidateList(
+    const commands::CandidateList &candidate_list) {
+  switch (candidate_list.category()) {
     case commands::CONVERSION:
       return session::SessionState::CONVERSION;
     case commands::PREDICTION:
@@ -235,7 +235,7 @@ session::SessionState::Mode GetSessionModeFromCandidates(
     case commands::SUGGESTION:
       return session::SessionState::SUGGESTION;
     default:
-      DCHECK(false) << "invalid candidate category";
+      DLOG(FATAL) << "invalid candidate category";
       return session::SessionState::COMPOSITION;
   }
 }
@@ -244,7 +244,10 @@ session::SessionState::Mode GetSessionModeFromCandidates(
 bool IsMouseSelect(const commands::Input &input) {
   return (input.type() == commands::Input::SEND_COMMAND &&
           input.has_command() &&
-          input.command().type() == commands::SessionCommand::SELECT_CANDIDATE);
+          (input.command().type() ==
+              commands::SessionCommand::SELECT_CANDIDATE ||
+           input.command().type() ==
+              commands::SessionCommand::SUBMIT_CANDIDATE));
 }
 
 // Return true if resegmented
@@ -308,6 +311,7 @@ bool CheckCandidateCategory(const SessionState *state,
   return (state->has_candidates() &&
           state->candidates().category() == category);
 }
+
 }  // namespace
 
 class EventConverter {
@@ -431,6 +435,7 @@ void SessionUsageObserver::SaveStats() {
   }
   boolean_cache_.clear();
 
+
   update_count_ = 0;
   usage_stats::UsageStats::Sync();
   VLOG(3) << "Save Stats";
@@ -519,17 +524,16 @@ void SessionUsageObserver::UpdateMode(const commands::Input &input,
 
   // Mouse select and no candidate window now.
   if (IsMouseSelect(input)) {
-    DCHECK(state->has_candidates());
-    if (state->has_candidates()) {
+    if (state->has_all_candidate_words()) {
       state->set_mode(
-          GetSessionModeFromCandidates(state->candidates()));
+          GetSessionModeFromCandidateList(state->all_candidate_words()));
     }
     return;
   }
 
-  if (output.has_candidates()) {
+  if (output.has_all_candidate_words()) {
     state->set_mode(
-        GetSessionModeFromCandidates(output.candidates()));
+        GetSessionModeFromCandidateList(output.all_candidate_words()));
     return;
   }
 
@@ -734,6 +738,29 @@ void SessionUsageObserver::UpdateState(const commands::Input &input,
   }
 }
 
+void SessionUsageObserver::UpdateClientSideStats(const commands::Input &input,
+                                                 SessionState *state) {
+  switch (input.command().usage_stats_event()) {
+    case commands::SessionCommand::INFOLIST_WINDOW_SHOW:
+      if (!state->has_start_infolist_window_time()) {
+        state->set_start_infolist_window_time(time(NULL));
+      }
+      break;
+    case commands::SessionCommand::INFOLIST_WINDOW_HIDE:
+      if (state->has_start_infolist_window_time()) {
+        const uint64 infolist_duration
+            = time(NULL) - state->start_infolist_window_time();
+        DLOG(INFO) << "infolist_duration:" << infolist_duration;
+        UpdateTiming("InfolistWindowDuration", infolist_duration);
+        state->clear_start_infolist_window_time();
+      }
+      break;
+    default:
+      LOG(WARNING) << "client side usage stats event has invalid category";
+      break;
+  }
+}
+
 void SessionUsageObserver::EvalSendKey(const commands::Input &input,
                                        const commands::Output &output) {
   if (input.has_key() && input.key().has_key_code()) {
@@ -785,9 +812,9 @@ void SessionUsageObserver::CheckOutput(const commands::Input &input,
     // We should check the candidate contents because suggestion
     // candidates are shown automatically.
     IncrementCount("CommitFromSuggestion");
-    if (state->selected_indices_size() == 0) {
+    if (input.command().type() == commands::SessionCommand::SUBMIT_CANDIDATE ||
+        state->selected_indices_size() == 0) {
       // Committed zero-query suggest candidate
-      // by using SEGMENT_FOCUS_RIGHT_OR_COMMIT command.
       UpdateCandidateStats("SuggestionCandidates", input.command().id());
     } else {
       const uint32 index = state->selected_indices(0);
@@ -839,8 +866,16 @@ void SessionUsageObserver::CheckOutput(const commands::Input &input,
     UpdateTiming("SubmittedLength", total_len);
     UpdateTiming("SubmittedSegmentNumber",state->preedit().segment_size());
     IncrementCountBy("SubmittedTotalLength", total_len);
+  } else {
+    // Zero-query Suggest
+    size_t length = Util::CharsLen(submit_value.c_str(), submit_value.size());
+    UpdateTiming("SubmittedSegmentLength", length);
+    UpdateTiming("SubmittedLength", length);
+    UpdateTiming("SubmittedSegmentNumber", 1);
+    IncrementCountBy("SubmittedTotalLength", length);
   }
 }
+
 
 void SessionUsageObserver::EvalCommandHandler(
     const commands::Command &command) {
@@ -934,6 +969,16 @@ void SessionUsageObserver::EvalCommandHandler(
   if (IsMouseSelect(input)) {
     IncrementCount("MouseSelect");
   }
+
+  // Client side event
+  if ((input.type() == commands::Input::SEND_COMMAND) &&
+      (input.has_command()) &&
+      (input.command().type() ==
+           commands::SessionCommand::USAGE_STATS_EVENT) &&
+      (input.command().has_usage_stats_event())) {
+    UpdateClientSideStats(input, state);
+  }
+
 
   if ((input.type() == commands::Input::SEND_COMMAND ||
        input.type() == commands::Input::SEND_KEY) &&

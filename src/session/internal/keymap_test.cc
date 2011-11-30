@@ -786,5 +786,42 @@ TEST(KeyMap, ZeroQuerySuggestion) {
   EXPECT_EQ(PrecompositionState::REVERT, command);
 }
 
+TEST(KeyMap, CapsLock) {
+  // MSIME
+  KeyMapManager *manager =
+      KeyMapFactory::GetKeyMapManager(config::Config::MSIME);
+  commands::KeyEvent key_event;
+  KeyParser::ParseKey("CAPS a", &key_event);
+
+  ConversionState::Commands conv_command;
+  EXPECT_TRUE(manager->GetCommandConversion(key_event, &conv_command));
+  EXPECT_EQ(ConversionState::INSERT_CHARACTER, conv_command);
+}
+
+TEST(KeyMap, ShortcutKeysWithCapsLock_Issue5627459) {
+  // MSIME
+  KeyMapManager *manager =
+      KeyMapFactory::GetKeyMapManager(config::Config::MSIME);
+
+  commands::KeyEvent key_event;
+  CompositionState::Commands composition_command;
+
+  // "Ctrl CAPS H" means that Ctrl and H key are pressed w/o shift key.
+  // See the description in command.proto.
+  KeyParser::ParseKey("Ctrl CAPS H", &key_event);
+  EXPECT_TRUE(manager->GetCommandComposition(key_event, &composition_command));
+  EXPECT_EQ(CompositionState::BACKSPACE, composition_command);
+
+  // "Ctrl CAPS h" means that Ctrl, Shift and H key are pressed.
+  KeyParser::ParseKey("Ctrl CAPS h", &key_event);
+  EXPECT_FALSE(manager->GetCommandComposition(key_event, &composition_command));
+
+  // "Ctrl CAPS 0" should be treated "Ctrl 0" as well.
+  KeyParser::ParseKey("Ctrl CAPS 0", &key_event);
+  EXPECT_TRUE(manager->GetCommandComposition(key_event, &composition_command));
+  EXPECT_EQ(CompositionState::CONVERT_TO_HALF_ALPHANUMERIC,
+            composition_command);
+}
+
 }  // namespace keymap
 }  // namespace mozc

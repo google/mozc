@@ -30,7 +30,7 @@
 #include "renderer/window_util.h"
 
 #include "base/base.h"
-#include "renderer/coordinates.h"
+#include "base/coordinates.h"
 
 namespace mozc {
 namespace renderer {
@@ -216,7 +216,7 @@ Rect WindowUtil::GetWindowRectForCascadingWindow(
 Rect WindowUtil::GetWindowRectForInfolistWindow(
     const Size &window_size, const Rect &candidate_rect,
     const Rect &working_area) {
-  renderer::Point infolist_pos;
+  Point infolist_pos;
 
   if (working_area.Height() == 0 || working_area.Width() == 0) {
     infolist_pos.x = candidate_rect.Left() + candidate_rect.Width();

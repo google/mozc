@@ -247,5 +247,26 @@ TEST_F(SymbolRewriterTest, InsertAfterSingleKanjiAndT13n) {
   }
 }
 
+TEST_F(SymbolRewriterTest, SetKey) {
+  SymbolRewriter symbol_rewriter;
+  Segments segments;
+  Segment *segment = segments.push_back_segment();
+  // "てん"
+  const string kKey = "\xe3\x81\xa6\xe3\x82\x93";
+  segment->set_key(kKey);
+  Segment::Candidate *candidate = segment->add_candidate();
+  candidate->Init();
+  candidate->key = "strange key";
+  candidate->value = "strange value";
+  candidate->content_key = "strange key";
+  candidate->content_value = "strange value";
+  EXPECT_EQ(1, segment->candidates_size());
+  EXPECT_TRUE(symbol_rewriter.Rewrite(&segments));
+  EXPECT_GT(segment->candidates_size(), 1);
+  for (size_t i = 1; i < segment->candidates_size(); ++i) {
+    EXPECT_EQ(kKey, segment->candidate(i).key);
+  }
+}
+
 
 }  // namespace mozc

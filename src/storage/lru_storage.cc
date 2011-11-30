@@ -242,23 +242,23 @@ bool LRUStorage::CreateStorageFile(const char *filename,
 }
 
 // Reopen file after initializing mapped page.
-void LRUStorage::Clear() {
+bool LRUStorage::Clear() {
   // Don't need to clear the page if the lru list is empty
   if (mmap_.get() == NULL || lru_list_.get() == NULL ||
       lru_list_->size() == 0) {
-    return;
+    return true;
   }
   const size_t offset =
       sizeof(value_size_) + sizeof(size_) + sizeof(seed_);
   if (offset >= mmap_->GetFileSize()) {   // should not happen
-    return;
+    return false;
   }
   memset(mmap_->begin() + offset, '\0',
          mmap_->GetFileSize() - offset);
   lru_list_.reset(NULL);
   map_.clear();
   Open(mmap_->begin(), mmap_->GetFileSize());
-  return;
+  return true;
 }
 
 bool LRUStorage::Merge(const char *filename) {

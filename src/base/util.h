@@ -72,6 +72,12 @@ class Util {
   // characters to the lower cases.  ex. "abCd" => "Abcd".
   static void CapitalizeString(string *output);
 
+  // Strip the leading/trailing white spaces from the input and stores
+  // it to the output.  If the input does not have such white spaces,
+  // this method just copies the input into the output.  It clears
+  // the output always.
+  static void StripWhiteSpaces(const string &str, string *output);
+
   static size_t OneCharLen(const char *src);
 
   static size_t CharsLen(const char *src, size_t size);
@@ -312,21 +318,28 @@ class Util {
   // the time-out interval elapses.
   static void Sleep(uint32 msec);
 
-  // Convert Kanji numeric into Arabic numeric
+  // Convert Kanji numeric into Arabic numeric.
   // When the trim_leading_zeros is true, leading zeros for arabic_output
   // are trimmed off.
   // TODO(toshiyuki): This parameter is only applied for arabic_output now.
   //
-  // When input contains non-number characters, conversion will be failed
-  // and returns false.
-  //
   // Input: "2千五百"
   // kanji_output: "二千五百"
   // arabic output: 2500
+  //
+  // NormalizeNumbers() returns false if it finds non-number characters.
+  // NormalizeNumbersWithSuffix() skips trailing non-number characters and
+  // return them in "suffix".
   static bool NormalizeNumbers(const string &input,
                                bool trim_leading_zeros,
                                string *kanji_output,
                                string *arabic_output);
+
+  static bool NormalizeNumbersWithSuffix(const string &input,
+                                         bool trim_leading_zeros,
+                                         string *kanji_output,
+                                         string *arabic_output,
+                                         string *suffix);
 
   // Japanese utils
   static void HiraganaToKatakana(const string &input,
@@ -407,6 +420,9 @@ class Util {
   static void UTF8ToSJIS(const string &input, string *output);
   static void SJISToUTF8(const string &input, string *output);
 
+  // Filesystem or user related methods are disabled on Native Client
+  // environment.
+#ifndef __native_client__
   // File and directory operations
   static bool CreateDirectory(const string &path);
   static bool RemoveDirectory(const string &dirname);
@@ -478,32 +494,8 @@ class Util {
   // build but available from those tests.
   static void SetUserProfileDirectory(const string &path);
 
-#ifdef OS_WINDOWS
-  // From an early stage of the development of Mozc, we have somehow abused
-  // CHECK macro assuming that any failure of fundamental APIs like
-  // ::SHGetFolderPathW or ::SHGetKnownFolderPathis is worth being notified
-  // as a crash.  But the circumstances have been changed.  As filed as
-  // b/3216603, increasing number of instances of various applications begin
-  // to use their own sandbox technology, where these kind of fundamental APIs
-  // are far more likely to fail with an unexpected error code.
-  // EnsureVitalImmutableDataIsAvailable is a simple fail-fast mechanism to
-  // this situation.  This function simply returns false instead of making
-  // the process crash if any of following functions cannot work as expected.
-  // - IsVistaOrLaterCache
-  // - SystemDirectoryCache
-  // - ProgramFilesX86Cache
-  // - LocalAppDataDirectoryCache
-  // TODO(taku,yukawa): Implement more robust and reliable mechanism against
-  //   sandboxed environment, where such kind of fundamental APIs are far more
-  //   likely to fail.  See b/3216603.
-  static bool EnsureVitalImmutableDataIsAvailable();
-#endif  // OS_WINDOWS
-
   // return the directory name where the mozc server exist.
   static string GetServerDirectory();
-
-  // return the path of the mozc server.
-  static string GetServerPath();
 
   // Returns the directory name which holds some documents bundled to
   // the installed application package.  Typically it's
@@ -526,6 +518,29 @@ class Util {
   // On Linux, return getenv("DISPLAY")
   // Mac has no DesktopName() so, just return empty string
   static string GetDesktopNameAsString();
+
+#endif  // __native_client__
+
+#ifdef OS_WINDOWS
+  // From an early stage of the development of Mozc, we have somehow abused
+  // CHECK macro assuming that any failure of fundamental APIs like
+  // ::SHGetFolderPathW or ::SHGetKnownFolderPathis is worth being notified
+  // as a crash.  But the circumstances have been changed.  As filed as
+  // b/3216603, increasing number of instances of various applications begin
+  // to use their own sandbox technology, where these kind of fundamental APIs
+  // are far more likely to fail with an unexpected error code.
+  // EnsureVitalImmutableDataIsAvailable is a simple fail-fast mechanism to
+  // this situation.  This function simply returns false instead of making
+  // the process crash if any of following functions cannot work as expected.
+  // - IsVistaOrLaterCache
+  // - SystemDirectoryCache
+  // - ProgramFilesX86Cache
+  // - LocalAppDataDirectoryCache
+  // TODO(taku,yukawa): Implement more robust and reliable mechanism against
+  //   sandboxed environment, where such kind of fundamental APIs are far more
+  //   likely to fail.  See b/3216603.
+  static bool EnsureVitalImmutableDataIsAvailable();
+#endif  // OS_WINDOWS
 
   // Command line arguments
 
@@ -575,6 +590,7 @@ class Util {
     KANJI,
     NUMBER,
     ALPHABET,
+    EMOJI,
     SCRIPT_TYPE_SIZE,
   };
 
@@ -582,8 +598,14 @@ class Util {
   static ScriptType GetScriptType(char32 w);
 
   // return script type of first character in [begin, end)
+  // This function finds the first UTF-8 chars and returns its script type.
+  // The length of the character will be returned in *mblen.
+  // This function calls GetScriptType(char32) internally.
   static ScriptType GetScriptType(const char *begin, const char *end,
                                   size_t *mblen);
+
+  // return script type of first character in str
+  static ScriptType GetFirstScriptType(const string &str);
 
   // return script type of string. all chars in str must be
   // KATAKANA/HIRAGANA/KANJI/NUMBER or ALPHABET.

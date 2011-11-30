@@ -35,6 +35,8 @@
 #include "base/logging.h"
 #include "base/version.h"
 #include "config/config_handler.h"
+#include "languages/global_language_spec.h"
+#include "languages/japanese/lang_dep_spec.h"
 #include "session/japanese_session_factory.h"
 #include "unix/ibus/main.h"
 #include "unix/ibus/mozc_engine.h"
@@ -140,6 +142,8 @@ void InitIBusComponent(bool executed_by_ibus_daemon) {
 
 int main(gint argc, gchar **argv) {
   InitGoogle(argv[0], &argc, &argv, true);
+  mozc::japanese::LangDepSpecJapanese spec;
+  mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(&spec);
 #ifdef OS_CHROMEOS
   // On Chrome OS, mozc does not store the config data to a local file.
   mozc::config::ConfigHandler::SetConfigFileName("memory://config.1.db");

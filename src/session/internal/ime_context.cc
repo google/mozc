@@ -56,12 +56,15 @@ void ImeContext::set_last_command_time(uint64 last_time) {
 }
 
 const composer::Composer &ImeContext::composer() const {
+  DCHECK(composer_.get());
   return *composer_;
 }
 composer::Composer *ImeContext::mutable_composer() {
+  DCHECK(composer_.get());
   return composer_.get();
 }
 void ImeContext::set_composer(composer::Composer *composer) {
+  DCHECK(composer);
   composer_.reset(composer);
 }
 

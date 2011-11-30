@@ -187,7 +187,7 @@ class ImeSwitchUtilImpl {
   void ReloadFromFile(const string &filename) {
     scoped_ptr<istream> ifs(ConfigFileStream::Open(filename));
     if (ifs.get() == NULL) {
-      DCHECK(false) << "could not open file: " << filename;
+      DLOG(FATAL) << "could not open file: " << filename;
       return;
     }
     return ReloadFromStream(ifs.get());

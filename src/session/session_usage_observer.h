@@ -35,6 +35,8 @@
 #include "base/base.h"
 #include "session/session_observer_interface.h"
 #include "session/state.pb.h"
+#include "session/commands.pb.h"
+#include "usage_stats/usage_stats.pb.h"
 
 namespace mozc {
 namespace commands {
@@ -78,6 +80,9 @@ class SessionUsageObserver : public SessionObserverInterface {
                    const SessionState *state);
   // Utility function for updating stats of candidates.
   void UpdateCandidateStats(const string &base_name, uint32 index);
+  // Update client side stats.
+  void UpdateClientSideStats(const commands::Input &input,
+                             SessionState *state);
 
   // Update stats. Values are cached.
   void IncrementCount(const string &name);
@@ -93,6 +98,8 @@ class SessionUsageObserver : public SessionObserverInterface {
   map<string, vector<uint32> > timing_cache_;
   map<string, int> integer_cache_;
   map<string, bool> boolean_cache_;
+
+
   DISALLOW_COPY_AND_ASSIGN(SessionUsageObserver);
 };
 }  // namespace mozc::session

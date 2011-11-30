@@ -41,7 +41,6 @@
 #include "base/util.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
-#include "dictionary/system/system_dictionary.h"
 
 namespace mozc {
 
@@ -59,7 +58,7 @@ bool TextDictionaryLoader::RewriteSpecialToken(Token *token,
     return true;
   }
   if (Util::StartsWith(label, "SPELLING_CORRECTION")) {
-    token->lid += SystemDictionary::kSpellingCorrectionPosOffset;
+    token->attributes = Token::SPELLING_CORRECTION;
     return true;
   }
   if (Util::StartsWith(label, "ZIP_CODE")) {

@@ -30,6 +30,7 @@
 #import "renderer/mac/CandidateView.h"
 
 #include "base/base.h"
+#include "base/coordinates.h"
 #include "renderer/table_layout.h"
 #include "renderer/window_util.h"
 #include "session/commands.pb.h"
@@ -46,12 +47,13 @@ namespace renderer {
 namespace mac{
 
 namespace {
+const int kHideWindowDelay = 500;   // msec
 const int kMarginAbovePreedit = 10; // pixel
 
 // Find the display including the specified point and if it fails to
 // find it, pick up the nearest display.  Returns the geometry of the
 // found display.
-renderer::Rect GetNearestDisplayRect(int x, int y) {
+mozc::Rect GetNearestDisplayRect(int x, int y) {
   CGPoint point;
   point.x = x;
   point.y = y;
@@ -92,8 +94,8 @@ renderer::Rect GetNearestDisplayRect(int x, int y) {
   }
 
   CGRect display_rect = CGDisplayBounds(displayID);
-  return renderer::Rect(display_rect.origin.x, display_rect.origin.y,
-                        display_rect.size.width, display_rect.size.height);
+  return mozc::Rect(display_rect.origin.x, display_rect.origin.y,
+              display_rect.size.width, display_rect.size.height);
 }
 }  // anonymous namespace
 
@@ -123,6 +125,7 @@ void CandidateController::SetSendCommandInterface(
     SendCommandInterface *send_command_interface) {
   candidate_window_->SetSendCommandInterface(send_command_interface);
   cascading_window_->SetSendCommandInterface(send_command_interface);
+  infolist_window_->SetSendCommandInterface(send_command_interface);
 }
 
 bool CandidateController::ExecCommand(const RendererCommand &command) {
@@ -171,12 +174,13 @@ bool CandidateController::ExecCommand(const RendererCommand &command) {
         candidates.focused_index() - candidates.candidate(0).index();
       if (candidates.candidate_size() >= focused_row &&
           candidates.candidate(focused_row).has_information_id()) {
-        infolist_window_->DelayShow();
+        const uint32 delay = max(0u, candidates.usages().delay());
+        infolist_window_->DelayShow(delay);
       } else {
-        infolist_window_->DelayHide();
+        infolist_window_->DelayHide(kHideWindowDelay);
       }
     } else {
-      infolist_window_->DelayHide();
+      infolist_window_->DelayHide(kHideWindowDelay);
     }
   } else {
     // Hide infolist window immediately.
@@ -193,14 +197,12 @@ void CandidateController::AlignWindows() {
     return;
   }
 
-  const renderer::Size preedit_size(command_.preedit_rectangle().right() -
-                                    command_.preedit_rectangle().left(),
-                                    command_.preedit_rectangle().bottom() -
-                                    command_.preedit_rectangle().top());
-  renderer::Rect preedit_rect(
-      renderer::Point(command_.preedit_rectangle().left(),
-                      command_.preedit_rectangle().top()),
-      preedit_size);
+  const mozc::Size preedit_size(command_.preedit_rectangle().right() -
+                          command_.preedit_rectangle().left(),
+                          command_.preedit_rectangle().bottom() -
+                          command_.preedit_rectangle().top());
+  mozc::Rect preedit_rect(mozc::Point(command_.preedit_rectangle().left(),
+                          command_.preedit_rectangle().top()), preedit_size);
   // Currently preedit_rect doesn't care about the text height -- it
   // just means the line under the preedit.  So here we fix the height.
   // TODO(mukai): replace this hack by calculating actual text height.
@@ -208,31 +210,31 @@ void CandidateController::AlignWindows() {
   preedit_rect.size.height += kMarginAbovePreedit;
 
   // Find out the nearest display.
-  const renderer::Rect display_rect = GetNearestDisplayRect(
-      preedit_rect.Left(), preedit_rect.Bottom());
+  const mozc::Rect display_rect = GetNearestDisplayRect(preedit_rect.Left(),
+                                                  preedit_rect.Bottom());
 
   // Align candidate window.
   // Initialize the the position.  We use (left, bottom) of preedit as
   // the top-left position of the window because we want to show the
   // window just below of the preedit.
   const TableLayout *candidate_layout = candidate_window_->GetTableLayout();
-  const renderer::Point candidate_zero_point(
+  const mozc::Point candidate_zero_point(
       candidate_layout->GetColumnRect(COLUMN_CANDIDATE).Left(), 0);
 
-  const renderer::Rect candidate_rect =
+  const mozc::Rect candidate_rect =
       WindowUtil::GetWindowRectForMainWindowFromPreeditRect(
           preedit_rect, candidate_window_->GetWindowSize(),
           candidate_zero_point, display_rect);
-  candidate_window_->MoveWindow(renderer::Point(candidate_rect.Left(),
-                                                candidate_rect.Top()));
+  candidate_window_->MoveWindow(mozc::Point(candidate_rect.Left(),
+                                            candidate_rect.Top()));
 
   // Align infolist window
-  const renderer::Rect infolist_rect =
+  const mozc::Rect infolist_rect =
       WindowUtil::GetWindowRectForInfolistWindow(
           infolist_window_->GetWindowSize(),
           candidate_rect, display_rect);
-  infolist_window_->MoveWindow(renderer::Point(infolist_rect.Left(),
-                                               infolist_rect.Top()));
+  infolist_window_->MoveWindow(mozc::Point(infolist_rect.Left(),
+                                           infolist_rect.Top()));
 
   // If there is no need to show cascading window, we just finish the
   // function here.
@@ -247,19 +249,19 @@ void CandidateController::AlignWindows() {
   const Candidates &candidates = command_.output().candidates();
   const int focused_row =
       candidates.focused_index() - candidates.candidate(0).index();
-  renderer::Rect focused_rect = candidate_layout->GetRowRect(focused_row);
+  mozc::Rect focused_rect = candidate_layout->GetRowRect(focused_row);
   // move the focused_rect to the monitor's coordinates
   focused_rect.origin.x += candidate_rect.origin.x;
   focused_rect.origin.y += candidate_rect.origin.y;
   // focused_rect doesn't have the width for scroll bar
   focused_rect.size.width += candidate_layout->GetVScrollBarRect().Width();
 
-  const renderer::Rect cascading_rect =
+  const mozc::Rect cascading_rect =
       WindowUtil::GetWindowRectForCascadingWindow(
           focused_rect, cascading_window_->GetWindowSize(),
-          Point(0, 0), display_rect);
-  cascading_window_->MoveWindow(renderer::Point(cascading_rect.Left(),
-                                                cascading_rect.Top()));
+          mozc::Point(0, 0), display_rect);
+  cascading_window_->MoveWindow(mozc::Point(cascading_rect.Left(),
+                                            cascading_rect.Top()));
 }
 
 

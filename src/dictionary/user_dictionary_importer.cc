@@ -689,7 +689,7 @@ UserDictionaryImporter::GuessEncodingType(const char *str, size_t size) {
   size_t valid_script = 0;
   while (begin < end) {
     size_t mblen = 0;
-    const uint16 ucs2 = Util::UTF8ToUCS2(begin, end, &mblen);
+    const char32 ucs4 = Util::UTF8ToUCS4(begin, end, &mblen);
     ++valid_utf8;
     for (size_t i = 1; i < mblen; ++i) {
       if (begin[i] >= 0x80 && begin[i] <= 0xBF) {
@@ -698,9 +698,9 @@ UserDictionaryImporter::GuessEncodingType(const char *str, size_t size) {
     }
 
     // "\n\r\t " or Japanese code point
-    if (ucs2 == 0x000A || ucs2 == 0x000D ||
-        ucs2 == 0x0020 || ucs2 == 0x0009 ||
-        Util::GetScriptType(ucs2) != Util::UNKNOWN_SCRIPT) {
+    if (ucs4 == 0x000A || ucs4 == 0x000D ||
+        ucs4 == 0x0020 || ucs4 == 0x0009 ||
+        Util::GetScriptType(ucs4) != Util::UNKNOWN_SCRIPT) {
       valid_script += mblen;
     }
 

@@ -32,8 +32,8 @@
 #include "renderer/window_util.h"
 
 #include "base/base.h"
+#include "base/coordinates.h"
 #include "testing/base/public/gunit.h"
-#include "renderer/coordinates.h"
 
 namespace mozc {
 namespace renderer {

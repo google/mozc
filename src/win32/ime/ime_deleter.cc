@@ -144,7 +144,7 @@ VKBackBasedDeleter::ClientAction VKBackBasedDeleter::OnKeyEvent(
       matched = ((vk == VK_BACK) && !is_keydown && !is_test_key);
       break;
     default:
-      DCHECK(false) << "unexpected state found";
+      DLOG(FATAL) << "unexpected state found";
       break;
   }
   if (matched) {

@@ -31,7 +31,8 @@
 
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
-#include <atlbase.h>
+// Workaround against KB813540
+#include <atlbase_mozc.h>
 #include <atlcom.h>
 #include <msctf.h>
 #include <objbase.h>
@@ -281,15 +282,14 @@ bool GetPreloadLayoutsMain(PreloadOrderToKLIDMap *preload_map) {
   for (DWORD i = 0;; ++i) {
     DWORD value_name_length = kMaxValueNameLength;
     DWORD value_length = kMaxValueLength;
-    LONG result = RegEnumValue(preload_key,
-                               i,
-                               value_name,
-                               &value_name_length,
-                               NULL,  // reserved (must be NULL)
-                               NULL,  // type (optional)
-                               value,
-                               &value_length);
-
+    result = RegEnumValue(preload_key,
+                          i,
+                          value_name,
+                          &value_name_length,
+                          NULL,  // reserved (must be NULL)
+                          NULL,  // type (optional)
+                          value,
+                          &value_length);
     if (ERROR_NO_MORE_ITEMS == result) {
       break;
     }

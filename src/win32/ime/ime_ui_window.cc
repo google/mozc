@@ -32,7 +32,8 @@
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
 #define _ATL_NO_HOSTING
-#include <atlbase.h>
+// Workaround against KB813540
+#include <atlbase_mozc.h>
 #include <atlapp.h>
 #include <atlstr.h>
 #include <atlwin.h>
@@ -70,6 +71,8 @@ using ATL::CStringA;
 using ATL::CWindow;
 using WTL::CPoint;
 using WTL::CRect;
+
+const int kRendereCommandMaxRetry = 2;
 
 // True if the the DLL received DLL_PROCESS_DETACH notification.
 bool g_module_unloaded = false;
@@ -540,6 +543,7 @@ class DefaultUIWindow {
  public:
   explicit DefaultUIWindow(HWND hwnd)
       : hwnd_(hwnd),
+        renderer_command_num_retry_(kRendereCommandMaxRetry),
         langbar_callback_(new LangBarCallbackImpl(hwnd)),
         renderer_client_(new mozc::renderer::RendererClient),
         language_bar_(new LanguageBar) {
@@ -675,39 +679,56 @@ class DefaultUIWindow {
 
   LRESULT OnSessionCommand(
       HIMC himc, commands::SessionCommand::CommandType command_type,
-      int mozc_candidate_id) {
+      LPARAM lParam) {
     if (himc == NULL) {
       return 0;
     }
 
     if ((command_type != commands::SessionCommand::SELECT_CANDIDATE) &&
-        (command_type != commands::SessionCommand::HIGHLIGHT_CANDIDATE)) {
+        (command_type != commands::SessionCommand::HIGHLIGHT_CANDIDATE) &&
+        (command_type != commands::SessionCommand::USAGE_STATS_EVENT)) {
       // Unsupported command.
       return 0;
     }
 
-    // Convert |mozc_candidate_id| to candidate index.
-    int candidate_index = 0;
-    {
-      UIContext context(himc);
-      commands::Output output;
-      if (!context.GetLastOutput(&output)) {
-        return 0;
-      }
-      if (!OutputUtil::GetCandidateIndexById(
-               output, mozc_candidate_id, &candidate_index)) {
-        return 0;
-      }
-    }  // release |context|.
+    if ((command_type == commands::SessionCommand::SELECT_CANDIDATE) ||
+        (command_type == commands::SessionCommand::HIGHLIGHT_CANDIDATE)) {
+      // Convert |mozc_candidate_id| to candidate index.
+      const int32 mozc_candidate_id = static_cast<int32>(lParam);
+      int candidate_index = 0;
+      {
+        UIContext context(himc);
+        commands::Output output;
+        if (!context.GetLastOutput(&output)) {
+          return 0;
+        }
+        if (!OutputUtil::GetCandidateIndexById(
+                 output, mozc_candidate_id, &candidate_index)) {
+          return 0;
+        }
+      }  // release |context|.
 
-    const int kCandidateWindowIndex = 0;
-    if (::ImmNotifyIME(himc, NI_SELECTCANDIDATESTR, kCandidateWindowIndex,
-                       candidate_index) == FALSE) {
-      return 0;
-    }
-    if (command_type == commands::SessionCommand::SELECT_CANDIDATE) {
-      if (::ImmNotifyIME(himc, NI_CLOSECANDIDATE, kCandidateWindowIndex, 0) ==
-          FALSE) {
+      const int kCandidateWindowIndex = 0;
+      if (::ImmNotifyIME(himc, NI_SELECTCANDIDATESTR, kCandidateWindowIndex,
+                         candidate_index) == FALSE) {
+        return 0;
+      }
+      if (command_type == commands::SessionCommand::SELECT_CANDIDATE) {
+        if (::ImmNotifyIME(himc, NI_CLOSECANDIDATE, kCandidateWindowIndex, 0) ==
+            FALSE) {
+          return 0;
+        }
+      }
+    } else if (command_type == commands::SessionCommand::USAGE_STATS_EVENT) {
+      // Send USAGE_STATS_EVENT to the server.
+      UIContext context(himc);
+      mozc::commands::Output output;
+      mozc::commands::SessionCommand command;
+      mozc::commands::SessionCommand::UsageStatsEvent event =
+          static_cast<mozc::commands::SessionCommand::UsageStatsEvent>(lParam);
+      command.set_type(mozc::commands::SessionCommand::USAGE_STATS_EVENT);
+      command.set_usage_stats_event(event);
+      if (!context.client()->SendCommand(command, &output)) {
         return 0;
       }
     }
@@ -781,6 +802,13 @@ class DefaultUIWindow {
   // Constructs RendererCommand based on various parameters in the input
   // context.  This implementation is very experimental, should be revised.
   void UpdateCandidate(const UIContext &context) {
+    if (renderer_command_num_retry_ <= 0) {
+      DLOG(INFO) << "RendererClient::ExecCommand failed "
+                 << kRendereCommandMaxRetry
+                 << " times. Gave up to call RendererClient::ExecCommand.";
+      return;
+    }
+
     mozc::commands::RendererCommand command;
     if (!command.IsInitialized()) {
       return;
@@ -788,7 +816,12 @@ class DefaultUIWindow {
     command.set_type(mozc::commands::RendererCommand::UPDATE);
     command.set_visible(false);
     UpdateCommand(context, hwnd_, *context.ui_visibility_tracker(), &command);
-    renderer_client_->ExecCommand(command);
+    if (renderer_client_->ExecCommand(command)) {
+      renderer_command_num_retry_ = kRendereCommandMaxRetry;
+    } else {
+      DLOG(ERROR) << "RendererClient::ExecCommand failed.";
+      --renderer_command_num_retry_;
+    }
   }
 
   bool UpdateLangBar(const UIContext &context) {
@@ -821,6 +854,7 @@ class DefaultUIWindow {
   }
 
   HWND hwnd_;
+  int renderer_command_num_retry_;
   scoped_ptr<mozc::renderer::RendererClient> renderer_client_;
   scoped_ptr<LanguageBar> language_bar_;
   LangBarCallbackImpl *langbar_callback_;
@@ -986,9 +1020,9 @@ LRESULT WINAPI UIWindowProc(HWND hwnd,
     const mozc::commands::SessionCommand::CommandType command_type =
         static_cast<mozc::commands::SessionCommand::CommandType>(
             renderer_msg.wParam);
-    const int32 id = static_cast<int32>(renderer_msg.lParam);
     const HIMC himc = GetSafeHIMC(hwnd);
-    result = ui_window->OnSessionCommand(himc, command_type, id);
+    result = ui_window->OnSessionCommand(himc, command_type,
+                                         renderer_msg.lParam);
     is_handled = true;
   } else if (message == WM_DESTROY) {
     // Ensure the LangBar is uninitialized.

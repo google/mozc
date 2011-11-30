@@ -78,9 +78,6 @@
       'type': 'none',
       'dependencies': [
         'dictionary_test',
-        'file/dictionary_file.gyp:dictionary_file_test',
-        'system/system_dictionary.gyp:system_dictionary_builder_test',
-        'system/system_dictionary.gyp:system_dictionary_test',
         'text_dictionary_loader_test',
       ],
     },

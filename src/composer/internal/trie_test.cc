@@ -123,3 +123,60 @@ TEST(TrieTest, LookUpPrefix) {
   key_length = 0;
   EXPECT_FALSE(trie.LookUpPrefix("xyz", &value, &key_length, &has_subtrie));
 }
+
+namespace {
+bool HasData(const vector<string> &values, const string &value) {
+  for (size_t i = 0; i < values.size(); ++i) {
+    if (values[i] == value) {
+      return true;
+    }
+  }
+  return false;
+}
+}  // namespace
+
+TEST(TrieTest, LookUpPredictiveAll) {
+  mozc::composer::Trie<string> trie;
+  trie.AddEntry("abc", "[ABC]");
+  trie.AddEntry("abd", "[ABD]");
+  trie.AddEntry("a", "[A]");
+
+  {
+    vector<string> values;
+    trie.LookUpPredictiveAll("a", &values);
+    EXPECT_EQ(3, values.size());
+    EXPECT_TRUE(HasData(values, "[ABC]"));
+    EXPECT_TRUE(HasData(values, "[ABD]"));
+    EXPECT_TRUE(HasData(values, "[A]"));
+  }
+
+  {
+    vector<string> values;
+    trie.LookUpPredictiveAll("ab", &values);
+    EXPECT_EQ(2, values.size());
+    EXPECT_TRUE(HasData(values, "[ABC]"));
+    EXPECT_TRUE(HasData(values, "[ABD]"));
+  }
+
+  {
+    vector<string> values;
+    trie.LookUpPredictiveAll("abc", &values);
+    EXPECT_EQ(1, values.size());
+    EXPECT_TRUE(HasData(values, "[ABC]"));
+  }
+
+  {
+    vector<string> values;
+    trie.LookUpPredictiveAll("", &values);
+    EXPECT_EQ(3, values.size());
+    EXPECT_TRUE(HasData(values, "[ABC]"));
+    EXPECT_TRUE(HasData(values, "[ABD]"));
+    EXPECT_TRUE(HasData(values, "[A]"));
+  }
+
+  {
+    vector<string> values;
+    trie.LookUpPredictiveAll("x", &values);
+    EXPECT_EQ(0, values.size());
+  }
+}

@@ -52,3 +52,12 @@ SuggestOnlyWord 特殊,サジェストのみ
 
 # Used in UsageRewriter
 ContentWordWithConjugation ^(動詞,自立,*,*,五段|動詞,自立,*,*,一段|形容詞,自立)
+
+# 末尾語
+SuffixWord ^(助詞|助動詞|動詞,非自立|動詞,接尾|形容詞,非自立|形容詞,接尾|動詞,自立,*,*,サ変・スル)
+
+# 固有名詞
+UniqueNoun ^名詞,固有名詞
+
+# 一般名詞
+GeneralNoun ^名詞,一般,*,*,*,*,*$

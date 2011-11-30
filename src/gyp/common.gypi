@@ -125,6 +125,10 @@
     # This option is only for Linux.
     'use_libzinnia%': 1,
 
+    # use_libxml represents if libxml library is used or not.
+    # This option is only for Linux.
+    'use_libxml%': 1,
+
     # a flag whether the current build is dev-channel or not.
     'channel_dev%': '0',
 
@@ -173,6 +177,7 @@
         'msvs_configuration_attributes': {
           'CharacterSet': '<(win_char_set_unicode)',
         },
+        'defines': ['<(language_define)'],
         'conditions': [
           ['branding=="GoogleJapaneseInput"', {
             'defines': ['GOOGLE_JAPANESE_INPUT_BUILD'],
@@ -351,7 +356,6 @@
     ],
     'include_dirs': [
       '<(DEPTH)',
-      '<(DEPTH)/..',
       '<(DEPTH)/third_party/breakpad/src',
       '<(SHARED_INTERMEDIATE_DIR)',
       '<(SHARED_INTERMEDIATE_DIR)/proto_out',
@@ -396,6 +400,11 @@
           '<(DEPTH)/third_party/gtest',
           '<(DEPTH)/third_party/gtest/include',
           '<(DEPTH)/third_party/wtl/include',
+          # Add atl_wrapper dir into the 'include_dirs' so that we can
+          # include the header file as <atlbase_mozc.h>, which
+          # is more lintian-friendly than "atlbase_mozc.h".
+          # See b/5101916 for the background information.
+          '<(DEPTH)/win32/atl_wrapper',
         ],
         # We don't have cygwin in our tree, but we need to have
         # setup_env.bat in the directory specified in 'msvs_cygwin_dirs'
@@ -532,7 +541,7 @@
           '<(DEPTH)/third_party/gtest/include',
         ],
         'mac_framework_dirs': [
-          '<(DEPTH)/../mac/Releases/GoogleBreakpad',
+          '<(mac_dir)/Releases/GoogleBreakpad',
           '<(DEPTH)/mozc_build_tools/mac',
         ],
         'xcode_settings': {

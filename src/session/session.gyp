@@ -115,7 +115,6 @@
         '../client/client.gyp:client',
         '../config/config.gyp:config_handler',
         '../config/config.gyp:genproto_config',
-        'session',
         'session_base.gyp:genproto_session',
         'session_base.gyp:keymap',
         'session_base.gyp:keymap_factory',

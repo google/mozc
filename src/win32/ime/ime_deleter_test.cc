@@ -169,7 +169,7 @@ TEST(VKBackBasedDeleterTest, NormalSequence) {
   output.set_id(kOutputId);
 
   ImeState ime_state;
-  ime_state.last_down_key = VirtualKey(kLastKey);
+  ime_state.last_down_key = VirtualKey::FromVirtualKey(kLastKey);
 
   // Delete proceeding 3 characters.
   deleter.BeginDeletion(3, output, ime_state);
@@ -285,7 +285,7 @@ TEST(VKBackBasedDeleterTest, BeginDeletion_InsuccessfulCase) {
   output.set_id(kOutputId);
 
   ImeState ime_state;
-  ime_state.last_down_key = VirtualKey(kLastKey);
+  ime_state.last_down_key = VirtualKey::FromVirtualKey(kLastKey);
 
   // Delete proceeding 3 characters.
   deleter.BeginDeletion(3, output, ime_state);

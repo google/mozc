@@ -32,6 +32,8 @@
 #include "base/util.h"
 #include "ipc/ipc.h"
 #include "ipc/ipc_test_util.h"
+#include "languages/global_language_spec.h"
+#include "languages/japanese/lang_dep_spec.h"
 #include "renderer/renderer_interface.h"
 #include "renderer/renderer_client.h"
 #include "renderer/renderer_server.h"
@@ -128,7 +130,23 @@ class DummyRendererLauncher : public RendererLauncherInterface {
 };
 }  // namespace
 
-TEST(RendererServer, IPCTest) {
+class RendererServerTest : public ::testing::Test {
+ protected:
+  virtual void SetUp() {
+    mozc::Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(
+        &lang_dep_spec_);
+  }
+
+  virtual void TearDown() {
+    mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(NULL);
+  }
+
+ private:
+  mozc::japanese::LangDepSpecJapanese lang_dep_spec_;
+};
+
+TEST_F(RendererServerTest, IPCTest) {
   Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
   mozc::IPCClientFactoryOnMemory on_memory_client_factory;
 

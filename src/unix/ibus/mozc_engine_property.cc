@@ -103,6 +103,24 @@ const MozcEngineToolProperty kMozcEngineToolProperties[] = {
     "dictionary.png",
   },
   {
+    "Tool.WordRegisterDialog",
+    "word_register_dialog",
+    "Word Register",
+    "word_register.png",
+  },
+  {
+    "Tool.HandWriting",
+    "hand_writing",
+    "Hand Writing",
+    "hand_writing.png",
+  },
+  {
+    "Tool.CharacterPalette",
+    "character_palette",
+    "Character Palette",
+    "character_palette.png",
+  },
+  {
     "Tool.AboutDialog",
     "about_dialog",
     "About Mozc",

@@ -39,10 +39,11 @@ class RendererBaseWindow {
  public:
   explicit RendererBaseWindow();
   ~RendererBaseWindow();
-  renderer::Size GetWindowSize() const;
+  Size GetWindowSize() const;
   virtual void Hide();
   virtual void Show();
-  virtual void MoveWindow(const renderer::Point &point);
+  virtual void MoveWindow(const Point &point);
+  virtual bool IsVisible();
 
  protected:
   scoped_nsobject<NSView> view_;
@@ -51,7 +52,7 @@ class RendererBaseWindow {
 
  private:
   virtual void ResetView();
-  renderer::Point pos_;
+  Point pos_;
   DISALLOW_COPY_AND_ASSIGN(RendererBaseWindow);
 };
 

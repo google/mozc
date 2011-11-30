@@ -186,6 +186,15 @@ transliteration::TransliterationType GetTransliterationTypeFromCompositionMode(
   }
 }
 
+bool IsCapsLocked(const commands::KeyEvent &key_event) {
+  for (size_t i = 0; i < key_event.modifier_keys_size(); ++i) {
+    if (key_event.modifier_keys(i) == commands::KeyEvent::CAPS) {
+      return true;
+    }
+  }
+  return false;
+}
+
 }  // namespace
 
 static const size_t kMaxPreeditLength = 256;
@@ -196,7 +205,7 @@ Composer::Composer()
       output_mode_(transliteration::HIRAGANA),
       comeback_input_mode_(transliteration::HIRAGANA),
       input_field_type_(commands::SessionCommand::NORMAL),
-      capital_sequence_count_(0),
+      shifted_sequence_count_(0),
       composition_(new Composition),
       max_length_(kMaxPreeditLength) {
   composition_->SetTable(Singleton<Table>::get());
@@ -231,7 +240,7 @@ void Composer::SetTable(const Table *table) {
 void Composer::SetInputMode(transliteration::TransliterationType mode) {
   comeback_input_mode_ = mode;
   input_mode_ = mode;
-  capital_sequence_count_ = 0;
+  shifted_sequence_count_ = 0;
   is_new_input_ = true;
   composition_->SetInputMode(GetTransliterator(mode));
 }
@@ -241,7 +250,7 @@ void Composer::SetTemporaryInputMode(
   // Set comeback_input_mode_ to revert back the current input mode.
   comeback_input_mode_ = input_mode_;
   input_mode_ = mode;
-  capital_sequence_count_ = 0;
+  shifted_sequence_count_ = 0;
   is_new_input_ = true;
   composition_->SetInputMode(GetTransliterator(mode));
 }
@@ -262,7 +271,7 @@ void Composer::UpdateInputMode() {
     // - If the current cursor is between the same character type like
     //   "A|B" and "あ|い", the input mode follows the character type.
     input_mode_ = GetTransliterationType(current_t12r, comeback_input_mode_);
-    capital_sequence_count_ = 0;
+    shifted_sequence_count_ = 0;
     is_new_input_ = true;
     composition_->SetInputMode(GetTransliterator(input_mode_));
     return;
@@ -300,6 +309,63 @@ void Composer::SetOutputMode(transliteration::TransliterationType mode) {
   position_ = composition_->GetLength();
 }
 
+void Composer::ApplyTemporaryInputMode(const string &input, bool caps_locked) {
+  DCHECK(!input.empty());
+
+  const config::Config::ShiftKeyModeSwitch switch_mode =
+      GET_CONFIG(shift_key_mode_switch);
+
+  // Input is NOT an ASCII code.
+  if (Util::OneCharLen(input.c_str()) != 1) {
+    SetInputMode(comeback_input_mode_);
+    return;
+  }
+
+  // Input is an ASCII code.
+  // we use first character to determin temporary input mode.
+  const char key = input[0];
+  const bool alpha_with_shift =
+      (!caps_locked && ('A' <= key && key <= 'Z')) ||
+      (caps_locked && ('a' <= key && key <= 'z'));
+  const bool alpha_without_shift =
+      (caps_locked && ('A' <= key && key <= 'Z')) ||
+      (!caps_locked && ('a' <= key && key <= 'z'));
+
+  if (alpha_with_shift) {
+    if (switch_mode == config::Config::ASCII_INPUT_MODE) {
+      if (input_mode_ == transliteration::HALF_ASCII ||
+          input_mode_ == transliteration::FULL_ASCII) {
+        // Do nothing.
+      } else {
+        SetTemporaryInputMode(transliteration::HALF_ASCII);
+      }
+    } else if (switch_mode == config::Config::KATAKANA_INPUT_MODE) {
+      if (input_mode_ == transliteration::HIRAGANA) {
+        SetTemporaryInputMode(transliteration::FULL_KATAKANA);
+      } else {
+        // Do nothing.
+      }
+    }
+    ++shifted_sequence_count_;
+  } else if (alpha_without_shift) {
+    // When shifted input continues, the next lower input is the end
+    // of temporary half-width Ascii input.
+    if (shifted_sequence_count_ > 1 &&
+        switch_mode == config::Config::ASCII_INPUT_MODE) {
+      SetInputMode(comeback_input_mode_);
+    }
+    if (switch_mode == config::Config::KATAKANA_INPUT_MODE) {
+      SetInputMode(comeback_input_mode_);
+    }
+    shifted_sequence_count_ = 0;
+  } else {
+    // If the key is not an alphabet, reset shifted_sequence_count_
+    // because "Continuous shifted input" feature should be reset
+    // when the input meets non-alphabet character.
+    shifted_sequence_count_ = 0;
+  }
+}
+
 void Composer::InsertCharacter(const string &key) {
   if (!EnableInsert()) {
     return;
@@ -309,6 +375,19 @@ void Composer::InsertCharacter(const string &key) {
   input.set_is_new_input(is_new_input_);
   position_ = composition_->InsertInput(position_, input);
   is_new_input_ = false;
+}
+
+void Composer::InsertCommandCharacter(const InternalCommand internal_command) {
+  const bool sensitive = Singleton<Table>::get()->case_sensitive();
+  Singleton<Table>::get()->set_case_sensitive(true);
+  switch (internal_command) {
+    case REWIND:
+      InsertCharacter(Table::ParseSpecialKey("{<}"));
+      break;
+    default:
+      LOG(ERROR) << "Unkown command : " << internal_command;
+  }
+  Singleton<Table>::get()->set_case_sensitive(sensitive);
 }
 
 void Composer::InsertCharacterPreedit(const string &input) {
@@ -415,47 +494,9 @@ bool Composer::InsertCharacterKeyEvent(const commands::KeyEvent &key) {
     }
   } else {
     // Romaji input usually does not has key_string.  Note that, the
-    // existence of key_string never determine if the input mode is
+    // existence of key_string never determines if the input mode is
     // Kana or Romaji.
-
-    if ('A' <= key_char && key_char <= 'Z') {
-      if (GET_CONFIG(shift_key_mode_switch) ==
-          config::Config::ASCII_INPUT_MODE) {
-        if (input_mode_ == transliteration::HALF_ASCII ||
-            input_mode_ == transliteration::FULL_ASCII) {
-          // Do nothing.
-        } else {
-          SetTemporaryInputMode(transliteration::HALF_ASCII);
-        }
-      } else if (GET_CONFIG(shift_key_mode_switch) ==
-                 config::Config::KATAKANA_INPUT_MODE) {
-        if (input_mode_ == transliteration::HIRAGANA) {
-          SetTemporaryInputMode(transliteration::FULL_KATAKANA);
-        } else {
-          // Do nothing.
-        }
-      }
-      ++capital_sequence_count_;
-    } else if ('a' <= key_char && key_char <= 'z') {
-      // When capital input continues, the next lower input is the end
-      // of temporary half-width Ascii input.
-
-      if (capital_sequence_count_ > 1 &&
-          GET_CONFIG(shift_key_mode_switch) ==
-          config::Config::ASCII_INPUT_MODE) {
-        SetInputMode(comeback_input_mode_);
-      }
-      if (GET_CONFIG(shift_key_mode_switch) ==
-          config::Config::KATAKANA_INPUT_MODE) {
-        SetInputMode(comeback_input_mode_);
-      }
-      capital_sequence_count_ = 0;
-    } else {
-      // If the key_char is not an alphabet, reset capital_sequence_count_
-      // because "Continuous capital input" feature should be reset
-      // when the input meets non-alphabet character.
-      capital_sequence_count_ = 0;
-    }
+    ApplyTemporaryInputMode(input, IsCapsLocked(key));
     InsertCharacter(input);
   }
 
@@ -479,6 +520,12 @@ void Composer::DeleteAt(size_t pos) {
 void Composer::Delete() {
   position_ = composition_->DeleteAt(position_);
   UpdateInputMode();
+}
+
+void Composer::DeleteRange(size_t pos, size_t length) {
+  for (int i = 0; i < length; ++i) {
+    DeleteAt(pos);
+  }
 }
 
 void Composer::EditErase() {
@@ -583,8 +630,8 @@ namespace {
 // Exmaple:
 // = Romanji Input =
 // ("もz", "も") -> "も"  // a part of romanji should be trimed.
-// ("z", "") -> "z"      // ditto.
 // ("もzky", "もz") -> "もzky"  // a user might intentionally typed them.
+// ("z", "") -> "z"      // ditto.
 // = Kana Input =
 // ("か", "") -> "か"  // a part of kana (it can be "が") should not be trimed.
 string *GetBaseQueryForPrediction(string *asis_query,
@@ -608,10 +655,15 @@ string *GetBaseQueryForPrediction(string *asis_query,
     return asis_query;
   }
 
-  // If the trimed_query is emapy and asis_query is alphabet, an empty
-  // string is used because the query is probably a part of romanji.
+  // If the trimed_query is empty and asis_query is alphabet, an asis
+  // string is used because the query may be typed intentionally.
   if (trimed_query->empty()) {  // alphabet???
-    return trimed_query;
+    const Util::ScriptType asis_type = Util::GetScriptType(*asis_query);
+    if (asis_type == Util::ALPHABET) {
+      return asis_query;
+    } else {
+      return trimed_query;
+    }
   }
 
   // Now there are two patterns: ("もzk", "もz") and ("もずk", "もず").
@@ -797,13 +849,24 @@ bool Composer::ShouldCommit() const {
 }
 
 bool Composer::ShouldCommitHead(size_t *length_to_commit) const {
-  if (GetInputFieldType() == commands::SessionCommand::PASSWORD &&
-      GetLength() > 1) {
-    *length_to_commit = GetLength() - 1;
-    return true;
-  } else {
-    return false;
+  size_t max_remaining_composition_length;
+  switch (GetInputFieldType()) {
+    case commands::SessionCommand::PASSWORD:
+      max_remaining_composition_length = 1;
+      break;
+    case commands::SessionCommand::TEL:
+    case commands::SessionCommand::NUMBER:
+      max_remaining_composition_length = 0;
+      break;
+    default:
+      // No need to commit. Return here.
+      return false;
   }
+  if (GetLength() > max_remaining_composition_length) {
+    *length_to_commit = GetLength() - max_remaining_composition_length;
+    return true;
+  }
+  return false;
 }
 
 namespace {
@@ -957,7 +1020,7 @@ bool Composer::TransformCharactersForNumbers(string *query) {
       }
       continue;
     }
-    DCHECK(false) << "Should not come here.";
+    DLOG(FATAL) << "Should not come here.";
   }
   if (!transformed) {
     return false;
@@ -977,6 +1040,10 @@ void Composer::SetNewInput() {
 void Composer::CopyFromInternal(const Composer &src, const string &query) {
   Reset();
 
+  SetInputMode(src.GetComebackInputMode());
+  SetOutputMode(src.GetOutputMode());
+  SetInputFieldType(src.GetInputFieldType());
+
   // Currently, InsertCharacterPreedit can't deal multiple characters
   // at the same time.
   // So we should split query to UTF-8 chars to avoid DCHECK failure.
@@ -986,17 +1053,18 @@ void Composer::CopyFromInternal(const Composer &src, const string &query) {
   vector<string> chars;
   Util::SplitStringToUtf8Chars(query, &chars);
   for (size_t i = 0; i < chars.size(); ++i) {
+    // This function does not work correctly with characters
+    // input with InsertCharacterPreedit() or InsertCharacterPreeditAt().
+    // TODO(hsumita): Add flags to determine how characters are input.
+    // We can appropriately copy a composition when this TODO is fixed.
+    // TODO(yukawa): Consider CapsLock.
+    ApplyTemporaryInputMode(chars[i], false);
     InsertCharacterPreedit(chars[i]);
   }
 
-  SetInputMode(src.GetComebackInputMode());
-  SetTemporaryInputMode(src.GetInputMode());
-  SetOutputMode(src.GetOutputMode());
-  SetInputFieldType(src.GetInputFieldType());
-
   position_ = src.GetCursor();
   is_new_input_ = src.is_new_input();
-  capital_sequence_count_ = src.capital_sequence_count();
+  shifted_sequence_count_ = src.shifted_sequence_count();
   source_text_.assign(src.source_text());
   max_length_ = src.max_length();
 }
@@ -1019,8 +1087,8 @@ bool Composer::is_new_input() const {
   return is_new_input_;
 }
 
-size_t Composer::capital_sequence_count() const {
-  return capital_sequence_count_;
+size_t Composer::shifted_sequence_count() const {
+  return shifted_sequence_count_;
 }
 
 const string &Composer::source_text() const {

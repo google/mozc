@@ -30,11 +30,13 @@
 #ifndef MOZC_USAGE_STATS_USAGE_STATS_H_
 #define MOZC_USAGE_STATS_USAGE_STATS_H_
 
+#include <map>
 #include <string>
 #include <utility>
 #include <vector>
 #include "base/util.h"
 #include "testing/base/public/gunit_prod.h"  // FRIEND_TEST
+#include "usage_stats/usage_stats.pb.h"
 
 namespace mozc {
 namespace usage_stats {
@@ -87,7 +89,6 @@ class UsageStats {
     UpdateTimingBy(name, vector<uint32>(1, val));
   }
 
-
   // Sets integer value
   // Replaces old value with val
   static void SetInteger(const string &name, int val);
@@ -105,6 +106,7 @@ class UsageStats {
   // Returns true if given stats name is in the stats list
   // (for debugging)
   static bool IsListed(const string &name);
+
 
  private:
   FRIEND_TEST(ClientIdTest, CreateClientIdTest);

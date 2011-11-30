@@ -435,6 +435,7 @@ TEST(UserDictionaryImporter, ImportFromIteratorNormalTest) {
   }
 }
 
+
 TEST(UserDictionaryImporter, ImportFromIteratorInvalidEntriesTest) {
   TestInputIterator iter;
   UserDictionaryStorage::UserDictionary user_dic;

@@ -34,10 +34,8 @@
 #include "base/base.h"
 
 namespace mozc {
-
-class UserDictionaryStorage;
-
 namespace gui {
+class SetupUtil;
 
 // Shows additional information to the user after installation.
 // This dialog also set Mozc as the default IME if it is closed
@@ -78,7 +76,7 @@ class PostInstallDialog : public QDialog,
   // Returns true if showing the help page is required.
   static bool IsShowHelpPageRequired();
 
-  scoped_ptr<UserDictionaryStorage> storage_;
+  scoped_ptr<SetupUtil> setuputil_;
 };
 }  // namespace gui
 }  // namespace mozc

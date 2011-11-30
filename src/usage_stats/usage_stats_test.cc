@@ -470,6 +470,7 @@ TEST_F(UsageStatsTest, IsListedTest) {
   EXPECT_FALSE(UsageStats::IsListed("WeDoNotDefinedThisStats"));
 }
 
+
 TEST(ClientIdTest, CreateClientIdTest) {
   // test default client id handler here
   UsageStats::SetClientIdHandler(NULL);

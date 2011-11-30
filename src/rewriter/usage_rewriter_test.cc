@@ -62,6 +62,13 @@ class UsageRewriterTest : public testing::Test {
   }
 };
 
+TEST_F(UsageRewriterTest, CapabilityTest) {
+  UsageRewriter rewriter;
+  EXPECT_EQ(RewriterInterface::CONVERSION |
+            RewriterInterface::PREDICTION,
+            rewriter.capability());
+}
+
 TEST_F(UsageRewriterTest, ConjugationTest) {
   Segments segments;
   UsageRewriter rewriter;

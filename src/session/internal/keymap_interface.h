@@ -107,6 +107,7 @@ enum Commands {
   INSERT_HALF_SPACE,  // Input half-width space
   INSERT_FULL_SPACE,  // Input full-width space
   CANCEL,  // Move to Precomposition stauts.
+  UNDO,
   MOVE_CURSOR_LEFT,
   MOVE_CURSOR_RIGHT,
   MOVE_CURSOR_TO_BEGINNING,
@@ -151,9 +152,9 @@ enum Commands {
   INSERT_HALF_SPACE,  // Input half-width space
   INSERT_FULL_SPACE,  // Input full-width space
   CANCEL,  // Back to Composition status.
+  UNDO,
   SEGMENT_FOCUS_LEFT,
   SEGMENT_FOCUS_RIGHT,
-  SEGMENT_FOCUS_RIGHT_OR_COMMIT,
   SEGMENT_FOCUS_FIRST,
   SEGMENT_FOCUS_LAST,
   SEGMENT_WIDTH_EXPAND,

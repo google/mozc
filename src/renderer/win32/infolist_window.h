@@ -33,7 +33,8 @@
 #include <windows.h>
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
-#include <atlbase.h>
+// Workaround against KB813540
+#include <atlbase_mozc.h>
 #include <atlwin.h>
 #include <atlapp.h>
 #include <atlcrack.h>
@@ -44,9 +45,14 @@
 
 #include "base/base.h"
 #include "base/const.h"
-#include "renderer/coordinates.h"
+#include "base/coordinates.h"
 
 namespace mozc {
+
+namespace client {
+class SendCommandInterface;
+}  // namespace client
+
 namespace commands {
 class Candidates;
 }  // namespace commands
@@ -84,7 +90,6 @@ class InfolistWindow : public ATL::CWindowImpl<InfolistWindow,
 
   InfolistWindow();
   ~InfolistWindow();
-  LRESULT OnCreate(LPCREATESTRUCT create_struct);
   void OnDestroy();
   BOOL OnEraseBkgnd(WTL::CDCHandle dc);
   void OnGetMinMaxInfo(MINMAXINFO *min_max_info);
@@ -94,16 +99,20 @@ class InfolistWindow : public ATL::CWindowImpl<InfolistWindow,
   void OnTimer(UINT_PTR nIDEvent);
 
   void UpdateLayout(const commands::Candidates &candidates);
+  void SetSendCommandInterface(
+      client::SendCommandInterface *send_command_interface);
 
   // Layout information for the WindowManager class.
   Size GetLayoutSize();
 
   void DelayShow(UINT mseconds);
   void DelayHide(UINT mseconds);
+
  private:
   Size DoPaint(WTL::CDCHandle dc);
   Size DoPaintRow(WTL::CDCHandle dc, int row, int ypos);
 
+  client::SendCommandInterface *send_command_interface_;
   scoped_ptr<commands::Candidates> candidates_;
   scoped_ptr<TextRenderer> text_renderer_;
   scoped_ptr<renderer::RendererStyle> style_;

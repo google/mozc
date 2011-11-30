@@ -32,7 +32,8 @@
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
 #define _ATL_NO_HOSTING
-#include <atlbase.h>
+// Workaround against KB813540
+#include <atlbase_mozc.h>
 #include <atlapp.h>
 #include <atlstr.h>
 #include <atlmisc.h>
@@ -258,6 +259,26 @@ bool UIContext::GetCompositionFont(LOGFONTW *font) const {
   if (::ImmGetCompositionFontW(context_handle_, font) == FALSE) {
     return false;
   }
+
+  // There exist some troublesome applications which set broken composition
+  // font. We ignore such composition font if its face-name is empty.
+  // See b/4506404 for details.
+  bool null_terminated = false;
+  bool empty_facename = true;
+  for (size_t i = 0; i < arraysize(font->lfFaceName); ++i) {
+    if (font->lfFaceName[i] == L'\0') {
+      null_terminated = true;
+      break;
+    }
+    empty_facename = false;
+  }
+  if (!null_terminated) {
+    return false;
+  }
+  if (empty_facename) {
+    return false;
+  }
+
   return true;
 }
 

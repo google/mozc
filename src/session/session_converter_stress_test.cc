@@ -128,8 +128,8 @@ TEST_F(SessionConverterStressTest, ConvertToHalfWidthForRandomAsciiInput) {
           &input);
 
       composer.InsertCharacterPreedit(input);
-      sconverter.ConvertToHalfWidth(&composer);
-      sconverter.FillOutput(&output);
+      sconverter.ConvertToHalfWidth(composer);
+      sconverter.FillOutput(composer, &output);
 
       const commands::Preedit &conversion = output.preedit();
       EXPECT_EQ(input, conversion.segment(0).value());

@@ -43,13 +43,13 @@ class KeyCorrector {
     KANA,
   };
 
-  KeyCorrector(const string &key, InputMode mode);
+  KeyCorrector(const string &key, InputMode mode, size_t history_size);
   KeyCorrector();
   virtual ~KeyCorrector();
 
   InputMode mode() const;
 
-  bool CorrectKey(const string &key, InputMode mode);
+  bool CorrectKey(const string &key, InputMode mode, size_t history_size);
 
   // return corrected key;
   const string &corrected_key() const;

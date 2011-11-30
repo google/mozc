@@ -27,8 +27,6 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "dictionary/text_dictionary_loader.h"
-
 #include <string>
 #include <vector>
 
@@ -37,21 +35,20 @@
 #include "base/util.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
-#include "dictionary/system/system_dictionary.h"
-#include "testing/base/public/googletest.h"
+#include "dictionary/text_dictionary_loader.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
 
 namespace mozc {
 namespace {
-
 const char kTextLines[] =
 "key_test1\t0\t0\t1\tvalue_test1\n"
 "foo\t1\t2\t3\tbar\n"
 "buz\t10\t20\t30\tfoobar\n";
+}  // namespace
 
-TEST(TextDictionaryLoaderText, BasicTest) {
+TEST(TextDictionaryLoaderTest, BasicTest) {
   {
     TextDictionaryLoader loader;
     vector<Token *> tokens;
@@ -136,30 +133,50 @@ TEST(TextDictionaryLoaderText, BasicTest) {
   Util::Unlink(filename);
 }
 
-TEST(TextDictionaryLoaderTest,  RewriteSpecialTokenTest) {
-  Token token;
-  token.lid = 100;
-  token.rid = 200;
+TEST(TextDictionaryLoaderTest, RewriteSpecialTokenTest) {
+  TextDictionaryLoader loader;
+  {
+    Token token;
+    token.lid = 100;
+    token.rid = 200;
+    EXPECT_TRUE(loader.RewriteSpecialToken(&token, ""));
+    EXPECT_EQ(100, token.lid);
+    EXPECT_EQ(200, token.rid);
+    EXPECT_EQ(Token::NONE, token.attributes);
+  }
 
-  EXPECT_TRUE(TextDictionaryLoader::RewriteSpecialToken(&token, ""));
-  EXPECT_EQ(100, token.lid);
-  EXPECT_EQ(200, token.rid);
+  {
+    Token token;
+    token.lid = 100;
+    token.rid = 200;
+    EXPECT_TRUE(loader.RewriteSpecialToken(&token, "SPELLING_CORRECTION"));
+    EXPECT_EQ(100, token.lid);
+    EXPECT_EQ(200, token.rid);
+    EXPECT_EQ(Token::SPELLING_CORRECTION, token.attributes);
+  }
 
-  EXPECT_TRUE(TextDictionaryLoader::RewriteSpecialToken(&token,
-                                                        "SPELLING_CORRECTION"));
-  EXPECT_EQ(100 + SystemDictionary::kSpellingCorrectionPosOffset, token.lid);
-  EXPECT_EQ(200, token.rid);
+  {
+    Token token;
+    token.lid = 100;
+    token.rid = 200;
+    EXPECT_TRUE(loader.RewriteSpecialToken(&token, "ZIP_CODE"));
+    EXPECT_EQ(POSMatcher::GetZipcodeId(), token.lid);
+    EXPECT_EQ(POSMatcher::GetZipcodeId(), token.rid);
+    EXPECT_EQ(Token::NONE, token.attributes);
+  }
 
-  EXPECT_TRUE(TextDictionaryLoader::RewriteSpecialToken(&token,
-                                                        "ZIP_CODE"));
-  EXPECT_EQ(POSMatcher::GetZipcodeId(), token.lid);
-  EXPECT_EQ(POSMatcher::GetZipcodeId(), token.rid);
-
-  EXPECT_FALSE(TextDictionaryLoader::RewriteSpecialToken(&token,
-                                                         "foo"));
+  {
+    Token token;
+    token.lid = 100;
+    token.rid = 200;
+    EXPECT_FALSE(loader.RewriteSpecialToken(&token, "foo"));
+    EXPECT_EQ(100, token.lid);
+    EXPECT_EQ(200, token.rid);
+    EXPECT_EQ(Token::NONE, token.attributes);
+  }
 }
 
-TEST(TextDictionaryLoaderText, LoadMultipleFilesTest) {
+TEST(TextDictionaryLoaderTest, LoadMultipleFilesTest) {
   const string filename1 = Util::JoinPath(FLAGS_test_tmpdir, "test1.tsv");
   const string filename2 = Util::JoinPath(FLAGS_test_tmpdir, "test2.tsv");
   const string filename = filename1 + "," + filename2;
@@ -185,5 +202,4 @@ TEST(TextDictionaryLoaderText, LoadMultipleFilesTest) {
   Util::Unlink(filename1);
   Util::Unlink(filename2);
 }
-}  // namespace
 }  // namespace mozc

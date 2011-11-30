@@ -74,11 +74,11 @@ class TestSentenceGenerator {
       vector<commands::KeyEvent> tmp;
       while (begin < end) {
         size_t mblen = 0;
-        const uint16 ucs2 = Util::UTF8ToUCS2(begin, end, &mblen);
-        if (ucs2 >= static_cast<uint16>('a') &&
-            ucs2 <= static_cast<uint16>('z')) {
+        const char32 ucs4 = Util::UTF8ToUCS4(begin, end, &mblen);
+        if (ucs4 >= static_cast<char32>('a') &&
+            ucs4 <= static_cast<char32>('z')) {
           commands::KeyEvent key;
-          key.set_key_code(static_cast<int>(ucs2));
+          key.set_key_code(static_cast<int>(ucs4));
           tmp.push_back(key);
         }
         begin += mblen;

@@ -33,6 +33,8 @@
 #define MOZC_GUI_CONFIG_DIALOG_CONFIG_DIALOG_H_
 
 #include <QtCore/QObject>
+#include <QtCore/QTimer>
+#include <map>
 #include <string>
 #include "base/base.h"
 #include "gui/config_dialog/ui_config_dialog.h"
@@ -65,9 +67,9 @@ class ConfigDialog : public QDialog,
   virtual void EditKeymap();
   virtual void EditRomanTable();
   virtual void ResetToDefaults();
-  virtual void SelectKeymapSetting(int index);
   virtual void SelectInputModeSetting(int index);
   virtual void SelectAutoConversionSetting(int state);
+  virtual void SelectSuggestionSetting(int state);
   virtual void LaunchAdministrationDialog();
 
  protected:
@@ -83,11 +85,13 @@ class ConfigDialog : public QDialog,
   void ConvertToProto(config::Config *config) const;
   void ConvertFromProto(const config::Config &config);
   bool Update();
+  void Reload();
   scoped_ptr<client::ClientInterface> client_;
   string custom_keymap_table_;
   string custom_roman_table_;
   int initial_preedit_method_;
   bool initial_use_keyboard_to_change_preedit_method_;
+  map<QString, config::Config::SessionKeymap> keymapname_sessionkeymap_map_;
 };
 }  // namespace gui
 }  // namespace mozc

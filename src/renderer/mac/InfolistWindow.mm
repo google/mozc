@@ -33,11 +33,14 @@
 #import "InfolistView.h"
 
 #include "base/base.h"
+#include "base/coordinates.h"
+#include "client/client_interface.h"
 #include "session/commands.pb.h"
-#include "renderer/coordinates.h"
 #include "renderer/mac/InfolistWindow.h"
 
 using mozc::commands::Candidates;
+using mozc::commands::Output;
+using mozc::commands::SessionCommand;
 
 @interface InfolistWindowTimerHandler : NSObject {
 @private
@@ -66,16 +69,36 @@ namespace mozc {
 namespace renderer {
 namespace mac {
 
+namespace {
+bool SendUsageStatsEvent(client::SendCommandInterface *command_sender,
+                         const SessionCommand::UsageStatsEvent &event) {
+  if (command_sender == NULL) {
+    return false;
+  }
+  SessionCommand command;
+  command.set_type(SessionCommand::USAGE_STATS_EVENT);
+  command.set_usage_stats_event(event);
+  Output dummy_output;
+  return command_sender->SendCommand(command, &dummy_output);
+}
+}  // anonymous namespace
+
 InfolistWindow::InfolistWindow()
-    : lasttimer_(NULL){
+    : lasttimer_(NULL),
+      command_sender_(NULL) {
  timer_handler_.reset([[InfolistWindowTimerHandler alloc]
      initWithInfolistWindow:this]);
 }
 
 InfolistWindow::~InfolistWindow() {
 }
+
+void InfolistWindow::SetSendCommandInterface(
+    client::SendCommandInterface *send_command_interface) {
+  command_sender_ = send_command_interface;
+}
+
 void InfolistWindow::SetCandidates(const Candidates &candidates) {
-  DLOG(INFO) << "InfolistWindow::SetCandidates()";
   if (candidates.candidate_size() == 0) {
     return;
   }
@@ -90,30 +113,48 @@ void InfolistWindow::SetCandidates(const Candidates &candidates) {
   ::SizeWindow(window_, size.width, size.height, YES);
 }
 
-void InfolistWindow::DelayHide() {
+void InfolistWindow::DelayHide(int delay) {
   DLOG(INFO) << "InfolistWindow::DelayHide()";
   if(lasttimer_) {
     [lasttimer_ invalidate];
   }
   visible_ = false;
-  lasttimer_ = [NSTimer scheduledTimerWithTimeInterval:0.5
+  const NSTimeInterval interval = delay / 1000.0;
+  lasttimer_ = [NSTimer scheduledTimerWithTimeInterval:interval
                                                 target:timer_handler_.get()
                                               selector:@selector(onTimer:)
                                               userInfo:nil
                                                repeats:NO];
 }
 
-void InfolistWindow::DelayShow() {
+void InfolistWindow::DelayShow(int delay) {
   DLOG(INFO) << "InfolistWindow::DelayShow()";
   if(lasttimer_) {
     [lasttimer_ invalidate];
   }
   visible_ = true;
-  lasttimer_ = [NSTimer scheduledTimerWithTimeInterval:0.5
+  const NSTimeInterval interval = delay / 1000.0;
+  lasttimer_ = [NSTimer scheduledTimerWithTimeInterval:interval
                                                 target:timer_handler_.get()
                                               selector:@selector(onTimer:)
                                               userInfo:nil
                                                repeats:NO];
+}
+
+void InfolistWindow::Hide() {
+  bool visible = IsVisible();
+  RendererBaseWindow::Hide();
+  if (visible) {
+    SendUsageStatsEvent(command_sender_, SessionCommand::INFOLIST_WINDOW_HIDE);
+  }
+}
+
+void InfolistWindow::Show() {
+  bool visible = IsVisible();
+  RendererBaseWindow::Show();
+  if (!visible) {
+    SendUsageStatsEvent(command_sender_, SessionCommand::INFOLIST_WINDOW_SHOW);
+  }
 }
 
 void InfolistWindow::onTimer(NSTimer* timer) {

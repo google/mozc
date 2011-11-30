@@ -27,7 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "converter/converter_interface.h"
+#include "converter/converter.h"
 
 #include <climits>
 #include <string>
@@ -55,48 +55,6 @@ namespace {
 
 size_t kErrorIndex = static_cast<size_t>(-1);
 
-class ConverterImpl : public ConverterInterface {
- public:
-  ConverterImpl();
-  virtual ~ConverterImpl();
-
-  bool StartConversion(Segments *segments,
-                       const string &key) const;
-  bool StartConversionWithComposer(Segments *segments,
-                                   const composer::Composer *composer) const;
-  bool StartReverseConversion(Segments *segments,
-                              const string &key) const;
-  bool StartPrediction(Segments *segments,
-                       const string &key) const;
-  bool StartSuggestion(Segments *segments,
-                       const string &key) const;
-  bool FinishConversion(Segments *segments) const;
-  bool CancelConversion(Segments *segments) const;
-  bool ResetConversion(Segments *segments) const;
-  bool RevertConversion(Segments *segments) const;
-  bool CommitSegmentValue(Segments *segments,
-                          size_t segment_index,
-                          int    candidate_index) const;
-  bool FocusSegmentValue(Segments *segments,
-                         size_t segment_index,
-                         int candidate_index) const;
-  bool FreeSegmentValue(Segments *segments,
-                        size_t segment_index) const;
-  bool SubmitFirstSegment(Segments *segments,
-                          size_t candidate_index) const;
-  bool ResizeSegment(Segments *segments,
-                     size_t segment_index,
-                     int offset_length) const;
-  bool ResizeSegment(Segments *segments,
-                     size_t start_segment_index,
-                     size_t segments_size,
-                     const uint8 *new_size_array,
-                     size_t array_size) const;
-  UserDataManagerInterface *GetUserDataManager();
-
- private:
-  scoped_ptr<UserDataManagerInterface> user_data_manager_;
-};
 
 class UserDataManagerImpl : public UserDataManagerInterface {
  public:
@@ -124,7 +82,6 @@ void SetKey(Segments *segments, const string &key) {
   segments->set_max_history_segments_size(4);
   segments->clear_conversion_segments();
   segments->clear_revert_entries();
-  segments->set_composer(NULL);
 
   mozc::Segment *seg = segments->add_segment();
   DCHECK(seg);
@@ -134,6 +91,18 @@ void SetKey(Segments *segments, const string &key) {
   seg->set_segment_type(mozc::Segment::FREE);
 
   VLOG(2) << segments->DebugString();
+}
+
+
+bool IsValidSegments(const Segments &segments) {
+  // All segments should have candidate
+  for (size_t i = 0; i < segments.segments_size(); ++i) {
+    if (segments.segment(i).candidates_size() != 0) {
+      continue;
+    }
+    return false;
+  }
+  return true;
 }
 
 ConverterInterface *g_converter = NULL;
@@ -152,7 +121,8 @@ void ConverterFactory::SetConverter(ConverterInterface *converter) {
 }
 
 ConverterImpl::ConverterImpl()
-    : user_data_manager_(new UserDataManagerImpl) {
+    : user_data_manager_(new UserDataManagerImpl),
+      immutable_converter_(ImmutableConverterFactory::GetImmutableConverter()) {
 }
 
 ConverterImpl::~ConverterImpl() {}
@@ -161,27 +131,20 @@ bool ConverterImpl::StartConversion(Segments *segments,
                                     const string &key) const {
   SetKey(segments, key);
   segments->set_request_type(Segments::CONVERSION);
-  if (ImmutableConverterFactory::GetImmutableConverter()->Convert(segments)) {
-    RewriterFactory::GetRewriter()->Rewrite(segments);
-    return true;
+  if (!immutable_converter_->Convert(segments)) {
+    return false;
   }
-  return false;
+  RewriterFactory::GetRewriter()->Rewrite(segments);
+  return IsValidSegments(*segments);
 }
 
 bool ConverterImpl::StartConversionWithComposer(
     Segments *segments, const composer::Composer *composer) const {
+  DCHECK(composer);
   string conversion_key;
-  if (composer != NULL) {
-    composer->GetQueryForConversion(&conversion_key);
-  }
-  SetKey(segments, conversion_key);
+  composer->GetQueryForConversion(&conversion_key);
   segments->set_composer(composer);
-  segments->set_request_type(Segments::CONVERSION);
-  if (ImmutableConverterFactory::GetImmutableConverter()->Convert(segments)) {
-    RewriterFactory::GetRewriter()->Rewrite(segments);
-    return true;
-  }
-  return false;
+  return StartConversion(segments, conversion_key);
 }
 
 bool ConverterImpl::StartReverseConversion(Segments *segments,
@@ -189,7 +152,7 @@ bool ConverterImpl::StartReverseConversion(Segments *segments,
   segments->Clear();
   SetKey(segments, key);
   segments->set_request_type(Segments::REVERSE_CONVERSION);
-  if (!ImmutableConverterFactory::GetImmutableConverter()->Convert(segments)) {
+  if (!immutable_converter_->Convert(segments)) {
     return false;
   }
   if (segments->segments_size() == 0) {
@@ -208,33 +171,95 @@ bool ConverterImpl::StartReverseConversion(Segments *segments,
   return true;
 }
 
+bool ConverterImpl::Predict(Segments *segments,
+                            const string &key,
+                            const Segments::RequestType request_type) const {
+  SetKey(segments, key);
+  segments->set_request_type(request_type);
+  if (!PredictorFactory::GetPredictor()->Predict(segments)) {
+    return false;
+  }
+  RewriterFactory::GetRewriter()->Rewrite(segments);
+  return IsValidSegments(*segments);
+}
+
 bool ConverterImpl::StartPrediction(Segments *segments,
                                     const string &key) const {
-  SetKey(segments, key);
-  segments->set_request_type(Segments::PREDICTION);
-  if (PredictorFactory::GetPredictor()->Predict(segments)) {
-    RewriterFactory::GetRewriter()->Rewrite(segments);
-    return true;
-  }
-  return false;
+  return Predict(segments, key, Segments::PREDICTION);
+}
+
+bool ConverterImpl::StartPredictionWithComposer(
+    Segments *segments, const composer::Composer *composer) const {
+  DCHECK(composer);
+  string conversion_key;
+  composer->GetQueryForPrediction(&conversion_key);
+  segments->set_composer(composer);
+  return StartPrediction(segments, conversion_key);
 }
 
 bool ConverterImpl::StartSuggestion(Segments *segments,
                                     const string &key) const {
-  SetKey(segments, key);
-  segments->set_request_type(Segments::SUGGESTION);
-  if (PredictorFactory::GetPredictor()->Predict(segments)) {
-    RewriterFactory::GetRewriter()->Rewrite(segments);
-    return true;
+  return Predict(segments, key, Segments::SUGGESTION);
+}
+
+bool ConverterImpl::StartSuggestionWithComposer(
+    Segments *segments, const composer::Composer *composer) const {
+  DCHECK(composer);
+  string conversion_key;
+  composer->GetQueryForPrediction(&conversion_key);
+  segments->set_composer(composer);
+  return StartSuggestion(segments, conversion_key);
+}
+
+bool ConverterImpl::StartPartialSuggestion(Segments *segments,
+                                           const string &key) const {
+  return Predict(segments, key, Segments::PARTIAL_SUGGESTION);
+}
+
+bool ConverterImpl::StartPartialSuggestionWithComposer(
+    Segments *segments, const composer::Composer *composer) const {
+  DCHECK(composer);
+  const size_t cursor = composer->GetCursor();
+  if (cursor == 0 || cursor == composer->GetLength()) {
+    return StartSuggestionWithComposer(segments, composer);
   }
-  return false;
+
+  string conversion_key;
+  composer->GetQueryForConversion(&conversion_key);
+  conversion_key = Util::SubString(conversion_key, 0, cursor);
+  segments->set_composer(composer);
+  return StartPartialSuggestion(segments, conversion_key);
+}
+
+bool ConverterImpl::StartPartialPrediction(Segments *segments,
+                                           const string &key) const {
+  return Predict(segments, key, Segments::PARTIAL_PREDICTION);
+}
+
+bool ConverterImpl::StartPartialPredictionWithComposer(
+    Segments *segments, const composer::Composer *composer) const {
+  DCHECK(composer);
+  const size_t cursor = composer->GetCursor();
+  if (cursor == 0 || cursor == composer->GetLength()) {
+    return StartPredictionWithComposer(segments, composer);
+  }
+
+  string conversion_key;
+  composer->GetQueryForConversion(&conversion_key);
+  conversion_key = Util::SubString(conversion_key, 0, cursor);
+  segments->set_composer(composer);
+  return StartPartialPrediction(segments, conversion_key);
 }
 
 bool ConverterImpl::FinishConversion(Segments *segments) const {
-  // revert SUBMITTED segments to FIXED_VALUE
   for (int i = 0; i < segments->segments_size(); ++i) {
     Segment *seg = segments->mutable_segment(i);
     DCHECK(seg);
+    // revert SUBMITTED segments to FIXED_VALUE
+    // SUBMITTED segments are created by "submit first segment" operation
+    // (ctrl+N for ATOK keymap).
+    // To learn the conversion result, we should change the segment types
+    // to FIXED_VALUE.
     if (seg->segment_type() == Segment::SUBMITTED) {
       seg->set_segment_type(Segment::FIXED_VALUE);
     }
@@ -249,14 +274,17 @@ bool ConverterImpl::FinishConversion(Segments *segments) const {
   }
   PredictorFactory::GetPredictor()->Finish(segments);
 
-  const int start_index = max(0,
-                              static_cast<int>(
-                                  segments->segments_size() -
-                                  segments->max_history_segments_size()));
+  // Remove the front segments except for some segments which will be
+  // used as history segments.
+  const int start_index = max(
+      0,
+      static_cast<int>(segments->segments_size()
+          - segments->max_history_segments_size()));
   for (int i = 0; i < start_index; ++i) {
     segments->pop_front_segment();
   }
 
+  // Remaining segments are used as history segments.
   for (size_t i = 0; i < segments->segments_size(); ++i) {
     Segment *seg = segments->mutable_segment(i);
     DCHECK(seg);
@@ -285,9 +313,9 @@ bool ConverterImpl::RevertConversion(Segments *segments) const {
   return true;
 }
 
-bool ConverterImpl::CommitSegmentValue(Segments *segments,
-                                       size_t segment_index,
-                                       int candidate_index) const {
+bool ConverterImpl::CommitSegmentValueInternal(
+    Segments *segments, size_t segment_index, int candidate_index,
+    Segment::SegmentType segment_type) const {
   segment_index = GetSegmentIndex(segments, segment_index);
   if (segment_index == kErrorIndex) {
     return false;
@@ -300,13 +328,37 @@ bool ConverterImpl::CommitSegmentValue(Segments *segments,
     return false;
   }
 
-  segment->set_segment_type(Segment::FIXED_VALUE);
+  segment->set_segment_type(segment_type);
   segment->move_candidate(candidate_index, 0);
 
   if (candidate_index != 0) {
-    segment->mutable_candidate(0)->attributes
-        |= Segment::Candidate::RERANKED;
+    segment->mutable_candidate(0)->attributes |= Segment::Candidate::RERANKED;
   }
+
+  return true;
+}
+
+bool ConverterImpl::CommitSegmentValue(Segments *segments, size_t segment_index,
+                                       int candidate_index) const {
+  return CommitSegmentValueInternal(segments, segment_index, candidate_index,
+                                    Segment::FIXED_VALUE);
+}
+
+bool ConverterImpl::CommitPartialSuggestionSegmentValue(
+    Segments *segments, size_t segment_index, int candidate_index,
+    const string &current_segment_key, const string &new_segment_key) const {
+  DCHECK_GT(segments->conversion_segments_size(), 0);
+
+  size_t raw_segment_index = GetSegmentIndex(segments, segment_index);
+  if (!CommitSegmentValueInternal(segments, segment_index, candidate_index,
+                                  Segment::SUBMITTED)) {
+    return false;
+  }
+  Segment *segment = segments->mutable_segment(raw_segment_index);
+  segment->set_key(current_segment_key);
+  Segment *new_segment = segments->insert_segment(raw_segment_index + 1);
+  new_segment->set_key(new_segment_key);
+  DCHECK_GT(segments->conversion_segments_size(), 0);
 
   return true;
 }
@@ -337,19 +389,13 @@ bool ConverterImpl::FreeSegmentValue(Segments *segments,
     return false;
   }
 
-  return ImmutableConverterFactory::GetImmutableConverter()->Convert(segments);
+  return immutable_converter_->Convert(segments);
 }
 
 bool ConverterImpl::SubmitFirstSegment(Segments *segments,
                                        size_t candidate_index) const {
-  if (!CommitSegmentValue(segments, 0, candidate_index)) {
-    return false;
-  }
-
-  const size_t segment_index = GetSegmentIndex(segments, 0);
-  Segment *segment = segments->mutable_segment(segment_index);
-  segment->set_segment_type(Segment::SUBMITTED);
-  return true;
+  return CommitSegmentValueInternal(segments, 0, candidate_index,
+                                    Segment::SUBMITTED);
 }
 
 bool ConverterImpl::ResizeSegment(Segments *segments,
@@ -383,30 +429,32 @@ bool ConverterImpl::ResizeSegment(Segments *segments,
   }
 
   const string cur_segment_key = cur_segment.key();
-  string tmp;
 
   if (offset_length > 0) {
     int length = offset_length;
     string last_key;
-    string new_key = cur_segment_key;
     size_t last_clen = 0;
-    while (segment_index + 1 < segments->segments_size()) {
-      last_key = segments->segment(segment_index + 1).key();
-      segments->erase_segment(segment_index + 1);
-      last_clen = Util::CharsLen(last_key.c_str(), last_key.size());
-      length -= static_cast<int>(last_clen);
-      if (length <= 0) {
-        Util::SubString(last_key, 0, length + last_clen, &tmp);
-        new_key += tmp;
-        break;
+    {
+      string new_key = cur_segment_key;
+      while (segment_index + 1 < segments->segments_size()) {
+        last_key = segments->segment(segment_index + 1).key();
+        segments->erase_segment(segment_index + 1);
+        last_clen = Util::CharsLen(last_key.c_str(), last_key.size());
+        length -= static_cast<int>(last_clen);
+        if (length <= 0) {
+          string tmp;
+          Util::SubString(last_key, 0, length + last_clen, &tmp);
+          new_key += tmp;
+          break;
+        }
+        new_key += last_key;
       }
-      new_key += last_key;
-    }
 
-    Segment *segment = segments->mutable_segment(segment_index);
-    segment->Clear();
-    segment->set_segment_type(Segment::FIXED_BOUNDARY);
-    segment->set_key(new_key);
+      Segment *segment = segments->mutable_segment(segment_index);
+      segment->Clear();
+      segment->set_segment_type(Segment::FIXED_BOUNDARY);
+      segment->set_key(new_key);
+    }  // scope out |segment|, |new_key|
 
     if (length < 0) {  // remaning part
       Segment *segment = segments->insert_segment(segment_index + 1);
@@ -454,7 +502,7 @@ bool ConverterImpl::ResizeSegment(Segments *segments,
 
   segments->set_resized(true);
 
-  if (!ImmutableConverterFactory::GetImmutableConverter()->Convert(segments)) {
+  if (!immutable_converter_->Convert(segments)) {
     return false;
   }
 
@@ -516,7 +564,7 @@ bool ConverterImpl::ResizeSegment(Segments *segments,
 
   segments->set_resized(true);
 
-  if (!ImmutableConverterFactory::GetImmutableConverter()->Convert(segments)) {
+  if (!immutable_converter_->Convert(segments)) {
     return false;
   }
 

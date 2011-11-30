@@ -66,6 +66,37 @@ uint32 GetModifiers(const commands::KeyEvent &key_event) {
 }
 }  // anonymous namespace
 
+void NormalizeKeyEvent(const commands::KeyEvent &key_event,
+                       commands::KeyEvent *new_key_event) {
+  DCHECK(new_key_event);
+  new_key_event->CopyFrom(key_event);
+
+  if ((GetModifiers(key_event) & (commands::KeyEvent::CAPS)) == 0) {
+    // No caps lock. Nothing to do.
+    return;
+  }
+
+  // Remove caps lock from |new_key_event->modifier_keys()|.
+  new_key_event->clear_modifier_keys();
+  for (size_t i = 0; i < key_event.modifier_keys_size(); ++i) {
+    if (key_event.modifier_keys(i) != commands::KeyEvent::CAPS) {
+      new_key_event->add_modifier_keys(key_event.modifier_keys(i));
+    }
+  }
+
+  if (!key_event.has_key_code()) {
+    return;
+  }
+
+  // Revert the flip of alphabetical key events caused by CapsLock.
+  const int key_code = key_event.key_code();
+  if ('A' <= key_code && key_code <= 'Z') {
+    new_key_event->set_key_code(key_code - 'A' + 'a');
+  } else if ('a' <= key_code && key_code <= 'z') {
+    new_key_event->set_key_code(key_code - 'a' + 'A');
+  }
+}
+
 bool GetKey(const commands::KeyEvent &key_event, Key *key) {
   // Key is an alias of uint64.
   Key modifier_keys = GetModifiers(key_event);
@@ -86,8 +117,8 @@ bool GetKey(const commands::KeyEvent &key_event, Key *key) {
 
 // Return a fallback keyevent generated from key_event.  In the
 // current implementation, if the input key_event does not contains
-// any special keys or modifier keys, that printable key will be
-// replaced the ASCII special key.
+// any special keys or modifier keys, that printable key will be replaced
+// with the ASCII special key.
 bool MaybeGetKeyStub(const commands::KeyEvent &key_event, Key *key) {
   // If any modifier keys were pressed, this function does nothing.
   if (GetModifiers(key_event) != 0) {
@@ -612,6 +643,7 @@ void KeyMapManager::InitCommandData() {
   RegisterCompositionCommand("InsertFullSpace",
                              CompositionState::INSERT_FULL_SPACE);
   RegisterCompositionCommand("Cancel", CompositionState::CANCEL);
+  RegisterCompositionCommand("Undo", CompositionState::UNDO);
   RegisterCompositionCommand("MoveCursorLeft",
                              CompositionState::MOVE_CURSOR_LEFT);
   RegisterCompositionCommand("MoveCursorRight",
@@ -693,10 +725,9 @@ void KeyMapManager::InitCommandData() {
   RegisterConversionCommand("InsertFullSpace",
                             ConversionState::INSERT_FULL_SPACE);
   RegisterConversionCommand("Cancel", ConversionState::CANCEL);
+  RegisterConversionCommand("Undo", ConversionState::UNDO);
   RegisterConversionCommand("SegmentFocusLeft",
                             ConversionState::SEGMENT_FOCUS_LEFT);
-  RegisterConversionCommand("SegmentFocusRightOrCommit",
-                            ConversionState::SEGMENT_FOCUS_RIGHT_OR_COMMIT);
   RegisterConversionCommand("SegmentFocusRight",
                             ConversionState::SEGMENT_FOCUS_RIGHT);
   RegisterConversionCommand("SegmentFocusFirst",

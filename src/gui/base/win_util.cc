@@ -36,7 +36,8 @@
 #include <uxtheme.h>
 #include <windows.h>
 #include <winuser.h>
-#include <atlbase.h>
+// Workaround against KB813540
+#include <atlbase_mozc.h>
 #include <atlcom.h>
 
 #include <objectarray.h>
@@ -590,7 +591,7 @@ BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lp) {
     return TRUE;
   }
   if (::SetForegroundWindow(hwnd) == 0) {
-    LOG(ERROR) << "::SetFOregroundWindow() failed";
+    LOG(ERROR) << "::SetForegroundWindow() failed";
   }
   return FALSE;
 }
@@ -615,35 +616,24 @@ const wchar_t kIMEHotKeyEntryData[]  = L"3";
 // static
 bool WinUtil::GetIMEHotKeyDisabled() {
 #ifdef OS_WINDOWS
-  HKEY key = 0;
-  LONG result = ::RegOpenKeyExW(HKEY_CURRENT_USER,
-                                kIMEHotKeyEntryKey,
-                                NULL,
-                                KEY_READ,
-                                &key);
+  CRegKey key;
+  LONG result = key.Open(HKEY_CURRENT_USER, kIMEHotKeyEntryKey, KEY_READ);
 
   // When the key doesn't exist, can return |false| as well.
   if (ERROR_SUCCESS != result) {
     return false;
   }
 
-  wchar_t data[4];
-  DWORD data_size = sizeof(data);
-  DWORD data_type = 0;
-  result = ::RegQueryValueEx(key,
-                             kIMEHotKeyEntryValue,
-                             NULL,
-                             &data_type,
-                             reinterpret_cast<BYTE *>(&data),
-                             &data_size);
-
-  ::RegCloseKey(key);
+  wchar_t data[4] = {};
+  ULONG num_chars = ARRAYSIZE(data);
+  result = key.QueryStringValue(kIMEHotKeyEntryValue, data, &num_chars);
+  // Returned |num_char| includes NULL character.
 
   // This is only the condition when this function
   // can return |true|
   if (ERROR_SUCCESS == result &&
-      data_type == REG_SZ &&
-      ::lstrcmpW(data, kIMEHotKeyEntryData) == 0) {
+      num_chars < ARRAYSIZE(data) &&
+      wstring(data) == kIMEHotKeyEntryData) {
     return true;
   }
 
@@ -662,38 +652,20 @@ bool WinUtil::SetIMEHotKeyDisabled(bool disabled) {
   }
 
   if (disabled) {
-    HKEY key = 0;
-    LONG result = ::RegCreateKeyExW(HKEY_CURRENT_USER,
-                                    kIMEHotKeyEntryKey,
-                                    0,
-                                    NULL,
-                                    0,
-                                    KEY_WRITE,
-                                    NULL,
-                                    &key,
-                                    NULL);
+    CRegKey key;
+    LONG result = key.Create(HKEY_CURRENT_USER, kIMEHotKeyEntryKey);
     if (ERROR_SUCCESS != result) {
       return false;
     }
 
     // set "3"
-    result = ::RegSetValueExW(
-        key,
-        kIMEHotKeyEntryValue,
-        0,
-        REG_SZ,
-        reinterpret_cast<const BYTE *>(&kIMEHotKeyEntryData),
-        sizeof(wchar_t) * (::lstrlenW(kIMEHotKeyEntryData) + 1));
-    ::RegCloseKey(key);
+    result = key.SetStringValue(kIMEHotKeyEntryValue, kIMEHotKeyEntryData);
 
     return ERROR_SUCCESS == result;
   } else {
-    HKEY key = 0;
-    LONG result = ::RegOpenKeyExW(HKEY_CURRENT_USER,
-                                  kIMEHotKeyEntryKey,
-                                  NULL,
-                                  KEY_SET_VALUE | DELETE,
-                                  &key);
+    CRegKey key;
+    LONG result = key.Open(HKEY_CURRENT_USER, kIMEHotKeyEntryKey,
+                           KEY_SET_VALUE | DELETE);
     if (result == ERROR_FILE_NOT_FOUND) {
       return true;  // default value will be used.
     }
@@ -702,9 +674,7 @@ bool WinUtil::SetIMEHotKeyDisabled(bool disabled) {
       return false;
     }
 
-    result = ::RegDeleteValueW(key, kIMEHotKeyEntryValue);
-
-    ::RegCloseKey(key);
+    result = key.DeleteValue(kIMEHotKeyEntryValue);
 
     return (ERROR_SUCCESS == result || ERROR_FILE_NOT_FOUND == result);
   }

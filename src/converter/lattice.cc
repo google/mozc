@@ -34,9 +34,14 @@
 
 #include "base/base.h"
 #include "base/singleton.h"
+#include "base/util.h"
 #include "converter/node.h"
 #include "converter/node_allocator.h"
 #include "dictionary/pos_matcher.h"
+
+DEFINE_bool(disable_lattice_cache,
+            false,
+            "do not use cache feature for lattice");
 
 namespace mozc {
 
@@ -116,6 +121,21 @@ string GetDebugStringForPath(const Node *end_node) {
   }
   return os.str();
 }
+
+string GetCommonPrefix(const string &str1, const string &str2) {
+  vector<string> split1, split2;
+  Util::SplitStringToUtf8Chars(str1, &split1);
+  Util::SplitStringToUtf8Chars(str2, &split2);
+  string common_prefix = "";
+  for (int i = 0; i < min(split1.size(), split2.size()); ++i) {
+    if (split1[i] == split2[i]) {
+      common_prefix += split1[i];
+    } else {
+      break;
+    }
+  }
+  return common_prefix;
+}
 }  // namespace
 
 struct LatticeDisplayNodeInfo {
@@ -150,11 +170,13 @@ void Lattice::SetKey(const string &key) {
   const size_t size = key.size();
   begin_nodes_.resize(size + 4);
   end_nodes_.resize(size + 4);
+  cache_info_.resize(size + 4);
 
   fill(begin_nodes_.begin(), begin_nodes_.end(),
        static_cast<Node *>(NULL));
   fill(end_nodes_.begin(), end_nodes_.end(),
        static_cast<Node *>(NULL));
+  fill(cache_info_.begin(), cache_info_.end(), 0);
 
   end_nodes_[0] = InitBOSNode(this,
                               static_cast<uint16>(0));
@@ -172,14 +194,14 @@ Node *Lattice::eos_nodes() const {
 
 void Lattice::Insert(size_t pos, Node *node) {
   for (Node *rnode = node; rnode != NULL; rnode = rnode->bnext) {
+    const size_t end_pos = min(rnode->key.size() + pos, key_.size());
     rnode->begin_pos = static_cast<uint16>(pos);
-    rnode->end_pos = static_cast<uint16>(pos + rnode->key.size());
+    rnode->end_pos = static_cast<uint16>(end_pos);
     rnode->prev = NULL;
     rnode->next = NULL;
     rnode->cost = 0;
-    const size_t x = rnode->key.size() + pos;
-    rnode->enext = end_nodes_[x];
-    end_nodes_[x] = rnode;
+    rnode->enext = end_nodes_[end_pos];
+    end_nodes_[end_pos] = rnode;
   }
 
   if (begin_nodes_[pos] == NULL) {
@@ -208,6 +230,7 @@ void Lattice::Clear() {
   begin_nodes_.clear();
   end_nodes_.clear();
   node_allocator_->Free();
+  cache_info_.clear();
 }
 
 void Lattice::SetDebugDisplayNode(size_t begin_pos, size_t end_pos,
@@ -221,6 +244,181 @@ void Lattice::SetDebugDisplayNode(size_t begin_pos, size_t end_pos,
 void Lattice::ResetDebugDisplayNode() {
   LatticeDisplayNodeInfo *info = Singleton<LatticeDisplayNodeInfo>::get();
   info->display_node_str_.clear();
+}
+
+void Lattice::UpdateKey(const string &new_key) {
+  if (FLAGS_disable_lattice_cache) {
+    SetKey(new_key);
+    return;
+  }
+
+  const string old_key = key_;
+  const string common_prefix = GetCommonPrefix(new_key, old_key);
+
+  // if the length of common prefix is too short, call SetKey
+  if (common_prefix.size() <= old_key.size() / 2) {
+    SetKey(new_key);
+    return;
+  }
+
+  // if node_allocator has many nodes, then clean up
+  const size_t size_threshold = node_allocator_->max_nodes_size();
+  if (node_allocator_->node_count() > size_threshold) {
+    SetKey(new_key);
+    return;
+  }
+
+  // erase the suffix of old_key so that the key becomes common_prefix
+  ShrinkKey(common_prefix.size());
+  // add a suffix so that the key becomes new_key
+  AddSuffix(new_key.substr(common_prefix.size()));
+}
+
+void Lattice::AddSuffix(const string &suffix_key) {
+  if (suffix_key == "") {
+    return;
+  }
+  const size_t old_size = key_.size();
+  const size_t new_size = key_.size() + suffix_key.size();
+
+  // update begin_nodes and end_nodes
+  begin_nodes_.resize(new_size + 4);
+  end_nodes_.resize(new_size + 4);
+
+  fill(begin_nodes_.begin() + old_size, begin_nodes_.end(),
+       static_cast<Node *>(NULL));
+  fill(end_nodes_.begin() + old_size + 1, end_nodes_.end(),
+       static_cast<Node *>(NULL));
+
+  end_nodes_[0] = InitBOSNode(this,
+                              static_cast<uint16>(0));
+  begin_nodes_[new_size] =
+      InitEOSNode(this, static_cast<uint16>(new_size));
+
+  // update cache_info
+  cache_info_.resize(new_size + 4, 0);
+
+  // update key
+  key_ += suffix_key;
+}
+
+void Lattice::ShrinkKey(const size_t new_len) {
+  const size_t old_len = key_.size();
+  CHECK_LE(new_len, old_len);
+  if (new_len == old_len) {
+    return;
+  }
+
+  // erase nodes whose end position exceeds new_len
+  for (size_t i = 0; i < new_len; ++i) {
+    Node *begin = begin_nodes_[i];
+    if (begin == NULL) {
+      continue;
+    }
+
+    for (Node *prev = begin, *curr = begin->bnext; curr != NULL; ) {
+      CHECK(prev);
+      if (curr->end_pos > new_len) {
+        prev->bnext = curr->bnext;
+        curr = curr->bnext;
+      } else {
+        prev = prev->bnext;
+        curr = curr->bnext;
+      }
+    }
+    if (begin->end_pos > new_len) {
+      begin_nodes_[i] = begin->bnext;
+    }
+  }
+
+  // update begin_nodes and end_nodes
+  for (size_t i = new_len; i <= old_len; ++i) {
+    begin_nodes_[i] = NULL;
+  }
+  for (size_t i = new_len + 1; i <= old_len; ++i) {
+    end_nodes_[i] = NULL;
+  }
+  begin_nodes_[new_len] =
+      InitEOSNode(this, static_cast<uint16>(new_len));
+
+  // update cache_info
+  for (size_t i = 0; i < new_len; ++i) {
+    cache_info_[i] = min(cache_info_[i], new_len - i);
+  }
+  fill(cache_info_.begin() + new_len, cache_info_.end(), 0);
+
+  // update key
+  key_ = key_.substr(0, new_len);
+}
+
+size_t Lattice::cache_info(const size_t pos) const {
+  CHECK_LE(pos, key_.size());
+  return cache_info_[pos];
+}
+
+void Lattice::SetCacheInfo(const size_t pos, const size_t len) {
+  CHECK_LE(pos, key_.size());
+  cache_info_[pos] = len;
+}
+
+void Lattice::ResetNodeCost() {
+  for (size_t i = 0; i <= key_.size(); ++i) {
+    if (begin_nodes_[i] != NULL) {
+      Node *prev = NULL;
+      for (Node *node = begin_nodes_[i]; node != NULL; node = node->bnext) {
+        // do not process BOS / EOS nodes
+        if (node->node_type == Node::BOS_NODE ||
+            node->node_type == Node::EOS_NODE) {
+          continue;
+        }
+        // if the node has ENABLE_CACHE attribute, then revert its wcost.
+        // Otherwise, erase the node from the lattice.
+        if (node->attributes & Node::ENABLE_CACHE) {
+          node->wcost = node->raw_wcost;
+        } else {
+          if (node == begin_nodes_[i]) {
+            if (node->bnext == NULL) {
+              begin_nodes_[i] = NULL;
+            } else {
+              begin_nodes_[i] = node->bnext;
+            }
+          } else {
+            CHECK(prev);
+            CHECK_EQ(prev->bnext, node);
+            prev->next = node->bnext;
+          }
+        }
+        // traverse a next node
+        prev = node;
+      }
+    }
+
+    if (end_nodes_[i] != NULL) {
+      Node *prev = NULL;
+      for (Node *node = end_nodes_[i]; node != NULL; node = node->enext) {
+        if (node->node_type == Node::BOS_NODE ||
+            node->node_type == Node::EOS_NODE) {
+          continue;
+        }
+        if (node->attributes & Node::ENABLE_CACHE) {
+          node->wcost = node->raw_wcost;
+        } else {
+          if (node == end_nodes_[i]) {
+            if (node->enext == NULL) {
+              end_nodes_[i] = NULL;
+            } else {
+              end_nodes_[i] = node->enext;
+            }
+          } else {
+            CHECK(prev);
+            CHECK_EQ(prev->enext, node);
+            prev->next = node->enext;
+          }
+        }
+        prev = node;
+      }
+    }
+  }
 }
 
 string Lattice::DebugString() const {

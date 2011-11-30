@@ -39,15 +39,18 @@ DECLARE_string(test_tmpdir);
 namespace mozc {
 
 class VersionRewriterTest : public testing::Test {
+ protected:
   virtual void SetUp() {
     Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
     config::Config config;
     config::ConfigHandler::GetDefaultConfig(&config);
     config::ConfigHandler::SetConfig(config);
+
   }
+
 };
 
-TEST_F(VersionRewriterTest, CapavilityTest) {
+TEST_F(VersionRewriterTest, CapabilityTest) {
   VersionRewriter rewriter;
   EXPECT_EQ(RewriterInterface::CONVERSION, rewriter.capability());
 }

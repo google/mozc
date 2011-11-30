@@ -33,10 +33,10 @@
 #define MOZC_RENDERER_WINDOW_UTIL_H_
 
 namespace mozc {
-namespace renderer {
 struct Point;
 struct Rect;
 struct Size;
+namespace renderer {
 
 class WindowUtil {
  public:

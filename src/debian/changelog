@@ -1,3 +1,18 @@
+mozc (1.3.911.102) lucid; urgency=low
+
+  * Ver. 1.3.911.102 on 2011-11-28
+  * Support new features for IBus.
+    - Support UNDO feature.
+    - Support Reconversion feature for IBus >=1.4.
+    - Add some menus into language bar.
+    - Set ibus-mozc rank as 80.
+  * Fixed some bugs.
+    - Fixed English-number toggle key issue for emacs.(Issue 101)
+    - Fixed crash problem on scim.(Issue 104)
+  * Change dependency name for Ubuntu 11.10.(Issue 106)
+
+ -- Seigo Nonaka <nona>  Mon, 28 Nov 2011 15:02:44 +0900
+
 mozc (1.2.855.102) lucid; urgency=low
 
   * Ver. 1.2.855.102 on 2011-09-27

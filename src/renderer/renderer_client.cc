@@ -429,6 +429,13 @@ bool RendererClient::ExecCommand(const commands::RendererCommand &command) {
       NewClient(name_,
                 disable_renderer_path_check_ ? "" : renderer_path_));
 
+  // In case IPCClient::Init fails with timeout error, the last error should be
+  // checked here.  See also b/3264926.
+  // TODO(yukawa): Check any other error.
+  if (client->GetLastIPCError() == IPC_TIMEOUT_ERROR) {
+    return false;
+  }
+
   is_window_visible_ = command.visible();
 
   if (!client->Connected()) {

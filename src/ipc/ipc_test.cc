@@ -32,6 +32,8 @@
 #include "base/util.h"
 #include "ipc/ipc.h"
 #include "ipc/ipc_test_util.h"
+#include "languages/global_language_spec.h"
+#include "languages/japanese/lang_dep_spec.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "base/thread.h"
@@ -124,6 +126,8 @@ class EchoServer: public mozc::IPCServer {
 
 TEST(IPCTest, IPCTest) {
   mozc::Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+  mozc::japanese::LangDepSpecJapanese lang_spec;
+  mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(&lang_spec);
 #ifdef OS_MACOSX
   mozc::TestMachPortManager manager;
 #endif

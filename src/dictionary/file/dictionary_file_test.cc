@@ -56,9 +56,9 @@ TEST(DictionaryFileTest, Basic) {
 
   {
     DictionaryFileBuilder builder;
-    EXPECT_TRUE(builder.AddSectionFromFile("sec1", fn1.c_str()));
-    EXPECT_TRUE(builder.AddSectionFromFile("sec2", fn2.c_str()));
-    EXPECT_FALSE(builder.AddSectionFromFile("sec2", fn2.c_str()));
+    EXPECT_TRUE(builder.AddSectionFromFile("sec1", fn1));
+    EXPECT_TRUE(builder.AddSectionFromFile("sec2", fn2));
+    EXPECT_FALSE(builder.AddSectionFromFile("sec2", fn2));
     builder.WriteImageToFile(dfn);
   }
 

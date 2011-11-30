@@ -27,8 +27,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "converter/character_form_manager.h"
 #include "composer/composer.h"
+
+#include <string>
+#include <utility>
+
+#include "converter/character_form_manager.h"
 #include "composer/table.h"
 #include "config/config_handler.h"
 #include "config/config.pb.h"
@@ -74,7 +78,7 @@ void ExpectSameComposer(const Composer &lhs, const Composer &rhs) {
   EXPECT_EQ(lhs.GetInputMode(), rhs.GetInputMode());
   EXPECT_EQ(lhs.GetOutputMode(), rhs.GetOutputMode());
   EXPECT_EQ(lhs.GetComebackInputMode(), rhs.GetComebackInputMode());
-  EXPECT_EQ(lhs.capital_sequence_count(), rhs.capital_sequence_count());
+  EXPECT_EQ(lhs.shifted_sequence_count(), rhs.shifted_sequence_count());
   EXPECT_EQ(lhs.source_text(), rhs.source_text());
   EXPECT_EQ(lhs.max_length(), rhs.max_length());
   EXPECT_EQ(lhs.GetInputFieldType(), rhs.GetInputFieldType());
@@ -603,7 +607,7 @@ TEST_F(ComposerTest, GetStringFunctions) {
 
   prediction.clear();
   composer_->GetQueryForPrediction(&prediction);
-  EXPECT_TRUE(prediction.empty());
+  EXPECT_EQ("s", prediction);
 
   // Query: "sk"
   composer_->EditErase();
@@ -668,6 +672,12 @@ TEST_F(ComposerTest, GetStringFunctions_ForN) {
   string prediction2;
   composer_->GetQueryForPrediction(&prediction2);
   EXPECT_EQ("ny[NYA][N][KA]", prediction2);
+}
+
+TEST_F(ComposerTest, InsertCommandCharacter) {
+  composer_->SetInputMode(transliteration::HALF_ASCII);
+  composer_->InsertCommandCharacter(Composer::REWIND);
+  EXPECT_EQ("\x0F<\x0E", GetPreedit(composer_.get()));
 }
 
 TEST_F(ComposerTest, InsertCharacterKeyEvent) {
@@ -885,6 +895,202 @@ TEST_F(ComposerTest, InsertCharacterKeyEventWithInputMode) {
   }
 }
 
+TEST_F(ComposerTest, ApplyTemporaryInputMode) {
+  const bool kCapsLocked = true;
+  const bool kCapsUnlocked = false;
+
+  // "あ"
+  table_->AddRule("a", "\xE3\x81\x82", "");
+  composer_->SetInputMode(transliteration::HIRAGANA);
+
+  // Since handlings of continuous shifted input differ,
+  // test cases differ between ASCII_INPUT_MODE and KATAKANA_INPUT_MODE
+
+  {  // ASCII_INPUT_MODE (w/o CapsLock)
+    config::Config config;
+    config::ConfigHandler::GetConfig(&config);
+    config.set_shift_key_mode_switch(config::Config::ASCII_INPUT_MODE);
+    config::ConfigHandler::SetConfig(config);
+
+    // pair<input, use_temporary_input_mode>
+    pair<string, bool> kTestDataAscii[] = {
+      make_pair("a", false),
+      make_pair("A", true),
+      make_pair("a", true),
+      make_pair("a", true),
+      make_pair("A", true),
+      make_pair("A", true),
+      make_pair("a", false),
+      make_pair("A", true),
+      make_pair("A", true),
+      make_pair("A", true),
+      make_pair("a", false),
+      make_pair("A", true),
+      make_pair(".", true),
+      make_pair("a", true),
+      make_pair("A", true),
+      make_pair("A", true),
+      make_pair(".", true),
+      make_pair("a", true),
+      // "あ"
+      make_pair("\xE3\x81\x82", false),
+      make_pair("a", false),
+    };
+
+    for (int i = 0; i < arraysize(kTestDataAscii); ++i) {
+      composer_->ApplyTemporaryInputMode(kTestDataAscii[i].first,
+                                         kCapsUnlocked);
+
+      const transliteration::TransliterationType expected =
+          kTestDataAscii[i].second
+          ? transliteration::HALF_ASCII
+          : transliteration::HIRAGANA;
+
+      EXPECT_EQ(expected, composer_->GetInputMode()) << "index=" << i;
+      EXPECT_EQ(transliteration::HIRAGANA, composer_->GetComebackInputMode())
+          << "index=" << i;
+    }
+  }
+
+  {  // ASCII_INPUT_MODE (w/ CapsLock)
+    config::Config config;
+    config::ConfigHandler::GetConfig(&config);
+    config.set_shift_key_mode_switch(config::Config::ASCII_INPUT_MODE);
+    config::ConfigHandler::SetConfig(config);
+
+    // pair<input, use_temporary_input_mode>
+    pair<string, bool> kTestDataAscii[] = {
+      make_pair("A", false),
+      make_pair("a", true),
+      make_pair("A", true),
+      make_pair("A", true),
+      make_pair("a", true),
+      make_pair("a", true),
+      make_pair("A", false),
+      make_pair("a", true),
+      make_pair("a", true),
+      make_pair("a", true),
+      make_pair("A", false),
+      make_pair("a", true),
+      make_pair(".", true),
+      make_pair("A", true),
+      make_pair("a", true),
+      make_pair("a", true),
+      make_pair(".", true),
+      make_pair("A", true),
+      // "あ"
+      make_pair("\xE3\x81\x82", false),
+      make_pair("A", false),
+    };
+
+    for (int i = 0; i < arraysize(kTestDataAscii); ++i) {
+      composer_->ApplyTemporaryInputMode(kTestDataAscii[i].first,
+                                         kCapsLocked);
+
+      const transliteration::TransliterationType expected =
+          kTestDataAscii[i].second
+          ? transliteration::HALF_ASCII
+          : transliteration::HIRAGANA;
+
+      EXPECT_EQ(expected, composer_->GetInputMode()) << "index=" << i;
+      EXPECT_EQ(transliteration::HIRAGANA, composer_->GetComebackInputMode())
+          << "index=" << i;
+    }
+  }
+
+  {  // KATAKANA_INPUT_MODE (w/o CapsLock)
+    config::Config config;
+    config::ConfigHandler::GetConfig(&config);
+    config.set_shift_key_mode_switch(config::Config::KATAKANA_INPUT_MODE);
+    config::ConfigHandler::SetConfig(config);
+
+    // pair<input, use_temporary_input_mode>
+    pair<string, bool> kTestDataKatakana[] = {
+      make_pair("a", false),
+      make_pair("A", true),
+      make_pair("a", false),
+      make_pair("a", false),
+      make_pair("A", true),
+      make_pair("A", true),
+      make_pair("a", false),
+      make_pair("A", true),
+      make_pair("A", true),
+      make_pair("A", true),
+      make_pair("a", false),
+      make_pair("A", true),
+      make_pair(".", true),
+      make_pair("a", false),
+      make_pair("A", true),
+      make_pair("A", true),
+      make_pair(".", true),
+      make_pair("a", false),
+      // "あ"
+      make_pair("\xE3\x81\x82", false),
+      make_pair("a", false),
+    };
+
+    for (int i = 0; i < arraysize(kTestDataKatakana); ++i) {
+      composer_->ApplyTemporaryInputMode(kTestDataKatakana[i].first,
+                                         kCapsUnlocked);
+
+      const transliteration::TransliterationType expected =
+          kTestDataKatakana[i].second
+          ? transliteration::FULL_KATAKANA
+          : transliteration::HIRAGANA;
+
+      EXPECT_EQ(expected, composer_->GetInputMode()) << "index=" << i;
+      EXPECT_EQ(transliteration::HIRAGANA, composer_->GetComebackInputMode())
+          << "index=" << i;
+    }
+  }
+
+  {  // KATAKANA_INPUT_MODE (w/ CapsLock)
+    config::Config config;
+    config::ConfigHandler::GetConfig(&config);
+    config.set_shift_key_mode_switch(config::Config::KATAKANA_INPUT_MODE);
+    config::ConfigHandler::SetConfig(config);
+
+    // pair<input, use_temporary_input_mode>
+    pair<string, bool> kTestDataKatakana[] = {
+      make_pair("A", false),
+      make_pair("a", true),
+      make_pair("A", false),
+      make_pair("A", false),
+      make_pair("a", true),
+      make_pair("a", true),
+      make_pair("A", false),
+      make_pair("a", true),
+      make_pair("a", true),
+      make_pair("a", true),
+      make_pair("A", false),
+      make_pair("a", true),
+      make_pair(".", true),
+      make_pair("A", false),
+      make_pair("a", true),
+      make_pair("a", true),
+      make_pair(".", true),
+      make_pair("A", false),
+      // "あ"
+      make_pair("\xE3\x81\x82", false),
+      make_pair("A", false),
+    };
+
+    for (int i = 0; i < arraysize(kTestDataKatakana); ++i) {
+      composer_->ApplyTemporaryInputMode(kTestDataKatakana[i].first,
+                                         kCapsLocked);
+
+      const transliteration::TransliterationType expected =
+          kTestDataKatakana[i].second
+          ? transliteration::FULL_KATAKANA
+          : transliteration::HIRAGANA;
+
+      EXPECT_EQ(expected, composer_->GetInputMode()) << "index=" << i;
+      EXPECT_EQ(transliteration::HIRAGANA, composer_->GetComebackInputMode())
+          << "index=" << i;
+    }
+  }
+}
+
 TEST_F(ComposerTest, CopyFrom) {
   // "あ"
   table_->AddRule("a", "\xE3\x81\x82", "");
@@ -933,6 +1139,27 @@ TEST_F(ComposerTest, CopyFrom) {
     Composer dest;
     string dest_composition;
     dest.CopyFromForConversion(*composer_);
+    dest.GetStringForSubmission(&dest_composition);
+    EXPECT_EQ(dest_composition, src_composition);
+
+    ExpectSameComposer(*composer_, dest);
+  }
+
+  {  // for Composition, temporary input mode
+    composer_->Reset();
+    InsertKey("A", composer_.get());
+    InsertKey("a", composer_.get());
+    InsertKey("A", composer_.get());
+    InsertKey("A", composer_.get());
+    InsertKey("a", composer_.get());
+    string src_composition;
+    composer_->GetStringForSubmission(&src_composition);
+    // "AaAAあ"
+    EXPECT_EQ("AaAA\xE3\x81\x82", src_composition);
+
+    Composer dest;
+    string dest_composition;
+    dest.CopyFromForSubmission(*composer_);
     dest.GetStringForSubmission(&dest_composition);
     EXPECT_EQ(dest_composition, src_composition);
 
@@ -2472,28 +2699,60 @@ TEST_F(ComposerTest, ShuoldCommit) {
 }
 
 TEST_F(ComposerTest, ShouldCommitHead) {
-  size_t length_to_commit;
-  composer_->SetInputFieldType(
-      commands::SessionCommand::PASSWORD);
+  struct TestData {
+    const string input_text;
+    const commands::SessionCommand::InputFieldType field_type;
+    const bool expected_return;
+    const size_t expected_commit_length;
+    TestData(const string &input_text,
+             commands::SessionCommand::InputFieldType field_type,
+             bool expected_return,
+             size_t expected_commit_length)
+        : input_text(input_text),
+          field_type(field_type),
+          expected_return(expected_return),
+          expected_commit_length(expected_commit_length) {
+    }
+  };
+  const TestData test_data_list[] = {
+      // On NORMAL, never commit the head.
+      TestData("", commands::SessionCommand::NORMAL, false, 0),
+      TestData("A", commands::SessionCommand::NORMAL, false, 0),
+      TestData("AB", commands::SessionCommand::NORMAL, false, 0),
+      TestData("", commands::SessionCommand::PASSWORD, false, 0),
+      // On PASSWORD, commit (length - 1) characters.
+      TestData("A", commands::SessionCommand::PASSWORD, false, 0),
+      TestData("AB", commands::SessionCommand::PASSWORD, true, 1),
+      TestData("ABCDEFGHI", commands::SessionCommand::PASSWORD, true, 8),
+      // On NUMBER and TEL, commit (length) characters.
+      TestData("", commands::SessionCommand::NUMBER, false, 0),
+      TestData("A", commands::SessionCommand::NUMBER, true, 1),
+      TestData("AB", commands::SessionCommand::NUMBER, true, 2),
+      TestData("ABCDEFGHI", commands::SessionCommand::NUMBER, true, 9),
+      TestData("", commands::SessionCommand::TEL, false, 0),
+      TestData("A", commands::SessionCommand::TEL, true, 1),
+      TestData("AB", commands::SessionCommand::TEL, true, 2),
+      TestData("ABCDEFGHI", commands::SessionCommand::TEL, true, 9),
+  };
 
-  composer_->InsertCharacter("A");
-  EXPECT_FALSE(composer_->ShouldCommitHead(&length_to_commit));
-
-  composer_->InsertCharacter("B");
-  EXPECT_TRUE(composer_->ShouldCommitHead(&length_to_commit));
-  EXPECT_EQ(1, length_to_commit);
-
-  composer_->InsertCharacter("CDEFGHI");
-  EXPECT_TRUE(composer_->ShouldCommitHead(&length_to_commit));
-  EXPECT_EQ(8, length_to_commit);
-
-  composer_->Reset();
-  composer_->SetInputFieldType(
-      commands::SessionCommand::NORMAL);
-  EXPECT_FALSE(composer_->ShouldCommitHead(&length_to_commit));
-
-  composer_->InsertCharacter("A");
-  EXPECT_FALSE(composer_->ShouldCommitHead(&length_to_commit));
+  for (size_t i = 0; i < ARRAYSIZE(test_data_list); ++i) {
+    const TestData &test_data = test_data_list[i];
+    SCOPED_TRACE(test_data.input_text);
+    SCOPED_TRACE(test_data.field_type);
+    SCOPED_TRACE(test_data.expected_return);
+    SCOPED_TRACE(test_data.expected_commit_length);
+    composer_->Reset();
+    composer_->SetInputFieldType(test_data.field_type);
+    composer_->InsertCharacter(test_data.input_text);
+    size_t length_to_commit;
+    const bool result = composer_->ShouldCommitHead(&length_to_commit);
+    if (test_data.expected_return) {
+      EXPECT_TRUE(result);
+      EXPECT_EQ(test_data.expected_commit_length, length_to_commit);
+    } else {
+      EXPECT_FALSE(result);
+    }
+  }
 }
 
 TEST_F(ComposerTest, CursorMovements) {
@@ -2586,5 +2845,59 @@ TEST_F(ComposerTest, DeleteAt) {
   EXPECT_EQ("\xe3\x82\x82\xe3\x82\x82", GetPreedit(composer_.get()));
   EXPECT_EQ(2, composer_->GetCursor());
 }
+
+TEST_F(ComposerTest, DeleteRange) {
+  // "も"
+  table_->AddRule("mo", "\xE3\x82\x82", "");
+  // "ず"
+  table_->AddRule("zu", "\xE3\x81\x9a", "");
+
+  composer_->InsertCharacter("z");
+  // "ｚ"
+  EXPECT_EQ("\xef\xbd\x9a", GetPreedit(composer_.get()));
+  EXPECT_EQ(1, composer_->GetCursor());
+
+  composer_->DeleteRange(0, 1);
+  EXPECT_EQ("", GetPreedit(composer_.get()));
+  EXPECT_EQ(0, composer_->GetCursor());
+
+  composer_->InsertCharacter("mmozmoz");
+  // "ｍもｚもｚ"
+  EXPECT_EQ("\xef\xbd\x8d\xe3\x82\x82\xef\xbd\x9a\xe3\x82\x82\xef\xbd\x9a",
+            GetPreedit(composer_.get()));
+  EXPECT_EQ(5, composer_->GetCursor());
+
+  composer_->DeleteRange(0, 3);
+  // "もｚ"
+  EXPECT_EQ("\xe3\x82\x82\xef\xbd\x9a", GetPreedit(composer_.get()));
+  EXPECT_EQ(2, composer_->GetCursor());
+
+  composer_->InsertCharacter("u");
+  // "もず"
+  EXPECT_EQ("\xe3\x82\x82\xe3\x81\x9a", GetPreedit(composer_.get()));
+  EXPECT_EQ(2, composer_->GetCursor());
+
+  composer_->InsertCharacter("xyz");
+  composer_->MoveCursorToBeginning();
+  composer_->InsertCharacter("mom");
+  // "もｍ|もずｘｙｚ"
+  EXPECT_EQ("\xe3\x82\x82\xef\xbd\x8d\xe3\x82\x82\xe3\x81\x9a"
+            "\xef\xbd\x98\xef\xbd\x99\xef\xbd\x9a",
+            GetPreedit(composer_.get()));
+  EXPECT_EQ(2, composer_->GetCursor());
+
+  composer_->DeleteRange(2, 3);
+  // "もｍ|ｙｚ"
+  EXPECT_EQ("\xe3\x82\x82\xef\xbd\x8d\xef\xbd\x99\xef\xbd\x9a",
+            GetPreedit(composer_.get()));
+  EXPECT_EQ(2, composer_->GetCursor());
+
+  composer_->InsertCharacter("o");
+  // "もも|ｙｚ"
+  EXPECT_EQ("\xe3\x82\x82\xe3\x82\x82\xef\xbd\x99\xef\xbd\x9a",
+            GetPreedit(composer_.get()));
+  EXPECT_EQ(2, composer_->GetCursor());
+}
+
 }  // namespace composer
 }  // namespace mozc

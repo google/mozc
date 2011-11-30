@@ -47,8 +47,9 @@
         'win32_ipc.cc',
       ],
       'dependencies': [
-        '../protobuf/protobuf.gyp:protobuf',
         '../base/base.gyp:base',
+        '../languages/languages.gyp:global_language_spec',
+        '../protobuf/protobuf.gyp:protobuf',
         'genproto_ipc',
       ],
     },
@@ -84,6 +85,7 @@
         'process_watch_dog_test.cc',
       ],
       'dependencies': [
+        '../languages/japanese/japanese.gyp:language_dependent_spec_japanese',
         '../testing/testing.gyp:gtest_main',
         'ipc',
         'ipc_test_util',

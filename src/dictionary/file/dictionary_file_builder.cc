@@ -33,6 +33,7 @@
 #include "base/base.h"
 #include "base/file_stream.h"
 #include "dictionary/file/codec_interface.h"
+#include "dictionary/file/codec.h"
 #include "dictionary/file/section.h"
 
 namespace mozc {

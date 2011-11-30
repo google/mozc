@@ -36,18 +36,38 @@
 #include "base/util.h"
 #include "composer/composer.h"
 #include "converter/segments.h"
+#include "dictionary/pos_matcher.h"
 #include "session/commands.pb.h"
 // For T13N normalize
 #include "transliteration/transliteration.h"
 
 namespace mozc {
 namespace {
+struct T13NIds {
+  uint16 hiragana_lid;
+  uint16 hiragana_rid;
+  uint16 katakana_lid;
+  uint16 katakana_rid;
+  uint16 ascii_lid;
+  uint16 ascii_rid;
+  T13NIds() : hiragana_lid(0), hiragana_rid(0),
+              katakana_lid(0), katakana_rid(0),
+              ascii_lid(0), ascii_rid(0) {}
+};
+
 bool IsValidComposer(const Segments *segments) {
   if (segments->composer() == NULL) {
     return false;
   }
+
   string conversion_query;
   segments->composer()->GetQueryForConversion(&conversion_query);
+  if (segments->request_type() == Segments::PARTIAL_PREDICTION ||
+      segments->request_type() == Segments::PARTIAL_SUGGESTION) {
+    conversion_query =
+        Util::SubString(conversion_query, 0, segments->composer()->GetCursor());
+  }
+
   string segments_key;
   for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
     segments_key.append(segments->conversion_segment(i).key());
@@ -61,30 +81,47 @@ bool IsValidComposer(const Segments *segments) {
   return true;
 }
 
-void NormalizeT13Ns(const vector<string> &t13ns,
-                    vector<string> *t13ns_normalized) {
-  DCHECK(t13ns_normalized);
-  t13ns_normalized->clear();
+void NormalizeT13Ns(vector<string> *t13ns) {
+  DCHECK(t13ns);
   string normalized;
-  for (size_t j = 0; j < t13ns.size(); ++j) {
+  for (size_t i = 0; i < t13ns->size(); ++i) {
     normalized.clear();
     TextNormalizer::NormalizeTransliterationText(
-        t13ns[j], &normalized);
-    t13ns_normalized->push_back(normalized);
+        t13ns->at(i), &normalized);
+    t13ns->at(i) = normalized;
   }
+}
+
+bool IsTransliterated(const vector<string> &t13ns) {
+  if (t13ns.empty() || t13ns[0].empty()) {
+    return false;
+  }
+  const string &base_candidate = t13ns[0];
+  for (size_t i = 1; i < t13ns.size(); ++i) {
+    if (t13ns[i] != base_candidate) {
+      return true;
+    }
+  }
+  return false;
 }
 
 void InitT13NCandidate(const string &key,
                        const string &value,
+                       uint16 lid,
+                       uint16 rid,
                        Segment::Candidate *cand) {
   DCHECK(cand);
   cand->Init();
   cand->value = value;
+  cand->key = key;
   cand->content_value = value;
   cand->content_key = key;
+  cand->lid = (lid != 0) ? lid : POSMatcher::GetUnknownId();
+  cand->rid = (rid != 0) ? rid : POSMatcher::GetUnknownId();
 }
 
-void SetTransliterations(const vector<string> &t13ns, Segment *segment) {
+void SetTransliterations(
+    const vector<string> &t13ns, const T13NIds &ids, Segment *segment) {
   if (t13ns.size() != transliteration::NUM_T13N_TYPES) {
     LOG(WARNING) << "t13ns size is invalid";
     return;
@@ -97,39 +134,70 @@ void SetTransliterations(const vector<string> &t13ns, Segment *segment) {
   meta_candidates->resize(transliteration::NUM_T13N_TYPES);
 
   InitT13NCandidate(key, t13ns[transliteration::HIRAGANA],
+                    ids.hiragana_lid, ids.hiragana_rid,
                     &meta_candidates->at(transliteration::HIRAGANA));
 
   InitT13NCandidate(key, t13ns[transliteration::FULL_KATAKANA],
+                    ids.katakana_lid, ids.katakana_rid,
                     &meta_candidates->at(transliteration::FULL_KATAKANA));
 
   InitT13NCandidate(key, t13ns[transliteration::HALF_ASCII],
+                    ids.ascii_lid, ids.ascii_rid,
                     &meta_candidates->at(transliteration::HALF_ASCII));
 
   InitT13NCandidate(key, t13ns[transliteration::HALF_ASCII_UPPER],
+                    ids.ascii_lid, ids.ascii_rid,
                     &meta_candidates->at(transliteration::HALF_ASCII_UPPER));
 
   InitT13NCandidate(key, t13ns[transliteration::HALF_ASCII_LOWER],
+                    ids.ascii_lid, ids.ascii_rid,
                     &meta_candidates->at(transliteration::HALF_ASCII_LOWER));
 
   InitT13NCandidate(
       key, t13ns[transliteration::HALF_ASCII_CAPITALIZED],
+      ids.ascii_lid, ids.ascii_rid,
       &meta_candidates->at(transliteration::HALF_ASCII_CAPITALIZED));
 
   InitT13NCandidate(key, t13ns[transliteration::FULL_ASCII],
+                    ids.ascii_lid, ids.ascii_rid,
                     &meta_candidates->at(transliteration::FULL_ASCII));
 
   InitT13NCandidate(key, t13ns[transliteration::FULL_ASCII_UPPER],
+                    ids.ascii_lid, ids.ascii_rid,
                     &meta_candidates->at(transliteration::FULL_ASCII_UPPER));
 
   InitT13NCandidate(key, t13ns[transliteration::FULL_ASCII_LOWER],
+                    ids.ascii_lid, ids.ascii_rid,
                     &meta_candidates->at(transliteration::FULL_ASCII_LOWER));
 
   InitT13NCandidate(
       key, t13ns[transliteration::FULL_ASCII_CAPITALIZED],
+      ids.ascii_lid, ids.ascii_rid,
       &meta_candidates->at(transliteration::FULL_ASCII_CAPITALIZED));
 
   InitT13NCandidate(key, t13ns[transliteration::HALF_KATAKANA],
+                    ids.katakana_lid, ids.katakana_rid,
                     &meta_candidates->at(transliteration::HALF_KATAKANA));
+}
+
+// Get T13N candidate ids from existing candidates.
+void GetIds(const Segment &segment, T13NIds *ids) {
+  DCHECK(ids);
+  // reverse loop to use the highest rank results for each type
+  for (int i = segment.candidates_size() - 1; i >= 0; --i) {
+    const Segment::Candidate &candidate = segment.candidate(i);
+    Util::ScriptType type = Util::GetScriptType(candidate.value);
+    if (type == Util::HIRAGANA) {
+      ids->hiragana_lid = candidate.lid;
+      ids->hiragana_rid = candidate.rid;
+    } else if (type == Util::KATAKANA) {
+      ids->katakana_lid = candidate.lid;
+      ids->katakana_rid = candidate.rid;
+    } else if (type == Util::ALPHABET) {
+      ids->ascii_lid = candidate.lid;
+      ids->ascii_rid = candidate.rid;
+    }
+  }
 }
 
 bool FillT13NsFromComposer(Segments *segments) {
@@ -138,16 +206,24 @@ bool FillT13NsFromComposer(Segments *segments) {
   for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
     Segment *segment = segments->mutable_conversion_segment(i);
     CHECK(segment);
-    modified = true;
+    if (segment->key().empty()) {
+      continue;
+    }
     const size_t composition_len = Util::CharsLen(segment->key());
     vector<string> t13ns;
     segments->composer()->GetSubTransliterations(composition_pos,
                                                  composition_len,
                                                  &t13ns);
-    vector<string> t13ns_normalized;
-    NormalizeT13Ns(t13ns, &t13ns_normalized);
-    SetTransliterations(t13ns_normalized, segment);
     composition_pos += composition_len;
+    T13NIds ids;
+    GetIds(*segment, &ids);
+
+    NormalizeT13Ns(&t13ns);
+    if (!IsTransliterated(t13ns)) {
+      continue;
+    }
+    SetTransliterations(t13ns, ids, segment);
+    modified = true;
   }
   return modified;
 }
@@ -160,8 +236,9 @@ bool FillT13NsFromKey(Segments *segments) {
   for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
     Segment *segment = segments->mutable_conversion_segment(i);
     CHECK(segment);
-    modified = true;
-
+    if (segment->key().empty()) {
+      continue;
+    }
     const string &hiragana = segment->key();
     string full_katakana, ascii;
     Util::HiraganaToKatakana(hiragana, &full_katakana);
@@ -183,6 +260,9 @@ bool FillT13NsFromKey(Segments *segments) {
     Util::LowerString(&full_ascii_lower);
     Util::CapitalizeString(&full_ascii_capitalized);
 
+    T13NIds ids;
+    GetIds(*segment, &ids);
+
     vector<string> t13ns;
     t13ns.resize(transliteration::NUM_T13N_TYPES);
     t13ns[transliteration::HIRAGANA] = hiragana;
@@ -197,9 +277,12 @@ bool FillT13NsFromKey(Segments *segments) {
     t13ns[transliteration::FULL_ASCII_LOWER] = full_ascii_lower;
     t13ns[transliteration::FULL_ASCII_CAPITALIZED] = full_ascii_capitalized;
 
-    vector<string> t13ns_normalized;
-    NormalizeT13Ns(t13ns, &t13ns_normalized);
-    SetTransliterations(t13ns_normalized, segment);
+    NormalizeT13Ns(&t13ns);
+    if (!IsTransliterated(t13ns)) {
+      continue;
+    }
+    SetTransliterations(t13ns, ids, segment);
+    modified = true;
   }
   return modified;
 }

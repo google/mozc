@@ -59,10 +59,14 @@ class DictionaryPredictor: public PredictorInterface {
   FRIEND_TEST(DictionaryPredictorTest,
               GetPredictionTypeTestWithZeroQuerySuggestion);
   FRIEND_TEST(DictionaryPredictorTest, IsZipCodeRequest);
+  FRIEND_TEST(DictionaryPredictorTest, GetRealtimeCandidateMaxSize);
+  FRIEND_TEST(DictionaryPredictorTest, GetRealtimeCandidateMaxSizeForMixed);
   FRIEND_TEST(DictionaryPredictorTest, AggregateRealtimeConversion);
+  FRIEND_TEST(DictionaryPredictorTest, GetUnigramCandidateCutoffThreshold);
   FRIEND_TEST(DictionaryPredictorTest, AggregateUnigramPrediction);
   FRIEND_TEST(DictionaryPredictorTest, AggregateBigramPrediction);
   FRIEND_TEST(DictionaryPredictorTest, AggregateSuffixPrediction);
+  FRIEND_TEST(DictionaryPredictorTest, ZeroQuerySuggestionAfterNumbers);
   FRIEND_TEST(DictionaryPredictorTest, GetHistoryKeyAndValue);
   FRIEND_TEST(DictionaryPredictorTest, RealtimeConversionStartingWithAlphabets);
   FRIEND_TEST(DictionaryPredictorTest,
@@ -217,6 +221,19 @@ class DictionaryPredictor: public PredictorInterface {
   // return PredictionType.
   // return value may be UNIGRAM | BIGRAM | REALTIME | SUFFIX.
   PredictionType GetPredictionType(const Segments &segments) const;
+
+  // return max size of realtime candidates.
+  size_t GetRealtimeCandidateMaxSize(const Segments &segments,
+                                     bool mixed_conversion,
+                                     size_t max_size) const;
+
+  // return cutoff threshold of unigram candidates.
+  // AggregateUnigramPrediction method does not return any candidates
+  // if there are too many (>= cutoff threshold) eligible candidates.
+  // This behavior prevents a user from seeing too many prefix-match
+  // candidates.
+  size_t GetUnigramCandidateCutoffThreshold(const Segments &segments,
+                                            bool mixed_conversion) const;
 
   DictionaryInterface *dictionary_;
   DictionaryInterface *suffix_dictionary_;

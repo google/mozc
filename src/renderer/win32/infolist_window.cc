@@ -34,8 +34,8 @@
 #include <sstream>
 
 #include "base/util.h"
+#include "base/coordinates.h"
 #include "client/client_interface.h"
-#include "renderer/coordinates.h"
 #include "renderer/renderer_style.pb.h"
 #include "renderer/renderer_style_handler.h"
 #include "renderer/table_layout.h"
@@ -68,6 +68,19 @@ using mozc::renderer::RendererStyleHandler;
 namespace {
 const COLORREF kDefaultBackgroundColor = RGB(0xff, 0xff, 0xff);
 const UINT_PTR kIdDelayShowHideTimer = 100;
+
+bool SendUsageStatsEvent(client::SendCommandInterface *command_sender,
+                         const SessionCommand::UsageStatsEvent &event) {
+  if (command_sender == NULL) {
+    return false;
+  }
+  SessionCommand command;
+  command.set_type(SessionCommand::USAGE_STATS_EVENT);
+  command.set_usage_stats_event(event);
+  DLOG(INFO) << "SendUsageStatsEvent " << command.DebugString();
+  Output dummy_output;
+  return command_sender->SendCommand(command, &dummy_output);
+}
 }
 
 
@@ -80,7 +93,8 @@ InfolistWindow::InfolistWindow()
       metrics_changed_(false),
       text_renderer_(new TextRenderer),
       style_(new RendererStyle),
-      visible_(false) {
+      visible_(false),
+      send_command_interface_(NULL) {
   text_renderer_->Init();
   mozc::renderer::RendererStyleHandler::GetRendererStyle(style_.get());
 }
@@ -148,7 +162,9 @@ Size InfolistWindow::DoPaint(CDCHandle dc) {
     const Rect backgrounnd_rect(infostyle.window_border(), ypos,
       infostyle.window_width() - infostyle.window_border() * 2,
       caption_height);
-    const CRect background_crect = backgrounnd_rect.ToCRect();
+    const CRect background_crect(
+        backgrounnd_rect.Left(), backgrounnd_rect.Top(),
+        backgrounnd_rect.Right(), backgrounnd_rect.Bottom());
 
     dc.FillSolidRect(&background_crect,
         RGB(infostyle.caption_background_color().r(),
@@ -304,6 +320,7 @@ void InfolistWindow::OnSettingChange(UINT uFlags, LPCTSTR /*lpszSection*/) {
       break;
   }
 }
+
 void InfolistWindow::OnTimer(UINT_PTR nIDEvent) {
   if (nIDEvent != kIdDelayShowHideTimer) {
     return;
@@ -319,9 +336,14 @@ void InfolistWindow::DelayShow(UINT mseconds) {
   visible_ = true;
   KillTimer(kIdDelayShowHideTimer);
   if (mseconds <= 0) {
+    const bool current_visible = IsWindowVisible();
     SetWindowPos(HWND_TOPMOST, 0, 0, 0, 0,
         SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW);
     SendMessageW(WM_NCACTIVATE, FALSE);
+    if (!current_visible) {
+      SendUsageStatsEvent(send_command_interface_,
+          SessionCommand::INFOLIST_WINDOW_SHOW);
+    }
   } else {
     SetTimer(kIdDelayShowHideTimer, mseconds, NULL);
   }
@@ -331,7 +353,12 @@ void InfolistWindow::DelayHide(UINT mseconds) {
   visible_ = false;
   KillTimer(kIdDelayShowHideTimer);
   if (mseconds <= 0) {
+    const bool current_visible = IsWindowVisible();
     ShowWindow(SW_HIDE);
+    if (current_visible) {
+      SendUsageStatsEvent(send_command_interface_,
+          SessionCommand::INFOLIST_WINDOW_HIDE);
+    }
   } else {
     SetTimer(kIdDelayShowHideTimer, mseconds, NULL);
   }
@@ -345,6 +372,11 @@ void InfolistWindow::UpdateLayout(const commands::Candidates &candidates) {
     text_renderer_->Init();
     metrics_changed_ = false;
   }
+}
+
+void InfolistWindow::SetSendCommandInterface(
+  client::SendCommandInterface *send_command_interface) {
+  send_command_interface_ = send_command_interface;
 }
 
 Size InfolistWindow::GetLayoutSize() {

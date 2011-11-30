@@ -54,12 +54,20 @@ class CheckCandSizePredictor : public PredictorInterface {
 
 class NullPredictor : public PredictorInterface {
  public:
-  explicit NullPredictor(bool ret) : return_value_(ret) {}
+  explicit NullPredictor(bool ret)
+      : return_value_(ret), predict_called_(false) {}
   bool Predict(Segments *segments) const {
+    predict_called_ = true;
     return return_value_;
   }
+
+  bool predict_called() const {
+    return predict_called_;
+  }
+
  private:
   bool return_value_;
+  mutable bool predict_called_;
 };
 }  // namespace
 
@@ -163,4 +171,37 @@ TEST_F(PredictorTest, CallPredictorsForPrediction) {
 }
 
 
+
+
+
+TEST_F(PredictorTest, DisableAllSuggestion) {
+  NullPredictor predictor1(true);
+  NullPredictor predictor2(true);
+  PredictorFactory::SetUserHistoryPredictor(&predictor1);
+  PredictorFactory::SetDictionaryPredictor(&predictor2);
+  Segments segments;
+  {
+    segments.set_request_type(Segments::SUGGESTION);
+    Segment *segment;
+    segment = segments.add_segment();
+    CHECK(segment);
+  }
+  PredictorInterface *predictor = PredictorFactory::GetPredictor();
+
+  config::Config config;
+  config::ConfigHandler::GetDefaultConfig(&config);
+
+  config.set_presentation_mode(true);
+  config::ConfigHandler::SetConfig(config);
+  EXPECT_FALSE(predictor->Predict(&segments));
+  EXPECT_FALSE(predictor1.predict_called());
+  EXPECT_FALSE(predictor2.predict_called());
+
+  config.set_presentation_mode(false);
+  config::ConfigHandler::SetConfig(config);
+  EXPECT_TRUE(predictor->Predict(&segments));
+  EXPECT_TRUE(predictor1.predict_called());
+  EXPECT_TRUE(predictor2.predict_called());
+
+}
 }  // namespace mozc

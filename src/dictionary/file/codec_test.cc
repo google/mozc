@@ -165,12 +165,12 @@ TEST_F(CodecTest, DefaultTest) {
     ofs.open(test_file_.c_str());
     codec->WriteSections(write_sections, &ofs);
   }
+  char buf[1024] = {};  // sections will reference this buffer.
   vector<DictionaryFileSection> sections;
   {
     EXPECT_TRUE(Util::FileExists(test_file_));
     InputFileStream ifs;
     ifs.open(test_file_.c_str());
-    char buf[1024];
     ifs.read(buf, 1024);
     EXPECT_TRUE(codec->ReadSections(buf, 1024, &sections));
   }
@@ -202,12 +202,12 @@ TEST_F(CodecTest, CodecTest) {
     ofs.open(test_file_.c_str());
     codec->WriteSections(write_sections, &ofs);
   }
+  char buf[1024] = {};  // sections will reference this buffer.
   vector<DictionaryFileSection> sections;
   {
     EXPECT_TRUE(Util::FileExists(test_file_));
     InputFileStream ifs;
     ifs.open(test_file_.c_str());
-    char buf[1024];
     ifs.read(buf, 1024);
     EXPECT_TRUE(codec->ReadSections(buf, 1024, &sections));
   }

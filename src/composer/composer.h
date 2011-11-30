@@ -40,6 +40,8 @@
 #include "transliteration/transliteration.h"
 #include "composer/composition_interface.h"
 #include "session/commands.pb.h"
+// for FRIEND_TEST()
+#include "testing/base/public/gunit_prod.h"
 
 namespace mozc {
 namespace commands {
@@ -53,6 +55,11 @@ class Table;
 
 class Composer {
  public:
+  // Pseudo commands in composer.
+  enum InternalCommand {
+    REWIND,
+  };
+
   Composer();
   virtual ~Composer();
 
@@ -60,7 +67,7 @@ class Composer {
   void Reset();
 
   // Reset input mode.  When the current input mode is
-  // HalfAlphanumeric by pressing capital alphabet, this function
+  // HalfAlphanumeric by pressing shifted alphabet, this function
   // revert the input mode from HalfAlphanumeric to the previous input
   // mode.
   void ResetInputMode();
@@ -118,6 +125,8 @@ class Composer {
 
   // Deletes a character at specified position.
   void DeleteAt(size_t pos);
+  // Delete multiple characters beginning at specified position.
+  void DeleteRange(size_t pos, size_t length);
 
   void InsertCharacter(const string &input);
   void InsertCharacterPreedit(const string &input);
@@ -127,6 +136,7 @@ class Composer {
                                       const string &key,
                                       const string &preedit);
   bool InsertCharacterKeyEvent(const commands::KeyEvent &key);
+  void InsertCommandCharacter(const InternalCommand internal_command);
   void Delete();
   void Backspace();
 
@@ -188,7 +198,7 @@ class Composer {
   void CopyFromForConversion(const Composer &src);
 
   bool is_new_input() const;
-  size_t capital_sequence_count() const;
+  size_t shifted_sequence_count() const;
   const string &source_text() const;
   string *mutable_source_text();
   void set_source_text(const string &source_text);
@@ -196,9 +206,18 @@ class Composer {
   void set_max_length(size_t length);
 
  private:
+  FRIEND_TEST(ComposerTest, ApplyTemporaryInputMode);
+
   // Copy composer except for composition_.
   // Arguments are Source composer and query string for composition.
   void CopyFromInternal(const Composer &src, const string &query);
+
+  // Change input mode temporarily accoding to the current context and
+  // the given input character.
+  // This function have a bug when key has characters input with Preedit.
+  // Expected behavior: InsertPreedit("A") + InsertKey("a") -> "Aあ"
+  // Actual behavior:   InsertPreedit("A") + InsertKey("a") -> "Aa"
+  void ApplyTemporaryInputMode(const string &key, bool caps_locked);
 
   size_t position_;
   // Whether the next insertion is the beginning of typing after an
@@ -214,7 +233,7 @@ class Composer {
   // Type of the input field to input texts.
   commands::SessionCommand::InputFieldType input_field_type_;
 
-  size_t capital_sequence_count_;
+  size_t shifted_sequence_count_;
   scoped_ptr<CompositionInterface> composition_;
 
   // The original text for the composition.  The value is usually

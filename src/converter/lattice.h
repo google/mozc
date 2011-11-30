@@ -80,6 +80,26 @@ class Lattice {
   // return true if this instance has a valid lattice.
   bool has_lattice() const;
 
+  // set key with cache information kept
+  void UpdateKey(const string &new_key);
+
+  // add suffix_key to the end of a current key
+  void AddSuffix(const string &suffix_key);
+
+  // erase the suffix of a key so that the length of the key becomes new_len
+  void ShrinkKey(const size_t new_len);
+
+  // getter
+  size_t cache_info(const size_t pos) const;
+
+  // setter
+  void SetCacheInfo(const size_t pos, const size_t len);
+
+  // revert the wcost of nodes if it has ENABLE_CACHE attribute.
+  // This function is needed for wcost may be changed during conversion
+  // process for some heuristic methods.
+  void ResetNodeCost();
+
   // Dump the best path and the path that contains the designated string.
   string DebugString() const;
 
@@ -98,6 +118,11 @@ class Lattice {
   vector<Node *> begin_nodes_;
   vector<Node *> end_nodes_;
   scoped_ptr<NodeAllocator> node_allocator_;
+
+  // cache_info_ holds cache information about lookup.
+  // If cache_info_[pos] equals to len, it means key.substr(pos, k)
+  // (1 <= k <= len) is already looked up.
+  vector<size_t> cache_info_;
 };
 }  // namespace mozc
 

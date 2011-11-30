@@ -110,6 +110,7 @@ CandidateList::CandidateList(const bool rotate)
       focused_(false),
       candidate_pool_(new ObjectPool<Candidate>(kPageSize)),
       candidates_(new vector<Candidate *>),
+      next_available_id_(0),
       added_candidates_(new map<uint64, int>),
       alternative_ids_(new map<int, int>) {
 }
@@ -127,6 +128,7 @@ void CandidateList::Clear() {
   focused_index_ = 0;
   focused_ = false;
   candidates_->clear();
+  next_available_id_ = 0;
   added_candidates_->clear();
   alternative_ids_->clear();
 }
@@ -145,6 +147,12 @@ void CandidateList::AddCandidate(const int id, const string &value) {
 void CandidateList::AddCandidateWithAttributes(const int id,
                                                const string &value,
                                                const Attributes attributes) {
+  if (id >= 0) {
+    DCHECK(id >= next_available_id_);
+    // If id is not for T13N candidate, update |last_added_id_|.
+    next_available_id_ = id + 1;
+  }
+
   // If the value has already been stored in the candidate list, reuse it and
   // update the alternative_ids_.
   const uint64 fp = Util::Fingerprint(value);
@@ -238,6 +246,20 @@ int CandidateList::focused_id() const {
 
 size_t CandidateList::focused_index() const {
   return focused_index_;
+}
+
+int CandidateList::next_available_id() const {
+  int result = next_available_id_;
+  for (size_t i = 0; i < candidates_->size(); ++i) {
+    if (candidate(i).IsSubcandidateList()) {
+      const int sub_available_id =
+          candidate(i).subcandidate_list().next_available_id();
+      if (result < sub_available_id) {
+        result = sub_available_id;
+      }
+    }
+  }
+  return result;
 }
 
 void CandidateList::GetPageRange(const size_t index,

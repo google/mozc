@@ -30,6 +30,7 @@
 #include "prediction/dictionary_predictor.h"
 
 #include <limits.h>   // INT_MAX
+#include <cctype>
 #include <cmath>
 #include <map>
 #include <set>
@@ -51,10 +52,10 @@
 #include "converter/segmenter.h"
 #include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
+#include "dictionary/pos_matcher.h"
 #include "dictionary/suffix_dictionary.h"
 #include "prediction/suggestion_filter.h"
 #include "prediction/predictor_interface.h"
-#include "rewriter/variants_rewriter.h"
 #include "session/commands.pb.h"
 
 
@@ -79,6 +80,7 @@ void UTF8ToUCS4Array(const string &input,
     begin += mblen;
   }
 }
+
 }  // namespace
 
 DictionaryPredictor::DictionaryPredictor()
@@ -103,14 +105,24 @@ bool DictionaryPredictor::Predict(Segments *segments) const {
   scoped_ptr<NodeAllocatorInterface> allocator(new NodeAllocator);
 
   vector<Result> results;
-  AggregateRealtimeConversion(prediction_type, segments,
+  if (segments->request_type() == Segments::PARTIAL_SUGGESTION ||
+      segments->request_type() == Segments::PARTIAL_PREDICTION) {
+      // This request type is used to get conversion before cursor during
+    // composition mode. Thus it should return only the candidates whose key
+    // exactly matches the query.
+    // Therefore, we use only the realtime conversion result.
+    AggregateRealtimeConversion(prediction_type, segments,
+                                allocator.get(), &results);
+  } else {
+    AggregateRealtimeConversion(prediction_type, segments,
+                                allocator.get(), &results);
+    AggregateUnigramPrediction(prediction_type, segments,
+                               allocator.get(), &results);
+    AggregateBigramPrediction(prediction_type, segments,
                               allocator.get(), &results);
-  AggregateUnigramPrediction(prediction_type, segments,
-                             allocator.get(), &results);
-  AggregateBigramPrediction(prediction_type, segments,
-                            allocator.get(), &results);
-  AggregateSuffixPrediction(prediction_type, segments,
-                            allocator.get(), &results);
+    AggregateSuffixPrediction(prediction_type, segments,
+                              allocator.get(), &results);
+  }
 
   if (results.empty()) {
     VLOG(2) << "|result| is empty";
@@ -212,21 +224,14 @@ bool DictionaryPredictor::Predict(Segments *segments) const {
     DCHECK(candidate);
 
     candidate->Init();
-    string rewritten_value;
-    CharacterFormManager::GetCharacterFormManager()->ConvertConversionString(
-        value, &rewritten_value);
-
-    VLOG(2) << "DictionarySuggest: " << node->wcost << " " << rewritten_value;
-
     candidate->content_key = key;
-    candidate->content_value = rewritten_value;
+    candidate->content_value = value;
     candidate->key = key;
-    candidate->value = rewritten_value;
+    candidate->value = value;
     candidate->lid = node->lid;
     candidate->rid = node->rid;
     candidate->wcost = node->wcost;
     candidate->cost = results[i].cost;
-    candidate->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
     if (node->attributes & Node::SPELLING_CORRECTION) {
       candidate->attributes |= Segment::Candidate::SPELLING_CORRECTION;
     }
@@ -241,9 +246,6 @@ bool DictionaryPredictor::Predict(Segments *segments) const {
       candidate->description = kDictionarySuggestDescription;
     }
 #endif
-
-    VariantsRewriter::SetDescriptionForPrediction(candidate);
-
     ++added;
   }
 
@@ -532,6 +534,48 @@ bool DictionaryPredictor::IsAggressiveSuggestion(
   return false;
 }
 
+size_t DictionaryPredictor::GetRealtimeCandidateMaxSize(
+    const Segments &segments, bool mixed_conversion, size_t max_size) const {
+  const Segments::RequestType request_type = segments.request_type();
+  DCHECK(request_type == Segments::PREDICTION ||
+         request_type == Segments::SUGGESTION ||
+         request_type == Segments::PARTIAL_PREDICTION ||
+         request_type == Segments::PARTIAL_SUGGESTION);
+  const int kFewResultThreshold = 8;
+  size_t default_size = 6;
+  if (segments.segments_size() > 0 &&
+      Util::CharsLen(segments.segment(0).key()) >= kFewResultThreshold) {
+    // We don't make so many realtime conversion prediction
+    // even if we have enough margin, as it's expected less useful.
+    max_size = min(max_size, static_cast<size_t>(8));
+    default_size = 3;
+  }
+  size_t size = 0;
+  switch (request_type) {
+    case Segments::PREDICTION:
+      size = mixed_conversion ? max_size - default_size : default_size;
+      break;
+    case Segments::SUGGESTION:
+      // Fewer candidatats are needed basically.
+      // But on mixed_conversion mode we should behave like as conversion mode.
+      size = mixed_conversion ? default_size : 1;
+      break;
+    case Segments::PARTIAL_PREDICTION:
+      // This is kind of prediction so richer result than PARTIAL_SUGGESTION
+      // is needed.
+      size = max_size;
+      break;
+    case Segments::PARTIAL_SUGGESTION:
+      // PARTIAL_SUGGESTION works like as conversion mode so returning
+      // some candidates is needed.
+      size = default_size;
+      break;
+    default:
+      size = 0;  // Never reach here
+  }
+  return min(max_size, size);
+}
+
 void DictionaryPredictor::AggregateRealtimeConversion(
     PredictionType type,
     Segments *segments,
@@ -548,6 +592,7 @@ void DictionaryPredictor::AggregateRealtimeConversion(
 
   Segment *segment = segments->mutable_conversion_segment(0);
   DCHECK(segment);
+  DCHECK(!segment->key().empty());
 
   // preserve the previous max_prediction_candidates_size,
   // and candidates_size.
@@ -557,18 +602,11 @@ void DictionaryPredictor::AggregateRealtimeConversion(
 
   // set how many candidates we want to obtain with
   // immutable converter.
-  size_t realtime_candidates_size = 1;
   bool mixed_conversion = false;
-
-  if (mixed_conversion ||
-      segments->request_type() == Segments::PREDICTION) {
-    // obtain 10 results from realtime conversion when
-    // mixed_conversion or PREDICTION mode.
-    // TODO(taku): want to change the size more adaptivly.
-    // For example, if key_len is long, we don't need to
-    // obtain 10 results.
-    realtime_candidates_size = 10;
-  }
+  const size_t realtime_candidates_size = GetRealtimeCandidateMaxSize(
+      *segments,
+      mixed_conversion,
+      prev_max_prediction_candidates_size - prev_candidates_size);
 
   segments->set_max_prediction_candidates_size(prev_candidates_size +
                                                realtime_candidates_size);
@@ -606,6 +644,21 @@ void DictionaryPredictor::AggregateRealtimeConversion(
   }
 }
 
+size_t DictionaryPredictor::GetUnigramCandidateCutoffThreshold(
+    const Segments &segments,
+    bool mixed_conversion) const {
+  DCHECK(segments.request_type() == Segments::PREDICTION ||
+         segments.request_type() == Segments::SUGGESTION);
+  if (mixed_conversion) {
+    return kSuggestionMaxNodesSize;
+  }
+  if (segments.request_type() == Segments::PREDICTION) {
+    // If PREDICTION, many candidates are needed than SUGGESTION.
+    return kPredictionMaxNodesSize;
+  }
+  return kSuggestionMaxNodesSize;
+}
+
 void DictionaryPredictor::AggregateUnigramPrediction(
     PredictionType type,
     Segments *segments,
@@ -619,13 +672,15 @@ void DictionaryPredictor::AggregateUnigramPrediction(
   DCHECK(results);
   DCHECK(dictionary_);
   DCHECK(allocator);
+  DCHECK(!segments->conversion_segment(0).key().empty());
 
   const string &input_key = segments->conversion_segment(0).key();
 
-  const size_t max_nodes_size =
-      (segments->request_type() == Segments::PREDICTION) ?
-      kPredictionMaxNodesSize : kSuggestionMaxNodesSize;
-  allocator->set_max_nodes_size(max_nodes_size);
+  bool mixed_conversion = false;
+  const size_t cutoff_threshold = GetUnigramCandidateCutoffThreshold(
+      *segments,
+      mixed_conversion);
+  allocator->set_max_nodes_size(cutoff_threshold);
 
   const size_t prev_results_size = results->size();
 
@@ -638,7 +693,7 @@ void DictionaryPredictor::AggregateUnigramPrediction(
     ++unigram_results_size;
   }
 
-  // if size reaches max_nodes_size.
+  // if size reaches max_nodes_size (== cutoff_threshold).
   // we don't show the candidates, since disambiguation from
   // 256 candidates is hard. (It may exceed max_nodes_size, because this is
   // just a limit for each backend, so total number may be larger)
@@ -787,13 +842,13 @@ void DictionaryPredictor::AggregateSuffixPrediction(
 
   DCHECK(allocator);
 
-  const string &input_key = segments->conversion_segment(0).key();
-  Node *node = suffix_dictionary_->LookupPredictive(input_key.data(),
-                                                    input_key.size(),
-                                                    allocator);
-  for (; node != NULL; node = node->bnext) {
-    results->push_back(Result(node, SUFFIX));
-  }
+    const string &input_key = segments->conversion_segment(0).key();
+    Node *node = suffix_dictionary_->LookupPredictive(input_key.data(),
+                                                      input_key.size(),
+                                                      allocator);
+    for (; node != NULL; node = node->bnext) {
+      results->push_back(Result(node, SUFFIX));
+    }
 }
 
 bool DictionaryPredictor::IsZipCodeRequest(const string &key) const {
@@ -840,7 +895,9 @@ DictionaryPredictor::GetPredictionType(const Segments &segments) const {
 
   bool mixed_conversion = false;
 
-  if ((GET_CONFIG(use_realtime_conversion) || mixed_conversion) &&
+  if (segments.request_type() == Segments::PARTIAL_SUGGESTION) {
+    result |= REALTIME;
+  } else if ((GET_CONFIG(use_realtime_conversion) || mixed_conversion) &&
       key.size() > 0 && key.size() < kMaxKeySize) {
     result |= REALTIME;
   }

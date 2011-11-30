@@ -32,7 +32,8 @@
 #include <windows.h>
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
-#include <atlbase.h>
+// Workaround against KB813540
+#include <atlbase_mozc.h>
 #include <atlwin.h>
 #include <atlapp.h>
 #include <atlcrack.h>
@@ -43,8 +44,8 @@
 #include <vector>
 
 #include "base/const.h"
+#include "base/coordinates.h"
 #include "base/util.h"
-#include "renderer/coordinates.h"
 #include "renderer/win32/win32_renderer_util.h"
 #include "session/commands.pb.h"
 

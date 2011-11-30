@@ -880,10 +880,7 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
 }
 
 #pragma mark callbacks
-- (void)candidateClicked:(int)id {
-  SessionCommand command;
-  command.set_type(SessionCommand::SELECT_CANDIDATE);
-  command.set_id(id);
+- (void)sendCommand:(SessionCommand &)command {
   Output output;
   if (!mozcClient_->SendCommand(command, &output)) {
     return;

@@ -410,9 +410,9 @@ bool ConvertToKeyEventMain(const VirtualKey &virtual_key,
   // TODO(yukawa, komatsu): Assign more appropriate key code rather than '?'.
   // TODO(yukawa, komatsu): Considier surrogate pairs.
   if (virtual_key.virtual_key() == VK_PACKET) {
-    const wchar_t character = virtual_key.unicode_char();
+    const char32 character = virtual_key.unicode_char();
     string utf8_characters;
-    Util::UCS2ToUTF8(character, &utf8_characters);
+    Util::UCS4ToUTF8(character, &utf8_characters);
     if (utf8_characters.empty()) {
       return false;
     }
@@ -430,6 +430,9 @@ bool ConvertToKeyEventMain(const VirtualKey &virtual_key,
   }
   if (keyboard_status.IsPressed(VK_MENU)) {
     modifer_keys->insert(KeyEvent::ALT);
+  }
+  if (keyboard_status.IsPressed(VK_CAPITAL)) {
+    modifer_keys->insert(KeyEvent::CAPS);
   }
 
   const KeyEvent::SpecialKey special_key =
@@ -456,6 +459,9 @@ bool ConvertToKeyEventMain(const VirtualKey &virtual_key,
       return true;
     case VK_MENU:
       modifer_keys->insert(KeyEvent::ALT);
+      return true;
+    case VK_CAPITAL:
+      modifer_keys->insert(KeyEvent::CAPS);
       return true;
   }
 
@@ -486,7 +492,7 @@ bool ConvertToKeyEventMain(const VirtualKey &virtual_key,
     const BYTE kKeyToggled = 0x1;
     keyboard_status_w_kana_lock.SetState(VK_KANA, kKeyPressed | kKeyToggled);
 
-    WCHAR kana_codes[16] = {0};
+    WCHAR kana_codes[16] = {};
     const int kana_locked_length = keyboard->ToUnicode(
         virtual_key.virtual_key(), to_unicode_scancode,
         keyboard_status_w_kana_lock.status(), &kana_codes[0],
@@ -523,20 +529,35 @@ bool ConvertToKeyEventMain(const VirtualKey &virtual_key,
   const bool is_vk_alpha =
       ('A' <= virtual_key.virtual_key() && virtual_key.virtual_key() <= 'Z');
   if (is_vk_alpha) {
-    // TODO(yukawa): Emulate Caps-Lock.
     const char keycode = static_cast<char>(virtual_key.virtual_key());
     const size_t index = (keycode - 'A');
+    if (keyboard_status_wo_kana_lock.IsToggled(VK_CAPITAL)) {
+      // CapsLock is enabled.
+      modifer_keys->insert(KeyEvent::CAPS);
+      if (keyboard_status_wo_kana_lock.IsPressed(VK_SHIFT)) {
+        if (!keyboard_status_wo_kana_lock.IsPressed(VK_CONTROL)) {
+          modifer_keys->erase(KeyEvent::SHIFT);
+        }
+        key->set_key_code('a' + index);
+      } else {
+        key->set_key_code('A' + index);
+      }
+      if (keyboard_status_wo_kana_lock.IsPressed(VK_CONTROL)) {
+        modifer_keys->insert(KeyEvent::CTRL);
+        return true;
+      }
+      return true;
+    }
 
+    // CapsLock is not enabled.
+    DCHECK(!keyboard_status_wo_kana_lock.IsPressed(VK_CAPITAL));
     if (keyboard_status_wo_kana_lock.IsPressed(VK_CONTROL)) {
       modifer_keys->insert(KeyEvent::CTRL);
       key->set_key_code('a' + index);
       return true;
     }
-
     if (keyboard_status_wo_kana_lock.IsPressed(VK_SHIFT)) {
       // In this cases, SHIFT modifier should be removed.
-      // TODO(komatsu): Make a document about what kind of algorithm is
-      // expected.
       modifer_keys->erase(KeyEvent::SHIFT);
       key->set_key_code('A' + index);
       return true;
@@ -569,7 +590,7 @@ bool ConvertToKeyEventMain(const VirtualKey &virtual_key,
     keyboard_status_wo_kana_lock.SetState(VK_RCONTROL, 0);
   }
 
-  WCHAR codes[16] = {0};
+  WCHAR codes[16] = {};
   int kana_unlocked_length = keyboard->ToUnicode(
       virtual_key.virtual_key(), to_unicode_scancode,
       keyboard_status_wo_kana_lock.status(), &codes[0],
@@ -599,12 +620,10 @@ bool ConvertToKeyEventMain(const VirtualKey &virtual_key,
     return false;
   }
 
-  // Remove the SHIFT modifier of a printable key.
-  // TODO(yukawa): This implementation just removes the SHIFT modifiers of
-  // printable keys and may cause side-effects when a user presses two or more
-  // modifier keys, e.g. SHIFT+CTRL, SHIFT+KANA, etc.  We need to decide how we
-  // should treat the case.
-  modifer_keys->erase(KeyEvent::SHIFT);
+  // Remove the SHIFT modifier if CapsLock is not locked.
+  if (modifer_keys->find(KeyEvent::CAPS) == modifer_keys->end()) {
+    modifer_keys->erase(KeyEvent::SHIFT);
+  }
 
   key->set_key_code(codes[0]);
 

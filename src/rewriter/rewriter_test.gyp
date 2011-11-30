@@ -34,12 +34,15 @@
   },
   'targets': [
     {
+      # TODO(team): split this test into individual tests.
       'target_name': 'rewriter_test',
       'type': 'executable',
       'sources': [
         'calculator_rewriter_test.cc',
         'collocation_util_test.cc',
         'date_rewriter_test.cc',
+        'dice_rewriter_test.cc',
+        'command_rewriter_test.cc',
         'dictionary_generator_test.cc',
         'emoticon_rewriter_test.cc',
         'english_variants_rewriter_test.cc',
@@ -47,7 +50,8 @@
         'fortune_rewriter_test.cc',
         'merger_rewriter_test.cc',
         'number_rewriter_test.cc',
-        'single_kanji_rewriter_test.cc',
+        'normalization_rewriter_test.cc',
+        'remove_redundant_candidate_rewriter_test.cc',
         'symbol_rewriter_test.cc',
         'transliteration_rewriter_test.cc',
         'unicode_rewriter_test.cc',
@@ -75,6 +79,21 @@
         }],
       ],
     },
+    {
+      'target_name': 'single_kanji_rewriter_test',
+      'type': 'executable',
+      'sources': [
+        'single_kanji_rewriter_test.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        '../testing/testing.gyp:gtest_main',
+        'rewriter.gyp:rewriter',
+      ],
+      'variables': {
+        'test_size': 'small',
+      },
+    },
     # Test cases meta target: this target is referred from gyp/tests.gyp
     {
       'target_name': 'rewriter_all_test',
@@ -82,6 +101,7 @@
       'dependencies': [
         'calculator/calculator.gyp:calculator_all_test',
         'rewriter_test',
+        'single_kanji_rewriter_test',
       ],
     },
   ],

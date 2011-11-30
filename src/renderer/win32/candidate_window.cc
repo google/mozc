@@ -34,8 +34,8 @@
 #include <sstream>
 
 #include "base/util.h"
+#include "base/coordinates.h"
 #include "client/client_interface.h"
-#include "renderer/coordinates.h"
 #include "renderer/renderer_style_handler.h"
 #include "renderer/table_layout.h"
 #include "renderer/win_resource.h"
@@ -57,6 +57,7 @@ using WTL::CRect;
 using WTL::CSize;
 
 namespace {
+
 // 96 DPI is the default DPI in Windows.
 const int kDefaultDPI = 96;
 
@@ -97,11 +98,14 @@ const COLORREF kFooterBottomColor = RGB(0xee, 0xee, 0xee);
 // ------------------------------------------------------------------------
 // Utility functions
 // ------------------------------------------------------------------------
+WTL::CRect ToCRect(const Rect &rect) {
+  return WTL::CRect(rect.Left(), rect.Top(), rect.Right(), rect.Bottom());
+}
 
 // Returns the smallest index of the given candidate list which satisfies
 // candidates.candidate(i) == |candidate_index|.
 // This function returns the size of the given candidate list when there
-// aren't any candidates satifying the above condition.
+// aren't any candidates satisfying the above condition.
 int GetCandidateArrayIndexByCandidateIndex(
     const commands::Candidates &candidates,
     int candidate_index) {
@@ -142,7 +146,7 @@ string GetIndexGuideString(const commands::Candidates &candidates) {
 // Returns the smallest index of the given candidate list which satisfies
 // |candidates.focused_index| == |candidates.candidate(i).index()|.
 // This function returns the size of the given candidate list when there
-// aren't any candidates satifying the above condition.
+// aren't any candidates satisfying the above condition.
 int GetFocusedArrayIndex(const commands::Candidates &candidates) {
   const int kInvalidIndex = candidates.candidate_size();
 
@@ -250,7 +254,7 @@ CandidateWindow::CandidateWindow()
     footer_logo_.GetSize(size);
     size.cx *= scale_factor_x;
     size.cy *= scale_factor_y;
-    footer_logo_display_size_ = Size(size);
+    footer_logo_display_size_ = Size(size.cx, size.cy);
   }
 
   indicator_width_ = kIndicatorWidthInDefaultDPI * scale_factor_x;
@@ -311,7 +315,7 @@ void CandidateWindow::HandleMouseEvent(
     const commands::Candidates::Candidate &candidate
         = candidates_->candidate(i);
 
-    const CRect rect = table_layout_->GetRowRect(i).ToCRect();
+    const CRect rect = ToCRect(table_layout_->GetRowRect(i));
     if (rect.PtInRect(point)) {
       commands::SessionCommand command;
       if (close_candidatewindow) {
@@ -612,9 +616,9 @@ Rect CandidateWindow::GetSelectionRectInScreenCord() const {
     const commands::Candidates::Candidate &candidate =
         candidates_->candidate(focused_array_index);
 
-    CRect rect = table_layout_->GetRowRect(focused_array_index).ToCRect();
+    CRect rect = ToCRect(table_layout_->GetRowRect(focused_array_index));
     ClientToScreen(&rect);
-    return Rect(rect);
+    return Rect(rect.left, rect.top, rect.Width(), rect.Height());
   }
 
   return Rect();
@@ -670,14 +674,14 @@ void CandidateWindow::DrawVScrollBar(CDCHandle dc) {
     const int end_index =
         candidates_->candidate(candidates_in_page - 1).index();
 
-    const CRect background_crect = vscroll_rect.ToCRect();
+    const CRect background_crect = ToCRect(vscroll_rect);
     dc.FillSolidRect(&background_crect, kIndicatorBackgroundColor);
 
-    const mozc::renderer::Rect &indicator_rect =
+    const mozc::Rect &indicator_rect =
         table_layout_->GetVScrollIndicatorRect(
             begin_index, end_index, candidates_total);
 
-    const CRect indicator_crect = indicator_rect.ToCRect();
+    const CRect indicator_crect = ToCRect(indicator_rect);
     dc.FillSolidRect(&indicator_crect, kIndicatorColor);
   }
 }
@@ -695,7 +699,7 @@ void CandidateWindow::DrawShortcutBackground(CDCHandle dc) {
       const int width = shortcut_colmun_rect.Right() - row_rect.Left();
       shortcut_colmun_rect.origin.x = row_rect.Left();
       shortcut_colmun_rect.size.width = width;
-      const CRect shortcut_colmun_crect = shortcut_colmun_rect.ToCRect();
+      const CRect shortcut_colmun_crect = ToCRect(shortcut_colmun_rect);
       dc.FillSolidRect(&shortcut_colmun_crect, kShortcutBackgroundColor);
     }
   }
@@ -828,7 +832,7 @@ void CandidateWindow::DrawSelectedRect(CDCHandle dc) {
         = candidates_->candidate(focused_array_index);
 
     const CRect selected_rect =
-        table_layout_->GetRowRect(focused_array_index).ToCRect();
+        ToCRect(table_layout_->GetRowRect(focused_array_index));
     dc.FillSolidRect(&selected_rect, kSelectedRowBackgroundColor);
 
     dc.SetDCBrushColor(kSelectedRowFrameColor);
@@ -845,7 +849,7 @@ void CandidateWindow::DrawInformationIcon(CDCHandle dc) {
                                             &scale_factor_y);
   for (size_t i = 0; i < candidates_->candidate_size(); ++i) {
     if (candidates_->candidate(i).has_information_id()) {
-      CRect rect = table_layout_->GetRowRect(i).ToCRect();
+      CRect rect = ToCRect(table_layout_->GetRowRect(i));
       rect.left = rect.right - (6.0 * scale_factor_x);
       rect.right = rect.right - (2.0 * scale_factor_x);
       rect.top += (2.0 * scale_factor_y);
@@ -860,13 +864,13 @@ void CandidateWindow::DrawInformationIcon(CDCHandle dc) {
 
 void CandidateWindow::DrawBackground(CDCHandle dc) {
   const Rect client_rect(Point(0, 0), table_layout_->GetTotalSize());
-  const CRect client_crect = client_rect.ToCRect();
+  const CRect client_crect = ToCRect(client_rect);
   dc.FillSolidRect(&client_crect, kDefaultBackgroundColor);
 }
 
 void CandidateWindow::DrawFrame(CDCHandle dc) {
   const Rect client_rect(Point(0, 0), table_layout_->GetTotalSize());
-  const CRect client_crect = client_rect.ToCRect();
+  const CRect client_crect = ToCRect(client_rect);
 
   // DC brush is available in Windows 2000 and later.
   dc.SetDCBrushColor(kFrameColor);

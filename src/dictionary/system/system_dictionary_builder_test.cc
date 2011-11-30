@@ -27,17 +27,18 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// Main purpose of this is to see behaviour of Rx, like speed or memory
-// cosumption. Functionality might be tested by original author.
+// Main purpose of this is to see behaviour of system dictionary builder
+// like speed or memory cosumption.
 
 #include <map>
 
 #include "base/file_stream.h"
 #include "dictionary/dictionary_token.h"
+#include "dictionary/system/system_dictionary_builder.h"
 #include "dictionary/text_dictionary_loader.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-#include "third_party/rx/v1_0rc2/rx.h"
+
 
 DEFINE_string(input,
               "data/dictionary/dictionary00.txt",
@@ -46,7 +47,7 @@ DEFINE_int32(dictionary_test_size, 10000,
              "Dictionary size for this test");
 
 namespace mozc {
-
+namespace dictionary {
 
 class SystemDictionaryBuilderTest : public testing::Test {
  protected:
@@ -55,27 +56,17 @@ class SystemDictionaryBuilderTest : public testing::Test {
 };
 
 TEST_F(SystemDictionaryBuilderTest, test) {
-  TextDictionaryLoader td;
+  // This test is only testing that system dicionary does not make any errors.
+  // Dictionary itself will be tested at sytem_dicitonary_test.
+  TextDictionaryLoader loader;
   const string dic_path = Util::JoinPath(FLAGS_test_srcdir, FLAGS_input);
   LOG(INFO) << "Reading " << dic_path;
-  td.OpenWithLineLimit(dic_path.c_str(), FLAGS_dictionary_test_size);
+  loader.OpenWithLineLimit(dic_path.c_str(), FLAGS_dictionary_test_size);
   vector<Token *> tokens;
-  td.CollectTokens(&tokens);
+  loader.CollectTokens(&tokens);
   LOG(INFO) << "Read " << tokens.size() << "tokens";
-  rx_builder *builder = rx_builder_create();
-  for (int i = 0; i < tokens.size(); ++i) {
-    rx_builder_add(builder, tokens[i]->key.c_str());
-  }
-  LOG(INFO) << "Added";
-  rx_builder_build(builder);
-  LOG(INFO) << "Built";
-  map<int, int> idx_map;
-  for (int i = 0; i < tokens.size(); ++i) {
-    int idx = rx_builder_get_key_index(builder, tokens[i]->key.c_str());
-    idx_map[i] = idx;
-  }
-  rx *r = rx_open(rx_builder_get_image(builder));
-  rx_close(r);
-  rx_builder_release(builder);
+  SystemDictionaryBuilder builder;
+  builder.BuildFromTokens(tokens);
 }
+}  // namespace dictionary
 }  // namespace mozc

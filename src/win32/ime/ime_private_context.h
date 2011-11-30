@@ -48,6 +48,7 @@ class Output;
 namespace win32 {
 struct ImeState;
 struct ImeBehavior;
+class SurrogatePairObserver;
 class UIVisibilityTracker;
 class VKBackBasedDeleter;
 
@@ -64,6 +65,7 @@ struct PrivateContext {
   UIVisibilityTracker *ui_visibility_tracker;
   mozc::commands::Output *last_output;
   VKBackBasedDeleter *deleter;
+  SurrogatePairObserver *surrogate_pair_observer;
 };
 
 // This class is a temporal solution of b/3021166
@@ -76,7 +78,7 @@ class PrivateContextUtil {
 
   // Returns true if given private data handle is consistent state.  If the
   // pointed data is not a Mozc's PrivateContext, this method initializes it.
-  static bool EmsurePrivateContextIsInitialized(
+  static bool EnsurePrivateContextIsInitialized(
       HIMCC *private_data_handle_pointer);
 
  private:

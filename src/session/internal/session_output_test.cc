@@ -200,7 +200,7 @@ TEST(SessionOutputTest, FillCandidates) {
 
 TEST(SessionOutputTest, FillAllCandidateWords) {
   // IDs are ordered by BFS.
-  // 
+  //
   //  ID|Idx| Candidate list tree
   //   1| 0 | [1:[sub1_1,
   //   5| 1 |    sub1_2:[subsub1_1,
@@ -219,6 +219,7 @@ TEST(SessionOutputTest, FillAllCandidateWords) {
   Segment segment;
   const char* kNormalKey = "key";
   segment.set_key(kNormalKey);
+  const char* kDescription = "desc";
 
   const char* kValues[7] =
     {"2", "sub1_1", "sub1_3", "sub2_1", "sub2_2", "subsub1_1", "subsub1_2"};
@@ -227,6 +228,7 @@ TEST(SessionOutputTest, FillAllCandidateWords) {
     Segment::Candidate *candidate = segment.push_back_candidate();
     candidate->content_key = kNormalKey;
     candidate->value = kValues[i];
+    candidate->description = kDescription;
   }
   // Set special key to ID:4 / Index:6
   const char* kSpecialKey = "Special Key";
@@ -305,13 +307,13 @@ TEST(SessionOutputTest, FillAllCandidateWords) {
   EXPECT_EQ(kValues[3], candidates_proto.candidates(5).value());
   EXPECT_EQ(kValues[4], candidates_proto.candidates(6).value());
 
-  EXPECT_FALSE(candidates_proto.candidates(0).has_annotation());
-  EXPECT_FALSE(candidates_proto.candidates(1).has_annotation());
-  EXPECT_FALSE(candidates_proto.candidates(2).has_annotation());
-  EXPECT_FALSE(candidates_proto.candidates(3).has_annotation());
-  EXPECT_FALSE(candidates_proto.candidates(4).has_annotation());
-  EXPECT_FALSE(candidates_proto.candidates(5).has_annotation());
-  EXPECT_FALSE(candidates_proto.candidates(6).has_annotation());
+  EXPECT_TRUE(candidates_proto.candidates(0).has_annotation());
+  EXPECT_TRUE(candidates_proto.candidates(1).has_annotation());
+  EXPECT_TRUE(candidates_proto.candidates(2).has_annotation());
+  EXPECT_TRUE(candidates_proto.candidates(3).has_annotation());
+  EXPECT_TRUE(candidates_proto.candidates(4).has_annotation());
+  EXPECT_TRUE(candidates_proto.candidates(5).has_annotation());
+  EXPECT_TRUE(candidates_proto.candidates(6).has_annotation());
 }
 
 TEST(SessionOutputTest, ShouldShowUsages) {
@@ -435,7 +437,7 @@ TEST(SessionOutputTest, FillUsages) {
     { "val19", 100, "title100", "desc100" },
     { "val20", 110, "title110", "desc110" },
     { "val21", 100, "title100", "desc100" },
-    { "val22", 0, "", "" },
+    { "val22", 110, "title110", "desc110" },
     { "val23", 0, "", "" },
     { "val24", 0, "", "" },
     { "val25", 0, "", "" },
@@ -477,7 +479,6 @@ TEST(SessionOutputTest, FillUsages) {
   // Focused usage index is 20
   EXPECT_TRUE(candidates_proto.usages().has_focused_index());
   EXPECT_EQ(2, candidates_proto.usages().focused_index());
-
   EXPECT_EQ(4, candidates_proto.usages().information_size());
   EXPECT_EQ(30, candidates_proto.usages().information(0).id());
   EXPECT_EQ(dummy_segments[10].usage_title,
@@ -508,7 +509,6 @@ TEST(SessionOutputTest, FillUsages) {
   EXPECT_EQ(0, candidates_proto.usages().focused_index());
   // usages(id:100) of "val19" and "val21" are merged
   EXPECT_EQ(2, candidates_proto.usages().information_size());
-
   EXPECT_EQ(100, candidates_proto.usages().information(0).id());
   EXPECT_EQ(dummy_segments[19].usage_title,
             candidates_proto.usages().information(0).title());
@@ -519,6 +519,29 @@ TEST(SessionOutputTest, FillUsages) {
             candidates_proto.usages().information(1).title());
   EXPECT_EQ(dummy_segments[20].usage_description,
             candidates_proto.usages().information(1).description());
+
+  candidate_list.MoveToId(20);
+  candidates_proto.Clear();
+  SessionOutput::FillUsages(segment, candidate_list, &candidates_proto);
+  ASSERT_TRUE(candidates_proto.has_usages());
+  EXPECT_TRUE(candidates_proto.usages().has_focused_index());
+  EXPECT_EQ(1, candidates_proto.usages().focused_index());
+
+  // usages(id:100) of "val19" and "val21" are merged
+  candidate_list.MoveToId(21);
+  candidates_proto.Clear();
+  SessionOutput::FillUsages(segment, candidate_list, &candidates_proto);
+  ASSERT_TRUE(candidates_proto.has_usages());
+  EXPECT_TRUE(candidates_proto.usages().has_focused_index());
+  EXPECT_EQ(0, candidates_proto.usages().focused_index());
+
+  // usages(id:110) of "val20" and "val22" are merged
+  candidate_list.MoveToId(22);
+  candidates_proto.Clear();
+  SessionOutput::FillUsages(segment, candidate_list, &candidates_proto);
+  ASSERT_TRUE(candidates_proto.has_usages());
+  EXPECT_TRUE(candidates_proto.usages().has_focused_index());
+  EXPECT_EQ(1, candidates_proto.usages().focused_index());
 
   candidate_list.MoveToId(28);
   candidates_proto.Clear();
@@ -667,8 +690,8 @@ TEST(SessionOutputTest, AddSegment) {
     string normalized_key;
     TextNormalizer::NormalizePreeditText(kKey, &normalized_key);
     EXPECT_EQ(normalized_key, segment.key());
-    string normalized_value;
-    TextNormalizer::NormalizeCandidateText(kValue, &normalized_value);
+    // Normalization is performed in Rewriter.     
+    string normalized_value = kValue;
     EXPECT_EQ(normalized_value, segment.value());
     EXPECT_EQ(Util::CharsLen(normalized_value), segment.value_length());
     EXPECT_EQ(commands::Preedit::Segment::HIGHLIGHT, segment.annotation());
@@ -686,8 +709,8 @@ TEST(SessionOutputTest, AddSegment) {
     string normalized_key;
     TextNormalizer::NormalizePreeditText(kKey, &normalized_key);
     EXPECT_EQ(normalized_key, segment.key());
-    string normalized_value;
-    TextNormalizer::NormalizeCandidateText(kValue, &normalized_value);
+    // Normalization is performed in Rewriter.
+    string normalized_value = kValue;
     EXPECT_EQ(normalized_value, segment.value());
     EXPECT_EQ(Util::CharsLen(normalized_value), segment.value_length());
     EXPECT_EQ(commands::Preedit::Segment::UNDERLINE, segment.annotation());

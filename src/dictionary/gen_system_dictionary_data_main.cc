@@ -33,10 +33,6 @@
 //  --input="dictionary0.txt dictionary1.txt"
 //  --output="output.h"
 //  --make_header
-//
-// Special input files are distinguished by prefixes of filenames
-//   zip_code*            : zip code seed dictionary
-//   spelling_correction* : spelling correction dictionary
 
 #include <string>
 #include <vector>
@@ -71,8 +67,9 @@ int main(int argc, char **argv) {
   }
 
   const string input = mozc::GetInputFileName(input_files);
-  mozc::SystemDictionaryBuilder::Compile(input.c_str(),
-                                         output.c_str());
+  mozc::dictionary::SystemDictionaryBuilder builder;
+  builder.BuildFromFile(input);
+  builder.WriteToFile(output);
 
   if (FLAGS_make_header) {
     const char kName[] = "DictionaryData";

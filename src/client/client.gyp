@@ -44,6 +44,7 @@
         '../base/base.gyp:base',
         '../config/config.gyp:genproto_config',
         '../ipc/ipc.gyp:ipc',
+        '../languages/languages.gyp:global_language_spec',
         '../session/session_base.gyp:genproto_session',
         '../session/session_base.gyp:session_protocol',
       ],

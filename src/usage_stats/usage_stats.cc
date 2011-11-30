@@ -127,6 +127,7 @@ ClientIdInterface &GetClientIdHandler() {
     return *g_client_id_handler;
   }
 }
+
 }  // namespace
 
 const uint32 UsageStats::kDefaultSchedulerDelay = 60*1000;  // 1 min
@@ -453,6 +454,7 @@ void UsageStats::SetBoolean(const string &name, bool val) {
     LOG(ERROR) << "cannot save " << name << " to registry";
   }
 }
+
 
 void UsageStats::Sync() {
   if (!storage::Registry::Sync()) {

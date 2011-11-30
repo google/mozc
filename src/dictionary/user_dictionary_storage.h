@@ -148,9 +148,15 @@ class UserDictionaryStorage : public user_dictionary::UserDictionaryStorage {
   // return mutable UserDictionary corresponding to dic_id
   UserDictionary *GetUserDictionary(uint64 dic_id);
 
+  // Searches a dictionary from a dictioanry name, and the dictionary id is
+  // stored in "dic_id".
+  // Returns false if the name is not found.
+  bool GetUserDictionaryId(const string &dic_name, uint64 *dic_id);
+
   // return last error type.
   // You can obtain the reason of the error of dictionary operation.
   UserDictionaryStorageErrorType GetLastError() const;
+
 
   // maxium number of dictionaries this storage can hold
   static size_t max_dictionary_size();
@@ -158,10 +164,14 @@ class UserDictionaryStorage : public user_dictionary::UserDictionaryStorage {
   // maximum number of entries one dictionary can hold
   static size_t max_entry_size();
 
+
  private:
   // Return true if this object can accept the given dictionary name.
   // This changes the internal state.
   bool IsValidDictionaryName(const string &name);
+
+  // Load the data from file_name actually.
+  bool LoadInternal();
 
   string file_name_;
   bool locked_;

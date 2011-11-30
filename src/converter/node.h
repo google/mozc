@@ -55,6 +55,7 @@ struct Node {
     WEAK_CONNECTED        = 8,   // internally used in the converter
     STARTS_WITH_PARTICLE  = 16,  // user input starts with particle
     SPELLING_CORRECTION   = 32,  // "did you mean"
+    ENABLE_CACHE          = 64,  // cache the node in lattice
   };
 
   Node     *prev;
@@ -70,8 +71,15 @@ struct Node {
   uint16    lid;
   uint16    begin_pos;
   uint16    end_pos;
+
+  // wcost: word cost for the node; it may be changed after lookup
+  // cost: the total cost between BOS and the node
+  // raw_wcost: raw word cost for the node; it is not changed after lookup.
+  //            It is used for the cache of lattice.
   int32     wcost;
   int32     cost;
+  int32     raw_wcost;
+
   NodeType  node_type;
   uint32    attributes;
   string    key;
@@ -94,6 +102,7 @@ struct Node {
     node_type = NOR_NODE;
     wcost = 0;
     cost = 0;
+    raw_wcost = 0;
     attributes = 0;
     key.clear();
     value.clear();

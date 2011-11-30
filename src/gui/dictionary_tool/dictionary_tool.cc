@@ -292,7 +292,8 @@ DictionaryTool::DictionaryTool(QWidget *parent)
       import_create_action_(NULL), import_append_action_(NULL),
       export_action_(NULL), import_default_ime_action_(NULL),
       client_(client::ClientFactory::NewClient()),
-      is_available_(true) {
+      is_available_(true),
+      max_entry_size_(UserDictionaryStorage::max_entry_size()) {
   setupUi(this);
 
   // Create and set up ImportDialog object.
@@ -586,6 +587,8 @@ void DictionaryTool::OnDictionarySelectionChanged() {
   } else {
     current_dic_id_ = dic_info.id;
     SetupDicContentEditor(dic_info);
+      max_entry_size_ = UserDictionaryStorage::max_entry_size();
+    LOG(INFO) << "Mac entry size: " << max_entry_size_;
   }
 }
 
@@ -640,8 +643,7 @@ void DictionaryTool::SetupDicContentEditor(
   // Update state of other GUI components.
   UpdateUIStatus();
 
-  const bool dictionary_is_full =
-      dic_content_->rowCount() >= UserDictionaryStorage::max_entry_size();
+  const bool dictionary_is_full = dic_content_->rowCount() >= max_entry_size_;
   new_word_button_->setEnabled(!dictionary_is_full);
 
   modified_ = false;
@@ -755,11 +757,10 @@ void DictionaryTool::ImportAndAppendDictionary() {
     return;
   }
 
-  const int max_size = UserDictionaryStorage::max_entry_size();
-  if (dic_content_->rowCount() >= max_size) {
+  if (dic_content_->rowCount() >= max_entry_size_) {
     QMessageBox::critical(this, window_title_,
                           tr("You can't have more than %1 "
-                             "words in one dictionary.").arg(max_size));
+                             "words in one dictionary.").arg(max_entry_size_));
     return;
   }
 
@@ -975,13 +976,11 @@ void DictionaryTool::ExportDictionary() {
 
 void DictionaryTool::AddWord() {
   const int row = dic_content_->rowCount();
-  const int max_size =
-      static_cast<int>(UserDictionaryStorage::max_entry_size());
-  if (row >= max_size) {
+  if (row >= max_entry_size_) {
     QMessageBox::information(
         this, window_title_,
         tr("You can't have more than %1 words in one dictionary.").arg(
-            max_size));
+            max_entry_size_));
     return;
   }
 
@@ -991,7 +990,7 @@ void DictionaryTool::AddWord() {
   dic_content_->setItem(row, 2, new QTableWidgetItem(default_pos_));
   dic_content_->setItem(row, 3, new QTableWidgetItem(""));
 
-  if (row + 1 >= max_size) {
+  if (row + 1 >= max_entry_size_) {
     new_word_button_->setEnabled(false);
   }
 
@@ -1047,7 +1046,7 @@ void DictionaryTool::DeleteWord() {
   setUpdatesEnabled(true);
   dic_content_->setEnabled(true);
 
-  if (dic_content_->rowCount() < UserDictionaryStorage::max_entry_size()) {
+  if (dic_content_->rowCount() < max_entry_size_) {
     new_word_button_->setEnabled(true);
   }
 
@@ -1449,8 +1448,7 @@ void DictionaryTool::UpdateUIStatus() {
 
   const bool is_enable_new_word =
       dic_list_->count() > 0 &&
-      dic_content_->rowCount() <
-      static_cast<int>(UserDictionaryStorage::max_entry_size());
+      dic_content_->rowCount() < max_entry_size_;
 
   new_word_button_->setEnabled(is_enable_new_word);
   delete_word_button_->setEnabled(dic_content_->rowCount() > 0);

@@ -62,6 +62,7 @@ const size_t kDefaultTotalBytesLimit = 512 << 20;
 // saved correctly. Please make the dictionary size smaller"
 const size_t kDefaultWarningTotalBytesLimit = 256 << 20;
 
+
 // Create Random ID for dictionary
 uint64 CreateID() {
   uint64 id = 0;
@@ -96,9 +97,7 @@ bool UserDictionaryStorage::Exists() const {
   return Util::FileExists(file_name_);
 }
 
-bool UserDictionaryStorage::Load() {
-  last_error_type_ = USER_DICTIONARY_STORAGE_NO_ERROR;
-
+bool UserDictionaryStorage::LoadInternal() {
   InputFileStream ifs(file_name_.c_str(), ios::binary);
   if (!ifs) {
     LOG(ERROR) << "cannot open file: " << file_name_;
@@ -123,14 +122,23 @@ bool UserDictionaryStorage::Load() {
     return false;
   }
 
+  return true;
+}
+
+bool UserDictionaryStorage::Load() {
+  last_error_type_ = USER_DICTIONARY_STORAGE_NO_ERROR;
+
+  bool result = LoadInternal();
+
   // Check dictionary id here. if id is 0, assign random ID.
   for (int i = 0; i < dictionaries_size(); ++i) {
-    if (dictionaries(i).id() == 0) {
+    const UserDictionary &dict = dictionaries(i);
+    if (dict.id() == 0) {
       mutable_dictionaries(i)->set_id(CreateID());
     }
   }
 
-  return true;
+  return result;
 }
 
 bool UserDictionaryStorage::Save() {
@@ -142,6 +150,7 @@ bool UserDictionaryStorage::Save() {
     last_error_type_ = SYNC_FAILURE;
     return false;
   }
+
 
   const string tmp_file_name = file_name_ + ".tmp";
   {
@@ -313,6 +322,7 @@ bool UserDictionaryStorage::DeleteDictionary(uint64 dic_id) {
     return false;
   }
 
+
   google::protobuf::RepeatedPtrField<UserDictionary> *dics =
       mutable_dictionaries();
 
@@ -347,6 +357,7 @@ bool UserDictionaryStorage::RenameDictionary(uint64 dic_id,
     return true;
   }
 
+
   for (int i = 0; i < dictionaries_size(); ++i) {
     if (dic_name == dictionaries(i).name()) {
       last_error_type_ = DUPLICATED_DICTIONARY_NAME;
@@ -371,6 +382,18 @@ int UserDictionaryStorage::GetUserDictionaryIndex(uint64 dic_id) const {
   return -1;
 }
 
+bool UserDictionaryStorage::GetUserDictionaryId(const string &dic_name,
+                                                uint64 *dic_id) {
+  for (size_t i = 0; i < dictionaries_size(); ++i) {
+    if (dic_name == dictionaries(i).name()) {
+      *dic_id = dictionaries(i).id();
+      return true;
+    }
+  }
+
+  return false;
+}
+
 UserDictionaryStorage::UserDictionary *
 UserDictionaryStorage::GetUserDictionary(uint64 dic_id) {
   const int index = GetUserDictionaryIndex(dic_id);
@@ -386,6 +409,7 @@ UserDictionaryStorage::UserDictionaryStorageErrorType
 UserDictionaryStorage::GetLastError() const {
   return last_error_type_;
 }
+
 
 // static
 size_t UserDictionaryStorage::max_entry_size() {
@@ -413,4 +437,5 @@ bool UserDictionaryStorage::IsValidDictionaryName(const string &name) {
   }
   return true;
 }
+
 }  // namespace mozc

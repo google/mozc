@@ -34,13 +34,27 @@
   },
   'targets': [
     {
+      'target_name': 'session_test_util',
+      'type' : 'static_library',
+      'sources': [
+        'session_test_util.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        '../composer/composer.gyp:composer',
+        'session_base.gyp:genproto_session',
+      ],
+    },
+    {
       'target_name': 'session_server_test',
       'type': 'executable',
       'sources': [
         'session_server_test.cc',
       ],
       'dependencies': [
+        '../languages/japanese/japanese.gyp:language_dependent_spec_japanese',
         '../testing/testing.gyp:gtest_main',
+        'session.gyp:session',
         'session.gyp:session_server',
       ],
       'variables': {
@@ -56,6 +70,7 @@
       'dependencies': [
         '../rewriter/rewriter.gyp:rewriter',
         '../testing/testing.gyp:gtest_main',
+        'session.gyp:session',
         'session.gyp:session_server',
       ],
       'variables': {
@@ -70,6 +85,7 @@
       ],
       'dependencies': [
         '../testing/testing.gyp:gtest_main',
+        'session.gyp:session',
         'session.gyp:session_server',
       ],
       'variables': {
@@ -84,6 +100,7 @@
       ],
       'dependencies': [
         '../testing/testing.gyp:gtest_main',
+        'session.gyp:session',
         'session.gyp:session_server',
       ],
       'variables': {
@@ -113,6 +130,7 @@
       'dependencies': [
         '../client/client.gyp:client_mock',
         '../testing/testing.gyp:gtest_main',
+        'session.gyp:session',
         'session.gyp:session_server',
         'session_base.gyp:ime_switch_util',
       ],
@@ -168,6 +186,7 @@
       'dependencies': [
         '../testing/testing.gyp:gtest_main',
         'session.gyp:random_keyevents_generator',
+        'session.gyp:session',
         'session.gyp:session_server',
       ],
       'variables': {

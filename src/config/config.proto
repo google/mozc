@@ -88,6 +88,10 @@ message Config {
   // whether to show the set default dialog on startup
   optional bool check_default = 22 [ default = true ];
 
+  // Presentation mode:
+  // disable all suggestion temporally.
+  optional bool presentation_mode = 23 [ default = false ];
+
   //////////////////////////////////////////////////////////////
   //
   // Basic features (40-79)
@@ -259,6 +263,26 @@ message Config {
   optional bool use_zip_code_conversion = 87  [ default = true ];
   optional bool use_spelling_correction = 88  [ default = true ];
 
+  message InformationListConfig {
+    optional bool use_local_usage_dictionary = 1 [ default = true ];
+    optional bool use_web_usage_dictionary = 2 [ default = false ];
+    message WebServiceEntry {
+      enum FormatType {
+        UNKNOWN_FORMAT = 0;   // Default value, Do nothing.
+        GENERIC_XML = 1;      // XML/XHTML
+        GENERIC_JSON = 2;     // JSON
+        PREDEFINED_XML = 3;   // not supported for now.
+        PREDEFINED_JSON = 4;  // not supported for now.
+      };
+      optional string name = 1 [ default = "" ];
+      optional FormatType type = 2 [ default = UNKNOWN_FORMAT ];
+      optional string url = 3 [ default = "" ];
+      optional string xpath = 4 [ default = "" ];  // Xpath or JsonPath
+    };
+    repeated WebServiceEntry web_service_entries = 10;
+  };
+  optional InformationListConfig information_list_config = 90;
+
   //////////////////////////////////////////////////////////////
   //
   // Suggest (100-119)
@@ -275,7 +299,6 @@ message Config {
 
   // size of suggestions
   optional uint32 suggestions_size = 110 [ default = 3 ];
-
 
 
   // Config for chewing.  It resides here for historical reason.

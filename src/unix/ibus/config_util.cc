@@ -171,6 +171,8 @@ void ConfigUtil::InitConfig(IBusConfig* config,
                             const char *section_name,
                             const map<string, const char*> &name_to_field) {
 #if IBUS_CHECK_VERSION(1, 3, 99)
+  // Following configuration codes are only for ChromeOS and IBus >= 1.3.99.
+  // On Linux, we can use GUI configuration tools.
   for (map<string, const char*>::const_iterator i = name_to_field.begin();
        i != name_to_field.end(); ++i) {
     const gchar *name = i->first.c_str();
@@ -184,8 +186,6 @@ void ConfigUtil::InitConfig(IBusConfig* config,
                           value);
     g_variant_unref(value);
   }
-#else
-#error ibus version 1.3.99 or higher required
 #endif
 }
 

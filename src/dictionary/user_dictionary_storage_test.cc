@@ -90,6 +90,7 @@ TEST(UserDictionaryStorage, LockTest) {
   EXPECT_TRUE(storage2.Save());
 }
 
+
 TEST(UserDictionaryStorage, BasicOperationsTest) {
   Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
   Util::Unlink(GetUserDictionaryFile());
@@ -100,18 +101,20 @@ TEST(UserDictionaryStorage, BasicOperationsTest) {
   const size_t kDictionariesSize = 3;
   uint64 id[kDictionariesSize];
 
+  const size_t dict_size = storage.dictionaries_size();
+
   for (size_t i = 0; i < kDictionariesSize; ++i) {
     EXPECT_TRUE(storage.CreateDictionary("test" + Util::SimpleItoa(i), &id[i]));
-    EXPECT_EQ(i + 1, storage.dictionaries_size());
+    EXPECT_EQ(i + 1 + dict_size, storage.dictionaries_size());
   }
 
   for (size_t i = 0; i < kDictionariesSize; ++i) {
-    EXPECT_EQ(i, storage.GetUserDictionaryIndex(id[i]));
+    EXPECT_EQ(i + dict_size, storage.GetUserDictionaryIndex(id[i]));
     EXPECT_EQ(-1, storage.GetUserDictionaryIndex(id[i] + 1));
   }
 
   for (size_t i = 0; i < kDictionariesSize; ++i) {
-    EXPECT_EQ(storage.mutable_dictionaries(i),
+    EXPECT_EQ(storage.mutable_dictionaries(i + dict_size),
               storage.GetUserDictionary(id[i]));
     EXPECT_EQ(NULL, storage.GetUserDictionary(id[i] + 1));
   }
@@ -137,13 +140,13 @@ TEST(UserDictionaryStorage, BasicOperationsTest) {
   EXPECT_TRUE(storage.RenameDictionary(id[0], "test0"));
 
   EXPECT_TRUE(storage.RenameDictionary(id[0], "renamed0"));
-  EXPECT_EQ("renamed0", storage.dictionaries(0).name());
+  EXPECT_EQ("renamed0", storage.GetUserDictionary(id[0])->name());
 
   // invalid id
   EXPECT_FALSE(storage.DeleteDictionary(0));
 
   EXPECT_TRUE(storage.DeleteDictionary(id[1]));
-  EXPECT_EQ(2, storage.dictionaries_size());
+  EXPECT_EQ(kDictionariesSize + dict_size - 1, storage.dictionaries_size());
 }
 
 TEST(UserDictionaryStorage, DeleteTest) {
@@ -264,4 +267,26 @@ TEST(UserDictionaryStorage, SerializeTest) {
     EXPECT_EQ(storage1.DebugString(), storage2.DebugString());
   }
 }
+
+TEST(UserDictionaryStorage, GetUserDictionaryIdTest) {
+  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+  Util::Unlink(GetUserDictionaryFile());
+
+  UserDictionaryStorage storage(GetUserDictionaryFile());
+  EXPECT_FALSE(storage.Load());
+
+  const size_t kDictionariesSize = 3;
+  uint64 id[kDictionariesSize];
+  EXPECT_TRUE(storage.CreateDictionary("testA", &id[0]));
+  EXPECT_TRUE(storage.CreateDictionary("testB", &id[1]));
+
+  uint64 ret_id[kDictionariesSize];
+  EXPECT_TRUE(storage.GetUserDictionaryId("testA", &ret_id[0]));
+  EXPECT_TRUE(storage.GetUserDictionaryId("testB", &ret_id[1]));
+  EXPECT_FALSE(storage.GetUserDictionaryId("testC", &ret_id[2]));
+
+  EXPECT_EQ(ret_id[0], id[0]);
+  EXPECT_EQ(ret_id[1], id[1]);
+}
+
 }  // namespace mozc

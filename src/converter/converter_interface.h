@@ -60,9 +60,33 @@ class ConverterInterface {
   virtual bool StartPrediction(Segments *segments,
                                const string &key) const = 0;
 
+  // Start prediction with composer.
+  virtual bool StartPredictionWithComposer(
+      Segments *segments, const composer::Composer *composer) const = 0;
+
   // Start suggestion with key (request_type = SUGGESTION)
   virtual bool StartSuggestion(Segments *segments,
                                const string &key) const = 0;
+
+  // Start suggestion with composer.
+  virtual bool StartSuggestionWithComposer(
+      Segments *segments, const composer::Composer *composer) const = 0;
+
+  // Start prediction with key (request_type = PARTIAL_PREDICTION)
+  virtual bool StartPartialPrediction(Segments *segments,
+                                      const string &key) const = 0;
+
+  // Start prediction with composer (request_type = PARTIAL_PREDICTION)
+  virtual bool StartPartialPredictionWithComposer(
+      Segments *segments, const composer::Composer *composer) const = 0;
+
+  // Start suggestion with key (request_type = PARTIAL_SUGGESTION)
+  virtual bool StartPartialSuggestion(Segments *segments,
+                                      const string &key) const = 0;
+
+  // Start suggestion with composer (request_type = PARTIAL_SUGGESTION)
+  virtual bool StartPartialSuggestionWithComposer(
+      Segments *segments, const composer::Composer *composer) const = 0;
 
   // Finish conversion.
   // Segments are cleared. Context is not clreared
@@ -89,8 +113,23 @@ class ConverterInterface {
   // Commit candidate
   virtual bool CommitSegmentValue(Segments *segments,
                                   size_t segment_index,
-                                  int    candidate_index) const = 0;
-
+                                  int candidate_index) const = 0;
+  // Commit candidate for partial suggestion.
+  // current_segment_key : key for submitted segment.
+  // new_segment_key : key for newly inserted segment.
+  // Example:
+  //   If the preedit is "いれた|てのおちゃ",
+  //   |current_segment_key| is "いれた" and
+  //   |new_segment_key| is "てのおちゃ".
+  //   After calling this method, the segments will contain following segments.
+  //   - {key_ : "いれた",  segment_type_ : SUBMITTED}
+  //   - {key_ : "てのおちゃ", segment_type_ : FREE}
+  virtual bool CommitPartialSuggestionSegmentValue(
+      Segments *segments,
+      size_t segment_index,
+      int candidate_index,
+      const string &current_segment_key,
+      const string &new_segment_key) const = 0;
   // Focus the candidate.
   // This method is mainly called when user puts SPACE key
   // and changes the focused candidate.

@@ -232,6 +232,9 @@ class DictionaryTool : public QMainWindow,
   scoped_ptr<client::ClientInterface> client_;
 
   bool is_available_;
+
+  // The maximum number of entries for a dictionary currently selected.
+  int max_entry_size_;
 };
 }  // namespace gui
 }  // namespace mozc

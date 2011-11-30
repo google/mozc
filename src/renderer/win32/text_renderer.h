@@ -33,7 +33,8 @@
 #include <windows.h>
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
-#include <atlbase.h>
+// Workaround against KB813540
+#include <atlbase_mozc.h>
 #include <atlapp.h>
 #include <atlmisc.h>
 
@@ -41,8 +42,8 @@
 #include <vector>
 
 #include "base/base.h"
+#include "base/coordinates.h"
 #include "base/scoped_ptr.h"
-#include "renderer/coordinates.h"
 
 namespace mozc {
 namespace renderer {

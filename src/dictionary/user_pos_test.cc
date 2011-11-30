@@ -80,5 +80,50 @@ TEST(UserPOSTest, UserPOSGetTokensTest) {
                                    &tokens));
   }
 }
+
+TEST(UserPOSTest, ConjugationTest) {
+  vector<UserPOS::Token> tokens1, tokens2;
+  // EXPECT_TRUE(UserPOS::GetTokens("わら", "嗤",
+  // "動詞ワ行五段", &tokens1));
+  // EXPECT_TRUE(UserPOS::GetTokens("わらう", "嗤う",
+  // "動詞ワ行五段", &tokens2));
+  EXPECT_TRUE(UserPOS::GetTokens("\xE3\x82\x8F\xE3\x82\x89", "\xE5\x97\xA4",
+                                 "\xE5\x8B\x95\xE8\xA9\x9E\xE3\x83\xAF"
+                                 "\xE8\xA1\x8C\xE4\xBA\x94\xE6\xAE\xB5",
+                                 &tokens1));
+  EXPECT_TRUE(UserPOS::GetTokens("\xE3\x82\x8F\xE3\x82\x89\xE3\x81\x86",
+                                 "\xE5\x97\xA4\xE3\x81\x86",
+                                 "\xE5\x8B\x95\xE8\xA9\x9E\xE3\x83\xAF"
+                                 "\xE8\xA1\x8C\xE4\xBA\x94\xE6\xAE\xB5",
+                                 &tokens2));
+  EXPECT_EQ(tokens1.size(), tokens2.size());
+  for (size_t i = 0; i < tokens1.size(); ++i) {
+    EXPECT_EQ(tokens1[i].key, tokens2[i].key);
+    EXPECT_EQ(tokens1[i].value, tokens2[i].value);
+    EXPECT_EQ(tokens1[i].id, tokens2[i].id);
+    EXPECT_EQ(tokens1[i].cost, tokens2[i].cost);
+  }
+
+  // EXPECT_TRUE(UserPOS::GetTokens("おそれ", "惧れ",
+  // "動詞一段", &tokens1));
+  // EXPECT_TRUE(UserPOS::GetTokens("おそれる", "惧れる",
+  // "動詞一段", &tokens2));
+  EXPECT_TRUE(UserPOS::GetTokens("\xE3\x81\x8A\xE3\x81\x9D\xE3\x82\x8C",
+                                 "\xE6\x83\xA7\xE3\x82\x8C",
+                                 "\xE5\x8B\x95\xE8\xA9\x9E"
+                                 "\xE4\xB8\x80\xE6\xAE\xB5", &tokens1));
+  EXPECT_TRUE(UserPOS::GetTokens("\xE3\x81\x8A\xE3\x81\x9D"
+                                 "\xE3\x82\x8C\xE3\x82\x8B",
+                                 "\xE6\x83\xA7\xE3\x82\x8C\xE3\x82\x8B",
+                                 "\xE5\x8B\x95\xE8\xA9\x9E"
+                                 "\xE4\xB8\x80\xE6\xAE\xB5", &tokens2));
+  EXPECT_EQ(tokens1.size(), tokens2.size());
+  for (size_t i = 0; i < tokens1.size(); ++i) {
+    EXPECT_EQ(tokens1[i].key, tokens2[i].key);
+    EXPECT_EQ(tokens1[i].value, tokens2[i].value);
+    EXPECT_EQ(tokens1[i].id, tokens2[i].id);
+    EXPECT_EQ(tokens1[i].cost, tokens2[i].cost);
+  }
+}
 }  // namespace
 }  // namespace mozc

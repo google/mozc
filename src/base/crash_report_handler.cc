@@ -52,6 +52,19 @@ const wchar_t kGoogleCrashHandlerPipePrefix[] =
 // This is the well known SID for the system principal.
 const wchar_t kSystemPrincipalSid[] =L"S-1-5-18";
 
+// The postfix of the pipe name which GoogleCrashHandler.exe opens for clients
+// to register them.
+#if defined(_M_IX86)
+// No postfix for the x86 crash handler.
+const wchar_t kGoogleCrashHandlerPipePostfix[] =L"";
+#elif defined(_M_X64)
+// x64 crash handler expects the postfix "-64".
+// See b/5166654 or http://crbug.com/89730 for the background info.
+const wchar_t kGoogleCrashHandlerPipePostfix[] =L"-x64";
+#else
+#error "unsupported platform"
+#endif
+
 // The product name registered in the crash server.
 const wchar_t kProductNameInCrash[] = L"Google_Japanese_IME";
 
@@ -122,9 +135,12 @@ google_breakpad::CustomClientInfo* GetCustomInfo() {
   return &custom_info;
 }
 
-// Returns the pipe name of the GoogleCrashHandler.exe running as a system user.
+// Returns the pipe name of the GoogleCrashHandler.exe or
+// GoogleCrashHandler64.exe running as a system user.
 wstring GetCrashHandlerPipeName() {
-  return wstring(kGoogleCrashHandlerPipePrefix) + wstring(kSystemPrincipalSid);
+  return wstring(kGoogleCrashHandlerPipePrefix) +
+         wstring(kSystemPrincipalSid) +
+         wstring(kGoogleCrashHandlerPipePostfix);
 }
 
 class ScopedCriticalSection {
@@ -187,7 +203,7 @@ bool IsCurrentModuleInStack(PCONTEXT context) {
   stack.AddrFrame.Offset = context->Rbp;
   stack.AddrFrame.Mode = AddrModeFlat;
 #else
-#error "unkown platform"
+#error "unsupported platform"
 #endif
 
   while (StackWalk64(IMAGE_FILE_MACHINE_I386,

@@ -45,8 +45,12 @@ namespace keymap {
 template<typename T>
 bool KeyMap<T>::GetCommand(const commands::KeyEvent &key_event,
                            T* command) const {
+  // Shortcut keys should be available as if CapsLock was not enabled like
+  // other IMEs such as MS-IME or ATOK. b/5627459
+  commands::KeyEvent normalized_key_event;
+  NormalizeKeyEvent(key_event, &normalized_key_event);
   Key key;
-  if (!GetKey(key_event, &key)) {
+  if (!GetKey(normalized_key_event, &key)) {
     return false;
   }
 
@@ -57,7 +61,7 @@ bool KeyMap<T>::GetCommand(const commands::KeyEvent &key_event,
     return true;
   }
 
-  if (MaybeGetKeyStub(key_event, &key)) {
+  if (MaybeGetKeyStub(normalized_key_event, &key)) {
     it = keymap_.find(key);
     if (it != keymap_.end()) {
       *command = it->second;

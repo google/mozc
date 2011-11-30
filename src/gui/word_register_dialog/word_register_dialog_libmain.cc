@@ -35,6 +35,8 @@
 #include "gui/base/locale_util.h"
 #include "gui/base/singleton_window_helper.h"
 #include "gui/word_register_dialog/word_register_dialog.h"
+#include "languages/global_language_spec.h"
+#include "languages/japanese/lang_dep_spec.h"
 
 int RunWordRegisterDialog(int argc, char *argv[]) {
   Q_INIT_RESOURCE(qrc_word_register_dialog);
@@ -49,6 +51,9 @@ int RunWordRegisterDialog(int argc, char *argv[]) {
     window_helper.ActivatePreviousWindow();
     return -1;
   }
+
+  mozc::japanese::LangDepSpecJapanese spec;
+  mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(&spec);
 
   mozc::gui::LocaleUtil::InstallTranslationMessageAndFont(
       "word_register_dialog");

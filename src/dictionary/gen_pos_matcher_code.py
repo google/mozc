@@ -103,6 +103,8 @@ def GetRange(pos, pattern):
 
 def main():
   pos = ReadPOSID(sys.argv[1], sys.argv[2])
+  print "#ifndef MOZC_DICTIONARY_POS_MATCHER_H_"
+  print "#define MOZC_DICTIONARY_POS_MATCHER_H_"
   print "#include \"base/base.h\""
   print "namespace mozc {"
   print "namespace {"
@@ -128,6 +130,7 @@ def main():
   print "};"
   print "}  // namespace"
   print "}  // mozc"
+  print "#endif  // MOZC_DICTIONARY_POS_MATCHER_H_"
 
 if __name__ == "__main__":
   main()

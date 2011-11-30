@@ -33,70 +33,28 @@
 #include "base/base.h"
 #include "gui/character_pad/hand_writing.h"
 
-#ifdef OS_MACOSX
-#include "base/mac_util.h"
-#endif
-
-#ifdef USE_LIBZINNIA
-// Use default zinnia installed in /usr/include
-#include <zinnia.h>
-#else
-#include "third_party/zinnia/v0_04/zinnia.h"
-#endif
-
 namespace mozc {
 namespace gui {
 
-namespace {
-string GetModelFileName() {
-#ifdef OS_MACOSX
-  // TODO(komatsu): Fix the file name to "handwriting-ja.model" like the
-  // Windows implementation regardless which data file is actually
-  // used.  See also gui.gyp:hand_writing_mac.
-  const char kModelFile[] = "handwriting-light-ja.model";
-  return Util::JoinPath(MacUtil::GetResourcesDirectory(), kModelFile);
-#elif defined(USE_LIBZINNIA)
-  // On Linux, use the model for tegaki-zinnia.
-  const char kModelFile[] =
-      "/usr/share/tegaki/models/zinnia/handwriting-ja.model";
-  return kModelFile;
-#else
-  const char kModelFile[] = "handwriting-ja.model";
-  return Util::JoinPath(Util::GetServerDirectory(), kModelFile);
-#endif  // OS_MACOSX
-}
-}  // namespace
-
 HandWritingCanvas::HandWritingCanvas(QWidget *parent)
     : QWidget(parent),
-      recognizer_(zinnia::Recognizer::create()),
-      character_(zinnia::Character::create()),
-      mmap_(new Mmap<char>()),
       list_widget_(NULL), is_drawing_(false) {
   setBackgroundRole(QPalette::Base);
   setAutoFillBackground(true);
   strokes_.reserve(128);
-
-  const string model_file = GetModelFileName();
-  if (!mmap_->Open(model_file.c_str())) {
-    LOG(ERROR) << "Cannot open model file:" << model_file;
-    QMessageBox::critical(this,
-                          tr("Mozc"),
-                          tr("Failed to load model file %1").arg(
-                              QString(model_file.c_str())));
-    return;
-  }
-  if (!recognizer_->open(mmap_->begin(), mmap_->GetFileSize())) {
-    LOG(ERROR) << "Model file is broken:" << model_file;
-    QMessageBox::critical(this,
-                          tr("Mozc"),
-                          tr("model file %1 is broken.").arg(
-                              QString(model_file.c_str())));
-    return;
-  }
+  QObject::connect(this, SIGNAL(startRecognition()),
+                   &recognizer_thread_, SLOT(startRecognition()),
+                   Qt::QueuedConnection);
+  QObject::connect(&recognizer_thread_, SIGNAL(candidatesUpdated()),
+                   this, SLOT(listUpdated()),
+                   Qt::QueuedConnection);
+  recognizer_thread_.Start();
 }
 
-HandWritingCanvas::~HandWritingCanvas() {}
+HandWritingCanvas::~HandWritingCanvas() {
+  recognizer_thread_.quit();
+  recognizer_thread_.wait();
+}
 
 void HandWritingCanvas::clear() {
   strokes_.clear();
@@ -171,27 +129,21 @@ void HandWritingCanvas::paintEvent(QPaintEvent *) {
 }
 
 void HandWritingCanvas::recognize() {
-  character_->clear();
-  character_->set_width(width());
-  character_->set_height(height());
-  for (int i = 0; i < strokes_.size(); ++i) {
-    for (int j = 0; j < strokes_[i].size(); ++j) {
-      character_->add(i,
-                      static_cast<int>(width() * strokes_[i][j].first),
-                      static_cast<int>(height() * strokes_[i][j].second));
-    }
-  }
-
-  const int kMaxResultSize = 100;
-  scoped_ptr<zinnia::Result> result(recognizer_->classify(*character_,
-                                                          kMaxResultSize));
-  if (result.get() == NULL) {
+  if (strokes_.empty()) {
     return;
   }
 
+  recognizer_thread_.SetStrokes(strokes_);
+  emit startRecognition();
+}
+
+void HandWritingCanvas::listUpdated() {
+  vector<string> candidates;
+  recognizer_thread_.GetCandidates(&candidates);
+
   list_widget_->clear();
-  for (size_t i = 0; i < result->size(); ++i) {
-    list_widget_->addItem(QString::fromUtf8(result->value(i)));
+  for (size_t i = 0; i < candidates.size(); ++i) {
+    list_widget_->addItem(QString::fromUtf8(candidates[i].c_str()));
   }
 }
 
@@ -203,7 +155,7 @@ void HandWritingCanvas::mousePressEvent(QMouseEvent *event) {
   strokes_.resize(strokes_.size() + 1);
   const float x = static_cast<float>(event->pos().x()) / width();
   const float y = static_cast<float>(event->pos().y()) / height();
-  strokes_.back().push_back(qMakePair(x, y));
+  strokes_.back().push_back(make_pair(x, y));
   is_drawing_ = true;
   update();
 }
@@ -215,7 +167,7 @@ void HandWritingCanvas::mouseMoveEvent(QMouseEvent *event) {
 
   const float x = static_cast<float>(event->pos().x()) / width();
   const float y = static_cast<float>(event->pos().y()) / height();
-  strokes_.back().push_back(qMakePair(x, y));
+  strokes_.back().push_back(make_pair(x, y));
   update();
 }
 

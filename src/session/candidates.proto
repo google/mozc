@@ -1,0 +1,217 @@
+// Copyright 2010-2011, Google Inc.
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+//     * Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//     * Redistributions in binary form must reproduce the above
+// copyright notice, this list of conditions and the following disclaimer
+// in the documentation and/or other materials provided with the
+// distribution.
+//     * Neither the name of Google Inc. nor the names of its
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+// Protocol messages of candidates to be used for mozc client/server
+// communication and client/renderer communication.
+
+syntax = "proto2";
+
+package mozc.commands;
+
+
+// Annotation against a candidate.
+message Annotation {
+  // Annotation prepended to the value.
+  optional string prefix = 1;
+  // Annotation appended to the value.
+  optional string suffix = 2;
+  // Type of the candidate such as [HALF][KATAKANA], [GREEK],
+  // [Black square], etc...
+  optional string description = 3;
+  // Shortcut key to select this candidate.
+  optional string shortcut = 4;
+};
+
+// Additional information to a candidate word.  This message is
+// used for describing a word usage for instance.
+message Information {
+  // Unique number specifying the information.
+  optional int32 id = 1;
+
+  // Title string of the information.  For usage, this value is
+  // probably equal to Candidate::value or its canonicalized value.
+  optional string title = 2;
+
+  // The content of the information.  For usage, this value actually
+  // describes how to use the word.
+  optional string description = 3;
+
+  // The IDs of candidates which connect with the information.
+  repeated int32 candidate_id = 4;
+};
+
+// Category describes the attribute of the words.
+enum Category {
+  CONVERSION = 0;
+  PREDICTION = 1;
+  SUGGESTION = 2;
+  TRANSLITERATION = 3;
+  USAGE = 4;
+};
+
+// DisplayType is a hint to UI renderers describing how the words are
+// displayed.
+enum DisplayType {
+  MAIN = 0;
+  CASCADE = 1;
+};
+
+// TODO(nona): merge to RendererCommand::Rectangle
+message Rectangle {
+  required int32 x = 1;
+  required int32 y = 2;
+  required int32 width = 3;
+  required int32 height = 4;
+}
+
+message InformationList {
+  optional uint32 focused_index = 1;
+  repeated Information information = 2;
+  // Category of the infolist.
+  optional Category category = 3 [default = CONVERSION];
+
+  // Information to be used for rendering.
+  optional DisplayType display_type = 4 [default = CASCADE];
+
+  // How long rendere needs to wait before the infolist is displayed.
+  // the default setting is 500 msec.
+  optional uint32 delay = 5  [ default = 500 ];
+};
+
+// Message representing the footer part of the candidate window.
+message Footer {
+  // Message shown like a status bar.
+  optional string label = 1;
+  // Whether index (e.g. 10/120) is visible or not.
+  optional bool index_visible = 2 [default = false];
+  // Whether the logo image is visible or not.
+  optional bool logo_visible = 3 [default = false];
+  // Message modestly shown.  It is used for displaying the version on
+  // dev-channel now.
+  optional string sub_label = 4;
+};
+
+message CandidateWord {
+  // Unique number specifing the candidate.  This may be a negative value.
+  optional int32 id = 1;
+  // The first index should be zero and index numbers should increase by one.
+  optional uint32 index = 2;
+  // Reading of the value.  The value is only used when the key is
+  // different from the input composition (e.g. suggestion/prediction).
+  optional string key = 3;
+  // Converted value.  (e.g. Kanji value).
+  optional string value = 4;
+  optional Annotation annotation = 5;
+};
+
+message CandidateList {
+  // This value represents the focused position of the next
+  // |candidates|.  If the |candidates| is a part of the whole
+  // candidate words (as a result of paging), this value indicates the
+  // position from the beginning of that part.  (ex. where
+  // |candidates| contatins 10th to 18th candidates, focused_index=0
+  // means the 10th candidate, but not 1st candidate.
+  //
+  // The existense of |focused_index| does not represents whether this
+  // candidate list is a 'suggestion' or not.  |category| represents
+  // it.
+  optional uint32 focused_index = 1;
+  repeated CandidateWord candidates = 2;
+  // Category of the candidates.
+  optional Category category = 3 [default = CONVERSION];
+};
+
+// TODO(komatsu) rename it to CandidateWindow.
+message Candidates {
+  // TODO(komatsu): Use CandidateList.
+  // When has_focused_index() is true, this message contains predicted and
+  // normally converted candidates. Otherwise, when the field is not set,
+  // this message contains a 'suggestion'.
+  optional uint32 focused_index = 1;
+
+  // The size of the total candidates in this candidate list.  The
+  // value does not include the size of subcandidate lists.  Note, the
+  // next repeated-Candidate=3 may not contain all candidates.
+  // all_candidates contains the values of subcandidate lists.
+  required uint32 size = 2;
+
+  // TODO(komatsu): Use CandidateList.
+  repeated group Candidate = 3 {
+    // The first index should be zero and index numbers should increase by one.
+    required uint32 index = 4;
+    required string value = 5;
+    optional int32 id = 9;  // Unique number specifing the candidate.
+    optional Annotation annotation = 7;
+    optional int32 information_id = 10;
+  };
+  // The position on the preedit.  The number represents the left edge
+  // of the candidate window.
+  required uint32 position = 6;
+
+  // Nested candidates aka cascading window.
+  optional Candidates subcandidates = 8;
+
+  // Usages of candidates.
+  optional InformationList usages = 10;
+
+  // TODO(komatsu): Use CandidateList.
+  // Category of the candidates
+  optional Category category = 11 [default = CONVERSION];
+
+  // Information to be used for rendering.
+  optional DisplayType display_type = 12 [default = MAIN];
+
+  // Footer of the GUI window.
+  optional Footer footer = 13;
+
+  // The direction of candidates in the window.  This is just a
+  // suggestion from the server and client does not have to follow.
+  enum Direction {
+    VERTICAL = 0;
+    HORIZONTAL = 1;
+  };
+  optional Direction direction = 14 [ default = VERTICAL ];
+
+  // This position is used for suggest window position.
+  optional Rectangle composition_rectangle = 15;
+  optional Rectangle caret_rectangle = 16;
+
+  enum CandidateWindowLocation{
+    // Shows candidate window under the caret. This is used for prediction and
+    // conversion
+    CARET = 0;
+    // Shows candidate window aligned with composition area. This is used for
+    // suggestion.
+    COMPOSITION = 1;
+  }
+  optional CandidateWindowLocation window_location = 17;
+};
+
+
+

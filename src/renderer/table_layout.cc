@@ -293,7 +293,7 @@ Rect TableLayout::GetVScrollBarRect() const {
   const int height = total_size_.height -           // total height
                      window_border_pixels_ * 2 -    // border top and bottom
                      minimum_header_size_.height -  // header height
-                     minimum_footer_size_.height;   // fotter height
+                     minimum_footer_size_.height;   // footer height
 
   return Rect(left, top, vscroll_width_pixels_, height);
 }
@@ -376,7 +376,6 @@ int TableLayout::number_of_rows() const {
 int TableLayout::number_of_columns() const {
   return number_of_columns_;
 }
-
 
 }  // namespace renderer
 }  // namespace mozc

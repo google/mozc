@@ -110,20 +110,32 @@ class RendererServerSendCommand : public client::SendCommandInterface {
   bool SendCommand(const mozc::commands::SessionCommand &command,
                    mozc::commands::Output* output) {
 #ifdef OS_WINDOWS
+    if ((command.type() != commands::SessionCommand::SELECT_CANDIDATE) &&
+        (command.type() != commands::SessionCommand::HIGHLIGHT_CANDIDATE) &&
+        (command.type() != commands::SessionCommand::USAGE_STATS_EVENT)) {
+      // Unsupported command.
+      return false;
+    }
+
     HWND target = reinterpret_cast<HWND>(receiver_handle_);
     if (target == NULL) {
       LOG(ERROR) << "target window is NULL";
       return false;
     }
-    WPARAM type = static_cast<WPARAM>(command.type());
-    LPARAM id = static_cast<LPARAM>(command.id());
     UINT mozc_msg =
         ::RegisterWindowMessageW(kMessageReceiverMessageName);
-    if (mozc_msg != 0) {
-      ::PostMessage(target, mozc_msg, type, id);
-    } else {
+    if (mozc_msg == 0) {
       LOG(ERROR) << "RegisterWindowMessage failed: " << ::GetLastError();
       return false;
+    }
+    if (command.type() == mozc::commands::SessionCommand::USAGE_STATS_EVENT) {
+      WPARAM type = static_cast<WPARAM>(command.type());
+      LPARAM event = static_cast<LPARAM>(command.usage_stats_event());
+      ::PostMessage(target, mozc_msg, type, event);
+    } else {  // SELECT_CANDIDATE or HIGHLIGHT_CANDIDATE
+      WPARAM type = static_cast<WPARAM>(command.type());
+      LPARAM id = static_cast<LPARAM>(command.id());
+      ::PostMessage(target, mozc_msg, type, id);
     }
 #endif
 

@@ -30,13 +30,17 @@
 #include "base/singleton.h"
 #include "rewriter/calculator_rewriter.h"
 #include "rewriter/collocation_rewriter.h"
+#include "rewriter/command_rewriter.h"
 #include "rewriter/date_rewriter.h"
+#include "rewriter/dice_rewriter.h"
 #include "rewriter/emoticon_rewriter.h"
 #include "rewriter/english_variants_rewriter.h"
 #include "rewriter/focus_candidate_rewriter.h"
 #include "rewriter/fortune_rewriter.h"
 #include "rewriter/merger_rewriter.h"
 #include "rewriter/number_rewriter.h"
+#include "rewriter/normalization_rewriter.h"
+#include "rewriter/remove_redundant_candidate_rewriter.h"
 #include "rewriter/rewriter_interface.h"
 #include "rewriter/single_kanji_rewriter.h"
 #include "rewriter/symbol_rewriter.h"
@@ -68,12 +72,13 @@ RewriterImpl::RewriterImpl() {
   AddRewriter(new NumberRewriter);
   AddRewriter(new CollocationRewriter);
   AddRewriter(new SingleKanjiRewriter);
-  AddRewriter(new SymbolRewriter);
-  AddRewriter(new CalculatorRewriter);
   AddRewriter(new EmoticonRewriter);
+  AddRewriter(new CalculatorRewriter);
+  AddRewriter(new SymbolRewriter);
   AddRewriter(new UnicodeRewriter);
   AddRewriter(new VariantsRewriter);
   AddRewriter(new ZipcodeRewriter);
+  AddRewriter(new DiceRewriter);
 
   if (FLAGS_use_history_rewriter) {
     AddRewriter(new UserBoundaryHistoryRewriter);
@@ -81,6 +86,7 @@ RewriterImpl::RewriterImpl() {
   }
   AddRewriter(new DateRewriter);
   AddRewriter(new FortuneRewriter);
+//  AddRewriter(new CommandRewriter);
   AddRewriter(new VersionRewriter);
 #if defined(OS_MACOSX) || defined(OS_WINDOWS) || defined(OS_CHROMEOS)
   // TODO(horo): Because infolist renderer window is implimented
@@ -88,6 +94,9 @@ RewriterImpl::RewriterImpl() {
   //             usage is available only in these OS.
   AddRewriter(new UsageRewriter);
 #endif  // defined(OS_MACOSX) || defined(OS_WINDOWS) || defined(OS_CHROMEOS)
+
+  AddRewriter(new NormalizationRewriter);
+  AddRewriter(new RemoveRedundantCandidateRewriter);
 }
 
 RewriterInterface *g_rewriter = NULL;

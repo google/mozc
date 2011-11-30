@@ -86,7 +86,6 @@ bool LaunchMozcToolInternal(const string &tool_name, const string &error_type) {
 
   // If normal expected tool_name is specified, we invoke specific application.
   NSString *appName = nil;
-  NSString *toolAppPath = nil;
   if (tool_name == "about_dialog") {
     appName = @"AboutDialog.app";
   } else if (tool_name == "config_dialog") {
@@ -99,14 +98,17 @@ bool LaunchMozcToolInternal(const string &tool_name, const string &error_type) {
     appName = @"WordRegisterDialog.app";
   }
 
+  // The Mozc Tool apps reside in the same directory where the mozc server does.
+  NSString *toolAppPath =
+      [NSString stringWithUTF8String:MacUtil::GetServerDirectory().c_str()];
+
   if (appName != nil) {
-    toolAppPath = [[[NSBundle mainBundle] resourcePath]
-                    stringByAppendingPathComponent:appName];
+    toolAppPath = [toolAppPath stringByAppendingPathComponent:appName];
   } else {
     // Otherwise, we tries to invoke the application by settings FLAGS_mode.
     // use --fromenv option to specify tool name
     setenv("FLAGS_mode", tool_name.c_str(), 1);
-    toolAppPath = [[[NSBundle mainBundle] resourcePath]
+    toolAppPath = [toolAppPath
                     stringByAppendingPathComponent:@ kProductPrefix "Tool.app"];
   }
 

@@ -514,6 +514,19 @@ commands {
       }
     }
     elapsed_time: 6843
+    all_candidate_words {
+      candidates {
+        id: 0
+        index: 0
+        value: "\343\203\236\343\202\277\343\203\217\343\203\252\343\203\274"
+      }
+      candidates {
+        id: 1
+        index: 1
+        value: "\343\203\236\343\202\277\343\203\273\343\203\217\343\203\252"
+      }
+      category: SUGGESTION
+    }
   }
 }
 commands {
@@ -589,6 +602,19 @@ commands {
       }
     }
     elapsed_time: 5950
+    all_candidate_words {
+      candidates {
+        id: 0
+        index: 0
+        value: "\343\203\236\343\202\277\343\203\217\343\203\252\343\203\274"
+      }
+      candidates {
+        id: 1
+        index: 1
+        value: "\343\203\236\343\202\277\343\203\273\343\203\217\343\203\252"
+      }
+      category: SUGGESTION
+    }
   }
 }
 commands {
@@ -1109,6 +1135,19 @@ commands {
       }
     }
     elapsed_time: 3859
+    all_candidate_words {
+      candidates {
+        id: 0
+        index: 0
+        value: "\343\203\242\343\202\272\343\202\257"
+      }
+      candidates {
+        id: 1
+        index: 1
+        value: "\343\202\202\343\201\232\343\201\217\351\205\242"
+      }
+      category: SUGGESTION
+    }
   }
 }
 commands {
@@ -2279,6 +2318,14 @@ commands {
       }
     }
     elapsed_time: 5148
+    all_candidate_words {
+      candidates {
+        id: 0
+        index: 0
+        value: "\347\214\253\343\202\222\346\212\261\343\201\204\343\201\246\350\261\241\343\201\250\346\263\263\343\201\220"
+      }
+      category: SUGGESTION
+    }
   }
 }
 commands {
@@ -2346,6 +2393,14 @@ commands {
       }
     }
     elapsed_time: 5356
+    all_candidate_words {
+      candidates {
+        id: 0
+        index: 0
+        value: "\347\214\253\343\202\222\346\212\261\343\201\204\343\201\246\350\261\241\343\201\250\346\263\263\343\201\220"
+      }
+      category: SUGGESTION
+    }
   }
 }
 commands {
@@ -2413,6 +2468,14 @@ commands {
       }
     }
     elapsed_time: 4772
+    all_candidate_words {
+      candidates {
+        id: 0
+        index: 0
+        value: "\347\214\253\343\202\222\343\201\213\343\201\266\343\202\213"
+      }
+      category: SUGGESTION
+    }
   }
 }
 commands {
@@ -2883,6 +2946,54 @@ commands {
       }
     }
     elapsed_time: 350
+    all_candidate_words {
+      candidates {
+        index: 0
+        value: "\350\247\243\344\275\223"
+        id: 0
+      }
+      candidates {
+        index: 1
+        value: "\350\262\267\343\201\204\343\201\237\343\201\204"
+        id: 1
+      }
+      candidates {
+        index: 2
+        value: "\351\243\274\343\201\204\343\201\237\343\201\204"
+        id: 2
+      }
+      candidates {
+        index: 3
+        value: "\346\217\217\343\201\204\343\201\237\343\201\204"
+        id: 3
+      }
+      candidates {
+        index: 4
+        value: "\346\207\220\350\203\216"
+        id: 4
+      }
+      candidates {
+        index: 5
+        value: "\343\201\213\343\201\204\343\201\237\343\201\204"
+        id: 5
+      }
+      candidates {
+        index: 6
+        value: "\346\210\222\344\275\223"
+        id: 6
+      }
+      candidates {
+        index: 7
+        value: "\350\247\243\351\232\212"
+        id: 7
+      }
+      candidates {
+        index: 8
+        value: "\346\265\267\351\200\200"
+        id: 8
+      }
+      category: CONVERSION
+    }
   }
 }
 commands {
@@ -3000,6 +3111,54 @@ commands {
       }
     }
     elapsed_time: 375
+    all_candidate_words {
+      candidates {
+        index: 0
+        value: "\350\247\243\344\275\223"
+        id: 0
+      }
+      candidates {
+        index: 1
+        value: "\350\262\267\343\201\204\343\201\237\343\201\204"
+        id: 1
+      }
+      candidates {
+        index: 2
+        value: "\351\243\274\343\201\204\343\201\237\343\201\204"
+        id: 2
+      }
+      candidates {
+        index: 3
+        value: "\346\217\217\343\201\204\343\201\237\343\201\204"
+        id: 3
+      }
+      candidates {
+        index: 4
+        value: "\346\207\220\350\203\216"
+        id: 4
+      }
+      candidates {
+        index: 5
+        value: "\343\201\213\343\201\204\343\201\237\343\201\204"
+        id: 5
+      }
+      candidates {
+        index: 6
+        value: "\346\210\222\344\275\223"
+        id: 6
+      }
+      candidates {
+        index: 7
+        value: "\350\247\243\351\232\212"
+        id: 7
+      }
+      candidates {
+        index: 8
+        value: "\346\265\267\351\200\200"
+        id: 8
+      }
+      category: CONVERSION
+    }
   }
 }
 commands {
@@ -3117,6 +3276,54 @@ commands {
       }
     }
     elapsed_time: 352
+    all_candidate_words {
+      candidates {
+        index: 0
+        value: "\350\247\243\344\275\223"
+        id: 0
+      }
+      candidates {
+        index: 1
+        value: "\350\262\267\343\201\204\343\201\237\343\201\204"
+        id: 1
+      }
+      candidates {
+        index: 2
+        value: "\351\243\274\343\201\204\343\201\237\343\201\204"
+        id: 2
+      }
+      candidates {
+        index: 3
+        value: "\346\217\217\343\201\204\343\201\237\343\201\204"
+        id: 3
+      }
+      candidates {
+        index: 4
+        value: "\346\207\220\350\203\216"
+        id: 4
+      }
+      candidates {
+        index: 5
+        value: "\343\201\213\343\201\204\343\201\237\343\201\204"
+        id: 5
+      }
+      candidates {
+        index: 6
+        value: "\346\210\222\344\275\223"
+        id: 6
+      }
+      candidates {
+        index: 7
+        value: "\350\247\243\351\232\212"
+        id: 7
+      }
+      candidates {
+        index: 8
+        value: "\346\265\267\351\200\200"
+        id: 8
+      }
+      category: CONVERSION
+    }
   }
 }
 commands {
@@ -3234,6 +3441,54 @@ commands {
       }
     }
     elapsed_time: 262
+    all_candidate_words {
+      candidates {
+        index: 0
+        value: "\350\247\243\344\275\223"
+        id: 0
+      }
+      candidates {
+        index: 1
+        value: "\350\262\267\343\201\204\343\201\237\343\201\204"
+        id: 1
+      }
+      candidates {
+        index: 2
+        value: "\351\243\274\343\201\204\343\201\237\343\201\204"
+        id: 2
+      }
+      candidates {
+        index: 3
+        value: "\346\217\217\343\201\204\343\201\237\343\201\204"
+        id: 3
+      }
+      candidates {
+        index: 4
+        value: "\346\207\220\350\203\216"
+        id: 4
+      }
+      candidates {
+        index: 5
+        value: "\343\201\213\343\201\204\343\201\237\343\201\204"
+        id: 5
+      }
+      candidates {
+        index: 6
+        value: "\346\210\222\344\275\223"
+        id: 6
+      }
+      candidates {
+        index: 7
+        value: "\350\247\243\351\232\212"
+        id: 7
+      }
+      candidates {
+        index: 8
+        value: "\346\265\267\351\200\200"
+        id: 8
+      }
+      category: CONVERSION
+    }
   }
 }
 commands {

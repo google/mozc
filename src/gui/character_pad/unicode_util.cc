@@ -44,7 +44,7 @@ namespace {
 
 template <class T> struct UnicodeDataCompare {
   bool operator()(const T &d1, const T &d2) const {
-    return (d1.ucs2 < d2.ucs2);
+    return (d1.ucs4 < d2.ucs4);
   }
 };
 
@@ -74,14 +74,14 @@ const uint16 LookupCP932Data(const QString &str) {
   }
 
   CP932MapData key;
-  key.ucs2 = str[0].unicode();
+  key.ucs4 = str[0].unicode();
   const CP932MapData *result =
       lower_bound(kCP932MapData,
                   kCP932MapData + kCP932MapDataSize,
                   key,
                   UnicodeDataCompare<CP932MapData>());
   if (result == kCP932MapData + kCP932MapDataSize ||
-      result->ucs2 != key.ucs2) {
+      result->ucs4 != key.ucs4) {
     return 0;
   }
   return result->sjis;
@@ -91,16 +91,16 @@ const UnihanData *LookupUnihanData(const QString &str) {
   if (str.length() != 1) {
     return NULL;
   }
-  uint16 ucs2 = str[0].unicode();
+  char32 ucs4 = str[0].unicode();
   UnihanData key;
-  key.ucs2 = ucs2;
+  key.ucs4 = ucs4;
   const UnihanData *result =
       lower_bound(kUnihanData,
                   kUnihanData + kUnihanDataSize,
                   key,
                   UnicodeDataCompare<UnihanData>());
   if (result == kUnihanData + kUnihanDataSize ||
-      result->ucs2 != ucs2) {
+      result->ucs4 != ucs4) {
     return NULL;
   }
 
@@ -111,9 +111,9 @@ const QString LookupUnicodeData(const QString &str) {
   if (str.length() != 1) {
     return QString("");
   }
-  uint16 ucs2 = str[0].unicode();
+  char32 ucs4 = str[0].unicode();
   UnicodeData key;
-  key.ucs2 = ucs2;
+  key.ucs4 = ucs4;
   key.description = NULL;
   const UnicodeData *result =
       lower_bound(kUnicodeData,
@@ -121,7 +121,7 @@ const QString LookupUnicodeData(const QString &str) {
                   key,
                   UnicodeDataCompare<UnicodeData>());
   if (result == kUnicodeData + kUnicodeDataSize ||
-      result->ucs2 != ucs2) {
+      result->ucs4 != ucs4) {
     return QString("");
   }
 

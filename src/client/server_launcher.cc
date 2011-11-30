@@ -48,6 +48,7 @@
 #include "client/client.h"
 #include "ipc/ipc.h"
 #include "ipc/named_event.h"
+#include "languages/global_language_spec.h"
 #ifdef OS_MACOSX
 #include "base/mac_util.h"
 #endif  // OS_MACOSX
@@ -86,7 +87,9 @@ const string LoadServerFlags() {
 
 // initialize default path
 ServerLauncher::ServerLauncher()
-    : server_program_(Util::GetServerPath()),
+    : server_program_(
+          language::GlobalLanguageSpec::GetLanguageDependentSpec()
+              ->GetServerPath()),
       restricted_(false) {}
 
 ServerLauncher::~ServerLauncher() {}
@@ -138,7 +141,9 @@ bool ServerLauncher::StartServer(ClientInterface *client) {
   size_t pid = 0;
 #ifdef OS_WINDOWS
   mozc::WinSandbox::SecurityInfo info;
-  info.primary_level = WinSandbox::USER_INTERACTIVE;
+  // You cannot use WinSandbox::USER_INTERACTIVE here because restricted token
+  // seems to prevent WinHTTP from using SSL. b/5502343
+  info.primary_level = WinSandbox::USER_NON_ADMIN;
   info.impersonation_level = WinSandbox::USER_RESTRICTED_SAME_ACCESS;
   info.integrity_level = WinSandbox::INTEGRITY_LEVEL_LOW;
   // If the current process is in a job, you cannot use

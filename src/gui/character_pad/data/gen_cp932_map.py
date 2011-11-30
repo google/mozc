@@ -54,7 +54,7 @@ def main():
   keys = sorted(result.keys())
 
   print "struct CP932MapData {"
-  print "  unsigned short int ucs2;"
+  print "  unsigned int ucs4;"
   print "  unsigned short int sjis;"
   print "};"
   print ""

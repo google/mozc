@@ -38,11 +38,26 @@ class NodeAllocatorInterface;
 
 class DictionaryInterface {
  public:
+  // limitation for LookupPrefixWithLimit
+  struct Limit {
+    int key_len_lower_limit;
+    Limit() : key_len_lower_limit(0) {}
+  };
+
   virtual Node *LookupPredictive(const char *str, int size,
                                  NodeAllocatorInterface *allocator) const = 0;
 
-  virtual Node *LookupPrefix(const char *str, int size,
-                             NodeAllocatorInterface *allocator) const = 0;
+  virtual Node *LookupPrefixWithLimit(
+      const char *str, int size,
+      const Limit &limit,
+      NodeAllocatorInterface *allocator) const = 0;
+
+  Node *LookupPrefix(const char *str, int size,
+                     NodeAllocatorInterface *allocator) const {
+    Limit limit;
+    limit.key_len_lower_limit = 0;  // no limit
+    return LookupPrefixWithLimit(str, size, limit, allocator);
+  }
 
   // For reverse lookup, the reading is stored in Node::value and the word
   // is stored in Node::key.

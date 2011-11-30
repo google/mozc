@@ -40,8 +40,6 @@ class SendCommandInterface;
 }  // namespace mozc::client
 
 namespace renderer {
-class Rect;
-
 namespace mac {
 class CandidateWindow;
 class InfolistWindow;

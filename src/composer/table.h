@@ -34,6 +34,7 @@
 
 #include <set>
 #include <string>
+#include <vector>
 #include "base/base.h"
 #include "composer/internal/trie.h"
 
@@ -106,6 +107,8 @@ class Table {
   const Entry *LookUpPrefix(const string &input,
                             size_t *key_length,
                             bool *fixed) const;
+  void LookUpPredictiveAll(const string &input,
+                           vector<const Entry *> *results) const;
   // TODO(komatsu): Delete this function.
   bool HasSubRules(const string &input) const;
 
@@ -125,6 +128,7 @@ class Table {
  private:
   bool LoadFromStream(istream *is);
   void DeleteEntry(const Entry *entry);
+  void ResetEntrySet();
 
   typedef Trie<const Entry*> EntryTrie;
   scoped_ptr<EntryTrie> entries_;

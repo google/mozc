@@ -119,48 +119,6 @@ class ShutdownHandler : public RegisterModuleHandler {
 }  // namespace
 }  // mozc
 
-#ifdef OS_WINDOWS
-
-namespace {
-// This handler will be called asynchronously in a temporal thread.
-BOOL WINAPI WinConsoleShutdownHandler(DWORD control_type) {
-  // Traps CTRL_SHUTDOWN_EVENT, CTRL_CLOSE_EVENT, and CTRL_LOGOFF_EVENT for
-  // clean-up tasks.
-  switch (control_type) {
-    case CTRL_SHUTDOWN_EVENT:
-      VLOG(1) << "CTRL_SHUTDOWN_EVENT has come";
-      // trap
-      break;
-    case CTRL_CLOSE_EVENT:
-      VLOG(1) << "CTRL_CLOSE_EVENT has come";
-      // trap
-      break;
-    case CTRL_LOGOFF_EVENT:
-      VLOG(1) << "CTRL_LOGOFF_EVENT has come";
-      // trap
-      break;
-    case CTRL_C_EVENT:
-      VLOG(1) << "CTRL_C_EVENT has come";
-      return TRUE;
-    case CTRL_BREAK_EVENT:
-      VLOG(1) << "CTRL_BREAK_EVENT has come";
-      return TRUE;
-    default:
-      VLOG(1) << "Unknown event (" << control_type << ") has come";
-      return TRUE;
-  }
-  // WARNING: Do not call RunFinalizers inside WinConsoleShutdownHandler as
-  // this callback function is not executed by main thread or even executed
-  // asynchronously with main/session threads.
-  mozc::RunShutdownHandlers();
-  // In Windows Vista or later, the system kills this process immediately after
-  // finishing the callback chain when the session is going to be ended.
-  // It would be better to start all nessesary clean-up tasks and wait for them
-  // here before returning a value from this function.
-  return TRUE;
-}
-}  // namespace
-#endif  // OS_WINDOWS
 
 namespace mozc {
 
@@ -172,16 +130,6 @@ InitializerRegister::InitializerRegister(const char *name,
 // TODO(taku): this function should be thread-safe
 void RunInitializers() {
   Singleton<Initializer>::get()->Call();
-
-#ifdef OS_WINDOWS
-  // In Windows 7 RTM, the system never calls logoff/shutdown event if one or
-  // more threads hold user32.dll and/or gdi32.dll.  We cannot relay on
-  // SetConsoleCtrlHandler any longer.
-  // TODO(yukawa): Switch back to WM_QUERYENDSESSION and WM_ENDSESSION.
-  const BOOL result = ::SetConsoleCtrlHandler(WinConsoleShutdownHandler, TRUE);
-  LOG_IF(ERROR, result == 0)
-      << "SetConsoleCtrlHandler failed: " << ::GetLastError();
-#endif  // OS_WINDOWS
 }
 }   // mozc
 

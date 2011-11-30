@@ -38,43 +38,46 @@
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
 #include "dictionary/system/system_dictionary.h"
+#include "dictionary/system/value_dictionary.h"
 #include "dictionary/user_dictionary.h"
 
 namespace mozc {
 
 DictionaryImpl::DictionaryImpl(const char *dic_data, int dic_data_size)
     : suppression_dictionary_(
-        SuppressionDictionary::GetSuppressionDictionary()) {
-  CHECK(suppression_dictionary_);
-  {
-    SystemDictionary *dic = SystemDictionary::GetSystemDictionary();
-    CHECK(dic->OpenFromArray(dic_data, dic_data_size));
-    dics_.push_back(dic);
-  }
-  {
-    UserDictionary *dic = UserDictionary::GetUserDictionary();
-    dics_.push_back(dic);
-  }
+        SuppressionDictionary::GetSuppressionDictionary()),
+      system_dictionary_(SystemDictionary::CreateSystemDictionaryFromImage(
+          dic_data, dic_data_size)),
+      value_dictionary_(ValueDictionary::CreateValueDictionaryFromImage(
+          dic_data, dic_data_size)) {
+  CHECK(suppression_dictionary_ != NULL);
+  CHECK(system_dictionary_.get() != NULL);
+  CHECK(value_dictionary_.get() != NULL);
+
+  dics_.push_back(system_dictionary_.get());
+  dics_.push_back(value_dictionary_.get());
+  dics_.push_back(UserDictionary::GetUserDictionary());
 }
 
-// since all sub-dictionaries are singleton, no need to delete them
 DictionaryImpl::~DictionaryImpl() {
   dics_.clear();
 }
 
 Node *DictionaryImpl::LookupPredictive(
     const char *str, int size, NodeAllocatorInterface *allocator) const {
-  return LookupInternal(str, size, PREDICTIVE, allocator);
+  return LookupInternal(str, size, PREDICTIVE, Limit(), allocator);
 }
 
-Node *DictionaryImpl::LookupPrefix(const char *str, int size,
-                                   NodeAllocatorInterface *allocator) const {
-  return LookupInternal(str, size, PREFIX, allocator);
+Node *DictionaryImpl::LookupPrefixWithLimit(
+    const char *str, int size,
+    const Limit &limit,
+    NodeAllocatorInterface *allocator) const {
+  return LookupInternal(str, size, PREFIX, limit, allocator);
 }
 
 Node *DictionaryImpl::LookupReverse(const char *str, int size,
                                     NodeAllocatorInterface *allocator) const {
-  return LookupInternal(str, size, REVERSE, allocator);
+  return LookupInternal(str, size, REVERSE, Limit(), allocator);
 }
 
 bool DictionaryImpl::Reload() {
@@ -143,6 +146,7 @@ Node *DictionaryImpl::MaybeRemvoeSpecialNodes(Node *node) const {
 
 Node *DictionaryImpl::LookupInternal(const char *str, int size,
                                      LookupType type,
+                                     const Limit &limit,
                                      NodeAllocatorInterface *allocator) const {
   Node *head = NULL;
   for (size_t i = 0; i < dics_.size(); ++i) {
@@ -152,7 +156,8 @@ Node *DictionaryImpl::LookupInternal(const char *str, int size,
         nodes = dics_[i]->LookupPredictive(str, size, allocator);
         break;
       case PREFIX:
-        nodes = dics_[i]->LookupPrefix(str, size, allocator);
+        nodes = dics_[i]->LookupPrefixWithLimit(
+            str, size, limit, allocator);
         break;
       case REVERSE:
         nodes = dics_[i]->LookupReverse(str, size, allocator);

@@ -30,6 +30,7 @@
 #ifndef MOZC_COMPOSER_INTERNAL_CHAR_CHUNK_H_
 #define MOZC_COMPOSER_INTERNAL_CHAR_CHUNK_H_
 
+#include <set>
 #include <string>
 
 #include "base/base.h"
@@ -66,6 +67,11 @@ class CharChunk {
   void AppendFixedResult(const Table &table,
                          const TransliteratorInterface *transliterator,
                          string *result) const;
+
+  // Get possible results from current chunk
+  void GetExpandedResults(const Table &table,
+                          const TransliteratorInterface *transliterator,
+                          set<string> *results) const;
   bool IsFixed() const;
 
   // True if IsAppendable() is true and this object is fixed (|pending_|=="")

@@ -64,7 +64,7 @@ namespace mozc {
 //                Let's check it to write test. (b/4509250)
 class HTTPClientMock : public HTTPClientInterface {
  public:
-  HTTPClientMock() : failure_mode_(false) {}
+  HTTPClientMock() : failure_mode_(false), execution_time_(0) {}
 
   bool Get(const string &url, string *output) const;
   bool Head(const string &url, string *output) const;
@@ -111,6 +111,10 @@ class HTTPClientMock : public HTTPClientInterface {
     option_ = option;
   }
 
+  void set_execution_time(int execution_time) {
+    execution_time_ = execution_time;
+  }
+
  private:
   bool DoRequest(const string &url, const bool check_data,
                     const string &data, const bool check_option,
@@ -122,6 +126,7 @@ class HTTPClientMock : public HTTPClientInterface {
 
   bool failure_mode_;
   Result result_;
+  int execution_time_;
   HTTPClient::Option option_;
 };
 

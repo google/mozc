@@ -33,7 +33,9 @@
 #include <sstream>
 #include "base/base.h"
 #include "base/util.h"
+#include "converter/converter.h"
 #include "converter/converter_interface.h"
+#include "converter/immutable_converter.h"
 #include "converter/lattice.h"
 #include "converter/segments.h"
 #include "session/commands.pb.h"
@@ -159,8 +161,12 @@ int main(int argc, char **argv) {
   }
 
 
-  mozc::ConverterInterface *converter
-      = mozc::ConverterFactory::GetConverter();
+  scoped_ptr<mozc::ImmutableConverterImpl> immutable_converter(
+      new mozc::ImmutableConverterImpl);
+  mozc::ImmutableConverterFactory::SetImmutableConverter(
+      immutable_converter.get());
+  scoped_ptr<mozc::ConverterImpl> converter_impl(new mozc::ConverterImpl);
+  mozc::ConverterInterface *converter = converter_impl.get();
   CHECK(converter);
 
   mozc::Segments segments;

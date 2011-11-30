@@ -32,7 +32,8 @@
 
 #include "base/base.h"
 #include "base/mmap.h"
-
+#include "gui/character_pad/hand_writing_thread.h"
+#include "handwriting/handwriting_manager.h"
 
 #include <QtGui/QWidget>
 #include <QtCore/QVector>
@@ -40,11 +41,6 @@
 
 class QMouseEvent;
 class QListWidget;
-
-namespace zinnia {
-class Recognizer;
-class Character;
-};
 
 namespace mozc {
 namespace gui {
@@ -65,6 +61,7 @@ class HandWritingCanvas : public QWidget {
  public slots:
   void clear();
   void revert();
+  void listUpdated();
 
  protected:
   void paintEvent(QPaintEvent *event);
@@ -74,18 +71,17 @@ class HandWritingCanvas : public QWidget {
 
  private:
   void recognize();
-  QVector<QVector<QPair<float, float> > > strokes_;
-  scoped_ptr<zinnia::Recognizer> recognizer_;
-  scoped_ptr<zinnia::Character> character_;
-  scoped_ptr<Mmap<char> > mmap_;
+  handwriting::Strokes strokes_;
   QListWidget *list_widget_;
   bool is_drawing_;
+  HandWritingThread recognizer_thread_;
 
  signals:
+  void startRecognition();
   void canvasUpdated();
 };
-}   // namespace gui
-}   // namespace mozc
+}  // namespace gui
+}  // namespace mozc
 
 using mozc::gui::HandWritingCanvas;
 

@@ -86,8 +86,9 @@ Node *SuffixDictionary::LookupPredictive(
 }
 
 // SuffixDictionary doesn't support Prefix/Revese Lookup.
-Node *SuffixDictionary::LookupPrefix(
+Node *SuffixDictionary::LookupPrefixWithLimit(
     const char *str, int size,
+    const Limit &limit,
     NodeAllocatorInterface *allocator) const {
   return NULL;
 }

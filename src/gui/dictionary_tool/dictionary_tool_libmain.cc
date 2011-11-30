@@ -35,6 +35,8 @@
 #include "gui/base/locale_util.h"
 #include "gui/base/singleton_window_helper.h"
 #include "gui/dictionary_tool/dictionary_tool.h"
+#include "languages/global_language_spec.h"
+#include "languages/japanese/lang_dep_spec.h"
 
 int RunDictionaryTool(int argc, char *argv[]) {
   Q_INIT_RESOURCE(qrc_dictionary_tool);
@@ -48,6 +50,9 @@ int RunDictionaryTool(int argc, char *argv[]) {
     window_helper.ActivatePreviousWindow();
     return -1;
   }
+
+  mozc::japanese::LangDepSpecJapanese spec;
+  mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(&spec);
 
   mozc::gui::LocaleUtil::InstallTranslationMessageAndFont("dictionary_tool");
   mozc::gui::DictionaryTool window;

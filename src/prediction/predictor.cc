@@ -36,45 +36,12 @@
 #include "converter/segments.h"
 #include "session/commands.pb.h"
 #include "prediction/dictionary_predictor.h"
-#include "prediction/predictor_interface.h"
+#include "prediction/predictor.h"
 #include "prediction/user_history_predictor.h"
 
 namespace mozc {
 namespace {
 const int kPredictionSize = 100;
-
-
-class BasePredictor : public PredictorInterface {
- public:
-  BasePredictor();
-  virtual ~BasePredictor();
-
-  // Overwrite predictor
-  virtual bool Predict(Segments *segments) const = 0;
-
-  // Hook(s) for all mutable operations
-  virtual void Finish(Segments *segments);
-
-  // Revert the last Finish operation
-  virtual void Revert(Segments *segments);
-
-  // clear all history data of UserHistoryPredictor
-  virtual bool ClearAllHistory();
-
-  // clear unused history data of UserHistoryPredictor
-  virtual bool ClearUnusedHistory();
-
-  // Sync user history
-  virtual bool Sync();
-
-  // Reload usre history
-  virtual bool Reload();
-};
-
-class DefaultPredictor : public BasePredictor {
- public:
-  virtual bool Predict(Segments *segments) const;
-};
 
 
 size_t GetCandidatesSize(const Segments &segments) {
@@ -84,6 +51,13 @@ size_t GetCandidatesSize(const Segments &segments) {
   }
   return segments.conversion_segment(0).candidates_size();
 }
+
+PredictorInterface *g_predictor = NULL;
+PredictorInterface *g_user_history_predictor = NULL;
+PredictorInterface *g_dictionary_predictor = NULL;
+
+
+}  // namespace
 
 BasePredictor::BasePredictor() {}
 
@@ -103,9 +77,8 @@ void BasePredictor::Finish(Segments *segments) {
   }
   // update the key as the original key only contains
   // the 'prefix'.
-  // TODO(taku): Ideally, we don't need to set Segment::key(), since
-  // Segment::key() stores the request key.
-  // Here we keep the original code not to break backward compatibility.
+  // note that candidate key may be different from request key (=segment key)
+  // due to suggestion/prediction.
   segment->set_key(segment->candidate(0).key);
 }
 
@@ -147,6 +120,15 @@ bool BasePredictor::Reload() {
 }
 
 bool DefaultPredictor::Predict(Segments *segments) const {
+  DCHECK(segments->request_type() == Segments::PREDICTION ||
+         segments->request_type() == Segments::SUGGESTION ||
+         segments->request_type() == Segments::PARTIAL_PREDICTION ||
+         segments->request_type() == Segments::PARTIAL_SUGGESTION);
+
+  if (GET_CONFIG(presentation_mode)) {
+    return false;
+  }
+
   int size = kPredictionSize;
   if (segments->request_type() == Segments::SUGGESTION) {
     size = min(9, max(1, static_cast<int>(GET_CONFIG(suggestions_size))));
@@ -180,12 +162,6 @@ bool DefaultPredictor::Predict(Segments *segments) const {
   return result;
 }
 
-
-PredictorInterface *g_predictor = NULL;
-PredictorInterface *g_user_history_predictor = NULL;
-PredictorInterface *g_dictionary_predictor = NULL;
-
-}  // namespace
 
 #define GET_PREDICTOR(PredictorClass, predictor_instance) do { \
   if (predictor_instance == NULL) { \

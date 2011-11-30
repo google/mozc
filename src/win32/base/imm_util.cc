@@ -30,7 +30,8 @@
 #include "win32/base/imm_util.h"
 
 #include <windows.h>
-#include <atlbase.h>
+// Workaround against KB813540
+#include <atlbase_mozc.h>
 #include <atlstr.h>
 #include <imm.h>
 #include <strsafe.h>

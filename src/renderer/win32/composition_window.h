@@ -33,7 +33,7 @@
 #include <vector>
 
 #include "base/base.h"
-#include "renderer/coordinates.h"
+#include "base/coordinates.h"
 #include "renderer/win32/win32_renderer_util.h"
 
 namespace WTL {

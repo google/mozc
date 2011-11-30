@@ -33,9 +33,9 @@
 #define _WTL_NO_AUTOMATIC_NAMESPACE
 
 #include "base/base.h"
+#include "base/coordinates.h"
 #include "base/singleton.h"
 #include "base/util.h"
-#include "renderer/coordinates.h"
 #include "renderer/renderer_interface.h"
 #include "renderer/window_util.h"
 #include "renderer/win32/candidate_window.h"
@@ -50,6 +50,7 @@ namespace win32 {
 using WTL::CPoint;
 using WTL::CRect;
 namespace {
+const int kHideWindowDelay = 500;  // msec
 const POINT kInvalidMousePosition = {-65535, -65535};
 
 CRect GetPreeditRect(const commands::RendererCommand &command) {
@@ -268,11 +269,12 @@ void WindowManager::UpdateLayout(
   }
   const Size main_window_size = main_window_->GetLayoutSize();
 
-  const Point target_point(candidate_layout.position());
+  const Point target_point(candidate_layout.position().x,
+                           candidate_layout.position().y);
 
   // Obtain the monitor's working area
   const HMONITOR monitor = ::MonitorFromPoint(
-      target_point.ToCPoint(), MONITOR_DEFAULTTONEAREST);
+      CPoint(target_point.x, target_point.y), MONITOR_DEFAULTTONEAREST);
 
   Rect working_area;
   MONITORINFO monitor_info = {0};
@@ -282,7 +284,8 @@ void WindowManager::UpdateLayout(
     working_area.size.height = 0;
     working_area.size.width = 0;
   } else {
-    working_area = Rect(monitor_info.rcWork);
+    const CRect area(monitor_info.rcWork);
+    working_area = Rect(area.left, area.top, area.Width(), area.Height());
   }
 
   // We prefer the left position of candidate strings is aligned to
@@ -292,10 +295,10 @@ void WindowManager::UpdateLayout(
 
   Rect main_window_rect;
   if (candidate_layout.has_exclude_region()) {
-    Point target_point(candidate_layout.position());
     // Equating |exclusion_area| with |preedit_rect| generally works well and
     // makes most of users happy.
-    const Rect preedit_rect(candidate_layout.exclude_region());
+    const CRect rect(candidate_layout.exclude_region());
+    const Rect preedit_rect(rect.left, rect.top, rect.Width(), rect.Height());
     const bool vertical = (LayoutManager::GetWritingDirection(app_info) ==
                            LayoutManager::VERTICAL_WRITING);
     // Sometimes |target_point| is set to the top-left of the exclusion area
@@ -304,12 +307,13 @@ void WindowManager::UpdateLayout(
     // |target_point|.
     // TODO(yukawa): Fix WindowUtil to support this case.
     // TODO(yukawa): Add more unit tests.
+    Point new_target_point = target_point;
     if (!vertical) {
-      target_point.y = preedit_rect.Bottom();
+      new_target_point.y = preedit_rect.Bottom();
     }
     main_window_rect =
         WindowUtil::GetWindowRectForMainWindowFromTargetPointAndPreedit(
-            target_point, preedit_rect, main_window_size,
+            new_target_point, preedit_rect, main_window_size,
             main_window_zero_point, working_area, vertical);
   } else {
     main_window_rect =
@@ -351,7 +355,7 @@ void WindowManager::UpdateLayout(
     }
 
     // Align infolist window
-    const renderer::Rect infolist_rect =
+    const Rect infolist_rect =
         WindowUtil::GetWindowRectForInfolistWindow(
             infolist_window_->GetLayoutSize(),
             main_window_rect, working_area);
@@ -367,12 +371,14 @@ void WindowManager::UpdateLayout(
         candidates.focused_index() - candidates.candidate(0).index();
       if (candidates.candidate_size() >= focused_row &&
           candidates.candidate(focused_row).has_information_id()) {
-        infolist_window_->DelayShow(500);
+        const int32 delay =
+            max(0, command.output().candidates().usages().delay());
+        infolist_window_->DelayShow(delay);
       } else {
-        infolist_window_->DelayHide(500);
+        infolist_window_->DelayHide(kHideWindowDelay);
       }
     } else {
-      infolist_window_->DelayHide(500);
+      infolist_window_->DelayHide(kHideWindowDelay);
     }
   } else {
     // Hide infolist window immediately.
@@ -444,6 +450,7 @@ void WindowManager::SetSendCommandInterface(
     client::SendCommandInterface *send_command_interface) {
   main_window_->SetSendCommandInterface(send_command_interface);
   cascading_window_->SetSendCommandInterface(send_command_interface);
+  infolist_window_->SetSendCommandInterface(send_command_interface);
 }
 
 void WindowManager::PreTranslateMessage(const MSG &message) {

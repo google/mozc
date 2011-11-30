@@ -37,6 +37,7 @@
 
 #include <climits>
 #include <string>
+
 #include "base/init.h"
 #include "base/util.h"
 
@@ -54,11 +55,11 @@ namespace {
 #ifdef OS_WINDOWS
 string GetProgramPath() {
   wchar_t w_path[MAX_PATH];
-  const DWORD char_size = GetModuleFileNameW(NULL, w_path, ARRAYSIZE(w_path));
+  const DWORD char_size = GetModuleFileNameW(NULL, w_path, arraysize(w_path));
   if (char_size == 0) {
     LOG(ERROR) << "GetModuleFileNameW failed.  error = " << ::GetLastError();
     return "";
-  } else if (char_size == ARRAYSIZE(w_path)) {
+  } else if (char_size >= arraysize(w_path)) {
     LOG(ERROR) << "The result of GetModuleFileNameW was truncated.";
     return "";
   }
@@ -68,9 +69,22 @@ string GetProgramPath() {
 }
 
 string GetTestSrcdir() {
-  // Return program path in default.
-  // TODO(toshiyuki) : Make it to be configured in build stage
-  return GetProgramPath();
+  // Hack: Gyp does not support escaping strings (i.e. '\\' to '\\\\') while
+  // Gyp normalizes path separators from '/' to '\\' for Windows, so we have
+  // a trouble that, if MOZC_DATA_DIR is defined as "a:\r\n", backslashes are
+  // not treated as path separators and they are treated as escape sequences
+  // (carriage return and new line).
+  // Thus we need a little hack.  First, escape all characters in MOZC_DATA_DIR
+  // with AS_STRING ("a:\r\n" -> "\"a:\\r\\n\""), and then remove unwanted
+  // double-quotes at both ends.
+  string srcdir = AS_STRING(MOZC_DATA_DIR);
+  CHECK(srcdir.length() > 2 &&
+        srcdir[0] == '\"' &&
+        srcdir[srcdir.length() - 1] == '\"');
+  srcdir = srcdir.substr(1, srcdir.length() - 2);
+
+  CHECK(Util::DirectoryExists(srcdir)) << srcdir << " is not a directory.";
+  return srcdir;
 }
 
 string GetTestTmpdir() {
@@ -100,13 +114,12 @@ string GetProgramPath() {
 }
 
 string GetTestSrcdir() {
-  // Use runfiles directory from program filename
   const string srcdir = MOZC_DATA_DIR;
 
   // FIXME(komatsu): We should implement "genrule" and "exports_files"
   // in build.py to install the data files into srcdir.
   CHECK_EQ(access(srcdir.c_str(), R_OK|X_OK), 0)
-    << "Access failure: " << srcdir;
+      << "Access failure: " << srcdir;
   return srcdir;
 }
 

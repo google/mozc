@@ -561,6 +561,10 @@ void IPCClient::Init(const string &name, const string &server_path) {
     if (!::WaitNamedPipe(wserver_address.c_str(),
                          kNamedPipeTimeout)) {
       LOG(ERROR) << "WaitNamedPipe failed: " << ::GetLastError();
+      if ((trial + 1) == kMaxTrial) {
+        last_ipc_error_ = IPC_TIMEOUT_ERROR;
+        return;
+      }
       continue;   // go 2nd trial
     }
   }

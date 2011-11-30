@@ -123,6 +123,7 @@ class CandidateList {
   const Candidate &candidate(size_t index) const;
   int focused_id() const;
   size_t focused_index() const;
+  int next_available_id() const;
   void GetPageRange(size_t index, size_t *cand_begin, size_t *cand_end) const;
 
   bool focused() const;
@@ -157,6 +158,7 @@ class CandidateList {
   string name_;
   scoped_ptr<ObjectPool<Candidate> > candidate_pool_;
   scoped_ptr<vector<Candidate *> > candidates_;
+  int next_available_id_;
 
   // Map marking added candidate values.  The keys are fingerprints of
   // the candidate values, the values of the map are candidate ids.

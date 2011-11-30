@@ -41,6 +41,7 @@
         'connector_test.cc',
         'converter_mock_test.cc',
         'converter_test.cc',
+        'immutable_converter_test.cc',
         'key_corrector_test.cc',
         'lattice_test.cc',
         'segmenter_test.cc',

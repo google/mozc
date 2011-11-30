@@ -38,10 +38,7 @@
 #include "base/process.h"
 #include "base/run_level.h"
 #include "base/util.h"
-#include "dictionary/user_dictionary_importer.h"
-#include "dictionary/user_dictionary_storage.h"
-#include "dictionary/user_dictionary_util.h"
-#include "gui/base/win_util.h"
+#include "gui/base/setup_util.h"
 #include "usage_stats/usage_stats.h"
 
 #ifdef OS_WINDOWS
@@ -51,11 +48,8 @@
 
 namespace mozc {
 namespace gui {
-
 PostInstallDialog::PostInstallDialog()
-    : storage_(
-          new UserDictionaryStorage(
-              UserDictionaryUtil::GetUserDictionaryFileName())) {
+    : setuputil_(new SetupUtil()) {
   setupUi(this);
   setWindowFlags(Qt::WindowSystemMenuHint |
                  Qt::MSWindowsFixedSizeDialogHint |
@@ -137,7 +131,8 @@ PostInstallDialog::PostInstallDialog()
   }
 
   // set the default state of migrateDefaultIMEUserDictionaryCheckBox
-  const bool status = (!RunLevel::IsElevatedByUAC() && storage_->Lock());
+  const bool status = (!RunLevel::IsElevatedByUAC() &&
+                       setuputil_->LockUserDictionary());
   migrateDefaultIMEUserDictionaryCheckBox->setVisible(status);
 
   // import MS-IME by default
@@ -201,67 +196,19 @@ void PostInstallDialog::reject() {
 
 void PostInstallDialog::ApplySettings() {
 #ifdef OS_WINDOWS
+  uint32 flags = SetupUtil::NONE;
   if (setAsDefaultCheckBox->isChecked()) {
-    usage_stats::UsageStats::IncrementCount("PostInstallSetDefault");
-    win32::ImeUtil::SetDefault();
-  } else {
-    usage_stats::UsageStats::IncrementCount("PostInstallNotSetDefault");
+    flags |= SetupUtil::IME_DEFAULT;
   }
-
-  if (IMEHotKeyDisabledCheckBox->isEnabled()) {
-    if (!WinUtil::SetIMEHotKeyDisabled(
-            IMEHotKeyDisabledCheckBox->isChecked())) {
-      LOG(ERROR) << "Failed to set IMEHotKey";
-    }
+  if (IMEHotKeyDisabledCheckBox->isEnabled() &&
+      IMEHotKeyDisabledCheckBox->isChecked()) {
+    flags |= SetupUtil::DISABLE_HOTKEY;
   }
-
   if (migrateDefaultIMEUserDictionaryCheckBox->isChecked() &&
       migrateDefaultIMEUserDictionaryCheckBox->isVisible()) {
-    storage_->Load();
-    // create UserDictionary if the current user dictionary is empty
-    if (!storage_->Exists()) {
-      const QString name = tr("User Dictionary 1");
-      uint64 dic_id = 0;
-      if (!storage_->CreateDictionary(name.toStdString(),
-                                      &dic_id)) {
-        LOG(ERROR) << "Failed to create a new dictionary.";
-        return;
-      }
-    }
-
-    // Import MS-IME's dictionary to an unique dictionary labeled
-    // as "MS-IME"
-    uint64 dic_id = 0;
-    const QString name = tr("MS-IME User Dictionary");
-    for (size_t i = 0; i < storage_->dictionaries_size(); ++i) {
-      if (storage_->dictionaries(i).name() == name.toStdString()) {
-        dic_id = storage_->dictionaries(i).id();
-        break;
-      }
-    }
-
-    if (dic_id == 0) {
-      if (!storage_->CreateDictionary(name.toStdString(),
-                                      &dic_id)) {
-        LOG(ERROR) << "Failed to create a new dictionary.";
-        return;
-      }
-    }
-
-    UserDictionaryStorage::UserDictionary *dic =
-        storage_->GetUserDictionary(dic_id);
-    if (dic == NULL) {
-      LOG(ERROR) << "GetUserDictionary returned NULL";
-      return;
-    }
-
-    if (UserDictionaryImporter::ImportFromMSIME(dic) !=
-        UserDictionaryImporter::IMPORT_NO_ERROR) {
-      LOG(ERROR) << "ImportFromMSIME failed";
-    }
-
-    storage_->Save();
+    flags |= SetupUtil::IMPORT_MSIME_DICTIONARY;
   }
+  setuputil_->SetDefaultProperty(flags);
 #else
   // not supported on Mac and Linux
 #endif  // OS_WINDOWS

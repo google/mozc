@@ -89,29 +89,29 @@ bool GenerateKeySequenceFrom(const string& hiragana_sentence,
   const char* end = begin + input.size();
   while (begin < end) {
     size_t mblen = 0;
-    const uint16 ucs2 = Util::UTF8ToUCS2(begin, end, &mblen);
+    const char32 ucs4 = Util::UTF8ToUCS4(begin, end, &mblen);
     CHECK_GT(mblen, 0);
     begin += mblen;
 
-    // TODO(noriyukit) Improve key sequence generation; currently, a few ucs2
+    // TODO(noriyukit) Improve key sequence generation; currently, a few ucs4
     // codes, like FF5E and 300E, cannot be handled.
     commands::KeyEvent key;
-    if (ucs2 >= 0x20 && ucs2 <= 0x7F) {
-      key.set_key_code(ucs2);
-    } else if (ucs2 == 0x3001 || ucs2 == 0xFF64) {
+    if (ucs4 >= 0x20 && ucs4 <= 0x7F) {
+      key.set_key_code(static_cast<int>(ucs4));
+    } else if (ucs4 == 0x3001 || ucs4 == 0xFF64) {
       key.set_key_code(0x002C);  // Full-width comma -> Half-width comma
-    } else if (ucs2 == 0x3002 || ucs2 == 0xFF0E || ucs2 == 0xFF61) {
+    } else if (ucs4 == 0x3002 || ucs4 == 0xFF0E || ucs4 == 0xFF61) {
       key.set_key_code(0x002E);  // Full-width period -> Half-width period
-    } else if (ucs2 == 0x2212 || ucs2 == 0x2015) {
+    } else if (ucs4 == 0x2212 || ucs4 == 0x2015) {
       key.set_key_code(0x002D);  // "−" -> "-"
-    } else if (ucs2 == 0x300C || ucs2 == 0xff62) {
+    } else if (ucs4 == 0x300C || ucs4 == 0xff62) {
       key.set_key_code(0x005B);  // "「" -> "["
-    } else if (ucs2 == 0x300D || ucs2 == 0xff63) {
+    } else if (ucs4 == 0x300D || ucs4 == 0xff63) {
       key.set_key_code(0x005D);  // "」" -> "]"
-    } else if (ucs2 == 0x30FB || ucs2 == 0xFF65) {
+    } else if (ucs4 == 0x30FB || ucs4 == 0xFF65) {
       key.set_key_code(0x002F);  // "・" -> "/"  "･" -> "/"
     } else {
-      LOG(WARNING) << "Unexpected character: " << hex << ucs2
+      LOG(WARNING) << "Unexpected character: " << hex << ucs4
                    << ": in " << input << " (" << hiragana_sentence << ")";
       return false;
     }

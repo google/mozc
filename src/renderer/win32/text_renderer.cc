@@ -35,6 +35,7 @@
 namespace mozc {
 namespace renderer {
 namespace win32 {
+
 using WTL::CLogFont;
 using WTL::CPoint;
 using WTL::CRect;
@@ -43,6 +44,7 @@ using mozc::renderer::RendererStyle;
 using mozc::renderer::RendererStyleHandler;
 
 namespace {
+
 // Font color scheme
 const COLORREF kShortcutColor = RGB(0x61, 0x61, 0x61);
 const COLORREF kDefaultColor = RGB(0x00, 0x00, 0x00);
@@ -50,6 +52,7 @@ const COLORREF kDescriptionColor = RGB(0x88, 0x88, 0x88);
 const COLORREF kFooterIndexColor = RGB(0x4c, 0x4c, 0x4c);
 const COLORREF kFooterLabelColor = RGB(0x4c, 0x4c, 0x4c);
 const COLORREF kFooterSubLabelColor = RGB(0xA7, 0xA7, 0xA7);
+
 }  // anonymous namespace
 
 struct FontInfo {
@@ -176,21 +179,22 @@ Size TextRenderer::MeasureString(
   CRect rect;
   mem_dc_.DrawTextW(str.c_str(), str.length(), &rect,
                     DT_NOPREFIX | DT_LEFT | DT_SINGLELINE | DT_CALCRECT);
-  return Size(rect.Size());
+  return Size(rect.Width(), rect.Height());
 }
+
 Size TextRenderer::MeasureStringMultiLine(
     FONT_TYPE font_type, const wstring &str, const int width) const {
   mem_dc_.SelectFont(GetFont(font_type));
   CRect rect(0, 0, width, 0);
   mem_dc_.DrawTextW(str.c_str(), str.length(), &rect,
       DT_NOPREFIX | DT_LEFT | DT_WORDBREAK | DT_CALCRECT);
-  return Size(rect.Size());
+  return Size(rect.Width(), rect.Height());
 }
 
 void TextRenderer::RenderText(CDCHandle dc, const wstring &text,
                               const Rect &rect, FONT_TYPE font_type) const {
   CFontHandle old_font = dc.SelectFont(GetFont(font_type));
-  CRect temp_rect = rect.ToCRect();
+  CRect temp_rect(rect.Left(), rect.Top(), rect.Right(), rect.Bottom());
   const COLORREF previous_color = dc.SetTextColor(GetFontColor(font_type));
   dc.DrawTextW(text.c_str(), text.size(), &temp_rect,
                GetFontStyle(font_type));
@@ -207,7 +211,8 @@ void TextRenderer::RenderText(CDCHandle dc,
   for (vector<TextRenderingInfo>::const_iterator i = display_list.begin();
        i != display_list.end(); ++i) {
     const TextRenderingInfo &rendering_info = *i;
-    CRect temp_rect = rendering_info.rect.ToCRect();
+    CRect temp_rect(rendering_info.rect.Left(), rendering_info.rect.Top(),
+                    rendering_info.rect.Right(), rendering_info.rect.Bottom());
     const wstring &text = rendering_info.text;
     dc.DrawTextW(text.c_str(), text.size(), &temp_rect,
                  GetFontStyle(font_type));
@@ -215,6 +220,7 @@ void TextRenderer::RenderText(CDCHandle dc,
   dc.SetTextColor(previous_color);
   dc.SelectFont(old_font);
 }
+
 }  // namespace win32
 }  // namespace renderer
 }  // namespace mozc

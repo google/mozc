@@ -30,6 +30,7 @@
 #include "unix/scim/imengine_factory.h"
 
 #include "base/logging.h"
+#include "languages/global_language_spec.h"
 #include "unix/scim/scim_mozc.h"
 
 #ifndef SCIM_MOZC_ICON_FILE
@@ -51,9 +52,12 @@ namespace mozc_unix_scim {
 IMEngineFactory::IMEngineFactory(const scim::ConfigPointer *config)
     : config_(config) {
   set_languages(kLanguage);
+  mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(
+      &language_dependency_spec_japanese_);
 }
 
 IMEngineFactory::~IMEngineFactory() {
+  mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(NULL);
 }
 
 // Implements scim::IMEngineFactoryBase::get_name().

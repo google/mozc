@@ -50,7 +50,7 @@ namespace {
 // Since the font of WAVE-DASH is ugly on Windows, here we convert WAVE-DHASH to
 // FULL_WIDTH_TILDA as CP932 does.
 #ifdef OS_WINDOWS
-inline uint16 ConvertVenderSpecificCharacter(uint16 c) {
+inline char32 ConvertVenderSpecificCharacter(char32 c) {
   switch (c) {
     case 0x00A5:   // YEN SIGN
       return 0x005C;   // REVERSE SOLIDUS
@@ -83,7 +83,7 @@ inline uint16 ConvertVenderSpecificCharacter(uint16 c) {
 }
 
 #else   // MAC & Linux
-inline uint16 ConvertVenderSpecificCharacter(uint16 c) {
+inline char32 ConvertVenderSpecificCharacter(char32 c) {
   return c;
 }
 #endif
@@ -94,12 +94,12 @@ void ConvertVenderSpecificString(const string &input, string *output) {
   output->clear();
   while (begin < end) {
     size_t mblen = 0;
-    const uint16 ucs2 = Util::UTF8ToUCS2(begin, end, &mblen);
-    const uint16 new_ucs2 = ConvertVenderSpecificCharacter(ucs2);
-    if (new_ucs2 == ucs2) {  // the same code point
+    const char32 ucs4 = Util::UTF8ToUCS4(begin, end, &mblen);
+    const char32 new_ucs4 = ConvertVenderSpecificCharacter(ucs4);
+    if (new_ucs4 == ucs4) {  // the same code point
       output->append(begin, mblen);
     } else {
-      Util::UCS2ToUTF8Append(new_ucs2, output);
+      Util::UCS4ToUTF8Append(new_ucs4, output);
     }
     begin += mblen;
   }

@@ -31,6 +31,8 @@
 
 #include "base/base.h"
 #include "base/scheduler.h"
+#include "languages/global_language_spec.h"
+#include "languages/japanese/lang_dep_spec.h"
 #include "session/session_server.h"
 #include "testing/base/public/gunit.h"
 
@@ -52,7 +54,27 @@ class JobRecorder : public mozc::Scheduler::SchedulerInterface {
 };
 }  // namespace
 
-TEST(SessionServerTest, SetSchedulerJobTest) {
+class SessionServerTest : public testing::Test {
+ protected:
+  SessionServerTest() {}
+  virtual ~SessionServerTest() {}
+
+  virtual void SetUp() {
+    mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(
+        &language_dependency_spec_japanese_);
+  }
+
+  virtual void TearDown() {
+    mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(NULL);
+  }
+
+ private:
+  // We need to set a LangDepSpecJapanese to GlobalLanguageSpec on start up for
+  // testing, and the actual instance does not have to be LangDepSpecJapanese.
+  mozc::japanese::LangDepSpecJapanese language_dependency_spec_japanese_;
+};
+
+TEST_F(SessionServerTest, SetSchedulerJobTest) {
   scoped_ptr<JobRecorder> job_recorder(new JobRecorder);
   mozc::Scheduler::SetSchedulerHandler(job_recorder.get());
   scoped_ptr<mozc::SessionServer> session_server(new mozc::SessionServer);

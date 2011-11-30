@@ -87,6 +87,7 @@
       ],
       'dependencies': [
         '../ipc/ipc.gyp:ipc_test_util',
+        '../languages/japanese/japanese.gyp:language_dependent_spec_japanese',
         '../testing/testing.gyp:gtest_main',
         'renderer',
         'table_layout',

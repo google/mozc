@@ -36,8 +36,10 @@
 #endif
 
 #include <algorithm>
+#include <sstream>
 #include <stdlib.h>
 #include <QtGui/QMessageBox>
+#include "base/config_file_stream.h"
 #include "base/const.h"
 #include "base/util.h"
 #include "base/run_level.h"
@@ -49,13 +51,10 @@
 #include "gui/base/win_util.h"
 #include "ipc/ipc.h"
 #include "session/commands.pb.h"
+#include "session/internal/keymap.h"
 #include "client/client.h"
 
 namespace mozc {
-
-namespace {
-static const char kServerName[] = "session";
-}  // namespace
 
 namespace gui {
 
@@ -76,10 +75,16 @@ ConfigDialog::ConfigDialog()
 
 #if defined(OS_MACOSX) || defined(OS_LINUX)
   // The last "misc" tab has no valid configs on Mac and Linux
-  const int kMiscTabIndex = 5;
+  const int kMiscTabIndex = 6;
   configDialogTabWidget->removeTab(kMiscTabIndex);
 #endif  // OS_MACOSX || OS_LINUX
 #endif  // NO_LOGGING
+
+#if !defined(GOOGLE_JAPANESE_INPUT_BUILD)
+  // Currently "Sync" feature is enabled on official build only.
+  const int kSyncTabIndex = 5;
+  configDialogTabWidget->removeTab(kSyncTabIndex);
+#endif  // !GOOGLE_JAPANESE_INPUT_BUILD
 
   client_->set_restricted(true);   // start with restricted mode
 
@@ -115,6 +120,10 @@ ConfigDialog::ConfigDialog()
   keymapSettingComboBox->addItem(tr("ATOK"));
   keymapSettingComboBox->addItem(tr("MS-IME"));
   keymapSettingComboBox->addItem(tr("Kotoeri"));
+
+  keymapname_sessionkeymap_map_[tr("ATOK")] = config::Config::ATOK;
+  keymapname_sessionkeymap_map_[tr("MS-IME")] = config::Config::MSIME;
+  keymapname_sessionkeymap_map_[tr("Kotoeri")] = config::Config::KOTOERI;
 
   inputModeComboBox->addItem(tr("Romaji"));
   inputModeComboBox->addItem(tr("Kana"));
@@ -198,15 +207,22 @@ ConfigDialog::ConfigDialog()
                    SIGNAL(currentIndexChanged(int)),
                    this,
                    SLOT(SelectInputModeSetting(int)));
-  QObject::connect(keymapSettingComboBox,
-                   SIGNAL(currentIndexChanged(int)),
-                   this,
-                   SLOT(SelectKeymapSetting(int)));
   QObject::connect(useAutoConversion,
                    SIGNAL(stateChanged(int)),
                    this,
                    SLOT(SelectAutoConversionSetting(int)));
-
+  QObject::connect(historySuggestCheckBox,
+                   SIGNAL(stateChanged(int)),
+                   this,
+                   SLOT(SelectSuggestionSetting(int)));
+  QObject::connect(dictionarySuggestCheckBox,
+                   SIGNAL(stateChanged(int)),
+                   this,
+                   SLOT(SelectSuggestionSetting(int)));
+  QObject::connect(realtimeConversionCheckBox,
+                   SIGNAL(stateChanged(int)),
+                   this,
+                   SLOT(SelectSuggestionSetting(int)));
   QObject::connect(launchAdministrationDialogButton,
                    SIGNAL(clicked()),
                    this,
@@ -273,22 +289,8 @@ ConfigDialog::ConfigDialog()
   usageStatsCheckBox->setVisible(false);
 #endif // OS_LINUX
 
-  config::Config config;
-  if (!GetConfig(&config)) {
-    QMessageBox::critical(this,
-                          tr("Mozc settings"),
-                          tr("Failed to get current config values"));
-  }
-  ConvertFromProto(config);
 
-  SelectAutoConversionSetting(static_cast<int>(config.use_auto_conversion()));
-
-  initial_preedit_method_ = static_cast<int>(config.preedit_method());
-  initial_use_keyboard_to_change_preedit_method_ =
-      config.use_keyboard_to_change_preedit_method();
-
-  // If the keymap is a custome keymap (= 0), the buttion is activated.
-  editKeymapButton->setEnabled(keymapSettingComboBox->currentIndex() == 0);
+  Reload();
 
 #ifdef OS_WINDOWS
   IMEHotKeyDisabledCheckBox->setChecked(WinUtil::GetIMEHotKeyDisabled());
@@ -328,6 +330,22 @@ bool ConfigDialog::GetConfig(config::Config *config) {
   }
 
   return true;
+}
+
+void ConfigDialog::Reload() {
+  config::Config config;
+  if (!GetConfig(&config)) {
+    QMessageBox::critical(this,
+                          tr("Mozc settings"),
+                          tr("Failed to get current config values"));
+  }
+  ConvertFromProto(config);
+
+  SelectAutoConversionSetting(static_cast<int>(config.use_auto_conversion()));
+
+  initial_preedit_method_ = static_cast<int>(config.preedit_method());
+  initial_use_keyboard_to_change_preedit_method_ =
+      config.use_keyboard_to_change_preedit_method();
 }
 
 bool ConfigDialog::Update() {
@@ -511,6 +529,7 @@ void ConfigDialog::ConvertFromProto(const config::Config &config) {
   // tab5
   SetSendStatsCheckBox();
   SET_CHECKBOX(incognitoModeCheckBox, incognito_mode);
+  SET_CHECKBOX(presentationModeCheckBox, presentation_mode);
 
   // tab6
   SET_COMBOBOX(verboseLevelComboBox, int, verbose_level);
@@ -595,6 +614,7 @@ void ConfigDialog::ConvertToProto(config::Config *config) const {
   // tab5
   GetSendStatsCheckBox();
   GET_CHECKBOX(incognitoModeCheckBox, incognito_mode);
+  GET_CHECKBOX(presentationModeCheckBox, presentation_mode);
 
   // tab6
   config->set_verbose_level(verboseLevelComboBox->currentIndex());
@@ -669,7 +689,7 @@ void ConfigDialog::ClearUserPrediction() {
         this,
         tr("Mozc settings"),
         tr("Mozc Converter is not running. "
-           "Settings were not saved"));
+           "Settings were not saved."));
   }
 }
 
@@ -691,7 +711,7 @@ void ConfigDialog::ClearUnusedUserPrediction() {
         this,
         tr("Mozc settings"),
         tr("Mozc Converter is not running. "
-           "operation was not executed"));
+           "Operation was not executed."));
   }
 }
 
@@ -700,11 +720,30 @@ void ConfigDialog::EditUserDictionary() {
 }
 
 void ConfigDialog::EditKeymap() {
+  string current_keymap_table = "";
+  const QString keymap_name = keymapSettingComboBox->currentText();
+  const map<QString, config::Config::SessionKeymap>::const_iterator itr =
+      keymapname_sessionkeymap_map_.find(keymap_name);
+  if (itr != keymapname_sessionkeymap_map_.end()) {
+    // Load from predefined mapping file.
+    const char *keymap_file =
+        keymap::KeyMapManager::GetKeyMapFileName(itr->second);
+    scoped_ptr<istream> ifs(
+        ConfigFileStream::Open(keymap_file));
+    CHECK(ifs.get() != NULL);  // should never happen
+    stringstream buffer;
+    buffer << ifs->rdbuf();
+    current_keymap_table = buffer.str();
+  } else {
+    current_keymap_table = custom_keymap_table_;
+  }
   string output;
   if (gui::KeyMapEditorDialog::Show(this,
-                                    custom_keymap_table_,
+                                    current_keymap_table,
                                     &output)) {
     custom_keymap_table_ = output;
+    // set keymapSettingComboBox to "Custom keymap"
+    keymapSettingComboBox->setCurrentIndex(0);
   }
 }
 
@@ -715,11 +754,6 @@ void ConfigDialog::EditRomanTable() {
                                         &output)) {
     custom_roman_table_ = output;
   }
-}
-
-void ConfigDialog::SelectKeymapSetting(int index) {
-  // enable "EDIT" button if custom is selected.
-  editKeymapButton->setEnabled((index == 0));
 }
 
 void ConfigDialog::SelectInputModeSetting(int index) {
@@ -734,6 +768,16 @@ void ConfigDialog::SelectAutoConversionSetting(int state) {
   exclamationMarkCheckBox->setEnabled(static_cast<bool>(state));
 }
 
+void ConfigDialog::SelectSuggestionSetting(int state) {
+  if (historySuggestCheckBox->isChecked() ||
+      dictionarySuggestCheckBox->isChecked() ||
+      realtimeConversionCheckBox->isChecked()) {
+    presentationModeCheckBox->setEnabled(true);
+  } else {
+    presentationModeCheckBox->setEnabled(false);
+  }
+}
+
 void ConfigDialog::ResetToDefaults() {
   if (QMessageBox::Ok ==
       QMessageBox::question(
@@ -745,6 +789,7 @@ void ConfigDialog::ResetToDefaults() {
              "The following items are not reset with this operation.\n"
              " - Personalization data\n"
              " - Input history\n"
+             " - Sync settings\n"
              " - Usage statistics and crash reports\n"
              " - Administrator settings"),
           QMessageBox::Ok | QMessageBox::Cancel,
@@ -762,6 +807,7 @@ void ConfigDialog::LaunchAdministrationDialog() {
   client_->LaunchTool("administration_dialog", "");
 #endif
 }
+
 
 // Catch MouseButtonRelease event to toggle the CheckBoxes
 bool ConfigDialog::eventFilter(QObject *obj, QEvent *event) {

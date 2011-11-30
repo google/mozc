@@ -30,6 +30,7 @@
 namespace mozc {
 namespace commands {
 class Output;
+class SessionCommand;
 }  // namespace mozc::commands
 }  // namespace mozc
 
@@ -38,21 +39,23 @@ class Output;
 // implement these methods (although there is only one method right
 // now).
 @protocol ControllerCallback
-- (void)candidateClicked:(int)id;
+- (void)sendCommand:(mozc::commands::SessionCommand &)data;
 
 // In the future, some utility tools will send the result text via
 // this method.
 - (void)outputResult:(mozc::commands::Output *)data;
 @end
 
-// RendererCallback is a protocol to send the clicked information back
-// to the UI client.  We don't use normal ipc mechanism for this
-// because our UI client process is not a server.  Rather we free-ride
-// the existing connection of normal IMKit.
+// RendererCallback is a protocol to send the clicked information and
+// usage stats event information back to the UI client.
+// We don't use normal ipc mechanism for this because our UI client
+// process is not a server.  Rather we free-ride the existing connection
+// of normal IMKit.
 @protocol ServerCallback
 // This method is called when a user clicks an item in a candidate
-// window.  The |data| contains a serialized protobuf message.
-- (void)rendererClicked:(NSData *)data;
+// window or when the renderer sends the usage stats event information.
+// The |data| contains a serialized protobuf message.
+- (void)sendData:(NSData *)data;
 
 // Register the current controller.
 - (void)setCurrentController:(id<ControllerCallback>)controller;

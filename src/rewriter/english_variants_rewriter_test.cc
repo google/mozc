@@ -202,5 +202,83 @@ TEST_F(EnglishVariantsRewriterTest, Regression3242753) {
   }
 }
 
+TEST_F(EnglishVariantsRewriterTest, Regression5137299) {
+  EnglishVariantsRewriter rewriter;
+  Segments segments;
+  Segment *seg = segments.push_back_segment();
+
+  {
+    Segment::Candidate *candidate = seg->add_candidate();
+    candidate->Init();
+    // "ぐーぐる"
+    candidate->content_key =
+        "\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90\xE3\x82\x8B";
+    candidate->key =
+        "\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90\xE3\x82\x8B";
+    candidate->value = "Google";
+    candidate->content_value = "Google";
+    candidate->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
+    EXPECT_EQ(1, seg->candidates_size());
+    EXPECT_EQ("Google", seg->candidate(0).value);
+    EXPECT_EQ("Google", seg->candidate(0).content_value);
+    EXPECT_FALSE(rewriter.Rewrite(&segments));
+    EXPECT_EQ(1, seg->candidates_size());
+  }
+
+  {
+    seg->clear_candidates();
+    Segment::Candidate *candidate = seg->add_candidate();
+    candidate->Init();
+    // "ぐーぐる"
+    candidate->content_key =
+        "\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90\xE3\x82\x8B";
+    candidate->key =
+        "\xE3\x81\x90\xE3\x83\xBC\xE3\x81\x90\xE3\x82\x8B";
+    candidate->value = "Google";
+    candidate->content_value = "Google";
+    candidate->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
+    candidate->attributes |= Segment::Candidate::USER_DICTIONARY;
+
+    EXPECT_EQ(1, seg->candidates_size());
+    EXPECT_EQ("Google", seg->candidate(0).value);
+    EXPECT_EQ("Google", seg->candidate(0).content_value);
+    EXPECT_TRUE(rewriter.Rewrite(&segments));
+    EXPECT_EQ(3, seg->candidates_size());
+    EXPECT_EQ("Google", seg->candidate(0).value);
+    EXPECT_EQ("Google", seg->candidate(0).content_value);
+    EXPECT_EQ("google", seg->candidate(1).value);
+    EXPECT_EQ("google", seg->candidate(1).content_value);
+    EXPECT_EQ("GOOGLE", seg->candidate(2).value);
+    EXPECT_EQ("GOOGLE", seg->candidate(2).content_value);
+  }
+}
+
+TEST_F(EnglishVariantsRewriterTest, ExpandEnglishEntry) {
+  // Fix variants
+  EnglishVariantsRewriter rewriter;
+  Segments segments;
+  Segment *seg = segments.push_back_segment();
+
+  {
+    Segment::Candidate *candidate = seg->add_candidate();
+    candidate->Init();
+    candidate->content_key = "google";
+    candidate->key = "google";
+    candidate->value = "Google";
+    candidate->content_value = "Google";
+    candidate->attributes &= ~Segment::Candidate::NO_VARIANTS_EXPANSION;
+
+    EXPECT_EQ(1, seg->candidates_size());
+    EXPECT_EQ("Google", seg->candidate(0).value);
+    EXPECT_EQ("Google", seg->candidate(0).content_value);
+    EXPECT_TRUE(rewriter.Rewrite(&segments));
+    EXPECT_EQ(1, seg->candidates_size());
+    EXPECT_EQ("Google", seg->candidate(0).value);
+    EXPECT_EQ("Google", seg->candidate(0).content_value);
+    EXPECT_TRUE(seg->candidate(0).attributes &
+                Segment::Candidate::NO_VARIANTS_EXPANSION);
+  }
+}
+
 
 }  // namespace mozc

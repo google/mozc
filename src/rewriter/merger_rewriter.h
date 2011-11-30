@@ -52,12 +52,22 @@ class MergerRewriter : public RewriterInterface {
     if (segments == NULL) {
       return false;
     }
-    return ((segments->request_type() == Segments::CONVERSION &&
-             (rewriter->capability() & RewriterInterface::CONVERSION)) ||
-            (segments->request_type() == Segments::PREDICTION &&
-             (rewriter->capability() & RewriterInterface::PREDICTION)) ||
-            (segments->request_type() == Segments::SUGGESTION &&
-             (rewriter->capability() & RewriterInterface::SUGGESTION)));
+    switch (segments->request_type()) {
+      case Segments::CONVERSION:
+        return (rewriter->capability() & RewriterInterface::CONVERSION);
+
+      case Segments::PREDICTION:
+      case Segments::PARTIAL_PREDICTION:
+        return (rewriter->capability() & RewriterInterface::PREDICTION);
+
+      case Segments::SUGGESTION:
+      case Segments::PARTIAL_SUGGESTION:
+        return (rewriter->capability() & RewriterInterface::SUGGESTION);
+
+      case Segments::REVERSE_CONVERSION:
+      default:
+        return false;
+    }
   }
 
   // This instance owns the rewriter.

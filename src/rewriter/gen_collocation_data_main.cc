@@ -105,15 +105,15 @@ void Convert() {
   ofs->setf(ios::showbase);             // add 0x
   int num = 0;
   while (begin < end) {
-    uint64 n = 0;
-    uint8 *buf = reinterpret_cast<uint8 *>(&n);
-    const size_t size = min(static_cast<size_t>(end - begin),
-                            static_cast<size_t>(8));
-    for (size_t i = 0; i < size; ++i) {
-      buf[i] = static_cast<uint8>(begin[i]);
+    uint64 value = 0;
+    uint8 *value_buf = reinterpret_cast<uint8 *>(&value);
+    const size_t value_size = min(static_cast<size_t>(end - begin),
+                                  static_cast<size_t>(8));
+    for (size_t i = 0; i < value_size; ++i) {
+      value_buf[i] = static_cast<uint8>(begin[i]);
     }
     begin += 8;
-    *ofs << n << ", ";
+    *ofs << value << ", ";
     if (++num % 8 == 0) {
       *ofs << endl;
     }

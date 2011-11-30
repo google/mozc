@@ -653,6 +653,45 @@ TEST_F(SessionUsageObserverTest, IMEActivationKeyNoCustomTest) {
   EXPECT_FALSE(stats.boolean_value());
 }
 
+
+TEST_F(SessionUsageObserverTest, ClientSideStatsInfolist) {
+  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
+  observer->SetInterval(1);
+  string reg_str;
+
+  // create session
+  {
+    commands::Command command;
+    command.mutable_input()->set_type(commands::Input::CREATE_SESSION);
+    command.mutable_output()->set_id(1);
+    observer->EvalCommandHandler(command);
+  }
+
+  // Add command (INFOLIST_WINDOW_SHOW)
+  commands::Command command;
+  command.mutable_input()->set_type(commands::Input::SEND_COMMAND);
+  command.mutable_input()->set_id(1);
+  command.mutable_input()->mutable_command()->set_type(
+      commands::SessionCommand::USAGE_STATS_EVENT);
+  command.mutable_input()->mutable_command()->set_usage_stats_event(
+      commands::SessionCommand::INFOLIST_WINDOW_SHOW);
+  command.mutable_output()->set_consumed(false);
+  EXPECT_TRUE(command.output().has_consumed());
+  EXPECT_FALSE(command.output().consumed());
+  EXPECT_TRUE(command.input().has_id());
+  observer->EvalCommandHandler(command);
+  EXPECT_FALSE(storage::Registry::Lookup(
+      string("usage_stats.InfolistWindowDuration"), &reg_str));
+  // Sleep 1 sec
+  mozc::Util::Sleep(1000.0);
+  // Add command (INFOLIST_WINDOW_HIDE)
+  command.mutable_input()->mutable_command()->set_usage_stats_event(
+      commands::SessionCommand::INFOLIST_WINDOW_HIDE);
+  observer->EvalCommandHandler(command);
+
+  ExpectStatsTiming("InfolistWindowDuration", 1, 1, 1, 1);
+}
+
 TEST_F(SessionUsageObserverTest, ConvertOneSegment) {
   // HANKAKU
   // a

@@ -27,83 +27,71 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef IME_MOZC_DICTIONARY_SYSTEM_SYSTEM_DICTIONARY_BUILDER_H_
-#define IME_MOZC_DICTIONARY_SYSTEM_SYSTEM_DICTIONARY_BUILDER_H_
+#ifndef MOZC_DICTIONARY_SYSTEM_SYSTEM_DICTIONARY_BUILDER_H_
+#define MOZC_DICTIONARY_SYSTEM_SYSTEM_DICTIONARY_BUILDER_H_
 
 #include <map>
 #include <string>
 #include <vector>
 
 #include "base/base.h"
-#include "base/hash_tables.h"
-
-struct rbx_builder;
+#include "dictionary/rx/rx_trie_builder.h"
+#include "dictionary/rx/rbx_array_builder.h"
+#include "dictionary/system/words_info.h"
 
 namespace mozc {
-
-class OutputFileStream;
 struct Token;
-struct RxKeyStringInfo;
-struct RxTokenInfo;
+namespace dictionary {
+class SystemDictionaryCodecInterface;
 
 class SystemDictionaryBuilder {
  public:
-  // This constructor sets input/output file names
-  SystemDictionaryBuilder(const string& input, const string& output);
+  SystemDictionaryBuilder();
   virtual ~SystemDictionaryBuilder();
 
-  // Builds actual dictionary file
-  void Build();
-  void BuildFromTokenVector(const vector<Token *>& tokens);
+  void BuildFromFile(const string &input_file);
+  void BuildFromTokens(const vector<Token *> &tokens);
 
-  // compile dictionary
-  static void Compile(const char *text_file,
-                      const char *binary_file);
+  void WriteToFile(const string &output_file) const;
 
  private:
-  bool BuildRxFile(const vector<string>& word_list, const string& fn,
-                   hash_map<string, int>* mapping);
-  // Writes an int value
-  void WriteInt(int val, OutputFileStream *ofs);
-  bool WriteTokenRx(hash_map<string, int>* mapping);
-  bool WriteIndexRx(const vector<Token *>& tokens,
-                    hash_map<string, int>* mapping);
-  void WriteFrequentPos();
-  void WriteToken(const RxKeyStringInfo &key, int n,
-                  ostream *ofs);
-  // Writes tokens
-  void WriteTokenSection();
-  void WriteTokensForKey(const RxKeyStringInfo &key, rbx_builder *rb);
-  // Generates the output dictionary file from section files
-  void ConcatFiles();
+  typedef map<string, KeyInfo> KeyInfoMap;
 
-  void BuildTokenInfo(const vector<Token *>& tokens);
-  bool BuildTokenRxMap(const hash_map<string, int>& mapping);
-  void SetIndexInTokenRx();
-  void SortTokenInfo();
-  bool BuildIndexRxMap(const vector<Token *>& tokens,
-                       const hash_map<string, int>& mapping);
-  void CollectFrequentPos(const vector<Token *>& tokens);
+  void ReadTokens(const vector<Token *>& tokens,
+                  KeyInfoMap *key_info_map) const;
 
-  // source TSV file name
-  const string input_filename_;
-  // output dictionary name
-  const string output_filename_;
+  void BuildFrequentPos(const KeyInfoMap &key_info_map);
+  void WriteFrequentPos(const string &file) const;
 
-  // mapping from a key string to Tokens.
-  map<string, RxKeyStringInfo *> key_info_;
-  // maps from token string to index in token Rx.
-  map<string, int> token_rx_map_;
+  void BuildValueTrie(const KeyInfoMap &key_info_map);
+  void WriteValueTrie(const string &file) const;
 
-  // maps from {left_id,right_id} to POS index (0~255)
+  void BuildKeyTrie(const KeyInfoMap &key_info_map);
+  void WriteKeyTrie(const string &file) const;
+
+  void BuildTokenArray(const KeyInfoMap &key_info_map);
+  void WriteTokenArray(const string &file) const;
+
+  void SetIdForValue(KeyInfoMap *key_info_map) const;
+  void SetIdForKey(KeyInfoMap *key_info_map) const;
+  void SortTokenInfo(KeyInfoMap *key_info_map) const;
+
+  void SetCostType(KeyInfoMap *key_info_map) const;
+  void SetPosType(KeyInfoMap *keyinfomap) const;
+  void SetValueType(KeyInfoMap *key_info_map) const;
+
+  scoped_ptr<rx::RxTrieBuilder> value_trie_builder_;
+  scoped_ptr<rx::RxTrieBuilder> key_trie_builder_;
+  scoped_ptr<rx::RbxArrayBuilder> token_array_builder_;
+
+  // mapping from {left_id, right_id} to POS index (0--255)
   map<uint32, int> frequent_pos_;
 
-  // file names of each section
-  string index_rx_filename_;
-  string token_rx_filename_;
-  string tokens_filename_;
-  string frequent_pos_filename_;
+  const dictionary::SystemDictionaryCodecInterface *codec_;
+
+  DISALLOW_COPY_AND_ASSIGN(SystemDictionaryBuilder);
 };
+}  // namespace dictionary
 }  // namespace mozc
 
-#endif  // IME_MOZC_DICTIONARY_SYSTEM_SYSTEM_DICTIONARY_BUILDER_H_
+#endif  // MOZC_DICTIONARY_SYSTEM_SYSTEM_DICTIONARY_BUILDER_H_

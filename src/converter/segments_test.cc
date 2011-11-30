@@ -610,22 +610,4 @@ TEST_F(SegmentTest, MetaCandidateTest) {
   segment.clear_meta_candidates();
   EXPECT_EQ(0, segment.meta_candidates_size());
 }
-
-TEST_F(SegmentTest, ExpandArabicNumber) {
-  // assume that "さんびゃく->三百" can be converted correctly;
-  mozc::Segments segments;
-  ConverterInterface *converter = ConverterFactory::GetConverter();
-  DCHECK(converter);
-  // "さんびゃく"
-  EXPECT_TRUE(converter->StartConversion(
-      &segments,
-      "\xE3\x81\x95\xE3\x82\x93\xE3\x81\xB3\xE3\x82\x83\xE3\x81\x8F"));
-  EXPECT_GT(segments.conversion_segments_size(), 0);
-  const mozc::Segment &seg = segments.conversion_segment(0);
-  EXPECT_GT(seg.candidates_size(), 2);
-  // "三百"
-  EXPECT_EQ(seg.candidate(0).value, "\xE4\xB8\x89\xE7\x99\xBE");
-  // "３００"
-  EXPECT_EQ(seg.candidate(1).value, "\xEF\xBC\x93\xEF\xBC\x90\xEF\xBC\x90");
-}
 }  // namespace

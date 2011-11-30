@@ -45,6 +45,7 @@
 
 namespace mozc {
 namespace {
+
 bool OpenEffectiveToken(const DWORD dwDesiredAccess, HANDLE *phToken) {
   HANDLE hToken = NULL;
 
@@ -155,7 +156,24 @@ bool GetTokenPrimaryGroupSidStringW(const HANDLE hToken,
 
   return false;
 }
-}   // anonymous namespace
+
+class ScopedLocalFreeInvoker {
+ public:
+  explicit ScopedLocalFreeInvoker(void *address) : address_(address) {}
+  ~ScopedLocalFreeInvoker() {
+    if (address_ != NULL) {
+      ::LocalFree(address_);
+      address_ = NULL;
+    }
+  }
+
+ private:
+  void *address_;
+
+  DISALLOW_COPY_AND_ASSIGN(ScopedLocalFreeInvoker);
+};
+
+}  // namespace
 
 Sid::Sid(const SID *sid) {
   ::CopySid(sizeof(sid_), sid_, const_cast<SID*>(sid));
@@ -350,24 +368,6 @@ bool WinSandbox::SetMandatoryLabelW(
 
   return true;
 }
-
-namespace {
-class ScopedLocalFreeInvoker {
- public:
-  explicit ScopedLocalFreeInvoker(void *address) : address_(address) {}
-  ~ScopedLocalFreeInvoker() {
-    if (address_ != NULL) {
-      ::LocalFree(address_);
-      address_ = NULL;
-    }
-  }
-
- private:
-  void *address_;
-
-  DISALLOW_COPY_AND_ASSIGN(ScopedLocalFreeInvoker);
-};
-}  // anonymous namespace
 
 bool WinSandbox::AddKnownSidToKernelObject(HANDLE object, const SID *known_sid,
                                            DWORD inhericance_flag,
@@ -729,7 +729,6 @@ class ScopedTokenInfo {
  public:
   explicit ScopedTokenInfo(HANDLE token) : initialized_(false) {
     DWORD num_bytes = 0;
-    DWORD last_error = ERROR_SUCCESS;
     ::GetTokenInformation(token, TokenClass, NULL, 0, &num_bytes);
     if (num_bytes == 0) {
       return;
@@ -1110,7 +1109,7 @@ vector<Sid> WinSandbox::GetSidsToDisable(HANDLE effective_token,
       }
       break;
     default:
-      DCHECK(false) << "unexpeced TokenLevel";
+      DLOG(FATAL) << "unexpeced TokenLevel";
       break;
   }
   return sids_to_disable;
@@ -1144,7 +1143,7 @@ vector<LUID> WinSandbox::GetPrivilegesToDisable(HANDLE effective_token,
       }
       break;
     default:
-      DCHECK(false) << "unexpeced TokenLevel";
+      DLOG(FATAL) << "unexpeced TokenLevel";
       break;
   }
   return privileges_to_disable;
@@ -1209,7 +1208,7 @@ vector<Sid> WinSandbox::GetSidsToRestrict(HANDLE effective_token,
       sids_to_restrict.push_back(Sid(WinNullSid));
       break;
     default:
-      DCHECK(false) << "unexpeced TokenLevel";
+      DLOG(FATAL) << "unexpeced TokenLevel";
       break;
   }
   return sids_to_restrict;

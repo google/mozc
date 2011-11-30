@@ -33,12 +33,20 @@
 #include "base/util.h"
 #include "converter/node.h"
 #include "converter/node_allocator.h"
-#include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
-#include "dictionary/text_dictionary_loader.h"
 #include "dictionary/system/system_dictionary_builder.h"
+#include "dictionary/text_dictionary_loader.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+
+namespace {
+// We cannot use #ifdef in DEFINE_int32.
+#ifdef _DEBUG
+const uint32 kDefaultReverseLookupTestSize = 1000;
+#else
+const uint32 kDefaultReverseLookupTestSize = 10000;
+#endif
+}  // namespace
 
 DEFINE_string(
     dictionary_source,
@@ -47,9 +55,13 @@ DEFINE_string(
 
 DEFINE_int32(dictionary_test_size, 100000,
              "Dictionary size for this test.");
+DEFINE_int32(dictionary_reverse_lookup_test_size, kDefaultReverseLookupTestSize,
+             "Number of tokens to run reverse lookup test.");
 DECLARE_string(test_srcdir);
+DECLARE_string(test_tmpdir);
 
 namespace mozc {
+namespace dictionary {
 namespace {
 
 
@@ -60,16 +72,35 @@ class SystemDictionaryTest : public testing::Test {
         dic_fn_(FLAGS_test_tmpdir + "/mozc.dic") {
     const string dic_path = Util::JoinPath(FLAGS_test_srcdir,
                                            FLAGS_dictionary_source);
-    text_dict_->OpenWithLineLimit(dic_path.c_str(),
-                                  FLAGS_dictionary_test_size);
+    CHECK(text_dict_->OpenWithLineLimit(dic_path.c_str(),
+                                        FLAGS_dictionary_test_size));
   }
+
+  virtual void SetUp() {
+    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+  }
+
   void BuildSystemDictionary(const vector <Token *>& tokens,
                              int num_tokens);
   Token* CreateToken(const string& key, const string& value) const;
+  bool CompareForLookup(const Node *node, const Token *token,
+                        bool reverse) const;
   // Only compares the higher byte since cost is sometimes encoded
   // into a byte.
   bool CompareCost(int c1, int c2) const {
     return abs(c1 - c2) < 256;
+  }
+
+  bool CompareNodeAndToken(const Token *token, const Node *node) const {
+    if (node->lid == token->lid &&
+        node->rid == token->rid &&
+        CompareCost(node->wcost, token->cost) &&
+        // key and value are opposite for reverse lookup.
+        node->key == token->value &&
+        node->value == token->key) {
+      return true;
+    }
+    return false;
   }
 
   scoped_ptr<TextDictionaryLoader> text_dict_;
@@ -78,22 +109,19 @@ class SystemDictionaryTest : public testing::Test {
 
 void SystemDictionaryTest::BuildSystemDictionary(const vector <Token *>& source,
                                                  int num_tokens) {
-  SystemDictionaryBuilder builder("dummy", dic_fn_.c_str());
+  SystemDictionaryBuilder builder;
   vector<Token *> tokens;
-  vector<Token *>::const_iterator it;
   // Picks up first tokens.
-  for (it = source.begin();
-       tokens.size() < num_tokens &&
-           it != source.end(); it++) {
+  for (vector<Token *>::const_iterator it = source.begin();
+       tokens.size() < num_tokens && it != source.end(); it++) {
     tokens.push_back(*it);
   }
-  LOG(INFO) << "Start to build dictionary";
-  builder.BuildFromTokenVector(tokens);
-  LOG(INFO) << "Built dictionary";
+  builder.BuildFromTokens(tokens);
+  builder.WriteToFile(dic_fn_);
 }
 
 Token* SystemDictionaryTest::CreateToken(const string& key,
-                                         const string& value) const {
+                                     const string& value) const {
   Token* t = new Token;
   t->key = key;
   t->value = value;
@@ -103,35 +131,173 @@ Token* SystemDictionaryTest::CreateToken(const string& key,
   return t;
 }
 
-TEST_F(SystemDictionaryTest, test_words) {
+// Return true if they seem to be same
+bool SystemDictionaryTest::CompareForLookup(const Node *node,
+                                            const Token *token,
+                                            bool reverse) const {
+  const bool key_value_check = reverse?
+      (node->key == token->value && node->value == token->key) :
+      (node->key == token->key && node->value == token->value);
+  if (!key_value_check) {
+    return false;
+  }
+  const uint16 token_lid = token->lid;
+  const uint16 token_rid = token->rid;
+  const bool comp_cost = CompareCost(node->wcost, token->cost);
+  if (!comp_cost) {
+    return false;
+  }
+  const bool spelling_match =
+      (static_cast<bool>(token->attributes & Token::SPELLING_CORRECTION) ==
+       static_cast<bool>(node->attributes & Node::SPELLING_CORRECTION));
+  if (!spelling_match) {
+    return false;
+  }
+  const bool id_match = (node->lid == token_lid) && (node->rid == token_rid);
+  if (!id_match) {
+    return false;
+  }
+  return true;
+}
+
+TEST_F(SystemDictionaryTest, test_normal_word) {
   vector<Token *> source_tokens;
-  text_dict_->CollectTokens(&source_tokens);
+  scoped_ptr<Token> t0(new Token);
+  // "あ"
+  t0->key = "\xe3\x81\x82";
+  // "亜"
+  t0->value = "\xe4\xba\x9c";
+  t0->cost = 100;
+  t0->lid = 50;
+  t0->rid = 70;
+  source_tokens.push_back(t0.get());
   BuildSystemDictionary(source_tokens, FLAGS_dictionary_test_size);
 
-  scoped_ptr<SystemDictionary> rx_dic(new SystemDictionary);
-  CHECK(rx_dic->Open(dic_fn_.c_str()))
+  scoped_ptr<SystemDictionary> system_dic(
+      SystemDictionary::CreateSystemDictionaryFromFile(dic_fn_));
+  CHECK(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
 
   // Scans the tokens and check if they all exists.
   vector<Token *>::const_iterator it;
-  for (it = source_tokens.begin(); it != source_tokens.end(); it++) {
+  for (it = source_tokens.begin(); it != source_tokens.end(); ++it) {
     bool found = false;
-    Node *node = rx_dic->LookupPrefix((*it)->key.c_str(), (*it)->key.size(),
-                                      NULL);
+    Node *node = system_dic->LookupPrefix((*it)->key.c_str(), (*it)->key.size(),
+                                          NULL);
     while (node) {
-      if (node->key == (*it)->key &&
-          node->value == (*it)->value &&
-          CompareCost(node->wcost, (*it)->cost) &&
-          node->lid == (*it)->lid &&
-          node->rid == (*it)->rid) {
+      if (CompareForLookup(node, *it, false)) {
         found = true;
       }
       Node *tmp_node = node;
       node = node->bnext;
       delete tmp_node;
     }
-    CHECK(found) << "Failed to find " << (*it)->key.c_str() << ":"
-                 << (*it)->value.c_str();
+    EXPECT_TRUE(found) << "Failed to find " << (*it)->key.c_str() << ":"
+                       << (*it)->value.c_str();
+  }
+}
+
+TEST_F(SystemDictionaryTest, test_same_word) {
+  vector<Token *> source_tokens;
+  scoped_ptr<Token> t0(new Token);
+  // "あ"
+  t0->key = "\xe3\x81\x82";
+  // "亜"
+  t0->value = "\xe4\xba\x9c";
+  t0->cost = 100;
+  t0->lid = 50;
+  t0->rid = 70;
+
+  scoped_ptr<Token> t1(new Token);
+  // "あ"
+  t1->key = "\xe3\x81\x82";
+  // "亜"
+  t1->value = "\xe4\xba\x9c";
+  t1->cost = 150;
+  t1->lid = 100;
+  t1->rid = 200;
+
+  scoped_ptr<Token> t2(new Token);
+  // "あ"
+  t2->key = "\xe3\x81\x82";
+  // "あ"
+  t2->value = "\xe3\x81\x82";
+  t2->cost = 100;
+  t2->lid = 1000;
+  t2->rid = 2000;
+
+  scoped_ptr<Token> t3(new Token);
+  // "あ"
+  t3->key = "\xe3\x81\x82";
+  // "亜"
+  t3->value = "\xe4\xba\x9c";
+  t3->cost = 1000;
+  t3->lid = 2000;
+  t3->rid = 3000;
+
+  source_tokens.push_back(t0.get());
+  source_tokens.push_back(t1.get());
+  source_tokens.push_back(t2.get());
+  source_tokens.push_back(t3.get());
+  BuildSystemDictionary(source_tokens, FLAGS_dictionary_test_size);
+
+  scoped_ptr<SystemDictionary> system_dic(
+      SystemDictionary::CreateSystemDictionaryFromFile(dic_fn_));
+  CHECK(system_dic.get() != NULL)
+      << "Failed to open dictionary source:" << dic_fn_;
+
+  // Scans the tokens and check if they all exists.
+  vector<Token *>::const_iterator it;
+  for (it = source_tokens.begin(); it != source_tokens.end(); ++it) {
+    bool found = false;
+    Node *node = system_dic->LookupPrefix((*it)->key.c_str(),
+                                          (*it)->key.size(), NULL);
+    while (node) {
+      if (CompareForLookup(node, *it, false)) {
+        found = true;
+      }
+      Node *tmp_node = node;
+      node = node->bnext;
+      delete tmp_node;
+    }
+    EXPECT_TRUE(found) << "Failed to find " << (*it)->key.c_str() << ":"
+                       << (*it)->value.c_str();
+  }
+}
+
+TEST_F(SystemDictionaryTest, test_words) {
+  vector<Token *> source_tokens;
+  text_dict_->CollectTokens(&source_tokens);
+  BuildSystemDictionary(source_tokens, FLAGS_dictionary_test_size);
+
+  scoped_ptr<SystemDictionary> system_dic(
+      SystemDictionary::CreateSystemDictionaryFromFile(dic_fn_));
+  CHECK(system_dic.get() != NULL)
+      << "Failed to open dictionary source:" << dic_fn_;
+
+  // Scans the tokens and check if they all exists.
+  vector<Token *>::const_iterator it;
+  for (it = source_tokens.begin(); it != source_tokens.end(); ++it) {
+    bool found = false;
+    Node *node = system_dic->LookupPrefix((*it)->key.c_str(), (*it)->key.size(),
+                                          NULL);
+    int count = 0;
+    while (node) {
+      ++count;
+      if (CompareForLookup(node, *it, false)) {
+        found = true;
+      }
+      Node *tmp_node = node;
+      node = node->bnext;
+      delete tmp_node;
+    }
+    EXPECT_TRUE(found) << "Failed to find " << (*it)->key << ":"
+                       << (*it)->value << "\t" << (*it)->cost << "\t"
+                       << (*it)->lid << "\t"
+                       << (*it)->rid << "\tcount\t" << count;
+    if (!found) {
+      break;
+    }
   }
 }
 
@@ -142,7 +308,7 @@ TEST_F(SystemDictionaryTest, test_prefix) {
   const string k0 = "\xe3\x81\xaf";
   // "はひふへほ"
   const string k1 = "\xe3\x81\xaf\xe3\x81\xb2\xe3\x81\xb5\xe3\x81\xb8\xe3\x81"
-      "\xbb";
+                    "\xbb";
 
   scoped_ptr<Token> t0(CreateToken(k0, "aa"));
   scoped_ptr<Token> t1(CreateToken(k1, "bb"));
@@ -151,33 +317,38 @@ TEST_F(SystemDictionaryTest, test_prefix) {
   text_dict_->CollectTokens(&source_tokens);
   BuildSystemDictionary(source_tokens, 100);
 
-  scoped_ptr<SystemDictionary> rx_dic(new SystemDictionary);
-  CHECK(rx_dic->Open(dic_fn_.c_str()))
+  scoped_ptr<SystemDictionary> system_dic(
+      SystemDictionary::CreateSystemDictionaryFromFile(dic_fn_));
+  CHECK(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
-  Node *node = rx_dic->LookupPrefix(k1.c_str(), k1.size(), NULL);
+
+  Node *node = system_dic->LookupPrefix(k1.c_str(), k1.size(), NULL);
   CHECK(node) << "no nodes found";
   bool found_k0 = false;
   while (node) {
-    if (node->key == k0 && node->value == "aa") {
+    if (CompareForLookup(node, t0.get(), false)) {
       found_k0 = true;
     }
     Node *tmp_node = node;
     node = node->bnext;
     delete tmp_node;
   }
-  CHECK(found_k0) << "failed to find :" << k0;
+  EXPECT_TRUE(found_k0) << "Failed to find " << k0;
 }
 
 TEST_F(SystemDictionaryTest, test_predictive) {
   vector<Token *> source_tokens;
 
-  // "は"
-  const string k0 = "\xe3\x81\xaf";
-  // "はひふ"
-  const string k1 = "\xe3\x81\xaf\xe3\x81\xb2\xe3\x81\xb5";
-  // "はひふへほ"
-  const string k2 = "\xe3\x81\xaf\xe3\x81\xb2\xe3\x81\xb5\xe3\x81\xb8\xe3\x81"
-      "\xbb";
+  // "まみむめも"
+  // There are not be so many entries which start with "まみむめも".
+  const string k0 = "\xe3\x81\xbe\xe3\x81\xbf\xe3\x82\x80"
+      "\xe3\x82\x81\xe3\x82\x82";
+  // "まみむめもや"
+  const string k1 = "\xe3\x81\xbe\xe3\x81\xbf\xe3\x82\x80"
+      "\xe3\x82\x81\xe3\x82\x82\xe3\x82\x84";
+  // "まみむめもやゆよ"
+  const string k2 = "\xe3\x81\xbe\xe3\x81\xbf\xe3\x82\x80"
+      "\xe3\x82\x81\xe3\x82\x82\xe3\x82\x84\xe3\x82\x86\xe3\x82\x88";
 
   scoped_ptr<Token> t1(CreateToken(k1, "aa"));
   scoped_ptr<Token> t2(CreateToken(k2, "bb"));
@@ -186,104 +357,269 @@ TEST_F(SystemDictionaryTest, test_predictive) {
   text_dict_->CollectTokens(&source_tokens);
   BuildSystemDictionary(source_tokens, 10000);
 
-  scoped_ptr<SystemDictionary> rx_dic(new SystemDictionary);
-  CHECK(rx_dic->Open(dic_fn_.c_str()))
+  scoped_ptr<SystemDictionary> system_dic(
+      SystemDictionary::CreateSystemDictionaryFromFile(dic_fn_));
+  CHECK(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
 
-  Node *node = rx_dic->LookupPredictive(k0.c_str(), k0.size(), NULL);
+  Node *node = system_dic->LookupPredictive(k0.c_str(), k0.size(), NULL);
   CHECK(node) << "no nodes found";
   bool found_k1 = false;
   bool found_k2 = false;
   while (node) {
-    // LOG(INFO) << node->key << ":" << node->value;
-    if (node->key == k1 && node->value == "aa") {
+    if (CompareForLookup(node, t1.get(), false)) {
       found_k1 = true;
     }
-    if (node->key == k2 && node->value == "bb") {
+    if (CompareForLookup(node, t2.get(), false)) {
       found_k2 = true;
     }
     Node *tmp_node = node;
     node = node->bnext;
     delete tmp_node;
   }
-  CHECK(found_k1) << "failed to find :" << k1;
-  CHECK(found_k2) << "failed to find :" << k2;
+  EXPECT_TRUE(found_k1) << "Failed to find " << k1;
+  EXPECT_TRUE(found_k2) << "Failed to find " << k2;
 }
 
-TEST_F(SystemDictionaryTest, index_coding) {
-  scoped_ptr<SystemDictionary> rx_dic(new SystemDictionary);
-  // "mozc・もずくー"
-  string src("\x6d\x6f\x7a\x63"
-             "\xe3\x83\xbb"
-             "\xe3\x82\x82\xe3\x81\x9a\xe3\x81\x8f"
-             "\xe3\x83\xbc");
-  string encoded;
-  rx_dic->EncodeIndexString(src, &encoded);
-  string decoded;
-  rx_dic->DecodeIndexString(encoded, &decoded);
-  EXPECT_EQ(src, decoded);
-}
+TEST_F(SystemDictionaryTest, test_predictive_cutoff) {
+  vector<Token *> source_tokens;
 
-TEST_F(SystemDictionaryTest, index_coding_all) {
-  scoped_ptr<SystemDictionary> rx_dic(new SystemDictionary);
-  string src;
-  for (int i = 0; i < 255; ++i) {
-    // Appends characters in all blocks. Though some might be invalid as
-    // a character. This should safely encode/decode them.
-    Util::UCS2ToUTF8Append(i * 256 + 1, &src);
+  // "あ"
+  // There are a lot of entries which start with "あ".
+  const string k0 = "\xe3\x81\x82";
+  // "あい"
+  const string k1 = "\xe3\x81\x82\xe3\x81\x84";
+  // "あいうえお"
+  const string k2 =
+      "\xe3\x81\x82\xe3\x81\x84\xe3\x81\x86\xe3\x81\x88\xe3\x81\x8a";
+
+  scoped_ptr<Token> t1(CreateToken(k1, "aa"));
+  scoped_ptr<Token> t2(CreateToken(k2, "bb"));
+  source_tokens.push_back(t1.get());
+  source_tokens.push_back(t2.get());
+  text_dict_->CollectTokens(&source_tokens);
+  BuildSystemDictionary(source_tokens, 10000);
+
+  scoped_ptr<SystemDictionary> system_dic(
+      SystemDictionary::CreateSystemDictionaryFromFile(dic_fn_));
+  CHECK(system_dic.get() != NULL)
+      << "Failed to open dictionary source:" << dic_fn_;
+
+  Node *node = system_dic->LookupPredictive(k0.c_str(), k0.size(), NULL);
+  CHECK(node) << "no nodes found";
+  bool found_k1 = false;
+  bool found_k2 = false;
+  int found_count = 0;
+  while (node) {
+    ++found_count;
+    if (CompareForLookup(node, t1.get(), false)) {
+      found_k1 = true;
+    }
+    if (CompareForLookup(node, t2.get(), false)) {
+      found_k2 = true;
+    }
+    Node *tmp_node = node;
+    node = node->bnext;
+    delete tmp_node;
   }
-  string encoded;
-  rx_dic->EncodeIndexString(src, &encoded);
-  string decoded;
-  rx_dic->DecodeIndexString(encoded, &decoded);
-  EXPECT_EQ(src, decoded);
+  EXPECT_GE(found_count, 64);
+  EXPECT_TRUE(found_k1) << "Failed to find " << k1;
+  // We don't return all results and return only for 'short key' entry
+  // if too many key are found by predictive lookup of key.
+  EXPECT_FALSE(found_k2) << "Failed to find " << k2;
 }
 
-TEST_F(SystemDictionaryTest, token_coding) {
-  scoped_ptr<SystemDictionary> rx_dic(new SystemDictionary);
-  // "mozcもずく百雲"
-  string src("\x6d\x6f\x7a\x63\xe3\x82\x82\xe3\x81\x9a\xe3\x81\x8f\xe7\x99\xbe"
-             "\xe9\x9b\xb2");
-  string encoded;
-  string decoded;
-  rx_dic->EncodeTokenString(src, &encoded);
-  rx_dic->DecodeTokenString(encoded, &decoded);
-  EXPECT_EQ(src, decoded);
+TEST_F(SystemDictionaryTest, test_reverse) {
+  scoped_ptr<Token> t0(new Token);
+  // "ど"
+  t0->key = "\xe3\x81\xa9";
+  // "ド"
+  t0->value = "\xe3\x83\x89";
+  t0->cost = 1;
+  t0->lid = 2;
+  t0->rid = 3;
+  scoped_ptr<Token> t1(new Token);
+  // "どらえもん"
+  t1->key = "\xe3\x81\xa9\xe3\x82\x89\xe3\x81\x88\xe3\x82\x82\xe3\x82\x93";
+  // "ドラえもん"
+  t1->value = "\xe3\x83\x89\xe3\x83\xa9\xe3\x81\x88\xe3\x82\x82\xe3\x82\x93";
+  t1->cost = 1;
+  t1->lid = 2;
+  t1->rid = 3;
+  scoped_ptr<Token> t2(new Token);
+  // "といざらす®"
+  t2->key = "\xe3\x81\xa8\xe3\x81\x84\xe3\x81\x96\xe3\x82\x89\xe3\x81\x99\xc2"
+            "\xae";
+  // "トイザらス®"
+  t2->value = "\xe3\x83\x88\xe3\x82\xa4\xe3\x82\xb6\xe3\x82\x89\xe3\x82\xb9\xc2"
+              "\xae";
+  t2->cost = 1;
+  t2->lid = 2;
+  t2->rid = 3;
+  scoped_ptr<Token> t3(new Token);
+  // "ああああああ"
+  // Both t3 and t4 will be encoded into 3 bytes.
+  t3->key = "\xe3\x81\x82\xe3\x81\x82\xe3\x81\x82"
+      "\xe3\x81\x82\xe3\x81\x82\xe3\x81\x82";
+  t3->value = t3->key;
+  t3->cost = 32000;
+  t3->lid = 1;
+  t3->rid = 1;
+  scoped_ptr<Token> t4(new Token);
+  *t4 = *t3;
+  t4->lid = 1;
+  t4->rid = 2;
+  scoped_ptr<Token> t5(new Token);
+  // "いいいいいい"
+  // t5 will be encoded into 3 bytes.
+  t5->key = "\xe3\x81\x84\xe3\x81\x84\xe3\x81\x84"
+      "\xe3\x81\x84\xe3\x81\x84\xe3\x81\x84";
+  t5->value = t5->key;
+  t5->cost = 32000;
+  t5->lid = 1;
+  t5->rid = 1;
+  // spelling correction token should not be retrieved by reverse lookup.
+  scoped_ptr<Token> t6(new Token);
+  // "どらえもん"
+  t6->key = "\xe3\x81\xa9\xe3\x82\x89\xe3\x81\x88\xe3\x82\x82\xe3\x82\x93";
+  // "ドラえもん"
+  t6->value = "\xe3\x83\x89\xe3\x83\xa9\xe3\x81\x88\xe3\x82\x82\xe3\x82\x93";
+  t6->cost = 1;
+  t6->lid = 2;
+  t6->rid = 3;
+  t6->attributes = Token::SPELLING_CORRECTION;
+  scoped_ptr<Token> t7(new Token);
+  // "こんさーと"
+  t7->key = "\xe3\x81\x93\xe3\x82\x93\xe3\x81\x95\xe3\x83\xbc\xe3\x81\xa8";
+  // "コンサート"
+  t7->value = "\xe3\x82\xb3\xe3\x83\xb3\xe3\x82\xb5\xe3\x83\xbc\xe3\x83\x88";
+  t7->cost = 1;
+  t7->lid = 1;
+  t7->rid = 1;
+  // "バージョン" should not return a result with the key "ヴァージョン".
+  scoped_ptr<Token> t8(new Token);
+  // "ばーじょん"
+  t8->key = "\xE3\x81\xB0\xE3\x83\xBC\xE3\x81\x98\xE3\x82\x87\xE3\x82\x93";
+  // "バージョン"
+  t8->value = "\xE3\x83\x90\xE3\x83\xBC\xE3\x82\xB8\xE3\x83\xA7\xE3\x83\xB3";
+  t8->cost = 1;
+  t8->lid = 1;
+  t8->rid = 1;
 
-  // "紀" is 0x7d00, so 00 handling
-  // "政紀"
-  src = "\xe6\x94\xbf\xe7\xb4\x80";
-  encoded = "";
-  decoded = "";
-  rx_dic->EncodeTokenString(src, &encoded);
-  rx_dic->DecodeTokenString(encoded, &decoded);
-  EXPECT_EQ(src, decoded);
+  vector<Token *> source_tokens;
+  source_tokens.push_back(t0.get());
+  source_tokens.push_back(t1.get());
+  source_tokens.push_back(t2.get());
+  source_tokens.push_back(t3.get());
+  source_tokens.push_back(t4.get());
+  source_tokens.push_back(t5.get());
+  source_tokens.push_back(t6.get());
+  source_tokens.push_back(t7.get());
+  source_tokens.push_back(t8.get());
 
-  // ASCII character.
-  // "8月"
-  src = "\x38\xe6\x9c\x88";
-  encoded = "";
-  decoded = "";
-  rx_dic->EncodeTokenString(src, &encoded);
-  rx_dic->DecodeTokenString(encoded, &decoded);
-  EXPECT_EQ(src, decoded);
+  text_dict_->CollectTokens(&source_tokens);
+  BuildSystemDictionary(source_tokens, source_tokens.size());
 
-  // 0x30ce, above hiragana range.
-  // "ノ"
-  src = "\xe3\x83\x8e";
-  encoded = "";
-  decoded = "";
-  rx_dic->EncodeTokenString(src, &encoded);
-  rx_dic->DecodeTokenString(encoded, &decoded);
-  EXPECT_EQ(src, decoded);
+  scoped_ptr<SystemDictionary> system_dic(
+      SystemDictionary::CreateSystemDictionaryFromFile(dic_fn_));
+  CHECK(system_dic.get() != NULL)
+      << "Failed to open dictionary source:" << dic_fn_;
+  vector<Token *>::const_iterator it;
+  int size = FLAGS_dictionary_reverse_lookup_test_size;
+  for (it = source_tokens.begin();
+       size > 0 && it != source_tokens.end(); ++it, --size) {
+    const Token *t = *it;
+    Node *node = system_dic->LookupReverse(t->value.c_str(),
+                                           t->value.size(),
+                                           NULL);
+    bool found = false;
+    int count = 0;
+    while (node != NULL) {
+      ++count;
+      // Make sure any of the key lengths of the lookup results
+      // doesn't exceed the original key length.
+      // It happened once
+      // when called with "バージョン", returning "ヴァージョン".
+      EXPECT_LE(node->key.size(), t->value.size())
+          << string(node->key) << ":" << string(node->value)
+          << "\t" << string(t->value);
+      if (CompareForLookup(node, t, true)) {
+        found = true;
+      }
+      Node *tmp_node = node;
+      node = node->bnext;
+      delete tmp_node;
+    }
+    if (t->attributes & Token::SPELLING_CORRECTION) {
+      EXPECT_FALSE(found)
+          << "Spelling correction token was retrieved:"
+          << t->key << ":" << t->value;
+      if (found) {
+        return;
+      }
+    } else {
+      EXPECT_TRUE(found) << "Failed to find " << t->key << ":" << t->value;
+      if (!found) {
+        return;
+      }
+    }
+  }
 
-  // ぁァー
-  src = "\xe3\x81\x81\xe3\x82\xa1\xe3\x83\xbc";
-  encoded = "";
-  decoded = "";
-  rx_dic->EncodeTokenString(src, &encoded);
-  rx_dic->DecodeTokenString(encoded, &decoded);
-  EXPECT_EQ(src, decoded);
+  // test for non exact transliterated index string.
+  // append "が"
+  const string key = t7->value + "\xe3\x81\x8c";
+  Node *node = system_dic->LookupReverse(key.c_str(),
+                                         key.size(),
+                                         NULL);
+  bool found = false;
+  while (node != NULL) {
+    if (CompareNodeAndToken(t7.get(), node)) {
+      found = true;
+    }
+    Node *tmp_node = node;
+    node = node->bnext;
+    delete tmp_node;
+  }
+  EXPECT_TRUE(found)
+      << "Missed node for non exact transliterated index" << key;
+}
+
+TEST_F(SystemDictionaryTest, test_reverse_cache) {
+  const string kDoraemon =
+      "\xe3\x83\x89\xe3\x83\xa9\xe3\x81\x88\xe3\x82\x82\xe3\x82\x93";
+
+  scoped_ptr<Token> t1(new Token);
+  // "どらえもん"
+  t1->key = "\xe3\x81\xa9\xe3\x82\x89\xe3\x81\x88\xe3\x82\x82\xe3\x82\x93";
+  // "ドラえもん"
+  t1->value = kDoraemon;
+  t1->cost = 1;
+  t1->lid = 2;
+  t1->rid = 3;
+  vector<Token *> source_tokens;
+  source_tokens.push_back(t1.get());
+  text_dict_->CollectTokens(&source_tokens);
+  BuildSystemDictionary(source_tokens, source_tokens.size());
+
+  scoped_ptr<SystemDictionary> system_dic(
+      SystemDictionary::CreateSystemDictionaryFromFile(dic_fn_));
+  CHECK(system_dic.get() != NULL)
+      << "Failed to open dictionary source:" << dic_fn_;
+  NodeAllocator allocator;
+  system_dic->PopulateReverseLookupCache(kDoraemon.c_str(), kDoraemon.size(),
+                                         &allocator);
+  Node *node = system_dic->LookupReverse(kDoraemon.c_str(),
+                                         kDoraemon.size(),
+                                         &allocator);
+  bool found = false;
+  while (node != NULL) {
+    if (node->key == kDoraemon) {
+      found = true;
+    }
+    node = node->bnext;
+  }
+  EXPECT_TRUE(found) << "Could not find " << t1->value;
+  system_dic->ClearReverseLookupCache(&allocator);
 }
 
 TEST_F(SystemDictionaryTest, nodes_size) {
@@ -298,17 +634,27 @@ TEST_F(SystemDictionaryTest, nodes_size) {
   }
   text_dict_->CollectTokens(&source_tokens);
   BuildSystemDictionary(source_tokens, 10000);
-  scoped_ptr<SystemDictionary> rx_dic(new SystemDictionary);
-  CHECK(rx_dic->Open(dic_fn_.c_str()))
+  scoped_ptr<SystemDictionary> system_dic(
+      SystemDictionary::CreateSystemDictionaryFromFile(dic_fn_));
+  CHECK(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
 
   const int kNumNodes = 5;
 
-  // Tests LookupPrefix
+  // Tests LookupPrefix and LookupReverse.
   NodeAllocator allocator1;
   allocator1.set_max_nodes_size(kNumNodes);
-  Node *node = rx_dic->LookupPrefix(s.c_str(), s.size(), &allocator1);
+  Node *node = system_dic->LookupPrefix(s.c_str(), s.size(), &allocator1);
   int count = 0;
+  for (Node *tmp = node; tmp; tmp = tmp->bnext) {
+    ++count;
+  }
+  EXPECT_EQ(kNumNodes, count);
+
+  NodeAllocator allocator2;
+  allocator2.set_max_nodes_size(kNumNodes);
+  node = system_dic->LookupReverse("1", 1, &allocator2);
+  count = 0;
   for (Node *tmp = node; tmp; tmp = tmp->bnext) {
     ++count;
   }
@@ -328,19 +674,23 @@ TEST_F(SystemDictionaryTest, spelling_correction_tokens) {
   // "アボカド"
   t1->value = "\xe3\x82\xa2\xe3\x83\x9c\xe3\x82\xab\xe3\x83\x89";
   t1->cost = 1;
-  t1->lid = 0 + SystemDictionary::kSpellingCorrectionPosOffset;
+  t1->lid = 0;
   t1->rid = 2;
+  t1->attributes = Token::SPELLING_CORRECTION;
 
   scoped_ptr<Token> t2(new Token);
   // "しゅみれーしょん"
-  t2->key = "\xe3\x81\x97\xe3\x82\x85\xe3\x81\xbf\xe3\x82\x8c"
+  t2->key =
+      "\xe3\x81\x97\xe3\x82\x85\xe3\x81\xbf\xe3\x82\x8c"
       "\xe3\x83\xbc\xe3\x81\x97\xe3\x82\x87\xe3\x82\x93";
   // "シミュレーション"
-  t2->value = "\xe3\x82\xb7\xe3\x83\x9f\xe3\x83\xa5\xe3\x83"
-      "\xac\xe3\x83\xbc\xe3\x82\xb7\xe3\x83\xa7\xe3\x83\xb3";
+  t2->value =
+      "\xe3\x82\xb7\xe3\x83\x9f\xe3\x83\xa5\xe3\x83\xac"
+      "\xe3\x83\xbc\xe3\x82\xb7\xe3\x83\xa7\xe3\x83\xb3";
   t2->cost = 1;
-  t2->lid = 100 + SystemDictionary::kSpellingCorrectionPosOffset;
+  t2->lid = 100;
   t2->rid = 3;
+  t2->attributes = Token::SPELLING_CORRECTION;
 
   scoped_ptr<Token> t3(new Token);
   // "あきはばら"
@@ -357,39 +707,28 @@ TEST_F(SystemDictionaryTest, spelling_correction_tokens) {
   source_tokens.push_back(t3.get());
   BuildSystemDictionary(source_tokens, source_tokens.size());
 
-  scoped_ptr<SystemDictionary> system_dic(new SystemDictionary);
-  CHECK(system_dic->Open(dic_fn_.c_str()))
+  scoped_ptr<SystemDictionary> system_dic(
+      SystemDictionary::CreateSystemDictionaryFromFile(dic_fn_));
+  CHECK(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
 
   vector<Token *>::const_iterator it;
   for (it = source_tokens.begin(); it != source_tokens.end(); ++it) {
-    const Token *t = *it;
-    Node *node = system_dic->LookupPrefix(t->key.c_str(), t->key.size(),
-                                          NULL);
+    Node *node = system_dic->LookupPrefix((*it)->key.c_str(),
+                                          (*it)->key.size(), NULL);
+    bool found = false;
     while (node) {
-      if (node->key == t->key) {
-        EXPECT_EQ(static_cast<bool>(
-            node->attributes & Node::SPELLING_CORRECTION),
-                  t->lid >= SystemDictionary::kSpellingCorrectionPosOffset);
-
-        if (node->attributes & Node::SPELLING_CORRECTION) {
-          EXPECT_EQ(node->lid,
-                    t->lid - SystemDictionary::kSpellingCorrectionPosOffset);
-        } else {
-          EXPECT_EQ(node->lid, t->lid);
-        }
-
-        EXPECT_EQ(node->rid, t->rid);
-        EXPECT_TRUE(CompareCost(node->wcost, t->cost));
-        EXPECT_EQ(node->key, t->key);
-        EXPECT_EQ(node->value, t->value);
+      if (CompareForLookup(node, *it, false)) {
+        found = true;
       }
-
       Node *tmp_node = node;
       node = node->bnext;
       delete tmp_node;
     }
+    EXPECT_TRUE(found) << "Failed to find " << (*it)->key
+                       << ":" << (*it)->value;
   }
 }
 }  // namespace
+}  // namespace dictionary
 }  // namespace mozc

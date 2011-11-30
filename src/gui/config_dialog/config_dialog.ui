@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>450</width>
+    <width>520</width>
     <height>430</height>
    </rect>
   </property>
@@ -18,13 +18,13 @@
   </property>
   <property name="minimumSize">
    <size>
-    <width>450</width>
+    <width>520</width>
     <height>430</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
-    <width>450</width>
+    <width>520</width>
     <height>430</height>
    </size>
   </property>
@@ -36,7 +36,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>451</width>
+     <width>521</width>
      <height>431</height>
     </rect>
    </property>
@@ -45,7 +45,7 @@
      <rect>
       <x>10</x>
       <y>10</y>
-      <width>431</width>
+      <width>501</width>
       <height>371</height>
      </rect>
     </property>
@@ -61,8 +61,8 @@
        <rect>
         <x>30</x>
         <y>30</y>
-        <width>371</width>
-        <height>211</height>
+        <width>441</width>
+        <height>234</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout">
@@ -158,7 +158,7 @@
        <rect>
         <x>30</x>
         <y>270</y>
-        <width>371</width>
+        <width>441</width>
         <height>66</height>
        </rect>
       </property>
@@ -207,7 +207,7 @@
        <rect>
         <x>20</x>
         <y>10</y>
-        <width>391</width>
+        <width>461</width>
         <height>21</height>
        </rect>
       </property>
@@ -239,7 +239,7 @@
        <rect>
         <x>20</x>
         <y>250</y>
-        <width>391</width>
+        <width>461</width>
         <height>20</height>
        </rect>
       </property>
@@ -276,7 +276,7 @@
        <rect>
         <x>30</x>
         <y>30</y>
-        <width>371</width>
+        <width>441</width>
         <height>81</height>
        </rect>
       </property>
@@ -328,7 +328,7 @@
        <rect>
         <x>30</x>
         <y>140</y>
-        <width>351</width>
+        <width>441</width>
         <height>32</height>
        </rect>
       </property>
@@ -372,7 +372,7 @@
        <rect>
         <x>30</x>
         <y>210</y>
-        <width>371</width>
+        <width>450</width>
         <height>121</height>
        </rect>
       </property>
@@ -447,7 +447,7 @@
        <rect>
         <x>20</x>
         <y>10</y>
-        <width>391</width>
+        <width>461</width>
         <height>21</height>
        </rect>
       </property>
@@ -479,7 +479,7 @@
        <rect>
         <x>20</x>
         <y>180</y>
-        <width>391</width>
+        <width>461</width>
         <height>21</height>
        </rect>
       </property>
@@ -511,7 +511,7 @@
        <rect>
         <x>20</x>
         <y>120</y>
-        <width>391</width>
+        <width>461</width>
         <height>20</height>
        </rect>
       </property>
@@ -548,7 +548,7 @@
        <rect>
         <x>30</x>
         <y>180</y>
-        <width>371</width>
+        <width>441</width>
         <height>141</height>
        </rect>
       </property>
@@ -558,7 +558,7 @@
        <rect>
         <x>20</x>
         <y>10</y>
-        <width>391</width>
+        <width>461</width>
         <height>20</height>
        </rect>
       </property>
@@ -590,7 +590,7 @@
        <rect>
         <x>20</x>
         <y>150</y>
-        <width>391</width>
+        <width>461</width>
         <height>21</height>
        </rect>
       </property>
@@ -622,7 +622,7 @@
        <rect>
         <x>30</x>
         <y>30</y>
-        <width>371</width>
+        <width>441</width>
         <height>111</height>
        </rect>
       </property>
@@ -732,7 +732,7 @@
        <rect>
         <x>20</x>
         <y>10</y>
-        <width>381</width>
+        <width>461</width>
         <height>24</height>
        </rect>
       </property>
@@ -764,7 +764,7 @@
        <rect>
         <x>20</x>
         <y>180</y>
-        <width>381</width>
+        <width>461</width>
         <height>21</height>
        </rect>
       </property>
@@ -796,7 +796,7 @@
        <rect>
         <x>30</x>
         <y>200</y>
-        <width>361</width>
+        <width>441</width>
         <height>31</height>
        </rect>
       </property>
@@ -844,7 +844,7 @@
        <rect>
         <x>30</x>
         <y>40</y>
-        <width>361</width>
+        <width>441</width>
         <height>121</height>
        </rect>
       </property>
@@ -933,7 +933,7 @@
       <property name="geometry">
        <rect>
         <x>30</x>
-        <y>140</y>
+        <y>210</y>
         <width>20</width>
         <height>20</height>
        </rect>
@@ -955,8 +955,8 @@
       <property name="geometry">
        <rect>
         <x>50</x>
-        <y>130</y>
-        <width>351</width>
+        <y>200</y>
+        <width>421</width>
         <height>61</height>
        </rect>
       </property>
@@ -971,8 +971,8 @@
       <property name="geometry">
        <rect>
         <x>20</x>
-        <y>110</y>
-        <width>391</width>
+        <y>180</y>
+        <width>461</width>
         <height>27</height>
        </rect>
       </property>
@@ -1004,7 +1004,7 @@
        <rect>
         <x>20</x>
         <y>20</y>
-        <width>391</width>
+        <width>461</width>
         <height>27</height>
        </rect>
       </property>
@@ -1058,7 +1058,7 @@
        <rect>
         <x>50</x>
         <y>40</y>
-        <width>351</width>
+        <width>421</width>
         <height>51</height>
        </rect>
       </property>
@@ -1072,8 +1072,8 @@
      <widget class="QPushButton" name="launchAdministrationDialogButtonForUsageStats">
       <property name="geometry">
        <rect>
-        <x>250</x>
-        <y>130</y>
+        <x>280</x>
+        <y>200</y>
         <width>150</width>
         <height>25</height>
        </rect>
@@ -1094,6 +1094,178 @@
        <string>Settings...</string>
       </property>
      </widget>
+     <widget class="QCheckBox" name="presentationModeCheckBox">
+      <property name="geometry">
+       <rect>
+        <x>30</x>
+        <y>130</y>
+        <width>441</width>
+        <height>17</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Temporarily disable all suggestions</string>
+      </property>
+     </widget>
+     <widget class="QWidget" name="horizontalLayoutWidget_19">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>100</y>
+        <width>461</width>
+        <height>27</height>
+       </rect>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout_21">
+       <item>
+        <widget class="QLabel" name="label_12">
+         <property name="text">
+          <string>Presentation mode</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="Line" name="line_12">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="tab">
+     <attribute name="title">
+      <string>Sync</string>
+     </attribute>
+     <widget class="QWidget" name="horizontalLayoutWidget_13">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>10</y>
+        <width>461</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout_17">
+       <item>
+        <widget class="QLabel" name="label_5">
+         <property name="text">
+          <string>Synchronization</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="Line" name="line_5">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="horizontalLayoutWidget_4">
+      <property name="geometry">
+       <rect>
+        <x>40</x>
+        <y>60</y>
+        <width>441</width>
+        <height>32</height>
+       </rect>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout_3">
+       <item>
+        <widget class="QPushButton" name="syncToggleButton">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>Start Sync</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="syncCustomizationButton">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>Customize...</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer_3">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QLabel" name="syncStatusLabel">
+      <property name="geometry">
+       <rect>
+        <x>40</x>
+        <y>40</y>
+        <width>401</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>latest sync</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_2">
+      <property name="geometry">
+       <rect>
+        <x>40</x>
+        <y>110</y>
+        <width>391</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Remove the uploaded data</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="clearSyncButton">
+      <property name="geometry">
+       <rect>
+        <x>40</x>
+        <y>130</y>
+        <width>111</width>
+        <height>31</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Remove all</string>
+      </property>
+     </widget>
     </widget>
     <widget class="QWidget" name="miscTab">
      <attribute name="title">
@@ -1104,7 +1276,7 @@
        <rect>
         <x>20</x>
         <y>16</y>
-        <width>391</width>
+        <width>461</width>
         <height>21</height>
        </rect>
       </property>
@@ -1136,7 +1308,7 @@
        <rect>
         <x>30</x>
         <y>200</y>
-        <width>371</width>
+        <width>441</width>
         <height>41</height>
        </rect>
       </property>
@@ -1165,7 +1337,7 @@
        <rect>
         <x>20</x>
         <y>181</y>
-        <width>391</width>
+        <width>461</width>
         <height>20</height>
        </rect>
       </property>
@@ -1197,7 +1369,7 @@
        <rect>
         <x>20</x>
         <y>114</y>
-        <width>391</width>
+        <width>461</width>
         <height>21</height>
        </rect>
       </property>
@@ -1229,8 +1401,8 @@
        <rect>
         <x>30</x>
         <y>134</y>
-        <width>371</width>
-        <height>31</height>
+        <width>441</width>
+        <height>32</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_10">
@@ -1274,7 +1446,7 @@
        <rect>
         <x>51</x>
         <y>36</y>
-        <width>361</width>
+        <width>421</width>
         <height>41</height>
        </rect>
       </property>
@@ -1312,7 +1484,7 @@
        <rect>
         <x>30</x>
         <y>75</y>
-        <width>369</width>
+        <width>401</width>
         <height>17</height>
        </rect>
       </property>
@@ -1327,7 +1499,7 @@
      <rect>
       <x>10</x>
       <y>390</y>
-      <width>431</width>
+      <width>501</width>
       <height>32</height>
      </rect>
     </property>
@@ -1407,7 +1579,6 @@
   <tabstop>editKeymapButton</tabstop>
   <tabstop>editRomanTableButton</tabstop>
   <tabstop>resetToDefaultsButton</tabstop>
-  <tabstop>configDialogButtonBox</tabstop>
   <tabstop>historyLearningLevelComboBox</tabstop>
   <tabstop>clearUserHistoryButton</tabstop>
   <tabstop>editUserDictionaryButton</tabstop>
@@ -1436,8 +1607,11 @@
   <tabstop>realtimeConversionCheckBox</tabstop>
   <tabstop>suggestionsSizeSpinBox</tabstop>
   <tabstop>incognitoModeCheckBox</tabstop>
+  <tabstop>presentationModeCheckBox</tabstop>
   <tabstop>usageStatsCheckBox</tabstop>
   <tabstop>launchAdministrationDialogButtonForUsageStats</tabstop>
+  <tabstop>syncToggleButton</tabstop>
+  <tabstop>syncCustomizationButton</tabstop>
   <tabstop>checkDefaultCheckBox</tabstop>
   <tabstop>IMEHotKeyDisabledCheckBox</tabstop>
   <tabstop>launchAdministrationDialogButton</tabstop>
