@@ -63,7 +63,7 @@
     {
       # Protobuf compiler / generator for the mozc inputmethod commands
       # protocol buffer.
-      'target_name': 'mozc_commands_proto',
+      'target_name': 'gen_candidates_proto',
       'type': 'none',
       'sources': [
         '<(third_party_dir)/mozc/session/candidates_lite.proto',
@@ -104,6 +104,16 @@
       },
       'export_dependent_settings': [
         '<(third_party_dir)/protobuf/protobuf.gyp:protobuf_lite',
+      ],
+    },
+    {
+      'target_name': 'mozc_candidates_proto',
+      'type': 'static_library',
+      'sources': [
+        '<(protoc_out_dir)/third_party/mozc/session/candidates_lite.pb.cc',
+      ],
+      'dependencies': [
+        'gen_candidates_proto',
       ],
     },
   ]
