@@ -420,6 +420,23 @@ def ParseGypOptions(args=None, values=None):
                     help='A path to the root directory of Native Client SDK. '
                     'This is used when NaCl module build.')
 
+  use_dynamically_linked_qt_default = True
+  parser.add_option('--use_dynamically_linked_qt',
+                    dest='use_dynamically_linked_qt',
+                    default=use_dynamically_linked_qt_default,
+                    help='Use dynamically linked version of Qt. '
+                    'Currently this flag is used only on Windows builds.')
+
+  # TODO(yukawa): Remove this option when Zinnia can be built on Windows with
+  #               enabling Unicode.
+  use_zinnia_default = True
+  if IsWindows():
+    # Zinnia on Windows cannot be enabled because of compile error.
+    use_zinnia_default = False
+  parser.add_option('--use_zinnia', dest='use_zinnia',
+                    default=use_zinnia_default,
+                    help='Use Zinnia if specified.')
+
   if IsWindows():
     parser.add_option('--wix_dir', dest='wix_dir',
                       default=GetDefaultWixPath(),
@@ -595,6 +612,16 @@ def GypMain(options, unused_args):
 
   if IsWindows():
     command_line.extend(['-G', 'msvs_version=%s' % options.msvs_version])
+
+  if options.use_dynamically_linked_qt:
+    command_line.extend(['-D', 'use_dynamically_linked_qt=YES'])
+  else:
+    command_line.extend(['-D', 'use_dynamically_linked_qt=NO'])
+
+  if options.use_zinnia:
+    command_line.extend(['-D', 'use_zinnia=YES'])
+  else:
+    command_line.extend(['-D', 'use_zinnia=NO'])
 
 
   # Dictionary configuration

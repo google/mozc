@@ -903,7 +903,6 @@
       'dependencies': [
         'about_dialog_lib',
         'administration_dialog_lib',
-        'character_pad_lib',
         'config_dialog_lib',
         'confirmation_dialog_lib',
         'dictionary_tool_lib',
@@ -950,6 +949,14 @@
           ],
         }, {
           'type': 'static_library',
+        }],
+        ['use_zinnia=="YES"', {
+          'dependencies+': [
+            'character_pad_lib',
+          ],
+          'defines': [
+            'USE_ZINNIA',
+          ],
         }],
       ],
     },

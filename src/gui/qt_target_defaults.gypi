@@ -33,6 +33,13 @@
 
   'variables': {
     'includes': ['qt_vars.gypi'],
+    'conditions': [
+      ['use_dynamically_linked_qt=="YES"', {
+        'libfile_postfix_for_win': '4',
+      }, {  # else
+        'libfile_postfix_for_win': '',
+      }],
+    ],
   },
   # MSVS specific settings
   'target_defaults': {
@@ -61,8 +68,8 @@
         'msvs_settings': {
           'VCLinkerTool': {
             'AdditionalDependencies': [
-              'QtCored.lib',
-              'QtGuid.lib',
+              'QtCored<(libfile_postfix_for_win).lib',
+              'QtGuid<(libfile_postfix_for_win).lib',
             ],
           },
         },
@@ -71,8 +78,8 @@
         'msvs_settings': {
           'VCLinkerTool': {
             'AdditionalDependencies': [
-              'QtCore.lib',
-              'QtGui.lib',
+              'QtCore<(libfile_postfix_for_win).lib',
+              'QtGui<(libfile_postfix_for_win).lib',
             ],
           },
         },

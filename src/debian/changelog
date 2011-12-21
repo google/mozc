@@ -1,14 +1,21 @@
+mozc (1.3.931.102) lucid; urgency=low
+
+  * Ver. 1.3.931.102 on 2011-12-21
+  * Support building mozc_tool on Windows.
+
+ -- Tsuyoshi Horo <horo>  Wed, 21 Dec 2011 14:11:13 +0900
+
 mozc (1.3.930.102) lucid; urgency=low
 
   * Ver. 1.3.930.102 on 2011-12-16
   * Fixed some bugs.
-    - Fixed memory leak in SCIM.(Issus 104)
-    - Fixed initial reconversion failure in IBus.(Issus 107)
+    - Fixed memory leak in SCIM.(Issue 104)
+    - Fixed initial reconversion failure in IBus.(Issue 107)
     - Changed to check the application have set IBUS_CAP_SURROUNDING_TEXT.
     - Fixed SVN check out failure.(Issue 109)
   * Use new version of japanese_usage_dictionary.
 
- -- Tsuyoshi Horo <horo>  Mon, 16 Dec 2011 12:55:16 +0900
+ -- Tsuyoshi Horo <horo>  Fri, 16 Dec 2011 12:55:16 +0900
 
 mozc (1.3.911.102) lucid; urgency=low
 

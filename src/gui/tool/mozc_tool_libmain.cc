@@ -49,8 +49,17 @@ int RunConfigDialog(int argc, char *argv[]);
 int RunDictionaryTool(int argc, char *argv[]);
 int RunWordRegisterDialog(int argc, char *argv[]);
 int RunErrorMessageDialog(int argc, char *argv[]);
+
+// TODO(yukawa): Remove this macro when Zinnia becomes available on Windows.
+#ifdef USE_ZINNIA
+// Currently the following functions are provided from the same library
+// named "character_pad_lib", which requires Zinnia to be built.
+// So we need to disable both of them when Zinnia is not available.
+// TODO(yukawa): Separate RunCharacterPalette so that we can use it
+//               even when Zinnia is not available.
 int RunCharacterPalette(int argc, char *argv[]);
 int RunHandWriting(int argc, char *argv[]);
+#endif  // USE_ZINNIA
 
 #ifdef OS_WINDOWS
 // (SetDefault|PostInstall|RunAdministartion)Dialog are used for Windows only.
@@ -108,10 +117,12 @@ int RunMozcTool(int argc, char *argv[]) {
     FLAGS_mode = "error_message_dialog";
   } else if (binary_name == "WordRegisterDialog") {
     FLAGS_mode = "word_register_dialog";
+#ifdef USE_ZINNIA
   } else if (binary_name == "HandWriting") {
     FLAGS_mode = "hand_writing";
   } else if (binary_name == "CharacterPalette") {
     FLAGS_mode = "character_palette";
+#endif  // USE_ZINNIA
   }
 #endif
 
@@ -143,10 +154,12 @@ int RunMozcTool(int argc, char *argv[]) {
     return RunErrorMessageDialog(argc, argv);
   } else if (FLAGS_mode == "about_dialog") {
     return RunAboutDialog(argc, argv);
+#ifdef USE_ZINNIA
   } else if (FLAGS_mode == "character_palette") {
     return RunCharacterPalette(argc, argv);
   } else if (FLAGS_mode == "hand_writing") {
     return RunHandWriting(argc, argv);
+#endif  // USE_ZINNIA
 #ifdef OS_WINDOWS
   } else if (FLAGS_mode == "set_default_dialog") {
     // set_default_dialog is used on Windows only.
