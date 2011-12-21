@@ -36,7 +36,7 @@
         'codec.cc',
       ],
       'dependencies': [
-        '../../base/base.gyp:base',
+        '../../base/base.gyp:base_core',
       ],
     },
     {
@@ -47,7 +47,7 @@
       ],
       'dependencies': [
         'codec',
-        '../../base/base.gyp:base',
+        '../../base/base.gyp:base_core',
         '../../testing/testing.gyp:gtest_main',
       ],
       'variables': {
@@ -62,7 +62,7 @@
       ],
       'dependencies': [
         'codec',
-        '../../base/base.gyp:base',
+        '../../base/base.gyp:base_core',
       ],
     },
     {
@@ -73,7 +73,7 @@
       ],
       'dependencies': [
         'codec',
-        '../../base/base.gyp:base',
+        '../../base/base.gyp:base_core',
       ],
     },
     {
@@ -85,7 +85,7 @@
       'dependencies': [
         'dictionary_file',
         'dictionary_file_builder',
-        '../../base/base.gyp:base',
+        '../../base/base.gyp:base_core',
         '../../testing/testing.gyp:gtest_main',
       ],
       'variables': {

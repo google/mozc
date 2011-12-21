@@ -640,22 +640,25 @@ string Segments::DebugString() const {
       } else {
         j = l - seg.meta_candidates_size();
       }
-      os << "   (value " << j << " " << seg.candidate(j).value << " "
-         << seg.candidate(j).content_value
-         << " cost=" << seg.candidate(j).cost
-         << " scost=" << seg.candidate(j).structure_cost
-         << " wcost=" << seg.candidate(j).wcost
-         << " lid=" << seg.candidate(j).lid
-         << " rid=" << seg.candidate(j).rid
-         << " attributes=" << seg.candidate(j).attributes;
-      if (!seg.candidate(j).prefix.empty()) {
-        os << " prefix=" << seg.candidate(j).prefix;
+      const Segment::Candidate &cand = seg.candidate(j);
+      os << "   (value " << j << " " << cand.value << " "
+         << cand.content_value
+         << " key " << cand.key << " "
+         << cand.content_key
+         << " cost=" << cand.cost
+         << " scost=" << cand.structure_cost
+         << " wcost=" << cand.wcost
+         << " lid=" << cand.lid
+         << " rid=" << cand.rid
+         << " attributes=" << cand.attributes;
+      if (!cand.prefix.empty()) {
+        os << " prefix=" << cand.prefix;
       }
-      if (!seg.candidate(j).suffix.empty()) {
-        os << " suffix=" << seg.candidate(j).suffix;
+      if (!cand.suffix.empty()) {
+        os << " suffix=" << cand.suffix;
       }
-      if (!seg.candidate(j).description.empty()) {
-        os << " description=" << seg.candidate(j).description;
+      if (!cand.description.empty()) {
+        os << " description=" << cand.description;
       }
       os << ")" << endl;
     }

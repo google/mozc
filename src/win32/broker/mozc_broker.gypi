@@ -46,8 +46,10 @@
       'dependencies': [
         '../../client/client.gyp:client',
         '../../config/config.gyp:genproto_config',
-        '../../ipc/ipc.gyp:ipc',
         '../../config/config.gyp:stats_config_util',
+        '../../ipc/ipc.gyp:ipc',
+        '../../languages/japanese/japanese.gyp:language_dependent_spec_japanese',
+        '../../languages/languages.gyp:global_language_spec',
         '../../session/session_base.gyp:genproto_session',
         '../base/win32_base.gyp:ime_base',
         'gen_mozc_broker_resource_header',

@@ -2352,9 +2352,8 @@ class UserProfileDirectoryImpl {
 // TODO(yukawa): Use API wrapper so that unit test can emulate any case.
 class LocalAppDataDirectoryCache {
  public:
-  LocalAppDataDirectoryCache()
-    : result_(E_FAIL) {
-    result_ = TryGetLocalAppData(&path_);
+  LocalAppDataDirectoryCache() : result_(E_FAIL) {
+    result_ = SafeTryGetLocalAppData(&path_);
   }
   HRESULT result() const {
     return result_;
@@ -2367,6 +2366,24 @@ class LocalAppDataDirectoryCache {
   }
 
  private:
+  // b/5707813 implies that TryGetLocalAppData causes an exception and makes
+  // Singleton<LocalAppDataDirectoryCache> invalid state which results in an
+  // infinite spin loop in CallOnce. To prevent this, the constructor of
+  // LocalAppDataDirectoryCache must be exception free.
+  // Note that __try and __except does not guarantees that any destruction
+  // of internal C++ objects when a non-C++ exception occurs except that
+  // /EHa compiler option is specified.
+  // Since Mozc uses /EHs option in common.gypi, we must admit potential
+  // memory leakes when any non-C++ exception occues in TryGetLocalAppData.
+  // See http://msdn.microsoft.com/en-us/library/1deeycx5.aspx
+  static HRESULT __declspec(nothrow) SafeTryGetLocalAppData(string *dir) {
+    __try {
+      return TryGetLocalAppData(dir);
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+      return E_UNEXPECTED;
+    }
+  }
+
   static HRESULT TryGetLocalAppData(string *dir) {
     if (dir == NULL) {
       return E_FAIL;
@@ -2509,35 +2526,8 @@ UserProfileDirectoryImpl::UserProfileDirectoryImpl() {
 // TODO(yukawa): Use API wrapper so that unit test can emulate any case.
 class ProgramFilesX86Cache {
  public:
-  ProgramFilesX86Cache()
-    : result_(E_FAIL) {
-    wchar_t program_files_path_buffer[MAX_PATH] = {};
-#if defined(_M_X64)
-    // In 64-bit processes (such as Text Input Prosessor DLL for 64-bit apps),
-    // CSIDL_PROGRAM_FILES points 64-bit Program Files directory. In this case,
-    // we should use CSIDL_PROGRAM_FILESX86 to find server, renderer, and other
-    // binaries' path.
-    result_ = ::SHGetFolderPathW(
-        NULL, CSIDL_PROGRAM_FILESX86, NULL,
-        SHGFP_TYPE_CURRENT, program_files_path_buffer);
-#elif defined(_M_IX86)
-    // In 32-bit processes (such as server, renderer, and other binaries),
-    // CSIDL_PROGRAM_FILES always points 32-bit Program Files directory
-    // even if they are running in 64-bit Windows.
-    result_ = ::SHGetFolderPathW(
-        NULL, CSIDL_PROGRAM_FILES, NULL,
-                           SHGFP_TYPE_CURRENT, program_files_path_buffer);
-#else
-#error "Unsupported CPU architecture"
-#endif  // _M_X64, _M_IX86, and others
-    if (FAILED(result_)) {
-      return;
-    }
-    if (Util::WideToUTF8(program_files_path_buffer,
-                         &path_) == 0) {
-      result_ = E_FAIL;
-      path_.clear();
-    }
+  ProgramFilesX86Cache() : result_(E_FAIL) {
+    result_ = SafeTryProgramFilesPath(&path_);
   }
   const bool succeeded() const {
     return SUCCEEDED(result_);
@@ -2548,7 +2538,61 @@ class ProgramFilesX86Cache {
   const string &path() const {
     return path_;
   }
+
  private:
+  // b/5707813 implies that the Shell API causes an exception in some cases.
+  // In order to avoid potential infinite loops in CallOnce. the constructor of
+  // ProgramFilesX86Cache must be exception free.
+  // Note that __try and __except does not guarantees that any destruction
+  // of internal C++ objects when a non-C++ exception occurs except that
+  // /EHa compiler option is specified.
+  // Since Mozc uses /EHs option in common.gypi, we must admit potential
+  // memory leakes when any non-C++ exception occues in TryProgramFilesPath.
+  // See http://msdn.microsoft.com/en-us/library/1deeycx5.aspx
+  static HRESULT __declspec(nothrow) SafeTryProgramFilesPath(string *path) {
+    __try {
+      return TryProgramFilesPath(path);
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+      return E_UNEXPECTED;
+    }
+  }
+
+  static HRESULT TryProgramFilesPath(string *path) {
+    if (path == NULL) {
+      return E_FAIL;
+    }
+    path->clear();
+
+    wchar_t program_files_path_buffer[MAX_PATH] = {};
+#if defined(_M_X64)
+    // In 64-bit processes (such as Text Input Prosessor DLL for 64-bit apps),
+    // CSIDL_PROGRAM_FILES points 64-bit Program Files directory. In this case,
+    // we should use CSIDL_PROGRAM_FILESX86 to find server, renderer, and other
+    // binaries' path.
+    const HRESULT result = ::SHGetFolderPathW(
+        NULL, CSIDL_PROGRAM_FILESX86, NULL,
+        SHGFP_TYPE_CURRENT, program_files_path_buffer);
+#elif defined(_M_IX86)
+    // In 32-bit processes (such as server, renderer, and other binaries),
+    // CSIDL_PROGRAM_FILES always points 32-bit Program Files directory
+    // even if they are running in 64-bit Windows.
+    const HRESULT result = ::SHGetFolderPathW(
+        NULL, CSIDL_PROGRAM_FILES, NULL,
+        SHGFP_TYPE_CURRENT, program_files_path_buffer);
+#else
+#error "Unsupported CPU architecture"
+#endif  // _M_X64, _M_IX86, and others
+    if (FAILED(result)) {
+      return result;
+    }
+
+    string program_files;
+    if (Util::WideToUTF8(program_files_path_buffer, &program_files) == 0) {
+      return E_FAIL;
+    }
+    *path = program_files;
+    return S_OK;
+  }
   HRESULT result_;
   string path_;
 };
@@ -3699,11 +3743,10 @@ void Util::WriteByteArray(const string &name, const char *image,
                           size_t image_size, ostream *ofs) {
   const char *begin = image;
   const char *end = image + image_size;
-  *ofs << "const size_t k" << name << "_size = "
-       << image_size << ";" << endl;
+  *ofs << "const size_t k" << name << "_size = " << image_size << ";\n";
 
 #ifdef OS_WINDOWS
-  *ofs << "const uint64 k" << name << "_data_uint64[] = {" << endl;
+  *ofs << "const uint64 k" << name << "_data_uint64[] = {\n";
   ofs->setf(ios::hex, ios::basefield);  // in hex
   ofs->setf(ios::showbase);             // add 0x
   int num = 0;
@@ -3718,25 +3761,24 @@ void Util::WriteByteArray(const string &name, const char *image,
     begin += 8;
     *ofs << n << ", ";
     if (++num % 8 == 0) {
-      *ofs << endl;
+      *ofs << '\n';
     }
   }
-  *ofs << "};" << endl;
+  *ofs << "};\n";
   *ofs << "const char *k" << name << "_data"
        << " = reinterpret_cast<const char *>(k"
-       << name << "_data_uint64);" << endl;
+       << name << "_data_uint64);\n";
 #else
-  *ofs << "const char k" << name << "_data[] =" << endl;
+  *ofs << "const char k" << name << "_data[] =\n";
   static const size_t kBucketSize = 20;
   while (begin < end) {
      const size_t size = min(static_cast<size_t>(end - begin), kBucketSize);
      string buf;
      Util::Escape(string(begin, size), &buf);
-     *ofs << "\"" << buf << "\"";
-     *ofs << endl;
+     *ofs << '\"' << buf << "\"\n";
      begin += kBucketSize;
   }
-  *ofs << ";" << endl;
+  *ofs << ";\n";
 #endif
 }
 

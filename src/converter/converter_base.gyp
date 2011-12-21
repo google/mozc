@@ -56,20 +56,56 @@
       ]
     },
     {
-      'target_name': 'segments',
+      'target_name': 'segmenter_base',
+      'type': 'static_library',
+      'sources': [
+        'segmenter_base.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+      ],
+    },
+    {
+      'target_name': 'segmenter',
       'type': 'static_library',
       'sources': [
         '<(gen_out_dir)/boundary_data.h',
-        '<(gen_out_dir)/embedded_connection_data.h',
         '<(gen_out_dir)/segmenter_data.h',
-        '<(gen_out_dir)/segmenter_inl.h',
+        'segmenter.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        'gen_boundary_data',
+        'gen_segmenter_data',
+        'segmenter_base',
+      ],
+    },
+    {
+      'target_name': 'test_segmenter',
+      'type': 'static_library',
+      'sources': [
+        '<(gen_out_dir)/test_boundary_data.h',
+        '<(gen_out_dir)/test_segmenter_data.h',
+        'test_segmenter.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        'gen_test_boundary_data',
+        'gen_test_segmenter_data',
+        'segmenter_base',
+      ],
+    },
+    {
+      'target_name': 'segments',
+      'type': 'static_library',
+      'sources': [
+        '<(gen_out_dir)/embedded_connection_data.h',
         '<(gen_out_mozc_dir)/dictionary/pos_matcher.h',
         'candidate_filter.cc',
         'connector.cc',
         'lattice.cc',
         'nbest_generator.cc',
         'node_allocator.h',
-        'segmenter.cc',
         'segments.cc',
         'sparse_connector.cc',
       ],
@@ -78,10 +114,8 @@
         '../dictionary/dictionary_base.gyp:gen_pos_matcher',
         '../transliteration/transliteration.gyp:transliteration',
         'character_form_manager',
-        'gen_boundary_data',
         'gen_embedded_connection_data',
-        'gen_segmenter_data',
-        'gen_segmenter_inl',
+        'segmenter',
       ],
       'conditions': [['two_pass_build==0', {
         'dependencies': [
@@ -182,6 +216,29 @@
       ],
     },
     {
+      'target_name': 'gen_test_segmenter_data',
+      'type': 'none',
+      'actions': [
+        {
+          'action_name': 'gen_test_segmenter_data',
+          'inputs': [
+            # HACK: Specifying this file is redundant but gyp requires actions
+            # to specify at least one file in inputs.
+            'gen_test_segmenter_bitarray_main.cc',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/test_segmenter_data.h',
+          ],
+          'action': [
+            '<(mozc_build_tools_dir)/gen_test_segmenter_bitarray_main',
+            '--logtostderr',
+            '--test_output=<(gen_out_dir)/test_segmenter_data.h',
+          ],
+          'message': 'Generating <(gen_out_dir)/test_segmenter_data.h.',
+        },
+      ],
+    },
+    {
       'target_name': 'gen_connection_data_main',
       'type': 'executable',
       'sources': [
@@ -204,15 +261,35 @@
       ]
     },
     {
+      'target_name': 'gen_segmenter_bitarray',
+      'type': 'static_library',
+      'sources': [
+        'gen_segmenter_bitarray.cc',
+      ],
+      'dependencies' : [
+        '../base/base.gyp:base',
+      ]
+    },
+    {
       'target_name': 'gen_segmenter_bitarray_main',
       'type': 'executable',
       'sources': [
         'gen_segmenter_bitarray_main.cc',
-        'key_corrector.cc',
       ],
       'dependencies': [
-        '../storage/storage.gyp:storage',
+        'gen_segmenter_bitarray',
         'gen_segmenter_inl',
+      ],
+    },
+    {
+      'target_name': 'gen_test_segmenter_bitarray_main',
+      'type': 'executable',
+      'sources': [
+        'gen_test_segmenter_bitarray_main.cc',
+      ],
+      'dependencies': [
+        'gen_segmenter_bitarray',
+        'gen_test_segmenter_inl',
       ],
     },
     {
@@ -242,6 +319,36 @@
             '<@(input_files)',
           ],
           'message': 'Generating <(gen_out_dir)/segmenter_inl.h.',
+        },
+      ],
+    },
+    {
+      'target_name': 'gen_test_segmenter_inl',
+      'type': 'none',
+      'actions': [
+        {
+          'action_name': 'gen_test_segmenter_inl',
+          'variables': {
+            'input_files%': [
+              '../data/test/dictionary/id.def',
+              '../data/rules/special_pos.def',
+              '../data/rules/segmenter.def',
+            ],
+          },
+          'inputs': [
+            'gen_segmenter_code.py',
+            '<@(input_files)',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/test_segmenter_inl.h',
+          ],
+          'action': [
+            'python', '../build_tools/redirect.py',
+            '<(gen_out_dir)/test_segmenter_inl.h',
+            'gen_segmenter_code.py',
+            '<@(input_files)',
+          ],
+          'message': 'Generating <(gen_out_dir)/test_segmenter_inl.h.',
         },
       ],
     },
@@ -276,10 +383,50 @@
       ],
     },
     {
+      'target_name': 'gen_test_boundary_data',
+      'type': 'none',
+      'actions': [
+        {
+          'action_name': 'gen_test_boundary_data',
+          'variables': {
+            # ordering-sensitive
+            'input_files': [
+              '../data/rules/boundary.def',
+              '../data/test/dictionary/id.def',
+            ],
+          },
+          'inputs': [
+            'gen_boundary_data.py',
+            '<@(input_files)',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/test_boundary_data.h',
+          ],
+          'action': [
+            'python', '../build_tools/redirect.py',
+            '<(gen_out_dir)/test_boundary_data.h',
+            'gen_boundary_data.py',
+            '<@(input_files)',
+          ],
+          'message': 'Generating <(gen_out_dir)/test_boundary_data.h.',
+        },
+      ],
+    },
+    {
       'target_name': 'install_gen_segmenter_bitarray_main',
       'type': 'none',
       'variables': {
         'bin_name': 'gen_segmenter_bitarray_main'
+      },
+      'includes' : [
+        '../gyp/install_build_tool.gypi',
+      ],
+    },
+    {
+      'target_name': 'install_gen_test_segmenter_bitarray_main',
+      'type': 'none',
+      'variables': {
+        'bin_name': 'gen_test_segmenter_bitarray_main'
       },
       'includes' : [
         '../gyp/install_build_tool.gypi',

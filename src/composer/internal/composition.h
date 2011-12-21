@@ -33,6 +33,7 @@
 #include "composer/composition_interface.h"
 
 #include <list>
+#include <set>
 #include <string>
 
 #include "base/base.h"
@@ -83,6 +84,13 @@ class Composition : public CompositionInterface {
       const TransliteratorInterface *transliterator,
       string *output) const;
   void GetStringWithTrimMode(TrimMode trim_mode, string* output) const;
+  // Get string with consideration for ambiguity from pending input
+  void GetExpandedStrings(string *base,
+                          set<string> *expanded) const;
+  void GetExpandedStringsWithTransliterator(
+      const TransliteratorInterface *transliterator,
+      string *base,
+      set<string> *expanded) const;
   void GetPreedit(
       size_t position, string *left, string *focused, string *right) const;
 

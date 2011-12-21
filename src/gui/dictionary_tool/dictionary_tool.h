@@ -113,6 +113,9 @@ class DictionaryTool : public QMainWindow,
   // Returns information on the current dictionary.
   DictionaryInfo current_dictionary() const;
 
+  // Returns true if the current dictionary is sync dictionary.
+  bool IsCurrentDictionaryForSync() const;
+
   // Save content of the current dictionary to the UserDictionaryStorage
   void SyncToStorage();
 

@@ -28,17 +28,17 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-'''
-A tool to generate EOS data
-'''
+"""A tool to generate boundary data."""
 
 __author__ = "taku"
 
-import sys
 import re
+import sys
+
 
 def PatternToRegexp(pattern):
   return '^' + pattern.replace('*', '[^,]+')
+
 
 def LoadPatterns(file):
   prefix = []
@@ -83,10 +83,6 @@ def main():
   (prefix, suffix) = LoadPatterns(sys.argv[1])
   features = LoadFeatures(sys.argv[2])
   print 'namespace {'
-  print 'struct BoundaryData {'
-  print '  uint16 prefix_penalty;';
-  print '  uint16 suffix_penalty;';
-  print '};'
   print 'const BoundaryData kBoundaryData[] = {'
 
   for n in range(len(features)):

@@ -6421,5 +6421,59 @@ TEST_F(SessionTest, CaretManageConversionToCompositionTest) {
             command.output().candidates().composition_rectangle().x());
 }
 
+TEST_F(SessionTest, CaretJumpCaseTest) {
+  scoped_ptr<Session> session(new Session);
+  InitSessionToPrecomposition(session.get());
+
+  commands::Command command;
+  Segments segments;
+  const int kCaretInitialXpos = 10;
+  const int kCaretInitialYpos = 12;
+  commands::Rectangle rectangle;
+  rectangle.set_x(kCaretInitialXpos);
+  rectangle.set_y(kCaretInitialYpos);
+  rectangle.set_width(0);
+  rectangle.set_height(0);
+
+  Segments segments_mo;
+  {
+    segments_mo.set_request_type(Segments::SUGGESTION);
+    Segment *segment;
+    segment = segments_mo.add_segment();
+    segment->set_key("MO");
+    segment->add_candidate()->value = "MOCHA";
+    segment->add_candidate()->value = "MOZUKU";
+  }
+
+  Segments segments_moz;
+  {
+    segments_moz.set_request_type(Segments::SUGGESTION);
+    Segment *segment;
+    segment = segments_moz.add_segment();
+    segment->set_key("MOZ");
+    segment->add_candidate()->value = "MOZUKU";
+  }
+
+  SetCaretLocation(rectangle, session.get());
+  SendKey("M", session.get(), &command);
+
+  // If Y-position of caret is jumped, composition text area is reset.
+  rectangle.set_y(rectangle.y() + 200);
+  SetCaretLocation(rectangle, session.get());
+  convertermock_->SetStartSuggestionWithComposer(&segments_mo, true);
+  command.Clear();
+  SendKey("O", session.get(), &command);
+  EXPECT_EQ(rectangle.y(),
+            command.output().candidates().composition_rectangle().y());
+
+  // Even if X-position of caret is jumped, composition text area is not reset.
+  rectangle.set_x(rectangle.x() + 200);
+  SetCaretLocation(rectangle, session.get());
+  convertermock_->SetStartSuggestionWithComposer(&segments_moz, true);
+  command.Clear();
+  SendKey("Z", session.get(), &command);
+  EXPECT_EQ(kCaretInitialXpos,
+            command.output().candidates().composition_rectangle().x());
+}
 }  // namespace session
 }  // namespace mozc

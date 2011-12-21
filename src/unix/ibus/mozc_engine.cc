@@ -482,6 +482,12 @@ void MozcEngine::Enable(IBusEngine *engine) {
   // mozc_server could discard a preedit string before the hot key is pressed
   // (crosbug.com/4596).
   RevertSession(engine);
+
+  // If engine wants to use surrounding text, we should call
+  // ibus_engine_get_surrounding_text once when the engine enabled.
+#if IBUS_CHECK_VERSION(1, 4, 0)
+  ibus_engine_get_surrounding_text(engine, NULL, NULL, NULL);
+#endif  // IBUS_CHECK_VERSION(1, 4, 0)
 }
 
 void MozcEngine::FocusIn(IBusEngine *engine) {
@@ -673,9 +679,7 @@ void MozcEngine::Reset(IBusEngine *engine) {
 
 void MozcEngine::SetCapabilities(IBusEngine *engine,
                                  guint capabilities) {
-  // TODO(mazda,yusukes): For now, there's nothing to do here. If mozc starts to
-  // support the reconversion feature, we should checkIBUS_CAP_SURROUNDING_TEXT
-  // here to see if the current client can provide surrounding text information.
+  // Do nothing.
 }
 
 void MozcEngine::SetCursorLocation(IBusEngine *engine,
@@ -1164,6 +1168,9 @@ bool MozcEngine::ExecuteCallback(IBusEngine *engine,
     case commands::SessionCommand::CONVERT_REVERSE: {
 #if IBUS_CHECK_VERSION(1, 4, 0)
 // ibus_engine_get_surrounding_text is supported by >= 1.4.0
+      if (!(engine->client_capabilities & IBUS_CAP_SURROUNDING_TEXT)) {
+        return false;
+      }
       IBusText *text = NULL;
       guint cursor_pos = 0;
       guint anchor_pos = 0;

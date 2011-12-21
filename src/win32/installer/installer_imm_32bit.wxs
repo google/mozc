@@ -181,6 +181,13 @@
             Key='$(var.OmahaClientKey)'
             Name='oopcrashes' Value='1' Action='write'
             Type='integer' />
+        <!-- enable usagestats for dev channel users -->
+        <?if ($(var.OmahaChannelType) = "dev") ?>
+          <RegistryValue Id='OmahaUsageStats' Root='HKLM'
+              Key='$(var.OmahaClientStateKey)'
+              Name='usagestats' Value='1' Action='write'
+              Type='integer' />
+        <?endif?>
       </Component>
 
       <!--

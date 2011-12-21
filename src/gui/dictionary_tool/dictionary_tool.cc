@@ -588,7 +588,6 @@ void DictionaryTool::OnDictionarySelectionChanged() {
     current_dic_id_ = dic_info.id;
     SetupDicContentEditor(dic_info);
       max_entry_size_ = UserDictionaryStorage::max_entry_size();
-    LOG(INFO) << "Mac entry size: " << max_entry_size_;
   }
 }
 
@@ -606,8 +605,9 @@ void DictionaryTool::SetupDicContentEditor(
   // Update the main table widget for dictionary contents.
   StopMonitoringUserEdit();
 
-  rename_action_->setEnabled(true);
-  delete_action_->setEnabled(true);
+  // Disable "rename" and "delete" for sync dictionary
+  rename_action_->setEnabled(!dic->syncable());
+  delete_action_->setEnabled(!dic->syncable());
   import_append_action_->setEnabled(true);
   export_action_->setEnabled(true);
 
@@ -1202,19 +1202,26 @@ void DictionaryTool::OnContextMenuRequestedForList(const QPoint &pos) {
   }
 
   QMenu *menu = new QMenu(this);
-  QAction *rename_action = menu->addAction(tr("Rename..."));
-  QAction *delete_action = menu->addAction(tr("Delete"));
+
+  // Disable "rename" and "delete" for sync dictionary.
+  QAction *rename_action = NULL;
+  QAction *delete_action = NULL;
+  if (!IsCurrentDictionaryForSync()) {
+    // "rename" and "delete" are not available for sync dictionary.
+    rename_action = menu->addAction(tr("Rename..."));
+    delete_action = menu->addAction(tr("Delete"));
+  }
   QAction *import_action = menu->addAction(tr("Import to this dictionary..."));
   QAction *export_action = menu->addAction(tr("Export this dictionary..."));
   QAction *selected_action = menu->exec(QCursor::pos());
 
-  if (selected_action == rename_action) {
+  if ((rename_action != NULL) && (selected_action == rename_action)) {
     RenameDictionary();
-  } else if (selected_action == delete_action) {
+  } else if ((delete_action != NULL) && (selected_action == delete_action)) {
     DeleteDictionary();
-  } else if (selected_action == import_action) {
+  } else if ((import_action != NULL) && (selected_action == import_action)) {
     ImportAndAppendDictionary();
-  } else if (selected_action == export_action) {
+  } else if ((export_action != NULL) && (selected_action == export_action)) {
     ExportDictionary();
   }
 }
@@ -1234,6 +1241,17 @@ DictionaryTool::DictionaryInfo DictionaryTool::current_dictionary() const {
   retval.id   = items[0]->data(Qt::UserRole).toULongLong();
   retval.item = items[0];
   return retval;
+}
+
+bool DictionaryTool::IsCurrentDictionaryForSync() const {
+  const DictionaryInfo &dic_info = current_dictionary();
+  if (dic_info.item == NULL) {
+    return false;
+  }
+
+  UserDictionaryStorage::UserDictionary *dic =
+      storage_->GetUserDictionary(dic_info.id);
+  return dic->syncable();
 }
 
 void DictionaryTool::SyncToStorage() {
@@ -1440,7 +1458,13 @@ void DictionaryTool::UpdateUIStatus() {
       dic_list_->count() < storage_->max_dictionary_size();
   new_action_->setEnabled(is_enable_new_dic);
   import_create_action_->setEnabled(is_enable_new_dic);
-  delete_action_->setEnabled(dic_list_->count() > 0);
+
+  // "delete" is not available for sync dictionary.
+  if (IsCurrentDictionaryForSync()) {
+    delete_action_->setEnabled(false);
+  } else {
+    delete_action_->setEnabled(dic_list_->count() > 0);
+  }
   import_append_action_->setEnabled(dic_list_->count() > 0);
 #ifdef OS_WINDOWS
   import_default_ime_action_->setEnabled(dic_list_->count() > 0);

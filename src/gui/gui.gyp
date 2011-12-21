@@ -802,6 +802,7 @@
         '../client/client.gyp:client',
         '../config/config.gyp:genproto_config',
         '../ipc/ipc.gyp:ipc',
+        '../languages/japanese/japanese.gyp:language_dependent_spec_japanese',
         '../session/session_base.gyp:genproto_session',
         'gen_set_default_dialog_files',
       ],

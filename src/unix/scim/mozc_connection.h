@@ -123,8 +123,11 @@ class MozcConnection : public MozcConnectionInterface {
       string *out_error) const;
 
   const scoped_ptr<ScimKeyTranslator> translator_;
-  scoped_ptr<mozc::client::ClientInterface> client_;
   mozc::config::Config::PreeditMethod preedit_method_;
+  // Keep definition order of client_factory_ and client_.
+  // We should delete client_ before deleting client_factory_.
+  scoped_ptr<mozc::IPCClientFactoryInterface> client_factory_;
+  scoped_ptr<mozc::client::ClientInterface> client_;
 
   DISALLOW_COPY_AND_ASSIGN(MozcConnection);
 };

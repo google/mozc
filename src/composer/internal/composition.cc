@@ -245,7 +245,7 @@ void Composition::GetStringWithModes(
   }
 
   CharChunkList::const_iterator it;
-  for (it = chunks_.begin(); (*it) != chunks_.back(); ++it) {
+  for (it = chunks_.begin(); *it != chunks_.back(); ++it) {
     (*it)->AppendResult(*table_, transliterator, composition);
   }
   switch (trim_mode) {
@@ -262,6 +262,34 @@ void Composition::GetStringWithModes(
       LOG(WARNING) << "Unexpected trim mode: " << trim_mode;
       break;
   }
+}
+
+void Composition::GetExpandedStrings(string *base,
+                                     set<string> *expanded) const {
+  GetExpandedStringsWithTransliterator(kNullT12r, base, expanded);
+}
+
+void Composition::GetExpandedStringsWithTransliterator(
+    const TransliteratorInterface *transliterator,
+    string *base,
+    set<string> *expanded) const {
+  DCHECK(base);
+  DCHECK(expanded);
+  base->clear();
+  expanded->clear();
+  if (chunks_.empty()) {
+    LOG(WARNING) << "The composition size is zero.";
+    return;
+  }
+
+  CharChunkList::const_iterator it;
+  for (it = chunks_.begin(); (*it) != chunks_.back(); ++it) {
+    (*it)->AppendFixedResult(*table_, transliterator, base);
+  }
+
+  chunks_.back()->AppendTrimedResult(*table_, transliterator, base);
+  // Get expanded from the last chunk
+  chunks_.back()->GetExpandedResults(*table_, transliterator, expanded);
 }
 
 void Composition::GetString(string *composition) const {

@@ -35,6 +35,11 @@
 #include <msctf.h>
 #include <vector>
 
+// MIDL_INTERFACE expects a string literal rather than a constant array of
+// characters.
+#define IIDSTR_IMozcLangBarMenu "85B8A2CD-88A0-469f-BC39-8333620AE1F5"
+#define IIDSTR_IMozcToggleButtonMenu "E625A19B-C56D-4511-8B48-5A7C2AA10DF5"
+
 class LangBarCallback;
 
 // Represents a tuple to specify the content of a language bar menu item.
@@ -70,40 +75,59 @@ class ImeLangBarMenuDataArray {
   vector<ImeLangBarMenuData> data_;
 };
 
+MIDL_INTERFACE(IIDSTR_IMozcLangBarMenu)
+IMozcLangBarMenu : public IUnknown {
+  // Sets the status of this language bar menu.
+  virtual STDMETHODIMP SetEnabled(bool enabled) = 0;
+};
+
+
+MIDL_INTERFACE(IIDSTR_IMozcToggleButtonMenu)
+IMozcToggleButtonMenu : public IUnknown {
+  // Selects a menu item which has the given |menu_id|.
+  virtual STDMETHODIMP SelectMenuItem(UINT menu_id) = 0;
+};
 
 // Represents the common operations for a button-menu item in the language bar.
 class ImeLangBarMenu
     : public ITfLangBarItemButton,
-      public ITfSource {
+      public ITfSource,
+      public IMozcLangBarMenu {
  public:
   explicit ImeLangBarMenu(LangBarCallback* langbar_callback,
                          const GUID& guid);
-  virtual ~ImeLangBarMenu();
+  // It is OK to declare the destructor as non-virtual because all the
+  // insbtances will be deleted from and only from the Release() method by
+  // |delete this| where |this| has the true (derived) type of the instance.
+  ~ImeLangBarMenu();
 
   // The IUnknown interface methods
-  STDMETHODIMP QueryInterface(REFIID guid, void** object);
-  STDMETHODIMP_(ULONG) AddRef(void);
-  STDMETHODIMP_(ULONG) Release(void);
+  virtual STDMETHODIMP QueryInterface(REFIID guid, void** object) = 0;
+  virtual STDMETHODIMP_(ULONG) AddRef() = 0;
+  virtual STDMETHODIMP_(ULONG) Release() = 0;
 
   // The ITfLangBarItem interface methods
   virtual STDMETHODIMP GetInfo(TF_LANGBARITEMINFO* item_info) = 0;
-  STDMETHODIMP GetStatus(DWORD* status);
-  STDMETHODIMP Show(BOOL show);
-  STDMETHODIMP GetTooltipString(BSTR* tooltip);
+  virtual STDMETHODIMP GetStatus(DWORD* status);
+  virtual STDMETHODIMP Show(BOOL show);
+  virtual STDMETHODIMP GetTooltipString(BSTR* tooltip);
 
   // The ITfLangBarItemButton interface methods
-  STDMETHODIMP OnClick(TfLBIClick clink, POINT point, const RECT* rect);
-  // These interfaces must be implemented by the derived class.
+  virtual STDMETHODIMP OnClick(TfLBIClick clink, POINT point,
+                               const RECT* rect);
   virtual STDMETHODIMP InitMenu(ITfMenu* menu) = 0;
   virtual STDMETHODIMP OnMenuSelect(UINT menu_id) = 0;
   virtual STDMETHODIMP GetIcon(HICON* icon) = 0;
-  STDMETHODIMP GetText(BSTR* text);
+  virtual STDMETHODIMP GetText(BSTR* text);
 
   // The ITfSource interface methods
-  STDMETHODIMP AdviseSink(REFIID interface_id,
-                          IUnknown* unknown,
-                          DWORD* cookie);
-  STDMETHODIMP UnadviseSink(DWORD cookie);
+  virtual STDMETHODIMP AdviseSink(REFIID interface_id,
+                                  IUnknown* unknown,
+                                  DWORD* cookie);
+  virtual STDMETHODIMP UnadviseSink(DWORD cookie);
+
+  // The IMozcLangBarMenu interface method
+  virtual STDMETHODIMP SetEnabled(bool enabled);
 
   // Initializes an ImeButtonMenu instance.
   // This function allocates resources for an ImeButtonMenu instance.
@@ -113,10 +137,7 @@ class ImeLangBarMenu
                int count);
 
   // Notifies the language bar of a change in a language bar item.
-  HRESULT OnUpdate(DWORD update_flag);
-
-  // Sets the status of this language bar menu.
-  HRESULT SetEnabled(bool enabled);
+  STDMETHODIMP OnUpdate(DWORD update_flag);
 
   // Returns true if a 32-bpp icon can be displayed as a context menu item on
   // the LangBar.  See http://b/2260057 and http://b/2265755
@@ -124,6 +145,8 @@ class ImeLangBarMenu
   static bool CanContextMenuDisplay32bppIcon();
 
  protected:
+  STDMETHODIMP QueryInterfaceBase(REFIID guid, void** object);
+
   // Returns the i-th data in the language bar menu.
   // Returns NULL if i is out of bounds.
   ImeLangBarMenuData* menu_data(size_t i);
@@ -136,6 +159,7 @@ class ImeLangBarMenu
 
   ITfLangBarItemSink* item_sink_;
   LangBarCallback* langbar_callback_;
+
  private:
   // Represents the information of an instance copied to the TSF manager.
   // The TSF manager uses this information to identifies an instance as
@@ -148,10 +172,6 @@ class ImeLangBarMenu
   // Records TF_LBI_STATUS_* bits and represents the status of the this langbar
   // menu.
   DWORD status_;
-
-  // Represents the reference count to an instance.
-  // volatile modifier is added to conform with InterlockedIncrement API.
-  volatile LONG reference_count_;
 };
 
 // Represents the common operations for a button-menu item with an icon in the
@@ -161,12 +181,17 @@ class ImeIconButtonMenu : public ImeLangBarMenu {
   explicit ImeIconButtonMenu(LangBarCallback* langbar_callback,
                              const GUID& guid);
 
+  // The IUnknown interface methods
+  virtual STDMETHODIMP QueryInterface(REFIID guid, void** object);
+  virtual STDMETHODIMP_(ULONG) AddRef();
+  virtual STDMETHODIMP_(ULONG) Release();
+
   virtual STDMETHODIMP GetInfo(TF_LANGBARITEMINFO* item_info);
 
   // A part of the ITfLangBarItemButton interface methods
-  STDMETHODIMP InitMenu(ITfMenu* menu);
-  STDMETHODIMP OnMenuSelect(UINT menu_id);
-  STDMETHODIMP GetIcon(HICON* icon);
+  virtual STDMETHODIMP InitMenu(ITfMenu* menu);
+  virtual STDMETHODIMP OnMenuSelect(UINT menu_id);
+  virtual STDMETHODIMP GetIcon(HICON* icon);
 
   // Initializes an ImeButtonMenu instance.
   // This function allocates resources for an ImeButtonMenu instance.
@@ -178,6 +203,10 @@ class ImeIconButtonMenu : public ImeLangBarMenu {
                UINT menu_icon_id_for_theme);
 
  private:
+  // Represents the reference count to an instance.
+  // volatile modifier is added to conform with InterlockedIncrement API.
+  volatile LONG reference_count_;
+
   // Represents the icon of the language bar menu.
   UINT menu_icon_id_for_theme_;
   UINT menu_icon_id_for_non_theme_;
@@ -185,11 +214,21 @@ class ImeIconButtonMenu : public ImeLangBarMenu {
 
 // Represents the common operations for a toggle button-menu item in the
 // language bar.
-class ImeToggleButtonMenu : public ImeLangBarMenu {
+class ImeToggleButtonMenu
+    : public ImeLangBarMenu,
+      public IMozcToggleButtonMenu {
  public:
   explicit ImeToggleButtonMenu(LangBarCallback* langbar_callback,
-                         const GUID& guid);
-  virtual ~ImeToggleButtonMenu();
+                               const GUID& guid);
+  ~ImeToggleButtonMenu();
+
+  // The IUnknown interface methods
+  virtual STDMETHODIMP QueryInterface(REFIID guid, void** object);
+  virtual STDMETHODIMP_(ULONG) AddRef();
+  virtual STDMETHODIMP_(ULONG) Release();
+
+  // The IToggleButtonMenu interface methods
+  virtual STDMETHODIMP SelectMenuItem(UINT menu_id);
 
   virtual STDMETHODIMP GetInfo(TF_LANGBARITEMINFO* item_info);
 
@@ -204,10 +243,11 @@ class ImeToggleButtonMenu : public ImeLangBarMenu {
                const ImeLangBarMenuItem* menu,
                int count);
 
-  // Selects a menu item which has the same menu_id_ as menu_id.
-  void SelectMenuItem(UINT menu_id);
-
  private:
+  // Represents the reference count to an instance.
+  // volatile modifier is added to conform with InterlockedIncrement API.
+  volatile LONG reference_count_;
+
   // Represents the index of the selected menu item.
   UINT menu_selected_;
 };
@@ -237,14 +277,14 @@ class ImeSystemLangBarMenu
                int count);
 
  private:
+  // Represents the reference count to an instance.
+  // volatile modifier is added to conform with InterlockedIncrement API.
+  volatile LONG reference_count_;
+
   LangBarCallback* langbar_callback_;
 
   // Represents the data possessed by the language bar menu.
   ImeLangBarMenuDataArray menu_data_;
-
-  // Represents the reference count to an instance.
-  // volatile modifier is added to conform with InterlockedIncrement API.
-  volatile LONG reference_count_;
 };
 
 #endif  // MOZC_WIN32_IME_IME_LANGUAGE_BAR_MENU_H_

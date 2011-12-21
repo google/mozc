@@ -42,6 +42,7 @@
 #include "win32/ime/ime_resource.h"
 
 using ATL::CComPtr;
+using ATL::CComQIPtr;
 
 namespace {
 // The GUID of the help menu in the system language bar.
@@ -68,17 +69,14 @@ const GUID kImeLangBarItem_HelpMenu = {
   0xbbca8c7b, 0xc1e5, 0x473d, {0x83, 0x45, 0xc6, 0x5b, 0x2c, 0x02, 0xcd, 0xc8}
 };
 
-// Casts CComPtr<S> to D.
-// Casting S* to D needs to be safe.
-template <typename D, typename S>
-D comptr_cast(CComPtr<S> ptr) {
-  return reinterpret_cast<D>(static_cast<S*>(ptr));
-}
-
 CComPtr<ITfLangBarItemMgr> GetLangBarItemMgr() {
   // "msctf.dll" is not always available.  For example, Windows XP can disable
   // TSF completely.  In this case, the "msctf.dll" is not loaded.
-  const HMODULE module = mozc::Util::GetSystemModuleHandle(L"msctf.dll");
+  // Note that "msctf.dll" never be unloaded when it exists because we
+  // increments its reference count here. This prevents weired crashes such as
+  // b/4322508.
+  const HMODULE module =
+      mozc::Util::GetSystemModuleHandleAndIncrementRefCount(L"msctf.dll");
   if (module == NULL) {
     return NULL;
   }
@@ -87,7 +85,7 @@ CComPtr<ITfLangBarItemMgr> GetLangBarItemMgr() {
     return NULL;
   }
   typedef HRESULT (WINAPI *FPTF_CreateLangBarItemMgr)(
-    ITfLangBarItemMgr **pplbim);
+      ITfLangBarItemMgr **pplbim);
   CComPtr<ITfLangBarItemMgr> ptr;
   const HRESULT result = reinterpret_cast<FPTF_CreateLangBarItemMgr>(function)(
       &ptr);
@@ -137,8 +135,7 @@ HRESULT LanguageBar::InitLanguageBar(LangBarCallback *text_service) {
       {NULL, LangBarCallback::kCancel, IDS_CANCEL, 0, 0},
     };
 
-    CComPtr<ImeToggleButtonMenu> input_button_menu;
-    input_button_menu.Attach(
+    CComPtr<ImeToggleButtonMenu> input_button_menu(
         new ImeToggleButtonMenu(text_service, kImeLangBarItem_Button));
     if (input_button_menu == NULL) {
       return E_OUTOFMEMORY;
@@ -150,8 +147,7 @@ HRESULT LanguageBar::InitLanguageBar(LangBarCallback *text_service) {
       return result;
     }
     item->AddItem(input_button_menu);
-
-    input_button_menu_ = static_cast<ITfLangBarItemButton*>(input_button_menu);
+    input_button_menu.QueryInterface(&input_button_menu_);
   }
 
   if (tool_button_menu_ == NULL) {
@@ -172,8 +168,7 @@ HRESULT LanguageBar::InitLanguageBar(LangBarCallback *text_service) {
       {NULL, LangBarCallback::kCancel, IDS_CANCEL, 0, 0},
     };
 
-    CComPtr<ImeIconButtonMenu> tool_button_menu;
-    tool_button_menu.Attach(
+    CComPtr<ImeIconButtonMenu> tool_button_menu(
         new ImeIconButtonMenu(text_service, kImeLangBarItem_ToolButton));
     if (tool_button_menu == NULL) {
       return E_OUTOFMEMORY;
@@ -186,8 +181,7 @@ HRESULT LanguageBar::InitLanguageBar(LangBarCallback *text_service) {
       return result;
     }
     item->AddItem(tool_button_menu);
-
-    tool_button_menu_ = static_cast<ITfLangBarItemButton*>(tool_button_menu);
+    tool_button_menu.QueryInterface(&tool_button_menu_);
   }
 
   if (help_menu_ == NULL) {
@@ -197,8 +191,7 @@ HRESULT LanguageBar::InitLanguageBar(LangBarCallback *text_service) {
       {NULL, LangBarCallback::kHelp, IDS_HELP, 0, 0},
     };
 
-    CComPtr<ImeSystemLangBarMenu> help_menu;
-    help_menu.Attach(
+    CComPtr<ImeSystemLangBarMenu> help_menu(
         new ImeSystemLangBarMenu(text_service, kImeLangBarItem_HelpMenu));
     if (help_menu == NULL) {
       return E_OUTOFMEMORY;
@@ -302,22 +295,25 @@ HRESULT LanguageBar::UpdateLangbarMenu(
         LOG(ERROR) << "Unknown composition mode: " << mode;
         return E_INVALIDARG;
     }
-    comptr_cast<ImeToggleButtonMenu*>(input_button_menu_)->SelectMenuItem(
-        menu_id);
+    CComQIPtr<IMozcToggleButtonMenu>
+        toggle_button_menu(input_button_menu_);
+    if (toggle_button_menu) {
+      toggle_button_menu->SelectMenuItem(menu_id);
+    }
   }
 
   return result;
 }
 
 HRESULT LanguageBar::SetLangbarMenuEnabled(bool enable) {
-  HRESULT result = S_OK;
-
-  if (input_button_menu_ != NULL) {
-    comptr_cast<ImeToggleButtonMenu*>(input_button_menu_)->SetEnabled(enable);
+  CComQIPtr<IMozcLangBarMenu> input_button_menu(input_button_menu_);
+  if (input_button_menu) {
+    input_button_menu->SetEnabled(enable);
   }
-  if (tool_button_menu_ != NULL) {
-    comptr_cast<ImeIconButtonMenu*>(tool_button_menu_)->SetEnabled(enable);
+  CComQIPtr<IMozcLangBarMenu> tool_button_menu(tool_button_menu_);
+  if (tool_button_menu) {
+    tool_button_menu->SetEnabled(enable);
   }
 
-  return result;
+  return S_OK;
 }

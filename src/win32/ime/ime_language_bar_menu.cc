@@ -190,8 +190,7 @@ ImeLangBarMenu::ImeLangBarMenu(LangBarCallback *langbar_callback,
                                const GUID& guid)
     : item_sink_(NULL),
       langbar_callback_(NULL),
-      status_(0),
-      reference_count_(1) {
+      status_(0) {
   // Initialize its TF_LANGBARITEMINFO object, which contains the properties of
   // this item and is copied to the TSF manager in GetInfo() function.
   // We set CLSID_NULL because this item is not provided by a text service.
@@ -221,63 +220,6 @@ ImeLangBarMenu::~ImeLangBarMenu() {
     langbar_callback_->Release();
   }
   langbar_callback_ = NULL;
-}
-
-// Implements the IUnknown::QueryInterface() function.
-// This function is used by Windows to retrieve the interfaces implemented by
-// this class.
-STDAPI ImeLangBarMenu::QueryInterface(REFIID interface_id, void** object) {
-
-  if (!object)
-    return E_INVALIDARG;
-
-  // Find a matching interface from the ones implemented by this object
-  // (i.e. IUnknown, ITfLangBarItem, ITfLangBarItemButton, ITfSource).
-  if (IsEqualIID(interface_id, IID_IUnknown) ||
-      IsEqualIID(interface_id, IID_ITfLangBarItem) ||
-      IsEqualIID(interface_id, IID_ITfLangBarItemButton)) {
-    *object = static_cast<ITfLangBarItemButton*>(this);
-    goto success;
-  } else if (IsEqualIID(interface_id, IID_ITfSource)) {
-    *object = static_cast<ITfSource*>(this);
-    goto success;
-  }
-
-  // This object does not implement the given interface.
-  *object = NULL;
-  return E_NOINTERFACE;
-
- success:
-  AddRef();
-  return S_OK;
-}
-
-// Implements the IUnknown::AddRef() function.
-// This function is called by Windows and LangBarCallback instances to notify
-// they need to have a copy of this object.
-// This implementation just increases the reference count of this object
-// to prevent this object from being deleted during it is in use.
-STDAPI_(ULONG) ImeLangBarMenu::AddRef() {
-  const LONG count = ::InterlockedIncrement(&reference_count_);
-  if (count < 0) {
-    DLOG(INFO) << "Reference count is negative.";
-    return 0;
-  }
-  return count;
-}
-
-// Implements the IUnknown::Release() function.
-// This function is called by Windows and LangBarCallback instances to notify
-// they do not need their local copies of this object any longer.
-// This implementation just decreases the reference count of this object
-// and delete it only if it is not referenced by any objects.
-STDAPI_(ULONG) ImeLangBarMenu::Release() {
-  const LONG count = ::InterlockedDecrement(&reference_count_);
-  if (count <= 0) {
-    delete this;
-    return 0;
-  }
-  return count;
 }
 
 // Implements the ITfLangBarItem::GetInfo() function.
@@ -443,11 +385,93 @@ const TF_LANGBARITEMINFO* ImeLangBarMenu::item_info() const {
   return &item_info_;
 }
 
+// Basic implements the IUnknown::QueryInterface() function.
+STDAPI ImeLangBarMenu::QueryInterfaceBase(
+    REFIID interface_id, void** object) {
+  if (!object) {
+    return E_INVALIDARG;
+  }
+
+  // Find a matching interface from the ones implemented by this object
+  // (i.e. IUnknown, ITfLangBarItem, ITfLangBarItemButton, ITfSource).
+  if (::IsEqualIID(interface_id, __uuidof(IMozcLangBarMenu))) {
+    *object = static_cast<IMozcLangBarMenu*>(this);
+    AddRef();
+    return S_OK;
+  }
+
+  if (::IsEqualIID(interface_id, IID_IUnknown)) {
+    *object = static_cast<IUnknown*>(
+        static_cast<ITfLangBarItemButton*>(this));
+    AddRef();
+    return S_OK;
+  }
+
+  if (::IsEqualIID(interface_id, IID_ITfLangBarItem)) {
+    *object = static_cast<ITfLangBarItem*>(this);
+    AddRef();
+    return S_OK;
+  }
+
+  if (::IsEqualIID(interface_id, IID_ITfLangBarItemButton)) {
+    *object = static_cast<ITfLangBarItemButton*>(this);
+    AddRef();
+    return S_OK;
+  }
+
+  if (::IsEqualIID(interface_id, IID_ITfSource)) {
+    *object = static_cast<ITfSource*>(this);
+    AddRef();
+    return S_OK;
+  }
+
+  // This object does not implement the given interface.
+  *object = NULL;
+  return E_NOINTERFACE;
+}
+
 ImeIconButtonMenu::ImeIconButtonMenu(LangBarCallback* langbar_callback,
                                      const GUID& guid)
     : ImeLangBarMenu(langbar_callback, guid),
+      reference_count_(0),
       menu_icon_id_for_theme_(0),
       menu_icon_id_for_non_theme_(0) {
+}
+
+// Implements the IUnknown::QueryInterface() function.
+// This function is used by Windows to retrieve the interfaces implemented by
+// this class.
+STDAPI ImeIconButtonMenu::QueryInterface(
+    REFIID interface_id, void** object) {
+  return QueryInterfaceBase(interface_id, object);
+}
+
+// Implements the IUnknown::AddRef() function.
+// This function is called by Windows and LangBarCallback instances to notify
+// they need to have a copy of this object.
+// This implementation just increases the reference count of this object
+// to prevent this object from being deleted during it is in use.
+STDAPI_(ULONG) ImeIconButtonMenu::AddRef() {
+  const LONG count = ::InterlockedIncrement(&reference_count_);
+  if (count < 0) {
+    DLOG(INFO) << "Reference count is negative.";
+    return 0;
+  }
+  return count;
+}
+
+// Implements the IUnknown::Release() function.
+// This function is called by Windows and LangBarCallback instances to notify
+// they do not need their local copies of this object any longer.
+// This implementation just decreases the reference count of this object
+// and delete it only if it is not referenced by any objects.
+STDAPI_(ULONG) ImeIconButtonMenu::Release() {
+  const LONG count = ::InterlockedDecrement(&reference_count_);
+  if (count <= 0) {
+    delete this;
+    return 0;
+  }
+  return count;
 }
 
 STDAPI ImeIconButtonMenu::InitMenu(ITfMenu* menu) {
@@ -560,10 +584,57 @@ HRESULT ImeIconButtonMenu::Init(HINSTANCE instance,
 ImeToggleButtonMenu::ImeToggleButtonMenu(LangBarCallback* langbar_callback,
                                          const GUID& guid)
     : ImeLangBarMenu(langbar_callback, guid),
+      reference_count_(0),
       menu_selected_(0) {
 }
 
 ImeToggleButtonMenu::~ImeToggleButtonMenu() {
+}
+
+// Implements the IUnknown::QueryInterface() function.
+// This function is used by Windows to retrieve the interfaces implemented by
+// this class.
+STDAPI ImeToggleButtonMenu::QueryInterface(
+    REFIID interface_id, void** object) {
+  if (!object) {
+    return E_INVALIDARG;
+  }
+
+  if (::IsEqualIID(interface_id, __uuidof(IMozcToggleButtonMenu))) {
+    *object = static_cast<IMozcToggleButtonMenu*>(this);
+    AddRef();
+    return S_OK;
+  }
+
+  return QueryInterfaceBase(interface_id, object);
+}
+
+// Implements the IUnknown::AddRef() function.
+// This function is called by Windows and LangBarCallback instances to notify
+// they need to have a copy of this object.
+// This implementation just increases the reference count of this object
+// to prevent this object from being deleted during it is in use.
+STDAPI_(ULONG) ImeToggleButtonMenu::AddRef() {
+  const LONG count = ::InterlockedIncrement(&reference_count_);
+  if (count < 0) {
+    DLOG(INFO) << "Reference count is negative.";
+    return 0;
+  }
+  return count;
+}
+
+// Implements the IUnknown::Release() function.
+// This function is called by Windows and LangBarCallback instances to notify
+// they do not need their local copies of this object any longer.
+// This implementation just decreases the reference count of this object
+// and delete it only if it is not referenced by any objects.
+STDAPI_(ULONG) ImeToggleButtonMenu::Release() {
+  const LONG count = ::InterlockedDecrement(&reference_count_);
+  if (count <= 0) {
+    delete this;
+    return 0;
+  }
+  return count;
 }
 
 // Implements the ITfLangBarItem::GetInfo() function.
@@ -665,7 +736,8 @@ HRESULT ImeToggleButtonMenu::Init(HINSTANCE instance,
   return ImeLangBarMenu::Init(instance, string_id, menu, count);
 }
 
-void ImeToggleButtonMenu::SelectMenuItem(UINT menu_id) {
+// Implements the IMozcToggleButtonMenu::SelectMenuItem() function.
+HRESULT ImeToggleButtonMenu::SelectMenuItem(UINT menu_id) {
   // Now SelectMenuItem may be called frequently to update LangbarItem for
   // every key input.  So we call ImeLangBarMenu::OnUpdate only if any item
   // state is updated.
@@ -689,13 +761,14 @@ void ImeToggleButtonMenu::SelectMenuItem(UINT menu_id) {
   if (item_state_changed) {
     ImeLangBarMenu::OnUpdate(TF_LBI_ICON | TF_LBI_STATUS);
   }
+  return S_OK;
 }
 
 
 // Implements the constructor of the ImeSystemLangBarMenu class.
 ImeSystemLangBarMenu::ImeSystemLangBarMenu(LangBarCallback *langbar_callback,
                                            const GUID& guid)
-    : reference_count_(1) {
+    : reference_count_(0) {
   // Save the LangBarCallback object who owns this button, and increase its
   // reference count not to prevent the object from being deleted
   langbar_callback_ = langbar_callback;

@@ -234,11 +234,12 @@ def GetGypFileNames(options):
     except RunOrDieError:
       print 'scim was not found with pkg-config.'
       gyp_file_names.remove('%s/unix/scim/scim.gyp' % SRC_DIR)
-    # Add chrome skk gyp scripts. If --chrome_skk option is not specified,
-    # These files will be excluded in GypMain().
+    # Add chrome skk gyp scripts.
     gyp_file_names.append('%s/chrome/skk/skk.gyp' % SRC_DIR)
+    gyp_file_names.append('%s/chrome/skk/skk_dict.gyp' % SRC_DIR)
     gyp_file_names.append('%s/chrome/skk/skk_util_test.gyp' % SRC_DIR)
   gyp_file_names.extend(glob.glob('third_party/rx/*.gyp'))
+  gyp_file_names.extend(glob.glob('third_party/jsoncpp/*.gyp'))
   gyp_file_names.sort()
   return gyp_file_names
 
@@ -258,6 +259,9 @@ def CopyFile(source, destination):
   """Copies a file to the destination. Remove an old version if needed."""
   if os.path.isfile(destination):  # Remove the old one if exists.
     RemoveFile(destination)
+  dest_dirname = os.path.dirname(destination)
+  if not os.path.isdir(dest_dirname):
+    os.makedirs(dest_dirname)
   print 'Copying file to: %s' % destination
   shutil.copy(source, destination)
 
@@ -407,18 +411,12 @@ def ParseGypOptions(args=None, values=None):
   parser.add_option('--rsync', dest='rsync', default=False, action='store_true',
                     help='use rsync to copy files instead of builtin function')
 
-  parser.add_option('--chrome_skk', dest='chrome_skk', action='store_true',
-                    default=False, help='include chrome-skk gyp recipe. '
-                    'This flag is false by default because it may require you '
-                    'to install Native Client SDK in your environment.')
-
   parser.add_option('--mac_dir', dest='mac_dir',
                     help='A path to the root directory of third party '
                     'libraries for Mac build which will be passed to gyp '
                     'files.')
 
-  parser.add_option('--nacl_sdk_root', dest='nacl_sdk_root',
-                    default='',
+  parser.add_option('--nacl_sdk_root', dest='nacl_sdk_root', default='',
                     help='A path to the root directory of Native Client SDK. '
                     'This is used when NaCl module build.')
 
@@ -517,9 +515,11 @@ def ParseCleanOptions(args=None, values=None):
 
 def GypMain(options, unused_args):
   """The main function for the 'gyp' command."""
-  # Copy rx.gyp to the third party directory.
+  # Copy rx.gyp and jsoncpp.gyp to the third party directory.
   CopyFile('%s/gyp/rx.gyp' % SRC_DIR,
            'third_party/rx/rx.gyp')
+  CopyFile('%s/gyp/jsoncpp.gyp' % SRC_DIR,
+           'third_party/jsoncpp/jsoncpp.gyp')
   # Copy breakpad.gyp to the third party directory, if necessary.
   if IsWindows():
     CopyFile('%s/gyp/breakpad.gyp' % SRC_DIR,
@@ -532,13 +532,6 @@ def GypMain(options, unused_args):
 
   # Get and show the list of .gyp file names.
   gyp_file_names = GetGypFileNames(options)
-  banned_gyp_files = []
-  if not options.chrome_skk:
-    banned_gyp_files.append('skk.gyp')
-    banned_gyp_files.append('skk_util_test.gyp')
-  if banned_gyp_files:
-    gyp_file_names = [gyp_file for gyp_file in gyp_file_names
-                      if os.path.basename(gyp_file) not in banned_gyp_files]
   print 'GYP files:'
   for file_name in gyp_file_names:
     print '- %s' % file_name
@@ -621,7 +614,14 @@ def GypMain(options, unused_args):
   else:
     command_line.extend(['-D', 'pkg_config_command='])
 
-  command_line.extend(['-D', 'nacl_sdk_root=%s' % options.nacl_sdk_root])
+  if os.path.isdir(options.nacl_sdk_root):
+    nacl_sdk_root = os.path.abspath(options.nacl_sdk_root)
+  elif options.nacl_sdk_root:
+    PrintErrorAndExit('The directory specified with --nacl_sdk_root does not '
+                      'exist: %s' % options.nacl_sdk_root)
+  else:
+    nacl_sdk_root = ''
+  command_line.extend(['-D', 'nacl_sdk_root=%s' % nacl_sdk_root])
 
   command_line.extend(['-D', 'language=%s' % options.language])
   command_line.extend([
@@ -787,8 +787,9 @@ def LocateVCBuildDir():
 
 
 def BuildOnWindowsVS2008(abs_solution_path, platform, configuration):
+  """Build the targets on Windows with VS2008."""
   abs_command_dir = LocateVCBuildDir()
-  command = "vcbuild.exe"
+  command = 'vcbuild.exe'
 
   CheckFileOrDie(os.path.join(abs_command_dir, command))
 
@@ -812,8 +813,9 @@ def BuildOnWindowsVS2008(abs_solution_path, platform, configuration):
 
 
 def BuildOnWindowsVS2010(abs_solution_path, platform, configuration):
+  """Build the targets on Windows with VS2010."""
   abs_command_dir = LocateMSBuildDir()
-  command = "msbuild.exe"
+  command = 'msbuild.exe'
 
   CheckFileOrDie(os.path.join(abs_command_dir, command))
 
@@ -855,7 +857,7 @@ def BuildOnWindows(options, targets, original_directory_name):
     if base_sln_file_name.lower() == 'build64.sln':
       platform = 'x64'
 
-    line = open(abs_sln_path).readline().rstrip("\n")
+    line = open(abs_sln_path).readline().rstrip('\n')
     if line.endswith('Format Version 11.00'):
       BuildOnWindowsVS2010(abs_sln_path, platform, options.configuration)
     elif line.endswith('Format Version 10.00'):
@@ -882,6 +884,7 @@ def BuildMain(options, targets, original_directory_name):
   else:
     print 'Unsupported platform: ', os.name
     return
+
   RunPackageVerifiers(
       os.path.join(GetBuildBaseName(options), options.configuration))
 
@@ -1011,6 +1014,7 @@ def CleanBuildFilesAndDirectories(options, unused_args):
                                                '*/*.Makefile')))
   file_names.append('%s/mozc_version.txt' % SRC_DIR)
   file_names.append('third_party/rx/rx.gyp')
+  file_names.append('third_party/jsoncpp/jsoncpp.gyp')
   # Collect stuff in the top-level directory.
   directory_names.append('mozc_build_tools')
 

@@ -46,6 +46,7 @@
 #include "converter/lattice.h"
 #include "converter/nbest_generator.h"
 #include "converter/segmenter.h"
+#include "converter/segmenter_interface.h"
 #include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
@@ -125,52 +126,6 @@ void InsertCorrectedNodes(size_t pos, const string &key,
   }
 }
 
-int GetConnectionType(const Node *lnode,
-                      const Node *rnode,
-                      const vector<uint16> &group,
-                      const Segments *segments) {
-  if ((rnode->node_type != Node::EOS_NODE &&
-       group[rnode->begin_pos] != group[rnode->end_pos - 1]) ||
-      (lnode->node_type != Node::BOS_NODE &&
-       group[lnode->begin_pos] != group[lnode->end_pos - 1])) {
-    return NOT_CONNECTED;
-  }
-
-  // BOS/EOS nodes
-  if (lnode->node_type == Node::BOS_NODE ||
-      rnode->node_type == Node::EOS_NODE ||
-      lnode->node_type == Node::HIS_NODE ||
-      rnode->node_type == Node::HIS_NODE) {
-    return CONNECTED;
-  }
-
-  // lnode and rnode are both FREE Node
-  const Segment::SegmentType ltype =
-      segments->segment(group[lnode->begin_pos]).segment_type();
-  const Segment::SegmentType rtype =
-      segments->segment(group[rnode->begin_pos]).segment_type();
-  if (ltype == Segment::FREE && rtype == Segment::FREE) {
-    return CONNECTED;
-  }
-
-  const bool is_prediction =
-      (segments->request_type() == Segments::PREDICTION ||
-       segments->request_type() == Segments::SUGGESTION ||
-       segments->request_type() == Segments::PARTIAL_PREDICTION ||
-       segments->request_type() == Segments::PARTIAL_SUGGESTION);
-
-  const bool is_rule_boundary = Segmenter::IsBoundary(lnode, rnode,
-                                                      is_prediction);
-  const bool is_constraint_boundary =
-      group[lnode->begin_pos] != group[rnode->begin_pos];
-
-  if (is_constraint_boundary && !is_rule_boundary) {
-    return WEAK_CONNECTED;
-  }
-
-  return CONNECTED;
-}
-
 void MakeGroup(const Segments *segments, vector<uint16> *group) {
   group->clear();
   for (size_t i = 0; i < segments->segments_size(); ++i) {
@@ -218,7 +173,6 @@ void DecomposePrefixAndNumber(const string &input,
   *prefix = input.substr(0, pos);
   *number = input.substr(pos, input.size() - pos);
 }
-
 
 void NormalizeHistorySegments(Segments *segments) {
   for (size_t i = 0; i < segments->history_segments_size(); ++i) {
@@ -282,9 +236,24 @@ Lattice *GetLattice(Segments *segments, bool is_prediction) {
 }
 }   // anonymous namespace
 
+// Constractor for keeping compatibility
+// TODO(team): Change code to use another constractor and
+// specify implementations.
 ImmutableConverterImpl::ImmutableConverterImpl()
     : connector_(ConnectorFactory::GetConnector()),
       dictionary_(DictionaryFactory::GetDictionary()),
+      segmenter_(Singleton<Segmenter>::get()),
+      last_to_first_name_transition_cost_(0) {
+  last_to_first_name_transition_cost_
+      = connector_->GetTransitionCost(
+          POSMatcher::GetLastNameId(), POSMatcher::GetFirstNameId());
+}
+
+ImmutableConverterImpl::ImmutableConverterImpl(
+    const SegmenterInterface *segmenter)
+    : connector_(ConnectorFactory::GetConnector()),
+      dictionary_(DictionaryFactory::GetDictionary()),
+      segmenter_(segmenter),
       last_to_first_name_transition_cost_(0) {
   last_to_first_name_transition_cost_
       = connector_->GetTransitionCost(
@@ -656,7 +625,7 @@ bool ImmutableConverterImpl::ResegmentPersonalName(
           if ((lnode->value.size() + rnode->value.size())
               == compound_node->value.size() &&
               (lnode->value + rnode->value) == compound_node->value &&
-              Segmenter::IsBoundary(lnode, rnode, false)) {   // Constraint 3.
+              segmenter_->IsBoundary(lnode, rnode, false)) {   // Constraint 3.
             const int32 cost = lnode->wcost + GetCost(lnode, rnode);
             if (cost < best_cost) {   // choose the smallest ones
               best_last_name_node = lnode;
@@ -930,6 +899,52 @@ bool ImmutableConverterImpl::Viterbi(Segments *segments,
   return true;
 }
 
+int ImmutableConverterImpl::GetConnectionType(const Node *lnode,
+                                              const Node *rnode,
+                                              const vector<uint16> &group,
+                                              const Segments *segments) const {
+  if ((rnode->node_type != Node::EOS_NODE &&
+       group[rnode->begin_pos] != group[rnode->end_pos - 1]) ||
+      (lnode->node_type != Node::BOS_NODE &&
+       group[lnode->begin_pos] != group[lnode->end_pos - 1])) {
+    return NOT_CONNECTED;
+  }
+
+  // BOS/EOS nodes
+  if (lnode->node_type == Node::BOS_NODE ||
+      rnode->node_type == Node::EOS_NODE ||
+      lnode->node_type == Node::HIS_NODE ||
+      rnode->node_type == Node::HIS_NODE) {
+    return CONNECTED;
+  }
+
+  // lnode and rnode are both FREE Node
+  const Segment::SegmentType ltype =
+      segments->segment(group[lnode->begin_pos]).segment_type();
+  const Segment::SegmentType rtype =
+      segments->segment(group[rnode->begin_pos]).segment_type();
+  if (ltype == Segment::FREE && rtype == Segment::FREE) {
+    return CONNECTED;
+  }
+
+  const bool is_prediction =
+      (segments->request_type() == Segments::PREDICTION ||
+       segments->request_type() == Segments::SUGGESTION ||
+       segments->request_type() == Segments::PARTIAL_PREDICTION ||
+       segments->request_type() == Segments::PARTIAL_SUGGESTION);
+
+  const bool is_rule_boundary = segmenter_->IsBoundary(lnode, rnode,
+                                                       is_prediction);
+  const bool is_constraint_boundary =
+      group[lnode->begin_pos] != group[rnode->begin_pos];
+
+  if (is_constraint_boundary && !is_rule_boundary) {
+    return WEAK_CONNECTED;
+  }
+
+  return CONNECTED;
+}
+
 // faster Viterbi algorithm for prediction
 //
 // Run simple Viterbi algorithm with contracting the same lid and rid.
@@ -1036,44 +1051,68 @@ void ImmutableConverterImpl::PredictionViterbiSub(Segments *segments,
   }
 }
 
+// Add predictive nodes from conversion key.
 void ImmutableConverterImpl::MakeLatticeNodesForPredictiveNodes(
     Lattice *lattice, Segments *segments) const {
   const string &key = lattice->key();
-  vector<string> key_chars;
-  Util::SplitStringToUtf8Chars(key, &key_chars);
+  string conversion_key;
+  for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
+    conversion_key += segments->conversion_segment(i).key();
+  }
+  DCHECK_NE(string::npos, key.find(conversion_key));
+  vector<string> conversion_key_chars;
+  Util::SplitStringToUtf8Chars(conversion_key, &conversion_key_chars);
 
-  // do nothing if the key is short
-  if (key_chars.size() <= 6) return;
+  // do nothing if the conversion key is short
+  const size_t kKeyMinLength = 7;
+  if (conversion_key_chars.size() < kKeyMinLength) {
+    return;
+  }
 
   // predictive search from suffix dictionary
   // (search words with between 1 and 6 characters)
-  for (size_t suffix_len = 1, pos = key.size();
-       suffix_len <= min(static_cast<size_t>(6), key_chars.size());
-       ++suffix_len) {
-    pos -= key_chars[key_chars.size() - suffix_len].size();
-    const size_t str_len = key.size() - pos;
+  {
+    const size_t kMaxSuffixLookupKey = 6;
+    const size_t max_sufffix_len =
+        min(kMaxSuffixLookupKey, conversion_key_chars.size());
+    size_t pos = key.size();
+    for (size_t suffix_len = 1; suffix_len <= max_sufffix_len; ++suffix_len) {
+      pos -= conversion_key_chars[
+          conversion_key_chars.size() - suffix_len].size();
+      DCHECK_GE(key.size(), pos);
 
-    Node *result_node;
-    result_node =
-        SuffixDictionaryFactory::GetSuffixDictionary()->LookupPredictive(
-            key.data() + pos, str_len,
-            lattice->node_allocator());
-    AddPredictiveNodes(suffix_len, pos, lattice, result_node);
+      const size_t str_len = key.size() - pos;
+      Node *result_node =
+          SuffixDictionaryFactory::GetSuffixDictionary()->LookupPredictive(
+              key.data() + pos, str_len,
+              lattice->node_allocator());
+      AddPredictiveNodes(suffix_len, pos, lattice, result_node);
+    }
   }
 
   // predictive search from system dictionary
   // (search words with between 5 and 8 characters)
-  for (size_t suffix_len = 1, pos = key.size();
-       suffix_len <= min(static_cast<size_t>(8), key_chars.size());
-       ++suffix_len) {
-    pos -= key_chars[key_chars.size() - suffix_len].size();
-    size_t str_len = key.size() - pos;
+  {
+    const size_t kMinSystemLookupKey = 5;
+    const size_t kMaxSystemLookupKey = 8;
+    const size_t max_suffix_len =
+        min(kMaxSystemLookupKey, conversion_key_chars.size());
+    size_t pos = key.size();
+    for (size_t suffix_len = 1; suffix_len <= max_suffix_len; ++suffix_len) {
+      pos -= conversion_key_chars[
+          conversion_key_chars.size() - suffix_len].size();
+      DCHECK_GE(key.size(), pos);
 
-    if (suffix_len >= 5) {
-      Node *result_node;
-      result_node = DictionaryFactory::GetDictionary()->LookupPredictive(
-          key.data() + pos, str_len,
-          lattice->node_allocator());
+      if (suffix_len < kMinSystemLookupKey) {
+        // Just update |pos|.
+        continue;
+      }
+
+      const size_t str_len = key.size() - pos;
+      Node *result_node =
+          DictionaryFactory::GetDictionary()->LookupPredictive(
+              key.data() + pos, str_len,
+              lattice->node_allocator());
       AddPredictiveNodes(suffix_len, pos, lattice, result_node);
     }
   }
@@ -1446,12 +1485,12 @@ void ImmutableConverterImpl::ApplyPrefixSuffixPenalty(
     // If history-segments is non-empty, we can make the
     // penalty smaller so that history context is more likely
     // selected.
-    node->wcost += Segmenter::GetPrefixPenalty(node->lid);
+    node->wcost += segmenter_->GetPrefixPenalty(node->lid);
   }
 
   for (Node *node = lattice->end_nodes(key.size());
        node != NULL; node = node->enext) {
-    node->wcost += Segmenter::GetSuffixPenalty(node->rid);
+    node->wcost += segmenter_->GetSuffixPenalty(node->rid);
   }
 }
 
@@ -1543,7 +1582,7 @@ bool ImmutableConverterImpl::MakeSegments(Segments *segments,
     } else if (node->node_type == Node::CON_NODE ||
                (node->next->node_type != Node::EOS_NODE &&
                 group[node->begin_pos] != group[node->next->begin_pos]) ||
-               Segmenter::IsBoundary(node, node->next, is_prediction)) {
+               segmenter_->IsBoundary(node, node->next, is_prediction)) {
       Segment *segment = is_prediction ?
           segments->mutable_segment(segments->segments_size() - 1) :
           segments->add_segment();

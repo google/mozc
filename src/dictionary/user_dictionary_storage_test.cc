@@ -91,6 +91,7 @@ TEST(UserDictionaryStorage, LockTest) {
 }
 
 
+
 TEST(UserDictionaryStorage, BasicOperationsTest) {
   Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
   Util::Unlink(GetUserDictionaryFile());
@@ -288,5 +289,6 @@ TEST(UserDictionaryStorage, GetUserDictionaryIdTest) {
   EXPECT_EQ(ret_id[0], id[0]);
   EXPECT_EQ(ret_id[1], id[1]);
 }
+
 
 }  // namespace mozc

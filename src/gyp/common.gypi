@@ -347,6 +347,22 @@
           },
         }],
       ],
+      # The following configurations, i.e. directories, are meant for binary
+      # files built with an NaCl toolchain.
+      # A special hack in build_for_nacl.py sets environment variables such as
+      # CC, LD, etc., so it builds NaCl binaries in these directories.
+      'Debug_NaCl_i686': {
+        'inherit_from': ['Common_Base', 'Debug_Base'],
+      },
+      'Release_NaCl_i686': {
+        'inherit_from': ['Common_Base', 'Optimize_Base', 'Release_Base'],
+      },
+      'Debug_NaCl_x86-64': {
+        'inherit_from': ['Common_Base', 'Debug_Base'],
+      },
+      'Release_NaCl_x86-64': {
+        'inherit_from': ['Common_Base', 'Optimize_Base', 'Release_Base'],
+      },
     },
     'default_configuration': 'Debug',
     'defines': [

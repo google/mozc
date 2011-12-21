@@ -105,6 +105,7 @@
       'dependencies': [
         '../net/net.gyp:http_client_mock',
         '../testing/testing.gyp:gtest_main',
+        'genproto_usage_stats',
         'usage_stats',
       ],
       'variables': {

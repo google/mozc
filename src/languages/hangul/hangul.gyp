@@ -127,6 +127,7 @@
             'session_test.cc',
           ],
           'dependencies': [
+            '../../config/config.gyp:config_handler',
             '../../testing/testing.gyp:gtest_main',
             'hangul_session',
           ],

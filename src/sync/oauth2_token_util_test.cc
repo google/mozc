@@ -55,5 +55,17 @@ TEST(OAuth2TokenUtil, ParseAuthCodeFromWindowTitleForWindows) {
       OAuth2TokenUtil::ParseAuthCodeFromWindowTitleForWindows(
            "4/a1B2c3D4e5F6g7H8i9J1k2l3M4n5 - Opera"));
 }
+
+TEST(OAuth2TokenUtil, ParseAuthCodeFromWindowTitleForMac) {
+  EXPECT_EQ("4/a1B2c3D4e5F6g7H8i9J1k2l3M4n5",
+      OAuth2TokenUtil::ParseAuthCodeFromWindowTitleForMac(
+          "Success code=4/a1B2c3D4e5F6g7H8i9J1k2l3M4n5"));
+  EXPECT_EQ("4/a1B2c3D4e5F6g7H8i9J1k2l3M4n5 - foo",
+      OAuth2TokenUtil::ParseAuthCodeFromWindowTitleForMac(
+          "Success code=4/a1B2c3D4e5F6g7H8i9J1k2l3M4n5 - foo"));
+  EXPECT_EQ("",
+      OAuth2TokenUtil::ParseAuthCodeFromWindowTitleForMac(
+           "4/a1B2c3D4e5F6g7H8i9J1k2l3M4n5"));
+}
 }  // sync
 }  // mozc

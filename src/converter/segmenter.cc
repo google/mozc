@@ -27,63 +27,19 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "base/base.h"
-#include "base/bitarray.h"
 #include "converter/segmenter.h"
-#include "converter/segmenter_data.h"
+#include "converter/boundary_struct.h"
 
 namespace mozc {
 namespace {
 #include "converter/boundary_data.h"
+#include "converter/segmenter_data.h"
 }  // namespace
 
-bool Segmenter::IsBoundary(const Node *lnode, const Node *rnode,
-                           bool is_single_segment) {
-  if (lnode->node_type == Node::BOS_NODE ||
-      rnode->node_type == Node::EOS_NODE) {
-    return true;
-  }
-
-  // return always false in prediction mode.
-  // This implies that converter always returns single-segment-result
-  // in prediction mode.
-  if (is_single_segment) {
-    return false;
-  }
-
-  const bool is_boundary = Segmenter::IsBoundary(lnode->rid, rnode->lid);
-
-  // Concatenate particle and content word into one segment,
-  // if lnode locates at the beginning of user input.
-  // This hack is for handling ambiguous bunsetsu segmentation.
-  // e.g. "かみ|にかく" => "紙|に書く" or "紙二角".
-  // If we segment "に書く" into two segments, "二角" is never be shown.
-  // There exits some implicit assumpution that user expects that his/her input
-  // becomes one bunsetu. So, it would be better to keep "二角" even after "紙".
-  if (is_boundary && (lnode->attributes & Node::STARTS_WITH_PARTICLE)) {
-    return false;
-  }
-
-  return is_boundary;
-}
-
-// use only for gen_segmenter_bitarrray.
-bool Segmenter::IsBoundary(uint16 rid, uint16 lid) {
-  //return IsBoundaryInternal(rid, lid);
-  return BitArray::GetValue(reinterpret_cast<const char*>
-                            (kSegmenterBitArrayData_data),
-                            kCompressedLIDTable[rid] +
-                            kCompressedLSize *
-                            kCompressedRIDTable[lid]);
-}
-
-// static
-int32 Segmenter::GetPrefixPenalty(uint16 lid) {
-  return kBoundaryData[lid].prefix_penalty;
-}
-
-// static
-int32 Segmenter::GetSuffixPenalty(uint16 rid) {
-  return kBoundaryData[rid].suffix_penalty;
-}
+Segmenter::Segmenter()
+    : SegmenterBase(kCompressedLSize, kCompressedRSize,
+                    kCompressedLIDTable, kCompressedRIDTable,
+                    kSegmenterBitArrayData_size,
+                    kSegmenterBitArrayData_data,
+                    kBoundaryData) {}
 }  // namespace mozc

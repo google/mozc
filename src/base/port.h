@@ -182,16 +182,4 @@ struct CompileAssert {
 #include "base/init.h"
 #include "base/flags.h"
 
-// Since Native Client does not provide mlock/munlock, we use dummy instead.
-// It is okay to include sys/mmap.h with this header file because NaCl version
-// of sys/mmap.h does not have prototypes for them.
-#ifdef __native_client__
-inline int mlock(const void *addr, size_t len) {
-  return -1;
-}
-inline int munlock(const void *addr, size_t len) {
-  return -1;
-}
-#endif  // __native_client__
-
 #endif  // MOZC_BASE_PORT_H_

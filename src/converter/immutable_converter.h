@@ -45,17 +45,22 @@
 
 namespace mozc {
 
-class ImmutableConverterInterface;
 class DictionaryInterface;
+class ImmutableConverterInterface;
+class SegmenterInterface;
 
 class ImmutableConverterImpl: public ImmutableConverterInterface {
  public:
-  virtual bool Convert(Segments *segments) const;
   ImmutableConverterImpl();
+  explicit ImmutableConverterImpl(const SegmenterInterface *segmenter);
   virtual ~ImmutableConverterImpl() {}
+
+  virtual bool Convert(Segments *segments) const;
 
  private:
   FRIEND_TEST(ImmutableConverterTest, DummyCandidatesCost);
+  FRIEND_TEST(ImmutableConverterTest, PredictiveNodesOnlyForConversionKey);
+  FRIEND_TEST(ImmutableConverterTest, AddPredictiveNodes);
   FRIEND_TEST(ImmutableConverterTest, PromoteUserDictionaryCandidate);
 
   void ExpandCandidates(NBestGenerator *nbest, Segment *segment,
@@ -103,6 +108,12 @@ class ImmutableConverterImpl: public ImmutableConverterInterface {
                const Lattice &lattice,
                const vector<uint16> &group) const;
 
+  int GetConnectionType(const Node *lnode,
+                        const Node *rnode,
+                        const vector<uint16> &group,
+                        const Segments *segments) const;
+
+
   bool PredictionViterbi(Segments *segments,
                          const Lattice &lattice) const;
 
@@ -125,6 +136,7 @@ class ImmutableConverterImpl: public ImmutableConverterInterface {
 
   ConnectorInterface *connector_;
   DictionaryInterface *dictionary_;
+  const SegmenterInterface *segmenter_;
 
   int32 last_to_first_name_transition_cost_;
   DISALLOW_COPY_AND_ASSIGN(ImmutableConverterImpl);

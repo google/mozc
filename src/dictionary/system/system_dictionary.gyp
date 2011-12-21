@@ -36,7 +36,7 @@
         'codec.cc',
       ],
       'dependencies': [
-        '../../base/base.gyp:base',
+        '../../base/base.gyp:base_core',
       ],
     },
     {
@@ -46,7 +46,7 @@
         'system_dictionary.cc',
       ],
       'dependencies': [
-        '../../base/base.gyp:base',
+        '../../base/base.gyp:base_core',
         '../file/dictionary_file.gyp:dictionary_file',
         '../rx/rx_storage.gyp:rbx_array',
         '../rx/rx_storage.gyp:rx_trie',
@@ -60,7 +60,7 @@
         'value_dictionary.cc',
       ],
       'dependencies': [
-        '../../base/base.gyp:base',
+        '../../base/base.gyp:base_core',
         '../dictionary_base.gyp:gen_pos_matcher',
         '../file/dictionary_file.gyp:dictionary_file',
         '../rx/rx_storage.gyp:rx_trie',
@@ -74,7 +74,7 @@
         'system_dictionary_builder.cc',
       ],
       'dependencies': [
-        '../../base/base.gyp:base',
+        '../../base/base.gyp:base_core',
         '../dictionary_base.gyp:text_dictionary_loader',
         '../file/dictionary_file.gyp:dictionary_file_builder',
         '../rx/rx_storage.gyp:rbx_array_builder',
@@ -103,7 +103,7 @@
         'system_dictionary_test.cc',
       ],
       'dependencies': [
-        '../../base/base.gyp:base',
+        '../../base/base.gyp:base_core',
         '../../dictionary/dictionary_base.gyp:install_dictionary_test_data',
         '../../testing/testing.gyp:gtest_main',
         'system_dictionary',
@@ -120,7 +120,7 @@
         'value_dictionary_test.cc',
       ],
       'dependencies': [
-        '../../base/base.gyp:base',
+        '../../base/base.gyp:base_core',
         '../../testing/testing.gyp:gtest_main',
         'system_dictionary_builder',
         'value_dictionary',
@@ -137,7 +137,7 @@
       ],
       'dependencies': [
         'system_dictionary_builder',
-        '../../base/base.gyp:base',
+        '../../base/base.gyp:base_core',
         '../../testing/testing.gyp:gtest_main',
       ],
       'variables': {

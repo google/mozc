@@ -47,6 +47,7 @@
         'segmenter_test.cc',
         'segments_test.cc',
         'sparse_connector_builder.cc',
+        'test_segmenter_test.cc',
       ],
       'dependencies': [
         '../composer/composer.gyp:composer',
@@ -55,6 +56,10 @@
         '../transliteration/transliteration.gyp:transliteration',
         'converter.gyp:converter',
         'converter_base.gyp:segments',
+        'converter_base.gyp:segmenter',
+        'converter_base.gyp:test_segmenter',
+        'converter_base.gyp:gen_segmenter_inl',
+        'converter_base.gyp:gen_test_segmenter_inl',
       ],
       'variables': {
         'test_size': 'small',

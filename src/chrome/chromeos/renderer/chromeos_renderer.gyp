@@ -34,11 +34,11 @@
 {
   'variables': {
     'protoc_out_dir': '<(SHARED_INTERMEDIATE_DIR)/protoc_out',
-    'third_party_dir': '../../../../../third_party',
+    'third_party_dir': '<(DEPTH)/third_party',
   },
   'targets': [
     {
-      'target_name': 'litify_mozc_proto_files',
+      'target_name': 'gen_candidates_proto',
       'type': 'none',
       'actions': [
         {
@@ -58,39 +58,25 @@
             '<(third_party_dir)/mozc/session/candidates_lite.proto',
           ],
         },
-      ]
-    },
-    {
-      # Protobuf compiler / generator for the mozc inputmethod commands
-      # protocol buffer.
-      'target_name': 'gen_candidates_proto',
-      'type': 'none',
-      'sources': [
-        '<(third_party_dir)/mozc/session/candidates_lite.proto',
-      ],
-      'rules': [
         {
-          'rule_name': 'genproto',
-          'extension': 'proto',
+          'action_name': 'genproto',
           'inputs': [
-            '<(PRODUCT_DIR)/<(EXECUTABLE_PREFIX)protoc<(EXECUTABLE_SUFFIX)',
+            '<(third_party_dir)/mozc/session/candidates_lite.proto',
           ],
           'outputs': [
-            '<(protoc_out_dir)/third_party/mozc/session/<(RULE_INPUT_ROOT).pb.h',
-            '<(protoc_out_dir)/third_party/mozc/session/<(RULE_INPUT_ROOT).pb.cc',
+            '<(protoc_out_dir)/third_party/mozc/session/candidates_lite.pb.h',
+            '<(protoc_out_dir)/third_party/mozc/session/candidates_lite.pb.cc',
           ],
           'action': [
             '<(PRODUCT_DIR)/<(EXECUTABLE_PREFIX)protoc<(EXECUTABLE_SUFFIX)',
             '--proto_path=<(third_party_dir)/mozc',
-            '<(third_party_dir)/mozc/session/<(RULE_INPUT_ROOT)<(RULE_INPUT_EXT)',
+            '<(third_party_dir)/mozc/session/candidates_lite.proto',
             '--cpp_out=<(protoc_out_dir)/third_party/mozc',
           ],
-          'message': 'Generating C++ code from <(RULE_INPUT_PATH)',
-          'process_outputs_as_sources': 1,
+          'message': 'Generating C++ code from <@(_inputs)',
         },
       ],
       'dependencies': [
-        'litify_mozc_proto_files',
         '<(third_party_dir)/protobuf/protobuf.gyp:protobuf_lite',
         '<(third_party_dir)/protobuf/protobuf.gyp:protoc#host',
       ],

@@ -30,12 +30,17 @@
 {
   'targets': [
     {
-      'target_name': 'jsoncpp',
-      'type': 'static_library',
+      'target_name': 'skk_util_test',
+      'type': 'executable',
       'sources': [
-        '<(DEPTH)/third_party/jsoncpp/json_reader.cc',
-        '<(DEPTH)/third_party/jsoncpp/json_value.cc',
-        '<(DEPTH)/third_party/jsoncpp/json_writer.cc',
+        'skk_util.cc',
+        'skk_util_test.cc',
+      ],
+      'dependencies': [
+        '../../dictionary/dictionary.gyp:gen_embedded_dictionary_data',
+        '../../dictionary/system/system_dictionary.gyp:system_dictionary',
+        '../../testing/testing.gyp:gtest_main',
+        '<(DEPTH)/third_party/jsoncpp/jsoncpp.gyp:jsoncpp',
       ],
     },
   ],

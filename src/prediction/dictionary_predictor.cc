@@ -40,6 +40,7 @@
 #include <algorithm>
 #include "base/base.h"
 #include "base/init.h"
+#include "base/singleton.h"
 #include "base/util.h"
 #include "config/config_handler.h"
 #include "config/config.pb.h"
@@ -49,6 +50,7 @@
 #include "converter/immutable_converter_interface.h"
 #include "converter/node.h"
 #include "converter/node_allocator.h"
+#include "converter/segmenter_interface.h"
 #include "converter/segmenter.h"
 #include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
@@ -87,6 +89,15 @@ DictionaryPredictor::DictionaryPredictor()
     : dictionary_(DictionaryFactory::GetDictionary()),
       suffix_dictionary_(SuffixDictionaryFactory::GetSuffixDictionary()),
       connector_(ConnectorFactory::GetConnector()),
+      segmenter_(Singleton<Segmenter>::get()),
+      immutable_converter_(
+          ImmutableConverterFactory::GetImmutableConverter()) {}
+
+DictionaryPredictor::DictionaryPredictor(SegmenterInterface *segmenter)
+    : dictionary_(DictionaryFactory::GetDictionary()),
+      suffix_dictionary_(SuffixDictionaryFactory::GetSuffixDictionary()),
+      connector_(ConnectorFactory::GetConnector()),
+      segmenter_(segmenter),
       immutable_converter_(
           ImmutableConverterFactory::GetImmutableConverter()) {}
 
@@ -261,7 +272,7 @@ int DictionaryPredictor::GetLMCost(PredictionType type,
     // Relatime conversion already adds perfix/suffix penalties to the nodes.
     // Note that we don't add prefix penalty the role of "bunsetsu" is
     // ambigous on zero-query suggestion.
-    lm_cost += Segmenter::GetSuffixPenalty(node.rid);
+    lm_cost += segmenter_->GetSuffixPenalty(node.rid);
   }
 
   return lm_cost;

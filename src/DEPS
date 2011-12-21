@@ -28,11 +28,11 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 vars = {
-  "breakpad_revision": "786",
+  "breakpad_revision": "892",
   "cygwin_in_chromium_revision": "66844",
   "gtest_revision": "484",
   "gyp_revision": "1034",
-  "japanese_usage_dictionary_revision": "3",
+  "jsoncpp_revision": "230",
   "memory_watcher_in_chromium_revision": "81926",
   "protobuf_revision": "375",
   "python_in_chromium_revision": "89111",
@@ -43,9 +43,9 @@ vars = {
 deps = {
   "src/third_party/gyp":
     "http://gyp.googlecode.com/svn/trunk@" + Var("gyp_revision"),
-  "src/third_party/japanese_usage_dictionary":
-    "http://japanese-usage-dictionary.googlecode.com/svn/trunk@" +
-    Var("japanese_usage_dictionary_revision"),
+  "src/third_party/jsoncpp":
+    "http://jsoncpp.svn.sourceforge.net/svnroot/jsoncpp/trunk/jsoncpp@" +
+    Var("jsoncpp_revision"),
 }
 
 deps_os = {

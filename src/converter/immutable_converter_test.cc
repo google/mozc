@@ -33,6 +33,9 @@
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
+#include "converter/lattice.h"
+#include "dictionary/dictionary_interface.h"
+#include "dictionary/suffix_dictionary.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
@@ -98,6 +101,131 @@ TEST_F(ImmutableConverterTest, DummyCandidatesCost) {
   EXPECT_GE(segment.candidates_size(), 3);
   EXPECT_LT(segment.candidate(0).wcost, segment.candidate(1).wcost);
   EXPECT_LT(segment.candidate(0).wcost, segment.candidate(2).wcost);
+}
+
+namespace {
+class KeyCheckDictionary : public DictionaryInterface {
+ public:
+  explicit KeyCheckDictionary(const string &query)
+      : target_query_(query), received_target_query_(false) {}
+  virtual ~KeyCheckDictionary() {}
+
+  virtual Node *LookupPredictive(const char *str, int size,
+                                 NodeAllocatorInterface *allocator) const {
+    string key(str, size);
+    if (key == target_query_) {
+      received_target_query_ = true;
+    }
+    return NULL;
+  }
+
+  virtual Node *LookupPrefix(const char *str, int size,
+                             NodeAllocatorInterface *allocator) const {
+    // No check
+    return NULL;
+  }
+
+  virtual Node *LookupPrefixWithLimit(const char *str, int size,
+                                      const Limit &limit,
+                                      NodeAllocatorInterface *allocator) const {
+    // No check
+    return NULL;
+  }
+
+  virtual Node *LookupReverse(const char *str, int size,
+                              NodeAllocatorInterface *allocator) const {
+    // No check
+    return NULL;
+  }
+
+  bool received_target_query() const {
+    return received_target_query_;
+  }
+
+ private:
+  const string target_query_;
+  mutable bool received_target_query_;
+};
+}  // namespace
+
+TEST_F(ImmutableConverterTest, PredictiveNodesOnlyForConversionKey) {
+  Segments segments;
+  {
+    Segment *segment = segments.add_segment();
+    // "いいんじゃな"
+    segment->set_key("\xe3\x81\x84\xe3\x81\x84\xe3\x82\x93\xe3\x81\x98"
+                     "\xe3\x82\x83\xe3\x81\xaa");
+    segment->set_segment_type(Segment::HISTORY);
+    Segment::Candidate *candidate = segment->add_candidate();
+    candidate->Init();
+    // "いいんじゃな"
+    candidate->key =
+        "\xe3\x81\x84\xe3\x81\x84\xe3\x82\x93\xe3\x81\x98"
+        "\xe3\x82\x83\xe3\x81\xaa";
+    // "いいんじゃな"
+    candidate->value =
+        "\xe3\x81\x84\xe3\x81\x84\xe3\x82\x93\xe3\x81\x98"
+        "\xe3\x82\x83\xe3\x81\xaa";
+
+    segment = segments.add_segment();
+    // "いか"
+    segment->set_key("\xe3\x81\x84\xe3\x81\x8b");
+
+    EXPECT_EQ(1, segments.history_segments_size());
+    EXPECT_EQ(1, segments.conversion_segments_size());
+  }
+
+  Lattice lattice;
+  // "いいんじゃないか"
+  lattice.SetKey("\xe3\x81\x84\xe3\x81\x84\xe3\x82\x93\xe3\x81\x98"
+                 "\xe3\x82\x83\xe3\x81\xaa\xe3\x81\x84\xe3\x81\x8b");
+
+  scoped_ptr<KeyCheckDictionary> dictionary(
+      // "ないか"
+      new KeyCheckDictionary("\xe3\x81\xaa\xe3\x81\x84\xe3\x81\x8b"));
+  DictionaryFactory::SetDictionary(dictionary.get());
+  SuffixDictionaryFactory::SetSuffixDictionary(dictionary.get());
+
+  GetConverter()->MakeLatticeNodesForPredictiveNodes(
+      &lattice, &segments);
+
+  EXPECT_FALSE(dictionary->received_target_query());
+
+  DictionaryFactory::SetDictionary(NULL);
+  SuffixDictionaryFactory::SetSuffixDictionary(NULL);
+}
+
+TEST_F(ImmutableConverterTest, AddPredictiveNodes) {
+  Segments segments;
+  {
+    Segment *segment = segments.add_segment();
+    // "よろしくおねがいしま"
+    segment->set_key("\xe3\x82\x88\xe3\x82\x8d\xe3\x81\x97\xe3\x81\x8f"
+                     "\xe3\x81\x8a\xe3\x81\xad\xe3\x81\x8c\xe3\x81\x84"
+                     "\xe3\x81\x97\xe3\x81\xbe");
+
+    EXPECT_EQ(1, segments.conversion_segments_size());
+  }
+
+  Lattice lattice;
+  // "よろしくおねがいしま"
+  lattice.SetKey("\xe3\x82\x88\xe3\x82\x8d\xe3\x81\x97\xe3\x81\x8f"
+                 "\xe3\x81\x8a\xe3\x81\xad\xe3\x81\x8c\xe3\x81\x84"
+                 "\xe3\x81\x97\xe3\x81\xbe");
+
+  scoped_ptr<KeyCheckDictionary> dictionary(
+      // "しま"
+      new KeyCheckDictionary("\xe3\x81\x97\xe3\x81\xbe"));
+  DictionaryFactory::SetDictionary(dictionary.get());
+  SuffixDictionaryFactory::SetSuffixDictionary(dictionary.get());
+
+  GetConverter()->MakeLatticeNodesForPredictiveNodes(
+      &lattice, &segments);
+
+  EXPECT_TRUE(dictionary->received_target_query());
+
+  DictionaryFactory::SetDictionary(NULL);
+  SuffixDictionaryFactory::SetSuffixDictionary(NULL);
 }
 
 TEST_F(ImmutableConverterTest, PromoteUserDictionaryCandidate) {

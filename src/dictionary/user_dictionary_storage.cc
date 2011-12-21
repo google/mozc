@@ -62,6 +62,11 @@ const size_t kDefaultTotalBytesLimit = 512 << 20;
 // saved correctly. Please make the dictionary size smaller"
 const size_t kDefaultWarningTotalBytesLimit = 256 << 20;
 
+const size_t kMaxSyncEntrySize = 10000;
+const size_t kMaxSyncDictionarySize = 1;
+const size_t kCloudSyncBytesLimit = 1 << 19;  // 0.5MB
+// TODO(mukai): translate the name.
+const char kSyncDictionaryName[] = "Sync Dictionary";
 
 // Create Random ID for dictionary
 uint64 CreateID() {
@@ -130,6 +135,15 @@ bool UserDictionaryStorage::Load() {
 
   bool result = LoadInternal();
 
+  // Create sync dictionary when and only when the build target is official
+  // build because sync feature is not supported on OSS Mozc.
+#ifdef GOOGLE_JAPANESE_INPUT_BUILD
+  if (!EnsureSyncDictionaryExists()) {
+    return false;
+  }
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
+
+
   // Check dictionary id here. if id is 0, assign random ID.
   for (int i = 0; i < dictionaries_size(); ++i) {
     const UserDictionary &dict = dictionaries(i);
@@ -151,6 +165,23 @@ bool UserDictionaryStorage::Save() {
     return false;
   }
 
+  size_t sync_binary_size_total = 0;
+  for (size_t i = 0; i < dictionaries_size(); ++i) {
+    const UserDictionary &dict = dictionaries(i);
+    if (!dict.syncable()) {
+      continue;
+    }
+    if (dict.entries_size() > kMaxSyncEntrySize) {
+      LOG(ERROR) << "Sync dictionary has too many entries";
+      return false;
+    }
+
+    sync_binary_size_total += dict.SerializeAsString().size();
+    if (sync_binary_size_total > kCloudSyncBytesLimit) {
+      LOG(ERROR) << "Sync dictionary is too large";
+      return false;
+    }
+  }
 
   const string tmp_file_name = file_name_ + ".tmp";
   {
@@ -301,6 +332,10 @@ bool UserDictionaryStorage::CopyDictionary(uint64 dic_id,
     LOG(ERROR) << "Invalid dictionary id: " << dic_id;
     return false;
   }
+  if (dic->syncable()) {
+    LOG(ERROR) << "Cannot copy a sync dictionary.";
+    return false;
+  }
 
   UserDictionary *new_dic = add_dictionaries();
   new_dic->CopyFrom(*dic);
@@ -322,6 +357,12 @@ bool UserDictionaryStorage::DeleteDictionary(uint64 dic_id) {
     return false;
   }
 
+  // Do not delete sync dictionary.
+  if (dictionaries(delete_index).syncable()) {
+    last_error_type_ = INVALID_DICTIONARY_ID;
+    LOG(ERROR) << "Cannot delete sync dictionary";
+    return false;
+  }
 
   google::protobuf::RepeatedPtrField<UserDictionary> *dics =
       mutable_dictionaries();
@@ -357,6 +398,11 @@ bool UserDictionaryStorage::RenameDictionary(uint64 dic_id,
     return true;
   }
 
+  if (dic->syncable()) {
+    last_error_type_ = INVALID_DICTIONARY_ID;
+    LOG(ERROR) << "Renaming sync dictionary is not allowed.";
+    return false;
+  }
 
   for (int i = 0; i < dictionaries_size(); ++i) {
     if (dic_name == dictionaries(i).name()) {
@@ -410,6 +456,36 @@ UserDictionaryStorage::GetLastError() const {
   return last_error_type_;
 }
 
+bool UserDictionaryStorage::EnsureSyncDictionaryExists() {
+  if (CountSyncableDictionaries(this) > 0) {
+    LOG(INFO) << "storage already has a sync dictionary.";
+    return true;
+  }
+  UserDictionary *dic = add_dictionaries();
+  if (dic == NULL) {
+    LOG(WARNING) << "cannot add a new dictionary.";
+    return false;
+  }
+
+  dic->set_name(kSyncDictionaryName);
+  dic->set_syncable(true);
+  dic->set_id(CreateID());
+
+  return true;
+}
+
+// static
+int UserDictionaryStorage::CountSyncableDictionaries(
+    const user_dictionary::UserDictionaryStorage *storage) {
+  int num_syncable_dictionaries = 0;
+  for (int i = 0; i < storage->dictionaries_size(); ++i) {
+    const UserDictionary &dict = storage->dictionaries(i);
+    if (dict.syncable()) {
+      ++num_syncable_dictionaries;
+    }
+  }
+  return num_syncable_dictionaries;
+}
 
 // static
 size_t UserDictionaryStorage::max_entry_size() {
@@ -438,4 +514,20 @@ bool UserDictionaryStorage::IsValidDictionaryName(const string &name) {
   return true;
 }
 
+// static methods around sync dictionary properties.
+size_t UserDictionaryStorage::max_sync_dictionary_size() {
+  return kMaxSyncDictionarySize;
+}
+
+size_t UserDictionaryStorage::max_sync_entry_size() {
+  return kMaxSyncEntrySize;
+}
+
+size_t UserDictionaryStorage::max_sync_binary_size() {
+  return kCloudSyncBytesLimit;
+}
+
+string UserDictionaryStorage::default_sync_dictionary_name() {
+  return string(kSyncDictionaryName);
+}
 }  // namespace mozc

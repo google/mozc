@@ -6,9 +6,21 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>390</width>
-    <height>141</height>
+    <width>380</width>
+    <height>120</height>
    </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>380</width>
+    <height>120</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>380</width>
+    <height>120</height>
+   </size>
   </property>
   <property name="windowTitle">
    <string>Dialog</string>
@@ -17,9 +29,9 @@
    <property name="geometry">
     <rect>
      <x>30</x>
-     <y>90</y>
+     <y>80</y>
      <width>341</width>
-     <height>32</height>
+     <height>31</height>
     </rect>
    </property>
    <property name="orientation">
@@ -35,7 +47,7 @@
      <x>10</x>
      <y>10</y>
      <width>361</width>
-     <height>20</height>
+     <height>21</height>
     </rect>
    </property>
    <property name="text">
@@ -47,7 +59,7 @@
     <rect>
      <x>30</x>
      <y>40</y>
-     <width>351</width>
+     <width>341</width>
      <height>31</height>
     </rect>
    </property>

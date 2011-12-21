@@ -34,16 +34,23 @@
 namespace mozc {
 namespace sync {
 
-string OAuth2TokenUtil::ParseAuthCodeFromWindowTitleForWindows(
+string OAuth2TokenUtil::ParseAuthCodeFromWindowTitleForMac(
     const string &title) {
   const char kSuccessCode[] = "Success code=";
-  const char kDelimiter[] = " - ";
 
   if (!mozc::Util::StartsWith(title, kSuccessCode)) {
     return "";
   }
 
-  const string &rest = title.substr(mozc::Util::CharsLen(kSuccessCode));
+  return title.substr(mozc::Util::CharsLen(kSuccessCode));
+}
+
+string OAuth2TokenUtil::ParseAuthCodeFromWindowTitleForWindows(
+    const string &title) {
+  const char kDelimiter[] = " - ";
+
+  const string rest = ParseAuthCodeFromWindowTitleForMac(title);
+
   const string::size_type pos = rest.find(kDelimiter);
   if (pos == string::npos) {
     return "";

@@ -674,6 +674,47 @@ TEST_F(ComposerTest, GetStringFunctions_ForN) {
   EXPECT_EQ("ny[NYA][N][KA]", prediction2);
 }
 
+TEST_F(ComposerTest, GetStringFunctions_InputFieldType) {
+  const struct TestData {
+    const commands::SessionCommand::InputFieldType field_type_;
+    const bool ascii_expected_;
+  } test_data_list[] = {
+      {commands::SessionCommand::NORMAL, false},
+      {commands::SessionCommand::NUMBER, true},
+      {commands::SessionCommand::PASSWORD, true},
+      {commands::SessionCommand::TEL, true},
+  };
+
+  composer_->SetInputMode(transliteration::HIRAGANA);
+  for (size_t test_data_index = 0;
+       test_data_index < ARRAYSIZE(test_data_list);
+       ++test_data_index) {
+    const TestData &test_data = test_data_list[test_data_index];
+    composer_->SetInputFieldType(test_data.field_type_);
+    string key, converted;
+    for (char c = 0x20; c <= 0x7E; ++c) {
+      key.assign(1, c);
+      composer_->EditErase();
+      composer_->InsertCharacter(key);
+      if (test_data.ascii_expected_) {
+        composer_->GetStringForPreedit(&converted);
+        EXPECT_EQ(key, converted);
+        composer_->GetStringForSubmission(&converted);
+        EXPECT_EQ(key, converted);
+      } else {
+        // Expected result is FULL_WIDTH form.
+        // Typically the result is a full-width form of the key,
+        // but some characters are not.
+        // So here we checks only the character form.
+        composer_->GetStringForPreedit(&converted);
+        EXPECT_EQ(Util::FULL_WIDTH, Util::GetFormType(converted));
+        composer_->GetStringForSubmission(&converted);
+        EXPECT_EQ(Util::FULL_WIDTH, Util::GetFormType(converted));
+      }
+    }
+  }
+}
+
 TEST_F(ComposerTest, InsertCommandCharacter) {
   composer_->SetInputMode(transliteration::HALF_ASCII);
   composer_->InsertCommandCharacter(Composer::REWIND);

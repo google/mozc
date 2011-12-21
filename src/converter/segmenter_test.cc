@@ -30,23 +30,33 @@
 #include <string>
 #include "base/base.h"
 #include "base/util.h"
-#include "converter/segmenter_inl.h"
 #include "converter/segmenter.h"
+#include "converter/segmenter_inl.h"
+#include "converter/node.h"
 #include "dictionary/pos_matcher.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
 
-TEST(SegmenterTest, SegmenterTest) {
+class SegmenterTest : public testing::Test {
+ protected:
+  SegmenterTest() {
+    segmenter_ = Singleton<Segmenter>::get();
+  }
+
+  Segmenter *segmenter_;
+};
+
+TEST_F(SegmenterTest, SegmenterTest) {
   for (size_t rid = 0; rid < kLSize; ++rid) {
     for (size_t lid = 0; lid < kRSize; ++lid) {
       EXPECT_EQ(IsBoundaryInternal(rid, lid),
-                Segmenter::IsBoundary(rid, lid)) << rid << " " << lid;
+                segmenter_->IsBoundary(rid, lid)) << rid << " " << lid;
     }
   }
 }
 
-TEST(SegmenterTest, SegmenterLNodeTest) {
+TEST_F(SegmenterTest, SegmenterLNodeTest) {
   // lnode is BOS
   Node lnode, rnode;
   lnode.node_type = Node::BOS_NODE;
@@ -55,13 +65,13 @@ TEST(SegmenterTest, SegmenterLNodeTest) {
     for (size_t lid = 0; lid < kRSize; ++lid) {
       lnode.rid = rid;
       lnode.lid = lid;
-      EXPECT_TRUE(Segmenter::IsBoundary(&lnode, &rnode, false));
-      EXPECT_TRUE(Segmenter::IsBoundary(&lnode, &rnode, true));
+      EXPECT_TRUE(segmenter_->IsBoundary(&lnode, &rnode, false));
+      EXPECT_TRUE(segmenter_->IsBoundary(&lnode, &rnode, true));
     }
   }
 }
 
-TEST(SegmenterTest, SegmenterRNodeTest) {
+TEST_F(SegmenterTest, SegmenterRNodeTest) {
   // rnode is EOS
   Node lnode, rnode;
   lnode.node_type = Node::NOR_NODE;
@@ -70,13 +80,13 @@ TEST(SegmenterTest, SegmenterRNodeTest) {
     for (size_t lid = 0; lid < kRSize; ++lid) {
       lnode.rid = rid;
       lnode.lid = lid;
-      EXPECT_TRUE(Segmenter::IsBoundary(&lnode, &rnode, false));
-      EXPECT_TRUE(Segmenter::IsBoundary(&lnode, &rnode, true));
+      EXPECT_TRUE(segmenter_->IsBoundary(&lnode, &rnode, false));
+      EXPECT_TRUE(segmenter_->IsBoundary(&lnode, &rnode, true));
     }
   }
 }
 
-TEST(SegmenterTest, SegmenterNodeTest) {
+TEST_F(SegmenterTest, SegmenterNodeTest) {
   Node lnode, rnode;
   lnode.node_type = Node::NOR_NODE;
   rnode.node_type = Node::NOR_NODE;
@@ -84,14 +94,14 @@ TEST(SegmenterTest, SegmenterNodeTest) {
     for (size_t lid = 0; lid < kRSize; ++lid) {
       lnode.rid = rid;
       rnode.lid = lid;
-      EXPECT_EQ(Segmenter::IsBoundary(rid, lid),
-                Segmenter::IsBoundary(&lnode, &rnode, false));
-      EXPECT_FALSE(Segmenter::IsBoundary(&lnode, &rnode, true));
+      EXPECT_EQ(segmenter_->IsBoundary(rid, lid),
+                segmenter_->IsBoundary(&lnode, &rnode, false));
+      EXPECT_FALSE(segmenter_->IsBoundary(&lnode, &rnode, true));
     }
   }
 }
 
-TEST(SegmenterTest, ParticleTest) {
+TEST_F(SegmenterTest, ParticleTest) {
   Node lnode, rnode;
   lnode.Init();
   rnode.Init();
@@ -101,9 +111,9 @@ TEST(SegmenterTest, ParticleTest) {
   lnode.rid = POSMatcher::GetAcceptableParticleAtBeginOfSegmentId();
   // "名詞,サ変".
   rnode.lid = POSMatcher::GetUnknownId();
-  EXPECT_TRUE(Segmenter::IsBoundary(&lnode, &rnode, false));
+  EXPECT_TRUE(segmenter_->IsBoundary(&lnode, &rnode, false));
 
   lnode.attributes |= Node::STARTS_WITH_PARTICLE;
-  EXPECT_FALSE(Segmenter::IsBoundary(&lnode, &rnode, false));
+  EXPECT_FALSE(segmenter_->IsBoundary(&lnode, &rnode, false));
 }
-}  // mozc
+}  // namespace mozc

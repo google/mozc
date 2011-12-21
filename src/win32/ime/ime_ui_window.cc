@@ -972,10 +972,11 @@ LRESULT WINAPI UIWindowProc(HWND hwnd,
       // Clear kana-lock state not to prevent users from typing their
       // correct passwords.
       // TODO(yukawa): Move this code to somewhere appropriate.
-      BYTE keyboard_state[256];
-      ::GetKeyboardState(keyboard_state);
-      keyboard_state[VK_KANA] = 0;
-      ::SetKeyboardState(keyboard_state);
+      BYTE keyboard_state[256] = {};
+      if (::GetKeyboardState(keyboard_state) != FALSE) {
+        keyboard_state[VK_KANA] = 0;
+        ::SetKeyboardState(keyboard_state);
+      }
 
       // Return FALSE not to be activated if the current session is
       // WinLogon. It may reduce the risk of BSOD.

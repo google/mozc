@@ -41,6 +41,8 @@
 #include "base/process_mutex.h"
 #include "gui/base/locale_util.h"
 #include "gui/set_default_dialog/set_default_dialog.h"
+#include "languages/global_language_spec.h"
+#include "languages/japanese/lang_dep_spec.h"
 
 int RunSetDefaultDialog(int argc, char *argv[]) {
   Q_INIT_RESOURCE(qrc_set_default_dialog);
@@ -62,6 +64,9 @@ int RunSetDefaultDialog(int argc, char *argv[]) {
 #endif
 
   QApplication app(argc, argv);
+
+  mozc::japanese::LangDepSpecJapanese spec;
+  mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(&spec);
 
   mozc::gui::LocaleUtil::InstallTranslationMessageAndFont
       ("set_default_dialog");

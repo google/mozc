@@ -29,6 +29,8 @@
 
 #include "composer/internal/composition.h"
 
+#include <algorithm>
+
 #include "composer/internal/char_chunk.h"
 #include "composer/internal/composition_input.h"
 #include "composer/internal/transliterators_ja.h"
@@ -559,8 +561,8 @@ void InitTable(Table* table) {
   table->AddRule("kyi", "\xe3\x81\x8d\xe3\x81\x83", "");
   // "ち"
   table->AddRule("ti", "\xe3\x81\xa1", "");
-  // "ちぁ"
-  table->AddRule("tya", "\xe3\x81\xa1\xe3\x81\x81", "");
+  // "ちゃ"
+  table->AddRule("tya", "\xe3\x81\xa1\xe3\x82\x83", "");
   // "ちぃ"
   table->AddRule("tyi", "\xe3\x81\xa1\xe3\x81\x83", "");
   // "や"
@@ -680,6 +682,33 @@ TEST_F(CompositionTest, InsertAt) {
   EXPECT_EQ("akykiittatty", GetInsertedString(kRawT12r, 5, "i"));
 
   EXPECT_EQ("akykittattyi", GetInsertedString(kRawT12r, 11, "i"));  // end
+}
+
+TEST_F(CompositionTest, GetExpandedStrings) {
+  Composition comp;
+  InitComposition(&comp);
+
+  Table table;
+  InitTable(&table);
+  comp.SetTable(&table);
+
+  // a ky ki tta tty
+  string base;
+  set<string> expanded;
+  comp.GetExpandedStrings(&base, &expanded);
+  // "あkyきったっ"
+  EXPECT_EQ(
+      "\xe3\x81\x82\x6b\x79\xe3\x81\x8d\xe3\x81\xa3\xe3\x81\x9f\xe3\x81\xa3",
+      base);
+  EXPECT_EQ(2, expanded.size());
+  // "ちぃ"
+  // You cannot use EXPECT_NE here because it causes compile error in gtest
+  // when the compiler is Visual C++. b/5655673
+  EXPECT_TRUE(expanded.find("\xe3\x81\xa1\xe3\x81\x83") != expanded.end());
+  // "ちゃ"
+  // You cannot use EXPECT_NE here because it causes compile error in gtest
+  // when the compiler is Visual C++. b/5655673
+  EXPECT_TRUE(expanded.find("\xe3\x81\xa1\xe3\x82\x83") != expanded.end());
 }
 
 TEST_F(CompositionTest, ConvertPosition) {

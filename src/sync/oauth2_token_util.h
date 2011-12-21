@@ -57,6 +57,11 @@ class OAuth2TokenUtil {
   //   "Success code=4/a1B2c3D4e5F6g7H8i9J1k2l3M4n5 - Windows Internet Explorer"
   static string ParseAuthCodeFromWindowTitleForWindows(const string &title);
 
+  // Mostly same as "ForWindows", but Mac APIs do not have application
+  // names in the window title, so we don't need to take care of the
+  // remaining part of " - Google Chrome".
+  static string ParseAuthCodeFromWindowTitleForMac(const string &title);
+
  private:
   OAuth2TokenUtil() {}
   ~OAuth2TokenUtil() {}

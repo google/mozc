@@ -157,6 +157,13 @@ class UserDictionaryStorage : public user_dictionary::UserDictionaryStorage {
   // You can obtain the reason of the error of dictionary operation.
   UserDictionaryStorageErrorType GetLastError() const;
 
+  // Add a sync dictionary if |storage| has less sync dictionaries than limit.
+  // Returns true if a new sync dictionary is added, false otherwise.
+  bool EnsureSyncDictionaryExists();
+
+  // return the number of dictionaries with "synclbe" being true.
+  static int CountSyncableDictionaries(
+      const user_dictionary::UserDictionaryStorage *storage);
 
   // maxium number of dictionaries this storage can hold
   static size_t max_dictionary_size();
@@ -164,6 +171,11 @@ class UserDictionaryStorage : public user_dictionary::UserDictionaryStorage {
   // maximum number of entries one dictionary can hold
   static size_t max_entry_size();
 
+  // Sync related properties.
+  static size_t max_sync_dictionary_size();
+  static size_t max_sync_entry_size();
+  static size_t max_sync_binary_size();
+  static string default_sync_dictionary_name();
 
  private:
   // Return true if this object can accept the given dictionary name.

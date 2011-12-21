@@ -33,6 +33,10 @@
 #include "base/util.h"
 #endif
 
+#if defined(OS_MACOSX)
+#include <Carbon/Carbon.h>
+#endif
+
 #include "sync/oauth2_token_util.h"
 
 namespace mozc {
@@ -79,7 +83,47 @@ string GetAuthCodeForWindows() {
   ::EnumWindows(EnumWindowsProc, reinterpret_cast<LPARAM>(&auth_code));
   return auth_code;
 }
-#endif  // OS_WINDOWS
+
+#elif defined(OS_MACOSX)
+string GetAuthCodeForMac() {
+  // Carbon API allows a user process to obtain the information of all
+  // windows in the desktop.  See:
+  // http://developer.apple.com/library/mac/#documentation
+  //   /Carbon/Reference/CGWindow_Reference/Reference/Functions.html
+  CFArrayRef window_list = ::CGWindowListCopyWindowInfo(
+      kCGWindowListOptionOnScreenOnly, kCGNullWindowID);
+  // window_list may be NULL if it's running outside of GUI (like SSH).
+  if (window_list == NULL) {
+    return "";
+  }
+  for (int i = 0; i < CFArrayGetCount(window_list); ++i) {
+    CFDictionaryRef window_data = static_cast<CFDictionaryRef>(
+        CFArrayGetValueAtIndex(window_list, i));
+    CFStringRef window_name = static_cast<CFStringRef>(
+        CFDictionaryGetValue(window_data, kCGWindowName));
+    if (window_name == NULL) {
+      continue;
+    }
+
+    // CFStringGetLength returns the number of UTF-16 code points,
+    // so the number of bytes in UTF-8 would be 3x larger at most.
+    CFIndex buffer_size = CFStringGetLength(window_name) * 3 + 1;
+    scoped_array<char> buffer(new char[buffer_size]);
+    if (!CFStringGetCString(
+            window_name, buffer.get(), buffer_size, kCFStringEncodingUTF8)) {
+      continue;
+    }
+
+    const string &auth_code =
+        sync::OAuth2TokenUtil::ParseAuthCodeFromWindowTitleForMac(buffer.get());
+    if (!auth_code.empty()) {
+      return auth_code;
+    }
+  }
+
+  return "";
+}
+#endif  // OS_WINDOWS | OS_MACOSX
 
 }  // namespace
 
@@ -87,7 +131,6 @@ AuthCodeDetector::AuthCodeDetector() {
 }
 
 void AuthCodeDetector::startFetchingAuthCode() {
-  // TODO(mukai): write platform dependent code here.
   // when finished, emit setAuthCode(code) to tell the result back to
   // the dialog.
 #if defined(OS_WINDOWS)
@@ -95,7 +138,12 @@ void AuthCodeDetector::startFetchingAuthCode() {
   if (!auth_code.empty()) {
     emit setAuthCode(auth_code.c_str());
   }
-#endif  // OS_WINDOWS
+#elif defined(OS_MACOSX)
+  const string &auth_code = GetAuthCodeForMac();
+  if (!auth_code.empty()) {
+    emit setAuthCode(auth_code.c_str());
+  }
+#endif  // OS_WINDOWS | OS_MACOSX
 }
 
 }  // namespace mozc::gui

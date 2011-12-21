@@ -4,22 +4,22 @@
 <context>
     <name>AuthDialog</name>
     <message>
-        <location filename="auth_dialog.ui" line="14"/>
+        <location filename="auth_dialog.ui" line="32"/>
         <source>Get Auth code</source>
         <translation>認証コードを取得</translation>
     </message>
     <message>
-        <location filename="auth_dialog.ui" line="42"/>
+        <location filename="auth_dialog.ui" line="78"/>
         <source>1. Click the following button to open permission page</source>
         <translation>1. このボタンをクリックすると認証ページが開きます。</translation>
     </message>
     <message>
-        <location filename="auth_dialog.ui" line="55"/>
+        <location filename="auth_dialog.ui" line="91"/>
         <source>2. Allow the access in the page, and copy&amp;paste the auth code in the box below</source>
         <translation>2. 認証すると表示される認証コードを下にあるテキストボックスに貼り付けてください。</translation>
     </message>
     <message>
-        <location filename="auth_dialog.ui" line="87"/>
+        <location filename="auth_dialog.ui" line="123"/>
         <source>Open Browser...</source>
         <translation>ブラウザを開く...</translation>
     </message>
@@ -206,7 +206,7 @@
     </message>
     <message>
         <source>Stop Sync</source>
-        <translation type="obsolete">同期の中断</translation>
+        <translation type="obsolete">同期の解除</translation>
     </message>
     <message>
         <source>Last synced time: </source>
@@ -225,12 +225,14 @@
         <translation type="obsolete">同期中です</translation>
     </message>
     <message>
-        <source>Clear all data in the server</source>
-        <translation type="obsolete">同期データを全消去する</translation>
+        <source>Clear all sync data in Google servers</source>
+        <translation type="obsolete">Google サーバー上の同期データを全て消去する</translation>
     </message>
     <message>
-        <source>You are trying to clear all the data in the sync server. Do you really want to do it?</source>
-        <translation type="obsolete">同期サーバーにあるデータを全て消去します。よろしいですか？</translation>
+        <location filename="config_dialog.ui" line="1272"/>
+        <source>Clear all sync data in Google servers. To delete data completely, make sure there is no other machine which is running sync and stop sync on this machine after clearing the data.</source>
+        <translation>同期サーバーにあるデータを全て消去します。データを消去したままにするには、他のコンピュータで実行している同期をあらかじめ解除し、消去の実行後にこのコンピュータの同期も解除してください。
+実行しますか？</translation>
     </message>
     <message>
         <location filename="config_dialog.ui" line="57"/>
@@ -275,7 +277,7 @@
     <message>
         <location filename="config_dialog.ui" line="185"/>
         <location filename="config_dialog.ui" line="192"/>
-        <location filename="config_dialog.ui" line="1211"/>
+        <location filename="config_dialog.ui" line="1230"/>
         <source>Customize...</source>
         <translation>編集...</translation>
     </message>
@@ -290,7 +292,7 @@
         <translation>¥キーで入力する文字</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="930"/>
+        <location filename="config_dialog.ui" line="949"/>
         <source>Privacy</source>
         <translation>プライバシー</translation>
     </message>
@@ -300,7 +302,7 @@
         <translation>キー設定</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1198"/>
+        <location filename="config_dialog.ui" line="1217"/>
         <source>Start Sync</source>
         <translation>同期する</translation>
     </message>
@@ -370,62 +372,67 @@
         <translation>その他の辞書</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="544"/>
+        <location filename="config_dialog.ui" line="554"/>
+        <source>Special conversions</source>
+        <translation>特殊変換</translation>
+    </message>
+    <message>
+        <location filename="config_dialog.ui" line="576"/>
         <source>Advanced</source>
         <translation>入力補助</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="633"/>
+        <location filename="config_dialog.ui" line="665"/>
         <source>Automatically switch to halfwidth</source>
         <translation>自動英数変換を有効にする</translation>
     </message>
     <message utf8="true">
-        <location filename="config_dialog.ui" line="663"/>
+        <location filename="config_dialog.ui" line="695"/>
         <source>、</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="676"/>
+        <location filename="config_dialog.ui" line="708"/>
         <source>?</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="683"/>
+        <location filename="config_dialog.ui" line="715"/>
         <source>Convert at punctuations</source>
         <translation>句読点変換を有効にする</translation>
     </message>
     <message utf8="true">
-        <location filename="config_dialog.ui" line="696"/>
+        <location filename="config_dialog.ui" line="728"/>
         <source>。</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="709"/>
+        <location filename="config_dialog.ui" line="741"/>
         <source>!</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="719"/>
+        <location filename="config_dialog.ui" line="751"/>
         <source>Always use Ja keyboard layout for Japanese input</source>
         <translation>日本語入力では常に日本語キー配列を使う</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="743"/>
+        <location filename="config_dialog.ui" line="775"/>
         <source>Source data</source>
         <translation>サジェストの種類</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="775"/>
+        <location filename="config_dialog.ui" line="807"/>
         <source>Other settings</source>
         <translation>その他の設定</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="855"/>
+        <location filename="config_dialog.ui" line="874"/>
         <source>Use input history</source>
         <translation>入力履歴からのサジェスト自動表示を有効にする</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="875"/>
+        <location filename="config_dialog.ui" line="894"/>
         <source>Use system dictionary</source>
         <translation>システム辞書からのサジェスト自動表示を有効にする</translation>
     </message>
@@ -454,72 +461,72 @@
         <translation type="obsolete">半角・全角</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="569"/>
+        <location filename="config_dialog.ui" line="601"/>
         <source>Input Assistance</source>
         <translation>入力補助</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="601"/>
+        <location filename="config_dialog.ui" line="633"/>
         <source>Fullwidth/Halfwidth</source>
         <translation>半角・全角</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="640"/>
+        <location filename="config_dialog.ui" line="672"/>
         <source>Shift key mode switch</source>
         <translation>シフトキーでの入力切替</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="728"/>
+        <location filename="config_dialog.ui" line="760"/>
         <source>Suggest</source>
         <translation>サジェスト</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="807"/>
+        <location filename="config_dialog.ui" line="839"/>
         <source>Maximum number of suggestions</source>
         <translation>サジェストの最大候補数</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="868"/>
+        <location filename="config_dialog.ui" line="887"/>
         <source>Clear all history</source>
         <translation>全入力履歴を削除</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="888"/>
+        <location filename="config_dialog.ui" line="907"/>
         <source>Clear unused history</source>
         <translation>未使用の履歴を削除</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="921"/>
+        <location filename="config_dialog.ui" line="940"/>
         <source>Use realtime conversion</source>
         <translation>リアルタイム変換を有効にする</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1015"/>
+        <location filename="config_dialog.ui" line="1034"/>
         <source>Secret mode</source>
         <translation>シークレットモード</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1066"/>
+        <location filename="config_dialog.ui" line="1085"/>
         <source>Temporarily disable conversion personalization, history-based suggestions and user dictionary</source>
         <translation>一時的に学習機能、入力履歴からのサジェスト機能、ユーザ辞書機能を無効にする</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1107"/>
+        <location filename="config_dialog.ui" line="1126"/>
         <source>Temporarily disable all suggestions</source>
         <translation>一時的にすべてのサジェスト機能を無効にする</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1123"/>
+        <location filename="config_dialog.ui" line="1142"/>
         <source>Presentation mode</source>
         <translation>プレゼンテーションモード</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1145"/>
+        <location filename="config_dialog.ui" line="1164"/>
         <source>Sync</source>
         <translation>同期</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1160"/>
+        <location filename="config_dialog.ui" line="1179"/>
         <source>Synchronization</source>
         <translation>同期設定</translation>
     </message>
@@ -528,17 +535,17 @@
         <translation type="obsolete">同期を解除</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1240"/>
+        <location filename="config_dialog.ui" line="1259"/>
         <source>latest sync</source>
         <translation>最終同期時刻</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1272"/>
+        <location filename="config_dialog.ui" line="1310"/>
         <source>Misc</source>
         <translation>その他</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1319"/>
+        <location filename="config_dialog.ui" line="1357"/>
         <source>Logging level (debug only)</source>
         <translation>ログレベル（デバッグ）</translation>
     </message>
@@ -547,64 +554,68 @@
         <translation type="obsolete">プロトコル ログを有効にする（デバッグ）</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1348"/>
+        <location filename="config_dialog.ui" line="1386"/>
         <source>Logging</source>
         <translation>ログ</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1380"/>
+        <location filename="config_dialog.ui" line="1418"/>
         <source>Administration</source>
         <translation>管理</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1094"/>
-        <location filename="config_dialog.ui" line="1418"/>
+        <location filename="config_dialog.ui" line="1113"/>
+        <location filename="config_dialog.ui" line="1456"/>
         <source>Settings...</source>
         <translation>設定変更...</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1438"/>
+        <location filename="config_dialog.ui" line="1476"/>
         <source>Dictionary preloading and UAC settings</source>
         <translation>オンメモリ辞書とUACの設定</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="983"/>
+        <location filename="config_dialog.ui" line="1002"/>
         <source>Usage statistics and crash reports</source>
         <translation>使用統計情報と障害レポート</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="964"/>
+        <location filename="config_dialog.ui" line="983"/>
         <source>Help make Mozc better by automatically sending usage statistics and crash reports to Google (changes will take effect after you log out and log back in)</source>
         <translation>使用統計データや障害レポートを Google に自動送信して
 Mozcの機能向上に役立てる（再ログイン後に変更は完了します）</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1253"/>
         <source>Remove the uploaded data</source>
-        <translation>アップロードされたデータを削除する</translation>
+        <translation type="obsolete">アップロードされたデータを削除する</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1266"/>
+        <location filename="config_dialog.ui" line="1288"/>
         <source>Remove all</source>
         <translation>全て削除</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1454"/>
+        <location filename="config_dialog.ui" line="1301"/>
+        <source>Mozc can securely syncs your settings and a user sync-dictionary among different machines</source>
+        <translation>設定や同期用ユーザー辞書を、異なるコンピュータ間で安全に同期します</translation>
+    </message>
+    <message>
+        <location filename="config_dialog.ui" line="1501"/>
         <source>Check if Mozc is the default IME on startup</source>
         <translation>起動時に Mozcが既定の IME であるか確認する</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1492"/>
+        <location filename="config_dialog.ui" line="1511"/>
         <source>Disable Keyboard layout hotkey (Ctrl+Shift)</source>
         <translation>ホットキー(Ctrl+Shift)による IME の切り替えを無効化する</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1287"/>
+        <location filename="config_dialog.ui" line="1325"/>
         <source>Default IME</source>
         <translation>既定の IME</translation>
     </message>
     <message>
-        <location filename="config_dialog.ui" line="1528"/>
+        <location filename="config_dialog.ui" line="1550"/>
         <source>Reset to defaults</source>
         <translation>初期値に戻す</translation>
     </message>
@@ -855,22 +866,22 @@ Mozcの機能向上に役立てる（再ログイン後に変更は完了しま�
 <context>
     <name>SyncCustomizeDialog</name>
     <message>
-        <location filename="sync_customize_dialog.ui" line="14"/>
+        <location filename="sync_customize_dialog.ui" line="26"/>
         <source>Dialog</source>
         <translation>同期の詳細設定</translation>
     </message>
     <message>
-        <location filename="sync_customize_dialog.ui" line="42"/>
+        <location filename="sync_customize_dialog.ui" line="54"/>
         <source>Sync everything</source>
         <translation>全て同期する</translation>
     </message>
     <message>
-        <location filename="sync_customize_dialog.ui" line="58"/>
+        <location filename="sync_customize_dialog.ui" line="70"/>
         <source>config</source>
         <translation>設定</translation>
     </message>
     <message>
-        <location filename="sync_customize_dialog.ui" line="65"/>
+        <location filename="sync_customize_dialog.ui" line="77"/>
         <source>user dictionary</source>
         <translation>ユーザー辞書</translation>
     </message>
@@ -928,165 +939,165 @@ Mozcの機能向上に役立てる（再ログイン後に変更は完了しま�
 <context>
     <name>mozc::gui::ConfigDialog</name>
     <message>
-        <location filename="config_dialog.cc" line="93"/>
         <location filename="config_dialog.cc" line="97"/>
+        <location filename="config_dialog.cc" line="101"/>
         <source>Kotoeri</source>
         <translation>ことえり</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="90"/>
+        <location filename="config_dialog.cc" line="94"/>
         <source>Custom keymap</source>
         <translation>カスタム</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="91"/>
         <location filename="config_dialog.cc" line="95"/>
+        <location filename="config_dialog.cc" line="99"/>
         <source>ATOK</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="92"/>
         <location filename="config_dialog.cc" line="96"/>
+        <location filename="config_dialog.cc" line="100"/>
         <source>MS-IME</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="99"/>
+        <location filename="config_dialog.cc" line="103"/>
         <source>Romaji</source>
         <translation>ローマ字入力</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="100"/>
+        <location filename="config_dialog.cc" line="104"/>
         <source>Kana</source>
         <translation>かな入力</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="104"/>
+        <location filename="config_dialog.cc" line="108"/>
         <source>Romaji (switchable)</source>
         <translation>ローマ字入力 (切替可)</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="105"/>
+        <location filename="config_dialog.cc" line="109"/>
         <source>Kana (switchable)</source>
         <translation>かな入力 (切替可)</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="108"/>
-        <location filename="config_dialog.cc" line="124"/>
+        <location filename="config_dialog.cc" line="112"/>
+        <location filename="config_dialog.cc" line="128"/>
         <source>Follow input mode</source>
         <translation>入力モードに従う</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="109"/>
-        <location filename="config_dialog.cc" line="125"/>
+        <location filename="config_dialog.cc" line="113"/>
+        <location filename="config_dialog.cc" line="129"/>
         <source>Fullwidth</source>
         <translation>全角</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="110"/>
-        <location filename="config_dialog.cc" line="126"/>
+        <location filename="config_dialog.cc" line="114"/>
+        <location filename="config_dialog.cc" line="130"/>
         <source>Halfwidth</source>
         <translation>半角</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="112"/>
+        <location filename="config_dialog.cc" line="116"/>
         <source>No shortcut</source>
         <translation>なし</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="113"/>
+        <location filename="config_dialog.cc" line="117"/>
         <source>1 -- 9</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="114"/>
+        <location filename="config_dialog.cc" line="118"/>
         <source>A -- L</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="116"/>
+        <location filename="config_dialog.cc" line="120"/>
         <source>Yes</source>
         <translation>有効</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="117"/>
+        <location filename="config_dialog.cc" line="121"/>
         <source>Yes (don&apos;t record new data)</source>
         <translation>有効（新規学習はしない）</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="118"/>
+        <location filename="config_dialog.cc" line="122"/>
         <source>No</source>
         <translation>無効</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="120"/>
+        <location filename="config_dialog.cc" line="124"/>
         <source>Off</source>
         <translation>オフ</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="121"/>
+        <location filename="config_dialog.cc" line="125"/>
         <source>Alphanumeric</source>
         <translation>英数字</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="122"/>
+        <location filename="config_dialog.cc" line="126"/>
         <source>Katakana</source>
         <translation>カタカナ</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="127"/>
+        <location filename="config_dialog.cc" line="131"/>
         <source>Direct input</source>
         <translation>直接入力</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="129"/>
+        <location filename="config_dialog.cc" line="133"/>
         <source>0</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="130"/>
+        <location filename="config_dialog.cc" line="134"/>
         <source>1</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="131"/>
+        <location filename="config_dialog.cc" line="135"/>
         <source>2</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="133"/>
+        <location filename="config_dialog.cc" line="137"/>
         <source>Yen Sign Â¥</source>
         <translation>円記号(¥)</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="134"/>
+        <location filename="config_dialog.cc" line="138"/>
         <source>Backslash \</source>
         <translation>バックスラッシュ(\)</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="376"/>
+        <location filename="config_dialog.cc" line="380"/>
         <source>Romaji/Kana setting is enabled from new applications.</source>
         <translation>ローマ字・かな入力の設定は新しいアプリケーションから有効になります。</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="546"/>
+        <location filename="config_dialog.cc" line="550"/>
         <source>Checking sync status</source>
         <translation>同期状態を確認する</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="548"/>
-        <location filename="config_dialog.cc" line="952"/>
+        <location filename="config_dialog.cc" line="552"/>
+        <location filename="config_dialog.cc" line="983"/>
         <source>Sync is not enabled</source>
         <translation>同期機能：オフ</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="684"/>
-        <location filename="config_dialog.cc" line="706"/>
+        <location filename="config_dialog.cc" line="688"/>
+        <location filename="config_dialog.cc" line="710"/>
         <source>Mozc Converter is not running. Settings were not saved.</source>
         <translation>変換サーバが反応していません。設定の反映に失敗しました。</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="801"/>
+        <location filename="config_dialog.cc" line="805"/>
         <source>When you reset Mozc settings, any changes you&apos;ve made will be reverted to the default settings. Do you want to reset settings? The following items are not reset with this operation.
  - Personalization data
  - Input history
@@ -1101,19 +1112,43 @@ Mozcの機能向上に役立てる（再ログイン後に変更は完了しま�
  - 管理者用設定</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="828"/>
+        <location filename="config_dialog.cc" line="833"/>
         <source>Stop Sync</source>
-        <translation>同期の中断</translation>
+        <translation>同期の解除</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="830"/>
+        <location filename="config_dialog.cc" line="835"/>
         <source>Start Sync</source>
         <translation>同期する</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="917"/>
+        <location filename="config_dialog.cc" line="851"/>
+        <source>Stop sync and reset the auth token</source>
+        <translation>同期の解除と認証コードのクリア</translation>
+    </message>
+    <message>
+        <location filename="config_dialog.cc" line="852"/>
+        <source>You are trying to stop sync and reset the auth token. To restart sync, you will need to get a new auth token.
+Do you really want to continue?</source>
+        <translation>同期の解除と認証コードのクリアを行います。同期を再開するには、新しい認証コードを取得する必要があります。
+実行しますか？</translation>
+    </message>
+    <message>
+        <location filename="config_dialog.cc" line="936"/>
+        <source>Not synced yet</source>
+        <translation>同期されていません</translation>
+    </message>
+    <message>
+        <location filename="config_dialog.cc" line="940"/>
         <source>Last synced time: </source>
         <translation>最終同期時刻: </translation>
+    </message>
+    <message>
+        <location filename="config_dialog.cc" line="995"/>
+        <source>You are trying to clear all the data in the sync server.
+Do you really want to continue?</source>
+        <translation>Google サーバー上の同期データを全て消去します。
+実行しますか？</translation>
     </message>
     <message>
         <source>Sync succeeded. </source>
@@ -1124,72 +1159,67 @@ Mozcの機能向上に役立てる（再ログイン後に変更は完了しま�
         <translation type="obsolete">同期失敗</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="949"/>
+        <location filename="config_dialog.cc" line="980"/>
         <source>During synchronization</source>
         <translation>同期中です</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="963"/>
-        <source>Clear all data in the server</source>
-        <translation>同期データを全消去する</translation>
+        <location filename="config_dialog.cc" line="994"/>
+        <source>Clear all sync data in Google servers</source>
+        <translation>Google サーバー上の同期データを全て消去する</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="964"/>
-        <source>You are trying to clear all the data in the sync server. Do you really want to do it?</source>
-        <translation>同期サーバーにあるデータを全て消去します。よろしいですか？</translation>
-    </message>
-    <message>
-        <location filename="config_dialog.cc" line="341"/>
-        <location filename="config_dialog.cc" line="361"/>
-        <location filename="config_dialog.cc" line="375"/>
-        <location filename="config_dialog.cc" line="383"/>
-        <location filename="config_dialog.cc" line="669"/>
-        <location filename="config_dialog.cc" line="683"/>
-        <location filename="config_dialog.cc" line="693"/>
-        <location filename="config_dialog.cc" line="705"/>
-        <location filename="config_dialog.cc" line="715"/>
-        <location filename="config_dialog.cc" line="727"/>
-        <location filename="config_dialog.cc" line="800"/>
+        <location filename="config_dialog.cc" line="345"/>
+        <location filename="config_dialog.cc" line="365"/>
+        <location filename="config_dialog.cc" line="379"/>
+        <location filename="config_dialog.cc" line="387"/>
+        <location filename="config_dialog.cc" line="673"/>
+        <location filename="config_dialog.cc" line="687"/>
+        <location filename="config_dialog.cc" line="697"/>
+        <location filename="config_dialog.cc" line="709"/>
+        <location filename="config_dialog.cc" line="719"/>
+        <location filename="config_dialog.cc" line="731"/>
+        <location filename="config_dialog.cc" line="804"/>
         <source>Mozc settings</source>
         <translation>Mozc プロパティ</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="248"/>
+        <location filename="config_dialog.cc" line="250"/>
         <source>Dictionary preloading</source>
         <translation>オンメモリ辞書の設定</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="342"/>
+        <location filename="config_dialog.cc" line="346"/>
         <source>Failed to get current config values</source>
         <translation>設定の取得に失敗しました。</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="362"/>
+        <location filename="config_dialog.cc" line="366"/>
         <source>The current custom keymap table is empty. When custom keymap is selected, you must customize it.</source>
         <translation>有効なキー設定がありません。カスタム キーマップを選択した場合は、キーマップを編集する必要があります。</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="384"/>
+        <location filename="config_dialog.cc" line="388"/>
         <source>Failed to update config</source>
         <translation>設定の反映に失敗しました</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="670"/>
+        <location filename="config_dialog.cc" line="674"/>
         <source>Do you want to clear personalization data? Input history is not reset with this operation. Please open &quot;suggestion&quot; tab to remove input history data.</source>
         <translation>学習結果がリセットされます。実行しますか？ 入力履歴データはリセットされません。入力履歴データのリセットは「サジェスト→全入力履歴の削除」で行えます。</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="728"/>
+        <location filename="config_dialog.cc" line="732"/>
         <source>Mozc Converter is not running. Operation was not executed.</source>
         <translation>Mozcコンバーターが起動していません。設定の反映に失敗しました。</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="694"/>
+        <location filename="config_dialog.cc" line="698"/>
         <source>Do you want to clear all history data?</source>
         <translation>すべての入力履歴が削除されます。実行しますか？</translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="716"/>
+        <location filename="config_dialog.cc" line="720"/>
         <source>Do you want to clear unused history data?</source>
         <translation>サジェスト経由で入力されなかった履歴が削除されます。実行しますか？</translation>
     </message>

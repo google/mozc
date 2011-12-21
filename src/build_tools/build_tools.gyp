@@ -55,6 +55,7 @@
         '../base/base.gyp:install_gen_config_file_stream_data_main',
         '../converter/converter_base.gyp:install_gen_connection_data_main',
         '../converter/converter_base.gyp:install_gen_segmenter_bitarray_main',
+        '../converter/converter_base.gyp:install_gen_test_segmenter_bitarray_main',
         '../dictionary/dictionary.gyp:install_gen_system_dictionary_data_main',
         '../rewriter/rewriter_base.gyp:install_gen_collocation_data_main',
         '../rewriter/rewriter_base.gyp:'

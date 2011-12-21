@@ -86,10 +86,10 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        '../net/jsoncpp.gyp:jsoncpp',
         '../net/net.gyp:net',
         '../protobuf/protobuf.gyp:protobuf',
         '../storage/storage.gyp:storage',
+        '<(DEPTH)/third_party/jsoncpp/jsoncpp.gyp:jsoncpp',
         'gen_sync_data',
       ],
     },

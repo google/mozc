@@ -86,8 +86,6 @@ ConfigDialog::ConfigDialog()
   configDialogTabWidget->removeTab(kSyncTabIndex);
 #endif  // !GOOGLE_JAPANESE_INPUT_BUILD
 
-  client_->set_restricted(true);   // start with restricted mode
-
   suggestionsSizeSpinBox->setRange(1, 9);
 
   // punctuationsSettingComboBox->addItem(QString::fromUtf8("、。"));
@@ -238,13 +236,11 @@ ConfigDialog::ConfigDialog()
   // clicked slot by default.
   usageStatsMessage->installEventFilter(this);
   incognitoModeMessage->installEventFilter(this);
-  checkDefaultMessage->installEventFilter(this);
 
 #ifndef OS_WINDOWS
   checkDefaultCheckBox->setVisible(false);
   checkDefaultLine->setVisible(false);
   checkDefaultLabel->setVisible(false);
-  checkDefaultMessage->setVisible(false);
 #endif   // !OS_WINDOWS
 
 #ifdef OS_WINDOWS
@@ -818,8 +814,6 @@ bool ConfigDialog::eventFilter(QObject *obj, QEvent *event) {
 #endif
     } else if (obj == incognitoModeMessage) {
       incognitoModeCheckBox->toggle();
-    } else if (obj == checkDefaultMessage) {
-      checkDefaultCheckBox->toggle();
     }
   }
   return QObject::eventFilter(obj, event);

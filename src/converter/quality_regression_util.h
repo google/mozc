@@ -38,8 +38,11 @@ namespace quality_regression {
 
 class QualityRegressionUtil {
  public:
-  QualityRegressionUtil();
-  virtual ~QualityRegressionUtil();
+  // bit fields
+  enum Platform {
+    DESKTOP = 1,
+    OSS = 2,
+  };
 
   struct TestItem {
     string label;
@@ -48,10 +51,15 @@ class QualityRegressionUtil {
     string command;
     int    expected_rank;
     double accuracy;
-    string comment;
+    // Target platform. Can set multiple platform defined in enum |Platform|.
+    uint32 platform;
     string OutputAsTSV() const;
     bool ParseFromTSV(const string &tsv_line);
   };
+
+  QualityRegressionUtil();
+  explicit QualityRegressionUtil(ConverterInterface *converter);
+  virtual ~QualityRegressionUtil();
 
   // Pase |filename| and save the all test items into |outputs|.
   static bool ParseFile(const string &filename,

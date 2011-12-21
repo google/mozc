@@ -32,9 +32,11 @@
 #include <string>
 
 #include "base/base.h"
+#include "base/singleton.h"
 #include "converter/candidate_filter.h"
 #include "converter/connector_interface.h"
 #include "converter/lattice.h"
+#include "converter/segmenter_interface.h"
 #include "converter/segmenter.h"
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
@@ -48,6 +50,16 @@ NBestGenerator::NBestGenerator()
     : freelist_(kFreeListSize), filter_(NULL),
       begin_node_(NULL), end_node_(NULL),
       connector_(ConnectorFactory::GetConnector()),
+      segmenter_(Singleton<Segmenter>::get()),
+      lattice_(NULL),
+      viterbi_result_checked_(false),
+      is_prediction_(false) {}
+
+NBestGenerator::NBestGenerator(const SegmenterInterface *segmenter)
+    : freelist_(kFreeListSize), filter_(NULL),
+      begin_node_(NULL), end_node_(NULL),
+      connector_(ConnectorFactory::GetConnector()),
+      segmenter_(segmenter),
       lattice_(NULL),
       viterbi_result_checked_(false),
       is_prediction_(false) {}
@@ -281,8 +293,8 @@ bool NBestGenerator::Next(Segment::Candidate *candidate,
         // is_boundary is true if there is a grammer-based boundary
         // between lnode and rnode
         const bool is_boundary = (lnode->node_type == Node::HIS_NODE ||
-                                  Segmenter::IsBoundary(lnode, rnode,
-                                                        is_prediction_));
+                                  segmenter_->IsBoundary(lnode, rnode,
+                                                         is_prediction_));
 
         // is_valid_boudnary is true if the word connection from
         // lnode to rnode has a gramatically correct relation.

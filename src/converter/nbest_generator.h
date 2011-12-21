@@ -44,6 +44,7 @@ namespace mozc {
 class CandidateFilter;
 class ConnectorInterface;
 class Lattice;
+class SegmenterInterface;
 struct Node;
 
 // TODO(toshiyuki): write unittest for NBestGenerator.
@@ -51,7 +52,9 @@ struct Node;
 //                  for Connector and Lattice
 class NBestGenerator {
  public:
-  explicit NBestGenerator();
+  // constractor for compatibility
+  NBestGenerator();
+  explicit NBestGenerator(const SegmenterInterface *segmenter);
   virtual ~NBestGenerator();
 
   // set starting Node and ending Node --
@@ -111,6 +114,7 @@ class NBestGenerator {
   const Node *begin_node_;
   const Node *end_node_;
   const ConnectorInterface *connector_;
+  const SegmenterInterface *segmenter_;
   const Lattice *lattice_;
   bool viterbi_result_checked_;
   bool is_prediction_;

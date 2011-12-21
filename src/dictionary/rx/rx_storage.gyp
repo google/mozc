@@ -36,7 +36,7 @@
         'rx_trie.cc',
       ],
       'dependencies': [
-        '../../base/base.gyp:base',
+        '../../base/base.gyp:base_core',
         '<(DEPTH)/third_party/rx/rx.gyp:rx',
       ],
     },
@@ -47,7 +47,7 @@
         'rx_trie_builder.cc'
       ],
       'dependencies': [
-        '../../base/base.gyp:base',
+        '../../base/base.gyp:base_core',
         '<(DEPTH)/third_party/rx/rx.gyp:rx',
       ],
     },
@@ -58,7 +58,7 @@
         'rbx_array.cc',
       ],
       'dependencies': [
-        '../../base/base.gyp:base',
+        '../../base/base.gyp:base_core',
         '<(DEPTH)/third_party/rx/rx.gyp:rx',
       ],
     },
@@ -69,7 +69,7 @@
         'rbx_array_builder.cc'
       ],
       'dependencies': [
-        '../../base/base.gyp:base',
+        '../../base/base.gyp:base_core',
         '<(DEPTH)/third_party/rx/rx.gyp:rx',
       ],
     },

@@ -654,6 +654,13 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
 }
 
 - (void)updateComposedString:(const Preedit *)preedit {
+  // If the last and the current composed string length is 0,
+  // we don't call updateComposition.
+  if (([composedString_ length] == 0) &&
+      ((preedit == NULL || preedit->segment_size() == 0))) {
+    return;
+  }
+
   [composedString_
     deleteCharactersInRange:NSMakeRange(0, [composedString_ length])];
   cursorPosition_ = NSNotFound;
@@ -740,10 +747,19 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
   //    cursor position correctly.  The candidate window moves
   //    frequently with those application, which irritates users.
   //  - Kotoeri does this too.
-  if (!rendererCommand_->visible()) {
+  if ((!rendererCommand_->visible()) &&
+      (output->candidates().candidate_size() > 0)) {
     NSRect preeditRect = NSZeroRect;
-    [[self client] attributesForCharacterIndex:output->candidates().position()
-                           lineHeightRectangle:&preeditRect];
+    // Some applications throws error when we call attributesForCharacterIndex.
+    @try {
+      [[self client] attributesForCharacterIndex:output->candidates().position()
+                             lineHeightRectangle:&preeditRect];
+    }
+    @catch (NSException *exception) {
+      LOG(ERROR) << "Exception from [" << *clientBundle_ << "] "
+                 << [[exception name] UTF8String] << ","
+                 << [[exception reason] UTF8String];
+    }
     NSScreen *baseScreen = nil;
     NSRect baseFrame = NSZeroRect;
     for (baseScreen in [NSScreen screens]) {

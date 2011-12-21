@@ -130,6 +130,7 @@
       'dependencies': [
         '../client/client.gyp:client_mock',
         '../testing/testing.gyp:gtest_main',
+        '../usage_stats/usage_stats.gyp:genproto_usage_stats',
         'session.gyp:session',
         'session.gyp:session_server',
         'session_base.gyp:ime_switch_util',

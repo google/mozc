@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>520</width>
-    <height>430</height>
+    <height>440</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -19,13 +19,13 @@
   <property name="minimumSize">
    <size>
     <width>520</width>
-    <height>430</height>
+    <height>440</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
     <width>520</width>
-    <height>430</height>
+    <height>440</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -46,7 +46,7 @@
       <x>10</x>
       <y>10</y>
       <width>501</width>
-      <height>371</height>
+      <height>381</height>
      </rect>
     </property>
     <property name="currentIndex">
@@ -157,7 +157,7 @@
       <property name="geometry">
        <rect>
         <x>30</x>
-        <y>270</y>
+        <y>280</y>
         <width>441</width>
         <height>66</height>
        </rect>
@@ -238,7 +238,7 @@
       <property name="geometry">
        <rect>
         <x>20</x>
-        <y>250</y>
+        <y>260</y>
         <width>461</width>
         <height>20</height>
        </rect>
@@ -372,7 +372,7 @@
        <rect>
         <x>30</x>
         <y>210</y>
-        <width>450</width>
+        <width>441</width>
         <height>121</height>
        </rect>
       </property>
@@ -479,7 +479,7 @@
        <rect>
         <x>20</x>
         <y>180</y>
-        <width>461</width>
+        <width>201</width>
         <height>21</height>
        </rect>
       </property>
@@ -538,6 +538,38 @@
        </item>
       </layout>
      </widget>
+     <widget class="QWidget" name="horizontalLayoutWidget_7">
+      <property name="geometry">
+       <rect>
+        <x>240</x>
+        <y>180</y>
+        <width>241</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout_22">
+       <item>
+        <widget class="QLabel" name="specialConversionLabel">
+         <property name="text">
+          <string>Special conversions</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="Line" name="specialConversionLine">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
     </widget>
     <widget class="QWidget" name="inputsupport_tab">
      <attribute name="title">
@@ -547,7 +579,7 @@
       <property name="geometry">
        <rect>
         <x>30</x>
-        <y>180</y>
+        <y>190</y>
         <width>441</width>
         <height>141</height>
        </rect>
@@ -559,7 +591,7 @@
         <x>20</x>
         <y>10</y>
         <width>461</width>
-        <height>20</height>
+        <height>21</height>
        </rect>
       </property>
       <layout class="QHBoxLayout" name="horizontalLayout_4">
@@ -589,7 +621,7 @@
       <property name="geometry">
        <rect>
         <x>20</x>
-        <y>150</y>
+        <y>160</y>
         <width>461</width>
         <height>21</height>
        </rect>
@@ -621,7 +653,7 @@
       <property name="geometry">
        <rect>
         <x>30</x>
-        <y>30</y>
+        <y>40</y>
         <width>441</width>
         <height>111</height>
        </rect>
@@ -733,7 +765,7 @@
         <x>20</x>
         <y>10</y>
         <width>461</width>
-        <height>24</height>
+        <height>21</height>
        </rect>
       </property>
       <layout class="QHBoxLayout" name="horizontalLayout_12">
@@ -810,19 +842,6 @@
        </item>
        <item row="0" column="2">
         <widget class="QSpinBox" name="suggestionsSizeSpinBox"/>
-       </item>
-       <item row="0" column="3">
-        <spacer name="horizontalSpacer_5">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>40</width>
-           <height>20</height>
-          </size>
-         </property>
-        </spacer>
        </item>
        <item row="0" column="1">
         <spacer name="horizontalSpacer_8">
@@ -933,7 +952,7 @@
       <property name="geometry">
        <rect>
         <x>30</x>
-        <y>210</y>
+        <y>190</y>
         <width>20</width>
         <height>20</height>
        </rect>
@@ -955,7 +974,7 @@
       <property name="geometry">
        <rect>
         <x>50</x>
-        <y>200</y>
+        <y>180</y>
         <width>421</width>
         <height>61</height>
        </rect>
@@ -971,9 +990,9 @@
       <property name="geometry">
        <rect>
         <x>20</x>
-        <y>180</y>
+        <y>160</y>
         <width>461</width>
-        <height>27</height>
+        <height>21</height>
        </rect>
       </property>
       <layout class="QHBoxLayout" name="horizontalLayout_18">
@@ -1003,9 +1022,9 @@
       <property name="geometry">
        <rect>
         <x>20</x>
-        <y>20</y>
+        <y>10</y>
         <width>461</width>
-        <height>27</height>
+        <height>21</height>
        </rect>
       </property>
       <layout class="QHBoxLayout" name="horizontalLayout_20">
@@ -1035,7 +1054,7 @@
       <property name="geometry">
        <rect>
         <x>30</x>
-        <y>50</y>
+        <y>40</y>
         <width>20</width>
         <height>20</height>
        </rect>
@@ -1057,7 +1076,7 @@
       <property name="geometry">
        <rect>
         <x>50</x>
-        <y>40</y>
+        <y>30</y>
         <width>421</width>
         <height>51</height>
        </rect>
@@ -1072,8 +1091,8 @@
      <widget class="QPushButton" name="launchAdministrationDialogButtonForUsageStats">
       <property name="geometry">
        <rect>
-        <x>280</x>
-        <y>200</y>
+        <x>320</x>
+        <y>180</y>
         <width>150</width>
         <height>25</height>
        </rect>
@@ -1098,7 +1117,7 @@
       <property name="geometry">
        <rect>
         <x>30</x>
-        <y>130</y>
+        <y>120</y>
         <width>441</width>
         <height>17</height>
        </rect>
@@ -1111,9 +1130,9 @@
       <property name="geometry">
        <rect>
         <x>20</x>
-        <y>100</y>
+        <y>90</y>
         <width>461</width>
-        <height>27</height>
+        <height>21</height>
        </rect>
       </property>
       <layout class="QHBoxLayout" name="horizontalLayout_21">
@@ -1179,8 +1198,8 @@
      <widget class="QWidget" name="horizontalLayoutWidget_4">
       <property name="geometry">
        <rect>
-        <x>40</x>
-        <y>60</y>
+        <x>30</x>
+        <y>100</y>
         <width>441</width>
         <height>32</height>
        </rect>
@@ -1230,40 +1249,59 @@
      <widget class="QLabel" name="syncStatusLabel">
       <property name="geometry">
        <rect>
-        <x>40</x>
-        <y>40</y>
+        <x>30</x>
+        <y>80</y>
         <width>401</width>
-        <height>16</height>
+        <height>20</height>
        </rect>
       </property>
       <property name="text">
        <string>latest sync</string>
       </property>
      </widget>
-     <widget class="QLabel" name="label_2">
+     <widget class="QLabel" name="removeAllDescriptionLabel">
       <property name="geometry">
        <rect>
-        <x>40</x>
-        <y>110</y>
-        <width>391</width>
-        <height>16</height>
+        <x>30</x>
+        <y>150</y>
+        <width>431</width>
+        <height>51</height>
        </rect>
       </property>
       <property name="text">
-       <string>Remove the uploaded data</string>
+       <string>Clear all sync data in Google servers. To delete data completely, make sure there is no other machine which is running sync and stop sync on this machine after clearing the data.</string>
+      </property>
+      <property name="wordWrap">
+       <bool>true</bool>
       </property>
      </widget>
      <widget class="QPushButton" name="clearSyncButton">
       <property name="geometry">
        <rect>
-        <x>40</x>
-        <y>130</y>
+        <x>30</x>
+        <y>205</y>
         <width>111</width>
         <height>31</height>
        </rect>
       </property>
       <property name="text">
        <string>Remove all</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="syncDescriptionLabel">
+      <property name="geometry">
+       <rect>
+        <x>29</x>
+        <y>40</y>
+        <width>441</width>
+        <height>31</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Mozc can securely syncs your settings and a user sync-dictionary among different machines</string>
+      </property>
+      <property name="wordWrap">
+       <bool>true</bool>
       </property>
      </widget>
     </widget>
@@ -1275,7 +1313,7 @@
       <property name="geometry">
        <rect>
         <x>20</x>
-        <y>16</y>
+        <y>10</y>
         <width>461</width>
         <height>21</height>
        </rect>
@@ -1336,9 +1374,9 @@
       <property name="geometry">
        <rect>
         <x>20</x>
-        <y>181</y>
+        <y>180</y>
         <width>461</width>
-        <height>20</height>
+        <height>21</height>
        </rect>
       </property>
       <layout class="QHBoxLayout" name="horizontalLayout_13">
@@ -1368,7 +1406,7 @@
       <property name="geometry">
        <rect>
         <x>20</x>
-        <y>114</y>
+        <y>110</y>
         <width>461</width>
         <height>21</height>
        </rect>
@@ -1400,7 +1438,7 @@
       <property name="geometry">
        <rect>
         <x>30</x>
-        <y>134</y>
+        <y>130</y>
         <width>441</width>
         <height>32</height>
        </rect>
@@ -1441,56 +1479,40 @@
        </item>
       </layout>
      </widget>
-     <widget class="QLabel" name="checkDefaultMessage">
-      <property name="geometry">
-       <rect>
-        <x>51</x>
-        <y>36</y>
-        <width>421</width>
-        <height>41</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Check if Mozc is the default IME on startup</string>
-      </property>
-      <property name="wordWrap">
-       <bool>true</bool>
-      </property>
-     </widget>
-     <widget class="QCheckBox" name="checkDefaultCheckBox">
+     <widget class="QWidget" name="layoutWidget">
       <property name="geometry">
        <rect>
         <x>30</x>
         <y>40</y>
-        <width>21</width>
-        <height>31</height>
+        <width>441</width>
+        <height>51</height>
        </rect>
       </property>
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <property name="text">
-       <string/>
-      </property>
-      <property name="tristate">
-       <bool>false</bool>
-      </property>
-     </widget>
-     <widget class="QCheckBox" name="IMEHotKeyDisabledCheckBox">
-      <property name="geometry">
-       <rect>
-        <x>30</x>
-        <y>75</y>
-        <width>401</width>
-        <height>17</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Disable Keyboard layout hotkey (Ctrl+Shift)</string>
-      </property>
+      <layout class="QGridLayout" name="gridLayout_8">
+       <item row="0" column="0">
+        <widget class="QCheckBox" name="checkDefaultCheckBox">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>Check if Mozc is the default IME on startup</string>
+         </property>
+         <property name="tristate">
+          <bool>false</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QCheckBox" name="IMEHotKeyDisabledCheckBox">
+         <property name="text">
+          <string>Disable Keyboard layout hotkey (Ctrl+Shift)</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </widget>
     </widget>
    </widget>
@@ -1498,7 +1520,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>390</y>
+      <y>400</y>
       <width>501</width>
       <height>32</height>
      </rect>
@@ -1583,15 +1605,15 @@
   <tabstop>clearUserHistoryButton</tabstop>
   <tabstop>editUserDictionaryButton</tabstop>
   <tabstop>singleKanjiDictionaryCheckBox</tabstop>
-  <tabstop>dateConversionCheckBox</tabstop>
   <tabstop>symbolDictionaryCheckBox</tabstop>
-  <tabstop>numberConversionCheckBox</tabstop>
   <tabstop>emoticonDictionaryCheckBox</tabstop>
-  <tabstop>useAutoImeTurnOff</tabstop>
-  <tabstop>calculatorCheckBox</tabstop>
   <tabstop>t13nDictionaryCheckBox</tabstop>
-  <tabstop>spellingCorrectionCheckBox</tabstop>
   <tabstop>zipcodeDictionaryCheckBox</tabstop>
+  <tabstop>dateConversionCheckBox</tabstop>
+  <tabstop>numberConversionCheckBox</tabstop>
+  <tabstop>calculatorCheckBox</tabstop>
+  <tabstop>spellingCorrectionCheckBox</tabstop>
+  <tabstop>useAutoImeTurnOff</tabstop>
   <tabstop>useAutoConversion</tabstop>
   <tabstop>kutenCheckBox</tabstop>
   <tabstop>toutenCheckBox</tabstop>
@@ -1612,10 +1634,12 @@
   <tabstop>launchAdministrationDialogButtonForUsageStats</tabstop>
   <tabstop>syncToggleButton</tabstop>
   <tabstop>syncCustomizationButton</tabstop>
+  <tabstop>clearSyncButton</tabstop>
   <tabstop>checkDefaultCheckBox</tabstop>
   <tabstop>IMEHotKeyDisabledCheckBox</tabstop>
   <tabstop>launchAdministrationDialogButton</tabstop>
   <tabstop>verboseLevelComboBox</tabstop>
+  <tabstop>configDialogButtonBox</tabstop>
  </tabstops>
  <resources/>
  <connections/>

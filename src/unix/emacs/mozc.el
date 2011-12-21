@@ -840,7 +840,7 @@ defaults to `frame-char-width'."
                                  overlay posn-origin))
                               contents))))
          (delete-overlay overlay)
-         (delete-backward-char 1))))))
+         (delete-char -1))))))
 
 (defun mozc-cand-overlay-estimate-width
   (left-text right-text space-width face overlay posn-origin)

@@ -81,15 +81,27 @@ int GetRank(const string &value, const Segments *segments,
   }
   return -1;
 }
+
+uint32 GetPlatfromFromString(const string &str) {
+  string lower = str;
+  Util::LowerString(&lower);
+  if (str == "desktop") {
+    return QualityRegressionUtil::DESKTOP;
+  }
+  if (str == "oss") {
+    return QualityRegressionUtil::OSS;
+  }
+  LOG(ERROR) << "Unknown platform name: " << str;
+  return QualityRegressionUtil::DESKTOP;
+}
 }   // namespace
 
 string QualityRegressionUtil::TestItem::OutputAsTSV() const {
   ostringstream os;
   os << label << '\t' << key << '\t' << expected_value << '\t'
-     << command << '\t' << expected_rank << '\t' << accuracy;
-  if (!comment.empty()) {
-    os << '\t' << accuracy;
-  }
+     << command << '\t' << expected_rank << '\t' << accuracy
+     << '\t' << platform;
+  // TODO(toshiyuki): platform enum to string
   return os.str();
 }
 
@@ -105,15 +117,30 @@ bool QualityRegressionUtil::TestItem::ParseFromTSV(const string &line) {
   command        = tokens[3];
   expected_rank  = atoi(tokens[4].c_str());
   accuracy       = atof(tokens[5].c_str());
-  comment.clear();
+  platform       = 0;
   if (tokens.size() >= 7) {
-    comment = tokens[6];
+    vector<string> platforms;
+    Util::SplitStringUsing(tokens[6], ",", &platforms);
+    for (size_t i = 0; i < platforms.size(); ++i) {
+      platform |= GetPlatfromFromString(platforms[i]);
+    }
+  } else {
+    // Default platform: desktop
+    platform = QualityRegressionUtil::DESKTOP;
   }
   return true;
 }
 
 QualityRegressionUtil::QualityRegressionUtil()
     : converter_(ConverterFactory::GetConverter()),
+      segments_(new Segments) {
+  config::Config config;
+  config::ConfigHandler::GetDefaultConfig(&config);
+  config::ConfigHandler::SetConfig(config);
+}
+
+QualityRegressionUtil::QualityRegressionUtil(ConverterInterface *converter)
+    : converter_(converter),
       segments_(new Segments) {
   config::Config config;
   config::ConfigHandler::GetDefaultConfig(&config);

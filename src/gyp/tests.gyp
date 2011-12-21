@@ -47,6 +47,7 @@
         '../ipc/ipc.gyp:ipc_all_test',
         # '../net/net.gyp:net_all_test',
         '../prediction/prediction.gyp:prediction_all_test',
+        '../renderer/renderer.gyp:renderer_all_test',
         '../rewriter/rewriter_test.gyp:rewriter_all_test',
         # '../server/server.gyp:server_all_test',
         '../session/session_test.gyp:session_all_test',

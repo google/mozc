@@ -43,6 +43,7 @@ class Segments;
 class DictionaryInterface;
 class ConnectorInterface;
 class ImmutableConverterInterface;
+class SegmenterInterface;
 class NodeAllocatorInterface;
 struct Node;
 
@@ -50,6 +51,7 @@ struct Node;
 class DictionaryPredictor: public PredictorInterface {
  public:
   DictionaryPredictor();
+  explicit DictionaryPredictor(SegmenterInterface *segmenter);
   virtual ~DictionaryPredictor();
 
   bool Predict(Segments *segments) const;
@@ -238,6 +240,7 @@ class DictionaryPredictor: public PredictorInterface {
   DictionaryInterface *dictionary_;
   DictionaryInterface *suffix_dictionary_;
   ConnectorInterface *connector_;
+  const SegmenterInterface *segmenter_;
   ImmutableConverterInterface *immutable_converter_;
 };
 }  // namespace mozc

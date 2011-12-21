@@ -609,6 +609,23 @@ void Composer::GetPreedit(string *left, string *focused, string *right) const {
 void Composer::GetStringForPreedit(string *output) const {
   composition_->GetString(output);
   TransformCharactersForNumbers(output);
+  // If the input field type needs half ascii characters,
+  // perform conversion here.
+  // Note that this purpose is also achieved by the client by setting
+  // input type as "half ascii".
+  // But the architecture of Mozc expects the server to handle such character
+  // width management.
+  // TODO(matsuzakit): Move this logic to another appopriate location.
+  // SetOutputMode() is not currently applicable but ideally it is
+  // better location than here.
+  const commands::SessionCommand::InputFieldType field_type =
+      GetInputFieldType();
+  if (field_type == commands::SessionCommand::NUMBER ||
+      field_type == commands::SessionCommand::PASSWORD ||
+      field_type == commands::SessionCommand::TEL) {
+    const string tmp = *output;
+    Util::FullWidthAsciiToHalfWidthAscii(tmp, output);
+  }
 }
 
 void Composer::GetStringForSubmission(string *output) const {

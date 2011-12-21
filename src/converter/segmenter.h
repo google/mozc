@@ -27,39 +27,21 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+// Segmenter implementation
+
 #ifndef MOZC_CONVERTER_SEGMENTER_H_
 #define MOZC_CONVERTER_SEGMENTER_H_
 
-#include "base/base.h"
-#include "converter/node.h"
+#include "base/singleton.h"
+#include "converter/segmenter_base.h"
 
 namespace mozc {
-
-class Segmenter {
- public:
-  // return true if there is a segment boundary between
-  // |lnode| and |rnode|.
-  // if |is_single_segment| is true, this function basically
-  // reutrns false unless |lnode| or |rnode| is BOS/EOS.
-  // |is_single_segment| is used for prediction/suggestion mode.
-  static bool IsBoundary(const Node *lnode, const Node *rnode,
-                         bool is_single_segment);
-
-  static bool IsBoundary(uint16 rid, uint16 lid);
-
-  // return cost penalty of the word prefix.
-  // we can add cost penalty if a node->lid
-  // exists at the begging of user input.
-  static int32 GetPrefixPenalty(uint16 lid);
-
-  // return cost penalty of the word suffix.
-  // we can add cost penalty if a node->rid
-  // exists at the end of user input.
-  static int32 GetSuffixPenalty(uint16 rid);
-
+class Segmenter : public SegmenterBase {
  private:
-  Segmenter() {}
+  Segmenter();
   virtual ~Segmenter() {}
+
+  friend class Singleton<Segmenter>;
 };
 }  // namespace mozc
 #endif  // MOZC_CONVERTER_SEGMENTER_H_

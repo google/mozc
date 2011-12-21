@@ -34,8 +34,16 @@
 #include "base/base.h"
 #include "base/file_stream.h"
 #include "base/util.h"
+#include "config/config.pb.h"
+#include "config/config_handler.h"
+#include "converter/converter.h"
+#include "converter/converter_interface.h"
+#include "converter/immutable_converter.h"
 #include "converter/quality_regression_test_data.h"
 #include "converter/quality_regression_util.h"
+#include "dictionary/dictionary_interface.h"
+#include "prediction/dictionary_predictor.h"
+#include "prediction/predictor.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
@@ -45,49 +53,91 @@ using mozc::quality_regression::QualityRegressionUtil;
 namespace mozc {
 namespace {
 
-TEST(QualityRegressionTest, BasicTest) {
-  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
-  QualityRegressionUtil util;
-
-  map<string, vector<pair<float, string> > > results;
-
-  for (size_t i = 0; i < ARRAYSIZE(kTestData); ++i) {
-    QualityRegressionUtil::TestItem item;
-    CHECK(item.ParseFromTSV(kTestData[i]));
-    string actual_value;
-    const  bool test_result = util.ConvertAndTest(item, &actual_value);
-    const string& label = item.label;
-    string line = kTestData[i];
-    line += "\tActual: ";
-    line += actual_value;
-    if (test_result) {
-      // use "-1.0" as a dummy expected ratio
-      results[label].push_back(make_pair(-1.0, line));
-    } else {
-      results[label].push_back(make_pair(item.accuracy, line));
-    }
+class QualityRegressionTest : public testing::Test {
+ protected:
+  virtual void SetUp() {
+    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    config::Config config;
+    config::ConfigHandler::GetDefaultConfig(&config);
+    config::ConfigHandler::SetConfig(config);
+    DictionaryFactory::SetDictionary(NULL);
+    PredictorFactory::SetDictionaryPredictor(NULL);
   }
 
-  for (map<string, vector<pair<float, string > > >::iterator
-           it = results.begin(); it != results.end(); ++it) {
-    vector<pair<float, string> > &values = it->second;
-    sort(values.begin(), values.end());
-    size_t correct = 0;
-    for (int n = 0; n < values.size(); ++n) {
-      const float accuracy = values[n].first;
-      if (accuracy < 0) {
-        ++correct;
+  virtual void TearDown() {
+    config::Config config;
+    config::ConfigHandler::GetDefaultConfig(&config);
+    config::ConfigHandler::SetConfig(config);
+    DictionaryFactory::SetDictionary(NULL);
+    PredictorFactory::SetDictionaryPredictor(NULL);
+  }
+
+  void RunTestForPlatform(uint32 platform, QualityRegressionUtil *util) {
+    CHECK(util);
+    map<string, vector<pair<float, string> > > results;
+
+    int testcase_count = 0;
+    for (size_t i = 0; i < ARRAYSIZE(kTestData); ++i) {
+      QualityRegressionUtil::TestItem item;
+      CHECK(item.ParseFromTSV(kTestData[i]));
+      if (!(item.platform & platform)) {
         continue;
       }
-      // Print failed example for failed label
-      const float actual_ratio = 1.0 * correct / values.size();
-      EXPECT_TRUE(accuracy < actual_ratio) << values[n].second
-                                           << " " << accuracy
-                                           << " " << actual_ratio;
+      string actual_value;
+      const  bool test_result = util->ConvertAndTest(item, &actual_value);
+      const string &label = item.label;
+      string line = kTestData[i];
+      line += "\tActual: ";
+      line += actual_value;
+      if (test_result) {
+        // use "-1.0" as a dummy expected ratio
+        results[label].push_back(make_pair(-1.0, line));
+      } else {
+        results[label].push_back(make_pair(item.accuracy, line));
+      }
+      ++testcase_count;
     }
-    LOG(INFO) << "Accuracy: " << it->first << " "
-              << 1.0 * correct / values.size();
+
+    for (map<string, vector<pair<float, string > > >::iterator
+             it = results.begin(); it != results.end(); ++it) {
+      vector<pair<float, string> > &values = it->second;
+      sort(values.begin(), values.end());
+      size_t correct = 0;
+      for (int n = 0; n < values.size(); ++n) {
+        const float accuracy = values[n].first;
+        if (accuracy < 0) {
+          ++correct;
+          continue;
+        }
+        // Print failed example for failed label
+        const float actual_ratio = 1.0 * correct / values.size();
+        EXPECT_TRUE(accuracy < actual_ratio) << values[n].second
+                                             << " " << accuracy
+                                             << " " << actual_ratio;
+      }
+      LOG(INFO) << "Accuracy: " << it->first << " "
+                << 1.0 * correct / values.size();
+    }
+    LOG(INFO) << "Tested " << testcase_count << " entries.";
   }
+};
+
+
+// Test for desktop
+TEST_F(QualityRegressionTest, BasicTest) {
+  scoped_ptr<ImmutableConverterImpl> immutable_converter(
+      new ImmutableConverterImpl);
+  ImmutableConverterFactory::SetImmutableConverter(immutable_converter.get());
+
+  scoped_ptr<DictionaryPredictor> dictionary_predictor(new DictionaryPredictor);
+  PredictorFactory::SetDictionaryPredictor(dictionary_predictor.get());
+
+  scoped_ptr<ConverterImpl> converter_impl(new ConverterImpl);
+  ConverterInterface *converter = converter_impl.get();
+  CHECK(converter);
+
+  QualityRegressionUtil util(converter);
+  RunTestForPlatform(QualityRegressionUtil::DESKTOP, &util);
 }
 }  // namespace
 }  // namespace mozc

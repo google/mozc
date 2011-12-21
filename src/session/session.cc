@@ -2613,11 +2613,29 @@ bool Session::SetCaretLocation(commands::Command *command) {
   }
 
   const commands::SessionCommand &session_command = command->input().command();
-  if (session_command.has_caret_rectangle()) {
-    caret_rectangle_.CopyFrom(session_command.caret_rectangle());
-  } else {
+  if (!session_command.has_caret_rectangle()) {
     caret_rectangle_.Clear();
+    return false;
   }
+
+  if (!caret_rectangle_.IsInitialized()) {
+    caret_rectangle_.CopyFrom(session_command.caret_rectangle());
+    return true;
+  }
+
+  const int caret_delta_y =
+      abs(caret_rectangle_.y() - session_command.caret_rectangle().y());
+
+  caret_rectangle_.CopyFrom(session_command.caret_rectangle());
+
+  const int kJumpThreshold = 30;
+
+  // If caret is jumped, assume the text field is also jumped and reset the
+  // rectangle of composition text.
+  if (caret_delta_y > kJumpThreshold) {
+    composition_rectangle_.CopyFrom(caret_rectangle_);
+  }
+
   return true;
 }
 

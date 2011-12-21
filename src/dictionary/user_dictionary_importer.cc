@@ -406,7 +406,9 @@ UserDictionaryImporter::ImportFromIterator(
   }
 
   const int max_size =
-      static_cast<int>(UserDictionaryStorage::max_entry_size());
+      user_dic->syncable() ?
+          static_cast<int>(UserDictionaryStorage::max_sync_entry_size()) :
+          static_cast<int>(UserDictionaryStorage::max_entry_size());
 
   UserDictionaryImporter::ErrorType ret =
       UserDictionaryImporter::IMPORT_NO_ERROR;

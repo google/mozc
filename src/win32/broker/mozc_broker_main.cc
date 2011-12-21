@@ -33,6 +33,8 @@
 
 #include "base/base.h"
 #include "base/util.h"
+#include "languages/global_language_spec.h"
+#include "languages/japanese/lang_dep_spec.h"
 
 #ifdef OS_WINDOWS
 #include "base/winmain.h"
@@ -56,18 +58,21 @@ int main(int argc, char *argv[]) {
 
   mozc::Util::DisableIME();
 
+  mozc::japanese::LangDepSpecJapanese spec;
+  mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(&spec);
   InitGoogleWithBreakPad(argv[0], &argc, &argv, false);
 
+  int result = 0;
 #ifdef OS_WINDOWS
   if (FLAGS_mode == "register_ime") {
-    return mozc::win32::RunRegisterIME(argc, argv);
+    result = mozc::win32::RunRegisterIME(argc, argv);
   } else if (FLAGS_mode == "set_default") {
-    return mozc::win32::RunSetDefault(argc, argv);
+    result = mozc::win32::RunSetDefault(argc, argv);
   } else if (FLAGS_mode == "unregister_ime") {
-    return mozc::win32::RunUnregisterIME(argc, argv);
+    result = mozc::win32::RunUnregisterIME(argc, argv);
   }
 #endif  // OS_WINDOWS
 
-  return 0;
+  mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(NULL);
+  return result;
 }
-

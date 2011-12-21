@@ -69,6 +69,9 @@
               '$(SDKROOT)/System/Library/Frameworks/InputMethodKit.framework',
             ],
           },
+          'xcode_settings': {
+            'GCC_ENABLE_CPP_EXCEPTIONS': 'YES',
+          },
         }],
         ['OS=="win"', {
           'msvs_settings': {
@@ -343,6 +346,7 @@
           ],
           'xcode_settings': {
             'INFOPLIST_FILE': '<(gen_out_dir)/Info.plist',
+            'GCC_ENABLE_CPP_EXCEPTIONS': 'YES',
           },
           'copies': [
             {
