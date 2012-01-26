@@ -1,4 +1,4 @@
-# Copyright 2010-2011, Google Inc.
+# Copyright 2010-2012, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -52,6 +52,7 @@
         'number_rewriter_test.cc',
         'normalization_rewriter_test.cc',
         'remove_redundant_candidate_rewriter_test.cc',
+        # 'rewriter_test.cc',
         'symbol_rewriter_test.cc',
         'transliteration_rewriter_test.cc',
         'unicode_rewriter_test.cc',

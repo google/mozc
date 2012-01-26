@@ -244,10 +244,6 @@
         <translation>Undo</translation>
     </message>
     <message>
-        <source>SegmentFocusRightOrCommit</source>
-        <translation>Move segment focus right or commit segment</translation>
-    </message>
-    <message>
         <source>Reconvert</source>
         <translation>Reconvert</translation>
     </message>

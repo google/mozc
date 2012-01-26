@@ -1,4 +1,4 @@
-// Copyright 2010-2011, Google Inc.
+// Copyright 2010-2012, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -290,6 +290,8 @@ ConfigDialog::ConfigDialog()
 
 #ifdef OS_WINDOWS
   IMEHotKeyDisabledCheckBox->setChecked(WinUtil::GetIMEHotKeyDisabled());
+#else
+  IMEHotKeyDisabledCheckBox->setVisible(false);
 #endif
 
 #ifdef CHANNEL_DEV

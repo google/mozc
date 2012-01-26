@@ -1,4 +1,4 @@
-// Copyright 2010-2011, Google Inc.
+// Copyright 2010-2012, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -48,6 +48,10 @@ struct MozcEngineProperty {
 
 extern const MozcEngineProperty kMozcEngineProperties[];
 extern const size_t kMozcEnginePropertiesSize;
+
+// If kMozcEnginePropertiesIMEOffState is NULL, it means IME should be always
+// On.
+extern const MozcEngineProperty *kMozcEnginePropertyIMEOffState;
 
 extern const commands::CompositionMode kMozcEngineInitialCompositionMode;
 

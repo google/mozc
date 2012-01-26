@@ -1,4 +1,4 @@
-// Copyright 2010-2011, Google Inc.
+// Copyright 2010-2012, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -158,7 +158,7 @@ class MozcEngine : public EngineInterface {
   bool LaunchTool(const commands::Output &output) const;
 
   // Updates the composition mode based on the content of |output|.
-  void UpdateCompositionMode(
+  void UpdateCompositionModeIcon(
       IBusEngine *engine, const commands::CompositionMode new_composition_mode);
   // Updates internal preedit_method (Roman/Kana) state
   void UpdatePreeditMethod();
@@ -184,7 +184,8 @@ class MozcEngine : public EngineInterface {
   IBusPropList *prop_root_;
   IBusProperty *prop_composition_mode_;
   IBusProperty *prop_mozc_tool_;
-  commands::CompositionMode current_composition_mode_;
+  commands::CompositionMode original_composition_mode_;
+  bool is_activated_;
   config::Config::PreeditMethod preedit_method_;
 
   // Unique IDs of candidates that are currently shown.

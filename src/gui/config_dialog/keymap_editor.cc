@@ -1,4 +1,4 @@
-// Copyright 2010-2011, Google Inc.
+// Copyright 2010-2012, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -94,13 +94,13 @@ class KeyMapValidator {
     invisible_commands_.insert(kReportBugCommand);
     // Old command name.
     invisible_commands_.insert(kEditInsertCommand);
-#if defined(OS_MACOSX) || defined(OS_LINUX)
-    // On Mac/Linux, we cannot customize keybindings for IME ON/OFF
+#if defined(OS_MACOSX)
+    // On Mac, we cannot customize keybindings for IME ON/OFF
     // So we do not show them.
     // TODO(toshiyuki): remove them after implimenting IME ON/OFF for Mac
     invisible_commands_.insert(kIMEOnCommand);
     invisible_commands_.insert(kIMEOffCommand);
-#endif  // OS_MACOSX || OS_LINUX
+#endif  // OS_MACOSX
 
     invisible_modifiers_.insert(mozc::commands::KeyEvent::KEY_DOWN);
     invisible_modifiers_.insert(mozc::commands::KeyEvent::KEY_UP);

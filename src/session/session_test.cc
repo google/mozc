@@ -1,4 +1,4 @@
-// Copyright 2010-2011, Google Inc.
+// Copyright 2010-2012, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -2137,48 +2137,6 @@ TEST_F(SessionTest, OutputAllCandidateWords) {
   }
 }
 
-TEST_F(SessionTest, UndoForComposition) {
-  scoped_ptr<Session> session(new Session);
-  InitSessionToPrecomposition(session.get());
-
-  // Undo requires capability DELETE_PRECEDING_TEXT.
-  commands::Capability capability;
-  capability.set_text_deletion(commands::Capability::DELETE_PRECEDING_TEXT);
-  session->set_client_capability(capability);
-
-  commands::Command command;
-  Segments segments;
-
-  {  // Undo for CommitFirstSuggestion
-    SetAiueo(&segments);
-    convertermock_->SetStartSuggestionWithComposer(&segments, true);
-    InsertCharacterChars("ai", session.get(), &command);
-    SetComposer(session.get(), &segments);
-    // "あい"
-    EXPECT_EQ("\xE3\x81\x82\xE3\x81\x84", GetComposition(command));
-
-    command.Clear();
-    session->CommitFirstSuggestion(&command);
-    EXPECT_TRUE(command.output().has_result());
-    EXPECT_FALSE(command.output().has_preedit());
-    // "あいうえお"
-    EXPECT_EQ("\xE3\x81\x82\xE3\x81\x84\xE3\x81\x86\xE3\x81\x88\xE3\x81\x8A",
-              command.output().result().value());
-    EXPECT_EQ(ImeContext::PRECOMPOSITION, session->context().state());
-
-    command.Clear();
-    session->Undo(&command);
-    EXPECT_FALSE(command.output().has_result());
-    EXPECT_TRUE(command.output().has_deletion_range());
-    EXPECT_EQ(-5, command.output().deletion_range().offset());
-    EXPECT_EQ(5, command.output().deletion_range().length());
-    EXPECT_TRUE(command.output().has_preedit());
-    // "あい"
-    EXPECT_EQ("\xE3\x81\x82\xE3\x81\x84", GetComposition(command));
-    EXPECT_EQ(2, command.output().candidates().size());
-    EXPECT_EQ(ImeContext::COMPOSITION, session->context().state());
-  }
-}
 
 TEST_F(SessionTest, RequestUndo) {
   scoped_ptr<Session> session(new Session);
@@ -5283,6 +5241,36 @@ TEST_F(SessionTest, Issue3428520) {
 
   // After check the status of revert_conversion_called.
   EXPECT_TRUE(convertermock->revert_conversion_called());
+}
+
+// Revert command must clear the undo context.
+TEST_F(SessionTest, Issue5742293) {
+  scoped_ptr<Session> session(new Session);
+  InitSessionToPrecomposition(session.get());
+
+  // Undo requires capability DELETE_PRECEDING_TEXT.
+  commands::Capability capability;
+  capability.set_text_deletion(commands::Capability::DELETE_PRECEDING_TEXT);
+  session->set_client_capability(capability);
+
+  config::Config config;
+  config.set_session_keymap(config::Config::MSIME);
+  SetConfig(config);
+
+  SetUndoContext(session.get());
+
+  commands::Command command;
+
+  // BackSpace key event issues Revert command, which should clear the undo
+  // context.
+  command.Clear();
+  EXPECT_TRUE(SendKey("Backspace", session.get(), &command));
+
+  // Ctrl+BS should be consumed as UNDO.
+  command.Clear();
+  EXPECT_TRUE(TestSendKey("Ctrl Backspace", session.get(), &command));
+
+  EXPECT_FALSE(command.output().consumed());
 }
 
 TEST_F(SessionTest, AutoConversion) {

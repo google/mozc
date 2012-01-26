@@ -1,4 +1,4 @@
-# Copyright 2010-2011, Google Inc.
+# Copyright 2010-2012, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@ vars = {
   "breakpad_revision": "892",
   "cygwin_in_chromium_revision": "66844",
   "gtest_revision": "484",
-  "gyp_revision": "1034",
+  "gyp_revision": "1167",
   "jsoncpp_revision": "230",
   "memory_watcher_in_chromium_revision": "81926",
   "protobuf_revision": "375",

@@ -1,4 +1,4 @@
-// Copyright 2010-2011, Google Inc.
+// Copyright 2010-2012, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,12 +31,17 @@
 
 #include <string>
 #include "base/base.h"
+#include "base/clock_mock.h"
 #include "base/file_stream.h"
 #include "base/freelist.h"
+#include "base/singleton.h"
 #include "base/util.h"
 #include "dictionary/user_dictionary_storage.h"
+#include "sync/sync_status_manager.h"
 #include "sync/sync_util.h"
 #include "testing/base/public/gunit.h"
+
+DECLARE_string(test_tmpdir);
 
 namespace mozc {
 namespace sync {
@@ -188,6 +193,58 @@ void AddRandomUpdates(UserDictionaryStorage *storage) {
   CHECK_GT(storage->dictionaries_size(), 0);
 }
 }  // namespace
+
+TEST(UserDictionarySyncUtilTest, NumEntryExceedsTest) {
+  const int kMaxNumEntry = UserDictionaryStorage::max_sync_entry_size();
+  const uint64 kSecond = 123;
+  const uint32 kMicroSecond = 456789;
+  scoped_ptr<Util::ClockInterface>
+      mock_clock(new ClockMock(kSecond, kMicroSecond));
+  Util::SetClockHandler(mock_clock.get());
+  SyncStatusManagerInterface *manager = Singleton<SyncStatusManager>::get();
+
+  // Set up test environment.
+  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+
+  // Actual test.
+  UserDictionaryStorage storage(Util::JoinPath(FLAGS_test_tmpdir, "test.db"));
+  EXPECT_TRUE(storage.EnsureSyncDictionaryExists());
+  UserDictionarySyncUtil::UserDictionary *dic = storage.mutable_dictionaries(0);
+  EXPECT_TRUE(dic->syncable());
+  EXPECT_EQ(0, dic->entries_size());
+  for (int i = 0; i < kMaxNumEntry; ++i) {
+    UserDictionarySyncUtil::UserDictionaryEntry *entry = dic->add_entries();
+    entry->set_key("key" + Util::SimpleItoa(i));
+    entry->set_value("value" + Util::SimpleItoa(i));
+  }
+
+  commands::CloudSyncStatus status;
+  manager->GetLastSyncStatus(&status);
+  EXPECT_EQ(0, status.sync_errors_size());
+  EXPECT_TRUE(UserDictionarySyncUtil::LockAndSaveStorage(&storage));
+
+  // Check error log
+  manager->GetLastSyncStatus(&status);
+  EXPECT_EQ(0, status.sync_errors_size());
+
+  // Newly add a few etnries, to exceed maximum number of entry.
+  for (int i = 0; i < 10; ++i) {
+    UserDictionarySyncUtil::UserDictionaryEntry *entry = dic->add_entries();
+    entry->set_key("key" + Util::SimpleItoa(i + kMaxNumEntry));
+    entry->set_value("value" + Util::SimpleItoa(i + kMaxNumEntry));
+  }
+  EXPECT_FALSE(UserDictionarySyncUtil::LockAndSaveStorage(&storage));
+
+  // Check error log
+  manager->GetLastSyncStatus(&status);
+  EXPECT_EQ(1, status.sync_errors_size());
+  EXPECT_EQ(commands::CloudSyncStatus::USER_DICTIONARY_NUM_ENTRY_EXCEEDED,
+            status.sync_errors(0).error_code());
+  EXPECT_EQ(kSecond, status.sync_errors(0).timestamp());
+
+  // Unset clock handler
+  Util::SetClockHandler(NULL);
+}
 
 TEST(UserDictionarySyncUtilTest, CreateAndMergeTest) {
   UserDictionaryStorage storage_orig("");

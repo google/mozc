@@ -1,3 +1,11 @@
+mozc (1.3.975.102) lucid; urgency=low
+
+  * Ver. 1.3.975.102 on 2012-01-24
+  * Fixed IME On/Off state change related issue.(Issue 113, Issue 114)
+  * Support Japanese misc keys on GUI keybinding editor dialog.
+
+ -- Seigo Nonaka <nona>  Tue, 24 Jan 2012 20:34:28 +0900
+
 mozc (1.3.931.102) lucid; urgency=low
 
   * Ver. 1.3.931.102 on 2011-12-21

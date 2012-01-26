@@ -1,4 +1,4 @@
-// Copyright 2010-2011, Google Inc.
+// Copyright 2010-2012, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -305,7 +305,8 @@ MozcEngine::MozcEngine()
       prop_root_(NULL),
       prop_composition_mode_(NULL),
       prop_mozc_tool_(NULL),
-      current_composition_mode_(kMozcEngineInitialCompositionMode),
+      original_composition_mode_(kMozcEngineInitialCompositionMode),
+      is_activated_(true),
       preedit_method_(config::Config::ROMAN),
       ignore_reset_for_deletion_range_workaround_(false) {
   // |sub_prop_list| is a radio menu which is shown when a button in the
@@ -560,14 +561,13 @@ gboolean MozcEngine::ProcessKeyEvent(
   }
 
   VLOG(2) << key.DebugString();
-  if ((current_composition_mode_ == commands::DIRECT) &&
+  if (!is_activated_ && !config::ImeSwitchUtil::IsTurnOnInDirectMode(key)) {
       // We DO consume keys that enable Mozc such as Henkan even when in the
       // DIRECT mode.
-      !config::ImeSwitchUtil::IsTurnOnInDirectMode(key)) {
     return FALSE;
   }
 
-  key.set_mode(current_composition_mode_);
+  key.set_mode(original_composition_mode_);
 
   commands::Output output;
   if (!client_->SendKey(key, &output)) {
@@ -587,18 +587,28 @@ void MozcEngine::SetCompositionMode(
     IBusEngine *engine, commands::CompositionMode composition_mode) {
   commands::SessionCommand command;
   commands::Output output;
-  if (composition_mode == commands::DIRECT) {
-    // Commit a preedit string.
-    command.set_type(commands::SessionCommand::SUBMIT);
-    client_->SendCommand(command, &output);
+
+  // In the case of Mozc, there are two state values of IME, IMEOn/IMEOff and
+  // composition_mode. However in IBus we can only control composition mode, not
+  // IMEOn/IMEOff. So we use one composition state as IMEOff and the others as
+  // IMEOn. This setting can be configured with setting
+  // kMozcEnginePropertyIMEOffState. If kMozcEnginePropertyIMEOffState is NULL,
+  // it means current IME should not be off.
+  if (kMozcEnginePropertyIMEOffState
+      && is_activated_
+      && composition_mode == kMozcEnginePropertyIMEOffState->composition_mode) {
+    commands::KeyEvent key;
+    key.set_special_key(mozc::commands::KeyEvent::OFF);
+    client_->SendKey(key, &output);
   } else {
     command.set_type(commands::SessionCommand::SWITCH_INPUT_MODE);
     command.set_composition_mode(composition_mode);
     client_->SendCommand(command, &output);
-    // To esacpe infinity loop, remove mode entry.
-    output.clear_mode();
   }
-  current_composition_mode_ = composition_mode;
+  DCHECK(output.has_status());
+  original_composition_mode_ = output.status().mode();
+  is_activated_ = output.status().activated();
+
   UpdateAll(engine, output);
 }
 
@@ -635,22 +645,11 @@ void MozcEngine::PropertyActivate(IBusEngine *engine,
       const MozcEngineProperty *entry =
           reinterpret_cast<const MozcEngineProperty*>(
               g_object_get_data(G_OBJECT(prop), kGObjectDataKey));
-      DCHECK(entry);
-      if (entry) {
-        // Update Mozc state.
-        SetCompositionMode(engine, entry->composition_mode);
-        // Update the language panel.
-        ibus_property_set_icon(prop_composition_mode_,
-                               GetIconPath(entry->icon).c_str());
-      }
-      // Update the radio menu item.
-      ibus_property_set_state(prop, PROP_STATE_CHECKED);
-    } else {
-      ibus_property_set_state(prop, PROP_STATE_UNCHECKED);
+      SetCompositionMode(engine, entry->composition_mode);
+      UpdateCompositionModeIcon(engine, entry->composition_mode);
+      break;
     }
-    // No need to call unref since ibus_prop_list_get does not add ref.
   }
-  ibus_engine_update_property(engine, prop_composition_mode_);
 }
 
 void MozcEngine::PropertyHide(IBusEngine *engine,
@@ -845,8 +844,19 @@ bool MozcEngine::UpdateAll(IBusEngine *engine, const commands::Output &output) {
   UpdateResult(engine, output);
   UpdatePreedit(engine, output);
   UpdateCandidates(engine, output);
-  if (output.has_mode()) {
-    UpdateCompositionMode(engine, output.mode());
+
+  if (output.has_status() &&
+      (output.status().activated() != is_activated_ ||
+       output.status().mode() != original_composition_mode_)) {
+    if (output.status().activated()) {
+      UpdateCompositionModeIcon(engine, output.status().mode());
+    } else {
+      DCHECK(kMozcEnginePropertyIMEOffState);
+      UpdateCompositionModeIcon(
+          engine, kMozcEnginePropertyIMEOffState->composition_mode);
+    }
+    is_activated_ = output.status().activated();
+    original_composition_mode_ = output.status().mode();
   }
   LaunchTool(output);
   ExecuteCallback(engine, output);
@@ -1072,17 +1082,33 @@ void MozcEngine::UpdateConfig(const gchar *section,
 }
 #endif  // OS_CHROMEOS
 
-void MozcEngine::UpdateCompositionMode(
+void MozcEngine::UpdateCompositionModeIcon(
     IBusEngine *engine, const commands::CompositionMode new_composition_mode) {
-  if (current_composition_mode_ == new_composition_mode) {
-    return;
-  }
+
+  const MozcEngineProperty *entry = NULL;
   for (size_t i = 0; i < kMozcEnginePropertiesSize; ++i) {
-    const MozcEngineProperty &entry = kMozcEngineProperties[i];
-    if (entry.composition_mode == new_composition_mode) {
-      PropertyActivate(engine, entry.key, PROP_STATE_CHECKED);
+    if (kMozcEngineProperties[i].composition_mode == new_composition_mode) {
+      entry = &(kMozcEngineProperties[i]);
+      break;
     }
   }
+  DCHECK(entry);
+
+  size_t i = 0;
+  IBusProperty *prop = NULL;
+  while ((prop = ibus_prop_list_get(prop_composition_mode_->sub_props, i++))) {
+    if (!g_strcmp0(entry->key, prop->key)) {
+      // Update the language panel.
+      ibus_property_set_icon(prop_composition_mode_,
+                             GetIconPath(entry->icon).c_str());
+      // Update the radio menu item.
+      ibus_property_set_state(prop, PROP_STATE_CHECKED);
+    } else {
+      ibus_property_set_state(prop, PROP_STATE_UNCHECKED);
+    }
+    // No need to call unref since ibus_prop_list_get does not add ref.
+  }
+  ibus_engine_update_property(engine, prop_composition_mode_);
 }
 
 void MozcEngine::UpdatePreeditMethod() {
@@ -1120,9 +1146,6 @@ bool MozcEngine::LaunchTool(const commands::Output &output) const {
 }
 
 void MozcEngine::RevertSession(IBusEngine *engine) {
-  const commands::CompositionMode original_composition_mode =
-      current_composition_mode_;
-
   commands::SessionCommand command;
   command.set_type(commands::SessionCommand::REVERT);
   commands::Output output;
@@ -1130,12 +1153,7 @@ void MozcEngine::RevertSession(IBusEngine *engine) {
     LOG(ERROR) << "RevertSession() failed";
     return;
   }
-  UpdateAll(engine, output);  // may update |current_composition_mode_|.
-
-  // If the original composition mode is DIRECT, we should resume the setting.
-  if (original_composition_mode == commands::DIRECT) {
-    UpdateCompositionMode(engine, original_composition_mode);
-  }
+  UpdateAll(engine, output);
 }
 
 bool MozcEngine::ExecuteCallback(IBusEngine *engine,

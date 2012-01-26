@@ -1,4 +1,4 @@
-// Copyright 2010-2011, Google Inc.
+// Copyright 2010-2012, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -1118,7 +1118,7 @@ bool Session::Abort(commands::Command *command) {
 bool Session::Revert(commands::Command *command) {
   if (context_->state() == ImeContext::PRECOMPOSITION) {
     context_->mutable_converter()->Revert();
-    return EchoBack(command);
+    return EchoBackAndClearUndoContext(command);
   }
 
   if (!(context_->state() & (ImeContext::COMPOSITION |

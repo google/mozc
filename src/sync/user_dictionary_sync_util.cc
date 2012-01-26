@@ -1,4 +1,4 @@
-// Copyright 2010-2011, Google Inc.
+// Copyright 2010-2012, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,7 +36,9 @@
 #include "base/base.h"
 #include "base/mmap.h"
 #include "base/mutex.h"
+#include "base/singleton.h"
 #include "dictionary/user_dictionary_storage.h"
+#include "sync/sync_status_manager.h"
 #include "sync/sync_util.h"
 
 namespace mozc {
@@ -403,6 +405,21 @@ bool UserDictionarySyncUtil::MergeUpdates(
 bool UserDictionarySyncUtil::LockAndSaveStorage(
     UserDictionaryStorage *storage) {
   DCHECK(storage);
+
+  // Check dictionary storage condition.
+  for (int i = 0; i < storage->dictionaries_size(); ++i) {
+    const UserDictionary &dict = storage->dictionaries(i);
+    if (dict.syncable() &&
+        dict.entries_size() > UserDictionaryStorage::max_sync_entry_size()) {
+      // This singleton is also used in sync_handler.cc.
+      Singleton<SyncStatusManager>::get()->AddSyncError(
+          commands::CloudSyncStatus::USER_DICTIONARY_NUM_ENTRY_EXCEEDED);
+      LOG(ERROR) << "a sync dictionary has " << dict.entries_size()
+                 << " entries which exceeds the limit.";
+      return false;
+    }
+  }
+
   if (!storage->Lock()) {
     LOG(ERROR) << "cannot lock the storage: " << storage->filename();
     return false;
@@ -416,5 +433,5 @@ bool UserDictionarySyncUtil::LockAndSaveStorage(
   return true;
 }
 
-}  // sync
-}  // mozc
+}  // namespace sync
+}  // namespace mozc

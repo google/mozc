@@ -1,4 +1,4 @@
-// Copyright 2010-2011, Google Inc.
+// Copyright 2010-2012, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -322,13 +322,13 @@ void WindowManager::UpdateLayout(
             working_area);
   }
 
-  DWORD set_windows_pos_flags = SWP_NOACTIVATE | SWP_SHOWWINDOW;
+  const DWORD kSetWindowsPosFlags = SWP_NOACTIVATE | SWP_SHOWWINDOW;
   main_window_->SetWindowPos(HWND_TOPMOST,
                              main_window_rect.Left(),
                              main_window_rect.Top(),
                              main_window_rect.Width(),
                              main_window_rect.Height(),
-                             set_windows_pos_flags);
+                             kSetWindowsPosFlags);
   // This trick ensures that the window is certainly shown as 'inactivated'
   // in terms of visual effect on DWM-enabled desktop.
   main_window_->SendMessageW(WM_NCACTIVATE, FALSE);
@@ -359,13 +359,12 @@ void WindowManager::UpdateLayout(
         WindowUtil::GetWindowRectForInfolistWindow(
             infolist_window_->GetLayoutSize(),
             main_window_rect, working_area);
-    infolist_window_->MoveWindow(infolist_rect.Left(),
-                                 infolist_rect.Top(),
-                                 infolist_rect.Width(),
-                                 infolist_rect.Height(),
-                                 TRUE);
-    infolist_window_->SetWindowPos(HWND_TOPMOST, 0, 0, 0, 0,
-        SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+    infolist_window_->SetWindowPos(HWND_TOPMOST,
+                                   infolist_rect.Left(),
+                                   infolist_rect.Top(),
+                                   infolist_rect.Width(),
+                                   infolist_rect.Height(),
+                                   kSetWindowsPosFlags);
     if (candidates.has_focused_index() && candidates.candidate_size() > 0) {
       const int focused_row =
         candidates.focused_index() - candidates.candidate(0).index();
@@ -418,7 +417,7 @@ void WindowManager::UpdateLayout(
                                     cascading_window_rect.Top(),
                                     cascading_window_rect.Width(),
                                     cascading_window_rect.Height(),
-                                    set_windows_pos_flags);
+                                    kSetWindowsPosFlags);
     // This trick ensures that the window is certainly shown as 'inactivated'
     // in terms of visual effect on DWM-enabled desktop.
     cascading_window_->SendMessageW(WM_NCACTIVATE, FALSE);

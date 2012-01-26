@@ -1,4 +1,4 @@
-// Copyright 2010-2011, Google Inc.
+// Copyright 2010-2012, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -393,6 +393,7 @@ void Session::UpdateCandidate(CandidateOperation candidate_operation,
 
   candidates->set_focused_index(hanja_index_);
   candidates->set_direction(commands::Candidates::HORIZONTAL);
+  candidates->set_position(0);
 }
 
 // TODO(nona): make backspace key customizable.
@@ -820,6 +821,9 @@ bool Session::SendCommand(commands::Command *command) {
           break;
       }
       hanja_lock_preedit_.clear();
+      // status is never used in hangul, followin value is dummy.
+      command->mutable_output()->mutable_status()->set_mode(commands::HIRAGANA);
+      command->mutable_output()->mutable_status()->set_activated(true);
       break;
     default:
       // do nothing.

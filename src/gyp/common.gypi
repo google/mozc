@@ -1,4 +1,4 @@
-# Copyright 2010-2011, Google Inc.
+# Copyright 2010-2012, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -138,6 +138,9 @@
     # project file called "coverage".
     'coverage%': 0,
 
+    # enable_cloud_sync represents if cloud sync feature is enabled or not.
+    'enable_cloud_sync%': 0,
+
     # The pkg-config command to get the cflags/ldflags for Linux
     # builds.  We make it customizable to allow building in a special
     # environment such like cross-platform build.
@@ -197,6 +200,9 @@
               '<@(linux_ldflags)',
             ],
           }],
+          ['enable_cloud_sync==1', {
+            'defines': ['CLOUD_SYNC'],
+          }],
         ],
       },
       'x86_Base': {
@@ -231,7 +237,24 @@
             'Optimization': '<(win_optimization_debug)',
             'PreprocessorDefinitions': ['_DEBUG'],
             'BasicRuntimeChecks': '3',
-            'RuntimeLibrary': '<(win_debug_static_crt)',
+            'conditions': [
+              ['use_dynamically_linked_qt=="YES"', {
+                # As a quick workaround, use dynamically-linked version of CRT
+                # if 'use_dynamically_linked_qt' is specified.
+                # As for GoogleJapaneseInput branding build, this is not enough
+                # because we cannot completely depend on dynamic CRT as
+                # described in b/2506385. We should use static CRT for the
+                # following binaries.
+                # - GoogleIMEJaCacheService.exe
+                # - GoogleIMEJaInstallerHelper32.dll
+                # - GoogleIMEJaInstallerHelper64.dll
+                # - any artifacts build in 'build_mozc.py build_tools'
+                # TODO(yukawa): Support GoogleJapaneseInput branding build.
+                'RuntimeLibrary': '<(win_debug_dynamic_crt)',
+              }, {  # else
+                'RuntimeLibrary': '<(win_debug_static_crt)',
+              }],
+            ],
           },
           'VCResourceCompilerTool': {
             'PreprocessorDefinitions': ['_DEBUG'],
@@ -273,7 +296,24 @@
             # are built with /O2.  We use the same optimization option between
             # Mozc and Qt just in case warning C4748 is true.
             'Optimization': '<(win_optimization_release)',
-            'RuntimeLibrary': '<(win_release_static_crt)',
+            'conditions': [
+              ['use_dynamically_linked_qt=="YES"', {
+                # As a quick workaround, use dynamically-linked version of CRT
+                # if 'use_dynamically_linked_qt' is specified.
+                # As for GoogleJapaneseInput branding build, this is not enough
+                # because we cannot completely depend on dynamic CRT as
+                # described in b/2506385. We should use static CRT for the
+                # following binaries.
+                # - GoogleIMEJaCacheService.exe
+                # - GoogleIMEJaInstallerHelper32.dll
+                # - GoogleIMEJaInstallerHelper64.dll
+                # - any artifacts build in 'build_mozc.py build_tools'
+                # TODO(yukawa): Support GoogleJapaneseInput branding build.
+                'RuntimeLibrary': '<(win_release_dynamic_crt)',
+              }, {  # else
+                'RuntimeLibrary': '<(win_release_static_crt)',
+              }],
+            ],
           },
         },
         'conditions': [

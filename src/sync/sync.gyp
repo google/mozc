@@ -1,4 +1,4 @@
-# Copyright 2010-2011, Google Inc.
+# Copyright 2010-2012, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -44,9 +44,10 @@
         'inprocess_service.cc',
         'learning_preference_adapter.cc',
         'learning_preference_sync_util.cc',
-        'sync_handler.cc',
-        'sync_util.cc',
         'mock_syncer.cc',
+        'sync_handler.cc',
+        'sync_status_manager.cc',
+        'sync_util.cc',
         'syncer.cc',
         'user_dictionary_adapter.cc',
         'user_dictionary_sync_util.cc',
@@ -158,6 +159,7 @@
          'oauth2_util_test.cc',
          'oauth2_token_util_test.cc',
          'sync_handler_test.cc',
+         'sync_status_manager_test.cc',
          'sync_util_test.cc',
          'syncer_test.cc',
          'user_dictionary_adapter_test.cc',

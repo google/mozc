@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Copyright 2010-2011, Google Inc.
+# Copyright 2010-2012, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -427,6 +427,17 @@ def ParseGypOptions(args=None, values=None):
                     help='Use dynamically linked version of Qt. '
                     'Currently this flag is used only on Windows builds.')
 
+  parser.add_option('--enable_cloud_sync', action='store_true',
+                    dest='enable_cloud_sync')
+  parser.add_option('--disable_cloud_sync', action='store_false',
+                    dest='enable_cloud_sync',
+                    help='Intentionally enable or disable cloud sync feature '
+                    'with the CLOUD_SYNC macro defined in code. '
+                    '--enable_cloud_sync enables it, and --disable_cloud_sync '
+                    'disables it. If both options are not set, enables the '
+                    'cloud sync feature according to the target environment '
+                    'and branding.')
+
   # TODO(yukawa): Remove this option when Zinnia can be built on Windows with
   #               enabling Unicode.
   use_zinnia_default = True
@@ -607,6 +618,17 @@ def GypMain(options, unused_args):
     options.channel_dev = version.IsDevChannel()
   if options.channel_dev:
     command_line.extend(['-D', 'channel_dev=1'])
+
+  # Check whether --enable_cloud_sync or --disable_cloud_sync are set. If
+  # neither of them are set, enables the cloud sync feature according to the
+  # target platform and branding.
+  if options.enable_cloud_sync is None:
+    if options.branding == 'GoogleJapaneseInput' and (IsWindows() or IsMac()):
+      options.enable_cloud_sync = True
+    else:
+      options.enable_cloud_sync = False
+  command_line.extend(['-D', 'enable_cloud_sync=%s' %
+                       (1 if options.enable_cloud_sync else 0)])
 
   command_line.extend(['-D', 'target_platform=%s' % options.target_platform])
 

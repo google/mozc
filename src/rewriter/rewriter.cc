@@ -1,4 +1,4 @@
-// Copyright 2010-2011, Google Inc.
+// Copyright 2010-2012, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -86,7 +86,7 @@ RewriterImpl::RewriterImpl() {
   }
   AddRewriter(new DateRewriter);
   AddRewriter(new FortuneRewriter);
-//  AddRewriter(new CommandRewriter);
+  // AddRewriter(new CommandRewriter);
   AddRewriter(new VersionRewriter);
 #if defined(OS_MACOSX) || defined(OS_WINDOWS) || defined(OS_CHROMEOS)
   // TODO(horo): Because infolist renderer window is implimented

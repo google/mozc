@@ -244,10 +244,6 @@
         <translation>確定取り消し</translation>
     </message>
     <message>
-        <source>SegmentFocusRightOrCommit</source>
-        <translation>文節を右に移動または確定</translation>
-    </message>
-    <message>
         <source>Reconvert</source>
         <translation>再変換</translation>
     </message>

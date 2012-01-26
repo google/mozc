@@ -1,4 +1,4 @@
-// Copyright 2010-2011, Google Inc.
+// Copyright 2010-2012, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -351,7 +351,7 @@ void Session::FillOutput(commands::Command *command) {
   }
   if (new_mode != commands::NUM_OF_COMPOSITIONS) {
     output->mutable_status()->set_mode(new_mode);
-    output->set_mode(new_mode);
+    output->mutable_status()->set_activated(true);
   }
 
   DLOG(INFO) << command->DebugString();

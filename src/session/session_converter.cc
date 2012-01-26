@@ -1,4 +1,4 @@
-// Copyright 2010-2011, Google Inc.
+// Copyright 2010-2012, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -640,7 +640,8 @@ bool SessionConverter::CommitSuggestionInternal(
 
   const size_t result_length = Util::CharsLen(result_.key());
   const size_t preedit_length = Util::CharsLen(preedit);
-  if (result_length < preedit_length) {
+  bool use_partial_suggestion = false;
+  if (use_partial_suggestion && (result_length < preedit_length)) {
     // A candidate was chosen from partial suggestion.
     converter_->CommitPartialSuggestionSegmentValue(
         segments_.get(),

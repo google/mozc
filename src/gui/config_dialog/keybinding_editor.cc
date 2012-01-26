@@ -1,4 +1,4 @@
-// Copyright 2010-2011, Google Inc.
+// Copyright 2010-2012, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,9 @@
 #include <windows.h>
 #include <imm.h>
 #include <ime.h>
+#elif OS_LINUX
+#define XK_MISCELLANY
+#include <X11/keysymdef.h>
 #endif
 
 #include <QtCore/QString>
@@ -117,6 +120,20 @@ const WinVirtualKeyEntry kWinVirtualKeyModifierNonRequiredTable[] = {
   { VK_DBE_SBCSCHAR, "Hankaku/Zenkaku" },        // Zenkaku/hankaku
   { VK_DBE_DBCSCHAR, "Hankaku/Zenkaku" },        // Zenkaku/hankaku
   // { VK_KANJI, "Kanji" },  // Do not support Kanji
+};
+#elif OS_LINUX
+struct LinuxVirtualKeyEntry {
+  uint16 virtual_key;
+  const char *mozc_key_name;
+};
+
+const LinuxVirtualKeyEntry kLinuxVirtualKeyModifierNonRequiredTable[] = {
+  { XK_Muhenkan, "Muhenkan" },
+  { XK_Henkan, "Henkan" },
+  { XK_Hiragana, "Hiragana" },
+  { XK_Katakana, "Katakana" },
+  { XK_Eisu_toggle, "Eisu" },
+  { XK_Zenkaku_Hankaku, "Hankaku/Zenkaku" },
 };
 #endif
 
@@ -367,6 +384,18 @@ KeyBindingFilter::KeyState KeyBindingFilter::AddKey(
         virtual_key) {
       modifier_non_required_key_ =
           kWinVirtualKeyModifierNonRequiredTable[i].mozc_key_name;
+      return Encode(result);
+    }
+  }
+#elif OS_LINUX
+  // Handle JP109's Muhenkan/Henkan/katakana-hiragana and Zenkaku/Hankaku
+  const uint16 virtual_key = key_event.nativeVirtualKey();
+  for (size_t i = 0; i < arraysize(kLinuxVirtualKeyModifierNonRequiredTable);
+       ++i) {
+    if (kLinuxVirtualKeyModifierNonRequiredTable[i].virtual_key ==
+        virtual_key) {
+      modifier_non_required_key_ =
+          kLinuxVirtualKeyModifierNonRequiredTable[i].mozc_key_name;
       return Encode(result);
     }
   }

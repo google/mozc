@@ -1,4 +1,4 @@
-// Copyright 2010-2011, Google Inc.
+// Copyright 2010-2012, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -566,6 +566,39 @@ message DeletionRange {
   optional int32 length = 2;
 };
 
+// TODO(peria): Move this message to a new protobuf file.
+message CloudSyncStatus {
+  enum SyncGlobalStatus {
+    SYNC_SUCCESS = 0;
+    SYNC_FAILURE = 1;
+    INSYNC = 2;
+    NOSYNC = 3;  // no synchronisation is working.
+  };
+  required SyncGlobalStatus global_status = 1;
+
+  // Error types in sync feature.
+  enum ErrorCode {
+    // In case AuthToken is not accepted in OAuth2 authorization.
+    AUTHORIZATION_FAIL = 0;
+    // Any sync dictionaries have more entries than pre-defiend limit.
+    USER_DICTIONARY_NUM_ENTRY_EXCEEDED = 1;
+    // Sizes of any sync dictionaries are larger than pre-defiend limit.
+    USER_DICTIONARY_BYTESIZE_EXCEEDED = 2;
+    // The number of sync dictionaries exceeds pre-defined limit.
+    USER_DICTIONARY_NUM_DICTIONARY_EXCEEDED = 3;
+  };
+  message SyncError {
+    required ErrorCode error_code = 1;
+    optional int64 timestamp = 2 [default = -1];
+  };
+  // Error logs in sync feature.
+  repeated SyncError sync_errors = 2;
+
+  // We have no items numbered 3-5 for a historical reason.
+
+  // Timestamp of the last successful sync.
+  optional uint64 last_synced_timestamp = 6 [default = 0];
+};
 
 message Output {
   optional uint64 id = 1;

@@ -1,4 +1,4 @@
-// Copyright 2010-2011, Google Inc.
+// Copyright 2010-2012, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -83,6 +83,8 @@ const MozcEngineProperty kMozcEngineProperties[] = {
   },
 };
 
+const MozcEngineProperty *kMozcEnginePropertyIMEOffState
+    = &kMozcEngineProperties[0];
 const size_t kMozcEnginePropertiesSize = arraysize(kMozcEngineProperties);
 COMPILE_ASSERT(commands::NUM_OF_COMPOSITIONS == kMozcEnginePropertiesSize,
                bad_number_of_props);

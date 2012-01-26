@@ -15,7 +15,7 @@
     </message>
     <message utf8="true">
         <location filename="about_dialog.ui" line="80"/>
-        <source>Copyright © 2011 Google Inc. All Rights Reserved.</source>
+        <source>Copyright © 2012 Google Inc. All Rights Reserved.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

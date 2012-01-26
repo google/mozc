@@ -1,4 +1,4 @@
-// Copyright 2010-2011, Google Inc.
+// Copyright 2010-2012, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,9 +38,9 @@
 #include "base/util.h"
 #include "config/config_handler.h"
 #include "ipc/named_event.h"
-#include "storage/registry.h"
 #include "sync/oauth2_client.h"
 #include "sync/oauth2_util.h"
+#include "sync/sync_status_manager.h"
 #include "sync/syncer_interface.h"
 #include "client/client_interface.h"
 
@@ -52,7 +52,6 @@ namespace {
 
 // TODO(taku) move it to base/const.h
 const char kEventName[] = "sync";
-const char kLastSyncedDataKey[] = "sync.last_synced_data";
 
 bool SyncFromScheduler(void *) {
   const config::Config &config = config::ConfigHandler::GetConfig();
@@ -122,34 +121,16 @@ void SendReloadCommand() {
   client->Reload();
 }
 
-void GetLastSyncedData(commands::CloudSyncStatus *cloud_sync_status) {
-  DCHECK(cloud_sync_status);
-  string value;
-  if (!mozc::storage::Registry::Lookup(kLastSyncedDataKey, &value)) {
-    LOG(WARNING) << "cannot read: " << kLastSyncedDataKey;
-    cloud_sync_status->Clear();
-    cloud_sync_status->set_global_status(commands::CloudSyncStatus::NOSYNC);
-    return;
-  }
-  cloud_sync_status->ParseFromArray(value.data(), value.size());
-}
-
-void SetLastSyncedData(const commands::CloudSyncStatus &cloud_sync_status) {
-  VLOG(1) << "setting last synced data";
-  if (!mozc::storage::Registry::Insert(
-          kLastSyncedDataKey, cloud_sync_status.SerializeAsString())) {
-    LOG(ERROR) << "cannot save: "<< kLastSyncedDataKey;
-  }
-  mozc::storage::Registry::Sync();
-}
-
 class SyncerThread: public Thread {
  public:
   SyncerThread()
       : oauth2_util_(OAuth2Client::GetDefaultClient()),
         last_sync_timestamp_(0) {
     SyncerFactory::SetOAuth2(&oauth2_util_);
-    GetLastSyncedData(&last_status_);
+
+    // Singleton of SyncStatusManager is also used in each sync_adapter and
+    // each sync_util.
+    sync_status_manager_ = Singleton<SyncStatusManager>::get();
   }
 
   virtual ~SyncerThread() {
@@ -173,10 +154,14 @@ class SyncerThread: public Thread {
     // existing token may be valid.
     oauth2_util_.RefreshAccessToken();
 
+    // Clear sync errors before stacking new errors in syncers' works.
+    sync_status_manager_->NewSyncStatusSession();
+
     switch (command_type_) {
       case SYNC:
         {
-          UpdateSyncStatusAtomically(commands::CloudSyncStatus::INSYNC);
+          sync_status_manager_->SetSyncGlobalStatus(
+              commands::CloudSyncStatus::INSYNC);
 
           bool reload_required = false;
           bool sync_succeed = true;
@@ -192,14 +177,12 @@ class SyncerThread: public Thread {
 
           {
             scoped_lock lock(&status_mutex_);
-            last_status_.set_global_status(
+            sync_status_manager_->SetSyncGlobalStatus(
                 sync_succeed ? commands::CloudSyncStatus::SYNC_SUCCESS :
                 commands::CloudSyncStatus::SYNC_FAILURE);
             if (sync_succeed) {
-              last_status_.set_last_synced_timestamp(current_timestamp);
+              sync_status_manager_->SetLastSyncedTimestamp(current_timestamp);
             }
-            DLOG(INFO) << last_status_.DebugString();
-            SetLastSyncedData(last_status_);
           }
           // Update last_sync_timestamp_
           last_sync_timestamp_ = current_timestamp;
@@ -211,7 +194,8 @@ class SyncerThread: public Thread {
           // Invokes the clear command later in case of failure.
           // AddJob just ignores if there's already the same job.
           Scheduler::AddJob(kClearSyncJobSetting);
-          UpdateSyncStatusAtomically(commands::CloudSyncStatus::SYNC_FAILURE);
+          sync_status_manager_->SetSyncGlobalStatus(
+              commands::CloudSyncStatus::SYNC_FAILURE);
 
           // Set the command type to SYNC to allow the next Clear() method.
           command_type_ = SYNC;
@@ -225,7 +209,8 @@ class SyncerThread: public Thread {
           commands::Input::AuthorizationInfo dummy_auth;
           SetAuthorization(dummy_auth);
         }
-        UpdateSyncStatusAtomically(commands::CloudSyncStatus::NOSYNC);
+        sync_status_manager_->SetSyncGlobalStatus(
+            commands::CloudSyncStatus::NOSYNC);
         Scheduler::RemoveJob(kClearSyncName);
         // Update last_sync_timestamp_
         last_sync_timestamp_ = current_timestamp;
@@ -234,6 +219,9 @@ class SyncerThread: public Thread {
         LOG(ERROR) << "Unknown command: " << command_type_;
         break;
     }
+
+    // Save the final sync status in registry
+    sync_status_manager_->SaveSyncStatus();
 
     // Emit a notification event to the caller of Sync|Clear method.
     NotifyEvent();
@@ -256,7 +244,8 @@ class SyncerThread: public Thread {
 
     if (!SyncerFactory::GetSyncer()->Start()) {
       LOG(ERROR) << "SyncerInterface::Start() failed";
-      UpdateSyncStatusAtomically(commands::CloudSyncStatus::SYNC_FAILURE);
+      sync_status_manager_->SetSyncGlobalStatus(
+          commands::CloudSyncStatus::SYNC_FAILURE);
       NotifyEvent();
       return false;
     }
@@ -303,16 +292,11 @@ class SyncerThread: public Thread {
 
   void GetCloudSyncStatus(commands::CloudSyncStatus *cloud_sync_status) {
     DCHECK(cloud_sync_status);
-    cloud_sync_status->Clear();
     if (IsRunning()) {
-      cloud_sync_status->set_global_status(commands::CloudSyncStatus::INSYNC);
-      return;
+      sync_status_manager_->SetSyncGlobalStatus(
+          commands::CloudSyncStatus::INSYNC);
     }
-
-    {
-      scoped_lock lock(&status_mutex_);
-      cloud_sync_status->CopyFrom(last_status_);
-    }
+    sync_status_manager_->GetLastSyncStatus(cloud_sync_status);
   }
 
   void SetAuthorization(
@@ -321,25 +305,21 @@ class SyncerThread: public Thread {
         !authorization_info.auth_code().empty()) {
       LOG(INFO) << authorization_info.DebugString();
       oauth2_util_.RequestAccessToken(authorization_info.auth_code());
-      UpdateSyncStatusAtomically(commands::CloudSyncStatus::INSYNC);
+      sync_status_manager_->SetSyncGlobalStatus(
+          commands::CloudSyncStatus::INSYNC);
     } else {
       oauth2_util_.Clear();
-      UpdateSyncStatusAtomically(commands::CloudSyncStatus::NOSYNC);
+      sync_status_manager_->SetSyncGlobalStatus(
+          commands::CloudSyncStatus::NOSYNC);
     }
   }
 
  private:
   CommandType command_type_;
-  commands::CloudSyncStatus last_status_;
   Mutex status_mutex_;
   OAuth2Util oauth2_util_;
   uint64 last_sync_timestamp_;
-
-  void UpdateSyncStatusAtomically(
-      commands::CloudSyncStatus::SyncGlobalStatus new_status) {
-    scoped_lock lock(&status_mutex_);
-    last_status_.set_global_status(new_status);
-  }
+  SyncStatusManagerInterface *sync_status_manager_;
 };
 }  // namespace
 
