@@ -1,0 +1,6 @@
+[Mozc/KeyboardLayout]
+Type=Enum
+Enum0=Japanese
+Enum1=America
+DefaultValue=Japanese
+Description=Keyboard layout while using Mozc
