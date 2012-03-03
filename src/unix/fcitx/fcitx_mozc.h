@@ -24,9 +24,12 @@
 #include <fcitx/instance.h>
 #include <fcitx/candidate.h>
 #include <fcitx-config/hotkey.h>
+#include <libintl.h>
 #include "base/base.h"  // for DISALLOW_COPY_AND_ASSIGN.
 #include "base/run_level.h"
 #include "session/commands.pb.h"
+
+#define _(x) dgettext("fcitx-mozc", (x))
 
 INPUT_RETURN_VALUE FcitxMozcGetCandidateWord(void* arg, FcitxCandidateWord* candWord);;
 
@@ -63,30 +66,41 @@ public:
                 MozcResponseParser *parser );
     virtual ~FcitxMozc();
 
-    virtual bool process_key_event ( FcitxKeySym sym, unsigned int state );
-    virtual void select_candidate ( FcitxCandidateWord* candWord );
-    virtual void resetim();
-    virtual void reset();
-    virtual void init();
-    virtual void focus_out();
+    bool process_key_event ( FcitxKeySym sym, unsigned int state );
+    void select_candidate ( FcitxCandidateWord* candWord );
+    void resetim();
+    void reset();
+    void init();
+    void focus_out();
 
     // Functions called by the MozcResponseParser class to update UI.
 
     // Displays a 'result' (aka 'commit string') on FCITX UI.
-    virtual void SetResultString ( const std::string &result_string );
+    void SetResultString ( const std::string &result_string );
     // Displays a 'preedit' string on FCITX UI. This function takes ownership
     // of preedit_info. If the parameter is NULL, hides the string currently
     // displayed.
-    virtual void SetPreeditInfo ( const PreeditInfo *preedit_info );
+    void SetPreeditInfo ( const PreeditInfo *preedit_info );
     // Displays an auxiliary message (e.g., an error message, a title of
     // candidate window). If the string is empty (""), hides the message
     // currently being displayed.
-    virtual void SetAuxString ( const std::string &str );
+    void SetAuxString ( const std::string &str );
     // Sets a current composition mode (e.g., Hankaku Katakana).
-    virtual void SetCompositionMode ( mozc::commands::CompositionMode mode );
+    void SetCompositionMode ( mozc::commands::CompositionMode mode );
+    
+    void SendCompositionMode ( mozc::commands::CompositionMode mode );
 
     // Sets the url to be opened by the default browser.
-    virtual void SetUrl ( const string &url );
+    void SetUrl ( const string &url );
+
+    const std::string& GetIconFile(const std::string key);
+    
+    const std::string& GetCurrentCompositionModeIcon();
+    
+    mozc::commands::CompositionMode GetCompositionMode() { return composition_mode_; }
+    
+    FcitxInstance* GetInstance() { return instance; }
+    
     FcitxInputState* GetInputState();
 
 private:
@@ -94,6 +108,8 @@ private:
 
     // Adds Mozc-specific icons to FCITX toolbar.
     void InitializeBar();
+    
+    void InitializeMenu();
 
     // Parses the response from mozc_server. Returns whether the server consumes
     // the input or not (true means 'consumed').
@@ -117,6 +133,11 @@ private:
     std::string aux_;  // error tooltip, or candidate window title.
     string url_;  // URL to be opened by a browser.
     mozc::commands::CompositionMode composition_mode_;
+    
+    std::map<std::string, std::string> iconMap;
+    
+    FcitxUIMenu compositionMenu;
+    FcitxUIMenu toolMenu;
 
     DISALLOW_COPY_AND_ASSIGN ( FcitxMozc );
 };

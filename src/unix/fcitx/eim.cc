@@ -25,6 +25,7 @@
 #include "fcitx_mozc.h"
 #include "mozc_connection.h"
 #include "mozc_response_parser.h"
+#include <fcitx-config/xdg.h>
 
 typedef struct _FcitxMozcState {
     mozc::japanese::LangDepSpecJapanese* language_dependency_spec_japanese;
@@ -75,9 +76,9 @@ static void* FcitxMozcCreate(FcitxInstance* instance)
     
     FcitxInstanceRegisterIM(instance,
         mozcState,
-        "fcitx-mozc",
-        "Mozc",
         "mozc",
+        "Mozc",
+        mozcState->mozc->GetIconFile("mozc.png").c_str(),
         FcitxMozcInit,
         FcitxMozcResetIM,
         FcitxMozcDoInput,
@@ -87,7 +88,7 @@ static void* FcitxMozcCreate(FcitxInstance* instance)
         FcitxMozcReloadConfig,
         NULL,
         5,
-        "ja_JP"
+        "ja"
     );
     
     return mozcState;

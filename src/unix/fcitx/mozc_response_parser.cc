@@ -137,8 +137,49 @@ void MozcResponseParser::ParseResult(const mozc::commands::Result &result,
 
 void MozcResponseParser::ParseCandidates(
     const mozc::commands::Candidates &candidates, FcitxMozc *fcitx_mozc) const {
-    FcitxCandidateWordReset(FcitxInputStateGetCandidateList(fcitx_mozc->GetInputState()));
+    const commands::Footer &footer = candidates.footer();
+    if (candidates.has_footer()) {
+        string auxString;
+        if (footer.has_label()) {
+            // TODO(yusukes,mozc-team): label() is not localized. Currently, it's always
+            // written in Japanese (in UTF-8).
+            auxString += footer.label();
+        } else if (footer.has_sub_label()) {
+            // Windows client shows sub_label() only when label() is not specified. We
+            // follow the policy.
+            auxString += footer.sub_label();
+        }
+        
+        if (footer.has_index_visible() && footer.index_visible()) {
+            // Max size of candidates is 200 so 128 is sufficient size for the buffer.
+            char index_buf[128] = {0};
+            const int result = snprintf(index_buf,
+                                        sizeof(index_buf) - 1,
+                                        "%s%d/%d",
+                                        (auxString.empty() ? "" : " "),
+                                        candidates.focused_index() + 1,
+                                        candidates.size());
+            DCHECK_GE(result, 0) << "snprintf in ComposeAuxiliaryText failed";
+            auxString += index_buf;
+        }
+        fcitx_mozc->SetAuxString(auxString);
+    }
+    
+    FcitxCandidateWordList* candList = FcitxInputStateGetCandidateList(fcitx_mozc->GetInputState());
+    FcitxCandidateWordReset(candList);
+    FcitxCandidateWordSetPageSize(candList, 9);
+    char strChoose[] = "\0\0\0\0\0\0\0\0\0\0\0";
+
+    int focused_index = -1;
+    int local_index = -1;
+    if (candidates.has_focused_index()) {
+        focused_index = candidates.focused_index();
+    }
     for (int i = 0; i < candidates.candidate_size(); ++i) {
+        const uint32 index = candidates.candidate(i).index();
+        if (focused_index != -1 && index == focused_index) {
+            local_index = i;
+        }
         int32* id = (int32*) fcitx_utils_malloc0(sizeof(int32));
         FcitxCandidateWord candWord;
         candWord.callback = FcitxMozcGetCandidateWord;
@@ -180,8 +221,14 @@ void MozcResponseParser::ParseCandidates(
             // node does not contain a candidate word.
             *id = kBadCandidateId;
         }
-        FcitxCandidateWordAppend(FcitxInputStateGetCandidateList(fcitx_mozc->GetInputState()), &candWord);
+        FcitxCandidateWordAppend(candList, &candWord);
     }
+    
+    if (footer.has_index_visible() && footer.index_visible())
+        FcitxCandidateWordSetChoose(candList, DIGIT_STR_CHOOSE);
+    else 
+        FcitxCandidateWordSetChoose(candList, strChoose);
+    FcitxCandidateWordSetFocus(candList, local_index);
 }
 
 static int GetRawCursorPos(const char * str, int upos)

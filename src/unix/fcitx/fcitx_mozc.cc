@@ -21,6 +21,7 @@
 
 #include <string>
 #include <fcitx/candidate.h>
+#include <fcitx-config/xdg.h>
 
 #include "base/const.h"
 #include "base/logging.h"
@@ -32,6 +33,8 @@
 
 namespace
 {
+    
+static const std::string empty_string;
 
 const struct CompositionMode
 {
@@ -42,32 +45,32 @@ const struct CompositionMode
 } kPropCompositionModes[] =
 {
     {
-        "mozc-direct",
+        "mozc-direct.png",
         "A",
         "Direct",
         mozc::commands::DIRECT,
     }, {
-        "mozc-hiragana",
+        "mozc-hiragana.png",
         "\xe3\x81\x82",  // Hiragana letter A in UTF-8.
         "Hiragana",
         mozc::commands::HIRAGANA,
     }, {
-        "mozc-katakana_full",
+        "mozc-katakana_full.png",
         "\xe3\x82\xa2",  // Katakana letter A.
         "Full Katakana",
         mozc::commands::FULL_KATAKANA,
     }, {
-        "mozc-alpha_half",
+        "mozc-alpha_half.png",
         "_A",
         "Half ASCII",
         mozc::commands::HALF_ASCII,
     }, {
-        "mozc-alpha_full",
+        "mozc-alpha_full.png",
         "\xef\xbc\xa1",  // Full width ASCII letter A.
         "Full ASCII",
         mozc::commands::FULL_ASCII,
     }, {
-        "mozc-katakana_half",
+        "mozc-katakana_half.png",
         "_\xef\xbd\xb1",  // Half width Katakana letter A.
         "Half Katakana",
         mozc::commands::HALF_KATAKANA,
@@ -113,6 +116,8 @@ FcitxMozc::FcitxMozc ( FcitxInstance* inst,
     = false;
     parser_->set_use_annotation ( is_vertical );
     InitializeBar();
+    InitializeMenu();
+    SetCompositionMode( mozc::commands::HIRAGANA );
 }
 
 FcitxMozc::~FcitxMozc()
@@ -189,16 +194,12 @@ void FcitxMozc::resetim()
 void FcitxMozc::reset()
 {
     FcitxIM* im = FcitxInstanceGetCurrentIM(instance);
-    if (!im || strcmp(im->uniqueName, "fcitx-mozc") != 0) {
+    if (!im || strcmp(im->uniqueName, "mozc") != 0) {
         FcitxUISetStatusVisable(instance, "mozc-tool", false);
-        FcitxUISetStatusVisable(instance, "mozc-dictionary-tool", false);
-        FcitxUISetStatusVisable(instance, "mozc-property", false);
         FcitxUISetStatusVisable(instance, "mozc-composition-mode", false);
     }
     else {
         FcitxUISetStatusVisable(instance, "mozc-tool", true);
-        FcitxUISetStatusVisable(instance, "mozc-dictionary-tool", true);
-        FcitxUISetStatusVisable(instance, "mozc-property", true);
         FcitxUISetStatusVisable(instance, "mozc-composition-mode", true);
     }
 }
@@ -259,11 +260,26 @@ void FcitxMozc::SetAuxString ( const std::string &str )
 void FcitxMozc::SetCompositionMode ( mozc::commands::CompositionMode mode )
 {
     composition_mode_ = mode;
-    // Update the bar.
-//    const char *icon = GetCurrentCompositionModeIcon();
-    
-    // TODO:
+    DCHECK(composition_mode_ < kNumCompositionModes);
+    if (composition_mode_ < kNumCompositionModes) {
+        FcitxUISetStatusString(instance,
+                               "mozc-composition-mode",
+                               _(kPropCompositionModes[composition_mode_].label),
+                               _(kPropCompositionModes[composition_mode_].description));
+    }
 }
+
+void FcitxMozc::SendCompositionMode(mozc::commands::CompositionMode mode)
+{
+    // Send the SWITCH_INPUT_MODE command.
+    string error;
+    mozc::commands::Output raw_response;
+    if (connection_->TrySendCompositionMode(
+            kPropCompositionModes[mode].mode, &raw_response, &error)) {
+        parser_->ParseResponse(raw_response, this);
+    }
+}
+
 
 void FcitxMozc::SetUrl ( const string &url )
 {
@@ -274,6 +290,7 @@ void FcitxMozc::ClearAll()
 {
     SetPreeditInfo ( NULL );
     SetAuxString ( "" );
+    FcitxCandidateWordReset(FcitxInputStateGetCandidateList(input));
     url_.clear();
 }
 
@@ -283,17 +300,21 @@ void FcitxMozc::DrawPreeditInfo()
     FcitxMessages* clientpreedit = FcitxInputStateGetClientPreedit(input);
     FcitxMessagesSetMessageCount(preedit, 0);
     FcitxMessagesSetMessageCount(clientpreedit, 0);
+    FcitxInputContext* ic = FcitxInstanceGetCurrentIC(instance);
     if ( preedit_info_.get() )
     {
         VLOG ( 1 ) << "DrawPreeditInfo: cursor=" << preedit_info_->cursor_pos;
         
-        FcitxInputStateSetShowCursor(input, true);
+        if (ic && (ic->contextCaps & CAPACITY_PREEDIT) == 0)
+            FcitxInputStateSetShowCursor(input, true);
         
         for (int i = 0; i < preedit_info_->preedit.size(); i ++) {
-            FcitxMessagesAddMessageAtLast(preedit, preedit_info_->preedit[i].type, "%s", preedit_info_->preedit[i].str.c_str());
+            if (ic && (ic->contextCaps & CAPACITY_PREEDIT) == 0)
+                FcitxMessagesAddMessageAtLast(preedit, preedit_info_->preedit[i].type, "%s", preedit_info_->preedit[i].str.c_str());
             FcitxMessagesAddMessageAtLast(clientpreedit, preedit_info_->preedit[i].type, "%s", preedit_info_->preedit[i].str.c_str());
         }
-        FcitxInputStateSetCursorPos(input, preedit_info_->cursor_pos);
+        if (ic && (ic->contextCaps & CAPACITY_PREEDIT) == 0)
+            FcitxInputStateSetCursorPos(input, preedit_info_->cursor_pos);
         FcitxInputStateSetClientCursorPos(input, preedit_info_->cursor_pos);
     }
     else {
@@ -308,7 +329,7 @@ void FcitxMozc::DrawAux()
     FcitxMessagesSetMessageCount(auxUp, 0);
     FcitxMessagesSetMessageCount(auxDown, 0);
     if ( !aux_.empty() ) {
-        FcitxMessagesAddMessageAtLast(auxUp, MSG_TIPS, "%s", aux_.c_str());
+        FcitxMessagesAddMessageAtLast(auxUp, MSG_TIPS, "%s ", aux_.c_str());
     }
 }
 
@@ -328,30 +349,17 @@ void FcitxMozc::OpenUrl()
     url_.clear();
 }
 
-static void ToggleCompositionMode(void* arg)
+static const char* GetCompositionIconName(void* arg)
 {
+    FcitxMozc* mozc = (FcitxMozc*) arg;
+    return mozc->GetCurrentCompositionModeIcon().c_str();
 }
 
-static boolean GetCompositionStatus(void* arg)
-{
-    return true;
-}
 
-static void ToggleMozcTool(void* arg)
+static const char* GetMozcToolIcon(void* arg)
 {
-}
-
-static void ToggleMozcDictionaryTool(void* arg)
-{
-}
-
-static void ToggleMozcProperty(void* arg)
-{
-}
-
-static boolean GetMozcToolStatus(void* arg)
-{
-    return true;
+    FcitxMozc* mozc = (FcitxMozc*) arg;
+    return mozc->GetIconFile("mozc-tool.png").c_str();
 }
 
 void FcitxMozc::InitializeBar()
@@ -359,53 +367,136 @@ void FcitxMozc::InitializeBar()
     VLOG ( 1 ) << "Registering properties";
     // TODO(yusukes): L10N needed for "Tool", "Dictionary tool", and "Property".
     
-    FcitxUIRegisterStatus(instance, this,
+    FcitxUIRegisterComplexStatus(instance, this,
         "mozc-composition-mode",
-        "",
-        "",
-        ToggleCompositionMode,
-        GetCompositionStatus
+        _("Composition Mode"),
+        _(""),
+        NULL,
+        GetCompositionIconName
     );
 
     if ( mozc::Util::FileExists ( mozc::Util::JoinPath (
                                       mozc::Util::GetServerDirectory(), mozc::kMozcTool ) ) )
     {
-        FcitxUIRegisterStatus(instance, this,
+        FcitxUIRegisterComplexStatus(instance, this,
             "mozc-tool",
-            "",
-            "",
-            ToggleMozcTool,
-            GetMozcToolStatus
-        );
-        
-        FcitxUIRegisterStatus(instance, this,
-            "mozc-dictionary-tool",
-            "",
-            "",
-            ToggleMozcDictionaryTool,
-            GetMozcToolStatus
-        );
-        
-        FcitxUIRegisterStatus(instance, this,
-            "mozc-property",
-            "",
-            "",
-            ToggleMozcProperty,
-            GetMozcToolStatus
+            _("Tool"),
+            _("Tool"),
+            NULL,
+            GetMozcToolIcon
         );
     }
     FcitxUISetStatusVisable(instance, "mozc-tool", false);
-    FcitxUISetStatusVisable(instance, "mozc-dictionary-tool", false);
-    FcitxUISetStatusVisable(instance, "mozc-property", false);
     FcitxUISetStatusVisable(instance, "mozc-composition-mode", false);
 }
 
+FcitxMozc::FcitxMozc(const mozc::fcitx::FcitxMozc& )
+{
+
+}
+
+boolean CompositionMenuAction(struct _FcitxUIMenu *menu, int index)
+{
+    FcitxMozc* mozc = (FcitxMozc*) menu->priv;
+    if (index == mozc::commands::DIRECT) {
+        FcitxInstanceCloseIM(mozc->GetInstance(), FcitxInstanceGetCurrentIC(mozc->GetInstance()));
+    }
+    else {
+        mozc->SendCompositionMode((mozc::commands::CompositionMode) index);
+    }
+    return true;
+}
+
+void UpdateCompositionMenu(struct _FcitxUIMenu *menu)
+{
+    FcitxMozc* mozc = (FcitxMozc*) menu->priv;
+    menu->mark = mozc->GetCompositionMode();
+}
+
+boolean ToolMenuAction(struct _FcitxUIMenu *menu, int index)
+{
+    string args;
+    switch(index) {
+        case 0:
+            args = "--mode=config_dialog";
+            break;
+        case 1:
+            args = "--mode=dictionary_tool";
+            break;
+        case 2:
+            args = "--mode=about_dialog";
+            break;
+    }
+    mozc::Process::SpawnMozcProcess("mozc_tool", args);
+    return true;
+}
+
+void UpdateToolMenu(struct _FcitxUIMenu *menu)
+{
+    return;
+}
+
+void FcitxMozc::InitializeMenu()
+{
+    FcitxMenuInit(&this->compositionMenu);
+    compositionMenu.name = strdup(_("Composition Mode"));
+    compositionMenu.candStatusBind = strdup("mozc-composition-mode");
+    compositionMenu.UpdateMenu = UpdateCompositionMenu;
+    compositionMenu.MenuAction = CompositionMenuAction;
+    compositionMenu.priv = this;
+    compositionMenu.isSubMenu = false;
+    int i;
+    for (i = 0; i < kNumCompositionModes; i ++)
+        FcitxMenuAddMenuItem(&compositionMenu, kPropCompositionModes[i].description, MENUTYPE_SIMPLE, NULL);
+
+    FcitxUIRegisterMenu(instance, &compositionMenu);
+
+    FcitxMenuInit(&this->toolMenu);
+    toolMenu.name = strdup(_("Mozc Tool"));
+    toolMenu.candStatusBind = strdup("mozc-tool");
+    toolMenu.UpdateMenu = UpdateToolMenu;
+    toolMenu.MenuAction = ToolMenuAction;
+    toolMenu.priv = this;
+    toolMenu.isSubMenu = false;
+    FcitxMenuAddMenuItem(&toolMenu, _("Configuration Tool"), MENUTYPE_SIMPLE, NULL);
+    FcitxMenuAddMenuItem(&toolMenu, _("Dictionary Tool"), MENUTYPE_SIMPLE, NULL);
+    FcitxMenuAddMenuItem(&toolMenu, _("About Mozc"), MENUTYPE_SIMPLE, NULL);
+    FcitxUIRegisterMenu(instance, &toolMenu);
+}
 
 FcitxInputState* FcitxMozc::GetInputState()
 {
     return input;
 }
 
+const std::string& FcitxMozc::GetIconFile(const std::string key)
+{
+    if (iconMap.count(key)) {
+        return iconMap[key];
+    }
+    
+    char* retFile;
+    FILE* fp = FcitxXDGGetFileWithPrefix("mozc/icon", key.c_str(), "r", &retFile);
+    if (fp)
+        fclose(fp);
+    if (retFile) {
+        iconMap[key] = std::string(retFile);
+        free(retFile);
+    }
+    else {
+        iconMap[key] = "";
+    }
+    return iconMap[key];
+}
+
+
+const std::string& FcitxMozc::GetCurrentCompositionModeIcon() {
+    DCHECK(composition_mode_ < kNumCompositionModes);
+    if (composition_mode_ < kNumCompositionModes) {
+        return GetIconFile(kPropCompositionModes[composition_mode_].icon);
+    }
+    return empty_string;
+}
 
 }  // namespace fcitx
 
