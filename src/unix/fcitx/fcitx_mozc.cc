@@ -30,6 +30,7 @@
 #include "unix/fcitx/mozc_connection.h"
 #include "unix/fcitx/mozc_response_parser.h"
 #include "unix/fcitx/fcitx_key_translator.h"
+#include <fcitx/context.h>
 
 namespace
 {
@@ -209,6 +210,10 @@ void FcitxMozc::reset()
 void FcitxMozc::init()
 {
     VLOG ( 1 ) << "focus_in";
+    boolean flag = false;
+    FcitxInstanceSetContext(instance, CONTEXT_DISABLE_AUTOENG, &flag);
+    FcitxInstanceSetContext(instance, CONTEXT_DISABLE_QUICKPHRASE, &flag);
+    FcitxInstanceSetContext(instance, CONTEXT_IM_KEYBOARD_LAYOUT, "jp");
     DrawAll();
 }
 
