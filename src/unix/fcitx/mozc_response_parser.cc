@@ -255,13 +255,13 @@ void MozcResponseParser::ParsePreedit(const mozc::commands::Preedit &preedit,
 
         switch (segment.annotation()) {
         case mozc::commands::Preedit_Segment::NONE:
-            type = MSG_INPUT;
+            type = (FcitxMessageType) (MSG_INPUT | MSG_NOUNDERLINE);
             break;
         case mozc::commands::Preedit_Segment::UNDERLINE:
-            type = MSG_TIPS;
+            type = (FcitxMessageType) (MSG_TIPS);
             break;
         case mozc::commands::Preedit_Segment::HIGHLIGHT:
-            type = MSG_CODE;
+            type = (FcitxMessageType) (MSG_CODE | MSG_NOUNDERLINE | MSG_HIGHLIGHT);
 
             break;
         }
