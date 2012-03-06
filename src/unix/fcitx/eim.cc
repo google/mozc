@@ -57,6 +57,7 @@ int ABI_VERSION = FCITX_ABI_VERSION;
 static void* FcitxMozcCreate(FcitxInstance* instance)
 {
     FcitxMozcState* mozcState = (FcitxMozcState*) fcitx_utils_malloc0(sizeof(FcitxMozcState));
+    bindtextdomain("fcitx-keyboard", LOCALEDIR);
     mozcState->language_dependency_spec_japanese = new mozc::japanese::LangDepSpecJapanese;
     mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(mozcState->language_dependency_spec_japanese);
     

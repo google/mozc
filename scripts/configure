@@ -1,0 +1,3 @@
+#!/bin/sh
+
+python build_mozc.py gyp --gypdir=/home/saber/Develop/mozc/gyp --channel_dev=0

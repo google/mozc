@@ -10,3 +10,6 @@ All development will be under fcitx branch.
 
 So git diff origin/master origin/fcitx will generate patch for distribution
 packager.
+
+There is some helper script for compile/install it yourself under scripts.
+Please run those scripts under src/.

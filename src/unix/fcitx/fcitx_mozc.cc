@@ -32,6 +32,8 @@
 #include "unix/fcitx/fcitx_key_translator.h"
 #include <fcitx/context.h>
 
+#define N_(x) (x)
+
 namespace
 {
     
@@ -48,32 +50,32 @@ const struct CompositionMode
     {
         "mozc-direct.png",
         "A",
-        "Direct",
+        N_("Direct"),
         mozc::commands::DIRECT,
     }, {
         "mozc-hiragana.png",
         "\xe3\x81\x82",  // Hiragana letter A in UTF-8.
-        "Hiragana",
+        N_("Hiragana"),
         mozc::commands::HIRAGANA,
     }, {
         "mozc-katakana_full.png",
         "\xe3\x82\xa2",  // Katakana letter A.
-        "Full Katakana",
+        N_("Full Katakana"),
         mozc::commands::FULL_KATAKANA,
     }, {
         "mozc-alpha_half.png",
-        "_A",
-        "Half ASCII",
+        "A",
+        N_("Half ASCII"),
         mozc::commands::HALF_ASCII,
     }, {
         "mozc-alpha_full.png",
         "\xef\xbc\xa1",  // Full width ASCII letter A.
-        "Full ASCII",
+        N_("Full ASCII"),
         mozc::commands::FULL_ASCII,
     }, {
         "mozc-katakana_half.png",
-        "_\xef\xbd\xb1",  // Half width Katakana letter A.
-        "Half Katakana",
+        "\xef\xbd\xb1",  // Half width Katakana letter A.
+        N_("Half Katakana"),
         mozc::commands::HALF_KATAKANA,
     },
 };
@@ -375,7 +377,7 @@ void FcitxMozc::InitializeBar()
     FcitxUIRegisterComplexStatus(instance, this,
         "mozc-composition-mode",
         _("Composition Mode"),
-        _(""),
+        _("Composition Mode"),
         NULL,
         GetCompositionIconName
     );
@@ -452,7 +454,7 @@ void FcitxMozc::InitializeMenu()
     compositionMenu.isSubMenu = false;
     int i;
     for (i = 0; i < kNumCompositionModes; i ++)
-        FcitxMenuAddMenuItem(&compositionMenu, kPropCompositionModes[i].description, MENUTYPE_SIMPLE, NULL);
+        FcitxMenuAddMenuItem(&compositionMenu, _(kPropCompositionModes[i].description), MENUTYPE_SIMPLE, NULL);
 
     FcitxUIRegisterMenu(instance, &compositionMenu);
 

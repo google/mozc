@@ -31,6 +31,7 @@
 {
   'variables': {
     'relative_dir': 'unix/fcitx',
+    'gen_out_dir': '<(SHARED_INTERMEDIATE_DIR)/<(relative_dir)',
     'pkg_config_libs': [
       'fcitx',
       'fcitx-config',
@@ -44,8 +45,29 @@
       '../../languages/languages.gyp:global_language_spec',
       '../../languages/japanese/japanese.gyp:language_dependent_spec_japanese',
     ],
+    'fcitx_defines': [
+      'LOCALEDIR="<!@(fcitx4-config --prefix)/share/locale/"',
+    ]
   },
   'targets': [
+    {
+      'target_name': 'gen_fcitx_mozc_i18n',
+      'type': 'none',
+      'actions': [
+        {
+          'action_name': 'gen_fcitx_mozc_i18n',
+          'inputs': [
+            './gen_fcitx_mozc_i18n.sh'
+          ],
+          'outputs': [
+            '<(gen_out_dir)/po/zh_CN.mo',
+          ],
+          'action': [
+            './gen_fcitx_mozc_i18n.sh',
+            '<(gen_out_dir)/po',
+          ],
+        }],
+    },
     {
       'target_name': 'fcitx-mozc',
       'product_prefix': '',
@@ -59,6 +81,7 @@
       ],
       'dependencies': [
         '<@(fcitx_dependencies)',
+        'gen_fcitx_mozc_i18n',
       ],
       'cflags': [
         '<!@(pkg-config --cflags <@(pkg_config_libs))',
@@ -71,6 +94,9 @@
       ],
       'ldflags': [
         '<!@(pkg-config --libs-only-L <@(pkg_config_libs))',
+      ],
+      'defines': [
+        '<@(fcitx_defines)',
       ],
     },
   ],
