@@ -36,6 +36,7 @@
 #include "base/util.h"
 #include "config/config_handler.h"
 #include "languages/chewing/scoped_chewing_ptr.h"
+#include "session/key_event_util.h"
 
 using mozc::commands::KeyEvent;
 using mozc::config::ChewingConfig;
@@ -148,7 +149,7 @@ Session::~Session() {
   chewing_delete(context_);
 }
 
-#define CHEWING_SET_CONFIG(field,name) \
+#define CHEWING_SET_CONFIG(field, name) \
   ::chewing_set_##name(context_, chewing_config.field())
 
 void Session::ResetConfig() {
@@ -367,7 +368,9 @@ bool Session::SendKey(commands::Command *command) {
   const KeyEvent &key_event = command->input().key();
   bool status_updated = false;
 
-  if (key_event.modifiers() == KeyEvent::SHIFT) {
+  const uint32 modifiers = KeyEventUtil::GetModifiers(key_event);
+
+  if (KeyEventUtil::IsShift(modifiers)) {
     if (key_event.has_special_key()) {
       if (key_event.special_key() == KeyEvent::LEFT) {
         ::chewing_handle_ShiftLeft(context_);
@@ -380,7 +383,7 @@ bool Session::SendKey(commands::Command *command) {
         status_updated = true;
       }
     }
-  } if (key_event.modifiers() == KeyEvent::CTRL) {
+  } else if (KeyEventUtil::IsCtrl(modifiers)) {
     // CtrlNum is the event just for numeric keys at the top of
     // keyboard, not for the tenkeys.
     if ('0' <= key_event.key_code() && key_event.key_code() <= '9') {

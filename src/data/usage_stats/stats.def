@@ -183,6 +183,7 @@ Performed_Precomposition_LaunchWordRegisterDialog
 Performed_Precomposition_Revert
 Performed_Precomposition_Undo
 Performed_Precomposition_Cancel
+Performed_Precomposition_CancelAndIMEOff
 Performed_Precomposition_PredictAndConvert
 Performed_Precomposition_CommitFirstSuggestion
 Performed_Precomposition_Abort
@@ -193,9 +194,12 @@ Performed_Composition_IMEOn
 Performed_Composition_InsertCharacter
 Performed_Composition_Delete
 Performed_Composition_Backspace
+Performed_Composition_InsertSpace
+Performed_Composition_InsertAlternateSpace
 Performed_Composition_InsertHalfSpace
 Performed_Composition_InsertFullSpace
 Performed_Composition_Cancel
+Performed_Composition_CancelAndIMEOff
 Performed_Composition_Undo
 Performed_Composition_MoveCursorLeft
 Performed_Composition_MoveCursorRight
@@ -230,9 +234,12 @@ Performed_Composition_Abort
 Performed_Conversion_IMEOff
 Performed_Conversion_IMEOn
 Performed_Conversion_InsertCharacter
+Performed_Conversion_InsertSpace
+Performed_Conversion_InsertAlternateSpace
 Performed_Conversion_InsertHalfSpace
 Performed_Conversion_InsertFullSpace
 Performed_Conversion_Cancel
+Performed_Conversion_CancelAndIMEOff
 Performed_Conversion_Undo
 Performed_Conversion_SegmentFocusLeft
 Performed_Conversion_SegmentFocusRight
@@ -411,6 +418,22 @@ ConfigUseJapaneseLayout
 ConfigSpaceCharacterForm
 # Use cloud sync
 ConfigUseCloudSync
+# Use config sync
+ConfigUseConfigSync
+# Use user dictionary sync
+ConfigUseUserDictionarySync
+# Use history sync
+ConfigUseHistorySync
+# Use learning preference sync
+ConfigUseLearningPreferenceSync
+# Use contact list sync
+ConfigUseContactListSync
+# Allow cloud handwriting
+ConfigAllowCloudHandwriting
+# Use local usage dictionary
+ConfigUseLocalUsageDictionary
+# Use web usage dictionary
+ConfigUseWebUsageDictionary
 
 # Need to show the help page after install (TSF is disabled)
 PostInstallShowPageRequired
@@ -436,6 +459,8 @@ IMEActivationKeyCustomized
 
 # Number of user registered dictionary word
 UserRegisteredWord
+# Number of user registered sync dictionary word
+UserRegisteredSyncWord
 # Number of user history entries for UserHistoryPredictor
 UserHistoryPredictorEntrySize
 # Number of user history entries for UserBoundaryHistoryRewriter
@@ -444,6 +469,8 @@ UserBoundaryHistoryEntrySize
 UserSegmentHistoryEntrySize
 # Total memory in MB
 TotalPhysicalMemory
+# Web service entry size of web usage dictionary
+WebServiceEntrySize
 
 # for windows
 

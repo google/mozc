@@ -38,6 +38,7 @@
 #include <string>
 #include "config/config.pb.h"
 #include "session/internal/keymap_interface.h"
+#include "session/key_event_util.h"
 
 namespace mozc {
 
@@ -47,19 +48,6 @@ class KeyEvent;
 
 namespace keymap {
 
-typedef uint64 Key;  // modifiers (63-32 bits) + keycode (31-0 bits)
-
-// TODO(komatsu): Refactor these functions when refactoring the session class.
-
-// Normalizes given key event for key command looking-up. This function does
-// - remove commands::KeyEvent::CAPS from the modifier keys
-// - revert the flip of alphabetical key code caused by CapsLock
-// so that shortcut keys can be used as if CapsLock was not enabled. b/5627459
-void NormalizeKeyEvent(const commands::KeyEvent &key_event,
-                       commands::KeyEvent *new_key_event);
-bool GetKey(const commands::KeyEvent &key_event, Key *key);
-bool MaybeGetKeyStub(const commands::KeyEvent &key_event, Key *key);
-
 template<typename T>
 class KeyMap : public KeyMapInterface<T> {
  public:
@@ -68,9 +56,8 @@ class KeyMap : public KeyMapInterface<T> {
   void Clear();
 
  private:
-  map<Key, T> keymap_;
+  map<KeyInformation, T> keymap_;
 };
-
 
 class KeyMapManager {
  public:
@@ -156,16 +143,6 @@ class KeyMapManager {
                                   CompositionState::Commands command);
   void RegisterConversionCommand(const string &command_string,
                                  ConversionState::Commands command);
-
-  // Migration code for CUSTOM keymap.
-  // If custom keymap has no IMEOf/Off key settings, add them and save
-  // to custom keymap.
-  void CheckIMEOnOffKeymap();
-  // This is used for migration.
-  // This stores ime on/off related keyevent.
-  // If this contains only ON, OFF or EISU, this settings should be
-  // migrated.
-  set<uint64> ime_on_off_keys_;
 
   config::Config::SessionKeymap keymap_;
   map<string, DirectInputState::Commands> command_direct_map_;

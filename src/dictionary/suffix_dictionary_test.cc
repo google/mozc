@@ -28,6 +28,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "base/base.h"
+#include "base/trie.h"
 #include "base/util.h"
 #include "converter/node.h"
 #include "converter/node_allocator.h"
@@ -72,6 +73,51 @@ TEST(SuffixDictionaryTest, BasicTest) {
       EXPECT_NE(node->lid, 0);
       EXPECT_NE(node->rid, 0);
       EXPECT_TRUE(Util::StartsWith(node->key, kQuery));
+    }
+  }
+
+  {
+    // "だ"
+    const char kQuery[] = "\xe3\x81\xa0";
+    DictionaryInterface::Limit limit;
+    Trie<string> trie;
+    // "ね"
+    trie.AddEntry("\xe3\x81\xad", "");
+    // "よ"
+    trie.AddEntry("\xe3\x82\x88", "");
+    limit.begin_with_trie = &trie;
+
+    Node *node = d->LookupPredictiveWithLimit(kQuery, strlen(kQuery),
+                                              limit, &allocator);
+    for (; node != NULL; node = node->bnext) {
+      // "だね"
+      // "だよ"
+      EXPECT_TRUE(Util::StartsWith(node->key, "\xe3\x81\xa0\xe3\x81\xad") ||
+                  Util::StartsWith(node->key, "\xe3\x81\xa0\xe3\x82\x88"));
+      // "だな"
+      EXPECT_FALSE(Util::StartsWith(node->key, "\xe3\x81\xa0\xe3\x81\xaa"));
+      EXPECT_NE(node->lid, 0);
+      EXPECT_NE(node->rid, 0);
+    }
+  }
+
+  {
+    DictionaryInterface::Limit limit;
+    Trie<string> trie;
+    // "だ"
+    trie.AddEntry("\xe3\x81\xa0", "");
+    // "で"
+    trie.AddEntry("\xe3\x81\xa7", "");
+    limit.begin_with_trie = &trie;
+
+    Node *node = d->LookupPredictiveWithLimit("", 0, limit, &allocator);
+    for (; node != NULL; node = node->bnext) {
+      // "だ"
+      // "で"
+      EXPECT_TRUE(Util::StartsWith(node->key, "\xe3\x81\xa0") ||
+                  Util::StartsWith(node->key, "\xe3\x81\xa7"));
+      EXPECT_NE(node->lid, 0);
+      EXPECT_NE(node->rid, 0);
     }
   }
 }

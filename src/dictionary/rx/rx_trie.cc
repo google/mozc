@@ -45,6 +45,11 @@ struct RxResults {
   vector<RxEntry> *result;
 };
 
+struct RxIDResult {
+  int target_len;
+  int id;
+};
+
 static int RxCallback(void *cookie, const char *s, int len, int id) {
   RxResults *res = reinterpret_cast<RxResults *>(cookie);
   DCHECK(res);
@@ -58,6 +63,17 @@ static int RxCallback(void *cookie, const char *s, int len, int id) {
   entry.key = string(s, len);
   entry.id = id;
   res->result->push_back(entry);
+  return 0;
+}
+
+static int RxIDCallback(void *cookie, const char *s, int len, int id) {
+  RxIDResult *res = reinterpret_cast<RxIDResult *>(cookie);
+  DCHECK(res);
+  if (res->target_len == len) {
+    res->id = id;
+    // stops traversal.
+    return -1;
+  }
   return 0;
 }
 }  // namespace
@@ -104,6 +120,14 @@ void RxTrie::ReverseLookup(int id, string *key) const {
   char buf[256];
   rx_reverse(rx_trie_, id, buf, sizeof(buf));
   key->assign(buf);
+}
+
+int RxTrie::GetIdFromKey(const string &key) const {
+  RxIDResult rx_id_result;
+  rx_id_result.target_len = key.length();
+  rx_id_result.id = -1;
+  rx_search(rx_trie_, 0, key.c_str(), RxIDCallback, &rx_id_result);
+  return rx_id_result.id;
 }
 
 void RxTrie::SearchInternal(const string &key, SearchType type,

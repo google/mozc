@@ -33,7 +33,6 @@
 
 #include "base/util.h"
 #include "config/config_handler.h"
-#include "session/key_event_normalizer.h"
 #include "session/key_parser.h"
 #include "session/internal/keymap.h"
 #include "testing/base/public/gunit.h"
@@ -59,23 +58,23 @@ TEST_F(ImeSwitchUtilTest, PresetTest) {
   {
     commands::KeyEvent key;
     KeyParser::ParseKey("HENKAN", &key);
-    EXPECT_TRUE(ImeSwitchUtil::IsTurnOnInDirectMode(key));
+    EXPECT_TRUE(ImeSwitchUtil::IsDirectModeCommand(key));
   }
   {
     commands::KeyEvent key;
     KeyParser::ParseKey("EISU", &key);
-    EXPECT_FALSE(ImeSwitchUtil::IsTurnOnInDirectMode(key));
+    EXPECT_FALSE(ImeSwitchUtil::IsDirectModeCommand(key));
   }
   {
     commands::KeyEvent key;
     KeyParser::ParseKey("ON", &key);
-    EXPECT_TRUE(ImeSwitchUtil::IsTurnOnInDirectMode(key));
+    EXPECT_TRUE(ImeSwitchUtil::IsDirectModeCommand(key));
   }
   {
     // Reconcersion
     commands::KeyEvent key;
     KeyParser::ParseKey("Shift HENKAN", &key);
-    EXPECT_TRUE(ImeSwitchUtil::IsTurnOnInDirectMode(key));
+    EXPECT_TRUE(ImeSwitchUtil::IsDirectModeCommand(key));
   }
 
   config.set_session_keymap(Config::MSIME);
@@ -84,17 +83,17 @@ TEST_F(ImeSwitchUtilTest, PresetTest) {
   {
     commands::KeyEvent key;
     KeyParser::ParseKey("HENKAN", &key);
-    EXPECT_TRUE(ImeSwitchUtil::IsTurnOnInDirectMode(key));
+    EXPECT_TRUE(ImeSwitchUtil::IsDirectModeCommand(key));
   }
   {
     commands::KeyEvent key;
     KeyParser::ParseKey("EISU", &key);
-    EXPECT_TRUE(ImeSwitchUtil::IsTurnOnInDirectMode(key));
+    EXPECT_TRUE(ImeSwitchUtil::IsDirectModeCommand(key));
   }
   {
     commands::KeyEvent key;
     KeyParser::ParseKey("ON", &key);
-    EXPECT_TRUE(ImeSwitchUtil::IsTurnOnInDirectMode(key));
+    EXPECT_TRUE(ImeSwitchUtil::IsDirectModeCommand(key));
   }
 
   config.set_session_keymap(Config::KOTOERI);
@@ -103,23 +102,23 @@ TEST_F(ImeSwitchUtilTest, PresetTest) {
   {
     commands::KeyEvent key;
     KeyParser::ParseKey("HENKAN", &key);
-    EXPECT_FALSE(ImeSwitchUtil::IsTurnOnInDirectMode(key));
+    EXPECT_FALSE(ImeSwitchUtil::IsDirectModeCommand(key));
   }
   {
     commands::KeyEvent key;
     KeyParser::ParseKey("EISU", &key);
-    EXPECT_FALSE(ImeSwitchUtil::IsTurnOnInDirectMode(key));
+    EXPECT_FALSE(ImeSwitchUtil::IsDirectModeCommand(key));
   }
   {
     commands::KeyEvent key;
     KeyParser::ParseKey("ON", &key);
-    EXPECT_TRUE(ImeSwitchUtil::IsTurnOnInDirectMode(key));
+    EXPECT_TRUE(ImeSwitchUtil::IsDirectModeCommand(key));
   }
   {
     // Reconcersion
     commands::KeyEvent key;
     KeyParser::ParseKey("Ctrl Shift r", &key);
-    EXPECT_TRUE(ImeSwitchUtil::IsTurnOnInDirectMode(key));
+    EXPECT_TRUE(ImeSwitchUtil::IsDirectModeCommand(key));
   }
 }
 
@@ -135,25 +134,25 @@ TEST_F(ImeSwitchUtilTest, DefaultTest) {
     KeyParser::ParseKey("HENKAN", &key);
     // HENKAN key in MSIME is TurnOn key while it's not in KOTOERI.
     if (keymap::KeyMapManager::GetDefaultKeyMap() == config::Config::MSIME) {
-      EXPECT_TRUE(ImeSwitchUtil::IsTurnOnInDirectMode(key));
+      EXPECT_TRUE(ImeSwitchUtil::IsDirectModeCommand(key));
     } else {
-      EXPECT_FALSE(ImeSwitchUtil::IsTurnOnInDirectMode(key));
+      EXPECT_FALSE(ImeSwitchUtil::IsDirectModeCommand(key));
     }
   }
   {
     commands::KeyEvent key;
     KeyParser::ParseKey("EISU", &key);
     if (keymap::KeyMapManager::GetDefaultKeyMap() == config::Config::MSIME) {
-      EXPECT_TRUE(ImeSwitchUtil::IsTurnOnInDirectMode(key));
+      EXPECT_TRUE(ImeSwitchUtil::IsDirectModeCommand(key));
     } else {
-      EXPECT_FALSE(ImeSwitchUtil::IsTurnOnInDirectMode(key));
+      EXPECT_FALSE(ImeSwitchUtil::IsDirectModeCommand(key));
     }
   }
   {
     commands::KeyEvent key;
     KeyParser::ParseKey("ON", &key);
     key.set_special_key(commands::KeyEvent::ON);
-    EXPECT_TRUE(ImeSwitchUtil::IsTurnOnInDirectMode(key));
+    EXPECT_TRUE(ImeSwitchUtil::IsDirectModeCommand(key));
   }
 }
 
@@ -163,10 +162,11 @@ TEST_F(ImeSwitchUtilTest, CustomTest) {
 
   const string custom_keymap_table =
       "status\tkey\tcommand\n"
-      "DirectInput\tCtrl j\tIMEOn\n"
       "DirectInput\tHenkan\tIMEOn\n"
+      "DirectInput\tCtrl j\tIMEOn\n"
       "DirectInput\tCtrl k\tIMEOff\n"
-      "Precomposition\tCtrl l\tIMEOn\n";
+      "DirectInput\tCtrl l\tLaunchWordRegisterDialog\n"
+      "Precomposition\tCtrl m\tIMEOn\n";
 
   config.set_session_keymap(Config::CUSTOM);
   config.set_custom_keymap_table(custom_keymap_table);
@@ -175,127 +175,34 @@ TEST_F(ImeSwitchUtilTest, CustomTest) {
   {
     commands::KeyEvent key;
     KeyParser::ParseKey("HENKAN", &key);
-    EXPECT_TRUE(ImeSwitchUtil::IsTurnOnInDirectMode(key));
+    EXPECT_TRUE(ImeSwitchUtil::IsDirectModeCommand(key));
   }
   {
     commands::KeyEvent key;
     KeyParser::ParseKey("EISU", &key);
-    EXPECT_FALSE(ImeSwitchUtil::IsTurnOnInDirectMode(key));
+    EXPECT_FALSE(ImeSwitchUtil::IsDirectModeCommand(key));
   }
   {
     commands::KeyEvent key;
     KeyParser::ParseKey("ctrl j", &key);
-    EXPECT_TRUE(ImeSwitchUtil::IsTurnOnInDirectMode(key));
+    EXPECT_TRUE(ImeSwitchUtil::IsDirectModeCommand(key));
   }
   {
     commands::KeyEvent key;
     KeyParser::ParseKey("ctrl k", &key);
-    EXPECT_FALSE(ImeSwitchUtil::IsTurnOnInDirectMode(key));
+    EXPECT_TRUE(ImeSwitchUtil::IsDirectModeCommand(key));
   }
   {
     commands::KeyEvent key;
     KeyParser::ParseKey("ctrl l", &key);
-    EXPECT_FALSE(ImeSwitchUtil::IsTurnOnInDirectMode(key));
+    EXPECT_TRUE(ImeSwitchUtil::IsDirectModeCommand(key));
+  }
+  {
+    commands::KeyEvent key;
+    KeyParser::ParseKey("ctrl m", &key);
+    EXPECT_FALSE(ImeSwitchUtil::IsDirectModeCommand(key));
   }
 }
 
-namespace {
-  bool IsIncludedKeyEvent(const commands::KeyEvent &key_event,
-                          const vector<commands::KeyEvent> &key_event_list) {
-    uint64 key;
-    if (!KeyEventNormalizer::ToUint64(key_event, &key)) {
-      return false;
-    }
-    for (size_t i = 0; i < key_event_list.size(); ++i) {
-      uint64 listed_key;
-      if (!KeyEventNormalizer::ToUint64(key_event_list[i], &listed_key)) {
-        return false;
-      }
-      if (key == listed_key) {
-        return true;
-      }
-    }
-    return false;
-  }
-}
-
-TEST_F(ImeSwitchUtilTest, GetKeyEventListTest) {
-  Config config;
-  ConfigHandler::GetConfig(&config);
-
-  const string custom_keymap_table =
-      "status\tkey\tcommand\n"
-      "DirectInput\tCtrl j\tIMEOn\n"
-      "DirectInput\tHenkan\tIMEOn\n"
-      "DirectInput\tCtrl k\tIMEOff\n"
-      "Precomposition\tCtrl l\tIMEOn\n";
-
-  config.set_session_keymap(Config::CUSTOM);
-  config.set_custom_keymap_table(custom_keymap_table);
-  ConfigHandler::SetConfig(config);
-  ImeSwitchUtil::Reload();
-  vector<commands::KeyEvent> key_event_list;
-  ImeSwitchUtil::GetTurnOnInDirectModeKeyEventList(&key_event_list);
-  EXPECT_EQ(2, key_event_list.size());
-  {
-    commands::KeyEvent key_event;
-    KeyParser::ParseKey("HENKAN", &key_event);
-    EXPECT_TRUE(IsIncludedKeyEvent(key_event, key_event_list));
-  }
-  {
-    commands::KeyEvent key_event;
-    KeyParser::ParseKey("EISU", &key_event);
-    EXPECT_FALSE(IsIncludedKeyEvent(key_event, key_event_list));
-  }
-  {
-    commands::KeyEvent key_event;
-    KeyParser::ParseKey("ctrl j", &key_event);
-    EXPECT_TRUE(IsIncludedKeyEvent(key_event, key_event_list));
-  }
-  {
-    commands::KeyEvent key_event;
-    KeyParser::ParseKey("ctrl k", &key_event);
-    EXPECT_FALSE(IsIncludedKeyEvent(key_event, key_event_list));
-  }
-  {
-    commands::KeyEvent key_event;
-    KeyParser::ParseKey("ctrl l", &key_event);
-    EXPECT_FALSE(IsIncludedKeyEvent(key_event, key_event_list));
-  }
-}
-
-TEST_F(ImeSwitchUtilTest, MigrationTest) {
-  Config config;
-  ConfigHandler::GetConfig(&config);
-
-  const string custom_keymap_table =
-      "status\tkey\tcommand\n"
-      "DirectInput\tON\tIMEOn\n";
-  config.set_session_keymap(Config::CUSTOM);
-  config.set_custom_keymap_table(custom_keymap_table);
-  ConfigHandler::SetConfig(config);
-  ImeSwitchUtil::Reload();
-  vector<commands::KeyEvent> key_event_list;
-  ImeSwitchUtil::GetTurnOnInDirectModeKeyEventList(&key_event_list);
-  EXPECT_EQ(3, key_event_list.size());
-  {
-    commands::KeyEvent key_event;
-    KeyParser::ParseKey("ON", &key_event);
-    EXPECT_TRUE(ImeSwitchUtil::IsTurnOnInDirectMode(key_event));
-    EXPECT_TRUE(IsIncludedKeyEvent(key_event, key_event_list));
-  }
-  {
-    commands::KeyEvent key_event;
-    KeyParser::ParseKey("Hankaku/Zenkaku", &key_event);
-    EXPECT_TRUE(ImeSwitchUtil::IsTurnOnInDirectMode(key_event));
-    EXPECT_TRUE(IsIncludedKeyEvent(key_event, key_event_list));
-  }
-  {
-    commands::KeyEvent key_event;
-    KeyParser::ParseKey("Kanji", &key_event);
-    EXPECT_TRUE(ImeSwitchUtil::IsTurnOnInDirectMode(key_event));
-    EXPECT_TRUE(IsIncludedKeyEvent(key_event, key_event_list));
-  }
-}
 }  // namespace config
 }  // namespace mozc

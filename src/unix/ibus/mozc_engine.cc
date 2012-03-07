@@ -30,7 +30,10 @@
 #include "unix/ibus/mozc_engine.h"
 
 #include <ibus.h>
+#include <algorithm>
 #include <cstdio>
+#include <limits>
+#include <map>
 #include <sstream>
 #include <string>
 
@@ -106,9 +109,19 @@ const gchar* kMozcConfigNames[] = {
 };
 #endif  // OS_CHROMEOS
 
-uint64 GetTime() {
-  return static_cast<uint64>(time(NULL));
+#if !IBUS_CHECK_VERSION(1, 3, 99)
+// Older libibus (<= 1.3) does not have the accessor methods.
+IBusPropList* ibus_property_get_sub_props(IBusProperty* prop) {
+  return prop->sub_props;
 }
+const gchar* ibus_property_get_key(IBusProperty* prop) {
+  return prop->key;
+}
+#endif
+
+#if IBUS_CHECK_VERSION(1, 4, 0)
+#define USE_IBUS_ENGINE_GET_SURROUNDING_TEXT
+#endif  // libibus (>= 1.4.0)
 
 // Returns true if mozc_tool is installed.
 bool IsMozcToolAvailable() {
@@ -165,6 +178,84 @@ void MozcEngineInstanceInit(GTypeInstance *instance, gpointer klass) {
 
 namespace mozc {
 namespace {
+
+#if defined(USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT) ||  \
+    defined(USE_IBUS_ENGINE_GET_SURROUNDING_TEXT)
+
+// This function calculates |from| - |to| and stores the result
+// into |delta| with checking integer overflow.
+// Returns true when neither |abs(delta)| nor |-delta| does not cause
+// integer overflow, that is, |delta| is in a safe range.
+// Returns false otherwise.
+bool GetSafeDelta(guint from, guint to, int32 *delta) {
+  DCHECK(delta);
+
+  COMPILE_ASSERT(sizeof(int64) > sizeof(guint), int64_guint_check);
+  const int64 kInt32AbsMax =
+      abs(static_cast<int64>(numeric_limits<int32>::max()));
+  const int64 kInt32AbsMin =
+      abs(static_cast<int64>(numeric_limits<int32>::min()));
+  const int64 kInt32SafeAbsMax =
+      min(kInt32AbsMax, kInt32AbsMin);
+
+  const int64 diff = static_cast<int64>(from) - static_cast<int64>(to);
+  if (abs(diff) > kInt32SafeAbsMax) {
+    return false;
+  }
+
+  *delta = static_cast<int32>(diff);
+  return true;
+}
+
+#endif  // USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT ||
+        // USE_IBUS_ENGINE_GET_SURROUNDING_TEXT
+
+uint32 GetModifiers(commands::KeyEvent *key_event) {
+  DCHECK(key_event);
+
+  uint32 modifiers = 0;
+  for (size_t i = 0; i < key_event->modifier_keys_size(); ++i) {
+    modifiers |= key_event->modifier_keys(i);
+  }
+  return modifiers;
+}
+
+class AdditionalModifiersData {
+ public:
+  AdditionalModifiersData() {
+    data_[commands::KeyEvent::LEFT_ALT] = commands::KeyEvent::ALT;
+    data_[commands::KeyEvent::RIGHT_ALT] = commands::KeyEvent::ALT;
+    data_[commands::KeyEvent::LEFT_CTRL] = commands::KeyEvent::CTRL;
+    data_[commands::KeyEvent::RIGHT_CTRL] = commands::KeyEvent::CTRL;
+    data_[commands::KeyEvent::LEFT_SHIFT] = commands::KeyEvent::SHIFT;
+    data_[commands::KeyEvent::RIGHT_SHIFT] = commands::KeyEvent::SHIFT;
+  }
+  const map<uint32, commands::KeyEvent::ModifierKey> &data() {
+    return data_;
+  }
+
+ private:
+  map<uint32, commands::KeyEvent::ModifierKey> data_;
+};
+
+void AddAdditionalModifiers(
+    set<commands::KeyEvent::ModifierKey> *modifier_keys_set) {
+  DCHECK(modifier_keys_set);
+
+  const map<uint32, commands::KeyEvent::ModifierKey> &data =
+      Singleton<AdditionalModifiersData>::get()->data();
+
+  // Adds MODIFIER if there are (LEFT|RIGHT)_MODIFIER like LEFT_SHIFT.
+  for (set<commands::KeyEvent::ModifierKey>::const_iterator it =
+           modifier_keys_set->begin(); it != modifier_keys_set->end(); ++it) {
+    map<uint32, commands::KeyEvent::ModifierKey>::const_iterator item =
+        data.find(*it);
+    if (item != data.end()) {
+      modifier_keys_set->insert(item->second);
+    }
+  }
+}
+
 bool IsModifierToBeSentOnKeyUp(const commands::KeyEvent &key_event) {
   if (key_event.modifier_keys_size() == 0) {
     return false;
@@ -295,20 +386,22 @@ IBusText *ComposeAuxiliaryText(const commands::Candidates &candidates) {
 }
 
 MozcEngine::MozcEngine()
-    : last_sync_time_(GetTime()),
+    : last_sync_time_(Util::GetTime()),
       key_translator_(new KeyTranslator),
 #ifdef OS_CHROMEOS
       client_(new ibus::Client),
 #else
       client_(client::ClientFactory::NewClient()),
 #endif
+#ifndef USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT
+      ignore_reset_for_deletion_range_workaround_(false),
+#endif  // !USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT
       prop_root_(NULL),
       prop_composition_mode_(NULL),
       prop_mozc_tool_(NULL),
       original_composition_mode_(kMozcEngineInitialCompositionMode),
       is_activated_(true),
-      preedit_method_(config::Config::ROMAN),
-      ignore_reset_for_deletion_range_workaround_(false) {
+      preedit_method_(config::Config::ROMAN) {
   // |sub_prop_list| is a radio menu which is shown when a button in the
   // language panel (i.e. |prop_composition_mode_| below) is clicked.
   IBusPropList *sub_prop_list = ibus_prop_list_new();
@@ -464,15 +557,19 @@ void MozcEngine::CursorUp(IBusEngine *engine) {
 }
 
 void MozcEngine::Disable(IBusEngine *engine) {
+#ifndef USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT
   // Stop ignoring "reset" signal.  See ProcessKeyevent().
   ignore_reset_for_deletion_range_workaround_ = false;
+#endif  // !USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT
 
   RevertSession(engine);
 }
 
 void MozcEngine::Enable(IBusEngine *engine) {
+#ifndef USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT
   // Stop ignoring "reset" signal.  See ProcessKeyevent().
   ignore_reset_for_deletion_range_workaround_ = false;
+#endif  // !USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT
 
   // Launch mozc_server
   client_->EnsureConnection();
@@ -484,11 +581,11 @@ void MozcEngine::Enable(IBusEngine *engine) {
   // (crosbug.com/4596).
   RevertSession(engine);
 
+#ifdef USE_IBUS_ENGINE_GET_SURROUNDING_TEXT
   // If engine wants to use surrounding text, we should call
   // ibus_engine_get_surrounding_text once when the engine enabled.
-#if IBUS_CHECK_VERSION(1, 4, 0)
   ibus_engine_get_surrounding_text(engine, NULL, NULL, NULL);
-#endif  // IBUS_CHECK_VERSION(1, 4, 0)
+#endif  // USE_IBUS_ENGINE_GET_SURROUNDING_TEXT
 }
 
 void MozcEngine::FocusIn(IBusEngine *engine) {
@@ -497,8 +594,10 @@ void MozcEngine::FocusIn(IBusEngine *engine) {
 }
 
 void MozcEngine::FocusOut(IBusEngine *engine) {
+#ifndef USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT
   // Stop ignoring "reset" signal.  See ProcessKeyevent().
   ignore_reset_for_deletion_range_workaround_ = false;
+#endif  // !USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT
 
   // Do not call SubmitSession or RevertSession. Preedit string will commit on
   // Focus Out event automatically by ibus_engine_update_preedit_text_with_mode
@@ -525,8 +624,10 @@ gboolean MozcEngine::ProcessKeyEvent(
           << ", keycode: " << keycode
           << ", modifiers: " << modifiers;
 
+#ifndef USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT
   // Stop ignoring "reset" signal.  See the code of deletion below.
   ignore_reset_for_deletion_range_workaround_ = false;
+#endif  // !USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT
 
   // Since IBus for ChromeOS is based on in-process conversion,
   // it is basically ok to call GetConfig() at every keyevent.
@@ -561,9 +662,9 @@ gboolean MozcEngine::ProcessKeyEvent(
   }
 
   VLOG(2) << key.DebugString();
-  if (!is_activated_ && !config::ImeSwitchUtil::IsTurnOnInDirectMode(key)) {
-      // We DO consume keys that enable Mozc such as Henkan even when in the
-      // DIRECT mode.
+  if (!is_activated_ && !config::ImeSwitchUtil::IsDirectModeCommand(key)) {
+    // We DO consume keys that should be handled even when in the DIRECT
+    // mode such as (default) Henkan key to enable Mozc.
     return FALSE;
   }
 
@@ -620,8 +721,12 @@ void MozcEngine::PropertyActivate(IBusEngine *engine,
 
 #ifndef OS_CHROMEOS
   if (prop_mozc_tool_) {
-    while ((prop = ibus_prop_list_get(prop_mozc_tool_->sub_props, i++))) {
-      if (!g_strcmp0(property_name, prop->key)) {
+    while ((prop = ibus_prop_list_get(
+               // TODO(yusukes): libibus newer than Dec 22 2011 does not need
+               // the const_cast<>. Remove the cast once we upgrade ibus ebuild.
+               const_cast<IBusPropList*>(
+                   ibus_property_get_sub_props(prop_mozc_tool_)), i++))) {
+      if (!g_strcmp0(property_name, ibus_property_get_key(prop))) {
         const MozcEngineToolProperty *entry =
             reinterpret_cast<const MozcEngineToolProperty*>(
                 g_object_get_data(G_OBJECT(prop), kGObjectDataKey));
@@ -640,8 +745,12 @@ void MozcEngine::PropertyActivate(IBusEngine *engine,
   }
 
   i = 0;
-  while ((prop = ibus_prop_list_get(prop_composition_mode_->sub_props, i++))) {
-    if (!g_strcmp0(property_name, prop->key)) {
+  while ((prop = ibus_prop_list_get(
+             // TODO(yusukes): Make the const_cast<> Linux-only. Chrome OS will
+             // not require the cast once we upgrade ibus ebuild.
+             const_cast<IBusPropList*>(
+                 ibus_property_get_sub_props(prop_composition_mode_)), i++))) {
+    if (!g_strcmp0(property_name, ibus_property_get_key(prop))) {
       const MozcEngineProperty *entry =
           reinterpret_cast<const MozcEngineProperty*>(
               g_object_get_data(G_OBJECT(prop), kGObjectDataKey));
@@ -663,6 +772,7 @@ void MozcEngine::PropertyShow(IBusEngine *engine,
 }
 
 void MozcEngine::Reset(IBusEngine *engine) {
+#ifndef USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT
   // Ignore this signal if ignore_reset_for_deletion_range_workaround_ is true.
   // This is workaround of deletion of surrounding text.
   // See also ProcessKeyEvent().
@@ -673,6 +783,7 @@ void MozcEngine::Reset(IBusEngine *engine) {
     ignore_reset_for_deletion_range_workaround_ = false;
     return;
   }
+#endif  // !USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT
   RevertSession(engine);
 }
 
@@ -827,6 +938,7 @@ bool MozcEngine::ProcessModifiers(
       for (size_t i = 0; i < key->modifier_keys_size(); ++i) {
         modifiers_to_be_sent->insert(key->modifier_keys(i));
       }
+      AddAdditionalModifiers(modifiers_to_be_sent);
     }
     currently_pressed_modifiers->insert(keyval);
     return false;
@@ -869,6 +981,14 @@ bool MozcEngine::UpdateDeletionRange(IBusEngine *engine,
       output.deletion_range().offset() < 0 &&
       output.deletion_range().offset() + output.deletion_range().length() >=
           0) {
+#ifdef USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT
+    // Nowadays 'ibus_engine_delete_surrounding_text' becomes functional on
+    // many of the major applications.  Confirmed that it works on
+    // Firefox 10.0, LibreOffice 3.3.4 and GEdit 3.2.3.
+    ibus_engine_delete_surrounding_text(
+        engine,
+        output.deletion_range().offset(), output.deletion_range().length());
+#else
     // Delete some characters of preceding text.  We really want to use
     // ibus_engine_delete_surrounding_text(), but it does not work on many
     // applications, e.g. Chrome, Firefox.  So we currently forward backspaces
@@ -908,6 +1028,7 @@ bool MozcEngine::UpdateDeletionRange(IBusEngine *engine,
     // reset on Disable(), FocusOut(), and ProcessKeyEvent().  Reset() also
     // reset this flag, i.e. this flag does not work more than once.
     ignore_reset_for_deletion_range_workaround_ = true;
+#endif
   }
   return true;
 }
@@ -1096,8 +1217,12 @@ void MozcEngine::UpdateCompositionModeIcon(
 
   size_t i = 0;
   IBusProperty *prop = NULL;
-  while ((prop = ibus_prop_list_get(prop_composition_mode_->sub_props, i++))) {
-    if (!g_strcmp0(entry->key, prop->key)) {
+  while ((prop = ibus_prop_list_get(
+             // TODO(yusukes): Make the const_cast<> Linux-only. Chrome OS will
+             // not require the cast once we upgrade ibus ebuild.
+             const_cast<IBusPropList*>(
+                 ibus_property_get_sub_props(prop_composition_mode_)), i++))) {
+    if (!g_strcmp0(entry->key, ibus_property_get_key(prop))) {
       // Update the language panel.
       ibus_property_set_icon(prop_composition_mode_,
                              GetIconPath(entry->icon).c_str());
@@ -1126,7 +1251,7 @@ void MozcEngine::SyncData(bool force) {
     return;
   }
 
-  const uint64 current_time = GetTime();
+  const uint64 current_time = Util::GetTime();
   if (force ||
       (current_time >= last_sync_time_ &&
        current_time - last_sync_time_ >= kSyncDataInterval)) {
@@ -1179,13 +1304,35 @@ bool MozcEngine::ExecuteCallback(IBusEngine *engine,
   commands::SessionCommand session_command;
   session_command.set_type(callback_command.type());
 
+#if defined(USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT) ||  \
+    defined(USE_IBUS_ENGINE_GET_SURROUNDING_TEXT)
+  // TODO(nona): Make a function to handle CONVERT_REVERSE.
+  // Used by CONVERT_REVERSE and/or UNDO
+  // This value represents how many characters are selected as a relative
+  // distance of characters. Positive value represents forward text selection
+  // and negative value represents backword text selection.
+  // Note that you should not allow 0x80000000 for |relative_selected_length|
+  // because you cannot safely use |-relative_selected_length| nor
+  // |abs(relative_selected_length)| in this case due to integer overflow.
+  int32 relative_selected_length = 0;
+#endif  // USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT ||
+        // USE_IBUS_ENGINE_GET_SURROUNDING_TEXT
+
   switch (callback_command.type()) {
     case commands::SessionCommand::UNDO:
-      // do nothing.
+      // As far as I've tested on Ubuntu 11.10, most of applications which
+      // accept 'ibus_engine_delete_surrounding_text' doe not set
+      // IBUS_CAP_SURROUNDING_TEXT bit.
+      // So we should carefully uncomment the following code.
+      // -----
+      // #ifdef USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT
+      // if (!(engine->client_capabilities & IBUS_CAP_SURROUNDING_TEXT)) {
+      //   return false;
+      // }
+      // #endif  // USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT
       break;
     case commands::SessionCommand::CONVERT_REVERSE: {
-#if IBUS_CHECK_VERSION(1, 4, 0)
-// ibus_engine_get_surrounding_text is supported by >= 1.4.0
+#ifdef USE_IBUS_ENGINE_GET_SURROUNDING_TEXT
       if (!(engine->client_capabilities & IBUS_CAP_SURROUNDING_TEXT)) {
         return false;
       }
@@ -1194,18 +1341,26 @@ bool MozcEngine::ExecuteCallback(IBusEngine *engine,
       guint anchor_pos = 0;
 
       ibus_engine_get_surrounding_text(engine, &text, &cursor_pos,
-                                         &anchor_pos);
+                                       &anchor_pos);
       if (cursor_pos == anchor_pos) {
         // There are no selection texts.
+        return false;
+      }
+
+      if (!GetSafeDelta(cursor_pos, anchor_pos, &relative_selected_length)) {
+        LOG(ERROR) << "Too long text selection.";
         return false;
       }
 
       const string surrounding_text(ibus_text_get_text(text));
       g_object_unref(text);
 
+      // TODO(nona): Write a test for this logic (especially selection_length).
+      // TODO(nona): Check integer range because Util::SubString works
+      //     on size_t, not uint32.
       string selection_text;
       const uint32 selection_start = min(cursor_pos, anchor_pos);
-      const uint32 selection_length = abs(cursor_pos - anchor_pos);
+      const uint32 selection_length = abs(relative_selected_length);
       Util::SubString(surrounding_text,
                       selection_start,
                       selection_length,
@@ -1215,7 +1370,7 @@ bool MozcEngine::ExecuteCallback(IBusEngine *engine,
       break;
 #else
       return false;
-#endif  // IBUS_CHECK_VERSION(1, 4, 0)
+#endif
     }
     default:
       return false;
@@ -1228,13 +1383,26 @@ bool MozcEngine::ExecuteCallback(IBusEngine *engine,
   }
 
   if (callback_command.type() == commands::SessionCommand::CONVERT_REVERSE) {
-    // We need remove selection area, but "delete-surrounding-text" API is
-    // unstable. So we send backspace key event once to remove selection area.
+    // We need to remove selected text as a first step of reconversion.
+    commands::DeletionRange *range = new_output.mutable_deletion_range();
+#ifdef USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT
+    // Use DeletionRange field to remove the selected text.
+    // For forward selection (that is, |relative_selected_length > 0|), the
+    // offset should be a negative value to delete preceding text.
+    // For backward selection (that is, |relative_selected_length < 0|),
+    // IBus and/or some applications seem to expect |offset == 0| somehow.
+    const int32 offset = relative_selected_length > 0
+        ? -relative_selected_length  // forward selection
+        : 0;                         // backward selection
+    range->set_offset(offset);
+    range->set_length(abs(relative_selected_length));
+#else
+    // Send backspace key event once to remove selection area.
     // To set deletion range as follows, the engine forwards backspace key event
     // once to the client application via ibus-daemon.
-    commands::DeletionRange *range = new_output.mutable_deletion_range();
     range->set_offset(-1);
     range->set_length(1);
+#endif
   }
 
   // Here uses recursion of UpdateAll but it's okay because the converter

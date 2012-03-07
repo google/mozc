@@ -29,18 +29,14 @@
 
 #include "usage_stats/usage_stats.h"
 
-#ifdef OS_WINDOWS
-#include <time.h>  // time()
-#else
-#include <sys/time.h>  // time()
-#endif
-
 #include <algorithm>
 #include <string>
 #include <vector>
 
+
 #include "base/util.h"
 #include "base/version.h"
+#include "base/scoped_ptr.h"
 #include "base/singleton.h"
 #include "config/stats_config_util.h"
 #include "net/http_client.h"
@@ -51,7 +47,7 @@
 
 #ifdef OS_WINDOWS
 #include "win32/base/imm_util.h"  // IsCuasEnabled
-#endif
+#endif  // OS_WINDOWS
 
 
 DECLARE_string(test_tmpdir);
@@ -224,12 +220,12 @@ class UsageStatsTest : public ::testing::Test {
 TEST_F(UsageStatsTest, SendTest) {
   // save last_upload
   const uint32 kOneDaySec = 24 * 60 * 60;  // 24 hours
-  const uint32 current_sec = time(NULL);
+  const uint32 current_sec = static_cast<uint32>(Util::GetTime());
   const uint32 yesterday_sec = current_sec - kOneDaySec;
   EXPECT_TRUE(storage::Registry::Insert("usage_stats.last_upload",
                                         yesterday_sec));
   SetValidResult();
-  const uint32 send_sec = time(NULL);
+  const uint32 send_sec = static_cast<uint32>(Util::GetTime());
   EXPECT_TRUE(UsageStats::Send(NULL));
 
   string stats_str;
@@ -247,7 +243,7 @@ TEST_F(UsageStatsTest, SendTest) {
 TEST_F(UsageStatsTest, SendFailTest) {
   // save last_upload
   const uint32 kHalfDaySec = 12 * 60 * 60;  // 12 hours
-  const uint32 current_sec = time(NULL);
+  const uint32 current_sec = static_cast<uint32>(Util::GetTime());
   const uint32 yesterday_sec = current_sec - kHalfDaySec;
   EXPECT_TRUE(storage::Registry::Insert("usage_stats.last_upload",
                                         yesterday_sec));
@@ -267,7 +263,7 @@ TEST_F(UsageStatsTest, SendFailTest) {
 TEST_F(UsageStatsTest, InvalidLastUploadTest) {
   // save last_upload
   const uint32 kHalfDaySec = 12 * 60 * 60;  // 12 hours
-  const uint32 current_sec = time(NULL);
+  const uint32 current_sec = static_cast<uint32>(Util::GetTime());
   // future time
   // for example: time zone has changed
   const uint32 invalid_sec = current_sec + kHalfDaySec;
@@ -306,7 +302,7 @@ class TestStorage: public storage::StorageInterface {
 TEST_F(UsageStatsTest, SaveCurrentTimeFailTest) {
   // save last_upload
   const uint32 kOneDaySec = 24 * 60 * 60;  // 24 hours
-  const uint32 current_sec = time(NULL);
+  const uint32 current_sec = static_cast<uint32>(Util::GetTime());
   const uint32 yesterday_sec = current_sec - kOneDaySec;
   EXPECT_TRUE(storage::Registry::Insert("usage_stats.last_upload",
                                         yesterday_sec));
@@ -337,7 +333,7 @@ TEST_F(UsageStatsTest, SaveCurrentTimeFailTest) {
 TEST_F(UsageStatsTest, UploadFailTest) {
   // save last_upload
   const uint32 kOneDaySec = 24 * 60 * 60;  // 24 hours
-  const uint32 current_sec = time(NULL);
+  const uint32 current_sec = static_cast<uint32>(Util::GetTime());
   const uint32 yesterday_sec = current_sec - kOneDaySec;
   EXPECT_TRUE(storage::Registry::Insert("usage_stats.last_upload",
                                         yesterday_sec));
@@ -372,7 +368,7 @@ TEST_F(UsageStatsTest, UploadFailTest) {
 TEST_F(UsageStatsTest, UploadRetryTest) {
   // save last_upload
   const uint32 kOneDaySec = 24 * 60 * 60;  // 24 hours
-  const uint32 current_sec = time(NULL);
+  const uint32 current_sec = static_cast<uint32>(Util::GetTime());
   const uint32 yesterday_sec = current_sec - kOneDaySec;
   EXPECT_TRUE(storage::Registry::Insert("usage_stats.last_upload",
                                         yesterday_sec));
@@ -427,7 +423,7 @@ TEST_F(UsageStatsTest, GetMsctfVerTest) {
 TEST_F(UsageStatsTest, UploadDataTest) {
   // save last_upload
   const uint32 kOneDaySec = 24 * 60 * 60;  // 24 hours
-  const uint32 current_sec = time(NULL);
+  const uint32 current_sec = static_cast<uint32>(Util::GetTime());
   const uint32 yesterday_sec = current_sec - kOneDaySec;
   EXPECT_TRUE(storage::Registry::Insert("usage_stats.last_upload",
                                         yesterday_sec));
@@ -471,7 +467,21 @@ TEST_F(UsageStatsTest, IsListedTest) {
 }
 
 
-TEST(ClientIdTest, CreateClientIdTest) {
+namespace {
+
+class ClientIdTest : public ::testing::Test {
+ protected:
+  virtual void SetUp() {
+  }
+
+  virtual void TearDown() {
+  }
+
+ private:
+};
+}  // namespace
+
+TEST_F(ClientIdTest, CreateClientIdTest) {
   // test default client id handler here
   UsageStats::SetClientIdHandler(NULL);
   Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
@@ -492,7 +502,7 @@ TEST(ClientIdTest, CreateClientIdTest) {
   EXPECT_NE(client_id_in_storage1, client_id_in_storage2);
 }
 
-TEST(ClientIdTest, GetClientIdTest) {
+TEST_F(ClientIdTest, GetClientIdTest) {
   // test default client id handler here.
   UsageStats::SetClientIdHandler(NULL);
   Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
@@ -511,7 +521,7 @@ TEST(ClientIdTest, GetClientIdTest) {
   EXPECT_NE(client_id1, client_id_in_storage);
 }
 
-TEST(ClientIdTest, GetClientIdFailTest) {
+TEST_F(ClientIdTest, GetClientIdFailTest) {
   // test default client id handler here.
   UsageStats::SetClientIdHandler(NULL);
   Util::SetUserProfileDirectory(FLAGS_test_tmpdir);

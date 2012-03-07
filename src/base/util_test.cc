@@ -34,6 +34,7 @@
 #include <cstring>
 #include <ctime>
 #include <fstream>
+#include <map>
 #include <sstream>
 #include <string>
 
@@ -45,9 +46,69 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
+DECLARE_string(test_srcdir);
 DECLARE_string(test_tmpdir);
 
 namespace mozc {
+
+namespace {
+
+void FillTestCharacterSetMap(map<char32, Util::CharacterSet> *test_map) {
+  CHECK(test_map);
+
+  const char kCharacterSetTestFile[] =
+      "data/test/character_set/character_set.tsv";
+  const string &path = Util::JoinPath(FLAGS_test_srcdir,
+                                      kCharacterSetTestFile);
+  CHECK(Util::FileExists(path)) << path << " does not exist.";
+
+  map<string, Util::CharacterSet> character_set_type_map;
+  character_set_type_map["ASCII"] = Util::ASCII;
+  character_set_type_map["JISX0201"] = Util::JISX0201;
+  character_set_type_map["JISX0208"] = Util::JISX0208;
+  character_set_type_map["JISX0212"] = Util::JISX0212;
+  character_set_type_map["JISX0213"] = Util::JISX0213;
+  character_set_type_map["CP932"] = Util::CP932;
+  // UNICODE_ONLY should not appear in the tsv file though.
+  character_set_type_map["UNICODE_ONLY"] = Util::UNICODE_ONLY;
+
+  InputFileStream finput(path.c_str());
+
+  // Read tsv file.
+  string line;
+  while (getline(finput, line)) {
+    if (Util::StartsWith(line, "#")) {
+      // Skip comment line.
+      continue;
+    }
+
+    vector<string> col;
+    mozc::Util::SplitStringUsing(line, "\t", &col);
+    CHECK_GE(col.size(), 2) << "format error: " << line;
+    const char32 ucs4 = Util::SimpleAtoi(col[0]);
+    map<string, Util::CharacterSet>::const_iterator itr =
+        character_set_type_map.find(col[1]);
+    // We cannot use CHECK_NE here because of overload resolution.
+    CHECK(character_set_type_map.end() != itr)
+        << "Unknown character set type: " << col[1];
+    test_map->insert(make_pair(ucs4, itr->second));
+  }
+}
+
+Util::CharacterSet GetExpectedCharacterSet(
+    const map<char32, Util::CharacterSet> &test_map,
+    char32 ucs4) {
+  map<char32, Util::CharacterSet>::const_iterator itr =
+      test_map.find(ucs4);
+  if (test_map.find(ucs4) == test_map.end()) {
+    // If the test data does not have an entry, it should be
+    // interpreted as |Util::UNICODE_ONLY|.
+    return Util::UNICODE_ONLY;
+  }
+  return itr->second;
+}
+
+}  // namespace
 
 class ThreadTest: public Thread {
  public:
@@ -66,6 +127,30 @@ TEST(UtilTest, JoinStrings) {
   string output;
   Util::JoinStrings(input, ":", &output);
   EXPECT_EQ("ab:cdef:ghr", output);
+}
+
+TEST(UtilTest, AppendStringWithDelimiter) {
+  string result;
+  string input;
+  const char kDelemiter[] = ":";
+
+  {
+    result.clear();
+    Util::AppendStringWithDelimiter(kDelemiter, "test", &result);
+    EXPECT_EQ("test", result);
+  }
+
+  {
+    result = "foo";
+    Util::AppendStringWithDelimiter(kDelemiter, "test", &result);
+    EXPECT_EQ("foo:test", result);
+  }
+
+  {
+    result = "foo";
+    Util::AppendStringWithDelimiter(kDelemiter, "", &result);
+    EXPECT_EQ("foo:", result);
+  }
 }
 
 TEST(UtilTest, SplitStringAllowEmpty) {
@@ -410,6 +495,11 @@ TEST(UtilTest, SubString) {
   Util::SubString(src, 5, string::npos, &result);
   // "中野です"
   EXPECT_EQ(result, "\xe4\xb8\xad\xe9\x87\x8e\xe3\x81\xa7\xe3\x81\x99");
+
+  // Doesn't clear result and call Util::SubString
+  Util::SubString(src, 5, string::npos, &result);
+  // "中野です"
+  EXPECT_EQ(result, "\xe4\xb8\xad\xe9\x87\x8e\xe3\x81\xa7\xe3\x81\x99");
 }
 
 TEST(UtilTest, StartsWith) {
@@ -525,7 +615,7 @@ TEST(UtilTest, SafeStrToUInt32) {
   EXPECT_FALSE(Util::SafeStrToUInt32("", &value));
 }
 
-TEST(UnitTest, SafeHexStrToUInt32) {
+TEST(UtilTest, SafeHexStrToUInt32) {
   uint32 value = 0xDEADBEEF;
 
   EXPECT_TRUE(Util::SafeHexStrToUInt32("0", &value));
@@ -559,7 +649,7 @@ TEST(UnitTest, SafeHexStrToUInt32) {
   EXPECT_FALSE(Util::SafeHexStrToUInt32("", &value));
 }
 
-TEST(UnitTest, SafeOctStrToUInt32) {
+TEST(UtilTest, SafeOctStrToUInt32) {
   uint32 value = 0xDEADBEEF;
 
   EXPECT_TRUE(Util::SafeOctStrToUInt32("0", &value));
@@ -648,7 +738,10 @@ TEST(UtilTest, SafeStrToDouble) {
 #endif
 }
 
+#include "base/push_warning_settings.h"
 #ifdef __GNUC__
+// On GCC, |EXPECT_EQ("", Util::StringPrintf(""))| may cause
+// "warning: zero-length printf format string" so we disable this check.
 #pragma GCC diagnostic ignored "-Wformat-zero-length"
 #endif  // __GNUC__
 TEST(UtilTest, StringPrintf) {
@@ -696,6 +789,7 @@ TEST(UtilTest, StringPrintf) {
                                             kLongStrB.c_str());
   EXPECT_EQ(kLongStrA + "\t" + kLongStrB + "\n", result);
 }
+#include "base/pop_warning_settings.h"
 
 TEST(UtilTest, HiraganaToKatakana) {
   {
@@ -904,6 +998,42 @@ TEST(UtilTest, BracketTest) {
   }
 }
 
+TEST(UtilTest, IsArabicNumber) {
+  EXPECT_TRUE(Util::IsArabicNumber("0"));
+  EXPECT_TRUE(Util::IsArabicNumber("1"));
+  EXPECT_TRUE(Util::IsArabicNumber("2"));
+  EXPECT_TRUE(Util::IsArabicNumber("3"));
+  EXPECT_TRUE(Util::IsArabicNumber("4"));
+  EXPECT_TRUE(Util::IsArabicNumber("5"));
+  EXPECT_TRUE(Util::IsArabicNumber("6"));
+  EXPECT_TRUE(Util::IsArabicNumber("7"));
+  EXPECT_TRUE(Util::IsArabicNumber("8"));
+  EXPECT_TRUE(Util::IsArabicNumber("9"));
+
+  EXPECT_TRUE(Util::IsArabicNumber("\xEF\xBC\x90"));  // ０
+  EXPECT_TRUE(Util::IsArabicNumber("\xEF\xBC\x91"));  // １
+  EXPECT_TRUE(Util::IsArabicNumber("\xEF\xBC\x92"));  // ２
+  EXPECT_TRUE(Util::IsArabicNumber("\xEF\xBC\x93"));  // ３
+  EXPECT_TRUE(Util::IsArabicNumber("\xEF\xBC\x94"));  // ４
+  EXPECT_TRUE(Util::IsArabicNumber("\xEF\xBC\x95"));  // ５
+  EXPECT_TRUE(Util::IsArabicNumber("\xEF\xBC\x96"));  // ６
+  EXPECT_TRUE(Util::IsArabicNumber("\xEF\xBC\x97"));  // ７
+  EXPECT_TRUE(Util::IsArabicNumber("\xEF\xBC\x98"));  // ８
+  EXPECT_TRUE(Util::IsArabicNumber("\xEF\xBC\x99"));  // ９
+
+  EXPECT_TRUE(Util::IsArabicNumber("0123456789"));
+  EXPECT_TRUE(Util::IsArabicNumber("01234567890123456789"));
+
+  EXPECT_TRUE(Util::IsArabicNumber("\xEF\xBC\x91\xEF\xBC\x90"));  // １０
+
+  EXPECT_FALSE(Util::IsArabicNumber("abc"));
+  EXPECT_FALSE(Util::IsArabicNumber("\xe5\x8d\x81"));  // 十
+  EXPECT_FALSE(Util::IsArabicNumber("\xe5\x84\x84"));  // 億
+  // グーグル
+  EXPECT_FALSE(Util::IsArabicNumber(
+      "\xe3\x82\xb0\xe3\x83\xbc\xe3\x82\xb0\xe3\x83\xab"));
+}
+
 TEST(UtilTest, KanjiNumberToArabicNumber) {
   {
     // "十"
@@ -963,6 +1093,18 @@ TEST(UtilTest, KanjiNumberToArabicNumber) {
 }
 
 TEST(UtilTest, NormalizeNumbers) {
+  {
+    // Checks that kanji_output and arabic_output is cleared.
+    // "一"
+    const string input = "\xE4\xB8\x80";
+    string arabic_output = "dummy_text_arabic";
+    string kanji_output = "dummy_text_kanji";
+    EXPECT_TRUE(Util::NormalizeNumbers(input, true,
+                                       &kanji_output, &arabic_output));
+    EXPECT_EQ("1", arabic_output);
+    EXPECT_EQ(input, kanji_output);
+  }
+
   {
     // "一万二十五"
     const string input = "\xe4\xb8\x80\xe4\xb8\x87\xe4\xba\x8c\xe5\x8d\x81\xe4"
@@ -1653,6 +1795,23 @@ TEST(UtilTest, NormalizeNumbers) {
 
 TEST(UtilTest, NormalizeNumbersWithSuffix) {
   {
+    // Checks that kanji_output and arabic_output is cleared.
+    // "一個"
+    const string input = "\xE4\xB8\x80\xE5\x80\x8B";
+    string arabic_output = "dummy_text_arabic";
+    string kanji_output = "dummy_text_kanji";
+    string suffix = "dummy_text_suffix";
+    EXPECT_TRUE(Util::NormalizeNumbersWithSuffix(input, true,
+                                                 &kanji_output,
+                                                 &arabic_output,
+                                                 &suffix));
+    EXPECT_EQ("\xE4\xB8\x80", kanji_output);
+    EXPECT_EQ("1", arabic_output);
+    // "個"
+    EXPECT_EQ("\xE5\x80\x8B", suffix);
+  }
+
+  {
     // "一万二十五個"
     const string input = "\xe4\xb8\x80\xe4\xb8\x87\xe4\xba\x8c\xe5\x8d\x81\xe4"
                          "\xba\x94\xE5\x80\x8B";
@@ -2135,15 +2294,17 @@ TEST(UtilTest, EscapeUrl) {
   // "らむだ"
   Util::EscapeUrl("\xe3\x82\x89\xe3\x82\x80\xe3\x81\xa0", &escaped);
   EXPECT_EQ("%E3%82%89%E3%82%80%E3%81%A0", escaped);
+  EXPECT_EQ("%E3%82%89%E3%82%80%E3%81%A0",
+            Util::EscapeUrl("\xe3\x82\x89\xe3\x82\x80\xe3\x81\xa0"));
 }
 
-TEST(UnitTest, EscapeHtml) {
+TEST(UtilTest, EscapeHtml) {
   string escaped;
   Util::EscapeHtml("<>&'\"abc", &escaped);
   EXPECT_EQ("&lt;&gt;&amp;&#39;&quot;abc", escaped);
 }
 
-TEST(UnitTest, EscapeCss) {
+TEST(UtilTest, EscapeCss) {
   string escaped;
   Util::EscapeCss("<>&'\"abc", &escaped);
   EXPECT_EQ("&lt;>&'\"abc", escaped);
@@ -2543,6 +2704,21 @@ TEST(UtilTest, FormType) {
   EXPECT_EQ(Util::HALF_WIDTH, Util::GetFormType("@!#"));
 }
 
+// We have a snapshot of the result of |Util::GetCharacterSet(ucs4)| in
+// data/test/character_set/character_set.tsv.
+// Compare the result for each character just in case.
+TEST(UtilTest, CharacterSetFullTest) {
+  map<char32, Util::CharacterSet> test_set;
+  FillTestCharacterSetMap(&test_set);
+  EXPECT_FALSE(test_set.empty());
+
+  // Unicode characters consist of [U+0000, U+10FFFF].
+  for (char32 ucs4 = 0; ucs4 <= 0x10ffff; ++ucs4) {
+    EXPECT_EQ(GetExpectedCharacterSet(test_set, ucs4),
+              Util::GetCharacterSet(ucs4))
+        << "Character set changed at " << ucs4;
+  }
+}
 
 TEST(UtilTest, CharacterSet_gen_character_set) {
   // [0x00, 0x7f] are ASCII
@@ -2618,61 +2794,6 @@ TEST(UtilTest, CharacterSet) {
   EXPECT_EQ(Util::UNICODE_ONLY, Util::GetCharacterSet("\xef\xbf\xa6"));
   // "ð ®·" from UCS4 ragne (b/4176888)
   EXPECT_EQ(Util::UNICODE_ONLY, Util::GetCharacterSet("\xF0\xA0\xAE\xB7"));
-}
-
-TEST(UtilTest, WriteByteArray) {
-  {
-    ostringstream os;
-    const string name = "Test";
-    char buf[] = "mozc";
-    size_t buf_size = sizeof(buf);
-    Util::WriteByteArray(name, buf, buf_size, &os);
-    EXPECT_NE(os.str().find("const size_t kTest_size ="), string::npos);
-#ifdef OS_WINDOWS
-    EXPECT_NE(string::npos,
-              os.str().find("const uint64 kTest_data_uint64[] ="));
-    EXPECT_NE(string::npos,
-              os.str().find("const char *kTest_data = "
-                            "reinterpret_cast<const char *>("
-                            "kTest_data_uint64);"));
-#else
-    EXPECT_NE(os.str().find("const char kTest_data[] ="), string::npos);
-#endif
-    LOG(INFO) << os.str();
-  }
-
-  const char kExpected[] = "const size_t ktest_size = 3;\n"
-#ifdef OS_WINDOWS
-      "const uint64 ktest_data_uint64[] = {\n"
-      "0x636261, };\n"
-      "const char *ktest_data = reinterpret_cast<const char *>("
-      "ktest_data_uint64);\n"
-#else
-      "const char ktest_data[] =\n"
-      "\"" "\\" "x61" "\\" "x62" "\\" "x63" "\"\n"
-      ";\n"
-#endif
-      ;
-  {
-    ostringstream os;
-    Util::WriteByteArray("test",
-                         "abc",
-                         3,
-                         &os);
-    EXPECT_EQ(kExpected, os.str());
-  }
-
-  const string filepath = Util::JoinPath(FLAGS_test_tmpdir, "testfile");
-  {
-    OutputFileStream ofs(filepath.c_str());
-    ofs << "abc";
-  }
-
-  {
-    ostringstream os;
-    Util::MakeByteArrayStream("test", filepath, &os);
-    EXPECT_EQ(kExpected, os.str());
-  }
 }
 
 TEST(UtilTest, DirectoryExists) {
@@ -2948,6 +3069,65 @@ TEST(UtilTest, Issue2190350) {
   EXPECT_EQ(3, result.length());
   EXPECT_EQ("\xE3\x81\x82", result);
 }
+
+#ifdef OS_WINDOWS
+// The following "ToUTF" tests fail in the windows environment where the target
+// code pages are not installed.
+#else
+TEST(UtilTest, ToUTF8) {
+  string result = "";
+  Util::ToUTF8("ISO8859-1", "\x61", &result);
+  EXPECT_EQ("a", result);
+
+  // http://en.wikipedia.org/wiki/ISO/IEC_8859
+  result.clear();
+  EXPECT_TRUE(Util::ToUTF8("ISO8859-1", "\xc0", &result));
+  EXPECT_EQ("\xC3\x80", result) << "ISO8859-1";
+  result.clear();
+  EXPECT_TRUE(Util::ToUTF8("ISO8859-2", "\xc0", &result));
+  EXPECT_EQ("\xC5\x94", result) << "ISO8859-2";
+  result.clear();
+  EXPECT_TRUE(Util::ToUTF8("ISO8859-3", "\xc5", &result));
+  EXPECT_EQ("\xC4\x8A", result) << "ISO8859-3";
+  result.clear();
+  EXPECT_TRUE(Util::ToUTF8("ISO8859-4", "\xbb", &result));
+  EXPECT_EQ("\xC4\xA3", result) << "ISO8859-4";
+  result.clear();
+  EXPECT_TRUE(Util::ToUTF8("ISO8859-5", "\xbb", &result));
+  EXPECT_EQ("\xD0\x9B", result) << "ISO8859-5";
+  result.clear();
+  EXPECT_TRUE(Util::ToUTF8("ISO8859-6", "\xbf", &result));
+  EXPECT_EQ("\xD8\x9F", result) << "ISO8859-6";
+  result.clear();
+  EXPECT_TRUE(Util::ToUTF8("ISO8859-7", "\xbf", &result));
+  EXPECT_EQ("\xCE\x8F", result) << "ISO8859-7";
+  result.clear();
+  EXPECT_TRUE(Util::ToUTF8("ISO8859-8", "\xfa", &result));
+  EXPECT_EQ("\xD7\xAA", result) << "ISO8859-8";
+  result.clear();
+  EXPECT_TRUE(Util::ToUTF8("ISO8859-9", "\xbf", &result));
+  EXPECT_EQ("\xC2\xBF", result) << "ISO8859-9";
+  result.clear();
+  EXPECT_TRUE(Util::ToUTF8("ISO8859-13", "\xbf", &result));
+  EXPECT_EQ("\xC3\xA6", result) << "ISO8859-13";
+  result.clear();
+  EXPECT_TRUE(Util::ToUTF8("ISO8859-15", "\xbf", &result));
+  EXPECT_EQ("\xC2\xBF", result) << "ISO8859-15";
+
+  // http://en.wikipedia.org/wiki/KOI8-R
+  result.clear();
+  EXPECT_TRUE(Util::ToUTF8("KOI8-R", "\xc6", &result));
+  EXPECT_EQ("\xD1\x84", result) << "KOI8-R";
+
+  // http://en.wikipedia.org/wiki/Windows-1251
+  result.clear();
+  EXPECT_TRUE(Util::ToUTF8("windows-1251", "\xc6", &result));
+  EXPECT_EQ("\xD0\x96", result) << "windows-1251";
+
+  result.clear();
+  EXPECT_FALSE(Util::ToUTF8("DUMMY_CODE", "a", &result));
+}
+#endif
 
 TEST(UtilTest, Fingerprint32WithSeed_uint32) {
   const uint32 seed = 0xabcdef;
@@ -3316,7 +3496,7 @@ TEST(UtilTest, ArabicToOtherRadixesTest) {
 }
 
 
-TEST(UtilTGest, RandomSeedTest) {
+TEST(UtilTest, RandomSeedTest) {
   Util::SetRandomSeed(0);
   const int first_try = Util::Random(INT_MAX);
   const int second_try = Util::Random(INT_MAX);

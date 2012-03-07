@@ -471,7 +471,7 @@ bool SortCandidates(const vector<ScoreType> &sorted_scores, Segment *segment) {
   }
   return true;
 }
-}  // end of anonymous
+}  // namespace
 
 UserSegmentHistoryRewriter::UserSegmentHistoryRewriter()
     : storage_(new LRUStorage) {
@@ -782,6 +782,7 @@ bool UserSegmentHistoryRewriter::Reload() {
                               kValueSize, kLRUSize, kSeedValue)) {
     LOG(WARNING) << "cannot initialize UserSegmentHistoryRewriter";
     storage_.reset(NULL);
+    g_lru_storage = NULL;
     return false;
   }
 
@@ -831,7 +832,7 @@ void UserSegmentHistoryRewriter::InsertTriggerKey(const Segment &segment) {
   DCHECK(storage_.get());
 
   KeyTriggerValue v;
-  DCHECK_EQ(sizeof(v), sizeof(uint32));
+  COMPILE_ASSERT(sizeof(uint32) == sizeof(v), check_sizeof_KeyTriggerValue);
 
   // TODO(taku): saving segment.candidate_size() might be too heavy and
   // increases the chance of hash collisions.
@@ -986,4 +987,4 @@ void UserSegmentHistoryRewriter::Clear() {
 LRUStorage *UserSegmentHistoryRewriter::GetStorage() {
   return g_lru_storage;
 }
-}  // namespace
+}  // namespace mozc

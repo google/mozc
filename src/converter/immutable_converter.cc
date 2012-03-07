@@ -281,30 +281,6 @@ void ImmutableConverterImpl::ExpandCandidates(
   }
 }
 
-void ImmutableConverterImpl::PromoteUserDictionaryCandidate(
-    Segment *segment) const {
-  // User-dictionary candidates are not always placed at the top.
-  // Since user expects that user-dictionary candidates may appear
-  // on the top, we simply move user-dictoinary-candidate just
-  // "after" the top candidate.
-  if (segment->candidates_size() <= 2) {
-    return;
-  }
-  if ((segment->candidate(0).attributes &
-       Segment::Candidate::USER_DICTIONARY) ||
-      (segment->candidate(1).attributes &
-       Segment::Candidate::USER_DICTIONARY)) {
-    return;
-  }
-  for (size_t i = 2; i < segment->candidates_size(); ++i) {
-    if (segment->candidate(i).attributes &
-        Segment::Candidate::USER_DICTIONARY) {
-      segment->move_candidate(i, 1);   // after the top.
-      return;
-    }
-  }
-}
-
 void ImmutableConverterImpl::InsertDummyCandidates(Segment *segment,
                                                    size_t expand_size) const {
   const Segment::Candidate *top_candidate =
@@ -1004,7 +980,7 @@ void ImmutableConverterImpl::PredictionViterbiSub(Segments *segments,
       const int rid = lnode->rid;
       map<int, pair<int, Node*> >::iterator it_best = lbest.find(rid);
       if (it_best == lbest.end()) {
-        lbest[rid] = make_pair<int, Node*>(INT_MAX, NULL);
+        lbest[rid] = pair<int, Node*>(INT_MAX, static_cast<Node*>(NULL));
         it_best = lbest.find(rid);
       }
       if (lnode->cost < it_best->second.first) {
@@ -1600,7 +1576,6 @@ bool ImmutableConverterImpl::MakeSegments(Segments *segments,
       }
       ExpandCandidates(nbest.get(), segment, segments->request_type(),
                        expand_size);
-      PromoteUserDictionaryCandidate(segment);
       InsertDummyCandidates(segment, expand_size);
       if (node->node_type == Node::CON_NODE) {
         segment->set_segment_type(Segment::FIXED_VALUE);

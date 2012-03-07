@@ -34,18 +34,13 @@
     'build_tools_dir%': '../build_tools',
   },
   'conditions': [
-    ['two_pass_build==0', {
-      'dependencies': [
-        '<(protobuf_dir)/protobuf.gyp:install_protoc',
-      ],
-    }],
     ['OS!="linux"', {
       'variables': {
         'protoc_command%': '<(relative_dir)/<(mozc_build_tools_dir)/protoc<(EXECUTABLE_SUFFIX)',
       },
     }, {  # else
       'conditions': [
-        ['use_libgtest==0', {
+        ['use_libprotobuf==0', {
           'variables': {
             'protoc_command%': '<(relative_dir)/<(mozc_build_tools_dir)/protoc<(EXECUTABLE_SUFFIX)',
           },
@@ -69,7 +64,7 @@
         '<(proto_out_dir)/<(relative_dir)/<(RULE_INPUT_ROOT).pb.cc',
       ],
       'action': [
-        'python', '../build_tools/run_after_chdir.py',
+        'python', '<(build_tools_dir)/run_after_chdir.py',
         '<(DEPTH)',
         '<(protoc_command)',
         '<(relative_dir)/<(RULE_INPUT_NAME)',

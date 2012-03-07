@@ -30,23 +30,27 @@
 #ifndef MOZC_PREDICTION_USER_HISTORY_PREDICTOR_H_
 #define MOZC_PREDICTION_USER_HISTORY_PREDICTOR_H_
 
-#include <algorithm>
 #include <queue>
 #include <set>
 #include <string>
 #include <utility>
-#include <vector>
 #include "base/freelist.h"
+#include "base/scoped_ptr.h"
+#include "base/trie.h"
 #include "prediction/predictor_interface.h"
 #include "prediction/user_history_predictor.pb.h"
 #include "storage/lru_cache.h"
-#include "testing/base/public/gunit_prod.h"  // for FRIEND_TEST
+// for FRIEND_TEST
+#include "testing/base/public/gunit_prod.h"
 
 namespace mozc {
 
+namespace storage {
+class EncryptedStringStorage;
+}  // namespace storage
+
 class Segments;
 class Segment;
-
 class UserHistoryPredictorSyncer;
 
 // Added serialization method for UserHistory.
@@ -55,9 +59,6 @@ class UserHistoryStorage : public mozc::user_history_predictor::UserHistory {
   explicit UserHistoryStorage(const string &filename);
   ~UserHistoryStorage();
 
-  // return failename
-  string filename() const;
-
   // Load from encrypted file.
   bool Load();
 
@@ -65,7 +66,7 @@ class UserHistoryStorage : public mozc::user_history_predictor::UserHistory {
   bool Save() const;
 
  private:
-  string filename_;
+  scoped_ptr<storage::EncryptedStringStorage> storage_;
 };
 
 // UserHistoryPredictor is NOT thread safe.
@@ -153,11 +154,21 @@ class UserHistoryPredictor: public PredictorInterface {
   FRIEND_TEST(UserHistoryPredictorTest, IsValidSuggestion);
   FRIEND_TEST(UserHistoryPredictorTest, EntryPriorityQueueTest);
   FRIEND_TEST(UserHistoryPredictorTest, PrivacySensitiveTest);
+  FRIEND_TEST(UserHistoryPredictorTest, PrivacySensitiveMultiSegmentsTest);
   FRIEND_TEST(UserHistoryPredictorTest, UserHistoryStorage);
   FRIEND_TEST(UserHistoryPredictorTest, RomanFuzzyPrefixMatch);
   FRIEND_TEST(UserHistoryPredictorTest, MaybeRomanMisspelledKey);
   FRIEND_TEST(UserHistoryPredictorTest, GetRomanMisspelledKey);
   FRIEND_TEST(UserHistoryPredictorTest, RomanFuzzyLookupEntry);
+  FRIEND_TEST(UserHistoryPredictorTest, ExpandedLookupRoman);
+  FRIEND_TEST(UserHistoryPredictorTest, ExpandedLookupKana);
+  FRIEND_TEST(UserHistoryPredictorTest, GetMatchTypeFromInputRoman);
+  FRIEND_TEST(UserHistoryPredictorTest, GetMatchTypeFromInputKana);
+  FRIEND_TEST(UserHistoryPredictorTest, GetInputKeyFromSegmentsRoman);
+  FRIEND_TEST(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanN);
+  FRIEND_TEST(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanRandom);
+  FRIEND_TEST(UserHistoryPredictorTest, GetInputKeyFromSegmentsShouldNotCrash);
+  FRIEND_TEST(UserHistoryPredictorTest, GetInputKeyFromSegmentsKana);
 
   // Load user history data to LRU from local file
   bool Load();
@@ -187,7 +198,14 @@ class UserHistoryPredictor: public PredictorInterface {
     EXACT_MATCH,         // right string == left string
   };
 
+  // Get match type from two strings
   static MatchType GetMatchType(const string &lstr, const string &rstr);
+
+  // Get match type with ambiguity expansion
+  static MatchType GetMatchTypeFromInput(const string &input_key,
+                                         const string &key_base,
+                                         const Trie<string> *key_expanded,
+                                         const string &target);
 
   // Uint32 <=> string conversion
   static string Uint32ToString(uint32 fp);
@@ -242,16 +260,34 @@ class UserHistoryPredictor: public PredictorInterface {
 
   bool Lookup(Segments *segments) const;
 
-  // If input_key can be a target key of entry->key(), creat a new
-  // result and insert it to |results|.
+  // If |entry| is the target of prediction,
+  // create a new result and insert it to |results|.
   // Can set |prev_entry| if there is a history segment just before |input_key|.
   // |prev_entry| is an optional field. If set NULL, this field is just ignored.
   // This method adds a new result entry with score, pair<score, entry>, to
   // |results|.
   bool LookupEntry(const string &input_key,
+                   const string &key_base,
+                   const Trie<string> *key_expanded,
                    const Entry *entry,
                    const Entry *prev_entry,
                    EntryPriorityQueue *results) const;
+
+  const Entry *LookupPrevEntry(const Segments &segments) const;
+
+  void GetResultsFromHistoryDictionary(
+      const Segments &segments,
+      const Entry *prev_entry,
+      EntryPriorityQueue *results) const;
+
+  // Get input data from segments.
+  // These input data include ambiguities.
+  static void GetInputKeyFromSegments(
+      const Segments &segments, string *input_key, string *base,
+      scoped_ptr<Trie<string> >*expanded);
+
+  bool InsertCandidates(bool zero_query_suggestion, Segments *segments,
+                        EntryPriorityQueue *results) const;
 
   // return true if |prefix| is a fuzzy-prefix of |str|.
   // 'Fuzzy' means that

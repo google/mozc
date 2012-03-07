@@ -29,15 +29,8 @@
 
 #include "session/session_usage_observer.h"
 
-#ifdef OS_WINDOWS
-#include <time.h>  // time()
-#else
-#include <sys/time.h>  // time()
-#endif
-
-#include <limits.h>
-
 #include <algorithm>
+#include <climits>
 #include <map>
 #include <set>
 #include <sstream>
@@ -46,12 +39,14 @@
 #include "base/base.h"
 #include "base/config_file_stream.h"
 #include "base/singleton.h"
+#include "base/util.h"
 #include "config/config_handler.h"
 #include "config/config.pb.h"
 #include "session/commands.pb.h"
 #include "session/internal/keymap.h"
 #include "session/state.pb.h"
 #include "usage_stats/usage_stats.h"
+#include "usage_stats/usage_stats.pb.h"
 
 namespace mozc {
 namespace session {
@@ -104,7 +99,7 @@ bool IMEActivationKeyCustomized() {
   for (size_t i = 0; i < arraysize(kKeyMaps); ++i) {
     const char *keymap_file =
         keymap::KeyMapManager::GetKeyMapFileName(kKeyMaps[i]);
-    scoped_ptr<istream> ifs(ConfigFileStream::Open(keymap_file));
+    scoped_ptr<istream> ifs(ConfigFileStream::LegacyOpen(keymap_file));
     if (ifs.get() == NULL) {
       LOG(ERROR) << "can not open default keymap table " << i;
       continue;
@@ -211,6 +206,56 @@ void SetConfigStats() {
   const bool ime_activation_key_customized = IMEActivationKeyCustomized();
   usage_stats::UsageStats::SetBoolean("IMEActivationKeyCustomized",
                                       ime_activation_key_customized);
+
+  const bool has_sync_config = GET_CONFIG(has_sync_config);
+  const bool use_config_sync = has_sync_config &&
+                               GET_CONFIG(sync_config().use_config_sync);
+  usage_stats::UsageStats::SetBoolean("ConfigUseConfigSync",
+                                      use_config_sync);
+  const bool use_user_dictionary_sync =
+      has_sync_config && GET_CONFIG(sync_config().use_user_dictionary_sync);
+  usage_stats::UsageStats::SetBoolean("ConfigUseUserDictionarySync",
+                                      use_user_dictionary_sync);
+  const bool use_user_history_sync =
+      has_sync_config && GET_CONFIG(sync_config().use_user_history_sync);
+  usage_stats::UsageStats::SetBoolean("ConfigUseHistorySync",
+                                      use_user_history_sync);
+  const bool use_learning_preference_sync =
+      has_sync_config && GET_CONFIG(sync_config().use_learning_preference_sync);
+  usage_stats::UsageStats::SetBoolean("ConfigUseLearningPreferenceSync",
+                                      use_learning_preference_sync);
+  const bool use_contact_list_sync =
+      has_sync_config && GET_CONFIG(sync_config().use_contact_list_sync);
+  usage_stats::UsageStats::SetBoolean("ConfigUseContactListSync",
+                                      use_contact_list_sync);
+
+  const bool use_cloud_sync =
+      use_config_sync || use_user_dictionary_sync || use_user_history_sync ||
+      use_learning_preference_sync || use_contact_list_sync;
+  usage_stats::UsageStats::SetBoolean("ConfigUseCloudSync",
+                                      use_cloud_sync);
+
+  const bool allow_cloud_handwriting = GET_CONFIG(allow_cloud_handwriting);
+  usage_stats::UsageStats::SetBoolean("ConfigAllowCloudHandwriting",
+                                       allow_cloud_handwriting);
+
+  const bool has_information_list_config =
+      GET_CONFIG(has_information_list_config);
+  const bool use_local_usage_dictionary =
+      has_information_list_config &&
+      GET_CONFIG(information_list_config().use_local_usage_dictionary);
+  usage_stats::UsageStats::SetBoolean("ConfigUseLocalUsageDictionary",
+                                      use_local_usage_dictionary);
+  const bool use_web_usage_dictionary =
+      has_information_list_config &&
+      GET_CONFIG(information_list_config().use_web_usage_dictionary);
+  usage_stats::UsageStats::SetBoolean("ConfigUseWebUsageDictionary",
+                                      use_web_usage_dictionary);
+  const uint32 web_service_entries_size =
+      has_information_list_config ?
+      GET_CONFIG(information_list_config().web_service_entries_size) : 0;
+  usage_stats::UsageStats::SetInteger("WebServiceEntrySize",
+                                      web_service_entries_size);
 }
 
 // Return true if the value is in the candidate.
@@ -395,9 +440,9 @@ class EventConverter {
   map<uint32, string> specialkey_map_;
 };
 
-SessionUsageObserver::SessionUsageObserver() :
-    update_count_(0),
-    save_interval_(kDefaultSaveInterval) {
+SessionUsageObserver::SessionUsageObserver()
+    : update_count_(0),
+      save_interval_(kDefaultSaveInterval) {
   SetConfigStats();
 }
 
@@ -486,14 +531,14 @@ void SessionUsageObserver::SetBoolean(const string &name, bool val) {
   }
 }
 
-void SessionUsageObserver::EvalCreateSession(const commands::Input &input,
-                                             const commands::Output &output,
-                                             map<uint64, SessionState> *states) {
+void SessionUsageObserver::EvalCreateSession(
+    const commands::Input &input, const commands::Output &output,
+    map<uint64, SessionState> *states) {
   // Number of create session
   IncrementCount("SessionCreated");
   SessionState state;
   state.set_id(output.id());
-  state.set_created_time(time(NULL));
+  state.set_created_time(Util::GetTime());
   // TODO(toshiyuki): LRU?
   if (states->size() <= kMaxSession) {
     states->insert(make_pair(output.id(), state));
@@ -617,12 +662,12 @@ void SessionUsageObserver::UpdateState(const commands::Input &input,
   // Preedit
   if (!state->has_preedit() && output.has_preedit()) {
     // Start preedit
-    state->set_start_preedit_time(time(NULL));
+    state->set_start_preedit_time(Util::GetTime());
   } else if (state->has_preedit() && output.has_preedit()) {
     // Continue preedit
   } else if (state->has_preedit() && !output.has_preedit()) {
     // Finish preedit
-    const uint64 duration = time(NULL) - state->start_preedit_time();
+    const uint64 duration = Util::GetTime() - state->start_preedit_time();
     UpdateTiming("PreeditDuration", duration);
   } else {
     // no preedit
@@ -633,13 +678,13 @@ void SessionUsageObserver::UpdateState(const commands::Input &input,
     const commands::Candidates &cands = output.candidates();
     switch (cands.category()) {
       case commands::CONVERSION:
-        state->set_start_conversion_window_time(time(NULL));
+        state->set_start_conversion_window_time(Util::GetTime());
         break;
       case commands::PREDICTION:
-        state->set_start_prediction_window_time(time(NULL));
+        state->set_start_prediction_window_time(Util::GetTime());
         break;
       case commands::SUGGESTION:
-        state->set_start_suggestion_window_time(time(NULL));
+        state->set_start_suggestion_window_time(Util::GetTime());
         break;
       default:
         LOG(WARNING) << "candidate window has invalid category";
@@ -650,17 +695,17 @@ void SessionUsageObserver::UpdateState(const commands::Input &input,
     if (!output.has_candidates() ||
         output.candidates().category() != commands::SUGGESTION) {
       const uint64 suggest_duration
-          = time(NULL) - state->start_suggestion_window_time();
+          = Util::GetTime() - state->start_suggestion_window_time();
       UpdateTiming("SuggestionWindowDuration",
                    suggest_duration);
     }
     if (output.has_candidates()) {
       switch (output.candidates().category()) {
         case commands::CONVERSION:
-          state->set_start_conversion_window_time(time(NULL));
+          state->set_start_conversion_window_time(Util::GetTime());
           break;
         case commands::PREDICTION:
-          state->set_start_prediction_window_time(time(NULL));
+          state->set_start_prediction_window_time(Util::GetTime());
           break;
         case commands::SUGGESTION:
           // continue suggestion
@@ -675,7 +720,7 @@ void SessionUsageObserver::UpdateState(const commands::Input &input,
     if (!output.has_candidates() ||
         output.candidates().category() != commands::PREDICTION) {
       const uint64 predict_duration
-          = time(NULL) - state->start_prediction_window_time();
+          = Util::GetTime() - state->start_prediction_window_time();
       UpdateTiming("PredictionWindowDuration",
                    predict_duration);
     }
@@ -685,7 +730,7 @@ void SessionUsageObserver::UpdateState(const commands::Input &input,
     if (!output.has_candidates() ||
         output.candidates().category() != commands::CONVERSION) {
       const uint64 conversion_duration
-          = time(NULL) - state->start_conversion_window_time();
+          = Util::GetTime() - state->start_conversion_window_time();
       UpdateTiming("ConversionWindowDuration",
                    conversion_duration);
     }
@@ -743,13 +788,13 @@ void SessionUsageObserver::UpdateClientSideStats(const commands::Input &input,
   switch (input.command().usage_stats_event()) {
     case commands::SessionCommand::INFOLIST_WINDOW_SHOW:
       if (!state->has_start_infolist_window_time()) {
-        state->set_start_infolist_window_time(time(NULL));
+        state->set_start_infolist_window_time(Util::GetTime());
       }
       break;
     case commands::SessionCommand::INFOLIST_WINDOW_HIDE:
       if (state->has_start_infolist_window_time()) {
         const uint64 infolist_duration
-            = time(NULL) - state->start_infolist_window_time();
+            = Util::GetTime() - state->start_infolist_window_time();
         DLOG(INFO) << "infolist_duration:" << infolist_duration;
         UpdateTiming("InfolistWindowDuration", infolist_duration);
         state->clear_start_infolist_window_time();
@@ -828,7 +873,7 @@ void SessionUsageObserver::CheckOutput(const commands::Input &input,
   } else if (state->mode() == session::SessionState::PREDICTION ||
              CheckCandidateCategory(state, commands::PREDICTION)) {
     IncrementCount("CommitFromPrediction");
-    DCHECK(state->selected_indices_size() == 1);
+    DCHECK_EQ(1, state->selected_indices_size());
     const uint32 index = state->selected_indices(0);
     if (index == kSelectDirectly) {
       // Treat as top candidate
@@ -864,7 +909,7 @@ void SessionUsageObserver::CheckOutput(const commands::Input &input,
       UpdateTiming("SubmittedSegmentLength", len);
     }
     UpdateTiming("SubmittedLength", total_len);
-    UpdateTiming("SubmittedSegmentNumber",state->preedit().segment_size());
+    UpdateTiming("SubmittedSegmentNumber", state->preedit().segment_size());
     IncrementCountBy("SubmittedTotalLength", total_len);
   } else {
     // Zero-query Suggest
@@ -942,7 +987,7 @@ void SessionUsageObserver::EvalCommandHandler(
 
   if (input.type() == commands::Input::DELETE_SESSION) {
     // Session duration sec
-    const uint64 duration = time(NULL) - state->created_time();
+    const uint64 duration = Util::GetTime() - state->created_time();
     UpdateTiming("SessionDuration", duration);
 
     states_.erase(iter);

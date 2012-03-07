@@ -33,6 +33,7 @@
 #include <sstream>
 #include "base/base.h"
 #include "base/util.h"
+#include "composer/composer.h"
 #include "converter/converter.h"
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter.h"
@@ -143,6 +144,22 @@ bool ExecCommand(const mozc::ConverterInterface &converter,
     segments->set_user_history_enabled(false);
   } else if (func == "enableuserhistory") {
     segments->set_user_history_enabled(true);
+  } else if (func == "convertwithprecedingtext" || func == "cwpt") {
+    CHECK_FIELDS_LENGTH(3);
+    mozc::composer::Composer composer;
+    composer.InsertCharacter(fields[2]);
+    mozc::ConversionRequest request(&composer);
+    request.preceding_text = fields[1];
+    converter.StartConversionForRequest(request, segments);
+    segments->set_composer(NULL);
+  } else if (func == "predictwithprecedingtext" || func == "pwpt") {
+    CHECK_FIELDS_LENGTH(3);
+    mozc::composer::Composer composer;
+    composer.InsertCharacter(fields[2]);
+    mozc::ConversionRequest request(&composer);
+    request.preceding_text = fields[1];
+    converter.StartPredictionForRequest(request, segments);
+    segments->set_composer(NULL);
   } else {
     LOG(WARNING) << "Unknown command: " <<  func;
     return false;

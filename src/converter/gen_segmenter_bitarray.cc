@@ -35,10 +35,12 @@
 #include "converter/gen_segmenter_bitarray.h"
 
 #include <map>
-#include <vector>
 #include <string>
+#include <vector>
+
 #include "base/base.h"
 #include "base/bitarray.h"
+#include "base/codegen_bytearray_stream.h"
 #include "base/file_stream.h"
 
 namespace mozc {
@@ -211,11 +213,11 @@ void SegmenterBitarrayGenerator::GenerateBitarray(int lsize, int rsize,
   ltable.Output("kCompressedLIDTable", &ofs);
   rtable.Output("kCompressedRIDTable", &ofs);
 
-  const char kBitArrayName[] = "SegmenterBitArrayData";
-  mozc::Util::WriteByteArray(kBitArrayName,
-                             reinterpret_cast<const char *>(barray.array()),
-                             barray.array_size(),
-                             &ofs);
+  mozc::CodeGenByteArrayOutputStream codegen_stream(
+      &ofs, mozc::codegenstream::NOT_OWN_STREAM);
+  codegen_stream.OpenVarDef("SegmenterBitArrayData");
+  codegen_stream.write(barray.array(), barray.array_size());
+  codegen_stream.CloseVarDef();
 }
 
 }  // namespace mozc

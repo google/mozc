@@ -46,7 +46,6 @@
         '../dictionary/dictionary_base.gyp:gen_pos_matcher',
         '../prediction/prediction.gyp:prediction',
         '../rewriter/rewriter.gyp:rewriter',
-        '../session/session_base.gyp:genproto_session',
         '../session/session_base.gyp:session_protocol',
         'converter_base.gyp:immutable_converter',
         'converter_base.gyp:segments',
@@ -59,6 +58,7 @@
         'converter_main.cc',
        ],
       'dependencies': [
+        '../composer/composer.gyp:composer',
         'converter',
         'converter_base.gyp:segments',
       ],

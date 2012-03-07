@@ -55,7 +55,14 @@
       ],
       'variables': {
         'test_size': 'small',
+        'test_data_subdir': 'data/test/config',
+        'test_data': [
+          '../<(test_data_subdir)/mac_config1.db',
+          '../<(test_data_subdir)/linux_config1.db',
+          '../<(test_data_subdir)/win_config1.db',
+        ],
       },
+      'includes': [ '../gyp/install_testdata.gypi' ],
     },
     # Test cases meta target: this target is referred from gyp/tests.gyp
     {

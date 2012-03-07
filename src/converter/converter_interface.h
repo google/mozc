@@ -41,8 +41,26 @@ namespace composer {
   class Composer;
 }  // namespace composer
 
+// Contains utilizable information for conversion, including composition,
+// preceding text, etc.
+struct ConversionRequest {
+  explicit ConversionRequest(const composer::Composer *c) : composer(c) {}
+
+  // Required field
+  // Input composer to generate a key for conversion.
+  const composer::Composer *composer;
+
+  // Optional field
+  // If nonempty, utilizes this preceding text for conversion.
+  string preceding_text;
+};
+
 class ConverterInterface {
  public:
+  // Starts conversion for given request.
+  virtual bool StartConversionForRequest(const ConversionRequest &request,
+                                         Segments *segments) const = 0;
+
   // Start conversion with key.
   // key is a request writtein in Hiragana sequence
   virtual bool StartConversion(Segments *segments,
@@ -55,6 +73,10 @@ class ConverterInterface {
   // Start reverse conversion with key.
   virtual bool StartReverseConversion(Segments *segments,
                                       const string &key) const = 0;
+
+  // Starts prediction for given request.
+  virtual bool StartPredictionForRequest(const ConversionRequest &request,
+                                         Segments *segments) const = 0;
 
   // Start prediction with key (request_type = PREDICTION)
   virtual bool StartPrediction(Segments *segments,
@@ -200,13 +222,6 @@ class ConverterUtil {
   static void InitSegmentsFromString(const string &key,
                                      const string &preedit,
                                      Segments *segments);
-
-  // Complete Left id/Right id if they are not defined.
-  // Some users don't push conversion button but directly
-  // input hiragana sequence only with composition mode. Converter
-  // cannot know which POS ids should be used for these directly-
-  // input strings. This function estimates IDs from value heuristically.
-  static void CompletePOSIds(Segment::Candidate *candidate);
 
  private:
   ConverterUtil() {}

@@ -53,15 +53,15 @@ class GenericTableEditorDialog : public QDialog,
   const string &table() const;
 
  protected slots:
-  void AddNewItem();
-  void InsertItem();
-  void DeleteSelectedItems();
-  void OnContextMenuRequested(const QPoint &pos);
-  void Clicked(QAbstractButton *button);
-  void InsertEmptyItem(int row);
-  void UpdateOKButton(bool status);
-  void Import();
-  void Export();
+  virtual void AddNewItem();
+  virtual void InsertItem();
+  virtual void DeleteSelectedItems();
+  virtual void OnContextMenuRequested(const QPoint &pos);
+  virtual void Clicked(QAbstractButton *button);
+  virtual void InsertEmptyItem(int row);
+  virtual void UpdateOKButton(bool status);
+  virtual void Import();
+  virtual void Export();
 
   virtual void UpdateMenuStatus();
   virtual void OnEditMenuAction(QAction *action);
@@ -82,7 +82,8 @@ class GenericTableEditorDialog : public QDialog,
   // the current view is updated.
   virtual bool Update() = 0;
 
-  static size_t max_entry_size();
+  // return maximum size of entry.
+  virtual size_t max_entry_size() const;
 
  private:
   QMenu *edit_menu_;

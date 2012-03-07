@@ -35,6 +35,8 @@
 
 #include "base/text_normalizer.h"
 #include "base/util.h"
+#include "config/config_handler.h"
+#include "config/config.pb.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
 #include "composer/composer.h"
@@ -46,8 +48,24 @@ namespace mozc {
 namespace session {
 
 namespace {
+
 const size_t kDefaultMaxHistorySize = 3;
+
+void SetPresentationMode(bool enabled) {
+  config::Config config;
+  config::ConfigHandler::GetConfig(&config);
+  config.set_presentation_mode(enabled);
+  config::ConfigHandler::SetConfig(config);
 }
+
+void SetIncognitoMode(bool enabled) {
+  config::Config config;
+  config::ConfigHandler::GetConfig(&config);
+  config.set_incognito_mode(enabled);
+  config::ConfigHandler::SetConfig(config);
+}
+
+}  // namespace
 
 SessionConverter::SessionConverter(const ConverterInterface *converter)
     : SessionConverterInterface(),
@@ -737,6 +755,16 @@ void SessionConverter::CommitFirstSegment(size_t *committed_key_size) {
   UpdateCandidateList();
 }
 
+void SessionConverter::CommitPreeditString(const string &key,
+                                           const string &preedit) {
+  SessionOutput::FillConversionResultWithoutNormalization(
+      key, preedit, &result_);
+
+  ConverterUtil::InitSegmentsFromString(key, preedit, segments_.get());
+  converter_->FinishConversion(segments_.get());
+  ResetState();
+}
+
 void SessionConverter::CommitPreedit(const composer::Composer &composer) {
   string key, preedit, normalized_preedit;
   composer.GetQueryForConversion(&key);
@@ -1025,6 +1053,9 @@ void SessionConverter::FillOutput(
   if (CheckState(SUGGESTION | PREDICTION | CONVERSION)) {
     FillAllCandidateWords(output->mutable_all_candidate_words());
   }
+
+  // Propagate config information to renderer.
+  PropagateConfigToRenderer(output);
 }
 
 void SessionConverter::FillContext(commands::Context *context) const {
@@ -1181,14 +1212,32 @@ bool SessionConverter::MaybePerformCommandCandidate(
     const size_t index,
     const size_t size) const {
   // If a candidate has the command attribute, Cancel is performed
-  // instead of Commit.
+  // instead of Commit after executing the specified action.
   for (size_t i = index; i < size; ++i) {
     const int id = GetCandidateIndexForConverter(i);
     const Segment::Candidate &candidate =
         segments_->conversion_segment(i).candidate(id);
     if (candidate.attributes & Segment::Candidate::COMMAND_CANDIDATE) {
-      // TODO(komatsu): Move the logic for command_candidate here from
-      // the rewriter.
+      switch (candidate.command) {
+        case Segment::Candidate::DEFAULT_COMMAND:
+          // Do nothing
+          break;
+        case Segment::Candidate::ENABLE_INCOGNITO_MODE:
+          SetIncognitoMode(true);
+          break;
+        case Segment::Candidate::DISABLE_INCOGNITO_MODE:
+          SetIncognitoMode(false);
+          break;
+        case Segment::Candidate::ENABLE_PRESENTATION_MODE:
+          SetPresentationMode(true);
+          break;
+        case Segment::Candidate::DISABLE_PRESENTATION_MODE:
+          SetPresentationMode(false);
+          break;
+        default:
+          LOG(WARNING) << "Unkown command: " << candidate.command;
+          break;
+      }
       return true;
     }
   }
@@ -1440,5 +1489,19 @@ void SessionConverter::FillAllCandidateWords(
       segment, *candidate_list_, category, candidates);
 }
 
+void SessionConverter::PropagateConfigToRenderer(
+    commands::Output *output) const {
+  DCHECK(output);
+  if (!candidate_list_visible_ || !CheckState(PREDICTION | CONVERSION)) {
+    return;
+  }
+  const config::Config &config = config::ConfigHandler::GetConfig();
+  if (config.has_information_list_config() &&
+      config.information_list_config().use_web_usage_dictionary() &&
+      config.information_list_config().web_service_entries_size() > 0) {
+    output->mutable_config()->mutable_information_list_config()->CopyFrom(
+        config.information_list_config());
+  }
+}
 }  // namespace session
 }  // namespace mozc

@@ -36,13 +36,17 @@
 
 #include <string>
 #include <vector>
+
 #include "base/base.h"
+#include "base/codegen_bytearray_stream.h"
+#include "base/file_stream.h"
 #include "base/util.h"
 #include "dictionary/system/system_dictionary_builder.h"
 
 DEFINE_string(input, "", "space separated input text files");
 DEFINE_string(output, "", "output binary file");
 DEFINE_bool(make_header, false, "make header mode");
+
 
 namespace mozc {
 namespace {
@@ -62,22 +66,25 @@ int main(int argc, char **argv) {
   mozc::Util::SplitStringUsing(FLAGS_input, " ", &input_files);
   string output = FLAGS_output;
 
-  if (FLAGS_make_header) {
-    output += ".tmp";
-  }
-
   const string input = mozc::GetInputFileName(input_files);
   mozc::dictionary::SystemDictionaryBuilder builder;
   builder.BuildFromFile(input);
-  builder.WriteToFile(output);
 
+  scoped_ptr<ostream> output_stream(
+      new mozc::OutputFileStream(FLAGS_output.c_str(),
+                                 FLAGS_make_header
+                                 ? ios::out
+                                 : ios::out | ios::binary));
   if (FLAGS_make_header) {
-    const char kName[] = "DictionaryData";
-    mozc::Util::MakeByteArrayFile(kName,
-                                  output,
-                                  FLAGS_output);
-    mozc::Util::Unlink(output);
+    mozc::CodeGenByteArrayOutputStream *codegen_stream;
+    output_stream.reset(
+        codegen_stream = new mozc::CodeGenByteArrayOutputStream(
+            output_stream.release(),
+            mozc::codegenstream::OWN_STREAM));
+    codegen_stream->OpenVarDef("DictionaryData");
   }
+
+  builder.WriteToStream(FLAGS_output, output_stream.get());
 
   return 0;
 }

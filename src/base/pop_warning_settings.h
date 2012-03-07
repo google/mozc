@@ -27,55 +27,31 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// Normalizer of key events
+// This header file intentionally does not have include guard because
+// the purpose of this header file is embedding boilerplate code and
+// you may want to use this header file multiple times from a file.
 
-#ifndef MOZC_SESSION_KEY_EVENT_NORMALIZER_H_
-#define MOZC_SESSION_KEY_EVENT_NORMALIZER_H_
+// This header file provides a generic way to restore compiler's warning
+// settings saved by "push_warning_settings.h" so that you can disable
+// some unavoidable warnings temporarily.
+// Currently Visual C++, GCC 4.6 and later, and clang are supported.
+// On GCC 4.5 and prior, this header does nothing.
+//
+// Usage example:
+//   #include "base/push_warning_settings.h"
+//   #if defined(__GNUC__) && (__GNUC__ * 100 + __GNUC_MINOR__ >= 405)
+//   #pragma GCC diagnostic ignored "-Wconversion-null"
+//   #endif  // GCC 4.5 and greater
+//   EXPECT_EQ(false, false);
+//   #include "base/pop_warning_settings.h"
 
-#include "base/base.h"
-
-namespace mozc {
-namespace commands {
-class KeyEvent;
-}
-
-class KeyEventNormalizer {
- public:
-  static bool ToUint64(const commands::KeyEvent &key_event, uint64 *key) {
-    const uint16 modifier_keys = GetModifiers(key_event);
-    const uint16 special_key = key_event.has_special_key() ?
-      key_event.special_key() : commands::KeyEvent::NO_SPECIALKEY;
-    const uint32 key_code = key_event.has_key_code() ?
-      key_event.key_code() : 0;
-
-    // Make sure the translation from the obsolete spesification.
-    // key_code should no longer contain control characters.
-    if (0 < key_code && key_code <= 32) {
-      return false;
-    }
-
-    // uint64 = |Modifiers(16bit)|SpecialKey(16bit)|Unicode(32bit)|.
-    *key = (static_cast<uint64>(modifier_keys) << 48) +
-      (static_cast<uint64>(special_key) << 32) + static_cast<uint64>(key_code);
-    return true;
-  }
- private:
-  static uint16 GetModifiers(const commands::KeyEvent &key_event) {
-    uint16 modifiers = 0;
-    if (key_event.has_modifiers()) {
-      modifiers = key_event.modifiers();
-    } else {
-      for (size_t i = 0; i < key_event.modifier_keys_size(); ++i) {
-        modifiers |= key_event.modifier_keys(i);
-      }
-    }
-    return modifiers;
-  }
-
-  // Should never been allocated.
-  DISALLOW_COPY_AND_ASSIGN(KeyEventNormalizer);
-};
-
-}  // namespace mozc
-
-#endif  // MOZC_SESSION_KEY_EVENT_NORMALIZER_H_
+#if defined(_MSC_VER)
+  // Visual C++
+  #pragma warning(pop)
+#elif defined(__GNUC__) && (__GNUC__ * 100 + __GNUC_MINOR__ >= 406)
+  // G++ 4.6 and greater
+  #pragma GCC diagnostic pop
+#elif defined(__clang__)
+  // Clang
+  #pragma clang diagnostic pop
+#endif

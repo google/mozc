@@ -1,0 +1,93 @@
+@	@		NoTransliteration
+-	-		NoTransliteration
+_	_		NoTransliteration
+/	/		NoTransliteration
+&	&		NoTransliteration
+a		{*}a	NoTransliteration
+b		{*}b	NoTransliteration
+c		{*}c	NoTransliteration
+{*}a*		{*}A
+{*}b*		{*}B
+{*}c*		{*}C
+{*}A*		{*}a
+{*}B*		{*}b
+{*}C*		{*}c
+d		{*}d	NoTransliteration
+e		{*}e	NoTransliteration
+f		{*}f	NoTransliteration
+{*}d*		{*}D
+{*}e*		{*}E
+{*}f*		{*}F
+{*}D*		{*}d
+{*}E*		{*}e
+{*}F*		{*}f
+g		{*}g	NoTransliteration
+h		{*}h	NoTransliteration
+i		{*}i	NoTransliteration
+{*}g*		{*}G
+{*}h*		{*}H
+{*}i*		{*}I
+{*}G*		{*}g
+{*}H*		{*}h
+{*}I*		{*}i
+j		{*}j	NoTransliteration
+k		{*}k	NoTransliteration
+l		{*}l	NoTransliteration
+{*}j*		{*}J
+{*}k*		{*}K
+{*}l*		{*}L
+{*}J*		{*}j
+{*}K*		{*}k
+{*}L*		{*}l
+m		{*}m	NoTransliteration
+n		{*}n	NoTransliteration
+o		{*}o	NoTransliteration
+{*}m*		{*}M
+{*}n*		{*}N
+{*}o*		{*}O
+{*}M*		{*}m
+{*}N*		{*}n
+{*}O*		{*}o
+p		{*}p	NoTransliteration
+q		{*}q	NoTransliteration
+r		{*}r	NoTransliteration
+s		{*}s	NoTransliteration
+{*}p*		{*}P
+{*}q*		{*}Q
+{*}r*		{*}R
+{*}s*		{*}S
+{*}P*		{*}p
+{*}Q*		{*}q
+{*}R*		{*}r
+{*}S*		{*}s
+t		{*}t	NoTransliteration
+u		{*}u	NoTransliteration
+v		{*}v	NoTransliteration
+{*}t*		{*}T
+{*}u*		{*}U
+{*}v*		{*}V
+{*}T*		{*}t
+{*}U*		{*}u
+{*}V*		{*}v
+w		{*}w	NoTransliteration
+x		{*}x	NoTransliteration
+y		{*}y	NoTransliteration
+z		{*}z	NoTransliteration
+{*}w*		{*}W
+{*}x*		{*}X
+{*}y*		{*}Y
+{*}z*		{*}Z
+{*}W*		{*}w
+{*}X*		{*}x
+{*}Y*		{*}y
+{*}Z*		{*}z
+*			NoTransliteration
+'	'		NoTransliteration
+"	"		NoTransliteration
+:	:		NoTransliteration
+;	;		NoTransliteration
+.	.		NoTransliteration
+,	,		NoTransliteration
+?	?		NoTransliteration
+!	!		NoTransliteration
+{<}		

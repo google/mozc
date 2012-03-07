@@ -45,6 +45,7 @@
 #include "session/session.h"
 #include "session/session_converter_interface.h"
 #include "session/session_handler.h"
+#include "session/session_test_util.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/googletest.h"
 
@@ -391,6 +392,53 @@ TEST_F(SessionRegressionTest, PredictionAfterUndo) {
   EXPECT_EQ(kYoroshikuString,
             segments.conversion_segment(0).candidate(yoroshiku_id).value);
   EXPECT_EQ(kYoroshikuString, GetComposition(command));
+}
+
+// This test is to check the consistency between the result of prediction and
+// suggestion.
+// Following 4 values are expected to be the same.
+// - The 1st candidate of prediction.
+// - The result of CommitFirstSuggestion for prediction candidate.
+// - The 1st candidate of suggestion.
+// - The result of CommitFirstSuggestion for suggestion candidate.
+//
+// BACKGROUND:
+// Previously there was a restriction on the result of prediction
+// and suggestion.
+// Currently the restriction is removed. This test checks that the logic
+// works well or not.
+TEST_F(SessionRegressionTest, ConsistencyBetweenPredictionAndSuggesion) {
+  const char kKey[] = "aio";
+  session::ScopedMobilePreference mobile_preference;
+
+  InitSessionToPrecomposition(session_.get());
+  commands::Command command;
+
+  command.Clear();
+  InsertCharacterChars(kKey, &command);
+  EXPECT_EQ(1, command.output().preedit().segment_size());
+  const string suggestion_first_candidate =
+      command.output().all_candidate_words().candidates(0).value();
+
+  command.Clear();
+  session_->CommitFirstSuggestion(&command);
+  const string suggestion_commit_result = command.output().result().value();
+
+  InitSessionToPrecomposition(session_.get());
+  command.Clear();
+  InsertCharacterChars(kKey, &command);
+  command.Clear();
+  session_->PredictAndConvert(&command);
+  const string prediction_first_candidate =
+      command.output().all_candidate_words().candidates(0).value();
+
+  command.Clear();
+  session_->Commit(&command);
+  const string prediction_commit_result = command.output().result().value();
+
+  EXPECT_EQ(suggestion_first_candidate, suggestion_commit_result);
+  EXPECT_EQ(suggestion_first_candidate, prediction_first_candidate);
+  EXPECT_EQ(suggestion_first_candidate, prediction_commit_result);
 }
 
 }  // namespace mozc

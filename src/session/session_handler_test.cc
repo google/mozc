@@ -30,63 +30,34 @@
 #include <algorithm>
 #include <string>
 #include <vector>
+
 #include "base/base.h"
 #include "base/util.h"
-#include "config/config_handler.h"
 #include "config/config.pb.h"
-#include "session/commands.pb.h"
-#include "session/japanese_session_factory.h"
-#include "session/session_handler.h"
+#include "config/config_handler.h"
 #include "converter/converter_mock.h"
 #include "converter/user_data_manager_mock.h"
-#include "testing/base/public/gunit.h"
+#include "session/commands.pb.h"
+#include "session/generic_storage_manager.h"
+#include "session/japanese_session_factory.h"
+#include "session/session_handler.h"
+#include "session/session_handler_test_util.h"
 #include "testing/base/public/googletest.h"
+#include "testing/base/public/gunit.h"
 
-DECLARE_int32(timeout);
 DECLARE_int32(max_session_size);
 DECLARE_int32(create_session_min_interval);
 DECLARE_int32(last_command_timeout);
 DECLARE_int32(last_create_session_timeout);
-DECLARE_string(test_tmpdir);
 
 namespace mozc {
 
-bool CreateSession(SessionHandler *handler, uint64 *id) {
-  commands::Command command;
-  command.mutable_input()->set_type(commands::Input::CREATE_SESSION);
-  handler->EvalCommand(&command);
-  *id = command.has_output() ? command.output().id() : 0;
-  return (command.output().error_code() == commands::Output::SESSION_SUCCESS);
-}
+using mozc::session::testing::CreateSession;
+using mozc::session::testing::CleanUp;
+using mozc::session::testing::IsGoodSession;
 
-bool IsGoodSession(SessionHandler *handler, uint64 id) {
-  commands::Command command;
-  command.mutable_input()->set_id(id);
-  command.mutable_input()->set_type(commands::Input::SEND_KEY);
-  command.mutable_input()->mutable_key()->set_special_key(
-      commands::KeyEvent::SPACE);
-  handler->EvalCommand(&command);
-  return (command.output().error_code() == commands::Output::SESSION_SUCCESS);
-}
-
-bool Cleanup(SessionHandler *handler) {
-  commands::Command command;
-  command.mutable_input()->set_type(commands::Input::CLEANUP);
-  return handler->EvalCommand(&command);
-}
-
-class SessionHandlerTest : public testing::Test {
- protected:
-  virtual void SetUp() {
-    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    config::Config config;
-    config::ConfigHandler::GetDefaultConfig(&config);
-    config::ConfigHandler::SetConfig(config);
-    session::SessionFactoryManager::SetSessionFactory(&session_factory_);
-  }
-
- private:
-  session::JapaneseSessionFactory session_factory_;
+using mozc::session::testing::JapaneseSessionHandlerTestBase;
+class SessionHandlerTest : public JapaneseSessionHandlerTestBase {
 };
 
 TEST_F(SessionHandlerTest, MaxSessionSizeTest) {
@@ -174,7 +145,7 @@ TEST_F(SessionHandlerTest, LastCreateSessionTimeout) {
 
   // wait 3 sec
   Util::Sleep(3000);
-  EXPECT_TRUE(Cleanup(&handler));
+  EXPECT_TRUE(CleanUp(&handler));
 
   // the session is removed by server
   EXPECT_FALSE(IsGoodSession(&handler, id));
@@ -186,7 +157,7 @@ TEST_F(SessionHandlerTest, LastCommandTimeout) {
   uint64 id = 0;
   EXPECT_TRUE(CreateSession(&handler, &id));
 
-  EXPECT_TRUE(Cleanup(&handler));
+  EXPECT_TRUE(CleanUp(&handler));
 
   Util::Sleep(200);
   EXPECT_TRUE(IsGoodSession(&handler, id));
@@ -198,7 +169,7 @@ TEST_F(SessionHandlerTest, LastCommandTimeout) {
   EXPECT_TRUE(IsGoodSession(&handler, id));
 
   Util::Sleep(12000);
-  EXPECT_TRUE(Cleanup(&handler));
+  EXPECT_TRUE(CleanUp(&handler));
   EXPECT_FALSE(IsGoodSession(&handler, id));
 }
 
@@ -238,5 +209,114 @@ const char *kStorageTestData[] = {
   "angel", "bishop", "chariot", "dragon",
 };
 
+class MockStorage : public GenericStorageInterface {
+ public:
+  int insert_count;
+  int clear_count;
+  const char **insert_expect;
+
+  MockStorage() : insert_count(0), clear_count(0) {}
+  virtual ~MockStorage() {}
+
+  virtual bool Insert(const string &key, const char *value) {
+    EXPECT_EQ(string(insert_expect[insert_count]), key);
+    EXPECT_EQ(string(insert_expect[insert_count]), string(value));
+    ++insert_count;
+    return true;
+  };
+
+  virtual const char *Lookup(const string &key) {
+    return NULL;
+  }
+
+  virtual bool GetAllValues(vector<string> *values) {
+    values->clear();
+    for (size_t i = 0; i < arraysize(kStorageTestData); ++i) {
+      values->push_back(kStorageTestData[i]);
+    }
+    return true;
+  }
+
+  virtual bool Clear() {
+    ++clear_count;
+    return true;
+  }
+
+  void SetInsertExpect(const char **expect) {
+    insert_expect = expect;
+  }
+};
+
+class MockStorageManager : public GenericStorageManagerInterface {
+ public:
+  virtual GenericStorageInterface *GetStorage(
+     commands::GenericStorageEntry::StorageType storage_type) {
+    return storage;
+  }
+
+  void SetStorage(MockStorage *newStorage) {
+    storage = newStorage;
+  }
+
+ private:
+  MockStorage *storage;
+};
+
+// Tests basic behavior of InsertToStorage and ReadAllFromStorage methods.
+TEST_F(SessionHandlerTest, StorageTest) {
+  // Inject mock objects.
+  MockStorageManager storageManager;
+  GenericStorageManagerFactory::SetGenericStorageManager(&storageManager);
+  SessionHandler handler;
+  {
+    // InsertToStorage
+    MockStorage mock_storage;
+    mock_storage.SetInsertExpect(kStorageTestData);
+    storageManager.SetStorage(&mock_storage);
+    commands::Command command;
+    command.mutable_input()->set_type(commands::Input::INSERT_TO_STORAGE);
+    commands::GenericStorageEntry *storage_entry =
+        command.mutable_input()->mutable_storage_entry();
+    storage_entry->set_type(commands::GenericStorageEntry::SYMBOL_HISTORY);
+    storage_entry->mutable_key()->assign("dummy key");
+    for (size_t i = 0; i < arraysize(kStorageTestData); ++i) {
+      storage_entry->mutable_value()->Add()->assign(kStorageTestData[i]);
+    }
+    EXPECT_TRUE(handler.InsertToStorage(&command));
+    EXPECT_EQ(arraysize(kStorageTestData), mock_storage.insert_count);
+  }
+  {
+    // ReadAllFromStorage
+    MockStorage mock_storage;
+    storageManager.SetStorage(&mock_storage);
+    commands::Command command;
+    command.mutable_input()->set_type(commands::Input::READ_ALL_FROM_STORAGE);
+    commands::GenericStorageEntry *storage_entry =
+        command.mutable_input()->mutable_storage_entry();
+    storage_entry->set_type(commands::GenericStorageEntry::EMOTICON_HISTORY);
+    EXPECT_TRUE(handler.ReadAllFromStorage(&command));
+    EXPECT_EQ(
+        commands::GenericStorageEntry::EMOTICON_HISTORY,
+        command.output().storage_entry().type());
+    EXPECT_EQ(
+        arraysize(kStorageTestData),
+        command.output().storage_entry().value().size());
+  }
+  {
+    // Clear
+    MockStorage mock_storage;
+    storageManager.SetStorage(&mock_storage);
+    commands::Command command;
+    command.mutable_input()->set_type(commands::Input::CLEAR_STORAGE);
+    commands::GenericStorageEntry *storage_entry =
+        command.mutable_input()->mutable_storage_entry();
+    storage_entry->set_type(commands::GenericStorageEntry::EMOTICON_HISTORY);
+    EXPECT_TRUE(handler.ClearStorage(&command));
+    EXPECT_EQ(
+        commands::GenericStorageEntry::EMOTICON_HISTORY,
+        command.output().storage_entry().type());
+    EXPECT_EQ(1, mock_storage.clear_count);
+  }
+}
 
 }  // namespace mozc

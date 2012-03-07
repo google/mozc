@@ -41,11 +41,11 @@
       'dependencies': [
         '../../base/base.gyp:base',
         '../../config/config.gyp:config_handler',
-        '../../config/config.gyp:genproto_config',
+        '../../config/config.gyp:config_protocol',
         '../../ipc/ipc.gyp:ipc',
-        '../../languages/languages.gyp:global_language_spec',
         '../../languages/japanese/japanese.gyp:language_dependent_spec_japanese',
-        '../../session/session_base.gyp:genproto_session',
+        '../../languages/languages.gyp:global_language_spec',
+        '../../session/session_base.gyp:session_protocol',
         'mozc_emacs_helper_lib',
       ],
     },
@@ -59,9 +59,9 @@
       'dependencies': [
         '../../base/base.gyp:base',
         '../../client/client.gyp:client',
-        '../../config/config.gyp:genproto_config',
-        '../../session/session_base.gyp:genproto_session',
+        '../../config/config.gyp:config_protocol',
         '../../session/session_base.gyp:key_parser',
+        '../../session/session_base.gyp:session_protocol',
         '../../storage/storage.gyp:storage',
       ],
     },
@@ -78,6 +78,14 @@
       'variables': {
         'test_size': 'small',
       },
+    },
+    # Test cases meta target: this target is referred from gyp/tests.gyp
+    {
+      'target_name': 'emacs_all_test',
+      'type': 'none',
+      'dependencies': [
+        'mozc_emacs_helper_lib_test',
+      ],
     },
   ],
 }

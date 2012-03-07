@@ -57,4 +57,22 @@
       ],
     },
   ],
+  'conditions': [
+    ['enable_cloud_handwriting==1', {
+      'targets': [
+        {
+          'target_name': 'cloud_handwriting',
+          'type': 'static_library',
+          'sources': [
+            'cloud_handwriting.cc',
+          ],
+          'dependencies': [
+            '../base/base.gyp:base',
+            '../net/net.gyp:net',
+            '<(DEPTH)/third_party/jsoncpp/jsoncpp.gyp:jsoncpp',
+          ],
+        },
+      ],
+    }],
+  ],
 }

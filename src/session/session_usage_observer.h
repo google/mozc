@@ -31,19 +31,20 @@
 #define MOZC_SESSION_SESSION_USAGE_OBSERVER_H_
 
 #include <map>
+#include <string>
 #include <vector>
 #include "base/base.h"
 #include "session/session_observer_interface.h"
-#include "session/state.pb.h"
-#include "session/commands.pb.h"
-#include "usage_stats/usage_stats.pb.h"
 
 namespace mozc {
 namespace commands {
 class Command;
-}  // namespace mozc::commands
+class Input;
+class Output;
+}  // namespace commands
 
 namespace session {
+class SessionState;
 
 class SessionUsageObserver : public SessionObserverInterface {
  public:
@@ -102,7 +103,7 @@ class SessionUsageObserver : public SessionObserverInterface {
 
   DISALLOW_COPY_AND_ASSIGN(SessionUsageObserver);
 };
-}  // namespace mozc::session
+}  // namespace session
 }  // namespace mozc
 
 #endif  // MOZC_SESSION_SESSION_USAGE_OBSERVER_H_

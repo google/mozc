@@ -87,7 +87,8 @@ void Segment::Candidate::CopyFrom(const Candidate &src) {
 
   attributes = src.attributes;
 
-  style = src. style;
+  style = src.style;
+  command = src.command;
 }
 
 Segment::Segment()

@@ -29,6 +29,7 @@
 
 #include <fstream>
 
+#include "base/clock_mock.h"
 #include "base/util.h"
 #include "base/protobuf/protobuf.h"
 #include "base/protobuf/text_format.h"
@@ -49,6 +50,75 @@ DECLARE_string(test_srcdir);
 namespace mozc {
 namespace session {
 
+namespace {
+void ConfigSyncTest(const string &stats_key, const string &config_key) {
+  config::Config config;
+  config::ConfigHandler::GetDefaultConfig(&config);
+  config::ConfigHandler::SetConfig(config);
+  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
+  observer->SetInterval(1);
+  string reg_str;
+
+  EXPECT_TRUE(storage::Registry::Lookup(
+      "usage_stats." + stats_key, &reg_str));
+  usage_stats::Stats stats;
+  EXPECT_TRUE(stats.ParseFromString(reg_str));
+  EXPECT_EQ(stats_key, stats.name());
+  EXPECT_EQ(usage_stats::Stats::BOOLEAN, stats.type());
+  EXPECT_FALSE(stats.boolean_value());
+
+  {
+    mozc::config::SyncConfig* sync_config = config.mutable_sync_config();
+    const mozc::protobuf::Descriptor* descriptor = sync_config->GetDescriptor();
+    const mozc::protobuf::FieldDescriptor* field =
+        descriptor->FindFieldByName(config_key);
+    ASSERT_TRUE(field != NULL);
+    ASSERT_TRUE(field->type() == mozc::protobuf::FieldDescriptor::TYPE_BOOL);
+    const mozc::protobuf::Reflection* reflection = sync_config->GetReflection();
+    ASSERT_TRUE(reflection != NULL);
+    reflection->SetBool(sync_config, field, false);
+    EXPECT_FALSE(reflection->GetBool(*sync_config, field));
+    config::ConfigHandler::SetConfig(config);
+    commands::Command command;
+    command.mutable_input()->set_type(commands::Input::SET_CONFIG);
+    command.mutable_input()->set_id(1);
+    observer->EvalCommandHandler(command);
+  }
+
+  EXPECT_TRUE(storage::Registry::Lookup(
+      "usage_stats." + stats_key, &reg_str));
+  EXPECT_TRUE(stats.ParseFromString(reg_str));
+  EXPECT_EQ(stats_key, stats.name());
+  EXPECT_EQ(usage_stats::Stats::BOOLEAN, stats.type());
+  EXPECT_FALSE(stats.boolean_value());
+
+  {
+    mozc::config::SyncConfig* sync_config = config.mutable_sync_config();
+    const mozc::protobuf::Descriptor* descriptor = sync_config->GetDescriptor();
+    const mozc::protobuf::FieldDescriptor* field =
+        descriptor->FindFieldByName(config_key);
+    ASSERT_TRUE(field != NULL);
+    ASSERT_TRUE(field->type() == mozc::protobuf::FieldDescriptor::TYPE_BOOL);
+    const mozc::protobuf::Reflection* reflection = sync_config->GetReflection();
+    ASSERT_TRUE(reflection != NULL);
+    reflection->SetBool(sync_config, field, true);
+    EXPECT_TRUE(reflection->GetBool(*sync_config, field));
+    config::ConfigHandler::SetConfig(config);
+    commands::Command command;
+    command.mutable_input()->set_type(commands::Input::SET_CONFIG);
+    command.mutable_input()->set_id(1);
+    observer->EvalCommandHandler(command);
+  }
+
+  EXPECT_TRUE(storage::Registry::Lookup(
+      "usage_stats." + stats_key, &reg_str));
+  EXPECT_TRUE(stats.ParseFromString(reg_str));
+  EXPECT_EQ(stats_key, stats.name());
+  EXPECT_EQ(usage_stats::Stats::BOOLEAN, stats.type());
+  EXPECT_TRUE(stats.boolean_value());
+}
+}  // namespace
+
 class SessionUsageObserverTest : public testing::Test {
  protected:
   virtual void SetUp() {
@@ -57,9 +127,13 @@ class SessionUsageObserverTest : public testing::Test {
     config::ConfigHandler::GetDefaultConfig(&config);
     config::ConfigHandler::SetConfig(config);
     EXPECT_TRUE(storage::Registry::Clear());
+
+    Util::SetClockHandler(NULL);
   }
 
   virtual void TearDown() {
+    Util::SetClockHandler(NULL);
+
     // just in case, reset the config in test_tmpdir
     config::Config config;
     config::ConfigHandler::GetDefaultConfig(&config);
@@ -342,7 +416,8 @@ TEST_F(SessionUsageObserverTest, PerformedCommandTest) {
       commands::Command command;
       command.mutable_input()->set_type(commands::Input::SEND_KEY);
       command.mutable_output()->set_id(1);
-      command.mutable_output()->set_performed_command("Precomposition_" + *iter);
+      command.mutable_output()->
+          set_performed_command("Precomposition_" + *iter);
       observer->EvalCommandHandler(command);
       ExpectStatsCount("Performed_Precomposition_" + *iter, 1);
     }
@@ -441,6 +516,24 @@ TEST_F(SessionUsageObserverTest, ConfigTest) {
       "usage_stats.ConfigSpaceCharacterForm", &reg_str));
   EXPECT_TRUE(storage::Registry::Lookup(
       "usage_stats.IMEActivationKeyCustomized", &reg_str));
+  EXPECT_TRUE(storage::Registry::Lookup(
+      "usage_stats.ConfigUseConfigSync", &reg_str));
+  EXPECT_TRUE(storage::Registry::Lookup(
+      "usage_stats.ConfigUseUserDictionarySync", &reg_str));
+  EXPECT_TRUE(storage::Registry::Lookup(
+      "usage_stats.ConfigUseHistorySync", &reg_str));
+  EXPECT_TRUE(storage::Registry::Lookup(
+      "usage_stats.ConfigUseLearningPreferenceSync", &reg_str));
+  EXPECT_TRUE(storage::Registry::Lookup(
+      "usage_stats.ConfigUseContactListSync", &reg_str));
+  EXPECT_TRUE(storage::Registry::Lookup(
+      "usage_stats.ConfigAllowCloudHandwriting", &reg_str));
+  EXPECT_TRUE(storage::Registry::Lookup(
+      "usage_stats.ConfigUseLocalUsageDictionary", &reg_str));
+  EXPECT_TRUE(storage::Registry::Lookup(
+      "usage_stats.ConfigUseWebUsageDictionary", &reg_str));
+  EXPECT_TRUE(storage::Registry::Lookup(
+      "usage_stats.WebServiceEntrySize", &reg_str));
 
   // Clear Stats
   EXPECT_TRUE(storage::Registry::Clear());
@@ -508,6 +601,24 @@ TEST_F(SessionUsageObserverTest, ConfigTest) {
       "usage_stats.ConfigSpaceCharacterForm", &reg_str));
   EXPECT_FALSE(storage::Registry::Lookup(
       "usage_stats.IMEActivationKeyCustomized", &reg_str));
+  EXPECT_FALSE(storage::Registry::Lookup(
+      "usage_stats.ConfigUseConfigSync", &reg_str));
+  EXPECT_FALSE(storage::Registry::Lookup(
+      "usage_stats.ConfigUseUserDictionarySync", &reg_str));
+  EXPECT_FALSE(storage::Registry::Lookup(
+      "usage_stats.ConfigUseHistorySync", &reg_str));
+  EXPECT_FALSE(storage::Registry::Lookup(
+      "usage_stats.ConfigUseLearningPreferenceSync", &reg_str));
+  EXPECT_FALSE(storage::Registry::Lookup(
+      "usage_stats.ConfigUseContactListSync", &reg_str));
+  EXPECT_FALSE(storage::Registry::Lookup(
+      "usage_stats.ConfigAllowCloudHandwriting", &reg_str));
+  EXPECT_FALSE(storage::Registry::Lookup(
+      "usage_stats.ConfigUseLocalUsageDictionary", &reg_str));
+  EXPECT_FALSE(storage::Registry::Lookup(
+      "usage_stats.ConfigUseWebUsageDictionary", &reg_str));
+  EXPECT_FALSE(storage::Registry::Lookup(
+      "usage_stats.WebServiceEntrySize", &reg_str));
 
   // Set config command
   {
@@ -578,6 +689,24 @@ TEST_F(SessionUsageObserverTest, ConfigTest) {
       "usage_stats.ConfigSpaceCharacterForm", &reg_str));
   EXPECT_TRUE(storage::Registry::Lookup(
       "usage_stats.IMEActivationKeyCustomized", &reg_str));
+  EXPECT_TRUE(storage::Registry::Lookup(
+      "usage_stats.ConfigUseConfigSync", &reg_str));
+  EXPECT_TRUE(storage::Registry::Lookup(
+      "usage_stats.ConfigUseUserDictionarySync", &reg_str));
+  EXPECT_TRUE(storage::Registry::Lookup(
+      "usage_stats.ConfigUseHistorySync", &reg_str));
+  EXPECT_TRUE(storage::Registry::Lookup(
+      "usage_stats.ConfigUseLearningPreferenceSync", &reg_str));
+  EXPECT_TRUE(storage::Registry::Lookup(
+      "usage_stats.ConfigUseContactListSync", &reg_str));
+  EXPECT_TRUE(storage::Registry::Lookup(
+      "usage_stats.ConfigAllowCloudHandwriting", &reg_str));
+  EXPECT_TRUE(storage::Registry::Lookup(
+      "usage_stats.ConfigUseLocalUsageDictionary", &reg_str));
+  EXPECT_TRUE(storage::Registry::Lookup(
+      "usage_stats.ConfigUseWebUsageDictionary", &reg_str));
+  EXPECT_TRUE(storage::Registry::Lookup(
+      "usage_stats.WebServiceEntrySize", &reg_str));
 }
 
 TEST_F(SessionUsageObserverTest, IMEActivationKeyCustomizedTest) {
@@ -653,6 +782,20 @@ TEST_F(SessionUsageObserverTest, IMEActivationKeyNoCustomTest) {
   EXPECT_FALSE(stats.boolean_value());
 }
 
+TEST_F(SessionUsageObserverTest, ConfigSyncTests) {
+  ConfigSyncTest("ConfigUseCloudSync", "use_config_sync");
+  ConfigSyncTest("ConfigUseCloudSync", "use_user_dictionary_sync");
+  ConfigSyncTest("ConfigUseCloudSync", "use_user_history_sync");
+  ConfigSyncTest("ConfigUseCloudSync", "use_learning_preference_sync");
+  ConfigSyncTest("ConfigUseCloudSync", "use_contact_list_sync");
+
+  ConfigSyncTest("ConfigUseConfigSync", "use_config_sync");
+  ConfigSyncTest("ConfigUseUserDictionarySync", "use_user_dictionary_sync");
+  ConfigSyncTest("ConfigUseHistorySync", "use_user_history_sync");
+  ConfigSyncTest("ConfigUseLearningPreferenceSync",
+                 "use_learning_preference_sync");
+  ConfigSyncTest("ConfigUseContactListSync", "use_contact_list_sync");
+}
 
 TEST_F(SessionUsageObserverTest, ClientSideStatsInfolist) {
   scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
@@ -666,6 +809,11 @@ TEST_F(SessionUsageObserverTest, ClientSideStatsInfolist) {
     command.mutable_output()->set_id(1);
     observer->EvalCommandHandler(command);
   }
+
+  const uint64 kSeconds = 0;
+  const uint32 kMicroSeconds = 0;
+  ClockMock clock(kSeconds, kMicroSeconds);
+  Util::SetClockHandler(&clock);
 
   // Add command (INFOLIST_WINDOW_SHOW)
   commands::Command command;
@@ -682,8 +830,10 @@ TEST_F(SessionUsageObserverTest, ClientSideStatsInfolist) {
   observer->EvalCommandHandler(command);
   EXPECT_FALSE(storage::Registry::Lookup(
       string("usage_stats.InfolistWindowDuration"), &reg_str));
-  // Sleep 1 sec
-  mozc::Util::Sleep(1000.0);
+
+  // Wait a second.
+  clock.PutClockForward(1, 0);
+
   // Add command (INFOLIST_WINDOW_HIDE)
   command.mutable_input()->mutable_command()->set_usage_stats_event(
       commands::SessionCommand::INFOLIST_WINDOW_HIDE);
@@ -1999,6 +2149,130 @@ TEST_F(SessionUsageObserverTest, MultipleSessions) {
   ExpectStatsCount("SubmittedTotalLength", 20);
 }
 
+
+TEST_F(SessionUsageObserverTest, ConfigInformationList) {
+  config::Config config;
+  config::ConfigHandler::GetDefaultConfig(&config);
+  config::ConfigHandler::SetConfig(config);
+  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
+  observer->SetInterval(1);
+  string reg_str;
+  usage_stats::Stats stats;
+
+  EXPECT_TRUE(storage::Registry::Lookup(
+      "usage_stats.ConfigUseLocalUsageDictionary", &reg_str));
+  EXPECT_TRUE(stats.ParseFromString(reg_str));
+  EXPECT_EQ("ConfigUseLocalUsageDictionary", stats.name());
+  EXPECT_EQ(usage_stats::Stats::BOOLEAN, stats.type());
+  EXPECT_FALSE(stats.boolean_value());
+
+  EXPECT_TRUE(storage::Registry::Lookup(
+      "usage_stats.ConfigUseWebUsageDictionary", &reg_str));
+  EXPECT_TRUE(stats.ParseFromString(reg_str));
+  EXPECT_EQ("ConfigUseWebUsageDictionary", stats.name());
+  EXPECT_EQ(usage_stats::Stats::BOOLEAN, stats.type());
+  EXPECT_FALSE(stats.boolean_value());
+
+  {
+    config.mutable_information_list_config()->
+        set_use_local_usage_dictionary(true);
+    config::ConfigHandler::SetConfig(config);
+    commands::Command command;
+    command.mutable_input()->set_type(commands::Input::SET_CONFIG);
+    command.mutable_input()->set_id(1);
+    observer->EvalCommandHandler(command);
+  }
+
+  EXPECT_TRUE(storage::Registry::Lookup(
+      "usage_stats.ConfigUseLocalUsageDictionary", &reg_str));
+  EXPECT_TRUE(stats.ParseFromString(reg_str));
+  EXPECT_EQ("ConfigUseLocalUsageDictionary", stats.name());
+  EXPECT_EQ(usage_stats::Stats::BOOLEAN, stats.type());
+  EXPECT_TRUE(stats.boolean_value());
+
+  {
+    config.mutable_information_list_config()->
+        set_use_web_usage_dictionary(true);
+    config::ConfigHandler::SetConfig(config);
+    commands::Command command;
+    command.mutable_input()->set_type(commands::Input::SET_CONFIG);
+    command.mutable_input()->set_id(1);
+    observer->EvalCommandHandler(command);
+  }
+
+  EXPECT_TRUE(storage::Registry::Lookup(
+      "usage_stats.ConfigUseWebUsageDictionary", &reg_str));
+  EXPECT_TRUE(stats.ParseFromString(reg_str));
+  EXPECT_EQ("ConfigUseWebUsageDictionary", stats.name());
+  EXPECT_EQ(usage_stats::Stats::BOOLEAN, stats.type());
+  EXPECT_TRUE(stats.boolean_value());
+}
+
+TEST_F(SessionUsageObserverTest, ConfigWebServiceEntrySize) {
+  config::Config config;
+  config::ConfigHandler::GetDefaultConfig(&config);
+  config::ConfigHandler::SetConfig(config);
+  scoped_ptr<SessionUsageObserver> observer(new SessionUsageObserver);
+  observer->SetInterval(1);
+  string reg_str;
+  usage_stats::Stats stats;
+
+  EXPECT_TRUE(storage::Registry::Lookup(
+      "usage_stats.WebServiceEntrySize", &reg_str));
+  EXPECT_TRUE(stats.ParseFromString(reg_str));
+  EXPECT_EQ("WebServiceEntrySize", stats.name());
+  EXPECT_EQ(usage_stats::Stats::INTEGER, stats.type());
+  EXPECT_EQ(stats.int_value(), 0);
+
+  {
+    config.mutable_information_list_config();
+    commands::Command command;
+    command.mutable_input()->set_type(commands::Input::SET_CONFIG);
+    command.mutable_input()->set_id(1);
+    observer->EvalCommandHandler(command);
+  }
+
+  EXPECT_TRUE(storage::Registry::Lookup(
+      "usage_stats.WebServiceEntrySize", &reg_str));
+  EXPECT_TRUE(stats.ParseFromString(reg_str));
+  EXPECT_EQ("WebServiceEntrySize", stats.name());
+  EXPECT_EQ(usage_stats::Stats::INTEGER, stats.type());
+  EXPECT_EQ(stats.int_value(), 0);
+
+  {
+    config.mutable_information_list_config()->
+        add_web_service_entries()->set_name("sample1");
+    config::ConfigHandler::SetConfig(config);
+    commands::Command command;
+    command.mutable_input()->set_type(commands::Input::SET_CONFIG);
+    command.mutable_input()->set_id(1);
+    observer->EvalCommandHandler(command);
+  }
+
+  EXPECT_TRUE(storage::Registry::Lookup(
+      "usage_stats.WebServiceEntrySize", &reg_str));
+  EXPECT_TRUE(stats.ParseFromString(reg_str));
+  EXPECT_EQ("WebServiceEntrySize", stats.name());
+  EXPECT_EQ(usage_stats::Stats::INTEGER, stats.type());
+  EXPECT_EQ(stats.int_value(), 1);
+
+  {
+    config.mutable_information_list_config()->
+        add_web_service_entries()->set_name("sample2");
+    config::ConfigHandler::SetConfig(config);
+    commands::Command command;
+    command.mutable_input()->set_type(commands::Input::SET_CONFIG);
+    command.mutable_input()->set_id(1);
+    observer->EvalCommandHandler(command);
+  }
+
+  EXPECT_TRUE(storage::Registry::Lookup(
+      "usage_stats.WebServiceEntrySize", &reg_str));
+  EXPECT_TRUE(stats.ParseFromString(reg_str));
+  EXPECT_EQ("WebServiceEntrySize", stats.name());
+  EXPECT_EQ(usage_stats::Stats::INTEGER, stats.type());
+  EXPECT_EQ(stats.int_value(), 2);
+}
 
 }  // namespace session
 }  // namespace mozc

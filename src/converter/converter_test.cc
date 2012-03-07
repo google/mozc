@@ -35,6 +35,7 @@
 #include "composer/table.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
+#include "converter/converter.h"
 #include "converter/converter_interface.h"
 #include "converter/node_allocator.h"
 #include "converter/segments.h"
@@ -45,6 +46,7 @@
 #include "prediction/predictor.h"
 #include "testing/base/public/gunit.h"
 #include "transliteration/transliteration.h"
+#include "rewriter/rewriter_interface.h"
 
 DECLARE_string(test_tmpdir);
 
@@ -70,6 +72,7 @@ class ConverterTest : public testing::Test {
     SuffixDictionaryFactory::SetSuffixDictionary(NULL);
 
     PredictorFactory::SetPredictor(NULL);
+    RewriterFactory::SetRewriter(NULL);
   }
 
 };
@@ -431,9 +434,22 @@ class TestDictionary : public DictionaryInterface {
     return result;
   }
 
+  virtual Node *LookupPredictiveWithLimit(
+      const char *str, int size, const Limit &limit,
+      NodeAllocatorInterface *allocator) const {
+    // Limit is not supported
+    return LookupPredictive(str, size, allocator);
+  }
+
   virtual Node *LookupPrefixWithLimit(
       const char *str, int size,
       const Limit &limit,
+      NodeAllocatorInterface *allocator) const {
+    return NULL;
+  }
+
+  virtual Node *LookupPrefix(
+      const char *str, int size,
       NodeAllocatorInterface *allocator) const {
     return NULL;
   }
@@ -451,12 +467,13 @@ TEST_F(ConverterTest, CompletePOSIds) {
   TestDictionary test_dictionary;
   SuffixDictionaryFactory::SetSuffixDictionary(&test_dictionary);
 
+  scoped_ptr<ConverterImpl> converter(new ConverterImpl);
   // NO rewrite
   {
     candidate.lid = 1;
     candidate.rid = 2;
     candidate.value = "test";
-    ConverterUtil::CompletePOSIds(&candidate);
+    converter->CompletePOSIds(&candidate);
     EXPECT_EQ(1, candidate.lid);
     EXPECT_EQ(2, candidate.rid);
   }
@@ -468,7 +485,7 @@ TEST_F(ConverterTest, CompletePOSIds) {
     candidate.value =
         "\xE3\x81\x9F\xE3\x81\xB9\xE3\x81\x9D\xE3\x81\x86"
         "\xE3\x81\xA7\xE3\x81\x99";
-    ConverterUtil::CompletePOSIds(&candidate);
+    converter->CompletePOSIds(&candidate);
     EXPECT_EQ(POSMatcher::GetUnknownId(), candidate.lid);
     // "そうです" is the longest match.
     EXPECT_EQ(2, candidate.rid);
@@ -479,7 +496,7 @@ TEST_F(ConverterTest, CompletePOSIds) {
     candidate.rid = 0;
     //    candidate.value = "おす";
     candidate.value = "\xE3\x81\x8A\xE3\x81\x99";
-    ConverterUtil::CompletePOSIds(&candidate);
+    converter->CompletePOSIds(&candidate);
     EXPECT_EQ(POSMatcher::GetUnknownId(), candidate.lid);
     EXPECT_EQ(3, candidate.rid);
   }
@@ -489,7 +506,7 @@ TEST_F(ConverterTest, CompletePOSIds) {
     candidate.rid = 0;
     //    candidate.value = "です";
     candidate.value = "\xE3\x81\xA7\xE3\x81\x99";
-    ConverterUtil::CompletePOSIds(&candidate);
+    converter->CompletePOSIds(&candidate);
     EXPECT_EQ(POSMatcher::GetUnknownId(), candidate.lid);
     // Have two "です". Select one who has the minimum cost.
     EXPECT_EQ(4, candidate.rid);
@@ -501,7 +518,7 @@ TEST_F(ConverterTest, CompletePOSIds) {
     //    candidate.value = "うごくです";
     candidate.value = "\xE3\x81\x86\xE3\x81\x94\xE3\x81\x8F"
         "\xE3\x81\xA7\xE3\x81\x99";
-    ConverterUtil::CompletePOSIds(&candidate);
+    converter->CompletePOSIds(&candidate);
     EXPECT_EQ(POSMatcher::GetUnknownId(), candidate.lid);
     EXPECT_EQ(4, candidate.rid);
   }
@@ -512,9 +529,138 @@ TEST_F(ConverterTest, CompletePOSIds) {
     candidate.rid = 0;
     // candidate.value = "京都";
     candidate.value = "\xE4\xBA\xAC\xE9\x83\xBD";
-    ConverterUtil::CompletePOSIds(&candidate);
+    converter->CompletePOSIds(&candidate);
     EXPECT_EQ(POSMatcher::GetUnknownId(), candidate.lid);
     EXPECT_EQ(POSMatcher::GetUnknownId(), candidate.rid);
+  }
+}
+
+TEST_F(ConverterTest, SetupHistorySegmentsFromPrecedingText) {
+  scoped_ptr<ConverterImpl> converter(new ConverterImpl);
+
+  // Test for short preceding text.
+  {
+    Segments segments;
+    segments.set_max_history_segments_size(4);
+    converter->SetupHistorySegmentsFromPrecedingText(
+        "\xE7\xA7\x81\xE3\x81\xAF\xE9\x88\xB4\xE6\x9C\xA8",  // "私は鈴木"
+        &segments);
+    EXPECT_EQ(2, segments.history_segments_size());
+
+    // Check the first segment
+    EXPECT_EQ(Segment::HISTORY, segments.segment(0).segment_type());
+    EXPECT_EQ(1, segments.segment(0).candidates_size());
+    EXPECT_EQ("\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAF",  // "わたしは"
+              segments.segment(0).candidate(0).key);
+    EXPECT_EQ("\xE7\xA7\x81\xE3\x81\xAF",  // "私は"
+              segments.segment(0).candidate(0).value);
+
+    // Check the second segment
+    EXPECT_EQ(Segment::HISTORY, segments.segment(1).segment_type());
+    EXPECT_EQ(1, segments.segment(1).candidates_size());
+    EXPECT_EQ("\xE3\x81\x99\xE3\x81\x9A\xE3\x81\x8D",  // "すずき"
+              segments.segment(1).candidate(0).key);
+    EXPECT_EQ("\xE9\x88\xB4\xE6\x9C\xA8",  // "鈴木"
+              segments.segment(1).candidate(0).value);
+  }
+  // Test for long preceding text having 6 segments. The results should have 4
+  // history segments.
+  {
+    Segments segments;
+    segments.set_max_history_segments_size(4);
+    converter->SetupHistorySegmentsFromPrecedingText(
+        // "私は鈴木私は鈴木私は鈴木"
+        "\xE7\xA7\x81\xE3\x81\xAF\xE9\x88\xB4\xE6\x9C\xA8"
+        "\xE7\xA7\x81\xE3\x81\xAF\xE9\x88\xB4\xE6\x9C\xA8"
+        "\xE7\xA7\x81\xE3\x81\xAF\xE9\x88\xB4\xE6\x9C\xA8",
+        &segments);
+    EXPECT_EQ(4, segments.history_segments_size());
+
+    for (int i = 0; i < 4; ++i) {
+      EXPECT_EQ(Segment::HISTORY, segments.segment(i).segment_type());
+      // Check the first and third segments
+      if (i % 2 == 0) {
+        EXPECT_EQ(1, segments.segment(i).candidates_size());
+        EXPECT_EQ(
+            "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAF",  // "わたしは"
+            segments.segment(i).candidate(0).key);
+        EXPECT_EQ("\xE7\xA7\x81\xE3\x81\xAF",  // "私は"
+                  segments.segment(i).candidate(0).value);
+      } else {
+        // Check the second and fourth segments
+        EXPECT_EQ(1, segments.segment(i).candidates_size());
+        EXPECT_EQ("\xE3\x81\x99\xE3\x81\x9A\xE3\x81\x8D",  // "すずき"
+                  segments.segment(i).candidate(0).key);
+        EXPECT_EQ("\xE9\x88\xB4\xE6\x9C\xA8",  // "鈴木"
+                  segments.segment(i).candidate(0).value);
+      }
+    }
+  }
+}
+
+TEST_F(ConverterTest, ConvertUsingPrecedingText_KikiIppatsu) {
+  ConverterInterface *converter = ConverterFactory::GetConverter();
+  // To see preceding text helps conversion, consider the case where user
+  // converts "いっぱつ".
+  {
+    // Without preceding text, test dictionary converts "いっぱつ" to "一発".
+    Segments segments;
+    mozc::composer::Composer composer;
+    composer.InsertCharacter(
+        "\xE3\x81\x84\xE3\x81\xA3\xE3\x81\xB1\xE3\x81\xA4");  // "いっぱつ"
+    mozc::ConversionRequest request(&composer);
+    converter->StartConversionForRequest(request, &segments);
+
+    EXPECT_EQ(1, segments.conversion_segments_size());
+    EXPECT_EQ("\xE4\xB8\x80\xE7\x99\xBA",  // "一発"
+              segments.conversion_segment(0).candidate(0).value);
+  }
+  {
+    // However, with preceding text "危機", test dictionary converts "いっぱつ"
+    // to "一髪".
+    Segments segments;
+    mozc::composer::Composer composer;
+    composer.InsertCharacter(
+        "\xE3\x81\x84\xE3\x81\xA3\xE3\x81\xB1\xE3\x81\xA4");  // "いっぱつ"
+    mozc::ConversionRequest request(&composer);
+    request.preceding_text = "\xE5\x8D\xB1\xE6\xA9\x9F";  // "危機"
+    converter->StartConversionForRequest(request, &segments);
+
+    EXPECT_EQ(1, segments.conversion_segments_size());
+    EXPECT_EQ("\xE4\xB8\x80\xE9\xAB\xAA",  // "一髪"
+              segments.conversion_segment(0).candidate(0).value);
+  }
+}
+
+TEST_F(ConverterTest, ConvertUsingPrecedingText_Jyosushi) {
+  ConverterInterface *converter = ConverterFactory::GetConverter();
+  // To see preceding text helps conversion after number characters, consider
+  // the case where user converts "ひき".
+  {
+    // Without preceding text, test dictionary converts "ひき" to "引き".
+    Segments segments;
+    mozc::composer::Composer composer;
+    composer.InsertCharacter("\xE3\x81\xB2\xE3\x81\x8D");  // "ひき"
+    mozc::ConversionRequest request(&composer);
+    converter->StartConversionForRequest(request, &segments);
+
+    EXPECT_EQ(1, segments.conversion_segments_size());
+    EXPECT_EQ("\xE5\xBC\x95\xE3\x81\x8D",  // "引き"
+              segments.conversion_segment(0).candidate(0).value);
+  }
+  {
+    // However, if providing "猫が5" as preceding text, "ひき" is converted to
+    // "匹" with test dictionary.
+    Segments segments;
+    mozc::composer::Composer composer;
+    composer.InsertCharacter("\xE3\x81\xB2\xE3\x81\x8D");  // "ひき"
+    mozc::ConversionRequest request(&composer);
+    request.preceding_text = "\xE7\x8C\xAB\xE3\x81\x8C\x35";  // "猫が5"
+    converter->StartConversionForRequest(request, &segments);
+
+    EXPECT_EQ(1, segments.conversion_segments_size());
+    EXPECT_EQ("\xE5\x8C\xB9",  // "匹"
+              segments.conversion_segment(0).candidate(0).value);
   }
 }
 
@@ -639,5 +785,144 @@ TEST_F(ConverterTest, StartPartialSuggestion) {
             segments.segment(0).candidate(0).content_key);
 }
 
+
+
+TEST_F(ConverterTest, Predict_SetKey) {
+  const char kPredictionKey[] = "prediction key";
+  const char kPredictionKey2[] = "prediction key2";
+  // Tests whether SetKey method is called or not.
+  struct TestData {
+    const Segments::RequestType request_type_;
+    const char *key_;
+    const bool expect_reset_;
+  };
+  const TestData test_data_list[] = {
+      {Segments::CONVERSION, NULL, true},
+      {Segments::CONVERSION, kPredictionKey, true},
+      {Segments::CONVERSION, kPredictionKey2, true},
+      {Segments::REVERSE_CONVERSION, NULL, true},
+      {Segments::REVERSE_CONVERSION, kPredictionKey, true},
+      {Segments::REVERSE_CONVERSION, kPredictionKey2, true},
+      {Segments::PREDICTION, NULL, true},
+      {Segments::PREDICTION, kPredictionKey2, true},
+      {Segments::SUGGESTION, NULL, true},
+      {Segments::SUGGESTION, kPredictionKey2, true},
+      {Segments::PARTIAL_PREDICTION, NULL, true},
+      {Segments::PARTIAL_PREDICTION, kPredictionKey2, true},
+      {Segments::PARTIAL_SUGGESTION, NULL, true},
+      {Segments::PARTIAL_SUGGESTION, kPredictionKey2, true},
+      // If we are predicting, and one or more segment exists,
+      // and the segments's key equals to the input key, then do not reset.
+      {Segments::PREDICTION, kPredictionKey, false},
+      {Segments::SUGGESTION, kPredictionKey, false},
+      {Segments::PARTIAL_PREDICTION, kPredictionKey, false},
+      {Segments::PARTIAL_SUGGESTION, kPredictionKey, false},
+  };
+
+  ConverterImpl *converter;
+  converter = dynamic_cast<ConverterImpl*>(ConverterFactory::GetConverter());
+
+  CHECK(converter);
+
+  class StubPredictor : public PredictorInterface {
+    bool Predict(Segments *segments) const { return true; };
+  };
+  StubPredictor predictor;
+
+  class StubRewriter : public RewriterInterface {
+    bool Rewrite(Segments *segments) const { return true; };
+  };
+  StubRewriter rewriter;
+
+  PredictorFactory::SetPredictor(&predictor);
+  RewriterFactory::SetRewriter(&rewriter);
+  // Note that TearDown method will reset above stubs.
+
+  for (size_t i = 0; i < ARRAYSIZE(test_data_list); ++i) {
+    const TestData &test_data = test_data_list[i];
+    Segments segments;
+    segments.set_request_type(test_data.request_type_);
+
+    if (test_data.key_) {
+      mozc::Segment *seg = segments.add_segment();
+      seg->Clear();
+      seg->set_key(test_data.key_);
+      // The segment has a candidate.
+      seg->add_candidate();
+    }
+    converter->Predict(&segments, kPredictionKey, Segments::PREDICTION);
+
+    EXPECT_EQ(1, segments.conversion_segments_size());
+    EXPECT_EQ(kPredictionKey, segments.conversion_segment(0).key());
+    EXPECT_EQ(test_data.expect_reset_ ? 0 : 1,
+              segments.conversion_segment(0).candidates_size());
+  }
+}
+
+TEST_F(ConverterTest, StartPredictionForRequest_KikiIppatsu) {
+  ConverterInterface *converter = ConverterFactory::GetConverter();
+  // To see preceding text helps prediction, consider the case where user
+  // converts "いっぱつ".
+  {
+    // Without preceding text, test dictionary predicts "いっぱつ" to "一発".
+    Segments segments;
+    mozc::composer::Composer composer;
+    composer.InsertCharacter(
+        "\xE3\x81\x84\xE3\x81\xA3\xE3\x81\xB1\xE3\x81\xA4");  // "いっぱつ"
+    mozc::ConversionRequest request(&composer);
+    converter->StartPredictionForRequest(request, &segments);
+
+    EXPECT_EQ(1, segments.conversion_segments_size());
+    EXPECT_EQ("\xE4\xB8\x80\xE7\x99\xBA",  // "一発"
+              segments.conversion_segment(0).candidate(0).value);
+  }
+  {
+    // However, with preceding text "危機", test dictionary converts "いっぱつ"
+    // to "一髪".
+    Segments segments;
+    mozc::composer::Composer composer;
+    composer.InsertCharacter(
+        "\xE3\x81\x84\xE3\x81\xA3\xE3\x81\xB1\xE3\x81\xA4");  // "いっぱつ"
+    mozc::ConversionRequest request(&composer);
+    request.preceding_text = "\xE5\x8D\xB1\xE6\xA9\x9F";  // "危機"
+    converter->StartPredictionForRequest(request, &segments);
+
+    EXPECT_EQ(1, segments.conversion_segments_size());
+    EXPECT_EQ("\xE4\xB8\x80\xE9\xAB\xAA",  // "一髪"
+              segments.conversion_segment(0).candidate(0).value);
+  }
+}
+
+TEST_F(ConverterTest, StartPredictionForRequest_Jyosushi) {
+  ConverterInterface *converter = ConverterFactory::GetConverter();
+  // To see preceding text helps prediction after number characters, consider
+  // the case where user converts "ひき".
+  {
+    // Without preceding text, test dictionary predicts "ひき" as "引換".
+    Segments segments;
+    mozc::composer::Composer composer;
+    composer.InsertCharacter("\xE3\x81\xB2\xE3\x81\x8D");  // "ひき"
+    mozc::ConversionRequest request(&composer);
+    converter->StartPredictionForRequest(request, &segments);
+
+    EXPECT_EQ(1, segments.conversion_segments_size());
+    EXPECT_EQ("\xE5\xBC\x95\xE6\x8F\x9B",  // "引換"
+              segments.conversion_segment(0).candidate(0).value);
+  }
+  {
+    // However, if providing "猫が5" as preceding text, "匹" is predicted from
+    // "ひき" with test dictionary.
+    Segments segments;
+    mozc::composer::Composer composer;
+    composer.InsertCharacter("\xE3\x81\xB2\xE3\x81\x8D");  // "ひき"
+    mozc::ConversionRequest request(&composer);
+    request.preceding_text = "\xE7\x8C\xAB\xE3\x81\x8C\x35";  // "猫が5"
+    converter->StartPredictionForRequest(request, &segments);
+
+    EXPECT_EQ(1, segments.conversion_segments_size());
+    EXPECT_EQ("\xE5\x8C\xB9",  // "匹"
+              segments.conversion_segment(0).candidate(0).value);
+  }
+}
 
 }  // namespace mozc

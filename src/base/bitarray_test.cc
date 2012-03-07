@@ -34,10 +34,6 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
-int rand_range(int x) {
-  return static_cast<int>(1.0 * rand() / RAND_MAX * x);
-}
-
 namespace mozc {
 TEST(BitArray, BitArraySizeTest) {
   {
@@ -77,7 +73,7 @@ TEST(BitArray, BitArrayTest) {
     EXPECT_EQ(size, array.size());
     vector<int> target(size);
     for (size_t j = 0; j < size; ++j) {
-      const bool v = (1.0 * rand() / RAND_MAX > 0.5);
+      const bool v = (Util::Random(2) == 0);
       if (v) {
         target[j] = 1;
         array.set(j);

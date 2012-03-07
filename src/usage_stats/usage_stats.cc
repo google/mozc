@@ -31,12 +31,6 @@
 
 #include <algorithm>
 
-#ifdef OS_WINDOWS
-#include <time.h>  // time()
-#else
-#include <sys/time.h>  // time()
-#endif
-
 #include "base/encryptor.h"
 #include "base/mutex.h"
 #include "base/singleton.h"
@@ -58,7 +52,7 @@ namespace {
 const char kRegistryPrefix[] = "usage_stats.";
 const char kLastUploadKey[] = "last_upload";
 const char kClientIdKey[] = "client_id";
-const uint32 kSendInterval = 23 * 60 * 60; // 23 hours
+const uint32 kSendInterval = 23 * 60 * 60;  // 23 hours
 
 #include "usage_stats/usage_stats_list.h"
 
@@ -226,7 +220,7 @@ void UsageStats::GetClientId(string *output) {
 
 bool UsageStats::Send(void *data) {
   Sync();
-  const uint32 current_sec = time(NULL);
+  const uint32 current_sec = static_cast<uint32>(Util::GetTime());
   uint32 last_upload_sec;
   const string upload_key = string(kRegistryPrefix) + string(kLastUploadKey);
   if (!storage::Registry::Lookup(upload_key, &last_upload_sec) ||

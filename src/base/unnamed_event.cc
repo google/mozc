@@ -42,7 +42,10 @@ namespace mozc {
 
 #ifdef OS_WINDOWS
 UnnamedEvent::UnnamedEvent()
-    : handle_(::CreateEvent(NULL, TRUE, FALSE, NULL)) {
+    : handle_(::CreateEvent(NULL, FALSE, FALSE, NULL)) {
+  // Use Auto reset mode of Win32 Event. (2nd arg of CreateEvent).
+  // pthread_cond_signal: auto reset mode.
+  // pthread_cond_broadcast: manual reset mode.
   if (NULL == handle_.get()) {
     LOG(ERROR) << "CreateEvent failed: " << ::GetLastError();
   }
@@ -83,15 +86,29 @@ bool UnnamedEvent::Wait(int msec) {
 
 #else  // OS_WINDOWS
 
-UnnamedEvent::UnnamedEvent() {
+namespace {
+class ScopedPthreadMutexLock {
+ public:
+  explicit ScopedPthreadMutexLock(pthread_mutex_t *mutex) : mutex_(mutex) {
+    pthread_mutex_lock(mutex_);
+  }
+  ~ScopedPthreadMutexLock() {
+    pthread_mutex_unlock(mutex_);
+  }
+ private:
+  pthread_mutex_t *mutex_;
+};
+}  // namespace
+
+UnnamedEvent::UnnamedEvent() : notified_(false) {
   pthread_mutex_init(&mutex_, NULL);
   pthread_cond_init(&cond_, NULL);
 }
 
+// It is necessary to ensure that no threads wait for this event before the
+// destruction.
 UnnamedEvent::~UnnamedEvent() {
-  pthread_mutex_unlock(&mutex_);
   pthread_mutex_destroy(&mutex_);
-  pthread_cond_signal(&cond_);
   pthread_cond_destroy(&cond_);
 }
 
@@ -100,40 +117,76 @@ bool UnnamedEvent::IsAvailable() const {
 }
 
 bool UnnamedEvent::Notify() {
-  if (pthread_cond_signal(&cond_) != 0) {
-    LOG(ERROR) << "pthread_cond_signal failed: " << errno;
-    return false;
+  {
+    ScopedPthreadMutexLock lock(&mutex_);
+    notified_ = true;
   }
+
+  // Note: Need to awake all threads waiting for this event. Otherwise
+  //   some thread would start to work incorrectly in some cases.
+  //   An example error scenario is:
+  //     - there are four threads, A, B, C and D.
+  //     - A and B are producers. C and D are consumers.
+  //     - C and D start to wait this event.
+  //     - Then A notifies.
+  //       - A takes the lock.
+  //       - set notified_ true.
+  //       - A releases the lock.
+  //     - Then before A sends a signal to awake a thread (either C or D),
+  //       B takes the lock.
+  //     - A sends a signal, but both C and D are sleeping as the lock is
+  //       still taken by B.
+  //     - B releases the lock. So one of the thread (let's assume C for this
+  //       example) starts to run, because it can take the lock.
+  //     - B also sends a signal again.
+  //     - C overrides notified_ to false, and releases the lock.
+  //     - At last, D starts to run wrongly.
+  //   The broadcast and while (in Wait) idiom is a popular way to fix such
+  //   cases.
+  pthread_cond_broadcast(&cond_);
   return true;
 }
 
 bool UnnamedEvent::Wait(int msec) {
-  pthread_mutex_lock(&mutex_);
+  ScopedPthreadMutexLock lock(&mutex_);
+  if (!notified_) {
+    // Need to wait actually.
+    if (msec < 0) {
+      // Wait forever.
+      while (!notified_) {
+        pthread_cond_wait(&cond_, &mutex_);
+      }
+    } else {
+      // Wait with time out.
+      struct timeval tv;
+      if (gettimeofday(&tv, NULL) != 0) {
+        LOG(ERROR) << "Failed to take the current time: " << errno;
+        return false;
+      }
 
-  if (msec >= 0) {
-    struct timeval tv;
-    if (0 != gettimeofday(&tv, NULL)) {
-      pthread_mutex_unlock(&mutex_);
-      return true;
+      struct timespec timeout;
+      timeout.tv_sec = tv.tv_sec + msec / 1000;
+      timeout.tv_nsec = 1000 * (tv.tv_usec + 1000 * (msec % 1000));
+
+      // if tv_nsec >= 10^9, pthread_cond_timedwait may return EINVAL
+      while (timeout.tv_nsec >= 1000000000) {
+        timeout.tv_sec++;
+        timeout.tv_nsec -= 1000000000;
+      }
+
+      int result = 0;
+      while (!notified_ && result == 0) {
+        result = pthread_cond_timedwait(&cond_, &mutex_, &timeout);
+      }
+
+      if (result != 0) {
+        // Time out.
+        return false;
+      }
     }
-
-    struct timespec timeout;
-    timeout.tv_sec = tv.tv_sec + msec / 1000;
-    timeout.tv_nsec = 1000 * (tv.tv_usec + 1000 * (msec % 1000));
-
-    // if tv_nsec >= 10^9, pthread_cond_timedwait may return EINVAL
-    while (timeout.tv_nsec >= 1000000000) {
-      timeout.tv_sec++;
-      timeout.tv_nsec -= 1000000000;
-    }
-
-    const int result = pthread_cond_timedwait(&cond_, &mutex_, &timeout);
-    pthread_mutex_unlock(&mutex_);
-    return ETIMEDOUT != result;
   }
-
-  pthread_cond_wait(&cond_, &mutex_);
-  pthread_mutex_unlock(&mutex_);
+  DCHECK(notified_);
+  notified_ = false;
   return true;
 }
 #endif   // OS_WINDOWS

@@ -111,9 +111,13 @@ class UserDictionaryStorage : public user_dictionary::UserDictionaryStorage {
   // Load user dictionary fomr the file
   bool Load();
 
-  // Serialzie user dictionary to local file
+  // Serialzie user dictionary to local file after some checks.
   // Need to call Lock() the dictionary before calling Save()
   bool Save();
+
+  // Serialzie user dictionary to local file without checks.
+  // Need to call Lock() the dictionary before calling SaveCore() directly.
+  bool SaveCore();
 
   // Lock the dictionary so that other process/threads cannot
   // execute mutable operations on this dictionary.

@@ -31,6 +31,8 @@
 #define MOZC_CONVERTER_CONVERTER_H_
 
 #include "converter/converter_interface.h"
+//  for FRIEND_TEST()
+#include "testing/base/public/gunit_prod.h"
 
 namespace mozc {
 class Segments;
@@ -46,12 +48,16 @@ class ConverterImpl : public ConverterInterface {
                const string &key,
                const Segments::RequestType request_type) const;
 
+  bool StartConversionForRequest(const ConversionRequest &request,
+                                 Segments *segments) const;
   bool StartConversion(Segments *segments,
                        const string &key) const;
   bool StartConversionWithComposer(Segments *segments,
                                    const composer::Composer *composer) const;
   bool StartReverseConversion(Segments *segments,
                               const string &key) const;
+  bool StartPredictionForRequest(const ConversionRequest &request,
+                                 Segments *segments) const;
   bool StartPrediction(Segments *segments,
                        const string &key) const;
   bool StartPredictionWithComposer(Segments *segments,
@@ -101,10 +107,25 @@ class ConverterImpl : public ConverterInterface {
   UserDataManagerInterface *GetUserDataManager();
 
  private:
+  FRIEND_TEST(ConverterTest, CompletePOSIds);
+  FRIEND_TEST(ConverterTest, SetupHistorySegmentsFromPrecedingText);
+
+  // Complete Left id/Right id if they are not defined.
+  // Some users don't push conversion button but directly
+  // input hiragana sequence only with composition mode. Converter
+  // cannot know which POS ids should be used for these directly-
+  // input strings. This function estimates IDs from value heuristically.
+  void CompletePOSIds(Segment::Candidate *candidate) const;
+
   bool CommitSegmentValueInternal(Segments *segments,
                                   size_t segment_index,
                                   int candidate_index,
                                   Segment::SegmentType segment_type) const;
+
+  // Reconstructs history segments from preceding text to emulate user input
+  // from preceding (surrounding) text.
+  bool SetupHistorySegmentsFromPrecedingText(const string &preceding_text,
+                                             Segments *segments) const;
 
   scoped_ptr<UserDataManagerInterface> user_data_manager_;
   ImmutableConverterInterface *immutable_converter_;

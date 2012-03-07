@@ -102,6 +102,14 @@ class SessionHandler : public SessionHandlerInterface {
   bool GetStoredConfig(commands::Command *command);
   bool SetStoredConfig(commands::Command *command);
   bool SetImposedConfig(commands::Command *command);
+  bool StartCloudSync(commands::Command *command);
+  bool ClearCloudSync(commands::Command *command);
+  bool GetCloudSyncStatus(commands::Command *command);
+  bool AddAuthCode(commands::Command *command);
+
+  bool InsertToStorage(commands::Command *command);
+  bool ReadAllFromStorage(commands::Command *command);
+  bool ClearStorage(commands::Command *command);
   bool Cleanup(commands::Command *command);
   bool NoOperation(commands::Command *command);
 

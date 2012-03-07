@@ -732,7 +732,7 @@ BOOL WINAPI ImeSelect(HIMC himc, BOOL select) {
   // may internally call LoadSystemLibrary to retrieve user profile directory.
   // We should definitely avoid using LoadSystemLibrary when the thread owns
   // loader lock.
-  mozc::Logging::InitLogStream("GoogleJapaneseInput_imm32_ui");
+  mozc::Logging::InitLogStream(kProductPrefix "_imm32_ui");
 
   mozc::win32::ScopedHIMC<mozc::win32::InputContext> context(himc);
   if (context.get() == NULL) {

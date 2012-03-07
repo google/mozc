@@ -726,20 +726,66 @@ TEST(SessionOutputTest, AddSegment) {
   }
 }
 
-TEST(SessionOutputTest, FillConversionResult) {
+TEST(SessionOutputTest, FillConversionResultWithoutNormalization) {
+  // "ゔ"
+  const char kInput[] = "\xE3\x82\x94";
+
   commands::Result result;
-  SessionOutput::FillConversionResult("abc", "ABC", &result);
+  SessionOutput::FillConversionResultWithoutNormalization(
+      kInput, kInput, &result);
   EXPECT_EQ(commands::Result::STRING, result.type());
-  EXPECT_EQ("abc", result.key());
-  EXPECT_EQ("ABC", result.value());
+  EXPECT_EQ(kInput, result.key());  // should not be normalized
+  EXPECT_EQ(kInput, result.value());  // should not be normalized
+}
+
+TEST(SessionOutputTest, FillConversionResult) {
+  {
+    commands::Result result;
+    SessionOutput::FillConversionResult("abc", "ABC", &result);
+    EXPECT_EQ(commands::Result::STRING, result.type());
+    EXPECT_EQ("abc", result.key());
+    EXPECT_EQ("ABC", result.value());
+  }
+
+  // Check text normalization for *key*
+  {
+    // "ゔ"
+    const char kToBeReplaced[] = "\xE3\x82\x94";
+    // "ヴ"
+    const char kReplaced[] = "\xE3\x83\xB4";
+
+    // SessionOutput::FillConversionResult assumes that
+    // the given value is already normalized.
+    commands::Result result;
+    SessionOutput::FillConversionResult(
+        kToBeReplaced, kReplaced, &result);
+    EXPECT_EQ(commands::Result::STRING, result.type());
+    EXPECT_EQ(kReplaced, result.key());
+    EXPECT_EQ(kReplaced, result.value());
+  }
 }
 
 TEST(SessionOutputTest, FillPreeditResult) {
-  commands::Result result;
-  SessionOutput::FillPreeditResult("ABC", &result);
-  EXPECT_EQ(commands::Result::STRING, result.type());
-  EXPECT_EQ("ABC", result.key());
-  EXPECT_EQ("ABC", result.value());
+  {
+    commands::Result result;
+    SessionOutput::FillPreeditResult("ABC", &result);
+    EXPECT_EQ(commands::Result::STRING, result.type());
+    EXPECT_EQ("ABC", result.key());
+    EXPECT_EQ("ABC", result.value());
+  }
+
+  {
+    // "ゔ"
+    const char kToBeReplaced[] = "\xE3\x82\x94";
+    // "ヴ"
+    const char kReplaced[] = "\xE3\x83\xB4";
+
+    commands::Result result;
+    SessionOutput::FillPreeditResult(kToBeReplaced, &result);
+    EXPECT_EQ(commands::Result::STRING, result.type());
+    EXPECT_EQ(kReplaced, result.key());
+    EXPECT_EQ(kReplaced, result.value());
+  }
 }
 
 TEST(SessionOutputTest, FillAllCandidateWords_NonForcused) {

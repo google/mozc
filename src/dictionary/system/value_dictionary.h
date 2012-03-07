@@ -62,6 +62,9 @@ class ValueDictionary : public DictionaryInterface {
   static ValueDictionary *CreateValueDictionaryFromImage(
       const char *ptr, int len);
 
+  Node *LookupPredictiveWithLimit(const char *str, int size,
+                                  const Limit &limit,
+                                  NodeAllocatorInterface *allocator) const;
   Node *LookupPredictive(const char *str, int size,
                          NodeAllocatorInterface *allocator) const;
   Node *LookupPrefixWithLimit(
@@ -81,6 +84,7 @@ class ValueDictionary : public DictionaryInterface {
   scoped_ptr<rx::RxTrie> value_trie_;
   scoped_ptr<DictionaryFile> dictionary_file_;
   const dictionary::SystemDictionaryCodecInterface *codec_;
+  const Limit empty_limit_;
 
   DISALLOW_COPY_AND_ASSIGN(ValueDictionary);
 };

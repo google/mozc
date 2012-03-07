@@ -49,8 +49,8 @@
         '../transliteration/transliteration.gyp:transliteration',
         '../usage_stats/usage_stats.gyp:usage_stats',
         '../config/config.gyp:config_handler',
-        '../config/config.gyp:genproto_config',
-        'session_base.gyp:genproto_session',
+        '../config/config.gyp:config_protocol',
+        'session_base.gyp:generic_storage_manager',
         'session_base.gyp:key_parser',
         'session_base.gyp:keymap',
         'session_base.gyp:keymap_factory',
@@ -66,12 +66,13 @@
         'internal/candidate_list.cc',
         'internal/ime_context.cc',
         'internal/session_output.cc',
+        'internal/key_event_transformer.cc',
       ],
       'dependencies': [
+        '../base/base.gyp:base',
         '../composer/composer.gyp:composer',
-        '../config/config.gyp:genproto_config',
-        '../protobuf/protobuf.gyp:protobuf',
-        'session_base.gyp:genproto_session',
+        '../config/config.gyp:config_handler',
+        '../config/config.gyp:config_protocol',
         'session_base.gyp:session_protocol',
       ],
     },
@@ -86,20 +87,18 @@
       ],
       'dependencies': [
         '../client/client.gyp:client',
-        '../config/config.gyp:genproto_config',
-        'session_base.gyp:genproto_session',
+        '../config/config.gyp:config_handler',
+        '../config/config.gyp:config_protocol',
+        'session_base.gyp:generic_storage_manager',
+        'session_base.gyp:request_handler',
         'session_base.gyp:session_protocol',
       ],
-    },
-    {
-      'target_name': 'session_handler_stress_test_main',
-      'type': 'executable',
-      'sources': [
-        'session_handler_stress_test_main.cc'
-      ],
-      'dependencies': [
-        'random_keyevents_generator',
-        'session_server',
+      'conditions': [
+        ['enable_cloud_sync==1', {
+          'dependencies': [
+            '../sync/sync.gyp:sync',
+          ]
+        }],
       ],
     },
     {
@@ -114,13 +113,25 @@
         '../base/base.gyp:config_file_stream',
         '../client/client.gyp:client',
         '../config/config.gyp:config_handler',
-        '../config/config.gyp:genproto_config',
-        '../usage_stats/usage_stats.gyp:genproto_usage_stats',
-        'session_base.gyp:genproto_session',
+        '../config/config.gyp:config_protocol',
+        '../usage_stats/usage_stats.gyp:usage_stats_protocol',
         'session_base.gyp:keymap',
         'session_base.gyp:keymap_factory',
         'session_base.gyp:session_protocol',
         'session_handler',
+      ],
+      'conditions': [
+        ['target_platform=="Android"', {
+          'sources!': [
+            'session_watch_dog.cc',
+          ],
+          'dependencies': [
+            '../ipc/ipc.gyp:ipc',
+          ],
+          'dependencies!': [
+            '../client/client.gyp:client',
+          ],
+        }],
       ],
     },
     {
@@ -131,10 +142,9 @@
         'random_keyevents_generator.cc',
       ],
       'dependencies': [
-        '../config/config.gyp:genproto_config',
+        '../config/config.gyp:config_protocol',
         'gen_session_stress_test_data',
         'session',
-        'session_base.gyp:genproto_session',
         'session_base.gyp:session_protocol',
       ],
     },

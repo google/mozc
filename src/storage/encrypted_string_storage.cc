@@ -1,0 +1,182 @@
+// Copyright 2010-2012, Google Inc.
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+//     * Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//     * Redistributions in binary form must reproduce the above
+// copyright notice, this list of conditions and the following disclaimer
+// in the documentation and/or other materials provided with the
+// distribution.
+//     * Neither the name of Google Inc. nor the names of its
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+#include "storage/encrypted_string_storage.h"
+
+#include <string>
+
+#include "base/mmap.h"
+#include "base/file_stream.h"
+#include "base/password_manager.h"
+#include "base/encryptor.h"
+
+namespace mozc {
+namespace storage {
+
+namespace {
+// Salt size for encryption
+const size_t kSaltSize = 32;
+
+// Maximum file size (64Mbyte)
+const size_t kMaxFileSize = 64 * 1024 * 1024;
+}  // namespace
+
+EncryptedStringStorage::EncryptedStringStorage(const string &filename)
+    : filename_(filename) {}
+
+EncryptedStringStorage::~EncryptedStringStorage() {}
+
+bool EncryptedStringStorage::Load(string *output) {
+  DCHECK(output);
+
+  string salt;
+
+  // Reads encrypted message and salt from local file
+  {
+    Mmap<char> mmap;
+    if (!mmap.Open(filename_.c_str(), "r")) {
+      LOG(ERROR) << "cannot open user history file";
+      return false;
+    }
+
+    if (mmap.GetFileSize() < kSaltSize) {
+      LOG(ERROR) << "file size is too small";
+      return false;
+    }
+
+    if (mmap.GetFileSize() > kMaxFileSize) {
+      LOG(ERROR) << "file size is too big.";
+      return false;
+    }
+
+    // copy salt
+    char tmp[kSaltSize];
+    memcpy(tmp, mmap.begin(), kSaltSize);
+    salt.assign(tmp, kSaltSize);
+
+    // copy body
+    output->assign(mmap.begin() + kSaltSize,
+                   mmap.GetFileSize() - kSaltSize);
+  }
+
+  string password;
+  if (!PasswordManager::GetPassword(&password)) {
+    LOG(ERROR) << "PasswordManager::GetPassword() failed";
+    return false;
+  }
+
+  if (password.empty()) {
+    LOG(ERROR) << "password is empty";
+    return false;
+  }
+
+  // Decrypt message
+  Encryptor::Key key;
+  if (!key.DeriveFromPassword(password, salt)) {
+    LOG(ERROR) << "Encryptor::Key::DeriveFromPassword failed";
+    return false;
+  }
+
+  if (!Encryptor::DecryptString(key, output)) {
+    LOG(ERROR) << "Encryptor::DecryptString() failed";
+    return false;
+  }
+
+  return true;
+}
+
+bool EncryptedStringStorage::Save(const string &input) const {
+  string output, salt;
+
+  {
+    string password;
+    if (!PasswordManager::GetPassword(&password)) {
+      LOG(ERROR) << "PasswordManager::GetPassword() failed";
+      return false;
+    }
+
+    if (password.empty()) {
+      LOG(ERROR) << "password is empty";
+      return false;
+    }
+
+    char tmp[kSaltSize];
+    memset(tmp, '\0', sizeof(tmp));
+    Util::GetSecureRandomSequence(tmp, sizeof(tmp));
+    salt.assign(tmp, sizeof(tmp));
+
+    Encryptor::Key key;
+    if (!key.DeriveFromPassword(password, salt)) {
+      LOG(ERROR) << "Encryptor::Key::DeriveFromPassword() failed";
+      return false;
+    }
+
+    output.assign(input);
+    if (!Encryptor::EncryptString(key, &output)) {
+      LOG(ERROR) << "Encryptor::EncryptString() failed";
+      return false;
+    }
+  }
+
+  // Even if histoy is empty, save to them into a file to
+  // make the file empty
+  const string tmp_filename = filename_ + ".tmp";
+  {
+    OutputFileStream ofs(tmp_filename.c_str(), ios::out | ios::binary);
+    if (!ofs) {
+      LOG(ERROR) << "failed to write: " << tmp_filename;
+      return false;
+    }
+
+    VLOG(1) << "Syncing user history to: " << filename_;
+    ofs.write(salt.data(), salt.size());
+    ofs.write(output.data(), output.size());
+  }
+
+  if (!Util::AtomicRename(tmp_filename, filename_)) {
+    LOG(ERROR) << "AtomicRename failed";
+    return false;
+  }
+
+#ifdef OS_WINDOWS
+  wstring wfilename;
+  Util::UTF8ToWide(filename_.c_str(), &wfilename);
+  if (!::SetFileAttributes(wfilename.c_str(),
+                           FILE_ATTRIBUTE_HIDDEN |
+                           FILE_ATTRIBUTE_SYSTEM)) {
+    LOG(ERROR) << "Cannot make hidden: " << filename_
+               << " " << ::GetLastError();
+  }
+#endif
+
+  return true;
+}
+
+}  // namespace storage
+}  // namespace mozc

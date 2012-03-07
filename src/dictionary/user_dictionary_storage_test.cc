@@ -34,6 +34,7 @@
 #endif
 
 #include <algorithm>
+#include <vector>
 #include "base/base.h"
 #include "base/file_stream.h"
 #include "base/util.h"
@@ -47,15 +48,12 @@ DECLARE_string(test_tmpdir);
 namespace mozc {
 namespace {
 
-int Random(int size) {
-  return static_cast<int> (1.0 * size * rand() / (RAND_MAX + 1.0));
-}
-
 string GenRandomString(int size) {
   string result;
-  const size_t len = Random(size) + 1;
+  const size_t len = Util::Random(size) + 1;
   for (int i = 0; i < len; ++i) {
-    const uint16 l = Random(static_cast<int>('~' - ' ')) + ' ';
+    const uint16 l =
+        static_cast<uint16>(Util::Random(static_cast<int>('~' - ' ')) + ' ');
     Util::UCS2ToUTF8Append(l, &result);
   }
   return result;
@@ -90,7 +88,97 @@ TEST(UserDictionaryStorage, LockTest) {
   EXPECT_TRUE(storage2.Save());
 }
 
+TEST(UserDictionaryStorage, SyncDictionaryBinarySizeTest) {
+  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+  Util::Unlink(GetUserDictionaryFile());
+  UserDictionaryStorage storage(GetUserDictionaryFile());
+  EXPECT_FALSE(storage.Load());
+#ifndef ENABLE_CLOUD_SYNC
+  // In binaries built without sync feature, we should make sync dictionary
+  // intentionally.
+  storage.EnsureSyncDictionaryExists();
+#endif  // ENABLE_CLOUD_SYNC
 
+  EXPECT_TRUE(storage.Lock());
+
+  EXPECT_TRUE(storage.Save());
+  {
+    // Creates an entry which exceeds the sync dictionary limit
+    // outside of the sync dictionary.
+    UserDictionaryStorage::UserDictionary *dic = storage.add_dictionaries();
+    dic->set_name("foo");
+    dic->set_syncable(false);
+    UserDictionaryStorage::UserDictionaryEntry *entry =
+        dic->add_entries();
+    entry->set_key(string(UserDictionaryStorage::max_sync_binary_size(), 'a'));
+    entry->set_value("value");
+    entry->set_pos("pos");
+  }
+  // Okay to store such entry in the normal dictionary.
+  EXPECT_TRUE(storage.Save());
+
+  {
+    // Same on the sync dictionary.
+    UserDictionaryStorage::UserDictionary *dic =
+        storage.mutable_dictionaries(0);
+    EXPECT_TRUE(dic->syncable());  // just in case.
+    UserDictionaryStorage::UserDictionaryEntry *entry =
+        dic->add_entries();
+    entry->set_key(string(UserDictionaryStorage::max_sync_binary_size(), 'a'));
+    entry->set_value("value");
+    entry->set_pos("pos");
+  }
+  // Such size is unacceptable for sync.
+  EXPECT_FALSE(storage.Save());
+
+  EXPECT_TRUE(storage.UnLock());
+}
+
+TEST(UserDictionaryStorage, SyncDictionaryEntrySizeTest) {
+  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+  Util::Unlink(GetUserDictionaryFile());
+  UserDictionaryStorage storage(GetUserDictionaryFile());
+  EXPECT_FALSE(storage.Load());
+#ifndef ENABLE_CLOUD_SYNC
+  // In binaries built without sync feature, we should make sync dictionary
+  // intentionally.
+  storage.EnsureSyncDictionaryExists();
+#endif  // ENABLE_CLOUD_SYNC
+
+  EXPECT_TRUE(storage.Lock());
+
+  EXPECT_TRUE(storage.Save());
+  {
+    // Creates an entry which exceeds the sync dictionary limit
+    // outside of the sync dictionary.
+    UserDictionaryStorage::UserDictionary *dic = storage.add_dictionaries();
+    dic->set_name("foo");
+    dic->set_syncable(false);
+    for (size_t i = 0; i < UserDictionaryStorage::max_sync_entry_size() + 1;
+         ++i) {
+      // add empty entries.
+      dic->add_entries();
+    }
+  }
+  // Okay to store such entry in the normal dictionary.
+  EXPECT_TRUE(storage.Save());
+
+  {
+    // Same on the sync dictionary.
+    UserDictionaryStorage::UserDictionary *dic =
+        storage.mutable_dictionaries(0);
+    EXPECT_TRUE(dic->syncable());  // just in case.
+    for (size_t i = 0; i < UserDictionaryStorage::max_sync_entry_size() + 1;
+         ++i) {
+      // add empty entries.
+      dic->add_entries();
+    }
+  }
+  // Such entry size is unacceptable for sync.
+  EXPECT_FALSE(storage.Save());
+
+  EXPECT_TRUE(storage.UnLock());
+}
 
 TEST(UserDictionaryStorage, BasicOperationsTest) {
   Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
@@ -168,7 +256,7 @@ TEST(UserDictionaryStorage, DeleteTest) {
 
     vector<uint64> alive;
     for (size_t i = 0; i < ids.size(); ++i) {
-      if (Random(3) == 0) {   // 30%
+      if (Util::Random(3) == 0) {   // 33%
         EXPECT_TRUE(storage.DeleteDictionary(ids[i]));
         continue;
       }
@@ -236,13 +324,13 @@ TEST(UserDictionaryStorage, SerializeTest) {
 
     {
       EXPECT_FALSE(storage1.Load());
-      const size_t dic_size = Random(50) + 1;
+      const size_t dic_size = Util::Random(50) + 1;
 
       for (size_t i = 0; i < dic_size; ++i) {
         uint64 id = 0;
         EXPECT_TRUE(storage1.CreateDictionary("test" + Util::SimpleItoa(i),
                                              &id));
-        const size_t entry_size = Random(100) + 1;
+        const size_t entry_size = Util::Random(100) + 1;
         for (size_t j = 0; j < entry_size; ++j) {
           UserDictionaryStorage::UserDictionary *dic =
               storage1.mutable_dictionaries(i);
@@ -290,5 +378,82 @@ TEST(UserDictionaryStorage, GetUserDictionaryIdTest) {
   EXPECT_EQ(ret_id[1], id[1]);
 }
 
+TEST(UserDictionaryStorage, SyncDictionaryTests) {
+  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+  Util::Unlink(GetUserDictionaryFile());
 
+  UserDictionaryStorage storage(GetUserDictionaryFile());
+  EXPECT_FALSE(storage.Load());
+#ifndef ENABLE_CLOUD_SYNC
+  // In binaries built without sync feature, we should make sync dictionary
+  // intentionally.
+  storage.EnsureSyncDictionaryExists();
+#endif  // ENABLE_CLOUD_SYNC
+
+  // Always the storage has the sync dictionary.
+  EXPECT_EQ(1, storage.dictionaries_size());
+  const user_dictionary::UserDictionaryStorage::UserDictionary &sync_dict =
+      storage.dictionaries(0);
+  uint64 sync_dict_id = sync_dict.id();
+  EXPECT_NE(0, sync_dict_id);
+  EXPECT_TRUE(sync_dict.syncable());
+
+  uint64 normal_dict_id = 0;
+  EXPECT_TRUE(storage.CreateDictionary("test", &normal_dict_id));
+  EXPECT_NE(sync_dict_id, normal_dict_id);
+
+  // Storing the file.
+  EXPECT_TRUE(storage.Lock());
+  EXPECT_TRUE(storage.Save());
+  EXPECT_TRUE(storage.UnLock());
+
+  // Clear and reload from the file again.
+  storage.Clear();
+  EXPECT_TRUE(storage.Load());
+  // In case of load from an existing file, it does not append a new
+  // sync dict.
+  EXPECT_EQ(2, storage.dictionaries_size());
+  bool has_sync_dict = false;
+  bool has_normal_dict = false;
+  for (size_t i = 0; i < storage.dictionaries_size(); ++i) {
+    const user_dictionary::UserDictionaryStorage::UserDictionary &dict =
+        storage.dictionaries(i);
+    if (dict.syncable()) {
+      // sync dictionary
+      EXPECT_EQ(sync_dict_id, dict.id());
+      has_sync_dict = true;
+    } else {
+      EXPECT_EQ(normal_dict_id, dict.id());
+      has_normal_dict = true;
+    }
+  }
+  EXPECT_TRUE(has_sync_dict);
+  EXPECT_TRUE(has_normal_dict);
+}
+
+TEST(UserDictionaryStorage, SyncDictionaryOperations) {
+  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+  Util::Unlink(GetUserDictionaryFile());
+
+  UserDictionaryStorage storage(GetUserDictionaryFile());
+  EXPECT_FALSE(storage.Load());
+#ifndef ENABLE_CLOUD_SYNC
+  // In binaries built without sync feature, we should make sync dictionary
+  // intentionally.
+  storage.EnsureSyncDictionaryExists();
+#endif  // ENABLE_CLOUD_SYNC
+
+  uint64 sync_dic_id = 0;
+  EXPECT_TRUE(storage.GetUserDictionaryId(
+      UserDictionaryStorage::default_sync_dictionary_name(), &sync_dic_id));
+
+  // Cannot delete.
+  EXPECT_FALSE(storage.DeleteDictionary(sync_dic_id));
+  // Cannot rename.
+  EXPECT_FALSE(storage.RenameDictionary(sync_dic_id, "foo"));
+  // Cannot copy.
+  uint64 dummy_id = 0;
+  EXPECT_FALSE(storage.CopyDictionary(sync_dic_id, "bar", &dummy_id));
+  EXPECT_EQ(0, dummy_id);
+}
 }  // namespace mozc

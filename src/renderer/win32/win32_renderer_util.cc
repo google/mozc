@@ -2289,45 +2289,65 @@ int LayoutManager::GetCompatibilityMode(
 
   int mode = COMPATIBILITY_MODE_NONE;
   {
-    const wchar_t *kUseCandidateFormForSuggest[] = {
-        L"Chrome_RenderWidgetHostHWND",
-        L"JsTaroCtrl",
-        L"OperaWindowClass",
-        L"QWidget",
+    {
+      const wchar_t *kUseCandidateFormForSuggest[] = {
+          L"Chrome_RenderWidgetHostHWND",
+          L"JsTaroCtrl",
+          L"OperaWindowClass",
+          L"QWidget",
+      };
+      for (size_t i = 0; i < ARRAYSIZE(kUseCandidateFormForSuggest); ++i) {
+        if (kUseCandidateFormForSuggest[i] == class_name) {
+          mode |= CAN_USE_CANDIDATE_FORM_FOR_SUGGEST;
+          break;
+        }
+      }
+    }
+  }
+
+  {
+    const wchar_t *kUseLocalCoord[] = {
+        L"gdkWindowToplevel",
+        L"SunAwtDialog",
+        L"SunAwtFrame",
     };
-    for (size_t i = 0; i < ARRAYSIZE(kUseCandidateFormForSuggest); ++i) {
-      if (kUseCandidateFormForSuggest[i] == class_name) {
-        mode |= CAN_USE_CANDIDATE_FORM_FOR_SUGGEST;
+    for (size_t i = 0; i < ARRAYSIZE(kUseLocalCoord); ++i) {
+      if (kUseLocalCoord[i] == class_name) {
+        mode |= USE_LOCAL_COORD_FOR_CANDIDATE_FORM;
         break;
       }
     }
   }
 
-  const wchar_t *kUseLocalCoord[] = {
-      L"gdkWindowToplevel",
-      L"SunAwtDialog",
-      L"SunAwtFrame",
-  };
-  for (size_t i = 0; i < ARRAYSIZE(kUseLocalCoord); ++i) {
-    if (kUseLocalCoord[i] == class_name) {
-      mode |= USE_LOCAL_COORD_FOR_CANDIDATE_FORM;
-      break;
+  {
+    const wchar_t *kIgnoreDefaultCompositionForm[] = {
+        L"SunAwtDialog",
+        L"SunAwtFrame",
+    };
+    for (size_t i = 0; i < ARRAYSIZE(kIgnoreDefaultCompositionForm); ++i) {
+      if (kIgnoreDefaultCompositionForm[i] == class_name) {
+        mode |= IGNORE_DEFAULT_COMPOSITION_FORM;
+        break;
+      }
     }
   }
 
-  const wchar_t *kIgnoreDefaultCompositionForm[] = {
-      L"SunAwtDialog",
-      L"SunAwtFrame",
-  };
-  for (size_t i = 0; i < ARRAYSIZE(kIgnoreDefaultCompositionForm); ++i) {
-    if (kIgnoreDefaultCompositionForm[i] == class_name) {
-      mode |= IGNORE_DEFAULT_COMPOSITION_FORM;
-      break;
+  {
+    const wchar_t *kShowInfolistImmediately[] = {
+        L"Emacs",
+        L"MEADOW",
+    };
+    for (size_t i = 0; i < ARRAYSIZE(kShowInfolistImmediately); ++i) {
+      if (kShowInfolistImmediately[i] == class_name) {
+        mode |= SHOW_INFOLIST_IMMEDIATELY;
+        break;
+      }
     }
   }
 
   return mode;
 }
+
 }  // namespace win32
 }  // namespace renderer
 }  // namespace mozc

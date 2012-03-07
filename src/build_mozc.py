@@ -197,10 +197,9 @@ def GetGypFileNames(options):
   # Include tests gyp
   gyp_file_names.append('%s/gyp/tests.gyp' % SRC_DIR)
   # Include subdirectory of dictionary
-  gyp_file_names.append(
-      '%s/dictionary/file/dictionary_file.gyp' % SRC_DIR)
-  gyp_file_names.append(
-      '%s/dictionary/system/system_dictionary.gyp' % SRC_DIR)
+  gyp_file_names.extend(glob.glob('%s/dictionary/*/*.gyp' % SRC_DIR))
+  # Include subdirectory of rewriter
+  gyp_file_names.extend(glob.glob('%s/rewriter/*/*.gyp' % SRC_DIR))
   # Include subdirectory of win32 and breakpad for Windows
   if IsWindows():
     gyp_file_names.extend(glob.glob('%s/win32/*/*.gyp' % SRC_DIR))
@@ -360,10 +359,20 @@ def AddCommonOptions(parser):
   parser.add_option('--build_base', dest='build_base',
                     help='Specifies the base directory of the built binaries.')
   # Linux environment can build both for Linux and ChromeOS.
-  # This option enable this script to know which build (Linux or ChromeOS)
+  # This option enables this script to know which build (Linux or ChromeOS)
   # should be done. If you want ChromeOS build, specify "ChromeOS".
-  parser.add_option('--target_platform', dest='target_platform', default='',
-                    help='If you want ChromeOS build, specify "ChromeOS"')
+  if IsLinux():
+    default_target = 'Linux'
+  elif IsWindows():
+    default_target = 'Windows'
+  elif IsMac():
+    default_target = 'Mac'
+  parser.add_option('--target_platform', dest='target_platform',
+                    default=default_target,
+                    help=('Linux environment can build both for Linux and '
+                          'ChromeOS. This option enables this script to know '
+                          'which build (Linux or ChromeOS) should be done. '
+                          'If you want ChromeOS build, specify "ChromeOS".'))
   parser.add_option('--language', dest='language', default='japanese',
                     help='Specify the target language to build.')
   return parser
@@ -386,10 +395,6 @@ def ParseGypOptions(args=None, values=None):
                     help='Specifies the DEPS file.')
   parser.add_option('--gyp_generator', dest='gyp_generator',
                     help='Specifies the generator for GYP.')
-  parser.add_option('--deprecated_onepass', '-1', dest='onepass',
-                    action='store_true',
-                    default=False,
-                    help='Not supported. Builds mozc in one pass.')
   parser.add_option('--branding', dest='branding', default='Mozc')
   parser.add_option('--gypdir', dest='gypdir', default='third_party/gyp')
   parser.add_option('--noqt', action='store_true', dest='noqt', default=False)
@@ -420,6 +425,18 @@ def ParseGypOptions(args=None, values=None):
                     help='A path to the root directory of Native Client SDK. '
                     'This is used when NaCl module build.')
 
+  # On Linux, you should not set this flag if you want to use "dlopen" to
+  # load Mozc's modules. See
+  # - http://code.google.com/p/mozc/issues/detail?id=14
+  # - http://code.google.com/p/protobuf/issues/detail?id=128
+  # - http://code.google.com/p/protobuf/issues/detail?id=370
+  # for the background information.
+  parser.add_option('--use_libprotobuf', action='store_true',
+                    dest='use_libprotobuf', default=False,
+                    help='Use libprotobuf on GNU/Linux. On other platforms, '
+                    'this flag will simply be ignored and Mozc always links '
+                    'to protobuf statically.')
+
   use_dynamically_linked_qt_default = True
   parser.add_option('--use_dynamically_linked_qt',
                     dest='use_dynamically_linked_qt',
@@ -427,20 +444,67 @@ def ParseGypOptions(args=None, values=None):
                     help='Use dynamically linked version of Qt. '
                     'Currently this flag is used only on Windows builds.')
 
-  parser.add_option('--enable_cloud_sync', action='store_true',
-                    dest='enable_cloud_sync')
-  parser.add_option('--disable_cloud_sync', action='store_false',
-                    dest='enable_cloud_sync',
-                    help='Intentionally enable or disable cloud sync feature '
-                    'with the CLOUD_SYNC macro defined in code. '
-                    '--enable_cloud_sync enables it, and --disable_cloud_sync '
-                    'disables it. If both options are not set, enables the '
-                    'cloud sync feature according to the target environment '
-                    'and branding.')
+  def AddFeatureOption(option_parser, feature_name, macro_name,
+                       option_name):
+    """Defines options like '--enable_foober' and '--disable_foober'.
+
+    This function defines options like --enable_foober and --disable_foobar
+    based on given parameters.
+
+    Args:
+      option_parser: An option parser to which options should be added.
+      feature_name: A name of the feature. Will be used for option's help.
+      macro_name: A macro name which will be defined when this feature is
+          enabled. Will be used for option's help.
+      option_name: A base name of the option. If 'foobar' is specified,
+          --enable_foobar and --disable_foobar will be defined.
+
+    Raises:
+      ValueError: An error occurred when any name parameter is empty.
+    """
+    if not feature_name:
+      raise ValueError('"feature_name" should be specified')
+    if not option_name:
+      raise ValueError('"option_name" should be specified')
+    if not macro_name:
+      raise ValueError('"macro_name" should be specified')
+    params = {'feature_name': feature_name,
+              'option_name': option_name,
+              'macro_name': macro_name}
+    help_template = ('Intentionally enable or disable %(feature_name)s '
+                     'feature with the %(macro_name)s macro defined in code. '
+                     '--enable_%(option_name)s enables it, and '
+                     '--disable_%(option_name)s disables it. If both options '
+                     'are not set, enables the %(feature_name)s feature '
+                     'according to the target environment and branding.')
+    option_parser.add_option('--enable_%(option_name)s' % params,
+                             action='store_true',
+                             dest=('enable_%(option_name)s' % params),
+                             help=help_template % params)
+    option_parser.add_option('--disable_%(option_name)s' % params,
+                             action='store_false',
+                             dest=('enable_%(option_name)s' % params),
+                             help=help_template % params)
+
+  AddFeatureOption(parser, feature_name='webservice infolist',
+                   macro_name='ENABLE_WEBSERVICE_INFOLIST',
+                   option_name='webservice_infolist')
+  AddFeatureOption(parser, feature_name='cloud sync',
+                   macro_name='ENABLE_CLOUD_SYNC',
+                   option_name='cloud_sync')
+  AddFeatureOption(parser, feature_name='cloud handwriting',
+                   macro_name='ENABLE_CLOUD_HANDWRITING',
+                   option_name='cloud_handwriting')
 
   # TODO(yukawa): Remove this option when Zinnia can be built on Windows with
   #               enabling Unicode.
   use_zinnia_default = True
+
+  parser.add_option('--server_dir', dest='server_dir',
+                    default='/usr/lib/mozc',
+                    help='A path to the directory to be installed server '
+                    'executable. This option is only available for Linux.')
+
   if IsWindows():
     # Zinnia on Windows cannot be enabled because of compile error.
     use_zinnia_default = False
@@ -577,8 +641,6 @@ def GypMain(options, unused_args):
                   '--include=%s/gyp/common.gypi' % SRC_DIR]
   command_line.extend(['-D', 'python_executable=%s' % sys.executable])
 
-  if options.onepass:
-    command_line.extend(['-D', 'two_pass_build=0'])
   command_line.extend(gyp_file_names)
 
   if options.branding:
@@ -619,16 +681,60 @@ def GypMain(options, unused_args):
   if options.channel_dev:
     command_line.extend(['-D', 'channel_dev=1'])
 
-  # Check whether --enable_cloud_sync or --disable_cloud_sync are set. If
-  # neither of them are set, enables the cloud sync feature according to the
-  # target platform and branding.
-  if options.enable_cloud_sync is None:
-    if options.branding == 'GoogleJapaneseInput' and (IsWindows() or IsMac()):
-      options.enable_cloud_sync = True
-    else:
-      options.enable_cloud_sync = False
-  command_line.extend(['-D', 'enable_cloud_sync=%s' %
-                       (1 if options.enable_cloud_sync else 0)])
+  def SetCommandLineForFeature(option_name, windows=False, mac=False,
+                               linux=False, chromeos=False, android=False):
+    """Updates an option like '--enable_foober' and add a -D argument for gyp.
+
+    This function ensures an option like '--enable_foober' exists and it has a
+    default boolean for each platform based on givem parameters. This
+    function also sets a '-D' command line option for gyp as
+    '-D enable_foober=0' or '-D enable_foober=1' depending on the actual value
+    of the target option.
+
+    Args:
+      option_name: A base name of the option. If 'foobar' is given,
+          '--enable_foober' option will be checked.
+      windows: A boolean which replesents the default value of the target
+          option on Windows platform.
+      mac: A boolean which replesents the default value of the target option
+          on MacOS X platform.
+      linux: A boolean which replesents the default value of the target option
+          on Linux platform.
+      chromeos: A boolean which replesents the default value of the target
+          option on ChromeOS platform.
+      android: A boolean which replesents the default value of the target
+          option on Android platform.
+
+    Raises:
+      ValueError: An error occurred when 'option_name' is empty.
+    """
+    if not option_name:
+      raise ValueError('"option_name" should be specified')
+
+    default_enabled = False
+    default_enabled = {'Windows': windows,
+                       'Mac': mac,
+                       'Linux': linux,
+                       'ChromeOS': chromeos,
+                       'Android': android}[options.target_platform]
+    enable_option_name = 'enable_%s' % option_name
+    enabled = options.ensure_value(enable_option_name, default_enabled)
+    command_line.extend(['-D',
+                         '%s=%s' % (enable_option_name, 1 if enabled else 0)])
+
+  is_official_dev = ((options.language == 'japanese') and
+                     (options.branding == 'GoogleJapaneseInput') and
+                     options.channel_dev)
+
+  SetCommandLineForFeature(option_name='webservice_infolist')
+  SetCommandLineForFeature(option_name='cloud_sync',
+                           linux=is_official_dev,
+                           windows=is_official_dev,
+                           mac=is_official_dev)
+  SetCommandLineForFeature(option_name='cloud_handwriting',
+                           linux=is_official_dev,
+                           windows=is_official_dev,
+                           mac=is_official_dev)
 
   command_line.extend(['-D', 'target_platform=%s' % options.target_platform])
 
@@ -645,13 +751,26 @@ def GypMain(options, unused_args):
   else:
     command_line.extend(['-D', 'use_zinnia=NO'])
 
+  if IsLinux():
+    if '%s/unix/ibus/ibus.gyp' % SRC_DIR in gyp_file_names:
+      command_line.extend(['-D', 'use_libibus=1'])
+    if '%s/unix/scim/scim.gyp' % SRC_DIR in gyp_file_names:
+      command_line.extend(['-D', 'use_libscim=1'])
+
+  if options.use_libprotobuf:
+    command_line.extend(['-D', 'use_libprotobuf=1'])
+
 
   # Dictionary configuration
   if options.target_platform == 'ChromeOS':
     # Note that the OSS version of mozc ignores the dictionary variable.
     command_line.extend(['-D', 'dictionary=small'])
+    command_line.extend(['-D', 'use_separate_connection_data=0'])
+    command_line.extend(['-D', 'use_separate_dictionary=0'])
   else:
     command_line.extend(['-D', 'dictionary=desktop'])
+    command_line.extend(['-D', 'use_separate_connection_data=0'])
+    command_line.extend(['-D', 'use_separate_dictionary=0'])
 
   # Specifying pkg-config command.  Some environment (such like
   # cross-platform ChromeOS build) requires us to call a different
@@ -675,6 +794,9 @@ def GypMain(options, unused_args):
   command_line.extend(['-D', 'language=%s' % options.language])
   command_line.extend([
       '-D', 'language_define=LANGUAGE_%s' % options.language.upper()])
+
+  command_line.extend([
+      '-D', 'server_dir=%s' % os.path.abspath(options.server_dir)])
 
   # Add options.gypdir/pylib to PYTHONPATH so gyp uses its own library modules,
   # otherwise gyp can use ones of a different version.
@@ -787,10 +909,10 @@ def BuildOnMac(options, targets, original_directory_name):
 
 
 def LocateMSBuildDir():
-  """Locate the directory where vcbuild.exe exists.
+  """Locate the directory where msbuild.exe exists.
 
   Returns:
-    A string of absolute directory path where vcbuild.exe exists.
+    A string of absolute directory path where msbuild.exe exists.
   """
   if not IsWindows():
     PrintErrorAndExit('msbuild.exe is not supported on this platform')
@@ -823,7 +945,6 @@ def LocateVCBuildDir():
   if not program_files_x86:
     PrintErrorAndExit('Failed to locate vcbuild.exe')
 
-  # TODO(yukawa): Support Visual C++ 2010
   vcbuild_path = os.path.join(program_files_x86, 'Microsoft Visual Studio 9.0',
                               'VC', 'vcpackages')
 

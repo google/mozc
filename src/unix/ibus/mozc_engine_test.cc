@@ -27,8 +27,14 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <ibus.h>
 #include <map>
+#include "base/util.h"
+#include "base/port.h"
 #include "client/client_mock.h"
+#include "languages/global_language_spec.h"
+#include "languages/japanese/lang_dep_spec.h"
+#include "session/commands.pb.h"
 #include "testing/base/public/gunit.h"
 #include "unix/ibus/mozc_engine.h"
 
@@ -41,12 +47,12 @@ class MozcEngineTest : public testing::Test {
     currently_pressed_modifiers_.clear();
     modifiers_to_be_sent_.clear();
     keyval_to_modifier_.clear();
-    keyval_to_modifier_[IBUS_Shift_L] = commands::KeyEvent::SHIFT;
-    keyval_to_modifier_[IBUS_Shift_R] = commands::KeyEvent::SHIFT;
-    keyval_to_modifier_[IBUS_Control_L] = commands::KeyEvent::CTRL;
-    keyval_to_modifier_[IBUS_Control_R] = commands::KeyEvent::CTRL;
-    keyval_to_modifier_[IBUS_Alt_L] = commands::KeyEvent::ALT;
-    keyval_to_modifier_[IBUS_Alt_R] = commands::KeyEvent::ALT;
+    keyval_to_modifier_[IBUS_Shift_L] = commands::KeyEvent::LEFT_SHIFT;
+    keyval_to_modifier_[IBUS_Shift_R] = commands::KeyEvent::RIGHT_SHIFT;
+    keyval_to_modifier_[IBUS_Control_L] = commands::KeyEvent::LEFT_CTRL;
+    keyval_to_modifier_[IBUS_Control_R] = commands::KeyEvent::RIGHT_CTRL;
+    keyval_to_modifier_[IBUS_Alt_L] = commands::KeyEvent::LEFT_ALT;
+    keyval_to_modifier_[IBUS_Alt_R] = commands::KeyEvent::RIGHT_ALT;
   }
 
   bool ProcessKey(bool is_key_up, gint keyval, commands::KeyEvent *key) {
@@ -83,17 +89,31 @@ class LaunchToolTest : public testing::Test {
  public:
   LaunchToolTest() {
     g_type_init();
-    mozc_engine_.reset(new MozcEngine());
   }
+
  protected:
   virtual void SetUp() {
+    language::GlobalLanguageSpec::SetLanguageDependentSpec(
+        &language_dependency_spec_japanese_);
+    mozc_engine_.reset(new MozcEngine());
+
     mock_ = new client::ClientMock();
     mock_->ClearFunctionCounter();
     mozc_engine_->client_.reset(mock_);
   }
 
+  virtual void TearDown() {
+    mozc_engine_.reset(NULL);
+    language::GlobalLanguageSpec::SetLanguageDependentSpec(NULL);
+  }
+
+  // We need to set a LangDepSpecJapanese to GlobalLanguageSpec on start up for
+  // testing, and the actual instance does not have to be LangDepSpecJapanese.
+  japanese::LangDepSpecJapanese language_dependency_spec_japanese_;
+
   client::ClientMock* mock_;
   scoped_ptr<MozcEngine> mozc_engine_;
+
  private:
   DISALLOW_COPY_AND_ASSIGN(LaunchToolTest);
 };
@@ -139,9 +159,12 @@ TEST_F(MozcEngineTest, ProcessShiftModifiers) {
   // Shift down
   EXPECT_FALSE(ProcessKey(false, IBUS_Shift_L, &key));
   EXPECT_TRUE(IsPressed(IBUS_Shift_L));
-  EXPECT_NE(modifiers_to_be_sent_.end(),
-            modifiers_to_be_sent_.find(commands::KeyEvent::SHIFT));
-  EXPECT_EQ(modifiers_to_be_sent_.size(), 1);
+  // Doesn't use EXPECT_NE because it can't handle iterator on some environment.
+  EXPECT_TRUE(modifiers_to_be_sent_.end() !=
+              modifiers_to_be_sent_.find(commands::KeyEvent::LEFT_SHIFT));
+  EXPECT_TRUE(modifiers_to_be_sent_.end() !=
+              modifiers_to_be_sent_.find(commands::KeyEvent::SHIFT));
+  EXPECT_EQ(modifiers_to_be_sent_.size(), 2);
 
   // "a" down
   key.Clear();
@@ -167,8 +190,8 @@ TEST_F(MozcEngineTest, ProcessShiftModifiers) {
   // Shift down
   EXPECT_FALSE(ProcessKey(false, IBUS_Shift_L, &key));
   EXPECT_TRUE(IsPressed(IBUS_Shift_L));
-  EXPECT_NE(modifiers_to_be_sent_.end(),
-            modifiers_to_be_sent_.find(commands::KeyEvent::SHIFT));
+  EXPECT_TRUE(modifiers_to_be_sent_.end() !=
+              modifiers_to_be_sent_.find(commands::KeyEvent::SHIFT));
   EXPECT_EQ(modifiers_to_be_sent_.size(), 1);
 
   // "0" down
@@ -197,27 +220,36 @@ TEST_F(MozcEngineTest, ProcessAltModifiers) {
   // Alt down
   EXPECT_FALSE(ProcessKey(false, IBUS_Alt_L, &key));
   EXPECT_TRUE(IsPressed(IBUS_Alt_L));
-  EXPECT_NE(modifiers_to_be_sent_.end(),
-            modifiers_to_be_sent_.find(commands::KeyEvent::ALT));
-  EXPECT_EQ(modifiers_to_be_sent_.size(), 1);
+  // Doesn't use EXPECT_NE because it can't handle iterator on some environment.
+  EXPECT_TRUE(modifiers_to_be_sent_.end() !=
+              modifiers_to_be_sent_.find(commands::KeyEvent::ALT));
+  EXPECT_TRUE(modifiers_to_be_sent_.end() !=
+              modifiers_to_be_sent_.find(commands::KeyEvent::LEFT_ALT));
+  EXPECT_EQ(modifiers_to_be_sent_.size(), 2);
 
   // "a" down
   key.Clear();
   key.add_modifier_keys(commands::KeyEvent::ALT);
+  key.add_modifier_keys(commands::KeyEvent::LEFT_ALT);
   EXPECT_TRUE(ProcessKey(false, 'a', &key));
   EXPECT_TRUE(IsPressed(IBUS_Alt_L));
-  EXPECT_NE(modifiers_to_be_sent_.end(),
-            modifiers_to_be_sent_.find(commands::KeyEvent::ALT));
-  EXPECT_EQ(modifiers_to_be_sent_.size(), 1);
+  EXPECT_TRUE(modifiers_to_be_sent_.end() !=
+              modifiers_to_be_sent_.find(commands::KeyEvent::ALT));
+  EXPECT_TRUE(modifiers_to_be_sent_.end() !=
+              modifiers_to_be_sent_.find(commands::KeyEvent::LEFT_ALT));
+  EXPECT_EQ(modifiers_to_be_sent_.size(), 2);
 
   // "a" up
   key.Clear();
   key.add_modifier_keys(commands::KeyEvent::ALT);
+  key.add_modifier_keys(commands::KeyEvent::LEFT_ALT);
   EXPECT_FALSE(ProcessKey(true, 'a', &key));
   EXPECT_TRUE(IsPressed(IBUS_Alt_L));
-  EXPECT_NE(modifiers_to_be_sent_.end(),
-            modifiers_to_be_sent_.find(commands::KeyEvent::ALT));
-  EXPECT_EQ(modifiers_to_be_sent_.size(), 1);
+  EXPECT_TRUE(modifiers_to_be_sent_.end() !=
+              modifiers_to_be_sent_.find(commands::KeyEvent::ALT));
+  EXPECT_TRUE(modifiers_to_be_sent_.end() !=
+              modifiers_to_be_sent_.find(commands::KeyEvent::LEFT_ALT));
+  EXPECT_EQ(modifiers_to_be_sent_.size(), 2);
 
   // ALt up
   key.Clear();
@@ -232,27 +264,36 @@ TEST_F(MozcEngineTest, ProcessCtrlModifiers) {
   // Ctrl down
   EXPECT_FALSE(ProcessKey(false, IBUS_Control_L, &key));
   EXPECT_TRUE(IsPressed(IBUS_Control_L));
-  EXPECT_NE(modifiers_to_be_sent_.end(),
-            modifiers_to_be_sent_.find(commands::KeyEvent::CTRL));
-  EXPECT_EQ(modifiers_to_be_sent_.size(), 1);
+  // Doesn't use EXPECT_NE because it can't handle iterator on some environment.
+  EXPECT_TRUE(modifiers_to_be_sent_.end() !=
+              modifiers_to_be_sent_.find(commands::KeyEvent::CTRL));
+  EXPECT_TRUE(modifiers_to_be_sent_.end() !=
+              modifiers_to_be_sent_.find(commands::KeyEvent::LEFT_CTRL));
+  EXPECT_EQ(modifiers_to_be_sent_.size(), 2);
 
   // "a" down
   key.Clear();
   key.add_modifier_keys(commands::KeyEvent::CTRL);
+  key.add_modifier_keys(commands::KeyEvent::LEFT_CTRL);
   EXPECT_TRUE(ProcessKey(false, 'a', &key));
   EXPECT_TRUE(IsPressed(IBUS_Control_L));
-  EXPECT_NE(modifiers_to_be_sent_.end(),
-            modifiers_to_be_sent_.find(commands::KeyEvent::CTRL));
-  EXPECT_EQ(modifiers_to_be_sent_.size(), 1);
+  EXPECT_TRUE(modifiers_to_be_sent_.end() !=
+              modifiers_to_be_sent_.find(commands::KeyEvent::CTRL));
+  EXPECT_TRUE(modifiers_to_be_sent_.end() !=
+              modifiers_to_be_sent_.find(commands::KeyEvent::LEFT_CTRL));
+  EXPECT_EQ(modifiers_to_be_sent_.size(), 2);
 
   // "a" up
   key.Clear();
   key.add_modifier_keys(commands::KeyEvent::CTRL);
+  key.add_modifier_keys(commands::KeyEvent::LEFT_CTRL);
   EXPECT_FALSE(ProcessKey(true, 'a', &key));
   EXPECT_TRUE(IsPressed(IBUS_Control_L));
-  EXPECT_NE(modifiers_to_be_sent_.end(),
-            modifiers_to_be_sent_.find(commands::KeyEvent::CTRL));
-  EXPECT_EQ(modifiers_to_be_sent_.size(), 1);
+  EXPECT_TRUE(modifiers_to_be_sent_.end() !=
+              modifiers_to_be_sent_.find(commands::KeyEvent::CTRL));
+  EXPECT_TRUE(modifiers_to_be_sent_.end() !=
+              modifiers_to_be_sent_.find(commands::KeyEvent::LEFT_CTRL));
+  EXPECT_EQ(modifiers_to_be_sent_.size(), 2);
 
   // Ctrl up
   key.Clear();
@@ -268,9 +309,14 @@ TEST_F(MozcEngineTest, ProcessShiftModifiersWithCapsLockOn) {
   // Shift down
   EXPECT_FALSE(ProcessKeyWithCapsLock(false, IBUS_Shift_L, &key));
   EXPECT_TRUE(IsPressed(IBUS_Shift_L));
-  EXPECT_NE(modifiers_to_be_sent_.end(),
-            modifiers_to_be_sent_.find(commands::KeyEvent::SHIFT));
-  EXPECT_EQ(modifiers_to_be_sent_.size(), 2);
+  // Doesn't use EXPECT_NE because it can't handle iterator on some environment.
+  EXPECT_TRUE(modifiers_to_be_sent_.end() !=
+              modifiers_to_be_sent_.find(commands::KeyEvent::CAPS));
+  EXPECT_TRUE(modifiers_to_be_sent_.end() !=
+              modifiers_to_be_sent_.find(commands::KeyEvent::SHIFT));
+  EXPECT_TRUE(modifiers_to_be_sent_.end() !=
+              modifiers_to_be_sent_.find(commands::KeyEvent::LEFT_SHIFT));
+  EXPECT_EQ(modifiers_to_be_sent_.size(), 3);
 
   // "a" down
   key.Clear();
@@ -289,6 +335,35 @@ TEST_F(MozcEngineTest, ProcessShiftModifiersWithCapsLockOn) {
   EXPECT_FALSE(ProcessKeyWithCapsLock(true, IBUS_Shift_L, &key));
   EXPECT_TRUE(currently_pressed_modifiers_.empty());
   EXPECT_TRUE(modifiers_to_be_sent_.empty());
+}
+
+TEST_F(MozcEngineTest, LeftRightModifiers) {
+  commands::KeyEvent key;
+
+  // Left-Shift down
+  EXPECT_FALSE(ProcessKey(false, IBUS_Shift_L, &key));
+  EXPECT_TRUE(IsPressed(IBUS_Shift_L));
+  // Doesn't use EXPECT_NE because it can't handle iterator on some environment.
+  EXPECT_TRUE(modifiers_to_be_sent_.end() !=
+              modifiers_to_be_sent_.find(commands::KeyEvent::SHIFT));
+  EXPECT_TRUE(modifiers_to_be_sent_.end() !=
+              modifiers_to_be_sent_.find(commands::KeyEvent::LEFT_SHIFT));
+  EXPECT_EQ(modifiers_to_be_sent_.size(), 2);
+
+  // Right-Shift down
+  key.Clear();
+  key.add_modifier_keys(commands::KeyEvent::SHIFT);
+  key.add_modifier_keys(commands::KeyEvent::LEFT_SHIFT);
+  EXPECT_FALSE(ProcessKey(false, IBUS_Shift_R, &key));
+  EXPECT_TRUE(IsPressed(IBUS_Shift_L));
+  EXPECT_TRUE(IsPressed(IBUS_Shift_R));
+  EXPECT_TRUE(modifiers_to_be_sent_.end() !=
+              modifiers_to_be_sent_.find(commands::KeyEvent::SHIFT));
+  EXPECT_TRUE(modifiers_to_be_sent_.end() !=
+              modifiers_to_be_sent_.find(commands::KeyEvent::LEFT_SHIFT));
+  EXPECT_TRUE(modifiers_to_be_sent_.end() !=
+              modifiers_to_be_sent_.find(commands::KeyEvent::RIGHT_SHIFT));
+  EXPECT_EQ(modifiers_to_be_sent_.size(), 3);
 }
 
 TEST_F(MozcEngineTest, ProcessModifiers) {
@@ -324,24 +399,24 @@ TEST_F(MozcEngineTest, ProcessModifiers) {
     for (size_t i = 0; i < key.modifier_keys_size(); ++i) {
       switch (key.modifier_keys(i)) {
         case commands::KeyEvent::SHIFT:
+        case commands::KeyEvent::LEFT_SHIFT:
+        case commands::KeyEvent::RIGHT_SHIFT:
           has_shift = true;
           break;
         case commands::KeyEvent::CTRL:
+        case commands::KeyEvent::LEFT_CTRL:
+        case commands::KeyEvent::RIGHT_CTRL:
           has_ctrl = true;
           break;
         case commands::KeyEvent::ALT:
+        case commands::KeyEvent::LEFT_ALT:
+        case commands::KeyEvent::RIGHT_ALT:
           has_alt = true;
           break;
         case commands::KeyEvent::CAPS:
           break;
         case commands::KeyEvent::KEY_DOWN:
         case commands::KeyEvent::KEY_UP:
-        case commands::KeyEvent::LEFT_CTRL:
-        case commands::KeyEvent::LEFT_ALT:
-        case commands::KeyEvent::LEFT_SHIFT:
-        case commands::KeyEvent::RIGHT_CTRL:
-        case commands::KeyEvent::RIGHT_ALT:
-        case commands::KeyEvent::RIGHT_SHIFT:
           ADD_FAILURE() << "Incorrect modifier key: " << key.modifier_keys(i);
           break;
         default:

@@ -30,7 +30,9 @@
 #ifndef MOZC_CONVERTER_SPARSE_CONNECTOR_H_
 #define MOZC_CONVERTER_SPARSE_CONNECTOR_H_
 
+#include <ostream>
 #include <string>
+
 #include "base/base.h"
 #include "converter/connector_interface.h"
 
@@ -72,8 +74,9 @@ class SparseConnectorBuilder {
   static void Compile(const string &text_connection_file,
                       const string &id_file,
                       const string &special_pos_file,
-                      const string &bnary_file);
+                      const string &output_file);
 };
-}  // mozc
+
+}  // namespace mozc
 
 #endif  // MOZC_CONVERTER_SPARSE_CONNECTOR_H_

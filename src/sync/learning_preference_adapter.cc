@@ -287,7 +287,7 @@ uint32 LearningPreferenceAdapter::GetNextBucketId() const {
   if (!Util::GetSecureRandomSequence(
           reinterpret_cast<char *>(&id), sizeof(id))) {
     LOG(ERROR) << "GetSecureRandomSequence() failed. use rand()";
-    id = static_cast<uint64>(rand());
+    id = static_cast<uint64>(Util::Random(RAND_MAX));
   }
 
   return static_cast<uint32>(id % bucket_size());

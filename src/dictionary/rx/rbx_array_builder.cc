@@ -56,6 +56,14 @@ void RbxArrayBuilder::Build() {
   rbx_builder_build(rbx_builder_);
 }
 
+const char *RbxArrayBuilder::GetImageBody() const {
+  return reinterpret_cast<const char *>(rbx_builder_get_image(rbx_builder_));
+}
+
+int RbxArrayBuilder::GetImageSize() const {
+  return rbx_builder_get_size(rbx_builder_);
+}
+
 void RbxArrayBuilder::WriteImage(OutputFileStream *ofs) const {
   DCHECK(ofs);
   const unsigned char *image = rbx_builder_get_image(rbx_builder_);

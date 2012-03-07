@@ -29,7 +29,6 @@
 
 #include "dictionary/rx/rx_trie_builder.h"
 
-
 #include "base/base.h"
 #include "base/file_stream.h"
 #include "third_party/rx/v1_0rc2/rx.h"
@@ -52,6 +51,14 @@ void RxTrieBuilder::Build() {
 
 int RxTrieBuilder::GetIdFromKey(const string &key) const {
   return rx_builder_get_key_index(rx_builder_, key.c_str());
+}
+
+const char *RxTrieBuilder::GetImageBody() const {
+  return reinterpret_cast<const char *>(rx_builder_get_image(rx_builder_));
+}
+
+int RxTrieBuilder::GetImageSize() const {
+  return rx_builder_get_size(rx_builder_);
 }
 
 void RxTrieBuilder::WriteImage(OutputFileStream *ofs) const {

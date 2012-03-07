@@ -117,7 +117,8 @@ bool AddSyncEntry(UserDictionaryStorage *storage) {
     UserDictionarySyncUtil::UserDictionary *dict =
         storage->mutable_dictionaries(i);
     if (dict->syncable()) {
-      UserDictionarySyncUtil::UserDictionaryEntry *entry = dict->add_entries();
+      UserDictionarySyncUtil::UserDictionaryEntry *entry =
+          dict->add_entries();
       DCHECK(entry);
       entry->set_key(SyncUtil::GenRandomString(5));
       entry->set_value(SyncUtil::GenRandomString(5));
@@ -325,6 +326,76 @@ TEST_F(UserDictionaryAdapterTest, SetDownloadedItemsConflicts) {
 
   storage.Load();
   EXPECT_TRUE(UserDictionarySyncUtil::IsEqualStorage(seed, storage));
+
+  Util::Unlink(adapter.GetUserDictionaryFileName());
+  Util::Unlink(adapter.GetLastSyncedUserDictionaryFileName());
+}
+
+// Local and remote updates makes 'prev_dict' storage exceed its limit.
+TEST_F(UserDictionaryAdapterTest, TemporaryFileExceeds) {
+  const string filename =
+      Util::JoinPath(FLAGS_test_tmpdir, "test_dic_exceed");
+
+  UserDictionaryAdapter adapter;
+  adapter.SetUserDictionaryFileName(filename);
+  Util::Unlink(adapter.GetUserDictionaryFileName());
+  Util::Unlink(adapter.GetLastSyncedUserDictionaryFileName());
+
+  // Set up sync environment.
+  ime_sync::SyncItems items;
+  ime_sync::SyncItem *item = items.Add();
+  CHECK(item);
+  item->set_component(adapter.component_id());
+  sync::UserDictionaryKey *key =
+      item->mutable_key()->MutableExtension(sync::UserDictionaryKey::ext);
+  CHECK(key);
+  sync::UserDictionaryValue *value =
+      item->mutable_value()->MutableExtension(sync::UserDictionaryValue::ext);
+  CHECK(value);
+  key->set_bucket_id(0);
+
+  // Create a user dictionary
+  UserDictionaryStorage storage(adapter.GetUserDictionaryFileName());
+  for (size_t i = 0; i < UserDictionaryStorage::max_sync_entry_size() - 1;
+       ++i) {
+    AddSyncEntry(&storage);
+  }
+  EXPECT_TRUE(storage.Lock());
+  EXPECT_TRUE(storage.Save());
+  EXPECT_TRUE(storage.UnLock());
+
+  // Create a last synced dictionary
+  UserDictionaryStorage prev_storage(
+      adapter.GetLastSyncedUserDictionaryFileName());
+  prev_storage.CopyFrom(storage);
+  AddSyncEntry(&prev_storage);
+  EXPECT_TRUE(prev_storage.Lock());
+  EXPECT_TRUE(prev_storage.Save());
+  EXPECT_TRUE(prev_storage.UnLock());
+
+  // Create local update, which has 1 removed entry.
+  UserDictionarySyncUtil::UserDictionaryStorageBase local_update;
+  UserDictionarySyncUtil::CreateUpdate(prev_storage, storage, &local_update);
+
+  // Create remote update, which has 1 more entry.
+  UserDictionaryStorage remote("");
+  remote.CopyFrom(storage);
+  AddSyncEntry(&remote);
+  UserDictionarySyncUtil::UserDictionaryStorageBase *remote_update =
+      value->mutable_user_dictionary_storage();
+  CHECK(remote_update);
+  UserDictionarySyncUtil::CreateUpdate(storage, remote, remote_update);
+
+  // The number of entries in prev_storage must exceed its limit.
+  EXPECT_TRUE(adapter.SetDownloadedItems(items));
+
+  // Here emulate the coflicts resolve.
+  UserDictionarySyncUtil::MergeUpdate(*remote_update, &prev_storage);
+  UserDictionarySyncUtil::MergeUpdate(local_update, &prev_storage);
+
+  storage.Load();
+  EXPECT_TRUE(UserDictionarySyncUtil::IsEqualStorage(prev_storage, storage));
+  prev_storage.Load();
 
   Util::Unlink(adapter.GetUserDictionaryFileName());
   Util::Unlink(adapter.GetLastSyncedUserDictionaryFileName());

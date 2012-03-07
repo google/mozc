@@ -33,6 +33,7 @@
 #define MOZC_SESSION_INTERNAL_KEYMAP_INL_H_
 
 #include "session/internal/keymap.h"
+#include "session/key_event_util.h"
 
 namespace mozc {
 
@@ -48,20 +49,20 @@ bool KeyMap<T>::GetCommand(const commands::KeyEvent &key_event,
   // Shortcut keys should be available as if CapsLock was not enabled like
   // other IMEs such as MS-IME or ATOK. b/5627459
   commands::KeyEvent normalized_key_event;
-  NormalizeKeyEvent(key_event, &normalized_key_event);
-  Key key;
-  if (!GetKey(normalized_key_event, &key)) {
+  KeyEventUtil::NormalizeKeyEvent(key_event, &normalized_key_event);
+  KeyInformation key;
+  if (!KeyEventUtil::GetKeyInformation(normalized_key_event, &key)) {
     return false;
   }
 
-  typename map<Key, T>::const_iterator it;
+  typename map<KeyInformation, T>::const_iterator it;
   it = keymap_.find(key);
   if (it != keymap_.end()) {
     *command = it->second;
     return true;
   }
 
-  if (MaybeGetKeyStub(normalized_key_event, &key)) {
+  if (KeyEventUtil::MaybeGetKeyStub(normalized_key_event, &key)) {
     it = keymap_.find(key);
     if (it != keymap_.end()) {
       *command = it->second;
@@ -74,8 +75,8 @@ bool KeyMap<T>::GetCommand(const commands::KeyEvent &key_event,
 template<typename T>
 bool KeyMap<T>::AddRule(const commands::KeyEvent &key_event,
                         T command) {
-  Key key;
-  if (!GetKey(key_event, &key)) {
+  KeyInformation key;
+  if (!KeyEventUtil::GetKeyInformation(key_event, &key)) {
     return false;
   }
 
@@ -88,7 +89,7 @@ void KeyMap<T>::Clear() {
   keymap_.clear();
 }
 
-}  // namespace mozc
 }  // namespace keymap
+}  // namespace mozc
 
 #endif  // MOZC_SESSION_INTERNAL_KEYMAP_INTERFACE_INL_H_

@@ -289,12 +289,12 @@ bool AddTasksToList(CComPtr<ICustomDestinationList> destination_list) {
   const LinkInfo kLinks[] = {
     // "手書き文字入力"
     {"--mode=hand_writing",
-     "Character Palette",
+     "Hand Wrinting",
      "\xE6\x89\x8B\xE6\x9B\xB8\xE3\x81\x8D\xE6\x96\x87\xE5\xAD\x97"
      "\xE5\x85\xA5\xE5\x8A\x9B"},
     // "文字パレット"
     {"--mode=character_palette",
-     "Hand Wrinting",
+     "Character Palette",
      "\xE6\x96\x87\xE5\xAD\x97\xE3\x83\x91\xE3\x83\xAC\xE3\x83\x83"
      "\xE3\x83\x88"},
     // "辞書ツール"

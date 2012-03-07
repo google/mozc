@@ -37,18 +37,17 @@
       'target_name': 'usage_stats',
       'type': 'static_library',
       'sources': [
-        '<(proto_out_dir)/<(relative_dir)/usage_stats.pb.cc',
         'upload_util.cc',
         'usage_stats.cc',
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        '../base/base.gyp:encryptor',
         '../config/config.gyp:stats_config_util',
         '../net/net.gyp:net',
-        '../protobuf/protobuf.gyp:protobuf',
         '../storage/storage.gyp:storage',
         'gen_usage_stats_list',
-        'genproto_usage_stats',
+        'usage_stats_protocol',
       ],
       'conditions': [
         ['OS=="win"', {
@@ -86,6 +85,21 @@
       ],
     },
     {
+      'target_name': 'usage_stats_protocol',
+      'type': 'static_library',
+      'hard_dependency': 1,
+      'sources': [
+        '<(proto_out_dir)/<(relative_dir)/usage_stats.pb.cc',
+      ],
+      'dependencies': [
+        '../protobuf/protobuf.gyp:protobuf',
+        'genproto_usage_stats',
+      ],
+      'export_dependent_settings': [
+        'genproto_usage_stats',
+      ],
+    },
+    {
       'target_name': 'genproto_usage_stats',
       'type': 'none',
       'sources': [
@@ -105,8 +119,8 @@
       'dependencies': [
         '../net/net.gyp:http_client_mock',
         '../testing/testing.gyp:gtest_main',
-        'genproto_usage_stats',
         'usage_stats',
+        'usage_stats_protocol',
       ],
       'variables': {
         'test_size': 'small',

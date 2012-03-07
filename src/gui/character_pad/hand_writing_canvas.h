@@ -52,9 +52,7 @@ class HandWritingCanvas : public QWidget {
   explicit HandWritingCanvas(QWidget *parent);
   virtual ~HandWritingCanvas();
 
-  void setListWidget(QListWidget *list_widget) {
-    list_widget_ = list_widget;
-  }
+  void setListWidget(QListWidget *list_widget);
 
   size_t strokes_size() const;
 
@@ -62,6 +60,7 @@ class HandWritingCanvas : public QWidget {
   void clear();
   void revert();
   void listUpdated();
+  void restartRecognition();
 
  protected:
   void paintEvent(QPaintEvent *event);

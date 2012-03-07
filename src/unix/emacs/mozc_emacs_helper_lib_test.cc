@@ -101,16 +101,15 @@ TEST_F(MozcEmacsHelperLibTest, ParseInputLine) {
       "key { key_code: 97 "
             "modifier_keys: SHIFT "
           "}");
+  // alt, meta, super, hyper keys will be converted to a single alt key.
+  // modifier_keys are sorted by enum value defined in commands.proto.
   ParseAndTestInputLine(
       "(6 SendKey 4 97 shift ctrl meta alt super hyper)", 6, 4,
       "type: SEND_KEY "
       "key { key_code: 97 "
-            "modifier_keys: SHIFT "
             "modifier_keys: CTRL "
             "modifier_keys: ALT "
-            "modifier_keys: ALT "
-            "modifier_keys: ALT "
-            "modifier_keys: ALT "
+            "modifier_keys: SHIFT "
           "}");
   // Special keys
   ParseAndTestInputLine("(7 SendKey 5 32)", 7, 5,
@@ -119,13 +118,14 @@ TEST_F(MozcEmacsHelperLibTest, ParseInputLine) {
   ParseAndTestInputLine("(8 SendKey 6 space)", 8, 6,
       "type: SEND_KEY "
       "key { special_key: SPACE }");  // space as special key
+  // alt, meta keys will be converted to a single alt key.
+  // modifier_keys are sorted by enum value defined in commands.proto.
   ParseAndTestInputLine("(9 SendKey 7 return shift ctrl meta alt)", 9, 7,
       "type: SEND_KEY "
       "key { special_key: ENTER "
-            "modifier_keys: SHIFT "
             "modifier_keys: CTRL "
             "modifier_keys: ALT "
-            "modifier_keys: ALT "
+            "modifier_keys: SHIFT "
           "}");
   // Key and string literal
   ParseAndTestInputLine("(10 SendKey 8 97 \"\343\201\241\")", 10, 8,

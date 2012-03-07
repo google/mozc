@@ -56,6 +56,14 @@ HandWritingCanvas::~HandWritingCanvas() {
   recognizer_thread_.wait();
 }
 
+void HandWritingCanvas::setListWidget(QListWidget *list_widget)  {
+  list_widget_ = list_widget;
+  QObject::connect(list_widget_, SIGNAL(itemSelected(const QListWidgetItem*)),
+                   &recognizer_thread_,
+                   SLOT(itemSelected(const QListWidgetItem*)),
+                   Qt::QueuedConnection);
+}
+
 void HandWritingCanvas::clear() {
   strokes_.clear();
   update();
@@ -69,6 +77,12 @@ void HandWritingCanvas::revert() {
     recognize();
   }
   is_drawing_ = false;
+}
+
+void HandWritingCanvas::restartRecognition() {
+  // We need to call |recognize()| instead of |emit startRecognition()| here
+  // so that the current stroke has a new timestamp.
+  recognize();
 }
 
 void HandWritingCanvas::paintEvent(QPaintEvent *) {

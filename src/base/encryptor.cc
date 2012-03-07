@@ -54,6 +54,7 @@
 namespace mozc {
 namespace {
 
+
 #ifdef OS_WINDOWS
 // Use CBC mode:
 // CBC has been the most commonly used mode of operation.
@@ -142,7 +143,7 @@ struct KeyData {
   HCRYPTPROV prov;
   HCRYPTHASH hash;
   HCRYPTKEY  key;
-#else   // OS_WINDOWS
+#else  // OS_WINDOWS
   AES_KEY encrypt_key;
   AES_KEY decrypt_key;
 #endif
@@ -414,7 +415,6 @@ bool Encryptor::EncryptArray(const Encryptor::Key &key,
   *buf_size = enc_size;
 
 #endif  // OS_WINDOWS
-
   return true;
 }
 
@@ -434,6 +434,7 @@ bool Encryptor::DecryptArray(const Encryptor::Key &key,
     LOG(ERROR) << "buf size is not multiples of " << key.block_size();
     return false;
   }
+
 
   size_t size = *buf_size;
 
@@ -480,7 +481,6 @@ bool Encryptor::DecryptArray(const Encryptor::Key &key,
   *buf_size -= padding_size;   // remove padding part
 
 #endif  // OS_WINDOWS
-
   return true;
 }
 
@@ -608,9 +608,9 @@ bool Encryptor::ProtectData(const string &plain_text, string *cipher_text) {
   char salt_buf[kSaltSize];
   if (!Util::GetSecureRandomSequence(salt_buf, sizeof(salt_buf))) {
     LOG(ERROR) << "GetSecureRandomSequence failed. "
-               << "make random key with rand()";
+               << "make random key with Util::Random()";
     for (size_t i = 0; i < sizeof(salt_buf); ++i) {
-      salt_buf[i] = static_cast<char>(rand() % 256);
+      salt_buf[i] = static_cast<char>(Util::Random(256));
     }
   }
 

@@ -36,6 +36,7 @@
 #include "base/base.h"
 #include "base/mutex.h"
 #include "base/singleton.h"
+#include "base/trie.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/node.h"
@@ -94,7 +95,7 @@ class UserDictionaryFileManager {
 
 class UserDictionaryReloader : public Thread {
  public:
-  UserDictionaryReloader(UserDictionary *dic)
+  explicit UserDictionaryReloader(UserDictionary *dic)
       : dic_(dic) {
     DCHECK(dic_);
   }
@@ -120,7 +121,7 @@ class UserDictionaryReloader : public Thread {
   UserDictionary *dic_;
 };
 
-UserDictionary::UserDictionary() {
+UserDictionary::UserDictionary() : empty_limit_(Limit()) {
   AsyncReload();
 }
 
@@ -143,8 +144,9 @@ bool UserDictionary::CheckReloaderAndDelete() const {
   return true;
 }
 
-Node *UserDictionary::LookupPredictive(const char *str, int size,
-                                       NodeAllocatorInterface *allocator) const {
+Node *UserDictionary::LookupPredictiveWithLimit(
+    const char *str, int size, const Limit &limit,
+    NodeAllocatorInterface *allocator) const {
   if (size == 0) {
     LOG(WARNING) << "string of length zero is passed.";
     return NULL;
@@ -177,6 +179,16 @@ Node *UserDictionary::LookupPredictive(const char *str, int size,
     if (!Util::StartsWith((*it)->key, key)) {
       break;
     }
+    // check begin with
+    if (limit.begin_with_trie != NULL) {
+      string value;
+      size_t key_length = 0;
+      bool has_subtrie = false;
+      if (!limit.begin_with_trie->LookUpPrefix((*it)->key.data() + size, &value,
+                                               &key_length, &has_subtrie)) {
+        continue;
+      }
+    }
 
     Node *new_node = allocator->NewNode();
     DCHECK(new_node);
@@ -197,6 +209,11 @@ Node *UserDictionary::LookupPredictive(const char *str, int size,
     result_node = new_node;
   }
   return result_node;
+}
+
+Node *UserDictionary::LookupPredictive(
+    const char *str, int size, NodeAllocatorInterface *allocator) const {
+  return LookupPredictiveWithLimit(str, size, empty_limit_, allocator);
 }
 
 Node *UserDictionary::LookupPrefixWithLimit(
@@ -268,6 +285,12 @@ Node *UserDictionary::LookupPrefixWithLimit(
   return result_node;
 }
 
+Node *UserDictionary::LookupPrefix(const char *str,
+                                   int size,
+                                   NodeAllocatorInterface *allocator) const {
+  return LookupPrefixWithLimit(str, size, empty_limit_, allocator);
+}
+
 Node *UserDictionary::LookupReverse(const char *str, int size,
                                     NodeAllocatorInterface *allocator) const {
   if (!CheckReloaderAndDelete()) {
@@ -330,6 +353,7 @@ bool UserDictionary::Load(const UserDictionaryStorage &storage) {
 
   set<uint64> seen;
   vector<UserPOS::Token> tokens;
+  int sync_words_count = 0;
 
   SuppressionDictionary *suppression_dictionary =
       SuppressionDictionary::GetSuppressionDictionary();
@@ -344,6 +368,10 @@ bool UserDictionary::Load(const UserDictionaryStorage &storage) {
         storage.dictionaries(i);
     if (!dic.enabled() || dic.entries_size() == 0) {
       continue;
+    }
+
+    if (dic.syncable()) {
+      sync_words_count += dic.entries_size();
     }
 
     for (size_t j = 0; j < dic.entries_size(); ++j) {
@@ -394,6 +422,8 @@ bool UserDictionary::Load(const UserDictionaryStorage &storage) {
 
   usage_stats::UsageStats::SetInteger("UserRegisteredWord",
                                       static_cast<int>(tokens_.size()));
+  usage_stats::UsageStats::SetInteger("UserRegisteredSyncWord",
+                                      sync_words_count);
 
   return true;
 }

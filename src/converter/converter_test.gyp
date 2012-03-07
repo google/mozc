@@ -52,6 +52,7 @@
       'dependencies': [
         '../composer/composer.gyp:composer',
         '../config/config.gyp:config_handler',
+        '../rewriter/rewriter.gyp:rewriter',
         '../testing/testing.gyp:gtest_main',
         '../transliteration/transliteration.gyp:transliteration',
         'converter.gyp:converter',
@@ -137,14 +138,93 @@
         'test_size': 'small',
       },
     },
+    {
+      'target_name': 'sparse_connector_test',
+      'type': 'executable',
+      'sources': [
+        'sparse_connector_test.cc',
+      ],
+      'dependencies': [
+        '../testing/testing.gyp:gtest_main',
+        'converter_base.gyp:sparse_connector',
+        'converter_base.gyp:sparse_connector_builder',
+      ],
+      'variables': {
+        'test_size': 'small',
+      },
+    },
+    {
+      'target_name': 'cached_connector_test',
+      'type': 'executable',
+      'sources': [
+        'cached_connector_test.cc',
+      ],
+      'dependencies': [
+        '../testing/testing.gyp:gtest_main',
+        'converter_base.gyp:cached_connector',
+      ],
+      'variables': {
+        'test_size': 'small',
+      },
+    },
+    {
+      'target_name': 'connector_test',
+      'type': 'executable',
+      'sources': [
+        'connector_test.cc',
+      ],
+      'dependencies': [
+        '../testing/testing.gyp:gtest_main',
+        'converter_base.gyp:connector',
+      ],
+      'variables': {
+        'test_size': 'small',
+        'test_data': [
+          '../<(test_data_subdir)/connection.txt',
+        ],
+        'test_data_subdir': 'data/dictionary',
+      },
+      'includes': ['../gyp/install_testdata.gypi'],
+    },
+    {
+      'target_name': 'test_connector_test',
+      'type': 'executable',
+      'sources': [
+        'test_connector_test.cc',
+      ],
+      'dependencies': [
+        '../testing/testing.gyp:gtest_main',
+        'converter_base.gyp:connector',
+        'converter_base.gyp:test_connector',
+      ],
+      'variables': {
+        'test_size': 'small',
+      },
+      # Copy explicitly.
+      # install_testdata.gypi does not support multiple directories of data
+      'copies': [
+        {
+          'destination': '<(mozc_data_dir)/data/dictionary/',
+          'files': [ '../data/dictionary/connection.txt', ],
+        },
+        {
+          'destination': '<(mozc_data_dir)/data/test/dictionary/',
+          'files': [ '../data/test/dictionary/connection.txt', ],
+        },
+      ],
+    },
+
     # Test cases meta target: this target is referred from gyp/tests.gyp
     {
       'target_name': 'converter_all_test',
       'type': 'none',
       'dependencies': [
+        'cached_connector_test',
         'character_form_manager_test',
+        'connector_test',
         'converter_test',
         'quality_regression_test',
+        'sparse_connector_test',
       ],
     },
   ],

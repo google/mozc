@@ -43,17 +43,49 @@
         '../dictionary/rx/rx_storage.gyp:rx_all_test',
         '../dictionary/system/system_dictionary.gyp:system_dictionary_all_test',
         '../handwriting/handwriting_test.gyp:handwriting_all_test',
+        # Currently 'gui_all_test' does not exist.
         # '../gui/gui.gyp:gui_all_test',
         '../ipc/ipc.gyp:ipc_all_test',
-        # '../net/net.gyp:net_all_test',
+        '../net/net.gyp:net_all_test',
         '../prediction/prediction.gyp:prediction_all_test',
         '../renderer/renderer.gyp:renderer_all_test',
         '../rewriter/rewriter_test.gyp:rewriter_all_test',
+        # Currently 'server_all_test' does not exist.
         # '../server/server.gyp:server_all_test',
         '../session/session_test.gyp:session_all_test',
         '../storage/storage.gyp:storage_all_test',
+        '../sync/sync.gyp:sync_all_test',
         '../transliteration/transliteration.gyp:transliteration_all_test',
         '../usage_stats/usage_stats.gyp:usage_stats_all_test',
+      ],
+      'conditions': [
+        ['OS=="win"', {
+          'dependencies': [
+            '../win32/base/win32_base.gyp:win32_base_all_test',
+            '../win32/ime/ime.gyp:ime_all_test',
+          ],
+        }],
+        ['OS=="mac"', {
+          'dependencies': [
+            '../mac/mac.gyp:mac_all_test',
+          ],
+        }],
+        ['OS=="linux"', {
+          'dependencies': [
+            '../chrome/skk/skk_util_test.gyp:skk_util_test',
+            '../unix/emacs/emacs.gyp:emacs_all_test',
+          ],
+        }],
+        ['OS=="linux" and use_libibus==1', {
+          'dependencies': [
+            '../unix/ibus/ibus.gyp:ibus_all_test',
+          ],
+        }],
+        ['OS=="linux" and use_libscim==1', {
+          'dependencies': [
+            '../unix/scim/scim.gyp:scim_all_test',
+          ],
+        }],
       ],
     },
   ],

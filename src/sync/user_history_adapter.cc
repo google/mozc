@@ -218,8 +218,8 @@ uint32 UserHistoryAdapter::GetNextBucketId() const {
   uint64 id = 0;
   if (!Util::GetSecureRandomSequence(
           reinterpret_cast<char *>(&id), sizeof(id))) {
-    LOG(ERROR) << "GetSecureRandomSequence() failed. use rand()";
-    id = static_cast<uint64>(rand());
+    LOG(ERROR) << "GetSecureRandomSequence() failed. use random value.";
+    id = static_cast<uint64>(Util::Random(RAND_MAX));
   }
 
   return static_cast<uint32>(id % bucket_size());

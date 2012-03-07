@@ -46,12 +46,6 @@ struct DirectInputState {
 enum Commands {
   NONE = 0,
   IME_ON,
-  // Space will not be sent to server.
-  // If Config::space_character_form is FULL_WIDTH,
-  // space should be full_width even in direct mode
-  INSERT_SPACE,  // To handle spaces.
-  // to handle shift+spaces (useally toggle half/full width)
-  INSERT_ALTERNATE_SPACE,
   // Switch input mode.
   INPUT_MODE_HIRAGANA,
   INPUT_MODE_FULL_KATAKANA,
@@ -91,6 +85,7 @@ enum Commands {
 
   // For ZeroQuerySuggestion
   CANCEL,  // Back to Composition status.
+  CANCEL_AND_IME_OFF,  // Cancel composition and turn off IME
   COMMIT_FIRST_SUGGESTION,   // ATOK's Shift-Enter style
   PREDICT_AND_CONVERT,
 };
@@ -104,9 +99,13 @@ enum Commands {
   INSERT_CHARACTER,
   DEL,  // DELETE cannot be used on Windows.  It is defined as a macro.
   BACKSPACE,
+  INSERT_SPACE,   // To handle spaces.
+  // to handle shift+spaces (useally toggle half/full with)
+  INSERT_ALTERNATE_SPACE,
   INSERT_HALF_SPACE,  // Input half-width space
   INSERT_FULL_SPACE,  // Input full-width space
   CANCEL,  // Move to Precomposition stauts.
+  CANCEL_AND_IME_OFF,  // Cancel composition and turn off IME
   UNDO,
   MOVE_CURSOR_LEFT,
   MOVE_CURSOR_RIGHT,
@@ -149,9 +148,13 @@ enum Commands {
   IME_OFF,
   IME_ON,
   INSERT_CHARACTER,  // Submit and Move to Composition status.
+  INSERT_SPACE,   // To handle spaces.
+  // to handle shift+spaces (useally toggle half/full with)
+  INSERT_ALTERNATE_SPACE,
   INSERT_HALF_SPACE,  // Input half-width space
   INSERT_FULL_SPACE,  // Input full-width space
   CANCEL,  // Back to Composition status.
+  CANCEL_AND_IME_OFF,  // Cancel composition and turn off IME
   UNDO,
   SEGMENT_FOCUS_LEFT,
   SEGMENT_FOCUS_RIGHT,

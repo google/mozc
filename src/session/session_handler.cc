@@ -43,10 +43,15 @@
 #include "config/config.pb.h"
 #include "converter/user_data_manager_interface.h"
 #include "session/commands.pb.h"
+#include "session/generic_storage_manager.h"
 #include "session/session_factory_manager.h"
 #include "session/session_interface.h"
 #include "session/session_observer_handler.h"
 #include "session/session_watch_dog.h"
+#ifdef ENABLE_CLOUD_SYNC
+#include "sync/sync_handler.h"
+#include "sync/syncer_interface.h"
+#endif  // ENABLE_CLOUD_SYNC
 
 DEFINE_int32(timeout, -1,
              "server timeout. "
@@ -278,6 +283,132 @@ bool SessionHandler::SetImposedConfig(commands::Command *command) {
 }
 
 
+bool SessionHandler::StartCloudSync(commands::Command *command) {
+  VLOG(1) << "Start cloud sync operation";
+  command->mutable_output()->set_id(command->input().id());
+#ifdef ENABLE_CLOUD_SYNC
+  return sync::SyncHandler::Sync();
+#else
+  return true;
+#endif  // ENABLE_CLOUD_SYNC
+}
+
+bool SessionHandler::ClearCloudSync(commands::Command *command) {
+  VLOG(1) << "Clear cloud sync";
+  command->mutable_output()->set_id(command->input().id());
+#ifdef ENABLE_CLOUD_SYNC
+  return sync::SyncHandler::Clear();
+#else
+  return true;
+#endif  // ENABLE_CLOUD_SYNC
+}
+
+bool SessionHandler::GetCloudSyncStatus(commands::Command *command) {
+  VLOG(1) << "GetSyncStatus";
+#ifdef ENABLE_CLOUD_SYNC
+  return sync::SyncHandler::GetCloudSyncStatus(
+      command->mutable_output()->mutable_cloud_sync_status());
+#else
+  return false;
+#endif  // ENABLE_CLOUD_SYNC
+}
+
+bool SessionHandler::AddAuthCode(commands::Command *command) {
+  VLOG(1) << "AddAuthCode";
+#ifdef ENABLE_CLOUD_SYNC
+  return sync::SyncHandler::SetAuthorization(
+      command->input().auth_code());
+#else
+  return false;
+#endif  // ENABLE_CLOUD_SYNC
+}
+
+bool SessionHandler::InsertToStorage(commands::Command *command) {
+  VLOG(1) << "Insert to generic storage";
+  command->mutable_output()->set_id(command->input().id());
+  if (!command->input().has_storage_entry()) {
+    LOG(WARNING) << "No storage_entry";
+    return false;
+  }
+  const commands::GenericStorageEntry &storage_entry =
+      command->input().storage_entry();
+  if (!storage_entry.has_type() ||
+      !storage_entry.has_key() ||
+      storage_entry.value().size() == 0) {
+    LOG(WARNING) << "storage_entry lacks some fields.";
+    return false;
+  }
+
+  GenericStorageInterface *storage =
+    GenericStorageManagerFactory::GetStorage(storage_entry.type());
+  if (!storage) {
+    LOG(WARNING) << "No storage found";
+    return false;
+  }
+
+  for (int i = 0; i < storage_entry.value_size(); ++i) {
+    const string &value = storage_entry.value(i);
+    storage->Insert(value, value.data());
+  }
+  return true;
+}
+
+bool SessionHandler::ReadAllFromStorage(commands::Command *command) {
+  VLOG(1) << "Read all from storage";
+  commands::Output *output = command->mutable_output();
+  output->set_id(command->input().id());
+  if (!command->input().has_storage_entry()) {
+    LOG(WARNING) << "No storage_entry";
+    return false;
+  }
+  if (!command->input().storage_entry().has_type()) {
+    LOG(WARNING) << "storage_entry lacks type fields.";
+    return false;
+  }
+
+  commands::GenericStorageEntry::StorageType storage_type =
+    command->input().storage_entry().type();
+  GenericStorageInterface *storage =
+    GenericStorageManagerFactory::GetStorage(storage_type);
+  if (!storage) {
+    LOG(WARNING) << "No storage found";
+    return false;
+  }
+
+  vector<string> result;
+  storage->GetAllValues(&result);
+  output->mutable_storage_entry()->set_type(storage_type);
+  for (size_t i = 0; i < result.size(); ++i) {
+    output->mutable_storage_entry()->add_value(result[i]);
+  }
+  return true;
+}
+
+bool SessionHandler::ClearStorage(commands::Command *command) {
+  VLOG(1) << "Clear storage";
+  commands::Output *output = command->mutable_output();
+  output->set_id(command->input().id());
+  if (!command->input().has_storage_entry()) {
+    LOG(WARNING) << "No storage_entry";
+    return false;
+  }
+  if (!command->input().storage_entry().has_type()) {
+    LOG(WARNING) << "storage_entry lacks type fields.";
+    return false;
+  }
+
+  commands::GenericStorageEntry::StorageType storage_type =
+    command->input().storage_entry().type();
+  GenericStorageInterface *storage =
+    GenericStorageManagerFactory::GetStorage(storage_type);
+  if (!storage) {
+    LOG(WARNING) << "No storage found";
+    return false;
+  }
+  output->mutable_storage_entry()->set_type(storage_type);
+  return storage->Clear();
+}
+
 bool SessionHandler::EvalCommand(commands::Command *command) {
   if (!is_available_) {
     return false;
@@ -332,6 +463,27 @@ bool SessionHandler::EvalCommand(commands::Command *command) {
       break;
     case commands::Input::CLEANUP:
       eval_succeeded = Cleanup(command);
+      break;
+    case commands::Input::START_CLOUD_SYNC:
+      eval_succeeded = StartCloudSync(command);
+      break;
+    case commands::Input::CLEAR_CLOUD_SYNC:
+      eval_succeeded = ClearCloudSync(command);
+      break;
+    case commands::Input::GET_CLOUD_SYNC_STATUS:
+      eval_succeeded = GetCloudSyncStatus(command);
+      break;
+    case commands::Input::ADD_AUTH_CODE:
+      eval_succeeded = AddAuthCode(command);
+      break;
+    case commands::Input::INSERT_TO_STORAGE:
+      eval_succeeded = InsertToStorage(command);
+      break;
+    case commands::Input::READ_ALL_FROM_STORAGE:
+      eval_succeeded = ReadAllFromStorage(command);
+      break;
+    case commands::Input::CLEAR_STORAGE:
+      eval_succeeded = ClearStorage(command);
       break;
     case commands::Input::NO_OPERATION:
       eval_succeeded = NoOperation(command);
@@ -576,8 +728,8 @@ SessionID SessionHandler::CreateNewSessionID() {
   while (true) {
     if (!Util::GetSecureRandomSequence(
             reinterpret_cast<char *>(&id), sizeof(id))) {
-      LOG(ERROR) << "GetSecureRandomSequence() failed. use rand()";
-      id = static_cast<uint64>(rand());
+      LOG(ERROR) << "GetSecureRandomSequence() failed. use random value";
+      id = static_cast<uint64>(Util::Random(RAND_MAX));
     }
 
     // don't allow id == 0, as it is reserved for

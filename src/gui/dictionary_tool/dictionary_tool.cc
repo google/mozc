@@ -90,6 +90,14 @@ QProgressDialog *CreateProgressDialog(
   return progress;
 }
 
+size_t GetMaxDictionaryEntrySize(bool is_syncable) {
+  if (is_syncable) {
+    return UserDictionaryStorage::max_sync_entry_size();
+  } else {
+    return UserDictionaryStorage::max_entry_size();
+  }
+}
+
 #if defined(OS_WINDOWS) || defined(OS_MACOSX)
 void InstallStyleSheet(const QString &filename) {
   QFile file(filename);
@@ -587,7 +595,9 @@ void DictionaryTool::OnDictionarySelectionChanged() {
   } else {
     current_dic_id_ = dic_info.id;
     SetupDicContentEditor(dic_info);
-      max_entry_size_ = UserDictionaryStorage::max_entry_size();
+    const UserDictionaryStorage::UserDictionary *dic =
+        storage_->GetUserDictionary(current_dic_id_);
+    max_entry_size_ = GetMaxDictionaryEntrySize(dic->syncable());
   }
 }
 
@@ -636,6 +646,7 @@ void DictionaryTool::SetupDicContentEditor(
   }
 
   setUpdatesEnabled(true);
+  dic_content_->repaint();
   dic_content_->setEnabled(true);
 
   StartMonitoringUserEdit();
@@ -1001,22 +1012,46 @@ void DictionaryTool::AddWord() {
   UpdateUIStatus();
 }
 
-void DictionaryTool::DeleteWord() {
-  vector<int> rows;
-  const QList<QTableWidgetItem *> items =
-      dic_content_->selectedItems();
+void DictionaryTool::GetSortedSelectedRows(vector<int> *rows) const {
+  DCHECK(rows);
+  rows->clear();
+
+  const QList<QTableWidgetItem *> items = dic_content_->selectedItems();
   if (items.empty()) {
     return;
   }
+  rows->reserve(items.count());
   for (int i = 0; i < items.size(); ++i) {
-    rows.push_back(items[i]->row());
+    rows->push_back(items[i]->row());
   }
 
-  sort(rows.begin(), rows.end(), greater<int>());
-  vector<int>::const_iterator end = unique(rows.begin(), rows.end());
+  sort(rows->begin(), rows->end(), greater<int>());
+  vector<int>::const_iterator end = unique(rows->begin(), rows->end());
+
+  rows->resize(end - rows->begin());
+}
+
+QListWidgetItem *DictionaryTool::GetFirstSelectedDictionary() const {
+  QList<QListWidgetItem *> selected_dicts = dic_list_->selectedItems();
+  if (selected_dicts.isEmpty()) {
+    LOG(WARNING) << "No current dictionary.";
+    return NULL;
+  }
+  if (selected_dicts.size() > 1) {
+    LOG(WARNING) << "Multiple items are selected.";
+  }
+  return selected_dicts[0];
+}
+
+void DictionaryTool::DeleteWord() {
+  vector<int> rows;
+  GetSortedSelectedRows(&rows);
+  if (rows.size() == 0) {
+    return;
+  }
 
   QString message;
-  if (end - rows.begin() == 1) {
+  if (rows.size() == 1) {
     message = tr("Do you want to delete this word?");
   } else {
     message = tr("Do you want to delete the selected words?");
@@ -1073,6 +1108,83 @@ void DictionaryTool::EditPOS(const string &pos) {
 
   setUpdatesEnabled(true);
   dic_content_->setEnabled(true);
+}
+
+void DictionaryTool::MoveTo(int dictionary_row) {
+  UserDictionaryStorage::UserDictionary *target_dict = NULL;
+  {
+    const QListWidgetItem * selected_dict = GetFirstSelectedDictionary();
+    if (selected_dict == NULL) {
+      return;
+    }
+    QListWidgetItem *target_dict_item = dic_list_->item(dictionary_row);
+    DCHECK(target_dict_item);
+    if (target_dict_item == selected_dict) {
+      LOG(WARNING) << "Target dictionary is the current dictionary.";
+      return;
+    }
+
+    target_dict = storage_->GetUserDictionary(
+        target_dict_item->data(Qt::UserRole).toULongLong());
+  }
+
+  vector<int> rows;
+  GetSortedSelectedRows(&rows);
+  if (rows.size() == 0) {
+    return;
+  }
+
+  const size_t target_max_entry_size =
+      GetMaxDictionaryEntrySize(target_dict->syncable());
+
+  if (target_dict->entries_size() + rows.size() > target_max_entry_size) {
+    QMessageBox::critical(this, window_title_,
+                          tr("Cannot move all the selected items.\n"
+                             "The target dictionary can have maximum "
+                             "%1 entries.").arg(target_max_entry_size));
+    return;
+  }
+
+  setUpdatesEnabled(false);
+
+  {
+    // add |rows.size()| items and remove |rows.size()| items
+    const int progress_max = rows.size() * 2;
+    scoped_ptr<QProgressDialog> progress(
+        CreateProgressDialog(
+            tr("Moving the selected words..."),
+            this,
+            progress_max));
+
+    int progress_index = 0;
+    if (target_dict) {
+      for (size_t i = 0; i < rows.size(); ++i) {
+        UserDictionaryStorage::UserDictionaryEntry *entry =
+            target_dict->add_entries();
+        const int row = rows[i];
+        entry->set_key(dic_content_->item(row, 0)->text().toStdString());
+        entry->set_value(dic_content_->item(row, 1)->text().toStdString());
+        entry->set_pos(dic_content_->item(row, 2)->text().toStdString());
+        entry->set_comment(dic_content_->item(row, 3)->text().toStdString());
+        UserDictionaryUtil::SanitizeEntry(entry);
+        progress->setValue(progress_index);
+        ++progress_index;
+      }
+    }
+    for (size_t i = 0; i < rows.size(); ++i) {
+      dic_content_->removeRow(rows[i]);
+      progress->setValue(progress_index);
+      ++progress_index;
+    }
+  }
+
+  setUpdatesEnabled(true);
+  dic_content_->setEnabled(true);
+
+  UpdateUIStatus();
+  dic_content_->repaint();
+
+  modified_ = true;
 }
 
 void DictionaryTool::EditComment() {
@@ -1155,29 +1267,49 @@ void DictionaryTool::OnContextMenuRequestedForContent(const QPoint &pos) {
   // appropriate text.
   const QList<QTableWidgetItem *> items = dic_content_->selectedItems();
   QString delete_menu_text = tr("Delete this word");
-  if (items.size() == 0) {
-  } else {
+  QString move_to_menu_text = tr("Move this word to");
+  if (items.size() > 0) {
     const int first_row = items[0]->row();
     for (int i = 1; i < items.size(); ++i) {
       if (items[i]->row() != first_row) {
         // More than one words are selected.
         delete_menu_text = tr("Delete the selected words");
+        move_to_menu_text = tr("Move the selected words to");
         break;
+      }
+    }
+  }
+  QMenu *move_to = menu->addMenu(move_to_menu_text);
+  vector<pair<int, QAction *> > change_dictionary_actions;
+  change_dictionary_actions.reserve(dic_list_->count());
+  {
+    const QListWidgetItem *selected_dict = GetFirstSelectedDictionary();
+    if (selected_dict != NULL) {
+      for (size_t i = 0; i < dic_list_->count(); ++i) {
+        QListWidgetItem *item = dic_list_->item(i);
+        DCHECK(item);
+        if (item == selected_dict) {
+          // Do not add the current dictionary into the "Move to" list.
+          continue;
+        }
+        change_dictionary_actions.push_back(
+            make_pair(i, move_to->addAction(item->text())));
       }
     }
   }
   QAction *delete_action = menu->addAction(delete_menu_text);
 
   menu->addSeparator();
-  QMenu *sub_menu = menu->addMenu(tr("Change category to"));
+  QMenu *change_category_to = menu->addMenu(tr("Change category to"));
   vector<string> pos_list;
   UserPOS::GetPOSList(&pos_list);
   vector<QAction *> change_pos_actions(pos_list.size());
   for (size_t i = 0; i < pos_list.size(); ++i) {
-    change_pos_actions[i] = sub_menu->addAction(
+    change_pos_actions[i] = change_category_to->addAction(
         QString::fromUtf8(pos_list[i].c_str()));
   }
   QAction *edit_comment_action = menu->addAction(tr("Edit comment"));
+
   QAction *selected_action = menu->exec(QCursor::pos());
 
   if (selected_action == add_action) {
@@ -1187,9 +1319,21 @@ void DictionaryTool::OnContextMenuRequestedForContent(const QPoint &pos) {
   } else if (selected_action == edit_comment_action) {
     EditComment();
   } else {
+    bool found = false;
     for (int i = 0; i < change_pos_actions.size(); ++i) {
       if (selected_action == change_pos_actions[i]) {
         EditPOS(pos_list[i]);
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      for (int i = 0; i < change_dictionary_actions.size(); ++i) {
+        if (selected_action == change_dictionary_actions[i].second) {
+          MoveTo(change_dictionary_actions[i].first);
+          found = true;
+          break;
+        }
       }
     }
   }
@@ -1229,17 +1373,14 @@ void DictionaryTool::OnContextMenuRequestedForList(const QPoint &pos) {
 DictionaryTool::DictionaryInfo DictionaryTool::current_dictionary() const {
   DictionaryInfo retval = { -1, 0, NULL };
 
-  QList<QListWidgetItem *> items = dic_list_->selectedItems();
-  if (items.isEmpty()) {
+  QListWidgetItem *selected_dict = GetFirstSelectedDictionary();
+  if (selected_dict == NULL) {
     return retval;
   }
-  if (items.size() > 1) {
-    LOG(WARNING) << "Multiple items are selected.";
-  }
 
-  retval.row  = dic_list_->row(items[0]);
-  retval.id   = items[0]->data(Qt::UserRole).toULongLong();
-  retval.item = items[0];
+  retval.row  = dic_list_->row(selected_dict);
+  retval.id   = selected_dict->data(Qt::UserRole).toULongLong();
+  retval.item = selected_dict;
   return retval;
 }
 

@@ -41,8 +41,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        '../config/config.gyp:genproto_config',
-        '../session/session_base.gyp:genproto_session',
+        '../session/session_base.gyp:session_protocol',
         'client.gyp:client',
       ],
       'actions': [

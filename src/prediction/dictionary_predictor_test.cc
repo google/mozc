@@ -33,6 +33,8 @@
 
 #include "base/freelist.h"
 #include "base/util.h"
+#include "composer/composer.h"
+#include "composer/table.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/character_form_manager.h"
@@ -43,18 +45,34 @@
 #include "converter/segments.h"
 #include "dictionary/dictionary_mock.h"
 #include "dictionary/suffix_dictionary.h"
+#include "dictionary/pos_matcher.h"
 #include "session/commands.pb.h"
 #include "testing/base/public/googletest.h"
+#include "testing/base/public/gmock.h"
 #include "testing/base/public/gunit.h"
 
 
+using ::testing::Return;
+using ::testing::_;
+
 DECLARE_string(test_tmpdir);
+DECLARE_bool(enable_expansion_for_dictionary_predictor);
 
 namespace mozc {
 
 class DictionaryPredictorTest : public testing::Test {
+ public:
+  DictionaryPredictorTest() :
+      default_expansion_flag_(
+          FLAGS_enable_expansion_for_dictionary_predictor) {}
+
+  virtual ~DictionaryPredictorTest() {
+    FLAGS_enable_expansion_for_dictionary_predictor = default_expansion_flag_;
+  }
+
  protected:
   virtual void SetUp() {
+    FLAGS_enable_expansion_for_dictionary_predictor = false;
     Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
     config::ConfigHandler::GetDefaultConfig(&default_config_);
     config::ConfigHandler::SetConfig(default_config_);
@@ -168,6 +186,7 @@ class DictionaryPredictorTest : public testing::Test {
 
  private:
   config::Config default_config_;
+  const bool default_expansion_flag_;
 };
 
 void MakeSegmentsForSuggestion(const string key,
@@ -706,9 +725,22 @@ class TestSuffixDictionary : public DictionaryInterface {
     return result;
   }
 
+  virtual Node *LookupPredictiveWithLimit(
+      const char *str, int size,
+      const Limit &limit,
+      NodeAllocatorInterface *allocator) const {
+    return NULL;
+  }
+
   virtual Node *LookupPrefixWithLimit(
       const char *str, int size,
       const Limit &limit,
+      NodeAllocatorInterface *allocator) const {
+    return NULL;
+  }
+
+  virtual Node *LookupPrefix(
+      const char *str, int size,
       NodeAllocatorInterface *allocator) const {
     return NULL;
   }
@@ -717,6 +749,30 @@ class TestSuffixDictionary : public DictionaryInterface {
                               NodeAllocatorInterface *allocator) const {
     return NULL;
   }
+};
+
+class CallCheckDictionary : public DictionaryInterface {
+ public:
+  CallCheckDictionary() {}
+  virtual ~CallCheckDictionary() {}
+
+  MOCK_CONST_METHOD3(LookupPredictive,
+                     Node *(const char *str, int size,
+                            NodeAllocatorInterface *allocator));
+  MOCK_CONST_METHOD4(LookupPredictiveWithLimit,
+                     Node *(const char *str, int size,
+                            const Limit &limit,
+                            NodeAllocatorInterface *allocator));
+  MOCK_CONST_METHOD3(LookupPrefix,
+                     Node *(const char *str, int size,
+                            NodeAllocatorInterface *allocator));
+  MOCK_CONST_METHOD4(LookupPrefixWithLimit,
+                     Node *(const char *str, int size,
+                            const Limit &limit,
+                            NodeAllocatorInterface *allocator));
+  MOCK_CONST_METHOD3(LookupReverse,
+                     Node *(const char *str, int size,
+                            NodeAllocatorInterface *allocator));
 };
 }  // namespace
 
@@ -1181,4 +1237,428 @@ TEST_F(DictionaryPredictorTest, LookupKeyValueFromDictionary) {
       "\xE3\x83\x86",
       &allocator));
 }
-}  // mozc
+
+namespace {
+void InsertInputSequence(const string &text, composer::Composer *composer) {
+  const char *begin = text.data();
+  const char *end = text.data() + text.size();
+  size_t mblen = 0;
+
+  while (begin < end) {
+    commands::KeyEvent key;
+    const char32 w = Util::UTF8ToUCS4(begin, end, &mblen);
+    if (Util::GetCharacterSet(w) == Util::ASCII) {
+      key.set_key_code(*begin);
+    } else {
+      key.set_key_code('?');
+      key.set_key_string(string(begin, mblen));
+    }
+    begin += mblen;
+    composer->InsertCharacterKeyEvent(key);
+  }
+}
+
+class TestableDictionaryPredictor : public DictionaryPredictor {
+  // Test-only subclass: Just changing access levels
+ public:
+  using DictionaryPredictor::NO_PREDICTION;
+  using DictionaryPredictor::UNIGRAM;
+  using DictionaryPredictor::BIGRAM;
+  using DictionaryPredictor::REALTIME;
+  using DictionaryPredictor::SUFFIX;
+  using DictionaryPredictor::Result;
+  using DictionaryPredictor::MakeResult;
+  using DictionaryPredictor::AggregateUnigramPrediction;
+  using DictionaryPredictor::AggregateBigramPrediction;
+  using DictionaryPredictor::AggregateSuffixPrediction;
+  using DictionaryPredictor::ApplyPenaltyForKeyExpansion;
+};
+
+void ExpansionForUnigramTestHelper(bool use_expansion) {
+  config::Config config;
+  config.set_use_dictionary_suggest(true);
+  config.set_use_realtime_conversion(false);
+  config::ConfigHandler::SetConfig(config);
+
+  scoped_ptr<CallCheckDictionary> check_dictionary(new CallCheckDictionary);
+  DictionaryFactory::SetDictionary(check_dictionary.get());
+
+  composer::Table table;
+  table.LoadFromFile("system://romanji-hiragana.tsv");
+  TestableDictionaryPredictor predictor;
+  NodeAllocator allocator;
+
+  {
+    Segments segments;
+    segments.set_request_type(Segments::PREDICTION);
+    composer::Composer composer;
+    composer.SetTableForUnittest(&table);
+    InsertInputSequence("gu-g", &composer);
+    segments.set_composer(&composer);
+    Segment *segment = segments.add_segment();
+    CHECK(segment);
+    string query;
+    composer.GetQueryForPrediction(&query);
+    segment->set_key(query);
+
+    if (use_expansion) {
+      EXPECT_CALL(*check_dictionary.get(),
+                  LookupPredictiveWithLimit(_, _, _, _));
+    } else {
+      EXPECT_CALL(*check_dictionary.get(),
+                  LookupPredictive(_, _, _));
+    }
+
+    vector<TestableDictionaryPredictor::Result> results;
+    predictor.AggregateUnigramPrediction(TestableDictionaryPredictor::UNIGRAM,
+                                         &segments, &allocator, &results);
+  }
+}
+
+void ExpansionForBigramTestHelper(bool use_expansion) {
+  config::Config config;
+  config.set_use_dictionary_suggest(true);
+  config.set_use_realtime_conversion(false);
+  config::ConfigHandler::SetConfig(config);
+
+  scoped_ptr<CallCheckDictionary> check_dictionary(new CallCheckDictionary);
+  DictionaryFactory::SetDictionary(check_dictionary.get());
+  composer::Table table;
+  table.LoadFromFile("system://romanji-hiragana.tsv");
+  TestableDictionaryPredictor predictor;
+  NodeAllocator allocator;
+
+  {
+    Segments segments;
+    segments.set_request_type(Segments::PREDICTION);
+    // History segment's key and value should be in the dictionary
+    Segment *segment = segments.add_segment();
+    CHECK(segment);
+    segment->set_segment_type(Segment::HISTORY);
+    // "ぐーぐる"
+    segment->set_key("\xe3\x81\x90\xe3\x83\xbc\xe3\x81\x90\xe3\x82\x8b");
+    Segment::Candidate *cand = segment->add_candidate();
+    // "ぐーぐる"
+    cand->key = "\xe3\x81\x90\xe3\x83\xbc\xe3\x81\x90\xe3\x82\x8b";
+    // "ぐーぐる"
+    cand->content_key = "\xe3\x81\x90\xe3\x83\xbc\xe3\x81\x90\xe3\x82\x8b";
+    // "グーグル"
+    cand->value = "\xe3\x82\xb0\xe3\x83\xbc\xe3\x82\xb0\xe3\x83\xab";
+    // "グーグル"
+    cand->content_value = "\xe3\x82\xb0\xe3\x83\xbc\xe3\x82\xb0\xe3\x83\xab";
+
+    segment = segments.add_segment();
+    CHECK(segment);
+
+    composer::Composer composer;
+    composer.SetTableForUnittest(&table);
+    InsertInputSequence("m", &composer);
+    segments.set_composer(&composer);
+    string query;
+    composer.GetQueryForPrediction(&query);
+    segment->set_key(query);
+
+    Node return_node_for_history;
+    // "ぐーぐる"
+    return_node_for_history.key =
+        "\xe3\x81\x90\xe3\x83\xbc\xe3\x81\x90\xe3\x82\x8b";
+    // "グーグル"
+    return_node_for_history.value =
+        "\xe3\x82\xb0\xe3\x83\xbc\xe3\x82\xb0\xe3\x83\xab";
+    return_node_for_history.lid = 1;
+    return_node_for_history.rid = 1;
+    // history key and value should be in the dictionary
+    EXPECT_CALL(*check_dictionary.get(),
+                LookupPrefix(_, _, _))
+        .WillOnce(Return(&return_node_for_history));
+    if (use_expansion) {
+      EXPECT_CALL(*check_dictionary.get(),
+                  LookupPredictiveWithLimit(_, _, _, _));
+    } else {
+      EXPECT_CALL(*check_dictionary.get(),
+                  LookupPredictive(_, _, _));
+    }
+
+    vector<TestableDictionaryPredictor::Result> results;
+    predictor.AggregateBigramPrediction(TestableDictionaryPredictor::BIGRAM,
+                                        &segments, &allocator, &results);
+  }
+}
+
+void ExpansionForSuffixTestHelper(bool use_expansion) {
+  config::Config config;
+  config.set_use_dictionary_suggest(true);
+  config.set_use_realtime_conversion(false);
+  config::ConfigHandler::SetConfig(config);
+
+  scoped_ptr<CallCheckDictionary> check_dictionary(new CallCheckDictionary);
+  SuffixDictionaryFactory::SetSuffixDictionary(check_dictionary.get());
+
+  composer::Table table;
+  table.LoadFromFile("system://romanji-hiragana.tsv");
+  TestableDictionaryPredictor predictor;
+  NodeAllocator allocator;
+
+  {
+    Segments segments;
+    segments.set_request_type(Segments::PREDICTION);
+    Segment *segment = segments.add_segment();
+    CHECK(segment);
+
+    composer::Composer composer;
+    composer.SetTableForUnittest(&table);
+    InsertInputSequence("des", &composer);
+    segments.set_composer(&composer);
+    string query;
+    composer.GetQueryForPrediction(&query);
+    segment->set_key(query);
+
+    if (use_expansion) {
+      EXPECT_CALL(*check_dictionary.get(),
+                  LookupPredictiveWithLimit(_, _, _, _));
+    } else {
+      EXPECT_CALL(*check_dictionary.get(),
+                  LookupPredictive(_, _, _));
+    }
+
+    vector<TestableDictionaryPredictor::Result> results;
+    predictor.AggregateSuffixPrediction(TestableDictionaryPredictor::SUFFIX,
+                                        &segments, &allocator, &results);
+  }
+}
+}  // namespace
+
+TEST_F(DictionaryPredictorTest, UseExpansionForUnigramTest) {
+  FLAGS_enable_expansion_for_dictionary_predictor = true;
+  ExpansionForUnigramTestHelper(true);
+}
+
+TEST_F(DictionaryPredictorTest, UnuseExpansionForUnigramTest) {
+  FLAGS_enable_expansion_for_dictionary_predictor = false;
+  ExpansionForUnigramTestHelper(false);
+}
+
+TEST_F(DictionaryPredictorTest, UseExpansionForBigramTest) {
+  FLAGS_enable_expansion_for_dictionary_predictor = true;
+  ExpansionForBigramTestHelper(true);
+}
+
+TEST_F(DictionaryPredictorTest, UnuseExpansionForBigramTest) {
+  FLAGS_enable_expansion_for_dictionary_predictor = false;
+  ExpansionForBigramTestHelper(false);
+}
+
+TEST_F(DictionaryPredictorTest, UseExpansionForSuffixTest) {
+  FLAGS_enable_expansion_for_dictionary_predictor = true;
+  ExpansionForSuffixTestHelper(true);
+}
+
+TEST_F(DictionaryPredictorTest, UnuseExpansionForSuffixTest) {
+  FLAGS_enable_expansion_for_dictionary_predictor = false;
+  ExpansionForSuffixTestHelper(false);
+}
+
+TEST_F(DictionaryPredictorTest, ExpansionPenaltyForRomanTest) {
+  DictionaryFactory::SetDictionary(GetMockDic());
+  FLAGS_enable_expansion_for_dictionary_predictor = true;
+  config::Config config;
+  config.set_use_dictionary_suggest(true);
+  config.set_use_realtime_conversion(false);
+  config::ConfigHandler::SetConfig(config);
+
+  composer::Table table;
+  table.LoadFromFile("system://romanji-hiragana.tsv");
+  TestableDictionaryPredictor predictor;
+  NodeAllocator allocator;
+
+  Segments segments;
+  segments.set_request_type(Segments::PREDICTION);
+  composer::Composer composer;
+  composer.SetTableForUnittest(&table);
+  InsertInputSequence("ak", &composer);
+  segments.set_composer(&composer);
+  Segment *segment = segments.add_segment();
+  CHECK(segment);
+  {
+    string query;
+    composer.GetQueryForPrediction(&query);
+    segment->set_key(query);
+    // "あ"
+    EXPECT_EQ("\xe3\x81\x82", query);
+  }
+  {
+    string base;
+    set<string> expanded;
+    composer.GetQueriesForPrediction(&base, &expanded);
+    // "あ"
+    EXPECT_EQ("\xe3\x81\x82", base);
+    EXPECT_GT(expanded.size(), 5);
+  }
+
+  vector<TestableDictionaryPredictor::Result> results;
+  Node node1;
+  // "あか"
+  node1.key = "\xe3\x81\x82\xe3\x81\x8b";
+  // "赤"
+  node1.value = "\xe8\xb5\xa4";
+  results.push_back(TestableDictionaryPredictor::MakeResult(
+      &node1, TestableDictionaryPredictor::UNIGRAM));
+  Node node2;
+  // "あき"
+  node2.key = "\xe3\x81\x82\xe3\x81\x8d";
+  // "秋"
+  node2.value = "\xe7\xa7\x8b";
+  results.push_back(TestableDictionaryPredictor::MakeResult(
+      &node2, TestableDictionaryPredictor::UNIGRAM));
+  Node node3;
+  // "あかぎ"
+  node3.key = "\xe3\x81\x82\xe3\x81\x8b\xe3\x81\x8e";
+  // "アカギ"
+  node3.value = "\xe3\x82\xa2\xe3\x82\xab\xe3\x82\xae";
+  results.push_back(TestableDictionaryPredictor::MakeResult(
+      &node3, TestableDictionaryPredictor::UNIGRAM));
+
+  EXPECT_EQ(3, results.size());
+  EXPECT_EQ(0, results[0].cost);
+  EXPECT_EQ(0, results[1].cost);
+  EXPECT_EQ(0, results[2].cost);
+
+  predictor.ApplyPenaltyForKeyExpansion(segments, &results);
+
+  // no penalties
+  EXPECT_EQ(0, results[0].cost);
+  EXPECT_EQ(0, results[1].cost);
+  EXPECT_EQ(0, results[2].cost);
+}
+
+TEST_F(DictionaryPredictorTest, ExpansionPenaltyForKanaTest) {
+  DictionaryFactory::SetDictionary(GetMockDic());
+  FLAGS_enable_expansion_for_dictionary_predictor = true;
+  config::Config config;
+  config.set_use_dictionary_suggest(true);
+  config.set_use_realtime_conversion(false);
+  config::ConfigHandler::SetConfig(config);
+
+  composer::Table table;
+  table.LoadFromFile("system://kana.tsv");
+  TestableDictionaryPredictor predictor;
+  NodeAllocator allocator;
+
+  Segments segments;
+  segments.set_request_type(Segments::PREDICTION);
+  composer::Composer composer;
+  composer.SetTableForUnittest(&table);
+  // "あし"
+  InsertInputSequence("\xe3\x81\x82\xe3\x81\x97", &composer);
+  segments.set_composer(&composer);
+  Segment *segment = segments.add_segment();
+  CHECK(segment);
+  {
+    string query;
+    composer.GetQueryForPrediction(&query);
+    segment->set_key(query);
+    // "あし"
+    EXPECT_EQ("\xe3\x81\x82\xe3\x81\x97", query);
+  }
+  {
+    string base;
+    set<string> expanded;
+    composer.GetQueriesForPrediction(&base, &expanded);
+    // "あ"
+    EXPECT_EQ("\xe3\x81\x82", base);
+    EXPECT_EQ(2, expanded.size());
+  }
+
+  vector<TestableDictionaryPredictor::Result> results;
+  Node node1;
+  // "あし"
+  node1.key = "\xe3\x81\x82\xe3\x81\x97";
+  // "足"
+  node1.value = "\xe8\xb6\xb3";
+  results.push_back(TestableDictionaryPredictor::MakeResult(
+      &node1, TestableDictionaryPredictor::UNIGRAM));
+  Node node2;
+  // "あじ"
+  node2.key = "\xe3\x81\x82\xe3\x81\x98";
+  // "味"
+  node2.value = "\xe5\x91\xb3";
+  results.push_back(TestableDictionaryPredictor::MakeResult(
+      &node2, TestableDictionaryPredictor::UNIGRAM));
+  Node node3;
+  // "あした"
+  node3.key = "\xe3\x81\x82\xe3\x81\x97\xe3\x81\x9f";
+  // "明日"
+  node3.value = "\xe6\x98\x8e\xe6\x97\xa5";
+  results.push_back(TestableDictionaryPredictor::MakeResult(
+      &node3, TestableDictionaryPredictor::UNIGRAM));
+  Node node4;
+  // "あじあ"
+  node4.key = "\xe3\x81\x82\xe3\x81\x98\xe3\x81\x82";
+  // "アジア"
+  node4.value = "\xe3\x82\xa2\xe3\x82\xb8\xe3\x82\xa2";
+  results.push_back(TestableDictionaryPredictor::MakeResult(
+      &node4, TestableDictionaryPredictor::UNIGRAM));
+
+  EXPECT_EQ(4, results.size());
+  EXPECT_EQ(0, results[0].cost);
+  EXPECT_EQ(0, results[1].cost);
+  EXPECT_EQ(0, results[2].cost);
+  EXPECT_EQ(0, results[3].cost);
+
+  predictor.ApplyPenaltyForKeyExpansion(segments, &results);
+
+  EXPECT_EQ(0, results[0].cost);
+  EXPECT_LT(0, results[1].cost);
+  EXPECT_EQ(0, results[2].cost);
+  EXPECT_LT(0, results[3].cost);
+}
+
+TEST_F(DictionaryPredictorTest, SetLMCost) {
+  TestableDictionaryPredictor predictor;
+
+  Segments segments;
+  segments.set_request_type(Segments::PREDICTION);
+  Segment *segment = segments.add_segment();
+  CHECK(segment);
+  // "てすと"
+  segment->set_key("\xe3\x81\xa6\xe3\x81\x99\xe3\x81\xa8");
+
+  vector<TestableDictionaryPredictor::Result> results;
+  Node node1;
+  // "てすと"
+  node1.key = "\xe3\x81\xa6\xe3\x81\x99\xe3\x81\xa8";
+  // "てすと"
+  node1.value = "\xe3\x81\xa6\xe3\x81\x99\xe3\x81\xa8";
+  results.push_back(TestableDictionaryPredictor::MakeResult(
+      &node1, TestableDictionaryPredictor::UNIGRAM));
+  Node node2;
+  // "てすと"
+  node2.key = "\xe3\x81\xa6\xe3\x81\x99\xe3\x81\xa8";
+  // "テスト"
+  node2.value = "\xe3\x83\x86\xe3\x82\xb9\xe3\x83\x88";
+  results.push_back(TestableDictionaryPredictor::MakeResult(
+      &node2, TestableDictionaryPredictor::UNIGRAM));
+  Node node3;
+  // "てすとてすと"
+  node3.key = "\xe3\x81\xa6\xe3\x81\x99\xe3\x81\xa8"
+      "\xe3\x81\xa6\xe3\x81\x99\xe3\x81\xa8";
+  // "テストテスト"
+  node3.value = "\xe3\x83\x86\xe3\x82\xb9\xe3\x83\x88"
+      "\xe3\x83\x86\xe3\x82\xb9\xe3\x83\x88";
+  results.push_back(TestableDictionaryPredictor::MakeResult(
+      &node3, TestableDictionaryPredictor::UNIGRAM));
+
+  predictor.SetLMCost(segments, &results);
+
+  EXPECT_EQ(3, results.size());
+  // "てすと"
+  EXPECT_EQ("\xe3\x81\xa6\xe3\x81\x99\xe3\x81\xa8", results[0].node->value);
+  // "テスト"
+  EXPECT_EQ("\xe3\x83\x86\xe3\x82\xb9\xe3\x83\x88", results[1].node->value);
+  // "テストテスト"
+  EXPECT_EQ("\xe3\x83\x86\xe3\x82\xb9\xe3\x83\x88"
+            "\xe3\x83\x86\xe3\x82\xb9\xe3\x83\x88", results[2].node->value);
+  EXPECT_GT(results[2].cost, results[0].cost);
+  EXPECT_GT(results[2].cost, results[1].cost);
+}
+}  // namespace mozc

@@ -40,7 +40,7 @@
 namespace {
 
 #ifndef OS_WINDOWS
-void IconvHelper(iconv_t ic, const string &input, string *output) {
+bool IconvHelper(iconv_t ic, const string &input, string *output) {
   size_t ilen = input.size();
   size_t olen = ilen * 4;
   string tmp;
@@ -54,21 +54,24 @@ void IconvHelper(iconv_t ic, const string &input, string *output) {
   while (ilen != 0) {
     if (iconv(ic, reinterpret_cast<char **>(&ibuf), &ilen, &obuf, &olen)
         == static_cast<size_t>(-1)) {
-      return;
+      return false;
     }
   }
   output->assign(obuf_org, olen_org - olen);
+  return true;
 }
 
-inline void Convert(const char *from, const char *to,
+inline bool Convert(const char *from, const char *to,
                     const string &input, string *output) {
   iconv_t ic = iconv_open(to, from);   // note the order
   if (ic == reinterpret_cast<iconv_t>(-1)) {
     LOG(WARNING) << "iconv_open failed";
     *output = input;
+    return false;
   }
-  IconvHelper(ic, input, output);
+  bool result = IconvHelper(ic, input, output);
   iconv_close(ic);
+  return result;
 }
 #else
 // Returns the code-page identifier for the specified encoding string.
@@ -85,15 +88,30 @@ static int GetCodepage(const char* name) {
     const char* name;
     int codepage;
   } kCodePageMap[] = {
-    { "UTF8",      CP_UTF8 },  // Unicode UTF-8
-    { "SJIS",      932     },  // ANSI/OEM - Japanese, Shift-JIS
-    { "EUC-JP-MS", 51932   },  // EUC - Japanese
-    { "JIS",       20932   },  // JIS X 0208-1990 & 0212-1990
+    { "UTF8",         CP_UTF8 },  // Unicode UTF-8
+    { "UTF-8",        CP_UTF8 },  // Unicode UTF-8
+    { "SJIS",         932     },  // ANSI/OEM - Japanese, Shift-JIS
+    { "EUC-JP-MS",    51932   },  // EUC - Japanese
+    { "JIS",          20932   },  // JIS X 0208-1990 & 0212-1990
+    { "ISO8859-1",    28591   },  // ISO8859-1
+    { "ISO8859-2",    28592   },  // ISO8859-2
+    { "ISO8859-3",    28593   },  // ISO8859-3
+    { "ISO8859-4",    28594   },  // ISO8859-4
+    { "ISO8859-5",    28595   },  // ISO8859-5
+    { "ISO8859-6",    28596   },  // ISO8859-6
+    { "ISO8859-7",    28597   },  // ISO8859-7
+    { "ISO8859-8",    28598   },  // ISO8859-8
+    { "ISO8859-9",    28599   },  // ISO8859-9
+    { "ISO8859-13",   28603   },  // ISO8859-13
+    { "ISO8859-15",   28605   },  // ISO8859-15
+    { "KOI8-R",       20866   },  // KOI8-R
+    { "windows-1251", 1251    },  // windows-1251
   };
 
   for (size_t i = 0; i < arraysize(kCodePageMap); i++) {
-    if (strcmp(kCodePageMap[i].name, name) == 0)
+    if (strcmp(kCodePageMap[i].name, name) == 0) {
       return kCodePageMap[i].codepage;
+    }
   }
   return 0;
 }
@@ -101,42 +119,49 @@ static int GetCodepage(const char* name) {
 // Converts the encoding of the specified string.
 // This function firstly converts the source string to create a temporary
 // UTF-16 string, and encodes the UTF-16 string with the destination encoding.
-inline void Convert(const char *from, const char *to,
+inline bool Convert(const char *from, const char *to,
                     const string &input, string *output) {
   const int codepage_from = GetCodepage(from);
   const int codepage_to = GetCodepage(to);
-  if (codepage_from == 0 || codepage_to == 0)
-    return;
+  if (codepage_from == 0 || codepage_to == 0) {
+    return false;
+  }
 
   const int wide_length = MultiByteToWideChar(codepage_from, 0, input.c_str(),
                                               -1, NULL, 0);
-  if (wide_length == 0)
-    return;
+  if (wide_length == 0) {
+    return false;
+  }
 
   scoped_array<wchar_t> wide(new wchar_t[wide_length + 1]);
-  if (wide.get() == NULL)
-    return;
+  if (wide.get() == NULL) {
+    return false;
+  }
 
   if (MultiByteToWideChar(codepage_from, 0, input.c_str(), -1,
                           wide.get(), wide_length + 1) == 0)
-    return;
+    return false;
 
   const int output_length = WideCharToMultiByte(codepage_to, 0, wide.get(), -1,
                                                 NULL, 0, NULL, NULL);
-  if (output_length == 0)
-    return;
+  if (output_length == 0) {
+    return false;
+  }
 
   scoped_array<char> multibyte(new char[output_length + 1]);
-  if (multibyte.get() == NULL)
-    return;
+  if (multibyte.get() == NULL) {
+    return false;
+  }
 
   const int result = WideCharToMultiByte(codepage_to, 0, wide.get(),
                                          wide_length, multibyte.get(),
                                          output_length + 1, NULL, NULL);
-  if (result == 0)
-    return;
+  if (result == 0) {
+    return false;
+  }
 
   output->assign(multibyte.get());
+  return true;
 }
 
 #endif
@@ -161,5 +186,9 @@ void Util::UTF8ToSJIS(const string &input, string *output) {
 
 void Util::SJISToUTF8(const string &input, string *output) {
   Convert("SJIS", "UTF8", input, output);
+}
+
+bool Util::ToUTF8(const char *from, const string &input, string *output) {
+  return Convert(from, "UTF8", input, output);
 }
 }  // namespace mozc

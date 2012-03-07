@@ -41,7 +41,6 @@ ResultList::ResultList(QWidget *parent)
     : QListWidget(parent) {
   setFlow(ResultList::LeftToRight);
   setWrapping(true);
-  setUniformItemSizes(true);
   setMouseTracking(true);
   setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   setMouseTracking(true);
@@ -72,6 +71,7 @@ void ResultList::mouseReleaseEvent(QMouseEvent *event) {
     return;
   }
   SelectionHandler::Select(item->text());
+  emit itemSelected(item);
 }
 
 void ResultList::mouseMoveEvent(QMouseEvent *event) {

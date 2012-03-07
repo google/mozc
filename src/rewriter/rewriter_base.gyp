@@ -51,12 +51,6 @@
             '<@(input_files)',
           ],
           'conditions': [
-            ['two_pass_build==0', {
-                'inputs': [
-                    '<(mozc_build_tools_dir)/gen_collocation_data_main',
-                ],
-              },
-            ],
           ],
           'outputs': [
             '<(gen_out_dir)/embedded_collocation_data.h',
@@ -78,11 +72,6 @@
           'inputs': [
             '<@(input_files)',
           ],
-          'conditions': [['two_pass_build==0', {
-            'inputs': [
-              '<(mozc_build_tools_dir)/gen_single_kanji_rewriter_dictionary_main',
-            ],
-          }]],
           'outputs': [
             '<(gen_out_dir)/single_kanji_rewriter_data.h',
           ],
@@ -106,11 +95,6 @@
           'inputs': [
             '<@(input_files)',
           ],
-          'conditions': [['two_pass_build==0', {
-            'inputs': [
-              '<(mozc_build_tools_dir)/gen_symbol_rewriter_dictionary_main',
-            ],
-          }]],
           'outputs': [
             '<(gen_out_dir)/symbol_rewriter_data.h',
           ],
@@ -131,11 +115,6 @@
           'inputs': [
             '<@(input_files)',
           ],
-          'conditions': [['two_pass_build==0', {
-            'inputs': [
-              '<(mozc_build_tools_dir)/gen_emoticon_rewriter_dictionary_main',
-            ],
-          }]],
           'outputs': [
             '<(gen_out_dir)/emoticon_rewriter_data.h',
           ],

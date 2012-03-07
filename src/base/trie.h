@@ -29,8 +29,8 @@
 
 // Trie tree library
 
-#ifndef MOZC_COMPOSER_INTERNAL_TRIE_H_
-#define MOZC_COMPOSER_INTERNAL_TRIE_H_
+#ifndef MOZC_BASE_TRIE_H_
+#define MOZC_BASE_TRIE_H_
 
 #include <map>
 #include <string>
@@ -38,7 +38,6 @@
 #include "base/util.h"
 
 namespace mozc {
-namespace composer {
 template<typename T> class Trie {
  public:
   Trie()
@@ -224,7 +223,6 @@ template<typename T> class Trie {
   bool has_data_;
   T data_;
 };
-}  // namespace composer
 }  // namespace mozc
 
-#endif  // MOZC_COMPOSER_INTERNAL_TRIE_H_
+#endif  // MOZC_BASE_TRIE_H_

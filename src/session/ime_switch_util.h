@@ -39,18 +39,11 @@ namespace mozc {
 namespace config {
 class ImeSwitchUtil {
  public:
-  // Returns true if 'key' is assigned for IMEOn, IMEToggle or input mode change
-  // in direct mode.
+  // Returns true if 'key' is assigned for any command in direct mode.
   // We want to know this configuration before starting mozc server,
   // because we use this config to start mozc server.
   // Please call this fuction only when the server is not runnning.
-  static bool IsTurnOnInDirectMode(const commands::KeyEvent &key);
-
-  // Returns the copy of key event list.
-  // They are needed for Windows.
-  // On Windows, we should register these hotkeys on IME activation.
-  static void GetTurnOnInDirectModeKeyEventList(
-      vector<commands::KeyEvent> *key_events);
+  static bool IsDirectModeCommand(const commands::KeyEvent &key);
 
   static void Reload();
 

@@ -110,6 +110,7 @@ class Session : public SessionInterface {
   bool Delete(commands::Command *command);
   bool Backspace(commands::Command *command);
   bool EditCancel(commands::Command *command);
+  bool EditCancelAndIMEOff(commands::Command *command);
 
   bool MoveCursorRight(commands::Command *command);
   bool MoveCursorLeft(commands::Command *command);
@@ -129,6 +130,8 @@ class Session : public SessionInterface {
   bool PredictAndConvert(commands::Command *command);
   bool Commit(commands::Command *command);
   bool CommitFirstSuggestion(commands::Command *command);
+  // Select a candidate located by input.command.id and commit.
+  bool CommitCandidate(commands::Command *command);
 
   // Expands suggestion candidates.
   bool ExpandSuggestion(commands::Command *command);
@@ -194,6 +197,8 @@ class Session : public SessionInterface {
   // Let client launch word register dialog
   bool LaunchWordRegisterDialog(commands::Command *command);
 
+  // Undo if pre-composition is empty. Rewind KANA cycle othrewise.
+  bool UndoOrRewind(commands::Command *command);
   // Send a command to the composer to append a special string.
   bool SendComposerCommand(
       const composer::Composer::InternalCommand composer_command,
@@ -254,9 +259,10 @@ class Session : public SessionInterface {
   // Set session state to the given state and also update related status.
   void SetSessionState(ImeContext::State state);
 
-  // Return true if full width space is preferred in the current
-  // situation rather than half width space.
-  bool IsFullWidthInsertSpace() const;
+  // Return true if full width space is preferred in the given new input
+  // state than half width space. When |input| does not have new input mode,
+  // the current mode will be considered.
+  bool IsFullWidthInsertSpace(const commands::Input &input) const;
 
   bool ConvertToTransliteration(commands::Command *command,
                                 transliteration::TransliterationType type);
@@ -269,6 +275,12 @@ class Session : public SessionInterface {
   // Calls SessionConverter::ConmmitFirstSegment() and deletes characters
   // from the composer.
   void CommitFirstSegmentInternal();
+
+  // Commands like EditCancel should restore the original string used for
+  // the reverse conversion without any modification.
+  // Returns true if the |source_text| is committed to calcel reconversion.
+  // Returns false if this function has nothing to do.
+  bool TryCancelConvertReverse(commands::Command *command);
 
   // Set the focus to the candidate located by input.command.id.  This
   // command would not be used from SendKey but used from SendCommand

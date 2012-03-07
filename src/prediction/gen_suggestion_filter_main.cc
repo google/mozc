@@ -31,6 +31,7 @@
 #include <string>
 
 #include "base/base.h"
+#include "base/codegen_bytearray_stream.h"
 #include "base/file_stream.h"
 #include "base/util.h"
 #include "storage/existence_filter.h"
@@ -98,7 +99,11 @@ int main(int argc, char **argv) {
 
   if (FLAGS_header) {
     mozc::OutputFileStream ofs(FLAGS_output.c_str());
-    mozc::Util::WriteByteArray(FLAGS_name, buf, size, &ofs);
+    mozc::CodeGenByteArrayOutputStream codegen_stream(
+        &ofs, mozc::codegenstream::NOT_OWN_STREAM);
+    codegen_stream.OpenVarDef(FLAGS_name);
+    codegen_stream.write(buf, size);
+    codegen_stream.CloseVarDef();
   } else {
     mozc::OutputFileStream ofs(FLAGS_output.c_str(),
                                ios::out | ios::trunc | ios::binary);

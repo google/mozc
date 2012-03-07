@@ -1609,5 +1609,36 @@ TEST(CharChunkTest, KanaGetExpandedResults) {
 }
 
 
+
+
+TEST(CharChunkTest, CopyFrom) {
+  CharChunk src;
+  src.transliterator_ = kHiraganaT12r;
+  src.raw_ = "raw";
+  src.conversion_ = "conversion";
+  src.pending_ = "pending";
+  src.ambiguous_ = "ambiguous";
+  src.status_mask_ = CharChunk::NO_RAW;
+  src.attributes_ = NEW_CHUNK;
+
+  CharChunk dest;
+  EXPECT_FALSE(src.transliterator_ == dest.transliterator_);
+  EXPECT_NE(src.raw_, dest.raw_);
+  EXPECT_NE(src.conversion_, dest.conversion_);
+  EXPECT_NE(src.pending_, dest.pending_);
+  EXPECT_NE(src.ambiguous_, dest.ambiguous_);
+  EXPECT_NE(src.status_mask_, dest.status_mask_);
+  EXPECT_NE(src.attributes_, dest.attributes_);
+
+  dest.CopyFrom(src);
+  EXPECT_TRUE(src.transliterator_ == dest.transliterator_);
+  EXPECT_EQ(src.raw_, dest.raw_);
+  EXPECT_EQ(src.conversion_, dest.conversion_);
+  EXPECT_EQ(src.pending_, dest.pending_);
+  EXPECT_EQ(src.ambiguous_, dest.ambiguous_);
+  EXPECT_EQ(src.status_mask_, dest.status_mask_);
+  EXPECT_EQ(src.attributes_, dest.attributes_);
+}
+
 }  // namespace composer
 }  // namespace mozc

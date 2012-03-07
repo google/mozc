@@ -56,6 +56,9 @@ ContentWordWithConjugation ^(動詞,自立,*,*,五段|動詞,自立,*,*,一段|�
 # 末尾語
 SuffixWord ^(助詞|助動詞|動詞,非自立|動詞,接尾|形容詞,非自立|形容詞,接尾|動詞,自立,*,*,サ変・スル)
 
+# 助数詞
+CounterSuffixWord 名詞,接尾,助数詞
+
 # 固有名詞
 UniqueNoun ^名詞,固有名詞
 

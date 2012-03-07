@@ -29,10 +29,9 @@
 
 #include "dictionary/system/system_dictionary_builder.h"
 
-#include <cstring>
-#include <climits>
-
 #include <algorithm>
+#include <climits>
+#include <cstring>
 #include <sstream>
 
 #include "base/base.h"
@@ -40,11 +39,11 @@
 #include "base/hash_tables.h"
 #include "base/util.h"
 #include "dictionary/dictionary_token.h"
-#include "dictionary/file/dictionary_file_builder.h"
-#include "dictionary/rx/rx_trie_builder.h"
+#include "dictionary/file/codec_interface.h"
 #include "dictionary/rx/rbx_array_builder.h"
-#include "dictionary/system/codec_interface.h"
+#include "dictionary/rx/rx_trie_builder.h"
 #include "dictionary/system/codec.h"
+#include "dictionary/system/codec_interface.h"
 #include "dictionary/system/words_info.h"
 #include "dictionary/text_dictionary_loader.h"
 
@@ -54,19 +53,26 @@ DEFINE_int32(min_key_length_to_use_small_cost_encoding, 6,
              "minimum key length to use 1 byte cost encoding.");
 
 namespace mozc {
+namespace {
+
+void WriteSectionToFile(const DictionaryFileSection &section,
+                        const string &filename);
+
+}  // namespace
+
 namespace dictionary {
 
 struct TokenGreaterThan {
   inline bool operator()(const TokenInfo& lhs,
                          const TokenInfo& rhs) const {
     if (lhs.token->lid != rhs.token->lid) {
-      return (lhs.token->lid > rhs.token->lid);
+      return lhs.token->lid > rhs.token->lid;
     }
     if (lhs.token->rid != rhs.token->rid) {
-      return (lhs.token->rid > rhs.token->rid);
+      return lhs.token->rid > rhs.token->rid;
     }
     if (lhs.id_in_value_trie != rhs.id_in_value_trie) {
-      return (lhs.id_in_value_trie < rhs.id_in_value_trie);
+      return lhs.id_in_value_trie < rhs.id_in_value_trie;
     }
     return lhs.token->attributes < rhs.token->attributes;
   }
@@ -111,35 +117,62 @@ void SystemDictionaryBuilder::BuildFromTokens(const vector<Token *> &tokens) {
 }
 
 void SystemDictionaryBuilder::WriteToFile(const string &output_file) const {
-  const string value_trie_file = output_file + ".value";
-  const string key_trie_file = output_file + ".key";
-  const string token_array_file = output_file + ".tokens";
-  const string frequent_pos_file = output_file + ".freq_pos";
+  OutputFileStream ofs(output_file.c_str(), ios::binary | ios::out);
+  WriteToStream(output_file, &ofs);
+}
 
-  WriteValueTrie(value_trie_file);
-  WriteKeyTrie(key_trie_file);
-  WriteTokenArray(token_array_file);
-  WriteFrequentPos(frequent_pos_file);
-
-  scoped_ptr<DictionaryFileBuilder> builder(new DictionaryFileBuilder);
-  builder->AddSectionFromFile(codec_->GetSectionNameForValue(),
-                              value_trie_file);
-  builder->AddSectionFromFile(codec_->GetSectionNameForKey(),
-                              key_trie_file);
-  builder->AddSectionFromFile(codec_->GetSectionNameForTokens(),
-                              token_array_file);
-  builder->AddSectionFromFile(codec_->GetSectionNameForPos(),
-                              frequent_pos_file);
-  builder->WriteImageToFile(output_file);
-
-  if (!FLAGS_preserve_intermediate_dictionary) {
-    LOG(INFO) << "cleaning intermediate files";
-    Util::Unlink(value_trie_file);
-    Util::Unlink(key_trie_file);
-    Util::Unlink(token_array_file);
-    Util::Unlink(frequent_pos_file);
-    LOG(INFO) << "removed";
+void SystemDictionaryBuilder::WriteToStream(
+    const string &intermediate_output_file_base_path,
+    ostream *output_stream) const {
+  // Memory images of each section
+  vector<DictionaryFileSection> sections;
+  DictionaryFileCodecInterface *file_codec =
+      DictionaryFileCodecFactory::GetCodec();
+  DictionaryFileSection value_trie_section = {
+    value_trie_builder_->GetImageBody(),
+    value_trie_builder_->GetImageSize(),
+    file_codec->GetSectionName(codec_->GetSectionNameForValue()),
+  };
+  sections.push_back(value_trie_section);
+  DictionaryFileSection key_trie_section = {
+    key_trie_builder_->GetImageBody(),
+    key_trie_builder_->GetImageSize(),
+    file_codec->GetSectionName(codec_->GetSectionNameForKey()),
+  };
+  sections.push_back(key_trie_section);
+  DictionaryFileSection token_array_section = {
+    token_array_builder_->GetImageBody(),
+    token_array_builder_->GetImageSize(),
+    file_codec->GetSectionName(codec_->GetSectionNameForTokens()),
+  };
+  sections.push_back(token_array_section);
+  uint32 frequent_pos_array[256] = {0};
+  for (map<uint32, int>::const_iterator i = frequent_pos_.begin();
+       i != frequent_pos_.end(); ++i) {
+    frequent_pos_array[i->second] = i->first;
   }
+  DictionaryFileSection frequent_pos_section = {
+    reinterpret_cast<const char *>(frequent_pos_array),
+    sizeof frequent_pos_array,
+    file_codec->GetSectionName(codec_->GetSectionNameForPos()),
+  };
+  sections.push_back(frequent_pos_section);
+
+  if (FLAGS_preserve_intermediate_dictionary &&
+      !intermediate_output_file_base_path.empty()) {
+    // Write out intermediate results to files.
+    const string &basepath = intermediate_output_file_base_path;
+    LOG(INFO) << "Writing intermediate files.";
+    WriteSectionToFile(value_trie_section, basepath + ".value");
+    WriteSectionToFile(key_trie_section, basepath + ".key");
+    WriteSectionToFile(token_array_section, basepath + ".tokens");
+    WriteSectionToFile(frequent_pos_section, basepath + ".freq_pos");
+  }
+
+  LOG(INFO) << "Start writing dictionary file.";
+  DictionaryFileCodecFactory::GetCodec()->WriteSections(sections,
+                                                        output_stream);
+  LOG(INFO) << "Start writing dictionary file... done.";
 }
 
 namespace {
@@ -176,17 +209,20 @@ bool HaveHomonymsInSamePos(const KeyInfo &key_info) {
 
 void SystemDictionaryBuilder::ReadTokens(const vector<Token *> &tokens,
                                          KeyInfoMap *key_info_map) const {
-  for (size_t i = 0; i < tokens.size(); ++i) {
-    Token *token = tokens[i];
+  for (vector<Token *>::const_iterator iter = tokens.begin();
+       iter != tokens.end(); ++iter) {
+    Token *token = *iter;
     CHECK(!token->key.empty()) << "empty key string in input";
     CHECK(!token->value.empty()) << "empty value string in input";
-    if (key_info_map->find(token->key) == key_info_map->end()) {
-      KeyInfo key_info;
-      key_info_map->insert(make_pair(token->key, key_info));
+    KeyInfoMap::iterator i = key_info_map->find(token->key);
+    if (i == key_info_map->end()) {
+      pair<KeyInfoMap::iterator, bool> result =
+          key_info_map->insert(make_pair(token->key, KeyInfo()));
+      CHECK(result.second);
+      i = result.first;
     }
-    KeyInfoMap::iterator itr = key_info_map->find(token->key);
-    itr->second.tokens.push_back(TokenInfo(token));
-    itr->second.tokens.back().value_type = GetValueType(token);
+    i->second.tokens.push_back(TokenInfo(token));
+    i->second.tokens.back().value_type = GetValueType(token);
   }
 }
 
@@ -386,38 +422,15 @@ void SystemDictionaryBuilder::BuildTokenArray(const KeyInfoMap &key_info_map) {
   token_array_builder_->Build();
 }
 
-void SystemDictionaryBuilder::WriteValueTrie(const string &file) const {
-  OutputFileStream ofs(file.c_str(), ios::binary|ios::out);
-  value_trie_builder_->WriteImage(&ofs);
-}
-
-void SystemDictionaryBuilder::WriteKeyTrie(const string &file) const {
-  OutputFileStream ofs(file.c_str(), ios::binary|ios::out);
-  key_trie_builder_->WriteImage(&ofs);
-}
-
-void SystemDictionaryBuilder::WriteTokenArray(const string &file) const {
-  OutputFileStream ofs(file.c_str(), ios::binary|ios::out);
-  token_array_builder_->WriteImage(&ofs);
-}
+}  // namespace dictionary
 
 namespace {
-void WriteInt(int value, OutputFileStream *ofs) {
-  ofs->write(reinterpret_cast<const char *>(&value), sizeof(value));
-}
-}  // namespace
 
-void SystemDictionaryBuilder::WriteFrequentPos(const string &file) const {
-  OutputFileStream ofs(file.c_str(), ios::binary|ios::out);
-  uint32 pos_array[256];
-  memset(pos_array, 0, sizeof(pos_array));
-  for (map<uint32, int>::const_iterator itr = frequent_pos_.begin();
-       itr != frequent_pos_.end(); ++itr) {
-    pos_array[itr->second] = itr->first;
-  }
-  for (size_t i = 0; i < 256; ++i) {
-    WriteInt(pos_array[i], &ofs);
-  }
+void WriteSectionToFile(const DictionaryFileSection &section,
+                        const string &filename) {
+  OutputFileStream ofs(filename.c_str(), ios::binary | ios::out);
+  ofs.write(section.ptr, section.len);
 }
-}  // namespace dictionary
+
+}  // namespace
 }  // namespace mozc

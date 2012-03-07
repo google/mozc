@@ -29,7 +29,11 @@
 
 #include <string>
 #include <vector>
+
 #include "base/base.h"
+#include "base/codegen_bytearray_stream.h"
+#include "base/file_stream.h"
+#include "base/mmap.h"
 #include "base/util.h"
 #include "converter/sparse_connector.h"
 
@@ -55,8 +59,17 @@ int main(int argc, char **argv) {
                                         output);
 
   if (FLAGS_make_header) {
-    const char kName[] = "ConnectionData";
-    mozc::Util::MakeByteArrayFile(kName, output, FLAGS_output);
+    mozc::Mmap<char> mmap;
+    CHECK(mmap.Open(output.c_str()));
+
+    mozc::OutputFileStream ofs(FLAGS_output.c_str());
+    mozc::CodeGenByteArrayOutputStream codegen_stream(
+        &ofs, mozc::codegenstream::NOT_OWN_STREAM);
+    codegen_stream.OpenVarDef("ConnectionData");
+    codegen_stream.write(mmap.begin(), mmap.Size());
+    codegen_stream.CloseVarDef();
+    ofs.close();
+
     mozc::Util::Unlink(output);
   }
 

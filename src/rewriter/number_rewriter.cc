@@ -169,10 +169,13 @@ class CheckValueOperator {
 // TODO(toshiyuki): Delete candidates between base pos and insert pos
 // if necessary.
 void EraseExistingCandidates(const vector<Segment::Candidate> &results,
-                             int base_candidate_pos,
+                             int *base_candidate_pos,
                              int *insert_pos, Segment *seg) {
+  DCHECK(base_candidate_pos);
+  DCHECK(insert_pos);
+  DCHECK(seg);
   // Remember base candidate value
-  const string &base_value = seg->candidate(base_candidate_pos).value;
+  const string &base_value = seg->candidate(*base_candidate_pos).value;
   size_t pos = 0;
   while (pos < seg->candidates_size()) {
     const string &value = seg->candidate(pos).value;
@@ -187,15 +190,17 @@ void EraseExistingCandidates(const vector<Segment::Candidate> &results,
       continue;
     }
     seg->erase_candidate(pos);
+    --(*base_candidate_pos);
     --(*insert_pos);
   }
 }
 
-void SetCandidate(const Segment::Candidate &base_cand,
-                  const Segment::Candidate &result_cand,
-                  Segment::Candidate *cand) {
+// This is a utility function for InsertCandidate and UpdateCandidate.
+// Do not use this function directly.
+void MergeCandidateInfoInternal(const Segment::Candidate &base_cand,
+                                const Segment::Candidate &result_cand,
+                                Segment::Candidate *cand) {
   DCHECK(cand);
-  cand->Init();
   cand->lid = base_cand.lid;
   cand->rid = base_cand.rid;
   cand->cost = base_cand.cost;
@@ -213,11 +218,43 @@ void SetCandidate(const Segment::Candidate &base_cand,
   }
 }
 
+void InsertCandidate(Segment *segment,
+                     int32 insert_position,
+                     const Segment::Candidate &base_cand,
+                     const Segment::Candidate &result_cand) {
+  DCHECK(segment);
+  Segment::Candidate *c = segment->insert_candidate(insert_position);
+  c->Init();
+  MergeCandidateInfoInternal(base_cand, result_cand, c);
+}
+
+void UpdateCandidate(Segment *segment,
+                     int32 update_position,
+                     const Segment::Candidate &base_cand,
+                     const Segment::Candidate &result_cand) {
+  DCHECK(segment);
+  Segment::Candidate *c = segment->mutable_candidate(update_position);
+  // Do not call |c->Init()| for an existing candidate.
+  // There are two major reasons.
+  // 1) Future design change may introduce another field into
+  //    Segment::Candidate. In such situation, simply calling |c->Init()|
+  //    for an existing candidate may result in unexpeced data loss.
+  // 2) In order to preserve existing attribute information such as
+  //    Segment::Candidate::USER_DICTIONARY bit in |c|, we cannot not call
+  //    |c->Init()|. Note that neither |base_cand| nor |result[0]| has
+  //    valid value in its |attributes|.
+  MergeCandidateInfoInternal(base_cand, result_cand, c);
+}
+
 void InsertConvertedCandidates(const vector<Segment::Candidate> &results,
                                const Segment::Candidate &base_cand,
                                int base_candidate_pos,
                                int insert_pos, Segment *seg) {
   if (results.empty()) {
+    return;
+  }
+  if (base_candidate_pos >= seg->candidates_size()) {
+    LOG(WARNING) << "Invalid base candidate pos";
     return;
   }
   // First, insert top candidate
@@ -234,21 +271,18 @@ void InsertConvertedCandidates(const vector<Segment::Candidate> &results,
     if (itr != results.end() &&
         itr->style != Segment::Candidate::NUMBER_KANJI &&
         itr->style != Segment::Candidate::NUMBER_KANJI_ARABIC) {
-      // Rewrite exsisting base candidate
-      Segment::Candidate *c = seg->mutable_candidate(base_candidate_pos);
-      SetCandidate(base_cand, results[0], c);
+      // Update exsisting base candidate
+      UpdateCandidate(seg, base_candidate_pos, base_cand, results[0]);
     } else {
       // Insert candidate just below the base candidate
-      Segment::Candidate *c = seg->insert_candidate(base_candidate_pos + 1);
-      SetCandidate(base_cand, results[0], c);
+      InsertCandidate(seg, base_candidate_pos + 1, base_cand, results[0]);
       ++insert_pos;
     }
   }
 
   // Insert others
   for (size_t i = 1; i < results.size(); ++i) {
-    Segment::Candidate *c = seg->insert_candidate(insert_pos++);
-    SetCandidate(base_cand, results[i], c);
+    InsertCandidate(seg, insert_pos++, base_cand, results[i]);
   }
 }
 
@@ -334,8 +368,7 @@ bool NumberRewriter::Rewrite(Segments *segments) const {
         // Rewrite for number suffix
         const int insert_pos = min(base_candidate_pos + 1,
                                    static_cast<int>(seg->candidates_size()));
-        Segment::Candidate *c = seg->insert_candidate(insert_pos);
-        SetCandidate(arabic_cand, arabic_cand, c);
+        InsertCandidate(seg, insert_pos, arabic_cand, arabic_cand);
         continue;  // It's normal for a candidate to have a suffix.
       }
       LOG(ERROR) << "arabic_content_value is not number: "
@@ -352,7 +385,8 @@ bool NumberRewriter::Rewrite(Segments *segments) const {
     SetCandidatesInfo(arabic_cand, &converted_numbers);
     int insert_pos = GetInsertPos(base_candidate_pos, *seg, type);
     EraseExistingCandidates(
-        converted_numbers, base_candidate_pos, &insert_pos, seg);
+        converted_numbers, &base_candidate_pos, &insert_pos, seg);
+    DCHECK_LT(base_candidate_pos, insert_pos);
     InsertConvertedCandidates(converted_numbers, arabic_cand,
                               base_candidate_pos,
                               insert_pos, seg);

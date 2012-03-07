@@ -27,54 +27,33 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// Mock Session handler of Mozc server.
+// Test utility for Request.
 
-#ifndef MOZC_SESSION_MOCK_SESSION_HANDLER_H_
-#define MOZC_SESSION_MOCK_SESSION_HANDLER_H_
-
-#include <map>
-#include <string>
-#include <utility>
+#ifndef MOZC_SESSION_REQUEST_TEST_UTIL_H_
+#define MOZC_SESSION_REQUEST_TEST_UTIL_H_
 
 #include "base/base.h"
 #include "session/commands.pb.h"
-#include "session/common.h"
-#include "session/session_handler_interface.h"
 
 namespace mozc {
 namespace commands {
-class Command;
-}
-namespace session {
-class SessionObserverInterface;
-}
-
-class MockSessionHandler : public SessionHandlerInterface {
+class ScopedRequestForUnittest {
  public:
-  MockSessionHandler();
-  virtual ~MockSessionHandler();
-
-  // Returns true if SessionHandle is available.
-  virtual bool IsAvailable() const;
-
-  virtual bool EvalCommand(commands::Command *command);
-
-  // Starts watch dog timer to cleanup sessions.
-  virtual bool StartWatchDog();
-
-  virtual void AddObserver(session::SessionObserverInterface *observer);
+  ScopedRequestForUnittest(const Request &request);
+  virtual ~ScopedRequestForUnittest();
 
  private:
-  bool CreateSession(commands::Command *command);
-  bool SendKey(commands::Command *command);
-  bool NoOperation(commands::Command *command);
-  void FillConversionResult(const string &key,
-                            const string &result,
-                            commands::Result *result_proto);
-
-  bool is_available_;
-  DISALLOW_COPY_AND_ASSIGN(MockSessionHandler);
+  const Request prev_request_;
 };
 
+class ScopedMobileRequestForUnittest {
+ public:
+  ScopedMobileRequestForUnittest();
+  virtual ~ScopedMobileRequestForUnittest();
+
+ private:
+  scoped_ptr<ScopedRequestForUnittest> scoped_request_;
+};
+}  // namespace commands
 }  // namespace mozc
-#endif  // MOZC_SESSION_MOCK_SESSION_HANDLER_H_
+#endif  // MOZC_SESSION_REQUEST_TEST_UTIL_H_

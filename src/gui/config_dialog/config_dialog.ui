@@ -37,7 +37,7 @@
      <x>0</x>
      <y>0</y>
      <width>521</width>
-     <height>431</height>
+     <height>440</height>
     </rect>
    </property>
    <widget class="QTabWidget" name="configDialogTabWidget">
@@ -277,7 +277,7 @@
         <x>30</x>
         <y>30</y>
         <width>441</width>
-        <height>81</height>
+        <height>71</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_5">
@@ -327,7 +327,7 @@
       <property name="geometry">
        <rect>
         <x>30</x>
-        <y>140</y>
+        <y>120</y>
         <width>441</width>
         <height>32</height>
        </rect>
@@ -371,9 +371,9 @@
       <property name="geometry">
        <rect>
         <x>30</x>
-        <y>210</y>
+        <y>230</y>
         <width>441</width>
-        <height>121</height>
+        <height>111</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_3">
@@ -478,7 +478,7 @@
       <property name="geometry">
        <rect>
         <x>20</x>
-        <y>180</y>
+        <y>210</y>
         <width>201</width>
         <height>21</height>
        </rect>
@@ -510,7 +510,7 @@
       <property name="geometry">
        <rect>
         <x>20</x>
-        <y>120</y>
+        <y>100</y>
         <width>461</width>
         <height>20</height>
        </rect>
@@ -542,7 +542,7 @@
       <property name="geometry">
        <rect>
         <x>240</x>
-        <y>180</y>
+        <y>210</y>
         <width>241</width>
         <height>21</height>
        </rect>
@@ -567,6 +567,84 @@
           <enum>Qt::Horizontal</enum>
          </property>
         </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="horizontalLayoutWidget_21">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>160</y>
+        <width>461</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout_24">
+       <item>
+        <widget class="QLabel" name="label_9">
+         <property name="text">
+          <string>Usage dictionary</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="Line" name="line_9">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="gridLayoutWidget_8">
+      <property name="geometry">
+       <rect>
+        <x>30</x>
+        <y>180</y>
+        <width>441</width>
+        <height>27</height>
+       </rect>
+      </property>
+      <layout class="QGridLayout" name="gridLayout_12">
+       <item row="0" column="0">
+        <widget class="QCheckBox" name="localUsageDictionaryCheckBox">
+         <property name="text">
+          <string>homonym dictionary</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="2">
+        <widget class="QCheckBox" name="webUsageDictionaryCheckBox">
+         <property name="text">
+          <string>Web extention</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="3">
+        <widget class="QPushButton" name="editWebServiceEntryButton">
+         <property name="text">
+          <string>Customize...</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <spacer name="horizontalSpacer_5">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
        </item>
       </layout>
      </widget>
@@ -1161,9 +1239,9 @@
     </widget>
     <widget class="QWidget" name="tab">
      <attribute name="title">
-      <string>Sync</string>
+      <string>Cloud</string>
      </attribute>
-     <widget class="QWidget" name="horizontalLayoutWidget_13">
+     <widget class="QWidget" name="syncHeaderLayoutWidget">
       <property name="geometry">
        <rect>
         <x>20</x>
@@ -1176,7 +1254,7 @@
        <item>
         <widget class="QLabel" name="label_5">
          <property name="text">
-          <string>Synchronization</string>
+          <string>Sync</string>
          </property>
         </widget>
        </item>
@@ -1195,7 +1273,7 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="horizontalLayoutWidget_4">
+     <widget class="QWidget" name="syncButtonsLayoutWidget">
       <property name="geometry">
        <rect>
         <x>30</x>
@@ -1303,6 +1381,51 @@
       <property name="wordWrap">
        <bool>true</bool>
       </property>
+     </widget>
+     <widget class="QCheckBox" name="cloudHandwritingCheckBox">
+      <property name="geometry">
+       <rect>
+        <x>30</x>
+        <y>300</y>
+        <width>441</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Enable Cloud handwriting recognition</string>
+      </property>
+     </widget>
+     <widget class="QWidget" name="cloudServersLayoutWidget">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>270</y>
+        <width>461</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout_23">
+       <item>
+        <widget class="QLabel" name="label_8">
+         <property name="text">
+          <string>Other Cloud based feature</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="Line" name="line_7">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </widget>
     </widget>
     <widget class="QWidget" name="miscTab">
@@ -1522,7 +1645,7 @@
       <x>10</x>
       <y>400</y>
       <width>501</width>
-      <height>32</height>
+      <height>35</height>
      </rect>
     </property>
     <layout class="QHBoxLayout" name="horizontalLayout_2">

@@ -29,32 +29,35 @@
 
 #include "prediction/user_history_predictor.h"
 
-#include <time.h>
-
 #include <algorithm>
 #include <cctype>
 #include <climits>
 #include <string>
 
 #include "base/base.h"
-#include "base/encryptor.h"
-#include "base/mmap.h"
+#include "base/config_file_stream.h"
 #include "base/init.h"
 #include "base/thread.h"
+#include "base/trie.h"
 #include "base/util.h"
-#include "base/password_manager.h"
-#include "base/config_file_stream.h"
-#include "config/config_handler.h"
+#include "composer/composer.h"
 #include "config/config.pb.h"
+#include "config/config_handler.h"
 #include "converter/segments.h"
 #include "dictionary/suppression_dictionary.h"
 #include "prediction/predictor_interface.h"
 #include "prediction/user_history_predictor.pb.h"
 #include "rewriter/variants_rewriter.h"
-#include "storage/lru_cache.h"
 #include "session/commands.pb.h"
+#include "storage/encrypted_string_storage.h"
+#include "storage/lru_cache.h"
 #include "usage_stats/usage_stats.h"
 
+
+// This flag is set by predictor.cc
+DEFINE_bool(enable_expansion_for_user_history_predictor,
+            false,
+            "enable ambiguity expansion for user_history_predictor.");
 
 namespace mozc {
 
@@ -74,15 +77,8 @@ const size_t kLRUCacheSize = 10000;
 // longer than kMaxCandidateSize to avoid memory explosion
 const size_t kMaxStringLength = 256;
 
-// salt size for encryption
-const size_t kSaltSize = 32;
-
 // maximum size of next_entries
 const size_t kMaxNextEntriesSize = 4;
-
-// 64Mbyte
-// Maximum file size for history
-const size_t kMaxFileSize = 64 * 1024 * 1024;
 
 // revert id for user_history_predictor
 const uint16 kRevertId = 1;
@@ -136,83 +132,92 @@ string GetDescription(const Segment::Candidate &candidate) {
 }
 
 // Returns true if the input first candidate seems to be a privacy sensitive
-// such like password
+// such like password.
 bool IsPrivacySensitive(const Segments *segments) {
-  // This is a very restricted rule and it will be relaxed.
+  const bool kNonSensitive = false;
+  const bool kSensitive = true;
+
+  // Skip privacy sensitive check if |segments| consists of multiple conversion
+  // segment. That is, segments like "パスワードは|x7LAGhaR" where '|' represents
+  // segment boundary is not considered to be privacy sensitive.
+  // TODO(team): Revisit this rule if necessary.
   if (segments->conversion_segments_size() != 1) {
-    return false;
+    return kNonSensitive;
   }
-  const Segment &first_segment = segments->conversion_segment(0);
-  const string &first_candidate_value = first_segment.candidate(0).value;
-  // if key looks like hiragana, the candidate is Katakana to English
-  // transliteration. Don't suppress transliterated candidates.
-  // http://b/issue?id=4394325
-  return (Util::GetCharacterSet(first_candidate_value) == Util::ASCII &&
-          (Util::ContainsScriptType(first_segment.key(), Util::ALPHABET) ||
-           Util::GetScriptType(first_segment.key()) == Util::NUMBER));
+
+  // Hereafter, we must have only one conversion segment.
+  const Segment &conversion_segment = segments->conversion_segment(0);
+  const string &segment_key = conversion_segment.key();
+
+  // The top candidate, which is about to be commited.
+  const Segment::Candidate &candidate = conversion_segment.candidate(0);
+  const string &candidate_value = candidate.value;
+
+  // If |candidate_value| contains any non-ASCII character, do not treat
+  // it as privacy sensitive information.
+  // TODO(team): Improve the following rule. For example,
+  //     "0000－0000－0000－0000" is not treated as privacy sensitive
+  //     because of this rule. When a user commits his password in
+  //     full-width form by mistake, like "ｘ７ＬＡＧｈａＲ", it is not
+  //     treated as privacy sensitive too.
+  if (Util::GetCharacterSet(candidate_value) != Util::ASCII) {
+    return kNonSensitive;
+  }
+
+  // Hereafter, |candidate_value| consists of ASCII characters only.
+
+  // Note: if the key looks like hiragana, the candidate might be Katakana to
+  // English transliteration. Don't suppress transliterated candidates.
+  // http://b/4394325
+
+  // If the key consists of number characters only, treat it as privacy
+  // sensitive.
+  if (Util::GetScriptType(segment_key) == Util::NUMBER) {
+    return kSensitive;
+  }
+
+  // If the key contains any alphabetical character, treat it as privacy
+  // sensitive. But for common English words, this rule is too strict and
+  // should be relaxed. See b/5995529.
+  // TODO(team): Relax this rule.
+  // There also remains some cases to be considered. Compare following two
+  // cases.
+  //   Case A:
+  //     1. Type "ywwz1sxm" in Roman-input style then get "yっwz1sxm".
+  //     2. Hit F10 key to convert it to "ywwz1sxm" by
+  //        ConvertToHalfAlphanumeric command.
+  //     3. Commit it.
+  //     In this case, |segment_key| is "yっwz1sxm" and actually contains
+  //     alphabetical characters. So kSensitive will be returned.
+  //     So far so good.
+  //   Case B:
+  //     1. type "ia1bo3xu" in Roman-input style then get "いあ1ぼ3ぅ".
+  //     2. hit F10 key to convert it to "ia1bo3xu" by
+  //        ConvertToHalfAlphanumeric command.
+  //     3. commit it.
+  //     In this case, |segment_key| is "ia1bo3xu" and contains no
+  //     alphabetical character. So the following check does nothing.
+  // TODO(team): Improve the following rule so that our user experience
+  //     can be consistent between case A and B.
+  if (Util::ContainsScriptType(segment_key, Util::ALPHABET)) {
+    return kSensitive;
+  }
+
+  return kNonSensitive;
 }
+
 }  // namespace
 
 UserHistoryStorage::UserHistoryStorage(const string &filename)
-    : filename_(filename) {}
+    : storage_(new storage::EncryptedStringStorage(filename)) {
+}
 
 UserHistoryStorage::~UserHistoryStorage() {}
 
-string UserHistoryStorage::filename() const {
-  return filename_;
-}
-
 bool UserHistoryStorage::Load() {
-  string input, salt;
-
-  // read encrypted message and salt from local file
-  {
-    Mmap<char> mmap;
-    if (!mmap.Open(filename_.c_str(), "r")) {
-      LOG(ERROR) << "cannot open user history file";
-      return false;
-    }
-
-    if (mmap.GetFileSize() < kSaltSize) {
-      LOG(ERROR) << "file size is too small";
-      return false;
-    }
-
-    if (mmap.GetFileSize() > kMaxFileSize) {
-      LOG(ERROR) << "file size is too big.";
-      return false;
-    }
-
-    // copy salt
-    char tmp[kSaltSize];
-    memcpy(tmp, mmap.begin(), kSaltSize);
-    salt.assign(tmp, kSaltSize);
-
-    // copy body
-    input.assign(mmap.begin() + kSaltSize,
-                 mmap.GetFileSize() - kSaltSize);
-  }
-
-  string password;
-  if (!PasswordManager::GetPassword(&password)) {
-    LOG(ERROR) << "PasswordManager::GetPassword() failed";
-    return false;
-  }
-
-  if (password.empty()) {
-    LOG(ERROR) << "password is empty";
-    return false;
-  }
-
-  // Decrypt message
-  Encryptor::Key key;
-  if (!key.DeriveFromPassword(password, salt)) {
-    LOG(ERROR) << "Encryptor::Key::DeriveFromPassword failed";
-    return false;
-  }
-
-  if (!Encryptor::DecryptString(key, &input)) {
-    LOG(ERROR) << "Encryptor::DecryptString() failed";
+  string input;
+  if (!storage_->Load(&input)) {
+    LOG(ERROR) << "Can't load user history data.";
     return false;
   }
 
@@ -222,12 +227,11 @@ bool UserHistoryStorage::Load() {
   }
 
   VLOG(1) << "Loaded user histroy, size=" << entries_size();
-
   return true;
 }
 
 bool UserHistoryStorage::Save() const {
-  string salt, output;
+  string output;
   {
     if (entries_size() == 0) {
       LOG(WARNING) << "etries size is 0. Not saved";
@@ -240,64 +244,10 @@ bool UserHistoryStorage::Save() const {
     }
   }
 
-  {
-    string password;
-    if (!PasswordManager::GetPassword(&password)) {
-      LOG(ERROR) << "PasswordManager::GetPassword() failed";
-      return false;
-    }
-
-    if (password.empty()) {
-      LOG(ERROR) << "password is empty";
-      return false;
-    }
-
-    char tmp[kSaltSize];
-    memset(tmp, '\0', sizeof(tmp));
-    Util::GetSecureRandomSequence(tmp, sizeof(tmp));
-    salt.assign(tmp, sizeof(tmp));
-
-    Encryptor::Key key;
-    if (!key.DeriveFromPassword(password, salt)) {
-      LOG(ERROR) << "Encryptor::Key::DeriveFromPassword() failed";
-      return false;
-    }
-
-    if (!Encryptor::EncryptString(key, &output)) {
-      LOG(ERROR) << "Encryptor::EncryptString() failed";
-      return false;
-    }
+  if (!storage_->Save(output)) {
+    LOG(ERROR) << "Can't save user history data.";
+    return false;
   }
-
-  // Even if histoy is empty, save to them into a file to
-  // make the file empty
-  const string tmp_filename = filename_ + ".tmp";
-  {
-    OutputFileStream ofs(tmp_filename.c_str(), ios::out | ios::binary);
-    if (!ofs) {
-      LOG(ERROR) << "failed to write: " << tmp_filename;
-      return false;
-    }
-
-    VLOG(1) << "Syncing user history to: " << filename_;
-    ofs.write(salt.data(), salt.size());
-    ofs.write(output.data(), output.size());
-  }
-
-  if (!Util::AtomicRename(tmp_filename, filename_)) {
-    LOG(ERROR) << "AtomicRename failed";
-  }
-
-#ifdef OS_WINDOWS
-  wstring wfilename;
-  Util::UTF8ToWide(filename_.c_str(), &wfilename);
-  if (!::SetFileAttributes(wfilename.c_str(),
-                           FILE_ATTRIBUTE_HIDDEN |
-                           FILE_ATTRIBUTE_SYSTEM)) {
-    LOG(ERROR) << "Cannot make hidden: " << filename_
-               << " " << ::GetLastError();
-  }
-#endif
 
   return true;
 }
@@ -710,6 +660,8 @@ bool UserHistoryPredictor::RomanFuzzyLookupEntry(
 
 bool UserHistoryPredictor::LookupEntry(
     const string &input_key,
+    const string &key_base,
+    const Trie<string> *key_expanded,
     const UserHistoryPredictor::Entry *entry,
     const UserHistoryPredictor::Entry *prev_entry,
     EntryPriorityQueue *results) const {
@@ -733,7 +685,10 @@ bool UserHistoryPredictor::LookupEntry(
 
   // |input_key| is a query user is now typing.
   // |entry->key()| is a target value saved in the database.
-  const MatchType mtype = GetMatchType(input_key, entry->key());
+  //  const string input_key = key_base;
+
+  const MatchType mtype = GetMatchTypeFromInput(
+      input_key, key_base, key_expanded, entry->key());
   if (mtype == NO_MATCH) {
     return false;
   } else if (mtype == LEFT_EMPTY_MATCH) {  // zero-query-suggestion
@@ -835,7 +790,6 @@ bool UserHistoryPredictor::LookupEntry(
       value += next_entry->value();
       current_entry = next_entry;
       last_entry = next_entry;
-
 
       // Don't update left_access_time if the current entry is
       // not a content word.
@@ -961,23 +915,13 @@ bool UserHistoryPredictor::Predict(Segments *segments) const {
     return false;
   }
 
-  const DicElement *head = dic_->Head();
-  if (head == NULL) {
+  if (dic_->Head() == NULL) {
     VLOG(2) << "dic head is NULL";
     return false;
   }
 
-  const string &input_key = segments->conversion_segment(0).key();
-  const size_t input_key_len = Util::CharsLen(input_key);
-
   bool zero_query_suggestion = false;
-
-
-  if (input_key_len == 0 && !zero_query_suggestion) {
-    VLOG(2) << "key length is 0";
-    return false;
-  }
-
+  const string &input_key = segments->conversion_segment(0).key();
   if (segments->request_type() == Segments::SUGGESTION &&
       !zero_query_suggestion &&
       IsPunctuation(Util::SubString(input_key, 0, 1))) {
@@ -985,105 +929,178 @@ bool UserHistoryPredictor::Predict(Segments *segments) const {
     return false;
   }
 
-  // Do linear search
-  Segment *segment = segments->mutable_conversion_segment(0);
-
-  if (segment == NULL) {
-    LOG(ERROR) << "segment is NULL";
+  const size_t input_key_len = Util::CharsLen(input_key);
+  if (input_key_len == 0 && !zero_query_suggestion) {
+    VLOG(2) << "key length is 0";
     return false;
   }
 
-  const size_t history_segments_size = segments->history_segments_size();
-  const Entry *prev_entry = NULL;
-
-  // when threre are non-zero history segments, lookup an entry
-  // from the LRU dictionary, which is correspoinding to the last
-  // history segment.
-  if (history_segments_size > 0) {
-    const Segment &history_segment =
-        segments->history_segment(history_segments_size - 1);
-    // Simply lookup the history_segment.
-    prev_entry = dic_->LookupWithoutInsert(
-        SegmentFingerprint(history_segment));
-    // When |prev_entry| is NULL or |prev_entry| has no valid next_entries,
-    // do linear-search over the LRU.
-    if ((prev_entry == NULL && history_segment.candidates_size() > 0) ||
-        (prev_entry != NULL && prev_entry->next_entries_size() == 0)) {
-      const string &prev_value = prev_entry == NULL ?
-          history_segment.candidate(0).value : prev_entry->value();
-      int trial = 0;
-      for (const DicElement *elm = head;
-           trial++ < kMaxPrevValueTrial && elm != NULL; elm = elm->next) {
-        const Entry *entry = &(elm->value);
-        // entry->value() equals to the prev_value or
-        // entry->value() is a SUFFIX of prev_value.
-        // length of entry->value() must be >= 2, as single-length
-        // match would be noisy.
-        if (IsValidEntry(*entry) &&
-            entry != prev_entry &&
-            entry->next_entries_size() > 0 &&
-            Util::CharsLen(entry->value()) >= 2 &&
-            (entry->value() == prev_value ||
-             Util::EndsWith(prev_value, entry->value()))) {
-          prev_entry = entry;
-          break;
-        }
-      }
-    }
-  }
-
+  const Entry *prev_entry = LookupPrevEntry(*segments);
   if (input_key_len == 0 && prev_entry == NULL) {
     VLOG(1) << "If input_key_len is 0, prev_entry must be set";
     return false;
   }
 
-  // Get romanized input key if the given preedit looks misspelled.
-  const string roman_input_key = GetRomanMisspelledKey(*segments);
-
-  // TODO(team): make GetKanaMisspelledKey(*segments);
-  // const string kana_input_key = GetKanaMisspelledKey(*segments);
-
-  const size_t max_results_size =
-      5 * segments->max_prediction_candidates_size();
-
-  int trial = 0;
   EntryPriorityQueue results;
-
-  for (const DicElement *elm = head; elm != NULL; elm = elm->next) {
-    if (!IsValidEntry(elm->value)) {
-      continue;
-    }
-
-    if (segments->request_type() == Segments::SUGGESTION &&
-        trial++ >= kMaxSuggestionTrial) {
-      VLOG(2) << "too many trials";
-      break;
-    }
-
-    // lookup input_key from elm_value and prev_entry.
-    // If a new entry is found, the entry is pushed to the results.
-    // TODO(team): make KanaFuzzyLookupEntry().
-    if (!LookupEntry(input_key, &(elm->value), prev_entry, &results) &&
-        !RomanFuzzyLookupEntry(roman_input_key, &(elm->value), &results)) {
-      continue;
-    }
-
-    // already found enough results.
-    if (results.size() >= max_results_size) {
-      break;
-    }
-  }
-
+  GetResultsFromHistoryDictionary(*segments, prev_entry, &results);
   if (results.size() == 0) {
     VLOG(2) << "no prefix match candiate is found.";
     return false;
   }
 
+  return InsertCandidates(zero_query_suggestion, segments, &results);
+}
+
+const UserHistoryPredictor::Entry *UserHistoryPredictor::LookupPrevEntry(
+    const Segments &segments) const {
+  const size_t history_segments_size = segments.history_segments_size();
+  const Entry *prev_entry = NULL;
+  // when threre are non-zero history segments, lookup an entry
+  // from the LRU dictionary, which is correspoinding to the last
+  // history segment.
+  if (history_segments_size == 0) {
+    return NULL;
+  }
+
+  const Segment &history_segment =
+      segments.history_segment(history_segments_size - 1);
+
+  // Simply lookup the history_segment.
+  prev_entry = dic_->LookupWithoutInsert(SegmentFingerprint(history_segment));
+
+  // When |prev_entry| is NULL or |prev_entry| has no valid next_entries,
+  // do linear-search over the LRU.
+  if ((prev_entry == NULL && history_segment.candidates_size() > 0) ||
+      (prev_entry != NULL && prev_entry->next_entries_size() == 0)) {
+    const string &prev_value = prev_entry == NULL ?
+        history_segment.candidate(0).value : prev_entry->value();
+    int trial = 0;
+    for (const DicElement *elm = dic_->Head();
+         trial++ < kMaxPrevValueTrial && elm != NULL; elm = elm->next) {
+      const Entry *entry = &(elm->value);
+      // entry->value() equals to the prev_value or
+      // entry->value() is a SUFFIX of prev_value.
+      // length of entry->value() must be >= 2, as single-length
+      // match would be noisy.
+      if (IsValidEntry(*entry) &&
+          entry != prev_entry &&
+          entry->next_entries_size() > 0 &&
+          Util::CharsLen(entry->value()) >= 2 &&
+          (entry->value() == prev_value ||
+           Util::EndsWith(prev_value, entry->value()))) {
+        prev_entry = entry;
+        break;
+      }
+    }
+  }
+  return prev_entry;
+}
+
+void UserHistoryPredictor::GetResultsFromHistoryDictionary(
+    const Segments &segments, const Entry *prev_entry,
+    EntryPriorityQueue *results) const {
+  DCHECK(results);
+  const size_t max_results_size = 5 * segments.max_prediction_candidates_size();
+
+  // Get romanized input key if the given preedit looks misspelled.
+  const string roman_input_key = GetRomanMisspelledKey(segments);
+
+  // TODO(team): make GetKanaMisspelledKey(segments);
+  // const string kana_input_key = GetKanaMisspelledKey(segments);
+
+  // If we have ambiguity for the input, get expanded key.
+  // Example1 roman input: for "あk", we will get |base|, "あ" and |expanded|,
+  // "か", "き", etc
+  // Example2 kana input: for "あか", we will get |base|, "あ" and |expanded|,
+  // "か", and "が".
+
+  // |base_key| and |input_key| could be different
+  // For kana-input, we will expand the ambiguity for "゛".
+  // When we input "もす",
+  // |base_key|: "も"
+  // |expanded|: "す", "ず"
+  // |input_key|: "もす"
+  // In this case, we want to show candidates for "もす" as EXACT match,
+  // and candidates for "もず" as LEFT_PREFIX_MATCH
+  //
+  // For roman-input, when we input "あｋ",
+  // |input_key| is "あｋ" and |base_key| is "あ"
+  string input_key;
+  string base_key;
+  scoped_ptr<Trie<string> > expanded(NULL);
+  GetInputKeyFromSegments(segments, &input_key, &base_key, &expanded);
+
+  int trial = 0;
+  for (const DicElement *elm = dic_->Head(); elm != NULL; elm = elm->next) {
+    if (!IsValidEntry(elm->value)) {
+      continue;
+    }
+
+    if (segments.request_type() == Segments::SUGGESTION &&
+        trial++ >= kMaxSuggestionTrial) {
+      VLOG(2) << "too many trials";
+      break;
+    }
+
+    // lookup key from elm_value and prev_entry.
+    // If a new entry is found, the entry is pushed to the results.
+    // TODO(team): make KanaFuzzyLookupEntry().
+    if (!LookupEntry(input_key, base_key, expanded.get(), &(elm->value),
+                     prev_entry, results) &&
+        !RomanFuzzyLookupEntry(roman_input_key, &(elm->value), results)) {
+      continue;
+    }
+
+    // already found enough results.
+    if (results->size() >= max_results_size) {
+      break;
+    }
+  }
+}
+
+// static
+void UserHistoryPredictor::GetInputKeyFromSegments(
+    const Segments &segments, string *input_key, string *base,
+    scoped_ptr<Trie<string> > *expanded) {
+  DCHECK(input_key);
+  DCHECK(base);
+  DCHECK_GE(segments.conversion_segments_size(), 0);
+
+  if (segments.composer() == NULL ||
+      !FLAGS_enable_expansion_for_user_history_predictor) {
+    *input_key = segments.conversion_segment(0).key();
+    *base = segments.conversion_segment(0).key();
+    return;
+  }
+
+  segments.composer()->GetStringForPreedit(input_key);
+  set<string> expanded_set;
+  segments.composer()->GetQueriesForPrediction(base, &expanded_set);
+  if (expanded_set.size() > 0) {
+    expanded->reset(new Trie<string>);
+    for (set<string>::const_iterator itr = expanded_set.begin();
+         itr != expanded_set.end(); ++itr) {
+      // For getting matched key, insert values
+      (*expanded)->AddEntry(*itr, *itr);
+    }
+  }
+}
+
+bool UserHistoryPredictor::InsertCandidates(bool zero_query_suggestion,
+                                            Segments *segments,
+                                            EntryPriorityQueue *results) const {
+  DCHECK(results);
+  Segment *segment = segments->mutable_conversion_segment(0);
+  if (segment == NULL) {
+    LOG(ERROR) << "segment is NULL";
+    return false;
+  }
+  const uint32 input_key_len = Util::CharsLen(segment->key());
   while (segment->candidates_size() <
          segments->max_prediction_candidates_size()) {
     // |results| is a priority queue where the elemtnt
     // in the queue is sorted by the score defined in GetScore().
-    const Entry *result_entry = results.Pop();
+    const Entry *result_entry = results->Pop();
     if (result_entry == NULL) {
       // Pop() returns NULL when no more valid entry exists.
       break;
@@ -1200,7 +1217,7 @@ void UserHistoryPredictor::InsertEvent(EntryType type) {
     return;
   }
 
-  const uint32 last_access_time = static_cast<uint32>(time(NULL));
+  const uint32 last_access_time = static_cast<uint32>(Util::GetTime());
   const uint32 dic_key = Fingerprint("", "", type);
 
   CHECK(dic_.get());
@@ -1311,7 +1328,7 @@ void UserHistoryPredictor::Finish(Segments *segments) {
   }
 
   const bool is_suggestion = segments->request_type() != Segments::CONVERSION;
-  const uint32 last_access_time = static_cast<uint32>(time(NULL));
+  const uint32 last_access_time = static_cast<uint32>(Util::GetTime());
 
   // If user inputs a punctuation just after some long sentence,
   // we make a new candidate by concatinating the top element in LRU and
@@ -1466,9 +1483,8 @@ void UserHistoryPredictor::Revert(Segments *segments) {
 
 // type
 // static
-UserHistoryPredictor::MatchType
-UserHistoryPredictor::GetMatchType(const string &lstr,
-                                   const string &rstr) {
+UserHistoryPredictor::MatchType UserHistoryPredictor::GetMatchType(
+    const string &lstr, const string &rstr) {
   if (lstr.empty() && !rstr.empty()) {
     return LEFT_EMPTY_MATCH;
   }
@@ -1491,6 +1507,62 @@ UserHistoryPredictor::GetMatchType(const string &lstr,
     return RIGHT_PREFIX_MATCH;
   }
 
+  return NO_MATCH;
+}
+
+// static
+UserHistoryPredictor::MatchType UserHistoryPredictor::GetMatchTypeFromInput(
+    const string &input_key,
+    const string &key_base, const Trie<string> *key_expanded,
+    const string &target) {
+  if (key_expanded == NULL) {
+    // |input_key| and |key_base| can be different by compoesr modification.
+    // For example, |input_key|, "８，＋", and |base| "８、＋".
+    return GetMatchType(key_base, target);
+  }
+
+  // we can assume key_expanded != NULL from here.
+  if (key_base.empty()) {
+      string value;
+      size_t key_length = 0;
+      bool has_subtrie = false;
+      if (!key_expanded->LookUpPrefix(target.data(), &value,
+                                      &key_length, &has_subtrie)) {
+        return NO_MATCH;
+      } else if (value == target && value == input_key) {
+        return EXACT_MATCH;
+      } else {
+        return LEFT_PREFIX_MATCH;
+      }
+  } else {
+    const size_t size = min(key_base.size(), target.size());
+    if (size == 0) {
+      return NO_MATCH;
+    }
+    const int result = memcmp(key_base.data(), target.data(), size);
+    if (result != 0) {
+      return NO_MATCH;
+    }
+    if (target.size() <= key_base.size()) {
+      return RIGHT_PREFIX_MATCH;
+    }
+    string value;
+    size_t key_length = 0;
+    bool has_subtrie = false;
+    if (!key_expanded->LookUpPrefix(target.data() + key_base.size(),
+                                    &value,
+                                    &key_length, &has_subtrie)) {
+      return NO_MATCH;
+    }
+    const string matched = key_base + value;
+    if (matched == target && matched == input_key) {
+      return EXACT_MATCH;
+    } else {
+      return LEFT_PREFIX_MATCH;
+    }
+  }
+
+  DCHECK(false) << "Should not come here";
   return NO_MATCH;
 }
 

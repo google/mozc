@@ -118,10 +118,9 @@ void TextDictionaryLoader::Close() {
 }
 
 void TextDictionaryLoader::CollectTokens(vector<Token *> *res) {
-  for (vector<Token *>::const_iterator it = tokens_.begin();
-       it != tokens_.end(); ++it) {
-    res->push_back(*it);
-  }
+  DCHECK(res);
+  res->reserve(res->size() + tokens_.size());
+  res->insert(res->end(), tokens_.begin(), tokens_.end());
 }
 
 void TextDictionaryLoader::ParseTSV(const string &line) {
@@ -133,9 +132,13 @@ void TextDictionaryLoader::ParseTSV(const string &line) {
   Token *token = new Token;
   CHECK(token);
   Util::NormalizeVoicedSoundMark(fields[0], &token->key);
-  token->lid = atoi(fields[1].c_str());
-  token->rid = atoi(fields[2].c_str());
-  token->cost = atoi(fields[3].c_str());
+  uint32 lid, rid, cost;
+  CHECK(Util::SafeStrToUInt32(fields[1], &lid)) << "wrong lid: " << fields[1];
+  CHECK(Util::SafeStrToUInt32(fields[2], &rid)) << "wrong rid: " << fields[2];
+  CHECK(Util::SafeStrToUInt32(fields[3], &cost)) << "wrong cost: " << fields[3];
+  token->lid = lid;
+  token->rid = rid;
+  token->cost = cost;
   Util::NormalizeVoicedSoundMark(fields[4], &token->value);
 
   const string label = fields.size() > 5 ? fields[5] : "";

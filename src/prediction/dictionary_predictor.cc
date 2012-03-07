@@ -41,7 +41,9 @@
 #include "base/base.h"
 #include "base/init.h"
 #include "base/singleton.h"
+#include "base/trie.h"
 #include "base/util.h"
+#include "composer/composer.h"
 #include "config/config_handler.h"
 #include "config/config.pb.h"
 #include "converter/character_form_manager.h"
@@ -60,6 +62,11 @@
 #include "prediction/predictor_interface.h"
 #include "session/commands.pb.h"
 
+
+// This flag is set by predictor.cc
+DEFINE_bool(enable_expansion_for_dictionary_predictor,
+            false,
+            "enable ambiguity expansion for dictionary_predictor");
 
 namespace mozc {
 namespace {
@@ -148,6 +155,8 @@ bool DictionaryPredictor::Predict(Segments *segments) const {
     SetPredictionCost(*segments, &results);
   }
 
+  ApplyPenaltyForKeyExpansion(*segments, &results);
+
   const string &input_key = segments->conversion_segment(0).key();
   const size_t input_key_len = Util::CharsLen(input_key);
 
@@ -171,7 +180,10 @@ bool DictionaryPredictor::Predict(Segments *segments) const {
 
   string history_key, history_value;
   GetHistoryKeyAndValue(*segments, &history_key, &history_value);
-  const string bigram_key = history_key + input_key;
+
+  // exact_bigram_key does not contain ambiguity expansion, because
+  // this is used for exact matching for the key.
+  const string exact_bigram_key = history_key + input_key;
 
   for (size_t i = 0; i < results.size(); ++i) {
     if (added >= size || results[i].cost == INT_MAX) {
@@ -201,7 +213,7 @@ bool DictionaryPredictor::Predict(Segments *segments) const {
     if (!mixed_conversion &&
         !(result.type & REALTIME) &&
         (((result.type & BIGRAM) &&
-          bigram_key == node->value) ||
+          exact_bigram_key == node->value) ||
          (!(result.type & BIGRAM) &&
           input_key == node->value))) {
       continue;
@@ -279,7 +291,7 @@ int DictionaryPredictor::GetLMCost(PredictionType type,
 }
 
 // return dictionary node whose value/key are |key| and |value|.
-// return NULL no words are foudn in the dictionary.
+// return NULL no words are found in the dictionary.
 const Node *DictionaryPredictor::LookupKeyValueFromDictionary(
     const string &key,
     const string &value,
@@ -292,7 +304,6 @@ const Node *DictionaryPredictor::LookupKeyValueFromDictionary(
       return node;
     }
   }
-
   return NULL;
 }
 
@@ -421,6 +432,19 @@ void DictionaryPredictor::SetLMCost(const Segments &segments,
     const PredictionType type = (*results)[i].type;
     DCHECK(node);
     int cost = GetLMCost(type, *node, rid);
+    if (type & UNIGRAM) {
+      const size_t input_key_len = Util::CharsLen(
+          segments.conversion_segment(0).key());
+      const size_t key_len = Util::CharsLen(node->key);
+      if (key_len > input_key_len) {
+        // Cost penalty means that exact candiates are evaluated
+        // 50 times bigger in frequency.
+        // Note that the cost is calculated by cost = -500 * log(prob)
+        // 1956 = 500 * log(50)
+        const int kNotExactPenalty = 1956;
+        cost += kNotExactPenalty;
+      }
+    }
     if (type & BIGRAM) {
       // When user inputs "六本木" and there is an entry
       // "六本木ヒルズ" in the dictionary, we can suggest
@@ -436,6 +460,25 @@ void DictionaryPredictor::SetLMCost(const Segments &segments,
       cost += (kDefaultTransitionCost - prev_cost);
     }
     (*results)[i].cost = cost;
+  }
+}
+
+void DictionaryPredictor::ApplyPenaltyForKeyExpansion(
+    const Segments &segments, vector<Result> *results) const {
+  if (segments.conversion_segments_size() == 0) {
+    return;
+  }
+  // Cost penalty 1151 means that expanded candiates are evaluated
+  // 10 times smaller in frequency.
+  // Note that the cost is calcurated by cost = -500 * log(prob)
+  // 1151 = 500 * log(10)
+  const int kKeyExpansionPenalty = 1151;
+  const string &conversion_key = segments.conversion_segment(0).key();
+  for (size_t i = 0; i < results->size(); ++i) {
+    const Node *node = (*results)[i].node;
+    if (!Util::StartsWith(node->key, conversion_key)) {
+      (*results)[i].cost += kKeyExpansionPenalty;
+    }
   }
 }
 
@@ -685,8 +728,6 @@ void DictionaryPredictor::AggregateUnigramPrediction(
   DCHECK(allocator);
   DCHECK(!segments->conversion_segment(0).key().empty());
 
-  const string &input_key = segments->conversion_segment(0).key();
-
   bool mixed_conversion = false;
   const size_t cutoff_threshold = GetUnigramCandidateCutoffThreshold(
       *segments,
@@ -695,9 +736,9 @@ void DictionaryPredictor::AggregateUnigramPrediction(
 
   const size_t prev_results_size = results->size();
 
-  const Node *unigram_node = dictionary_->LookupPredictive(input_key.c_str(),
-                                                           input_key.size(),
-                                                           allocator);
+  // no history key
+  const Node *unigram_node = GetPredictiveNodes(
+      dictionary_, "", *segments, allocator);
   size_t unigram_results_size = 0;
   for (; unigram_node != NULL; unigram_node = unigram_node->bnext) {
     results->push_back(Result(unigram_node, UNIGRAM));
@@ -751,10 +792,8 @@ void DictionaryPredictor::AggregateBigramPrediction(
 
   const size_t prev_results_size = results->size();
 
-  const string bigram_key = history_key + input_key;
-  const Node *bigram_node = dictionary_->LookupPredictive(bigram_key.c_str(),
-                                                          bigram_key.size(),
-                                                          allocator);
+  const Node *bigram_node = GetPredictiveNodes(
+      dictionary_, history_key, *segments, allocator);
   size_t bigram_results_size = 0;
   for (; bigram_node != NULL; bigram_node = bigram_node->bnext) {
     // filter out the output (value)'s prefix doesn't match to
@@ -842,6 +881,43 @@ void DictionaryPredictor::AggregateBigramPrediction(
   }
 }
 
+const Node *DictionaryPredictor::GetPredictiveNodes(
+    const DictionaryInterface *dictionary,
+    const string &history_key, const Segments &segments,
+    NodeAllocatorInterface *allocator) const {
+  if (segments.composer() == NULL ||
+      !FLAGS_enable_expansion_for_dictionary_predictor) {
+    const string input_key = history_key + segments.conversion_segment(0).key();
+    return dictionary->LookupPredictive(input_key.c_str(),
+                                        input_key.size(),
+                                        allocator);
+  } else {
+    // If we have ambiguity for the input, get expanded key.
+    // Example1 roman input: for "あk", we will get |base|, "あ" and |expanded|,
+    // "か", "き", etc
+    // Example2 kana input: for "あか", we will get |base|, "あ" and |expanded|,
+    // "か", and "が".
+    string base;
+    set<string> expanded;
+    segments.composer()->GetQueriesForPrediction(&base, &expanded);
+    const string input_key = history_key + base;
+    DictionaryInterface::Limit limit;
+    scoped_ptr<Trie<string> > trie(NULL);
+    if (expanded.size() > 0) {
+      trie.reset(new Trie<string>);
+      for (set<string>::const_iterator itr = expanded.begin();
+           itr != expanded.end(); ++itr) {
+        trie->AddEntry(*itr, "");
+      }
+      limit.begin_with_trie = trie.get();
+    }
+    return dictionary->LookupPredictiveWithLimit(input_key.c_str(),
+                                                 input_key.size(),
+                                                 limit,
+                                                 allocator);
+  }
+}
+
 void DictionaryPredictor::AggregateSuffixPrediction(
     PredictionType type,
     Segments *segments,
@@ -853,10 +929,8 @@ void DictionaryPredictor::AggregateSuffixPrediction(
 
   DCHECK(allocator);
 
-    const string &input_key = segments->conversion_segment(0).key();
-    Node *node = suffix_dictionary_->LookupPredictive(input_key.data(),
-                                                      input_key.size(),
-                                                      allocator);
+    const Node *node = GetPredictiveNodes(
+        suffix_dictionary_, "", *segments, allocator);
     for (; node != NULL; node = node->bnext) {
       results->push_back(Result(node, SUFFIX));
     }

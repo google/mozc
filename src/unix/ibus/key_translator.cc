@@ -132,12 +132,12 @@ const struct ModifierKeyMap {
   guint from;
   mozc::commands::KeyEvent::ModifierKey to;
 } modifier_key_map[] = {
-  {IBUS_Shift_L, mozc::commands::KeyEvent::SHIFT},
-  {IBUS_Shift_R, mozc::commands::KeyEvent::SHIFT},
-  {IBUS_Control_L, mozc::commands::KeyEvent::CTRL},
-  {IBUS_Control_R, mozc::commands::KeyEvent::CTRL},
-  {IBUS_Alt_L, mozc::commands::KeyEvent::ALT},
-  {IBUS_Alt_R, mozc::commands::KeyEvent::ALT},
+  {IBUS_Shift_L, mozc::commands::KeyEvent::LEFT_SHIFT},
+  {IBUS_Shift_R, mozc::commands::KeyEvent::RIGHT_SHIFT},
+  {IBUS_Control_L, mozc::commands::KeyEvent::LEFT_CTRL},
+  {IBUS_Control_R, mozc::commands::KeyEvent::RIGHT_CTRL},
+  {IBUS_Alt_L, mozc::commands::KeyEvent::LEFT_ALT},
+  {IBUS_Alt_R, mozc::commands::KeyEvent::RIGHT_ALT},
   {IBUS_LOCK_MASK, mozc::commands::KeyEvent::CAPS},
 };
 
@@ -150,7 +150,7 @@ const struct ModifierMaskMap {
   {IBUS_MOD1_MASK, mozc::commands::KeyEvent::ALT},
 };
 
-// TODO:Add kana_map_dv to support Dvoraklayout.
+// TODO(team): Add kana_map_dv to support Dvoraklayout.
 const struct KanaMap {
   guint code;
   const char *no_shift;

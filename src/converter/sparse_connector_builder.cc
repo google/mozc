@@ -27,11 +27,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "converter/sparse_connector.h"
+
 #include <vector>
+
 #include "base/base.h"
 #include "base/file_stream.h"
 #include "base/mmap.h"
-#include "converter/sparse_connector.h"
 #include "storage/sparse_array_image.h"
 
 DEFINE_bool(use_1byte_cost, false,

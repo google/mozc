@@ -30,6 +30,7 @@
 #ifndef MOZC_COMPOSER_INTERNAL_COMPOSITION_INTERFACE_H_
 #define MOZC_COMPOSER_INTERNAL_COMPOSITION_INTERFACE_H_
 
+#include <set>
 #include <string>
 
 namespace mozc {
@@ -89,6 +90,14 @@ class CompositionInterface {
       const TransliteratorInterface *transliterator,
       string *output) const = 0;
 
+  // Get string with consideration for ambiguity from pending input
+  virtual void GetExpandedStrings(string *base,
+                                  set<string> *expanded) const = 0;
+
+  virtual void GetExpandedStringsWithTransliterator(
+      const TransliteratorInterface *transliterator, string *base,
+      set<string> *expanded) const = 0;
+
   // Return string with the specified trim mode and the current display mode.
   virtual void GetStringWithTrimMode(TrimMode trim_mode,
                                      string *output) const = 0;
@@ -99,11 +108,23 @@ class CompositionInterface {
                           string *left,
                           string *focused,
                           string *right) const = 0;
-  virtual void SetTable(const Table *table) = 0;
+
   virtual void SetInputMode(const TransliteratorInterface *transliterator) = 0;
 
   // Return true if the composition is adviced to be committed immediately.
   virtual bool ShouldCommit() const = 0;
+
+  // Get clone of the composition.
+  // This class does NOT take the ownership of the return value.
+  //
+  // This interface implements Clone method instead of CopyFrom method because
+  // it is a little hard to implements CopyFrom using CompositionInterface
+  // without making CharChunk accessible from Composer.
+  // If we decided to discard this interface, we should refactor
+  // internal/composer_test.cc.
+  virtual CompositionInterface *Clone() const = 0;
+
+  virtual void SetTableForUnittest(const Table *table) = 0;
 };
 
 }  // namespace composer

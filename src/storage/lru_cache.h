@@ -30,8 +30,9 @@
 #ifndef MOZC_STORAGE_LRU_CACHE_H_
 #define MOZC_STORAGE_LRU_CACHE_H_
 
-#include <map>
+#include <cstring>
 #include <list>
+#include <map>
 #include <string>
 
 #include "base/base.h"
@@ -280,7 +281,7 @@ LRUCache<Key, Value>::LRUCache(size_t max_elements)
     block_count_(0),
     block_capacity_(0),
     max_elements_(max_elements) {
-  memset(blocks_, 0, sizeof(blocks_));
+  ::memset(blocks_, 0, sizeof(blocks_));
   table_ = new Table;
   CHECK(table_);
   if (max_elements_ <= 128) {
@@ -392,7 +393,7 @@ void LRUCache<Key, Value>::Clear() {
 }
 
 template<typename Key, typename Value>
-bool LRUCache<Key, Value>::HasKey(const Key& key ) const {
+bool LRUCache<Key, Value>::HasKey(const Key& key) const {
   return (table_->find(key) != table_->end());
 }
 

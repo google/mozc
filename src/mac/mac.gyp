@@ -192,7 +192,7 @@
           'dependencies': [
             '../base/base.gyp:base',
             '../prediction/prediction.gyp:prediction',
-            '../prediction/prediction.gyp:genproto_prediction',
+            '../prediction/prediction.gyp:prediction_protocol',
           ],
           'mac_bundle_resources': [
             '../data/images/mac/product_icon.icns',
@@ -218,7 +218,7 @@
           'dependencies': [
             '../base/base.gyp:base',
             '../prediction/prediction.gyp:prediction',
-            '../prediction/prediction.gyp:genproto_prediction',
+            '../prediction/prediction.gyp:prediction_protocol',
           ],
         },
         {

@@ -59,6 +59,7 @@ class UserDictionaryAdapter : public AdapterInterface {
   FRIEND_TEST(UserDictionaryAdapterTest, SetDownloadedItems);
   FRIEND_TEST(UserDictionaryAdapterTest, SetDownloadedItemsSnapshot);
   FRIEND_TEST(UserDictionaryAdapterTest, SetDownloadedItemsConflicts);
+  FRIEND_TEST(UserDictionaryAdapterTest, TemporaryFileExceeds);
   FRIEND_TEST(UserDictionaryAdapterTest, GetItemsToUpload);
   FRIEND_TEST(UserDictionaryAdapterTest, GetItemsToUploadSnapShot);
   FRIEND_TEST(UserDictionaryAdapterTest, RealScenarioTest);

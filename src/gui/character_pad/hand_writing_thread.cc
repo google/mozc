@@ -31,6 +31,9 @@
 
 // MutexLocker locks in the constructor and unlocks in the destructor.
 #include <QtCore/QMutexLocker>
+#include <QtGui/QtGui>
+
+#include "base/util.h"
 
 namespace {
 // Thread-safe copying of strokes.
@@ -69,12 +72,18 @@ namespace mozc {
 namespace gui {
 
 void HandWritingThread::Start() {
+  strokes_sec_ = 0;
+  strokes_usec_ = 0;
+  last_requested_sec_ = 0;
+  last_requested_usec_ = 0;
   start();
   moveToThread(this);
 }
 
 void HandWritingThread::SetStrokes(const handwriting::Strokes &strokes) {
   CopyStrokes(strokes, &strokes_, &strokes_mutex_);
+  // This is absolutely thread-unsafe but practically no problems.
+  Util::GetTimeOfDay(&strokes_sec_, &strokes_usec_);
 }
 
 void HandWritingThread::GetCandidates(vector<string> *candidates) {
@@ -82,6 +91,12 @@ void HandWritingThread::GetCandidates(vector<string> *candidates) {
 }
 
 void HandWritingThread::startRecognition() {
+  if (last_requested_sec_ == strokes_sec_ &&
+      last_requested_usec_ == strokes_usec_) {
+    LOG(WARNING) << "Already sent that stroke";
+    return;
+  }
+
   handwriting::Strokes strokes;
   CopyStrokes(strokes_, &strokes, &strokes_mutex_);
   if (strokes.empty()) {
@@ -91,7 +106,17 @@ void HandWritingThread::startRecognition() {
   vector<string> candidates;
   handwriting::HandwritingManager::Recognize(strokes, &candidates);
   CopyCandidates(candidates, &candidates_, &candidates_mutex_);
+  last_requested_sec_ = strokes_sec_;
+  last_requested_usec_ = strokes_usec_;
   emit candidatesUpdated();
+}
+
+void HandWritingThread::itemSelected(const QListWidgetItem *item) {
+  handwriting::Strokes strokes;
+  CopyStrokes(strokes_, &strokes, &strokes_mutex_);
+  const QByteArray text = item->text().toUtf8();
+  handwriting::HandwritingManager::Commit(
+      strokes, string(text.constData(), text.length()));
 }
 
 }  // namespace gui

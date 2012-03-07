@@ -457,6 +457,17 @@ void Util::JoinStrings(const vector<string> &input,
   }
 }
 
+void Util::AppendStringWithDelimiter(const string &delimiter,
+                                     const string &append_string,
+                                     string *output) {
+  CHECK(output);
+  if (!output->empty()) {
+    output->append(delimiter);
+  }
+  output->append(append_string);
+}
+
+
 void Util::StringReplace(const string &s, const string &oldsub,
                          const string &newsub, bool replace_all,
                          string *res) {
@@ -561,7 +572,7 @@ void Util::StripWhiteSpaces(const string &input, string *output) {
   for (; start < input.size() && isspace(input[start]); ++start);
   for (; end > start && isspace(input[end]); --end);
 
-  if(end > start) {
+  if (end > start) {
     output->assign(input.data() + start, end - start + 1);
   }
 }
@@ -747,6 +758,9 @@ void Util::SubString(const string &src,
                      const size_t start,
                      const size_t length,
                      string *result) {
+  DCHECK(result);
+  result->clear();
+
   size_t l = start;
   const char *begin = src.c_str();
   const char *end = begin + src.size();
@@ -814,6 +828,41 @@ int Util::SimpleAtoi(const string &str) {
   int i = 0;
   ss >> i;
   return i;
+}
+
+namespace {
+// TODO(hidehiko): Refactoring with GetScriptType.
+inline bool IsArabicDecimalChar32(char32 ucs4) {
+  // Halfwidth digit.
+  if ('0' <= ucs4 && ucs4 <= '9') {
+    return true;
+  }
+
+  // Fullwidth digit.
+  if (0xFF10 <= ucs4 && ucs4 <= 0xFF19) {
+    return true;
+  }
+
+  return false;
+}
+}  // namespace
+
+bool Util::IsArabicNumber(const string &input_string) {
+  const char *begin = input_string.data();
+  const char *end = input_string.data() + input_string.size();
+
+  while (begin < end) {
+    size_t mblen;
+    const char32 ucs4 = Util::UTF8ToUCS4(begin, end, &mblen);
+    if (!IsArabicDecimalChar32(ucs4)) {
+      // Found non-arabic decimal character.
+      return false;
+    }
+    begin += mblen;
+  }
+
+  // All characters are numbers.
+  return true;
 }
 
 void PushBackNumberString(const string &value, const string &description,
@@ -1667,6 +1716,7 @@ bool NormalizeNumbersInternal(const string &input,
   // Maps Kanji number string to digits, e.g., "二百十一" -> [2, 100, 10, 1].
   // Simultaneously, constructs a Kanji number string.
   kanji_output->clear();
+  arabic_output->clear();
   string kanji_char;
   string kanji_char_normalized;
 
@@ -1691,8 +1741,7 @@ bool NormalizeNumbersInternal(const string &input,
         return false;
       }
       DCHECK(suffix);
-      *suffix = "";
-      suffix->insert(0, begin, end - begin);
+      suffix->assign(begin, end);
       break;
     }
     *kanji_output += kanji_char_normalized;
@@ -2379,7 +2428,7 @@ class LocalAppDataDirectoryCache {
   static HRESULT __declspec(nothrow) SafeTryGetLocalAppData(string *dir) {
     __try {
       return TryGetLocalAppData(dir);
-    } __except (EXCEPTION_EXECUTE_HANDLER) {
+    } __except(EXCEPTION_EXECUTE_HANDLER) {
       return E_UNEXPECTED;
     }
   }
@@ -2552,7 +2601,7 @@ class ProgramFilesX86Cache {
   static HRESULT __declspec(nothrow) SafeTryProgramFilesPath(string *path) {
     __try {
       return TryProgramFilesPath(path);
-    } __except (EXCEPTION_EXECUTE_HANDLER) {
+    } __except(EXCEPTION_EXECUTE_HANDLER) {
       return E_UNEXPECTED;
     }
   }
@@ -2637,7 +2686,7 @@ string Util::GetServerDirectory() {
 #endif  // OS_MACOSX
 
 #ifdef OS_LINUX
-  return "/usr/lib/mozc";
+  return kMozcServerDirectory;
 #endif  // OS_LINUX
 }
 
@@ -2977,6 +3026,12 @@ void Util::EscapeUrl(const string &input, string *output) {
   for (size_t i = 0; i < input.size(); ++i) {
     EscapeInternal(input[i], "%", output);
   }
+}
+
+string Util::EscapeUrl(const string &input) {
+  string escaped_input;
+  Util::EscapeUrl(input, &escaped_input);
+  return escaped_input;
 }
 
 void Util::EscapeHtml(const string &plain, string *escaped) {
@@ -3721,65 +3776,6 @@ void Util::PreloadMappedRegion(const void *begin,
     }
     dummy += *p;
   }
-}
-
-void Util::MakeByteArrayFile(const string &name,
-                          const string &input,
-                          const string &output) {
-  OutputFileStream ofs(output.c_str());
-  CHECK(ofs);
-  Util::MakeByteArrayStream(name, input, &ofs);
-}
-
-void Util::MakeByteArrayStream(const string &name,
-                               const string &input,
-                               ostream *os) {
-  Mmap<char> mmap;
-  CHECK(mmap.Open(input.c_str()));
-  Util::WriteByteArray(name, mmap.begin(), mmap.GetFileSize(), os);
-}
-
-void Util::WriteByteArray(const string &name, const char *image,
-                          size_t image_size, ostream *ofs) {
-  const char *begin = image;
-  const char *end = image + image_size;
-  *ofs << "const size_t k" << name << "_size = " << image_size << ";\n";
-
-#ifdef OS_WINDOWS
-  *ofs << "const uint64 k" << name << "_data_uint64[] = {\n";
-  ofs->setf(ios::hex, ios::basefield);  // in hex
-  ofs->setf(ios::showbase);             // add 0x
-  int num = 0;
-  while (begin < end) {
-    uint64 n = 0;
-    uint8 *buf = reinterpret_cast<uint8 *>(&n);
-    const size_t size = min(static_cast<size_t>(end - begin),
-                            static_cast<size_t>(8));
-    for (size_t i = 0; i < size; ++i) {
-      buf[i] = static_cast<uint8>(begin[i]);
-    }
-    begin += 8;
-    *ofs << n << ", ";
-    if (++num % 8 == 0) {
-      *ofs << '\n';
-    }
-  }
-  *ofs << "};\n";
-  *ofs << "const char *k" << name << "_data"
-       << " = reinterpret_cast<const char *>(k"
-       << name << "_data_uint64);\n";
-#else
-  *ofs << "const char k" << name << "_data[] =\n";
-  static const size_t kBucketSize = 20;
-  while (begin < end) {
-     const size_t size = min(static_cast<size_t>(end - begin), kBucketSize);
-     string buf;
-     Util::Escape(string(begin, size), &buf);
-     *ofs << '\"' << buf << "\"\n";
-     begin += kBucketSize;
-  }
-  *ofs << ";\n";
-#endif
 }
 
 bool Util::IsLittleEndian() {

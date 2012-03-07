@@ -65,20 +65,18 @@ TEST(RxTrieBuilderTest, BasicTest) {
 }
 
 TEST(RxTrieBuilderTest, RandomTest) {
-  srand(0);
+  Util::SetRandomSeed(0);
   const int kTestSize = 1000000;
   hash_set<string> inserted;
   RxTrieBuilder builder;
   for (size_t i = 0; i < kTestSize; ++i) {
-    const string key = Util::SimpleItoa(
-        static_cast<int>(1.0 * kTestSize * rand() / (RAND_MAX + 1.0)));
+    const string key = Util::SimpleItoa(Util::Random(kTestSize));
     builder.AddKey(key);
     inserted.insert(key);
   }
   builder.Build();
   for (size_t i = 0; i < kTestSize; ++i) {
-    const string key = Util::SimpleItoa(
-        static_cast<int>(1.0 * kTestSize * rand() / (RAND_MAX + 1.0)));
+    const string key = Util::SimpleItoa(Util::Random(kTestSize));
     if (inserted.find(key) != inserted.end()) {
       EXPECT_GE(builder.GetIdFromKey(key), 0);
     } else {

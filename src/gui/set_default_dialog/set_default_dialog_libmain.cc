@@ -65,6 +65,8 @@ int RunSetDefaultDialog(int argc, char *argv[]) {
 
   QApplication app(argc, argv);
 
+  // TODO(nona): remove these lines when link-time language dependency
+  //             injection is rolled out.
   mozc::japanese::LangDepSpecJapanese spec;
   mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(&spec);
 
@@ -72,7 +74,11 @@ int RunSetDefaultDialog(int argc, char *argv[]) {
       ("set_default_dialog");
 
   mozc::gui::SetDefaultDialog dialog;
-  dialog.exec();
+  const int result = dialog.exec();
 
-  return 0;
+  // TODO(nona): remove this line when link-time language dependency
+  //             injection is rolled out.
+  mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(NULL);
+
+  return result;
 }

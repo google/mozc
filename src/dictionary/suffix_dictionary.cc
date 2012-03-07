@@ -31,8 +31,9 @@
 
 #include <string>
 #include "base/base.h"
-#include "base/util.h"
 #include "base/singleton.h"
+#include "base/trie.h"
+#include "base/util.h"
 #include "converter/node.h"
 
 namespace mozc {
@@ -49,11 +50,18 @@ struct SuffixToken {
 #include "dictionary/suffix_data.h"
 }   // namespace
 
-SuffixDictionary::SuffixDictionary() {}
+SuffixDictionary::SuffixDictionary() : empty_limit_(Limit()) {}
+
 SuffixDictionary::~SuffixDictionary() {}
 
 Node *SuffixDictionary::LookupPredictive(
     const char *str, int size,
+    NodeAllocatorInterface *allocator) const {
+  return LookupPredictiveWithLimit(str, size, empty_limit_, allocator);
+}
+
+Node *SuffixDictionary::LookupPredictiveWithLimit(
+    const char *str, int size, const Limit &limit,
     NodeAllocatorInterface *allocator) const {
   string input_key;
   if (str != NULL && size > 0) {
@@ -61,6 +69,7 @@ Node *SuffixDictionary::LookupPredictive(
   }
 
   DCHECK(allocator);
+
   Node *result = NULL;
   for (size_t i = 0; i < arraysize(kSuffixTokens); ++i) {
     const SuffixToken *token = &kSuffixTokens[i];
@@ -68,6 +77,16 @@ Node *SuffixDictionary::LookupPredictive(
     DCHECK(token->key);
     if (!input_key.empty() && !Util::StartsWith(token->key, input_key)) {
       continue;
+    }
+    // check begin with
+    if (limit.begin_with_trie != NULL) {
+      string value;
+      size_t key_length = 0;
+      bool has_subtrie = false;
+      if (!limit.begin_with_trie->LookUpPrefix(token->key + size, &value,
+                                               &key_length, &has_subtrie)) {
+        continue;
+      }
     }
     Node *node = allocator->NewNode();
     DCHECK(node);
@@ -89,6 +108,12 @@ Node *SuffixDictionary::LookupPredictive(
 Node *SuffixDictionary::LookupPrefixWithLimit(
     const char *str, int size,
     const Limit &limit,
+    NodeAllocatorInterface *allocator) const {
+  return NULL;
+}
+
+Node *SuffixDictionary::LookupPrefix(
+    const char *str, int size,
     NodeAllocatorInterface *allocator) const {
   return NULL;
 }

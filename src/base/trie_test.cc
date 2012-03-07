@@ -27,13 +27,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "composer/internal/trie.h"
-
 #include "base/base.h"
+#include "base/trie.h"
 #include "testing/base/public/gunit.h"
 
 TEST(TrieTest, Trie) {
-  mozc::composer::Trie<string> trie;
+  mozc::Trie<string> trie;
 
   enum TestType {
     LOOKUP,
@@ -91,7 +90,7 @@ TEST(TrieTest, Trie) {
 }
 
 TEST(TrieTest, LookUpPrefix) {
-  mozc::composer::Trie<string> trie;
+  mozc::Trie<string> trie;
   trie.AddEntry("abc", "[ABC]");
   trie.AddEntry("abd", "[ABD]");
   trie.AddEntry("a", "[A]");
@@ -124,6 +123,104 @@ TEST(TrieTest, LookUpPrefix) {
   EXPECT_FALSE(trie.LookUpPrefix("xyz", &value, &key_length, &has_subtrie));
 }
 
+TEST(TrieTest, Empty) {
+  mozc::Trie<string> trie;
+  {
+    vector<string> values;
+    trie.LookUpPredictiveAll("a", &values);
+    EXPECT_EQ(0, values.size());
+  }
+
+  {
+    string value;
+    size_t key_length = 0;
+    bool has_subtrie = false;
+    EXPECT_FALSE(trie.LookUpPrefix("a", &value, &key_length, &has_subtrie));
+    EXPECT_EQ("", value);
+    EXPECT_EQ(0, key_length);
+  }
+}
+
+TEST(TrieTest, UTF8LookUpPrefix) {
+  mozc::Trie<string> trie;
+  // "きゃ"
+  trie.AddEntry("\xe3\x81\x8d\xe3\x82\x83", "");
+  // "きゅ"
+  trie.AddEntry("\xe3\x81\x8d\xe3\x82\x85", "");
+  // "きょ"
+  trie.AddEntry("\xe3\x81\x8d\xe3\x82\x87", "");
+  // "っ"
+  trie.AddEntry("\xe3\x81\xa3", "");
+  // "か"
+  trie.AddEntry("\xe3\x81\x8b", "");
+  // "き"
+  trie.AddEntry("\xe3\x81\x8d", "");
+  // "く"
+  trie.AddEntry("\xe3\x81\x8f", "");
+  // "け"
+  trie.AddEntry("\xe3\x81\x91", "");
+  // "こ"
+  trie.AddEntry("\xe3\x81\x93", "");
+
+  string value;
+  size_t key_length = 0;
+  bool has_subtrie = false;
+  {
+    key_length = 0;
+    // "か"
+    const string query = "\xe3\x81\x8b";
+    EXPECT_TRUE(trie.LookUpPrefix(query, &value, &key_length, &has_subtrie));
+  }
+  {
+    key_length = 0;
+    // "きゅ"
+    const string query = "\xe3\x81\x8d\xe3\x82\x85";
+    EXPECT_TRUE(trie.LookUpPrefix(query, &value, &key_length, &has_subtrie));
+  }
+  {
+    key_length = 0;
+    // "くぁ"
+    const string query = "\xe3\x81\x8f\xe3\x81\x81";
+    EXPECT_TRUE(trie.LookUpPrefix(query, &value, &key_length, &has_subtrie));
+  }
+  {
+    key_length = 0;
+    // "っあ"
+    const string query = "\xe3\x81\xa3\xe3\x81\x82";
+    EXPECT_TRUE(trie.LookUpPrefix(query, &value, &key_length, &has_subtrie));
+  }
+  {
+    key_length = 0;
+    // "き"
+    const string query = "\xe3\x81\x8d";
+    EXPECT_TRUE(trie.LookUpPrefix(query, &value, &key_length, &has_subtrie));
+  }
+  {
+    key_length = 0;
+    // "かかかかかか"
+    const string query = "\xe3\x81\x8b\xe3\x81\x8b\xe3\x81\x8b\xe3\x81\x8b\xe3\x81\x8b\xe3\x81\x8b";
+    EXPECT_TRUE(trie.LookUpPrefix(query, &value, &key_length, &has_subtrie));
+  }
+  {
+    key_length = 0;
+    // "きゅあああ"
+    const string query = "\xe3\x81\x8d\xe3\x82\x85\xe3\x81\x82\xe3\x81\x82\xe3\x81\x82";
+    EXPECT_TRUE(trie.LookUpPrefix(query, &value, &key_length, &has_subtrie));
+  }
+  {
+    key_length = 0;
+    // "きあああ"
+    const string query = "\xe3\x81\x8d\xe3\x81\x82\xe3\x81\x82\xe3\x81\x82";
+    EXPECT_TRUE(trie.LookUpPrefix(query, &value, &key_length, &has_subtrie));
+  }
+  {
+    key_length = 0;
+    // "も"
+    const string query = "\xe3\x82\x82";
+    EXPECT_FALSE(trie.LookUpPrefix(query, &value, &key_length, &has_subtrie));
+  }
+}
+
 namespace {
 bool HasData(const vector<string> &values, const string &value) {
   for (size_t i = 0; i < values.size(); ++i) {
@@ -136,7 +233,7 @@ bool HasData(const vector<string> &values, const string &value) {
 }  // namespace
 
 TEST(TrieTest, LookUpPredictiveAll) {
-  mozc::composer::Trie<string> trie;
+  mozc::Trie<string> trie;
   trie.AddEntry("abc", "[ABC]");
   trie.AddEntry("abd", "[ABD]");
   trie.AddEntry("a", "[A]");

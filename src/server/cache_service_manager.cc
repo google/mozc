@@ -38,6 +38,7 @@
 #include <string>
 
 #include "base/base.h"
+#include "base/const.h"
 #include "base/scoped_handle.h"
 #include "base/util.h"
 #include "server/mozc_cache_service_resource.h"
@@ -45,9 +46,6 @@
 
 namespace mozc {
 namespace {
-const char    kProgramName[] = "GoogleIMEJaCacheService.exe";
-const wchar_t kServiceName[] = L"GoogleIMEJaCacheService";
-
 const uint64 kMinimumRequiredMemorySizeForInstall = 384 * 1024 * 1024;
 
 class ScopedSCHandle {
@@ -231,7 +229,7 @@ bool IsServiceRunning(const ScopedSCHandle &service_handle) {
     return false;
   }
 
-  SERVICE_STATUS service_status = { 0 };
+  SERVICE_STATUS service_status = {};
   if (!::QueryServiceStatus(service_handle.get(), &service_status)) {
     LOG(ERROR) << "QueryServiceStatus failed: " << ::GetLastError();
     return false;
@@ -279,7 +277,7 @@ bool SetServiceDescription(const ScopedSCHandle &service_handle,
   description._Copy_s(buffer.get(), buffer_length, description.size());
   buffer[buffer_length - 1] = L'\0';
 
-  SERVICE_DESCRIPTION desc = { 0 };
+  SERVICE_DESCRIPTION desc = {};
   desc.lpDescription = buffer.get();
   if (!::ChangeServiceConfig2(service_handle.get(),
                               SERVICE_CONFIG_DESCRIPTION, &desc)) {
@@ -287,40 +285,65 @@ bool SetServiceDescription(const ScopedSCHandle &service_handle,
     return false;
   }
 
-  // Windows Vista or later allows the SCM to run a service in a restricted
-  // context as described in following documents.
+  return true;
+}
+
+// Set *nice-to-have* features for the cache service.
+// We do not care about any failure because it is not critical for the
+// functionality of the cache service itself.
+void SetAdvancedConfig(const ScopedSCHandle &service_handle) {
+  // On Windows XP, we have nothing to do.
+  if (!Util::IsVistaOrLater()) {
+    return;
+  }
+
+  // Windows Vista or later has some nice features as described in the
+  // following documents.
   // http://msdn.microsoft.com/en-us/magazine/cc164252.aspx
+
+  // Enable "Delayed Auto-start".
+  {
+    SERVICE_DELAYED_AUTO_START_INFO info = {};
+    info.fDelayedAutostart = TRUE;
+
+    if (!::ChangeServiceConfig2(service_handle.get(),
+                                SERVICE_CONFIG_DELAYED_AUTO_START_INFO,
+                                &info)) {
+      LOG(ERROR) << "ChangeServiceConfig2 failed: " << ::GetLastError();
+    }
+  }
+
   // http://blogs.technet.com/richard_macdonald/archive/2007/06/27/1375523.aspx
   // See also http://b/2470180
-  if (Util::IsVistaOrLater()) {
-    // Only SE_INC_BASE_PRIORITY_NAME and SE_CHANGE_NOTIFY are needed.
-    // According to MSDN Library, we need not explicitly specify the later.
-    // See http://msdn.microsoft.com/en-us/library/ms685976.aspx for details.
-    SERVICE_REQUIRED_PRIVILEGES_INFO privileges_info = { 0 };
+
+  // Only SE_INC_BASE_PRIORITY_NAME and SE_CHANGE_NOTIFY are needed.
+  // According to MSDN Library, we need not explicitly specify the later.
+  // See http://msdn.microsoft.com/en-us/library/ms685976.aspx for details.
+  {
+    SERVICE_REQUIRED_PRIVILEGES_INFO privileges_info = {};
     privileges_info.pmszRequiredPrivileges = SE_INC_BASE_PRIORITY_NAME
                                              TEXT("\0");
     if (!::ChangeServiceConfig2(service_handle.get(),
                                 SERVICE_CONFIG_REQUIRED_PRIVILEGES_INFO,
                                 &privileges_info)) {
       LOG(ERROR) << "ChangeServiceConfig2 failed: " << ::GetLastError();
-      return false;
     }
+  }
 
-    // Remove write privileges from the cache service.
-    // See http://msdn.microsoft.com/en-us/library/ms685987.aspx for details.
-    // This may restrict glog functions such as LOG(ERROR).
-    // TODO(yukawa): Output logging messages as debug strings, or output them
-    // to the Win32 event log.
-    SERVICE_SID_INFO sid_info = { 0 };
+  // Remove write privileges from the cache service.
+  // See http://msdn.microsoft.com/en-us/library/ms685987.aspx for details.
+  // This may restrict glog functions such as LOG(ERROR).
+  // TODO(yukawa): Output logging messages as debug strings, or output them
+  // to the Win32 event log.
+  {
+    SERVICE_SID_INFO sid_info = {};
     sid_info.dwServiceSidType = SERVICE_SID_TYPE_RESTRICTED;
     if (!::ChangeServiceConfig2(service_handle.get(),
                                 SERVICE_CONFIG_SERVICE_SID_INFO,
                                 &sid_info)) {
       LOG(ERROR) << "ChangeServiceConfig2 failed: " << ::GetLastError();
-      return false;
     }
   }
-  return true;
 }
 
 // This function updates the following settings of the cache service as
@@ -352,6 +375,10 @@ bool RestoreStateInternal(const cache_service::Win32ServiceState &state) {
   if (!SetServiceDescription(service_handle, GetDescription())) {
     return false;
   }
+
+  // We ignore any failure of advanced configurations because they are
+  // *nice-to-have* features.
+  SetAdvancedConfig(service_handle);
 
   const bool now_running = IsServiceRunning(service_handle);
 
@@ -461,12 +488,12 @@ bool CacheServiceManager::IsEnabled() {
 }
 
 const wchar_t *CacheServiceManager::GetServiceName() {
-  return kServiceName;
+  return kMozcCacheServiceName;
 }
 
 wstring CacheServiceManager::GetUnquotedServicePath() {
   const string lock_service_path =
-      Util::JoinPath(Util::GetServerDirectory(), kProgramName);
+      Util::JoinPath(Util::GetServerDirectory(), kMozcCacheServiceExeName);
   wstring wlock_service_path;
   if (Util::UTF8ToWide(lock_service_path.c_str(), &wlock_service_path) <= 0) {
     return L"";
@@ -532,7 +559,7 @@ bool CacheServiceManager::RestartService() {
 
   const int kNumTrial = 10;
   for (int i = 0; i < kNumTrial; ++i) {
-    SERVICE_STATUS service_status = { 0 };
+    SERVICE_STATUS service_status = {};
     if (!::QueryServiceStatus(service_handle.get(), &service_status)) {
       LOG(ERROR) << "QueryServiceStatus failed: " << ::GetLastError();
       return false;

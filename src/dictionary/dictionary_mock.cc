@@ -96,6 +96,14 @@ DictionaryMock::DictionaryMock() {
 DictionaryMock::~DictionaryMock() {
 }
 
+Node *DictionaryMock::LookupPredictiveWithLimit(
+    const char *str, int size,
+    const Limit &limit,
+    NodeAllocatorInterface *allocator) const {
+  // DictionaryMock doesn't support a limitation
+  return LookupPredictive(str, size, allocator);
+}
+
 Node *DictionaryMock::LookupPredictive(
     const char *str, int size,
     NodeAllocatorInterface *allocator) const {
@@ -109,6 +117,12 @@ Node *DictionaryMock::LookupPrefixWithLimit(
     const Limit &limit,
     NodeAllocatorInterface *allocator) const {
   // DictionaryMock doesn't support a limitation
+  return LookupPrefix(str, size, allocator);
+}
+
+Node *DictionaryMock::LookupPrefix(
+    const char *str, int size,
+    NodeAllocatorInterface *allocator) const {
   CHECK_GT(size, 0);
   return LookupInternal(prefix_dictionary_, str,
                         static_cast<size_t>(size), allocator, true);

@@ -31,11 +31,12 @@
 
 #ifdef OS_WINDOWS
 #include <windows.h>
-#endif
+#endif  // OS_WINDOWS
 
 #include <algorithm>
 #include "base/base.h"
 #include "base/const.h"
+#include "base/logging.h"
 #include "base/util.h"
 #include "client/client_interface.h"
 #include "config/config_handler.h"
@@ -43,8 +44,6 @@
 #include "ipc/named_event.h"
 #include "ipc/process_watch_dog.h"
 #include "session/commands.pb.h"
-
-#include "base/logging.h"
 
 // By default, mozc_renderer quits when user-input continues to be
 // idle for 10min.
@@ -168,6 +167,7 @@ RendererServer::RendererServer()
   const config::Config &config = config::ConfigHandler::GetConfig();
   Logging::SetConfigVerboseLevel(config.verbose_level());
 #endif  // NO_LOGGING
+
 }
 
 RendererServer::~RendererServer() {}
@@ -257,7 +257,11 @@ bool RendererServer::ExecCommandInternal(
     }
   }
 
-  return renderer_interface_->ExecCommand(command);
+  if (renderer_interface_->ExecCommand(command)) {
+    return true;
+  }
+
+  return false;
 }
 
 uint32 RendererServer::timeout() const {

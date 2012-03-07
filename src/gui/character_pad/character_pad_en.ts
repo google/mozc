@@ -33,16 +33,6 @@
         <source>Smallest</source>
         <translation type="unfinished"></translation>
     </message>
-    <message>
-        <location filename="character_palette.ui" line="123"/>
-        <source>JIS</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="character_palette.ui" line="128"/>
-        <source>Unicode</source>
-        <translation type="unfinished"></translation>
-    </message>
 </context>
 <context>
     <name>HandWriting</name>
@@ -86,11 +76,21 @@
         <source>revert</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <location filename="hand_writing.ui" line="146"/>
+        <source>Local</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="hand_writing.ui" line="151"/>
+        <source>Cloud</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>QObject</name>
     <message>
-        <location filename="hand_writing_canvas.cc" line="118"/>
+        <location filename="hand_writing_canvas.cc" line="100"/>
         <source>Draw a character here</source>
         <translation type="unfinished"></translation>
     </message>
@@ -115,42 +115,26 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="unicode_util.cc" line="197"/>
-        <source>Radical</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="unicode_util.cc" line="204"/>
-        <source>Total Strokes</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="unicode_util.cc" line="209"/>
+        <location filename="unicode_util.cc" line="211"/>
         <source>Source</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="unicode_util.cc" line="215"/>
+        <location filename="unicode_util.cc" line="217"/>
         <source>Unicode</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
-    <name>mozc::gui::HandWritingCanvas</name>
+    <name>mozc::gui::HandWriting</name>
     <message>
-        <location filename="hand_writing_canvas.cc" line="48"/>
-        <location filename="hand_writing_canvas.cc" line="56"/>
-        <source>Mozc</source>
+        <location filename="hand_writing.cc" line="277"/>
+        <source>Cloud handwriting recognition</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="hand_writing_canvas.cc" line="49"/>
-        <source>Failed to load model file %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="hand_writing_canvas.cc" line="57"/>
-        <source>model file %1 is broken.</source>
+        <location filename="hand_writing.cc" line="280"/>
+        <source>This feature improve the accuracy of handwriting recognition by using a Google web service. To do so, your handwriting strokes will be securely sent to Google. Do you want to use Cloud handwriting?</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

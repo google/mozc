@@ -78,7 +78,7 @@
 <context>
     <name>QObject</name>
     <message>
-        <location filename="dictionary_tool.cc" line="233"/>
+        <location filename="dictionary_tool.cc" line="243"/>
         <source>Importing new words...</source>
         <translation type="unfinished"></translation>
     </message>
@@ -86,298 +86,319 @@
 <context>
     <name>mozc::gui::DictionaryTool</name>
     <message>
-        <location filename="dictionary_tool.cc" line="260"/>
+        <location filename="dictionary_tool.cc" line="270"/>
         <source>Mozc</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="285"/>
+        <location filename="dictionary_tool.cc" line="296"/>
         <source>Another process is accessing the user dictionary file.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="349"/>
+        <location filename="dictionary_tool.cc" line="360"/>
         <source>Reading</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="349"/>
+        <location filename="dictionary_tool.cc" line="360"/>
         <source>Word</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="350"/>
+        <location filename="dictionary_tool.cc" line="361"/>
         <source>Comment</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="383"/>
+        <location filename="dictionary_tool.cc" line="394"/>
         <source>New dictionary...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="1178"/>
+        <location filename="dictionary_tool.cc" line="1329"/>
         <source>Rename...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="1179"/>
+        <location filename="dictionary_tool.cc" line="1330"/>
         <source>Delete</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="389"/>
+        <location filename="dictionary_tool.cc" line="400"/>
         <source>Import as new dictionary...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="391"/>
+        <location filename="dictionary_tool.cc" line="402"/>
         <source>Import to current dictionary...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="464"/>
+        <location filename="dictionary_tool.cc" line="475"/>
         <source>User Dictionary 1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="628"/>
-        <location filename="dictionary_tool.cc" line="704"/>
+        <location filename="dictionary_tool.cc" line="643"/>
+        <location filename="dictionary_tool.cc" line="719"/>
         <source>You can&apos;t have more than %1 dictionaries.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="633"/>
+        <location filename="dictionary_tool.cc" line="648"/>
         <source>Name of the new dictionary</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="647"/>
-        <location filename="dictionary_tool.cc" line="676"/>
-        <location filename="dictionary_tool.cc" line="726"/>
-        <location filename="dictionary_tool.cc" line="876"/>
-        <location filename="dictionary_tool.cc" line="918"/>
+        <location filename="dictionary_tool.cc" line="662"/>
+        <location filename="dictionary_tool.cc" line="691"/>
+        <location filename="dictionary_tool.cc" line="741"/>
+        <location filename="dictionary_tool.cc" line="890"/>
+        <location filename="dictionary_tool.cc" line="932"/>
         <source>No dictionary is selected.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="653"/>
+        <location filename="dictionary_tool.cc" line="668"/>
         <source>Do you want to delete %1?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="682"/>
+        <location filename="dictionary_tool.cc" line="697"/>
         <source>New name of the dictionary</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="1305"/>
+        <location filename="dictionary_tool.cc" line="1251"/>
+        <source>Move the selected words to</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="dictionary_tool.cc" line="1465"/>
         <source>Dictionary name is empty.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="1310"/>
+        <location filename="dictionary_tool.cc" line="1470"/>
         <source>Dictionary name is too long.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="1300"/>
+        <location filename="dictionary_tool.cc" line="1460"/>
         <source>An invalid character is included in the dictionary name.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="301"/>
+        <location filename="dictionary_tool.cc" line="312"/>
         <source>Add</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="392"/>
+        <location filename="dictionary_tool.cc" line="403"/>
         <source>Export current dictionary...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="923"/>
+        <location filename="dictionary_tool.cc" line="937"/>
         <source>Export dictionary</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="302"/>
+        <location filename="dictionary_tool.cc" line="313"/>
         <source>Remove</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="300"/>
+        <location filename="dictionary_tool.cc" line="311"/>
         <source>Tools</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="350"/>
+        <location filename="dictionary_tool.cc" line="361"/>
         <source>Category</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="385"/>
+        <location filename="dictionary_tool.cc" line="396"/>
         <source>Delete dictionary</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="733"/>
-        <location filename="dictionary_tool.cc" line="955"/>
+        <location filename="dictionary_tool.cc" line="747"/>
+        <location filename="dictionary_tool.cc" line="967"/>
         <source>You can&apos;t have more than %1 words in one dictionary.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="882"/>
+        <location filename="dictionary_tool.cc" line="896"/>
         <source>All user-registered words in %1 are migrated into the current dictionary.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="786"/>
+        <location filename="dictionary_tool.cc" line="800"/>
         <source>Failed to open user dictionary</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="924"/>
+        <location filename="dictionary_tool.cc" line="938"/>
         <source>Text Files (*.txt);;All Files (*)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="802"/>
-        <location filename="dictionary_tool.cc" line="932"/>
+        <location filename="dictionary_tool.cc" line="816"/>
+        <location filename="dictionary_tool.cc" line="946"/>
         <source>Can&apos;t open %1.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="384"/>
+        <location filename="dictionary_tool.cc" line="395"/>
         <source>Rename dictionary...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="386"/>
+        <location filename="dictionary_tool.cc" line="397"/>
         <source>Find...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="399"/>
+        <location filename="dictionary_tool.cc" line="410"/>
         <source>Import from %1&apos;s user dictionary...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="510"/>
+        <location filename="dictionary_tool.cc" line="521"/>
         <source>Making dangerously large user dictionary file. If the dictionary file turns out to be larger than 256Mbyte, the dictionary loader skips to handle all the words to prevent the converter from being halted.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="590"/>
+        <location filename="dictionary_tool.cc" line="605"/>
         <source>Updating the current view data...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="757"/>
+        <location filename="dictionary_tool.cc" line="771"/>
         <source>%1 entries are imported to %2.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="763"/>
+        <location filename="dictionary_tool.cc" line="777"/>
         <source>You have imported a file in an invalid or unsupported file format.
 
 Please check the file format. ATOK11 or older format is not supported by Mozc.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="772"/>
+        <location filename="dictionary_tool.cc" line="786"/>
         <source>%1 doesn&apos;t have enough space to import all words in the file. First %2 entries are imported.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="779"/>
+        <location filename="dictionary_tool.cc" line="793"/>
         <source>%1 entries are imported to %2.
 
 Some imported words were not recognized by %3. Please check the original import file.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="867"/>
+        <location filename="dictionary_tool.cc" line="881"/>
         <source>Microsoft IME dictioanry import function doesn&apos;t work on UAC-elevated process.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="945"/>
+        <location filename="dictionary_tool.cc" line="959"/>
         <source>Dictionary export finished.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="993"/>
+        <location filename="dictionary_tool.cc" line="1029"/>
         <source>Do you want to delete this word?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="995"/>
+        <location filename="dictionary_tool.cc" line="1031"/>
         <source>Do you want to delete the selected words?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="1009"/>
+        <location filename="dictionary_tool.cc" line="1045"/>
         <source>Deleting the selected words...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="1060"/>
+        <location filename="dictionary_tool.cc" line="1116"/>
+        <source>Cannot move all the selected items.
+The target dictionary can have maximum %1 entries.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="dictionary_tool.cc" line="1129"/>
+        <source>Moving the selected words...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="dictionary_tool.cc" line="1173"/>
         <source>New comment</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="1092"/>
+        <location filename="dictionary_tool.cc" line="1205"/>
         <source>An invalid character is included in the reading.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="1125"/>
+        <location filename="dictionary_tool.cc" line="1238"/>
         <source>Add a word</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="1130"/>
+        <location filename="dictionary_tool.cc" line="1243"/>
         <source>Delete this word</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="1137"/>
+        <location filename="dictionary_tool.cc" line="1250"/>
         <source>Delete the selected words</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="1145"/>
+        <location filename="dictionary_tool.cc" line="1244"/>
+        <source>Move this word to</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="dictionary_tool.cc" line="1277"/>
         <source>Change category to</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="1153"/>
+        <location filename="dictionary_tool.cc" line="1285"/>
         <source>Edit comment</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="1180"/>
+        <location filename="dictionary_tool.cc" line="1332"/>
         <source>Import to this dictionary...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="1181"/>
+        <location filename="dictionary_tool.cc" line="1333"/>
         <source>Export this dictionary...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="1315"/>
+        <location filename="dictionary_tool.cc" line="1475"/>
         <source>Dictionary already exists.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="1320"/>
+        <location filename="dictionary_tool.cc" line="1480"/>
         <source>A fatal error occurred.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="1432"/>
+        <location filename="dictionary_tool.cc" line="1597"/>
         <source>%1: %2 entries</source>
         <translation type="unfinished"></translation>
     </message>
@@ -385,7 +406,7 @@ Some imported words were not recognized by %3. Please check the original import 
 <context>
     <name>mozc::gui::FindDialog</name>
     <message>
-        <location filename="find_dialog.cc" line="127"/>
+        <location filename="find_dialog.cc" line="126"/>
         <source>Cannot find pattern %1</source>
         <translation type="unfinished"></translation>
     </message>

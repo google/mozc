@@ -36,8 +36,8 @@
         'existence_filter.cc',
         'lru_storage.cc',
         'registry.cc',
-        'tiny_storage.cc',
         'sparse_array_image.cc',
+        'tiny_storage.cc',
       ],
       'dependencies': [
         '../base/base.gyp:base',
@@ -61,11 +61,37 @@
         'test_size': 'small',
       },
     },
+    {
+      'target_name': 'encrypted_string_storage',
+      'type': 'static_library',
+      'sources': [
+        'encrypted_string_storage.cc'
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        '../base/base.gyp:encryptor',
+      ],
+    },
+    {
+      'target_name': 'encrypted_string_storage_test',
+      'type': 'executable',
+      'sources': [
+        'encrypted_string_storage_test.cc',
+      ],
+      'dependencies': [
+        '../testing/testing.gyp:gtest_main',
+        'encrypted_string_storage',
+      ],
+      'variables': {
+        'test_size': 'small',
+      },
+    },
     # Test cases meta target: this target is referred from gyp/tests.gyp
     {
       'target_name': 'storage_all_test',
       'type': 'none',
       'dependencies': [
+        'encrypted_string_storage_test',
         'storage_test',
       ],
     },

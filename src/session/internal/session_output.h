@@ -117,6 +117,13 @@ class SessionOutput {
                          commands::Preedit *preedit);
 
   // Fill the Result protobuf with the key and result strings
+  // for a conversion result without any text normalization.
+  static void FillConversionResultWithoutNormalization(
+      const string &key,
+      const string &result,
+      commands::Result *result_proto);
+
+  // Fill the Result protobuf with the key and result strings
   // nomalizing the string for a conversion result.
   static void FillConversionResult(const string &key,
                                    const string &result,

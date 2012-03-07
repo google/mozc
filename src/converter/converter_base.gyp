@@ -48,8 +48,7 @@
         '../base/base.gyp:base',
         '../base/base.gyp:config_file_stream',
         '../config/config.gyp:config_handler',
-        '../config/config.gyp:genproto_config',
-        '../session/session_base.gyp:genproto_session',
+        '../session/session_base.gyp:session_protocol',
         # storage.gyp:storage is depended by character_form_manager.
         # TODO(komatsu): delete this line.
         '../storage/storage.gyp:storage',
@@ -96,33 +95,83 @@
       ],
     },
     {
+      'target_name': 'sparse_connector',
+      'type': 'static_library',
+      'sources': [
+        'sparse_connector.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        '../storage/storage.gyp:storage',
+      ],
+    },
+    {
+      'target_name': 'cached_connector',
+      'type': 'static_library',
+      'sources': [
+        'cached_connector.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        'sparse_connector',
+      ],
+    },
+    {
+      'target_name': 'connector_base',
+      'type': 'static_library',
+      'sources': [
+        'connector_base.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        'cached_connector',
+        'sparse_connector',
+      ],
+    },
+    {
+      'target_name': 'connector',
+      'type': 'static_library',
+      'sources': [
+        'connector.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        'connector_base',
+        'gen_connection_data',
+      ],
+    },
+    {
+      'target_name': 'test_connector',
+      'type': 'static_library',
+      'sources': [
+        '<(gen_out_dir)/embedded_test_connection_data.h',
+        'test_connector.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        'connector_base',
+        'gen_embedded_test_connection_data',
+      ],
+    },
+    {
       'target_name': 'segments',
       'type': 'static_library',
       'sources': [
-        '<(gen_out_dir)/embedded_connection_data.h',
         '<(gen_out_mozc_dir)/dictionary/pos_matcher.h',
         'candidate_filter.cc',
-        'connector.cc',
         'lattice.cc',
         'nbest_generator.cc',
         'node_allocator.h',
         'segments.cc',
-        'sparse_connector.cc',
       ],
       'dependencies': [
         '../base/base.gyp:base',
         '../dictionary/dictionary_base.gyp:gen_pos_matcher',
         '../transliteration/transliteration.gyp:transliteration',
         'character_form_manager',
-        'gen_embedded_connection_data',
+        'connector',
         'segmenter',
       ],
-      'conditions': [['two_pass_build==0', {
-        'dependencies': [
-          'install_gen_connection_data_main',
-          'install_gen_segmenter_bitarray_main',
-        ],
-      }]],
     },
     {
       'target_name': 'immutable_converter',
@@ -134,12 +183,30 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        '../config/config.gyp:genproto_config',
-        '../dictionary/dictionary_base.gyp:gen_pos_matcher',
+        '../config/config.gyp:config_handler',
+        '../config/config.gyp:config_protocol',
         '../dictionary/dictionary.gyp:suffix_dictionary',
+        '../dictionary/dictionary_base.gyp:gen_pos_matcher',
         '../rewriter/rewriter_base.gyp:gen_rewriter_files',
-        '../session/session_base.gyp:genproto_session',
+        '../session/session_base.gyp:session_protocol',
         'segments',
+      ],
+    },
+    {
+      'target_name': 'gen_connection_data',
+      'type': 'none',
+      'conditions': [
+        ['use_separate_connection_data==1',{
+            'dependencies': [
+              'gen_separate_connection_data',
+            ],
+          },
+          {
+            'dependencies': [
+              'gen_embedded_connection_data',
+            ],
+          },
+        ]
       ],
     },
     {
@@ -164,13 +231,6 @@
           # excludes this action from executed actions for some reasons. Build
           # with vcbuild succeeds without specifying this input so we omit the
           # input on Windows.
-          'conditions': [
-            ['two_pass_build==0 and OS!="win"',
-              { 'inputs':
-                ['<(mozc_build_tools_dir)/gen_connection_data_main'],
-              },
-            ],
-          ],
           'outputs': [
             '<(gen_out_dir)/embedded_connection_data.h',
           ],
@@ -188,6 +248,79 @@
       ],
     },
     {
+      # This target is copied from 'gen_embedded_connection_data'.
+      # We need both targets because some targets depend on
+      # gen_embedded_test_connection_data directly.
+      'target_name': 'gen_separate_connection_data',
+      'type': 'none',
+      'actions': [
+        {
+          'action_name': 'gen_separate_connection_data',
+          'variables': {
+            'input_files%': [
+              '../data/dictionary/connection.txt',
+              '../data/dictionary/id.def',
+              '../data/rules/special_pos.def',
+            ],
+            'use_1byte_cost_flag': 'false',
+          },
+          'inputs': [
+            '<@(input_files)',
+          ],
+          # HACK: If gen_converter_data_main is added to inputs, build with
+          # vcbuild fails because gyp on Windows generates a project file which
+          # excludes this action from executed actions for some reasons. Build
+          # with vcbuild succeeds without specifying this input so we omit the
+          # input on Windows.
+          'outputs': [
+            '<(gen_out_dir)/connection.data',
+          ],
+          'action': [
+            # Use the pre-built version. See comments in mozc.gyp for why.
+            '<(mozc_build_tools_dir)/gen_connection_data_main',
+            '--logtostderr',
+            '--input=<(input_files)',
+            '--output=<(gen_out_dir)/connection.data',
+            '--use_1byte_cost=<(use_1byte_cost_flag)',
+          ],
+          'message': 'Generating <(gen_out_dir)/connection.data.',
+        },
+      ],
+    },
+    # TODO(toshiyuki): make .gypi file.
+    {
+      'target_name': 'gen_embedded_test_connection_data',
+      'type': 'none',
+      'actions': [
+        {
+          'action_name': 'gen_embedded_test_connection_data',
+          'variables': {
+            'input_files%': [
+              '../data/test/dictionary/connection.txt',
+              '../data/test/dictionary/id.def',
+              '../data/rules/special_pos.def',
+            ],
+            'use_1byte_cost_flag': 'false',
+          },
+          'inputs': [
+            '<@(input_files)',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/embedded_test_connection_data.h',
+          ],
+          'action': [
+            '<(mozc_build_tools_dir)/gen_connection_data_main',
+            '--logtostderr',
+            '--input=<(input_files)',
+            '--make_header',
+            '--output=<(gen_out_dir)/embedded_test_connection_data.h',
+            '--use_1byte_cost=<(use_1byte_cost_flag)',
+          ],
+          'message': 'Generating <(gen_out_dir)/embedded_test_connection_data.h.',
+        },
+      ],
+    },
+    {
       'target_name': 'gen_segmenter_data',
       'type': 'none',
       'actions': [
@@ -198,11 +331,6 @@
             # to specify at least one file in inputs.
             'gen_segmenter_bitarray_main.cc',
           ],
-          'conditions': [['two_pass_build==0', {
-            'inputs': [
-              '<(mozc_build_tools_dir)/gen_segmenter_bitarray_main',
-            ],
-          }]],
           'outputs': [
             '<(gen_out_dir)/segmenter_data.h',
           ],
@@ -239,15 +367,24 @@
       ],
     },
     {
-      'target_name': 'gen_connection_data_main',
-      'type': 'executable',
+      'target_name': 'sparse_connector_builder',
+      'type': 'static_library',
       'sources': [
         'sparse_connector.cc',
         'sparse_connector_builder.cc',
-        'gen_connection_data_main.cc',
       ],
       'dependencies': [
         '../storage/storage.gyp:storage',
+      ],
+    },
+    {
+      'target_name': 'gen_connection_data_main',
+      'type': 'executable',
+      'sources': [
+        'gen_connection_data_main.cc',
+      ],
+      'dependencies': [
+        'sparse_connector_builder',
       ],
     },
     {

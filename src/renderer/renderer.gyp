@@ -71,9 +71,16 @@
         '../base/base.gyp:base',
         '../client/client.gyp:client',
         '../config/config.gyp:config_handler',
-        '../config/config.gyp:genproto_config',
         '../ipc/ipc.gyp:ipc',
-        '../session/session_base.gyp:genproto_session'
+        '../session/session_base.gyp:session_protocol',
+        '../net/net.gyp:net',
+      ],
+      'conditions': [
+        ['enable_webservice_infolist==1', {
+          'dependencies': [
+            'webservice_infolist_handler',
+          ],
+        }],
       ],
     },
     {
@@ -103,12 +110,11 @@
       'sources': [
         'renderer_style_handler_test.cc',
         'renderer_style_handler.cc',
-        '<(proto_out_dir)/<(relative_dir)/renderer_style.pb.cc',
       ],
       'dependencies': [
         '../testing/testing.gyp:gtest_main',
         'renderer',
-        'genproto_renderer',
+        'renderer_protocol',
       ],
       'variables': {
         'test_size': 'small',
@@ -124,6 +130,21 @@
         '../protobuf/genproto.gypi',
       ],
     },
+    {
+      'target_name': 'renderer_protocol',
+      'type': 'static_library',
+      'hard_dependency': 1,
+      'sources': [
+        '<(proto_out_dir)/<(relative_dir)/renderer_style.pb.cc',
+      ],
+      'dependencies': [
+        '../protobuf/protobuf.gyp:protobuf',
+        'genproto_renderer'
+      ],
+      'export_dependent_settings': [
+        'genproto_renderer',
+      ],
+    },
     # Test cases meta target: this target is referred from gyp/tests.gyp
     {
       'target_name': 'renderer_all_test',
@@ -132,6 +153,11 @@
         'renderer_test',
       ],
       'conditions': [
+        ['enable_webservice_infolist==1', {
+          'dependencies': [
+            'webservice_infolist_handler_test',
+          ],
+        }],
         ['OS=="win"', {
           'dependencies': [
             'win32_renderer_util_test',
@@ -146,6 +172,46 @@
     },
   ],
   'conditions': [
+    ['enable_webservice_infolist==1', {
+      'targets': [
+        {
+          'target_name': 'webservice_infolist_handler',
+          'type': 'static_library',
+          'sources': [
+            'webservice_infolist_handler.cc',
+          ],
+          'dependencies': [
+            '../base/base.gyp:base',
+            '../config/config.gyp:config_handler',
+            '../config/config.gyp:genproto_config',
+            '../libxml/libxml.gyp:libxml',
+            '../net/net.gyp:jsonpath',
+            '../session/session_base.gyp:session_protocol',
+            '<(DEPTH)/third_party/jsoncpp/jsoncpp.gyp:jsoncpp',
+          ],
+          'include_dirs' : [
+            '../libxml/libxml2-2.7.7/include',
+          ],
+        },
+        {
+          'target_name': 'webservice_infolist_handler_test',
+          'type': 'executable',
+          'sources': [
+            'webservice_infolist_handler_test.cc',
+          ],
+          'dependencies': [
+            '../languages/japanese/japanese.gyp:language_dependent_spec_japanese',
+            '../net/net.gyp:http_client_mock',
+            '../testing/testing.gyp:gtest_main',
+            'renderer',
+            'webservice_infolist_handler',
+          ],
+          'variables': {
+            'test_size': 'small',
+          },
+        },
+      ],
+    }],
     ['OS=="win"', {
       'targets': [
         {
@@ -168,10 +234,7 @@
           ],
           'dependencies': [
             '../base/base.gyp:base',
-            '../config/config.gyp:genproto_config',
-            '../session/session_base.gyp:genproto_session',
             '../session/session_base.gyp:session_protocol',
-            '../config/config.gyp:genproto_config',
             '../config/config.gyp:config_protocol',
             '../win32/base/win32_base.gyp:ime_base',
           ],
@@ -205,21 +268,20 @@
             'win32/infolist_window.cc',
             'win32/text_renderer.cc',
             '<(gen_out_dir)/mozc_renderer_autogen.rc',
-            '<(proto_out_dir)/<(relative_dir)/renderer_style.pb.cc',
           ],
           'dependencies': [
             '../base/base.gyp:base',
             '../client/client.gyp:client',
-            '../config/config.gyp:genproto_config',
+            '../config/config.gyp:config_protocol',
             '../config/config.gyp:stats_config_util',
             '../ipc/ipc.gyp:ipc',
-            '../session/session_base.gyp:genproto_session',
+            '../session/session_base.gyp:session_protocol',
             'gen_mozc_renderer_resource_header',
             'renderer',
+            'renderer_protocol',
             'table_layout',
             'win32_renderer_util',
             'window_util',
-            'genproto_renderer',
           ],
           'includes': [
             '../gyp/postbuilds_win.gypi',
@@ -246,7 +308,6 @@
             'mac/RendererBaseWindow.mm',
             'mac/mac_view_util.mm',
             'renderer_style_handler.cc',
-            '<(proto_out_dir)/<(relative_dir)/renderer_style.pb.cc',
           ],
           'mac_bundle_resources': [
             '../data/images/mac/candidate_window_logo.png',
@@ -255,15 +316,15 @@
           'dependencies': [
             '../base/base.gyp:base',
             '../client/client.gyp:client',
-            '../config/config.gyp:genproto_config',
+            '../config/config.gyp:config_protocol',
             '../config/config.gyp:stats_config_util',
             '../ipc/ipc.gyp:ipc',
-            '../session/session_base.gyp:genproto_session',
+            '../session/session_base.gyp:session_protocol',
             'gen_renderer_files',
             'renderer',
+            'renderer_protocol',
             'table_layout',
             'window_util',
-            'genproto_renderer',
           ],
           'xcode_settings': {
             'INFOPLIST_FILE': '<(gen_out_dir)/Info.plist',

@@ -28,6 +28,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <vector>
+#include <algorithm>
 #include "base/base.h"
 #include "base/util.h"
 #include "ipc/ipc.h"
@@ -54,14 +55,10 @@ static const int kNumThreads = 5;
 #endif
 static const int kNumRequests = 2000;
 
-int rand_range(int x) {
-  return static_cast<int>(1.0 * rand() / RAND_MAX * x);
-}
-
 string GenRandomString(size_t size) {
   string result;
   while (result.length() < size) {
-    result += static_cast<char>(rand_range(0xff));
+    result += static_cast<char>(mozc::Util::Random(256));
   }
   return result;
 }
@@ -86,7 +83,7 @@ class MultiConnections: public mozc::Thread {
       con.SetMachPortManager(mach_port_manager_);
 #endif
       ASSERT_TRUE(con.Connected());
-      const int size = max(rand_range(8000), 1);
+      const int size = max(mozc::Util::Random(8000), 1);
       string input = "test";
       input += GenRandomString(size);
       size_t length = sizeof(buf);

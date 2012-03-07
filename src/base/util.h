@@ -60,6 +60,9 @@ class Util {
                           const char *delm,
                           string *output);
 
+  static void AppendStringWithDelimiter(const string &delimiter,
+                                        const string &append_string,
+                                        string *output);
 
   static void StringReplace(const string &s, const string &oldsub,
                             const string &newsub, bool replace_all,
@@ -146,6 +149,10 @@ class Util {
 
   // Convert the string to a number and return it.
   static int SimpleAtoi(const string &str);
+
+  // Returns true if the given input_string contains only number characters
+  // (regardless of halfwidth or fullwidth).
+  static bool IsArabicNumber(const string &input_string);
 
   struct NumberString {
    public:
@@ -419,6 +426,7 @@ class Util {
 
   static void UTF8ToSJIS(const string &input, string *output);
   static void SJISToUTF8(const string &input, string *output);
+  static bool ToUTF8(const char *from, const string &input, string *output);
 
   // Filesystem or user related methods are disabled on Native Client
   // environment.
@@ -574,6 +582,7 @@ class Util {
   // Escape any characters into % prefixed hex digits.
   // ex. "ABC" => "%41%42%43"
   static void EscapeUrl(const string &input, string *output);
+  static string EscapeUrl(const string &input);
 
   // Escape/Unescape unsafe html characters such as <, > and &.
   static void EscapeHtml(const string &text, string *res);
@@ -741,30 +750,6 @@ class Util {
   static void PreloadMappedRegion(const void *begin,
                                   size_t region_size_in_byte,
                                   volatile bool *query_quit);
-
-  // write byte array header to ofs
-  // Windows does not accept static string of size >= 65536.
-  // so we represent string in an array of uint64 in Windows.
-  //  * const size_t k<name>_size and
-  //  * const uint64 k<name>_uint64_data[] and
-  //    const char *k<name>_data =
-  //                     reinterpret_cast<const char *>(k<name>_uint64_data)
-  //    (for Windows), or
-  //  * const char k<name>_data[] (for others)
-  // are generated.
-  static void WriteByteArray(const string &name, const char *buf,
-                             size_t buf_size, ostream *ofs);
-
-
-  // Convert binary file |input| into header file |output|
-  static void MakeByteArrayFile(const string &name,
-                                const string &input,
-                                const string &output);
-
-  // Convert binary file |input| into header filestream |os|
-  static void MakeByteArrayStream(const string &name,
-                                  const string &input,
-                                  ostream *os);
 
   // check endian-ness at runtime.
   static bool IsLittleEndian();

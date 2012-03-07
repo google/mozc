@@ -29,12 +29,12 @@
 
 #include "dictionary/user_dictionary_storage.h"
 
+#include <google/protobuf/io/coded_stream.h>
+#include <google/protobuf/io/zero_copy_stream_impl.h>
+
 #include <algorithm>
 #include <string>
 #include <vector>
-
-#include <google/protobuf/io/coded_stream.h>
-#include <google/protobuf/io/zero_copy_stream_impl.h>
 
 #include "base/base.h"
 #include "base/file_stream.h"
@@ -76,8 +76,8 @@ uint64 CreateID() {
   while (id == 0) {
     if (!Util::GetSecureRandomSequence(
             reinterpret_cast<char *>(&id), sizeof(id))) {
-      LOG(ERROR) << "GetSecureRandomSequence() failed. use rand()";
-      id = static_cast<uint64>(rand());
+      LOG(ERROR) << "GetSecureRandomSequence() failed. use random value.";
+      id = static_cast<uint64>(Util::Random(RAND_MAX));
     }
   }
 
@@ -135,14 +135,12 @@ bool UserDictionaryStorage::Load() {
 
   bool result = LoadInternal();
 
-  // Create sync dictionary when and only when the build target is official
-  // build because sync feature is not supported on OSS Mozc.
-#ifdef GOOGLE_JAPANESE_INPUT_BUILD
+  // Create sync dictionary when cloud sync feature is available.
+#ifdef ENABLE_CLOUD_SYNC
   if (!EnsureSyncDictionaryExists()) {
     return false;
   }
-#endif  // GOOGLE_JAPANESE_INPUT_BUILD
-
+#endif  // ENABLE_CLOUD_SYNC
 
   // Check dictionary id here. if id is 0, assign random ID.
   for (int i = 0; i < dictionaries_size(); ++i) {
@@ -182,6 +180,12 @@ bool UserDictionaryStorage::Save() {
       return false;
     }
   }
+
+  return SaveCore();
+}
+
+bool UserDictionaryStorage::SaveCore() {
+  last_error_type_ = USER_DICTIONARY_STORAGE_NO_ERROR;
 
   const string tmp_file_name = file_name_ + ".tmp";
   {

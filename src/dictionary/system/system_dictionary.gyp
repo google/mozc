@@ -76,7 +76,7 @@
       'dependencies': [
         '../../base/base.gyp:base_core',
         '../dictionary_base.gyp:text_dictionary_loader',
-        '../file/dictionary_file.gyp:dictionary_file_builder',
+        '../file/dictionary_file.gyp:codec',
         '../rx/rx_storage.gyp:rbx_array_builder',
         '../rx/rx_storage.gyp:rx_trie_builder',
         'system_dictionary_codec',

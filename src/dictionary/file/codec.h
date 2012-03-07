@@ -40,7 +40,6 @@
 #include "dictionary/file/section.h"
 
 namespace mozc {
-class OutputFileStream;
 
 
 class DictionaryFileCodec : public DictionaryFileCodecInterface {
@@ -50,7 +49,7 @@ class DictionaryFileCodec : public DictionaryFileCodecInterface {
   virtual ~DictionaryFileCodec();
 
   virtual void WriteSections(const vector<DictionaryFileSection> &sections,
-                             OutputFileStream *ofs) const;
+                             ostream *ofs) const;
 
   virtual bool ReadSections(const char *image, int length,
                             vector<DictionaryFileSection> *sections) const;
@@ -58,10 +57,10 @@ class DictionaryFileCodec : public DictionaryFileCodecInterface {
   virtual string GetSectionName(const string &name) const;
 
  private:
-  void WriteHeader(OutputFileStream *ofs) const;
+  void WriteHeader(ostream *ofs) const;
 
   void WriteSection(const DictionaryFileSection &section,
-                    OutputFileStream *ofs) const;
+                    ostream *ofs) const;
 
   // Magic value for simple file validation
   const int filemagic_;

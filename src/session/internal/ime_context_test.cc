@@ -29,13 +29,15 @@
 
 #include "session/internal/ime_context.h"
 
+#include <string>
+
 #include "composer/composer.h"
 #include "composer/table.h"
 #include "converter/converter_interface.h"
 #include "converter/converter_mock.h"
 #include "session/session_converter.h"
-#include "testing/base/public/gunit.h"
 #include "testing/base/public/googletest.h"
+#include "testing/base/public/gunit.h"
 
 namespace mozc {
 namespace session {
@@ -52,8 +54,6 @@ TEST(ImeContextTest, DefaultValues) {
   EXPECT_TRUE(NULL == context.mutable_converter());
 
   EXPECT_EQ(ImeContext::NONE, context.state());
-
-  EXPECT_TRUE(context.transform_table().empty());
 }
 
 TEST(ImeContextTest, BasicTest) {
@@ -123,13 +123,13 @@ TEST(ImeContextTest, CopyContext) {
   {
     ImeContext source;
     source.set_composer(new composer::Composer);
-    source.mutable_composer()->SetTable(&table);
+    source.mutable_composer()->SetTableForUnittest(&table);
     source.set_converter(
         new SessionConverter(ConverterFactory::GetConverter()));
 
     ImeContext destination;
     destination.set_composer(new composer::Composer);
-    destination.mutable_composer()->SetTable(&table);
+    destination.mutable_composer()->SetTableForUnittest(&table);
     destination.set_converter(
         new SessionConverter(ConverterFactory::GetConverter()));
 
@@ -153,13 +153,13 @@ TEST(ImeContextTest, CopyContext) {
   {
     ImeContext source;
     source.set_composer(new composer::Composer);
-    source.mutable_composer()->SetTable(&table);
+    source.mutable_composer()->SetTableForUnittest(&table);
     source.set_converter(
         new SessionConverter(ConverterFactory::GetConverter()));
 
     ImeContext destination;
     destination.set_composer(new composer::Composer);
-    destination.mutable_composer()->SetTable(&table);
+    destination.mutable_composer()->SetTableForUnittest(&table);
     destination.set_converter(
         new SessionConverter(ConverterFactory::GetConverter()));
 

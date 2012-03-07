@@ -43,8 +43,7 @@ int main(int argc, char **argv) {
   mozc::composer::Table table;
   table.LoadFromFile(FLAGS_table.c_str());
 
-  mozc::composer::Composition composition;
-  composition.SetTable(&table);
+  mozc::composer::Composition composition(&table);
 
   string command;
   string result;

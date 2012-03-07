@@ -177,7 +177,7 @@ bool IsSuggestionEnabled() {
       GET_CONFIG(use_dictionary_suggest) ||
       GET_CONFIG(use_realtime_conversion);
 }
-}   // namespace
+}  // namespace
 
 CommandRewriter::CommandRewriter() {}
 
@@ -194,27 +194,12 @@ void CommandRewriter::InsertIncognitoModeToggleCommand(
   DCHECK(candidate);
   if (GET_CONFIG(incognito_mode)) {
     candidate->value = kIncoginitoModeOff;
+    candidate->command = Segment::Candidate::DISABLE_INCOGNITO_MODE;
   } else {
     candidate->value = kIncoginitoModeOn;
+    candidate->command = Segment::Candidate::ENABLE_INCOGNITO_MODE;
   }
   candidate->content_value = candidate->value;
-}
-
-void CommandRewriter::ApplyIncognitoModeToggleCommand(
-    const Segment &segment) {
-  const Segment::Candidate &candidate = segment.candidate(0);
-
-  if (candidate.value != kIncoginitoModeOn &&
-      candidate.value != kIncoginitoModeOff &&
-      candidate.description != kDescription) {
-    return;
-  }
-
-
-  config::Config config;
-  config::ConfigHandler::GetConfig(&config);
-  config.set_incognito_mode(candidate.value == kIncoginitoModeOn);
-  config::ConfigHandler::SetConfig(config);
 }
 
 void CommandRewriter::InsertDisableAllSuggestionToggleCommand(
@@ -229,45 +214,16 @@ void CommandRewriter::InsertDisableAllSuggestionToggleCommand(
   DCHECK(candidate);
   if (GET_CONFIG(presentation_mode)) {
     candidate->value = kDisableAllSuggestionOff;
+    candidate->command = Segment::Candidate::DISABLE_PRESENTATION_MODE;
   } else {
     candidate->value = kDisableAllSuggestionOn;
+    candidate->command = Segment::Candidate::ENABLE_PRESENTATION_MODE;
   }
   candidate->content_value = candidate->value;
 }
 
-void CommandRewriter::ApplyDisableAllSuggestionToggleCommand(
-    const Segment &segment) {
-  if (!IsSuggestionEnabled()) {
-    return;
-  }
-  const Segment::Candidate &candidate = segment.candidate(0);
-
-  if (candidate.value != kDisableAllSuggestionOn &&
-      candidate.value != kDisableAllSuggestionOff &&
-      candidate.description != kDescription) {
-    return;
-  }
-
-  config::Config config;
-  config::ConfigHandler::GetConfig(&config);
-  config.set_presentation_mode(candidate.value == kDisableAllSuggestionOn);
-  config::ConfigHandler::SetConfig(config);
-}
-
 void CommandRewriter::Finish(Segments *segments) {
-  if (segments->conversion_segments_size() != 1 ||
-      segments->conversion_segment(0).candidates_size() == 0) {
-    return;
-  }
-
-  const Segment &segment = segments->conversion_segment(0);
-  const Segment::Candidate &candidate = segment.candidate(0);
-  if (!(candidate.attributes & Segment::Candidate::COMMAND_CANDIDATE)) {
-    return;
-  }
-
-  ApplyIncognitoModeToggleCommand(segment);
-  ApplyDisableAllSuggestionToggleCommand(segment);
+  // Do nothing in finish.
 }
 
 bool CommandRewriter::RewriteSegment(Segment *segment) const {

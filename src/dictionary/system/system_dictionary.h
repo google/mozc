@@ -38,6 +38,7 @@
 #include <vector>
 
 #include "base/base.h"
+#include "base/trie.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/rx/rx_trie.h"
 #include "dictionary/rx/rbx_array.h"
@@ -76,12 +77,19 @@ class SystemDictionary : public DictionaryInterface {
       const char *ptr, int len);
 
   // Predictive lookup
+  virtual Node *LookupPredictiveWithLimit(
+      const char *str, int size, const Limit &limit,
+      NodeAllocatorInterface *allocator) const;
   virtual Node *LookupPredictive(const char *str, int size,
                                  NodeAllocatorInterface *allocator) const;
   // Prefix lookup
   virtual Node *LookupPrefixWithLimit(
       const char *str, int size,
       const Limit &limit,
+      NodeAllocatorInterface *allocator) const;
+  // Prefix lookup
+  virtual Node *LookupPrefix(
+      const char *str, int size,
       NodeAllocatorInterface *allocator) const;
   // Value to key prefix lookup
   virtual Node *LookupReverse(const char *str, int size,
@@ -91,6 +99,8 @@ class SystemDictionary : public DictionaryInterface {
   virtual void ClearReverseLookupCache(NodeAllocatorInterface *allocator) const;
 
  private:
+  FRIEND_TEST(SystemDictionaryTest, TokenAfterSpellningToken);
+
   struct FilterInfo {
     enum Condition {
       NONE = 0,
@@ -104,9 +114,29 @@ class SystemDictionary : public DictionaryInterface {
     int value_id;
     int key_len_lower_limit;
     int key_len_upper_limit;
+    // Starting position for begin with filter.
+    // Assume that the target key length >= pos.
+    // Do not filter if -1.
+    // We will check the key is beginning with the string in the list.
+    //
+    // Example:
+    //  key_begin_with_pos: 3
+    //  key_begin_with_list: a, b, cd,
+    //
+    //  input:
+    //   abcd -> NG (input + 3 is 'd')
+    //   abca -> OK
+    //   abcc -> NG (input + 3 does not start with any of 'a', 'b', and 'cd')
+    //   abccd -> OK
+    //   abcaaaa -> OK
+    int key_begin_with_pos;
+    // This does not have the ownership
+    const Trie<string> *key_begin_with_trie;
     FilterInfo() : conditions(NONE), value_id(-1),
                    key_len_lower_limit(0),
-                   key_len_upper_limit(kint32max) {}
+                   key_len_upper_limit(kint32max),
+                   key_begin_with_pos(-1),
+                   key_begin_with_trie(NULL) {}
   };
 
   SystemDictionary();
@@ -162,6 +192,7 @@ class SystemDictionary : public DictionaryInterface {
   scoped_ptr<DictionaryFile> dictionary_file_;
   const uint32 *frequent_pos_;
   const dictionary::SystemDictionaryCodecInterface *codec_;
+  const Limit empty_limit_;
 
   DISALLOW_COPY_AND_ASSIGN(SystemDictionary);
 };

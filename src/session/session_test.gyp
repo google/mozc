@@ -42,7 +42,24 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../composer/composer.gyp:composer',
-        'session_base.gyp:genproto_session',
+        'session_base.gyp:request_test_util',
+        'session_base.gyp:session_protocol',
+      ],
+    },
+    {
+      'target_name': 'session_handler_test_util',
+      'type' : 'static_library',
+      'sources': [
+        'session_handler_test_util.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        '../config/config.gyp:config_handler',
+        '../config/config.gyp:config_protocol',
+        '../testing/testing.gyp:testing',
+        'session.gyp:session',
+        'session.gyp:session_handler',
+        'session_base.gyp:session_protocol',
       ],
     },
     {
@@ -72,6 +89,7 @@
         '../testing/testing.gyp:gtest_main',
         'session.gyp:session',
         'session.gyp:session_server',
+        'session_test_util',
       ],
       'variables': {
         'test_size': 'small',
@@ -84,6 +102,7 @@
         'session_regression_test.cc',
       ],
       'dependencies': [
+        ':session_test_util',
         '../testing/testing.gyp:gtest_main',
         'session.gyp:session',
         'session.gyp:session_server',
@@ -102,6 +121,7 @@
         '../testing/testing.gyp:gtest_main',
         'session.gyp:session',
         'session.gyp:session_server',
+        'session_handler_test_util',
       ],
       'variables': {
         'test_size': 'small',
@@ -116,6 +136,7 @@
       'dependencies': [
         '../testing/testing.gyp:gtest_main',
         'session.gyp:session',
+        'session_test_util',
       ],
     },
     {
@@ -123,17 +144,31 @@
       'type': 'executable',
       'sources': [
         'ime_switch_util_test.cc',
+        'key_event_util_test.cc',
+        'key_parser_test.cc',
+        'request_handler_test.cc',
         'session_observer_handler_test.cc',
         'session_usage_observer_test.cc',
         'session_watch_dog_test.cc',
       ],
       'dependencies': [
+        '../base/base.gyp:base',
         '../client/client.gyp:client_mock',
         '../testing/testing.gyp:gtest_main',
-        '../usage_stats/usage_stats.gyp:genproto_usage_stats',
+        '../usage_stats/usage_stats.gyp:usage_stats_protocol',
         'session.gyp:session',
         'session.gyp:session_server',
         'session_base.gyp:ime_switch_util',
+        'session_base.gyp:key_event_util',
+        'session_base.gyp:key_parser',
+        'session_base.gyp:session_protocol',
+      ],
+      'conditions': [
+        ['target_platform=="Android"', {
+          'sources!': [
+            'session_watch_dog_test.cc',
+          ],
+        }],
       ],
       'variables': {
         'test_size': 'small',
@@ -169,10 +204,14 @@
         'internal/keymap_test.cc',
         'internal/keymap_factory_test.cc',
         'internal/session_output_test.cc',
+        'internal/key_event_transformer_test.cc',
       ],
       'dependencies': [
+        '../base/base.gyp:base',
+        '../config/config.gyp:config_protocol',
         '../testing/testing.gyp:gtest_main',
         'session.gyp:session',
+        'session_base.gyp:session_protocol',
       ],
       'variables': {
         'test_size': 'small',
@@ -189,6 +228,7 @@
         'session.gyp:random_keyevents_generator',
         'session.gyp:session',
         'session.gyp:session_server',
+        'session_handler_test_util',
       ],
       'variables': {
         'test_size': 'small',
@@ -222,12 +262,62 @@
         'test_size': 'large',
       },
     },
+    {
+      'target_name': 'generic_storage_manager_test',
+      'type': 'executable',
+      'sources': [
+        'generic_storage_manager_test.cc'
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        '../testing/testing.gyp:gtest_main',
+        'session_base.gyp:generic_storage_manager',
+      ],
+      'variables': {
+        'test_size': 'small',
+      },
+    },
+    {
+      'target_name': 'request_test_util_test',
+      'type': 'executable',
+      'sources': [
+        'request_test_util_test.cc'
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        '../testing/testing.gyp:gtest_main',
+        'session_base.gyp:request_test_util',
+      ],
+      'variables': {
+        'test_size': 'small',
+      },
+    },
+    {
+      'target_name': 'session_handler_stress_test_main',
+      'type': 'executable',
+      'sources': [
+        'session_handler_stress_test_main.cc'
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        '../config/config.gyp:config_handler',
+        '../config/config.gyp:config_protocol',
+        '../testing/testing.gyp:gtest_main',
+        'session.gyp:random_keyevents_generator',
+        'session.gyp:session_handler',
+        'session_base.gyp:session_protocol',
+        'session_handler_test_util',
+      ],
+    },
+
     # Test cases meta target: this target is referred from gyp/tests.gyp
     {
       'target_name': 'session_all_test',
       'type': 'none',
       'dependencies': [
+        'generic_storage_manager_test',
         'random_keyevents_generator_test',
+        'request_test_util_test',
         'session_converter_stress_test',
         'session_converter_test',
         'session_handler_stress_test',

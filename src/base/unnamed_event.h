@@ -38,22 +38,21 @@
 
 namespace mozc {
 
-// UnnamedEvent is a simple event object shared
-// by multiple threads
+// UnnamedEvent is a simple event object shared by multiple threads.
 class UnnamedEvent {
  public:
   UnnamedEvent();
   virtual ~UnnamedEvent();
 
-  // Wait an event. Can set a maximum timeout value.
+  // Waits an event. Can set a maximum timeout value.
   // Return true if the event object receives a notification event from
   // different thread.
   bool Wait(int msec);
 
-  // Raise a notification event
+  // Raises a notification event.
   bool Notify();
 
-  // return true if this event object is available
+  // Returns true if this event object is available.
   bool IsAvailable() const;
 
  private:
@@ -62,6 +61,7 @@ class UnnamedEvent {
 #else
   pthread_cond_t cond_;
   pthread_mutex_t mutex_;
+  bool notified_;
 #endif
 };
 }  // namespace mozc
