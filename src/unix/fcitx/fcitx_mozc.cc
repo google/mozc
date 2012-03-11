@@ -317,7 +317,7 @@ void FcitxMozc::DrawPreeditInfo()
             FcitxInputStateSetShowCursor(input, true);
         
         for (int i = 0; i < preedit_info_->preedit.size(); i ++) {
-            if (ic && (ic->contextCaps & CAPACITY_PREEDIT) == 0)
+            if (ic && ((ic->contextCaps & CAPACITY_PREEDIT) == 0 || !profile->bUsePreedit))
                 FcitxMessagesAddMessageAtLast(preedit, preedit_info_->preedit[i].type, "%s", preedit_info_->preedit[i].str.c_str());
             FcitxMessagesAddMessageAtLast(clientpreedit, preedit_info_->preedit[i].type, "%s", preedit_info_->preedit[i].str.c_str());
         }

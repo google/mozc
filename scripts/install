@@ -7,7 +7,7 @@ for mofile in out_linux/Debug/obj/gen/unix/fcitx/po/*.mo
 do
     filename=`basename $mofile`
     lang=${filename/.mo/}
-    install -m 644 "$mofile" "${pkgdir}/usr/share/locale/$lang/LC_MESSAGES/fcitx-mozc.mo"
+    install -D -m 644 "$mofile" "${pkgdir}/usr/share/locale/$lang/LC_MESSAGES/fcitx-mozc.mo"
 done
 
 install -D -m 755 out_linux/${_bldtype}/mozc_server "${pkgdir}/usr/lib/mozc/mozc_server"
