@@ -303,6 +303,7 @@ void FcitxMozc::ClearAll()
 
 void FcitxMozc::DrawPreeditInfo()
 {
+    FcitxProfile* profile = FcitxInstanceGetProfile(instance);
     FcitxMessages* preedit = FcitxInputStateGetPreedit(input);
     FcitxMessages* clientpreedit = FcitxInputStateGetClientPreedit(input);
     FcitxMessagesSetMessageCount(preedit, 0);
@@ -312,7 +313,7 @@ void FcitxMozc::DrawPreeditInfo()
     {
         VLOG ( 1 ) << "DrawPreeditInfo: cursor=" << preedit_info_->cursor_pos;
         
-        if (ic && (ic->contextCaps & CAPACITY_PREEDIT) == 0)
+        if (ic && ((ic->contextCaps & CAPACITY_PREEDIT) == 0 || !profile->bUsePreedit))
             FcitxInputStateSetShowCursor(input, true);
         
         for (int i = 0; i < preedit_info_->preedit.size(); i ++) {
@@ -320,7 +321,7 @@ void FcitxMozc::DrawPreeditInfo()
                 FcitxMessagesAddMessageAtLast(preedit, preedit_info_->preedit[i].type, "%s", preedit_info_->preedit[i].str.c_str());
             FcitxMessagesAddMessageAtLast(clientpreedit, preedit_info_->preedit[i].type, "%s", preedit_info_->preedit[i].str.c_str());
         }
-        if (ic && (ic->contextCaps & CAPACITY_PREEDIT) == 0)
+        if (ic && ((ic->contextCaps & CAPACITY_PREEDIT) == 0 || !profile->bUsePreedit))
             FcitxInputStateSetCursorPos(input, preedit_info_->cursor_pos);
         FcitxInputStateSetClientCursorPos(input, preedit_info_->cursor_pos);
     }
