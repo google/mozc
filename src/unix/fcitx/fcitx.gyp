@@ -65,6 +65,7 @@
             '<(gen_out_dir)/po/ja_JP.mo',
           ],
           'action': [
+            'sh',
             './gen_fcitx_mozc_i18n.sh',
             '<(gen_out_dir)/po',
           ],
