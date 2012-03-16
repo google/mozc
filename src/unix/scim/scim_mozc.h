@@ -91,7 +91,6 @@ class ScimMozc : public scim::IMEngineInstanceBase {
 
   // Sets the url to be opened by the default browser.
   virtual void SetUrl(const string &url);
-    scim::Property Property(const char[] arg1, const char* arg2,  arg3, const char* arg4);
 
  private:
   friend class ScimMozcTest;
