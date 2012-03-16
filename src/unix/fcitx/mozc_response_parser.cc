@@ -251,7 +251,7 @@ void MozcResponseParser::ParsePreedit(const mozc::commands::Preedit &preedit,
     for (int i = 0; i < preedit.segment_size(); ++i) {
         const mozc::commands::Preedit_Segment &segment = preedit.segment(i);
         const std::string &str = segment.value();
-        FcitxMessageType type;
+        FcitxMessageType type = MSG_INPUT;
 
         switch (segment.annotation()) {
         case mozc::commands::Preedit_Segment::NONE:
@@ -262,7 +262,6 @@ void MozcResponseParser::ParsePreedit(const mozc::commands::Preedit &preedit,
             break;
         case mozc::commands::Preedit_Segment::HIGHLIGHT:
             type = (FcitxMessageType) (MSG_CODE | MSG_NOUNDERLINE | MSG_HIGHLIGHT);
-
             break;
         }
         s += str;
