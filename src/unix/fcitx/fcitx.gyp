@@ -62,7 +62,7 @@
           'outputs': [
             '<(gen_out_dir)/po/zh_CN.mo',
             '<(gen_out_dir)/po/zh_TW.mo',
-            '<(gen_out_dir)/po/ja_JP.mo',
+            '<(gen_out_dir)/po/ja.mo',
           ],
           'action': [
             'sh',
