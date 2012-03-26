@@ -116,8 +116,9 @@ bool SessionConverter::ConvertWithPreferences(
   segments_->set_request_type(Segments::CONVERSION);
   SetConversionPreferences(preferences, segments_.get());
 
-  if (!converter_->StartConversionWithComposer(segments_.get(), &composer)) {
-    LOG(WARNING) << "StartConversionWithComposer() failed";
+  if (!converter_->StartConversionForRequest(
+          ConversionRequest(&composer), segments_.get())) {
+    LOG(WARNING) << "StartConversionForRequest() failed";
     return false;
   }
 
@@ -224,8 +225,8 @@ bool SessionConverter::ConvertToTransliteration(
     if (segments_->conversion_segments_size() != 1) {
       string composition;
       GetPreedit(0, segments_->conversion_segments_size(), &composition);
-      converter_->ResizeSegment(segments_.get(), 0,
-                                Util::CharsLen(composition));
+      converter_->ResizeSegment(segments_.get(), ConversionRequest(&composer),
+                                0, Util::CharsLen(composition));
       UpdateCandidateList();
     }
 
@@ -270,8 +271,8 @@ bool SessionConverter::ConvertToHalfWidth(const composer::Composer &composer) {
     // converter/converter.cc to enable to accept mozc::Segment::FIXED
     // from the session layer.
     if (segments_->conversion_segments_size() != 1) {
-      converter_->ResizeSegment(segments_.get(), 0,
-                                Util::CharsLen(composition));
+      converter_->ResizeSegment(segments_.get(), ConversionRequest(&composer),
+                                0, Util::CharsLen(composition));
       UpdateCandidateList();
     }
   } else {
@@ -322,8 +323,8 @@ bool SessionConverter::SwitchKanaType(const composer::Composer &composer) {
     if (segments_->conversion_segments_size() != 1) {
       string composition;
       GetPreedit(0, segments_->conversion_segments_size(), &composition);
-      converter_->ResizeSegment(segments_.get(), 0,
-                                Util::CharsLen(composition));
+      converter_->ResizeSegment(segments_.get(), ConversionRequest(&composer),
+                                0, Util::CharsLen(composition));
       UpdateCandidateList();
     }
 
@@ -872,7 +873,7 @@ void SessionConverter::SegmentFocusLeftEdge() {
   UpdateCandidateList();
 }
 
-void SessionConverter::SegmentWidthExpand() {
+void SessionConverter::SegmentWidthExpand(const composer::Composer &composer) {
   DCHECK(CheckState(PREDICTION | CONVERSION));
   candidate_list_visible_ = false;
   if (CheckState(PREDICTION)) {
@@ -880,14 +881,15 @@ void SessionConverter::SegmentWidthExpand() {
   }
   ResetResult();
 
-  if (!converter_->ResizeSegment(segments_.get(), segment_index_, 1)) {
+  if (!converter_->ResizeSegment(segments_.get(), ConversionRequest(&composer),
+                                 segment_index_, 1)) {
     return;
   }
 
   UpdateCandidateList();
 }
 
-void SessionConverter::SegmentWidthShrink() {
+void SessionConverter::SegmentWidthShrink(const composer::Composer &composer) {
   DCHECK(CheckState(PREDICTION | CONVERSION));
   candidate_list_visible_ = false;
   if (CheckState(PREDICTION)) {
@@ -895,7 +897,8 @@ void SessionConverter::SegmentWidthShrink() {
   }
   ResetResult();
 
-  if (!converter_->ResizeSegment(segments_.get(), segment_index_, -1)) {
+  if (!converter_->ResizeSegment(segments_.get(), ConversionRequest(&composer),
+                                 segment_index_, -1)) {
     return;
   }
 
@@ -1122,22 +1125,27 @@ void SessionConverter::SetConversionPreferences(
   segments->set_max_history_segments_size(preferences.max_history_size);
 }
 
+// TODO(team): Strictly speaking, copy source must be of type SessionConverter
+// because we cannot create an exact copy from another implementation of
+// SessionConverterInterface other than SessionConverter. The design should be
+// reconsidered.
 void SessionConverter::CopyFrom(const SessionConverterInterface &src) {
   Reset();
 
-  Segments segments;
-  src.GetSegments(&segments);
-  SetSegments(segments);
-
+  // Copy the members in order of their declarations.
   state_ = src.GetState();
+  // TODO(team): copy of |converter_| member.
+  // We cannot copy the member converter_ from SessionConverterInterface becase
+  // it doesn't (and shouldn't) define a method like GetConverter(). At the
+  // moment it's ok because the current design guarantees that the converter is
+  // singleton. However, we should refactor such bad design; see also the
+  // comment right above.
+  src.GetSegments(segments_.get());
   segment_index_ = src.GetSegmentIndex();
+  previous_suggestions_.CopyFrom(src.GetPreviousSuggestions());
   conversion_preferences_ = src.conversion_preferences();
   operation_preferences_ = src.GetOperationPreferences();
   result_.CopyFrom(src.GetResult());
-
-  const Segment &previous_suggestions =
-      src.GetPreviousSuggestions();
-  previous_suggestions_.CopyFrom(previous_suggestions);
 
   if (CheckState(SUGGESTION | PREDICTION | CONVERSION)) {
     UpdateCandidateList();

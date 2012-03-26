@@ -38,6 +38,7 @@
 
 namespace mozc {
 
+class ConversionRequest;
 class Segment;
 class Segments;
 
@@ -49,8 +50,10 @@ class SymbolRewriter: public RewriterInterface  {
   virtual int capability() const;
 
   virtual bool Rewrite(Segments *segments) const;
+  virtual bool RewriteForRequest(const ConversionRequest &request,
+                                 Segments *segments) const;
 
-private:
+ private:
   FRIEND_TEST(SymbolRewriterTest, TriggerRewriteEntireTest);
   FRIEND_TEST(SymbolRewriterTest, TriggerRewriteEachTest);
   FRIEND_TEST(SymbolRewriterTest, TriggerRewriteDescriptionTest);
@@ -87,7 +90,8 @@ private:
       size_t size, Segment *segment);
 
   // Insert symbols using connected all segments.
-  static bool RewriteEntireCandidate(Segments *segments);
+  static bool RewriteEntireCandidate(const ConversionRequest &request,
+                                     Segments *segments);
 
   // Insert symbols using single segment.
   static bool RewriteEachCandidate(Segments *segments);

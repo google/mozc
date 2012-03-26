@@ -56,9 +56,14 @@ class SyncStatusManagerInterface {
   virtual void SetSyncGlobalStatus(
       const commands::CloudSyncStatus::SyncGlobalStatus global_status) = 0;
 
-  // Add a |sync_error| item, with error_code and a timestamp.
+  // Add a |sync_error| item, with error_code.
   virtual void AddSyncError(
       const commands::CloudSyncStatus::ErrorCode error_code) = 0;
+
+  // Add a |sync_error| item, with error_code and a timestamp.
+  virtual void AddSyncErrorWithTimestamp(
+      const commands::CloudSyncStatus::ErrorCode error_code,
+      const int64 timestamp) = 0;
 
   // Clear everything other than |sync_global_status| and
   // |last_synced_timestamp|.

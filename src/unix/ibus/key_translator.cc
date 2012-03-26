@@ -52,7 +52,8 @@ const struct SpecialKeyMap {
   {IBUS_Henkan, mozc::commands::KeyEvent::HENKAN},
   {IBUS_Muhenkan, mozc::commands::KeyEvent::MUHENKAN},
   {IBUS_Hiragana, mozc::commands::KeyEvent::KANA},
-  {IBUS_Katakana, mozc::commands::KeyEvent::KANA},
+  {IBUS_Hiragana_Katakana, mozc::commands::KeyEvent::KANA},
+  {IBUS_Katakana, mozc::commands::KeyEvent::KATAKANA},
   {IBUS_Eisu_toggle, mozc::commands::KeyEvent::EISU},
   {IBUS_Home, mozc::commands::KeyEvent::HOME},
   {IBUS_End, mozc::commands::KeyEvent::END},
@@ -372,6 +373,15 @@ bool KeyTranslator::Translate(guint keyval,
   DCHECK(out_event) << "out_event is NULL";
   out_event->Clear();
 
+  // Due to historical reasons, many linux ditributions set Hiragana_Katakana
+  // key as Hiragana key (which is Katkana key with shift modifier). So, we
+  // translate Hiragana_Katanaka key as Hiragana key by mapping table, and
+  // Shift + Hiragana_Katakana key as Katakana key by functionally.
+  // TODO(nona): Fix process modifier to handle right shift
+  if (IsHiraganaKatakanaKeyWithShift(keyval, keycode, modifiers)) {
+    modifiers &= ~IBUS_SHIFT_MASK;
+    keyval = IBUS_Katakana;
+  }
   string kana_key_string;
   if ((method == config::Config::KANA) && IsKanaAvailable(
           keyval, keycode, modifiers, layout_is_jp, &kana_key_string)) {
@@ -447,6 +457,12 @@ bool KeyTranslator::IsSpecialKey(guint keyval,
                                  guint keycode,
                                  guint modifiers) const {
   return special_key_map_.find(keyval) != special_key_map_.end();
+}
+
+bool KeyTranslator::IsHiraganaKatakanaKeyWithShift(guint keyval,
+                                                   guint keycode,
+                                                   guint modifiers) {
+  return ((modifiers & IBUS_SHIFT_MASK) && (keyval == IBUS_Hiragana_Katakana));
 }
 
 bool KeyTranslator::IsKanaAvailable(guint keyval,

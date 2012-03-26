@@ -35,6 +35,7 @@
 
 #include <QtGui/QtGui>
 #include "base/base.h"
+#include "base/const.h"
 #include "base/password_manager.h"
 #include "base/run_level.h"
 #include "base/util.h"
@@ -72,6 +73,7 @@ int RunUpdateDialog(int argc, char *argv[]);
 #ifdef OS_MACOSX
 // Confirmation Dialog is used for the update dialog on Mac only.
 int RunConfirmationDialog(int argc, char *argv[]);
+int RunPrelaunchProcesses(int argc, char *argv[]);
 #endif  // OS_MACOSX
 
 #ifdef OS_MACOSX
@@ -83,7 +85,6 @@ char *strdup_with_new(const char *str) {
   v[len] = '\0';
   return v;
 }
-
 }  // namespace
 #endif  // OS_MACOSX
 
@@ -93,7 +94,8 @@ int RunMozcTool(int argc, char *argv[]) {
   // Here we read the flags by using --fromenv option
   scoped_array<char *> tmp(new char * [2]);
   tmp[0] = strdup_with_new(argv[0]);
-  tmp[1] = strdup_with_new("--fromenv=mode,error_type,confirmation_type");
+  tmp[1] = strdup_with_new(
+       "--fromenv=mode,error_type,confirmation_type,register_prelauncher");
   int new_argc = 2;
   char **new_argv = tmp.get();
   InitGoogleWithBreakPad(new_argv[0], &new_argc, &new_argv, false);
@@ -117,6 +119,11 @@ int RunMozcTool(int argc, char *argv[]) {
     FLAGS_mode = "error_message_dialog";
   } else if (binary_name == "WordRegisterDialog") {
     FLAGS_mode = "word_register_dialog";
+  } else if (binary_name == kProductPrefix "Prelauncher") {
+    // The binary name of prelauncher is user visible in
+    // "System Preferences" -> "Accounts" -> "Login items".
+    // So we set kProductPrefix to the binary name.
+    FLAGS_mode = "prelauncher";
 #ifdef USE_ZINNIA
   } else if (binary_name == "HandWriting") {
     FLAGS_mode = "hand_writing";
@@ -178,6 +185,9 @@ int RunMozcTool(int argc, char *argv[]) {
   } else if (FLAGS_mode == "confirmation_dialog") {
     // Confirmation Dialog is used for the update dialog on Mac only.
     return RunConfirmationDialog(argc, argv);
+  } else if (FLAGS_mode == "prelauncher") {
+    // Prelauncher is used on Mac only.
+    return RunPrelaunchProcesses(argc, argv);
 #endif  // OS_MACOSX
   } else {
     LOG(ERROR) << "Unknown mode: " << FLAGS_mode;

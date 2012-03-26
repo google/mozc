@@ -41,7 +41,7 @@
 #include "base/version.h"
 #include "ipc/ipc.h"
 #include "ipc/named_event.h"
-#include "session/commands.pb.h"
+#include "renderer/renderer_command.pb.h"
 
 #ifdef OS_MACOSX
 #include "base/mac_util.h"
@@ -235,7 +235,9 @@ class RendererLauncher : public RendererLauncherInterface,
         return;
     }
 
-    Process::LaunchErrorMessageDialog(error_type);
+    if (!suppress_error_dialog_) {
+      Process::LaunchErrorMessageDialog(error_type);
+    }
   }
 
   void SetPendingCommand(const commands::RendererCommand &command) {
@@ -249,11 +251,16 @@ class RendererLauncher : public RendererLauncherInterface,
     }
   }
 
+  void set_suppress_error_dialog(bool suppress) {
+    suppress_error_dialog_ = suppress;
+  }
+
   RendererLauncher()
       : renderer_status_(RendererLauncher::RENDERER_UNKNOWN),
         last_launch_time_(0),
         error_times_(0),
         disable_renderer_path_check_(false),
+        suppress_error_dialog_(false),
         ipc_client_factory_interface_(NULL) {}
 
   virtual ~RendererLauncher() {
@@ -300,6 +307,7 @@ class RendererLauncher : public RendererLauncherInterface,
   volatile uint64 last_launch_time_;
   volatile size_t error_times_;
   bool disable_renderer_path_check_;
+  bool suppress_error_dialog_;
   IPCClientFactoryInterface *ipc_client_factory_interface_;
   scoped_ptr<commands::RendererCommand> pending_command_;
   Mutex pending_command_mutex_;
@@ -393,6 +401,14 @@ bool RendererClient::Shutdown(bool force) {
 
 void RendererClient::DisableRendererServerCheck() {
   disable_renderer_path_check_ = true;
+}
+
+void RendererClient::set_suppress_error_dialog(bool suppress) {
+  if (renderer_launcher_interface_ == NULL) {
+    LOG(ERROR) << "RendererLauncher is NULL";
+    return;
+  }
+  renderer_launcher_interface_->set_suppress_error_dialog(suppress);
 }
 
 bool RendererClient::ExecCommand(const commands::RendererCommand &command) {

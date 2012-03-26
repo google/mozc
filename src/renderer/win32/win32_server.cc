@@ -32,8 +32,8 @@
 #include "base/base.h"
 #include "base/run_level.h"
 #include "base/util.h"
+#include "renderer/renderer_command.pb.h"
 #include "renderer/win32/window_manager.h"
-#include "session/commands.pb.h"
 
 namespace mozc {
 namespace renderer {

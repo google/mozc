@@ -37,8 +37,13 @@
 #ifdef OS_WINDOWS
 #include <hash_map>
 #include <hash_set>
+#if _MSC_VER < 1310 || _MSC_VER >= 1600
+using std::hash_map;
+using std::hash_set;
+#else
 using stdext::hash_map;
 using stdext::hash_set;
+#endif
 #else  // not OS_WINDOWS
 
 

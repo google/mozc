@@ -37,6 +37,7 @@
 
 namespace mozc {
 
+class ConversionRequest;
 class Segments;
 class Segment;
 class LRUStorage;
@@ -47,6 +48,8 @@ class UserBoundaryHistoryRewriter: public RewriterInterface {
   virtual ~UserBoundaryHistoryRewriter();
 
   virtual bool Rewrite(Segments *segments) const;
+  virtual bool RewriteForRequest(const ConversionRequest &request,
+                                 Segments *segments) const;
 
   virtual void Finish(Segments *segments);
 
@@ -61,7 +64,8 @@ class UserBoundaryHistoryRewriter: public RewriterInterface {
   static LRUStorage *GetStorage();
 
  private:
-  bool ResizeOrInsert(Segments *segments, int type) const;
+  bool ResizeOrInsert(Segments *segments, const ConversionRequest &request,
+                      int type) const;
 
   void Insert(const vector<const Segment *> &segs1,
               const vector<const Segment *> &segs2);

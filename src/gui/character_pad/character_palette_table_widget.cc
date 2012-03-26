@@ -54,6 +54,7 @@ void CharacterPaletteTableWidget::mouseReleaseEvent(QMouseEvent *event) {
     return;
   }
   SelectionHandler::Select(item->text());
+  emit itemSelected(item);
 }
 
 void CharacterPaletteTableWidget::mouseMoveEvent(QMouseEvent *event) {

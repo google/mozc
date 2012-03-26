@@ -72,6 +72,9 @@ class RendererLauncherInterface {
   virtual void SetPendingCommand(
       const commands::RendererCommand &command) = 0;
 
+  // Sets the flag of error dialog suppression.
+  virtual void set_suppress_error_dialog(bool suppress) = 0;
+
   RendererLauncherInterface() {}
   virtual ~RendererLauncherInterface() {}
 };
@@ -114,6 +117,9 @@ class RendererClient : public RendererInterface {
   // Don't check the renderer server path.
   // DO NOT call it except for testing
   void DisableRendererServerCheck();
+
+  // Sets the flag of error dialog suppression.
+  void set_suppress_error_dialog(bool suppress);
 
  private:
   bool is_window_visible_;

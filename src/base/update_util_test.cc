@@ -32,11 +32,12 @@
 #include "base/update_util.h"
 #include "base/version.h"
 #include "testing/base/public/gunit.h"
-#ifdef OS_WINDOWS
+#if defined(OS_WINDOWS) && defined(GOOGLE_JAPANESE_INPUT_BUILD)
 #include "shared/opensource/patching/sidestep/cross/auto_testing_hook.h"
-#endif
+#endif  // OS_WINDOWS && GOOGLE_JAPANESE_INPUT_BUILD
 
 #ifdef OS_WINDOWS
+#ifdef GOOGLE_JAPANESE_INPUT_BUILD
 
 namespace {
 HKEY g_created_key;
@@ -171,12 +172,36 @@ TEST_F(UpdateUtilTestWin, IsNewVersionAvailable) {
   g_query_value_returned = L"1000.0.0.0";
   EXPECT_TRUE(UpdateUtil::IsNewVersionAvailable());
 }
+
 }  // namespace mozc
+
+#else
+
+// On Non-GoogleJapaneseInput build, all the methods related to Omaha
+// must never be functional.
+namespace mozc {
+
+TEST(UpdateUtilTestWin, WriteActiveUsageInfo) {
+  EXPECT_FALSE(UpdateUtil::WriteActiveUsageInfo());
+}
+
+TEST(UpdateUtilTestWin, GetAvailableVersion) {
+  EXPECT_EQ("", UpdateUtil::GetAvailableVersion());
+}
+
+TEST(UpdateUtilTestWin, IsNewVersionAvailable) {
+  EXPECT_FALSE(UpdateUtil::IsNewVersionAvailable());
+}
+
+}  // namespace mozc
+
+#endif  // branding (GOOGLE_JAPANESE_INPUT_BUILD or not)
 #endif  // OS_WINDOWS
 
-
 namespace mozc {
+
 TEST(UpdateUtilTest, GetCurrentVersion) {
   EXPECT_EQ(UpdateUtil::GetCurrentVersion(), Version::GetMozcVersion());
 }
+
 }  // namespace mozc

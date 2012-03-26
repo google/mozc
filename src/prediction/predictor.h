@@ -30,6 +30,7 @@
 #ifndef MOZC_PREDICTION_PREDICTOR_H_
 #define MOZC_PREDICTION_PREDICTOR_H_
 
+#include "converter/conversion_request.h"
 #include "prediction/predictor_interface.h"
 
 namespace mozc {
@@ -41,6 +42,9 @@ class BasePredictor : public PredictorInterface {
 
   // Overwrite predictor
   virtual bool Predict(Segments *segments) const = 0;
+
+  virtual bool PredictForRequest(const ConversionRequest &request,
+                                 Segments *segments) const = 0;
 
   // Hook(s) for all mutable operations
   virtual void Finish(Segments *segments);
@@ -63,7 +67,17 @@ class BasePredictor : public PredictorInterface {
 
 class DefaultPredictor : public BasePredictor {
  public:
+  DefaultPredictor();
+
+  virtual ~DefaultPredictor();
+
+  virtual bool PredictForRequest(const ConversionRequest &request,
+                                 Segments *segments) const;
+
   virtual bool Predict(Segments *segments) const;
+
+ private:
+  const ConversionRequest empty_request_;
 };
 
 

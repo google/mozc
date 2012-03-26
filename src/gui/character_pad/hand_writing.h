@@ -43,12 +43,9 @@
 #include "gui/character_pad/ui_hand_writing.h"
 
 namespace mozc {
-
-#ifdef ENABLE_CLOUD_HANDWRITING
 namespace client {
 class ClientInterface;
 }
-#endif  // ENABLE_CLOUD_HANDWRITING
 
 namespace gui {
 class HandWriting : public QMainWindow,
@@ -66,6 +63,7 @@ class HandWriting : public QMainWindow,
   void revert();
   void updateUIStatus();
   void tryToUpdateHandwritingSource(int index);
+  void itemSelected(const QListWidgetItem *item);
 
  protected:
   void resizeEvent(QResizeEvent *event);
@@ -76,6 +74,8 @@ class HandWriting : public QMainWindow,
 
   void updateHandwritingSource(int index);
 
+  scoped_ptr<client::ClientInterface> client_;
+  bool usage_stats_enabled_;
 // Do not depend on CloudHandwriting class to keep dependencies
 // minimum.
 // TODO(yukawa): Remove this #ifdef when CloudHandwriting class
@@ -87,7 +87,6 @@ class HandWriting : public QMainWindow,
   // necessary and updates the current config as
   // |config.set_allow_cloud_handwriting(true)| when it is allowed.
   bool TryToEnableCloudHandwriting();
-  scoped_ptr<client::ClientInterface> client_;
   mozc::handwriting::CloudHandwriting cloud_handwriting_;
 #endif  // ENABLE_CLOUD_HANDWRITING
   mozc::handwriting::ZinniaHandwriting zinnia_handwriting_;

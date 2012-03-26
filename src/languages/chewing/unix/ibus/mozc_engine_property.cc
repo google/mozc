@@ -52,7 +52,7 @@ const MozcEngineProperty kMozcEngineProperties[] = {
     commands::HIRAGANA,
     "CompositionMode.Chinese",
     "Chinese",
-    "\xe9\x85\xB7",  //U+9177 "chewing" kanji
+    "\xe9\x85\xB7",  // "酷" U+9177 "chewing" kanji
     "hiragana.png",
   },
   {
@@ -71,13 +71,17 @@ const size_t kMozcEnginePropertiesSize = arraysize(kMozcEngineProperties);
 const commands::CompositionMode kMozcEngineInitialCompositionMode =
     commands::HIRAGANA;
 
+const MozcEngineSwitchProperty kMozcEngineSwitchProperties[] = {};
+const size_t kMozcEngineSwitchPropertiesSize =
+    ARRAYSIZE(kMozcEngineSwitchProperties);
+
 // TODO(mukai): Fix the following properties when we suppport
 // non-ChromeOS Linux.
 const MozcEngineToolProperty kMozcEngineToolProperties[] = {
   {
     "Tool.ConfigDialog",
     "config_dialog",
-    "Property",
+    "Properties",
     "properties.png",
   },
   {

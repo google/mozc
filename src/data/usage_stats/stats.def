@@ -434,6 +434,8 @@ ConfigAllowCloudHandwriting
 ConfigUseLocalUsageDictionary
 # Use web usage dictionary
 ConfigUseWebUsageDictionary
+# Prelauncher is enabled or not
+PrelauncherEnabled
 
 # Need to show the help page after install (TSF is disabled)
 PostInstallShowPageRequired
@@ -471,6 +473,15 @@ UserSegmentHistoryEntrySize
 TotalPhysicalMemory
 # Web service entry size of web usage dictionary
 WebServiceEntrySize
+
+# The count of the handwriting tool opened
+HandwritingOpen
+# The count of the commit from the handwriting tool
+HandwritingCommit
+# The count of the character palette opened
+CharacterPaletteOpen
+# The count of the commit from the character palette
+CharacterPaletteCommit
 
 # for windows
 

@@ -58,6 +58,7 @@ const wchar_t kDefaultKeyboardLayout[] = L"00000411";
 const char kCompanyNameInEnglish[] = "Google";
 const char kEventPathPrefix[] = "Global\\GoogleJapaneseInput.event.";
 const char kMutexPathPrefix[] = "Global\\GoogleJapaneseInput.mutex.";
+const char kMozcServerName[] = "GoogleIMEJaConverter.exe";
 const char kIMEFile[] = "GIMEJa.ime";
 const char kMozcBroker32[] = "GoogleIMEJaBroker32.exe";
 const char kMozcBroker64[] = "GoogleIMEJaBroker64.exe";
@@ -94,6 +95,7 @@ const wchar_t kElevatedProcessDisabledKey[]
 const char kCompanyNameInEnglish[] = "Mozc Project";
 const char kEventPathPrefix[] = "Global\\Mozc.event.";
 const char kMutexPathPrefix[] = "Global\\Mozc.mutex.";
+const char kMozcServerName[] = "mozc_server.exe";
 const char kIMEFile[] = "mozc_ja.ime";
 const char kMozcBroker32[] = "mozc_broker32.exe";
 const char kMozcBroker64[] = "mozc_broker64.exe";
@@ -121,12 +123,19 @@ const wchar_t kElevatedProcessDisabledKey[]
     = L"Software\\Policies\\Mozc Project\\Mozc\\Preferences";
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 #elif defined(OS_MACOSX)
+const char kMozcServerName[] = kProductPrefix "Converter.app";
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
 const char kEventPathPrefix[] = "GoogleJapaneseInput.event.";
 #else
 const char kEventPathPrefix[] = "Mozc.event.";
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
-#else  // OS_LINUX
+#else  // OS_LINUX including OS_CHROMEOS and OS_ANDROID
+#ifdef MOZC_LANGUAGE_SUFFIX_FOR_LINUX
+const char kMozcServerName[] =
+    "mozc_server" MOZC_LANGUAGE_SUFFIX_FOR_LINUX;
+#else
+const char kMozcServerName[] = "mozc_server";  // Japanese
+#endif
 const char kEventPathPrefix[] = "mozc.event.";
 const char kMozcTool[] = "mozc_tool";
 #ifdef MOZC_SERVER_DIRECTORY

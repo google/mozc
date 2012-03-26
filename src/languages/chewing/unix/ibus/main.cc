@@ -35,11 +35,9 @@
 #include "base/logging.h"
 #include "base/version.h"
 #include "config/config_handler.h"
-#include "languages/chewing/lang_dep_spec.h"
 #include "languages/chewing/chewing_session_factory.h"
 #include "languages/chewing/unix/ibus/config_updater.h"
 #include "languages/chewing/unix/ibus/main.h"
-#include "languages/global_language_spec.h"
 #include "session/session_factory_manager.h"
 #include "unix/ibus/config_util.h"
 #include "unix/ibus/mozc_engine.h"
@@ -137,8 +135,6 @@ void InitIBusComponent(bool executed_by_ibus_daemon) {
 
 int main(gint argc, gchar **argv) {
   InitGoogle(argv[0], &argc, &argv, true);
-  mozc::chewing::LangDepSpecChewing lang_spec;
-  mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(&lang_spec);
 #ifdef OS_CHROMEOS
   mozc::chewing::ChewingSessionFactory session_factory;
   mozc::session::SessionFactoryManager::SetSessionFactory(&session_factory);

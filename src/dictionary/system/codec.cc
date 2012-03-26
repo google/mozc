@@ -246,14 +246,9 @@ void SystemDictionaryCodec::DecodeKey(const string &src, string *dst) const {
 void SystemDictionaryCodec::EncodeValue(
     const string &src, string *dst) const {
   DCHECK(dst);
-  const char *cstr = src.c_str();
-  const char *end = src.c_str() + src.size();
-  int pos = 0;
-  while (pos < src.length()) {
-    size_t mblen;
+  for (ConstChar32Iterator iter(src); !iter.Done(); iter.Next()) {
     COMPILE_ASSERT(sizeof(uint32) == sizeof(char32), check_sizeof_char32);
-    const uint32 c = Util::UTF8ToUCS4(&cstr[pos], end, &mblen);
-    pos += mblen;
+    const uint32 c = iter.Get();
     if (c >= 0x3041 && c < 0x3095) {
       // Hiragana(85 characters) are encoded into 1 byte.
       dst->push_back(c - 0x3041 + kValueHiraganaOffset);

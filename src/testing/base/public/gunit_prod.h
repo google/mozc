@@ -30,14 +30,13 @@
 #ifndef MOZC_TESTING_BASE_PUBLIC_GUNIT_PROD_H_
 #define MOZC_TESTING_BASE_PUBLIC_GUNIT_PROD_H_
 
-#if defined(OS_CHROMEOS) || defined(__native_client__)
-// gtest is omitted from Chromium OS and NaCl builds temporarily because
-// unittest tests are not integrated to the automated test framework yet.
-// Just use the following macro definition.
+// TODO(yukawa): undef MOZC_ENABLE_UNITTEST for NaCl build in the gyp layer.
+#if !defined(MOZC_ENABLE_UNITTEST) || defined(__native_client__)
+// Just use the following macro definition when unittest is not available.
 #define FRIEND_TEST(test_case_name, test_name)\
 friend class test_case_name##_##test_name##_Test
 #else
 #include "gtest/gtest_prod.h"
-#endif  // OS_CHROMEOS || __native_client__
+#endif  // !MOZC_ENABLE_UNITTEST || defined(__native_client__)
 
 #endif  // MOZC_TESTING_BASE_PUBLIC_GUNIT_PROD_H_

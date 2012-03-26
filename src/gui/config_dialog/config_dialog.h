@@ -109,6 +109,7 @@ class ConfigDialog : public QDialog,
 #ifdef ENABLE_CLOUD_SYNC
   void UpdateSyncToggleButtonText();
   void StopSync();
+  void StopSyncForcely();
   void LaunchAuthDialog();
   void AddLastSyncedDateTime(uint64 timestamp, QString *output) const;
   void SyncToggleButtonClickedImpl();

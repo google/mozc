@@ -68,9 +68,8 @@ bool KeyEventUtil::GetKeyInformation(const KeyEvent &key_event,
 
   const uint16 modifier_keys = static_cast<uint16>(GetModifiers(key_event));
   const uint16 special_key = key_event.has_special_key() ?
-      key_event.special_key() : commands::KeyEvent::NO_SPECIALKEY;
-  const uint32 key_code = key_event.has_key_code() ?
-      key_event.key_code() : 0;
+      key_event.special_key() : KeyEvent::NO_SPECIALKEY;
+  const uint32 key_code = key_event.has_key_code() ? key_event.key_code() : 0;
 
   // Make sure the translation from the obsolete spesification.
   // key_code should no longer contain control characters.
@@ -86,61 +85,130 @@ bool KeyEventUtil::GetKeyInformation(const KeyEvent &key_event,
   return true;
 }
 
-void KeyEventUtil::NormalizeCaps(const commands::KeyEvent &key_event,
-                                 commands::KeyEvent *new_key_event) {
+void KeyEventUtil::NormalizeCaps(const KeyEvent &key_event,
+                                 KeyEvent *new_key_event) {
   DCHECK(new_key_event);
 
-  const uint32 kIgnorableModifierMask = commands::KeyEvent::CAPS;
+  const uint32 kIgnorableModifierMask = KeyEvent::CAPS;
 
-  NormalizeKeyEventInternal(key_event, kIgnorableModifierMask, new_key_event);
+  NormalizeModifiersInternal(key_event, kIgnorableModifierMask, new_key_event);
 }
 
-void KeyEventUtil::NormalizeKeyEvent(const commands::KeyEvent &key_event,
-                                     commands::KeyEvent *new_key_event) {
+void KeyEventUtil::NormalizeModifiers(const KeyEvent &key_event,
+                                      KeyEvent *new_key_event) {
   DCHECK(new_key_event);
-
-  const uint32 kIgnorableModifierMask =
-      (commands::KeyEvent::CAPS |
-       commands::KeyEvent::LEFT_ALT | commands::KeyEvent::RIGHT_ALT |
-       commands::KeyEvent::LEFT_CTRL | commands::KeyEvent::RIGHT_CTRL |
-       commands::KeyEvent::LEFT_SHIFT | commands::KeyEvent::RIGHT_SHIFT);
-
-  NormalizeKeyEventInternal(key_event, kIgnorableModifierMask, new_key_event);
-}
-
-void KeyEventUtil::NormalizeKeyEventInternal(
-    const commands::KeyEvent &key_event, uint32 ignorable_modifier_mask,
-    commands::KeyEvent *new_key_event) {
-  DCHECK(new_key_event);
-  new_key_event->CopyFrom(key_event);
 
   // CTRL (or ALT, SHIFT) should be set on modifier_keys when
   // LEFT (or RIGHT) ctrl is set.
   // LEFT_CTRL (or others) is not handled on Japanese, so we remove these.
+  const uint32 kIgnorableModifierMask =
+      (KeyEvent::CAPS |
+       KeyEvent::LEFT_ALT | KeyEvent::RIGHT_ALT |
+       KeyEvent::LEFT_CTRL | KeyEvent::RIGHT_CTRL |
+       KeyEvent::LEFT_SHIFT | KeyEvent::RIGHT_SHIFT);
 
-  // Remvoes ignorable keys.
-  new_key_event->clear_modifier_keys();
-  for (size_t i = 0; i < key_event.modifier_keys_size(); ++i) {
-    const commands::KeyEvent::ModifierKey mod_key = key_event.modifier_keys(i);
-    if (!(ignorable_modifier_mask & mod_key)) {
-      new_key_event->add_modifier_keys(mod_key);
-    }
-  }
+  NormalizeModifiersInternal(key_event, kIgnorableModifierMask, new_key_event);
+}
+
+void KeyEventUtil::NormalizeModifiersInternal(
+    const KeyEvent &key_event, uint32 ignorable_modifier_mask,
+    KeyEvent *new_key_event) {
+  DCHECK(new_key_event);
+
+  RemoveModifiers(key_event, ignorable_modifier_mask, new_key_event);
 
   // Reverts the flip of alphabetical key events caused by CapsLock.
   const uint32 original_modifiers = GetModifiers(key_event);
-  if ((original_modifiers & commands::KeyEvent::CAPS) &&
+  if ((original_modifiers & KeyEvent::CAPS) &&
       key_event.has_key_code()) {
-    const int key_code = key_event.key_code();
+    const uint32 key_code = key_event.key_code();
     if ('A' <= key_code && key_code <= 'Z') {
-      new_key_event->set_key_code(key_code - 'A' + 'a');
+      new_key_event->set_key_code(key_code + ('a' - 'A'));
     } else if ('a' <= key_code && key_code <= 'z') {
-      new_key_event->set_key_code(key_code - 'a' + 'A');
+      new_key_event->set_key_code(key_code + ('A' - 'a'));
     }
   }
 }
 
-bool KeyEventUtil::MaybeGetKeyStub(const commands::KeyEvent &key_event,
+void KeyEventUtil::NormalizeNumpadKey(const KeyEvent &key_event,
+                                      KeyEvent *new_key_event) {
+  DCHECK(new_key_event);
+  new_key_event->CopyFrom(key_event);
+
+  if (!IsNumpadKey(*new_key_event)) {
+    return;
+  }
+  const KeyEvent::SpecialKey numpad_key = new_key_event->special_key();
+
+  // KeyEvent::SEPARATOR is transformed to Enter.
+  if (numpad_key == KeyEvent::SEPARATOR) {
+    new_key_event->set_special_key(KeyEvent::ENTER);
+    return;
+  }
+
+  new_key_event->clear_special_key();
+
+  // Handles number keys
+  if (KeyEvent::NUMPAD0 <= numpad_key && numpad_key <= KeyEvent::NUMPAD9) {
+    new_key_event->set_key_code(
+        static_cast<uint32>('0' + (numpad_key - KeyEvent::NUMPAD0)));
+    return;
+  }
+
+  char new_key_code;
+  switch (numpad_key) {
+    case KeyEvent::MULTIPLY:
+      new_key_code = '*';
+      break;
+    case KeyEvent::ADD:
+      new_key_code = '+';
+      break;
+    case KeyEvent::SUBTRACT:
+      new_key_code = '-';
+      break;
+    case KeyEvent::DECIMAL:
+      new_key_code = '.';
+      break;
+    case KeyEvent::DIVIDE:
+      new_key_code = '/';
+      break;
+    case KeyEvent::EQUALS:
+      new_key_code = '=';
+      break;
+    default:
+      LOG(ERROR) << "Should not reach here.";
+      return;
+  }
+
+  new_key_event->set_key_code(static_cast<uint32>(new_key_code));
+}
+
+void KeyEventUtil::RemoveModifiers(const KeyEvent &key_event,
+                                   uint32 remove_modifiers,
+                                   KeyEvent *new_key_event) {
+  DCHECK(new_key_event);
+  new_key_event->CopyFrom(key_event);
+
+  if (HasAlt(remove_modifiers)) {
+    remove_modifiers |= KeyEvent::LEFT_ALT | KeyEvent::RIGHT_ALT;
+  }
+  if (HasCtrl(remove_modifiers)) {
+    remove_modifiers |= KeyEvent::LEFT_CTRL | KeyEvent::RIGHT_CTRL;
+  }
+  if (HasShift(remove_modifiers)) {
+    remove_modifiers |= KeyEvent::LEFT_SHIFT | KeyEvent::RIGHT_SHIFT;
+  }
+
+  new_key_event->clear_modifier_keys();
+  for (size_t i = 0; i < key_event.modifier_keys_size(); ++i) {
+    const KeyEvent::ModifierKey mod_key = key_event.modifier_keys(i);
+    if (!(remove_modifiers & mod_key)) {
+      new_key_event->add_modifier_keys(mod_key);
+    }
+  }
+}
+
+bool KeyEventUtil::MaybeGetKeyStub(const KeyEvent &key_event,
                                    KeyInformation *key) {
   DCHECK(key);
 
@@ -158,8 +226,8 @@ bool KeyEventUtil::MaybeGetKeyStub(const commands::KeyEvent &key_event,
     return false;
   }
 
-  commands::KeyEvent stub_key_event;
-  stub_key_event.set_special_key(commands::KeyEvent::ASCII);
+  KeyEvent stub_key_event;
+  stub_key_event.set_special_key(KeyEvent::ASCII);
   if (!GetKeyInformation(stub_key_event, key)) {
     return false;
   }
@@ -227,7 +295,7 @@ bool KeyEventUtil::IsAltCtrlShift(uint32 modifiers) {
       ((modifiers & (kAltMask | kCtrlMask | kShiftMask)) == modifiers);
 }
 
-bool KeyEventUtil::IsLowerAlphabet(const commands::KeyEvent &key_event) {
+bool KeyEventUtil::IsLowerAlphabet(const KeyEvent &key_event) {
   if (!key_event.has_key_code()) {
     return false;
   }
@@ -243,7 +311,7 @@ bool KeyEventUtil::IsLowerAlphabet(const commands::KeyEvent &key_event) {
   }
 }
 
-bool KeyEventUtil::IsUpperAlphabet(const commands::KeyEvent &key_event) {
+bool KeyEventUtil::IsUpperAlphabet(const KeyEvent &key_event) {
   if (!key_event.has_key_code()) {
     return false;
   }
@@ -257,6 +325,15 @@ bool KeyEventUtil::IsUpperAlphabet(const commands::KeyEvent &key_event) {
   } else {
     return isupper(key_code);
   }
+}
+
+bool KeyEventUtil::IsNumpadKey(const KeyEvent &key_event) {
+  if (!key_event.has_special_key()) {
+    return false;
+  }
+
+  const KeyEvent::SpecialKey special_key = key_event.special_key();
+  return (KeyEvent::NUMPAD0 <= special_key && special_key <= KeyEvent::EQUALS);
 }
 
 }  // namespace mozc

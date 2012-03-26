@@ -39,7 +39,6 @@
 #include "converter/converter.h"
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter.h"
-#include "converter/quality_regression_test_data.h"
 #include "converter/quality_regression_util.h"
 #include "dictionary/dictionary_interface.h"
 #include "prediction/dictionary_predictor.h"
@@ -49,6 +48,9 @@
 DECLARE_string(test_tmpdir);
 
 using mozc::quality_regression::QualityRegressionUtil;
+
+// Test data is provided in external file.
+extern const char *kTestData[];
 
 namespace mozc {
 namespace {
@@ -77,7 +79,7 @@ class QualityRegressionTest : public testing::Test {
     map<string, vector<pair<float, string> > > results;
 
     int testcase_count = 0;
-    for (size_t i = 0; i < ARRAYSIZE(kTestData); ++i) {
+    for (size_t i = 0; kTestData[i]; ++i) {
       QualityRegressionUtil::TestItem item;
       CHECK(item.ParseFromTSV(kTestData[i]));
       if (!(item.platform & platform)) {

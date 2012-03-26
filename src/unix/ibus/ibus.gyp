@@ -35,7 +35,6 @@
       '../../composer/composer.gyp:composer',
       '../../converter/converter.gyp:converter',
       '../../dictionary/dictionary.gyp:dictionary',
-      '../../languages/japanese/japanese.gyp:language_dependent_spec_japanese',
       '../../prediction/prediction.gyp:prediction',
       '../../rewriter/rewriter.gyp:rewriter',
       '../../session/session.gyp:session',
@@ -120,6 +119,7 @@
       'sources': [
         'engine_registrar.cc',
         'key_translator.cc',
+        'message_translator.cc',
         'mozc_engine.cc',
         'path_util.cc',
       ],
@@ -139,10 +139,15 @@
           'dependencies+': [
             '<@(ibus_standalone_dependencies)',
           ],
-        },{
+        },{ # else (i.e. chromeos != 1)
           'dependencies+': [
             '<@(ibus_client_dependencies)',
           ]
+        }],
+        ['enable_gtk_renderer==1', {
+          'dependencies+': [
+            '../../renderer/renderer.gyp:renderer',
+          ],
         }],
        ],
     },
@@ -201,7 +206,6 @@
       ],
       'dependencies': [
         '../../base/base.gyp:base',
-        '../../languages/japanese/japanese.gyp:language_dependent_spec_japanese',
         'gen_mozc_xml',
         'ibus_mozc_lib',
         'ibus_mozc_metadata',
@@ -217,6 +221,11 @@
            '<@(ibus_client_dependencies)',
          ],
         }],
+        ['enable_gtk_renderer==1', {
+         'dependencies+': [
+            '../../renderer/renderer.gyp:renderer',
+         ],
+        }],
        ],
     },
     {
@@ -225,12 +234,14 @@
       'sources': [
         'config_util_test.cc',
         'key_translator_test.cc',
+        'message_translator_test.cc',
         'mozc_engine_test.cc',
         'path_util_test.cc',
       ],
       'dependencies': [
         '../../base/base.gyp:base',
         '../../client/client.gyp:client_mock',
+        '../../session/session_base.gyp:key_event_util',
         '../../testing/testing.gyp:gtest_main',
         'ibus_mozc_lib',
         'ibus_mozc_metadata',
@@ -246,6 +257,11 @@
          ],
          'dependencies': [
            '../../client/client.gyp:client_mock',
+         ],
+        }],
+        ['enable_gtk_renderer==1', {
+         'dependencies': [
+            '../../renderer/renderer.gyp:renderer',
          ],
         }],
       ],

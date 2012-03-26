@@ -46,6 +46,7 @@
 #include "base/mmap.h"
 #include "base/singleton.h"
 #include "base/util.h"
+#include "data_manager/user_dictionary_manager.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
 
@@ -157,7 +158,10 @@ bool ConvertEntryInternal(
   }
 
   // validation
-  if (!UserDictionaryUtil::IsValidEntry(*to)) {
+  // TODO(noriyukit): Use dependency injection for UserPOS.
+  const UserPOSInterface *user_pos =
+      UserDictionaryManager::GetUserDictionaryManager()->GetUserPOS();
+  if (!UserDictionaryUtil::IsValidEntry(*user_pos, *to)) {
     return false;
   }
 

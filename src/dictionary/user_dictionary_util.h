@@ -40,6 +40,8 @@
 
 namespace mozc {
 
+class UserPOSInterface;
+
 class UserDictionaryUtil {
  public:
   // Return true if all characters in the given string is a legitimate
@@ -56,8 +58,9 @@ class UserDictionaryUtil {
   // have a legitimate value. It checks for an empty string, an
   // invalid character and so on. If the function returns false, we
   // shouldn't accept the data being passed into the dictionary.
-  static bool IsValidEntry(const UserDictionaryStorage::UserDictionaryEntry
-                           &entry);
+  static bool IsValidEntry(
+      const UserPOSInterface &user_pos,
+      const UserDictionaryStorage::UserDictionaryEntry &entry);
 
   // Sanitize a dictionary entry so that it's acceptable to the
   // class. A user of the class may want this function to make sure an

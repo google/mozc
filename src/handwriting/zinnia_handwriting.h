@@ -51,9 +51,10 @@ class ZinniaHandwriting : public HandwritingInterface {
   ZinniaHandwriting();
   virtual ~ZinniaHandwriting() {}
 
-  void Recognize(const Strokes &strokes, vector<string> *candidates) const;
+  HandwritingStatus Recognize(const Strokes &strokes,
+                              vector<string> *candidates) const;
 
-  void Commit(const Strokes &strokes, const string &result);
+  HandwritingStatus Commit(const Strokes &strokes, const string &result);
 
  private:
   scoped_ptr<zinnia::Recognizer> recognizer_;
@@ -61,6 +62,7 @@ class ZinniaHandwriting : public HandwritingInterface {
   scoped_ptr<Mmap<char> > mmap_;
   size_t width_;
   size_t height_;
+  bool zinnia_model_error_;
 
   DISALLOW_COPY_AND_ASSIGN(ZinniaHandwriting);
 };

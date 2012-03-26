@@ -52,7 +52,7 @@ class ScimKeyTranslator {
 
   // Converts scim_key into Mozc key code and stores them on out_translated.
   // scim_key must satisfy the following precondition: CanConvert(scim_key)
-  void Translate(const scim::KeyEvent &key,
+  void Translate(const scim::KeyEvent &original_key,
                  mozc::config::Config::PreeditMethod method,
                  mozc::commands::KeyEvent *out_event) const;
 
@@ -74,6 +74,13 @@ class ScimKeyTranslator {
   // Returns true iff scim_key is special key such as ENTER, ESC, or PAGE_UP.
   bool IsSpecialKey(const scim::KeyEvent &scim_key,
                     mozc::commands::KeyEvent::SpecialKey *out) const;
+
+  // Returns a normalized key event iff key is HiraganaKatakana with shift
+  // modifier. See http://code.google.com/p/mozc/issues/detail?id=136 for
+  // the background information.
+  // Otherwire returns the original key.
+  static scim::KeyEvent NormalizeHiraganaKatakanaKeyWithShift(
+      const scim::KeyEvent &key);
 
   // Returns true iff scim_key is special key that can be converted to ASCII.
   // For example, scim::SCIM_KEY_KP_0 (numeric keypad zero) in SCIM can be

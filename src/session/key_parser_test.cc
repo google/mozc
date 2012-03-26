@@ -32,20 +32,11 @@
 
 #include "base/base.h"
 #include "session/commands.pb.h"
+#include "session/key_event_util.h"
 #include "session/key_parser.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
-
-namespace {
-uint32 UnifyModifiers(commands::KeyEvent key_event) {
-  uint32 modifiers = 0;
-  for (size_t i = 0; i < key_event.modifier_keys_size(); ++i) {
-    modifiers |= key_event.modifier_keys(i);
-  }
-  return modifiers;
-}
-}  // namespace
 
 TEST(KeyParserTest, KeyCode) {
   commands::KeyEvent key_event;
@@ -93,7 +84,7 @@ TEST(KeyParserTest, ModifierKeys) {
     SCOPED_TRACE(kTestData[i].first);
     commands::KeyEvent key_event;
     EXPECT_TRUE(KeyParser::ParseKey(kTestData[i].first, &key_event));
-    EXPECT_EQ(kTestData[i].second, UnifyModifiers(key_event));
+    EXPECT_EQ(kTestData[i].second, KeyEventUtil::GetModifiers(key_event));
   }
 }
 
@@ -103,7 +94,7 @@ TEST(KeyParserTest, MultipleModifierKeys) {
   EXPECT_EQ(3, key_event.modifier_keys_size());
   EXPECT_EQ((commands::KeyEvent::CTRL | commands::KeyEvent::LEFT_CTRL |
              commands::KeyEvent::RIGHT_CTRL),
-            UnifyModifiers(key_event));
+            KeyEventUtil::GetModifiers(key_event));
 }
 
 TEST(KeyParserTest, SpecialKeys) {
@@ -203,17 +194,17 @@ TEST(KeyParserTest, Combination) {
   EXPECT_EQ('a', key_event.key_code());
   EXPECT_EQ(commands::KeyEvent::LEFT_SHIFT | commands::KeyEvent::SHIFT |
             commands::KeyEvent::CTRL,
-            UnifyModifiers(key_event));
+            KeyEventUtil::GetModifiers(key_event));
 
   EXPECT_TRUE(KeyParser::ParseKey("rightalt On", &key_event));
   EXPECT_EQ(commands::KeyEvent::ON, key_event.special_key());
   EXPECT_EQ(commands::KeyEvent::RIGHT_ALT | commands::KeyEvent::ALT,
-            UnifyModifiers(key_event));
+            KeyEventUtil::GetModifiers(key_event));
 
   EXPECT_TRUE(KeyParser::ParseKey("SHIFT on a", &key_event));
   EXPECT_EQ('a', key_event.key_code());
   EXPECT_EQ(commands::KeyEvent::ON, key_event.special_key());
-  EXPECT_EQ(commands::KeyEvent::SHIFT, UnifyModifiers(key_event));
+  EXPECT_EQ(commands::KeyEvent::SHIFT, KeyEventUtil::GetModifiers(key_event));
 }
 
 }  // namespace mozc

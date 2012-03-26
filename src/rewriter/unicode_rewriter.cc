@@ -30,8 +30,10 @@
 #include "rewriter/unicode_rewriter.h"
 
 #include <cctype>
+#include <string>
 
 #include "base/util.h"
+#include "converter/conversion_request.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
 
@@ -87,6 +89,11 @@ bool IsAcceptableUnicode(uint32 ucs4) {
 }  // namespace
 
 bool UnicodeRewriter::Rewrite(Segments *segments) const {
+  return RewriteForRequest(ConversionRequest(), segments);
+}
+
+bool UnicodeRewriter::RewriteForRequest(const ConversionRequest &request,
+                                        Segments *segments) const {
   string key;
   DCHECK(segments);
   for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
@@ -125,7 +132,7 @@ bool UnicodeRewriter::Rewrite(Segments *segments) const {
     }
     const uint32 resize_len = Util::CharsLen(key) -
         Util::CharsLen(segments->conversion_segment(0).key());
-    if (!converter->ResizeSegment(segments, 0, resize_len)) {
+    if (!converter->ResizeSegment(segments, request, 0, resize_len)) {
       return false;
     }
   }

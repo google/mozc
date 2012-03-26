@@ -115,6 +115,7 @@
         '../config/config.gyp:config_handler',
         '../config/config.gyp:config_protocol',
         '../usage_stats/usage_stats.gyp:usage_stats_protocol',
+        'session_base.gyp:key_event_util',
         'session_base.gyp:keymap',
         'session_base.gyp:keymap_factory',
         'session_base.gyp:session_protocol',

@@ -41,7 +41,6 @@
 #include "config/config.pb.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
-#include "converter/character_form_manager.h"
 #include "rewriter/rewriter_interface.h"
 #include "rewriter/embedded_dictionary.h"
 #include "session/commands.pb.h"
@@ -114,15 +113,11 @@ const string SymbolRewriter::GetDescription(
 // return true key has no-hiragana
 // static function
 bool SymbolRewriter::IsSymbol(const string &key) {
-  const char *begin  = key.data();
-  const char *end = key.data() + key.size();
-  while (begin < end) {
-    size_t mblen = 0;
-    const char32 ucs4 = Util::UTF8ToUCS4(begin, end, &mblen);
+  for (ConstChar32Iterator iter(key); !iter.Done(); iter.Next()) {
+    const char32 ucs4 = iter.Get();
     if (ucs4 >= 0x3041 && ucs4 <= 0x309F) {  // hiragana
       return false;
     }
-    begin += mblen;
   }
   return true;
 }
@@ -322,7 +317,8 @@ bool SymbolRewriter::RewriteEachCandidate(Segments *segments) {
 }
 
 // static function
-bool SymbolRewriter::RewriteEntireCandidate(Segments *segments) {
+bool SymbolRewriter::RewriteEntireCandidate(const ConversionRequest &request,
+                                            Segments *segments) {
   string key;
   for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
     key += segments->conversion_segment(i).key();
@@ -346,7 +342,8 @@ bool SymbolRewriter::RewriteEntireCandidate(Segments *segments) {
         Util::CharsLen(segments->conversion_segment(0).key());
     const int diff = static_cast<int>(all_length - first_length);
     if (diff > 0) {
-      ConverterFactory::GetConverter()->ResizeSegment(segments, 0, diff);
+      ConverterFactory::GetConverter()->ResizeSegment(
+          segments, request, 0, diff);
     }
   } else {
     InsertCandidates(token->value, token->value_size,
@@ -366,6 +363,11 @@ int SymbolRewriter::capability() const {
 }
 
 bool SymbolRewriter::Rewrite(Segments *segments) const {
+  return RewriteForRequest(ConversionRequest(), segments);
+}
+
+bool SymbolRewriter::RewriteForRequest(const ConversionRequest &request,
+                                       Segments *segments) const {
   if (!GET_CONFIG(use_symbol_conversion)) {
     VLOG(2) << "no use_symbol_conversion";
     return false;
@@ -374,7 +376,7 @@ bool SymbolRewriter::Rewrite(Segments *segments) const {
   // apply entire candidate first, as we want to
   // find character combinations first, e.g.,
   // "－＞" -> "→"
-  return (RewriteEntireCandidate(segments) ||
+  return (RewriteEntireCandidate(request, segments) ||
           RewriteEachCandidate(segments));
 }
 }  // namespace mozc

@@ -209,7 +209,7 @@ skk.mode.Preedit.prototype.prepareForKey = function(keyEvent) {
   }
 
   if (skk.util.isEnter(keyEvent.key)) {
-    chrome.experimental.input.commitText(
+    chrome.input.ime.commitText(
         {
           contextID: this.ime_.context.contextID,
           text: this.preedit_ + this.composer_.undetermined
@@ -308,7 +308,7 @@ skk.mode.Conversion.prototype.setPreedit = function(preedit) {
  */
 skk.mode.Conversion.prototype.setCandidates = function(candidates) {
   this.candidates_ = candidates;
-  chrome.experimental.input.setCandidates(
+  chrome.input.ime.setCandidates(
       {
         contextID: this.ime_.context.contextID,
         candidates: this.candidates_.map(
@@ -381,7 +381,7 @@ skk.mode.Conversion.prototype.suspend = function() {
 skk.mode.Conversion.prototype.commitCandidate = function(candidateId) {
   var selection = this.candidates_[candidateId];
   this.ime_.dict.addHistory(this.base_, this.stem_, selection);
-  chrome.experimental.input.commitText(
+  chrome.input.ime.commitText(
       {
         contextID: this.ime_.context.contextID,
         text: selection
@@ -409,7 +409,7 @@ skk.mode.Conversion.prototype.prepareForKey = function(keyEvent) {
     this.selectedIndex_ += skk.NUM_CANDIDATES;
     // TODO(sekia): implement word registering
     this.selectedIndex_ %= this.candidates_.length;
-    chrome.experimental.input.setCursorPosition(
+    chrome.input.ime.setCursorPosition(
         {
           contextID: this.ime_.context.contextID,
           candidateID: this.selectedIndex_
@@ -427,7 +427,7 @@ skk.mode.Conversion.prototype.prepareForKey = function(keyEvent) {
       return null;
     }
 
-    chrome.experimental.input.setCursorPosition(
+    chrome.input.ime.setCursorPosition(
         {
           contextID: this.ime_.context.contextID,
           candidateID: this.selectedIndex_
@@ -468,7 +468,7 @@ skk.mode.Conversion.prototype.addKey = function(keyEvent) {
  * Displays candidate window.
  */
 skk.mode.Conversion.prototype.showCandidateWindow = function() {
-  chrome.experimental.input.setCandidateWindowProperties(
+  chrome.input.ime.setCandidateWindowProperties(
       {
         engineID: this.ime_.engineID,
         properties: { visible: true }
@@ -479,7 +479,7 @@ skk.mode.Conversion.prototype.showCandidateWindow = function() {
  * Hides candidate window.
  */
 skk.mode.Conversion.prototype.hideCandidateWindow = function() {
-  chrome.experimental.input.setCandidateWindowProperties(
+  chrome.input.ime.setCandidateWindowProperties(
       {
         engineID: this.ime_.engineID,
         properties: { visible: false }

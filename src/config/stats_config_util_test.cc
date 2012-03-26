@@ -35,7 +35,7 @@
 #include "base/util.h"
 #include "config/stats_config_util.h"
 #include "testing/base/public/gunit.h"
-#ifdef OS_WINDOWS
+#if defined(OS_WINDOWS) && defined(GOOGLE_JAPANESE_INPUT_BUILD)
 #include "shared/opensource/patching/sidestep/cross/auto_testing_hook.h"
 #endif
 
@@ -686,9 +686,6 @@ TEST_F(StatsConfigUtilTestWin, IsEnabled) {
 }  // namespace mozc
 #endif  // OS_WINDOWS
 
-#ifdef CHANNEL_DEV
-#else  // CHANNEL_DEV
-#endif  // CHANNEL_DEV
 
 #ifdef OS_LINUX
 TEST(StatsConfigUtilTestLinux, DefaultValueTest) {

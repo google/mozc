@@ -74,6 +74,7 @@
         '../ipc/ipc.gyp:ipc',
         '../session/session_base.gyp:session_protocol',
         '../net/net.gyp:net',
+        'renderer_protocol',
       ],
       'conditions': [
         ['enable_webservice_infolist==1', {
@@ -94,7 +95,6 @@
       ],
       'dependencies': [
         '../ipc/ipc.gyp:ipc_test_util',
-        '../languages/japanese/japanese.gyp:language_dependent_spec_japanese',
         '../testing/testing.gyp:gtest_main',
         'renderer',
         'table_layout',
@@ -124,6 +124,7 @@
       'target_name': 'genproto_renderer',
       'type': 'none',
       'sources': [
+        'renderer_command.proto',
         'renderer_style.proto',
       ],
       'includes': [
@@ -135,10 +136,13 @@
       'type': 'static_library',
       'hard_dependency': 1,
       'sources': [
+        '<(proto_out_dir)/<(relative_dir)/renderer_command.pb.cc',
         '<(proto_out_dir)/<(relative_dir)/renderer_style.pb.cc',
       ],
       'dependencies': [
+        '../config/config.gyp:config_protocol',
         '../protobuf/protobuf.gyp:protobuf',
+        '../session/session_base.gyp:session_protocol',
         'genproto_renderer'
       ],
       'export_dependent_settings': [
@@ -160,12 +164,18 @@
         }],
         ['OS=="win"', {
           'dependencies': [
+            'win32_font_util_test',
             'win32_renderer_util_test',
           ],
         }],
         ['OS=="mac"', {
           'dependencies': [
             'renderer_style_handler_test',
+          ],
+        }],
+        ['enable_gtk_renderer==1', {
+          'dependencies': [
+            'gtk_renderer_test',
           ],
         }],
       ],
@@ -188,6 +198,7 @@
             '../net/net.gyp:jsonpath',
             '../session/session_base.gyp:session_protocol',
             '<(DEPTH)/third_party/jsoncpp/jsoncpp.gyp:jsoncpp',
+            'renderer_protocol',
           ],
           'include_dirs' : [
             '../libxml/libxml2-2.7.7/include',
@@ -200,7 +211,6 @@
             'webservice_infolist_handler_test.cc',
           ],
           'dependencies': [
-            '../languages/japanese/japanese.gyp:language_dependent_spec_japanese',
             '../net/net.gyp:http_client_mock',
             '../testing/testing.gyp:gtest_main',
             'renderer',
@@ -227,6 +237,33 @@
           ],
         },
         {
+          'target_name': 'win32_font_util',
+          'type': 'static_library',
+          'sources': [
+            'win32/win32_font_util.cc',
+          ],
+          'dependencies': [
+            '../base/base.gyp:base',
+            '../config/config.gyp:config_protocol',
+            '../session/session_base.gyp:session_protocol',
+            'renderer_protocol',
+          ],
+        },
+        {
+          'target_name': 'win32_font_util_test',
+          'type': 'executable',
+          'sources': [
+            'win32/win32_font_util_test.cc',
+          ],
+          'dependencies': [
+            '../testing/testing.gyp:gtest_main',
+            'win32_font_util',
+          ],
+          'variables': {
+            'test_size': 'small',
+          },
+        },
+        {
           'target_name': 'win32_renderer_util',
           'type': 'static_library',
           'sources': [
@@ -234,9 +271,11 @@
           ],
           'dependencies': [
             '../base/base.gyp:base',
-            '../session/session_base.gyp:session_protocol',
             '../config/config.gyp:config_protocol',
+            '../session/session_base.gyp:session_protocol',
             '../win32/base/win32_base.gyp:ime_base',
+            'renderer_protocol',
+            'win32_font_util',
           ],
         },
         {
@@ -363,6 +402,81 @@
                 '--branding', '<(branding)',
               ],
             },
+          ],
+        },
+      ],
+    }],
+    ['enable_gtk_renderer==1', {
+      'targets': [
+        {
+          'target_name': 'mozc_renderer_lib',
+          'type': 'static_library',
+          'sources': [
+            '<(proto_out_dir)/<(relative_dir)/renderer_style.pb.cc',
+            'renderer_style_handler.cc',
+            'unix/cairo_factory.cc',
+            'unix/cairo_wrapper.cc',
+            'unix/candidate_window.cc',
+            'unix/draw_tool.cc',
+            'unix/font_spec.cc',
+            'unix/gtk_window_base.cc',
+            'unix/gtk_wrapper.cc',
+            'unix/infolist_window.cc',
+            'unix/pango_wrapper.cc',
+            'unix/text_renderer.cc',
+            'unix/unix_renderer.cc',
+            'unix/unix_server.cc',
+            'unix/window_manager.cc',
+          ],
+          'dependencies': [
+            '../base/base.gyp:base',
+            '../client/client.gyp:client',
+            '../config/config.gyp:genproto_config',
+            '../config/config.gyp:stats_config_util',
+            '../ipc/ipc.gyp:ipc',
+            '../session/session_base.gyp:genproto_session',
+            'genproto_renderer',
+            'renderer',
+            'table_layout',
+            'window_util',
+          ],
+          'includes': [
+            'unix/gtk_libraries.gypi',
+          ],
+        },
+        {
+          'target_name': 'mozc_renderer',
+          'type': 'executable',
+          'sources': [
+            'mozc_renderer_main.cc',
+          ],
+          'dependencies': [
+            'mozc_renderer_lib',
+          ],
+          'includes': [
+            'unix/gtk_libraries.gypi',
+          ],
+        },
+        {
+          'target_name': 'gtk_renderer_test',
+          'type': 'executable',
+          'sources': [
+            'unix/candidate_window_test.cc',
+            'unix/draw_tool_test.cc',
+            'unix/font_spec_test.cc',
+            'unix/gtk_window_base_test.cc',
+            'unix/infolist_window_test.cc',
+            'unix/text_renderer_test.cc',
+            'unix/unix_renderer_test.cc',
+            'unix/unix_server_test.cc',
+            'unix/window_manager_test.cc',
+          ],
+          'dependencies': [
+            '../testing/testing.gyp:gtest_main',
+            'mozc_renderer_lib',
+          ],
+          'includes': [
+            'unix/gtk_libraries.gypi',
           ],
         },
       ],

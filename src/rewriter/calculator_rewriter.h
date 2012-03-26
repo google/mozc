@@ -30,12 +30,14 @@
 #ifndef MOZC_REWRITER_CALCULATOR_REWRITER_H_
 #define MOZC_REWRITER_CALCULATOR_REWRITER_H_
 
+#include <string>
 #include "converter/segments.h"
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {
 
 class CalculatorRewriterTest;
+class ConversionRequest;
 class Segments;
 
 class CalculatorRewriter : public RewriterInterface {
@@ -46,6 +48,8 @@ class CalculatorRewriter : public RewriterInterface {
   virtual ~CalculatorRewriter();
 
   virtual bool Rewrite(Segments *segments) const;
+  virtual bool RewriteForRequest(const ConversionRequest &request,
+                                 Segments *segments) const;
 
  private:
   // Inserts a candidate with the string into the |segment|.

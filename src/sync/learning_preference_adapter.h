@@ -44,8 +44,6 @@ class LRUStorage;
 
 namespace sync {
 
-class ClockTimerInterface;
-
 class LearningPreferenceAdapter : public AdapterInterface {
  public:
   LearningPreferenceAdapter();
@@ -98,11 +96,6 @@ class LearningPreferenceAdapter : public AdapterInterface {
   // Return last synced history filename.
   uint64 GetLastDownloadTimestamp() const;
   bool SetLastDownloadTimestamp(uint64 last_download_time);
-
-  // Inject ClockTimerInterface for unittesting
-  void SetClockTimerInterface(ClockTimerInterface *clock_timer);
-
-  ClockTimerInterface *clock_timer_;
 
   vector<Storage> storages_;
   LearningPreference local_update_;

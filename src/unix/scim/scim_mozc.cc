@@ -46,10 +46,20 @@ const char kConfigName[] = "/Panel/Gtk/LookupTableVertical";
 
 const char kPropTool[] = "/Mozc/Tool";
 const char kPropToolIcon[] = SCIM_ICONDIR "/scim-mozc-tool.png";
-const char kPropToolDictionary[] = "/Mozc/Tool/dictionary";
-const char kPropToolDictionaryIcon[] = SCIM_ICONDIR "/scim-mozc-dictionary.png";
-const char kPropToolProperty[] = "/Mozc/Tool/property";
-const char kPropToolPropertyIcon[] = SCIM_ICONDIR "/scim-mozc-properties.png";
+const char kPropToolConfigDialog[] = "/Mozc/Tool/configdialog";
+const char kPropToolConfigDialogIcon[] =
+    SCIM_ICONDIR "/scim-mozc-properties.png";
+const char kPropToolWordRegisterDialog[] =
+    "/Mozc/Tool/wordregisterdialog";
+const char kPropToolWordRegisterDialogIcon[] =
+    SCIM_ICONDIR "/scim-mozc-dictionary.png";
+const char kPropToolDictionaryTool[] = "/Mozc/Tool/dictionarytool";
+const char kPropToolDictionaryToolIcon[] =
+    SCIM_ICONDIR "/scim-mozc-dictionary.png";
+const char kPropToolHandwriting[] = "/Mozc/Tool/handwriting";
+const char kPropToolHandwritingIcon[] = "";
+const char kPropToolCharacterPalette[] = "/Mozc/Tool/characterpalette";
+const char kPropToolCharacterPaletteIcon[] = "";
 
 const char kPropCompositionMode[] = "/Mozc/CompositionMode";
 
@@ -256,10 +266,16 @@ void ScimMozc::trigger_property(const scim::String &property) {
   }
 
   string args;
-  if (property == kPropToolDictionary) {
+  if (property == kPropToolDictionaryTool) {
     args = "--mode=dictionary_tool";
-  } else if (property == kPropToolProperty) {
+  } else if (property == kPropToolConfigDialog) {
     args = "--mode=config_dialog";
+  } else if (property == kPropToolWordRegisterDialog) {
+    args = "--mode=word_register_dialog";
+  } else if (property == kPropToolHandwriting) {
+    args = "--mode=hand_writing";
+  } else if (property == kPropToolCharacterPalette) {
+    args = "--mode=character_palette";
   } else {
     // Unknown property.
     return;
@@ -385,10 +401,20 @@ void ScimMozc::InitializeBar() {
     // Construct "tool" icon and its menu.
     p = scim::Property(kPropTool, "", kPropToolIcon, "Tool");
     prop_list.push_back(p);
-    p = scim::Property(
-        kPropToolDictionary, "Dictionary tool", kPropToolDictionaryIcon);
+    p = scim::Property(kPropToolConfigDialog, "Properties",
+                       kPropToolConfigDialogIcon);
     prop_list.push_back(p);
-    p = scim::Property(kPropToolProperty, "Property", kPropToolPropertyIcon);
+    p = scim::Property(kPropToolWordRegisterDialog, "Add Word",
+                       kPropToolWordRegisterDialogIcon);
+    prop_list.push_back(p);
+    p = scim::Property(kPropToolDictionaryTool, "Dictionary tool",
+                       kPropToolDictionaryToolIcon);
+    prop_list.push_back(p);
+    p = scim::Property(kPropToolCharacterPalette, "Character Palette",
+                       kPropToolCharacterPaletteIcon);
+    prop_list.push_back(p);
+    p = scim::Property(kPropToolHandwriting, "Handwriting",
+                       kPropToolHandwritingIcon);
     prop_list.push_back(p);
   }
 

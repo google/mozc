@@ -137,9 +137,7 @@ SystemDictionary *SystemDictionary::CreateSystemDictionaryFromImage(
   // has the priviledge to mlock.
   // Note that we don't munlock the space because it's always better to keep
   // the singleton system dictionary paged in as long as the process runs.
-#ifndef OS_WINDOWS
-  mlock(ptr, len);
-#endif  // OS_WINDOWS
+  Util::MaybeMLock(ptr, len);
   SystemDictionary *instance = new SystemDictionary();
   DCHECK(instance);
   do {

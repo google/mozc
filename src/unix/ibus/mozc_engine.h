@@ -32,11 +32,15 @@
 
 #include <ibus.h>
 #include <set>
+#include <vector>
 #include "base/port.h"
 #include "base/scoped_ptr.h"
 #include "session/commands.pb.h"
 #include "testing/base/public/gunit_prod.h"
 #include "unix/ibus/engine_interface.h"
+#ifdef ENABLE_GTK_RENDERER
+#include "renderer/renderer_client.h"
+#endif  // ENABLE_GTK_RENDERER
 
 #if !defined(OS_CHROMEOS) && IBUS_CHECK_VERSION(1, 2, 1)
 #define USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT
@@ -52,6 +56,7 @@ namespace ibus {
 
 class KeyTranslator;
 class LaunchToolTest;
+class MessageTranslatorInterface;
 
 // Implements EngineInterface and handles signals from IBus daemon.
 // This class mainly does the two things:
@@ -128,10 +133,18 @@ class MozcEngine : public EngineInterface {
       bool is_key_up,
       gint keyval,
       commands::KeyEvent *key,
+      bool *is_non_modifier_key_pressed,
       set<gint> *currently_pressed_modifiers,
       set<commands::KeyEvent::ModifierKey> *modifiers_to_be_sent);
 
  private:
+  // Appends entries to the back of ibus root panel.
+  void AppendCompositionPropertyToPanel(
+      const MessageTranslatorInterface &translator);
+  void AppendToolPropertyToPanel(const MessageTranslatorInterface &translator);
+  void AppendSwitchPropertyToPanel(
+      const MessageTranslatorInterface &translator);
+
   // Updates the preedit text and the candidate window and inserts result
   // based on the content of |output|.
   bool UpdateAll(IBusEngine *engine, const commands::Output &output);
@@ -139,9 +152,14 @@ class MozcEngine : public EngineInterface {
   bool UpdateResult(IBusEngine *engine, const commands::Output &output) const;
   // Updates the preedit text based on the content of |output|.
   bool UpdatePreedit(IBusEngine *engine, const commands::Output &output) const;
-  // Updates the candidate window based on the content of |output|.
+  // Updates the candidates based on the content of |output|.
   bool UpdateCandidates(IBusEngine *engine,
                         const commands::Output &output);
+  // Updates the auxiliary text based on the content of |output|.
+  // There are some situations that candidate window has auxiliary text without
+  // candidates. So we separate UpdateAuxiliaryText() from UpdateCandidates().
+  bool UpdateAuxiliaryText(IBusEngine *engine,
+                           const commands::Output &output) const;
   // Updates the deletion range message based on the content of |output|.
   bool UpdateDeletionRange(IBusEngine *engine, const commands::Output &output);
 
@@ -181,9 +199,17 @@ class MozcEngine : public EngineInterface {
   // message, then hides a preedit string and the candidate window.
   void RevertSession(IBusEngine *engine);
 
+#ifdef ENABLE_GTK_RENDERER
+  // Hides native candidate window.
+  void HideNativeCandidateWindow();
+#endif  // ENABLE_GTK_RENDERER
+
   uint64 last_sync_time_;
   scoped_ptr<KeyTranslator> key_translator_;
   scoped_ptr<client::ClientInterface> client_;
+#ifdef ENABLE_GTK_RENDERER
+  scoped_ptr<renderer::RendererClient> renderer_;
+#endif  // ENABLE_GTK_RENDERER
 
 #ifndef USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT
   // A flag to avoid reverting session after deleting surrounding text.
@@ -194,6 +220,7 @@ class MozcEngine : public EngineInterface {
   IBusPropList *prop_root_;
   IBusProperty *prop_composition_mode_;
   IBusProperty *prop_mozc_tool_;
+  vector<IBusProperty *> prop_switch_properties_;
   commands::CompositionMode original_composition_mode_;
   bool is_activated_;
   config::Config::PreeditMethod preedit_method_;
@@ -201,6 +228,8 @@ class MozcEngine : public EngineInterface {
   // Unique IDs of candidates that are currently shown.
   vector<int32> unique_candidate_ids_;
 
+  // Non modifier key is pressed or not after all keys are released.
+  bool is_non_modifier_key_pressed_;
   // Currently pressed modifier keys.  It is set of keyval.
   set<gint> currently_pressed_modifiers_;
   // Pending modifier keys.

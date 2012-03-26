@@ -37,15 +37,17 @@
 #include <sddl.h>
 #include <stdio.h>  // MSVC requires this for _vsnprintf
 // #include <KnownFolders.h>
-#else
+#else  // OS_WINDOWS
+#ifdef OS_MACOSX
+#include <mach/mach.h>
+#include <mach/mach_time.h>
+#include <sys/sysctl.h>
+#endif  // OS_MACOSX
 #include <pwd.h>
 #include <string.h>
 #include <sys/stat.h>
-#ifdef OS_MACOSX
-#include <sys/sysctl.h>
-#endif  // OS_MACOSX
-#include <sys/types.h>
 #include <sys/time.h>
+#include <sys/types.h>
 #include <unistd.h>
 #endif  // OS_WINDOWS
 #include <algorithm>
@@ -72,6 +74,7 @@
 #ifdef OS_MACOSX
 #include "base/mac_util.h"
 #endif
+
 
 
 namespace {
@@ -848,17 +851,11 @@ inline bool IsArabicDecimalChar32(char32 ucs4) {
 }  // namespace
 
 bool Util::IsArabicNumber(const string &input_string) {
-  const char *begin = input_string.data();
-  const char *end = input_string.data() + input_string.size();
-
-  while (begin < end) {
-    size_t mblen;
-    const char32 ucs4 = Util::UTF8ToUCS4(begin, end, &mblen);
-    if (!IsArabicDecimalChar32(ucs4)) {
+  for (ConstChar32Iterator iter(input_string); !iter.Done(); iter.Next()) {
+    if (!IsArabicDecimalChar32(iter.Get())) {
       // Found non-arabic decimal character.
       return false;
     }
-    begin += mblen;
   }
 
   // All characters are numbers.
@@ -1253,6 +1250,20 @@ bool Util::SafeStrToDouble(const string &str, double *value) {
   return (*endptr == '\0') && (errno == 0);
 }
 
+bool Util::SafeStrToFloat(const string &str, float *value) {
+  double double_value;
+  if (!SafeStrToDouble(str, &double_value)) {
+    return false;
+  }
+  *value = static_cast<float>(double_value);
+
+  if ((*value ==  numeric_limits<float>::infinity()) ||
+      (*value == -numeric_limits<float>::infinity())) {
+    return false;
+  }
+  return true;
+}
+
 string Util::StringPrintf(const char *format, ...) {
   va_list ap;
   va_start(ap, format);
@@ -1334,7 +1345,7 @@ class ClockImpl : public Util::ClockInterface {
   ClockImpl() {}
   virtual ~ClockImpl() {}
 
-  void GetTimeOfDay(uint64 *sec, uint32 *usec) {
+  virtual void GetTimeOfDay(uint64 *sec, uint32 *usec) {
 #ifdef OS_WINDOWS
     FILETIME file_time;
     GetSystemTimeAsFileTime(&file_time);
@@ -1361,7 +1372,7 @@ class ClockImpl : public Util::ClockInterface {
 #endif
   }
 
-  uint64 GetTime() {
+  virtual uint64 GetTime() {
 #ifdef OS_WINDOWS
     return static_cast<uint64>(_time64(NULL));
 # else
@@ -1369,7 +1380,7 @@ class ClockImpl : public Util::ClockInterface {
 # endif
   }
 
-  bool GetTmWithOffsetSecond(time_t offset_sec, tm *output) {
+  virtual bool GetTmWithOffsetSecond(time_t offset_sec, tm *output) {
     const time_t current_sec = static_cast<time_t>(this->GetTime());
     const time_t modified_sec = current_sec + offset_sec;
 
@@ -1383,6 +1394,59 @@ class ClockImpl : public Util::ClockInterface {
     }
 #endif
     return true;
+  }
+
+  virtual uint64 GetFrequency() {
+#if defined(OS_WINDOWS)
+    LARGE_INTEGER timestamp;
+    // TODO(yukawa): Consider the case where QueryPerformanceCounter is not
+    // available.
+    const BOOL result = ::QueryPerformanceFrequency(&timestamp);
+    return static_cast<uint64>(timestamp.QuadPart);
+#elif defined(OS_MACOSX)
+    static mach_timebase_info_data_t timebase_info;
+    mach_timebase_info(&timebase_info);
+    return static_cast<uint64>(
+        1.0e9 * timebase_info.denom / timebase_info.numer);
+#elif defined(OS_LINUX)
+#if defined(HAVE_LIBRT)
+    return 1000000000uLL;
+#else
+    return 1000000uLL;
+#endif  // HAVE_LIBRT
+#else
+#error "Not supported platform"
+#endif  // platforms (OS_WINDOWS, OS_MACOSX, OS_LINUX, ...)
+  }
+
+  virtual uint64 GetTicks() {
+#if defined(OS_WINDOWS)
+    LARGE_INTEGER timestamp;
+    // TODO(yukawa): Consider the case where QueryPerformanceCounter is not
+    // available.
+    const BOOL result = ::QueryPerformanceCounter(&timestamp);
+    return static_cast<uint64>(timestamp.QuadPart);
+#elif defined(OS_MACOSX)
+    return static_cast<uint64>(mach_absolute_time());
+#elif defined(OS_LINUX)
+#if defined(HAVE_LIBRT)
+    struct timespec timestamp;
+    if (-1 == clock_gettime(CLOCK_REALTIME, &timestamp)) {
+      return 0;
+    }
+    return timestamp.tv_sec * 1000000000uLL + timestamp.tv_nsec;
+#else
+    // librt is not linked on Android, so we uses GetTimeOfDay instead.
+    // GetFrequency() always returns 1MHz when librt is not available,
+    // so we uses microseconds as ticks.
+    uint64 sec;
+    uint32 usec;
+    GetTimeOfDay(&sec, &usec);
+    return sec * 1000000 + usec;
+#endif  // HAVE_LIBRT
+#else
+#error "Not supported platform"
+#endif  // platforms (OS_WINDOWS, OS_MACOSX, OS_LINUX, ...)
   }
 };
 
@@ -1415,6 +1479,14 @@ bool Util::GetCurrentTm(tm *current_time) {
 
 bool Util::GetTmWithOffsetSecond(tm *time_with_offset, int offset_sec) {
   return GetClockHandler()->GetTmWithOffsetSecond(offset_sec, time_with_offset);
+}
+
+uint64 Util::GetFrequency() {
+  return GetClockHandler()->GetFrequency();
+}
+
+uint64 Util::GetTicks() {
+  return GetClockHandler()->GetTicks();
 }
 
 void Util::Sleep(uint32 msec) {
@@ -2020,12 +2092,8 @@ bool Util::IsCloseBracket(const string &key, string *open_bracket) {
 }
 
 bool Util::IsFullWidthSymbolInHalfWidthKatakana(const string &input) {
-  const char *begin = input.data();
-  const char *end = begin + input.size();
-  while (begin < end) {
-    size_t mblen = 0;
-    char32 w = UTF8ToUCS4(begin, end, &mblen);
-    switch (w) {
+  for (ConstChar32Iterator iter(input); !iter.Done(); iter.Next()) {
+    switch (iter.Get()) {
       case 0x3002:  // FULLSTOP "。"
       case 0x300C:  // LEFT CORNER BRACKET "「"
       case 0x300D:  // RIGHT CORNER BRACKET "」"
@@ -2034,23 +2102,17 @@ bool Util::IsFullWidthSymbolInHalfWidthKatakana(const string &input) {
       case 0x30FC:  // SOUND_MARK "ー"
       case 0x3099:  // VOICE SOUND MARK "゙"
       case 0x309A:  // SEMI VOICE SOUND MARK "゚"
-        begin += mblen;
         break;
       default:
         return false;
     }
-    begin += mblen;
   }
   return true;
 }
 
 bool Util::IsHalfWidthKatakanaSymbol(const string &input) {
-  const char *begin = input.data();
-  const char *end = begin + input.size();
-  while (begin < end) {
-    size_t mblen = 0;
-    char32 w = UTF8ToUCS4(begin, end, &mblen);
-    switch (w) {
+  for (ConstChar32Iterator iter(input); !iter.Done(); iter.Next()) {
+    switch (iter.Get()) {
       case 0xFF61:  // FULLSTOP "｡"
       case 0xFF62:  // LEFT CORNER BRACKET "｢"
       case 0xFF63:  // RIGHT CORNER BRACKET "｣"
@@ -2059,7 +2121,6 @@ bool Util::IsHalfWidthKatakanaSymbol(const string &input) {
       case 0xFF70:  // SOUND_MARK "ｰ"
       case 0xFF9E:  // VOICE SOUND MARK "ﾞ"
       case 0xFF9F:  // SEMI VOICE SOUND MARK "ﾟ"
-        begin += mblen;
         break;
       default:
         return false;
@@ -2069,12 +2130,8 @@ bool Util::IsHalfWidthKatakanaSymbol(const string &input) {
 }
 
 bool Util::IsKanaSymbolContained(const string &input) {
-  const char *begin = input.data();
-  const char *end = begin + input.size();
-  while (begin < end) {
-    size_t mblen = 0;
-    char32 w = UTF8ToUCS4(begin, end, &mblen);
-    switch (w) {
+  for (ConstChar32Iterator iter(input); !iter.Done(); iter.Next()) {
+    switch (iter.Get()) {
       case 0x3002:  // FULLSTOP "。"
       case 0x300C:  // LEFT CORNER BRACKET "「"
       case 0x300D:  // RIGHT CORNER BRACKET "」"
@@ -2092,8 +2149,6 @@ bool Util::IsKanaSymbolContained(const string &input) {
       case 0xFF9E:  // VOICE SOUND MARK "ﾞ"
       case 0xFF9F:  // SEMI VOICE SOUND MARK "ﾟ"
         return true;
-      default:
-        begin += mblen;
     }
   }
   return false;
@@ -2690,6 +2745,15 @@ string Util::GetServerDirectory() {
 #endif  // OS_LINUX
 }
 
+string Util::GetServerPath() {
+  const string server_path = mozc::Util::GetServerDirectory();
+  // if server path is empty, return empty path
+  if (server_path.empty()) {
+    return "";
+  }
+  return mozc::Util::JoinPath(server_path, kMozcServerName);
+}
+
 string Util::GetDocumentDirectory() {
 #ifdef OS_MACOSX
   return Util::GetServerDirectory();
@@ -2721,6 +2785,7 @@ string Util::GetUserNameAsString() {
 
 #ifdef OS_WINDOWS
 namespace {
+
 string GetObjectNameAsString(HANDLE handle) {
   if (handle == NULL) {
     LOG(ERROR) << "Unknown handle";
@@ -2760,8 +2825,20 @@ string GetObjectNameAsString(HANDLE handle) {
 
   return result;
 }
+
+bool GetCurrentSessionId(DWORD *session_id) {
+  DCHECK(session_id);
+  *session_id = 0;
+  if (!::ProcessIdToSessionId(::GetCurrentProcessId(),
+                              session_id)) {
+    LOG(ERROR) << "cannot get session id: " << ::GetLastError();
+    return false;
+  }
+  return true;
 }
-#endif
+
+}
+#endif  // OS_WINDOWS
 
 string Util::GetDesktopNameAsString() {
 #ifdef OS_LINUX
@@ -2778,9 +2855,7 @@ string Util::GetDesktopNameAsString() {
 
 #ifdef OS_WINDOWS
   DWORD session_id = 0;
-  if (!::ProcessIdToSessionId(::GetCurrentProcessId(),
-                              &session_id)) {
-    LOG(ERROR) << "cannot get session id: " << ::GetLastError();
+  if (!GetCurrentSessionId(&session_id)) {
     return "";
   }
 
@@ -3136,37 +3211,34 @@ Util::ScriptType Util::GetScriptType(const char *begin,
 namespace {
 Util::ScriptType GetScriptTypeInternal(const string &str,
                                        bool ignore_symbols) {
-  const char *begin = str.data();
-  const char *end = str.data() + str.size();
-  size_t mblen = 0;
   Util::ScriptType result = Util::SCRIPT_TYPE_SIZE;
 
-  while (begin < end) {
-    const char32 w = Util::UTF8ToUCS4(begin, end, &mblen);
+  for (ConstChar32Iterator iter(str); !iter.Done(); iter.Next()) {
+    const char32 w = iter.Get();
     Util::ScriptType type = Util::GetScriptType(w);
-    if ((w == 0x30FC || w == 0x30FB ||
-         (w >= 0x3099 && w <= 0x309C)) &&
-        // PROLONGEDSOUND MARK|MIDLE_DOT|VOICDE_SOUND_MARKS
+    if ((w == 0x30FC || w == 0x30FB || (w >= 0x3099 && w <= 0x309C)) &&
+        // PROLONGEDSOUND MARK|MIDLE_DOT|VOICED_SOUND_MARKS
         // are HIRAGANA as well
         (result == Util::SCRIPT_TYPE_SIZE ||
          result == Util::HIRAGANA || result == Util::KATAKANA)) {
       type = result;  // restore the previous state
     }
+
     // Ignore symbols
     // Regard UNKNOWN_SCRIPT as symbols here
     if (ignore_symbols &&
         result != Util::UNKNOWN_SCRIPT &&
         type == Util::UNKNOWN_SCRIPT) {
-      begin += mblen;
       continue;
     }
-    // not first character
-    if (str.data() != begin &&
-        result != Util::SCRIPT_TYPE_SIZE && type != result) {
+
+    // Not first character.
+    // Note: GetScriptType doesn't return SCRIPT_TYPE_SIZE, thus if result
+    // is not SCRIPT_TYPE_SIZE, it is not the first character.
+    if (result != Util::SCRIPT_TYPE_SIZE && type != result) {
       return Util::UNKNOWN_SCRIPT;
     }
     result = type;
-    begin += mblen;
   }
 
   if (result == Util::SCRIPT_TYPE_SIZE) {  // everything is "ー"
@@ -3194,15 +3266,10 @@ Util::ScriptType Util::GetScriptTypeWithoutSymbols(const string &str) {
 
 // return true if all script_type in str is "type"
 bool Util::IsScriptType(const string &str, Util::ScriptType type) {
-  const char *begin = str.data();
-  const char *end = str.data() + str.size();
-  size_t mblen = 0;
-  while (begin < end) {
-    const char32 w = Util::UTF8ToUCS4(begin, end, &mblen);
+  for (ConstChar32Iterator iter(str); !iter.Done(); iter.Next()) {
+    const char32 w = iter.Get();
     // Exception: 30FC (PROLONGEDSOUND MARK is categorized as HIRAGANA as well)
-    if ((w == 0x30FC && type == HIRAGANA) || type == GetScriptType(w)) {
-      begin += mblen;
-    } else {
+    if (type != GetScriptType(w) && (w != 0x30FC || type != HIRAGANA)) {
       return false;
     }
   }
@@ -3211,34 +3278,26 @@ bool Util::IsScriptType(const string &str, Util::ScriptType type) {
 
 // return true if the string contains script_type char
 bool Util::ContainsScriptType(const string &str, ScriptType type) {
-  const char *begin = str.data();
-  const char *end = str.data() + str.size();
-  while (begin < end) {
-    size_t mblen;
-    const char32 w = Util::UTF8ToUCS4(begin, end, &mblen);
-    if (type == Util::GetScriptType(w)) {
+  for (ConstChar32Iterator iter(str); !iter.Done(); iter.Next()) {
+    if (type == Util::GetScriptType(iter.Get())) {
       return true;
     }
-    begin += mblen;
   }
   return false;
 }
 
 // return the Form Type of string
 Util::FormType Util::GetFormType(const string &str) {
-  const char *begin = str.data();
-  const char *end = str.data() + str.size();
-  size_t mblen = 0;
-  Util::FormType result = Util::UNKNOWN_FORM;
+  // TODO(hidehiko): get rid of using FORM_TYPE_SIZE.
+  Util::FormType result = Util::FORM_TYPE_SIZE;
 
-  while (begin < end) {
-    const char32 w = Util::UTF8ToUCS4(begin, end, &mblen);
-    const Util::FormType type = GetFormType(w);
-    if (type == UNKNOWN_FORM || (str.data() != begin && type != result)) {
+  for (ConstChar32Iterator iter(str); !iter.Done(); iter.Next()) {
+    const Util::FormType type = GetFormType(iter.Get());
+    if (type == UNKNOWN_FORM ||
+        (result != Util::FORM_TYPE_SIZE && type != result)) {
       return UNKNOWN_FORM;
     }
     result = type;
-    begin += mblen;
   }
 
   return result;
@@ -3248,17 +3307,10 @@ Util::FormType Util::GetFormType(const string &str) {
 #include "base/character_set.h"
 
 Util::CharacterSet Util::GetCharacterSet(const string &str) {
-  const char *begin = str.data();
-  const char *end = str.data() + str.size();
-  size_t mblen = 0;
   Util::CharacterSet result = Util::ASCII;
-
-  while (begin < end) {
-    const char32 w = Util::UTF8ToUCS4(begin, end, &mblen);
-    result = max(result, GetCharacterSet(w));
-    begin += mblen;
+  for (ConstChar32Iterator iter(str); !iter.Done(); iter.Next()) {
+    result = max(result, GetCharacterSet(iter.Get()));
   }
-
   return result;
 }
 
@@ -3430,6 +3482,7 @@ class IsWindowsVerXOrLaterCache {
 
 typedef IsWindowsVerXOrLaterCache<6, 0> IsWindowsVistaOrLaterCache;
 typedef IsWindowsVerXOrLaterCache<6, 1> IsWindows7OrLaterCache;
+typedef IsWindowsVerXOrLaterCache<6, 2> IsWindows8OrLaterCache;
 
 // TODO(yukawa): Use API wrapper so that unit test can emulate any case.
 class IsWindowsX64Cache {
@@ -3501,6 +3554,11 @@ bool Util::IsVistaOrLater() {
 bool Util::IsWindows7OrLater() {
   DCHECK(Singleton<IsWindows7OrLaterCache>::get()->succeeded());
   return Singleton<IsWindows7OrLaterCache>::get()->is_ver_x_or_later();
+}
+
+bool Util::IsWindows8OrLater() {
+  DCHECK(Singleton<IsWindows8OrLaterCache>::get()->succeeded());
+  return Singleton<IsWindows8OrLaterCache>::get()->is_ver_x_or_later();
 }
 
 bool Util::IsWindowsX64() {
@@ -3669,6 +3727,8 @@ string Util::GetFileVersionString(const wstring &file_fullpath) {
 
   return buf.str();
 }
+
+
 #endif  // OS_WINDOWS
 
 // TODO(toshiyuki): move this to the initialization module and calculate
@@ -3793,6 +3853,27 @@ bool Util::IsLittleEndian() {
 #endif
 }
 
+int Util::MaybeMLock(const void *addr, size_t len) {
+  // TODO(yukawa): Integrate mozc_cache service.
+#if defined(OS_WINDOWS) || defined(OS_ANDROID) || defined(__native_client__)
+  return -1;
+#else  // defined(OS_WINDOWS) || defined(OS_ANDROID) ||
+       // defined(__native_client__)
+  return mlock(addr, len);
+#endif  // defined(OS_WINDOWS) || defined(OS_ANDROID) ||
+        // defined(__native_client__)
+}
+
+int Util::MaybeMUnlock(const void *addr, size_t len) {
+#if defined(OS_WINDOWS) || defined(OS_ANDROID) || defined(__native_client__)
+  return -1;
+#else  // defined(OS_WINDOWS) || defined(OS_ANDROID) ||
+       // defined(__native_client__)
+  return munlock(addr, len);
+#endif  // defined(OS_WINDOWS) || defined(OS_ANDROID) ||
+        // defined(__native_client__)
+}
+
 #ifdef OS_WINDOWS
 // TODO(team): Support other platforms.
 bool Util::EnsureVitalImmutableDataIsAvailable() {
@@ -3800,6 +3881,9 @@ bool Util::EnsureVitalImmutableDataIsAvailable() {
     return false;
   }
   if (!Singleton<IsWindows7OrLaterCache>::get()->succeeded()) {
+    return false;
+  }
+  if (!Singleton<IsWindows8OrLaterCache>::get()->succeeded()) {
     return false;
   }
   if (!Singleton<SystemDirectoryCache>::get()->succeeded()) {

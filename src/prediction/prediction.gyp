@@ -89,6 +89,34 @@
       ],
     },
     {
+      'target_name': 'gen_zero_query_number_data',
+      'type': 'none',
+      'actions': [
+        {
+          'action_name': 'gen_zero_query_number_data',
+          'variables': {
+            'input_files': [
+              '../data/zero_query/zero_query_number.def',
+            ],
+          },
+          'inputs': [
+            'gen_zero_query_number_data.py',
+            '<@(input_files)',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/zero_query_number_data.h',
+          ],
+          'action': [
+            'python', '../build_tools/redirect.py',
+            '<(gen_out_dir)/zero_query_number_data.h',
+            'gen_zero_query_number_data.py',
+            '<@(input_files)',
+          ],
+          'message': 'Generating <(gen_out_dir)/zero_query_number_data.h',
+        },
+      ],
+    },
+    {
       'target_name': 'gen_suggestion_filter_main',
       'type': 'executable',
       'sources': [
@@ -131,34 +159,6 @@
       ],
       'export_dependent_settings': [
         'genproto_prediction',
-      ],
-    },
-    {
-      'target_name': 'prediction_test',
-      'type': 'executable',
-      'sources': [
-        'dictionary_predictor_test.cc',
-        'suggestion_filter_test.cc',
-        'user_history_predictor_test.cc',
-        'predictor_test.cc',
-      ],
-      'dependencies': [
-        '../dictionary/dictionary.gyp:dictionary_mock',
-        '../dictionary/dictionary_base.gyp:install_dictionary_test_data',
-        '../config/config.gyp:config_handler',
-        '../testing/testing.gyp:gtest_main',
-        'prediction',
-      ],
-      'variables': {
-        'test_size': 'small',
-      },
-    },
-    # Test cases meta target: this target is referred from gyp/tests.gyp
-    {
-      'target_name': 'prediction_all_test',
-      'type': 'none',
-      'dependencies': [
-        'prediction_test',
       ],
     },
   ],

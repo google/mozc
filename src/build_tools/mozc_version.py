@@ -70,6 +70,8 @@ def CalculateRevisionForPlatform(revision, target_platform):
   # OSS GNU/Linux version.
   if target_platform == 'ChromeOS':
     last_digit = '2'
+  elif target_platform == 'Android':
+    last_digit = '3'
   elif IsWindows():
     last_digit = '0'
   elif IsMac():
@@ -113,6 +115,7 @@ class MozcVersion(object):
     self._revision = CalculateRevisionForPlatform(self._dict['REVISION'],
                                                   target_platform)
     self._flag = self._dict.get('FLAG', 'RELEASE')
+    self._android_version_code = self._dict['ANDROID_VERSION_CODE']
     if expand_daily:
       zero_day = datetime.date(2009, 5, 24)
       num_of_days = datetime.date.today().toordinal() - zero_day.toordinal()
@@ -120,6 +123,8 @@ class MozcVersion(object):
         self._build = str(num_of_days)
         if 'FLAG' not in self._dict:
           self._flag = 'CONTINUOUS'
+      if self._android_version_code == 'daily':
+        self._android_version_code = str(num_of_days)
 
   def IsDevChannel(self):
     """Returns true if the parsed version is dev-channel."""
@@ -151,6 +156,7 @@ class MozcVersion(object):
     """
     replacements = [('@MAJOR@', self._major), ('@MINOR@', self._minor),
                     ('@BUILD@', self._build), ('@REVISION@', self._revision),
+                    ('@ANDROID_VERSION_CODE@', self._android_version_code),
                     ('@FLAG@', self._flag)]
     result = format
     for r in replacements:

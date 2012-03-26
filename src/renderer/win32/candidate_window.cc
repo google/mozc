@@ -36,11 +36,11 @@
 #include "base/util.h"
 #include "base/coordinates.h"
 #include "client/client_interface.h"
+#include "renderer/renderer_command.pb.h"
 #include "renderer/renderer_style_handler.h"
 #include "renderer/table_layout.h"
 #include "renderer/win_resource.h"
 #include "renderer/win32/text_renderer.h"
-#include "session/commands.pb.h"
 
 namespace mozc {
 namespace renderer {

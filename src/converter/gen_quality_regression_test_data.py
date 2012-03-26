@@ -70,7 +70,10 @@ def ParseTSV(file):
 
 
 def GetText(node):
-  return node[0].firstChild.nodeValue.strip().replace('\t', ' ')
+  if len(node) >= 1 and node[0].firstChild:
+    return node[0].firstChild.nodeValue.strip().replace('\t', ' ')
+  else:
+    return ''
 
 
 def ParseXML(file):
@@ -81,11 +84,14 @@ def ParseXML(file):
     if status != 'Fixed' and status != 'Verified':
       continue
     id = issue.attributes['id'].value
+    target = GetText(issue.getElementsByTagName('target'))
     for detail in issue.getElementsByTagName(u'detail'):
       fields = []
       fields.append('mozcsu_%s' % id)
       for key in ('reading', 'output', 'actionStatus', 'rank', 'accuracy'):
         fields.append(GetText(detail.getElementsByTagName(key)))
+      if target:
+        fields.append(target)
       result.append(('\t'.join(fields)).encode('utf-8'))
   return result
 
@@ -99,10 +105,12 @@ def ParseFile(file):
 
 def GenerateHeader(files):
   try:
+    print "#include <cstddef>"  # for NULL
     print "const char *kTestData[] = {"
     for file in files:
       for line in ParseFile(file):
         print " \"%s\"," % EscapeString(line)
+    print "NULL,"
     print "};"
   except:
     print "cannot open %s" % (file)

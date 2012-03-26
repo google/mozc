@@ -41,6 +41,9 @@
 #include <QtGui/QMessageBox>
 #include "base/config_file_stream.h"
 #include "base/const.h"
+#ifdef OS_MACOSX
+#include "base/mac_util.h"
+#endif  // OS_MACOSX
 #include "base/util.h"
 #include "base/run_level.h"
 #include "config/config_handler.h"
@@ -69,18 +72,30 @@ ConfigDialog::ConfigDialog()
   setWindowFlags(Qt::WindowSystemMenuHint);
   setWindowModality(Qt::NonModal);
 
+#ifdef OS_WINDOWS
+  miscStartupWidget->setVisible(false);
+#endif  // OS_WINDOWS
+
+#ifdef OS_MACOSX
+  miscDefaultIMEWidget->setVisible(false);
+  miscAdministrationWidget->setVisible(false);
+#endif  // OS_MACOSX
+
+#if defined(OS_LINUX)
+  miscDefaultIMEWidget->setVisible(false);
+  miscAdministrationWidget->setVisible(false);
+  miscStartupWidget->setVisible(false);
+#endif  // OS_LINUX
+
 #ifdef NO_LOGGING
   // disable logging options
-  loggingLabel->setVisible(false);
-  loggingLine->setVisible(false);
-  verboseLevelLabel->setVisible(false);
-  verboseLevelComboBox->setVisible(false);
+  miscLoggingWidget->setVisible(false);
 
-#if defined(OS_MACOSX) || defined(OS_LINUX)
-  // The last "misc" tab has no valid configs on Mac and Linux
+#if defined(OS_LINUX)
+  // The last "misc" tab has no valid configs on Linux
   const int kMiscTabIndex = 6;
   configDialogTabWidget->removeTab(kMiscTabIndex);
-#endif  // OS_MACOSX || OS_LINUX
+#endif  // OS_LINUX
 #endif  // NO_LOGGING
 
 #ifndef ENABLE_CLOUD_SYNC
@@ -448,6 +463,18 @@ bool ConfigDialog::Update() {
   }
 #endif
 
+#ifdef OS_MACOSX
+  if (startupCheckBox->isChecked()) {
+    if (!MacUtil::CheckPrelauncherLoginItemStatus()) {
+      MacUtil::AddPrelauncherLoginItem();
+    }
+  } else {
+    if (MacUtil::CheckPrelauncherLoginItemStatus()) {
+      MacUtil::RemovePrelauncherLoginItem();
+    }
+  }
+#endif  // OS_MACOSX
+
   return true;
 }
 
@@ -610,6 +637,12 @@ void ConfigDialog::ConvertFromProto(const config::Config &config) {
   UpdateSyncToggleButtonText();
 #endif  // ENABLE_CLOUD_SYNC
   SET_CHECKBOX(cloudHandwritingCheckBox, allow_cloud_handwriting);
+
+#ifdef OS_MACOSX
+  startupCheckBox->setChecked(
+      MacUtil::CheckPrelauncherLoginItemStatus());
+#endif  // OS_MACOSX
+
 }
 
 void ConfigDialog::ConvertToProto(config::Config *config) const {
@@ -704,7 +737,9 @@ void ConfigDialog::ConvertToProto(config::Config *config) const {
 #ifdef ENABLE_CLOUD_SYNC
   sync_customize_dialog_->Save(sync_running_, config);
 #endif  // ENABLE_CLOUD_SYNC
+#ifdef ENABLE_CLOUD_HANDWRITING
   GET_CHECKBOX(cloudHandwritingCheckBox, allow_cloud_handwriting);
+#endif  // ENABLE_CLOUD_HANDWRITING
 }
 
 #undef SET_COMBOBOX
@@ -908,6 +943,11 @@ void ConfigDialog::ResetToDefaults() {
     config::Config config;
     config::ConfigHandler::GetDefaultConfig(&config);
     ConvertFromProto(config);
+#ifdef ENABLE_CLOUD_SYNC
+    if (sync_running_) {
+      StopSyncForcely();
+    }
+#endif  // ENABLE_CLOUD_SYNC
   }
 }
 
@@ -971,6 +1011,10 @@ void ConfigDialog::StopSync() {
     return;
   }
 
+  StopSyncForcely();
+}
+
+void ConfigDialog::StopSyncForcely() {
   // To stop the current synchronization, it resets the authorization code.
   commands::Input::AuthorizationInfo auth_info;
   auth_info.set_auth_code("");
@@ -1063,12 +1107,13 @@ void ConfigDialog::UpdateSyncStatusImpl() {
   // enabled" when the user explicitly turns off sync feature.
   QString sync_message;
   commands::CloudSyncStatus cloud_sync_status;
-  // The default status is 'NOSYNC'.  Only changed via IPC when sync
-  // is running.
-  cloud_sync_status.set_global_status(commands::CloudSyncStatus::NOSYNC);
+  client_->GetCloudSyncStatus(&cloud_sync_status);
   if (sync_running_) {
-    client_->GetCloudSyncStatus(&cloud_sync_status);
     DLOG(INFO) << cloud_sync_status.DebugString();
+  } else {
+    // The default status is 'NOSYNC'.  Only changed via IPC when sync
+    // is running.
+    cloud_sync_status.set_global_status(commands::CloudSyncStatus::NOSYNC);
   }
 
   commands::CloudSyncStatus::SyncGlobalStatus sync_global_status =

@@ -47,7 +47,6 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        '../languages/languages.gyp:global_language_spec',
         'ipc_protocol',
       ],
     },
@@ -122,7 +121,6 @@
         'process_watch_dog_test.cc',
       ],
       'dependencies': [
-        '../languages/japanese/japanese.gyp:language_dependent_spec_japanese',
         '../testing/testing.gyp:gtest_main',
         'ipc',
         'ipc_test_util',

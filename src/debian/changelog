@@ -1,3 +1,19 @@
+mozc (1.4.1033.102) lucid; urgency=low
+
+  * Ver. 1.4.1033.102 on 2012-03-23
+  * 'libgtest-dev' is removed from the build dependencies on Linux.
+  * The build number is no longer displayed on the candidate window even if you
+    do not specify '--channel_dev=0'.
+  * Fixed issues:
+    - 'g_language_dependent_spec' is removed. (Issue 115)
+    - mozc.el now supports PageUp, PageDown and Hiragana/katakana keys.
+      (Issue 130, Issue 136)
+    - ibus-mozc now supports Hiragana/Katakana key. (Issue 136)
+    - Key-binding editor now supports Hiragana/Katakana key on Linux.
+      (Issue 137)
+
+ -- Tsuyoshi Horo <horo>  Fri, 23 Mar 2012 15:51:33 +0900
+
 mozc (1.4.1003.102) lucid; urgency=low
 
   * Ver. 1.4.1003.102 on 2012-02-22
@@ -7,7 +23,7 @@ mozc (1.4.1003.102) lucid; urgency=low
     - Cannot be built with IBus 1.4.1. (Issue 117)
   * Use ibus_engine_delete_surrounding_text instead of backspace forwarding
     for IBus 1.2.1 or later. (Issue 126)
-  * Enable "Set input mode to X" commands on Linux.
+  * Enable "Set input mode to X" commands on Linux. (Issue 128)
 
  -- Hidehiko Abe <hidehiko>  Wed, 22 Feb 2012 14:16:29 +0900
 

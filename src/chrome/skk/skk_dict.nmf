@@ -30,10 +30,10 @@
 {
   "program": {
     "x86-64": {
-      "url": "skk_dict_x86_64.nexe",
+      "url": "skk_dict_x86_64.nexe"
     },
     "x86-32": {
-      "url": "skk_dict_i686.nexe",
-    },
-  },
+      "url": "skk_dict_i686.nexe"
+    }
+  }
 }

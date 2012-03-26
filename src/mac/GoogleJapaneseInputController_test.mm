@@ -39,8 +39,6 @@
 #include "base/mac_util.h"
 #include "base/util.h"
 #include "client/client_mock.h"
-#include "languages/global_language_spec.h"
-#include "languages/japanese/lang_dep_spec.h"
 #include "renderer/renderer_interface.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
@@ -242,7 +240,6 @@ class MockRenderer : public mozc::renderer::RendererInterface {
 class GoogleJapaneseInputControllerTest : public testing::Test {
  protected:
   void SetUp() {
-    mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(&spec_);
     pool_ = [[NSAutoreleasePool alloc] init];
     mock_server_ = [[MockIMKServer alloc] init];
     mock_client_ = [[MockClient alloc] init];
@@ -265,7 +262,6 @@ class GoogleJapaneseInputControllerTest : public testing::Test {
     // mock_mozc_client and mock_renderer are released during the release of
     // |controller_|.
     [pool_ release];
-    mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(NULL);
   }
 
   void SetUpController() {
@@ -295,7 +291,6 @@ class GoogleJapaneseInputControllerTest : public testing::Test {
  private:
   MockIMKServer *mock_server_;
   NSAutoreleasePool *pool_;
-  mozc::japanese::LangDepSpecJapanese spec_;
 };
 
 // Because preedit has NSMarkedClauseSegment attribute which has to
@@ -457,6 +452,9 @@ TEST_F(GoogleJapaneseInputControllerTest, ClearCandidates) {
 TEST_F(GoogleJapaneseInputControllerTest, UpdateCandidates) {
   // When output is null, same as ClearCandidate
   [controller_ updateCandidates:NULL];
+  // Run the runloop so "delayedUpdateCandidates" can be called
+  [[NSRunLoop currentRunLoop]
+      runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.1]];
   EXPECT_EQ(1, mock_renderer_->counter_ExecCommand());
   EXPECT_FALSE(mock_renderer_->CalledCommand().visible());
   EXPECT_EQ(0,
@@ -478,6 +476,9 @@ TEST_F(GoogleJapaneseInputControllerTest, UpdateCandidates) {
   // setup the cursor position
   mock_client_.expectedCursor = NSMakeRect(50, 50, 1, 10);
   [controller_ updateCandidates:&output];
+  // Run the runloop so "delayedUpdateCandidates" can be called
+  [[NSRunLoop currentRunLoop]
+      runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.1]];
   EXPECT_EQ(1,
             [mock_client_
               getCounter:"attributesForCharacterIndex:lineHeightRectangle:"]);
@@ -497,6 +498,9 @@ TEST_F(GoogleJapaneseInputControllerTest, UpdateCandidates) {
   // reshow the candidate window again -- but cursor position has changed.
   mock_client_.expectedCursor = NSMakeRect(60, 50, 1, 10);
   [controller_ updateCandidates:&output];
+  // Run the runloop so "delayedUpdateCandidates" can be called
+  [[NSRunLoop currentRunLoop]
+      runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.1]];
   // Does not change: not call again
   EXPECT_EQ(1,
             [mock_client_
@@ -511,6 +515,9 @@ TEST_F(GoogleJapaneseInputControllerTest, UpdateCandidates) {
   // Then update without candidate entries -- goes invisible.
   output.Clear();
   [controller_ updateCandidates:&output];
+  // Run the runloop so "delayedUpdateCandidates" can be called
+  [[NSRunLoop currentRunLoop]
+      runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.1]];
   // Does not change: not call again
   EXPECT_EQ(1,
             [mock_client_

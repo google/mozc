@@ -52,6 +52,7 @@ const guint special_keys[] = {
   IBUS_Muhenkan,
   IBUS_Hiragana,
   IBUS_Katakana,
+  IBUS_Hiragana_Katakana,
   IBUS_Eisu_toggle,
   IBUS_Home,
   IBUS_End,
@@ -131,6 +132,7 @@ const commands::KeyEvent::SpecialKey mapped_special_keys[] = {
   commands::KeyEvent::HENKAN,
   commands::KeyEvent::MUHENKAN,
   commands::KeyEvent::KANA,
+  commands::KeyEvent::KATAKANA,
   commands::KeyEvent::KANA,
   commands::KeyEvent::EISU,
   commands::KeyEvent::HOME,
@@ -261,6 +263,15 @@ TEST_F(KeyTranslatorTest, TranslateSpecial) {
     EXPECT_EQ(mapped_special_keys[i], out.special_key());
     EXPECT_EQ(0, out.modifier_keys_size());
   }
+
+  // Check Hiragana_Katakana local hack. The detail is described in
+  // key_translator.cc file.
+  EXPECT_TRUE(translator_->Translate(IBUS_Hiragana_Katakana, 0, 0,
+                                     config::Config::ROMAN, true, &out));
+  EXPECT_FALSE(out.has_key_code());
+  ASSERT_TRUE(out.has_special_key());
+  EXPECT_EQ(commands::KeyEvent::KANA, out.special_key());
+  EXPECT_EQ(0, out.modifier_keys_size());
 }
 
 TEST_F(KeyTranslatorTest, TranslateSingleModifierMasks) {
@@ -385,6 +396,196 @@ TEST_F(KeyTranslatorTest, TranslateMultipleModifierMasks) {
   IsContained(commands::KeyEvent::CTRL, out.modifier_keys());
   IsContained(commands::KeyEvent::ALT, out.modifier_keys());
   IsContained(commands::KeyEvent::SHIFT, out.modifier_keys());
+}
+
+TEST_F(KeyTranslatorTest, HiraganaKatakanaHandlingWithSingleModifierTest) {
+  // Check Hiragana_Katakana local hack. The detail is described in
+  // key_translator.cc file.
+  commands::KeyEvent out;
+
+  // S-Hiragana_Katakana
+  EXPECT_TRUE(translator_->Translate(IBUS_Hiragana_Katakana, 0, IBUS_SHIFT_MASK,
+                                     config::Config::ROMAN, true, &out));
+  EXPECT_FALSE(out.has_key_code());
+  ASSERT_TRUE(out.has_special_key());
+  EXPECT_EQ(commands::KeyEvent::KATAKANA, out.special_key());
+  EXPECT_EQ(0, out.modifier_keys_size());
+
+  // C-Hiragana_Katakana
+  EXPECT_TRUE(translator_->Translate(IBUS_Hiragana_Katakana, 0,
+                                     IBUS_CONTROL_MASK, config::Config::ROMAN,
+                                     true, &out));
+  EXPECT_EQ(commands::KeyEvent::KANA, out.special_key());
+  ASSERT_EQ(1, out.modifier_keys_size());
+  EXPECT_EQ(commands::KeyEvent::CTRL, out.modifier_keys(0));
+
+  // M-Hiragana_Katakana
+  EXPECT_TRUE(translator_->Translate(IBUS_Hiragana_Katakana, 0, IBUS_MOD1_MASK,
+                                     config::Config::ROMAN, true, &out));
+  EXPECT_EQ(commands::KeyEvent::KANA, out.special_key());
+  ASSERT_EQ(1, out.modifier_keys_size());
+  EXPECT_EQ(commands::KeyEvent::ALT, out.modifier_keys(0));
+
+  // Hiragana_Katakana handling should have no effect into Hiragana key or
+  // Katakana key.
+  // S-Hiragana
+  EXPECT_TRUE(translator_->Translate(IBUS_Hiragana, 0, IBUS_SHIFT_MASK,
+                                     config::Config::ROMAN, true, &out));
+  EXPECT_EQ(commands::KeyEvent::KANA, out.special_key());
+  EXPECT_EQ(1, out.modifier_keys_size());
+  EXPECT_EQ(commands::KeyEvent::SHIFT, out.modifier_keys(0));
+
+  // C-Hiragana
+  EXPECT_TRUE(translator_->Translate(IBUS_Hiragana, 0, IBUS_CONTROL_MASK,
+                                     config::Config::ROMAN, true, &out));
+  EXPECT_EQ(commands::KeyEvent::KANA, out.special_key());
+  ASSERT_EQ(1, out.modifier_keys_size());
+  EXPECT_EQ(commands::KeyEvent::CTRL, out.modifier_keys(0));
+
+  // M-Hiragana
+  EXPECT_TRUE(translator_->Translate(IBUS_Hiragana, 0, IBUS_MOD1_MASK,
+                                     config::Config::ROMAN, true, &out));
+  EXPECT_EQ(commands::KeyEvent::KANA, out.special_key());
+  ASSERT_EQ(1, out.modifier_keys_size());
+  EXPECT_EQ(commands::KeyEvent::ALT, out.modifier_keys(0));
+
+  // S-Katakana
+  EXPECT_TRUE(translator_->Translate(IBUS_Katakana, 0, IBUS_SHIFT_MASK,
+                                     config::Config::ROMAN, true, &out));
+  EXPECT_EQ(commands::KeyEvent::KATAKANA, out.special_key());
+  EXPECT_EQ(1, out.modifier_keys_size());
+  EXPECT_EQ(commands::KeyEvent::SHIFT, out.modifier_keys(0));
+
+  // C-Katakana
+  EXPECT_TRUE(translator_->Translate(IBUS_Katakana, 0, IBUS_CONTROL_MASK,
+                                     config::Config::ROMAN, true, &out));
+  EXPECT_EQ(commands::KeyEvent::KATAKANA, out.special_key());
+  ASSERT_EQ(1, out.modifier_keys_size());
+  EXPECT_EQ(commands::KeyEvent::CTRL, out.modifier_keys(0));
+
+  // M-Katakana
+  EXPECT_TRUE(translator_->Translate(IBUS_Katakana, 0, IBUS_MOD1_MASK,
+                                     config::Config::ROMAN, true, &out));
+  EXPECT_EQ(commands::KeyEvent::KATAKANA, out.special_key());
+  ASSERT_EQ(1, out.modifier_keys_size());
+  EXPECT_EQ(commands::KeyEvent::ALT, out.modifier_keys(0));
+}
+
+TEST_F(KeyTranslatorTest, HiraganaKatakanaHandlingWithMultipleModifiersTest) {
+  // Check Hiragana_Katakana local hack. The detail is described in
+  // key_translator.cc file.
+  commands::KeyEvent out;
+  guint modifier;
+
+  // C-S-Hiragana_Katakana
+  modifier = IBUS_SHIFT_MASK | IBUS_CONTROL_MASK;
+  EXPECT_TRUE(translator_->Translate(IBUS_Hiragana_Katakana, 0, modifier,
+                                     config::Config::ROMAN, true, &out));
+  EXPECT_EQ(commands::KeyEvent::KATAKANA, out.special_key());
+  ASSERT_EQ(1, out.modifier_keys_size());
+  EXPECT_EQ(commands::KeyEvent::CTRL, out.modifier_keys(0));
+
+  // M-S-Hiragana_Katakana
+  modifier = IBUS_SHIFT_MASK | IBUS_MOD1_MASK;
+  EXPECT_TRUE(translator_->Translate(IBUS_Hiragana_Katakana, 0, modifier,
+                                     config::Config::ROMAN, true, &out));
+  EXPECT_EQ(commands::KeyEvent::KATAKANA, out.special_key());
+  ASSERT_EQ(1, out.modifier_keys_size());
+  EXPECT_EQ(commands::KeyEvent::ALT, out.modifier_keys(0));
+
+  // C-M-Hiragana_Katakana
+  modifier = IBUS_MOD1_MASK | IBUS_CONTROL_MASK;
+  EXPECT_TRUE(translator_->Translate(IBUS_Hiragana_Katakana, 0, modifier,
+                                     config::Config::ROMAN, true, &out));
+  EXPECT_EQ(commands::KeyEvent::KANA, out.special_key());
+  ASSERT_EQ(2, out.modifier_keys_size());
+  IsContained(commands::KeyEvent::CTRL, out.modifier_keys());
+  IsContained(commands::KeyEvent::ALT, out.modifier_keys());
+
+  // C-S-M-Hiragana_Katakana
+  modifier = IBUS_SHIFT_MASK | IBUS_MOD1_MASK | IBUS_CONTROL_MASK;
+  EXPECT_TRUE(translator_->Translate(IBUS_Hiragana_Katakana, 0, modifier,
+                                     config::Config::ROMAN, true, &out));
+  EXPECT_EQ(commands::KeyEvent::KATAKANA, out.special_key());
+  EXPECT_EQ(2, out.modifier_keys_size());
+  IsContained(commands::KeyEvent::CTRL, out.modifier_keys());
+  IsContained(commands::KeyEvent::ALT, out.modifier_keys());
+
+  // Hiragana_Katakana handling should have no effect into Hiragana key or
+  // Katakana key.
+  // C-S-Hiragana
+  modifier = IBUS_SHIFT_MASK | IBUS_CONTROL_MASK;
+  EXPECT_TRUE(translator_->Translate(IBUS_Hiragana, 0, modifier,
+                                     config::Config::ROMAN, true, &out));
+  EXPECT_EQ(commands::KeyEvent::KANA, out.special_key());
+  ASSERT_EQ(2, out.modifier_keys_size());
+  IsContained(commands::KeyEvent::CTRL, out.modifier_keys());
+  IsContained(commands::KeyEvent::SHIFT, out.modifier_keys());
+
+  // M-S-Hiragana
+  modifier = IBUS_SHIFT_MASK | IBUS_MOD1_MASK;
+  EXPECT_TRUE(translator_->Translate(IBUS_Hiragana, 0, modifier,
+                                     config::Config::ROMAN, true, &out));
+  EXPECT_EQ(commands::KeyEvent::KANA, out.special_key());
+  ASSERT_EQ(2, out.modifier_keys_size());
+  IsContained(commands::KeyEvent::ALT, out.modifier_keys());
+  IsContained(commands::KeyEvent::SHIFT, out.modifier_keys());
+
+  // C-M-Hiragana
+  modifier = IBUS_MOD1_MASK | IBUS_CONTROL_MASK;
+  EXPECT_TRUE(translator_->Translate(IBUS_Hiragana, 0, modifier,
+                                     config::Config::ROMAN, true, &out));
+  EXPECT_EQ(commands::KeyEvent::KANA, out.special_key());
+  ASSERT_EQ(2, out.modifier_keys_size());
+  IsContained(commands::KeyEvent::CTRL, out.modifier_keys());
+  IsContained(commands::KeyEvent::ALT, out.modifier_keys());
+
+  // C-S-M-Hiragana
+  modifier = IBUS_SHIFT_MASK | IBUS_MOD1_MASK | IBUS_CONTROL_MASK;
+  EXPECT_TRUE(translator_->Translate(IBUS_Hiragana, 0, modifier,
+                                     config::Config::ROMAN, true, &out));
+  EXPECT_EQ(commands::KeyEvent::KANA, out.special_key());
+  EXPECT_EQ(3, out.modifier_keys_size());
+  IsContained(commands::KeyEvent::CTRL, out.modifier_keys());
+  IsContained(commands::KeyEvent::ALT, out.modifier_keys());
+  IsContained(commands::KeyEvent::SHIFT, out.modifier_keys());
+
+  // C-S-Katakana
+  modifier = IBUS_SHIFT_MASK | IBUS_CONTROL_MASK;
+  EXPECT_TRUE(translator_->Translate(IBUS_Katakana, 0, modifier,
+                                     config::Config::ROMAN, true, &out));
+  EXPECT_EQ(commands::KeyEvent::KATAKANA, out.special_key());
+  ASSERT_EQ(2, out.modifier_keys_size());
+  IsContained(commands::KeyEvent::CTRL, out.modifier_keys());
+  IsContained(commands::KeyEvent::SHIFT, out.modifier_keys());
+
+  // M-S-Katakana
+  modifier = IBUS_SHIFT_MASK | IBUS_MOD1_MASK;
+  EXPECT_TRUE(translator_->Translate(IBUS_Katakana, 0, modifier,
+                                     config::Config::ROMAN, true, &out));
+  EXPECT_EQ(commands::KeyEvent::KATAKANA, out.special_key());
+  ASSERT_EQ(2, out.modifier_keys_size());
+  IsContained(commands::KeyEvent::SHIFT, out.modifier_keys());
+  IsContained(commands::KeyEvent::ALT, out.modifier_keys());
+
+  // C-M-Katakana
+  modifier = IBUS_MOD1_MASK | IBUS_CONTROL_MASK;
+  EXPECT_TRUE(translator_->Translate(IBUS_Katakana, 0, modifier,
+                                     config::Config::ROMAN, true, &out));
+  EXPECT_EQ(commands::KeyEvent::KATAKANA, out.special_key());
+  ASSERT_EQ(2, out.modifier_keys_size());
+  IsContained(commands::KeyEvent::CTRL, out.modifier_keys());
+  IsContained(commands::KeyEvent::ALT, out.modifier_keys());
+
+  // C-S-M-Katakana
+  modifier = IBUS_SHIFT_MASK | IBUS_MOD1_MASK | IBUS_CONTROL_MASK;
+  EXPECT_TRUE(translator_->Translate(IBUS_Katakana, 0, modifier,
+                                     config::Config::ROMAN, true, &out));
+  EXPECT_EQ(commands::KeyEvent::KATAKANA, out.special_key());
+  EXPECT_EQ(3, out.modifier_keys_size());
+  IsContained(commands::KeyEvent::CTRL, out.modifier_keys());
+  IsContained(commands::KeyEvent::SHIFT, out.modifier_keys());
+  IsContained(commands::KeyEvent::ALT, out.modifier_keys());
 }
 
 TEST_F(KeyTranslatorTest, TranslateUnknow) {

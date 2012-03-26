@@ -30,63 +30,47 @@
 #ifndef MOZC_DICTIONARY_USER_POS_H_
 #define MOZC_DICTIONARY_USER_POS_H_
 
+#include <map>
 #include <string>
 #include <vector>
 #include "base/base.h"
+#include "dictionary/user_pos_interface.h"
 
 namespace mozc {
-class UserPOS {
+
+class UserPOS : public UserPOSInterface {
  public:
-  // return posssible list of part-of-speech Mozc can handle
-  static void GetPOSList(vector<string> *pos_list);
-
-  // Return true if the given string is one of the POSes Mozc can handle.
-  static bool IsValidPOS(const string &pos);
-
-  // Return iid from Mozc POS.
-  // If pos has inflection, this method only returns
-  // the ids of base form
-  static bool GetPOSIDs(const string &pos, uint16 *id);
-
-  struct Token {
-    string key;
-    string value;
+  struct ConjugationType {
+    const char *key_suffix;
+    const char *value_suffix;
     uint16 id;
-    int16  cost;
   };
 
-  // Convert from key/value/pos pair to Token.
-  // If pos has inflection, this function expands possible
-  // inflections automatically.
-  static bool GetTokens(const string &key,
-                        const string &value,
-                        const string &pos,
-                        vector<Token> *tokens);
-
-  // This function is provided for test code to use mock version of
-  // POS. There is an underlying helper class inside POS and behaivior
-  // of POS can be customized by replacing the instance of the helper
-  // class with another one.
-  class UserPOSInterface;
-  static void SetUserPOSInterface(const UserPOSInterface *impl);
-
-  // Interface that defines interface of the helper class used by
-  // POS. Default implementation is defined in the .cc file.
-  class UserPOSInterface {
-   public:
-    virtual ~UserPOSInterface() {}
-    virtual void GetPOSList(vector<string> *pos_list) const = 0;
-    virtual bool IsValidPOS(const string &pos) const = 0;
-    virtual bool GetPOSIDs(const string &pos, uint16 *id) const = 0;
-    virtual bool GetTokens(const string &key,
-                           const string &value,
-                           const string &pos,
-                           vector<Token> *tokens) const = 0;
+  struct POSToken {
+    const char *pos;
+    uint16 conjugation_size;
+    const ConjugationType *conjugation_form;
   };
+
+  // Initializes the user pos from the given POSToken array. The class doesn't
+  // take the ownership of the array. The caller is responsible for deleting it.
+  explicit UserPOS(const POSToken *pos_token_array);
+  virtual ~UserPOS() {}
+
+  // Implementation of UserPOSInterface.
+  virtual void GetPOSList(vector<string> *pos_list) const;
+  virtual bool IsValidPOS(const string &pos) const;
+  virtual bool GetPOSIDs(const string &pos, uint16 *id) const;
+  virtual bool GetTokens(const string &key, const string &value,
+                         const string &pos, vector<Token> *tokens) const;
 
  private:
-  UserPOS() {}
-  virtual ~UserPOS() {}
+  const POSToken *pos_token_array_;
+  map<string, const POSToken*> pos_map_;
+
+  DISALLOW_COPY_AND_ASSIGN(UserPOS);
 };
+
 }  // mozc
+
 #endif  // MOZC_DICTIONARY_USER_POS_H_

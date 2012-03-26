@@ -49,8 +49,10 @@ namespace storage {
 class EncryptedStringStorage;
 }  // namespace storage
 
-class Segments;
+class ConversionRequest;
+class DictionaryInterface;
 class Segment;
+class Segments;
 class UserHistoryPredictorSyncer;
 
 // Added serialization method for UserHistory.
@@ -74,12 +76,14 @@ class UserHistoryStorage : public mozc::user_history_predictor::UserHistory {
 // by single thread. Although AsyncSave() and AsyncLoad() make
 // worker threads internally, these two functions won't be
 // called by multiple-threads at the same time
-class UserHistoryPredictor: public PredictorInterface {
+class UserHistoryPredictor : public PredictorInterface {
  public:
   UserHistoryPredictor();
   virtual ~UserHistoryPredictor();
 
   bool Predict(Segments *segments) const;
+  bool PredictForRequest(const ConversionRequest &request,
+                         Segments *segments) const;
 
   // Hook(s) for all mutable operations
   void Finish(Segments *segments);
@@ -276,6 +280,7 @@ class UserHistoryPredictor: public PredictorInterface {
   const Entry *LookupPrevEntry(const Segments &segments) const;
 
   void GetResultsFromHistoryDictionary(
+      const ConversionRequest &request,
       const Segments &segments,
       const Entry *prev_entry,
       EntryPriorityQueue *results) const;
@@ -283,7 +288,8 @@ class UserHistoryPredictor: public PredictorInterface {
   // Get input data from segments.
   // These input data include ambiguities.
   static void GetInputKeyFromSegments(
-      const Segments &segments, string *input_key, string *base,
+      const ConversionRequest &request, const Segments &segments,
+      string *input_key, string *base,
       scoped_ptr<Trie<string> >*expanded);
 
   bool InsertCandidates(bool zero_query_suggestion, Segments *segments,
@@ -338,8 +344,13 @@ class UserHistoryPredictor: public PredictorInterface {
   void InsertNextEntry(const NextEntry &next_entry,
                        UserHistoryPredictor::Entry *entry) const;
 
+  // Returns true if the input first candidate seems to be a privacy sensitive
+  // such like password.
+  bool IsPrivacySensitive(const Segments *segments) const;
+
   bool updated_;
   scoped_ptr<DicCache> dic_;
+  DictionaryInterface *dictionary_;
   mutable scoped_ptr<UserHistoryPredictorSyncer> syncer_;
 };
 }  // namespace mozc

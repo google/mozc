@@ -99,8 +99,8 @@ void CallOnce(once_t *once, void (*func)()) {
   } else {
     while (once->state == ONCE_INIT) {
 #ifdef OS_WINDOWS
-      YieldProcessor();
-#endif
+      ::YieldProcessor();
+#endif  // OS_WINDOWS
     }  // busy loop
   }
 }

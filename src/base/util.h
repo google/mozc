@@ -242,6 +242,16 @@ class Util {
   // it returns true and sets correct value when compiled by gcc.
   static bool SafeStrToDouble(const string &str, double *value);
 
+  // Converts the string to a float. Returns true if success or false if the
+  // string is in the wrong format.
+  static bool SafeStrToFloat(const string &str, float *value);
+  // Converts the string to a float.
+  static float StrToFloat(const string &str) {
+    float value;
+    Util::SafeStrToFloat(str, &value);
+    return value;
+  }
+
 #ifndef SWIG
   // C++ string version of sprintf.
   static string StringPrintf(const char *format, ...)
@@ -307,6 +317,14 @@ class Util {
   // succeeded.
   static bool GetTmWithOffsetSecond(tm *time_with_offset, int offset_sec);
 
+  // Get the system frequency to calculate the time from ticks.
+  static uint64 GetFrequency();
+
+  // Get the current ticks. It may return incorrect value on Virtual Machines.
+  // If you'd like to get a value in secs, it is necessary to divide a result by
+  // GetFrequency().
+  static uint64 GetTicks();
+
   // Interface of the helper class.
   // Default implementation is defined in the .cc file.
   class ClockInterface {
@@ -315,6 +333,10 @@ class Util {
     virtual void GetTimeOfDay(uint64 *sec, uint32 *usec) = 0;
     virtual uint64 GetTime() = 0;
     virtual bool GetTmWithOffsetSecond(time_t offset_sec, tm *output) = 0;
+
+    // High accuracy clock.
+    virtual uint64 GetFrequency() = 0;
+    virtual uint64 GetTicks() = 0;
   };
 
   // This function is provided for test.
@@ -505,6 +527,9 @@ class Util {
   // return the directory name where the mozc server exist.
   static string GetServerDirectory();
 
+  // return the path of the mozc server.
+  static string GetServerPath();
+
   // Returns the directory name which holds some documents bundled to
   // the installed application package.  Typically it's
   // <server directory>/documents but it can change among platforms.
@@ -677,6 +702,9 @@ class Util {
   // return true if the version of Windows is 6.1 or later.
   static bool IsWindows7OrLater();
 
+  // return true if the version of Windows is 6.2 or later.
+  static bool IsWindows8OrLater();
+
   // return true if the version of Windows is x64 Edition.
   static bool IsWindowsX64();
 
@@ -754,11 +782,75 @@ class Util {
   // check endian-ness at runtime.
   static bool IsLittleEndian();
 
+  // Following mlock/munlock related functions work based on target environment.
+  // In the case of Android, Native Client, Windows, we don't want to call
+  // actual functions, so these functions do nothing and return -1. In other
+  // cases, these functions call actual mlock/munlock functions and return it's
+  // result.
+  // On Android, page-out is probably acceptable because
+  // - Smaller RAM on the device.
+  // - The storage is (usually) solid state thus page-in/out is expected to
+  //   be faster.
+  // On Linux, in the kernel version >= 2.6.9, user process can mlock. In older
+  // kernel, it fails if the process is running in user priviledge.
+  // TODO(horo): Check in mac that mlock is really necessary.
+  static int MaybeMLock(const void *addr, size_t len);
+
+  static int MaybeMUnlock(const void *addr, size_t len);
+
   // should never be allocated.
  private:
   Util() {}
   virtual ~Util() {}
 };
+
+// Const iterator implementation to traverse on a (utf8) string as a char32
+// string.
+//
+// Example usage:
+//   string utf8_str;
+//   for (ConstChar32Iterator iter(utf8_str); !iter.Done(); iter.Next()) {
+//     char32 c = iter.Get();
+//     ...
+//   }
+class ConstChar32Iterator {
+ public:
+  explicit ConstChar32Iterator(const string &utf8_string) {
+    ptr_ = utf8_string.data();
+    end_ = utf8_string.data() + utf8_string.size();
+    current_ = Util::UTF8ToUCS4(ptr_, end_, &current_char_size_);
+  }
+
+  ConstChar32Iterator(const char *utf8_ptr, size_t size) {
+    ptr_ = utf8_ptr;
+    end_ = utf8_ptr + size;
+    current_ = Util::UTF8ToUCS4(ptr_, end_, &current_char_size_);
+  }
+
+  char32 Get() const {
+    DCHECK(ptr_ < end_);
+    return current_;
+  }
+
+  void Next() {
+    DCHECK(ptr_ < end_);
+    ptr_ += current_char_size_;
+    current_ = Util::UTF8ToUCS4(ptr_, end_, &current_char_size_);
+  }
+
+  bool Done() const {
+    return ptr_ == end_;
+  }
+
+ private:
+  const char *ptr_;
+  const char *end_;
+  char32 current_;
+  size_t current_char_size_;
+
+  DISALLOW_COPY_AND_ASSIGN(ConstChar32Iterator);
+};
+
 }  // namespace mozc
 
 #endif  // MOZC_BASE_UTIL_H_

@@ -738,6 +738,53 @@ TEST(UtilTest, SafeStrToDouble) {
 #endif
 }
 
+TEST(UtilTest, SafeStrToFloat) {
+  float value = 1.0;
+
+  EXPECT_TRUE(Util::SafeStrToFloat("0", &value));
+  EXPECT_EQ(0.0, value);
+  EXPECT_TRUE(Util::SafeStrToFloat(" \t\r\n\v\f0 \t\r\n\v\f", &value));
+  EXPECT_EQ(0.0, value);
+  EXPECT_TRUE(Util::SafeStrToFloat("-0", &value));
+  EXPECT_EQ(0.0, value);
+  EXPECT_TRUE(Util::SafeStrToFloat("1.0e1", &value));
+  EXPECT_EQ(10.0, value);
+  EXPECT_TRUE(Util::SafeStrToFloat("-5.0e-1", &value));
+  EXPECT_EQ(-0.5, value);
+  EXPECT_TRUE(Util::SafeStrToFloat(".0", &value));
+  EXPECT_EQ(0.0, value);
+  EXPECT_TRUE(Util::SafeStrToFloat("0.", &value));
+  EXPECT_EQ(0.0, value);
+  EXPECT_TRUE(Util::SafeStrToFloat("0.0", &value));
+  EXPECT_EQ(0.0, value);
+  // GCC accepts hexadecimal number, but VisualC++ does not.
+#ifndef _MSC_VER
+  EXPECT_TRUE(Util::SafeStrToFloat("0x1234", &value));
+  EXPECT_EQ(static_cast<float>(0x1234), value);
+#endif
+
+  EXPECT_FALSE(Util::SafeStrToFloat("3.4028236e38",  // overflow
+                                     &value));
+  EXPECT_FALSE(Util::SafeStrToFloat("-3.4028236e38", &value));
+  EXPECT_FALSE(Util::SafeStrToFloat("3e", &value));
+  EXPECT_FALSE(Util::SafeStrToFloat(".", &value));
+  EXPECT_FALSE(Util::SafeStrToFloat("", &value));
+#ifdef _MSC_VER
+  EXPECT_FALSE(Util::SafeStrToFloat("0x1234", &value));
+#endif
+}
+
+TEST(UtilTest, StrToFloat) {
+  EXPECT_EQ(0.0, Util::StrToFloat("0"));
+  EXPECT_EQ(0.0, Util::StrToFloat(" \t\r\n\v\f0 \t\r\n\v\f"));
+  EXPECT_EQ(0.0, Util::StrToFloat("-0"));
+  EXPECT_EQ(10.0, Util::StrToFloat("1.0e1"));
+  EXPECT_EQ(-0.5, Util::StrToFloat("-5.0e-1"));
+  EXPECT_EQ(0.0, Util::StrToFloat(".0"));
+  EXPECT_EQ(0.0, Util::StrToFloat("0."));
+  EXPECT_EQ(0.0, Util::StrToFloat("0.0"));
+}
+
 #include "base/push_warning_settings.h"
 #ifdef __GNUC__
 // On GCC, |EXPECT_EQ("", Util::StringPrintf(""))| may cause
@@ -849,6 +896,12 @@ TEST(UtilTest, IsFullWidthSymbolInHalfWidthKatakana) {
                                                           "\xbc\xe3\x82\xb0\xe3"
                                                           "\x83\xab\xe3\x80"
                                                           "\x82"));
+  // "ー。"
+  EXPECT_TRUE(Util::IsFullWidthSymbolInHalfWidthKatakana(
+      "\xe3\x83\xbc\xe3\x80\x82"));
+  // "ーグ。"
+  EXPECT_FALSE(Util::IsFullWidthSymbolInHalfWidthKatakana(
+      "\xe3\x83\xbc\xe3\x82\xb0\xe3\x80\x82"));
 }
 
 TEST(UtilTest, IsHalfWidthKatakanaSymbol) {
@@ -2092,8 +2145,24 @@ TEST(UtilTest, TimeTestWithMock) {
     EXPECT_EQ(5,   offset_tm.tm_wday);
   }
 
+  // GetFrequency / GetTicks
+  {
+    const uint64 kFrequency = 12345;
+    const uint64 kTicks = 54321;
+    mock_clock->SetFrequency(kFrequency);
+    EXPECT_EQ(kFrequency, Util::GetFrequency());
+    mock_clock->SetTicks(kTicks);
+    EXPECT_EQ(kTicks, Util::GetTicks());
+  }
+
   // unset clock handler
   Util::SetClockHandler(NULL);
+
+  // GetFrequency / GetTicks without ClockMock
+  {
+    EXPECT_NE(0, Util::GetFrequency());
+    EXPECT_NE(0, Util::GetTicks());
+  }
 }
 
 // time utility test without mock clock
@@ -3505,6 +3574,41 @@ TEST(UtilTest, RandomSeedTest) {
   // Reset the seed.
   Util::SetRandomSeed(0);
   EXPECT_EQ(first_try, Util::Random(INT_MAX));
+}
+
+#ifdef OS_WINDOWS
+TEST(UtilTest, WindowsMaybeMLockTest) {
+  size_t data_len = 32;
+  void *addr = malloc(data_len);
+  EXPECT_EQ(-1, Util::MaybeMLock(addr, data_len));
+  EXPECT_EQ(-1, Util::MaybeMUnlock(addr, data_len));
+  free(addr);
+}
+#endif  // OS_WINDOWS
+
+#ifdef OS_MACOSX
+TEST(UtilTest, MacMaybeMLockTest) {
+  size_t data_len = 32;
+  void *addr = malloc(data_len);
+  EXPECT_EQ(0, Util::MaybeMLock(addr, data_len));
+  EXPECT_EQ(0, Util::MaybeMUnlock(addr, data_len));
+  free(addr);
+}
+#endif  // OS_MACOSX
+
+TEST(UtilTest, LinuxMaybeMLockTest) {
+  size_t data_len = 32;
+  void *addr = malloc(data_len);
+#ifdef OS_LINUX
+#if defined(OS_ANDROID) || defined(__native_client__)
+  EXPECT_EQ(-1, Util::MaybeMLock(addr, data_len));
+  EXPECT_EQ(-1, Util::MaybeMUnlock(addr, data_len));
+#else
+  EXPECT_EQ(0, Util::MaybeMLock(addr, data_len));
+  EXPECT_EQ(0, Util::MaybeMUnlock(addr, data_len));
+#endif  // defined(OS_ANDROID) || defined(__native_client__)
+#endif  // OS_LINUX
+  free(addr);
 }
 
 }  // namespace mozc

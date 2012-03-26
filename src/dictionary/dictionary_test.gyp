@@ -60,6 +60,18 @@
       'variables': {
         'test_size': 'small',
       },
+      'conditions': [
+        ['use_separate_connection_data==1', {
+          'dependencies': [
+            '../converter/converter.gyp:connection_data_injected_environment',
+          ],
+        }],
+        ['use_separate_dictionary==1', {
+          'dependencies': [
+            'dictionary.gyp:dictionary_data_injected_environment',
+          ],
+        }],
+      ],
     },
     {
       'target_name': 'text_dictionary_loader_test',

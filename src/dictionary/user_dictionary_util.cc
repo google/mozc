@@ -35,7 +35,8 @@
 #include "base/config_file_stream.h"
 #include "base/file_stream.h"
 #include "base/util.h"
-#include "dictionary/user_pos.h"
+#include "data_manager/user_dictionary_manager.h"
+#include "dictionary/user_pos_interface.h"
 
 namespace mozc {
 
@@ -51,6 +52,7 @@ const char kUserDictionaryFile[] = "user://user_dictionary.db";
 
 // TODO(keni): Write unit tests for this function.
 bool UserDictionaryUtil::IsValidEntry(
+    const UserPOSInterface &user_pos,
     const UserDictionaryStorage::UserDictionaryEntry &entry) {
   if (entry.key().empty()) {
     VLOG(1) << "key is empty";
@@ -92,7 +94,8 @@ bool UserDictionaryUtil::IsValidEntry(
     VLOG(1) << "Invalid reading";
     return false;
   }
-  if (!UserPOS::IsValidPOS(entry.pos())) {
+
+  if (!user_pos.IsValidPOS(entry.pos())) {
     VLOG(1) << "Invalid POS";
     return false;
   }

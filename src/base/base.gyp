@@ -76,12 +76,42 @@
             'win_sandbox.cc',
             'win_util.cc',
           ],
+          'link_settings': {
+            'msvs_settings': {
+              'VCLinkerTool': {
+                'AdditionalDependencies': [
+                  'aux_ulib.lib',  # used in 'win_util.cc'
+                  'propsys.lib',   # used in 'win_util.cc'
+                ],
+              },
+            },
+          },
           'conditions': [
             ['branding=="GoogleJapaneseInput"', {
               'dependencies': [
                 '<(DEPTH)/third_party/breakpad/breakpad.gyp:breakpad',
               ],
             }],
+          ],
+        }],
+        # When the target platform is 'Android', build settings are currently
+        # shared among *host* binaries and *target* binaries. This means that
+        # you should implement *host* binaries by using limited libraries
+        # which are also available on NDK.
+        ['OS=="linux" and target_platform!="Android"', {
+          'defines': [
+            'HAVE_LIBRT=1',
+          ],
+          'link_settings': {
+            'libraries': [
+              '-lrt',
+            ],
+          },
+        }],
+        ['target_platform=="Android"', {
+          'sources!': [
+            'iconv.cc',
+            'process.cc',
           ],
         }],
       ],
@@ -106,6 +136,19 @@
       'dependencies': [
         'gen_character_set',
         'gen_version_def',
+      ],
+      'conditions': [
+        ['OS=="win"', {
+          'link_settings': {
+            'msvs_settings': {
+              'VCLinkerTool': {
+                'AdditionalDependencies': [
+                  'version.lib',  # used in 'util.cc'
+                ],
+              },
+            },
+          },
+        }],
       ],
     },
     {
@@ -152,6 +195,19 @@
       'dependencies': [
         'base',
       ],
+      'conditions': [
+        ['OS=="win"', {
+          'link_settings': {
+            'msvs_settings': {
+              'VCLinkerTool': {
+                'AdditionalDependencies': [
+                  'crypt32.lib',  # used in 'encryptor.cc'
+                ],
+              },
+            },
+          },
+        }],
+      ],
     },
     {
       'target_name': 'gen_version_def',
@@ -194,62 +250,39 @@
       'actions': [
         {
           'action_name': 'gen_config_file_stream_data',
-          'variables': {
-            'input_files': [
-              '../data/keymap/atok.tsv',
-              '../data/keymap/kotoeri.tsv',
-              '../data/keymap/mobile.tsv',
-              '../data/keymap/ms-ime.tsv',
-              '../data/preedit/kana.tsv',
-              '../data/preedit/hiragana-romanji.tsv',
-              '../data/preedit/romanji-hiragana.tsv',
-              '../data/preedit/12keys-hiragana.tsv',
-              '../data/preedit/12keys-halfwidthascii.tsv',
-              '../data/preedit/12keys-number.tsv',
-              '../data/preedit/flick-halfwidthascii.tsv',
-              '../data/preedit/flick-hiragana.tsv',
-              '../data/preedit/flick-number.tsv',
-              '../data/preedit/toggle_flick-hiragana.tsv',
-              '../data/preedit/toggle_flick-halfwidthascii.tsv',
-              '../data/preedit/toggle_flick-number.tsv',
-              '../data/preedit/qwerty_mobile-hiragana.tsv',
-              '../data/preedit/qwerty_mobile-hiragana-number.tsv',
-              '../data/preedit/qwerty_mobile-halfwidthascii.tsv',
-            ],
-          },
           'inputs': [
-            '<@(input_files)',
+            '../data/keymap/atok.tsv',
+            '../data/keymap/kotoeri.tsv',
+            '../data/keymap/mobile.tsv',
+            '../data/keymap/ms-ime.tsv',
+            '../data/preedit/12keys-halfwidthascii.tsv',
+            '../data/preedit/12keys-hiragana.tsv',
+            '../data/preedit/12keys-number.tsv',
+            '../data/preedit/flick-halfwidthascii.tsv',
+            '../data/preedit/flick-hiragana.tsv',
+            '../data/preedit/flick-number.tsv',
+            '../data/preedit/hiragana-romanji.tsv',
+            '../data/preedit/kana.tsv',
+            '../data/preedit/qwerty_mobile-halfwidthascii.tsv',
+            '../data/preedit/qwerty_mobile-hiragana-number.tsv',
+            '../data/preedit/qwerty_mobile-hiragana.tsv',
+            '../data/preedit/romanji-hiragana.tsv',
+            '../data/preedit/toggle_flick-halfwidthascii.tsv',
+            '../data/preedit/toggle_flick-hiragana.tsv',
+            '../data/preedit/toggle_flick-number.tsv',
           ],
           'outputs': [
             '<(gen_out_dir)/config_file_stream_data.h',
           ],
           'action': [
-            'python', '../build_tools/redirect.py',
-            '<(gen_out_dir)/config_file_stream_data.h',
-            '<(mozc_build_tools_dir)/gen_config_file_stream_data_main',
-            '<@(input_files)'
+            'python', 'gen_config_file_stream_data.py',
+            '--output', '<@(_outputs)',
+            '<@(_inputs)',
+          ],
+          'dependencies': [
+            'gen_config_file_stream_data.py',
           ],
         },
-      ],
-    },
-    {
-      'target_name': 'gen_config_file_stream_data_main',
-      'type': 'executable',
-      'sources': [
-        'gen_config_file_stream_data_main.cc',
-      ],
-      'dependencies': [
-        'base',
-      ],
-    },
-    {
-      'target_name': 'install_gen_config_file_stream_data_main',
-      'type': 'none',
-      'variables': {
-        'bin_name': 'gen_config_file_stream_data_main'
-      },
-      'includes' : [
-        '../gyp/install_build_tool.gypi',
       ],
     },
   ],

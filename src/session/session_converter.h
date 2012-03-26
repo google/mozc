@@ -168,8 +168,8 @@ class SessionConverter : public SessionConverterInterface {
   void SegmentFocusLeftEdge();
 
   // Resize the focused segment.
-  void SegmentWidthExpand();
-  void SegmentWidthShrink();
+  void SegmentWidthExpand(const composer::Composer &composer);
+  void SegmentWidthShrink(const composer::Composer &composer);
 
   // Move the focus of candidates.
   void CandidateNext(const composer::Composer &composer);

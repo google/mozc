@@ -33,6 +33,7 @@
       'target_name': 'composer',
       'type': 'static_library',
       'sources': [
+        'composer.cc',
         'internal/char_chunk.cc',
         'internal/composition.cc',
         'internal/composition_input.cc',
@@ -40,7 +41,6 @@
         'internal/mode_switching_handler.cc',
         'internal/transliterators.cc',
         'internal/transliterators_ja.cc',
-        'composer.cc',
         'table.cc',
       ],
       'dependencies': [
@@ -49,8 +49,9 @@
         '../config/config.gyp:config_handler',
         '../config/config.gyp:config_protocol',
         '../converter/converter_base.gyp:character_form_manager',
-        '../session/session_base.gyp:request_handler',
+        '../session/session_base.gyp:key_event_util',
         '../session/session_base.gyp:key_parser',
+        '../session/session_base.gyp:request_handler',
         # This is needed. GYP is not smart enough about indirect dependencies.
         '../session/session_base.gyp:session_protocol',
         '../transliteration/transliteration.gyp:transliteration',
@@ -60,6 +61,7 @@
       'target_name': 'composer_test',
       'type': 'executable',
       'sources': [
+        'composer_test.cc',
         'internal/char_chunk_test.cc',
         'internal/composition_input_test.cc',
         'internal/composition_test.cc',
@@ -67,7 +69,6 @@
         'internal/mode_switching_handler_test.cc',
         'internal/transliterators_ja_test.cc',
         'internal/transliterators_test.cc',
-        'composer_test.cc',
         'table_test.cc',
       ],
       'dependencies': [

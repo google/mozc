@@ -108,8 +108,18 @@ class UserDictionaryStorage : public user_dictionary::UserDictionaryStorage {
   // for the first time.
   bool Exists() const;
 
-  // Load user dictionary fomr the file
+  // Load user dictionary from the file. Note that this method may create or
+  // remove sync dictionary depending on ENABLE_CLOUD_SYNC macro.
+  // Use LoadWithoutChangingSyncDictionary for deterministic unit tests.
   bool Load();
+
+  // For deterministic unit test.
+  // Load user dictionary from the file without adding or removing sync
+  // dictionary.
+  // TODO(yukawa): Refactor this design, especially around Load(),
+  //     EnsureSyncDictionaryExists() and
+  //     RemoveUnusedSyncDictionariesIfExist().
+  bool LoadWithoutChangingSyncDictionary();
 
   // Serialzie user dictionary to local file after some checks.
   // Need to call Lock() the dictionary before calling Save()
@@ -165,6 +175,10 @@ class UserDictionaryStorage : public user_dictionary::UserDictionaryStorage {
   // Returns true if a new sync dictionary is added, false otherwise.
   bool EnsureSyncDictionaryExists();
 
+  // Remove all the empty sync dictionaries. This method is introduced as a
+  // temporary workaround against b/6004671.
+  void RemoveUnusedSyncDictionariesIfExist();
+
   // return the number of dictionaries with "synclbe" being true.
   static int CountSyncableDictionaries(
       const user_dictionary::UserDictionaryStorage *storage);
@@ -182,6 +196,14 @@ class UserDictionaryStorage : public user_dictionary::UserDictionaryStorage {
   static string default_sync_dictionary_name();
 
  private:
+  // Load the data from |file_name_| and updates sync dictionary based on given
+  // flags.
+  // TODO(yukawa): Refactor this design, especially around Load(),
+  //     EnsureSyncDictionaryExists() and
+  //     RemoveUnusedSyncDictionariesIfExist().
+  bool LoadAndUpdateSyncDictionaries(bool ensure_one_sync_dictionary_exists,
+                                     bool remove_empty_sync_dictionaries);
+
   // Return true if this object can accept the given dictionary name.
   // This changes the internal state.
   bool IsValidDictionaryName(const string &name);

@@ -42,11 +42,12 @@ class CloudHandwriting : public HandwritingInterface {
   CloudHandwriting() {}
   virtual ~CloudHandwriting() {}
 
-  void Recognize(const Strokes &strokes, vector<string> *candidates) const;
+  HandwritingStatus Recognize(const Strokes &strokes,
+                              vector<string> *candidates) const;
 
-  void Commit(const Strokes &strokes, const string &result);
+  HandwritingStatus Commit(const Strokes &strokes, const string &result);
 
-// Parses the server response and fills to |candidates|
+  // Parses the server response and fills to |candidates|
   static bool ParseResponse(const string &json, vector<string> *candidates);
 
   // Converts the |strokes| into the request format and returns it as a string.

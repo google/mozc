@@ -70,6 +70,16 @@ const GUID kImeLangBarItem_HelpMenu = {
 };
 
 CComPtr<ITfLangBarItemMgr> GetLangBarItemMgr() {
+  // To work around weird crash on Windows8 CP, instanciate the LangBarItemMrg
+  // via ::CoCreateInstance. b/6106437.
+  // TODO(yukawa): Revisit here and make sure if we should extend the condition
+  //     to Vista (or 7) or not.
+  if (mozc::Util::IsWindows8OrLater()) {
+    CComPtr<ITfLangBarItemMgr> ptr;
+    ptr.CoCreateInstance(CLSID_TF_LangBarItemMgr);
+    return ptr;
+  }
+
   // "msctf.dll" is not always available.  For example, Windows XP can disable
   // TSF completely.  In this case, the "msctf.dll" is not loaded.
   // Note that "msctf.dll" never be unloaded when it exists because we

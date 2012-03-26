@@ -40,7 +40,6 @@
 #include "base/singleton.h"
 #include "base/util.h"
 #include "ipc/ipc.h"
-#include "languages/global_language_spec.h"
 #include "session/session_factory_manager.h"
 #include "session/session_server.h"
 
@@ -111,11 +110,7 @@ void InitGoogleAndMozcServer(const char *arg0,
 }
 
 int MozcServer::Run() {
-  const language::LanguageDependentSpecInterface *language_dependent_spec =
-      language::GlobalLanguageSpec::GetLanguageDependentSpec();
-
-  string mutex_name = "server_";
-  mutex_name.append(language_dependent_spec->GetLanguageName());
+  string mutex_name = "server";
   mozc::ProcessMutex mutex(mutex_name.c_str());
   if (!mutex.Lock()) {
     LOG(INFO) << "Mozc Server is already running";

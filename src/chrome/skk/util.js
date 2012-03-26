@@ -184,12 +184,11 @@ skk.util = {
    */
   showPreedit: function(contextId, preedit) {
     console.debug('skk.util.showPreedit');
-    chrome.experimental.input.setComposition(
+    chrome.input.ime.setComposition(
         {
           contextID: contextId,
           text: preedit,
-          selectionStart: preedit.length,
-          selectionEnd: preedit.length
+          cursor: preedit.length
         });
   }
 };

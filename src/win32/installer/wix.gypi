@@ -56,8 +56,8 @@
         'tool_elevation_policy_key': r'Software\Microsoft\Internet Explorer\Low Rights\ElevationPolicy\{94F14A1B-94E6-4303-A0DD-C1CED3D89DD4}',
         'broker32_elevation_policy_key': r'Software\Microsoft\Internet Explorer\Low Rights\ElevationPolicy\{F568BB28-0957-4A34-BEA7-D5F566B52410}',
         'broker64_elevation_policy_key': r'Software\Microsoft\Internet Explorer\Low Rights\ElevationPolicy\{04F68DA0-E43F-4CDC-8B79-C034A192787E}',
-        'icon_path': '<(mozc_data_dir)/images/win/product_icon.ico',
-        'document_dir': '<(mozc_data_dir)/installer',
+        'icon_path': '<(mozc_content_dir)/images/win/product_icon.ico',
+        'document_dir': '<(mozc_content_dir)/installer',
       },
       'inputs': [
         '<(wxs_file)',

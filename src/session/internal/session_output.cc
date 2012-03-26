@@ -314,9 +314,11 @@ bool SessionOutput::FillFooter(const commands::Category category,
     footer->set_logo_visible(true);
   }
 
-#ifdef CHANNEL_DEV
+  // Show the build number on the footer label for debugging when the build
+  // configuration is official dev channel.
+#if defined(CHANNEL_DEV) && defined(GOOGLE_JAPANESE_INPUT_BUILD)
   FillSubLabel(footer);
-#endif  // CHANNEL_DEV
+#endif  // CHANNEL_DEV && GOOGLE_JAPANESE_INPUT_BUILD
 
   return true;
 }

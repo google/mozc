@@ -36,7 +36,7 @@
   'targets': [
     {
       'target_name': 'win32_base_dummy',
-      'type': 'executable',
+      'type': 'none',
       'sources': [
         # empty
       ],
@@ -80,7 +80,6 @@
           'type': 'static_library',
           'sources': [
             'conversion_mode_util.cc',
-            'font_util.cc',
             'migration_util.cc',
             'string_util.cc',
             'uninstall_helper.cc',
@@ -104,7 +103,6 @@
           'type': 'executable',
           'sources': [
             'conversion_mode_util_test.cc',
-            'font_util_test.cc',
             'string_util_test.cc',
             'uninstall_helper_test.cc',
           ],

@@ -217,7 +217,7 @@ void Session::PopUndoContext() {
   if (!prev_context_.get()) {
     return;
   }
-  ImeContext::CopyContext(*prev_context_, context_.get());
+  context_.swap(prev_context_);
   prev_context_.reset(NULL);
 }
 
@@ -387,29 +387,24 @@ bool Session::TestSendKey(commands::Command *command) {
     // the inconsistency between TestSendKey and SendKey.
     switch (key_command) {
       case keymap::PrecompositionState::INSERT_SPACE:
-        ClearUndoContext();
         if (!IsFullWidthInsertSpace(command->input()) &&
             IsPureSpaceKey(command->input().key())) {
-          return EchoBack(command);
+          return EchoBackAndClearUndoContext(command);
         }
         return DoNothing(command);
       case keymap::PrecompositionState::INSERT_ALTERNATE_SPACE:
-        ClearUndoContext();
         if (IsFullWidthInsertSpace(command->input()) &&
             IsPureSpaceKey(command->input().key())) {
-          return EchoBack(command);
+          return EchoBackAndClearUndoContext(command);
         }
         return DoNothing(command);
       case keymap::PrecompositionState::INSERT_HALF_SPACE:
-        ClearUndoContext();
         if (IsPureSpaceKey(command->input().key())) {
-          return EchoBack(command);
+          return EchoBackAndClearUndoContext(command);
         }
         return DoNothing(command);
       case keymap::PrecompositionState::INSERT_FULL_SPACE:
-        ClearUndoContext();
         return DoNothing(command);
-        break;
       default:
         // Do nothing.
         break;
@@ -1317,8 +1312,8 @@ bool Session::MaybeSelectCandidate(commands::Command *command) {
   // enabled. This is why we need to normalize the key event here.
   // See b/5655743.
   commands::KeyEvent normalized_keyevent;
-  KeyEventUtil::NormalizeKeyEvent(command->input().key(),
-                                  &normalized_keyevent);
+  KeyEventUtil::NormalizeModifiers(command->input().key(),
+                                   &normalized_keyevent);
 
   // Check if the input character is in the shortcut.
   // TODO(komatsu): Support non ASCII characters such as Unicode and
@@ -2324,7 +2319,7 @@ bool Session::SegmentWidthExpand(commands::Command *command) {
     return DoNothing(command);
   }
   command->mutable_output()->set_consumed(true);
-  context_->mutable_converter()->SegmentWidthExpand();
+  context_->mutable_converter()->SegmentWidthExpand(context_->composer());
   Output(command);
   return true;
 }
@@ -2334,7 +2329,7 @@ bool Session::SegmentWidthShrink(commands::Command *command) {
     return DoNothing(command);
   }
   command->mutable_output()->set_consumed(true);
-  context_->mutable_converter()->SegmentWidthShrink();
+  context_->mutable_converter()->SegmentWidthShrink(context_->composer());
   Output(command);
   return true;
 }

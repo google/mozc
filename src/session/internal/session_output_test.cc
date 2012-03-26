@@ -584,18 +584,18 @@ TEST(SessionOutputTest, FillFooter) {
   EXPECT_TRUE(SessionOutput::FillFooter(commands::SUGGESTION, &candidates));
   EXPECT_TRUE(candidates.has_footer());
 
-#ifdef CHANNEL_DEV
+#if defined(CHANNEL_DEV) && defined(GOOGLE_JAPANESE_INPUT_BUILD)
   EXPECT_FALSE(candidates.footer().has_label());
   EXPECT_TRUE(candidates.footer().has_sub_label());
   EXPECT_EQ(0, candidates.footer().sub_label().find("build "));
-#else  // CHANNEL_DEV
+#else  // CHANNEL_DEV && GOOGLE_JAPANESE_INPUT_BUILD
   EXPECT_TRUE(candidates.footer().has_label());
   EXPECT_FALSE(candidates.footer().has_sub_label());
   // "Tabキーで選択"
   const char kLabel[] = ("Tab\xE3\x82\xAD\xE3\x83\xBC\xE3\x81\xA7"
                          "\xE9\x81\xB8\xE6\x8A\x9E");
   EXPECT_EQ(kLabel, candidates.footer().label());
-#endif  // CHANNEL_DEV
+#endif  // CHANNEL_DEV && GOOGLE_JAPANESE_INPUT_BUILD
 
   EXPECT_FALSE(candidates.footer().index_visible());
   EXPECT_FALSE(candidates.footer().logo_visible());

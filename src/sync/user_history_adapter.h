@@ -41,8 +41,6 @@
 namespace mozc {
 namespace sync {
 
-class ClockTimerInterface;
-
 class UserHistoryAdapter : public AdapterInterface {
  public:
   UserHistoryAdapter();
@@ -79,11 +77,7 @@ class UserHistoryAdapter : public AdapterInterface {
   uint64 GetLastDownloadTimestamp() const;
   bool SetLastDownloadTimestamp(uint64 last_download_time);
 
-  // Inject ClockTimerInterface for unittesting
-  void SetClockTimerInterface(ClockTimerInterface *clock_timer);
-
   string user_history_filename_;
-  ClockTimerInterface *clock_timer_;
   uint64 local_update_time_;
 };
 }  // namespace sync

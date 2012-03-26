@@ -31,111 +31,97 @@
 
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "base/clock_mock.h"
+#include "base/scoped_ptr.h"
 #include "base/stopwatch.h"
 #include "base/util.h"
 
-namespace {
-  // Allow 500 msec margin.
-  const double kMarginMicroseconds = 500.0e+3;
-
-  double GetElapsedMicroseconds(uint64 sec_begin, uint32 usec_begin,
-                                uint64 sec_end, uint32 usec_end) {
-    double usec_diff = usec_end;
-    usec_diff -= usec_begin;
-
-    double sec_diff = usec_end;
-    if (sec_end > sec_begin) {
-      sec_diff = static_cast<double>(sec_end - sec_begin);
-    } else {
-      sec_diff = - static_cast<double>(sec_begin - sec_end);
-    }
-
-    return sec_diff * 1.0e+6 + usec_diff;
-  }
-}  // anonymous namespace
-
 namespace mozc {
-TEST(StopWatchTest, MultipleGetElapsedMillisecondsTest) {
-  const int kSleepMilliseconds = 200;
+
+class StopwatchTest : public testing::Test {
+ protected:
+  void SetUp() {
+    clock_mock_.reset(new ClockMock(0, 0));
+    // 1GHz (Accuracy = 1ns)
+    clock_mock_->SetFrequency(1000000000uLL);
+    Util::SetClockHandler(clock_mock_.get());
+  }
+
+  void TearDown() {
+    Util::SetClockHandler(NULL);
+  }
+
+  void PutForwardNanoseconds(uint64 nano_sec) {
+    clock_mock_->PutClockForwardByTicks(nano_sec);
+  }
+
+  scoped_ptr<ClockMock> clock_mock_;
+};
+
+TEST_F(StopwatchTest, MultipleGetElapsedMillisecondsTest) {
+  const uint64 kWaitNanoseconds = 1000000000uLL;  // 1 sec
 
   Stopwatch stopwatch = Stopwatch::StartNew();
-  Util::Sleep(kSleepMilliseconds);
+  PutForwardNanoseconds(kWaitNanoseconds);
   stopwatch.Stop();
 
   // GetElapsedX should return the same value if the stopwatch is not running.
   EXPECT_FALSE(stopwatch.IsRunning());
-  const int64 elapsed_time1 = stopwatch.GetElapsedMilliseconds();
-  Util::Sleep(kSleepMilliseconds);
-  const int64 elapsed_time2 = stopwatch.GetElapsedMilliseconds();
-  Util::Sleep(kSleepMilliseconds);
-  const int64 elapsed_time3 = stopwatch.GetElapsedMilliseconds();
+  const uint64 elapsed_time1 = stopwatch.GetElapsedMilliseconds();
+  PutForwardNanoseconds(kWaitNanoseconds);
+  const uint64 elapsed_time2 = stopwatch.GetElapsedMilliseconds();
+  PutForwardNanoseconds(kWaitNanoseconds);
+  const uint64 elapsed_time3 = stopwatch.GetElapsedMilliseconds();
   EXPECT_EQ(elapsed_time1, elapsed_time2);
   EXPECT_EQ(elapsed_time1, elapsed_time3);
 }
 
-TEST(StopWatchTest, GetElapsedMicrosecondsTest) {
-  const int kSleepMilliseconds = 1000;
+TEST_F(StopwatchTest, GetElapsedXSecondsTest) {
+  const uint64 kWaitNanoseconds = 1000000000uLL;  // 1 sec
 
-  uint64 sec_begin, sec_end;
-  uint32 usec_begin, usec_end;
-  Util::GetTimeOfDay(&sec_begin, &usec_begin);
   Stopwatch stopwatch = Stopwatch::StartNew();
-  Util::Sleep(kSleepMilliseconds);
+  PutForwardNanoseconds(kWaitNanoseconds);
   stopwatch.Stop();
-  Util::GetTimeOfDay(&sec_end, &usec_end);
 
-  const double expected_elapsed_usec =
-      GetElapsedMicroseconds(sec_begin, usec_begin, sec_end, usec_end);
-  EXPECT_GE(stopwatch.GetElapsedMicroseconds(),
-            expected_elapsed_usec - kMarginMicroseconds);
-  EXPECT_LE(stopwatch.GetElapsedMicroseconds(),
-            expected_elapsed_usec + kMarginMicroseconds);
+  EXPECT_EQ(kWaitNanoseconds, stopwatch.GetElapsedNanoseconds());
+  EXPECT_EQ(kWaitNanoseconds / 1000, stopwatch.GetElapsedMicroseconds());
+  EXPECT_EQ(kWaitNanoseconds / 1000000, stopwatch.GetElapsedMilliseconds());
 }
 
-TEST(StopWatchTest, RestartTest) {
-  const int kSleepMilliseconds1 = 1000;
-  const int kSleepMilliseconds2 = 500;
+TEST_F(StopwatchTest, RestartTest) {
+  const uint64 kWaitNanoseconds1 = 1000000000uLL;  // 1 sec
+  const uint64 kWaitNanoseconds2 = 2000000000uLL;  // 2 sec
+  const uint64 kWaitNanoseconds3 = 4000000000uLL;  // 4 sec
 
-  uint64 sec_begin, sec_end;
-  uint32 usec_begin, usec_end;
-  Util::GetTimeOfDay(&sec_begin, &usec_begin);
   Stopwatch stopwatch = Stopwatch::StartNew();
-  Util::Sleep(kSleepMilliseconds1);
+  PutForwardNanoseconds(kWaitNanoseconds1);
   stopwatch.Stop();
+  PutForwardNanoseconds(kWaitNanoseconds2);
   stopwatch.Start();
-  Util::Sleep(kSleepMilliseconds2);
+  PutForwardNanoseconds(kWaitNanoseconds3);
   stopwatch.Stop();
-  Util::GetTimeOfDay(&sec_end, &usec_end);
 
-  const double expected_elapsed_usec =
-      GetElapsedMicroseconds(sec_begin, usec_begin, sec_end, usec_end);
-  EXPECT_GE(stopwatch.GetElapsedMicroseconds(),
-            expected_elapsed_usec - kMarginMicroseconds);
-  EXPECT_LE(stopwatch.GetElapsedMicroseconds(),
-            expected_elapsed_usec + kMarginMicroseconds);
+  const uint64 kExpected = kWaitNanoseconds1 + kWaitNanoseconds3;
+  EXPECT_EQ(kExpected, stopwatch.GetElapsedNanoseconds());
+  EXPECT_EQ(kExpected / 1000, stopwatch.GetElapsedMicroseconds());
+  EXPECT_EQ(kExpected / 1000000, stopwatch.GetElapsedMilliseconds());
 }
 
-TEST(StopWatchTest, ResetTest) {
-  const int kSleepMilliseconds1 = 1000;
-  const int kSleepMilliseconds2 = 500;
+TEST_F(StopwatchTest, ResetTest) {
+  const uint64 kWaitNanoseconds1 = 1000000000uLL;  // 1 sec
+  const uint64 kWaitNanoseconds2 = 2000000000uLL;  // 2 sec
   Stopwatch stopwatch = Stopwatch::StartNew();
-  Util::Sleep(kSleepMilliseconds1);
+  PutForwardNanoseconds(kWaitNanoseconds1);
   stopwatch.Stop();
   stopwatch.Reset();
 
-  uint64 sec_begin, sec_end;
-  uint32 usec_begin, usec_end;
-  Util::GetTimeOfDay(&sec_begin, &usec_begin);
   stopwatch.Start();
-  Util::Sleep(kSleepMilliseconds2);
+  PutForwardNanoseconds(kWaitNanoseconds2);
   stopwatch.Stop();
-  Util::GetTimeOfDay(&sec_end, &usec_end);
 
-  const double expected_elapsed_usec =
-      GetElapsedMicroseconds(sec_begin, usec_begin, sec_end, usec_end);
-  EXPECT_GE(stopwatch.GetElapsedMicroseconds(),
-            expected_elapsed_usec - kMarginMicroseconds);
-  EXPECT_LE(stopwatch.GetElapsedMicroseconds(),
-            expected_elapsed_usec + kMarginMicroseconds);
+  EXPECT_EQ(kWaitNanoseconds2, stopwatch.GetElapsedNanoseconds());
+  EXPECT_EQ(kWaitNanoseconds2 / 1000, stopwatch.GetElapsedMicroseconds());
+  EXPECT_EQ(kWaitNanoseconds2 / 1000000, stopwatch.GetElapsedMilliseconds());
 }
+
 }  // namespace mozc

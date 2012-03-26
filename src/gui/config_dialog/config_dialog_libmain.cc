@@ -39,8 +39,6 @@
 #include "gui/base/locale_util.h"
 #include "gui/base/singleton_window_helper.h"
 #include "gui/config_dialog/config_dialog.h"
-#include "languages/global_language_spec.h"
-#include "languages/japanese/lang_dep_spec.h"
 
 int RunConfigDialog(int argc, char *argv[]) {
   Q_INIT_RESOURCE(qrc_config_dialog);
@@ -55,11 +53,6 @@ int RunConfigDialog(int argc, char *argv[]) {
     return -1;
   }
 
-  // TODO(nona): remove these lines when link-time language dependency
-  //             injection is rolled out.
-  mozc::japanese::LangDepSpecJapanese spec;
-  mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(&spec);
-
   QStringList resource_names;
   resource_names << "config_dialog" << "keymap";
   mozc::gui::LocaleUtil::InstallTranslationMessagesAndFont(resource_names);
@@ -67,11 +60,5 @@ int RunConfigDialog(int argc, char *argv[]) {
 
   mozc_config.show();
   mozc_config.raise();
-  const int result = app.exec();
-
-  // TODO(nona): remove this line when link-time language dependency
-  //             injection is rolled out.
-  mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(NULL);
-
-  return result;
+  return app.exec();
 }

@@ -69,19 +69,15 @@ class TestSentenceGenerator {
     for (size_t i = 0; i < size; ++i) {
       string output;
       Util::HiraganaToRomanji(sentences[i], &output);
-      const char *begin = output.data();
-      const char *end = output.data() + output.size();
       vector<commands::KeyEvent> tmp;
-      while (begin < end) {
-        size_t mblen = 0;
-        const char32 ucs4 = Util::UTF8ToUCS4(begin, end, &mblen);
+      for (ConstChar32Iterator iter(output); !iter.Done(); iter.Next()) {
+        const char32 ucs4 = iter.Get();
         if (ucs4 >= static_cast<char32>('a') &&
             ucs4 <= static_cast<char32>('z')) {
           commands::KeyEvent key;
           key.set_key_code(static_cast<int>(ucs4));
           tmp.push_back(key);
         }
-        begin += mblen;
       }
       if (!tmp.empty()) {
         keys_.push_back(tmp);

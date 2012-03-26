@@ -37,8 +37,67 @@
 namespace mozc {
 using commands::KeyEvent;
 
+namespace {
+::testing::AssertionResult CompareKeyEvent(const char *expected_expr,
+                                           const char *actual_expr,
+                                           const KeyEvent &expected,
+                                           const KeyEvent &actual) {
+  {  // Key code
+    const int expected_key_code =
+        (expected.has_key_code()) ? expected.key_code() : -1;
+    const int actual_key_code =
+        (actual.has_key_code()) ? actual.key_code() : -1;
+    if (expected_key_code != actual_key_code) {
+      const string expected_value = (expected_key_code == -1)
+          ? "None"
+          : Util::StringPrintf("%c (%d)", expected_key_code, expected_key_code);
+      const string actual_value = (actual_key_code == -1)
+          ? string("None")
+          : Util::StringPrintf("%c (%d)", actual_key_code, actual_key_code);
+      return ::testing::AssertionFailure() <<
+          "Key codes are not same\n" <<
+          "Expected: " << expected_value << "\n" <<
+          "Actual  : " << actual_value;
+    }
+  }
+
+  {  // Special key
+    const int expected_special_key =
+        (expected.has_special_key()) ? expected.special_key() : -1;
+    const int actual_special_key =
+        (actual.has_special_key()) ? actual.special_key() : -1;
+    if (expected_special_key != actual_special_key) {
+      const string expected_value = (expected_special_key == -1)
+          ? "None" : Util::SimpleItoa(expected_special_key);
+      const string actual_value = (actual_special_key == -1)
+          ? "None" : Util::SimpleItoa(actual_special_key);
+      return ::testing::AssertionFailure() <<
+          "Special keys are not same\n" <<
+          "Expected: " << expected_value << "\n" <<
+          "Actual  : " << actual_value;
+    }
+  }
+
+  {  // Modifier keys
+    const int expected_modifier_keys = KeyEventUtil::GetModifiers(expected);
+    const int actual_modifier_keys = KeyEventUtil::GetModifiers(actual);
+    if (expected_modifier_keys != actual_modifier_keys) {
+      return ::testing::AssertionFailure() <<
+          "Modifier keys are not same\n" <<
+          "Expected: " << expected_modifier_keys << "\n" <<
+          "Actual  : " << actual_modifier_keys;
+    }
+  }
+
+  return ::testing::AssertionSuccess();
+}
+
+#define EXPECT_EQ_KEY_EVENT(expected, actual) \
+  EXPECT_PRED_FORMAT2(CompareKeyEvent, expected, actual)
+}  // namespace
+
 TEST(KeyEventUtilTest, GetModifiers) {
-  commands::KeyEvent key_event;
+  KeyEvent key_event;
 
   KeyParser::ParseKey("a", &key_event);
   EXPECT_EQ(0, KeyEventUtil::GetModifiers(key_event));
@@ -76,7 +135,7 @@ TEST(KeyEventUtilTest, GetKeyInformation) {
     "LeftShift Space a",
   };
 
-  commands::KeyEvent key_event;
+  KeyEvent key_event;
   uint64 output;
 
   for (size_t i = 0; i < ARRAYSIZE(kTestKeys); ++i) {
@@ -105,8 +164,6 @@ TEST(KeyEventUtilTest, GetKeyInformation) {
 }
 
 TEST(KeyEventUtilTest, NormalizeCaps) {
-  using commands::KeyEvent;
-
   KeyEvent key_event;
   KeyEvent normalized_key_event;
 
@@ -156,9 +213,7 @@ TEST(KeyEventUtilTest, NormalizeCaps) {
   }
 }
 
-TEST(KeyEventUtilTest, NormalizeKeyEvent) {
-  using commands::KeyEvent;
-
+TEST(KeyEventUtilTest, NormalizeModifiers) {
   KeyEvent key_event;
   KeyEvent normalized_key_event;
 
@@ -168,7 +223,7 @@ TEST(KeyEventUtilTest, NormalizeKeyEvent) {
     ASSERT_EQ(KeyEvent::CAPS, KeyEventUtil::GetModifiers(key_event));
     ASSERT_EQ('H', key_event.key_code());
 
-    KeyEventUtil::NormalizeKeyEvent(key_event, &normalized_key_event);
+    KeyEventUtil::NormalizeModifiers(key_event, &normalized_key_event);
     EXPECT_EQ(0, normalized_key_event.modifier_keys_size());
     EXPECT_EQ('h', normalized_key_event.key_code());
   }
@@ -179,7 +234,7 @@ TEST(KeyEventUtilTest, NormalizeKeyEvent) {
     ASSERT_EQ((KeyEvent::SHIFT | KeyEvent::LEFT_SHIFT),
               KeyEventUtil::GetModifiers(key_event));
 
-    KeyEventUtil::NormalizeKeyEvent(key_event, &normalized_key_event);
+    KeyEventUtil::NormalizeModifiers(key_event, &normalized_key_event);
     EXPECT_EQ(1, normalized_key_event.modifier_keys_size());
     ASSERT_EQ(KeyEvent::SHIFT,
               KeyEventUtil::GetModifiers(normalized_key_event));
@@ -193,7 +248,7 @@ TEST(KeyEventUtilTest, NormalizeKeyEvent) {
 
     ASSERT_EQ('H', key_event.key_code());
 
-    KeyEventUtil::NormalizeKeyEvent(key_event, &normalized_key_event);
+    KeyEventUtil::NormalizeModifiers(key_event, &normalized_key_event);
     EXPECT_EQ(1, normalized_key_event.modifier_keys_size());
     EXPECT_EQ(KeyEvent::SHIFT,
               KeyEventUtil::GetModifiers(normalized_key_event));
@@ -201,8 +256,41 @@ TEST(KeyEventUtilTest, NormalizeKeyEvent) {
   }
 }
 
+namespace {
+const struct NormalizeNumpadKeyTestData {
+  const char *from;
+  const char *to;
+} kNormalizeNumpadKeyTestData[] = {
+  { "a",             "a" },
+  { "Shift",         "Shift" },
+  { "Caps",          "Caps" },
+  { "Enter",         "Enter" },
+  { "Shift Caps a",  "Shift Caps a" },
+  { "NUMPAD0",       "0" },
+  { "NUMPAD9",       "9" },
+  { "MULTIPLY",      "*" },
+  { "SEPARATOR",     "Enter" },
+  { "EQUALS",        "=" },
+  { "Ctrl NUMPAD0",  "Ctrl 0" },
+  { "NUMPAD0 a",     "0" },
+};
+}  // namespace
+
+TEST(KeyEventUtilTest, NormalizeNumpadKey) {
+  for (size_t i = 0; i < ARRAYSIZE(kNormalizeNumpadKeyTestData); ++i) {
+    const NormalizeNumpadKeyTestData &data = kNormalizeNumpadKeyTestData[i];
+    SCOPED_TRACE(data.from);
+
+    KeyEvent key_event_from, key_event_to, key_event_normalized;
+    KeyParser::ParseKey(data.from, &key_event_from);
+    KeyParser::ParseKey(data.to, &key_event_to);
+    KeyEventUtil::NormalizeNumpadKey(key_event_from, &key_event_normalized);
+    EXPECT_EQ_KEY_EVENT(key_event_to, key_event_normalized);
+  }
+}
+
 TEST(KeyEventUtilTest, MaybeGetKeyStub) {
-  commands::KeyEvent key_event;
+  KeyEvent key_event;
   KeyInformation key;
 
   KeyParser::ParseKey("Shift", &key_event);
@@ -218,7 +306,54 @@ TEST(KeyEventUtilTest, MaybeGetKeyStub) {
 
   KeyParser::ParseKey("a", &key_event);
   EXPECT_TRUE(KeyEventUtil::MaybeGetKeyStub(key_event, &key));
-  EXPECT_EQ(static_cast<KeyInformation>(commands::KeyEvent::ASCII) << 32, key);
+  EXPECT_EQ(static_cast<KeyInformation>(KeyEvent::ASCII) << 32, key);
+}
+
+namespace {
+const struct RemoveModifiersTestData {
+  const char *input;
+  const char *remove;
+  const char *output;
+} kRemoveModifiersTestData[] = {
+  {
+    "",
+    "",
+    "",
+  }, {
+    "Ctrl Shift LeftAlt Caps",
+    "Ctrl Shift LeftAlt Caps",
+    "",
+  }, {
+    "Ctrl Shift LeftAlt Caps",
+    "Shift Caps",
+    "Ctrl LeftAlt",
+  }, {
+    "Ctrl Shift LeftAlt Caps",
+    "Alt",
+    "Ctrl Shift Caps",
+  }, {
+    "",
+    "Ctrl Shift LeftAlt Caps",
+    "",
+  },
+};
+}  // namespace
+
+TEST(KeyEventUtilTest, RemvoeModifiers) {
+  for (size_t i = 0; i < ARRAYSIZE(kRemoveModifiersTestData); ++i) {
+    SCOPED_TRACE(Util::StringPrintf("index = %d", static_cast<int>(i)));
+    const RemoveModifiersTestData &data = kRemoveModifiersTestData[i];
+
+    KeyEvent input, remove, output;
+    KeyParser::ParseKey(data.input, &input);
+    KeyParser::ParseKey(data.remove, &remove);
+    KeyParser::ParseKey(data.output, &output);
+    const uint32 remove_modifiers = KeyEventUtil::GetModifiers(remove);
+
+    KeyEvent removed_key_event;
+    KeyEventUtil::RemoveModifiers(input, remove_modifiers, &removed_key_event);
+    EXPECT_EQ_KEY_EVENT(output, removed_key_event);
+  }
 }
 
 TEST(KeyEventUtilTest, HasModifiers) {
@@ -316,6 +451,7 @@ TEST(KeyEventUtilTest, IsModifiers) {
   }
 }
 
+namespace {
 const struct IsLowerUpperAlphabetTestData {
   const char *key;
   bool is_lower;
@@ -332,15 +468,45 @@ const struct IsLowerUpperAlphabetTestData {
   { "Caps",         false, false },
   { "Space",        false, false },
 };
+}  // namespace
 
 TEST(KeyEventUtilTest, IsLowerUpperAlphabet) {
   for (size_t i = 0; i < ARRAYSIZE(kIsLowerUpperAlphabetTestData); ++i) {
     const IsLowerUpperAlphabetTestData &data = kIsLowerUpperAlphabetTestData[i];
     SCOPED_TRACE(data.key);
-    commands::KeyEvent key_event;
+    KeyEvent key_event;
     KeyParser::ParseKey(data.key, &key_event);
     EXPECT_EQ(data.is_lower, KeyEventUtil::IsLowerAlphabet(key_event));
     EXPECT_EQ(data.is_upper, KeyEventUtil::IsUpperAlphabet(key_event));
+  }
+}
+
+namespace {
+const struct IsNumpadKeyTestData {
+  const char *key;
+  bool is_numpad_key;
+} kIsNumpadKeyTestData[] = {
+  { "a",            false },
+  { "A",            false },
+  { "Shift",        false },
+  { "Shift a",      false },
+  { "0",            false },
+  { "EISU",         false },
+  { "NUMPAD0",      true },
+  { "NUMPAD9",      true },
+  { "MULTIPLY",     true },
+  { "EQUALS",       true },
+  { "ASCII",        false },
+};
+}  // namespace
+
+TEST(KeyEventUtilTest, IsNumpadKey) {
+  for (size_t i = 0; i < ARRAYSIZE(kIsNumpadKeyTestData); ++i) {
+    const IsNumpadKeyTestData &data = kIsNumpadKeyTestData[i];
+    SCOPED_TRACE(data.key);
+    KeyEvent key_event;
+    KeyParser::ParseKey(data.key, &key_event);
+    EXPECT_EQ(data.is_numpad_key, KeyEventUtil::IsNumpadKey(key_event));
   }
 }
 

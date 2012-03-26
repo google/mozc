@@ -401,6 +401,10 @@ void Client::set_server_program(const string &program_path) {
   server_launcher_->set_server_program(program_path);
 }
 
+void Client::set_suppress_error_dialog(bool suppress) {
+  server_launcher_->set_suppress_error_dialog(suppress);
+}
+
 void Client::set_client_capability(const commands::Capability &capability) {
   client_capability_.CopyFrom(capability);
 }

@@ -41,11 +41,11 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../client/client.gyp:client_mock',
+        '../config/config.gyp:config_protocol',
         '../renderer/renderer.gyp:renderer',
+        '../renderer/renderer.gyp:renderer_protocol',
         '../renderer/renderer.gyp:table_layout',
         '../renderer/renderer.gyp:window_util',
-        '../languages/japanese/japanese.gyp:language_dependent_spec_japanese',
-        '../languages/languages.gyp:global_language_spec',
         '../session/session_base.gyp:ime_switch_util',
         '../session/session_base.gyp:session_protocol',
         '../testing/testing.gyp:gtest_main',
@@ -317,9 +317,8 @@
             '../gui/gui.gyp:dictionary_tool_mac',
             '../gui/gui.gyp:error_message_dialog_mac',
             '../gui/gui.gyp:hand_writing_mac',
+            '../gui/gui.gyp:prelauncher_mac',
             '../gui/gui.gyp:word_register_dialog_mac',
-            '../languages/japanese/japanese.gyp:language_dependent_spec_japanese',
-            '../languages/languages.gyp:global_language_spec',
             '../renderer/renderer.gyp:mozc_renderer',
             '../renderer/renderer.gyp:renderer',
             '../renderer/renderer.gyp:table_layout',
@@ -352,6 +351,7 @@
             {
               'files': [
                 '<(PRODUCT_DIR)/<(branding)Converter.app',
+                '<(PRODUCT_DIR)/<(branding)Prelauncher.app',
                 '<(PRODUCT_DIR)/<(branding)Renderer.app',
                 '<(PRODUCT_DIR)/<(branding)Tool.app',
                 '<(PRODUCT_DIR)/AboutDialog.app',

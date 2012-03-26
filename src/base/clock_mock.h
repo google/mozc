@@ -30,9 +30,9 @@
 #ifndef MOZC_BASE_CLOCK_MOCK_H_
 #define MOZC_BASE_CLOCK_MOCK_H_
 
-#include "base/util.h"
-
 #include <ctime>
+
+#include "base/util.h"
 
 namespace mozc {
 
@@ -43,17 +43,37 @@ class ClockMock : public Util::ClockInterface {
   ClockMock(uint64 sec, uint32 usec);
   virtual ~ClockMock();
 
-  void GetTimeOfDay(uint64 *sec, uint32 *usec);
-  uint64 GetTime();
-  bool GetTmWithOffsetSecond(time_t offset_sec, tm *output);
+  virtual void GetTimeOfDay(uint64 *sec, uint32 *usec);
+  virtual uint64 GetTime();
+  virtual bool GetTmWithOffsetSecond(time_t offset_sec, tm *output);
+  virtual uint64 GetFrequency();
+  virtual uint64 GetTicks();
 
-  // Put this clock forward.
-  // This function is NOT contained in Util::ClockInterface.
+  // Puts this clock forward.
+  // It has no impact on ticks.
   void PutClockForward(uint64 delta_sec, uint32 delta_usec);
+
+  // Puts this clock forward by ticks
+  // It has no impact on seconds and micro seconds.
+  void PutClockForwardByTicks(uint64 ticks);
+
+  // Automatically puts this clock forward on every time after it returns time.
+  // It has no impact on ticks.
+  void SetAutoPutClockForward(uint64 delta_sec, uint32 delta_usec);
+
+  void SetTime(uint64 sec, uint32 usec);
+  void SetFrequency(uint64 frequency);
+  void SetTicks(uint64 ticks);
 
  private:
   uint64 seconds_;
   uint32 micro_seconds_;
+  uint64 frequency_;
+  uint64 ticks_;
+  // Everytime user requests time clock, following time is added to the
+  // internal clock.
+  uint64 delta_seconds_;
+  uint32 delta_micro_seconds_;
 
   DISALLOW_COPY_AND_ASSIGN(ClockMock);
 };

@@ -32,9 +32,8 @@
 #include "base/util.h"
 #include "base/port.h"
 #include "client/client_mock.h"
-#include "languages/global_language_spec.h"
-#include "languages/japanese/lang_dep_spec.h"
 #include "session/commands.pb.h"
+#include "session/key_event_util.h"
 #include "testing/base/public/gunit.h"
 #include "unix/ibus/mozc_engine.h"
 
@@ -44,6 +43,7 @@ namespace ibus {
 class MozcEngineTest : public testing::Test {
  protected:
   virtual void SetUp() {
+    is_non_modifier_key_pressed_ = false;
     currently_pressed_modifiers_.clear();
     modifiers_to_be_sent_.clear();
     keyval_to_modifier_.clear();
@@ -55,16 +55,30 @@ class MozcEngineTest : public testing::Test {
     keyval_to_modifier_[IBUS_Alt_R] = commands::KeyEvent::RIGHT_ALT;
   }
 
-  bool ProcessKey(bool is_key_up, gint keyval, commands::KeyEvent *key) {
-    if (keyval_to_modifier_.find(keyval) != keyval_to_modifier_.end()) {
-      key->add_modifier_keys(keyval_to_modifier_[keyval]);
+  void Clear() {
+    is_non_modifier_key_pressed_ = false;
+    currently_pressed_modifiers_.clear();
+    modifiers_to_be_sent_.clear();
+  }
+
+  // Currently this function does not supports special keys.
+  void AppendToKeyEvent(gint keyval, commands::KeyEvent *key) const {
+    const map<gint, commands::KeyEvent::ModifierKey>::const_iterator it =
+        keyval_to_modifier_.find(keyval);
+    if (it != keyval_to_modifier_.end()) {
+      key->add_modifier_keys(it->second);
     } else {
       key->set_key_code(keyval);
     }
+  }
+
+  bool ProcessKey(bool is_key_up, gint keyval, commands::KeyEvent *key) {
+    AppendToKeyEvent(keyval, key);
 
     return MozcEngine::ProcessModifiers(is_key_up,
                                         keyval,
                                         key,
+                                        &is_non_modifier_key_pressed_,
                                         &currently_pressed_modifiers_,
                                         &modifiers_to_be_sent_);
   }
@@ -80,6 +94,7 @@ class MozcEngineTest : public testing::Test {
         currently_pressed_modifiers_.find(keyval);
   }
 
+  bool is_non_modifier_key_pressed_;
   set<gint> currently_pressed_modifiers_;
   set<commands::KeyEvent::ModifierKey> modifiers_to_be_sent_;
   map<gint, commands::KeyEvent::ModifierKey> keyval_to_modifier_;
@@ -93,8 +108,6 @@ class LaunchToolTest : public testing::Test {
 
  protected:
   virtual void SetUp() {
-    language::GlobalLanguageSpec::SetLanguageDependentSpec(
-        &language_dependency_spec_japanese_);
     mozc_engine_.reset(new MozcEngine());
 
     mock_ = new client::ClientMock();
@@ -104,12 +117,7 @@ class LaunchToolTest : public testing::Test {
 
   virtual void TearDown() {
     mozc_engine_.reset(NULL);
-    language::GlobalLanguageSpec::SetLanguageDependentSpec(NULL);
   }
-
-  // We need to set a LangDepSpecJapanese to GlobalLanguageSpec on start up for
-  // testing, and the actual instance does not have to be LangDepSpecJapanese.
-  japanese::LangDepSpecJapanese language_dependency_spec_japanese_;
 
   client::ClientMock* mock_;
   scoped_ptr<MozcEngine> mozc_engine_;
@@ -233,11 +241,7 @@ TEST_F(MozcEngineTest, ProcessAltModifiers) {
   key.add_modifier_keys(commands::KeyEvent::LEFT_ALT);
   EXPECT_TRUE(ProcessKey(false, 'a', &key));
   EXPECT_TRUE(IsPressed(IBUS_Alt_L));
-  EXPECT_TRUE(modifiers_to_be_sent_.end() !=
-              modifiers_to_be_sent_.find(commands::KeyEvent::ALT));
-  EXPECT_TRUE(modifiers_to_be_sent_.end() !=
-              modifiers_to_be_sent_.find(commands::KeyEvent::LEFT_ALT));
-  EXPECT_EQ(modifiers_to_be_sent_.size(), 2);
+  EXPECT_TRUE(modifiers_to_be_sent_.empty());
 
   // "a" up
   key.Clear();
@@ -245,15 +249,11 @@ TEST_F(MozcEngineTest, ProcessAltModifiers) {
   key.add_modifier_keys(commands::KeyEvent::LEFT_ALT);
   EXPECT_FALSE(ProcessKey(true, 'a', &key));
   EXPECT_TRUE(IsPressed(IBUS_Alt_L));
-  EXPECT_TRUE(modifiers_to_be_sent_.end() !=
-              modifiers_to_be_sent_.find(commands::KeyEvent::ALT));
-  EXPECT_TRUE(modifiers_to_be_sent_.end() !=
-              modifiers_to_be_sent_.find(commands::KeyEvent::LEFT_ALT));
-  EXPECT_EQ(modifiers_to_be_sent_.size(), 2);
+  EXPECT_TRUE(modifiers_to_be_sent_.empty());
 
   // ALt up
   key.Clear();
-  EXPECT_TRUE(ProcessKey(true, IBUS_Alt_L, &key));
+  EXPECT_FALSE(ProcessKey(true, IBUS_Alt_L, &key));
   EXPECT_TRUE(currently_pressed_modifiers_.empty());
   EXPECT_TRUE(modifiers_to_be_sent_.empty());
 }
@@ -277,11 +277,7 @@ TEST_F(MozcEngineTest, ProcessCtrlModifiers) {
   key.add_modifier_keys(commands::KeyEvent::LEFT_CTRL);
   EXPECT_TRUE(ProcessKey(false, 'a', &key));
   EXPECT_TRUE(IsPressed(IBUS_Control_L));
-  EXPECT_TRUE(modifiers_to_be_sent_.end() !=
-              modifiers_to_be_sent_.find(commands::KeyEvent::CTRL));
-  EXPECT_TRUE(modifiers_to_be_sent_.end() !=
-              modifiers_to_be_sent_.find(commands::KeyEvent::LEFT_CTRL));
-  EXPECT_EQ(modifiers_to_be_sent_.size(), 2);
+  EXPECT_TRUE(modifiers_to_be_sent_.empty());
 
   // "a" up
   key.Clear();
@@ -289,15 +285,11 @@ TEST_F(MozcEngineTest, ProcessCtrlModifiers) {
   key.add_modifier_keys(commands::KeyEvent::LEFT_CTRL);
   EXPECT_FALSE(ProcessKey(true, 'a', &key));
   EXPECT_TRUE(IsPressed(IBUS_Control_L));
-  EXPECT_TRUE(modifiers_to_be_sent_.end() !=
-              modifiers_to_be_sent_.find(commands::KeyEvent::CTRL));
-  EXPECT_TRUE(modifiers_to_be_sent_.end() !=
-              modifiers_to_be_sent_.find(commands::KeyEvent::LEFT_CTRL));
-  EXPECT_EQ(modifiers_to_be_sent_.size(), 2);
+  EXPECT_TRUE(modifiers_to_be_sent_.empty());
 
   // Ctrl up
   key.Clear();
-  EXPECT_TRUE(ProcessKey(true, IBUS_Control_L, &key));
+  EXPECT_FALSE(ProcessKey(true, IBUS_Control_L, &key));
   EXPECT_TRUE(currently_pressed_modifiers_.empty());
   EXPECT_TRUE(modifiers_to_be_sent_.empty());
 }
@@ -322,13 +314,13 @@ TEST_F(MozcEngineTest, ProcessShiftModifiersWithCapsLockOn) {
   key.Clear();
   EXPECT_TRUE(ProcessKeyWithCapsLock(false, 'a', &key));
   EXPECT_FALSE(IsPressed(IBUS_Shift_L));
-  EXPECT_EQ(modifiers_to_be_sent_.size(), 0);
+  EXPECT_TRUE(modifiers_to_be_sent_.empty());
 
   // "a" up
   key.Clear();
   EXPECT_FALSE(ProcessKeyWithCapsLock(true, 'a', &key));
   EXPECT_FALSE(IsPressed(IBUS_Shift_L));
-  EXPECT_EQ(modifiers_to_be_sent_.size(), 0);
+  EXPECT_TRUE(modifiers_to_be_sent_.empty());
 
   // Shift up
   key.Clear();
@@ -377,7 +369,8 @@ TEST_F(MozcEngineTest, ProcessModifiers) {
   EXPECT_TRUE(ProcessKey(true, IBUS_Shift_L, &key));
   EXPECT_TRUE(currently_pressed_modifiers_.empty());
   EXPECT_TRUE(modifiers_to_be_sent_.empty());
-  EXPECT_EQ(commands::KeyEvent::SHIFT, key.modifier_keys(0));
+  EXPECT_EQ((commands::KeyEvent::SHIFT | commands::KeyEvent::LEFT_SHIFT),
+            KeyEventUtil::GetModifiers(key));
 
   // Shift down => Ctrl down => Shift up => Alt down => Ctrl up => Alt up
   key.Clear();
@@ -394,38 +387,85 @@ TEST_F(MozcEngineTest, ProcessModifiers) {
   EXPECT_TRUE(ProcessKey(true, IBUS_Alt_L, &key));
   EXPECT_TRUE(currently_pressed_modifiers_.empty());
   EXPECT_TRUE(modifiers_to_be_sent_.empty());
-  {
-    bool has_shift = false, has_ctrl = false, has_alt = false;
-    for (size_t i = 0; i < key.modifier_keys_size(); ++i) {
-      switch (key.modifier_keys(i)) {
-        case commands::KeyEvent::SHIFT:
-        case commands::KeyEvent::LEFT_SHIFT:
-        case commands::KeyEvent::RIGHT_SHIFT:
-          has_shift = true;
-          break;
-        case commands::KeyEvent::CTRL:
-        case commands::KeyEvent::LEFT_CTRL:
-        case commands::KeyEvent::RIGHT_CTRL:
-          has_ctrl = true;
-          break;
-        case commands::KeyEvent::ALT:
-        case commands::KeyEvent::LEFT_ALT:
-        case commands::KeyEvent::RIGHT_ALT:
-          has_alt = true;
-          break;
-        case commands::KeyEvent::CAPS:
-          break;
-        case commands::KeyEvent::KEY_DOWN:
-        case commands::KeyEvent::KEY_UP:
-          ADD_FAILURE() << "Incorrect modifier key: " << key.modifier_keys(i);
-          break;
-        default:
-          ADD_FAILURE() << "Invalid modifier key id: " << key.modifier_keys(i);
+  EXPECT_EQ((commands::KeyEvent::ALT | commands::KeyEvent::LEFT_ALT |
+             commands::KeyEvent::CTRL | commands::KeyEvent::LEFT_CTRL |
+             commands::KeyEvent::SHIFT | commands::KeyEvent::LEFT_SHIFT),
+            KeyEventUtil::GetModifiers(key));
+}
+
+TEST_F(MozcEngineTest, ProcessModifiersRandomTest) {
+  // This test generates random key sequence and check that
+  // - All states are cleared when all keys are released.
+  // - All states are cleared when a non-modifier key with no modifier keys
+  //   is pressed / released.
+
+  const gint kKeySet[] = {
+    IBUS_Alt_L,
+    IBUS_Alt_R,
+    IBUS_Control_L,
+    IBUS_Control_R,
+    IBUS_Shift_L,
+    IBUS_Shift_R,
+    IBUS_Caps_Lock,
+    IBUS_a,
+  };
+  const size_t kKeySetSize = arraysize(kKeySet);
+  Util::SetRandomSeed(static_cast<uint32>(Util::GetTime()));
+
+  const int kTrialNum = 10000;
+  for (int trial = 0; trial < kTrialNum; ++trial) {
+    Clear();
+    set<gint> pressed_keys;
+    string key_sequence;
+
+    const int kSequenceLength = 100;
+    for (int i = 0; i < kSequenceLength; ++i) {
+      const int key_index = Util::Random(kKeySetSize);
+      const gint key_value = kKeySet[key_index];
+
+      bool is_key_up;
+      if (pressed_keys.find(key_value) == pressed_keys.end()) {
+        pressed_keys.insert(key_value);
+        is_key_up = false;
+      } else {
+        pressed_keys.erase(key_value);
+        is_key_up = true;
+      }
+
+      key_sequence += Util::StringPrintf("is_key_up: %d, key_index = %d\n",
+                                         is_key_up, key_index);
+
+      commands::KeyEvent key;
+      for (set<gint>::const_iterator it = pressed_keys.begin();
+           it != pressed_keys.end(); ++it) {
+        AppendToKeyEvent(*it, &key);
+      }
+
+      ProcessKey(is_key_up, key_value, &key);
+
+      if (pressed_keys.empty()) {
+        SCOPED_TRACE("key_sequence:\n" + key_sequence);
+        EXPECT_FALSE(is_non_modifier_key_pressed_);
+        EXPECT_TRUE(currently_pressed_modifiers_.empty());
+        EXPECT_TRUE(modifiers_to_be_sent_.empty());
       }
     }
-    EXPECT_TRUE(has_shift);
-    EXPECT_TRUE(has_ctrl);
-    EXPECT_TRUE(has_alt);
+
+    // Anytime non-modifier key without modifier key should clear states.
+    commands::KeyEvent key;
+    const gint non_modifier_key = IBUS_b;
+    AppendToKeyEvent(non_modifier_key, &key);
+    ProcessKey(false, non_modifier_key, &key);
+
+    {
+      const bool is_key_up = static_cast<bool>(Util::Random(2));
+      SCOPED_TRACE(Util::StringPrintf(
+          "Should be reset by non_modifier_key %s. key_sequence:\n%s",
+          (is_key_up ? "up" : "down"), key_sequence.c_str()));
+      EXPECT_FALSE(is_non_modifier_key_pressed_);
+      EXPECT_TRUE(currently_pressed_modifiers_.empty());
+      EXPECT_TRUE(modifiers_to_be_sent_.empty());
+    }
   }
 }
 

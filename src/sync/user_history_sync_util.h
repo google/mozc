@@ -41,8 +41,6 @@ class UserHistoryStorage;
 
 namespace sync {
 
-class ClockTimerInterface;
-
 class UserHistorySyncUtil {
  public:
   typedef user_history_predictor::UserHistory UserHistory;
@@ -66,12 +64,10 @@ class UserHistorySyncUtil {
 
   // Add random updates to |history|.
   // Used for unittesting.
-  static void AddRandomUpdates(UserHistory *history,
-                               ClockTimerInterface *clock_timer);
+  static void AddRandomUpdates(UserHistory *history);
 
  private:
-  UserHistorySyncUtil() {}
-  ~UserHistorySyncUtil() {}
+  DISALLOW_IMPLICIT_CONSTRUCTORS(UserHistorySyncUtil);
 };
 }  // sync
 }  // mozc

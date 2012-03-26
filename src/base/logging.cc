@@ -66,6 +66,39 @@ DEFINE_int32(v, 0, "verbose level");
 
 namespace mozc {
 
+// Use the same implementation both for Opt and Debug.
+string Logging::GetLogMessageHeader() {
+  tm tm_time;
+  Util::GetCurrentTm(&tm_time);
+
+  char buf[512];
+  snprintf(buf, sizeof(buf),
+           "%4.4d-%2.2d-%2.2d %2.2d:%2.2d:%2.2d %u "
+#ifndef OS_LINUX  // = OS_WINDOWS or OS_MACOSX
+           "%u",
+#else
+           "%lu",
+#endif
+           1900 + tm_time.tm_year,
+           1 + tm_time.tm_mon,
+           tm_time.tm_mday,
+           tm_time.tm_hour,
+           tm_time.tm_min,
+           tm_time.tm_sec,
+#if defined(OS_WINDOWS)
+           ::GetCurrentProcessId(),
+           ::GetCurrentThreadId()
+#elif defined(OS_MACOSX)
+           ::getpid(),
+           reinterpret_cast<uint32>(pthread_self())
+#else  // = OS_LINUX
+           ::getpid(),
+           pthread_self()  // returns unsigned long.
+#endif
+           );
+  return buf;
+}
+
 #ifdef NO_LOGGING
 
 void Logging::InitLogStream(const char *argv0) {
@@ -83,10 +116,6 @@ NullLogStream &Logging::GetNullLogStream() {
 }
 
 const char  *Logging::GetLogSeverityName(LogSeverity severity) {
-  return "";
-}
-
-string Logging::GetLogMessageHeader() {
   return "";
 }
 
@@ -203,38 +232,6 @@ const char *Logging::GetLogSeverityName(LogSeverity severity) {
   const char *kLogSeverityName[LOG_SEVERITY_SIZE] =
       { "INFO", "WARNING", "ERROR", "FATAL" };
   return kLogSeverityName[static_cast<int>(severity)];
-}
-
-string Logging::GetLogMessageHeader() {
-  tm tm_time;
-  Util::GetCurrentTm(&tm_time);
-
-  char buf[512];
-  snprintf(buf, sizeof(buf),
-           "%4.4d-%2.2d-%2.2d %2.2d:%2.2d:%2.2d %u "
-#ifndef OS_LINUX  // = OS_WINDOWS or OS_MACOSX
-           "%u",
-#else
-           "%lu",
-#endif
-           1900 + tm_time.tm_year,
-           1 + tm_time.tm_mon,
-           tm_time.tm_mday,
-           tm_time.tm_hour,
-           tm_time.tm_min,
-           tm_time.tm_sec,
-#if defined(OS_WINDOWS)
-           ::GetCurrentProcessId(),
-           ::GetCurrentThreadId()
-#elif defined(OS_MACOSX)
-           ::getpid(),
-           reinterpret_cast<uint32>(pthread_self())
-#else  // = OS_LINUX
-           ::getpid(),
-           pthread_self()  // returns unsigned long.
-#endif
-           );
-  return buf;
 }
 
 int Logging::GetVerboseLevel() {

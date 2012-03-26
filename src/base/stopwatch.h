@@ -44,12 +44,6 @@ class Stopwatch {
   // and returns the stopwatch object.
   static Stopwatch StartNew();
 
-  // Returns ticks per second of current timer.
-  static int64 GetFrequency();
-
-  // Returns tick count of 'now'.
-  static int64 GetTimestamp();
-
   Stopwatch();
 
   // Sets elapsed time to zero.

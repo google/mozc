@@ -48,7 +48,7 @@
 #include "base/util.h"
 #include "config/config_handler.h"
 #include "renderer/renderer_client.h"
-#include "session/commands.pb.h"
+#include "renderer/renderer_command.pb.h"
 #include "win32/base/conversion_mode_util.h"
 #include "win32/base/imm_util.h"
 #include "win32/base/string_util.h"

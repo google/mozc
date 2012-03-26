@@ -47,8 +47,8 @@
 
 #include "base/singleton.h"
 #include "client/client_interface.h"
-#include "session/commands.pb.h"
-#include "win32/base/font_util.h"
+#include "renderer/renderer_command.pb.h"
+#include "renderer/win32/win32_font_util.h"
 #include "win32/base/immdev.h"
 #include "win32/ime/ime_composition_string.h"
 #include "win32/ime/ime_keyevent_handler.h"

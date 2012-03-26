@@ -44,22 +44,21 @@
 #include "base/trie.h"
 #include "base/util.h"
 #include "composer/composer.h"
-#include "config/config_handler.h"
 #include "config/config.pb.h"
-#include "converter/character_form_manager.h"
+#include "config/config_handler.h"
 #include "converter/connector_interface.h"
-#include "converter/converter_interface.h"
+#include "converter/conversion_request.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/node.h"
 #include "converter/node_allocator.h"
-#include "converter/segmenter_interface.h"
 #include "converter/segmenter.h"
+#include "converter/segmenter_interface.h"
 #include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suffix_dictionary.h"
-#include "prediction/suggestion_filter.h"
 #include "prediction/predictor_interface.h"
+#include "prediction/suggestion_filter.h"
 #include "session/commands.pb.h"
 
 
@@ -75,20 +74,6 @@ namespace {
 // Number of prediction calls should be minimized.
 const size_t kSuggestionMaxNodesSize = 256;
 const size_t kPredictionMaxNodesSize = 100000;
-
-void UTF8ToUCS4Array(const string &input,
-                     vector<char32> *output) {
-  DCHECK(output);
-  const char *begin = input.data();
-  const char *end = input.data() + input.size();
-  while (begin < end) {
-    size_t mblen = 0;
-    const char32 ucs4 = Util::UTF8ToUCS4(begin, end, &mblen);
-    DCHECK_GT(mblen, 0);
-    output->push_back(ucs4);
-    begin += mblen;
-  }
-}
 
 }  // namespace
 
@@ -111,72 +96,99 @@ DictionaryPredictor::DictionaryPredictor(SegmenterInterface *segmenter)
 DictionaryPredictor::~DictionaryPredictor() {}
 
 bool DictionaryPredictor::Predict(Segments *segments) const {
+  ConversionRequest default_request;
+  return PredictForRequest(default_request, segments);
+}
+
+bool DictionaryPredictor::PredictForRequest(const ConversionRequest &request,
+                                            Segments *segments) const {
   if (segments == NULL) {
     return false;
   }
+
+  vector<Result> results;
+  scoped_ptr<NodeAllocatorInterface> allocator(new NodeAllocator);
+
+  if (!AggregatePrediction(request, segments, allocator.get(), &results)) {
+    return false;
+  }
+
+  SetCost(*segments, &results);
+  RemovePrediction(*segments, &results);
+  return AddPredictionToCandidates(segments, &results);
+}
+
+bool DictionaryPredictor::AggregatePrediction(
+    const ConversionRequest &request,
+    Segments *segments, NodeAllocatorInterface *allocator,
+    vector<Result> *results) const {
+  DCHECK(segments);
+  DCHECK(results);
 
   const PredictionType prediction_type = GetPredictionType(*segments);
   if (prediction_type == NO_PREDICTION) {
     return false;
   }
 
-  scoped_ptr<NodeAllocatorInterface> allocator(new NodeAllocator);
-
-  vector<Result> results;
   if (segments->request_type() == Segments::PARTIAL_SUGGESTION ||
       segments->request_type() == Segments::PARTIAL_PREDICTION) {
       // This request type is used to get conversion before cursor during
     // composition mode. Thus it should return only the candidates whose key
     // exactly matches the query.
     // Therefore, we use only the realtime conversion result.
-    AggregateRealtimeConversion(prediction_type, segments,
-                                allocator.get(), &results);
+    AggregateRealtimeConversion(prediction_type, segments, allocator, results);
   } else {
-    AggregateRealtimeConversion(prediction_type, segments,
-                                allocator.get(), &results);
-    AggregateUnigramPrediction(prediction_type, segments,
-                               allocator.get(), &results);
-    AggregateBigramPrediction(prediction_type, segments,
-                              allocator.get(), &results);
-    AggregateSuffixPrediction(prediction_type, segments,
-                              allocator.get(), &results);
+    AggregateRealtimeConversion(prediction_type, segments, allocator, results);
+    AggregateUnigramPrediction(prediction_type, request, segments,
+                               allocator, results);
+    AggregateBigramPrediction(prediction_type, request, segments,
+                              allocator, results);
+    AggregateSuffixPrediction(prediction_type, request, segments,
+                              allocator, results);
   }
 
-  if (results.empty()) {
+  if (results->empty()) {
     VLOG(2) << "|result| is empty";
     return false;
+  } else {
+    return true;
   }
+}
 
+void DictionaryPredictor::SetCost(const Segments &segments,
+                                  vector<Result> *results) const {
+  DCHECK(results);
   bool mixed_conversion = false;
 
   if (mixed_conversion) {
-    SetLMCost(*segments, &results);
+    SetLMCost(segments, results);
   } else {
-    SetPredictionCost(*segments, &results);
+    SetPredictionCost(segments, results);
   }
 
-  ApplyPenaltyForKeyExpansion(*segments, &results);
+  ApplyPenaltyForKeyExpansion(segments, results);
+}
+
+void DictionaryPredictor::RemovePrediction(const Segments &segments,
+                                           vector<Result> *results) const {
+  DCHECK(results);
+  bool mixed_conversion = false;
+
+  if (!mixed_conversion) {
+    const string &input_key = segments.conversion_segment(0).key();
+    const size_t input_key_len = Util::CharsLen(input_key);
+    RemoveMissSpelledCandidates(input_key_len, results);
+  }
+}
+
+bool DictionaryPredictor::AddPredictionToCandidates(
+    Segments *segments, vector<Result> *results) const {
+  DCHECK(segments);
+  DCHECK(results);
+  bool mixed_conversion = false;
 
   const string &input_key = segments->conversion_segment(0).key();
   const size_t input_key_len = Util::CharsLen(input_key);
-
-  if (!mixed_conversion) {
-    RemoveMissSpelledCandidates(input_key_len, &results);
-  }
-
-  const size_t size = min(segments->max_prediction_candidates_size(),
-                          results.size());
-
-  // Instead of sorting all the results, we construct a heap.
-  // This is done in linear time and
-  // we can pop as many results as we need effectively.
-  make_heap(results.begin(), results.end(), ResultCompare());
-
-  Segment *segment = segments->mutable_conversion_segment(0);
-  DCHECK(segment);
-
-  int added = 0;
-  set<string> seen;
 
   string history_key, history_value;
   GetHistoryKeyAndValue(*segments, &history_key, &history_value);
@@ -185,13 +197,27 @@ bool DictionaryPredictor::Predict(Segments *segments) const {
   // this is used for exact matching for the key.
   const string exact_bigram_key = history_key + input_key;
 
-  for (size_t i = 0; i < results.size(); ++i) {
-    if (added >= size || results[i].cost == INT_MAX) {
+  Segment *segment = segments->mutable_conversion_segment(0);
+  DCHECK(segment);
+
+  // Instead of sorting all the results, we construct a heap.
+  // This is done in linear time and
+  // we can pop as many results as we need efficiently.
+  make_heap(results->begin(), results->end(), ResultCompare());
+
+  const size_t size = min(segments->max_prediction_candidates_size(),
+                          results->size());
+
+  int added = 0;
+  set<string> seen;
+
+  for (size_t i = 0; i < results->size(); ++i) {
+    if (added >= size || results->at(i).cost == INT_MAX) {
       break;
     }
 
-    pop_heap(results.begin(), results.end() - i, ResultCompare());
-    const Result &result = results[results.size() - i - 1];
+    pop_heap(results->begin(), results->end() - i, ResultCompare());
+    const Result &result = results->at(results->size() - i - 1);
     const Node *node = result.node;
     DCHECK(node);
 
@@ -254,7 +280,7 @@ bool DictionaryPredictor::Predict(Segments *segments) const {
     candidate->lid = node->lid;
     candidate->rid = node->rid;
     candidate->wcost = node->wcost;
-    candidate->cost = results[i].cost;
+    candidate->cost = results->at(i).cost;
     if (node->attributes & Node::SPELLING_CORRECTION) {
       candidate->attributes |= Segment::Candidate::SPELLING_CORRECTION;
     }
@@ -491,20 +517,24 @@ size_t DictionaryPredictor::GetMissSpelledPosition(
     return Util::CharsLen(key);
   }
 
-  vector<char32> ucs4_hiragana_values, ucs4_keys;
-  UTF8ToUCS4Array(hiragana_value, &ucs4_hiragana_values);
-  UTF8ToUCS4Array(key, &ucs4_keys);
-
   // Find the first position of character where miss spell occurs.
-  const size_t size = min(ucs4_hiragana_values.size(), ucs4_keys.size());
-  for (size_t i = 0; i < size; ++i) {
-    if (ucs4_hiragana_values[i] != ucs4_keys[i]) {
-      return i;
+  int position = 0;
+  ConstChar32Iterator key_iter(key);
+  for (ConstChar32Iterator hiragana_iter(hiragana_value);
+       !hiragana_iter.Done() && !key_iter.Done();
+       hiragana_iter.Next(), key_iter.Next(), ++position) {
+    if (hiragana_iter.Get() != key_iter.Get()) {
+      return position;
     }
   }
 
   // not find. return the length of key.
-  return ucs4_keys.size();
+  while (!key_iter.Done()) {
+    ++position;
+    key_iter.Next();
+  }
+
+  return position;
 }
 
 void DictionaryPredictor::RemoveMissSpelledCandidates(
@@ -715,6 +745,7 @@ size_t DictionaryPredictor::GetUnigramCandidateCutoffThreshold(
 
 void DictionaryPredictor::AggregateUnigramPrediction(
     PredictionType type,
+    const ConversionRequest &request,
     Segments *segments,
     NodeAllocatorInterface *allocator,
     vector<Result> *results) const {
@@ -738,7 +769,7 @@ void DictionaryPredictor::AggregateUnigramPrediction(
 
   // no history key
   const Node *unigram_node = GetPredictiveNodes(
-      dictionary_, "", *segments, allocator);
+      dictionary_, "", request, *segments, allocator);
   size_t unigram_results_size = 0;
   for (; unigram_node != NULL; unigram_node = unigram_node->bnext) {
     results->push_back(Result(unigram_node, UNIGRAM));
@@ -756,6 +787,7 @@ void DictionaryPredictor::AggregateUnigramPrediction(
 
 void DictionaryPredictor::AggregateBigramPrediction(
     PredictionType type,
+    const ConversionRequest &request,
     Segments *segments,
     NodeAllocatorInterface *allocator,
     vector<Result> *results) const {
@@ -793,7 +825,7 @@ void DictionaryPredictor::AggregateBigramPrediction(
   const size_t prev_results_size = results->size();
 
   const Node *bigram_node = GetPredictiveNodes(
-      dictionary_, history_key, *segments, allocator);
+      dictionary_, history_key, request, *segments, allocator);
   size_t bigram_results_size = 0;
   for (; bigram_node != NULL; bigram_node = bigram_node->bnext) {
     // filter out the output (value)'s prefix doesn't match to
@@ -883,9 +915,11 @@ void DictionaryPredictor::AggregateBigramPrediction(
 
 const Node *DictionaryPredictor::GetPredictiveNodes(
     const DictionaryInterface *dictionary,
-    const string &history_key, const Segments &segments,
+    const string &history_key,
+    const ConversionRequest &request,
+    const Segments &segments,
     NodeAllocatorInterface *allocator) const {
-  if (segments.composer() == NULL ||
+  if (!request.has_composer() ||
       !FLAGS_enable_expansion_for_dictionary_predictor) {
     const string input_key = history_key + segments.conversion_segment(0).key();
     return dictionary->LookupPredictive(input_key.c_str(),
@@ -899,7 +933,7 @@ const Node *DictionaryPredictor::GetPredictiveNodes(
     // "か", and "が".
     string base;
     set<string> expanded;
-    segments.composer()->GetQueriesForPrediction(&base, &expanded);
+    request.composer().GetQueriesForPrediction(&base, &expanded);
     const string input_key = history_key + base;
     DictionaryInterface::Limit limit;
     scoped_ptr<Trie<string> > trie(NULL);
@@ -920,6 +954,7 @@ const Node *DictionaryPredictor::GetPredictiveNodes(
 
 void DictionaryPredictor::AggregateSuffixPrediction(
     PredictionType type,
+    const ConversionRequest &request,
     Segments *segments,
     NodeAllocatorInterface *allocator,
     vector<Result> *results) const {
@@ -930,7 +965,7 @@ void DictionaryPredictor::AggregateSuffixPrediction(
   DCHECK(allocator);
 
     const Node *node = GetPredictiveNodes(
-        suffix_dictionary_, "", *segments, allocator);
+        suffix_dictionary_, "", request, *segments, allocator);
     for (; node != NULL; node = node->bnext) {
       results->push_back(Result(node, SUFFIX));
     }

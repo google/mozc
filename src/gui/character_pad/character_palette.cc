@@ -32,10 +32,13 @@
 #include <QtGui/QtGui>
 #include <QtGui/QMessageBox>
 #include "base/util.h"
+#include "client/client.h"
+#include "config/stats_config_util.h"
 #include "gui/base/win_util.h"
 #include "gui/character_pad/data/local_character_map.h"
 #include "gui/character_pad/data/unicode_blocks.h"
 #include "gui/character_pad/selection_handler.h"
+#include "session/commands.pb.h"
 
 namespace mozc {
 namespace gui {
@@ -115,7 +118,16 @@ QTreeWidgetItem *AddItem(QTreeWidgetItem *parent, const char *name) {
 }  // namespace
 
 CharacterPalette::CharacterPalette(QWidget *parent)
-    : QMainWindow(parent) {
+    : QMainWindow(parent),
+      usage_stats_enabled_(StatsConfigUtil::IsEnabled()) {
+  // To reduce the disk IO of reading the stats config, we load it only when the
+  // class is initialized. There is no problem because the config dialog (on
+  // Mac) and the administrator dialog (on Windows) say that the usage stats
+  // setting changes will take effect after the re-login.
+
+  if (usage_stats_enabled_) {
+    client_.reset(client::ClientFactory::NewClient());
+  }
   setupUi(this);
 
   fontComboBox->setWritingSystem
@@ -134,6 +146,11 @@ CharacterPalette::CharacterPalette(QWidget *parent)
 
   sizeComboBox->setCurrentIndex(4);
   fontComboBox->setCurrentFont(tableWidget->font());
+
+  QObject::connect(tableWidget,
+                   SIGNAL(itemSelected(const QTableWidgetItem*)),
+                   this,
+                   SLOT(itemSelected(const QTableWidgetItem*)));
 
   // Category Tree
   QObject::connect(categoryTreeWidget,
@@ -192,9 +209,23 @@ CharacterPalette::CharacterPalette(QWidget *parent)
 
   tableWidget->setAutoScroll(false);
 
+  if (usage_stats_enabled_) {
+    CHECK(client_.get());
+    // Sends the usage stats event (CHARACTER_PALETTE_OPEN_EVENT) to mozc
+    // converter.
+    commands::SessionCommand command;
+    command.set_type(commands::SessionCommand::USAGE_STATS_EVENT);
+    command.set_usage_stats_event(
+        commands::SessionCommand::CHARACTER_PALETTE_OPEN_EVENT);
+    commands::Output dummy_output;
+    client_->SendCommand(command, &dummy_output);
+  }
+
   repaint();
   update();
 }
+
+CharacterPalette::~CharacterPalette() {}
 
 void CharacterPalette::updateFont(const QFont &font) {
   QFont new_font = font;
@@ -278,6 +309,21 @@ void CharacterPalette::categorySelected(QTreeWidgetItem *item,
   } else if (text == kCP932Name) {
     showLocalTable(kCP932Map, kCP932MapSize);
   }
+}
+
+void CharacterPalette::itemSelected(const QTableWidgetItem *item) {
+  if (!usage_stats_enabled_) {
+    return;
+  }
+  CHECK(client_.get());
+  // Sends the usage stats event (CHARACTER_PALETTE_COMMIT_EVENT) to mozc
+  // converter.
+  commands::SessionCommand command;
+  command.set_type(commands::SessionCommand::USAGE_STATS_EVENT);
+  command.set_usage_stats_event(
+      commands::SessionCommand::CHARACTER_PALETTE_COMMIT_EVENT);
+  commands::Output dummy_output;
+  client_->SendCommand(command, &dummy_output);
 }
 
 // Unicode operations

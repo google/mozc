@@ -42,6 +42,7 @@
 
 #include "base/base.h"
 #include "base/const.h"
+#include "base/scoped_handle.h"
 #include "base/scoped_ptr.h"
 #include "base/util.h"
 #include "win32/base/imm_registrar.h"
@@ -54,6 +55,7 @@ namespace {
 // The registry key for the CUAS setting.
 const wchar_t kCUASKey[] = L"Software\\Microsoft\\CTF\\SystemShared";
 const wchar_t kCUASValueName[] = L"CUAS";
+
 
 bool GetDefaultLayout(LAYOUTORTIPPROFILE *profile) {
   vector<LAYOUTORTIPPROFILE> profiles;
@@ -305,6 +307,13 @@ bool ImeUtil::ActivateForCurrentSession() {
   }
   const HKL mozc_hkl = ::LoadKeyboardLayout(
       mozc_hkld.ToString().c_str(), KLF_ACTIVATE);
+
+
+  // Broadcasting WM_INPUTLANGCHANGEREQUEST so that existing process in the
+  // current session will change their input method to |hkl|. This mechanism
+  // also works against a HKL which is substituted by a TIP on Windows XP.
+  // Note: we have virtually the same code in uninstall_helper.cc too.
+  // TODO(yukawa): Make a common function around WM_INPUTLANGCHANGEREQUEST.
   DWORD recipients = BSM_APPLICATIONS;
   return (0 < ::BroadcastSystemMessage(
       BSF_POSTMESSAGE,
@@ -313,5 +322,7 @@ bool ImeUtil::ActivateForCurrentSession() {
       INPUTLANGCHANGE_SYSCHARSET,
       reinterpret_cast<LPARAM>(mozc_hkl)));
 }
+
+
 }  // namespace win32
 }  // namespace mozc

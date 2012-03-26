@@ -44,6 +44,7 @@
 #include "base/util.h"
 #include "gui/base/win_util.h"
 #include "client/client.h"
+#include "data_manager/user_dictionary_manager.h"
 #include "dictionary/user_dictionary_importer.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
@@ -301,7 +302,9 @@ DictionaryTool::DictionaryTool(QWidget *parent)
       export_action_(NULL), import_default_ime_action_(NULL),
       client_(client::ClientFactory::NewClient()),
       is_available_(true),
-      max_entry_size_(UserDictionaryStorage::max_entry_size()) {
+      max_entry_size_(UserDictionaryStorage::max_entry_size()),
+      user_pos_(
+          UserDictionaryManager::GetUserDictionaryManager()->GetUserPOS()) {
   setupUi(this);
 
   // Create and set up ImportDialog object.
@@ -366,7 +369,7 @@ DictionaryTool::DictionaryTool(QWidget *parent)
 
   // Get a list of POS and set a custom delagate that holds the list.
   vector<string> tmp_pos_vec;
-  UserPOS::GetPOSList(&tmp_pos_vec);
+  user_pos_->GetPOSList(&tmp_pos_vec);
   QStringList pos_list;
   for (size_t i = 0; i < tmp_pos_vec.size(); ++i) {
     pos_list.append(tmp_pos_vec[i].c_str());
@@ -1279,21 +1282,24 @@ void DictionaryTool::OnContextMenuRequestedForContent(const QPoint &pos) {
       }
     }
   }
-  QMenu *move_to = menu->addMenu(move_to_menu_text);
   vector<pair<int, QAction *> > change_dictionary_actions;
-  change_dictionary_actions.reserve(dic_list_->count());
-  {
-    const QListWidgetItem *selected_dict = GetFirstSelectedDictionary();
-    if (selected_dict != NULL) {
-      for (size_t i = 0; i < dic_list_->count(); ++i) {
-        QListWidgetItem *item = dic_list_->item(i);
-        DCHECK(item);
-        if (item == selected_dict) {
-          // Do not add the current dictionary into the "Move to" list.
-          continue;
+  // "Move to" is available only when we have 2 or more dictionaries.
+  if (dic_list_->count() > 1) {
+    QMenu *move_to = menu->addMenu(move_to_menu_text);
+    change_dictionary_actions.reserve(dic_list_->count() - 1);
+    {
+      const QListWidgetItem *selected_dict = GetFirstSelectedDictionary();
+      if (selected_dict != NULL) {
+        for (size_t i = 0; i < dic_list_->count(); ++i) {
+          QListWidgetItem *item = dic_list_->item(i);
+          DCHECK(item);
+          if (item == selected_dict) {
+            // Do not add the current dictionary into the "Move to" list.
+            continue;
+          }
+          change_dictionary_actions.push_back(
+              make_pair(i, move_to->addAction(item->text())));
         }
-        change_dictionary_actions.push_back(
-            make_pair(i, move_to->addAction(item->text())));
       }
     }
   }
@@ -1302,7 +1308,7 @@ void DictionaryTool::OnContextMenuRequestedForContent(const QPoint &pos) {
   menu->addSeparator();
   QMenu *change_category_to = menu->addMenu(tr("Change category to"));
   vector<string> pos_list;
-  UserPOS::GetPOSList(&pos_list);
+  user_pos_->GetPOSList(&pos_list);
   vector<QAction *> change_pos_actions(pos_list.size());
   for (size_t i = 0; i < pos_list.size(); ++i) {
     change_pos_actions[i] = change_category_to->addAction(

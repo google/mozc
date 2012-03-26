@@ -35,8 +35,6 @@
 #include "gui/base/locale_util.h"
 #include "gui/base/singleton_window_helper.h"
 #include "gui/dictionary_tool/dictionary_tool.h"
-#include "languages/global_language_spec.h"
-#include "languages/japanese/lang_dep_spec.h"
 
 int RunDictionaryTool(int argc, char *argv[]) {
   Q_INIT_RESOURCE(qrc_dictionary_tool);
@@ -51,11 +49,6 @@ int RunDictionaryTool(int argc, char *argv[]) {
     return -1;
   }
 
-  // TODO(nona): remove these lines when link-time language dependency
-  //             injection is rolled out.
-  mozc::japanese::LangDepSpecJapanese spec;
-  mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(&spec);
-
   mozc::gui::LocaleUtil::InstallTranslationMessageAndFont("dictionary_tool");
   mozc::gui::DictionaryTool window;
 
@@ -67,11 +60,5 @@ int RunDictionaryTool(int argc, char *argv[]) {
   window.show();
   window.raise();
 
-  const int result = app.exec();
-
-  // TODO(nona): remove this line when link-time language dependency
-  //             injection is rolled out.
-  mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(NULL);
-
-  return result;
+  return app.exec();
 }

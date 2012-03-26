@@ -247,6 +247,16 @@
             Value='&quot;[#GoogleIMEJaTool.exe]&quot; --mode=post_install_dialog' />
       </Component>
 
+      <!--
+        Write a registry key to launch GoogleIMEJaConverter.exe and
+        GoogleIMEJaRenderer.exe automatically after user logon.
+      -->
+      <Component Id='PrelaunchProcesses' Guid='*'>
+        <RegistryValue Id='RunBroker' Root='HKLM'
+            Key='Software\Microsoft\Windows\CurrentVersion\Run'
+            Name='Google Japanese Input Prelauncher' Action='write' Type='string'
+            Value='&quot;[#GoogleIMEJaBroker32.exe]&quot; --mode=prelaunch_processes' />
+      </Component>
     </Directory>
 
     <Upgrade Id='$(var.UpgradeCode)'>
@@ -277,6 +287,7 @@
       <ComponentRef Id='OmahaRegister' />
       <ComponentRef Id='OmahaRegLaunchCmdLine' />
       <ComponentRef Id='SysProcs' />
+      <ComponentRef Id='PrelaunchProcesses' />
       <ComponentRef Id='GIMEJaElevationPolicy32' />
       <ComponentRef Id='CreditsJa' />
       <ComponentRef Id='CreditsEn' />

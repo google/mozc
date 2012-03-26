@@ -30,14 +30,10 @@
 #include "server/mozc_server.h"
 #include "session/session_factory_manager.h"
 #include "languages/hangul/hangul_session_factory.h"
-#include "languages/hangul/lang_dep_spec.h"
-#include "languages/global_language_spec.h"
 
 int main(int argc, char* argv[]) {
   mozc::server::InitGoogleAndMozcServer(argv[0], &argc, &argv, false);
 
-  mozc::hangul::LangDepSpecHangul manager;
-  mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(&manager);
   mozc::hangul::HangulSessionFactory session_factory;
   mozc::session::SessionFactoryManager::SetSessionFactory(&session_factory);
 

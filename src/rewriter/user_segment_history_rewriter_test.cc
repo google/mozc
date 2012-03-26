@@ -1201,7 +1201,7 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberSpecial) {
     candidate->content_key = "12";
     candidate->lid = POSMatcher::GetNumberId();
     candidate->rid = POSMatcher::GetNumberId();
-    candidate->style = Segment::Candidate::NUMBER_CIRCLED;
+    candidate->style = Util::NumberString::NUMBER_CIRCLED;
     segments.mutable_segment(0)->mutable_candidate(0)->attributes
         |= Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
@@ -1253,7 +1253,7 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberHalfWidth) {
     candidate->lid = POSMatcher::GetNumberId();
     candidate->rid = POSMatcher::GetNumberId();
     candidate->style =
-        Segment::Candidate::NUMBER_SEPARATED_ARABIC_FULLWIDTH;
+        Util::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
     rewriter.Finish(&segments);  // full-width for separated number
   }
@@ -1301,7 +1301,7 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberFullWidth) {
     candidate->lid = POSMatcher::GetNumberId();
     candidate->rid = POSMatcher::GetNumberId();
     candidate->style =
-        Segment::Candidate::NUMBER_SEPARATED_ARABIC_HALFWIDTH;
+        Util::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
     rewriter.Finish(&segments);  // half-width for separated number
   }
@@ -1348,7 +1348,7 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberNoSeparated) {
     candidate->content_key = "10";
     candidate->lid = POSMatcher::GetNumberId();
     candidate->rid = POSMatcher::GetNumberId();
-    candidate->style = Segment::Candidate::NUMBER_KANJI;
+    candidate->style = Util::NumberString::NUMBER_KANJI;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
     rewriter.Finish(&segments);  // learn kanji
   }
@@ -1364,7 +1364,7 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberNoSeparated) {
     candidate->lid = POSMatcher::GetNumberId();
     candidate->rid = POSMatcher::GetNumberId();
     candidate->style =
-        Segment::Candidate::NUMBER_SEPARATED_ARABIC_HALFWIDTH;
+        Util::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
     rewriter.Finish(&segments);  // learn kanji
   }

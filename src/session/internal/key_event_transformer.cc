@@ -29,58 +29,17 @@
 
 #include "session/internal/key_event_transformer.h"
 
+#include <string>
+
 #include "base/singleton.h"
+#include "base/util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "session/commands.pb.h"
-
+#include "session/key_event_util.h"
 
 namespace mozc {
 namespace session {
-
-namespace {
-// Numpad keys are transformed to normal characters.
-static const struct NumpadKeyEventTransformer {
-  const commands::KeyEvent::SpecialKey key;
-  const char code;
-  const char *halfwidth_key_string;
-  const char *fullwidth_key_string;
-} kTransformTable[] = {
-  // "０"
-  { commands::KeyEvent::NUMPAD0,  '0', "0", "\xef\xbc\x90"},
-  // "１"
-  { commands::KeyEvent::NUMPAD1,  '1', "1", "\xef\xbc\x91"},
-  // "２"
-  { commands::KeyEvent::NUMPAD2,  '2', "2", "\xef\xbc\x92"},
-  // "３"
-  { commands::KeyEvent::NUMPAD3,  '3', "3", "\xef\xbc\x93"},
-  // "４"
-  { commands::KeyEvent::NUMPAD4,  '4', "4", "\xef\xbc\x94"},
-  // "５"
-  { commands::KeyEvent::NUMPAD5,  '5', "5", "\xef\xbc\x95"},
-  // "６"
-  { commands::KeyEvent::NUMPAD6,  '6', "6", "\xef\xbc\x96"},
-  // "７"
-  { commands::KeyEvent::NUMPAD7,  '7', "7", "\xef\xbc\x97"},
-  // "８"
-  { commands::KeyEvent::NUMPAD8,  '8', "8", "\xef\xbc\x98"},
-  // "９"
-  { commands::KeyEvent::NUMPAD9,  '9', "9", "\xef\xbc\x99"},
-  // "＊"
-  { commands::KeyEvent::MULTIPLY, '*', "*", "\xef\xbc\x8a"},
-  // "＋"
-  { commands::KeyEvent::ADD,      '+', "+", "\xef\xbc\x8b"},
-  // "−"
-  { commands::KeyEvent::SUBTRACT, '-', "-", "\xe2\x88\x92"},
-  // "．"
-  { commands::KeyEvent::DECIMAL,  '.', ".", "\xef\xbc\x8e"},
-  // "／"
-  { commands::KeyEvent::DIVIDE,   '/', "/", "\xef\xbc\x8f"},
-  // "＝"
-  { commands::KeyEvent::EQUALS,   '=', "=", "\xef\xbc\x9d"},
-};
-}  // namespace
-
 
 KeyEventTransformer::KeyEventTransformer() {
   config::Config config;
@@ -163,53 +122,74 @@ bool KeyEventTransformer::TransformKeyEvent(commands::KeyEvent *key_event) {
 
 bool KeyEventTransformer::TransformKeyEventForNumpad(
     commands::KeyEvent *key_event) {
-  if (!key_event->has_special_key()) {
+  DCHECK(key_event);
+
+  if (!KeyEventUtil::IsNumpadKey(*key_event)) {
     return false;
   }
-  const commands::KeyEvent::SpecialKey special_key = key_event->special_key();
+
+  {
+    commands::KeyEvent key_event_origin;
+    key_event_origin.CopyFrom(*key_event);
+    KeyEventUtil::NormalizeNumpadKey(key_event_origin, key_event);
+  }
 
   // commands::KeyEvent::SEPARATOR is transformed to Enter.
-  if (special_key == commands::KeyEvent::SEPARATOR) {
-    key_event->set_special_key(commands::KeyEvent::ENTER);
+  if (key_event->has_special_key()) {
+    DCHECK_EQ(commands::KeyEvent::ENTER, key_event->special_key());
     return true;
   }
 
-  for (size_t i = 0; i < arraysize(kTransformTable); ++i) {
-    if (special_key == kTransformTable[i].key) {
-      key_event->clear_special_key();
-      key_event->set_key_code(static_cast<uint32>(kTransformTable[i].code));
-      switch (numpad_character_form_) {
-        case config::Config::NUMPAD_INPUT_MODE:
-          key_event->set_key_string(kTransformTable[i].fullwidth_key_string);
-          key_event->set_input_style(commands::KeyEvent::FOLLOW_MODE);
-          break;
-        case config::Config::NUMPAD_FULL_WIDTH:
-          key_event->set_key_string(kTransformTable[i].fullwidth_key_string);
-          key_event->set_input_style(commands::KeyEvent::AS_IS);
-          break;
-        case config::Config::NUMPAD_HALF_WIDTH:
-          key_event->set_key_string(kTransformTable[i].halfwidth_key_string);
-          key_event->set_input_style(commands::KeyEvent::AS_IS);
-          break;
-        case config::Config::NUMPAD_DIRECT_INPUT:
-          key_event->set_key_string(kTransformTable[i].halfwidth_key_string);
-          key_event->set_input_style(commands::KeyEvent::DIRECT_INPUT);
-          break;
-        default:
-          LOG(ERROR) << "Unknown numpad character form value.";
-          // Use the same behavior with NUMPAD_HALF_WIDTH as a fallback.
-          key_event->set_key_string(kTransformTable[i].halfwidth_key_string);
-          key_event->set_input_style(commands::KeyEvent::AS_IS);
-          break;
-      }
-      return true;
-    }
+  bool is_full_width = true;
+  switch (numpad_character_form_) {
+    case config::Config::NUMPAD_INPUT_MODE:
+      is_full_width = true;
+      key_event->set_input_style(commands::KeyEvent::FOLLOW_MODE);
+      break;
+    case config::Config::NUMPAD_FULL_WIDTH:
+      is_full_width = true;
+      key_event->set_input_style(commands::KeyEvent::AS_IS);
+      break;
+    case config::Config::NUMPAD_HALF_WIDTH:
+      is_full_width = false;
+      key_event->set_input_style(commands::KeyEvent::AS_IS);
+      break;
+    case config::Config::NUMPAD_DIRECT_INPUT:
+      is_full_width = false;
+      key_event->set_input_style(commands::KeyEvent::DIRECT_INPUT);
+      break;
+    default:
+      LOG(ERROR) << "Unknown numpad character form value.";
+      // Use the same behavior with NUMPAD_HALF_WIDTH as a fallback.
+      is_full_width = false;
+      key_event->set_input_style(commands::KeyEvent::AS_IS);
+      break;
   }
-  return false;
+
+  // All key event except for commands::KeyEvent::SEPARATOR should have key code
+  // and it's value should represent a ASCII character since it is generated
+  // from numpad key.
+  DCHECK(key_event->has_key_code());
+  const uint32 key_code = key_event->key_code();
+  DCHECK_GT(128, key_code);
+  const string half_width_key_string(1, static_cast<char>(key_code));
+
+  if (is_full_width) {
+    string full_width_key_string;
+    Util::HalfWidthAsciiToFullWidthAscii(half_width_key_string,
+                                         &full_width_key_string);
+    key_event->set_key_string(full_width_key_string);
+  } else {
+    key_event->set_key_string(half_width_key_string);
+  }
+
+  return true;
 }
 
 bool KeyEventTransformer::TransformKeyEventForKana(
     commands::KeyEvent *key_event) {
+  DCHECK(key_event);
+
   if (!key_event->has_key_string()) {
     return false;
   }

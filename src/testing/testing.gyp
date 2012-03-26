@@ -28,6 +28,10 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 {
+  'variables': {
+    'relative_dir': 'testing',
+    'gen_out_dir': '<(SHARED_INTERMEDIATE_DIR)/<(relative_dir)',
+  },
   'targets': [
     {
       'target_name': 'testing',
@@ -54,6 +58,29 @@
       ]
     },
     {
+      'target_name': 'gen_mozc_data_dir_header',
+      'type': 'none',
+      'actions': [
+        {
+          'action_name': 'gen_mozc_data_dir_header',
+          'variables': {
+            'gen_header_path': '<(gen_out_dir)/mozc_data_dir.h',
+          },
+          'inputs': [
+          ],
+          'outputs': [
+            '<(gen_header_path)',
+          ],
+          'action': [
+            'python', '../build_tools/embed_pathname.py',
+            '--path_to_be_embedded', '<(mozc_data_dir)',
+            '--constant_name', 'kMozcDataDir',
+            '--output', '<(gen_header_path)',
+          ],
+        },
+      ],
+    },
+    {
       'target_name': 'gtest_main',
       'type': 'static_library',
       'sources': [
@@ -62,6 +89,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        'gen_mozc_data_dir_header',
         'testing',
       ],
       'conditions': [

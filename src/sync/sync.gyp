@@ -188,9 +188,17 @@
     {
       'target_name': 'sync_all_test',
       'type': 'none',
-      'dependencies': [
-        'oauth2_token_util_test',
-        'sync_base_test',
+      'conditions': [
+        ['enable_extra_unit_tests==1', {
+          'dependencies': [
+            # Temporarily disable following tests because JsonCpp still
+            # cannot be built on OSS Mozc.
+            # TODO(nona): Support building JsonCpp on OSS Mozc and remove the
+            #     condtion above.
+            'oauth2_token_util_test',
+            'sync_base_test',
+          ],
+        }],
       ],
     },
   ],

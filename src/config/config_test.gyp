@@ -53,6 +53,13 @@
         '../testing/testing.gyp:gtest_main',
         'config.gyp:stats_config_util',
       ],
+      'conditions': [
+        ['OS=="win" and branding=="GoogleJapaneseInput"', {
+          'dependencies': [
+            '../testing/sidestep/sidestep.gyp:sidestep',
+          ],
+        }],
+      ],
       'variables': {
         'test_size': 'small',
         'test_data_subdir': 'data/test/config',

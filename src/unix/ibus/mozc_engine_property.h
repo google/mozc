@@ -55,6 +55,19 @@ extern const MozcEngineProperty *kMozcEnginePropertyIMEOffState;
 
 extern const commands::CompositionMode kMozcEngineInitialCompositionMode;
 
+struct MozcEngineSwitchProperty {
+  // Specifies the command id to trigger.
+  commands::SessionCommand::LanguageBarCommandId id;
+  const char *key;      // IBus property key.
+  const char *label;    // text for the menu.
+  const char *icon;     // icon.
+  const char *tooltip;  // tooltip.
+};
+
+extern const MozcEngineSwitchProperty
+    kMozcEngineSwitchProperties[];
+extern const size_t kMozcEngineSwitchPropertiesSize;
+
 struct MozcEngineToolProperty {
   const char *key;    // IBus property key for the MozcTool.
   const char *mode;   // command line passed as --mode=

@@ -130,7 +130,16 @@ bool BasePredictor::Reload() {
   return user_history_predictor->Reload();
 }
 
+DefaultPredictor::DefaultPredictor() : empty_request_(ConversionRequest()) {}
+
+DefaultPredictor::~DefaultPredictor() {}
+
 bool DefaultPredictor::Predict(Segments *segments) const {
+  return PredictForRequest(empty_request_, segments);
+}
+
+bool DefaultPredictor::PredictForRequest(const ConversionRequest &request,
+                                         Segments *segments) const {
   DCHECK(segments->request_type() == Segments::PREDICTION ||
          segments->request_type() == Segments::SUGGESTION ||
          segments->request_type() == Segments::PARTIAL_PREDICTION ||
@@ -156,7 +165,7 @@ bool DefaultPredictor::Predict(Segments *segments) const {
 
   int remained_size = size;
   segments->set_max_prediction_candidates_size(static_cast<size_t>(size));
-  result |= user_history_predictor->Predict(segments);
+  result |= user_history_predictor->PredictForRequest(request, segments);
   remained_size = size - static_cast<size_t>(GetCandidatesSize(*segments));
 
   // Do not call dictionary_predictor if the size of candidates get
@@ -166,7 +175,7 @@ bool DefaultPredictor::Predict(Segments *segments) const {
   }
 
   segments->set_max_prediction_candidates_size(remained_size);
-  result |= dictionary_predictor->Predict(segments);
+  result |= dictionary_predictor->PredictForRequest(request, segments);
   remained_size = size - static_cast<size_t>(GetCandidatesSize(*segments));
 
 

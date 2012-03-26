@@ -45,8 +45,6 @@
 #include "base/update_util.h"
 #include "base/util.h"
 #include "config/stats_config_util.h"
-#include "languages/global_language_spec.h"
-#include "languages/japanese/lang_dep_spec.h"
 #include "win32/base/conversion_mode_util.h"
 #include "win32/base/immdev.h"
 #include "win32/base/string_util.h"
@@ -69,7 +67,6 @@
 namespace {
 HINSTANCE g_instance = NULL;
 DWORD g_ime_system_info = MAXDWORD;
-mozc::language::LanguageDependentSpecInterface *g_lang_spec_ptr = NULL;
 // True if the boot mode is safe mode.
 bool g_in_safe_mode = true;
 // True when Util::EnsureVitalImmutableDataIsAvailable() returns false.
@@ -197,9 +194,6 @@ BOOL OnDllProcessAttach(HINSTANCE instance, bool static_loading) {
       &g_critical_section_for_breakpad);
 #endif  // USE_BREAKPAD
 
-  g_lang_spec_ptr = new mozc::japanese::LangDepSpecJapanese();
-  mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(g_lang_spec_ptr);
-
   ATOM atom = INVALID_ATOM;
   if (!UIWindowManager::OnDllProcessAttach(instance, static_loading)) {
     return FALSE;
@@ -233,9 +227,6 @@ BOOL OnDllProcessDetach(HINSTANCE instance, bool process_shutdown) {
   ::DeleteCriticalSection(&g_critical_section_for_breakpad);
 #endif  // USE_BREAKPAD
 
-  mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(NULL);
-  delete g_lang_spec_ptr;
-  g_lang_spec_ptr = NULL;
   return TRUE;
 }
 }  // namespace win32

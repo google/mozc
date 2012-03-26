@@ -28,23 +28,21 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "net/http_client.h"
-#include "net/http_client_common.h"
 
-#ifdef OS_WINDOWS
+
+#if defined(OS_WINDOWS)
 #include <windows.h>
 #include <wininet.h>
-#else
+#elif defined(HAVE_CURL)
 #include "curl/curl.h"
-#include "net/proxy_manager.h"
-#endif  // OS_WINDOWS
-#ifdef OS_MACOSX
-#include "net/http_client_mac.h"
-#endif  // OS_MACOSX
+#endif
 
 #include "base/base.h"
 #include "base/singleton.h"
 #include "base/util.h"
-
+#include "net/http_client_common.h"
+#include "net/http_client_mac.h"
+#include "net/proxy_manager.h"
 
 namespace mozc {
 // We use a dummy user agent.

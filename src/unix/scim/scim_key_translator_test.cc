@@ -116,6 +116,17 @@ const uint16 kLayoutUS[] = {
   scim::SCIM_KEYBOARD_US,
 };
 
+// Checks "container" contains "key" value or not
+bool IsContained(mozc::commands::KeyEvent::ModifierKey key,
+                 const ::google::protobuf::RepeatedField<int>& container) {
+  for (int i = 0; i< container.size(); ++i) {
+    if (container.Get(i) == key) {
+      return true;
+    }
+  }
+  return false;
+}
+
 }  // namespace
 
 TEST(ScimKeyTranslatorTest, TestCanConvert_Release) {
@@ -487,4 +498,229 @@ TEST(ScimKeyTranslatorTest, TestTranslate_ModifierSpecial) {
       EXPECT_EQ(kMappedSpecial[i], out_key.special_key());
     }
   }
+}
+
+TEST(ScimKeyTranslatorTest, HiraganaKatakanaHandlingWithSingleModifier) {
+  using scim::SCIM_KEY_AltMask;
+  using scim::SCIM_KEY_ControlMask;
+  using scim::SCIM_KEY_Hiragana;
+  using scim::SCIM_KEY_Hiragana_Katakana;
+  using scim::SCIM_KEY_Katakana;
+  using scim::SCIM_KEY_ShiftMask;
+
+  ScimKeyTranslator translator;
+
+  // Check Hiragana_Katakana local hack. The detail is described in
+  // scim_key_translator.cc file.
+  mozc::commands::KeyEvent out;
+
+  // S-Hiragana_Katakana
+  translator.Translate(
+      KeyEvent(SCIM_KEY_Hiragana_Katakana, SCIM_KEY_ShiftMask, 0),
+      mozc::config::Config::ROMAN, &out);
+  EXPECT_FALSE(out.has_key_code());
+  ASSERT_TRUE(out.has_special_key());
+  EXPECT_EQ(mozc::commands::KeyEvent::KATAKANA, out.special_key());
+  EXPECT_EQ(0, out.modifier_keys_size());
+
+  // C-Hiragana_Katakana
+  translator.Translate(
+      KeyEvent(SCIM_KEY_Hiragana_Katakana, SCIM_KEY_ControlMask, 0),
+      mozc::config::Config::ROMAN, &out);
+  EXPECT_EQ(mozc::commands::KeyEvent::KANA, out.special_key());
+  ASSERT_EQ(1, out.modifier_keys_size());
+  EXPECT_EQ(mozc::commands::KeyEvent::CTRL, out.modifier_keys(0));
+
+  // A-Hiragana_Katakana
+  translator.Translate(
+      KeyEvent(SCIM_KEY_Hiragana_Katakana, SCIM_KEY_AltMask, 0),
+      mozc::config::Config::ROMAN, &out);
+  EXPECT_EQ(mozc::commands::KeyEvent::KANA, out.special_key());
+  ASSERT_EQ(1, out.modifier_keys_size());
+  EXPECT_EQ(mozc::commands::KeyEvent::ALT, out.modifier_keys(0));
+
+  // Hiragana_Katakana handling should have no effect into Hiragana key or
+  // Katakana key.
+  // S-Hiragana
+  translator.Translate(
+      KeyEvent(SCIM_KEY_Hiragana, SCIM_KEY_ShiftMask, 0),
+      mozc::config::Config::ROMAN, &out);
+  EXPECT_EQ(mozc::commands::KeyEvent::KANA, out.special_key());
+  EXPECT_EQ(1, out.modifier_keys_size());
+  EXPECT_EQ(mozc::commands::KeyEvent::SHIFT, out.modifier_keys(0));
+
+  // C-Hiragana
+  translator.Translate(
+      KeyEvent(SCIM_KEY_Hiragana, SCIM_KEY_ControlMask, 0),
+      mozc::config::Config::ROMAN, &out);
+  EXPECT_EQ(mozc::commands::KeyEvent::KANA, out.special_key());
+  ASSERT_EQ(1, out.modifier_keys_size());
+  EXPECT_EQ(mozc::commands::KeyEvent::CTRL, out.modifier_keys(0));
+
+  // A-Hiragana
+  translator.Translate(
+      KeyEvent(SCIM_KEY_Hiragana, SCIM_KEY_AltMask, 0),
+      mozc::config::Config::ROMAN, &out);
+  EXPECT_EQ(mozc::commands::KeyEvent::KANA, out.special_key());
+  ASSERT_EQ(1, out.modifier_keys_size());
+  EXPECT_EQ(mozc::commands::KeyEvent::ALT, out.modifier_keys(0));
+
+  // S-Katakana
+  translator.Translate(
+      KeyEvent(SCIM_KEY_Katakana, SCIM_KEY_ShiftMask, 0),
+      mozc::config::Config::ROMAN, &out);
+  EXPECT_EQ(mozc::commands::KeyEvent::KATAKANA, out.special_key());
+  EXPECT_EQ(1, out.modifier_keys_size());
+  EXPECT_EQ(mozc::commands::KeyEvent::SHIFT, out.modifier_keys(0));
+
+  // C-Katakana
+  translator.Translate(
+      KeyEvent(SCIM_KEY_Katakana, SCIM_KEY_ControlMask, 0),
+      mozc::config::Config::ROMAN, &out);
+  EXPECT_EQ(mozc::commands::KeyEvent::KATAKANA, out.special_key());
+  ASSERT_EQ(1, out.modifier_keys_size());
+  EXPECT_EQ(mozc::commands::KeyEvent::CTRL, out.modifier_keys(0));
+
+  // A-Katakana
+  translator.Translate(
+      KeyEvent(SCIM_KEY_Katakana, SCIM_KEY_AltMask, 0),
+      mozc::config::Config::ROMAN, &out);
+  EXPECT_EQ(mozc::commands::KeyEvent::KATAKANA, out.special_key());
+  ASSERT_EQ(1, out.modifier_keys_size());
+  EXPECT_EQ(mozc::commands::KeyEvent::ALT, out.modifier_keys(0));
+}
+
+TEST(ScimKeyTranslatorTest, HiraganaKatakanaHandlingWithMultipleModifiers) {
+  using scim::SCIM_KEY_AltMask;
+  using scim::SCIM_KEY_ControlMask;
+  using scim::SCIM_KEY_Hiragana;
+  using scim::SCIM_KEY_Hiragana_Katakana;
+  using scim::SCIM_KEY_Katakana;
+  using scim::SCIM_KEY_ShiftMask;
+
+  ScimKeyTranslator translator;
+
+  // Check Hiragana_Katakana local hack. The detail is described in
+  // scim_key_translator.cc file.
+  mozc::commands::KeyEvent out;
+
+  // C-S-Hiragana_Katakana
+  translator.Translate(
+      KeyEvent(SCIM_KEY_Hiragana_Katakana,
+               SCIM_KEY_ShiftMask | SCIM_KEY_ControlMask, 0),
+      mozc::config::Config::ROMAN, &out);
+  EXPECT_EQ(mozc::commands::KeyEvent::KATAKANA, out.special_key());
+  ASSERT_EQ(1, out.modifier_keys_size());
+  EXPECT_EQ(mozc::commands::KeyEvent::CTRL, out.modifier_keys(0));
+
+  // A-S-Hiragana_Katakana
+  translator.Translate(
+      KeyEvent(SCIM_KEY_Hiragana_Katakana,
+               SCIM_KEY_ShiftMask | SCIM_KEY_AltMask, 0),
+      mozc::config::Config::ROMAN, &out);
+  EXPECT_EQ(mozc::commands::KeyEvent::KATAKANA, out.special_key());
+  ASSERT_EQ(1, out.modifier_keys_size());
+  EXPECT_EQ(mozc::commands::KeyEvent::ALT, out.modifier_keys(0));
+
+  // C-A-Hiragana_Katakana
+  translator.Translate(
+      KeyEvent(SCIM_KEY_Hiragana_Katakana,
+               SCIM_KEY_ControlMask | SCIM_KEY_AltMask, 0),
+      mozc::config::Config::ROMAN, &out);
+  EXPECT_EQ(mozc::commands::KeyEvent::KANA, out.special_key());
+  ASSERT_EQ(2, out.modifier_keys_size());
+  IsContained(mozc::commands::KeyEvent::CTRL, out.modifier_keys());
+  IsContained(mozc::commands::KeyEvent::ALT, out.modifier_keys());
+
+  // C-S-A-Hiragana_Katakana
+  translator.Translate(
+      KeyEvent(SCIM_KEY_Hiragana_Katakana,
+               SCIM_KEY_ControlMask | SCIM_KEY_ShiftMask | SCIM_KEY_AltMask,
+               0),
+      mozc::config::Config::ROMAN, &out);
+  EXPECT_EQ(mozc::commands::KeyEvent::KATAKANA, out.special_key());
+  EXPECT_EQ(2, out.modifier_keys_size());
+  IsContained(mozc::commands::KeyEvent::CTRL, out.modifier_keys());
+  IsContained(mozc::commands::KeyEvent::ALT, out.modifier_keys());
+
+  // Hiragana_Katakana handling should have no effect into Hiragana key or
+  // Katakana key.
+  // C-S-Hiragana
+  translator.Translate(
+      KeyEvent(SCIM_KEY_Hiragana,
+               SCIM_KEY_ShiftMask | SCIM_KEY_ControlMask, 0),
+      mozc::config::Config::ROMAN, &out);
+  EXPECT_EQ(mozc::commands::KeyEvent::KANA, out.special_key());
+  ASSERT_EQ(2, out.modifier_keys_size());
+  IsContained(mozc::commands::KeyEvent::CTRL, out.modifier_keys());
+  IsContained(mozc::commands::KeyEvent::SHIFT, out.modifier_keys());
+
+  // S-A-Hiragana
+  translator.Translate(
+      KeyEvent(SCIM_KEY_Hiragana, SCIM_KEY_ShiftMask | SCIM_KEY_AltMask, 0),
+      mozc::config::Config::ROMAN, &out);
+  EXPECT_EQ(mozc::commands::KeyEvent::KANA, out.special_key());
+  ASSERT_EQ(2, out.modifier_keys_size());
+  IsContained(mozc::commands::KeyEvent::ALT, out.modifier_keys());
+  IsContained(mozc::commands::KeyEvent::SHIFT, out.modifier_keys());
+
+  // C-A-Hiragana
+  translator.Translate(
+      KeyEvent(SCIM_KEY_Hiragana, SCIM_KEY_ControlMask | SCIM_KEY_AltMask, 0),
+      mozc::config::Config::ROMAN, &out);
+  EXPECT_EQ(mozc::commands::KeyEvent::KANA, out.special_key());
+  ASSERT_EQ(2, out.modifier_keys_size());
+  IsContained(mozc::commands::KeyEvent::CTRL, out.modifier_keys());
+  IsContained(mozc::commands::KeyEvent::ALT, out.modifier_keys());
+
+  // C-S-A-Hiragana
+  translator.Translate(
+      KeyEvent(SCIM_KEY_Hiragana,
+               SCIM_KEY_ShiftMask | SCIM_KEY_ControlMask | SCIM_KEY_AltMask,
+               0),
+      mozc::config::Config::ROMAN, &out);
+  EXPECT_EQ(mozc::commands::KeyEvent::KANA, out.special_key());
+  EXPECT_EQ(3, out.modifier_keys_size());
+  IsContained(mozc::commands::KeyEvent::CTRL, out.modifier_keys());
+  IsContained(mozc::commands::KeyEvent::ALT, out.modifier_keys());
+  IsContained(mozc::commands::KeyEvent::SHIFT, out.modifier_keys());
+
+  // C-S-Katakana
+  translator.Translate(
+      KeyEvent(SCIM_KEY_Katakana,
+               SCIM_KEY_ControlMask | SCIM_KEY_ShiftMask, 0),
+      mozc::config::Config::ROMAN, &out);
+  EXPECT_EQ(mozc::commands::KeyEvent::KATAKANA, out.special_key());
+  ASSERT_EQ(2, out.modifier_keys_size());
+  IsContained(mozc::commands::KeyEvent::CTRL, out.modifier_keys());
+  IsContained(mozc::commands::KeyEvent::SHIFT, out.modifier_keys());
+
+  // A-S-Katakana
+  translator.Translate(
+      KeyEvent(SCIM_KEY_Katakana, SCIM_KEY_AltMask | SCIM_KEY_ShiftMask, 0),
+      mozc::config::Config::ROMAN, &out);
+  EXPECT_EQ(mozc::commands::KeyEvent::KATAKANA, out.special_key());
+  ASSERT_EQ(2, out.modifier_keys_size());
+  IsContained(mozc::commands::KeyEvent::SHIFT, out.modifier_keys());
+  IsContained(mozc::commands::KeyEvent::ALT, out.modifier_keys());
+
+  // C-A-Katakana
+  translator.Translate(
+      KeyEvent(SCIM_KEY_Katakana, SCIM_KEY_ControlMask | SCIM_KEY_AltMask, 0),
+      mozc::config::Config::ROMAN, &out);
+  EXPECT_EQ(mozc::commands::KeyEvent::KATAKANA, out.special_key());
+  ASSERT_EQ(2, out.modifier_keys_size());
+  IsContained(mozc::commands::KeyEvent::CTRL, out.modifier_keys());
+  IsContained(mozc::commands::KeyEvent::ALT, out.modifier_keys());
+
+  // C-S-A-Katakana
+  translator.Translate(
+      KeyEvent(SCIM_KEY_Katakana,
+               SCIM_KEY_ControlMask | SCIM_KEY_ShiftMask | SCIM_KEY_AltMask, 0),
+      mozc::config::Config::ROMAN, &out);
+  EXPECT_EQ(mozc::commands::KeyEvent::KATAKANA, out.special_key());
+  EXPECT_EQ(3, out.modifier_keys_size());
+  IsContained(mozc::commands::KeyEvent::CTRL, out.modifier_keys());
+  IsContained(mozc::commands::KeyEvent::SHIFT, out.modifier_keys());
+  IsContained(mozc::commands::KeyEvent::ALT, out.modifier_keys());
 }

@@ -80,6 +80,16 @@
             'usage_rewriter_test.cc',
           ],
         }],
+        ['use_separate_connection_data==1', {
+          'dependencies': [
+            '../converter/converter.gyp:connection_data_injected_environment',
+          ],
+        }],
+        ['use_separate_dictionary==1', {
+          'dependencies': [
+            '../dictionary/dictionary.gyp:dictionary_data_injected_environment',
+          ],
+        }],
       ],
     },
     {

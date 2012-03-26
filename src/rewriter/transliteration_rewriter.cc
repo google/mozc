@@ -35,6 +35,7 @@
 #include "base/text_normalizer.h"
 #include "base/util.h"
 #include "composer/composer.h"
+#include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
 #include "session/commands.pb.h"
@@ -56,17 +57,17 @@ struct T13NIds {
               ascii_lid(0), ascii_rid(0) {}
 };
 
-bool IsValidComposer(const Segments *segments) {
-  if (segments->composer() == NULL) {
+bool IsValidRequest(const ConversionRequest &request, const Segments *segments) {
+  if (!request.has_composer()) {
     return false;
   }
 
   string conversion_query;
-  segments->composer()->GetQueryForConversion(&conversion_query);
+  request.composer().GetQueryForConversion(&conversion_query);
   if (segments->request_type() == Segments::PARTIAL_PREDICTION ||
       segments->request_type() == Segments::PARTIAL_SUGGESTION) {
     conversion_query =
-        Util::SubString(conversion_query, 0, segments->composer()->GetCursor());
+        Util::SubString(conversion_query, 0, request.composer().GetCursor());
   }
 
   string segments_key;
@@ -230,7 +231,8 @@ void GetIds(const Segment &segment, T13NIds *ids) {
   }
 }
 
-bool FillT13NsFromComposer(Segments *segments) {
+bool FillT13NsFromComposer(const ConversionRequest &request,
+                           Segments *segments) {
   bool modified = false;
   size_t composition_pos = 0;
   for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
@@ -241,9 +243,9 @@ bool FillT13NsFromComposer(Segments *segments) {
     }
     const size_t composition_len = Util::CharsLen(segment->key());
     vector<string> t13ns;
-    segments->composer()->GetSubTransliterations(composition_pos,
-                                                 composition_len,
-                                                 &t13ns);
+    request.composer().GetSubTransliterations(composition_pos,
+                                              composition_len,
+                                              &t13ns);
     composition_pos += composition_len;
     T13NIds ids;
     GetIds(*segment, &ids);
@@ -341,9 +343,14 @@ int TransliterationRewriter::capability() const {
 }
 
 bool TransliterationRewriter::Rewrite(Segments *segments) const {
-  if (!IsValidComposer(segments)) {
+  return FillT13NsFromKey(segments);
+}
+
+bool TransliterationRewriter::RewriteForRequest(
+    const ConversionRequest &request, Segments *segments) const {
+  if (!IsValidRequest(request, segments)) {
     return FillT13NsFromKey(segments);
   }
-  return FillT13NsFromComposer(segments);
+  return FillT13NsFromComposer(request, segments);
 }
 }  // namespace mozc

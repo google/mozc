@@ -35,7 +35,18 @@
 #include "converter/connector.h"
 #include "testing/base/public/gunit.h"
 
+#ifdef MOZC_USE_SEPARATE_CONNECTION_DATA
+#include "converter/connection_data_injected_environment.h"
+namespace {
+const ::testing::Environment *kConnectionDataInjectedEnvironment =
+    ::testing::AddGlobalTestEnvironment(
+        new ::mozc::ConnectionDataInjectedEnvironment());
+}  // namespace
+#endif  // MOZC_USE_SEPARATE_CONNECTION_DATA
+
 DECLARE_string(test_srcdir);
+DEFINE_string(connection_text_file, "data/dictionary/connection.txt",
+              "Path to connection file.");
 
 namespace mozc {
 
@@ -66,7 +77,7 @@ string GetFilePath(const string &path) {
 class ConnectorTest : public testing::Test {
  protected:
   ConnectorTest() : connector_(Singleton<Connector>::get()),
-                    data_file_(GetFilePath("data/dictionary/connection.txt")) {}
+                    data_file_(GetFilePath(FLAGS_connection_text_file)) {}
 
   const Connector *connector_;
   const string data_file_;
@@ -79,6 +90,7 @@ TEST_F(ConnectorTest, RandomValueCheck) {
   EXPECT_TRUE(getline(ifs, header_line));
 
   string line;
+  const int resolution = connector_->GetResolution();
   while (getline(ifs, line)) {
     uint16 rid = 0, lid = 0;
     int cost = -1;
@@ -88,7 +100,14 @@ TEST_F(ConnectorTest, RandomValueCheck) {
     }
     EXPECT_TRUE(ParseLine(line, &rid, &lid, &cost));
     EXPECT_GE(cost, 0);
-    EXPECT_EQ(cost, connector_->GetTransitionCost(rid, lid));
+    const int actual_cost = connector_->GetTransitionCost(rid, lid);
+    if (cost == ConnectorInterface::kInvalidCost) {
+      EXPECT_EQ(cost, actual_cost);
+    } else {
+      EXPECT_TRUE(cost == actual_cost ||
+                  (cost - cost % resolution) == actual_cost)
+          << "cost: " << cost << ", actual_cost: " << actual_cost;
+    }
   }
 }
 }  // namespace mozc

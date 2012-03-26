@@ -30,7 +30,8 @@
 #import <InputMethodKit/InputMethodKit.h>
 #import "mac/common.h"
 
-#include "session/commands.pb.h"  // for CompositionMode
+// For mozc::commands::CompositionMode
+#include "renderer/renderer_command.pb.h"
 
 @class NSMenu;
 @class KeyCodeMap;
@@ -39,12 +40,6 @@ namespace mozc {
 namespace client {
 class ClientInterface;
 }  // namespace mozc::client
-
-namespace commands {
-class Output;
-class RendererCommand;
-class SessionCommand;
-}
 
 namespace renderer {
 class RendererInterface;
@@ -140,9 +135,13 @@ class RendererInterface;
 // menu item.
 - (IBAction)registerWordClicked:(id)sender;
 
-// characterPadClicked: is called when the user clicks "Character Pad..."
+// characterPaletteClicked: is called when the user clicks
+// "Character Palette..." menu item.
+- (IBAction)characterPaletteClicked:(id)sender;
+
+// handWritingClicked: is called when the user clicks "Hand Wrinting..."
 // menu item.
-- (IBAction)characterPadClicked:(id)sender;
+- (IBAction)handWritingClicked:(id)sender;
 
 // aboutDialogClicked: is called when the user clicks "About Mozc..."
 // menu item.

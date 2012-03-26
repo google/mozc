@@ -174,10 +174,7 @@ template <class T> class Mmap {
       return false;
     }
 
-    // We don't check the return value because it fails in some environments.
-    // For linux, in the kernel version >= 2.6.9, user process can mlock.
-    // In older kernel, it fails if the process is running in user priviledge.
-    mlock(p, length_);
+    Util::MaybeMLock(p, length_);
     text_ = reinterpret_cast<T *>(p);
 #else
     text_ = new T[length_];
@@ -200,8 +197,7 @@ template <class T> class Mmap {
 
     if (text_ != NULL) {
 #ifdef HAVE_MMAP
-      // Again, we don't check the return value here.
-      munlock(text_, length_);
+      Util::MaybeMUnlock(text_, length_);
       munmap(reinterpret_cast<char *>(text_), length_);
 #else  // HAVE_MMAP
       if (flag_ == O_RDWR) {

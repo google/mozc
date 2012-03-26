@@ -136,8 +136,6 @@ bool ConfigHandlerImpl::SetConfigInternal(const Config &config) {
 #endif  // OS_MACOSX
   }
 
-#ifdef CHANNEL_DEV
-#endif  // CHANNEL_DEV
 
   UpdateMergedConfig();
 
@@ -282,8 +280,6 @@ void ConfigHandler::GetDefaultConfig(Config *config) {
   AddCharacterFormRule(config, "?!",
                        config::Config::FULL_WIDTH, config::Config::LAST_FORM);
 
-#ifdef CHANNEL_DEV
-#endif  // CHANNEL_DEV
 }
 
 // Reload from file

@@ -65,22 +65,29 @@ const uint32 kBoxSize = 200;
 ZinniaHandwriting::ZinniaHandwriting()
     : recognizer_(zinnia::Recognizer::create()),
       character_(zinnia::Character::create()),
-      mmap_(new Mmap<char>()) {
+      mmap_(new Mmap<char>()),
+      zinnia_model_error_(false) {
   const string model_file = GetModelFileName();
   DCHECK(recognizer_.get());
   DCHECK(character_.get());
   if (!mmap_->Open(model_file.c_str())) {
     LOG(ERROR) << "Cannot open model file:" << model_file;
+    zinnia_model_error_ = true;
     return;
   }
   if (!recognizer_->open(mmap_->begin(), mmap_->GetFileSize())) {
     LOG(ERROR) << "Model file is broken:" << model_file;
+    zinnia_model_error_ = true;
     return;
   }
 }
 
-void ZinniaHandwriting::Recognize(const Strokes &strokes,
-                                  vector<string> *candidates) const {
+HandwritingStatus ZinniaHandwriting::Recognize(
+    const Strokes &strokes, vector<string> *candidates) const {
+  if (zinnia_model_error_) {
+    return HANDWRITING_ERROR;
+  }
+
   character_->clear();
   character_->set_width(kBoxSize);
   character_->set_height(kBoxSize);
@@ -96,17 +103,20 @@ void ZinniaHandwriting::Recognize(const Strokes &strokes,
   scoped_ptr<zinnia::Result> result(recognizer_->classify(*character_,
                                                           kMaxResultSize));
   if (result.get() == NULL) {
-    return;
+    return HANDWRITING_ERROR;
   }
 
   candidates->clear();
   for (size_t i = 0; i < result->size(); ++i) {
     candidates->push_back(result->value(i));
   }
+  return HANDWRITING_NO_ERROR;
 }
 
-void ZinniaHandwriting::Commit(const Strokes &strokes, const string &result) {
+HandwritingStatus ZinniaHandwriting::Commit(const Strokes &strokes,
+                                            const string &result) {
   // Do nothing so far.
+  return HANDWRITING_NO_ERROR;
 }
 
 }  // namespace handwriting

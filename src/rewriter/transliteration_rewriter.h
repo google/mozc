@@ -35,6 +35,7 @@
 namespace mozc {
 
 class Segments;
+class ConversionRequest;
 
 class TransliterationRewriter: public RewriterInterface  {
  public:
@@ -43,6 +44,8 @@ class TransliterationRewriter: public RewriterInterface  {
 
   virtual int capability() const;
 
+  virtual bool RewriteForRequest(const ConversionRequest &request,
+                                 Segments *segments) const;
   virtual bool Rewrite(Segments *segments) const;
 };
 }

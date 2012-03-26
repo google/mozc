@@ -275,14 +275,15 @@ message Config {
     optional bool use_web_usage_dictionary = 2 [ default = false ];
     message WebServiceEntry {
       enum FormatType {
-        UNKNOWN_FORMAT = 0;   // Default value, Do nothing.
+        AUTO_DETECT = 0;      // detect automatically.
+        // We won't allow user to choose format type via config dialog now.
         GENERIC_XML = 1;      // XML/XHTML
         GENERIC_JSON = 2;     // JSON
         PREDEFINED_XML = 3;   // not supported for now.
         PREDEFINED_JSON = 4;  // not supported for now.
       };
       optional string name = 1 [ default = "" ];
-      optional FormatType type = 2 [ default = UNKNOWN_FORMAT ];
+      optional FormatType type = 2 [ default = AUTO_DETECT ];
       optional string url = 3 [ default = "" ];
       optional string xpath = 4 [ default = "" ];  // Xpath or JsonPath
     };
@@ -322,10 +323,39 @@ message Config {
 
   // Multilingual config.  It resides here for historical reason.
   // TODO(mukai): apply extension for multilingual config.
+  optional PinyinConfig pinyin_config = 996;
   optional HangulConfig hangul_config = 998;
   optional ChewingConfig chewing_config = 999;
 };
 
+// Config for Chinese PinYin input.  Those items are based on the libpyzy
+// configurations and current ChromeOS ibus-pinyin config items.
+message PinyinConfig {
+  // These default values are not used on ChromeOS.
+
+  // Corrects some typos or not.  (e.g. gn -> ng)
+  optional bool correct_pinyin = 1 [default = true];
+  // Accepts pinyin which is based on the pronunciation of Mandarin Chinese.
+  optional bool fuzzy_pinyin = 2 [default = false];
+  optional bool select_with_shift = 3 [default = false];
+  optional bool paging_with_minus_equal = 4 [default = true];
+  optional bool paging_with_comma_period = 5 [default = true];
+  optional bool auto_commit = 6 [default = false];
+  optional bool double_pinyin = 7 [default = false];
+  optional bool initial_mode_chinese = 8 [default = true];
+  optional bool initial_mode_full_width_word = 9 [default = false];
+  optional bool initial_mode_full_width_punctuation = 10 [default = true];
+  optional bool initial_mode_simplified_chinese = 11 [default = true];
+
+  // Double pinyin shcema list.
+  // MSPY = 0;
+  // ZRM = 1;
+  // ABC = 2;
+  // ZGPY = 3;
+  // PYJJ = 4;
+  // XHE = 5;
+  optional int32 double_pinyin_schema = 12 [default = 0];
+};
 
 
 // Config for Korean hangul input.

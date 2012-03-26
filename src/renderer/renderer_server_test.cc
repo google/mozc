@@ -32,12 +32,10 @@
 #include "base/util.h"
 #include "ipc/ipc.h"
 #include "ipc/ipc_test_util.h"
-#include "languages/global_language_spec.h"
-#include "languages/japanese/lang_dep_spec.h"
 #include "renderer/renderer_interface.h"
 #include "renderer/renderer_client.h"
+#include "renderer/renderer_command.pb.h"
 #include "renderer/renderer_server.h"
-#include "session/commands.pb.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_int32(timeout);
@@ -127,6 +125,9 @@ class DummyRendererLauncher : public RendererLauncherInterface {
 
   virtual void SetPendingCommand(const commands::RendererCommand &command) {
   }
+
+  virtual void set_suppress_error_dialog(bool suppress) {
+  }
 };
 }  // namespace
 
@@ -134,16 +135,7 @@ class RendererServerTest : public ::testing::Test {
  protected:
   virtual void SetUp() {
     mozc::Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(
-        &lang_dep_spec_);
   }
-
-  virtual void TearDown() {
-    mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(NULL);
-  }
-
- private:
-  mozc::japanese::LangDepSpecJapanese lang_dep_spec_;
 };
 
 TEST_F(RendererServerTest, IPCTest) {

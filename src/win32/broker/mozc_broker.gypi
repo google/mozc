@@ -49,8 +49,6 @@
         '../../config/config.gyp:genproto_config',
         '../../config/config.gyp:stats_config_util',
         '../../ipc/ipc.gyp:ipc',
-        '../../languages/japanese/japanese.gyp:language_dependent_spec_japanese',
-        '../../languages/languages.gyp:global_language_spec',
         '../../renderer/renderer.gyp:renderer',
         '../../session/session_base.gyp:genproto_session',
         '../base/win32_base.gyp:ime_base',

@@ -406,8 +406,8 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterNumber) {
   AddCandidate(seg[0], "\xE5\xBC\x90");
 
 
-  seg[0]->mutable_candidate(2)->style = Segment::Candidate::NUMBER_KANJI;
-  seg[0]->mutable_candidate(3)->style = Segment::Candidate::NUMBER_OLD_KANJI;
+  seg[0]->mutable_candidate(2)->style = Util::NumberString::NUMBER_KANJI;
+  seg[0]->mutable_candidate(3)->style = Util::NumberString::NUMBER_OLD_KANJI;
 
   // "テスト1"
   AddCandidate(seg[1], "\xe3\x83\x86\xe3\x82\xb9\xe3\x83\x88\x31");
@@ -422,8 +422,8 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterNumber) {
   AddCandidate(seg[2], "\xE4\xB8\x89");
   AddCandidate(seg[2], "\xE5\x8F\x82");
 
-  seg[2]->mutable_candidate(2)->style = Segment::Candidate::NUMBER_KANJI;
-  seg[2]->mutable_candidate(3)->style = Segment::Candidate::NUMBER_OLD_KANJI;
+  seg[2]->mutable_candidate(2)->style = Util::NumberString::NUMBER_KANJI;
+  seg[2]->mutable_candidate(3)->style = Util::NumberString::NUMBER_OLD_KANJI;
 
   seg[3]->set_key("4");
   AddCandidate(seg[3], "4");
@@ -431,7 +431,7 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterNumber) {
   //  AddCandidate(seg[3], "四");
   AddCandidate(seg[3], "\xEF\xBC\x94");
   AddCandidate(seg[3], "\xE5\x9B\x9B");
-  seg[3]->mutable_candidate(2)->style = Segment::Candidate::NUMBER_KANJI;
+  seg[3]->mutable_candidate(2)->style = Util::NumberString::NUMBER_KANJI;
 
   // "テスト1"
   AddCandidate(seg[4], "\xe3\x83\x86\xe3\x82\xb9\xe3\x83\x88\x31");
@@ -444,7 +444,7 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterNumber) {
   AddCandidate(seg[6], "\xEF\xBC\x94");
   AddCandidate(seg[6], "\xE5\x9B\x9B");
 
-  seg[6]->mutable_candidate(2)->style = Segment::Candidate::NUMBER_KANJI;
+  seg[6]->mutable_candidate(2)->style = Util::NumberString::NUMBER_KANJI;
 
   EXPECT_TRUE(GetRewriter()->Focus(&segments, 0,
                                    0));
