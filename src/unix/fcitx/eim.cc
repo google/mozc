@@ -20,15 +20,12 @@
 #include <fcitx/instance.h>
 #include <fcitx/ime.h>
 #include <fcitx/hook.h>
-#include <languages/global_language_spec.h>
-#include <languages/japanese/lang_dep_spec.h>
+#include <fcitx-config/xdg.h>
 #include "fcitx_mozc.h"
 #include "mozc_connection.h"
 #include "mozc_response_parser.h"
-#include <fcitx-config/xdg.h>
 
 typedef struct _FcitxMozcState {
-    mozc::japanese::LangDepSpecJapanese* language_dependency_spec_japanese;
     mozc::fcitx::FcitxMozc* mozc;
 } FcitxMozcState;
 
@@ -58,23 +55,21 @@ static void* FcitxMozcCreate(FcitxInstance* instance)
 {
     FcitxMozcState* mozcState = (FcitxMozcState*) fcitx_utils_malloc0(sizeof(FcitxMozcState));
     bindtextdomain("fcitx-keyboard", LOCALEDIR);
-    mozcState->language_dependency_spec_japanese = new mozc::japanese::LangDepSpecJapanese;
-    mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(mozcState->language_dependency_spec_japanese);
-    
+
     mozcState->mozc = new mozc::fcitx::FcitxMozc(
         instance,
         mozc::fcitx::MozcConnection::CreateMozcConnection(),
         new mozc::fcitx::MozcResponseParser
     );
-    
+
     mozcState->mozc->SetCompositionMode(mozc::commands::HIRAGANA);
-    
+
     FcitxIMEventHook hk;
     hk.arg = mozcState;
     hk.func = FcitxMozcReset;
-    
+
     FcitxInstanceRegisterResetInputHook(instance, hk);
-    
+
     FcitxInstanceRegisterIM(instance,
         mozcState,
         "mozc",
@@ -91,7 +86,7 @@ static void* FcitxMozcCreate(FcitxInstance* instance)
         5,
         "ja"
     );
-    
+
     return mozcState;
 }
 
@@ -99,10 +94,8 @@ static void FcitxMozcDestroy(void *arg)
 {
     FcitxMozcState* mozcState = (FcitxMozcState*) arg;
     delete mozcState->mozc;
-    mozc::language::GlobalLanguageSpec::SetLanguageDependentSpec(NULL);
-    delete mozcState->language_dependency_spec_japanese;
     free(mozcState);
-} 
+}
 
 INPUT_RETURN_VALUE FcitxMozcDoInput(void* arg, FcitxKeySym sym, unsigned int state)
 {

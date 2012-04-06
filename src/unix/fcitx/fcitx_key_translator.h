@@ -59,9 +59,9 @@ public:
     // pressed', or 'special key that Mozc doesn't know pressed' cannot be
     // converted to mozc::commands::Input.
     bool CanConvert(FcitxKeySym sym, unsigned int state) const;
-    
+
     void SetLayout(FcitxMozcLayout l);
-    
+
     void SetInputState(FcitxInputState* i);
 
 private:
@@ -71,6 +71,13 @@ private:
     // Returns true iff scim_key is special key such as ENTER, ESC, or PAGE_UP.
     bool IsSpecialKey(FcitxKeySym sym, unsigned int state,
                       mozc::commands::KeyEvent::SpecialKey *out) const;
+
+    // Returns a normalized key event iff key is HiraganaKatakana with shift
+    // modifier. See http://code.google.com/p/mozc/issues/detail?id=136 for
+    // the background information.
+    // Otherwire returns the original key.
+    static void NormalizeHiraganaKatakanaKeyWithShift(
+        FcitxKeySym origsym, unsigned int origstate, FcitxKeySym* sym, unsigned int* state);
 
     // Returns true iff scim_key is special key that can be converted to ASCII.
     // For example, scim::FCITX_KEY_KP_0 (numeric keypad zero) in FCITX can be

@@ -36,7 +36,7 @@
 
 namespace
 {
-    
+
 static const std::string empty_string;
 
 const struct CompositionMode
@@ -93,7 +93,7 @@ INPUT_RETURN_VALUE FcitxMozcGetCandidateWord(void* arg, FcitxCandidateWord* cand
 {
     mozc::fcitx::FcitxMozc* fcitx_mozc = (mozc::fcitx::FcitxMozc*) arg;
     fcitx_mozc->select_candidate(candWord);
-    
+
     return IRV_DISPLAY_CANDWORDS;
 }
 
@@ -156,7 +156,7 @@ bool FcitxMozc::process_key_event ( FcitxKeySym sym, unsigned int state )
 void FcitxMozc::select_candidate ( FcitxCandidateWord* candWord )
 {
     int32 *id = (int32*) candWord->priv;
-    
+
     if ( *id == kBadCandidateId )
     {
         LOG ( ERROR ) << "The clicked candidate doesn't have unique ID.";
@@ -191,7 +191,7 @@ void FcitxMozc::resetim()
     }
     ClearAll();  // just in case.
     DrawAll();
-    
+
 }
 
 void FcitxMozc::reset()
@@ -312,10 +312,10 @@ void FcitxMozc::DrawPreeditInfo()
     if ( preedit_info_.get() )
     {
         VLOG ( 1 ) << "DrawPreeditInfo: cursor=" << preedit_info_->cursor_pos;
-        
+
         if (ic && ((ic->contextCaps & CAPACITY_PREEDIT) == 0 || !profile->bUsePreedit))
             FcitxInputStateSetShowCursor(input, true);
-        
+
         for (int i = 0; i < preedit_info_->preedit.size(); i ++) {
             if (ic && ((ic->contextCaps & CAPACITY_PREEDIT) == 0 || !profile->bUsePreedit))
                 FcitxMessagesAddMessageAtLast(preedit, preedit_info_->preedit[i].type, "%s", preedit_info_->preedit[i].str.c_str());
@@ -373,8 +373,7 @@ static const char* GetMozcToolIcon(void* arg)
 void FcitxMozc::InitializeBar()
 {
     VLOG ( 1 ) << "Registering properties";
-    // TODO(yusukes): L10N needed for "Tool", "Dictionary tool", and "Property".
-    
+
     FcitxUIRegisterComplexStatus(instance, this,
         "mozc-composition-mode",
         _("Composition Mode"),
@@ -432,6 +431,15 @@ boolean ToolMenuAction(struct _FcitxUIMenu *menu, int index)
             args = "--mode=dictionary_tool";
             break;
         case 2:
+            args = "--mode=hand_writing";
+            break;
+        case 3:
+            args = "--mode=character_palette";
+            break;
+        case 4:
+            args = "--mode=word_register_dialog";
+            break;
+        case 5:
             args = "--mode=about_dialog";
             break;
     }
@@ -468,6 +476,9 @@ void FcitxMozc::InitializeMenu()
     toolMenu.isSubMenu = false;
     FcitxMenuAddMenuItem(&toolMenu, _("Configuration Tool"), MENUTYPE_SIMPLE, NULL);
     FcitxMenuAddMenuItem(&toolMenu, _("Dictionary Tool"), MENUTYPE_SIMPLE, NULL);
+    FcitxMenuAddMenuItem(&toolMenu, _("Hand Writing"), MENUTYPE_SIMPLE, NULL);
+    FcitxMenuAddMenuItem(&toolMenu, _("Character Palette"), MENUTYPE_SIMPLE, NULL);
+    FcitxMenuAddMenuItem(&toolMenu, _("Add Word"), MENUTYPE_SIMPLE, NULL);
     FcitxMenuAddMenuItem(&toolMenu, _("About Mozc"), MENUTYPE_SIMPLE, NULL);
     FcitxUIRegisterMenu(instance, &toolMenu);
 }
@@ -482,7 +493,7 @@ const std::string& FcitxMozc::GetIconFile(const std::string key)
     if (iconMap.count(key)) {
         return iconMap[key];
     }
-    
+
     char* retFile;
     FILE* fp = FcitxXDGGetFileWithPrefix("mozc/icon", key.c_str(), "r", &retFile);
     if (fp)

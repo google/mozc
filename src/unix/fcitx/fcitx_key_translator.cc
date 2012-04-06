@@ -57,8 +57,11 @@ const struct SpecialKeyMap {
     {FcitxKey_Insert, mozc::commands::KeyEvent::INSERT},
     {FcitxKey_Henkan, mozc::commands::KeyEvent::HENKAN},
     {FcitxKey_Muhenkan, mozc::commands::KeyEvent::MUHENKAN},
-    // NOTE(komatsu): There is FcitxKey_Hiragana_Katakana too.
     {FcitxKey_Hiragana, mozc::commands::KeyEvent::KANA},
+    // FcitxKey_Hiragana_Katakana requires special treatment.
+    // See FcitxKeyTranslator::NormalizeHiraganaKatakanaKeyWithShift.
+    {FcitxKey_Hiragana_Katakana, mozc::commands::KeyEvent::KANA},
+    {FcitxKey_Katakana, mozc::commands::KeyEvent::KATAKANA},
     {FcitxKey_Eisu_toggle, mozc::commands::KeyEvent::EISU},
     {FcitxKey_Home, mozc::commands::KeyEvent::HOME},
     {FcitxKey_End, mozc::commands::KeyEvent::END},
@@ -354,7 +357,7 @@ static inline char get_ascii_code(FcitxKeySym sym)
         return 0x08;
     if (sym == FcitxKey_Escape)
         return 0x1b;
-    
+
     return 0;
 }
 
@@ -372,8 +375,11 @@ KeyTranslator::~KeyTranslator() {
 }
 
 void KeyTranslator::Translate(
-    FcitxKeySym sym, unsigned int state, mozc::config::Config::PreeditMethod method,
+    FcitxKeySym origsym, unsigned int origstate, mozc::config::Config::PreeditMethod method,
     mozc::commands::KeyEvent *out_event) const {
+    FcitxKeySym sym;
+    unsigned int state;
+    NormalizeHiraganaKatakanaKeyWithShift(origsym, origstate, &sym, &state);
     DCHECK(CanConvert(sym, state));
     if (!CanConvert(sym, state)) {
         LOG(ERROR) << "Can't handle the key: " << sym;
@@ -383,6 +389,8 @@ void KeyTranslator::Translate(
     if (!out_event) {
         return;
     }
+    out_event->Clear();
+
 
     if ((state & FcitxKeyState_Ctrl) != 0) {
         out_event->add_modifier_keys(mozc::commands::KeyEvent::CTRL);
@@ -479,6 +487,21 @@ bool KeyTranslator::IsSpecialKey(
     }
     return true;
 }
+
+// static
+void KeyTranslator::NormalizeHiraganaKatakanaKeyWithShift(
+    FcitxKeySym origsym, unsigned int origstate, FcitxKeySym* sym, unsigned int* state) {
+    if (origsym == FcitxKey_Hiragana_Katakana) {
+        *sym = FcitxKey_Katakana;
+        *state = origstate & ~FcitxKeyState_Shift;
+    }
+    else {
+        *sym = origsym;
+        *state = origstate;
+    }
+}
+
+
 
 bool KeyTranslator::IsSpecialAscii(
     FcitxKeySym sym, unsigned int state, uint32 *out) const {

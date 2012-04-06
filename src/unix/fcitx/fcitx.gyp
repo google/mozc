@@ -40,10 +40,11 @@
     'fcitx_dep_include_dirs': [
     ],
     'fcitx_dependencies': [
-      '../../base/base.gyp:base',
-      '../../client/client.gyp:client',
-      '../../languages/languages.gyp:global_language_spec',
-      '../../languages/japanese/japanese.gyp:language_dependent_spec_japanese',
+        '../../base/base.gyp:base',
+        '../../client/client.gyp:client',
+        '../../ipc/ipc.gyp:ipc',
+        '../../session/session_base.gyp:ime_switch_util',
+        '../../session/session_base.gyp:session_protocol',
     ],
     'fcitx_defines': [
       'LOCALEDIR="<!@(fcitx4-config --prefix)/share/locale/"',
