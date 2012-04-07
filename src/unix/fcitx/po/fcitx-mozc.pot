@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2012-03-06 12:26+0800\n"
+"POT-Creation-Date: 2012-04-07 11:37+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -41,7 +41,7 @@ msgstr ""
 msgid "Half Katakana"
 msgstr ""
 
-#: ../fcitx_mozc.cc:379 ../fcitx_mozc.cc:380 ../fcitx_mozc.cc:449
+#: ../fcitx_mozc.cc:379 ../fcitx_mozc.cc:380 ../fcitx_mozc.cc:458
 msgid "Composition Mode"
 msgstr ""
 
@@ -49,18 +49,30 @@ msgstr ""
 msgid "Tool"
 msgstr ""
 
-#: ../fcitx_mozc.cc:462
+#: ../fcitx_mozc.cc:471
 msgid "Mozc Tool"
 msgstr ""
 
-#: ../fcitx_mozc.cc:468
+#: ../fcitx_mozc.cc:477
 msgid "Configuration Tool"
 msgstr ""
 
-#: ../fcitx_mozc.cc:469
+#: ../fcitx_mozc.cc:478
 msgid "Dictionary Tool"
 msgstr ""
 
-#: ../fcitx_mozc.cc:470
+#: ../fcitx_mozc.cc:479
+msgid "Hand Writing"
+msgstr ""
+
+#: ../fcitx_mozc.cc:480
+msgid "Character Palette"
+msgstr ""
+
+#: ../fcitx_mozc.cc:481
+msgid "Add Word"
+msgstr ""
+
+#: ../fcitx_mozc.cc:482
 msgid "About Mozc"
 msgstr ""

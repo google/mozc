@@ -1,22 +1,23 @@
-# SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
-# 
+#
 # Translators:
 #   <wengxt@gmail.com>, 2012.
 msgid ""
 msgstr ""
 "Project-Id-Version: fcitx\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2012-03-06 12:26+0800\n"
-"PO-Revision-Date: 2012-03-06 07:05+0000\n"
-"Last-Translator: csslayer <wengxt@gmail.com>\n"
-"Language-Team: Japanese (Japan) (http://www.transifex.net/projects/p/fcitx/language/ja_JP/)\n"
+"POT-Creation-Date: 2012-04-07 11:37+0800\n"
+"PO-Revision-Date: 2012-04-07 11:45+0800\n"
+"Last-Translator: Weng Xuetian <wengxt@gmail.com>\n"
+"Language-Team: Chinese Traditional <fcitx-dev@googlegroups.com>\n"
+"language/ja_JP/)\n"
+"Language: ja_JP\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: ja_JP\n"
 "Plural-Forms: nplurals=1; plural=0\n"
+"X-Generator: Lokalize 1.4\n"
 
 #: ../fcitx_mozc.cc:53
 msgid "Direct"
@@ -42,7 +43,7 @@ msgstr "全角英数"
 msgid "Half Katakana"
 msgstr "半角カタカナ"
 
-#: ../fcitx_mozc.cc:379 ../fcitx_mozc.cc:380 ../fcitx_mozc.cc:449
+#: ../fcitx_mozc.cc:379 ../fcitx_mozc.cc:380 ../fcitx_mozc.cc:458
 msgid "Composition Mode"
 msgstr "変換モード"
 
@@ -50,18 +51,31 @@ msgstr "変換モード"
 msgid "Tool"
 msgstr "ツールを"
 
-#: ../fcitx_mozc.cc:462
+#: ../fcitx_mozc.cc:471
 msgid "Mozc Tool"
 msgstr "Mozc ツールを"
 
-#: ../fcitx_mozc.cc:468
+#: ../fcitx_mozc.cc:477
 msgid "Configuration Tool"
 msgstr "設定ツールを"
 
-#: ../fcitx_mozc.cc:469
+#: ../fcitx_mozc.cc:478
 msgid "Dictionary Tool"
 msgstr "辞書ツールを"
 
-#: ../fcitx_mozc.cc:470
+#: ../fcitx_mozc.cc:479
+msgid "Hand Writing"
+msgstr "手書き文字認識"
+
+#: ../fcitx_mozc.cc:480
+msgid "Character Palette"
+msgstr "文字パレット"
+
+#: ../fcitx_mozc.cc:481
+msgid "Add Word"
+msgstr "単語登録"
+
+#: ../fcitx_mozc.cc:482
 msgid "About Mozc"
 msgstr "Mozc について"
+
