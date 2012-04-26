@@ -33,6 +33,7 @@
 #include "base/util.h"
 #include "config/config_handler.h"
 #include "config/config.pb.h"
+#include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "session/commands.pb.h"
 #include "testing/base/public/gunit.h"
@@ -197,12 +198,13 @@ TEST_F(DateRewriterTest, DateRewriteTest) {
 
   DateRewriter rewriter;
   Segments segments;
+  const ConversionRequest request;
 
   // "きょう/今日/今日の日付"
   {
     InitSegment("\xE3\x81\x8D\xE3\x82\x87\xE3\x81\x86",
                 "\xE4\xBB\x8A\xE6\x97\xA5", &segments);
-    EXPECT_TRUE(rewriter.Rewrite(&segments));
+    EXPECT_TRUE(rewriter.Rewrite(request, &segments));
     EXPECT_EQ(5, CountDescription(
         segments,
         "\xE4\xBB\x8A\xE6\x97\xA5"
@@ -233,7 +235,7 @@ TEST_F(DateRewriterTest, DateRewriteTest) {
   {
     InitSegment("\xE3\x81\x82\xE3\x81\x97\xE3\x81\x9F",
                 "\xE6\x98\x8E\xE6\x97\xA5", &segments);
-    EXPECT_TRUE(rewriter.Rewrite(&segments));
+    EXPECT_TRUE(rewriter.Rewrite(request, &segments));
     EXPECT_EQ(5, CountDescription(
         segments,
         "\xE6\x98\x8E\xE6\x97\xA5"
@@ -264,7 +266,7 @@ TEST_F(DateRewriterTest, DateRewriteTest) {
   {
     InitSegment("\xE3\x81\x8D\xE3\x81\xAE\xE3\x81\x86",
                 "\xE6\x98\xA8\xE6\x97\xA5", &segments);
-    EXPECT_TRUE(rewriter.Rewrite(&segments));
+    EXPECT_TRUE(rewriter.Rewrite(request, &segments));
     EXPECT_EQ(5, CountDescription(
         segments,
         "\xE6\x98\xA8\xE6\x97\xA5"
@@ -295,7 +297,7 @@ TEST_F(DateRewriterTest, DateRewriteTest) {
   {
     InitSegment("\xE3\x81\x82\xE3\x81\x95\xE3\x81\xA3\xE3\x81\xA6",
                 "\xE6\x98\x8E\xE5\xBE\x8C\xE6\x97\xA5", &segments);
-    EXPECT_TRUE(rewriter.Rewrite(&segments));
+    EXPECT_TRUE(rewriter.Rewrite(request, &segments));
     EXPECT_EQ(5, CountDescription(
         segments,
         "\xE6\x98\x8E\xE5\xBE\x8C\xE6\x97\xA5"
@@ -326,7 +328,7 @@ TEST_F(DateRewriterTest, DateRewriteTest) {
   {
     InitSegment("\xE3\x81\xAB\xE3\x81\xA1\xE3\x81\x98",
                 "\xE6\x97\xA5\xE6\x99\x82", &segments);
-    EXPECT_TRUE(rewriter.Rewrite(&segments));
+    EXPECT_TRUE(rewriter.Rewrite(request, &segments));
     EXPECT_EQ(1, CountDescription(
         segments,
         "\xE7\x8F\xBE\xE5\x9C\xA8\xE3\x81\xAE\xE6\x97\xA5\xE6\x99\x82"));
@@ -339,7 +341,7 @@ TEST_F(DateRewriterTest, DateRewriteTest) {
   {
     InitSegment("\xE3\x81\x84\xE3\x81\xBE",
                 "\xE4\xBB\x8A", &segments);
-    EXPECT_TRUE(rewriter.Rewrite(&segments));
+    EXPECT_TRUE(rewriter.Rewrite(request, &segments));
     EXPECT_EQ(3, CountDescription(
         segments,
         "\xE7\x8F\xBE\xE5\x9C\xA8\xE3\x81\xAE\xE6\x99\x82\xE5\x88\xBB"));
@@ -375,7 +377,7 @@ TEST_F(DateRewriterTest, DateRewriteTest) {
     // "きょう", "今日"
     InitSegment("\xE3\x81\x8D\xE3\x82\x87\xE3\x81\x86",
                 "\xE4\xBB\x8A\xE6\x97\xA5", &segments);
-    EXPECT_TRUE(rewriter.Rewrite(&segments));
+    EXPECT_TRUE(rewriter.Rewrite(request, &segments));
     EXPECT_EQ(5, CountDescription(
         segments,
         // "今日の日付"
@@ -400,7 +402,7 @@ TEST_F(DateRewriterTest, DateRewriteTest) {
     InsertCandidate("Candidate3", "Candidate3", 0, segments.mutable_segment(0));
     InsertCandidate("Candidate4", "Candidate4", 0, segments.mutable_segment(0));
 
-    EXPECT_TRUE(rewriter.Rewrite(&segments));
+    EXPECT_TRUE(rewriter.Rewrite(request, &segments));
     // "今日の日付"
     EXPECT_EQ(5, CountDescription(
         segments,
@@ -426,7 +428,7 @@ TEST_F(DateRewriterTest, DateRewriteTest) {
     InsertCandidate("Candidate3", "Candidate3", 1, segments.mutable_segment(0));
     InsertCandidate("Candidate4", "Candidate4", 1, segments.mutable_segment(0));
 
-    EXPECT_TRUE(rewriter.Rewrite(&segments));
+    EXPECT_TRUE(rewriter.Rewrite(request, &segments));
     // "今日の日付"
     EXPECT_EQ(5, CountDescription(
         segments,
@@ -447,6 +449,7 @@ TEST_F(DateRewriterTest, DateRewriteTest) {
 TEST_F(DateRewriterTest, ADToERA) {
   DateRewriter rewriter;
   vector<string> results;
+  const ConversionRequest request;
 
   results.clear();
   rewriter.ADtoERA(0, &results);
@@ -590,6 +593,7 @@ TEST_F(DateRewriterTest, ADToERA) {
 TEST_F(DateRewriterTest, ConvertTime) {
   DateRewriter rewriter;
   vector<string> results;
+  const ConversionRequest request;
 
   results.clear();
   EXPECT_TRUE(rewriter.ConvertTime(0, 0, &results));
@@ -828,10 +832,11 @@ TEST_F(DateRewriterTest, ConvertDateTest) {
 TEST_F(DateRewriterTest, NumberRewriterTest) {
   Segments segments;
   DateRewriter rewriter;
+  const ConversionRequest request;
 
   // 0101 is expected 3 time candidate and 2 date candidates
   InitSegment("0101", "0101", &segments);
-  EXPECT_TRUE(rewriter.Rewrite(&segments));
+  EXPECT_TRUE(rewriter.Rewrite(request, &segments));
   // "時刻"
   EXPECT_EQ(3, CountDescription(segments,
                                 "\xE6\x99\x82\xE5\x88\xBB"));
@@ -857,7 +862,7 @@ TEST_F(DateRewriterTest, NumberRewriterTest) {
 
   // 1830 is expected 5 time candidate and 0 date candidates
   InitSegment("1830", "1830", &segments);
-  EXPECT_TRUE(rewriter.Rewrite(&segments));
+  EXPECT_TRUE(rewriter.Rewrite(request, &segments));
   // "時刻"
   EXPECT_EQ(5, CountDescription(segments,
                                 "\xE6\x99\x82\xE5\x88\xBB"));
@@ -882,19 +887,20 @@ TEST_F(DateRewriterTest, NumberRewriterTest) {
 
   // Invalid date or time number expect false return
   InitSegment("9999", "9999", &segments);
-  EXPECT_FALSE(rewriter.Rewrite(&segments));
+  EXPECT_FALSE(rewriter.Rewrite(request, &segments));
 }
 
 
 TEST_F(DateRewriterTest, RewriteYearTest) {
   DateRewriter rewriter;
   Segments segments;
+  const ConversionRequest request;
 
   InitSegment("2010", "2010", &segments);
   // "年"
   AppendSegment("nenn", "\xE5\xB9\xB4", &segments);
 
-  EXPECT_TRUE(rewriter.Rewrite(&segments));
+  EXPECT_TRUE(rewriter.Rewrite(request, &segments));
   // "平成22"
   EXPECT_TRUE(ContainCandidate(segments, "\xE5\xB9\xB3\xE6\x88\x90\x32\x32"));
 }
@@ -905,6 +911,7 @@ TEST_F(DateRewriterTest, RewriteYearTest) {
 TEST_F(DateRewriterTest, RelationWithUserHistoryRewriterTest) {
   DateRewriter rewriter;
   Segments segments;
+  const ConversionRequest request;
 
   // "二千十一"
   InitSegment("2011",
@@ -913,7 +920,7 @@ TEST_F(DateRewriterTest, RelationWithUserHistoryRewriterTest) {
   // "年"
   AppendSegment("nenn", "\xE5\xB9\xB4", &segments);
 
-  EXPECT_TRUE(rewriter.Rewrite(&segments));
+  EXPECT_TRUE(rewriter.Rewrite(request, &segments));
   // "平成23"
   EXPECT_TRUE(ContainCandidate(segments, "\xE5\xB9\xB3\xE6\x88\x90\x32\x33"));
 }

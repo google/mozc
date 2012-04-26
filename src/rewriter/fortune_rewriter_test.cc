@@ -31,6 +31,7 @@
 #include <string>
 
 #include "base/util.h"
+#include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "rewriter/fortune_rewriter.h"
 #include "testing/base/public/gunit.h"
@@ -83,16 +84,17 @@ class FortuneRewriterTest : public testing::Test {
 
 TEST_F(FortuneRewriterTest, BasicTest) {
   FortuneRewriter fortune_rewriter;
+  const ConversionRequest request;
 
   Segments segments;
   AddSegment("test", "test", &segments);
-  fortune_rewriter.Rewrite(&segments);
+  fortune_rewriter.Rewrite(request, &segments);
   EXPECT_FALSE(HasFortune(segments));
 
   // "おみくじ"
   AddSegment("\xE3\x81\x8A\xE3\x81\xBF\xE3\x81\x8F\xE3\x81\x98",
              "test", &segments);
-  fortune_rewriter.Rewrite(&segments);
+  fortune_rewriter.Rewrite(request, &segments);
   EXPECT_TRUE(HasFortune(segments));
 }
 }  // namespace mozc

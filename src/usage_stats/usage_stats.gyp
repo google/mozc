@@ -37,29 +37,37 @@
       'target_name': 'usage_stats',
       'type': 'static_library',
       'sources': [
-        'upload_util.cc',
         'usage_stats.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        '../storage/storage.gyp:storage',
+        'gen_usage_stats_list#host',
+        'usage_stats_protocol',
+      ],
+    },
+    {
+      'target_name': 'usage_stats_uploader',
+      'type': 'static_library',
+      'sources': [
+        'upload_util.cc',
+        'usage_stats_uploader.cc',
       ],
       'dependencies': [
         '../base/base.gyp:base',
         '../base/base.gyp:encryptor',
         '../config/config.gyp:stats_config_util',
-        '../net/net.gyp:net',
+        '../net/net.gyp:http_client',
         '../storage/storage.gyp:storage',
-        'gen_usage_stats_list',
+        'gen_usage_stats_list#host',
+        'usage_stats',
         'usage_stats_protocol',
-      ],
-      'conditions': [
-        ['OS=="win"', {
-          'dependencies': [
-            '../win32/base/win32_base.gyp:imm_util',
-          ],
-        }],
       ],
     },
     {
       'target_name': 'gen_usage_stats_list',
       'type': 'none',
+      'toolsets': ['host'],
       'actions': [
         {
           'action_name': 'gen_usage_stats_list',
@@ -93,15 +101,16 @@
       ],
       'dependencies': [
         '../protobuf/protobuf.gyp:protobuf',
-        'genproto_usage_stats',
+        'genproto_usage_stats#host',
       ],
       'export_dependent_settings': [
-        'genproto_usage_stats',
+        'genproto_usage_stats#host',
       ],
     },
     {
       'target_name': 'genproto_usage_stats',
       'type': 'none',
+      'toolsets': ['host'],
       'sources': [
         'usage_stats.proto',
       ],
@@ -113,13 +122,28 @@
       'target_name': 'usage_stats_test',
       'type': 'executable',
       'sources': [
-        'upload_util_test.cc',
         'usage_stats_test.cc',
+      ],
+      'dependencies': [
+        '../testing/testing.gyp:gtest_main',
+        'usage_stats',
+        'usage_stats_protocol',
+      ],
+      'variables': {
+        'test_size': 'small',
+      },
+    },
+    {
+      'target_name': 'usage_stats_uploader_test',
+      'type': 'executable',
+      'sources': [
+        'upload_util_test.cc',
+        'usage_stats_uploader_test.cc',
       ],
       'dependencies': [
         '../net/net.gyp:http_client_mock',
         '../testing/testing.gyp:gtest_main',
-        'usage_stats',
+        'usage_stats_uploader',
         'usage_stats_protocol',
       ],
       'variables': {
@@ -132,6 +156,7 @@
       'type': 'none',
       'dependencies': [
         'usage_stats_test',
+        'usage_stats_uploader_test',
       ],
     },
   ],

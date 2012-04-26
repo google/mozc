@@ -45,19 +45,9 @@
 
 namespace mozc {
 namespace {
-struct T13NIds {
-  uint16 hiragana_lid;
-  uint16 hiragana_rid;
-  uint16 katakana_lid;
-  uint16 katakana_rid;
-  uint16 ascii_lid;
-  uint16 ascii_rid;
-  T13NIds() : hiragana_lid(0), hiragana_rid(0),
-              katakana_lid(0), katakana_rid(0),
-              ascii_lid(0), ascii_rid(0) {}
-};
 
-bool IsValidRequest(const ConversionRequest &request, const Segments *segments) {
+bool IsValidRequest(const ConversionRequest &request,
+                    const Segments *segments) {
   if (!request.has_composer()) {
     return false;
   }
@@ -136,23 +126,167 @@ bool IsTransliterated(const vector<string> &t13ns) {
   return false;
 }
 
-void InitT13NCandidate(const string &key,
-                       const string &value,
-                       uint16 lid,
-                       uint16 rid,
-                       Segment::Candidate *cand) {
+// Get T13N candidate ids from existing candidates.
+void GetIds(const Segment &segment, TransliterationRewriter::T13NIds *ids) {
+  DCHECK(ids);
+  // reverse loop to use the highest rank results for each type
+  for (int i = segment.candidates_size() - 1; i >= 0; --i) {
+    const Segment::Candidate &candidate = segment.candidate(i);
+    Util::ScriptType type = Util::GetScriptType(candidate.value);
+    if (type == Util::HIRAGANA) {
+      ids->hiragana_lid = candidate.lid;
+      ids->hiragana_rid = candidate.rid;
+    } else if (type == Util::KATAKANA) {
+      ids->katakana_lid = candidate.lid;
+      ids->katakana_rid = candidate.rid;
+    } else if (type == Util::ALPHABET) {
+      ids->ascii_lid = candidate.lid;
+      ids->ascii_rid = candidate.rid;
+    }
+  }
+}
+}  // namespace
+
+bool TransliterationRewriter::FillT13NsFromComposer(
+    const ConversionRequest &request,
+    Segments *segments) const {
+  bool modified = false;
+  size_t composition_pos = 0;
+  for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
+    Segment *segment = segments->mutable_conversion_segment(i);
+    CHECK(segment);
+    if (segment->key().empty()) {
+      continue;
+    }
+    const size_t composition_len = Util::CharsLen(segment->key());
+    vector<string> t13ns;
+    request.composer().GetSubTransliterations(composition_pos,
+                                              composition_len,
+                                              &t13ns);
+    composition_pos += composition_len;
+    TransliterationRewriter::T13NIds ids;
+    GetIds(*segment, &ids);
+
+    // Especially for mobile-flick input, the input key is sometimes
+    // non-transliteration. For example, the i-flick is '_', which is not
+    // the transliteration at all. So, for those input mode, we just accept
+    // only 12-keys number layouts.
+    commands::Request::SpecialRomanjiTable special_romanji_table =
+        GET_REQUEST(special_romanji_table);
+    if (special_romanji_table == commands::Request::TWELVE_KEYS_TO_HIRAGANA ||
+        special_romanji_table == commands::Request::FLICK_TO_HIRAGANA ||
+        special_romanji_table == commands::Request::TOGGLE_FLICK_TO_HIRAGANA) {
+      EraseNon12KeyT13Ns(segment->key(), &t13ns);
+    }
+
+    NormalizeT13Ns(&t13ns);
+    if (!IsTransliterated(t13ns)) {
+      continue;
+    }
+    SetTransliterations(t13ns, ids, segment);
+    modified = true;
+  }
+  return modified;
+}
+
+// This function is used for a fail-safe.
+// Ambiguities of roman rule are ignored here.
+// ('n' or 'nn' for "ん", etc)
+bool TransliterationRewriter::FillT13NsFromKey(Segments *segments) const {
+  bool modified = false;
+  for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
+    Segment *segment = segments->mutable_conversion_segment(i);
+    CHECK(segment);
+    if (segment->key().empty()) {
+      continue;
+    }
+    const string &hiragana = segment->key();
+    string full_katakana, ascii;
+    Util::HiraganaToKatakana(hiragana, &full_katakana);
+    Util::HiraganaToRomanji(hiragana, &ascii);
+    string half_ascii, full_ascii, half_katakana;
+    Util::FullWidthAsciiToHalfWidthAscii(ascii, &half_ascii);
+    Util::HalfWidthAsciiToFullWidthAscii(half_ascii, &full_ascii);
+    Util::FullWidthToHalfWidth(full_katakana, &half_katakana);
+    string half_ascii_upper = half_ascii;
+    string half_ascii_lower = half_ascii;
+    string half_ascii_capitalized = half_ascii;
+    Util::UpperString(&half_ascii_upper);
+    Util::LowerString(&half_ascii_lower);
+    Util::CapitalizeString(&half_ascii_capitalized);
+    string full_ascii_upper = full_ascii;
+    string full_ascii_lower = full_ascii;
+    string full_ascii_capitalized = full_ascii;
+    Util::UpperString(&full_ascii_upper);
+    Util::LowerString(&full_ascii_lower);
+    Util::CapitalizeString(&full_ascii_capitalized);
+
+    TransliterationRewriter::T13NIds ids;
+    GetIds(*segment, &ids);
+
+    vector<string> t13ns;
+    t13ns.resize(transliteration::NUM_T13N_TYPES);
+    t13ns[transliteration::HIRAGANA] = hiragana;
+    t13ns[transliteration::FULL_KATAKANA] = full_katakana;
+    t13ns[transliteration::HALF_KATAKANA] = half_katakana;
+    t13ns[transliteration::HALF_ASCII] = half_ascii;
+    t13ns[transliteration::HALF_ASCII_UPPER] = half_ascii_upper;
+    t13ns[transliteration::HALF_ASCII_LOWER] = half_ascii_lower;
+    t13ns[transliteration::HALF_ASCII_CAPITALIZED] = half_ascii_capitalized;
+    t13ns[transliteration::FULL_ASCII] = full_ascii;
+    t13ns[transliteration::FULL_ASCII_UPPER] = full_ascii_upper;
+    t13ns[transliteration::FULL_ASCII_LOWER] = full_ascii_lower;
+    t13ns[transliteration::FULL_ASCII_CAPITALIZED] = full_ascii_capitalized;
+
+    NormalizeT13Ns(&t13ns);
+    if (!IsTransliterated(t13ns)) {
+      continue;
+    }
+    SetTransliterations(t13ns, ids, segment);
+    modified = true;
+  }
+  return modified;
+}
+
+TransliterationRewriter::TransliterationRewriter(const POSMatcher &pos_matcher)
+    : unknown_id_(pos_matcher.GetUnknownId()) {}
+
+TransliterationRewriter::~TransliterationRewriter() {}
+
+int TransliterationRewriter::capability() const {
+  if (GET_REQUEST(mixed_conversion)) {
+    return RewriterInterface::ALL;
+  }
+  return RewriterInterface::CONVERSION;
+}
+
+bool TransliterationRewriter::Rewrite(
+    const ConversionRequest &request, Segments *segments) const {
+  if (!IsValidRequest(request, segments)) {
+    return FillT13NsFromKey(segments);
+  }
+  return FillT13NsFromComposer(request, segments);
+}
+
+
+void TransliterationRewriter::InitT13NCandidate(
+    const string &key,
+    const string &value,
+    uint16 lid,
+    uint16 rid,
+    Segment::Candidate *cand) const {
   DCHECK(cand);
   cand->Init();
   cand->value = value;
   cand->key = key;
   cand->content_value = value;
   cand->content_key = key;
-  cand->lid = (lid != 0) ? lid : POSMatcher::GetUnknownId();
-  cand->rid = (rid != 0) ? rid : POSMatcher::GetUnknownId();
+  cand->lid = (lid != 0) ? lid : unknown_id_;
+  cand->rid = (rid != 0) ? rid : unknown_id_;
 }
 
-void SetTransliterations(
-    const vector<string> &t13ns, const T13NIds &ids, Segment *segment) {
+void TransliterationRewriter::SetTransliterations(
+    const vector<string> &t13ns, const T13NIds &ids, Segment *segment) const {
   if (t13ns.size() != transliteration::NUM_T13N_TYPES) {
     LOG(WARNING) << "t13ns size is invalid";
     return;
@@ -211,146 +345,4 @@ void SetTransliterations(
                     &meta_candidates->at(transliteration::HALF_KATAKANA));
 }
 
-// Get T13N candidate ids from existing candidates.
-void GetIds(const Segment &segment, T13NIds *ids) {
-  DCHECK(ids);
-  // reverse loop to use the highest rank results for each type
-  for (int i = segment.candidates_size() - 1; i >= 0; --i) {
-    const Segment::Candidate &candidate = segment.candidate(i);
-    Util::ScriptType type = Util::GetScriptType(candidate.value);
-    if (type == Util::HIRAGANA) {
-      ids->hiragana_lid = candidate.lid;
-      ids->hiragana_rid = candidate.rid;
-    } else if (type == Util::KATAKANA) {
-      ids->katakana_lid = candidate.lid;
-      ids->katakana_rid = candidate.rid;
-    } else if (type == Util::ALPHABET) {
-      ids->ascii_lid = candidate.lid;
-      ids->ascii_rid = candidate.rid;
-    }
-  }
-}
-
-bool FillT13NsFromComposer(const ConversionRequest &request,
-                           Segments *segments) {
-  bool modified = false;
-  size_t composition_pos = 0;
-  for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
-    Segment *segment = segments->mutable_conversion_segment(i);
-    CHECK(segment);
-    if (segment->key().empty()) {
-      continue;
-    }
-    const size_t composition_len = Util::CharsLen(segment->key());
-    vector<string> t13ns;
-    request.composer().GetSubTransliterations(composition_pos,
-                                              composition_len,
-                                              &t13ns);
-    composition_pos += composition_len;
-    T13NIds ids;
-    GetIds(*segment, &ids);
-
-    // Especially for mobile-flick input, the input key is sometimes
-    // non-transliteration. For example, the i-flick is '_', which is not
-    // the transliteration at all. So, for those input mode, we just accept
-    // only 12-keys number layouts.
-    commands::Request::SpecialRomanjiTable special_romanji_table =
-        GET_REQUEST(special_romanji_table);
-    if (special_romanji_table == commands::Request::TWELVE_KEYS_TO_HIRAGANA ||
-        special_romanji_table == commands::Request::FLICK_TO_HIRAGANA ||
-        special_romanji_table == commands::Request::TOGGLE_FLICK_TO_HIRAGANA) {
-      EraseNon12KeyT13Ns(segment->key(), &t13ns);
-    }
-
-    NormalizeT13Ns(&t13ns);
-    if (!IsTransliterated(t13ns)) {
-      continue;
-    }
-    SetTransliterations(t13ns, ids, segment);
-    modified = true;
-  }
-  return modified;
-}
-
-// This function is used for a fail-safe.
-// Ambiguities of roman rule are ignored here.
-// ('n' or 'nn' for "ん", etc)
-bool FillT13NsFromKey(Segments *segments) {
-  bool modified = false;
-  for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
-    Segment *segment = segments->mutable_conversion_segment(i);
-    CHECK(segment);
-    if (segment->key().empty()) {
-      continue;
-    }
-    const string &hiragana = segment->key();
-    string full_katakana, ascii;
-    Util::HiraganaToKatakana(hiragana, &full_katakana);
-    Util::HiraganaToRomanji(hiragana, &ascii);
-    string half_ascii, full_ascii, half_katakana;
-    Util::FullWidthAsciiToHalfWidthAscii(ascii, &half_ascii);
-    Util::HalfWidthAsciiToFullWidthAscii(half_ascii, &full_ascii);
-    Util::FullWidthToHalfWidth(full_katakana, &half_katakana);
-    string half_ascii_upper = half_ascii;
-    string half_ascii_lower = half_ascii;
-    string half_ascii_capitalized = half_ascii;
-    Util::UpperString(&half_ascii_upper);
-    Util::LowerString(&half_ascii_lower);
-    Util::CapitalizeString(&half_ascii_capitalized);
-    string full_ascii_upper = full_ascii;
-    string full_ascii_lower = full_ascii;
-    string full_ascii_capitalized = full_ascii;
-    Util::UpperString(&full_ascii_upper);
-    Util::LowerString(&full_ascii_lower);
-    Util::CapitalizeString(&full_ascii_capitalized);
-
-    T13NIds ids;
-    GetIds(*segment, &ids);
-
-    vector<string> t13ns;
-    t13ns.resize(transliteration::NUM_T13N_TYPES);
-    t13ns[transliteration::HIRAGANA] = hiragana;
-    t13ns[transliteration::FULL_KATAKANA] = full_katakana;
-    t13ns[transliteration::HALF_KATAKANA] = half_katakana;
-    t13ns[transliteration::HALF_ASCII] = half_ascii;
-    t13ns[transliteration::HALF_ASCII_UPPER] = half_ascii_upper;
-    t13ns[transliteration::HALF_ASCII_LOWER] = half_ascii_lower;
-    t13ns[transliteration::HALF_ASCII_CAPITALIZED] = half_ascii_capitalized;
-    t13ns[transliteration::FULL_ASCII] = full_ascii;
-    t13ns[transliteration::FULL_ASCII_UPPER] = full_ascii_upper;
-    t13ns[transliteration::FULL_ASCII_LOWER] = full_ascii_lower;
-    t13ns[transliteration::FULL_ASCII_CAPITALIZED] = full_ascii_capitalized;
-
-    NormalizeT13Ns(&t13ns);
-    if (!IsTransliterated(t13ns)) {
-      continue;
-    }
-    SetTransliterations(t13ns, ids, segment);
-    modified = true;
-  }
-  return modified;
-}
-}   // namespace
-
-TransliterationRewriter::TransliterationRewriter() {}
-TransliterationRewriter::~TransliterationRewriter() {}
-
-int TransliterationRewriter::capability() const {
-  if (GET_REQUEST(mixed_conversion)) {
-    return RewriterInterface::ALL;
-  }
-  return RewriterInterface::CONVERSION;
-}
-
-bool TransliterationRewriter::Rewrite(Segments *segments) const {
-  return FillT13NsFromKey(segments);
-}
-
-bool TransliterationRewriter::RewriteForRequest(
-    const ConversionRequest &request, Segments *segments) const {
-  if (!IsValidRequest(request, segments)) {
-    return FillT13NsFromKey(segments);
-  }
-  return FillT13NsFromComposer(request, segments);
-}
 }  // namespace mozc

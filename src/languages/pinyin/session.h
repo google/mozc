@@ -111,6 +111,7 @@ class Session : public mozc::session::SessionInterface {
   // or SendCommand() to fill a protocol buffer correctly.
   ConversionMode next_conversion_mode_;
   scoped_ptr<SessionConfig> session_config_;
+  bool is_already_commited_;
 
   uint64 create_session_time_;
   commands::ApplicationInfo application_info_;

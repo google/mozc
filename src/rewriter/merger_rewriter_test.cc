@@ -30,16 +30,20 @@
 #include <string>
 
 #include "base/util.h"
-#include "config/config_handler.h"
 #include "config/config.pb.h"
+#include "config/config_handler.h"
+#include "converter/conversion_request.h"
+#include "converter/segments.h"
 #include "rewriter/merger_rewriter.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
 
+namespace mozc {
+
 // Tests in which order methods of each instance should be called
 // and what value should be returned.
-class TestRewriter : public mozc::RewriterInterface {
+class TestRewriter : public RewriterInterface {
  public:
   TestRewriter(string *buffer, const string &name, bool return_value)
       : buffer_(buffer), name_(name), return_value_(return_value),
@@ -50,7 +54,8 @@ class TestRewriter : public mozc::RewriterInterface {
       : buffer_(buffer), name_(name), return_value_(return_value),
         capability_(capability) {}
 
-  virtual bool Rewrite(mozc::Segments *segments) const {
+  virtual bool Rewrite(const ConversionRequest &request,
+                       Segments *segments) const {
     buffer_->append(name_ + ".Rewrite();");
     return return_value_;
   }
@@ -63,14 +68,14 @@ class TestRewriter : public mozc::RewriterInterface {
     return capability_;
   }
 
-  virtual bool Focus(mozc::Segments *segments,
+  virtual bool Focus(Segments *segments,
                      size_t segment_index,
                      int candidate_index) const {
     buffer_->append(name_ + ".Focus();");
     return return_value_;
   }
 
-  virtual void Finish(mozc::Segments *segments) {
+  virtual void Finish(Segments *segments) {
     buffer_->append(name_ + ".Finish();");
   }
 
@@ -98,29 +103,31 @@ class TestRewriter : public mozc::RewriterInterface {
 class MergerRewriterTest : public testing::Test {
  protected:
   virtual void SetUp() {
-    mozc::Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    mozc::config::Config default_config;
-    mozc::config::ConfigHandler::GetDefaultConfig(&default_config);
-    mozc::config::ConfigHandler::SetConfig(default_config);
+    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    config::Config default_config;
+    config::ConfigHandler::GetDefaultConfig(&default_config);
+    config::ConfigHandler::SetConfig(default_config);
   }
 };
 
 TEST_F(MergerRewriterTest, Rewrite) {
   string call_result;
-  mozc::MergerRewriter merger;
-  mozc::Segments segments;
-  segments.set_request_type(mozc::Segments::CONVERSION);
+  MergerRewriter merger;
+  Segments segments;
+  const ConversionRequest request;
+
+  segments.set_request_type(Segments::CONVERSION);
   merger.AddRewriter(new TestRewriter(&call_result, "a", false));
   merger.AddRewriter(new TestRewriter(&call_result, "b", false));
   merger.AddRewriter(new TestRewriter(&call_result, "c", false));
-  EXPECT_FALSE(merger.Rewrite(&segments));
+  EXPECT_FALSE(merger.Rewrite(request, &segments));
   EXPECT_EQ("a.Rewrite();"
             "b.Rewrite();"
             "c.Rewrite();",
             call_result);
   merger.AddRewriter(new TestRewriter(&call_result, "d", true));
   call_result.clear();
-  EXPECT_TRUE(merger.Rewrite(&segments));
+  EXPECT_TRUE(merger.Rewrite(request, &segments));
   EXPECT_EQ("a.Rewrite();"
             "b.Rewrite();"
             "c.Rewrite();"
@@ -130,57 +137,58 @@ TEST_F(MergerRewriterTest, Rewrite) {
 
 TEST_F(MergerRewriterTest, RewriteCheckTest) {
   string call_result;
-  mozc::MergerRewriter merger;
-  mozc::Segments segments;
+  MergerRewriter merger;
+  Segments segments;
+  const ConversionRequest request;
   merger.AddRewriter(new TestRewriter(
       &call_result, "a", false,
-      mozc::RewriterInterface::CONVERSION));
+      RewriterInterface::CONVERSION));
   merger.AddRewriter(new TestRewriter(
       &call_result, "b", false,
-      mozc::RewriterInterface::SUGGESTION));
+      RewriterInterface::SUGGESTION));
   merger.AddRewriter(new TestRewriter(
       &call_result, "c", false,
-      mozc::RewriterInterface::PREDICTION));
+      RewriterInterface::PREDICTION));
   merger.AddRewriter(new TestRewriter(
       &call_result, "d", false,
-      mozc::RewriterInterface::PREDICTION |
-      mozc::RewriterInterface::CONVERSION));
+      RewriterInterface::PREDICTION |
+      RewriterInterface::CONVERSION));
   merger.AddRewriter(new TestRewriter(
       &call_result, "e", false,
-      mozc::RewriterInterface::ALL));
+      RewriterInterface::ALL));
 
-  segments.set_request_type(mozc::Segments::CONVERSION);
-  EXPECT_FALSE(merger.Rewrite(&segments));
+  segments.set_request_type(Segments::CONVERSION);
+  EXPECT_FALSE(merger.Rewrite(request, &segments));
   EXPECT_EQ("a.Rewrite();"
             "d.Rewrite();"
             "e.Rewrite();",
             call_result);
   call_result.clear();
 
-  segments.set_request_type(mozc::Segments::PREDICTION);
-  EXPECT_FALSE(merger.Rewrite(&segments));
+  segments.set_request_type(Segments::PREDICTION);
+  EXPECT_FALSE(merger.Rewrite(request, &segments));
   EXPECT_EQ("c.Rewrite();"
             "d.Rewrite();"
             "e.Rewrite();",
             call_result);
   call_result.clear();
 
-  segments.set_request_type(mozc::Segments::SUGGESTION);
-  EXPECT_FALSE(merger.Rewrite(&segments));
+  segments.set_request_type(Segments::SUGGESTION);
+  EXPECT_FALSE(merger.Rewrite(request, &segments));
   EXPECT_EQ("b.Rewrite();"
             "e.Rewrite();",
             call_result);
   call_result.clear();
 
-  segments.set_request_type(mozc::Segments::PARTIAL_SUGGESTION);
-  EXPECT_FALSE(merger.Rewrite(&segments));
+  segments.set_request_type(Segments::PARTIAL_SUGGESTION);
+  EXPECT_FALSE(merger.Rewrite(request, &segments));
   EXPECT_EQ("b.Rewrite();"
             "e.Rewrite();",
             call_result);
   call_result.clear();
 
-  segments.set_request_type(mozc::Segments::PARTIAL_PREDICTION);
-  EXPECT_FALSE(merger.Rewrite(&segments));
+  segments.set_request_type(Segments::PARTIAL_PREDICTION);
+  EXPECT_FALSE(merger.Rewrite(request, &segments));
   EXPECT_EQ("c.Rewrite();"
             "d.Rewrite();"
             "e.Rewrite();",
@@ -190,7 +198,7 @@ TEST_F(MergerRewriterTest, RewriteCheckTest) {
 
 TEST_F(MergerRewriterTest, Focus) {
   string call_result;
-  mozc::MergerRewriter merger;
+  MergerRewriter merger;
   merger.AddRewriter(new TestRewriter(&call_result, "a", false));
   merger.AddRewriter(new TestRewriter(&call_result, "b", false));
   merger.AddRewriter(new TestRewriter(&call_result, "c", false));
@@ -211,7 +219,7 @@ TEST_F(MergerRewriterTest, Focus) {
 
 TEST_F(MergerRewriterTest, Finish) {
   string call_result;
-  mozc::MergerRewriter merger;
+  MergerRewriter merger;
   merger.AddRewriter(new TestRewriter(&call_result, "a", false));
   merger.AddRewriter(new TestRewriter(&call_result, "b", false));
   merger.AddRewriter(new TestRewriter(&call_result, "c", false));
@@ -224,7 +232,7 @@ TEST_F(MergerRewriterTest, Finish) {
 
 TEST_F(MergerRewriterTest, Sync) {
   string call_result;
-  mozc::MergerRewriter merger;
+  MergerRewriter merger;
   merger.AddRewriter(new TestRewriter(&call_result, "a", false));
   merger.AddRewriter(new TestRewriter(&call_result, "b", false));
   merger.AddRewriter(new TestRewriter(&call_result, "c", false));
@@ -245,7 +253,7 @@ TEST_F(MergerRewriterTest, Sync) {
 
 TEST_F(MergerRewriterTest, Reload) {
   string call_result;
-  mozc::MergerRewriter merger;
+  MergerRewriter merger;
   merger.AddRewriter(new TestRewriter(&call_result, "a", false));
   merger.AddRewriter(new TestRewriter(&call_result, "b", false));
   merger.AddRewriter(new TestRewriter(&call_result, "c", false));
@@ -266,7 +274,7 @@ TEST_F(MergerRewriterTest, Reload) {
 
 TEST_F(MergerRewriterTest, Clear) {
   string call_result;
-  mozc::MergerRewriter merger;
+  MergerRewriter merger;
   merger.AddRewriter(new TestRewriter(&call_result, "a", false));
   merger.AddRewriter(new TestRewriter(&call_result, "b", false));
   merger.AddRewriter(new TestRewriter(&call_result, "c", false));
@@ -284,3 +292,5 @@ TEST_F(MergerRewriterTest, Clear) {
             "d.Clear();",
             call_result);
 }
+
+}  // namespace mozc

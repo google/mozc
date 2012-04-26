@@ -30,7 +30,7 @@
 #include "dictionary/rx/rbx_array.h"
 
 #include "base/base.h"
-#include "third_party/rx/v1_0rc2/rx.h"
+#include "third_party/rx/v1_1_2/rx.h"
 
 namespace mozc {
 namespace rx {

@@ -29,7 +29,7 @@
 
 #include "converter/connector_base.h"
 
-#include "base/port.h"
+#include "base/base.h"
 #include "converter/cached_connector.h"
 #include "converter/sparse_connector.h"
 
@@ -49,6 +49,7 @@ ConnectorBase::ConnectorBase(const char *connection_data,
                                             cache_size)) {}
 
 ConnectorBase::~ConnectorBase() {}
+
 
 int ConnectorBase::GetTransitionCost(uint16 rid, uint16 lid) const {
   return cached_connector_->GetTransitionCost(rid, lid);

@@ -51,6 +51,7 @@
       'dependencies': [
         '../composer/composer.gyp:composer',
         '../config/config.gyp:config_handler',
+        '../data_manager/data_manager.gyp:user_pos_manager',
         '../rewriter/rewriter.gyp:rewriter',
         '../testing/testing.gyp:gtest_main',
         '../transliteration/transliteration.gyp:transliteration',
@@ -58,8 +59,8 @@
         'converter_base.gyp:segments',
         'converter_base.gyp:segmenter',
         'converter_base.gyp:test_segmenter',
-        'converter_base.gyp:gen_segmenter_inl',
-        'converter_base.gyp:gen_test_segmenter_inl',
+        'converter_base.gyp:gen_segmenter_inl#host',
+        'converter_base.gyp:gen_test_segmenter_inl#host',
       ],
       'variables': {
         'test_size': 'small',
@@ -121,6 +122,17 @@
       },
     },
     {
+      'target_name': 'install_connection_txt',
+      'type': 'none',
+      'variables': {
+        'test_data': [
+          '../<(test_data_subdir)/connection.txt',
+        ],
+        'test_data_subdir': 'data/dictionary',
+      },
+      'includes': ['../gyp/install_testdata.gypi'],
+    },
+    {
       'target_name': 'connector_test',
       'type': 'executable',
       'sources': [
@@ -129,15 +141,11 @@
       'dependencies': [
         '../testing/testing.gyp:gtest_main',
         'converter_base.gyp:connector',
+        'install_connection_txt',
       ],
       'variables': {
         'test_size': 'small',
-        'test_data': [
-          '../<(test_data_subdir)/connection.txt',
-        ],
-        'test_data_subdir': 'data/dictionary',
       },
-      'includes': ['../gyp/install_testdata.gypi'],
       'conditions': [
         ['use_separate_connection_data==1', {
           'dependencies': [
@@ -156,6 +164,7 @@
         '../testing/testing.gyp:gtest_main',
         'converter_base.gyp:connector',
         'converter_base.gyp:test_connector',
+        'install_connection_txt',
       ],
       'variables': {
         'test_size': 'small',
@@ -163,10 +172,9 @@
       # Copy explicitly.
       # install_testdata.gypi does not support multiple directories of data
       'copies': [
-        {
-          'destination': '<(mozc_data_dir)/data/dictionary/',
-          'files': [ '../data/dictionary/connection.txt', ],
-        },
+        # The file ../data/dictionary/connection.txt' is copied by the target
+        # install_connection_txt. So here we need to copy
+        # ../data/test/dictionary/connection.txt only.
         {
           'destination': '<(mozc_data_dir)/data/test/dictionary/',
           'files': [ '../data/test/dictionary/connection.txt', ],

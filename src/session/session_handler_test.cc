@@ -208,6 +208,7 @@ TEST_F(SessionHandlerTest, VerifySyncIsCalled) {
     EXPECT_EQ(0, user_data_manager_mock->GetFunctionCallCount("Sync"));
     handler.EvalCommand(&command);
     EXPECT_EQ(1, user_data_manager_mock->GetFunctionCallCount("Sync"));
+    ConverterFactory::SetConverter(NULL);
   }
 
   {
@@ -222,6 +223,7 @@ TEST_F(SessionHandlerTest, VerifySyncIsCalled) {
     EXPECT_EQ(0, user_data_manager_mock->GetFunctionCallCount("Sync"));
     handler.EvalCommand(&command);
     EXPECT_EQ(1, user_data_manager_mock->GetFunctionCallCount("Sync"));
+    ConverterFactory::SetConverter(NULL);
   }
 }
 

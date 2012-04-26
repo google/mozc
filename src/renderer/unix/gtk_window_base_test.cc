@@ -48,6 +48,12 @@ namespace {
 // restriction, can not modify const modifier.
 GtkWidget *kDummyWindow = reinterpret_cast<GtkWidget*>(0x12345678);
 GtkWidget *kDummyCanvas = reinterpret_cast<GtkWidget*>(0x87654321);
+GdkWindow *kDummyGdkWindow = reinterpret_cast<GdkWindow*>(0x29828374);
+
+MATCHER_P(PointEq, expected_point, "The expected point does not match") {
+  return (arg.x == expected_point.x) && (arg.y == expected_point.y);
+}
+
 }  // namespace
 
 class GtkWindowBaseTest : public testing::Test {
@@ -63,9 +69,18 @@ class GtkWindowBaseTest : public testing::Test {
         kDummyWindow, StrEq("destroy"),
         G_CALLBACK(GtkWindowBase::OnDestroyThunk), _));
     EXPECT_CALL(*mock, GSignalConnect(
+        kDummyWindow, StrEq("button-press-event"),
+        G_CALLBACK(GtkWindowBase::OnMouseDownThunk), _));
+    EXPECT_CALL(*mock, GSignalConnect(
+        kDummyWindow, StrEq("button-release-event"),
+        G_CALLBACK(GtkWindowBase::OnMouseUpThunk), _));
+    EXPECT_CALL(*mock, GSignalConnect(
         kDummyCanvas, StrEq("expose-event"),
         G_CALLBACK(GtkWindowBase::OnPaintThunk), _));
     EXPECT_CALL(*mock, GtkContainerAdd(kDummyWindow, kDummyCanvas));
+    EXPECT_CALL(*mock, GtkWidgetAddEvents(kDummyWindow, GDK_BUTTON_PRESS_MASK));
+    EXPECT_CALL(*mock, GtkWidgetAddEvents(kDummyWindow,
+                                          GDK_BUTTON_RELEASE_MASK));
 
     return mock;
   }
@@ -200,6 +215,92 @@ TEST_F(GtkWindowBaseTest, RedrawTest) {
 
   GtkWindowBase window(mock);
   window.Redraw();
+}
+
+class OverriddenCallTestableGtkWindowBase : public GtkWindowBase {
+ public:
+  explicit OverriddenCallTestableGtkWindowBase(GtkWrapperInterface *gtk)
+      : GtkWindowBase(gtk) {}
+  MOCK_METHOD1(OnMouseLeftDown, void(const Point &pos));
+  MOCK_METHOD1(OnMouseLeftUp, void(const Point &pos));
+  MOCK_METHOD1(OnMouseRightDown, void(const Point &pos));
+  MOCK_METHOD1(OnMouseRightUp, void(const Point &pos));
+};
+
+TEST_F(GtkWindowBaseTest, LeftRightTest) {
+  const Point expected_pos(10, 15);
+  {
+    SCOPED_TRACE("Left button is pressed, then call OnMouseLeftDown");
+    GtkWrapperMock *mock = GetGtkMock();
+    GdkEventButton event;
+    event.window = kDummyGdkWindow;
+    event.x = static_cast<double>(expected_pos.x);
+    event.y = static_cast<double>(expected_pos.y);
+    event.state = GDK_BUTTON1_MASK;
+
+    OverriddenCallTestableGtkWindowBase window(mock);
+    EXPECT_CALL(window, OnMouseLeftDown(PointEq(expected_pos)));
+    EXPECT_EQ(TRUE, window.OnMouseDown(kDummyWindow, &event));
+  }
+  {
+    SCOPED_TRACE("Right button is pressed, then call OnMouseRightDown");
+    GtkWrapperMock *mock = GetGtkMock();
+    GdkEventButton event;
+    event.window = kDummyGdkWindow;
+    event.x = static_cast<double>(expected_pos.x);
+    event.y = static_cast<double>(expected_pos.y);
+    event.state = GDK_BUTTON3_MASK;
+
+    OverriddenCallTestableGtkWindowBase window(mock);
+    EXPECT_CALL(window, OnMouseRightDown(PointEq(expected_pos)));
+    EXPECT_EQ(TRUE, window.OnMouseDown(kDummyWindow, &event));
+  }
+  {
+    SCOPED_TRACE("Left button is released, then call OnMouseLeftUp");
+    GtkWrapperMock *mock = GetGtkMock();
+    GdkEventButton event;
+    event.window = kDummyGdkWindow;
+    event.x = static_cast<double>(expected_pos.x);
+    event.y = static_cast<double>(expected_pos.y);
+    event.state = GDK_BUTTON1_MASK;
+
+    OverriddenCallTestableGtkWindowBase window(mock);
+    EXPECT_CALL(window, OnMouseLeftUp(PointEq(expected_pos)));
+    EXPECT_EQ(TRUE, window.OnMouseUp(kDummyWindow, &event));
+  }
+  {
+    SCOPED_TRACE("Right button is released, then call OnMouseRightUp");
+    GtkWrapperMock *mock = GetGtkMock();
+    GdkEventButton event;
+    event.window = kDummyGdkWindow;
+    event.x = static_cast<double>(expected_pos.x);
+    event.y = static_cast<double>(expected_pos.y);
+    event.state = GDK_BUTTON3_MASK;
+
+    OverriddenCallTestableGtkWindowBase window(mock);
+    EXPECT_CALL(window, OnMouseRightUp(PointEq(expected_pos)));
+    EXPECT_EQ(TRUE, window.OnMouseUp(kDummyWindow, &event));
+  }
+  {
+    SCOPED_TRACE("Other button is ignored and return 0");
+    // The state mask is up to 2^12, so try all state.
+    for (size_t flags = 0; flags < (1 << 13); ++flags) {
+      GtkWrapperMock *mock = GetGtkMock();
+      GdkEventButton event;
+      event.window = kDummyGdkWindow;
+      event.x = static_cast<double>(expected_pos.x);
+      event.y = static_cast<double>(expected_pos.y);
+      event.state = flags & ~(GDK_BUTTON1_MASK | GDK_BUTTON3_MASK);
+
+      OverriddenCallTestableGtkWindowBase window(mock);
+      EXPECT_CALL(window, OnMouseLeftDown(_)).Times(0);
+      EXPECT_CALL(window, OnMouseLeftUp(_)).Times(0);
+      EXPECT_CALL(window, OnMouseRightDown(_)).Times(0);
+      EXPECT_CALL(window, OnMouseRightUp(_)).Times(0);
+
+      EXPECT_EQ(TRUE, window.OnMouseUp(kDummyWindow, &event));
+    }
+  }
 }
 }  // namespace gtk
 }  // namespace renderer

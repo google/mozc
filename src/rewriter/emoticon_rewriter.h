@@ -34,17 +34,20 @@
 
 namespace mozc {
 
+class ConversionRequest;
 class Segments;
 
-class EmoticonRewriter: public RewriterInterface  {
+class EmoticonRewriter : public RewriterInterface  {
  public:
   EmoticonRewriter();
   virtual ~EmoticonRewriter();
 
   virtual int capability() const;
 
-  virtual bool Rewrite(Segments *segments) const;
+  virtual bool Rewrite(const ConversionRequest &request,
+                       Segments *segments) const;
 };
+
 }  // namespace mozc
 
 #endif  // MOZC_REWRITER_EMOTICON_REWRITER_H_

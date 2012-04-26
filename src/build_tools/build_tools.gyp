@@ -50,6 +50,7 @@
     {
       'target_name': 'build_tools',
       'type': 'none',
+      'toolsets': ['host'],
       'dependencies': [
         'primitive_tools/primitive_tools.gyp:primitive_tools',
         '../converter/converter_base.gyp:install_gen_connection_data_main',
@@ -57,14 +58,17 @@
         '../converter/converter_base.gyp:install_gen_test_segmenter_bitarray_main',
         '../dictionary/dictionary.gyp:install_gen_system_dictionary_data_main',
         '../rewriter/rewriter_base.gyp:install_gen_collocation_data_main',
-        '../rewriter/rewriter_base.gyp:'
-        'install_gen_single_kanji_rewriter_dictionary_main',
-        '../rewriter/rewriter_base.gyp:'
-        'install_gen_symbol_rewriter_dictionary_main',
-        '../rewriter/rewriter_base.gyp:'
-        'install_gen_usage_rewriter_dictionary_main',
+        '../rewriter/rewriter_base.gyp:install_gen_collocation_suppression_data_main',
+        '../rewriter/rewriter_base.gyp:install_gen_single_kanji_rewriter_dictionary_main',
+        '../rewriter/rewriter_base.gyp:install_gen_symbol_rewriter_dictionary_main',
+        '../rewriter/rewriter_base.gyp:install_gen_usage_rewriter_dictionary_main',
       ],
       'conditions': [
+        ['target_platform=="Android"', {
+          'dependencies': [
+            '../android/android_base.gyp:copy_curl_config_headers',
+          ],
+        }],
         ['language=="pinyin"', {
           'dependencies': [
             '../languages/pinyin/pinyin.gyp:'

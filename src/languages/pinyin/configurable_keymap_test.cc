@@ -123,9 +123,9 @@ TEST_F(ConfigurableKeymapTest, SelectWithShift) {
     EXPECT_FALSE(GetKeyCommand("Ctrl LeftShift", INACTIVE, &key_command));
     EXPECT_FALSE(GetKeyCommand("Alt Ctrl LeftShift", INACTIVE, &key_command));
 
-    EXPECT_FALSE(GetKeyCommand("LeftShift a", ACTIVE, &key_command));
+    // "Shift + printable key" should not be sent from mozc_engine.
+    // Shift key with a printable key is removed.
     EXPECT_FALSE(GetKeyCommand("LeftShift BS", ACTIVE, &key_command));
-    EXPECT_FALSE(GetKeyCommand("LeftShift a", INACTIVE, &key_command));
     EXPECT_FALSE(GetKeyCommand("LeftShift BS", INACTIVE, &key_command));
   }
 
@@ -151,9 +151,9 @@ TEST_F(ConfigurableKeymapTest, SelectWithShift) {
     EXPECT_FALSE(GetKeyCommand("Ctrl Shift", INACTIVE, &key_command));
     EXPECT_FALSE(GetKeyCommand("Alt Ctrl Shift", INACTIVE, &key_command));
 
-    EXPECT_FALSE(GetKeyCommand("LeftShift a", ACTIVE, &key_command));
+    // "Shift + printable key" should not be sent from mozc_engine.
+    // Shift key with a printable key is removed.
     EXPECT_FALSE(GetKeyCommand("LeftShift BS", ACTIVE, &key_command));
-    EXPECT_FALSE(GetKeyCommand("LeftShift a", INACTIVE, &key_command));
     EXPECT_FALSE(GetKeyCommand("LeftShift BS", INACTIVE, &key_command));
   }
 }
@@ -176,7 +176,8 @@ TEST_F(ConfigurableKeymapTest, PagingWithMinusEqual) {
 
     EXPECT_FALSE(GetKeyCommand("Alt =", ACTIVE, &key_command));
     EXPECT_FALSE(GetKeyCommand("Ctrl =", ACTIVE, &key_command));
-    EXPECT_FALSE(GetKeyCommand("Shift =", ACTIVE, &key_command));
+    // "Shift + printable key" should not be sent from mozc_engine.
+    // Shift key with a printable key is removed.
     EXPECT_FALSE(GetKeyCommand("Alt Ctrl =", ACTIVE, &key_command));
     EXPECT_FALSE(GetKeyCommand("Alt Shift =", ACTIVE, &key_command));
     EXPECT_FALSE(GetKeyCommand("Ctrl Shift =", ACTIVE, &key_command));
@@ -184,7 +185,8 @@ TEST_F(ConfigurableKeymapTest, PagingWithMinusEqual) {
 
     EXPECT_FALSE(GetKeyCommand("Alt =", INACTIVE, &key_command));
     EXPECT_FALSE(GetKeyCommand("Ctrl =", INACTIVE, &key_command));
-    EXPECT_FALSE(GetKeyCommand("Shift =", INACTIVE, &key_command));
+    // "Shift + printable key" should not be sent from mozc_engine.
+    // Shift key with a printable key is removed.
     EXPECT_FALSE(GetKeyCommand("Alt Ctrl =", INACTIVE, &key_command));
     EXPECT_FALSE(GetKeyCommand("Alt Shift =", INACTIVE, &key_command));
     EXPECT_FALSE(GetKeyCommand("Ctrl Shift =", INACTIVE, &key_command));
@@ -199,7 +201,8 @@ TEST_F(ConfigurableKeymapTest, PagingWithMinusEqual) {
 
     EXPECT_FALSE(GetKeyCommand("Alt =", ACTIVE, &key_command));
     EXPECT_FALSE(GetKeyCommand("Ctrl =", ACTIVE, &key_command));
-    EXPECT_FALSE(GetKeyCommand("Shift =", ACTIVE, &key_command));
+    // "Shift + printable key" should not be sent from mozc_engine.
+    // Shift key with a printable key is removed.
     EXPECT_FALSE(GetKeyCommand("Alt Ctrl =", ACTIVE, &key_command));
     EXPECT_FALSE(GetKeyCommand("Alt Shift =", ACTIVE, &key_command));
     EXPECT_FALSE(GetKeyCommand("Ctrl Shift =", ACTIVE, &key_command));
@@ -207,7 +210,8 @@ TEST_F(ConfigurableKeymapTest, PagingWithMinusEqual) {
 
     EXPECT_FALSE(GetKeyCommand("Alt =", INACTIVE, &key_command));
     EXPECT_FALSE(GetKeyCommand("Ctrl =", INACTIVE, &key_command));
-    EXPECT_FALSE(GetKeyCommand("Shift =", INACTIVE, &key_command));
+    // "Shift + printable key" should not be sent from mozc_engine.
+    // Shift key with a printable key is removed.
     EXPECT_FALSE(GetKeyCommand("Alt Ctrl =", INACTIVE, &key_command));
     EXPECT_FALSE(GetKeyCommand("Alt Shift =", INACTIVE, &key_command));
     EXPECT_FALSE(GetKeyCommand("Ctrl Shift =", INACTIVE, &key_command));
@@ -233,7 +237,8 @@ TEST_F(ConfigurableKeymapTest, PagingWithCommaPeriod) {
 
     EXPECT_FALSE(GetKeyCommand("Alt .", ACTIVE, &key_command));
     EXPECT_FALSE(GetKeyCommand("Ctrl .", ACTIVE, &key_command));
-    EXPECT_FALSE(GetKeyCommand("Shift .", ACTIVE, &key_command));
+    // "Shift + printable key" should not be sent from mozc_engine.
+    // Shift key with a printable key is removed.
     EXPECT_FALSE(GetKeyCommand("Alt Ctrl .", ACTIVE, &key_command));
     EXPECT_FALSE(GetKeyCommand("Alt Shift .", ACTIVE, &key_command));
     EXPECT_FALSE(GetKeyCommand("Ctrl Shift .", ACTIVE, &key_command));
@@ -241,7 +246,8 @@ TEST_F(ConfigurableKeymapTest, PagingWithCommaPeriod) {
 
     EXPECT_FALSE(GetKeyCommand("Alt .", INACTIVE, &key_command));
     EXPECT_FALSE(GetKeyCommand("Ctrl .", INACTIVE, &key_command));
-    EXPECT_FALSE(GetKeyCommand("Shift .", INACTIVE, &key_command));
+    // "Shift + printable key" should not be sent from mozc_engine.
+    // Shift key with a printable key is removed.
     EXPECT_FALSE(GetKeyCommand("Alt Ctrl .", INACTIVE, &key_command));
     EXPECT_FALSE(GetKeyCommand("Alt Shift .", INACTIVE, &key_command));
     EXPECT_FALSE(GetKeyCommand("Ctrl Shift .", INACTIVE, &key_command));
@@ -256,7 +262,8 @@ TEST_F(ConfigurableKeymapTest, PagingWithCommaPeriod) {
 
     EXPECT_FALSE(GetKeyCommand("Alt .", ACTIVE, &key_command));
     EXPECT_FALSE(GetKeyCommand("Ctrl .", ACTIVE, &key_command));
-    EXPECT_FALSE(GetKeyCommand("Shift .", ACTIVE, &key_command));
+    // "Shift + printable key" should not be sent from mozc_engine.
+    // Shift key with a printable key is removed.
     EXPECT_FALSE(GetKeyCommand("Alt Ctrl .", ACTIVE, &key_command));
     EXPECT_FALSE(GetKeyCommand("Alt Shift .", ACTIVE, &key_command));
     EXPECT_FALSE(GetKeyCommand("Ctrl Shift .", ACTIVE, &key_command));
@@ -264,7 +271,8 @@ TEST_F(ConfigurableKeymapTest, PagingWithCommaPeriod) {
 
     EXPECT_FALSE(GetKeyCommand("Alt .", INACTIVE, &key_command));
     EXPECT_FALSE(GetKeyCommand("Ctrl .", INACTIVE, &key_command));
-    EXPECT_FALSE(GetKeyCommand("Shift .", INACTIVE, &key_command));
+    // "Shift + printable key" should not be sent from mozc_engine.
+    // Shift key with a printable key is removed.
     EXPECT_FALSE(GetKeyCommand("Alt Ctrl .", INACTIVE, &key_command));
     EXPECT_FALSE(GetKeyCommand("Alt Shift .", INACTIVE, &key_command));
     EXPECT_FALSE(GetKeyCommand("Ctrl Shift .", INACTIVE, &key_command));
@@ -287,7 +295,8 @@ TEST_F(ConfigurableKeymapTest, AutoCommit) {
 
     EXPECT_FALSE(GetKeyCommand("Alt !", ACTIVE, &key_command));
     EXPECT_FALSE(GetKeyCommand("Ctrl !", ACTIVE, &key_command));
-    EXPECT_FALSE(GetKeyCommand("Shift !", ACTIVE, &key_command));
+    // "Shift + printable key" should not be sent from mozc_engine.
+    // Shift key with a printable key is removed.
     EXPECT_FALSE(GetKeyCommand("Alt Ctrl !", ACTIVE, &key_command));
     EXPECT_FALSE(GetKeyCommand("Alt Shift !", ACTIVE, &key_command));
     EXPECT_FALSE(GetKeyCommand("Ctrl Shift !", ACTIVE, &key_command));
@@ -296,7 +305,8 @@ TEST_F(ConfigurableKeymapTest, AutoCommit) {
     ASSERT_FALSE(GetKeyCommand("!", INACTIVE, &key_command));
     EXPECT_FALSE(GetKeyCommand("Alt !", INACTIVE, &key_command));
     EXPECT_FALSE(GetKeyCommand("Ctrl !", INACTIVE, &key_command));
-    EXPECT_FALSE(GetKeyCommand("Shift !", INACTIVE, &key_command));
+    // "Shift + printable key" should not be sent from mozc_engine.
+    // Shift key with a printable key is removed.
     EXPECT_FALSE(GetKeyCommand("Alt Ctrl !", INACTIVE, &key_command));
     EXPECT_FALSE(GetKeyCommand("Alt Shift !", INACTIVE, &key_command));
     EXPECT_FALSE(GetKeyCommand("Ctrl Shift !", INACTIVE, &key_command));
@@ -315,7 +325,8 @@ TEST_F(ConfigurableKeymapTest, AutoCommit) {
     ASSERT_FALSE(GetKeyCommand("!", ACTIVE, &key_command));
     EXPECT_FALSE(GetKeyCommand("Alt !", ACTIVE, &key_command));
     EXPECT_FALSE(GetKeyCommand("Ctrl !", ACTIVE, &key_command));
-    EXPECT_FALSE(GetKeyCommand("Shift !", ACTIVE, &key_command));
+    // "Shift + printable key" should not be sent from mozc_engine.
+    // Shift key with a printable key is removed.
     EXPECT_FALSE(GetKeyCommand("Alt Ctrl !", ACTIVE, &key_command));
     EXPECT_FALSE(GetKeyCommand("Alt Shift !", ACTIVE, &key_command));
     EXPECT_FALSE(GetKeyCommand("Ctrl Shift !", ACTIVE, &key_command));
@@ -324,7 +335,8 @@ TEST_F(ConfigurableKeymapTest, AutoCommit) {
     ASSERT_FALSE(GetKeyCommand("!", INACTIVE, &key_command));
     EXPECT_FALSE(GetKeyCommand("Alt !", INACTIVE, &key_command));
     EXPECT_FALSE(GetKeyCommand("Ctrl !", INACTIVE, &key_command));
-    EXPECT_FALSE(GetKeyCommand("Shift !", INACTIVE, &key_command));
+    // "Shift + printable key" should not be sent from mozc_engine.
+    // Shift key with a printable key is removed.
     EXPECT_FALSE(GetKeyCommand("Alt Ctrl !", INACTIVE, &key_command));
     EXPECT_FALSE(GetKeyCommand("Alt Shift !", INACTIVE, &key_command));
     EXPECT_FALSE(GetKeyCommand("Ctrl Shift !", INACTIVE, &key_command));

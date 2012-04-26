@@ -34,6 +34,7 @@
 
 #include "base/base.h"
 #include "renderer/unix/font_spec_interface.h"
+#include "renderer/unix/gtk_wrapper_interface.h"
 
 namespace mozc {
 namespace renderer {
@@ -43,21 +44,23 @@ struct FontInfo;
 
 class FontSpec : public FontSpecInterface {
  public:
-  FontSpec();
+  explicit FontSpec(GtkWrapperInterface *gtk);
   virtual ~FontSpec();
 
-  virtual void Reload();
+  virtual void Reload(const string &font_description);
   virtual PangoAlignment GetFontAlignment(FONT_TYPE font_type) const;
   virtual PangoAttrList *GetFontAttributes(FONT_TYPE font_type) const;
   virtual const PangoFontDescription *GetFontDescription(
       FONT_TYPE font_type) const;
 
- private:
-  void LoadFontSpec();
+ protected:
+  void LoadFontSpec(const string &font_description);
   void ReleaseFontSpec();
   vector<FontInfo> fonts_;
   bool is_initialized_;
+  scoped_ptr<GtkWrapperInterface> gtk_;
 
+ private:
   DISALLOW_COPY_AND_ASSIGN(FontSpec);
 };
 }  // namespace gtk

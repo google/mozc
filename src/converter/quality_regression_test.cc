@@ -40,9 +40,17 @@
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter.h"
 #include "converter/quality_regression_util.h"
+#include "converter/segmenter.h"
+#include "data_manager/user_pos_manager.h"
 #include "dictionary/dictionary_interface.h"
+#include "dictionary/pos_group.h"
+#include "dictionary/pos_matcher.h"
+#include "dictionary/suffix_dictionary.h"
+#include "dictionary/suppression_dictionary.h"
 #include "prediction/dictionary_predictor.h"
 #include "prediction/predictor.h"
+#include "prediction/user_history_predictor.h"
+#include "rewriter/rewriter.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
@@ -63,7 +71,6 @@ class QualityRegressionTest : public testing::Test {
     config::ConfigHandler::GetDefaultConfig(&config);
     config::ConfigHandler::SetConfig(config);
     DictionaryFactory::SetDictionary(NULL);
-    PredictorFactory::SetDictionaryPredictor(NULL);
   }
 
   virtual void TearDown() {
@@ -71,7 +78,6 @@ class QualityRegressionTest : public testing::Test {
     config::ConfigHandler::GetDefaultConfig(&config);
     config::ConfigHandler::SetConfig(config);
     DictionaryFactory::SetDictionary(NULL);
-    PredictorFactory::SetDictionaryPredictor(NULL);
   }
 
   void RunTestForPlatform(uint32 platform, QualityRegressionUtil *util) {
@@ -127,18 +133,46 @@ class QualityRegressionTest : public testing::Test {
 
 // Test for desktop
 TEST_F(QualityRegressionTest, BasicTest) {
+  DictionaryFactory::SetDictionary(DictionaryFactory::GetDictionary());
+
   scoped_ptr<ImmutableConverterImpl> immutable_converter(
-      new ImmutableConverterImpl);
+      new ImmutableConverterImpl(
+          DictionaryFactory::GetDictionary(),
+          SuffixDictionaryFactory::GetSuffixDictionary(),
+          Singleton<SuppressionDictionary>::get(),
+          ConnectorFactory::GetConnector(),
+          Singleton<Segmenter>::get(),
+          Singleton<POSMatcher>::get(),
+          UserPosManager::GetUserPosManager()->GetPosGroup()));
   ImmutableConverterFactory::SetImmutableConverter(immutable_converter.get());
 
-  scoped_ptr<DictionaryPredictor> dictionary_predictor(new DictionaryPredictor);
-  PredictorFactory::SetDictionaryPredictor(dictionary_predictor.get());
+  // TODO(team): Dictionary predictor depends on global singleton of dictionary,
+  // segmenter, etc. This design is undesirable. We want to fix the design
+  // problem.
+  PredictorInterface *dictionary_predictor =
+      new DictionaryPredictor(immutable_converter.get(),
+                              DictionaryFactory::GetDictionary(),
+                              SuffixDictionaryFactory::GetSuffixDictionary(),
+                              ConnectorFactory::GetConnector(),
+                              Singleton<Segmenter>::get(),
+                              *Singleton<POSMatcher>::get());
 
-  scoped_ptr<ConverterImpl> converter_impl(new ConverterImpl);
-  ConverterInterface *converter = converter_impl.get();
-  CHECK(converter);
+  PredictorInterface *user_history_predictor =
+      new UserHistoryPredictor(DictionaryFactory::GetDictionary(),
+                               Singleton<POSMatcher>::get());
 
-  QualityRegressionUtil util(converter);
+  PredictorInterface *extra_predictor = NULL;
+  scoped_ptr<ConverterImpl> converter(new ConverterImpl);
+  CHECK(converter.get());
+  converter->Init(
+      new DefaultPredictor(dictionary_predictor,
+                           user_history_predictor,
+                           extra_predictor),
+      new RewriterImpl(converter.get(),
+                       Singleton<POSMatcher>::get(),
+                       UserPosManager::GetUserPosManager()->GetPosGroup()));
+
+  QualityRegressionUtil util(converter.get());
   RunTestForPlatform(QualityRegressionUtil::DESKTOP, &util);
 }
 }  // namespace

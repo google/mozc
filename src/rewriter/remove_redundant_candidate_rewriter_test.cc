@@ -28,6 +28,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "base/base.h"
+#include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "rewriter/remove_redundant_candidate_rewriter.h"
 #include "testing/base/public/gunit.h"
@@ -43,7 +44,7 @@ TEST(RemoveRedundantCandidateRewriterTest, RemoveTest) {
   candidate->key = "a";
   candidate->value = "a";
 
-  EXPECT_TRUE(rewriter.Rewrite(&segments));
+  EXPECT_TRUE(rewriter.Rewrite(ConversionRequest(), &segments));
   EXPECT_EQ(0, segment->candidates_size());
 }
 
@@ -57,7 +58,7 @@ TEST(RemoveRedundantCandidateRewriterTest, NoRemoveTest) {
   candidate->key = "a";
   candidate->value = "aa";
 
-  EXPECT_FALSE(rewriter.Rewrite(&segments));
+  EXPECT_FALSE(rewriter.Rewrite(ConversionRequest(), &segments));
   EXPECT_EQ(1, segment->candidates_size());
 }
 

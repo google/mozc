@@ -40,58 +40,6 @@ from build_tools import code_generator_util
 from dictionary import pos_util
 
 
-def ParseInflectionMap(path):
-  """Reads and parses inflection data.
-
-  Returns:
-    parsed inflection map data, which forms;
-    - map of key to (form, value_suffix, key_suffix)
-  """
-  result = defaultdict(list)
-  with open(path, 'r') as stream:
-    stream = code_generator_util.SkipLineComment(stream)
-    stream = code_generator_util.ParseColumnStream(stream, num_column=4)
-    for key, form, value_suffix, key_suffix in stream:
-      result[key].append((
-          form,
-          value_suffix if value_suffix != '*' else '',
-          key_suffix if key_suffix != '*' else ''))
-
-  return result
-
-
-def ParseUserPos(path, pos_database, inflection_map):
-  """Reads and parses user pos data based on given pos_util and inflection_map.
-
-  Returns:
-    parsed user pos data, which is a list of (user_pos, conjugation_list)
-    pairs.
-    conjugation_list is a list of (value_suffix, key_suffix, pos_id).
-  """
-  result = []
-  with open(path, 'r') as stream:
-    stream = code_generator_util.SkipLineComment(stream)
-    stream = code_generator_util.ParseColumnStream(stream, num_column=3)
-    for user_pos, ctype, feature in stream:
-      conjugation_list = []
-      if ctype == '*':
-        conjugation_list.append((None, None, pos_database.GetPosId(feature)))
-      else:
-        for form, value_suffix, key_suffix in inflection_map[ctype]:
-          # repalce <cfrom> with actual cform
-          pos_id = pos_database.GetPosId(feature.replace('<cform>', form))
-
-          # Known error items.
-          # 動詞,自立,*,*,五段動詞,体言接続特殊２,*
-          # 形容詞,自立,*,*,形容詞・アウオ段,文語基本形,*
-          # TODO(hidehiko): Make sure it is expected or not.
-          if pos_id is not None:
-            conjugation_list.append((value_suffix, key_suffix, pos_id))
-
-      result.append((user_pos, conjugation_list))
-  return result
-
-
 def OutputUserPosDataHeader(user_pos_data, output):
   """Prints user_pos_data.h to output."""
   # Output kConjugation
@@ -138,12 +86,13 @@ def main():
   options = ParseOptions()
   pos_database = pos_util.PosDataBase()
   pos_database.Parse(options.id_file, options.special_pos_file)
-  inflection_map = ParseInflectionMap(options.cforms_file)
-  user_pos_data = ParseUserPos(
-      options.user_pos_file, pos_database, inflection_map)
+  inflection_map = pos_util.InflectionMap()
+  inflection_map.Parse(options.cforms_file)
+  user_pos = pos_util.UserPos(pos_database, inflection_map)
+  user_pos.Parse(options.user_pos_file)
 
   with open(options.output, 'w') as stream:
-    OutputUserPosDataHeader(user_pos_data, stream)
+    OutputUserPosDataHeader(user_pos.data, stream)
 
 
 if __name__ == '__main__':

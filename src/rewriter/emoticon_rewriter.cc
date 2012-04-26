@@ -38,6 +38,7 @@
 #include "base/util.h"
 #include "config/config_handler.h"
 #include "config/config.pb.h"
+#include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "rewriter/rewriter_interface.h"
 #include "rewriter/embedded_dictionary.h"
@@ -254,7 +255,8 @@ int EmoticonRewriter::capability() const {
   return RewriterInterface::CONVERSION;
 }
 
-bool EmoticonRewriter::Rewrite(Segments *segments) const {
+bool EmoticonRewriter::Rewrite(const ConversionRequest &request,
+                               Segments *segments) const {
   if (!GET_CONFIG(use_emoticon_conversion)) {
     VLOG(2) << "no use_emoticon_conversion";
     return false;

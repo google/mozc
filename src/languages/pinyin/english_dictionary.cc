@@ -81,30 +81,34 @@ bool SerializeUserDictionary(const UserDictionary &dictionary,
   return true;
 }
 
+// Format is | key_length (1byte) | key (~80bytes) | used_count (4bytes) |
 bool DeserializeUserDictionary(const string &input,
                                UserDictionary *dictionary) {
   DCHECK(dictionary);
   dictionary->clear();
 
-  for (size_t i = 0; i < input.size(); ++i) {
-    size_t entry_begin = i;
-
-    if (entry_begin + 1 >= input.size()) {
+  size_t index = 0;
+  while (index < input.size()) {
+    if (index + 1 > input.size()) {
       LOG(ERROR) << "Cannot parse user dicitonary.";
       dictionary->clear();
       return false;
     }
-    const size_t key_length = static_cast<size_t>(input[entry_begin]);
 
-    if (entry_begin + 1 + key_length + 4 >= input.size()) {
+    const size_t key_length = static_cast<size_t>(input[index]);
+    index += 1;
+
+    if (index + key_length + 4 > input.size()) {
       LOG(ERROR) << "Cannot parse user dicitonary.";
       dictionary->clear();
       return false;
     }
-    const string key = input.substr(entry_begin + 1, key_length);
-    const uint32 used_count =
-        *reinterpret_cast<const uint32 *>(
-            input.substr(entry_begin + 1 + key_length, 4).c_str());
+
+    const string key = input.substr(index, key_length);
+    index += key_length;
+    const uint32 used_count = *reinterpret_cast<const uint32 *>(
+        input.substr(index, 4).c_str());
+    index += 4;
 
     dictionary->insert(make_pair(key, used_count));
   }
@@ -261,6 +265,7 @@ bool EnglishDictionary::ReloadUserDictionary() {
     LOG(ERROR) << "Cannot deserialize data.";
     return false;
   }
+
   return true;
 }
 

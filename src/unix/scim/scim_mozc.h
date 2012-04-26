@@ -86,8 +86,8 @@ class ScimMozc : public scim::IMEngineInstanceBase {
   // candidate window). If the string is empty (""), hides the message
   // currently being displayed.
   virtual void SetAuxString(const scim::String &str);
-  // Sets a current composition mode (e.g., Hankaku Katakana).
-  virtual void SetCompositionMode(mozc::commands::CompositionMode mode);
+  // Sets a current status.
+  virtual void SetStatus(const mozc::commands::Status &status);
 
   // Sets the url to be opened by the default browser.
   virtual void SetUrl(const string &url);
@@ -127,6 +127,7 @@ class ScimMozc : public scim::IMEngineInstanceBase {
   scoped_ptr<const MozcLookupTable> candidates_;
   scim::String aux_;  // error tooltip, or candidate window title.
   string url_;  // URL to be opened by a browser.
+  bool activated_;  // true if the current mode is not Direct.
   mozc::commands::CompositionMode composition_mode_;
 
   DISALLOW_COPY_AND_ASSIGN(ScimMozc);

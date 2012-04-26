@@ -37,6 +37,7 @@
 using ::testing::Expectation;
 using ::testing::Return;
 using ::testing::StrictMock;
+using ::testing::StrEq;
 using ::testing::_;
 
 namespace mozc {
@@ -158,7 +159,8 @@ TEST(WindowManagerTest, ShouldShowCandidateWindowTest) {
     command.set_visible(false);
     command.mutable_output()->mutable_candidates();
 
-    EXPECT_FALSE(WindowManager::ShouldShowCandidateWindow(command));
+    WindowManager manager(NULL, NULL, NULL);
+    EXPECT_FALSE(manager.ShouldShowCandidateWindow(command));
   }
   {
     SCOPED_TRACE("If there is no Candidates message, return false.");
@@ -166,14 +168,17 @@ TEST(WindowManagerTest, ShouldShowCandidateWindowTest) {
     command.set_visible(true);
     command.mutable_output();
 
-    EXPECT_FALSE(WindowManager::ShouldShowCandidateWindow(command));
+    WindowManager manager(NULL, NULL, NULL);
+    EXPECT_FALSE(manager.ShouldShowCandidateWindow(command));
   }
   {
     SCOPED_TRACE("If there are no candidates, return false.");
     commands::RendererCommand command;
     command.set_visible(true);
     command.mutable_output()->mutable_candidates();
-    EXPECT_FALSE(WindowManager::ShouldShowCandidateWindow(command));
+
+    WindowManager manager(NULL, NULL, NULL);
+    EXPECT_FALSE(manager.ShouldShowCandidateWindow(command));
   }
   {
     commands::RendererCommand command;
@@ -181,7 +186,9 @@ TEST(WindowManagerTest, ShouldShowCandidateWindowTest) {
     commands::Candidates *candidates
         = command.mutable_output()->mutable_candidates();
     candidates->add_candidate();
-    EXPECT_TRUE(WindowManager::ShouldShowCandidateWindow(command));
+
+    WindowManager manager(NULL, NULL, NULL);
+    EXPECT_TRUE(manager.ShouldShowCandidateWindow(command));
   }
 }
 
@@ -192,7 +199,8 @@ TEST(WindowManagerTest, ShouldShowInfolistWindowTest) {
     command.set_visible(false);
     command.mutable_output()->mutable_candidates();
 
-    EXPECT_FALSE(WindowManager::ShouldShowInfolistWindow(command));
+    WindowManager manager(NULL, NULL, NULL);
+    EXPECT_FALSE(manager.ShouldShowInfolistWindow(command));
   }
   {
     SCOPED_TRACE("If there is no Candidates message, return false.");
@@ -200,14 +208,17 @@ TEST(WindowManagerTest, ShouldShowInfolistWindowTest) {
     command.set_visible(true);
     command.mutable_output();
 
-    EXPECT_FALSE(WindowManager::ShouldShowInfolistWindow(command));
+    WindowManager manager(NULL, NULL, NULL);
+    EXPECT_FALSE(manager.ShouldShowInfolistWindow(command));
   }
   {
     SCOPED_TRACE("If there are no candidates, return false.");
     commands::RendererCommand command;
     command.set_visible(true);
     command.mutable_output()->mutable_candidates();
-    EXPECT_FALSE(WindowManager::ShouldShowInfolistWindow(command));
+
+    WindowManager manager(NULL, NULL, NULL);
+    EXPECT_FALSE(manager.ShouldShowInfolistWindow(command));
   }
   {
     SCOPED_TRACE("If there is no usages message, return false");
@@ -216,7 +227,9 @@ TEST(WindowManagerTest, ShouldShowInfolistWindowTest) {
     commands::Candidates *candidates
         = command.mutable_output()->mutable_candidates();
     candidates->add_candidate();
-    EXPECT_FALSE(WindowManager::ShouldShowInfolistWindow(command));
+
+    WindowManager manager(NULL, NULL, NULL);
+    EXPECT_FALSE(manager.ShouldShowInfolistWindow(command));
   }
   {
     SCOPED_TRACE("If there is no Information List message, return false");
@@ -225,7 +238,9 @@ TEST(WindowManagerTest, ShouldShowInfolistWindowTest) {
     commands::Candidates *candidates
         = command.mutable_output()->mutable_candidates();
     candidates->add_candidate();
-    EXPECT_FALSE(WindowManager::ShouldShowInfolistWindow(command));
+
+    WindowManager manager(NULL, NULL, NULL);
+    EXPECT_FALSE(manager.ShouldShowInfolistWindow(command));
   }
   {
     SCOPED_TRACE("If there are no information, return false");
@@ -237,7 +252,8 @@ TEST(WindowManagerTest, ShouldShowInfolistWindowTest) {
     commands::InformationList *usage = candidates->mutable_usages();
     usage->add_information();
 
-    EXPECT_FALSE(WindowManager::ShouldShowInfolistWindow(command));
+    WindowManager manager(NULL, NULL, NULL);
+    EXPECT_FALSE(manager.ShouldShowInfolistWindow(command));
   }
   {
     SCOPED_TRACE("If focused index is out of range, return false");
@@ -251,7 +267,8 @@ TEST(WindowManagerTest, ShouldShowInfolistWindowTest) {
 
     candidates->set_focused_index(3);
 
-    EXPECT_FALSE(WindowManager::ShouldShowInfolistWindow(command));
+    WindowManager manager(NULL, NULL, NULL);
+    EXPECT_FALSE(manager.ShouldShowInfolistWindow(command));
   }
   {
     SCOPED_TRACE("If focused candidate has no information, return false");
@@ -266,7 +283,8 @@ TEST(WindowManagerTest, ShouldShowInfolistWindowTest) {
     candidates->set_focused_index(0);
     candidate->set_index(0);
 
-    EXPECT_FALSE(WindowManager::ShouldShowInfolistWindow(command));
+    WindowManager manager(NULL, NULL, NULL);
+    EXPECT_FALSE(manager.ShouldShowInfolistWindow(command));
   }
   {
     commands::RendererCommand command;
@@ -281,11 +299,13 @@ TEST(WindowManagerTest, ShouldShowInfolistWindowTest) {
     candidates->set_focused_index(0);
     candidate->set_information_id(0);
 
-    EXPECT_TRUE(WindowManager::ShouldShowInfolistWindow(command));
+    WindowManager manager(NULL, NULL, NULL);
+    EXPECT_TRUE(manager.ShouldShowInfolistWindow(command));
   }
 }
 
 TEST(WindowManagerTest, UpdateCandidateWindowTest) {
+  // TODO(nona): Cleanup redundant codes.
   {
     SCOPED_TRACE("Use caret location");
     GtkWindowMock *candidate_window_mock = new GtkWindowMock();
@@ -329,6 +349,17 @@ TEST(WindowManagerTest, UpdateCandidateWindowTest) {
                 Move(PointEq(expected_window_position)));
     EXPECT_CALL(*candidate_window_mock, ShowWindow());
 
+    GtkWidget *toplevel_widget = reinterpret_cast<GtkWidget*>(0x12345678);
+    GdkScreen *toplevel_screen = reinterpret_cast<GdkScreen*>(0x87654321);
+    const Rect screen_rect(0, 0, 4000, 4000);
+    EXPECT_CALL(*gtk_mock, GtkWindowNew(GTK_WINDOW_TOPLEVEL))
+        .WillOnce(Return(toplevel_widget));
+    EXPECT_CALL(*gtk_mock, GtkWindowGetScreen(toplevel_widget))
+        .WillOnce(Return(toplevel_screen));
+    EXPECT_CALL(*gtk_mock, GdkScreenGetWidth(toplevel_screen))
+        .WillOnce(Return(screen_rect.size.width));
+    EXPECT_CALL(*gtk_mock, GdkScreenGetHeight(toplevel_screen))
+        .WillOnce(Return(screen_rect.size.height));
     WindowManager manager(candidate_window_mock, infolist_window_mock,
                           gtk_mock);
     const Rect actual_rect = manager.UpdateCandidateWindow(command);
@@ -382,6 +413,17 @@ TEST(WindowManagerTest, UpdateCandidateWindowTest) {
                 Move(PointEq(expected_window_position)));
     EXPECT_CALL(*candidate_window_mock, ShowWindow());
 
+    GtkWidget *toplevel_widget = reinterpret_cast<GtkWidget*>(0x12345678);
+    GdkScreen *toplevel_screen = reinterpret_cast<GdkScreen*>(0x87654321);
+    const Rect screen_rect(0, 0, 4000, 4000);
+    EXPECT_CALL(*gtk_mock, GtkWindowNew(GTK_WINDOW_TOPLEVEL))
+        .WillOnce(Return(toplevel_widget));
+    EXPECT_CALL(*gtk_mock, GtkWindowGetScreen(toplevel_widget))
+        .WillOnce(Return(toplevel_screen));
+    EXPECT_CALL(*gtk_mock, GdkScreenGetWidth(toplevel_screen))
+        .WillOnce(Return(screen_rect.size.width));
+    EXPECT_CALL(*gtk_mock, GdkScreenGetHeight(toplevel_screen))
+        .WillOnce(Return(screen_rect.size.height));
     WindowManager manager(candidate_window_mock, infolist_window_mock,
                           gtk_mock);
     const Rect actual_rect = manager.UpdateCandidateWindow(command);
@@ -390,6 +432,50 @@ TEST(WindowManagerTest, UpdateCandidateWindowTest) {
     EXPECT_EQ(actual_rect.origin.y, expected_window_position.y);
     EXPECT_EQ(actual_rect.size.width, window_size.width);
     EXPECT_EQ(actual_rect.size.height, window_size.height);
+  }
+  {
+    SCOPED_TRACE("Edge fixing");
+    GtkWindowMock *candidate_window_mock = new GtkWindowMock();
+    GtkWindowMock *infolist_window_mock = new GtkWindowMock();
+    GtkWrapperMock *gtk_mock = new GtkWrapperMock();
+
+    commands::RendererCommand command;
+    commands::Candidates *candidates
+        = command.mutable_output()->mutable_candidates();
+    candidates->add_candidate();
+
+    GtkWidget *toplevel_widget = reinterpret_cast<GtkWidget*>(0x12345678);
+    GdkScreen *toplevel_screen = reinterpret_cast<GdkScreen*>(0x87654321);
+    const Rect client_cord_rect(0, 0, 30, 40);
+    const Point window_position(1000, 1000);
+    const Size window_size(300, 400);
+    const Rect screen_rect(0, 0, 1200, 1200);
+
+    EXPECT_CALL(*candidate_window_mock, Update(_))
+        .WillOnce(Return(window_size));
+    EXPECT_CALL(*candidate_window_mock, GetCandidateColumnInClientCord())
+        .WillOnce(Return(client_cord_rect));
+    EXPECT_CALL(*candidate_window_mock, GetWindowPos())
+        .WillOnce(Return(window_position));
+    EXPECT_CALL(*candidate_window_mock, Move(_));
+    EXPECT_CALL(*candidate_window_mock, ShowWindow());
+
+    EXPECT_CALL(*gtk_mock, GtkWindowNew(GTK_WINDOW_TOPLEVEL))
+        .WillOnce(Return(toplevel_widget));
+    EXPECT_CALL(*gtk_mock, GtkWindowGetScreen(toplevel_widget))
+        .WillOnce(Return(toplevel_screen));
+    EXPECT_CALL(*gtk_mock, GdkScreenGetWidth(toplevel_screen))
+        .WillOnce(Return(screen_rect.size.width));
+    EXPECT_CALL(*gtk_mock, GdkScreenGetHeight(toplevel_screen))
+        .WillOnce(Return(screen_rect.size.height));
+    WindowManager manager(candidate_window_mock, infolist_window_mock,
+                          gtk_mock);
+    const Rect actual_rect = manager.UpdateCandidateWindow(command);
+
+    EXPECT_LE(actual_rect.Right(), screen_rect.Right());
+    EXPECT_LE(actual_rect.Bottom(), screen_rect.Bottom());
+    EXPECT_GE(actual_rect.Left(), screen_rect.Left());
+    EXPECT_GE(actual_rect.Top(), screen_rect.Top());
   }
 }
 
@@ -427,7 +513,6 @@ TEST(WindowManagerTest, UpdateInfolistWindowTest) {
     candidates->set_focused_index(0);
     candidate->set_information_id(0);
 
-    EXPECT_TRUE(WindowManager::ShouldShowInfolistWindow(command));
 
     GtkWidget *toplevel_widget = reinterpret_cast<GtkWidget*>(0x12345678);
     GdkScreen *toplevel_screen = reinterpret_cast<GdkScreen*>(0x87654321);
@@ -452,6 +537,8 @@ TEST(WindowManagerTest, UpdateInfolistWindowTest) {
     const Rect candidate_window_rect(10, 20, 30, 40);
     WindowManager manager(candidate_window_mock, infolist_window_mock,
                           gtk_mock);
+
+    EXPECT_TRUE(manager.ShouldShowInfolistWindow(command));
     manager.UpdateInfolistWindow(command, candidate_window_rect);
   }
 }
@@ -478,6 +565,160 @@ TEST(WindowManagerTest, GetDesktopRectTest) {
   EXPECT_EQ(0, actual_screen_rect.origin.y);
   EXPECT_EQ(screen_size.width, actual_screen_rect.size.width);
   EXPECT_EQ(screen_size.height, actual_screen_rect.size.height);
+}
+
+class FontUpdateTestableWindowManager : public WindowManager {
+ public:
+  FontUpdateTestableWindowManager(GtkWindowInterface *main_window,
+                                  GtkWindowInterface *infolist_window,
+                                  GtkWrapperInterface *gtk)
+      : WindowManager(main_window, infolist_window, gtk) {}
+  virtual ~FontUpdateTestableWindowManager() {}
+
+  MOCK_METHOD1(ShouldShowCandidateWindow,
+               bool(const commands::RendererCommand &command));
+  MOCK_METHOD1(ShouldShowInfolistWindow,
+               bool(const commands::RendererCommand &command));
+  MOCK_METHOD1(UpdateCandidateWindow,
+               Rect(const commands::RendererCommand &command));
+  MOCK_METHOD2(UpdateInfolistWindow,
+               void(const commands::RendererCommand &command,
+                    const Rect &candidate_window_rect));
+};
+
+TEST(WindowManagerTest, FontReloadTest) {
+  {
+    GtkWindowMock *candidate_window_mock = new GtkWindowMock();
+    GtkWindowMock *infolist_window_mock = new GtkWindowMock();
+    GtkWrapperMock *gtk_mock = new GtkWrapperMock();
+
+    const Rect kDummyRect(0, 0, 0, 0);
+    const char kDummyFontDescription[] = "Foo,Bar,Baz";
+
+    FontUpdateTestableWindowManager window_manager(
+        candidate_window_mock, infolist_window_mock, gtk_mock);
+    EXPECT_CALL(window_manager, ShouldShowCandidateWindow(_))
+        .WillOnce(Return(true));
+    EXPECT_CALL(*candidate_window_mock,
+                ReloadFontConfig(StrEq(kDummyFontDescription)));
+    EXPECT_CALL(*infolist_window_mock,
+                ReloadFontConfig(StrEq(kDummyFontDescription)));
+    EXPECT_CALL(window_manager, UpdateCandidateWindow(_))
+        .WillOnce(Return(kDummyRect));
+
+    EXPECT_CALL(window_manager, UpdateInfolistWindow(_, _));
+
+    commands::RendererCommand command;
+
+    commands::RendererCommand::ApplicationInfo *app_info =
+        command.mutable_application_info();
+    app_info->set_pango_font_description(kDummyFontDescription);
+
+    window_manager.UpdateLayout(command);
+  }
+  {
+    SCOPED_TRACE("Does not call reload function when the custom font setting "
+                 "is not available");
+    GtkWindowMock *candidate_window_mock = new GtkWindowMock();
+    GtkWindowMock *infolist_window_mock = new GtkWindowMock();
+    GtkWrapperMock *gtk_mock = new GtkWrapperMock();
+
+    const Rect kDummyRect(0, 0, 0, 0);
+
+    FontUpdateTestableWindowManager window_manager(
+        candidate_window_mock, infolist_window_mock, gtk_mock);
+    EXPECT_CALL(window_manager, ShouldShowCandidateWindow(_))
+        .WillOnce(Return(true));
+    EXPECT_CALL(*candidate_window_mock, ReloadFontConfig(_)).Times(0);
+    EXPECT_CALL(*infolist_window_mock, ReloadFontConfig(_)).Times(0);
+    EXPECT_CALL(window_manager, UpdateCandidateWindow(_))
+        .WillOnce(Return(kDummyRect));
+
+    EXPECT_CALL(window_manager, UpdateInfolistWindow(_, _));
+
+    commands::RendererCommand command;
+    command.mutable_application_info();
+
+    window_manager.UpdateLayout(command);
+  }
+  {
+    SCOPED_TRACE("Does not call reload function if previously loaded font"
+                 "description is same as requested one.");
+    GtkWindowMock *candidate_window_mock = new GtkWindowMock();
+    GtkWindowMock *infolist_window_mock = new GtkWindowMock();
+    GtkWrapperMock *gtk_mock = new GtkWrapperMock();
+
+    const Rect kDummyRect(0, 0, 0, 0);
+    const char kDummyFontDescription[] = "Foo,Bar,Baz";
+
+    FontUpdateTestableWindowManager window_manager(
+        candidate_window_mock, infolist_window_mock, gtk_mock);
+    EXPECT_CALL(window_manager, ShouldShowCandidateWindow(_))
+        .Times(2)
+        .WillRepeatedly(Return(true));
+    EXPECT_CALL(*candidate_window_mock,
+                ReloadFontConfig(StrEq(kDummyFontDescription)));
+    EXPECT_CALL(*infolist_window_mock,
+                ReloadFontConfig(StrEq(kDummyFontDescription)));
+    EXPECT_CALL(window_manager, UpdateCandidateWindow(_))
+        .Times(2)
+        .WillRepeatedly(Return(kDummyRect));
+
+    EXPECT_CALL(window_manager, UpdateInfolistWindow(_, _)).Times(2);
+
+    commands::RendererCommand command;
+
+    commands::RendererCommand::ApplicationInfo *app_info =
+        command.mutable_application_info();
+    app_info->set_pango_font_description(kDummyFontDescription);
+
+    window_manager.UpdateLayout(command);
+
+    // Call again with same font description.
+    window_manager.UpdateLayout(command);
+  }
+  {
+    SCOPED_TRACE("Call reload function if previously loaded font description"
+                 " is different from requested one.");
+    GtkWindowMock *candidate_window_mock = new GtkWindowMock();
+    GtkWindowMock *infolist_window_mock = new GtkWindowMock();
+    GtkWrapperMock *gtk_mock = new GtkWrapperMock();
+
+    const Rect kDummyRect(0, 0, 0, 0);
+    const char kDummyFontDescription[] = "Foo,Bar,Baz";
+    const char kDummyFontDescription2[] = "Foo,Bar";
+
+    FontUpdateTestableWindowManager window_manager(
+        candidate_window_mock, infolist_window_mock, gtk_mock);
+    EXPECT_CALL(window_manager, ShouldShowCandidateWindow(_))
+        .Times(2)
+        .WillRepeatedly(Return(true));
+    EXPECT_CALL(*candidate_window_mock,
+                ReloadFontConfig(StrEq(kDummyFontDescription)));
+    EXPECT_CALL(*infolist_window_mock,
+                ReloadFontConfig(StrEq(kDummyFontDescription)));
+    EXPECT_CALL(*candidate_window_mock,
+                ReloadFontConfig(StrEq(kDummyFontDescription2)));
+    EXPECT_CALL(*infolist_window_mock,
+                ReloadFontConfig(StrEq(kDummyFontDescription2)));
+    EXPECT_CALL(window_manager, UpdateCandidateWindow(_))
+        .Times(2)
+        .WillRepeatedly(Return(kDummyRect));
+
+    EXPECT_CALL(window_manager, UpdateInfolistWindow(_, _)).Times(2);
+
+    commands::RendererCommand command;
+
+    commands::RendererCommand::ApplicationInfo *app_info =
+        command.mutable_application_info();
+    app_info->set_pango_font_description(kDummyFontDescription);
+
+    window_manager.UpdateLayout(command);
+
+    app_info->set_pango_font_description(kDummyFontDescription2);
+    // Call again with different font description.
+    window_manager.UpdateLayout(command);
+  }
 }
 }  // namespace gtk
 }  // namespace renderer

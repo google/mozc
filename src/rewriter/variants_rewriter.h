@@ -36,21 +36,27 @@
 
 namespace mozc {
 
-class VariantsRewriter: public RewriterInterface  {
+class ConversionRequest;
+class POSMatcher;
+
+class VariantsRewriter : public RewriterInterface  {
  public:
-  VariantsRewriter();
+  explicit VariantsRewriter(const POSMatcher *pos_matcher);
   virtual ~VariantsRewriter();
   virtual int capability() const;
-  virtual bool Rewrite(Segments *segments) const;
+  virtual bool Rewrite(const ConversionRequest &request,
+                       Segments *segments) const;
   virtual void Finish(Segments *segments);
   virtual void Clear();
 
-  static void SetDescriptionForCandidate(
-      Segment::Candidate *candidate);
-  static void SetDescriptionForTransliteration(
-      Segment::Candidate *candidate);
-  static void SetDescriptionForPrediction(
-      Segment::Candidate *candidate);
+  // Used by UserSegmentHistoryRewriter.
+  // TODO(noriyukit): I'd be better to prepare some utility for rewriters.
+  static void SetDescriptionForCandidate(const POSMatcher &pos_matcher,
+                                         Segment::Candidate *candidate);
+  static void SetDescriptionForTransliteration(const POSMatcher &pos_matcher,
+                                               Segment::Candidate *candidate);
+  static void SetDescriptionForPrediction(const POSMatcher &pos_matcher,
+                                          Segment::Candidate *candidate);
 
  private:
   // 1) Full width / half width description
@@ -77,11 +83,14 @@ class VariantsRewriter: public RewriterInterface  {
     SELECT_VARIANT = 1,  // Select preferred form
   };
 
-  static void SetDescription(int description_type,
+  static void SetDescription(const POSMatcher &pos_matcher,
+                             int description_type,
                              Segment::Candidate *candidate);
-
   bool RewriteSegment(RewriteType type, Segment *seg) const;
+
+  const POSMatcher *pos_matcher_;
 };
-}
+
+}  // namespace mozc
 
 #endif  // MOZC_REWRITER_VARIANTS_REWRITER_H_

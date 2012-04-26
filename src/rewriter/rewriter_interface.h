@@ -56,15 +56,8 @@ class RewriterInterface {
     return CONVERSION;
   }
 
-  // TODO(noriyukit): Deprecates this method and migrate to RewriteForRequest.
-  // Rewrite request and/or result.
-  virtual bool Rewrite(Segments *segments) const = 0;
-
-  virtual bool RewriteForRequest(const ConversionRequest &request,
-                                 Segments *segments) const {
-    // Ignore the request by default.
-    return Rewrite(segments);
-  }
+  virtual bool Rewrite(const ConversionRequest &request,
+                       Segments *segments) const = 0;
 
   // This method is mainly called when user puts SPACE key
   // and changes the focused candidate.
@@ -93,20 +86,7 @@ class RewriterInterface {
   RewriterInterface() {}
 };
 
-// factory for making "default" rewriter
-class RewriterFactory {
- public:
-  // return singleton object
-  static RewriterInterface *GetRewriter();
 
-  // dependency injection for unittesting
-  static void SetRewriter(RewriterInterface *rewriter);
-
- private:
-  RewriterFactory();
-  ~RewriterFactory();
-};
-
-}  // mozc
+}  // namespace mozc
 
 #endif  // MOZC_REWRITER_REWRITER_INTERFACE_H_

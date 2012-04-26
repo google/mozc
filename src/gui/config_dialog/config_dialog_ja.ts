@@ -393,7 +393,7 @@
     </message>
     <message>
         <location filename="config_dialog.ui" line="618"/>
-        <source>homonym dictionary</source>
+        <source>Homonym dictionary</source>
         <translation>同音異義語辞書</translation>
     </message>
     <message>

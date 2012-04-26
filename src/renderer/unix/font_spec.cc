@@ -63,10 +63,11 @@ struct FontInfo {
   PangoFontDescription *font;
 };
 
-FontSpec::FontSpec()
+FontSpec::FontSpec(GtkWrapperInterface *gtk)
   : fonts_(SIZE_OF_FONT_TYPE),
-    is_initialized_(false) {
-  LoadFontSpec();
+    is_initialized_(false),
+    gtk_(gtk) {
+  LoadFontSpec(kDefaultFontDescription);
 }
 
 FontSpec::~FontSpec() {
@@ -75,11 +76,11 @@ FontSpec::~FontSpec() {
   }
 }
 
-void FontSpec::Reload() {
+void FontSpec::Reload(const string &font_description) {
   if (!is_initialized_) {
     ReleaseFontSpec();
   }
-  LoadFontSpec();
+  LoadFontSpec(font_description);
 }
 
 void FontSpec::ReleaseFontSpec() {
@@ -93,7 +94,7 @@ void FontSpec::ReleaseFontSpec() {
   }
 }
 
-void FontSpec::LoadFontSpec() {
+void FontSpec::LoadFontSpec(const string &font_description) {
   if (is_initialized_) {
     LOG(WARNING) << "Font spec is already loaded. reloading...";
     ReleaseFontSpec();
@@ -116,49 +117,49 @@ void FontSpec::LoadFontSpec() {
 
   // Set font descriptions.
   fonts_[FONTSET_CANDIDATE].font
-      = pango_font_description_from_string(kNormalFont);
+      = pango_font_description_from_string(font_description.c_str());
   fonts_[FONTSET_DESCRIPTION].font
-      = pango_font_description_from_string(kNormalFont);
+      = pango_font_description_from_string(font_description.c_str());
   fonts_[FONTSET_FOOTER_INDEX].font
-      = pango_font_description_from_string(kNormalFont);
+      = pango_font_description_from_string(font_description.c_str());
   fonts_[FONTSET_FOOTER_LABEL].font
-      = pango_font_description_from_string(kNormalFont);
+      = pango_font_description_from_string(font_description.c_str());
   fonts_[FONTSET_FOOTER_SUBLABEL].font
-      = pango_font_description_from_string(kNormalFont);
+      = pango_font_description_from_string(font_description.c_str());
   fonts_[FONTSET_SHORTCUT].font
-      = pango_font_description_from_string(kShortcutFont);
+      = pango_font_description_from_string(font_description.c_str());
   fonts_[FONTSET_INFOLIST_CAPTION].font
-      = pango_font_description_from_string(kNormalFont);
+      = pango_font_description_from_string(font_description.c_str());
   fonts_[FONTSET_INFOLIST_TITLE].font
-      = pango_font_description_from_string(kNormalFont);
+      = pango_font_description_from_string(font_description.c_str());
   fonts_[FONTSET_INFOLIST_DESCRIPTION].font
-      = pango_font_description_from_string(kNormalFont);
+      = pango_font_description_from_string(font_description.c_str());
 
   // Set color and scales.
   fonts_[FONTSET_CANDIDATE].attributes
-      = CreateAttrListByScaleColor(kDefaultColor, PANGO_SCALE_SMALL);
+      = CreateAttrListByScaleColor(kDefaultColor, PANGO_SCALE_MEDIUM);
   fonts_[FONTSET_DESCRIPTION].attributes
-      = CreateAttrListByScaleColor(kDescriptionColor, PANGO_SCALE_SMALL);
+      = CreateAttrListByScaleColor(kDescriptionColor, PANGO_SCALE_MEDIUM);
   fonts_[FONTSET_FOOTER_INDEX].attributes
-      = CreateAttrListByScaleColor(kFooterIndexColor, PANGO_SCALE_X_SMALL);
+      = CreateAttrListByScaleColor(kFooterIndexColor, PANGO_SCALE_SMALL);
   fonts_[FONTSET_FOOTER_LABEL].attributes
-      = CreateAttrListByScaleColor(kFooterLabelColor, PANGO_SCALE_X_SMALL);
+      = CreateAttrListByScaleColor(kFooterLabelColor, PANGO_SCALE_SMALL);
   fonts_[FONTSET_FOOTER_SUBLABEL].attributes
-      = CreateAttrListByScaleColor(kFooterSubLabelColor, PANGO_SCALE_X_SMALL);
+      = CreateAttrListByScaleColor(kFooterSubLabelColor, PANGO_SCALE_SMALL);
   fonts_[FONTSET_SHORTCUT].attributes
-      = CreateAttrListByScaleColor(kShortcutColor, PANGO_SCALE_SMALL);
+      = CreateAttrListByScaleColor(kShortcutColor, PANGO_SCALE_MEDIUM);
   fonts_[FONTSET_INFOLIST_CAPTION].attributes
       = CreateAttrListByScaleColor(
           RGBAColor2RGBA(infostyle.caption_style().foreground_color()),
-          PANGO_SCALE_SMALL);
+          PANGO_SCALE_MEDIUM);
   fonts_[FONTSET_INFOLIST_TITLE].attributes
       =  CreateAttrListByScaleColor(
           RGBAColor2RGBA(infostyle.title_style().foreground_color()),
-          PANGO_SCALE_SMALL);
+          PANGO_SCALE_MEDIUM);
   fonts_[FONTSET_INFOLIST_DESCRIPTION].attributes
       =  CreateAttrListByScaleColor(
           RGBAColor2RGBA(infostyle.description_style().foreground_color()),
-          PANGO_SCALE_SMALL);
+          PANGO_SCALE_MEDIUM);
   is_initialized_ = true;
 }
 
@@ -176,6 +177,7 @@ const PangoFontDescription *FontSpec::GetFontDescription(FONT_TYPE font_type) co
   DCHECK(0 <= font_type && font_type < SIZE_OF_FONT_TYPE);
   return fonts_[font_type].font;
 }
+
 }  // namespace gtk
 }  // namespace renderer
 }  // namespace mozc

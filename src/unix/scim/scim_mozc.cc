@@ -139,6 +139,7 @@ ScimMozc::ScimMozc(scim::IMEngineFactoryBase *factory,
     : scim::IMEngineInstanceBase(factory, encoding, id),
       connection_(connection),
       parser_(parser),
+      activated_(false),
       composition_mode_(mozc::commands::HIRAGANA) {
   VLOG(1) << "ScimMozc created.";
   const bool is_vertical
@@ -164,7 +165,7 @@ bool ScimMozc::process_key_event(const scim::KeyEvent &key) {
   string error;
   mozc::commands::Output raw_response;
   if (!connection_->TrySendKeyEvent(
-          key, composition_mode_, &raw_response, &error)) {
+          key, activated_, composition_mode_, &raw_response, &error)) {
     // TODO(yusukes): Show |error|.
     return false;  // not consumed.
   }
@@ -241,7 +242,9 @@ void ScimMozc::trigger_property(const scim::String &property) {
 
   for (size_t i = 0; i < kNumCompositionModes; ++i) {
     if (property == kPropCompositionModes[i].config_path) {
-      if (kPropCompositionModes[i].mode == mozc::commands::DIRECT) {
+      const mozc::commands::CompositionMode new_mode =
+          kPropCompositionModes[i].mode;
+      if (activated_ && new_mode == mozc::commands::DIRECT) {
         // Commit a preedit string.
         string error;
         mozc::commands::Output raw_response;
@@ -249,18 +252,22 @@ void ScimMozc::trigger_property(const scim::String &property) {
                                         &raw_response, &error)) {
           parser_->ParseResponse(raw_response, this);
         }
-        DrawAll();
-        // Switch to the DIRECT mode.
-        SetCompositionMode(mozc::commands::DIRECT);
-      } else {
-        // Send the SWITCH_INPUT_MODE command.
-        string error;
-        mozc::commands::Output raw_response;
-        if (connection_->TrySendCompositionMode(
-                kPropCompositionModes[i].mode, &raw_response, &error)) {
+        if (connection_->TrySendImeOff(composition_mode_, &raw_response,
+                                       &error)) {
           parser_->ParseResponse(raw_response, this);
         }
+      } else {
+        if (activated_) {
+          composition_mode_ = new_mode;
+        } else {
+          string error;
+          mozc::commands::Output raw_response;
+          if (connection_->TrySendImeOn(new_mode, &raw_response, &error)) {
+            parser_->ParseResponse(raw_response, this);
+          }
+        }
       }
+      DrawAll();
       return;
     }
   }
@@ -313,8 +320,13 @@ void ScimMozc::SetAuxString(const scim::String &str) {
   aux_ = str;
 }
 
-void ScimMozc::SetCompositionMode(mozc::commands::CompositionMode mode) {
-  composition_mode_ = mode;
+void ScimMozc::SetStatus(const mozc::commands::Status &status) {
+  if (!status.has_activated() || !status.has_mode()) {
+    return;
+  }
+
+  activated_ = status.activated();
+  composition_mode_ = status.mode();
   // Update the bar.
   const char *icon = GetCurrentCompositionModeIcon();
   scim::Property p = scim::Property(
@@ -422,6 +434,10 @@ void ScimMozc::InitializeBar() {
 }
 
 const char *ScimMozc::GetCurrentCompositionModeIcon() const {
+  if (!activated_) {
+    DCHECK_LT(mozc::commands::DIRECT, kNumCompositionModes);
+    return kPropCompositionModes[mozc::commands::DIRECT].icon;
+  }
   DCHECK(composition_mode_ < kNumCompositionModes);
   if (composition_mode_ < kNumCompositionModes) {
     return kPropCompositionModes[composition_mode_].icon;

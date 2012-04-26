@@ -34,9 +34,10 @@
 
 namespace mozc {
 
+class ConversionRequest;
 class Segments;
 
-class FocusCandidateRewriter: public RewriterInterface  {
+class FocusCandidateRewriter : public RewriterInterface  {
  public:
   FocusCandidateRewriter();
   virtual ~FocusCandidateRewriter();
@@ -50,9 +51,11 @@ class FocusCandidateRewriter: public RewriterInterface  {
              size_t segment_index,
              int candidate_index) const;
 
-  bool Rewrite(Segments *segments) const {
+  virtual bool Rewrite(const ConversionRequest &request,
+                       Segments *segments) const {
     return false;
   }
 };
-}  // mozc
+
+}  // namespace mozc
 #endif  // MOZC_REWRITER_FOCUS_CANDIDATE_REWRITER_H_

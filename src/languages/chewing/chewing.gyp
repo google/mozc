@@ -49,35 +49,23 @@
         'chewing_libraries.gypi',
       ],
     },
+    {
+      'target_name': 'chewing_all_test',
+      'type': 'none',
+    },
   ],
   'conditions': [
     ['OS=="linux"', {
       'targets': [
         {
-          'target_name': 'ibus_mozc_chewing_metadata',
-          'type': 'static_library',
-          'sources': [
-            'unix/ibus/mozc_engine_property.cc',
-          ],
-          'dependencies': [
-            '../../session/session_base.gyp:session_protocol',
-          ],
-          'includes': [
-            '../../unix/ibus/ibus_libraries.gypi',
-          ],
-        },
-        {
           'target_name': 'ibus_mozc_chewing',
           'type': 'executable',
           'sources': [
             'unix/ibus/main.cc',
+            'unix/ibus/mozc_engine_property.cc',
           ],
           'dependencies': [
             '../../unix/ibus/ibus.gyp:ibus_mozc_lib',
-            'ibus_mozc_chewing_metadata',
-          ],
-          'includes': [
-            '../../unix/ibus/ibus_libraries.gypi',
           ],
           'conditions': [
             ['chromeos==1', {

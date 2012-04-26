@@ -36,6 +36,7 @@
 #include <pthread.h>
 #endif
 
+
 #include "base/base.h"
 
 namespace mozc {
@@ -66,7 +67,17 @@ class Mutex : CRITICAL_SECTION {
   void Unlock() {
     ::LeaveCriticalSection(this);
   }
+
+  // Fallback implementations in case that ReaderWriterLock is not available.
+  void ReaderLock() { Lock(); }
+  void WriterLock() { Lock(); }
+  void ReaderUnlock() { Unlock(); }
+  void WriterUnlock() { Unlock(); }
 };
+
+// TODO(taku): implement ReaderWriterMutex for Windows.
+// e.g., http://msdn.microsoft.com/en-us/library/windows/desktop/ms683483.aspx
+typedef Mutex ReaderWriterMutex;
 
 #else   // OS_WINDOWS
 
@@ -108,10 +119,56 @@ class Mutex {
     pthread_mutex_unlock(&mutex_);
   }
 
+  // Fallback implementations in case that ReaderWriterLock is not available.
+  void ReaderLock() { Lock(); }
+  void WriterLock() { Lock(); }
+  void ReaderUnlock() { Unlock(); }
+  void WriterUnlock() { Unlock(); }
+
  private:
   pthread_mutex_t mutex_;
 };
-#endif
+
+#if defined(OS_ANDROID) && defined(__ANDROID_API__) && (__ANDROID_API__ < 9) || \
+    defined(__native_client__)
+// pthread_rwlock_init is not available < Android ver. 2.3 and NaCl.
+// TODO(all): Enables ReaderWriterMutex on Android when API Level >= 9.
+typedef Mutex ReaderWriterMutex;
+#else  // (!OS_ANDROID || __ANDROID_API__ >= 9) && !__native_client__
+
+#define HAVE_READER_WRITER_MUTEX
+
+class ReaderWriterMutex {
+ public:
+  ReaderWriterMutex() {
+    pthread_rwlock_init(&mutex_, NULL);
+  }
+
+  virtual ~ReaderWriterMutex() {
+    pthread_rwlock_destroy(&mutex_);
+  }
+
+  void ReaderLock() {
+    pthread_rwlock_rdlock(&mutex_);
+  }
+
+  void ReaderUnlock() {
+    pthread_rwlock_unlock(&mutex_);
+  }
+
+  void WriterLock() {
+    pthread_rwlock_wrlock(&mutex_);
+  }
+
+  void WriterUnlock() {
+    pthread_rwlock_unlock(&mutex_);
+  }
+
+ private:
+  pthread_rwlock_t mutex_;
+};
+#endif  // (!OS_ANDROID || __ANDROID_API__ >= 9) && !__native_client__
+#endif  // OS_WINDOWS
 
 class scoped_lock {
  public:
@@ -131,7 +188,33 @@ class scoped_lock {
   scoped_lock() {}
 };
 
+class scoped_writer_lock {
+ public:
+  explicit scoped_writer_lock(ReaderWriterMutex *mutex) : mutex_(mutex) {
+    mutex_->WriterLock();
+  }
+  ~scoped_writer_lock() {
+    mutex_->WriterUnlock();
+  }
+ private:
+  ReaderWriterMutex *mutex_;
+};
+
+class scoped_reader_lock {
+ public:
+  explicit scoped_reader_lock(ReaderWriterMutex *mutex) : mutex_(mutex) {
+    mutex_->ReaderLock();
+  }
+  ~scoped_reader_lock() {
+    mutex_->ReaderUnlock();
+  }
+ private:
+  ReaderWriterMutex *mutex_;
+};
+
 typedef scoped_lock MutexLock;
+typedef scoped_reader_lock ReaderMutexLock;
+typedef scoped_writer_lock WriterMutexLock;
 
 enum CallOnceState {
   ONCE_INIT = 0,

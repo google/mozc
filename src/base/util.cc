@@ -134,9 +134,17 @@ const char *const kNumKanjiBiggerRanks[] = {
   "", "\xe4\xb8\x87", "\xe5\x84\x84", "\xe5\x85\x86", "\xe4\xba\xac"
   //   "", "万", "億", "兆", "京"
 };
+const char *const kNumKanjiOldRanks[] = {
+  NULL, "", "\xe6\x8b\xbe", "\xe7\x99\xbe", "\xe9\x98\xa1"
+  //   NULL, "", "拾", "百", "阡"
+};
+const char *const kNumKanjiBiggerOldRanks[] = {
+  "", "\xe8\x90\xac", "\xe5\x84\x84", "\xe5\x85\x86", "\xe4\xba\xac"
+  //   "", "萬", "億", "兆", "京"
+};
 
 const char *const *const kKanjiDigitsVariations[] = {
-  kNumKanjiDigits, kNumKanjiOldDigits, NULL
+  kNumHalfDigits, kNumWideDigits, kNumKanjiDigits, kNumKanjiOldDigits, NULL
 };
 const char *const *const kSingleDigitsVariations[] = {
   kNumKanjiDigits, kNumWideDigits, NULL
@@ -194,14 +202,7 @@ const int kSpecialNumericSizes[] = {
 
 const char *const kNumZero = "\xe9\x9b\xb6";
 // const char* const kNumZero = "零";
-const char *const kNumOldTen = "\xe6\x8b\xbe";
-// const char* const kNumOldTen = "拾";
-const char *const kNumOldTwenty = "\xe5\xbb\xbf";
-// const char* const kNumOldTwenty = "廿";
-const char *const kNumOldThousand = "\xe9\x98\xa1";
-// const char* const kNumOldThousand = "阡";
-const char *const kNumOldTenThousand = "\xe8\x90\xac";
-// const char* const kNumOldTenThousand = "萬";
+
 const char *const kNumGoogol =
 "100000000000000000000000000000000000000000000000000"
 "00000000000000000000000000000000000000000000000000";
@@ -212,26 +213,6 @@ void AppendToEachElement(
     vector<pair<string, mozc::Util::NumberString::Style> > *out) {
   for (int i = 0; i < out->size(); i++) {
     (*out)[i].first.append(s);
-  }
-}
-
-void AppendReplacedElements(
-    const string &before,
-    const string &after,
-    vector<pair<string, mozc::Util::NumberString::Style> > *texts) {
-  for (size_t i = 0; i < texts->size(); ++i) {
-    size_t tpos = (*texts)[i].first.find(before);
-    if (tpos == string::npos) {
-      continue;
-    }
-    string replaced = (*texts)[i].first;
-    do {
-      replaced.replace(tpos, before.size(), after);
-      tpos = replaced.find(before, tpos);
-    }while (tpos != string::npos);
-
-    texts->push_back(make_pair(replaced,
-                               mozc::Util::NumberString::NUMBER_OLD_KANJI));
   }
 }
 
@@ -862,11 +843,13 @@ bool Util::IsArabicNumber(const string &input_string) {
   return true;
 }
 
+namespace {
 void PushBackNumberString(const string &value, const string &description,
                           Util::NumberString::Style style,
                           vector<Util::NumberString> *output) {
   output->push_back(Util::NumberString(value, description, style));
 }
+}  // namespace
 
 // Number Converters main functions.
 // They receives two arguments:
@@ -877,116 +860,137 @@ void PushBackNumberString(const string &value, const string &description,
 bool Util::ArabicToKanji(const string &input_num,
                          vector<NumberString> *output) {
   DCHECK(output);
+  const int kDigitsInBigRank = 4;
 
   if (!IsDecimalNumeric(input_num)) {
     return false;
   }
 
-  for (const char *const *const *digits_ptr = kKanjiDigitsVariations;
-       *digits_ptr; digits_ptr++) {
-    bool is_old = (*digits_ptr == kNumKanjiOldDigits);
-    const char *const *const digits = *digits_ptr;
-
-    const char *input_ptr = input_num.data();
-    int input_len = static_cast<int>(input_num.size());
-    while (input_len > 0 && *input_ptr == '0') {
-      ++input_ptr;
-      --input_len;
+  // We don't convert a number starting with '0', other than 0 itself.
+  if (input_num[0] == '0') {
+    const char *p = input_num.c_str();
+    while (*p == '0') {
+      ++p;
     }
-    if (input_len == 0) {
+    if (*p == '\0') {
       // "大字"
-      // http://ja.wikipedia.org/wiki/%E5%A4%A7%E5%AD%97_(%E6%95%B0%E5%AD%97)
       PushBackNumberString(kNumZero, "\xE5\xA4\xA7\xE5\xAD\x97",
-                           Util::NumberString::NUMBER_OLD_KANJI, output);
-      break;
+                           NumberString::NUMBER_OLD_KANJI, output);
+      return true;
     }
-    int bigger_ranks = input_len / 4;
-    if (bigger_ranks * 4 == input_len) {
-      --bigger_ranks;
+  }
+
+  // If given number needs higher ranks than our expectations,
+  // we don't convert it.
+  if (arraysize(kNumKanjiBiggerRanks) * kDigitsInBigRank < input_num.size()) {
+    return false;
+  }
+
+  // The order in this array must be same with kKanjiDigitsVariations[].
+  const NumberString::Style kStyles[] = {
+    NumberString::NUMBER_ARABIC_AND_KANJI_HALFWIDTH,
+    NumberString::NUMBER_ARABIC_AND_KANJI_FULLWIDTH,
+    NumberString::NUMBER_KANJI,
+    NumberString::NUMBER_OLD_KANJI,
+  };
+  // To know what "大字" means, please refer
+  // http://ja.wikipedia.org/wiki/%E5%A4%A7%E5%AD%97_(%E6%95%B0%E5%AD%97)
+  const char *kDescriptions[] = {
+    // "数字"
+    "\xE6\x95\xB0\xE5\xAD\x97",
+    // "数字"
+    "\xE6\x95\xB0\xE5\xAD\x97",
+    // "漢数字"
+    "\xE6\xBC\xA2\xE6\x95\xB0\xE5\xAD\x97",
+    // "大字"
+    "\xE5\xA4\xA7\xE5\xAD\x97",
+  };
+
+  // Fill '0' in the beginning of input_num to make its length
+  // (N * kDigitsInBigRank).
+  const int filled_zero_num = (kDigitsInBigRank -
+      (input_num.size() % kDigitsInBigRank)) % kDigitsInBigRank;
+  string input(filled_zero_num, '0');
+  input.append(input_num);
+
+  // Segment into kDigitsInBigRank-digits pieces
+  vector<string> ranked_numbers;
+  for (int i = static_cast<int>(input.size()) - kDigitsInBigRank; i >= 0;
+       i -= kDigitsInBigRank) {
+    ranked_numbers.push_back(input.substr(i, kDigitsInBigRank));
+  }
+  const size_t rank_size = ranked_numbers.size();
+
+  for (size_t variation_index = 0;
+       kKanjiDigitsVariations[variation_index] != NULL; ++variation_index) {
+    const char *const *const digits = kKanjiDigitsVariations[variation_index];
+    const NumberString::Style style = kStyles[variation_index];
+
+    if (rank_size == 1 &&
+        (style == NumberString::NUMBER_ARABIC_AND_KANJI_HALFWIDTH ||
+         style == NumberString::NUMBER_ARABIC_AND_KANJI_FULLWIDTH)) {
+      continue;
     }
-    if (bigger_ranks < static_cast<int>(arraysize(kNumKanjiBiggerRanks))) {
-      // pair of value and type
-      vector<pair<string, Util::NumberString::Style> > results;
-      const Util::NumberString::Style kStyle = is_old ?
-          Util::NumberString::NUMBER_OLD_KANJI :
-          Util::NumberString::NUMBER_KANJI;
-      results.push_back(make_pair("", kStyle));
-      for (; bigger_ranks >= 0; --bigger_ranks) {
-        bool is_printed = false;
-        int smaller_rank_len = input_len - bigger_ranks * 4;
-        for (int i = smaller_rank_len; i > 0; --i, ++input_ptr, --input_len) {
-          uint32 n = *input_ptr - '0';
-          if (n != 0) {
-            is_printed = true;
-          }
-          if (!is_old && i == 4 && bigger_ranks > 0 &&
-              strncmp(input_ptr, "1000", 4) == 0) {
-            AppendToEachElement(digits[n], &results);
-            AppendToEachElement(kNumKanjiRanks[i], &results);
-            input_ptr += 4;
-            input_len -= 4;
-            break;
-          }
-          if (n == 1) {
-            if (is_old) {
-              AppendToEachElement(digits[n], &results);
-            } else if (i == 4) {
-              if (is_old) {
-                AppendToEachElement(digits[n], &results);
-              } else {
-                const size_t len = results.size();
-                for (size_t j = 0; j < len; ++j) {
-                  results.push_back(make_pair(results[j].first + digits[n],
-                                              kStyle));
-                }
-              }
-            } else if (i == 1) {
-              AppendToEachElement(digits[n], &results);
-            }
-          } else if (n >= 2 && n <= 9) {
-            AppendToEachElement(digits[n], &results);
-          }
-          if (n > 0 && n <= 9) {
-            AppendToEachElement(
-                (i == 2 && is_old)? kNumOldTen : kNumKanjiRanks[i], &results);
-          }
+
+    const char *const *ranks = (style == NumberString::NUMBER_OLD_KANJI) ?
+        kNumKanjiOldRanks : kNumKanjiRanks;
+    const char *const *bigger_ranks =
+        (style == NumberString::NUMBER_OLD_KANJI) ?
+        kNumKanjiBiggerOldRanks : kNumKanjiBiggerRanks;
+
+    // Converts each segment, and merges them with rank Kanjis.
+    string result;
+    for (int rank = rank_size - 1; rank >= 0; --rank) {
+      const string &segment = ranked_numbers[rank];
+      string segment_result;
+      bool leading = true;
+      for (size_t i = 0; i < segment.size(); ++i) {
+        if (leading && segment[i] == '0') {
+          continue;
         }
-        if (is_printed) {
-          AppendToEachElement(kNumKanjiBiggerRanks[bigger_ranks], &results);
-        }
-      }
-      if (is_old) {
-        AppendReplacedElements("\xe5\x8d\x83", kNumOldThousand, &results);
-        // AppendReplacedElements("千", kNumOldThousand, &results);
-        AppendReplacedElements("\xe5\xbc\x90\xe6\x8b\xbe", kNumOldTwenty,
-                               &results);
-        // AppendReplacedElements("弐拾", kNumOldTwenty, &results);
-        AppendReplacedElements(kNumKanjiBiggerRanks[1], kNumOldTenThousand,
-                               &results);
-      }
-      if (is_old && input_num == "10") {
-        // add "拾" in case of input_num == "10"
-        results.push_back(make_pair("\xE6\x8B\xBE",
-                                    Util::NumberString::NUMBER_OLD_KANJI));
-      }
-      for (vector<pair<string, Util::NumberString::Style> >::const_iterator it =
-           results.begin();
-           it != results.end(); ++it) {
-        if (it->second == Util::NumberString::NUMBER_OLD_KANJI) {
-          // "大字"
-          // http://ja.wikipedia.org/wiki/%E5%A4%A7%E5%AD%97_(%E6%95%B0%E5%AD%97)
-          PushBackNumberString(it->first,
-                               "\xE5\xA4\xA7\xE5\xAD\x97",
-                               it->second, output);
+
+        if (style == NumberString::NUMBER_KANJI ||
+            style == NumberString::NUMBER_OLD_KANJI) {
+          if (segment[i] == '0') {
+            continue;
+          }
+          if (i == kDigitsInBigRank - 1 || segment[i] != '1') {
+            segment_result += digits[segment[i] - '0'];
+          }
+          segment_result += ranks[kDigitsInBigRank - i];
         } else {
-          // "漢数字"
-          PushBackNumberString(it->first,
-                               "\xE6\xBC\xA2\xE6\x95\xB0\xE5\xAD\x97",
-                               it->second, output);
+          segment_result += digits[segment[i] - '0'];
         }
+        leading = false;
+      }
+      if (!segment_result.empty()) {
+        result += segment_result + bigger_ranks[rank];
+      }
+    }
+
+    const char *description = kDescriptions[variation_index];
+    // Add simply converted numbers.
+    PushBackNumberString(result, description, style, output);
+
+    // Add specialized style numbers.
+    if (style == NumberString::NUMBER_OLD_KANJI) {
+      // "弐拾"
+      const char *kOldTwoTen = "\xE5\xBC\x90\xE6\x8B\xBE";
+      // "廿"
+      const char *kOldTwenty = "\xE5\xBB\xBF";
+
+      size_t id;
+      string result2(result);
+      while ((id = result2.find(kOldTwoTen)) != string::npos) {
+        result2.replace(id, strlen(kOldTwoTen), kOldTwenty);
+      }
+
+      if (result2 != result) {
+        PushBackNumberString(result2, description, style, output);
       }
     }
   }
+
   return true;
 }
 

@@ -59,15 +59,16 @@
       ],
       'dependencies': [
         '../protobuf/protobuf.gyp:protobuf',
-        'genproto_ipc',
+        'genproto_ipc#host',
       ],
       'export_dependent_settings': [
-        'genproto_ipc',
+        'genproto_ipc#host',
       ],
     },
     {
       'target_name': 'genproto_ipc',
       'type': 'none',
+      'toolsets': ['host'],
       'sources': [
         'ipc.proto',
       ],
@@ -84,15 +85,16 @@
       ],
       'dependencies': [
         '../protobuf/protobuf.gyp:protobuf',
-        'genproto_window_info',
+        'genproto_window_info#host',
       ],
       'export_dependent_settings': [
-        'genproto_window_info',
+        'genproto_window_info#host',
       ],
     },
     {
       'target_name': 'genproto_window_info',
       'type': 'none',
+      'toolsets': ['host'],
       'sources': [
         'window_info.proto',
       ],

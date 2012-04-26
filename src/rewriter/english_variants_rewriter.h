@@ -38,15 +38,17 @@
 // for FRIEND_TEST()
 
 namespace mozc {
+class ConversionRequest;
 
-class EnglishVariantsRewriter: public RewriterInterface  {
+class EnglishVariantsRewriter : public RewriterInterface  {
  public:
   EnglishVariantsRewriter();
   virtual ~EnglishVariantsRewriter();
 
   virtual int capability() const;
 
-  virtual bool Rewrite(Segments *segments) const;
+  virtual bool Rewrite(const ConversionRequest &request,
+                       Segments *segments) const;
 
  private:
   FRIEND_TEST(EnglishVariantsRewriterTest, ExpandEnglishVariants);
@@ -56,6 +58,7 @@ class EnglishVariantsRewriter: public RewriterInterface  {
                              vector<string> *variants) const;
   bool ExpandEnglishVariantsWithSegment(Segment *seg) const;
 };
-}
+
+}  // namespace mozc
 
 #endif  // MOZC_REWRITER_ENGLISH_VARIANTS_REWRITER_H_

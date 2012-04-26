@@ -39,6 +39,7 @@
 #include "base/util.h"
 #include "config/config_handler.h"
 #include "config/config.pb.h"
+#include "converter/conversion_request.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
 #include "rewriter/rewriter_interface.h"
@@ -79,7 +80,7 @@ class SymbolDictionary {
  private:
   scoped_ptr<EmbeddedDictionary> dic_;
 };
-} // namespace
+}  // namespace
 
 // Some characters may have different description for full/half width forms.
 // Here we just change the description in this function.
@@ -316,9 +317,8 @@ bool SymbolRewriter::RewriteEachCandidate(Segments *segments) {
   return modified;
 }
 
-// static function
 bool SymbolRewriter::RewriteEntireCandidate(const ConversionRequest &request,
-                                            Segments *segments) {
+                                            Segments *segments) const {
   string key;
   for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
     key += segments->conversion_segment(i).key();
@@ -342,8 +342,7 @@ bool SymbolRewriter::RewriteEntireCandidate(const ConversionRequest &request,
         Util::CharsLen(segments->conversion_segment(0).key());
     const int diff = static_cast<int>(all_length - first_length);
     if (diff > 0) {
-      ConverterFactory::GetConverter()->ResizeSegment(
-          segments, request, 0, diff);
+      parent_converter_->ResizeSegment(segments, request, 0, diff);
     }
   } else {
     InsertCandidates(token->value, token->value_size,
@@ -354,7 +353,10 @@ bool SymbolRewriter::RewriteEntireCandidate(const ConversionRequest &request,
   return true;
 }
 
-SymbolRewriter::SymbolRewriter() {}
+SymbolRewriter::SymbolRewriter(const ConverterInterface *parent_converter)
+    : parent_converter_(parent_converter) {
+  DCHECK(parent_converter_);
+}
 
 SymbolRewriter::~SymbolRewriter() {}
 
@@ -362,12 +364,8 @@ int SymbolRewriter::capability() const {
   return RewriterInterface::CONVERSION;
 }
 
-bool SymbolRewriter::Rewrite(Segments *segments) const {
-  return RewriteForRequest(ConversionRequest(), segments);
-}
-
-bool SymbolRewriter::RewriteForRequest(const ConversionRequest &request,
-                                       Segments *segments) const {
+bool SymbolRewriter::Rewrite(const ConversionRequest &request,
+                             Segments *segments) const {
   if (!GET_CONFIG(use_symbol_conversion)) {
     VLOG(2) << "no use_symbol_conversion";
     return false;

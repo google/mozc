@@ -34,13 +34,14 @@
 #include <set>
 #include <string>
 #include <vector>
-
 #include "base/config_file_stream.h"
 #include "base/util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/character_form_manager.h"
+#include "converter/conversion_request.h"
 #include "converter/segments.h"
+#include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
 #include "rewriter/rewriter_interface.h"
 #include "rewriter/variants_rewriter.h"
@@ -71,15 +72,7 @@ class FeatureValue {
   uint32 reserved_     : 31;  // this area is reserved for future
 };
 
-// define kLidGroup[]
-#include "rewriter/user_segment_history_rewriter_rule.h"
-
-// return the POS group of the given candidate
-uint16 GetPosGroup(const Segment::Candidate &candidate) {
-  return kLidGroup[candidate.lid];
-}
-
-bool IsPunctuation(const string &str) {
+bool IsPunctuationInternal(const string &str) {
   // return (str == "。" || str == "｡" ||
   // str == "、" || str == "､" ||
   // str == "，" || str == "," ||
@@ -88,13 +81,6 @@ bool IsPunctuation(const string &str) {
           str == "\xE3\x80\x81" || str == "\xEF\xBD\xA4" ||
           str == "\xEF\xBC\x8C" || str == "," ||
           str == "\xEF\xBC\x8E"  || str == ".");
-}
-
-bool IsPunctuation(const Segment &seg,
-                   const Segment::Candidate &candidate) {
-  return (POSMatcher::IsJapanesePunctuations(candidate.lid) &&
-          candidate.lid == candidate.rid &&
-          IsPunctuation(seg.key()) && IsPunctuation(candidate.value));
 }
 
 class KeyTriggerValue {
@@ -121,16 +107,10 @@ class KeyTriggerValue {
   uint32 candidates_size_ : 8;   // candidate size
 };
 
-struct ScoreType {
-  uint32 last_access_time;
-  uint32 score;
-  const Segment::Candidate *candidate;
-};
-
 class ScoreTypeCompare {
  public:
-  bool operator() (const ScoreType &a,
-                   const ScoreType &b) const {
+  bool operator() (const UserSegmentHistoryRewriter::ScoreType &a,
+                   const UserSegmentHistoryRewriter::ScoreType &b) const {
     if (a.score != b.score) {
       return (a.score > b.score);
     }
@@ -231,44 +211,6 @@ inline bool GetFeatureR(const Segments &segments, size_t i,
       base_value + '\t' +
       segments.segment(i + 1).candidate(j).value;
   return true;
-}
-
-// Feature "Left Number"
-inline bool GetFeatureLN(const Segments &segments, size_t i,
-                         const string &base_key,
-                         const string &base_value, string *value) {
-  DCHECK(value);
-  if (i < 1) {
-    return false;
-  }
-  const int j = GetDefaultCandidateIndex(segments.segment(i - 1));
-  const Segment::Candidate &candidate = segments.segment(i - 1).candidate(j);
-  if (POSMatcher::IsNumber(candidate.rid) ||
-      POSMatcher::IsKanjiNumber(candidate.rid) ||
-      Util::GetScriptType(candidate.value) == Util::NUMBER) {
-    *value = string("LN") + '\t' + base_key + '\t' + base_value;
-    return true;
-  }
-  return false;
-}
-
-// Feature "Right Number"
-inline bool GetFeatureRN(const Segments &segments, size_t i,
-                         const string &base_key,
-                         const string &base_value, string *value) {
-  DCHECK(value);
-  if (i + 1 >= segments.segments_size()) {
-    return false;
-  }
-  const int j = GetDefaultCandidateIndex(segments.segment(i + 1));
-  const Segment::Candidate &candidate = segments.segment(i + 1).candidate(j);
-  if (POSMatcher::IsNumber(candidate.lid) ||
-      POSMatcher::IsKanjiNumber(candidate.lid) ||
-      Util::GetScriptType(candidate.value) == Util::NUMBER) {
-    *value = string("RN") + '\t' + base_key + '\t' + base_value;
-    return true;
-  }
-  return false;
 }
 
 // Feature "Current"
@@ -395,7 +337,14 @@ bool GetSameValueCandidatePosition(const Segment *segment,
   return false;
 }
 
-bool SortCandidates(const vector<ScoreType> &sorted_scores, Segment *segment) {
+bool IsT13NCandidate(const Segment::Candidate &cand) {
+  // Regard the cand with 0-id as the transliterated candidate.
+  return (cand.lid == 0 && cand.rid == 0);
+}
+}  // namespace
+
+bool UserSegmentHistoryRewriter::SortCandidates(
+    const vector<ScoreType> &sorted_scores, Segment *segment) const {
   const uint32 top_score = sorted_scores[0].score;
   const size_t kMaxRerankSize = min(sorted_scores.size(),
                                     static_cast<size_t>(5));
@@ -457,7 +406,8 @@ bool SortCandidates(const vector<ScoreType> &sorted_scores, Segment *segment) {
         // This fix addresses Bug #3493644.
         // (Wrong character width annotation after learning alphabet)
         new_candidate->description.clear();
-        VariantsRewriter::SetDescriptionForCandidate(new_candidate);
+        VariantsRewriter::SetDescriptionForCandidate(*pos_matcher_,
+                                                     new_candidate);
         ++next_pos;
         seen.insert(normalized_value);
       }
@@ -471,10 +421,13 @@ bool SortCandidates(const vector<ScoreType> &sorted_scores, Segment *segment) {
   }
   return true;
 }
-}  // namespace
 
-UserSegmentHistoryRewriter::UserSegmentHistoryRewriter()
-    : storage_(new LRUStorage) {
+UserSegmentHistoryRewriter::UserSegmentHistoryRewriter(
+    const POSMatcher *pos_matcher,
+    const PosGroup *pos_group)
+    : storage_(new LRUStorage),
+      pos_matcher_(pos_matcher),
+      pos_group_(pos_group) {
   Reload();
   g_lru_storage = storage_.get();
 
@@ -585,19 +538,13 @@ bool UserSegmentHistoryRewriter::GetScore(const Segments &segments,
   return (*score > 0);
 }
 
-namespace {
-bool IsT13NCandidate(const Segment::Candidate &cand) {
-  // Regard the cand with 0-id as the transliterated candidate.
-  return (cand.lid == 0 && cand.rid == 0);
-}
-}  // namespace
-
 // Returns true if |lhs| candidate can be replaceable with |rhs|.
 bool UserSegmentHistoryRewriter::Replaceable(
     const Segment::Candidate &lhs, const Segment::Candidate &rhs) const {
   const bool same_functional_value =
       (lhs.functional_value() == rhs.functional_value());
-  const bool same_pos_group = (GetPosGroup(lhs) == GetPosGroup(rhs));
+  const bool same_pos_group =
+      (pos_group_->GetPosGroup(lhs.lid) == pos_group_->GetPosGroup(rhs.lid));
   return (same_functional_value &&
           (same_pos_group || IsT13NCandidate(lhs) || IsT13NCandidate(rhs)));
 }
@@ -895,7 +842,8 @@ bool UserSegmentHistoryRewriter::RewriteNumber(Segment *segment) const {
   return SortCandidates(scores, segment);
 }
 
-bool UserSegmentHistoryRewriter::Rewrite(Segments *segments) const {
+bool UserSegmentHistoryRewriter::Rewrite(const ConversionRequest &request,
+                                         Segments *segments) const {
   if (!IsAvailable(*segments)) {
     return false;
   }
@@ -987,4 +935,56 @@ void UserSegmentHistoryRewriter::Clear() {
 LRUStorage *UserSegmentHistoryRewriter::GetStorage() {
   return g_lru_storage;
 }
+
+bool UserSegmentHistoryRewriter::IsPunctuation(
+    const Segment &seg,
+    const Segment::Candidate &candidate) const {
+  return (pos_matcher_->IsJapanesePunctuations(candidate.lid) &&
+          candidate.lid == candidate.rid &&
+          IsPunctuationInternal(seg.key()) &&
+          IsPunctuationInternal(candidate.value));
+}
+
+// Feature "Left Number"
+bool UserSegmentHistoryRewriter::GetFeatureLN(const Segments &segments,
+                                              size_t i,
+                                              const string &base_key,
+                                              const string &base_value,
+                                              string *value) const {
+  DCHECK(value);
+  if (i < 1) {
+    return false;
+  }
+  const int j = GetDefaultCandidateIndex(segments.segment(i - 1));
+  const Segment::Candidate &candidate = segments.segment(i - 1).candidate(j);
+  if (pos_matcher_->IsNumber(candidate.rid) ||
+      pos_matcher_->IsKanjiNumber(candidate.rid) ||
+      Util::GetScriptType(candidate.value) == Util::NUMBER) {
+    *value = string("LN") + '\t' + base_key + '\t' + base_value;
+    return true;
+  }
+  return false;
+}
+
+// Feature "Right Number"
+bool UserSegmentHistoryRewriter::GetFeatureRN(const Segments &segments,
+                                              size_t i,
+                                              const string &base_key,
+                                              const string &base_value,
+                                              string *value) const {
+  DCHECK(value);
+  if (i + 1 >= segments.segments_size()) {
+    return false;
+  }
+  const int j = GetDefaultCandidateIndex(segments.segment(i + 1));
+  const Segment::Candidate &candidate = segments.segment(i + 1).candidate(j);
+  if (pos_matcher_->IsNumber(candidate.lid) ||
+      pos_matcher_->IsKanjiNumber(candidate.lid) ||
+      Util::GetScriptType(candidate.value) == Util::NUMBER) {
+    *value = string("RN") + '\t' + base_key + '\t' + base_value;
+    return true;
+  }
+  return false;
+}
+
 }  // namespace mozc

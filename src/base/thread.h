@@ -37,6 +37,8 @@
 #include <pthread.h>
 #endif
 
+#include "base/compiler_specific.h"
+
 
 // Definition of TLS (Thread Local Storage) keyword.
 #ifndef TLS_KEYWORD
@@ -66,8 +68,7 @@
 #endif  // OS_LINUX && !OS_ANDROID && (__GNUC__ || __clang__)
 
 
-#if defined(OS_MACOSX) && \
-    defined(__GNUC__) && (__GNUC__ * 100 + __GNUC_MINOR__ >= 405)
+#if defined(OS_MACOSX) && MOZC_GCC_VERSION_GE(4, 5)
 // GCC 4.5 and later can *emulate* TLS on Mac even though it is
 // expensive operation.
 #define TLS_KEYWORD __thread

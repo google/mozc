@@ -33,6 +33,11 @@
 #include <Aux_ulib.h>
 #include <Winternl.h>
 
+// Workaround against KB813540
+#define _ATL_NO_AUTOMATIC_NAMESPACE
+#define _WTL_NO_AUTOMATIC_NAMESPACE
+#include <atlbase_mozc.h>
+
 #include <clocale>
 #endif  // OS_WINDOWS
 
@@ -106,6 +111,37 @@ bool AdjustPrivilegesForShutdown() {
 bool EqualLuid(const LUID &L1, const LUID &L2) {
   return (L1.LowPart == L2.LowPart && L1.HighPart == L2.HighPart);
 }
+
+
+// The registry key for the CUAS setting.
+// Note: We have the same values in win32/base/imm_util.cc
+// TODO(yukawa): Define these constants at the same place.
+const wchar_t kCUASKey[] = L"Software\\Microsoft\\CTF\\SystemShared";
+const wchar_t kCUASValueName[] = L"CUAS";
+
+// Reads CUAS value in the registry keys and returns true if the value is set
+// to 1.
+// The CUAS value is read from 64 bit registry keys if KEY_WOW64_64KEY is
+// specified as |additional_regsam| and read from 32 bit registry keys if
+// KEY_WOW64_32KEY is specified.
+bool IsCuasEnabledInternal(REGSAM additional_regsam) {
+  const REGSAM sam_desired = KEY_QUERY_VALUE | additional_regsam;
+  ATL::CRegKey key;
+  LONG result = key.Open(HKEY_LOCAL_MACHINE, kCUASKey, sam_desired);
+  if (ERROR_SUCCESS != result) {
+    LOG(ERROR) << "Cannot open HKEY_LOCAL_MACHINE\\Software\\Microsoft\\CTF\\"
+                  "SystemShared: "
+               << result;
+    return false;
+  }
+  DWORD cuas;
+  result = key.QueryDWORDValue(kCUASValueName, cuas);
+  if (ERROR_SUCCESS != result) {
+    LOG(ERROR) << "Failed to query CUAS value:" << result;
+  }
+  return (cuas == 1);
+}
+
 }  // namespace
 
 bool WinUtil::IsDLLSynchronizationHeld(bool *lock_status) {
@@ -369,6 +405,21 @@ bool WinUtil::IsServiceAccount(bool *is_service) {
   return true;
 }
 
+bool WinUtil::IsCuasEnabled() {
+  if (Util::IsVistaOrLater()) {
+    // CUAS is always enabled on Vista or later.
+    return true;
+  }
+
+  if (Util::IsWindowsX64()) {
+    // see both 64 bit and 32 bit registry keys
+    return IsCuasEnabledInternal(KEY_WOW64_64KEY) &&
+           IsCuasEnabledInternal(KEY_WOW64_32KEY);
+  } else {
+    return IsCuasEnabledInternal(0);
+  }
+}
+
 ScopedCOMInitializer::ScopedCOMInitializer()
     : hr_(::CoInitialize(NULL)) {
 }
@@ -378,5 +429,6 @@ ScopedCOMInitializer::~ScopedCOMInitializer() {
     ::CoUninitialize();
   }
 }
+
 #endif  // OS_WINDOWS
 }  // namespace mozc

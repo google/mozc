@@ -308,16 +308,13 @@ bool PunctuationContext::DirectCommit(char ch) {
   string text(1, ch);
 
   if (session_config_.full_width_punctuation_mode) {
-    bool result;
     if (session_config_.simplified_chinese_mode) {
-      result = table_->GetDirectCommitTextForSimplifiedChinese(ch, &text);
+      table_->GetDirectCommitTextForSimplifiedChinese(ch, &text);
     } else {
-      result = table_->GetDirectCommitTextForTraditionalChinese(ch, &text);
+      table_->GetDirectCommitTextForTraditionalChinese(ch, &text);
     }
-
-    if (!result) {
-      return false;
-    }
+    // We use an original character as a commit text if
+    // GetDirectCommitTextFor*() is failed.
   } else {
     // TODO(hsumita): Move this logic to SessionConverter.
     if (session_config_.full_width_word_mode) {

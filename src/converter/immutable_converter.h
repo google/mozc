@@ -30,13 +30,11 @@
 #ifndef MOZC_CONVERTER_IMMUTABLE_CONVERTER_H_
 #define MOZC_CONVERTER_IMMUTABLE_CONVERTER_H_
 
-#include "converter/immutable_converter_interface.h"
-
 #include <string>
 #include <vector>
-
 #include "base/base.h"
 #include "converter/connector_interface.h"
+#include "converter/immutable_converter_interface.h"
 #include "converter/lattice.h"
 #include "converter/nbest_generator.h"
 #include "converter/segments.h"
@@ -47,12 +45,69 @@ namespace mozc {
 
 class DictionaryInterface;
 class ImmutableConverterInterface;
+class PosGroup;
+class POSMatcher;
 class SegmenterInterface;
 
-class ImmutableConverterImpl: public ImmutableConverterInterface {
+// Helper class for ImmutableConverterImpl::Viterbi() performance.
+// In Viterbi, we are calculating connection type in the loop like this,
+//  for (rnode_loop ...) {
+//    for (lnode_loop ...) {
+//      GetConnectionType(lnode, rnode)
+//    }
+//  }
+// By pre-calculating the connection type using rnode outside the lnode loop,
+// We can reduce computation time.
+class ConnectionTypeHandler {
+ public:
+  enum ConnectionType {
+    CONNECTED,
+    WEAK_CONNECTED,
+    NOT_CONNECTED,
+  };
+
+  ConnectionTypeHandler(const vector<uint16> &group,
+                        const Segments *segments,
+                        const SegmenterInterface *segmenter);
+
+  void SetRNode(const Node *rnode);
+
+  // Returns connection type using rnode.
+  ConnectionType GetConnectionType(Node *lnode) const;
+
+ private:
+  FRIEND_TEST(ConnectionTypeHandlerTest, GetConnectionType);
+
+  enum ReturnType {
+    DEFAULT,
+    RETURN_NOT_CONNECTED,
+    RETURN_CONNECTED_IF_LNODE_IS_VALID
+  };
+
+  // Original GetConnectionType for unittesting.
+  static ConnectionType GetConnectionTypeForUnittest(
+      const Node *lnode, const Node *rnode, const vector<uint16> &group,
+      const Segments *segments, const SegmenterInterface *segmenter);
+
+  const Node *rnode_;
+  const vector<uint16> &group_;
+  const Segments *segments_;
+  const SegmenterInterface *segmenter_;
+  ReturnType ret_;
+  Segment::SegmentType rtype_;
+  bool is_prediction_;
+};
+
+class ImmutableConverterImpl : public ImmutableConverterInterface {
  public:
   ImmutableConverterImpl();
-  explicit ImmutableConverterImpl(const SegmenterInterface *segmenter);
+  ImmutableConverterImpl(const DictionaryInterface *dictionary,
+                         const DictionaryInterface *suffix_dictionary,
+                         const SuppressionDictionary *suppression_dictionary,
+                         const ConnectorInterface *connector,
+                         const SegmenterInterface *segmenter,
+                         const POSMatcher *pos_matcher,
+                         const PosGroup *pos_group);
   virtual ~ImmutableConverterImpl() {}
 
   virtual bool Convert(Segments *segments) const;
@@ -61,6 +116,7 @@ class ImmutableConverterImpl: public ImmutableConverterInterface {
   FRIEND_TEST(ImmutableConverterTest, DummyCandidatesCost);
   FRIEND_TEST(ImmutableConverterTest, PredictiveNodesOnlyForConversionKey);
   FRIEND_TEST(ImmutableConverterTest, AddPredictiveNodes);
+  FRIEND_TEST(ConnectionTypeHandlerTest, GetConnectionType);
 
   void ExpandCandidates(NBestGenerator *nbest, Segment *segment,
                         Segments::RequestType request_type,
@@ -106,12 +162,6 @@ class ImmutableConverterImpl: public ImmutableConverterInterface {
                const Lattice &lattice,
                const vector<uint16> &group) const;
 
-  int GetConnectionType(const Node *lnode,
-                        const Node *rnode,
-                        const vector<uint16> &group,
-                        const Segments *segments) const;
-
-
   bool PredictionViterbi(Segments *segments,
                          const Lattice &lattice) const;
 
@@ -132,11 +182,23 @@ class ImmutableConverterImpl: public ImmutableConverterInterface {
     return connector_->GetTransitionCost(lnode->rid, rnode->lid) + rnode->wcost;
   }
 
-  ConnectorInterface *connector_;
-  DictionaryInterface *dictionary_;
+  const DictionaryInterface *dictionary_;
+  const DictionaryInterface *suffix_dictionary_;
+  const SuppressionDictionary *suppression_dictionary_;
+  const ConnectorInterface *connector_;
   const SegmenterInterface *segmenter_;
+  const POSMatcher *pos_matcher_;
+  const PosGroup *pos_group_;
 
-  int32 last_to_first_name_transition_cost_;
+  // Cache for POS ids.
+  const uint16 first_name_id_;
+  const uint16 last_name_id_;
+  const uint16 number_id_;
+  const uint16 unknown_id_;
+
+  // Cache for transition cost.
+  const int32 last_to_first_name_transition_cost_;
+
   DISALLOW_COPY_AND_ASSIGN(ImmutableConverterImpl);
 };
 

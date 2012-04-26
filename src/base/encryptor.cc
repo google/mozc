@@ -29,53 +29,49 @@
 
 #include "base/encryptor.h"
 
-#ifdef OS_WINDOWS
+
+#if defined(OS_WINDOWS)
 #include <windows.h>
 #include <wincrypt.h>
-#else
-#ifdef OS_MACOSX
+#elif defined(OS_MACOSX)
 #include <unistd.h>
 #include <sys/types.h>
-#endif
+#else
 #include <string.h>
+#endif  // platforms (OS_WINDOWS, OS_MACOSX, ...)
+
+#ifdef HAVE_OPENSSL
 #include <openssl/sha.h>   // Use default openssl
 #include <openssl/aes.h>
-#endif
+#endif  // HAVE_OPENSSL
+
 
 #include "base/password_manager.h"
 #include "base/util.h"
 
 #ifdef OS_MACOSX
 #include "base/mac_util.h"
-#endif
+#endif  // OS_MACOSX
 
 #include <string>
 
 namespace mozc {
 namespace {
 
-
-#ifdef OS_WINDOWS
+#if defined(OS_WINDOWS)
+const size_t kBlockSize = 16;  // 128bit
+const size_t kKeySize = 256;   // key length in bit
 // Use CBC mode:
 // CBC has been the most commonly used mode of operation.
 // See http://en.wikipedia.org/wiki/Block_cipher_modes_of_operation
-const DWORD kCryptMode   = CRYPT_MODE_CBC;  // crypt mode (CBC)
-
+const DWORD kCryptMode = CRYPT_MODE_CBC;   // crypt mode (CBC)
 // Use PKCS5 padding:
 // See http://www.chilkatsoft.com/faq/PKCS5_Padding.html
-const DWORD kPaddingMode = PKCS5_PADDING;   // padding mode
-#endif
-
-// Block size of AES is always 128 bit
-#ifndef OS_WINDOWS
+const DWORD kPaddingMode = PKCS5_PADDING;  // padding mode
+#elif defined(HAVE_OPENSSL)
 const size_t kBlockSize = AES_BLOCK_SIZE;
-#else
-const size_t kBlockSize = 16;  // 128bit
-#endif
+const size_t kKeySize = 256;   // key length in bit
 
-const size_t kKeySize = 256;    // key length in bit
-
-#ifndef OS_WINDOWS
 // Return SHA1 digest
 string HashSHA1(const string &data) {
   uint8 buf[SHA_DIGEST_LENGTH];   // 160bit
@@ -84,8 +80,8 @@ string HashSHA1(const string &data) {
   return result;
 }
 
-// On Linux/Mac, emulate Microsoft's CryptDerivePassword API
-// http://msdn.microsoft.com/en-us/library/aa379916(VS.85).aspx
+// By using OpenSSL's SHA1, emulate Microsoft's CryptDerivePassword API
+// http://msdn.microsoft.com/en-us/library/aa379916.aspx
 // says:
 // Let n be the required derived key length, in bytes.
 // The derived key is the first n bytes of the hash value after
@@ -135,17 +131,24 @@ string GetMSCryptDeriveKeyWithSHA1(const string &password,
 
   return HashSHA1(result1) + HashSHA1(result2);
 }
-#endif  // OS_WINDOWS
+#else
+// None of OS_ANDROID/OS_WINDOWS/HAVE_OPENSSL is defined.
+#error "Encryptor does not support your platform."
+#endif
+
 }  // namespace
 
 struct KeyData {
-#ifdef OS_WINDOWS
+#if defined(OS_WINDOWS)
   HCRYPTPROV prov;
   HCRYPTHASH hash;
   HCRYPTKEY  key;
-#else  // OS_WINDOWS
+#elif defined(HAVE_OPENSSL)
   AES_KEY encrypt_key;
   AES_KEY decrypt_key;
+#else
+// None of OS_ANDROID/OS_WINDOWS/HAVE_OPENSSL is defined.
+#error "Encryptor does not support your platform."
 #endif
 };
 

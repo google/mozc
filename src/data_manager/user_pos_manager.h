@@ -27,31 +27,44 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// This header file intentionally does not have include guard because
-// the purpose of this header file is embedding boilerplate code and
-// you may want to use this header file multiple times from a file.
+#ifndef MOZC_DATA_MANAGER_USER_POS_MANAGER_H_
+#define MOZC_DATA_MANAGER_USER_POS_MANAGER_H_
 
-// This header file provides a generic way to restore compiler's warning
-// settings saved by "push_warning_settings.h" so that you can disable
-// some unavoidable warnings temporarily.
-// Currently Visual C++, GCC 4.6 and later, and clang are supported.
-// On GCC 4.5 and prior, this header does nothing.
-//
-// Usage example:
-//   #include "base/push_warning_settings.h"
-//   #if defined(__GNUC__) && (__GNUC__ * 100 + __GNUC_MINOR__ >= 405)
-//   #pragma GCC diagnostic ignored "-Wconversion-null"
-//   #endif  // GCC 4.5 and greater
-//   EXPECT_EQ(false, false);
-//   #include "base/pop_warning_settings.h"
+#include "base/base.h"
+#include "base/mutex.h"
+#include "base/singleton.h"
+#include "data_manager/data_manager_interface.h"
 
-#if defined(_MSC_VER)
-  // Visual C++
-  #pragma warning(pop)
-#elif defined(__GNUC__) && (__GNUC__ * 100 + __GNUC_MINOR__ >= 406)
-  // G++ 4.6 and greater
-  #pragma GCC diagnostic pop
-#elif defined(__clang__)
-  // Clang
-  #pragma clang diagnostic pop
-#endif
+namespace mozc {
+
+class UserDictionary;
+class UserPOSInterface;
+
+// The class is responsible for creating correct
+class UserPosManager : public DataManagerInterface {
+ public:
+  // Returns the singleton of this class.
+  // TODO(noriyukit): This factory method is introduced just for step-by-step
+  // refactoring of mozc server. Will be removed after the clean up.
+  static UserPosManager *GetUserPosManager();
+
+  virtual ~UserPosManager() {}
+
+  virtual const UserPOSInterface *GetUserPOS() const;
+  virtual UserDictionary *GetUserDictionary() { return NULL; }
+
+  // TODO(noriyukit): Better to move GetPosGroup() to further derived class, as
+  // its use is restricted. Tentatively implemented in this class.
+  virtual const PosGroup *GetPosGroup();
+
+ protected:
+  UserPosManager() {}
+
+ private:
+  friend class Singleton<UserPosManager>;
+  DISALLOW_COPY_AND_ASSIGN(UserPosManager);
+};
+
+}  // namespace mozc
+
+#endif  // MOZC_DATA_MANAGER_USER_POS_MANAGER_H_

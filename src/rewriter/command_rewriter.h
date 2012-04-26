@@ -34,20 +34,22 @@
 
 namespace mozc {
 
+class ConversionRequest;
 class Segments;
 class Segment;
 
 // CommandRewriter is a Rewriter which inserts
 // "Command candidates" with which user can change the configurations
 // of Suggestions and/or Incogito mode.
-class CommandRewriter: public RewriterInterface  {
+class CommandRewriter : public RewriterInterface  {
  public:
   CommandRewriter();
   virtual ~CommandRewriter();
 
   virtual int capability() const;
 
-  virtual bool Rewrite(Segments *segments) const;
+  virtual bool Rewrite(const ConversionRequest &request,
+                       Segments *segments) const;
 
   virtual void Finish(Segments *segments);
 
@@ -70,5 +72,6 @@ class CommandRewriter: public RewriterInterface  {
                                                size_t reference_pos,
                                                size_t insert_pos) const;
 };
-}
+
+}  // namespace mozc
 #endif  // MOZC_REWRITER_COMMAND_REWRITER_H_

@@ -32,13 +32,19 @@
 #include "renderer/renderer_style_handler.h"
 #include "renderer/unix/const.h"
 #include "renderer/unix/font_spec.h"
+#include "renderer/unix/gtk_wrapper_mock.h"
 #include "testing/base/public/gunit.h"
+
+using ::testing::Return;
+using ::testing::_;
+using ::testing::StrEq;
 
 namespace mozc {
 namespace renderer {
 namespace gtk {
 
 namespace {
+
 RGBA RGBAColor2RGBA(const RendererStyle::RGBAColor &rgba) {
   RGBA result = {
     static_cast<uint8>(rgba.r()),
@@ -51,26 +57,39 @@ RGBA RGBAColor2RGBA(const RendererStyle::RGBAColor &rgba) {
 
 }  // namespace
 
+class TestableFontSpec : public FontSpec {
+ public:
+  explicit TestableFontSpec(GtkWrapperInterface *gtk) :
+    FontSpec(gtk) {}
+  virtual ~TestableFontSpec() {}
+
+  // Change access rights.
+  using FontSpec::LoadFontSpec;
+  using FontSpec::ReleaseFontSpec;
+  using FontSpec::fonts_;
+  using FontSpec::is_initialized_;
+};
+
 class FontSpecTest : public testing::Test {
  protected:
-  virtual void SetUp() {
-    font_spec_.reset(new FontSpec());
-  }
-
-  void ExpectAlignment(const PangoAlignment &expected,
+  void ExpectAlignment(const TestableFontSpec &font_spec,
+                       const PangoAlignment &expected,
                        FontSpecInterface::FONT_TYPE font_type) {
-    EXPECT_EQ(expected, font_spec_->GetFontAlignment(font_type));
+    EXPECT_EQ(expected, font_spec.GetFontAlignment(font_type));
   }
 
-  void ExpectFontDescription(const string &expected,
+  void ExpectFontDescription(const TestableFontSpec &font_spec,
+                             const string &expected,
                              FontSpecInterface::FONT_TYPE font_type) {
     EXPECT_EQ(expected, pango_font_description_to_string(
-        font_spec_->GetFontDescription(font_type)));
+        font_spec.GetFontDescription(font_type)));
   }
 
-  void ExpectFontAttribute(const RGBA &color, double scale,
+  void ExpectFontAttribute(const TestableFontSpec &font_spec,
+                           const RGBA &color,
+                           double scale,
                            FontSpecInterface::FONT_TYPE font_type) {
-    PangoAttrList *attributes = font_spec_->GetFontAttributes(font_type);
+    PangoAttrList *attributes = font_spec.GetFontAttributes(font_type);
     // Check color attribute
     {
       PangoAttrIterator *it = pango_attr_list_get_iterator(attributes);
@@ -99,67 +118,110 @@ class FontSpecTest : public testing::Test {
       pango_attribute_destroy(expected_attribute);
     }
   }
-
-  scoped_ptr<FontSpec> font_spec_;
 };
 
 TEST_F(FontSpecTest, AlignTest) {
-  ExpectAlignment(PANGO_ALIGN_LEFT, FontSpecInterface::FONTSET_CANDIDATE);
-  ExpectAlignment(PANGO_ALIGN_LEFT, FontSpecInterface::FONTSET_DESCRIPTION);
-  ExpectAlignment(PANGO_ALIGN_RIGHT, FontSpecInterface::FONTSET_FOOTER_INDEX);
-  ExpectAlignment(PANGO_ALIGN_CENTER,
+  GtkWrapperMock *mock = new GtkWrapperMock();
+
+  // Following EXPECT_CALLs actually make no sense for testing.
+  TestableFontSpec font_spec(mock);
+  ExpectAlignment(font_spec, PANGO_ALIGN_LEFT,
+                  FontSpecInterface::FONTSET_CANDIDATE);
+  ExpectAlignment(font_spec, PANGO_ALIGN_LEFT,
+                  FontSpecInterface::FONTSET_DESCRIPTION);
+  ExpectAlignment(font_spec, PANGO_ALIGN_RIGHT,
+                  FontSpecInterface::FONTSET_FOOTER_INDEX);
+  ExpectAlignment(font_spec, PANGO_ALIGN_CENTER,
                   FontSpecInterface::FONTSET_FOOTER_LABEL);
-  ExpectAlignment(PANGO_ALIGN_CENTER,
+  ExpectAlignment(font_spec, PANGO_ALIGN_CENTER,
                   FontSpecInterface::FONTSET_FOOTER_SUBLABEL);
-  ExpectAlignment(PANGO_ALIGN_CENTER, FontSpecInterface::FONTSET_SHORTCUT);
-  ExpectAlignment(PANGO_ALIGN_LEFT,
+  ExpectAlignment(font_spec, PANGO_ALIGN_CENTER,
+                  FontSpecInterface::FONTSET_SHORTCUT);
+  ExpectAlignment(font_spec, PANGO_ALIGN_LEFT,
                   FontSpecInterface::FONTSET_INFOLIST_CAPTION);
-  ExpectAlignment(PANGO_ALIGN_LEFT, FontSpecInterface::FONTSET_INFOLIST_TITLE);
-  ExpectAlignment(PANGO_ALIGN_LEFT,
+  ExpectAlignment(font_spec, PANGO_ALIGN_LEFT,
+                  FontSpecInterface::FONTSET_INFOLIST_TITLE);
+  ExpectAlignment(font_spec, PANGO_ALIGN_LEFT,
                   FontSpecInterface::FONTSET_INFOLIST_DESCRIPTION);
 }
 
 TEST_F(FontSpecTest, FontDescriptionTest) {
-  ExpectFontDescription(kNormalFont, FontSpecInterface::FONTSET_CANDIDATE);
-  ExpectFontDescription(kNormalFont, FontSpecInterface::FONTSET_DESCRIPTION);
-  ExpectFontDescription(kNormalFont, FontSpecInterface::FONTSET_FOOTER_INDEX);
-  ExpectFontDescription(kNormalFont, FontSpecInterface::FONTSET_FOOTER_LABEL);
-  ExpectFontDescription(kNormalFont,
-                  FontSpecInterface::FONTSET_FOOTER_SUBLABEL);
-  ExpectFontDescription(kShortcutFont, FontSpecInterface::FONTSET_SHORTCUT);
-  ExpectFontDescription(kNormalFont,
-                  FontSpecInterface::FONTSET_INFOLIST_CAPTION);
-  ExpectFontDescription(kNormalFont, FontSpecInterface::FONTSET_INFOLIST_TITLE);
-  ExpectFontDescription(kNormalFont,
-                  FontSpecInterface::FONTSET_INFOLIST_DESCRIPTION);
+  GtkWrapperMock *mock = new GtkWrapperMock();
+
+  TestableFontSpec font_spec(mock);
+  ExpectFontDescription(font_spec, kDefaultFontDescription,
+                        FontSpecInterface::FONTSET_CANDIDATE);
+  ExpectFontDescription(font_spec, kDefaultFontDescription,
+                        FontSpecInterface::FONTSET_DESCRIPTION);
+  ExpectFontDescription(font_spec, kDefaultFontDescription,
+                        FontSpecInterface::FONTSET_FOOTER_INDEX);
+  ExpectFontDescription(font_spec, kDefaultFontDescription,
+                        FontSpecInterface::FONTSET_FOOTER_LABEL);
+  ExpectFontDescription(font_spec, kDefaultFontDescription,
+                        FontSpecInterface::FONTSET_FOOTER_SUBLABEL);
+  ExpectFontDescription(font_spec, kDefaultFontDescription,
+                        FontSpecInterface::FONTSET_SHORTCUT);
+  ExpectFontDescription(font_spec, kDefaultFontDescription,
+                        FontSpecInterface::FONTSET_INFOLIST_CAPTION);
+  ExpectFontDescription(font_spec, kDefaultFontDescription,
+                        FontSpecInterface::FONTSET_INFOLIST_TITLE);
+  ExpectFontDescription(font_spec, kDefaultFontDescription,
+                        FontSpecInterface::FONTSET_INFOLIST_DESCRIPTION);
+
+  const char kDummyFontDescription[] = "Foo,Bar,Baz";
+  font_spec.Reload(kDummyFontDescription);
+  ExpectFontDescription(font_spec, kDummyFontDescription,
+                        FontSpecInterface::FONTSET_CANDIDATE);
+  ExpectFontDescription(font_spec, kDummyFontDescription,
+                        FontSpecInterface::FONTSET_DESCRIPTION);
+  ExpectFontDescription(font_spec, kDummyFontDescription,
+                        FontSpecInterface::FONTSET_FOOTER_INDEX);
+  ExpectFontDescription(font_spec, kDummyFontDescription,
+                        FontSpecInterface::FONTSET_FOOTER_LABEL);
+  ExpectFontDescription(font_spec, kDummyFontDescription,
+                        FontSpecInterface::FONTSET_FOOTER_SUBLABEL);
+  ExpectFontDescription(font_spec, kDummyFontDescription,
+                        FontSpecInterface::FONTSET_SHORTCUT);
+  ExpectFontDescription(font_spec, kDummyFontDescription,
+                        FontSpecInterface::FONTSET_INFOLIST_CAPTION);
+  ExpectFontDescription(font_spec, kDummyFontDescription,
+                        FontSpecInterface::FONTSET_INFOLIST_TITLE);
+  ExpectFontDescription(font_spec, kDummyFontDescription,
+                        FontSpecInterface::FONTSET_INFOLIST_DESCRIPTION);
 }
 
 TEST_F(FontSpecTest, AttributeTest) {
+  GtkWrapperMock *mock = new GtkWrapperMock();
+
+  TestableFontSpec font_spec(mock);
   RendererStyle style;
   RendererStyleHandler::GetRendererStyle(&style);
   const RendererStyle::InfolistStyle infostyle = style.infolist_style();
 
-  ExpectFontAttribute(kDefaultColor, PANGO_SCALE_SMALL,
+  ExpectFontAttribute(font_spec, kDefaultColor, PANGO_SCALE_MEDIUM,
                       FontSpecInterface::FONTSET_CANDIDATE);
-  ExpectFontAttribute(kDescriptionColor, PANGO_SCALE_SMALL,
+  ExpectFontAttribute(font_spec, kDescriptionColor, PANGO_SCALE_MEDIUM,
                       FontSpecInterface::FONTSET_DESCRIPTION);
-  ExpectFontAttribute(kFooterIndexColor, PANGO_SCALE_X_SMALL,
+  ExpectFontAttribute(font_spec, kFooterIndexColor, PANGO_SCALE_SMALL,
                       FontSpecInterface::FONTSET_FOOTER_INDEX);
-  ExpectFontAttribute(kFooterLabelColor, PANGO_SCALE_X_SMALL,
+  ExpectFontAttribute(font_spec, kFooterLabelColor, PANGO_SCALE_SMALL,
                       FontSpecInterface::FONTSET_FOOTER_LABEL);
-  ExpectFontAttribute(kFooterSubLabelColor, PANGO_SCALE_X_SMALL,
+  ExpectFontAttribute(font_spec, kFooterSubLabelColor, PANGO_SCALE_SMALL,
                       FontSpecInterface::FONTSET_FOOTER_SUBLABEL);
-  ExpectFontAttribute(kShortcutColor, PANGO_SCALE_SMALL,
+  ExpectFontAttribute(font_spec, kShortcutColor, PANGO_SCALE_MEDIUM,
                       FontSpecInterface::FONTSET_SHORTCUT);
   ExpectFontAttribute(
+      font_spec,
       RGBAColor2RGBA(infostyle.title_style().foreground_color()),
-      PANGO_SCALE_SMALL, FontSpecInterface::FONTSET_INFOLIST_TITLE);
+      PANGO_SCALE_MEDIUM, FontSpecInterface::FONTSET_INFOLIST_TITLE);
   ExpectFontAttribute(
+      font_spec,
       RGBAColor2RGBA(infostyle.title_style().foreground_color()),
-      PANGO_SCALE_SMALL, FontSpecInterface::FONTSET_INFOLIST_TITLE);
+      PANGO_SCALE_MEDIUM, FontSpecInterface::FONTSET_INFOLIST_TITLE);
   ExpectFontAttribute(
+      font_spec,
       RGBAColor2RGBA(infostyle.description_style().foreground_color()),
-      PANGO_SCALE_SMALL, FontSpecInterface::FONTSET_INFOLIST_DESCRIPTION);
+      PANGO_SCALE_MEDIUM, FontSpecInterface::FONTSET_INFOLIST_DESCRIPTION);
 }
 }  // namespace gtk
 }  // namespace renderer

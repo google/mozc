@@ -74,7 +74,8 @@ MozcConnection::~MozcConnection() {
 
 bool MozcConnection::TrySendKeyEvent(
     const scim::KeyEvent &key,
-    mozc::commands::CompositionMode composition_mode,
+    bool is_activated,
+    mozc::commands::CompositionMode next_mode,
     mozc::commands::Output *out,
     string *out_error) const {
   DCHECK(out);
@@ -90,8 +91,9 @@ bool MozcConnection::TrySendKeyEvent(
 
   mozc::commands::KeyEvent event;
   translator_->Translate(key, preedit_method_, &event);
+  event.set_mode(next_mode);
 
-  if ((composition_mode == mozc::commands::DIRECT) &&
+  if (!is_activated &&
       !mozc::config::ImeSwitchUtil::IsDirectModeCommand(event)) {
     VLOG(1) << "In DIRECT mode. Not consumed.";
     return false;  // not consumed.
@@ -118,17 +120,44 @@ bool MozcConnection::TrySendClick(int32 unique_id,
   return TrySendCommandInternal(command, out, out_error);
 }
 
-bool MozcConnection::TrySendCompositionMode(
-    mozc::commands::CompositionMode mode,
+bool MozcConnection::TrySendImeOff(
+    mozc::commands::CompositionMode next_mode,
     mozc::commands::Output *out,
     string *out_error) const {
   DCHECK(out);
   DCHECK(out_error);
+  out_error->clear();
 
-  mozc::commands::SessionCommand command;
-  command.set_type(mozc::commands::SessionCommand::SWITCH_INPUT_MODE);
-  command.set_composition_mode(mode);
-  return TrySendCommandInternal(command, out, out_error);
+  mozc::commands::KeyEvent event;
+  event.set_special_key(mozc::commands::KeyEvent::OFF);
+  event.set_mode(next_mode);
+  if (!client_->SendKey(event, out)) {
+    *out_error = "SendKey failed";
+    VLOG(1) << "ERROR";
+    return false;
+  }
+  VLOG(1) << "OK: " << endl << out->DebugString();
+  return true;
+}
+
+bool MozcConnection::TrySendImeOn(
+    mozc::commands::CompositionMode next_mode,
+    mozc::commands::Output *out,
+    string *out_error) const {
+  DCHECK(out);
+  DCHECK(out_error);
+  out_error->clear();
+
+  mozc::commands::KeyEvent event;
+  event.set_special_key(mozc::commands::KeyEvent::ON);
+  event.set_mode(next_mode);
+  if (!client_->SendKey(event, out)) {
+    *out_error = "SendKey failed";
+    VLOG(1) << "ERROR";
+    return false;
+  }
+  VLOG(1) << "OK: " << endl << out->DebugString();
+  return true;
 }
 
 bool MozcConnection::TrySendCommand(

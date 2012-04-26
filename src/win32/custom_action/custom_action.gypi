@@ -37,7 +37,7 @@
     '../../base/base.gyp:base',
     '../../client/client.gyp:client',
     '../../config/config.gyp:stats_config_util',
-    '../../renderer/renderer.gyp:renderer',
+    '../../renderer/renderer.gyp:renderer_client',
     '../../server/server.gyp:cache_service_manager',
     '../base/win32_base.gyp:ime_base',
     'gen_custom_action_resource_header',

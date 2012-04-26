@@ -41,7 +41,7 @@
 #include "base/file_stream.h"
 #include "base/port.h"
 #include "base/util.h"
-#include "data_manager/user_dictionary_manager.h"
+#include "data_manager/user_pos_manager.h"
 #include "dictionary/user_pos.h"
 #include "rewriter/embedded_dictionary.h"
 
@@ -133,7 +133,7 @@ string NormalizeRendaku(const string &input) {
 // Wraps GetPOSIDs of UserPOS.
 bool GetPOSIDs(const string &pos, uint16 *id) {
   const UserPOSInterface *user_pos =
-      UserDictionaryManager::GetUserDictionaryManager()->GetUserPOS();
+      UserPosManager::GetUserPosManager()->GetUserPOS();
   return user_pos->GetPOSIDs(pos, id);
 }
 

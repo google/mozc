@@ -97,7 +97,7 @@ void CheckConversion(const commands::Command &command,
               conversion.segment(index).annotation());
     EXPECT_EQ(Util::CharsLen(conversion_text),
               conversion.segment(index).value_length());
-    EXPECT_EQ(index, conversion.highlighted_position());
+    EXPECT_EQ(Util::CharsLen(selected_text), conversion.highlighted_position());
     ++index;
   }
 
@@ -168,7 +168,7 @@ class PinyinSessionTest : public testing::Test {
     config::ConfigHandler::GetDefaultConfig(&config);
     config::ConfigHandler::SetConfig(config);
 
-    PyZy::InputContext::init();
+    PyZy::InputContext::init(FLAGS_test_tmpdir);
 
     ResetSession();
   }
@@ -740,7 +740,6 @@ TEST_F(PinyinSessionTest, AutoCommit) {
   config::ConfigHandler::SetConfig(config);
 
   commands::Command command;
-
   {
     SCOPED_TRACE("Inserts abc! and does auto commit");
     command.Clear();
@@ -748,12 +747,14 @@ TEST_F(PinyinSessionTest, AutoCommit) {
 
     command.Clear();
     SendKey("!", &command);
-    EXPECT_FALSE(command.output().consumed());
+    EXPECT_TRUE(command.output().consumed());
 
     CheckConversion(command, "", "", "");
     CheckCandidates(command, "", 0);
-    CheckResult(command, ToFullWidthAscii("ABC"));
+    CheckResult(command, ToFullWidthAscii("ABC!"));
   }
+
+  ResetSession();
 
   {
     SCOPED_TRACE("Inserts abc, moves cursor, and does auto commit");
@@ -763,11 +764,11 @@ TEST_F(PinyinSessionTest, AutoCommit) {
 
     command.Clear();
     SendKey("!", &command);
-    EXPECT_FALSE(command.output().consumed());
+    EXPECT_TRUE(command.output().consumed());
 
     CheckConversion(command, "", "", "");
     CheckCandidates(command, "", 0);
-    CheckResult(command, ToFullWidthAscii("AB") + "c");
+    CheckResult(command, ToFullWidthAscii("AB") + "c" + ToFullWidthAscii("!"));
   }
 }
 
@@ -860,7 +861,7 @@ TEST_F(PinyinSessionTest, SwitchConversionMode) {
   ResetSession();
 
   {
-    SCOPED_TRACE("Switches to Pinyin mode with SessionCommand");
+    SCOPED_TRACE("English mode to Pinyin mode with SessionCommand");
     ASSERT_EQ(PINYIN, GetConversionMode());
 
     command.Clear();
@@ -875,6 +876,24 @@ TEST_F(PinyinSessionTest, SwitchConversionMode) {
     CheckConversion(command, "", "", "");
     CheckCandidates(command, "", 0);
     CheckResult(command, "t");
+  }
+
+  {
+    SCOPED_TRACE("Punctuation mode to Pinyin mode with SessionCommand");
+    ASSERT_EQ(PINYIN, GetConversionMode());
+
+    command.Clear();
+    InsertCharacterChars("`", &command);
+    EXPECT_EQ(PUNCTUATION, GetConversionMode());
+
+    command.Clear();
+    command.mutable_input()->mutable_command()->set_type(
+        commands::SessionCommand::SUBMIT);
+    session_->SendCommand(&command);
+    EXPECT_EQ(PINYIN, GetConversionMode());
+    CheckConversion(command, "", "", "");
+    CheckCandidates(command, "", 0);
+    CheckResult(command, "\xC2\xB7");  // "·"
   }
 }
 

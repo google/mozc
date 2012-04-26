@@ -48,11 +48,24 @@ const char kTextLines[] =
 "buz\t10\t20\t30\tfoobar\n";
 }  // namespace
 
-TEST(TextDictionaryLoaderTest, BasicTest) {
+class TextDictionaryLoaderTest : public ::testing::Test {
+ protected:
+  // Explicitly define constructor to prevent Visual C++ from
+  // considering this class as POD.
+  TextDictionaryLoaderTest() {}
+
+  TextDictionaryLoader *CreateTextDictionaryLoader() {
+    return new TextDictionaryLoader(pos_matcher_);
+  }
+
+  const POSMatcher pos_matcher_;
+};
+
+TEST_F(TextDictionaryLoaderTest, BasicTest) {
   {
-    TextDictionaryLoader loader;
+    scoped_ptr<TextDictionaryLoader> loader(CreateTextDictionaryLoader());
     vector<Token *> tokens;
-    loader.CollectTokens(&tokens);
+    loader->CollectTokens(&tokens);
     EXPECT_TRUE(tokens.empty());
   }
 
@@ -63,10 +76,10 @@ TEST(TextDictionaryLoaderTest, BasicTest) {
   }
 
   {
-    TextDictionaryLoader loader;
+    scoped_ptr<TextDictionaryLoader> loader(CreateTextDictionaryLoader());
     vector<Token *> tokens;
-    EXPECT_TRUE(loader.Open(filename.c_str()));
-    loader.CollectTokens(&tokens);
+    EXPECT_TRUE(loader->Open(filename.c_str()));
+    loader->CollectTokens(&tokens);
 
     EXPECT_EQ(3, tokens.size());
 
@@ -88,17 +101,17 @@ TEST(TextDictionaryLoaderTest, BasicTest) {
     EXPECT_EQ(20, tokens[2]->rid);
     EXPECT_EQ(30, tokens[2]->cost);
 
-    loader.Close();
+    loader->Close();
     tokens.clear();
-    loader.CollectTokens(&tokens);
+    loader->CollectTokens(&tokens);
     EXPECT_TRUE(tokens.empty());
   }
 
   {
-    TextDictionaryLoader loader;
+    scoped_ptr<TextDictionaryLoader> loader(CreateTextDictionaryLoader());
     vector<Token *> tokens;
-    EXPECT_TRUE(loader.OpenWithLineLimit(filename.c_str(), 2));
-    loader.CollectTokens(&tokens);
+    EXPECT_TRUE(loader->OpenWithLineLimit(filename.c_str(), 2));
+    loader->CollectTokens(&tokens);
 
     EXPECT_EQ(2, tokens.size());
 
@@ -114,32 +127,32 @@ TEST(TextDictionaryLoaderTest, BasicTest) {
     EXPECT_EQ(2, tokens[1]->rid);
     EXPECT_EQ(3, tokens[1]->cost);
 
-    loader.Close();
+    loader->Close();
     tokens.clear();
-    loader.CollectTokens(&tokens);
+    loader->CollectTokens(&tokens);
     EXPECT_TRUE(tokens.empty());
   }
 
   {
-    TextDictionaryLoader loader;
+    scoped_ptr<TextDictionaryLoader> loader(CreateTextDictionaryLoader());
     vector<Token *> tokens;
     // open twice -- tokens are cleared everytime
-    EXPECT_TRUE(loader.Open(filename.c_str()));
-    EXPECT_TRUE(loader.Open(filename.c_str()));
-    loader.CollectTokens(&tokens);
+    EXPECT_TRUE(loader->Open(filename.c_str()));
+    EXPECT_TRUE(loader->Open(filename.c_str()));
+    loader->CollectTokens(&tokens);
     EXPECT_EQ(3, tokens.size());
   }
 
   Util::Unlink(filename);
 }
 
-TEST(TextDictionaryLoaderTest, RewriteSpecialTokenTest) {
-  TextDictionaryLoader loader;
+TEST_F(TextDictionaryLoaderTest, RewriteSpecialTokenTest) {
+  scoped_ptr<TextDictionaryLoader> loader(CreateTextDictionaryLoader());
   {
     Token token;
     token.lid = 100;
     token.rid = 200;
-    EXPECT_TRUE(loader.RewriteSpecialToken(&token, ""));
+    EXPECT_TRUE(loader->RewriteSpecialToken(&token, ""));
     EXPECT_EQ(100, token.lid);
     EXPECT_EQ(200, token.rid);
     EXPECT_EQ(Token::NONE, token.attributes);
@@ -149,7 +162,7 @@ TEST(TextDictionaryLoaderTest, RewriteSpecialTokenTest) {
     Token token;
     token.lid = 100;
     token.rid = 200;
-    EXPECT_TRUE(loader.RewriteSpecialToken(&token, "SPELLING_CORRECTION"));
+    EXPECT_TRUE(loader->RewriteSpecialToken(&token, "SPELLING_CORRECTION"));
     EXPECT_EQ(100, token.lid);
     EXPECT_EQ(200, token.rid);
     EXPECT_EQ(Token::SPELLING_CORRECTION, token.attributes);
@@ -159,9 +172,9 @@ TEST(TextDictionaryLoaderTest, RewriteSpecialTokenTest) {
     Token token;
     token.lid = 100;
     token.rid = 200;
-    EXPECT_TRUE(loader.RewriteSpecialToken(&token, "ZIP_CODE"));
-    EXPECT_EQ(POSMatcher::GetZipcodeId(), token.lid);
-    EXPECT_EQ(POSMatcher::GetZipcodeId(), token.rid);
+    EXPECT_TRUE(loader->RewriteSpecialToken(&token, "ZIP_CODE"));
+    EXPECT_EQ(pos_matcher_.GetZipcodeId(), token.lid);
+    EXPECT_EQ(pos_matcher_.GetZipcodeId(), token.rid);
     EXPECT_EQ(Token::NONE, token.attributes);
   }
 
@@ -169,14 +182,14 @@ TEST(TextDictionaryLoaderTest, RewriteSpecialTokenTest) {
     Token token;
     token.lid = 100;
     token.rid = 200;
-    EXPECT_FALSE(loader.RewriteSpecialToken(&token, "foo"));
+    EXPECT_FALSE(loader->RewriteSpecialToken(&token, "foo"));
     EXPECT_EQ(100, token.lid);
     EXPECT_EQ(200, token.rid);
     EXPECT_EQ(Token::NONE, token.attributes);
   }
 }
 
-TEST(TextDictionaryLoaderTest, LoadMultipleFilesTest) {
+TEST_F(TextDictionaryLoaderTest, LoadMultipleFilesTest) {
   const string filename1 = Util::JoinPath(FLAGS_test_tmpdir, "test1.tsv");
   const string filename2 = Util::JoinPath(FLAGS_test_tmpdir, "test2.tsv");
   const string filename = filename1 + "," + filename2;
@@ -192,10 +205,10 @@ TEST(TextDictionaryLoaderTest, LoadMultipleFilesTest) {
   }
 
   {
-    TextDictionaryLoader loader;
+    scoped_ptr<TextDictionaryLoader> loader(CreateTextDictionaryLoader());
     vector<Token *> tokens;
-    EXPECT_TRUE(loader.Open(filename.c_str()));
-    loader.CollectTokens(&tokens);
+    EXPECT_TRUE(loader->Open(filename.c_str()));
+    loader->CollectTokens(&tokens);
     EXPECT_EQ(6, tokens.size());
   }
 

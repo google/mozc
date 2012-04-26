@@ -36,6 +36,7 @@
     {
       'target_name': 'base',
       'type': 'static_library',
+      'toolsets': ['host', 'target'],
       'sources': [
         'clock_mock.cc',
         'cpu_stats.cc',
@@ -63,6 +64,11 @@
             'mac_process.mm',
             'mac_util.mm',
           ],
+          'link_settings': {
+            'libraries': [
+              '/usr/lib/libiconv.dylib',  # used in iconv.cc
+            ],
+          },
           'conditions': [
             ['branding=="GoogleJapaneseInput"', {
               'sources': [
@@ -104,7 +110,7 @@
           ],
           'link_settings': {
             'libraries': [
-              '-lrt',
+              '-lrt',  # used in util.cc for Util::GetTicks()/GetFrequency()
             ],
           },
         }],
@@ -119,6 +125,7 @@
     {
       'target_name': 'base_core',
       'type': 'static_library',
+      'toolsets': ['host', 'target'],
       'sources': [
         '<(gen_out_dir)/character_set.h',
         '<(gen_out_dir)/version_def.h',
@@ -134,8 +141,8 @@
         'version.cc',
       ],
       'dependencies': [
-        'gen_character_set',
-        'gen_version_def',
+        'gen_character_set#host',
+        'gen_version_def#host',
       ],
       'conditions': [
         ['OS=="win"', {
@@ -154,6 +161,7 @@
     {
       'target_name': 'gen_character_set',
       'type': 'none',
+      'toolsets': ['host'],
       'actions': [
         {
           'action_name': 'gen_character_set',
@@ -207,11 +215,42 @@
             },
           },
         }],
+        ['OS=="mac"', {
+          'defines': [
+            'HAVE_OPENSSL=1',
+          ],
+          'link_settings': {
+            'libraries': [
+              '/usr/lib/libcrypto.dylib',  # used in 'encryptor.cc'
+              '/usr/lib/libssl.dylib',     # used in 'encryptor.cc'
+            ],
+          }
+        }],
+        ['OS=="linux" and target_platform!="Android"', {
+          'cflags': [
+            '<!@(<(pkg_config_command) --cflags-only-other openssl)',
+          ],
+          'defines': [
+            'HAVE_OPENSSL=1',
+          ],
+          'include_dirs': [
+            '<!@(<(pkg_config_command) --cflags-only-I openssl)',
+          ],
+          'link_settings': {
+            'ldflags': [
+              '<!@(<(pkg_config_command) --libs-only-L openssl)',
+            ],
+            'libraries': [
+              '<!@(<(pkg_config_command) --libs-only-l openssl)',
+            ],
+          },
+        }],
       ],
     },
     {
       'target_name': 'gen_version_def',
       'type': 'none',
+      'toolsets': ['host'],
       'actions': [
         {
           'action_name': 'gen_version_def',
@@ -228,7 +267,6 @@
             '--version_file', '../mozc_version.txt',
             '--input', 'version_def_template.h',
             '--output', '<(gen_out_dir)/version_def.h',
-            '--target_platform', '<(target_platform)',
           ],
         },
       ],
@@ -241,12 +279,13 @@
         'config_file_stream.cc',
       ],
       'dependencies': [
-        'gen_config_file_stream_data',
+        'gen_config_file_stream_data#host',
       ],
     },
     {
       'target_name': 'gen_config_file_stream_data',
       'type': 'none',
+      'toolsets': ['host'],
       'actions': [
         {
           'action_name': 'gen_config_file_stream_data',

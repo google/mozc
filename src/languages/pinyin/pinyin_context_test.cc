@@ -68,7 +68,7 @@ class PinyinContextTest : public testing::Test {
  protected:
   virtual void SetUp() {
     Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    PyZy::InputContext::init();
+    PyZy::InputContext::init(FLAGS_test_tmpdir);
 
     config::Config config;
     config::ConfigHandler::GetDefaultConfig(&config);
@@ -302,14 +302,14 @@ TEST_F(PinyinContextTest, MoveCursor) {
   {
     SCOPED_TRACE("Move cursor left");
     context_->MoveCursorLeft();
-    CheckTextAccessors("", "nihao", "", "", "ni ha|o", "ni ha|o");
+    CheckTextAccessors("", "nihao", "", "ni ha|o", "", "ni ha|o");
     EXPECT_EQ(4, context_->cursor());
   }
 
   {
     SCOPED_TRACE("Move cursor left by word");
     context_->MoveCursorLeftByWord();
-    CheckTextAccessors("", "nihao", "", "", "ni|hao", "ni|hao");
+    CheckTextAccessors("", "nihao", "", "ni|hao", "", "ni|hao");
     EXPECT_EQ(2, context_->cursor());
   }
 
@@ -323,7 +323,7 @@ TEST_F(PinyinContextTest, MoveCursor) {
   {
     SCOPED_TRACE("Move cursor right");
     context_->MoveCursorRight();
-    CheckTextAccessors("", "nihao", "", "", "n|ihao", "n|ihao");
+    CheckTextAccessors("", "nihao", "", "n|ihao", "", "n|ihao");
     EXPECT_EQ(1, context_->cursor());
   }
 
@@ -345,6 +345,45 @@ TEST_F(PinyinContextTest, MoveCursor) {
     CheckTextAccessors("", "nihao", "", kNihao, "", "ni hao|");
     EXPECT_EQ(5, context_->cursor());
   }
+}
+
+TEST_F(PinyinContextTest, UnselectCandidates) {
+  InsertCharacterChars("nihao");
+  ASSERT_EQ("nihao", context_->input_text());
+  ASSERT_TRUE(context_->selected_text().empty());
+
+  size_t ni_index;
+  ASSERT_TRUE(FindCandidateIndex(kNi, &ni_index));
+
+  context_->SelectCandidate(ni_index);
+  ASSERT_EQ(kNi, context_->selected_text());
+  context_->MoveCursorLeft();
+  EXPECT_TRUE(context_->selected_text().empty());
+
+  context_->SelectCandidate(ni_index);
+  ASSERT_EQ(kNi, context_->selected_text());
+  context_->MoveCursorRight();
+  EXPECT_TRUE(context_->selected_text().empty());
+
+  context_->SelectCandidate(ni_index);
+  ASSERT_EQ(kNi, context_->selected_text());
+  context_->MoveCursorLeftByWord();
+  EXPECT_TRUE(context_->selected_text().empty());
+
+  context_->SelectCandidate(ni_index);
+  ASSERT_EQ(kNi, context_->selected_text());
+  context_->MoveCursorRightByWord();
+  EXPECT_TRUE(context_->selected_text().empty());
+
+  context_->SelectCandidate(ni_index);
+  ASSERT_EQ(kNi, context_->selected_text());
+  context_->MoveCursorToBeginning();
+  EXPECT_TRUE(context_->selected_text().empty());
+
+  context_->SelectCandidate(ni_index);
+  ASSERT_EQ(kNi, context_->selected_text());
+  context_->MoveCursorToEnd();
+  EXPECT_TRUE(context_->selected_text().empty());
 }
 
 TEST_F(PinyinContextTest, RemoveCharacters) {

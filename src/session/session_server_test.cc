@@ -31,9 +31,13 @@
 
 #include "base/base.h"
 #include "base/scheduler.h"
+#include "base/util.h"
 #include "session/session_server.h"
 #include "testing/base/public/gunit.h"
 
+DECLARE_string(test_tmpdir);
+
+namespace mozc {
 namespace {
 class JobRecorder : public mozc::Scheduler::SchedulerInterface {
  public:
@@ -50,13 +54,20 @@ class JobRecorder : public mozc::Scheduler::SchedulerInterface {
  private:
   vector<mozc::Scheduler::JobSetting> job_settings_;
 };
-}  // namespace
 
-TEST(SessionServerTest, SetSchedulerJobTest) {
+}  // namespace
+class SessionServerTest : public testing::Test {
+ protected:
+  void SetUp() {
+    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+  }
+};
+
+TEST_F(SessionServerTest, SetSchedulerJobTest) {
   scoped_ptr<JobRecorder> job_recorder(new JobRecorder);
-  mozc::Scheduler::SetSchedulerHandler(job_recorder.get());
-  scoped_ptr<mozc::SessionServer> session_server(new mozc::SessionServer);
-  const vector<mozc::Scheduler::JobSetting> &job_settings =
+  Scheduler::SetSchedulerHandler(job_recorder.get());
+  scoped_ptr<SessionServer> session_server(new SessionServer);
+  const vector<Scheduler::JobSetting> &job_settings =
       job_recorder->job_settings();
   EXPECT_GE(job_settings.size(), 1);
   EXPECT_EQ("UsageStatsTimer", job_settings[0].name());
@@ -64,5 +75,6 @@ TEST(SessionServerTest, SetSchedulerJobTest) {
   EXPECT_GE(job_settings.size(), 2);
   EXPECT_EQ("CloudSync", job_settings[1].name());
 #endif  // ENABLE_CLOUD_SYNC
-  mozc::Scheduler::SetSchedulerHandler(NULL);
+  Scheduler::SetSchedulerHandler(NULL);
 }
+}  // namespace mozc

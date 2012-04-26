@@ -27,6 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "session/session.h"
+
 #include <string>
 #include <vector>
 #include "base/base.h"
@@ -38,19 +40,19 @@
 #include "config/config_handler.h"
 #include "converter/converter_interface.h"
 #include "converter/converter_mock.h"
+#include "dictionary/pos_matcher.h"
 #include "rewriter/transliteration_rewriter.h"
 #include "session/commands.pb.h"
 #include "session/internal/ime_context.h"
 #include "session/internal/keymap.h"
 #include "session/japanese_session_factory.h"
 #include "session/key_parser.h"
-#include "session/session.h"
+#include "session/request_handler.h"
 #include "session/session_converter_interface.h"
 #include "session/session_handler.h"
-#include "testing/base/public/gunit.h"
-#include "testing/base/public/googletest.h"
-#include "session/request_handler.h"
 #include "session/session_test_util.h"
+#include "testing/base/public/googletest.h"
+#include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
 
@@ -432,7 +434,8 @@ class SessionTest : public testing::Test {
     convertermock_.reset(new ConverterMock());
     ConverterFactory::SetConverter(convertermock_.get());
     handler_.reset(new SessionHandler());
-    t13n_rewriter_.reset(new TransliterationRewriter());
+    t13n_rewriter_.reset(
+        new TransliterationRewriter(*Singleton<POSMatcher>::get()));
   }
 
   virtual void TearDown() {
@@ -573,7 +576,7 @@ class SessionTest : public testing::Test {
   }
 
   void FillT13Ns(const ConversionRequest &request, Segments *segments) {
-    t13n_rewriter_->RewriteForRequest(request, segments);
+    t13n_rewriter_->Rewrite(request, segments);
   }
 
   void SetComposer(Session *session, ConversionRequest *request) {

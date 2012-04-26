@@ -276,3 +276,27 @@ TEST_F(MozcEmacsHelperLibTest, TokenizeSExpr) {
   // unclosed double quote
   EXPECT_FALSE(TokenizeSExpr("\"", &output));
 }
+
+TEST_F(MozcEmacsHelperLibTest, RemoveUsageDataTest) {
+  {
+    SCOPED_TRACE("If there are no candidates, do nothing.");
+    mozc::commands::Output output;
+    EXPECT_FALSE(mozc::emacs::RemoveUsageData(&output));
+  }
+  {
+    SCOPED_TRACE("If there are no usage data, do nothing.");
+    mozc::commands::Output output;
+    output.mutable_candidates();
+    EXPECT_FALSE(mozc::emacs::RemoveUsageData(&output));
+    EXPECT_TRUE(output.has_candidates());
+  }
+  {
+    SCOPED_TRACE("Removes usage data from output");
+    mozc::commands::Output output;
+    mozc::commands::Candidates *candidates = output.mutable_candidates();
+    candidates->mutable_usages();
+    EXPECT_TRUE(mozc::emacs::RemoveUsageData(&output));
+    EXPECT_TRUE(output.has_candidates());
+    EXPECT_TRUE(output.candidates().has_usages());
+  }
+}

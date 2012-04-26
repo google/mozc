@@ -48,6 +48,16 @@ template <class T> struct UnicodeDataCompare {
   }
 };
 
+bool IsOneUCS4Char(const QString &str, char32 *ucs4) {
+  const QVector<uint> ucs4s = str.toUcs4();
+  if (ucs4s.size() != 1) {
+    return false;
+  }
+  DCHECK(ucs4);
+  *ucs4 = static_cast<char32>(ucs4s[0]);
+  return true;
+}
+
 // TODO(taku):  move it to base/util
 uint16 SjisToEUC(uint16 code) {
   if (code < 0x80) {  // ascii
@@ -69,12 +79,13 @@ uint16 SjisToEUC(uint16 code) {
 }
 
 const uint16 LookupCP932Data(const QString &str) {
-  if (str.length() != 1) {
+  char32 ucs4 = 0;
+  if (!IsOneUCS4Char(str, &ucs4)) {
     return 0;
   }
 
   CP932MapData key;
-  key.ucs4 = str[0].unicode();
+  key.ucs4 = ucs4;
   const CP932MapData *result =
       lower_bound(kCP932MapData,
                   kCP932MapData + kCP932MapDataSize,
@@ -88,10 +99,10 @@ const uint16 LookupCP932Data(const QString &str) {
 }
 
 const UnihanData *LookupUnihanData(const QString &str) {
-  if (str.length() != 1) {
+  char32 ucs4 = 0;
+  if (!IsOneUCS4Char(str, &ucs4)) {
     return NULL;
   }
-  char32 ucs4 = str[0].unicode();
   UnihanData key;
   key.ucs4 = ucs4;
   const UnihanData *result =
@@ -108,10 +119,10 @@ const UnihanData *LookupUnihanData(const QString &str) {
 }
 
 const QString LookupUnicodeData(const QString &str) {
-  if (str.length() != 1) {
+  char32 ucs4 = 0;
+  if (!IsOneUCS4Char(str, &ucs4)) {
     return QString("");
   }
-  char32 ucs4 = str[0].unicode();
   UnicodeData key;
   key.ucs4 = ucs4;
   key.description = NULL;

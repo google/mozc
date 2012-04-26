@@ -29,6 +29,8 @@
 
 #ifndef MOZC_BASE_MAC_UTIL_H_
 #define MOZC_BASE_MAC_UTIL_H_
+
+#ifdef OS_MACOSX
 #include <string>
 
 namespace mozc {
@@ -76,4 +78,6 @@ class MacUtil {
   ~MacUtil() {}
 };
 }  // namespace mozc
+
+#endif  // OS_MACOSX
 #endif  // MOZC_BASE_MAC_UTIL_H_

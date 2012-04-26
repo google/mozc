@@ -136,7 +136,7 @@ class IPCClientMutex {
 // RAII class for calling ReleaseMutex in destructor.
 class ScopedReleaseMutex {
  public:
-  ScopedReleaseMutex(HANDLE handle)
+  explicit ScopedReleaseMutex(HANDLE handle)
       : handle_(handle) {}
 
   virtual ~ScopedReleaseMutex() {
@@ -169,7 +169,7 @@ uint32 GetServerProcessId(HANDLE handle) {
 }
 
 void SafeCancelIO(HANDLE handle, OVERLAPPED *overlapped) {
-  if(::CancelIo(handle)) {
+  if (::CancelIo(handle)) {
     // wait for the cancel to complete
     // ignore the result, as we're exiting anyway
     DWORD size = 0;
@@ -275,11 +275,17 @@ IPCServer::IPCServer(const string &name,
       timeout_(timeout) {
   IPCPathManager *manager = IPCPathManager::GetIPCPathManager(name);
   string server_address;
-  if (!manager->CreateNewPathName() ||
-      !manager->GetPathName(&server_address)) {
+
+  if (!manager->CreateNewPathName() && !manager->LoadPathName()) {
+    LOG(ERROR) << "Cannot prepare IPC path name";
+    return;
+  }
+
+  if (!manager->GetPathName(&server_address)) {
     LOG(ERROR) << "Cannot make IPC path name";
     return;
   }
+  DCHECK(!server_address.empty());
 
   SECURITY_ATTRIBUTES security_attributes;
   if (!WinSandbox::MakeSecurityAttributes(&security_attributes)) {
@@ -296,8 +302,9 @@ IPCServer::IPCServer(const string &name,
                                     PIPE_TYPE_MESSAGE |
                                     PIPE_READMODE_MESSAGE |
                                     PIPE_WAIT,
-                                    (num_connections <= 0 ?
-                                     PIPE_UNLIMITED_INSTANCES : num_connections),
+                                    (num_connections <= 0
+                                     ? PIPE_UNLIMITED_INSTANCES
+                                     : num_connections),
                                     sizeof(request_),
                                     sizeof(response_),
                                     0,
@@ -359,7 +366,7 @@ void IPCServer::Loop() {
     ::ZeroMemory(&Overlapped, sizeof(Overlapped));
     const HRESULT result = ::ConnectNamedPipe(handle_.get(), &Overlapped);
     // ConnectNamedPipe always return 0 with Overlapped IO
-    CHECK(result == 0);
+    CHECK_EQ(0, result);
 
     DWORD size = 0;
     const DWORD last_error = ::GetLastError();
@@ -379,7 +386,8 @@ void IPCServer::Loop() {
           case WAIT_OBJECT_0 + 1:
             break;
           default:
-            LOG(FATAL) << "::WaitForMultipleObjects() failed: " << GetLastError();
+            LOG(FATAL) << "::WaitForMultipleObjects() failed: "
+                       << GetLastError();
             SafeCancelIO(handle_.get(), &Overlapped);
             return;
         }
@@ -512,7 +520,7 @@ void IPCClient::Init(const string &name, const string &server_path) {
 
   for (size_t trial = 0; trial < kMaxTrial; ++trial) {
     string server_address;
-    if (!manager->GetPathName(&server_address)) {
+    if (!manager->LoadPathName() || !manager->GetPathName(&server_address)) {
       continue;
     }
     wstring wserver_address;

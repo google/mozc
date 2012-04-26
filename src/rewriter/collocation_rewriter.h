@@ -30,18 +30,32 @@
 #ifndef MOZC_REWRITER_COLLOCATION_REWRITER_H_
 #define MOZC_REWRITER_COLLOCATION_REWRITER_H_
 
+#include "base/port.h"
+#include "converter/segments.h"
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {
+class ConversionRequest;
+class POSMatcher;
 
-class Segments;
-
-class CollocationRewriter: public RewriterInterface {
+class CollocationRewriter : public RewriterInterface {
  public:
-  CollocationRewriter();
+  explicit CollocationRewriter(const POSMatcher &pos_matcher);
   virtual ~CollocationRewriter();
-  virtual bool Rewrite(Segments *setments) const;
+  virtual bool Rewrite(const ConversionRequest &request,
+                       Segments *segments) const;
+
+ private:
+  bool IsName(const Segment::Candidate &cand) const;
+  bool RewriteFromPrevSegment(const Segment::Candidate &prev_cand,
+                              Segment *seg) const;
+  bool RewriteUsingNextSegment(Segment *next_seg,
+                               Segment *seg) const;
+  bool RewriteCollocation(Segments *segments) const;
+
+  const uint16 first_name_id_;
+  const uint16 last_name_id_;
 };
-} // namespace mozc
+}  // namespace mozc
 
 #endif  // MOZC_REWRITER_COLLOCATION_REWRITER_H_

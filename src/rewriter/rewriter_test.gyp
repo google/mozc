@@ -60,7 +60,8 @@
         'user_dictionary_rewriter_test.cc',
         'user_segment_history_rewriter_test.cc',
         'variants_rewriter_test.cc',
-        'version_rewriter_test.cc'
+        'version_rewriter_test.cc',
+        'zipcode_rewriter_test.cc',
       ],
       'dependencies': [
         '../base/base.gyp:base',

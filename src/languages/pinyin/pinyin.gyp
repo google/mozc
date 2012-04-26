@@ -189,7 +189,7 @@
         '../../dictionary/file/dictionary_file.gyp:dictionary_file',
         '../../dictionary/rx/rx_storage.gyp:rx_trie',
         '../../storage/storage.gyp:encrypted_string_storage',
-        'gen_pinyin_english_dictionary_data',
+        'gen_pinyin_english_dictionary_data#host',
       ],
     },
     {
@@ -231,11 +231,18 @@
       'target_name': 'pinyin_all_test',
       'type': 'none',
       'dependencies': [
+        'pinyin_config_manager_test',
         'pinyin_configurable_keymap_test',
         'pinyin_context_mock_test',
         'pinyin_context_test',
         'pinyin_default_keymap_test',
+        'pinyin_direct_context_test',
+        'pinyin_english_context_test',
+        'pinyin_english_dictionary_factory_test',
+        'pinyin_english_dictionary_test',
         'pinyin_keymap_test',
+        'pinyin_punctuation_context_test',
+        'pinyin_punctuation_table_test',
         'pinyin_session_converter_test',
         'pinyin_session_factory_test',
         'pinyin_session_test',
@@ -479,6 +486,7 @@
     {
       'target_name': 'gen_pinyin_english_dictionary_data',
       'type': 'none',
+      'toolsets': ['host'],
       'actions': [
         {
           'action_name': 'gen_pinyin_english_dictionary_data',
@@ -507,6 +515,7 @@
     {
       'target_name': 'pinyin_english_dictionary_data_builder',
       'type': 'static_library',
+      'toolsets': ['host'],
       'sources': [
         'english_dictionary_data_builder.cc',
       ],
@@ -521,6 +530,7 @@
     {
       'target_name': 'gen_pinyin_english_dictionary_data_main',
       'type': 'executable',
+      'toolsets': ['host'],
       'sources': [
         'gen_english_dictionary_data_main.cc',
       ],
@@ -532,6 +542,7 @@
     {
       'target_name': 'install_gen_pinyin_english_dictionary_data_main',
       'type': 'none',
+      'toolsets': ['host'],
       'variables': {
         'bin_name': 'gen_pinyin_english_dictionary_data_main'
       },
@@ -545,24 +556,11 @@
     ['OS=="linux"', {
       'targets': [
         {
-          # TODO(hsumita):move to common.gypi
-          'target_name': 'ibus_mozc_pinyin_metadata',
-          'type': 'static_library',
-          'sources': [
-            'unix/ibus/mozc_engine_property.cc',
-          ],
-          'dependencies': [
-            '../../session/session_base.gyp:session_protocol',
-          ],
-          'includes': [
-            '../../unix/ibus/ibus_libraries.gypi',
-          ],
-        },
-        {
           'target_name': 'ibus_mozc_pinyin',
           'type': 'executable',
           'sources': [
             'unix/ibus/main.cc',
+            'unix/ibus/mozc_engine_property.cc',
           ],
           'dependencies': [
             '../../config/config.gyp:config_handler',
@@ -571,11 +569,7 @@
             '../../protobuf/protobuf.gyp:protobuf',
             '../../session/session.gyp:session_handler',
             '../../unix/ibus/ibus.gyp:ibus_mozc_lib',
-            'ibus_mozc_pinyin_metadata',
             'pinyin_session',
-          ],
-          'includes': [
-            '../../unix/ibus/ibus_libraries.gypi',
           ],
           'conditions': [
             ['chromeos==1', {

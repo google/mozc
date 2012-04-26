@@ -42,17 +42,20 @@ const char kComponentHomepage[] = "http://code.google.com/p/mozc/";
 const char kComponentDescription[] = "Mozc Pinyin Component";
 const char kEngineRank[] = "0";
 const char kEngineDescription[] = "Mozc Pinyin (Pinyin Input Method)";
-const char kEngineLanguage[] = "cn";
+const char kEngineLanguage[] = "zh-CN";
 const char kEngineIcon[] = "/usr/share/ibus-mozc/product_icon.png";
 const char *kEngineLayoutArray[] = {
-"us",
+  "us",
+  "us(dvorak)",
 };
 const char *kEngineNameArray[] = {
-"mozc-pinyin",
+  "mozc-pinyin",
+  "mozc-pinyin-dv",
 };
 const char *kEngineLongnameArray[] = {
-"Mozc Pinyin (Pinyin)",
+  "Mozc Pinyin",
+  "Mozc Pinyin (for US Dvorak keyboard)",
 };
-const size_t kEngineArrayLen = 1;
+const size_t kEngineArrayLen = 2;
 }  // namespace
 #endif  // MOZC_LANGUAGES_PINYIN_UNIX_IBUS_MAIN_H_

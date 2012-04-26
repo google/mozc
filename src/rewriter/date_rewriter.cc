@@ -45,6 +45,7 @@
 #include "base/util.h"
 #include "config/config_handler.h"
 #include "config/config.pb.h"
+#include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "session/commands.pb.h"
 
@@ -1250,7 +1251,8 @@ int DateRewriter::capability() const {
   return RewriterInterface::CONVERSION;
 }
 
-bool DateRewriter::Rewrite(Segments *segments) const {
+bool DateRewriter::Rewrite(const ConversionRequest &request,
+                           Segments *segments) const {
   if (!GET_CONFIG(use_date_conversion)) {
     VLOG(2) << "no use_date_conversion";
     return false;

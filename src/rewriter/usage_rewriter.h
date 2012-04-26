@@ -32,6 +32,7 @@
 #include <list>
 #include <map>
 #include <string>
+#include <utility>
 
 #include "base/base.h"
 #include "converter/segments.h"
@@ -47,11 +48,15 @@ struct UsageDictItem {
   const char *meaning;
 };
 
-class UsageRewriter: public RewriterInterface  {
+class ConversionRequest;
+class POSMatcher;
+
+class UsageRewriter : public RewriterInterface  {
  public:
-  UsageRewriter();
+  explicit UsageRewriter(const POSMatcher *pos_matcher);
   virtual ~UsageRewriter();
-  virtual bool Rewrite(Segments *segments) const;
+  virtual bool Rewrite(const ConversionRequest &request,
+                       Segments *segments) const;
 
   // better to show usage when user type "tab" key.
   virtual int capability() const {
@@ -70,6 +75,8 @@ class UsageRewriter: public RewriterInterface  {
       const Segment::Candidate &candidate) const;
 
   map<StrPair, const UsageDictItem *> key_value_usageitem_map_;
+  const POSMatcher *pos_matcher_;
 };
+
 }  // namespace mozc
 #endif  // MOZC_REWRITER_USAGE_REWRITER_H_

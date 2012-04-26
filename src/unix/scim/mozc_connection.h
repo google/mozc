@@ -63,15 +63,19 @@ class MozcConnectionInterface {
   virtual ~MozcConnectionInterface();
 
   virtual bool TrySendKeyEvent(const scim::KeyEvent &key,
-                               mozc::commands::CompositionMode composition_mode,
+                               bool is_activated,
+                               mozc::commands::CompositionMode next_mode,
                                mozc::commands::Output *out,
                                string *out_error) const = 0;
   virtual bool TrySendClick(int32 unique_id,
                             mozc::commands::Output *out,
                             string *out_error) const = 0;
-  virtual bool TrySendCompositionMode(mozc::commands::CompositionMode mode,
-                                      mozc::commands::Output *out,
-                                      string *out_error) const = 0;
+  virtual bool TrySendImeOff(mozc::commands::CompositionMode next_mode,
+                             mozc::commands::Output *out,
+                             string *out_error) const = 0;
+  virtual bool TrySendImeOn(mozc::commands::CompositionMode next_mode,
+                            mozc::commands::Output *out,
+                            string *out_error) const = 0;
   virtual bool TrySendCommand(mozc::commands::SessionCommand::CommandType type,
                               mozc::commands::Output *out,
                               string *out_error) const = 0;
@@ -90,7 +94,8 @@ class MozcConnection : public MozcConnectionInterface {
   // fails, returns false and the error message is stored on 'out_error'. In
   // this case, 'out' is not modified.
   virtual bool TrySendKeyEvent(const scim::KeyEvent &key,
-                               mozc::commands::CompositionMode composition_mode,
+                               bool is_activated,
+                               mozc::commands::CompositionMode next_mode,
                                mozc::commands::Output *out,
                                string *out_error) const;
 
@@ -99,10 +104,15 @@ class MozcConnection : public MozcConnectionInterface {
                             mozc::commands::Output *out,
                             string *out_error) const;
 
-  // Sends composition mode to the server.
-  virtual bool TrySendCompositionMode(mozc::commands::CompositionMode mode,
-                                      mozc::commands::Output *out,
-                                      string *out_error) const;
+  // Sends 'KeyEvent::OFF' event to the server.
+  virtual bool TrySendImeOff(mozc::commands::CompositionMode next_mode,
+                             mozc::commands::Output *out,
+                             string *out_error) const;
+
+  // Sends 'KeyEvent::ON' event to the server.
+  virtual bool TrySendImeOn(mozc::commands::CompositionMode next_mode,
+                            mozc::commands::Output *out,
+                            string *out_error) const;
 
   // Sends a command to the server.
   virtual bool TrySendCommand(mozc::commands::SessionCommand::CommandType type,

@@ -128,7 +128,9 @@ const struct DirectKeymapTestData {
   { "a",            INSERT },
   { "!",            INSERT },
   { "0",            INSERT },
-  { "Shift a",      INSERT },
+  { "A",            INSERT },
+  // "Shift + printable key" should not be sent from mozc_engine.
+  // Shift key with a printable key is removed.
   { "Ctrl a",       DO_NOTHING_WITHOUT_CONSUME },
   { "Left",         DO_NOTHING_WITHOUT_CONSUME },
   { "Ctrl Left",    DO_NOTHING_WITHOUT_CONSUME },
@@ -160,7 +162,9 @@ const struct EnglishKeymapTestData {
   { "-",            FOCUS_CANDIDATE_PREV_PAGE },
   { "a",            INSERT },
   { "!",            DO_NOTHING_WITH_CONSUME },
-  { "Shift a",      INSERT },
+  { "A",            INSERT },
+  // "Shift + printable key" should not be sent from mozc_engine.
+  // Shift key with a printable key is removed.
   { "Ctrl a",       DO_NOTHING_WITH_CONSUME },
   { "Left",         FOCUS_CANDIDATE_TOP },
   { "Right",        FOCUS_CANDIDATE_TOP },
@@ -196,7 +200,9 @@ const struct PunctuationKeymapTestData {
   { "a",            INSERT },
   { "!",            INSERT },
   { "0",            INSERT },
-  { "Shift a",      INSERT },
+  { "A",            INSERT },
+  // "Shift + printable key" should not be sent from mozc_engine.
+  // Shift key with a printable key is removed.
   { "Ctrl a",       DO_NOTHING_WITH_CONSUME },
   { "Left",         MOVE_CURSOR_LEFT },
   { "SHIFT",        DO_NOTHING_WITHOUT_CONSUME },

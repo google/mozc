@@ -61,6 +61,7 @@ class InfolistWindow : public GtkWindowBase {
   virtual void Initialize();
   // This function is not used in infolist window.
   virtual Rect GetCandidateColumnInClientCord() const;
+  virtual void ReloadFontConfig(const string &font_description);
 
  protected:
   virtual bool OnPaint(GtkWidget *widget, GdkEventExpose *event);

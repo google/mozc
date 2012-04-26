@@ -156,9 +156,10 @@ TEST(Dictionary_test, DisableZipCodeConversionTest) {
     config.set_use_zip_code_conversion(true);
     config::ConfigHandler::SetConfig(config);
 
+    const POSMatcher pos_matcher;
     Node *node = d->LookupPrefix(kQuery, strlen(kQuery), &allocator);
     for (; node != NULL; node = node->bnext) {
-      if (POSMatcher::IsZipcode(node->lid)) {
+      if (pos_matcher.IsZipcode(node->lid)) {
         EXPECT_TRUE(GET_CONFIG(use_zip_code_conversion));
       }
     }
@@ -167,7 +168,7 @@ TEST(Dictionary_test, DisableZipCodeConversionTest) {
     config::ConfigHandler::SetConfig(config);;
     node = d->LookupPrefix(kQuery, strlen(kQuery), &allocator);
     for (; node != NULL; node = node->bnext) {
-      EXPECT_FALSE(POSMatcher::IsZipcode(node->lid));
+      EXPECT_FALSE(pos_matcher.IsZipcode(node->lid));
     }
   }
 }

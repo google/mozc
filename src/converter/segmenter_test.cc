@@ -45,6 +45,7 @@ class SegmenterTest : public testing::Test {
   }
 
   Segmenter *segmenter_;
+  const POSMatcher pos_matcher_;
 };
 
 TEST_F(SegmenterTest, SegmenterTest) {
@@ -108,9 +109,9 @@ TEST_F(SegmenterTest, ParticleTest) {
   lnode.node_type = Node::NOR_NODE;
   rnode.node_type = Node::NOR_NODE;
   // "助詞"
-  lnode.rid = POSMatcher::GetAcceptableParticleAtBeginOfSegmentId();
+  lnode.rid = pos_matcher_.GetAcceptableParticleAtBeginOfSegmentId();
   // "名詞,サ変".
-  rnode.lid = POSMatcher::GetUnknownId();
+  rnode.lid = pos_matcher_.GetUnknownId();
   EXPECT_TRUE(segmenter_->IsBoundary(&lnode, &rnode, false));
 
   lnode.attributes |= Node::STARTS_WITH_PARTICLE;

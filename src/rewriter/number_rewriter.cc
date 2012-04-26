@@ -36,10 +36,11 @@
 #include <vector>
 
 #include "base/util.h"
-#include "dictionary/pos_matcher.h"
-#include "config/config_handler.h"
 #include "config/config.pb.h"
+#include "config/config_handler.h"
+#include "converter/conversion_request.h"
 #include "converter/segments.h"
+#include "dictionary/pos_matcher.h"
 #include "session/commands.pb.h"
 
 namespace mozc {
@@ -49,13 +50,6 @@ namespace {
 // 5 candidates apart from base candidate.
 // http://b/issue?id=2872048
 const int kArabicNumericOffset = 5;
-
-// Rewrite type
-enum RewriteType {
-  NO_REWRITE = 0,
-  ARABIC_FIRST,  // arabic candidates first ordering
-  KANJI_FIRST,  // kanji candidates first ordering
-};
 
 void PushBackCandidate(const string &value, const string &desc,
                        Util::NumberString::Style style,
@@ -75,69 +69,6 @@ void PushBackCandidate(const string &value, const string &desc,
     cand.style = style;
     results->push_back(cand);
   }
-}
-
-bool IsNumber(uint16 lid) {
-  // Number candidates sometimes categorized as general noun.
-  // TODO(toshiyuki): It's better if we can rewrite
-  // from general noun POS to number POS
-  // TODO(toshiyuki): We can remove general noun check if we can set
-  // correct POS.
-  return (POSMatcher::IsNumber(lid) || POSMatcher::IsKanjiNumber(lid) ||
-          POSMatcher::IsGeneralNoun(lid));
-}
-
-// Returns rewrite type for the given segment and base candidate information.
-// *base_candidate_pos: candidate index of starting insertion.
-// *arabic_candidate: arabic candidate using numeric style conversion.
-// POS information, cost, etc will be copied from base candidate.
-RewriteType GetRewriteTypeAndBase(const Segment &seg,
-                                  int *base_candidate_pos,
-                                  Segment::Candidate *arabic_candidate) {
-  DCHECK(base_candidate_pos);
-  DCHECK(arabic_candidate);
-  for (size_t i = 0; i < seg.candidates_size(); ++i) {
-    const Segment::Candidate &c = seg.candidate(i);
-    if (!IsNumber(c.lid)) {
-      continue;
-    }
-
-    if (Util::GetScriptType(c.content_value) == Util::NUMBER) {
-      *base_candidate_pos = i;
-      arabic_candidate->CopyFrom(c);
-      return ARABIC_FIRST;
-    }
-
-    string kanji_number, arabic_number, half_width_new_content_value;
-    Util::FullWidthToHalfWidth(c.content_key, &half_width_new_content_value);
-    // Try to get normalized kanji_number and arabic_number.
-    // If it failed, do nothing.
-    // Retain suffix for later use.
-    string number_suffix;
-    if (!Util::NormalizeNumbersWithSuffix(c.content_value,
-                                          true,  // trim_reading_zeros
-                                          &kanji_number,
-                                          &arabic_number,
-                                          &number_suffix) ||
-        arabic_number == half_width_new_content_value) {
-      return NO_REWRITE;
-    }
-    const string suffix = c.value.substr(
-        c.content_value.size(), c.value.size() - c.content_value.size());
-    arabic_candidate->Init();
-    arabic_candidate->value = arabic_number + number_suffix + suffix;
-    arabic_candidate->content_value = arabic_number + number_suffix;
-    arabic_candidate->key = c.key;
-    arabic_candidate->content_key = c.content_key;
-    arabic_candidate->cost = c.cost;
-    arabic_candidate->structure_cost = c.structure_cost;
-    arabic_candidate->lid = c.lid;
-    arabic_candidate->rid = c.rid;
-    *base_candidate_pos = i;
-    return KANJI_FIRST;
-  }
-
-  return NO_REWRITE;
 }
 
 void SetCandidatesInfo(const Segment::Candidate &arabic_cand,
@@ -287,8 +218,9 @@ void InsertConvertedCandidates(const vector<Segment::Candidate> &results,
   }
 }
 
-int GetInsertPos(int base_pos, const Segment &segment, RewriteType type) {
-  if (type == ARABIC_FIRST) {
+int GetInsertPos(int base_pos, const Segment &segment,
+                 NumberRewriter::RewriteType type) {
+  if (type == NumberRewriter::ARABIC_FIRST) {
     // +2 for arabic half_width full_width expansion
     return min(base_pos + 2, static_cast<int>(segment.candidates_size()));
   } else {
@@ -303,17 +235,17 @@ void InsertHalfArabic(const string &half_arabic,
                                        Util::NumberString::DEFAULT_STYLE));
 }
 
-void GetNumbers(RewriteType type, const Segments &segments,
+void GetNumbers(NumberRewriter::RewriteType type, const Segments &segments,
                 const string &arabic_content_value,
                 vector<Util::NumberString> *output) {
   DCHECK(output);
-  if (type == ARABIC_FIRST) {
+  if (type == NumberRewriter::ARABIC_FIRST) {
     InsertHalfArabic(arabic_content_value, output);
     Util::ArabicToWideArabic(arabic_content_value, output);
     Util::ArabicToSeparatedArabic(arabic_content_value, output);
     Util::ArabicToKanji(arabic_content_value, output);
     Util::ArabicToOtherForms(arabic_content_value, output);
-  } else if (type == KANJI_FIRST) {
+  } else if (type == NumberRewriter::KANJI_FIRST) {
     Util::ArabicToKanji(arabic_content_value, output);
     InsertHalfArabic(arabic_content_value, output);
     Util::ArabicToWideArabic(arabic_content_value, output);
@@ -330,14 +262,17 @@ void GetNumbers(RewriteType type, const Segments &segments,
 }
 }  // namespace
 
-NumberRewriter::NumberRewriter() {}
+NumberRewriter::NumberRewriter(const POSMatcher *pos_matcher)
+    : pos_matcher_(pos_matcher) {}
+
 NumberRewriter::~NumberRewriter() {}
 
 int NumberRewriter::capability() const {
   return RewriterInterface::CONVERSION;
 }
 
-bool NumberRewriter::Rewrite(Segments *segments) const {
+bool NumberRewriter::Rewrite(const ConversionRequest &request,
+                             Segments *segments) const {
   if (!GET_CONFIG(use_number_conversion)) {
     VLOG(2) << "no use_number_conversion";
     return false;
@@ -395,4 +330,69 @@ bool NumberRewriter::Rewrite(Segments *segments) const {
 
   return modified;
 }
+
+bool NumberRewriter::IsNumber(uint16 lid) const {
+  // Number candidates sometimes categorized as general noun.
+  // TODO(toshiyuki): It's better if we can rewrite
+  // from general noun POS to number POS
+  // TODO(toshiyuki): We can remove general noun check if we can set
+  // correct POS.
+  return (pos_matcher_->IsNumber(lid) || pos_matcher_->IsKanjiNumber(lid) ||
+          pos_matcher_->IsGeneralNoun(lid));
+}
+
+// Returns rewrite type for the given segment and base candidate information.
+// *base_candidate_pos: candidate index of starting insertion.
+// *arabic_candidate: arabic candidate using numeric style conversion.
+// POS information, cost, etc will be copied from base candidate.
+NumberRewriter::RewriteType NumberRewriter::GetRewriteTypeAndBase(
+    const Segment &seg,
+    int *base_candidate_pos,
+    Segment::Candidate *arabic_candidate) const {
+  DCHECK(base_candidate_pos);
+  DCHECK(arabic_candidate);
+  for (size_t i = 0; i < seg.candidates_size(); ++i) {
+    const Segment::Candidate &c = seg.candidate(i);
+    if (!IsNumber(c.lid)) {
+      continue;
+    }
+
+    if (Util::GetScriptType(c.content_value) == Util::NUMBER) {
+      *base_candidate_pos = i;
+      arabic_candidate->CopyFrom(c);
+      return ARABIC_FIRST;
+    }
+
+    string kanji_number, arabic_number, half_width_new_content_value;
+    Util::FullWidthToHalfWidth(c.content_key, &half_width_new_content_value);
+    // Try to get normalized kanji_number and arabic_number.
+    // If it failed, do nothing.
+    // Retain suffix for later use.
+    string number_suffix;
+    if (!Util::NormalizeNumbersWithSuffix(c.content_value,
+                                          true,  // trim_reading_zeros
+                                          &kanji_number,
+                                          &arabic_number,
+                                          &number_suffix) ||
+        arabic_number == half_width_new_content_value) {
+      return NO_REWRITE;
+    }
+    const string suffix = c.value.substr(
+        c.content_value.size(), c.value.size() - c.content_value.size());
+    arabic_candidate->Init();
+    arabic_candidate->value = arabic_number + number_suffix + suffix;
+    arabic_candidate->content_value = arabic_number + number_suffix;
+    arabic_candidate->key = c.key;
+    arabic_candidate->content_key = c.content_key;
+    arabic_candidate->cost = c.cost;
+    arabic_candidate->structure_cost = c.structure_cost;
+    arabic_candidate->lid = c.lid;
+    arabic_candidate->rid = c.rid;
+    *base_candidate_pos = i;
+    return KANJI_FIRST;
+  }
+
+  return NO_REWRITE;
+}
+
 }  // namespace mozc

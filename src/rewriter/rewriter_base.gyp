@@ -39,6 +39,7 @@
     {
       'target_name': 'gen_rewriter_files',
       'type': 'none',
+      'toolsets': ['host'],
       'actions': [
         {
           'action_name': 'gen_collocation_data',
@@ -59,7 +60,29 @@
             'python', '../build_tools/redirect.py',
             '<(gen_out_dir)/embedded_collocation_data.h',
             '<(mozc_build_tools_dir)/gen_collocation_data_main',
+            '--collocation_data=<@(input_files)',
+          ],
+        },
+        {
+          'action_name': 'gen_collocation_suppression_data',
+          'variables': {
+            'input_files%': [
+              '../data/dictionary/collocation_suppression.txt',
+            ],
+          },
+          'inputs': [
             '<@(input_files)',
+          ],
+          'conditions': [
+          ],
+          'outputs': [
+            '<(gen_out_dir)/embedded_collocation_suppression_data.h',
+          ],
+          'action': [
+            'python', '../build_tools/redirect.py',
+            '<(gen_out_dir)/embedded_collocation_suppression_data.h',
+            '<(mozc_build_tools_dir)/gen_collocation_suppression_data_main',
+            '--suppression_data=<@(input_files)',
           ],
         },
         {
@@ -125,29 +148,6 @@
             '--output=<(output_file)',
           ],
         },
-        {
-          'action_name': 'gen_user_segment_history_rewriter_rule',
-          'variables': {
-            'input_files': [
-              '../data/dictionary/id.def',
-              '../data/rules/special_pos.def',
-              '../data/rules/user_segment_history_pos_group.def',
-            ],
-          },
-          'inputs': [
-            '../dictionary/gen_pos_rewrite_rule.py',
-            '<@(input_files)',
-          ],
-          'outputs': [
-            '<(gen_out_dir)/user_segment_history_rewriter_rule.h',
-          ],
-          'action': [
-            'python', '../build_tools/redirect.py',
-            '<(gen_out_dir)/user_segment_history_rewriter_rule.h',
-            '../dictionary/gen_pos_rewrite_rule.py',
-            '<@(input_files)',
-          ],
-        },
       ],
       'conditions': [
         ['target_platform!="Android"', {
@@ -184,8 +184,10 @@
     {
       'target_name': 'gen_collocation_data_main',
       'type': 'executable',
+      'toolsets': ['host'],
       'sources': [
         'gen_collocation_data_main.cc',
+        'gen_existence_header.cc'
       ],
       'dependencies': [
         '../storage/storage.gyp:storage',
@@ -194,6 +196,7 @@
     {
       'target_name': 'install_gen_collocation_data_main',
       'type': 'none',
+      'toolsets': ['host'],
       'variables': {
         'bin_name': 'gen_collocation_data_main'
       },
@@ -202,21 +205,46 @@
       ]
     },
     {
+      'target_name': 'gen_collocation_suppression_data_main',
+      'type': 'executable',
+      'toolsets': ['host'],
+      'sources': [
+        'gen_collocation_suppression_data_main.cc',
+        'gen_existence_header.cc'
+      ],
+      'dependencies': [
+        '../storage/storage.gyp:storage',
+      ],
+    },
+    {
+      'target_name': 'install_gen_collocation_suppression_data_main',
+      'type': 'none',
+      'toolsets': ['host'],
+      'variables': {
+        'bin_name': 'gen_collocation_suppression_data_main'
+      },
+      'includes' : [
+        '../gyp/install_build_tool.gypi',
+      ]
+    },
+    {
       'target_name': 'gen_single_kanji_rewriter_dictionary_main',
       'type': 'executable',
+      'toolsets': ['host'],
       'sources': [
         'embedded_dictionary.cc',
         'gen_single_kanji_rewriter_dictionary_main.cc',
       ],
        'dependencies': [
          '../base/base.gyp:base',
-         '../data_manager/data_manager.gyp:user_dictionary_manager',
+         '../data_manager/data_manager.gyp:user_pos_manager',
          '../dictionary/dictionary_base.gyp:user_pos_data',
        ],
     },
     {
       'target_name': 'install_gen_single_kanji_rewriter_dictionary_main',
       'type': 'none',
+      'toolsets': ['host'],
       'variables': {
         'bin_name': 'gen_single_kanji_rewriter_dictionary_main'
       },
@@ -227,6 +255,7 @@
     {
       'target_name': 'gen_symbol_rewriter_dictionary_main',
       'type': 'executable',
+      'toolsets': ['host'],
       'sources': [
         'dictionary_generator.cc',
         'embedded_dictionary.cc',
@@ -234,13 +263,15 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        '../data_manager/data_manager.gyp:user_dictionary_manager',
+        '../data_manager/data_manager.gyp:user_pos_manager',
+        '../dictionary/dictionary_base.gyp:pos_matcher',
         '../dictionary/dictionary_base.gyp:user_pos_data',
       ],
     },
     {
       'target_name': 'install_gen_symbol_rewriter_dictionary_main',
       'type': 'none',
+      'toolsets': ['host'],
       'variables': {
         'bin_name': 'gen_symbol_rewriter_dictionary_main'
       },
@@ -251,6 +282,7 @@
     {
       'target_name': 'gen_usage_rewriter_dictionary_main',
       'type': 'executable',
+      'toolsets': ['host'],
       'sources': [
         'gen_usage_rewriter_dictionary_main.cc',
       ],
@@ -261,6 +293,7 @@
     {
       'target_name': 'install_gen_usage_rewriter_dictionary_main',
       'type': 'none',
+      'toolsets': ['host'],
       'variables': {
         'bin_name': 'gen_usage_rewriter_dictionary_main'
       },

@@ -77,6 +77,7 @@ class GtkWrapperMock : public GtkWrapperInterface {
   MOCK_METHOD1(GtkWindowIsActive, bool(GtkWidget *window));
   MOCK_METHOD3(GtkWindowMove, void(GtkWidget *window, int x, int y));
   MOCK_METHOD3(GtkWindowResize, void(GtkWidget *window, int width, int height));
+  MOCK_METHOD2(GtkWidgetAddEvents, void(GtkWidget *widget, gint events));
 };
 
 }  // namespace gtk

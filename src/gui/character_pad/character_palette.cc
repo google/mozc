@@ -45,7 +45,7 @@ namespace gui {
 
 namespace {
 
-const int kHexBase = 16;
+const char32 kHexBase = 16;
 
 const char kUNICODEName[]  = "Unicode";
 const char kCP932Name[]    = "Shift JIS";
@@ -54,13 +54,15 @@ const char kJISX0208Name[] = "JISX 0208";
 const char kJISX0212Name[] = "JISX 0212";
 const char kJISX0213Name[] = "JISX 0213";
 
+const CharacterPalette::UnicodeRange kUCS2Range = { 0, 0xffff };
+
 //   static const CP932JumpTo kCP932JumpTo[] = {
 //     { "半角英数字",    0x0020 },
 //     { "半角カタカナ",  0x00A1 },
 //     { "全角記号",      0x8141 },
 //     { "全角英数字",    0x8250 },
 //     { "ひらがな",      0x829F },
-//     { "かたかな",      0x8340 },
+//     { "カタカナ",      0x8340 },
 //     { "丸数字",        0x8740 },
 //     { "ローマ数字",    0xFA40 },
 //     { "単位",          0x875F },
@@ -84,7 +86,7 @@ const CharacterPalette::CP932JumpTo kCP932JumpTo[] = {
     0x8250 },
   { "\xE3\x81\xB2\xE3\x82\x89\xE3\x81\x8C\xE3\x81\xAA",
     0x829F },
-  { "\xE3\x81\x8B\xE3\x81\x9F\xE3\x81\x8B\xE3\x81\xAA",
+  { "\xE3\x82\xAB\xE3\x82\xBF\xE3\x82\xAB\xE3\x83\x8A",
     0x8340 },
   { "\xE4\xB8\xB8\xE6\x95\xB0\xE5\xAD\x97",
     0x8740 },
@@ -179,14 +181,20 @@ CharacterPalette::CharacterPalette(QWidget *parent)
   categoryTreeWidget->addTopLevelItem(jisx0208_item);
   categoryTreeWidget->addTopLevelItem(jisx0212_item);
 
-  for (int i = 0; kCP932JumpTo[i].name != NULL; ++i) {
+  for (size_t i = 0; kCP932JumpTo[i].name != NULL; ++i) {
     AddItem(sjis_item, kCP932JumpTo[i].name);
   }
 
-  // Make Unicode Block children
-  for (int i = 0; kUnicodeBlockTable[i].name != NULL; ++i) {
+  // Make Unicode block children and look-up table for each character range.
+  for (size_t i = 0; kUnicodeBlockTable[i].name != NULL; ++i) {
+    const UnicodeBlock &block = kUnicodeBlockTable[i];
+    const UnicodeRange &range = block.range;
     QTreeWidgetItem *item = new QTreeWidgetItem(unicode_item);
-    item->setText(0, QObject::tr(kUnicodeBlockTable[i].name));
+    const QString original_name(block.name);
+    const QString translated_name(QObject::tr(block.name));
+    unicode_block_map_[original_name] = range;
+    unicode_block_map_[translated_name] = range;
+    item->setText(0, translated_name);
     unicode_item->addChild(item);
   }
 
@@ -295,9 +303,12 @@ void CharacterPalette::categorySelected(QTreeWidgetItem *item,
   item->setExpanded(!item->isExpanded());
 
   if (text == kUNICODEName) {     // TOP Unicode
-    showUnicodeAllTable();
+    // The number of characters within entire Unicode range is now too large to
+    // show in the table. So we show only UCS2 range when |kUNICODEName| is
+    // clicked.
+    showUnicodeTableByRange(kUCS2Range);
   } else if (parent != NULL && parent->text(0) == kUNICODEName) {
-    showUnicodeBlockTable(text);
+    showUnicodeTableByBlockName(text);
   } else if (parent != NULL && parent->text(0) == kCP932Name) {
     showSJISBlockTable(text);
   } else if (text == kJISX0201Name) {
@@ -327,19 +338,19 @@ void CharacterPalette::itemSelected(const QTableWidgetItem *item) {
 }
 
 // Unicode operations
-void CharacterPalette::showUnicodeTable(int start, int end) {
+void CharacterPalette::showUnicodeTableByRange(const UnicodeRange &range) {
   tableWidget->hide();
   tableWidget->clear();
 
   QStringList column_header;
-  for (int i = 0; i < kHexBase; ++i) {
-    column_header << QString::number(i, kHexBase).toUpper();
+  for (int col = 0; col < kHexBase; ++col) {
+    column_header << QString::number(col, kHexBase).toUpper();
   }
 
   QStringList row_header;
-  for (int i = start; i < end; i += kHexBase) {
+  for (char32 ucs4 = range.first; ucs4 <= range.last; ucs4 += kHexBase) {
     QString str;
-    str.sprintf("U+%3.3X0", i / kHexBase);
+    str.sprintf("U+%3.3X0", ucs4 / kHexBase);
     row_header << str;
   }
 
@@ -349,16 +360,13 @@ void CharacterPalette::showUnicodeTable(int start, int end) {
   tableWidget->setHorizontalHeaderLabels(column_header);
   tableWidget->setVerticalHeaderLabels(row_header);
 
-  const int offset = start / kHexBase;
-  for (int i = start; i < end; ++i) {
-    // We do not use QString(QChar(i)) but Util::UCS4ToUTF8 because
-    // QChar is only 16-bit.
-    string utf8;
-    Util::UCS4ToUTF8(i, &utf8);
-    QTableWidgetItem *item = new QTableWidgetItem(
-        QString::fromUtf8(utf8.data(), utf8.size()));
+  const char32 offset = range.first / kHexBase;
+  for (char32 ucs4 = range.first; ucs4 <= range.last; ++ucs4) {
+    const char32 ucs4s[] = { ucs4 };
+    QTableWidgetItem *item =
+        new QTableWidgetItem(QString::fromUcs4(ucs4s, ARRAYSIZE(ucs4s)));
     item->setTextAlignment(Qt::AlignCenter);
-    tableWidget->setItem(i / kHexBase - offset, i % kHexBase, item);
+    tableWidget->setItem(ucs4 / kHexBase - offset, ucs4 % kHexBase, item);
     tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
   }
 
@@ -366,10 +374,6 @@ void CharacterPalette::showUnicodeTable(int start, int end) {
                             QAbstractItemView::PositionAtTop);
   tableWidget->setLookupResultItem(NULL);
   tableWidget->show();
-}
-
-void CharacterPalette::showUnicodeAllTable() {
-  showUnicodeTable(0, 65536);  // all Unicode Range
 }
 
 void CharacterPalette::showSJISBlockTable(const QString &name) {
@@ -401,26 +405,13 @@ void CharacterPalette::showSJISBlockTable(const QString &name) {
   tableWidget->show();
 }
 
-void CharacterPalette::showUnicodeBlockTable(const QString &name) {
-  if (name == kUNICODEName) {
-    showUnicodeAllTable();
+void CharacterPalette::showUnicodeTableByBlockName(const QString &block_name) {
+  QMap<QString, UnicodeRange>::const_iterator
+      it = unicode_block_map_.find(block_name);
+  if (it == unicode_block_map_.end()) {
     return;
   }
-
-  const UnicodeBlock *block = NULL;
-  for (int i = 0; kUnicodeBlockTable[i].name != NULL; ++i) {
-    if (name == kUnicodeBlockTable[i].name ||
-        name == QObject::tr(kUnicodeBlockTable[i].name)) {
-      block = &kUnicodeBlockTable[i];
-      break;
-    }
-  }
-
-  if (block == NULL) {
-    return;
-  }
-
-  showUnicodeTable(block->start, block->end);
+  showUnicodeTableByRange(it.value());
 }
 
 // Local table
@@ -430,8 +421,8 @@ void CharacterPalette::showLocalTable(const LocalCharacterMap *local_map,
   tableWidget->clear();
 
   QStringList column_header;
-  for (int i = 0; i < kHexBase; ++i) {
-    column_header << QString::number(i, kHexBase).toUpper();
+  for (int col = 0; col < kHexBase; ++col) {
+    column_header << QString::number(col, kHexBase).toUpper();
   }
 
   // find range

@@ -85,7 +85,6 @@ class SessionRegressionTest : public testing::Test {
 
     orig_use_history_rewriter_ = FLAGS_use_history_rewriter;
     FLAGS_use_history_rewriter = true;
-    RewriterFactory::SetRewriter(NULL);
 
     config::Config config;
     config::ConfigHandler::GetDefaultConfig(&config);

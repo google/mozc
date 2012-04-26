@@ -115,13 +115,28 @@ Rect WindowManager::UpdateCandidateWindow(
     }
   }
 
-  new_window_pos.x
-      -= candidate_window_->GetCandidateColumnInClientCord().Left();
-
-  candidate_window_->Move(new_window_pos);
+  const Rect working_area = GetDesktopRect();
+  const Point alignment_base_point_in_local_window_coord(
+      candidate_window_->GetCandidateColumnInClientCord().Left(), 0);
+  const Rect caret_rect(candidates.caret_rectangle().x(),
+                              candidates.caret_rectangle().y(),
+                              candidates.caret_rectangle().width(),
+                              candidates.caret_rectangle().height());
+  // |caret_rect| is not always equal to preedit rect but can be an alternative
+  // in terms of positional calculation, especially for vertical adjustment in
+  // horizontal writing.
+  const Rect expected_window_rect_in_screen_coord =
+      WindowUtil::GetWindowRectForMainWindowFromTargetPointAndPreedit(
+          new_window_pos,
+          caret_rect,
+          new_window_size,
+          alignment_base_point_in_local_window_coord,
+          working_area,
+          false); // GTK+ renderer only support horizontal window.
+  candidate_window_->Move(expected_window_rect_in_screen_coord.origin);
   candidate_window_->ShowWindow();
 
-  return Rect(new_window_pos, new_window_size);
+  return expected_window_rect_in_screen_coord;
 }
 
 // static
@@ -195,6 +210,20 @@ void WindowManager::UpdateLayout(const commands::RendererCommand &command) {
     return;
   }
 
+  if (command.has_application_info() &&
+      command.application_info().has_pango_font_description()) {
+    const string font_description =
+        command.application_info().pango_font_description();
+    if (previous_font_description_ != font_description) {
+      DVLOG(1) << "Font description is changed"
+               << " From:" << previous_font_description_
+               << " To  :" << font_description;
+      candidate_window_->ReloadFontConfig(font_description);
+      infolist_window_->ReloadFontConfig(font_description);
+      previous_font_description_.assign(font_description);
+    }
+  }
+
   const Rect candidate_window_rect = UpdateCandidateWindow(command);
   UpdateInfolistWindow(command, candidate_window_rect);
 }
@@ -212,7 +241,8 @@ bool WindowManager::IsAvailable() const {
 bool WindowManager::SetSendCommandInterface(
     client::SendCommandInterface *send_command_interface) {
   send_command_interface_ = send_command_interface;
-  return true;
+  return candidate_window_->SetSendCommandInterface(send_command_interface_) &&
+      infolist_window_->SetSendCommandInterface(send_command_interface_);
 }
 
 void WindowManager::SetWindowPos(int x, int y) {

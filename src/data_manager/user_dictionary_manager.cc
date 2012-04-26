@@ -30,33 +30,54 @@
 #include "data_manager/user_dictionary_manager.h"
 
 #include "base/base.h"
+#include "base/init.h"
+#include "base/mutex.h"
 #include "base/singleton.h"
+#include "dictionary/pos_matcher.h"
+#include "dictionary/user_dictionary.h"
 #include "dictionary/user_pos.h"
 
 namespace mozc {
+namespace {
+
+// TODO(noriyukit): It's clearer to reload the user dictionary not by
+// REGISTER_MODULE_RELOADER().
+void ReloadUserDictionary() {
+  VLOG(1) << "Reloading user dictionary";
+  UserDictionaryManager *manager =
+      UserDictionaryManager::GetUserDictionaryManager();
+  manager->GetUserDictionary()->Reload();
+}
+
+// ReloadUserDictionary() is called by SessionHandler::Reload()
+REGISTER_MODULE_RELOADER(reload_user_dictionary,
+                         ReloadUserDictionary());
+
+}  // namespace
 
 UserDictionaryManager *UserDictionaryManager::GetUserDictionaryManager() {
   return Singleton<UserDictionaryManager>::get();
 }
 
-namespace {
-// The following header file is automatically generated and contains the
-// definition of variable, kPOSToken, of type UserPOSImpl::POSToken.
-// TODO(noriyukit): We may need to change the path to header file to avoid file
-// name collision among platforms.
-#include "dictionary/user_pos_data.h"
+UserDictionaryManager::UserDictionaryManager() : user_dictionary_(NULL) {}
 
-class MozcUserPOS : public UserPOS {
- public:
-  MozcUserPOS() : UserPOS(kPOSToken) {
-    DCHECK(kPOSToken != NULL);
+UserDictionaryManager::~UserDictionaryManager() {
+  delete user_dictionary_;
+  user_dictionary_ = NULL;
+}
+
+UserDictionary *UserDictionaryManager::GetUserDictionary() {
+  if (user_dictionary_ == NULL) {
+    scoped_lock l(&mutex_);
+    if (user_dictionary_ == NULL) {
+      // TODO(noriyukit): POSMatcher depends on embedded data set and should be
+      // factoried by DataManager.
+      user_dictionary_ = new UserDictionary(GetUserPOS(),
+                                            Singleton<POSMatcher>::get());
+    }
   }
-};
-}  // namespace
-
-const UserPOSInterface *UserDictionaryManager::GetUserPOS() const {
-  // TODO(noriyukit): We may want to stop using singleton here.
-  return Singleton<MozcUserPOS>::get();
+  DCHECK(user_dictionary_);
+  return user_dictionary_;
 }
 
 }  // namespace mozc

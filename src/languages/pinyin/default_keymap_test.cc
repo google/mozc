@@ -144,16 +144,12 @@ TEST(DefaultKeymapTest, NumberKey) {
     EXPECT_EQ(SELECT_CANDIDATE, GetKeyCommand("1", ACTIVE));
 
     EXPECT_EQ(DO_NOTHING_WITH_CONSUME, GetKeyCommand("ALT 1", ACTIVE));
-    EXPECT_EQ(CLEAR_CANDIDATE_FROM_HISTORY,
-              GetKeyCommand("CTRL 1", ACTIVE));
-    EXPECT_EQ(DO_NOTHING_WITH_CONSUME,
-              GetKeyCommand("SHIFT 1", ACTIVE));
-    EXPECT_EQ(DO_NOTHING_WITH_CONSUME,
-              GetKeyCommand("ALT CTRL 1", ACTIVE));
-    EXPECT_EQ(DO_NOTHING_WITH_CONSUME,
-              GetKeyCommand("ALT SHIFT 1", ACTIVE));
-    EXPECT_EQ(DO_NOTHING_WITH_CONSUME,
-              GetKeyCommand("CTRL SHIFT 1", ACTIVE));
+    EXPECT_EQ(CLEAR_CANDIDATE_FROM_HISTORY, GetKeyCommand("CTRL 1", ACTIVE));
+    // "Shift + printable key" should not be sent from mozc_engine.
+    // Shift key with a printable key is removed.
+    EXPECT_EQ(DO_NOTHING_WITH_CONSUME, GetKeyCommand("ALT CTRL 1", ACTIVE));
+    EXPECT_EQ(DO_NOTHING_WITH_CONSUME, GetKeyCommand("ALT SHIFT 1", ACTIVE));
+    EXPECT_EQ(DO_NOTHING_WITH_CONSUME, GetKeyCommand("CTRL SHIFT 1", ACTIVE));
     EXPECT_EQ(DO_NOTHING_WITH_CONSUME,
               GetKeyCommand("ALT CTRL SHIFT 1", ACTIVE));
   }
@@ -161,11 +157,10 @@ TEST(DefaultKeymapTest, NumberKey) {
   {  // Converter is NOT active
     EXPECT_EQ(INSERT, GetKeyCommand("1", INACTIVE));
 
-    EXPECT_EQ(DO_NOTHING_WITHOUT_CONSUME,
-              GetKeyCommand("ALT 1", INACTIVE));
-    EXPECT_EQ(DO_NOTHING_WITHOUT_CONSUME,
-              GetKeyCommand("CTRL 1", INACTIVE));
-    EXPECT_EQ(INSERT, GetKeyCommand("SHIFT 1", INACTIVE));
+    EXPECT_EQ(DO_NOTHING_WITHOUT_CONSUME, GetKeyCommand("ALT 1", INACTIVE));
+    EXPECT_EQ(DO_NOTHING_WITHOUT_CONSUME, GetKeyCommand("CTRL 1", INACTIVE));
+    // "Shift + printable key" should not be sent from mozc_engine.
+    // Shift key with a printable key is removed.
     EXPECT_EQ(DO_NOTHING_WITHOUT_CONSUME,
               GetKeyCommand("ALT CTRL 1", INACTIVE));
     EXPECT_EQ(DO_NOTHING_WITHOUT_CONSUME,
@@ -184,8 +179,8 @@ TEST(DefaultKeymapTest, PunctuationKey) {
 
     EXPECT_EQ(DO_NOTHING_WITH_CONSUME, GetKeyCommand("ALT !", ACTIVE));
     EXPECT_EQ(DO_NOTHING_WITH_CONSUME, GetKeyCommand("CTRL !", ACTIVE));
-    EXPECT_EQ(DO_NOTHING_WITH_CONSUME,
-              GetKeyCommand("SHIFT !", ACTIVE));
+    // "Shift + printable key" should not be sent from mozc_engine.
+    // Shift key with a printable key is removed.
     EXPECT_EQ(DO_NOTHING_WITH_CONSUME,
               GetKeyCommand("ALT CTRL !", ACTIVE));
     EXPECT_EQ(DO_NOTHING_WITH_CONSUME,
@@ -204,7 +199,8 @@ TEST(DefaultKeymapTest, PunctuationKey) {
               GetKeyCommand("ALT !", INACTIVE));
     EXPECT_EQ(DO_NOTHING_WITHOUT_CONSUME,
               GetKeyCommand("CTRL !", INACTIVE));
-    EXPECT_EQ(INSERT, GetKeyCommand("SHIFT !", INACTIVE));
+    // "Shift + printable key" should not be sent from mozc_engine.
+    // Shift key with a printable key is removed.
     EXPECT_EQ(DO_NOTHING_WITHOUT_CONSUME,
               GetKeyCommand("ALT CTRL !", INACTIVE));
     EXPECT_EQ(DO_NOTHING_WITHOUT_CONSUME,

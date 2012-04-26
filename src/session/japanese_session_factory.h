@@ -33,7 +33,6 @@
 #define MOZC_SESSION_JAPANESE_SESSION_FACTORY_H_
 
 #include "base/base.h"
-#include "session/commands.pb.h"
 #include "session/session_factory_manager.h"
 
 namespace mozc {

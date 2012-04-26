@@ -30,13 +30,14 @@
 #include <string>
 
 #include "base/util.h"
-#include "config/config_handler.h"
 #include "config/config.pb.h"
+#include "config/config_handler.h"
 #include "converter/conversion_request.h"
+#include "converter/converter_interface.h"
 #include "converter/segments.h"
 #include "rewriter/symbol_rewriter.h"
-#include "testing/base/public/gunit.h"
 #include "session/commands.pb.h"
+#include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
 
@@ -98,6 +99,7 @@ class SymbolRewriterTest : public testing::Test {
     config::Config config;
     config::ConfigHandler::GetDefaultConfig(&config);
     config::ConfigHandler::SetConfig(config);
+    converter_ = ConverterFactory::GetConverter();
   }
 
   virtual void TearDown() {
@@ -106,6 +108,8 @@ class SymbolRewriterTest : public testing::Test {
     config::ConfigHandler::GetDefaultConfig(&config);
     config::ConfigHandler::SetConfig(config);
   }
+
+  const ConverterInterface *converter_;
 };
 
 // Note that these tests are using default symbol dictionary.
@@ -113,14 +117,16 @@ class SymbolRewriterTest : public testing::Test {
 // TODO(toshiyuki): Modify symbol rewriter so that we can use symbol dictionary
 // for testing.
 TEST_F(SymbolRewriterTest, TriggerRewriteTest) {
-  SymbolRewriter symbol_rewriter;
+  SymbolRewriter symbol_rewriter(converter_);
+  const ConversionRequest request;
+
   {
     Segments segments;
     // "ー"
     AddSegment("\xe3\x83\xbc", "test", &segments);
     // ">"
     AddSegment("\x3e", "test", &segments);
-    EXPECT_TRUE(symbol_rewriter.Rewrite(&segments));
+    EXPECT_TRUE(symbol_rewriter.Rewrite(request, &segments));
     // "→"
     EXPECT_TRUE(HasCandidate(segments, 0, "\xe2\x86\x92"));
   }
@@ -130,7 +136,7 @@ TEST_F(SymbolRewriterTest, TriggerRewriteTest) {
     AddSegment("\xe3\x83\xbc", "test", &segments);
     // "ー"
     AddSegment("\xe3\x83\xbc", "test", &segments);
-    EXPECT_TRUE(symbol_rewriter.Rewrite(&segments));
+    EXPECT_TRUE(symbol_rewriter.Rewrite(request, &segments));
     // "―"
     EXPECT_TRUE(HasCandidate(segments, 0, "\xe2\x80\x95"));
     // "―"
@@ -139,8 +145,8 @@ TEST_F(SymbolRewriterTest, TriggerRewriteTest) {
 }
 
 TEST_F(SymbolRewriterTest, TriggerRewriteEntireTest) {
-  SymbolRewriter symbol_rewriter;
-  ConversionRequest request;
+  SymbolRewriter symbol_rewriter(converter_);
+  const ConversionRequest request;
   {
     Segments segments;
     // "ー"
@@ -162,7 +168,7 @@ TEST_F(SymbolRewriterTest, TriggerRewriteEntireTest) {
 }
 
 TEST_F(SymbolRewriterTest, TriggerRewriteEachTest) {
-  SymbolRewriter symbol_rewriter;
+  SymbolRewriter symbol_rewriter(converter_);
   {
     Segments segments;
     // "ー"
@@ -181,7 +187,7 @@ TEST_F(SymbolRewriterTest, TriggerRewriteEachTest) {
 }
 
 TEST_F(SymbolRewriterTest, TriggerRewriteDescriptionTest) {
-  SymbolRewriter symbol_rewriter;
+  SymbolRewriter symbol_rewriter(converter_);
   {
     Segments segments;
     // "したつき"
@@ -200,7 +206,8 @@ TEST_F(SymbolRewriterTest, TriggerRewriteDescriptionTest) {
 }
 
 TEST_F(SymbolRewriterTest, InsertAfterSingleKanjiAndT13n) {
-  SymbolRewriter symbol_rewriter;
+  SymbolRewriter symbol_rewriter(converter_);
+  const ConversionRequest request;
   {
     Segments segments;
     // "てん", "てん"
@@ -239,7 +246,7 @@ TEST_F(SymbolRewriterTest, InsertAfterSingleKanjiAndT13n) {
     // "貼"
     AddCandidate("\xe8\xb2\xbc", seg);
 
-    EXPECT_TRUE(symbol_rewriter.Rewrite(&segments));
+    EXPECT_TRUE(symbol_rewriter.Rewrite(request, &segments));
     EXPECT_GT(segments.segment(0).candidates_size(), 16);
     for (int i = 0; i < 16; ++i) {
       const string &value = segments.segment(0).candidate(i).value;
@@ -250,8 +257,10 @@ TEST_F(SymbolRewriterTest, InsertAfterSingleKanjiAndT13n) {
 }
 
 TEST_F(SymbolRewriterTest, SetKey) {
-  SymbolRewriter symbol_rewriter;
+  SymbolRewriter symbol_rewriter(converter_);
   Segments segments;
+  const ConversionRequest request;
+
   Segment *segment = segments.push_back_segment();
   // "てん"
   const string kKey = "\xe3\x81\xa6\xe3\x82\x93";
@@ -263,7 +272,7 @@ TEST_F(SymbolRewriterTest, SetKey) {
   candidate->content_key = "strange key";
   candidate->content_value = "strange value";
   EXPECT_EQ(1, segment->candidates_size());
-  EXPECT_TRUE(symbol_rewriter.Rewrite(&segments));
+  EXPECT_TRUE(symbol_rewriter.Rewrite(request, &segments));
   EXPECT_GT(segment->candidates_size(), 1);
   for (size_t i = 1; i < segment->candidates_size(); ++i) {
     EXPECT_EQ(kKey, segment->candidate(i).key);

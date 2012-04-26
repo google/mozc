@@ -27,6 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <algorithm>
 #include <string>
 #include <vector>
 
@@ -136,19 +137,6 @@ TEST_F(EnglishDictionaryTest, LearningFunction) {
     EXPECT_TRUE(it_a < it_b);
   }
 
-  {  // Learns more 5 times and move word_a to top of candidates.
-    ASSERT_TRUE(dictionary.GetSuggestions(kQueryPrefix, &output));
-    ASSERT_EQ(original_size + 2, output.size());
-    ASSERT_NE(word_a, output[0]);
-
-    for (size_t i = 0; i < 5; ++i) {
-      dictionary.LearnWord(word_a);
-    }
-    ASSERT_TRUE(dictionary.GetSuggestions(kQueryPrefix, &output));
-    ASSERT_EQ(original_size + 2, output.size());
-    EXPECT_EQ(word_a, output[0]);
-  }
-
   {  // Learns more 100 times and move word_a to top of candidates.
     ASSERT_TRUE(dictionary.GetSuggestions(kQueryPrefix, &output));
     ASSERT_EQ(original_size + 2, output.size());
@@ -171,8 +159,10 @@ TEST_F(EnglishDictionaryTest, LearnWordsContainsUpperAlphabet_Issue6136098) {
   const char *kWord = "abcDEFghi";
   const char *kLowerWord = "abcdefghi";
 
-  ASSERT_TRUE(dictionary.GetSuggestions(kWord, &output));
-  ASSERT_TRUE(output.empty());
+  ASSERT_FALSE(dictionary.GetSuggestions("", &output));
+
+  output.clear();
+  ASSERT_FALSE(dictionary.GetSuggestions(kWord, &output));
 
   output.clear();
   dictionary.LearnWord(kWord);

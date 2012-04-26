@@ -38,18 +38,19 @@ namespace mozc {
 
 class CalculatorRewriterTest;
 class ConversionRequest;
+class ConversionRequest;
+class ConverterInterface;
 class Segments;
 
 class CalculatorRewriter : public RewriterInterface {
  public:
   friend class CalculatorRewriterTest;
 
-  CalculatorRewriter();
+  explicit CalculatorRewriter(const ConverterInterface *parent_converter);
   virtual ~CalculatorRewriter();
 
-  virtual bool Rewrite(Segments *segments) const;
-  virtual bool RewriteForRequest(const ConversionRequest &request,
-                                 Segments *segments) const;
+  virtual bool Rewrite(const ConversionRequest &request,
+                       Segments *segments) const;
 
  private:
   // Inserts a candidate with the string into the |segment|.
@@ -58,6 +59,8 @@ class CalculatorRewriter : public RewriterInterface {
   bool InsertCandidate(const string &value,
                        size_t insert_pos,
                        Segment *segment) const;
+
+  const ConverterInterface *parent_converter_;
 };
 
 }  // namespace mozc

@@ -34,8 +34,16 @@
     {
       'target_name': 'rx',
       'type': 'static_library',
+      'toolsets': ['target', 'host'],
       'sources': [
-        'v1_0rc2/rx.c',
+        'v1_1_2/rx.c',
+      ],
+      # A quick workaround against b/6385490. Note that
+      # '-Wno-unused-but-set-variable' is not valid on older GCCs such as
+      # GCC 4.2, which is still used for Mac OS X build of Mozc.
+      # TODO(team): fix this issue in upstream.
+      'cflags!': [
+        '-Werror',
       ],
     },
   ],

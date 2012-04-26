@@ -36,12 +36,26 @@
 
 namespace mozc {
 
+class POSMatcher;
 class SuppressionDictionary;
-class SystemDictionary;
-class ValueDictionary;
 
 class DictionaryImpl : public DictionaryInterface {
  public:
+  // Initializes a dictionary with given dictionaries and POS data.  The system
+  // and value dictionaries are owned by this class but the user dictionary is
+  // just a reference and to be deleted by the caller. Note that the user
+  // dictionary is not a const reference because this class may reload the user
+  // dictionary.
+  // TODO(noriyukit): Currently DictionaryInterface::Reload() is not used and
+  // thus user_dictionary can be const as well. We can make it const after
+  // clarifying the ownership of the user dictionary and changing code so that
+  // the owner reloads it.
+  DictionaryImpl(const DictionaryInterface *system_dictionary,
+                 const DictionaryInterface *value_dictionary,
+                 DictionaryInterface *user_dictionary,
+                 const SuppressionDictionary *suppression_dictionary,
+                 const POSMatcher *pos_matcher);
+
   virtual ~DictionaryImpl();
 
   virtual Node *LookupPredictiveWithLimit(
@@ -70,15 +84,8 @@ class DictionaryImpl : public DictionaryInterface {
 
   virtual void ClearReverseLookupCache(NodeAllocatorInterface *allocator) const;
 
- protected:
-  DictionaryImpl(const char *dic_data, int dic_data_size);
 
  private:
-  vector<DictionaryInterface *> dics_;
-  SuppressionDictionary *suppression_dictionary_;
-  scoped_ptr<SystemDictionary> system_dictionary_;
-  scoped_ptr<ValueDictionary> value_dictionary_;
-
   enum LookupType {
     PREDICTIVE,
     PREFIX,
@@ -91,6 +98,21 @@ class DictionaryImpl : public DictionaryInterface {
                        NodeAllocatorInterface *allocator) const;
 
   Node *MaybeRemoveSpecialNodes(Node *node) const;
+
+  // Main three dictionaries.
+  scoped_ptr<const DictionaryInterface> system_dictionary_;
+  scoped_ptr<const DictionaryInterface> value_dictionary_;
+  DictionaryInterface *user_dictionary_;
+
+  // Convenient container to handle the above three dictionaries as one
+  // composite dictionary.
+  vector<const DictionaryInterface *> dics_;
+
+  // Suppression dictionary is used to suppress nodes.
+  const SuppressionDictionary *suppression_dictionary_;
+
+  // Used to check POS IDs.
+  const POSMatcher *pos_matcher_;
 };
 
 }  // namespace mozc

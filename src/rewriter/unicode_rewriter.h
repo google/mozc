@@ -35,17 +35,21 @@
 namespace mozc {
 
 class ConversionRequest;
+class ConverterInterface;
 class Segments;
 
-class UnicodeRewriter: public RewriterInterface {
+class UnicodeRewriter : public RewriterInterface {
  public:
-  UnicodeRewriter();
+  explicit UnicodeRewriter(const ConverterInterface *parent_converter);
   virtual ~UnicodeRewriter();
 
-  virtual bool Rewrite(Segments *segments) const;
-  virtual bool RewriteForRequest(const ConversionRequest &request,
-                                 Segments *segments) const;
+  virtual bool Rewrite(const ConversionRequest &request,
+                       Segments *segments) const;
+
+ private:
+  const ConverterInterface *parent_converter_;
 };
-}  // mozc namespace
+
+}  // namespace mozc
 
 #endif  // MOZC_REWRITER_UNICODE_REWRITER_H_

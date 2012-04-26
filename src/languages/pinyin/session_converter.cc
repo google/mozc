@@ -251,27 +251,25 @@ void SessionConverter::FillConversion(commands::Preedit *preedit) const {
   const size_t kConversionIndex = 1;
 
   // Add segments
-  size_t segment_num = 0;
-  size_t total_size = 0;
+  size_t total_length = 0;
   for (int i = 0; i < 3; ++i) {
     if (texts[i].empty()) {
       continue;
     }
 
     commands::Preedit::Segment *segment = preedit->add_segment();
-    segment->set_value(texts[i]);
-    const size_t text_size = Util::CharsLen(texts[i]);
-    segment->set_value_length(text_size);
-    total_size += text_size;
 
     if (i == kConversionIndex) {
       segment->set_annotation(commands::Preedit::Segment::HIGHLIGHT);
-      preedit->set_highlighted_position(segment_num);
+      preedit->set_highlighted_position(total_length);
     } else {
       segment->set_annotation(commands::Preedit::Segment::UNDERLINE);
     }
 
-    ++segment_num;
+    segment->set_value(texts[i]);
+    const size_t value_length = Util::CharsLen(texts[i]);
+    segment->set_value_length(value_length);
+    total_length += value_length;
   }
 
   preedit->set_cursor(Util::CharsLen(context_->selected_text()));

@@ -33,6 +33,7 @@
 
 #include "base/base.h"
 #include "base/util.h"
+#include "client/client_interface.h"
 #include "renderer/renderer_style_handler.h"
 #include "renderer/table_layout.h"
 #include "renderer/unix/cairo_factory_interface.h"
@@ -450,6 +451,48 @@ void CandidateWindow::GetDisplayString(
 Rect CandidateWindow::GetCandidateColumnInClientCord() const {
   DCHECK(table_layout_->IsLayoutFrozen()) << "Table layout is not frozen.";
   return table_layout_->GetCellRect(0, COLUMN_CANDIDATE);
+}
+
+void CandidateWindow::OnMouseLeftUp(const Point &pos) {
+  if (send_command_interface_ == NULL) {
+    LOG(ERROR) << "send_command_interface_ is NULL";
+    return;
+  }
+
+  const int kSelectedIdx = GetSelectedRowIndex(pos);
+  if (kSelectedIdx == -1) {  // out of range
+    return;
+  }
+
+  const commands::Candidates::Candidate &candidate =
+      candidates_.candidate(kSelectedIdx);
+  commands::SessionCommand command;
+  command.set_type(commands::SessionCommand::SELECT_CANDIDATE);
+  command.set_id(candidate.id());
+  commands::Output output;
+  send_command_interface_->SendCommand(command, &output);
+  return;
+}
+
+int CandidateWindow::GetSelectedRowIndex(const Point &pos) const {
+  for (size_t i = 0; i < candidates_.candidate_size(); ++i) {
+    const Rect rect = table_layout_->GetRowRect(i);
+
+    if (rect.PtrInRect(pos)) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+bool CandidateWindow::SetSendCommandInterface(
+    client::SendCommandInterface *send_command_interface) {
+  send_command_interface_ = send_command_interface;
+  return true;
+}
+
+void CandidateWindow::ReloadFontConfig(const string &font_description) {
+  text_renderer_->ReloadFontConfig(font_description);
 }
 
 }  // namespace gtk

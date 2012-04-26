@@ -34,18 +34,21 @@
 
 namespace mozc {
 
+class ConversionRequest;
 class Segments;
 
 // A very simple rewriter to put version candidates for some segments.
-class VersionRewriter: public RewriterInterface  {
+class VersionRewriter : public RewriterInterface  {
  public:
   VersionRewriter();
   virtual ~VersionRewriter();
 
   virtual int capability() const;
 
-  virtual bool Rewrite(Segments *segments) const;
+  virtual bool Rewrite(const ConversionRequest &request,
+                       Segments *segments) const;
 };
-}
+
+}  // namespace mozc
 
 #endif  // MOZC_REWRITER_VERSION_REWRITER_H_

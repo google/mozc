@@ -597,4 +597,40 @@ TEST(UserDictionaryStorage, RemoveUnusedSyncDictionariesIfExist) {
   Util::Unlink(GetUserDictionaryFile());
 }
 
+TEST(UserDictionaryStorage, AddToAutoRegisteredDictionary) {
+  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+
+  {
+    Util::Unlink(GetUserDictionaryFile());
+    UserDictionaryStorage storage(GetUserDictionaryFile());
+    EXPECT_EQ(0, storage.dictionaries_size());
+    EXPECT_TRUE(storage.AddToAutoRegisteredDictionary("key1", "value1", "pos"));
+    EXPECT_EQ(1, storage.dictionaries_size());
+    EXPECT_EQ(1, storage.dictionaries(0).entries_size());
+    const UserDictionaryStorage::UserDictionaryEntry &entry1 =
+        storage.dictionaries(0).entries(0);
+    EXPECT_EQ("key1", entry1.key());
+    EXPECT_EQ("value1", entry1.value());
+    EXPECT_EQ("pos", entry1.pos());
+    EXPECT_TRUE(entry1.auto_registered());
+
+    EXPECT_TRUE(storage.AddToAutoRegisteredDictionary("key2", "value2", "pos"));
+    EXPECT_EQ(1, storage.dictionaries_size());
+    EXPECT_EQ(2, storage.dictionaries(0).entries_size());
+    const UserDictionaryStorage::UserDictionaryEntry &entry2 =
+        storage.dictionaries(0).entries(1);
+    EXPECT_EQ("key2", entry2.key());
+    EXPECT_EQ("value2", entry2.value());
+    EXPECT_EQ("pos", entry2.pos());
+    EXPECT_TRUE(entry1.auto_registered());
+  }
+
+  {
+    Util::Unlink(GetUserDictionaryFile());
+    UserDictionaryStorage storage(GetUserDictionaryFile());
+    storage.Lock();
+    // Already locked.
+    EXPECT_FALSE(storage.AddToAutoRegisteredDictionary("key", "value", "pos"));
+  }
+}
 }  // namespace mozc

@@ -85,6 +85,11 @@ class WinUtil {
   // known service or not.  Otherwise, returns false.
   static bool IsServiceUser(HANDLE hToken, bool *is_service);
 
+  // Returns true if CUAS (Cicero Unaware Application Support) is enabled.
+  // Note: This method was previously defined in win32/base/imm_util.h but
+  // moved to here because UsateStats depends on this method.
+  static bool IsCuasEnabled();
+
  private:
   // Compares |lhs| with |rhs| by CompareStringOrdinal and returns the result
   // in |are_equal|.  If |ignore_case| is true, this function uses system

@@ -32,35 +32,25 @@
 #include <algorithm>
 #include <set>
 #include <string>
-
 #include "base/base.h"
 #include "base/mutex.h"
 #include "base/singleton.h"
+#include "base/stl_util.h"
+#include "base/thread.h"
 #include "base/trie.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/node.h"
-#include "data_manager/user_dictionary_manager.h"
+#include "converter/node_allocator.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
-#include "dictionary/user_pos.h"
+#include "dictionary/user_pos_interface.h"
 #include "usage_stats/usage_stats.h"
 
 namespace mozc {
 namespace {
-
-void ReloadUserDictionary() {
-  VLOG(1) << "Reloading user dictionary";
-  UserDictionary::GetUserDictionary()->AsyncReload();
-  // Sync version:
-  // UserDictionary::GetUserDictionary()->SyncReload();
-}
-
-// ReloadUserDictionary() is called by Session::Reload()
-REGISTER_MODULE_RELOADER(reload_user_dictionary,
-                         ReloadUserDictionary());
 
 class POSTokenLess {
  public:
@@ -95,15 +85,125 @@ class UserDictionaryFileManager {
 };
 }  // namespace
 
+class TokensIndex : public vector<UserPOS::Token *> {
+ public:
+  explicit TokensIndex(const UserPOSInterface *user_pos)
+      : user_pos_(user_pos) {}
+  virtual ~TokensIndex() {
+    Clear();
+  }
+
+  void Clear() {
+    STLDeleteElements(this);
+    clear();
+  }
+
+  void Load(const UserDictionaryStorage &storage) {
+    Clear();
+    set<uint64> seen;
+    vector<UserPOS::Token> tokens;
+    int sync_words_count = 0;
+
+    SuppressionDictionary *suppression_dictionary =
+        SuppressionDictionary::GetSuppressionDictionary();
+    DCHECK(suppression_dictionary);
+    if (!suppression_dictionary->IsLocked()) {
+      LOG(ERROR) << "SuppressionDictionary must be locked first";
+    }
+    suppression_dictionary->Clear();
+
+    for (size_t i = 0; i < storage.dictionaries_size(); ++i) {
+      const UserDictionaryStorage::UserDictionary &dic =
+          storage.dictionaries(i);
+      if (!dic.enabled() || dic.entries_size() == 0) {
+        continue;
+      }
+
+      if (dic.syncable()) {
+        sync_words_count += dic.entries_size();
+      }
+
+      for (size_t j = 0; j < dic.entries_size(); ++j) {
+        const UserDictionaryStorage::UserDictionaryEntry &entry =
+            dic.entries(j);
+
+        if (!UserDictionaryUtil::IsValidEntry(*user_pos_, entry)) {
+          continue;
+        }
+
+        string tmp, reading;
+        UserDictionaryUtil::NormalizeReading(entry.key(), &tmp);
+
+        // We cannot call NormalizeVoiceSoundMark inside NormalizeReading,
+        // because the normalization is user-visible.
+        // http://b/2480844
+        Util::NormalizeVoicedSoundMark(tmp, &reading);
+
+        const uint64 fp = Util::Fingerprint(reading +
+                                            "\t" +
+                                            entry.value() +
+                                            "\t" +
+                                            entry.pos());
+        if (!seen.insert(fp).second) {
+          VLOG(1) << "Found dup item";
+          continue;
+        }
+
+        // "抑制単語"
+        if (entry.pos() == "\xE6\x8A\x91\xE5\x88\xB6\xE5\x8D\x98\xE8\xAA\x9E") {
+          suppression_dictionary->AddEntry(reading, entry.value());
+        } else {
+          tokens.clear();
+          user_pos_->GetTokens(reading, entry.value(), entry.pos(), &tokens);
+          for (size_t k = 0; k < tokens.size(); ++k) {
+            this->push_back(new UserPOS::Token(tokens[k]));
+          }
+        }
+      }
+    }
+
+    sort(this->begin(), this->end(), POSTokenLess());
+
+    suppression_dictionary->UnLock();
+
+    VLOG(1) << this->size() << " user dic entries loaded";
+
+    usage_stats::UsageStats::SetInteger("UserRegisteredWord",
+                                        static_cast<int>(this->size()));
+    usage_stats::UsageStats::SetInteger("UserRegisteredSyncWord",
+                                        sync_words_count);
+  }
+
+ private:
+  const UserPOSInterface *user_pos_;
+};
+
 class UserDictionaryReloader : public Thread {
  public:
   explicit UserDictionaryReloader(UserDictionary *dic)
-      : dic_(dic) {
+      : auto_register_mode_(false), dic_(dic) {
     DCHECK(dic_);
   }
 
   virtual ~UserDictionaryReloader() {
     Join();
+  }
+
+  void StartAutoRegistration(const string &key,
+                             const string &value,
+                             const string &pos) {
+    {
+      scoped_lock l(&mutex_);
+      auto_register_mode_ = true;
+      key_ = key;
+      value_ = value;
+      pos_ = pos;
+    }
+    Start();
+  }
+
+  void StartReload() {
+    Start();
   }
 
   virtual void Run() {
@@ -116,67 +216,58 @@ class UserDictionaryReloader : public Thread {
       return;
     }
 
+    if (auto_register_mode_ &&
+        !storage->AddToAutoRegisteredDictionary(key_, value_, pos_)) {
+      LOG(ERROR) << "failed to execute AddToAutoRegisteredDictionary";
+      auto_register_mode_ = false;
+      return;
+    }
+
+    auto_register_mode_ = false;
     dic_->Load(*(storage.get()));
   }
 
  private:
+  Mutex mutex_;
+  bool auto_register_mode_;
   UserDictionary *dic_;
+  string key_;
+  string value_;
+  string pos_;
 };
 
-// TODO(noriyukit): Deprecate this method; we should explicity pass
-// UserPOSInterface to user dictionary.
-UserDictionary::UserDictionary()
-    : user_pos_(
-        UserDictionaryManager::GetUserDictionaryManager()->GetUserPOS()),
-      empty_limit_(Limit()) {
+UserDictionary::UserDictionary(const UserPOSInterface *user_pos,
+                               const POSMatcher *pos_matcher)
+    : reloader_(new UserDictionaryReloader(this)),
+      user_pos_(user_pos),
+      pos_matcher_(pos_matcher),
+      empty_limit_(Limit()),
+      tokens_(new TokensIndex(user_pos_)) {
   DCHECK(user_pos_);
-  AsyncReload();
-}
-
-UserDictionary::UserDictionary(const UserPOSInterface *user_pos)
-    : user_pos_(user_pos),
-      empty_limit_(Limit()) {
-  DCHECK(user_pos_);
-  AsyncReload();
+  DCHECK(pos_matcher_);
+  Reload();
 }
 
 UserDictionary::~UserDictionary() {
-  if (reloader_.get() != NULL) {
-    reloader_->Join();
-  }
-  Clear();
-}
-
-bool UserDictionary::CheckReloaderAndDelete() const {
-  if (reloader_.get() != NULL) {
-    if (reloader_->IsRunning()) {
-      return false;
-    } else {
-      reloader_.reset(NULL);  // remove
-    }
-  }
-
-  return true;
+  reloader_->Join();
+  delete tokens_;
 }
 
 Node *UserDictionary::LookupPredictiveWithLimit(
     const char *str, int size, const Limit &limit,
     NodeAllocatorInterface *allocator) const {
+  scoped_reader_lock l(&mutex_);
+
   if (size == 0) {
     LOG(WARNING) << "string of length zero is passed.";
     return NULL;
   }
 
-  if (tokens_.empty()) {
+  if (tokens_->empty()) {
     return NULL;
   }
 
   if (GET_CONFIG(incognito_mode)) {
-    return NULL;
-  }
-
-  if (!CheckReloaderAndDelete()) {
-    LOG(WARNING) << "Reloader is running";
     return NULL;
   }
 
@@ -188,9 +279,9 @@ Node *UserDictionary::LookupPredictiveWithLimit(
   UserPOS::Token key_token;
   key_token.key = key;
   vector<UserPOS::Token *>::const_iterator it =
-      lower_bound(tokens_.begin(), tokens_.end(), &key_token, POSTokenLess());
+      lower_bound(tokens_->begin(), tokens_->end(), &key_token, POSTokenLess());
 
-  for (; it != tokens_.end(); ++it) {
+  for (; it != tokens_->end(); ++it) {
     if (!Util::StartsWith((*it)->key, key)) {
       break;
     }
@@ -207,9 +298,9 @@ Node *UserDictionary::LookupPredictiveWithLimit(
 
     Node *new_node = allocator->NewNode();
     DCHECK(new_node);
-    if (POSMatcher::IsSuggestOnlyWord((*it)->id)) {
-      new_node->lid = POSMatcher::GetUnknownId();
-      new_node->rid = POSMatcher::GetUnknownId();
+    if (pos_matcher_->IsSuggestOnlyWord((*it)->id)) {
+      new_node->lid = pos_matcher_->GetUnknownId();
+      new_node->rid = pos_matcher_->GetUnknownId();
     } else {
       new_node->lid = (*it)->id;
       new_node->rid = (*it)->id;
@@ -236,12 +327,14 @@ Node *UserDictionary::LookupPrefixWithLimit(
     int size,
     const Limit &limit,
     NodeAllocatorInterface *allocator) const {
+  scoped_reader_lock l(&mutex_);
+
   if (size == 0) {
     LOG(WARNING) << "string of length zero is passed.";
     return NULL;
   }
 
-  if (tokens_.empty()) {
+  if (tokens_->empty()) {
     return NULL;
   }
 
@@ -249,10 +342,6 @@ Node *UserDictionary::LookupPrefixWithLimit(
     return NULL;
   }
 
-  if (!CheckReloaderAndDelete()) {
-    LOG(WARNING) << "Reloader is running";
-    return NULL;
-  }
 
   DCHECK(allocator != NULL);
   Node *result_node = NULL;
@@ -262,15 +351,14 @@ Node *UserDictionary::LookupPrefixWithLimit(
   UserPOS::Token key_token;
   key_token.key = key.substr(0, Util::OneCharLen(key.c_str()));
   vector<UserPOS::Token *>::const_iterator it =
-      lower_bound(tokens_.begin(), tokens_.end(), &key_token, POSTokenLess());
+      lower_bound(tokens_->begin(), tokens_->end(), &key_token, POSTokenLess());
 
-
-  for (; it != tokens_.end(); ++it) {
+  for (; it != tokens_->end(); ++it) {
     if ((*it)->key > key) {
       break;
     }
 
-    if (POSMatcher::IsSuggestOnlyWord((*it)->id)) {
+    if (pos_matcher_->IsSuggestOnlyWord((*it)->id)) {
       continue;
     }
 
@@ -308,11 +396,6 @@ Node *UserDictionary::LookupPrefix(const char *str,
 
 Node *UserDictionary::LookupReverse(const char *str, int size,
                                     NodeAllocatorInterface *allocator) const {
-  if (!CheckReloaderAndDelete()) {
-    LOG(WARNING) << "Reloader is running";
-    return NULL;
-  }
-
   if (GET_CONFIG(incognito_mode)) {
     return NULL;
   }
@@ -321,142 +404,76 @@ Node *UserDictionary::LookupReverse(const char *str, int size,
 }
 
 bool UserDictionary::Reload() {
-  return AsyncReload();
-}
-
-bool UserDictionary::SyncReload() {
-  Clear();
-
-  scoped_ptr<UserDictionaryStorage>
-      storage(
-          new UserDictionaryStorage
-          (Singleton<UserDictionaryFileManager>::get()->GetFileName()));
-  // Load from file
-  if (!storage->Load()) {
+  if (reloader_->IsRunning()) {
     return false;
   }
 
   SuppressionDictionary::GetSuppressionDictionary()->Lock();
+  DCHECK(SuppressionDictionary::GetSuppressionDictionary()->IsLocked());
+  reloader_->StartReload();
 
-  return Load(*(storage.get()));
+  return true;
 }
 
-bool UserDictionary::AsyncReload() {
-  // now loading
-  if (!CheckReloaderAndDelete()) {
-    return true;
+bool UserDictionary::AddToAutoRegisteredDictionary(
+    const string &key, const string &value, const string &pos) {
+  if (reloader_->IsRunning()) {
+    return false;
+  }
+
+  scoped_ptr<NodeAllocator> allocator(new NodeAllocator);
+  Node *result = LookupPrefix(key.data(), key.size(), allocator.get());
+  for (Node *node = result; node != NULL; node = node->bnext) {
+    if (node->key == key && node->value == value) {
+      // Already registered
+      return false;
+    }
   }
 
   SuppressionDictionary::GetSuppressionDictionary()->Lock();
   DCHECK(SuppressionDictionary::GetSuppressionDictionary()->IsLocked());
-
-  reloader_.reset(new UserDictionaryReloader(this));
-  reloader_->Start();
+  reloader_->StartAutoRegistration(key, value, pos);
 
   return true;
 }
 
 void UserDictionary::WaitForReloader() {
-  if (reloader_.get() != NULL) {
-    reloader_->Join();
-    reloader_.reset(NULL);
+  reloader_->Join();
+}
+
+void UserDictionary::Swap(TokensIndex *new_tokens) {
+  DCHECK(new_tokens);
+  TokensIndex *old_tokens = tokens_;
+  {
+    scoped_writer_lock l(&mutex_);
+    tokens_ = new_tokens;
   }
+  delete old_tokens;
 }
 
 bool UserDictionary::Load(const UserDictionaryStorage &storage) {
-  Clear();
-
-  set<uint64> seen;
-  vector<UserPOS::Token> tokens;
-  int sync_words_count = 0;
-
-  SuppressionDictionary *suppression_dictionary =
-      SuppressionDictionary::GetSuppressionDictionary();
-  DCHECK(suppression_dictionary);
-  if (!suppression_dictionary->IsLocked()) {
-    LOG(ERROR) << "SuppressionDictionary must be locked first";
-  }
-  suppression_dictionary->Clear();
-
-  for (size_t i = 0; i < storage.dictionaries_size(); ++i) {
-    const UserDictionaryStorage::UserDictionary &dic =
-        storage.dictionaries(i);
-    if (!dic.enabled() || dic.entries_size() == 0) {
-      continue;
-    }
-
-    if (dic.syncable()) {
-      sync_words_count += dic.entries_size();
-    }
-
-    for (size_t j = 0; j < dic.entries_size(); ++j) {
-      const UserDictionaryStorage::UserDictionaryEntry &entry =
-          dic.entries(j);
-
-      if (!UserDictionaryUtil::IsValidEntry(*user_pos_, entry)) {
-        continue;
-      }
-
-      string tmp, reading;
-      UserDictionaryUtil::NormalizeReading(entry.key(), &tmp);
-
-      // We cannot call NormalizeVoiceSoundMark inside NormalizeReading,
-      // because the normalization is user-visible.
-      // http://b/2480844
-      Util::NormalizeVoicedSoundMark(tmp, &reading);
-
-      const uint64 fp = Util::Fingerprint(reading +
-                                          "\t" +
-                                          entry.value() +
-                                          "\t" +
-                                          entry.pos());
-      if (!seen.insert(fp).second) {
-        VLOG(1) << "Found dup item";
-        continue;
-      }
-
-      // "抑制単語"
-      if (entry.pos() == "\xE6\x8A\x91\xE5\x88\xB6\xE5\x8D\x98\xE8\xAA\x9E") {
-        suppression_dictionary->AddEntry(reading, entry.value());
-      } else {
-        tokens.clear();
-        user_pos_->GetTokens(reading, entry.value(), entry.pos(), &tokens);
-        for (size_t k = 0; k < tokens.size(); ++k) {
-          tokens_.push_back(new UserPOS::Token(tokens[k]));
-        }
-      }
-    }
+  size_t size = 0;
+  {
+    scoped_reader_lock l(&mutex_);
+    size = tokens_->size();
   }
 
-  sort(tokens_.begin(), tokens_.end(), POSTokenLess());
+  // If UserDictionary is pretty big, we first remove the
+  // current dictionary to save memory usage.
+  const size_t kVeryBigUserDictionarySize = 100000;
 
-  suppression_dictionary->UnLock();
+  if (size >= kVeryBigUserDictionarySize) {
+    TokensIndex *dummy_empty_tokens = new TokensIndex(user_pos_);
+    Swap(dummy_empty_tokens);
+  }
 
-  VLOG(1) << tokens_.size() << " user dic entries loaded";
-
-  usage_stats::UsageStats::SetInteger("UserRegisteredWord",
-                                      static_cast<int>(tokens_.size()));
-  usage_stats::UsageStats::SetInteger("UserRegisteredSyncWord",
-                                      sync_words_count);
-
+  TokensIndex *tokens = new TokensIndex(user_pos_);
+  tokens->Load(storage);
+  Swap(tokens);
   return true;
-}
-
-void UserDictionary::Clear() {
-  for (vector<UserPOS::Token *>::iterator it = tokens_.begin();
-       it != tokens_.end(); it++) {
-    delete *it;
-  }
-  tokens_.clear();
 }
 
 void UserDictionary::SetUserDictionaryName(const string &filename) {
   Singleton<UserDictionaryFileManager>::get()->SetFileName(filename);
-}
-
-// TODO(noriyukit): Remove this method after completing the implementation of
-// DataManager class.
-UserDictionary *UserDictionary::GetUserDictionary() {
-  return Singleton<UserDictionary>::get();
 }
 }  // namespace mozc

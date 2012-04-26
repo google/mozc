@@ -34,6 +34,7 @@
 
 namespace mozc {
 
+class ConversionRequest;
 class Segments;
 
 class DiceRewriter : public RewriterInterface {
@@ -41,8 +42,10 @@ class DiceRewriter : public RewriterInterface {
   DiceRewriter();
   virtual ~DiceRewriter();
 
-  virtual bool Rewrite(Segments *segments) const;
+  virtual bool Rewrite(const ConversionRequest &request,
+                       Segments *segments) const;
 };
+
 }  // namespace mozc
 
 #endif  // MOZC_REWRITER_DICE_REWRITER_H_

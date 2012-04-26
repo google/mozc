@@ -46,6 +46,10 @@ namespace mozc {
 
 class CandidateFilterTest : public testing::Test {
  protected:
+  // Explicitly define constructor to prevent Visual C++ from
+  // considering this class as POD.
+  CandidateFilterTest() {}
+
   virtual void SetUp() {
     candidate_freelist_.reset(new FreeList<Segment::Candidate>(1024));
     node_freelist_.reset(new FreeList<Node>(1024));
@@ -61,15 +65,15 @@ class CandidateFilterTest : public testing::Test {
     Node *n1 = NewNode();
     // "てすと"
     n1->value = "\xE3\x81\xA6\xE3\x81\x99\xE3\x81\xA8";
-    n1->lid = POSMatcher::GetUnknownId();
-    n1->rid = POSMatcher::GetUnknownId();
+    n1->lid = pos_matcher().GetUnknownId();
+    n1->rid = pos_matcher().GetUnknownId();
     nodes->push_back(n1);
 
     Node *n2 = NewNode();
     // "てすと"
     n2->value = "\xE3\x81\xA6\xE3\x81\x99\xE3\x81\xA8";
-    n2->lid = POSMatcher::GetFunctionalId();
-    n2->rid = POSMatcher::GetFunctionalId();
+    n2->lid = pos_matcher().GetFunctionalId();
+    n2->rid = pos_matcher().GetFunctionalId();
     nodes->push_back(n2);
   }
 
@@ -87,13 +91,23 @@ class CandidateFilterTest : public testing::Test {
     return c;
   }
 
+  const POSMatcher &pos_matcher() const {
+    return pos_matcher_;
+  }
+
+  CandidateFilter *CreateCandidateFilter() const {
+    return new CandidateFilter(&suppression_dictionary_, &pos_matcher_);
+  }
+
  private:
   scoped_ptr<FreeList<Segment::Candidate> > candidate_freelist_;
   scoped_ptr<FreeList<Node> > node_freelist_;
+  const POSMatcher pos_matcher_;
+  SuppressionDictionary suppression_dictionary_;
 };
 
 TEST_F(CandidateFilterTest, FilterTest) {
-  CandidateFilter filter;
+  scoped_ptr<CandidateFilter> filter(CreateCandidateFilter());
   vector<const Node *> n;
 
   GetDefaultNodes(&n);
@@ -102,25 +116,25 @@ TEST_F(CandidateFilterTest, FilterTest) {
   c1->rid = 1;
   c1->value = "abc";
   EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
-            filter.FilterCandidate(c1, n));
+            filter->FilterCandidate(c1, n));
 
   Segment::Candidate *c2 = NewCandidate();
   c2->value = "abc";
   // Same value candidate should be rejected.
   EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
-            filter.FilterCandidate(c2, n));
+            filter->FilterCandidate(c2, n));
 
   Segment::Candidate *c3 = NewCandidate();
   c3->structure_cost = INT_MAX;
   c3->value = "def";
   // High structure cost candidate should be rejected.
   EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
-            filter.FilterCandidate(c3, n));
+            filter->FilterCandidate(c3, n));
 
   Segment::Candidate *c4 = NewCandidate();
   // Checks if a canidate is active before appending many candidates.
   EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
-            filter.FilterCandidate(c4, n));
+            filter->FilterCandidate(c4, n));
 
   // Don't filter if lid/rid the same as the top candidate.
   Segment::Candidate *c5 = NewCandidate();
@@ -128,7 +142,7 @@ TEST_F(CandidateFilterTest, FilterTest) {
   c5->lid = 1;
   c5->rid = 1;
   EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
-            filter.FilterCandidate(c5, n));
+            filter->FilterCandidate(c5, n));
 
 
   // Though CandidateFilter may change its limit, 1000 should
@@ -138,71 +152,71 @@ TEST_F(CandidateFilterTest, FilterTest) {
     char buf[10];
     snprintf(buf, sizeof(buf), "%d", i);
     cand->value = string(buf);
-    filter.FilterCandidate(cand, n);
+    filter->FilterCandidate(cand, n);
   }
   // There will be no more candidates.
   EXPECT_EQ(CandidateFilter::STOP_ENUMERATION,
-            filter.FilterCandidate(c4, n));
+            filter->FilterCandidate(c4, n));
 }
 
 TEST_F(CandidateFilterTest, KatakanaT13N) {
   {
-    CandidateFilter filter;
+    scoped_ptr<CandidateFilter> filter(CreateCandidateFilter());
     vector<const Node *> nodes;
     GetDefaultNodes(&nodes);
     // nodes[0] is KatakanaT13N
     Segment::Candidate *c = NewCandidate();
     c->value = "abc";
     Node *n = NewNode();
-    n->lid = POSMatcher::GetUnknownId();
-    n->rid = POSMatcher::GetUnknownId();
+    n->lid = pos_matcher().GetUnknownId();
+    n->rid = pos_matcher().GetUnknownId();
     n->value = "abc";
     nodes[0] = n;
     EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
-              filter.FilterCandidate(c, nodes));
+              filter->FilterCandidate(c, nodes));
   }
 
   {
-    CandidateFilter filter;
+    scoped_ptr<CandidateFilter> filter(CreateCandidateFilter());
     vector<const Node *> nodes;
     GetDefaultNodes(&nodes);
     // nodes[1] is KatakanaT13N
     Segment::Candidate *c = NewCandidate();
     c->value = "abc";
     Node *n = NewNode();
-    n->lid = POSMatcher::GetFunctionalId();
-    n->rid = POSMatcher::GetFunctionalId();
+    n->lid = pos_matcher().GetFunctionalId();
+    n->rid = pos_matcher().GetFunctionalId();
     n->value = "abc";
     nodes[1] = n;
     EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
-              filter.FilterCandidate(c, nodes));
+              filter->FilterCandidate(c, nodes));
   }
 
   {
-    CandidateFilter filter;
+    scoped_ptr<CandidateFilter> filter(CreateCandidateFilter());
     vector<const Node *> nodes;
     GetDefaultNodes(&nodes);
     // nodes[1] is not a functional word
     Segment::Candidate *c = NewCandidate();
     c->value = "abc";
     Node *n1 = NewNode();
-    n1->lid = POSMatcher::GetUnknownId();
-    n1->rid = POSMatcher::GetUnknownId();
+    n1->lid = pos_matcher().GetUnknownId();
+    n1->rid = pos_matcher().GetUnknownId();
     n1->value = "abc";
     nodes[0] = n1;
     Node *n2 = NewNode();
-    n2->lid = POSMatcher::GetUnknownId();
-    n2->rid = POSMatcher::GetUnknownId();
+    n2->lid = pos_matcher().GetUnknownId();
+    n2->rid = pos_matcher().GetUnknownId();
     // "てすと";
     n2->value = "\xE3\x81\xA6\xE3\x81\x99\xE3\x81\xA8";
     nodes[1] = n2;
     EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
-              filter.FilterCandidate(c, nodes));
+              filter->FilterCandidate(c, nodes));
   }
 }
 
 TEST_F(CandidateFilterTest, IsolatedWord) {
-  CandidateFilter filter;
+  scoped_ptr<CandidateFilter> filter(CreateCandidateFilter());
   vector<const Node *> nodes;
   Segment::Candidate *c = NewCandidate();
   c->value = "abc";
@@ -211,54 +225,54 @@ TEST_F(CandidateFilterTest, IsolatedWord) {
   nodes.push_back(node);
   node->prev = NewNode();
   node->next = NewNode();
-  node->lid = POSMatcher::GetIsolatedWordId();
-  node->rid = POSMatcher::GetIsolatedWordId();
+  node->lid = pos_matcher().GetIsolatedWordId();
+  node->rid = pos_matcher().GetIsolatedWordId();
   node->key = "test";
   node->value = "test";
 
   node->prev->node_type = Node::NOR_NODE;
   node->next->node_type = Node::EOS_NODE;
   EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
-            filter.FilterCandidate(c, nodes));
+            filter->FilterCandidate(c, nodes));
 
   node->prev->node_type = Node::BOS_NODE;
   node->next->node_type = Node::NOR_NODE;
   EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
-            filter.FilterCandidate(c, nodes));
+            filter->FilterCandidate(c, nodes));
 
   node->prev->node_type = Node::NOR_NODE;
   node->next->node_type = Node::NOR_NODE;
   EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
-            filter.FilterCandidate(c, nodes));
+            filter->FilterCandidate(c, nodes));
 
   node->prev->node_type = Node::BOS_NODE;
   node->next->node_type = Node::EOS_NODE;
   EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
-            filter.FilterCandidate(c, nodes));
+            filter->FilterCandidate(c, nodes));
 }
 
 TEST_F(CandidateFilterTest, MayHaveMoreCandidates) {
-  CandidateFilter filter;
+  scoped_ptr<CandidateFilter> filter(CreateCandidateFilter());
   vector<const Node *> n;
   GetDefaultNodes(&n);
 
   Segment::Candidate *c1 = NewCandidate();
   c1->value = "abc";
   EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
-            filter.FilterCandidate(c1, n));
+            filter->FilterCandidate(c1, n));
 
   Segment::Candidate *c2 = NewCandidate();
   c2->value = "abc";
   // Though same value candidate is rejected, enumeration should continue.
   EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
-            filter.FilterCandidate(c2, n));
+            filter->FilterCandidate(c2, n));
 
   Segment::Candidate *c3 = NewCandidate();
   c3->structure_cost = INT_MAX;
   c3->value = "def";
   // High structure cost should not Stop enumeration.
   EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
-            filter.FilterCandidate(c3, n));
+            filter->FilterCandidate(c3, n));
 
   Segment::Candidate *c4 = NewCandidate();
   c4->cost = INT_MAX;
@@ -266,13 +280,13 @@ TEST_F(CandidateFilterTest, MayHaveMoreCandidates) {
   c4->value = "ghi";
   // High cost candidate should be rejected.
   EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
-            filter.FilterCandidate(c4, n));
+            filter->FilterCandidate(c4, n));
 
   // Insert many valid candidates
   for (int i = 0; i < 50; ++i) {
     Segment::Candidate *tmp = NewCandidate();
     tmp->value = Util::SimpleItoa(i) + "test";
-    filter.FilterCandidate(tmp, n);
+    filter->FilterCandidate(tmp, n);
   }
 
   Segment::Candidate *c5 = NewCandidate();
@@ -284,11 +298,15 @@ TEST_F(CandidateFilterTest, MayHaveMoreCandidates) {
   // filter has seen more than 50 good candidates.
   c5->value = "ghi2";
   EXPECT_EQ(CandidateFilter::STOP_ENUMERATION,
-            filter.FilterCandidate(c5, n));
+            filter->FilterCandidate(c5, n));
 }
 
 TEST_F(CandidateFilterTest, Regression3437022) {
-  CandidateFilter filter;
+  scoped_ptr<SuppressionDictionary> dic(new SuppressionDictionary);
+  scoped_ptr<POSMatcher> pos_matcher(new POSMatcher);
+  scoped_ptr<CandidateFilter> filter(
+      new CandidateFilter(dic.get(), pos_matcher.get()));
+
   vector<const Node *> n;
   GetDefaultNodes(&n);
 
@@ -297,16 +315,14 @@ TEST_F(CandidateFilterTest, Regression3437022) {
   c1->value = "test_value";
 
   EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
-            filter.FilterCandidate(c1, n));
+            filter->FilterCandidate(c1, n));
 
-  SuppressionDictionary *dic
-      = SuppressionDictionary::GetSuppressionDictionary();
   dic->Lock();
   dic->AddEntry("test_key", "test_value");
   dic->UnLock();
 
   EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
-            filter.FilterCandidate(c1, n));
+            filter->FilterCandidate(c1, n));
 
   c1->key = "test_key_suffix";
   c1->value = "test_value_suffix";
@@ -314,18 +330,18 @@ TEST_F(CandidateFilterTest, Regression3437022) {
   c1->content_value = "test_value";
 
   EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
-            filter.FilterCandidate(c1, n));
+            filter->FilterCandidate(c1, n));
 
   dic->Lock();
   dic->Clear();
   dic->UnLock();
 
   EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
-            filter.FilterCandidate(c1, n));
+            filter->FilterCandidate(c1, n));
 }
 
 TEST_F(CandidateFilterTest, FilterRealtimeConversionTest) {
-  CandidateFilter filter;
+  scoped_ptr<CandidateFilter> filter(CreateCandidateFilter());
   vector<const Node *> n;
 
   n.clear();
@@ -333,15 +349,15 @@ TEST_F(CandidateFilterTest, FilterRealtimeConversionTest) {
 
   n1->key = "PC";
   n1->value = "PC";
-  n1->lid = POSMatcher::GetUnknownId();
-  n1->rid = POSMatcher::GetUnknownId();
+  n1->lid = pos_matcher().GetUnknownId();
+  n1->rid = pos_matcher().GetUnknownId();
   n.push_back(n1);
 
   Node *n2 = NewNode();
   // "てすと"
   n2->value = "\xE3\x81\xA6\xE3\x81\x99\xE3\x81\xA8";
-  n2->lid = POSMatcher::GetUnknownId();
-  n2->rid = POSMatcher::GetUnknownId();
+  n2->lid = pos_matcher().GetUnknownId();
+  n2->rid = pos_matcher().GetUnknownId();
   n.push_back(n2);
 
   Segment::Candidate *c1 = NewCandidate();
@@ -351,6 +367,6 @@ TEST_F(CandidateFilterTest, FilterRealtimeConversionTest) {
   // Don't filter a candidate because it starts with alphabets and
   // is followed by a non-functional word.
   EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
-            filter.FilterCandidate(c1, n));
+            filter->FilterCandidate(c1, n));
 }
 }  // namespace mozc

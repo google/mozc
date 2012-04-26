@@ -30,7 +30,7 @@
 {
   'targets': [
     {
-      'target_name': 'net',
+      'target_name': 'http_client',
       'type': 'static_library',
       'sources': [
         'http_client.cc',
@@ -40,48 +40,49 @@
         '../base/base.gyp:base',
       ],
       'conditions': [
-        ['OS=="mac"', {
-          'sources': [
-            'http_client_mac.mm',
+        ['enable_http_client==1', {
+          'defines': [
+            'MOZC_ENABLE_HTTP_CLIENT',
           ],
-        }],
-        ['OS=="win"', {
-          'link_settings': {
-            'msvs_settings': {
-              'VCLinkerTool': {
-                'AdditionalDependencies': [
-                  'wininet.lib',
-                  # used in 'http_client.cc'
-                  # TODO(yukawa): Remove this dependency by replacing
-                  # ::timeGetTime() with Util::GetTick().
-                  'winmm.lib',
+          'conditions': [
+            ['OS=="mac"', {
+              'sources': [
+                'http_client_mac.mm',
+              ],
+            }],
+            ['OS=="win"', {
+              'link_settings': {
+                'msvs_settings': {
+                  'VCLinkerTool': {
+                    'AdditionalDependencies': [
+                      'wininet.lib',
+                      # used in 'http_client.cc'
+                      # TODO(yukawa): Remove this dependency by replacing
+                      #     ::timeGetTime() with Util::GetTick().
+                      'winmm.lib',
+                    ],
+                  },
+                },
+              },
+            }],
+            ['target_platform=="Linux"', {
+              # Enable libcurl
+              'cflags': [
+                '<!@(<(pkg_config_command) --cflags libcurl)',
+              ],
+              'defines': [
+                'HAVE_CURL=1',
+              ],
+              'link_settings': {
+                'ldflags': [
+                  '<!@(<(pkg_config_command) --libs-only-L libcurl)',
+                ],
+                'libraries': [
+                  '<!@(<(pkg_config_command) --libs-only-l libcurl)',
                 ],
               },
-            },
-          },
-        }],
-        ['OS=="linux" and target_platform!="Android"', {
-          # Enable libcurl
-          'cflags': [
-            '<!@(<(pkg_config_command) --cflags-only-other libcurl)',
+            }],
           ],
-          'defines': [
-            'HAVE_CURL=1',
-          ],
-          'include_dirs': [
-            '<!@(<(pkg_config_command) --cflags-only-I libcurl)',
-          ],
-          # Following settings will be applied into all the executable targets
-          # and shared_library targets which directly or indirectly depend on
-          # this target.
-          'link_settings': {
-            'ldflags': [
-              '<!@(<(pkg_config_command) --libs-only-L libcurl)',
-            ],
-            'libraries': [
-              '<!@(<(pkg_config_command) --libs-only-l libcurl)',
-            ],
-          },
         }],
       ],
     },
@@ -93,7 +94,6 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        'net',
       ],
     },
     {
@@ -104,7 +104,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        'net',
+        'http_client',
       ],
     },
     {

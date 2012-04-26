@@ -170,7 +170,7 @@ def main():
     logging.error("Cannot find Keystone.pkg.  Wrong --keystone_dir flag?")
     exit(-1)
 
-  version = mozc_version.MozcVersion(options.version_file, expand_daily=False)
+  version = mozc_version.MozcVersion(options.version_file)
 
   # \xC2\xA9 is the copyright mark in UTF-8
   copyright_message = '\xC2\xA9 %d Google Inc.' % _COPYRIGHT_YEAR

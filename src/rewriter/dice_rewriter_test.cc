@@ -31,6 +31,7 @@
 #include <string>
 
 #include "base/util.h"
+#include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "rewriter/dice_rewriter.h"
 #include "testing/base/public/gunit.h"
@@ -130,6 +131,7 @@ class DiceRewriterTest : public testing::Test {
 TEST_F(DiceRewriterTest, InsertTest) {
   DiceRewriter dice_rewriter;
   Segments segments;
+  const ConversionRequest request;
 
   // Check a dice number index with some mock candidates.
   for (int candidates_size = 1;
@@ -137,7 +139,7 @@ TEST_F(DiceRewriterTest, InsertTest) {
        ++candidates_size) {
     MakeSegments(&segments, kKey, 1, candidates_size);
 
-    EXPECT_TRUE(dice_rewriter.Rewrite(&segments));
+    EXPECT_TRUE(dice_rewriter.Rewrite(request, &segments));
     EXPECT_EQ(1, segments.segments_size());
 
     const Segment &segment = segments.conversion_segment(0);
@@ -155,17 +157,18 @@ TEST_F(DiceRewriterTest, InsertTest) {
 TEST_F(DiceRewriterTest, IgnoringTest) {
   DiceRewriter dice_rewriter;
   Segments segments;
+  const ConversionRequest request;
 
   // Candidates size is 0.
   MakeSegments(&segments, kKey, 1, 0);
-  EXPECT_FALSE(dice_rewriter.Rewrite(&segments));
+  EXPECT_FALSE(dice_rewriter.Rewrite(request, &segments));
 
   // Segments key is not matched.
   MakeSegments(&segments, "dice", 1, 1);
-  EXPECT_FALSE(dice_rewriter.Rewrite(&segments));
+  EXPECT_FALSE(dice_rewriter.Rewrite(request, &segments));
 
   // Segments size is more than 1.
   MakeSegments(&segments, kKey, 2, 1);
-  EXPECT_FALSE(dice_rewriter.Rewrite(&segments));
+  EXPECT_FALSE(dice_rewriter.Rewrite(request, &segments));
 }
 }  // namespace mozc

@@ -63,26 +63,27 @@ class WindowManager : public WindowManagerInterface {
       client::SendCommandInterface *send_command_interface);
   virtual void SetWindowPos(int x, int y);
 
- private:
+ protected:
   // If this function returns true, we should show/reload candidate window.
-  static bool ShouldShowCandidateWindow(
+  virtual bool ShouldShowCandidateWindow(
       const commands::RendererCommand &command);
 
   // Judges whether infolist should be shown or not.
-  static bool ShouldShowInfolistWindow(
+  virtual bool ShouldShowInfolistWindow(
       const commands::RendererCommand &command);
 
   // Updates candidate window size and location based on given command, and
   // returns actual rectangle.
-  Rect UpdateCandidateWindow(const commands::RendererCommand &command);
+  virtual Rect UpdateCandidateWindow(const commands::RendererCommand &command);
 
   // Updates infolist window size and location based on given command and
   // candidate window rectangle.
-  void UpdateInfolistWindow(const commands::RendererCommand &command,
-                            const Rect &candidate_window_rect);
+  virtual void UpdateInfolistWindow(const commands::RendererCommand &command,
+                                    const Rect &candidate_window_rect);
 
   Rect GetDesktopRect();
 
+ private:
   FRIEND_TEST(WindowManagerTest, SetSendCommandInterfaceTest);
   FRIEND_TEST(WindowManagerTest, ShouldShowCandidateWindowTest);
   FRIEND_TEST(WindowManagerTest, ShouldShowInfolistWindowTest);
@@ -94,6 +95,7 @@ class WindowManager : public WindowManagerInterface {
   scoped_ptr<GtkWindowInterface> infolist_window_;
   scoped_ptr<GtkWrapperInterface> gtk_;
   client::SendCommandInterface *send_command_interface_;
+  string previous_font_description_;
   DISALLOW_COPY_AND_ASSIGN(WindowManager);
 };
 

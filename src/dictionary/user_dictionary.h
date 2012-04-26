@@ -33,20 +33,23 @@
 #include <string>
 #include <vector>
 #include "base/base.h"
+#include "base/mutex.h"
 #include "base/thread.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/user_pos.h"
 
 namespace mozc {
 
+class POSMatcher;
 class UserDictionaryReloader;
 class UserDictionaryStorage;
 class UserPOSInterface;
+class TokensIndex;   // defined in user_dictionary.cc
 
 class UserDictionary : public DictionaryInterface {
  public:
-  UserDictionary();
-  explicit UserDictionary(const UserPOSInterface *user_pos);
+  UserDictionary(const UserPOSInterface *user_pos,
+                 const POSMatcher *pos_matcher);
   virtual ~UserDictionary();
 
   virtual Node *LookupPredictiveWithLimit(
@@ -69,33 +72,36 @@ class UserDictionary : public DictionaryInterface {
   // mainly for unittesting
   bool Load(const UserDictionaryStorage &storage);
 
-  bool Reload();
-
-  // Reload synchronously.
-  bool SyncReload();
-
   // Reload dictionary asynchronously
-  bool AsyncReload();
+  bool Reload();
 
   // Wait until reloader finishes
   void WaitForReloader();
 
-  // Return an singleton object
-  static UserDictionary *GetUserDictionary();
+  // Adds new word to auto registered dictionary and reload asynchronously.
+  // Note that this method will not guarantee that
+  // new word is added successfully, since the actual
+  // dictionary modification is done by other thread.
+  // Also, this method should be called by the main converter thread which
+  // is executed synchronously with user input.
+  bool AddToAutoRegisteredDictionary(
+      const string &key, const string &value, const string &pos);
 
   // Set user dicitonary filename for unittesting
   static void SetUserDictionaryName(const string &filename);
 
  private:
+  // Swap internal tokens index to |new_tokens|.
+  void Swap(TokensIndex *new_tokens);
+
   friend class UserDictionaryTest;
 
-  void Clear();
-  bool CheckReloaderAndDelete() const;
-
-  vector<UserPOS::Token *> tokens_;
-  mutable scoped_ptr<UserDictionaryReloader> reloader_;
+  scoped_ptr<UserDictionaryReloader> reloader_;
   const UserPOSInterface *user_pos_;
+  const POSMatcher *pos_matcher_;
   const Limit empty_limit_;
+  TokensIndex *tokens_;
+  mutable ReaderWriterMutex mutex_;
 
   DISALLOW_COPY_AND_ASSIGN(UserDictionary);
 };

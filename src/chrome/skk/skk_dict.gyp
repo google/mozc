@@ -46,8 +46,6 @@
     ],
     'link_settings': {
       'libraries': ['<@(nacl_libraries)'],
-      # Remove all non-NaCl libraries.
-      'libraries!': ['<@(linux_libs)'],
     },
   },
   'targets': [
@@ -60,7 +58,7 @@
         'skk_util.cc',
       ],
       'dependencies': [
-        '../../dictionary/dictionary.gyp:gen_embedded_dictionary_data',
+        '../../dictionary/dictionary.gyp:gen_embedded_dictionary_data#host',
         '../../dictionary/system/system_dictionary.gyp:system_dictionary',
         '<(DEPTH)/third_party/jsoncpp/jsoncpp.gyp:jsoncpp',
       ],

@@ -32,7 +32,7 @@
 
 #include <gtk/gtk.h>
 
-#include "renderer/unix/font_spec.h"
+#include "renderer/unix/font_spec_interface.h"
 #include "renderer/unix/pango_wrapper_interface.h"
 #include "renderer/unix/text_renderer_interface.h"
 #include "testing/base/public/gunit_prod.h"
@@ -45,18 +45,19 @@ class TextRendererTest;
 
 class TextRenderer : public TextRendererInterface {
  public:
-  TextRenderer();
+  explicit TextRenderer(FontSpecInterface *font_spec);
   virtual ~TextRenderer() {}
 
   virtual void Initialize(GdkDrawable *drawable);
-  virtual Size GetPixelSize(FontSpec::FONT_TYPE font_type,
+  virtual Size GetPixelSize(FontSpecInterface::FONT_TYPE font_type,
                             const string &str);
-  virtual Size GetMultiLinePixelSize(FontSpec::FONT_TYPE font_type,
+  virtual Size GetMultiLinePixelSize(FontSpecInterface::FONT_TYPE font_type,
                                      const string &str,
                                      const int width);
   virtual void RenderText(const string &text,
                           const Rect &rect,
-                          FontSpec::FONT_TYPE font_type);
+                          FontSpecInterface::FONT_TYPE font_type);
+  virtual void ReloadFontConfig(const string &font_description);
 
  private:
   friend class TextRendererTest;
@@ -64,16 +65,17 @@ class TextRenderer : public TextRendererInterface {
   FRIEND_TEST(TextRendererTest, GetMultilinePixelSizeTest);
   FRIEND_TEST(TextRendererTest, RenderTextTest);
 
-  void SetUpPangoLayout(const string &str, FontSpec::FONT_TYPE font_type,
+  void SetUpPangoLayout(const string &str,
+                        FontSpecInterface::FONT_TYPE font_type,
                         PangoLayoutWrapperInterface *layout);
   void RenderTextInternal(const string& text,
                           const Rect &rect,
-                          FontSpec::FONT_TYPE font_type,
+                          FontSpecInterface::FONT_TYPE font_type,
                           PangoLayoutWrapperInterface *layout);
-  Size GetPixelSizeInternal(FontSpec::FONT_TYPE font_type,
+  Size GetPixelSizeInternal(FontSpecInterface::FONT_TYPE font_type,
                             const string &str,
                             PangoLayoutWrapperInterface *layout);
-  Size GetMultiLinePixelSizeInternal(FontSpec::FONT_TYPE font_type,
+  Size GetMultiLinePixelSizeInternal(FontSpecInterface::FONT_TYPE font_type,
                                      const string &str,
                                      const int width,
                                      PangoLayoutWrapperInterface *layout);

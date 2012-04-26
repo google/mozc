@@ -38,10 +38,14 @@ namespace mozc {
 namespace {
 const int kInvalidCacheKey = -1;
 
-inline int GetHashValue(uint16 rid, uint16 lid, int cache_size) {
+inline int GetHashValue(uint16 rid, uint16 lid, int hash_mask) {
+  return ((3 * rid + lid) & hash_mask);
+  // The above value is equivalent to:
+  //  return (3 * rid + lid) % cache_size;
+  // The performance is important here, as this is called so many times.
+
   // Multiplying '3' makes the conversion speed faster.
   // The result hash value becomes reasonalbly random.
-  return (3 * rid + lid) % cache_size;
 }
 }  // namespace
 
@@ -54,7 +58,11 @@ CachedConnector::CachedConnector(ConnectorInterface *connector,
       cache_initialized_(cache_initialized),
       cache_key_(cache_key),
       cache_value_(cache_value),
-      cache_size_(cache_size) {}
+      cache_size_(cache_size),
+      hash_mask_(cache_size - 1) {
+  // Check if the cache_size is 2^k form.
+  DCHECK_EQ(0, cache_size & (cache_size - 1));
+}
 
 CachedConnector::~CachedConnector() {}
 
@@ -68,7 +76,7 @@ int CachedConnector::GetTransitionCost(uint16 rid, uint16 lid) const {
   // 2) Can see about 20% performance drop with Mutex lock.
 
   const uint32 index = SparseConnector::EncodeKey(rid, lid);
-  const int bucket = GetHashValue(rid, lid, cache_size_);
+  const int bucket = GetHashValue(rid, lid, hash_mask_);
   if (cache_key_[bucket] != index) {
     // Simply overwrite previous key/value.
     cache_key_[bucket] = index;

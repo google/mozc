@@ -157,15 +157,14 @@ message RendererCommand {
 
     // Represents IM Framework used in the client.
     // Currently only Windows IM frameworks are supported.
-    // TODO(team): Add other IM frameworks.
     enum InputFrameworkType {
       UNKNOWN_FRAMEWORK = 0;   // Default. For backward compatibility.
       TSF = 1;
       IMM32 = 2;
+      IMKit = 3;
+      IBus = 4;
     };
-    // used in Windows:
     // Specifies which IM Framework is used in the client.
-    // TODO(team): Support other IM frameworks.
     optional InputFrameworkType input_framework = 6
         [ default = UNKNOWN_FRAMEWORK ];
 
@@ -210,6 +209,13 @@ message RendererCommand {
       RENDERER = 1;
     };
     optional MessageSenderType message_sender_type = 12 [ default = CLIENT ];
+
+    // A string representation of PangoFontDescription
+    // http://developer.gnome.org/pango/stable/pango-Fonts.html#pango-font-description-from-string
+    // This field is not application specific information but temporaly locate
+    // here.
+    // TODO(nona): Make new message if necessary.
+    optional string pango_font_description = 13;
   };
 
   optional ApplicationInfo application_info = 5;

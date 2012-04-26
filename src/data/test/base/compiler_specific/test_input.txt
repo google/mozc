@@ -1,0 +1,36 @@
+#include "compiler_specific.h"
+
+#if MOZC_MSVC_VERSION_GE(10, 1)
+class MSVS_GE_10_01;
+#endif  // MSVS>=10.1
+#if MOZC_MSVC_VERSION_LE(10, 1)
+class MSVS_LE_10_01;
+#endif  // MSVS<=10.1
+#if MOZC_GCC_VERSION_GE(4, 6)
+class GCC_GE_04_06;
+#endif  // GCC>=4.6
+#if MOZC_GCC_VERSION_LE(4, 6)
+class GCC_LE_04_06;
+#endif  // GCC<=4.6
+#if MOZC_CLANG_VERSION_GE(2, 8)
+class CLANG_GE_02_08;
+#endif  // Clang<=2.8
+#if MOZC_CLANG_VERSION_LE(2, 8)
+class CLANG_LE_02_08;
+#endif  // Clang<=2.8
+
+MOZC_MSVC_PUSH_WARNING();
+MOZC_MSVC_DISABLE_WARNING(4001);
+MOZC_MSVC_POP_WARNING();
+
+MOZC_GCC_PUSH_WARNING();
+MOZC_GCC_DISABLE_WARNING_INLINE(conversion-null);
+MOZC_GCC_DISABLE_WARNING_FILELEVEL(format-zero-length);
+MOZC_GCC_POP_WARNING();
+
+MOZC_CLANG_PUSH_WARNING();
+MOZC_CLANG_DISABLE_WARNING(conversion-null);
+MOZC_CLANG_POP_WARNING();
+
+MOZC_COMPILE_MESSAGE("Hello");
+

@@ -34,11 +34,47 @@
 
 namespace mozc {
 
+class ConnectorInterface;
+class DictionaryInterface;
+class PosGroup;
+class SegmenterInterface;
+class UserDictionary;
 class UserPOSInterface;
 
+// Builds those objects that depend on a set of embedded data generated from
+// files in data/dictionary, such as dictionary.txt, id.def, etc.
 class DataManagerInterface {
  public:
+  // Returns a reference to the UserPOS class handling user pos data.  Don't
+  // delete the returned pointer, which is owned by the manager.
   virtual const UserPOSInterface *GetUserPOS() const = 0;
+  virtual UserDictionary *GetUserDictionary() = 0;
+
+  // Since some modules don't require possibly huge dictionary data, we allow
+  // derived classes not to implement the following methods.
+
+  // Returns a reference to PosGroup class handling POS grouping rule. Don't
+  // delete the returned pointer, which is owned by the manager.
+  virtual const PosGroup *GetPosGroup() { return NULL; }
+
+  // Returns a reference to Connector class handling connection data.  Don't
+  // delete the returned pointer, which is owned by the manager.
+  virtual const ConnectorInterface *GetConnector() { return NULL; }
+
+  // Returns a reference to Segmenter class handling segmentation data.  Don't
+  // delete the returned pointer, which is owned by the manager.
+  virtual const SegmenterInterface *GetSegmenter() { return NULL; }
+
+  // Creates a system dictionary. The caller is responsible for deleting the
+  // returned object.
+  virtual DictionaryInterface *CreateSystemDictionary() { return NULL; }
+
+  // Creates a value dictionary. The caller is responsible for deleting the
+  // returned object.
+  virtual DictionaryInterface *CreateValueDictionary() { return NULL; }
+
+  // Returns a reference to the suffix dictionary.
+  virtual DictionaryInterface *GetSuffixDictionary() { return NULL; }
 
  protected:
   DataManagerInterface() {}

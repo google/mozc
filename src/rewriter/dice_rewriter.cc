@@ -33,6 +33,7 @@
 #include <string>
 #include "base/base.h"
 #include "base/util.h"
+#include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "rewriter/rewriter_interface.h"
 
@@ -87,7 +88,8 @@ DiceRewriter::DiceRewriter() {}
 
 DiceRewriter::~DiceRewriter() {}
 
-bool DiceRewriter::Rewrite(Segments *segments) const {
+bool DiceRewriter::Rewrite(const ConversionRequest &request,
+                           Segments *segments) const {
   if (segments->conversion_segments_size() != 1) {
     return false;
   }

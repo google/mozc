@@ -90,7 +90,7 @@ def main():
   if build_details:
     build_details = ('  (%s)' % build_details)
 
-  version = mozc_version.MozcVersion(options.version_file, expand_daily=False)
+  version = mozc_version.MozcVersion(options.version_file)
   bootstrapper_template = (
       '#define MOZC_RES_VERSION_NUMBER @MAJOR@,@MINOR@,@BUILD@,@REVISION@\n'
       '#define MOZC_RES_VERSION_STRING "@MAJOR@.@MINOR@.@BUILD@.@REVISION@"\n'

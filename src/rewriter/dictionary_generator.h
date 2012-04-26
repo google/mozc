@@ -110,6 +110,8 @@ class DictionaryGenerator {
   scoped_ptr<ObjectPool<Token> > token_pool_;
   scoped_ptr<map<uint64, Token *> > token_map_;
   const UserPOSInterface *user_pos_;
+  const uint16 open_bracket_id_;
+  const uint16 close_bracket_id_;
 
   DISALLOW_COPY_AND_ASSIGN(DictionaryGenerator);
 };

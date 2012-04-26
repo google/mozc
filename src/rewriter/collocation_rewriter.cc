@@ -38,6 +38,7 @@
 #include "base/mmap.h"
 #include "base/singleton.h"
 #include "base/util.h"
+#include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
 #include "rewriter/collocation_util.h"
@@ -49,6 +50,7 @@ DEFINE_bool(use_collocation, true, "use collocation rewrite");
 namespace mozc {
 namespace {
 #include "rewriter/embedded_collocation_data.h"
+#include "rewriter/embedded_collocation_suppression_data.h"
 
 const size_t kCandidateSize = 12;
 
@@ -56,9 +58,28 @@ class CollocationFilter {
  public:
   CollocationFilter()
       : filter_(
-          ExistenceFilter::Read(reinterpret_cast<const char *>(kCollocation),
-                                kCollocationSize)) {}
+          ExistenceFilter::Read(
+              reinterpret_cast<const char *>(CollocationData::kExistenceData),
+              CollocationData::kExistenceDataSize)) {}
   ~CollocationFilter() {}
+
+  bool Exists(uint64 id) const {
+    return filter_->Exists(id);
+  }
+
+ private:
+  scoped_ptr<ExistenceFilter> filter_;
+};
+
+class SuppressionFilter {
+ public:
+  SuppressionFilter()
+      : filter_(
+          ExistenceFilter::Read(
+              reinterpret_cast<const char *>(
+                  CollocationSuppressionData::kExistenceData),
+              CollocationSuppressionData::kExistenceDataSize)) {}
+  ~SuppressionFilter() {}
 
   bool Exists(uint64 id) const {
     return filter_->Exists(id);
@@ -76,6 +97,17 @@ bool LookupPair(const string &left, const string &right) {
   const string pair = left + right;
   const uint64 id = Util::Fingerprint(pair);
   return Singleton<CollocationFilter>::get()->Exists(id);
+}
+
+// Returns true if the content key and value of the candidate is "ateji".
+// Atejis are stored using Bloom filter, so it is possible that non-ateji words
+// are sometimes mistakenly classified as ateji, resulting in passing on the
+// right collocations, though the possibility is very low (0.001% by default).
+bool ContentIsAteji(const Segment::Candidate &cand) {
+  const char kSeparator[] = "\t";
+  const string key = cand.content_value + kSeparator + cand.content_key;
+  const uint64 id = Util::Fingerprint(key);
+  return Singleton<SuppressionFilter>::get()->Exists(id);
 }
 
 bool ContainsScriptType(const string &str, Util::ScriptType type) {
@@ -185,7 +217,10 @@ void ResolveCompoundSegment(const string &top_value, const string &value,
   static const uint16 kPat8[] = {0x3088, 0x308A};  // "より"
   static const uint16 kPat9[] = {0x3067};  // "で"
 
-  static const struct { const uint16 *pat; int len; } kParticles[] = {
+  static const struct {
+    const uint16 *pat;
+    int len;
+  } kParticles[] = {
     {kPat1, arraysize(kPat1)},
     //    {kPat2, arraysize(kPat2)},
     {kPat3, arraysize(kPat3)},
@@ -219,15 +254,6 @@ void ResolveCompoundSegment(const string &top_value, const string &value,
       return;
     }
   }
-}
-
-bool IsName(const Segment::Candidate &cand) {
-  const bool ret = (cand.lid == POSMatcher::GetLastNameId()
-                    || cand.lid == POSMatcher::GetFirstNameId());
-  if (ret) {
-    VLOG(3) << cand.value << " is name sagment";
-  }
-  return ret;
 }
 
 bool IsNaturalContent(const Segment::Candidate &cand,
@@ -474,92 +500,12 @@ bool IsNaturalContent(const Segment::Candidate &cand,
   return true;
 }
 
-
-
-bool RewriteFromPrevSegment(const Segment::Candidate &prev_cand,
-                            Segment *seg) {
-  string prev;
-  CollocationUtil::GetNormalizedScript(prev_cand.value, &prev);
-
-  const size_t i_max = min(seg->candidates_size(), kCandidateSize);
-  for (size_t i = 0; i < i_max; ++i) {
-    vector<string> curs;
-    if (!IsNaturalContent(seg->candidate(i), seg->candidate(0),
-                          false, &curs)) {
-      continue;
-    }
-    if (IsName(seg->candidate(i))) {
-      continue;
-    }
-
-    for (int j = 0; j < curs.size(); ++j) {
-      string cur;
-      CollocationUtil::GetNormalizedScript(curs[j], &cur);
-      if (LookupPair(prev, cur)) {
-        if (i != 0) {
-          VLOG(3) << prev << cur << " "
-                  << seg->candidate(0).value << "->"
-                  << seg->candidate(i).value;
-        }
-        seg->move_candidate(i, 0);
-        seg->mutable_candidate(0)->attributes
-            |= Segment::Candidate::CONTEXT_SENSITIVE;
-        return true;
-      }
-    }
-  }
-  return false;
-}
-
-bool RewriteUsingNextSegment(Segment *next_seg, Segment *seg) {
-  const size_t i_max = min(seg->candidates_size(), kCandidateSize);
-  for (size_t i = 0; i < i_max; ++i) {
-    vector<string> curs;
-    if (!IsNaturalContent(seg->candidate(i), seg->candidate(0), true, &curs)) {
-      continue;
-    }
-    if (IsName(seg->candidate(i))) {
-      continue;
-    }
-
-    const size_t j_max = min(next_seg->candidates_size(), kCandidateSize);
-    for (size_t j = 0; j < j_max; ++j) {
-      vector<string> nexts;
-      if (!IsNaturalContent(next_seg->candidate(j),
-                            next_seg->candidate(0), false, &nexts)) {
-        continue;
-      }
-      if (IsName(next_seg->candidate(j))) {
-        continue;
-      }
-
-      for (int k = 0; k < curs.size(); ++k) {
-        for (int l = 0; l < nexts.size(); ++l) {
-          string cur, next;
-          CollocationUtil::GetNormalizedScript(curs[k], &cur);
-          CollocationUtil::GetNormalizedScript(nexts[l], &next);
-          if (LookupPair(cur, next)) {
-            VLOG(3) << curs[k] << nexts[l] << " " << cur << next;
-            seg->move_candidate(i, 0);
-            seg->mutable_candidate(0)->attributes
-                |= Segment::Candidate::CONTEXT_SENSITIVE;
-            next_seg->move_candidate(j, 0);
-            next_seg->mutable_candidate(0)->attributes
-                |= Segment::Candidate::CONTEXT_SENSITIVE;
-            return true;
-          }
-        }
-      }
-    }
-  }
-  return false;
-}
-
 bool IsKeyUnknown(const Segment &seg) {
   return Util::IsScriptType(seg.key(), Util::UNKNOWN_SCRIPT);
 }
+}  // namespace
 
-bool RewriteCollocation(Segments *segments) {
+bool CollocationRewriter::RewriteCollocation(Segments *segments) const {
   // return false if at least one segment is fixed.
   for (size_t i = segments->history_segments_size();
        i < segments->segments_size(); ++i) {
@@ -626,14 +572,138 @@ bool RewriteCollocation(Segments *segments) {
   return changed;
 }
 
-}  // namespace
-
-CollocationRewriter::CollocationRewriter() {}
+CollocationRewriter::CollocationRewriter(const POSMatcher &pos_matcher)
+    : first_name_id_(pos_matcher.GetFirstNameId()),
+      last_name_id_(pos_matcher.GetLastNameId()) {}
 
 CollocationRewriter::~CollocationRewriter() {}
 
-bool CollocationRewriter::Rewrite(Segments *segments) const {
+bool CollocationRewriter::Rewrite(const ConversionRequest &request,
+                                  Segments *segments) const {
   return RewriteCollocation(segments);
+}
+
+bool CollocationRewriter::IsName(const Segment::Candidate &cand) const {
+  const bool ret = (cand.lid == last_name_id_ || cand.lid == first_name_id_);
+  if (ret) {
+    VLOG(3) << cand.value << " is name sagment";
+  }
+  return ret;
+}
+
+bool CollocationRewriter::RewriteFromPrevSegment(
+    const Segment::Candidate &prev_cand,
+    Segment *seg) const {
+  string prev;
+  CollocationUtil::GetNormalizedScript(prev_cand.value, &prev);
+
+  const size_t i_max = min(seg->candidates_size(), kCandidateSize);
+  for (size_t i = 0; i < i_max; ++i) {
+    vector<string> curs;
+    if (!IsNaturalContent(seg->candidate(i), seg->candidate(0),
+                          false, &curs)) {
+      continue;
+    }
+    if (IsName(seg->candidate(i))) {
+      continue;
+    }
+    if (ContentIsAteji(seg->candidate(i))) {
+      continue;
+    }
+
+    for (int j = 0; j < curs.size(); ++j) {
+      string cur;
+      CollocationUtil::GetNormalizedScript(curs[j], &cur);
+      if (LookupPair(prev, cur)) {
+        if (i != 0) {
+          VLOG(3) << prev << cur << " "
+                  << seg->candidate(0).value << "->"
+                  << seg->candidate(i).value;
+        }
+        seg->move_candidate(i, 0);
+        seg->mutable_candidate(0)->attributes
+            |= Segment::Candidate::CONTEXT_SENSITIVE;
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+bool CollocationRewriter::RewriteUsingNextSegment(Segment *next_seg,
+                                                  Segment *seg) const {
+  const size_t i_max = min(seg->candidates_size(), kCandidateSize);
+  const size_t j_max = min(next_seg->candidates_size(), kCandidateSize);
+
+  // Cache the results for the next segment
+  vector<int> next_seg_ok(j_max);  // Avoiding vector<bool>
+  vector<vector<string> > normalized_string(j_max);
+
+  for (size_t j = 0; j < j_max; ++j) {
+    next_seg_ok[j] = 0;
+    vector<string> nexts;
+
+    if (!IsNaturalContent(next_seg->candidate(j),
+                          next_seg->candidate(0), false, &nexts)) {
+      continue;
+    }
+    if (IsName(next_seg->candidate(j))) {
+      continue;
+    }
+    if (ContentIsAteji(next_seg->candidate(j))) {
+      continue;
+    }
+    next_seg_ok[j] = 1;
+    for (vector<string>::const_iterator it = nexts.begin();
+         it != nexts.end(); ++it) {
+      string next_normalized;
+      CollocationUtil::GetNormalizedScript(*it, &next_normalized);
+      normalized_string[j].push_back(next_normalized);
+    }
+  }
+
+  for (size_t i = 0; i < i_max; ++i) {
+    vector<string> curs;
+    if (!IsNaturalContent(seg->candidate(i), seg->candidate(0), true, &curs)) {
+      continue;
+    }
+    if (IsName(seg->candidate(i))) {
+      continue;
+    }
+    if (ContentIsAteji(seg->candidate(i))) {
+      continue;
+    }
+
+    for (int k = 0; k < curs.size(); ++k) {
+      string cur;
+      CollocationUtil::GetNormalizedScript(curs[k], &cur);
+      for (size_t j = 0; j < j_max; ++j) {
+        if (!next_seg_ok[j]) {
+          continue;
+        }
+
+        for (int l = 0; l < normalized_string[j].size(); ++l) {
+          const string &next = normalized_string[j][l];
+          if (LookupPair(cur, next)) {
+            vector<string> nexts;
+            DCHECK(IsNaturalContent(next_seg->candidate(j),
+                                    next_seg->candidate(0), false, &nexts))
+                << "IsNaturalContent() should not fail here.";
+
+            VLOG(3) << curs[k] << nexts[l] << " " << cur << next;
+            seg->move_candidate(i, 0);
+            seg->mutable_candidate(0)->attributes
+                |= Segment::Candidate::CONTEXT_SENSITIVE;
+            next_seg->move_candidate(j, 0);
+            next_seg->mutable_candidate(0)->attributes
+                |= Segment::Candidate::CONTEXT_SENSITIVE;
+            return true;
+          }
+        }
+      }
+    }
+  }
+  return false;
 }
 
 }  // namespace mozc

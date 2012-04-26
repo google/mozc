@@ -34,22 +34,26 @@
 #include <vector>
 #include "base/base.h"
 #include "rewriter/rewriter_interface.h"
-#include "testing/base/public/gunit_prod.h"  // for FRIEND_TEST()
+// for FRIEND_TEST()
+#include "testing/base/public/gunit_prod.h"
 
 namespace mozc {
 
 class Converter;
+class ConversionRequest;
 class Segment;
 class Segments;
 
-class DateRewriter: public RewriterInterface  {
+class DateRewriter : public RewriterInterface  {
  public:
   DateRewriter();
   virtual ~DateRewriter();
 
   virtual int capability() const;
 
-  virtual bool Rewrite(Segments *segments) const;
+  virtual bool Rewrite(const ConversionRequest &request,
+                       Segments *segments) const;
+
  private:
   FRIEND_TEST(DateRewriterTest, ADToERA);
   FRIEND_TEST(DateRewriterTest, ConvertTime);
@@ -123,6 +127,7 @@ class DateRewriter: public RewriterInterface  {
   bool ConvertDateWithoutYear(uint32 month, uint32 day,
                               vector<string> *results) const;
 };
-}
+
+}  // namespace mozc
 
 #endif  // MOZC_REWRITER_DATE_REWRITER_H_

@@ -27,16 +27,21 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <string>
+#include "rewriter/zipcode_rewriter.h"
 
+#include <string>
+#include "base/base.h"
+#include "base/singleton.h"
 #include "base/util.h"
-#include "config/config_handler.h"
 #include "config/config.pb.h"
+#include "config/config_handler.h"
+#include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
-#include "rewriter/zipcode_rewriter.h"
 #include "session/commands.pb.h"
 #include "testing/base/public/gunit.h"
+
+DECLARE_string(test_tmpdir);
 
 namespace mozc {
 
@@ -59,8 +64,9 @@ void AddSegment(const string &key, const string &value,
   candidate->content_value = value;
 
   if (type == ZIPCODE) {
-    candidate->lid = POSMatcher::GetZipcodeId();
-    candidate->rid = POSMatcher::GetZipcodeId();
+    const POSMatcher pos_matcher;
+    candidate->lid = pos_matcher.GetZipcodeId();
+    candidate->rid = pos_matcher.GetZipcodeId();
   }
 }
 
@@ -98,10 +104,14 @@ class ZipcodeRewriterTest : public ::testing::Test {
     config::ConfigHandler::GetDefaultConfig(&default_config);
     config::ConfigHandler::SetConfig(default_config);
   }
+
+  ZipcodeRewriter *CreateZipcodeRewriter() const {
+    return new ZipcodeRewriter(Singleton<POSMatcher>::get());
+  }
 };
 
 TEST_F(ZipcodeRewriterTest, BasicTest) {
-  ZipcodeRewriter zipcode_rewriter;
+  scoped_ptr<ZipcodeRewriter> zipcode_rewriter(CreateZipcodeRewriter());
 
   const string kZipcode = "107-0052";
   const string kAddress =
@@ -112,7 +122,7 @@ TEST_F(ZipcodeRewriterTest, BasicTest) {
   {
     Segments segments;
     AddSegment("test", "test", NON_ZIPCODE, &segments);
-    EXPECT_FALSE(zipcode_rewriter.Rewrite(&segments));
+    EXPECT_FALSE(zipcode_rewriter->Rewrite(ConversionRequest(), &segments));
   }
 
   {
@@ -124,7 +134,7 @@ TEST_F(ZipcodeRewriterTest, BasicTest) {
 
     Segments segments;
     AddSegment(kZipcode, kAddress, ZIPCODE, &segments);
-    zipcode_rewriter.Rewrite(&segments);
+    zipcode_rewriter->Rewrite(ConversionRequest(), &segments);
     EXPECT_TRUE(HasZipcodeAndAddress(segments,
                                      kZipcode + " " + kAddress));
   }
@@ -138,7 +148,7 @@ TEST_F(ZipcodeRewriterTest, BasicTest) {
 
     Segments segments;
     AddSegment(kZipcode, kAddress, ZIPCODE, &segments);
-    zipcode_rewriter.Rewrite(&segments);
+    zipcode_rewriter->Rewrite(ConversionRequest(), &segments);
     EXPECT_TRUE(HasZipcodeAndAddress(segments,
                                      // "　" (full-width space)
                                      kZipcode + "\xE3\x80\x80" + kAddress));

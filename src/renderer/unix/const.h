@@ -64,9 +64,6 @@ const RGBA kFooterSubLabelColor = { 0xA7, 0xA7, 0xA7, 0xFF };
 
 const RGBA kWhite = { 0xFF, 0xFF, 0xFF, 0xFF };
 
-const char kNormalFont[] = "SansSerif 12";
-const char kShortcutFont[] = "SansSerif Bold 12";
-
 const int kWindowBorder = 1;
 const int kFooterSeparatorHeight = 1;
 const int kRowRectPadding = 1;
@@ -76,6 +73,13 @@ const int kIndicatorWidthInDefaultDPI = 4;
 const char kMinimumCandidateAndDescriptionWidthAsString[] =
     "\xe3\x81\x9d\xe3\x81\xae\xe3\x81\xbb\xe3\x81\x8b\xe3\x81\xae\xe6\x96\x87"
     "\xe5\xad\x97\xe7\xa8\xae";
+
+// "IPAゴシック,SansSerif 11"
+// The pango font description allows us to set multiple font names.
+// See the detail in
+// http://developer.gnome.org/pango/stable/pango-Fonts.html#pango-font-description-from-string
+const char kDefaultFontDescription[] = "IPA"
+    "\xE3\x82\xB4\xE3\x82\xB7\xE3\x83\x83\xE3\x82\xAF,SansSerif 11";
 
 }  // namespace gtk
 }  // namespace renderer

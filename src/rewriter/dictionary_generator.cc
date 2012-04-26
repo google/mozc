@@ -36,7 +36,7 @@
 #include "base/file_stream.h"
 #include "base/freelist.h"
 #include "base/util.h"
-#include "data_manager/user_dictionary_manager.h"
+#include "data_manager/user_pos_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/user_pos.h"
 
@@ -78,8 +78,9 @@ static const size_t kTokenSize = 1000;
 DictionaryGenerator::DictionaryGenerator()
     : token_pool_(new ObjectPool<Token>(kTokenSize)),
       token_map_(new map<uint64, Token *>),
-      user_pos_(
-          UserDictionaryManager::GetUserDictionaryManager()->GetUserPOS()) {}
+      user_pos_(UserPosManager::GetUserPosManager()->GetUserPOS()),
+      open_bracket_id_(POSMatcher().GetOpenBracketId()),
+      close_bracket_id_(POSMatcher().GetCloseBracketId()) {}
 
 DictionaryGenerator::~DictionaryGenerator() {}
 
@@ -150,9 +151,9 @@ bool DictionaryGenerator::Output(const string &filename) const {
 
     uint16 id;
     if (pos == "\xE6\x8B\xAC\xE5\xBC\xA7\xE9\x96\x8B") {      // "括弧開"
-      id = POSMatcher::GetOpenBracketId();
+      id = open_bracket_id_;
     } else if (pos == "\xE6\x8B\xAC\xE5\xBC\xA7\xE9\x96\x89") {  // "括弧閉"
-      id = POSMatcher::GetCloseBracketId();
+      id = close_bracket_id_;
     } else {
       CHECK(user_pos_->GetPOSIDs(pos, &id)) << "Unknown POS type: " << pos;
     }

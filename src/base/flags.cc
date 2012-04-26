@@ -28,6 +28,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+
 #include "base/flags.h"
 
 #include <stdlib.h>  // for atexit, getenv
@@ -104,13 +105,22 @@ bool FlagUtil::SetFlag(const string &name, const string &value) {
   if (it == GetFlagMap()->end()) return false;
   string v = value;
   Flag *flag = it->second;
+
+  // If empty value is set, we assume true or emtpy string is set
+  // for boolean or string option. With other types, setting fails.
   if (value.empty()) {
-    if (flag->type == B) {
-      v = "true";
-    } else {
-      return false;
+    switch (flag->type) {
+      case B:
+        v = "true";
+        break;
+      case S:
+        v = "";
+        break;
+      default:
+        return false;
     }
   }
+
   switch (flag->type) {
     case I:
       *(reinterpret_cast<int32 *>(flag->storage)) = atoi32(v.c_str());

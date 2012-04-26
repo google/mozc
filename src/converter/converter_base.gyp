@@ -75,8 +75,8 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        'gen_boundary_data',
-        'gen_segmenter_data',
+        'gen_boundary_data#host',
+        'gen_segmenter_data#host',
         'segmenter_base',
       ],
     },
@@ -90,8 +90,8 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        'gen_test_boundary_data',
-        'gen_test_segmenter_data',
+        'gen_test_boundary_data#host',
+        'gen_test_segmenter_data#host',
         'segmenter_base',
       ],
     },
@@ -138,7 +138,7 @@
       'dependencies': [
         '../base/base.gyp:base',
         'connector_base',
-        'gen_connection_data',
+        'gen_connection_data#host',
       ],
     },
     {
@@ -151,7 +151,7 @@
       'dependencies': [
         '../base/base.gyp:base',
         'connector_base',
-        'gen_embedded_test_connection_data',
+        'gen_embedded_test_connection_data#host',
       ],
     },
     {
@@ -167,7 +167,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        '../dictionary/dictionary_base.gyp:gen_pos_matcher',
+        '../dictionary/dictionary_base.gyp:pos_matcher',
         '../transliteration/transliteration.gyp:transliteration',
         'connector',
         'segmenter',
@@ -185,9 +185,11 @@
         '../base/base.gyp:base',
         '../config/config.gyp:config_handler',
         '../config/config.gyp:config_protocol',
+        '../data_manager/data_manager.gyp:user_pos_manager',
         '../dictionary/dictionary.gyp:suffix_dictionary',
-        '../dictionary/dictionary_base.gyp:gen_pos_matcher',
-        '../rewriter/rewriter_base.gyp:gen_rewriter_files',
+        '../dictionary/dictionary_base.gyp:pos_matcher',
+        '../dictionary/dictionary_base.gyp:suppression_dictionary',
+        '../rewriter/rewriter_base.gyp:gen_rewriter_files#host',
         '../session/session_base.gyp:session_protocol',
         'segments',
       ],
@@ -195,6 +197,7 @@
     {
       'target_name': 'gen_connection_data',
       'type': 'none',
+      'toolsets': ['host'],
       'conditions': [
         ['use_separate_connection_data==1',{
             'dependencies': [
@@ -212,6 +215,7 @@
     {
       'target_name': 'gen_embedded_connection_data',
       'type': 'none',
+      'toolsets': ['host'],
       'actions': [
         {
           'action_name': 'gen_embedded_connection_data',
@@ -253,6 +257,7 @@
       # gen_embedded_test_connection_data directly.
       'target_name': 'gen_separate_connection_data',
       'type': 'none',
+      'toolsets': ['host'],
       'actions': [
         {
           'action_name': 'gen_separate_connection_data',
@@ -291,6 +296,7 @@
     {
       'target_name': 'gen_embedded_test_connection_data',
       'type': 'none',
+      'toolsets': ['host'],
       'actions': [
         {
           'action_name': 'gen_embedded_test_connection_data',
@@ -323,6 +329,7 @@
     {
       'target_name': 'gen_segmenter_data',
       'type': 'none',
+      'toolsets': ['host'],
       'actions': [
         {
           'action_name': 'gen_segmenter_data',
@@ -346,6 +353,7 @@
     {
       'target_name': 'gen_test_segmenter_data',
       'type': 'none',
+      'toolsets': ['host'],
       'actions': [
         {
           'action_name': 'gen_test_segmenter_data',
@@ -369,6 +377,7 @@
     {
       'target_name': 'sparse_connector_builder',
       'type': 'static_library',
+      'toolsets': ['target', 'host'],   # "target" is needed for test.
       'sources': [
         'sparse_connector.cc',
         'sparse_connector_builder.cc',
@@ -380,6 +389,7 @@
     {
       'target_name': 'gen_connection_data_main',
       'type': 'executable',
+      'toolsets': ['host'],
       'sources': [
         'gen_connection_data_main.cc',
       ],
@@ -390,6 +400,7 @@
     {
       'target_name': 'install_gen_connection_data_main',
       'type': 'none',
+      'toolsets': ['host'],
       'variables': {
         'bin_name': 'gen_connection_data_main'
       },
@@ -400,6 +411,7 @@
     {
       'target_name': 'gen_segmenter_bitarray',
       'type': 'static_library',
+      'toolsets': ['host'],
       'sources': [
         'gen_segmenter_bitarray.cc',
       ],
@@ -410,6 +422,7 @@
     {
       'target_name': 'gen_segmenter_bitarray_main',
       'type': 'executable',
+      'toolsets': ['host'],
       'sources': [
         'gen_segmenter_bitarray_main.cc',
       ],
@@ -421,6 +434,7 @@
     {
       'target_name': 'gen_test_segmenter_bitarray_main',
       'type': 'executable',
+      'toolsets': ['host'],
       'sources': [
         'gen_test_segmenter_bitarray_main.cc',
       ],
@@ -432,6 +446,7 @@
     {
       'target_name': 'gen_segmenter_inl',
       'type': 'none',
+      'toolsets': ['host'],
       'actions': [
         {
           'action_name': 'gen_segmenter_inl',
@@ -462,6 +477,7 @@
     {
       'target_name': 'gen_test_segmenter_inl',
       'type': 'none',
+      'toolsets': ['host'],
       'actions': [
         {
           'action_name': 'gen_test_segmenter_inl',
@@ -492,6 +508,7 @@
     {
       'target_name': 'gen_boundary_data',
       'type': 'none',
+      'toolsets': ['host'],
       'actions': [
         {
           'action_name': 'gen_boundary_data',
@@ -522,6 +539,7 @@
     {
       'target_name': 'gen_test_boundary_data',
       'type': 'none',
+      'toolsets': ['host'],
       'actions': [
         {
           'action_name': 'gen_test_boundary_data',
@@ -552,6 +570,7 @@
     {
       'target_name': 'install_gen_segmenter_bitarray_main',
       'type': 'none',
+      'toolsets': ['host'],
       'variables': {
         'bin_name': 'gen_segmenter_bitarray_main'
       },
@@ -562,6 +581,7 @@
     {
       'target_name': 'install_gen_test_segmenter_bitarray_main',
       'type': 'none',
+      'toolsets': ['host'],
       'variables': {
         'bin_name': 'gen_test_segmenter_bitarray_main'
       },

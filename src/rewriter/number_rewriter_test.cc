@@ -27,14 +27,15 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <string>
+#include "rewriter/number_rewriter.h"
 
+#include <string>
 #include "base/util.h"
-#include "config/config_handler.h"
 #include "config/config.pb.h"
+#include "config/config_handler.h"
+#include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
-#include "rewriter/number_rewriter.h"
 #include "session/commands.pb.h"
 #include "testing/base/public/gunit.h"
 
@@ -75,8 +76,9 @@ Segment *SetupSegments(const string &candidate_value, Segments *segments) {
   Segment *seg = segments->push_back_segment();
   Segment::Candidate *candidate = seg->add_candidate();
   candidate->Init();
-  candidate->lid = POSMatcher::GetNumberId();
-  candidate->rid = POSMatcher::GetNumberId();
+  const POSMatcher pos_matcher;
+  candidate->lid = pos_matcher.GetNumberId();
+  candidate->rid = pos_matcher.GetNumberId();
   candidate->value = candidate_value;
   candidate->content_value = candidate_value;
 
@@ -106,88 +108,85 @@ bool FindCandidateId(const Segment &segment, const string &value, int *id) {
 
 class NumberRewriterTest : public testing::Test {
  protected:
+  // Explicitly define constructor to prevent Visual C++ from
+  // considering this class as POD.
+  NumberRewriterTest() {}
+
   virtual void SetUp() {
     Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
     config::Config default_config;
     config::ConfigHandler::GetDefaultConfig(&default_config);
     config::ConfigHandler::SetConfig(default_config);
   }
+
+  NumberRewriter *CreateNumberRewriter() {
+    return new NumberRewriter(&pos_matcher_);
+  }
+
+  const POSMatcher pos_matcher_;
 };
 
+namespace {
+struct ExpectResult {
+  const char *value;
+  const char *content_value;
+  const char *description;
+};
+}  // namespace
+
 TEST_F(NumberRewriterTest, BasicTest) {
-  NumberRewriter number_rewriter;
+  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
   Segments segments;
   Segment *seg = segments.push_back_segment();
   Segment::Candidate *candidate = seg->add_candidate();
   candidate->Init();
-  candidate->lid = POSMatcher::GetNumberId();
-  candidate->rid = POSMatcher::GetNumberId();
+  candidate->lid = pos_matcher_.GetNumberId();
+  candidate->rid = pos_matcher_.GetNumberId();
   candidate->value = "012";
   candidate->content_value = "012";
 
-  EXPECT_TRUE(number_rewriter.Rewrite(&segments));
+  EXPECT_TRUE(number_rewriter->Rewrite(ConversionRequest(), &segments));
 
-  EXPECT_EQ(11, seg->candidates_size());
+  const ExpectResult kExpectResults[] = {
+    {"012", "012", ""},
+    // "〇一二"
+    {"\xE3\x80\x87\xE4\xB8\x80\xE4\xBA\x8C",
+     "\xE3\x80\x87\xE4\xB8\x80\xE4\xBA\x8C", kKanjiDescription},
+    // "０１２"
+    {"\xEF\xBC\x90\xEF\xBC\x91\xEF\xBC\x92",
+     "\xEF\xBC\x90\xEF\xBC\x91\xEF\xBC\x92", kArabicDescription},
+    // "十二"
+    {"\xE5\x8D\x81\xE4\xBA\x8C", "\xE5\x8D\x81\xE4\xBA\x8C",
+     kKanjiDescription},
+    // "拾弐"
+    {"\xE6\x8B\xBE\xE5\xBC\x90", "\xE6\x8B\xBE\xE5\xBC\x90",
+     kOldKanjiDescription},
+    // XII
+    {"\xE2\x85\xAB", "\xE2\x85\xAB", kRomanCapitalDescription},
+    // xii
+    {"\xE2\x85\xBB", "\xE2\x85\xBB", kRomanNoCapitalDescription},
+    // 12 with circle mark
+    {"\xE2\x91\xAB", "\xE2\x91\xAB", kMaruNumberDescription},
+    // "16進数"
+    {"0xc", "0xc", "16""\xE9\x80\xB2\xE6\x95\xB0"},
+    // "8進数"
+    {"014", "014", "8""\xE9\x80\xB2\xE6\x95\xB0"},
+    // "2進数"
+    {"0b1100", "0b1100", "2""\xE9\x80\xB2\xE6\x95\xB0"},
+  };
 
-  // "012"
-  EXPECT_EQ("012", seg->candidate(0).value);
-  EXPECT_EQ("012", seg->candidate(0).content_value);
-  EXPECT_EQ("", seg->candidate(0).description);
+  const size_t kExpectResultSize = ARRAYSIZE(kExpectResults);
+  EXPECT_EQ(kExpectResultSize, seg->candidates_size());
 
-  // "〇一二"
-  EXPECT_EQ("\xE3\x80\x87\xE4\xB8\x80\xE4\xBA\x8C", seg->candidate(1).value);
-  EXPECT_EQ("\xE3\x80\x87\xE4\xB8\x80\xE4\xBA\x8C", seg->candidate(1).content_value);
-  EXPECT_EQ(kKanjiDescription, seg->candidate(1).description);
-
-  // "０１２"
-  EXPECT_EQ("\xEF\xBC\x90\xEF\xBC\x91\xEF\xBC\x92", seg->candidate(2).value);
-  EXPECT_EQ("\xEF\xBC\x90\xEF\xBC\x91\xEF\xBC\x92", seg->candidate(2).content_value);
-  EXPECT_EQ(kArabicDescription, seg->candidate(2).description);
-
-  // "十二"
-  EXPECT_EQ("\xE5\x8D\x81\xE4\xBA\x8C", seg->candidate(3).value);
-  EXPECT_EQ("\xE5\x8D\x81\xE4\xBA\x8C", seg->candidate(3).content_value);
-  EXPECT_EQ(kKanjiDescription, seg->candidate(3).description);
-
-  // "壱拾弐"
-  EXPECT_EQ("\xE5\xA3\xB1\xE6\x8B\xBE\xE5\xBC\x90", seg->candidate(4).value);
-  EXPECT_EQ("\xE5\xA3\xB1\xE6\x8B\xBE\xE5\xBC\x90", seg->candidate(4).content_value);
-  EXPECT_EQ(kOldKanjiDescription, seg->candidate(4).description);
-
-  // VI
-  EXPECT_EQ("\xE2\x85\xAB", seg->candidate(5).value);
-  EXPECT_EQ("\xE2\x85\xAB", seg->candidate(5).content_value);
-  EXPECT_EQ(kRomanCapitalDescription, seg->candidate(5).description);
-
-  // vi
-  EXPECT_EQ("\xE2\x85\xBB", seg->candidate(6).value);
-  EXPECT_EQ("\xE2\x85\xBB", seg->candidate(6).content_value);
-  EXPECT_EQ(kRomanNoCapitalDescription, seg->candidate(6).description);
-
-  // 12 with circle mark
-  EXPECT_EQ("\xE2\x91\xAB", seg->candidate(7).value);
-  EXPECT_EQ("\xE2\x91\xAB", seg->candidate(7).content_value);
-  EXPECT_EQ(kMaruNumberDescription, seg->candidate(7).description);
-
-  EXPECT_EQ("0xc", seg->candidate(8).value);
-  EXPECT_EQ("0xc", seg->candidate(8).content_value);
-  // "16進数"
-  EXPECT_EQ("\x31\x36\xE9\x80\xB2\xE6\x95\xB0",
-            seg->candidate(8).description);
-
-  EXPECT_EQ("014", seg->candidate(9).value);
-  EXPECT_EQ("014", seg->candidate(9).content_value);
-  // "8進数"
-  EXPECT_EQ("\x38\xE9\x80\xB2\xE6\x95\xB0",
-            seg->candidate(9).description);
-
-  EXPECT_EQ("0b1100", seg->candidate(10).value);
-  EXPECT_EQ("0b1100", seg->candidate(10).content_value);
-  // "2進数"
-  EXPECT_EQ("\x32\xE9\x80\xB2\xE6\x95\xB0",
-            seg->candidate(10).description);
-
+  for (size_t i = 0; i < kExpectResultSize; ++i) {
+    SCOPED_TRACE(Util::StringPrintf("i = %lu", i));
+    EXPECT_EQ(kExpectResults[i].value, seg->candidate(i).value);
+    EXPECT_EQ(kExpectResults[i].content_value,
+              seg->candidate(i).content_value);
+    EXPECT_EQ(kExpectResults[i].description,
+              seg->candidate(i).description);
+  }
   seg->clear_candidates();
 }
 
@@ -208,7 +207,7 @@ TEST_F(NumberRewriterTest, RequestType) {
       TestData(Segments::SUGGESTION, 8),
   };
 
-  NumberRewriter number_rewriter;
+  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
   for (size_t i = 0; i < ARRAYSIZE(test_data_list); ++i) {
     TestData& test_data = test_data_list[i];
@@ -217,105 +216,86 @@ TEST_F(NumberRewriterTest, RequestType) {
     Segment *seg = segments.push_back_segment();
     Segment::Candidate *candidate = seg->add_candidate();
     candidate->Init();
-    candidate->lid = POSMatcher::GetNumberId();
-    candidate->rid = POSMatcher::GetNumberId();
+    candidate->lid = pos_matcher_.GetNumberId();
+    candidate->rid = pos_matcher_.GetNumberId();
     candidate->value = "012";
     candidate->content_value = "012";
-    EXPECT_TRUE(number_rewriter.Rewrite(&segments));
+    EXPECT_TRUE(number_rewriter->Rewrite(ConversionRequest(), &segments));
     EXPECT_EQ(test_data.expected_candidate_number_, seg->candidates_size());
   }
 }
 
 TEST_F(NumberRewriterTest, BasicTestWithSuffix) {
-  NumberRewriter number_rewriter;
+  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
   Segments segments;
   Segment *seg = segments.push_back_segment();
   Segment::Candidate *candidate = seg->add_candidate();
   candidate->Init();
-  candidate->lid = POSMatcher::GetNumberId();
-  candidate->rid = POSMatcher::GetNumberId();
-  candidate->value = "012\xE3\x81\x8C";   // "012が"
+  candidate->lid = pos_matcher_.GetNumberId();
+  candidate->rid = pos_matcher_.GetNumberId();
+  candidate->value = "012""\xE3\x81\x8C";   // "012が"
   candidate->content_value = "012";
 
-  EXPECT_TRUE(number_rewriter.Rewrite(&segments));
+  EXPECT_TRUE(number_rewriter->Rewrite(ConversionRequest(), &segments));
 
-  EXPECT_EQ(11, seg->candidates_size());
+  const ExpectResult kExpectResults[] = {
+    // "012"
+    {"012\xE3\x81\x8C", "012",""},
+    // "〇一二"
+    {"\xE3\x80\x87\xE4\xB8\x80\xE4\xBA\x8C\xE3\x81\x8C",
+     "\xE3\x80\x87\xE4\xB8\x80\xE4\xBA\x8C", kKanjiDescription},
+    // "０１２"
+    {"\xEF\xBC\x90\xEF\xBC\x91\xEF\xBC\x92\xE3\x81\x8C",
+     "\xEF\xBC\x90\xEF\xBC\x91\xEF\xBC\x92", kArabicDescription},
+    // "十二"
+    {"\xE5\x8D\x81\xE4\xBA\x8C\xE3\x81\x8C",
+     "\xE5\x8D\x81\xE4\xBA\x8C", kKanjiDescription},
+    // "拾弐"
+    {"\xE6\x8B\xBE\xE5\xBC\x90\xE3\x81\x8C",
+     "\xE6\x8B\xBE\xE5\xBC\x90", kOldKanjiDescription},
+    // XII
+    {"\xE2\x85\xAB\xE3\x81\x8C", "\xE2\x85\xAB", kRomanCapitalDescription},
+    // xii
+    {"\xE2\x85\xBB\xE3\x81\x8C", "\xE2\x85\xBB", kRomanNoCapitalDescription},
+    // 12 with circle mark
+    {"\xE2\x91\xAB\xE3\x81\x8C", "\xE2\x91\xAB", kMaruNumberDescription},
+    // "16進数"
+    {"0xc""\xE3\x81\x8C", "0xc", "16""\xE9\x80\xB2\xE6\x95\xB0"},
+    // "8進数"
+    {"014""\xE3\x81\x8C", "014", "8""\xE9\x80\xB2\xE6\x95\xB0"},
+    // "2進数"
+    {"0b1100""\xE3\x81\x8C", "0b1100", "2""\xE9\x80\xB2\xE6\x95\xB0"},
+  };
 
-  // "012"
-  EXPECT_EQ("012\xE3\x81\x8C", seg->candidate(0).value);
-  EXPECT_EQ("012", seg->candidate(0).content_value);
-  EXPECT_EQ("", seg->candidate(0).description);
+  const size_t kExpectResultSize = ARRAYSIZE(kExpectResults);
+  EXPECT_EQ(kExpectResultSize, seg->candidates_size());
 
-  // "〇一二"
-  EXPECT_EQ("\xE3\x80\x87\xE4\xB8\x80\xE4\xBA\x8C\xE3\x81\x8C", seg->candidate(1).value);
-  EXPECT_EQ("\xE3\x80\x87\xE4\xB8\x80\xE4\xBA\x8C", seg->candidate(1).content_value);
-  EXPECT_EQ(kKanjiDescription, seg->candidate(1).description);
-
-  // "０１２"
-  EXPECT_EQ("\xEF\xBC\x90\xEF\xBC\x91\xEF\xBC\x92\xE3\x81\x8C", seg->candidate(2).value);
-  EXPECT_EQ("\xEF\xBC\x90\xEF\xBC\x91\xEF\xBC\x92", seg->candidate(2).content_value);
-  EXPECT_EQ(kArabicDescription, seg->candidate(2).description);
-
-  // "十二"
-  EXPECT_EQ("\xE5\x8D\x81\xE4\xBA\x8C\xE3\x81\x8C", seg->candidate(3).value);
-  EXPECT_EQ("\xE5\x8D\x81\xE4\xBA\x8C", seg->candidate(3).content_value);
-  EXPECT_EQ(kKanjiDescription, seg->candidate(3).description);
-
-  // "壱拾弐"
-  EXPECT_EQ("\xE5\xA3\xB1\xE6\x8B\xBE\xE5\xBC\x90\xE3\x81\x8C", seg->candidate(4).value);
-  EXPECT_EQ("\xE5\xA3\xB1\xE6\x8B\xBE\xE5\xBC\x90", seg->candidate(4).content_value);
-  EXPECT_EQ(kOldKanjiDescription, seg->candidate(4).description);
-
-  // VI
-  EXPECT_EQ("\xE2\x85\xAB\xE3\x81\x8C", seg->candidate(5).value);
-  EXPECT_EQ("\xE2\x85\xAB", seg->candidate(5).content_value);
-  EXPECT_EQ(kRomanCapitalDescription, seg->candidate(5).description);
-
-  // vi
-  EXPECT_EQ("\xE2\x85\xBB\xE3\x81\x8C", seg->candidate(6).value);
-  EXPECT_EQ("\xE2\x85\xBB", seg->candidate(6).content_value);
-  EXPECT_EQ(kRomanNoCapitalDescription, seg->candidate(6).description);
-
-  // 12 with circle mark
-  EXPECT_EQ("\xE2\x91\xAB\xE3\x81\x8C", seg->candidate(7).value);
-  EXPECT_EQ("\xE2\x91\xAB", seg->candidate(7).content_value);
-  EXPECT_EQ(kMaruNumberDescription, seg->candidate(7).description);
-
-  EXPECT_EQ("0xc\xE3\x81\x8C", seg->candidate(8).value);
-  EXPECT_EQ("0xc", seg->candidate(8).content_value);
-  // "16進数"
-  EXPECT_EQ("\x31\x36\xE9\x80\xB2\xE6\x95\xB0",
-            seg->candidate(8).description);
-
-  EXPECT_EQ("014\xE3\x81\x8C", seg->candidate(9).value);
-  EXPECT_EQ("014", seg->candidate(9).content_value);
-  // "8進数"
-  EXPECT_EQ("\x38\xE9\x80\xB2\xE6\x95\xB0",
-            seg->candidate(9).description);
-
-  EXPECT_EQ("0b1100\xE3\x81\x8C", seg->candidate(10).value);
-  EXPECT_EQ("0b1100", seg->candidate(10).content_value);
-  // "2進数"
-  EXPECT_EQ("\x32\xE9\x80\xB2\xE6\x95\xB0",
-            seg->candidate(10).description);
+  for (size_t i = 0; i < kExpectResultSize; ++i) {
+    SCOPED_TRACE(Util::StringPrintf("i = %lu", i));
+    EXPECT_EQ(kExpectResults[i].value, seg->candidate(i).value);
+    EXPECT_EQ(kExpectResults[i].content_value,
+              seg->candidate(i).content_value);
+    EXPECT_EQ(kExpectResults[i].description,
+              seg->candidate(i).description);
+  }
 
   seg->clear_candidates();
 }
 
 TEST_F(NumberRewriterTest, BasicTestWithNumberSuffix) {
-  NumberRewriter number_rewriter;
+  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
   Segments segments;
   Segment *seg = segments.push_back_segment();
   Segment::Candidate *candidate = seg->add_candidate();
   candidate->Init();
-  candidate->lid = POSMatcher::GetNumberId();
-  candidate->rid = POSMatcher::GetNumberId();
+  candidate->lid = pos_matcher_.GetNumberId();
+  candidate->rid = pos_matcher_.GetNumberId();
   candidate->value = "\xE5\x8D\x81\xE4\xBA\x94\xE5\x80\x8B";  // "十五個"
   candidate->content_value = "\xE5\x8D\x81\xE4\xBA\x94\xE5\x80\x8B";  // ditto
 
-  EXPECT_TRUE(number_rewriter.Rewrite(&segments));
+  EXPECT_TRUE(number_rewriter->Rewrite(ConversionRequest(), &segments));
 
   EXPECT_EQ(2, seg->candidates_size());
 
@@ -333,54 +313,55 @@ TEST_F(NumberRewriterTest, BasicTestWithNumberSuffix) {
 }
 
 TEST_F(NumberRewriterTest, SpecialFormBoundaries) {
-  NumberRewriter number_rewriter;
+  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
   Segments segments;
+  const ConversionRequest request;
 
   // Special forms doesn't have zeros.
   Segment *seg = SetupSegments("0", &segments);
-  EXPECT_TRUE(number_rewriter.Rewrite(&segments));
+  EXPECT_TRUE(number_rewriter->Rewrite(request, &segments));
   EXPECT_FALSE(HasDescription(*seg, kMaruNumberDescription));
   EXPECT_FALSE(HasDescription(*seg, kRomanCapitalDescription));
   EXPECT_FALSE(HasDescription(*seg, kRomanNoCapitalDescription));
 
   // "1" has special forms.
   seg = SetupSegments("1", &segments);
-  EXPECT_TRUE(number_rewriter.Rewrite(&segments));
+  EXPECT_TRUE(number_rewriter->Rewrite(request, &segments));
   EXPECT_TRUE(HasDescription(*seg, kMaruNumberDescription));
   EXPECT_TRUE(HasDescription(*seg, kRomanCapitalDescription));
   EXPECT_TRUE(HasDescription(*seg, kRomanNoCapitalDescription));
 
   // "12" has every special forms.
   seg = SetupSegments("12", &segments);
-  EXPECT_TRUE(number_rewriter.Rewrite(&segments));
+  EXPECT_TRUE(number_rewriter->Rewrite(request, &segments));
   EXPECT_TRUE(HasDescription(*seg, kMaruNumberDescription));
   EXPECT_TRUE(HasDescription(*seg, kRomanCapitalDescription));
   EXPECT_TRUE(HasDescription(*seg, kRomanNoCapitalDescription));
 
   // "13" doesn't have roman forms.
   seg = SetupSegments("13", &segments);
-  EXPECT_TRUE(number_rewriter.Rewrite(&segments));
+  EXPECT_TRUE(number_rewriter->Rewrite(request, &segments));
   EXPECT_TRUE(HasDescription(*seg, kMaruNumberDescription));
   EXPECT_FALSE(HasDescription(*seg, kRomanCapitalDescription));
   EXPECT_FALSE(HasDescription(*seg, kRomanNoCapitalDescription));
 
   // "50" has circled numerics.
   seg = SetupSegments("50", &segments);
-  EXPECT_TRUE(number_rewriter.Rewrite(&segments));
+  EXPECT_TRUE(number_rewriter->Rewrite(request, &segments));
   EXPECT_TRUE(HasDescription(*seg, kMaruNumberDescription));
   EXPECT_FALSE(HasDescription(*seg, kRomanCapitalDescription));
   EXPECT_FALSE(HasDescription(*seg, kRomanNoCapitalDescription));
 
   // "51" doesn't have special forms.
   seg = SetupSegments("51", &segments);
-  EXPECT_TRUE(number_rewriter.Rewrite(&segments));
+  EXPECT_TRUE(number_rewriter->Rewrite(request, &segments));
   EXPECT_FALSE(HasDescription(*seg, kMaruNumberDescription));
   EXPECT_FALSE(HasDescription(*seg, kRomanCapitalDescription));
   EXPECT_FALSE(HasDescription(*seg, kRomanNoCapitalDescription));
 }
 
 TEST_F(NumberRewriterTest, OneOfCandidatesIsEmpty) {
-  NumberRewriter number_rewriter;
+  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
   Segments segments;
   Segment *seg = segments.push_back_segment();
@@ -395,11 +376,11 @@ TEST_F(NumberRewriterTest, OneOfCandidatesIsEmpty) {
   second_candidate->Init();
 
   second_candidate->value = "0";
-  second_candidate->lid = POSMatcher::GetNumberId();
-  second_candidate->rid = POSMatcher::GetNumberId();
+  second_candidate->lid = pos_matcher_.GetNumberId();
+  second_candidate->rid = pos_matcher_.GetNumberId();
   second_candidate->content_value = second_candidate->value;
 
-  EXPECT_TRUE(number_rewriter.Rewrite(&segments));
+  EXPECT_TRUE(number_rewriter->Rewrite(ConversionRequest(), &segments));
 
   EXPECT_EQ("", seg->candidate(0).value);
   EXPECT_EQ("", seg->candidate(0).content_value);
@@ -432,7 +413,7 @@ TEST_F(NumberRewriterTest, OneOfCandidatesIsEmpty) {
 }
 
 TEST_F(NumberRewriterTest, RewriteDoesNotHappen) {
-  NumberRewriter number_rewriter;
+  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
   Segments segments;
   Segment *seg = segments.push_back_segment();
@@ -444,7 +425,7 @@ TEST_F(NumberRewriterTest, RewriteDoesNotHappen) {
   candidate->content_value = candidate->value;
 
   // Number rewrite should not occur
-  EXPECT_FALSE(number_rewriter.Rewrite(&segments));
+  EXPECT_FALSE(number_rewriter->Rewrite(ConversionRequest(), &segments));
 
   // Number of cahdidates should be maintained
   EXPECT_EQ(1, seg->candidates_size());
@@ -453,18 +434,18 @@ TEST_F(NumberRewriterTest, RewriteDoesNotHappen) {
 }
 
 TEST_F(NumberRewriterTest, NumberIsZero) {
-  NumberRewriter number_rewriter;
+  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
   Segments segments;
   Segment *seg = segments.push_back_segment();
   Segment::Candidate *candidate = seg->add_candidate();
   candidate->Init();
-  candidate->lid = POSMatcher::GetNumberId();
-  candidate->rid = POSMatcher::GetNumberId();
+  candidate->lid = pos_matcher_.GetNumberId();
+  candidate->rid = pos_matcher_.GetNumberId();
   candidate->value = "0";
   candidate->content_value = "0";
 
-  EXPECT_TRUE(number_rewriter.Rewrite(&segments));
+  EXPECT_TRUE(number_rewriter->Rewrite(ConversionRequest(), &segments));
 
   EXPECT_EQ(4, seg->candidates_size());
 
@@ -495,18 +476,18 @@ TEST_F(NumberRewriterTest, NumberIsZero) {
 }
 
 TEST_F(NumberRewriterTest, NumberIsZeroZero) {
-  NumberRewriter number_rewriter;
+  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
   Segments segments;
   Segment *seg = segments.push_back_segment();
   Segment::Candidate *candidate = seg->add_candidate();
   candidate->Init();
-  candidate->lid = POSMatcher::GetNumberId();
-  candidate->rid = POSMatcher::GetNumberId();
+  candidate->lid = pos_matcher_.GetNumberId();
+  candidate->rid = pos_matcher_.GetNumberId();
   candidate->value = "00";
   candidate->content_value = "00";
 
-  EXPECT_TRUE(number_rewriter.Rewrite(&segments));
+  EXPECT_TRUE(number_rewriter->Rewrite(ConversionRequest(), &segments));
 
   EXPECT_EQ(4, seg->candidates_size());
 
@@ -537,493 +518,274 @@ TEST_F(NumberRewriterTest, NumberIsZeroZero) {
 }
 
 TEST_F(NumberRewriterTest, NumberIs19Digit) {
-  NumberRewriter number_rewriter;
+  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
   Segments segments;
   Segment *seg = segments.push_back_segment();
   Segment::Candidate *candidate = seg->add_candidate();
   candidate->Init();
-  candidate->lid = POSMatcher::GetNumberId();
-  candidate->rid = POSMatcher::GetNumberId();
+  candidate->lid = pos_matcher_.GetNumberId();
+  candidate->rid = pos_matcher_.GetNumberId();
   candidate->value = "1000000000000000000";
   candidate->content_value = "1000000000000000000";
 
-  EXPECT_TRUE(number_rewriter.Rewrite(&segments));
+  EXPECT_TRUE(number_rewriter->Rewrite(ConversionRequest(), &segments));
 
-  EXPECT_EQ(10, seg->candidates_size());
+  const ExpectResult kExpectResults[] = {
+    {"1000000000000000000", "1000000000000000000", ""},
+    // "一〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇"
+    {"\xE4\xB8\x80\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87"
+     "\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87"
+     "\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87"
+     "\xE3\x80\x87",
+     "\xE4\xB8\x80\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87"
+     "\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87"
+     "\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87"
+     "\xE3\x80\x87", kKanjiDescription},
+    // "１００００００００００００００００００"
+    {"\xEF\xBC\x91\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90"
+     "\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90"
+     "\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90"
+     "\xEF\xBC\x90",
+     "\xEF\xBC\x91\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90"
+     "\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90"
+     "\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90"
+     "\xEF\xBC\x90", kArabicDescription},
+    {"1,000,000,000,000,000,000", "1,000,000,000,000,000,000",
+     kArabicDescription},
+    // "１，０００，０００，０００，０００，０００，０００"
+    {"\xEF\xBC\x91\xEF\xBC\x8C\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x8C"
+     "\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x8C\xEF\xBC\x90\xEF\xBC\x90"
+     "\xEF\xBC\x90\xEF\xBC\x8C\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x8C"
+     "\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x8C\xEF\xBC\x90\xEF\xBC\x90"
+     "\xEF\xBC\x90",
+     "\xEF\xBC\x91\xEF\xBC\x8C\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x8C"
+     "\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x8C\xEF\xBC\x90\xEF\xBC\x90"
+     "\xEF\xBC\x90\xEF\xBC\x8C\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x8C"
+     "\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x8C\xEF\xBC\x90\xEF\xBC\x90"
+     "\xEF\xBC\x90", kArabicDescription},
+    // "100京"
+    {"100""\xE4\xBA\xAC", "100""\xE4\xBA\xAC", kArabicDescription},
+    // "１００京"
+    {"\xEF\xBC\x91\xEF\xBC\x90\xEF\xBC\x90\xE4\xBA\xAC",
+     "\xEF\xBC\x91\xEF\xBC\x90\xEF\xBC\x90\xE4\xBA\xAC", kArabicDescription},
+    // "百京"
+    {"\xE7\x99\xBE\xE4\xBA\xAC", "\xE7\x99\xBE\xE4\xBA\xAC",
+     kKanjiDescription},
+    // "16進数"
+    {"0xde0b6b3a7640000", "0xde0b6b3a7640000", "16""\xE9\x80\xB2\xE6\x95\xB0"},
+    {"067405553164731000000", "067405553164731000000",
+     // "8進数"
+     "8""\xE9\x80\xB2\xE6\x95\xB0"},
+    {"0b110111100000101101101011001110100111011001000000000000000000",
+     "0b110111100000101101101011001110100111011001000000000000000000",
+     // "2進数"
+     "2""\xE9\x80\xB2\xE6\x95\xB0"},
+  };
 
-  // "1000000000000000000"
-  EXPECT_EQ("1000000000000000000", seg->candidate(0).value);
-  EXPECT_EQ("1000000000000000000", seg->candidate(0).content_value);
-  EXPECT_EQ("", seg->candidate(0).description);
+  const size_t kExpectResultSize = ARRAYSIZE(kExpectResults);
+  EXPECT_EQ(kExpectResultSize, seg->candidates_size());
 
-  // "一〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇"
-  EXPECT_EQ("\xE4\xB8\x80\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3"
-            "\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80"
-            "\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87"
-            "\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3"
-            "\x80\x87\xE3\x80\x87",
-            seg->candidate(1).value);
-  EXPECT_EQ("\xE4\xB8\x80\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3"
-            "\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80"
-            "\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87"
-            "\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3"
-            "\x80\x87\xE3\x80\x87",
-            seg->candidate(1).content_value);
-  EXPECT_EQ(kKanjiDescription, seg->candidate(1).description);
-
-  // "１００００００００００００００００００"
-  EXPECT_EQ("\xEF\xBC\x91\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF"
-            "\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC"
-            "\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90"
-            "\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF"
-            "\xBC\x90\xEF\xBC\x90",
-            seg->candidate(2).value);
-  EXPECT_EQ("\xEF\xBC\x91\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF"
-            "\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC"
-            "\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90"
-            "\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF"
-            "\xBC\x90\xEF\xBC\x90",
-            seg->candidate(2).content_value);
-  EXPECT_EQ(kArabicDescription, seg->candidate(2).description);
-
-  // "1,000,000,000,000,000,000"
-  EXPECT_EQ("1,000,000,000,000,000,000", seg->candidate(3).value);
-  EXPECT_EQ("1,000,000,000,000,000,000", seg->candidate(3).content_value);
-  EXPECT_EQ(kArabicDescription, seg->candidate(3).description);
-
-  // "１，０００，０００，０００，０００，０００，０００"
-  EXPECT_EQ("\xEF\xBC\x91\xEF\xBC\x8C\xEF\xBC\x90\xEF\xBC\x90"
-            "\xEF\xBC\x90\xEF\xBC\x8C\xEF\xBC\x90\xEF\xBC\x90"
-            "\xEF\xBC\x90\xEF\xBC\x8C\xEF\xBC\x90\xEF\xBC\x90"
-            "\xEF\xBC\x90\xEF\xBC\x8C\xEF\xBC\x90\xEF\xBC\x90"
-            "\xEF\xBC\x90\xEF\xBC\x8C\xEF\xBC\x90\xEF\xBC\x90"
-            "\xEF\xBC\x90\xEF\xBC\x8C\xEF\xBC\x90\xEF\xBC\x90"
-            "\xEF\xBC\x90",
-            seg->candidate(4).value);
-  EXPECT_EQ("\xEF\xBC\x91\xEF\xBC\x8C\xEF\xBC\x90\xEF\xBC\x90"
-            "\xEF\xBC\x90\xEF\xBC\x8C\xEF\xBC\x90\xEF\xBC\x90"
-            "\xEF\xBC\x90\xEF\xBC\x8C\xEF\xBC\x90\xEF\xBC\x90"
-            "\xEF\xBC\x90\xEF\xBC\x8C\xEF\xBC\x90\xEF\xBC\x90"
-            "\xEF\xBC\x90\xEF\xBC\x8C\xEF\xBC\x90\xEF\xBC\x90"
-            "\xEF\xBC\x90\xEF\xBC\x8C\xEF\xBC\x90\xEF\xBC\x90"
-            "\xEF\xBC\x90",
-            seg->candidate(4).content_value);
-  EXPECT_EQ(kArabicDescription, seg->candidate(4).description);
-
-  // "百京"
-  EXPECT_EQ("\xE7\x99\xBE\xE4\xBA\xAC",
-            seg->candidate(5).value);
-  EXPECT_EQ("\xE7\x99\xBE\xE4\xBA\xAC",
-            seg->candidate(5).content_value);
-  EXPECT_EQ(kKanjiDescription, seg->candidate(5).description);
-
-  // "壱百京",
-  EXPECT_EQ("\xE5\xA3\xB1\xE7\x99\xBE\xE4\xBA\xAC",
-            seg->candidate(6).value);
-  EXPECT_EQ("\xE5\xA3\xB1\xE7\x99\xBE\xE4\xBA\xAC",
-            seg->candidate(6).content_value);
-  EXPECT_EQ(kOldKanjiDescription, seg->candidate(6).description);
-
-  EXPECT_EQ("0xde0b6b3a7640000", seg->candidate(7).value);
-  EXPECT_EQ("0xde0b6b3a7640000", seg->candidate(7).content_value);
-  // "16進数"
-  EXPECT_EQ("\x31\x36\xE9\x80\xB2\xE6\x95\xB0",
-            seg->candidate(7).description);
-
-  EXPECT_EQ("067405553164731000000", seg->candidate(8).value);
-  EXPECT_EQ("067405553164731000000", seg->candidate(8).content_value);
-  // "8進数"
-  EXPECT_EQ("\x38\xE9\x80\xB2\xE6\x95\xB0",
-            seg->candidate(8).description);
-
-  EXPECT_EQ("0b"
-            "110111100000101101101011001110"
-            "100111011001000000000000000000",
-            seg->candidate(9).value);
-  EXPECT_EQ("0b"
-            "110111100000101101101011001110"
-            "100111011001000000000000000000",
-            seg->candidate(9).content_value);
-  // "2進数"
-  EXPECT_EQ("\x32\xE9\x80\xB2\xE6\x95\xB0",
-            seg->candidate(9).description);
+  for (size_t i = 0; i < kExpectResultSize; ++i) {
+    SCOPED_TRACE(Util::StringPrintf("i = %lu", i));
+    EXPECT_EQ(kExpectResults[i].value, seg->candidate(i).value);
+    EXPECT_EQ(kExpectResults[i].content_value,
+              seg->candidate(i).content_value);
+    EXPECT_EQ(kExpectResults[i].description,
+              seg->candidate(i).description);
+  }
 
   seg->clear_candidates();
 }
 
 TEST_F(NumberRewriterTest, NumberIs20Digit) {
-  NumberRewriter number_rewriter;
+  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
   Segments segments;
   Segment *seg = segments.push_back_segment();
   Segment::Candidate *candidate = seg->add_candidate();
   candidate->Init();
-  candidate->lid = POSMatcher::GetNumberId();
-  candidate->rid = POSMatcher::GetNumberId();
+  candidate->lid = pos_matcher_.GetNumberId();
+  candidate->rid = pos_matcher_.GetNumberId();
   candidate->value = "10000000000000000000";
   candidate->content_value = "10000000000000000000";
 
-  EXPECT_TRUE(number_rewriter.Rewrite(&segments));
+  EXPECT_TRUE(number_rewriter->Rewrite(ConversionRequest(), &segments));
 
-  EXPECT_EQ(8, seg->candidates_size());
+  const ExpectResult kExpectResults[] = {
+    {"10000000000000000000", "10000000000000000000", ""},
+    // "一〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇"
+    {"\xE4\xB8\x80\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87"
+     "\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87"
+     "\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87"
+     "\xE3\x80\x87\xE3\x80\x87",
+     "\xE4\xB8\x80\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87"
+     "\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87"
+     "\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87"
+     "\xE3\x80\x87\xE3\x80\x87", kKanjiDescription},
+    // "１０００００００００００００００００００"
+    {"\xEF\xBC\x91\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90"
+     "\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90"
+     "\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90"
+     "\xEF\xBC\x90\xEF\xBC\x90",
+     "\xEF\xBC\x91\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90"
+     "\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90"
+     "\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90"
+     "\xEF\xBC\x90\xEF\xBC\x90", kArabicDescription},
+    {"10,000,000,000,000,000,000", "10,000,000,000,000,000,000",
+     kArabicDescription},
+    // "１０，０００，０００，０００，０００，０００，０００"
+    {"\xEF\xBC\x91\xEF\xBC\x90\xEF\xBC\x8C\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90"
+     "\xEF\xBC\x8C\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x8C\xEF\xBC\x90"
+     "\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x8C\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90"
+     "\xEF\xBC\x8C\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x8C\xEF\xBC\x90"
+     "\xEF\xBC\x90\xEF\xBC\x90",
+     "\xEF\xBC\x91\xEF\xBC\x90\xEF\xBC\x8C\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90"
+     "\xEF\xBC\x8C\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x8C\xEF\xBC\x90"
+     "\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x8C\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90"
+     "\xEF\xBC\x8C\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x8C\xEF\xBC\x90"
+     "\xEF\xBC\x90\xEF\xBC\x90", kArabicDescription},
+    // "1000京"
+    {"1000""\xE4\xBA\xAC", "1000""\xE4\xBA\xAC", kArabicDescription},
+    // "１０００京"
+    {"\xEF\xBC\x91\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xE4\xBA\xAC",
+     "\xEF\xBC\x91\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xE4\xBA\xAC",
+     kArabicDescription},
+    // "千京"
+    {"\xE5\x8D\x83\xE4\xBA\xAC", "\xE5\x8D\x83\xE4\xBA\xAC", kKanjiDescription},
+    // "阡京"
+    {"\xE9\x98\xA1\xE4\xBA\xAC", "\xE9\x98\xA1\xE4\xBA\xAC",
+     kOldKanjiDescription},
+  };
 
-  // "10000000000000000000"
-  EXPECT_EQ("10000000000000000000", seg->candidate(0).value);
-  EXPECT_EQ("10000000000000000000", seg->candidate(0).content_value);
-  EXPECT_EQ("", seg->candidate(0).description);
+  const size_t kExpectResultSize = ARRAYSIZE(kExpectResults);
+  EXPECT_EQ(kExpectResultSize, seg->candidates_size());
 
-  // "一〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇"
-  EXPECT_EQ("\xE4\xB8\x80\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3"
-            "\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80"
-            "\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87"
-            "\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3"
-            "\x80\x87\xE3\x80\x87\xE3\x80\x87",
-            seg->candidate(1).value);
-  EXPECT_EQ("\xE4\xB8\x80\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3"
-            "\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80"
-            "\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87"
-            "\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3\x80\x87\xE3"
-            "\x80\x87\xE3\x80\x87\xE3\x80\x87",
-            seg->candidate(1).content_value);
-  EXPECT_EQ(kKanjiDescription, seg->candidate(1).description);
-
-  // "１０００００００００００００００００００"
-  EXPECT_EQ("\xEF\xBC\x91\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF"
-            "\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC"
-            "\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90"
-            "\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF"
-            "\xBC\x90\xEF\xBC\x90\xEF\xBC\x90",
-            seg->candidate(2).value);
-  EXPECT_EQ("\xEF\xBC\x91\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF"
-            "\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC"
-            "\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90"
-            "\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x90\xEF"
-            "\xBC\x90\xEF\xBC\x90\xEF\xBC\x90",
-            seg->candidate(2).content_value);
-  EXPECT_EQ(kArabicDescription, seg->candidate(2).description);
-
-  // "10,000,000,000,000,000,000"
-  EXPECT_EQ("10,000,000,000,000,000,000", seg->candidate(3).value);
-  EXPECT_EQ("10,000,000,000,000,000,000", seg->candidate(3).content_value);
-  EXPECT_EQ(kArabicDescription, seg->candidate(3).description);
-
-  // "１０，０００，０００，０００，０００，０００，０００"
-  EXPECT_EQ("\xEF\xBC\x91\xEF\xBC\x90\xEF\xBC\x8C\xEF\xBC\x90"
-            "\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x8C\xEF\xBC\x90"
-            "\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x8C\xEF\xBC\x90"
-            "\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x8C\xEF\xBC\x90"
-            "\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x8C\xEF\xBC\x90"
-            "\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x8C\xEF\xBC\x90"
-            "\xEF\xBC\x90\xEF\xBC\x90",
-            seg->candidate(4).value);
-  EXPECT_EQ("\xEF\xBC\x91\xEF\xBC\x90\xEF\xBC\x8C\xEF\xBC\x90"
-            "\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x8C\xEF\xBC\x90"
-            "\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x8C\xEF\xBC\x90"
-            "\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x8C\xEF\xBC\x90"
-            "\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x8C\xEF\xBC\x90"
-            "\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x8C\xEF\xBC\x90"
-            "\xEF\xBC\x90\xEF\xBC\x90",
-            seg->candidate(4).content_value);
-  EXPECT_EQ(kArabicDescription, seg->candidate(4).description);
-
-  // "一千京"
-  EXPECT_EQ("\xE4\xB8\x80\xE5\x8D\x83\xE4\xBA\xAC",
-            seg->candidate(5).value);
-  EXPECT_EQ("\xE4\xB8\x80\xE5\x8D\x83\xE4\xBA\xAC",
-            seg->candidate(5).content_value);
-  EXPECT_EQ(kKanjiDescription, seg->candidate(5).description);
-
-  // "壱千京"
-  EXPECT_EQ("\xE5\xA3\xB1\xE5\x8D\x83\xE4\xBA\xAC",
-            seg->candidate(6).value);
-  EXPECT_EQ("\xE5\xA3\xB1\xE5\x8D\x83\xE4\xBA\xAC",
-            seg->candidate(6).content_value);
-  EXPECT_EQ(kOldKanjiDescription, seg->candidate(6).description);
-
-  // "壱阡京"
-  EXPECT_EQ("\xE5\xA3\xB1\xE9\x98\xA1\xE4\xBA\xAC",
-            seg->candidate(7).value);
-  EXPECT_EQ("\xE5\xA3\xB1\xE9\x98\xA1\xE4\xBA\xAC",
-            seg->candidate(7).content_value);
-  EXPECT_EQ(kOldKanjiDescription, seg->candidate(7).description);
+  for (size_t i = 0; i < kExpectResultSize; ++i) {
+    SCOPED_TRACE(Util::StringPrintf("i = %lu", i));
+    EXPECT_EQ(kExpectResults[i].value, seg->candidate(i).value);
+    EXPECT_EQ(kExpectResults[i].content_value,
+              seg->candidate(i).content_value);
+    EXPECT_EQ(kExpectResults[i].description,
+              seg->candidate(i).description);
+  }
 
   seg->clear_candidates();
 }
 
 TEST_F(NumberRewriterTest, NumberIsGreaterThanUInt64Max) {
-  NumberRewriter number_rewriter;
+  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
   Segments segments;
   Segment *seg = segments.push_back_segment();
   Segment::Candidate *candidate = seg->add_candidate();
   candidate->Init();
-  candidate->lid = POSMatcher::GetNumberId();
-  candidate->rid = POSMatcher::GetNumberId();
+  candidate->lid = pos_matcher_.GetNumberId();
+  candidate->rid = pos_matcher_.GetNumberId();
   candidate->value = "18446744073709551616";  // 2^64
   candidate->content_value = "18446744073709551616";
 
-  EXPECT_TRUE(number_rewriter.Rewrite(&segments));
+  EXPECT_TRUE(number_rewriter->Rewrite(ConversionRequest(), &segments));
 
-  EXPECT_EQ(13, seg->candidates_size());
+  const ExpectResult kExpectResults[] = {
+    {"18446744073709551616", "18446744073709551616", ""},
+    // "一八四四六七四四〇七三七〇九五五一六一六"
+    {"\xE4\xB8\x80\xE5\x85\xAB\xE5\x9B\x9B\xE5\x9B\x9B\xE5\x85\xAD\xE4\xB8\x83"
+     "\xE5\x9B\x9B\xE5\x9B\x9B\xE3\x80\x87\xE4\xB8\x83\xE4\xB8\x89\xE4\xB8\x83"
+     "\xE3\x80\x87\xE4\xB9\x9D\xE4\xBA\x94\xE4\xBA\x94\xE4\xB8\x80\xE5\x85\xAD"
+     "\xE4\xB8\x80\xE5\x85\xAD",
+     "\xE4\xB8\x80\xE5\x85\xAB\xE5\x9B\x9B\xE5\x9B\x9B\xE5\x85\xAD\xE4\xB8\x83"
+     "\xE5\x9B\x9B\xE5\x9B\x9B\xE3\x80\x87\xE4\xB8\x83\xE4\xB8\x89\xE4\xB8\x83"
+     "\xE3\x80\x87\xE4\xB9\x9D\xE4\xBA\x94\xE4\xBA\x94\xE4\xB8\x80\xE5\x85\xAD"
+     "\xE4\xB8\x80\xE5\x85\xAD", kKanjiDescription},
+    // "１８４４６７４４０７３７０９５５１６１６"
+    {"\xEF\xBC\x91\xEF\xBC\x98\xEF\xBC\x94\xEF\xBC\x94\xEF\xBC\x96\xEF\xBC\x97"
+     "\xEF\xBC\x94\xEF\xBC\x94\xEF\xBC\x90\xEF\xBC\x97\xEF\xBC\x93\xEF\xBC\x97"
+     "\xEF\xBC\x90\xEF\xBC\x99\xEF\xBC\x95\xEF\xBC\x95\xEF\xBC\x91\xEF\xBC\x96"
+     "\xEF\xBC\x91\xEF\xBC\x96",
+     "\xEF\xBC\x91\xEF\xBC\x98\xEF\xBC\x94\xEF\xBC\x94\xEF\xBC\x96\xEF\xBC\x97"
+     "\xEF\xBC\x94\xEF\xBC\x94\xEF\xBC\x90\xEF\xBC\x97\xEF\xBC\x93\xEF\xBC\x97"
+     "\xEF\xBC\x90\xEF\xBC\x99\xEF\xBC\x95\xEF\xBC\x95\xEF\xBC\x91\xEF\xBC\x96"
+     "\xEF\xBC\x91\xEF\xBC\x96", kArabicDescription},
+    {"18,446,744,073,709,551,616", "18,446,744,073,709,551,616",
+     kArabicDescription},
+    // "１８，４４６，７４４，０７３，７０９，５５１，６１６"
+    {"\xEF\xBC\x91\xEF\xBC\x98\xEF\xBC\x8C\xEF\xBC\x94\xEF\xBC\x94\xEF\xBC\x96"
+     "\xEF\xBC\x8C\xEF\xBC\x97\xEF\xBC\x94\xEF\xBC\x94\xEF\xBC\x8C\xEF\xBC\x90"
+     "\xEF\xBC\x97\xEF\xBC\x93\xEF\xBC\x8C\xEF\xBC\x97\xEF\xBC\x90\xEF\xBC\x99"
+     "\xEF\xBC\x8C\xEF\xBC\x95\xEF\xBC\x95\xEF\xBC\x91\xEF\xBC\x8C\xEF\xBC\x96"
+     "\xEF\xBC\x91\xEF\xBC\x96",
+     "\xEF\xBC\x91\xEF\xBC\x98\xEF\xBC\x8C\xEF\xBC\x94\xEF\xBC\x94\xEF\xBC\x96"
+     "\xEF\xBC\x8C\xEF\xBC\x97\xEF\xBC\x94\xEF\xBC\x94\xEF\xBC\x8C\xEF\xBC\x90"
+     "\xEF\xBC\x97\xEF\xBC\x93\xEF\xBC\x8C\xEF\xBC\x97\xEF\xBC\x90\xEF\xBC\x99"
+     "\xEF\xBC\x8C\xEF\xBC\x95\xEF\xBC\x95\xEF\xBC\x91\xEF\xBC\x8C\xEF\xBC\x96"
+     "\xEF\xBC\x91\xEF\xBC\x96", kArabicDescription},
+    // "1844京6744兆737億955万1616"
+    {"1844""\xE4\xBA\xAC""6744""\xE5\x85\x86""737""\xE5\x84\x84""955"
+     "\xE4\xB8\x87""1616",
+     "1844""\xE4\xBA\xAC""6744""\xE5\x85\x86""737""\xE5\x84\x84""955"
+     "\xE4\xB8\x87" "1616", kArabicDescription},
+    // "１８４４京６７４４兆７３７億９５５万１６１６"
+    {"\xEF\xBC\x91\xEF\xBC\x98\xEF\xBC\x94\xEF\xBC\x94\xE4\xBA\xAC\xEF\xBC\x96"
+     "\xEF\xBC\x97\xEF\xBC\x94\xEF\xBC\x94\xE5\x85\x86\xEF\xBC\x97\xEF\xBC\x93"
+     "\xEF\xBC\x97\xE5\x84\x84\xEF\xBC\x99\xEF\xBC\x95\xEF\xBC\x95\xE4\xB8\x87"
+     "\xEF\xBC\x91\xEF\xBC\x96\xEF\xBC\x91\xEF\xBC\x96",
+     "\xEF\xBC\x91\xEF\xBC\x98\xEF\xBC\x94\xEF\xBC\x94\xE4\xBA\xAC\xEF\xBC\x96"
+     "\xEF\xBC\x97\xEF\xBC\x94\xEF\xBC\x94\xE5\x85\x86\xEF\xBC\x97\xEF\xBC\x93"
+     "\xEF\xBC\x97\xE5\x84\x84\xEF\xBC\x99\xEF\xBC\x95\xEF\xBC\x95\xE4\xB8\x87"
+     "\xEF\xBC\x91\xEF\xBC\x96\xEF\xBC\x91\xEF\xBC\x96", kArabicDescription},
+    // "千八百四十四京六千七百四十四兆七百三十七億九百五十五万千六百十六"
+    {"\xE5\x8D\x83\xE5\x85\xAB\xE7\x99\xBE\xE5\x9B\x9B\xE5\x8D\x81\xE5\x9B\x9B"
+     "\xE4\xBA\xAC\xE5\x85\xAD\xE5\x8D\x83\xE4\xB8\x83\xE7\x99\xBE\xE5\x9B\x9B"
+     "\xE5\x8D\x81\xE5\x9B\x9B\xE5\x85\x86\xE4\xB8\x83\xE7\x99\xBE\xE4\xB8\x89"
+     "\xE5\x8D\x81\xE4\xB8\x83\xE5\x84\x84\xE4\xB9\x9D\xE7\x99\xBE\xE4\xBA\x94"
+     "\xE5\x8D\x81\xE4\xBA\x94\xE4\xB8\x87\xE5\x8D\x83\xE5\x85\xAD\xE7\x99\xBE"
+     "\xE5\x8D\x81\xE5\x85\xAD",
+     "\xE5\x8D\x83\xE5\x85\xAB\xE7\x99\xBE\xE5\x9B\x9B\xE5\x8D\x81\xE5\x9B\x9B"
+     "\xE4\xBA\xAC\xE5\x85\xAD\xE5\x8D\x83\xE4\xB8\x83\xE7\x99\xBE\xE5\x9B\x9B"
+     "\xE5\x8D\x81\xE5\x9B\x9B\xE5\x85\x86\xE4\xB8\x83\xE7\x99\xBE\xE4\xB8\x89"
+     "\xE5\x8D\x81\xE4\xB8\x83\xE5\x84\x84\xE4\xB9\x9D\xE7\x99\xBE\xE4\xBA\x94"
+     "\xE5\x8D\x81\xE4\xBA\x94\xE4\xB8\x87\xE5\x8D\x83\xE5\x85\xAD\xE7\x99\xBE"
+     "\xE5\x8D\x81\xE5\x85\xAD", kKanjiDescription},
+    // "阡八百四拾四京六阡七百四拾四兆七百参拾七億九百五拾五萬阡六百拾六"
+    {"\xE9\x98\xA1\xE5\x85\xAB\xE7\x99\xBE\xE5\x9B\x9B\xE6\x8B\xBE\xE5\x9B\x9B"
+     "\xE4\xBA\xAC\xE5\x85\xAD\xE9\x98\xA1\xE4\xB8\x83\xE7\x99\xBE\xE5\x9B\x9B"
+     "\xE6\x8B\xBE\xE5\x9B\x9B\xE5\x85\x86\xE4\xB8\x83\xE7\x99\xBE\xE5\x8F\x82"
+     "\xE6\x8B\xBE\xE4\xB8\x83\xE5\x84\x84\xE4\xB9\x9D\xE7\x99\xBE\xE4\xBA\x94"
+     "\xE6\x8B\xBE\xE4\xBA\x94\xE8\x90\xAC\xE9\x98\xA1\xE5\x85\xAD\xE7\x99\xBE"
+     "\xE6\x8B\xBE\xE5\x85\xAD",
+     "\xE9\x98\xA1\xE5\x85\xAB\xE7\x99\xBE\xE5\x9B\x9B\xE6\x8B\xBE\xE5\x9B\x9B"
+     "\xE4\xBA\xAC\xE5\x85\xAD\xE9\x98\xA1\xE4\xB8\x83\xE7\x99\xBE\xE5\x9B\x9B"
+     "\xE6\x8B\xBE\xE5\x9B\x9B\xE5\x85\x86\xE4\xB8\x83\xE7\x99\xBE\xE5\x8F\x82"
+     "\xE6\x8B\xBE\xE4\xB8\x83\xE5\x84\x84\xE4\xB9\x9D\xE7\x99\xBE\xE4\xBA\x94"
+     "\xE6\x8B\xBE\xE4\xBA\x94\xE8\x90\xAC\xE9\x98\xA1\xE5\x85\xAD\xE7\x99\xBE"
+     "\xE6\x8B\xBE\xE5\x85\xAD", kOldKanjiDescription},
+  };
 
-  // "18446744073709551616"
-  EXPECT_EQ("18446744073709551616", seg->candidate(0).value);
-  EXPECT_EQ("18446744073709551616", seg->candidate(0).content_value);
-  EXPECT_EQ("", seg->candidate(0).description);
+  const size_t kExpectResultSize = ARRAYSIZE(kExpectResults);
+  EXPECT_EQ(kExpectResultSize, seg->candidates_size());
 
-  // "一八四四六七四四〇七三七〇九五五一六一六"
-  EXPECT_EQ("\xE4\xB8\x80\xE5\x85\xAB\xE5\x9B\x9B\xE5\x9B\x9B\xE5"
-            "\x85\xAD\xE4\xB8\x83\xE5\x9B\x9B\xE5\x9B\x9B\xE3\x80"
-            "\x87\xE4\xB8\x83\xE4\xB8\x89\xE4\xB8\x83\xE3\x80\x87"
-            "\xE4\xB9\x9D\xE4\xBA\x94\xE4\xBA\x94\xE4\xB8\x80\xE5"
-            "\x85\xAD\xE4\xB8\x80\xE5\x85\xAD",
-            seg->candidate(1).value);
-  EXPECT_EQ("\xE4\xB8\x80\xE5\x85\xAB\xE5\x9B\x9B\xE5\x9B\x9B\xE5"
-            "\x85\xAD\xE4\xB8\x83\xE5\x9B\x9B\xE5\x9B\x9B\xE3\x80"
-            "\x87\xE4\xB8\x83\xE4\xB8\x89\xE4\xB8\x83\xE3\x80\x87"
-            "\xE4\xB9\x9D\xE4\xBA\x94\xE4\xBA\x94\xE4\xB8\x80\xE5"
-            "\x85\xAD\xE4\xB8\x80\xE5\x85\xAD",
-            seg->candidate(1).content_value);
-  EXPECT_EQ(kKanjiDescription, seg->candidate(1).description);
-
-  // "１８４４６７４４０７３７０９５５１６１６"
-  EXPECT_EQ("\xEF\xBC\x91\xEF\xBC\x98\xEF\xBC\x94\xEF\xBC\x94\xEF"
-            "\xBC\x96\xEF\xBC\x97\xEF\xBC\x94\xEF\xBC\x94\xEF\xBC"
-            "\x90\xEF\xBC\x97\xEF\xBC\x93\xEF\xBC\x97\xEF\xBC\x90"
-            "\xEF\xBC\x99\xEF\xBC\x95\xEF\xBC\x95\xEF\xBC\x91\xEF"
-            "\xBC\x96\xEF\xBC\x91\xEF\xBC\x96",
-            seg->candidate(2).value);
-  EXPECT_EQ("\xEF\xBC\x91\xEF\xBC\x98\xEF\xBC\x94\xEF\xBC\x94\xEF"
-            "\xBC\x96\xEF\xBC\x97\xEF\xBC\x94\xEF\xBC\x94\xEF\xBC"
-            "\x90\xEF\xBC\x97\xEF\xBC\x93\xEF\xBC\x97\xEF\xBC\x90"
-            "\xEF\xBC\x99\xEF\xBC\x95\xEF\xBC\x95\xEF\xBC\x91\xEF"
-            "\xBC\x96\xEF\xBC\x91\xEF\xBC\x96",
-            seg->candidate(2).content_value);
-  EXPECT_EQ(kArabicDescription, seg->candidate(2).description);
-
-  // "18,446,744,073,709,551,616"
-  EXPECT_EQ("18,446,744,073,709,551,616", seg->candidate(3).value);
-  EXPECT_EQ("18,446,744,073,709,551,616", seg->candidate(3).content_value);
-  EXPECT_EQ(kArabicDescription, seg->candidate(3).description);
-
-  // "１８，４４６，７４４，０７３，７０９，５５１，６１６"
-  EXPECT_EQ("\xEF\xBC\x91\xEF\xBC\x98\xEF\xBC\x8C\xEF\xBC\x94"
-            "\xEF\xBC\x94\xEF\xBC\x96\xEF\xBC\x8C\xEF\xBC\x97"
-            "\xEF\xBC\x94\xEF\xBC\x94\xEF\xBC\x8C\xEF\xBC\x90"
-            "\xEF\xBC\x97\xEF\xBC\x93\xEF\xBC\x8C\xEF\xBC\x97"
-            "\xEF\xBC\x90\xEF\xBC\x99\xEF\xBC\x8C\xEF\xBC\x95"
-            "\xEF\xBC\x95\xEF\xBC\x91\xEF\xBC\x8C\xEF\xBC\x96"
-            "\xEF\xBC\x91\xEF\xBC\x96",
-            seg->candidate(4).value);
-  EXPECT_EQ("\xEF\xBC\x91\xEF\xBC\x98\xEF\xBC\x8C\xEF\xBC\x94"
-            "\xEF\xBC\x94\xEF\xBC\x96\xEF\xBC\x8C\xEF\xBC\x97"
-            "\xEF\xBC\x94\xEF\xBC\x94\xEF\xBC\x8C\xEF\xBC\x90"
-            "\xEF\xBC\x97\xEF\xBC\x93\xEF\xBC\x8C\xEF\xBC\x97"
-            "\xEF\xBC\x90\xEF\xBC\x99\xEF\xBC\x8C\xEF\xBC\x95"
-            "\xEF\xBC\x95\xEF\xBC\x91\xEF\xBC\x8C\xEF\xBC\x96"
-            "\xEF\xBC\x91\xEF\xBC\x96",
-            seg->candidate(4).content_value);
-  EXPECT_EQ(kArabicDescription, seg->candidate(4).description);
-
-  // "千八百四十四京六千七百四十四兆"
-  // "七百三十七億九百五十五万千六百十六"
-  EXPECT_EQ("\xE5\x8D\x83\xE5\x85\xAB\xE7\x99\xBE\xE5\x9B\x9B\xE5"
-            "\x8D\x81\xE5\x9B\x9B\xE4\xBA\xAC\xE5\x85\xAD\xE5\x8D"
-            "\x83\xE4\xB8\x83\xE7\x99\xBE\xE5\x9B\x9B\xE5\x8D\x81"
-            "\xE5\x9B\x9B\xE5\x85\x86\xE4\xB8\x83\xE7\x99\xBE\xE4"
-            "\xB8\x89\xE5\x8D\x81\xE4\xB8\x83\xE5\x84\x84\xE4\xB9"
-            "\x9D\xE7\x99\xBE\xE4\xBA\x94\xE5\x8D\x81\xE4\xBA\x94"
-            "\xE4\xB8\x87\xE5\x8D\x83\xE5\x85\xAD\xE7\x99\xBE\xE5"
-            "\x8D\x81\xE5\x85\xAD",
-            seg->candidate(5).value);
-  EXPECT_EQ("\xE5\x8D\x83\xE5\x85\xAB\xE7\x99\xBE\xE5\x9B\x9B\xE5"
-            "\x8D\x81\xE5\x9B\x9B\xE4\xBA\xAC\xE5\x85\xAD\xE5\x8D"
-            "\x83\xE4\xB8\x83\xE7\x99\xBE\xE5\x9B\x9B\xE5\x8D\x81"
-            "\xE5\x9B\x9B\xE5\x85\x86\xE4\xB8\x83\xE7\x99\xBE\xE4"
-            "\xB8\x89\xE5\x8D\x81\xE4\xB8\x83\xE5\x84\x84\xE4\xB9"
-            "\x9D\xE7\x99\xBE\xE4\xBA\x94\xE5\x8D\x81\xE4\xBA\x94"
-            "\xE4\xB8\x87\xE5\x8D\x83\xE5\x85\xAD\xE7\x99\xBE\xE5"
-            "\x8D\x81\xE5\x85\xAD",
-            seg->candidate(5).content_value);
-  EXPECT_EQ(kKanjiDescription, seg->candidate(5).description);
-
-  // "一千八百四十四京六千七百四十四兆"
-  // "七百三十七億九百五十五万千六百十六"
-  EXPECT_EQ("\xE4\xB8\x80\xE5\x8D\x83\xE5\x85\xAB\xE7\x99\xBE\xE5"
-            "\x9B\x9B\xE5\x8D\x81\xE5\x9B\x9B\xE4\xBA\xAC\xE5\x85"
-            "\xAD\xE5\x8D\x83\xE4\xB8\x83\xE7\x99\xBE\xE5\x9B\x9B"
-            "\xE5\x8D\x81\xE5\x9B\x9B\xE5\x85\x86\xE4\xB8\x83\xE7"
-            "\x99\xBE\xE4\xB8\x89\xE5\x8D\x81\xE4\xB8\x83\xE5\x84"
-            "\x84\xE4\xB9\x9D\xE7\x99\xBE\xE4\xBA\x94\xE5\x8D\x81"
-            "\xE4\xBA\x94\xE4\xB8\x87\xE5\x8D\x83\xE5\x85\xAD\xE7"
-            "\x99\xBE\xE5\x8D\x81\xE5\x85\xAD",
-            seg->candidate(6).value);
-  // "一千八百四十四京六千七百四十四兆"
-  // "七百三十七億九百五十五万千六百十六"
-  EXPECT_EQ("\xE4\xB8\x80\xE5\x8D\x83\xE5\x85\xAB\xE7\x99\xBE\xE5"
-            "\x9B\x9B\xE5\x8D\x81\xE5\x9B\x9B\xE4\xBA\xAC\xE5\x85"
-            "\xAD\xE5\x8D\x83\xE4\xB8\x83\xE7\x99\xBE\xE5\x9B\x9B"
-            "\xE5\x8D\x81\xE5\x9B\x9B\xE5\x85\x86\xE4\xB8\x83\xE7"
-            "\x99\xBE\xE4\xB8\x89\xE5\x8D\x81\xE4\xB8\x83\xE5\x84"
-            "\x84\xE4\xB9\x9D\xE7\x99\xBE\xE4\xBA\x94\xE5\x8D\x81"
-            "\xE4\xBA\x94\xE4\xB8\x87\xE5\x8D\x83\xE5\x85\xAD\xE7"
-            "\x99\xBE\xE5\x8D\x81\xE5\x85\xAD",
-            seg->candidate(6).content_value);
-  EXPECT_EQ(kKanjiDescription, seg->candidate(6).description);
-
-  // "千八百四十四京六千七百四十四兆"
-  // "七百三十七億九百五十五万一千六百十六"
-  EXPECT_EQ("\xE5\x8D\x83\xE5\x85\xAB\xE7\x99\xBE\xE5\x9B\x9B\xE5"
-            "\x8D\x81\xE5\x9B\x9B\xE4\xBA\xAC\xE5\x85\xAD\xE5\x8D"
-            "\x83\xE4\xB8\x83\xE7\x99\xBE\xE5\x9B\x9B\xE5\x8D\x81"
-            "\xE5\x9B\x9B\xE5\x85\x86\xE4\xB8\x83\xE7\x99\xBE\xE4"
-            "\xB8\x89\xE5\x8D\x81\xE4\xB8\x83\xE5\x84\x84\xE4\xB9"
-            "\x9D\xE7\x99\xBE\xE4\xBA\x94\xE5\x8D\x81\xE4\xBA\x94"
-            "\xE4\xB8\x87\xE4\xB8\x80\xE5\x8D\x83\xE5\x85\xAD\xE7"
-            "\x99\xBE\xE5\x8D\x81\xE5\x85\xAD",
-            seg->candidate(7).value);
-  // "千八百四十四京六千七百四十四兆"
-  // "七百三十七億九百五十五万一千六百十六"
-  EXPECT_EQ("\xE5\x8D\x83\xE5\x85\xAB\xE7\x99\xBE\xE5\x9B\x9B\xE5"
-            "\x8D\x81\xE5\x9B\x9B\xE4\xBA\xAC\xE5\x85\xAD\xE5\x8D"
-            "\x83\xE4\xB8\x83\xE7\x99\xBE\xE5\x9B\x9B\xE5\x8D\x81"
-            "\xE5\x9B\x9B\xE5\x85\x86\xE4\xB8\x83\xE7\x99\xBE\xE4"
-            "\xB8\x89\xE5\x8D\x81\xE4\xB8\x83\xE5\x84\x84\xE4\xB9"
-            "\x9D\xE7\x99\xBE\xE4\xBA\x94\xE5\x8D\x81\xE4\xBA\x94"
-            "\xE4\xB8\x87\xE4\xB8\x80\xE5\x8D\x83\xE5\x85\xAD\xE7"
-            "\x99\xBE\xE5\x8D\x81\xE5\x85\xAD",
-            seg->candidate(7).content_value);
-  EXPECT_EQ(kKanjiDescription, seg->candidate(7).description);
-
-  // "一千八百四十四京六千七百四十四兆"
-  // "七百三十七億九百五十五万一千六百十六"
-  EXPECT_EQ("\xE4\xB8\x80\xE5\x8D\x83\xE5\x85\xAB\xE7\x99\xBE\xE5"
-            "\x9B\x9B\xE5\x8D\x81\xE5\x9B\x9B\xE4\xBA\xAC\xE5\x85"
-            "\xAD\xE5\x8D\x83\xE4\xB8\x83\xE7\x99\xBE\xE5\x9B\x9B"
-            "\xE5\x8D\x81\xE5\x9B\x9B\xE5\x85\x86\xE4\xB8\x83\xE7"
-            "\x99\xBE\xE4\xB8\x89\xE5\x8D\x81\xE4\xB8\x83\xE5\x84"
-            "\x84\xE4\xB9\x9D\xE7\x99\xBE\xE4\xBA\x94\xE5\x8D\x81"
-            "\xE4\xBA\x94\xE4\xB8\x87\xE4\xB8\x80\xE5\x8D\x83\xE5"
-            "\x85\xAD\xE7\x99\xBE\xE5\x8D\x81\xE5\x85\xAD",
-            seg->candidate(8).value);
-  // "一千八百四十四京六千七百四十四兆"
-  // "七百三十七億九百五十五万一千六百十六"
-  EXPECT_EQ("\xE4\xB8\x80\xE5\x8D\x83\xE5\x85\xAB\xE7\x99\xBE\xE5"
-            "\x9B\x9B\xE5\x8D\x81\xE5\x9B\x9B\xE4\xBA\xAC\xE5\x85"
-            "\xAD\xE5\x8D\x83\xE4\xB8\x83\xE7\x99\xBE\xE5\x9B\x9B"
-            "\xE5\x8D\x81\xE5\x9B\x9B\xE5\x85\x86\xE4\xB8\x83\xE7"
-            "\x99\xBE\xE4\xB8\x89\xE5\x8D\x81\xE4\xB8\x83\xE5\x84"
-            "\x84\xE4\xB9\x9D\xE7\x99\xBE\xE4\xBA\x94\xE5\x8D\x81"
-            "\xE4\xBA\x94\xE4\xB8\x87\xE4\xB8\x80\xE5\x8D\x83\xE5"
-            "\x85\xAD\xE7\x99\xBE\xE5\x8D\x81\xE5\x85\xAD",
-            seg->candidate(8).content_value);
-  EXPECT_EQ(kKanjiDescription, seg->candidate(8).description);
-
-  // "壱千八百四拾四京六千七百四拾四兆"
-  // "七百参拾七億九百五拾五万壱千六百壱拾六"
-  EXPECT_EQ("\xE5\xA3\xB1\xE5\x8D\x83\xE5\x85\xAB\xE7\x99\xBE\xE5"
-            "\x9B\x9B\xE6\x8B\xBE\xE5\x9B\x9B\xE4\xBA\xAC\xE5\x85"
-            "\xAD\xE5\x8D\x83\xE4\xB8\x83\xE7\x99\xBE\xE5\x9B\x9B"
-            "\xE6\x8B\xBE\xE5\x9B\x9B\xE5\x85\x86\xE4\xB8\x83\xE7"
-            "\x99\xBE\xE5\x8F\x82\xE6\x8B\xBE\xE4\xB8\x83\xE5\x84"
-            "\x84\xE4\xB9\x9D\xE7\x99\xBE\xE4\xBA\x94\xE6\x8B\xBE"
-            "\xE4\xBA\x94\xE4\xB8\x87\xE5\xA3\xB1\xE5\x8D\x83\xE5"
-            "\x85\xAD\xE7\x99\xBE\xE5\xA3\xB1\xE6\x8B\xBE\xE5\x85"
-            "\xAD",
-            seg->candidate(9).value);
-  // "壱千八百四拾四京六千七百四拾四兆"
-  // "七百参拾七億九百五拾五万壱千六百壱拾六"
-  EXPECT_EQ("\xE5\xA3\xB1\xE5\x8D\x83\xE5\x85\xAB\xE7\x99\xBE\xE5"
-            "\x9B\x9B\xE6\x8B\xBE\xE5\x9B\x9B\xE4\xBA\xAC\xE5\x85"
-            "\xAD\xE5\x8D\x83\xE4\xB8\x83\xE7\x99\xBE\xE5\x9B\x9B"
-            "\xE6\x8B\xBE\xE5\x9B\x9B\xE5\x85\x86\xE4\xB8\x83\xE7"
-            "\x99\xBE\xE5\x8F\x82\xE6\x8B\xBE\xE4\xB8\x83\xE5\x84"
-            "\x84\xE4\xB9\x9D\xE7\x99\xBE\xE4\xBA\x94\xE6\x8B\xBE"
-            "\xE4\xBA\x94\xE4\xB8\x87\xE5\xA3\xB1\xE5\x8D\x83\xE5"
-            "\x85\xAD\xE7\x99\xBE\xE5\xA3\xB1\xE6\x8B\xBE\xE5\x85"
-            "\xAD",
-            seg->candidate(9).value);
-  EXPECT_EQ(kOldKanjiDescription, seg->candidate(9).description);
-
-  // "壱阡八百四拾四京六阡七百四拾四兆"
-  // "七百参拾七億九百五拾五万壱阡六百壱拾六"
-  EXPECT_EQ("\xE5\xA3\xB1\xE9\x98\xA1\xE5\x85\xAB\xE7\x99\xBE\xE5"
-            "\x9B\x9B\xE6\x8B\xBE\xE5\x9B\x9B\xE4\xBA\xAC\xE5\x85"
-            "\xAD\xE9\x98\xA1\xE4\xB8\x83\xE7\x99\xBE\xE5\x9B\x9B"
-            "\xE6\x8B\xBE\xE5\x9B\x9B\xE5\x85\x86\xE4\xB8\x83\xE7"
-            "\x99\xBE\xE5\x8F\x82\xE6\x8B\xBE\xE4\xB8\x83\xE5\x84"
-            "\x84\xE4\xB9\x9D\xE7\x99\xBE\xE4\xBA\x94\xE6\x8B\xBE"
-            "\xE4\xBA\x94\xE4\xB8\x87\xE5\xA3\xB1\xE9\x98\xA1\xE5"
-            "\x85\xAD\xE7\x99\xBE\xE5\xA3\xB1\xE6\x8B\xBE\xE5\x85"
-            "\xAD",
-            seg->candidate(10).content_value);
-  EXPECT_EQ(kOldKanjiDescription, seg->candidate(10).description);
-
-  // "壱千八百四拾四京六千七百四拾四兆"
-  // "七百参拾七億九百五拾五萬壱千六百壱拾六"
-  EXPECT_EQ("\xE5\xA3\xB1\xE5\x8D\x83\xE5\x85\xAB\xE7\x99\xBE\xE5"
-            "\x9B\x9B\xE6\x8B\xBE\xE5\x9B\x9B\xE4\xBA\xAC\xE5\x85"
-            "\xAD\xE5\x8D\x83\xE4\xB8\x83\xE7\x99\xBE\xE5\x9B\x9B"
-            "\xE6\x8B\xBE\xE5\x9B\x9B\xE5\x85\x86\xE4\xB8\x83\xE7"
-            "\x99\xBE\xE5\x8F\x82\xE6\x8B\xBE\xE4\xB8\x83\xE5\x84"
-            "\x84\xE4\xB9\x9D\xE7\x99\xBE\xE4\xBA\x94\xE6\x8B\xBE"
-            "\xE4\xBA\x94\xE8\x90\xAC\xE5\xA3\xB1\xE5\x8D\x83\xE5"
-            "\x85\xAD\xE7\x99\xBE\xE5\xA3\xB1\xE6\x8B\xBE\xE5\x85"
-            "\xAD",
-            seg->candidate(11).value);
-  // "壱千八百四拾四京六千七百四拾四兆"
-  // "七百参拾七億九百五拾五萬壱千六百壱拾六"
-  EXPECT_EQ("\xE5\xA3\xB1\xE5\x8D\x83\xE5\x85\xAB\xE7\x99\xBE\xE5"
-            "\x9B\x9B\xE6\x8B\xBE\xE5\x9B\x9B\xE4\xBA\xAC\xE5\x85"
-            "\xAD\xE5\x8D\x83\xE4\xB8\x83\xE7\x99\xBE\xE5\x9B\x9B"
-            "\xE6\x8B\xBE\xE5\x9B\x9B\xE5\x85\x86\xE4\xB8\x83\xE7"
-            "\x99\xBE\xE5\x8F\x82\xE6\x8B\xBE\xE4\xB8\x83\xE5\x84"
-            "\x84\xE4\xB9\x9D\xE7\x99\xBE\xE4\xBA\x94\xE6\x8B\xBE"
-            "\xE4\xBA\x94\xE8\x90\xAC\xE5\xA3\xB1\xE5\x8D\x83\xE5"
-            "\x85\xAD\xE7\x99\xBE\xE5\xA3\xB1\xE6\x8B\xBE\xE5\x85"
-            "\xAD",
-            seg->candidate(11).content_value);
-  EXPECT_EQ(kOldKanjiDescription, seg->candidate(11).description);
-
-  // "壱阡八百四拾四京六阡七百四拾四兆"
-  // "七百参拾七億九百五拾五萬壱阡六百壱拾六"
-  EXPECT_EQ("\xE5\xA3\xB1\xE9\x98\xA1\xE5\x85\xAB\xE7\x99\xBE\xE5"
-            "\x9B\x9B\xE6\x8B\xBE\xE5\x9B\x9B\xE4\xBA\xAC\xE5\x85"
-            "\xAD\xE9\x98\xA1\xE4\xB8\x83\xE7\x99\xBE\xE5\x9B\x9B"
-            "\xE6\x8B\xBE\xE5\x9B\x9B\xE5\x85\x86\xE4\xB8\x83\xE7"
-            "\x99\xBE\xE5\x8F\x82\xE6\x8B\xBE\xE4\xB8\x83\xE5\x84"
-            "\x84\xE4\xB9\x9D\xE7\x99\xBE\xE4\xBA\x94\xE6\x8B\xBE"
-            "\xE4\xBA\x94\xE8\x90\xAC\xE5\xA3\xB1\xE9\x98\xA1\xE5"
-            "\x85\xAD\xE7\x99\xBE\xE5\xA3\xB1\xE6\x8B\xBE\xE5\x85"
-            "\xAD",
-            seg->candidate(12).value);
-  // "壱阡八百四拾四京六阡七百四拾四兆"
-  // "七百参拾七億九百五拾五萬壱阡六百壱拾六"
-  EXPECT_EQ("\xE5\xA3\xB1\xE9\x98\xA1\xE5\x85\xAB\xE7\x99\xBE\xE5"
-            "\x9B\x9B\xE6\x8B\xBE\xE5\x9B\x9B\xE4\xBA\xAC\xE5\x85"
-            "\xAD\xE9\x98\xA1\xE4\xB8\x83\xE7\x99\xBE\xE5\x9B\x9B"
-            "\xE6\x8B\xBE\xE5\x9B\x9B\xE5\x85\x86\xE4\xB8\x83\xE7"
-            "\x99\xBE\xE5\x8F\x82\xE6\x8B\xBE\xE4\xB8\x83\xE5\x84"
-            "\x84\xE4\xB9\x9D\xE7\x99\xBE\xE4\xBA\x94\xE6\x8B\xBE"
-            "\xE4\xBA\x94\xE8\x90\xAC\xE5\xA3\xB1\xE9\x98\xA1\xE5"
-            "\x85\xAD\xE7\x99\xBE\xE5\xA3\xB1\xE6\x8B\xBE\xE5\x85"
-            "\xAD",
-            seg->candidate(12).content_value);
-  EXPECT_EQ(kOldKanjiDescription, seg->candidate(12).description);
+  for (size_t i = 0; i < kExpectResultSize; ++i) {
+    SCOPED_TRACE(Util::StringPrintf("i = %lu", i));
+    EXPECT_EQ(kExpectResults[i].value, seg->candidate(i).value);
+    EXPECT_EQ(kExpectResults[i].content_value,
+              seg->candidate(i).content_value);
+    EXPECT_EQ(kExpectResults[i].description,
+              seg->candidate(i).description);
+  }
 
   seg->clear_candidates();
 }
 
 TEST_F(NumberRewriterTest, NumberIsGoogol) {
-  NumberRewriter number_rewriter;
+  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
   Segments segments;
   Segment *seg = segments.push_back_segment();
   Segment::Candidate *candidate = seg->add_candidate();
   candidate->Init();
-  candidate->lid = POSMatcher::GetNumberId();
-  candidate->rid = POSMatcher::GetNumberId();
+  candidate->lid = pos_matcher_.GetNumberId();
+  candidate->rid = pos_matcher_.GetNumberId();
 
   // 10^100 as "100000 ... 0"
   string input = "1";
@@ -1034,7 +796,7 @@ TEST_F(NumberRewriterTest, NumberIsGoogol) {
   candidate->value = input;
   candidate->content_value = input;
 
-  EXPECT_TRUE(number_rewriter.Rewrite(&segments));
+  EXPECT_TRUE(number_rewriter->Rewrite(ConversionRequest(), &segments));
 
   EXPECT_EQ(6, seg->candidates_size());
 
@@ -1090,7 +852,7 @@ TEST_F(NumberRewriterTest, NumberIsGoogol) {
 TEST_F(NumberRewriterTest, RankingForKanjiCandidate) {
   // If kanji candidate is higher before we rewrite segments,
   // kanji should have higher raking.
-  NumberRewriter number_rewriter;
+  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
   Segments segments;
   {
@@ -1102,8 +864,8 @@ TEST_F(NumberRewriterTest, RankingForKanjiCandidate) {
     Segment::Candidate *candidate = segment->add_candidate();
     candidate = segment->add_candidate();
     candidate->Init();
-    candidate->lid = POSMatcher::GetNumberId();
-    candidate->rid = POSMatcher::GetNumberId();
+    candidate->lid = pos_matcher_.GetNumberId();
+    candidate->rid = pos_matcher_.GetNumberId();
     // "さんびゃく"
     candidate->key =
         "\xe3\x81\x95\xe3\x82\x93\xe3\x81\xb3\xe3\x82\x83\xe3\x81\x8f";
@@ -1113,7 +875,7 @@ TEST_F(NumberRewriterTest, RankingForKanjiCandidate) {
     candidate->content_value = "\xe4\xb8\x89\xe7\x99\xbe";
   }
 
-  EXPECT_TRUE(number_rewriter.Rewrite(&segments));
+  EXPECT_TRUE(number_rewriter->Rewrite(ConversionRequest(), &segments));
   EXPECT_NE(0, segments.segments_size());
   int kanji_pos = 0, arabic_pos = 0;
   // "三百"
@@ -1123,48 +885,10 @@ TEST_F(NumberRewriterTest, RankingForKanjiCandidate) {
   EXPECT_LT(kanji_pos, arabic_pos);
 }
 
-TEST_F(NumberRewriterTest, DoNotRewriteNormalKanji) {
-  // "千億" should not be rewrited by "一千億"
-  NumberRewriter number_rewriter;
-
-  Segments segments;
-  {
-    Segment *segment = segments.add_segment();
-    DCHECK(segment);
-    // "せんおく"
-    segment->set_key(
-        "\xe3\x81\x9b\xe3\x82\x93\xe3\x81\x8a\xe3\x81\x8f");
-    Segment::Candidate *candidate = segment->add_candidate();
-    candidate = segment->add_candidate();
-    candidate->Init();
-    candidate->lid = POSMatcher::GetNumberId();
-    candidate->rid = POSMatcher::GetNumberId();
-    // "せんおく"
-    candidate->key =
-        "\xe3\x81\x9b\xe3\x82\x93\xe3\x81\x8a\xe3\x81\x8f";
-    // "千億"
-    candidate->value = "\xe5\x8d\x83\xe5\x84\x84";
-    // "千億"
-    candidate->content_value = "\xe5\x8d\x83\xe5\x84\x84";
-  }
-
-  EXPECT_TRUE(number_rewriter.Rewrite(&segments));
-  EXPECT_NE(0, segments.segments_size());
-  int original_pos = 0, generated_kanji_pos = 1;
-  // "千億"
-  EXPECT_TRUE(FindCandidateId(segments.segment(0),
-                              "\xe5\x8d\x83\xe5\x84\x84", &original_pos));
-  // "一千億"
-  EXPECT_TRUE(FindCandidateId(segments.segment(0),
-                              "\xe4\xb8\x80\xe5\x8d\x83\xe5\x84\x84",
-                              &generated_kanji_pos));
-  EXPECT_LT(original_pos, generated_kanji_pos);
-}
-
 TEST_F(NumberRewriterTest, ModifyExsistingRanking) {
   // Modify exsisting ranking even if the converter returns unusual results
   // due to dictionary noise, etc.
-  NumberRewriter number_rewriter;
+  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
   Segments segments;
   {
@@ -1175,8 +899,8 @@ TEST_F(NumberRewriterTest, ModifyExsistingRanking) {
         "\xe3\x81\x95\xe3\x82\x93\xe3\x81\xb3\xe3\x82\x83\xe3\x81\x8f");
     Segment::Candidate *candidate = segment->add_candidate();
     candidate->Init();
-    candidate->lid = POSMatcher::GetNumberId();
-    candidate->rid = POSMatcher::GetNumberId();
+    candidate->lid = pos_matcher_.GetNumberId();
+    candidate->rid = pos_matcher_.GetNumberId();
     // "さんびゃく"
     candidate->key =
         "\xe3\x81\x95\xe3\x82\x93\xe3\x81\xb3\xe3\x82\x83\xe3\x81\x8f";
@@ -1187,8 +911,8 @@ TEST_F(NumberRewriterTest, ModifyExsistingRanking) {
 
     candidate = segment->add_candidate();
     candidate->Init();
-    candidate->lid = POSMatcher::GetNumberId();
-    candidate->rid = POSMatcher::GetNumberId();
+    candidate->lid = pos_matcher_.GetNumberId();
+    candidate->rid = pos_matcher_.GetNumberId();
     // "さんびゃく"
     candidate->key =
         "\xe3\x81\x95\xe3\x82\x93\xe3\x81\xb3\xe3\x82\x83\xe3\x81\x8f";
@@ -1198,7 +922,7 @@ TEST_F(NumberRewriterTest, ModifyExsistingRanking) {
     candidate->content_value = "\xe4\xb8\x89\xe7\x99\xbe";
   }
 
-  EXPECT_TRUE(number_rewriter.Rewrite(&segments));
+  EXPECT_TRUE(number_rewriter->Rewrite(ConversionRequest(), &segments));
   int kanji_pos = 0, old_kanji_pos = 0;
   EXPECT_NE(0, segments.segments_size());
   // "三百"
@@ -1211,7 +935,7 @@ TEST_F(NumberRewriterTest, ModifyExsistingRanking) {
 }
 
 TEST_F(NumberRewriterTest, EraseExistingCandidates) {
-  NumberRewriter number_rewriter;
+  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
   Segments segments;
   {
@@ -1221,8 +945,8 @@ TEST_F(NumberRewriterTest, EraseExistingCandidates) {
     segment->set_key("\xe3\x81\x84\xe3\x81\xa1");
     Segment::Candidate *candidate = segment->add_candidate();
     candidate->Init();
-    candidate->lid = POSMatcher::GetUnknownId();  // Not number POS
-    candidate->rid = POSMatcher::GetUnknownId();
+    candidate->lid = pos_matcher_.GetUnknownId();  // Not number POS
+    candidate->rid = pos_matcher_.GetUnknownId();
     // "いち"
     candidate->key = "\xe3\x81\x84\xe3\x81\xa1";
     // "いち"
@@ -1234,8 +958,8 @@ TEST_F(NumberRewriterTest, EraseExistingCandidates) {
 
     candidate = segment->add_candidate();
     candidate->Init();
-    candidate->lid = POSMatcher::GetNumberId();  // Number POS
-    candidate->rid = POSMatcher::GetNumberId();
+    candidate->lid = pos_matcher_.GetNumberId();  // Number POS
+    candidate->rid = pos_matcher_.GetNumberId();
     // "いち"
     candidate->key = "\xe3\x81\x84\xe3\x81\xa1";
     // "いち"
@@ -1246,7 +970,7 @@ TEST_F(NumberRewriterTest, EraseExistingCandidates) {
     candidate->content_value = "\xe4\xb8\x80";
   }
 
-  EXPECT_TRUE(number_rewriter.Rewrite(&segments));
+  EXPECT_TRUE(number_rewriter->Rewrite(ConversionRequest(), &segments));
 
   // "一" become the base candidate, instead of "壱"
   int base_pos = 0;
@@ -1259,25 +983,26 @@ TEST_F(NumberRewriterTest, EraseExistingCandidates) {
   // "壱"
   EXPECT_TRUE(FindCandidateId(segments.segment(0), "\xe5\xa3\xb1", &daiji_pos));
   EXPECT_GT(daiji_pos, 0);
-  EXPECT_EQ(POSMatcher::GetNumberId(),
+  EXPECT_EQ(pos_matcher_.GetNumberId(),
             segments.segment(0).candidate(daiji_pos).lid);
-  EXPECT_EQ(POSMatcher::GetNumberId(),
+  EXPECT_EQ(pos_matcher_.GetNumberId(),
             segments.segment(0).candidate(daiji_pos).rid);
 }
 
 TEST_F(NumberRewriterTest, SeparatedArabicsTest) {
-  NumberRewriter number_rewriter;
+  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+  const ConversionRequest request;
 
   {
     Segments segments;
     Segment *seg = segments.push_back_segment();
     Segment::Candidate *candidate = seg->add_candidate();
     candidate->Init();
-    candidate->lid = POSMatcher::GetNumberId();
-    candidate->rid = POSMatcher::GetNumberId();
+    candidate->lid = pos_matcher_.GetNumberId();
+    candidate->rid = pos_matcher_.GetNumberId();
     candidate->value = "123";
     candidate->content_value = "123";
-    EXPECT_TRUE(number_rewriter.Rewrite(&segments));
+    EXPECT_TRUE(number_rewriter->Rewrite(request, &segments));
     EXPECT_FALSE(FindValue(segments.segment(0), ",123"));
     // "，１２３"
     EXPECT_FALSE(FindValue(segments.segment(0),
@@ -1289,11 +1014,11 @@ TEST_F(NumberRewriterTest, SeparatedArabicsTest) {
     Segment *seg = segments.push_back_segment();
     Segment::Candidate *candidate = seg->add_candidate();
     candidate->Init();
-    candidate->lid = POSMatcher::GetNumberId();
-    candidate->rid = POSMatcher::GetNumberId();
+    candidate->lid = pos_matcher_.GetNumberId();
+    candidate->rid = pos_matcher_.GetNumberId();
     candidate->value = "999";
     candidate->content_value = "999";
-    EXPECT_TRUE(number_rewriter.Rewrite(&segments));
+    EXPECT_TRUE(number_rewriter->Rewrite(request, &segments));
     EXPECT_FALSE(FindValue(segments.segment(0), ",999"));
     // "，９９９"
     EXPECT_FALSE(FindValue(segments.segment(0),
@@ -1305,11 +1030,11 @@ TEST_F(NumberRewriterTest, SeparatedArabicsTest) {
     Segment *seg = segments.push_back_segment();
     Segment::Candidate *candidate = seg->add_candidate();
     candidate->Init();
-    candidate->lid = POSMatcher::GetNumberId();
-    candidate->rid = POSMatcher::GetNumberId();
+    candidate->lid = pos_matcher_.GetNumberId();
+    candidate->rid = pos_matcher_.GetNumberId();
     candidate->value = "1000";
     candidate->content_value = "1000";
-    EXPECT_TRUE(number_rewriter.Rewrite(&segments));
+    EXPECT_TRUE(number_rewriter->Rewrite(request, &segments));
     EXPECT_TRUE(FindValue(segments.segment(0), "1,000"));
     // "１，０００"
     EXPECT_TRUE(FindValue(segments.segment(0),
@@ -1322,11 +1047,11 @@ TEST_F(NumberRewriterTest, SeparatedArabicsTest) {
     Segment *seg = segments.push_back_segment();
     Segment::Candidate *candidate = seg->add_candidate();
     candidate->Init();
-    candidate->lid = POSMatcher::GetNumberId();
-    candidate->rid = POSMatcher::GetNumberId();
+    candidate->lid = pos_matcher_.GetNumberId();
+    candidate->rid = pos_matcher_.GetNumberId();
     candidate->value = "0000";
     candidate->content_value = "0000";
-    EXPECT_TRUE(number_rewriter.Rewrite(&segments));
+    EXPECT_TRUE(number_rewriter->Rewrite(request, &segments));
     EXPECT_FALSE(FindValue(segments.segment(0), "0,000"));
     // "０，０００"
     EXPECT_FALSE(FindValue(segments.segment(0),
@@ -1339,11 +1064,11 @@ TEST_F(NumberRewriterTest, SeparatedArabicsTest) {
     Segment *seg = segments.push_back_segment();
     Segment::Candidate *candidate = seg->add_candidate();
     candidate->Init();
-    candidate->lid = POSMatcher::GetNumberId();
-    candidate->rid = POSMatcher::GetNumberId();
+    candidate->lid = pos_matcher_.GetNumberId();
+    candidate->rid = pos_matcher_.GetNumberId();
     candidate->value = "12345678";
     candidate->content_value = "12345678";
-    EXPECT_TRUE(number_rewriter.Rewrite(&segments));
+    EXPECT_TRUE(number_rewriter->Rewrite(request, &segments));
     EXPECT_TRUE(FindValue(segments.segment(0), "12,345,678"));
     // "１２，３４５，６７８"
     EXPECT_TRUE(FindValue(segments.segment(0),
@@ -1361,15 +1086,15 @@ TEST_F(NumberRewriterTest, SeparatedArabicsTest) {
 // In this case, NumberRewriter should not clear
 // Segment::Candidate::USER_DICTIONARY bit in the base candidate.
 TEST_F(NumberRewriterTest, PreserveUserDictionaryAttibute) {
-  NumberRewriter number_rewriter;
+  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
   {
     Segments segments;
     {
       Segment *seg = segments.push_back_segment();
       Segment::Candidate *candidate = seg->add_candidate();
       candidate->Init();
-      candidate->lid = POSMatcher::GetGeneralNounId();
-      candidate->rid = POSMatcher::GetGeneralNounId();
+      candidate->lid = pos_matcher_.GetGeneralNounId();
+      candidate->rid = pos_matcher_.GetGeneralNounId();
       // "はやぶさ"
       candidate->key = "\xE3\x81\xAF\xE3\x82\x84\xE3\x81\xB6\xE3\x81\x95";
       candidate->content_key = candidate->key;
@@ -1382,7 +1107,7 @@ TEST_F(NumberRewriterTest, PreserveUserDictionaryAttibute) {
           Segment::Candidate::NO_VARIANTS_EXPANSION;
     }
 
-    EXPECT_TRUE(number_rewriter.Rewrite(&segments));
+    EXPECT_TRUE(number_rewriter->Rewrite(ConversionRequest(), &segments));
     bool base_candidate_found = false;
     {
       const Segment &segment = segments.segment(0);

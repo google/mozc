@@ -35,12 +35,10 @@
 
 namespace mozc {
 class Connector : public ConnectorBase {
- private:
+ public:
   Connector();
   virtual ~Connector() {}
 
-  // Connector will be used only from singleton class.
-  friend class Singleton<Connector>;
 };
 }  // namespace mozc
 

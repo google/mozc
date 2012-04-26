@@ -27,12 +27,19 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "prediction/predictor.h"
+
+#include "base/base.h"
+#include "base/singleton.h"
 #include "base/util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/conversion_request.h"
 #include "converter/segments.h"
+#include "dictionary/dictionary_mock.h"
+#include "dictionary/pos_matcher.h"
 #include "prediction/predictor_interface.h"
+#include "prediction/user_history_predictor.h"
 #include "testing/base/public/gmock.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
@@ -71,6 +78,10 @@ class NullPredictor : public PredictorInterface {
     return predict_called_;
   }
 
+  void Clear() {
+    predict_called_ = false;
+  }
+
  private:
   bool return_value_;
   mutable bool predict_called_;
@@ -102,16 +113,14 @@ class PredictorTest : public testing::Test {
     config::Config config;
     config::ConfigHandler::GetDefaultConfig(&config);
     config::ConfigHandler::SetConfig(config);
-    PredictorFactory::SetUserHistoryPredictor(NULL);
-    PredictorFactory::SetDictionaryPredictor(NULL);
   }
 };
 
 TEST_F(PredictorTest, AllPredictorsReturnTrue) {
-  NullPredictor predictor1(true);
-  NullPredictor predictor2(true);
-  PredictorFactory::SetUserHistoryPredictor(&predictor1);
-  PredictorFactory::SetDictionaryPredictor(&predictor2);
+  scoped_ptr<DefaultPredictor> predictor(
+      new DefaultPredictor(new NullPredictor(true),
+                           new NullPredictor(true),
+                           new NullPredictor(true)));
   Segments segments;
   {
     segments.set_request_type(Segments::SUGGESTION);
@@ -119,15 +128,14 @@ TEST_F(PredictorTest, AllPredictorsReturnTrue) {
     segment = segments.add_segment();
     CHECK(segment);
   }
-  PredictorInterface *predictor = PredictorFactory::GetPredictor();
   EXPECT_TRUE(predictor->Predict(&segments));
 }
 
 TEST_F(PredictorTest, MixedReturnValue) {
-  NullPredictor predictor1(true);
-  NullPredictor predictor2(false);
-  PredictorFactory::SetUserHistoryPredictor(&predictor1);
-  PredictorFactory::SetDictionaryPredictor(&predictor2);
+  scoped_ptr<DefaultPredictor> predictor(
+      new DefaultPredictor(new NullPredictor(true),
+                           new NullPredictor(false),
+                           new NullPredictor(false)));
   Segments segments;
   {
     segments.set_request_type(Segments::SUGGESTION);
@@ -135,15 +143,14 @@ TEST_F(PredictorTest, MixedReturnValue) {
     segment = segments.add_segment();
     CHECK(segment);
   }
-  PredictorInterface *predictor = PredictorFactory::GetPredictor();
   EXPECT_TRUE(predictor->Predict(&segments));
 }
 
 TEST_F(PredictorTest, AllPredictorsReturnFalse) {
-  NullPredictor predictor1(false);
-  NullPredictor predictor2(false);
-  PredictorFactory::SetUserHistoryPredictor(&predictor1);
-  PredictorFactory::SetDictionaryPredictor(&predictor2);
+  scoped_ptr<DefaultPredictor> predictor(
+      new DefaultPredictor(new NullPredictor(false),
+                           new NullPredictor(false),
+                           new NullPredictor(false)));
   Segments segments;
   {
     segments.set_request_type(Segments::SUGGESTION);
@@ -151,15 +158,15 @@ TEST_F(PredictorTest, AllPredictorsReturnFalse) {
     segment = segments.add_segment();
     CHECK(segment);
   }
-  PredictorInterface *predictor = PredictorFactory::GetPredictor();
   EXPECT_FALSE(predictor->Predict(&segments));
 }
 
 TEST_F(PredictorTest, CallPredictorsForSuggestion) {
-  CheckCandSizePredictor predictor1(GET_CONFIG(suggestions_size));
-  CheckCandSizePredictor predictor2(GET_CONFIG(suggestions_size));
-  PredictorFactory::SetUserHistoryPredictor(&predictor1);
-  PredictorFactory::SetDictionaryPredictor(&predictor2);
+  scoped_ptr<DefaultPredictor> predictor(
+      new DefaultPredictor(
+          new CheckCandSizePredictor(GET_CONFIG(suggestions_size)),
+          new CheckCandSizePredictor(GET_CONFIG(suggestions_size)),
+          new CheckCandSizePredictor(-1)));
   Segments segments;
   {
     segments.set_request_type(Segments::SUGGESTION);
@@ -167,16 +174,15 @@ TEST_F(PredictorTest, CallPredictorsForSuggestion) {
     segment = segments.add_segment();
     CHECK(segment);
   }
-  PredictorInterface *predictor = PredictorFactory::GetPredictor();
   EXPECT_TRUE(predictor->Predict(&segments));
 }
 
 TEST_F(PredictorTest, CallPredictorsForPrediction) {
   const int kPredictionSize = 100;
-  CheckCandSizePredictor predictor1(kPredictionSize);
-  CheckCandSizePredictor predictor2(kPredictionSize);
-  PredictorFactory::SetUserHistoryPredictor(&predictor1);
-  PredictorFactory::SetDictionaryPredictor(&predictor2);
+  scoped_ptr<DefaultPredictor> predictor(
+      new DefaultPredictor(new CheckCandSizePredictor(kPredictionSize),
+                           new CheckCandSizePredictor(kPredictionSize),
+                           new CheckCandSizePredictor(kPredictionSize)));
   Segments segments;
   {
     segments.set_request_type(Segments::PREDICTION);
@@ -184,15 +190,17 @@ TEST_F(PredictorTest, CallPredictorsForPrediction) {
     segment = segments.add_segment();
     CHECK(segment);
   }
-  PredictorInterface *predictor = PredictorFactory::GetPredictor();
   EXPECT_TRUE(predictor->Predict(&segments));
 }
 
 TEST_F(PredictorTest, CallPredictForRequet) {
-  MockPredictor predictor1;
-  MockPredictor predictor2;
-  PredictorFactory::SetUserHistoryPredictor(&predictor1);
-  PredictorFactory::SetDictionaryPredictor(&predictor2);
+  // To be owned by DefaultPredictor
+  MockPredictor *predictor1 = new MockPredictor;
+  MockPredictor *predictor2 = new MockPredictor;
+  MockPredictor *predictor3 = new MockPredictor;
+  scoped_ptr<DefaultPredictor> predictor(new DefaultPredictor(predictor1,
+                                                              predictor2,
+                                                              predictor3));
   Segments segments;
   {
     segments.set_request_type(Segments::SUGGESTION);
@@ -200,10 +208,11 @@ TEST_F(PredictorTest, CallPredictForRequet) {
     segment = segments.add_segment();
     CHECK(segment);
   }
-  PredictorInterface *predictor = PredictorFactory::GetPredictor();
-  EXPECT_CALL(predictor1, PredictForRequest(_, _))
+  EXPECT_CALL(*predictor1, PredictForRequest(_, _))
       .Times(AtMost(1)).WillOnce(Return(true));
-  EXPECT_CALL(predictor2, PredictForRequest(_, _))
+  EXPECT_CALL(*predictor2, PredictForRequest(_, _))
+      .Times(AtMost(1)).WillOnce(Return(true));
+  EXPECT_CALL(*predictor3, PredictForRequest(_, _))
       .Times(AtMost(1)).WillOnce(Return(true));
   EXPECT_TRUE(predictor->Predict(&segments));
 }
@@ -214,10 +223,11 @@ TEST_F(PredictorTest, CallPredictForRequet) {
 
 
 TEST_F(PredictorTest, DisableAllSuggestion) {
-  NullPredictor predictor1(true);
-  NullPredictor predictor2(true);
-  PredictorFactory::SetUserHistoryPredictor(&predictor1);
-  PredictorFactory::SetDictionaryPredictor(&predictor2);
+  NullPredictor *predictor1 = new NullPredictor(true);
+  NullPredictor *predictor2 = new NullPredictor(true);
+  scoped_ptr<DefaultPredictor> predictor(new DefaultPredictor(predictor1,
+                                                              predictor2,
+                                                              NULL));
   Segments segments;
   {
     segments.set_request_type(Segments::SUGGESTION);
@@ -225,7 +235,6 @@ TEST_F(PredictorTest, DisableAllSuggestion) {
     segment = segments.add_segment();
     CHECK(segment);
   }
-  PredictorInterface *predictor = PredictorFactory::GetPredictor();
 
   config::Config config;
   config::ConfigHandler::GetDefaultConfig(&config);
@@ -233,14 +242,13 @@ TEST_F(PredictorTest, DisableAllSuggestion) {
   config.set_presentation_mode(true);
   config::ConfigHandler::SetConfig(config);
   EXPECT_FALSE(predictor->Predict(&segments));
-  EXPECT_FALSE(predictor1.predict_called());
-  EXPECT_FALSE(predictor2.predict_called());
+  EXPECT_FALSE(predictor1->predict_called());
+  EXPECT_FALSE(predictor2->predict_called());
 
   config.set_presentation_mode(false);
   config::ConfigHandler::SetConfig(config);
   EXPECT_TRUE(predictor->Predict(&segments));
-  EXPECT_TRUE(predictor1.predict_called());
-  EXPECT_TRUE(predictor2.predict_called());
-
+  EXPECT_TRUE(predictor1->predict_called());
+  EXPECT_TRUE(predictor2->predict_called());
 }
 }  // namespace mozc

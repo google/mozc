@@ -54,6 +54,7 @@ class DictionaryInterface;
 class Segment;
 class Segments;
 class UserHistoryPredictorSyncer;
+class POSMatcher;
 
 // Added serialization method for UserHistory.
 class UserHistoryStorage : public mozc::user_history_predictor::UserHistory {
@@ -78,7 +79,8 @@ class UserHistoryStorage : public mozc::user_history_predictor::UserHistory {
 // called by multiple-threads at the same time
 class UserHistoryPredictor : public PredictorInterface {
  public:
-  UserHistoryPredictor();
+  UserHistoryPredictor(const DictionaryInterface *dictionary,
+                       const POSMatcher *pos_matcher);
   virtual ~UserHistoryPredictor();
 
   bool Predict(Segments *segments) const;
@@ -348,9 +350,11 @@ class UserHistoryPredictor : public PredictorInterface {
   // such like password.
   bool IsPrivacySensitive(const Segments *segments) const;
 
+  const DictionaryInterface *dictionary_;
+  const POSMatcher *pos_matcher_;
+
   bool updated_;
   scoped_ptr<DicCache> dic_;
-  DictionaryInterface *dictionary_;
   mutable scoped_ptr<UserHistoryPredictorSyncer> syncer_;
 };
 }  // namespace mozc

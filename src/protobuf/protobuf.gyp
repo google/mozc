@@ -115,6 +115,7 @@
     {
       'target_name': 'protobuf',
       'type': 'static_library',
+      'toolsets': ['host', 'target'],
       'conditions': [
         ['OS=="linux"', {
           'conditions': [
@@ -153,6 +154,7 @@
     {
       'target_name': 'protoc',
       'type': 'executable',
+      'toolsets': ['host'],
       'dependencies': [
         'protobuf',
       ],
@@ -191,6 +193,7 @@
     {
       'target_name': 'install_protoc',
       'type': 'none',
+      'toolsets': ['host'],
       'variables': {
         'bin_name': 'protoc',
       },

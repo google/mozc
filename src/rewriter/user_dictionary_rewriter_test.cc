@@ -28,8 +28,10 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <string>
+#include <vector>
 
 #include "base/util.h"
+#include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "rewriter/user_dictionary_rewriter.h"
 #include "testing/base/public/gunit.h"
@@ -88,6 +90,7 @@ class UserDictionaryRewriterTest : public testing::Test {
 
 TEST_F(UserDictionaryRewriterTest, RewriteTest) {
   UserDictionaryRewriter rewriter;
+  const ConversionRequest request;
 
   {
     Segments segments;
@@ -96,7 +99,7 @@ TEST_F(UserDictionaryRewriterTest, RewriteTest) {
     AddCandidate("3", false, &segments);
     AddCandidate("4", false, &segments);
     AddCandidate("5", false, &segments);
-    EXPECT_FALSE(rewriter.Rewrite(&segments));
+    EXPECT_FALSE(rewriter.Rewrite(request, &segments));
     EXPECT_EQ("1 2 3 4 5", GetCandidates(segments));
   }
 
@@ -107,7 +110,7 @@ TEST_F(UserDictionaryRewriterTest, RewriteTest) {
     AddCandidate("3", false, &segments);
     AddCandidate("4", false, &segments);
     AddCandidate("5", false, &segments);
-    EXPECT_FALSE(rewriter.Rewrite(&segments));
+    EXPECT_FALSE(rewriter.Rewrite(request, &segments));
     EXPECT_EQ("1 2 3 4 5", GetCandidates(segments));
   }
 
@@ -118,7 +121,7 @@ TEST_F(UserDictionaryRewriterTest, RewriteTest) {
     AddCandidate("3", false, &segments);
     AddCandidate("4", false, &segments);
     AddCandidate("5", false, &segments);
-    EXPECT_FALSE(rewriter.Rewrite(&segments));
+    EXPECT_FALSE(rewriter.Rewrite(request, &segments));
     EXPECT_EQ("1 2 3 4 5", GetCandidates(segments));
   }
 
@@ -129,7 +132,7 @@ TEST_F(UserDictionaryRewriterTest, RewriteTest) {
     AddCandidate("3", true, &segments);
     AddCandidate("4", false, &segments);
     AddCandidate("5", false, &segments);
-    EXPECT_TRUE(rewriter.Rewrite(&segments));
+    EXPECT_TRUE(rewriter.Rewrite(request, &segments));
     EXPECT_EQ("1 3 2 4 5", GetCandidates(segments));
   }
   {
@@ -139,7 +142,7 @@ TEST_F(UserDictionaryRewriterTest, RewriteTest) {
     AddCandidate("3", true, &segments);
     AddCandidate("4", true, &segments);
     AddCandidate("5", false, &segments);
-    EXPECT_TRUE(rewriter.Rewrite(&segments));
+    EXPECT_TRUE(rewriter.Rewrite(request, &segments));
     EXPECT_EQ("1 3 4 2 5", GetCandidates(segments));
   }
   {
@@ -149,7 +152,7 @@ TEST_F(UserDictionaryRewriterTest, RewriteTest) {
     AddCandidate("3", true, &segments);
     AddCandidate("4", true, &segments);
     AddCandidate("5", false, &segments);
-    EXPECT_FALSE(rewriter.Rewrite(&segments));
+    EXPECT_FALSE(rewriter.Rewrite(request, &segments));
     EXPECT_EQ("1 2 3 4 5", GetCandidates(segments));
   }
   {
@@ -159,7 +162,7 @@ TEST_F(UserDictionaryRewriterTest, RewriteTest) {
     AddCandidate("3", true, &segments);
     AddCandidate("4", true, &segments);
     AddCandidate("5", true, &segments);
-    EXPECT_FALSE(rewriter.Rewrite(&segments));
+    EXPECT_FALSE(rewriter.Rewrite(request, &segments));
     EXPECT_EQ("1 2 3 4 5", GetCandidates(segments));
   }
   {
@@ -169,7 +172,7 @@ TEST_F(UserDictionaryRewriterTest, RewriteTest) {
     AddCandidate("3", false, &segments);
     AddCandidate("4", true, &segments);
     AddCandidate("5", false, &segments);
-    EXPECT_TRUE(rewriter.Rewrite(&segments));
+    EXPECT_TRUE(rewriter.Rewrite(request, &segments));
     EXPECT_EQ("1 4 2 3 5", GetCandidates(segments));
   }
 }

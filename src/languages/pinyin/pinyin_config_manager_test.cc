@@ -41,6 +41,8 @@ namespace pinyin {
 TEST(PinyinConfigManagerTest, UpdateWithGlobalConfig) {
   PyZy::PinyinConfig &pyzy_config = PyZy::PinyinConfig::instance();
   config::PinyinConfig pinyin_config;
+
+  // Updates conversion option
   vector<uint32> options;
 
   pinyin_config.set_correct_pinyin(false);
@@ -74,6 +76,13 @@ TEST(PinyinConfigManagerTest, UpdateWithGlobalConfig) {
   pinyin_config.set_fuzzy_pinyin(false);
   PinyinConfigManager::UpdateWithGlobalConfig(pinyin_config);
   EXPECT_EQ(options[0], pyzy_config.option());
+
+  // Updates double pinyin schema
+  const int32 kDoublePinyinSchema = 3;
+  ASSERT_NE(kDoublePinyinSchema, pyzy_config.doublePinyinSchema());
+  pinyin_config.set_double_pinyin_schema(kDoublePinyinSchema);
+  PinyinConfigManager::UpdateWithGlobalConfig(pinyin_config);
+  EXPECT_EQ(kDoublePinyinSchema, pyzy_config.doublePinyinSchema());
 }
 
 TEST(PinyinConfigManagerTest, UpdateWithLocalConfig) {

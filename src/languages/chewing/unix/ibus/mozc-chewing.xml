@@ -7,15 +7,15 @@
   <author>Google Inc.</author>
   <homepage>http://code.google.com/p/mozc/</homepage>
   <description>Mozc Chewing Component</description>
-<engines>
-<engine>
-  <rank>0</rank>
-  <description>Mozc Chewing (Chewing Input Method)</description>
-  <language>zh-TW</language>
-  <icon>/usr/share/ibus-mozc/product_icon.png</icon>
-  <layout>us</layout>
-  <name>mozc-chewing</name>
-  <longname>Mozc Chewing (Chewing)</longname>
-</engine>
-</engines>
+  <engines>
+    <engine>
+      <rank>0</rank>
+      <description>Mozc Chewing (Chewing Input Method)</description>
+      <language>zh-TW</language>
+      <icon>/usr/share/ibus-mozc/product_icon.png</icon>
+      <layout>us</layout>
+      <name>mozc-chewing</name>
+      <longname>Mozc Chewing (Chewing)</longname>
+    </engine>
+  </engines>
 </component>

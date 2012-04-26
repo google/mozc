@@ -31,25 +31,33 @@
 #define MOZC_DATA_MANAGER_USER_DICTIONARY_MANAGER_H_
 
 #include "base/base.h"
+#include "base/mutex.h"
 #include "base/singleton.h"
-#include "data_manager/data_manager_interface.h"
+#include "data_manager/user_pos_manager.h"
+#include "dictionary/user_dictionary.h"
 
 namespace mozc {
 
-class UserPOSInterface;
+class UserDictionary;
 
-class UserDictionaryManager : public DataManagerInterface {
+class UserDictionaryManager : public UserPosManager {
  public:
   // Returns the singleton of this class.
   // TODO(noriyukit): This factory method is introduced just for step-by-step
   // refactoring of mozc server. Will be removed after the clean up.
   static UserDictionaryManager *GetUserDictionaryManager();
 
-  virtual ~UserDictionaryManager() {}
-  virtual const UserPOSInterface *GetUserPOS() const;
+  virtual ~UserDictionaryManager();
+  virtual UserDictionary *GetUserDictionary();
+
+ protected:
+  UserDictionaryManager();
 
  private:
-  UserDictionaryManager() {}
+  UserDictionary *volatile user_dictionary_;
+
+  // Used to guarantee singleness of some objects.
+  Mutex mutex_;
 
   friend class Singleton<UserDictionaryManager>;
   DISALLOW_COPY_AND_ASSIGN(UserDictionaryManager);

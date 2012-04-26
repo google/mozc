@@ -76,10 +76,10 @@ string GetFilePath(const string &path) {
 
 class ConnectorTest : public testing::Test {
  protected:
-  ConnectorTest() : connector_(Singleton<Connector>::get()),
+  ConnectorTest() : connector_(new Connector),
                     data_file_(GetFilePath(FLAGS_connection_text_file)) {}
 
-  const Connector *connector_;
+  scoped_ptr<Connector> connector_;
   const string data_file_;
 };
 
@@ -110,4 +110,6 @@ TEST_F(ConnectorTest, RandomValueCheck) {
     }
   }
 }
+
+
 }  // namespace mozc

@@ -43,10 +43,17 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        '../net/net.gyp:net',
+        '../net/net.gyp:http_client',
         '../storage/storage.gyp:storage',
         '<(DEPTH)/third_party/jsoncpp/jsoncpp.gyp:jsoncpp',
-        'gen_sync_data',
+        'gen_sync_data#host',
+      ],
+      'conditions': [
+        ['target_platform!="Android"', {
+          'dependencies': [
+            '../base/base.gyp:encryptor',  # 'oauth2_util.cc' depends on Encryptor except for Android.
+          ],
+        }],
       ],
     },
     {
@@ -77,6 +84,7 @@
     {
       'target_name': 'genproto_sync',
       'type': 'none',
+      'toolsets': ['host'],
       'sources': [
         'sync.proto',
       ],
@@ -85,7 +93,7 @@
       ],
       'dependencies': [
         '../config/config.gyp:genproto_config',
-        '../dictionary/dictionary.gyp:genproto_dictionary',
+        '../dictionary/dictionary_base.gyp:genproto_dictionary',
         '../prediction/prediction.gyp:genproto_prediction',
       ],
     },
@@ -98,18 +106,19 @@
       ],
       'dependencies': [
         '../config/config.gyp:config_protocol',
-        '../dictionary/dictionary.gyp:dictionary_protocol',
+        '../dictionary/dictionary_base.gyp:dictionary_protocol',
         '../prediction/prediction.gyp:prediction_protocol',
         '../protobuf/protobuf.gyp:protobuf',
-        'genproto_sync',
+        'genproto_sync#host',
       ],
       'export_dependent_settings': [
-        'genproto_sync',
+        'genproto_sync#host',
       ],
     },
     {
       'target_name': 'gen_sync_data',
       'type': 'none',
+      'toolsets': ['host'],
       'actions': [
         {
           'action_name': 'gen_client_data',
@@ -145,11 +154,11 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        '../dictionary/dictionary.gyp:user_dictionary',
+        '../dictionary/dictionary_base.gyp:user_dictionary',
         '../prediction/prediction.gyp:prediction',
         '../prediction/prediction.gyp:prediction_protocol',
         '../session/session_base.gyp:session_protocol',
-        'gen_sync_data',
+        'gen_sync_data#host',
         'oauth2',
         'oauth2_token_util',
         'sync_protocol',

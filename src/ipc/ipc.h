@@ -306,7 +306,6 @@ class IPCServer {
   ScopedHandle handle_;  // Windows
   ScopedHandle event_;   // ctrl event
 #elif defined(OS_MACOSX)
-  string server_address_;
   string name_;
   MachPortManagerInterface *mach_port_manager_;
 #else

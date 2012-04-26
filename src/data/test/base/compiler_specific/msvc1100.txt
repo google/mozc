@@ -1,0 +1,17 @@
+namespace mozc {
+namespace compiler_specific_internal {
+class SemicolonEater {};
+}
+}
+class MSVS_GE_10_01;
+__pragma(warning(push)) using mozc::compiler_specific_internal::SemicolonEater;
+__pragma(warning(disable:4001)) using mozc::compiler_specific_internal::SemicolonEater;
+__pragma(warning(pop)) using mozc::compiler_specific_internal::SemicolonEater;
+using mozc::compiler_specific_internal::SemicolonEater;
+using mozc::compiler_specific_internal::SemicolonEater;
+using mozc::compiler_specific_internal::SemicolonEater;
+using mozc::compiler_specific_internal::SemicolonEater;
+using mozc::compiler_specific_internal::SemicolonEater;
+using mozc::compiler_specific_internal::SemicolonEater;
+using mozc::compiler_specific_internal::SemicolonEater;
+__pragma(message ("Hello")) using mozc::compiler_specific_internal::SemicolonEater;

@@ -59,6 +59,9 @@ class GtkWindowMock : public GtkWindowInterface {
   MOCK_METHOD0(Redraw, void());
   MOCK_METHOD1(Update, Size(const commands::Candidates &candidates));
   MOCK_CONST_METHOD0(GetCandidateColumnInClientCord, Rect());
+  MOCK_METHOD1(SetSendCommandInterface,
+               bool(client::SendCommandInterface *send_command_interface));
+  MOCK_METHOD1(ReloadFontConfig, void(const string &font_description));
 };
 
 }  // namespace gtk

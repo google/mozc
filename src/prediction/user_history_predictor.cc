@@ -47,6 +47,7 @@
 #include "converter/node_allocator.h"
 #include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
+#include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
 #include "prediction/predictor_interface.h"
 #include "prediction/user_history_predictor.pb.h"
@@ -341,10 +342,13 @@ class UserHistoryPredictorSyncer : public Thread {
   RequestType type_;
 };
 
-UserHistoryPredictor::UserHistoryPredictor()
-    : updated_(false),
-      dic_(new DicCache(UserHistoryPredictor::cache_size())),
-      dictionary_(DictionaryFactory::GetDictionary()) {
+UserHistoryPredictor::UserHistoryPredictor(
+    const DictionaryInterface *dictionary,
+    const POSMatcher *pos_matcher)
+    : dictionary_(dictionary),
+      pos_matcher_(pos_matcher),
+      updated_(false),
+      dic_(new DicCache(UserHistoryPredictor::cache_size())) {
   AsyncLoad();  // non-blocking
   // Load()  blocking version can be used if any
 }
@@ -1179,7 +1183,7 @@ bool UserHistoryPredictor::InsertCandidates(bool zero_query_suggestion,
       candidate->description = description;
       candidate->attributes |= Segment::Candidate::NO_EXTRA_DESCRIPTION;
     } else {
-      VariantsRewriter::SetDescriptionForPrediction(candidate);
+      VariantsRewriter::SetDescriptionForPrediction(*pos_matcher_, candidate);
     }
   }
 

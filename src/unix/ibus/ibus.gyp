@@ -49,12 +49,38 @@
     'ibus_standalone_dependencies' : [
       '../../base/base.gyp:config_file_stream',
       '../../config/config.gyp:config_handler',
-      '../../net/net.gyp:net',
       '../../session/session.gyp:session_handler',
       '../../usage_stats/usage_stats.gyp:usage_stats',
     ],
   },
   'targets': [
+    {
+      # Meta target to set up build environment for ibus. Required 'cflags'
+      # and 'link_settings' will be automatically injected into any target
+      # which directly or indirectly depends on this target.
+      'target_name': 'ibus_build_environment',
+      'type': 'none',
+      'variables': {
+        'target_libs': [
+          'glib-2.0',
+          'gobject-2.0',
+          'ibus-1.0',
+        ],
+      },
+      'all_dependent_settings': {
+        'cflags': [
+          '<!@(<(pkg_config_command) --cflags <@(target_libs))',
+        ],
+        'link_settings': {
+          'libraries': [
+            '<!@(<(pkg_config_command) --libs-only-l <@(target_libs))',
+          ],
+          'ldflags': [
+            '<!@(<(pkg_config_command) --libs-only-L <@(target_libs))',
+          ],
+        },
+      },
+    },
     {
       'target_name': 'gen_mozc_xml',
       'type': 'none',
@@ -108,33 +134,65 @@
       'dependencies': [
         '../../base/base.gyp:base',
         '../../session/session_base.gyp:session_protocol',
+        'ibus_build_environment',
       ],
-      'includes': [
-        'ibus_libraries.gypi',
+    },
+    {
+      'target_name': 'ibus_property_handler',
+      'type': 'static_library',
+      'sources': [
+        'property_handler.cc',
+      ],
+      'dependencies': [
+        '../../session/session_base.gyp:session_protocol',
+        'ibus_build_environment',
+        'message_translator',
+        'path_util',
+      ],
+    },
+    {
+      'target_name': 'path_util',
+      'type': 'static_library',
+      'sources': [
+        'path_util.cc',
+      ],
+      'dependencies': [
+        '../../base/base.gyp:base',
+      ],
+    },
+    {
+      'target_name': 'message_translator',
+      'type': 'static_library',
+      'sources': [
+        'message_translator.cc',
+      ],
+      'dependencies': [
+        '../../base/base.gyp:base',
       ],
     },
     {
       'target_name': 'ibus_mozc_lib',
       'type': 'static_library',
       'sources': [
+        'config_util.cc',
         'engine_registrar.cc',
+        'ibus_candidate_window_handler.cc',
+        'key_event_handler.cc',
         'key_translator.cc',
-        'message_translator.cc',
         'mozc_engine.cc',
-        'path_util.cc',
-      ],
-      'includes': [
-        'ibus_libraries.gypi',
+        'preedit_handler.cc',
       ],
       'dependencies': [
         '../../session/session_base.gyp:ime_switch_util',
         '../../session/session_base.gyp:session_protocol',
+        'ibus_property_handler',
+        'message_translator',
+        'path_util',
       ],
       'conditions': [
         ['chromeos==1', {
           'sources': [
             'client.cc',
-            'config_util.cc',
           ],
           'dependencies+': [
             '<@(ibus_standalone_dependencies)',
@@ -146,7 +204,7 @@
         }],
         ['enable_gtk_renderer==1', {
           'dependencies+': [
-            '../../renderer/renderer.gyp:renderer',
+            'gtk_candidate_window_handler',
           ],
         }],
        ],
@@ -201,9 +259,6 @@
           ],
         },
       ],
-      'includes': [
-        'ibus_libraries.gypi',
-      ],
       'dependencies': [
         '../../base/base.gyp:base',
         'gen_mozc_xml',
@@ -221,18 +276,14 @@
            '<@(ibus_client_dependencies)',
          ],
         }],
-        ['enable_gtk_renderer==1', {
-         'dependencies+': [
-            '../../renderer/renderer.gyp:renderer',
-         ],
-        }],
-       ],
+      ],
     },
     {
       'target_name': 'ibus_mozc_test',
       'type': 'executable',
       'sources': [
         'config_util_test.cc',
+        'key_event_handler_test.cc',
         'key_translator_test.cc',
         'message_translator_test.cc',
         'mozc_engine_test.cc',
@@ -259,14 +310,6 @@
            '../../client/client.gyp:client_mock',
          ],
         }],
-        ['enable_gtk_renderer==1', {
-         'dependencies': [
-            '../../renderer/renderer.gyp:renderer',
-         ],
-        }],
-      ],
-      'includes': [
-        'ibus_libraries.gypi',
       ],
       'variables': {
         'test_size': 'small',
@@ -276,13 +319,15 @@
     {
       'target_name': 'ibus_all_test',
       'type': 'none',
-      'dependencies': [
-        'ibus_mozc_test',
-      ],
       'conditions': [
         ['chromeos==1', {
           'dependencies': [
             'chromeos_client_test',
+          ],
+        }],
+        ['enable_gtk_renderer==1', {
+          'dependencies': [
+            'gtk_candidate_window_handler_test',
           ],
         }],
       ],
@@ -299,19 +344,44 @@
           ],
           'dependencies': [
             '../../base/base.gyp:base',
+            '../../testing/testing.gyp:googletest_lib',
             '../../testing/testing.gyp:testing',
             'ibus_mozc_lib',
             'ibus_mozc_metadata',
             '<@(ibus_standalone_dependencies)',
             '<@(ibus_japanese_standalone_dependencies)',
           ],
-          'includes': [
-            'ibus_libraries.gypi',
-          ],
           'variables': {
             'test_size': 'small',
           },
         }],
+    }],
+    ['enable_gtk_renderer==1', {
+      'targets': [
+        {
+          'target_name': 'gtk_candidate_window_handler',
+          'type': 'static_library',
+          'sources': [
+            'gtk_candidate_window_handler.cc',
+          ],
+          'dependencies': [
+            '../../renderer/renderer.gyp:renderer_client',
+            '../../renderer/renderer.gyp:renderer_protocol',
+            'ibus_build_environment',
+          ],
+        },
+        {
+          'target_name': 'gtk_candidate_window_handler_test',
+          'type': 'executable',
+          'sources': [
+            'gtk_candidate_window_handler_test.cc',
+          ],
+          'dependencies': [
+            'gtk_candidate_window_handler',
+            '../../testing/testing.gyp:gtest_main',
+          ],
+        },
+      ],
     }],
   ],
 }

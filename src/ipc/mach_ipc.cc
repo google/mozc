@@ -303,9 +303,8 @@ IPCClient::~IPCClient() {
 
 void IPCClient::Init(const string &name, const string &serverPath) {
   ipc_path_manager_ = IPCPathManager::GetIPCPathManager(name);
-  string serverAddress;
-  if (!ipc_path_manager_->GetPathName(&serverAddress)) {
-    LOG(ERROR) << "Cannot make IPC path name";
+  if (!ipc_path_manager_->LoadPathName()) {
+    LOG(ERROR) << "Cannot load IPC path name";
   }
 }
 
@@ -434,8 +433,7 @@ bool IPCClient::Call(const char *request_,
 }
 
 bool IPCClient::Connected() const {
-  string serverAddress;
-  if (!ipc_path_manager_->GetPathName(&serverAddress)) {
+  if (!ipc_path_manager_->LoadPathName()) {
     // No server files found: not running server or not initialized yet.
     return false;
   }

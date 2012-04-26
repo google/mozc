@@ -1,0 +1,26 @@
+namespace mozc {
+namespace compiler_specific_internal {
+class SemicolonEater {};
+}
+}
+class CLANG_GE_02_08;
+class CLANG_LE_02_08;
+using mozc::compiler_specific_internal::SemicolonEater;
+using mozc::compiler_specific_internal::SemicolonEater;
+using mozc::compiler_specific_internal::SemicolonEater;
+using mozc::compiler_specific_internal::SemicolonEater;
+using mozc::compiler_specific_internal::SemicolonEater;
+using mozc::compiler_specific_internal::SemicolonEater;
+using mozc::compiler_specific_internal::SemicolonEater;
+
+#pragma clang diagnostic push
+ using mozc::compiler_specific_internal::SemicolonEater;
+
+#pragma clang diagnostic ignored "-Wconversion-null"
+ using mozc::compiler_specific_internal::SemicolonEater;
+
+#pragma clang diagnostic pop
+ using mozc::compiler_specific_internal::SemicolonEater;
+
+#pragma message "Hello"
+ using mozc::compiler_specific_internal::SemicolonEater;

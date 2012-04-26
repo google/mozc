@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright 2010-2012, Google Inc.
 # All rights reserved.
 #
@@ -27,19 +28,52 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-{
-  'variables': {
-    'hangul_libs': [
-      'gtk+-2.0',
-    ],
-  },
-  'cflags': [
-    '<!@(<(pkg_config_command) --cflags <@(hangul_libs))',
-  ],
-  'libraries': [
-    '<!@(<(pkg_config_command) --libs-only-l <@(hangul_libs))',
-  ],
-  'ldflags': [
-    '<!@(<(pkg_config_command) --libs-only-L <@(hangul_libs))',
-  ],
-}
+"""A script to ensure 'import gyp' loads a gyp module from expected location.
+
+Example:
+./ensure_gyp_module_path.py
+    --expected=/home/foobar/work/mozc/src/third_party/gyp/pylib/gyp
+"""
+__author__ = "yukawa"
+
+import optparse
+import os
+import sys
+
+
+def ParseOption():
+  """Parse command line options."""
+  parser = optparse.OptionParser()
+  parser.add_option('--expected', dest='expected')
+
+  (options, _) = parser.parse_args()
+  if not options.expected:
+    print parser.print_help()
+    sys.exit(1)
+
+  return options
+
+
+def main():
+  """Script to ensure gyp module location."""
+  opt = ParseOption()
+  expected_path = os.path.abspath(opt.expected)
+  if not os.path.exists(expected_path):
+    print '%s does not exist.' % expected_path
+    sys.exit(1)
+
+  try:
+    import gyp  # NOLINT
+  except ImportError, e:
+    print 'import gyp failed: %s' % e
+    sys.exit(1)
+
+  actual_path = os.path.abspath(gyp.__path__[0])
+  if expected_path != actual_path:
+    print 'Unexpected gyp module is loaded on this environment.'
+    print '  expected: %s' % expected_path
+    print '  actual  : %s' % actual_path
+    sys.exit(1)
+
+if __name__ == '__main__':
+  main()
