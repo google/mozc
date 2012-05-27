@@ -8,7 +8,9 @@ protobuf_url="http://protobuf.googlecode.com/files/protobuf-${_protobuf_ver}.tar
 
 pushd .
 cd ..
-wget -c ${protobuf_url} -O protobuf-${_protobuf_ver}.tar.bz2
+if [ ! -f protobuf-${_protobuf_ver}.tar.bz2 ]; then
+    wget -c ${protobuf_url} -O protobuf-${_protobuf_ver}.tar.bz2
+fi
 rm -rf protobuf-${_protobuf_ver}
 tar xvf protobuf-${_protobuf_ver}.tar.bz2
 cp -rf "protobuf-${_protobuf_ver}" src/protobuf/files

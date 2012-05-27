@@ -212,10 +212,12 @@ void FcitxMozc::reset()
 void FcitxMozc::init()
 {
     VLOG ( 1 ) << "focus_in";
-    boolean flag = false;
+    boolean flag = true;
     FcitxInstanceSetContext(instance, CONTEXT_DISABLE_AUTOENG, &flag);
     FcitxInstanceSetContext(instance, CONTEXT_DISABLE_QUICKPHRASE, &flag);
     FcitxInstanceSetContext(instance, CONTEXT_IM_KEYBOARD_LAYOUT, "jp");
+    FcitxInstanceSetContext(instance, "CONTEXT_DISABLE_AUTO_FIRST_CANDIDATE_HIGHTLIGHT", &flag);
+
     DrawAll();
 }
 

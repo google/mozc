@@ -149,7 +149,7 @@ void MozcResponseParser::ParseCandidates(
             // follow the policy.
             auxString += footer.sub_label();
         }
-        
+
         if (footer.has_index_visible() && footer.index_visible()) {
             // Max size of candidates is 200 so 128 is sufficient size for the buffer.
             char index_buf[128] = {0};
@@ -164,7 +164,7 @@ void MozcResponseParser::ParseCandidates(
         }
         fcitx_mozc->SetAuxString(auxString);
     }
-    
+
     FcitxCandidateWordList* candList = FcitxInputStateGetCandidateList(fcitx_mozc->GetInputState());
     FcitxCandidateWordReset(candList);
     FcitxCandidateWordSetPageSize(candList, 9);
@@ -177,17 +177,21 @@ void MozcResponseParser::ParseCandidates(
     }
     for (int i = 0; i < candidates.candidate_size(); ++i) {
         const uint32 index = candidates.candidate(i).index();
+        FcitxMessageType type;
         if (focused_index != -1 && index == focused_index) {
             local_index = i;
+            type = MSG_FIRSTCAND;
         }
+        else
+            type = MSG_OTHER;
         int32* id = (int32*) fcitx_utils_malloc0(sizeof(int32));
         FcitxCandidateWord candWord;
         candWord.callback = FcitxMozcGetCandidateWord;
-        candWord.extraType = MSG_INPUT;
+        candWord.extraType = MSG_OTHER;
         candWord.strExtra = NULL;
         candWord.priv = id;
         candWord.strWord = NULL;
-        candWord.wordType = MSG_INPUT;
+        candWord.wordType = type;
         candWord.owner = fcitx_mozc;
 
         string value;
@@ -211,7 +215,7 @@ void MozcResponseParser::ParseCandidates(
         }
 
         candWord.strWord = strdup(value.c_str());
-        
+
         if (candidates.candidate(i).has_id()) {
             const int32 cid = candidates.candidate(i).id();
             DCHECK_NE(kBadCandidateId, cid) << "Unexpected id is passed.";
@@ -223,10 +227,10 @@ void MozcResponseParser::ParseCandidates(
         }
         FcitxCandidateWordAppend(candList, &candWord);
     }
-    
+
     if (footer.has_index_visible() && footer.index_visible())
         FcitxCandidateWordSetChoose(candList, DIGIT_STR_CHOOSE);
-    else 
+    else
         FcitxCandidateWordSetChoose(candList, strChoose);
     FcitxCandidateWordSetFocus(candList, local_index);
 }
@@ -265,7 +269,7 @@ void MozcResponseParser::ParsePreedit(const mozc::commands::Preedit &preedit,
             break;
         }
         s += str;
-        
+
         PreeditItem item;
         item.type = type;
         item.str = str;
