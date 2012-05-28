@@ -51,7 +51,10 @@
 #include "prediction/dictionary_predictor.h"
 #include "prediction/predictor.h"
 #include "prediction/user_history_predictor.h"
+#include "rewriter/rewriter.h"
 #include "rewriter/rewriter_interface.h"
+#include "session/commands.pb.h"
+#include "session/request_handler.h"
 #include "testing/base/public/gunit.h"
 #include "transliteration/transliteration.h"
 
@@ -80,6 +83,7 @@ namespace mozc {
 class ConverterTest : public testing::Test {
  public:
   virtual void SetUp() {
+    prev_preference_.CopyFrom(commands::RequestHandler::GetRequest());
 
     // set default user profile directory
     Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
@@ -89,6 +93,7 @@ class ConverterTest : public testing::Test {
   }
 
   virtual void TearDown() {
+    commands::RequestHandler::SetRequest(prev_preference_);
 
     // just in case, reset the config in test_tmpdir
     config::Config config;
@@ -98,6 +103,8 @@ class ConverterTest : public testing::Test {
   }
 
 
+ private:
+  commands::Request prev_preference_;
 };
 
 // test for issue:2209644
@@ -416,8 +423,7 @@ TEST_F(ConverterTest, Regression3437022) {
   // Add compound entry to suppression dictioanry
   segments.Clear();
 
-  SuppressionDictionary *dic
-      = SuppressionDictionary::GetSuppressionDictionary();
+  SuppressionDictionary *dic = Singleton<SuppressionDictionary>::get();
   dic->Lock();
   dic->AddEntry(kKey1 + kKey2, kValue1 + kValue2);
   dic->UnLock();
@@ -566,12 +572,14 @@ TEST_F(ConverterTest, SetupHistorySegmentsFromPrecedingText) {
 
 TEST_F(ConverterTest, ConvertUsingPrecedingText_KikiIppatsu) {
   ConverterInterface *converter = ConverterFactory::GetConverter();
+  mozc::composer::Table table;
   // To see preceding text helps conversion, consider the case where user
   // converts "いっぱつ".
   {
     // Without preceding text, test dictionary converts "いっぱつ" to "一発".
     Segments segments;
     mozc::composer::Composer composer;
+    composer.SetTable(&table);
     composer.InsertCharacter(
         "\xE3\x81\x84\xE3\x81\xA3\xE3\x81\xB1\xE3\x81\xA4");  // "いっぱつ"
     mozc::ConversionRequest request(&composer);
@@ -586,6 +594,7 @@ TEST_F(ConverterTest, ConvertUsingPrecedingText_KikiIppatsu) {
     // to "一髪".
     Segments segments;
     mozc::composer::Composer composer;
+    composer.SetTable(&table);
     composer.InsertCharacter(
         "\xE3\x81\x84\xE3\x81\xA3\xE3\x81\xB1\xE3\x81\xA4");  // "いっぱつ"
     mozc::ConversionRequest request(&composer);
@@ -600,12 +609,14 @@ TEST_F(ConverterTest, ConvertUsingPrecedingText_KikiIppatsu) {
 
 TEST_F(ConverterTest, ConvertUsingPrecedingText_Jyosushi) {
   ConverterInterface *converter = ConverterFactory::GetConverter();
+  mozc::composer::Table table;
   // To see preceding text helps conversion after number characters, consider
   // the case where user converts "ひき".
   {
     // Without preceding text, test dictionary converts "ひき" to "引き".
     Segments segments;
     mozc::composer::Composer composer;
+    composer.SetTable(&table);
     composer.InsertCharacter("\xE3\x81\xB2\xE3\x81\x8D");  // "ひき"
     mozc::ConversionRequest request(&composer);
     converter->StartConversionForRequest(request, &segments);
@@ -619,6 +630,7 @@ TEST_F(ConverterTest, ConvertUsingPrecedingText_Jyosushi) {
     // "匹" with test dictionary.
     Segments segments;
     mozc::composer::Composer composer;
+    composer.SetTable(&table);
     composer.InsertCharacter("\xE3\x81\xB2\xE3\x81\x8D");  // "ひき"
     mozc::ConversionRequest request(&composer);
     request.set_preceding_text("\xE7\x8C\xAB\xE3\x81\x8C\x35");  // "猫が5"
@@ -716,6 +728,55 @@ TEST_F(ConverterTest, EmoticonsAboveSymbols) {
   EXPECT_TRUE(found_emoticon);
 }
 
+TEST_F(ConverterTest, StartSuggestionForRequest) {
+  commands::Request input;
+  input.set_mixed_conversion(true);
+  commands::RequestHandler::SetRequest(input);
+
+  ConverterInterface *converter = ConverterFactory::GetConverter();
+  CHECK(converter);
+
+  // "し"
+  const string kShi = "\xE3\x81\x97";
+
+  composer::Table table;
+  table.AddRule("si", kShi, "");
+  table.AddRule("shi", kShi, "");
+
+  {
+    composer::Composer composer;
+    composer.SetTable(&table);
+
+    composer.InsertCharacter("shi");
+
+    Segments segments;
+    EXPECT_TRUE(converter->StartSuggestionForRequest(
+        ConversionRequest(&composer), &segments));
+    EXPECT_EQ(1, segments.segments_size());
+    ASSERT_TRUE(segments.segment(0).meta_candidates_size() >=
+                transliteration::HALF_ASCII);
+    EXPECT_EQ("shi",
+              segments.segment(0).meta_candidate(
+                  transliteration::HALF_ASCII).value);
+  }
+
+  {
+    composer::Composer composer;
+    composer.SetTable(&table);
+
+    composer.InsertCharacter("si");
+
+    Segments segments;
+    EXPECT_TRUE(converter->StartSuggestionForRequest(
+        ConversionRequest(&composer), &segments));
+    EXPECT_EQ(1, segments.segments_size());
+    ASSERT_TRUE(segments.segment(0).meta_candidates_size() >=
+                transliteration::HALF_ASCII);
+    EXPECT_EQ("si",
+              segments.segment(0).meta_candidate(
+                  transliteration::HALF_ASCII).value);
+  }
+}
 
 TEST_F(ConverterTest, StartPartialPrediction) {
   ConverterInterface *converter = ConverterFactory::GetConverter();
@@ -786,9 +847,19 @@ TEST_F(ConverterTest, Predict_SetKey) {
   };
 
   class StubPredictor : public PredictorInterface {
-    bool Predict(Segments *segments) const {
+   public:
+    StubPredictor() : predictor_name_("StubPredictor") {}
+
+    virtual bool Predict(Segments *segments) const {
       return true;
     };
+
+    virtual const string &GetPredictorName() const {
+      return predictor_name_;
+    };
+
+   private:
+    const string predictor_name_;
   };
 
   class StubRewriter : public RewriterInterface {
@@ -828,12 +899,14 @@ TEST_F(ConverterTest, Predict_SetKey) {
 
 TEST_F(ConverterTest, StartPredictionForRequest_KikiIppatsu) {
   ConverterInterface *converter = ConverterFactory::GetConverter();
+  mozc::composer::Table table;
   // To see preceding text helps prediction, consider the case where user
   // converts "いっぱつ".
   {
     // Without preceding text, test dictionary predicts "いっぱつ" to "一発".
     Segments segments;
     mozc::composer::Composer composer;
+    composer.SetTable(&table);
     composer.InsertCharacter(
         "\xE3\x81\x84\xE3\x81\xA3\xE3\x81\xB1\xE3\x81\xA4");  // "いっぱつ"
     mozc::ConversionRequest request(&composer);
@@ -848,6 +921,7 @@ TEST_F(ConverterTest, StartPredictionForRequest_KikiIppatsu) {
     // to "一髪".
     Segments segments;
     mozc::composer::Composer composer;
+    composer.SetTable(&table);
     composer.InsertCharacter(
         "\xE3\x81\x84\xE3\x81\xA3\xE3\x81\xB1\xE3\x81\xA4");  // "いっぱつ"
     mozc::ConversionRequest request(&composer);
@@ -864,12 +938,14 @@ TEST_F(ConverterTest, StartPredictionForRequest_KikiIppatsu) {
 // we are not using preceding text for now. Make this enabled later.
 TEST_F(ConverterTest, DISABLED_StartPredictionForRequest_Jyosushi) {
   ConverterInterface *converter = ConverterFactory::GetConverter();
+  mozc::composer::Table table;
   // To see preceding text helps prediction after number characters, consider
   // the case where user converts "ひき".
   {
     // Without preceding text, test dictionary predicts "ひき" as "引換".
     Segments segments;
     mozc::composer::Composer composer;
+    composer.SetTable(&table);
     composer.InsertCharacter("\xE3\x81\xB2\xE3\x81\x8D");  // "ひき"
     mozc::ConversionRequest request(&composer);
     converter->StartPredictionForRequest(request, &segments);
@@ -883,6 +959,7 @@ TEST_F(ConverterTest, DISABLED_StartPredictionForRequest_Jyosushi) {
     // "ひき" with test dictionary.
     Segments segments;
     mozc::composer::Composer composer;
+    composer.SetTable(&table);
     composer.InsertCharacter("\xE3\x81\xB2\xE3\x81\x8D");  // "ひき"
     mozc::ConversionRequest request(&composer);
     request.set_preceding_text("\xE7\x8C\xAB\xE3\x81\x8C\x35");  // "猫が5"
@@ -894,4 +971,9 @@ TEST_F(ConverterTest, DISABLED_StartPredictionForRequest_Jyosushi) {
   }
 }
 
+TEST_F(ConverterTest, DefaultPredictor) {
+  ConverterImpl converter;
+  PredictorInterface *default_predictor = converter.predictor_.get();
+  EXPECT_EQ("DefaultPredictor", default_predictor->GetPredictorName());
+}
 }  // namespace mozc

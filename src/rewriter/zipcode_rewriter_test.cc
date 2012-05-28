@@ -37,6 +37,7 @@
 #include "config/config_handler.h"
 #include "converter/conversion_request.h"
 #include "converter/segments.h"
+#include "data_manager/user_pos_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "session/commands.pb.h"
 #include "testing/base/public/gunit.h"
@@ -64,9 +65,10 @@ void AddSegment(const string &key, const string &value,
   candidate->content_value = value;
 
   if (type == ZIPCODE) {
-    const POSMatcher pos_matcher;
-    candidate->lid = pos_matcher.GetZipcodeId();
-    candidate->rid = pos_matcher.GetZipcodeId();
+    const POSMatcher *pos_matcher =
+        UserPosManager::GetUserPosManager()->GetPOSMatcher();
+    candidate->lid = pos_matcher->GetZipcodeId();
+    candidate->rid = pos_matcher->GetZipcodeId();
   }
 }
 
@@ -106,7 +108,8 @@ class ZipcodeRewriterTest : public ::testing::Test {
   }
 
   ZipcodeRewriter *CreateZipcodeRewriter() const {
-    return new ZipcodeRewriter(Singleton<POSMatcher>::get());
+    return new ZipcodeRewriter(
+        UserPosManager::GetUserPosManager()->GetPOSMatcher());
   }
 };
 

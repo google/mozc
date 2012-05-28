@@ -56,10 +56,6 @@
                   'VCLinkerTool': {
                     'AdditionalDependencies': [
                       'wininet.lib',
-                      # used in 'http_client.cc'
-                      # TODO(yukawa): Remove this dependency by replacing
-                      #     ::timeGetTime() with Util::GetTick().
-                      'winmm.lib',
                     ],
                   },
                 },
@@ -122,6 +118,16 @@
       },
     },
     {
+      'target_name': 'jsoncpp',
+      'type': 'none',
+      'sources': [
+        'jsoncpp.h',
+      ],
+      'dependencies': [
+        '<(DEPTH)/third_party/jsoncpp/jsoncpp.gyp:jsoncpp_do_not_directly_use',
+      ],
+    },
+    {
       'target_name': 'jsonpath',
       'type': 'static_library',
       'sources': [
@@ -129,7 +135,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        '<(DEPTH)/third_party/jsoncpp/jsoncpp.gyp:jsoncpp',
+        'jsoncpp',
       ],
     },
     {
@@ -152,17 +158,7 @@
       'type': 'none',
       'dependencies': [
         'http_client_mock_test',
-      ],
-      'conditions': [
-        ['enable_extra_unit_tests==1', {
-          'dependencies': [
-            # Temporarily disable following test because JsonCpp still
-            # cannot be built on OSS Mozc.
-            # TODO(nona): Support building JsonCpp on OSS Mozc and remove
-            #     the condtion above.
-            'jsonpath_test',
-          ],
-        }],
+        'jsonpath_test',
       ],
     },
   ],

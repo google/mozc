@@ -33,6 +33,7 @@
 #include <string>
 
 #include "base/base.h"
+#include "languages/pinyin/pinyin_constant.h"
 #include "session/session_interface.h"
 
 namespace mozc {
@@ -55,16 +56,6 @@ class KeymapInterface;
 
 class SessionConverterInterface;
 struct SessionConfig;
-
-// TODO(hsumita): Implements DIRECT mode on client layer. We can inplement it
-// using ImeSwitchUtil. (But there are some problem related to config and m17n.)
-enum ConversionMode {
-  NONE,         // Initial state.
-  PINYIN,       // Parses alphabet as pinyin, and converts it to phrase.
-  DIRECT,       // Inputs input characters.
-  ENGLISH,      // Suggests English words.
-  PUNCTUATION,  // Suggests punctuations.
-};
 
 class Session : public mozc::session::SessionInterface {
  public:
@@ -104,13 +95,13 @@ class Session : public mozc::session::SessionInterface {
   void HandleLanguageBarCommand(
       const commands::SessionCommand &session_command);
 
+  scoped_ptr<SessionConfig> session_config_;
   scoped_ptr<SessionConverterInterface> converter_;
   const keymap::KeymapInterface *keymap_;
   ConversionMode conversion_mode_;
   // Stores conversion mode which we should switched to at the end of SendKey()
   // or SendCommand() to fill a protocol buffer correctly.
   ConversionMode next_conversion_mode_;
-  scoped_ptr<SessionConfig> session_config_;
   bool is_already_commited_;
 
   uint64 create_session_time_;

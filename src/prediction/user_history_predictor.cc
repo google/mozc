@@ -53,12 +53,14 @@
 #include "prediction/user_history_predictor.pb.h"
 #include "rewriter/variants_rewriter.h"
 #include "session/commands.pb.h"
+#include "session/request_handler.h"
 #include "storage/encrypted_string_storage.h"
 #include "storage/lru_cache.h"
 #include "usage_stats/usage_stats.h"
 
 
 // This flag is set by predictor.cc
+// We can remove this after the ambiguity expansion feature get stable.
 DEFINE_bool(enable_expansion_for_user_history_predictor,
             false,
             "enable ambiguity expansion for user_history_predictor.");
@@ -229,6 +231,7 @@ bool UserHistoryPredictor::IsPrivacySensitive(const Segments *segments) const {
   return kNonSensitive;
 }
 
+#ifndef __native_client__
 UserHistoryStorage::UserHistoryStorage(const string &filename)
     : storage_(new storage::EncryptedStringStorage(filename)) {
 }
@@ -272,6 +275,7 @@ bool UserHistoryStorage::Save() const {
 
   return true;
 }
+#endif  // __native_client__
 
 UserHistoryPredictor::EntryPriorityQueue::EntryPriorityQueue()
     : pool_(kEntryPoolSize) {}
@@ -306,6 +310,7 @@ UserHistoryPredictor::EntryPriorityQueue::NewEntry() {
   return pool_.Alloc();
 }
 
+#ifndef __native_client__
 class UserHistoryPredictorSyncer : public Thread {
  public:
   enum RequestType {
@@ -341,12 +346,16 @@ class UserHistoryPredictorSyncer : public Thread {
   UserHistoryPredictor *predictor_;
   RequestType type_;
 };
+#endif  // __native_client__
 
 UserHistoryPredictor::UserHistoryPredictor(
     const DictionaryInterface *dictionary,
-    const POSMatcher *pos_matcher)
+    const POSMatcher *pos_matcher,
+    const SuppressionDictionary *suppression_dictionary)
     : dictionary_(dictionary),
       pos_matcher_(pos_matcher),
+      suppression_dictionary_(suppression_dictionary),
+      predictor_name_("UserHistoryPredictor"),
       updated_(false),
       dic_(new DicCache(UserHistoryPredictor::cache_size())) {
   AsyncLoad();  // non-blocking
@@ -369,6 +378,7 @@ uint16 UserHistoryPredictor::revert_id() {
   return kRevertId;
 }
 
+#ifndef __native_client__
 void UserHistoryPredictor::WaitForSyncer() {
   if (syncer_.get() != NULL) {
     syncer_->Join();
@@ -545,6 +555,48 @@ bool UserHistoryPredictor::ClearUnusedHistory() {
 
   return true;
 }
+#else  // __native_client__
+// TODO(horo): implement UserHistoryStorage for NaCl.
+void UserHistoryPredictor::WaitForSyncer() {
+}
+
+bool UserHistoryPredictor::CheckSyncerAndDelete() const {
+  return true;
+}
+
+bool UserHistoryPredictor::Sync() {
+  return true;
+}
+
+bool UserHistoryPredictor::Reload() {
+  return true;
+}
+
+bool UserHistoryPredictor::AsyncLoad() {
+  return true;
+}
+
+bool UserHistoryPredictor::AsyncSave() {
+  return true;
+}
+
+bool UserHistoryPredictor::Load() {
+  return true;
+}
+
+bool UserHistoryPredictor::Save() {
+  return true;
+}
+
+bool UserHistoryPredictor::ClearAllHistory() {
+  return true;
+}
+
+bool UserHistoryPredictor::ClearUnusedHistory() {
+  return true;
+}
+#endif  // __native_client__
+
 
 // return true if prev_entry has a next_fp link to entry
 // static
@@ -950,7 +1002,7 @@ bool UserHistoryPredictor::PredictForRequest(const ConversionRequest &request,
     return false;
   }
 
-  bool zero_query_suggestion = false;
+  const bool zero_query_suggestion = GET_REQUEST(zero_query_suggestion);
   const string &input_key = segments->conversion_segment(0).key();
   if (segments->request_type() == Segments::SUGGESTION &&
       !zero_query_suggestion &&
@@ -1236,12 +1288,10 @@ void UserHistoryPredictor::InsertNextEntry(
   target_next_entry->CopyFrom(next_entry);
 }
 
-// static
-bool UserHistoryPredictor::IsValidEntry(const Entry &entry) {
+bool UserHistoryPredictor::IsValidEntry(const Entry &entry) const {
   return !entry.removed() &&
       entry.entry_type() == Entry::DEFAULT_ENTRY &&
-      !SuppressionDictionary::GetSuppressionDictionary()->SuppressEntry(
-          entry.key(), entry.value());
+      !suppression_dictionary_->SuppressEntry(entry.key(), entry.value());
 }
 
 void UserHistoryPredictor::InsertEvent(EntryType type) {
@@ -1657,6 +1707,9 @@ bool UserHistoryPredictor::IsValidSuggestion(
   if (entry.bigram_boost()) {
     return true;
   }
+  // when zero_query_suggestion is true, that means that
+  // predictor is running on mobile device. In this case,
+  // make the behavior more aggressive.
   if (is_zero_query_suggestion) {
     return true;
   }

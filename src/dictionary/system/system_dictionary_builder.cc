@@ -38,6 +38,7 @@
 #include "base/file_stream.h"
 #include "base/hash_tables.h"
 #include "base/util.h"
+#include "data_manager/user_pos_manager.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/file/codec_interface.h"
 #include "dictionary/pos_matcher.h"
@@ -89,8 +90,9 @@ SystemDictionaryBuilder::~SystemDictionaryBuilder() {}
 
 void SystemDictionaryBuilder::BuildFromFile(const string &input_file) {
   VLOG(1) << "load file: " << input_file;
-  const POSMatcher pos_matcher;
-  TextDictionaryLoader loader(pos_matcher);
+  const POSMatcher *pos_matcher =
+      UserPosManager::GetUserPosManager()->GetPOSMatcher();
+  TextDictionaryLoader loader(*pos_matcher);
   loader.Open(input_file.c_str());
   // Get all tokens
   vector<Token *> tokens;

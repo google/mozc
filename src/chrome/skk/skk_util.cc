@@ -35,7 +35,6 @@
 #include "base/scoped_ptr.h"
 #include "converter/node_allocator.h"
 #include "dictionary/system/system_dictionary.h"
-#include "third_party/jsoncpp/json.h"
 
 namespace mozc {
 

@@ -33,7 +33,6 @@
 #include <QtCore/QModelIndex>
 #include <QtCore/QObject>
 #include <QtGui/QItemDelegate>
-#include <QtGui/QPushButton>
 
 #include "base/base.h"
 

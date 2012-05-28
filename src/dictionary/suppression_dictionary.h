@@ -41,6 +41,9 @@ struct Node;
 
 class SuppressionDictionary {
  public:
+  SuppressionDictionary();
+  virtual ~SuppressionDictionary();
+
   // Lock dictioanry.
   // call Lock() before calling AddWord() or Clear();
   // When the dictionary is locked, Supress() return false.
@@ -75,12 +78,6 @@ class SuppressionDictionary {
   // Suppress node from a linked list of nodes.
   // Return new (modified) linked list.
   Node *SuppressNodes(Node *node) const;
-
-  // Return Singleton object
-  static SuppressionDictionary *GetSuppressionDictionary();
-
-  SuppressionDictionary();
-  virtual ~SuppressionDictionary();
 
  private:
   set<string> dic_;

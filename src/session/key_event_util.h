@@ -54,11 +54,7 @@ class KeyEventUtil {
   // - remove commands::KeyEvent::CAPS from the modifier keys
   // - revert the flip of alphabetical key code caused by CapsLock
   // so that shortcut keys can be used as if CapsLock was not enabled. b/5627459
-  static void NormalizeCaps(const commands::KeyEvent &key_event,
-                            commands::KeyEvent *new_key_event);
-
-  // Handles CapsLock as NormalizeCaps(), and removes Left / Right specified
-  // modifiers.
+  // In addition, this function removes left / right specified modifiers.
   static void NormalizeModifiers(const commands::KeyEvent &key_event,
                                  commands::KeyEvent *new_key_event);
 
@@ -97,11 +93,6 @@ class KeyEventUtil {
   static bool IsNumpadKey(const commands::KeyEvent &key_event);
 
  private:
-  static void NormalizeModifiersInternal(const commands::KeyEvent &key_event,
-                                         uint32 ignorable_modifier_mask,
-                                         commands::KeyEvent *new_key_event);
-
-
   DISALLOW_IMPLICIT_CONSTRUCTORS(KeyEventUtil);
 };
 

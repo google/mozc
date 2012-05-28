@@ -48,6 +48,15 @@
             '${BUILT_PRODUCTS_DIR}/<(product_name).app/Contents',
           ],
         },
+        {
+          'postbuild_name': 'Change the reference to Qt frameworks',
+          'action': [
+            'python', '../build_tools/change_qt_reference_mac.py',
+            '--qtdir', '<(qt_dir)',
+            '--target',
+            '${BUILT_PRODUCTS_DIR}/<(product_name).app/Contents/MacOS/<(product_name)',
+          ],
+        },
       ],
     }, { # else
       'sources': [

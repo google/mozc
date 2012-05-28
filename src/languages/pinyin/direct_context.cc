@@ -173,11 +173,11 @@ size_t DirectContext::cursor() const { return 0; }
 
 // There is no candidates.
 size_t DirectContext::focused_candidate_index() const { return 0; }
-size_t DirectContext::candidates_size() const { return 0; }
-void DirectContext::GetCandidates(vector<string> *candidates) const {
-  DCHECK(candidates);
-  candidates->clear();
+bool DirectContext::GetCandidate(size_t index, Candidate *candidate) {
+  return false;
 }
+bool DirectContext::HasCandidate(size_t index) { return false; }
+size_t DirectContext::PrepareCandidates(size_t required_size) { return 0; }
 
 }  // namespace direct
 }  // namespace pinyin

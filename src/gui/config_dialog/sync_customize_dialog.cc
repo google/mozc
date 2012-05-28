@@ -83,10 +83,7 @@ void SyncCustomizeDialog::Load(const config::Config &config) {
   const config::SyncConfig &sync_config = config.sync_config();
 
   if (sync_config.use_config_sync() &&
-      sync_config.use_user_dictionary_sync() &&
-      sync_config.use_user_history_sync() &&
-      sync_config.use_learning_preference_sync() &&
-      sync_config.use_contact_list_sync()) {
+      sync_config.use_user_dictionary_sync()) {
     syncEverythingCheckbox->setChecked(true);
     syncAllClicked(true);
     return;

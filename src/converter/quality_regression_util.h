@@ -42,6 +42,7 @@ class QualityRegressionUtil {
   enum Platform {
     DESKTOP = 1,
     OSS = 2,
+    MOBILE = 4,
   };
 
   struct TestItem {

@@ -273,7 +273,7 @@ TEST_F(LearningPreferenceAdapterTest, MarkUploaded) {
   CHECK(value);
   key->set_bucket_id(0);
 
-  const uint64 synced_time = static_cast<uint64>(time(NULL));
+  const uint64 synced_time = Util::GetTime();
   adapter->Start();
 
   // last_access_time is not updated.

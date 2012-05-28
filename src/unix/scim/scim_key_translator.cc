@@ -71,6 +71,9 @@ const struct SpecialKeyMap {
   // See ScimKeyTranslator::NormalizeHiraganaKatakanaKeyWithShift.
   {scim::SCIM_KEY_Hiragana_Katakana, mozc::commands::KeyEvent::KANA},
   {scim::SCIM_KEY_Katakana, mozc::commands::KeyEvent::KATAKANA},
+  {scim::SCIM_KEY_Zenkaku, mozc::commands::KeyEvent::HANKAKU},
+  {scim::SCIM_KEY_Hankaku, mozc::commands::KeyEvent::HANKAKU},
+  {scim::SCIM_KEY_Zenkaku_Hankaku, mozc::commands::KeyEvent::HANKAKU},
   {scim::SCIM_KEY_Eisu_toggle, mozc::commands::KeyEvent::EISU},
   {scim::SCIM_KEY_Home, mozc::commands::KeyEvent::HOME},
   {scim::SCIM_KEY_End, mozc::commands::KeyEvent::END},

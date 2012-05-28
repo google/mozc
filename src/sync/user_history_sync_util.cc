@@ -245,11 +245,13 @@ void UserHistorySyncUtil::AddRandomUpdates(UserHistory *history) {
     if (Util::Random(10) == 0) {
       // update values
       Entry *entry = history->mutable_entries(i);
-      entry->set_conversion_freq(
-          entry->conversion_freq() + Util::Random(3));
-      entry->set_suggestion_freq(
-          entry->suggestion_freq() + Util::Random(3));
-      entry->set_last_access_time(Util::GetTime());
+      if (entry->entry_type() == UserHistory::Entry::DEFAULT_ENTRY) {
+        entry->set_conversion_freq(
+            entry->conversion_freq() + Util::Random(3));
+        entry->set_suggestion_freq(
+            entry->suggestion_freq() + Util::Random(3));
+        entry->set_last_access_time(Util::GetTime());
+      }
     }
   }
 

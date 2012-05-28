@@ -246,6 +246,8 @@ typedef NullStatsConfigUtilImpl DefaultConfigUtilImpl;
 typedef WinStatsConfigUtilImpl DefaultConfigUtilImpl;
 #elif defined(OS_MACOSX)
 typedef MacStatsConfigUtilImpl DefaultConfigUtilImpl;
+#elif defined(OS_ANDROID)
+typedef AndroidStatsConfigUtilImpl DefaultConfigUtilImpl;
 #else
 // Fall back mode.  Use null implementation.
 typedef NullStatsConfigUtilImpl DefaultConfigUtilImpl;

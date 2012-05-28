@@ -35,8 +35,8 @@
 #include "base/base.h"
 #include "base/util.h"
 #include "net/http_client.h"
+#include "net/jsoncpp.h"
 #include "storage/registry.h"
-#include "third_party/jsoncpp/json.h"
 
 namespace mozc {
 namespace sync {

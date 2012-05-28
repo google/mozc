@@ -47,8 +47,8 @@ namespace renderer {
 namespace mac {
 class InfolistWindow : public RendererBaseWindow {
  public:
-  explicit InfolistWindow();
-  ~InfolistWindow();
+  InfolistWindow();
+  virtual ~InfolistWindow();
   void SetSendCommandInterface(
       client::SendCommandInterface *send_command_interface);
   void SetCandidates(const commands::Candidates &candidates);

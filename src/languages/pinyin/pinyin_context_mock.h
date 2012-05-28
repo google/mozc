@@ -96,7 +96,9 @@ class PinyinContextMock : public PinyinContextInterface {
   virtual size_t cursor() const;
   virtual size_t focused_candidate_index() const;
   virtual size_t candidates_size() const;
-  virtual void GetCandidates(vector<string> *candidates) const;
+  virtual bool HasCandidate(size_t index);
+  virtual bool GetCandidate(size_t index, Candidate *candidate);
+  virtual size_t PrepareCandidates(size_t index);
 
  private:
   // Finds a word boundary around cursor_.

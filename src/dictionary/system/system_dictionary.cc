@@ -54,6 +54,8 @@
 #include "dictionary/system/codec_interface.h"
 #include "dictionary/system/words_info.h"
 #include "dictionary/text_dictionary_loader.h"
+#include "session/commands.pb.h"
+#include "session/request_handler.h"
 
 namespace mozc {
 namespace {
@@ -95,6 +97,7 @@ bool IsCacheAvailable(
   }
   return true;
 }
+
 }  // namespace
 
 SystemDictionary::SystemDictionary()
@@ -167,6 +170,7 @@ bool SystemDictionary::OpenDictionaryFile() {
     return false;
   }
 
+
   const unsigned char *value_image =
       reinterpret_cast<const unsigned char *>(dictionary_file_->GetSection(
           codec_->GetSectionNameForValue(), &len));
@@ -194,6 +198,7 @@ bool SystemDictionary::OpenDictionaryFile() {
   return true;
 }
 
+
 Node *SystemDictionary::LookupPredictiveWithLimit(
     const char *str, int size,
     const Limit &lookup_limit,
@@ -203,6 +208,8 @@ Node *SystemDictionary::LookupPredictiveWithLimit(
 
   vector<rx::RxEntry> results;
   int limit = -1;  // no limit
+
+
   if (allocator != NULL) {
     limit = allocator->max_nodes_size();
     key_trie_->PredictiveSearchWithLimit(lookup_key_str,
@@ -240,8 +247,7 @@ Node *SystemDictionary::LookupPredictiveWithLimit(
     filter.key_begin_with_pos = size;
     filter.key_begin_with_trie = lookup_limit.begin_with_trie;
   }
-  return GetNodesFromLookupResults(
-      filter, results, allocator, &limit);
+  return GetNodesFromLookupResults(filter, results, allocator, &limit);
 }
 
 Node *SystemDictionary::LookupPredictive(
@@ -258,6 +264,8 @@ Node *SystemDictionary::LookupPrefixWithLimit(
 
   vector<rx::RxEntry> results;
   int limit = -1;  // no limit
+
+
   if (allocator != NULL) {
     limit = allocator->max_nodes_size();
     key_trie_->PrefixSearchWithLimit(
@@ -268,8 +276,7 @@ Node *SystemDictionary::LookupPrefixWithLimit(
 
   FilterInfo filter;
   filter.key_len_lower_limit = lookup_limit.key_len_lower_limit;
-  return GetNodesFromLookupResults(
-      filter, results, allocator, &limit);
+  return GetNodesFromLookupResults(filter, results, allocator, &limit);
 }
 
 Node *SystemDictionary::LookupPrefix(
@@ -293,7 +300,9 @@ Node *SystemDictionary::GetNodesFromLookupResults(
     }
     // decode key
     string tokens_key;
+    string actual_key;
     codec_->DecodeKey(results[i].key, &tokens_key);
+    codec_->DecodeKey(results[i].actual_key, &actual_key);
 
     // filter by key length
     if (tokens_key.size() < filter.key_len_lower_limit) {
@@ -323,6 +332,7 @@ Node *SystemDictionary::GetNodesFromLookupResults(
 
     res = AppendNodesFromTokens(filter,
                                 tokens_key,
+                                actual_key,
                                 &tokens,
                                 res,
                                 allocator,
@@ -339,6 +349,7 @@ Node *SystemDictionary::GetNodesFromLookupResults(
 Node *SystemDictionary::AppendNodesFromTokens(
     const FilterInfo &filter,
     const string &tokens_key,
+    const string &actual_key,
     vector<dictionary::TokenInfo> *tokens,
     Node *node,
     NodeAllocatorInterface *allocator,
@@ -369,8 +380,10 @@ Node *SystemDictionary::AppendNodesFromTokens(
       continue;
     }
 
+
     if (*limit == -1 || *limit > 0) {
       Node *new_node = CopyTokenToNode(allocator, *(token_info->token));
+      new_node->actual_key = actual_key;
       new_node->bnext = res;
       res = new_node;
       if (*limit > 0) {
@@ -648,9 +661,12 @@ Node *SystemDictionary::GetNodesFromReverseLookupResults(
       key_trie_->ReverseLookup(reverse_result.id_in_key_trie, &encoded_key);
       string tokens_key;
       codec_->DecodeKey(encoded_key, &tokens_key);
+      // always the same for reverse conversions.
+      string actual_key = tokens_key;
 
       res = AppendNodesFromTokens(filter,
                                   tokens_key,
+                                  actual_key,
                                   &tokens,
                                   res,
                                   allocator,

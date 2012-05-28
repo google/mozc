@@ -32,13 +32,38 @@
 {
   'targets': [
     {
-      'target_name': 'jsoncpp',
+      # IMPORTANT: Do no directly any include file in this target nor depend
+      #     on this target from your target. Include 'net/jsoncpp.h' and make
+      #     depend on 'net/net.gyp:jsoncpp' instead.
+      'target_name': 'jsoncpp_do_not_directly_use',
       'type': 'static_library',
-      'sources': [
-        'json_reader.cc',
-        'json_value.cc',
-        'json_writer.cc',
+      'variables': {
+        'jsoncpp_defines': [
+          'JSON_USE_EXCEPTION=0',  # Mozc basically disables C++ exception.
+        ],
+        'jsoncpp_include_dirs': [
+          'include',
+        ],
+        'jsoncpp_srcs': [
+          'src/lib_json/json_reader.cpp',
+          'src/lib_json/json_value.cpp',
+          'src/lib_json/json_writer.cpp',
+        ],
+      },
+      'defines': [
+        '<@(jsoncpp_defines)',
       ],
+      'include_dirs': [
+        '<@(jsoncpp_include_dirs)',
+      ],
+      'sources': [
+        '<@(jsoncpp_srcs)',
+      ],
+      'all_dependent_settings': {
+        'defines': [
+          '<@(jsoncpp_defines)',
+        ],
+      },
     },
   ],
 }

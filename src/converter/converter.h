@@ -115,6 +115,7 @@ class ConverterImpl : public ConverterInterface {
  private:
   FRIEND_TEST(ConverterTest, CompletePOSIds);
   FRIEND_TEST(ConverterTest, SetupHistorySegmentsFromPrecedingText);
+  FRIEND_TEST(ConverterTest, DefaultPredictor);
 
   // Complete Left id/Right id if they are not defined.
   // Some users don't push conversion button but directly

@@ -33,9 +33,10 @@
 #include "config/config_handler.h"
 #include "converter/node.h"
 #include "converter/node_allocator.h"
+#include "data_manager/user_pos_manager.h"
 #include "dictionary/dictionary_interface.h"
-#include "dictionary/suppression_dictionary.h"
 #include "dictionary/pos_matcher.h"
+#include "dictionary/suppression_dictionary.h"
 #include "testing/base/public/gunit.h"
 
 #ifdef MOZC_USE_SEPARATE_CONNECTION_DATA
@@ -54,21 +55,9 @@ const ::testing::Environment *kDictionaryDataInjectedEnvironment =
 
 namespace mozc {
 
-TEST(Dictionary_test, basic) {
-  // delete without Open()
-  DictionaryInterface *d1 = DictionaryFactory::GetDictionary();
-  EXPECT_TRUE(d1 != NULL);
-
-  DictionaryInterface *d2 = DictionaryFactory::GetDictionary();
-  EXPECT_TRUE(d2 != NULL);
-
-  EXPECT_EQ(d1, d2);
-}
-
 TEST(Dictionary_test, WordSuppressionTest) {
   DictionaryInterface *d = DictionaryFactory::GetDictionary();
-  SuppressionDictionary *s =
-      SuppressionDictionary::GetSuppressionDictionary();
+  SuppressionDictionary *s = Singleton<SuppressionDictionary>::get();
 
   NodeAllocator allocator;
 
@@ -156,10 +145,11 @@ TEST(Dictionary_test, DisableZipCodeConversionTest) {
     config.set_use_zip_code_conversion(true);
     config::ConfigHandler::SetConfig(config);
 
-    const POSMatcher pos_matcher;
+    const POSMatcher *pos_matcher =
+        UserPosManager::GetUserPosManager()->GetPOSMatcher();
     Node *node = d->LookupPrefix(kQuery, strlen(kQuery), &allocator);
     for (; node != NULL; node = node->bnext) {
-      if (pos_matcher.IsZipcode(node->lid)) {
+      if (pos_matcher->IsZipcode(node->lid)) {
         EXPECT_TRUE(GET_CONFIG(use_zip_code_conversion));
       }
     }
@@ -168,7 +158,7 @@ TEST(Dictionary_test, DisableZipCodeConversionTest) {
     config::ConfigHandler::SetConfig(config);;
     node = d->LookupPrefix(kQuery, strlen(kQuery), &allocator);
     for (; node != NULL; node = node->bnext) {
-      EXPECT_FALSE(pos_matcher.IsZipcode(node->lid));
+      EXPECT_FALSE(pos_matcher->IsZipcode(node->lid));
     }
   }
 }

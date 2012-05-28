@@ -87,6 +87,8 @@ MockVoidImplementation(set_client_capability,
                        const commands::Capability &capability);
 MockBoolImplementation(LaunchToolWithProtoBuf, const commands::Output &output);
 MockBoolImplementation(OpenBrowser, const string &url);
+MockBoolImplementation(StartCloudSync, void);
+MockBoolImplementation(ClearCloudSync, void);
 
 #undef MockConstImplementation
 #undef MockBoolImplementation
@@ -163,5 +165,22 @@ int ClientMock::GetFunctionCallCount(string key) {
   return function_counter_[key];
 }
 
+bool ClientMock::GetCloudSyncStatus(
+    commands::CloudSyncStatus *cloud_sync_status) {
+  DCHECK(cloud_sync_status);
+  function_counter_["GetCloudSyncStatus"]++;
+  cloud_sync_status->CopyFrom(cloud_sync_status_);
+  map<string, bool>::const_iterator it =
+      return_bool_values_.find("GetCloudSyncStatus");
+  if (it != return_bool_values_.end()) {
+    return it->second;
+  }
+  return false;
+}
+
+void ClientMock::set_output_GetCloudSyncStatus(
+    const commands::CloudSyncStatus &cloud_sync_status) {
+  cloud_sync_status_.CopyFrom(cloud_sync_status);
+}
 }  // namespace mozc
 }  // namespace ibus

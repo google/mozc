@@ -34,6 +34,7 @@
 #include "base/mutex.h"
 #include "base/singleton.h"
 #include "dictionary/pos_matcher.h"
+#include "dictionary/suppression_dictionary.h"
 #include "dictionary/user_dictionary.h"
 #include "dictionary/user_pos.h"
 
@@ -67,17 +68,25 @@ UserDictionaryManager::~UserDictionaryManager() {
 }
 
 UserDictionary *UserDictionaryManager::GetUserDictionary() {
+#ifdef __native_client__
+  return NULL;
+#else  // __native_client__
   if (user_dictionary_ == NULL) {
     scoped_lock l(&mutex_);
     if (user_dictionary_ == NULL) {
       // TODO(noriyukit): POSMatcher depends on embedded data set and should be
       // factoried by DataManager.
-      user_dictionary_ = new UserDictionary(GetUserPOS(),
-                                            Singleton<POSMatcher>::get());
+      // TODO(noriyukit): SuppressionDictionary should be managed by engine
+      // class. This is a part of refactoring and will be fixed in future.
+      user_dictionary_ = new UserDictionary(
+          GetUserPOS(),
+          GetPOSMatcher(),
+          Singleton<SuppressionDictionary>::get());
     }
   }
   DCHECK(user_dictionary_);
   return user_dictionary_;
+#endif  // __native_client__
 }
 
 }  // namespace mozc

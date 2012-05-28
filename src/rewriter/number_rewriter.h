@@ -36,6 +36,7 @@
 namespace mozc {
 class ConversionRequest;
 class POSMatcher;
+struct RewriteCandidateInfo;
 
 class NumberRewriter : public RewriterInterface  {
  public:
@@ -55,9 +56,14 @@ class NumberRewriter : public RewriterInterface  {
                        Segments *segments) const;
 
  private:
+  bool RewriteOneSegment(bool exec_radix_conversion, Segment *seg) const;
+  void GetRewriteCandidateInfos(const Segment &seg,
+                                vector<RewriteCandidateInfo>
+                                *rewrite_candidate_info) const;
+
   RewriteType GetRewriteTypeAndBase(
       const Segment &seg,
-      int *base_candidate_pos,
+      int base_candidate_pos,
       Segment::Candidate *arabic_candidate) const;
 
   bool IsNumber(uint16 lid) const;

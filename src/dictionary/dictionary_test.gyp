@@ -83,6 +83,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        '../data_manager/data_manager.gyp:user_pos_manager',
         '../testing/testing.gyp:gtest_main',
         'dictionary_base.gyp:text_dictionary_loader',
       ],

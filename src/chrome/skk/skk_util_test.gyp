@@ -39,24 +39,16 @@
       'dependencies': [
         '../../dictionary/dictionary.gyp:gen_embedded_dictionary_data#host',
         '../../dictionary/system/system_dictionary.gyp:system_dictionary',
+        '../../net/net.gyp:jsoncpp',
         '../../testing/testing.gyp:gtest_main',
-        '<(DEPTH)/third_party/jsoncpp/jsoncpp.gyp:jsoncpp',
       ],
     },
     # Test cases meta target: this target is referred from gyp/tests.gyp
     {
       'target_name': 'skk_util_all_test',
       'type': 'none',
-      'conditions': [
-        ['enable_extra_unit_tests==1', {
-          'dependencies': [
-            # Temporarily disable following tests because JsonCpp still
-            # cannot be built on OSS Mozc.
-            # TODO(nona): Support building JsonCpp on OSS Mozc and remove the
-            #     condtion above.
-            'skk_util_test',
-          ],
-        }],
+      'dependencies': [
+        'skk_util_test',
       ],
     },
   ],

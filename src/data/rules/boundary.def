@@ -23,31 +23,65 @@
 # Users tend to input verb 基本形 in one segment
 SUFFIX 動詞,自立,*,*,*,基本形        0
 
+SUFFIX 名詞,形容動詞語幹,            300
+
 PREFIX 名詞,非自立,副詞可能,*,*,*,際 1000
-# want to premote "件"
+# want to promote "件"
 PREFIX 名詞,接尾,地域,*,*,*,県       1500
 # user may input 123回 as 123|回
-PREFIX 名詞,接尾,助数詞,*,*,*,*      1000
-PREFIX 名詞,接尾,特殊                2000
+PREFIX 名詞,接尾,助数詞              1000
+PREFIX 名詞,接尾,特殊,               2000
+PREFIX 名詞,接尾,一般,               1000
 PREFIX 名詞,接尾,                    1000
 PREFIX 助詞,格助詞,引用,*,*,*,と     2000
 PREFIX 助詞,(格助詞|連体化)          3000
 PREFIX 動詞,自立,*,*,サ変・スル,*    1000
+
 # general noun might be buried in personal names
-PREFIX 名詞,固有名詞,人名            1000
+# especially we have a lot of first name variants
+SUFFIX 名詞,接尾可能,人名            0
+SUFFIX 名詞,固有名詞,人名,名         1000
+PREFIX 名詞,固有名詞,人名,名         1000
+PREFIX 名詞,固有名詞,人名            800
+
+PREFIX 名詞,サ変接続, 0
+SUFFIX 名詞,一般, 200
 PREFIX 名詞,(数|固有名詞|副詞可能|代名詞|一般|サ変接続), 0
+#PREFIX 名詞,(数|固有名詞|副詞可能|代名詞|一般|サ変接続), 0
 # さかれていた => さ|枯れていた
 PREFIX 副詞,助詞類接続,*,*,*,*,さ    2000
-PREFIX (動詞,自立|形容詞,自立|副詞|連体詞),   0
+#PREFIX (形容詞,自立|副詞|連体詞),   0
+PREFIX (形容詞,自立|連体詞),   0
 
-# 会いた|がる
-SUFFIX 助動詞,*,*,*,特殊・タイ,ガル接続,たい 7000
-SUFFIX 名詞,(数|固有名詞|副詞可能|代名詞|一般|サ変接続|接尾), 0
-SUFFIX (副詞|連体詞), 0
+SUFFIX 名詞,一般,*,*,*,*,*,気        500
+
+# 出抵抗 from でていこう
+SUFFIX 名詞,サ変接続,*,*,*,*,*,抵抗  3000
+
+# おうち
+SUFFIX 名詞,非自立,副詞可能          1000
+
+# 嘆じた
+PREFIX 助動詞,*,*,*,特殊・タ,基本形	     3000
+
+SUFFIX 名詞,固有名詞,一般         0
+SUFFIX 名詞,(数|固有名詞|副詞可能|代名詞|一般|サ変接続|接尾), 200
+#SUFFIX (副詞|連体詞), 0
+SUFFIX 連体詞, 0
 # These suffixes tend to be input as one word.
 SUFFIX 接頭詞,名詞接続,*,*,*,*,*,(各|約|超|当|同|全|元|新|等)  0
 # These suffixes tend to be input as one word, but weaker than previous words.
 SUFFIX 接頭詞,名詞接続,*,*,*,*,*,(低|未|非|高|大) 1000
+
+# 代用品
+# major 接頭辞 will be covered by compound
+PREFIX 接頭詞,名詞接続               200
+
+PREFIX 動詞,自立　　　　　　　　　　  200
+PREFIX 動詞,非自立                    3000
+
+# 会いた|がる
+SUFFIX 助動詞,*,*,*,特殊・タイ,ガル接続,たい 7000
 SUFFIX 接頭詞, 4000
 
 #####################################################

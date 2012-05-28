@@ -44,6 +44,7 @@ namespace composer {
 
 class CompositionInput;
 class TransliteratorInterface;
+class Table;
 
 // This class contains a unit of composition string.  The unit consists of
 // conversion, pending and raw strings.  Every unit should be the shortest
@@ -52,7 +53,8 @@ class TransliteratorInterface;
 // "ka"} and {conversion: "っ", pending: "t", raw: "tt"}.
 class CharChunk {
  public:
-  CharChunk();
+  CharChunk(const TransliteratorInterface *transliterator,
+            const Table *table);
 
   void Clear();
 
@@ -61,19 +63,15 @@ class CharChunk {
   // Append the characters representing this CharChunk accoring to the
   // transliterator.  If the transliterator is NULL, the local
   // transliterator specified via SetTransliterator is used.
-  void AppendResult(const Table &table,
-                    const TransliteratorInterface *transliterator,
+  void AppendResult(const TransliteratorInterface *transliterator,
                     string *result) const;
-  void AppendTrimedResult(const Table &table,
-                          const TransliteratorInterface *transliterator,
+  void AppendTrimedResult(const TransliteratorInterface *transliterator,
                           string *result) const;
-  void AppendFixedResult(const Table &table,
-                         const TransliteratorInterface *transliterator,
+  void AppendFixedResult(const TransliteratorInterface *transliterator,
                          string *result) const;
 
   // Get possible results from current chunk
-  void GetExpandedResults(const Table &table,
-                          const TransliteratorInterface *transliterator,
+  void GetExpandedResults(const TransliteratorInterface *transliterator,
                           set<string> *results) const;
   bool IsFixed() const;
 
@@ -81,7 +79,7 @@ class CharChunk {
   // when |input| is appended.
   bool IsConvertible(
       const TransliteratorInterface *transliterator,
-      const Table &table,
+      const Table *table,
       const string &input) const;
 
   // Combines all fields with |left_chunk|.
@@ -92,25 +90,26 @@ class CharChunk {
   void Combine(const CharChunk& left_chunk);
 
   // Return true if this char chunk accepts additional characters with
-  // the specified transliterator.
-  bool IsAppendable(const TransliteratorInterface *transliterator) const;
+  // the specified transliterator and the table.
+  bool IsAppendable(const TransliteratorInterface *transliterator,
+                    const Table *table) const;
 
+  // Split CharChunk at |position| and set split new chunk to |left_new_chunk|.
+  // CharChunk doesn't have ownership of the new chunk.
   bool SplitChunk(const TransliteratorInterface *transliterator,
                   size_t position,
-                  CharChunk* left_new_chunk);
+                  CharChunk **left_new_chunk);
 
   // Return true if this chunk should be commited immediately.  This
   // function refers DIRECT_INPUT attribute.
   bool ShouldCommit() const;
 
-  bool ShouldInsertNewChunk(const Table &table,
-                            const CompositionInput &input) const;
-  void AddInput(const Table &table, string *input);
+  bool ShouldInsertNewChunk(const CompositionInput &input) const;
+  void AddInput(string *input);
   void AddConvertedChar(string *input);
-  void AddInputAndConvertedChar(const Table &table,
-                                string *key,
+  void AddInputAndConvertedChar(string *key,
                                 string *converted_char);
-  void AddCompositionInput(const Table &table, CompositionInput *input);
+  void AddCompositionInput(CompositionInput *input);
 
   void SetTransliterator(const TransliteratorInterface *transliterator);
   const TransliteratorInterface *GetTransliterator(
@@ -145,15 +144,16 @@ class CharChunk {
   bool has_status(uint32 status_mask) const;
   void clear_status();
 
-  void CopyFrom(const CharChunk &src);
+  CharChunk *Clone() const;
 
   // Test only
-  bool AddInputInternal(const Table &table, string *input);
+  bool AddInputInternal(string *input);
 
  private:
-  FRIEND_TEST(CharChunkTest, CopyFrom);
+  FRIEND_TEST(CharChunkTest, Clone);
 
   const TransliteratorInterface *transliterator_;
+  const Table *table_;
 
   string raw_;
   string conversion_;

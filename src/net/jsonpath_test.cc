@@ -45,7 +45,7 @@ class JsonPathTest : public testing::Test {
     Json::Reader reader;
     Json::Value root;
     EXPECT_TRUE(reader.parse(json, root))
-        << reader.getFormatedErrorMessages()
+        << reader.getFormattedErrorMessages()
         << " "
         << json;
     vector<const Json::Value *> output;

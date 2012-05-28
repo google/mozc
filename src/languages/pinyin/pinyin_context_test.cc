@@ -97,15 +97,14 @@ class PinyinContextTest : public testing::Test {
   }
 
   bool FindCandidateIndex(const string &expected_candidate, size_t *index) {
-    vector<string> actual_candidates;
-    context_->GetCandidates(&actual_candidates);
-
-    for (size_t i = 0; i < actual_candidates.size(); ++i) {
-      if (actual_candidates[i] == expected_candidate) {
+    Candidate candidate;
+    for (size_t i = 0; context_->GetCandidate(i, &candidate); ++i) {
+      if (candidate.text == expected_candidate) {
         *index = i;
         return true;
       }
     }
+
     LOG(ERROR) << "Can't find candidate index";
     return false;
   }
@@ -142,13 +141,11 @@ TEST_F(PinyinContextTest, InsertAndClear) {
     CheckTextAccessors("", "nihao", "", kNihao, "", "ni hao|");
     EXPECT_EQ(0, context_->focused_candidate_index());
     EXPECT_EQ(5, context_->cursor());
-    EXPECT_LT(0, context_->candidates_size());
+    EXPECT_TRUE(context_->HasCandidate(0));
 
-    vector<string> candidates;
-    context_->GetCandidates(&candidates);
-    ASSERT_LT(0, candidates.size());
-    EXPECT_EQ(candidates.size(), context_->candidates_size());
-    EXPECT_EQ(kNihao, candidates[0]);
+    Candidate candidate;
+    ASSERT_TRUE(context_->GetCandidate(0, &candidate));
+    EXPECT_EQ(kNihao, candidate.text);
   }
 
   {
@@ -157,7 +154,7 @@ TEST_F(PinyinContextTest, InsertAndClear) {
     CheckTextAccessors("", "", "", "", "", "");
     EXPECT_EQ(0, context_->focused_candidate_index());
     EXPECT_EQ(0, context_->cursor());
-    EXPECT_EQ(0, context_->candidates_size());
+    EXPECT_FALSE(context_->HasCandidate(0));
   }
 }
 
@@ -274,7 +271,7 @@ TEST_F(PinyinContextTest, ClearTest) {
 
 TEST_F(PinyinContextTest, FocusCandidate) {
   InsertCharacterChars("nihao");
-  ASSERT_LT(3, context_->candidates_size());
+  ASSERT_TRUE(context_->HasCandidate(2));
   ASSERT_EQ(0, context_->focused_candidate_index());
 
   {

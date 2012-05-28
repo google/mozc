@@ -124,13 +124,13 @@ TEST(ImeContextTest, CopyContext) {
   {
     ImeContext source;
     source.set_composer(new composer::Composer);
-    source.mutable_composer()->SetTableForUnittest(&table);
+    source.mutable_composer()->SetTable(&table);
     source.set_converter(
         new SessionConverter(ConverterFactory::GetConverter()));
 
     ImeContext destination;
     destination.set_composer(new composer::Composer);
-    destination.mutable_composer()->SetTableForUnittest(&table);
+    destination.mutable_composer()->SetTable(&table);
     destination.set_converter(
         new SessionConverter(ConverterFactory::GetConverter()));
 
@@ -158,13 +158,13 @@ TEST(ImeContextTest, CopyContext) {
     source.set_create_time(kCreateTime);
     source.set_last_command_time(kLastCommandTime);
     source.set_composer(new composer::Composer);
-    source.mutable_composer()->SetTableForUnittest(&table);
+    source.mutable_composer()->SetTable(&table);
     source.set_converter(
         new SessionConverter(ConverterFactory::GetConverter()));
 
     ImeContext destination;
     destination.set_composer(new composer::Composer);
-    destination.mutable_composer()->SetTableForUnittest(&table);
+    destination.mutable_composer()->SetTable(&table);
     destination.set_converter(
         new SessionConverter(ConverterFactory::GetConverter()));
 

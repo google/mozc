@@ -123,7 +123,7 @@ class ComposerTest : public testing::Test {
     config::ConfigHandler::SetConfig(config);
     table_.reset(new Table);
     composer_.reset(new Composer);
-    composer_->SetTableForUnittest(table_.get());
+    composer_->SetTable(table_.get());
     CharacterFormManager::GetCharacterFormManager()->SetDefaultRule();
   }
 
@@ -707,6 +707,36 @@ TEST_F(ComposerTest, GetQueriesForPredictionRoman) {
   }
 }
 
+TEST_F(ComposerTest, GetQueriesForPredictionMobile) {
+  // "い"
+  table_->AddRule("_", "", "\xe3\x81\x84");
+  // "い*", "ぃ"
+  table_->AddRule("\xe3\x81\x84\x2a", "", "\xe3\x81\x83");
+  // "ぃ*", "い"
+  table_->AddRule("\xe3\x81\x83\x2a", "", "\xe3\x81\x84");
+  // "と"
+  table_->AddRule("$", "", "\xe3\x81\xa8");
+  // "と*", "ど"
+  table_->AddRule("\xe3\x81\xa8\x2a", "", "\xe3\x81\xa9");
+  // "ど*", "と"
+  table_->AddRule("\xe3\x81\xa9\x2a", "", "\xe3\x81\xa8");
+
+  {
+    string base, preedit;
+    set<string> expanded;
+    composer_->EditErase();
+    composer_->InsertCharacter("_$");
+    composer_->GetQueriesForPrediction(&base, &expanded);
+    composer_->GetStringForPreedit(&preedit);
+    // "い"
+    EXPECT_EQ("\xe3\x81\x84", base);
+    EXPECT_EQ(2, expanded.size());
+    // "と"
+    EXPECT_TRUE(expanded.end() != expanded.find("\xe3\x81\xa8"));
+    // "ど"
+    EXPECT_TRUE(expanded.end() != expanded.find("\xe3\x81\xa9"));
+  }
+}
 
 TEST_F(ComposerTest, GetStringFunctions_ForN) {
   table_->AddRule("a", "[A]", "");
@@ -967,7 +997,7 @@ TEST_F(ComposerTest, InsertCharacterKeyEventWithInputMode) {
   }
 
   composer_.reset(new Composer);
-  composer_->SetTableForUnittest(table_.get());
+  composer_->SetTable(table_.get());
 
   {
     // "a" → "あ" (Hiragana)
@@ -1470,7 +1500,7 @@ TEST_F(ComposerTest, AutoIMETurnOffEnabled) {
   }
 
   composer_.reset(new Composer);
-  composer_->SetTableForUnittest(table_.get());
+  composer_->SetTable(table_.get());
 
   {  // google
     InsertKey("g", composer_.get());
@@ -1544,7 +1574,7 @@ TEST_F(ComposerTest, AutoIMETurnOffEnabled) {
   config.set_shift_key_mode_switch(config::Config::OFF);
   config::ConfigHandler::SetConfig(config);
   composer_.reset(new Composer);
-  composer_->SetTableForUnittest(table_.get());
+  composer_->SetTable(table_.get());
 
   {  // Google
     InsertKey("G", composer_.get());

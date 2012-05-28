@@ -32,6 +32,7 @@
 
 
 #include <sys/types.h>
+#include "base/compiler_specific.h"
 
 // basic macros
 typedef signed char         int8;
@@ -52,6 +53,11 @@ typedef long long           int64;
 #define atoi32 atoi
 #define strto32 strtol
 #define strto64 strtoll
+
+#if !defined(COMPILER_MSVC) || MOZC_MSVC_VERSION_GE(16, 0)
+// MSVCs older than VC2010 don't have stdint.h header.
+#include <stdint.h>
+#endif  // !COMPILER_MSVC or MSVC 2010+
 
 #ifdef OS_WINDOWS
 #include <stdarg.h>

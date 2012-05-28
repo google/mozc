@@ -55,9 +55,12 @@
 #include "dictionary/pos_matcher.h"
 #include "prediction/predictor_interface.h"
 #include "prediction/suggestion_filter.h"
+#include "prediction/zero_query_number_data.h"
 #include "session/commands.pb.h"
+#include "session/request_handler.h"
 
 // This flag is set by predictor.cc
+// We can remove this after the ambiguity expansion feature get stable.
 DEFINE_bool(enable_expansion_for_dictionary_predictor,
             false,
             "enable ambiguity expansion for dictionary_predictor");
@@ -70,6 +73,43 @@ namespace {
 const size_t kSuggestionMaxNodesSize = 256;
 const size_t kPredictionMaxNodesSize = 100000;
 
+bool IsNumber(const string &str) {
+  for (string::const_iterator it = str.begin(); it != str.end(); ++it) {
+    if (!isdigit(*it)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+void GetNumberSuffixArray(const string &history_input,
+                          vector<string> *suffixes) {
+  DCHECK(suffixes);
+  const char kDefault[] = "default";
+  const string default_str(kDefault);
+
+  int default_num = -1;
+  int suffix_num = -1;
+
+  for (int i = 0; ZeroQueryNum[i]; ++i) {
+    if (default_str == ZeroQueryNum[i][0]) {
+      default_num = i;
+    } else if (history_input == ZeroQueryNum[i][0]) {
+      suffix_num = i;
+    }
+  }
+  DCHECK_GE(default_num, 0);
+
+  if (suffix_num != -1) {
+    for (int j = 1; ZeroQueryNum[suffix_num][j]; ++j) {
+      suffixes->push_back(ZeroQueryNum[suffix_num][j]);
+    }
+  }
+  for (int j = 1; ZeroQueryNum[default_num][j]; ++j) {
+    suffixes->push_back(ZeroQueryNum[default_num][j]);
+  }
+  DCHECK_GE(suffixes->size(), 0);
+}
 }  // namespace
 
 DictionaryPredictor::DictionaryPredictor(
@@ -84,7 +124,8 @@ DictionaryPredictor::DictionaryPredictor(
       suffix_dictionary_(suffix_dictionary),
       connector_(connector),
       segmenter_(segmenter),
-      counter_suffix_word_id_(pos_matcher.GetCounterSuffixWordId()) {}
+      counter_suffix_word_id_(pos_matcher.GetCounterSuffixWordId()),
+      predictor_name_("DictionaryPredictor") {}
 
 DictionaryPredictor::~DictionaryPredictor() {}
 
@@ -151,9 +192,8 @@ bool DictionaryPredictor::AggregatePrediction(
 void DictionaryPredictor::SetCost(const Segments &segments,
                                   vector<Result> *results) const {
   DCHECK(results);
-  bool mixed_conversion = false;
 
-  if (mixed_conversion) {
+  if (GET_REQUEST(mixed_conversion)) {
     SetLMCost(segments, results);
   } else {
     SetPredictionCost(segments, results);
@@ -165,9 +205,10 @@ void DictionaryPredictor::SetCost(const Segments &segments,
 void DictionaryPredictor::RemovePrediction(const Segments &segments,
                                            vector<Result> *results) const {
   DCHECK(results);
-  bool mixed_conversion = false;
 
-  if (!mixed_conversion) {
+  if (!GET_REQUEST(mixed_conversion)) {
+    // Currently, we don't have spelling correction feature on mobile,
+    // so we don't run RemoveMissSpelledCandidates.
     const string &input_key = segments.conversion_segment(0).key();
     const size_t input_key_len = Util::CharsLen(input_key);
     RemoveMissSpelledCandidates(input_key_len, results);
@@ -178,7 +219,7 @@ bool DictionaryPredictor::AddPredictionToCandidates(
     Segments *segments, vector<Result> *results) const {
   DCHECK(segments);
   DCHECK(results);
-  bool mixed_conversion = false;
+  const bool mixed_conversion = GET_REQUEST(mixed_conversion);
 
   const string &input_key = segments->conversion_segment(0).key();
   const size_t input_key_len = Util::CharsLen(input_key);
@@ -431,6 +472,7 @@ void DictionaryPredictor::SetLMCost(const Segments &segments,
                                     vector<Result> *results) const {
   DCHECK(results);
 
+  // ranking for mobile
   int rid = 0;  // 0 (BOS) is default
   int prev_cost = 0;
   if (segments.history_segments_size() > 0) {
@@ -451,6 +493,9 @@ void DictionaryPredictor::SetLMCost(const Segments &segments,
     const PredictionType type = (*results)[i].type;
     DCHECK(node);
     int cost = GetLMCost(type, *node, rid);
+    // Make exact candidates to have higher ranking.
+    // Because for mobile, suggestion is the main candidates and
+    // users expect the candidates for the input key on the candidates.
     if (type & UNIGRAM) {
       const size_t input_key_len = Util::CharsLen(
           segments.conversion_segment(0).key());
@@ -679,7 +724,7 @@ void DictionaryPredictor::AggregateRealtimeConversion(
 
   // set how many candidates we want to obtain with
   // immutable converter.
-  bool mixed_conversion = false;
+  const bool mixed_conversion = GET_REQUEST(mixed_conversion);
   const size_t realtime_candidates_size = GetRealtimeCandidateMaxSize(
       *segments,
       mixed_conversion,
@@ -752,7 +797,7 @@ void DictionaryPredictor::AggregateUnigramPrediction(
   DCHECK(allocator);
   DCHECK(!segments->conversion_segment(0).key().empty());
 
-  bool mixed_conversion = false;
+  const bool mixed_conversion = GET_REQUEST(mixed_conversion);
   const size_t cutoff_threshold = GetUnigramCandidateCutoffThreshold(
       *segments,
       mixed_conversion);
@@ -957,11 +1002,49 @@ void DictionaryPredictor::AggregateSuffixPrediction(
 
   DCHECK(allocator);
 
+  size_t history_size = segments->history_segments_size();
+  bool has_number_history = false;
+
+  if (history_size) {
+    const string &history_key =
+        segments->history_segment(history_size - 1).key();
+    has_number_history = IsNumber(history_key);
+  }
+
+  if (has_number_history && segments->conversion_segment(0).key().size() == 0) {
+    const string &history_key =
+        segments->history_segment(history_size - 1).key();
+    vector<string> suffixes;
+    GetNumberSuffixArray(history_key, &suffixes);
+    DCHECK_GT(suffixes.size(), 0);
+    Node *result = NULL;
+    int cost = 0;
+
+    for (vector<string>::const_iterator it = suffixes.begin();
+         it != suffixes.end(); ++it) {
+      // Increment cost to show the candidates in order.
+      const int kSuffixPenalty = 10;
+
+      Node *node = allocator->NewNode();
+      DCHECK(node);
+      node->Init();
+      node->wcost = cost;
+      node->key = *it;  // Filler; same as the value
+      node->value = *it;
+      node->lid = counter_suffix_word_id_;
+      node->rid = counter_suffix_word_id_;
+      node->bnext = result;
+      result = node;
+      results->push_back(Result(node, SUFFIX));
+      cost += kSuffixPenalty;
+    }
+  } else {
     const Node *node = GetPredictiveNodes(
         suffix_dictionary_, "", request, *segments, allocator);
     for (; node != NULL; node = node->bnext) {
       results->push_back(Result(node, SUFFIX));
     }
+  }
 }
 
 bool DictionaryPredictor::IsZipCodeRequest(const string &key) const {
@@ -1006,7 +1089,7 @@ DictionaryPredictor::GetPredictionType(const Segments &segments) const {
   // support realtime conversion.
   const size_t kMaxKeySize = 300;   // 300 bytes in UTF8
 
-  bool mixed_conversion = false;
+  const bool mixed_conversion = GET_REQUEST(mixed_conversion);
 
   if (segments.request_type() == Segments::PARTIAL_SUGGESTION) {
     result |= REALTIME;
@@ -1021,7 +1104,7 @@ DictionaryPredictor::GetPredictionType(const Segments &segments) const {
     return static_cast<PredictionType>(result);
   }
 
-  bool zero_query_suggestion = false;
+  const bool zero_query_suggestion = GET_REQUEST(zero_query_suggestion);
 
   const size_t key_len = Util::CharsLen(key);
   if (key_len == 0 && !zero_query_suggestion) {

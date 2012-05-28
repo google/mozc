@@ -85,15 +85,6 @@ bool KeyEventUtil::GetKeyInformation(const KeyEvent &key_event,
   return true;
 }
 
-void KeyEventUtil::NormalizeCaps(const KeyEvent &key_event,
-                                 KeyEvent *new_key_event) {
-  DCHECK(new_key_event);
-
-  const uint32 kIgnorableModifierMask = KeyEvent::CAPS;
-
-  NormalizeModifiersInternal(key_event, kIgnorableModifierMask, new_key_event);
-}
-
 void KeyEventUtil::NormalizeModifiers(const KeyEvent &key_event,
                                       KeyEvent *new_key_event) {
   DCHECK(new_key_event);
@@ -107,15 +98,7 @@ void KeyEventUtil::NormalizeModifiers(const KeyEvent &key_event,
        KeyEvent::LEFT_CTRL | KeyEvent::RIGHT_CTRL |
        KeyEvent::LEFT_SHIFT | KeyEvent::RIGHT_SHIFT);
 
-  NormalizeModifiersInternal(key_event, kIgnorableModifierMask, new_key_event);
-}
-
-void KeyEventUtil::NormalizeModifiersInternal(
-    const KeyEvent &key_event, uint32 ignorable_modifier_mask,
-    KeyEvent *new_key_event) {
-  DCHECK(new_key_event);
-
-  RemoveModifiers(key_event, ignorable_modifier_mask, new_key_event);
+  RemoveModifiers(key_event, kIgnorableModifierMask, new_key_event);
 
   // Reverts the flip of alphabetical key events caused by CapsLock.
   const uint32 original_modifiers = GetModifiers(key_event);

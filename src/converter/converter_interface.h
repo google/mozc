@@ -68,16 +68,6 @@ class ConverterInterface {
   virtual bool StartPrediction(Segments *segments,
                                const string &key) const = 0;
 
-  // DEPRECATED. Start prediction with composer.
-  // TODO(noriyukit): Remove this method.
-  virtual bool StartPredictionWithComposer(
-      Segments *segments, const composer::Composer *composer) const {
-    DCHECK(composer);
-    DLOG(WARNING) << ("StartPredictionWithComposer() is deprecated. "
-                      "Use StartPredictionForRequest() instead.");
-    return StartPredictionForRequest(ConversionRequest(composer), segments);
-  }
-
   // Starts suggestion for given request.
   virtual bool StartSuggestionForRequest(const ConversionRequest &request,
                                          Segments *segments) const = 0;
@@ -85,16 +75,6 @@ class ConverterInterface {
   // Start suggestion with key (request_type = SUGGESTION)
   virtual bool StartSuggestion(Segments *segments,
                                const string &key) const = 0;
-
-  // DEPRECATED. Start suggestion with composer.
-  // TODO(noriyukit): Remove this method.
-  virtual bool StartSuggestionWithComposer(
-      Segments *segments, const composer::Composer *composer) const {
-    DCHECK(composer);
-    DLOG(WARNING) << ("StartSuggestionWithComposer() is deprecated. "
-                      "Use StartSuggestionForRequest() instead.");
-    return StartSuggestionForRequest(ConversionRequest(composer), segments);
-  }
 
   // Starts partial prediction for given request.
   virtual bool StartPartialPredictionForRequest(
@@ -104,18 +84,6 @@ class ConverterInterface {
   virtual bool StartPartialPrediction(Segments *segments,
                                       const string &key) const = 0;
 
-  // DEPRECATED.
-  // Start prediction with composer (request_type = PARTIAL_PREDICTION)
-  // TODO(noriyukit): Remove this method.
-  virtual bool StartPartialPredictionWithComposer(
-      Segments *segments, const composer::Composer *composer) const {
-    DCHECK(composer);
-    DLOG(WARNING) << ("StartPartialPredictionWithComposer() is deprecated. "
-                      "Use StartPartialPredictionForRequest() instead.");
-    return StartPartialPredictionForRequest(ConversionRequest(composer),
-                                            segments);
-  }
-
   // Starts partial suggestion for given request.
   virtual bool StartPartialSuggestionForRequest(
       const ConversionRequest &request, Segments *segments) const = 0;
@@ -123,18 +91,6 @@ class ConverterInterface {
   // Start suggestion with key (request_type = PARTIAL_SUGGESTION)
   virtual bool StartPartialSuggestion(Segments *segments,
                                       const string &key) const = 0;
-
-  // DEPRECATED.
-  // Start suggestion with composer (request_type = PARTIAL_SUGGESTION)
-  // TODO(noriyukit): Remove this method.
-  virtual bool StartPartialSuggestionWithComposer(
-      Segments *segments, const composer::Composer *composer) const {
-    DCHECK(composer);
-    DLOG(WARNING) << ("StartPartialSuggestionWithComposer() is deprecated. "
-                      "Use StartPartialSuggestionForRequest() instead.");
-    return StartPartialSuggestionForRequest(ConversionRequest(composer),
-                                            segments);
-  }
 
   // Finish conversion.
   // Segments are cleared. Context is not clreared

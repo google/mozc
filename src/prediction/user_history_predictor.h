@@ -51,12 +51,15 @@ class EncryptedStringStorage;
 
 class ConversionRequest;
 class DictionaryInterface;
+class POSMatcher;
 class Segment;
 class Segments;
+class SuppressionDictionary;
 class UserHistoryPredictorSyncer;
-class POSMatcher;
 
+#ifndef __native_client__
 // Added serialization method for UserHistory.
+// TODO(horo): implement UserHistoryStorage for NaCl.
 class UserHistoryStorage : public mozc::user_history_predictor::UserHistory {
  public:
   explicit UserHistoryStorage(const string &filename);
@@ -71,6 +74,7 @@ class UserHistoryStorage : public mozc::user_history_predictor::UserHistory {
  private:
   scoped_ptr<storage::EncryptedStringStorage> storage_;
 };
+#endif  // __native_client__
 
 // UserHistoryPredictor is NOT thread safe.
 // Currently, all methods of UserHistoryPredictor is called
@@ -80,35 +84,38 @@ class UserHistoryStorage : public mozc::user_history_predictor::UserHistory {
 class UserHistoryPredictor : public PredictorInterface {
  public:
   UserHistoryPredictor(const DictionaryInterface *dictionary,
-                       const POSMatcher *pos_matcher);
+                       const POSMatcher *pos_matcher,
+                       const SuppressionDictionary *suppression_dictionary);
   virtual ~UserHistoryPredictor();
 
-  bool Predict(Segments *segments) const;
-  bool PredictForRequest(const ConversionRequest &request,
-                         Segments *segments) const;
+  virtual bool Predict(Segments *segments) const;
+  virtual bool PredictForRequest(const ConversionRequest &request,
+                                 Segments *segments) const;
 
   // Hook(s) for all mutable operations
-  void Finish(Segments *segments);
+  virtual void Finish(Segments *segments);
 
   // Revert last Finish operation
-  void Revert(Segments *segments);
+  virtual void Revert(Segments *segments);
 
   // Sync user history data to local file.
   // You can call either Save() or AsyncSave().
-  bool Sync();
+  virtual bool Sync();
 
   // Reload from local disk.
   // Do not call Sync() before Reload().
-  bool Reload();
+  virtual bool Reload();
 
   // clear LRU data
-  bool ClearAllHistory();
+  virtual bool ClearAllHistory();
 
   // clear unused data
-  bool ClearUnusedHistory();
+  virtual bool ClearUnusedHistory();
 
   // Get user history filename.
   static string GetUserHistoryFileName();
+
+  virtual const string &GetPredictorName() const { return predictor_name_; }
 
   // Used in user_history_sync_util.
   typedef user_history_predictor::UserHistory::Entry Entry;
@@ -174,6 +181,8 @@ class UserHistoryPredictor : public PredictorInterface {
   FRIEND_TEST(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanN);
   FRIEND_TEST(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanRandom);
   FRIEND_TEST(UserHistoryPredictorTest, GetInputKeyFromSegmentsShouldNotCrash);
+  FRIEND_TEST(UserHistoryPredictorTest, GetInputKeyFromSegmentsFlickN);
+  FRIEND_TEST(UserHistoryPredictorTest, GetInputKeyFromSegments12KeyN);
   FRIEND_TEST(UserHistoryPredictorTest, GetInputKeyFromSegmentsKana);
 
   // Load user history data to LRU from local file
@@ -228,7 +237,7 @@ class UserHistoryPredictor : public PredictorInterface {
                                 const Entry &result_entry);
 
   // return true if entry is DEFAULT_ENTRY and doesn't have removed flag.
-  static bool IsValidEntry(const Entry &entry);
+  bool IsValidEntry(const Entry &entry) const;
 
   // return "tweaked" score of result_entry.
   // the score is basically determined by "last_access_time", (a.k.a,
@@ -352,10 +361,14 @@ class UserHistoryPredictor : public PredictorInterface {
 
   const DictionaryInterface *dictionary_;
   const POSMatcher *pos_matcher_;
+  const SuppressionDictionary *suppression_dictionary_;
+  const string predictor_name_;
 
   bool updated_;
   scoped_ptr<DicCache> dic_;
+#ifndef __native_client__
   mutable scoped_ptr<UserHistoryPredictorSyncer> syncer_;
+#endif  // __native_client__
 };
 }  // namespace mozc
 

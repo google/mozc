@@ -104,7 +104,8 @@
         # shared among *host* binaries and *target* binaries. This means that
         # you should implement *host* binaries by using limited libraries
         # which are also available on NDK.
-        ['OS=="linux" and target_platform!="Android"', {
+        ['OS=="linux" and target_platform!="Android" and '
+         'not (target_platform=="NaCl" and _toolset=="target")', {
           'defines': [
             'HAVE_LIBRT=1',
           ],
@@ -118,6 +119,14 @@
           'sources!': [
             'iconv.cc',
             'process.cc',
+          ],
+        }],
+        ['target_platform=="NaCl" and _toolset=="target"', {
+          'sources!': [
+            'crash_report_handler.cc',
+            'crash_report_util.cc',
+            'process.cc',
+            'process_mutex.cc',
           ],
         }],
       ],
@@ -244,6 +253,12 @@
               '<!@(<(pkg_config_command) --libs-only-l openssl)',
             ],
           },
+        }],
+        ['target_platform=="NaCl" and _toolset=="target"', {
+          'sources!': [
+            'encryptor.cc',
+            'password_manager.cc',
+          ],
         }],
       ],
     },

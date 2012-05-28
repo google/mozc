@@ -37,8 +37,6 @@ namespace renderer {
 namespace mac {
 class RendererBaseWindow {
  public:
-  explicit RendererBaseWindow();
-  ~RendererBaseWindow();
   Size GetWindowSize() const;
   virtual void Hide();
   virtual void Show();
@@ -46,6 +44,9 @@ class RendererBaseWindow {
   virtual bool IsVisible();
 
  protected:
+  RendererBaseWindow();
+  virtual ~RendererBaseWindow();
+
   scoped_nsobject<NSView> view_;
   WindowRef window_;
   virtual void InitWindow();

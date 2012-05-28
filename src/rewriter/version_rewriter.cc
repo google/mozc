@@ -39,6 +39,7 @@
 #include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "session/commands.pb.h"
+#include "session/request_handler.h"
 
 namespace mozc {
 namespace {
@@ -113,6 +114,9 @@ VersionRewriter::VersionRewriter() {}
 VersionRewriter::~VersionRewriter() {}
 
 int VersionRewriter::capability() const {
+  if (GET_REQUEST(mixed_conversion)) {
+    return RewriterInterface::ALL;
+  }
   return RewriterInterface::CONVERSION;
 }
 

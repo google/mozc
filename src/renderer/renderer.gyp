@@ -161,7 +161,6 @@
         'renderer_style_handler.cc',
       ],
       'dependencies': [
-        '../testing/testing.gyp:gtest_main',
         'renderer_protocol',
       ],
       'variables': {
@@ -261,7 +260,6 @@
             '../net/net.gyp:jsonpath',
             '../net/net.gyp:http_client',
             '../session/session_base.gyp:session_protocol',
-            '<(DEPTH)/third_party/jsoncpp/jsoncpp.gyp:jsoncpp',
             'renderer_protocol',
           ],
           'include_dirs' : [

@@ -42,8 +42,10 @@
 #include "config/config_handler.h"
 #include "config/config.pb.h"
 #include "converter/user_data_manager_interface.h"
+#include "composer/table.h"
 #include "session/commands.pb.h"
 #include "session/generic_storage_manager.h"
+#include "session/request_handler.h"
 #include "session/session_factory_manager.h"
 #include "session/session_interface.h"
 #include "session/session_observer_handler.h"
@@ -117,7 +119,8 @@ SessionHandler::SessionHandler()
       session_factory_(
           session::SessionFactoryManager::GetSessionFactory()),
       observer_handler_(new session::SessionObserverHandler()),
-      stopwatch_(new Stopwatch) {
+      stopwatch_(new Stopwatch),
+      table_manager_(new composer::TableManager) {
   if (FLAGS_restricted) {
     VLOG(1) << "Server starts with restricted mode";
     // --restricted is almost always specified when mozc_client is inside Job.
@@ -176,11 +179,15 @@ void SessionHandler::ReloadSession() {
 }
 
 void SessionHandler::ReloadConfig() {
+  const composer::Table *table = table_manager_->GetTable(
+      commands::RequestHandler::GetRequest(),
+      config::ConfigHandler::GetConfig());
   for (SessionElement *element =
            const_cast<SessionElement *>(session_map_->Head());
        element != NULL; element = element->next) {
     if (element->value != NULL) {
       element->value->ReloadConfig();
+      element->value->SetTable(table);
     }
   }
 }
@@ -282,6 +289,20 @@ bool SessionHandler::SetImposedConfig(commands::Command *command) {
   return true;
 }
 
+bool SessionHandler::SetRequest(commands::Command *command) {
+  VLOG(1) << "Setting client's request";
+  if (!command->input().has_request()) {
+    LOG(WARNING) << "request is empty";
+    return false;
+  }
+
+  const mozc::commands::Request &reqeust = command->input().request();
+  commands::RequestHandler::SetRequest(reqeust);
+
+  Reload(command);
+
+  return true;
+}
 
 bool SessionHandler::StartCloudSync(commands::Command *command) {
   VLOG(1) << "Start cloud sync operation";
@@ -454,6 +475,9 @@ bool SessionHandler::EvalCommand(commands::Command *command) {
       break;
     case commands::Input::SET_IMPOSED_CONFIG:
       eval_succeeded = SetImposedConfig(command);
+      break;
+    case commands::Input::SET_REQUEST:
+      eval_succeeded = SetRequest(command);
       break;
     case commands::Input::SHUTDOWN:
       eval_succeeded = Shutdown(command);

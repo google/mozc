@@ -40,6 +40,12 @@
 namespace mozc {
 namespace pinyin {
 
+// TODO(hsumita): Appends candidate type to |Candidate|.
+// Candidate type is used to indicates how the candidate is generated.
+struct Candidate {
+  string text;
+};
+
 class PinyinContextInterface {
  public:
   virtual ~PinyinContextInterface() {}
@@ -97,9 +103,11 @@ class PinyinContextInterface {
 
   virtual size_t cursor() const = 0;
   virtual size_t focused_candidate_index() const = 0;
-  virtual size_t candidates_size() const = 0;
-  // TODO(hsumita): Support candidate type
-  virtual void GetCandidates(vector<string> *candidates) const = 0;
+  // TODO(hsumita): Appends const qualifier to Get/HasCandidate methods.
+  virtual bool GetCandidate(size_t index, Candidate *candidate) = 0;
+  virtual bool HasCandidate(size_t index) = 0;
+  // Takes a required candidates size, and returns a prepared candidates size.
+  virtual size_t PrepareCandidates(size_t required_size) = 0;
 };
 
 }  // namespace pinyin

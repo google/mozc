@@ -234,18 +234,27 @@ size_t PinyinContext::focused_candidate_index() const {
   return context_->focusedCandidate();
 }
 
-size_t PinyinContext::candidates_size() const {
-  return context_->candidates().size();
+bool PinyinContext::GetCandidate(size_t index, Candidate *candidate) {
+  DCHECK(candidate);
+
+  PyZy::Candidate pyzy_candidate;
+  if (context_->getCandidate(index, pyzy_candidate)) {
+    candidate->text.assign(pyzy_candidate.text);
+    return true;
+  }
+  return false;
 }
 
-void PinyinContext::GetCandidates(vector<string> *candidates) const {
-  DCHECK(candidates);
-  candidates->clear();
+bool PinyinContext::HasCandidate(size_t index) {
+  return context_->hasCandidate(index);
+}
 
-  const PyZy::Candidates &src = context_->candidates();
-  for (size_t i = 0; i < src.size(); ++i) {
-    candidates->push_back(src.get(i).text);
+size_t PinyinContext::PrepareCandidates(size_t required_size) {
+  DCHECK_NE(0, required_size);
+  if (context_->hasCandidate(required_size - 1)) {
+    return required_size;
   }
+  return context_->getPreparedCandidatesSize();
 }
 
 void PinyinContext::ResetContext() {

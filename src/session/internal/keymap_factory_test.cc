@@ -89,6 +89,8 @@ TEST_F(KeyMapFactoryTest, KeyMapFactoryTest) {
         KeyMapFactory::GetKeyMapManager(config::Config::KOTOERI);
     KeyMapManager *custom =
         KeyMapFactory::GetKeyMapManager(config::Config::CUSTOM);
+    KeyMapManager *mobile =
+        KeyMapFactory::GetKeyMapManager(config::Config::MOBILE);
 
     // GetKeyMapFactory() returns the same instance when argument is the same
     EXPECT_EQ(atok,
@@ -99,11 +101,13 @@ TEST_F(KeyMapFactoryTest, KeyMapFactoryTest) {
               KeyMapFactory::GetKeyMapManager(config::Config::KOTOERI));
     EXPECT_EQ(custom,
               KeyMapFactory::GetKeyMapManager(config::Config::CUSTOM));
+    EXPECT_EQ(mobile,
+              KeyMapFactory::GetKeyMapManager(config::Config::MOBILE));
 
     // GetKeyMapFactory() does not return the same instance
     // when argument is not the same
     KeyMapManager *keymap_array[] = {
-      atok, msime, kotoeri, custom,
+      atok, msime, kotoeri, custom, mobile,
     };
     const int array_size = arraysize(keymap_array);
     for (int i = 0; i < array_size; ++i) {

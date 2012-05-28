@@ -34,7 +34,11 @@
 #include <vector>
 
 #include "base/util.h"
+#include "languages/pinyin/direct_context.h"
+#include "languages/pinyin/english_context.h"
+#include "languages/pinyin/pinyin_context.h"
 #include "languages/pinyin/pinyin_context_interface.h"
+#include "languages/pinyin/punctuation_context.h"
 #include "session/commands.pb.h"
 #include "session/key_event_util.h"
 
@@ -45,8 +49,12 @@ namespace {
 const size_t kCandidatesPerPage = 5;
 }  // namespace
 
-SessionConverter::SessionConverter(PinyinContextInterface *context)
-    : context_(context) {
+SessionConverter::SessionConverter(const SessionConfig &session_config)
+    : pinyin_context_(new PinyinContext(session_config)),
+      direct_context_(new direct::DirectContext(session_config)),
+      english_context_(new english::EnglishContext(session_config)),
+      punctuation_context_(new punctuation::PunctuationContext(session_config)) {
+  context_ = pinyin_context_.get();
 }
 
 SessionConverter::~SessionConverter() {
@@ -56,8 +64,8 @@ bool SessionConverter::IsConverterActive() const {
   return !context_->input_text().empty();
 }
 
-bool SessionConverter::IsCandidateListVisible() const {
-  return (context_->candidates_size() != 0 ||
+bool SessionConverter::IsCandidateListVisible() {
+  return (context_->HasCandidate(0) ||
           !context_->auxiliary_text().empty());
 }
 
@@ -87,19 +95,30 @@ bool SessionConverter::Insert(const commands::KeyEvent &key_event) {
     return false;
   }
 
-  return context_->Insert(insert_character);
+  const bool result = context_->Insert(insert_character);
+  if (!context_->commit_text().empty()) {
+    punctuation_context_->UpdatePreviousCommitText(context_->commit_text());
+  }
+  return result;
 }
 
 void SessionConverter::Clear() {
+  ClearInternal();
+  punctuation_context_->ClearAll();
+}
+
+void SessionConverter::ClearInternal() {
   context_->Clear();
 }
 
 void SessionConverter::Commit() {
   context_->Commit();
+  punctuation_context_->UpdatePreviousCommitText(context_->commit_text());
 }
 
 void SessionConverter::CommitPreedit() {
   context_->CommitPreedit();
+  punctuation_context_->UpdatePreviousCommitText(context_->commit_text());
 }
 
 bool SessionConverter::SelectCandidateOnPage(size_t index) {
@@ -111,7 +130,7 @@ bool SessionConverter::SelectCandidateOnPage(size_t index) {
 }
 
 bool SessionConverter::SelectFocusedCandidate() {
-  if (context_->candidates_size() == 0) {
+  if (!context_->HasCandidate(0)) {
     context_->Commit();
     return true;
   }
@@ -119,7 +138,7 @@ bool SessionConverter::SelectFocusedCandidate() {
 }
 
 bool SessionConverter::FocusCandidate(size_t index) {
-  if (index >= context_->candidates_size()) {
+  if (!context_->HasCandidate(index)) {
     return false;
   }
   return context_->FocusCandidate(index);
@@ -138,18 +157,18 @@ bool SessionConverter::FocusCandidateNext() {
 }
 
 bool SessionConverter::FocusCandidateNextPage() {
-  DCHECK_LT(0, context_->candidates_size());
+  DCHECK(context_->HasCandidate(0));
 
   const size_t current_page =
       context_->focused_candidate_index() / kCandidatesPerPage;
-  const size_t last_page =
-      (context_->candidates_size() - 1) / kCandidatesPerPage;
+  const size_t prepared_size =
+      context_->PrepareCandidates((current_page + 2) * kCandidatesPerPage);
 
-  if (current_page == last_page) {
+  if (prepared_size <= (current_page + 1) * kCandidatesPerPage) {
     return false;
   }
 
-  const size_t index = min(context_->candidates_size() - 1,
+  const size_t index = min(prepared_size - 1,
                            context_->focused_candidate_index()
                            + kCandidatesPerPage);
   return context_->FocusCandidate(index);
@@ -216,7 +235,7 @@ bool SessionConverter::MoveCursorToEnd() {
   return context_->MoveCursorToEnd();
 }
 
-void SessionConverter::FillOutput(commands::Output *output) const {
+void SessionConverter::FillOutput(commands::Output *output) {
   DCHECK(output);
 
   if (!context_->commit_text().empty()) {
@@ -284,28 +303,37 @@ void SessionConverter::FillResult(commands::Result *result) const {
   result->set_type(commands::Result::STRING);
 }
 
-void SessionConverter::FillCandidates(commands::Candidates *candidates) const {
+void SessionConverter::FillCandidates(commands::Candidates *candidates) {
   DCHECK(candidates);
   DCHECK(IsCandidateListVisible());
   candidates->Clear();
 
-  vector<string> candidates_list;
-  context_->GetCandidates(&candidates_list);
-  candidates->set_size(context_->candidates_size());
+  const size_t focused_index = context_->focused_candidate_index();
+  const size_t candidates_begin =
+      focused_index - focused_index % kCandidatesPerPage;
+  const size_t candidates_end =
+      context_->PrepareCandidates(candidates_begin + kCandidatesPerPage);
+  const size_t candidates_size = candidates_end - candidates_begin;
 
-  if (!candidates_list.empty()) {
-    const size_t focused_index = context_->focused_candidate_index();
-    const size_t candidates_begin =
-        focused_index - focused_index % kCandidatesPerPage;
-    const size_t candidates_end = min(context_->candidates_size(),
-                                      candidates_begin + kCandidatesPerPage);
+  // Currently we cannot get the correct size of the all candidates with a good
+  // performance, and commands::Candidates::size is not used unless
+  // commands::Candidates::Footer::index_visible is true on ibus environment.
+  // So it is ok to set a dummy value.
+  // TODO(hsumita): Makes commands::Candidates::size optional and removes these
+  // statements.
+  const size_t kDummyCandidatesSize = 0xFFFFFFFF;
+  candidates->set_size(kDummyCandidatesSize);
 
+  if (candidates_size > 0) {
     for (size_t i = candidates_begin; i < candidates_end; ++i) {
       commands::Candidates::Candidate *new_candidate =
           candidates->add_candidate();
       new_candidate->set_id(i);
       new_candidate->set_index(i);
-      new_candidate->set_value(candidates_list[i]);
+      Candidate value;
+      const bool result = context_->GetCandidate(i, &value);
+      DCHECK(result);
+      new_candidate->set_value(value.text);
     }
 
     {
@@ -330,6 +358,7 @@ void SessionConverter::FillCandidates(commands::Candidates *candidates) const {
   if (!context_->auxiliary_text().empty()) {
     commands::Footer *footer = candidates->mutable_footer();
     footer->set_label(context_->auxiliary_text());
+    footer->set_index_visible(false);
   }
 
   candidates->set_direction(commands::Candidates::HORIZONTAL);
@@ -338,7 +367,7 @@ void SessionConverter::FillCandidates(commands::Candidates *candidates) const {
 }
 
 bool SessionConverter::GetAbsoluteIndex(size_t relative_index,
-                                        size_t *absolute_index) const {
+                                        size_t *absolute_index) {
   DCHECK(absolute_index);
 
   if (relative_index >= kCandidatesPerPage) {
@@ -349,7 +378,7 @@ bool SessionConverter::GetAbsoluteIndex(size_t relative_index,
   const size_t current_page = focused_index / kCandidatesPerPage;
   const size_t index = current_page * kCandidatesPerPage + relative_index;
 
-  if (index >= context_->candidates_size()) {
+  if (!context_->HasCandidate(index)) {
     return false;
   }
 
@@ -359,6 +388,29 @@ bool SessionConverter::GetAbsoluteIndex(size_t relative_index,
 
 void SessionConverter::ReloadConfig() {
   context_->ReloadConfig();
+}
+
+void SessionConverter::SwitchContext(ConversionMode mode) {
+  ClearInternal();
+
+  switch (mode) {
+    case PINYIN:
+      context_ = pinyin_context_.get();
+      break;
+    case DIRECT:
+      context_ = direct_context_.get();
+      break;
+    case ENGLISH:
+      context_ = english_context_.get();
+      break;
+    case PUNCTUATION:
+      context_ = punctuation_context_.get();
+      break;
+    default:
+      LOG(ERROR) << "Should NOT reach here. Fallback to Pinyin context.";
+      context_ = pinyin_context_.get();
+      break;
+  }
 }
 
 }  // namespace pinyin

@@ -34,6 +34,7 @@
 
 #include <string>
 #include "base/scoped_ptr.h"
+#include "languages/pinyin/punctuation_context.h"
 
 namespace mozc {
 namespace commands {
@@ -45,12 +46,16 @@ class Result;
 }  // namespace commands
 
 namespace pinyin {
+namespace punctuation {
+class PunctuationContext;
+}  // namespace punctuation
+
 class PinyinContextInterface;
+class SessionConfig;
 
 class SessionConverter : public SessionConverterInterface {
  public:
-  // This class takes the ownership of *context.
-  explicit SessionConverter(PinyinContextInterface *context);
+  explicit SessionConverter(const SessionConfig &session_config);
   virtual ~SessionConverter();
 
   bool IsConverterActive() const;
@@ -83,29 +88,47 @@ class SessionConverter : public SessionConverterInterface {
   bool RemoveWordBefore();
   bool RemoveWordAfter();
 
-  void FillOutput(commands::Output *output) const;
+  // These methods sets dummy value into commands::Candidates::size to avoid
+  // performance issue. http://b/6340948
+  void FillOutput(commands::Output *output);
   void PopOutput(commands::Output *output);
 
   void ReloadConfig();
+  void SwitchContext(ConversionMode mode);
 
  private:
   friend class PinyinSessionTest;
   friend class SessionConverterTest;
 
-  bool IsCandidateListVisible() const;
+  // Clears the context expect for some states on PunctuationContext.
+  void ClearInternal();
+
+  // IsCandidateListVisible doesn't have const qualifier because
+  // PinyinContextInterface may generate candidates lazily.
+  bool IsCandidateListVisible();
   bool IsConversionTextVisible() const;
 
   // Fills data. We may need to update data before call these.
   void FillConversion(commands::Preedit *preedit) const;
   void FillResult(commands::Result *result) const;
-  void FillCandidates(commands::Candidates *candidates) const;
+  // FillCandidates doesn't have const qualifier because PinyinContextInterface
+  // may generate candidates lazily.
+  void FillCandidates(commands::Candidates *candidates);
 
   // Converts relative index to absolute index.
   // Absolute index is an index from the beginning of candidates, and
   // relative index is an index from the beginning of a candidates page.
-  bool GetAbsoluteIndex(size_t relative_index, size_t *absolute_index) const;
+  bool GetAbsoluteIndex(size_t relative_index, size_t *absolute_index);
 
-  scoped_ptr<PinyinContextInterface> context_;
+  scoped_ptr<PinyinContextInterface> pinyin_context_;
+  scoped_ptr<PinyinContextInterface> direct_context_;
+  scoped_ptr<PinyinContextInterface> english_context_;
+  // The type of |punctuation_context_| is not PinyinContextInterface since
+  // we use PunctuationContext specific methods.
+  scoped_ptr<punctuation::PunctuationContext> punctuation_context_;
+  // |context_| holds the pointer of current context (pinyin, direct, english
+  // or punctuation), and does NOT take a ownership.
+  PinyinContextInterface *context_;
 
   DISALLOW_COPY_AND_ASSIGN(SessionConverter);
 };

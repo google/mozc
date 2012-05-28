@@ -17,7 +17,7 @@
 export DH_OPTIONS
 
 BUILD_DIR=./out_linux
-TARGETS=unix/ibus/ibus.gyp:ibus_mozc unix/emacs/emacs.gyp:mozc_emacs_helper server/server.gyp:mozc_server gui/gui.gyp:mozc_tool
+TARGETS=unix/ibus/ibus.gyp:ibus_mozc unix/emacs/emacs.gyp:mozc_emacs_helper server/server.gyp:mozc_server renderer/renderer.gyp:mozc_renderer gui/gui.gyp:mozc_tool
 
 configure: configure-stamp
 configure-stamp:
@@ -85,8 +85,11 @@ install-arch:
 	mkdir -p $(CURDIR)/debian/mozc-server/usr/lib/mozc
 	cp -p $(BUILD_DIR)/Release/mozc_server $(CURDIR)/debian/mozc-server/usr/lib/mozc/
 
+	mkdir -p $(CURDIR)/debian/mozc-renderer/usr/lib/mozc
+	cp -p $(BUILD_DIR)/Release/mozc_renderer $(CURDIR)/debian/mozc-renderer/usr/lib/mozc/
+
 	mkdir -p $(CURDIR)/debian/mozc-utils-gui/usr/lib/mozc
-	cp -p $(BUILD_DIR)/Release/mozc_tool $(CURDIR)/debian/mozc-utils-gui/usr/lib/mozc
+	cp -p $(BUILD_DIR)/Release/mozc_tool $(CURDIR)/debian/mozc-utils-gui/usr/lib/mozc/
 
 	dh_install -s
 

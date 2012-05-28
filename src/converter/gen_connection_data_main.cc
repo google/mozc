@@ -36,6 +36,7 @@
 #include "base/mmap.h"
 #include "base/util.h"
 #include "converter/sparse_connector.h"
+#include "converter/sparse_connector_builder.h"
 
 DEFINE_string(input, "", "input text file");
 DEFINE_string(output, "", "output binary file");
@@ -53,10 +54,11 @@ int main(int argc, char **argv) {
   mozc::Util::SplitStringUsing(FLAGS_input, " ", &files);
   CHECK_EQ(3, files.size());
 
-  mozc::SparseConnectorBuilder::Compile(files[0],  // connection.txt
-                                        files[1],  // id.def
-                                        files[2],  // special_pos.def
-                                        output);
+  mozc::converter::SparseConnectorBuilder::Compile(
+      files[0],  // connection.txt
+      files[1],  // id.def
+      files[2],  // special_pos.def
+      output);
 
   if (FLAGS_make_header) {
     mozc::Mmap<char> mmap;

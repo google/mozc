@@ -34,6 +34,7 @@
 #include "converter/segments.h"
 #include "rewriter/english_variants_rewriter.h"
 #include "session/commands.pb.h"
+#include "session/request_handler.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
@@ -285,5 +286,17 @@ TEST_F(EnglishVariantsRewriterTest, ExpandEnglishEntry) {
   }
 }
 
+TEST_F(EnglishVariantsRewriterTest, MobileEnvironmentTest) {
+  commands::Request input;
+  EnglishVariantsRewriter rewriter;
+
+  input.set_mixed_conversion(true);
+  commands::RequestHandler::SetRequest(input);
+  EXPECT_EQ(RewriterInterface::ALL, rewriter.capability());
+
+  input.set_mixed_conversion(false);
+  commands::RequestHandler::SetRequest(input);
+  EXPECT_EQ(RewriterInterface::CONVERSION, rewriter.capability());
+}
 
 }  // namespace mozc

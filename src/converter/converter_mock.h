@@ -74,16 +74,12 @@ class ConverterMock : public ConverterInterface {
   void SetStartReverseConversion(Segments *segments, bool result);
   void SetStartPredictionForRequest(Segments *segments, bool result);
   void SetStartPrediction(Segments *segments, bool result);
-  void SetStartPredictionWithComposer(Segments *segments, bool result);
   void SetStartSuggestionForRequest(Segments *segments, bool result);
   void SetStartSuggestion(Segments *segments, bool result);
-  void SetStartSuggestionWithComposer(Segments *segments, bool result);
   void SetStartPartialPredictionForRequest(Segments *segments, bool result);
   void SetStartPartialPrediction(Segments *segments, bool result);
-  void SetStartPartialPredictionWithComposer(Segments *segments, bool result);
   void SetStartPartialSuggestionForRequest(Segments *segments, bool result);
   void SetStartPartialSuggestion(Segments *segments, bool result);
-  void SetStartPartialSuggestionWithComposer(Segments *segments, bool result);
   void SetFinishConversion(Segments *segments, bool result);
   void SetCancelConversion(Segments *segments, bool result);
   void SetResetConversion(Segments *segments, bool result);
@@ -104,25 +100,15 @@ class ConverterMock : public ConverterInterface {
   void GetStartPredictionForRequest(Segments *segments,
                                     ConversionRequest *request);
   void GetStartPrediction(Segments *segments, string *key);
-  void GetStartPredictionWithComposer(Segments *segments,
-                                      const composer::Composer **composer);
   void GetStartSuggestionForRequest(Segments *segments,
                                     ConversionRequest *request);
   void GetStartSuggestion(Segments *segments, string *key);
-  void GetStartSuggestionWithComposer(Segments *segments,
-                                      const composer::Composer **composer);
   void GetStartPartialPredictionForRequest(Segments *segments,
                                            ConversionRequest *request);
   void GetStartPartialPrediction(Segments *segments, string *key);
-  void GetStartPartialPredictionWithComposer(
-      Segments *segments,
-      const composer::Composer **composer);
   void GetStartPartialSuggestionForRequest(Segments *segments,
                                            ConversionRequest *request);
   void GetStartPartialSuggestion(Segments *segments, string *key);
-  void GetStartPartialSuggestionWithComposer(
-      Segments *segments,
-      const composer::Composer **composer);
   void GetFinishConversion(Segments *segments);
   void GetCancelConversion(Segments *segments);
   void GetResetConversion(Segments *segments);
@@ -155,26 +141,18 @@ class ConverterMock : public ConverterInterface {
                                  Segments *segments) const;
   bool StartPrediction(Segments *segments,
                        const string &key) const;
-  bool StartPredictionWithComposer(
-      Segments *segments, const composer::Composer *composer) const;
   bool StartSuggestionForRequest(const ConversionRequest &request,
                                  Segments *segments) const;
   bool StartSuggestion(Segments *segments,
                        const string &key) const;
-  bool StartSuggestionWithComposer(
-      Segments *segments, const composer::Composer *composer) const;
   bool StartPartialPredictionForRequest(const ConversionRequest &request,
                                         Segments *segments) const;
   bool StartPartialPrediction(Segments *segments,
                               const string &key) const;
-  bool StartPartialPredictionWithComposer(
-      Segments *segments, const composer::Composer *composer) const;
   bool StartPartialSuggestionForRequest(const ConversionRequest &request,
                                         Segments *segments) const;
   bool StartPartialSuggestion(Segments *segments,
                               const string &key) const;
-  bool StartPartialSuggestionWithComposer(
-      Segments *segments, const composer::Composer *composer) const;
   bool FinishConversion(Segments *segments) const;
   bool CancelConversion(Segments *segments) const;
   bool ResetConversion(Segments *segments) const;
@@ -215,16 +193,12 @@ class ConverterMock : public ConverterInterface {
   mutable ConverterInput startreverseconversion_input_;
   mutable ConverterInput startpredictionwithrequest_input_;
   mutable ConverterInput startprediction_input_;
-  mutable ConverterInput startpredictionwithcomposer_input_;
   mutable ConverterInput startsuggestionforrequest_input_;
   mutable ConverterInput startsuggestion_input_;
-  mutable ConverterInput startsuggestionwithcomposer_input_;
   mutable ConverterInput startpartialpredictionforrequest_input_;
   mutable ConverterInput startpartialprediction_input_;
-  mutable ConverterInput startpartialpredictionwithcomposer_input_;
   mutable ConverterInput startpartialsuggestionforrequest_input_;
   mutable ConverterInput startpartialsuggestion_input_;
-  mutable ConverterInput startpartialsuggestionwithcomposer_input_;
   mutable ConverterInput finishconversion_input_;
   mutable ConverterInput cancelconversion_input_;
   mutable ConverterInput resetconversion_input_;
@@ -242,16 +216,12 @@ class ConverterMock : public ConverterInterface {
   ConverterOutput startreverseconversion_output_;
   ConverterOutput startpredictionwithrequest_output_;
   ConverterOutput startprediction_output_;
-  ConverterOutput startpredictionwithcomposer_output_;
   ConverterOutput startsuggestionforrequest_output_;
   ConverterOutput startsuggestion_output_;
-  ConverterOutput startsuggestionwithcomposer_output_;
   ConverterOutput startpartialpredictionforrequest_output_;
   ConverterOutput startpartialprediction_output_;
-  ConverterOutput startpartialpredictionwithcomposer_output_;
   ConverterOutput startpartialsuggestionforrequest_output_;
   ConverterOutput startpartialsuggestion_output_;
-  ConverterOutput startpartialsuggestionwithcomposer_output_;
   ConverterOutput finishconversion_output_;
   ConverterOutput cancelconversion_output_;
   ConverterOutput resetconversion_output_;

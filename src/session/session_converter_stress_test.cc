@@ -102,7 +102,7 @@ TEST_F(SessionConverterStressTest, ConvertToHalfWidthForRandomAsciiInput) {
   composer::Table table;
   table.LoadFromFile(kRomajiHiraganaTable.c_str());
   composer::Composer composer;
-  composer.SetTableForUnittest(&table);
+  composer.SetTable(&table);
   commands::Output output;
   string input;
 

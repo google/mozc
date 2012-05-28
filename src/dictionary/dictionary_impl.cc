@@ -47,21 +47,24 @@ DictionaryImpl::DictionaryImpl(
     DictionaryInterface *user_dictionary,
     const SuppressionDictionary *suppression_dictionary,
     const POSMatcher *pos_matcher)
-    : system_dictionary_(system_dictionary),
+    : pos_matcher_(pos_matcher),
+      system_dictionary_(system_dictionary),
       value_dictionary_(value_dictionary),
       user_dictionary_(user_dictionary),
-      suppression_dictionary_(suppression_dictionary),
-      pos_matcher_(pos_matcher) {
+      suppression_dictionary_(suppression_dictionary) {
+  CHECK(pos_matcher_);
   CHECK(system_dictionary_.get());
   CHECK(value_dictionary_.get());
+#ifndef __native_client__
   CHECK(user_dictionary_);
+#endif  // __native_client__
   CHECK(suppression_dictionary_);
-  CHECK(pos_matcher_);
   dics_.push_back(system_dictionary_.get());
   dics_.push_back(value_dictionary_.get());
-  dics_.push_back(user_dictionary_);
+  if (user_dictionary_) {
+    dics_.push_back(user_dictionary_);
+  }
 }
-
 
 DictionaryImpl::~DictionaryImpl() {
   dics_.clear();

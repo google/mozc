@@ -33,6 +33,7 @@
 #include "base/base.h"
 #include "base/file_stream.h"
 #include "base/util.h"
+#include "data_manager/user_pos_manager.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/text_dictionary_loader.h"
@@ -54,11 +55,15 @@ class TextDictionaryLoaderTest : public ::testing::Test {
   // considering this class as POD.
   TextDictionaryLoaderTest() {}
 
-  TextDictionaryLoader *CreateTextDictionaryLoader() {
-    return new TextDictionaryLoader(pos_matcher_);
+  virtual void SetUp() {
+    pos_matcher_ = UserPosManager::GetUserPosManager()->GetPOSMatcher();
   }
 
-  const POSMatcher pos_matcher_;
+  TextDictionaryLoader *CreateTextDictionaryLoader() {
+    return new TextDictionaryLoader(*pos_matcher_);
+  }
+
+  const POSMatcher *pos_matcher_;
 };
 
 TEST_F(TextDictionaryLoaderTest, BasicTest) {
@@ -173,8 +178,8 @@ TEST_F(TextDictionaryLoaderTest, RewriteSpecialTokenTest) {
     token.lid = 100;
     token.rid = 200;
     EXPECT_TRUE(loader->RewriteSpecialToken(&token, "ZIP_CODE"));
-    EXPECT_EQ(pos_matcher_.GetZipcodeId(), token.lid);
-    EXPECT_EQ(pos_matcher_.GetZipcodeId(), token.rid);
+    EXPECT_EQ(pos_matcher_->GetZipcodeId(), token.lid);
+    EXPECT_EQ(pos_matcher_->GetZipcodeId(), token.rid);
     EXPECT_EQ(Token::NONE, token.attributes);
   }
 

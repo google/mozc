@@ -119,13 +119,18 @@ static const char kSquareClose[] = "]";
 static const char kMiddleDot[]   = "\xE3\x83\xBB";  // "・"
 
 bool Table::Initialize() {
+  return InitializeWithRequestAndConfig(commands::RequestHandler::GetRequest(),
+                                        config::ConfigHandler::GetConfig());
+}
+
+bool Table::InitializeWithRequestAndConfig(const commands::Request &request,
+                                           const config::Config &config) {
   case_sensitive_ = false;
   bool result = false;
-  const config::Config &config = config::ConfigHandler::GetConfig();
-  if (GET_REQUEST(special_romanji_table)
+  if (request.special_romanji_table()
       != mozc::commands::Request::DEFAULT_TABLE) {
     const char *table_file_name;
-    switch (GET_REQUEST(special_romanji_table)) {
+    switch (request.special_romanji_table()) {
       case mozc::commands::Request::TWELVE_KEYS_TO_HIRAGANA:
         table_file_name = k12keysHiraganaTableFile;
         break;
@@ -599,6 +604,47 @@ string Table::DeleteSpecialKey(const string &input) {
     cursor = close_pos + 1;
   }
   return output;
+}
+
+// ========================================
+// TableContainer
+// ========================================
+TableManager::TableManager() {
+}
+
+TableManager::~TableManager() {
+  for (map<uint32, const Table*>::iterator iterator = table_map_.begin();
+      iterator != table_map_.end();
+      ++iterator) {
+    delete iterator->second;
+  }
+}
+
+const Table *TableManager::GetTable(const mozc::commands::Request &request,
+                                    const mozc::config::Config &config) {
+  // calculate the hash depending on the request and the config
+  uint32 hash = request.special_romanji_table();
+  hash = hash * (mozc::config::Config_PreeditMethod_PreeditMethod_MAX + 1)
+      + config.preedit_method();
+  hash =
+      hash * (mozc::config::Config_PunctuationMethod_PunctuationMethod_MAX + 1)
+      + config.punctuation_method();
+  hash = hash * (mozc::config::Config_SymbolMethod_SymbolMethod_MAX + 1)
+      + config.symbol_method();
+
+  map<uint32, const Table*>::iterator iterator = table_map_.find(hash);
+  if (iterator != table_map_.end()) {
+    return iterator->second;
+  }
+
+  scoped_ptr<Table> table(new Table());
+  if (!table->InitializeWithRequestAndConfig(request, config)) {
+    return NULL;
+  }
+
+  Table* table_to_cache = table.release();
+  table_map_[hash] = table_to_cache;
+  return table_to_cache;
 }
 }  // namespace composer
 }  // namespace mozc

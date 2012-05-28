@@ -47,6 +47,10 @@ class UnicodeRewriter : public RewriterInterface {
                        Segments *segments) const;
 
  private:
+  bool RewriteToUnicodeCharFormat(const ConversionRequest &request,
+                                  Segments *segments) const;
+  bool RewriteFromUnicodeCharFormat(const ConversionRequest &request,
+                                    Segments *segments) const;
   const ConverterInterface *parent_converter_;
 };
 

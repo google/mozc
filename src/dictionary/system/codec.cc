@@ -39,9 +39,7 @@
 namespace mozc {
 namespace dictionary {
 namespace {
-void EncodeKeyImpl(const string &src, string *dst);
-
-void DecodeKeyImpl(const string &src, string *dst);
+void EncodeDecodeKeyImpl(const string &src, string *dst);
 
 uint8 GetFlagsForToken(const vector<TokenInfo> &tokens, int index);
 
@@ -62,8 +60,6 @@ void EncodeValueInfo(
 uint8 ReadFlags(uint8 val);
 
 void DecodeCost(const uint8 *ptr, TokenInfo *token, int *offset);
-
-void ReadCost(const uint8 *ptr, int *offset);
 
 void DecodePos(const uint8 *ptr, uint8 flags, TokenInfo *token, int *offset);
 
@@ -224,11 +220,11 @@ const string SystemDictionaryCodec::GetSectionNameForPos() const {
 }
 
 void SystemDictionaryCodec::EncodeKey(const string &src, string *dst) const {
-  EncodeKeyImpl(src, dst);
+  EncodeDecodeKeyImpl(src, dst);
 }
 
 void SystemDictionaryCodec::DecodeKey(const string &src, string *dst) const {
-  DecodeKeyImpl(src, dst);
+  EncodeDecodeKeyImpl(src, dst);
 }
 
 // This encodes each UCS4 character into following areas
@@ -471,80 +467,37 @@ bool SystemDictionaryCodec::ReadTokenForReverseLookup(
 
 
 namespace {
-void EncodeKeyImpl(const string &src, string *dst) {
-  DCHECK(dst);
-  const char *p = src.c_str();
-  while (*p != '\0') {
-    const uint8 code = GetKeyCharCode(p);
-    if (code != 0) {
-      dst->push_back(code);
-      p += 3;
-    } else {
-      dst->push_back(kKeyCharMarkEscape);
-      dst->push_back(p[0]);
-      ++p;
-    }
-  }
-}
 
-// Returns encoded code for a charactor from utf-8 key string
-// "ぁ" = 0xe3,0x81,0x81 -> 0x81 & 0x7f = 0b10000001 & 0b01111111 = 1 = 0x01
-// ...
-// "み" = 0xe3,0x81,0xbf -> 0xbf & 0x7f = 0b10111111 & 0b01111111 = 63 = 0x3f
-// "む" = 0xe3,0x82,0x80 -> 0x80 = 0b10000000 = 128 = 0x80
-// ...
-// "タ" = 0xe3,0x82,0xbf -> 0xbf = 0b10111111 = 191 (128+63) = 0xbf
-// "・" = 0xe3,0x83,0xbb -> 0xfd
-// "ー" = 0xe3,0x83,0xbc -> 0xfe
-// (others) -> 0
+// Swap the area for Hiragana, prolonged sound mark and middle dot with
+// the one for control codes and alphabets.
 //
-// TODO(toshiyuki): Prepare code for numbers and hyphen, they are used
-// for the key of zip code entries.
-uint8 GetKeyCharCode(const char *str) {
-  const uint8 *ustr =
-      reinterpret_cast<const uint8 *>(str);
-  if (ustr[0] == 0xe3 && ustr[1] == 0x81) {
-    // Hiragana 0xe3,0x81,0x80|Z -> Z
-    return ustr[2] & 0x7f;
-  } else if (ustr[0] == 0xe3 && ustr[1] == 0x82) {
-    // Hiragana 0xe3,0x82,Z -> Z
-    return ustr[2] | 0x80;
-  } else if (ustr[0] == 0xe3 && ustr[1] == 0x83 && ustr[2] == 0xbb) {
-    return kKeyCharMiddleDot;
-  } else if (ustr[0] == 0xe3 && ustr[1] == 0x83 && ustr[2] == 0xbc) {
-    return kKeyCharProlongedSound;
-  }
-  return 0;
-}
-
-void DecodeKeyImpl(const string &src, string *dst) {
-  DCHECK(dst);
-  const uint8 *p = reinterpret_cast<const uint8 *>(src.c_str());
-  while (*p != '\0') {
-    if (p[0] == kKeyCharMarkEscape) {
-      dst->push_back(p[1]);
-      p += 2;
-    } else if (p[0] == kKeyCharMiddleDot) {
-      dst->push_back(0xe3);
-      dst->push_back(0x83);
-      dst->push_back(0xbb);
-      ++p;
-    } else if (p[0] == kKeyCharProlongedSound) {
-      dst->push_back(0xe3);
-      dst->push_back(0x83);
-      dst->push_back(0xbc);
-      ++p;
-    } else if (!(p[0] & 0x80)) {
-      dst->push_back(0xe3);
-      dst->push_back(0x81);
-      dst->push_back(p[0] | 0x80);
-      ++p;
-    } else {
-      dst->push_back(0xe3);
-      dst->push_back(0x82);
-      dst->push_back(p[0]);
-      ++p;
+// U+3041 - U+305F ("ぁ" - "た") <=> U+0001 - U+001F
+// U+3060 - U+3095 ("だ" - "ゕ") <=> U+0040 - U+0075
+// U+30FB - U+30FC ("・" - "ー") <=> U+0076 - U+0077
+//
+// U+0020 - U+003F are left intact to represent numbers and hyphen in 1 byte.
+void EncodeDecodeKeyImpl(const string &src, string *dst) {
+  for (ConstChar32Iterator iter(src); !iter.Done(); iter.Next()) {
+    COMPILE_ASSERT(sizeof(uint32) == sizeof(char32), check_sizeof_char32);
+    uint32 code = iter.Get();
+    int32 offset = 0;
+    if ((code >= 0x0001 && code <= 0x001f) ||
+        (code >= 0x3041 && code <= 0x305f)) {
+      offset = 0x3041 - 0x0001;
+    } else if ((code >= 0x0040 && code <= 0x0075) ||
+               (code >= 0x3060 && code <= 0x3095)) {
+      offset = 0x3060 - 0x0040;
+    } else if ((code >= 0x0076 && code <= 0x0077) ||
+               (code >= 0x30FB && code <= 0x30FC)) {
+      offset = 0x30FB - 0x0076;
     }
+    if (code < 0x80) {
+      code += offset;
+    } else {
+      code -= offset;
+    }
+    DCHECK_GT(code, 0);
+    Util::UCS4ToUTF8Append(code, dst);
   }
 }
 

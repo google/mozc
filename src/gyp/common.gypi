@@ -40,10 +40,6 @@
     # Top directory of third party libraries for Windows.
     'third_party_dir_win%': '<(DEPTH)/third_party',
 
-    # Flags to temporarily disable some unit tests which are still
-    # unavailable on OSS Mozc.
-    'enable_extra_unit_tests': 0,
-
     # This variable need to be set to 1 when you build Mozc for Chromium OS.
     'chromeos%': 0,
 
@@ -119,13 +115,26 @@
     # TODO(yukawa): Support NaCl environment.
     'enable_unittest%': '1',
 
-    # On internal Visual C++ 2008 build, we use checked-in version of Visual C++
-    # libraries and Platform SDK 7.1 libraries.
     'conditions': [
+      # enable_gtk_renderer represents if mozc_renderer is supported on Linux
+      # or not.
+      ['target_platform=="Linux" and language=="japanese"', {
+        'enable_gtk_renderer%': 1,
+      }, { # else
+        'enable_gtk_renderer%': 0,
+      }],
       ['target_platform=="ChromeOS"', {
         # Unittest is not integrated to the automated test framework yet.
         # TODO(nona): Enable unittest on Chromium OS. crosbug.com/19325
         'enable_unittest': '0',
+      }],
+      ['target_compiler=="msvs2008"', {
+        'additional_defines+': [
+          # Bind executables to the latest version of Visual C++ 2008
+          # CRTs supported in the build environment.  b/2842806
+          # http://msdn.microsoft.com/en-us/library/cc664727(v=vs.90).aspx
+          '_BIND_TO_CURRENT_VCLIBS_VERSION=1',
+        ],
       }],
     ],
     'msvc_disabled_warnings': [
@@ -197,10 +206,6 @@
     # enable_webservice_infolist represents if webservice infolist feature is
     # enabled or not.
     'enable_webservice_infolist%': 0,
-
-    # enable_gtk_renderer represents if gtk native candidate window feature is
-    # enabled or not.
-    'enable_gtk_renderer%': 0,
 
 
     # The pkg-config command to get the cflags/ldflags for Linux
@@ -357,6 +362,38 @@
           },
         },
       },
+      'Win_Static_Debug_CRT_Base': {
+        'abstract': 1,
+        'msvs_settings': {
+          'VCCLCompilerTool': {
+            'RuntimeLibrary': '<(win_debug_static_crt)',
+          },
+        },
+      },
+      'Win_Static_Optimize_CRT_Base': {
+        'abstract': 1,
+        'msvs_settings': {
+          'VCCLCompilerTool': {
+            'RuntimeLibrary': '<(win_release_static_crt)',
+          },
+        },
+      },
+      'Win_Dynamic_Debug_CRT_Base': {
+        'abstract': 1,
+        'msvs_settings': {
+          'VCCLCompilerTool': {
+            'RuntimeLibrary': '<(win_debug_dynamic_crt)',
+          },
+        },
+      },
+      'Win_Dynamic_Optimize_CRT_Base': {
+        'abstract': 1,
+        'msvs_settings': {
+          'VCCLCompilerTool': {
+            'RuntimeLibrary': '<(win_release_dynamic_crt)',
+          },
+        },
+      },
       'Debug_Base': {
         'abstract': 1,
         'defines': [
@@ -373,24 +410,6 @@
             'Optimization': '<(win_optimization_debug)',
             'PreprocessorDefinitions': ['_DEBUG'],
             'BasicRuntimeChecks': '3',
-            'conditions': [
-              ['use_dynamically_linked_qt=="YES"', {
-                # As a quick workaround, use dynamically-linked version of CRT
-                # if 'use_dynamically_linked_qt' is specified.
-                # As for GoogleJapaneseInput branding build, this is not enough
-                # because we cannot completely depend on dynamic CRT as
-                # described in b/2506385. We should use static CRT for the
-                # following binaries.
-                # - GoogleIMEJaCacheService.exe
-                # - GoogleIMEJaInstallerHelper32.dll
-                # - GoogleIMEJaInstallerHelper64.dll
-                # - any artifacts build in 'build_mozc.py build_tools'
-                # TODO(yukawa): Support GoogleJapaneseInput branding build.
-                'RuntimeLibrary': '<(win_debug_dynamic_crt)',
-              }, {  # else
-                'RuntimeLibrary': '<(win_debug_static_crt)',
-              }],
-            ],
           },
           'VCResourceCompilerTool': {
             'PreprocessorDefinitions': ['_DEBUG'],
@@ -432,24 +451,6 @@
             # are built with /O2.  We use the same optimization option between
             # Mozc and Qt just in case warning C4748 is true.
             'Optimization': '<(win_optimization_release)',
-            'conditions': [
-              ['use_dynamically_linked_qt=="YES"', {
-                # As a quick workaround, use dynamically-linked version of CRT
-                # if 'use_dynamically_linked_qt' is specified.
-                # As for GoogleJapaneseInput branding build, this is not enough
-                # because we cannot completely depend on dynamic CRT as
-                # described in b/2506385. We should use static CRT for the
-                # following binaries.
-                # - GoogleIMEJaCacheService.exe
-                # - GoogleIMEJaInstallerHelper32.dll
-                # - GoogleIMEJaInstallerHelper64.dll
-                # - any artifacts build in 'build_mozc.py build_tools'
-                # TODO(yukawa): Support GoogleJapaneseInput branding build.
-                'RuntimeLibrary': '<(win_release_dynamic_crt)',
-              }, {  # else
-                'RuntimeLibrary': '<(win_release_static_crt)',
-              }],
-            ],
           },
         },
         'conditions': [
@@ -528,21 +529,30 @@
       # Concrete configurations
       #
       'Debug': {
-        'inherit_from': ['Common_Base', 'x86_Base', 'Debug_Base'],
+        'inherit_from': ['Common_Base', 'x86_Base', 'Debug_Base', 'Win_Static_Debug_CRT_Base'],
       },
       'Optimize': {
-        'inherit_from': ['Common_Base', 'x86_Base', 'Optimize_Base'],
+        'inherit_from': ['Common_Base', 'x86_Base', 'Optimize_Base', 'Win_Static_Optimize_CRT_Base'],
       },
       'Release': {
         'inherit_from': ['Optimize', 'Release_Base'],
       },
       'conditions': [
         ['OS=="win"', {
+          'DebugDynamic': {
+            'inherit_from': ['Common_Base', 'x86_Base', 'Debug_Base', 'Win_Dynamic_Debug_CRT_Base'],
+          },
+          'OptimizeDynamic': {
+            'inherit_from': ['Common_Base', 'x86_Base', 'Optimize_Base', 'Win_Dynamic_Optimize_CRT_Base'],
+          },
+          'ReleaseDynamic': {
+            'inherit_from': ['OptimizeDynamic', 'Release_Base'],
+          },
           'Debug_x64': {
-            'inherit_from': ['Common_Base', 'x64_Base', 'Debug_Base'],
+            'inherit_from': ['Common_Base', 'x64_Base', 'Debug_Base', 'Win_Static_Debug_CRT_Base'],
           },
           'Optimize_x64': {
-            'inherit_from': ['Common_Base', 'x64_Base', 'Optimize_Base'],
+            'inherit_from': ['Common_Base', 'x64_Base', 'Optimize_Base', 'Win_Static_Optimize_CRT_Base'],
           },
           'Release_x64': {
             'inherit_from': ['Optimize_x64', 'Release_Base'],
@@ -741,6 +751,9 @@
               ['_toolset=="target"', {
                 'cflags': [
                   '<@(nacl_cflags)',
+                ],
+                'defines': [
+                  'MOZC_USE_PEPPER_FILE_IO',
                 ],
               }],
             ]

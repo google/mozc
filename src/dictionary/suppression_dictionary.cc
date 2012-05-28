@@ -150,11 +150,6 @@ Node *SuppressionDictionary::SuppressNodes(Node *node) const {
   return head;
 }
 
-// Return Singleton object
-SuppressionDictionary *SuppressionDictionary::GetSuppressionDictionary() {
-  return Singleton<SuppressionDictionary>::get();
-}
-
 SuppressionDictionary::SuppressionDictionary()
     : locked_(false), has_key_empty_(false), has_value_empty_(false) {}
 

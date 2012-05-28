@@ -27,8 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// skip all if Windows
-#ifdef OS_LINUX
+// skip all if non-Linux or Android.
+#if defined(OS_LINUX) && !defined(OS_ANDROID)
 
 #include "ipc/ipc.h"
 
@@ -529,4 +529,4 @@ void IPCServer::Loop() {
 
 };  // namespace mozc
 
-#endif  // OS_LINUX
+#endif  // OS_LINUX && !OS_ANDROID

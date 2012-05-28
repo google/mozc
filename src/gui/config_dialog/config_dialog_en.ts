@@ -721,14 +721,14 @@
         <location filename="config_dialog.cc" line="420"/>
         <location filename="config_dialog.cc" line="434"/>
         <location filename="config_dialog.cc" line="442"/>
-        <location filename="config_dialog.cc" line="767"/>
-        <location filename="config_dialog.cc" line="781"/>
-        <location filename="config_dialog.cc" line="791"/>
-        <location filename="config_dialog.cc" line="803"/>
-        <location filename="config_dialog.cc" line="813"/>
-        <location filename="config_dialog.cc" line="825"/>
-        <location filename="config_dialog.cc" line="905"/>
-        <location filename="config_dialog.cc" line="928"/>
+        <location filename="config_dialog.cc" line="769"/>
+        <location filename="config_dialog.cc" line="783"/>
+        <location filename="config_dialog.cc" line="793"/>
+        <location filename="config_dialog.cc" line="805"/>
+        <location filename="config_dialog.cc" line="815"/>
+        <location filename="config_dialog.cc" line="827"/>
+        <location filename="config_dialog.cc" line="907"/>
+        <location filename="config_dialog.cc" line="930"/>
         <source>Mozc settings</source>
         <translation type="unfinished"></translation>
     </message>
@@ -759,43 +759,43 @@
     </message>
     <message>
         <location filename="config_dialog.cc" line="628"/>
-        <location filename="config_dialog.cc" line="1152"/>
+        <location filename="config_dialog.cc" line="1154"/>
         <source>Sync is not enabled</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="768"/>
+        <location filename="config_dialog.cc" line="770"/>
         <source>Do you want to clear personalization data? Input history is not reset with this operation. Please open &quot;suggestion&quot; tab to remove input history data.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="782"/>
-        <location filename="config_dialog.cc" line="804"/>
+        <location filename="config_dialog.cc" line="784"/>
+        <location filename="config_dialog.cc" line="806"/>
         <source>Mozc Converter is not running. Settings were not saved.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="792"/>
+        <location filename="config_dialog.cc" line="794"/>
         <source>Do you want to clear all history data?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="814"/>
+        <location filename="config_dialog.cc" line="816"/>
         <source>Do you want to clear unused history data?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="826"/>
+        <location filename="config_dialog.cc" line="828"/>
         <source>Mozc Converter is not running. Operation was not executed.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="906"/>
+        <location filename="config_dialog.cc" line="908"/>
         <source>Web Service extension enables Mozc to display third party usage dictionaries provided as an Web service API, e.g. REST (POX/JSON over HTTP). Note that candidate/preedit strings are sent to the Web service when this feature is enabled. Do you want to use Web Service extension?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="929"/>
+        <location filename="config_dialog.cc" line="931"/>
         <source>When you reset Mozc settings, any changes you&apos;ve made will be reverted to the default settings. Do you want to reset settings? The following items are not reset with this operation.
  - Personalization data
  - Input history
@@ -805,93 +805,93 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="986"/>
+        <location filename="config_dialog.cc" line="988"/>
         <source>Stop Sync</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="988"/>
+        <location filename="config_dialog.cc" line="990"/>
         <source>Start Sync</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="1004"/>
+        <location filename="config_dialog.cc" line="1006"/>
         <source>Stop sync and reset the auth token</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="1005"/>
+        <location filename="config_dialog.cc" line="1007"/>
         <source>You are trying to stop sync and reset the auth token. To restart sync, you will need to get a new auth token.
 Do you really want to continue?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="1093"/>
+        <location filename="config_dialog.cc" line="1095"/>
         <source>Not synced yet</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="1097"/>
+        <location filename="config_dialog.cc" line="1099"/>
         <source>Last synced time: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="1140"/>
+        <location filename="config_dialog.cc" line="1142"/>
         <source>Waiting for server to be ready</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="1146"/>
+        <location filename="config_dialog.cc" line="1148"/>
         <source>During synchronization</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="1169"/>
+        <location filename="config_dialog.cc" line="1171"/>
         <source>Authorization failed.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="1172"/>
+        <location filename="config_dialog.cc" line="1174"/>
         <source>Cannot save dictionaries because Sync Dictionary exceeds its entry size limit.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="1176"/>
+        <location filename="config_dialog.cc" line="1178"/>
         <source>Cannot save dictionaries because Sync Dictionary exceeds its binary size limit.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="1180"/>
+        <location filename="config_dialog.cc" line="1182"/>
         <source>Cannot save dictionaries because the number of dictionaries for sync exceeds its limit.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="1184"/>
+        <location filename="config_dialog.cc" line="1186"/>
         <source>Unknown error was found.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="1196"/>
+        <location filename="config_dialog.cc" line="1198"/>
         <source>Authorization error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="1201"/>
+        <location filename="config_dialog.cc" line="1203"/>
         <source>Dictionary sync error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="1204"/>
+        <location filename="config_dialog.cc" line="1206"/>
         <source>Unknown sync error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="1218"/>
+        <location filename="config_dialog.cc" line="1220"/>
         <source>Clear all sync data in Google servers</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="config_dialog.cc" line="1219"/>
+        <location filename="config_dialog.cc" line="1221"/>
         <source>You are trying to clear all the data in the sync server.
 Do you really want to continue?</source>
         <translation type="unfinished"></translation>
@@ -905,64 +905,69 @@ Do you really want to continue?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="generic_table_editor.cc" line="132"/>
-        <location filename="generic_table_editor.cc" line="177"/>
-        <location filename="generic_table_editor.cc" line="188"/>
-        <location filename="generic_table_editor.cc" line="210"/>
-        <location filename="generic_table_editor.cc" line="218"/>
-        <location filename="generic_table_editor.cc" line="226"/>
-        <location filename="generic_table_editor.cc" line="248"/>
+        <location filename="generic_table_editor.cc" line="136"/>
+        <location filename="generic_table_editor.cc" line="181"/>
+        <location filename="generic_table_editor.cc" line="192"/>
+        <location filename="generic_table_editor.cc" line="214"/>
+        <location filename="generic_table_editor.cc" line="222"/>
+        <location filename="generic_table_editor.cc" line="230"/>
+        <location filename="generic_table_editor.cc" line="252"/>
         <source>Mozc settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="generic_table_editor.cc" line="133"/>
-        <location filename="generic_table_editor.cc" line="178"/>
+        <location filename="generic_table_editor.cc" line="137"/>
+        <location filename="generic_table_editor.cc" line="182"/>
         <source>No entry is selected</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="generic_table_editor.cc" line="189"/>
+        <location filename="generic_table_editor.cc" line="193"/>
         <source>You can&apos;t have more than %1 entries</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="generic_table_editor.cc" line="201"/>
+        <location filename="generic_table_editor.cc" line="205"/>
         <source>import from file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="generic_table_editor.cc" line="211"/>
+        <location filename="generic_table_editor.cc" line="215"/>
         <source>File not found</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="generic_table_editor.cc" line="219"/>
+        <location filename="generic_table_editor.cc" line="223"/>
         <source>The specified file is too large (&gt;=100K byte)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="generic_table_editor.cc" line="227"/>
+        <location filename="generic_table_editor.cc" line="231"/>
         <source>Import failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="generic_table_editor.cc" line="238"/>
+        <location filename="generic_table_editor.cc" line="242"/>
         <source>export to file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="generic_table_editor.cc" line="249"/>
+        <location filename="generic_table_editor.cc" line="253"/>
         <source>Export failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="generic_table_editor.cc" line="282"/>
+        <location filename="generic_table_editor.cc" line="291"/>
+        <source>Edit entry</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="generic_table_editor.cc" line="293"/>
         <source>New entry</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="generic_table_editor.cc" line="283"/>
+        <location filename="generic_table_editor.cc" line="294"/>
         <source>Remove entry</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1010,51 +1015,51 @@ Do you really want to continue?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="280"/>
+        <location filename="keymap_editor.cc" line="279"/>
         <source>Mozc keymap editor</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="284"/>
+        <location filename="keymap_editor.cc" line="283"/>
         <source>Mode</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="284"/>
+        <location filename="keymap_editor.cc" line="283"/>
         <source>Key</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="284"/>
+        <location filename="keymap_editor.cc" line="283"/>
         <source>Command</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="368"/>
-        <location filename="keymap_editor.cc" line="408"/>
-        <location filename="keymap_editor.cc" line="427"/>
-        <location filename="keymap_editor.cc" line="463"/>
+        <location filename="keymap_editor.cc" line="367"/>
+        <location filename="keymap_editor.cc" line="407"/>
+        <location filename="keymap_editor.cc" line="426"/>
+        <location filename="keymap_editor.cc" line="462"/>
         <source>Mozc settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="369"/>
+        <location filename="keymap_editor.cc" line="368"/>
         <source>Current keymap table is empty. You might want to import a pre-defined keymap table first</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="409"/>
+        <location filename="keymap_editor.cc" line="408"/>
         <source>Invalid key:
 %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="428"/>
+        <location filename="keymap_editor.cc" line="427"/>
         <source>The keymaps for IME ON and Reconversion will be applied after new applications.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="keymap_editor.cc" line="464"/>
+        <location filename="keymap_editor.cc" line="463"/>
         <source>Do you want to overwrite the current keymaps?</source>
         <translation type="unfinished"></translation>
     </message>

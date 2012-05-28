@@ -38,7 +38,10 @@
 namespace mozc {
 namespace commands {
 class Command;
-}
+}  // namespace commands
+namespace composer {
+class Table;
+}  // namespace composer
 namespace session {
 class SessionInterface {
  public:
@@ -53,6 +56,9 @@ class SessionInterface {
   virtual bool SendCommand(commands::Command *command) ABSTRACT;
 
   virtual void ReloadConfig() ABSTRACT;
+
+  // Set composition Table. Currently, this is especial for session::Session.
+  virtual void SetTable(const composer::Table *table) {}
 
   // Set client capability for this session.  Used by unittest.
   virtual void set_client_capability(

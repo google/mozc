@@ -90,7 +90,7 @@ class RewriterTest : public testing::Test {
     converter_mock_.reset(new ConverterMock);
     rewriter_.reset(
         new RewriterImpl(converter_mock_.get(),
-                         Singleton<POSMatcher>::get(),
+                         UserPosManager::GetUserPosManager()->GetPOSMatcher(),
                          UserPosManager::GetUserPosManager()->GetPosGroup()));
   }
 
@@ -108,6 +108,7 @@ class RewriterTest : public testing::Test {
   scoped_ptr<RewriterImpl> rewriter_;
 };
 
+// Command rewriter should be disabled on Android build. b/5851240
 TEST_F(RewriterTest, CommandRewriterAvailability) {
   Segments segments;
   const ConversionRequest request;

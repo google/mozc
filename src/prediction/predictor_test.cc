@@ -36,10 +36,14 @@
 #include "config/config_handler.h"
 #include "converter/conversion_request.h"
 #include "converter/segments.h"
+#include "data_manager/user_pos_manager.h"
 #include "dictionary/dictionary_mock.h"
 #include "dictionary/pos_matcher.h"
+#include "dictionary/suppression_dictionary.h"
 #include "prediction/predictor_interface.h"
 #include "prediction/user_history_predictor.h"
+#include "session/commands.pb.h"
+#include "session/request_handler.h"
 #include "testing/base/public/gmock.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
@@ -55,21 +59,27 @@ namespace {
 class CheckCandSizePredictor : public PredictorInterface {
  public:
   explicit CheckCandSizePredictor(int expected_cand_size) :
-      expected_cand_size_(expected_cand_size) {
+      expected_cand_size_(expected_cand_size),
+      predictor_name_("CheckCandSizePredictor") {
   }
-  bool Predict(Segments *segments) const {
+  virtual bool Predict(Segments *segments) const {
     EXPECT_EQ(expected_cand_size_, segments->max_prediction_candidates_size());
     return true;
   }
+  virtual const string &GetPredictorName() const {
+    return predictor_name_;
+  }
  private:
   int expected_cand_size_;
+  const string predictor_name_;
 };
 
 class NullPredictor : public PredictorInterface {
  public:
   explicit NullPredictor(bool ret)
-      : return_value_(ret), predict_called_(false) {}
-  bool Predict(Segments *segments) const {
+      : return_value_(ret), predict_called_(false),
+        predictor_name_("NullPredictor") {}
+  virtual bool Predict(Segments *segments) const {
     predict_called_ = true;
     return return_value_;
   }
@@ -78,13 +88,18 @@ class NullPredictor : public PredictorInterface {
     return predict_called_;
   }
 
-  void Clear() {
+  virtual void Clear() {
     predict_called_ = false;
+  }
+
+  virtual const string &GetPredictorName() const {
+    return predictor_name_;
   }
 
  private:
   bool return_value_;
   mutable bool predict_called_;
+  const string predictor_name_;
 };
 
 class MockPredictor : public PredictorInterface {
@@ -96,13 +111,21 @@ class MockPredictor : public PredictorInterface {
   MOCK_CONST_METHOD2(
       PredictForRequest,
       bool (const ConversionRequest &request, Segments *segments));
+  MOCK_CONST_METHOD0(GetPredictorName, const string &());
 };
 
+void SetMobilePreference(bool is_mobile) {
+  commands::Request request;
+  request.set_zero_query_suggestion(is_mobile);
+  request.set_mixed_conversion(is_mobile);
+  commands::RequestHandler::SetRequest(request);
+}
 }  // namespace
 
 class PredictorTest : public testing::Test {
  protected:
   virtual void SetUp() {
+    SetMobilePreference(false);
     Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
     config::Config config;
     config::ConfigHandler::GetDefaultConfig(&config);
@@ -110,6 +133,7 @@ class PredictorTest : public testing::Test {
   }
 
   virtual void TearDown() {
+    SetMobilePreference(false);
     config::Config config;
     config::ConfigHandler::GetDefaultConfig(&config);
     config::ConfigHandler::SetConfig(config);

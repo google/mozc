@@ -73,6 +73,11 @@ class ClientMock : public client::ClientInterface {
   bool LaunchTool(const string &mode, const string &extra_arg);
   bool LaunchToolWithProtoBuf(const commands::Output &output);
   bool OpenBrowser(const string &url);
+  bool StartCloudSync();
+  bool ClearCloudSync();
+  bool GetCloudSyncStatus(commands::CloudSyncStatus *cloud_sync_status);
+  void set_output_GetCloudSyncStatus(
+      const commands::CloudSyncStatus &cloud_sync_status);
 
   void ClearFunctionCounter();
   void SetBoolFunctionReturn(string func_name, bool value);
@@ -104,6 +109,7 @@ class ClientMock : public client::ClientInterface {
 
   config::Config called_config_;
 
+  commands::CloudSyncStatus cloud_sync_status_;
 };
 }  // namespace ibus
 }  // namespace mozc

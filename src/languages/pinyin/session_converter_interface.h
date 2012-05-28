@@ -31,6 +31,7 @@
 #define MOZC_LANGUAGES_PINYIN_SESSION_CONVERTER_INTERFACE_H_
 
 #include "base/base.h"
+#include "languages/pinyin/pinyin_constant.h"
 
 namespace mozc {
 namespace commands {
@@ -91,11 +92,15 @@ class SessionConverterInterface {
   virtual bool MoveCursorToEnd() = 0;
 
   // Fills protocol buffers
-  virtual void FillOutput(commands::Output *output) const = 0;
+  // It doesn't have const qualifier because PinyinContextInterface may
+  // generate candidates lazily.
+  virtual void FillOutput(commands::Output *output) = 0;
   // Fills protocol buffers and updates internal status for a next operation.
   virtual void PopOutput(commands::Output *output) = 0;
 
   virtual void ReloadConfig() = 0;
+  // Switches the context.
+  virtual void SwitchContext(ConversionMode mode) = 0;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(SessionConverterInterface);

@@ -133,7 +133,13 @@ void CheckCandidates(const commands::Command &command,
   // Converts "abc" to ("ＡＢＣ", "ＡＢ", "Ａ").
 
   const commands::Candidates &candidates = output.candidates();
-  ASSERT_EQ(base_text.size(), candidates.size());
+  // Okay to check only the candidates.size is 0 or not, because this value
+  // does not represent actual one due to performance issue
+  if (base_text.empty()) {
+    EXPECT_EQ(0, candidates.size());
+  } else {
+    EXPECT_NE(0, candidates.size());
+  }
   EXPECT_EQ(focused_index, candidates.focused_index());
 
   string focused_text = base_text.substr(0, base_text.size() - focused_index);
@@ -215,7 +221,14 @@ class PinyinSessionTest : public testing::Test {
 
   void ResetSession() {
     session_.reset(new pinyin::Session);
-    session_->converter_.reset(new SessionConverter(new PinyinContextMock));
+
+    SessionConverter *converter =
+        new SessionConverter(*session_->session_config_);
+    PinyinContextMock *mock = new PinyinContextMock;
+    converter->pinyin_context_.reset(mock);
+    converter->context_ = mock;
+
+    session_->converter_.reset(converter);
 
     config::ConfigHandler::Reload();
   }

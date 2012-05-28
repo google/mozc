@@ -94,6 +94,9 @@ uint32 GetPlatfromFromString(const string &str) {
   if (str == "oss") {
     return QualityRegressionUtil::OSS;
   }
+  if (str == "mobile") {
+    return QualityRegressionUtil::MOBILE;
+  }
   LOG(ERROR) << "Unknown platform name: " << str;
   return QualityRegressionUtil::DESKTOP;
 }

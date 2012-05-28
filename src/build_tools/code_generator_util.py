@@ -32,6 +32,9 @@
 
 __author__ = "hidehiko"
 
+import types
+
+
 CPP_STRING_LITERAL_EXCEPTION = ['\\', '"']
 
 
@@ -47,6 +50,17 @@ def ToCppStringLiteral(s):
   if s is None:
     return 'NULL'
   return '"%s"' % ''.join(_CppCharEscape(c) for c in s)
+
+
+def FormatWithCppEscape(format, *args):
+  """Returns a string filling format with args."""
+  literal_list = []
+  for arg in args:
+    if isinstance(arg, (types.StringType, types.NoneType)):
+      arg = ToCppStringLiteral(arg)
+    literal_list.append(arg)
+
+  return format % tuple(literal_list)
 
 
 def SkipLineComment(stream, comment_prefix='#'):

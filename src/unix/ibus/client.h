@@ -102,6 +102,9 @@ class Client : public client::ClientInterface {
   // TODO(mazda): Implement this
   virtual void Reset();
 
+  bool StartCloudSync();
+  bool ClearCloudSync();
+  bool GetCloudSyncStatus(commands::CloudSyncStatus *cloud_sync_status);
 
   // Does nothing.
   virtual bool PingServer() const;

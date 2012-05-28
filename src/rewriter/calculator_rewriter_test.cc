@@ -117,16 +117,22 @@ class CalculatorRewriterTest : public testing::Test {
 
     // use mock
     CalculatorFactory::SetCalculator(&calculator_mock_);
+    config::ConfigHandler::GetDefaultConfig(&default_config_);
+    config::Config config(default_config_);
+    config.set_use_calculator(true);
+    config::ConfigHandler::SetConfig(config);
   }
 
   virtual void TearDown() {
     // Clear the mock test calculator
     CalculatorFactory::SetCalculator(NULL);
+    config::ConfigHandler::SetConfig(default_config_);
   }
 
  private:
   CalculatorMock calculator_mock_;
   scoped_ptr<ConverterInterface> converter_mock_;
+  config::Config default_config_;
 };
 
 TEST_F(CalculatorRewriterTest, InsertCandidateTest) {

@@ -56,8 +56,11 @@ SparseConnector::SparseConnector(const char *ptr, size_t size)
   const size_t default_cost_size = sizeof(default_cost_[0]) * lsize;
 
   ptr += default_cost_size;
+  // Next chunk is aligned to 4byte boundary.
+  ptr += (4 - (reinterpret_cast<uintptr_t>(ptr) % 4)) % 4;
 
   CHECK_GT(size, default_cost_size + kHeaderSize);
+  CHECK(reinterpret_cast<uintptr_t>(ptr) % 4 == 0);
 
   const size_t array_image_size = size - kHeaderSize - default_cost_size;
   array_image_.reset(new SparseArrayImage(ptr, array_image_size));

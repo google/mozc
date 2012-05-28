@@ -35,11 +35,15 @@
 #include "base/util.h"
 #include "converter/node.h"
 #include "converter/node_allocator.h"
+#include "data_manager/user_pos_manager.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/system/codec.h"
 #include "dictionary/system/system_dictionary_builder.h"
 #include "dictionary/text_dictionary_loader.h"
+#include "session/commands.pb.h"
+#include "session/request_handler.h"
+#include "session/request_test_util.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
@@ -73,7 +77,8 @@ using dictionary::TokenInfo;
 class SystemDictionaryTest : public testing::Test {
  protected:
   SystemDictionaryTest()
-      : text_dict_(new TextDictionaryLoader(*Singleton<POSMatcher>::get())),
+      : text_dict_(new TextDictionaryLoader(
+          *UserPosManager::GetUserPosManager()->GetPOSMatcher())),
         dic_fn_(FLAGS_test_tmpdir + "/mozc.dic") {
     const string dic_path = Util::JoinPath(FLAGS_test_srcdir,
                                            FLAGS_dictionary_source);
@@ -90,6 +95,7 @@ class SystemDictionaryTest : public testing::Test {
   Token* CreateToken(const string& key, const string& value) const;
   bool CompareForLookup(const Node *node, const Token *token,
                         bool reverse) const;
+
   // Only compares the higher byte since cost is sometimes encoded
   // into a byte.
   bool CompareCost(int c1, int c2) const {
@@ -111,6 +117,30 @@ class SystemDictionaryTest : public testing::Test {
   scoped_ptr<TextDictionaryLoader> text_dict_;
   const string dic_fn_;
 };
+
+namespace {
+void DeleteNodes(Node *node) {
+  while (node) {
+    Node *tmp_node = node;
+    node = node->bnext;
+    delete tmp_node;
+  }
+}
+
+const Node* FindNodeByToken(const Token &token, const Node &node) {
+  const Node *n = &node;
+  while (n) {
+    if (n->actual_key == token.key &&
+        n->value == token.value &&
+        n->lid == token.lid &&
+        n->rid == token.rid) {  // Doesn't compare costs
+      return n;
+    }
+    n = n->bnext;
+  }
+  return NULL;
+}
+}  // namespace
 
 void SystemDictionaryTest::BuildSystemDictionary(const vector <Token *>& source,
                                                  int num_tokens) {
@@ -842,10 +872,12 @@ TEST_F(SystemDictionaryTest, TokenAfterSpellningToken) {
       codec(new CodecForTest());
   system_dic->codec_ = codec.get();
 
+  const string original_key;
   const string tokens_key;
   Node *head = NULL;
   int limit = 10000;
-  Node *res = system_dic->AppendNodesFromTokens(filter, tokens_key, &tokens,
+  Node *res = system_dic->AppendNodesFromTokens(filter, "",
+                                                tokens_key, &tokens,
                                                 head, NULL, &limit);
 
   vector<Node *> nodes;
@@ -862,4 +894,5 @@ TEST_F(SystemDictionaryTest, TokenAfterSpellningToken) {
     delete nodes[i];
   }
 }
+
 }  // namespace mozc

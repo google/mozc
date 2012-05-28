@@ -32,6 +32,7 @@
 #include "config/config.pb.h"
 #include "rewriter/version_rewriter.h"
 #include "session/commands.pb.h"
+#include "session/request_handler.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
@@ -45,14 +46,38 @@ class VersionRewriterTest : public testing::Test {
     config::Config config;
     config::ConfigHandler::GetDefaultConfig(&config);
     config::ConfigHandler::SetConfig(config);
-
+    // Reserve the previous request before starting a test.
+    previous_request_.CopyFrom(commands::RequestHandler::GetRequest());
   }
 
+  virtual void TearDown() {
+    // and gets back to the request at the end of a test.
+    commands::RequestHandler::SetRequest(previous_request_);
+  }
+
+ private:
+  commands::Request previous_request_;
 };
 
 TEST_F(VersionRewriterTest, CapabilityTest) {
+  // default_request is just declared but not touched at all, so it
+  // holds all default values.
+  commands::Request default_request;
+  commands::RequestHandler::SetRequest(default_request);
   VersionRewriter rewriter;
   EXPECT_EQ(RewriterInterface::CONVERSION, rewriter.capability());
 }
 
+TEST_F(VersionRewriterTest, MobileEnvironmentTest) {
+  commands::Request input;
+  VersionRewriter rewriter;
+
+  input.set_mixed_conversion(true);
+  commands::RequestHandler::SetRequest(input);
+  EXPECT_EQ(RewriterInterface::ALL, rewriter.capability());
+
+  input.set_mixed_conversion(false);
+  commands::RequestHandler::SetRequest(input);
+  EXPECT_EQ(RewriterInterface::CONVERSION, rewriter.capability());
+}
 }  // namespace mozc

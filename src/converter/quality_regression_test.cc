@@ -47,6 +47,7 @@
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suffix_dictionary.h"
 #include "dictionary/suppression_dictionary.h"
+#include "engine/engine_interface.h"
 #include "prediction/dictionary_predictor.h"
 #include "prediction/predictor.h"
 #include "prediction/user_history_predictor.h"
@@ -142,7 +143,7 @@ TEST_F(QualityRegressionTest, BasicTest) {
           Singleton<SuppressionDictionary>::get(),
           ConnectorFactory::GetConnector(),
           Singleton<Segmenter>::get(),
-          Singleton<POSMatcher>::get(),
+          UserPosManager::GetUserPosManager()->GetPOSMatcher(),
           UserPosManager::GetUserPosManager()->GetPosGroup()));
   ImmutableConverterFactory::SetImmutableConverter(immutable_converter.get());
 
@@ -150,16 +151,19 @@ TEST_F(QualityRegressionTest, BasicTest) {
   // segmenter, etc. This design is undesirable. We want to fix the design
   // problem.
   PredictorInterface *dictionary_predictor =
-      new DictionaryPredictor(immutable_converter.get(),
-                              DictionaryFactory::GetDictionary(),
-                              SuffixDictionaryFactory::GetSuffixDictionary(),
-                              ConnectorFactory::GetConnector(),
-                              Singleton<Segmenter>::get(),
-                              *Singleton<POSMatcher>::get());
+      new DictionaryPredictor(
+          immutable_converter.get(),
+          DictionaryFactory::GetDictionary(),
+          SuffixDictionaryFactory::GetSuffixDictionary(),
+          ConnectorFactory::GetConnector(),
+          Singleton<Segmenter>::get(),
+          *UserPosManager::GetUserPosManager()->GetPOSMatcher());
 
   PredictorInterface *user_history_predictor =
-      new UserHistoryPredictor(DictionaryFactory::GetDictionary(),
-                               Singleton<POSMatcher>::get());
+      new UserHistoryPredictor(
+          DictionaryFactory::GetDictionary(),
+          UserPosManager::GetUserPosManager()->GetPOSMatcher(),
+          Singleton<SuppressionDictionary>::get());
 
   PredictorInterface *extra_predictor = NULL;
   scoped_ptr<ConverterImpl> converter(new ConverterImpl);
@@ -169,7 +173,7 @@ TEST_F(QualityRegressionTest, BasicTest) {
                            user_history_predictor,
                            extra_predictor),
       new RewriterImpl(converter.get(),
-                       Singleton<POSMatcher>::get(),
+                       UserPosManager::GetUserPosManager()->GetPOSMatcher(),
                        UserPosManager::GetUserPosManager()->GetPosGroup()));
 
   QualityRegressionUtil util(converter.get());

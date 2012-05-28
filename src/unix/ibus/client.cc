@@ -264,6 +264,34 @@ bool Client::PingServer() const {
   return true;
 }
 
+bool Client::StartCloudSync() {
+  return CallCommand(commands::Input::START_CLOUD_SYNC);
+}
+
+bool Client::ClearCloudSync() {
+  return CallCommand(commands::Input::CLEAR_CLOUD_SYNC);
+}
+
+bool Client::GetCloudSyncStatus(commands::CloudSyncStatus *cloud_sync_status) {
+  DCHECK(cloud_sync_status);
+  commands::Input input;
+  input.set_id(id_);
+  input.set_type(commands::Input::GET_CLOUD_SYNC_STATUS);
+
+  commands::Output output;
+  if (!Call(input, &output)) {
+    LOG(ERROR) << "GetCloudSyncStatus command is not supported.";
+    return false;
+  }
+
+  if (!output.has_cloud_sync_status()) {
+    LOG(ERROR) << "No CloudSyncStatus.  Server may be stale.";
+    return false;
+  }
+
+  cloud_sync_status->CopyFrom(output.cloud_sync_status());
+  return true;
+}
 
 bool Client::CallCommand(commands::Input::CommandType type) {
   commands::Input input;

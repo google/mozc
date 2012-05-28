@@ -69,6 +69,8 @@ class BasePredictor : public PredictorInterface {
   // Reload usre history
   virtual bool Reload();
 
+  virtual const string &GetPredictorName() const = 0;
+
  protected:
   scoped_ptr<PredictorInterface> dictionary_predictor_;
   scoped_ptr<PredictorInterface> user_history_predictor_;
@@ -87,8 +89,11 @@ class DefaultPredictor : public BasePredictor {
 
   virtual bool Predict(Segments *segments) const;
 
+  virtual const string &GetPredictorName() const { return predictor_name_; }
+
  private:
   const ConversionRequest empty_request_;
+  const string predictor_name_;
 };
 
 

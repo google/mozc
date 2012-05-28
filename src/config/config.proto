@@ -56,6 +56,7 @@ message GeneralConfig {
   optional string ui_locale = 5 [ default = "" ];
 
   // Whether to upload usage stats
+  // This flag is used only for Android.
   optional bool upload_usage_stats = 6 [default = false];
 };
 
@@ -124,6 +125,7 @@ message Config {
     ATOK = 1;
     MSIME = 2;
     KOTOERI = 3;
+    MOBILE = 4;
   };
   optional SessionKeymap session_keymap = 41 [default = NONE];
 

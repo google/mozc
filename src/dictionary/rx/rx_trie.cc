@@ -42,6 +42,8 @@ const int kMaxTokensPerLookup = 10000;
 
 struct RxResults {
   int limit;
+  string search_key;
+  bool is_predictive;
   vector<RxEntry> *result;
 };
 
@@ -60,11 +62,21 @@ static int RxCallback(void *cookie, const char *s, int len, int id) {
   --(res->limit);
   // truncates to len byte.
   RxEntry entry;
-  entry.key = string(s, len);
+  if (res->is_predictive) {
+    size_t search_key_len = res->search_key.size();
+    DCHECK(len >= search_key_len);
+    entry.actual_key = string(s, len);
+    entry.key = res->search_key + string(s + search_key_len,
+                                         len - search_key_len);
+  } else {  // prefix search
+    entry.actual_key = string(s, len);
+    entry.key = string(res->search_key, 0, len);
+  }
   entry.id = id;
   res->result->push_back(entry);
   return 0;
 }
+
 
 static int RxIDCallback(void *cookie, const char *s, int len, int id) {
   RxIDResult *res = reinterpret_cast<RxIDResult *>(cookie);
@@ -78,7 +90,9 @@ static int RxIDCallback(void *cookie, const char *s, int len, int id) {
 }
 }  // namespace
 
-RxTrie::RxTrie() : rx_trie_(NULL) {}
+
+RxTrie::RxTrie() : rx_trie_(NULL) {
+}
 
 RxTrie::~RxTrie() {
   rx_close(rx_trie_);
@@ -88,6 +102,7 @@ bool RxTrie::OpenImage(const unsigned char *image) {
   rx_trie_ = rx_open(image);
   return (rx_trie_ != NULL);
 }
+
 
 void RxTrie::PredictiveSearch(const string &key,
                               vector<RxEntry> *result) const {
@@ -136,14 +151,13 @@ void RxTrie::SearchInternal(const string &key, SearchType type,
   DCHECK(result);
   RxResults rx_results;
   rx_results.limit = limit;
+  rx_results.search_key = key;
   rx_results.result = result;
-  if (type == PREDICTIVE) {
-    rx_search(rx_trie_, 1, key.c_str(), RxCallback, &rx_results);
-  } else if (type == PREFIX) {
-    rx_search(rx_trie_, 0, key.c_str(), RxCallback, &rx_results);
-  } else {
-    DLOG(FATAL) << "should not come here.";
-  }
+  rx_results.is_predictive = (type == PREDICTIVE);
+
+  DCHECK(type == PREDICTIVE || type == PREFIX);
+  rx_search(rx_trie_, type == PREDICTIVE, key.c_str(),
+            RxCallback, &rx_results);
 }
 }  // namespace rx
 }  // namespace mozc

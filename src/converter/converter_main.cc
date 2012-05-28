@@ -41,11 +41,14 @@
 #include "converter/lattice.h"
 #include "converter/segments.h"
 #include "session/commands.pb.h"
+#include "session/request_handler.h"
 
 DEFINE_int32(max_conversion_candidates_size, 200,
              "maximum candidates size");
 DEFINE_string(user_profile_dir, "", "path to user profile directory");
 
+DEFINE_bool(mobile, false, "use mobile preference");
+DEFINE_bool(output_debug_string, true, "output debug string for each input");
 
 namespace {
 bool ExecCommand(const mozc::ConverterInterface &converter,
@@ -179,6 +182,14 @@ int main(int argc, char **argv) {
     mozc::Util::SetUserProfileDirectory(FLAGS_user_profile_dir);
   }
 
+  if (FLAGS_mobile) {
+    LOG(INFO) << "Using mobile preference and dictionary";
+    mozc::commands::Request request;
+    request.set_zero_query_suggestion(true);
+    request.set_mixed_conversion(true);
+    mozc::commands::RequestHandler::SetRequest(request);
+
+  }
 
   scoped_ptr<mozc::ImmutableConverterImpl> immutable_converter(
       new mozc::ImmutableConverterImpl);

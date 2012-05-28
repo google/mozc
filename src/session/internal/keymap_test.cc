@@ -164,6 +164,8 @@ TEST(KeyMap, GetCommandKeyStub) {
 TEST(KeyMap, GetKeyMapFileName) {
   EXPECT_STREQ("system://atok.tsv",
                KeyMapManager::GetKeyMapFileName(config::Config::ATOK));
+  EXPECT_STREQ("system://mobile.tsv",
+               KeyMapManager::GetKeyMapFileName(config::Config::MOBILE));
   EXPECT_STREQ("system://ms-ime.tsv",
                KeyMapManager::GetKeyMapFileName(config::Config::MSIME));
   EXPECT_STREQ("system://kotoeri.tsv",
@@ -228,6 +230,10 @@ TEST(KeyMap, LoadStreamWithErrors) {
   EXPECT_TRUE(manager.LoadStreamWithErrors(is.get(), &errors));
   EXPECT_TRUE(errors.empty());
 
+  errors.clear();
+  is.reset(ConfigFileStream::LegacyOpen("system://mobile.tsv"));
+  EXPECT_TRUE(manager.LoadStreamWithErrors(is.get(), &errors));
+  EXPECT_TRUE(errors.empty());
 }
 
 TEST(KeyMap, GetName) {

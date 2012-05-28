@@ -175,6 +175,7 @@ class UserDictionaryTest : public testing::Test {
     CHECK(pos_mock_.get() != NULL);
     Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
     CHECK(storage::Registry::Clear());
+    suppression_dictionary_.reset(new SuppressionDictionary);
   }
 
   virtual void TearDown() {
@@ -187,14 +188,20 @@ class UserDictionaryTest : public testing::Test {
   UserDictionary *CreateDictionaryWithMockPos() {
     // TODO(noriyukit): Prepare mock for POSMatcher that is consistent with
     // UserPOSMock.
-    return new UserDictionary(pos_mock_.get(), Singleton<POSMatcher>::get());
+    return new UserDictionary(
+        pos_mock_.get(),
+        UserDictionaryManager::GetUserDictionaryManager()->GetPOSMatcher(),
+        suppression_dictionary_.get());
   }
 
   // Creates a user dictionary with actual pos data.
   UserDictionary *CreateDictionary() {
     const UserPOSInterface *user_pos =
         UserDictionaryManager::GetUserDictionaryManager()->GetUserPOS();
-    return new UserDictionary(user_pos, Singleton<POSMatcher>::get());
+    return new UserDictionary(
+        user_pos,
+        UserDictionaryManager::GetUserDictionaryManager()->GetPOSMatcher(),
+        Singleton<SuppressionDictionary>::get());
   }
 
   // Returns a sigleton of a user dictionary.
@@ -299,6 +306,7 @@ class UserDictionaryTest : public testing::Test {
   }
 
   scoped_ptr<const UserPOSMock> pos_mock_;
+  scoped_ptr<SuppressionDictionary> suppression_dictionary_;
 };
 
 TEST_F(UserDictionaryTest, TestLookupPredictive) {
@@ -637,9 +645,6 @@ TEST_F(UserDictionaryTest, AddToAutoRegisteredDictionary) {
 }
 
 TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
-  SuppressionDictionary *suppression_dictionary =
-      SuppressionDictionary::GetSuppressionDictionary();
-
   scoped_ptr<UserDictionary> user_dic(CreateDictionaryWithMockPos());
   user_dic->WaitForReloader();
 
@@ -672,13 +677,13 @@ TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
       entry->set_pos("\xE6\x8A\x91\xE5\x88\xB6\xE5\x8D\x98\xE8\xAA\x9E");
     }
 
-    suppression_dictionary->Lock();
-    EXPECT_TRUE(suppression_dictionary->IsLocked());
+    suppression_dictionary_->Lock();
+    EXPECT_TRUE(suppression_dictionary_->IsLocked());
     user_dic->Load(storage);
-    EXPECT_FALSE(suppression_dictionary->IsLocked());
+    EXPECT_FALSE(suppression_dictionary_->IsLocked());
 
     for (size_t j = 0; j < 10; ++j) {
-      EXPECT_TRUE(suppression_dictionary->SuppressEntry(
+      EXPECT_TRUE(suppression_dictionary_->SuppressEntry(
           "suppress_key" + Util::SimpleItoa(j),
           "suppress_value" + Util::SimpleItoa(j)));
     }
@@ -699,12 +704,12 @@ TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
       entry->set_pos("noun");
     }
 
-    suppression_dictionary->Lock();
+    suppression_dictionary_->Lock();
     user_dic->Load(storage);
-    EXPECT_FALSE(suppression_dictionary->IsLocked());
+    EXPECT_FALSE(suppression_dictionary_->IsLocked());
 
     for (size_t j = 0; j < 10; ++j) {
-      EXPECT_FALSE(suppression_dictionary->SuppressEntry(
+      EXPECT_FALSE(suppression_dictionary_->SuppressEntry(
           "suppress_key" + Util::SimpleItoa(j),
           "suppress_value" + Util::SimpleItoa(j)));
     }

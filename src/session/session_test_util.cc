@@ -29,8 +29,6 @@
 
 // Session test utility functions
 
-#include "base/singleton.h"
-#include "composer/table.h"
 #include "session/commands.pb.h"
 #include "session/session_test_util.h"
 
@@ -39,12 +37,10 @@ namespace session {
 
 ScopedMobilePreference::ScopedMobilePreference()
     : scoped_request_(new commands::ScopedMobileRequestForUnittest) {
-  Singleton<composer::Table>::get()->Initialize();
 }
 
 ScopedMobilePreference::~ScopedMobilePreference() {
   scoped_request_.reset(NULL);
-  Singleton<composer::Table>::get()->Initialize();
 }
 
 }  // namespace session

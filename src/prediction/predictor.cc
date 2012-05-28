@@ -125,7 +125,8 @@ DefaultPredictor::DefaultPredictor(PredictorInterface *dictionary_predictor,
     : BasePredictor(dictionary_predictor,
                     user_history_predictor,
                     extra_predictor),
-      empty_request_(ConversionRequest()) {}
+      empty_request_(ConversionRequest()),
+      predictor_name_("DefaultPredictor") {}
 
 DefaultPredictor::~DefaultPredictor() {}
 

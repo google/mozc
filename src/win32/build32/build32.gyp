@@ -43,7 +43,6 @@
           'target_name': 'mozc_win32_build32',
           'type': 'none',
           'dependencies': [
-            '../../gui/gui.gyp:mozc_tool',
             '../../renderer/renderer.gyp:mozc_renderer',
             '../../server/server.gyp:mozc_cache_service',
             '../../server/server.gyp:mozc_server',
@@ -51,6 +50,11 @@
             '../ime/ime.gyp:mozc_ime',
           ],
           'conditions': [
+            ['use_dynamically_linked_qt!=1', {
+              'dependencies': [
+                '../../gui/gui.gyp:mozc_tool',
+              ],
+            }],
             ['branding=="GoogleJapaneseInput"', {
               'dependencies': [
                 '../custom_action/custom_action.gyp:mozc_custom_action32',

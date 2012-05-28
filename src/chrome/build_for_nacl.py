@@ -42,6 +42,7 @@ import json
 import optparse
 import os
 import subprocess
+import sys
 
 
 def SetNaclSdkPath(nacl_sdk_root, toolchain_dir, env):
@@ -71,7 +72,8 @@ def SetNaclToolchainEnv(toolchain_prefix, env):
 
 def InvokeBuildMozcScript(build_base, configuration, depth, args, env):
   """Invokes build_mozc.py to build targets with specified configuration."""
-  command_line = ['./build_mozc.py', 'build']
+  command_line = [sys.executable, './build_mozc.py',
+                  'build']
   if build_base:
     command_line.append('--build_base=%s' % build_base)
   if configuration:

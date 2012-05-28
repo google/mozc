@@ -40,7 +40,6 @@
 #include "ppapi/cpp/instance.h"
 #include "ppapi/cpp/module.h"
 #include "ppapi/cpp/var.h"
-#include "third_party/jsoncpp/json.h"
 
 namespace mozc {
 

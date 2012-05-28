@@ -176,3 +176,9 @@ class UserPos(object):
 
         result.append((user_pos, conjugation_list))
     self.data = result
+
+  def GetPosId(self, pos):
+    """Returns id of the given pos."""
+    for user_pos, conjugation_list in self.data:
+      if user_pos == pos:
+        return conjugation_list[0][2]

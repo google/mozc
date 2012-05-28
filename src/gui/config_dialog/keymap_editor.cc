@@ -42,6 +42,7 @@
 #include "base/singleton.h"
 #include "base/config_file_stream.h"
 #include "base/util.h"
+#include "gui/base/table_util.h"
 #include "gui/config_dialog/combobox_delegate.h"
 #include "gui/config_dialog/keybinding_editor_delegate.h"
 #include "session/commands.pb.h"
@@ -301,7 +302,6 @@ KeyMapEditorDialog::KeyMapEditorDialog(QWidget *parent)
                                                    keybinding_delegate_.get());
   mutable_table_widget()->setItemDelegateForColumn(2,
                                                    commands_delegate_.get());
-  mutable_table_widget()->setEditTriggers(QAbstractItemView::AllEditTriggers);
 
   setWindowTitle(tr("Mozc keymap editor"));
   CHECK(mutable_table_widget());
@@ -406,12 +406,12 @@ bool KeyMapEditorDialog::Update() {
   *keymap_table = "status\tkey\tcommand\n";
 
   for (int i = 0; i < mutable_table_widget()->rowCount(); ++i) {
-    const string i18n_status =
-        mutable_table_widget()->item(i, 0)->text().toStdString();
-    const string key =
-        mutable_table_widget()->item(i, 1)->text().toStdString();
-    const string i18n_command =
-        mutable_table_widget()->item(i, 2)->text().toStdString();
+    const string &i18n_status =
+        TableUtil::SafeGetItemText(mutable_table_widget(), i, 0).toStdString();
+    const string &key =
+        TableUtil::SafeGetItemText(mutable_table_widget(), i, 1).toStdString();
+    const string &i18n_command =
+        TableUtil::SafeGetItemText(mutable_table_widget(), i, 2).toStdString();
 
     const map<string, string>::const_iterator status_it =
         normalized_status_map_.find(i18n_status);

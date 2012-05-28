@@ -38,6 +38,7 @@
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
 #include "session/commands.pb.h"
+#include "session/request_handler.h"
 
 namespace mozc {
 namespace {

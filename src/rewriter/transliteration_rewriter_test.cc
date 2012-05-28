@@ -39,6 +39,7 @@
 #include "config/config_handler.h"
 #include "converter/conversion_request.h"
 #include "converter/segments.h"
+#include "data_manager/user_pos_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "session/commands.pb.h"
 #include "session/request_handler.h"
@@ -68,16 +69,6 @@ void SetAkann(composer::Composer *composer) {
   // "あかん"
   EXPECT_EQ("\xe3\x81\x82\xe3\x81\x8b\xe3\x82\x93", query);
 }
-
-void SetKamaboko(composer::Composer *composer) {
-  InsertASCIISequence("kamabokonoinbou", composer);
-  string query;
-  composer->GetQueryForConversion(&query);
-  // "かまぼこのいんぼう"
-  EXPECT_EQ("\xe3\x81\x8b\xe3\x81\xbe\xe3\x81\xbc\xe3\x81\x93\xe3\x81\xae"
-            "\xe3\x81\x84\xe3\x82\x93\xe3\x81\xbc\xe3\x81\x86",
-            query);
-}
 }  // namespace
 
 class TransliterationRewriterTest : public testing::Test {
@@ -95,7 +86,8 @@ class TransliterationRewriterTest : public testing::Test {
   }
 
   TransliterationRewriter *CreateTransliterationRewriter() const {
-    return new TransliterationRewriter(*Singleton<POSMatcher>::get());
+    return new TransliterationRewriter(
+        *UserPosManager::GetUserPosManager()->GetPOSMatcher());
   }
 
  private:
@@ -159,7 +151,7 @@ TEST_F(TransliterationRewriterTest, T13NFromComposerTest) {
   composer::Table table;
   table.Initialize();
   composer::Composer composer;
-  composer.SetTableForUnittest(&table);
+  composer.SetTable(&table);
   SetAkann(&composer);
 
   Segments segments;
@@ -220,7 +212,7 @@ TEST_F(TransliterationRewriterTest, T13NWithMultiSegmentsTest) {
   composer::Table table;
   table.Initialize();
   composer::Composer composer;
-  composer.SetTableForUnittest(&table);
+  composer.SetTable(&table);
   SetAkann(&composer);
 
   Segments segments;
@@ -264,7 +256,7 @@ TEST_F(TransliterationRewriterTest, ComposerValidationTest) {
   composer::Table table;
   table.Initialize();
   composer::Composer composer;
-  composer.SetTableForUnittest(&table);
+  composer.SetTable(&table);
   SetAkann(&composer);
 
   Segments segments;
@@ -320,7 +312,7 @@ TEST_F(TransliterationRewriterTest, RewriteWithSameComposerTest) {
   composer::Table table;
   table.Initialize();
   composer::Composer composer;
-  composer.SetTableForUnittest(&table);
+  composer.SetTable(&table);
   SetAkann(&composer);
 
   Segments segments;
@@ -480,7 +472,7 @@ TEST_F(TransliterationRewriterTest, NoKeyWithComposerTest) {
   composer::Table table;
   table.Initialize();
   composer::Composer composer;
-  composer.SetTableForUnittest(&table);
+  composer.SetTable(&table);
   InsertASCIISequence("a", &composer);
 
   Segments segments;
@@ -525,7 +517,7 @@ TEST_F(TransliterationRewriterTest, NormalizedTransliterations) {
   composer::Table table;
   table.Initialize();
   composer::Composer composer;
-  composer.SetTableForUnittest(&table);
+  composer.SetTable(&table);
 
   // "らゔ"
   composer.InsertCharacterPreedit("\xE3\x82\x89\xE3\x82\x94");
@@ -577,7 +569,7 @@ TEST_F(TransliterationRewriterTest, MobileT13NTestWith12KeysHiragana) {
   composer::Table table;
   table.Initialize();
   composer::Composer composer;
-  composer.SetTableForUnittest(&table);
+  composer.SetTable(&table);
   {
     InsertASCIISequence("11#", &composer);
     string query;
@@ -650,7 +642,7 @@ TEST_F(TransliterationRewriterTest, MobileT13NTestWith12KeysToNumber) {
   composer::Table table;
   table.Initialize();
   composer::Composer composer;
-  composer.SetTableForUnittest(&table);
+  composer.SetTable(&table);
   {
     InsertASCIISequence("1212", &composer);
     string query;
@@ -723,7 +715,7 @@ TEST_F(TransliterationRewriterTest, MobileT13NTestWith12KeysFlick) {
   composer::Table table;
   table.Initialize();
   composer::Composer composer;
-  composer.SetTableForUnittest(&table);
+  composer.SetTable(&table);
   {
     InsertASCIISequence("1a", &composer);
     string query;
@@ -800,7 +792,7 @@ TEST_F(TransliterationRewriterTest, MobileT13NTestWithQwertyHiragana) {
 
   {
     composer::Composer composer;
-    composer.SetTableForUnittest(&table);
+    composer.SetTable(&table);
 
     InsertASCIISequence("shi", &composer);
     string query;
@@ -819,7 +811,7 @@ TEST_F(TransliterationRewriterTest, MobileT13NTestWithQwertyHiragana) {
 
   {
     composer::Composer composer;
-    composer.SetTableForUnittest(&table);
+    composer.SetTable(&table);
 
     InsertASCIISequence("si", &composer);
     string query;

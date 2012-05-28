@@ -68,7 +68,7 @@
           'dependencies': [
             '../base/base.gyp:base',
             '../net/net.gyp:http_client',
-            '<(DEPTH)/third_party/jsoncpp/jsoncpp.gyp:jsoncpp',
+            '../net/net.gyp:jsoncpp',
           ],
         },
       ],

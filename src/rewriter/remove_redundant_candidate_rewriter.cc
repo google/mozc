@@ -32,6 +32,8 @@
 #include "base/base.h"
 #include "converter/conversion_request.h"
 #include "converter/segments.h"
+#include "session/commands.pb.h"
+#include "session/request_handler.h"
 
 namespace mozc {
 
@@ -40,11 +42,17 @@ RemoveRedundantCandidateRewriter::RemoveRedundantCandidateRewriter() {}
 RemoveRedundantCandidateRewriter::~RemoveRedundantCandidateRewriter() {}
 
 int RemoveRedundantCandidateRewriter::capability() const {
+  if (GET_REQUEST(mixed_conversion)) {
+    return RewriterInterface::ALL;
+  }
   return RewriterInterface::NOT_AVAILABLE;
 }
 
 bool RemoveRedundantCandidateRewriter::Rewrite(const ConversionRequest &request,
                                                Segments *segments) const {
+  // For mobile, we don't return the single result that is same as a preedit.
+  // However we want to have T13N candidates if we have T13N candidates.
+  // http://b/5389342
   if (segments->conversion_segments_size() == 1 &&
       segments->conversion_segment(0).candidates_size() == 1 &&
       segments->conversion_segment(0).candidate(0).value ==

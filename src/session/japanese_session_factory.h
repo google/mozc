@@ -45,10 +45,8 @@ class JapaneseSessionFactory : public SessionFactoryInterface {
   virtual ~JapaneseSessionFactory();
   virtual SessionInterface *NewSession();
   virtual UserDataManagerInterface *GetUserDataManager();
-  virtual void Reload();
   virtual bool IsAvailable() const;
  private:
-  bool is_available_;
   static scoped_ptr<SessionFactoryInterface> factory_;
 };
 

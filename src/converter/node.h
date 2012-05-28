@@ -82,7 +82,13 @@ struct Node {
 
   NodeType  node_type;
   uint32    attributes;
+
+  // key: The user input.
+  // actual_key: The actual search key that corresponds to the value.
+  //           Can differ from key when no modifier conversion is enabled.
+  // value: The surface form of the word.
   string    key;
+  string    actual_key;
   string    value;
 
   Node() {
@@ -105,6 +111,7 @@ struct Node {
     raw_wcost = 0;
     attributes = 0;
     key.clear();
+    actual_key.clear();
     value.clear();
   }
 };

@@ -1,3 +1,15 @@
+mozc (1.5.1090.102) lucid; urgency=low
+
+  * Ver. 1.5.1090.102 on 2012-05-17
+  * Add a workaround against QTBUG-25536 (Issue 158)
+  * 'mozc_renderer' on Linux (a.k.a. 'gtk_renderer') (Issue 145):
+    - Experimental option (--enable_gtk_renderer) has been deprecated
+      and 'mozc_renderer' is now enabled by default on Linux.
+      You can still remove the dependencies to mozc_renderer as follows.
+      GYP_DEFINES="enable_gtk_renderer=0" python build_mozc.py gyp
+
+ -- Hiroshi Sumita <hsumita>  Thu, 17 May 2012 16:02:27 +0900
+
 mozc (1.5.1053.102) lucid; urgency=low
 
   * Ver. 1.5.1053.102 on 2012-04-18

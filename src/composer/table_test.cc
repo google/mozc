@@ -764,6 +764,77 @@ TEST_F(TableTest, AutomaticCaseSensitiveDetection) {
   }
 }
 
+TEST_F(TableTest, MobileMode) {
+  mozc::composer::Table table;
+  mozc::commands::Request request;
+  request.set_zero_query_suggestion(true);
+  request.set_mixed_conversion(true);
+  request.set_combine_all_segments(true);
+
+  // To 12keys -> Hiragana mode
+  request.set_special_romanji_table(
+      mozc::commands::Request::TWELVE_KEYS_TO_HIRAGANA);
+  mozc::commands::RequestHandler::SetRequest(request);
+  table.Reload();
+  {
+    const mozc::composer::Entry *entry = NULL;
+    size_t key_length = 0;
+    bool fixed = false;
+    entry = table.LookUpPrefix("2", &key_length, &fixed);
+    EXPECT_EQ("2", entry->input());
+    EXPECT_EQ("", entry->result());
+    // "か"
+    EXPECT_EQ("\xE3\x81\x8B", entry->pending());
+    EXPECT_EQ(1, key_length);
+    EXPECT_TRUE(fixed);
+  }
+  {
+    const mozc::composer::Entry *entry = NULL;
+    size_t key_length = 0;
+    bool fixed = false;
+    // "し*"
+    entry = table.LookUpPrefix("\xE3\x81\x97*", &key_length, &fixed);
+    // "し*"
+    EXPECT_EQ("\xE3\x81\x97*", entry->input());
+    EXPECT_EQ("", entry->result());
+    // "\x0F*\x0Eじ"
+    // 0F and 0E are shift in/out characters.
+    EXPECT_EQ("\x0F*\x0E\xE3\x81\x98", entry->pending());
+    EXPECT_EQ(4, key_length);
+    EXPECT_TRUE(fixed);
+  }
+
+  // To 12keys -> Halfwidth Ascii mode
+  request.set_special_romanji_table(
+      mozc::commands::Request::TWELVE_KEYS_TO_HALFWIDTHASCII);
+  mozc::commands::RequestHandler::SetRequest(request);
+  table.Reload();
+  {
+    const mozc::composer::Entry *entry = NULL;
+    size_t key_length = 0;
+    bool fixed = false;
+    entry = table.LookUpPrefix("2", &key_length, &fixed);
+    EXPECT_EQ("a", entry->pending());
+  }
+
+
+  // To Flick -> Hiragana mode.
+  request.set_special_romanji_table(
+      mozc::commands::Request::FLICK_TO_HIRAGANA);
+  mozc::commands::RequestHandler::SetRequest(request);
+  table.Reload();
+  {
+    size_t key_length = 0;
+    bool fixed = false;
+    const mozc::composer::Entry *entry =
+        table.LookUpPrefix("a", &key_length, &fixed);
+    // "き"
+    EXPECT_EQ("\xE3\x81\x8D", entry->pending());
+  }
+
+  // Reset the request.
+  mozc::commands::RequestHandler::SetRequest(mozc::commands::Request());
+}
 
 TEST_F(TableTest, OrderOfAddRule) {
   // The order of AddRule should not be sensitive.
@@ -960,6 +1031,64 @@ TEST_F(TableTest, SpecialKeys) {
     // This is not a fixed specification, but a current behavior.
     EXPECT_EQ("\x0F" "{-" "\x0E" "}",
               table.AddRule("{{-}}", "", "")->input());
+  }
+}
+
+TEST_F(TableTest, TableManager) {
+  TableManager table_manager;
+  set<const Table*> table_set;
+  static const commands::Request::SpecialRomanjiTable
+      special_romanji_table[] = {
+    commands::Request::DEFAULT_TABLE,
+    commands::Request::TWELVE_KEYS_TO_HIRAGANA,
+    commands::Request::TWELVE_KEYS_TO_HALFWIDTHASCII,
+    commands::Request::TWELVE_KEYS_TO_NUMBER,
+    commands::Request::FLICK_TO_HIRAGANA,
+    commands::Request::FLICK_TO_HALFWIDTHASCII,
+    commands::Request::FLICK_TO_NUMBER,
+    commands::Request::TOGGLE_FLICK_TO_HIRAGANA,
+    commands::Request::TOGGLE_FLICK_TO_HALFWIDTHASCII,
+    commands::Request::TOGGLE_FLICK_TO_NUMBER,
+    commands::Request::QWERTY_MOBILE_TO_HIRAGANA,
+    commands::Request::QWERTY_MOBILE_TO_HIRAGANA_NUMBER,
+    commands::Request::QWERTY_MOBILE_TO_HALFWIDTHASCII,
+  };
+  static const config::Config::PreeditMethod preedit_method[] = {
+    config::Config::ROMAN,
+    config::Config::KANA
+  };
+  static const config::Config::PunctuationMethod punctuation_method[] = {
+    config::Config::KUTEN_TOUTEN,
+    config::Config::COMMA_PERIOD,
+    config::Config::KUTEN_PERIOD,
+    config::Config::COMMA_TOUTEN
+  };
+  static const config::Config::SymbolMethod symbol_method[] = {
+    config::Config::CORNER_BRACKET_MIDDLE_DOT,
+    config::Config::SQUARE_BRACKET_SLASH,
+    config::Config::CORNER_BRACKET_SLASH,
+    config::Config::SQUARE_BRACKET_MIDDLE_DOT
+  };
+
+  for (int romanji = 0; romanji < arraysize(special_romanji_table); ++romanji) {
+    for (int preedit = 0; preedit < arraysize(preedit_method); ++preedit) {
+      for (int punctuation = 0; punctuation < arraysize(punctuation_method);
+           ++punctuation) {
+        for (int symbol = 0; symbol < arraysize(symbol_method); ++symbol) {
+          commands::Request request;
+          request.set_special_romanji_table(special_romanji_table[romanji]);
+          config::Config config;
+          config.set_preedit_method(preedit_method[preedit]);
+          config.set_punctuation_method(punctuation_method[punctuation]);
+          config.set_symbol_method(symbol_method[symbol]);
+          const Table *table = table_manager.GetTable(request, config);
+          EXPECT_TRUE(table != NULL);
+          EXPECT_TRUE(table_manager.GetTable(request, config) == table);
+          EXPECT_TRUE(table_set.find(table) == table_set.end());
+          table_set.insert(table);
+        }
+      }
+    }
   }
 }
 

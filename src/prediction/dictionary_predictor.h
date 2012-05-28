@@ -62,9 +62,11 @@ class DictionaryPredictor : public PredictorInterface {
                       const POSMatcher &pos_matcher);
   virtual ~DictionaryPredictor();
 
-  bool Predict(Segments *segments) const;
-  bool PredictForRequest(const ConversionRequest &request,
-                         Segments *segments) const;
+  virtual bool Predict(Segments *segments) const;
+  virtual bool PredictForRequest(const ConversionRequest &request,
+                                 Segments *segments) const;
+
+  virtual const string &GetPredictorName() const { return predictor_name_; }
 
  protected:
   // Protected members for unittesting
@@ -246,10 +248,12 @@ class DictionaryPredictor : public PredictorInterface {
 
   // Scoring function which takes prediction bounus into account.
   // It basically reranks the candidate by lang_prob * (1 + remain_len).
+  // This algorithm is mainly used for desktop.
   void SetPredictionCost(const Segments &segments,
                          vector<Result> *results) const;
 
   // Language model-based scoring function.
+  // This algorithm is mainly used for mobile.
   void SetLMCost(const Segments &segments,
                  vector<Result> *results) const;
 
@@ -289,6 +293,7 @@ class DictionaryPredictor : public PredictorInterface {
   const ConnectorInterface *connector_;
   const SegmenterInterface *segmenter_;
   const uint16 counter_suffix_word_id_;
+  const string predictor_name_;
 };
 }  // namespace mozc
 
