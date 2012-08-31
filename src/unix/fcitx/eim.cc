@@ -17,6 +17,9 @@
  *   51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.              *
  ***************************************************************************/
 
+// workaround
+#define _FCITX_LOG_H_
+
 #include <fcitx/instance.h>
 #include <fcitx/ime.h>
 #include <fcitx/hook.h>
