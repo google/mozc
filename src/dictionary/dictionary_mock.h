@@ -94,6 +94,9 @@ class DictionaryMock : public DictionaryInterface {
   virtual Node *LookupPrefix(const char *str, int size,
                              NodeAllocatorInterface *allocator) const;
 
+  virtual Node *LookupExact(const char *str, int size,
+                            NodeAllocatorInterface *allocator) const;
+
   // For reverse lookup, the reading is stored in Node::value and the word
   // is stored in Node::key.
   virtual Node *LookupReverse(const char *str, int size,
@@ -122,6 +125,13 @@ class DictionaryMock : public DictionaryInterface {
                         const string &key, const string &value,
                         const uint32 node_type);
 
+  // Adds a string-node pair to the exact search result.
+  // Same as AddLookupPrefix, but they have different dictionaries
+  // internally.
+  void AddLookupExact(const string &str,
+                      const string &key, const string &value,
+                      const uint32 node_type);
+
   // Erases all the dictinary contents.
   void ClearAll();
 
@@ -132,6 +142,9 @@ class DictionaryMock : public DictionaryInterface {
   map<string, list<NodeData> > predictive_dictionary_;
   map<string, list<NodeData> > prefix_dictionary_;
   map<string, list<NodeData> > reverse_dictionary_;
+  map<string, list<NodeData> > exact_dictionary_;
+
+  DISALLOW_COPY_AND_ASSIGN(DictionaryMock);
 };
 }  // namespace mozc
 

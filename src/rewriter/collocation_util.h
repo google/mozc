@@ -42,12 +42,18 @@ class CollocationUtil {
   // Gets normalized script
   // Removes or rewrites some symbols.
   // for example:
-  // "一個" -> "個" (removes 'number')
+  // "一個" -> "個" (removes 'number' if |remove_number| is true)
   // "%％" -> "%%" (full width '%' to half width)
-  static void GetNormalizedScript(const string &str, string *output);
+  static void GetNormalizedScript(
+      const string &str, bool remove_number, string *output);
 
   // Returns true if given char is number including kanji.
-  static bool IsNumber(uint16 wchar);
+  static bool IsNumber(char32 c);
+
+ private:
+  // Removes characters for normalizing.
+  static void RemoveExtraCharacters(
+      const string &input, bool remove_number, string *output);
 };
 }  // namespace mozc
 

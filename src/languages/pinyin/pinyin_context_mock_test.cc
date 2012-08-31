@@ -264,27 +264,12 @@ TEST_F(PinyinContextMockTest, FocusTest) {
   EXPECT_EQ(0, context.focused_candidate_index());
   EXPECT_EQ(5, context.candidates_size());
 
-  context.FocusCandidatePrev();
-  EXPECT_EQ(ToFullWidthAscii("NIHAO"), context.conversion_text());
-  EXPECT_EQ("", context.rest_text());
-  EXPECT_EQ(0, context.focused_candidate_index());
-
   context.FocusCandidate(4);
   EXPECT_EQ(ToFullWidthAscii("N"), context.conversion_text());
   EXPECT_EQ("ihao", context.rest_text());
   EXPECT_EQ(4, context.focused_candidate_index());
 
-  context.FocusCandidateNext();
-  EXPECT_EQ(ToFullWidthAscii("N"), context.conversion_text());
-  EXPECT_EQ("ihao", context.rest_text());
-  EXPECT_EQ(4, context.focused_candidate_index());
-
-  context.FocusCandidatePrev();
-  EXPECT_EQ(ToFullWidthAscii("NI"), context.conversion_text());
-  EXPECT_EQ("hao", context.rest_text());
-  EXPECT_EQ(3, context.focused_candidate_index());
-
-  context.FocusCandidateNext();
+  context.FocusCandidate(100);
   EXPECT_EQ(ToFullWidthAscii("N"), context.conversion_text());
   EXPECT_EQ("ihao", context.rest_text());
   EXPECT_EQ(4, context.focused_candidate_index());
@@ -398,7 +383,7 @@ TEST_F(PinyinContextMockTest, CursorTest) {
   InsertCharacterChars("nihao", &context);
 
   {  // Confirms focused_candidate_index when cursor is not moved.
-    context.FocusCandidateNext();
+    context.FocusCandidate(1);
     ASSERT_EQ(1, context.focused_candidate_index());
 
     context.MoveCursorRight();
@@ -407,8 +392,8 @@ TEST_F(PinyinContextMockTest, CursorTest) {
     context.MoveCursorLeft();
     EXPECT_EQ(0, context.focused_candidate_index());
 
-    context.FocusCandidateNext();
-    ASSERT_EQ(1, context.focused_candidate_index());
+    context.FocusCandidate(2);
+    ASSERT_EQ(2, context.focused_candidate_index());
 
     context.MoveCursorRight();
     EXPECT_EQ(0, context.focused_candidate_index());

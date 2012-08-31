@@ -41,25 +41,19 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        'gen_suffix_data#host',
       ],
     },
     {
       'target_name': 'dictionary',
-      'type': 'static_library',
-      'sources': [
-        'dictionary.cc',
-      ],
+      'type': 'none',
       'dependencies': [
         '../base/base.gyp:base',
-        '../data_manager/data_manager.gyp:user_dictionary_manager',
         '<(DEPTH)/third_party/rx/rx.gyp:rx',
         'dictionary_base.gyp:dictionary_protocol',
         'dictionary_base.gyp:gen_pos_matcher#host',
         'dictionary_base.gyp:suppression_dictionary',
         'dictionary_base.gyp:user_dictionary',
         'dictionary_impl',
-        'gen_dictionary_data#host',
         'suffix_dictionary',
         'system/system_dictionary.gyp:system_dictionary',
         'system/system_dictionary.gyp:value_dictionary',
@@ -75,127 +69,6 @@
         '../base/base.gyp:base',
         'dictionary_base.gyp:dictionary_protocol',
         'dictionary_base.gyp:suppression_dictionary',
-      ],
-    },
-    {
-      'target_name': 'gen_dictionary_data',
-      'type': 'none',
-      'toolsets': ['host'],
-      'conditions': [
-        ['use_separate_dictionary==1',{
-            'dependencies': [
-              'gen_separate_dictionary_data',
-            ],
-          }, {
-            'dependencies': [
-              'gen_embedded_dictionary_data',
-            ],
-          },
-        ]
-      ],
-    },
-    {
-      'target_name': 'gen_embedded_dictionary_data',
-      'type': 'none',
-      'toolsets': ['host'],
-      'actions': [
-        {
-          'action_name': 'gen_embedded_dictionary_data',
-          'variables': {
-             'input_files%': [
-               '../data/dictionary/dictionary00.txt',
-               '../data/dictionary/dictionary01.txt',
-               '../data/dictionary/dictionary02.txt',
-               '../data/dictionary/dictionary03.txt',
-               '../data/dictionary/dictionary04.txt',
-               '../data/dictionary/dictionary05.txt',
-               '../data/dictionary/dictionary06.txt',
-               '../data/dictionary/dictionary07.txt',
-               '../data/dictionary/dictionary08.txt',
-               '../data/dictionary/dictionary09.txt',
-             ],
-          },
-          'inputs': [
-            '<@(input_files)',
-          ],
-          'outputs': [
-            '<(gen_out_dir)/embedded_dictionary_data.h',
-          ],
-          'action': [
-            # Use the pre-built version. See comments in mozc.gyp for why.
-            '<(mozc_build_tools_dir)/gen_system_dictionary_data_main',
-            '--logtostderr',
-            '--input=<(input_files)',
-            '--make_header',
-            '--output=<(gen_out_dir)/embedded_dictionary_data.h',
-          ],
-          'message': 'Generating <(gen_out_dir)/embedded_dictionary_data.h.',
-        },
-      ],
-    },
-    {
-      'target_name': 'gen_separate_dictionary_data',
-      'type': 'none',
-      'toolsets': ['host'],
-      'actions': [
-        {
-          'action_name': 'gen_separate_dictionary_data',
-          'variables': {
-             'input_files%': [
-               '../data/dictionary/dictionary00.txt',
-               '../data/dictionary/dictionary01.txt',
-               '../data/dictionary/dictionary02.txt',
-               '../data/dictionary/dictionary03.txt',
-               '../data/dictionary/dictionary04.txt',
-               '../data/dictionary/dictionary05.txt',
-               '../data/dictionary/dictionary06.txt',
-               '../data/dictionary/dictionary07.txt',
-               '../data/dictionary/dictionary08.txt',
-               '../data/dictionary/dictionary09.txt',
-             ],
-          },
-          'inputs': [
-            '<@(input_files)',
-          ],
-          'outputs': [
-            '<(gen_out_dir)/system.dictionary',
-          ],
-          'action': [
-            '<(mozc_build_tools_dir)/gen_system_dictionary_data_main',
-            '--logtostderr',
-            '--input=<(input_files)',
-            '--output=<(gen_out_dir)/system.dictionary',
-          ],
-          'message': 'Generating <(gen_out_dir)/system.dictionary.',
-        },
-      ],
-    },
-    {
-      'target_name': 'gen_suffix_data',
-      'type': 'none',
-      'toolsets': ['host'],
-      'actions': [
-        {
-          'action_name': 'gen_suffix_data',
-          'variables': {
-            'input_files': [
-              '../data/dictionary/suffix.txt',
-            ],
-          },
-          'inputs': [
-            'gen_suffix_data.py',
-            '<@(input_files)',
-          ],
-          'outputs': [
-            '<(gen_out_dir)/suffix_data.h',
-          ],
-          'action': [
-            'python', '../build_tools/redirect.py',
-            '<(gen_out_dir)/suffix_data.h',
-            'gen_suffix_data.py',
-            '<@(input_files)',
-          ],
-        },
       ],
     },
     {
@@ -231,18 +104,6 @@
       'dependencies': [
         '../base/base.gyp:base',
         '<(DEPTH)/third_party/rx/rx.gyp:rx',
-      ],
-    },
-    {
-      'target_name': 'dictionary_data_injected_environment',
-      'type': 'static_library',
-      'sources': [
-        'dictionary_data_injected_environment.cc',
-      ],
-      'dependencies': [
-        '../base/base.gyp:base_core',
-        '../testing/testing.gyp:testing',
-        'dictionary',
       ],
     },
   ],

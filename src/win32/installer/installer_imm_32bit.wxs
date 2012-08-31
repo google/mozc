@@ -321,7 +321,7 @@
         <RegistryValue Id='OmahaLaunchCmdLineValue' Root='HKLM'
             Key='$(var.OmahaClientStateKey)'
             Name='InstallerSuccessLaunchCmdLine' Action='write' Type='string'
-            Value='&quot;[GIMEJaDir]\GoogleIMEJaTool.exe&quot; --mode=post_install_dialog' />
+            Value='&quot;[GIMEJaDir]GoogleIMEJaTool.exe&quot; --mode=post_install_dialog' />
       </Component>
 
       <!--
@@ -332,7 +332,7 @@
         <RegistryValue Id='RunBroker' Root='HKLM'
             Key='Software\Microsoft\Windows\CurrentVersion\Run'
             Name='Google Japanese Input Prelauncher' Action='write' Type='string'
-            Value='&quot;[GIMEJaDir]\GoogleIMEJaBroker32.exe&quot; --mode=prelaunch_processes' />
+            Value='&quot;[GIMEJaDir]GoogleIMEJaBroker32.exe&quot; --mode=prelaunch_processes' />
       </Component>
     </Directory>
 

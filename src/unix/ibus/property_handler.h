@@ -30,11 +30,11 @@
 #ifndef MOZC_UNIX_IBUS_PROPERTY_HANDLER_H_
 #define MOZC_UNIX_IBUS_PROPERTY_HANDLER_H_
 
-#include <ibus.h>
 #include <vector>
 
 #include "base/port.h"
 #include "base/scoped_ptr.h"
+#include "unix/ibus/ibus_header.h"
 #include "unix/ibus/property_handler_interface.h"
 
 namespace mozc {

@@ -33,15 +33,17 @@
 #include <cstring>
 #include <string>
 #include <vector>
+
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/singleton.h"
 #include "base/util.h"
-#include "config/config_handler.h"
 #include "config/config.pb.h"
+#include "config/config_handler.h"
 #include "converter/conversion_request.h"
 #include "converter/segments.h"
-#include "rewriter/rewriter_interface.h"
 #include "rewriter/embedded_dictionary.h"
+#include "rewriter/rewriter_interface.h"
 #include "session/commands.pb.h"
 #include "session/request_handler.h"
 

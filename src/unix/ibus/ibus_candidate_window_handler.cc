@@ -29,7 +29,6 @@
 
 #include "unix/ibus/ibus_candidate_window_handler.h"
 
-#include <ibus.h>
 #include <cstdio>
 #include <cstdlib>
 

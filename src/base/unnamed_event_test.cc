@@ -28,6 +28,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/thread.h"
 #include "base/unnamed_event.h"
 #include "base/util.h"

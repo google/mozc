@@ -43,13 +43,16 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        '../config/config.gyp:config_handler',
+        '../config/config.gyp:config_protocol',
+        # TODO(noriyukit): The following target is only necessary to link
+        # ConverterUtil. By defining it in another file, we can detach the
+        # dependency on converter itself from session_converter.
         '../converter/converter.gyp:converter',
         '../rewriter/calculator/calculator.gyp:calculator',
         '../storage/storage.gyp:storage',
         '../transliteration/transliteration.gyp:transliteration',
         '../usage_stats/usage_stats.gyp:usage_stats',
-        '../config/config.gyp:config_handler',
-        '../config/config.gyp:config_protocol',
         'session_base.gyp:generic_storage_manager',
         'session_base.gyp:key_parser',
         'session_base.gyp:keymap',
@@ -89,6 +92,7 @@
         '../composer/composer.gyp:composer',
         '../config/config.gyp:config_handler',
         '../config/config.gyp:config_protocol',
+        '../dictionary/dictionary_base.gyp:user_dictionary',
         'session_base.gyp:generic_storage_manager',
         'session_base.gyp:request_handler',
         'session_base.gyp:session_protocol',
@@ -99,6 +103,30 @@
             '../sync/sync.gyp:sync',
           ]
         }],
+        ['target_platform=="NaCl" and _toolset=="target"', {
+          'sources!': [
+            'session_watch_dog.cc',
+          ],
+          'dependencies!': [
+            '../client/client.gyp:client',
+          ],
+        }],
+      ],
+    },
+    {
+      'target_name': 'session_usage_observer',
+      'type': 'static_library',
+      'sources': [
+        'session_usage_observer.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        '../base/base.gyp:config_file_stream',
+        '../config/config.gyp:config_handler',
+        '../config/config.gyp:config_protocol',
+        '../usage_stats/usage_stats.gyp:usage_stats_protocol',
+        '../usage_stats/usage_stats.gyp:usage_stats_uploader',
+        'session_base.gyp:session_protocol',
       ],
     },
     {
@@ -106,34 +134,13 @@
       'type': 'static_library',
       'sources': [
         'session_server.cc',
-        'session_usage_observer.cc',
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        '../base/base.gyp:config_file_stream',
-        '../client/client.gyp:client',
-        '../config/config.gyp:config_handler',
-        '../config/config.gyp:config_protocol',
-        '../usage_stats/usage_stats.gyp:usage_stats_protocol',
         '../usage_stats/usage_stats.gyp:usage_stats_uploader',
-        'session_base.gyp:key_event_util',
-        'session_base.gyp:keymap',
-        'session_base.gyp:keymap_factory',
         'session_base.gyp:session_protocol',
         'session_handler',
-      ],
-      'conditions': [
-        ['target_platform=="Android"', {
-          'sources!': [
-            'session_watch_dog.cc',
-          ],
-          'dependencies': [
-            '../ipc/ipc.gyp:ipc',
-          ],
-          'dependencies!': [
-            '../client/client.gyp:client',
-          ],
-        }],
+        'session_usage_observer',
       ],
     },
     {

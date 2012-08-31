@@ -31,12 +31,13 @@
 
 #include "base/singleton.h"
 #include "base/util.h"
-#include "converter/character_form_manager.h"
+#include "config/character_form_manager.h"
 
 namespace mozc {
 namespace composer {
-
 namespace {
+
+using ::mozc::config::CharacterFormManager;
 
 class DefaultTransliterator : public TransliteratorInterface {
  public:
@@ -237,5 +238,6 @@ const TransliteratorInterface*
 TransliteratorsJa::GetHalfAsciiTransliterator() {
   return Singleton<HalfAsciiTransliterator>::get();
 }
+
 }  // namespace composer
 }  // namespace mozc

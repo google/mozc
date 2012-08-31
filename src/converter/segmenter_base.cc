@@ -31,22 +31,25 @@
 
 #include "base/base.h"
 #include "base/bitarray.h"
+#include "base/logging.h"
 #include "converter/boundary_struct.h"
 #include "converter/node.h"
 
 namespace mozc {
 
 SegmenterBase::SegmenterBase(
-    size_t l_size, size_t r_size, const uint16 *l_table, const uint16 *r_table,
-    size_t bitarray_size, const char *bitarray_data,
-    const BoundaryData *boundary_data)
-    : l_size_(l_size), r_size_(r_size), l_table_(l_table), r_table_(r_table),
-      bitarray_size_(bitarray_size), bitarray_data_(bitarray_data),
-      boundary_data_(boundary_data) {
-  DCHECK(l_table);
-  DCHECK(r_table);
-  DCHECK(bitarray_data);
-  DCHECK(boundary_data);
+    size_t l_num_elements, size_t r_num_elements, const uint16 *l_table,
+    const uint16 *r_table, size_t bitarray_num_bytes,
+    const char *bitarray_data, const BoundaryData *boundary_data)
+    : l_num_elements_(l_num_elements), r_num_elements_(r_num_elements),
+      l_table_(l_table), r_table_(r_table),
+      bitarray_num_bytes_(bitarray_num_bytes),
+      bitarray_data_(bitarray_data), boundary_data_(boundary_data) {
+  DCHECK(l_table_);
+  DCHECK(r_table_);
+  DCHECK(bitarray_data_);
+  DCHECK(boundary_data_);
+  CHECK_LE(l_num_elements_ * r_num_elements_, bitarray_num_bytes_ * 8);
 }
 
 SegmenterBase::~SegmenterBase() {}
@@ -84,8 +87,9 @@ bool SegmenterBase::IsBoundary(const Node *lnode, const Node *rnode,
 }
 
 bool SegmenterBase::IsBoundary(uint16 rid, uint16 lid) const {
+  const uint32 bitarray_index = l_table_[rid] + l_num_elements_ * r_table_[lid];
   return BitArray::GetValue(reinterpret_cast<const char*>(bitarray_data_),
-                            l_table_[rid] + l_size_ * r_table_[lid]);
+                            bitarray_index);
 }
 
 int32 SegmenterBase::GetPrefixPenalty(uint16 lid) const {

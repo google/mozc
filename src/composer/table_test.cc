@@ -43,6 +43,9 @@ DECLARE_string(test_tmpdir);
 namespace mozc {
 namespace composer {
 
+using ::mozc::config::Config;
+using ::mozc::commands::Request;
+
 static void InitTable(Table* table) {
   // "あ"
   table->AddRule("a",  "\xe3\x81\x82", "");
@@ -144,7 +147,7 @@ TEST_F(TableTest, LookUp) {
     // "ん"
     { "nn", true, "\xe3\x82\x93", "" },
   };
-  static const int size = ARRAYSIZE(test_cases);
+  static const int size = ARRAYSIZE_UNSAFE(test_cases);
 
   Table table;
   InitTable(&table);
@@ -205,7 +208,7 @@ TEST_F(TableTest, Punctuations) {
   config::ConfigHandler::SetConfigFileName(config_file);
   config::ConfigHandler::Reload();
 
-  for (int i = 0; i < ARRAYSIZE(test_cases); ++i) {
+  for (int i = 0; i < ARRAYSIZE_UNSAFE(test_cases); ++i) {
     config::Config config;
     config.set_punctuation_method(test_cases[i].method);
     EXPECT_TRUE(config::ConfigHandler::SetConfig(config));
@@ -253,7 +256,7 @@ TEST_F(TableTest, Symbols) {
   config::ConfigHandler::SetConfigFileName(config_file);
   config::ConfigHandler::Reload();
 
-  for (int i = 0; i < ARRAYSIZE(test_cases); ++i) {
+  for (int i = 0; i < ARRAYSIZE_UNSAFE(test_cases); ++i) {
     config::Config config;
     config.set_symbol_method(test_cases[i].method);
     EXPECT_TRUE(config::ConfigHandler::SetConfig(config));
@@ -1089,6 +1092,35 @@ TEST_F(TableTest, TableManager) {
         }
       }
     }
+  }
+
+  {
+    // b/6788850.
+    const string kRule =
+        "a\t[A]\n";  // 2 entry rule
+
+    commands::Request request;
+    request.set_special_romanji_table(Request::DEFAULT_TABLE);
+    config::Config config;
+    config.set_preedit_method(Config::ROMAN);
+    config.set_punctuation_method(Config::KUTEN_TOUTEN);
+    config.set_symbol_method(Config::CORNER_BRACKET_MIDDLE_DOT);
+    config.set_custom_roman_table(kRule);
+    const Table *table = table_manager.GetTable(request, config);
+    EXPECT_TRUE(table != NULL);
+    EXPECT_TRUE(table_manager.GetTable(request, config) == table);
+    EXPECT_TRUE(NULL != table->LookUp("a"));
+    EXPECT_TRUE(NULL == table->LookUp("kk"));
+
+    const string kRule2 =
+        "a\t[A]\n"  // 2 entry rule
+        "kk\t[X]\tk\n";  // 3 entry rule
+    config.set_custom_roman_table(kRule2);
+    const Table *table2 = table_manager.GetTable(request, config);
+    EXPECT_TRUE(table2 != NULL);
+    EXPECT_TRUE(table_manager.GetTable(request, config) == table2);
+    EXPECT_TRUE(NULL != table2->LookUp("a"));
+    EXPECT_TRUE(NULL != table2->LookUp("kk"));
   }
 }
 

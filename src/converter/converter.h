@@ -47,11 +47,14 @@ class UserDatamanagerInterface;
 class ConverterImpl : public ConverterInterface {
  public:
   ConverterImpl();
-  ConverterImpl(PredictorInterface *predictor, RewriterInterface *rewriter);
   virtual ~ConverterImpl();
 
-  // Lazily initializes the internal predictor and rewriter.
-  void Init(PredictorInterface *predictor, RewriterInterface *rewriter);
+  // Lazily initializes the internal members. Must be called before the use.
+  void Init(const POSMatcher *pos_matcher,
+            const PosGroup *pos_group,
+            PredictorInterface *predictor,
+            RewriterInterface *rewriter,
+            ImmutableConverterInterface *immutable_converter);
 
   bool Predict(const ConversionRequest &request,
                const string &key,
@@ -140,7 +143,7 @@ class ConverterImpl : public ConverterInterface {
   scoped_ptr<RewriterInterface> rewriter_;
   scoped_ptr<UserDataManagerInterface> user_data_manager_;
   const ImmutableConverterInterface *immutable_converter_;
-  const uint16 general_noun_id_;
+  uint16 general_noun_id_;
 };
 }  // namespace mozc
 

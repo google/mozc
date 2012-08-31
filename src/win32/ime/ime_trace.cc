@@ -57,41 +57,41 @@ void OutputMessage(const wchar_t *format, ...) {
 
 SimpleTracer::SimpleTracer(const wchar_t *function_name)
     : function_name_(function_name) {
-#if !defined(_DEBUG)
+#if !defined(DEBUG)
   if (!::IsDebuggerPresent()) {
      return;
   }
-#endif  // _DEBUG
+#endif  // !DEBUG
   OutputMessage(L"%1!s!: %2!s!;\n", function_name_, L"enter");
 }
 
 SimpleTracer::~SimpleTracer() {
-#if !defined(_DEBUG)
+#if !defined(DEBUG)
   if (!::IsDebuggerPresent()) {
      return;
   }
-#endif  // _DEBUG
+#endif  // !DEBUG
   OutputMessage(L"%1!s!: %2!s!;\n", function_name_, L"exit");
 }
 
 void SimpleTracer::Trace(const wchar_t *function_name, const int line,
                          const wchar_t *message) {
-#if !defined(_DEBUG)
+#if !defined(DEBUG)
   if (!::IsDebuggerPresent()) {
      return;
   }
-#endif  // _DEBUG
+#endif  // !DEBUG
   OutputMessage(L"%1!s!(%2!d!): %3!s!; %4!s!\n",
                 function_name, line, L"trace", message);
 }
 
 void SimpleTracer::TraceFormat(const wchar_t *function_name, const int line,
                                const wchar_t *format, ...) {
-#if !defined(_DEBUG)
+#if !defined(DEBUG)
   if (!::IsDebuggerPresent()) {
      return;
   }
-#endif  // _DEBUG
+#endif  // !DEBUG
   va_list arguments;
   va_start(arguments, format);
 

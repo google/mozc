@@ -36,8 +36,8 @@
       'sources': [
         'existence_filter.cc',
         'lru_storage.cc',
+        'memory_storage.cc',
         'registry.cc',
-        'sparse_array_image.cc',
         'tiny_storage.cc',
       ],
       'dependencies': [
@@ -57,10 +57,10 @@
       'type': 'executable',
       'sources': [
         'existence_filter_test.cc',
-        'sparse_array_image_test.cc',
-        'tiny_storage_test.cc',
         'lru_storage_test.cc',
+        'memory_storage_test.cc',
         'registry_test.cc',
+        'tiny_storage_test.cc',
       ],
       'dependencies': [
         '../testing/testing.gyp:gtest_main',

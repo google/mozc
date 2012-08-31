@@ -33,33 +33,53 @@
 #include <string>
 
 #include "base/base.h"
+#include "base/logging.h"
+#include "base/stl_util.h"
 #include "base/util.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
 #include "storage/registry.h"
 #include "sync/logging.h"
-#include "sync/user_dictionary_sync_util.h"
 #include "sync/sync.pb.h"
 #include "sync/sync_util.h"
+#include "sync/user_dictionary_sync_util.h"
 
 namespace mozc {
 namespace sync {
 namespace {
+
 const uint32 kBucketSize = 256;
 const char kLastBucketIdKey[] = "sync.user_dictionary_last_bucket_id";
+
+class UserDictionaryStorageDeleter {
+ public:
+  explicit UserDictionaryStorageDeleter(
+      vector<UserDictionarySyncUtil::UserDictionaryStorageBase *> *vec)
+      : vec_(vec) {
+  }
+  ~UserDictionaryStorageDeleter() {
+    STLDeleteElements(vec_);
+  }
+ private:
+  vector<UserDictionarySyncUtil::UserDictionaryStorageBase *> *vec_;
+  DISALLOW_COPY_AND_ASSIGN(UserDictionaryStorageDeleter);
+};
+
 }  // anonymous namespace
 
-UserDictionaryAdapter::UserDictionaryAdapter() {
-  // set default user dictionary
-  SetUserDictionaryFileName(UserDictionaryUtil::GetUserDictionaryFileName());
+UserDictionaryAdapter::UserDictionaryAdapter()
+    // set default user dictionary
+    : user_dictionary_filename_(
+        UserDictionaryUtil::GetUserDictionaryFileName()) {
 }
 
 UserDictionaryAdapter::~UserDictionaryAdapter() {}
 
 bool UserDictionaryAdapter::SetDownloadedItems(
     const ime_sync::SyncItems &items) {
-  vector<const UserDictionarySyncUtil::UserDictionaryStorageBase *>
+  vector<UserDictionarySyncUtil::UserDictionaryStorageBase *>
       remote_updates;
+  UserDictionaryStorageDeleter deleter(&remote_updates);
 
   SYNC_VLOG(1) << "Start SetDownloadedItems: "
                << items.size() << " items";
@@ -93,7 +113,9 @@ bool UserDictionaryAdapter::SetDownloadedItems(
       continue;
     }
 
-    remote_updates.push_back(&(value.user_dictionary_storage()));
+    remote_updates.push_back(
+        new UserDictionarySyncUtil::UserDictionaryStorageBase(
+            value.user_dictionary_storage()));
     bucket_id = key.bucket_id();
   }
 
@@ -102,10 +124,16 @@ bool UserDictionaryAdapter::SetDownloadedItems(
     return false;
   }
 
+  // Run migration code, because the incoming data from the server may in
+  // the older format.
+  for (size_t i = 0; i < remote_updates.size(); ++i) {
+    UserDictionaryUtil::ResolveUnknownFieldSet(remote_updates[i]);
+  }
+
   SYNC_VLOG(1) << "current backet_id=" << bucket_id;
 
   const string prev_file = GetLastSyncedUserDictionaryFileName();
-  const string cur_file = GetUserDictionaryFileName();
+  const string &cur_file = user_dictionary_filename();
 
   SYNC_VLOG(1) << "comparing " << prev_file << " with " << cur_file;
   if (Util::IsEqualFile(prev_file, cur_file)) {
@@ -211,13 +239,13 @@ bool UserDictionaryAdapter::GetItemsToUpload(ime_sync::SyncItems *items) {
   DCHECK(items);
   SYNC_VLOG(1) << "Start GetItemsToUpload()";
 
-  if (!Util::FileExists(GetUserDictionaryFileName())) {
-    SYNC_VLOG(1) << GetUserDictionaryFileName() << " does not exist.";
+  if (!Util::FileExists(user_dictionary_filename())) {
+    SYNC_VLOG(1) << user_dictionary_filename() << " does not exist.";
     return true;
   }
 
   const string prev_file = GetLastSyncedUserDictionaryFileName();
-  const string cur_file = GetUserDictionaryFileName();
+  const string &cur_file = user_dictionary_filename();
 
   // No updates found on the local.
   if (Util::IsEqualFile(prev_file, cur_file)) {
@@ -225,8 +253,10 @@ bool UserDictionaryAdapter::GetItemsToUpload(ime_sync::SyncItems *items) {
     return true;
   }
 
+  // Load raw data, (i.e. without migration code), because it should be the
+  // data on the server.
   UserDictionaryStorage prev_storage(prev_file);
-  prev_storage.Load();
+  prev_storage.LoadWithoutMigration();
 
   UserDictionaryStorage cur_storage(cur_file);
   cur_storage.Load();
@@ -246,46 +276,48 @@ bool UserDictionaryAdapter::GetItemsToUpload(ime_sync::SyncItems *items) {
     return false;
   }
 
+
+  UserDictionarySyncUtil::UserDictionaryStorageBase local_update;
+
+  // Obtain local update.
+  UserDictionarySyncUtil::CreateUpdate(
+      prev_storage, cur_storage, &local_update);
+
+  // No need to update the file.
+  if (local_update.dictionaries_size() == 0) {
+    SYNC_VLOG(1) << "No local update";
+    Util::Unlink(tmp_file);
+    return true;
+  }
+  UserDictionaryUtil::FillDesktopDeprecatedPosField(&local_update);
+
   ime_sync::SyncItem *item = items->Add();
   CHECK(item);
 
   item->set_component(component_id());
-
   sync::UserDictionaryKey *key =
-      item->mutable_key()->MutableExtension(
-          sync::UserDictionaryKey::ext);
-  sync::UserDictionaryValue *value =
-      item->mutable_value()->MutableExtension(
-          sync::UserDictionaryValue::ext);
+      item->mutable_key()->MutableExtension(sync::UserDictionaryKey::ext);
   CHECK(key);
+
+  sync::UserDictionaryValue *value =
+      item->mutable_value()->MutableExtension(sync::UserDictionaryValue::ext);
   CHECK(value);
-
-  UserDictionarySyncUtil::UserDictionaryStorageBase *local_update =
-      value->mutable_user_dictionary_storage();
-  CHECK(local_update);
-
-  // Obtain local update.
-  UserDictionarySyncUtil::CreateUpdate(prev_storage, cur_storage,
-                                       local_update);
-
-  // No need to update the file.
-  if (local_update->dictionaries_size() == 0) {
-    SYNC_VLOG(1) << "No local update";
-    Util::Unlink(tmp_file);
-    items->RemoveLast();
-    return true;
-  }
+  value->mutable_user_dictionary_storage()->Swap(&local_update);
 
   uint32 next_bucket_id = GetNextBucketId();
 
   // If the diff is too big or next_bucket_id is 0,
   // create a snapshot instead.
   if (next_bucket_id == 0 ||
-      UserDictionarySyncUtil::ShouldCreateSnapshot(*local_update)) {
+      UserDictionarySyncUtil::ShouldCreateSnapshot(
+          value->user_dictionary_storage())) {
     SYNC_VLOG(1) << "Start creating snapshot";
     // 0 is reserved for snapshot.
     next_bucket_id = 0;
-    UserDictionarySyncUtil::CreateSnapshot(cur_storage, local_update);
+    UserDictionarySyncUtil::CreateSnapshot(
+        cur_storage, value->mutable_user_dictionary_storage());
+    UserDictionaryUtil::FillDesktopDeprecatedPosField(
+        value->mutable_user_dictionary_storage());
   }
 
   key->set_bucket_id(next_bucket_id);
@@ -335,22 +367,13 @@ ime_sync::Component UserDictionaryAdapter::component_id() const {
   return ime_sync::MOZC_USER_DICTIONARY;
 }
 
-void UserDictionaryAdapter::SetUserDictionaryFileName(const string &filename) {
-  VLOG(1) << "Setting UserDictionaryFileName: " << filename;
-  user_dictionary_filename_ = filename;
-}
-
-string UserDictionaryAdapter::GetUserDictionaryFileName() const {
-  return user_dictionary_filename_;
-}
-
 string UserDictionaryAdapter::GetLastSyncedUserDictionaryFileName() const {
   const char kSuffix[] = ".last_synced";
 #ifdef OS_WINDOWS
-  return GetUserDictionaryFileName() + kSuffix;
+  return user_dictionary_filename() + kSuffix;
 #else
-  const string dirname = Util::Dirname(GetUserDictionaryFileName());
-  const string basename = Util::Basename(GetUserDictionaryFileName());
+  const string dirname = Util::Dirname(user_dictionary_filename());
+  const string basename = Util::Basename(user_dictionary_filename());
   return Util::JoinPath(dirname, "." + basename + kSuffix);
 #endif
 }
@@ -390,5 +413,6 @@ uint32 UserDictionaryAdapter::GetNextBucketId() const {
   }
   return (value + 1) % bucket_size();
 }
+
 }  // namespace sync
 }  // namespace mozc

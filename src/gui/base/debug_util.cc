@@ -41,13 +41,11 @@ namespace mozc {
 namespace gui {
 namespace {
 void SendLogToDebugger(const char *msg) {
-#ifdef _DEBUG
-#ifdef OS_WINDOWS
+#if defined(DEBUG) && defined(OS_WINDOWS)
   wstring wmsg;
   Util::UTF8ToWide(msg, &wmsg);
   ::OutputDebugString(wmsg.c_str());
-#endif  // OS_WINDOWS
-#endif  // _DEBUG
+#endif  // OS_WINDOWS && DEBUG
 }
 }  // namespace
 

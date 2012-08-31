@@ -33,6 +33,7 @@
 #include <map>
 #include <utility>
 
+#include "base/logging.h"
 #include "base/mutex.h"
 #include "base/singleton.h"
 #include "base/timer.h"

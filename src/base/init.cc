@@ -30,6 +30,7 @@
 #include <vector>
 #include "base/base.h"
 #include "base/init.h"
+#include "base/logging.h"
 #include "base/mutex.h"
 #include "base/singleton.h"
 #include "base/util.h"

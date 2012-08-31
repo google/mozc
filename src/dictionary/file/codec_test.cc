@@ -29,7 +29,9 @@
 
 #include "dictionary/file/codec.h"
 
+#include "base/base.h"
 #include "base/file_stream.h"
+#include "base/logging.h"
 #include "base/util.h"
 #include "dictionary/file/codec_interface.h"
 #include "dictionary/file/section.h"
@@ -64,10 +66,8 @@ class CodecTest : public ::testing::Test {
                   vector<DictionaryFileSection> *sections) const {
     CHECK(codec);
     CHECK(sections);
-    sections->resize(sections->size() + 1);
-    sections->back().name = codec->GetSectionName(name);
-    sections->back().ptr = ptr;
-    sections->back().len = len;
+    sections->push_back(
+        DictionaryFileSection(ptr, len, codec->GetSectionName(name)));
   }
 
   bool FindSection(const DictionaryFileCodecInterface *codec,
@@ -105,9 +105,7 @@ class CodecMock : public DictionaryFileCodecInterface {
 
   virtual bool ReadSections(const char *image, int length,
                             vector<DictionaryFileSection> *sections) const {
-    DictionaryFileSection section;
-    section.name = "dummy name";
-    sections->push_back(section);
+    sections->push_back(DictionaryFileSection(NULL, 0, "dummy name"));
     return true;
   }
 

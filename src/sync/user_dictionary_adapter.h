@@ -53,16 +53,17 @@ class UserDictionaryAdapter : public AdapterInterface {
   virtual ime_sync::Component component_id() const;
 
  private:
+  // TODO(team): get rid of friend test.
   FRIEND_TEST(UserDictionaryAdapterTest, BucketSize);
   FRIEND_TEST(UserDictionaryAdapterTest, BucketId);
   FRIEND_TEST(UserDictionaryAdapterTest, UserDictionaryFileName);
-  FRIEND_TEST(UserDictionaryAdapterTest, SetDownloadedItems);
-  FRIEND_TEST(UserDictionaryAdapterTest, SetDownloadedItemsSnapshot);
-  FRIEND_TEST(UserDictionaryAdapterTest, SetDownloadedItemsConflicts);
   FRIEND_TEST(UserDictionaryAdapterTest, TemporaryFileExceeds);
-  FRIEND_TEST(UserDictionaryAdapterTest, GetItemsToUpload);
-  FRIEND_TEST(UserDictionaryAdapterTest, GetItemsToUploadSnapShot);
   FRIEND_TEST(UserDictionaryAdapterTest, RealScenarioTest);
+  FRIEND_TEST(UserDictionaryAdapterMigrationTest, SetDownloadedItems);
+  FRIEND_TEST(UserDictionaryAdapterMigrationTest, SetDownloadedItemsSnapshot);
+  FRIEND_TEST(UserDictionaryAdapterMigrationTest, SetDownloadedItemsConflicts);
+  FRIEND_TEST(UserDictionaryAdapterMigrationTest, GetItemsToUpload);
+  FRIEND_TEST(UserDictionaryAdapterMigrationTest, GetItemsToUploadSnapShot);
 
   // Return the size of buckets.
   uint32 bucket_size() const;
@@ -73,10 +74,13 @@ class UserDictionaryAdapter : public AdapterInterface {
   // Save new bucket id.
   bool SetBucketId(uint32 bucket_id);
 
-  // Set user dictionary file name.
   // This is used for unittesting.
-  void SetUserDictionaryFileName(const string &filename);
-  string GetUserDictionaryFileName() const;
+  void set_user_dictionary_filename(const string &filename) {
+    user_dictionary_filename_ = filename;
+  }
+  const string &user_dictionary_filename() const {
+    return user_dictionary_filename_;
+  }
 
   // Return last synced dictionary filename.
   string GetLastSyncedUserDictionaryFileName() const;
@@ -84,6 +88,7 @@ class UserDictionaryAdapter : public AdapterInterface {
 
   string user_dictionary_filename_;
 };
+
 }  // namespace sync
 }  // namespace mozc
 

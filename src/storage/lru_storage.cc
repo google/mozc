@@ -27,21 +27,27 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <time.h>
-#include <stdlib.h>
+#include "storage/lru_storage.h"
+
+#include <algorithm>
+#include <cstdlib>
+#include <cstring>
+#include <ctime>
 #include <map>
 #include <set>
 #include <string>
 #include <vector>
-#include <algorithm>
+
 #include "base/base.h"
 #include "base/file_stream.h"
-#include "base/util.h"
+#include "base/logging.h"
 #include "base/mmap.h"
-#include "storage/lru_storage.h"
+#include "base/util.h"
+
+namespace mozc {
+namespace storage {
 
 namespace {
-
 const size_t kMaxLRUSize   = 1000000;  // 1M
 const size_t kMaxValueSize = 1024;     // 1024 byte
 
@@ -81,31 +87,35 @@ class CompareByTimeStamp {
     return GetTimeStamp(a) > GetTimeStamp(b);
   }
 };
-}
+}  // namespace
 
-namespace mozc {
+class LRUStorage::Node {
+ public:
+  Node(): next(NULL), prev(NULL), value(NULL) {
+  }
 
-struct LRUList_Node {
-  LRUList_Node *next;
-  LRUList_Node *prev;
+  Node *next;
+  Node *prev;
   char *value;
-  LRUList_Node(): next(NULL), prev(NULL), value(NULL) {}
+
+ private:
+  DISALLOW_COPY_AND_ASSIGN(Node);
 };
 
-class LRUList {
+class LRUStorage::LRUList {
  public:
   explicit LRUList(size_t max_size)
-      : max_size_(max_size), size_(0),
-        last_(NULL), top_(NULL) {}
+      : max_size_(max_size), size_(0), last_(NULL), top_(NULL) {
+  }
 
-  virtual ~LRUList() {
+  ~LRUList() {
     Clear();
   }
 
   void Clear() {
-    LRUList_Node *node = top_;
+    Node *node = top_;
     while (node != NULL) {
-      LRUList_Node *next = node->next;
+      Node *next = node->next;
       delete node;
       node = next;
     }
@@ -113,9 +123,9 @@ class LRUList {
     top_ = last_ = NULL;
   }
 
-  LRUList_Node *Add(char *value) {
+  Node *Add(char *value) {
     if (size_ < max_size_) {
-      LRUList_Node *node = new LRUList_Node;
+      Node *node = new Node;
       node->value = value;
       if (last_ == NULL) {
         node->prev = NULL;
@@ -141,14 +151,14 @@ class LRUList {
     return size_;
   }
 
-  LRUList_Node *GetLastNode() {
+  Node *GetLastNode() {
     return last_;
   }
 
-  void MoveToTop(LRUList_Node *node) {
+  void MoveToTop(Node *node) {
     if (node->prev != NULL) {  // this is top
-      LRUList_Node *prev = node->prev;
-      LRUList_Node *next = node->next;
+      Node *prev = node->prev;
+      Node *next = node->next;
       prev->next = next;
       if (next == NULL) {
         last_ = prev;
@@ -165,31 +175,31 @@ class LRUList {
  private:
   size_t max_size_;
   size_t size_;
-  LRUList_Node *last_;
-  LRUList_Node *top_;
+  Node *last_;
+  Node *top_;
+
+  DISALLOW_COPY_AND_ASSIGN(LRUList);
 };
 
 LRUStorage *LRUStorage::Create(const char *filename) {
-  LRUStorage *n = new LRUStorage;
+  scoped_ptr<LRUStorage> n(new LRUStorage);
   if (!n->Open(filename)) {
-    delete n;
     LOG(ERROR) << "could not open LRUStorage";
     return NULL;
   }
-  return n;
+  return n.release();
 }
 
 LRUStorage *LRUStorage::Create(const char *filename,
                                size_t value_size,
                                size_t size,
                                uint32 seed) {
-  LRUStorage *n = new LRUStorage;
+  scoped_ptr<LRUStorage> n(new LRUStorage);
   if (!n->OpenOrCreate(filename, value_size, size, seed)) {
-    delete n;
     LOG(ERROR) << "could not open LRUStorage";
     return NULL;
   }
-  return n;
+  return n.release();
 }
 
 bool LRUStorage::CreateStorageFile(const char *filename,
@@ -250,14 +260,13 @@ bool LRUStorage::Clear() {
   }
   const size_t offset =
       sizeof(value_size_) + sizeof(size_) + sizeof(seed_);
-  if (offset >= mmap_->GetFileSize()) {   // should not happen
+  if (offset >= mmap_->size()) {   // should not happen
     return false;
   }
-  memset(mmap_->begin() + offset, '\0',
-         mmap_->GetFileSize() - offset);
+  memset(mmap_->begin() + offset, '\0', mmap_->size() - offset);
   lru_list_.reset(NULL);
   map_.clear();
-  Open(mmap_->begin(), mmap_->GetFileSize());
+  Open(mmap_->begin(), mmap_->size());
   return true;
 }
 
@@ -322,7 +331,7 @@ bool LRUStorage::Merge(const LRUStorage &storage) {
     memset(begin_ + new_size, '\0', old_size - new_size);
   }
 
-  return Open(mmap_->begin(), mmap_->GetFileSize());
+  return Open(mmap_->begin(), mmap_->size());
 }
 
 LRUStorage::LRUStorage()
@@ -337,31 +346,53 @@ LRUStorage::~LRUStorage() {
 }
 
 bool LRUStorage::OpenOrCreate(const char *filename,
-                              size_t _value_size,
-                              size_t _size,
-                              uint32 _seed) {
+                              size_t new_value_size,
+                              size_t new_size,
+                              uint32 new_seed) {
+#ifdef MOZC_USE_PEPPER_FILE_IO
+  // TODO(horo): We have to implement LRUStorage for NaCl.
+  LOG(ERROR) << "LRUStorage::OpenOrCreate is not implemented for NaCl now.";
+  return false;
+#else  // MOZC_USE_PEPPER_FILE_IO
+  if (!Util::FileExists(filename)) {
+    // This is also an expected scenario. Let's create a new data file.
+    VLOG(1) << filename << " does not exist. Creating a new one.";
+    if (!LRUStorage::CreateStorageFile(filename,
+                                       new_value_size,
+                                       new_size, new_seed)) {
+      LOG(ERROR) << "CreateStorageFile failed against " << filename;
+      return false;
+    }
+  }
+
   if (!Open(filename)) {
     Close();
-    LOG(ERROR) << "cannot open file. call CreateStorageFile";
+    LOG(ERROR) << "Failed to open the file or the data is corrupted. "
+                  "So try to recreate new file. filename: " << filename;
+    // If the file exists but is corrupted, the following operation may
+    // may fix some problem. However, if the file was temporarily locked
+    // by some processes and now no longer locked, the following operation
+    // is likely to result in a simple permanent data loss.
+    // TODO(yukawa, team): Do not clear the data whenever we can open the
+    //     data file and the content is actually valid.
     if (!LRUStorage::CreateStorageFile(filename,
-                                       _value_size,
-                                       _size, _seed)) {
+                                       new_value_size,
+                                       new_size, new_seed)) {
       LOG(ERROR) << "CreateStorageFile failed";
       return false;
     }
     if (!Open(filename)) {
       Close();
-      LOG(ERROR) << "Open failed after CreateStorageFile";
+      LOG(ERROR) << "Open failed after CreateStorageFile. Give up...";
       return false;
     }
   }
 
   // File format has changed
-  if (_value_size != value_size() || _size != size()) {
+  if (new_value_size != value_size() || new_size != size()) {
     Close();
-    if (!LRUStorage::CreateStorageFile(filename,
-                                       _value_size,
-                                       _size, _seed)) {
+    if (!LRUStorage::CreateStorageFile(filename, new_value_size,
+                                       new_size, new_seed)) {
       LOG(ERROR) << "CreateStorageFile failed";
       return false;
     }
@@ -372,17 +403,18 @@ bool LRUStorage::OpenOrCreate(const char *filename,
     }
   }
 
-  if (_value_size != value_size() || _size != size()) {
+  if (new_value_size != value_size() || new_size != size()) {
     Close();
     LOG(ERROR) << "file is broken";
     return false;
   }
 
   return true;
+#endif  // MOZC_USE_PEPPER_FILE_IO
 }
 
 bool LRUStorage::Open(const char *filename) {
-  mmap_.reset(new Mmap<char>);
+  mmap_.reset(new Mmap);
 
   if (mmap_.get() == NULL) {
     LOG(ERROR) << "cannot make Mmap object";
@@ -395,13 +427,13 @@ bool LRUStorage::Open(const char *filename) {
     return false;
   }
 
-  if (mmap_->GetFileSize() < 8) {
+  if (mmap_->size() < 8) {
     LOG(ERROR) << "file size is too small";
     return false;
   }
 
   filename_ = filename;
-  return Open(mmap_->begin(), mmap_->GetFileSize());
+  return Open(mmap_->begin(), mmap_->size());
 }
 
 bool LRUStorage::Open(char *ptr, size_t ptr_size) {
@@ -433,7 +465,7 @@ bool LRUStorage::Open(char *ptr, size_t ptr_size) {
     return false;
   }
 
-  const size_t file_size = mmap_->GetFileSize() - 12;
+  const size_t file_size = mmap_->size() - 12;
   if ((value_size_ + 12) * size_ != file_size) {
     LOG(ERROR) << "LRU file is broken";
     return false;
@@ -454,7 +486,7 @@ bool LRUStorage::Open(char *ptr, size_t ptr_size) {
   last_item_ = NULL;
   for (size_t i = 0; i < ary.size(); ++i) {
     if (GetTimeStamp(ary[i]) != 0) {
-      LRUList_Node *node = lru_list_->Add(ary[i]);
+      Node *node = lru_list_->Add(ary[i]);
       map_.insert(make_pair(GetFP(ary[i]), node));
     } else if (last_item_ == NULL) {
       last_item_ = ary[i];
@@ -481,7 +513,7 @@ const char* LRUStorage::Lookup(const string &key,
   const uint64 fp = Util::FingerprintWithSeed(key.data(),
                                               key.size(),
                                               seed_);
-  map<uint64, LRUList_Node *>::const_iterator it = map_.find(fp);
+  map<uint64, Node *>::const_iterator it = map_.find(fp);
   if (it == map_.end()) {
     return NULL;
   }
@@ -495,7 +527,7 @@ bool LRUStorage::GetAllValues(vector<string> *values) const {
   }
   DCHECK(values);
   values->clear();
-  for (const LRUList_Node *node = lru_list_->GetLastNode();
+  for (const Node *node = lru_list_->GetLastNode();
        node != NULL;
        node = node->prev) {
     // Default constructor of string is not applicable
@@ -515,7 +547,7 @@ bool LRUStorage::Touch(const string &key) {
   const uint64 fp = Util::FingerprintWithSeed(key.data(),
                                               key.size(),
                                               seed_);
-  map<uint64, LRUList_Node *>::iterator it = map_.find(fp);
+  map<uint64, Node *>::iterator it = map_.find(fp);
   if (it != map_.end()) {     // find in the cache
     Update(it->second->value);
     lru_list_->MoveToTop(it->second);
@@ -532,15 +564,15 @@ bool LRUStorage::Insert(const string &key, const char *value) {
   const uint64 fp = Util::FingerprintWithSeed(key.data(),
                                               key.size(),
                                               seed_);
-  map<uint64, LRUList_Node *>::iterator it = map_.find(fp);
+  map<uint64, Node *>::iterator it = map_.find(fp);
   if (it != map_.end()) {     // find in the cache
     Update(it->second->value, fp, value, value_size_);
     lru_list_->MoveToTop(it->second);
   } else if (lru_list_->size() >= size_ ||
              last_item_ == NULL) {  // not found, but cache is FULL
-    LRUList_Node *node = lru_list_->GetLastNode();
+    Node *node = lru_list_->GetLastNode();
     const uint64 old_fp = GetFP(node->value);  // remove oldest item
-    map<uint64, LRUList_Node *>::iterator old_it = map_.find(old_fp);
+    map<uint64, Node *>::iterator old_it = map_.find(old_fp);
     if (old_it != map_.end()) {
       map_.erase(old_it);
     }
@@ -548,7 +580,7 @@ bool LRUStorage::Insert(const string &key, const char *value) {
     Update(node->value, fp, value, value_size_);
     map_.insert(make_pair(fp, node));
   } else if (last_item_ < mmap_->end()) {  // not found, cahce is not FULL
-    LRUList_Node *node = lru_list_->Add(last_item_);
+    Node *node = lru_list_->Add(last_item_);
     lru_list_->MoveToTop(node);
     Update(node->value, fp, value, value_size_);
     map_.insert(make_pair(fp, node));
@@ -572,7 +604,7 @@ bool LRUStorage::TryInsert(const string &key, const char *value) {
   const uint64 fp = Util::FingerprintWithSeed(key.data(),
                                               key.size(),
                                               seed_);
-  map<uint64, LRUList_Node *>::iterator it = map_.find(fp);
+  map<uint64, Node *>::iterator it = map_.find(fp);
   if (it != map_.end()) {     // find in the cache
     Update(it->second->value, fp, value, value_size_);
     lru_list_->MoveToTop(it->second);
@@ -605,7 +637,6 @@ void LRUStorage::Write(size_t i,
                        uint64 fp,
                        const string &value,
                        uint32 last_access_time) {
-  DCHECK_GE(i, 0);
   DCHECK_LT(i, size_);
   char *ptr = begin_ + (i * (value_size_ + 12));
   memcpy(ptr,     reinterpret_cast<const char *>(&fp), 8);
@@ -621,11 +652,12 @@ void LRUStorage::Read(size_t i,
                       uint64 *fp,
                       string *value,
                       uint32 *last_access_time) const {
-  DCHECK_GE(i, 0);
   DCHECK_LT(i, size_);
   const char *ptr = begin_ + (i * (value_size_ + 12));
   *fp = GetFP(ptr);
   value->assign(GetValue(ptr), value_size_);
   *last_access_time = GetTimeStamp(ptr);
 }
-}   // end of mozc
+
+}  // namespace storage
+}  // namespace mozc

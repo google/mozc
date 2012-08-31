@@ -147,7 +147,7 @@ const struct DirectKeymapTestData {
 TEST_F(KeymapTest, DirectKeymap) {
   const KeymapInterface *keymap = KeymapFactory::GetKeymap(DIRECT);
 
-  for (size_t i = 0; i < ARRAYSIZE(kDirectKeymapTestData); ++i) {
+  for (size_t i = 0; i < ARRAYSIZE_UNSAFE(kDirectKeymapTestData); ++i) {
     const DirectKeymapTestData &data = kDirectKeymapTestData[i];
     SCOPED_TRACE(data.keys);
     EXPECT_KEY_COMMAND(data.command, keymap, data.keys);
@@ -184,7 +184,7 @@ const struct EnglishKeymapTestData {
 TEST_F(KeymapTest, EnglishKeymap) {
   const KeymapInterface *keymap = KeymapFactory::GetKeymap(ENGLISH);
 
-  for (size_t i = 0; i < ARRAYSIZE(kEnglishKeymapTestData); ++i) {
+  for (size_t i = 0; i < ARRAYSIZE_UNSAFE(kEnglishKeymapTestData); ++i) {
     const EnglishKeymapTestData &data = kEnglishKeymapTestData[i];
     SCOPED_TRACE(data.keys);
     EXPECT_KEY_COMMAND(data.command, keymap, data.keys);
@@ -216,7 +216,7 @@ const struct PunctuationKeymapTestData {
 TEST_F(KeymapTest, PunctuationKeymap) {
   const KeymapInterface *keymap = KeymapFactory::GetKeymap(PUNCTUATION);
 
-  for (size_t i = 0; i < ARRAYSIZE(kPunctuationKeymapTestData); ++i) {
+  for (size_t i = 0; i < ARRAYSIZE_UNSAFE(kPunctuationKeymapTestData); ++i) {
     const PunctuationKeymapTestData &data = kPunctuationKeymapTestData[i];
     SCOPED_TRACE(data.keys);
     EXPECT_KEY_COMMAND(data.command, keymap, data.keys);

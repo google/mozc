@@ -31,7 +31,8 @@
 #define MOZC_DICTIONARY_USER_DICTIONARY_IMPORTER_H_
 
 #include <string>
-#include "dictionary/user_dictionary_storage.h"
+#include "base/port.h"
+#include "dictionary/user_dictionary_storage.pb.h"
 
 namespace mozc {
 
@@ -40,6 +41,21 @@ namespace mozc {
 // Kotoeri, and ATOK(optional) user dictionaries.
 class UserDictionaryImporter {
  public:
+  // A raw entry to be read.
+  struct RawEntry {
+    string key;
+    string value;
+    string pos;
+    string comment;
+
+    void Clear() {
+      key.clear();
+      value.clear();
+      pos.clear();
+      comment.clear();
+    }
+  };
+
   // An abstract class for representing an input device
   // for user dictionary. It could be possible to import
   // dictionary from docs/spreadsheet.
@@ -53,8 +69,7 @@ class UserDictionaryImporter {
 
     // return true if entry is read successfully.
     // Next method doesn't nee to convert the POS of entry.
-    virtual bool Next(
-        UserDictionaryStorage::UserDictionaryEntry *entry) = 0;
+    virtual bool Next(RawEntry *raw_entry) = 0;
 
    private:
     DISALLOW_COPY_AND_ASSIGN(InputIteratorInterface);
@@ -96,6 +111,26 @@ class UserDictionaryImporter {
    private:
     istream *is_;
     DISALLOW_COPY_AND_ASSIGN(IStreamTextLineIterator);
+  };
+
+  // A wrapper for string. The string should contain utf-8 characters.
+  // This class should resolve CR/LF issue.
+  // This class does NOT take the ownership of the given string.
+  // So it is caller's responsibility to extend the lifetime of the given
+  // string until this iterator is destroyed.
+  class StringTextLineIterator : public TextLineIteratorInterface {
+   public:
+    explicit StringTextLineIterator(const string &data);
+    virtual ~StringTextLineIterator();
+
+    virtual bool IsAvailable() const;
+    virtual bool Next(string *line);
+    virtual void Reset();
+
+   private:
+    const string &data_;
+    int position_;
+    DISALLOW_COPY_AND_ASSIGN(StringTextLineIterator);
   };
 
   // List of IMEs.
@@ -140,9 +175,7 @@ class UserDictionaryImporter {
     virtual ~TextInputIterator();
 
     virtual bool IsAvailable() const;
-    virtual bool Next(
-        UserDictionaryStorage::UserDictionaryEntry *entry);
-
+    virtual bool Next(RawEntry *entry);
     IMEType ime_type() const { return ime_type_; }
 
    private:
@@ -164,40 +197,35 @@ class UserDictionaryImporter {
 
   // Convert POS's of other IME's into Mozc's IME.
   static bool ConvertEntry(
-      const UserDictionaryStorage::UserDictionaryEntry &from,
-      UserDictionaryStorage::UserDictionaryEntry *to);
+      const RawEntry &from, user_dictionary::UserDictionary::Entry *to);
 
   // Import from Iterator. This is the most generic interface
   static ErrorType ImportFromIterator(
       UserDictionaryImporter::InputIteratorInterface *iter,
-      UserDictionaryStorage::UserDictionary *dic);
+      user_dictionary::UserDictionary *dic);
 
   // Import from TextLineIterator
   static ErrorType ImportFromTextLineIterator(
       UserDictionaryImporter::IMEType ime_type,
       UserDictionaryImporter::TextLineIteratorInterface *iter,
-      UserDictionaryStorage::UserDictionary *dic);
+      user_dictionary::UserDictionary *dic);
 
   // Import from MS-IME's user dictionary directly.
   // Only available on Windows
-  static ErrorType ImportFromMSIME(
-      UserDictionaryStorage::UserDictionary *dic);
+  static ErrorType ImportFromMSIME(user_dictionary::UserDictionary *dic);
 
   // Not implemented
-  static ErrorType ImportFromKotoeri(
-      UserDictionaryStorage::UserDictionary *dic) {
+  static ErrorType ImportFromKotoeri(user_dictionary::UserDictionary *dic) {
     return IMPORT_NOT_SUPPORTED;
   }
 
   // Not implemented
-  static ErrorType ImportFromATOK(
-      UserDictionaryStorage::UserDictionary *dic) {
+  static ErrorType ImportFromATOK(user_dictionary::UserDictionary *dic) {
     return IMPORT_NOT_SUPPORTED;
   }
 
  private:
-  UserDictionaryImporter() {}
-  ~UserDictionaryImporter() {}
+  DISALLOW_IMPLICIT_CONSTRUCTORS(UserDictionaryImporter);
 };
 }  // namespace mozc
 #endif  // MOZC_DICTIONARY_USER_DICTIONARY_IMPORTER_H_

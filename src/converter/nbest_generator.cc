@@ -29,34 +29,70 @@
 
 #include "converter/nbest_generator.h"
 
+#include <algorithm>
 #include <string>
 
 #include "base/base.h"
+#include "base/logging.h"
 #include "converter/candidate_filter.h"
 #include "converter/connector_interface.h"
 #include "converter/lattice.h"
-#include "converter/segmenter.h"
 #include "converter/segmenter_interface.h"
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
 
 namespace mozc {
+namespace {
 
 const int kFreeListSize = 512;
-const int kCostDiff     = 3453;
+const int kCostDiff = 3453;
+
+}  // namespace
+
+using converter::CandidateFilter;
+
+struct NBestGenerator::QueueElement {
+  const Node *node;
+  const QueueElement *next;
+  int32 fx;  // f(x) = h(x) + g(x): cost function for A* search
+  int32 gx;  // g(x)
+  // transition cost part of g(x).
+  // Do not take the transition costs to edge nodes.
+  int32 structure_gx;
+  int32 w_gx;
+};
+
+struct NBestGenerator::QueueElementComparator {
+  bool operator()(const NBestGenerator::QueueElement *q1,
+                  const NBestGenerator::QueueElement *q2) const {
+    return (q1->fx > q2->fx);
+  }
+};
+
+inline void NBestGenerator::Agenda::Push(
+    const NBestGenerator::QueueElement *element) {
+  priority_queue_.push_back(element);
+  push_heap(priority_queue_.begin(), priority_queue_.end(),
+            QueueElementComparator());
+}
+
+inline void NBestGenerator::Agenda::Pop() {
+  DCHECK(!priority_queue_.empty());
+  pop_heap(priority_queue_.begin(), priority_queue_.end(),
+           QueueElementComparator());
+  priority_queue_.pop_back();
+}
 
 NBestGenerator::NBestGenerator(const SuppressionDictionary *suppression_dic,
                                const SegmenterInterface *segmenter,
                                const ConnectorInterface *connector,
                                const POSMatcher *pos_matcher,
-                               const Node *begin_node, const Node *end_node,
                                const Lattice *lattice,
                                bool is_prediction)
     : suppression_dictionary_(suppression_dic),
       segmenter_(segmenter), connector_(connector), pos_matcher_(pos_matcher),
-      begin_node_(begin_node), end_node_(end_node),
       lattice_(lattice),
-      agenda_(new Agenda),
+      begin_node_(NULL), end_node_(NULL),
       freelist_(kFreeListSize),
       filter_(new CandidateFilter(suppression_dic, pos_matcher)),
       viterbi_result_checked_(false),
@@ -64,12 +100,25 @@ NBestGenerator::NBestGenerator(const SuppressionDictionary *suppression_dic,
   DCHECK(suppression_dictionary_);
   DCHECK(segmenter);
   DCHECK(connector);
-  DCHECK(begin_node);
-  DCHECK(end_node);
   if (lattice_ == NULL || !lattice_->has_lattice()) {
     LOG(ERROR) << "lattice is not available";
     return;
   }
+
+  agenda_.Reserve(kFreeListSize);
+}
+
+NBestGenerator::~NBestGenerator() {
+}
+
+void NBestGenerator::Reset(const Node *begin_node, const Node *end_node) {
+  agenda_.Clear();
+  freelist_.Free();
+  filter_->Reset();
+  viterbi_result_checked_ = false;
+
+  begin_node_ = begin_node;
+  end_node_ = end_node;
 
   for (Node *node = lattice_->begin_nodes(end_node_->begin_pos);
        node != NULL; node = node->bnext) {
@@ -85,21 +134,16 @@ NBestGenerator::NBestGenerator(const SuppressionDictionary *suppression_dic,
       eos->gx = 0;
       eos->structure_gx = 0;
       eos->w_gx = 0;
-      agenda_->push(eos);
+      agenda_.Push(eos);
     }
   }
 }
 
-NBestGenerator::~NBestGenerator() {}
-
 void NBestGenerator::MakeCandidate(Segment::Candidate *candidate,
                                    int32 cost, int32 structure_cost,
                                    int32 wcost,
-                                   const vector<const Node *> nodes) const {
+                                   const vector<const Node *> &nodes) const {
   CHECK(!nodes.empty());
-
-  bool has_constrained_node = false;
-  bool is_functional = false;
 
   candidate->Init();
   candidate->lid = nodes.front()->lid;
@@ -108,13 +152,10 @@ void NBestGenerator::MakeCandidate(Segment::Candidate *candidate,
   candidate->structure_cost = structure_cost;
   candidate->wcost = wcost;
 
+  bool is_functional = false;
   for (size_t i = 0; i < nodes.size(); ++i) {
     const Node *node = nodes[i];
     DCHECK(node != NULL);
-    if (node->constrained_prev != NULL ||
-        (node->next != NULL && node->next->constrained_prev == node)) {
-      has_constrained_node = true;
-    }
     if (!is_functional && !pos_matcher_->IsFunctional(node->lid)) {
       candidate->content_value += node->value;
       candidate->content_key += node->key;
@@ -124,6 +165,15 @@ void NBestGenerator::MakeCandidate(Segment::Candidate *candidate,
 
     candidate->key += node->key;
     candidate->value += node->value;
+
+    if (node->constrained_prev != NULL ||
+        (node->next != NULL && node->next->constrained_prev == node)) {
+      // If result has constrained_node, set CONTEXT_SENSITIVE.
+      // If a node has constrained node, the node is generated by
+      //  a) compound node and resegmented via personal name resegmentation
+      //  b) compound-based reranking.
+      candidate->attributes |= Segment::Candidate::CONTEXT_SENSITIVE;
+    }
     if (node->attributes & Node::SPELLING_CORRECTION) {
       candidate->attributes |= Segment::Candidate::SPELLING_CORRECTION;
     }
@@ -139,18 +189,13 @@ void NBestGenerator::MakeCandidate(Segment::Candidate *candidate,
     candidate->content_value = candidate->value;
     candidate->content_key = candidate->key;
   }
-
-  // If result has constrained_node, set CONTEXT_SENSITIVE.
-  // If a node has constrained node, the node is generated by
-  //  a) compound node and resegmented via personal name resegmentation
-  //  b) compound-based reranking.
-  if (has_constrained_node) {
-    candidate->attributes |= Segment::Candidate::CONTEXT_SENSITIVE;
-  }
 }
 
 bool NBestGenerator::Next(Segment::Candidate *candidate,
                           Segments::RequestType request_type) {
+  DCHECK(begin_node_);
+  DCHECK(end_node_);
+
   DCHECK(candidate);
   if (lattice_ == NULL || !lattice_->has_lattice()) {
     LOG(ERROR) << "Must create lattice in advance";
@@ -203,10 +248,10 @@ bool NBestGenerator::Next(Segment::Candidate *candidate,
   const int KMaxTrial = 500;
   int num_trials = 0;
 
-  while (!agenda_->empty()) {
-    const QueueElement *top = agenda_->top();
+  while (!agenda_.IsEmpty()) {
+    const QueueElement *top = agenda_.Top();
     DCHECK(top);
-    agenda_->pop();
+    agenda_.Pop();
     const Node *rnode = top->node;
     CHECK(rnode);
 
@@ -217,16 +262,18 @@ bool NBestGenerator::Next(Segment::Candidate *candidate,
 
     // reached to the goal.
     if (rnode->end_pos == begin_node_->end_pos) {
-      vector<const Node *> nodes;
+      nodes_.clear();
       for (const QueueElement *elm = top->next;
            elm->next != NULL; elm = elm->next) {
-        nodes.push_back(elm->node);
+        nodes_.push_back(elm->node);
       }
-      CHECK(!nodes.empty());
+      CHECK(!nodes_.empty());
 
-      MakeCandidate(candidate, top->gx, top->structure_gx, top->w_gx, nodes);
+      MakeCandidate(candidate, top->gx, top->structure_gx, top->w_gx, nodes_);
+      int filter_result = filter_->FilterCandidate(candidate, nodes_);
+      nodes_.clear();
 
-      switch (filter_->FilterCandidate(candidate, nodes)) {
+      switch (filter_result) {
         case CandidateFilter::GOOD_CANDIDATE:
           return true;
         case CandidateFilter::STOP_ENUMERATION:
@@ -248,8 +295,6 @@ bool NBestGenerator::Next(Segment::Candidate *candidate,
 
       for (Node *lnode = lattice_->end_nodes(rnode->begin_pos);
            lnode != NULL; lnode = lnode->enext) {
-
-
         // is_invalid_position is true if the lnode's location is invalid
         //  1.   |<-- begin_node_-->|
         //                    |<--lnode-->|  <== overlapped.
@@ -350,12 +395,12 @@ bool NBestGenerator::Next(Segment::Candidate *candidate,
             best_left_elm = elm;
           }
         } else {
-          agenda_->push(elm);
+          agenda_.Push(elm);
         }
       }
 
       if (best_left_elm != NULL) {
-        agenda_->push(best_left_elm);
+        agenda_.Push(best_left_elm);
       }
     }
   }
@@ -365,16 +410,16 @@ bool NBestGenerator::Next(Segment::Candidate *candidate,
 
 int NBestGenerator::InsertTopResult(Segment::Candidate *candidate,
                                     Segments::RequestType request_type) {
-  vector<const Node *> nodes;
+  nodes_.clear();
   int total_wcost = 0;
   for (const Node *node = begin_node_->next;
        node != end_node_; node = node->next) {
-    nodes.push_back(node);
+    nodes_.push_back(node);
     if (node != begin_node_->next) {
       total_wcost += node->wcost;
     }
   }
-  DCHECK(!nodes.empty());
+  DCHECK(!nodes_.empty());
 
   const int cost = end_node_->cost -
       begin_node_->cost - end_node_->wcost;
@@ -383,13 +428,16 @@ int NBestGenerator::InsertTopResult(Segment::Candidate *candidate,
   const int wcost = end_node_->prev->cost -
       begin_node_->next->cost + begin_node_->next->wcost;
 
-  MakeCandidate(candidate, cost, structure_cost, wcost, nodes);
+  MakeCandidate(candidate, cost, structure_cost, wcost, nodes_);
+
   if (request_type == Segments::SUGGESTION) {
     candidate->attributes |= Segment::Candidate::REALTIME_CONVERSION;
   }
 
   viterbi_result_checked_ = true;
-  return filter_->FilterCandidate(candidate, nodes);
+  int result = filter_->FilterCandidate(candidate, nodes_);
+  nodes_.clear();
+  return result;
 }
 
 int NBestGenerator::GetTransitionCost(const Node *lnode,
@@ -400,4 +448,5 @@ int NBestGenerator::GetTransitionCost(const Node *lnode,
   }
   return connector_->GetTransitionCost(lnode->rid, rnode->lid);
 }
+
 }  // namespace mozc

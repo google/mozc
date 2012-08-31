@@ -27,9 +27,14 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "base/singleton.h"
+
+#ifdef OS_WINDOWS
+#include <Windows.h>
+#endif  // OS_WINDOWS
+
 #include "base/base.h"
 #include "base/mutex.h"
-#include "base/singleton.h"
 
 namespace mozc {
 namespace {

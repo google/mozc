@@ -39,11 +39,13 @@ namespace mozc {
 namespace commands {
 class ScopedRequestForUnittest {
  public:
-  ScopedRequestForUnittest(const Request &request);
+  explicit ScopedRequestForUnittest(const Request &request);
   virtual ~ScopedRequestForUnittest();
 
  private:
   const Request prev_request_;
+
+  DISALLOW_COPY_AND_ASSIGN(ScopedRequestForUnittest);
 };
 
 class ScopedMobileRequestForUnittest {
@@ -53,6 +55,16 @@ class ScopedMobileRequestForUnittest {
 
  private:
   scoped_ptr<ScopedRequestForUnittest> scoped_request_;
+
+  DISALLOW_COPY_AND_ASSIGN(ScopedMobileRequestForUnittest);
+};
+
+class RequestForUnitTest {
+ public:
+  static void FillMobileRequest(Request *request);
+
+ private:
+  DISALLOW_IMPLICIT_CONSTRUCTORS(RequestForUnitTest);
 };
 }  // namespace commands
 }  // namespace mozc

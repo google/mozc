@@ -29,7 +29,6 @@
 
 #include "unix/ibus/mozc_engine.h"
 
-#include <ibus.h>
 #include <algorithm>
 #include <cstdio>
 #include <cstdlib>
@@ -56,6 +55,7 @@
 #include "unix/ibus/path_util.h"
 #include "unix/ibus/preedit_handler.h"
 #include "unix/ibus/property_handler.h"
+#include "unix/ibus/surrounding_text_util.h"
 
 #ifdef OS_CHROMEOS
 // use standalone (in-process) session
@@ -70,9 +70,13 @@
 #include "unix/ibus/gtk_candidate_window_handler.h"
 #endif  // ENABLE_GTK_RENDERER
 
+#ifdef MOZC_ENABLE_X11_SELECTION_MONITOR
+#include "unix/ibus/selection_monitor.h"
+#endif  // MOZC_ENABLE_X11_SELECTION_MONITOR
+
 #ifdef ENABLE_GTK_RENDERER
-DEFINE_bool(use_mozc_candidate_window, true,
-            "The engine uses GTK+ native candidate window service.");
+DEFINE_bool(use_mozc_renderer, true,
+            "The engine tries to use mozc_renderer if available.");
 #endif  // ENABLE_GTK_RENDERER
 
 namespace {
@@ -87,24 +91,12 @@ const char kMozcSectionName[] = "engine/Mozc";
 #ifdef ENABLE_GTK_RENDERER
 const char kMozcPanelSectionName[] = "panel";
 #endif  // ENABLE_GTK_RENDERER
-// Icon path for MozcTool
-const char kMozcToolIconPath[] = "tool.png";
 
 // Default UI locale
 const char kMozcDefaultUILocale[] = "en_US.UTF-8";
 
 // for every 5 minutes, call SyncData
 const uint64 kSyncDataInterval = 5 * 60;
-
-#ifndef USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT
-// Following constants are used to emulate ibus_engine_delete_surrounding_text
-
-// Backspace key code
-const guint kBackSpaceKeyCode = 14;
-
-// Left shift key code
-const guint kShiftLeftKeyCode = 42;
-#endif  // !USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT
 
 #ifdef OS_CHROMEOS
 // IBus config names for Mozc.
@@ -133,10 +125,6 @@ const gchar* kMozcConfigNames[] = {
   "suggestions_size",
 };
 #endif  // OS_CHROMEOS
-
-#if IBUS_CHECK_VERSION(1, 4, 0)
-#define USE_IBUS_ENGINE_GET_SURROUNDING_TEXT
-#endif  // libibus (>= 1.4.0)
 
 #ifndef OS_CHROMEOS
 const char *kUILocaleEnvNames[] = {
@@ -205,41 +193,6 @@ void MozcEngineInstanceInit(GTypeInstance *instance, gpointer klass) {
 }  // namespace
 
 namespace mozc {
-namespace {
-
-#if defined(USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT) ||  \
-    defined(USE_IBUS_ENGINE_GET_SURROUNDING_TEXT)
-
-// This function calculates |from| - |to| and stores the result
-// into |delta| with checking integer overflow.
-// Returns true when neither |abs(delta)| nor |-delta| does not cause
-// integer overflow, that is, |delta| is in a safe range.
-// Returns false otherwise.
-bool GetSafeDelta(guint from, guint to, int32 *delta) {
-  DCHECK(delta);
-
-  COMPILE_ASSERT(sizeof(int64) > sizeof(guint), int64_guint_check);
-  COMPILE_ASSERT(sizeof(int64) == sizeof(llabs(0)), int64_llabs_check);
-  const int64 kInt32AbsMax =
-      llabs(static_cast<int64>(numeric_limits<int32>::max()));
-  const int64 kInt32AbsMin =
-      llabs(static_cast<int64>(numeric_limits<int32>::min()));
-  const int64 kInt32SafeAbsMax =
-      min(kInt32AbsMax, kInt32AbsMin);
-
-  const int64 diff = static_cast<int64>(from) - static_cast<int64>(to);
-  if (llabs(diff) > kInt32SafeAbsMax) {
-    return false;
-  }
-
-  *delta = static_cast<int32>(diff);
-  return true;
-}
-
-#endif  // USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT ||
-        // USE_IBUS_ENGINE_GET_SURROUNDING_TEXT
-}  // namespace
-
 namespace ibus {
 
 namespace {
@@ -267,9 +220,9 @@ MozcEngine::MozcEngine()
     : last_sync_time_(Util::GetTime()),
       key_event_handler_(new KeyEventHandler),
       client_(CreateClient()),
-#ifndef USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT
-      ignore_reset_for_deletion_range_workaround_(false),
-#endif  // !USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT
+#ifdef MOZC_ENABLE_X11_SELECTION_MONITOR
+      selection_monitor_(SelectionMonitorFactory::Create(1024)),
+#endif  // MOZC_ENABLE_X11_SELECTION_MONITOR
       property_handler_(new PropertyHandler(CreateTranslator(),
                                             client_.get())),
       preedit_handler_(new PreeditHandler()),
@@ -286,6 +239,13 @@ MozcEngine::MozcEngine()
   commands::Capability capability;
   capability.set_text_deletion(commands::Capability::DELETE_PRECEDING_TEXT);
   client_->set_client_capability(capability);
+
+#ifdef MOZC_ENABLE_X11_SELECTION_MONITOR
+  if (selection_monitor_.get() != NULL) {
+    selection_monitor_->StartMonitoring();
+  }
+#endif  // MOZC_ENABLE_X11_SELECTION_MONITOR
+
   // TODO(yusukes): write a unit test to check if the capability is set
   // as expected.
 }
@@ -323,21 +283,11 @@ void MozcEngine::CursorUp(IBusEngine *engine) {
 }
 
 void MozcEngine::Disable(IBusEngine *engine) {
-#ifndef USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT
-  // Stop ignoring "reset" signal.  See ProcessKeyevent().
-  ignore_reset_for_deletion_range_workaround_ = false;
-#endif  // !USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT
-
   RevertSession(engine);
   GetCandidateWindowHandler(engine)->Hide(engine);
 }
 
 void MozcEngine::Enable(IBusEngine *engine) {
-#ifndef USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT
-  // Stop ignoring "reset" signal.  See ProcessKeyevent().
-  ignore_reset_for_deletion_range_workaround_ = false;
-#endif  // !USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT
-
   // Launch mozc_server
   client_->EnsureConnection();
   UpdatePreeditMethod();
@@ -348,11 +298,9 @@ void MozcEngine::Enable(IBusEngine *engine) {
   // (crosbug.com/4596).
   RevertSession(engine);
 
-#ifdef USE_IBUS_ENGINE_GET_SURROUNDING_TEXT
   // If engine wants to use surrounding text, we should call
   // ibus_engine_get_surrounding_text once when the engine enabled.
   ibus_engine_get_surrounding_text(engine, NULL, NULL, NULL);
-#endif  // USE_IBUS_ENGINE_GET_SURROUNDING_TEXT
 }
 
 void MozcEngine::FocusIn(IBusEngine *engine) {
@@ -361,11 +309,6 @@ void MozcEngine::FocusIn(IBusEngine *engine) {
 }
 
 void MozcEngine::FocusOut(IBusEngine *engine) {
-#ifndef USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT
-  // Stop ignoring "reset" signal.  See ProcessKeyevent().
-  ignore_reset_for_deletion_range_workaround_ = false;
-#endif  // !USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT
-
   GetCandidateWindowHandler(engine)->Hide(engine);
 
   // Do not call SubmitSession or RevertSession. Preedit string will commit on
@@ -401,11 +344,6 @@ gboolean MozcEngine::ProcessKeyEvent(
                     engine->cursor_area.y,
                     engine->cursor_area.width,
                     engine->cursor_area.height);
-
-#ifndef USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT
-  // Stop ignoring "reset" signal.  See the code of deletion below.
-  ignore_reset_for_deletion_range_workaround_ = false;
-#endif  // !USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT
 
   // Since IBus for ChromeOS is based on in-process conversion,
   // it is basically ok to call GetConfig() at every keyevent.
@@ -473,18 +411,6 @@ void MozcEngine::PropertyShow(IBusEngine *engine,
 }
 
 void MozcEngine::Reset(IBusEngine *engine) {
-#ifndef USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT
-  // Ignore this signal if ignore_reset_for_deletion_range_workaround_ is true.
-  // This is workaround of deletion of surrounding text.
-  // See also ProcessKeyEvent().
-  if (ignore_reset_for_deletion_range_workaround_) {
-    VLOG(2) << "Reset signal is ignored";
-    // We currently do not know the cases that application sends reset signal
-    // more than once, so reset the flag here.
-    ignore_reset_for_deletion_range_workaround_ = false;
-    return;
-  }
-#endif  // !USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT
   RevertSession(engine);
 }
 
@@ -532,8 +458,6 @@ void MozcEngine::Disconnected(IBusBus *bus, gpointer user_data) {
   ibus_quit();
 }
 
-#if IBUS_CHECK_VERSION(1, 3, 99)
-// For IBus 1.4.
 void MozcEngine::ConfigValueChanged(IBusConfig *config,
                                     const gchar *section,
                                     const gchar *name,
@@ -545,39 +469,15 @@ void MozcEngine::ConfigValueChanged(IBusConfig *config,
   MozcEngine *engine = mozc::Singleton<MozcEngine>::get();
   engine->UpdateConfig(section, name, value);
 }
-#else
-// For IBus 1.2 and 1.3.
-void MozcEngine::ConfigValueChanged(IBusConfig *config,
-                                    const gchar *section,
-                                    const gchar *name,
-                                    GValue *value,
-                                    gpointer user_data) {
-  MozcEngine *engine = mozc::Singleton<MozcEngine>::get();
-  engine->UpdateConfig(section, name, value);
-}
-#endif
 
 #ifdef ENABLE_GTK_RENDERER
 void MozcEngine::InitRendererConfig(IBusConfig *config) {
-#if IBUS_CHECK_VERSION(1, 4, 0)
   GVariant *custom_font_value = ibus_config_get_value(config,
                                                       kMozcPanelSectionName,
                                                       "custom_font");
   GVariant *use_custom_font_value = ibus_config_get_value(config,
                                                           kMozcPanelSectionName,
                                                           "use_custom_font");
-#else
-  // TODO(nona): Refactoring following logic or give up support 1.2.x
-  GValue _custom_font_value = { 0 };
-  GValue *custom_font_value = &_custom_font_value;
-  ibus_config_get_value(config, kMozcPanelSectionName, "custom_font",
-                        custom_font_value);
-
-  GValue _use_custom_font_value = { 0 };
-  GValue *use_custom_font_value = &_use_custom_font_value;
-  ibus_config_get_value(config, kMozcPanelSectionName, "use_custom_font",
-                        use_custom_font_value);
-#endif  // IBUS >= 1.4.0
   gboolean use_custom_font;
   if (ConfigUtil::GetBoolean(use_custom_font_value, &use_custom_font)) {
     gtk_candidate_window_handler_->OnIBusUseCustomFontDescriptionChanged(
@@ -637,54 +537,12 @@ bool MozcEngine::UpdateDeletionRange(IBusEngine *engine,
       output.deletion_range().offset() < 0 &&
       output.deletion_range().offset() + output.deletion_range().length() >=
           0) {
-#ifdef USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT
     // Nowadays 'ibus_engine_delete_surrounding_text' becomes functional on
     // many of the major applications.  Confirmed that it works on
     // Firefox 10.0, LibreOffice 3.3.4 and GEdit 3.2.3.
     ibus_engine_delete_surrounding_text(
         engine,
         output.deletion_range().offset(), output.deletion_range().length());
-#else
-    // Delete some characters of preceding text.  We really want to use
-    // ibus_engine_delete_surrounding_text(), but it does not work on many
-    // applications, e.g. Chrome, Firefox.  So we currently forward backspaces
-    // to application.
-    // NOTE: There are some workarounds.  They must be maintained
-    // continuosly.
-    // NOTE: It cannot delete range of characters not adjacent to the left side
-    // of cursor.  If the range is not adjacent to the cursor, ignore it.  If
-    // the range contains the cursor, only characters on the left side of cursor
-    // are deleted.
-    const int length = -output.deletion_range().offset();
-
-    // Some applications, e.g. Chrome, delete preedit character when we forward
-    // a backspace.  We can avoid it by hiding preedit before forwarding
-    // backspaces.
-    ibus_engine_hide_preedit_text(engine);
-
-    // Forward backspaces.
-    for (size_t i = 0; i < length; ++i) {
-      ibus_engine_forward_key_event(
-          engine, IBUS_BackSpace, kBackSpaceKeyCode, 0);
-    }
-
-    // This is a workaround.  Some applications (e.g. Chrome, etc.) send
-    // strange signals such as "focus_out" and "focus_in" after forwarding
-    // Backspace key event.  However, such strange signals are not sent if we
-    // forward another key event after backspaces.  Here we choose Shift L,
-    // which is one of the most quiet key event.
-    ibus_engine_forward_key_event(engine, IBUS_Shift_L, kShiftLeftKeyCode, 0);
-
-    // This is also a workaround.  Some applications (e.g. gedit, etc.) send a
-    // "reset" signal after forwarding backspaces.  This signal is sent after
-    // this ProcessKeyEvent() returns, and we want to avoid reverting the
-    // session.
-    // See also Reset(), which calls RevertSession() only if
-    // ignore_reset_for_deletion_range_workaround_ is false.  This flag is
-    // reset on Disable(), FocusOut(), and ProcessKeyEvent().  Reset() also
-    // reset this flag, i.e. this flag does not work more than once.
-    ignore_reset_for_deletion_range_workaround_ = true;
-#endif
   }
   return true;
 }
@@ -724,12 +582,7 @@ bool MozcEngine::UpdateCandidateIDMapping(const commands::Output &output) {
 
 void MozcEngine::UpdateConfig(const gchar *section,
                               const gchar *name,
-#if IBUS_CHECK_VERSION(1, 3, 99)
-                              GVariant *value
-#else
-                              GValue *value
-#endif
-                              ) {
+                              GVariant *value) {
   if (!section || !name || !value) {
     return;
   }
@@ -837,8 +690,6 @@ bool MozcEngine::ExecuteCallback(IBusEngine *engine,
   commands::SessionCommand session_command;
   session_command.set_type(callback_command.type());
 
-#if defined(USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT) ||  \
-    defined(USE_IBUS_ENGINE_GET_SURROUNDING_TEXT)
   // TODO(nona): Make a function to handle CONVERT_REVERSE.
   // Used by CONVERT_REVERSE and/or UNDO
   // This value represents how many characters are selected as a relative
@@ -848,8 +699,6 @@ bool MozcEngine::ExecuteCallback(IBusEngine *engine,
   // because you cannot safely use |-relative_selected_length| nor
   // |abs(relative_selected_length)| in this case due to integer overflow.
   int32 relative_selected_length = 0;
-#endif  // USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT ||
-        // USE_IBUS_ENGINE_GET_SURROUNDING_TEXT
 
   switch (callback_command.type()) {
     case commands::SessionCommand::UNDO:
@@ -858,35 +707,49 @@ bool MozcEngine::ExecuteCallback(IBusEngine *engine,
       // IBUS_CAP_SURROUNDING_TEXT bit.
       // So we should carefully uncomment the following code.
       // -----
-      // #ifdef USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT
       // if (!(engine->client_capabilities & IBUS_CAP_SURROUNDING_TEXT)) {
       //   return false;
       // }
-      // #endif  // USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT
       break;
     case commands::SessionCommand::CONVERT_REVERSE: {
-#ifdef USE_IBUS_ENGINE_GET_SURROUNDING_TEXT
       if (!(engine->client_capabilities & IBUS_CAP_SURROUNDING_TEXT)) {
+        VLOG(1) << "Give up CONVERT_REVERSE due to client_capabilities: "
+                << engine->client_capabilities;
         return false;
       }
-      IBusText *text = NULL;
       guint cursor_pos = 0;
       guint anchor_pos = 0;
-
+      // DO NOT call g_object_unref against this.
+      // http://ibus.googlecode.com/svn/docs/ibus-1.4/IBusText.html
+      // http://developer.gnome.org/gobject/stable/gobject-The-Base-Object-Type.html#gobject-The-Base-Object-Type.description
+      IBusText *text = NULL;
       ibus_engine_get_surrounding_text(engine, &text, &cursor_pos,
                                        &anchor_pos);
+      const string surrounding_text(ibus_text_get_text(text));
+
+#ifdef MOZC_ENABLE_X11_SELECTION_MONITOR
+      if (cursor_pos == anchor_pos && selection_monitor_.get() != NULL) {
+        const SelectionInfo &info = selection_monitor_->GetSelectionInfo();
+        guint new_anchor_pos = 0;
+        if (SurroundingTextUtil::GetAnchorPosFromSelection(
+                surrounding_text, info.selected_text,
+                cursor_pos, &new_anchor_pos)) {
+          anchor_pos = new_anchor_pos;
+        }
+      }
+#endif  // MOZC_ENABLE_X11_SELECTION_MONITOR
+
       if (cursor_pos == anchor_pos) {
-        // There are no selection texts.
+        // There is no selection text.
+        VLOG(1) << "Failed to retrieve non-empty text selection.";
         return false;
       }
 
-      if (!GetSafeDelta(cursor_pos, anchor_pos, &relative_selected_length)) {
+      if (!SurroundingTextUtil::GetSafeDelta(cursor_pos, anchor_pos,
+                                             &relative_selected_length)) {
         LOG(ERROR) << "Too long text selection.";
         return false;
       }
-
-      const string surrounding_text(ibus_text_get_text(text));
-      g_object_unref(text);
 
       // TODO(nona): Write a test for this logic (especially selection_length).
       // TODO(nona): Check integer range because Util::SubString works
@@ -901,9 +764,6 @@ bool MozcEngine::ExecuteCallback(IBusEngine *engine,
 
       session_command.set_text(selection_text);
       break;
-#else
-      return false;
-#endif
     }
     default:
       return false;
@@ -918,7 +778,6 @@ bool MozcEngine::ExecuteCallback(IBusEngine *engine,
   if (callback_command.type() == commands::SessionCommand::CONVERT_REVERSE) {
     // We need to remove selected text as a first step of reconversion.
     commands::DeletionRange *range = new_output.mutable_deletion_range();
-#ifdef USE_IBUS_ENGINE_DELETE_SURROUNDING_TEXT
     // Use DeletionRange field to remove the selected text.
     // For forward selection (that is, |relative_selected_length > 0|), the
     // offset should be a negative value to delete preceding text.
@@ -929,13 +788,6 @@ bool MozcEngine::ExecuteCallback(IBusEngine *engine,
         : 0;                         // backward selection
     range->set_offset(offset);
     range->set_length(abs(relative_selected_length));
-#else
-    // Send backspace key event once to remove selection area.
-    // To set deletion range as follows, the engine forwards backspace key event
-    // once to the client application via ibus-daemon.
-    range->set_offset(-1);
-    range->set_length(1);
-#endif
   }
 
   // Here uses recursion of UpdateAll but it's okay because the converter
@@ -949,7 +801,7 @@ CandidateWindowHandlerInterface *MozcEngine::GetCandidateWindowHandler(
 #ifndef ENABLE_GTK_RENDERER
   return ibus_candidate_window_handler_.get();
 #else
-  if (!FLAGS_use_mozc_candidate_window) {
+  if (!FLAGS_use_mozc_renderer) {
     return ibus_candidate_window_handler_.get();
   }
 

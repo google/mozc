@@ -30,47 +30,10 @@
 #ifndef MOZC_DATA_MANAGER_USER_POS_MANAGER_H_
 #define MOZC_DATA_MANAGER_USER_POS_MANAGER_H_
 
-#include "base/base.h"
-#include "base/mutex.h"
-#include "base/singleton.h"
-#include "data_manager/data_manager_interface.h"
 
+#include "data_manager/oss/oss_user_pos_manager.h"
 namespace mozc {
-
-class POSMatcher;
-class PosGroup;
-class UserDictionary;
-class UserPOSInterface;
-
-// The class is responsible for creating correct
-class UserPosManager : public DataManagerInterface {
- public:
-  // Returns the singleton of this class.
-  // TODO(noriyukit): This factory method is introduced just for step-by-step
-  // refactoring of mozc server. Will be removed after the clean up.
-  static UserPosManager *GetUserPosManager();
-
-  virtual ~UserPosManager() {}
-
-  virtual const UserPOSInterface *GetUserPOS() const;
-  virtual UserDictionary *GetUserDictionary() { return NULL; }
-
-  // TODO(noriyukit): Better to move GetPOSMatcher() to further derived class,
-  // as its use is restricted. Tentatively implemented in this class.
-  virtual const POSMatcher *GetPOSMatcher();
-
-  // TODO(noriyukit): Better to move GetPosGroup() to further derived class, as
-  // its use is restricted. Tentatively implemented in this class.
-  virtual const PosGroup *GetPosGroup();
-
- protected:
-  UserPosManager() {}
-
- private:
-  friend class Singleton<UserPosManager>;
-  DISALLOW_COPY_AND_ASSIGN(UserPosManager);
-};
-
-}  // namespace mozc
+typedef oss::OssUserPosManager UserPosManager;
+}
 
 #endif  // MOZC_DATA_MANAGER_USER_POS_MANAGER_H_

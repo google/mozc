@@ -35,14 +35,14 @@
 namespace mozc {
 
 class ConverterInterface;
+class DataManagerInterface;
 class POSMatcher;
 class PosGroup;
 
 class RewriterImpl : public MergerRewriter {
  public:
   RewriterImpl(const ConverterInterface *parent_converter,
-               const POSMatcher *pos_matcher,
-               const PosGroup *pos_group);
+               const DataManagerInterface *data_manager);
 
  private:
   const ConverterInterface *parent_converter_;

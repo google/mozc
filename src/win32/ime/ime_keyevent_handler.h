@@ -34,13 +34,10 @@
 
 #include "base/base.h"
 #include "base/scoped_ptr.h"
-#include "client/client_interface.h"
 #include "testing/base/public/gunit_prod.h"
 // for FRIEND_TEST()
-#include "win32/ime/ime_keyboard.h"
 
 namespace mozc {
-
 namespace client {
 class ClientInterface;
 }  // namespace client
@@ -51,20 +48,12 @@ class Output;
 }  // namespace commands
 
 namespace win32 {
-
-struct ImeState {
-  bool open;
-  DWORD conversion_status;
-  VirtualKey last_down_key;
-  ImeState();
-};
-
-struct ImeBehavior {
-  bool disabled;
-  bool prefer_kana_input;
-  bool use_kanji_key_to_toggle_input_style;
-  ImeBehavior();
-};
+class KeyboardStatus;
+class LParamKeyInfo;
+class VirtualKey;
+class Win32KeyboardInterface;
+struct ImeState;
+struct ImeBehavior;
 
 struct KeyEventHandlerResult {
   bool should_be_eaten;

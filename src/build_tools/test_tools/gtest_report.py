@@ -93,7 +93,7 @@ class TestSuite(object):
         continue
       print >>output, '%s.%s:' % (self.name, testcase.name)
       for failure in testcase.failures:
-        print >>output, failure.contents
+        print >>output, failure.contents.encode('utf-8')
     return output.getvalue()
 
   @classmethod
@@ -138,7 +138,7 @@ def GetFromXMLFile(xml_fname):
   """Create summary object from specified xml file."""
   try:
     tree = ElementTree.parse(xml_fname)
-  except SyntaxError, reason:
+  except SyntaxError as reason:
     logging.critical('XML Parse Failed: %s', reason)
     return None
   return TestSuites.CreateFromXMLElement(tree.getroot())

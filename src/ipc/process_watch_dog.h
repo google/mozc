@@ -30,13 +30,13 @@
 #ifndef MOZC_IPC_PROCESS_WATCH_DOG_H_
 #define MOZC_IPC_PROCESS_WATCH_DOG_H_
 
-#ifdef OS_WINDOWS
-#include <windows.h>
-#else
+#ifndef OS_WINDOWS
 #include <sys/types.h>
-#endif
+#endif  // !OS_WINDOWS
 
-#include "base/mutex.h"
+#include "base/port.h"
+#include "base/scoped_handle.h"
+#include "base/scoped_ptr.h"
 #include "base/thread.h"
 
 // Usage:
@@ -51,6 +51,11 @@
 // dog.SetID(pid, tid, -1);
 
 namespace mozc {
+
+class Mutex;
+#ifdef OS_WINDOWS
+class ScopedHandle;
+#endif  // OS_WINDOWS
 
 class ProcessWatchDog : public Thread {
  public:
@@ -68,8 +73,8 @@ class ProcessWatchDog : public Thread {
   };
 
 #ifdef OS_WINDOWS
-  typedef DWORD ProcessID;
-  typedef DWORD ThreadID;
+  typedef uint32 ProcessID;
+  typedef uint32 ThreadID;
 #else
   typedef pid_t ProcessID;
   // Linux/Mac has no way to export ThreadID to other process.
@@ -103,13 +108,14 @@ class ProcessWatchDog : public Thread {
 
  private:
 #ifdef OS_WINDOWS
-  HANDLE event_;
+  ScopedHandle event_;
 #endif
   ProcessID process_id_;
   ThreadID thread_id_;
   int timeout_;
   volatile bool is_finished_;
-  Mutex mutex_;
+  scoped_ptr<Mutex> mutex_;
 };
-}  // mozc
+
+}  // namespace mozc
 #endif  // MOZC_IPC_PROCESS_WATCH_DOG_H_

@@ -28,22 +28,23 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "base/run_level.h"
-#include "base/scoped_handle.h"
 
 #ifdef OS_WINDOWS
-#include "base/const.h"
-#include "base/win_sandbox.h"
-#include "base/win_util.h"
-#include <aclapi.h>
 #include <windows.h>
-#endif
+#include <aclapi.h>
+#endif  // OS_WINDOWS
 
 #ifdef OS_LINUX
 #include <unistd.h>
 #include <sys/types.h>
-#endif
+#endif  // OS_LINUX
 
+#include "base/const.h"
+#include "base/logging.h"
+#include "base/scoped_handle.h"
 #include "base/util.h"
+#include "base/win_sandbox.h"
+#include "base/win_util.h"
 
 namespace mozc {
 namespace {

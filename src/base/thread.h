@@ -30,15 +30,9 @@
 #ifndef MOZC_BASE_THREAD_H_
 #define MOZC_BASE_THREAD_H_
 
-#ifdef OS_WINDOWS
-#include <windows.h>
-#include <process.h>
-#else
-#include <pthread.h>
-#endif
-
 #include "base/compiler_specific.h"
-
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 
 // Definition of TLS (Thread Local Storage) keyword.
 #ifndef TLS_KEYWORD
@@ -90,126 +84,34 @@
 
 namespace mozc {
 
+struct ThreadInternalState;
+
 class Thread {
  public:
-  virtual void Run() { }
+  Thread();
+  virtual ~Thread();
 
-  void Start() {
-    if (IsRunning()) {
-      return;
-    }
+  virtual void Run() = 0;
 
-    Detach();
-#ifdef OS_WINDOWS
-    handle_ = reinterpret_cast<HANDLE>(
-                  _beginthreadex(NULL, 0, &Thread::WrapperForWindows,
-                                 this, 0, NULL));
-#else
-    is_running_ = true;
-    if (0 != pthread_create(&handle_, 0, &Thread::WrapperForPOSIX,
-                            static_cast<void *>(this))) {
-      is_running_ = false;
-    }
-#endif
-  }
-
-  bool IsRunning() const {
-#ifdef OS_WINDOWS
-    DWORD result = 0;
-    if (handle_ == NULL || !::GetExitCodeThread(handle_, &result)) {
-      return false;
-    }
-    return (STILL_ACTIVE == result);
-#else
-    return is_running_;
-#endif
-  }
-
-  void SetJoinable(bool joinable) {
-    joinable_ = joinable;
-  }
-
-  void Join() {
-    if (!joinable_) {
-      return;
-    }
-    if (!handle_) {
-      return;
-    }
-#ifdef OS_WINDOWS
-    ::WaitForSingleObject(handle_, INFINITE);
-    ::CloseHandle(handle_);
-    handle_ = NULL;
-#else
-    pthread_join(handle_, NULL);
-    handle_ = 0;
-#endif
-  }
-
+  void Start();
+  bool IsRunning() const;
+  void SetJoinable(bool joinable);
+  void Join();
   // This method is not encouraged especiialy in Windows.
-  void Terminate() {
-    if (handle_) {
-#ifdef OS_WINDOWS
-      ::TerminateThread(handle_, 0);
-      handle_ = NULL;
-#else
-      pthread_cancel(handle_);
-      handle_ = 0;
-#endif  // OS_WINDOWS
-    }
-  }
-
-  Thread() : handle_(0),
-#ifndef OS_WINDOWS
-             is_running_(false),
-#endif
-             joinable_(true) {}
-
-  virtual ~Thread() {
-    Detach();
-  }
+  void Terminate();
 
  private:
-  void Detach() {
-    if (handle_ != 0) {
-#ifdef OS_WINDOWS
-      ::CloseHandle(handle_);
-#endif
-    }
-    handle_ = 0;
-  }
+  void Detach();
 
-#if defined(OS_WINDOWS)
-  static unsigned __stdcall WrapperForWindows(void *ptr) {
-    Thread *p = static_cast<Thread *>(ptr);
-    p->Run();
-    return 0;
-  }
-#else
-  static void * WrapperForPOSIX(void *ptr) {
-    Thread *p = static_cast<Thread *>(ptr);
-    pthread_cleanup_push(&Thread::Cleanup, static_cast<void *>(&p->is_running_));
-    p->Run();
-    pthread_cleanup_pop(1);
-    return NULL;
-  }
+#ifndef OS_WINDOWS
+  static void *WrapperForPOSIX(void *ptr);
+#endif  // OS_WINDOWS
 
-  static void Cleanup(void *ptr) {
-    bool *is_running = static_cast<bool *>(ptr);
-    *is_running = false;
-  }
-#endif
+  scoped_ptr<ThreadInternalState> state_;
 
-#ifdef OS_WINDOWS
-  HANDLE  handle_;
-#else
-  pthread_t handle_;
-  bool is_running_;
-#endif
-  bool joinable_;
+  DISALLOW_COPY_AND_ASSIGN(Thread);
 };
-}
-#ifdef OS_WINDOWS
-#undef BEGINTHREAD
-#endif
+
+}  // namespace mozc
+
 #endif  // MOZC_BASE_THREAD_H_

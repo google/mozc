@@ -52,14 +52,38 @@ TEST(LocaleBasedMessageTranslatorTest, UnknownLocaleName) {
 }
 
 TEST(LocaleBasedMessageTranslatorTest, KnownJapaneseLocaleName) {
-  LocaleBasedMessageTranslator translator("ja_JP.UTF-8");
-  // For unknown key.
-  EXPECT_EQ("foobar", translator.MaybeTranslate("foobar"));
+  {
+    LocaleBasedMessageTranslator translator("ja_JP.UTF-8");
+    // For unknown key.
+    EXPECT_EQ("foobar", translator.MaybeTranslate("foobar"));
 
-  // For known key.
-  // "プロパティ"
-  EXPECT_EQ("\xE3\x83\x97\xE3\x83\xAD\xE3\x83\x91\xE3\x83\x86\xE3\x82\xA3",
-            translator.MaybeTranslate("Properties"));
+    // For known key.
+    // "プロパティ"
+    EXPECT_EQ("\xE3\x83\x97\xE3\x83\xAD\xE3\x83\x91\xE3\x83\x86\xE3\x82\xA3",
+              translator.MaybeTranslate("Properties"));
+  }
+
+  {
+    LocaleBasedMessageTranslator translator("ja_JP.utf8");
+    // For unknown key.
+    EXPECT_EQ("foobar", translator.MaybeTranslate("foobar"));
+
+    // For known key.
+    // "プロパティ"
+    EXPECT_EQ("\xE3\x83\x97\xE3\x83\xAD\xE3\x83\x91\xE3\x83\x86\xE3\x82\xA3",
+              translator.MaybeTranslate("Properties"));
+  }
+
+  {
+    LocaleBasedMessageTranslator translator("ja_JP.uTf-8");
+    // For unknown key.
+    EXPECT_EQ("foobar", translator.MaybeTranslate("foobar"));
+
+    // For known key.
+    // "プロパティ"
+    EXPECT_EQ("\xE3\x83\x97\xE3\x83\xAD\xE3\x83\x91\xE3\x83\x86\xE3\x82\xA3",
+              translator.MaybeTranslate("Properties"));
+  }
 }
 
 }  // namespace ibus

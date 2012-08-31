@@ -138,9 +138,9 @@ bool CompositionString::HandleResult(const mozc::commands::Output &output) {
   wstring result_string;
   mozc::Util::UTF8ToWide(output.result().value(), &result_string);
   result = ::StringCchCopyN(result_,
-                            ARRAYSIZE(result_),
+                            arraysize(result_),
                             result_string.c_str(),
-                            ARRAYSIZE(result_));
+                            arraysize(result_));
   if (FAILED(result)) {
     return false;
   }
@@ -149,7 +149,7 @@ bool CompositionString::HandleResult(const mozc::commands::Output &output) {
   // Since the Mozc server does not support clause information for the
   // result string, we always declare the result string to be one segment.
   // TODO(yukawa): Set clause after b/3135804 is implemented.
-  COMPILE_ASSERT(ARRAYSIZE(result_reading_clause_) >= 2,
+  COMPILE_ASSERT(arraysize(result_reading_clause_) >= 2,
                  RESULT_CLAUSE_ARRAY_IS_TOO_SMALL);
   info.dwResultClauseLen = sizeof(result_clause_[0]) +
                            sizeof(result_clause_[1]);
@@ -162,9 +162,9 @@ bool CompositionString::HandleResult(const mozc::commands::Output &output) {
     const wstring &reading_string =
         StringUtil::KeyToReading(output.result().key());
     result = ::StringCchCopyN(result_reading_,
-                              ARRAYSIZE(result_reading_),
+                              arraysize(result_reading_),
                               reading_string.c_str(),
-                              ARRAYSIZE(result_reading_));
+                              arraysize(result_reading_));
     if (FAILED(result)) {
       return false;
     }
@@ -175,7 +175,7 @@ bool CompositionString::HandleResult(const mozc::commands::Output &output) {
     // Since the Mozc server does not return clause information for the
     // result string, we always declare the result string to be one segment.
     // TODO(yukawa): Set clause after b/3135804 is implemented.
-    COMPILE_ASSERT(ARRAYSIZE(result_reading_clause_) >= 2,
+    COMPILE_ASSERT(arraysize(result_reading_clause_) >= 2,
                    RESULT_READING_CLAUSE_ARRAY_IS_TOO_SMALL);
     info.dwResultReadClauseLen = sizeof(result_reading_clause_[0]) +
                                  sizeof(result_reading_clause_[1]);
@@ -315,24 +315,24 @@ bool CompositionString::HandlePreedit(const mozc::commands::Output &output) {
 
   HRESULT result = S_OK;
   result = ::StringCchCopyN(composition_,
-                            ARRAYSIZE(composition_),
+                            arraysize(composition_),
                             composition_string.c_str(),
-                            ARRAYSIZE(composition_));
+                            arraysize(composition_));
   if (FAILED(result)) {
     return false;
   }
   info.dwCompStrLen = composition_string.size();
 
   result = ::StringCchCopyN(composition_reading_,
-                            ARRAYSIZE(composition_reading_),
+                            arraysize(composition_reading_),
                             reading_string.c_str(),
-                            ARRAYSIZE(composition_reading_));
+                            arraysize(composition_reading_));
   if (FAILED(result)) {
     return false;
   }
   info.dwCompReadStrLen = reading_string.size();
 
-  if (ARRAYSIZE(composition_clause_) <= composition_clauses.size()) {
+  if (arraysize(composition_clause_) <= composition_clauses.size()) {
     return false;
   }
   info.dwCompClauseLen = composition_clauses.size() * sizeof(DWORD);
@@ -340,7 +340,7 @@ bool CompositionString::HandlePreedit(const mozc::commands::Output &output) {
     composition_clause_[i] = composition_clauses[i];
   }
 
-  if (ARRAYSIZE(composition_reading_clause_) <= reading_clauses.size()) {
+  if (arraysize(composition_reading_clause_) <= reading_clauses.size()) {
     return false;
   }
   info.dwCompReadClauseLen = reading_clauses.size() * sizeof(DWORD);

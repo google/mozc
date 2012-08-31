@@ -30,7 +30,9 @@
 #include "rewriter/zipcode_rewriter.h"
 
 #include <string>
+
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/singleton.h"
 #include "base/util.h"
 #include "config/config.pb.h"

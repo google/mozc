@@ -44,6 +44,33 @@
 namespace mozc {
 class WinUtil {
  public:
+  // Load a DLL which has the specified base-name and is located in the
+  // system directory.
+  // If the function succeeds, the return value is a handle to the module.
+  // You should call FreeLibrary with the handle.
+  // If the function fails, the return value is NULL.
+  static HMODULE LoadSystemLibrary(const wstring &base_filename);
+
+  // Load a DLL which has the specified base-name and is located in the
+  // Mozc server directory.
+  // If the function succeeds, the return value is a handle to the module.
+  // You should call FreeLibrary with the handle.
+  // If the function fails, the return value is NULL.
+  static HMODULE LoadMozcLibrary(const wstring &base_filename);
+
+  // If a DLL which has the specified base-name and located in the system
+  // directory is loaded in the caller process, retrieve its module handle.
+  // If the function succeeds, the return value is a handle to the module
+  // without incrementing its reference count so that you should not call
+  // FreeLibrary with the handle.
+  // If the function fails, the return value is NULL.
+  static HMODULE GetSystemModuleHandle(const wstring &base_filename);
+
+  // A variant ot GetSystemModuleHandle except that this method increments
+  // reference count of the target DLL.
+  static HMODULE GetSystemModuleHandleAndIncrementRefCount(
+      const wstring &base_filename);
+
   // Retrieve whether the calling thread hold loader lock or not.
   // Return true if the state is retrieved successfuly.
   // Otherwise, the state of loader lock is unknown.

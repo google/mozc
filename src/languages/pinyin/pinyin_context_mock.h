@@ -75,8 +75,6 @@ class PinyinContextMock : public PinyinContextInterface {
 
   virtual bool SelectCandidate(size_t index);
   virtual bool FocusCandidate(size_t index);
-  virtual bool FocusCandidatePrev();
-  virtual bool FocusCandidateNext();
   virtual bool ClearCandidateFromHistory(size_t index);
 
   virtual bool RemoveCharBefore();

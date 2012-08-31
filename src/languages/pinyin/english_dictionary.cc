@@ -36,20 +36,31 @@
 
 #include "base/config_file_stream.h"
 #include "base/scoped_ptr.h"
-#include "base/singleton.h"
+#include "base/util.h"
 #include "dictionary/file/codec_interface.h"
 #include "dictionary/file/dictionary_file.h"
-#include "dictionary/rx/rx_trie.h"
+// Includes generated dictionary data.
+#include "languages/pinyin/pinyin_embedded_english_dictionary_data.h"
 #include "storage/encrypted_string_storage.h"
 
-// TODO(hsumita): Locks user dictionary file.
+#ifdef MOZC_USE_MOZC_LOUDS
+#include "dictionary/louds/louds_trie_adapter.h"
+#else
+#include "dictionary/rx/rx_trie.h"
+#endif  // MOZC_USE_MOZC_LOUDS
+
+// TODO(hsumita): Lock user dictionary file.
 
 namespace mozc {
 namespace pinyin {
 namespace english {
 
 namespace {
-#include "languages/pinyin/pinyin_embedded_english_dictionary_data.h"
+#ifdef MOZC_USE_MOZC_LOUDS
+typedef dictionary::louds::Entry EntryType;
+#else
+typedef rx::RxEntry EntryType;
+#endif  // MOZC_USE_MOZC_LOUDS
 
 const char *kUserDictionaryFileName = "user://pinyin_english.db";
 // The last printable character in ASCII code
@@ -58,10 +69,20 @@ const char kSentinelValueForAlphabet = '~';
 const size_t kMaxUserDictionarySize = 50000;
 const size_t kMaxWordLength = 80;
 
-// Format is | key_length (1byte) | key (~80bytes) | used_count (4bytes) |
-bool SerializeUserDictionary(const UserDictionary &dictionary,
+// Serialized user dictionary format is as following.
+// Dictionary : array of Entry
+// Entry      : | key_length (1byte) | key (~80bytes) | used_count (4bytes) |
+//
+// key_length : length of key.
+// key:       : word registered on user dictionary entry.
+// used_count : number that how many times this entry is learned.
+//
+// |key| should be smaller than or equal to 80 bytes, and we can store the
+// length of |key| within 1byte w/o worry about signed vs unsigned conversion.
+
+void SerializeUserDictionary(const UserDictionary &dictionary,
                              string *output) {
-  DCHECK(output);
+  CHECK(output);
   output->clear();
 
   for (UserDictionary::const_iterator it = dictionary.begin();
@@ -72,34 +93,25 @@ bool SerializeUserDictionary(const UserDictionary &dictionary,
 
     // The length of the key should be <= 80.
     // So we can save it as uint8.
-    DCHECK_GE(80, key.size());
+    CHECK_GE(80, key.size());
     output->append(1, static_cast<uint8>(key.size()));
     output->append(key);
     output->append(used_count_ptr, used_count_ptr + 4);
   }
-
-  return true;
 }
 
-// Format is | key_length (1byte) | key (~80bytes) | used_count (4bytes) |
 bool DeserializeUserDictionary(const string &input,
                                UserDictionary *dictionary) {
-  DCHECK(dictionary);
+  CHECK(dictionary);
   dictionary->clear();
 
   size_t index = 0;
   while (index < input.size()) {
-    if (index + 1 > input.size()) {
-      LOG(ERROR) << "Cannot parse user dicitonary.";
-      dictionary->clear();
-      return false;
-    }
-
-    const size_t key_length = static_cast<size_t>(input[index]);
+    const size_t key_length = input[index];
     index += 1;
 
     if (index + key_length + 4 > input.size()) {
-      LOG(ERROR) << "Cannot parse user dicitonary.";
+      LOG(ERROR) << "Cannot parse user dictionary.";
       dictionary->clear();
       return false;
     }
@@ -116,46 +128,45 @@ bool DeserializeUserDictionary(const string &input,
   return true;
 }
 
-struct  DictionaryEntry {
-  string key;
-  float priority;
-};
+// <key, priority>
+typedef pair<string, float> DictionaryEntry;
+typedef map<string, float> DictionaryMap;
 
 bool DictionaryEntryComparator(const DictionaryEntry &lhs,
                                const DictionaryEntry &rhs) {
-  if (lhs.priority != rhs.priority) {
-    return lhs.priority > rhs.priority;
+  if (lhs.second != rhs.second) {
+    return lhs.second > rhs.second;
   }
-  return lhs.key < rhs.key;
+  return lhs.first < rhs.first;
 }
 }  // namespace
 
 EnglishDictionary::EnglishDictionary()
-    : word_trie_(new rx::RxTrie),
+    : word_trie_(new TrieType),
       storage_(new storage::EncryptedStringStorage(
-          EnglishDictionary::file_name())) {
+          EnglishDictionary::user_dictionary_file_path())) {
   Init();
 }
 
 EnglishDictionary::~EnglishDictionary() {
 }
 
-bool EnglishDictionary::GetSuggestions(const string &input_prefix,
+void EnglishDictionary::GetSuggestions(const string &input_prefix,
                                        vector<string> *output) const {
-  DCHECK(output);
+  CHECK(output);
   output->clear();
+
+  if (input_prefix.empty()) {
+    return;
+  }
 
   string prefix = input_prefix;
   Util::LowerString(&prefix);
 
-  if (prefix.empty()) {
-    return false;
-  }
-
-  vector<rx::RxEntry> system_entries;
+  vector<EntryType> system_entries;
   word_trie_->PredictiveSearch(prefix, &system_entries);
 
-  map<string, float> merged_entries;
+  DictionaryMap merged_entries;
   {
     const UserDictionary::const_iterator it_begin =
         user_dictionary_.lower_bound(prefix);
@@ -166,45 +177,31 @@ bool EnglishDictionary::GetSuggestions(const string &input_prefix,
     }
   }
   for (size_t i = 0; i < system_entries.size(); ++i) {
-    const rx::RxEntry &entry = system_entries[i];
+    const EntryType &entry = system_entries[i];
     merged_entries[entry.key] += priority_table_[entry.id];
   }
 
-  vector<DictionaryEntry> merged_vector;
-  for (map<string, float>::const_iterator iter = merged_entries.begin();
-       iter != merged_entries.end(); ++iter) {
-    DictionaryEntry entry = {
-      iter->first,
-      iter->second,
-    };
-    merged_vector.push_back(entry);
-  }
-
+  vector<DictionaryEntry> merged_vector(merged_entries.size());
+  copy(merged_entries.begin(), merged_entries.end(), merged_vector.begin());
   sort(merged_vector.begin(), merged_vector.end(), DictionaryEntryComparator);
 
   for (size_t i = 0; i < merged_vector.size(); ++i) {
-    output->push_back(merged_vector[i].key);
+    output->push_back(merged_vector[i].first);
   }
+}
 
-  if (output->empty()) {
+bool EnglishDictionary::LearnWord(const string &input_word) {
+  if (input_word.empty()) {
+    LOG(ERROR) << "Cannot learn an empty word.";
     return false;
   }
 
-  return true;
-}
-
-void EnglishDictionary::LearnWord(const string &input_word) {
-  if (input_word.empty()) {
-    LOG(ERROR) << "Cannot learn an empty word.";
-    return;
-  }
-
-  if (input_word.size() >= kMaxWordLength) {
+  if (input_word.size() > kMaxWordLength) {
     LOG(ERROR) << "Cannot learn a too long word.";
-    return;
+    return false;
   }
 
-  // TODO(hsumita): Introduces LRU algorithm. http://b/6047022
+  // TODO(hsumita): Introduce LRU algorithm. http://b/6047022
   if (user_dictionary_.size() < kMaxUserDictionarySize) {
     string word = input_word;
     Util::LowerString(&word);
@@ -214,19 +211,19 @@ void EnglishDictionary::LearnWord(const string &input_word) {
     ++user_dictionary_[word];
   }
 
-  Sync();
+  return Sync();
 }
 
 void EnglishDictionary::Init() {
+  CHECK(priority_table_.empty());
+
   vector<DictionaryFileSection> sections;
-  DictionaryFileCodecInterface *codec =
+  const DictionaryFileCodecInterface *codec =
       DictionaryFileCodecFactory::GetCodec();
-  if (!codec->ReadSections(
-          kPinyinEnglishDictionary_data, kPinyinEnglishDictionary_size,
-          &sections)) {
-    LOG(ERROR) << "Cannot open English dictionary"
-        " because section data is not found.";
-    return;
+  if (!codec->ReadSections(kPinyinEnglishDictionary_data,
+                          kPinyinEnglishDictionary_size, &sections)) {
+    LOG(FATAL)
+        << "Cannot open English dictionary because section data is not found.";
   }
 
   const string word_trie_section_name =
@@ -240,7 +237,7 @@ void EnglishDictionary::Init() {
     if (section.name == word_trie_section_name) {
       if (!word_trie_->OpenImage(
               reinterpret_cast<const unsigned char *>(section.ptr))) {
-        LOG(ERROR) << "Failed to create ngram dictionary";
+        LOG(FATAL) << "Failed to open trie section data.";
       }
     } else if (section.name == priority_table_section_name) {
       const float *p = reinterpret_cast<const float *>(section.ptr);
@@ -249,7 +246,7 @@ void EnglishDictionary::Init() {
     } else if (section.name == learning_multiplier_section_name) {
       learning_multiplier_ = *reinterpret_cast<const float *>(section.ptr);
     } else {
-      DCHECK(false) << "Unknown section name: " << section.name;
+      LOG(FATAL) << "Unknown section name: " << section.name;
     }
   }
 
@@ -260,8 +257,8 @@ bool EnglishDictionary::ReloadUserDictionary() {
   user_dictionary_.clear();
 
   string serialized_data;
-  storage_->Load(&serialized_data);
-  if (!DeserializeUserDictionary(serialized_data, &user_dictionary_)) {
+  if (!storage_->Load(&serialized_data) ||
+      !DeserializeUserDictionary(serialized_data, &user_dictionary_)) {
     LOG(ERROR) << "Cannot deserialize data.";
     return false;
   }
@@ -271,15 +268,12 @@ bool EnglishDictionary::ReloadUserDictionary() {
 
 bool EnglishDictionary::Sync() {
   string serialized_data;
-  if (!SerializeUserDictionary(user_dictionary_, &serialized_data)) {
-    LOG(ERROR) << "Cannot sync.";
-    return false;
-  }
+  SerializeUserDictionary(user_dictionary_, &serialized_data);
   return storage_->Save(serialized_data);
 }
 
 // static
-string EnglishDictionary::file_name() {
+string EnglishDictionary::user_dictionary_file_path() {
   return ConfigFileStream::GetFileName(kUserDictionaryFileName);
 }
 

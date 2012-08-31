@@ -35,11 +35,13 @@
 #include <vector>
 
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/mmap.h"
 #include "base/singleton.h"
 #include "base/util.h"
 #include "converter/conversion_request.h"
 #include "converter/segments.h"
+#include "data_manager/data_manager_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "rewriter/collocation_util.h"
 #include "rewriter/rewriter_interface.h"
@@ -48,150 +50,57 @@
 DEFINE_bool(use_collocation, true, "use collocation rewrite");
 
 namespace mozc {
-namespace {
-#include "rewriter/embedded_collocation_data.h"
-#include "rewriter/embedded_collocation_suppression_data.h"
 
+using mozc::storage::ExistenceFilter;
+
+namespace {
 const size_t kCandidateSize = 12;
 
-class CollocationFilter {
- public:
-  CollocationFilter()
-      : filter_(
-          ExistenceFilter::Read(
-              reinterpret_cast<const char *>(CollocationData::kExistenceData),
-              CollocationData::kExistenceDataSize)) {}
-  ~CollocationFilter() {}
-
-  bool Exists(uint64 id) const {
-    return filter_->Exists(id);
-  }
-
- private:
-  scoped_ptr<ExistenceFilter> filter_;
+// For collocation, we use two segments.
+enum SegmentLookupType {
+  LEFT,
+  RIGHT,
 };
-
-class SuppressionFilter {
- public:
-  SuppressionFilter()
-      : filter_(
-          ExistenceFilter::Read(
-              reinterpret_cast<const char *>(
-                  CollocationSuppressionData::kExistenceData),
-              CollocationSuppressionData::kExistenceDataSize)) {}
-  ~SuppressionFilter() {}
-
-  bool Exists(uint64 id) const {
-    return filter_->Exists(id);
-  }
-
- private:
-  scoped_ptr<ExistenceFilter> filter_;
-};
-
-bool LookupPair(const string &left, const string &right) {
-  if (left.empty() || right.empty()) {
-    return false;
-  }
-
-  const string pair = left + right;
-  const uint64 id = Util::Fingerprint(pair);
-  return Singleton<CollocationFilter>::get()->Exists(id);
-}
-
-// Returns true if the content key and value of the candidate is "ateji".
-// Atejis are stored using Bloom filter, so it is possible that non-ateji words
-// are sometimes mistakenly classified as ateji, resulting in passing on the
-// right collocations, though the possibility is very low (0.001% by default).
-bool ContentIsAteji(const Segment::Candidate &cand) {
-  const char kSeparator[] = "\t";
-  const string key = cand.content_value + kSeparator + cand.content_key;
-  const uint64 id = Util::Fingerprint(key);
-  return Singleton<SuppressionFilter>::get()->Exists(id);
-}
-
-bool ContainsScriptType(const string &str, Util::ScriptType type) {
-  const char *begin = str.data();
-  const char *end = str.data() + str.size();
-  size_t mblen = 0;
-  while (begin < end) {
-    const uint16 w = Util::UTF8ToUCS2(begin, end, &mblen);
-    if (Util::GetScriptType(w) == type) {
-      return true;
-    }
-    begin += mblen;
-  }
-  return false;
-}
 
 // returns true if the given string contains number including Kanji.
 bool ContainsNumber(const string &str) {
-  const char *begin = str.data();
-  const char *end = str.data() + str.size();
-  size_t mblen = 0;
-
-  while (begin < end) {
-    const uint16 wchar = Util::UTF8ToUCS2(begin, end, &mblen);
-    if (CollocationUtil::IsNumber(wchar)) {
+  for (ConstChar32Iterator iter(str); !iter.Done(); iter.Next()) {
+    if (CollocationUtil::IsNumber(iter.Get())) {
       return true;
     }
-    begin += mblen;
   }
   return false;
 }
 
-bool IsEndWith(const string& str, const uint16 *pattern, int pat_len) {
-  const char *begin = str.data();
-  const char *end = str.data() + str.size();
-  size_t mblen = 0;
-  int pos = 0;
-
-  while (begin < end) {
-    const uint16 wchar = Util::UTF8ToUCS2(begin, end, &mblen);
-    if (wchar == pattern[pos]) {
-      ++pos;
-    } else if (pos != 0) {
-      return false;
-    }
-
-    begin += mblen;
-    if (pos == pat_len) {
-      if (begin == end) {
-        return true;
-      } else {
-        return false;
-      }
-    }
+bool IsEndWith(const string &str, const char32 *pattern, int pat_len) {
+  string pattern_utf8;
+  for (int i = 0; i < pat_len; ++i) {
+    Util::UCS4ToUTF8Append(pattern[i], &pattern_utf8);
   }
-  return false;
+
+  return Util::EndsWith(str, pattern_utf8);
 }
 
-bool ParseCompound(const string &value, const uint16 *pattern, int pat_len,
+bool ParseCompound(const string &value, const char32 *pattern, int pat_len,
                    string *first_content, string *first_aux, string *second) {
-  const char *begin = value.data();
-  const char *end = value.data() + value.size();
-  size_t mblen = 0;
   int pos = 0;
-
-  while (begin < end) {
-    const uint16 wchar = Util::UTF8ToUCS2(begin, end, &mblen);
+  for (ConstChar32Iterator iter(value); !iter.Done(); iter.Next()) {
+    const char32 wchar = iter.Get();
     if (pos < pat_len && wchar == pattern[pos]) {
-      Util::UCS2ToUTF8Append(wchar, first_aux);
+      Util::UCS4ToUTF8Append(wchar, first_aux);
       ++pos;
     } else if (pos == 0) {
-      Util::UCS2ToUTF8Append(wchar, first_content);
+      Util::UCS4ToUTF8Append(wchar, first_content);
     } else if (pos < pat_len) {
       return false;
     } else if (pos == pat_len) {
-      Util::UCS2ToUTF8Append(wchar, second);
+      Util::UCS4ToUTF8Append(wchar, second);
     }
-
-    begin += mblen;
   }
 
   if (second->empty() ||
       !Util::IsScriptType(*first_content, Util::KANJI) ||
-      !ContainsScriptType(*second, Util::KANJI)) {
+      !Util::ContainsScriptType(*second, Util::KANJI)) {
     return false;
   } else {
     return true;
@@ -200,25 +109,25 @@ bool ParseCompound(const string &value, const uint16 *pattern, int pat_len,
 
 // handles compound such as "本を読む"(one segment)
 // we want to rewrite using it as if it was "<本|を><読む>"
-// so that we can use collocation data like "暑い本"
+// so that we can use collocation data like "厚い本"
 void ResolveCompoundSegment(const string &top_value, const string &value,
-                            bool is_first,
+                            SegmentLookupType type,
                             vector<string> *output) {
   // "格助詞"
   // see "http://ja.wikipedia.org/wiki/助詞"
-  static const uint16 kPat1[] = {0x304C};  // "が"
+  static const char32 kPat1[] = {0x304C};  // "が"
   // "の" was not good...
-  // static const uint16 kPat2[] = {0x306E};  // "の"
-  static const uint16 kPat3[] = {0x3092};  // "を"
-  static const uint16 kPat4[] = {0x306B};  // "に"
-  static const uint16 kPat5[] = {0x3078};  // "へ"
-  static const uint16 kPat6[] = {0x3068};  // "と"
-  static const uint16 kPat7[] = {0x304B, 0x3089};  // "から"
-  static const uint16 kPat8[] = {0x3088, 0x308A};  // "より"
-  static const uint16 kPat9[] = {0x3067};  // "で"
+  // static const char32 kPat2[] = {0x306E};  // "の"
+  static const char32 kPat3[] = {0x3092};  // "を"
+  static const char32 kPat4[] = {0x306B};  // "に"
+  static const char32 kPat5[] = {0x3078};  // "へ"
+  static const char32 kPat6[] = {0x3068};  // "と"
+  static const char32 kPat7[] = {0x304B, 0x3089};  // "から"
+  static const char32 kPat8[] = {0x3088, 0x308A};  // "より"
+  static const char32 kPat9[] = {0x3067};  // "で"
 
   static const struct {
-    const uint16 *pat;
+    const char32 *pat;
     int len;
   } kParticles[] = {
     {kPat1, arraysize(kPat1)},
@@ -233,7 +142,7 @@ void ResolveCompoundSegment(const string &top_value, const string &value,
     {NULL, 0}
   };
 
-  for (int i =0; kParticles[i].pat != NULL; ++i) {
+  for (int i = 0; kParticles[i].pat != NULL; ++i) {
     string first_content, first_aux, second;
     if (!ParseCompound(top_value, kParticles[i].pat, kParticles[i].len,
                        &first_content, &first_aux, &second)) {
@@ -245,7 +154,7 @@ void ResolveCompoundSegment(const string &top_value, const string &value,
     second.clear();
     if (ParseCompound(value, kParticles[i].pat, kParticles[i].len,
                       &first_content, &first_aux, &second)) {
-      if (is_first) {
+      if (type == LEFT) {
         output->push_back(second);
         output->push_back(first_content + first_aux);
       } else {
@@ -258,27 +167,27 @@ void ResolveCompoundSegment(const string &top_value, const string &value,
 
 bool IsNaturalContent(const Segment::Candidate &cand,
                       const Segment::Candidate &top_cand,
-                      bool is_first,
+                      SegmentLookupType type,
                       vector<string> *output) {
   const string& content = cand.content_value;
   const string& value = cand.value;
   const string& top_content = top_cand.content_value;
   const string& top_value = top_cand.value;
 
-  if (!is_first &&
+  if (type == RIGHT &&
       value != top_value &&
       Util::CharsLen(top_content) >= 2 &&
       Util::CharsLen(content) == 1) {
     return false;
   }
 
-  if (is_first) {
+  if (type == LEFT) {
     output->push_back(value);
   } else {
     output->push_back(content);
     // "舞って" workaround
     // V+"て" is often treated as one compound.
-    static const uint16 kPat[] = {0x3066};  // "て"
+    static const char32 kPat[] = {0x3066};  // "て"
     if (IsEndWith(content, kPat, arraysize(kPat))) {
       output->push_back(
           Util::SubString(content, 0, Util::CharsLen(content) - 1));
@@ -297,7 +206,7 @@ bool IsNaturalContent(const Segment::Candidate &cand,
 
   // we don't rewrite KATAKANA segment
   // for example, we don't rewrite "コーヒー飲みます" to "珈琲飲みます"
-  if (is_first &&
+  if (type == LEFT &&
       Util::CharsLen(top_aux_value) == 0 &&
       top_value != value &&
       Util::IsScriptType(top_value, Util::KATAKANA)) {
@@ -309,7 +218,7 @@ bool IsNaturalContent(const Segment::Candidate &cand,
     const char *begin = top_content.data();
     const char *end = top_content.data() + top_content.size();
     size_t mblen = 0;
-    const uint16 wchar = Util::UTF8ToUCS2(begin, end, &mblen);
+    const char32 wchar = Util::UTF8ToUCS4(begin, end, &mblen);
 
     switch (wchar) {
       case 0x304a:  // "お"
@@ -321,12 +230,15 @@ bool IsNaturalContent(const Segment::Candidate &cand,
     }
   }
 
+  // Remove number in normalization for the left segment.
   string aux_normalized, top_aux_normalized;
-  CollocationUtil::GetNormalizedScript(aux_value, &aux_normalized);
-  CollocationUtil::GetNormalizedScript(top_aux_value, &top_aux_normalized);
+  CollocationUtil::GetNormalizedScript(
+      aux_value, (type == LEFT), &aux_normalized);
+  CollocationUtil::GetNormalizedScript(
+      top_aux_value, (type == LEFT), &top_aux_normalized);
   if (Util::CharsLen(aux_normalized) > 0 &&
       !Util::IsScriptType(aux_normalized, Util::HIRAGANA)) {
-    if (!is_first) {
+    if (type == RIGHT) {
       return false;
     }
     if (aux_normalized != top_aux_normalized) {
@@ -334,16 +246,16 @@ bool IsNaturalContent(const Segment::Candidate &cand,
     }
   }
 
-  ResolveCompoundSegment(top_value, value, is_first, output);
+  ResolveCompoundSegment(top_value, value, type, output);
 
   // "<XXいる|>" can be rewrited to "<YY|いる>" and vice versa
   {
-    static const uint16 kPat[] = {0x3044, 0x308B};  // "いる"
+    static const char32 kPat[] = {0x3044, 0x308B};  // "いる"
     if (Util::CharsLen(top_aux_value) == 0 &&
         IsEndWith(top_value, kPat, arraysize(kPat)) &&
         Util::CharsLen(aux_value) == 2 &&
         IsEndWith(aux_value, kPat, arraysize(kPat))) {
-      if (!is_first) {
+      if (type == RIGHT) {
         // "YYいる" in addition to "YY"
         output->push_back(value);
       }
@@ -353,7 +265,7 @@ bool IsNaturalContent(const Segment::Candidate &cand,
         IsEndWith(value, kPat, arraysize(kPat)) &&
         Util::CharsLen(top_aux_value) == 2 &&
         IsEndWith(top_aux_value, kPat, arraysize(kPat))) {
-      if (!is_first) {
+      if (type == RIGHT) {
         // "YY" in addition to "YYいる"
         output->push_back(Util::SubString(value, 0,
                                           Util::CharsLen(value) - 2));
@@ -364,12 +276,12 @@ bool IsNaturalContent(const Segment::Candidate &cand,
 
   // "<XXせる|>" can be rewrited to "<YY|せる>" and vice versa
   {
-    static const uint16 kPat[] = {0x305B, 0x308B};  // "せる"
+    static const char32 kPat[] = {0x305B, 0x308B};  // "せる"
     if (Util::CharsLen(top_aux_value) == 0 &&
         IsEndWith(top_value, kPat, arraysize(kPat)) &&
         Util::CharsLen(aux_value) == 2 &&
         IsEndWith(aux_value, kPat, arraysize(kPat))) {
-      if (!is_first) {
+      if (type == RIGHT) {
         // "YYせる" in addition to "YY"
         output->push_back(value);
       }
@@ -379,7 +291,7 @@ bool IsNaturalContent(const Segment::Candidate &cand,
         IsEndWith(value, kPat, arraysize(kPat)) &&
         Util::CharsLen(top_aux_value) == 2 &&
         IsEndWith(top_aux_value, kPat, arraysize(kPat))) {
-      if (!is_first) {
+      if (type == RIGHT) {
         // "YY" in addition to "YYせる"
         output->push_back(Util::SubString(value, 0,
                                           Util::CharsLen(value) - 2));
@@ -392,7 +304,7 @@ bool IsNaturalContent(const Segment::Candidate &cand,
   // in "<XX|する>", XX must be single script type
   // "評する"
   {
-    static const uint16 kPat[] = { 0x3059, 0x308B};  // "する"
+    static const char32 kPat[] = { 0x3059, 0x308B};  // "する"
     if (Util::CharsLen(aux_value) == 2 &&
         IsEndWith(aux_value, kPat, arraysize(kPat))) {
       if (!Util::IsScriptType(content, Util::KATAKANA) &&
@@ -401,7 +313,7 @@ bool IsNaturalContent(const Segment::Candidate &cand,
           !Util::IsScriptType(content, Util::ALPHABET)) {
         return false;
       }
-      if (!is_first) {
+      if (type == RIGHT) {
         // "YYす" in addition to "YY"
         output->push_back(Util::SubString(value, 0,
                                           Util::CharsLen(value) - 1));
@@ -413,10 +325,10 @@ bool IsNaturalContent(const Segment::Candidate &cand,
   // "<XXる>" can be rewrited using "<XX|る>"
   // "まとめる", "衰える"
   {
-    static const uint16 kPat[] = {0x308B};  // "る"
+    static const char32 kPat[] = {0x308B};  // "る"
     if (Util::CharsLen(aux_value) == 0 &&
         IsEndWith(value, kPat, arraysize(kPat))) {
-      if (!is_first) {
+      if (type == RIGHT) {
         // "YY" in addition to "YYる"
         output->push_back(Util::SubString(value, 0,
                                           Util::CharsLen(value) - 1));
@@ -427,12 +339,12 @@ bool IsNaturalContent(const Segment::Candidate &cand,
 
   // "<XXす>" can be rewrited using "XXする"
   {
-    static const uint16 kPat[] = {0x3059};  // "す"
+    static const char32 kPat[] = {0x3059};  // "す"
     if (IsEndWith(value, kPat, arraysize(kPat)) &&
         Util::IsScriptType(
             Util::SubString(value, 0, Util::CharsLen(value) - 1),
             Util::KANJI)) {
-      if (!is_first) {
+      if (type == RIGHT) {
         string val = value;
         Util::UCS2ToUTF8Append(0x308B, &val);  // "る"
         // "YYする" in addition to "YY"
@@ -444,13 +356,13 @@ bool IsNaturalContent(const Segment::Candidate &cand,
 
   // "<XXし|た>" can be rewrited using "<XX|した>"
   {
-    static const uint16 kPat[] = {0x3057};  // "し"
+    static const char32 kPat[] = {0x3057};  // "し"
     static const string aux = "\xe3\x81\x9f";  // "た"
     if (IsEndWith(content, kPat, arraysize(kPat)) &&
         aux_value == aux &&
         IsEndWith(top_content, kPat, arraysize(kPat)) &&
         top_aux_value == aux) {
-      if (!is_first) {
+      if (type == RIGHT) {
         string val = Util::SubString(content, 0, Util::CharsLen(content) - 1);
         // XX must be KANJI
         if (Util::IsScriptType(val, Util::KANJI)) {
@@ -461,8 +373,9 @@ bool IsNaturalContent(const Segment::Candidate &cand,
     }
   }
 
-  int aux_len = Util::CharsLen(value) - Util::CharsLen(content);
-  int top_aux_len = Util::CharsLen(top_value) - Util::CharsLen(top_content);
+  const int aux_len = Util::CharsLen(value) - Util::CharsLen(content);
+  const int top_aux_len =
+      Util::CharsLen(top_value) - Util::CharsLen(top_content);
   if (aux_len != top_aux_len) {
     return false;
   }
@@ -475,7 +388,7 @@ bool IsNaturalContent(const Segment::Candidate &cand,
 
   // we don't rewrite second KATAKANA
   // for example, we don't rewrite "このコーヒー" to "この珈琲"
-  if (!is_first &&
+  if (type == RIGHT &&
       value != top_value &&
       Util::IsScriptType(top_content, Util::KATAKANA)) {
     return false;
@@ -572,9 +485,64 @@ bool CollocationRewriter::RewriteCollocation(Segments *segments) const {
   return changed;
 }
 
-CollocationRewriter::CollocationRewriter(const POSMatcher &pos_matcher)
-    : first_name_id_(pos_matcher.GetFirstNameId()),
-      last_name_id_(pos_matcher.GetLastNameId()) {}
+class CollocationRewriter::CollocationFilter {
+ public:
+  CollocationFilter(const char *existence_data, size_t size)
+      : filter_(ExistenceFilter::Read(existence_data, size)) {
+  }
+  ~CollocationFilter() {
+  }
+
+  bool Exists(const string &left, const string &right) const {
+    if (left.empty() || right.empty()) {
+      return false;
+    }
+    const uint64 id = Util::Fingerprint(left + right);
+    return filter_->Exists(id);
+  }
+
+ private:
+  scoped_ptr<ExistenceFilter> filter_;
+
+  DISALLOW_COPY_AND_ASSIGN(CollocationFilter);
+};
+
+class CollocationRewriter::SuppressionFilter {
+ public:
+  SuppressionFilter(const char *suppression_data, size_t size)
+      : filter_(ExistenceFilter::Read(suppression_data, size)) {
+  }
+  ~SuppressionFilter() {
+  }
+
+  bool Exists(const Segment::Candidate &cand) const {
+    // TODO(noriyukit): We should share key generation rule with
+    // gen_collocation_suppression_data_main.cc.
+    const char kSeparator[] = "\t";
+    const string key = cand.content_value + kSeparator + cand.content_key;
+    const uint64 id = Util::Fingerprint(key);
+    return filter_->Exists(id);
+  }
+
+ private:
+  scoped_ptr<ExistenceFilter> filter_;
+
+  DISALLOW_COPY_AND_ASSIGN(SuppressionFilter);
+};
+
+CollocationRewriter::CollocationRewriter(
+    const DataManagerInterface *data_manager)
+    : first_name_id_(data_manager->GetPOSMatcher()->GetFirstNameId()),
+      last_name_id_(data_manager->GetPOSMatcher()->GetLastNameId()) {
+  const char *data = NULL;
+  size_t size = 0;
+
+  data_manager->GetCollocationData(&data, &size);
+  collocation_filter_.reset(new CollocationFilter(data, size));
+
+  data_manager->GetCollocationSuppressionData(&data, &size);
+  suppression_filter_.reset(new SuppressionFilter(data, size));
+}
 
 CollocationRewriter::~CollocationRewriter() {}
 
@@ -595,26 +563,26 @@ bool CollocationRewriter::RewriteFromPrevSegment(
     const Segment::Candidate &prev_cand,
     Segment *seg) const {
   string prev;
-  CollocationUtil::GetNormalizedScript(prev_cand.value, &prev);
+  CollocationUtil::GetNormalizedScript(prev_cand.value, true, &prev);
 
   const size_t i_max = min(seg->candidates_size(), kCandidateSize);
   for (size_t i = 0; i < i_max; ++i) {
     vector<string> curs;
     if (!IsNaturalContent(seg->candidate(i), seg->candidate(0),
-                          false, &curs)) {
+                          RIGHT, &curs)) {
       continue;
     }
     if (IsName(seg->candidate(i))) {
       continue;
     }
-    if (ContentIsAteji(seg->candidate(i))) {
+    if (suppression_filter_->Exists(seg->candidate(i))) {
       continue;
     }
 
     for (int j = 0; j < curs.size(); ++j) {
       string cur;
-      CollocationUtil::GetNormalizedScript(curs[j], &cur);
-      if (LookupPair(prev, cur)) {
+      CollocationUtil::GetNormalizedScript(curs[j], false, &cur);
+      if (collocation_filter_->Exists(prev, cur)) {
         if (i != 0) {
           VLOG(3) << prev << cur << " "
                   << seg->candidate(0).value << "->"
@@ -644,39 +612,39 @@ bool CollocationRewriter::RewriteUsingNextSegment(Segment *next_seg,
     vector<string> nexts;
 
     if (!IsNaturalContent(next_seg->candidate(j),
-                          next_seg->candidate(0), false, &nexts)) {
+                          next_seg->candidate(0), RIGHT, &nexts)) {
       continue;
     }
     if (IsName(next_seg->candidate(j))) {
       continue;
     }
-    if (ContentIsAteji(next_seg->candidate(j))) {
+    if (suppression_filter_->Exists(next_seg->candidate(j))) {
       continue;
     }
     next_seg_ok[j] = 1;
     for (vector<string>::const_iterator it = nexts.begin();
          it != nexts.end(); ++it) {
       string next_normalized;
-      CollocationUtil::GetNormalizedScript(*it, &next_normalized);
+      CollocationUtil::GetNormalizedScript(*it, false, &next_normalized);
       normalized_string[j].push_back(next_normalized);
     }
   }
 
   for (size_t i = 0; i < i_max; ++i) {
     vector<string> curs;
-    if (!IsNaturalContent(seg->candidate(i), seg->candidate(0), true, &curs)) {
+    if (!IsNaturalContent(seg->candidate(i), seg->candidate(0), LEFT, &curs)) {
       continue;
     }
     if (IsName(seg->candidate(i))) {
       continue;
     }
-    if (ContentIsAteji(seg->candidate(i))) {
+    if (suppression_filter_->Exists(seg->candidate(i))) {
       continue;
     }
 
     for (int k = 0; k < curs.size(); ++k) {
       string cur;
-      CollocationUtil::GetNormalizedScript(curs[k], &cur);
+      CollocationUtil::GetNormalizedScript(curs[k], true, &cur);
       for (size_t j = 0; j < j_max; ++j) {
         if (!next_seg_ok[j]) {
           continue;
@@ -684,10 +652,10 @@ bool CollocationRewriter::RewriteUsingNextSegment(Segment *next_seg,
 
         for (int l = 0; l < normalized_string[j].size(); ++l) {
           const string &next = normalized_string[j][l];
-          if (LookupPair(cur, next)) {
+          if (collocation_filter_->Exists(cur, next)) {
             vector<string> nexts;
             DCHECK(IsNaturalContent(next_seg->candidate(j),
-                                    next_seg->candidate(0), false, &nexts))
+                                    next_seg->candidate(0), RIGHT, &nexts))
                 << "IsNaturalContent() should not fail here.";
 
             VLOG(3) << curs[k] << nexts[l] << " " << cur << next;

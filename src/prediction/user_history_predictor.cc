@@ -37,6 +37,7 @@
 #include "base/base.h"
 #include "base/config_file_stream.h"
 #include "base/init.h"
+#include "base/logging.h"
 #include "base/thread.h"
 #include "base/trie.h"
 #include "base/util.h"
@@ -106,10 +107,12 @@ bool IsPunctuation(const string &value) {
   //  return (value == "。" || value == "." ||
   //          value == "、" || value == "," ||
   //          value == "？" || value == "?" ||
+  //          value == "！" || value == "!" ||
   //          value == "，" || value == "．");
   return (value == "\xE3\x80\x82" || value == "." ||
           value == "\xE3\x80\x81" || value == "," ||
           value == "\xEF\xBC\x9F" || value == "?" ||
+          value == "\xEF\xBC\x81" || value == "!" ||
           value == "\xEF\xBC\x8C" || value == "\xEF\xBC\x8E");
 }
 
@@ -146,8 +149,8 @@ bool UserHistoryPredictor::IsPrivacySensitive(const Segments *segments) const {
   const bool kSensitive = true;
 
   // Skip privacy sensitive check if |segments| consists of multiple conversion
-  // segment. That is, segments like "パスワードは|x7LAGhaR" where '|' represents
-  // segment boundary is not considered to be privacy sensitive.
+  // segment. That is, segments like "パスワードは|x7LAGhaR" where '|'
+  // represents segment boundary is not considered to be privacy sensitive.
   // TODO(team): Revisit this rule if necessary.
   if (segments->conversion_segments_size() != 1) {
     return kNonSensitive;
@@ -190,20 +193,36 @@ bool UserHistoryPredictor::IsPrivacySensitive(const Segments *segments) const {
   if (segment_key.size() <= 3) {
     return kNonSensitive;
   }
-  // TODO(noriyukit): The following code performs case-sensitive match. We may
-  // relax the match to case-insensitive one.
-  // TODO(noriyukit): It'd be better if DictionaryInterface has LookupExact()
-  // method.
-  NodeAllocator allocator;
-  Node *node = dictionary_->LookupPredictive(segment_key.c_str(),
-                                             segment_key.size(),
-                                             &allocator);
-  for (; node != NULL; node = node->bnext) {
-    if (node->key == segment_key) {
+
+  // Dictionary-based sensitivity test. If the word user typed is in dictionary,
+  // treat it as privacy insensitive. For English (ASCII) words,
+  // dictionary-based test is extended to the following forms:
+  //   1) All lower case (e.g., hello)
+  //   2) All upper case (e.g., HELLO)
+  //   3) Capitalized (e.g., Hello)
+  //   4) As-is (e.g., HeLlO)
+  // Since English words are stored in lower case, in case of upper case and
+  // capitalized keys, we convert it to lower case in advance.
+  if (Util::IsUpperOrCapitalizedAscii(candidate_value)) {
+    // Look up for keys that are all in upper case or capitalized ASCII.
+    string key(candidate_value);
+    Util::LowerString(&key);
+    NodeAllocator allocator;
+    Node *node = dictionary_->LookupExact(key.c_str(), key.size(), &allocator);
+    if (node != NULL) {
+      return kNonSensitive;
+    }
+  } else {
+    // Look up for the original key, including those that are all in lower case
+    // ASCII.
+    NodeAllocator allocator;
+    Node *node = dictionary_->LookupExact(candidate_value.c_str(),
+                                          candidate_value.size(),
+                                          &allocator);
+    if (node != NULL) {
       return kNonSensitive;
     }
   }
-
   // If the key contains any alphabetical character and is not in our
   // dictionary, treat it as privacy sensitive. There also remains some cases to
   // be considered. Compare following two cases.
@@ -1002,17 +1021,16 @@ bool UserHistoryPredictor::PredictForRequest(const ConversionRequest &request,
     return false;
   }
 
-  const bool zero_query_suggestion = GET_REQUEST(zero_query_suggestion);
+  const RequestType request_type = GET_REQUEST(zero_query_suggestion) ?
+      ZERO_QUERY_SUGGESTION : DEFAULT;
   const string &input_key = segments->conversion_segment(0).key();
-  if (segments->request_type() == Segments::SUGGESTION &&
-      !zero_query_suggestion &&
-      IsPunctuation(Util::SubString(input_key, 0, 1))) {
+  if (IsPunctuation(Util::SubString(input_key, 0, 1))) {
     VLOG(2) << "input_key starts with punctuations";
     return false;
   }
 
   const size_t input_key_len = Util::CharsLen(input_key);
-  if (input_key_len == 0 && !zero_query_suggestion) {
+  if (input_key_len == 0 && request_type == DEFAULT) {
     VLOG(2) << "key length is 0";
     return false;
   }
@@ -1030,7 +1048,7 @@ bool UserHistoryPredictor::PredictForRequest(const ConversionRequest &request,
     return false;
   }
 
-  return InsertCandidates(zero_query_suggestion, segments, &results);
+  return InsertCandidates(request_type, segments, &results);
 }
 
 const UserHistoryPredictor::Entry *UserHistoryPredictor::LookupPrevEntry(
@@ -1148,7 +1166,6 @@ void UserHistoryPredictor::GetInputKeyFromSegments(
     scoped_ptr<Trie<string> > *expanded) {
   DCHECK(input_key);
   DCHECK(base);
-  DCHECK_GE(segments.conversion_segments_size(), 0);
 
   if (!request.has_composer() ||
       !FLAGS_enable_expansion_for_user_history_predictor) {
@@ -1170,7 +1187,7 @@ void UserHistoryPredictor::GetInputKeyFromSegments(
   }
 }
 
-bool UserHistoryPredictor::InsertCandidates(bool zero_query_suggestion,
+bool UserHistoryPredictor::InsertCandidates(RequestType request_type,
                                             Segments *segments,
                                             EntryPriorityQueue *results) const {
   DCHECK(results);
@@ -1201,7 +1218,7 @@ bool UserHistoryPredictor::InsertCandidates(bool zero_query_suggestion,
       // "です" after that,  showing "デスノート" is annoying.
       // In this situation, "です" is in the LRU, but SuggestionTrigerFunc
       // returns false for "です", since it is short.
-      if (IsValidSuggestion(zero_query_suggestion,
+      if (IsValidSuggestion(request_type,
                             input_key_len, *result_entry)) {
         is_valid_candidate = true;
       } else if (segment->candidates_size() == 0) {
@@ -1237,6 +1254,11 @@ bool UserHistoryPredictor::InsertCandidates(bool zero_query_suggestion,
     } else {
       VariantsRewriter::SetDescriptionForPrediction(*pos_matcher_, candidate);
     }
+#if DEBUG
+    if (candidate->description.find("History") == string::npos) {
+      candidate->description += " History";
+    }
+#endif  // DEBUG
   }
 
   return (segment->candidates_size() > 0);
@@ -1699,7 +1721,7 @@ uint32 UserHistoryPredictor::StringToUint32(const string &input) {
 
 // static
 bool UserHistoryPredictor::IsValidSuggestion(
-    bool is_zero_query_suggestion,
+    RequestType request_type,
     uint32 prefix_len,
     const UserHistoryPredictor::Entry &entry) {
   // when bigram_boost is true, that means that previous user input
@@ -1710,7 +1732,7 @@ bool UserHistoryPredictor::IsValidSuggestion(
   // when zero_query_suggestion is true, that means that
   // predictor is running on mobile device. In this case,
   // make the behavior more aggressive.
-  if (is_zero_query_suggestion) {
+  if (request_type == ZERO_QUERY_SUGGESTION) {
     return true;
   }
   // Handle suggestion_freq and conversion_freq differently.

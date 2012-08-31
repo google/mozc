@@ -83,7 +83,7 @@ wstring GetRegistryStringRedirectorOrRedirectedString(int resource_id) {
   wchar_t buffer[MAX_PATH] = { L'\0' };
 
   HRESULT hr = ::StringCchPrintf(
-      buffer, ARRAYSIZE(buffer), kRegistryStringRedirectionPattern,
+      buffer, arraysize(buffer), kRegistryStringRedirectionPattern,
       CacheServiceManager::GetUnquotedServicePath().c_str(), resource_id);
   if (hr != S_OK) {
     return L"";

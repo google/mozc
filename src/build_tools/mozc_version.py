@@ -52,6 +52,7 @@ The syntax of template is written in the template file.
 
 import datetime
 import logging
+import optparse
 import os
 import re
 import sys
@@ -74,6 +75,8 @@ VERSION_PROPERTIES = [
     'ANDROID_VERSION_CODE',
     'FLAG',
     'TARGET_PLATFORM',
+    'ANDROID_APPLICATION_ID',
+    'ANDROID_SERVICE_NAME',
     ]
 
 MOZC_EPOCH = datetime.date(2009, 5, 24)
@@ -112,7 +115,8 @@ def _GetRevisionForPlatform(revision, target_platform, is_channel_dev):
     return revision
 
 
-def _ParseVersionTemplateFile(template_path, target_platform, is_channel_dev):
+def _ParseVersionTemplateFile(template_path, target_platform, is_channel_dev,
+                              android_application_id):
   """Parses a version definition file.
 
   Args:
@@ -120,6 +124,7 @@ def _ParseVersionTemplateFile(template_path, target_platform, is_channel_dev):
     target_platform: The target platform on which the programs run.
     is_channel_dev: True if dev channel. False if stable channel.
       None if you want to use template file's configuration.
+    android_application_id: Android application id.
   Returns:
     A dictionary generated from the template file.
   """
@@ -139,7 +144,6 @@ def _ParseVersionTemplateFile(template_path, target_platform, is_channel_dev):
   # Some properties need to be tweaked.
   template_dict['REVISION'] = _GetRevisionForPlatform(
       template_dict.get('REVISION', None), target_platform, is_channel_dev)
-  is_flag_set = 'FLAG' in template_dict
   num_of_days = datetime.date.today().toordinal() - MOZC_EPOCH.toordinal()
   if template_dict['BUILD'] == 'daily':
     template_dict['BUILD'] = str(num_of_days)
@@ -149,6 +153,9 @@ def _ParseVersionTemplateFile(template_path, target_platform, is_channel_dev):
   if template_dict['ANDROID_VERSION_CODE'] == 'daily':
     template_dict['ANDROID_VERSION_CODE'] = str(num_of_days)
   template_dict['TARGET_PLATFORM'] = target_platform
+  template_dict['ANDROID_APPLICATION_ID'] = android_application_id
+  template_dict['ANDROID_SERVICE_NAME'] = (
+        'org.mozc.android.inputmethod.japanese.MozcService')
   return template_dict
 
 
@@ -178,7 +185,8 @@ def GenerateVersionFileFromTemplate(template_path,
                                     output_path,
                                     version_format,
                                     target_platform,
-                                    is_channel_dev=None):
+                                    is_channel_dev=None,
+                                    android_application_id=''):
   """Generates version file from template file and given parameters.
 
   Args:
@@ -192,10 +200,11 @@ def GenerateVersionFileFromTemplate(template_path,
       If True BUILD becomes 3 digits (e.g. 103 for Android).
       If False BUILD becomes 1 digit (e.g. 3 for Android).
       If None BUILD property in the template file is used.
+    android_application_id: Android application id.
   """
 
   properties = _ParseVersionTemplateFile(template_path, target_platform,
-                                         is_channel_dev)
+                                         is_channel_dev, android_application_id)
   version_definition = _GetVersionInFormat(properties, version_format)
   old_content = ''
   if os.path.exists(output_path):
@@ -209,6 +218,40 @@ def GenerateVersionFileFromTemplate(template_path,
   if version_definition != old_content:
     with open(output_path, 'w') as output_file:
       output_file.write(version_definition)
+
+
+def GenerateVersionFile(version_template_path, version_path, target_platform,
+                        is_channel_dev, android_application_id):
+  """Reads the version template file and stores it into version_path.
+
+  This doesn't update the "version_path" if nothing will be changed to
+  reduce unnecessary build caused by file timestamp.
+
+  Args:
+    version_template_path: a file name which contains the template of version.
+    version_path: a file name to be stored the official version.
+    target_platform: target platform name. c.f. --target_platform option
+    is_channel_dev: True if dev channel. False if stable channel.
+      None if you want to use template file's configuration.
+    android_application_id: [Android Only] application id
+      (e.g. org.mozc.android).
+  """
+  version_format = ('MAJOR=@MAJOR@\n'
+                    'MINOR=@MINOR@\n'
+                    'BUILD=@BUILD@\n'
+                    'REVISION=@REVISION@\n'
+                    'ANDROID_VERSION_CODE=@ANDROID_VERSION_CODE@\n'
+                    'FLAG=@FLAG@\n'
+                    'TARGET_PLATFORM=@TARGET_PLATFORM@\n'
+                    'ANDROID_APPLICATION_ID=@ANDROID_APPLICATION_ID@\n'
+                    'ANDROID_SERVICE_NAME=@ANDROID_SERVICE_NAME@\n')
+  GenerateVersionFileFromTemplate(
+      version_template_path,
+      version_path,
+      version_format,
+      target_platform=target_platform,
+      is_channel_dev=is_channel_dev,
+      android_application_id=android_application_id)
 
 
 class MozcVersion(object):
@@ -243,8 +286,9 @@ class MozcVersion(object):
     # Check mandatory properties.
     for key in VERSION_PROPERTIES:
       if key not in self._properties:
-        logging.critical('Mandatory key "%s" does not exist in %s', key, path)
-        exit(1)
+        # Don't raise error nor exit.
+        # Error handling is the client's responsibility.
+        logging.warning('Mandatory key "%s" does not exist in %s', key, path)
 
   def IsDevChannel(self):
     """Returns true if the parsed version is dev-channel."""
@@ -268,18 +312,45 @@ class MozcVersion(object):
     """
     return self.GetVersionInFormat('@MAJOR@.@MINOR@.@BUILD@.@REVISION@')
 
-  def GetVersionInFormat(self, format):
-    return _GetVersionInFormat(self._properties, format)
+  def GetVersionInFormat(self, version_format):
+    """Returns the version string based on the specified format."""
+    return _GetVersionInFormat(self._properties, version_format)
 
 
 def main():
-  """A sample main function."""
-  if len(sys.argv) < 1:
-    logging.error('The number of argument is not enough')
-    exit(1)
+  """Generates version file based on the default format.
 
-  version = MozcVersion(sys.argv[1])
-  print version.GetVersionString()
+  Generated file is mozc_version.txt compatible.
+  """
+  parser = optparse.OptionParser(usage='Usage: %prog ')
+  parser.add_option('--template_path', dest='template_path',
+                    help='Path to a template version file.')
+  parser.add_option('--output', dest='output',
+                    help='Path to the output version file.')
+  parser.add_option('--target_platform', dest='target_platform',
+                    help='Target platform of the version info.')
+  parser.add_option('--channel_dev', dest='channel_dev',
+                    action='store_true',
+                    help='Specifies the dev channel.',
+                    default=False)
+  parser.add_option('--channel_stable', dest='channel_dev',
+                    action='store_false',
+                    help='Specifies the stable channel.')
+  parser.add_option('--android_application_id', dest='android_application_id',
+                    default='my.application.id',
+                    help='Specifies the application id (Android Only).')
+  (options, args) = parser.parse_args()
+  assert not args, 'Unexpected arguments.'
+  assert options.template_path, 'No --template_path was specified.'
+  assert options.output, 'No --output was specified.'
+  assert options.target_platform, 'No --target_platform was specified.'
+
+  GenerateVersionFile(
+      version_template_path=options.template_path,
+      version_path=options.output,
+      target_platform=options.target_platform,
+      is_channel_dev=options.channel_dev,
+      android_application_id=options.android_application_id)
 
 if __name__ == '__main__':
   main()

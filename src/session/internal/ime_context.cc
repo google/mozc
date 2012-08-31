@@ -32,28 +32,24 @@
 
 #include "session/internal/ime_context.h"
 
+#include "base/logging.h"
 #include "composer/composer.h"
 #include "session/session_converter_interface.h"
 
 namespace mozc {
 namespace session {
 
+using commands::Request;
+
 ImeContext::ImeContext()
     : create_time_(0),
       last_command_time_(0),
       composer_(NULL),
       converter_(NULL),
-      state_(NONE) {}
+      state_(NONE) {
+  request_.CopyFrom(Request::default_instance());
+}
 ImeContext::~ImeContext() {}
-
-uint64 ImeContext::create_time() const { return create_time_; }
-void ImeContext::set_create_time(uint64 create_time) {
-  create_time_ = create_time;
-}
-uint64 ImeContext::last_command_time() const { return last_command_time_; }
-void ImeContext::set_last_command_time(uint64 last_time) {
-  last_command_time_ = last_time;
-}
 
 const composer::Composer &ImeContext::composer() const {
   DCHECK(composer_.get());
@@ -78,57 +74,35 @@ void ImeContext::set_converter(SessionConverterInterface *converter) {
   converter_.reset(converter);
 }
 
-ImeContext::State ImeContext::state() const {
-  return state_;
-}
-void ImeContext::set_state(ImeContext::State state) {
-  state_ = state;
-}
-
-config::Config::SessionKeymap ImeContext::keymap() const {
-  return keymap_;
+void ImeContext::SetRequest(const commands::Request &request) {
+  request_.CopyFrom(request);
+  converter_->SetRequest(request_);
+  composer_->SetRequest(request_);
 }
 
-void ImeContext::set_keymap(config::Config::SessionKeymap keymap) {
-  keymap_ = keymap;
-}
-
-const commands::Capability &ImeContext::client_capability() const {
-  return client_capability_;
-}
-commands::Capability *ImeContext::mutable_client_capability() {
-  return &client_capability_;
-}
-
-const commands::ApplicationInfo &ImeContext::application_info() const {
-  return application_info_;
-}
-commands::ApplicationInfo *ImeContext::mutable_application_info() {
-  return &application_info_;
-}
-
-const commands::Output &ImeContext::output() const {
-  return output_;
-}
-commands::Output *ImeContext::mutable_output() {
-  return &output_;
+const commands::Request &ImeContext::GetRequest() const {
+  return request_;
 }
 
 // static
 void ImeContext::CopyContext(const ImeContext &src, ImeContext *dest) {
   DCHECK(dest);
 
-  dest->create_time_ = src.create_time_;
-  dest->last_command_time_ = src.last_command_time_;
+  dest->set_create_time(src.create_time());
+  dest->set_last_command_time(src.last_command_time());
 
   dest->mutable_composer()->CopyFrom(src.composer());
-  dest->mutable_converter()->CopyFrom(src.converter());
+  dest->converter_.reset(src.converter().Clone());
 
   dest->set_state(src.state());
   dest->set_keymap(src.keymap());
 
+  dest->request_.CopyFrom(src.request_);
+
   dest->mutable_client_capability()->CopyFrom(src.client_capability());
   dest->mutable_application_info()->CopyFrom(src.application_info());
+  dest->mutable_composition_rectangle()->CopyFrom(src.composition_rectangle());
+  dest->mutable_caret_rectangle()->CopyFrom(src.caret_rectangle());
   dest->mutable_output()->CopyFrom(src.output());
 }
 

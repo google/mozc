@@ -37,7 +37,6 @@
 @private
   const NSURLRequest  *request_;
   string              *output_string_;
-  ostream             *output_stream_;
   size_t              max_data_size_;
   size_t              output_size_;
   bool                include_header_;
@@ -50,7 +49,6 @@
 
 - (HTTPStream *)initWithRequest:(const NSURLRequest *)request
                    outputString:(string *)output_string
-                   outputStream:(ostream *)output_stream
                     maxDataSize:(size_t)max_data_size
                  include_header:(bool)include_header {
   self = [super init];
@@ -62,7 +60,6 @@
   }
   request_ = request;
   output_string_ = output_string;
-  output_stream_ = output_stream;
   max_data_size_ = max_data_size;
   output_size_ = 0;
   include_header_ = include_header;
@@ -83,11 +80,6 @@
   if (output_string_ != NULL) {
     VLOG(2) << "Recived: " << size << " bytes to std::string";
     output_string_->append((const char*)buf, size);
-  }
-
-  if (output_stream_ != NULL) {
-    VLOG(2) << "Recived: " << size << " bytes to std::ostream";
-    output_stream_->write((const char*)buf, size);
   }
 
   output_size_ += size;
@@ -227,8 +219,7 @@ bool MacHTTPRequestHandler::Request(HTTPMethodType type,
                                     const char *post_data,
                                     size_t post_size,
                                     const HTTPClient::Option &option,
-                                    string *output_string,
-                                    ostream *output_stream) {
+                                    string *output_string) {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   NSString *urlStr = [NSString stringWithUTF8String:url.c_str()];
 
@@ -271,7 +262,6 @@ bool MacHTTPRequestHandler::Request(HTTPMethodType type,
 
   HTTPStream *stream = [[[HTTPStream alloc] initWithRequest:request
                           outputString:output_string
-                          outputStream:output_stream
                           maxDataSize:option.max_data_size
                           include_header:option.include_header]
                         autorelease];

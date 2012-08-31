@@ -38,7 +38,6 @@
       'type': 'none',
       'toolsets': ['host'],
       'dependencies': [
-        '../../prediction/prediction.gyp:install_gen_suggestion_filter_main',
         '../../protobuf/protobuf.gyp:install_protoc',
       ],
     },

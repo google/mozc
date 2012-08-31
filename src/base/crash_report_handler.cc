@@ -31,14 +31,17 @@
 
 #include "base/crash_report_handler.h"
 
-#include <windows.h>
+#include <Windows.h>
+#include <ShellAPI.h>  // for CommandLineToArgvW
+
 #include <cstdlib>
 #include <string>
 
 #include "base/const.h"
 #include "base/crash_report_util.h"
-#include "base/util.h"
+#include "base/logging.h"
 #include "base/process.h"
+#include "base/util.h"
 #include "base/version.h"
 #include "base/win_util.h"
 #include "third_party/breakpad/src/client/windows/handler/exception_handler.h"
@@ -54,13 +57,15 @@ const wchar_t kSystemPrincipalSid[] =L"S-1-5-18";
 
 // The postfix of the pipe name which GoogleCrashHandler.exe opens for clients
 // to register them.
-#if defined(_M_IX86)
-// No postfix for the x86 crash handler.
-const wchar_t kGoogleCrashHandlerPipePostfix[] =L"";
-#elif defined(_M_X64)
+// Covert: On x86 environment, both _M_X64 and _M_IX86 are defined. So we need
+//     to check _M_X64 first.
+#if defined(_M_X64)
 // x64 crash handler expects the postfix "-64".
 // See b/5166654 or http://crbug.com/89730 for the background info.
 const wchar_t kGoogleCrashHandlerPipePostfix[] =L"-x64";
+#elif defined(_M_IX86)
+// No postfix for the x86 crash handler.
+const wchar_t kGoogleCrashHandlerPipePostfix[] =L"";
 #else
 #error "unsupported platform"
 #endif
@@ -81,7 +86,7 @@ google_breakpad::ExceptionHandler *g_handler = NULL;
 std::wstring GetBuildMode() {
 #if defined(NO_LOGGING)
   return L"rel";
-#elif defined(_DEBUG)
+#elif defined(DEBUG)
   return L"dbg";
 #else
   return L"opt";
@@ -323,9 +328,9 @@ bool CrashReportHandler::Initialize(bool check_address) {
       return false;
     }
 
-#ifdef _DEBUG
+#ifdef DEBUG
     g_handler->set_handle_debug_exceptions(true);
-#endif
+#endif  // DEBUG
     return true;
   }
   return false;

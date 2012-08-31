@@ -30,16 +30,20 @@
 // Main purpose of this is to see behaviour of system dictionary builder
 // like speed or memory cosumption.
 
-#include <map>
+#include "dictionary/system/system_dictionary_builder.h"
 
+#include <map>
+#include <string>
+
+#include "base/base.h"
 #include "base/file_stream.h"
+#include "base/logging.h"
+#include "base/util.h"
 #include "data_manager/user_pos_manager.h"
 #include "dictionary/dictionary_token.h"
-#include "dictionary/system/system_dictionary_builder.h"
 #include "dictionary/text_dictionary_loader.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-
 
 DEFINE_string(input,
               "data/dictionary/dictionary00.txt",

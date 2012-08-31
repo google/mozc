@@ -32,96 +32,43 @@
 #include <string>
 
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/util.h"
 #include "net/http_client.h"
 
 namespace mozc {
-
-bool HTTPClientMock::Get(const string &url, string *output) const {
-  return DoRequest(url, false, "", false, HTTPClient::Option(), output);
-}
-
-bool HTTPClientMock::Head(const string &url, string *output) const {
-  return DoRequest(url, false, "", false, HTTPClient::Option(), output);
-}
-
-bool HTTPClientMock::Post(const string &url, const string &data,
-                          string *output) const {
-  return DoRequest(url, true, data, false, HTTPClient::Option(), output);
-}
-
 bool HTTPClientMock::Get(const string &url, const HTTPClient::Option &option,
                          string *output) const {
-  return DoRequest(url, false, "", true, option, output);
+  string header;
+  return DoRequest(url, false, "", option, &header, output);
 }
 
 bool HTTPClientMock::Head(const string &url, const HTTPClient::Option &option,
                           string *output) const {
-  return DoRequest(url, false, "", true, option, output);
+  string body;
+  return DoRequest(url, false, "", option, output, &body);
 }
 
 bool HTTPClientMock::Post(const string &url, const string &data,
                           const HTTPClient::Option &option,
                           string *output) const {
-  return DoRequest(url, true, data, true, option, output);
+  string header;
+  return DoRequest(url, true, data, option, &header, output);
 }
 
-bool HTTPClientMock::Post(const string &url, const char *data,
-                          size_t data_size, const HTTPClient::Option &option,
-                          string *output) const {
-  string trimed_data = string(data, data_size);
-  return DoRequest(url, true, trimed_data, true, option, output);
-}
-
-bool HTTPClientMock::Get(const string &url, ostream *stream) const {
-  return DoRequestWithStream(url, false, "", false, HTTPClient::Option(),
-                             stream);
-}
-
-bool HTTPClientMock::Head(const string &url, ostream *stream) const {
-  return DoRequestWithStream(url, false, "", false, HTTPClient::Option(),
-                             stream);
-}
-
-bool HTTPClientMock::Post(const string &url, const string &data,
-                          ostream *stream) const {
-  return DoRequestWithStream(url, true, data, false, HTTPClient::Option(),
-                             stream);
-}
-
-bool HTTPClientMock::Get(const string &url, const HTTPClient::Option &option,
-                         ostream *stream) const {
-  return DoRequestWithStream(url, false, "", true, option, stream);
-}
-
-bool HTTPClientMock::Head(const string &url, const HTTPClient::Option &option,
-                          ostream *stream) const {
-  return DoRequestWithStream(url, false, "", true, option, stream);
-}
-
-bool HTTPClientMock::Post(const string &url, const string &data,
-                          const HTTPClient::Option &option,
-                          ostream *stream)  const {
-  return DoRequestWithStream(url, true, data, true, option, stream);
-}
-
-bool HTTPClientMock::Post(const string &url, const char *data,
-                          size_t data_size, const HTTPClient::Option &option,
-                          ostream *stream) const {
-  const string trimed_data = string(data, data_size);
-  return DoRequestWithStream(url, true, trimed_data, true, option, stream);
-}
-
-bool HTTPClientMock::DoRequest(const string &url, const bool check_data,
-                               const string &data, const bool check_option,
+bool HTTPClientMock::DoRequest(const string &url,
+                               const bool check_data,
+                               const string &data,
                                const HTTPClient::Option &option,
-                               string *output) const {
+                               string *header,
+                               string *body) const {
   if (execution_time_ > 0) {
     Util::Sleep(execution_time_);
   }
 
   if (failure_mode_) {
     VLOG(2) << "failure mode";
+    *header = "failure mode";
     return false;
   }
 
@@ -129,6 +76,7 @@ bool HTTPClientMock::DoRequest(const string &url, const bool check_data,
     LOG(WARNING) << "Expected URL is not same as Actual URL";
     LOG(WARNING) << "  expected: " << result_.expected_url;
     LOG(WARNING) << "  actual:   " << url;
+    *header = "wrong url";
     return false;
   }
 
@@ -137,40 +85,25 @@ bool HTTPClientMock::DoRequest(const string &url, const bool check_data,
     LOG(WARNING) << "Expected request is not same as actual request";
     LOG(WARNING) << "  expected: " << result_.expected_request;
     LOG(WARNING) << "  actual:   " << data;
+    *header = "wrong parameters";
     return false;
   }
 
-  if (!check_option) {
-    output->assign(result_.expected_result);
-    return true;
-  }
-
-  // Check HTTP header field
+  // Check HTTP request header field
   for (int i = 0; i < option_.headers.size(); ++i) {
     bool match = false;
     for (int j = 0; !match && j < option.headers.size(); ++j) {
       match = (option_.headers[i] == option.headers[j]);
     }
     if (!match) {
+      *header = "wrong header";
       return false;
     }
   }
 
-  output->assign(result_.expected_result);
+  *body = result_.expected_result;
+  *header = "OK";
   return true;
-}
-
-bool HTTPClientMock::DoRequestWithStream(const string &url,
-                                         const bool check_body,
-                                         const string &data,
-                                         const bool check_option,
-                                         const HTTPClient::Option &option,
-                                         ostream *stream) const {
-  string output;
-  bool result = DoRequest(url, check_body, data, check_option, option,
-                          &output);
-  *stream << output;
-  return result;
 }
 
 };  // namespace mozc

@@ -38,6 +38,7 @@
 DECLARE_string(test_tmpdir);
 
 namespace mozc {
+namespace converter {
 namespace {
 class TestConnector : public ConnectorInterface {
  public:
@@ -45,7 +46,8 @@ class TestConnector : public ConnectorInterface {
   ~TestConnector() {}
 
   int GetTransitionCost(uint16 rid, uint16 lid) const {
-    return offset_ + SparseConnector::EncodeKey(rid, lid);
+    uint32 key = (static_cast<uint32>(rid) << 16) | lid;
+    return offset_ + key;
   }
 
   int GetResolution() const {
@@ -157,4 +159,6 @@ TEST_F(CachedConnectorTest, CacheTestWithThread) {
   }
 #endif
 }
+
+}  // namespace converter
 }  // namespace mozc

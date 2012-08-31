@@ -29,6 +29,8 @@
 
 #include "base/version.h"
 
+#include "base/logging.h"
+#include "base/number_util.h"
 #include "base/util.h"
 
 // Import the generated version_def.h.
@@ -38,7 +40,7 @@ namespace mozc {
 
 namespace {
 bool StringAsIntegerComparator(const string &lhs, const string &rhs) {
-  return mozc::Util::SimpleAtoi(lhs) < mozc::Util::SimpleAtoi(rhs);
+  return NumberUtil::SimpleAtoi(lhs) < NumberUtil::SimpleAtoi(rhs);
 }
 }  // namespace
 
@@ -49,7 +51,7 @@ string Version::GetMozcVersion() {
 #ifdef OS_WINDOWS
 wstring Version::GetMozcVersionW() {
   wstring version;
-  mozc::Util::UTF8ToWide(version::kMozcVersion, &version);
+  Util::UTF8ToWide(version::kMozcVersion, &version);
   return version;
 }
 #endif

@@ -120,16 +120,6 @@ bool DirectContext::FocusCandidate(size_t index) {
   return false;
 }
 
-bool DirectContext::FocusCandidatePrev() {
-  DLOG(ERROR) << "FocusCandidatePrev will not be expected to call.";
-  return false;
-}
-
-bool DirectContext::FocusCandidateNext() {
-  DLOG(ERROR) << "FocusCandidateNext will not be expected to call.";
-  return false;
-}
-
 bool DirectContext::ClearCandidateFromHistory(size_t index) {
   // This context doesn't use history.
   return true;

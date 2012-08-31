@@ -35,13 +35,19 @@
 #include <set>
 #include <sstream>
 #include <string>
+#include <vector>
 
 #include "base/base.h"
 #include "base/config_file_stream.h"
+#include "base/logging.h"
+#include "base/mutex.h"
+#include "base/number_util.h"
+#include "base/scheduler.h"
 #include "base/singleton.h"
 #include "base/util.h"
-#include "config/config_handler.h"
 #include "config/config.pb.h"
+#include "config/config_handler.h"
+#include "config/stats_config_util.h"
 #include "session/commands.pb.h"
 #include "session/internal/keymap.h"
 #include "session/state.pb.h"
@@ -52,8 +58,11 @@ namespace mozc {
 namespace session {
 
 namespace {
+Mutex g_stats_cache_mutex;
+const char kStatsJobName[] = "SaveCachedStats";
+const uint32 kSaveCacheStatsInterval = 10 * 60 * 1000;  // 10 min
+
 const size_t kMaxSession = 64;
-const size_t kDefaultSaveInterval = 500;
 const char kIMEOnCommand[] = "IMEOn";
 const char kIMEOffCommand[] = "IMEOff";
 // Used for selected_indices
@@ -430,6 +439,7 @@ class EventConverter {
     specialkey_map_[commands::KeyEvent::HANKAKU] = "HANKAKU";
     specialkey_map_[commands::KeyEvent::KANJI] = "KANJI";
     specialkey_map_[commands::KeyEvent::KATAKANA] = "KATAKANA";
+    specialkey_map_[commands::KeyEvent::COMMA] = "COMMA";
   }
 
   const map<uint32, string> &GetSpecialKeyMap() const {
@@ -440,50 +450,72 @@ class EventConverter {
   map<uint32, string> specialkey_map_;
 };
 
-SessionUsageObserver::SessionUsageObserver()
-    : update_count_(0),
-      save_interval_(kDefaultSaveInterval) {
+SessionUsageObserver::SessionUsageObserver() {
   SetConfigStats();
+  Scheduler::AddJob(Scheduler::JobSetting(
+      kStatsJobName,
+      kSaveCacheStatsInterval,  // default interval
+      kSaveCacheStatsInterval,  // max interval
+      kSaveCacheStatsInterval,  // delay start
+      0,  // random delay 0 (no internet connection from this job)
+      &SessionUsageObserver::SaveCachedStats,
+      &usage_cache_));
 }
 
 SessionUsageObserver::~SessionUsageObserver() {
-  SaveStats();
+  SaveCachedStats(&usage_cache_);
+  Scheduler::RemoveJob(kStatsJobName);
 }
 
-void SessionUsageObserver::SetInterval(uint32 val) {
-  save_interval_ = val;
+void SessionUsageObserver::UsageCache::Clear() {
+  count.clear();
+  timing.clear();
+  integer.clear();
+  boolean.clear();
 }
 
-void SessionUsageObserver::SaveStats() {
-  for (map<string, uint32>::const_iterator iter = count_cache_.begin();
-       iter != count_cache_.end(); ++iter) {
+// static
+bool SessionUsageObserver::SaveCachedStats(void *data) {
+  UsageCache *cache = reinterpret_cast<UsageCache *>(data);
+
+  if (!config::StatsConfigUtil::IsEnabled()) {
+    cache->Clear();
+    return true;
+  }
+
+  scoped_lock l(&g_stats_cache_mutex);
+
+  map<string, uint32> *count = &cache->count;
+  map<string, vector<uint32> > *timing = &cache->timing;
+  map<string, int> *integer = &cache->integer;
+  map<string, bool> *boolean = &cache->boolean;
+
+  for (map<string, uint32>::const_iterator iter = count->begin();
+       iter != count->end(); ++iter) {
     usage_stats::UsageStats::IncrementCountBy(iter->first, iter->second);
   }
-  count_cache_.clear();
 
-  for (map<string, vector<uint32> >::const_iterator iter
-           = timing_cache_.begin();
-       iter != timing_cache_.end(); ++iter) {
+  for (map<string, vector<uint32> >::const_iterator iter = timing->begin();
+       iter != timing->end(); ++iter) {
     usage_stats::UsageStats::UpdateTimingBy(iter->first, iter->second);
   }
-  timing_cache_.clear();
 
-  for (map<string, int>::const_iterator iter = integer_cache_.begin();
-       iter != integer_cache_.end(); ++iter) {
+  for (map<string, int>::const_iterator iter = integer->begin();
+       iter != integer->end(); ++iter) {
     usage_stats::UsageStats::SetInteger(iter->first, iter->second);
   }
-  integer_cache_.clear();
 
-  for (map<string, bool>::const_iterator iter = boolean_cache_.begin();
-       iter != boolean_cache_.end(); ++iter) {
+  for (map<string, bool>::const_iterator iter = boolean->begin();
+       iter != boolean->end(); ++iter) {
     usage_stats::UsageStats::SetBoolean(iter->first, iter->second);
   }
-  boolean_cache_.clear();
 
 
-  update_count_ = 0;
   usage_stats::UsageStats::Sync();
+  cache->Clear();
+
   VLOG(3) << "Save Stats";
+  return true;
 }
 
 void SessionUsageObserver::IncrementCount(const string &name) {
@@ -492,43 +524,43 @@ void SessionUsageObserver::IncrementCount(const string &name) {
 
 void SessionUsageObserver::IncrementCountBy(const string &name,
                                             uint64 count) {
+  if (!config::StatsConfigUtil::IsEnabled()) {
+    return;
+  }
   DCHECK(usage_stats::UsageStats::IsListed(name))
       << name << " is not in the stats list";
-  count_cache_[name] += count;
-  ++update_count_;
-  if (update_count_ >= save_interval_) {
-    SaveStats();
-  }
+  scoped_lock l(&g_stats_cache_mutex);
+  usage_cache_.count[name] += count;
 }
 
 void SessionUsageObserver::UpdateTiming(const string &name, uint64 val) {
+  if (!config::StatsConfigUtil::IsEnabled()) {
+    return;
+  }
   DCHECK(usage_stats::UsageStats::IsListed(name))
       << name << " is not in the stats list";
-  timing_cache_[name].push_back(val);
-  ++update_count_;
-  if (update_count_ >= save_interval_) {
-    SaveStats();
-  }
+  scoped_lock l(&g_stats_cache_mutex);
+  usage_cache_.timing[name].push_back(val);
 }
 
 void SessionUsageObserver::SetInteger(const string &name, int val) {
+  if (!config::StatsConfigUtil::IsEnabled()) {
+    return;
+  }
   DCHECK(usage_stats::UsageStats::IsListed(name))
       << name << " is not in the stats list";
-  integer_cache_[name] = val;
-  ++update_count_;
-  if (update_count_ >= save_interval_) {
-    SaveStats();
-  }
+  scoped_lock l(&g_stats_cache_mutex);
+  usage_cache_.integer[name] = val;
 }
 
 void SessionUsageObserver::SetBoolean(const string &name, bool val) {
+  if (!config::StatsConfigUtil::IsEnabled()) {
+    return;
+  }
   DCHECK(usage_stats::UsageStats::IsListed(name))
       << name << " is not in the stats list";
-  boolean_cache_[name] = val;
-  ++update_count_;
-  if (update_count_ >= save_interval_) {
-    SaveStats();
-  }
+  scoped_lock l(&g_stats_cache_mutex);
+  usage_cache_.boolean[name] = val;
 }
 
 void SessionUsageObserver::EvalCreateSession(
@@ -795,7 +827,7 @@ void SessionUsageObserver::UpdateClientSideStats(const commands::Input &input,
       if (state->has_start_infolist_window_time()) {
         const uint64 infolist_duration
             = Util::GetTime() - state->start_infolist_window_time();
-        DLOG(INFO) << "infolist_duration:" << infolist_duration;
+        VLOG(2) << "infolist_duration:" << infolist_duration;
         UpdateTiming("InfolistWindowDuration", infolist_duration);
         state->clear_start_infolist_window_time();
       }
@@ -841,7 +873,7 @@ void SessionUsageObserver::EvalSendKey(const commands::Input &input,
 void SessionUsageObserver::UpdateCandidateStats(const string &base_name,
                                                 uint32 index) {
   if (index <= 9) {
-    const string stats_name = base_name + Util::SimpleItoa(index);
+    const string stats_name = base_name + NumberUtil::SimpleItoa(index);
     IncrementCount(stats_name);
   } else {
     const string stats_name = base_name + "GE10";
@@ -958,7 +990,12 @@ void SessionUsageObserver::EvalCommandHandler(
 
   if (input.type() == commands::Input::CREATE_SESSION) {
     EvalCreateSession(input, output, &states_);
-    SaveStats();
+    SaveCachedStats(&usage_cache_);
+    return;
+  }
+
+  // NOP event usually has no session ID.
+  if (input.type() == commands::Input::NO_OPERATION) {
     return;
   } else if (!input.has_id()) {
     LOG(WARNING) << "no id";
@@ -1003,7 +1040,7 @@ void SessionUsageObserver::EvalCommandHandler(
     UpdateTiming("SessionDuration", duration);
 
     states_.erase(iter);
-    SaveStats();
+    SaveCachedStats(&usage_cache_);
     return;
   }
 
@@ -1050,5 +1087,5 @@ void SessionUsageObserver::EvalCommandHandler(
 void SessionUsageObserver::Reload() {
 }
 
-}  // namespace mozc::session
+}  // namespace session
 }  // namespace mozc

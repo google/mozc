@@ -27,18 +27,23 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "rewriter/symbol_rewriter.h"
+
 #include <string>
 
+#include "base/base.h"
+#include "base/logging.h"
 #include "base/util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/conversion_request.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
-#include "rewriter/symbol_rewriter.h"
+#include "engine/engine_interface.h"
+#include "engine/mock_data_engine_factory.h"
 #include "session/commands.pb.h"
-#include "testing/base/public/gunit.h"
 #include "session/request_handler.h"
+#include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
 
@@ -100,7 +105,13 @@ class SymbolRewriterTest : public testing::Test {
     config::Config config;
     config::ConfigHandler::GetDefaultConfig(&config);
     config::ConfigHandler::SetConfig(config);
-    converter_ = ConverterFactory::GetConverter();
+
+    // We cannot use mock converter here because SymbolRewriter uses
+    // ResizeSegment of converter implementation. However, SymbolRewriter is
+    // independent of underlying dictionary and, hence, we can use a converter
+    // with mock data.
+    engine_.reset(MockDataEngineFactory::Create());
+    converter_ = engine_->GetConverter();
   }
 
   virtual void TearDown() {
@@ -110,6 +121,7 @@ class SymbolRewriterTest : public testing::Test {
     config::ConfigHandler::SetConfig(config);
   }
 
+  scoped_ptr<EngineInterface> engine_;
   const ConverterInterface *converter_;
 };
 

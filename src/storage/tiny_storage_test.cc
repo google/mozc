@@ -27,12 +27,15 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <string>
-#include <vector>
+#include <map>
 #include <set>
+#include <string>
 #include <utility>
+#include <vector>
 #include "base/base.h"
+#include "base/scoped_ptr.h"
 #include "base/util.h"
+#include "storage/storage_interface.h"
 #include "storage/tiny_storage.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
@@ -40,6 +43,7 @@
 namespace mozc {
 namespace storage {
 namespace {
+
 void CreateKeyValue(map<string, string> *output, int size) {
   output->clear();
   for (int i = 0; i < size; ++i) {
@@ -50,7 +54,8 @@ void CreateKeyValue(map<string, string> *output, int size) {
     output->insert(pair<string, string>(key, value));
   }
 }
-}  // anonymous namespace
+
+}  // namespace
 
 class TinyStorageTest : public testing::Test {
  protected:
@@ -71,6 +76,10 @@ class TinyStorageTest : public testing::Test {
     }
   }
 
+  static StorageInterface *CreateStorage() {
+    return TinyStorage::New();
+  }
+
   static string GetTemporaryFilePath() {
     // This name should be unique to each test.
     return Util::JoinPath(FLAGS_test_tmpdir, "TinyStorageTest_test.db");
@@ -87,16 +96,16 @@ TEST_F(TinyStorageTest, TinyStorageTest) {
 
   for (int i = 0; i < arraysize(kSize); ++i) {
     Util::Unlink(filename);
-    TinyStorage storage;
+    scoped_ptr<StorageInterface> storage(CreateStorage());
 
     // Insert
     map<string, string> target;
     CreateKeyValue(&target,  kSize[i]);
     {
-      EXPECT_TRUE(storage.Open(filename));
+      EXPECT_TRUE(storage->Open(filename));
       for (map<string, string>::const_iterator it = target.begin();
            it != target.end(); ++it) {
-        EXPECT_TRUE(storage.Insert(it->first, it->second));
+        EXPECT_TRUE(storage->Insert(it->first, it->second));
       }
     }
 
@@ -104,7 +113,7 @@ TEST_F(TinyStorageTest, TinyStorageTest) {
     for (map<string, string>::const_iterator it = target.begin();
          it != target.end(); ++it) {
       string value;
-      EXPECT_TRUE(storage.Lookup(it->first, &value));
+      EXPECT_TRUE(storage->Lookup(it->first, &value));
       EXPECT_EQ(value, it->second);
     }
 
@@ -112,20 +121,20 @@ TEST_F(TinyStorageTest, TinyStorageTest) {
          it != target.end(); ++it) {
       const string key = it->first + ".dummy";
       string value;
-      EXPECT_FALSE(storage.Lookup(key, &value));
+      EXPECT_FALSE(storage->Lookup(key, &value));
     }
 
-    storage.Sync();
+    storage->Sync();
 
-    TinyStorage storage2;
-    EXPECT_TRUE(storage2.Open(filename));
-    EXPECT_EQ(storage.Size(), storage2.Size());
+    scoped_ptr<StorageInterface> storage2(CreateStorage());
+    EXPECT_TRUE(storage2->Open(filename));
+    EXPECT_EQ(storage->Size(), storage2->Size());
 
     // Lookup
     for (map<string, string>::const_iterator it = target.begin();
          it != target.end(); ++it) {
       string value;
-      EXPECT_TRUE(storage2.Lookup(it->first, &value));
+      EXPECT_TRUE(storage2->Lookup(it->first, &value));
       EXPECT_EQ(value, it->second);
     }
 
@@ -133,7 +142,7 @@ TEST_F(TinyStorageTest, TinyStorageTest) {
          it != target.end(); ++it) {
       const string key = it->first + ".dummy";
       string value;
-      EXPECT_FALSE(storage2.Lookup(key, &value));
+      EXPECT_FALSE(storage2->Lookup(key, &value));
     }
 
     // Erase
@@ -141,9 +150,9 @@ TEST_F(TinyStorageTest, TinyStorageTest) {
     for (map<string, string>::const_iterator it = target.begin();
          it != target.end(); ++it) {
       if (id % 2 == 0) {
-        EXPECT_TRUE(storage.Erase(it->first));
+        EXPECT_TRUE(storage->Erase(it->first));
         const string key = it->first + ".dummy";
-        EXPECT_FALSE(storage.Erase(key));
+        EXPECT_FALSE(storage->Erase(key));
       }
     }
 
@@ -152,12 +161,13 @@ TEST_F(TinyStorageTest, TinyStorageTest) {
       string value;
       const string &key = it->first;
       if (id % 2 == 0) {
-        EXPECT_FALSE(storage.Lookup(key, &value));
+        EXPECT_FALSE(storage->Lookup(key, &value));
       } else {
-        EXPECT_TRUE(storage.Lookup(key, &value));
+        EXPECT_TRUE(storage->Lookup(key, &value));
       }
     }
   }
 }
+
 }  // namespace storage
 }  // namespace mozc

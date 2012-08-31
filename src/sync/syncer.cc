@@ -30,8 +30,8 @@
 #include "sync/syncer.h"
 
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/singleton.h"
-#include "base/util.h"
 #include "config/config_handler.h"
 #include "storage/registry.h"
 #include "sync/adapter_interface.h"
@@ -40,8 +40,8 @@
 #include "sync/mock_syncer.h"
 #include "sync/oauth2_client.h"
 #include "sync/oauth2_util.h"
-#include "sync/user_dictionary_adapter.h"
 #include "sync/service_interface.h"
+#include "sync/user_dictionary_adapter.h"
 
 DEFINE_string(sync_url,
               "",

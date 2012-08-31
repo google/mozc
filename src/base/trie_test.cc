@@ -65,7 +65,7 @@ TEST(TrieTest, Trie) {
     { LOOKUP, "abcd", "", true, "data_abcd" },
     { REMOVE, "xyz", "", false, "" },
   };
-  const int size = ARRAYSIZE(test_cases);
+  const int size = ARRAYSIZE_UNSAFE(test_cases);
   for (int i = 0; i < size; ++i) {
     const TestCase& test = test_cases[i];
     switch (test.type) {

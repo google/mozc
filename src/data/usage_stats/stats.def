@@ -354,6 +354,8 @@ ASCII
 HANKAKU
 KANJI
 KATAKANA
+# Numpad [,]
+COMMA
 
 # Stats for config
 # Keymap style
@@ -469,6 +471,8 @@ UserHistoryPredictorEntrySize
 UserBoundaryHistoryEntrySize
 # Number of user history entries for UserSegmentHistoryRewriter
 UserSegmentHistoryEntrySize
+# (Android Only) API Level
+AndroidApiLevel
 # Total memory in MB
 TotalPhysicalMemory
 # Web service entry size of web usage dictionary

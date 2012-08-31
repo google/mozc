@@ -39,7 +39,9 @@
 #include <sstream>
 #include "base/base.h"
 #include "base/file_stream.h"
+#include "base/logging.h"
 #include "base/singleton.h"
+#include "base/util.h"
 
 namespace mozc {
 

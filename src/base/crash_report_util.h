@@ -38,6 +38,12 @@ namespace mozc {
 // Provides utility functions used for crash reporting.
 class CrashReportUtil {
  public:
+  // For official branding build, installs breakpad regardless of the
+  // usagestats settings. You must call this method when and only when the
+  // usagestats is enabled.
+  // For non-official branding build, does nothing.
+  static void InstallBreakpad();
+
   // Returns the directory path crash dumps are stored.
   static string GetCrashReportDirectory();
 

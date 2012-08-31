@@ -33,6 +33,9 @@
 
 namespace mozc {
 
+// TODO(team): Use gMock instead of this Mock class. Few tests should be
+//     changed for the replacement.
+
 // This is a mock for tests using HTTP requests.
 //
 // Usage:
@@ -66,32 +69,12 @@ class HTTPClientMock : public HTTPClientInterface {
  public:
   HTTPClientMock() : failure_mode_(false), execution_time_(0) {}
 
-  bool Get(const string &url, string *output) const;
-  bool Head(const string &url, string *output) const;
-  bool Post(const string &url, const string &data, string *output) const;
-
   bool Get(const string &url, const HTTPClient::Option &option,
            string *output) const;
   bool Head(const string &url, const HTTPClient::Option &option,
             string *output) const;
   bool Post(const string &url, const string &data,
             const HTTPClient::Option &option, string *output) const;
-  bool Post(const string &url, const char *data, size_t data_size,
-            const HTTPClient::Option &option, string *output) const;
-
-  bool Get(const string &url, ostream *output) const;
-  bool Head(const string &url, ostream *output) const;
-  bool Post(const string &url, const string &data, ostream *output) const;
-
-  bool Get(const string &url, const HTTPClient::Option &option,
-           ostream *output) const;
-  bool Head(const string &url, const HTTPClient::Option &option,
-            ostream *output) const;
-  bool Post(const string &url, const string &data,
-            const HTTPClient::Option &option, ostream *output) const;
-  bool Post(const string &url, const char *data, size_t data_size,
-            const HTTPClient::Option &option,
-            ostream *output) const;
 
   struct Result {
     string expected_url;
@@ -99,7 +82,7 @@ class HTTPClientMock : public HTTPClientInterface {
     string expected_result;
   };
 
-  // HTTP request fail if failure_mode is true.
+  // HTTP request fails if failure_mode is true.
   void set_failure_mode(bool failure_mode) {
     failure_mode_ = failure_mode;
   }
@@ -116,14 +99,13 @@ class HTTPClientMock : public HTTPClientInterface {
   }
 
  private:
+  // Check if url or data in body field are as expectations and returns
+  // if all of them are correct.  |header| should have a HTTP response header,
+  // but it gets other strings for simplicity.
+  // |body| will have a HTTP response content.
   bool DoRequest(const string &url, const bool check_data,
-                    const string &data, const bool check_option,
-                    const HTTPClient::Option &option, string *output) const;
-  bool DoRequestWithStream(const string &url, const bool check_data,
-                           const string &data, const bool check_option,
-                           const HTTPClient::Option &option,
-                           ostream *stream) const;
-
+                 const string &data, const HTTPClient::Option &option,
+                 string *header, string *output) const;
   bool failure_mode_;
   Result result_;
   int execution_time_;

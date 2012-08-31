@@ -51,14 +51,23 @@ class SessionUsageObserver : public SessionObserverInterface {
   SessionUsageObserver();
   virtual ~SessionUsageObserver();
 
-  void EvalCommandHandler(const commands::Command &command);
-  void Reload();
-  // Sets interval times for cache flash
-  void SetInterval(uint32 val);
+  virtual void EvalCommandHandler(const commands::Command &command);
+  virtual void Reload();
 
  private:
+  struct UsageCache {
+    map<string, uint32> count;
+    map<string, vector<uint32> > timing;
+    map<string, int> integer;
+    map<string, bool> boolean;
+    void Clear();
+  };
+
   // Save cached stats.
-  void SaveStats();
+  // This should be thread safe, as this will be called from scheduler.
+  // Function type should be |bool Func(void *)| for using scheduler.
+  static bool SaveCachedStats(void *data);
+
   void EvalCreateSession(const commands::Input &input,
                         const commands::Output &output,
                         map<uint64, SessionState> *states);
@@ -92,13 +101,8 @@ class SessionUsageObserver : public SessionObserverInterface {
   void SetInteger(const string &name, int val);
   void SetBoolean(const string &name, bool val);
 
-  uint32 update_count_;
-  uint32 save_interval_;
   map<uint64, SessionState> states_;
-  map<string, uint32> count_cache_;
-  map<string, vector<uint32> > timing_cache_;
-  map<string, int> integer_cache_;
-  map<string, bool> boolean_cache_;
+  UsageCache usage_cache_;
 
 
   DISALLOW_COPY_AND_ASSIGN(SessionUsageObserver);

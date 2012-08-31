@@ -27,12 +27,16 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <string.h>
+#include <algorithm>
+#include <cstring>
+#include <map>
 #include <string>
 #include <vector>
-#include <algorithm>
-#include <map>
+
+#include "base/base.h"
 #include "base/file_stream.h"
+#include "base/logging.h"
+#include "base/util.h"
 #include "rewriter/embedded_dictionary.h"
 
 namespace mozc {
@@ -167,8 +171,9 @@ void EmbeddedDictionary::Compile(const string &name,
         << offset << ", " << it->second.size() << "}," << endl;
     offset += it->second.size();
   }
-  ofs << "  { NULL, " << "k" << name << "_value, " << value_size << " }" << endl;
+  ofs << "  { NULL, " << "k" << name << "_value, " << value_size << " }"
+      << endl;
 
   ofs << "};" << endl;
 };
-}  // mozc
+}  // namespace mozc

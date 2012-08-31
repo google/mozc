@@ -29,8 +29,6 @@
 
 #include "unix/ibus/key_translator.h"
 
-#include <ibus.h>
-
 #include "base/logging.h"
 
 namespace {

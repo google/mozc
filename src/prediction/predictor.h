@@ -79,6 +79,11 @@ class BasePredictor : public PredictorInterface {
 
 class DefaultPredictor : public BasePredictor {
  public:
+  static PredictorInterface *CreateDefaultPredictor(
+      PredictorInterface *dictionary_predictor,
+      PredictorInterface *user_history_predictor,
+      PredictorInterface *extra_predictor);
+
   DefaultPredictor(PredictorInterface *dictionary_predictor,
                    PredictorInterface *user_history_predictor,
                    PredictorInterface *extra_predictor);

@@ -29,7 +29,9 @@
 
 #include "rewriter/rewriter.h"
 
+#include "base/logging.h"
 #include "converter/converter_interface.h"
+#include "data_manager/data_manager_interface.h"
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
 #include "rewriter/calculator_rewriter.h"
@@ -66,11 +68,10 @@ DEFINE_bool(use_history_rewriter, true, "Use history rewriter or not.");
 namespace mozc {
 
 RewriterImpl::RewriterImpl(const ConverterInterface *parent_converter,
-                           const POSMatcher *pos_matcher,
-                           const PosGroup *pos_group)
+                           const DataManagerInterface *data_manager)
     : parent_converter_(parent_converter),
-      pos_matcher_(pos_matcher),
-      pos_group_(pos_group) {
+      pos_matcher_(data_manager->GetPOSMatcher()),
+      pos_group_(data_manager->GetPosGroup()) {
   DCHECK(parent_converter_);
   DCHECK(pos_matcher_);
   DCHECK(pos_group_);
@@ -81,8 +82,8 @@ RewriterImpl::RewriterImpl(const ConverterInterface *parent_converter,
   AddRewriter(new TransliterationRewriter(*pos_matcher_));
   AddRewriter(new EnglishVariantsRewriter);
   AddRewriter(new NumberRewriter(pos_matcher_));
-  AddRewriter(new CollocationRewriter(*pos_matcher_));
-  AddRewriter(new SingleKanjiRewriter);
+  AddRewriter(new CollocationRewriter(data_manager));
+  AddRewriter(new SingleKanjiRewriter(*pos_matcher_));
   AddRewriter(new EmoticonRewriter);
   AddRewriter(new CalculatorRewriter(parent_converter_));
   AddRewriter(new SymbolRewriter(parent_converter_));
@@ -97,20 +98,23 @@ RewriterImpl::RewriterImpl(const ConverterInterface *parent_converter,
     AddRewriter(new UserSegmentHistoryRewriter(pos_matcher_, pos_group_));
   }
 #endif  // __native_client__
+
   AddRewriter(new DateRewriter);
   AddRewriter(new FortuneRewriter);
+#ifndef OS_ANDROID
   // CommandRewriter is not tested well on Android.
   // So we temporarily disable it.
   // TODO(yukawa, team): Enable CommandRewriter on Android if necessary.
   AddRewriter(new CommandRewriter);
-  AddRewriter(new VersionRewriter);
+#endif  // OS_ANDROID
 #ifdef USE_USAGE_REWRITER
   AddRewriter(new UsageRewriter(pos_matcher_));
 #endif  // USE_USAGE_REWRITER
-  AddRewriter(CorrectionRewriter::CreateCorrectionRewriter());
+
+  AddRewriter(new VersionRewriter);
+  AddRewriter(CorrectionRewriter::CreateCorrectionRewriter(data_manager));
   AddRewriter(new NormalizationRewriter);
   AddRewriter(new RemoveRedundantCandidateRewriter);
 }
-
 
 }  // namespace mozc

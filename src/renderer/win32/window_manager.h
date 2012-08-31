@@ -64,7 +64,6 @@ class WindowManager {
   void DestroyAllWindows();
   void HideAllWindows();
   void UpdateLayout(const commands::RendererCommand &command);
-  bool Activate();
   bool IsAvailable() const;
   void SetSendCommandInterface(
      client::SendCommandInterface *send_command_interface);

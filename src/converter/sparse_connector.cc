@@ -29,58 +29,134 @@
 
 #include "converter/sparse_connector.h"
 
-#include <algorithm>
-#include <string>
 #include <vector>
+
 #include "base/base.h"
-#include "base/file_stream.h"
-#include "base/util.h"
-#include "storage/sparse_array_image.h"
+#include "base/logging.h"
+#include "base/stl_util.h"
+#include "storage/louds/simple_succinct_bit_vector_index.h"
 
 namespace mozc {
 
+using mozc::storage::louds::SimpleSuccinctBitVectorIndex;
+
+class SparseConnector::Row {
+ public:
+  Row()
+      : chunk_bits_index_(sizeof(uint32)),
+        compact_bits_index_(sizeof(uint32)) {
+  }
+
+  void Init(const uint8 *chunk_bits, size_t chunk_bits_size,
+            const uint8 *compact_bits, size_t compact_bits_size,
+            const uint8 *values, bool use_1byte_value) {
+    chunk_bits_index_.Init(chunk_bits, chunk_bits_size);
+    compact_bits_index_.Init(compact_bits, compact_bits_size);
+    values_ = values;
+    use_1byte_value_ = use_1byte_value;
+  }
+
+  // Returns true if the value is found in the row and then store the found
+  // value into |value|. Otherwise returns false.
+  bool GetValue(uint16 index, uint16 *value) const {
+    int chunk_bit_position = index / 8;
+    if (!chunk_bits_index_.Get(chunk_bit_position)) {
+      return false;
+    }
+    int compact_bit_position =
+        chunk_bits_index_.Rank1(chunk_bit_position) * 8 + index % 8;
+    if (!compact_bits_index_.Get(compact_bit_position)) {
+      return false;
+    }
+    int value_position = compact_bits_index_.Rank1(compact_bit_position);
+    if (use_1byte_value_) {
+      *value = values_[value_position];
+      if (*value == SparseConnector::kInvalid1ByteCostValue) {
+        *value = ConnectorInterface::kInvalidCost;
+      }
+    } else {
+      *value = reinterpret_cast<const uint16 *>(values_)[value_position];
+    }
+
+    return true;
+  }
+
+ private:
+  SimpleSuccinctBitVectorIndex chunk_bits_index_;
+  SimpleSuccinctBitVectorIndex compact_bits_index_;
+  const uint8 *values_;
+  bool use_1byte_value_;
+
+  DISALLOW_COPY_AND_ASSIGN(Row);
+};
+
 SparseConnector::SparseConnector(const char *ptr, size_t size)
     : default_cost_(NULL) {
-  // |magic(2bytes)|resolution(2bytes)|lsize(2bytes)|rsize(2bytes)
-  // |default_cost..|sparse_image
-  const size_t kHeaderSize = 8;
-  CHECK_GT(size, kHeaderSize);
-  const uint16 *image = reinterpret_cast<const uint16*>(ptr);
-  resolution_ = image[1];
-  const uint16 lsize = image[2];
-  const uint16 rsize = image[3];
-  CHECK_EQ(lsize, rsize);
-  ptr += kHeaderSize;
+  // Parse header info.
+  // Please refer to gen_connection_data.py for the basic idea how to
+  // compress the connection data, and its binary format.
+  CHECK_EQ(*reinterpret_cast<const uint16 *>(ptr), kSparseConnectorMagic);
+  resolution_ = *reinterpret_cast<const uint16 *>(ptr + 2);
+  const uint16 rsize = *reinterpret_cast<const uint16 *>(ptr + 4);
+  const uint16 lsize = *reinterpret_cast<const uint16 *>(ptr + 6);
+  CHECK_EQ(rsize, lsize)
+      << "The sparse connector data should be squre matrix";
+  default_cost_ = reinterpret_cast<const uint16 *>(ptr + 8);
 
-  default_cost_ = reinterpret_cast<const int16 *>(ptr);
-  const size_t default_cost_size = sizeof(default_cost_[0]) * lsize;
+  // Calculate the row's beginning position. Note that it should be aligned to
+  // 32-bits boundary.
+  size_t offset = 8 + (rsize + (rsize & 1)) * 2;
 
-  ptr += default_cost_size;
-  // Next chunk is aligned to 4byte boundary.
-  ptr += (4 - (reinterpret_cast<uintptr_t>(ptr) % 4)) % 4;
+  // The number of valid bits in a chunk. Each bit is bitwise-or of consecutive
+  // 8-bits.
+  size_t num_chunk_bits = (lsize + 7) / 8;
 
-  CHECK_GT(size, default_cost_size + kHeaderSize);
-  CHECK(reinterpret_cast<uintptr_t>(ptr) % 4 == 0);
+  // Then calculate the actual size of chunk in bytes, which is aligned to
+  // 32-bits boundary.
+  size_t chunk_bits_size = (num_chunk_bits + 31) / 32 * 4;
 
-  const size_t array_image_size = size - kHeaderSize - default_cost_size;
-  array_image_.reset(new SparseArrayImage(ptr, array_image_size));
+  bool use_1byte_value = resolution_ != 1;
+
+  rows_.reserve(rsize);
+  for (size_t i = 0; i < rsize; ++i) {
+    Row *row = new Row;
+    uint16 compact_bits_size = *reinterpret_cast<const uint16 *>(ptr + offset);
+    CHECK_EQ(compact_bits_size % 4, 0) << compact_bits_size;
+    uint16 values_size = *reinterpret_cast<const uint16 *>(ptr + offset + 2);
+    CHECK_EQ(values_size % 4, 0) << values_size;
+
+    const uint8 *chunk_bits = reinterpret_cast<const uint8 *>(
+        ptr + offset + 4);
+    const uint8 *compact_bits = reinterpret_cast<const uint8 *>(
+        ptr + offset + 4 + chunk_bits_size);
+    const uint8 *values = reinterpret_cast<const uint8 *>(
+        ptr + offset + 4 + chunk_bits_size + compact_bits_size);
+    row->Init(chunk_bits, chunk_bits_size,
+              compact_bits, compact_bits_size,
+              values, use_1byte_value);
+    rows_.push_back(row);
+
+    offset += 4 + chunk_bits_size + compact_bits_size + values_size;
+  }
+
+  // Make sure that the data is fully read.
+  CHECK_EQ(offset, size);
 }
 
-SparseConnector::~SparseConnector() {}
+SparseConnector::~SparseConnector() {
+  STLDeleteElements(&rows_);
+}
 
 int SparseConnector::GetTransitionCost(uint16 rid, uint16 lid) const {
-  const int pos = array_image_->Peek(EncodeKey(rid, lid));
-  if (pos == SparseArrayImage::kInvalidValueIndex) {
+  uint16 value;
+  if (!rows_[rid]->GetValue(lid, &value)) {
     return default_cost_[rid];
   }
-  const int cost = array_image_->GetValue(pos);
-  if (resolution_ > 1 && cost == kInvalid1ByteCostValue) {
-    return ConnectorInterface::kInvalidCost;
-  }
-  return cost * resolution_;
+  return value * resolution_;
 }
 
 int SparseConnector::GetResolution() const {
   return resolution_;
 }
+
 }  // namespace mozc

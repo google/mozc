@@ -52,6 +52,18 @@
       '../../session/session.gyp:session_handler',
       '../../usage_stats/usage_stats.gyp:usage_stats',
     ],
+    'conditions': [
+      # enable_x11_selection_monitor represents if ibus_mozc uses X11 selection
+      # monitor or not.
+      ['target_platform=="Linux" and language=="japanese"', {
+        'enable_x11_selection_monitor%': 1,
+      }, { # else
+        # Currently X11 selection monitor is not enabled on ChromeOS build and
+        # non-Japanese build.
+        # TODO(nona): Enable it for ChromeOS or other languages if applicable.
+        'enable_x11_selection_monitor': 0,
+      }],
+    ],
   },
   'targets': [
     {
@@ -94,7 +106,7 @@
             '<(gen_out_dir)/mozc.xml',
           ],
           'conditions': [
-            ['chromeos==1 and branding=="GoogleJapaneseInput"', {
+            ['target_platform=="ChromeOS" and branding=="GoogleJapaneseInput"', {
               'action': [
                 'python', '../../build_tools/redirect.py',
                 '<(gen_out_dir)/mozc.xml',
@@ -103,7 +115,7 @@
                 '--branding=GoogleJapaneseInput',
               ],
             }],
-            ['chromeos==1 and branding!="GoogleJapaneseInput"', {
+            ['target_platform=="ChromeOS" and branding!="GoogleJapaneseInput"', {
               'action': [
                 'python', '../../build_tools/redirect.py',
                 '<(gen_out_dir)/mozc.xml',
@@ -112,13 +124,14 @@
                 '--branding=Mozc',
               ],
             }],
-            ['chromeos!=1', {
+            ['target_platform!="ChromeOS"', {
               'action': [
                 'python', '../../build_tools/redirect.py',
                 '<(gen_out_dir)/mozc.xml',
                 './gen_mozc_xml.py',
                 '--platform=Linux',
                 '--branding=Mozc',
+                '--server_dir=<(server_dir)',
               ],
             }],
           ],
@@ -181,6 +194,7 @@
         'key_translator.cc',
         'mozc_engine.cc',
         'preedit_handler.cc',
+        'surrounding_text_util.cc',
       ],
       'dependencies': [
         '../../session/session_base.gyp:ime_switch_util',
@@ -190,14 +204,14 @@
         'path_util',
       ],
       'conditions': [
-        ['chromeos==1', {
+        ['target_platform=="ChromeOS"', {
           'sources': [
             'client.cc',
           ],
           'dependencies+': [
             '<@(ibus_standalone_dependencies)',
           ],
-        },{ # else (i.e. chromeos != 1)
+        },{ # else (i.e. target_platform!="ChromeOS")
           'dependencies+': [
             '<@(ibus_client_dependencies)',
           ]
@@ -207,7 +221,12 @@
             'gtk_candidate_window_handler',
           ],
         }],
-       ],
+        ['enable_x11_selection_monitor==1', {
+          'dependencies+': [
+            'selection_monitor',
+          ],
+        }],
+      ],
     },
     {
       'target_name': 'ibus_mozc',
@@ -226,7 +245,7 @@
             '<(gen_out_dir)/main.h',
           ],
           'conditions': [
-            ['chromeos==1 and branding=="GoogleJapaneseInput"', {
+            ['target_platform=="ChromeOS" and branding=="GoogleJapaneseInput"', {
               'action': [
                 'python', '../../build_tools/redirect.py',
                 '<(gen_out_dir)/main.h',
@@ -236,7 +255,7 @@
                 '--output_cpp'
               ],
             }],
-            ['chromeos==1 and branding!="GoogleJapaneseInput"', {
+            ['target_platform=="ChromeOS" and branding!="GoogleJapaneseInput"', {
               'action': [
                 'python', '../../build_tools/redirect.py',
                 '<(gen_out_dir)/main.h',
@@ -246,7 +265,7 @@
                 '--output_cpp'
               ],
             }],
-            ['chromeos!=1', {
+            ['target_platform!="ChromeOS"', {
               'action': [
                 'python', '../../build_tools/redirect.py',
                 '<(gen_out_dir)/main.h',
@@ -261,12 +280,13 @@
       ],
       'dependencies': [
         '../../base/base.gyp:base',
+        '../../engine/engine.gyp:engine_factory',
         'gen_mozc_xml',
         'ibus_mozc_lib',
         'ibus_mozc_metadata',
       ],
       'conditions': [
-        ['chromeos==1', {
+        ['target_platform=="ChromeOS"', {
          'dependencies+': [
            '<@(ibus_standalone_dependencies)',
            '<@(ibus_japanese_standalone_dependencies)',
@@ -288,6 +308,7 @@
         'message_translator_test.cc',
         'mozc_engine_test.cc',
         'path_util_test.cc',
+        'surrounding_text_util_test.cc',
       ],
       'dependencies': [
         '../../base/base.gyp:base',
@@ -301,8 +322,8 @@
         '<@(ibus_japanese_standalone_dependencies)',
       ],
       'conditions': [
-        ['chromeos!=1', {
-         # config_util.cc is included in ibus_mozc_lib only for chromeos==1
+        ['target_platform!="ChromeOS"', {
+            # config_util.cc is included in ibus_mozc_lib only for ChromeOS
          'sources': [
            'config_util.cc',
          ],
@@ -320,7 +341,7 @@
       'target_name': 'ibus_all_test',
       'type': 'none',
       'conditions': [
-        ['chromeos==1', {
+        ['target_platform=="ChromeOS"', {
           'dependencies': [
             'chromeos_client_test',
           ],
@@ -334,7 +355,7 @@
     },
   ],
   'conditions': [
-    ['chromeos==1', {
+    ['target_platform=="ChromeOS"', {
       'targets': [
         {
           'target_name': 'chromeos_client_test',
@@ -344,6 +365,7 @@
           ],
           'dependencies': [
             '../../base/base.gyp:base',
+            '../../engine/engine.gyp:mock_converter_engine',
             '../../testing/testing.gyp:googletest_lib',
             '../../testing/testing.gyp:testing',
             'ibus_mozc_lib',
@@ -379,6 +401,50 @@
           'dependencies': [
             'gtk_candidate_window_handler',
             '../../testing/testing.gyp:gtest_main',
+          ],
+        },
+      ],
+    }],
+    ['enable_x11_selection_monitor==1', {
+      'targets': [
+        {
+          # Meta target to set up build environment for ibus. Required 'cflags'
+          # and 'link_settings' will be automatically injected into any target
+          # which directly or indirectly depends on this target.
+          'target_name': 'xcb_build_environment',
+          'type': 'none',
+          'variables': {
+            'target_libs': [
+              'xcb',
+              'xcb-xfixes',
+            ],
+          },
+          'all_dependent_settings': {
+            'cflags': [
+              '<!@(<(pkg_config_command) --cflags <@(target_libs))',
+            ],
+            'link_settings': {
+              'libraries': [
+                '<!@(<(pkg_config_command) --libs-only-l <@(target_libs))',
+              ],
+              'ldflags': [
+                '<!@(<(pkg_config_command) --libs-only-L <@(target_libs))',
+              ],
+            },
+            'defines': [
+              'MOZC_ENABLE_X11_SELECTION_MONITOR=1'
+            ],
+          },
+        },
+        {
+          'target_name': 'selection_monitor',
+          'type': 'static_library',
+          'sources': [
+            'selection_monitor.cc',
+          ],
+          'dependencies': [
+            '../../base/base.gyp:base',
+            'xcb_build_environment',
           ],
         },
       ],

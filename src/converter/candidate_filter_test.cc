@@ -35,6 +35,7 @@
 
 #include "base/base.h"
 #include "base/freelist.h"
+#include "base/number_util.h"
 #include "base/util.h"
 #include "converter/node.h"
 #include "converter/segments.h"
@@ -44,6 +45,7 @@
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
+namespace converter {
 
 class CandidateFilterTest : public testing::Test {
  protected:
@@ -287,7 +289,7 @@ TEST_F(CandidateFilterTest, MayHaveMoreCandidates) {
   // Insert many valid candidates
   for (int i = 0; i < 50; ++i) {
     Segment::Candidate *tmp = NewCandidate();
-    tmp->value = Util::SimpleItoa(i) + "test";
+    tmp->value = NumberUtil::SimpleItoa(i) + "test";
     filter->FilterCandidate(tmp, n);
   }
 
@@ -372,4 +374,6 @@ TEST_F(CandidateFilterTest, FilterRealtimeConversionTest) {
   EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
             filter->FilterCandidate(c1, n));
 }
+
+}  // namespace converter
 }  // namespace mozc

@@ -37,6 +37,7 @@ syntax = "proto2";
 
 import "config/config.proto";
 import "session/candidates.proto";
+import "dictionary/user_dictionary_storage.proto";
 
 package mozc.commands;
 
@@ -127,7 +128,8 @@ message KeyEvent {
     KATAKANA = 67; // VK_DBE_KATAKANA(Win)
     CAPS_LOCK = 68;
     HANJA = 69;
-    NUM_SPECIALKEYS = 70;
+    COMMA = 70;  // Numpad [,]
+    NUM_SPECIALKEYS = 71;
   };
 
   // CTRL, ALT and SHIFT cover both LEFT and RIGHT keys.  If the
@@ -212,7 +214,10 @@ message KeyEvent {
     CAPS = 2048;
   };
 
-  optional uint32 key_code = 1;  // Printable key in ASCII.
+
+  // Printable key in UCS4.  If key_code is empty, key_string is used
+  // as a raw input.
+  optional uint32 key_code = 1;
   optional uint32 modifiers = 2;  // Going to be obsolete.
   optional SpecialKey special_key = 3;  // Unprintable key listed above.
   repeated ModifierKey modifier_keys = 4;  // ModifierKeys
@@ -236,6 +241,7 @@ message KeyEvent {
 
   // Input mode
   optional CompositionMode mode = 7;
+
 };
 
 message GenericStorageEntry {
@@ -641,10 +647,13 @@ message Input {
     READ_ALL_FROM_STORAGE = 21;
     CLEAR_STORAGE = 25;
 
+    // Send a command for user dictionary session.
+    SEND_USER_DICTIONARY_COMMAND = 26;
+
     // Number of commands.
     // When new command is added, the command should use below number
     // and NUM_OF_COMMANDS should be incremented.
-    NUM_OF_COMMANDS = 26;
+    NUM_OF_COMMANDS = 27;
   };
   required CommandType type = 1;
 
@@ -693,6 +702,19 @@ message Input {
   // Specify the authorization info if the command is SET_AUTH_CODE.
   optional AuthorizationInfo auth_code = 11;
 
+
+  optional mozc.user_dictionary.UserDictionaryCommand user_dictionary_command
+      = 13;
+
+  // A flag to control if the server should return suggest-results or not.
+  // If this is set to false, regardless of other configurations,
+  // the server won't return suggestion results.
+  // This is set to true by default.
+  // Note that even if this flag is set to false, when a suggestion is shown
+  // in the previous phase, it is possible from the client to submit it.
+  // This works only for suggestions for the key insersion, but not for
+  // others commands, such as predictions or conversions.
+  optional bool request_suggestion = 14 [default = true];
 };
 
 
@@ -884,6 +906,9 @@ message Output {
   optional GenericStorageEntry storage_entry = 19;
 
   optional CloudSyncStatus cloud_sync_status = 20;
+
+  optional mozc.user_dictionary.UserDictionaryCommandStatus
+      user_dictionary_command_status = 21;
 };
 
 message Command {

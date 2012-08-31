@@ -32,6 +32,7 @@
 #include <string>
 #include <vector>
 
+#include "base/logging.h"
 #include "base/singleton.h"
 #include "base/util.h"
 #include "base/version.h"

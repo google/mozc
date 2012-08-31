@@ -43,12 +43,12 @@ class EnglishDictionaryInterface {
  public:
   virtual ~EnglishDictionaryInterface() {}
 
-  // Get suggestions.
-  virtual bool GetSuggestions(
+  // Gets English words starts with prefix.
+  virtual void GetSuggestions(
       const string &prefix, vector<string> *output) const = 0;
 
   // Learns word to add unknown word or to boost a word priority.
-  virtual void LearnWord(const string &word) = 0;
+  virtual bool LearnWord(const string &word) = 0;
 };
 
 }  // namespace english

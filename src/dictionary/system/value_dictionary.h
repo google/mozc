@@ -45,13 +45,25 @@ namespace dictionary {
 class SystemDictionaryCodecInterface;
 }  // namespace dictionary
 
+#ifdef MOZC_USE_MOZC_LOUDS
+namespace dictionary {
+namespace louds {
+struct Entry;
+class LoudsTrieAdapter;
+}  // namespace louds
+}  // namespace dictionary
+#else
 namespace rx {
 class RxTrie;
+class RxEntry;
 }  // namespace rx
+#endif  // MOZC_USE_MOZC_LOUDS
 
 class DictionaryFile;
 class NodeAllocatorInterface;
 class POSMatcher;
+
+namespace dictionary {
 
 class ValueDictionary : public DictionaryInterface {
  public:
@@ -74,6 +86,8 @@ class ValueDictionary : public DictionaryInterface {
       NodeAllocatorInterface *allocator) const;
   Node *LookupPrefix(const char *str, int size,
                      NodeAllocatorInterface *allocator) const;
+  Node *LookupExact(const char *str, int size,
+                    NodeAllocatorInterface *allocator) const;
   Node *LookupReverse(const char *str, int size,
                       NodeAllocatorInterface *allocator) const;
 
@@ -82,14 +96,24 @@ class ValueDictionary : public DictionaryInterface {
 
   bool OpenDictionaryFile();
 
-  scoped_ptr<rx::RxTrie> value_trie_;
+#ifdef MOZC_USE_MOZC_LOUDS
+  typedef mozc::dictionary::louds::LoudsTrieAdapter TrieType;
+  typedef mozc::dictionary::louds::Entry EntryType;
+#else
+  typedef rx::RxTrie TrieType;
+  typedef rx::RxEntry EntryType;
+#endif  // MOZC_USE_MOZC_LOUDS
+  scoped_ptr<TrieType> value_trie_;
+
   scoped_ptr<DictionaryFile> dictionary_file_;
-  const dictionary::SystemDictionaryCodecInterface *codec_;
+  const SystemDictionaryCodecInterface *codec_;
   const Limit empty_limit_;
   const uint16 suggestion_only_word_id_;
 
   DISALLOW_COPY_AND_ASSIGN(ValueDictionary);
 };
+
+}  // namespace dictionary
 }  // namespace mozc
 
 #endif  // MOZC_DICTIONARY_SYSTEM_VALUE_DICTIONARY_H_

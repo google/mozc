@@ -35,6 +35,7 @@
 
 #include "base/base.h"
 #include "base/freelist.h"
+#include "base/logging.h"
 #include "base/mutex.h"
 #include "base/util.h"
 #include "converter/node.h"
@@ -96,7 +97,7 @@ Segment::Segment()
 
 Segment::~Segment() {}
 
-const Segment::SegmentType Segment::segment_type() const {
+Segment::SegmentType Segment::segment_type() const {
   return segment_type_;
 }
 
@@ -655,4 +656,4 @@ string Segments::DebugString() const {
 
   return os.str();
 }
-}   // mozc
+}   // namespace mozc

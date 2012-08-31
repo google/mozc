@@ -37,35 +37,71 @@ TEST(CollocationUtilTest, GetNormalizedScript) {
   string result;
   // "あいうえお"
   CollocationUtil::GetNormalizedScript(
-      "\xe3\x81\x82\xe3\x81\x84\xe3\x81\x86\xe3\x81\x88\xe3\x81\x8a", &result);
+      "\xe3\x81\x82\xe3\x81\x84\xe3\x81\x86\xe3\x81\x88\xe3\x81\x8a",
+      true, &result);
+  // "あいうえお"
+  EXPECT_EQ(
+      "\xe3\x81\x82\xe3\x81\x84\xe3\x81\x86\xe3\x81\x88\xe3\x81\x8a", result);
+
+  // "あいうえお"
+  CollocationUtil::GetNormalizedScript(
+      "\xe3\x81\x82\xe3\x81\x84\xe3\x81\x86\xe3\x81\x88\xe3\x81\x8a",
+      false, &result);
   // "あいうえお"
   EXPECT_EQ(
       "\xe3\x81\x82\xe3\x81\x84\xe3\x81\x86\xe3\x81\x88\xe3\x81\x8a", result);
 
   // "1個"
-  CollocationUtil::GetNormalizedScript("\x31\xe5\x80\x8b", &result);
+  CollocationUtil::GetNormalizedScript("\x31\xe5\x80\x8b", true, &result);
   // "個"
   EXPECT_EQ("\xe5\x80\x8b", result);
+  // "1個"
+  CollocationUtil::GetNormalizedScript("\x31\xe5\x80\x8b", false, &result);
+  // "1個"
+  EXPECT_EQ("\x31\xe5\x80\x8b", result);
 
   // "１個"
-  CollocationUtil::GetNormalizedScript("\xef\xbc\x91\xe5\x80\x8b", &result);
+  CollocationUtil::GetNormalizedScript(
+      "\xef\xbc\x91\xe5\x80\x8b", true, &result);
   // "個"
   EXPECT_EQ("\xe5\x80\x8b", result);
+  // "１個"
+  CollocationUtil::GetNormalizedScript(
+      "\xef\xbc\x91\xe5\x80\x8b", false, &result);
+  // "１個"
+  EXPECT_EQ("\xef\xbc\x91\xe5\x80\x8b", result);
 
-  CollocationUtil::GetNormalizedScript("", &result);
+  CollocationUtil::GetNormalizedScript("", true, &result);
+  EXPECT_EQ("", result);
+  CollocationUtil::GetNormalizedScript("", false, &result);
   EXPECT_EQ("", result);
 
   // "＄"
-  CollocationUtil::GetNormalizedScript("\xef\xbc\x84", &result);
+  CollocationUtil::GetNormalizedScript("\xef\xbc\x84", true, &result);
+  EXPECT_EQ("", result);
+  // "＄"
+  CollocationUtil::GetNormalizedScript("\xef\xbc\x84", false, &result);
   EXPECT_EQ("", result);
 
   // "等々"
-  CollocationUtil::GetNormalizedScript("\xe7\xad\x89\xe3\x80\x85", &result);
+  CollocationUtil::GetNormalizedScript(
+      "\xe7\xad\x89\xe3\x80\x85", true, &result);
+  // "等々"
+  EXPECT_EQ("\xe7\xad\x89\xe3\x80\x85", result);
+  // "等々"
+  CollocationUtil::GetNormalizedScript(
+      "\xe7\xad\x89\xe3\x80\x85", false, &result);
   // "等々"
   EXPECT_EQ("\xe7\xad\x89\xe3\x80\x85", result);
 
+
   // "％%％"
-  CollocationUtil::GetNormalizedScript("\xef\xbc\x85\x25\xef\xbc\x85", &result);
+  CollocationUtil::GetNormalizedScript(
+      "\xef\xbc\x85\x25\xef\xbc\x85", true, &result);
+  EXPECT_EQ("%%%", result);
+  // "％%％"
+  CollocationUtil::GetNormalizedScript(
+      "\xef\xbc\x85\x25\xef\xbc\x85", false, &result);
   EXPECT_EQ("%%%", result);
 }
 

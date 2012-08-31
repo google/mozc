@@ -30,16 +30,15 @@
 #ifndef MOZC_STORAGE_EXISTENCE_FILTER_H_
 #define MOZC_STORAGE_EXISTENCE_FILTER_H_
 
-#include "base/base.h"
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 
 namespace mozc {
+namespace storage {
 
 // Bloom filter
 class ExistenceFilter {
-  class BlockBitmap;
-
  public:
-
   struct Header {
     uint32 m;
     uint32 n;
@@ -51,11 +50,10 @@ class ExistenceFilter {
   // 'k' is the number of hash values to use per insert/lookup
   // k must be less than 8
   ExistenceFilter(uint32 m, uint32 n, int k);
+  ~ExistenceFilter();
 
   static ExistenceFilter* CreateOptimal(size_t size_in_bytes,
                                         uint32 estimated_insertions);
-
-  ~ExistenceFilter();
 
   void Clear();
 
@@ -85,6 +83,8 @@ class ExistenceFilter {
   static ExistenceFilter* Read(const char *buf, size_t size);
 
  private:
+  class BlockBitmap;
+
   // private constructor for ExistenceFilter::Read();
   ExistenceFilter(uint32 m, uint32 n, int k, bool is_mutable);
 
@@ -92,23 +92,16 @@ class ExistenceFilter {
                                                          uint32 n,
                                                          int k);
 
-  // Rotate the value in 'original' by 'num_bits'
-  static uint64 RotateLeft64(uint64 original, int num_bits);
-
-  static inline uint32 BitsToWords(uint32 bits) {
-    uint32 words = (bits + 31) >> 5;
-    if (bits > 0 && words == 0) {
-      words = 1 << (32 - 5);  // possible overflow
-    }
-    return words;
-  }
-
   scoped_ptr<BlockBitmap> rep_;  // points to bitmap
   const uint32 vec_size_;  // size of bitmap (in bits)
   const bool is_power_of_two_;  // true if vec_size_ is a power of two
   const uint32 expected_nelts_;  // expected number of inserts
   const int32 num_hashes_;  // number of hashes per lookup
+
+  DISALLOW_COPY_AND_ASSIGN(ExistenceFilter);
 };
+
+}  // namespace storage
 }  // namespace mozc
 
 #endif  // MOZC_STORAGE_EXISTENCE_FILTER_H_

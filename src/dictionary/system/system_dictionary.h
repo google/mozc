@@ -40,26 +40,45 @@
 #include "base/base.h"
 #include "base/trie.h"
 #include "dictionary/dictionary_interface.h"
-#include "dictionary/rx/rx_trie.h"
-#include "dictionary/rx/rbx_array.h"
 #include "dictionary/system/codec_interface.h"
 #include "dictionary/system/words_info.h"
 // for FRIEND_TEST
 #include "testing/base/public/gunit_prod.h"
 
+#ifdef MOZC_USE_MOZC_LOUDS
+#include "storage/louds/bit_vector_based_array.h"
+#include "dictionary/louds/louds_trie_adapter.h"
+#else
+#include "dictionary/rx/rx_trie.h"
+#include "dictionary/rx/rbx_array.h"
+#endif  // MOZC_USE_MOZC_LOUDS
+
 
 namespace mozc {
-
-namespace dictionary {
-class SystemDictionaryCodecInterface;
-}  // namespace dictionary
 
 class NodeAllocatorInterface;
 class DictionaryFile;
 struct Token;
 
+namespace dictionary {
+
+class SystemDictionaryCodecInterface;
+
 class SystemDictionary : public DictionaryInterface {
  public:
+
+#ifdef MOZC_USE_MOZC_LOUDS
+  typedef dictionary::louds::LoudsTrieAdapter TrieType;
+  typedef dictionary::louds::Entry EntryType;
+  typedef storage::louds::BitVectorBasedArray ArrayType;
+  typedef storage::louds::KeyExpansionTable KeyExpansionTable;
+#else
+  typedef rx::RxTrie TrieType;
+  typedef rx::RxEntry EntryType;
+  typedef rx::RbxArray ArrayType;
+  typedef scoped_array<string> KeyExpansionTable;
+#endif  // MOZC_USE_MOZC_LOUDS
+
   struct ReverseLookupResult {
     // Offset from the tokens section beginning.
     // (token_array_->Get(id_in_key_trie) ==
@@ -84,14 +103,15 @@ class SystemDictionary : public DictionaryInterface {
   virtual Node *LookupPredictive(const char *str, int size,
                                  NodeAllocatorInterface *allocator) const;
   // Prefix lookup
-  virtual Node *LookupPrefixWithLimit(
-      const char *str, int size,
-      const Limit &limit,
-      NodeAllocatorInterface *allocator) const;
+  virtual Node *LookupPrefixWithLimit(const char *str, int size,
+                                      const Limit &limit,
+                                      NodeAllocatorInterface *allocator) const;
   // Prefix lookup
-  virtual Node *LookupPrefix(
-      const char *str, int size,
-      NodeAllocatorInterface *allocator) const;
+  virtual Node *LookupPrefix(const char *str, int size,
+                             NodeAllocatorInterface *allocator) const;
+  // Exact lookup
+  virtual Node *LookupExact(const char *str, int size,
+                            NodeAllocatorInterface *allocator) const;
   // Value to key prefix lookup
   virtual Node *LookupReverse(const char *str, int size,
                               NodeAllocatorInterface *allocator) const;
@@ -144,27 +164,25 @@ class SystemDictionary : public DictionaryInterface {
 
   bool OpenDictionaryFile();
 
+  // Allocates nodes from |allocator| and append them to |node|.
+  // Token info will be filled using |tokens_key|, |actual_key| and |tokens|
+  // |tokens_key| is a key used for look up.
+  // |actual_key| is a node's key.
+  // They may be different when we perform ambiguous search.
   Node *AppendNodesFromTokens(
       const FilterInfo &filter,
       const string &tokens_key,
       const string &actual_key,
-      vector<dictionary::TokenInfo> *tokens,
+      const uint8 *,
       Node *node,
       NodeAllocatorInterface *allocator,
       int *limit) const;
 
-  void FillTokenInfo(const string &key,
-                     const string &key_katakana,
-                     const dictionary::TokenInfo *prev_token_info,
-                     dictionary::TokenInfo *token_info) const;
-
   bool IsBadToken(const FilterInfo &filter,
                   const dictionary::TokenInfo &token_info) const;
 
-  void LookupValue(dictionary::TokenInfo *token_info) const;
-
   Node *GetNodesFromLookupResults(const FilterInfo &filter,
-                                  const vector<rx::RxEntry> &results,
+                                  const vector<EntryType> &results,
                                   NodeAllocatorInterface *allocator,
                                   int *limit) const;
 
@@ -185,20 +203,19 @@ class SystemDictionary : public DictionaryInterface {
       NodeAllocatorInterface *allocator,
       int *limit) const;
 
-  Node *CopyTokenToNode(NodeAllocatorInterface *allocator,
-                        const Token &token) const;
 
-
-  scoped_ptr<rx::RxTrie> key_trie_;
-  scoped_ptr<rx::RxTrie> value_trie_;
-  scoped_ptr<rx::RbxArray> token_array_;
+  scoped_ptr<TrieType> key_trie_;
+  scoped_ptr<TrieType> value_trie_;
+  scoped_ptr<ArrayType> token_array_;
   scoped_ptr<DictionaryFile> dictionary_file_;
   const uint32 *frequent_pos_;
-  const dictionary::SystemDictionaryCodecInterface *codec_;
+  const SystemDictionaryCodecInterface *codec_;
   const Limit empty_limit_;
 
   DISALLOW_COPY_AND_ASSIGN(SystemDictionary);
 };
+
+}  // namespace dictionary
 }  // namespace mozc
 
 #endif  // MOZC_DICTIONARY_SYSTEM_SYSTEM_DICTIONARY_H_

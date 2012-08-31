@@ -41,6 +41,9 @@ JapanesePunctuations 記号,(句点|読点)
 OpenBracket 記号,括弧開
 CloseBracket 記号,括弧閉
 
+# used in SingleKanjiRewriter
+GeneralSymbol 記号,一般,
+
 # zipcode
 Zipcode 特殊,郵便番号
 
@@ -64,3 +67,9 @@ UniqueNoun ^名詞,固有名詞
 
 # 一般名詞
 GeneralNoun ^名詞,一般,*,*,*,*,*$
+
+# Content Noun
+ContentNoun ^名詞,(一般|固有名詞|副詞可能|サ変接続),
+
+# Noun prefix
+NounPrefix ^接頭詞,名詞接続,

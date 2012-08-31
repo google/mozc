@@ -27,10 +27,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "base/util.h"
-#include "config/config_handler.h"
-#include "config/config.pb.h"
 #include "rewriter/version_rewriter.h"
+
+#include "base/util.h"
+#include "config/config.pb.h"
+#include "config/config_handler.h"
+#include "converter/conversion_request.h"
+#include "converter/segments.h"
 #include "session/commands.pb.h"
 #include "session/request_handler.h"
 #include "testing/base/public/gunit.h"
@@ -53,6 +56,34 @@ class VersionRewriterTest : public testing::Test {
   virtual void TearDown() {
     // and gets back to the request at the end of a test.
     commands::RequestHandler::SetRequest(previous_request_);
+  }
+
+  static void AddSegment(const string &key, const string &value,
+                         Segments *segments) {
+    Segment *segment = segments->push_back_segment();
+    segment->set_key(key);
+    AddCandidate(key, value, segment);
+  }
+
+  static void AddCandidate(const string &key, const string &value,
+                           Segment *segment) {
+    Segment::Candidate *candidate = segment->add_candidate();
+    candidate->Init();
+    candidate->value = value;
+    candidate->content_value = value;
+    candidate->content_key = key;
+  }
+
+  static bool FindCandidateWithPrefix(const string &prefix,
+                                      const Segments &segments) {
+    for (size_t i = 0; i < segments.segments_size(); ++i) {
+      for (size_t j = 0; j < segments.segment(i).candidates_size(); ++j) {
+        if (Util::StartsWith(segments.segment(i).candidate(j).value, prefix)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
  private:
@@ -80,4 +111,34 @@ TEST_F(VersionRewriterTest, MobileEnvironmentTest) {
   commands::RequestHandler::SetRequest(input);
   EXPECT_EQ(RewriterInterface::CONVERSION, rewriter.capability());
 }
+
+
+TEST_F(VersionRewriterTest, RewriteTest_Version) {
+#ifdef GOOGLE_JAPANESE_INPUT_BUILD
+  static const char kVersionPrefixExpected[] = "GoogleJapaneseInput-";
+  static const char kVersionPrefixUnexpected[] = "Mozc-";
+#else
+  static const char kVersionPrefixExpected[] = "Mozc-";
+  static const char kVersionPrefixUnexpected[] = "GoogleJapaneseInput-";
+#endif
+
+  VersionRewriter version_rewriter;
+
+  const ConversionRequest request;
+  Segments segments;
+  VersionRewriterTest::AddSegment(
+      // "ばーじょん"
+      "\xe3\x81\xb0\xe3\x83\xbc\xe3\x81\x98\xe3\x82\x87\xe3\x82\x93",
+      // "バージョン"
+      "\xe3\x83\x90\xe3\x83\xbc\xe3\x82\xb8\xe3\x83\xa7\xe3\x83\xb3",
+      &segments);
+
+  EXPECT_TRUE(version_rewriter.Rewrite(request, &segments));
+  EXPECT_TRUE(VersionRewriterTest::FindCandidateWithPrefix(
+      kVersionPrefixExpected, segments));
+  EXPECT_FALSE(VersionRewriterTest::FindCandidateWithPrefix(
+      kVersionPrefixUnexpected, segments));
+}
+
+
 }  // namespace mozc

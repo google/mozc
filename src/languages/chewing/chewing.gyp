@@ -68,7 +68,7 @@
             '../../unix/ibus/ibus.gyp:ibus_mozc_lib',
           ],
           'conditions': [
-            ['chromeos==1', {
+            ['target_platform=="ChromeOS"', {
              'dependencies': [
                '../../config/config.gyp:config_handler',
                '../../config/config.gyp:config_protocol',

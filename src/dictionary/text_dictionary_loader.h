@@ -44,16 +44,21 @@ struct Token;
 
 class TextDictionaryLoader {
  public:
+  // TODO(noriyukit): Better to pass the pointer of pos_matcher.
   explicit TextDictionaryLoader(const POSMatcher& pos_matcher);
   virtual ~TextDictionaryLoader();
 
   // Reads source dictionary file.
-  bool Open(const char *filename);
+  bool Open(const string &filename);
   // Reads source dictionary file at most lines_limit lines. No limit will
   // be applied when the limit is -1.
   // This is mainly used for test to reduce run time.
   // You can pass multiple filenames delimiterd by ",".
-  bool OpenWithLineLimit(const char *filename, int lines_limit);
+  bool OpenWithLineLimit(const string &filename, int lines_limit);
+
+  // Reads reading correction data file.
+  // This method must be called after calling "Open".
+  bool OpenReadingCorrection(const string &filename);
 
   void Close();
 
@@ -66,12 +71,17 @@ class TextDictionaryLoader {
   FRIEND_TEST(TextDictionaryLoaderTest, RewriteSpecialTokenTest);
 
   // Encode special information into |token| with the |label|.
-  // Currently, label must be empty, "SPELLINC_CORRECITON" or "ZIP_CODE".
+  // Currently, label must be:
+  //   - empty string,
+  //   - "SPELLING_CORRECITON",
+  //   - "ZIP_CODE", or
+  //   - "ENGLISH".
+  // Otherwise, the method returns false.
   bool RewriteSpecialToken(Token *token, const string &label);
 
   void ParseTSV(const string &line);
 
-  const uint16 zip_code_id_;
+  const POSMatcher *pos_matcher_;
   vector<Token *> tokens_;
 };
 }  // namespace mozc

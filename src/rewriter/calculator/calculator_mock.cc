@@ -30,7 +30,9 @@
 #include "rewriter/calculator/calculator_mock.h"
 
 #include <string>
+
 #include "base/base.h"
+#include "base/logging.h"
 
 namespace mozc {
 CalculatorMock::CalculatorMock()

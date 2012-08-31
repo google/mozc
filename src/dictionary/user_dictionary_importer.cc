@@ -44,19 +44,24 @@
 
 #include "base/base.h"
 #include "base/mmap.h"
+#include "base/number_util.h"
 #include "base/singleton.h"
 #include "base/util.h"
-#include "data_manager/user_dictionary_manager.h"
-#include "dictionary/user_dictionary_storage.h"
+#include "base/win_util.h"
 #include "dictionary/user_dictionary_util.h"
 
 namespace mozc {
+
+using user_dictionary::UserDictionary;
+using user_dictionary::UserDictionaryCommandStatus;
+
 namespace {
-uint64 EntryFingerprint(
-    const UserDictionaryStorage::UserDictionaryEntry &entry) {
+uint64 EntryFingerprint(const UserDictionary::Entry &entry) {
+  DCHECK_LE(0, entry.pos());
+  DCHECK_LE(entry.pos(), 255);
   return Util::Fingerprint(entry.key() + "\t" +
                            entry.value() + "\t" +
-                           entry.pos());
+                           static_cast<char>(entry.pos()));
 }
 
 void NormalizePOS(const string &input, string *output) {
@@ -66,15 +71,11 @@ void NormalizePOS(const string &input, string *output) {
   Util::HalfWidthKatakanaToFullWidthKatakana(tmp, output);
 }
 
-// A data type to hold conversion rules of POSes and stemming
-// suffixes. If mozc_pos is set to be an empty string (""), it means
-// that words of the POS should be ignored in Mozc.
+// A data type to hold conversion rules of POSes. If mozc_pos is set to be an
+// empty string (""), it means that words of the POS should be ignored in Mozc.
 struct POSMap {
-  const char *source_pos;   // POS string of a third party IME.
-  const char *mozc_pos;     // POS string of Mozc.
-  const char *suffix;       // Stemming suffix that should be appended
-  // when converting a dictionary entry to
-  // Mozc style.
+  const char *source_pos;  // POS string of a third party IME.
+  UserDictionary::PosType mozc_pos;  // POS of Mozc.
 };
 
 // Include actual POS mapping rules defined outside the file.
@@ -93,8 +94,8 @@ class POSMapCompare {
 // mapping.
 bool ConvertEntryInternal(
     const POSMap *pos_map, size_t map_size,
-    const UserDictionaryStorage::UserDictionaryEntry &from,
-    UserDictionaryStorage::UserDictionaryEntry *to) {
+    const UserDictionaryImporter::RawEntry &from,
+    UserDictionary::Entry *to) {
   if (to == NULL) {
     LOG(ERROR) << "Null pointer is passed.";
     return false;
@@ -102,13 +103,13 @@ bool ConvertEntryInternal(
 
   to->Clear();
 
-  if (from.pos().empty()) {
+  if (from.pos.empty()) {
     return false;
   }
 
   // Normalize POS (remove full width ascii and half width katakana)
   string pos;
-  NormalizePOS(from.pos(), &pos);
+  NormalizePOS(from.pos, &pos);
 
   // ATOK's POS has a special marker for distinguishing
   // auto-registered words/manually-registered words.
@@ -121,30 +122,29 @@ bool ConvertEntryInternal(
 
   POSMap key;
   key.source_pos = pos.c_str();
-  key.mozc_pos = NULL;
-  key.suffix = NULL;
+  key.mozc_pos = static_cast<UserDictionary::PosType>(0);
 
   // Search for mapping for the given POS.
   const POSMap *found = lower_bound(pos_map, pos_map + map_size,
                                     key, POSMapCompare());
   if (found == pos_map + map_size ||
       strcmp(found->source_pos, key.source_pos) != 0) {
-    LOG(WARNING) << "Invalid POS is passed: " << from.pos();
+    LOG(WARNING) << "Invalid POS is passed: " << from.pos;
     return false;
   }
 
   // Enpty Mozc POS means that words of the POS should be ignored
   // in Mozc. Set all arguments to an empty string.
   // const POSMap &map_rule = pos_map[index];
-  if (found->mozc_pos == NULL) {
+  if (!UserDictionary::PosType_IsValid(found->mozc_pos)) {
     to->clear_key();
     to->clear_value();
     to->clear_pos();
     return false;
   }
 
-  to->set_key(from.key());
-  to->set_value(from.value());
+  to->set_key(from.key);
+  to->set_value(from.value);
   to->set_pos(found->mozc_pos);
 
   // normalize reading
@@ -153,15 +153,13 @@ bool ConvertEntryInternal(
   to->set_key(normalized_key);
 
   // copy comment
-  if (from.has_comment()) {
-    to->set_comment(from.comment());
+  if (!from.comment.empty()) {
+    to->set_comment(from.comment);
   }
 
   // validation
-  // TODO(noriyukit): Use dependency injection for UserPOS.
-  const UserPOSInterface *user_pos =
-      UserDictionaryManager::GetUserDictionaryManager()->GetUserPOS();
-  if (!UserDictionaryUtil::IsValidEntry(*user_pos, *to)) {
+  if (UserDictionaryUtil::ValidateEntry(*to) !=
+      UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS) {
     return false;
   }
 
@@ -193,7 +191,7 @@ class IFEDictionaryFactory {
 
     // check imjp dll from newer ones.
     for (size_t i = 0; i < arraysize(kIMEJPLibs); ++i) {
-      lib_ = Util::LoadSystemLibrary(kIMEJPLibs[i]);
+      lib_ = WinUtil::LoadSystemLibrary(kIMEJPLibs[i]);
       if (NULL != lib_) {
         break;
       }
@@ -311,7 +309,9 @@ class MSIMEImportIterator
     return result_ == IFED_S_MORE_ENTRIES || result_ == S_OK;
   }
 
-  bool Next(UserDictionaryStorage::UserDictionaryEntry *entry) {
+  // NOTE: Without "UserDictionaryImporter::", Visual C++ 2008 somehow fails
+  //     to look up the type name.
+  bool Next(UserDictionaryImporter::RawEntry *entry) {
     if (!IsAvailable()) {
       LOG(ERROR) << "Iterator is not available";
       return false;
@@ -332,8 +332,8 @@ class MSIMEImportIterator
       }
 
       // set key/value
-      Util::WideToUTF8(buf_[index_].pwchReading, entry->mutable_key());
-      Util::WideToUTF8(buf_[index_].pwchDisplay, entry->mutable_value());
+      Util::WideToUTF8(buf_[index_].pwchReading, &entry->key);
+      Util::WideToUTF8(buf_[index_].pwchDisplay, &entry->value);
 
       // set POS
       map<int, string>::const_iterator it = pos_map_.find(buf_[index_].nPos1);
@@ -343,18 +343,18 @@ class MSIMEImportIterator
         entry->Clear();
         return true;
       }
-      entry->set_pos(it->second);
+      entry->pos = it->second;
 
       // set comment
       if (buf_[index_].pvComment != NULL) {
         if (buf_[index_].uct == IFED_UCT_STRING_SJIS) {
           Util::SJISToUTF8(
               reinterpret_cast<const char *>(buf_[index_].pvComment),
-              entry->mutable_comment());
+              &entry->comment);
         } else if (buf_[index_].uct == IFED_UCT_STRING_UNICODE) {
           Util::WideToUTF8(
               reinterpret_cast<const wchar_t *>(buf_[index_].pvComment),
-              entry->mutable_comment());
+              &entry->comment);
         }
       }
     }
@@ -391,7 +391,7 @@ class MSIMEImportIterator
 #endif  // OS_WINDOWS && HAS_MSIME_HEADER
 
 UserDictionaryImporter::ErrorType UserDictionaryImporter::ImportFromMSIME(
-    UserDictionaryStorage::UserDictionary *user_dic) {
+    UserDictionary *user_dic) {
   DCHECK(user_dic);
 #if defined(OS_WINDOWS) && defined(HAS_MSIME_HEADER)
   MSIMEImportIterator iter;
@@ -403,7 +403,7 @@ UserDictionaryImporter::ErrorType UserDictionaryImporter::ImportFromMSIME(
 UserDictionaryImporter::ErrorType
 UserDictionaryImporter::ImportFromIterator(
     UserDictionaryImporter::InputIteratorInterface *iter,
-    UserDictionaryStorage::UserDictionary *user_dic) {
+    UserDictionary *user_dic) {
   if (iter == NULL || user_dic == NULL) {
     LOG(ERROR) << "iter or user_dic is NULL";
     return UserDictionaryImporter::IMPORT_FATAL;
@@ -411,8 +411,8 @@ UserDictionaryImporter::ImportFromIterator(
 
   const int max_size =
       user_dic->syncable() ?
-          static_cast<int>(UserDictionaryStorage::max_sync_entry_size()) :
-          static_cast<int>(UserDictionaryStorage::max_entry_size());
+          static_cast<int>(UserDictionaryUtil::max_sync_entry_size()) :
+          static_cast<int>(UserDictionaryUtil::max_entry_size());
 
   UserDictionaryImporter::ErrorType ret =
       UserDictionaryImporter::IMPORT_NO_ERROR;
@@ -422,36 +422,36 @@ UserDictionaryImporter::ImportFromIterator(
     dup_set.insert(EntryFingerprint(user_dic->entries(i)));
   }
 
-  UserDictionaryStorage::UserDictionaryEntry entry, tmp_entry;
-  while (iter->Next(&entry)) {
+  UserDictionary::Entry entry;
+  RawEntry raw_entry;
+  while (iter->Next(&raw_entry)) {
     if (user_dic->entries_size() >= max_size) {
       LOG(WARNING) << "Too many words in one dictionary";
       return UserDictionaryImporter::IMPORT_TOO_MANY_WORDS;
     }
 
-    if (entry.key().empty() &&
-        entry.value().empty() &&
-        entry.comment().empty()) {
+    if (raw_entry.key.empty() &&
+        raw_entry.value.empty() &&
+        raw_entry.comment.empty()) {
       // Empty entry is just skipped. It could be annoying
       // if we show an warning dialog when these empty candidates exist.
       continue;
     }
 
-    if (!UserDictionaryImporter::ConvertEntry(entry, &tmp_entry)) {
+    if (!UserDictionaryImporter::ConvertEntry(raw_entry, &entry)) {
       LOG(WARNING) << "Entry is not valid";
       ret = UserDictionaryImporter::IMPORT_INVALID_ENTRIES;
       continue;
     }
 
     //  don't register words if it is aleady in the current dictionary
-    if (!dup_set.insert(EntryFingerprint(tmp_entry)).second) {
+    if (!dup_set.insert(EntryFingerprint(entry)).second) {
       continue;
     }
 
-    UserDictionaryStorage::UserDictionaryEntry *new_entry
-        = user_dic->add_entries();
+    UserDictionary::Entry *new_entry = user_dic->add_entries();
     DCHECK(new_entry);
-    new_entry->CopyFrom(tmp_entry);
+    new_entry->CopyFrom(entry);
   }
 
   return ret;
@@ -461,7 +461,7 @@ UserDictionaryImporter::ErrorType
 UserDictionaryImporter::ImportFromTextLineIterator(
     UserDictionaryImporter::IMEType ime_type,
     UserDictionaryImporter::TextLineIteratorInterface *iter,
-    UserDictionaryStorage::UserDictionary *user_dic) {
+    UserDictionary *user_dic) {
   TextInputIterator text_iter(ime_type, iter);
   if (text_iter.ime_type() == UserDictionaryImporter::NUM_IMES) {
     return UserDictionaryImporter::IMPORT_NOT_SUPPORTED;
@@ -485,6 +485,40 @@ bool UserDictionaryImporter::IStreamTextLineIterator::Next(string *line) {
 
 void UserDictionaryImporter::IStreamTextLineIterator::Reset() {
   is_->seekg(0, ios_base::beg);
+}
+
+UserDictionaryImporter::StringTextLineIterator::StringTextLineIterator(
+    const string &data) : data_(data), position_(0) {
+}
+
+UserDictionaryImporter::StringTextLineIterator::~StringTextLineIterator() {
+}
+
+bool UserDictionaryImporter::StringTextLineIterator::IsAvailable() const {
+  return position_ < data_.length();
+}
+
+bool UserDictionaryImporter::StringTextLineIterator::Next(string *line) {
+  if (!IsAvailable()) {
+    return false;
+  }
+
+  for (int i = position_; i < data_.length(); ++i) {
+    if (data_[i] == '\n' || data_[i] == '\r') {
+      *line = data_.substr(position_, i - position_);
+      // Handles CR/LF issue.
+      position_ = data_.compare(i, 2, "\r\n", 2) == 0 ? (i + 2) : (i + 1);
+      return true;
+    }
+  }
+
+  *line = data_.substr(position_);
+  position_ = data_.length();
+  return true;
+}
+
+void UserDictionaryImporter::StringTextLineIterator::Reset() {
+  position_ = 0;
 }
 
 UserDictionaryImporter::TextInputIterator::TextInputIterator(
@@ -517,8 +551,7 @@ bool UserDictionaryImporter::TextInputIterator::IsAvailable() const {
           ime_type_ != UserDictionaryImporter::NUM_IMES);
 }
 
-bool UserDictionaryImporter::TextInputIterator::Next(
-    UserDictionaryStorage::UserDictionaryEntry *entry) {
+bool UserDictionaryImporter::TextInputIterator::Next(RawEntry *entry) {
   DCHECK(iter_);
   if (!IsAvailable()) {
     LOG(ERROR) << "iterator is not available";
@@ -566,11 +599,11 @@ bool UserDictionaryImporter::TextInputIterator::Next(
         if (values.size() < 3) {
           continue;  // ignore this line
         }
-        entry->set_key(values[0]);
-        entry->set_value(values[1]);
-        entry->set_pos(values[2]);
+        entry->key = values[0];
+        entry->value = values[1];
+        entry->pos = values[2];
         if (values.size() >= 4) {
-          entry->set_comment(values[3]);
+          entry->comment = values[3];
         }
         return true;
         break;
@@ -579,14 +612,13 @@ bool UserDictionaryImporter::TextInputIterator::Next(
         if (values.size() < 3) {
           continue;  // ignore this line
         }
-        entry->set_key(values[0]);
-        entry->set_value(values[1]);
-        entry->set_pos(values[2]);
+        entry->key = values[0];
+        entry->value = values[1];
+        entry->pos = values[2];
         return true;
         break;
       default:
-        LOG(ERROR) << "Unknown format: " <<
-            static_cast<int>(ime_type_);
+        LOG(ERROR) << "Unknown format: " << static_cast<int>(ime_type_);
         return false;
     }
   }
@@ -595,8 +627,7 @@ bool UserDictionaryImporter::TextInputIterator::Next(
 }
 
 bool UserDictionaryImporter::ConvertEntry(
-    const UserDictionaryStorage::UserDictionaryEntry &from,
-    UserDictionaryStorage::UserDictionaryEntry *to) {
+    const RawEntry &from, UserDictionary::Entry *to) {
   return ConvertEntryInternal(kPOSMap, arraysize(kPOSMap), from, to);
 }
 
@@ -617,7 +648,7 @@ UserDictionaryImporter::GuessIMEType(const string &line) {
   // http://b/2455897
   if (lower.find("!!dicut") == 0 && lower.size() > 7) {
     const string version = lower.substr(7, lower.size() - 7);
-    if (Util::SimpleAtoi(version) >= 11) {
+    if (NumberUtil::SimpleAtoi(version) >= 11) {
       return UserDictionaryImporter::ATOK;
     } else {
       return UserDictionaryImporter::NUM_IMES;
@@ -725,14 +756,13 @@ UserDictionaryImporter::GuessEncodingType(const char *str, size_t size) {
 
 UserDictionaryImporter::EncodingType
 UserDictionaryImporter::GuessFileEncodingType(const string &filename) {
-  Mmap<char> mmap;
+  Mmap mmap;
   if (!mmap.Open(filename.c_str(), "r")) {
     LOG(ERROR) << "cannot open: " << filename;
     return UserDictionaryImporter::NUM_ENCODINGS;
   }
   const size_t kMaxCheckSize = 1024;
-  const size_t size = min(kMaxCheckSize,
-                          static_cast<size_t>(mmap.GetFileSize()));
+  const size_t size = min(kMaxCheckSize, static_cast<size_t>(mmap.size()));
   return GuessEncodingType(mmap.begin(), size);
 }
 }  // namespace mozc

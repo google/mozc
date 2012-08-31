@@ -637,7 +637,6 @@
         '../client/client.gyp:client',
         '../config/config.gyp:config_handler',
         '../config/config.gyp:config_protocol',
-        '../data_manager/data_manager.gyp:user_dictionary_manager',
         '../data_manager/data_manager.gyp:user_pos_manager',
         '../dictionary/dictionary_base.gyp:dictionary_protocol',
         '../dictionary/dictionary_base.gyp:user_dictionary',
@@ -693,7 +692,7 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../client/client.gyp:client',
-        '../data_manager/data_manager.gyp:user_dictionary_manager',
+        '../data_manager/data_manager.gyp:user_pos_manager',
         '../dictionary/dictionary_base.gyp:dictionary_protocol',
         '../dictionary/dictionary_base.gyp:pos_matcher',
         '../dictionary/dictionary_base.gyp:user_dictionary',

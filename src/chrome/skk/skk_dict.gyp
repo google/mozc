@@ -59,7 +59,7 @@
         'skk_util.cc',
       ],
       'dependencies': [
-        '../../dictionary/dictionary.gyp:gen_embedded_dictionary_data#host',
+        '../../data_manager/oss/oss_data_manager.gyp:gen_embedded_dictionary_data_for_oss#host',
         '../../dictionary/system/system_dictionary.gyp:system_dictionary',
         '../../net/net.gyp:jsoncpp',
       ],

@@ -58,20 +58,6 @@ const size_t kMaxErrorTimes         = 5;
 const uint64 kRetryIntervalTime     = 30;  // 30 sec
 const char   kServiceName[]         = "renderer";
 
-#if !defined(OS_WINDOWS)
-const char kMozcRenderer[] = "mozc_renderer";
-#endif  // !OS_WINDOWS
-
-// TODO(taku): move it to Util
-string GetRendererPath() {
-  return mozc::Util::JoinPath(mozc::Util::GetServerDirectory(),
-#if defined(OS_WINDOWS)
-                              mozc::kMozcRenderer);
-#else  // OS_WINDOWS
-                              kMozcRenderer);
-#endif
-}
-
 inline void CallCommand(IPCClientInterface *client,
                         const commands::RendererCommand &command) {
   string buf;
@@ -329,7 +315,7 @@ RendererClient::RendererClient()
     name_ += desktop_name;
   }
 
-  renderer_path_ = GetRendererPath();
+  renderer_path_ = Util::GetRendererPath();
 }
 
 RendererClient::~RendererClient() {

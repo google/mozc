@@ -50,18 +50,6 @@ class ConnectorInterface {
   DISALLOW_COPY_AND_ASSIGN(ConnectorInterface);
 };
 
-class ConnectorFactory {
- public:
-  // return singleton object
-  static ConnectorInterface *GetConnector();
-
-  // dependency injection for unittesting
-  static void SetConnector(ConnectorInterface *connector);
-
-  // set the connector data's address and size.
-  // if not set, default value (typically embedded data) is used.
-  static void SetConnectionData(void *address, size_t size);
-};
 }  // namespace mozc
 
 #endif  // MOZC_CONVERTER_CONNECTOR_INTERFACE_H_

@@ -35,6 +35,7 @@
 #include <string>
 #include "base/base.h"
 #include "base/file_stream.h"
+#include "base/logging.h"
 #include "base/singleton.h"
 #include "base/util.h"
 #include "client/client.h"
@@ -349,7 +350,7 @@ class Conversion : public TestScenarioInterface {
   }
 };
 }  // namespace
-}  // mozc
+}  // namespace mozc
 
 int main(int argc, char **argv) {
   InitGoogle(argv[0], &argc, &argv, false);

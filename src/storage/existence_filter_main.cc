@@ -28,17 +28,20 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <string>
+
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/util.h"
 #include "storage/existence_filter.h"
+
+using mozc::storage::ExistenceFilter;
 
 int main(int argc, char **argv) {
   InitGoogle(argv[0], &argc, &argv, false);
 
   int n = 500;
-  int m = mozc::ExistenceFilter::MinFilterSizeInBytesForErrorRate(0.01,
-                                                                  n);
-  mozc::ExistenceFilter *filter = mozc::ExistenceFilter::CreateOptimal(m, n);
+  int m = ExistenceFilter::MinFilterSizeInBytesForErrorRate(0.01, n);
+  ExistenceFilter *filter = ExistenceFilter::CreateOptimal(m, n);
   for (int i = 0; i < n; ++i) {
     uint64 val = i * 2;
     filter->Insert(val);

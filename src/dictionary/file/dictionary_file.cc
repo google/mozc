@@ -33,9 +33,10 @@
 #include <vector>
 
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/mmap.h"
-
 #include "dictionary/file/codec_interface.h"
+#include "dictionary/file/section.h"
 
 namespace mozc {
 
@@ -44,13 +45,9 @@ DictionaryFile::DictionaryFile() {}
 DictionaryFile::~DictionaryFile() {}
 
 bool DictionaryFile::OpenFromFile(const string &file) {
-  mapping_.reset(new Mmap<char>());
-  mapping_->Open(file.c_str());
-  const char *ptr = mapping_->begin();
-  const int len = mapping_->GetFileSize();
-  CHECK(ptr != NULL);
-  const bool result = OpenFromImage(ptr, len);
-  return result;
+  mapping_.reset(new Mmap());
+  CHECK(mapping_->Open(file.c_str()));
+  return OpenFromImage(mapping_->begin(), mapping_->size());
 }
 
 bool DictionaryFile::OpenFromImage(const char *image, int length) {
@@ -74,4 +71,4 @@ const char *DictionaryFile::GetSection(const string &section_name,
   }
   return NULL;
 }
-}  // namespace
+}  // namespace mozc

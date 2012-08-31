@@ -31,21 +31,26 @@
 #define MOZC_REWRITER_COLLOCATION_REWRITER_H_
 
 #include "base/port.h"
+#include "base/scoped_ptr.h"
 #include "converter/segments.h"
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {
 class ConversionRequest;
+class DataManagerInterface;
 class POSMatcher;
 
 class CollocationRewriter : public RewriterInterface {
  public:
-  explicit CollocationRewriter(const POSMatcher &pos_matcher);
+  explicit CollocationRewriter(const DataManagerInterface *data_manager);
   virtual ~CollocationRewriter();
   virtual bool Rewrite(const ConversionRequest &request,
                        Segments *segments) const;
 
  private:
+  class CollocationFilter;
+  class SuppressionFilter;
+
   bool IsName(const Segment::Candidate &cand) const;
   bool RewriteFromPrevSegment(const Segment::Candidate &prev_cand,
                               Segment *seg) const;
@@ -55,6 +60,17 @@ class CollocationRewriter : public RewriterInterface {
 
   const uint16 first_name_id_;
   const uint16 last_name_id_;
+
+  // Used to test if pairs of strings are in collocation data. Since it's a
+  // bloom filter, non-collocation words are sometimes mistakenly boosted,
+  // although the possibility is very low (0.001% by default).
+  scoped_ptr<CollocationFilter> collocation_filter_;
+
+  // Used to test if pairs of content key and value are "ateji". Since it's a
+  // bloom filter, non-ateji words are sometimes mistakenly classified as ateji,
+  // resulting in passing on the right collocations, though the possibility is
+  // very low (0.001% by default).
+  scoped_ptr<SuppressionFilter> suppression_filter_;
 };
 }  // namespace mozc
 

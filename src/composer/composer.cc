@@ -31,6 +31,7 @@
 
 #include "composer/composer.h"
 
+#include "base/logging.h"
 #include "base/singleton.h"
 #include "base/util.h"
 #include "composer/internal/composition.h"
@@ -38,15 +39,17 @@
 #include "composer/internal/mode_switching_handler.h"
 #include "composer/internal/transliterators_ja.h"
 #include "composer/table.h"
+#include "config/character_form_manager.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
-#include "converter/character_form_manager.h"
 #include "session/commands.pb.h"
 #include "session/key_event_util.h"
 #include "session/request_handler.h"
 
 namespace mozc {
 namespace composer {
+
+using ::mozc::config::CharacterFormManager;
 
 namespace {
 
@@ -89,7 +92,7 @@ const TransliteratorInterface *GetTransliterator(
   return kNullTransliterator;  // Just in case
 }
 
-const transliteration::TransliterationType GetTransliterationType(
+transliteration::TransliterationType GetTransliterationType(
     const TransliteratorInterface *transliterator,
     const transliteration::TransliterationType default_type) {
   if (transliterator == TransliteratorsJa::GetHiraganaTransliterator()) {
@@ -191,7 +194,7 @@ transliteration::TransliterationType GetTransliterationTypeFromCompositionMode(
 }  // namespace
 
 static const size_t kMaxPreeditLength = 256;
-Composer::Composer()
+Composer::Composer(const Table *table, const commands::Request &request)
     : position_(0),
       is_new_input_(true),
       input_mode_(transliteration::HIRAGANA),
@@ -199,10 +202,11 @@ Composer::Composer()
       comeback_input_mode_(transliteration::HIRAGANA),
       input_field_type_(commands::SessionCommand::NORMAL),
       shifted_sequence_count_(0),
-      composition_(new Composition(NULL)),
+      composition_(new Composition(table)),
       max_length_(kMaxPreeditLength) {
   SetInputMode(transliteration::HIRAGANA);
   Reset();
+  request_.CopyFrom(request);
 }
 
 Composer::~Composer() {}
@@ -229,6 +233,10 @@ void Composer::SetTable(const Table *table) {
   composition_->SetTable(table);
 }
 
+void Composer::SetRequest(const commands::Request &request) {
+  request_.CopyFrom(request);
+}
+
 void Composer::SetInputMode(transliteration::TransliterationType mode) {
   comeback_input_mode_ = mode;
   input_mode_ = mode;
@@ -249,7 +257,7 @@ void Composer::SetTemporaryInputMode(
 
 void Composer::UpdateInputMode() {
   if (position_ != 0 &&
-      GET_REQUEST(update_input_mode_from_surrounding_text)) {
+      request_.update_input_mode_from_surrounding_text()) {
     const TransliteratorInterface *current_t12r =
         composition_->GetTransliterator(position_);
     if (position_ == composition_->GetLength() ||
@@ -443,9 +451,9 @@ bool Composer::InsertCharacterKeyEvent(const commands::KeyEvent &key) {
     }
   }
 
+  // If only SHIFT is pressed, this is used to revert back to the
+  // previous input mode.
   if (!key.has_key_code()) {
-    // If only SHIFT is pressed, this is used to revert back to the
-    // previous input mode.
     for (size_t i = 0; key.modifier_keys_size(); ++i) {
       if (key.modifier_keys(i) == commands::KeyEvent::SHIFT) {
         // TODO(komatsu): Enable to customize the behavior.
@@ -453,18 +461,18 @@ bool Composer::InsertCharacterKeyEvent(const commands::KeyEvent &key) {
         return true;
       }
     }
-    LOG(WARNING) << "key_code is empty";
-    return false;
   }
 
-  const uint32 key_code = key.key_code();
-  if ((key_code >> 8) > 0) {
-    LOG(ERROR) << "key_code is not ASCII: " << key_code;
+  // Fill input representing user's raw input.
+  string input;
+  if (key.has_key_code()) {
+    Util::UCS4ToUTF8(key.key_code(), &input);
+  } else if (key.has_key_string()) {
+    input = key.key_string();
+  } else {
+    LOG(WARNING) << "input is empty";
     return false;
   }
-  const char key_char = static_cast<char>(key_code);
-  char input[2] = " ";
-  input[0] = key_char;
 
   if (key.has_key_string()) {
     if (key.input_style() == commands::KeyEvent::AS_IS ||
@@ -697,6 +705,18 @@ void Composer::GetQueryForPrediction(string *output) const {
   string asis_query;
   composition_->GetStringWithTrimMode(ASIS, &asis_query);
 
+  switch (input_mode_) {
+    case transliteration::HALF_ASCII: {
+      output->assign(asis_query);
+      return;
+    }
+    case transliteration::FULL_ASCII: {
+      Util::FullWidthAsciiToHalfWidthAscii(asis_query, output);
+      return;
+    }
+    default: {}
+  }
+
   string trimed_query;
   composition_->GetStringWithTrimMode(TRIM, &trimed_query);
 
@@ -717,6 +737,16 @@ void Composer::GetQueriesForPrediction(
   DCHECK(base);
   DCHECK(expanded);
   DCHECK(composition_.get());
+  // In case of the Latin input modes, we don't perform expansion.
+  switch (input_mode_) {
+    case transliteration::HALF_ASCII:
+    case transliteration::FULL_ASCII: {
+      GetQueryForPrediction(base);
+      expanded->clear();
+      return;
+    }
+    default: {}
+  }
   composition_->GetExpandedStrings(base, expanded);
 }
 
@@ -1070,6 +1100,8 @@ void Composer::CopyFrom(const Composer &src) {
   max_length_ = src.max_length_;
 
   composition_.reset(src.composition_->Clone());
+
+  request_.CopyFrom(src.request_);
 }
 
 bool Composer::is_new_input() const {

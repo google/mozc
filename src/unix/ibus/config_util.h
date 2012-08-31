@@ -32,13 +32,12 @@
 #ifndef MOZC_UNIX_IBUS_CONFIG_UTIL_H_
 #define MOZC_UNIX_IBUS_CONFIG_UTIL_H_
 
-#include <ibus.h>
-
 #include <map>
 #include <string>
 
 #include "base/base.h"
 #include "base/protobuf/message.h"
+#include "unix/ibus/ibus_header.h"
 
 namespace mozc {
 namespace ibus {

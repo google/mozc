@@ -36,8 +36,8 @@
 #include <QtGui/QSplitterHandle>
 #include <QtGui/QSplitter>
 
+#include "base/base.h"
 #include "gui/dictionary_tool/ui_dictionary_tool.h"
-#include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_importer.h"
 
 namespace mozc {
@@ -46,7 +46,11 @@ class UserPOSInterface;
 
 namespace client {
 class ClientInterface;
-}
+}  // namespace client
+
+namespace user_dictionary {
+class UserDictionarySession;
+}  // namespace user_dictionary
 
 namespace gui {
 
@@ -189,7 +193,7 @@ class DictionaryTool : public QMainWindow,
 
   ImportDialog *import_dialog_;
   FindDialog   *find_dialog_;
-  scoped_ptr<UserDictionaryStorage> storage_;
+  scoped_ptr<mozc::user_dictionary::UserDictionarySession> session_;
 
   // ID of current selected dictionary. This needs to be maintained
   // separate from selection on the list widget because data is saved

@@ -54,6 +54,17 @@
       ],
     },
     {
+      'target_name': 'install_calculator_test_data',
+      'type': 'none',
+      'variables': {
+        'test_data': [
+          '../../<(test_data_subdir)/testset.txt',
+        ],
+        'test_data_subdir': 'data/test/calculator',
+      },
+      'includes': [ '../../gyp/install_testdata.gypi' ],
+    },
+    {
       'target_name': 'calculator_test',
       'type': 'executable',
       'sources': [
@@ -62,15 +73,11 @@
       'dependencies': [
         '../../testing/testing.gyp:gtest_main',
         'calculator',
+        'install_calculator_test_data',
       ],
       'variables': {
         'test_size': 'small',
-        'test_data': [
-          '../../<(test_data_subdir)/testset.txt',
-        ],
-        'test_data_subdir': 'data/test/calculator',
       },
-      'includes': [ '../../gyp/install_testdata.gypi' ],
     },
     # Test cases meta target: this target is referred from gyp/tests.gyp
     {

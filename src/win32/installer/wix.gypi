@@ -140,12 +140,12 @@
         '-dCustomActions64Path=<(mozc_ca64_path)',
         '-dDocumentsDir=<(document_dir)',
         '<@(additional_args)',
-        # we do not use '-o <@(_outputs)' because it causes an error.
-        '"-o <@(_outputs)"',
+        '-o', '<@(_outputs)',
         # We do not use '<@(_inputs)' here because it contains some
         # input files just for peoper rebiuld condition.
         '<(wxs_file)',
       ],
+      'msvs_cygwin_shell': 0,
       'message': 'candle is generating <@(_outputs)',
     },
     {
@@ -173,12 +173,12 @@
         # We intentionally remove *.ime from system folders as a part
         # of uninstallation.
         '-sice:ICE09',
-        # we do not use '-o <@(_outputs)' because it causes an error.
-        '"-o <@(_outputs)"',
+        '-o', '<@(_outputs)',
         # We do not use '<@(_inputs)' here because it contains some
         # input files just for peoper rebiuld condition.
         '<(wixobj_file)',
       ],
+      'msvs_cygwin_shell': 0,
       'message': 'light is generating <@(_outputs)',
     },
   ],

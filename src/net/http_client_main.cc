@@ -29,8 +29,8 @@
 
 #include <string>
 #include <iostream>
-#include <fstream>
 #include "base/base.h"
+#include "base/file_stream.h"
 #include "base/mmap.h"
 #include "net/http_client.h"
 #include "net/proxy_manager.h"
@@ -58,47 +58,37 @@ int main(int argc, char **argv) {
     mozc::ProxyManager::SetProxyManager(&dummy_proxy);
   }
 
-  const char *post_data = NULL;
-  size_t post_size = 0;
-
-  if (!FLAGS_post_data.empty()) {
-    post_data = FLAGS_post_data.data();
-    post_size = FLAGS_post_data.size();
-  } else if (!FLAGS_post_data_file.empty()) {
-    mozc::Mmap<char> mmap;
-    CHECK(mmap.Open(FLAGS_post_data_file.c_str()));
-    post_data = mmap.begin();
-    post_size = mmap.GetFileSize();
+  if (!FLAGS_post_data_file.empty()) {
+    char buffer[2048];
+    mozc::InputFileStream ifs(FLAGS_post_data_file.c_str(),
+                              ios::in | ios::binary);
+    FLAGS_post_data = "";
+    do {
+      ifs.read(buffer, sizeof(buffer));
+      FLAGS_post_data.append(buffer);
+    } while (!ifs.eof());
   }
 
-  if (FLAGS_output.empty()) {
-    bool ret = false;
-    string output;
-    if (FLAGS_method == "GET") {
-      ret = mozc::HTTPClient::Get(FLAGS_url, option, &output);
-    } else if (FLAGS_method == "HEAD") {
-      ret = mozc::HTTPClient::Head(FLAGS_url, option, &output);
-    } else if (FLAGS_method == "POST") {
-      ret = mozc::HTTPClient::Post(FLAGS_url,
-                                   post_data, post_size,
-                                   option, &output);
-    }
+  bool ret = false;
+  string output;
+  if (FLAGS_method == "GET") {
+    ret = mozc::HTTPClient::Get(FLAGS_url, option, &output);
+  } else if (FLAGS_method == "HEAD") {
+    ret = mozc::HTTPClient::Head(FLAGS_url, option, &output);
+  } else if (FLAGS_method == "POST") {
+    ret = mozc::HTTPClient::Post(FLAGS_url, FLAGS_post_data, option, &output);
+  }
 
+  std::cout << (ret ? "Request succeeded" : "Request failed") << std::endl;
+  if (FLAGS_output.empty()) {
+    // Do not output if the request failed not to break your terminal.
     if (ret) {
       std::cout << output << std::endl;
     }
   } else {
-    ofstream output(FLAGS_output.c_str(), ios::out | ios::binary);
-    bool ret = false;
-    if (FLAGS_method == "GET") {
-      ret = mozc::HTTPClient::Get(FLAGS_url, option, &output);
-    } else if (FLAGS_method == "HEAD") {
-      ret = mozc::HTTPClient::Head(FLAGS_url, option, &output);
-    } else if (FLAGS_method == "POST") {
-      ret = mozc::HTTPClient::Post(FLAGS_url,
-                                   post_data, post_size,
-                                   option, &output);
-    }
+    mozc::OutputFileStream ofs(FLAGS_output.c_str(), ios::out | ios::binary);
+    // Output even if the request failed.
+    ofs << output << std::endl;
   }
 
   return 0;

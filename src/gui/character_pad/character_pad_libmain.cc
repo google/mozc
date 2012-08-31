@@ -45,11 +45,14 @@
 #include "gui/character_pad/windows_selection_handler.h"
 
 namespace {
+
+#ifdef OS_WINDOWS
 void InstallStyleSheet(const string &style_sheet) {
   QFile file(style_sheet.c_str());
   file.open(QFile::ReadOnly);
   qApp->setStyleSheet(QLatin1String(file.readAll()));
 }
+#endif  // OS_WINDOWS
 
 enum {
   CHARACTER_PALETTE,

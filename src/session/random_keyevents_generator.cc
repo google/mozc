@@ -30,8 +30,10 @@
 #include "session/random_keyevents_generator.h"
 
 #include <string>
+#include <vector>
 
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/mutex.h"
 #include "base/util.h"
 
@@ -88,7 +90,8 @@ const commands::KeyEvent::SpecialKey kSpecialKeys[] = {
   commands::KeyEvent::SUBTRACT,
   commands::KeyEvent::DECIMAL,
   commands::KeyEvent::DIVIDE,
-  commands::KeyEvent::EQUALS
+  commands::KeyEvent::EQUALS,
+  commands::KeyEvent::COMMA,
 };
 
 uint32 GetRandomAsciiKey() {

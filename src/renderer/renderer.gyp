@@ -354,6 +354,17 @@
           'variables': {
             'test_size': 'small',
           },
+          # Use IPAex font, which contains IVS characters for b/2876066
+          'copies': [
+            {
+              'files': [
+                '<(DEPTH)/third_party/ipa_font/ipaexg.ttf',
+                '<(DEPTH)/third_party/ipa_font/ipaexm.ttf',
+              ],
+              # Note $(TargetDir) is specific to Visual Studio.
+              'destination': '$(TargetDir)/data',
+            },
+          ],
         },
         {
           'target_name': 'mozc_renderer',
@@ -411,7 +422,7 @@
             'mac/mac_view_util.mm',
           ],
           'mac_bundle_resources': [
-            '../data/images/mac/candidate_window_logo.png',
+            '../data/images/mac/candidate_window_logo.tiff',
             '../data/images/mac/product_icon.icns',
           ],
           'dependencies': [

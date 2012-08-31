@@ -30,7 +30,9 @@
 #include "dictionary/dictionary_impl.h"
 
 #include <string>
+
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
@@ -40,6 +42,7 @@
 #include "dictionary/suppression_dictionary.h"
 
 namespace mozc {
+namespace dictionary {
 
 DictionaryImpl::DictionaryImpl(
     const DictionaryInterface *system_dictionary,
@@ -90,10 +93,14 @@ Node *DictionaryImpl::LookupPrefixWithLimit(
   return LookupInternal(str, size, PREFIX, limit, allocator);
 }
 
-Node *DictionaryImpl::LookupPrefix(
-    const char *str, int size,
-    NodeAllocatorInterface *allocator) const {
+Node *DictionaryImpl::LookupPrefix(const char *str, int size,
+                                   NodeAllocatorInterface *allocator) const {
   return LookupInternal(str, size, PREFIX, Limit(), allocator);
+}
+
+Node *DictionaryImpl::LookupExact(const char *str, int size,
+                                  NodeAllocatorInterface *allocator) const {
+  return LookupInternal(str, size, EXACT, Limit(), allocator);
 }
 
 Node *DictionaryImpl::LookupReverse(const char *str, int size,
@@ -173,16 +180,23 @@ Node *DictionaryImpl::LookupInternal(const char *str, int size,
   for (size_t i = 0; i < dics_.size(); ++i) {
     Node *nodes = NULL;
     switch (type) {
-      case PREDICTIVE:
+      case PREDICTIVE: {
         nodes = dics_[i]->LookupPredictiveWithLimit(
             str, size, limit, allocator);
         break;
-      case PREFIX:
+      }
+      case PREFIX: {
         nodes = dics_[i]->LookupPrefixWithLimit(str, size, limit, allocator);
         break;
-      case REVERSE:
+      }
+      case REVERSE: {
         nodes = dics_[i]->LookupReverse(str, size, allocator);
         break;
+      }
+      case EXACT: {
+        nodes = dics_[i]->LookupExact(str, size, allocator);
+        break;
+      }
     }
     if (head == NULL) {
       head = nodes;
@@ -201,4 +215,5 @@ Node *DictionaryImpl::LookupInternal(const char *str, int size,
   return head;
 }
 
+}  // namespace dictionary
 }  // namespace mozc

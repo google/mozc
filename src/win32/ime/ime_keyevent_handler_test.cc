@@ -36,7 +36,7 @@
 #include "base/scoped_ptr.h"
 #include "base/util.h"
 #include "base/version.h"
-#include "client/client.h"
+#include "client/client_interface.h"
 #include "config/config_handler.h"
 #include "ipc/ipc_mock.h"
 #include "session/commands.pb.h"
@@ -45,10 +45,12 @@
 #include "testing/base/public/gunit.h"
 #include "win32/ime/ime_keyboard.h"
 #include "win32/ime/ime_keyevent_handler.h"
+#include "win32/ime/ime_state.h"
 
 namespace mozc {
 namespace win32 {
 namespace {
+
 const BYTE kPressed = 0x80;
 const BYTE kToggled = 0x01;
 LPARAM CreateLParam(uint16 repeat_count,
@@ -234,7 +236,8 @@ class MockState {
   TestServerLauncher *launcher_;
   DISALLOW_COPY_AND_ASSIGN(MockState);
 };
-}  // anonymous namespace
+
+}  // namespace
 
 class ImeKeyEventHandlerTest : public testing::Test {
  public:

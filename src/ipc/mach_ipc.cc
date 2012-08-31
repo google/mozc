@@ -30,6 +30,8 @@
 // The IPC implementation using core Mach APIs.
 #ifdef OS_MACOSX
 
+#include "ipc/ipc.h"
+
 #include <map>
 #include <vector>
 
@@ -37,10 +39,9 @@
 #include <mach/mach.h>
 #include <servers/bootstrap.h>
 
-#include "ipc/ipc.h"
-
-#include "base/singleton.h"
 #include "base/mac_util.h"
+#include "base/singleton.h"
+#include "base/thread.h"
 #include "ipc/ipc_path_manager.h"
 
 namespace mozc {
@@ -292,16 +293,16 @@ IPCClient::IPCClient(const string &name)
   Init(name, "");
 }
 
-IPCClient::IPCClient(const string &name, const string &serverPath)
+IPCClient::IPCClient(const string &name, const string &server_path)
     : name_(name), mach_port_manager_(NULL), ipc_path_manager_(NULL) {
-  Init(name, serverPath);
+  Init(name, server_path);
 }
 
 IPCClient::~IPCClient() {
   // Do nothing
 }
 
-void IPCClient::Init(const string &name, const string &serverPath) {
+void IPCClient::Init(const string &name, const string & /*server_path*/) {
   ipc_path_manager_ = IPCPathManager::GetIPCPathManager(name);
   if (!ipc_path_manager_->LoadPathName()) {
     LOG(ERROR) << "Cannot load IPC path name";
@@ -566,6 +567,11 @@ void IPCServer::Loop() {
     }
   }
 }
+
+void IPCServer::Terminate() {
+  server_thread_->Terminate();
+}
+
 }  // namespace mozc
 
 #endif  // OS_MACOSX

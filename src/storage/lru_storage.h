@@ -32,17 +32,21 @@
 
 #include <map>
 #include <string>
-#include "base/base.h"
+#include <vector>
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 
 namespace mozc {
 
-template <class T> class Mmap;
+class Mmap;
 
-class LRUList;
-struct LRUList_Node;
+namespace storage {
 
 class LRUStorage {
  public:
+  LRUStorage();
+  ~LRUStorage();
+
   bool Open(const char *filename);
   void Close();
 
@@ -50,9 +54,9 @@ class LRUStorage {
   // If the file is broken or cannot open, tries to recreate
   // new file
   bool OpenOrCreate(const char *filename,
-                    size_t value_size,
-                    size_t size,
-                    uint32 seed);
+                    size_t new_value_size,
+                    size_t new_size,
+                    uint32 new_seed);
 
   // Lookup key
   const char *Lookup(const string &key,
@@ -119,11 +123,10 @@ class LRUStorage {
                                 size_t value_size,
                                 size_t size,
                                 uint32 seed);
-
-  LRUStorage();
-  virtual ~LRUStorage();
-
  private:
+  class LRUList;
+  class Node;
+
   // load from memory buffer
   bool Open(char *ptr, size_t ptr_size);
 
@@ -134,10 +137,14 @@ class LRUStorage {
   char *begin_;
   char *end_;
   string filename_;
-  map<uint64, LRUList_Node *> map_;
+  map<uint64, Node *> map_;
   scoped_ptr<LRUList> lru_list_;
-  scoped_ptr<Mmap<char> > mmap_;
+  scoped_ptr<Mmap> mmap_;
+
+  DISALLOW_COPY_AND_ASSIGN(LRUStorage);
 };
-}
+
+}  // namespace storage
+}  // namespace mozc
 
 #endif  // MOZC_STORAGE_LRU_STORAGE_H_

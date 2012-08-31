@@ -34,7 +34,7 @@
 #include <vector>
 #include <string>
 #include "base/base.h"
-#include "base/util.h"
+#include "base/number_util.h"
 #include "converter/lattice.h"
 
 namespace mozc {
@@ -123,7 +123,7 @@ class Segment {
 
     // Candidate style. This is not a bit-field.
     // The style is defined in enum |Style|.
-    Util::NumberString::Style style;
+    NumberUtil::NumberString::Style style;
 
     // Command of this candidate. This is not a bit-field.
     // The style is defined in enum |Command|.
@@ -146,13 +146,13 @@ class Segment {
       rid = 0;
       usage_id = 0;
       attributes = 0;
-      style = Util::NumberString::DEFAULT_STYLE;
+      style = NumberUtil::NumberString::DEFAULT_STYLE;
       command = DEFAULT_COMMAND;
     }
 
     Candidate() : cost(0), wcost(0), structure_cost(0),
                   lid(0), rid(0), attributes(0),
-                  style(Util::NumberString::DEFAULT_STYLE),
+                  style(NumberUtil::NumberString::DEFAULT_STYLE),
                   command(DEFAULT_COMMAND) {}
 
     // return functional key
@@ -168,7 +168,7 @@ class Segment {
     void CopyFrom(const Candidate &src);
   };
 
-  const SegmentType segment_type() const;
+  SegmentType segment_type() const;
   SegmentType *mutable_segment_type();
   void set_segment_type(const SegmentType &segment_type);
 
@@ -390,6 +390,6 @@ class Segments {
 
   DISALLOW_COPY_AND_ASSIGN(Segments);
 };
-}
+}  // namespace mozc
 
 #endif  // MOZC_CONVERTER_SEGMENTS_H_

@@ -27,27 +27,37 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "converter/converter.h"
+
 #include <string>
 #include <vector>
+
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/singleton.h"
 #include "base/util.h"
 #include "composer/composer.h"
 #include "composer/table.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
-#include "converter/converter.h"
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/node_allocator.h"
-#include "converter/segmenter.h"
 #include "converter/segments.h"
 #include "converter/user_data_manager_interface.h"
+#include "data_manager/testing/mock_data_manager.h"
 #include "data_manager/user_pos_manager.h"
+#include "dictionary/dictionary_impl.h"
+#include "dictionary/dictionary_mock.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suffix_dictionary.h"
 #include "dictionary/suppression_dictionary.h"
+#include "dictionary/user_dictionary_stub.h"
+#include "engine/engine.h"
+#include "engine/engine_factory.h"
+#include "engine/engine_interface.h"
+#include "engine/mock_data_engine_factory.h"
 #include "prediction/dictionary_predictor.h"
 #include "prediction/predictor.h"
 #include "prediction/user_history_predictor.h"
@@ -58,30 +68,42 @@
 #include "testing/base/public/gunit.h"
 #include "transliteration/transliteration.h"
 
-#ifdef MOZC_USE_SEPARATE_CONNECTION_DATA
-#include "converter/connection_data_injected_environment.h"
-namespace {
-const ::testing::Environment *kConnectionDataInjectedEnvironment =
-    ::testing::AddGlobalTestEnvironment(
-        new ::mozc::ConnectionDataInjectedEnvironment());
-}  // namespace
-#endif  // MOZC_USE_SEPARATE_CONNECTION_DATA
-
-#ifdef MOZC_USE_SEPARATE_DICTIONARY
-#include "dictionary/dictionary_data_injected_environment.h"
-namespace {
-const ::testing::Environment *kDictionaryDataInjectedEnvironment =
-    ::testing::AddGlobalTestEnvironment(
-        new ::mozc::DictionaryDataInjectedEnvironment());
-}  // namespace
-#endif  // MOZC_USE_SEPARATE_DICTIONARY
-
 DECLARE_string(test_tmpdir);
 
 namespace mozc {
 
-class ConverterTest : public testing::Test {
+using mozc::dictionary::DictionaryImpl;
+
+namespace {
+class StubPredictor : public PredictorInterface {
  public:
+  StubPredictor() : predictor_name_("StubPredictor") {}
+
+  virtual bool Predict(Segments *segments) const {
+    return true;
+  };
+
+  virtual const string &GetPredictorName() const {
+    return predictor_name_;
+  };
+
+ private:
+  const string predictor_name_;
+};
+
+class StubRewriter : public RewriterInterface {
+  bool Rewrite(const ConversionRequest &request, Segments *segments) const {
+    return true;
+  };
+};
+}  // namespace
+
+class ConverterTest : public ::testing::Test {
+ protected:
+  // Workaround for C2512 error (no default appropriate constructor) on MSVS.
+  ConverterTest() {}
+  virtual ~ConverterTest() {}
+
   virtual void SetUp() {
     prev_preference_.CopyFrom(commands::RequestHandler::GetRequest());
 
@@ -99,19 +121,71 @@ class ConverterTest : public testing::Test {
     config::Config config;
     config::ConfigHandler::GetDefaultConfig(&config);
     config::ConfigHandler::SetConfig(config);
-    SuffixDictionaryFactory::SetSuffixDictionary(NULL);
+  }
+
+  // This struct holds resources used by converter.
+  struct ConverterAndData {
+    scoped_ptr<DictionaryInterface> user_dictionary;
+    scoped_ptr<SuppressionDictionary> suppression_dictionary;
+    scoped_ptr<DictionaryInterface> dictionary;
+    scoped_ptr<ImmutableConverterInterface> immutable_converter;
+    scoped_ptr<ConverterImpl> converter;
+  };
+
+  ConverterAndData *CreateStubbedConverterAndData() {
+    ConverterAndData *ret = new ConverterAndData;
+
+    testing::MockDataManager data_manager;
+    ret->user_dictionary.reset(new UserDictionaryStub);
+    ret->suppression_dictionary.reset(new SuppressionDictionary);
+    ret->dictionary.reset(
+        new DictionaryImpl(data_manager.CreateSystemDictionary(),
+                           data_manager.CreateValueDictionary(),
+                           ret->user_dictionary.get(),
+                           ret->suppression_dictionary.get(),
+                           data_manager.GetPOSMatcher()));
+    ret->immutable_converter.reset(
+        new ImmutableConverterImpl(ret->dictionary.get(),
+                                   data_manager.GetSuffixDictionary(),
+                                   ret->suppression_dictionary.get(),
+                                   data_manager.GetConnector(),
+                                   data_manager.GetSegmenter(),
+                                   data_manager.GetPOSMatcher(),
+                                   data_manager.GetPosGroup()));
+    ret->converter.reset(new ConverterImpl);
+    ret->converter->Init(data_manager.GetPOSMatcher(),
+                         data_manager.GetPosGroup(),
+                         new StubPredictor,
+                         new StubRewriter,
+                         ret->immutable_converter.get());
+    return ret;
   }
 
 
+  bool FindCandidateByValue(const string &value, const Segment &segment) const {
+    for (size_t i = 0; i < segment.candidates_size(); ++i) {
+      if (segment.candidate(i).value == value) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  const commands::Request &default_request() const {
+    return default_request_;
+  }
+
  private:
   commands::Request prev_preference_;
+  const commands::Request default_request_;
 };
 
 // test for issue:2209644
 // just checking whether this causes segmentation fault or not.
 // TODO(toshiyuki): make dictionary mock and test strictly.
 TEST_F(ConverterTest, CanConvertTest) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
+  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
   {
     Segments segments;
@@ -131,7 +205,9 @@ namespace {
 string ContextAwareConvert(const string &first_key,
                            const string &first_value,
                            const string &second_key) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
+  // The caller of this function requires dictionary of full-size.
+  scoped_ptr<EngineInterface> engine(EngineFactory::Create());
+  ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
   converter->GetUserDataManager()->ClearUserHistory();
 
@@ -232,7 +308,8 @@ TEST_F(ConverterTest, ContextAwareConversionTest) {
 }
 
 TEST_F(ConverterTest, CommitSegmentValue) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
+  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
   Segments segments;
 
@@ -283,7 +360,8 @@ TEST_F(ConverterTest, CommitSegmentValue) {
 }
 
 TEST_F(ConverterTest, CommitPartialSuggestionSegmentValue) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
+  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
   Segments segments;
 
@@ -328,7 +406,8 @@ TEST_F(ConverterTest, CommitPartialSuggestionSegmentValue) {
 }
 
 TEST_F(ConverterTest, CandidateKeyTest) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
+  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
   Segments segments;
   // "わたしは"
@@ -345,7 +424,9 @@ TEST_F(ConverterTest, CandidateKeyTest) {
 }
 
 TEST_F(ConverterTest, QueryOfDeathTest) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
+  scoped_ptr<EngineInterface> engine(EngineFactory::Create());
+  ConverterInterface *converter = engine->GetConverter();
+
   CHECK(converter);
   Segments segments;
   // "りゅきゅけmぽ"
@@ -359,7 +440,8 @@ TEST_F(ConverterTest, QueryOfDeathTest) {
 }
 
 TEST_F(ConverterTest, Regression3323108) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
+  scoped_ptr<EngineInterface> engine(EngineFactory::Create());
+  ConverterInterface *converter = engine->GetConverter();
   Segments segments;
 
   // "ここではきものをぬぐ"
@@ -382,7 +464,8 @@ TEST_F(ConverterTest, Regression3323108) {
 }
 
 TEST_F(ConverterTest, Regression3437022) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
+  scoped_ptr<EngineInterface> engine(EngineFactory::Create());
+  ConverterInterface *converter = engine->GetConverter();
   Segments segments;
 
   // "けいたい"
@@ -423,7 +506,7 @@ TEST_F(ConverterTest, Regression3437022) {
   // Add compound entry to suppression dictioanry
   segments.Clear();
 
-  SuppressionDictionary *dic = Singleton<SuppressionDictionary>::get();
+  SuppressionDictionary *dic = engine->GetSuppressionDictionary();
   dic->Lock();
   dic->AddEntry(kKey1 + kKey2, kValue1 + kValue2);
   dic->UnLock();
@@ -471,7 +554,9 @@ TEST_F(ConverterTest, CompletePOSIds) {
     "\xE3\x81\xAE\xE3\x81\xA7\xE3\x81\x99"
   };
 
-  scoped_ptr<ConverterImpl> converter(new ConverterImpl);
+  scoped_ptr<ConverterAndData> converter_and_data(
+      CreateStubbedConverterAndData());
+  ConverterImpl *converter = converter_and_data->converter.get();
   for (size_t i = 0; i < arraysize(kTestKeys); ++i) {
     Segments segments;
     segments.set_request_type(Segments::PREDICTION);
@@ -479,8 +564,7 @@ TEST_F(ConverterTest, CompletePOSIds) {
     seg->set_key(kTestKeys[i]);
     seg->set_segment_type(mozc::Segment::FREE);
     segments.set_max_prediction_candidates_size(20);
-    CHECK(ImmutableConverterFactory::GetImmutableConverter()->
-          Convert(&segments));
+    CHECK(converter_and_data->immutable_converter->Convert(&segments));
     const int lid = segments.segment(0).candidate(0).lid;
     const int rid = segments.segment(0).candidate(0).rid;
     Segment::Candidate candidate;
@@ -508,7 +592,9 @@ TEST_F(ConverterTest, CompletePOSIds) {
 }
 
 TEST_F(ConverterTest, SetupHistorySegmentsFromPrecedingText) {
-  scoped_ptr<ConverterImpl> converter(new ConverterImpl);
+  scoped_ptr<ConverterAndData> converter_and_data(
+      CreateStubbedConverterAndData());
+  ConverterImpl *converter = converter_and_data->converter.get();
 
   // Test for short preceding text.
   {
@@ -571,15 +657,15 @@ TEST_F(ConverterTest, SetupHistorySegmentsFromPrecedingText) {
 }
 
 TEST_F(ConverterTest, ConvertUsingPrecedingText_KikiIppatsu) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
+  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  ConverterInterface *converter = engine->GetConverter();
   mozc::composer::Table table;
   // To see preceding text helps conversion, consider the case where user
   // converts "いっぱつ".
   {
     // Without preceding text, test dictionary converts "いっぱつ" to "一発".
     Segments segments;
-    mozc::composer::Composer composer;
-    composer.SetTable(&table);
+    mozc::composer::Composer composer(&table, default_request());
     composer.InsertCharacter(
         "\xE3\x81\x84\xE3\x81\xA3\xE3\x81\xB1\xE3\x81\xA4");  // "いっぱつ"
     mozc::ConversionRequest request(&composer);
@@ -593,8 +679,7 @@ TEST_F(ConverterTest, ConvertUsingPrecedingText_KikiIppatsu) {
     // However, with preceding text "危機", test dictionary converts "いっぱつ"
     // to "一髪".
     Segments segments;
-    mozc::composer::Composer composer;
-    composer.SetTable(&table);
+    mozc::composer::Composer composer(&table, default_request());
     composer.InsertCharacter(
         "\xE3\x81\x84\xE3\x81\xA3\xE3\x81\xB1\xE3\x81\xA4");  // "いっぱつ"
     mozc::ConversionRequest request(&composer);
@@ -608,15 +693,17 @@ TEST_F(ConverterTest, ConvertUsingPrecedingText_KikiIppatsu) {
 }
 
 TEST_F(ConverterTest, ConvertUsingPrecedingText_Jyosushi) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
+  // TODO(noriyukit): This test requires the actual dictionary data. Rewrite the
+  // test with mock data.
+  scoped_ptr<EngineInterface> engine(EngineFactory::Create());
+  ConverterInterface *converter = engine->GetConverter();
   mozc::composer::Table table;
   // To see preceding text helps conversion after number characters, consider
   // the case where user converts "ひき".
   {
     // Without preceding text, test dictionary converts "ひき" to "引き".
     Segments segments;
-    mozc::composer::Composer composer;
-    composer.SetTable(&table);
+    mozc::composer::Composer composer(&table, default_request());
     composer.InsertCharacter("\xE3\x81\xB2\xE3\x81\x8D");  // "ひき"
     mozc::ConversionRequest request(&composer);
     converter->StartConversionForRequest(request, &segments);
@@ -629,8 +716,7 @@ TEST_F(ConverterTest, ConvertUsingPrecedingText_Jyosushi) {
     // However, if providing "猫が5" as preceding text, "ひき" is converted to
     // "匹" with test dictionary.
     Segments segments;
-    mozc::composer::Composer composer;
-    composer.SetTable(&table);
+    mozc::composer::Composer composer(&table, default_request());
     composer.InsertCharacter("\xE3\x81\xB2\xE3\x81\x8D");  // "ひき"
     mozc::ConversionRequest request(&composer);
     request.set_preceding_text("\xE7\x8C\xAB\xE3\x81\x8C\x35");  // "猫が5"
@@ -644,7 +730,8 @@ TEST_F(ConverterTest, ConvertUsingPrecedingText_Jyosushi) {
 
 TEST_F(ConverterTest, Regression3046266) {
   // Shouldn't correct nodes at the beginning of a sentence.
-  ConverterInterface *converter = ConverterFactory::GetConverter();
+  scoped_ptr<EngineInterface> engine(EngineFactory::Create());
+  ConverterInterface *converter = engine->GetConverter();
   Segments segments;
 
   // Can be any string that has "ん" at the end
@@ -676,7 +763,8 @@ TEST_F(ConverterTest, Regression3046266) {
 
 TEST_F(ConverterTest, Regression5502496) {
   // Make sure key correction works for the first word of a sentence.
-  ConverterInterface *converter = ConverterFactory::GetConverter();
+  scoped_ptr<EngineInterface> engine(EngineFactory::Create());
+  ConverterInterface *converter = engine->GetConverter();
   Segments segments;
 
   // "みんあ"
@@ -698,7 +786,8 @@ TEST_F(ConverterTest, Regression5502496) {
 }
 
 TEST_F(ConverterTest, EmoticonsAboveSymbols) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
+  scoped_ptr<EngineInterface> engine(EngineFactory::Create());
+  ConverterInterface *converter = engine->GetConverter();
   Segments segments;
 
   // "かおもじ"
@@ -733,7 +822,8 @@ TEST_F(ConverterTest, StartSuggestionForRequest) {
   input.set_mixed_conversion(true);
   commands::RequestHandler::SetRequest(input);
 
-  ConverterInterface *converter = ConverterFactory::GetConverter();
+  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
 
   // "し"
@@ -744,8 +834,7 @@ TEST_F(ConverterTest, StartSuggestionForRequest) {
   table.AddRule("shi", kShi, "");
 
   {
-    composer::Composer composer;
-    composer.SetTable(&table);
+    composer::Composer composer(&table, default_request());
 
     composer.InsertCharacter("shi");
 
@@ -761,8 +850,7 @@ TEST_F(ConverterTest, StartSuggestionForRequest) {
   }
 
   {
-    composer::Composer composer;
-    composer.SetTable(&table);
+    composer::Composer composer(&table, default_request());
 
     composer.InsertCharacter("si");
 
@@ -779,7 +867,8 @@ TEST_F(ConverterTest, StartSuggestionForRequest) {
 }
 
 TEST_F(ConverterTest, StartPartialPrediction) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
+  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
   Segments segments;
   // "わたしは"
@@ -796,7 +885,8 @@ TEST_F(ConverterTest, StartPartialPrediction) {
 }
 
 TEST_F(ConverterTest, StartPartialSuggestion) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
+  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
   Segments segments;
   // "わたしは"
@@ -846,35 +936,14 @@ TEST_F(ConverterTest, Predict_SetKey) {
       {Segments::PARTIAL_SUGGESTION, kPredictionKey, true},
   };
 
-  class StubPredictor : public PredictorInterface {
-   public:
-    StubPredictor() : predictor_name_("StubPredictor") {}
-
-    virtual bool Predict(Segments *segments) const {
-      return true;
-    };
-
-    virtual const string &GetPredictorName() const {
-      return predictor_name_;
-    };
-
-   private:
-    const string predictor_name_;
-  };
-
-  class StubRewriter : public RewriterInterface {
-    bool Rewrite(const ConversionRequest &request, Segments *segments) const {
-      return true;
-    };
-  };
-
-  scoped_ptr<ConverterImpl> converter(new ConverterImpl(new StubPredictor,
-                                                        new StubRewriter));
-  CHECK(converter.get());
+  scoped_ptr<ConverterAndData> converter_and_data(
+      CreateStubbedConverterAndData());
+  ConverterImpl *converter = converter_and_data->converter.get();
+  ASSERT_TRUE(converter);
 
   // Note that TearDown method will reset above stubs.
 
-  for (size_t i = 0; i < ARRAYSIZE(test_data_list); ++i) {
+  for (size_t i = 0; i < ARRAYSIZE_UNSAFE(test_data_list); ++i) {
     const TestData &test_data = test_data_list[i];
     Segments segments;
     segments.set_request_type(test_data.request_type_);
@@ -898,15 +967,15 @@ TEST_F(ConverterTest, Predict_SetKey) {
 }
 
 TEST_F(ConverterTest, StartPredictionForRequest_KikiIppatsu) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
+  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  ConverterInterface *converter = engine->GetConverter();
   mozc::composer::Table table;
   // To see preceding text helps prediction, consider the case where user
   // converts "いっぱつ".
   {
     // Without preceding text, test dictionary predicts "いっぱつ" to "一発".
     Segments segments;
-    mozc::composer::Composer composer;
-    composer.SetTable(&table);
+    mozc::composer::Composer composer(&table, default_request());
     composer.InsertCharacter(
         "\xE3\x81\x84\xE3\x81\xA3\xE3\x81\xB1\xE3\x81\xA4");  // "いっぱつ"
     mozc::ConversionRequest request(&composer);
@@ -920,8 +989,7 @@ TEST_F(ConverterTest, StartPredictionForRequest_KikiIppatsu) {
     // However, with preceding text "危機", test dictionary converts "いっぱつ"
     // to "一髪".
     Segments segments;
-    mozc::composer::Composer composer;
-    composer.SetTable(&table);
+    mozc::composer::Composer composer(&table, default_request());
     composer.InsertCharacter(
         "\xE3\x81\x84\xE3\x81\xA3\xE3\x81\xB1\xE3\x81\xA4");  // "いっぱつ"
     mozc::ConversionRequest request(&composer);
@@ -934,18 +1002,102 @@ TEST_F(ConverterTest, StartPredictionForRequest_KikiIppatsu) {
   }
 }
 
-// TODO(toshiyuki): Current test is dictionary data dependent and
-// we are not using preceding text for now. Make this enabled later.
+TEST_F(ConverterTest, VariantExpansionForSuggestion) {
+  // Create Converter with mock user dictioanry
+  testing::MockDataManager data_manager;
+  scoped_ptr<DictionaryMock> mock_user_dictioanry(new DictionaryMock);
+
+  mock_user_dictioanry->AddLookupPredictive(
+      // "てすと"
+      "\xe3\x81\xa6\xe3\x81\x99\xe3\x81\xa8",
+      // "てすと"
+      "\xe3\x81\xa6\xe3\x81\x99\xe3\x81\xa8",
+      "<>!?",
+      (Node::USER_DICTIONARY | Node::NO_VARIANTS_EXPANSION));
+  mock_user_dictioanry->AddLookupPrefix(
+      // "てすと"
+      "\xe3\x81\xa6\xe3\x81\x99\xe3\x81\xa8",
+      // "てすと"
+      "\xe3\x81\xa6\xe3\x81\x99\xe3\x81\xa8",
+      "<>!?",
+      (Node::USER_DICTIONARY | Node::NO_VARIANTS_EXPANSION));
+  scoped_ptr<SuppressionDictionary> suppression_dictionary(
+      new SuppressionDictionary);
+  scoped_ptr<DictionaryInterface> dictionary(
+      new DictionaryImpl(data_manager.CreateSystemDictionary(),
+                         data_manager.CreateValueDictionary(),
+                         mock_user_dictioanry.get(),
+                         suppression_dictionary.get(),
+                         data_manager.GetPOSMatcher()));
+  scoped_ptr<ImmutableConverterInterface> immutable_converter(
+      new ImmutableConverterImpl(dictionary.get(),
+                                 data_manager.GetSuffixDictionary(),
+                                 suppression_dictionary.get(),
+                                 data_manager.GetConnector(),
+                                 data_manager.GetSegmenter(),
+                                 data_manager.GetPOSMatcher(),
+                                 data_manager.GetPosGroup()));
+  scoped_ptr<ConverterImpl> converter(new ConverterImpl);
+  converter->Init(data_manager.GetPOSMatcher(),
+                  data_manager.GetPosGroup(),
+                  DefaultPredictor::CreateDefaultPredictor(
+                      new DictionaryPredictor(
+                          immutable_converter.get(),
+                          dictionary.get(),
+                          data_manager.GetSuffixDictionary(),
+                          &data_manager),
+                      new UserHistoryPredictor(dictionary.get(),
+                                               data_manager.GetPOSMatcher(),
+                                               suppression_dictionary.get()),
+                      NULL),
+                  new RewriterImpl(converter.get(), &data_manager),
+                  immutable_converter.get());
+
+  Segments segments;
+  {
+    // Dictionary suggestion
+    EXPECT_TRUE(converter->StartSuggestion(
+        &segments,
+        // "てすと"
+        "\xe3\x81\xa6\xe3\x81\x99\xe3\x81\xa8"));
+    EXPECT_EQ(1, segments.conversion_segments_size());
+    EXPECT_LE(1, segments.conversion_segment(0).candidates_size());
+    EXPECT_TRUE(FindCandidateByValue("<>!?", segments.conversion_segment(0)));
+    EXPECT_FALSE(FindCandidateByValue(
+        // "＜＞！？"
+        "\xef\xbc\x9c\xef\xbc\x9e\xef\xbc\x81\xef\xbc\x9f",
+        segments.conversion_segment(0)));
+  }
+  {
+    // Realtime conversion
+    segments.Clear();
+    EXPECT_TRUE(converter->StartSuggestion(
+        &segments,
+        // "てすとの"
+        "\xe3\x81\xa6\xe3\x81\x99\xe3\x81\xa8\xe3\x81\xae"));
+    EXPECT_EQ(1, segments.conversion_segments_size());
+    EXPECT_LE(1, segments.conversion_segment(0).candidates_size());
+    // "<>!?の"
+    EXPECT_TRUE(FindCandidateByValue("\x3c\x3e\x21\x3f\xe3\x81\xae",
+                                     segments.conversion_segment(0)));
+    EXPECT_FALSE(FindCandidateByValue(
+        // "＜＞！？の"
+        // "＜＞！？の"
+        "\xef\xbc\x9c\xef\xbc\x9e\xef\xbc\x81\xef\xbc\x9f\xe3\x81\xae",
+        segments.conversion_segment(0)));
+  }
+}
+
 TEST_F(ConverterTest, DISABLED_StartPredictionForRequest_Jyosushi) {
-  ConverterInterface *converter = ConverterFactory::GetConverter();
+  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  ConverterInterface *converter = engine->GetConverter();
   mozc::composer::Table table;
   // To see preceding text helps prediction after number characters, consider
   // the case where user converts "ひき".
   {
     // Without preceding text, test dictionary predicts "ひき" as "引換".
     Segments segments;
-    mozc::composer::Composer composer;
-    composer.SetTable(&table);
+    mozc::composer::Composer composer(&table, default_request());
     composer.InsertCharacter("\xE3\x81\xB2\xE3\x81\x8D");  // "ひき"
     mozc::ConversionRequest request(&composer);
     converter->StartPredictionForRequest(request, &segments);
@@ -958,8 +1110,7 @@ TEST_F(ConverterTest, DISABLED_StartPredictionForRequest_Jyosushi) {
     // However, if providing "猫が5" as preceding text, "匹" is predicted from
     // "ひき" with test dictionary.
     Segments segments;
-    mozc::composer::Composer composer;
-    composer.SetTable(&table);
+    mozc::composer::Composer composer(&table, default_request());
     composer.InsertCharacter("\xE3\x81\xB2\xE3\x81\x8D");  // "ひき"
     mozc::ConversionRequest request(&composer);
     request.set_preceding_text("\xE7\x8C\xAB\xE3\x81\x8C\x35");  // "猫が5"
@@ -969,11 +1120,5 @@ TEST_F(ConverterTest, DISABLED_StartPredictionForRequest_Jyosushi) {
     EXPECT_EQ("\xE5\x8C\xB9",  // "匹"
               segments.conversion_segment(0).candidate(0).value);
   }
-}
-
-TEST_F(ConverterTest, DefaultPredictor) {
-  ConverterImpl converter;
-  PredictorInterface *default_predictor = converter.predictor_.get();
-  EXPECT_EQ("DefaultPredictor", default_predictor->GetPredictorName());
 }
 }  // namespace mozc

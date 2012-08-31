@@ -34,6 +34,7 @@
 #include "base/clock_mock.h"
 #include "base/file_stream.h"
 #include "base/freelist.h"
+#include "base/number_util.h"
 #include "base/util.h"
 #include "prediction/user_history_predictor.h"
 #include "sync/sync_util.h"
@@ -78,7 +79,7 @@ TEST_F(UserHistorySyncUtilTest, MergeEntry) {
   EXPECT_EQ(100, new_entry.last_access_time());
 
   // follow the value in |entry|.
-  EXPECT_EQ(false, new_entry.removed());
+  EXPECT_FALSE(new_entry.removed());
 
   {
     UserHistorySyncUtil::Entry a, b;
@@ -154,8 +155,8 @@ TEST_F(UserHistorySyncUtilTest, CreateUpdate) {
 
   for (int i = 0; i < 1000; ++i) {
     UserHistorySyncUtil::Entry *entry = history.add_entries();
-    entry->set_key("key" + Util::SimpleItoa(i));
-    entry->set_key("value" + Util::SimpleItoa(i));
+    entry->set_key("key" + NumberUtil::SimpleItoa(i));
+    entry->set_key("value" + NumberUtil::SimpleItoa(i));
     entry->set_last_access_time(static_cast<uint64>(i));
   }
 

@@ -43,7 +43,6 @@ The usage example is as follows.
                                  This function blocks main thread until all
                                  task is completed.
 TODO(nona): Adds unit test(hard to inject mock code due to multiprocessing)
-TODO(nona): Colorize the logging message
 """
 
 __author__ = "nona"
@@ -59,6 +58,8 @@ import subprocess
 import sys
 import tempfile
 import time
+
+from build_tools import util
 
 
 # TODO(team): Move this to build_tools.util
@@ -79,8 +80,9 @@ def _RmTreeOnError(function, path, info):
 
 
 # TODO(team): Move this to build_tools.util
-class PathDeleter():
+class PathDeleter(object):
   """A deleter to ensure that the given path object is certainly removed."""
+
   def __init__(self, path):
     """Stores the target path."""
     self._path = path
@@ -124,27 +126,30 @@ def _ExecuteTest((command, gtest_report_dir)):
   binary_filename = os.path.basename(binary)
   tmp_dir = tempfile.mkdtemp()
   with PathDeleter(tmp_dir):
-    xml_path = os.path.join(gtest_report_dir or tmp_dir,
-                            '%s.xml' % binary_filename)
+    tmp_xml_path = os.path.join(tmp_dir, '%s.xml' % binary_filename)
     # Due to incompatibility between the prefixes of internal and external,
     # testing libraries.
     test_command = command + ['--test_tmpdir=%s' % tmp_dir,
-                              '--gunit_output=xml:%s' % xml_path,
-                              '--gtest_output=xml:%s' % xml_path]
+                              '--gunit_output=xml:%s' % tmp_xml_path,
+                              '--gtest_output=xml:%s' % tmp_xml_path]
     try:
       proc = subprocess.Popen(test_command, stdout=subprocess.PIPE,
                               stderr=subprocess.STDOUT)
       (output, _) = proc.communicate()
-      result = proc.poll() == 0 and os.path.isfile(xml_path)
+      result = proc.poll() == 0 and os.path.isfile(tmp_xml_path)
+      if os.path.isfile(tmp_xml_path) and gtest_report_dir:
+        shutil.copy(tmp_xml_path, gtest_report_dir)
     except OSError:
       logging.fatal('Fail to execute %s', ' '.join(command))
       sys.exit(1)
 
   if result:
-    print '[ SUCCESS ] %s ' % binary
+    label = util.ColoredText('[ PASSED ]', logging.INFO)
+    logging.info('%s %s', label, binary)
   else:
-    print output
-    print '[ FAILED  ] %s ' % binary
+    label = util.ColoredText('[ FAILED ]', logging.ERROR)
+    logging.error('Failed. Detail output:\n%s', output)
+    logging.info('%s %s', label, binary)
 
   return {'command': command, 'result': result}
 

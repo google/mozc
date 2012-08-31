@@ -34,11 +34,13 @@
 #include <string>
 #include <vector>
 
+#include "base/base.h"
 #include "base/config_file_stream.h"
+#include "base/logging.h"
 #include "base/singleton.h"
 #include "base/util.h"
-#include "config/config_handler.h"
 #include "config/config.pb.h"
+#include "config/config_handler.h"
 #include "session/commands.pb.h"
 #include "session/internal/keymap.h"
 #include "session/key_event_util.h"

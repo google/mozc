@@ -39,8 +39,8 @@
 #include <vector>
 #include <stdlib.h>
 
+#include "base/number_util.h"
 #include "base/update_checker.h"
-#include "base/util.h"
 
 namespace mozc {
 namespace gui {
@@ -93,7 +93,7 @@ bool UpdateDialog::winEvent(MSG *message, long *result) {
         label_text = tr("Downloading.");
         label_text += " ";
         label_text +=
-            Util::SimpleItoa(static_cast<int>(message->lParam)).c_str();
+            NumberUtil::SimpleItoa(static_cast<int>(message->lParam)).c_str();
         label_text += "%";
         break;
       case UpdateInvoker::ON_WAITING_TO_INSTALL:

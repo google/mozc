@@ -30,7 +30,10 @@
 #include "rewriter/focus_candidate_rewriter.h"
 
 #include <string>
+
 #include "base/base.h"
+#include "base/logging.h"
+#include "base/number_util.h"
 #include "base/singleton.h"
 #include "base/util.h"
 #include "converter/segments.h"
@@ -77,7 +80,7 @@ bool IsValidSegment(const Segment &segment) {
 }
 
 bool IsNumberCandidate(const Segment::Candidate &candidate) {
-  return (candidate.style != Util::NumberString::DEFAULT_STYLE ||
+  return (candidate.style != NumberUtil::NumberString::DEFAULT_STYLE ||
           Util::GetScriptType(candidate.value) == Util::NUMBER);
 }
 
@@ -90,7 +93,7 @@ bool IsNumberSegment(const Segment &segment) {
 bool IsSameNumberType(const Segment::Candidate &candidate1,
                       const Segment::Candidate &candidate2) {
   if (candidate1.style == candidate2.style) {
-    if (candidate1.style == Util::NumberString::DEFAULT_STYLE) {
+    if (candidate1.style == NumberUtil::NumberString::DEFAULT_STYLE) {
       if (IsNumberCandidate(candidate1) && IsNumberCandidate(candidate2) &&
           Util::GetFormType(candidate1.value) ==
           Util::GetFormType(candidate2.value)) {

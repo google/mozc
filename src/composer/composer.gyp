@@ -46,9 +46,9 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../base/base.gyp:config_file_stream',
+        '../config/config.gyp:character_form_manager',
         '../config/config.gyp:config_handler',
         '../config/config.gyp:config_protocol',
-        '../converter/converter_base.gyp:character_form_manager',
         '../session/session_base.gyp:key_event_util',
         '../session/session_base.gyp:key_parser',
         '../session/session_base.gyp:request_handler',

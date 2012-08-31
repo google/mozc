@@ -32,16 +32,26 @@
 
 #include <string>
 
+#include "base/port.h"
+#include "base/scoped_ptr.h"
+
 namespace mozc {
+namespace storage {
+class ExistenceFilter;
+}  // namespace storage
 
 // Simple bloomfilter
 class SuggestionFilter {
  public:
-  static bool IsBadSuggestion(const string &text);
+  SuggestionFilter(const char *data, size_t size);
+  ~SuggestionFilter();
+
+  bool IsBadSuggestion(const string &text) const;
 
  private:
-  SuggestionFilter() {}
-  ~SuggestionFilter() {}
+  scoped_ptr<mozc::storage::ExistenceFilter> filter_;
+
+  DISALLOW_COPY_AND_ASSIGN(SuggestionFilter);
 };
 }  // namespace mozc
 

@@ -29,6 +29,7 @@
 
 #include "composer/internal/transliterators.h"
 
+#include "base/logging.h"
 #include "base/singleton.h"
 #include "base/util.h"
 

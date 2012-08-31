@@ -29,23 +29,36 @@
 
 #include "win32/ime/ime_deleter.h"
 
+#include <deque>
+#include <vector>
+
 #include "session/commands.pb.h"
 #include "win32/ime/ime_keyboard.h"
-#include "win32/ime/ime_keyevent_handler.h"
+#include "win32/ime/ime_state.h"
 
 namespace mozc {
 namespace win32 {
 
+class VKBackBasedDeleterQueue
+    : public deque<pair<VKBackBasedDeleter::DeletionWaitState,
+                        VKBackBasedDeleter::ClientAction> > {
+};
+
 VKBackBasedDeleter::VKBackBasedDeleter()
-    : keyboard_(Win32KeyboardInterface::CreateDefault()),
+    : wait_queue_(new VKBackBasedDeleterQueue),
+      keyboard_(Win32KeyboardInterface::CreateDefault()),
       pending_ime_state_(new ImeState()),
       pending_output_(new mozc::commands::Output()) {
 }
 
 VKBackBasedDeleter::VKBackBasedDeleter(Win32KeyboardInterface *keyboard_mock)
-    : keyboard_(keyboard_mock),
+    : wait_queue_(new VKBackBasedDeleterQueue),
+      keyboard_(keyboard_mock),
       pending_ime_state_(new ImeState()),
       pending_output_(new mozc::commands::Output()) {
+}
+
+VKBackBasedDeleter::~VKBackBasedDeleter() {
 }
 
 void VKBackBasedDeleter::BeginDeletion(int deletion_count,
@@ -53,7 +66,7 @@ void VKBackBasedDeleter::BeginDeletion(int deletion_count,
                                        const ImeState &ime_state) {
   vector<INPUT> inputs;
 
-  wait_queue_.clear();
+  wait_queue_->clear();
   *pending_ime_state_ = ImeState();
   pending_output_->Clear();
 
@@ -64,25 +77,25 @@ void VKBackBasedDeleter::BeginDeletion(int deletion_count,
   *pending_ime_state_ = ime_state;
   pending_output_->CopyFrom(output);
 
-  wait_queue_.push_back(make_pair(
+  wait_queue_->push_back(make_pair(
       WAIT_INITIAL_VK_BACK_TESTDOWN, SEND_KEY_TO_APPLICATION));
-  wait_queue_.push_back(make_pair(
+  wait_queue_->push_back(make_pair(
       WAIT_VK_BACK_TESTUP, SEND_KEY_TO_APPLICATION));
 
   for (int i = 1; i < deletion_count; ++i) {
-    wait_queue_.push_back(make_pair(
+    wait_queue_->push_back(make_pair(
         WAIT_VK_BACK_TESTDOWN, SEND_KEY_TO_APPLICATION));
-    wait_queue_.push_back(make_pair(
+    wait_queue_->push_back(make_pair(
         WAIT_VK_BACK_TESTUP, SEND_KEY_TO_APPLICATION));
   }
 
-  wait_queue_.push_back(make_pair(
+  wait_queue_->push_back(make_pair(
       WAIT_VK_BACK_TESTDOWN, CONSUME_KEY_BUT_NEVER_SEND_TO_SERVER));
-  wait_queue_.push_back(make_pair(
+  wait_queue_->push_back(make_pair(
       WAIT_VK_BACK_DOWN, APPLY_PENDING_STATUS));
-  wait_queue_.push_back(make_pair(
+  wait_queue_->push_back(make_pair(
       WAIT_VK_BACK_TESTUP, CONSUME_KEY_BUT_NEVER_SEND_TO_SERVER));
-  wait_queue_.push_back(make_pair(
+  wait_queue_->push_back(make_pair(
       WAIT_VK_BACK_UP,
       CALL_END_DELETION_BUT_NEVER_SEND_TO_SERVER));
 
@@ -116,10 +129,10 @@ VKBackBasedDeleter::ClientAction VKBackBasedDeleter::OnKeyEvent(
 
   // Hereafter, auto-deletion is ongoing.
   const pair<DeletionWaitState, ClientAction> next =
-      wait_queue_.front();
+      wait_queue_->front();
   if (next.first == WAIT_INITIAL_VK_BACK_TESTDOWN) {
     if ((vk == VK_BACK) && is_keydown && is_test_key) {
-      wait_queue_.pop_front();
+      wait_queue_->pop_front();
       return next.second;
     } else {
       // Do not pop front.
@@ -127,7 +140,7 @@ VKBackBasedDeleter::ClientAction VKBackBasedDeleter::OnKeyEvent(
     }
   }
 
-  wait_queue_.pop_front();
+  wait_queue_->pop_front();
 
   bool matched = false;
   switch (next.first) {
@@ -209,11 +222,11 @@ void VKBackBasedDeleter::EndDeletion() {
   if (to_be_updated) {
     keyboard_->SetKeyboardState(keyboard_state);
   }
-  wait_queue_.clear();
+  wait_queue_->clear();
 }
 
 bool VKBackBasedDeleter::IsDeletionOngoing() const {
-  return !wait_queue_.empty();
+  return !wait_queue_->empty();
 }
 
 const mozc::commands::Output &VKBackBasedDeleter::pending_output() const {

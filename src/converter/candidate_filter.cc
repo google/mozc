@@ -39,6 +39,8 @@
 #include <utility>
 #include <vector>
 
+#include "base/base.h"
+#include "base/logging.h"
 #include "base/singleton.h"
 #include "base/util.h"
 #include "converter/node.h"
@@ -47,8 +49,9 @@
 #include "dictionary/suppression_dictionary.h"
 
 namespace mozc {
-
+namespace converter {
 namespace {
+
 const size_t kMaxCandidatesSize = 200;   // how many candidates we expand
 
 // Currently, the cost (logprob) is calcurated as cost = -500 * log(prob).
@@ -77,6 +80,7 @@ const int   kMinStructureCostOffset  = 1151;
 const int32 kNoFilterRank            = 3;
 const int32 kNoFilterIfSameIdRank    = 10;
 const int32 kStopEnmerationCacheSize = 15;
+
 }  // anonymous namespace
 
 CandidateFilter::CandidateFilter(
@@ -98,7 +102,7 @@ void CandidateFilter::Reset() {
 
 CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
     const Segment::Candidate *candidate,
-    const vector<const Node *> nodes) {
+    const vector<const Node *> &nodes) {
   DCHECK(candidate);
 
   // In general, the cost of constrained node tends to be overestimated.
@@ -182,7 +186,8 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
   // otherwise this ruins the whole sentence
   // that starts with alphabets.
   if (!(candidate->attributes & Segment::Candidate::REALTIME_CONVERSION)) {
-    const bool is_top_english_t13n = Util::IsEnglishTransliteration(nodes[0]->value);
+    const bool is_top_english_t13n =
+        Util::IsEnglishTransliteration(nodes[0]->value);
     for (size_t i = 1; i < nodes.size(); ++i) {
       // EnglishT13N must be the prefix of the candidate.
       if (Util::IsEnglishTransliteration(nodes[i]->value)) {
@@ -274,7 +279,7 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
 
 CandidateFilter::ResultType CandidateFilter::FilterCandidate(
     const Segment::Candidate *candidate,
-    const vector<const Node *> nodes) {
+    const vector<const Node *> &nodes) {
   const CandidateFilter::ResultType result =
       FilterCandidateInternal(candidate, nodes);
   if (result != CandidateFilter::GOOD_CANDIDATE) {
@@ -283,4 +288,6 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidate(
   seen_.insert(candidate->value);
   return result;
 }
+
+}  // namespace converter
 }  // namespace mozc

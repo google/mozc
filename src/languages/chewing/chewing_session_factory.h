@@ -43,7 +43,6 @@ class ChewingSessionFactory : public session::SessionFactoryInterface {
   virtual ~ChewingSessionFactory();
   virtual session::SessionInterface *NewSession();
   virtual UserDataManagerInterface *GetUserDataManager();
-  virtual bool IsAvailable() const;
  private:
   bool is_available_;
 };

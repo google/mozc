@@ -29,6 +29,10 @@
 
 #include "rewriter/usage_rewriter.h"
 
+#include <string>
+
+#include "base/base.h"
+#include "base/logging.h"
 #include "base/util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
@@ -147,7 +151,7 @@ const UsageDictItem* UsageRewriter::LookupUsage(
 
 bool UsageRewriter::Rewrite(const ConversionRequest &request,
                             Segments *segments) const {
-  DLOG(INFO) << segments->DebugString();
+  VLOG(2) << segments->DebugString();
 
   const config::Config &config = config::ConfigHandler::GetConfig();
   // Default value of use_local_usage_dictionary() is true.
@@ -172,7 +176,7 @@ bool UsageRewriter::Rewrite(const ConversionRequest &request,
         candidate->usage_title = string(usage->value)
           + kBaseConjugationSuffix[usage->conjugation_id].value_suffix;
         candidate->usage_description = usage->meaning;
-        DLOG(INFO) << i << ":" << j << ":" <<
+        VLOG(2) << i << ":" << j << ":" <<
             candidate->content_key << ":" << candidate->content_value <<
             ":" << usage->key << ":" << usage->value <<
             ":" << usage->conjugation_id << ":" << usage->meaning;

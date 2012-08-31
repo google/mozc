@@ -33,6 +33,7 @@
 
 #include "base/base.h"
 #include "base/coordinates.h"
+#include "base/mac_util.h"
 #include "session/commands.pb.h"
 #include "renderer/mac/RendererBaseWindow.h"
 
@@ -42,6 +43,11 @@ namespace renderer{
 namespace mac {
 
 namespace {
+  // kWindowHighResolutionCapableAttribute is defined in HIToolbox/MacWindows.h
+  // (version >= 10.7.4)
+  // http://developer.apple.com/library/mac/#documentation/GraphicsAnimation/Conceptual/HighResolutionOSX/APIs/APIs.html
+  // TODO(horo): Remove this line once we update the SDK version to 10.7.
+  const WindowAttributes kWindowHighResolutionCapableAttribute = 1 << 20;
   enum CandidateStatusCode {
     userDataMissingErr = 1000,
     unknownEventErr = 1001,
@@ -119,10 +125,18 @@ void RendererBaseWindow::InitWindow() {
   DLOG(INFO) << "RendererBaseWindow::InitWindow";
   // Creating Window
   ::Rect rect;
-  SetRect(&rect, 0, 0, 1, 1);
-  CreateNewWindow(kUtilityWindowClass,
-                  kWindowNoTitleBarAttribute | kWindowCompositingAttribute |
-                  kWindowStandardHandlerAttribute, &rect, &window_);
+  rect.top = 0;
+  rect.left = 0;
+  rect.bottom = 1;
+  rect.right = 1;
+  WindowAttributes attributes = kWindowNoTitleBarAttribute |
+                                kWindowCompositingAttribute |
+                                kWindowStandardHandlerAttribute;
+  if (MacUtil::OSVersionIsGreaterOrEqual(10, 7, 4)) {
+    // kWindowHighResolutionCapableAttribute is available in 10.7.4 and later.
+    attributes |= kWindowHighResolutionCapableAttribute;
+  }
+  CreateNewWindow(kUtilityWindowClass, attributes, &rect, &window_);
 
   // Changing the window level as same as overlay window class, which
   // means "top".

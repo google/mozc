@@ -55,19 +55,20 @@ class SegmenterBase : public SegmenterInterface {
 
  protected:
   // This class does not have the ownership of pointer parameters.
-  SegmenterBase(size_t l_size, size_t r_size,
+  SegmenterBase(size_t l_num_elements, size_t r_num_elements,
                 const uint16 *l_table, const uint16 *r_table,
-                size_t bitarray_size, const char *bitarray_data,
+                size_t bitarray_num_bytes, const char *bitarray_data,
                 const BoundaryData *boundary_data);
 
  private:
-  const size_t l_size_;
-  const size_t r_size_;
+  const size_t l_num_elements_;
+  const size_t r_num_elements_;
   const uint16 *l_table_;
   const uint16 *r_table_;
-  const size_t bitarray_size_;
+  const size_t bitarray_num_bytes_;
   const char *bitarray_data_;
   const BoundaryData *boundary_data_;
 };
+
 }  // namespace mozc
 #endif  // MOZC_CONVERTER_SEGMENTER_BASE_H_

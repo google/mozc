@@ -55,7 +55,25 @@
         '<(DEPTH)/third_party/gmock/include',
         '<(DEPTH)/third_party/gtest',
         '<(DEPTH)/third_party/gtest/include',
-      ]
+      ],
+      'conditions': [
+        ['target_platform=="NaCl" and _toolset=="target"', {
+          'sources': [
+            'base/public/nacl_mock_module.cc',
+          ],
+          'all_dependent_settings': {
+            'link_settings': {
+              'libraries': ['-lppapi', '-lppapi_cpp'],
+            },
+          },
+        }],
+        ['clang==1', {
+          'cflags+': [
+            '-Wno-missing-field-initializers',
+            '-Wno-unused-private-field',
+          ],
+        }],
+      ],
     },
     {
       'target_name': 'gen_mozc_data_dir_header',

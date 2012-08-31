@@ -29,6 +29,7 @@
 
 #include "renderer/table_layout.h"
 
+#include <algorithm>
 #include <numeric>
 
 namespace mozc {

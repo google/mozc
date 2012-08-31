@@ -31,8 +31,6 @@
 #include <string>
 #include <vector>
 
-#include "base/scoped_ptr.h"
-#include "base/util.h"
 #include "languages/pinyin/punctuation_table.h"
 #include "testing/base/public/gunit.h"
 

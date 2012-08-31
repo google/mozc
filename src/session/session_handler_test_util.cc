@@ -32,6 +32,8 @@
 #include "base/util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
+#include "engine/engine_factory.h"
+#include "engine/engine_interface.h"
 #include "session/commands.pb.h"
 #include "session/session_factory_manager.h"
 #include "session/session_handler.h"
@@ -93,14 +95,22 @@ void JapaneseSessionHandlerTestBase::SetUp() {
   ConfigHandler::GetDefaultConfig(&config);
   ConfigHandler::SetConfig(config);
 
+  // Store the origianl to restore it in TearDown.
   session_factory_backup_ = SessionFactoryManager::GetSessionFactory();
-  SessionFactoryManager::SetSessionFactory(&session_factory_);
+
+  ResetEngine(EngineFactory::Create());
 }
 
 void JapaneseSessionHandlerTestBase::TearDown() {
   SessionFactoryManager::SetSessionFactory(session_factory_backup_);
   ConfigHandler::SetConfig(config_backup_);
   Util::SetUserProfileDirectory(user_profile_directory_backup_);
+}
+
+void JapaneseSessionHandlerTestBase::ResetEngine(EngineInterface *engine) {
+  engine_.reset(engine);
+  session_factory_.reset(new JapaneseSessionFactory(engine_.get()));
+  SessionFactoryManager::SetSessionFactory(session_factory_.get());
 }
 
 TestSessionClient::TestSessionClient() : id_(0), handler_(new SessionHandler) {

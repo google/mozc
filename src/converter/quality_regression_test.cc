@@ -31,27 +31,17 @@
 #include <map>
 #include <string>
 #include <vector>
+
 #include "base/base.h"
 #include "base/file_stream.h"
+#include "base/logging.h"
 #include "base/util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
-#include "converter/converter.h"
 #include "converter/converter_interface.h"
-#include "converter/immutable_converter.h"
 #include "converter/quality_regression_util.h"
-#include "converter/segmenter.h"
-#include "data_manager/user_pos_manager.h"
-#include "dictionary/dictionary_interface.h"
-#include "dictionary/pos_group.h"
-#include "dictionary/pos_matcher.h"
-#include "dictionary/suffix_dictionary.h"
-#include "dictionary/suppression_dictionary.h"
+#include "engine/engine_factory.h"
 #include "engine/engine_interface.h"
-#include "prediction/dictionary_predictor.h"
-#include "prediction/predictor.h"
-#include "prediction/user_history_predictor.h"
-#include "rewriter/rewriter.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
@@ -71,14 +61,12 @@ class QualityRegressionTest : public testing::Test {
     config::Config config;
     config::ConfigHandler::GetDefaultConfig(&config);
     config::ConfigHandler::SetConfig(config);
-    DictionaryFactory::SetDictionary(NULL);
   }
 
   virtual void TearDown() {
     config::Config config;
     config::ConfigHandler::GetDefaultConfig(&config);
     config::ConfigHandler::SetConfig(config);
-    DictionaryFactory::SetDictionary(NULL);
   }
 
   void RunTestForPlatform(uint32 platform, QualityRegressionUtil *util) {
@@ -93,7 +81,7 @@ class QualityRegressionTest : public testing::Test {
         continue;
       }
       string actual_value;
-      const  bool test_result = util->ConvertAndTest(item, &actual_value);
+      const bool test_result = util->ConvertAndTest(item, &actual_value);
       const string &label = item.label;
       string line = kTestData[i];
       line += "\tActual: ";
@@ -134,49 +122,8 @@ class QualityRegressionTest : public testing::Test {
 
 // Test for desktop
 TEST_F(QualityRegressionTest, BasicTest) {
-  DictionaryFactory::SetDictionary(DictionaryFactory::GetDictionary());
-
-  scoped_ptr<ImmutableConverterImpl> immutable_converter(
-      new ImmutableConverterImpl(
-          DictionaryFactory::GetDictionary(),
-          SuffixDictionaryFactory::GetSuffixDictionary(),
-          Singleton<SuppressionDictionary>::get(),
-          ConnectorFactory::GetConnector(),
-          Singleton<Segmenter>::get(),
-          UserPosManager::GetUserPosManager()->GetPOSMatcher(),
-          UserPosManager::GetUserPosManager()->GetPosGroup()));
-  ImmutableConverterFactory::SetImmutableConverter(immutable_converter.get());
-
-  // TODO(team): Dictionary predictor depends on global singleton of dictionary,
-  // segmenter, etc. This design is undesirable. We want to fix the design
-  // problem.
-  PredictorInterface *dictionary_predictor =
-      new DictionaryPredictor(
-          immutable_converter.get(),
-          DictionaryFactory::GetDictionary(),
-          SuffixDictionaryFactory::GetSuffixDictionary(),
-          ConnectorFactory::GetConnector(),
-          Singleton<Segmenter>::get(),
-          *UserPosManager::GetUserPosManager()->GetPOSMatcher());
-
-  PredictorInterface *user_history_predictor =
-      new UserHistoryPredictor(
-          DictionaryFactory::GetDictionary(),
-          UserPosManager::GetUserPosManager()->GetPOSMatcher(),
-          Singleton<SuppressionDictionary>::get());
-
-  PredictorInterface *extra_predictor = NULL;
-  scoped_ptr<ConverterImpl> converter(new ConverterImpl);
-  CHECK(converter.get());
-  converter->Init(
-      new DefaultPredictor(dictionary_predictor,
-                           user_history_predictor,
-                           extra_predictor),
-      new RewriterImpl(converter.get(),
-                       UserPosManager::GetUserPosManager()->GetPOSMatcher(),
-                       UserPosManager::GetUserPosManager()->GetPosGroup()));
-
-  QualityRegressionUtil util(converter.get());
+  scoped_ptr<EngineInterface> engine(EngineFactory::Create());
+  QualityRegressionUtil util(engine->GetConverter());
   RunTestForPlatform(QualityRegressionUtil::DESKTOP, &util);
 }
 }  // namespace

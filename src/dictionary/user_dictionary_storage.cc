@@ -38,19 +38,21 @@
 
 #include "base/base.h"
 #include "base/file_stream.h"
+#include "base/logging.h"
 #include "base/mutex.h"
 #include "base/process_mutex.h"
+#include "base/protobuf/coded_stream.h"
 #include "base/protobuf/descriptor.h"
 #include "base/protobuf/message.h"
 #include "base/protobuf/protobuf.h"
 #include "base/protobuf/repeated_field.h"
+#include "base/protobuf/zero_copy_stream_impl.h"
 #include "base/util.h"
+#include "dictionary/user_dictionary_util.h"
 
 namespace mozc {
 namespace {
 // Maximum number of dictionary entries per dictionary.
-const size_t kMaxEntrySize          = 1000000;
-const size_t kMaxDictionarySize     =     100;
 const size_t kMaxDictionaryNameSize =     300;
 
 // 512MByte
@@ -62,8 +64,6 @@ const size_t kDefaultTotalBytesLimit = 512 << 20;
 // saved correctly. Please make the dictionary size smaller"
 const size_t kDefaultWarningTotalBytesLimit = 256 << 20;
 
-const size_t kMaxSyncEntrySize = 10000;
-const size_t kMaxSyncDictionarySize = 1;
 const size_t kCloudSyncBytesLimit = 1 << 19;  // 0.5MB
 // TODO(mukai): translate the name.
 const char kSyncDictionaryName[] = "Sync Dictionary";
@@ -72,22 +72,9 @@ const char kSyncDictionaryName[] = "Sync Dictionary";
 const char kAutoRegisteredDictionaryName[] =
   "\xE8\x87\xAA\xE5\x8B\x95\xE7\x99\xBB\xE9\x8C\xB2\xE5\x8D\x98\xE8\xAA\x9E";
 
-// Create Random ID for dictionary
-uint64 CreateID() {
-  uint64 id = 0;
-
-  // dic_id == 0 is used as a magic number
-  while (id == 0) {
-    if (!Util::GetSecureRandomSequence(
-            reinterpret_cast<char *>(&id), sizeof(id))) {
-      LOG(ERROR) << "GetSecureRandomSequence() failed. use random value.";
-      id = static_cast<uint64>(Util::Random(RAND_MAX));
-    }
-  }
-
-  return id;
-}
 }  // namespace
+
+using ::mozc::user_dictionary::UserDictionaryCommandStatus;
 
 UserDictionaryStorage::UserDictionaryStorage(const string &file_name)
     : file_name_(file_name),
@@ -106,11 +93,16 @@ bool UserDictionaryStorage::Exists() const {
   return Util::FileExists(file_name_);
 }
 
-bool UserDictionaryStorage::LoadInternal() {
+bool UserDictionaryStorage::LoadInternal(bool run_migration) {
   InputFileStream ifs(file_name_.c_str(), ios::binary);
   if (!ifs) {
-    LOG(ERROR) << "cannot open file: " << file_name_;
-    last_error_type_ = FILE_NOT_EXISTS;
+    if (Exists()) {
+      LOG(ERROR) << file_name_ << " exists but cannot be opened.";
+      last_error_type_ = UNKNOWN_ERROR;
+    } else {
+      LOG(ERROR) << file_name_ << " does not exist.";
+      last_error_type_ = FILE_NOT_EXISTS;
+    }
     return false;
   }
 
@@ -120,26 +112,50 @@ bool UserDictionaryStorage::LoadInternal() {
   // TODO(taku): we have to introduce a restriction to
   // the file size and let user know "import failure" if user
   // wants to use more than 512MB.
-  google::protobuf::io::IstreamInputStream zero_copy_input(&ifs);
-  google::protobuf::io::CodedInputStream decoder(&zero_copy_input);
+  mozc::protobuf::io::IstreamInputStream zero_copy_input(&ifs);
+  mozc::protobuf::io::CodedInputStream decoder(&zero_copy_input);
   decoder.SetTotalBytesLimit(kDefaultTotalBytesLimit, -1);
-  if (!ParseFromCodedStream(&decoder) ||
-      !decoder.ConsumedEntireMessage() ||
-      !ifs.eof()) {
-    LOG(ERROR) << "ParseFromStream failed: file seems broken";
-    last_error_type_ = BROKEN_FILE;
-    return false;
+  if (!ParseFromCodedStream(&decoder)) {
+    LOG(ERROR) << "Failed to parse";
+    if (!decoder.ConsumedEntireMessage() || !ifs.eof()) {
+      LOG(ERROR) << "ParseFromStream failed: file seems broken";
+      last_error_type_ = BROKEN_FILE;
+      return false;
+    }
+  }
+
+  // Maybe this is just older file format.
+  // Note that the data in older format can be parsed "successfully,"
+  // so that it is necessary to run migration code from the older format to
+  // the newer format.
+  if (run_migration) {
+    if (!UserDictionaryUtil::ResolveUnknownFieldSet(this)) {
+      LOG(ERROR) << "Failed to resolve older fields.";
+      return false;
+    }
   }
 
   return true;
 }
 
+
 bool UserDictionaryStorage::LoadAndUpdateSyncDictionaries(
     bool ensure_one_sync_dictionary_exists,
-    bool remove_empty_sync_dictionaries) {
+    bool remove_empty_sync_dictionaries,
+    bool run_migration) {
   last_error_type_ = USER_DICTIONARY_STORAGE_NO_ERROR;
 
-  bool result = LoadInternal();
+  bool result = false;
+
+  // Check if the user dictionary exists or not.
+  if (Exists()) {
+    result = LoadInternal(run_migration);
+  } else {
+    // This is also an expected scenario: e.g., clean installation, unit tests.
+    VLOG(1) << "User dictionary file has not been created.";
+    last_error_type_ = FILE_NOT_EXISTS;
+    result = false;
+  }
 
   if (ensure_one_sync_dictionary_exists && !EnsureSyncDictionaryExists()) {
     return false;
@@ -153,26 +169,45 @@ bool UserDictionaryStorage::LoadAndUpdateSyncDictionaries(
   for (int i = 0; i < dictionaries_size(); ++i) {
     const UserDictionary &dict = dictionaries(i);
     if (dict.id() == 0) {
-      mutable_dictionaries(i)->set_id(CreateID());
+      mutable_dictionaries(i)->set_id(
+          UserDictionaryUtil::CreateNewDictionaryId(*this));
     }
   }
 
   return result;
 }
 
+namespace {
+
+const bool kRunMigration = true;
+
+}  // namespace
+
 bool UserDictionaryStorage::Load() {
 #ifdef ENABLE_CLOUD_SYNC
   // Create sync dictionary when cloud sync feature is available.
-  return LoadAndUpdateSyncDictionaries(true, false);
+  return LoadAndUpdateSyncDictionaries(true, false, kRunMigration);
 #else
   // Do not automatically create sync dictionary.
   // Remove empty sync dictionaries instead.
-  return LoadAndUpdateSyncDictionaries(false, true);
+  return LoadAndUpdateSyncDictionaries(false, true, kRunMigration);
 #endif  // ENABLE_CLOUD_SYNC
 }
 
+bool UserDictionaryStorage::LoadWithoutMigration() {
+#ifdef ENABLE_CLOUD_SYNC
+  // Create sync dictionary when cloud sync feature is available.
+  return LoadAndUpdateSyncDictionaries(true, false, !kRunMigration);
+#else
+  // Do not automatically create sync dictionary.
+  // Remove empty sync dictionaries instead.
+  return LoadAndUpdateSyncDictionaries(false, true, !kRunMigration);
+#endif  // ENABLE_CLOUD_SYNC
+}
+
+// TODO(peria): Clean up this method, as it isn't used from anywhere.
 bool UserDictionaryStorage::LoadWithoutChangingSyncDictionary() {
-  return LoadAndUpdateSyncDictionaries(false, false);
+  return LoadAndUpdateSyncDictionaries(false, false, kRunMigration);
 }
 
 bool UserDictionaryStorage::Save() {
@@ -191,7 +226,7 @@ bool UserDictionaryStorage::Save() {
     if (!dict.syncable()) {
       continue;
     }
-    if (dict.entries_size() > kMaxSyncEntrySize) {
+    if (dict.entries_size() > UserDictionaryUtil::max_sync_entry_size()) {
       LOG(ERROR) << "Sync dictionary has too many entries";
       return false;
     }
@@ -206,6 +241,28 @@ bool UserDictionaryStorage::Save() {
   return SaveCore();
 }
 
+namespace {
+
+bool SerializeUserDictionaryStorageToOstream(
+    const user_dictionary::UserDictionaryStorage &input_storage,
+    ostream *stream) {
+#ifdef OS_ANDROID
+  // To keep memory usage low, we do not copy the input storage on mobile.
+  // Fortunately, on mobile, we don't need to think about users who re-install
+  // older version after a new version is installed. So, we don't need to
+  // fill the deprecated field here.
+  return input_storage.SerializeToOstream(stream);
+#else
+  // To support backward compatibility, we set deprecated field temporarily.
+  // TODO(hidehiko): remove this after migration.
+  user_dictionary::UserDictionaryStorage storage(input_storage);
+  UserDictionaryUtil::FillDesktopDeprecatedPosField(&storage);
+  return storage.SerializeToOstream(stream);
+#endif  // OS_ANDROID
+}
+
+}  // namespace
+
 bool UserDictionaryStorage::SaveCore() {
   last_error_type_ = USER_DICTIONARY_STORAGE_NO_ERROR;
 
@@ -219,7 +276,7 @@ bool UserDictionaryStorage::SaveCore() {
       return false;
     }
 
-    if (!SerializeToOstream(&ofs)) {
+    if (!SerializeUserDictionaryStorageToOstream(*this, &ofs)) {
       LOG(ERROR) << "SerializeToString failed";
       last_error_type_ = SYNC_FAILURE;
       return false;
@@ -278,7 +335,7 @@ bool UserDictionaryStorage::ExportDictionary(
     const UserDictionaryEntry &entry = dic.entries(i);
     ofs << entry.key() << "\t"
         << entry.value() << "\t"
-        << entry.pos() << "\t"
+        << UserDictionaryUtil::GetStringPosType(entry.pos()) << "\t"
         << entry.comment() << endl;
   }
 
@@ -287,47 +344,36 @@ bool UserDictionaryStorage::ExportDictionary(
 
 bool UserDictionaryStorage::CreateDictionary(
     const string &dic_name, uint64 *new_dic_id) {
-  last_error_type_ = USER_DICTIONARY_STORAGE_NO_ERROR;
-
-  if (!UserDictionaryStorage::IsValidDictionaryName(dic_name)) {
-    LOG(ERROR) << "Invalid dictionary name is passed";
-    return false;
-  }
-
-  if (dictionaries_size() >= kMaxDictionarySize) {
-    last_error_type_ = TOO_MANY_DICTIONARIES;
-    LOG(ERROR) << "too many dictionaries";
-    return false;
-  }
-
-  for (int i = 0; i < dictionaries_size(); ++i) {
-    if (dic_name == dictionaries(i).name()) {
+  UserDictionaryCommandStatus::Status status =
+      UserDictionaryUtil::CreateDictionary(this, dic_name, new_dic_id);
+  // Update last_error_type_
+  switch (status) {
+    case UserDictionaryCommandStatus::DICTIONARY_NAME_EMPTY:
+      last_error_type_ = EMPTY_DICTIONARY_NAME;
+      break;
+    case UserDictionaryCommandStatus::DICTIONARY_NAME_TOO_LONG:
+      last_error_type_ = TOO_LONG_DICTIONARY_NAME;
+      break;
+    case UserDictionaryCommandStatus
+        ::DICTIONARY_NAME_CONTAINS_INVALID_CHARACTER:
+      last_error_type_ = INVALID_CHARACTERS_IN_DICTIONARY_NAME;
+      break;
+    case UserDictionaryCommandStatus::DICTIONARY_NAME_DUPLICATED:
       last_error_type_ = DUPLICATED_DICTIONARY_NAME;
-      LOG(ERROR) << "duplicated dictionary name";
-      return false;
-    }
+      break;
+    case UserDictionaryCommandStatus::DICTIONARY_SIZE_LIMIT_EXCEEDED:
+      last_error_type_ = TOO_MANY_DICTIONARIES;
+      break;
+    case UserDictionaryCommandStatus::UNKNOWN_ERROR:
+      last_error_type_ = UNKNOWN_ERROR;
+      break;
+    default:
+      last_error_type_ = USER_DICTIONARY_STORAGE_NO_ERROR;
+      break;
   }
 
-  if (new_dic_id == NULL) {
-    last_error_type_ = UNKNOWN_ERROR;
-    LOG(ERROR) << "new_dic_id is NULL";
-    return false;
-  }
-
-  UserDictionary *dic = add_dictionaries();
-  if (dic == NULL) {
-    last_error_type_ = UNKNOWN_ERROR;
-    LOG(ERROR) << "add_dictionaries() failed";
-    return false;
-  }
-
-  *new_dic_id = CreateID();
-
-  dic->set_id(*new_dic_id);
-  dic->set_name(dic_name);
-  dic->clear_entries();
-
-  return true;
+  return
+      status == UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS;
 }
 
 bool UserDictionaryStorage::CopyDictionary(uint64 dic_id,
@@ -340,7 +386,7 @@ bool UserDictionaryStorage::CopyDictionary(uint64 dic_id,
     return false;
   }
 
-  if (dictionaries_size() >= kMaxDictionarySize) {
+  if (UserDictionaryUtil::IsStorageFull(*this)) {
     last_error_type_ = TOO_MANY_DICTIONARIES;
     LOG(ERROR) << "too many dictionaries";
     return false;
@@ -366,7 +412,7 @@ bool UserDictionaryStorage::CopyDictionary(uint64 dic_id,
   UserDictionary *new_dic = add_dictionaries();
   new_dic->CopyFrom(*dic);
 
-  *new_dic_id = CreateID();
+  *new_dic_id = UserDictionaryUtil::CreateNewDictionaryId(*this);
   dic->set_id(*new_dic_id);
   dic->set_name(dic_name);
 
@@ -374,32 +420,13 @@ bool UserDictionaryStorage::CopyDictionary(uint64 dic_id,
 }
 
 bool UserDictionaryStorage::DeleteDictionary(uint64 dic_id) {
+  if (!UserDictionaryUtil::DeleteDictionary(this, dic_id, NULL, NULL)) {
+    // Failed to delete dictionary.
+    last_error_type_ = INVALID_DICTIONARY_ID;
+    return false;
+  }
+
   last_error_type_ = USER_DICTIONARY_STORAGE_NO_ERROR;
-
-  const int delete_index = GetUserDictionaryIndex(dic_id);
-  if (delete_index == -1) {
-    last_error_type_ = INVALID_DICTIONARY_ID;
-    LOG(ERROR) << "Invalid dictionary id: " << dic_id;
-    return false;
-  }
-
-  // Do not delete sync dictionary.
-  if (dictionaries(delete_index).syncable()) {
-    last_error_type_ = INVALID_DICTIONARY_ID;
-    LOG(ERROR) << "Cannot delete sync dictionary";
-    return false;
-  }
-
-  google::protobuf::RepeatedPtrField<UserDictionary> *dics =
-      mutable_dictionaries();
-
-  UserDictionary **data = dics->mutable_data();
-  for (int i = delete_index; i < dictionaries_size() - 1; ++i) {
-    swap(data[i], data[i + 1]);
-  }
-
-  dics->RemoveLast();
-
   return true;
 }
 
@@ -444,14 +471,7 @@ bool UserDictionaryStorage::RenameDictionary(uint64 dic_id,
 }
 
 int UserDictionaryStorage::GetUserDictionaryIndex(uint64 dic_id) const {
-  for (int i = 0; i < dictionaries_size(); ++i) {
-    if (dic_id == dictionaries(i).id()) {
-      return i;
-    }
-  }
-
-  LOG(ERROR) << "Cannot find dictionary id: " << dic_id;
-  return -1;
+  return UserDictionaryUtil::GetUserDictionaryIndexById(*this, dic_id);
 }
 
 bool UserDictionaryStorage::GetUserDictionaryId(const string &dic_name,
@@ -466,15 +486,9 @@ bool UserDictionaryStorage::GetUserDictionaryId(const string &dic_name,
   return false;
 }
 
-UserDictionaryStorage::UserDictionary *
-UserDictionaryStorage::GetUserDictionary(uint64 dic_id) {
-  const int index = GetUserDictionaryIndex(dic_id);
-  if (index < 0) {
-    LOG(ERROR) << "Invalid dictionary id: " << dic_id;
-    return NULL;
-  }
-
-  return mutable_dictionaries(index);
+user_dictionary::UserDictionary *UserDictionaryStorage::GetUserDictionary(
+    uint64 dic_id) {
+  return UserDictionaryUtil::GetMutableUserDictionaryById(this, dic_id);
 }
 
 UserDictionaryStorage::UserDictionaryStorageErrorType
@@ -484,18 +498,18 @@ UserDictionaryStorage::GetLastError() const {
 
 bool UserDictionaryStorage::EnsureSyncDictionaryExists() {
   if (CountSyncableDictionaries(this) > 0) {
-    LOG(INFO) << "storage already has a sync dictionary.";
+    VLOG(1) << "storage already has a sync dictionary.";
     return true;
   }
   UserDictionary *dic = add_dictionaries();
   if (dic == NULL) {
-    LOG(WARNING) << "cannot add a new dictionary.";
+    LOG(ERROR) << "cannot add a new dictionary.";
     return false;
   }
 
   dic->set_name(kSyncDictionaryName);
   dic->set_syncable(true);
-  dic->set_id(CreateID());
+  dic->set_id(UserDictionaryUtil::CreateNewDictionaryId(*this));
 
   return true;
 }
@@ -524,7 +538,7 @@ void UserDictionaryStorage::RemoveUnusedSyncDictionariesIfExist() {
 
   // Add new entry to the auto registered dictionary.
 bool UserDictionaryStorage::AddToAutoRegisteredDictionary(
-    const string &key, const string &value, const string &pos) {
+    const string &key, const string &value, UserDictionary::PosType pos) {
   if (!Lock()) {
     LOG(ERROR) << "cannot lock the user dictionary storage";
     return false;
@@ -540,14 +554,14 @@ bool UserDictionaryStorage::AddToAutoRegisteredDictionary(
 
   UserDictionary *dic = NULL;
   if (auto_index == -1) {
-    if (dictionaries_size() >= kMaxDictionarySize) {
+    if (UserDictionaryUtil::IsStorageFull(*this)) {
       last_error_type_ = TOO_MANY_DICTIONARIES;
       LOG(ERROR) << "too many dictionaries";
       UnLock();
       return false;
     }
     dic = add_dictionaries();
-    dic->set_id(CreateID());
+    dic->set_id(UserDictionaryUtil::CreateNewDictionaryId(*this));
     dic->set_name(kAutoRegisteredDictionaryName);
   } else {
     dic = mutable_dictionaries(auto_index);
@@ -603,38 +617,50 @@ int UserDictionaryStorage::CountSyncableDictionaries(
 
 // static
 size_t UserDictionaryStorage::max_entry_size() {
-  return kMaxEntrySize;
+  return UserDictionaryUtil::max_entry_size();
 }
 
 // static
 size_t UserDictionaryStorage::max_dictionary_size() {
-  return kMaxDictionarySize;
+  return UserDictionaryUtil::max_entry_size();
 }
 
 bool UserDictionaryStorage::IsValidDictionaryName(const string &name) {
-  if (name.empty()) {
-    VLOG(1) << "Empty dictionary name.";
-    last_error_type_ = EMPTY_DICTIONARY_NAME;
-    return false;
-  } else if (name.size() > kMaxDictionaryNameSize) {
-    last_error_type_ = TOO_LONG_DICTIONARY_NAME;
-    VLOG(1) << "Too long dictionary name";
-    return false;
-  } else if (name.find_first_of("\n\r\t") != string::npos) {
-    last_error_type_ = INVALID_CHARACTERS_IN_DICTIONARY_NAME;
-    VLOG(1) << "Invalid character in dictionary name: " << name;
-    return false;
+  UserDictionaryCommandStatus::Status status =
+      UserDictionaryUtil::ValidateDictionaryName(
+          UserDictionaryStorage::default_instance(), name);
+
+  // Update last_error_type_.
+  switch (status) {
+    // Succeeded case.
+    case UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS:
+      return true;
+
+    // Failure cases.
+    case UserDictionaryCommandStatus::DICTIONARY_NAME_EMPTY:
+      last_error_type_ = EMPTY_DICTIONARY_NAME;
+      return false;
+    case UserDictionaryCommandStatus::DICTIONARY_NAME_TOO_LONG:
+      last_error_type_ = TOO_LONG_DICTIONARY_NAME;
+      return false;
+    case UserDictionaryCommandStatus
+        ::DICTIONARY_NAME_CONTAINS_INVALID_CHARACTER:
+      last_error_type_ = INVALID_CHARACTERS_IN_DICTIONARY_NAME;
+      return false;
+    default:
+      LOG(WARNING) << "Unknown status: " << status;
+      return false;
   }
-  return true;
+  // Should never reach here.
 }
 
 // static methods around sync dictionary properties.
 size_t UserDictionaryStorage::max_sync_dictionary_size() {
-  return kMaxSyncDictionarySize;
+  return UserDictionaryUtil::max_sync_dictionary_size();
 }
 
 size_t UserDictionaryStorage::max_sync_entry_size() {
-  return kMaxSyncEntrySize;
+  return UserDictionaryUtil::max_sync_entry_size();
 }
 
 size_t UserDictionaryStorage::max_sync_binary_size() {
@@ -644,4 +670,5 @@ size_t UserDictionaryStorage::max_sync_binary_size() {
 string UserDictionaryStorage::default_sync_dictionary_name() {
   return string(kSyncDictionaryName);
 }
+
 }  // namespace mozc

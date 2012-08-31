@@ -35,20 +35,28 @@
 
 #include "base/base.h"
 #include "base/flags.h"
+#include "base/logging.h"
 #include "base/trie.h"
 #include "base/util.h"
 #include "converter/node.h"
 #include "dictionary/file/dictionary_file.h"
 #include "dictionary/pos_matcher.h"
-#include "dictionary/rx/rx_trie.h"
 #include "dictionary/system/codec_interface.h"
 
+#ifdef MOZC_USE_MOZC_LOUDS
+#include "dictionary/louds/louds_trie_adapter.h"
+#else
+#include "dictionary/rx/rx_trie.h"
+#endif  // MOZC_USE_MOZC_LOUDS
+
+
 namespace mozc {
+namespace dictionary {
 
 ValueDictionary::ValueDictionary(const POSMatcher& pos_matcher)
-    : value_trie_(new rx::RxTrie),
+    : value_trie_(new TrieType),
       dictionary_file_(new DictionaryFile),
-      codec_(dictionary::SystemDictionaryCodecFactory::GetCodec()),
+      codec_(SystemDictionaryCodecFactory::GetCodec()),
       empty_limit_(Limit()),
       suggestion_only_word_id_(pos_matcher.GetSuggestOnlyWordId()) {
 }
@@ -110,12 +118,27 @@ Node *ValueDictionary::LookupPredictiveWithLimit(
     const char *str, int size,
     const Limit &limit,
     NodeAllocatorInterface *allocator) const {
+  if (size == 0) {
+    // To fill the gap of the behavior between rx/mozc's louds, return
+    // NULL immediately if the key is empty.
+    // Background:
+    // - For predictive search, RxTrie returns no entries because rx doesn't
+    //   invoke callbacks if the key is empty.
+    // - On the other hand, Mozc's louds trie returns all values in the trie.
+    // From the trie's point of view, returning all values looks a bit more
+    // natrual. So, we fill the gap at the dictionary layer as a short term
+    // fix.
+    // TODO(hidehiko): Returning all entries in dictionary for predictive
+    //   searching with an empty key may look natural as well. So we should
+    //   find an appropriate handling point.
+    return NULL;
+  }
   string lookup_key_str;
   codec_->EncodeValue(string(str, size), &lookup_key_str);
 
   DCHECK(value_trie_.get() != NULL);
 
-  vector<rx::RxEntry> results;
+  vector<EntryType> results;
   // TODO(toshiyuki): node_size_limit can be defined in the Limit
   int node_size_limit = -1;  // no limit
   if (allocator != NULL) {
@@ -136,7 +159,6 @@ Node *ValueDictionary::LookupPredictiveWithLimit(
     }
     string value;
     codec_->DecodeValue(results[i].key, &value);
-    // filter by begin with list
     if (limit.begin_with_trie != NULL) {
       string trie_value;
       size_t key_length = 0;
@@ -197,9 +219,48 @@ Node *ValueDictionary::LookupPrefix(
   return NULL;
 }
 
+Node *ValueDictionary::LookupExact(const char *str, int size,
+                                   NodeAllocatorInterface *allocator) const {
+  if (size == 0) {
+    // For empty string, return NULL for compatibility reason; see the comment
+    // above.
+    return NULL;
+  }
+  DCHECK(value_trie_.get() != NULL);
+  DCHECK(allocator != NULL);
+
+  string lookup_key_str;
+  codec_->EncodeValue(string(str, size), &lookup_key_str);
+
+  vector<EntryType> results;
+  // TODO(team): We may want to have ExactSearch implemented at trie layer for
+  // performance reason.
+  value_trie_->PrefixSearchWithLimit(
+      lookup_key_str, allocator->max_nodes_size(), &results);
+
+  Node *head = NULL;
+  for (size_t i = 0; i < results.size(); ++i) {
+    if (results[i].key != lookup_key_str) {
+      continue;
+    }
+    Node *node = allocator->NewNode();
+    // Set fake token information due to the same reason as LookupPredictive.
+    node->lid = suggestion_only_word_id_;
+    node->rid = suggestion_only_word_id_;
+    node->wcost = 10000;
+    codec_->DecodeValue(results[i].key, &node->value);
+    node->key = node->value;
+    node->node_type = Node::NOR_NODE;
+    node->bnext = head;
+    head = node;
+  }
+  return head;
+}
+
 Node *ValueDictionary::LookupReverse(const char *str, int size,
                                      NodeAllocatorInterface *allocator) const {
   return NULL;
 }
 
+}  // namespace dictionary
 }  // namespace mozc

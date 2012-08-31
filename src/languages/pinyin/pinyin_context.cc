@@ -29,11 +29,10 @@
 
 #include "languages/pinyin/pinyin_context.h"
 
-#include <pyzy-1.0/PyZyConfig.h>
-#include <pyzy-1.0/PyZyInputContext.h>
-#include <cctype>
+#include <PyZy/Const.h>
+#include <PyZy/InputContext.h>
+#include <PyZy/Variant.h>
 #include <string>
-#include <vector>
 #include "base/util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
@@ -48,11 +47,13 @@ class ContextObserver : public ContextObserverInterface {
       : session_config_(session_config) {
   }
 
-  const string &commit_text() const {
+  virtual ~ContextObserver() {}
+
+  virtual const string &commit_text() const {
     return commit_text_;
   }
 
-  void SetCommitText(const string &commit_text) {
+  virtual void SetCommitText(const string &commit_text) {
     // TODO(hsumita): Move this logic to SessionConverter.
     if (session_config_.full_width_word_mode) {
       Util::HalfWidthAsciiToFullWidthAscii(commit_text, &commit_text_);
@@ -61,20 +62,22 @@ class ContextObserver : public ContextObserverInterface {
     }
   }
 
-  void ClearCommitText() {
+  virtual void ClearCommitText() {
     commit_text_.clear();
   }
 
   // Callback interfaces which are called by libpyzy.
-  void commitText(const PyZy::InputContext *context,
+  virtual void commitText(PyZy::InputContext *context,
                   const string &commit_text) {
     SetCommitText(commit_text);
   }
 
   // We don't use these function. Do nothings.
-  void preeditTextChanged(const PyZy::InputContext *context) {}
-  void auxiliaryTextChanged(const PyZy::InputContext *context) {}
-  void lookupTableChanged(const PyZy::InputContext *context) {}
+  virtual void inputTextChanged(PyZy::InputContext *context) {}
+  virtual void cursorChanged(PyZy::InputContext *context) {}
+  virtual void preeditTextChanged(PyZy::InputContext *context) {}
+  virtual void auxiliaryTextChanged(PyZy::InputContext *context) {}
+  virtual void candidatesChanged(PyZy::InputContext *context) {}
 
  private:
   string commit_text_;
@@ -83,8 +86,10 @@ class ContextObserver : public ContextObserverInterface {
 
 // Apply this change to the header file.
 PinyinContext::PinyinContext(const SessionConfig &session_config)
-    : observer_(new ContextObserver(session_config)) {
+    : session_config_(session_config),
+      observer_(new ContextObserver(session_config)) {
   ResetContext();
+  ReloadConfig();
 }
 
 PinyinContext::~PinyinContext() {
@@ -165,14 +170,6 @@ bool PinyinContext::FocusCandidate(size_t index) {
   return context_->focusCandidate(index);
 }
 
-bool PinyinContext::FocusCandidatePrev() {
-  return context_->focusCandidatePrevious();
-}
-
-bool PinyinContext::FocusCandidateNext() {
-  return context_->focusCandidateNext();
-}
-
 bool PinyinContext::ClearCandidateFromHistory(size_t index) {
   return context_->resetCandidate(index);
 }
@@ -193,6 +190,25 @@ bool PinyinContext::RemoveWordAfter() {
   return context_->removeWordAfter();
 }
 
+namespace {
+const uint32 kIncompletePinyinOption = PINYIN_INCOMPLETE_PINYIN;
+const uint32 kCorrectPinyinOption = PINYIN_CORRECT_ALL;
+const uint32 kFuzzyPinyinOption =
+    PINYIN_FUZZY_C_CH |
+    PINYIN_FUZZY_Z_ZH |
+    PINYIN_FUZZY_S_SH |
+    PINYIN_FUZZY_L_N |
+    PINYIN_FUZZY_F_H |
+    PINYIN_FUZZY_K_G |
+    PINYIN_FUZZY_G_K |
+    PINYIN_FUZZY_AN_ANG |
+    PINYIN_FUZZY_ANG_AN |
+    PINYIN_FUZZY_EN_ENG |
+    PINYIN_FUZZY_ENG_EN |
+    PINYIN_FUZZY_IN_ING |
+    PINYIN_FUZZY_ING_IN;
+}  // namespace
+
 void PinyinContext::ReloadConfig() {
   const config::PinyinConfig &config = GET_CONFIG(pinyin_config);
 
@@ -200,6 +216,24 @@ void PinyinContext::ReloadConfig() {
   if (config.double_pinyin() != double_pinyin_) {
     ResetContext();
   }
+
+  uint32 conversion_option = kIncompletePinyinOption;
+  if (config.correct_pinyin()) {
+    conversion_option |= kCorrectPinyinOption;
+  }
+  if (config.fuzzy_pinyin()) {
+    conversion_option |= kFuzzyPinyinOption;
+  }
+  context_->setProperty(PyZy::InputContext::PROPERTY_CONVERSION_OPTION,
+                        PyZy::Variant::fromUnsignedInt(conversion_option));
+
+  context_->setProperty(
+      PyZy::InputContext::PROPERTY_DOUBLE_PINYIN_SCHEMA,
+      PyZy::Variant::fromUnsignedInt(config.double_pinyin_schema()));
+
+  context_->setProperty(
+      PyZy::InputContext::PROPERTY_MODE_SIMP,
+      PyZy::Variant::fromBool(session_config_.simplified_chinese_mode));
 }
 
 const string &PinyinContext::commit_text() const {
@@ -264,8 +298,7 @@ void PinyinContext::ResetContext() {
       ? PyZy::InputContext::DOUBLE_PINYIN
       : PyZy::InputContext::FULL_PINYIN;
 
-  context_.reset(PyZy::InputContext::create(
-      type, PyZy::PinyinConfig::instance(), observer_.get()));
+  context_.reset(PyZy::InputContext::create(type, observer_.get()));
   Clear();
 }
 

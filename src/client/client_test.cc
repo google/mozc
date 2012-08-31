@@ -30,6 +30,8 @@
 #include <string>
 #include <map>
 #include "base/base.h"
+#include "base/logging.h"
+#include "base/number_util.h"
 #include "base/util.h"
 #include "base/version.h"
 #include "client/client.h"
@@ -47,13 +49,13 @@ const string UpdateVersion(int diff) {
   Util::SplitStringUsing(Version::GetMozcVersion(), ".", &tokens);
   EXPECT_EQ(tokens.size(), 4);
   char buf[64];
-  snprintf(buf, sizeof(buf), "%d", Util::SimpleAtoi(tokens[3]) + diff);
+  snprintf(buf, sizeof(buf), "%d", NumberUtil::SimpleAtoi(tokens[3]) + diff);
   tokens[3] = buf;
   string output;
   Util::JoinStrings(tokens, ".", &output);
   return output;
 }
-}
+}  // namespace
 
 class TestServerLauncher : public ServerLauncherInterface {
  public:
@@ -841,7 +843,7 @@ TEST_F(SessionPlaybackTest, PlaybackHistoryTest) {
   SetMockOutput(mock_output);
   EXPECT_TRUE(client_->SendKey(key_event, &output));
 
-#ifndef _DEBUG
+#ifndef DEBUG
   // PlaybackHistory and push history
   client_->GetHistoryInputs(&history);
   EXPECT_EQ(3, history.size());

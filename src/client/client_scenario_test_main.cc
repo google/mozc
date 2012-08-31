@@ -35,6 +35,7 @@
 #include <iostream>
 #include "base/base.h"
 #include "base/file_stream.h"
+#include "base/logging.h"
 #include "base/util.h"
 #include "client/client.h"
 #include "renderer/renderer_command.pb.h"
@@ -184,7 +185,7 @@ int Loop(istream *input) {
   return 0;
 }
 
-}  // anonymous namespace
+}  // namespace
 }  // namespace mozc
 
 int main(int argc, char **argv) {

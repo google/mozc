@@ -31,6 +31,8 @@
 
 #include <cctype>
 
+#include "base/base.h"
+#include "base/logging.h"
 #include "session/commands.pb.h"
 
 namespace mozc {
@@ -157,6 +159,9 @@ void KeyEventUtil::NormalizeNumpadKey(const KeyEvent &key_event,
       break;
     case KeyEvent::EQUALS:
       new_key_code = '=';
+      break;
+    case KeyEvent::COMMA:
+      new_key_code = ',';
       break;
     default:
       LOG(ERROR) << "Should not reach here.";
@@ -316,7 +321,13 @@ bool KeyEventUtil::IsNumpadKey(const KeyEvent &key_event) {
   }
 
   const KeyEvent::SpecialKey special_key = key_event.special_key();
-  return (KeyEvent::NUMPAD0 <= special_key && special_key <= KeyEvent::EQUALS);
+  if (KeyEvent::NUMPAD0 <= special_key && special_key <= KeyEvent::EQUALS) {
+    return true;
+  }
+  if (special_key == KeyEvent::COMMA) {
+    return true;
+  }
+  return false;
 }
 
 }  // namespace mozc

@@ -29,8 +29,11 @@
 
 #include "rewriter/transliteration_rewriter.h"
 
+#include <cctype>
 #include <string>
+
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/singleton.h"
 #include "base/util.h"
 #include "composer/composer.h"
@@ -73,8 +76,13 @@ void SetAkann(composer::Composer *composer) {
 
 class TransliterationRewriterTest : public testing::Test {
  protected:
+  // Workaround for C2512 error (no default appropriate constructor) on MSVS.
+  TransliterationRewriterTest() {}
+  virtual ~TransliterationRewriterTest() {}
+
   virtual void SetUp() {
     prev_preference_.CopyFrom(commands::RequestHandler::GetRequest());
+    commands::RequestHandler::SetRequest(default_request_);
     Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
     config::Config config;
     config::ConfigHandler::GetDefaultConfig(&config);
@@ -83,6 +91,9 @@ class TransliterationRewriterTest : public testing::Test {
 
   virtual void TearDown() {
     commands::RequestHandler::SetRequest(prev_preference_);
+    config::Config config;
+    config::ConfigHandler::GetDefaultConfig(&config);
+    config::ConfigHandler::SetConfig(config);
   }
 
   TransliterationRewriter *CreateTransliterationRewriter() const {
@@ -90,8 +101,13 @@ class TransliterationRewriterTest : public testing::Test {
         *UserPosManager::GetUserPosManager()->GetPOSMatcher());
   }
 
+  const commands::Request &default_request() const {
+    return default_request_;
+  }
+
  private:
   commands::Request prev_preference_;
+  const commands::Request default_request_;
 };
 
 TEST_F(TransliterationRewriterTest, T13NFromKeyTest) {
@@ -150,8 +166,7 @@ TEST_F(TransliterationRewriterTest, T13NFromComposerTest) {
 
   composer::Table table;
   table.Initialize();
-  composer::Composer composer;
-  composer.SetTable(&table);
+  composer::Composer composer(&table, default_request());
   SetAkann(&composer);
 
   Segments segments;
@@ -205,15 +220,66 @@ TEST_F(TransliterationRewriterTest, T13NFromComposerTest) {
   }
 }
 
+
+TEST_F(TransliterationRewriterTest, KeyOfT13NFromComposerTest) {
+  scoped_ptr<TransliterationRewriter> t13n_rewriter(
+      CreateTransliterationRewriter());
+
+  composer::Table table;
+  table.Initialize();
+  composer::Composer composer(&table, default_request());
+  InsertASCIISequence("ssh", &composer);
+
+  Segments segments;
+  segments.set_request_type(Segments::SUGGESTION);
+  Segment *segment = segments.add_segment();
+  CHECK(segment);
+
+  ConversionRequest request(&composer);
+  {
+    // Although the segment key is "っ" as a partical string of the full
+    // composition, the transliteration key should be "っsh" as the
+    // whole composition string.
+
+    // "っ"
+    segment->set_key("\xE3\x81\xA3");
+    EXPECT_TRUE(t13n_rewriter->Rewrite(request, &segments));
+
+    EXPECT_EQ(1, segments.conversion_segments_size());
+    const Segment &seg = segments.conversion_segment(0);
+
+    // "っｓｈ"
+    EXPECT_EQ("\xE3\x81\xA3\xEF\xBD\x93\xEF\xBD\x88",
+              seg.meta_candidate(transliteration::HIRAGANA).value);
+    // "っsh"
+    EXPECT_EQ("\xE3\x81\xA3" "sh",
+              seg.meta_candidate(transliteration::HIRAGANA).key);
+    EXPECT_EQ("ssh", seg.meta_candidate(transliteration::HALF_ASCII).value);
+    // "っsh"
+    EXPECT_EQ("\xE3\x81\xA3" "sh",
+              seg.meta_candidate(transliteration::HALF_ASCII).key);
+  }
+}
+
+
 TEST_F(TransliterationRewriterTest, T13NWithMultiSegmentsTest) {
   scoped_ptr<TransliterationRewriter> t13n_rewriter(
       CreateTransliterationRewriter());
 
   composer::Table table;
   table.Initialize();
-  composer::Composer composer;
-  composer.SetTable(&table);
-  SetAkann(&composer);
+  composer::Composer composer(&table, default_request());
+
+  // Set kamabokoinbou to composer.
+  {
+    InsertASCIISequence("kamabokonoinbou", &composer);
+    string query;
+    composer.GetQueryForConversion(&query);
+    // "かまぼこのいんぼう"
+    EXPECT_EQ("\xE3\x81\x8B\xE3\x81\xBE\xE3\x81\xBC\xE3\x81\x93"
+              "\xE3\x81\xAE\xE3\x81\x84\xE3\x82\x93\xE3\x81\xBC\xE3\x81\x86",
+              query);
+  }
 
   Segments segments;
   ConversionRequest request(&composer);
@@ -255,9 +321,16 @@ TEST_F(TransliterationRewriterTest, ComposerValidationTest) {
 
   composer::Table table;
   table.Initialize();
-  composer::Composer composer;
-  composer.SetTable(&table);
-  SetAkann(&composer);
+  composer::Composer composer(&table, default_request());
+
+  // Set kan to composer.
+  {
+    InsertASCIISequence("kan", &composer);
+    string query;
+    composer.GetQueryForConversion(&query);
+    // "かん"
+    EXPECT_EQ("\xE3\x81\x8B\xE3\x82\x93", query);
+  }
 
   Segments segments;
   Segment *segment = segments.add_segment();
@@ -311,8 +384,7 @@ TEST_F(TransliterationRewriterTest, RewriteWithSameComposerTest) {
 
   composer::Table table;
   table.Initialize();
-  composer::Composer composer;
-  composer.SetTable(&table);
+  composer::Composer composer(&table, default_request());
   SetAkann(&composer);
 
   Segments segments;
@@ -471,8 +543,7 @@ TEST_F(TransliterationRewriterTest, NoKeyWithComposerTest) {
 
   composer::Table table;
   table.Initialize();
-  composer::Composer composer;
-  composer.SetTable(&table);
+  composer::Composer composer(&table, default_request());
   InsertASCIISequence("a", &composer);
 
   Segments segments;
@@ -516,8 +587,7 @@ TEST_F(TransliterationRewriterTest, NormalizedTransliterations) {
 
   composer::Table table;
   table.Initialize();
-  composer::Composer composer;
-  composer.SetTable(&table);
+  composer::Composer composer(&table, default_request());
 
   // "らゔ"
   composer.InsertCharacterPreedit("\xE3\x82\x89\xE3\x82\x94");
@@ -568,8 +638,8 @@ TEST_F(TransliterationRewriterTest, MobileT13NTestWith12KeysHiragana) {
 
   composer::Table table;
   table.Initialize();
-  composer::Composer composer;
-  composer.SetTable(&table);
+  composer::Composer composer(&table, default_request());
+
   {
     InsertASCIISequence("11#", &composer);
     string query;
@@ -641,8 +711,8 @@ TEST_F(TransliterationRewriterTest, MobileT13NTestWith12KeysToNumber) {
 
   composer::Table table;
   table.Initialize();
-  composer::Composer composer;
-  composer.SetTable(&table);
+  composer::Composer composer(&table, default_request());
+
   {
     InsertASCIISequence("1212", &composer);
     string query;
@@ -714,8 +784,8 @@ TEST_F(TransliterationRewriterTest, MobileT13NTestWith12KeysFlick) {
 
   composer::Table table;
   table.Initialize();
-  composer::Composer composer;
-  composer.SetTable(&table);
+  composer::Composer composer(&table, default_request());
+
   {
     InsertASCIISequence("1a", &composer);
     string query;
@@ -791,8 +861,7 @@ TEST_F(TransliterationRewriterTest, MobileT13NTestWithQwertyHiragana) {
   table.Initialize();
 
   {
-    composer::Composer composer;
-    composer.SetTable(&table);
+    composer::Composer composer(&table, default_request());
 
     InsertASCIISequence("shi", &composer);
     string query;
@@ -810,8 +879,7 @@ TEST_F(TransliterationRewriterTest, MobileT13NTestWithQwertyHiragana) {
   }
 
   {
-    composer::Composer composer;
-    composer.SetTable(&table);
+    composer::Composer composer(&table, default_request());
 
     InsertASCIISequence("si", &composer);
     string query;
@@ -826,6 +894,77 @@ TEST_F(TransliterationRewriterTest, MobileT13NTestWithQwertyHiragana) {
 
     const Segment &seg = segments.conversion_segment(0);
     EXPECT_EQ("si", seg.meta_candidate(transliteration::HALF_ASCII).value);
+  }
+}
+
+
+TEST_F(TransliterationRewriterTest, T13nOnSuggestion) {
+  scoped_ptr<TransliterationRewriter> t13n_rewriter(
+      CreateTransliterationRewriter());
+
+  commands::Request request;
+  request.set_mixed_conversion(true);
+
+  ScopedRequestForUnittest scoped_request(request);
+
+  // "っ"
+  const string kXtsu = "\xE3\x81\xA3";
+
+  composer::Table table;
+  table.Initialize();
+  {
+    composer::Composer composer(&table, default_request());
+
+    InsertASCIISequence("ssh", &composer);
+    string query;
+    composer.GetQueryForPrediction(&query);
+    EXPECT_EQ(kXtsu, query);
+
+    Segments segments;
+    segments.set_request_type(Segments::SUGGESTION);
+    Segment *segment = segments.add_segment();
+    segment->set_key(kXtsu);
+    ConversionRequest request(&composer);
+    EXPECT_TRUE(t13n_rewriter->Rewrite(request, &segments));
+
+    const Segment &seg = segments.conversion_segment(0);
+    EXPECT_EQ("ssh", seg.meta_candidate(transliteration::HALF_ASCII).value);
+  }
+}
+
+TEST_F(TransliterationRewriterTest, T13nOnPartialSuggestion) {
+  scoped_ptr<TransliterationRewriter> t13n_rewriter(
+      CreateTransliterationRewriter());
+
+  commands::Request request;
+  request.set_mixed_conversion(true);
+
+  ScopedRequestForUnittest scoped_request(request);
+
+  // "っ"
+  const string kXtsu = "\xE3\x81\xA3";
+
+  composer::Table table;
+  table.Initialize();
+  {
+    composer::Composer composer(&table, default_request());
+
+    InsertASCIISequence("ssh", &composer);  // "っsh|"
+    string query;
+    composer.GetQueryForPrediction(&query);
+    EXPECT_EQ(kXtsu, query);
+
+    composer.MoveCursorTo(1);  // "っ|sh"
+
+    Segments segments;
+    segments.set_request_type(Segments::PARTIAL_SUGGESTION);
+    Segment *segment = segments.add_segment();
+    segment->set_key(kXtsu);
+    ConversionRequest request(&composer);
+    EXPECT_TRUE(t13n_rewriter->Rewrite(request, &segments));
+
+    const Segment &seg = segments.conversion_segment(0);
+    EXPECT_EQ("s", seg.meta_candidate(transliteration::HALF_ASCII).value);
   }
 }
 }  // namespace mozc

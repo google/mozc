@@ -29,7 +29,9 @@
 
 #include "languages/pinyin/pinyin_context.h"
 
-#include <pyzy-1.0/PyZyInputContext.h>
+#include <PyZy/Const.h>
+#include <PyZy/InputContext.h>
+#include <PyZy/Variant.h>
 #include <algorithm>
 #include <string>
 
@@ -68,7 +70,7 @@ class PinyinContextTest : public testing::Test {
  protected:
   virtual void SetUp() {
     Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    PyZy::InputContext::init(FLAGS_test_tmpdir);
+    PyZy::InputContext::init(FLAGS_test_tmpdir, FLAGS_test_tmpdir);
 
     config::Config config;
     config::ConfigHandler::GetDefaultConfig(&config);
@@ -123,8 +125,12 @@ class PinyinContextTest : public testing::Test {
     EXPECT_EQ(auxiliary_text, context_->auxiliary_text());
   }
 
+  PyZy::InputContext *GetRawContext() const {
+    return context_->context_.get();
+  }
+
   scoped_ptr<SessionConfig> session_config_;
-  scoped_ptr<PinyinContextInterface> context_;
+  scoped_ptr<PinyinContext> context_;
 };
 
 TEST_F(PinyinContextTest, InsertAndClear) {
@@ -275,20 +281,14 @@ TEST_F(PinyinContextTest, FocusCandidate) {
   ASSERT_EQ(0, context_->focused_candidate_index());
 
   {
-    SCOPED_TRACE("Focus a next candidate");
-    context_->FocusCandidateNext();
-    EXPECT_EQ(1, context_->focused_candidate_index());
+    SCOPED_TRACE("Focus 3rd candidate");
+    EXPECT_TRUE(context_->FocusCandidate(2));
+    EXPECT_EQ(2, context_->focused_candidate_index());
   }
 
   {
-    SCOPED_TRACE("Focus a previous candidate");
-    context_->FocusCandidatePrev();
-    EXPECT_EQ(0, context_->focused_candidate_index());
-  }
-
-  {
-    SCOPED_TRACE("Focus a specified candidate");
-    context_->FocusCandidate(2);
+    SCOPED_TRACE("Focus 100th candidate and fail");
+    EXPECT_FALSE(context_->FocusCandidate(99));
     EXPECT_EQ(2, context_->focused_candidate_index());
   }
 }
@@ -417,25 +417,93 @@ TEST_F(PinyinContextTest, RemoveCharacters) {
   }
 }
 
+namespace {
+const uint32 kIncompletePinyinOption = PINYIN_INCOMPLETE_PINYIN;
+const uint32 kCorrectPinyinOption = PINYIN_CORRECT_ALL;
+const uint32 kFuzzyPinyinOption =
+    PINYIN_FUZZY_C_CH |
+    PINYIN_FUZZY_Z_ZH |
+    PINYIN_FUZZY_S_SH |
+    PINYIN_FUZZY_L_N |
+    PINYIN_FUZZY_F_H |
+    PINYIN_FUZZY_K_G |
+    PINYIN_FUZZY_G_K |
+    PINYIN_FUZZY_AN_ANG |
+    PINYIN_FUZZY_ANG_AN |
+    PINYIN_FUZZY_EN_ENG |
+    PINYIN_FUZZY_ENG_EN |
+    PINYIN_FUZZY_IN_ING |
+    PINYIN_FUZZY_ING_IN;
+}  // namespace
+
 TEST_F(PinyinContextTest, ReloadConfig) {
   config::Config config;
   config::ConfigHandler::GetDefaultConfig(&config);
+  config::PinyinConfig *pinyin_config = config.mutable_pinyin_config();
 
   {  // full pinyin / double pinyin
-    config.mutable_pinyin_config()->set_double_pinyin(false);
+    pinyin_config->set_double_pinyin(false);
     config::ConfigHandler::SetConfig(config);
 
     context_->ReloadConfig();
     InsertCharacterChars("nihao");
     EXPECT_EQ(kNihao, context_->conversion_text());
 
-    config.mutable_pinyin_config()->set_double_pinyin(true);
+    pinyin_config->set_double_pinyin(true);
     config::ConfigHandler::SetConfig(config);
 
     context_->ReloadConfig();
     EXPECT_EQ("", context_->input_text());
     InsertCharacterChars("nihk");
     EXPECT_EQ(kNihao, context_->conversion_text());
+  }
+
+  const PyZy::InputContext *raw_context = GetRawContext();
+
+  {  // conversion option
+    const bool kInput[][2] = {
+      {false, false}, {false, true}, {true, false}, {true, true},
+    };
+
+    for (size_t i = 0; i < arraysize(kInput); ++i) {
+      const bool use_correct = kInput[i][0];
+      const bool use_fuzzy = kInput[i][1];
+      pinyin_config->set_fuzzy_pinyin(use_fuzzy);
+      pinyin_config->set_correct_pinyin(use_correct);
+      config::ConfigHandler::SetConfig(config);
+      context_->ReloadConfig();
+      const uint32 expected =
+          kIncompletePinyinOption |
+          (use_correct ? kCorrectPinyinOption : 0) |
+          (use_fuzzy ? kFuzzyPinyinOption : 0);
+      const uint32 actual = raw_context->getProperty(
+          PyZy::InputContext::PROPERTY_CONVERSION_OPTION).getUnsignedInt();
+      EXPECT_EQ(expected, actual) << use_fuzzy << "," << use_correct;
+    }
+  }
+
+  {  // double pinyin schema
+    ASSERT_EQ(DOUBLE_PINYIN_KEYBOARD_MSPY,
+              pinyin_config->double_pinyin_schema());
+    ASSERT_EQ(DOUBLE_PINYIN_KEYBOARD_MSPY, raw_context->getProperty(
+        PyZy::InputContext::PROPERTY_DOUBLE_PINYIN_SCHEMA).getUnsignedInt());
+
+    pinyin_config->set_double_pinyin_schema(DOUBLE_PINYIN_KEYBOARD_ZRM);
+    config::ConfigHandler::SetConfig(config);
+    context_->ReloadConfig();
+    EXPECT_EQ(DOUBLE_PINYIN_KEYBOARD_ZRM, raw_context->getProperty(
+        PyZy::InputContext::PROPERTY_DOUBLE_PINYIN_SCHEMA).getUnsignedInt());
+  }
+
+  {  // simplified chinese
+    ASSERT_TRUE(session_config_->simplified_chinese_mode);
+    ASSERT_TRUE(raw_context->getProperty(
+        PyZy::InputContext::PROPERTY_MODE_SIMP).getBool());
+
+    session_config_->simplified_chinese_mode = false;
+    context_->ReloadConfig();
+    EXPECT_FALSE(raw_context->getProperty(
+        PyZy::InputContext::PROPERTY_MODE_SIMP).getBool());
   }
 }
 

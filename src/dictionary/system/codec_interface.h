@@ -72,6 +72,11 @@ class SystemDictionaryCodecInterface {
   virtual void DecodeTokens(
       const uint8 *ptr, vector<TokenInfo> *tokens) const = 0;
 
+  // Decode a token. If the token is the last one, returns false,
+  // otherwise true.
+  virtual bool DecodeToken(
+      const uint8 *ptr, TokenInfo *token_info, int *read_bytes) const = 0;
+
   // Read a token for reverse lookup
   // If the token have value id, assign it to |value_id|
   // otherwise assign -1

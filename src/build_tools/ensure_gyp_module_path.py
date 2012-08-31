@@ -64,7 +64,7 @@ def main():
 
   try:
     import gyp  # NOLINT
-  except ImportError, e:
+  except ImportError as e:
     print 'import gyp failed: %s' % e
     sys.exit(1)
 

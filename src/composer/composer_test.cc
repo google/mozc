@@ -32,13 +32,13 @@
 #include <string>
 #include <utility>
 
+#include "base/logging.h"
 #include "composer/table.h"
+#include "config/character_form_manager.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
-#include "converter/character_form_manager.h"
 #include "session/commands.pb.h"
 #include "session/key_parser.h"
-#include "session/request_handler.h"
 #include "session/request_test_util.h"
 #include "testing/base/public/gunit.h"
 
@@ -46,6 +46,11 @@ DECLARE_string(test_tmpdir);
 
 namespace mozc {
 namespace composer {
+
+using ::mozc::config::CharacterFormManager;
+using ::mozc::config::Config;
+using ::mozc::config::ConfigHandler;
+using ::mozc::commands::Request;
 
 namespace {
 bool InsertKey(const string &key_string, Composer *composer) {
@@ -118,12 +123,12 @@ class ComposerTest : public testing::Test {
 
   virtual void SetUp() {
     Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    config::Config config;
-    config::ConfigHandler::GetDefaultConfig(&config);
-    config::ConfigHandler::SetConfig(config);
+    Config config;
+    ConfigHandler::GetDefaultConfig(&config);
+    ConfigHandler::SetConfig(config);
     table_.reset(new Table);
-    composer_.reset(new Composer);
-    composer_->SetTable(table_.get());
+    default_request_.CopyFrom(Request::default_instance());
+    composer_.reset(new Composer(table_.get(), default_request_));
     CharacterFormManager::GetCharacterFormManager()->SetDefaultRule();
   }
 
@@ -131,13 +136,14 @@ class ComposerTest : public testing::Test {
     table_.reset();
     composer_.reset();
     // just in case, reset config in test_tmpdir
-    config::Config config;
-    config::ConfigHandler::GetDefaultConfig(&config);
-    config::ConfigHandler::SetConfig(config);
+    Config config;
+    ConfigHandler::GetDefaultConfig(&config);
+    ConfigHandler::SetConfig(config);
   }
 
   scoped_ptr<Composer> composer_;
   scoped_ptr<Table> table_;
+  Request default_request_;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(ComposerTest);
@@ -660,6 +666,61 @@ TEST_F(ComposerTest, GetStringFunctions) {
   EXPECT_EQ("sk", prediction);
 }
 
+TEST_F(ComposerTest, GetQueryForPredictionHalfAscii) {
+  // Dummy setup of romanji table.
+  table_->AddRule("he", "\xe3\x81\xb8", "");  // "へ"
+  table_->AddRule("ll", "\xe3\x81\xa3\xef\xbd\x8c", "");  // "っｌ"
+  table_->AddRule("lo", "\xe3\x82\x8d", "");  // "ろ"
+
+  // Switch to Half-Latin input mode.
+  composer_->SetInputMode(transliteration::HALF_ASCII);
+
+  string prediction;
+  {
+    const char kInput[] = "hello";
+    composer_->InsertCharacter(kInput);
+    composer_->GetQueryForPrediction(&prediction);
+    EXPECT_EQ(kInput, prediction);
+  }
+  prediction.clear();
+  composer_->EditErase();
+  {
+    const char kInput[] = "hello!";
+    composer_->InsertCharacter(kInput);
+    composer_->GetQueryForPrediction(&prediction);
+    EXPECT_EQ(kInput, prediction);
+  }
+}
+
+TEST_F(ComposerTest, GetQueryForPredictionFullAscii) {
+  // Dummy setup of romanji table.
+  table_->AddRule("he", "\xe3\x81\xb8", "");  // "へ"
+  table_->AddRule("ll", "\xe3\x81\xa3\xef\xbd\x8c", "");  // "っｌ"
+  table_->AddRule("lo", "\xe3\x82\x8d", "");  // "ろ"
+
+  // Switch to Full-Latin input mode.
+  composer_->SetInputMode(transliteration::FULL_ASCII);
+
+  string prediction;
+  {
+    // "ｈｅｌｌｏ"
+    composer_->InsertCharacter(
+        "\xef\xbd\x88\xef\xbd\x85\xef\xbd\x8c\xef\xbd\x8c\xef\xbd\x8f");
+    composer_->GetQueryForPrediction(&prediction);
+    EXPECT_EQ("hello", prediction);
+  }
+  prediction.clear();
+  composer_->EditErase();
+  {
+    // "ｈｅｌｌｏ！"
+    composer_->InsertCharacter(
+        "\xef\xbd\x88\xef\xbd\x85\xef\xbd\x8c\xef\xbd\x8c"
+        "\xef\xbd\x8f\xef\xbc\x81");
+    composer_->GetQueryForPrediction(&prediction);
+    EXPECT_EQ("hello!", prediction);
+  }
+}
+
 TEST_F(ComposerTest, GetQueriesForPredictionRoman) {
   // "う"
   table_->AddRule("u", "\xe3\x81\x86", "");
@@ -791,7 +852,7 @@ TEST_F(ComposerTest, GetStringFunctions_InputFieldType) {
 
   composer_->SetInputMode(transliteration::HIRAGANA);
   for (size_t test_data_index = 0;
-       test_data_index < ARRAYSIZE(test_data_list);
+       test_data_index < ARRAYSIZE_UNSAFE(test_data_list);
        ++test_data_index) {
     const TestData &test_data = test_data_list[test_data_index];
     composer_->SetInputFieldType(test_data.field_type_);
@@ -886,6 +947,59 @@ TEST_F(ComposerTest, InsertCharacterKeyEvent) {
   composer_->GetStringForPreedit(&preedit);
   // "ア"
   EXPECT_EQ("\xE3\x82\xA2", preedit);
+}
+
+namespace {
+// "山"
+const char kYama[] = "\xE5\xB1\xB1";
+// "川"
+const char kKawa[] = "\xE5\xB7\x9D";
+// "空"
+const char kSora[] = "\xE7\xA9\xBA";
+}  // namespace
+
+TEST_F(ComposerTest, InsertCharacterKeyEventWithUcs4KeyCode) {
+  commands::KeyEvent key;
+
+  // Input "山" as key_code.
+  key.set_key_code(0x5C71);  // U+5C71 = "山"
+  composer_->InsertCharacterKeyEvent(key);
+
+  string preedit;
+  composer_->GetStringForPreedit(&preedit);
+  EXPECT_EQ(kYama, preedit);
+
+  // Input "山" as key_code which is converted to "川".
+  table_->AddRule(kYama, kKawa, "");
+  composer_->Reset();
+  composer_->InsertCharacterKeyEvent(key);
+  composer_->GetStringForPreedit(&preedit);
+  EXPECT_EQ(kKawa, preedit);
+
+  // Input ("山", "空") as (key_code, key_string) which is treated as "空".
+  key.set_key_string(kSora);
+  composer_->Reset();
+  composer_->InsertCharacterKeyEvent(key);
+  composer_->GetStringForPreedit(&preedit);
+  EXPECT_EQ(kSora, preedit);
+}
+
+TEST_F(ComposerTest, InsertCharacterKeyEventWithoutKeyCode) {
+  commands::KeyEvent key;
+
+  // Input "山" as key_string.  key_code is empty.
+  key.set_key_string(kYama);
+  composer_->InsertCharacterKeyEvent(key);
+  EXPECT_FALSE(key.has_key_code());
+
+  string preedit;
+  composer_->GetStringForPreedit(&preedit);
+  EXPECT_EQ(kYama, preedit);
+
+  transliteration::Transliterations transliterations;
+  composer_->GetTransliterations(&transliterations);
+  EXPECT_EQ(kYama, transliterations[transliteration::HIRAGANA]);
+  EXPECT_EQ(kYama, transliterations[transliteration::HALF_ASCII]);
 }
 
 TEST_F(ComposerTest, InsertCharacterKeyEventWithAsIs) {
@@ -996,8 +1110,7 @@ TEST_F(ComposerTest, InsertCharacterKeyEventWithInputMode) {
     EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
   }
 
-  composer_.reset(new Composer);
-  composer_->SetTable(table_.get());
+  composer_.reset(new Composer(table_.get(), default_request_));
 
   {
     // "a" → "あ" (Hiragana)
@@ -1052,10 +1165,10 @@ TEST_F(ComposerTest, ApplyTemporaryInputMode) {
   // test cases differ between ASCII_INPUT_MODE and KATAKANA_INPUT_MODE
 
   {  // ASCII_INPUT_MODE (w/o CapsLock)
-    config::Config config;
-    config::ConfigHandler::GetConfig(&config);
-    config.set_shift_key_mode_switch(config::Config::ASCII_INPUT_MODE);
-    config::ConfigHandler::SetConfig(config);
+    Config config;
+    ConfigHandler::GetConfig(&config);
+    config.set_shift_key_mode_switch(Config::ASCII_INPUT_MODE);
+    ConfigHandler::SetConfig(config);
 
     // pair<input, use_temporary_input_mode>
     pair<string, bool> kTestDataAscii[] = {
@@ -1098,10 +1211,10 @@ TEST_F(ComposerTest, ApplyTemporaryInputMode) {
   }
 
   {  // ASCII_INPUT_MODE (w/ CapsLock)
-    config::Config config;
-    config::ConfigHandler::GetConfig(&config);
-    config.set_shift_key_mode_switch(config::Config::ASCII_INPUT_MODE);
-    config::ConfigHandler::SetConfig(config);
+    Config config;
+    ConfigHandler::GetConfig(&config);
+    config.set_shift_key_mode_switch(Config::ASCII_INPUT_MODE);
+    ConfigHandler::SetConfig(config);
 
     // pair<input, use_temporary_input_mode>
     pair<string, bool> kTestDataAscii[] = {
@@ -1144,10 +1257,10 @@ TEST_F(ComposerTest, ApplyTemporaryInputMode) {
   }
 
   {  // KATAKANA_INPUT_MODE (w/o CapsLock)
-    config::Config config;
-    config::ConfigHandler::GetConfig(&config);
-    config.set_shift_key_mode_switch(config::Config::KATAKANA_INPUT_MODE);
-    config::ConfigHandler::SetConfig(config);
+    Config config;
+    ConfigHandler::GetConfig(&config);
+    config.set_shift_key_mode_switch(Config::KATAKANA_INPUT_MODE);
+    ConfigHandler::SetConfig(config);
 
     // pair<input, use_temporary_input_mode>
     pair<string, bool> kTestDataKatakana[] = {
@@ -1190,10 +1303,10 @@ TEST_F(ComposerTest, ApplyTemporaryInputMode) {
   }
 
   {  // KATAKANA_INPUT_MODE (w/ CapsLock)
-    config::Config config;
-    config::ConfigHandler::GetConfig(&config);
-    config.set_shift_key_mode_switch(config::Config::KATAKANA_INPUT_MODE);
-    config::ConfigHandler::SetConfig(config);
+    Config config;
+    ConfigHandler::GetConfig(&config);
+    config.set_shift_key_mode_switch(Config::KATAKANA_INPUT_MODE);
+    ConfigHandler::SetConfig(config);
 
     // pair<input, use_temporary_input_mode>
     pair<string, bool> kTestDataKatakana[] = {
@@ -1251,7 +1364,7 @@ TEST_F(ComposerTest, CopyFrom) {
     composer_->GetStringForSubmission(&src_composition);
     EXPECT_EQ("", src_composition);
 
-    Composer dest;
+    Composer dest(NULL, default_request_);
     dest.CopyFrom(*composer_);
 
     ExpectSameComposer(*composer_, dest);
@@ -1267,7 +1380,7 @@ TEST_F(ComposerTest, CopyFrom) {
     // "あｎ"
     EXPECT_EQ("\xE3\x81\x82\xEF\xBD\x8E", src_composition);
 
-    Composer dest;
+    Composer dest(NULL, default_request_);
     dest.CopyFrom(*composer_);
 
     ExpectSameComposer(*composer_, dest);
@@ -1281,7 +1394,7 @@ TEST_F(ComposerTest, CopyFrom) {
     // "あん"
     EXPECT_EQ("\xE3\x81\x82\xE3\x82\x93", src_composition);
 
-    Composer dest;
+    Composer dest(NULL, default_request_);
     dest.CopyFrom(*composer_);
 
     ExpectSameComposer(*composer_, dest);
@@ -1301,7 +1414,7 @@ TEST_F(ComposerTest, CopyFrom) {
     // "AaAAあ"
     EXPECT_EQ("AaAA\xE3\x81\x82", src_composition);
 
-    Composer dest;
+    Composer dest(NULL, default_request_);
     dest.CopyFrom(*composer_);
 
     ExpectSameComposer(*composer_, dest);
@@ -1319,7 +1432,7 @@ TEST_F(ComposerTest, CopyFrom) {
     composer_->GetStringForSubmission(&src_composition);
     EXPECT_EQ("M", src_composition);
 
-    Composer dest;
+    Composer dest(NULL, default_request_);
     dest.CopyFrom(*composer_);
 
     ExpectSameComposer(*composer_, dest);
@@ -1427,10 +1540,10 @@ TEST_F(ComposerTest, ShiftKeyOperation) {
 }
 
 TEST_F(ComposerTest, ShiftKeyOperationForKatakana) {
-  config::Config config;
-  config::ConfigHandler::GetConfig(&config);
-  config.set_shift_key_mode_switch(config::Config::KATAKANA_INPUT_MODE);
-  config::ConfigHandler::SetConfig(config);
+  Config config;
+  ConfigHandler::GetConfig(&config);
+  config.set_shift_key_mode_switch(Config::KATAKANA_INPUT_MODE);
+  ConfigHandler::SetConfig(config);
   table_->Initialize();
   composer_->Reset();
   composer_->SetInputMode(transliteration::HIRAGANA);
@@ -1468,16 +1581,16 @@ TEST_F(ComposerTest, ShiftKeyOperationForKatakana) {
             "\xEF\xBD\x8B\xE3\x82\xA2\xE3\x81\xAA",
             preedit);
 
-  config.set_shift_key_mode_switch(config::Config::ASCII_INPUT_MODE);
-  config::ConfigHandler::SetConfig(config);
+  config.set_shift_key_mode_switch(Config::ASCII_INPUT_MODE);
+  ConfigHandler::SetConfig(config);
 }
 
 TEST_F(ComposerTest, AutoIMETurnOffEnabled) {
-  config::Config config;
-  config::ConfigHandler::GetConfig(&config);
-  config.set_preedit_method(config::Config::ROMAN);
+  Config config;
+  ConfigHandler::GetConfig(&config);
+  config.set_preedit_method(Config::ROMAN);
   config.set_use_auto_ime_turn_off(true);
-  config::ConfigHandler::SetConfig(config);
+  ConfigHandler::SetConfig(config);
 
   table_->Initialize();
 
@@ -1499,8 +1612,7 @@ TEST_F(ComposerTest, AutoIMETurnOffEnabled) {
     EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
   }
 
-  composer_.reset(new Composer);
-  composer_->SetTable(table_.get());
+  composer_.reset(new Composer(table_.get(), default_request_));
 
   {  // google
     InsertKey("g", composer_.get());
@@ -1571,10 +1683,9 @@ TEST_F(ComposerTest, AutoIMETurnOffEnabled) {
     EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
   }
 
-  config.set_shift_key_mode_switch(config::Config::OFF);
-  config::ConfigHandler::SetConfig(config);
-  composer_.reset(new Composer);
-  composer_->SetTable(table_.get());
+  config.set_shift_key_mode_switch(Config::OFF);
+  ConfigHandler::SetConfig(config);
+  composer_.reset(new Composer(table_.get(), default_request_));
 
   {  // Google
     InsertKey("G", composer_.get());
@@ -1598,12 +1709,12 @@ TEST_F(ComposerTest, AutoIMETurnOffEnabled) {
 }
 
 TEST_F(ComposerTest, AutoIMETurnOffDisabled) {
-  config::Config config;
-  config::ConfigHandler::GetConfig(&config);
+  Config config;
+  ConfigHandler::GetConfig(&config);
 
-  config.set_preedit_method(config::Config::ROMAN);
+  config.set_preedit_method(Config::ROMAN);
   config.set_use_auto_ime_turn_off(false);
-  config::ConfigHandler::SetConfig(config);
+  ConfigHandler::SetConfig(config);
 
   table_->Initialize();
 
@@ -1639,12 +1750,12 @@ TEST_F(ComposerTest, AutoIMETurnOffDisabled) {
 }
 
 TEST_F(ComposerTest, AutoIMETurnOffKana) {
-  config::Config config;
-  config::ConfigHandler::GetConfig(&config);
+  Config config;
+  ConfigHandler::GetConfig(&config);
 
-  config.set_preedit_method(config::Config::KANA);
+  config.set_preedit_method(Config::KANA);
   config.set_use_auto_ime_turn_off(true);
-  config::ConfigHandler::SetConfig(config);
+  ConfigHandler::SetConfig(config);
 
   table_->Initialize();
 
@@ -1868,9 +1979,9 @@ TEST_F(ComposerTest, UpdateInputMode) {
 
 TEST_F(ComposerTest, DisabledUpdateInputMode) {
   // Set the flag disable.
-  commands::Request request(commands::RequestHandler::GetRequest());
+  commands::Request request;
   request.set_update_input_mode_from_surrounding_text(false);
-  commands::ScopedRequestForUnittest scoped_request(request);
+  composer_->SetRequest(request);
 
   // "あ"
   table_->AddRule("a", "\xE3\x81\x82", "");
@@ -2172,8 +2283,8 @@ TEST_F(ComposerTest, PreeditFormAfterCharacterTransform) {
   {
     composer_->Reset();
     manager->SetDefaultRule();
-    manager->AddPreeditRule("1", config::Config::HALF_WIDTH);
-    manager->AddPreeditRule(".,", config::Config::HALF_WIDTH);
+    manager->AddPreeditRule("1", Config::HALF_WIDTH);
+    manager->AddPreeditRule(".,", Config::HALF_WIDTH);
     composer_->InsertCharacter("3.14");
     string result;
     composer_->GetStringForPreedit(&result);
@@ -2184,8 +2295,8 @@ TEST_F(ComposerTest, PreeditFormAfterCharacterTransform) {
   {
     composer_->Reset();
     manager->SetDefaultRule();
-    manager->AddPreeditRule("1", config::Config::FULL_WIDTH);
-    manager->AddPreeditRule(".,", config::Config::HALF_WIDTH);
+    manager->AddPreeditRule("1", Config::FULL_WIDTH);
+    manager->AddPreeditRule(".,", Config::HALF_WIDTH);
     composer_->InsertCharacter("3.14");
     string result;
     composer_->GetStringForPreedit(&result);
@@ -2197,8 +2308,8 @@ TEST_F(ComposerTest, PreeditFormAfterCharacterTransform) {
   {
     composer_->Reset();
     manager->SetDefaultRule();
-    manager->AddPreeditRule("1", config::Config::HALF_WIDTH);
-    manager->AddPreeditRule(".,", config::Config::FULL_WIDTH);
+    manager->AddPreeditRule("1", Config::HALF_WIDTH);
+    manager->AddPreeditRule(".,", Config::FULL_WIDTH);
     composer_->InsertCharacter("3.14");
     string result;
     composer_->GetStringForPreedit(&result);
@@ -2210,8 +2321,8 @@ TEST_F(ComposerTest, PreeditFormAfterCharacterTransform) {
   {
     composer_->Reset();
     manager->SetDefaultRule();
-    manager->AddPreeditRule("1", config::Config::FULL_WIDTH);
-    manager->AddPreeditRule(".,", config::Config::FULL_WIDTH);
+    manager->AddPreeditRule("1", Config::FULL_WIDTH);
+    manager->AddPreeditRule(".,", Config::FULL_WIDTH);
     composer_->InsertCharacter("3.14");
     string result;
     composer_->GetStringForPreedit(&result);
@@ -2619,11 +2730,11 @@ TEST_F(ComposerTest, Issue2797991_4) {
 
 TEST_F(ComposerTest, CaseSensitiveByConfiguration) {
   {
-    config::Config config;
-    config::ConfigHandler::GetDefaultConfig(&config);
-    config.set_shift_key_mode_switch(mozc::config::Config::OFF);
-    config::ConfigHandler::SetConfig(config);
-    EXPECT_TRUE(mozc::config::ConfigHandler::SetConfig(config));
+    Config config;
+    ConfigHandler::GetDefaultConfig(&config);
+    config.set_shift_key_mode_switch(Config::OFF);
+    ConfigHandler::SetConfig(config);
+    EXPECT_TRUE(ConfigHandler::SetConfig(config));
     table_->Initialize();
 
     // i -> "い"
@@ -2642,11 +2753,11 @@ TEST_F(ComposerTest, CaseSensitiveByConfiguration) {
   }
   composer_->Reset();
   {
-    config::Config config;
-    config::ConfigHandler::GetDefaultConfig(&config);
-    config.set_shift_key_mode_switch(mozc::config::Config::ASCII_INPUT_MODE);
-    config::ConfigHandler::SetConfig(config);
-    EXPECT_TRUE(mozc::config::ConfigHandler::SetConfig(config));
+    Config config;
+    ConfigHandler::GetDefaultConfig(&config);
+    config.set_shift_key_mode_switch(Config::ASCII_INPUT_MODE);
+    ConfigHandler::SetConfig(config);
+    EXPECT_TRUE(ConfigHandler::SetConfig(config));
     table_->Initialize();
 
     // i -> "い"
@@ -2668,11 +2779,11 @@ TEST_F(ComposerTest, CaseSensitiveByConfiguration) {
 TEST_F(ComposerTest,
        InputUppercaseInAlphanumericModeWithShiftKeyModeSwitchIsKatakana) {
   {
-    config::Config config;
-    config::ConfigHandler::GetDefaultConfig(&config);
-    config.set_shift_key_mode_switch(mozc::config::Config::KATAKANA_INPUT_MODE);
-    config::ConfigHandler::SetConfig(config);
-    EXPECT_TRUE(mozc::config::ConfigHandler::SetConfig(config));
+    Config config;
+    ConfigHandler::GetDefaultConfig(&config);
+    config.set_shift_key_mode_switch(Config::KATAKANA_INPUT_MODE);
+    ConfigHandler::SetConfig(config);
+    EXPECT_TRUE(ConfigHandler::SetConfig(config));
     table_->Initialize();
 
     // i -> "い"
@@ -2980,7 +3091,7 @@ TEST_F(ComposerTest, ShouldCommitHead) {
       TestData("ABCDEFGHI", commands::SessionCommand::TEL, true, 9),
   };
 
-  for (size_t i = 0; i < ARRAYSIZE(test_data_list); ++i) {
+  for (size_t i = 0; i < ARRAYSIZE_UNSAFE(test_data_list); ++i) {
     const TestData &test_data = test_data_list[i];
     SCOPED_TRACE(test_data.input_text);
     SCOPED_TRACE(test_data.field_type);
@@ -3152,8 +3263,9 @@ TEST_F(ComposerTest, 12KeysAsciiGetQueryForPrediction) {
   request.set_combine_all_segments(true);
   request.set_special_romanji_table(
       commands::Request::TWELVE_KEYS_TO_HALFWIDTHASCII);
-  commands::ScopedRequestForUnittest scoped_request(request);
-  table_->Initialize();
+  composer_->SetRequest(request);
+  table_->InitializeWithRequestAndConfig(request,
+                                         config::ConfigHandler::GetConfig());
   composer_->InsertCharacter("2");
   EXPECT_EQ("a", GetPreedit(composer_.get()));
   string result;

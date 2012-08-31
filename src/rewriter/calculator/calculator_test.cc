@@ -33,6 +33,8 @@
 #include <string>
 
 #include "base/base.h"
+#include "base/compiler_specific.h"
+#include "base/logging.h"
 #include "base/util.h"
 #include "rewriter/calculator/calculator_interface.h"
 #include "testing/base/public/gunit.h"
@@ -45,7 +47,7 @@ namespace {
 const char kTestDir[] = "data/test/calculator/";
 
 // Runs calculation with |expression| and compares the result and |expect|.
-bool VerifyCalculation(const CalculatorInterface *calculator,
+void VerifyCalculation(const CalculatorInterface *calculator,
                        const string &expression,
                        const string &expected) {
   string result;
@@ -60,11 +62,23 @@ bool VerifyCalculation(const CalculatorInterface *calculator,
       << "error: " << err << endl
       << "expr = " << expression << endl
       << "result = " << result;
-  return true;
 }
 
+// Runs calculation without any verification.
+// For smoke test.
+// This method is not used on some build environment, so we need to suppress
+// warnings.
+MOZC_CLANG_PUSH_WARNING();
+MOZC_CLANG_DISABLE_WARNING(unused-function);
+void RunCalculation(const CalculatorInterface *calculator,
+                    const string &expression) {
+  string result;
+  calculator->CalculateString(expression, &result);
+}
+MOZC_CLANG_POP_WARNING();
+
 // Runs calculation and compare results in PRINTED string.
-bool VerifyCalculationInString(const CalculatorInterface *calculator,
+void VerifyCalculationInString(const CalculatorInterface *calculator,
                                const string &expression,
                                const string &expected) {
   string result;
@@ -72,16 +86,14 @@ bool VerifyCalculationInString(const CalculatorInterface *calculator,
       << expression << "  expected = " << expected;
   EXPECT_EQ(expected, result)
       << "expr = " << expression << endl;
-  return true;
 }
 
 // Tries to calculate |wrong_key| and returns true if it fails.
-bool VerifyRejection(const CalculatorInterface *calculator,
+void VerifyRejection(const CalculatorInterface *calculator,
                      const string &wrong_key) {
   string result;
   EXPECT_FALSE(calculator->CalculateString(wrong_key, &result))
       << "expression: " << wrong_key << endl;
-  return true;
 }
 
 }  // anonymous namespace
@@ -91,63 +103,58 @@ TEST(CalculatorTest, BasicTest) {
 
   // These are not expressions
   // apparently
-  EXPECT_TRUE(VerifyRejection(calculator, "test"));
+  VerifyRejection(calculator, "test");
   // Expressoin must be ended with equal '='.
-  EXPECT_TRUE(VerifyRejection(calculator, "5+4"));
+  VerifyRejection(calculator, "5+4");
   // Expression must include at least one operator other than parentheses.
-  EXPECT_TRUE(VerifyRejection(calculator, "111="));
-  EXPECT_TRUE(VerifyRejection(calculator, "(5)="));
+  VerifyRejection(calculator, "111=");
+  VerifyRejection(calculator, "(5)=");
   // Expression must include at least one number.
-  EXPECT_TRUE(VerifyRejection(calculator, "()="));
+  VerifyRejection(calculator, "()=");
 
   // Test for each operators
-  EXPECT_TRUE(VerifyCalculation(calculator, "38+2.5=", "40.5"));
-  EXPECT_TRUE(VerifyCalculation(calculator, "5.5-21=", "-15.5"));
-  EXPECT_TRUE(VerifyCalculation(calculator, "4*2.1=", "8.4"));
-  EXPECT_TRUE(VerifyCalculation(calculator, "8/2=", "4"));
+  VerifyCalculation(calculator, "38+2.5=", "40.5");
+  VerifyCalculation(calculator, "5.5-21=", "-15.5");
+  VerifyCalculation(calculator, "4*2.1=", "8.4");
+  VerifyCalculation(calculator, "8/2=", "4");
   // "15・3="
-  EXPECT_TRUE(VerifyCalculation(calculator, "15\xE3\x83\xBB""3=", "5"));
-  EXPECT_TRUE(VerifyCalculation(calculator, "100%6=", "4"));
-  EXPECT_TRUE(VerifyCalculation(calculator, "2^10=", "1024"));
-  EXPECT_TRUE(VerifyCalculation(calculator, "4*-2=", "-8"));
-  EXPECT_TRUE(VerifyCalculation(calculator, "-10.3+3.5=", "-6.8"));
+  VerifyCalculation(calculator, "15\xE3\x83\xBB""3=", "5");
+  VerifyCalculation(calculator, "100%6=", "4");
+  VerifyCalculation(calculator, "2^10=", "1024");
+  VerifyCalculation(calculator, "4*-2=", "-8");
+  VerifyCalculation(calculator, "-10.3+3.5=", "-6.8");
 
   // Full width cases (some operators may appear as full width character).
   // "１２３４５＋６７８９０＝"
-  EXPECT_TRUE(VerifyCalculation(
-                  calculator,
-                  "\xEF\xBC\x91\xEF\xBC\x92\xEF\xBC\x93\xEF\xBC\x94\xEF\xBC"
-                  "\x95\xEF\xBC\x8B\xEF\xBC\x96\xEF\xBC\x97\xEF\xBC\x98\xEF"
-                  "\xBC\x99\xEF\xBC\x90\xEF\xBC\x9D",
-                  "80235"));
+  VerifyCalculation(calculator,
+                    "\xEF\xBC\x91\xEF\xBC\x92\xEF\xBC\x93\xEF\xBC\x94\xEF\xBC"
+                    "\x95\xEF\xBC\x8B\xEF\xBC\x96\xEF\xBC\x97\xEF\xBC\x98\xEF"
+                    "\xBC\x99\xEF\xBC\x90\xEF\xBC\x9D",
+                    "80235");
   // "5−1="
-  EXPECT_TRUE(VerifyCalculation(calculator, "5\xE2\x88\x92""1=", "4"));
+  VerifyCalculation(calculator, "5\xE2\x88\x92""1=", "4");
   // "-ー3+5="
-  EXPECT_TRUE(VerifyCalculation(calculator, "-\xE3\x83\xBC""3+5=", "8"));
+  VerifyCalculation(calculator, "-\xE3\x83\xBC""3+5=", "8");
   // "1．5＊2="
-  EXPECT_TRUE(VerifyCalculation(calculator,
-                                "1\xEF\xBC\x8E""5\xEF\xBC\x8A""2=",
-                                "3"));
+  VerifyCalculation(calculator, "1\xEF\xBC\x8E""5\xEF\xBC\x8A""2=", "3");
   // "10／2="
-  EXPECT_TRUE(VerifyCalculation(calculator, "10\xEF\xBC\x8F""2=", "5"));
+  VerifyCalculation(calculator, "10\xEF\xBC\x8F""2=", "5");
   // "2＾ー2="
-  EXPECT_TRUE(VerifyCalculation(calculator,
-                                "2\xEF\xBC\xBE\xE3\x83\xBC""2=",
-                                "0.25"));
+  VerifyCalculation(calculator, "2\xEF\xBC\xBE\xE3\x83\xBC""2=", "0.25");
   // "13％3="
-  EXPECT_TRUE(VerifyCalculation(calculator, "13\xEF\xBC\x85""3=", "1"));
+  VerifyCalculation(calculator, "13\xEF\xBC\x85""3=", "1");
   // "（1+1）*2="
-  EXPECT_TRUE(VerifyCalculation(calculator,
+  VerifyCalculation(calculator,
                                 "\xEF\xBC\x88""1+1\xEF\xBC\x89*2=",
-                                "4"));
+                                "4");
 
   // Expressions with more than one operator.
-  EXPECT_TRUE(VerifyCalculation(calculator, "(1+2)-4=", "-1"));
-  EXPECT_TRUE(VerifyCalculation(calculator, "5*(2+3)=", "25"));
-  EXPECT_TRUE(VerifyCalculation(calculator, "(70-((3+2)*4))%8=", "2"));
+  VerifyCalculation(calculator, "(1+2)-4=", "-1");
+  VerifyCalculation(calculator, "5*(2+3)=", "25");
+  VerifyCalculation(calculator, "(70-((3+2)*4))%8=", "2");
 
   // Issue 3082576: 7472.4 - 7465.6 = 6.7999999999993 is not expected.
-  EXPECT_TRUE(VerifyCalculationInString(calculator, "7472.4-7465.6=", "6.8"));
+  VerifyCalculationInString(calculator, "7472.4-7465.6=", "6.8");
 }
 
 // Test large number of queries.  Test data is located at
@@ -172,17 +179,15 @@ TEST(CalculatorTest, StressTest) {
     const size_t index_of_equal = line.find('=');
     DCHECK(index_of_equal != string::npos);
     const size_t query_length = index_of_equal + 1;
+    const string query(line, 0, query_length);
 
     if (line.size() == query_length) {
       // False test
-      EXPECT_TRUE(VerifyRejection(calculator, line))
-          << "line " << lineno << ": " << line;
+      VerifyRejection(calculator, line);
       continue;
     }
-    const string query(line, 0, query_length);
     const string answer(line, query_length);
-    EXPECT_TRUE(VerifyCalculation(calculator, query, answer))
-        << "line " << lineno << ": " << line;
+    VerifyCalculation(calculator, query, answer);
   }
   LOG(INFO) << "done " << lineno << " tests from " << filename << endl;
 }

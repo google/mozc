@@ -88,11 +88,13 @@ void Win32Server::AsyncQuit() {
 }
 
 bool Win32Server::Activate() {
-  return window_manager_->Activate();
+  // TODO(yukawa): Implement this.
+  return true;
 }
 
 bool Win32Server::IsAvailable() const {
-  return window_manager_->IsAvailable();
+  // TODO(yukawa): Implement this.
+  return true;
 }
 
 bool Win32Server::ExecCommand(const commands::RendererCommand &command) {
@@ -102,7 +104,8 @@ bool Win32Server::ExecCommand(const commands::RendererCommand &command) {
     case commands::RendererCommand::NOOP:
       break;
     case commands::RendererCommand::SHUTDOWN:
-      window_manager_->DestroyAllWindows();
+      // Do not destroy windows here.
+      window_manager_->HideAllWindows();
       break;
     case commands::RendererCommand::UPDATE:
       if (!command.visible()) {
@@ -144,15 +147,25 @@ bool Win32Server::AsyncExecCommand(string *proto_message) {
 int Win32Server::StartMessageLoop() {
   window_manager_->Initialize();
 
-  MSG msg;
-  ZeroMemory(&msg, sizeof(msg));
+  int return_code = 0;
 
-  while (msg.message != WM_QUIT) {
+  while (true) {
+    // WindowManager::IsAvailable() returns false at least one window does not
+    // have a valid window handle.
+    // - WindowManager::Initialize() somehow failed.
+    // - A window is closed as a result of WM_CLOSE sent from an external
+    //   process. This may happen if the shell or restart manager wants to shut
+    //   down the renderer.
+    if (!window_manager_->IsAvailable()) {
+      // Mark this thread to quit.
+      ::PostQuitMessage(0);
+      break;  // exit message pump.
+    }
+
     // Wait for the next window message or next rendering message.
-    const DWORD ret =
+    const DWORD wait_result =
       ::MsgWaitForMultipleObjects(1, &event_, FALSE, INFINITE, QS_ALLINPUT);
-
-    if (ret == WAIT_OBJECT_0) {
+    if (wait_result == WAIT_OBJECT_0) {
       // "event_" is signaled so that we have to handle the renderer command
       // stored in "message_"
       string message;
@@ -164,29 +177,45 @@ int Win32Server::StartMessageLoop() {
       commands::RendererCommand command;
       if (command.ParseFromString(message)) {
         ExecCommandInternal(command);
+        if (command.type() == commands::RendererCommand::SHUTDOWN) {
+          break;  // exit message pump.
+        }
       } else {
-        LOG(WARNING) << "ParseFromString failed";
+        LOG(ERROR) << "ParseFromString failed";
       }
-    } else if (ret == WAIT_OBJECT_0 + 1) {
-      // We have one or many window messages. Let's handle them.
-      ZeroMemory(&msg, sizeof(msg));
-      while ((::PeekMessage(&msg, NULL, 0, 0, PM_REMOVE) != 0) &&
-             (msg.message != WM_QUIT)) {
+    } else if (wait_result == WAIT_OBJECT_0 + 1) {
+      // We have at least one window message. Let's handle them.
+      while (true) {
+        MSG msg = {};
+        if (::PeekMessage(&msg, NULL, 0, 0, PM_REMOVE) == 0) {
+          // No more message.
+          break;  // exit message pump.
+        }
+        if (msg.message == WM_QUIT) {
+          return_code = msg.wParam;
+          VLOG(0) << "Reveiced WM_QUIT.";
+          break;  // exit message pump.
+        }
         window_manager_->PreTranslateMessage(msg);
         ::TranslateMessage(&msg);
         ::DispatchMessage(&msg);
       }
-    } else if (ret == WAIT_ABANDONED_0) {
+    } else if (wait_result == WAIT_ABANDONED_0) {
       LOG(INFO) << "WAIT_ABANDONED_0";
     } else {
-      LOG(ERROR) << "Unexpected result";
+      LOG(ERROR) << "MsgWaitForMultipleObjects returned unexpected result: "
+                 << wait_result;
     }
   }
 
-  // Make sure to close all windows.
+  // Ensure that IPC thread is terminated.
+  // TODO(yukawa): Update the IPC server so that we can set a timeout here.
+  Terminate();
+
+  // Make sure all the windows are closed.
   // WindowManager::DestroyAllWindows supports multiple calls on the UI thread.
   window_manager_->DestroyAllWindows();
-  return msg.wParam;
+  return return_code;
 }
 }  // win32
 }  // renderer

@@ -30,8 +30,6 @@
 #ifndef MOZC_UNIX_IBUS_MOZC_ENGINE_PROPERTY_H_
 #define MOZC_UNIX_IBUS_MOZC_ENGINE_PROPERTY_H_
 
-#include <ibus.h>
-
 #include "session/commands.pb.h"
 
 namespace mozc {
@@ -46,7 +44,8 @@ struct MozcEngineProperty {
   const char *icon;
 };
 
-extern const MozcEngineProperty kMozcEngineProperties[];
+// This pointer should be NULL when properties size is 0.
+extern const MozcEngineProperty *kMozcEngineProperties;
 extern const size_t kMozcEnginePropertiesSize;
 
 // If kMozcEnginePropertiesIMEOffState is NULL, it means IME should be always
@@ -64,8 +63,8 @@ struct MozcEngineSwitchProperty {
   const char *tooltip;  // tooltip.
 };
 
-extern const MozcEngineSwitchProperty
-    kMozcEngineSwitchProperties[];
+// This pointer should be NULL when properties size is 0.
+extern const MozcEngineSwitchProperty *kMozcEngineSwitchProperties;
 extern const size_t kMozcEngineSwitchPropertiesSize;
 
 struct MozcEngineToolProperty {
@@ -75,7 +74,8 @@ struct MozcEngineToolProperty {
   const char *icon;   // icon
 };
 
-extern const MozcEngineToolProperty kMozcEngineToolProperties[];
+// This pointer should be NULL when properties size is 0.
+extern const MozcEngineToolProperty *kMozcEngineToolProperties;
 extern const size_t kMozcEngineToolPropertiesSize;
 
 extern const unsigned int kPageSize;

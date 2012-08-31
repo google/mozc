@@ -31,9 +31,12 @@
 
 #include <string>
 #include <vector>
+
 #include "base/base.h"
+#include "base/logging.h"
+#include "base/number_util.h"
 #include "base/util.h"
-#include "converter/character_form_manager.h"
+#include "config/character_form_manager.h"
 #include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
@@ -41,32 +44,50 @@
 #include "session/request_handler.h"
 
 namespace mozc {
-namespace {
+
+using config::CharacterFormManager;
+
+#ifndef OS_ANDROID
 // "ひらがな"
-const char kHiragana[] = "\xE3\x81\xB2\xE3\x82\x89\xE3\x81\x8C\xE3\x81\xAA";
+const char *VariantsRewriter::kHiragana =
+    "\xE3\x81\xB2\xE3\x82\x89\xE3\x81\x8C\xE3\x81\xAA";
 // "カタカナ"
-const char kKatakana[] = "\xE3\x82\xAB\xE3\x82\xBF\xE3\x82\xAB\xE3\x83\x8A";
+const char *VariantsRewriter::kKatakana =
+    "\xE3\x82\xAB\xE3\x82\xBF\xE3\x82\xAB\xE3\x83\x8A";
 // "数字"
-const char kNumber[] = "\xE6\x95\xB0\xE5\xAD\x97";
+const char *VariantsRewriter::kNumber = "\xE6\x95\xB0\xE5\xAD\x97";
 // "アルファベット"
-const char kAlphabet[] = "\xE3\x82\xA2\xE3\x83\xAB\xE3\x83\x95\xE3\x82\xA1"
-    "\xE3\x83\x99\xE3\x83\x83\xE3\x83\x88";
+const char *VariantsRewriter::kAlphabet = "\xE3\x82\xA2\xE3\x83\xAB"
+    "\xE3\x83\x95\xE3\x82\xA1\xE3\x83\x99\xE3\x83\x83\xE3\x83\x88";
 // "漢字"
-const char kKanji[] = "\xe6\xbc\xa2\xe5\xad\x97";
-
+const char *VariantsRewriter::kKanji = "\xe6\xbc\xa2\xe5\xad\x97";
 // "[全]"
-const char kFullWidth[] = "[\xE5\x85\xA8]";
-
+const char *VariantsRewriter::kFullWidth = "[\xE5\x85\xA8]";
 // "[半]"
-const char kHalfWidth[] = "[\xE5\x8D\x8A]";
-
+const char *VariantsRewriter::kHalfWidth = "[\xE5\x8D\x8A]";
 // "<機種依存文字>"
-const char kPlatformDependent[] = "<\xE6\xA9\x9F\xE7\xA8\xAE"
+const char *VariantsRewriter::kPlatformDependent = "<\xE6\xA9\x9F\xE7\xA8\xAE"
     "\xE4\xBE\x9D\xE5\xAD\x98\xE6\x96\x87\xE5\xAD\x97>";
-
 // "<もしかして>"
-const char kDidYouMean[] =
+const char *VariantsRewriter::kDidYouMean =
     "<\xE3\x82\x82\xE3\x81\x97\xE3\x81\x8B\xE3\x81\x97\xE3\x81\xA6>";
+#else  // OS_ANDROID
+const char *VariantsRewriter::kHiragana = "";
+const char *VariantsRewriter::kKatakana = "";
+const char *VariantsRewriter::kNumber = "";
+const char *VariantsRewriter::kAlphabet = "";
+const char *VariantsRewriter::kKanji = "";
+// "[全]"
+const char *VariantsRewriter::kFullWidth = "[\xE5\x85\xA8]";
+// "[半]"
+const char *VariantsRewriter::kHalfWidth = "[\xE5\x8D\x8A]";
+// "<機種依存>"
+const char *VariantsRewriter::kPlatformDependent = "<\xE6\xA9\x9F\xE7\xA8\xAE"
+    "\xE4\xBE\x9D\xE5\xAD\x98>";
+// "<もしかして>"
+const char *VariantsRewriter::kDidYouMean =
+    "<\xE3\x82\x82\xE3\x81\x97\xE3\x81\x8B\xE3\x81\x97\xE3\x81\xA6>";
+#endif  // OS_ANDROID
 
 // Append |src| to |dst| with a separator ' '.
 void AppendString(const string &src, string *dst) {
@@ -105,7 +126,6 @@ bool HasCharacterFormDescription(const string &value) {
   }
   return true;
 }
-}  // namespace
 
 VariantsRewriter::VariantsRewriter(const POSMatcher *pos_matcher)
     : pos_matcher_(pos_matcher) {}
@@ -232,7 +252,21 @@ void VariantsRewriter::SetDescription(const POSMatcher &pos_matcher,
   AppendString(character_form_message, &description);
 
   // add main message
-  AppendString(candidate->description, &description);
+  if (candidate->value == "\x5C" || candidate->value == "\xEF\xBC\xBC") {
+    // if "\" (harlf-width backslash) or "＼" (full-width backslash)
+    // AppendString("バックスラッシュ", &description);
+    AppendString("\xE3\x83\x90\xE3\x83\x83\xE3\x82\xAF\xE3\x82\xB9"
+                 "\xE3\x83\xA9\xE3\x83\x83\xE3\x82\xB7\xE3\x83\xA5",
+                 &description);
+  } else if (candidate->value == "\xC2\xA5" ||
+             candidate->value == "\xEF\xBF\xA5") {
+    // if "¥" (harlf-width Yen sign) or "￥" (full-width Yen sign)
+    // AppendString("通貨記号(円)", &description);
+    AppendString("\xE9\x80\x9A\xE8\xB2\xA8\xE8\xA8\x98\xE5\x8F\xB7\x28"
+                 "\xE5\x86\x86\x29", &description);
+  } else {
+    AppendString(candidate->description, &description);
+  }
 
   // Platform dependent char description
   if (description_type & PLATFORM_DEPENDENT_CHARACTER &&
@@ -410,12 +444,12 @@ void VariantsRewriter::Finish(Segments *segments) {
     }
 
     switch (candidate.style) {
-      case Util::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH:
+      case NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH:
         // treat NUMBER_SEPARATED_ARABIC as half_width num
         CharacterFormManager::GetCharacterFormManager()->
             SetCharacterForm("0", config::Config::HALF_WIDTH);
         break;
-      case Util::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH:
+      case NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH:
         // treat NUMBER_SEPARATED_WIDE_ARABIC as full_width num
         CharacterFormManager::GetCharacterFormManager()->
             SetCharacterForm("0", config::Config::FULL_WIDTH);
@@ -449,4 +483,5 @@ bool VariantsRewriter::Rewrite(const ConversionRequest &request,
 
   return modified;
 }
+
 }  // namespace mozc

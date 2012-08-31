@@ -35,6 +35,8 @@
 
 namespace mozc {
 
+using converter::CachedConnector;
+
 ConnectorBase::ConnectorBase(const char *connection_data,
                              size_t connection_size,
                              bool *cache_initialized,

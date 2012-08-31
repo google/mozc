@@ -50,7 +50,7 @@ struct Node {
   enum Attribute {
     DEFAULT_ATTRIBUTE     = 0,
     SYSTEM_DICTIONARY     = 1,   // system dictionary (not used now)
-    USER_DICTIONARY       = 2,   // user dictionary (not used now)
+    USER_DICTIONARY       = 2,   // user dictionary
     NO_VARIANTS_EXPANSION = 4,   // no need to expand full/half
     WEAK_CONNECTED        = 8,   // internally used in the converter
     STARTS_WITH_PARTICLE  = 16,  // user input starts with particle
@@ -186,5 +186,5 @@ class NodeAllocatorInterface {
   size_t max_nodes_size_;
   NodeAllocatorData data_;
 };
-}
+}  // namespace mozc
 #endif  // MOZC_CONVERTER_NODE_H_;

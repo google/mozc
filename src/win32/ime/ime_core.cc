@@ -30,17 +30,14 @@
 #include "win32/ime/ime_core.h"
 
 #include <ime.h>
-#include <string.h>
 #include <windows.h>
 
-#include <set>
-
-#include "base/singleton.h"
 #include "base/util.h"
-#include "client/client.h"
+#include "client/client_interface.h"
 #include "config/config_handler.h"
 #include "session/commands.pb.h"
 #include "session/ime_switch_util.h"
+#include "session/output_util.h"
 #include "win32/base/conversion_mode_util.h"
 #include "win32/ime/ime_candidate_info.h"
 #include "win32/ime/ime_composition_string.h"
@@ -50,12 +47,13 @@
 #include "win32/ime/ime_private_context.h"
 #include "win32/ime/ime_reconvert_string.h"
 #include "win32/ime/ime_scoped_context.h"
+#include "win32/ime/ime_state.h"
 #include "win32/ime/ime_ui_context.h"
 #include "win32/ime/ime_ui_visibility_tracker.h"
-#include "win32/ime/output_util.h"
 
 namespace mozc {
 namespace win32 {
+
 using commands::KeyEvent;
 using commands::Output;
 using commands::SessionCommand;
@@ -92,7 +90,7 @@ bool GetNextState(HIMC himc, const commands::Output &output,
 
 BOOL UpdateInputContext(
     HIMC himc, const commands::Output &output, bool generate_message) {
-  mozc::win32::ImeState next_state;
+  ImeState next_state;
   if (!GetNextState(himc, output, &next_state)) {
     return FALSE;
   }
@@ -109,11 +107,32 @@ BOOL UpdateInputContext(
   return (message_queue.Send() ? TRUE : FALSE);
 }
 
+HIMCC EnsureHIMCCSize(HIMCC himcc, DWORD size) {
+  if (himcc == NULL) {
+    return ::ImmCreateIMCC(size);
+  }
+  const DWORD current_size = ::ImmGetIMCCSize(himcc);
+  if (current_size == size) {
+    return himcc;
+  }
+  return ::ImmReSizeIMCC(himcc, size);
+}
+
 bool UpdateCompositionString(HIMC himc,
                              const commands::Output &output,
                              vector<UIMessage> *messages) {
   ScopedHIMC<InputContext> context(himc);
-  ScopedHIMCC<mozc::win32::CompositionString> compstr(context->hCompStr);
+
+  // When the string is inserted from Tablet Input Panel, MSCTF shrinks the
+  // CompositionString buffer that we allocated in ImeSelect(). Thus we need
+  // to resize the buffer when necessary. b/6841008
+  // TODO(yukawa): Move this logic into more appropriate place.
+  const HIMCC composition_string_handle = EnsureHIMCCSize(
+      context->hCompStr, sizeof(CompositionString));
+  if (composition_string_handle == NULL) {
+    return false;
+  }
+  ScopedHIMCC<CompositionString> compstr(composition_string_handle);
   if (!compstr->Update(output, messages)) {
     return false;
   }
@@ -426,7 +445,7 @@ void ImeCore::SortIMEMessages(
 }
 
 bool ImeCore::UpdateContext(HIMC himc,
-                            const ImeState next_state,
+                            const ImeState &next_state,
                             const commands::Output &new_output,
                             MessageQueue *message_queue) {
   if (!IsInputContextInitialized(himc)) {
@@ -462,7 +481,7 @@ bool ImeCore::UpdateContext(HIMC himc,
   if (!context.client()->SendCommand(callback_command, &callback_output)) {
     return false;
   }
-  mozc::win32::ImeState callback_state;
+  ImeState callback_state;
   if (!GetNextState(himc, callback_output, &callback_state)) {
     return false;
   }
@@ -471,7 +490,7 @@ bool ImeCore::UpdateContext(HIMC himc,
 }
 
 bool ImeCore::UpdateContextMain(HIMC himc,
-                                const ImeState next_state,
+                                const ImeState &next_state,
                                 const commands::Output &new_output,
                                 MessageQueue *message_queue) {
   DCHECK(IsInputContextInitialized(himc));
@@ -591,7 +610,7 @@ BOOL ImeCore::IMEOff(HIMC himc, bool generate_message) {
       &next_open_status, &next_mode)) {
     return FALSE;
   }
-  mozc::win32::ImeState next_state;
+  ImeState next_state;
   next_state.open = false;  // We ignore the returned status.
   next_state.conversion_status = next_mode;
   if (!generate_message) {
@@ -632,7 +651,7 @@ BOOL ImeCore::HighlightCandidate(
     }
 
     // Stop sending HIGHLIGHT_CANDIDATE if the given candidate is already
-    // selected.  If the |last_output| does not have focused candiadte,
+    // selected.  If the |last_output| does not have focused candidate,
     // HIGHLIGHT_CANDIDATE is always be sent.
     int32 focused_candidate_id = 0;
     if (OutputUtil::GetFocusedCandidateId(
@@ -725,7 +744,7 @@ bool ImeCore::TurnOnIMEAndTryToReconvertFromIME(HIMC himc) {
   }
   if (!context.IsCompositionStringEmpty()) {
     // TODO(yukawa): Use Mozc server to determine the behavior when any
-    //   appropriate procotol becomes available.
+    //   appropriate protocol becomes available.
     DLOG(INFO) << "Ongoing comosition exists.";
     return false;
   }
@@ -857,7 +876,7 @@ bool ImeCore::ReconversionFromApplication(
 
   if (!context.IsCompositionStringEmpty()) {
     // TODO(yukawa): Use Mozc server to determine the behavior when any
-    //   appropriate procotol becomes available.
+    //   appropriate protocol becomes available.
     DLOG(INFO) << "Ongoing comosition exists.";
     return false;
   }
@@ -897,18 +916,20 @@ bool ImeCore::ResetServerContextIfNeccesary(HIMC himc) {
   }
 
   // TODO(yukawa): Use IMR_DOCUMENTFEED in addition to mouse event.
-  if (context.GetOpenStatus() &&
-      context.IsCompositionStringEmpty() &&
-      ThreadLocalMouseTracker::WasLeftButtonPressed()) {
-    SessionCommand command;    
+  const bool was_left_pressed = ThreadLocalMouseTracker::WasLeftButtonPressed();
+  ThreadLocalMouseTracker::ResetWasLeftButtonPressed();
+  if (!context.GetOpenStatus() || !context.IsCompositionStringEmpty()) {
+    return true;
+  }
+  if (was_left_pressed) {
+    SessionCommand command;
     command.set_type(commands::SessionCommand::RESET_CONTEXT);
     Output output;
-    if (context.client()->SendCommand(command, &output)) {
+    if (!context.client()->SendCommand(command, &output)) {
       LOG(ERROR) << "TestSendKey failed.";
       return false;
     }
   }
-  ThreadLocalMouseTracker::ResetWasLeftButtonPressed();
   return true;
 }
 }  // namespace win32

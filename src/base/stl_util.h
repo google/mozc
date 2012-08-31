@@ -30,6 +30,8 @@
 #ifndef MOZC_BASE_STL_UTIL_H_
 #define MOZC_BASE_STL_UTIL_H_
 
+#include <functional>
+
 namespace mozc {
 
 template <class ForwardIterator>
@@ -50,6 +52,60 @@ void STLDeleteElements(T *container) {
   STLDeleteContainerPointers(container->begin(), container->end());
   container->clear();
 }
+
+// Comparator functor based of a member.
+// Key: a function object to return key from the given value.
+// Comparator: a base comparator function object.
+template <typename Key, typename Comparator>
+class OrderBy {
+ public:
+  OrderBy() {
+  }
+
+  OrderBy(const Key &key, const Comparator &comparator)
+      : key_(key), comparator_(comparator) {
+  }
+
+  template<typename T>
+  bool operator()(const T &lhs, const T &rhs) const {
+    return comparator_(key_(lhs), key_(rhs));
+  }
+
+ private:
+  Key key_;
+  Comparator comparator_;
+};
+
+// Function object to return pair<T1, T2>::first.
+struct FirstKey {
+  template<typename T>
+  const typename T::first_type &operator()(const T &value) const {
+    return value.first;
+  }
+};
+
+// Function object to return pair<T1, T2>::second.
+struct SecondKey {
+  template<typename T>
+  const typename T::second_type &operator()(const T &value) const {
+    return value.second;
+  }
+};
+
+// Simple wrapper of binary predicator in functional.
+template<template<typename T> class Comparator>
+struct FunctionalComparator {
+  template<typename T>
+  bool operator()(const T &lhs, const T &rhs) const {
+    return Comparator<T>()(lhs, rhs);
+  }
+};
+typedef FunctionalComparator<equal_to> EqualTo;
+typedef FunctionalComparator<not_equal_to> NotEqualTo;
+typedef FunctionalComparator<less> Less;
+typedef FunctionalComparator<greater> Greater;
+typedef FunctionalComparator<less_equal> LessEqual;
+typedef FunctionalComparator<greater_equal> GreaterEqual;
 
 }  // namespace mozc
 

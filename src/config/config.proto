@@ -297,16 +297,16 @@ message Config {
   //
   // Suggest (100-119)
   //
-  // use history-based suggest feature
+  // Use history-based suggest feature.
   optional bool use_history_suggest = 100 [ default = true ];
 
-  // use dictionary-based suggest feature
+  // Use dictionary-based suggest feature.
   optional bool use_dictionary_suggest = 101 [ default = true ];
 
-  // use realtime conversion feature (experimental)
+  // Use realtime conversion feature.
   optional bool use_realtime_conversion = 102 [ default = true ];
 
-  // size of suggestions
+  // Size of suggestions.
   optional uint32 suggestions_size = 110 [ default = 3 ];
 
   //////////////////////////////////////////////////////////////

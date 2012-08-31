@@ -34,10 +34,11 @@
 #include <vector>
 
 #include "base/base.h"
+#include "base/logging.h"
 #include "storage/registry.h"
-#include "sync/user_history_sync_util.h"
 #include "sync/sync.pb.h"
 #include "sync/sync_util.h"
+#include "sync/user_history_sync_util.h"
 
 namespace mozc {
 namespace sync {

@@ -180,21 +180,6 @@ class ConverterInterface {
   DISALLOW_COPY_AND_ASSIGN(ConverterInterface);
 };
 
-class ConverterFactory {
- public:
-  // Create singleton Converter insntance.
-  // If failed, return NULL
-  // TODO(taku): move them to ConverterFactory
-  static ConverterInterface *GetConverter();
-
-  // Inject a dependency for unittesting
-  static void SetConverter(ConverterInterface *converter);
-
- private:
-  ConverterFactory() {}
-  ~ConverterFactory() {}
-};
-
 // static converter utilities
 class ConverterUtil {
  public:

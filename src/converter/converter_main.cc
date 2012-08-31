@@ -31,15 +31,19 @@
 #include <sstream>
 #include <string>
 #include <vector>
+
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/util.h"
 #include "composer/composer.h"
+#include "composer/table.h"
 #include "converter/conversion_request.h"
-#include "converter/converter.h"
 #include "converter/converter_interface.h"
-#include "converter/immutable_converter.h"
 #include "converter/lattice.h"
 #include "converter/segments.h"
+#include "engine/android_engine_factory.h"
+#include "engine/engine_factory.h"
+#include "engine/engine_interface.h"
 #include "session/commands.pb.h"
 #include "session/request_handler.h"
 
@@ -153,14 +157,20 @@ bool ExecCommand(const mozc::ConverterInterface &converter,
     segments->set_user_history_enabled(true);
   } else if (func == "convertwithprecedingtext" || func == "cwpt") {
     CHECK_FIELDS_LENGTH(3);
-    mozc::composer::Composer composer;
+    mozc::composer::Table table;
+    table.Initialize();
+    mozc::composer::Composer composer(
+        &table, mozc::commands::Request::default_instance());
     composer.InsertCharacter(fields[2]);
     mozc::ConversionRequest request(&composer);
     request.set_preceding_text(fields[1]);
     converter.StartConversionForRequest(request, segments);
   } else if (func == "predictwithprecedingtext" || func == "pwpt") {
     CHECK_FIELDS_LENGTH(3);
-    mozc::composer::Composer composer;
+    mozc::composer::Table table;
+    table.Initialize();
+    mozc::composer::Composer composer(
+        &table, mozc::commands::Request::default_instance());
     composer.InsertCharacter(fields[2]);
     mozc::ConversionRequest request(&composer);
     request.set_preceding_text(fields[1]);
@@ -182,21 +192,20 @@ int main(int argc, char **argv) {
     mozc::Util::SetUserProfileDirectory(FLAGS_user_profile_dir);
   }
 
+  scoped_ptr<mozc::EngineInterface> engine;
   if (FLAGS_mobile) {
-    LOG(INFO) << "Using mobile preference and dictionary";
+    LOG(INFO) << "Using mobile preference and engine";
     mozc::commands::Request request;
     request.set_zero_query_suggestion(true);
     request.set_mixed_conversion(true);
     mozc::commands::RequestHandler::SetRequest(request);
-
+    engine.reset(mozc::AndroidEngineFactory::Create());
+  } else {
+    LOG(INFO) << "Using desktop preference and default engine";
+    engine.reset(mozc::EngineFactory::Create());
   }
-
-  scoped_ptr<mozc::ImmutableConverterImpl> immutable_converter(
-      new mozc::ImmutableConverterImpl);
-  mozc::ImmutableConverterFactory::SetImmutableConverter(
-      immutable_converter.get());
-  scoped_ptr<mozc::ConverterImpl> converter_impl(new mozc::ConverterImpl);
-  mozc::ConverterInterface *converter = converter_impl.get();
+  CHECK(engine.get());
+  mozc::ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
 
   mozc::Segments segments;

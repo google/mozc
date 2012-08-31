@@ -30,3 +30,43 @@
 // IPC server inplementation for Android. Currently it does nothing.
 
 // skip all if not Android
+#ifdef OS_ANDROID
+
+#include "base/thread.h"
+#include "ipc/ipc.h"
+
+namespace mozc {
+
+namespace {
+
+const int kInvalidSocket = -1;
+
+}  // namespace
+
+// Server
+IPCServer::IPCServer(const string &name,
+                     int32 num_connections,
+                     int32 timeout)
+    : connected_(false), socket_(kInvalidSocket), timeout_(timeout) {
+  // do nothing
+}
+
+IPCServer::~IPCServer() {
+  // do nothing
+}
+
+bool IPCServer::Connected() const {
+  return true;
+}
+
+void IPCServer::Loop() {
+  // do nothing
+}
+
+void IPCServer::Terminate() {
+  // do nothing
+}
+
+};  // namespace mozc
+
+#endif  // OS_ANDROID

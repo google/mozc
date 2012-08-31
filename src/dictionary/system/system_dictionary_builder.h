@@ -30,24 +30,47 @@
 #ifndef MOZC_DICTIONARY_SYSTEM_SYSTEM_DICTIONARY_BUILDER_H_
 #define MOZC_DICTIONARY_SYSTEM_SYSTEM_DICTIONARY_BUILDER_H_
 
+#include <deque>
 #include <map>
 #include <ostream>
 #include <string>
 #include <vector>
 
 #include "base/base.h"
-#include "dictionary/rx/rbx_array_builder.h"
-#include "dictionary/rx/rx_trie_builder.h"
 #include "dictionary/system/words_info.h"
 
 namespace mozc {
 struct DictionaryFileSection;
 struct Token;
+
+#ifdef MOZC_USE_MOZC_LOUDS
+namespace storage {
+namespace louds {
+class BitVectorBasedArrayBuilder;
+class LoudsTrieBuilder;
+}  // namespace louds
+}  // namespace storage
+#else
+namespace rx {
+class RbxArrayBuilder;
+class RxTrieBuilder;
+}  // namespace rx
+#endif  // MOZC_USE_MOZC_LOUDS
+
 namespace dictionary {
 class SystemDictionaryCodecInterface;
 
 class SystemDictionaryBuilder {
  public:
+  // Represents words info for a certain key(=reading).
+  struct KeyInfo {
+    KeyInfo() : id_in_key_trie(-1) {}
+    // id of the key(=reading) string in key trie
+    int id_in_key_trie;
+    string key;
+    vector<TokenInfo> tokens;
+  };
+
   SystemDictionaryBuilder();
   virtual ~SystemDictionaryBuilder();
 
@@ -59,30 +82,38 @@ class SystemDictionaryBuilder {
                      ostream *output_stream) const;
 
  private:
-  typedef map<string, KeyInfo> KeyInfoMap;
+  typedef deque<KeyInfo> KeyInfoList;
+
+#ifdef MOZC_USE_MOZC_LOUDS
+  typedef ::mozc::storage::louds::LoudsTrieBuilder TrieBuilder;
+  typedef ::mozc::storage::louds::BitVectorBasedArrayBuilder ArrayBuilder;
+#else
+  typedef ::mozc::rx::RxTrieBuilder TrieBuilder;
+  typedef ::mozc::rx::RbxArrayBuilder ArrayBuilder;
+#endif
 
   void ReadTokens(const vector<Token *>& tokens,
-                  KeyInfoMap *key_info_map) const;
+                  KeyInfoList *key_info_list) const;
 
-  void BuildFrequentPos(const KeyInfoMap &key_info_map);
+  void BuildFrequentPos(const KeyInfoList &key_info_list);
 
-  void BuildValueTrie(const KeyInfoMap &key_info_map);
+  void BuildValueTrie(const KeyInfoList &key_info_list);
 
-  void BuildKeyTrie(const KeyInfoMap &key_info_map);
+  void BuildKeyTrie(const KeyInfoList &key_info_list);
 
-  void BuildTokenArray(const KeyInfoMap &key_info_map);
+  void BuildTokenArray(const KeyInfoList &key_info_list);
 
-  void SetIdForValue(KeyInfoMap *key_info_map) const;
-  void SetIdForKey(KeyInfoMap *key_info_map) const;
-  void SortTokenInfo(KeyInfoMap *key_info_map) const;
+  void SetIdForValue(KeyInfoList *key_info_list) const;
+  void SetIdForKey(KeyInfoList *key_info_list) const;
+  void SortTokenInfo(KeyInfoList *key_info_list) const;
 
-  void SetCostType(KeyInfoMap *key_info_map) const;
-  void SetPosType(KeyInfoMap *keyinfomap) const;
-  void SetValueType(KeyInfoMap *key_info_map) const;
+  void SetCostType(KeyInfoList *key_info_list) const;
+  void SetPosType(KeyInfoList *keyinfomap) const;
+  void SetValueType(KeyInfoList *key_info_list) const;
 
-  scoped_ptr<rx::RxTrieBuilder> value_trie_builder_;
-  scoped_ptr<rx::RxTrieBuilder> key_trie_builder_;
-  scoped_ptr<rx::RbxArrayBuilder> token_array_builder_;
+  scoped_ptr<TrieBuilder> value_trie_builder_;
+  scoped_ptr<TrieBuilder> key_trie_builder_;
+  scoped_ptr<ArrayBuilder> token_array_builder_;
 
   // mapping from {left_id, right_id} to POS index (0--255)
   map<uint32, int> frequent_pos_;

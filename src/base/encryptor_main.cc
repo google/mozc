@@ -27,12 +27,14 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <string>
 #include <iostream>
+#include <string>
 #include "base/base.h"
-#include "base/mmap.h"
-#include "base/file_stream.h"
 #include "base/encryptor.h"
+#include "base/file_stream.h"
+#include "base/logging.h"
+#include "base/mmap.h"
+#include "base/util.h"
 
 DEFINE_string(password, "", "password");
 DEFINE_string(salt, "", "salt");
@@ -71,10 +73,9 @@ int main(int argc, char **argv) {
     mozc::Encryptor::Key key;
     CHECK(key.DeriveFromPassword(FLAGS_password, FLAGS_salt, iv));
 
-    mozc::Mmap<char> mmap;
+    mozc::Mmap mmap;
     CHECK(mmap.Open(FLAGS_input_file.c_str(), "r"));
-    string buf;
-    buf.assign(mmap.begin(), mmap.GetFileSize());
+    string buf(mmap.begin(), mmap.size());
     if (FLAGS_encrypt) {
       CHECK(mozc::Encryptor::EncryptString(key, &buf));
     } else if (FLAGS_decrypt) {

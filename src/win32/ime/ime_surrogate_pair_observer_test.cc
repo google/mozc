@@ -30,7 +30,6 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
-#include "session/commands.pb.h"
 #include "win32/ime/ime_keyboard.h"
 #include "win32/ime/ime_surrogate_pair_observer.h"
 

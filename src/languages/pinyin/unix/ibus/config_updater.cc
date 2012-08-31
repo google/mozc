@@ -70,23 +70,14 @@ ConfigUpdater::ConfigUpdater() {
 void ConfigUpdater::ConfigValueChanged(IBusConfig *config,
                                        const gchar *section,
                                        const gchar *name,
-#if IBUS_CHECK_VERSION(1, 3, 99)
                                        GVariant *value,
-#else
-                                       GValue *value,
-#endif
                                        gpointer user_data) {
   Singleton<ConfigUpdater>::get()->UpdateConfig(section, name, value);
 }
 
 void ConfigUpdater::UpdateConfig(const gchar *section,
                                  const gchar *name,
-#if IBUS_CHECK_VERSION(1, 3, 99)
-                                 GVariant *value
-#else
-                                 GValue *value
-#endif
-                                 ) {
+                                 GVariant *value) {
   if (!section || !name || !value) {
     return;
   }

@@ -31,18 +31,21 @@
 
 #ifdef OS_WINDOWS
 #include <windows.h>
-#endif
+#else
+#include <sys/stat.h>
+#endif  // OS_WINDOWS
 
 #ifdef OS_MACOSX
 #include <CoreFoundation/CoreFoundation.h>
 #include <Security/Security.h>
-#endif
+#endif  // OS_MACOSX
 
 #include <string>
 #include "base/base.h"
 #include "base/const.h"
 #include "base/encryptor.h"
 #include "base/file_stream.h"
+#include "base/logging.h"
 #include "base/mmap.h"
 #include "base/mutex.h"
 #include "base/singleton.h"
@@ -138,7 +141,7 @@ bool SavePassword(const string &password) {
 
 bool LoadPassword(string *password) {
   const string filename = GetFileName();
-  Mmap<char> mmap;
+  Mmap mmap;
   if (!mmap.Open(filename.c_str(), "r")) {
     LOG(ERROR) << "cannot open: " << filename;
     return false;
@@ -148,12 +151,12 @@ bool LoadPassword(string *password) {
   // becomes bigger than the original message.
   // Typical file size is 32 * 5 = 160byte.
   // We just set the maximum file size to be 4096byte just in case.
-  if (mmap.GetFileSize() == 0 || mmap.GetFileSize() > 4096) {
+  if (mmap.size() == 0 || mmap.size() > 4096) {
     LOG(ERROR) << "Invalid password is saved";
     return false;
   }
 
-  password->assign(mmap.begin(), mmap.GetFileSize());
+  password->assign(mmap.begin(), mmap.size());
 
   return true;
 }

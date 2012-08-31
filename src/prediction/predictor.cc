@@ -31,7 +31,9 @@
 
 #include <string>
 #include <vector>
+
 #include "base/base.h"
+#include "base/logging.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
@@ -46,7 +48,6 @@ DECLARE_bool(enable_expansion_for_user_history_predictor);
 namespace mozc {
 namespace {
 const int kPredictionSize = 100;
-
 
 size_t GetCandidatesSize(const Segments &segments) {
   if (segments.conversion_segments_size() <= 0) {
@@ -119,6 +120,16 @@ bool BasePredictor::Reload() {
   return user_history_predictor_->Reload();
 }
 
+// static
+PredictorInterface *DefaultPredictor::CreateDefaultPredictor(
+    PredictorInterface *dictionary_predictor,
+    PredictorInterface *user_history_predictor,
+    PredictorInterface *extra_predictor) {
+  return new DefaultPredictor(dictionary_predictor,
+                              user_history_predictor,
+                              extra_predictor);
+}
+
 DefaultPredictor::DefaultPredictor(PredictorInterface *dictionary_predictor,
                                    PredictorInterface *user_history_predictor,
                                    PredictorInterface *extra_predictor)
@@ -166,6 +177,17 @@ bool DefaultPredictor::PredictForRequest(const ConversionRequest &request,
   result |= dictionary_predictor_->PredictForRequest(request, segments);
   remained_size = size - static_cast<size_t>(GetCandidatesSize(*segments));
 
+  // Do not call extra_predictor if the size of candidates get
+  // >= suggestions_size.
+  if (remained_size <= 0) {
+    return result;
+  }
+
+  if (extra_predictor_.get()) {
+    segments->set_max_prediction_candidates_size(remained_size);
+    result |= extra_predictor_->PredictForRequest(request, segments);
+    remained_size = size - static_cast<size_t>(GetCandidatesSize(*segments));
+  }
 
   return result;
 }

@@ -28,6 +28,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <string.h>
+#include "base/logging.h"
 #include "base/mutex.h"
 #include "base/thread.h"
 #include "base/util.h"
@@ -104,7 +105,6 @@ void CallbackFunc() {
   Util::Sleep(20);
 }
 
-#ifdef HAVE_READER_WRITER_MUTEX
 class ReaderMutexTestThread : public Thread {
  public:
   explicit ReaderMutexTestThread(ReaderWriterMutex *mutex)
@@ -114,6 +114,7 @@ class ReaderMutexTestThread : public Thread {
 
   virtual void Run() {
     while (g_counter != kStopCoutner) {
+      Util::Sleep(1);
       scoped_reader_lock l(mutex_);
       counter_ = g_counter;
     }
@@ -126,24 +127,32 @@ class ReaderMutexTestThread : public Thread {
   ReaderWriterMutex *mutex_;
 };
 
+// TODO(yukawa): Replace the following test with more stable one
+//     which asserts deterministic conditions that will not be
+//     affected by the CPU load average. b/6355447
 TEST(MutexTest, ReaderWriterTest) {
-  const int kThreadsSize = 5;
+  if (!ReaderWriterMutex::MultipleReadersThreadsSupported()) {
+    LOG(INFO) << "ReaderWriterMutex does not support multiple "
+                 "reader threads. Skipping ReaderWriterTest test.";
+    return;
+  }
 
+  const size_t kThreadsSize = 3;
   vector<ReaderMutexTestThread *> threads(kThreadsSize);
 
   // shared variable
   g_counter = 1;
 
   ReaderWriterMutex mutex;
-  for (int i = 0; i < kThreadsSize; ++i) {
+  for (size_t i = 0; i < kThreadsSize; ++i) {
     threads[i] = new ReaderMutexTestThread(&mutex);
   }
 
-  for (int i = 0; i < kThreadsSize; ++i) {
+  for (size_t i = 0; i < kThreadsSize; ++i) {
     threads[i]->Start();
   }
 
-  const uint32 kSleepTime = 100;  // 100 msec
+  const uint32 kSleepTime = 500;  // 500 msec
 
   // every reader thread can get g_counter variable at the same time.
   Util::Sleep(kSleepTime);
@@ -160,28 +169,28 @@ TEST(MutexTest, ReaderWriterTest) {
       g_counter = counter + 1;
 
       // Still the counter value is counter.
-      for (int i = 0; i < kThreadsSize; ++i) {
+      for (size_t i = 0; i < kThreadsSize; ++i) {
         EXPECT_EQ(counter, threads[i]->counter());
       }
     }
 
     Util::Sleep(kSleepTime);
     // coutner value becomes the same as g_counter
-    for (int i = 0; i < kThreadsSize; ++i) {
+    for (size_t i = 0; i < kThreadsSize; ++i) {
       EXPECT_EQ(g_counter, threads[i]->counter());
     }
   }
 
-  mutex.WriterLock();
-  g_counter = ReaderMutexTestThread::kStopCoutner;
-  mutex.WriterUnlock();
+  {
+    scoped_writer_lock l(&mutex);
+    g_counter = ReaderMutexTestThread::kStopCoutner;
+  }
 
-  for (int i = 0; i < kThreadsSize; ++i) {
+  for (size_t i = 0; i < kThreadsSize; ++i) {
     threads[i]->Join();
     delete threads[i];
   }
 }
-#endif  // HAVE_READER_WRITER_MUTEX
 
 TEST(CallOnceTest, CallOnceBasicTest) {
   g_counter = 0;

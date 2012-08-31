@@ -48,7 +48,7 @@ typedef __int64             int64;
 #else
 typedef unsigned long long uint64;
 typedef long long           int64;
-#endif
+#endif  // OS_WINDOWS
 
 #define atoi32 atoi
 #define strto32 strtol
@@ -79,8 +79,8 @@ typedef long long           int64;
 inline void va_copy(va_list& a, va_list& b) {
   a = b;
 }
-#endif
-#endif
+#endif  // COMPILER_MSVC
+#endif  // OS_WINDOWS
 
 template <typename T, size_t N>
 char (&ArraySizeHelper(T (&array)[N]))[N];
@@ -88,22 +88,9 @@ char (&ArraySizeHelper(T (&array)[N]))[N];
 #ifndef OS_WINDOWS
 template <typename T, size_t N>
 char (&ArraySizeHelper(const T (&array)[N]))[N];
-#endif
+#endif  // !OS_WINDOWS
 
 #define arraysize(array) (sizeof(ArraySizeHelper(array)))
-
-// ARRAYSIZE performs essentially the same calculation as arraysize,
-// but can be used on anonymous types or types defined inside
-// functions.  It's less safe than arraysize as it accepts some
-// (although not all) pointers.  Therefore, you should use arraysize
-// whenever possible.
-//
-// Starting with Visual C++ 2005, WinNT.h includes ARRAYSIZE.
-#if !defined(COMPILER_MSVC) || (defined(_MSC_VER) && _MSC_VER < 1400)
-#define ARRAYSIZE(a) \
-  ((sizeof(a) / sizeof(*(a))) / \
-   static_cast<size_t>(!(sizeof(a) % sizeof(*(a)))))
-#endif
 
 #ifdef OS_WINDOWS
 // I64/UI64 postfixes are equivalent to LL/ULL and "I64" is equivalent to
@@ -143,12 +130,12 @@ static const  int64 kint64min  = (( int64) GG_LONGLONG(0x8000000000000000));
 static const  int64 kint64max  = (( int64) GG_LONGLONG(0x7FFFFFFFFFFFFFFF));
 
 #define DISALLOW_COPY_AND_ASSIGN(TypeName) \
-  TypeName(const TypeName&);               \
-  void operator=(const TypeName&)
+    TypeName(const TypeName&);             \
+    void operator=(const TypeName&)
 
 #define DISALLOW_IMPLICIT_CONSTRUCTORS(TypeName) \
-  TypeName();                                    \
-  DISALLOW_COPY_AND_ASSIGN(TypeName)
+    TypeName();                                  \
+    DISALLOW_COPY_AND_ASSIGN(TypeName)
 
 #if (defined(COMPILER_GCC3) || defined(COMPILER_ICC) || defined(OS_MACOSX)) && !defined(SWIG)
 // Tell the compiler to do printf format string checking if the
@@ -165,7 +152,7 @@ static const  int64 kint64max  = (( int64) GG_LONGLONG(0x7FFFFFFFFFFFFFFF));
 #else
 #define PRINTF_ATTRIBUTE(string_index, first_to_check)
 #define SCANF_ATTRIBUTE(string_index, first_to_check)
-#endif
+#endif  // (COMPILER_GCC3 || COMPILER_ICC || OS_MACOSX) && !SWIG
 
 #ifndef SWIG
 # define ABSTRACT = 0
@@ -181,11 +168,20 @@ struct CompileAssert {
 #define AS_STRING(x)   AS_STRING_INTERNAL(x)
 #define AS_STRING_INTERNAL(x)   #x
 
-#include "base/logging.h"
+
+// ARRAYSIZE_UNSAFE performs essentially the same calculation as arraysize,
+// but can be used on anonymous types or types defined inside functions.
+// It's less safe than arraysize as it accepts some (although not all)
+// pointers.  Therefore, you should use arraysize whenever possible.
+
+#ifndef ARRAYSIZE_UNSAFE
+#define ARRAYSIZE_UNSAFE(a)       \
+    ((sizeof(a) / sizeof(*(a))) / \
+    static_cast<size_t>(!(sizeof(a) % sizeof(*(a)))))
+#endif  // !ARRAYSIZE_UNSAFE
+
 #include "base/flags.h"
-
-
 #include "base/init.h"
-#include "base/flags.h"
+#include "base/logging.h"
 
 #endif  // MOZC_BASE_PORT_H_

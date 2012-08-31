@@ -31,32 +31,34 @@
 
 #include "session/japanese_session_factory.h"
 
+#include "base/logging.h"
 #include "converter/converter_interface.h"
-#include "session/internal/keymap.h"
-#include "session/session_interface.h"
+#include "engine/engine_interface.h"
 #include "session/session.h"
+#include "session/session_interface.h"
 
 namespace mozc {
 namespace session {
 
-JapaneseSessionFactory::JapaneseSessionFactory() {
+JapaneseSessionFactory::JapaneseSessionFactory(EngineInterface *engine)
+    : engine_(engine) {
 }
 
 JapaneseSessionFactory::~JapaneseSessionFactory() {
 }
 
 SessionInterface *JapaneseSessionFactory::NewSession() {
-  return new Session();
+  return new Session(engine_);
 }
 
 UserDataManagerInterface *JapaneseSessionFactory::GetUserDataManager() {
-  return ConverterFactory::GetConverter()->GetUserDataManager();
+  return engine_->GetConverter()->GetUserDataManager();
 }
 
-// TODO(yoichio): This function is just same as extended one.
-// SessionFactoryInterface::IsAvailable() may be deprecated?
-bool JapaneseSessionFactory::IsAvailable() const {
-  return true;
+void JapaneseSessionFactory::Reload() {
+  if (!engine_->Reload()) {
+    LOG(ERROR) << "Failed to reload engine.";
+  }
 }
 
 }  // namespace session

@@ -34,29 +34,21 @@
 #include <string>
 #include <utility>
 #include <vector>
+
 #include "base/base.h"
-#include "base/mutex.h"
-#include "base/singleton.h"
+#include "base/logging.h"
 #include "base/util.h"
 #include "composer/composer.h"
 #include "converter/connector_interface.h"
 #include "converter/conversion_request.h"
 #include "converter/immutable_converter_interface.h"
-#include "converter/node_allocator.h"
-#include "converter/segmenter.h"
 #include "converter/segments.h"
 #include "converter/user_data_manager_interface.h"
-#include "data_manager/user_pos_manager.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
-#include "dictionary/suffix_dictionary.h"
 #include "dictionary/suppression_dictionary.h"
-#include "prediction/dictionary_predictor.h"
-#include "prediction/predictor.h"
 #include "prediction/predictor_interface.h"
-#include "prediction/user_history_predictor.h"
-#include "rewriter/rewriter.h"
 #include "rewriter/rewriter_interface.h"
 #include "session/request_handler.h"
 #include "transliteration/transliteration.h"
@@ -131,75 +123,31 @@ bool IsValidSegments(const Segments &segments) {
   }
   return true;
 }
-
-ConverterInterface *g_converter = NULL;
 }  // namespace
 
-ConverterInterface *ConverterFactory::GetConverter() {
-  if (g_converter == NULL) {
-    return Singleton<ConverterImpl>::get();
-  } else {
-    return g_converter;
-  }
-}
-
-void ConverterFactory::SetConverter(ConverterInterface *converter) {
-  g_converter = converter;
-}
-
-ConverterImpl::ConverterImpl(PredictorInterface *predictor,
-                             RewriterInterface *rewriter)
-    : pos_matcher_(UserPosManager::GetUserPosManager()->GetPOSMatcher()),
-      pos_group_(UserPosManager::GetUserPosManager()->GetPosGroup()),
-      predictor_(predictor),
-      rewriter_(rewriter),
-      user_data_manager_(new UserDataManagerImpl(predictor, rewriter)),
-      immutable_converter_(ImmutableConverterFactory::GetImmutableConverter()),
-      general_noun_id_(pos_matcher_->GetGeneralNounId()) {}
-
-ConverterImpl::ConverterImpl()
-    : pos_matcher_(UserPosManager::GetUserPosManager()->GetPOSMatcher()),
-      pos_group_(UserPosManager::GetUserPosManager()->GetPosGroup()),
-      rewriter_(new RewriterImpl(this, pos_matcher_, pos_group_)),
-      immutable_converter_(ImmutableConverterFactory::GetImmutableConverter()),
-      general_noun_id_(pos_matcher_->GetGeneralNounId()) {
-  // TODO(noriyukit): Better to prepare a builder class that builds
-  // converter/predictor modules by appropriately setting parameters to the
-  // constructors of those classes.
-  PredictorInterface *dictionary_predictor =
-      new DictionaryPredictor(
-          immutable_converter_,
-          DictionaryFactory::GetDictionary(),
-          SuffixDictionaryFactory::GetSuffixDictionary(),
-          ConnectorFactory::GetConnector(),
-          Singleton<Segmenter>::get(),
-          *UserPosManager::GetUserPosManager()->GetPOSMatcher());
-  CHECK(dictionary_predictor);
-
-  PredictorInterface *user_history_predictor =
-      new UserHistoryPredictor(
-          DictionaryFactory::GetDictionary(),
-          UserPosManager::GetUserPosManager()->GetPOSMatcher(),
-          Singleton<SuppressionDictionary>::get());
-
-  PredictorInterface *extra_predictor = NULL;
-
-  predictor_.reset(new DefaultPredictor(dictionary_predictor,
-                                        user_history_predictor,
-                                        extra_predictor));
-
-  user_data_manager_.reset(new UserDataManagerImpl(predictor_.get(),
-                                                   rewriter_.get()));
+ConverterImpl::ConverterImpl() : pos_matcher_(NULL),
+                                 pos_group_(NULL),
+                                 rewriter_(NULL),
+                                 user_data_manager_(NULL),
+                                 immutable_converter_(NULL),
+                                 general_noun_id_(kuint16max) {
 }
 
 ConverterImpl::~ConverterImpl() {}
 
-void ConverterImpl::Init(PredictorInterface *predictor,
-                         RewriterInterface *rewriter) {
+void ConverterImpl::Init(const POSMatcher *pos_matcher,
+                         const PosGroup *pos_group,
+                         PredictorInterface *predictor,
+                         RewriterInterface *rewriter,
+                         ImmutableConverterInterface *immutable_converter) {
+  // Initializes in order of declaration.
+  pos_matcher_ = pos_matcher;
+  pos_group_ = pos_group;
   predictor_.reset(predictor);
   rewriter_.reset(rewriter);
   user_data_manager_.reset(new UserDataManagerImpl(predictor, rewriter));
-  immutable_converter_ = ImmutableConverterFactory::GetImmutableConverter();
+  immutable_converter_ = immutable_converter;
+  general_noun_id_ = pos_matcher_->GetGeneralNounId();
 }
 
 bool ConverterImpl::SetupHistorySegmentsFromPrecedingText(
@@ -800,7 +748,11 @@ void ConverterImpl::CompletePOSIds(Segment::Candidate *candidate) const {
       }
     }
   }
-  LOG(WARNING) << "Cannot set lid/rid. use default value";
+  LOG(WARNING) << "Cannot set lid/rid. use default value. "
+               << "key: " << candidate->key << ", "
+               << "value: " << candidate->value << ", "
+               << "lid: " << candidate->lid << ", "
+               << "rid: " << candidate->rid;
 }
 
 UserDataManagerInterface *ConverterImpl::GetUserDataManager() {
@@ -810,15 +762,11 @@ UserDataManagerInterface *ConverterImpl::GetUserDataManager() {
 UserDataManagerImpl::~UserDataManagerImpl() {}
 
 bool UserDataManagerImpl::Sync() {
-  return (rewriter_->Sync() &&
-          predictor_->Sync() &&
-          DictionaryFactory::GetDictionary()->Sync());
+  return (rewriter_->Sync() && predictor_->Sync());
 }
 
 bool UserDataManagerImpl::Reload() {
-  return (rewriter_->Reload() &&
-          predictor_->Reload() &&
-          DictionaryFactory::GetDictionary()->Reload());
+  return (rewriter_->Reload() && predictor_->Reload());
 }
 
 bool UserDataManagerImpl::ClearUserHistory() {

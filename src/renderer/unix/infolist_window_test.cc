@@ -29,7 +29,7 @@
 
 #include "renderer/unix/infolist_window.h"
 
-#include "base/util.h"
+#include "base/number_util.h"
 #include "renderer/unix/cairo_factory_mock.h"
 #include "renderer/unix/const.h"
 #include "renderer/unix/draw_tool_mock.h"
@@ -61,19 +61,19 @@ void SetInformations(int count, commands::InformationList *usages) {
   for (int i = 0; i < count; ++i) {
     commands::Information *info = usages->add_information();
 
-    const string id_str = Util::SimpleItoa(i);
+    const string id_str = NumberUtil::SimpleItoa(i);
     info->set_title(kSampleTitle + id_str);
     info->set_description(kSampleDescription + id_str);
   }
 }
 
 string GetExpectedTitle(int row) {
-  const string id_str = Util::SimpleItoa(row);
+  const string id_str = NumberUtil::SimpleItoa(row);
   return kSampleTitle + id_str;
 }
 
 string GetExpectedDescription(int row) {
-  const string id_str = Util::SimpleItoa(row);
+  const string id_str = NumberUtil::SimpleItoa(row);
   return kSampleDescription + id_str;
 }
 

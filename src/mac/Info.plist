@@ -41,7 +41,7 @@
 				<key>TISIntendedLanguage</key>
 				<string>ja</string>
 				<key>tsInputModeAlternateMenuIconFileKey</key>
-				<string>hiragana.png</string>
+				<string>hiragana.tiff</string>
 				<key>tsInputModeDefaultStateKey</key>
 				<true/>
 				<key>tsInputModeIsVisibleKey</key>
@@ -53,9 +53,9 @@
 				<key>tsInputModeKeyEquivalentModifiersKey</key>
 				<integer>4608</integer>
 				<key>tsInputModeMenuIconFileKey</key>
-				<string>hiragana.png</string>
+				<string>hiragana.tiff</string>
 				<key>tsInputModePaletteIconFileKey</key>
-				<string>hiragana.png</string>
+				<string>hiragana.tiff</string>
 				<key>tsInputModePrimaryInScriptKey</key>
 				<true/>
 				<key>tsInputModeScriptKey</key>
@@ -69,7 +69,7 @@
 				<key>TISIntendedLanguage</key>
 				<string>ja</string>
 				<key>tsInputModeAlternateMenuIconFileKey</key>
-				<string>full_katakana.png</string>
+				<string>full_katakana.tiff</string>
 				<key>tsInputModeDefaultStateKey</key>
 				<true/>
 				<key>tsInputModeIsVisibleKey</key>
@@ -81,9 +81,9 @@
 				<key>tsInputModeKeyEquivalentModifiersKey</key>
 				<integer>4608</integer>
 				<key>tsInputModeMenuIconFileKey</key>
-				<string>full_katakana.png</string>
+				<string>full_katakana.tiff</string>
 				<key>tsInputModePaletteIconFileKey</key>
-				<string>full_katakana.png</string>
+				<string>full_katakana.tiff</string>
 				<key>tsInputModePrimaryInScriptKey</key>
 				<false/>
 				<key>tsInputModeScriptKey</key>
@@ -97,7 +97,7 @@
 				<key>TISIntendedLanguage</key>
 				<string>ja</string>
 				<key>tsInputModeAlternateMenuIconFileKey</key>
-				<string>half_katakana.png</string>
+				<string>half_katakana.tiff</string>
 				<key>tsInputModeDefaultStateKey</key>
 				<true/>
 				<key>tsInputModeIsVisibleKey</key>
@@ -109,9 +109,9 @@
 				<key>tsInputModeKeyEquivalentModifiersKey</key>
 				<integer>4608</integer>
 				<key>tsInputModeMenuIconFileKey</key>
-				<string>half_katakana.png</string>
+				<string>half_katakana.tiff</string>
 				<key>tsInputModePaletteIconFileKey</key>
-				<string>half_katakana.png</string>
+				<string>half_katakana.tiff</string>
 				<key>tsInputModePrimaryInScriptKey</key>
 				<false/>
 				<key>tsInputModeScriptKey</key>
@@ -125,7 +125,7 @@
 				<key>TISIntendedLanguage</key>
 				<string>ja</string>
 				<key>tsInputModeAlternateMenuIconFileKey</key>
-				<string>full_ascii.png</string>
+				<string>full_ascii.tiff</string>
 				<key>tsInputModeDefaultStateKey</key>
 				<true/>
 				<key>tsInputModeIsVisibleKey</key>
@@ -137,9 +137,9 @@
 				<key>tsInputModeKeyEquivalentModifiersKey</key>
 				<integer>4608</integer>
 				<key>tsInputModeMenuIconFileKey</key>
-				<string>full_ascii.png</string>
+				<string>full_ascii.tiff</string>
 				<key>tsInputModePaletteIconFileKey</key>
-				<string>full_ascii.png</string>
+				<string>full_ascii.tiff</string>
 				<key>tsInputModePrimaryInScriptKey</key>
 				<false/>
 				<key>tsInputModeScriptKey</key>
@@ -153,7 +153,7 @@
 				<key>TISIntendedLanguage</key>
 				<string>en</string>
 				<key>tsInputModeAlternateMenuIconFileKey</key>
-				<string>direct.png</string>
+				<string>direct.tiff</string>
 				<key>tsInputModeDefaultStateKey</key>
 				<true/>
 				<key>tsInputModeIsVisibleKey</key>
@@ -165,9 +165,9 @@
 				<key>tsInputModeKeyEquivalentModifiersKey</key>
 				<integer>4608</integer>
 				<key>tsInputModeMenuIconFileKey</key>
-				<string>direct.png</string>
+				<string>direct.tiff</string>
 				<key>tsInputModePaletteIconFileKey</key>
-				<string>direct.png</string>
+				<string>direct.tiff</string>
 				<key>tsInputModePrimaryInScriptKey</key>
 				<true/>
 				<key>tsInputModeScriptKey</key>

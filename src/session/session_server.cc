@@ -28,9 +28,13 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // Session Server
+
 #include "session/session_server.h"
 
+#include <string>
+
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/scheduler.h"
 #include "ipc/ipc.h"
 #include "ipc/named_event.h"
@@ -44,10 +48,17 @@
 #endif  // ENABLE_CLOUD_SYNC
 
 namespace {
-const int kNumConnections = 10;
+
+#ifdef OS_WINDOWS
+const int kNumConnections   = 1;
+#else
+const int kNumConnections   = 10;
+#endif  // OS_WINDOWS or not
+
 const int kTimeOut = 5000;  // 5000msec
 const char kSessionName[] = "session";
 const char kEventName[] = "session";
+
 }  // namespace
 
 namespace mozc {

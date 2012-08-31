@@ -31,7 +31,9 @@
 
 #include <string>
 #include <vector>
+
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/singleton.h"
 #include "base/util.h"
 #include "composer/composer.h"
@@ -42,16 +44,17 @@
 #include "converter/converter_mock.h"
 #include "data_manager/user_pos_manager.h"
 #include "dictionary/pos_matcher.h"
+#include "engine/engine_interface.h"
+#include "engine/mock_converter_engine.h"
 #include "rewriter/transliteration_rewriter.h"
 #include "session/commands.pb.h"
 #include "session/internal/ime_context.h"
 #include "session/internal/keymap.h"
 #include "session/japanese_session_factory.h"
 #include "session/key_parser.h"
-#include "session/request_handler.h"
+#include "session/request_test_util.h"
 #include "session/session_converter_interface.h"
 #include "session/session_handler.h"
-#include "session/session_test_util.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
@@ -59,6 +62,8 @@ DECLARE_string(test_tmpdir);
 
 namespace mozc {
 namespace session {
+
+using ::mozc::commands::Request;
 
 namespace {
 // "あいうえお"
@@ -373,6 +378,39 @@ class ConverterMockForReset : public ConverterMock {
   mutable bool reset_conversion_called_;
 };
 
+class MockConverterEngineForReset : public EngineInterface {
+ public:
+  MockConverterEngineForReset() : converter_mock_(new ConverterMockForReset) {}
+  virtual ~MockConverterEngineForReset() {}
+
+  virtual ConverterInterface *GetConverter() const {
+    return converter_mock_.get();
+  }
+
+  virtual PredictorInterface *GetPredictor() const {
+    return NULL;
+  }
+
+  virtual SuppressionDictionary *GetSuppressionDictionary() {
+    return NULL;
+  }
+
+  virtual bool Reload() {
+    return true;
+  }
+
+  const ConverterMockForReset &converter_mock() const {
+    return *converter_mock_;
+  }
+
+  ConverterMockForReset *mutable_converter_mock() {
+    return converter_mock_.get();
+  }
+
+ private:
+  scoped_ptr<ConverterMockForReset> converter_mock_;
+};
+
 class ConverterMockForRevert : public ConverterMock {
  public:
   bool RevertConversion(Segments *segments) const {
@@ -392,6 +430,40 @@ class ConverterMockForRevert : public ConverterMock {
  private:
   mutable bool revert_conversion_called_;
 };
+
+class MockConverterEngineForRevert : public EngineInterface {
+ public:
+  MockConverterEngineForRevert()
+      : converter_mock_(new ConverterMockForRevert) {}
+  virtual ~MockConverterEngineForRevert() {}
+
+  virtual ConverterInterface *GetConverter() const {
+    return converter_mock_.get();
+  }
+
+  virtual PredictorInterface *GetPredictor() const {
+    return NULL;
+  }
+
+  virtual SuppressionDictionary *GetSuppressionDictionary() {
+    return NULL;
+  }
+
+  virtual bool Reload() {
+    return true;
+  }
+
+  const ConverterMockForRevert &converter_mock() const {
+    return *converter_mock_;
+  }
+
+  ConverterMockForRevert *mutable_converter_mock() {
+    return converter_mock_.get();
+  }
+
+ private:
+  scoped_ptr<ConverterMockForRevert> converter_mock_;
+};
 }  // namespace
 
 class SessionTest : public testing::Test {
@@ -403,20 +475,18 @@ class SessionTest : public testing::Test {
     config::ConfigHandler::GetDefaultConfig(&config);
     config::ConfigHandler::SetConfig(config);
 
-    // Use an empty request to reset the global request.
-    commands::Request request;
-    commands::RequestHandler::SetRequest(request);
-    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    mobile_request_.reset(new Request);
+    commands::RequestForUnitTest::FillMobileRequest(mobile_request_.get());
+
+    engine_.reset(new MockConverterEngine);
 
     // The constructor of JapaneseSessionFactory internally refers to the
     // global config and request. Make sure that the global config and
     // request have already been initialized.
-    session_factory_.reset(new JapaneseSessionFactory);
+    session_factory_.reset(new JapaneseSessionFactory(engine_.get()));
     session::SessionFactoryManager::SetSessionFactory(session_factory_.get());
 
-    convertermock_.reset(new ConverterMock());
-    ConverterFactory::SetConverter(convertermock_.get());
-    handler_.reset(new SessionHandler());
+    handler_.reset(new SessionHandler);
     t13n_rewriter_.reset(
         new TransliterationRewriter(
             *UserPosManager::GetUserPosManager()->GetPOSMatcher()));
@@ -427,10 +497,6 @@ class SessionTest : public testing::Test {
     config::Config config;
     config::ConfigHandler::GetDefaultConfig(&config);
     config::ConfigHandler::SetConfig(config);
-
-    // Use an empty request to reset the global request.
-    commands::Request request;
-    commands::RequestHandler::SetRequest(request);
 
     // Make sure that internal Romaji table is reloaded.
     session_factory_->Reload();
@@ -524,7 +590,7 @@ class SessionTest : public testing::Test {
     SetComposer(session, &request);
     SetAiueo(&segments);
     FillT13Ns(request, &segments);
-    convertermock_->SetStartConversionForRequest(&segments, true);
+    GetConverterMock()->SetStartConversionForRequest(&segments, true);
 
     command.Clear();
     EXPECT_TRUE(session->Convert(&command));
@@ -538,8 +604,29 @@ class SessionTest : public testing::Test {
     commands::Command command;
     session->IMEOn(&command);
 #endif  // OS_WINDOWS
+    commands::Request request;
+    InitSessionWithRequest(session, request);
+  }
+
+  void InitSessionToPrecomposition(
+      Session* session,
+      const commands::Request &request) {
+#ifdef OS_WINDOWS
+    // Session is created with direct mode on Windows
+    // Direct status
+    commands::Command command;
+    session->IMEOn(&command);
+#endif  // OS_WINDOWS
+    InitSessionWithRequest(session, request);
+  }
+
+  void InitSessionWithRequest(
+      Session* session,
+      const commands::Request &request) {
+    session->SetRequest(request);
     table_.reset(new composer::Table());
-    table_.get()->Initialize();
+    table_.get()->InitializeWithRequestAndConfig(
+        request, config::ConfigHandler::GetConfig());
     session->SetTable(table_.get());
   }
 
@@ -604,7 +691,7 @@ class SessionTest : public testing::Test {
     // For reverse conversion, key is the original kanji string.
     candidate->key = kanji;
     candidate->value = hiragana;
-    convertermock_->SetStartReverseConversion(&reverse_segments, true);
+    GetConverterMock()->SetStartReverseConversion(&reverse_segments, true);
     // Set up Segments for forward conversion.
     Segments segments;
     segment = segments.add_segment();
@@ -612,7 +699,7 @@ class SessionTest : public testing::Test {
     candidate = segment->add_candidate();
     candidate->key = hiragana;
     candidate->value = kanji;
-    convertermock_->SetStartConversionForRequest(&segments, true);
+    GetConverterMock()->SetStartConversionForRequest(&segments, true);
   }
 
   void SetupCommandForReverseConversion(const string &text,
@@ -629,7 +716,7 @@ class SessionTest : public testing::Test {
     // Enable zero query suggest.
     commands::Request request;
     request.set_zero_query_suggestion(enable);
-    commands::RequestHandler::SetRequest(request);
+    session->SetRequest(request);
 
     // Type "google".
     commands::Command command;
@@ -643,7 +730,7 @@ class SessionTest : public testing::Test {
       segment = segments.add_segment();
       segment->set_key("google");
       segment->add_candidate()->value = "GOOGLE";
-      convertermock_->SetStartConversionForRequest(&segments, true);
+      GetConverterMock()->SetStartConversionForRequest(&segments, true);
     }
     command.Clear();
     session->Convert(&command);
@@ -657,7 +744,7 @@ class SessionTest : public testing::Test {
       segment->set_key("");
       AddCandidate("search", "search", segment);
       AddCandidate("input", "input", segment);
-      convertermock_->SetStartSuggestionForRequest(&segments, true);
+      GetConverterMock()->SetStartSuggestionForRequest(&segments, true);
     }
   }
 
@@ -685,14 +772,14 @@ class SessionTest : public testing::Test {
     }
 
     {  // Commit the composition to make an undo context.
-      convertermock_->SetStartConversionForRequest(&segments, true);
+      GetConverterMock()->SetStartConversionForRequest(&segments, true);
       command.Clear();
       session->Convert(&command);
       EXPECT_FALSE(command.output().has_result());
       // "あいうえお"
       EXPECT_PREEDIT(kAiueo, command);
 
-      convertermock_->SetCommitSegmentValue(&segments, true);
+      GetConverterMock()->SetCommitSegmentValue(&segments, true);
       command.Clear();
       session->Commit(&command);
       EXPECT_FALSE(command.output().has_preedit());
@@ -701,31 +788,31 @@ class SessionTest : public testing::Test {
     }
   }
 
+  ConverterMock *GetConverterMock() {
+    return engine_->mutable_converter_mock();
+  }
+
   // IMPORTANT: Use scoped_ptr and instanciate an object in SetUp() method
   //    if the target object should be initialized *AFTER* global settings
   //    such as user profile dir or global config are set up for unit test.
   //    If you directly define a variable here without scoped_ptr, its
   //    constructor will be called *BEFORE* SetUp() is called.
+  scoped_ptr<MockConverterEngine> engine_;
   scoped_ptr<SessionHandler> handler_;
-  scoped_ptr<ConverterMock> convertermock_;
   scoped_ptr<TransliterationRewriter> t13n_rewriter_;
   scoped_ptr<JapaneseSessionFactory> session_factory_;
   scoped_ptr<composer::Table> table_;
+  scoped_ptr<Request> mobile_request_;
 };
 
 // This test is intentionally defined at this location so that this
-// test can ensure that the first SetUp() initialized global request,
+// test can ensure that the first SetUp() initialized global
 // config, and table object to the default state.
 // Please do not define another test before this.
 // FYI, each TEST_F will be eventually expanded into a global variable
 // and global variables in a single translation unit (source file) are
 // always initialized in the order in which they are defined.
 TEST_F(SessionTest, TestOfTestForSetup) {
-  commands::Request request;
-  request.CopyFrom(commands::RequestHandler::GetRequest());
-  EXPECT_FALSE(request.has_special_romanji_table())
-      << "Global request should be initialized for each text fixture.";
-
   config::Config config;
   config::ConfigHandler::GetConfig(&config);
   EXPECT_FALSE(config.has_use_auto_conversion())
@@ -733,7 +820,7 @@ TEST_F(SessionTest, TestOfTestForSetup) {
 
   // Make sure that the default roman table is initialized.
   {
-    scoped_ptr<Session> session(new Session());
+    scoped_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
     SendKey("a", session.get(), &command);
@@ -741,13 +828,6 @@ TEST_F(SessionTest, TestOfTestForSetup) {
     EXPECT_SINGLE_SEGMENT(kHiraganaA, command)
         << "Global Romaji table should be initialized for each text fixture.";
   }
-
-  // intentionally leave non-default value so that |TestOfTestForTearDown|
-  // can test it later.
-  request.CopyFrom(commands::RequestHandler::GetRequest());
-  request.set_special_romanji_table(
-      mozc::commands::Request::TWELVE_KEYS_TO_HIRAGANA);
-  commands::RequestHandler::SetRequest(request);
 
   // intentionally leave non-default value so that |TestOfTestForTearDown|
   // can test it later.
@@ -760,19 +840,13 @@ TEST_F(SessionTest, TestOfTestForSetup) {
 }
 
 // This test ensures that the TearDown() against |TestOfTestForSetup|
-// restored global request, config, and table object to the default state
+// restored global config, and table object to the default state
 // Please do not define another test between |TestOfTestForSetup| and
 // this test.
 // FYI, each TEST_F will be eventually expanded into a global variable
 // and global variables in a single translation unit (source file) are
 // always initialized in the order in which they are defined.
 TEST_F(SessionTest, TestOfTestForTearDown) {
-  // Make sure that the initial global request has default value.
-  commands::Request request;
-  request.CopyFrom(commands::RequestHandler::GetRequest());
-  EXPECT_FALSE(request.has_special_romanji_table())
-      << "Global request should be initialized for each text fixture.";
-
   // Make sure that the initial global config has default value.
   config::Config config;
   config::ConfigHandler::GetConfig(&config);
@@ -781,7 +855,7 @@ TEST_F(SessionTest, TestOfTestForTearDown) {
 
   // Make sure that the initial roman table has default value.
   {
-    scoped_ptr<Session> session(new Session());
+    scoped_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
     SendKey("a", session.get(), &command);
@@ -792,7 +866,7 @@ TEST_F(SessionTest, TestOfTestForTearDown) {
 }
 
 TEST_F(SessionTest, TestSendKey) {
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -840,7 +914,7 @@ TEST_F(SessionTest, TestSendKey) {
 }
 
 TEST_F(SessionTest, SendCommand) {
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -899,16 +973,16 @@ TEST_F(SessionTest, SendCommand) {
   EXPECT_FALSE(command.output().has_preedit());
   EXPECT_FALSE(command.output().has_candidates());
   // test of reseting the history segements
-  scoped_ptr<ConverterMockForReset> convertermock(new ConverterMockForReset);
-  ConverterFactory::SetConverter(convertermock.get());
-  session.reset(new Session);
+  scoped_ptr<MockConverterEngineForReset> engine(
+      new MockConverterEngineForReset);
+  session.reset(new Session(engine.get()));
   InitSessionToPrecomposition(session.get());
   command.Clear();
   command.mutable_input()->mutable_command()->set_type(
       commands::SessionCommand::RESET_CONTEXT);
   session->SendCommand(&command);
   EXPECT_FALSE(command.output().consumed());
-  EXPECT_TRUE(convertermock->reset_conversion_called());
+  EXPECT_TRUE(engine->converter_mock().reset_conversion_called());
 
   // USAGE_STATS_EVENT
   command.Clear();
@@ -921,7 +995,7 @@ TEST_F(SessionTest, SendCommand) {
 
 TEST_F(SessionTest, SwitchInputMode) {
   {
-    scoped_ptr<Session> session(new Session);
+    scoped_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
 
@@ -948,7 +1022,7 @@ TEST_F(SessionTest, SwitchInputMode) {
   {
     // Confirm that we can change the mode from DIRECT
     // to other modes directly (without IMEOn command).
-    scoped_ptr<Session> session(new Session);
+    scoped_ptr<Session> session(new Session(engine_.get()));
     InitSessionToDirect(session.get());
 
     commands::Command command;
@@ -988,7 +1062,7 @@ TEST_F(SessionTest, SwitchInputMode) {
 
 TEST_F(SessionTest, RevertComposition) {
   // Issue#2237323
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -998,7 +1072,7 @@ TEST_F(SessionTest, RevertComposition) {
   SetComposer(session.get(), &request);
   SetAiueo(&segments);
   FillT13Ns(request, &segments);
-  convertermock_->SetStartConversionForRequest(&segments, true);
+  GetConverterMock()->SetStartConversionForRequest(&segments, true);
 
   command.clear_input();
   command.clear_output();
@@ -1019,7 +1093,7 @@ TEST_F(SessionTest, RevertComposition) {
 }
 
 TEST_F(SessionTest, InputMode) {
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   EXPECT_TRUE(session->InputModeHalfASCII(&command));
@@ -1039,7 +1113,7 @@ TEST_F(SessionTest, InputMode) {
 }
 
 TEST_F(SessionTest, SelectCandidate) {
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -1049,7 +1123,7 @@ TEST_F(SessionTest, SelectCandidate) {
   SetComposer(session.get(), &request);
   SetAiueo(&segments);
   FillT13Ns(request, &segments);
-  convertermock_->SetStartConversionForRequest(&segments, true);
+  GetConverterMock()->SetStartConversionForRequest(&segments, true);
 
   command.clear_input();
   command.clear_output();
@@ -1075,7 +1149,7 @@ TEST_F(SessionTest, SelectCandidate) {
 }
 
 TEST_F(SessionTest, HighlightCandidate) {
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -1085,7 +1159,7 @@ TEST_F(SessionTest, HighlightCandidate) {
   SetComposer(session.get(), &request);
   SetAiueo(&segments);
   FillT13Ns(request, &segments);
-  convertermock_->SetStartConversionForRequest(&segments, true);
+  GetConverterMock()->SetStartConversionForRequest(&segments, true);
 
   command.clear_input();
   command.clear_output();
@@ -1114,7 +1188,7 @@ TEST_F(SessionTest, HighlightCandidate) {
 }
 
 TEST_F(SessionTest, Conversion) {
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -1124,7 +1198,7 @@ TEST_F(SessionTest, Conversion) {
   SetComposer(session.get(), &request);
   SetAiueo(&segments);
   FillT13Ns(request, &segments);
-  convertermock_->SetStartConversionForRequest(&segments, true);
+  GetConverterMock()->SetStartConversionForRequest(&segments, true);
 
   // "あいうえお"
   EXPECT_SINGLE_SEGMENT_AND_KEY(kAiueo, kAiueo, command);
@@ -1149,7 +1223,7 @@ TEST_F(SessionTest, Conversion) {
 
 
 TEST_F(SessionTest, SegmentWidthShrink) {
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -1159,7 +1233,7 @@ TEST_F(SessionTest, SegmentWidthShrink) {
   SetComposer(session.get(), &request);
   SetAiueo(&segments);
   FillT13Ns(request, &segments);
-  convertermock_->SetStartConversionForRequest(&segments, true);
+  GetConverterMock()->SetStartConversionForRequest(&segments, true);
 
   command.clear_input();
   command.clear_output();
@@ -1175,7 +1249,7 @@ TEST_F(SessionTest, SegmentWidthShrink) {
 }
 
 TEST_F(SessionTest, ConvertPrev) {
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -1185,7 +1259,7 @@ TEST_F(SessionTest, ConvertPrev) {
   SetComposer(session.get(), &request);
   SetAiueo(&segments);
   FillT13Ns(request, &segments);
-  convertermock_->SetStartConversionForRequest(&segments, true);
+  GetConverterMock()->SetStartConversionForRequest(&segments, true);
 
   command.Clear();
   session->Convert(&command);
@@ -1205,7 +1279,7 @@ TEST_F(SessionTest, ResetFocusedSegmentAfterCommit) {
   Segments segments;
   Segment *segment;
   Segment::Candidate *candidate;
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -1248,7 +1322,7 @@ TEST_F(SessionTest, ResetFocusedSegmentAfterCommit) {
       = "\xe3\x81\xaa\xe3\x81\x8b\xe3\x81\xae\xe3\x81\xa7\xe3\x81\x99";
   SetComposer(session.get(), &request);
   FillT13Ns(request, &segments);
-  convertermock_->SetStartConversionForRequest(&segments, true);
+  GetConverterMock()->SetStartConversionForRequest(&segments, true);
 
   command.clear_input();
   command.clear_output();
@@ -1309,7 +1383,7 @@ TEST_F(SessionTest, ResetFocusedSegmentAfterCommit) {
 
   SetComposer(session.get(), &request);
   FillT13Ns(request, &segments);
-  convertermock_->SetStartConversionForRequest(&segments, true);
+  GetConverterMock()->SetStartConversionForRequest(&segments, true);
 
   // "あ[]"
 
@@ -1329,7 +1403,7 @@ TEST_F(SessionTest, ResetFocusedSegmentAfterCancel) {
   Segments segments;
   Segment *segment;
   Segment::Candidate *candidate;
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -1347,7 +1421,7 @@ TEST_F(SessionTest, ResetFocusedSegmentAfterCancel) {
   ConversionRequest request;
   SetComposer(session.get(), &request);
   FillT13Ns(request, &segments);
-  convertermock_->SetStartConversionForRequest(&segments, true);
+  GetConverterMock()->SetStartConversionForRequest(&segments, true);
   // "あい[]"
 
   command.clear_input();
@@ -1371,7 +1445,7 @@ TEST_F(SessionTest, ResetFocusedSegmentAfterCancel) {
   candidate = segment->add_candidate();
   // "位"
   candidate->value = "\xe4\xbd\x8d";
-  convertermock_->SetResizeSegment1(&segments, true);
+  GetConverterMock()->SetResizeSegment1(&segments, true);
 
   command.clear_input();
   command.clear_output();
@@ -1380,7 +1454,7 @@ TEST_F(SessionTest, ResetFocusedSegmentAfterCancel) {
 
   segment = segments.mutable_segment(0);
   segment->set_segment_type(Segment::FIXED_VALUE);
-  convertermock_->SetCommitSegmentValue(&segments, true);
+  GetConverterMock()->SetCommitSegmentValue(&segments, true);
 
   command.clear_input();
   command.clear_output();
@@ -1409,7 +1483,7 @@ TEST_F(SessionTest, ResetFocusedSegmentAfterCancel) {
   candidate->value = "\xe7\x9b\xb8";
   SetComposer(session.get(), &request);
   FillT13Ns(request, &segments);
-  convertermock_->SetStartConversionForRequest(&segments, true);
+  GetConverterMock()->SetStartConversionForRequest(&segments, true);
 
   command.clear_input();
   command.clear_output();
@@ -1429,7 +1503,7 @@ TEST_F(SessionTest, KeepFixedCandidateAfterSegmentWidthExpand) {
   Segments segments;
   Segment *segment;
   Segment::Candidate *candidate;
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -1464,7 +1538,7 @@ TEST_F(SessionTest, KeepFixedCandidateAfterSegmentWidthExpand) {
   ConversionRequest request;
   SetComposer(session.get(), &request);
   FillT13Ns(request, &segments);
-  convertermock_->SetStartConversionForRequest(&segments, true);
+  GetConverterMock()->SetStartConversionForRequest(&segments, true);
 
   command.clear_input();
   command.clear_output();
@@ -1481,7 +1555,7 @@ TEST_F(SessionTest, KeepFixedCandidateAfterSegmentWidthExpand) {
   segment = segments.mutable_segment(0);
   segment->set_segment_type(Segment::FIXED_VALUE);
   segment->move_candidate(1, 0);
-  convertermock_->SetCommitSegmentValue(&segments, true);
+  GetConverterMock()->SetCommitSegmentValue(&segments, true);
 
   command.clear_input();
   command.clear_output();
@@ -1506,7 +1580,7 @@ TEST_F(SessionTest, KeepFixedCandidateAfterSegmentWidthExpand) {
   // "った"
   candidate->value = "\xe3\x81\xa3\xe3\x81\x9f";
 
-  convertermock_->SetResizeSegment1(&segments, true);
+  GetConverterMock()->SetResizeSegment1(&segments, true);
 
   command.clear_input();
   command.clear_output();
@@ -1524,7 +1598,7 @@ TEST_F(SessionTest, CommitSegment) {
   Segment::Candidate *candidate;
 
   // Issue#1560608
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -1554,7 +1628,7 @@ TEST_F(SessionTest, CommitSegment) {
   ConversionRequest request;
   SetComposer(session.get(), &request);
   FillT13Ns(request, &segments);
-  convertermock_->SetStartConversionForRequest(&segments, true);
+  GetConverterMock()->SetStartConversionForRequest(&segments, true);
 
   command.Clear();
   session->Convert(&command);
@@ -1575,7 +1649,7 @@ TEST_F(SessionTest, CommitSegment) {
   segment->set_segment_type(Segment::FIXED_VALUE);
   segment->move_candidate(2, 0);
 
-  convertermock_->SetSubmitFirstSegment(&segments, true);
+  GetConverterMock()->SetSubmitFirstSegment(&segments, true);
 
   command.Clear();
   session->CommitSegment(&command);
@@ -1587,7 +1661,7 @@ TEST_F(SessionTest, CommitSegmentAt2ndSegment) {
   Segments segments;
   Segment *segment;
   Segment::Candidate *candidate;
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -1610,7 +1684,7 @@ TEST_F(SessionTest, CommitSegmentAt2ndSegment) {
   ConversionRequest request;
   SetComposer(session.get(), &request);
   FillT13Ns(request, &segments);
-  convertermock_->SetStartConversionForRequest(&segments, true);
+  GetConverterMock()->SetStartConversionForRequest(&segments, true);
 
   command.Clear();
   session->Convert(&command);
@@ -1622,7 +1696,7 @@ TEST_F(SessionTest, CommitSegmentAt2ndSegment) {
 
   segment->set_segment_type(Segment::FIXED_VALUE);
   segment->move_candidate(1, 0);
-  convertermock_->SetSubmitFirstSegment(&segments, true);
+  GetConverterMock()->SetSubmitFirstSegment(&segments, true);
 
   command.Clear();
   session->CommitSegment(&command);
@@ -1639,7 +1713,7 @@ TEST_F(SessionTest, CommitSegmentAt2ndSegment) {
   // "は"
   candidate->value = "\xe3\x81\xaf";
   segments.pop_front_segment();
-  convertermock_->SetResizeSegment1(&segments, true);
+  GetConverterMock()->SetResizeSegment1(&segments, true);
 
   command.Clear();
   session->SegmentWidthShrink(&command);
@@ -1651,7 +1725,7 @@ TEST_F(SessionTest, Transliterations) {
   Segments segments;
   Segment *segment;
   Segment::Candidate *candidate;
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   InsertCharacterChars("jishin", session.get(), &command);
@@ -1669,7 +1743,7 @@ TEST_F(SessionTest, Transliterations) {
   ConversionRequest request;
   SetComposer(session.get(), &request);
   FillT13Ns(request, &segments);
-  convertermock_->SetStartConversionForRequest(&segments, true);
+  GetConverterMock()->SetStartConversionForRequest(&segments, true);
 
   command.Clear();
   session->Convert(&command);
@@ -1699,7 +1773,7 @@ TEST_F(SessionTest, ConvertToTransliteration) {
   Segment *segment;
   Segment::Candidate *candidate;
 
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   InsertCharacterChars("jishin", session.get(), &command);
@@ -1717,7 +1791,7 @@ TEST_F(SessionTest, ConvertToTransliteration) {
   ConversionRequest request;
   SetComposer(session.get(), &request);
   FillT13Ns(request, &segments);
-  convertermock_->SetStartConversionForRequest(&segments, true);
+  GetConverterMock()->SetStartConversionForRequest(&segments, true);
 
   command.Clear();
   session->ConvertToHalfASCII(&command);
@@ -1737,7 +1811,7 @@ TEST_F(SessionTest, ConvertToTransliteration) {
 }
 
 TEST_F(SessionTest, ConvertToTransliterationWithMultipleSegments) {
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -1748,7 +1822,7 @@ TEST_F(SessionTest, ConvertToTransliterationWithMultipleSegments) {
   ConversionRequest request;
   SetComposer(session.get(), &request);
   FillT13Ns(request, &segments);
-  convertermock_->SetStartConversionForRequest(&segments, true);
+  GetConverterMock()->SetStartConversionForRequest(&segments, true);
 
   // Convert
   command.Clear();
@@ -1783,7 +1857,7 @@ TEST_F(SessionTest, ConvertToTransliterationWithMultipleSegments) {
 }
 
 TEST_F(SessionTest, ConvertToHalfWidth) {
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   InsertCharacterChars("abc", session.get(), &command);
@@ -1799,7 +1873,7 @@ TEST_F(SessionTest, ConvertToHalfWidth) {
   ConversionRequest request;
   SetComposer(session.get(), &request);
   FillT13Ns(request, &segments);
-  convertermock_->SetStartConversionForRequest(&segments, true);
+  GetConverterMock()->SetStartConversionForRequest(&segments, true);
 
   command.Clear();
   session->ConvertToHalfWidth(&command);
@@ -1820,7 +1894,7 @@ TEST_F(SessionTest, ConvertConsonantsToFullAlphanumeric) {
   Segment *segment;
   Segment::Candidate *candidate;
 
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   InsertCharacterChars("dvd", session.get(), &command);
@@ -1836,7 +1910,7 @@ TEST_F(SessionTest, ConvertConsonantsToFullAlphanumeric) {
   ConversionRequest request;
   SetComposer(session.get(), &request);
   FillT13Ns(request, &segments);
-  convertermock_->SetStartConversionForRequest(&segments, true);
+  GetConverterMock()->SetStartConversionForRequest(&segments, true);
 
   command.Clear();
   session->ConvertToFullASCII(&command);
@@ -1869,7 +1943,7 @@ TEST_F(SessionTest, ConvertConsonantsToFullAlphanumericWithoutCascadingWindow) {
   Segment *segment;
   Segment::Candidate *candidate;
 
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   command.Clear();
   InsertCharacterChars("dvd", session.get(), &command);
@@ -1885,7 +1959,7 @@ TEST_F(SessionTest, ConvertConsonantsToFullAlphanumericWithoutCascadingWindow) {
   ConversionRequest request;
   SetComposer(session.get(), &request);
   FillT13Ns(request, &segments);
-  convertermock_->SetStartConversionForRequest(&segments, true);
+  GetConverterMock()->SetStartConversionForRequest(&segments, true);
 
   command.Clear();
   session->ConvertToFullASCII(&command);
@@ -1911,7 +1985,7 @@ TEST_F(SessionTest, ConvertConsonantsToFullAlphanumericWithoutCascadingWindow) {
 // Convert input string to Hiragana, Katakana, and Half Katakana
 TEST_F(SessionTest, SwitchKanaType) {
   {  // From composition mode.
-    scoped_ptr<Session> session(new Session);
+    scoped_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
     InsertCharacterChars("abc", session.get(), &command);
@@ -1928,7 +2002,7 @@ TEST_F(SessionTest, SwitchKanaType) {
     ConversionRequest request;
     SetComposer(session.get(), &request);
     FillT13Ns(request, &segments);
-    convertermock_->SetStartConversionForRequest(&segments, true);
+    GetConverterMock()->SetStartConversionForRequest(&segments, true);
 
     command.Clear();
     session->SwitchKanaType(&command);
@@ -1952,7 +2026,7 @@ TEST_F(SessionTest, SwitchKanaType) {
   }
 
   {  // From conversion mode.
-    scoped_ptr<Session> session(new Session);
+    scoped_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
     InsertCharacterChars("kanji", session.get(), &command);
@@ -1969,7 +2043,7 @@ TEST_F(SessionTest, SwitchKanaType) {
     ConversionRequest request;
     SetComposer(session.get(), &request);
     FillT13Ns(request, &segments);
-    convertermock_->SetStartConversionForRequest(&segments, true);
+    GetConverterMock()->SetStartConversionForRequest(&segments, true);
 
     command.Clear();
     session->Convert(&command);
@@ -2001,7 +2075,7 @@ TEST_F(SessionTest, SwitchKanaType) {
 
 // Rotate input mode among Hiragana, Katakana, and Half Katakana
 TEST_F(SessionTest, InputModeSwitchKanaType) {
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -2092,7 +2166,7 @@ TEST_F(SessionTest, InputModeSwitchKanaType) {
 }
 
 TEST_F(SessionTest, TranslateHalfWidth) {
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   InsertCharacterChars("abc", session.get(), &command);
@@ -2113,7 +2187,7 @@ TEST_F(SessionTest, TranslateHalfWidth) {
 }
 
 TEST_F(SessionTest, UpdatePreferences) {
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   InsertCharacterChars("aiueo", session.get(), &command);
@@ -2123,7 +2197,7 @@ TEST_F(SessionTest, UpdatePreferences) {
   ConversionRequest request;
   SetComposer(session.get(), &request);
   FillT13Ns(request, &segments);
-  convertermock_->SetStartConversionForRequest(&segments, true);
+  GetConverterMock()->SetStartConversionForRequest(&segments, true);
 
   command.Clear();
   session->Convert(&command);
@@ -2184,7 +2258,7 @@ TEST_F(SessionTest, RomajiInput) {
   table.AddRule("na", "\xe3\x81\xaa", "");
   // This rule makes the "n" rule ambiguous.
 
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   session->get_internal_composer_only_for_unittest()->SetTable(&table);
   InitSessionToPrecomposition(session.get());
 
@@ -2207,7 +2281,7 @@ TEST_F(SessionTest, RomajiInput) {
   ConversionRequest request;
   SetComposer(session.get(), &request);
   FillT13Ns(request, &segments);
-  convertermock_->SetStartConversionForRequest(&segments, true);
+  GetConverterMock()->SetStartConversionForRequest(&segments, true);
 
   session->ConvertToHiragana(&command);
   // "ぱん"
@@ -2227,7 +2301,7 @@ TEST_F(SessionTest, KanaInput) {
   // "す゛", "ず"
   table.AddRule("\xe3\x81\x99\xe3\x82\x9b", "\xe3\x81\x9a", "");
 
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   session->get_internal_composer_only_for_unittest()->SetTable(&table);
   InitSessionToPrecomposition(session.get());
 
@@ -2274,7 +2348,7 @@ TEST_F(SessionTest, KanaInput) {
   ConversionRequest request;
   SetComposer(session.get(), &request);
   FillT13Ns(request, &segments);
-  convertermock_->SetStartConversionForRequest(&segments, true);
+  GetConverterMock()->SetStartConversionForRequest(&segments, true);
 
   command.Clear();
   session->ConvertToHalfASCII(&command);
@@ -2285,7 +2359,7 @@ TEST_F(SessionTest, ExceededComposition) {
   Segments segments;
   Segment *segment;
   Segment::Candidate *candidate;
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -2306,7 +2380,7 @@ TEST_F(SessionTest, ExceededComposition) {
   ConversionRequest request;
   SetComposer(session.get(), &request);
   FillT13Ns(request, &segments);
-  convertermock_->SetStartConversionForRequest(&segments, true);
+  GetConverterMock()->SetStartConversionForRequest(&segments, true);
 
   command.Clear();
   session->Convert(&command);
@@ -2322,7 +2396,7 @@ TEST_F(SessionTest, ExceededComposition) {
 }
 
 TEST_F(SessionTest, OutputAllCandidateWords) {
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -2333,7 +2407,7 @@ TEST_F(SessionTest, OutputAllCandidateWords) {
   ConversionRequest request;
   SetComposer(session.get(), &request);
   FillT13Ns(request, &segments);
-  convertermock_->SetStartConversionForRequest(&segments, true);
+  GetConverterMock()->SetStartConversionForRequest(&segments, true);
 
   command.Clear();
   session->Convert(&command);
@@ -2392,7 +2466,7 @@ TEST_F(SessionTest, OutputAllCandidateWords) {
 }
 
 TEST_F(SessionTest, UndoForComposition) {
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   // Enable zero query suggest.
@@ -2408,7 +2482,7 @@ TEST_F(SessionTest, UndoForComposition) {
 
   {  // Undo for CommitFirstSuggestion
     SetAiueo(&segments);
-    convertermock_->SetStartSuggestionForRequest(&segments, true);
+    GetConverterMock()->SetStartSuggestionForRequest(&segments, true);
     InsertCharacterChars("ai", session.get(), &command);
     ConversionRequest request;
     SetComposer(session.get(), &request);
@@ -2436,7 +2510,7 @@ TEST_F(SessionTest, UndoForComposition) {
 }
 
 TEST_F(SessionTest, RequestUndo) {
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
 
   // It is OK not to check ImeContext::DIRECT because you cannot
   // assign any key event to Undo command in DIRECT mode.
@@ -2464,7 +2538,7 @@ TEST_F(SessionTest, RequestUndo) {
 }
 
 TEST_F(SessionTest, UndoForSingleSegment) {
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   // Undo requires capability DELETE_PRECEDING_TEXT.
@@ -2490,14 +2564,14 @@ TEST_F(SessionTest, UndoForSingleSegment) {
   }
 
   {  // Undo after commitment of composition
-    convertermock_->SetStartConversionForRequest(&segments, true);
+    GetConverterMock()->SetStartConversionForRequest(&segments, true);
     command.Clear();
     session->Convert(&command);
     EXPECT_FALSE(command.output().has_result());
     // "あいうえお"
     EXPECT_PREEDIT(kAiueo, command);
 
-    convertermock_->SetCommitSegmentValue(&segments, true);
+    GetConverterMock()->SetCommitSegmentValue(&segments, true);
     command.Clear();
     session->Commit(&command);
     EXPECT_FALSE(command.output().has_preedit());
@@ -2529,7 +2603,7 @@ TEST_F(SessionTest, UndoForSingleSegment) {
     // "アイウエオ"
     EXPECT_PREEDIT(kKatakanaAiueo, command);
 
-    convertermock_->SetCommitSegmentValue(&segments, true);
+    GetConverterMock()->SetCommitSegmentValue(&segments, true);
     command.Clear();
     session->Commit(&command);
     EXPECT_FALSE(command.output().has_preedit());
@@ -2560,7 +2634,7 @@ TEST_F(SessionTest, UndoForSingleSegment) {
     EXPECT_FALSE(command.output().has_result());
     EXPECT_PREEDIT("aiueo", command);
 
-    convertermock_->SetCommitSegmentValue(&segments, true);
+    GetConverterMock()->SetCommitSegmentValue(&segments, true);
     command.Clear();
     session->Commit(&command);
     EXPECT_FALSE(command.output().has_preedit());
@@ -2582,7 +2656,7 @@ TEST_F(SessionTest, UndoForSingleSegment) {
   {
     // If capability does not support DELETE_PRECEDIGN_TEXT, Undo is not
     // performed.
-    convertermock_->SetCommitSegmentValue(&segments, true);
+    GetConverterMock()->SetCommitSegmentValue(&segments, true);
     command.Clear();
     session->Commit(&command);
     EXPECT_FALSE(command.output().has_preedit());
@@ -2601,7 +2675,7 @@ TEST_F(SessionTest, UndoForSingleSegment) {
 }
 
 TEST_F(SessionTest, ClearUndoContextByKeyEvent_Issue5529702) {
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   // Undo requires capability DELETE_PRECEDING_TEXT.
@@ -2650,7 +2724,7 @@ TEST_F(SessionTest, ClearUndoContextByKeyEvent_Issue5529702) {
 }
 
 TEST_F(SessionTest, UndoForMultipleSegments) {
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   // Undo requires capability DELETE_PRECEDING_TEXT.
@@ -2692,14 +2766,14 @@ TEST_F(SessionTest, UndoForMultipleSegments) {
   }
 
   {  // Undo for CommitCandidate
-    convertermock_->SetStartConversionForRequest(&segments, true);
+    GetConverterMock()->SetStartConversionForRequest(&segments, true);
     command.Clear();
     session->Convert(&command);
     EXPECT_FALSE(command.output().has_result());
     EXPECT_PREEDIT("cand1-1cand2-1cand3-1", command);
     EXPECT_EQ(ImeContext::CONVERSION, session->context().state());
 
-    convertermock_->SetCommitSegmentValue(&segments, true);
+    GetConverterMock()->SetCommitSegmentValue(&segments, true);
     command.Clear();
     command.mutable_input()->mutable_command()->set_id(1);
     session->CommitCandidate(&command);
@@ -2743,14 +2817,14 @@ TEST_F(SessionTest, UndoForMultipleSegments) {
     EXPECT_EQ(ImeContext::CONVERSION, session->context().state());
   }
   {  // Undo for CommitSegment
-    convertermock_->SetStartConversionForRequest(&segments, true);
+    GetConverterMock()->SetStartConversionForRequest(&segments, true);
     command.Clear();
     session->Convert(&command);
     EXPECT_FALSE(command.output().has_result());
     EXPECT_PREEDIT("cand1-1cand2-1cand3-1", command);
     EXPECT_EQ(ImeContext::CONVERSION, session->context().state());
 
-    convertermock_->SetCommitSegmentValue(&segments, true);
+    GetConverterMock()->SetCommitSegmentValue(&segments, true);
     command.Clear();
     session->ConvertNext(&command);
     EXPECT_EQ("cand1-2cand2-1cand3-1", GetComposition(command));
@@ -2802,7 +2876,7 @@ TEST_F(SessionTest, UndoForMultipleSegments) {
 }
 
 TEST_F(SessionTest, UndoOrRewind_undo) {
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   // Undo requires capability DELETE_PRECEDING_TEXT.
@@ -2827,14 +2901,14 @@ TEST_F(SessionTest, UndoOrRewind_undo) {
       candidate->value = "AIUEO";
     }
     {
-      convertermock_->SetStartConversionForRequest(&segments, true);
+      GetConverterMock()->SetStartConversionForRequest(&segments, true);
       command.Clear();
       session->Convert(&command);
       EXPECT_FALSE(command.output().has_result());
       // "あいうえお"
       EXPECT_PREEDIT(kAiueo, command);
 
-      convertermock_->SetCommitSegmentValue(&segments, true);
+      GetConverterMock()->SetCommitSegmentValue(&segments, true);
       command.Clear();
       session->Commit(&command);
       EXPECT_FALSE(command.output().has_preedit());
@@ -2860,9 +2934,8 @@ TEST_F(SessionTest, UndoOrRewind_undo) {
 }
 
 TEST_F(SessionTest, UndoOrRewind_rewind) {
-  ScopedMobilePreference mobile_preference;
-  scoped_ptr<Session> session(new Session);
-  InitSessionToPrecomposition(session.get());
+  scoped_ptr<Session> session(new Session(engine_.get()));
+  InitSessionToPrecomposition(session.get(), *mobile_request_);
 
   Segments segments;
   {
@@ -2872,7 +2945,7 @@ TEST_F(SessionTest, UndoOrRewind_rewind) {
     AddCandidate("e", "e", segment);
     AddCandidate("e", "E", segment);
   }
-  convertermock_->SetStartSuggestionForRequest(&segments, true);
+  GetConverterMock()->SetStartSuggestionForRequest(&segments, true);
 
   commands::Command command;
   InsertCharacterChars("11111", session.get(), &command);
@@ -2894,7 +2967,7 @@ TEST_F(SessionTest, UndoOrRewind_rewind) {
 TEST_F(SessionTest, NeedlessClearUndoContext) {
   // This is a unittest against http://b/3423910.
 
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   // Undo requires capability DELETE_PRECEDING_TEXT.
@@ -2911,14 +2984,14 @@ TEST_F(SessionTest, NeedlessClearUndoContext) {
     SetAiueo(&segments);
     FillT13Ns(request, &segments);
 
-    convertermock_->SetStartConversionForRequest(&segments, true);
+    GetConverterMock()->SetStartConversionForRequest(&segments, true);
     command.Clear();
     session->Convert(&command);
     EXPECT_FALSE(command.output().has_result());
     // "あいうえお"
     EXPECT_PREEDIT(kAiueo, command);
 
-    convertermock_->SetCommitSegmentValue(&segments, true);
+    GetConverterMock()->SetCommitSegmentValue(&segments, true);
     command.Clear();
     session->Commit(&command);
     EXPECT_FALSE(command.output().has_preedit());
@@ -2978,7 +3051,7 @@ TEST_F(SessionTest, NeedlessClearUndoContext) {
 }
 
 TEST_F(SessionTest, ClearUndoContextAfterDirectInputAfterConversion) {
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   // Prepare Numpad
@@ -3005,7 +3078,7 @@ TEST_F(SessionTest, ClearUndoContextAfterDirectInputAfterConversion) {
   FillT13Ns(request, &segments);
 
   // Convert
-  convertermock_->SetStartConversionForRequest(&segments, true);
+  GetConverterMock()->SetStartConversionForRequest(&segments, true);
   command.Clear();
   session->Convert(&command);
   EXPECT_FALSE(command.output().has_result());
@@ -3029,7 +3102,7 @@ TEST_F(SessionTest, ClearUndoContextAfterDirectInputAfterConversion) {
 
 TEST_F(SessionTest, TemporaryInputModeAfterUndo) {
   // This is a unittest against http://b/3423599.
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   // Undo requires capability DELETE_PRECEDING_TEXT.
@@ -3109,7 +3182,7 @@ TEST_F(SessionTest, TemporaryInputModeAfterUndo) {
 
 TEST_F(SessionTest, DCHECKFailureAfterUndo) {
   // This is a unittest against http://b/3437358.
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   commands::Capability capability;
@@ -3148,7 +3221,7 @@ TEST_F(SessionTest, DCHECKFailureAfterUndo) {
 
 TEST_F(SessionTest, ConvertToFullOrHalfAlphanumericAfterUndo) {
   // This is a unittest against http://b/3423592.
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   // Undo requires capability DELETE_PRECEDING_TEXT.
@@ -3175,7 +3248,7 @@ TEST_F(SessionTest, ConvertToFullOrHalfAlphanumericAfterUndo) {
     // "あいうえお"
     EXPECT_EQ(kAiueo, GetComposition(command));
 
-    convertermock_->SetStartConversionForRequest(&segments, true);
+    GetConverterMock()->SetStartConversionForRequest(&segments, true);
     command.Clear();
     session->ConvertToHalfASCII(&command);
     EXPECT_FALSE(command.output().has_result());
@@ -3196,7 +3269,7 @@ TEST_F(SessionTest, ConvertToFullOrHalfAlphanumericAfterUndo) {
     // "あいうえお"
     EXPECT_EQ(kAiueo, GetComposition(command));
 
-    convertermock_->SetStartConversionForRequest(&segments, true);
+    GetConverterMock()->SetStartConversionForRequest(&segments, true);
     command.Clear();
     session->ConvertToFullASCII(&command);
     EXPECT_FALSE(command.output().has_result());
@@ -3214,7 +3287,7 @@ TEST_F(SessionTest, ComposeVoicedSoundMarkAfterUndo_Issue5369632) {
   SetConfig(config);
   ASSERT_EQ(config::Config::KANA, GET_CONFIG(preedit_method));
 
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   // Undo requires capability DELETE_PRECEDING_TEXT.
@@ -3249,16 +3322,14 @@ TEST_F(SessionTest, ComposeVoicedSoundMarkAfterUndo_Issue5369632) {
 }
 
 TEST_F(SessionTest, SpaceOnAlphanumeric) {
-  const commands::Request orig_request(commands::RequestHandler::GetRequest());
   commands::Request request;
   commands::Command command;
 
   {
     request.set_space_on_alphanumeric(commands::Request::COMMIT);
-    commands::RequestHandler::SetRequest(request);
 
-    Session session;
-    InitSessionToPrecomposition(&session);
+    Session session(engine_.get());
+    InitSessionToPrecomposition(&session, request);
 
     command.Clear();
     SendKey("A", &session, &command);
@@ -3272,10 +3343,9 @@ TEST_F(SessionTest, SpaceOnAlphanumeric) {
   {
     request.set_space_on_alphanumeric(
         commands::Request::SPACE_OR_CONVERT_COMMITING_COMPOSITION);
-    commands::RequestHandler::SetRequest(request);
 
-    Session session;
-    InitSessionToPrecomposition(&session);
+    Session session(engine_.get());
+    InitSessionToPrecomposition(&session, request);
 
     command.Clear();
     SendKey("A", &session, &command);
@@ -3296,10 +3366,9 @@ TEST_F(SessionTest, SpaceOnAlphanumeric) {
   {
     request.set_space_on_alphanumeric(
         commands::Request::SPACE_OR_CONVERT_KEEPING_COMPOSITION);
-    commands::RequestHandler::SetRequest(request);
 
-    Session session;
-    InitSessionToPrecomposition(&session);
+    Session session(engine_.get());
+    InitSessionToPrecomposition(&session, request);
 
     command.Clear();
     SendKey("A", &session, &command);
@@ -3315,8 +3384,6 @@ TEST_F(SessionTest, SpaceOnAlphanumeric) {
     EXPECT_FALSE(command.output().has_result());
     EXPECT_EQ("A a", GetComposition(command));
   }
-
-  commands::RequestHandler::SetRequest(orig_request);
 }
 
 TEST_F(SessionTest, Issue1805239) {
@@ -3324,7 +3391,7 @@ TEST_F(SessionTest, Issue1805239) {
   Segments segments;
   Segment *segment;
   Segment::Candidate *candidate;
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -3352,7 +3419,7 @@ TEST_F(SessionTest, Issue1805239) {
   ConversionRequest request;
   SetComposer(session.get(), &request);
   FillT13Ns(request, &segments);
-  convertermock_->SetStartConversionForRequest(&segments, true);
+  GetConverterMock()->SetStartConversionForRequest(&segments, true);
 
   SendSpecialKey(commands::KeyEvent::SPACE, session.get(), &command);
   SendSpecialKey(commands::KeyEvent::RIGHT, session.get(), &command);
@@ -3383,7 +3450,7 @@ TEST_F(SessionTest, Issue1816861) {
   Segments segments;
   Segment *segment;
   Segment::Candidate *candidate;
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -3413,7 +3480,7 @@ TEST_F(SessionTest, Issue1816861) {
   ConversionRequest request;
   SetComposer(session.get(), &request);
   FillT13Ns(request, &segments);
-  convertermock_->SetStartConversionForRequest(&segments, true);
+  GetConverterMock()->SetStartConversionForRequest(&segments, true);
 
   SendSpecialKey(commands::KeyEvent::SPACE, session.get(), &command);
   SendSpecialKey(commands::KeyEvent::RIGHT, session.get(), &command);
@@ -3443,7 +3510,7 @@ TEST_F(SessionTest, Issue1816861) {
   // "陰謀説"
   candidate->value = "\xe9\x99\xb0\xe8\xac\x80\xe8\xaa\xac";
 
-  convertermock_->SetStartPredictionForRequest(&segments, true);
+  GetConverterMock()->SetStartPredictionForRequest(&segments, true);
 
   SendSpecialKey(commands::KeyEvent::TAB, session.get(), &command);
 }
@@ -3451,7 +3518,7 @@ TEST_F(SessionTest, Issue1816861) {
 TEST_F(SessionTest, T13NWithResegmentation) {
   // This is a unittest against http://b/3272827
   Segment::Candidate *candidate;
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -3485,7 +3552,7 @@ TEST_F(SessionTest, T13NWithResegmentation) {
     ConversionRequest request;
     SetComposer(session.get(), &request);
     FillT13Ns(request, &segments);
-    convertermock_->SetStartConversionForRequest(&segments, true);
+    GetConverterMock()->SetStartConversionForRequest(&segments, true);
   }
   {
     Segments segments;
@@ -3526,7 +3593,7 @@ TEST_F(SessionTest, T13NWithResegmentation) {
     ConversionRequest request;
     SetComposer(session.get(), &request);
     FillT13Ns(request, &segments);
-    convertermock_->SetResizeSegment1(&segments, true);
+    GetConverterMock()->SetResizeSegment1(&segments, true);
   }
 
   // Start conversion
@@ -3563,7 +3630,7 @@ TEST_F(SessionTest, Shortcut) {
     SetConfig(config);
     ASSERT_EQ(shortcut, GET_CONFIG(selection_shortcut));
 
-    scoped_ptr<Session> session(new Session);
+    scoped_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
 
     Segments segments;
@@ -3571,7 +3638,7 @@ TEST_F(SessionTest, Shortcut) {
     ConversionRequest request;
     SetComposer(session.get(), &request);
     FillT13Ns(request, &segments);
-    convertermock_->SetStartConversionForRequest(&segments, true);
+    GetConverterMock()->SetStartConversionForRequest(&segments, true);
 
     commands::Command command;
     InsertCharacterChars("aiueo", session.get(), &command);
@@ -3596,7 +3663,7 @@ TEST_F(SessionTest, ShortcutWithCapsLock_Issue5655743) {
   ASSERT_EQ(config::Config::SHORTCUT_ASDFGHJKL,
             GET_CONFIG(selection_shortcut));
 
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   Segments segments;
@@ -3604,7 +3671,7 @@ TEST_F(SessionTest, ShortcutWithCapsLock_Issue5655743) {
   ConversionRequest request;
   SetComposer(session.get(), &request);
   FillT13Ns(request, &segments);
-  convertermock_->SetStartConversionForRequest(&segments, true);
+  GetConverterMock()->SetStartConversionForRequest(&segments, true);
 
   commands::Command command;
   InsertCharacterChars("aiueo", session.get(), &command);
@@ -3632,7 +3699,7 @@ TEST_F(SessionTest, ShortcutWithCapsLock_Issue5655743) {
 }
 
 TEST_F(SessionTest, NumpadKey) {
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -3764,7 +3831,7 @@ TEST_F(SessionTest, KanaSymbols) {
   ASSERT_EQ(config::Config::COMMA_PERIOD, GET_CONFIG(punctuation_method));
   ASSERT_EQ(config::Config::CORNER_BRACKET_SLASH, GET_CONFIG(symbol_method));
 
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   {
@@ -3799,7 +3866,7 @@ TEST_F(SessionTest, KanaSymbols) {
 
 TEST_F(SessionTest, InsertCharacterWithShiftKey) {
   {  // Basic behavior
-    scoped_ptr<Session> session(new Session);
+    scoped_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
     EXPECT_TRUE(SendKey("a", session.get(), &command));
@@ -3817,7 +3884,7 @@ TEST_F(SessionTest, InsertCharacterWithShiftKey) {
   }
 
   {  // Revert back to the previous input mode.
-    scoped_ptr<Session> session(new Session);
+    scoped_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
     session->InputModeFullKatakana(&command);
@@ -3840,7 +3907,7 @@ TEST_F(SessionTest, InsertCharacterWithShiftKey) {
 TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommitingSugesstion) {
   // This is a unittest against http://b/2977131.
   {
-    scoped_ptr<Session> session(new Session);
+    scoped_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
     EXPECT_TRUE(SendKey("N", session.get(), &command));
@@ -3854,7 +3921,7 @@ TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommitingSugesstion) {
     ConversionRequest request;
     SetComposer(session.get(), &request);
     FillT13Ns(request, &segments);
-    convertermock_->SetStartConversionForRequest(&segments, true);
+    GetConverterMock()->SetStartConversionForRequest(&segments, true);
 
     EXPECT_TRUE(session->Convert(&command));
     EXPECT_FALSE(command.output().has_candidates());
@@ -3872,7 +3939,7 @@ TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommitingSugesstion) {
   }
 
   {
-    scoped_ptr<Session> session(new Session);
+    scoped_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
     EXPECT_TRUE(SendKey("N", session.get(), &command));
@@ -3883,7 +3950,7 @@ TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommitingSugesstion) {
     Segment *segment = segments.add_segment();
     segment->set_key("NFL");
     segment->add_candidate()->value = "NFL";
-    convertermock_->SetStartPredictionForRequest(&segments, true);
+    GetConverterMock()->SetStartPredictionForRequest(&segments, true);
 
     EXPECT_TRUE(session->PredictAndConvert(&command));
     ASSERT_TRUE(command.output().has_candidates());
@@ -3902,7 +3969,7 @@ TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommitingSugesstion) {
   }
 
   {
-    scoped_ptr<Session> session(new Session);
+    scoped_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
     EXPECT_TRUE(SendKey("N", session.get(), &command));
@@ -3927,7 +3994,7 @@ TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommitingSugesstion) {
 
 TEST_F(SessionTest, StatusOutput) {
   {  // Basic behavior
-    scoped_ptr<Session> session(new Session);
+    scoped_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
     EXPECT_TRUE(SendKey("a", session.get(), &command));  // "あ"
@@ -3975,7 +4042,7 @@ TEST_F(SessionTest, StatusOutput) {
   }
 
   {  // Katakana mode + Shift key
-    scoped_ptr<Session> session(new Session);
+    scoped_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
     session->InputModeFullKatakana(&command);
@@ -4036,20 +4103,20 @@ TEST_F(SessionTest, Suggest) {
     segment->add_candidate()->value = "MOZUKU";
   }
 
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   SendKey("M", session.get(), &command);
 
   command.Clear();
-  convertermock_->SetStartSuggestionForRequest(&segments_mo, true);
+  GetConverterMock()->SetStartSuggestionForRequest(&segments_mo, true);
   SendKey("O", session.get(), &command);
   ASSERT_TRUE(command.output().has_candidates());
   EXPECT_EQ(2, command.output().candidates().candidate_size());
   EXPECT_EQ("MOCHA", command.output().candidates().candidate(0).value());
 
   // moz|
-  convertermock_->SetStartSuggestionForRequest(&segments_moz, true);
+  GetConverterMock()->SetStartSuggestionForRequest(&segments_moz, true);
   command.Clear();
   SendKey("Z", session.get(), &command);
   ASSERT_TRUE(command.output().has_candidates());
@@ -4057,7 +4124,7 @@ TEST_F(SessionTest, Suggest) {
   EXPECT_EQ("MOZUKU", command.output().candidates().candidate(0).value());
 
   // mo|
-  convertermock_->SetStartSuggestionForRequest(&segments_mo, true);
+  GetConverterMock()->SetStartSuggestionForRequest(&segments_mo, true);
   command.Clear();
   SendKey("Backspace", session.get(), &command);
   ASSERT_TRUE(command.output().has_candidates());
@@ -4065,7 +4132,7 @@ TEST_F(SessionTest, Suggest) {
   EXPECT_EQ("MOCHA", command.output().candidates().candidate(0).value());
 
   // m|o
-  convertermock_->SetStartSuggestionForRequest(&segments_mo, true);
+  GetConverterMock()->SetStartSuggestionForRequest(&segments_mo, true);
   command.Clear();
   EXPECT_TRUE(session->MoveCursorLeft(&command));
   ASSERT_TRUE(command.output().has_candidates());
@@ -4073,7 +4140,7 @@ TEST_F(SessionTest, Suggest) {
   EXPECT_EQ("MOCHA", command.output().candidates().candidate(0).value());
 
   // mo|
-  convertermock_->SetStartSuggestionForRequest(&segments_mo, true);
+  GetConverterMock()->SetStartSuggestionForRequest(&segments_mo, true);
   command.Clear();
   EXPECT_TRUE(session->MoveCursorToEnd(&command));
   ASSERT_TRUE(command.output().has_candidates());
@@ -4081,7 +4148,7 @@ TEST_F(SessionTest, Suggest) {
   EXPECT_EQ("MOCHA", command.output().candidates().candidate(0).value());
 
   // |mo
-  convertermock_->SetStartSuggestionForRequest(&segments_mo, true);
+  GetConverterMock()->SetStartSuggestionForRequest(&segments_mo, true);
   command.Clear();
   EXPECT_TRUE(session->MoveCursorToBeginning(&command));
   ASSERT_TRUE(command.output().has_candidates());
@@ -4089,7 +4156,7 @@ TEST_F(SessionTest, Suggest) {
   EXPECT_EQ("MOCHA", command.output().candidates().candidate(0).value());
 
   // m|o
-  convertermock_->SetStartSuggestionForRequest(&segments_mo, true);
+  GetConverterMock()->SetStartSuggestionForRequest(&segments_mo, true);
   command.Clear();
   EXPECT_TRUE(session->MoveCursorRight(&command));
   ASSERT_TRUE(command.output().has_candidates());
@@ -4097,7 +4164,7 @@ TEST_F(SessionTest, Suggest) {
   EXPECT_EQ("MOCHA", command.output().candidates().candidate(0).value());
 
   // m|
-  convertermock_->SetStartSuggestionForRequest(&segments_m, true);
+  GetConverterMock()->SetStartSuggestionForRequest(&segments_m, true);
   command.Clear();
   EXPECT_TRUE(session->Delete(&command));
   ASSERT_TRUE(command.output().has_candidates());
@@ -4116,11 +4183,11 @@ TEST_F(SessionTest, Suggest) {
   ConversionRequest request_m_conv;
   SetComposer(session.get(), &request_m_conv);
   FillT13Ns(request_m_conv, &segments_m_conv);
-  convertermock_->SetStartConversionForRequest(&segments_m_conv, true);
+  GetConverterMock()->SetStartConversionForRequest(&segments_m_conv, true);
   command.Clear();
   EXPECT_TRUE(session->Convert(&command));
 
-  convertermock_->SetStartSuggestionForRequest(&segments_m, true);
+  GetConverterMock()->SetStartSuggestionForRequest(&segments_m, true);
   command.Clear();
   EXPECT_TRUE(session->ConvertCancel(&command));
   ASSERT_TRUE(command.output().has_candidates());
@@ -4129,7 +4196,7 @@ TEST_F(SessionTest, Suggest) {
 }
 
 TEST_F(SessionTest, ExpandSuggestion) {
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -4143,7 +4210,7 @@ TEST_F(SessionTest, ExpandSuggestion) {
     segment->add_candidate()->value = "MOCHA";
     segment->add_candidate()->value = "MOZUKU";
   }
-  convertermock_->SetStartSuggestionForRequest(&segments_m, true);
+  GetConverterMock()->SetStartSuggestionForRequest(&segments_m, true);
 
   SendKey("M", session.get(), &command);
   ASSERT_TRUE(command.output().has_candidates());
@@ -4159,7 +4226,7 @@ TEST_F(SessionTest, ExpandSuggestion) {
     segment->add_candidate()->value = "MOZUKU";
     segment->add_candidate()->value = "MOZUKUSU";
   }
-  convertermock_->SetStartPredictionForRequest(&segments_mo, true);
+  GetConverterMock()->SetStartPredictionForRequest(&segments_mo, true);
 
   command.Clear();
   EXPECT_TRUE(session->ExpandSuggestion(&command));
@@ -4171,7 +4238,7 @@ TEST_F(SessionTest, ExpandSuggestion) {
 
 TEST_F(SessionTest, ExpandSuggestionDirectMode) {
   // On direct mode, ExpandSuggestion() should do nothing.
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   commands::Command command;
 
   session->IMEOff(&command);
@@ -4184,7 +4251,7 @@ TEST_F(SessionTest, ExpandSuggestionDirectMode) {
 
 TEST_F(SessionTest, ExpandSuggestionConversionMode) {
   // On conversion mode, ExpandSuggestion() should do nothing.
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -4194,7 +4261,7 @@ TEST_F(SessionTest, ExpandSuggestionConversionMode) {
   SetComposer(session.get(), &request);
   SetAiueo(&segments);
   FillT13Ns(request, &segments);
-  convertermock_->SetStartConversionForRequest(&segments, true);
+  GetConverterMock()->SetStartConversionForRequest(&segments, true);
 
   command.Clear();
   session->Convert(&command);
@@ -4208,12 +4275,10 @@ TEST_F(SessionTest, ExpandSuggestionConversionMode) {
 }
 
 TEST_F(SessionTest, MobilePartialSuggestion) {
-  ScopedMobilePreference preference;
   commands::Request request;
-  request.CopyFrom(commands::RequestHandler::GetRequest());
+  request.CopyFrom(*mobile_request_);
   request.set_special_romanji_table(
       commands::Request::QWERTY_MOBILE_TO_HIRAGANA);
-  commands::RequestHandler::SetRequest(request);
 
   Segments segments_wata;
   {
@@ -4254,11 +4319,12 @@ TEST_F(SessionTest, MobilePartialSuggestion) {
     candidate = AddCandidate("\xe3\x81\x97\xe3\x81\xae", "shino", segment);
   }
 
-  scoped_ptr<Session> session(new Session);
-  InitSessionToPrecomposition(session.get());
+  scoped_ptr<Session> session(new Session(engine_.get()));
+  InitSessionToPrecomposition(session.get(), request);
+
   commands::Command command;
   command.Clear();
-  convertermock_->SetStartSuggestionForRequest(&segments_watashino, true);
+  GetConverterMock()->SetStartSuggestionForRequest(&segments_watashino, true);
   InsertCharacterChars("watashino", session.get(), &command);
   ASSERT_TRUE(command.output().has_candidates());
   EXPECT_EQ(2, command.output().candidates().candidate_size());
@@ -4267,7 +4333,7 @@ TEST_F(SessionTest, MobilePartialSuggestion) {
             command.output().candidates().candidate(0).value());
 
   // partial suggestion for "わた|しの"
-  convertermock_->SetStartPartialSuggestion(&segments_wata, true);
+  GetConverterMock()->SetStartPartialSuggestion(&segments_wata, true);
   command.Clear();
   EXPECT_TRUE(session->MoveCursorLeft(&command));
   command.Clear();
@@ -4283,7 +4349,7 @@ TEST_F(SessionTest, MobilePartialSuggestion) {
   command.mutable_input()->mutable_command()->set_type(
       commands::SessionCommand::SUBMIT_CANDIDATE);
   command.mutable_input()->mutable_command()->set_id(0);
-  convertermock_->SetStartSuggestionForRequest(&segments_shino, true);
+  GetConverterMock()->SetStartSuggestionForRequest(&segments_shino, true);
   session->SendCommand(&command);
   EXPECT_TRUE(command.output().consumed());
   // "綿", "わた"
@@ -4302,7 +4368,7 @@ TEST_F(SessionTest, MobilePartialSuggestion) {
 }
 
 TEST_F(SessionTest, ToggleAlphanumericMode) {
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -4389,7 +4455,7 @@ TEST_F(SessionTest, ToggleAlphanumericMode) {
     ConversionRequest request;
     SetComposer(session.get(), &request);
     FillT13Ns(request, &segments);
-    convertermock_->SetStartConversionForRequest(&segments, true);
+    GetConverterMock()->SetStartConversionForRequest(&segments, true);
 
     command.Clear();
     session->Convert(&command);
@@ -4410,7 +4476,7 @@ TEST_F(SessionTest, ToggleAlphanumericMode) {
 }
 
 TEST_F(SessionTest, InsertSpace) {
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -4449,7 +4515,7 @@ TEST_F(SessionTest, InsertSpace) {
 }
 
 TEST_F(SessionTest, InsertSpaceToggled) {
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -4488,7 +4554,7 @@ TEST_F(SessionTest, InsertSpaceToggled) {
 }
 
 TEST_F(SessionTest, InsertSpaceHalfWidth) {
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -4517,7 +4583,7 @@ TEST_F(SessionTest, InsertSpaceHalfWidth) {
     ConversionRequest request;
     SetComposer(session.get(), &request);
     FillT13Ns(request, &segments);
-    convertermock_->SetStartConversionForRequest(&segments, true);
+    GetConverterMock()->SetStartConversionForRequest(&segments, true);
 
     command.Clear();
     EXPECT_TRUE(session->Convert(&command));
@@ -4531,7 +4597,7 @@ TEST_F(SessionTest, InsertSpaceHalfWidth) {
 }
 
 TEST_F(SessionTest, InsertSpaceFullWidth) {
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -4561,7 +4627,7 @@ TEST_F(SessionTest, InsertSpaceFullWidth) {
     ConversionRequest request;
     SetComposer(session.get(), &request);
     FillT13Ns(request, &segments);
-    convertermock_->SetStartConversionForRequest(&segments, true);
+    GetConverterMock()->SetStartConversionForRequest(&segments, true);
 
     command.Clear();
     EXPECT_TRUE(session->Convert(&command));
@@ -4589,7 +4655,7 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
     SetConfig(config);
   }
   {
-    scoped_ptr<Session> session(new Session);
+    scoped_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
 
     commands::Command command;
@@ -4604,7 +4670,7 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
     EXPECT_EQ(ImeContext::PRECOMPOSITION, session->context().state());
   }
   {
-    scoped_ptr<Session> session(new Session);
+    scoped_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
 
     commands::Command command;
@@ -4641,7 +4707,7 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
     SetConfig(config);
   }
   {
-    scoped_ptr<Session> session(new Session);
+    scoped_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
 
     commands::Command command;
@@ -4658,7 +4724,7 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
     EXPECT_EQ(commands::HALF_KATAKANA, command.output().mode());
   }
   {
-    scoped_ptr<Session> session(new Session);
+    scoped_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
 
     commands::Command command;
@@ -4698,7 +4764,7 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
     SetConfig(config);
   }
   {
-    scoped_ptr<Session> session(new Session);
+    scoped_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
 
     commands::Command command;
@@ -4715,7 +4781,7 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
     EXPECT_EQ(commands::HALF_ASCII, command.output().mode());
   }
   {
-    scoped_ptr<Session> session(new Session);
+    scoped_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
 
     commands::Command command;
@@ -4756,7 +4822,7 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
     SetConfig(config);
   }
   {
-    scoped_ptr<Session> session(new Session);
+    scoped_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
 
     commands::Command command;
@@ -4769,7 +4835,7 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
     EXPECT_FALSE(command.output().consumed());
   }
   {
-    scoped_ptr<Session> session(new Session);
+    scoped_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
 
     commands::Command command;
@@ -4810,7 +4876,7 @@ TEST_F(SessionTest, InsertSpaceWithCustomKeyBinding) {
   config.set_space_character_form(config::Config::FUNDAMENTAL_HALF_WIDTH);
   SetConfig(config);
 
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -4856,7 +4922,7 @@ TEST_F(SessionTest, InsertAlternateSpaceWithCustomKeyBinding) {
   config.set_space_character_form(config::Config::FUNDAMENTAL_FULL_WIDTH);
   SetConfig(config);
 
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -4901,7 +4967,7 @@ TEST_F(SessionTest, InsertSpaceHalfWidthWithCustomKeyBinding) {
   config.set_custom_keymap_table(custom_keymap_table);
   SetConfig(config);
 
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -4946,7 +5012,7 @@ TEST_F(SessionTest, InsertSpaceFullWidthWithCustomKeyBinding) {
   config.set_custom_keymap_table(custom_keymap_table);
   SetConfig(config);
 
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToDirect(session.get());
 
   commands::Command command;
@@ -4997,7 +5063,7 @@ TEST_F(SessionTest, InsertSpaceInDirectMode) {
   config.set_custom_keymap_table(custom_keymap_table);
   SetConfig(config);
 
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToDirect(session.get());
 
   commands::Command command;
@@ -5065,7 +5131,7 @@ TEST_F(SessionTest, InsertSpaceInCompositionMode) {
   config.set_space_character_form(config::Config::FUNDAMENTAL_FULL_WIDTH);
   SetConfig(config);
 
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -5126,7 +5192,7 @@ TEST_F(SessionTest, InsertSpaceInConversionMode) {
   config.set_space_character_form(config::Config::FUNDAMENTAL_FULL_WIDTH);
   SetConfig(config);
 
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
 
   {
     InitSessionToConversionWithAiueo(session.get());
@@ -5204,7 +5270,7 @@ TEST_F(SessionTest, InsertSpaceInConversionMode) {
 }
 
 TEST_F(SessionTest, InsertSpaceFullWidthOnHalfKanaInput) {
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -5233,7 +5299,7 @@ TEST_F(SessionTest, IsFullWidthInsertSpace) {
     // Default config -- follow to the current mode.
     config.set_space_character_form(config::Config::FUNDAMENTAL_INPUT_MODE);
     SetConfig(config);
-    session.reset(new Session);
+    session.reset(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
 
     commands::Input empty_input;
@@ -5266,7 +5332,7 @@ TEST_F(SessionTest, IsFullWidthInsertSpace) {
     // Set config to 'half' -- all mode has to emit half-width space.
     config.set_space_character_form(config::Config::FUNDAMENTAL_HALF_WIDTH);
     SetConfig(config);
-    session.reset(new Session);
+    session.reset(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
 
     // Hiragana
@@ -5298,7 +5364,7 @@ TEST_F(SessionTest, IsFullWidthInsertSpace) {
     // full-width space.
     config.set_space_character_form(config::Config::FUNDAMENTAL_FULL_WIDTH);
     SetConfig(config);
-    session.reset(new Session);
+    session.reset(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
 
     // Hiragana
@@ -5333,7 +5399,7 @@ TEST_F(SessionTest, IsFullWidthInsertSpace) {
     // Default config -- follow to the current mode.
     config.set_space_character_form(config::Config::FUNDAMENTAL_INPUT_MODE);
     SetConfig(config);
-    session.reset(new Session);
+    session.reset(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
 
     // Use HALF_KATAKANA for the new input mode
@@ -5398,7 +5464,7 @@ TEST_F(SessionTest, IsFullWidthInsertSpace) {
 TEST_F(SessionTest, Issue1951385) {
   // This is a unittest against http://b/1951385
   Segments segments;
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -5409,7 +5475,7 @@ TEST_F(SessionTest, Issue1951385) {
   ConversionRequest request;
   SetComposer(session.get(), &request);
   FillT13Ns(request, &segments);
-  convertermock_->SetStartConversionForRequest(&segments, false);
+  GetConverterMock()->SetStartConversionForRequest(&segments, false);
 
   command.Clear();
   session->ConvertToFullASCII(&command);
@@ -5437,9 +5503,9 @@ TEST_F(SessionTest, Issue1978201) {
   segment->add_candidate()->value = "\xe9\x99\xb0\xe8\xac\x80\xe8\xab\x96";
   // "陰謀説"
   segment->add_candidate()->value = "\xe9\x99\xb0\xe8\xac\x80\xe8\xaa\xac";
-  convertermock_->SetStartPredictionForRequest(&segments, true);
+  GetConverterMock()->SetStartPredictionForRequest(&segments, true);
 
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   EXPECT_TRUE(session->SegmentWidthShrink(&command));
@@ -5448,7 +5514,7 @@ TEST_F(SessionTest, Issue1978201) {
   ConversionRequest request;
   SetComposer(session.get(), &request);
   FillT13Ns(request, &segments);
-  convertermock_->SetStartConversionForRequest(&segments, true);
+  GetConverterMock()->SetStartConversionForRequest(&segments, true);
   EXPECT_TRUE(session->Convert(&command));
 
   command.Clear();
@@ -5460,13 +5526,13 @@ TEST_F(SessionTest, Issue1978201) {
 
 TEST_F(SessionTest, Issue1975771) {
   // This is a unittest against http://b/1975771
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   // Trigger suggest by pressing "a".
   Segments segments;
   SetAiueo(&segments);
-  convertermock_->SetStartSuggestionForRequest(&segments, true);
+  GetConverterMock()->SetStartSuggestionForRequest(&segments, true);
 
   commands::Command command;
   commands::KeyEvent* key_event = command.mutable_input()->mutable_key();
@@ -5502,7 +5568,7 @@ TEST_F(SessionTest, Issue2029466) {
   // "a<tab><ctrl-N>a" raised an exception because CommitFirstSegment
   // did not check if the current status is in conversion or
   // precomposition.
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   // "a"
@@ -5512,14 +5578,14 @@ TEST_F(SessionTest, Issue2029466) {
   // <tab>
   Segments segments;
   SetAiueo(&segments);
-  convertermock_->SetStartPredictionForRequest(&segments, true);
+  GetConverterMock()->SetStartPredictionForRequest(&segments, true);
   command.Clear();
   EXPECT_TRUE(session->PredictAndConvert(&command));
 
   // <ctrl-N>
   segments.Clear();
   // FinishConversion is expected to return empty Segments.
-  convertermock_->SetFinishConversion(&segments, true);
+  GetConverterMock()->SetFinishConversion(&segments, true);
   command.Clear();
   EXPECT_TRUE(session->CommitSegment(&command));
 
@@ -5535,7 +5601,7 @@ TEST_F(SessionTest, Issue2034943) {
   //
   // The composition should have been reset if CommitSegment submitted
   // the all segments (e.g. the size of segments is one).
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   InsertCharacterChars("mozu", session.get(), &command);
@@ -5550,7 +5616,7 @@ TEST_F(SessionTest, Issue2034943) {
     ConversionRequest request;
     SetComposer(session.get(), &request);
     FillT13Ns(request, &segments);
-    convertermock_->SetStartConversionForRequest(&segments, true);
+    GetConverterMock()->SetStartConversionForRequest(&segments, true);
   }
   // Get conversion
   command.Clear();
@@ -5568,7 +5634,7 @@ TEST_F(SessionTest, Issue2034943) {
 
 TEST_F(SessionTest, Issue2026354) {
   // This is a unittest against http://b/2026354
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -5580,7 +5646,7 @@ TEST_F(SessionTest, Issue2026354) {
   ConversionRequest request;
   SetComposer(session.get(), &request);
   FillT13Ns(request, &segments);
-  convertermock_->SetStartConversionForRequest(&segments, true);
+  GetConverterMock()->SetStartConversionForRequest(&segments, true);
 
   command.Clear();
   EXPECT_TRUE(session->Convert(&command));
@@ -5600,7 +5666,7 @@ TEST_F(SessionTest, Issue2066906) {
   Segments segments;
   Segment *segment;
   Segment::Candidate *candidate;
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   segment = segments.add_segment();
@@ -5609,7 +5675,7 @@ TEST_F(SessionTest, Issue2066906) {
   candidate->value = "abc";
   candidate = segment->add_candidate();
   candidate->value = "abcdef";
-  convertermock_->SetStartPredictionForRequest(&segments, true);
+  GetConverterMock()->SetStartPredictionForRequest(&segments, true);
 
   // Prediction with "a"
   commands::Command command;
@@ -5621,7 +5687,7 @@ TEST_F(SessionTest, Issue2066906) {
   EXPECT_TRUE(session->Commit(&command));
   EXPECT_RESULT("abc", command);
 
-  convertermock_->SetStartSuggestionForRequest(&segments, true);
+  GetConverterMock()->SetStartSuggestionForRequest(&segments, true);
   command.Clear();
   InsertCharacterChars("a", session.get(), &command);
   EXPECT_FALSE(command.output().has_result());
@@ -5629,7 +5695,7 @@ TEST_F(SessionTest, Issue2066906) {
 
 TEST_F(SessionTest, Issue2187132) {
   // This is a unittest against http://b/2187132
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -5661,7 +5727,7 @@ TEST_F(SessionTest, Issue2190364) {
   SetConfig(config);
   ASSERT_EQ(config::Config::KANA, GET_CONFIG(preedit_method));
 
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -5683,7 +5749,7 @@ TEST_F(SessionTest, Issue2190364) {
 
 TEST_F(SessionTest, Issue1556649) {
   // This is a unittest against http://b/1556649
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   InsertCharacterChars("kudoudesu", session.get(), &command);
@@ -5711,7 +5777,7 @@ TEST_F(SessionTest, Issue1518994) {
   // This is a unittest against http://b/1518994.
   // - Can't input space in ascii mode.
   {
-    scoped_ptr<Session> session(new Session);
+    scoped_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
     EXPECT_TRUE(SendKey("a", session.get(), &command));
@@ -5727,7 +5793,7 @@ TEST_F(SessionTest, Issue1518994) {
   }
 
   {
-    scoped_ptr<Session> session(new Session);
+    scoped_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
     EXPECT_TRUE(SendKey("a", session.get(), &command));
@@ -5744,7 +5810,7 @@ TEST_F(SessionTest, Issue1518994) {
 TEST_F(SessionTest, Issue1571043) {
   // This is a unittest against http://b/1571043.
   // - Underline of composition is separated.
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   InsertCharacterChars("aiu", session.get(), &command);
@@ -5762,7 +5828,7 @@ TEST_F(SessionTest, Issue1571043) {
 TEST_F(SessionTest, Issue1799384) {
   // This is a unittest against http://b/1571043.
   // - ConvertToHiragana converts Vu to U+3094 "ヴ"
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   InsertCharacterChars("ravu", session.get(), &command);
@@ -5770,7 +5836,7 @@ TEST_F(SessionTest, Issue1799384) {
   // "らヴ"
   EXPECT_EQ("\xE3\x82\x89\xE3\x83\xB4", GetComposition(command));
 
-  {  // Initialize convertermock_ to generate t13n candidates.
+  {  // Initialize GetConverterMock() to generate t13n candidates.
     Segments segments;
     Segment *segment;
     segments.set_request_type(Segments::CONVERSION);
@@ -5784,7 +5850,7 @@ TEST_F(SessionTest, Issue1799384) {
     ConversionRequest request;
     SetComposer(session.get(), &request);
     FillT13Ns(request, &segments);
-    convertermock_->SetStartConversionForRequest(&segments, true);
+    GetConverterMock()->SetStartConversionForRequest(&segments, true);
   }
 
   command.Clear();
@@ -5798,7 +5864,7 @@ TEST_F(SessionTest, Issue2217250) {
   // This is a unittest against http://b/2217250.
   // Temporary direct input mode through a special sequence such as
   // www. continues even after committing them
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   InsertCharacterChars("www.", session.get(), &command);
@@ -5814,7 +5880,7 @@ TEST_F(SessionTest, Issue2223823) {
   // This is a unittest against http://b/2223823
   // Input mode does not recover like MS-IME by single shift key down
   // and up.
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   SendKey("G", session.get(), &command);
@@ -5830,7 +5896,7 @@ TEST_F(SessionTest, Issue2223823) {
 TEST_F(SessionTest, Issue2223762) {
   // This is a unittest against http://b/2223762.
   // - The first space in half-width alphanumeric mode is full-width.
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -5848,7 +5914,7 @@ TEST_F(SessionTest, Issue2223755) {
   // - F6 and F7 convert space to half-width.
 
   {  // DisplayAsFullKatakana
-    scoped_ptr<Session> session(new Session);
+    scoped_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
 
@@ -5869,7 +5935,7 @@ TEST_F(SessionTest, Issue2223755) {
   }
 
   {  // ConvertToFullKatakana
-    scoped_ptr<Session> session(new Session);
+    scoped_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
 
@@ -5882,7 +5948,7 @@ TEST_F(SessionTest, Issue2223755) {
     // "あ い"
     EXPECT_EQ("\xE3\x81\x82\x20\xE3\x81\x84", GetComposition(command));
 
-    {  // Initialize convertermock_ to generate t13n candidates.
+    {  // Initialize GetConverterMock() to generate t13n candidates.
       Segments segments;
       Segment *segment;
       segments.set_request_type(Segments::CONVERSION);
@@ -5896,7 +5962,7 @@ TEST_F(SessionTest, Issue2223755) {
       ConversionRequest request;
       SetComposer(session.get(), &request);
       FillT13Ns(request, &segments);
-      convertermock_->SetStartConversionForRequest(&segments, true);
+      GetConverterMock()->SetStartConversionForRequest(&segments, true);
     }
 
     command.Clear();
@@ -5911,7 +5977,7 @@ TEST_F(SessionTest, Issue2269058) {
   // This is a unittest against http://b/2269058.
   // - Temporary input mode should not be overridden by a permanent
   //   input mode change.
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -5930,7 +5996,7 @@ TEST_F(SessionTest, Issue2272745) {
   // This is a unittest against http://b/2272745.
   // A temporary input mode remains when a composition is canceled.
   {
-    scoped_ptr<Session> session(new Session);
+    scoped_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
 
@@ -5942,7 +6008,7 @@ TEST_F(SessionTest, Issue2272745) {
   }
 
   {
-    scoped_ptr<Session> session(new Session);
+    scoped_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
 
@@ -5961,7 +6027,7 @@ TEST_F(SessionTest, Issue2282319) {
   config.set_session_keymap(config::Config::MSIME);
   SetConfig(config);
 
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   ASSERT_EQ(config::Config::MSIME, GET_CONFIG(session_keymap));
 
@@ -5996,7 +6062,7 @@ TEST_F(SessionTest, Issue2297060) {
   config.set_session_keymap(config::Config::MSIME);
   SetConfig(config);
 
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   ASSERT_EQ(config::Config::MSIME, GET_CONFIG(session_keymap));
 
@@ -6008,7 +6074,7 @@ TEST_F(SessionTest, Issue2297060) {
 TEST_F(SessionTest, Issue2379374) {
   // This is a unittest against http://b/2379374.
   // Numpad ignores Direct input style when typing after conversion.
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -6036,7 +6102,7 @@ TEST_F(SessionTest, Issue2379374) {
     ConversionRequest request;
     SetComposer(session.get(), &request);
     FillT13Ns(request, &segments);
-    convertermock_->SetStartConversionForRequest(&segments, true);
+    GetConverterMock()->SetStartConversionForRequest(&segments, true);
   }
 
   EXPECT_TRUE(SendKey("a", session.get(), &command));
@@ -6063,7 +6129,7 @@ TEST_F(SessionTest, Issue2569789) {
   // After typing "google", the input mode does not come back to the
   // previous input mode.
   {
-    scoped_ptr<Session> session(new Session);
+    scoped_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
 
@@ -6078,7 +6144,7 @@ TEST_F(SessionTest, Issue2569789) {
   }
 
   {
-    scoped_ptr<Session> session(new Session);
+    scoped_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
 
@@ -6092,7 +6158,7 @@ TEST_F(SessionTest, Issue2569789) {
   }
 
   {
-    scoped_ptr<Session> session(new Session);
+    scoped_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
 
@@ -6110,7 +6176,7 @@ TEST_F(SessionTest, Issue2569789) {
   }
 
   {
-    scoped_ptr<Session> session(new Session);
+    scoped_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
 
@@ -6128,7 +6194,7 @@ TEST_F(SessionTest, Issue2555503) {
   // This is a unittest against http://b/2555503.
   // Mode respects the previous character too much.
 
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   SendKey("a", session.get(), &command);
@@ -6150,7 +6216,7 @@ TEST_F(SessionTest, Issue2791640) {
   // This is a unittest against http://b/2791640.
   // Existing preedit should be committed when IME is turned off.
 
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -6175,7 +6241,7 @@ TEST_F(SessionTest, CommitExistingPreeditWhenIMEIsTurnedOff) {
 
   // Check "hankaku/zenkaku"
   {
-    scoped_ptr<Session> session(new Session);
+    scoped_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
 
     commands::Command command;
@@ -6197,7 +6263,7 @@ TEST_F(SessionTest, CommitExistingPreeditWhenIMEIsTurnedOff) {
 
   // Check "kanji"
   {
-    scoped_ptr<Session> session(new Session);
+    scoped_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
 
     commands::Command command;
@@ -6223,7 +6289,7 @@ TEST_F(SessionTest, SendKeyDirectInputStateTest) {
   // InputModeChange commands from direct mode are supported only for Windows
   // for now.
 #ifdef OS_WINDOWS
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToDirect(session.get());
   commands::Command command;
 
@@ -6255,7 +6321,7 @@ TEST_F(SessionTest, HandlingDirectInputTableAttribute) {
   table.AddRuleWithAttributes("ta", "\xE3\x81\x9F", "",
                               composer::NO_TABLE_ATTRIBUTE);
 
-  Session session;
+  Session session(engine_.get());
   InitSessionToPrecomposition(&session);
   session.get_internal_composer_only_for_unittest()->SetTable(&table);
 
@@ -6284,7 +6350,7 @@ TEST_F(SessionTest, HandlingDirectInputTableAttribute) {
 
 TEST_F(SessionTest, IMEOnWithModeTest) {
   {
-    scoped_ptr<Session> session(new Session);
+    scoped_ptr<Session> session(new Session(engine_.get()));
     InitSessionToDirect(session.get());
 
     commands::Command command;
@@ -6301,7 +6367,7 @@ TEST_F(SessionTest, IMEOnWithModeTest) {
     EXPECT_SINGLE_SEGMENT(kHiraganaA, command);
   }
   {
-    scoped_ptr<Session> session(new Session);
+    scoped_ptr<Session> session(new Session(engine_.get()));
     InitSessionToDirect(session.get());
 
     commands::Command command;
@@ -6316,7 +6382,7 @@ TEST_F(SessionTest, IMEOnWithModeTest) {
     EXPECT_SINGLE_SEGMENT("\xE3\x82\xA2", command);
   }
   {
-    scoped_ptr<Session> session(new Session);
+    scoped_ptr<Session> session(new Session(engine_.get()));
     InitSessionToDirect(session.get());
 
     commands::Command command;
@@ -6331,7 +6397,7 @@ TEST_F(SessionTest, IMEOnWithModeTest) {
     EXPECT_SINGLE_SEGMENT("\xEF\xBD\xB1", command);
   }
   {
-    scoped_ptr<Session> session(new Session);
+    scoped_ptr<Session> session(new Session(engine_.get()));
     InitSessionToDirect(session.get());
 
     commands::Command command;
@@ -6346,7 +6412,7 @@ TEST_F(SessionTest, IMEOnWithModeTest) {
     EXPECT_SINGLE_SEGMENT("\xEF\xBD\x81", command);
   }
   {
-    scoped_ptr<Session> session(new Session);
+    scoped_ptr<Session> session(new Session(engine_.get()));
     InitSessionToDirect(session.get());
 
     commands::Command command;
@@ -6363,7 +6429,7 @@ TEST_F(SessionTest, IMEOnWithModeTest) {
 }
 
 TEST_F(SessionTest, InputModeConsumed) {
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   EXPECT_TRUE(session->InputModeHiragana(&command));
@@ -6395,7 +6461,7 @@ TEST_F(SessionTest, InputModeConsumedForTestSendKey) {
   config.set_session_keymap(config::Config::MSIME);
   SetConfig(config);
 
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   ASSERT_EQ(config::Config::MSIME, GET_CONFIG(session_keymap));
   // In MSIME keymap, Hiragana is assigned for
@@ -6408,7 +6474,7 @@ TEST_F(SessionTest, InputModeConsumedForTestSendKey) {
 }
 
 TEST_F(SessionTest, InputModeOutputHasComposition) {
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   SendKey("a", session.get(), &command);
@@ -6452,7 +6518,7 @@ TEST_F(SessionTest, InputModeOutputHasComposition) {
 }
 
 TEST_F(SessionTest, InputModeOutputHasCandidates) {
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   Segments segments;
@@ -6460,7 +6526,7 @@ TEST_F(SessionTest, InputModeOutputHasCandidates) {
   ConversionRequest request;
   SetComposer(session.get(), &request);
   FillT13Ns(request, &segments);
-  convertermock_->SetStartConversionForRequest(&segments, true);
+  GetConverterMock()->SetStartConversionForRequest(&segments, true);
 
   commands::Command command;
   InsertCharacterChars("aiueo", session.get(), &command);
@@ -6508,7 +6574,7 @@ TEST_F(SessionTest, InputModeOutputHasCandidates) {
 }
 
 TEST_F(SessionTest, PerformedCommand) {
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   {
@@ -6542,7 +6608,7 @@ TEST_F(SessionTest, PerformedCommand) {
     ConversionRequest request;
     SetComposer(session.get(), &request);
     FillT13Ns(request, &segments);
-    convertermock_->SetStartConversionForRequest(&segments, true);
+    GetConverterMock()->SetStartConversionForRequest(&segments, true);
     commands::Command command;
     // SPACE
     command.mutable_input()->mutable_key()->set_special_key(
@@ -6563,9 +6629,11 @@ TEST_F(SessionTest, PerformedCommand) {
 }
 
 TEST_F(SessionTest, ResetContext) {
-  scoped_ptr<ConverterMockForReset> convertermock(new ConverterMockForReset);
-  ConverterFactory::SetConverter(convertermock.get());
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<MockConverterEngineForReset> engine(
+      new MockConverterEngineForReset);
+  ConverterMockForReset *convertermock = engine->mutable_converter_mock();
+
+  scoped_ptr<Session> session(new Session(engine.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -6583,7 +6651,7 @@ TEST_F(SessionTest, ResetContext) {
 }
 
 TEST_F(SessionTest, ClearUndoOnResetContext) {
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   // Undo requires capability DELETE_PRECEDING_TEXT.
@@ -6609,14 +6677,14 @@ TEST_F(SessionTest, ClearUndoOnResetContext) {
   }
 
   {
-    convertermock_->SetStartConversionForRequest(&segments, true);
+    GetConverterMock()->SetStartConversionForRequest(&segments, true);
     command.Clear();
     session->Convert(&command);
     EXPECT_FALSE(command.output().has_result());
     // "あいうえお"
     EXPECT_SINGLE_SEGMENT(kAiueo, command);
 
-    convertermock_->SetCommitSegmentValue(&segments, true);
+    GetConverterMock()->SetCommitSegmentValue(&segments, true);
     command.Clear();
     session->Commit(&command);
     EXPECT_FALSE(command.output().has_preedit());
@@ -6634,9 +6702,11 @@ TEST_F(SessionTest, ClearUndoOnResetContext) {
 }
 
 TEST_F(SessionTest, IssueResetConversion) {
-  scoped_ptr<ConverterMockForReset> convertermock(new ConverterMockForReset);
-  ConverterFactory::SetConverter(convertermock.get());
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<MockConverterEngineForReset> engine(
+      new MockConverterEngineForReset);
+  ConverterMockForReset *convertermock = engine->mutable_converter_mock();
+
+  scoped_ptr<Session> session(new Session(engine.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -6652,9 +6722,11 @@ TEST_F(SessionTest, IssueResetConversion) {
 }
 
 TEST_F(SessionTest, IssueRevert) {
-  scoped_ptr<ConverterMockForRevert> convertermock(new ConverterMockForRevert);
-  ConverterFactory::SetConverter(convertermock.get());
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<MockConverterEngineForRevert> engine(
+      new MockConverterEngineForRevert);
+  ConverterMockForRevert *convertermock = engine->mutable_converter_mock();
+
+  scoped_ptr<Session> session(new Session(engine.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -6669,9 +6741,11 @@ TEST_F(SessionTest, IssueRevert) {
 
 // Undo command must call RervertConversion
 TEST_F(SessionTest, Issue3428520) {
-  scoped_ptr<ConverterMockForRevert> convertermock(new ConverterMockForRevert);
-  ConverterFactory::SetConverter(convertermock.get());
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<MockConverterEngineForRevert> engine(
+      new MockConverterEngineForRevert);
+  ConverterMockForRevert *convertermock = engine->mutable_converter_mock();
+
+  scoped_ptr<Session> session(new Session(engine.get()));
   InitSessionToPrecomposition(session.get());
 
   // Undo requires capability DELETE_PRECEDING_TEXT.
@@ -6711,7 +6785,7 @@ TEST_F(SessionTest, Issue3428520) {
 
 // Revert command must clear the undo context.
 TEST_F(SessionTest, Issue5742293) {
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   // Undo requires capability DELETE_PRECEDING_TEXT.
@@ -6744,14 +6818,14 @@ TEST_F(SessionTest, AutoConversion) {
   SetAiueo(&segments);
   ConversionRequest default_request;
   FillT13Ns(default_request, &segments);
-  convertermock_->SetStartConversionForRequest(&segments, true);
+  GetConverterMock()->SetStartConversionForRequest(&segments, true);
 
   // Auto Off
   config::Config config;
   config.set_use_auto_conversion(false);
   SetConfig(config);
   {
-    scoped_ptr<Session> session(new Session);
+    scoped_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
 
@@ -6764,7 +6838,7 @@ TEST_F(SessionTest, AutoConversion) {
         "\xE3\x81\xA6\xE3\x81\x99\xE3\x81\xA8\xE3\x80\x82", command);
   }
   {
-    scoped_ptr<Session> session(new Session);
+    scoped_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
 
@@ -6783,7 +6857,7 @@ TEST_F(SessionTest, AutoConversion) {
   config.set_use_auto_conversion(true);
   SetConfig(config);
   {
-    scoped_ptr<Session> session(new Session);
+    scoped_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
 
     commands::Command command;
@@ -6794,7 +6868,7 @@ TEST_F(SessionTest, AutoConversion) {
     EXPECT_SINGLE_SEGMENT_AND_KEY(kAiueo, kAiueo, command);
   }
   {
-    scoped_ptr<Session> session(new Session);
+    scoped_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
 
     commands::Command command;
@@ -6809,7 +6883,7 @@ TEST_F(SessionTest, AutoConversion) {
 
   // Don't trigger auto conversion for the pattern number + "."
   {
-    scoped_ptr<Session> session(new Session);
+    scoped_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
 
@@ -6824,7 +6898,7 @@ TEST_F(SessionTest, AutoConversion) {
 
   // Don't trigger auto conversion for the ".."
   {
-    scoped_ptr<Session> session(new Session);
+    scoped_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
 
@@ -6837,7 +6911,7 @@ TEST_F(SessionTest, AutoConversion) {
   }
 
   {
-    scoped_ptr<Session> session(new Session);
+    scoped_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
 
@@ -6854,7 +6928,7 @@ TEST_F(SessionTest, AutoConversion) {
 
   // Don't trigger auto conversion for "." only.
   {
-    scoped_ptr<Session> session(new Session);
+    scoped_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
 
@@ -6866,7 +6940,7 @@ TEST_F(SessionTest, AutoConversion) {
   }
 
   {
-    scoped_ptr<Session> session(new Session);
+    scoped_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
     commands::Command command;
 
@@ -6880,7 +6954,7 @@ TEST_F(SessionTest, AutoConversion) {
 
   // Do auto conversion even if romanji-table is modified.
   {
-    scoped_ptr<Session> session(new Session);
+    scoped_ptr<Session> session(new Session(engine_.get()));
     InitSessionToPrecomposition(session.get());
 
     // Modify romanji-table to convert "zz" -> "。"
@@ -6925,7 +6999,7 @@ TEST_F(SessionTest, AutoConversion) {
               config::Config::AUTO_CONVERSION_EXCLAMATION_MARK);
 
           for (int i = 0; i < 4; ++i) {
-            scoped_ptr<Session> session(new Session);
+            scoped_ptr<Session> session(new Session(engine_.get()));
             InitSessionToPrecomposition(session.get());
             commands::Command command;
 
@@ -6963,7 +7037,7 @@ TEST_F(SessionTest, AutoConversion) {
 }
 
 TEST_F(SessionTest, FillHistoryContext) {
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -6977,7 +7051,7 @@ TEST_F(SessionTest, FillHistoryContext) {
     candidate->value = kHistory[0];
   }
   // FinishConversion is expected to return empty Segments.
-  convertermock_->SetFinishConversion(&segments, true);
+  GetConverterMock()->SetFinishConversion(&segments, true);
 
   // dummy code to set segments above
   EXPECT_TRUE(SendKey("a", session.get(), &command));
@@ -7008,7 +7082,7 @@ TEST_F(SessionTest, FillHistoryContext) {
     candidate->value = kHistory[1];
   }
   // FinishConversion is expected to return empty Segments.
-  convertermock_->SetFinishConversion(&segments, true);
+  GetConverterMock()->SetFinishConversion(&segments, true);
 
   // dummy code to set segments above
   EXPECT_TRUE(SendKey("a", session.get(), &command));
@@ -7020,7 +7094,7 @@ TEST_F(SessionTest, FillHistoryContext) {
 }
 
 TEST_F(SessionTest, ExpandCompositionForNestedCalculation) {
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   commands::Context context;
@@ -7062,7 +7136,7 @@ TEST_F(SessionTest, ExpandCompositionForNestedCalculation) {
 TEST_F(SessionTest, InputSpaceWithKatakanaMode) {
   // This is a unittest against http://b/3203944.
   // Input mode should not be changed when a space key is typed.
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -7085,7 +7159,7 @@ TEST_F(SessionTest, InputSpaceWithKatakanaMode) {
 TEST_F(SessionTest, AlphanumericOfSSH) {
   // This is a unittest against http://b/3199626
   // 'ssh' (っｓｈ) + F10 should be 'ssh'.
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -7108,7 +7182,7 @@ TEST_F(SessionTest, AlphanumericOfSSH) {
   ConversionRequest request;
   SetComposer(session.get(), &request);
   FillT13Ns(request, &segments);
-  convertermock_->SetStartConversionForRequest(&segments, true);
+  GetConverterMock()->SetStartConversionForRequest(&segments, true);
 
   command.Clear();
   EXPECT_TRUE(session->ConvertToHalfASCII(&command));
@@ -7116,13 +7190,12 @@ TEST_F(SessionTest, AlphanumericOfSSH) {
 }
 
 TEST_F(SessionTest, KeitaiInput_toggle) {
-  ScopedMobilePreference mobile_preference;
   config::Config config;
   config.set_session_keymap(config::Config::MSIME);
   SetConfig(config);
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
 
-  InitSessionToPrecomposition(session.get());
+  InitSessionToPrecomposition(session.get(), *mobile_request_);
   commands::Command command;
 
   SendKey("1", session.get(), &command);
@@ -7296,15 +7369,14 @@ TEST_F(SessionTest, KeitaiInput_toggle) {
 }
 
 TEST_F(SessionTest, KeitaiInput_flick) {
-  ScopedMobilePreference mobile_preference;
   config::Config config;
   config.set_session_keymap(config::Config::MSIME);
   SetConfig(config);
   commands::Command command;
 
   {
-    scoped_ptr<Session> session(new Session);
-    InitSessionToPrecomposition(session.get());
+    scoped_ptr<Session> session(new Session(engine_.get()));
+    InitSessionToPrecomposition(session.get(), *mobile_request_);
     // "は"
     InsertCharacterCodeAndString('6', "\xE3\x81\xAF", session.get(), &command);
     // "し"
@@ -7320,8 +7392,9 @@ TEST_F(SessionTest, KeitaiInput_flick) {
   }
 
   {
-    scoped_ptr<Session> session(new Session);
-    InitSessionToPrecomposition(session.get());
+    scoped_ptr<Session> session(new Session(engine_.get()));
+    InitSessionToPrecomposition(session.get(), *mobile_request_);
+
     SendKey("6", session.get(), &command);
     SendKey("3", session.get(), &command);
     SendKey("3", session.get(), &command);
@@ -7336,8 +7409,9 @@ TEST_F(SessionTest, KeitaiInput_flick) {
   }
 
   {
-    scoped_ptr<Session> session(new Session);
-    InitSessionToPrecomposition(session.get());
+    scoped_ptr<Session> session(new Session(engine_.get()));
+    InitSessionToPrecomposition(session.get(), *mobile_request_);
+
     SendKey("1", session.get(), &command);
     SendKey("2", session.get(), &command);
     SendKey("3", session.get(), &command);
@@ -7414,9 +7488,9 @@ TEST_F(SessionTest, KeitaiInput_flick) {
 }
 
 TEST_F(SessionTest, CommitCandidate_suggestion) {
-  ScopedMobilePreference mobile_preference;
-  scoped_ptr<Session> session(new Session);
-  InitSessionToPrecomposition(session.get());
+  scoped_ptr<Session> session(new Session(engine_.get()));
+  InitSessionToPrecomposition(session.get(), *mobile_request_);
+
   Segments segments_mo;
   {
     segments_mo.set_request_type(Segments::SUGGESTION);
@@ -7430,14 +7504,14 @@ TEST_F(SessionTest, CommitCandidate_suggestion) {
   commands::Command command;
   SendKey("M", session.get(), &command);
   command.Clear();
-  convertermock_->SetStartSuggestionForRequest(&segments_mo, true);
+  GetConverterMock()->SetStartSuggestionForRequest(&segments_mo, true);
   SendKey("O", session.get(), &command);
   ASSERT_TRUE(command.output().has_candidates());
   EXPECT_EQ(2, command.output().candidates().candidate_size());
   EXPECT_EQ("MOCHA", command.output().candidates().candidate(0).value());
 
   command.Clear();
-  convertermock_->SetFinishConversion(
+  GetConverterMock()->SetFinishConversion(
       scoped_ptr<Segments>(new Segments).get(), true);
   command.mutable_input()->mutable_command()->set_type(
       commands::SessionCommand::SUBMIT_CANDIDATE);
@@ -7466,9 +7540,9 @@ bool FindCandidateID(const commands::Candidates &candidates,
 }
 
 TEST_F(SessionTest, CommitCandidate_T13N) {
-  ScopedMobilePreference mobile_preference;
-  scoped_ptr<Session> session(new Session);
-  InitSessionToPrecomposition(session.get());
+  scoped_ptr<Session> session(new Session(engine_.get()));
+  InitSessionToPrecomposition(session.get(), *mobile_request_);
+
   {
     Segments segments;
     segments.set_request_type(Segments::SUGGESTION);
@@ -7484,7 +7558,7 @@ TEST_F(SessionTest, CommitCandidate_T13N) {
     EXPECT_EQ("TOK", segment->candidate(-2).value);
     EXPECT_EQ("Tok", segment->candidate(-3).value);
 
-    convertermock_->SetStartSuggestionForRequest(&segments, true);
+    GetConverterMock()->SetStartSuggestionForRequest(&segments, true);
   }
 
   {
@@ -7501,7 +7575,7 @@ TEST_F(SessionTest, CommitCandidate_T13N) {
     EXPECT_EQ("tok", segment->candidate(-1).value);
     EXPECT_EQ("TOK", segment->candidate(-2).value);
     EXPECT_EQ("Tok", segment->candidate(-3).value);
-    convertermock_->SetStartPredictionForRequest(&segments, true);
+    GetConverterMock()->SetStartPredictionForRequest(&segments, true);
   }
 
   commands::Command command;
@@ -7514,7 +7588,7 @@ TEST_F(SessionTest, CommitCandidate_T13N) {
 #else
   EXPECT_TRUE(FindCandidateID(command.output().candidates(), "TOK", &id));
   command.Clear();
-  convertermock_->SetFinishConversion(
+  GetConverterMock()->SetFinishConversion(
       scoped_ptr<Segments>(new Segments).get(), true);
   command.mutable_input()->mutable_command()->set_type(
       commands::SessionCommand::SUBMIT_CANDIDATE);
@@ -7528,7 +7602,7 @@ TEST_F(SessionTest, CommitCandidate_T13N) {
 }
 
 TEST_F(SessionTest, RequestConvertReverse) {
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -7542,7 +7616,7 @@ TEST_F(SessionTest, RequestConvertReverse) {
 }
 
 TEST_F(SessionTest, ConvertReverse) {
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   // "阿伊宇江於"
   const char kKanjiAiueo[] =
@@ -7562,7 +7636,7 @@ TEST_F(SessionTest, ConvertReverse) {
 }
 
 TEST_F(SessionTest, EscapeFromConvertReverse) {
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   // "阿伊宇江於"
   const char kKanjiAiueo[] =
@@ -7591,7 +7665,7 @@ TEST_F(SessionTest, EscapeFromConvertReverse) {
 }
 
 TEST_F(SessionTest, SecondEscapeFromConvertReverse) {
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   // "阿伊宇江於"
   const char kKanjiAiueo[] =
@@ -7627,7 +7701,7 @@ TEST_F(SessionTest, SecondEscapeFromConvertReverse) {
 
 TEST_F(SessionTest, SecondEscapeFromConvertReverse_Issue5687022) {
   // This is a unittest against http://b/5687022
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   const char kInput[] = "abcde";
   const char kReading[] = "abcde";
@@ -7656,7 +7730,7 @@ TEST_F(SessionTest, SecondEscapeFromConvertReverseKeepsOriginalText) {
   // without any text normalization even if the input text contains any
   // special characters which Mozc usually do normalization.
 
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   // "ゔ"
   const char kInput[] = "\xE3\x82\x94";
@@ -7682,7 +7756,7 @@ TEST_F(SessionTest, SecondEscapeFromConvertReverseKeepsOriginalText) {
 }
 
 TEST_F(SessionTest, EscapeFromCompositionAfterConvertReverse) {
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   // "阿伊宇江於"
   const char kKanjiAiueo[] =
@@ -7714,7 +7788,7 @@ TEST_F(SessionTest, EscapeFromCompositionAfterConvertReverse) {
 }
 
 TEST_F(SessionTest, ConvertReverseFromOffState) {
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   // "阿伊宇江於"
   const string kanji_aiueo =
@@ -7735,7 +7809,7 @@ TEST_F(SessionTest, ConvertReverseFromOffState) {
 
 TEST_F(SessionTest, DCHECKFailureAfterConvertReverse) {
   // This is a unittest against http://b/5145295.
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -7761,7 +7835,7 @@ TEST_F(SessionTest, DCHECKFailureAfterConvertReverse) {
 }
 
 TEST_F(SessionTest, LaunchTool) {
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
 
   {
     commands::Command command;
@@ -7789,13 +7863,13 @@ TEST_F(SessionTest, LaunchTool) {
 }
 
 TEST_F(SessionTest, NotZeroQuerySuggest) {
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   // Disable zero query suggest.
   commands::Request request;
   request.set_zero_query_suggestion(false);
-  commands::RequestHandler::SetRequest(request);
+  session->SetRequest(request);
 
   // Type "google".
   commands::Command command;
@@ -7810,7 +7884,7 @@ TEST_F(SessionTest, NotZeroQuerySuggest) {
   segment->set_key("");
   segment->add_candidate()->value = "search";
   segment->add_candidate()->value = "input";
-  convertermock_->SetStartSuggestionForRequest(&segments, true);
+  GetConverterMock()->SetStartSuggestionForRequest(&segments, true);
 
   // Commit composition and zero query suggest should not be invoked.
   command.Clear();
@@ -7825,7 +7899,7 @@ TEST_F(SessionTest, NotZeroQuerySuggest) {
 
 TEST_F(SessionTest, ZeroQuerySuggest) {
   {  // Commit
-    scoped_ptr<Session> session(new Session);
+    scoped_ptr<Session> session(new Session(engine_.get()));
     SetupZeroQuerySuggestionReady(session.get(), true);
 
     commands::Command command;
@@ -7840,7 +7914,7 @@ TEST_F(SessionTest, ZeroQuerySuggest) {
   }
 
   {  // CommitSegment
-    scoped_ptr<Session> session(new Session);
+    scoped_ptr<Session> session(new Session(engine_.get()));
     SetupZeroQuerySuggestionReady(session.get(), true);
 
     commands::Command command;
@@ -7855,7 +7929,7 @@ TEST_F(SessionTest, ZeroQuerySuggest) {
   }
 
   {  // CommitCandidate
-    scoped_ptr<Session> session(new Session);
+    scoped_ptr<Session> session(new Session(engine_.get()));
     SetupZeroQuerySuggestionReady(session.get(), true);
 
     commands::Command command;
@@ -7874,14 +7948,14 @@ TEST_F(SessionTest, ZeroQuerySuggest) {
   }
 
   {  // CommitFirstSuggestion
-    scoped_ptr<Session> session(new Session);
+    scoped_ptr<Session> session(new Session(engine_.get()));
 
     InitSessionToPrecomposition(session.get());
 
     // Enable zero query suggest.
     commands::Request request;
     request.set_zero_query_suggestion(true);
-    commands::RequestHandler::SetRequest(request);
+    session->SetRequest(request);
 
     // Type "google".
     commands::Command command;
@@ -7895,7 +7969,7 @@ TEST_F(SessionTest, ZeroQuerySuggest) {
       segment = segments.add_segment();
       segment->set_key("");
       segment->add_candidate()->value = "google";
-      convertermock_->SetStartSuggestionForRequest(&segments, true);
+      GetConverterMock()->SetStartSuggestionForRequest(&segments, true);
     }
 
     command.Clear();
@@ -7910,7 +7984,7 @@ TEST_F(SessionTest, ZeroQuerySuggest) {
       segment->set_key("");
       segment->add_candidate()->value = "search";
       segment->add_candidate()->value = "input";
-      convertermock_->SetStartSuggestionForRequest(&segments, true);
+      GetConverterMock()->SetStartSuggestionForRequest(&segments, true);
     }
 
     command.Clear();
@@ -7927,7 +8001,7 @@ TEST_F(SessionTest, ZeroQuerySuggest) {
 
 TEST_F(SessionTest, CommandsAfterZeroQuerySuggest) {
   {  // Cancel command should close the candidate window.
-    Session session;
+    Session session(engine_.get());
     commands::Command command;
     SetupZeroQuerySuggestion(&session, &command);
 
@@ -7941,7 +8015,7 @@ TEST_F(SessionTest, CommandsAfterZeroQuerySuggest) {
   }
 
   {  // PredictAndConvert should select the first candidate.
-    Session session;
+    Session session(engine_.get());
     commands::Command command;
     SetupZeroQuerySuggestion(&session, &command);
 
@@ -7955,13 +8029,13 @@ TEST_F(SessionTest, CommandsAfterZeroQuerySuggest) {
   }
 
   {  // CommitFirstSuggestion should insert the first candidate.
-    Session session;
+    Session session(engine_.get());
     commands::Command command;
     SetupZeroQuerySuggestion(&session, &command);
 
     command.Clear();
     // FinishConversion is expected to return empty Segments.
-    convertermock_->SetFinishConversion(
+    GetConverterMock()->SetFinishConversion(
         scoped_ptr<Segments>(new Segments).get(), true);
     session.CommitFirstSuggestion(&command);
     EXPECT_TRUE(command.output().consumed());
@@ -7973,7 +8047,7 @@ TEST_F(SessionTest, CommandsAfterZeroQuerySuggest) {
   }
 
   {  // Space should be inserted directly.
-    Session session;
+    Session session(engine_.get());
     commands::Command command;
     SetupZeroQuerySuggestion(&session, &command);
 
@@ -7988,7 +8062,7 @@ TEST_F(SessionTest, CommandsAfterZeroQuerySuggest) {
   }
 
   {  // 'a' should be inserted in the composition.
-    Session session;
+    Session session(engine_.get());
     commands::Command command;
     SetupZeroQuerySuggestion(&session, &command);
     EXPECT_EQ(commands::HIRAGANA, command.output().mode());
@@ -8004,7 +8078,7 @@ TEST_F(SessionTest, CommandsAfterZeroQuerySuggest) {
   }
 
   {  // Enter should be inserted directly.
-    Session session;
+    Session session(engine_.get());
     commands::Command command;
     SetupZeroQuerySuggestion(&session, &command);
 
@@ -8018,7 +8092,7 @@ TEST_F(SessionTest, CommandsAfterZeroQuerySuggest) {
   }
 
   {  // Right should be inserted directly.
-    Session session;
+    Session session(engine_.get());
     commands::Command command;
     SetupZeroQuerySuggestion(&session, &command);
 
@@ -8032,7 +8106,7 @@ TEST_F(SessionTest, CommandsAfterZeroQuerySuggest) {
   }
 
   {  // SelectCnadidate command should work with zero query suggestion.
-    Session session;
+    Session session(engine_.get());
     commands::Command command;
     SetupZeroQuerySuggestion(&session, &command);
 
@@ -8054,7 +8128,7 @@ TEST_F(SessionTest, CommandsAfterZeroQuerySuggest) {
 }
 
 TEST_F(SessionTest, Issue4437420) {
-  Session session;
+  Session session(engine_.get());
   InitSessionToPrecomposition(&session);
   commands::Command command;
   commands::Request request;
@@ -8067,9 +8141,10 @@ TEST_F(SessionTest, Issue4437420) {
   command.Clear();
   request.set_special_romanji_table(
       commands::Request::TWELVE_KEYS_TO_HALFWIDTHASCII);
-  commands::RequestHandler::SetRequest(request);
+  session.SetRequest(request);
   scoped_ptr<composer::Table> table(new composer::Table());
-  table.get()->Initialize();
+  table.get()->InitializeWithRequestAndConfig(
+      request, config::ConfigHandler::GetConfig());
   session.SetTable(table.get());
   // Type "2*" to produce "A".
   command.mutable_input()->set_type(commands::Input::SEND_KEY);
@@ -8088,9 +8163,10 @@ TEST_F(SessionTest, Issue4437420) {
 
   command.Clear();
   request.set_special_romanji_table(commands::Request::TWELVE_KEYS_TO_NUMBER);
-  commands::RequestHandler::SetRequest(request);
+  session.SetRequest(request);
   table.reset(new composer::Table());
-  table.get()->Initialize();
+  table.get()->InitializeWithRequestAndConfig(
+      request, config::ConfigHandler::GetConfig());
   session.SetTable(table.get());
   // Type "2" to produce "A2".
   command.mutable_input()->set_type(commands::Input::SEND_KEY);
@@ -8105,9 +8181,10 @@ TEST_F(SessionTest, Issue4437420) {
   command.Clear();
   request.set_special_romanji_table(
       commands::Request::TWELVE_KEYS_TO_HALFWIDTHASCII);
-  commands::RequestHandler::SetRequest(request);
+  session.SetRequest(request);
   table.reset(new composer::Table());
-  table.get()->Initialize();
+  table.get()->InitializeWithRequestAndConfig(
+      request, config::ConfigHandler::GetConfig());
   session.SetTable(table.get());
   // Type "2" to produce "A2a".
   command.mutable_input()->set_type(commands::Input::SEND_KEY);
@@ -8120,7 +8197,7 @@ TEST_F(SessionTest, Issue4437420) {
 
 // If undo context is empty, key event for UNDO should be echoed back. b/5553298
 TEST_F(SessionTest, Issue5553298) {
-  Session session;
+  Session session(engine_.get());
   InitSessionToPrecomposition(&session);
 
   // Undo requires capability DELETE_PRECEDING_TEXT.
@@ -8160,7 +8237,7 @@ TEST_F(SessionTest, UndoKeyAction) {
   overriding_config.set_session_keymap(config::Config::MOBILE);
   // Test in half width ascii mode.
   {
-    Session session;
+    Session session(engine_.get());
     InitSessionToPrecomposition(&session);
 
     // Change to 12keys-halfascii mode.
@@ -8169,9 +8246,10 @@ TEST_F(SessionTest, UndoKeyAction) {
     command.Clear();
     request.set_special_romanji_table(
         commands::Request::TWELVE_KEYS_TO_HALFWIDTHASCII);
-    commands::RequestHandler::SetRequest(request);
+    session.SetRequest(request);
     composer::Table table;
-    table.Initialize();
+    table.InitializeWithRequestAndConfig(
+        request, config::ConfigHandler::GetConfig());
     session.SetTable(&table);
 
     // Type "2" to produce "a".
@@ -8213,7 +8291,7 @@ TEST_F(SessionTest, UndoKeyAction) {
 
   // Test in Hiaragana-mode.
   {
-    Session session;
+    Session session(engine_.get());
     InitSessionToPrecomposition(&session);
 
     // Change to 12keys-Hiragana mode.
@@ -8222,9 +8300,10 @@ TEST_F(SessionTest, UndoKeyAction) {
     command.Clear();
     request.set_special_romanji_table(
         commands::Request::TWELVE_KEYS_TO_HIRAGANA);
-    commands::RequestHandler::SetRequest(request);
+    session.SetRequest(request);
     composer::Table table;
-    table.Initialize();
+    table.InitializeWithRequestAndConfig(
+        request, config::ConfigHandler::GetConfig());
     session.SetTable(&table);
     // Type "33{<}{<}" to produce "さ"->"し"->"さ"->"そ".
     command.mutable_input()->set_type(commands::Input::SEND_KEY);
@@ -8266,7 +8345,7 @@ TEST_F(SessionTest, UndoKeyAction) {
 
   // Test to do nothing for voiced sounds.
   {
-    Session session;
+    Session session(engine_.get());
     InitSessionToPrecomposition(&session);
 
     // Change to 12keys-Hiragana mode.
@@ -8275,9 +8354,10 @@ TEST_F(SessionTest, UndoKeyAction) {
     command.Clear();
     request.set_special_romanji_table(
         commands::Request::TWELVE_KEYS_TO_HIRAGANA);
-    commands::RequestHandler::SetRequest(request);
+    session.SetRequest(request);
     composer::Table table;
-    table.Initialize();
+    table.InitializeWithRequestAndConfig(
+        request, config::ConfigHandler::GetConfig());
     session.SetTable(&table);
     // Type "3*{<}*{<}", and composition should change
     // "さ"->"ざ"->(No change)->"さ"->(No change).
@@ -8329,7 +8409,7 @@ TEST_F(SessionTest, UndoKeyAction) {
 
   // Test to make nothing newly in preedit for empty composition.
   {
-    Session session;
+    Session session(engine_.get());
     InitSessionToPrecomposition(&session);
 
     // Change to 12keys-Hiragana mode.
@@ -8338,9 +8418,10 @@ TEST_F(SessionTest, UndoKeyAction) {
     command.Clear();
     request.set_special_romanji_table(
         commands::Request::TWELVE_KEYS_TO_HIRAGANA);
-    commands::RequestHandler::SetRequest(request);
+    session.SetRequest(request);
     composer::Table table;
-    table.Initialize();
+    table.InitializeWithRequestAndConfig(
+        request, config::ConfigHandler::GetConfig());
     session.SetTable(&table);
     // Type "{<}" and do nothing
     command.mutable_input()->set_type(commands::Input::SEND_COMMAND);
@@ -8356,7 +8437,7 @@ TEST_F(SessionTest, UndoKeyAction) {
 
   // Test of acting as UNDO key. Almost same as the first section in Undo test.
   {
-    Session session;
+    Session session(engine_.get());
     InitSessionToPrecomposition(&session);
 
     commands::Capability capability;
@@ -8374,14 +8455,14 @@ TEST_F(SessionTest, UndoKeyAction) {
     candidate = segments.mutable_segment(0)->add_candidate();
     candidate->value = "AIUEO";
 
-    convertermock_->SetStartConversionForRequest(&segments, true);
+    GetConverterMock()->SetStartConversionForRequest(&segments, true);
     command.Clear();
     session.Convert(&command);
     EXPECT_FALSE(command.output().has_result());
     // "あいうえお"
     EXPECT_PREEDIT(kAiueo, command);
 
-    convertermock_->SetCommitSegmentValue(&segments, true);
+    GetConverterMock()->SetCommitSegmentValue(&segments, true);
     command.Clear();
     session.Commit(&command);
     EXPECT_FALSE(command.output().has_preedit());
@@ -8418,7 +8499,7 @@ TEST_F(SessionTest, UndoKeyAction) {
 
   // Do not UNDO even if UNDO stack is not empty if it is in COMPOSITE state.
   {
-    Session session;
+    Session session(engine_.get());
     InitSessionToPrecomposition(&session);
 
     // Change to 12keys-Hiragana mode.
@@ -8427,9 +8508,10 @@ TEST_F(SessionTest, UndoKeyAction) {
     command.Clear();
     request.set_special_romanji_table(
         commands::Request::TWELVE_KEYS_TO_HIRAGANA);
-    commands::RequestHandler::SetRequest(request);
+    session.SetRequest(request);
     composer::Table table;
-    table.Initialize();
+    table.InitializeWithRequestAndConfig(
+        request, config::ConfigHandler::GetConfig());
     session.SetTable(&table);
 
     // commit "あ" to push UNDO stack
@@ -8477,7 +8559,7 @@ TEST_F(SessionTest, TemporaryKeyMapChange) {
   config::ConfigHandler::SetConfig(config);
 
   // Session created with keymap ATOK
-  Session session;
+  Session session(engine_.get());
   InitSessionToPrecomposition(&session);
   EXPECT_EQ(config::Config::ATOK, session.context().keymap());
 
@@ -8499,7 +8581,7 @@ TEST_F(SessionTest, TemporaryKeyMapChange) {
 }
 
 TEST_F(SessionTest, MoveCursor) {
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
@@ -8515,7 +8597,7 @@ TEST_F(SessionTest, MoveCursor) {
 }
 
 TEST_F(SessionTest, CommitHead) {
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   composer::Table table;
   // "も"
   table.AddRule("mo", "\xe3\x82\x82", "");
@@ -8542,19 +8624,14 @@ TEST_F(SessionTest, CommitHead) {
 }
 
 TEST_F(SessionTest, PasswordWithToggleAlpabetInput) {
-  scoped_ptr<Session> session(new Session);
-  InitSessionToPrecomposition(session.get());
-  ScopedMobilePreference preference;
+  scoped_ptr<Session> session(new Session(engine_.get()));
 
   commands::Request request;
-  request.CopyFrom(commands::RequestHandler::GetRequest());
+  request.CopyFrom(*mobile_request_);
   request.set_special_romanji_table(
       commands::Request::TWELVE_KEYS_TO_HALFWIDTHASCII);
 
-  commands::RequestHandler::SetRequest(request);
-  composer::Table table;
-  table.Initialize();
-  session->SetTable(&table);
+  InitSessionToPrecomposition(session.get(), request);
 
   // Change to 12keys-halfascii mode.
   SwitchInputFieldType(commands::SessionCommand::PASSWORD, session.get());
@@ -8599,7 +8676,7 @@ TEST_F(SessionTest, PasswordWithToggleAlpabetInput) {
 }
 
 TEST_F(SessionTest, SwitchInputFieldType) {
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   // initial state is NORMAL
@@ -8617,18 +8694,14 @@ TEST_F(SessionTest, SwitchInputFieldType) {
 }
 
 TEST_F(SessionTest, CursorKeysInPasswordMode) {
-  scoped_ptr<Session> session(new Session);
-  InitSessionToPrecomposition(session.get());
-  ScopedMobilePreference preference;
+  scoped_ptr<Session> session(new Session(engine_.get()));
 
   commands::Request request;
-  request.CopyFrom(commands::RequestHandler::GetRequest());
+  request.CopyFrom(*mobile_request_);
   request.set_special_romanji_table(commands::Request::DEFAULT_TABLE);
+  session->SetRequest(request);
 
-  commands::RequestHandler::SetRequest(request);
-  composer::Table table;
-  table.Initialize();
-  session->SetTable(&table);
+  InitSessionToPrecomposition(session.get(), request);
 
   SwitchInputFieldType(commands::SessionCommand::PASSWORD, session.get());
   SwitchInputMode(commands::HALF_ASCII, session.get());
@@ -8670,7 +8743,7 @@ TEST_F(SessionTest, CursorKeysInPasswordMode) {
 }
 
 TEST_F(SessionTest, BackKeyCommitsPreeditInPasswordMode) {
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   commands::Request request;
@@ -8678,10 +8751,11 @@ TEST_F(SessionTest, BackKeyCommitsPreeditInPasswordMode) {
   request.set_zero_query_suggestion(false);
   request.set_combine_all_segments(true);
   request.set_special_romanji_table(commands::Request::DEFAULT_TABLE);
+  session->SetRequest(request);
 
-  commands::RequestHandler::SetRequest(request);
   composer::Table table;
-  table.Initialize();
+  table.InitializeWithRequestAndConfig(
+      request, config::ConfigHandler::GetConfig());
   session->SetTable(&table);
 
   SwitchInputFieldType(commands::SessionCommand::PASSWORD, session.get());
@@ -8725,7 +8799,7 @@ TEST_F(SessionTest, BackKeyCommitsPreeditInPasswordMode) {
 }
 
 TEST_F(SessionTest, EditCancel) {
-  Session session;
+  Session session(engine_.get());
   InitSessionToPrecomposition(&session);
 
   Segments segments_mo;
@@ -8743,7 +8817,7 @@ TEST_F(SessionTest, EditCancel) {
     SendKey("M", &session, &command);
 
     command.Clear();
-    convertermock_->SetStartSuggestionForRequest(&segments_mo, true);
+    GetConverterMock()->SetStartSuggestionForRequest(&segments_mo, true);
     SendKey("O", &session, &command);
     ASSERT_TRUE(command.output().has_candidates());
     EXPECT_EQ(2, command.output().candidates().candidate_size());
@@ -8766,7 +8840,7 @@ TEST_F(SessionTest, EditCancel) {
     EXPECT_TRUE(session.SendCommand(&command));
 
     command.Clear();
-    convertermock_->SetStartSuggestionForRequest(&segments_mo, true);
+    GetConverterMock()->SetStartSuggestionForRequest(&segments_mo, true);
     session.ConvertCancel(&command);
     ASSERT_TRUE(command.output().has_candidates());
     EXPECT_EQ(2, command.output().candidates().candidate_size());
@@ -8782,11 +8856,12 @@ TEST_F(SessionTest, EditCancel) {
 }
 
 TEST_F(SessionTest, ImeOff) {
-  scoped_ptr<ConverterMockForReset> convertermock(new ConverterMockForReset);
-  ConverterFactory::SetConverter(convertermock.get());
+  scoped_ptr<MockConverterEngineForReset> engine(
+      new MockConverterEngineForReset);
+  ConverterMockForReset *convertermock = engine->mutable_converter_mock();
 
   convertermock->Reset();
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   session->IMEOff(&command);
@@ -8818,7 +8893,7 @@ TEST_F(SessionTest, EditCancelAndIMEOff) {
   }
 
   {  // Cancel of Precomposition and deactivate IME
-    Session session;
+    Session session(engine_.get());
     InitSessionToPrecomposition(&session);
 
     commands::Command command;
@@ -8836,7 +8911,7 @@ TEST_F(SessionTest, EditCancelAndIMEOff) {
   }
 
   {  // Cancel of Composition and deactivate IME
-    Session session;
+    Session session(engine_.get());
     InitSessionToPrecomposition(&session);
 
     commands::Command command;
@@ -8857,14 +8932,14 @@ TEST_F(SessionTest, EditCancelAndIMEOff) {
   }
 
   {  // Cancel of Suggestion and deactivate IME
-    Session session;
+    Session session(engine_.get());
     InitSessionToPrecomposition(&session);
 
     commands::Command command;
     SendKey("M", &session, &command);
 
     command.Clear();
-    convertermock_->SetStartSuggestionForRequest(&segments_mo, true);
+    GetConverterMock()->SetStartSuggestionForRequest(&segments_mo, true);
     SendKey("O", &session, &command);
     ASSERT_TRUE(command.output().has_candidates());
     EXPECT_EQ(2, command.output().candidates().candidate_size());
@@ -8885,7 +8960,7 @@ TEST_F(SessionTest, EditCancelAndIMEOff) {
   }
 
   {  // Cancel of Conversion and deactivate IME
-    Session session;
+    Session session(engine_.get());
     InitSessionToConversionWithAiueo(&session);
 
     commands::Command command;
@@ -8903,7 +8978,7 @@ TEST_F(SessionTest, EditCancelAndIMEOff) {
   }
 
   {  // Cancel of Reverse conversion and deactivate IME
-    Session session;
+    Session session(engine_.get());
     InitSessionToPrecomposition(&session);
 
     commands::Command command;
@@ -8915,7 +8990,7 @@ TEST_F(SessionTest, EditCancelAndIMEOff) {
     EXPECT_TRUE(session.SendCommand(&command));
 
     command.Clear();
-    convertermock_->SetStartSuggestionForRequest(&segments_mo, true);
+    GetConverterMock()->SetStartSuggestionForRequest(&segments_mo, true);
     session.ConvertCancel(&command);
     ASSERT_TRUE(command.output().has_candidates());
     EXPECT_EQ(2, command.output().candidates().candidate_size());
@@ -8962,7 +9037,7 @@ TEST_F(SessionTest, CancelInPasswordMode_Issue5955618) {
   {  // Cancel of Precomposition in password field
      // Basically this is unusual because there is no character to be canceled
      // when Precomposition state.
-    Session session;
+    Session session(engine_.get());
     InitSessionToPrecomposition(&session);
     SwitchInputFieldType(commands::SessionCommand::PASSWORD, &session);
 
@@ -8980,7 +9055,7 @@ TEST_F(SessionTest, CancelInPasswordMode_Issue5955618) {
   }
 
   {  // Cancel of Composition in password field
-    Session session;
+    Session session(engine_.get());
     InitSessionToPrecomposition(&session);
     SwitchInputFieldType(commands::SessionCommand::PASSWORD, &session);
 
@@ -8998,7 +9073,7 @@ TEST_F(SessionTest, CancelInPasswordMode_Issue5955618) {
   }
 
   {  // Cancel of Conversion in password field
-    Session session;
+    Session session(engine_.get());
     InitSessionToConversionWithAiueo(&session);
     SwitchInputFieldType(commands::SessionCommand::PASSWORD, &session);
 
@@ -9016,7 +9091,7 @@ TEST_F(SessionTest, CancelInPasswordMode_Issue5955618) {
   }
 
   {  // Cancel of Reverse conversion in password field
-    Session session;
+    Session session(engine_.get());
     InitSessionToPrecomposition(&session);
     SwitchInputFieldType(commands::SessionCommand::PASSWORD, &session);
 
@@ -9082,7 +9157,7 @@ TEST_F(SessionTest, CancelAndIMEOffInPasswordMode_Issue5955618) {
   }
 
   {  // Cancel of Precomposition and deactivate IME in password field.
-    Session session;
+    Session session(engine_.get());
     InitSessionToPrecomposition(&session);
     SwitchInputFieldType(commands::SessionCommand::PASSWORD, &session);
 
@@ -9109,7 +9184,7 @@ TEST_F(SessionTest, CancelAndIMEOffInPasswordMode_Issue5955618) {
   }
 
   {  // Cancel of Composition and deactivate IME in password field
-    Session session;
+    Session session(engine_.get());
     InitSessionToPrecomposition(&session);
     SwitchInputFieldType(commands::SessionCommand::PASSWORD, &session);
 
@@ -9136,7 +9211,7 @@ TEST_F(SessionTest, CancelAndIMEOffInPasswordMode_Issue5955618) {
   }
 
   {  // Cancel of Conversion and deactivate IME in password field
-    Session session;
+    Session session(engine_.get());
     InitSessionToConversionWithAiueo(&session);
     SwitchInputFieldType(commands::SessionCommand::PASSWORD, &session);
 
@@ -9161,7 +9236,7 @@ TEST_F(SessionTest, CancelAndIMEOffInPasswordMode_Issue5955618) {
   }
 
   {  // Cancel of Reverse conversion and deactivate IME in password field
-    Session session;
+    Session session(engine_.get());
     InitSessionToPrecomposition(&session);
     SwitchInputFieldType(commands::SessionCommand::PASSWORD, &session);
 
@@ -9211,7 +9286,7 @@ TEST_F(SessionTest, CancelAndIMEOffInPasswordMode_Issue5955618) {
 //  Also it is not necessary to test in case of changing to CONVERSION state,
 //  because conversion window is always shown under current cursor.
 TEST_F(SessionTest, CaretManagePrecompositionToCompositionTest) {
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -9243,7 +9318,7 @@ TEST_F(SessionTest, CaretManagePrecompositionToCompositionTest) {
   SetCaretLocation(rectangle, session.get());
 
   command.Clear();
-  convertermock_->SetStartSuggestionForRequest(&segments_mo, true);
+  GetConverterMock()->SetStartSuggestionForRequest(&segments_mo, true);
   SendKey("O", session.get(), &command);
   EXPECT_EQ(kCaretInitialXpos,
             command.output().candidates().composition_rectangle().x());
@@ -9279,7 +9354,7 @@ TEST_F(SessionTest, CaretManageCompositionToCompositionTest) {
     segment->add_candidate()->value = "MOZUKU";
   }
 
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   const int kCaretInitialXpos = 10;
@@ -9297,7 +9372,7 @@ TEST_F(SessionTest, CaretManageCompositionToCompositionTest) {
   SetCaretLocation(rectangle, session.get());
 
   command.Clear();
-  convertermock_->SetStartSuggestionForRequest(&segments_mo, true);
+  GetConverterMock()->SetStartSuggestionForRequest(&segments_mo, true);
   SendKey("O", session.get(), &command);
   EXPECT_EQ(kCaretInitialXpos,
             command.output().candidates().composition_rectangle().x());
@@ -9307,7 +9382,7 @@ TEST_F(SessionTest, CaretManageCompositionToCompositionTest) {
 
   // [COMP-R] -> [COMP-R]:
   //  Expectation: ^mo| -> ^moz|
-  convertermock_->SetStartSuggestionForRequest(&segments_moz, true);
+  GetConverterMock()->SetStartSuggestionForRequest(&segments_moz, true);
   command.Clear();
   SendKey("Z", session.get(), &command);
   EXPECT_EQ(kCaretInitialXpos,
@@ -9318,7 +9393,7 @@ TEST_F(SessionTest, CaretManageCompositionToCompositionTest) {
 
   // [COMP-R] -> [COMP-R]:
   //  Expectation: ^moz| -> ^mo|
-  convertermock_->SetStartSuggestionForRequest(&segments_mo, true);
+  GetConverterMock()->SetStartSuggestionForRequest(&segments_mo, true);
   command.Clear();
   SendKey("Backspace", session.get(), &command);
   EXPECT_EQ(kCaretInitialXpos,
@@ -9329,7 +9404,7 @@ TEST_F(SessionTest, CaretManageCompositionToCompositionTest) {
 
   // [COMP-R] -> [COMP-M]:
   //  Expectation: ^mo| -> ^m|o
-  convertermock_->SetStartSuggestionForRequest(&segments_mo, true);
+  GetConverterMock()->SetStartSuggestionForRequest(&segments_mo, true);
   command.Clear();
   EXPECT_TRUE(session->MoveCursorLeft(&command));
   EXPECT_EQ(kCaretInitialXpos,
@@ -9340,7 +9415,7 @@ TEST_F(SessionTest, CaretManageCompositionToCompositionTest) {
 
   // [COMP-M] -> [COMP-R]:
   //  Expectation: ^m|o -> ^mo|
-  convertermock_->SetStartSuggestionForRequest(&segments_mo, true);
+  GetConverterMock()->SetStartSuggestionForRequest(&segments_mo, true);
   command.Clear();
   EXPECT_TRUE(session->MoveCursorToEnd(&command));
   EXPECT_EQ(kCaretInitialXpos,
@@ -9351,7 +9426,7 @@ TEST_F(SessionTest, CaretManageCompositionToCompositionTest) {
 
   // [COMP-R] -> [COMP-L]:
   //  Expectation: ^mo| -> ^|mo
-  convertermock_->SetStartSuggestionForRequest(&segments_mo, true);
+  GetConverterMock()->SetStartSuggestionForRequest(&segments_mo, true);
   command.Clear();
   EXPECT_TRUE(session->MoveCursorToBeginning(&command));
   EXPECT_EQ(kCaretInitialXpos,
@@ -9362,7 +9437,7 @@ TEST_F(SessionTest, CaretManageCompositionToCompositionTest) {
 
   // [COMP-L] -> [COMP-M]:
   //  Expectation: ^|mo -> ^m|o
-  convertermock_->SetStartSuggestionForRequest(&segments_mo, true);
+  GetConverterMock()->SetStartSuggestionForRequest(&segments_mo, true);
   command.Clear();
   EXPECT_TRUE(session->MoveCursorRight(&command));
   EXPECT_EQ(kCaretInitialXpos,
@@ -9373,7 +9448,7 @@ TEST_F(SessionTest, CaretManageCompositionToCompositionTest) {
 
   // [COMP-M] -> [COMP-L]:
   //  Expectation: ^m|o -> ^m|
-  convertermock_->SetStartSuggestionForRequest(&segments_m, true);
+  GetConverterMock()->SetStartSuggestionForRequest(&segments_m, true);
   command.Clear();
   EXPECT_TRUE(session->Delete(&command));
   EXPECT_EQ(kCaretInitialXpos,
@@ -9393,7 +9468,7 @@ TEST_F(SessionTest, CaretManageConversionToCompositionTest) {
   //    Actual: ^a|i
   // In the session side, we can only support the former case.
 
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -9456,7 +9531,7 @@ TEST_F(SessionTest, CaretManageConversionToCompositionTest) {
   SetCaretLocation(rectangle, session.get());
 
   command.Clear();
-  convertermock_->SetStartSuggestionForRequest(&segments_mo, true);
+  GetConverterMock()->SetStartSuggestionForRequest(&segments_mo, true);
   SendKey("O", session.get(), &command);
   EXPECT_EQ(kCaretInitialXpos,
             command.output().candidates().composition_rectangle().x());
@@ -9468,21 +9543,21 @@ TEST_F(SessionTest, CaretManageConversionToCompositionTest) {
   request_m_conv.reset(new ConversionRequest);
   SetComposer(session.get(), request_m_conv.get());
   FillT13Ns(*request_m_conv, &segments_m_conv);
-  convertermock_->SetStartConversionForRequest(&segments_m_conv, true);
+  GetConverterMock()->SetStartConversionForRequest(&segments_m_conv, true);
   EXPECT_TRUE(session->Convert(&command));
 
   rectangle.set_x(rectangle.x() + 5);
   SetCaretLocation(rectangle, session.get());
 
   command.Clear();
-  convertermock_->SetStartSuggestionForRequest(&segments_m, true);
+  GetConverterMock()->SetStartSuggestionForRequest(&segments_m, true);
   EXPECT_TRUE(session->ConvertCancel(&command));
   EXPECT_EQ(kCaretInitialXpos,
             command.output().candidates().composition_rectangle().x());
 
   // [CONV-M] -> [COMP-R]
   //  Expectation: ^a|b -> ^ab|
-  session.reset(new Session());
+  session.reset(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
   command.Clear();
   rectangle.set_x(kCaretInitialXpos);
@@ -9495,7 +9570,7 @@ TEST_F(SessionTest, CaretManageConversionToCompositionTest) {
   SetCaretLocation(rectangle, session.get());
 
   command.Clear();
-  convertermock_->SetStartSuggestionForRequest(&segments_mo, true);
+  GetConverterMock()->SetStartSuggestionForRequest(&segments_mo, true);
   SendKey("O", session.get(), &command);
 
   rectangle.set_x(rectangle.x() + 5);
@@ -9505,7 +9580,7 @@ TEST_F(SessionTest, CaretManageConversionToCompositionTest) {
   request_m_conv.reset(new ConversionRequest);
   SetComposer(session.get(), request_m_conv.get());
   FillT13Ns(*request_m_conv, &segments_m_conv);
-  convertermock_->SetStartConversionForRequest(&segments_m_conv, true);
+  GetConverterMock()->SetStartConversionForRequest(&segments_m_conv, true);
   EXPECT_TRUE(session->Convert(&command));
 
   rectangle.set_x(rectangle.x() + 5);
@@ -9518,14 +9593,14 @@ TEST_F(SessionTest, CaretManageConversionToCompositionTest) {
   SetCaretLocation(rectangle, session.get());
 
   command.Clear();
-  convertermock_->SetStartSuggestionForRequest(&segments_m, true);
+  GetConverterMock()->SetStartSuggestionForRequest(&segments_m, true);
   EXPECT_TRUE(session->ConvertCancel(&command));
   EXPECT_EQ(kCaretInitialXpos,
             command.output().candidates().composition_rectangle().x());
 }
 
 TEST_F(SessionTest, CaretJumpCaseTest) {
-  scoped_ptr<Session> session(new Session);
+  scoped_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -9563,7 +9638,7 @@ TEST_F(SessionTest, CaretJumpCaseTest) {
   // If Y-position of caret is jumped, composition text area is reset.
   rectangle.set_y(rectangle.y() + 200);
   SetCaretLocation(rectangle, session.get());
-  convertermock_->SetStartSuggestionForRequest(&segments_mo, true);
+  GetConverterMock()->SetStartSuggestionForRequest(&segments_mo, true);
   command.Clear();
   SendKey("O", session.get(), &command);
   EXPECT_EQ(rectangle.y(),
@@ -9572,11 +9647,71 @@ TEST_F(SessionTest, CaretJumpCaseTest) {
   // Even if X-position of caret is jumped, composition text area is not reset.
   rectangle.set_x(rectangle.x() + 200);
   SetCaretLocation(rectangle, session.get());
-  convertermock_->SetStartSuggestionForRequest(&segments_moz, true);
+  GetConverterMock()->SetStartSuggestionForRequest(&segments_moz, true);
   command.Clear();
   SendKey("Z", session.get(), &command);
   EXPECT_EQ(kCaretInitialXpos,
             command.output().candidates().composition_rectangle().x());
 }
+
+TEST_F(SessionTest, DoNothingOnCompositionKeepingSuggestWindow) {
+  Session session(engine_.get());
+  InitSessionToPrecomposition(&session);
+
+  Segments segments_mo;
+  {
+    segments_mo.set_request_type(Segments::SUGGESTION);
+    Segment *segment;
+    segment = segments_mo.add_segment();
+    segment->set_key("MO");
+    segment->add_candidate()->value = "MOCHA";
+    segment->add_candidate()->value = "MOZUKU";
+  }
+  GetConverterMock()->SetStartSuggestionForRequest(&segments_mo, true);
+
+  commands::Command command;
+  SendKey("M", &session, &command);
+  EXPECT_TRUE(command.output().has_candidates());
+
+  command.Clear();
+  SendKey("Ctrl", &session, &command);
+  EXPECT_TRUE(command.output().has_candidates());
+}
+
+TEST_F(SessionTest, ModeChangeOfConvertAtPunctuations) {
+  config::Config config;
+  config.set_use_auto_conversion(true);
+  SetConfig(config);
+
+  Session session(engine_.get());
+  InitSessionToPrecomposition(&session);
+
+  Segments segments_a_conv;
+  {
+    segments_a_conv.set_request_type(Segments::CONVERSION);
+    Segment *segment;
+    segment = segments_a_conv.add_segment();
+    segment->set_key(kHiraganaA);
+    segment->add_candidate()->value = kHiraganaA;
+  }
+  GetConverterMock()->SetStartConversionForRequest(&segments_a_conv, true);
+
+  commands::Command command;
+  SendKey("a", &session, &command);     // "あ|" (composition)
+  EXPECT_EQ(ImeContext::COMPOSITION, session.context().state());
+
+  SendKey(".", &session, &command);     // "あ。|" (conversion)
+  EXPECT_EQ(ImeContext::CONVERSION, session.context().state());
+
+  SendKey("ESC", &session, &command);   // "あ。|" (composition)
+  EXPECT_EQ(ImeContext::COMPOSITION, session.context().state());
+
+  SendKey("Left", &session, &command);  // "あ|。" (composition)
+  EXPECT_EQ(ImeContext::COMPOSITION, session.context().state());
+
+  SendKey("i", &session, &command);     // "あい|。" (should be composition)
+  EXPECT_EQ(ImeContext::COMPOSITION, session.context().state());
+}
+
 }  // namespace session
 }  // namespace mozc

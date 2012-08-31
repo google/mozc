@@ -35,7 +35,7 @@
 
 int main(int argc, char **argv) {
   InitGoogle(argv[0], &argc, &argv, false);
-  mozc::LRUCache<string, string> cache(5);
+  mozc::storage::LRUCache<string, string> cache(5);
 
   string line;
   while (getline(cin, line)) {

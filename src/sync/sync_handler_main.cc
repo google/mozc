@@ -29,10 +29,12 @@
 
 #include <string>
 #include <iostream>
+
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/util.h"
-#include "config/config_handler.h"
 #include "config/config.pb.h"
+#include "config/config_handler.h"
 #include "session/commands.pb.h"
 #include "sync/oauth2_client.h"
 #include "sync/oauth2_util.h"
@@ -95,11 +97,12 @@ bool SetConfigures() {
 }
 
 bool OAuth2Login(OAuth2Util *oauth2) {
+  mozc::sync::OAuth2::Error error;
   string auth_token;
   cout << "Access " << oauth2->GetAuthenticateUri() << endl
        << "and enter the auth token: " << flush;
   cin >> auth_token;
-  if (!auth_token.empty() && !oauth2->RequestAccessToken(auth_token)) {
+  if (!auth_token.empty() && !oauth2->RequestAccessToken(auth_token ,&error)) {
     return false;
   }
 
@@ -109,10 +112,11 @@ bool OAuth2Login(OAuth2Util *oauth2) {
 bool Sync(OAuth2Util *oauth2) {
   LOG(INFO) << "Start syncing...";
 
+  mozc::sync::OAuth2::Error error;
   if (FLAGS_oauth2_login && oauth2 != NULL && OAuth2Login(oauth2)) {
     SyncerFactory::SetOAuth2(oauth2);
   } else if (FLAGS_oauth2_token_refresh && oauth2 != NULL &&
-             oauth2->RefreshAccessToken()) {
+             oauth2->RefreshAccessToken(&error)) {
     SyncerFactory::SetOAuth2(oauth2);
   } else if (oauth2 != NULL) {
     LOG(ERROR) << "Something goes wrong with oauth2";

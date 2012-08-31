@@ -29,6 +29,7 @@
 
 #include <string>
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/util.h"
 #include "storage/lru_storage.h"
 
@@ -36,18 +37,17 @@ DEFINE_bool(create_db, false, "initialize database");
 DEFINE_string(file, "test.db", "");
 DEFINE_int32(size, 10, "size");
 
+using mozc::storage::LRUStorage;
+
 int main(int argc, char **argv) {
   InitGoogle(argv[0], &argc, &argv, false);
 
   if (FLAGS_create_db) {
-    CHECK(mozc::LRUStorage::CreateStorageFile(FLAGS_file.c_str(),
-                                              static_cast<uint32>(4),
-                                              FLAGS_size, 0xff02));
+    CHECK(LRUStorage::CreateStorageFile(
+        FLAGS_file.c_str(), static_cast<uint32>(4), FLAGS_size, 0xff02));
   }
 
-  string line;
-  vector<string> fields;
-  mozc::LRUStorage s;
+  LRUStorage s;
   CHECK(s.Open(FLAGS_file.c_str()));
 
   LOG(INFO) << "size=" << s.size();
@@ -55,6 +55,8 @@ int main(int argc, char **argv) {
   LOG(INFO) << "usage=" << 100.0 * s.used_size() / s.size() << "%";
   LOG(INFO) << "value_size=" << s.value_size();
 
+  string line;
+  vector<string> fields;
   while (getline(cin, line)) {
     fields.clear();
     mozc::Util::SplitStringUsing(line, "\t ", &fields);

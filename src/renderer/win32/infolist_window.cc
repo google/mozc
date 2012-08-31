@@ -77,7 +77,7 @@ bool SendUsageStatsEvent(client::SendCommandInterface *command_sender,
   SessionCommand command;
   command.set_type(SessionCommand::USAGE_STATS_EVENT);
   command.set_usage_stats_event(event);
-  DLOG(INFO) << "SendUsageStatsEvent " << command.DebugString();
+  VLOG(2) << "SendUsageStatsEvent " << command.DebugString();
   Output dummy_output;
   return command_sender->SendCommand(command, &dummy_output);
 }

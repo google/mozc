@@ -30,25 +30,29 @@
 #include "converter/immutable_converter.h"
 
 #include "base/base.h"
-#include "base/singleton.h"
+#include "base/logging.h"
 #include "base/util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/lattice.h"
-#include "converter/segmenter.h"
+#include "converter/segmenter_interface.h"
 #include "converter/segments.h"
-#include "data_manager/user_pos_manager.h"
+#include "data_manager/testing/mock_data_manager.h"
+#include "dictionary/dictionary_impl.h"
 #include "dictionary/dictionary_interface.h"
+#include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suffix_dictionary.h"
 #include "dictionary/suppression_dictionary.h"
+#include "dictionary/user_dictionary_stub.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
 
 namespace mozc {
-
 namespace {
+
+using mozc::dictionary::DictionaryImpl;
 
 void SetCandidate(const string &key, const string &value, Segment *segment) {
   segment->set_key(key);
@@ -60,6 +64,67 @@ void SetCandidate(const string &key, const string &value, Segment *segment) {
   candidate->content_value = value;
 }
 
+class MockDataAndImmutableConverter {
+ public:
+  // Initializes data and immutable converter with given dictionaries. If NULL
+  // is passed, the default mock dictionary is used. This class owns the first
+  // argument dictionary but doesn't the second (because in the current design,
+  // suffix dictionary is assumed to be a singleton).
+  MockDataAndImmutableConverter(
+      const DictionaryInterface *dictionary = NULL,
+      const DictionaryInterface *suffix_dictionary = NULL) {
+    data_manager_.reset(new testing::MockDataManager);
+
+    const POSMatcher *pos_matcher = data_manager_->GetPOSMatcher();
+    CHECK(pos_matcher);
+
+    suppression_dictionary_.reset(new SuppressionDictionary);
+    CHECK(suppression_dictionary_.get());
+
+    if (dictionary) {
+      dictionary_.reset(dictionary);
+    } else {
+      dictionary_.reset(
+          new DictionaryImpl(data_manager_->CreateSystemDictionary(),
+                             data_manager_->CreateValueDictionary(),
+                             &user_dictionary_stub_,
+                             suppression_dictionary_.get(),
+                             pos_matcher));
+    }
+    CHECK(dictionary_.get());
+
+    if (!suffix_dictionary) {
+      suffix_dictionary = data_manager_->GetSuffixDictionary();
+    }
+    CHECK(suffix_dictionary);
+
+    immutable_converter_.reset(new ImmutableConverterImpl(
+        dictionary_.get(),
+        suffix_dictionary,
+        suppression_dictionary_.get(),
+        data_manager_->GetConnector(),
+        data_manager_->GetSegmenter(),
+        pos_matcher,
+        data_manager_->GetPosGroup()));
+    CHECK(immutable_converter_.get());
+  }
+
+  ImmutableConverterImpl *GetConverter() {
+    return immutable_converter_.get();
+  }
+
+  const SegmenterInterface *GetSegmenter() const {
+    return data_manager_->GetSegmenter();
+  }
+
+ private:
+  scoped_ptr<const DataManagerInterface> data_manager_;
+  scoped_ptr<const SuppressionDictionary> suppression_dictionary_;
+  scoped_ptr<const DictionaryInterface> dictionary_;
+  scoped_ptr<ImmutableConverterImpl> immutable_converter_;
+  UserDictionaryStub user_dictionary_stub_;
+};
+
 }  // namespace
 
 class ImmutableConverterTest : public ::testing::Test {
@@ -68,23 +133,19 @@ class ImmutableConverterTest : public ::testing::Test {
     Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
     config::ConfigHandler::GetDefaultConfig(&default_config_);
     config::ConfigHandler::SetConfig(default_config_);
-    immutable_converter_.reset(new ImmutableConverterImpl());
   }
 
   virtual void TearDown() {
     config::ConfigHandler::SetConfig(default_config_);
   }
 
-  ImmutableConverterImpl *GetConverter() const {
-    return immutable_converter_.get();
-  }
-
  private:
   config::Config default_config_;
-  scoped_ptr<ImmutableConverterImpl> immutable_converter_;
 };
 
 TEST_F(ImmutableConverterTest, KeepKeyForPrediction) {
+  scoped_ptr<MockDataAndImmutableConverter> data_and_converter(
+      new MockDataAndImmutableConverter);
   Segments segments;
   segments.set_request_type(Segments::PREDICTION);
   Segment *segment = segments.add_segment();
@@ -93,17 +154,19 @@ TEST_F(ImmutableConverterTest, KeepKeyForPrediction) {
       "\xe3\x82\x88\xe3\x82\x8d\xe3\x81\x97\xe3\x81\x8f\xe3\x81\x8a"
       "\xe3\x81\xad\xe3\x81\x8c\xe3\x81\x84\xe3\x81\x97\xe3\x81\xbe";
   segment->set_key(kRequestKey);
-  EXPECT_TRUE(GetConverter()->Convert(&segments));
+  EXPECT_TRUE(data_and_converter->GetConverter()->Convert(&segments));
   EXPECT_EQ(1, segments.segments_size());
   EXPECT_GT(segments.segment(0).candidates_size(), 0);
   EXPECT_EQ(kRequestKey, segments.segment(0).key());
 }
 
 TEST_F(ImmutableConverterTest, DummyCandidatesCost) {
+  scoped_ptr<MockDataAndImmutableConverter> data_and_converter(
+      new MockDataAndImmutableConverter);
   Segment segment;
   // "てすと"
   SetCandidate("\xE3\x81\xA6\xE3\x81\x99\xE3\x81\xA8", "test", &segment);
-  GetConverter()->InsertDummyCandidates(&segment, 10);
+  data_and_converter->GetConverter()->InsertDummyCandidates(&segment, 10);
   EXPECT_GE(segment.candidates_size(), 3);
   EXPECT_LT(segment.candidate(0).wcost, segment.candidate(1).wcost);
   EXPECT_LT(segment.candidate(0).wcost, segment.candidate(2).wcost);
@@ -140,6 +203,12 @@ class KeyCheckDictionary : public DictionaryInterface {
   virtual Node *LookupPrefixWithLimit(const char *str, int size,
                                       const Limit &limit,
                                       NodeAllocatorInterface *allocator) const {
+    // No check
+    return NULL;
+  }
+
+  virtual Node *LookupExact(const char *str, int size,
+                            NodeAllocatorInterface *allocator) const {
     // No check
     return NULL;
   }
@@ -192,19 +261,12 @@ TEST_F(ImmutableConverterTest, PredictiveNodesOnlyForConversionKey) {
   lattice.SetKey("\xe3\x81\x84\xe3\x81\x84\xe3\x82\x93\xe3\x81\x98"
                  "\xe3\x82\x83\xe3\x81\xaa\xe3\x81\x84\xe3\x81\x8b");
 
-  scoped_ptr<KeyCheckDictionary> dictionary(
-      // "ないか"
-      new KeyCheckDictionary("\xe3\x81\xaa\xe3\x81\x84\xe3\x81\x8b"));
-
-  scoped_ptr<ImmutableConverterImpl> converter(
-      new ImmutableConverterImpl(
-          dictionary.get(),
-          dictionary.get(),
-          Singleton<SuppressionDictionary>::get(),
-          ConnectorFactory::GetConnector(),
-          Singleton<Segmenter>::get(),
-          UserPosManager::GetUserPosManager()->GetPOSMatcher(),
-          UserPosManager::GetUserPosManager()->GetPosGroup()));
+  // "ないか"
+  KeyCheckDictionary *dictionary =
+      new KeyCheckDictionary("\xe3\x81\xaa\xe3\x81\x84\xe3\x81\x8b");
+  scoped_ptr<MockDataAndImmutableConverter> data_and_converter(
+      new MockDataAndImmutableConverter(dictionary, dictionary));
+  ImmutableConverterImpl *converter = data_and_converter->GetConverter();
   converter->MakeLatticeNodesForPredictiveNodes(&lattice, &segments);
   EXPECT_FALSE(dictionary->received_target_query());
 }
@@ -227,19 +289,12 @@ TEST_F(ImmutableConverterTest, AddPredictiveNodes) {
                  "\xe3\x81\x8a\xe3\x81\xad\xe3\x81\x8c\xe3\x81\x84"
                  "\xe3\x81\x97\xe3\x81\xbe");
 
-  scoped_ptr<KeyCheckDictionary> dictionary(
-      // "しま"
-      new KeyCheckDictionary("\xe3\x81\x97\xe3\x81\xbe"));
-
-  scoped_ptr<ImmutableConverterImpl> converter(
-      new ImmutableConverterImpl(
-          dictionary.get(),
-          dictionary.get(),
-          Singleton<SuppressionDictionary>::get(),
-          ConnectorFactory::GetConnector(),
-          Singleton<Segmenter>::get(),
-          UserPosManager::GetUserPosManager()->GetPOSMatcher(),
-          UserPosManager::GetUserPosManager()->GetPosGroup()));
+  // "しま"
+  KeyCheckDictionary *dictionary =
+      new KeyCheckDictionary("\xe3\x81\x97\xe3\x81\xbe");
+  scoped_ptr<MockDataAndImmutableConverter> data_and_converter(
+      new MockDataAndImmutableConverter(dictionary, dictionary));
+  ImmutableConverterImpl *converter = data_and_converter->GetConverter();
   converter->MakeLatticeNodesForPredictiveNodes(&lattice, &segments);
   EXPECT_TRUE(dictionary->received_target_query());
 }
@@ -258,15 +313,9 @@ class ConnectionTypeHandlerTest : public ::testing::Test {
 };
 
 TEST_F(ConnectionTypeHandlerTest, GetConnectionType) {
-  scoped_ptr<ImmutableConverterImpl> converter(
-      new ImmutableConverterImpl(
-          DictionaryFactory::GetDictionary(),
-          SuffixDictionaryFactory::GetSuffixDictionary(),
-          Singleton<SuppressionDictionary>::get(),
-          ConnectorFactory::GetConnector(),
-          Singleton<Segmenter>::get(),
-          UserPosManager::GetUserPosManager()->GetPOSMatcher(),
-          UserPosManager::GetUserPosManager()->GetPosGroup()));
+  scoped_ptr<MockDataAndImmutableConverter> data_and_converter(
+      new MockDataAndImmutableConverter);
+  ImmutableConverterImpl *converter = data_and_converter->GetConverter();
 
   Segments segments;
   segments.set_request_type(Segments::CONVERSION);
@@ -313,7 +362,7 @@ TEST_F(ConnectionTypeHandlerTest, GetConnectionType) {
       "\xe3\x81\x93\xe3\x82\x8d\xe3\x81\xa7");
   converter->MakeLattice(&lattice, &segments);
 
-  SegmenterInterface *segmenter = Singleton<Segmenter>::get();
+  const SegmenterInterface *segmenter = data_and_converter->GetSegmenter();
 
   ConnectionTypeHandler connection_type_handler(
       group, &segments, segmenter);

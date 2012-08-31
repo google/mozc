@@ -35,8 +35,6 @@
 #include <ime.h>
 #include <strsafe.h>
 
-#include <vector>
-
 #include "google/protobuf/stubs/common.h"
 #include "base/const.h"
 #include "base/crash_report_handler.h"
@@ -57,12 +55,12 @@
 #include "win32/ime/ime_mouse_tracker.h"
 #include "win32/ime/ime_private_context.h"
 #include "win32/ime/ime_scoped_context.h"
+#include "win32/ime/ime_state.h"
 #include "win32/ime/ime_surrogate_pair_observer.h"
 #include "win32/ime/ime_trace.h"
 #include "win32/ime/ime_ui_context.h"
 #include "win32/ime/ime_ui_visibility_tracker.h"
 #include "win32/ime/ime_ui_window.h"
-#include "win32/ime/output_util.h"
 
 namespace {
 HINSTANCE g_instance = NULL;
@@ -303,7 +301,7 @@ BOOL WINAPI ImeInquire(LPIMEINFO ime_info,
 
   if (!mozc::win32::IsInLockdownMode()) {
 #if defined(USE_BREAKPAD)
-    if (mozc::StatsConfigUtil::IsEnabled()) {
+    if (mozc::config::StatsConfigUtil::IsEnabled()) {
       mozc::CrashReportHandler::Initialize(true);
     }
 #endif  // USE_BREAKPAD
@@ -329,6 +327,7 @@ BOOL WINAPI ImeDestroy(UINT force) {
   // As commented above, ImeDestroy is not so reliable place to free global
   // resources allocated in this DLL.
   // TODO(yukawa): Find better place.
+  mozc::win32::UIWindowManager::OnImeDestroy();
 
   // Free all singleton instances
   mozc::SingletonFinalizer::Finalize();

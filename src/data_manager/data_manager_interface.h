@@ -41,6 +41,7 @@ class PosGroup;
 class SegmenterInterface;
 class UserDictionary;
 class UserPOSInterface;
+struct ReadingCorrectionItem;
 
 // Builds those objects that depend on a set of embedded data generated from
 // files in data/dictionary, such as dictionary.txt, id.def, etc.
@@ -51,37 +52,48 @@ class DataManagerInterface {
   // Returns a reference to the UserPOS class handling user pos data.  Don't
   // delete the returned pointer, which is owned by the manager.
   virtual const UserPOSInterface *GetUserPOS() const = 0;
-  virtual UserDictionary *GetUserDictionary() = 0;
-
-  // Since some modules don't require possibly huge dictionary data, we allow
-  // derived classes not to implement the following methods.
 
   // Returns a reference to POSMatcher class handling POS rules. Don't
   // delete the returned pointer, which is owned by the manager.
-  virtual const POSMatcher *GetPOSMatcher() { return NULL; }
+  virtual const POSMatcher *GetPOSMatcher() const = 0;
 
   // Returns a reference to PosGroup class handling POS grouping rule. Don't
   // delete the returned pointer, which is owned by the manager.
-  virtual const PosGroup *GetPosGroup() { return NULL; }
+  virtual const PosGroup *GetPosGroup() const = 0;
 
   // Returns a reference to Connector class handling connection data.  Don't
   // delete the returned pointer, which is owned by the manager.
-  virtual const ConnectorInterface *GetConnector() { return NULL; }
+  virtual const ConnectorInterface *GetConnector() const = 0;
 
   // Returns a reference to Segmenter class handling segmentation data.  Don't
   // delete the returned pointer, which is owned by the manager.
-  virtual const SegmenterInterface *GetSegmenter() { return NULL; }
+  virtual const SegmenterInterface *GetSegmenter() const = 0;
 
   // Creates a system dictionary. The caller is responsible for deleting the
   // returned object.
-  virtual DictionaryInterface *CreateSystemDictionary() { return NULL; }
+  virtual DictionaryInterface *CreateSystemDictionary() const = 0;
 
   // Creates a value dictionary. The caller is responsible for deleting the
   // returned object.
-  virtual DictionaryInterface *CreateValueDictionary() { return NULL; }
+  virtual DictionaryInterface *CreateValueDictionary() const = 0;
 
   // Returns a reference to the suffix dictionary.
-  virtual DictionaryInterface *GetSuffixDictionary() { return NULL; }
+  virtual const DictionaryInterface *GetSuffixDictionary() const = 0;
+
+  // Gets a reference to reading correction data array and its size.
+  virtual void GetReadingCorrectionData(const ReadingCorrectionItem **array,
+                                        size_t *size) const = 0;
+
+  // Gets the address of collocation data array and its size.
+  virtual void GetCollocationData(const char **array, size_t *size) const = 0;
+
+  // Gets the address of collocation suppression data array and its size.
+  virtual void GetCollocationSuppressionData(const char **array,
+                                             size_t *size) const = 0;
+
+  // Gets an address of suggestion filter data array and its size.
+  virtual void GetSuggestionFilterData(const char **data,
+                                       size_t *size) const = 0;
 
  protected:
   DataManagerInterface() {}

@@ -29,18 +29,22 @@
 
 #include "rewriter/single_kanji_rewriter.h"
 
+#include <algorithm>
 #include <string>
 #include <vector>
 #include <set>
+
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/singleton.h"
 #include "base/util.h"
-#include "config/config_handler.h"
 #include "config/config.pb.h"
+#include "config/config_handler.h"
 #include "converter/conversion_request.h"
 #include "converter/segments.h"
-#include "rewriter/rewriter_interface.h"
+#include "dictionary/pos_matcher.h"
 #include "rewriter/embedded_dictionary.h"
+#include "rewriter/rewriter_interface.h"
 #include "session/commands.pb.h"
 #include "session/request_handler.h"
 
@@ -48,15 +52,35 @@ namespace mozc {
 
 namespace {
 
+struct SingleKanjiList {
+  // reading, single_kanji_s
+  // { "あ", "亜阿有..." }
+  const char *key;
+  const char *values;
+};
+
+struct KanjiVariantItem {
+  // target, original, type_id
+  // { "亞", "亜", 0 } ,
+  const char *target;
+  const char *original;
+  int type_id;
+};
+
 #include "rewriter/single_kanji_rewriter_data.h"
 
-class SingleKanjiDictionary {
+// Since NounPrefixDictionary is just a tentative workaround,
+// we copy the SingleKanji structure so that we can remove this workaround
+// easily. Also, the logic of NounPrefix insertion is put independently from
+// the single kanji dictionary. Ideally, we want to regenerate our
+// language model for fixing noun-prefix issue.
+class NounPrefixDictionary {
  public:
-  SingleKanjiDictionary()
-      : dic_(new EmbeddedDictionary(kSingleKanjiData_token_data,
-                                    kSingleKanjiData_token_size)) {}
+  NounPrefixDictionary()
+      : dic_(new EmbeddedDictionary(kNounPrefixData_token_data,
+                                    kNounPrefixData_token_size)) {}
 
-  ~SingleKanjiDictionary() {}
+  ~NounPrefixDictionary() {}
 
   EmbeddedDictionary *GetDictionary() const {
     return dic_.get();
@@ -66,95 +90,154 @@ class SingleKanjiDictionary {
   scoped_ptr<EmbeddedDictionary> dic_;
 };
 
+struct SingleKanjiListCompare {
+  bool operator() (const SingleKanjiList &lhs, const SingleKanjiList &rhs) {
+    return (strcmp(lhs.key, rhs.key) < 0);
+  }
+};
+
+// Lookup SingleKanjiList from key (reading).
+// Returns false if not found.
+bool LookupKanjiList(const string &key, vector<string> *kanji_list) {
+  DCHECK(kanji_list);
+  SingleKanjiList key_item;
+  key_item.key = key.c_str();
+  const SingleKanjiList *result =
+      lower_bound(kSingleKanjis, kSingleKanjis + arraysize(kSingleKanjis),
+                  key_item, SingleKanjiListCompare());
+  if (result == (kSingleKanjis + arraysize(kSingleKanjis)) ||
+      key.compare(result->key) != 0) {
+    return false;
+  }
+  Util::SplitStringToUtf8Chars(result->values, kanji_list);
+  return true;
+}
+
+struct KanjiVariantItemCompare {
+  bool operator() (const KanjiVariantItem &lhs, const KanjiVariantItem &rhs) {
+    return (strcmp(lhs.target, rhs.target) < 0);
+  }
+};
+
+// Generates kanji variant description from key.
+// Does nothing if not found.
+void GenerateDescription(const string &key, string *desc) {
+  DCHECK(desc);
+  KanjiVariantItem key_item;
+  key_item.target = key.c_str();
+  const KanjiVariantItem *result =
+      lower_bound(kKanjiVariants, kKanjiVariants + arraysize(kKanjiVariants),
+                  key_item, KanjiVariantItemCompare());
+  if (result == (kKanjiVariants + arraysize(kKanjiVariants)) ||
+      key.compare(result->target) != 0) {
+    return;
+  }
+  DCHECK_LT(result->type_id, arraysize(kKanjiVariantTypes));
+  desc->assign(Util::StringPrintf(
+      // "%sの%s"
+      "%s\xe3\x81\xae%s",
+      result->original, kKanjiVariantTypes[result->type_id]));
+}
+
+// Add single kanji variants description to existing candidates,
+// because if we have candidates with same value, the lower ranked candidate
+// will be removed.
+void AddDescriptionForExsistingCandidates(Segment *segment) {
+  DCHECK(segment);
+  for (size_t i = 0; i < segment->candidates_size(); ++i) {
+    Segment::Candidate *cand = segment->mutable_candidate(i);
+    if (!cand->description.empty()) {
+      continue;
+    }
+    GenerateDescription(cand->value, &cand->description);
+  }
+}
+
+void FillCandidate(const string &key, const string &value,
+                   int cost, uint16 single_kanji_id,
+                   Segment::Candidate *cand) {
+  cand->lid = single_kanji_id;
+  cand->rid = single_kanji_id;
+  cand->cost = cost;
+  cand->content_key = key;
+  cand->content_value = value;
+  cand->key = key;
+  cand->value = value;
+  cand->attributes |= Segment::Candidate::CONTEXT_SENSITIVE;
+  cand->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
+  GenerateDescription(value, &cand->description);
+}
+
 // Insert SingleKanji into segment.
-void InsertCandidate(Segment *segment,
-                     bool is_single_segment,
-                     const EmbeddedDictionary::Value *dict_values,
-                     size_t dict_values_size) {
+void InsertCandidate(bool is_single_segment,
+                     uint16 single_kanji_id,
+                     const vector<string> &kanji_list,
+                     Segment *segment) {
+  DCHECK(segment);
   if (segment->candidates_size() == 0) {
     LOG(WARNING) << "candidates_size is 0";
     return;
   }
 
-  // Adding 5000 to the single kanji cost
-  const int kOffsetDiff = 5000;
+  const string &candidate_key = ((!segment->key().empty()) ?
+                                 segment->key() :
+                                 segment->candidate(0).key);
+
+  // Adding 8000 to the single kanji cost
+  // Note that this cost does not make no effect.
+  // Here we set the cost just in case.
+  const int kOffsetCost = 8000;
+
+  // Append single-kanji
+  for (size_t i = 0; i < kanji_list.size(); ++i) {
+    Segment::Candidate *c = segment->push_back_candidate();
+    FillCandidate(candidate_key, kanji_list[i],
+                  kOffsetCost + i, single_kanji_id, c);
+  }
+}
+
+// Insert Noun prefix into segment.
+void InsertNounPrefix(const POSMatcher &pos_matcher,
+                      Segment *segment,
+                      const EmbeddedDictionary::Value *dict_values,
+                      size_t dict_values_size) {
+  DCHECK(dict_values);
+  DCHECK_GT(dict_values_size, 0);
+
+  if (segment->candidates_size() == 0) {
+    LOG(WARNING) << "candidates_size is 0";
+    return;
+  }
+
+  if (segment->segment_type() == Segment::FIXED_VALUE) {
+    return;
+  }
 
   const string &candidate_key = ((!segment->key().empty()) ?
                                  segment->key() :
                                  segment->candidate(0).key);
-  size_t idx_j = 0;
-
-  if (is_single_segment) {
-    // Merge default candidate and SingleKanji candidate.
-    // This procedure makes dup, but we just ignore it, as
-    // session layer removes dups
-    size_t idx_i = 0;
-
-    // we don't touch the first candidate if it is already fixed
-    if (segment->segment_type() == Segment::FIXED_VALUE) {
-      idx_i = 1;
-    }
-
-    // Find insertion point
-    for (size_t i = 0; i < segment->candidates_size(); ++i) {
-      const string &value = segment->candidate(i).value;
-      // We want to insert under hiragana, katakana,
-      // and single kanjis in system dictionary.
-      if (Util::IsScriptType(value, Util::HIRAGANA) ||
-          Util::IsScriptType(value, Util::KATAKANA) ||
-          (Util::IsScriptType(value, Util::KANJI) &&
-           Util::CharsLen(value) == 1)) {
-        ++idx_i;
-        continue;
-      }
-      break;
-    }
-
-    while (idx_i < segment->candidates_size() && idx_j < dict_values_size) {
-      const int cost = dict_values[idx_j].cost + kOffsetDiff;
-      if (cost >= segment->candidate(idx_i).cost) {
-        ++idx_i;
-        continue;
-      }
-      Segment::Candidate *c = segment->insert_candidate(idx_i);
-      c->lid = dict_values[idx_j].lid;
-      c->rid = dict_values[idx_j].rid;
-      c->cost = dict_values[idx_j].cost + kOffsetDiff;
-      c->content_value = dict_values[idx_j].value;
-      c->key = candidate_key;
-      c->content_key = candidate_key;
-      c->value = dict_values[idx_j].value;
-      c->attributes |= Segment::Candidate::CONTEXT_SENSITIVE;
-      c->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
-      if (dict_values[idx_j].description != NULL) {
-        c->description = dict_values[idx_j].description;
-      }
-      ++idx_i;
-      ++idx_j;
-    }
-  }
-
-  // append remaining single-kanji
-  while (idx_j < dict_values_size) {
-    Segment::Candidate *c = segment->push_back_candidate();
-    c->lid = dict_values[idx_j].lid;
-    c->rid = dict_values[idx_j].rid;
-    c->cost = dict_values[idx_j].cost + kOffsetDiff;
-    c->content_value = dict_values[idx_j].value;
+  for (int i = 0; i < dict_values_size; ++i) {
+    const int insert_pos = min(
+        static_cast<int>(segment->candidates_size()),
+        static_cast<int>(dict_values[i].cost +
+                         (segment->candidate(0).attributes &
+                          Segment::Candidate::CONTEXT_SENSITIVE) ? 1 : 0));
+    Segment::Candidate *c = segment->insert_candidate(insert_pos);
+    c->lid = pos_matcher.GetNounPrefixId();
+    c->rid = pos_matcher.GetNounPrefixId();
+    c->cost = 5000;
+    c->content_value = dict_values[i].value;
     c->key = candidate_key;
     c->content_key = candidate_key;
-    c->value = dict_values[idx_j].value;
+    c->value = dict_values[i].value;
     c->attributes |= Segment::Candidate::CONTEXT_SENSITIVE;
     c->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
-    if (dict_values[idx_j].description != NULL) {
-      c->description = dict_values[idx_j].description;
-    }
-    ++idx_j;
   }
 }
 }  // namespace
 
-SingleKanjiRewriter::SingleKanjiRewriter() {}
+SingleKanjiRewriter::SingleKanjiRewriter(const POSMatcher &pos_matcher)
+    : pos_matcher_(&pos_matcher) {}
 
 SingleKanjiRewriter::~SingleKanjiRewriter() {}
 
@@ -176,15 +259,52 @@ bool SingleKanjiRewriter::Rewrite(const ConversionRequest &request,
   const size_t segments_size = segments->conversion_segments_size();
   const bool is_single_segment = (segments_size == 1);
   for (size_t i = 0; i < segments_size; ++i) {
+    AddDescriptionForExsistingCandidates(
+        segments->mutable_conversion_segment(i));
+
+    const string &key = segments->conversion_segment(i).key();
+    vector<string> kanji_list;
+    if (!LookupKanjiList(key, &kanji_list)) {
+      continue;
+    }
+    InsertCandidate(is_single_segment,
+                    pos_matcher_->GetGeneralSymbolId(),
+                    kanji_list,
+                    segments->mutable_conversion_segment(i));
+
+    modified = true;
+  }
+
+  // Tweak for noun prefix.
+  // TODO(team): Ideally, this issue can be fixed via the language model
+  // and dictionary generation.
+  for (size_t i = 0; i < segments_size; ++i) {
+    if (segments->conversion_segment(i).candidates_size() == 0) {
+      continue;
+    }
+
+    if (i + 1 < segments_size) {
+      const Segment::Candidate &right_candidate =
+          segments->conversion_segment(i + 1).candidate(0);
+      // right segment must be a noun.
+      if (!pos_matcher_->IsContentNoun(right_candidate.lid)) {
+        continue;
+      }
+    } else if (segments_size != 1) {  // also apply if segments_size == 1.
+      continue;
+    }
+
     const string &key = segments->conversion_segment(i).key();
     const EmbeddedDictionary::Token *token =
-        Singleton<SingleKanjiDictionary>::get()->GetDictionary()->Lookup(key);
+        Singleton<NounPrefixDictionary>::get()->GetDictionary()->Lookup(key);
     if (token == NULL) {
       continue;
     }
-    InsertCandidate(segments->mutable_conversion_segment(i),
-                    is_single_segment,
-                    token->value, token->value_size);
+    InsertNounPrefix(*pos_matcher_,
+                     segments->mutable_conversion_segment(i),
+                     token->value, token->value_size);
+    // Ignore the next noun content word.
+    ++i;
     modified = true;
   }
 

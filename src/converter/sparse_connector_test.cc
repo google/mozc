@@ -27,100 +27,54 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "converter/sparse_connector.h"
+
 #include <string>
+
+#include "base/base.h"
 #include "base/file_stream.h"
+#include "base/logging.h"
 #include "base/mmap.h"
+#include "base/number_util.h"
 #include "base/util.h"
 #include "converter/connector_interface.h"
-#include "converter/sparse_connector.h"
-#include "converter/sparse_connector_builder.h"
 #include "testing/base/public/gunit.h"
 
-DECLARE_string(test_tmpdir);
+DECLARE_string(test_srcdir);
 
 namespace mozc {
+
 namespace {
-int GetFakeCost(int l, int r) {
-  return (3 * l + r) * 1000;
-}
+const char kTestConnectionDataImagePath[] =
+    "converter/test_connection_data.data";
+const char kTestConnectionFilePath[] = "data/test/dictionary/connection.txt";
 }  // namespace
 
-TEST(SparseConnectorTest, SparseConnecterOpenTest) {
-  const string input_filename
-      = mozc::Util::JoinPath(FLAGS_test_tmpdir, "connector.txt");
-  const string id_filename
-      = mozc::Util::JoinPath(FLAGS_test_tmpdir, "id.def");
-  const string special_pos_filename
-      = mozc::Util::JoinPath(FLAGS_test_tmpdir, "special_pos.def");
-  const string output_filename
-      = mozc::Util::JoinPath(FLAGS_test_tmpdir, "connector.db");
-
-  {
-    mozc::OutputFileStream ofs(input_filename.c_str());
-    EXPECT_TRUE(ofs);
-
-    ofs << "3 3" << endl;  // 3x3 matrix
-    for (int i = 0; i < 3; ++i) {
-      for (int j = 0; j < 3; ++j) {
-        // lid, rid, cost
-        ofs << i << " " << j << " " << GetFakeCost(i, j) << endl;
-      }
-    }
-  }
-
-  {
-    mozc::OutputFileStream ofs(id_filename.c_str());
-    EXPECT_TRUE(ofs);
-    ofs << "0 foo" << endl;
-    ofs << "1 bar" << endl;
-    ofs << "2 buzz" << endl;
-  }
-
-  {
-    mozc::OutputFileStream ofs(special_pos_filename.c_str());
-    EXPECT_TRUE(ofs);
-    ofs << "extra1" << endl;
-    ofs << "extra2" << endl;
-  }
-
-  converter::SparseConnectorBuilder::Compile(input_filename,
-                                             id_filename,
-                                             special_pos_filename,
-                                             output_filename);
-
-  Mmap<char> cmmap;
-  CHECK(cmmap.Open(output_filename.c_str()))
-      << "Failed to open matrix image" << output_filename;
-  CHECK_GE(cmmap.Size(), 4) << "Malformed matrix image";
+TEST(SarseConnectorTest, SparseConnectorTest) {
+  string path = Util::JoinPath(
+      FLAGS_test_srcdir, kTestConnectionDataImagePath);
+  Mmap cmmap;
+  CHECK(cmmap.Open(path.c_str())) << "Failed to open image: " << path;
   scoped_ptr<SparseConnector> connector(
-      new SparseConnector(cmmap.begin(), cmmap.GetFileSize()));
+      new SparseConnector(cmmap.begin(), cmmap.size()));
+  ASSERT_EQ(1, connector->GetResolution());
 
-  const int cost_resolution = connector->GetResolution();
-  for (int i = 0; i < 3; ++i) {
-    for (int j = 0; j < 3; ++j) {
-      const int diff = GetFakeCost(i, j) - connector->GetTransitionCost(i, j);
-      EXPECT_LT(abs(diff), cost_resolution);
-    }
+  string connection_text_path =
+      Util::JoinPath(FLAGS_test_srcdir, kTestConnectionFilePath);
+  InputFileStream input(connection_text_path.c_str());
+  string line;
+  getline(input, line);  // Discard the first line.
+  vector<string> fields;
+  while (getline(input, line)) {
+    fields.clear();
+    Util::SplitStringUsing(line, "\t ", &fields);
+    CHECK_GE(fields.size(), 3) << line;
+    uint16 rid = static_cast<uint16>(NumberUtil::SimpleAtoi(fields[0]));
+    uint16 lid = static_cast<uint16>(NumberUtil::SimpleAtoi(fields[1]));
+    uint16 cost = static_cast<uint16>(NumberUtil::SimpleAtoi(fields[2]));
+
+    EXPECT_EQ(cost, connector->GetTransitionCost(rid, lid));
   }
-
-  const int16 invalid_cost = ConnectorInterface::kInvalidCost;
-  EXPECT_EQ(invalid_cost, connector->GetTransitionCost(1, 3));
-  EXPECT_EQ(invalid_cost, connector->GetTransitionCost(3, 4));
-  EXPECT_EQ(0, connector->GetTransitionCost(0, 3));
-  EXPECT_EQ(0, connector->GetTransitionCost(0, 4));
-
-  EXPECT_EQ(invalid_cost, connector->GetTransitionCost(3, 1));
-  EXPECT_EQ(invalid_cost, connector->GetTransitionCost(4, 3));
-  EXPECT_EQ(0, connector->GetTransitionCost(0, 3));
-  EXPECT_EQ(0, connector->GetTransitionCost(4, 0));
 }
 
-TEST(SparseConnectorTest, key_coding) {
-  int key;
-  key = SparseConnector::EncodeKey(0, 0);
-  EXPECT_EQ(key, 0);
-
-  key = SparseConnector::EncodeKey(0xaabb, 0xccdd);
-  EXPECT_EQ(key, 0xccddaabb);
-}
 }  // namespace mozc

@@ -32,20 +32,22 @@
 #else
 #include <sys/types.h>
 #include <unistd.h>
-#endif
+#endif  // OS_WINDOWS
+
+#include <iostream>
+
+#include "base/base.h"
+#include "base/file_stream.h"
+#include "base/logging.h"
+#include "base/util.h"
+#include "client/client.h"
+#include "renderer/renderer_client.h"
+#include "renderer/renderer_command.pb.h"
+#include "session/random_keyevents_generator.h"
 
 // TODO(taku)
 // 1. multi-thread testing
 // 2. change/config the senario
-
-#include <iostream>
-#include "base/base.h"
-#include "base/file_stream.h"
-#include "base/util.h"
-#include "client/client.h"
-#include "renderer/renderer_command.pb.h"
-#include "renderer/renderer_client.h"
-#include "session/random_keyevents_generator.h"
 
 DEFINE_int32(max_keyevents, 100000,
              "test at most |max_keyevents| key sequences");
@@ -73,7 +75,7 @@ void DisplayPreedit(const commands::Output &output) {
     cout << tmp << '\r';
 #else
     cout << value << '\r';
-#endif
+#endif  // OS_WINDOWS
   } else if (output.has_result()) {
 #ifdef OS_WINDOWS
     string tmp;
@@ -81,11 +83,11 @@ void DisplayPreedit(const commands::Output &output) {
     cout << tmp << endl;
 #else
     cout << output.result().value() << endl;
-#endif
+#endif  // OS_WINDOWS
   }
 }
 }  // namespace
-}  // mozc
+}  // namespace mozc
 
 int main(int argc, char **argv) {
   InitGoogle(argv[0], &argc, &argv, false);
@@ -111,14 +113,14 @@ int main(int argc, char **argv) {
         (::GetCurrentProcessId());
     renderer_command.mutable_application_info()->set_thread_id
         (::GetCurrentThreadId());
-#endif
+#endif  // OS_WINDOWS
     renderer_command.mutable_preedit_rectangle()->set_left(10);
     renderer_command.mutable_preedit_rectangle()->set_top(10);
     renderer_command.mutable_preedit_rectangle()->set_right(200);
     renderer_command.mutable_preedit_rectangle()->set_bottom(30);
 #else
     LOG(FATAL) << "test_renderer is only supported on Windows and Mac";
-#endif
+#endif  // OS_WINDOWS || OS_MACOSX
     renderer_client.reset(new mozc::renderer::RendererClient);
     CHECK(renderer_client->Activate());
   }

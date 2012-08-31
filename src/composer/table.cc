@@ -37,6 +37,7 @@
 #include "base/base.h"
 #include "base/config_file_stream.h"
 #include "base/file_stream.h"
+#include "base/logging.h"
 #include "base/trie.h"
 #include "base/util.h"
 #include "config/config.pb.h"
@@ -76,7 +77,6 @@ const char kQwertyMobileHiraganaNumberTableFile[]
     = "system://qwerty_mobile-hiragana-number.tsv";
 const char kQwertyMobileHalfwidthasciiTableFile[]
     = "system://qwerty_mobile-halfwidthascii.tsv";
-
 
 const char kNewChunkPrefix[] = "\t";
 const char kSpecialKeyOpen[] = "\x0F";  // Shift-In of ASCII
@@ -632,9 +632,28 @@ const Table *TableManager::GetTable(const mozc::commands::Request &request,
   hash = hash * (mozc::config::Config_SymbolMethod_SymbolMethod_MAX + 1)
       + config.symbol_method();
 
+  // When custom_roman_table is set, force to create new table.
+  bool update_custom_roman_table = false;
+  if ((config.preedit_method() == config::Config::ROMAN) &&
+      config.has_custom_roman_table() &&
+      !config.custom_roman_table().empty()) {
+    const uint32 custom_roman_table_fingerprint =
+        Util::Fingerprint32(config.custom_roman_table());
+    if (custom_roman_table_fingerprint != custom_roman_table_fingerprint_) {
+      update_custom_roman_table = true;
+      custom_roman_table_fingerprint_ = custom_roman_table_fingerprint;
+    }
+  }
+
   map<uint32, const Table*>::iterator iterator = table_map_.find(hash);
   if (iterator != table_map_.end()) {
-    return iterator->second;
+    if (update_custom_roman_table) {
+      // Delete the previous table to update the table.
+      delete iterator->second;
+      table_map_.erase(iterator);
+    } else {
+      return iterator->second;
+    }
   }
 
   scoped_ptr<Table> table(new Table());

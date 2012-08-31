@@ -30,6 +30,7 @@
 #include "base/util.h"
 #include "net/http_client_mock.h"
 #include "storage/registry.h"
+#include "storage/tiny_storage.h"
 #include "sync/oauth2_client.h"
 #include "sync/oauth2_util.h"
 #include "testing/base/public/gunit.h"
@@ -57,10 +58,24 @@ const char kResourceUri[] =
 class OAuth2UtilTest : public testing::Test {
  protected:
   virtual void SetUp() {
+    original_user_profile_dir_ = Util::GetUserProfileDirectory();
     Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    string registory_file_path;
+    Util::JoinPath(original_user_profile_dir_, "registry.db",
+      &registory_file_path);
+    local_storage_.reset(storage::TinyStorage::Create(
+      registory_file_path.c_str()));
+    storage::Registry::SetStorage(local_storage_.get());
+
     HTTPClient::SetHTTPClientHandler(&client_);
     oauth2_client_.reset(new OAuth2Client(
         "test", "dummyclientid", "dummyclientsecret"));
+  }
+
+  virtual void TearDown() {
+    storage::Registry::SetStorage(NULL);
+    local_storage_.reset(NULL);
+    Util::SetUserProfileDirectory(original_user_profile_dir_);
   }
 
   void SetAuthorizationServer() {
@@ -112,6 +127,10 @@ class OAuth2UtilTest : public testing::Test {
 
   HTTPClientMock client_;
   scoped_ptr<OAuth2Client> oauth2_client_;
+
+ private:
+  string original_user_profile_dir_;
+  scoped_ptr<storage::StorageInterface> local_storage_;
 };
 
 TEST_F(OAuth2UtilTest, GetLoginUri) {
@@ -127,8 +146,10 @@ TEST_F(OAuth2UtilTest, GetLoginUri) {
 
 TEST_F(OAuth2UtilTest, CheckLogin) {
   OAuth2Util oauth2(oauth2_client_.get());
+  OAuth2::Error error;
   SetAuthorizationServer();
-  EXPECT_TRUE(oauth2.RequestAccessToken(kAuthToken));
+  EXPECT_TRUE(oauth2.RequestAccessToken(kAuthToken, &error));
+  EXPECT_EQ(OAuth2::kNone, error);
 
   string access_token;
   string refresh_token;
@@ -150,9 +171,12 @@ TEST_F(OAuth2UtilTest, RefeshToken) {
   OAuth2Util oauth2(oauth2_client_.get());
   string access_token = kAccessToken;
   string refresh_token = kRefreshToken;
+  OAuth2::Error error;
   SetRefreshServer();
   EXPECT_TRUE(oauth2.RegisterTokens(access_token, refresh_token));
-  EXPECT_TRUE(oauth2.RefreshAccessToken());
+  EXPECT_TRUE(oauth2.RefreshAccessToken(&error));
+  EXPECT_EQ(OAuth2::kNone, error);
+
   EXPECT_TRUE(oauth2.GetTokens(&access_token, &refresh_token));
   EXPECT_EQ(kAccessToken2, access_token);
   EXPECT_EQ(kRefreshToken2, refresh_token);

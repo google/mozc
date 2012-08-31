@@ -40,6 +40,7 @@
 
 #include "base/base.h"
 #include "base/cpu_stats.h"
+#include "base/logging.h"
 #include "base/unnamed_event.h"
 #include "base/util.h"
 #include "client/client_interface.h"
@@ -62,7 +63,7 @@ const float kMinimumAllCPULoad = 0.33f;
 // Average CPU load for last 10secs.
 // If the load > kMinimumLatestCPULoad, don't send Cleanup
 const float kMinimumLatestCPULoad = 0.66f;
-}
+}  // namespace
 
 SessionWatchDog::SessionWatchDog(int32 interval_sec)
     : interval_sec_(interval_sec),

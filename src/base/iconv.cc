@@ -35,6 +35,7 @@
 
 #include <string>
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/util.h"
 
 namespace {

@@ -58,7 +58,6 @@ class QualityRegressionUtil {
     bool ParseFromTSV(const string &tsv_line);
   };
 
-  QualityRegressionUtil();
   explicit QualityRegressionUtil(ConverterInterface *converter);
   virtual ~QualityRegressionUtil();
 

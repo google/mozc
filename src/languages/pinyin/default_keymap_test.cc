@@ -71,7 +71,7 @@ KeyCommand GetKeyCommand(const string &key_string, ConverterState state) {
 
 void TestSpecialKey(const KeyTable &key_table, const string &modifiers) {
   // Converter is active.
-  for (size_t i = 0; i < ARRAYSIZE(kSpecialKeys); ++i) {
+  for (size_t i = 0; i < ARRAYSIZE_UNSAFE(kSpecialKeys); ++i) {
     const string key_string = modifiers + ' ' + kSpecialKeys[i];
     SCOPED_TRACE(key_string + " (converter is active)");
     const KeyCommand key_command = GetKeyCommand(key_string, ACTIVE);
@@ -85,7 +85,7 @@ void TestSpecialKey(const KeyTable &key_table, const string &modifiers) {
   }
 
   // Converter is NOT active.  All KeyEvent should NOT be consumed.
-  for (size_t i = 0; i < ARRAYSIZE(kSpecialKeys); ++i) {
+  for (size_t i = 0; i < ARRAYSIZE_UNSAFE(kSpecialKeys); ++i) {
     const string key_string = modifiers + ' ' + kSpecialKeys[i];
     SCOPED_TRACE(key_string + " (converter is NOT active)");
     const KeyCommand key_command = GetKeyCommand(key_string, INACTIVE);

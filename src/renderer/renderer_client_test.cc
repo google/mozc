@@ -29,6 +29,7 @@
 
 #include <string>
 #include "base/base.h"
+#include "base/number_util.h"
 #include "base/util.h"
 #include "base/version.h"
 #include "ipc/ipc.h"
@@ -38,14 +39,16 @@
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
+
 namespace renderer {
+
 namespace {
 const string UpdateVersion(int diff) {
   vector<string> tokens;
   Util::SplitStringUsing(Version::GetMozcVersion(), ".", &tokens);
   EXPECT_EQ(tokens.size(), 4);
   char buf[64];
-  snprintf(buf, sizeof(buf), "%d", Util::SimpleAtoi(tokens[3]) + diff);
+  snprintf(buf, sizeof(buf), "%d", NumberUtil::SimpleAtoi(tokens[3]) + diff);
   tokens[3] = buf;
   string output;
   Util::JoinStrings(tokens, ".", &output);
@@ -582,5 +585,5 @@ TEST(RendererClient, SetPendingCommandTest) {
     EXPECT_FALSE(launcher.is_set_pending_command_called());
   }
 }
-}  // renderer
-}  // mozc
+}  // namespace renderer
+}  // namespace mozc

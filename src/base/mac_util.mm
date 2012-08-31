@@ -38,6 +38,7 @@
 
 #include "base/const.h"
 #include "base/scoped_cftyperef.h"
+#include "base/singleton.h"
 #include "base/util.h"
 
 namespace mozc {
@@ -155,6 +156,59 @@ string MacUtil::GetOSVersionString() {
                   cStringUsingEncoding : NSUTF8StringEncoding]);
   [pool drain];
   return version;
+}
+
+namespace {
+
+class OSVersionCache {
+ public:
+  OSVersionCache() : succeeded_(false) {
+    // TODO(horo): Gestalt function is deprecated in OS X v10.8.
+    //             Consider how to get the version after 10.8.
+    if (Gestalt(gestaltSystemVersionMajor, &major_version_) == noErr &&
+        Gestalt(gestaltSystemVersionMinor, &minor_version_) == noErr &&
+        Gestalt(gestaltSystemVersionBugFix, &fix_version_) == noErr) {
+      succeeded_ = true;
+    }
+  }
+  bool GetOSVersion(int32 *major, int32 *minor, int32 *fix) const {
+    if (!succeeded_) {
+      return false;
+    }
+    *major = major_version_;
+    *minor = minor_version_;
+    *fix = fix_version_;
+    return true;
+  }
+
+ private:
+  SInt32 major_version_;
+  SInt32 minor_version_;
+  SInt32 fix_version_;
+  bool succeeded_;
+};
+
+}  // namespace
+
+bool MacUtil::GetOSVersion(int32 *major, int32 *minor, int32 *fix) {
+  return Singleton<OSVersionCache>::get()->GetOSVersion(major, minor, fix);
+}
+
+bool MacUtil::OSVersionIsGreaterOrEqual(int32 major, int32 minor, int32 fix) {
+  int32 major_version = 0;
+  int32 minor_version = 0;
+  int32 fix_version = 0;
+
+  if (!GetOSVersion(&major_version, &minor_version, &fix_version)) {
+    return false;
+  }
+  if ((major_version > major) ||
+      ((major_version == major) &&
+           ((minor_version > minor) ||
+            ((minor_version == minor) && (fix_version >= fix))))) {
+    return true;
+  }
+  return false;
 }
 
 string MacUtil::GetServerDirectory() {

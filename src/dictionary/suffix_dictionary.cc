@@ -29,8 +29,11 @@
 
 #include "dictionary/suffix_dictionary.h"
 
+#include <cstring>
 #include <string>
+
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/singleton.h"
 #include "base/trie.h"
 #include "base/util.h"
@@ -54,9 +57,9 @@ Node *SuffixDictionary::LookupPredictive(
 Node *SuffixDictionary::LookupPredictiveWithLimit(
     const char *str, int size, const Limit &limit,
     NodeAllocatorInterface *allocator) const {
-  string input_key;
-  if (str != NULL && size > 0) {
-    input_key.assign(str, size);
+  if (str == NULL) {
+    DCHECK(size == 0);
+    str = "";
   }
 
   DCHECK(allocator);
@@ -65,7 +68,7 @@ Node *SuffixDictionary::LookupPredictiveWithLimit(
   for (size_t i = 0; i < suffix_tokens_size_; ++i) {
     const SuffixToken &token = suffix_tokens_[i];
     DCHECK(token.key);
-    if (!input_key.empty() && !Util::StartsWith(token.key, input_key)) {
+    if (str[0] && std::strncmp(token.key, str, size) != 0) {
       continue;
     }
     // check begin with
@@ -114,30 +117,4 @@ Node *SuffixDictionary::LookupReverse(
   return NULL;
 }
 
-namespace {
-// TODO(noriyukit): Move this embedded data to data manager.
-#include "dictionary/suffix_data.h"
-
-class MozcSuffixDictionary : public SuffixDictionary {
- public:
-  MozcSuffixDictionary() : SuffixDictionary(kSuffixTokens,
-                                            arraysize(kSuffixTokens)) {}
-  virtual ~MozcSuffixDictionary() {}
-};
-
-DictionaryInterface *g_suffix_dictionary = NULL;
-}   // namespace
-
-DictionaryInterface *SuffixDictionaryFactory::GetSuffixDictionary() {
-  if (g_suffix_dictionary == NULL) {
-    return Singleton<MozcSuffixDictionary>::get();
-  } else {
-    return g_suffix_dictionary;
-  }
-}
-
-void SuffixDictionaryFactory::SetSuffixDictionary(
-    DictionaryInterface *dictionary) {
-  g_suffix_dictionary = dictionary;
-}
 }  // namespace mozc

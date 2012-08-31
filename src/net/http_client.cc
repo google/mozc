@@ -34,12 +34,15 @@
 #if defined(OS_WINDOWS)
 #include <windows.h>
 #include <wininet.h>
+#elif defined(OS_ANDROID)
+#include "base/android_jni_proxy.h"
 #elif defined(HAVE_CURL)
 #include <curl/curl.h>
 #endif
 #endif  // MOZC_ENABLE_HTTP_CLIENT
 
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/singleton.h"
 #include "base/stopwatch.h"
 #include "base/util.h"
@@ -58,10 +61,8 @@ namespace {
 #if defined(MOZC_ENABLE_HTTP_CLIENT)
 class HTTPStream {
  public:
-  HTTPStream(string *output_string, ostream *output_stream,
-             size_t max_data_size)
+  HTTPStream(string *output_string, size_t max_data_size)
       : output_string_(output_string),
-        output_stream_(output_stream),
         max_data_size_(max_data_size),
         output_size_(0) {
     if (NULL != output_string_) {
@@ -85,11 +86,6 @@ class HTTPStream {
       output_string_->append(buf, size);
     }
 
-    if (output_stream_ != NULL) {
-      VLOG(2) << "Recived: " << size << " bytes to std::ostream";
-      output_stream_->write(buf, size);
-    }
-
     output_size_ += size;
 
     return size;
@@ -97,7 +93,6 @@ class HTTPStream {
 
  private:
   string  *output_string_;
-  ostream *output_stream_;
   size_t   max_data_size_;
   size_t   output_size_;
 };
@@ -177,8 +172,7 @@ bool RequestInternal(HTTPMethodType type,
                      const char *post_data,
                      size_t post_size,
                      const HTTPClient::Option &option,
-                     string *output_string,
-                     ostream *output_stream) {
+                     string *output_string) {
   if (option.timeout <= 0) {
     LOG(ERROR) << "timeout should not be negative nor 0";
     return false;
@@ -302,7 +296,6 @@ bool RequestInternal(HTTPMethodType type,
     }
   }
 
-
   if (!::HttpSendRequest(handle.get(),
                          NULL, 0,
                          (type == HTTP_POST) ? (LPVOID)post_data : NULL,
@@ -316,7 +309,6 @@ bool RequestInternal(HTTPMethodType type,
   } else {
     return false;
   }
-
 
   if (VLOG_IS_ON(2)) {
     char buf[8192];
@@ -343,16 +335,10 @@ bool RequestInternal(HTTPMethodType type,
                  << ::GetLastError() << " " << url;
       return false;
     }
-  }  // scope out |size|
-
-  if (kOKResponseCode != code) {
-    LOG(WARNING) << "status code is not 200: " << code << " " << url;
-    return false;
   }
 
   // make stream
-  HTTPStream stream(output_string, output_stream,
-                    option.max_data_size);
+  HTTPStream stream(output_string, option.max_data_size);
 
   if (option.include_header || type == HTTP_HEAD) {
     char buf[8192];
@@ -404,6 +390,11 @@ bool RequestInternal(HTTPMethodType type,
     }
   }
 
+  if (kOKResponseCode != code) {
+    LOG(WARNING) << "status code is not 200: " << code << " " << url;
+    return false;
+  }
+
   return true;
 }
 
@@ -414,13 +405,24 @@ bool RequestInternal(HTTPMethodType type,
                      const char *post_data,
                      size_t post_size,
                      const HTTPClient::Option &option,
-                     string *output_string,
-                     ostream *output_stream) {
+                     string *output_string) {
   return MacHTTPRequestHandler::Request(type, url,
                                         post_data, post_size, option,
-                                        output_string, output_stream);
+                                        output_string);
 }
 
+#elif defined(OS_ANDROID)
+bool RequestInternal(HTTPMethodType type,
+                     const string &url,
+                     const char *post_data,
+                     size_t post_size,
+                     const HTTPClient::Option &option,
+                     string *output_string) {
+  // TODO(matsuzakit): Put body field in HTTP response on |output_string|
+  //     if the request arrives to the server and fails.
+  return jni::JavaHttpClientProxy::Request(type, url, post_data, post_size,
+                                           option, output_string);
+}
 #elif defined(HAVE_CURL)
 
 class CurlInitializer {
@@ -456,8 +458,7 @@ bool RequestInternal(HTTPMethodType type,
                      const char *post_data,
                      size_t post_size,
                      const HTTPClient::Option &option,
-                     string *output_string,
-                     ostream *output_stream) {
+                     string *output_string) {
   if (option.timeout < 0) {
     LOG(ERROR) << "timeout should not be negative nor 0";
     return false;
@@ -471,8 +472,7 @@ bool RequestInternal(HTTPMethodType type,
     return false;
   }
 
-  HTTPStream stream(output_string, output_stream,
-                    option.max_data_size);
+  HTTPStream stream(output_string, option.max_data_size);
 
   string debug;
   if (VLOG_IS_ON(2)) {
@@ -483,7 +483,6 @@ bool RequestInternal(HTTPMethodType type,
 
   curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
   curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1);
-  curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1);
   curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1);
   curl_easy_setopt(curl, CURLOPT_AUTOREFERER, 1);
   curl_easy_setopt(curl, CURLOPT_USERAGENT, kUserAgent);
@@ -546,13 +545,11 @@ bool RequestInternal(HTTPMethodType type,
     LOG(WARNING) << "curl_easy_perform() failed: " << curl_easy_strerror(ret);
   }
 
-  if (result) {
-    int code = 0;
-    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
-    if (kOKResponseCode != code) {
-      LOG(WARNING) << "status code is not 200: " << code;
-      result = false;
-    }
+  int code = 0;
+  curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
+  if (kOKResponseCode != code) {
+    LOG(WARNING) << "status code is not 200: " << code;
+    result = false;
   }
 
   curl_easy_cleanup(curl);
@@ -566,11 +563,11 @@ bool RequestInternal(HTTPMethodType type,
 
   return result;
 }
-#else
+#else  // defined(HAVE_CURL)
 // None of OS_WINDOWS/OS_MACOSX/HAVE_CURL is defined.
 #error "HttpClient does not support your platform."
-#endif
-#else
+#endif  // defined(HAVE_CURL)
+#else  // defined(MOZC_ENABLE_HTTP_CLIENT)
 // MOZC_ENABLE_HTTP_CLIENT is not defined
 MOZC_COMPILE_MESSAGE("HTTPClient is disabled.");
 bool RequestInternal(HTTPMethodType type,
@@ -578,8 +575,7 @@ bool RequestInternal(HTTPMethodType type,
                      const char *post_data,
                      size_t post_size,
                      const HTTPClient::Option &option,
-                     string *output_string,
-                     ostream *output_stream) {
+                     string *output_string) {
   // Null implementation.
   LOG(ERROR) << "HttpClient is not enabled.";
   return false;
@@ -590,97 +586,23 @@ bool RequestInternal(HTTPMethodType type,
 
 class HTTPClientImpl: public HTTPClientInterface {
  public:
-  virtual bool Get(const string &url, string *output_string) const {
-    HTTPClient::Option option;
-    return RequestInternal(HTTP_GET, url, NULL, 0, option,
-                           output_string, NULL);
-  }
-
-  virtual bool Head(const string &url, string *output_string) const {
-    HTTPClient::Option option;
-    return RequestInternal(HTTP_HEAD, url, NULL, 0, option,
-                           output_string, NULL);
-  }
-
-  virtual bool Post(const string &url, const string &data,
-                    string *output_string) const {
-    HTTPClient::Option option;
-    return RequestInternal(HTTP_POST, url, data.data(), data.size(),
-                           option, output_string, NULL);
-  }
-
   virtual bool Get(const string &url, const HTTPClient::Option &option,
                    string *output_string) const {
     return RequestInternal(HTTP_GET, url, NULL, 0, option,
-                           output_string, NULL);
+                           output_string);
   }
 
   virtual bool Head(const string &url, const HTTPClient::Option &option,
                     string *output_string) const {
     return RequestInternal(HTTP_HEAD, url, NULL, 0, option,
-                           output_string, NULL);
+                           output_string);
   }
 
   virtual bool Post(const string &url, const string &data,
                     const HTTPClient::Option &option,
                     string *output_string) const {
     return RequestInternal(HTTP_POST, url, data.data(), data.size(),
-                           option, output_string, NULL);
-  }
-
-  virtual bool Post(const string &url, const char *data,
-                    size_t data_size,
-                    const HTTPClient::Option &option,
-                    string *output_string) const {
-    return RequestInternal(HTTP_POST, url, data, data_size, option,
-                           output_string, NULL);
-  }
-
-  // stream
-  virtual bool Get(const string &url, ostream *output_stream) const {
-    HTTPClient::Option option;
-    return RequestInternal(HTTP_GET, url, NULL, 0, option,
-                           NULL, output_stream);
-  }
-
-  virtual bool Head(const string &url, ostream *output_stream) const {
-    HTTPClient::Option option;
-    return RequestInternal(HTTP_HEAD, url, NULL, 0, option,
-                           NULL, output_stream);
-  }
-
-  virtual bool Post(const string &url, const string &data,
-                    ostream *output_stream) const {
-    HTTPClient::Option option;
-    return RequestInternal(HTTP_POST, url, data.data(), data.size(),
-                           option, NULL, output_stream);
-  }
-
-  virtual bool Get(const string &url, const HTTPClient::Option &option,
-                   ostream *output_stream) const {
-    return RequestInternal(HTTP_GET, url, NULL, 0, option,
-                           NULL, output_stream);
-  }
-
-  virtual bool Head(const string &url, const HTTPClient::Option &option,
-                    ostream *output_stream) const {
-    return RequestInternal(HTTP_HEAD, url, NULL, 0, option,
-                           NULL, output_stream);
-  }
-
-  virtual bool Post(const string &url, const string &data,
-                    const HTTPClient::Option &option,
-                    ostream *output_stream) const {
-    return RequestInternal(HTTP_POST, url, data.data(), data.size(), option,
-                           NULL, output_stream);
-  }
-
-  virtual bool Post(const string &url, const char *data,
-                    size_t data_size,
-                    const HTTPClient::Option &option,
-                    ostream *output_stream) const {
-    return RequestInternal(HTTP_POST, url, data, data_size, option,
-                           NULL, output_stream);
+                           option, output_string);
   }
 };
 
@@ -702,75 +624,30 @@ void HTTPClient::SetHTTPClientHandler(
 }
 
 bool HTTPClient::Get(const string &url, string *output_string) {
-  return GetHTTPClient().Get(url, output_string);
+  return GetHTTPClient().Get(url, Option(), output_string);
 }
 
 bool HTTPClient::Head(const string &url, string *output_string) {
-  return GetHTTPClient().Head(url, output_string);
+  return GetHTTPClient().Head(url, Option(), output_string);
 }
 
 bool HTTPClient::Post(const string &url, const string &data,
                       string *output_string) {
-  return GetHTTPClient().Post(url, data, output_string);
+  return GetHTTPClient().Post(url, data, Option(), output_string);
 }
 
-bool HTTPClient::Get(const string &url, const HTTPClient::Option &option,
+bool HTTPClient::Get(const string &url, const Option &option,
                      string *output_string) {
   return GetHTTPClient().Get(url, option, output_string);
 }
 
-bool HTTPClient::Head(const string &url, const HTTPClient::Option &option,
+bool HTTPClient::Head(const string &url, const Option &option,
                       string *output_string) {
   return GetHTTPClient().Head(url, option, output_string);
 }
 
 bool HTTPClient::Post(const string &url, const string &data,
-                      const HTTPClient::Option &option,
-                      string *output_string) {
+                      const Option &option, string *output_string) {
   return GetHTTPClient().Post(url, data, option, output_string);
-}
-
-bool HTTPClient::Post(const string &url, const char *data,
-                      size_t data_size,
-                      const HTTPClient::Option &option,
-                      string *output_string) {
-  return GetHTTPClient().Post(url, data, data_size, option, output_string);
-}
-
-// stream
-bool HTTPClient::Get(const string &url, ostream *output_stream) {
-  return GetHTTPClient().Get(url, output_stream);
-}
-
-bool HTTPClient::Head(const string &url, ostream *output_stream) {
-  return GetHTTPClient().Head(url, output_stream);
-}
-
-bool HTTPClient::Post(const string &url, const string &data,
-                      ostream *output_stream) {
-  return GetHTTPClient().Post(url, data, output_stream);
-}
-
-bool HTTPClient::Get(const string &url, const HTTPClient::Option &option,
-                     ostream *output_stream) {
-  return GetHTTPClient().Get(url, option, output_stream);
-}
-
-bool HTTPClient::Head(const string &url, const HTTPClient::Option &option,
-                      ostream *output_stream) {
-  return GetHTTPClient().Head(url, option, output_stream);
-}
-
-bool HTTPClient::Post(const string &url, const string &data,
-                      const HTTPClient::Option &option,
-                      ostream *output_stream) {
-  return GetHTTPClient().Post(url, data, option, output_stream);
-}
-
-bool HTTPClient::Post(const string &url, const char *data,
-                      size_t data_size,
-                      const HTTPClient::Option &option,
-                      ostream *output_stream) {
-  return GetHTTPClient().Post(url, data, data_size, option, output_stream);
 }
 }  // namespace mozc

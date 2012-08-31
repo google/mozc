@@ -106,9 +106,12 @@ TEST(NamedEventTest, IsOwnerTest) {
 TEST(NamedEventTest, NamedEventMultipleListenerTest) {
   Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
 
-  vector<NamedEventListenerThread> t(kNumRequests);
+  // mozc::Thread is not designed as value-semantics.
+  // So here we use pointers to maintain these instances.
+  vector<NamedEventListenerThread *> t(kNumRequests);
   for (int i = 0; i < kNumRequests; ++i) {
-    t[i].Start();
+    t[i] = new NamedEventListenerThread;
+    t[i]->Start();
   }
 
   // all |kNumRequests| listener events should be raised
@@ -118,7 +121,9 @@ TEST(NamedEventTest, NamedEventMultipleListenerTest) {
   EXPECT_TRUE(n.Notify());
 
   for (int i = 0; i < kNumRequests; ++i) {
-    t[i].Join();
+    t[i]->Join();
+    delete t[i];
+    t[i] = NULL;
   }
 }
 

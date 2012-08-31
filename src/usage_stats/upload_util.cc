@@ -29,6 +29,7 @@
 
 #include "usage_stats/upload_util.h"
 
+#include "base/number_util.h"
 #include "base/util.h"
 #include "net/http_client.h"
 
@@ -57,7 +58,7 @@ void UploadUtil::SetHeader(
     elapsed_sec = 0;
   }
   stat_header_ = type + "&" +
-      Util::SimpleItoa(static_cast<uint32>(elapsed_sec));
+      NumberUtil::SimpleItoa(static_cast<uint32>(elapsed_sec));
   optional_url_params_ = optional_url_params;
 }
 
@@ -67,7 +68,7 @@ void UploadUtil::AddCountValue(const string &name, uint32 count) {
   stat_values_.append("&");
   stat_values_.append(encoded_name);
   stat_values_.append(":c=");
-  stat_values_.append(Util::SimpleItoa(count));
+  stat_values_.append(NumberUtil::SimpleItoa(count));
 }
 
 void UploadUtil::AddTimingValue(const string &name, uint32 num_timings,
@@ -78,13 +79,13 @@ void UploadUtil::AddTimingValue(const string &name, uint32 num_timings,
   stat_values_.append("&");
   stat_values_.append(encoded_name);
   stat_values_.append(":t=");
-  stat_values_.append(Util::SimpleItoa(num_timings));
+  stat_values_.append(NumberUtil::SimpleItoa(num_timings));
   stat_values_.append(";");
-  stat_values_.append(Util::SimpleItoa(avg_time));
+  stat_values_.append(NumberUtil::SimpleItoa(avg_time));
   stat_values_.append(";");
-  stat_values_.append(Util::SimpleItoa(min_time));
+  stat_values_.append(NumberUtil::SimpleItoa(min_time));
   stat_values_.append(";");
-  stat_values_.append(Util::SimpleItoa(max_time));
+  stat_values_.append(NumberUtil::SimpleItoa(max_time));
 }
 
 void UploadUtil::AddIntegerValue(const string &name, int int_value) {
@@ -93,7 +94,7 @@ void UploadUtil::AddIntegerValue(const string &name, int int_value) {
   stat_values_.append("&");
   stat_values_.append(encoded_name);
   stat_values_.append(":i=");
-  stat_values_.append(Util::SimpleItoa(int_value));
+  stat_values_.append(NumberUtil::SimpleItoa(int_value));
 }
 
 void UploadUtil::AddBooleanValue(const string &name, bool boolean_value) {
@@ -131,5 +132,5 @@ bool UploadUtil::Upload() {
   VLOG(3) << response;
   return true;
 }
-}  // namespace mozc::usage_stats
+}  // namespace usage_stats
 }  // namespace mozc

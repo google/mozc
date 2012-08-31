@@ -55,7 +55,12 @@ namespace mozc {
 namespace renderer {
 
 namespace {
+
+#ifdef OS_WINDOWS
+const int kNumConnections   = 1;
+#else
 const int kNumConnections   = 10;
+#endif  // OS_WINDOWS or not
 const int kIPCServerTimeOut = 1000;
 const char kServiceName[]   = "renderer";
 

@@ -30,23 +30,21 @@
 #ifndef MOZC_CONVERTER_SPARSE_CONNECTOR_H_
 #define MOZC_CONVERTER_SPARSE_CONNECTOR_H_
 
-#include <ostream>
-#include <string>
+#include <vector>
 
-#include "base/base.h"
+#include "base/port.h"
 #include "converter/connector_interface.h"
 
 namespace mozc {
-
-class SparseArrayImage;
 
 class SparseConnector : public ConnectorInterface {
  public:
   SparseConnector(const char *ptr, size_t size);
   virtual ~SparseConnector();
 
-  // magic number for SparseConnector image.
-  static const uint16 kSparseConnectorMagic = 0x4141;
+  // Magic number for SparseConnector image.
+  static const uint16 kSparseConnectorMagic = 0xCDAB;
+
   // Special cost number to denote kInvalidCost for 1 byte cost encoding
   // mode.
   static const uint8 kInvalid1ByteCostValue = 255;
@@ -54,20 +52,17 @@ class SparseConnector : public ConnectorInterface {
   virtual int GetTransitionCost(uint16 rid, uint16 lid) const;
   virtual int GetResolution() const;
 
-  // It is better to store rid in higher bit as loop for rid is outside
-  // of lid loop.
-  inline static uint32 EncodeKey(int lid, int rid) {
-    return (rid << 16) + lid;
-  }
-
  private:
-  scoped_ptr<SparseArrayImage> array_image_;
-  const int16 *default_cost_;
+  class Row;
+
+  vector<Row *> rows_;
+  const uint16 *default_cost_;
   // Resolution of cost value. This value should be 1 for 2bytes cost mode.
   int resolution_;
 
   DISALLOW_COPY_AND_ASSIGN(SparseConnector);
 };
+
 }  // namespace mozc
 
 #endif  // MOZC_CONVERTER_SPARSE_CONNECTOR_H_

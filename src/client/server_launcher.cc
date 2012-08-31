@@ -42,6 +42,7 @@
 #include "base/base.h"
 #include "base/const.h"
 #include "base/file_stream.h"
+#include "base/logging.h"
 #include "base/process.h"
 #include "base/run_level.h"
 #include "base/util.h"
@@ -66,7 +67,7 @@ const uint32 kRetryIntervalForServer = 1000;
 // Try 20 times to check mozc_server is running
 const uint32 kTrial = 20;
 
-#ifdef _DEBUG
+#ifdef DEBUG
 // Load special flags for server.
 // This should be enabled on debug build
 const string LoadServerFlags() {
@@ -81,7 +82,7 @@ const string LoadServerFlags() {
   VLOG(1) << "New server flag: " << flags;
   return flags;
 }
-#endif
+#endif  // DEBUG
 }  // namespace
 
 // initialize default path
@@ -124,14 +125,14 @@ bool ServerLauncher::StartServer(ClientInterface *client) {
   }
 #endif
 
-#ifdef _DEBUG
+#ifdef DEBUG
   // In oreder to test the Session treatment (timeout/size constratins),
   // Server flags can be configurable on DEBUG build
   if (!arg.empty()) {
     arg += " ";
   }
   arg += LoadServerFlags();
-#endif  // _DEBUG
+#endif  // DEBUG
 
   NamedEventListener listener(kServerName);
   const bool listener_is_available = listener.IsAvailable();
@@ -264,5 +265,5 @@ void ServerLauncher::OnFatal(
     Process::LaunchErrorMessageDialog(error_type);
   }
 }
-}  // client
-}  // mozc
+}  // namespace client
+}  // namespace mozc

@@ -40,6 +40,7 @@
         '../converter/converter_test.gyp:converter_all_test',
         '../dictionary/dictionary_test.gyp:dictionary_all_test',
         '../dictionary/file/dictionary_file.gyp:dictionary_file_all_test',
+        '../dictionary/louds/louds_trie_adapter.gyp:dictionary_louds_all_test',
         '../dictionary/rx/rx_storage.gyp:rx_all_test',
         '../dictionary/system/system_dictionary.gyp:system_dictionary_all_test',
         '../handwriting/handwriting_test.gyp:handwriting_all_test',
@@ -53,6 +54,7 @@
         # Currently 'server_all_test' does not exist.
         # '../server/server.gyp:server_all_test',
         '../session/session_test.gyp:session_all_test',
+        '../storage/louds/louds.gyp:storage_louds_all_test',
         '../storage/storage.gyp:storage_all_test',
         '../sync/sync.gyp:sync_all_test',
         '../transliteration/transliteration.gyp:transliteration_all_test',
@@ -79,11 +81,6 @@
         ['OS=="linux" and use_libibus==1', {
           'dependencies': [
             '../unix/ibus/ibus.gyp:ibus_all_test',
-          ],
-        }],
-        ['OS=="linux" and use_libscim==1', {
-          'dependencies': [
-            '../unix/scim/scim.gyp:scim_all_test',
           ],
         }],
       ],

@@ -31,7 +31,10 @@
 
 #include <string>
 
+#ifndef OS_ANDROID
 #include "base/encryptor.h"
+#endif  // OS_ANDROID
+#include "base/logging.h"
 #include "base/password_manager.h"
 #include "storage/registry.h"
 #include "sync/oauth2.h"
@@ -61,13 +64,14 @@ string OAuth2Util::GetAuthenticateUri() {
   return uri;
 }
 
-bool OAuth2Util::RequestAccessToken(const string &auth_token) {
+bool OAuth2Util::RequestAccessToken(const string &auth_token,
+                                    OAuth2::Error *error) {
   string access_token;
   string refresh_token;
   if (!OAuth2::AuthorizeToken(request_token_uri_, client_->client_id_,
                               client_->client_secret_, redirect_uri_,
-                              auth_token, scope_, "", &access_token,
-                              &refresh_token)) {
+                              auth_token, scope_, "", error,
+                              &access_token, &refresh_token)) {
     LOG(ERROR) << "Authorization in " << authenticate_uri_ << " failed";
     return false;
   }
@@ -78,15 +82,15 @@ bool OAuth2Util::RequestAccessToken(const string &auth_token) {
   return true;
 }
 
-bool OAuth2Util::RefreshAccessToken() {
+bool OAuth2Util::RefreshAccessToken(OAuth2::Error *error) {
   string access_token;
   string refresh_token;
   if (!GetTokens(&access_token, &refresh_token)) {
     return false;
   }
   if (!OAuth2::RefreshTokens(request_token_uri_, client_->client_id_,
-                             client_->client_secret_, scope_, &refresh_token,
-                             &access_token)) {
+                             client_->client_secret_, scope_, error,
+                             &refresh_token, &access_token)) {
     LOG(ERROR) << "Refreshtokens failed";
     return false;
   }
@@ -201,6 +205,9 @@ bool OAuth2Util::RegisterTokens(const string &access_token,
 }
 
 bool OAuth2Util::EncryptString(const string &plain, string *crypt) {
+#ifdef OS_ANDROID
+  *crypt = plain;
+#else
   string password;
   if (!PasswordManager::GetPassword(&password)) {
     LOG(ERROR) << "PasswordManager::GetPassword() failed";
@@ -222,10 +229,14 @@ bool OAuth2Util::EncryptString(const string &plain, string *crypt) {
     LOG(ERROR) << "Encryptor::EncryptString() failed";
     return false;
   }
+#endif  // OS_ANDROID
   return true;
 }
 
 bool OAuth2Util::DecryptString(const string &crypt, string *plain) {
+#ifdef OS_ANDROID
+  *plain = crypt;
+#else
   string password;
   if (!PasswordManager::GetPassword(&password)) {
     LOG(ERROR) << "PasswordManager::GetPassword() failed";
@@ -247,6 +258,7 @@ bool OAuth2Util::DecryptString(const string &crypt, string *plain) {
     LOG(ERROR) << "Encryptor::DecryptString() failed";
     return false;
   }
+#endif  // OS_ANDROID
   return true;
 }
 

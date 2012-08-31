@@ -30,9 +30,10 @@
 #include "sync/contact_syncer.h"
 
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/util.h"
-#include "config/config_handler.h"
 #include "config/config.pb.h"
+#include "config/config_handler.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
 #include "storage/registry.h"
@@ -50,8 +51,7 @@ using config::Config;
 using config::ConfigHandler;
 using config::SyncConfig;
 
-typedef user_dictionary::UserDictionaryStorage::UserDictionary UserDictionary;
-typedef UserDictionary::Entry Entry;
+using user_dictionary::UserDictionary;
 
 namespace {
 const char kGdataLastDownloadTimeKey[] = "gdata.last_download_time";
@@ -138,11 +138,12 @@ bool ContactSyncer::Download(user_dictionary::UserDictionaryStorage *storage,
   params.push_back(make_pair("v", "3.0"));
   params.push_back(make_pair("max-results", "999999"));
   params.push_back(make_pair("updated-min", timestamp));
-  mozc::Util::AppendCGIParams(params, &resource_uri);
+  Util::AppendCGIParams(params, &resource_uri);
 
   string response;
+  OAuth2::Error error;
   if (!oauth2_util_->RequestResource(resource_uri, &response) &&
-      (!oauth2_util_->RefreshAccessToken() ||
+      (!oauth2_util_->RefreshAccessToken(&error) ||
        !oauth2_util_->RequestResource(resource_uri, &response))) {
     return false;
   }

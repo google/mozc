@@ -27,17 +27,40 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <string.h>
-#include <cmath>
 #include "storage/existence_filter.h"
 
+#include <cstring>
+#include <cmath>
+
+#include "base/base.h"
+#include "base/logging.h"
+
 namespace mozc {
+namespace storage {
+namespace {
+
+// Rotate the value in 'original' by 'num_bits'
+inline uint64 RotateLeft64(uint64 original, int num_bits) {
+  // TODO(team): we may want to use rotl64 depending on the platform.
+  DCHECK(0 < num_bits && num_bits < 64) << num_bits;
+  return (original << (64 - num_bits)) | (original >> num_bits);
+}
+
+inline uint32 BitsToWords(uint32 bits) {
+  uint32 words = (bits + 31) >> 5;
+  if (bits > 0 && words == 0) {
+    words = 1 << (32 - 5);  // possible overflow
+  }
+  return words;
+}
+
+}  // namespace
 
 class ExistenceFilter::BlockBitmap {
  public:
   explicit BlockBitmap(uint32 length);
   BlockBitmap(uint32 length, bool is_mutable);
-  virtual ~BlockBitmap();
+  ~BlockBitmap();
 
   size_t size() const;
   void Clear();
@@ -213,26 +236,15 @@ bool ExistenceFilter::BlockBitmap::GetMutableFragment(uint32 *iter,
                                                       char ***ptr,
                                                       size_t *size) {
   const uint32 b = *iter;
-  (*iter)++;
-  if (b < num_blocks_) {
-    *ptr = reinterpret_cast<char **>(&block_[b]);
-    *size = (b == num_blocks_-1) ? bytes_in_last_ : kBlockBytes;
-    return true;
-  } else {
-    LOG(WARNING) << "out of range iterator";
+  if (b >= num_blocks_) {
+    // |iter| reached to the end of the block.
     return false;
   }
-}
 
-/* static */
-uint64 ExistenceFilter::RotateLeft64(uint64 original, int num_bits) {
-  int num_bot_bits = num_bits;
-  uint64 mask_bits = (1 << num_bot_bits) - 1;
-  uint64 old_bot_part = original & mask_bits;
-  uint64 new_bot_part = original >> num_bot_bits;
-  uint64 new_top_part = old_bot_part << (64 - num_bot_bits);
-  uint64 rotated_original = new_bot_part | new_top_part;
-  return rotated_original;
+  (*iter)++;
+  *ptr = reinterpret_cast<char **>(&block_[b]);
+  *size = (b == num_blocks_-1) ? bytes_in_last_ : kBlockBytes;
+  return true;
 }
 
 bool ExistenceFilter::Exists(uint64 hash) const {
@@ -368,4 +380,6 @@ ExistenceFilter* ExistenceFilter::Read(const char *buf, size_t size) {
   }
   return filter;
 }
+
+}  // namespace storage
 }  // namespace mozc

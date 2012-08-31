@@ -37,24 +37,33 @@
 #include "base/base.h"
 #include "base/coordinates.h"
 #include "composer/composer.h"
-#include "session/commands.pb.h"
 #include "session/session_interface.h"
-// Need to include it for "ImeContext::State".
-#include "session/internal/ime_context.h"
 #include "transliteration/transliteration.h"
 // for FRIEND_TEST()
 #include "testing/base/public/gunit_prod.h"
 
 namespace mozc {
+namespace commands {
+class ApplicationInfo;
+class Capability;
+class Command;
+class Input;
+class KeyEvent;
+}  // namespace commands
+
 namespace composer {
 class Table;
 }  // namespace composer
 
+class EngineInterface;
+
 namespace session {
+class ImeContext;
 class SessionCursorManageTest;
+
 class Session : public SessionInterface {
  public:
-  Session();
+  explicit Session(EngineInterface *engine);
   virtual ~Session();
 
   virtual bool SendKey(commands::Command *command);
@@ -217,14 +226,16 @@ class Session : public SessionInterface {
 
   virtual void ReloadConfig();
 
+  virtual void SetRequest(const commands::Request &request);
+
   virtual void SetTable(const composer::Table *table);
 
   // Set client capability for this session.  Used by unittest.
   virtual void set_client_capability(const commands::Capability &capability);
 
   // Set application information for this session.
-  virtual void set_application_info(const commands::ApplicationInfo
-                                    &application_info);
+  virtual void set_application_info(
+      const commands::ApplicationInfo &application_info);
 
   // Get application information
   virtual const commands::ApplicationInfo &application_info() const;
@@ -253,6 +264,13 @@ class Session : public SessionInterface {
   FRIEND_TEST(SessionTest, IsFullWidthInsertSpace);
   FRIEND_TEST(SessionTest, RequestUndo);
 
+  // Underlying conversion engine for this session. Please note that:
+  //   i) Session doesn't own the pointer.
+  //  ii) Although the pointer itself is const, the state of underlying
+  //      converter will change because it manages user history, user
+  //      dictionary, etc.
+  const EngineInterface *engine_;
+
   scoped_ptr<ImeContext> context_;
   scoped_ptr<ImeContext> prev_context_;
 
@@ -261,9 +279,6 @@ class Session : public SessionInterface {
   void PushUndoContext();
   void PopUndoContext();
   void ClearUndoContext();
-
-  // Set session state to the given state and also update related status.
-  void SetSessionState(ImeContext::State state);
 
   // Return true if full width space is preferred in the given new input
   // state than half width space. When |input| does not have new input mode,
@@ -339,9 +354,6 @@ class Session : public SessionInterface {
   // Stores received caret location into caret_rectangle_.
   bool SetCaretLocation(commands::Command *command);
 
-  // TODO(nona): Move following rectangle state to ImeContext.
-  commands::Rectangle composition_rectangle_;
-  commands::Rectangle caret_rectangle_;
   DISALLOW_COPY_AND_ASSIGN(Session);
 };
 

@@ -32,6 +32,7 @@
 #include <sstream>
 #include <vector>
 #include "base/config_file_stream.h"
+#include "base/util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "session/commands.pb.h"
@@ -46,7 +47,25 @@ DECLARE_string(test_tmpdir);
 namespace mozc {
 namespace keymap {
 
-TEST(KeyMap, AddRule) {
+class KeyMapTest : public testing::Test {
+ protected:
+  virtual void SetUp() {
+    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+
+    config::Config config;
+    config::ConfigHandler::GetDefaultConfig(&config);
+    config::ConfigHandler::SetConfig(config);
+  }
+
+  virtual void TearDown() {
+    // just in case, reset the config in test_tmpdir
+    config::Config config;
+    config::ConfigHandler::GetDefaultConfig(&config);
+    config::ConfigHandler::SetConfig(config);
+  }
+};
+
+TEST_F(KeyMapTest, AddRule) {
   KeyMap<PrecompositionState::Commands> keymap;
   commands::KeyEvent key_event;
   // 'a'
@@ -81,7 +100,7 @@ TEST(KeyMap, AddRule) {
   EXPECT_TRUE(keymap.AddRule(key_event, PrecompositionState::INSERT_CHARACTER));
 }
 
-TEST(KeyMap, GetCommand) {
+TEST_F(KeyMapTest, GetCommand) {
   {
     KeyMap<PrecompositionState::Commands> keymap;
     commands::KeyEvent init_key_event;
@@ -147,7 +166,7 @@ TEST(KeyMap, GetCommand) {
   }
 }
 
-TEST(KeyMap, GetCommandKeyStub) {
+TEST_F(KeyMapTest, GetCommandKeyStub) {
   KeyMap<PrecompositionState::Commands> keymap;
   commands::KeyEvent init_key_event;
   init_key_event.set_special_key(commands::KeyEvent::ASCII);
@@ -161,7 +180,7 @@ TEST(KeyMap, GetCommandKeyStub) {
   EXPECT_EQ(PrecompositionState::INSERT_CHARACTER, command);
 }
 
-TEST(KeyMap, GetKeyMapFileName) {
+TEST_F(KeyMapTest, GetKeyMapFileName) {
   EXPECT_STREQ("system://atok.tsv",
                KeyMapManager::GetKeyMapFileName(config::Config::ATOK));
   EXPECT_STREQ("system://mobile.tsv",
@@ -174,7 +193,7 @@ TEST(KeyMap, GetKeyMapFileName) {
                KeyMapManager::GetKeyMapFileName(config::Config::CUSTOM));
 }
 
-TEST(KeyMap, DefaultKeyBindings) {
+TEST_F(KeyMapTest, DefaultKeyBindings) {
   KeyMapManager manager;
 
   istringstream iss("", istringstream::in);
@@ -213,7 +232,7 @@ TEST(KeyMap, DefaultKeyBindings) {
   }
 }
 
-TEST(KeyMap, LoadStreamWithErrors) {
+TEST_F(KeyMapTest, LoadStreamWithErrors) {
   KeyMapManager manager;
   vector<string> errors;
   scoped_ptr<istream> is(ConfigFileStream::LegacyOpen("system://atok.tsv"));
@@ -236,7 +255,7 @@ TEST(KeyMap, LoadStreamWithErrors) {
   EXPECT_TRUE(errors.empty());
 }
 
-TEST(KeyMap, GetName) {
+TEST_F(KeyMapTest, GetName) {
   KeyMapManager manager;
   {
     // Direct
@@ -292,7 +311,7 @@ TEST(KeyMap, GetName) {
   }
 }
 
-TEST(KeyMap, DirectModeDoesNotSupportInsertSpace) {
+TEST_F(KeyMapTest, DirectModeDoesNotSupportInsertSpace) {
   // InsertSpace, InsertAlternateSpace, InsertHalfSpace, and InsertFullSpace
   // are not supported in direct mode.
   KeyMapManager manager;
@@ -306,7 +325,7 @@ TEST(KeyMap, DirectModeDoesNotSupportInsertSpace) {
   EXPECT_TRUE(names.end() == names.find("InsertFullSpace"));
 }
 
-TEST(KeyMap, ShiftTabToConvertPrev) {
+TEST_F(KeyMapTest, ShiftTabToConvertPrev) {
   // http://b/2973471
   // Shift+TAB does not work on a suggestion window
 
@@ -338,7 +357,7 @@ TEST(KeyMap, ShiftTabToConvertPrev) {
   }
 }
 
-TEST(KeyMap, LaunchToolTest) {
+TEST_F(KeyMapTest, LaunchToolTest) {
   config::Config config;
   commands::KeyEvent key_event;
   PrecompositionState::Commands conv_command;
@@ -367,7 +386,7 @@ TEST(KeyMap, LaunchToolTest) {
   }
 }
 
-TEST(KeyMap, Undo) {
+TEST_F(KeyMapTest, Undo) {
   PrecompositionState::Commands command;
   commands::KeyEvent key_event;
 
@@ -396,7 +415,7 @@ TEST(KeyMap, Undo) {
   }
 }
 
-TEST(KeyMap, Reconvert) {
+TEST_F(KeyMapTest, Reconvert) {
   DirectInputState::Commands direct_command;
   PrecompositionState::Commands precomposition_command;
   commands::KeyEvent key_event;
@@ -436,7 +455,7 @@ TEST(KeyMap, Reconvert) {
   }
 }
 
-TEST(KeyMap, ReloadWithKeymap) {
+TEST_F(KeyMapTest, ReloadWithKeymap) {
   KeyMapManager manager;
   config::Config::SessionKeymap keymap_setting;
   commands::KeyEvent key_event;
@@ -458,7 +477,7 @@ TEST(KeyMap, ReloadWithKeymap) {
   }
 }
 
-TEST(KeyMap, AddCommand) {
+TEST_F(KeyMapTest, AddCommand) {
   KeyMapManager manager;
   commands::KeyEvent key_event;
   const char kKeyEvent[] = "Ctrl Shift Insert";
@@ -482,7 +501,7 @@ TEST(KeyMap, AddCommand) {
   }
 }
 
-TEST(KeyMap, ZeroQuerySuggestion) {
+TEST_F(KeyMapTest, ZeroQuerySuggestion) {
   KeyMapManager manager;
   EXPECT_TRUE(manager.AddCommand("ZeroQuerySuggestion",
                                  "ESC", "Cancel"));
@@ -513,7 +532,7 @@ TEST(KeyMap, ZeroQuerySuggestion) {
   EXPECT_EQ(PrecompositionState::REVERT, command);
 }
 
-TEST(KeyMap, CapsLock) {
+TEST_F(KeyMapTest, CapsLock) {
   // MSIME
   KeyMapManager *manager =
       KeyMapFactory::GetKeyMapManager(config::Config::MSIME);
@@ -525,7 +544,7 @@ TEST(KeyMap, CapsLock) {
   EXPECT_EQ(ConversionState::INSERT_CHARACTER, conv_command);
 }
 
-TEST(KeyMap, ShortcutKeysWithCapsLock_Issue5627459) {
+TEST_F(KeyMapTest, ShortcutKeysWithCapsLock_Issue5627459) {
   // MSIME
   KeyMapManager *manager =
       KeyMapFactory::GetKeyMapManager(config::Config::MSIME);

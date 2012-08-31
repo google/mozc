@@ -33,7 +33,7 @@
 #include "session/commands.pb.h"
 #include "win32/ime/ime_deleter.h"
 #include "win32/ime/ime_keyboard.h"
-#include "win32/ime/ime_keyevent_handler.h"
+#include "win32/ime/ime_state.h"
 
 namespace mozc {
 namespace win32 {

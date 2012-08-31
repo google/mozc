@@ -40,10 +40,11 @@
 
 #include "base/base.h"
 #include "base/file_stream.h"
+#include "base/logging.h"
 #include "base/singleton.h"
 #include "base/util.h"
-#include "config/config_handler.h"
 #include "config/config.pb.h"
+#include "config/config_handler.h"
 
 DECLARE_string(log_dir);
 DEFINE_int32(sync_verbose_level, 1,

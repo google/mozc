@@ -45,6 +45,7 @@
 #include "base/scoped_handle.h"
 #include "base/scoped_ptr.h"
 #include "base/util.h"
+#include "base/win_util.h"
 #include "win32/base/imm_registrar.h"
 #include "win32/base/input_dll.h"
 #include "win32/base/keyboard_layout_id.h"
@@ -58,6 +59,11 @@ namespace {
 const wchar_t kCUASKey[] = L"Software\\Microsoft\\CTF\\SystemShared";
 const wchar_t kCUASValueName[] = L"CUAS";
 
+// Timeout value used by a work around against b/5765783. As b/6165722
+// this value is determined to be:
+// - smaller than the default time-out used in IsHungAppWindow API.
+// - similar to the same timeout used by TSF.
+const uint32 kWaitForAsmCacheReadyEventTimeout = 4500;  // 4.5 sec.
 
 bool GetDefaultLayout(LAYOUTORTIPPROFILE *profile) {
   vector<LAYOUTORTIPPROFILE> profiles;
@@ -234,14 +240,14 @@ bool ImeUtil::IsCtfmonRunning() {
 
   // If TSF is enabled and this process has created a window, msctf.dll should
   // be loaded.
-  HMODULE hMsctfDll = Util::GetSystemModuleHandle(L"msctf.dll");
+  HMODULE hMsctfDll = WinUtil::GetSystemModuleHandle(L"msctf.dll");
   if (!hMsctfDll) {
-    LOG(ERROR) << "Util::GetSystemModuleHandle failed";
+    LOG(ERROR) << "WinUtil::GetSystemModuleHandle failed";
     return false;
   }
 
   PFN_TF_ISCTFMONRUNNING pfnTF_IsCtfmonRunning =
-      GetProcAddress(hMsctfDll, "TF_IsCtfmonRunning");
+      ::GetProcAddress(hMsctfDll, "TF_IsCtfmonRunning");
   if (!pfnTF_IsCtfmonRunning) {
     LOG(ERROR) << "GetProcAddress for TF_IsCtfmonRunning failed";
     return false;
@@ -272,6 +278,9 @@ bool ImeUtil::ActivateForCurrentSession() {
   const HKL mozc_hkl = ::LoadKeyboardLayout(
       mozc_hkld.ToString().c_str(), KLF_ACTIVATE);
 
+  if (!WaitForAsmCacheReady(kWaitForAsmCacheReadyEventTimeout)) {
+    LOG(ERROR) << "ImeUtil::WaitForAsmCacheReady failed.";
+  }
 
   // Broadcasting WM_INPUTLANGCHANGEREQUEST so that existing process in the
   // current session will change their input method to |hkl|. This mechanism
@@ -287,6 +296,40 @@ bool ImeUtil::ActivateForCurrentSession() {
       reinterpret_cast<LPARAM>(mozc_hkl)));
 }
 
+// Wait for "MSCTF.AsmCacheReady.<desktop name><session #>" event signal to
+// work around b/5765783.
+bool ImeUtil::WaitForAsmCacheReady(uint32 timeout_msec) {
+  wstring event_name;
+  if (Util::UTF8ToWide(Util::GetMSCTFAsmCacheReadyEventName(),
+                       &event_name) == 0) {
+    LOG(ERROR) << "Failed to compose event name.";
+    return false;
+  }
+  ScopedHandle handle(
+      ::OpenEventW(SYNCHRONIZE, FALSE, event_name.c_str()));
+  if (handle.get() == NULL) {
+    // Event not found.
+    // Returns true assuming that we need not to wait anything.
+    return true;
+  }
+  const DWORD result = ::WaitForSingleObject(handle.get(), timeout_msec);
+  switch (result) {
+    case WAIT_OBJECT_0:
+      return true;
+    case WAIT_TIMEOUT:
+      LOG(ERROR) << "WaitForSingleObject timeout. timeout_msec: "
+                 << timeout_msec;
+      return false;
+    case WAIT_ABANDONED:
+      LOG(ERROR) << "Event was abandoned";
+      return false;
+    default:
+      LOG(ERROR) << "WaitForSingleObject with unknown error: " << result;
+      return false;
+  }
+  LOG(FATAL) << "Should never reach here.";
+  return false;
+}
 
 }  // namespace win32
 }  // namespace mozc

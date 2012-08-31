@@ -37,7 +37,8 @@
 #include <vector>
 
 #include "base/base.h"
-#include "base/singleton.h"
+#include "base/logging.h"
+#include "base/stl_util.h"
 #include "base/util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
@@ -45,14 +46,11 @@
 #include "converter/key_corrector.h"
 #include "converter/lattice.h"
 #include "converter/nbest_generator.h"
-#include "converter/segmenter.h"
 #include "converter/segmenter_interface.h"
 #include "converter/segments.h"
-#include "data_manager/user_pos_manager.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
-#include "dictionary/suffix_dictionary.h"
 #include "dictionary/suppression_dictionary.h"
 
 DECLARE_bool(disable_lattice_cache);
@@ -343,32 +341,6 @@ ConnectionTypeHandler::GetConnectionTypeForUnittest(
   }
 
   return CONNECTED;
-}
-
-// Constructor for keeping compatibility
-// TODO(team): Change code to use another constractor and
-
-// specify implementations.
-ImmutableConverterImpl::ImmutableConverterImpl()
-    : dictionary_(DictionaryFactory::GetDictionary()),
-      suffix_dictionary_(SuffixDictionaryFactory::GetSuffixDictionary()),
-      suppression_dictionary_(Singleton<SuppressionDictionary>::get()),
-      connector_(ConnectorFactory::GetConnector()),
-      segmenter_(Singleton<Segmenter>::get()),
-      pos_matcher_(UserPosManager::GetUserPosManager()->GetPOSMatcher()),
-      pos_group_(UserPosManager::GetUserPosManager()->GetPosGroup()),
-      first_name_id_(pos_matcher_->GetFirstNameId()),
-      last_name_id_(pos_matcher_->GetLastNameId()),
-      number_id_(pos_matcher_->GetNumberId()),
-      unknown_id_(pos_matcher_->GetUnknownId()),
-      last_to_first_name_transition_cost_(
-          connector_->GetTransitionCost(last_name_id_, first_name_id_)) {
-  DCHECK(dictionary_);
-  DCHECK(suffix_dictionary_);
-  DCHECK(connector_);
-  DCHECK(segmenter_);
-  DCHECK(pos_matcher_);
-  DCHECK(pos_group_);
 }
 
 ImmutableConverterImpl::ImmutableConverterImpl(
@@ -1070,58 +1042,85 @@ void ImmutableConverterImpl::PredictionViterbiSub(Segments *segments,
                                                   int calc_begin_pos,
                                                   int calc_end_pos) const {
   CHECK_LE(calc_begin_pos, calc_end_pos);
-  for (size_t pos = calc_begin_pos; pos <= calc_end_pos; ++pos) {
-    // Mapping from lnode's rid to (cost, Node) of best way/cost
-    map<int, pair<int, Node*> > lbest;
 
+  // Mapping from lnode's rid to (cost, Node) of best way/cost, and vice versa.
+  // Note that, the average number of lid/rid variation is less than 30 in
+  // most cases. So, in order to avoid too many allocations for internal
+  // nodes of std::map, we use vector of key-value pairs.
+  typedef vector<pair<int, pair<int, Node*> > > BestMap;
+  typedef OrderBy<FirstKey, Less> OrderByFirst;
+  BestMap lbest, rbest;
+  lbest.reserve(128);
+  rbest.reserve(128);
+
+  const pair<int, Node*> kInvalidValue(INT_MAX, static_cast<Node*>(NULL));
+
+  for (size_t pos = calc_begin_pos; pos <= calc_end_pos; ++pos) {
+    lbest.clear();
     for (Node *lnode = lattice.end_nodes(pos);
          lnode != NULL; lnode = lnode->enext) {
       const int rid = lnode->rid;
-      map<int, pair<int, Node*> >::iterator it_best = lbest.find(rid);
-      if (it_best == lbest.end()) {
-        lbest[rid] = pair<int, Node*>(INT_MAX, static_cast<Node*>(NULL));
-        it_best = lbest.find(rid);
-      }
-      if (lnode->cost < it_best->second.first) {
-        it_best->second.first = lnode->cost;
-        it_best->second.second = lnode;
+      BestMap::value_type key(rid, kInvalidValue);
+      BestMap::iterator iter =
+          lower_bound(lbest.begin(), lbest.end(), key, OrderByFirst());
+      if (iter == lbest.end() || iter->first != rid) {
+        lbest.insert(
+            iter, BestMap::value_type(rid, make_pair(lnode->cost, lnode)));
+      } else if (lnode->cost < iter->second.first) {
+        iter->second.first = lnode->cost;
+        iter->second.second = lnode;
       }
     }
 
-    map<int, int> rbest_cost;
-    for (Node *rnode = lattice.begin_nodes(pos);
-         rnode != NULL; rnode = rnode->bnext) {
+    if (lbest.empty()) {
+      continue;
+    }
+
+    rbest.clear();
+    Node *rnode_begin = lattice.begin_nodes(pos);
+    for (Node *rnode = rnode_begin; rnode != NULL; rnode = rnode->bnext) {
       if (rnode->end_pos > calc_end_pos) {
         continue;
       }
-      rbest_cost[rnode->lid] = INT_MAX;
+      BestMap::value_type key(rnode->lid, kInvalidValue);
+      BestMap::iterator iter =
+          lower_bound(rbest.begin(), rbest.end(), key, OrderByFirst());
+      if (iter == rbest.end() || iter->first != rnode->lid) {
+        rbest.insert(iter, key);
+      }
     }
 
-    map<int, Node*> rbest_prev_node;
-    for (map<int, pair<int, Node*> >::iterator lt = lbest.begin();
-         lt != lbest.end(); ++lt) {
-      for (map<int, int>::iterator rt = rbest_cost.begin();
-           rt != rbest_cost.end(); ++rt) {
-        const int cost = lt->second.first +
-            connector_->GetTransitionCost(lt->first, rt->first);
-        if (cost < rt->second) {
-          rbest_prev_node[rt->first] = lt->second.second;
-          rt->second = cost;
+    if (rbest.empty()) {
+      continue;
+    }
+
+    for (BestMap::iterator liter = lbest.begin();
+         liter != lbest.end(); ++liter) {
+      for (BestMap::iterator riter = rbest.begin();
+           riter != rbest.end(); ++riter) {
+        const int cost = liter->second.first +
+            connector_->GetTransitionCost(liter->first, riter->first);
+        if (cost < riter->second.first) {
+          riter->second.first = cost;
+          riter->second.second = liter->second.second;
         }
       }
     }
 
-    for (Node *rnode = lattice.begin_nodes(pos);
-         rnode != NULL; rnode = rnode->bnext) {
+    for (Node *rnode = rnode_begin; rnode != NULL; rnode = rnode->bnext) {
       if (rnode->end_pos > calc_end_pos) {
         continue;
       }
-      const int lid = rnode->lid;
-      if (rbest_prev_node[lid] == NULL) {
+      BestMap::value_type key(rnode->lid, kInvalidValue);
+      BestMap::iterator iter =
+          lower_bound(rbest.begin(), rbest.end(), key, OrderByFirst());
+      if (iter == rbest.end() || iter->first != rnode->lid ||
+          iter->second.second == NULL) {
         continue;
       }
-      rnode->prev = rbest_prev_node[lid];
-      rnode->cost = rbest_cost[lid] + rnode->wcost;
+
+      rnode->cost = iter->second.first + rnode->wcost;
+      rnode->prev = iter->second.second;
     }
   }
 }
@@ -1460,6 +1459,7 @@ bool ImmutableConverterImpl::MakeLatticeNodesForHistorySegments(
         new_node->lid = compound_node->lid;
         new_node->bnext = NULL;
         new_node->node_type = Node::NOR_NODE;
+        new_node->attributes |= Segment::Candidate::CONTEXT_SENSITIVE;
 
         // New cost recalcuration:
         //
@@ -1640,24 +1640,28 @@ bool ImmutableConverterImpl::MakeSegments(Segments *segments,
   const size_t history_segments_size = segments->history_segments_size();
   const size_t old_segments_size = segments->segments_size();
 
+  NBestGenerator nbest_generator(
+      suppression_dictionary_, segmenter_, connector_, pos_matcher_,
+      &lattice, is_prediction);
+
   string key;
   for (Node *node = prev->next; node->next != NULL; node = node->next) {
     key.append(node->key);
     const Segment &old_segment = segments->segment(group[node->begin_pos]);
-    // Condition 1: prev->next is NOT a boundary. Very strong constraint
+    // Condition 1: prev->next is NOT a boundary. Very strong constraint.
     if (node->next->node_type != Node::EOS_NODE &&
         old_segment.segment_type() == Segment::FIXED_BOUNDARY &&
         group[node->begin_pos] == group[node->next->begin_pos]) {
       // do nothing
-      // Condition 2: prev->next is a boundary. Very strong constraint
-    } else if (node->node_type == Node::CON_NODE ||
-               (node->next->node_type != Node::EOS_NODE &&
-                group[node->begin_pos] != group[node->next->begin_pos]) ||
-               segmenter_->IsBoundary(node, node->next, is_prediction)) {
-      scoped_ptr<NBestGenerator> nbest(new NBestGenerator(
-          suppression_dictionary_, segmenter_, connector_, pos_matcher_,
-          prev, node->next, &lattice, is_prediction));
-      CHECK(nbest.get());
+      continue;
+    }
+
+    // Condition 2: prev->next is a boundary. Very strong constraint.
+    if (node->node_type == Node::CON_NODE ||
+        (node->next->node_type != Node::EOS_NODE &&
+         group[node->begin_pos] != group[node->next->begin_pos]) ||
+        segmenter_->IsBoundary(node, node->next, is_prediction)) {
+      nbest_generator.Reset(prev, node->next);
       Segment *segment = is_prediction ?
           segments->mutable_segment(segments->segments_size() - 1) :
           segments->add_segment();
@@ -1666,8 +1670,8 @@ bool ImmutableConverterImpl::MakeSegments(Segments *segments,
         segment->clear_candidates();
         segment->set_key(key);
       }
-      ExpandCandidates(nbest.get(), segment, segments->request_type(),
-                       expand_size);
+      ExpandCandidates(
+          &nbest_generator, segment, segments->request_type(), expand_size);
       InsertDummyCandidates(segment, expand_size);
       if (node->node_type == Node::CON_NODE) {
         segment->set_segment_type(Segment::FIXED_VALUE);
@@ -1676,8 +1680,10 @@ bool ImmutableConverterImpl::MakeSegments(Segments *segments,
       }
       key.clear();
       prev = node;
+      continue;
     }
-    // otherwise, not a boundary
+
+    // Otherwise, not a boundary.
   }
 
   // erase old segments
@@ -1726,24 +1732,5 @@ bool ImmutableConverterImpl::Convert(Segments *segments) const {
   }
 
   return true;
-}
-
-namespace {
-ImmutableConverterInterface *g_immutable_converter = NULL;
-
-}  // namespace
-
-ImmutableConverterInterface *
-ImmutableConverterFactory::GetImmutableConverter() {
-  if (g_immutable_converter == NULL) {
-    return Singleton<ImmutableConverterImpl>::get();
-  } else {
-    return g_immutable_converter;
-  }
-}
-
-void ImmutableConverterFactory::SetImmutableConverter(
-    ImmutableConverterInterface *immutable_converter) {
-  g_immutable_converter = immutable_converter;
 }
 }  // namespace mozc

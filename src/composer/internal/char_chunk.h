@@ -135,15 +135,6 @@ class CharChunk {
   // Test only
   void set_ambiguous(const string &ambiguous);
 
-  enum Status {
-    NO_CONVERSION = 1,
-    NO_RAW = 2,
-  };
-  void set_status(uint32 status_mask);
-  void add_status(uint32 status_mask);
-  bool has_status(uint32 status_mask) const;
-  void clear_status();
-
   CharChunk *Clone() const;
 
   // Test only
@@ -159,7 +150,6 @@ class CharChunk {
   string conversion_;
   string pending_;
   string ambiguous_;
-  uint32 status_mask_;
   TableAttributes attributes_;
 };
 

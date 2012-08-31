@@ -32,9 +32,12 @@
 #include <cctype>
 #include <string>
 
+#include "base/base.h"
+#include "base/logging.h"
+#include "base/number_util.h"
 #include "base/util.h"
-#include "converter/conversion_request.h"
 #include "composer/composer.h"
+#include "converter/conversion_request.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
 
@@ -73,7 +76,7 @@ bool IsValidUCS4Expression(const string &input) {
 bool UCS4ExpressionToInteger(const string &input, uint32 *ucs4) {
   DCHECK(ucs4);
   const string hexcode = input.substr(2, input.npos);
-  return Util::SafeHexStrToUInt32(hexcode, ucs4);
+  return NumberUtil::SafeHexStrToUInt32(hexcode, ucs4);
 }
 
 // Checks if given ucs4 value is acceptable or not.
@@ -195,7 +198,7 @@ bool UnicodeRewriter::RewriteFromUnicodeCharFormat(
       return false;
     }
   }
-  DCHECK(segments->conversion_segments_size() == 1);
+  DCHECK_EQ(1, segments->conversion_segments_size());
 
   Segment *segment = segments->mutable_conversion_segment(0);
   AddCandidate(key, value, 0, segment);

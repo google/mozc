@@ -42,7 +42,7 @@
 #include <strsafe.h>
 
 #ifdef HAS_MSIME_HEADER
-#indlude <msime.h>
+#include <msime.h>
 #endif  // HAS_MSIME_HEADER
 
 #include "base/singleton.h"
@@ -53,6 +53,7 @@
 #include "win32/ime/ime_composition_string.h"
 #include "win32/ime/ime_keyevent_handler.h"
 #include "win32/ime/ime_private_context.h"
+#include "win32/ime/ime_state.h"
 
 #ifndef RWM_QUERYPOSITION
 #define RWM_QUERYPOSITION  TEXT("MSIMEQueryPosition")
@@ -233,7 +234,7 @@ bool UIContext::GetCandidateForm(
   }
 
   // Currently the array size is 4.
-  if (form_index >= ARRAYSIZE(input_context_->cfCandForm)) {
+  if (form_index >= arraysize(input_context_->cfCandForm)) {
     return false;
   }
 
@@ -411,7 +412,7 @@ bool UIContext::FillCharPosition(ApplicationInfo *info) const {
   // Do not request character position to some troublesome windows.
   // See b/4285222 for details.
   const wstring window_class_name = GetAttachedWindowClass();
-  for (size_t i = 0; i < ARRAYSIZE(kTroublesomeWindowClassNames); ++i) {
+  for (size_t i = 0; i < arraysize(kTroublesomeWindowClassNames); ++i) {
     if (window_class_name == kTroublesomeWindowClassNames[i]) {
       return false;
     }
@@ -494,5 +495,6 @@ bool UIContext::FillFontInfo(ApplicationInfo *info) const {
                          info->mutable_composition_font());
   return true;
 }
+
 }  // namespace win32
 }  // namespace mozc

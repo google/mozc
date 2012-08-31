@@ -67,7 +67,10 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../converter/converter.gyp:converter',
+        '../converter/converter_base.gyp:converter_mock',
         '../data_manager/data_manager.gyp:user_pos_manager',
+        '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
+        '../engine/engine.gyp:mock_data_engine_factory',
         '../session/session_base.gyp:request_test_util',
         '../testing/testing.gyp:gtest_main',
         'calculator/calculator.gyp:calculator_mock',
@@ -83,14 +86,12 @@
             'usage_rewriter_test.cc',
           ],
         }],
-        ['use_separate_connection_data==1', {
-          'dependencies': [
-            '../converter/converter.gyp:connection_data_injected_environment',
-          ],
-        }],
-        ['use_separate_dictionary==1', {
-          'dependencies': [
-            '../dictionary/dictionary.gyp:dictionary_data_injected_environment',
+        ['target_platform=="NaCl" and _toolset=="target"', {
+          'sources!': [
+            'user_boundary_history_rewriter_test.cc',
+            'user_dictionary_rewriter_test.cc',
+            'user_segment_history_rewriter_test.cc',
+            'variants_rewriter_test.cc',
           ],
         }],
       ],
@@ -103,6 +104,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
         '../session/session_base.gyp:request_test_util',
         '../testing/testing.gyp:gtest_main',
         'rewriter.gyp:rewriter',

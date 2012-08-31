@@ -30,21 +30,25 @@
 #include "rewriter/user_segment_history_rewriter.h"
 
 #include <string>
+
 #include "base/base.h"
 #include "base/clock_mock.h"
 #include "base/init.h"
+#include "base/logging.h"
+#include "base/number_util.h"
 #include "base/util.h"
+#include "config/character_form_manager.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
-#include "converter/character_form_manager.h"
 #include "converter/conversion_request.h"
 #include "converter/converter_interface.h"
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
-#include "data_manager/user_pos_manager.h"
+#include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
 #include "rewriter/number_rewriter.h"
+#include "rewriter/variants_rewriter.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
@@ -52,6 +56,10 @@ DECLARE_string(test_tmpdir);
 
 namespace mozc {
 namespace {
+
+using config::CharacterFormManager;
+using config::Config;
+using config::ConfigHandler;
 
 const size_t kCandidatesSize = 20;
 
@@ -61,11 +69,11 @@ void InitSegments(Segments *segments, size_t size,
   for (size_t i = 0; i < size; ++i) {
     Segment *segment = segments->add_segment();
     CHECK(segment);
-    segment->set_key(string("segment") + Util::SimpleItoa(i));
+    segment->set_key(string("segment") + NumberUtil::SimpleItoa(i));
     for (size_t j = 0; j < candidate_size; ++j) {
       Segment::Candidate *c = segment->add_candidate();
       c->content_key = segment->key();
-      c->content_value = string("candidate") + Util::SimpleItoa(j);
+      c->content_value = string("candidate") + NumberUtil::SimpleItoa(j);
       c->value = c->content_value;
       if (j == 0) {
         c->attributes |= Segment::Candidate::BEST_CANDIDATE;
@@ -98,32 +106,32 @@ void AppendCandidateSuffixWithLid(Segment *segment, size_t index,
 }
 
 void SetIncognito(bool incognito) {
-  config::Config input;
-  config::ConfigHandler::GetConfig(&input);
+  Config input;
+  ConfigHandler::GetConfig(&input);
   input.set_incognito_mode(incognito);
-  config::ConfigHandler::SetConfig(input);
+  ConfigHandler::SetConfig(input);
   EXPECT_EQ(incognito, GET_CONFIG(incognito_mode));
 }
 
-void SetLearningLevel(config::Config::HistoryLearningLevel level) {
-  config::Config input;
-  config::ConfigHandler::GetConfig(&input);
+void SetLearningLevel(Config::HistoryLearningLevel level) {
+  Config input;
+  ConfigHandler::GetConfig(&input);
   input.set_history_learning_level(level);
-  config::ConfigHandler::SetConfig(input);
+  ConfigHandler::SetConfig(input);
   EXPECT_EQ(level, GET_CONFIG(history_learning_level));
 }
 
-void SetNumberForm(config::Config::CharacterForm form) {
-  config::Config input;
-  config::ConfigHandler::GetConfig(&input);
+void SetNumberForm(Config::CharacterForm form) {
+  Config input;
+  ConfigHandler::GetConfig(&input);
   for (size_t i = 0; i < input.character_form_rules_size(); ++i) {
-    config::Config::CharacterFormRule *rule =
+    Config::CharacterFormRule *rule =
         input.mutable_character_form_rules(i);
     if (rule->group() == "0") {
       rule->set_conversion_character_form(form);
     }
   }
-  config::ConfigHandler::SetConfig(input);
+  ConfigHandler::SetConfig(input);
   CharacterFormManager::GetCharacterFormManager()->Reload();
   EXPECT_EQ(form,
             CharacterFormManager::GetCharacterFormManager()->
@@ -131,31 +139,34 @@ void SetNumberForm(config::Config::CharacterForm form) {
 }
 }  // namespace
 
-class UserSegmentHistoryRewriterTest : public testing::Test {
+class UserSegmentHistoryRewriterTest : public ::testing::Test {
  protected:
   UserSegmentHistoryRewriterTest() {}
 
   virtual void SetUp() {
-    ConverterFactory::SetConverter(&mock_);
     Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
 
-    config::Config config;
-    config::ConfigHandler::GetDefaultConfig(&config);
+    Config config;
+    ConfigHandler::GetDefaultConfig(&config);
     for (int i = 0; i < config.character_form_rules_size(); ++i) {
-      config::Config::CharacterFormRule *rule =
+      Config::CharacterFormRule *rule =
           config.mutable_character_form_rules(i);
       if (rule->group() == "0" || rule->group() == "A" ||
           rule->group() == "(){}[]") {
-        rule->set_preedit_character_form(config::Config::HALF_WIDTH);
-        rule->set_conversion_character_form(config::Config::HALF_WIDTH);
+        rule->set_preedit_character_form(Config::HALF_WIDTH);
+        rule->set_conversion_character_form(Config::HALF_WIDTH);
       }
     }
-    config::ConfigHandler::SetConfig(config);
+    ConfigHandler::SetConfig(config);
     CharacterFormManager::GetCharacterFormManager()->Reload();
 
     Util::SetClockHandler(NULL);
 
-    pos_matcher_ = UserPosManager::GetUserPosManager()->GetPOSMatcher();
+    testing::MockDataManager data_manager;
+    pos_matcher_ = data_manager.GetPOSMatcher();
+    pos_group_ = data_manager.GetPosGroup();
+    ASSERT_TRUE(pos_matcher_ != NULL);
+    ASSERT_TRUE(pos_group_ != NULL);
   }
 
   virtual void TearDown() {
@@ -165,12 +176,10 @@ class UserSegmentHistoryRewriterTest : public testing::Test {
         CreateUserSegmentHistoryRewriter());
     rewriter->Clear();
     // reset config of test_tmpdir.
-    config::Config config;
-    config::ConfigHandler::GetDefaultConfig(&config);
-    config::ConfigHandler::SetConfig(config);
-
-    // Clear converter mock.  Otherwise, subsequent tests receive garbage.
-    ConverterFactory::SetConverter(NULL);
+    Config config;
+    ConfigHandler::GetDefaultConfig(&config);
+    ConfigHandler::SetConfig(config);
+    CharacterFormManager::GetCharacterFormManager()->SetDefaultRule();
   }
 
   ConverterMock &mock() {
@@ -186,14 +195,13 @@ class UserSegmentHistoryRewriterTest : public testing::Test {
   }
 
   UserSegmentHistoryRewriter *CreateUserSegmentHistoryRewriter() const {
-    return new UserSegmentHistoryRewriter(
-        pos_matcher_,
-        UserPosManager::GetUserPosManager()->GetPosGroup());
+    return new UserSegmentHistoryRewriter(pos_matcher_, pos_group_);
   }
 
  private:
   ConverterMock mock_;
   const POSMatcher *pos_matcher_;
+  const PosGroup *pos_group_;
   DISALLOW_COPY_AND_ASSIGN(UserSegmentHistoryRewriterTest);
 };
 
@@ -205,7 +213,7 @@ TEST_F(UserSegmentHistoryRewriterTest, CreateFile) {
 }
 
 TEST_F(UserSegmentHistoryRewriterTest, InvalidInputsTest) {
-  SetLearningLevel(config::Config::DEFAULT_HISTORY);
+  SetLearningLevel(Config::DEFAULT_HISTORY);
   SetIncognito(false);
   Segments segments;
   scoped_ptr<UserSegmentHistoryRewriter> rewriter(
@@ -216,7 +224,7 @@ TEST_F(UserSegmentHistoryRewriterTest, InvalidInputsTest) {
 }
 
 TEST_F(UserSegmentHistoryRewriterTest, IncognitoModeTest) {
-  SetLearningLevel(config::Config::DEFAULT_HISTORY);
+  SetLearningLevel(Config::DEFAULT_HISTORY);
   Segments segments;
   scoped_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
@@ -266,7 +274,7 @@ TEST_F(UserSegmentHistoryRewriterTest, ConfigTest) {
   const ConversionRequest request;
 
   {
-    SetLearningLevel(config::Config::DEFAULT_HISTORY);
+    SetLearningLevel(Config::DEFAULT_HISTORY);
     InitSegments(&segments, 1);
     segments.mutable_segment(0)->move_candidate(2, 0);
     segments.mutable_segment(0)->mutable_candidate(0)->attributes
@@ -278,13 +286,13 @@ TEST_F(UserSegmentHistoryRewriterTest, ConfigTest) {
     EXPECT_EQ("candidate2",
               segments.segment(0).candidate(0).value);
 
-    SetLearningLevel(config::Config::NO_HISTORY);
+    SetLearningLevel(Config::NO_HISTORY);
     InitSegments(&segments, 1);
     rewriter->Rewrite(request, &segments);
     EXPECT_EQ("candidate0",
               segments.segment(0).candidate(0).value);
 
-    SetLearningLevel(config::Config::READ_ONLY);
+    SetLearningLevel(Config::READ_ONLY);
     InitSegments(&segments, 1);
     rewriter->Rewrite(request, &segments);
     EXPECT_EQ("candidate2",
@@ -292,7 +300,7 @@ TEST_F(UserSegmentHistoryRewriterTest, ConfigTest) {
   }
 
   {
-    SetLearningLevel(config::Config::NO_HISTORY);
+    SetLearningLevel(Config::NO_HISTORY);
     InitSegments(&segments, 1);
     segments.mutable_segment(0)->move_candidate(2, 0);
     segments.mutable_segment(0)->mutable_candidate(0)->attributes
@@ -308,7 +316,7 @@ TEST_F(UserSegmentHistoryRewriterTest, ConfigTest) {
 
 TEST_F(UserSegmentHistoryRewriterTest, DisableTest) {
   SetIncognito(false);
-  SetLearningLevel(config::Config::DEFAULT_HISTORY);
+  SetLearningLevel(Config::DEFAULT_HISTORY);
   Segments segments;
   scoped_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
@@ -357,7 +365,7 @@ TEST_F(UserSegmentHistoryRewriterTest, DisableTest) {
 }
 
 TEST_F(UserSegmentHistoryRewriterTest, BasicTest) {
-  SetLearningLevel(config::Config::DEFAULT_HISTORY);
+  SetLearningLevel(Config::DEFAULT_HISTORY);
   Segments segments;
   scoped_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
@@ -455,7 +463,7 @@ TEST_F(UserSegmentHistoryRewriterTest, BasicTest) {
 
 // Test for Issue 2155278
 TEST_F(UserSegmentHistoryRewriterTest, SequenceTest) {
-  SetLearningLevel(config::Config::DEFAULT_HISTORY);
+  SetLearningLevel(Config::DEFAULT_HISTORY);
   Segments segments;
   scoped_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
@@ -559,7 +567,7 @@ TEST_F(UserSegmentHistoryRewriterTest, SequenceTest) {
 }
 
 TEST_F(UserSegmentHistoryRewriterTest, DupTest) {
-  SetLearningLevel(config::Config::DEFAULT_HISTORY);
+  SetLearningLevel(Config::DEFAULT_HISTORY);
   Segments segments;
   scoped_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
@@ -619,7 +627,7 @@ TEST_F(UserSegmentHistoryRewriterTest, DupTest) {
 }
 
 TEST_F(UserSegmentHistoryRewriterTest, LearningType) {
-  SetLearningLevel(config::Config::DEFAULT_HISTORY);
+  SetLearningLevel(Config::DEFAULT_HISTORY);
   Segments segments;
   scoped_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
@@ -675,7 +683,7 @@ TEST_F(UserSegmentHistoryRewriterTest, LearningType) {
 }
 
 TEST_F(UserSegmentHistoryRewriterTest, ContextSensitive) {
-  SetLearningLevel(config::Config::DEFAULT_HISTORY);
+  SetLearningLevel(Config::DEFAULT_HISTORY);
   Segments segments;
   scoped_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
@@ -730,7 +738,7 @@ TEST_F(UserSegmentHistoryRewriterTest, ContextSensitive) {
 }
 
 TEST_F(UserSegmentHistoryRewriterTest, ContentValueLearning) {
-  SetLearningLevel(config::Config::DEFAULT_HISTORY);
+  SetLearningLevel(Config::DEFAULT_HISTORY);
   Segments segments;
   scoped_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
@@ -851,7 +859,7 @@ TEST_F(UserSegmentHistoryRewriterTest, ContentValueLearning) {
 }
 
 TEST_F(UserSegmentHistoryRewriterTest, ReplaceableTest) {
-  SetLearningLevel(config::Config::DEFAULT_HISTORY);
+  SetLearningLevel(Config::DEFAULT_HISTORY);
   Segments segments;
   scoped_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
@@ -981,7 +989,7 @@ TEST_F(UserSegmentHistoryRewriterTest, ReplaceableTest) {
 }
 
 TEST_F(UserSegmentHistoryRewriterTest, NotReplaceableForDifferentId) {
-  SetLearningLevel(config::Config::DEFAULT_HISTORY);
+  SetLearningLevel(Config::DEFAULT_HISTORY);
   Segments segments;
   scoped_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
@@ -1013,7 +1021,7 @@ TEST_F(UserSegmentHistoryRewriterTest, NotReplaceableForDifferentId) {
 }
 
 TEST_F(UserSegmentHistoryRewriterTest, ReplaceableForSameId) {
-  SetLearningLevel(config::Config::DEFAULT_HISTORY);
+  SetLearningLevel(Config::DEFAULT_HISTORY);
   Segments segments;
   scoped_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
@@ -1045,7 +1053,7 @@ TEST_F(UserSegmentHistoryRewriterTest, ReplaceableForSameId) {
 }
 
 TEST_F(UserSegmentHistoryRewriterTest, ReplaceableT13NTest) {
-  SetLearningLevel(config::Config::DEFAULT_HISTORY);
+  SetLearningLevel(Config::DEFAULT_HISTORY);
   Segments segments;
   scoped_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
@@ -1078,7 +1086,7 @@ TEST_F(UserSegmentHistoryRewriterTest, ReplaceableT13NTest) {
 }
 
 TEST_F(UserSegmentHistoryRewriterTest, LeftRightNumber) {
-  SetLearningLevel(config::Config::DEFAULT_HISTORY);
+  SetLearningLevel(Config::DEFAULT_HISTORY);
   Segments segments;
   scoped_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
@@ -1140,7 +1148,7 @@ TEST_F(UserSegmentHistoryRewriterTest, LeftRightNumber) {
 }
 
 TEST_F(UserSegmentHistoryRewriterTest, BacketMatching) {
-  SetLearningLevel(config::Config::DEFAULT_HISTORY);
+  SetLearningLevel(Config::DEFAULT_HISTORY);
   Segments segments;
   scoped_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
@@ -1179,7 +1187,7 @@ TEST_F(UserSegmentHistoryRewriterTest, BacketMatching) {
 
 // issue 2262691
 TEST_F(UserSegmentHistoryRewriterTest, MultipleLearning) {
-  SetLearningLevel(config::Config::DEFAULT_HISTORY);
+  SetLearningLevel(Config::DEFAULT_HISTORY);
   Segments segments;
   scoped_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
@@ -1238,7 +1246,7 @@ TEST_F(UserSegmentHistoryRewriterTest, MultipleLearning) {
 }
 
 TEST_F(UserSegmentHistoryRewriterTest, NumberSpecial) {
-  SetLearningLevel(config::Config::DEFAULT_HISTORY);
+  SetLearningLevel(Config::DEFAULT_HISTORY);
   Segments segments;
   scoped_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
@@ -1258,7 +1266,7 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberSpecial) {
     candidate->content_key = "12";
     candidate->lid = pos_matcher().GetNumberId();
     candidate->rid = pos_matcher().GetNumberId();
-    candidate->style = Util::NumberString::NUMBER_CIRCLED;
+    candidate->style = NumberUtil::NumberString::NUMBER_CIRCLED;
     segments.mutable_segment(0)->mutable_candidate(0)->attributes
         |= Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
@@ -1287,8 +1295,8 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberSpecial) {
 }
 
 TEST_F(UserSegmentHistoryRewriterTest, NumberHalfWidth) {
-  SetLearningLevel(config::Config::DEFAULT_HISTORY);
-  SetNumberForm(config::Config::HALF_WIDTH);
+  SetLearningLevel(Config::DEFAULT_HISTORY);
+  SetNumberForm(Config::HALF_WIDTH);
   Segments segments;
   scoped_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
@@ -1312,7 +1320,7 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberHalfWidth) {
     candidate->lid = pos_matcher().GetNumberId();
     candidate->rid = pos_matcher().GetNumberId();
     candidate->style =
-        Util::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH;
+        NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
     rewriter->Finish(&segments);  // full-width for separated number
   }
@@ -1340,8 +1348,8 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberHalfWidth) {
 }
 
 TEST_F(UserSegmentHistoryRewriterTest, NumberFullWidth) {
-  SetLearningLevel(config::Config::DEFAULT_HISTORY);
-  SetNumberForm(config::Config::FULL_WIDTH);
+  SetLearningLevel(Config::DEFAULT_HISTORY);
+  SetNumberForm(Config::FULL_WIDTH);
   Segments segments;
   scoped_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
@@ -1362,7 +1370,7 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberFullWidth) {
     candidate->lid = pos_matcher().GetNumberId();
     candidate->rid = pos_matcher().GetNumberId();
     candidate->style =
-        Util::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH;
+        NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
     rewriter->Finish(&segments);  // half-width for separated number
   }
@@ -1390,8 +1398,8 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberFullWidth) {
 }
 
 TEST_F(UserSegmentHistoryRewriterTest, NumberNoSeparated) {
-  SetLearningLevel(config::Config::DEFAULT_HISTORY);
-  SetNumberForm(config::Config::HALF_WIDTH);
+  SetLearningLevel(Config::DEFAULT_HISTORY);
+  SetNumberForm(Config::HALF_WIDTH);
   Segments segments;
   scoped_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
@@ -1411,7 +1419,7 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberNoSeparated) {
     candidate->content_key = "10";
     candidate->lid = pos_matcher().GetNumberId();
     candidate->rid = pos_matcher().GetNumberId();
-    candidate->style = Util::NumberString::NUMBER_KANJI;
+    candidate->style = NumberUtil::NumberString::NUMBER_KANJI;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
     rewriter->Finish(&segments);  // learn kanji
   }
@@ -1427,7 +1435,7 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberNoSeparated) {
     candidate->lid = pos_matcher().GetNumberId();
     candidate->rid = pos_matcher().GetNumberId();
     candidate->style =
-        Util::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH;
+        NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
     rewriter->Finish(&segments);  // learn kanji
   }
@@ -1453,7 +1461,7 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberNoSeparated) {
 }
 
 TEST_F(UserSegmentHistoryRewriterTest, Regression2459519) {
-  SetLearningLevel(config::Config::DEFAULT_HISTORY);
+  SetLearningLevel(Config::DEFAULT_HISTORY);
   Segments segments;
   scoped_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
@@ -1510,7 +1518,7 @@ TEST_F(UserSegmentHistoryRewriterTest, Regression2459519) {
 }
 
 TEST_F(UserSegmentHistoryRewriterTest, Regression2459520) {
-  SetLearningLevel(config::Config::DEFAULT_HISTORY);
+  SetLearningLevel(Config::DEFAULT_HISTORY);
   Segments segments;
   scoped_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
@@ -1539,7 +1547,7 @@ TEST_F(UserSegmentHistoryRewriterTest, Regression2459520) {
 }
 
 TEST_F(UserSegmentHistoryRewriterTest, PuntuationsTest) {
-  SetLearningLevel(config::Config::DEFAULT_HISTORY);
+  SetLearningLevel(Config::DEFAULT_HISTORY);
   Segments segments;
   scoped_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
@@ -1576,7 +1584,7 @@ TEST_F(UserSegmentHistoryRewriterTest, PuntuationsTest) {
 }
 
 TEST_F(UserSegmentHistoryRewriterTest, Regression3264619) {
-  SetLearningLevel(config::Config::DEFAULT_HISTORY);
+  SetLearningLevel(Config::DEFAULT_HISTORY);
   Segments segments;
   scoped_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
@@ -1599,7 +1607,7 @@ TEST_F(UserSegmentHistoryRewriterTest, Regression3264619) {
 }
 
 TEST_F(UserSegmentHistoryRewriterTest, RandomTest) {
-  SetLearningLevel(config::Config::DEFAULT_HISTORY);
+  SetLearningLevel(Config::DEFAULT_HISTORY);
   Segments segments;
   scoped_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
@@ -1631,7 +1639,7 @@ TEST_F(UserSegmentHistoryRewriterTest, RandomTest) {
 }
 
 TEST_F(UserSegmentHistoryRewriterTest, AnnotationAfterLearning) {
-  SetLearningLevel(config::Config::DEFAULT_HISTORY);
+  SetLearningLevel(Config::DEFAULT_HISTORY);
   Segments segments;
   scoped_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
@@ -1676,8 +1684,12 @@ TEST_F(UserSegmentHistoryRewriterTest, AnnotationAfterLearning) {
     rewriter->Rewrite(request, &segments);
     EXPECT_EQ("abc", segments.segment(0).candidate(0).content_value);
     // "[半] アルファベット"
-    EXPECT_EQ("[\xE5\x8D\x8A] \xE3\x82\xA2\xE3\x83\xAB\xE3\x83\x95\xE3\x82\xA1"
-              "\xE3\x83\x99\xE3\x83\x83\xE3\x83\x88",
+    string expectation = VariantsRewriter::kHalfWidth;
+    const string alphabet = VariantsRewriter::kAlphabet;
+    if (alphabet.size() != 0) {
+      expectation += ' ' + alphabet;
+    }
+    EXPECT_EQ(expectation,
               segments.segment(0).candidate(0).description);
     rewriter->Finish(&segments);
   }

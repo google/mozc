@@ -30,12 +30,17 @@
 #include "sync/learning_preference_sync_util.h"
 
 #include <string>
+
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/util.h"
 #include "storage/lru_storage.h"
 
 namespace mozc {
 namespace sync {
+
+using mozc::storage::LRUStorage;
+
 bool LearningPreferenceSyncUtil::CreateUpdate(
     const LRUStorage &storage,
     LearningPreference::Entry::Type type,
@@ -120,5 +125,6 @@ bool LearningPreferenceSyncUtil::CreateMergePendingFile(
 
   return true;
 }
-}  // sync
-}  // mozc
+
+}  // namespace sync
+}  // namespace mozc

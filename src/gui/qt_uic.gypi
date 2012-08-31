@@ -61,7 +61,7 @@
           'action': [
             '<(uic_path)',
             '-o', '<(gen_out_dir)/<(subdir)/ui_<(RULE_INPUT_ROOT).h',
-            '"<(RULE_INPUT_PATH)"'
+            '<(RULE_INPUT_PATH)'
           ],
         }, {
           'action': [

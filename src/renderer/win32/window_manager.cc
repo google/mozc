@@ -454,15 +454,10 @@ void WindowManager::UpdateLayout(
   }
 }
 
-
-bool WindowManager::Activate() {
-  // TODO(yukawa): to be implemented.
-  return true;
-}
-
 bool WindowManager::IsAvailable() const {
-  // TODO(yukawa): to be implemented.
-  return true;
+  return main_window_->IsWindow() &&
+         cascading_window_->IsWindow() &&
+         infolist_window_->IsWindow();
 }
 
 void WindowManager::SetSendCommandInterface(

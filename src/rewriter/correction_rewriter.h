@@ -29,14 +29,16 @@
 
 #ifndef MOZC_REWRITER_CORRECTION_REWRITER_H_
 #define MOZC_REWRITER_CORRECTION_REWRITER_H_
-#include <string>
+
 #include <map>
-#include <utility>
+#include <string>
+#include <vector>
 
 #include "base/base.h"
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {
+
 struct ReadingCorrectionItem {
   // ex. (value, error, correction) = ("雰囲気", "ふいんき", "ふんいき")
   const char *value;
@@ -45,13 +47,16 @@ struct ReadingCorrectionItem {
 };
 
 class ConversionRequest;
+class DataManagerInterface;
 class Segments;
 
 class CorrectionRewriter : public RewriterInterface  {
  public:
-  // Returnes an instance of ReadingCorrectionRewriter initialized
-  // with the default data.  The caller takes the ownership of the instance.
-  static CorrectionRewriter *CreateCorrectionRewriter();
+  // Returnes an instance of ReadingCorrectionRewriter initialized with the
+  // default provided by data_manager.  The caller takes the ownership of the
+  // instance.
+  static CorrectionRewriter *CreateCorrectionRewriter(
+      const DataManagerInterface *data_manager);
 
   CorrectionRewriter(const ReadingCorrectionItem *reading_corrections,
                      size_t array_size);
@@ -63,18 +68,19 @@ class CorrectionRewriter : public RewriterInterface  {
     return RewriterInterface::ALL;
   }
 
-
  private:
-  typedef pair<string, string> StrPair;
-  map<StrPair, string> correction_map_;
+  const ReadingCorrectionItem *reading_corrections_;
+  size_t size_;
 
-  // Looks up corrections with key and value.  If a corrections is
-  // matched, true is returned and correction is filled with the
-  // matched data.  If not matched, false is returned and correction
-  // is not modified.
-  bool LookupCorrection(const string &key,
-                        const string &value,
-                        string *correction) const;
+  // Looks up corrections with key and value. Return true if at least
+  // one correction is found in the internal dictionary.
+  // If |value| is empty, looks up corrections only using the key.
+  // The matched results are saved in |results|.
+  // Return false if |results| is empty.
+  bool LookupCorrection(
+      const string &key,
+      const string &value,
+      vector<const ReadingCorrectionItem *> *results) const;
 };
 
 }  // namespace mozc

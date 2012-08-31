@@ -38,6 +38,7 @@ daemon in ~/.cache/ibus/bus/ is not ready or is expired.
 __author__ = "yusukes"
 
 import optparse
+import os
 import sys
 
 # Information to generate <component> part of mozc.xml. %s will be replaced with
@@ -114,7 +115,7 @@ def OutputXmlElement(product_name, element_name, value):
                            element_name)
 
 
-def OutputXml(product_name, component, engine_common, engines):
+def OutputXml(product_name, component, engine_common, engines, setup_arg):
   """Outputs a XML data for ibus-daemon.
 
   Args:
@@ -134,6 +135,8 @@ def OutputXml(product_name, component, engine_common, engines):
     print '<engine>'
     for key in engine_common:
       OutputXmlElement(product_name, key, engine_common[key])
+    if setup_arg:
+      OutputXmlElement(product_name, 'setup', ' '.join(setup_arg))
     for key in engines:
       OutputXmlElement(product_name, key, engines[key][i])
     print '</engine>'
@@ -183,7 +186,15 @@ def main():
   parser.add_option('--branding', dest='branding', default=None,
                     help='GoogleJapaneseInput for the ChromeOS official build. '
                     'Otherwise, Mozc.')
+  parser.add_option('--server_dir', dest='server_dir', default='',
+                    help='The absolute directory path to be installed the '
+                    'server executable.')
   (options, unused_args) = parser.parse_args()
+
+  setup_arg = []
+  if options.platform == 'Linux':
+    setup_arg.append(os.path.join(options.server_dir, 'mozc_tool'))
+    setup_arg.append('--mode=config_dialog')
 
   if options.output_cpp:
     OutputCpp(PRODUCT_NAMES[options.branding], IBUS_COMPONENT_PROPS,
@@ -192,7 +203,8 @@ def main():
   else:
     OutputXml(PRODUCT_NAMES[options.branding], IBUS_COMPONENT_PROPS,
               IBUS_ENGINE_COMMON_PROPS,
-              IBUS_ENGINES_PROPS[options.platform])
+              IBUS_ENGINES_PROPS[options.platform],
+              setup_arg)
   return 0
 
 if __name__ == '__main__':

@@ -27,14 +27,17 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "sync/syncer.h"
+
 #include <string>
+
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/util.h"
 #include "config/config_handler.h"
 #include "sync/adapter_interface.h"
 #include "sync/inprocess_service.h"
 #include "sync/sync.pb.h"
-#include "sync/syncer.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);

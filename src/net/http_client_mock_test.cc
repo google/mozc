@@ -62,43 +62,56 @@ class HTTPClientMockTest : public testing::Test {
   HTTPClientMock client_;
 };
 
-TEST_F(HTTPClientMockTest, SimpleGet) {
-  string output;
-  EXPECT_TRUE(client_.Get("url", &output));
-  EXPECT_EQ("result", output);
-}
-
-TEST_F(HTTPClientMockTest, SimplePost) {
-  string output;
-  EXPECT_TRUE(client_.Post("url", "request", &output));
-  EXPECT_EQ("result", output);
-  EXPECT_FALSE(client_.Post("url", "request&extra", &output));
-}
-
-TEST_F(HTTPClientMockTest, GetWithOption) {
+TEST_F(HTTPClientMockTest, GetTest) {
   SetDefaultOption();
-  EXPECT_TRUE(true);
 
   string output;
   HTTPClient::Option option;
   option.headers.push_back("header0");
   EXPECT_FALSE(client_.Get("url", option, &output));
+
   option.headers.push_back("header1");
   EXPECT_TRUE(client_.Get("url", option, &output));
+  EXPECT_FALSE(client_.Get("url2", option, &output));
+
   // Header field can have external line ohter than expected
   option.headers.push_back("header2");
   EXPECT_TRUE(client_.Get("url", option, &output));
 }
 
-TEST_F(HTTPClientMockTest, PostWithOption) {
+TEST_F(HTTPClientMockTest, HeadTest) {
   SetDefaultOption();
+
+  string output;
+  HTTPClient::Option option;
+
+  option.headers.push_back("header0");
+  EXPECT_FALSE(client_.Head("url", option, &output));
+  EXPECT_EQ("wrong header", output);
+
+  option.headers.push_back("header1");
+  EXPECT_TRUE(client_.Head("url", option, &output));
+  EXPECT_EQ("OK", output);
+
+  // Header field can have external line ohter than expected
+  option.headers.push_back("header2");
+  EXPECT_TRUE(client_.Head("url", option, &output));
+  EXPECT_EQ("OK", output);
+}
+
+TEST_F(HTTPClientMockTest, PostTest) {
+  SetDefaultOption();
+
   string output;
   HTTPClient::Option option;
   option.include_header = true;
   option.headers.push_back("header0");
   EXPECT_FALSE(client_.Post("url", "request", option, &output));
+
   option.headers.push_back("header1");
   EXPECT_TRUE(client_.Post("url", "request", option, &output));
+  EXPECT_FALSE(client_.Post("url2", "request", option, &output));
+
   // Header field can have external lines ohter than expected
   option.headers.push_back("header2");
   EXPECT_TRUE(client_.Post("url", "request", option, &output));

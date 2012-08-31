@@ -32,7 +32,7 @@
 #include <string>
 #include <vector>
 
-#include "dictionary/embedded_dictionary_data.h"
+#include "data_manager/oss/embedded_dictionary_data.h"
 #include "dictionary/system/system_dictionary.h"
 #include "testing/base/public/gunit.h"
 
@@ -165,8 +165,8 @@ TEST(SkkUtilTest, ValidateMessageTest) {
 }
 
 TEST(SkkUtilTest, LookupEntryTest) {
-  mozc::SystemDictionary *dictionary
-      = mozc::SystemDictionary::CreateSystemDictionaryFromImage(
+  mozc::dictionary::SystemDictionary *dictionary
+      = mozc::dictionary::SystemDictionary::CreateSystemDictionaryFromImage(
           kDictionaryData_data, kDictionaryData_size);
   ASSERT_TRUE(dictionary != NULL);
 

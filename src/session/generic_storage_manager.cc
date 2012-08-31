@@ -29,9 +29,16 @@
 
 #include "session/generic_storage_manager.h"
 
+#include <string>
+#include <vector>
+
+#include "base/base.h"
 #include "base/config_file_stream.h"
+#include "base/logging.h"
 #include "base/mutex.h"
+#include "base/scoped_ptr.h"
 #include "base/singleton.h"
+#include "storage/lru_storage.h"
 
 namespace {
 
@@ -63,6 +70,8 @@ const uint32 kEmojiSeed = 136843897;
 }  // namespace
 
 namespace mozc {
+
+using mozc::storage::LRUStorage;
 
 class GenericStorageManagerImpl
     : public GenericStorageManagerInterface {
@@ -116,6 +125,16 @@ GenericStorageInterface *GenericStorageManagerFactory::GetStorage(
   GenericStorageManagerInterface *manager = g_storage_manager ?
       g_storage_manager : Singleton<GenericStorageManagerImpl>::get();
   return manager->GetStorage(storage_type);
+}
+
+
+GenericLruStorage::GenericLruStorage(
+    const char *file_name, size_t value_size, size_t size, uint32 seed)
+    : file_name_(file_name), value_size_(value_size),
+      size_(size), seed_(seed) {
+}
+
+GenericLruStorage::~GenericLruStorage() {
 }
 
 bool GenericLruStorage::EnsureStorage() {

@@ -30,7 +30,9 @@
 #include "rewriter/user_dictionary_rewriter.h"
 
 #include <string>
+
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/util.h"
 #include "converter/conversion_request.h"
 #include "converter/segments.h"

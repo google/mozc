@@ -42,6 +42,7 @@
 #endif  // OS_MACOSX
 
 #include "base/base.h"
+#include "base/logging.h"
 
 namespace mozc {
 namespace {

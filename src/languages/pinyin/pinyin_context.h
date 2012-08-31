@@ -32,7 +32,7 @@
 
 #include "languages/pinyin/pinyin_context_interface.h"
 
-#include <pyzy-1.0/PyZyInputContext.h>
+#include <PyZy/InputContext.h>
 #include <string>
 #include <vector>
 
@@ -73,8 +73,6 @@ class PinyinContext : public PinyinContextInterface {
 
   bool SelectCandidate(size_t index);
   bool FocusCandidate(size_t index);
-  bool FocusCandidatePrev();
-  bool FocusCandidateNext();
   bool ClearCandidateFromHistory(size_t index);
 
   bool RemoveCharBefore();
@@ -98,10 +96,12 @@ class PinyinContext : public PinyinContextInterface {
   size_t PrepareCandidates(size_t required_size);
 
  private:
+  friend class PinyinContextTest;
   void ResetContext();
 
   // Double pinyin mode or not.
   bool double_pinyin_;
+  const SessionConfig &session_config_;
   // We should delete context_ before observer_.
   scoped_ptr<ContextObserverInterface> observer_;
   scoped_ptr<PyZy::InputContext> context_;

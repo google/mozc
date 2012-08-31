@@ -34,6 +34,29 @@
   },
   'targets': [
     {
+      # Meta target to set up build environment.
+      'target_name': 'pinyin_build_environment',
+      'type': 'none',
+      'variables': {
+        'pinyin_libs': [
+          'pyzy-1.0',
+        ],
+      },
+      'all_dependent_settings': {
+        'cflags': [
+          '<!@(<(pkg_config_command) --cflags <@(pinyin_libs))',
+        ],
+        'link_settings': {
+          'libraries': [
+            '<!@(<(pkg_config_command) --libs-only-l <@(pinyin_libs))',
+          ],
+          'ldflags': [
+            '<!@(<(pkg_config_command) --libs-only-L <@(pinyin_libs))',
+          ],
+        },
+      },
+    },
+    {
       'target_name': 'pinyin_session',
       'type': 'static_library',
       'sources': [
@@ -44,7 +67,6 @@
         '../../config/config.gyp:config_handler',
         '../../config/config.gyp:config_protocol',
         '../../session/session_base.gyp:session_protocol',
-        'pinyin_config_manager',
         'pinyin_keymap',
         'pinyin_session_converter',
       ],
@@ -88,6 +110,7 @@
         '../../base/base.gyp:base',
         '../../config/config.gyp:config_handler',
         '../../config/config.gyp:config_protocol',
+        'pinyin_build_environment',
       ],
     },
     {
@@ -191,6 +214,16 @@
         '../../storage/storage.gyp:encrypted_string_storage',
         'gen_pinyin_english_dictionary_data#host',
       ],
+      'conditions': [
+        ['enable_mozc_louds==1', {
+          'dependencies!': [
+              '../../dictionary/rx/rx_storage.gyp:rx_trie',
+          ],
+          'dependencies': [
+            '../../dictionary/louds/louds_trie_adapter.gyp:louds_trie_adapter',
+          ],
+        }],
+      ],
     },
     {
       'target_name': 'pinyin_english_dictionary_factory',
@@ -213,25 +246,12 @@
         '../../base/base.gyp:base',
       ],
     },
-    {
-      'target_name': 'pinyin_config_manager',
-      'type': 'static_library',
-      'sources': [
-        'pinyin_config_manager.cc',
-      ],
-      'dependencies': [
-        '../../base/base.gyp:base',
-        '../../config/config.gyp:config_handler',
-        '../../config/config.gyp:config_protocol',
-      ],
-    },
     # test
     {
       # TODO(hsumita): We should add it to gyp/test.gyp.
       'target_name': 'pinyin_all_test',
       'type': 'none',
       'dependencies': [
-        'pinyin_config_manager_test',
         'pinyin_configurable_keymap_test',
         'pinyin_context_mock_test',
         'pinyin_context_test',
@@ -258,9 +278,6 @@
         '../../testing/testing.gyp:gtest_main',
         'pinyin_context',
       ],
-      'includes': [
-        'pinyin_libraries.gypi',
-      ]
     },
     {
       'target_name': 'pinyin_punctuation_context_test',
@@ -272,9 +289,6 @@
         '../../testing/testing.gyp:gtest_main',
         'pinyin_punctuation_context',
       ],
-      'includes': [
-        'pinyin_libraries.gypi',
-      ]
     },
     {
       'target_name': 'pinyin_direct_context_test',
@@ -286,9 +300,6 @@
         '../../testing/testing.gyp:gtest_main',
         'pinyin_direct_context',
       ],
-      'includes': [
-        'pinyin_libraries.gypi',
-      ]
     },
     {
       'target_name': 'pinyin_context_mock_test',
@@ -301,9 +312,6 @@
         '../../testing/testing.gyp:gtest_main',
         'pinyin_context_mock',
       ],
-      'includes': [
-        'pinyin_libraries.gypi',
-      ]
     },
     {
       'target_name': 'pinyin_keymap_test',
@@ -319,9 +327,6 @@
         '../../testing/testing.gyp:gtest_main',
         'pinyin_keymap',
       ],
-      'includes': [
-        'pinyin_libraries.gypi',
-      ]
     },
     {
       'target_name': 'pinyin_configurable_keymap_test',
@@ -337,9 +342,6 @@
         '../../testing/testing.gyp:gtest_main',
         'pinyin_configurable_keymap',
       ],
-      'includes': [
-        'pinyin_libraries.gypi',
-      ]
     },
     {
       'target_name': 'pinyin_default_keymap_test',
@@ -353,9 +355,6 @@
         '../../testing/testing.gyp:gtest_main',
         'pinyin_default_keymap',
       ],
-      'includes': [
-        'pinyin_libraries.gypi',
-      ]
     },
     {
       'target_name': 'pinyin_session_converter_test',
@@ -368,9 +367,6 @@
         '../../testing/testing.gyp:gtest_main',
         'pinyin_session_converter',
       ],
-      'includes': [
-        'pinyin_libraries.gypi',
-      ]
     },
     {
       'target_name': 'pinyin_session_factory_test',
@@ -383,9 +379,6 @@
         '../../testing/testing.gyp:gtest_main',
         'pinyin_session_factory',
       ],
-      'includes': [
-        'pinyin_libraries.gypi',
-      ]
     },
     {
       'target_name': 'pinyin_session_test',
@@ -403,9 +396,6 @@
         'pinyin_session',
         'pinyin_session_converter',
       ],
-      'includes': [
-        'pinyin_libraries.gypi',
-      ]
     },
     {
       'target_name': 'pinyin_english_context_test',
@@ -418,9 +408,6 @@
         '../../testing/testing.gyp:gtest_main',
         'pinyin_english_context',
       ],
-      'includes': [
-        'pinyin_libraries.gypi',
-      ]
     },
     {
       'target_name': 'pinyin_english_dictionary_test',
@@ -432,9 +419,6 @@
         '../../testing/testing.gyp:gtest_main',
         'pinyin_english_dictionary',
       ],
-      'includes': [
-        'pinyin_libraries.gypi',
-      ]
     },
     {
       'target_name': 'pinyin_english_dictionary_factory_test',
@@ -446,9 +430,6 @@
         '../../testing/testing.gyp:gtest_main',
         'pinyin_english_dictionary_factory',
       ],
-      'includes': [
-        'pinyin_libraries.gypi',
-      ]
     },
     {
       'target_name': 'pinyin_punctuation_table_test',
@@ -458,29 +439,8 @@
       ],
       'dependencies': [
         '../../testing/testing.gyp:gtest_main',
-        '../../base/base.gyp:base',
         'pinyin_punctuation_table'
       ],
-      'includes': [
-        'pinyin_libraries.gypi',
-      ]
-    },
-    {
-      'target_name': 'pinyin_config_manager_test',
-      'type': 'executable',
-      'sources': [
-        'pinyin_config_manager_test.cc',
-      ],
-      'dependencies': [
-        '../../base/base.gyp:base',
-        '../../config/config.gyp:config_handler',
-        '../../config/config.gyp:config_protocol',
-        '../../testing/testing.gyp:gtest_main',
-        'pinyin_config_manager',
-      ],
-      'includes': [
-        'pinyin_libraries.gypi',
-      ]
     },
     # generates data.
     {
@@ -523,8 +483,17 @@
         '../../base/base.gyp:base',
         '../../dictionary/file/dictionary_file.gyp:codec',
         '../../dictionary/file/dictionary_file.gyp:dictionary_file',
-        '../../dictionary/rx/rx_storage.gyp:rx_trie',
         '../../dictionary/rx/rx_storage.gyp:rx_trie_builder',
+      ],
+      'conditions': [
+        ['enable_mozc_louds==1', {
+          'dependencies!': [
+            '../../dictionary/rx/rx_storage.gyp:rx_trie_builder',
+          ],
+          'dependencies': [
+            '../../storage/louds/louds.gyp:louds_trie_builder',
+          ],
+        }],
       ],
     },
     {
@@ -572,7 +541,7 @@
             'pinyin_session',
           ],
           'conditions': [
-            ['chromeos==1', {
+            ['target_platform=="ChromeOS"', {
               'sources': [
                 'unix/ibus/config_updater.cc',
               ],
@@ -580,9 +549,6 @@
                 '../../config/config.gyp:config_handler',
                 '../../config/config.gyp:config_protocol',
                 'pinyin_session_factory',
-              ],
-              'includes': [
-                'pinyin_libraries.gypi',
               ],
             }],
           ],
@@ -596,9 +562,6 @@
           'dependencies': [
             '../../server/server.gyp:mozc_server_lib',
             'pinyin_session_factory',
-          ],
-          'includes': [
-            'pinyin_libraries.gypi',
           ],
         },
       ],

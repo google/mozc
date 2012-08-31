@@ -34,11 +34,16 @@
 #include <set>
 #include <string>
 #include <vector>
+
+#include "base/base.h"
+#include "base/compiler_specific.h"
 #include "base/config_file_stream.h"
+#include "base/logging.h"
+#include "base/number_util.h"
 #include "base/util.h"
+#include "config/character_form_manager.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
-#include "converter/character_form_manager.h"
 #include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "dictionary/pos_group.h"
@@ -51,6 +56,10 @@
 
 namespace mozc {
 
+using config::CharacterFormManager;
+using config::Config;
+using storage::LRUStorage;
+
 namespace {
 const uint32 kValueSize = 4;
 const uint32 kLRUSize   = 20000;
@@ -61,16 +70,22 @@ const char kFileName[] = "user://segment.db";
 
 LRUStorage *g_lru_storage = NULL;
 
+// Temporarily disable unused private field warning against
+// FeatureValue::reserved_ from Clang.
+MOZC_CLANG_PUSH_WARNING();
+MOZC_CLANG_DISABLE_WARNING(unused-private-field);
 class FeatureValue {
  public:
   FeatureValue() : feature_type_(1), reserved_(0) {}
   bool IsValid() const {
     return (feature_type_ == 1);
   }
+
  private:
   uint32 feature_type_ : 1;   // always 1
   uint32 reserved_     : 31;  // this area is reserved for future
 };
+MOZC_CLANG_POP_WARNING();
 
 bool IsPunctuationInternal(const string &str) {
   // return (str == "。" || str == "｡" ||
@@ -83,6 +98,10 @@ bool IsPunctuationInternal(const string &str) {
           str == "\xEF\xBC\x8E"  || str == ".");
 }
 
+// Temporarily disable unused private field warning against
+// KeyTriggerValue::reserved_ from Clang.
+MOZC_CLANG_PUSH_WARNING();
+MOZC_CLANG_DISABLE_WARNING(unused-private-field);
 class KeyTriggerValue {
  public:
   KeyTriggerValue()
@@ -106,6 +125,7 @@ class KeyTriggerValue {
   // want to encode POS, freq etc.
   uint32 candidates_size_ : 8;   // candidate size
 };
+MOZC_CLANG_POP_WARNING();
 
 class ScoreTypeCompare {
  public:
@@ -128,7 +148,9 @@ inline int GetDefaultCandidateIndex(const Segment &segment) {
     }
   }
 
-  LOG(WARNING) << "Cannot find default candidate";
+  LOG(WARNING) << "Cannot find default candidate. "
+               << "key: " << segment.key() << ", "
+               << "candidates_size: " << segment.candidates_size();
   return 0;
 }
 
@@ -238,7 +260,7 @@ inline bool GetFeatureS(const Segments &segments, size_t i,
 // used for number rewrite
 inline bool GetFeatureN(uint16 type, string *value) {
   DCHECK(value);
-  *value = string("N") + '\t' + Util::SimpleItoa(type);
+  *value = string("N") + '\t' + NumberUtil::SimpleItoa(type);
   return true;
 }
 
@@ -257,7 +279,7 @@ bool IsNumberSegment(const Segment &seg) {
 }
 
 void GetValueByType(const Segment *segment,
-                    Util::NumberString::Style style,
+                    NumberUtil::NumberString::Style style,
                     string *output) {
   DCHECK(output);
   for (size_t i = 0; i < segment->candidates_size(); ++i) {
@@ -282,29 +304,31 @@ void NormalizeCandidate(const Segment *segment, int n,
 
   string result = candidate.value;
   switch (candidate.style) {
-    case Util::NumberString::DEFAULT_STYLE:
+    case NumberUtil::NumberString::DEFAULT_STYLE:
       CharacterFormManager::GetCharacterFormManager()->
           ConvertConversionString(candidate.value, &result);
       break;
-    case Util::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH:
-    case Util::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH:
+    case NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH:
+    case NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH:
       // Convert separated arabic here and don't use character form manager
       // so that suppressing mixed form of candidates
       // ("1，234" etc.)
       // and the forms of separated arabics are learned in converter using
       // style.
       {
-        const config::Config::CharacterForm
-            form = CharacterFormManager::GetCharacterFormManager()->
+        const Config::CharacterForm form =
+            CharacterFormManager::GetCharacterFormManager()->
             GetConversionCharacterForm("0");
-        if (form == config::Config::FULL_WIDTH) {
-          GetValueByType(segment,
-                         Util::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH,
-                         &result);
-        } else if (form == config::Config::HALF_WIDTH) {
-          GetValueByType(segment,
-                         Util::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH,
-                         &result);
+        if (form == Config::FULL_WIDTH) {
+          GetValueByType(
+              segment,
+              NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH,
+              &result);
+        } else if (form == Config::HALF_WIDTH) {
+          GetValueByType(
+              segment,
+              NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH,
+              &result);
         }
       }
       break;
@@ -555,9 +579,9 @@ void UserSegmentHistoryRewriter::RememberNumberPreference(
   const Segment::Candidate &candidate = segment.candidate(0);
 
   if ((candidate.style ==
-       Util::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH) ||
+       NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH) ||
       (candidate.style ==
-       Util::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH)) {
+       NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH)) {
     // in the case of:
     // 1. submit "123"
     // 2. submit "一二三"
@@ -569,7 +593,7 @@ void UserSegmentHistoryRewriter::RememberNumberPreference(
     // separated and default is learned at same time
     // This problem is solved by workaround on lookup.
     string default_feature_key;
-    GetFeatureN(Util::NumberString::DEFAULT_STYLE, &default_feature_key);
+    GetFeatureN(NumberUtil::NumberString::DEFAULT_STYLE, &default_feature_key);
     FeatureValue v;
     DCHECK(v.IsValid());
     storage_->Insert(default_feature_key, reinterpret_cast<const char *>(&v));
@@ -696,8 +720,7 @@ void UserSegmentHistoryRewriter::Finish(Segments *segments) {
     return;
   }
 
-  if (GET_CONFIG(history_learning_level) !=
-      config::Config::DEFAULT_HISTORY) {
+  if (GET_CONFIG(history_learning_level) != Config::DEFAULT_HISTORY) {
     VLOG(2) << "history_learning_level is not DEFAULT_HISTORY";
     return;
   }
@@ -735,8 +758,12 @@ bool UserSegmentHistoryRewriter::Reload() {
 
   const char kFileSuffix[] = ".merge_pending";
   const string merge_pending_file = filename + kFileSuffix;
-  storage_->Merge(merge_pending_file.c_str());
-  Util::Unlink(merge_pending_file);
+
+  // merge pending file does not always exist.
+  if (Util::FileExists(merge_pending_file)) {
+    storage_->Merge(merge_pending_file.c_str());
+    Util::Unlink(merge_pending_file);
+  }
 
   return true;
 }
@@ -822,9 +849,9 @@ bool UserSegmentHistoryRewriter::RewriteNumber(Segment *segment) const {
       // has higher rank by sorting of scores.
       if (last_access_time > 0 &&
           (segment->candidate(j).style
-           != Util::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH) &&
+           != NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH) &&
           (segment->candidate(j).style
-           != Util::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH)) {
+           != NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH)) {
         last_access_time--;
       }
       scores.resize(scores.size() + 1);
@@ -848,7 +875,7 @@ bool UserSegmentHistoryRewriter::Rewrite(const ConversionRequest &request,
     return false;
   }
 
-  if (GET_CONFIG(history_learning_level) == config::Config::NO_HISTORY) {
+  if (GET_CONFIG(history_learning_level) == Config::NO_HISTORY) {
     VLOG(2) << "history_learning_level is NO_HISTORY";
     return false;
   }

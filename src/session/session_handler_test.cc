@@ -37,6 +37,7 @@
 #include "config/config_handler.h"
 #include "converter/converter_mock.h"
 #include "converter/user_data_manager_mock.h"
+#include "engine/mock_converter_engine.h"
 #include "session/commands.pb.h"
 #include "session/generic_storage_manager.h"
 #include "session/japanese_session_factory.h"
@@ -44,24 +45,6 @@
 #include "session/session_handler_test_util.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-
-#ifdef MOZC_USE_SEPARATE_CONNECTION_DATA
-#include "converter/connection_data_injected_environment.h"
-namespace {
-const ::testing::Environment *kConnectionDataInjectedEnvironment =
-    ::testing::AddGlobalTestEnvironment(
-        new ::mozc::ConnectionDataInjectedEnvironment());
-}  // namespace
-#endif  // MOZC_USE_SEPARATE_CONNECTION_DATA
-
-#ifdef MOZC_USE_SEPARATE_DICTIONARY
-#include "dictionary/dictionary_data_injected_environment.h"
-namespace {
-const ::testing::Environment *kDictionaryDataInjectedEnvironment =
-    ::testing::AddGlobalTestEnvironment(
-        new ::mozc::DictionaryDataInjectedEnvironment());
-}  // namespace
-#endif  // MOZC_USE_SEPARATE_DICTIONARY
 
 DECLARE_int32(max_session_size);
 DECLARE_int32(create_session_min_interval);
@@ -194,36 +177,32 @@ TEST_F(SessionHandlerTest, LastCommandTimeout) {
 }
 
 TEST_F(SessionHandlerTest, VerifySyncIsCalled) {
-  {
-    // This test consumes much stack so to reduce the stack size
-    // here we use scoped_ptr instead of local variable.
-    scoped_ptr<ConverterMock> converter_mock(new ConverterMock);
-    // This Mock is released inside of ConverterMock
-    UserDataManagerMock *user_data_manager_mock = new UserDataManagerMock();
-    converter_mock->SetUserDataManager(user_data_manager_mock);
-    ConverterFactory::SetConverter(converter_mock.get());
-    SessionHandler handler;
-    commands::Command command;
-    command.mutable_input()->set_type(commands::Input::DELETE_SESSION);
-    EXPECT_EQ(0, user_data_manager_mock->GetFunctionCallCount("Sync"));
-    handler.EvalCommand(&command);
-    EXPECT_EQ(1, user_data_manager_mock->GetFunctionCallCount("Sync"));
-    ConverterFactory::SetConverter(NULL);
-  }
+  // Tests if sync is called for the following input commands.
+  commands::Input::CommandType command_types[] = {
+    commands::Input::DELETE_SESSION,
+    commands::Input::CLEANUP,
+  };
+  for (int i = 0; i < arraysize(command_types); ++i) {
+    // Set up engine with mock converter, where engine is owned by
+    // SessionHandlerTest class through ResetEngine().
+    MockConverterEngine *engine = new MockConverterEngine;
+    ResetEngine(engine);
 
-  {
-    scoped_ptr<ConverterMock> converter_mock(new ConverterMock);
-    // This Mock is released inside of ConverterMock
-    UserDataManagerMock *user_data_manager_mock = new UserDataManagerMock();
-    converter_mock->SetUserDataManager(user_data_manager_mock);
-    ConverterFactory::SetConverter(converter_mock.get());
+    // Set the mock user data manager to the converter mock created above. This
+    // user_data_manager_mock is owned by the converter mock inside the engine
+    // instance.
+    UserDataManagerMock *user_data_mgr_mock = new UserDataManagerMock();
+    engine->mutable_converter_mock()->SetUserDataManager(user_data_mgr_mock);
+
+    // Set up a session handler and a input command.
     SessionHandler handler;
     commands::Command command;
-    command.mutable_input()->set_type(commands::Input::CLEANUP);
-    EXPECT_EQ(0, user_data_manager_mock->GetFunctionCallCount("Sync"));
+    command.mutable_input()->set_type(command_types[i]);
+
+    // Check if Sync() is called after evaluating the command.
+    EXPECT_EQ(0, user_data_mgr_mock->GetFunctionCallCount("Sync"));
     handler.EvalCommand(&command);
-    EXPECT_EQ(1, user_data_manager_mock->GetFunctionCallCount("Sync"));
-    ConverterFactory::SetConverter(NULL);
+    EXPECT_EQ(1, user_data_mgr_mock->GetFunctionCallCount("Sync"));
   }
 }
 

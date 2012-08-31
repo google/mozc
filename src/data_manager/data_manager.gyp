@@ -34,107 +34,26 @@
   },
   'targets': [
     {
-      'target_name': 'gen_pos_matcher_data',
-      'type': 'none',
-      'toolsets': ['host'],
-      'dependencies': [
-        '../dictionary/dictionary_base.gyp:pos_util',
-      ],
-      'actions': [
-        {
-          'action_name': 'gen_pos_matcher_data',
-          'variables': {
-            'id_def': '../data/dictionary/id.def',
-            'special_pos': '../data/rules/special_pos.def',
-            'pos_matcher_rule': '../data/rules/pos_matcher_rule.def',
-            'pos_matcher_data': '<(gen_out_dir)/pos_matcher_data.h',
-          },
-          'inputs': [
-            '../dictionary/gen_pos_matcher_code.py',
-            '<(id_def)',
-            '<(special_pos)',
-            '<(pos_matcher_rule)'
-          ],
-          'outputs': [
-            '<(pos_matcher_data)',
-          ],
-          'action': [
-            'python',
-            '../dictionary/gen_pos_matcher_code.py',
-            '--id_file=<(id_def)',
-            '--special_pos_file=<(special_pos)',
-            '--pos_matcher_rule_file=<(pos_matcher_rule)',
-            '--output_pos_matcher_data=<(pos_matcher_data)',
-          ],
-          'message': ('Generating <(pos_matcher_data)'),
-        },
-      ],
-    },
-    {
-      'target_name': 'pos_group_data',
-      'type': 'none',
-      'toolsets': ['host'],
-      'actions': [
-        {
-          'action_name': 'gen_pos_group',
-          'variables': {
-            'input_files': [
-              '../data/dictionary/id.def',
-              '../data/rules/special_pos.def',
-              '../data/rules/user_segment_history_pos_group.def',
-            ],
-          },
-          'inputs': [
-            '../dictionary/gen_pos_rewrite_rule.py',
-            '<@(input_files)',
-          ],
-          'outputs': [
-            '<(gen_out_dir)/pos_group_data.h',
-          ],
-          'action': [
-            'python', '../build_tools/redirect.py',
-            '<(gen_out_dir)/pos_group_data.h',
-            '../dictionary/gen_pos_rewrite_rule.py',
-            '<@(input_files)',
-          ],
-        },
-      ],
-    },
-    {
       'target_name': 'user_pos_manager',
-      'type': 'static_library',
-      'hard_dependency': 1,
-      'toolsets': ['target', 'host'],
+      'type': 'none',
+      'toolsets': [ 'target', 'host' ],
       'sources': [
-        'user_pos_manager.cc',
-        '../dictionary/pos_group.h',
-        '<(gen_out_dir)/dictionary/pos_matcher.h',
+        'user_pos_manager.h',
       ],
       'dependencies': [
-        '../base/base.gyp:base',
-        '../dictionary/dictionary_base.gyp:pos_matcher',
-        '../dictionary/dictionary_base.gyp:user_pos',
-        '../dictionary/dictionary_base.gyp:user_pos_data',
-        'gen_pos_matcher_data#host',
-        'pos_group_data#host',
-      ],
-      'export_dependent_settings': [
-        'gen_pos_matcher_data#host',
-        'pos_group_data#host',
+        'oss/oss_data_manager_base.gyp:oss_user_pos_manager',
       ],
     },
     {
-      'target_name': 'user_dictionary_manager',
+      'target_name': 'data_manager_test_base',
       'type': 'static_library',
       'sources': [
-        'user_dictionary_manager.cc',
+        'data_manager_test_base.cc',
       ],
       'dependencies': [
         '../base/base.gyp:base',
         '../dictionary/dictionary_base.gyp:pos_matcher',
-        '../dictionary/dictionary_base.gyp:suppression_dictionary',
-        '../dictionary/dictionary_base.gyp:user_dictionary',
-        '../dictionary/dictionary_base.gyp:user_pos_data',
+        '../prediction/prediction_base.gyp:suggestion_filter',
         'user_pos_manager',
       ],
     },

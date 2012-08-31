@@ -432,7 +432,7 @@ HRESULT CoCreateInstanceAsAdmin(REFCLSID class_id, HWND window_handle,
 
   wchar_t class_id_as_string[MAX_PATH] = {};
   ::StringFromGUID2(class_id, class_id_as_string,
-                    ARRAYSIZE(class_id_as_string));
+                    arraysize(class_id_as_string));
 
   wstring elevation_moniker_name = L"Elevation:Administrator!new:";
   elevation_moniker_name += class_id_as_string;

@@ -314,7 +314,7 @@ bool GetPreloadLayoutsMain(PreloadOrderToKLIDMap *preload_map) {
 wstring GUIDToString(const GUID &guid) {
   wchar_t buffer[256];
   const int character_length_with_null =
-      ::StringFromGUID2(guid, buffer, ARRAYSIZE(buffer));
+      ::StringFromGUID2(guid, buffer, arraysize(buffer));
   if (character_length_with_null <= 0) {
     return L"";
   }
@@ -326,7 +326,7 @@ wstring GUIDToString(const GUID &guid) {
 
 wstring LANGIDToString(LANGID langid) {
   wchar_t buffer[5];
-  HRESULT hr = ::StringCchPrintf(buffer, ARRAYSIZE(buffer), L"%04x", langid);
+  HRESULT hr = ::StringCchPrintf(buffer, arraysize(buffer), L"%04x", langid);
   if (FAILED(hr)) {
     return L"";
   }

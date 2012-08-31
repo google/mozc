@@ -46,6 +46,7 @@
 DECLARE_string(test_tmpdir);
 
 namespace mozc {
+namespace dictionary {
 
 class ValueDictionaryTest : public testing::Test {
  protected:
@@ -157,4 +158,40 @@ TEST_F(ValueDictionaryTest, LookupPredictiveWithLimit) {
   EXPECT_FALSE(word_found);
 }
 
+TEST_F(ValueDictionaryTest, LookupExact) {
+  NodeAllocator allocator;
+  // "うぃー"
+  AddToken("\xE3\x81\x86\xE3\x81\x83\xE3\x83\xBC", "we");
+  // "うぉー"
+  AddToken("\xE3\x81\x86\xE3\x81\x89\xE3\x83\xBC", "war");
+  // "わーど"
+  AddToken("\xE3\x82\x8F\xE3\x83\xBC\xE3\x81\xA9", "word");
+  BuildDictionary();
+
+  scoped_ptr<ValueDictionary> dictionary(
+      ValueDictionary::CreateValueDictionaryFromFile(*pos_matcher_,
+                                                     dict_name_));
+
+  const string lookup_key = "war";
+  Node *node = dictionary->LookupExact(
+      lookup_key.c_str(), lookup_key.size(), &allocator);
+  bool we_found = false;
+  bool war_found = false;
+  bool word_found = false;
+  while (node) {
+    if (node->value == "we") {
+      we_found = true;
+    } else if (node->value == "war") {
+      war_found = true;
+    } else if (node->value == "word") {
+      word_found = true;
+    }
+    node = node->bnext;
+  }
+  EXPECT_FALSE(we_found);
+  EXPECT_TRUE(war_found);
+  EXPECT_FALSE(word_found);
+}
+
+}  // namespace dictionary
 }  // namespace mozc

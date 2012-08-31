@@ -29,7 +29,9 @@
 
 #include "base/win_util.h"
 
+// skip all unless OS_WINDOWS
 #ifdef OS_WINDOWS
+
 #include <Aux_ulib.h>
 #include <Winternl.h>
 
@@ -39,16 +41,13 @@
 #include <atlbase_mozc.h>
 
 #include <clocale>
-#endif  // OS_WINDOWS
 
-#ifdef OS_WINDOWS
-#include "base/util.h"
+#include "base/logging.h"
 #include "base/scoped_handle.h"
 #include "base/singleton.h"
-#endif  // OS_WINDOWS
+#include "base/util.h"
 
 namespace mozc {
-#ifdef OS_WINDOWS
 namespace {
 class AuxLibInitializer {
  public:
@@ -144,6 +143,73 @@ bool IsCuasEnabledInternal(REGSAM additional_regsam) {
 
 }  // namespace
 
+HMODULE WinUtil::LoadSystemLibrary(const wstring &base_filename) {
+  wstring fullpath = Util::GetSystemDir();
+  fullpath += L"\\";
+  fullpath += base_filename;
+
+  const HMODULE module = ::LoadLibraryExW(fullpath.c_str(),
+                                          NULL,
+                                          LOAD_WITH_ALTERED_SEARCH_PATH);
+  if (NULL == module) {
+    const int last_error = ::GetLastError();
+    DLOG(WARNING) << "LoadLibraryEx failed."
+                  << " fullpath = " << fullpath.c_str()
+                  << " error = " << last_error;
+  }
+  return module;
+}
+
+HMODULE WinUtil::LoadMozcLibrary(const wstring &base_filename) {
+  wstring fullpath;
+  Util::UTF8ToWide(Util::GetServerDirectory().c_str(), &fullpath);
+  fullpath += L"\\";
+  fullpath += base_filename;
+
+  const HMODULE module = ::LoadLibraryExW(fullpath.c_str(),
+                                          NULL,
+                                          LOAD_WITH_ALTERED_SEARCH_PATH);
+  if (NULL == module) {
+    const int last_error = ::GetLastError();
+    DLOG(WARNING) << "LoadLibraryEx failed."
+                  << " fullpath = " << fullpath.c_str()
+                  << " error = " << last_error;
+  }
+  return module;
+}
+
+HMODULE WinUtil::GetSystemModuleHandle(const wstring &base_filename) {
+  wstring fullpath = Util::GetSystemDir();
+  fullpath += L"\\";
+  fullpath += base_filename;
+
+  HMODULE module = NULL;
+  if (GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                         fullpath.c_str(), &module) == FALSE) {
+    const int last_error = ::GetLastError();
+    DLOG(WARNING) << "GetModuleHandleExW failed."
+                  << " fullpath = " << fullpath.c_str()
+                  << " error = " << last_error;
+  }
+  return module;
+}
+
+HMODULE WinUtil::GetSystemModuleHandleAndIncrementRefCount(
+    const wstring &base_filename) {
+  wstring fullpath = Util::GetSystemDir();
+  fullpath += L"\\";
+  fullpath += base_filename;
+
+  HMODULE module = NULL;
+  if (GetModuleHandleExW(0, fullpath.c_str(), &module) == FALSE) {
+    const int last_error = ::GetLastError();
+    DLOG(WARNING) << "GetModuleHandleExW failed."
+                  << " fullpath = " << fullpath.c_str()
+                  << " error = " << last_error;
+  }
+  return module;
+}
+
 bool WinUtil::IsDLLSynchronizationHeld(bool *lock_status) {
   return Singleton<AuxLibInitializer>::get()->IsDLLSynchronizationHeld(
       lock_status);
@@ -166,7 +232,7 @@ bool WinUtil::Win32EqualString(const wstring &lhs, const wstring &rhs,
       __in int     cchCount2,
       __in BOOL    bIgnoreCase);
 
-  const HMODULE kernel = Util::GetSystemModuleHandle(L"kernel32.dll");
+  const HMODULE kernel = WinUtil::GetSystemModuleHandle(L"kernel32.dll");
   if (kernel == NULL) {
     LOG(ERROR) << "GetSystemModuleHandle failed";
     return false;
@@ -197,7 +263,7 @@ bool WinUtil::NativeEqualString(const wstring &lhs, const wstring &rhs,
       __in  PCUNICODE_STRING String2,
       __in  BOOLEAN CaseInSensitive);
 
-  const HMODULE ntdll = Util::GetSystemModuleHandle(L"ntdll.dll");
+  const HMODULE ntdll = GetSystemModuleHandle(L"ntdll.dll");
   if (ntdll == NULL) {
     LOG(ERROR) << "GetSystemModuleHandle failed";
     return false;
@@ -430,5 +496,6 @@ ScopedCOMInitializer::~ScopedCOMInitializer() {
   }
 }
 
-#endif  // OS_WINDOWS
 }  // namespace mozc
+
+#endif  // OS_WINDOWS

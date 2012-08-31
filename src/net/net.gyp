@@ -28,6 +28,9 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 {
+  'variables': {
+    'relative_dir': 'net',
+  },
   'targets': [
     {
       'target_name': 'http_client',
@@ -41,9 +44,6 @@
       ],
       'conditions': [
         ['enable_http_client==1', {
-          'defines': [
-            'MOZC_ENABLE_HTTP_CLIENT',
-          ],
           'conditions': [
             ['OS=="mac"', {
               'sources': [
@@ -77,6 +77,11 @@
                   '<!@(<(pkg_config_command) --libs-only-l libcurl)',
                 ],
               },
+            }],
+            ['target_platform=="Android"', {
+              'dependencies': [
+                '../base/base.gyp:jni_proxy'
+              ],
             }],
           ],
         }],
@@ -152,6 +157,59 @@
         'test_size': 'small',
       },
     },
+    {
+      'target_name': 'json_util',
+      'type': 'static_library',
+      'sources': [
+        'json_util.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        'jsoncpp',
+      ],
+    },
+    {
+      'target_name': 'json_util_test',
+      'type': 'executable',
+      'sources': [
+        'json_util_test.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:testing_util',
+        '../testing/testing.gyp:gtest_main',
+        'json_util',
+        'json_util_test_protocol',
+      ],
+      'variables': {
+        'test_size': 'small',
+      },
+    },
+    {
+      'target_name': 'genproto_json_util_test',
+      'type': 'none',
+      'toolsets': ['host'],
+      'sources': [
+        'json_util_test.proto',
+      ],
+      'includes': [
+        '../protobuf/genproto.gypi',
+      ],
+    },
+    {
+      'target_name': 'json_util_test_protocol',
+      'type': 'static_library',
+      'hard_dependency': 1,
+      'sources': [
+        '<(proto_out_dir)/<(relative_dir)/json_util_test.pb.cc',
+      ],
+      'dependencies': [
+        '../protobuf/protobuf.gyp:protobuf',
+        'genproto_json_util_test#host',
+      ],
+      'export_dependent_settings': [
+        'genproto_json_util_test#host',
+      ],
+    },
     # Test cases meta target: this target is referred from gyp/tests.gyp
     {
       'target_name': 'net_all_test',
@@ -159,6 +217,7 @@
       'dependencies': [
         'http_client_mock_test',
         'jsonpath_test',
+        'json_util_test',
       ],
     },
   ],

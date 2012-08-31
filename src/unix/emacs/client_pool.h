@@ -58,7 +58,7 @@ class ClientPool {
   linked_ptr<Client> GetClient(int id);
 
  private:
-  mozc::LRUCache<int, linked_ptr<Client> > lru_cache_;
+  mozc::storage::LRUCache<int, linked_ptr<Client> > lru_cache_;
   int next_id_;
 
   DISALLOW_COPY_AND_ASSIGN(ClientPool);

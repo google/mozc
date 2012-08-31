@@ -33,9 +33,12 @@
 #include <map>
 #include <string>
 #include <vector>
+
 #include "base/base.h"
-#include "base/version.h"
+#include "base/const.h"
+#include "base/logging.h"
 #include "base/singleton.h"
+#include "base/version.h"
 #include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "session/commands.pb.h"
@@ -66,33 +69,41 @@ class VersionDataImpl {
   }
 
   VersionDataImpl() {
-#ifdef GOOGLE_JAPANESE_INPUT_BUILD
-    const string branding = "GoogleJapaneseInput";
-#else
-    const string branding = "Mozc";
-#endif  // GOOGLE_JAPANESE_INPUT_BUILD
-    const string version_string = branding + "-" + Version::GetMozcVersion();
-    entries_["\xe3\x81\x86\xe3\x82\x9b\xe3\x81\x81\xe3\x83\xbc"
-             "\xe3\x81\x98\xe3\x82\x87\xe3\x82\x93"] =
-        new VersionEntry("\xe3\x83\xb4\xe3\x82\xa1\xe3\x83\xbc"
-                         "\xe3\x82\xb8\xe3\x83\xa7\xe3\x83\xb3",
-                         version_string, 9);
-    entries_["\xe3\x82\x94\xe3\x81\x81\xe3\x83\xbc"
-             "\xe3\x81\x98\xe3\x82\x87\xe3\x82\x93"] =
-        new VersionEntry("\xe3\x83\xb4\xe3\x82\xa1\xe3\x83\xbc"
-                         "\xe3\x82\xb8\xe3\x83\xa7\xe3\x83\xb3",
-                         version_string, 9);
-    entries_["\xe3\x81\xb0\xe3\x83\xbc\xe3\x81\x98"
-             "\xe3\x82\x87\xe3\x82\x93"] =
-        new VersionEntry("\xe3\x83\x90\xe3\x83\xbc\xe3\x82\xb8"
-                         "\xe3\x83\xa7\xe3\x83\xb3", version_string, 9);
+    static const struct {
+      const char *key;
+      const char *base_candidate;
+    } kKeyCandList[] = {
+      {
+        // "う゛ぁーじょん"
+        "\xe3\x81\x86\xe3\x82\x9b\xe3\x81\x81\xe3\x83\xbc"
+        "\xe3\x81\x98\xe3\x82\x87\xe3\x82\x93",
+        // "ヴァージョン"
+        "\xe3\x83\xb4\xe3\x82\xa1\xe3\x83\xbc"
+        "\xe3\x82\xb8\xe3\x83\xa7\xe3\x83\xb3",
+      }, {
+        // "ゔぁーじょん"
+        "\xe3\x82\x94\xe3\x81\x81\xe3\x83\xbc"
+        "\xe3\x81\x98\xe3\x82\x87\xe3\x82\x93",
+        // "ヴァージョン"
+        "\xe3\x83\xb4\xe3\x82\xa1\xe3\x83\xbc"
+        "\xe3\x82\xb8\xe3\x83\xa7\xe3\x83\xb3",
+      }, {
+        // "ばーじょん"
+        "\xe3\x81\xb0\xe3\x83\xbc\xe3\x81\x98"
+        "\xe3\x82\x87\xe3\x82\x93",
+        // "バージョン"
+        "\xe3\x83\x90\xe3\x83\xbc\xe3\x82\xb8"
+        "\xe3\x83\xa7\xe3\x83\xb3",
+      },
+    };
 
-    //   entries_["う゛ぁーじょん"] =
-    //     new VersionEntry("ヴァージョン", Version::GetMozcVersion(), 9);
-    //   entries_["ゔぁーじょん"] =
-    //     new VersionEntry("ヴァージョン", Version::GetMozcVersion(), 9);
-    //   entries_["ばーじょん"] =
-    //     new VersionEntry("バージョン", Version::GetMozcVersion(), 9);
+    const string &version_string =
+        kVersionRewriterVersionPrefix + Version::GetMozcVersion();
+    for (int i = 0; i < ARRAYSIZE_UNSAFE(kKeyCandList); ++i) {
+      entries_[kKeyCandList[i].key] =
+          new VersionEntry(kKeyCandList[i].base_candidate,
+                           version_string, 9);
+    }
   }
 
   ~VersionDataImpl() {

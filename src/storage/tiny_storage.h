@@ -30,72 +30,29 @@
 #ifndef MOZC_STORAGE_TINY_STORAGE_H_
 #define MOZC_STORAGE_TINY_STORAGE_H_
 
-#include <map>
-#include <string>
-#include "base/base.h"
+#include "base/port.h"
+#include "storage/storage_interface.h"
 
 namespace mozc {
 namespace storage {
-
-class StorageInterface {
- public:
-  // Open storage
-  virtual bool Open(const string &filename) = 0;
-
-  // Syncing into the disk
-  virtual bool Sync() = 0;
-
-  // Lookup key and return the value.
-  // if key is not found, return false.
-  // It is not guranteed that the data is synced to the disk.
-  virtual bool Lookup(const string &key, string *value) const = 0;
-
-  // Insert key and value
-  // It is not guranteed that the data is synced to the disk.
-  virtual bool Insert(const string &key, const string &value) = 0;
-
-  // Erase key
-  // It is not guranteed that the data is synced to the disk
-  virtual bool Erase(const string &key) = 0;
-
-  // clear internal keys and values
-  // Sync() is automatically called.
-  virtual bool Clear() = 0;
-
-  // return the size of keys
-  virtual size_t Size() const = 0;
-
-  StorageInterface() {}
-  virtual ~StorageInterface() {}
-};
 
 // Very simple and tiny key/value storage.
 // Use it just for saving small data which
 // are not updated frequently, like timestamp, auth_token, etc.
 // We will replace it with faster and more robust implementation.
-class TinyStorage: public StorageInterface {
+class TinyStorage {
  public:
-  TinyStorage();
-  virtual ~TinyStorage();
-
-  bool Open(const string &filename);
-  bool Sync();
-  bool Lookup(const string &key, string *value) const;
-  bool Insert(const string &key, const string &value);
-  bool Erase(const string &key);
-  bool Clear();
-  size_t Size() const {
-    return dic_.size();
-  }
-
-  // return TinyStorage instance
-  static TinyStorage *Create(const char *filename);
+  // Returns an implementatoin of StorageInterface.
+  // Caller must take ownership of the returned object.
+  // Returns NULL if fails.
+  static StorageInterface *New();
+  static StorageInterface *Create(const char *filename);
 
  private:
-  string filename_;
-  bool should_sync_;
-  map<string, string> dic_;
+  DISALLOW_IMPLICIT_CONSTRUCTORS(TinyStorage);
 };
-}  // storage
-}  // mozc
+
+}  // namespace storage
+}  // namespace mozc
+
 #endif  // MOZC_STORAGE_TINY_STORAGE_H_

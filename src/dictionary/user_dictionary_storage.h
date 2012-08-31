@@ -70,14 +70,11 @@ namespace mozc {
 class ProcessMutex;
 
 // Inherit from ProtocolBuffer
+// TODO(hidehiko): Get rid of this implementation.
 class UserDictionaryStorage : public user_dictionary::UserDictionaryStorage {
  public:
-  typedef
-  user_dictionary::UserDictionaryStorage::UserDictionary UserDictionary;
-
-  typedef
-  user_dictionary::UserDictionaryStorage::UserDictionary::Entry
-  UserDictionaryEntry;
+  typedef user_dictionary::UserDictionary UserDictionary;
+  typedef user_dictionary::UserDictionary::Entry UserDictionaryEntry;
 
   enum UserDictionaryStorageErrorType {
     USER_DICTIONARY_STORAGE_NO_ERROR = 0,  // default
@@ -112,6 +109,18 @@ class UserDictionaryStorage : public user_dictionary::UserDictionaryStorage {
   // remove sync dictionary depending on ENABLE_CLOUD_SYNC macro.
   // Use LoadWithoutChangingSyncDictionary for deterministic unit tests.
   bool Load();
+
+  // Loads user dictionary from the file. Usually, it should be able to
+  // read both files in the older format, whose pos is numbered '3',
+  // and in the newer format, whose pos is numbered '5' in enum format.
+  // Load() declared above handles to fill the gap actually. So in most cases
+  // what clients of this class need is just invoke Load().
+  // However, there are some special cases that a client doesn't want to
+  // fill the gap automatically. For such cases, this class provides the
+  // method to do it.
+  // TODO(hidehiko,peria): Remove this method when we get rid of supporting
+  //   older format in sync.
+  bool LoadWithoutMigration();
 
   // For deterministic unit test.
   // Load user dictionary from the file without adding or removing sync
@@ -182,7 +191,7 @@ class UserDictionaryStorage : public user_dictionary::UserDictionaryStorage {
   // Add new entry to the auto registered dictionary.
   bool AddToAutoRegisteredDictionary(const string &key,
                                      const string &value,
-                                     const string &pos);
+                                     UserDictionary::PosType pos);
 
   // return the number of dictionaries with "synclbe" being true.
   static int CountSyncableDictionaries(
@@ -207,14 +216,15 @@ class UserDictionaryStorage : public user_dictionary::UserDictionaryStorage {
   //     EnsureSyncDictionaryExists() and
   //     RemoveUnusedSyncDictionariesIfExist().
   bool LoadAndUpdateSyncDictionaries(bool ensure_one_sync_dictionary_exists,
-                                     bool remove_empty_sync_dictionaries);
+                                     bool remove_empty_sync_dictionaries,
+                                     bool run_migration);
 
   // Return true if this object can accept the given dictionary name.
   // This changes the internal state.
   bool IsValidDictionaryName(const string &name);
 
   // Load the data from file_name actually.
-  bool LoadInternal();
+  bool LoadInternal(bool run_migration);
 
   string file_name_;
   bool locked_;

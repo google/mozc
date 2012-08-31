@@ -84,7 +84,7 @@ HRESULT CallSystemDllFunction(const char* dll_name,
   HRESULT result = E_NOTIMPL;
   wstring wdll_name;
   mozc::Util::UTF8ToWide(dll_name, &wdll_name);
-  const HMODULE dll = mozc::Util::LoadSystemLibrary(wdll_name);
+  const HMODULE dll = mozc::WinUtil::LoadSystemLibrary(wdll_name);
   if (dll != NULL) {
     typedef HRESULT (*DllFunction)();
     DllFunction dll_function = reinterpret_cast<DllFunction>(
@@ -428,8 +428,6 @@ UINT __stdcall StopCacheService(MSIHANDLE msi_handle) {
 
 UINT __stdcall WriteApValue(MSIHANDLE msi_handle) {
   DEBUG_BREAK_FOR_DEBUGGER();
-  wchar_t channel_buf[512];
-  DWORD channel_len = arraysize(channel_buf);
   const wstring channel = GetProperty(msi_handle, L"CustomActionData");
   if (channel.empty()) {
     // OK. Does not change ap value when CustomActionData is not found.

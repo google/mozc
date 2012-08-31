@@ -64,7 +64,7 @@ bool InputDll::EnsureInitialized() {
     return false;
   }
 
-  const HMODULE input_dll = Util::LoadSystemLibrary(kInputDllName);
+  const HMODULE input_dll = WinUtil::LoadSystemLibrary(kInputDllName);
   if (input_dll == NULL) {
     const int last_error = ::GetLastError();
     DLOG(INFO) << "LoadSystemLibrary(\"" << kInputDllName << "\") failed. "

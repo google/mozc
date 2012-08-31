@@ -32,10 +32,11 @@
 #include <string>
 #include <vector>
 
+#include "base/logging.h"
 #include "base/util.h"  // for RomanjiToHiragana
 #include "chrome/skk/skk_util.h"
 #include "converter/node_allocator.h"
-#include "dictionary/embedded_dictionary_data.h"
+#include "data_manager/oss/embedded_dictionary_data.h"
 #include "dictionary/system/system_dictionary.h"
 #include "ppapi/cpp/instance.h"
 #include "ppapi/cpp/module.h"

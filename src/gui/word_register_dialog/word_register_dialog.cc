@@ -44,13 +44,20 @@
 #include "base/scoped_ptr.h"
 #include "base/util.h"
 #include "client/client.h"
-#include "data_manager/user_dictionary_manager.h"
+#include "data_manager/user_pos_manager.h"
+#include "dictionary/user_dictionary_session.h"
 #include "dictionary/user_dictionary_storage.h"
+#include "dictionary/user_dictionary_storage.pb.h"
 #include "dictionary/user_dictionary_util.h"
 #include "dictionary/user_pos.h"
 
 namespace mozc {
 namespace gui {
+
+using mozc::user_dictionary::UserDictionary;
+using mozc::user_dictionary::UserDictionaryCommandStatus;
+using mozc::user_dictionary::UserDictionarySession;
+using mozc::user_dictionary::UserDictionaryStorage;
 
 namespace {
 const int kSessionTimeout = 100000;
@@ -84,13 +91,11 @@ QString GetEnv(const char *envname) {
 
 WordRegisterDialog::WordRegisterDialog()
     : is_available_(true),
-      storage_(
-          new UserDictionaryStorage(
-              UserDictionaryUtil::GetUserDictionaryFileName())),
+      session_(new UserDictionarySession(
+          UserDictionaryUtil::GetUserDictionaryFileName())),
       client_(client::ClientFactory::NewClient()),
       window_title_(tr("Mozc")),
-      user_pos_(
-          UserDictionaryManager::GetUserDictionaryManager()->GetUserPOS()) {
+      user_pos_(UserPosManager::GetUserPosManager()->GetUserPOS()) {
   setupUi(this);
   setWindowFlags(Qt::WindowSystemMenuHint | Qt::WindowStaysOnTopHint);
   setWindowModality(Qt::NonModal);
@@ -107,11 +112,12 @@ WordRegisterDialog::WordRegisterDialog()
 
   client_->set_timeout(kSessionTimeout);
 
-  if (!storage_->Load()) {
-    LOG(WARNING) << "UserDictionaryStorage::Load() failed";
+  if (session_->Load() !=
+      UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS) {
+    LOG(WARNING) << "UserDictionarySession::Load() failed";
   }
 
-  if (!storage_->Lock()) {
+  if (!session_->mutable_storage()->Lock()) {
     QMessageBox::information(
         this, window_title_,
         tr("Close dictionary tool before using word register dialog."));
@@ -130,11 +136,12 @@ WordRegisterDialog::WordRegisterDialog()
   }
 
   // Create new dictionary if empty
-  if (!storage_->Exists() || storage_->dictionaries_size() == 0) {
+  if (!session_->mutable_storage()->Exists() ||
+      session_->storage().dictionaries_size() == 0) {
     const QString name = tr("User Dictionary 1");
     uint64 dic_id = 0;
-    if (!storage_->CreateDictionary(name.toStdString(),
-                                    &dic_id)) {
+    if (!session_->mutable_storage()->CreateDictionary(
+            name.toStdString(), &dic_id)) {
       LOG(ERROR) << "Failed to create a new dictionary.";
       is_available_ = false;
       return;
@@ -142,9 +149,12 @@ WordRegisterDialog::WordRegisterDialog()
   }
 
   // Load Dictionary List
-  CHECK_GT(storage_->dictionaries_size(), 0);
-  for (size_t i = 0; i < storage_->dictionaries_size(); ++i) {
-    DictionarycomboBox->addItem(storage_->dictionaries(i).name().c_str());
+  {
+    const UserDictionaryStorage &storage = session_->storage();
+    CHECK_GT(storage.dictionaries_size(), 0);
+    for (size_t i = 0; i < storage.dictionaries_size(); ++i) {
+      DictionarycomboBox->addItem(storage.dictionaries(i).name().c_str());
+    }
   }
 
   connect(WordlineEdit, SIGNAL(textChanged(const QString &)),
@@ -245,7 +255,8 @@ void WordRegisterDialog::Clicked(QAbstractButton *button) {
 WordRegisterDialog::ErrorCode WordRegisterDialog::SaveEntry() {
   const string key = ReadinglineEdit->text().toStdString();
   const string value = WordlineEdit->text().toStdString();
-  const string pos = PartOfSpeechcomboBox->currentText().toStdString();
+  UserDictionary::PosType pos = UserDictionaryUtil::ToPosType(
+      PartOfSpeechcomboBox->currentText().toStdString().c_str());
 
   if (key.empty()) {
     return EMPTY_KEY;
@@ -259,19 +270,19 @@ WordRegisterDialog::ErrorCode WordRegisterDialog::SaveEntry() {
     return INVALID_KEY;
   }
 
-  if (pos.empty()) {
-    LOG(ERROR) << "POS is empty";
+  if (!UserDictionary::PosType_IsValid(pos)) {
+    LOG(ERROR) << "POS is invalid";
     return FATAL_ERROR;
   }
 
   const int index = DictionarycomboBox->currentIndex();
-  if (index < 0 || index >= storage_->dictionaries_size()) {
+  if (index < 0 || index >= session_->storage().dictionaries_size()) {
     LOG(ERROR) << "index is out of range";
     return FATAL_ERROR;
   }
 
-  UserDictionaryStorage::UserDictionary *dic =
-      storage_->mutable_dictionaries(index);
+  UserDictionary *dic =
+      session_->mutable_storage()->mutable_dictionaries(index);
   CHECK(dic);
 
   if (dic->name() != DictionarycomboBox->currentText().toStdString()) {
@@ -279,14 +290,15 @@ WordRegisterDialog::ErrorCode WordRegisterDialog::SaveEntry() {
     return FATAL_ERROR;
   }
 
-  UserDictionaryStorage::UserDictionaryEntry *entry = dic->add_entries();
+  UserDictionary::Entry *entry = dic->add_entries();
   CHECK(entry);
   entry->set_key(key);
   entry->set_value(value);
   entry->set_pos(pos);
 
-  if (!storage_->Save() &&
-      storage_->GetLastError() == UserDictionaryStorage::SYNC_FAILURE) {
+  if (!session_->mutable_storage()->Save() &&
+      session_->mutable_storage()->GetLastError() ==
+      mozc::UserDictionaryStorage::SYNC_FAILURE) {
     LOG(ERROR) << "Cannot save dictionary";
     return SAVE_FAILURE;
   }
@@ -313,7 +325,7 @@ WordRegisterDialog::ErrorCode WordRegisterDialog::SaveEntry() {
 }
 
 void WordRegisterDialog::LaunchDictionaryTool() {
-  storage_->UnLock();
+  session_->mutable_storage()->UnLock();
   client_->LaunchTool("dictionary_tool", "");
   QWidget::close();
 }

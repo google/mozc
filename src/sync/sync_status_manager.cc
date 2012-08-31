@@ -30,10 +30,12 @@
 #include "sync/sync_status_manager.h"
 
 #include <string>
+
 #include "base/base.h"
-#include "base/util.h"
+#include "base/logging.h"
 #include "base/mutex.h"
 #include "base/process_mutex.h"
+#include "base/util.h"
 #include "storage/registry.h"
 
 namespace mozc {

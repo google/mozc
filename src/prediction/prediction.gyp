@@ -37,7 +37,6 @@
       'target_name': 'prediction',
       'type': 'static_library',
       'sources': [
-        'suggestion_filter.cc',
         'dictionary_predictor.cc',
         'predictor.cc',
         'user_history_predictor.cc',
@@ -58,8 +57,8 @@
         '../storage/storage.gyp:encrypted_string_storage',
         '../storage/storage.gyp:storage',
         '../usage_stats/usage_stats.gyp:usage_stats',
-        'gen_suggestion_filter_data#host',
         'gen_zero_query_number_data#host',
+        'prediction_base.gyp:suggestion_filter',
         'prediction_protocol',
       ],
       'conditions': [
@@ -68,34 +67,6 @@
             '../storage/storage.gyp:encrypted_string_storage',
           ],
         }],
-      ],
-    },
-    {
-      'target_name': 'gen_suggestion_filter_data',
-      'type': 'none',
-      'toolsets': ['host'],
-      'actions': [
-        {
-          'action_name': 'gen_suggestion_filter_data',
-          'variables': {
-            'input_files%': [
-              '../data/dictionary/suggestion_filter.txt',
-            ],
-          },
-          'inputs': [
-            '<@(input_files)',
-          ],
-          'outputs': [
-            '<(gen_out_dir)/suggestion_filter_data.h',
-          ],
-          'action': [
-            '<(mozc_build_tools_dir)/gen_suggestion_filter_main',
-            '<@(input_files)',
-            '<(gen_out_dir)/suggestion_filter_data.h',
-            '--header',
-            '--logtostderr',
-          ],
-        },
       ],
     },
     {
@@ -126,28 +97,6 @@
           'message': 'Generating <(gen_out_dir)/zero_query_number_data.h',
         },
       ],
-    },
-    {
-      'target_name': 'gen_suggestion_filter_main',
-      'type': 'executable',
-      'toolsets': ['host'],
-      'sources': [
-        'gen_suggestion_filter_main.cc',
-      ],
-      'dependencies': [
-        '../storage/storage.gyp:storage',
-      ],
-    },
-    {
-      'target_name': 'install_gen_suggestion_filter_main',
-      'type': 'none',
-      'toolsets': ['host'],
-      'variables': {
-        'bin_name': 'gen_suggestion_filter_main'
-      },
-      'includes' : [
-        '../gyp/install_build_tool.gypi',
-      ]
     },
     {
       'target_name': 'genproto_prediction',

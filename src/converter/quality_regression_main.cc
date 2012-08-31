@@ -33,15 +33,20 @@
 #include "base/base.h"
 #include "base/util.h"
 #include "converter/quality_regression_util.h"
+#include "engine/engine_factory.h"
+#include "engine/engine_interface.h"
 
 DEFINE_string(test_file, "", "regression test file");
 
+using mozc::EngineFactory;
+using mozc::EngineInterface;
 using mozc::quality_regression::QualityRegressionUtil;
 
 int main(int argc, char **argv) {
   InitGoogle(argv[0], &argc, &argv, false);
 
-  QualityRegressionUtil util;
+  scoped_ptr<EngineInterface> engine(EngineFactory::Create());
+  QualityRegressionUtil util(engine->GetConverter());
 
   vector<QualityRegressionUtil::TestItem> items;
   QualityRegressionUtil::ParseFile(FLAGS_test_file, &items);

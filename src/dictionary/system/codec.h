@@ -48,51 +48,52 @@ class SystemDictionaryCodec : public SystemDictionaryCodecInterface {
   virtual ~SystemDictionaryCodec();
 
   // Return section name for key trie
-  const string GetSectionNameForKey() const;
+  virtual const string GetSectionNameForKey() const;
 
   // Return section name for value trie
-  const string GetSectionNameForValue() const;
+  virtual const string GetSectionNameForValue() const;
 
   // Return section name for tokens array
-  const string GetSectionNameForTokens() const;
+  virtual const string GetSectionNameForTokens() const;
 
   // Return section name for frequent pos map
-  const string GetSectionNameForPos() const;
+  virtual const string GetSectionNameForPos() const;
 
   // Compresses key string into small bytes.
-  void EncodeKey(const string &src, string *dst) const;
+  virtual void EncodeKey(const string &src, string *dst) const;
 
   // Decompress key string
-  void DecodeKey(const string &src, string *dst) const;
+  virtual void DecodeKey(const string &src, string *dst) const;
 
   // Compresses value string into small bytes.
-  void EncodeValue(const string &src, string *dst) const;
+  virtual void EncodeValue(const string &src, string *dst) const;
 
   // Decompress value string
-  void DecodeValue(const string &src, string *dst) const;
+  virtual void DecodeValue(const string &src, string *dst) const;
 
   // Compress tokens
-  void EncodeTokens(
+  virtual void EncodeTokens(
       const vector<TokenInfo> &tokens, string *output) const;
 
   // Decompress tokens
-  void DecodeTokens(const uint8 *ptr, vector<TokenInfo> *tokens) const;
+  virtual void DecodeTokens(const uint8 *ptr, vector<TokenInfo> *tokens) const;
+
+  // Decompress a token.
+  virtual bool DecodeToken(
+      const uint8 *ptr, TokenInfo *token_info, int *read_bytes) const;
 
   // Read a token for reverse lookup
   // If the token have value id, assign it to |id_in_value_trie|
   // otherwise assign -1
   // Return false if a token is the last token for a certain key
-  bool ReadTokenForReverseLookup(
+  virtual bool ReadTokenForReverseLookup(
       const uint8 *ptr, int *value_id, int *read_bytes) const;
 
-  uint8 GetTokensTerminationFlag() const;
+  virtual uint8 GetTokensTerminationFlag() const;
 
  private:
   void EncodeToken(
-      const vector<TokenInfo> &tokens, int index, ostringstream *oss) const;
-
-  bool DecodeToken(
-      const uint8 *ptr, TokenInfo *token_info, int *read_bytes) const;
+      const vector<TokenInfo> &tokens, int index, string *output) const;
 
   DISALLOW_COPY_AND_ASSIGN(SystemDictionaryCodec);
 };

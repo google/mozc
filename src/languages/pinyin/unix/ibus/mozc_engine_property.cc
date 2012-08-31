@@ -27,8 +27,6 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <ibus.h>
-
 #include "unix/ibus/mozc_engine_property.h"
 
 #include "base/base.h"
@@ -37,19 +35,11 @@
 namespace mozc {
 namespace ibus {
 
+namespace {
 // The list of properties used in ibus-mozc-pinyin.
 // In ChromeOS, we do not use toggle interface, because ChromeOS does not
 // support toggle interface.
-const MozcEngineProperty kMozcEngineProperties[] = {};
-
-// The IMEOff state is not available in Pinyin.
-const MozcEngineProperty *kMozcEnginePropertyIMEOffState = NULL;
-const size_t kMozcEnginePropertiesSize = ARRAYSIZE(kMozcEngineProperties);
-
-const commands::CompositionMode kMozcEngineInitialCompositionMode =
-    commands::HIRAGANA;
-
-const MozcEngineSwitchProperty kMozcEngineSwitchProperties[] = {
+const MozcEngineSwitchProperty kMozcEngineSwitchPropertiesArray[] = {
   {
     commands::SessionCommand::TOGGLE_PINYIN_CHINESE_MODE,
     "mode.chinese",
@@ -77,30 +67,23 @@ const MozcEngineSwitchProperty kMozcEngineSwitchProperties[] = {
   },
 };
 
+}  // namespace
+
+const MozcEngineProperty *kMozcEngineProperties = NULL;
+// The IMEOff state is not available in Pinyin.
+const MozcEngineProperty *kMozcEnginePropertyIMEOffState = NULL;
+const size_t kMozcEnginePropertiesSize = 0;
+
+const commands::CompositionMode kMozcEngineInitialCompositionMode =
+    commands::HIRAGANA;
+
+const MozcEngineSwitchProperty *kMozcEngineSwitchProperties =
+    &kMozcEngineSwitchPropertiesArray[0];
 const size_t kMozcEngineSwitchPropertiesSize =
-    arraysize(kMozcEngineSwitchProperties);
+    arraysize(kMozcEngineSwitchPropertiesArray);
 
-const MozcEngineToolProperty kMozcEngineToolProperties[] = {
-  {
-    "Tool.ConfigDialog",
-    "config_dialog",
-    "Properties",
-    "properties.png",
-  }, {
-    "Tool.DictionaryTool",
-    "dictionary_tool",
-    "Dictionary tool",
-    "dictionary.png",
-  }, {
-    "Tool.AboutDialog",
-    "about_dialog",
-    "About Mozc",
-    NULL,
-  },
-};
-
-const size_t kMozcEngineToolPropertiesSize =
-    arraysize(kMozcEngineToolProperties);
+const MozcEngineToolProperty *kMozcEngineToolProperties = NULL;
+const size_t kMozcEngineToolPropertiesSize = 0;
 
 // iBus lookup up table size (that is, the number of candidates per page).
 // TODO(hsumita) make this variable editable in config.

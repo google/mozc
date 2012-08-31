@@ -50,14 +50,17 @@
 #include <vector>
 #include <string>
 #include "base/base.h"
+#include "base/number_util.h"
 #include "base/process_mutex.h"
 #include "base/singleton.h"
 #include "base/util.h"
+#include "engine/engine_factory.h"
+#include "engine/engine_interface.h"
 #include "session/commands.pb.h"
 #include "session/japanese_session_factory.h"
+#include "session/random_keyevents_generator.h"
 #include "session/session_handler.h"
 #include "session/session_usage_observer.h"
-#include "session/random_keyevents_generator.h"
 
 DEFINE_string(host, "localhost", "server host name");
 DEFINE_bool(server, true, "server mode");
@@ -68,6 +71,7 @@ DEFINE_int32(rpc_timeout, 60000, "timeout");
 DEFINE_string(user_profile_directory, "", "user profile directory");
 
 namespace mozc {
+
 namespace {
 
 const size_t kMaxRequestSize = 32 * 32 * 8192;
@@ -288,7 +292,7 @@ class RPCClient {
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_family = AF_INET;
 
-    const string port_str = Util::SimpleItoa(FLAGS_port);
+    const string port_str = NumberUtil::SimpleItoa(FLAGS_port);
     CHECK_EQ(::getaddrinfo(FLAGS_host.c_str(), port_str.c_str(),
                            &hints, &res), 0)
         << "getaddrinfo failed";
@@ -353,7 +357,8 @@ class ScopedWSAData {
   }
 };
 }  // namespace
-}  // mozc
+
+}  // namespace mozc
 
 int main(int argc, char *argv[]) {
   InitGoogle(argv[0], &argc, &argv, false);
@@ -383,7 +388,8 @@ int main(int argc, char *argv[]) {
     CHECK(client.DeleteSession());
     return 0;
   } else if (FLAGS_server) {
-    static mozc::session::JapaneseSessionFactory session_factory;
+    scoped_ptr<mozc::EngineInterface> engine(mozc::EngineFactory::Create());
+    static mozc::session::JapaneseSessionFactory session_factory(engine.get());
     mozc::session::SessionFactoryManager::SetSessionFactory(&session_factory);
     mozc::RPCServer server;
     server.Loop();

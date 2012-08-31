@@ -32,6 +32,7 @@
 #include "base/base.h"
 #include "base/util.h"
 #include "storage/registry.h"
+#include "storage/tiny_storage.h"
 #include "session/commands.pb.h"
 #include "testing/base/public/gunit.h"
 
@@ -47,10 +48,31 @@ const int kNumSyncError = 4;
 class SyncStatusManagerTest : public testing::Test {
  protected:
   virtual void SetUp() {
+    original_user_profile_dir_ = Util::GetUserProfileDirectory();
+    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    string registory_file_path;
+    Util::JoinPath(original_user_profile_dir_, "registry.db",
+                   &registory_file_path);
+    local_storage_.reset(storage::TinyStorage::Create(
+        registory_file_path.c_str()));
+    storage::Registry::SetStorage(local_storage_.get());
     manager_.reset(new SyncStatusManager());
   }
 
+  virtual void TearDown() {
+    // SyncStatusManager updates registry.db when it is destructed. So we need
+    // to delete it here before we restore the original user profile directory.
+    manager_.reset(NULL);
+    storage::Registry::SetStorage(NULL);
+    local_storage_.reset(NULL);
+    Util::SetUserProfileDirectory(original_user_profile_dir_);
+  }
+
   scoped_ptr<SyncStatusManager> manager_;
+
+ private:
+  string original_user_profile_dir_;
+  scoped_ptr<storage::StorageInterface> local_storage_;
 };
 
 TEST_F(SyncStatusManagerTest, GetSetLastSyncStatus) {

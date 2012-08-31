@@ -39,8 +39,10 @@
 #include <set>
 #include <string>
 #include <algorithm>
+
 #include "base/base.h"
 #include "base/file_stream.h"
+#include "base/logging.h"
 #include "base/util.h"
 #include "rewriter/dictionary_generator.h"
 #include "rewriter/embedded_dictionary.h"
@@ -60,7 +62,7 @@ void GetSortingMap(const string &auto_file,
   sorting_map->clear();
   string line;
   int sorting_key = 0;
-  mozc::InputFileStream rule_ifs(rule_file.c_str());
+  InputFileStream rule_ifs(rule_file.c_str());
   CHECK(rule_ifs);
   while (getline(rule_ifs, line)) {
     if (line.empty() || line[0] == '#') {
@@ -70,7 +72,7 @@ void GetSortingMap(const string &auto_file,
     ++sorting_key;
   }
 
-  mozc::InputFileStream auto_ifs(auto_file.c_str());
+  InputFileStream auto_ifs(auto_file.c_str());
   CHECK(auto_ifs);
 
   while (getline(auto_ifs, line)) {
@@ -78,11 +80,11 @@ void GetSortingMap(const string &auto_file,
       continue;
     }
     vector<string> fields;
-    mozc::Util::SplitStringUsing(line, "\t ", &fields);
+    Util::SplitStringUsing(line, "\t ", &fields);
     CHECK_GE(fields.size(), 2);
     const char32 ucs4 = strtol(fields[1].c_str(), NULL, 16);
     string utf8;
-    mozc::Util::UCS4ToUTF8(ucs4, &utf8);
+    Util::UCS4ToUTF8(ucs4, &utf8);
     if (sorting_map->find(utf8) != sorting_map->end()) {
       // ordered by rule
       continue;
@@ -100,7 +102,7 @@ void AddSymbolToDictionary(const string &pos,
                            const map<string, uint16> &sorting_map,
                            rewriter::DictionaryGenerator *dictionary) {
   // use first char of value as sorting key.
-  const string first_value = mozc::Util::SubString(value, 0, 1);
+  const string first_value = Util::SubString(value, 0, 1);
   map<string, uint16>::const_iterator itr = sorting_map.find(first_value);
   uint16 sorting_key = 0;
   if (itr == sorting_map.end()) {
@@ -127,7 +129,7 @@ void AddSymbolToDictionary(const string &pos,
     dictionary->AddToken(token);
 
     string fw_key;
-    mozc::Util::HalfWidthAsciiToFullWidthAscii(key, &fw_key);
+    Util::HalfWidthAsciiToFullWidthAscii(key, &fw_key);
     if (fw_key != key) {
       token.set_key(fw_key);
       dictionary->AddToken(token);
@@ -144,7 +146,7 @@ void MakeDictionary(const string &symbol_dictionary_file,
   map<string, uint16> sorting_map;
   GetSortingMap(sorting_map_file, ordering_rule_file, &sorting_map);
 
-  mozc::InputFileStream ifs(symbol_dictionary_file.c_str());
+  InputFileStream ifs(symbol_dictionary_file.c_str());
   CHECK(ifs);
 
   string line;
@@ -156,14 +158,14 @@ void MakeDictionary(const string &symbol_dictionary_file,
     // Format:
     // POS <tab> value <tab> readings(space delimitered) <tab>
     // description <tab> memo
-    mozc::Util::SplitStringAllowEmpty(line, "\t", &fields);
+    Util::SplitStringAllowEmpty(line, "\t", &fields);
     if (fields.size() < 3 ||
         (fields[1].empty() && fields[2].empty())) {
       VLOG(3) << "invalid format. skip line: " << line;
       continue;
     }
     string pos = fields[0];
-    mozc::Util::UpperString(&pos);
+    Util::UpperString(&pos);
     const string &value = fields[1];
     if (seen.find(value) != seen.end()) {
       LOG(WARNING) << "already inserted: " << value;
@@ -173,9 +175,9 @@ void MakeDictionary(const string &symbol_dictionary_file,
     }
     string keys_str;
     // \xE3\x80\x80 is full width space
-    mozc::Util::StringReplace(fields[2], "\xE3\x80\x80", " ", true, &keys_str);
+    Util::StringReplace(fields[2], "\xE3\x80\x80", " ", true, &keys_str);
     vector<string> keys;
-    mozc::Util::SplitStringUsing(keys_str, " ", &keys);
+    Util::SplitStringUsing(keys_str, " ", &keys);
     const string &description = (fields.size()) > 3 ? fields[3] : "";
     const string &additional_description = (fields.size()) > 4 ? fields[4] : "";
     AddSymbolToDictionary(pos, value, keys, description,
@@ -191,7 +193,7 @@ void MakeDictionary(const string &symbol_dictionary_file,
                         dictionary);
 }
 }  // namespace
-}  // mozc
+}  // namespace mozc
 
 int main(int argc, char **argv) {
   InitGoogle(argv[0], &argc, &argv, true);

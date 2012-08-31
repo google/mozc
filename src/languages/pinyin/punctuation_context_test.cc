@@ -223,7 +223,7 @@ TEST_F(PunctuationContextTest, Insert) {
 TEST_F(PunctuationContextTest, Commit) {
   InsertCharacterChars("`!!");
   context_->MoveCursorLeft();
-  context_->FocusCandidateNext();
+  context_->FocusCandidate(1);
 
   {
     SCOPED_TRACE("Commit");
@@ -235,7 +235,7 @@ TEST_F(PunctuationContextTest, Commit) {
 
   InsertCharacterChars("`!!");
   context_->MoveCursorLeft();
-  context_->FocusCandidateNext();
+  context_->FocusCandidate(1);
 
   {
     SCOPED_TRACE("CommitPreedit");
@@ -355,7 +355,7 @@ TEST_F(PunctuationContextTest, MoveCursor) {
 TEST_F(PunctuationContextTest, FocusCandidateIndex) {
   {
     SCOPED_TRACE("There are no candidates");
-    context_->FocusCandidateNext();
+    context_->FocusCandidate(10);
     CheckComposition("", "", "");
     CheckCandidates(empty_candidates_, 0, "");
     CheckResult("");
@@ -365,7 +365,7 @@ TEST_F(PunctuationContextTest, FocusCandidateIndex) {
 
   {
     SCOPED_TRACE("Default candidates");
-    context_->FocusCandidateNext();
+    context_->FocusCandidate(1);
     CheckComposition("`", dummy_candidates_[1], "");
     CheckCandidates(dummy_candidates_, 1, "`|");
     CheckResult("");

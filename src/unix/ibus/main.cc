@@ -29,12 +29,12 @@
 
 #include <cstdio>
 
-#include <ibus.h>
-
 #include "base/base.h"
 #include "base/logging.h"
 #include "base/version.h"
 #include "config/config_handler.h"
+#include "engine/engine_factory.h"
+#include "engine/engine_interface.h"
 #include "session/japanese_session_factory.h"
 #include "unix/ibus/main.h"
 #include "unix/ibus/mozc_engine.h"
@@ -137,7 +137,8 @@ int main(gint argc, gchar **argv) {
 #ifdef OS_CHROMEOS
   // On Chrome OS, mozc does not store the config data to a local file.
   mozc::config::ConfigHandler::SetConfigFileName("memory://config.1.db");
-  mozc::session::JapaneseSessionFactory session_factory;
+  scoped_ptr<mozc::EngineInterface> engine(mozc::EngineFactory::Create());
+  mozc::session::JapaneseSessionFactory session_factory(engine.get());
   mozc::session::SessionFactoryManager::SetSessionFactory(&session_factory);
 #endif  // OS_CHROMEOS
   ibus_init();

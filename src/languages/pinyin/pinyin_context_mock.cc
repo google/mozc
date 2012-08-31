@@ -158,20 +158,6 @@ bool PinyinContextMock::FocusCandidate(size_t index) {
   return true;
 }
 
-bool PinyinContextMock::FocusCandidatePrev() {
-  if (focused_candidate_index_ != 0) {
-    FocusCandidate(focused_candidate_index_ - 1);
-  }
-  return true;
-}
-
-bool PinyinContextMock::FocusCandidateNext() {
-  if (focused_candidate_index_ + 1 < candidates_.size()) {
-    FocusCandidate(focused_candidate_index_ + 1);
-  }
-  return true;
-}
-
 bool PinyinContextMock::ClearCandidateFromHistory(size_t index) {
   if (index >= candidates_.size()) {
     return false;

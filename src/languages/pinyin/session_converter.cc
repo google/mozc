@@ -153,7 +153,7 @@ bool SessionConverter::FocusCandidateOnPage(size_t index) {
 }
 
 bool SessionConverter::FocusCandidateNext() {
-  return context_->FocusCandidateNext();
+  return FocusCandidate(context_->focused_candidate_index() + 1);
 }
 
 bool SessionConverter::FocusCandidateNextPage() {
@@ -175,15 +175,18 @@ bool SessionConverter::FocusCandidateNextPage() {
 }
 
 bool SessionConverter::FocusCandidatePrev() {
-  return context_->FocusCandidatePrev();
+  const size_t focused_index = context_->focused_candidate_index();
+  if (focused_index == 0) {
+    return false;
+  }
+  return context_->FocusCandidate(focused_index - 1);
 }
 
 bool SessionConverter::FocusCandidatePrevPage() {
   if (context_->focused_candidate_index() < kCandidatesPerPage) {
     return false;
   }
-  const size_t index =
-      context_->focused_candidate_index() - kCandidatesPerPage;
+  const size_t index = context_->focused_candidate_index() - kCandidatesPerPage;
   return context_->FocusCandidate(index);
 }
 

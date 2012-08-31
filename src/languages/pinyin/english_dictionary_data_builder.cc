@@ -34,11 +34,16 @@
 #include <vector>
 
 #include "base/file_stream.h"
+#include "base/util.h"
 #include "dictionary/file/codec_interface.h"
 #include "dictionary/file/dictionary_file.h"
 #include "dictionary/file/section.h"
-#include "dictionary/rx/rx_trie.h"
+
+#ifdef MOZC_USE_MOZC_LOUDS
+#include "storage/louds/louds_trie_builder.h"
+#else
 #include "dictionary/rx/rx_trie_builder.h"
+#endif  // MOZC_USE_MOZC_LOUDS
 
 namespace mozc {
 namespace pinyin {
@@ -51,7 +56,7 @@ const float kLearningMultiplier = 0.02;
 }  // namespace
 
 EnglishDictionaryDataBuilder::EnglishDictionaryDataBuilder()
-    : builder_(NULL), rx_id_to_priority_(NULL), words_num_(0) {
+    : builder_(NULL), louds_id_to_priority_(NULL), words_num_(0) {
 }
 
 EnglishDictionaryDataBuilder::~EnglishDictionaryDataBuilder() {
@@ -69,52 +74,65 @@ void EnglishDictionaryDataBuilder::BuildFromStream(istream *input_stream) {
     words.push_back(line);
   }
 
-  builder_.reset(new rx::RxTrieBuilder);
+  builder_.reset(new TrieBuilderType);
   for (size_t i = 0; i < words.size(); ++i) {
+#ifdef MOZC_USE_MOZC_LOUDS
+    builder_->Add(words[i]);
+#else
     builder_->AddKey(words[i]);
+#endif  // MOZC_USE_MOZC_LOUDS
   }
   builder_->Build();
 
   words_num_ = words.size();
-  rx_id_to_priority_.reset(new float[words_num_]);
+  louds_id_to_priority_.reset(new float[words_num_]);
 
   for (size_t i = 0; i < words.size(); ++i) {
-    int word_id = builder_->GetIdFromKey(words[i]);
+#ifdef MOZC_USE_MOZC_LOUDS
+      const int word_id = builder_->GetId(words[i]);
+#else
+      const int word_id = builder_->GetIdFromKey(words[i]);
+#endif  // MOZC_USE_MOZC_LOUDS
+
     DCHECK_LT(word_id, words.size());
     DCHECK_NE(-1, word_id);
 
-    rx_id_to_priority_[word_id] = 1.0 / (sqrt(kIndexOffset + i));
+    louds_id_to_priority_[word_id] = 1.0 / (sqrt(kIndexOffset + i));
   }
 }
 
 void EnglishDictionaryDataBuilder::WriteToStream(ostream *output_stream) const {
   DCHECK(output_stream);
   DCHECK(builder_.get());
-  DCHECK(rx_id_to_priority_.get());
+  DCHECK(louds_id_to_priority_.get());
 
   vector<DictionaryFileSection> sections;
   DictionaryFileCodecInterface *file_codec =
       DictionaryFileCodecFactory::GetCodec();
 
-  DictionaryFileSection dictionary_trie = {
-    builder_->GetImageBody(),
-    builder_->GetImageSize(),
-    file_codec->GetSectionName("english_dictionary_trie"),
-  };
+#ifdef MOZC_USE_MOZC_LOUDS
+  DictionaryFileSection dictionary_trie(
+      builder_->image().data(),
+      builder_->image().size(),
+      file_codec->GetSectionName("english_dictionary_trie"));
+#else
+  DictionaryFileSection dictionary_trie(
+      builder_->GetImageBody(),
+      builder_->GetImageSize(),
+      file_codec->GetSectionName("english_dictionary_trie"));
+#endif  // MOZC_USE_MOZC_LOUDS
   sections.push_back(dictionary_trie);
 
-  DictionaryFileSection word_priority_table = {
-    reinterpret_cast<const char *>(rx_id_to_priority_.get()),
-    words_num_ * static_cast<int>(sizeof(rx_id_to_priority_[0])),
-    file_codec->GetSectionName("english_word_priority_table"),
-  };
+  DictionaryFileSection word_priority_table(
+      reinterpret_cast<const char *>(louds_id_to_priority_.get()),
+      words_num_ * static_cast<int>(sizeof(louds_id_to_priority_[0])),
+      file_codec->GetSectionName("english_word_priority_table"));
   sections.push_back(word_priority_table);
 
-  DictionaryFileSection learning_multiplier = {
+  DictionaryFileSection learning_multiplier(
     reinterpret_cast<const char *>(&kLearningMultiplier),
     sizeof(kLearningMultiplier),
-    file_codec->GetSectionName("learning_multiplier"),
-  };
+    file_codec->GetSectionName("learning_multiplier"));
   sections.push_back(learning_multiplier);
 
   file_codec->WriteSections(sections, output_stream);

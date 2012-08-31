@@ -36,8 +36,11 @@
 #include <sstream>
 #include <string>
 #include <vector>
+
 #include "base/base.h"
 #include "base/file_stream.h"
+#include "base/logging.h"
+#include "base/number_util.h"
 #include "base/singleton.h"
 #include "base/trie.h"
 #include "base/util.h"
@@ -45,7 +48,7 @@
 #include "config/config_handler.h"
 #include "converter/node.h"
 #include "converter/node_allocator.h"
-#include "data_manager/user_dictionary_manager.h"
+#include "data_manager/testing/mock_user_pos_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
 #include "dictionary/user_dictionary_storage.h"
@@ -70,8 +73,9 @@ const char kUserDictionary0[] =
     "stand\tstand\tverb\n"
     "smile\tsmile\tverb\n"
     "smog\tsmog\tnoun\n"
-    // invalid characters in reading
-    "水雲""\tvalue\tnoun\n"
+    // invalid characters "水雲" in reading
+    "\xE6\xB0\xB4\xE9\x9B\xB2\tvalue\tnoun\n"
+
     // Empty key
     "\tvalue\tnoun\n"
     // Empty value
@@ -111,6 +115,9 @@ class UserPOSMock : public UserPOSInterface {
     return true;
   }
 
+  static const char *kNoun;
+  static const char *kVerb;
+
   // Given a verb, this method expands it to three different forms,
   // i.e. base form (the word itself), "-ed" form and "-ing" form. For
   // example, if the given word is "play", the method returns "play",
@@ -135,10 +142,10 @@ class UserPOSMock : public UserPOSInterface {
     }
 
     tokens->clear();
-    if (pos == "noun") {
+    if (pos == kNoun) {
       PushBackToken(key, value, 100, tokens);
       return true;
-    } else if (pos == "verb") {
+    } else if (pos == kVerb) {
       PushBackToken(key, value, 200, tokens);
       PushBackToken(key + "ed", value + "ed", 210, tokens);
       PushBackToken(key + "ing", value + "ing", 220, tokens);
@@ -157,6 +164,11 @@ class UserPOSMock : public UserPOSInterface {
  private:
   DISALLOW_COPY_AND_ASSIGN(UserPOSMock);
 };
+// "名詞"
+const char *UserPOSMock::kNoun = "\xE5\x90\x8D\xE8\xA9\x9E";
+// "動詞ワ行五段"
+const char *UserPOSMock::kVerb =
+    "\xE5\x8B\x95\xE8\xA9\x9E\xE3\x83\xAF\xE8\xA1\x8C\xE4\xBA\x94\xE6\xAE\xB5";
 
 string GenRandomAlphabet(int size) {
   string result;
@@ -168,7 +180,7 @@ string GenRandomAlphabet(int size) {
   return result;
 }
 
-class UserDictionaryTest : public testing::Test {
+class UserDictionaryTest : public ::testing::Test {
  protected:
   virtual void SetUp() {
     pos_mock_.reset(new UserPOSMock);
@@ -186,29 +198,19 @@ class UserDictionaryTest : public testing::Test {
   // Workaround for the constructor of UserDictionary being protected.
   // Creates a user dictionary with mock pos data.
   UserDictionary *CreateDictionaryWithMockPos() {
-    // TODO(noriyukit): Prepare mock for POSMatcher that is consistent with
-    // UserPOSMock.
+    const testing::MockUserPosManager user_pos_manager;
     return new UserDictionary(
         pos_mock_.get(),
-        UserDictionaryManager::GetUserDictionaryManager()->GetPOSMatcher(),
+        user_pos_manager.GetPOSMatcher(),
         suppression_dictionary_.get());
   }
 
   // Creates a user dictionary with actual pos data.
   UserDictionary *CreateDictionary() {
-    const UserPOSInterface *user_pos =
-        UserDictionaryManager::GetUserDictionaryManager()->GetUserPOS();
-    return new UserDictionary(
-        user_pos,
-        UserDictionaryManager::GetUserDictionaryManager()->GetPOSMatcher(),
-        Singleton<SuppressionDictionary>::get());
-  }
-
-  // Returns a sigleton of a user dictionary.
-  UserDictionary *GetUserDictionarySingleton() {
-    UserDictionaryManager *manager =
-        UserDictionaryManager::GetUserDictionaryManager();
-    return manager->GetUserDictionary();
+    const testing::MockUserPosManager user_pos_manager;
+    return new UserDictionary(user_pos_manager.GetUserPOS(),
+                              user_pos_manager.GetPOSMatcher(),
+                              Singleton<SuppressionDictionary>::get());
   }
 
   struct Entry {
@@ -250,6 +252,22 @@ class UserDictionaryTest : public testing::Test {
     }
   }
 
+  static void TestLookupExactHelper(const Entry *expected,
+                                    size_t expected_size,
+                                    const char *key,
+                                    size_t key_size,
+                                    const UserDictionary &dic) {
+    NodeAllocator allocator;
+    Node *node = dic.LookupExact(key, key_size, &allocator);
+
+    if (expected == NULL || expected_size == 0) {
+      EXPECT_TRUE(NULL == node);
+    } else {
+      ASSERT_TRUE(NULL != node);
+      CompareEntries(expected, expected_size, node);
+    }
+  }
+
   static void CompareEntries(const Entry *expected, size_t expected_size,
                              const Node *node) {
     vector<string> expected_encode_items;
@@ -257,8 +275,8 @@ class UserDictionaryTest : public testing::Test {
       const Entry &entry = expected[i];
       expected_encode_items.push_back(entry.key + "\t" +
                                       entry.value + "\t" +
-                                      Util::SimpleItoa(entry.lid) + "\t" +
-                                      Util::SimpleItoa(entry.rid) + "\n");
+                                      NumberUtil::SimpleItoa(entry.lid) + "\t" +
+                                      NumberUtil::SimpleItoa(entry.rid) + "\n");
     }
     sort(expected_encode_items.begin(), expected_encode_items.end());
     string expected_encode;
@@ -268,8 +286,8 @@ class UserDictionaryTest : public testing::Test {
     for ( ; node != NULL; node = node->bnext) {
       actual_encode_items.push_back(node->key + "\t" +
                                     node->value + "\t" +
-                                    Util::SimpleItoa(node->lid) + "\t" +
-                                    Util::SimpleItoa(node->rid) + "\n");
+                                    NumberUtil::SimpleItoa(node->lid) + "\t" +
+                                    NumberUtil::SimpleItoa(node->rid) + "\n");
     }
     sort(actual_encode_items.begin(), actual_encode_items.end());
     string actual_encode;
@@ -301,7 +319,11 @@ class UserDictionaryTest : public testing::Test {
       CHECK(entry);
       entry->set_key(fields[0]);
       entry->set_value(fields[1]);
-      entry->set_pos(fields[2]);
+      if (fields[2] == "verb") {
+        entry->set_pos(user_dictionary::UserDictionary::WA_GROUP1_VERB);
+      } else if (fields[2] == "noun") {
+        entry->set_pos(user_dictionary::UserDictionary::NOUN);
+      }
     }
   }
 
@@ -473,6 +495,38 @@ TEST_F(UserDictionaryTest, TestLookupPrefix) {
   TestLookupPrefixHelper(NULL, 0, "starting", 8, *dic.get());
 }
 
+TEST_F(UserDictionaryTest, TestLookupExact) {
+  scoped_ptr<UserDictionary> dic(CreateDictionaryWithMockPos());
+  // Wait for async reload called from the constructor.
+  dic->WaitForReloader();
+
+  {
+    UserDictionaryStorage storage("");
+    LoadFromString(kUserDictionary0, &storage);
+    dic->Load(storage);
+  }
+
+  // A normal lookup operation.
+  const Entry kExpected0[] = {
+    { "start", "start", 200, 200 },
+  };
+  TestLookupExactHelper(kExpected0, arraysize(kExpected0),
+                        "start", 5, *dic.get());
+
+  // Another normal lookup operation.
+  const Entry kExpected1[] = {
+    { "starting", "starting", 100, 100 },
+    { "starting", "starting", 220, 220 },
+  };
+  TestLookupExactHelper(kExpected1, arraysize(kExpected1),
+                        "starting", 8, *dic.get());
+
+  // Invalid input values should be just ignored.
+  TestLookupPrefixHelper(NULL, 0, "", 0, *dic.get());
+  TestLookupPrefixHelper(NULL, 0, "\xE6\xB0\xB4\xE9\x9B\xB2",  // "水雲"
+                         strlen("\xE6\xB0\xB4\xE9\x9B\xB2"), *dic.get());
+}
+
 TEST_F(UserDictionaryTest, IncognitoModeTest) {
   config::Config config;
   config::ConfigHandler::GetConfig(&config);
@@ -523,7 +577,7 @@ TEST_F(UserDictionaryTest, AsyncLoadTest) {
           dic->add_entries();
       entry->set_key(GenRandomAlphabet(10));
       entry->set_value(GenRandomAlphabet(10));
-      entry->set_pos(GenRandomAlphabet(10));
+      entry->set_pos(user_dictionary::UserDictionary::NOUN);
       entry->set_comment(GenRandomAlphabet(10));
       keys.push_back(entry->key());
     }
@@ -532,7 +586,7 @@ TEST_F(UserDictionaryTest, AsyncLoadTest) {
   }
 
   {
-    UserDictionary *dic = GetUserDictionarySingleton();
+    scoped_ptr<UserDictionary> dic(CreateDictionary());
     // Wait for async reload called from the constructor.
     dic->WaitForReloader();
     dic->SetUserDictionaryName(filename);
@@ -572,9 +626,9 @@ TEST_F(UserDictionaryTest, AddToAutoRegisteredDictionary) {
     dic->SetUserDictionaryName(filename);
     for (int i = 0; i < 100; ++i) {
       EXPECT_TRUE(dic->AddToAutoRegisteredDictionary(
-                      "key" + Util::SimpleItoa(i),
-                      "value" + Util::SimpleItoa(i),
-                      "noun"));
+                      "key" + NumberUtil::SimpleItoa(i),
+                      "value" + NumberUtil::SimpleItoa(i),
+                      user_dictionary::UserDictionary::NOUN));
       dic->WaitForReloader();
     }
   }
@@ -592,11 +646,11 @@ TEST_F(UserDictionaryTest, AddToAutoRegisteredDictionary) {
 #endif
     EXPECT_EQ(100, storage.dictionaries(index).entries_size());
     for (int i = 0; i < 100; ++i) {
-      EXPECT_EQ("key" + Util::SimpleItoa(i),
+      EXPECT_EQ("key" + NumberUtil::SimpleItoa(i),
                 storage.dictionaries(index).entries(i).key());
-      EXPECT_EQ("value" + Util::SimpleItoa(i),
+      EXPECT_EQ("value" + NumberUtil::SimpleItoa(i),
                 storage.dictionaries(index).entries(i).value());
-      EXPECT_EQ("noun",
+      EXPECT_EQ(user_dictionary::UserDictionary::NOUN,
                 storage.dictionaries(index).entries(i).pos());
     }
   }
@@ -617,10 +671,12 @@ TEST_F(UserDictionaryTest, AddToAutoRegisteredDictionary) {
     scoped_ptr<UserDictionary> dic(CreateDictionaryWithMockPos());
     dic->WaitForReloader();
     dic->SetUserDictionaryName(filename);
-    EXPECT_TRUE(dic->AddToAutoRegisteredDictionary("key", "value", "noun"));
+    EXPECT_TRUE(dic->AddToAutoRegisteredDictionary(
+        "key", "value", user_dictionary::UserDictionary::NOUN));
     dic->WaitForReloader();
     // Duplicated one is not registered.
-    EXPECT_FALSE(dic->AddToAutoRegisteredDictionary("key", "value", "noun"));
+    EXPECT_FALSE(dic->AddToAutoRegisteredDictionary(
+        "key", "value", user_dictionary::UserDictionary::NOUN));
     dic->WaitForReloader();
   }
 
@@ -633,13 +689,15 @@ TEST_F(UserDictionaryTest, AddToAutoRegisteredDictionary) {
     EXPECT_EQ(1, storage.dictionaries(1).entries_size());
     EXPECT_EQ("key", storage.dictionaries(1).entries(0).key());
     EXPECT_EQ("value", storage.dictionaries(1).entries(0).value());
-    EXPECT_EQ("noun", storage.dictionaries(1).entries(0).pos());
+    EXPECT_EQ(user_dictionary::UserDictionary::NOUN,
+              storage.dictionaries(1).entries(0).pos());
 #else
     EXPECT_EQ(1, storage.dictionaries_size());
     EXPECT_EQ(1, storage.dictionaries(0).entries_size());
     EXPECT_EQ("key", storage.dictionaries(0).entries(0).key());
     EXPECT_EQ("value", storage.dictionaries(0).entries(0).value());
-    EXPECT_EQ("noun", storage.dictionaries(0).entries(0).pos());
+    EXPECT_EQ(user_dictionary::UserDictionary::NOUN,
+              storage.dictionaries(0).entries(0).pos());
 #endif
   }
 }
@@ -663,18 +721,18 @@ TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
     for (size_t j = 0; j < 10000; ++j) {
       UserDictionaryStorage::UserDictionaryEntry *entry =
           dic->add_entries();
-      entry->set_key("no_suppress_key" + Util::SimpleItoa(j));
-      entry->set_value("no_suppress_value" + Util::SimpleItoa(j));
-      entry->set_pos("noun");
+      entry->set_key("no_suppress_key" + NumberUtil::SimpleItoa(j));
+      entry->set_value("no_suppress_value" + NumberUtil::SimpleItoa(j));
+      entry->set_pos(user_dictionary::UserDictionary::NOUN);
     }
 
     for (size_t j = 0; j < 10; ++j) {
       UserDictionaryStorage::UserDictionaryEntry *entry =
           dic->add_entries();
-      entry->set_key("suppress_key" + Util::SimpleItoa(j));
-      entry->set_value("suppress_value" + Util::SimpleItoa(j));
+      entry->set_key("suppress_key" + NumberUtil::SimpleItoa(j));
+      entry->set_value("suppress_value" + NumberUtil::SimpleItoa(j));
       // entry->set_pos("抑制単語");
-      entry->set_pos("\xE6\x8A\x91\xE5\x88\xB6\xE5\x8D\x98\xE8\xAA\x9E");
+      entry->set_pos(user_dictionary::UserDictionary::SUPPRESSION_WORD);
     }
 
     suppression_dictionary_->Lock();
@@ -684,8 +742,8 @@ TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
 
     for (size_t j = 0; j < 10; ++j) {
       EXPECT_TRUE(suppression_dictionary_->SuppressEntry(
-          "suppress_key" + Util::SimpleItoa(j),
-          "suppress_value" + Util::SimpleItoa(j)));
+          "suppress_key" + NumberUtil::SimpleItoa(j),
+          "suppress_value" + NumberUtil::SimpleItoa(j)));
     }
   }
 
@@ -699,9 +757,9 @@ TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
     for (size_t j = 0; j < 10000; ++j) {
       UserDictionaryStorage::UserDictionaryEntry *entry =
           dic->add_entries();
-      entry->set_key("no_suppress_key" + Util::SimpleItoa(j));
-      entry->set_value("no_suppress_value" + Util::SimpleItoa(j));
-      entry->set_pos("noun");
+      entry->set_key("no_suppress_key" + NumberUtil::SimpleItoa(j));
+      entry->set_value("no_suppress_value" + NumberUtil::SimpleItoa(j));
+      entry->set_pos(user_dictionary::UserDictionary::NOUN);
     }
 
     suppression_dictionary_->Lock();
@@ -710,8 +768,8 @@ TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
 
     for (size_t j = 0; j < 10; ++j) {
       EXPECT_FALSE(suppression_dictionary_->SuppressEntry(
-          "suppress_key" + Util::SimpleItoa(j),
-          "suppress_value" + Util::SimpleItoa(j)));
+          "suppress_key" + NumberUtil::SimpleItoa(j),
+          "suppress_value" + NumberUtil::SimpleItoa(j)));
     }
   }
   Util::Unlink(filename);
@@ -737,20 +795,19 @@ TEST_F(UserDictionaryTest, TestSuggestionOnlyWord) {
     for (size_t j = 0; j < 10; ++j) {
       UserDictionaryStorage::UserDictionaryEntry *entry =
           dic->add_entries();
-      entry->set_key("key" + Util::SimpleItoa(j));
+      entry->set_key("key" + NumberUtil::SimpleItoa(j));
       entry->set_value("default");
       // "名詞"
-      entry->set_pos("\xE5\x90\x8D\xE8\xA9\x9E");
+      entry->set_pos(user_dictionary::UserDictionary::NOUN);
     }
 
     for (size_t j = 0; j < 10; ++j) {
       UserDictionaryStorage::UserDictionaryEntry *entry =
           dic->add_entries();
-      entry->set_key("key" + Util::SimpleItoa(j));
+      entry->set_key("key" + NumberUtil::SimpleItoa(j));
       entry->set_value("suggest_only");
       // "サジェストのみ"
-      entry->set_pos("\xE3\x82\xB5\xE3\x82\xB8\xE3\x82\xA7"
-                     "\xE3\x82\xB9\xE3\x83\x88\xE3\x81\xAE\xE3\x81\xBF");
+      entry->set_pos(user_dictionary::UserDictionary::SUGGESTION_ONLY);
     }
 
     user_dic->Load(storage);
@@ -795,12 +852,12 @@ TEST_F(UserDictionaryTest, TestUsageStats) {
     CHECK(entry);
     entry->set_key("key1");
     entry->set_value("value1");
-    entry->set_pos("noun");
+    entry->set_pos(user_dictionary::UserDictionary::NOUN);
     entry = dic1->add_entries();
     CHECK(entry);
     entry->set_key("key2");
     entry->set_value("value2");
-    entry->set_pos("noun");
+    entry->set_pos(user_dictionary::UserDictionary::NOUN);
   }
   {
     UserDictionaryStorage::UserDictionary *dic2 = storage.add_dictionaries();
@@ -811,17 +868,17 @@ TEST_F(UserDictionaryTest, TestUsageStats) {
     CHECK(entry);
     entry->set_key("key3");
     entry->set_value("value3");
-    entry->set_pos("noun");
+    entry->set_pos(user_dictionary::UserDictionary::NOUN);
     entry = dic2->add_entries();
     CHECK(entry);
     entry->set_key("key4");
     entry->set_value("value4");
-    entry->set_pos("noun");
+    entry->set_pos(user_dictionary::UserDictionary::NOUN);
     entry = dic2->add_entries();
     CHECK(entry);
     entry->set_key("key5");
     entry->set_value("value5");
-    entry->set_pos("noun");
+    entry->set_pos(user_dictionary::UserDictionary::NOUN);
   }
   dic->Load(storage);
 

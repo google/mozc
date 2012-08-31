@@ -1096,20 +1096,17 @@ TEST(CharChunkTest, Combine) {
     lhs.set_conversion("LC");
     lhs.set_pending("LP");
     lhs.set_raw("LR");
-    rhs.set_status(CharChunk::NO_RAW);
 
     rhs.set_ambiguous("RA");
     rhs.set_conversion("RC");
     rhs.set_pending("RP");
     rhs.set_raw("RR");
-    rhs.set_status(CharChunk::NO_CONVERSION);
 
     rhs.Combine(lhs);
     EXPECT_EQ("LARA", rhs.ambiguous());
     EXPECT_EQ("LCRC", rhs.conversion());
     EXPECT_EQ("LPRP", rhs.pending());
     EXPECT_EQ("LRRR", rhs.raw());
-    EXPECT_TRUE(rhs.has_status(CharChunk::NO_CONVERSION));
   }
 
   {  // lhs' ambigous is empty.
@@ -1118,20 +1115,17 @@ TEST(CharChunkTest, Combine) {
     lhs.set_conversion("LC");
     lhs.set_pending("LP");
     lhs.set_raw("LR");
-    rhs.set_status(CharChunk::NO_RAW);
 
     rhs.set_ambiguous("RA");
     rhs.set_conversion("RC");
     rhs.set_pending("RP");
     rhs.set_raw("RR");
-    rhs.set_status(CharChunk::NO_CONVERSION);
 
     rhs.Combine(lhs);
     EXPECT_EQ("", rhs.ambiguous());
     EXPECT_EQ("LCRC", rhs.conversion());
     EXPECT_EQ("LPRP", rhs.pending());
     EXPECT_EQ("LRRR", rhs.raw());
-    EXPECT_TRUE(rhs.has_status(CharChunk::NO_CONVERSION));
   }
 
   {  // rhs' ambigous is empty.
@@ -1140,20 +1134,17 @@ TEST(CharChunkTest, Combine) {
     lhs.set_conversion("LC");
     lhs.set_pending("LP");
     lhs.set_raw("LR");
-    rhs.set_status(CharChunk::NO_RAW);
 
     rhs.set_ambiguous("");
     rhs.set_conversion("RC");
     rhs.set_pending("RP");
     rhs.set_raw("RR");
-    rhs.set_status(CharChunk::NO_CONVERSION);
 
     rhs.Combine(lhs);
     EXPECT_EQ("LARP", rhs.ambiguous());
     EXPECT_EQ("LCRC", rhs.conversion());
     EXPECT_EQ("LPRP", rhs.pending());
     EXPECT_EQ("LRRR", rhs.raw());
-    EXPECT_TRUE(rhs.has_status(CharChunk::NO_CONVERSION));
   }
 }
 
@@ -1858,7 +1849,6 @@ TEST(CharChunkTest, Clone) {
   src.conversion_ = "conversion";
   src.pending_ = "pending";
   src.ambiguous_ = "ambiguous";
-  src.status_mask_ = CharChunk::NO_RAW;
   src.attributes_ = NEW_CHUNK;
 
   scoped_ptr<CharChunk> dest(new CharChunk(kNullT12r, NULL));
@@ -1868,7 +1858,6 @@ TEST(CharChunkTest, Clone) {
   EXPECT_NE(src.conversion_, dest->conversion_);
   EXPECT_NE(src.pending_, dest->pending_);
   EXPECT_NE(src.ambiguous_, dest->ambiguous_);
-  EXPECT_NE(src.status_mask_, dest->status_mask_);
   EXPECT_NE(src.attributes_, dest->attributes_);
 
   dest.reset(src.Clone());
@@ -1878,7 +1867,6 @@ TEST(CharChunkTest, Clone) {
   EXPECT_EQ(src.conversion_, dest->conversion_);
   EXPECT_EQ(src.pending_, dest->pending_);
   EXPECT_EQ(src.ambiguous_, dest->ambiguous_);
-  EXPECT_EQ(src.status_mask_, dest->status_mask_);
   EXPECT_EQ(src.attributes_, dest->attributes_);
 }
 

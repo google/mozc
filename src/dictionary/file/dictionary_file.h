@@ -36,15 +36,17 @@
 #include <string>
 #include <vector>
 
-#include "base/base.h"
-#include "base/mmap.h"
-#include "dictionary/file/section.h"
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 
 namespace mozc {
+class Mmap;
+struct DictionaryFileSection;
+
 class DictionaryFile {
  public:
   DictionaryFile();
-  virtual ~DictionaryFile();
+  ~DictionaryFile();
 
   // Open from file
   bool OpenFromFile(const string &file);
@@ -59,7 +61,7 @@ class DictionaryFile {
 
  private:
   // This will be NULL if the mapping source is given as a pointer.
-  scoped_ptr<Mmap<char> > mapping_;
+  scoped_ptr<Mmap> mapping_;
 
   vector<DictionaryFileSection> sections_;
 

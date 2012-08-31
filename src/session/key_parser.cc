@@ -31,9 +31,13 @@
 
 #include "session/key_parser.h"
 
+#include <map>
 #include <set>
+#include <string>
+#include <vector>
 
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/singleton.h"
 #include "base/util.h"
 #include "session/commands.pb.h"
@@ -165,6 +169,7 @@ class KeyParserData {
     keycode_map_["decimal"] = KeyEvent::DECIMAL;
     keycode_map_["divide"] = KeyEvent::DIVIDE;
     keycode_map_["equals"] = KeyEvent::EQUALS;
+    keycode_map_["comma"] = KeyEvent::COMMA;
   }
 
   SpecialKeysMap keycode_map_;

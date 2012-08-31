@@ -30,24 +30,25 @@
 #ifndef MOZC_CONVERTER_NBEST_GENERATOR_H_
 #define MOZC_CONVERTER_NBEST_GENERATOR_H_
 
-#include <queue>
-#include <set>
 #include <vector>
-#include <string>
-#include "base/base.h"
+
 #include "base/freelist.h"
-#include "converter/node.h"
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 #include "converter/segments.h"
 
 namespace mozc {
 
-class CandidateFilter;
 class ConnectorInterface;
 class Lattice;
 class POSMatcher;
 class SegmenterInterface;
 class SuppressionDictionary;
 struct Node;
+
+namespace converter {
+class CandidateFilter;
+}  // namespace converter
 
 // TODO(toshiyuki): write unittest for NBestGenerator.
 class NBestGenerator {
@@ -57,61 +58,73 @@ class NBestGenerator {
                  const SegmenterInterface *segmenter,
                  const ConnectorInterface *connector,
                  const POSMatcher *pos_matcher,
-                 const Node *begin_node, const Node *end_node,
                  const Lattice *lattice, bool is_prediction);
+  ~NBestGenerator();
 
-  virtual ~NBestGenerator();
+  // Reset the iterator status.
+  void Reset(const Node *begin_node, const Node *end_node);
 
   // Iterator:
   // Can obtain N-best results by calling Next() in sequence.
   bool Next(Segment::Candidate *candidate, Segments::RequestType request_type);
 
  private:
+  struct QueueElement;
+  struct QueueElementComparator;
+
+  // This is just a priority_queue of const QueueElement*, but supports
+  // more operations in addition to std::priority_queue.
+  class Agenda {
+   public:
+    Agenda() {
+    }
+    ~Agenda() {
+    }
+
+    const QueueElement *Top() const {
+      return priority_queue_.front();
+    }
+    bool IsEmpty() const {
+      return priority_queue_.empty();
+    }
+    void Clear() {
+      priority_queue_.clear();
+    }
+    void Reserve(int size) {
+      priority_queue_.reserve(size);
+    }
+
+    void Push(const QueueElement *element);
+    void Pop();
+   private:
+    vector<const QueueElement*> priority_queue_;
+
+    DISALLOW_COPY_AND_ASSIGN(Agenda);
+  };
+
   int InsertTopResult(Segment::Candidate *candidate,
                       Segments::RequestType request_type);
 
   void MakeCandidate(Segment::Candidate *candidate,
-                     int cost,
-                     int structure_cost,
-                     int w_cost,
-                     const vector<const Node *> nodes) const;
+                     int32 cost, int32 structure_cost, int32 wcost,
+                     const vector<const Node *> &nodes) const;
 
   int GetTransitionCost(const Node *lnode, const Node *rnode) const;
-
-  struct QueueElement {
-    const Node *node;
-    const QueueElement *next;
-    int32 fx;  // f(x) = h(x) + g(x): cost function for A* search
-    int32 gx;  // g(x)
-    // transition cost part of g(x).
-    // Do not take the transition costs to edge nodes.
-    int32 structure_gx;
-    int32 w_gx;
-  };
-
-  class QueueElementComp {
-   public:
-    const bool operator()(const QueueElement *q1,
-                          const QueueElement *q2) const {
-      return (q1->fx > q2->fx);
-    }
-  };
-
-  typedef priority_queue<const QueueElement *, vector<const QueueElement *>,
-                         QueueElementComp> Agenda;
 
   // References to relevant modules.
   const SuppressionDictionary *suppression_dictionary_;
   const SegmenterInterface *segmenter_;
   const ConnectorInterface *connector_;
   const POSMatcher *pos_matcher_;
-  const Node *begin_node_;
-  const Node *end_node_;
   const Lattice *lattice_;
 
-  scoped_ptr<Agenda> agenda_;
+  const Node *begin_node_;
+  const Node *end_node_;
+
+  Agenda agenda_;
   FreeList<QueueElement> freelist_;
-  scoped_ptr<CandidateFilter> filter_;
+  vector<const Node *> nodes_;
+  scoped_ptr<converter::CandidateFilter> filter_;
   bool viterbi_result_checked_;
   bool is_prediction_;
 

@@ -56,6 +56,18 @@
         '../rx/rx_storage.gyp:rx_trie',
         'system_dictionary_codec',
       ],
+      'conditions': [
+        ['enable_mozc_louds==1', {
+          'dependencies!': [
+            '../rx/rx_storage.gyp:rbx_array',
+            '../rx/rx_storage.gyp:rx_trie',
+          ],
+          'dependencies': [
+            '../louds/louds_trie_adapter.gyp:louds_trie_adapter',
+            '../../storage/louds/louds.gyp:bit_vector_based_array',
+          ],
+        }],
+      ],
     },
     {
       'target_name': 'value_dictionary',
@@ -69,6 +81,16 @@
         '../file/dictionary_file.gyp:dictionary_file',
         '../rx/rx_storage.gyp:rx_trie',
         'system_dictionary_codec',
+      ],
+      'conditions': [
+        ['enable_mozc_louds==1', {
+          'dependencies!': [
+            '../rx/rx_storage.gyp:rx_trie',
+          ],
+          'dependencies': [
+            '../louds/louds_trie_adapter.gyp:louds_trie_adapter',
+          ],
+        }],
       ],
     },
     {
@@ -87,6 +109,18 @@
         '../rx/rx_storage.gyp:rbx_array_builder',
         '../rx/rx_storage.gyp:rx_trie_builder',
         'system_dictionary_codec',
+      ],
+      'conditions': [
+        ['enable_mozc_louds==1', {
+          'dependencies!': [
+            '../rx/rx_storage.gyp:rbx_array_builder',
+            '../rx/rx_storage.gyp:rx_trie_builder',
+          ],
+          'dependencies': [
+            '../../storage/louds/louds.gyp:bit_vector_based_array_builder',
+            '../../storage/louds/louds.gyp:louds_trie_builder',
+          ],
+        }],
       ],
     },
     {
@@ -111,15 +145,31 @@
       ],
       'dependencies': [
         '../../base/base.gyp:base_core',
-        '../../dictionary/dictionary_base.gyp:install_dictionary_test_data',
         '../../session/session_base.gyp:request_test_util',
         '../../testing/testing.gyp:gtest_main',
+        'install_system_dictionary_test_data',
         'system_dictionary',
         'system_dictionary_builder',
       ],
       'variables': {
         'test_size': 'small',
       },
+    },
+    {
+      # TODO(noriyukit): Ideally, the copy rule of
+      # dictionary_oss/dictionary00.txt can be shared with one in
+      # data_manager/dictionary_oss/oss_data_manager_test.gyp. However, to avoid
+      # conflict of copy destination name, the copy destination here is changed
+      # from the original one.
+      'target_name': 'install_system_dictionary_test_data',
+      'type': 'none',
+      'variables': {
+        'test_data_subdir': 'data/system_dictionary_test',
+        'test_data': [
+          '../../data/dictionary_oss/dictionary00.txt',
+        ],
+      },
+      'includes': [ '../../gyp/install_testdata.gypi' ],
     },
     {
       'target_name': 'value_dictionary_test',

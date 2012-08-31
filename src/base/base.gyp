@@ -71,27 +71,21 @@
           },
           'conditions': [
             ['branding=="GoogleJapaneseInput"', {
-              'sources': [
-                'crash_report_handler.mm',
-               ],
+              'dependencies': [
+                # We cannot add 'crash_report_handler.mm' to 'sources' here
+                # because we already have 'crash_report_handler.cc' in this
+                # target. When a static library target has multiple files
+                # with the same basenames in its 'sources' list,
+                # gyp (r1354+) treats it as an error.
+                'crash_report_handler_mac',
+              ],
             }],
           ],
         }],
         ['OS=="win"', {
           'sources': [
             'win_sandbox.cc',
-            'win_util.cc',
           ],
-          'link_settings': {
-            'msvs_settings': {
-              'VCLinkerTool': {
-                'AdditionalDependencies': [
-                  'aux_ulib.lib',  # used in 'win_util.cc'
-                  'propsys.lib',   # used in 'win_util.cc'
-                ],
-              },
-            },
-          },
           'conditions': [
             ['branding=="GoogleJapaneseInput"', {
               'dependencies': [
@@ -138,16 +132,23 @@
       'sources': [
         '<(gen_out_dir)/character_set.h',
         '<(gen_out_dir)/version_def.h',
+        'file_stream.cc',
         'flags.cc',
         'hash.cc',
         'init.cc',
         'logging.cc',
+        'mmap.cc',
         'mutex.cc',
+        'number_util.cc',
+        'scoped_handle.cc',
         'singleton.cc',
+        'string_piece.cc',
         'text_converter.cc',
         'text_normalizer.cc',
+        'thread.cc',
         'util.cc',
         'version.cc',
+        'win_util.cc',
       ],
       'dependencies': [
         'gen_character_set#host',
@@ -159,6 +160,8 @@
             'msvs_settings': {
               'VCLinkerTool': {
                 'AdditionalDependencies': [
+                  'aux_ulib.lib',  # used in 'win_util.cc'
+                  'propsys.lib',   # used in 'win_util.cc'
                   'version.lib',  # used in 'util.cc'
                 ],
               },
@@ -200,6 +203,28 @@
             '--output=<(gen_out_dir)/character_set.h'
           ],
         },
+      ],
+    },
+    {
+      'target_name': 'codegen_bytearray_stream',
+      'type': 'none',
+      'toolsets': ['host'],
+      'sources': [
+        'codegen_bytearray_stream.h',  # this is header only library.
+      ],
+      'dependencies': [
+        'base_core#host',
+      ],
+    },
+    {
+      'target_name': 'jni_proxy',
+      'type': 'static_library',
+      'conditions': [
+        ['target_platform=="Android"', {
+          'sources': [
+            'android_jni_proxy.cc'
+          ],
+        }],
       ],
     },
     {
@@ -254,12 +279,28 @@
             ],
           },
         }],
+        ['target_platform=="Android"', {
+          'dependencies': [
+            'jni_proxy'
+          ],
+        }],
         ['target_platform=="NaCl" and _toolset=="target"', {
           'sources!': [
             'encryptor.cc',
             'password_manager.cc',
           ],
         }],
+      ],
+    },
+    {
+      'target_name': 'testing_util',
+      'type': 'static_library',
+      'sources': [
+        'testing_util.cc',
+      ],
+      'dependencies': [
+        'base_core',
+        '../protobuf/protobuf.gyp:protobuf',
       ],
     },
     {
@@ -339,10 +380,29 @@
         },
       ],
     },
+    {
+      'target_name': 'task',
+      'type': 'static_library',
+      'sources': [
+        'task_manager.cc',
+        'task_runner.cc',
+        'task_token.cc',
+      ],
+      'dependencies': [
+        'base',
+      ],
+    },
   ],
   'conditions': [
     ['OS=="mac"', {
       'targets': [
+        {
+          'target_name': 'crash_report_handler_mac',
+          'type': 'static_library',
+          'sources': [
+            'crash_report_handler.mm',
+          ],
+        },
         {
           'target_name': 'mac_util_main',
           'type': 'executable',

@@ -50,20 +50,11 @@ class ConfigUpdater {
   static void ConfigValueChanged(IBusConfig *config,
                                  const gchar *section,
                                  const gchar *name,
-#if IBUS_CHECK_VERSION(1, 3, 99)
                                  GVariant *value,
-#else
-                                 GValue *value,
-#endif  // IBUS_CHECK_VERSION
                                  gpointer user_data);
   void UpdateConfig(const gchar *section,
                     const gchar *name,
-#if IBUS_CHECK_VERSION(1, 3, 99)
-                    GVariant *value
-#else
-                    GValue *value
-#endif  // IBUS_CHECK_VERSION
-                                 );
+                    GVariant *value);
 
   // Initializes mozc hangul config.
   static void InitConfig(IBusConfig *config);

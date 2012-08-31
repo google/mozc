@@ -45,7 +45,8 @@
 //  // here main() is automatically converted to WinMain
 //  int main(int argc,  char *argv[]) { .. }
 #ifdef OS_WINDOWS
-#include <windows.h>
+#include <Windows.h>
+#include <ShellAPI.h>  // for CommandLineToArgvW
 #include "base/base.h"
 #include "base/util.h"
 #include "base/const.h"

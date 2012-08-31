@@ -29,6 +29,7 @@
 
 #include "session/key_event_util.h"
 
+#include "base/number_util.h"
 #include "base/util.h"
 #include "session/commands.pb.h"
 #include "session/key_parser.h"
@@ -68,9 +69,9 @@ namespace {
         (actual.has_special_key()) ? actual.special_key() : -1;
     if (expected_special_key != actual_special_key) {
       const string expected_value = (expected_special_key == -1)
-          ? "None" : Util::SimpleItoa(expected_special_key);
+          ? "None" : NumberUtil::SimpleItoa(expected_special_key);
       const string actual_value = (actual_special_key == -1)
-          ? "None" : Util::SimpleItoa(actual_special_key);
+          ? "None" : NumberUtil::SimpleItoa(actual_special_key);
       return ::testing::AssertionFailure() <<
           "Special keys are not same\n" <<
           "Expected: " << expected_value << "\n" <<
@@ -138,7 +139,7 @@ TEST(KeyEventUtilTest, GetKeyInformation) {
   KeyEvent key_event;
   uint64 output;
 
-  for (size_t i = 0; i < ARRAYSIZE(kTestKeys); ++i) {
+  for (size_t i = 0; i < arraysize(kTestKeys); ++i) {
     SCOPED_TRACE(kTestKeys[i]);
     KeyParser::ParseKey(kTestKeys[i], &key_event);
     ASSERT_TRUE(KeyEventUtil::GetKeyInformation(key_event, &output));
@@ -227,7 +228,7 @@ const struct NormalizeNumpadKeyTestData {
 }  // namespace
 
 TEST(KeyEventUtilTest, NormalizeNumpadKey) {
-  for (size_t i = 0; i < ARRAYSIZE(kNormalizeNumpadKeyTestData); ++i) {
+  for (size_t i = 0; i < arraysize(kNormalizeNumpadKeyTestData); ++i) {
     const NormalizeNumpadKeyTestData &data = kNormalizeNumpadKeyTestData[i];
     SCOPED_TRACE(data.from);
 
@@ -290,7 +291,7 @@ const struct RemoveModifiersTestData {
 }  // namespace
 
 TEST(KeyEventUtilTest, RemvoeModifiers) {
-  for (size_t i = 0; i < ARRAYSIZE(kRemoveModifiersTestData); ++i) {
+  for (size_t i = 0; i < arraysize(kRemoveModifiersTestData); ++i) {
     SCOPED_TRACE(Util::StringPrintf("index = %d", static_cast<int>(i)));
     const RemoveModifiersTestData &data = kRemoveModifiersTestData[i];
 
@@ -386,7 +387,7 @@ const struct IsModifiersTestData {
 }  // namespace
 
 TEST(KeyEventUtilTest, IsModifiers) {
-  for (size_t i = 0; i < ARRAYSIZE(kIsModifiersTestData); ++i) {
+  for (size_t i = 0; i < arraysize(kIsModifiersTestData); ++i) {
     const IsModifiersTestData &data = kIsModifiersTestData[i];
     SCOPED_TRACE(Util::StringPrintf("index: %d", static_cast<int>(i)));
 
@@ -421,7 +422,7 @@ const struct IsLowerUpperAlphabetTestData {
 }  // namespace
 
 TEST(KeyEventUtilTest, IsLowerUpperAlphabet) {
-  for (size_t i = 0; i < ARRAYSIZE(kIsLowerUpperAlphabetTestData); ++i) {
+  for (size_t i = 0; i < arraysize(kIsLowerUpperAlphabetTestData); ++i) {
     const IsLowerUpperAlphabetTestData &data = kIsLowerUpperAlphabetTestData[i];
     SCOPED_TRACE(data.key);
     KeyEvent key_event;
@@ -446,12 +447,13 @@ const struct IsNumpadKeyTestData {
   { "NUMPAD9",      true },
   { "MULTIPLY",     true },
   { "EQUALS",       true },
+  { "COMMA",        true },
   { "ASCII",        false },
 };
 }  // namespace
 
 TEST(KeyEventUtilTest, IsNumpadKey) {
-  for (size_t i = 0; i < ARRAYSIZE(kIsNumpadKeyTestData); ++i) {
+  for (size_t i = 0; i < arraysize(kIsNumpadKeyTestData); ++i) {
     const IsNumpadKeyTestData &data = kIsNumpadKeyTestData[i];
     SCOPED_TRACE(data.key);
     KeyEvent key_event;

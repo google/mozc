@@ -45,21 +45,24 @@
 #include <limits>
 
 #include "base/util.h"
+#include "base/win_util.h"
 #include "win32/ime/ime_impl_imm.h"
 #include "win32/ime/ime_language_bar.h"
 
 namespace {
+
 using WTL::CBitmap;
 using WTL::CIcon;
 using WTL::CSize;
 using WTL::CDC;
 
+const int kDefaultDPI = 96;
+
 // Represents the cookie for the sink to an ImeLangBarItem object.
-// TODO(yukawa): add another value for opensource version.
-static const int kImeLangBarMenuCookie = (('G' << 24) |
-                                          ('O' << 16) |
-                                          ('O' << 8) |
-                                          ('G' << 0));
+const int kImeLangBarMenuCookie = (('M' << 24) |
+                                   ('o' << 16) |
+                                   ('z' << 8) |
+                                   ('c' << 0));
 
 // Loads an icon which is appropriate for the current theme.
 // An icon ID 0 represents "no icon".
@@ -77,7 +80,7 @@ HICON LoadIconFromResource(HINSTANCE instance,
     // TODO(yukawa): Make a wrapper of GetModuleHandleEx to increment a
     // reference count of the theme DLL while we call IsThemeActive API.
     const HMODULE theme_dll =
-        mozc::Util::GetSystemModuleHandleAndIncrementRefCount(kThemeDll);
+        mozc::WinUtil::GetSystemModuleHandleAndIncrementRefCount(kThemeDll);
     if (theme_dll != NULL) {
       FPIsThemeActive is_thread_active = reinterpret_cast<FPIsThemeActive>(
           ::GetProcAddress(theme_dll, "IsThemeActive"));
@@ -94,9 +97,15 @@ HICON LoadIconFromResource(HINSTANCE instance,
     return NULL;
   }
 
+  CDC desktop_dc(::GetDC(NULL));
+  const int dpi_x = desktop_dc.GetDeviceCaps(LOGPIXELSX);
+  const int dpi_y = desktop_dc.GetDeviceCaps(LOGPIXELSY);
+  const int icon_width = ::MulDiv(16, dpi_x, kDefaultDPI);
+  const int icon_height = ::MulDiv(16, dpi_y, kDefaultDPI);
+
   return static_cast<HICON>(::LoadImage(
       instance, MAKEINTRESOURCE(id),
-      IMAGE_ICON, 16, 16, LR_CREATEDIBSECTION));
+      IMAGE_ICON, icon_width, icon_height, LR_CREATEDIBSECTION));
 }
 
 // Retrieves the bitmap handle loaded by using an icon ID.
@@ -141,6 +150,7 @@ bool LoadIconAsBitmap(HINSTANCE instance,
 
   return true;
 }
+
 }  // namespace
 
 HRESULT ImeLangBarMenuDataArray::Init(
@@ -151,7 +161,7 @@ HRESULT ImeLangBarMenuDataArray::Init(
 
   // Attach menu texts and icons.
   for (int i = 0; i < count; ++i) {
-    ImeLangBarMenuData data;
+    ImeLangBarMenuData data = {};
     int length = 0;
     HICON icon = NULL;
     if ((menu[i].flags_ & TF_LBMENUF_SEPARATOR) == 0) {
@@ -159,7 +169,7 @@ HRESULT ImeLangBarMenuDataArray::Init(
       length = ::LoadString(instance,
                             menu[i].text_id_,
                             &data.text_[0],
-                            ARRAYSIZE(data.text_));
+                            arraysize(data.text_));
     }
     data.flags_ = menu[i].flags_;
     data.menu_id_ = menu[i].menu_id_;
@@ -326,7 +336,7 @@ HRESULT ImeLangBarMenu::Init(HINSTANCE instance,
   // Retrieve the text label from the resource.
   // This string is also used as a tool-tip text.
   ::LoadString(instance, string_id, &item_info_.szDescription[0],
-               ARRAYSIZE(item_info_.szDescription));
+               arraysize(item_info_.szDescription));
 
   // Create a new ImeLangBarMenuItem object.
   menu_data_.Init(instance, menu, count);
@@ -745,17 +755,17 @@ HRESULT ImeToggleButtonMenu::SelectMenuItem(UINT menu_id) {
   for (size_t i = 0; i < menu_data_size(); ++i) {
     ImeLangBarMenuData* data = menu_data(i);
     if (data->menu_id_ == menu_id) {
-      if (data->flags_ != TF_LBMENUF_RADIOCHECKED ||
+      if ((data->flags_ & TF_LBMENUF_RADIOCHECKED) != 0 ||
           menu_selected_ != static_cast<UINT>(i)) {
         item_state_changed |= true;
       }
-      data->flags_ = TF_LBMENUF_RADIOCHECKED;
+      data->flags_ |= TF_LBMENUF_RADIOCHECKED;
       menu_selected_ = static_cast<UINT>(i);
     } else {
       if (data->flags_ != NULL) {
         item_state_changed |= true;
       }
-      data->flags_ = NULL;
+      data->flags_ &= ~TF_LBMENUF_RADIOCHECKED;
     }
   }
   if (item_state_changed) {

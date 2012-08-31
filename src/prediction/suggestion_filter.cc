@@ -30,42 +30,28 @@
 #include "prediction/suggestion_filter.h"
 
 #include "base/base.h"
-#include "base/singleton.h"
 #include "base/util.h"
 #include "storage/existence_filter.h"
 
 namespace mozc {
-namespace {
 
-#include "prediction/suggestion_filter_data.h"
-
-class SuggestionFilterImpl {
- public:
-  bool IsBadSuggestion(const string &text) const {
-    if (filter_.get() == NULL) {
-      return false;
-    }
-    string lower_text = text;
-    Util::LowerString(&lower_text);
-    return filter_->Exists(Util::Fingerprint(lower_text.data(),
-                                             lower_text.size()));
-  }
-
-  SuggestionFilterImpl() : filter_(NULL) {
-    // kSuggestionFilterData_data and kSuggestionFilterData_size
-    // are defined in suggest_filter_data.h
-    filter_.reset(ExistenceFilter::Read(kSuggestionFilterData_data,
-                                        kSuggestionFilterData_size));
-    LOG_IF(ERROR, filter_.get() == NULL)
-        << "SuggestionFilterData is broken";
-  }
-
- private:
-  scoped_ptr<ExistenceFilter> filter_;
-};
-}  // namespace
-
-bool SuggestionFilter::IsBadSuggestion(const string &text) {
-  return Singleton<SuggestionFilterImpl>::get()->IsBadSuggestion(text);
+SuggestionFilter::SuggestionFilter(const char *data, size_t size)
+    : filter_(NULL) {
+  filter_.reset(mozc::storage::ExistenceFilter::Read(data, size));
+  LOG_IF(ERROR, filter_.get() == NULL)
+      << "SuggestionFilterData is broken";
 }
+
+SuggestionFilter::~SuggestionFilter() {}
+
+bool SuggestionFilter::IsBadSuggestion(const string &text) const {
+  if (filter_.get() == NULL) {
+    return false;
+  }
+  string lower_text = text;
+  Util::LowerString(&lower_text);
+  return filter_->Exists(Util::Fingerprint(lower_text.data(),
+                                           lower_text.size()));
+}
+
 }  // namespace mozc

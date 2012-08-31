@@ -463,14 +463,14 @@ TEST_F(SessionConverterTest, FocusCandidate) {
   EXPECT_CALL(*context_, FocusCandidate(_)).Times(0);
   EXPECT_FALSE(converter_->FocusCandidateOnPage(4));
 
-  EXPECT_CALL(*context_, FocusCandidateNext()).WillOnce(Return(true));
+  EXPECT_CALL(*context_, FocusCandidate(7)).WillOnce(Return(true));
   EXPECT_TRUE(converter_->FocusCandidateNext());
-  EXPECT_CALL(*context_, FocusCandidateNext()).WillOnce(Return(false));
+  EXPECT_CALL(*context_, FocusCandidate(7)).WillOnce(Return(false));
   EXPECT_FALSE(converter_->FocusCandidateNext());
 
-  EXPECT_CALL(*context_, FocusCandidatePrev()).WillOnce(Return(true));
+  EXPECT_CALL(*context_, FocusCandidate(5)).WillOnce(Return(true));
   EXPECT_TRUE(converter_->FocusCandidatePrev());
-  EXPECT_CALL(*context_, FocusCandidatePrev()).WillOnce(Return(false));
+  EXPECT_CALL(*context_, FocusCandidate(5)).WillOnce(Return(false));
   EXPECT_FALSE(converter_->FocusCandidatePrev());
 
   // FocusCandidateNextPage
@@ -528,7 +528,7 @@ TEST_F(SessionConverterTest, FillOutputAndPopOutput) {
     {true,  false, false, false, true},   // Auxiliary text only (English mode)
   };
 
-  for (int i = 0; i < ARRAYSIZE(kStates); ++i) {
+  for (int i = 0; i < ARRAYSIZE_UNSAFE(kStates); ++i) {
     const bool *state = kStates[i];
 
     {

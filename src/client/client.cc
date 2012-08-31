@@ -32,7 +32,8 @@
 #include "client/client.h"
 
 #ifdef OS_WINDOWS
-#include <windows.h>
+#include <Windows.h>
+#include <ShellAPI.h>
 #else
 #include <sys/types.h>
 #include <unistd.h>
@@ -44,6 +45,7 @@
 #include "base/const.h"
 #include "base/crash_report_util.h"
 #include "base/file_stream.h"
+#include "base/logging.h"
 #include "base/process.h"
 #include "base/run_level.h"
 #include "base/singleton.h"
@@ -64,11 +66,11 @@ const char kServerAddress[]    = "session";  // name for the IPC connection.
 const int    kResultBufferSize = 8192 * 32;   // size of IPC buffer
 const size_t kMaxPlayBackSize  = 512;   // size of maximum history
 
-#ifdef _DEBUG
+#ifdef DEBUG
 const int kDefaultTimeout = 100000;   // 100 sec for dbg
 #else
 const int kDefaultTimeout = 30000;    // 30 sec for opt
-#endif  // _DEBUG
+#endif  // DEBUG
 
 // Delete Session is called inside the Destructor of Client class.
 // To prevent from an application being stalled at the close time,
@@ -136,11 +138,11 @@ bool Client::EnsureConnection() {
       return false;
       break;
     case SERVER_SHUTDOWN:
-#ifdef _DEBUG
+#ifdef DEBUG
       OnFatal(ServerLauncherInterface::SERVER_SHUTDOWN);
       // don't break here as SERVER_SHUTDOWN and SERVER_UNKNOWN
       // have basically the same treatment.
-#endif  // _DEBUG
+#endif  // DEBUG
     case SERVER_UNKNOWN:
       if (StartServer()) {
         server_status_ = SERVER_INVALID_SESSION;
@@ -279,11 +281,11 @@ void Client::GetHistoryInputs(vector<commands::Input> *output) const {
 
 bool Client::SendKey(const commands::KeyEvent &key,
                       commands::Output *output) {
-#ifdef _DEBUG
+#ifdef DEBUG
   if (IsAbortKey(key)) {
     DCHECK(CrashReportUtil::Abort()) << "Not aborted by CrashReportUtil::Abort";
   }
-#endif  // _DEBUG
+#endif  // DEBUG
   commands::Input input;
   input.set_type(commands::Input::SEND_KEY);
   input.mutable_key()->CopyFrom(key);
@@ -292,11 +294,11 @@ bool Client::SendKey(const commands::KeyEvent &key,
 
 bool Client::TestSendKey(const commands::KeyEvent &key,
                           commands::Output *output) {
-#ifdef _DEBUG
+#ifdef DEBUG
   if (IsAbortKey(key)) {
     DCHECK(CrashReportUtil::Abort()) << "Not aborted by CrashReportUtil::Abort";
   }
-#endif  // _DEBUG
+#endif  // DEBUG
   commands::Input input;
   input.set_type(commands::Input::TEST_SEND_KEY);
   input.mutable_key()->CopyFrom(key);
@@ -354,14 +356,14 @@ bool Client::EnsureCallCommand(commands::Input *input,
       // playback the history to restore the previous state.
       PlaybackHistory();
       InitInput(input);
-#ifdef _DEBUG
+#ifdef DEBUG
       // The debug binary dumps query of death at the first trial.
       history_inputs_.push_back(*input);
       DumpQueryOfDeath();
-#endif  // _DEBUG
+#endif  // DEBUG
       // second trial
       if (!CallAndCheckVersion(*input, output)) {
-#ifndef _DEBUG
+#ifndef DEBUG
         // if second trial failed, record the input
         history_inputs_.push_back(*input);
         // Opt or release binaries refrain from dumping query of death
@@ -369,7 +371,7 @@ bool Client::EnsureCallCommand(commands::Input *input,
         //
         // TODO(komatsu, taku): Should release binary dump query of death?
         DumpQueryOfDeath();
-#endif  // _DEBUG
+#endif  // DEBUG
         return false;
       }
     } else {
@@ -902,8 +904,7 @@ bool Client::LaunchTool(const string &mode, const string &extra_arg) {
 
   if (mode == "administration_dialog") {
 #ifdef OS_WINDOWS
-    const string path = mozc::Util::JoinPath
-        (mozc::Util::GetServerDirectory(), kMozcTool);
+    const string &path = mozc::Util::GetToolPath();
     wstring wpath;
     Util::UTF8ToWide(path.c_str(), &wpath);
     wpath = L"\"" + wpath + L"\"";

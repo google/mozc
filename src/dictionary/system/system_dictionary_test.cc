@@ -29,7 +29,11 @@
 
 #include "dictionary/system/system_dictionary.h"
 
+#include <string>
+#include <vector>
+
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/singleton.h"
 #include "base/trie.h"
 #include "base/util.h"
@@ -49,16 +53,21 @@
 
 namespace {
 // We cannot use #ifdef in DEFINE_int32.
-#ifdef _DEBUG
+#ifdef DEBUG
 const uint32 kDefaultReverseLookupTestSize = 1000;
 #else
 const uint32 kDefaultReverseLookupTestSize = 10000;
 #endif
 }  // namespace
 
+// TODO(noriyukit): Ideally, the copy rule of dictionary_oss/dictionary00.txt
+// can be shared with one in
+// data_manager/dictionary_oss/oss_data_manager_test.gyp. However, to avoid
+// conflict of copy destination name, the copy destination here is changed from
+// the original one. See also comments in system_dictionary_test.gyp.
 DEFINE_string(
     dictionary_source,
-    "data/dictionary/dictionary00.txt",
+    "data/system_dictionary_test/dictionary00.txt",
     "source dictionary file to run test");
 
 DEFINE_int32(dictionary_test_size, 100000,
@@ -69,10 +78,10 @@ DECLARE_string(test_srcdir);
 DECLARE_string(test_tmpdir);
 
 namespace mozc {
+namespace dictionary {
 
-
-using dictionary::SystemDictionaryBuilder;
-using dictionary::TokenInfo;
+namespace {
+}  // namespace
 
 class SystemDictionaryTest : public testing::Test {
  protected:
@@ -118,29 +127,6 @@ class SystemDictionaryTest : public testing::Test {
   const string dic_fn_;
 };
 
-namespace {
-void DeleteNodes(Node *node) {
-  while (node) {
-    Node *tmp_node = node;
-    node = node->bnext;
-    delete tmp_node;
-  }
-}
-
-const Node* FindNodeByToken(const Token &token, const Node &node) {
-  const Node *n = &node;
-  while (n) {
-    if (n->actual_key == token.key &&
-        n->value == token.value &&
-        n->lid == token.lid &&
-        n->rid == token.rid) {  // Doesn't compare costs
-      return n;
-    }
-    n = n->bnext;
-  }
-  return NULL;
-}
-}  // namespace
 
 void SystemDictionaryTest::BuildSystemDictionary(const vector <Token *>& source,
                                                  int num_tokens) {
@@ -156,7 +142,7 @@ void SystemDictionaryTest::BuildSystemDictionary(const vector <Token *>& source,
 }
 
 Token* SystemDictionaryTest::CreateToken(const string& key,
-                                     const string& value) const {
+                                         const string& value) const {
   Token* t = new Token;
   t->key = key;
   t->value = value;
@@ -210,7 +196,7 @@ TEST_F(SystemDictionaryTest, test_normal_word) {
 
   scoped_ptr<SystemDictionary> system_dic(
       SystemDictionary::CreateSystemDictionaryFromFile(dic_fn_));
-  CHECK(system_dic.get() != NULL)
+  ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
 
   // Scans the tokens and check if they all exists.
@@ -278,7 +264,7 @@ TEST_F(SystemDictionaryTest, test_same_word) {
 
   scoped_ptr<SystemDictionary> system_dic(
       SystemDictionary::CreateSystemDictionaryFromFile(dic_fn_));
-  CHECK(system_dic.get() != NULL)
+  ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
 
   // Scans the tokens and check if they all exists.
@@ -307,7 +293,7 @@ TEST_F(SystemDictionaryTest, test_words) {
 
   scoped_ptr<SystemDictionary> system_dic(
       SystemDictionary::CreateSystemDictionaryFromFile(dic_fn_));
-  CHECK(system_dic.get() != NULL)
+  ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
 
   // Scans the tokens and check if they all exists.
@@ -354,11 +340,11 @@ TEST_F(SystemDictionaryTest, test_prefix) {
 
   scoped_ptr<SystemDictionary> system_dic(
       SystemDictionary::CreateSystemDictionaryFromFile(dic_fn_));
-  CHECK(system_dic.get() != NULL)
+  ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
 
   Node *node = system_dic->LookupPrefix(k1.c_str(), k1.size(), NULL);
-  CHECK(node) << "no nodes found";
+  ASSERT_TRUE(node != NULL) << "no nodes found";
   bool found_k0 = false;
   while (node) {
     if (CompareForLookup(node, t0.get(), false)) {
@@ -394,11 +380,11 @@ TEST_F(SystemDictionaryTest, test_predictive) {
 
   scoped_ptr<SystemDictionary> system_dic(
       SystemDictionary::CreateSystemDictionaryFromFile(dic_fn_));
-  CHECK(system_dic.get() != NULL)
+  ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
 
   Node *node = system_dic->LookupPredictive(k0.c_str(), k0.size(), NULL);
-  CHECK(node) << "no nodes found";
+  ASSERT_TRUE(node != NULL) << "no nodes found";
   bool found_k1 = false;
   bool found_k2 = false;
   while (node) {
@@ -444,7 +430,7 @@ TEST_F(SystemDictionaryTest, test_predictive_with_limit) {
 
   scoped_ptr<SystemDictionary> system_dic(
       SystemDictionary::CreateSystemDictionaryFromFile(dic_fn_));
-  CHECK(system_dic.get() != NULL)
+  ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
 
   DictionaryInterface::Limit limit;
@@ -498,11 +484,11 @@ TEST_F(SystemDictionaryTest, test_predictive_cutoff) {
 
   scoped_ptr<SystemDictionary> system_dic(
       SystemDictionary::CreateSystemDictionaryFromFile(dic_fn_));
-  CHECK(system_dic.get() != NULL)
+  ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
 
   Node *node = system_dic->LookupPredictive(k0.c_str(), k0.size(), NULL);
-  CHECK(node) << "no nodes found";
+  ASSERT_TRUE(node != NULL) << "no nodes found";
   bool found_k1 = false;
   bool found_k2 = false;
   int found_count = 0;
@@ -523,6 +509,52 @@ TEST_F(SystemDictionaryTest, test_predictive_cutoff) {
   // We don't return all results and return only for 'short key' entry
   // if too many key are found by predictive lookup of key.
   EXPECT_FALSE(found_k2) << "Failed to find " << k2;
+}
+
+TEST_F(SystemDictionaryTest, test_exact) {
+  vector<Token *> source_tokens;
+
+  // "は"
+  const string k0 = "\xe3\x81\xaf";
+  // "はひふへほ"
+  const string k1 = "\xe3\x81\xaf\xe3\x81\xb2\xe3\x81\xb5\xe3\x81\xb8\xe3\x81"
+                    "\xbb";
+
+  scoped_ptr<Token> t0(CreateToken(k0, "aa"));
+  scoped_ptr<Token> t1(CreateToken(k1, "bb"));
+  source_tokens.push_back(t0.get());
+  source_tokens.push_back(t1.get());
+  text_dict_->CollectTokens(&source_tokens);
+  BuildSystemDictionary(source_tokens, 100);
+
+  scoped_ptr<SystemDictionary> system_dic(
+      SystemDictionary::CreateSystemDictionaryFromFile(dic_fn_));
+  ASSERT_TRUE(system_dic.get() != NULL)
+      << "Failed to open dictionary source:" << dic_fn_;
+
+  {
+    Node *node = system_dic->LookupExact(k1.c_str(), k1.size(), NULL);
+    EXPECT_TRUE(node != NULL) << "no nodes found";
+    bool found_k0 = false;
+    bool found_k1 = false;
+    while (node) {
+      if (CompareForLookup(node, t0.get(), false)) {
+        found_k0 = true;
+      } else if (CompareForLookup(node, t1.get(), false)) {
+        found_k1 = true;
+      }
+      Node *tmp_node = node;
+      node = node->bnext;
+      delete tmp_node;
+    }
+    EXPECT_FALSE(found_k0) << "Should not find " << k0;
+    EXPECT_TRUE(found_k1) << "Failed to find " << k1;
+  }
+  {
+    const string hoge = "hoge";
+    Node *node = system_dic->LookupExact(hoge.c_str(), hoge.size(), NULL);
+    EXPECT_TRUE(node == NULL);
+  }
 }
 
 TEST_F(SystemDictionaryTest, test_reverse) {
@@ -618,7 +650,7 @@ TEST_F(SystemDictionaryTest, test_reverse) {
 
   scoped_ptr<SystemDictionary> system_dic(
       SystemDictionary::CreateSystemDictionaryFromFile(dic_fn_));
-  CHECK(system_dic.get() != NULL)
+  ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
   vector<Token *>::const_iterator it;
   int size = FLAGS_dictionary_reverse_lookup_test_size;
@@ -699,7 +731,7 @@ TEST_F(SystemDictionaryTest, test_reverse_cache) {
 
   scoped_ptr<SystemDictionary> system_dic(
       SystemDictionary::CreateSystemDictionaryFromFile(dic_fn_));
-  CHECK(system_dic.get() != NULL)
+  ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
   NodeAllocator allocator;
   system_dic->PopulateReverseLookupCache(kDoraemon.c_str(), kDoraemon.size(),
@@ -732,7 +764,7 @@ TEST_F(SystemDictionaryTest, nodes_size) {
   BuildSystemDictionary(source_tokens, 10000);
   scoped_ptr<SystemDictionary> system_dic(
       SystemDictionary::CreateSystemDictionaryFromFile(dic_fn_));
-  CHECK(system_dic.get() != NULL)
+  ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
 
   const int kNumNodes = 5;
@@ -805,7 +837,7 @@ TEST_F(SystemDictionaryTest, spelling_correction_tokens) {
 
   scoped_ptr<SystemDictionary> system_dic(
       SystemDictionary::CreateSystemDictionaryFromFile(dic_fn_));
-  CHECK(system_dic.get() != NULL)
+  ASSERT_TRUE(system_dic.get() != NULL)
       << "Failed to open dictionary source:" << dic_fn_;
 
   vector<Token *>::const_iterator it;
@@ -827,25 +859,59 @@ TEST_F(SystemDictionaryTest, spelling_correction_tokens) {
 }
 
 // Minimal modification of the codec for the TokenAfterSpellningToken.
-class CodecForTest : public dictionary::SystemDictionaryCodec {
+class CodecForTest : public SystemDictionaryCodecInterface {
  public:
-  CodecForTest() {
+  CodecForTest() : counter_(0) {
   }
 
   virtual ~CodecForTest() {
   }
 
-  static const char *kDummyValue;
+  // Just mock methods.
+  const string GetSectionNameForKey() const { return "Mock"; }
+  const string GetSectionNameForValue() const { return "Mock"; }
+  const string GetSectionNameForTokens() const { return "Mock"; }
+  const string GetSectionNameForPos() const { return "Mock"; }
+  void EncodeKey(const string &src, string *dst) const {}
+  void DecodeKey(const string &src, string *dst) const {}
+  void EncodeValue(const string &src, string *dst) const {}
+  void EncodeTokens(
+      const vector<TokenInfo> &tokens, string *output) const {}
+  void DecodeTokens(
+      const uint8 *ptr, vector<TokenInfo> *tokens) const {}
+  bool ReadTokenForReverseLookup(
+      const uint8 *ptr, int *value_id, int *read_bytes) const { return false; }
+  uint8 GetTokensTerminationFlag() const { return 0xff; }
+
+  // Mock methods which will be actually called.
+  bool DecodeToken(
+      const uint8 *ptr, TokenInfo *token_info, int *read_bytes) const {
+    *read_bytes = 0;
+    switch (counter_++) {
+      case 0:
+        token_info->id_in_value_trie = 0;
+        token_info->value_type = TokenInfo::DEFAULT_VALUE;
+        token_info->token->attributes = Token::SPELLING_CORRECTION;
+        token_info->token->cost = 1;
+        return true;
+      case 1:
+        token_info->value_type = TokenInfo::SAME_AS_PREV_VALUE;
+        token_info->token->cost = 111;
+        return false;
+      default:
+        LOG(FATAL) << "Should never reach here.";
+    }
+    return true;
+  }
 
   void DecodeValue(const string &src, string *dst) const {
-    *dst = kDummyValue;
+    *dst = "DummyValue";
   }
 
  private:
+  mutable int counter_;
   DISALLOW_COPY_AND_ASSIGN(CodecForTest);
 };
-
-const char *CodecForTest::kDummyValue = "DummyValue";
 
 TEST_F(SystemDictionaryTest, TokenAfterSpellningToken) {
   scoped_ptr<SystemDictionary> system_dic(
@@ -857,28 +923,17 @@ TEST_F(SystemDictionaryTest, TokenAfterSpellningToken) {
   // The 2nd token refers previous token by SAME_AS_PREV_VALUE,
   // but the 1st token is spelling correction which will be ignored for
   // reverse conversion.
-  vector<TokenInfo> tokens;
-  scoped_ptr<Token> t0(new Token);
-  t0->attributes = Token::SPELLING_CORRECTION;
-  t0->cost = 1;
-  tokens.push_back(dictionary::TokenInfo(t0.get()));
-  scoped_ptr<Token> t1(new Token);
-  t1->cost = 111;
-  tokens.push_back(dictionary::TokenInfo(t1.get()));
-  tokens[1].value_type = TokenInfo::SAME_AS_PREV_VALUE;
 
   // Inject a minimal codec.
-  scoped_ptr<CodecForTest>
-      codec(new CodecForTest());
+  scoped_ptr<CodecForTest> codec(new CodecForTest());
   system_dic->codec_ = codec.get();
 
   const string original_key;
   const string tokens_key;
   Node *head = NULL;
   int limit = 10000;
-  Node *res = system_dic->AppendNodesFromTokens(filter, "",
-                                                tokens_key, &tokens,
-                                                head, NULL, &limit);
+  Node *res = system_dic->AppendNodesFromTokens(
+      filter, "", tokens_key, NULL, head, NULL, &limit);
 
   vector<Node *> nodes;
   while (res) {
@@ -888,11 +943,13 @@ TEST_F(SystemDictionaryTest, TokenAfterSpellningToken) {
   // The 2nd token should survive with the same value of 1st token.
   EXPECT_EQ(1, nodes.size());
   EXPECT_EQ(111, nodes[0]->wcost);
-  EXPECT_EQ(CodecForTest::kDummyValue, nodes[0]->value);
+  EXPECT_EQ("DummyValue", nodes[0]->value);
 
   for (size_t i = 0; i < nodes.size(); ++i) {
     delete nodes[i];
   }
 }
 
+
+}  // namespace dictionary
 }  // namespace mozc

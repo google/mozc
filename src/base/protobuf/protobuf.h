@@ -30,44 +30,15 @@
 #ifndef MOZC_BASE_PROTOBUF_PROTOBUF_H_
 #define MOZC_BASE_PROTOBUF_PROTOBUF_H_
 
-#define MOZC_TYPEDEF_PROTOBUF(name)             \
-  namespace google {                            \
-  namespace protobuf {                          \
-  class name;                                   \
-  }  /* namespace protobuf */                   \
-  }  /* namespace google */                     \
-  namespace mozc {                              \
-  namespace protobuf {                          \
-  typedef google::protobuf::name name;          \
-  }  /* namespace protobuf */                   \
-  }  /* namespace mozc */
 
-#define MOZC_TYPEDEF_PROTOBUF_IO(name)          \
-  namespace google {                            \
-  namespace protobuf {                          \
-  namespace io {                                \
-  class name;                                   \
-  }  /* namespace io */                         \
-  }  /* namespace protobuf */                   \
-  }  /* namespace google */                     \
-  namespace mozc {                              \
-  namespace protobuf {                          \
-  namespace io {                                \
-  typedef google::protobuf::io::name name;      \
-  }  /* namespace io */                         \
-  }  /* namespace protobuf */                   \
-  }  /* namespace mozc */
+namespace google {
+namespace protobuf {
+}  // namespace protobuf
+}  // namespace google
 
+namespace mozc {
+namespace protobuf = ::google::protobuf;
+}  // namespace mozc
 
-// Typedef declarations.
-MOZC_TYPEDEF_PROTOBUF(Message);
-MOZC_TYPEDEF_PROTOBUF(Reflection);
-MOZC_TYPEDEF_PROTOBUF(FieldDescriptor);
-MOZC_TYPEDEF_PROTOBUF(TextFormat);
-MOZC_TYPEDEF_PROTOBUF(Descriptor);
-MOZC_TYPEDEF_PROTOBUF_IO(IstreamInputStream);
-
-#undef MOZC_TYPEDEF_PROTOBUF
-#undef MOZC_TYPEDEF_PROTOBUF_IO
 
 #endif  // MOZC_BASE_PROTOBUF_PROTOBUF_H_

@@ -37,9 +37,9 @@
 #include "gui/about_dialog/ui_about_dialog.h"
 
 #if defined(OS_WINDOWS) && defined(GOOGLE_JAPANESE_INPUT_BUILD) \
-    && defined(_DEBUG)
+    && defined(DEBUG)
 #define USE_UPDATE_CHECKER
-#endif  // OS_WINDOWS && GOOGLE_JAPANESE_INPUT_BUILD && _DEBUG
+#endif  // OS_WINDOWS && GOOGLE_JAPANESE_INPUT_BUILD && DEBUG
 
 class QImage;
 

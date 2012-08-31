@@ -41,6 +41,17 @@ class POSMatcher;
 
 class VariantsRewriter : public RewriterInterface  {
  public:
+  // Annotation constants.
+  static const char *kHiragana;
+  static const char *kKatakana;
+  static const char *kNumber;
+  static const char *kAlphabet;
+  static const char *kKanji;
+  static const char *kFullWidth;
+  static const char *kHalfWidth;
+  static const char *kPlatformDependent;
+  static const char *kDidYouMean;
+
   explicit VariantsRewriter(const POSMatcher *pos_matcher);
   virtual ~VariantsRewriter();
   virtual int capability() const;

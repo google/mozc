@@ -34,11 +34,13 @@
 #endif
 
 #include "base/base.h"
+#include "base/crash_report_util.h"
 #include "base/process.h"
 #include "base/process_mutex.h"
 #include "base/run_level.h"
 #include "base/singleton.h"
 #include "base/util.h"
+#include "config/stats_config_util.h"
 #include "ipc/ipc.h"
 #include "session/session_factory_manager.h"
 #include "session/session_server.h"
@@ -99,7 +101,10 @@ void InitGoogleAndMozcServer(const char *arg0,
     return;
   }
 
-  InitGoogleWithBreakPad(arg0, argc, argv, remove_flags);
+  if (mozc::config::StatsConfigUtil::IsEnabled()) {
+    mozc::CrashReportUtil::InstallBreakpad();
+  }
+  InitGoogle(arg0, argc, argv, remove_flags);
 
   if (run_level == mozc::RunLevel::RESTRICTED) {
     VLOG(1) << "Mozc server starts with timeout mode";

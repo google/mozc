@@ -117,30 +117,18 @@
       'type': 'static_library',
       'toolsets': ['host', 'target'],
       'conditions': [
-        ['OS=="linux"', {
-          'conditions': [
-            ['use_libprotobuf==1', {
-              'link_settings': {
-                'libraries': [
-                  '-lprotobuf',
-                ],
-              },
-            }, {  # OS=="linux" and use_libprotobuf==0
-              'sources': ['<@(protobuf_sources)'],
-              'include_dirs': ['.'],
-            }],
-          ],
-        }],
-        ['OS=="mac"', {
+        ['use_libprotobuf==1', {
+          'link_settings': {
+            'libraries': [
+              '-lprotobuf',
+            ],
+          },
+        }, {  # else
           'sources': ['<@(protobuf_sources)'],
           'include_dirs': ['.'],
           'xcode_settings': {
             'WARNING_CFLAGS': ['-Wno-error'],
           },
-        }],
-        ['OS=="win"', {
-          'sources': ['<@(protobuf_sources)'],
-          'include_dirs': ['.'],
           'msvs_settings': {
             'VCCLCompilerTool': {
               'DisableSpecificWarnings': [
@@ -148,6 +136,15 @@
               ],
             },
           },
+          'conditions': [
+            # for gcc and clang
+            ['OS=="linux" or OS=="mac"', {
+              'cflags': [
+                '-Wno-conversion-null',  # coded_stream.cc uses NULL to bool.
+                '-Wno-unused-function',
+              ],
+            }],
+          ],
         }],
       ],
     },

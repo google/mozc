@@ -97,7 +97,7 @@ wstring KeyboardLayoutID::ToString() const {
   CHECK(has_id()) << "ID is not set.";
   wchar_t buffer[KL_NAMELENGTH];
   const HRESULT result =
-      ::StringCchPrintf(buffer, ARRAYSIZE(buffer), L"%08X", id_);
+      ::StringCchPrintf(buffer, arraysize(buffer), L"%08X", id_);
   if (FAILED(result)) {
     return L"";
   }

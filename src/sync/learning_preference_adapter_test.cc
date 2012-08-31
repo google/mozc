@@ -32,15 +32,17 @@
 #include <cmath>
 #include <map>
 #include <string>
+
 #include "base/base.h"
 #include "base/file_stream.h"
+#include "base/logging.h"
 #include "base/util.h"
 #include "storage/lru_storage.h"
-#include "sync/learning_preference_sync_util.h"
 #include "sync/inprocess_service.h"
+#include "sync/learning_preference_sync_util.h"
 #include "sync/sync.pb.h"
-#include "sync/syncer.h"
 #include "sync/sync_util.h"
+#include "sync/syncer.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
@@ -50,6 +52,8 @@ DECLARE_string(test_tmpdir);
 
 namespace mozc {
 namespace sync {
+
+using mozc::storage::LRUStorage;
 
 class LearningPreferenceAdapterTest : public testing::Test {
  public:

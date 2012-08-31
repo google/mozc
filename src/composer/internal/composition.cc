@@ -29,6 +29,7 @@
 
 #include "composer/internal/composition.h"
 
+#include "base/logging.h"
 #include "base/util.h"
 #include "composer/internal/char_chunk.h"
 #include "composer/internal/composition_input.h"
@@ -241,7 +242,9 @@ void Composition::GetStringWithModes(
     string* composition) const {
   composition->clear();
   if (chunks_.empty()) {
-    LOG(WARNING) << "The composition size is zero.";
+    // This is not an error. For example, the composition should be empty for
+    // the first keydown event after turning on the IME.
+    DCHECK(composition->empty()) << "An empty string should be returned.";
     return;
   }
 

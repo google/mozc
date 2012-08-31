@@ -31,6 +31,7 @@
 #include <vector>
 #include <string>
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/mutex.h"
 #include "base/timer.h"
 #include "base/util.h"

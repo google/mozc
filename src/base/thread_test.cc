@@ -37,13 +37,25 @@ namespace {
 
 class TestThread : public Thread {
  public:
-  TestThread(int time) : time_(time) {}
-  void Run() {
+  explicit TestThread(int time)
+      : time_(time),
+        invoked_(false) {}
+
+  virtual void Run() {
+    invoked_ = true;
     Util::Sleep(time_);
+  }
+
+  bool invoked() const {
+    return invoked_;
+  }
+  void clear_invoked() {
+    invoked_ = false;
   }
 
  private:
   int time_;
+  bool invoked_;
 };
 }  // namespace
 
@@ -54,31 +66,49 @@ TEST(ThreadTest, BasicThreadTest) {
     EXPECT_TRUE(t.IsRunning());
     t.Join();
     EXPECT_FALSE(t.IsRunning());
+    EXPECT_TRUE(t.invoked());
   }
 
   {
-    TestThread t(3000);
+    TestThread t(1000);
+    t.clear_invoked();
     t.Start();
 
-    Util::Sleep(1000);
-    EXPECT_TRUE(t.IsRunning());
-
-    Util::Sleep(1000);
-    EXPECT_TRUE(t.IsRunning());
-
-    Util::Sleep(2000);
+    Util::Sleep(3000);
     EXPECT_FALSE(t.IsRunning());
+    EXPECT_TRUE(t.invoked());
   }
 
   {
     TestThread t(3000);
     t.Start();
-
     Util::Sleep(1000);
-    EXPECT_TRUE(t.IsRunning());
-
     t.Terminate();
     Util::Sleep(100);
+    EXPECT_FALSE(t.IsRunning());
+  }
+}
+
+TEST(ThreadTest, RestartTest) {
+  {
+    TestThread t(1000);
+    t.clear_invoked();
+    t.Start();
+    EXPECT_TRUE(t.IsRunning());
+    t.Join();
+    EXPECT_TRUE(t.invoked());
+    EXPECT_FALSE(t.IsRunning());
+    t.clear_invoked();
+    t.Start();
+    EXPECT_TRUE(t.IsRunning());
+    t.Join();
+    EXPECT_TRUE(t.invoked());
+    EXPECT_FALSE(t.IsRunning());
+    t.clear_invoked();
+    t.Start();
+    EXPECT_TRUE(t.IsRunning());
+    t.Join();
+    EXPECT_TRUE(t.invoked());
     EXPECT_FALSE(t.IsRunning());
   }
 }
@@ -89,7 +119,7 @@ TLS_KEYWORD int g_tls_values[100] =  { 0 };
 
 class TLSThread : public Thread {
  public:
-  void Run() {
+  virtual void Run() {
     ++g_tls_value;
     ++g_tls_value;
     ++g_tls_value;

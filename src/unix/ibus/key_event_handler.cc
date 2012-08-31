@@ -29,7 +29,6 @@
 
 #include "unix/ibus/key_event_handler.h"
 
-#include <ibus.h>
 #include <map>
 
 #include "base/singleton.h"

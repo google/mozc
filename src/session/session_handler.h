@@ -37,6 +37,7 @@
 #include <utility>
 
 #include "base/base.h"
+#include "base/scoped_ptr.h"
 #include "composer/table.h"
 #include "session/common.h"
 #include "session/session_handler_interface.h"
@@ -45,8 +46,19 @@
 // for FRIEND_TEST()
 #include "testing/base/public/gunit_prod.h"
 
+#if defined(OS_ANDROID) || defined(__native_client__)
+// Session watch dog is not aviable from android mozc for now.
+#define MOZC_DISABLE_SESSION_WATCHDOG
+#endif  // OS_ANDROID || __native_client__
+
 namespace mozc {
+#ifndef MOZC_DISABLE_SESSION_WATCHDOG
 class SessionWatchDog;
+#else  // MOZC_DISABLE_SESSION_WATCHDOG
+// Session watch dog is not aviable from android mozc for now.
+// TODO(kkojima): Remove this guard after
+// enabling session watch dog for android.
+#endif  // MOZC_DISABLE_SESSION_WATCHDOG
 class Stopwatch;
 
 namespace commands {
@@ -59,6 +71,10 @@ class SessionInterface;
 class SessionObserverHandler;
 class SessionObserverInterface;
 }  // namespace session
+
+namespace user_dictionary {
+class UserDictionarySessionHandler;
+}  // namespace user_dictionary
 
 class SessionHandler : public SessionHandlerInterface {
  public:
@@ -83,6 +99,10 @@ class SessionHandler : public SessionHandlerInterface {
 
  private:
   FRIEND_TEST(SessionHandlerTest, StorageTest);
+
+  typedef mozc::storage::LRUCache<SessionID, session::SessionInterface*>
+      SessionMap;
+  typedef SessionMap::Element SessionElement;
 
   // Reload settings which are managed by SessionHandler
   void ReloadSession();
@@ -113,16 +133,20 @@ class SessionHandler : public SessionHandlerInterface {
   bool ReadAllFromStorage(commands::Command *command);
   bool ClearStorage(commands::Command *command);
   bool Cleanup(commands::Command *command);
+  bool SendUserDictionaryCommand(commands::Command *command);
   bool NoOperation(commands::Command *command);
 
   SessionID CreateNewSessionID();
   bool DeleteSessionID(SessionID id);
 
-  typedef LRUCache<SessionID, session::SessionInterface*> SessionMap;
-  typedef LRUCache<SessionID,
-                   session::SessionInterface*>::Element SessionElement;
   scoped_ptr<SessionMap> session_map_;
+#ifndef MOZC_DISABLE_SESSION_WATCHDOG
   scoped_ptr<SessionWatchDog> session_watch_dog_;
+#else  // MOZC_DISABLE_SESSION_WATCHDOG
+  // Session watch dog is not aviable from android mozc and nacl mozc for now.
+  // TODO(kkojima): Remove this guard after
+  // enabling session watch dog for android.
+#endif  // MOZC_DISABLE_SESSION_WATCHDOG
   bool is_available_;
   int keyevent_counter_;
   uint32 max_session_size_;
@@ -133,8 +157,12 @@ class SessionHandler : public SessionHandlerInterface {
   session::SessionFactoryInterface *session_factory_;
   scoped_ptr<session::SessionObserverHandler> observer_handler_;
   scoped_ptr<Stopwatch> stopwatch_;
-
+#ifndef __native_client__
+  scoped_ptr<user_dictionary::UserDictionarySessionHandler>
+      user_dictionary_session_handler_;
+#endif  // __native_client__
   scoped_ptr<composer::TableManager> table_manager_;
+  scoped_ptr<commands::Request> request_;
 
   DISALLOW_COPY_AND_ASSIGN(SessionHandler);
 };

@@ -27,18 +27,22 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "rewriter/calculator_rewriter.h"
+
 #include <string>
 
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/conversion_request.h"
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
+#include "engine/engine_interface.h"
+#include "engine/mock_data_engine_factory.h"
 #include "rewriter/calculator/calculator_interface.h"
 #include "rewriter/calculator/calculator_mock.h"
-#include "rewriter/calculator_rewriter.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
@@ -197,8 +201,9 @@ TEST_F(CalculatorRewriterTest, SeparatedSegmentsTest) {
   // Since this test depends on the actual implementation of
   // Converter::ResizeSegments(), we cannot use converter mock here. However,
   // the test itself is independent of data.
+  scoped_ptr<EngineInterface> engine_(MockDataEngineFactory::Create());
   scoped_ptr<CalculatorRewriter> calculator_rewriter(
-      new CalculatorRewriter(ConverterFactory::GetConverter()));
+      new CalculatorRewriter(engine_->GetConverter()));
   const ConversionRequest request;
 
   // Push back separated segments.
@@ -262,9 +267,9 @@ TEST_F(CalculatorRewriterTest, ConfigTest) {
   // Since this test depends on the actual implementation of
   // Converter::ResizeSegments(), we cannot use converter mock here. However,
   // the test itself is independent of data.
+  scoped_ptr<EngineInterface> engine_(MockDataEngineFactory::Create());
   scoped_ptr<CalculatorRewriter> calculator_rewriter(
-      new CalculatorRewriter(ConverterFactory::GetConverter()));
-
+      new CalculatorRewriter(engine_->GetConverter()));
   {
     Segments segments;
     AddSegment("1", "1", &segments);

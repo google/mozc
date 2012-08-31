@@ -51,6 +51,7 @@
 #include <cstring>
 #include <cstdlib>
 
+#include "base/thread.h"
 #include "base/util.h"
 #include "ipc/ipc_path_manager.h"
 
@@ -525,6 +526,10 @@ void IPCServer::Loop() {
   }
   connected_ = false;
   socket_ = kInvalidSocket;
+}
+
+void IPCServer::Terminate() {
+  server_thread_->Terminate();
 }
 
 };  // namespace mozc

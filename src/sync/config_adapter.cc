@@ -34,8 +34,9 @@
 #include <vector>
 
 #include "base/config_file_stream.h"
-#include "base/protobuf/protobuf.h"
+#include "base/logging.h"
 #include "base/protobuf/descriptor.h"
+#include "base/protobuf/protobuf.h"
 #include "base/singleton.h"
 #include "config/config_handler.h"
 #include "sync/logging.h"
