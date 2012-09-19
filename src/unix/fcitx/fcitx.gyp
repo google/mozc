@@ -79,6 +79,7 @@
       'sources': [
         'fcitx_mozc.cc',
         'fcitx_key_translator.cc',
+        'fcitx_key_event_handler.cc',
         'mozc_connection.cc',
         'mozc_response_parser.cc',
         'eim.cc',

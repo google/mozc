@@ -66,7 +66,7 @@ public:
                 MozcResponseParser *parser );
     virtual ~FcitxMozc();
 
-    bool process_key_event ( FcitxKeySym sym, unsigned int state );
+    bool process_key_event (FcitxKeySym sym, uint32 keycode, uint32 state, bool layout_is_jp, bool is_key_up);
     void select_candidate ( FcitxCandidateWord* candWord );
     void resetim();
     void reset();

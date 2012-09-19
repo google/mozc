@@ -39,72 +39,69 @@ namespace fcitx {
 // /usr/include/scim-1.0/scim_event.h) to IPC input for mozc_server.
 class KeyTranslator {
 public:
-    KeyTranslator();
-    ~KeyTranslator();
+  KeyTranslator();
+  virtual ~KeyTranslator();
 
-    // Converts scim_key into Mozc key code and stores them on out_translated.
-    // scim_key must satisfy the following precondition: CanConvert(scim_key)
-    void Translate(FcitxKeySym sym,
-                   unsigned int state,
-                   mozc::config::Config::PreeditMethod method,
-                   mozc::commands::KeyEvent *out_event) const;
-
-    // Converts 'left click on a candidate window' into Mozc message.
-    // unique_id: Unique identifier of the clicked candidate.
-    void TranslateClick(int32 unique_id,
-                        mozc::commands::SessionCommand *out_command) const;
-
-    // Returns true iff scim_key can be converted to mozc::commands::Input.
-    // Note: some keys and key events, such as 'key released', 'modifier key
-    // pressed', or 'special key that Mozc doesn't know pressed' cannot be
-    // converted to mozc::commands::Input.
-    bool CanConvert(FcitxKeySym sym, unsigned int state) const;
-
-    void SetLayout(FcitxMozcLayout l);
-
-    void SetInputState(FcitxInputState* i);
+  // Converts scim_key into Mozc key code and stores them on out_translated.
+  // scim_key must satisfy the following precondition: CanConvert(scim_key)
+  bool Translate(FcitxKeySym keyval,
+                 uint32 keycode,
+                 uint32 modifiers,
+                 mozc::config::Config::PreeditMethod method,
+                 bool layout_is_jp,
+                 mozc::commands::KeyEvent *out_event) const;
 
 private:
-    // Returns true iff scim_key is modifier key such as SHIFT, ALT, or CAPSLOCK.
-    bool IsModifierKey(FcitxKeySym sym, unsigned int state) const;
+  typedef map<uint32, commands::KeyEvent::SpecialKey> SpecialKeyMap;
+  typedef map<uint32, commands::KeyEvent::ModifierKey> ModifierKeyMap;
+  typedef map<uint32, pair<string, string> > KanaMap;
 
-    // Returns true iff scim_key is special key such as ENTER, ESC, or PAGE_UP.
-    bool IsSpecialKey(FcitxKeySym sym, unsigned int state,
-                      mozc::commands::KeyEvent::SpecialKey *out) const;
+  // Returns true iff key is modifier key such as SHIFT, ALT, or CAPSLOCK.
+  bool IsModifierKey(uint32 keyval,
+                     uint32 keycode,
+                     uint32 modifiers) const;
 
-    // Returns a normalized key event iff key is HiraganaKatakana with shift
-    // modifier. See http://code.google.com/p/mozc/issues/detail?id=136 for
-    // the background information.
-    // Otherwire returns the original key.
-    static void NormalizeHiraganaKatakanaKeyWithShift(
-        FcitxKeySym origsym, unsigned int origstate, FcitxKeySym* sym, unsigned int* state);
+  // Returns true iff key is special key such as ENTER, ESC, or PAGE_UP.
+  bool IsSpecialKey(uint32 keyval,
+                    uint32 keycode,
+                    uint32 modifiers) const;
 
-    // Returns true iff scim_key is special key that can be converted to ASCII.
-    // For example, scim::FCITX_KEY_KP_0 (numeric keypad zero) in FCITX can be
-    // treated as ASCII code '0' in Mozc.
-    bool IsSpecialAscii(FcitxKeySym sym, unsigned int state, uint32 *out) const;
+  // Returns true iff |keyval| is a key with a kana assigned.
+  bool IsKanaAvailable(uint32 keyval,
+                       uint32 keycode,
+                       uint32 modifiers,
+                       bool layout_is_jp,
+                       string *out) const;
 
-    // Returns true iff scim_key is key with a kana assigned.
-    bool IsKanaAvailable(FcitxKeySym sym, unsigned int state, string *out) const;
+  // Returns true iff key is ASCII such as '0', 'A', or '!'.
+  static bool IsAscii(uint32 keyval,
+                      uint32 keycode,
+                      uint32 modifiers);
 
-    // Returns true iff scim_key is ASCII such as '0', 'A', or '!'.
-    static bool IsAscii(FcitxKeySym sym, unsigned int state);
+  // Returns true iff key is printable.
+  static bool IsPrintable(uint32 keyval, uint32 keycode, uint32 modifiers);
 
-    // Returns true iff kana_map_jp_ is to be used.
-    static bool IsJapaneseLayout(FcitxMozcLayout layout);
+  // Returns true iff key is HiraganaKatakana with shift modifier.
+  static bool IsHiraganaKatakanaKeyWithShift(uint32 keyval,
+                                             uint32 keycode,
+                                             uint32 modifiers);
 
-    // Initializes private fields.
-    void InitializeKeyMaps();
+  // Initializes private fields.
+  void Init();
 
-    map<uint32, mozc::commands::KeyEvent::SpecialKey> special_key_map_;
-    set<uint32> modifier_keys_;
-    map<uint32, uint32> special_ascii_map_;
-    map<uint32, const char *> kana_map_jp_;
-    map<uint32, const char *> kana_map_us_;
-    FcitxInputState* input;
-    FcitxMozcLayout layout;
+  // Stores a mapping from ibus keys to Mozc's special keys.
+  SpecialKeyMap special_key_map_;
+  // Stores a mapping from ibus modifier keys to Mozc's modifier keys.
+  ModifierKeyMap modifier_key_map_;
+  // Stores a mapping from ibus modifier masks to Mozc's modifier keys.
+  ModifierKeyMap modifier_mask_map_;
+  // Stores a mapping from ASCII to Kana character. For example, ASCII character
+  // '4' is mapped to Japanese 'Hiragana Letter U' (without Shift modifier) and
+  // 'Hiragana Letter Small U' (with Shift modifier).
+  KanaMap kana_map_jp_;  // mapping for JP keyboard.
+  KanaMap kana_map_us_;  // mapping for US keyboard.
 
-    DISALLOW_COPY_AND_ASSIGN(KeyTranslator);
+  DISALLOW_COPY_AND_ASSIGN(KeyTranslator);
 };
 
 }  // namespace fcitx

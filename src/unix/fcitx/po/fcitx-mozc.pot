@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2012-04-07 11:37+0800\n"
+"POT-Creation-Date: 2012-09-19 15:26-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,62 +17,62 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ../fcitx_mozc.cc:53
+#: ../fcitx_mozc.cc:57
 msgid "Direct"
 msgstr ""
 
-#: ../fcitx_mozc.cc:58
+#: ../fcitx_mozc.cc:62
 msgid "Hiragana"
 msgstr ""
 
-#: ../fcitx_mozc.cc:63
+#: ../fcitx_mozc.cc:67
 msgid "Full Katakana"
 msgstr ""
 
-#: ../fcitx_mozc.cc:68
+#: ../fcitx_mozc.cc:72
 msgid "Half ASCII"
 msgstr ""
 
-#: ../fcitx_mozc.cc:73
+#: ../fcitx_mozc.cc:77
 msgid "Full ASCII"
 msgstr ""
 
-#: ../fcitx_mozc.cc:78
+#: ../fcitx_mozc.cc:82
 msgid "Half Katakana"
 msgstr ""
 
-#: ../fcitx_mozc.cc:379 ../fcitx_mozc.cc:380 ../fcitx_mozc.cc:458
+#: ../fcitx_mozc.cc:393 ../fcitx_mozc.cc:394 ../fcitx_mozc.cc:472
 msgid "Composition Mode"
 msgstr ""
 
-#: ../fcitx_mozc.cc:390 ../fcitx_mozc.cc:391
+#: ../fcitx_mozc.cc:404 ../fcitx_mozc.cc:405
 msgid "Tool"
 msgstr ""
 
-#: ../fcitx_mozc.cc:471
+#: ../fcitx_mozc.cc:485
 msgid "Mozc Tool"
 msgstr ""
 
-#: ../fcitx_mozc.cc:477
+#: ../fcitx_mozc.cc:491
 msgid "Configuration Tool"
 msgstr ""
 
-#: ../fcitx_mozc.cc:478
+#: ../fcitx_mozc.cc:492
 msgid "Dictionary Tool"
 msgstr ""
 
-#: ../fcitx_mozc.cc:479
+#: ../fcitx_mozc.cc:493
 msgid "Hand Writing"
 msgstr ""
 
-#: ../fcitx_mozc.cc:480
+#: ../fcitx_mozc.cc:494
 msgid "Character Palette"
 msgstr ""
 
-#: ../fcitx_mozc.cc:481
+#: ../fcitx_mozc.cc:495
 msgid "Add Word"
 msgstr ""
 
-#: ../fcitx_mozc.cc:482
+#: ../fcitx_mozc.cc:496
 msgid "About Mozc"
 msgstr ""

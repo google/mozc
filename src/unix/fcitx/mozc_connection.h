@@ -35,6 +35,7 @@
 
 #include "base/base.h"
 #include "session/commands.pb.h"
+#include "unix/fcitx/fcitx_key_event_handler.h"
 
 namespace mozc {
 
@@ -59,8 +60,10 @@ class MozcConnectionInterface {
  public:
   virtual ~MozcConnectionInterface();
 
-  virtual bool TrySendKeyEvent(FcitxKeySym sym, unsigned int state,
+  virtual bool TrySendKeyEvent(FcitxKeySym sym, uint32 keycode, uint32 state,
                                mozc::commands::CompositionMode composition_mode,
+                               bool layout_is_jp,
+                               bool is_key_up,
                                mozc::commands::Output *out,
                                string *out_error) const = 0;
   virtual bool TrySendClick(int32 unique_id,
@@ -72,7 +75,6 @@ class MozcConnectionInterface {
   virtual bool TrySendCommand(mozc::commands::SessionCommand::CommandType type,
                               mozc::commands::Output *out,
                               string *out_error) const = 0;
-  virtual bool CanSend(FcitxKeySym sym, unsigned int state) const = 0;
 };
 
 class MozcConnection : public MozcConnectionInterface {
@@ -86,8 +88,10 @@ class MozcConnection : public MozcConnectionInterface {
   // response is stored on 'out' (and 'out_error' is not modified). If the IPC
   // fails, returns false and the error message is stored on 'out_error'. In
   // this case, 'out' is not modified.
-  virtual bool TrySendKeyEvent(FcitxKeySym sym, unsigned int state,
+  virtual bool TrySendKeyEvent(FcitxKeySym sym, uint32 keycode, uint32 state,
                                mozc::commands::CompositionMode composition_mode,
+                               bool layout_is_jp,
+                               bool is_key_up,
                                mozc::commands::Output *out,
                                string *out_error) const;
 
@@ -106,9 +110,6 @@ class MozcConnection : public MozcConnectionInterface {
                               mozc::commands::Output *out,
                               string *out_error) const;
 
-  // Returns true iff TrySendKeyEvent() accepts the key.
-  virtual bool CanSend(FcitxKeySym sym, unsigned int state) const;
-
  private:
   friend class MozcConnectionTest;
   MozcConnection(mozc::client::ServerLauncherInterface *server_launcher,
@@ -119,7 +120,7 @@ class MozcConnection : public MozcConnectionInterface {
       mozc::commands::Output *out,
       string *out_error) const;
 
-  const scoped_ptr<KeyTranslator> translator_;
+  const scoped_ptr<KeyEventHandler> handler_;
   mozc::config::Config::PreeditMethod preedit_method_;
   // Keep definition order of client_factory_ and client_.
   // We should delete client_ before deleting client_factory_.

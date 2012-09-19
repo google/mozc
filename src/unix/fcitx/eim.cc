@@ -23,6 +23,7 @@
 #include <fcitx/instance.h>
 #include <fcitx/ime.h>
 #include <fcitx/hook.h>
+#include <fcitx/module.h>
 #include <fcitx-config/xdg.h>
 #include "fcitx_mozc.h"
 #include "mozc_connection.h"
@@ -39,6 +40,7 @@ static boolean FcitxMozcInit(void *arg); /**< FcitxMozcInit */
 static void FcitxMozcResetIM(void *arg); /**< FcitxMozcResetIM */
 static void FcitxMozcReset(void *arg); /**< FcitxMozcResetIM */
 static INPUT_RETURN_VALUE FcitxMozcDoInput(void *arg, FcitxKeySym, unsigned int); /**< FcitxMozcDoInput */
+static INPUT_RETURN_VALUE FcitxMozcDoReleaseInput(void *arg, FcitxKeySym, unsigned int); /**< FcitxMozcDoInput */
 static void FcitxMozcSave(void *arg); /**< FcitxMozcSave */
 static void FcitxMozcReloadConfig(void *arg); /**< FcitxMozcReloadConfig */
 
@@ -54,10 +56,28 @@ int ABI_VERSION = FCITX_ABI_VERSION;
 
 }
 
+static inline bool CheckLayout(FcitxInstance* instance)
+{
+    char *layout = NULL, *variant = NULL;
+    FcitxModuleFunctionArg args;
+    args.args[0] = &layout;
+    args.args[1] = &variant;
+    bool layout_is_jp = false;
+    FcitxModuleInvokeFunctionByName(instance, "fcitx-xkb", 1, args);
+    if (layout && strcmp(layout, "jp") == 0)
+        layout_is_jp = true;
+
+    fcitx_utils_free(layout);
+    fcitx_utils_free(variant);
+
+
+    return layout_is_jp;
+}
+
 static void* FcitxMozcCreate(FcitxInstance* instance)
 {
     FcitxMozcState* mozcState = (FcitxMozcState*) fcitx_utils_malloc0(sizeof(FcitxMozcState));
-    bindtextdomain("fcitx-keyboard", LOCALEDIR);
+    bindtextdomain("fcitx-mozc", LOCALEDIR);
 
     mozcState->mozc = new mozc::fcitx::FcitxMozc(
         instance,
@@ -73,20 +93,24 @@ static void* FcitxMozcCreate(FcitxInstance* instance)
 
     FcitxInstanceRegisterResetInputHook(instance, hk);
 
-    FcitxInstanceRegisterIM(instance,
+    FcitxIMIFace iface;
+    memset(&iface, 0, sizeof(FcitxIMIFace));
+    iface.Init = FcitxMozcInit;
+    iface.ResetIM = FcitxMozcResetIM;
+    iface.DoInput = FcitxMozcDoInput;
+    iface.DoReleaseInput = FcitxMozcDoReleaseInput;
+    iface.ReloadConfig = FcitxMozcReloadConfig;
+    iface.Save = FcitxMozcSave;
+
+
+    FcitxInstanceRegisterIMv2(
+        instance,
         mozcState,
         "mozc",
         "Mozc",
         mozcState->mozc->GetIconFile("mozc.png").c_str(),
-        FcitxMozcInit,
-        FcitxMozcResetIM,
-        FcitxMozcDoInput,
-        NULL,
-        NULL,
-        FcitxMozcSave,
-        FcitxMozcReloadConfig,
-        NULL,
-        5,
+        iface,
+        1,
         "ja"
     );
 
@@ -100,15 +124,41 @@ static void FcitxMozcDestroy(void *arg)
     free(mozcState);
 }
 
-INPUT_RETURN_VALUE FcitxMozcDoInput(void* arg, FcitxKeySym sym, unsigned int state)
+INPUT_RETURN_VALUE FcitxMozcDoInput(void* arg, FcitxKeySym _sym, unsigned int _state)
 {
     FcitxMozcState* mozcState = (FcitxMozcState*) arg;
-    bool result = mozcState->mozc->process_key_event(sym, state);
+    FcitxInstance* instance = mozcState->mozc->GetInstance();
+    FcitxInputState* input = FcitxInstanceGetInputState(mozcState->mozc->GetInstance());
+    FCITX_UNUSED(_sym);
+    FCITX_UNUSED(_state);
+    FcitxKeySym sym = (FcitxKeySym) FcitxInputStateGetKeySym(input);
+    uint32 keycode = FcitxInputStateGetKeyCode(input);
+    uint32 state = FcitxInputStateGetKeyState(input);
+    bool result = mozcState->mozc->process_key_event(sym, keycode, state, CheckLayout(instance), false);
     if (!result)
         return IRV_TO_PROCESS;
     else
         return IRV_DISPLAY_CANDWORDS;
 }
+
+INPUT_RETURN_VALUE FcitxMozcDoReleaseInput(void* arg, FcitxKeySym _sym, unsigned int _state)
+{
+    FcitxMozcState* mozcState = (FcitxMozcState*) arg;
+    FcitxInstance* instance = mozcState->mozc->GetInstance();
+    FcitxInputState* input = FcitxInstanceGetInputState(mozcState->mozc->GetInstance());
+    FCITX_UNUSED(_sym);
+    FCITX_UNUSED(_state);
+    FcitxKeySym sym = (FcitxKeySym) FcitxInputStateGetKeySym(input);
+    uint32 keycode = FcitxInputStateGetKeyCode(input);
+    uint32 state = FcitxInputStateGetKeyState(input);
+    bool result = mozcState->mozc->process_key_event(sym, keycode, state, CheckLayout(instance), true);
+    if (!result)
+        return IRV_TO_PROCESS;
+    else
+        return IRV_DISPLAY_CANDWORDS;
+}
+
+
 
 boolean FcitxMozcInit(void* arg)
 {

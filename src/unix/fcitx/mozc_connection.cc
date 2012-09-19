@@ -40,7 +40,7 @@
 #include "ipc/ipc.h"
 #include "session/commands.pb.h"
 #include "session/ime_switch_util.h"
-#include "unix/fcitx/fcitx_key_translator.h"
+#include "unix/fcitx/fcitx_key_event_handler.h"
 
 namespace mozc {
 namespace fcitx {
@@ -51,7 +51,7 @@ MozcConnectionInterface::~MozcConnectionInterface() {
 MozcConnection::MozcConnection(
     mozc::client::ServerLauncherInterface *server_launcher,
     mozc::IPCClientFactoryInterface *client_factory)
-    : translator_(new KeyTranslator),
+    : handler_(new KeyEventHandler),
       preedit_method_(mozc::config::Config::ROMAN),
       client_factory_(client_factory) {
   VLOG(1) << "MozcConnection is created";
@@ -77,8 +77,10 @@ MozcConnection::~MozcConnection() {
 }
 
 bool MozcConnection::TrySendKeyEvent(
-    FcitxKeySym sym, unsigned int state,
+    FcitxKeySym sym, uint32 keycode, uint32 state,
     mozc::commands::CompositionMode composition_mode,
+    bool layout_is_jp,
+    bool is_key_up,
     mozc::commands::Output *out,
     string *out_error) const {
   DCHECK(out);
@@ -93,7 +95,8 @@ bool MozcConnection::TrySendKeyEvent(
   }
 
   mozc::commands::KeyEvent event;
-  translator_->Translate(sym, state, preedit_method_, &event);
+  if (!handler_->GetKeyEvent(sym, keycode, state, preedit_method_, layout_is_jp, is_key_up, &event))
+      return false;
 
   if ((composition_mode == mozc::commands::DIRECT) &&
       !mozc::config::ImeSwitchUtil::IsDirectModeCommand(event)) {
@@ -118,7 +121,8 @@ bool MozcConnection::TrySendClick(int32 unique_id,
   DCHECK(out_error);
 
   mozc::commands::SessionCommand command;
-  translator_->TranslateClick(unique_id, &command);
+  command.set_type(mozc::commands::SessionCommand::SELECT_CANDIDATE);
+  command.set_id(unique_id);
   return TrySendCommandInternal(command, out, out_error);
 }
 
@@ -159,10 +163,6 @@ bool MozcConnection::TrySendCommandInternal(
   }
   VLOG(1) << "OK: " << endl << out->DebugString();
   return true;
-}
-
-bool MozcConnection::CanSend(FcitxKeySym sym, unsigned int state) const {
-  return translator_->CanConvert(sym, state);
 }
 
 MozcConnection *MozcConnection::CreateMozcConnection() {

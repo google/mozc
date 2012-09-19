@@ -24,6 +24,7 @@
 
 #include <string>
 #include <fcitx/candidate.h>
+#include <fcitx/module.h>
 #include <fcitx-config/xdg.h>
 
 #include "base/const.h"
@@ -32,7 +33,6 @@
 #include "base/util.h"
 #include "unix/fcitx/mozc_connection.h"
 #include "unix/fcitx/mozc_response_parser.h"
-#include "unix/fcitx/fcitx_key_translator.h"
 #include <fcitx/context.h>
 
 #define N_(x) (x)
@@ -133,19 +133,12 @@ FcitxMozc::~FcitxMozc()
 
 // This function is called from SCIM framework when users press or release a
 // key.
-bool FcitxMozc::process_key_event ( FcitxKeySym sym, unsigned int state )
+bool FcitxMozc::process_key_event (FcitxKeySym sym, uint32 keycode, uint32 state, bool layout_is_jp, bool is_key_up)
 {
-
-    if ( !connection_->CanSend ( sym, state ) )
-    {
-        VLOG ( 1 ) << "Mozc doesn't handle the key. Not consumed.";
-        return false;  // not consumed.
-    }
-
     string error;
     mozc::commands::Output raw_response;
     if ( !connection_->TrySendKeyEvent (
-                sym, state, composition_mode_, &raw_response, &error ) )
+                sym, keycode, state, composition_mode_, layout_is_jp, is_key_up, &raw_response, &error ) )
     {
         // TODO(yusukes): Show |error|.
         return false;  // not consumed.

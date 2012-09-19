@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2012-04-07 11:37+0800\n"
+"POT-Creation-Date: 2012-09-19 15:26-0400\n"
 "PO-Revision-Date: 2012-04-07 11:39+0800\n"
 "Last-Translator: Weng Xuetian <wengxt@gmail.com>\n"
 "Language-Team: Chinese Simplified <fcitx-dev@googlegroups.com>\n"
@@ -17,63 +17,62 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 "X-Generator: Lokalize 1.4\n"
 
-#: ../fcitx_mozc.cc:53
+#: ../fcitx_mozc.cc:57
 msgid "Direct"
 msgstr "直接键盘输入"
 
-#: ../fcitx_mozc.cc:58
+#: ../fcitx_mozc.cc:62
 msgid "Hiragana"
 msgstr "平假名"
 
-#: ../fcitx_mozc.cc:63
+#: ../fcitx_mozc.cc:67
 msgid "Full Katakana"
 msgstr "全角片假名"
 
-#: ../fcitx_mozc.cc:68
+#: ../fcitx_mozc.cc:72
 msgid "Half ASCII"
 msgstr "半角 ASCII"
 
-#: ../fcitx_mozc.cc:73
+#: ../fcitx_mozc.cc:77
 msgid "Full ASCII"
 msgstr "全角 ASCII"
 
-#: ../fcitx_mozc.cc:78
+#: ../fcitx_mozc.cc:82
 msgid "Half Katakana"
 msgstr "半角片假名"
 
-#: ../fcitx_mozc.cc:379 ../fcitx_mozc.cc:380 ../fcitx_mozc.cc:458
+#: ../fcitx_mozc.cc:393 ../fcitx_mozc.cc:394 ../fcitx_mozc.cc:472
 msgid "Composition Mode"
 msgstr "编辑模式"
 
-#: ../fcitx_mozc.cc:390 ../fcitx_mozc.cc:391
+#: ../fcitx_mozc.cc:404 ../fcitx_mozc.cc:405
 msgid "Tool"
 msgstr "工具"
 
-#: ../fcitx_mozc.cc:471
+#: ../fcitx_mozc.cc:485
 msgid "Mozc Tool"
 msgstr "Mozc 工具"
 
-#: ../fcitx_mozc.cc:477
+#: ../fcitx_mozc.cc:491
 msgid "Configuration Tool"
 msgstr "配置工具"
 
-#: ../fcitx_mozc.cc:478
+#: ../fcitx_mozc.cc:492
 msgid "Dictionary Tool"
 msgstr "词典工具"
 
-#: ../fcitx_mozc.cc:479
+#: ../fcitx_mozc.cc:493
 msgid "Hand Writing"
 msgstr "手写输入"
 
-#: ../fcitx_mozc.cc:480
+#: ../fcitx_mozc.cc:494
 msgid "Character Palette"
 msgstr "字符映射表"
 
-#: ../fcitx_mozc.cc:481
+#: ../fcitx_mozc.cc:495
 msgid "Add Word"
 msgstr "添加单词"
 
-#: ../fcitx_mozc.cc:482
+#: ../fcitx_mozc.cc:496
 msgid "About Mozc"
 msgstr "关于 Mozc"
-
