@@ -377,6 +377,10 @@ bool KeyTranslator::Translate(FcitxKeySym keyval,
   DCHECK(out_event) << "out_event is NULL";
   out_event->Clear();
 
+  /* this is key we cannot handle, don't process it */
+  if (modifiers & FcitxKeyState_Super)
+    return false;
+
   // Due to historical reasons, many linux ditributions set Hiragana_Katakana
   // key as Hiragana key (which is Katkana key with shift modifier). So, we
   // translate Hiragana_Katanaka key as Hiragana key by mapping table, and
