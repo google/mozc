@@ -94,12 +94,6 @@
       'include_dirs': [
         '<@(fcitx_dep_include_dirs)',
       ],
-      'libraries': [
-        '<!@(pkg-config --libs-only-l <@(pkg_config_libs))',
-      ],
-      'ldflags': [
-        '<!@(pkg-config --libs-only-L <@(pkg_config_libs))',
-      ],
       'defines': [
         '<@(fcitx_defines)',
       ],
