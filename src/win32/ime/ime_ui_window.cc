@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -41,20 +41,21 @@
 #include <strsafe.h>
 
 #include "base/const.h"
-#include "base/mutex.h"
+#include "base/logging.h"
 #include "base/process.h"
 #include "base/process_mutex.h"
 #include "base/run_level.h"
 #include "base/scoped_handle.h"
 #include "base/singleton.h"
-#include "base/util.h"
+#include "base/system_util.h"
 #include "base/win_util.h"
 #include "client/client_interface.h"
 #include "config/config_handler.h"
-#include "renderer/renderer_client.h"
 #include "renderer/renderer_command.pb.h"
+#include "renderer/win32/win32_renderer_client.h"
 #include "session/output_util.h"
 #include "win32/base/conversion_mode_util.h"
+#include "win32/base/indicator_visibility_tracker.h"
 #include "win32/base/imm_util.h"
 #include "win32/base/string_util.h"
 #include "win32/ime/ime_core.h"
@@ -77,6 +78,8 @@ using ATL::CWindow;
 using WTL::CPoint;
 using WTL::CRect;
 
+using ::mozc::renderer::win32::Win32RendererClient;
+
 // True if the the DLL received DLL_PROCESS_DETACH notification.
 volatile bool g_module_unloaded = false;
 
@@ -92,175 +95,6 @@ volatile bool g_module_unloaded = false;
 
 // A global variable of mozc::once_t, which is POD, has no bad side effect.
 static once_t g_launch_set_default_dialog = MOZC_ONCE_INIT;
-
-// A pointer to the renderer command to be sent to the renderer process.
-// The reader and writer must grant lock via |g_mutex| when accessing this
-// object.
-commands::RendererCommand *g_renderer_command = NULL;
-
-// A reference count which indicates the number of users who are using the
-// the global shared resources.
-volatile LONG g_shared_resource_refcount = 0;
-
-// A pointer to the Mutex object with which the |g_renderer_command| is to be
-// guarded. The command sender thread needs to delete this object when
-// |g_renderer_quit_event| is signaled.
-Mutex *g_mutex = NULL;
-
-// An event object which should be signaled while |g_renderer_command| is
-// pointing a valid renderer command which is to be sent to the renderer.
-// The command sender thread needs to call CloseHandle API against this object
-// when |g_renderer_quit_event| is signaled.
-HANDLE g_renderer_thread_event = NULL;
-
-// An event object which should be signaled when the command sender thread
-// needs to be terminated.
-// The command sender thread needs to call CloseHandle API against this object
-// when |g_renderer_quit_event| is signaled.
-HANDLE g_renderer_quit_event = NULL;
-
-// A global variable of mozc::once_t, which is POD, has no bad side effect.
-once_t g_renderer_thread_launch_once = MOZC_ONCE_INIT;
-
-bool IsSharedResourceAvailable() {
-  return g_shared_resource_refcount > 0;
-}
-
-void AddRefSharedResource() {
-  ::InterlockedIncrement(&g_shared_resource_refcount);
-}
-
-void TryReleaseSharedResource() {
-  if (::InterlockedDecrement(&g_shared_resource_refcount) == 0) {
-    if (g_mutex != NULL) {
-      scoped_lock lock(g_mutex);
-      delete g_renderer_command;
-      g_renderer_command = NULL;
-    }
-    if (g_renderer_quit_event != NULL) {
-      ::CloseHandle(g_renderer_quit_event);
-      g_renderer_quit_event = NULL;
-    }
-    if (g_renderer_thread_event != NULL) {
-      ::CloseHandle(g_renderer_thread_event);
-      g_renderer_thread_event = NULL;
-    }
-    delete g_mutex;
-    g_mutex = NULL;
-  }
-}
-
-DWORD WINAPI RendererClientThread(void * /*unused*/) {
-  {
-    mozc::renderer::RendererClient renderer_client;
-    while (true) {
-      const HANDLE handles[] = {g_renderer_quit_event, g_renderer_thread_event};
-      const DWORD wait_result = ::WaitForMultipleObjects(
-          arraysize(handles), handles, FALSE, INFINITE);
-      const DWORD wait_error = ::GetLastError();
-      if (g_module_unloaded) {
-        break;
-      }
-      const DWORD kQuitEventSignaled = WAIT_OBJECT_0;
-      const DWORD kRendererEventSignaled = WAIT_OBJECT_0 + 1;
-      if (wait_result == kQuitEventSignaled) {
-        // handles[0], that is, quit event is signaled.
-        break;
-      }
-      if (wait_result != kRendererEventSignaled) {
-        LOG(ERROR) << "WaitForMultipleObjects failed. error: " << wait_error;
-        break;
-      }
-      // handles[1], that is, renderer event is signaled.
-      scoped_ptr<commands::RendererCommand> command;
-      {
-        scoped_lock lock(g_mutex);
-        command.reset(g_renderer_command);
-        g_renderer_command = NULL;
-        ::ResetEvent(g_renderer_thread_event);
-      }
-      if (command.get() == NULL) {
-        DCHECK(command.get()) << "This should not be NULL.";
-        continue;
-      }
-      if (!renderer_client.ExecCommand(*command)) {
-        DLOG(ERROR) << "RendererClient::ExecCommand failed.";
-      }
-    }
-  }
-  TryReleaseSharedResource();
-  // Here we need to
-  //   1) decrement the reference count of this DLL and
-  //   2) exit the current thread
-  // The following API does both 1) and 2) as one action.
-  ::FreeLibraryAndExitThread(ImeGetResource(), 0);
-}
-
-void CreateRendererThread() {
-  // Here we directly use CreateThread API rather than _beginthreadex because
-  // the command sender thread will be eventually terminated via
-  // FreeLibraryAndExitThread API. Regarding CRT memory resources, this will
-  // be OK because this code will be running as DLL and the CRT can manage
-  // thread specific resources through attach/detach notification in DllMain.
-  DWORD thread_id = 0;
-  ScopedHandle thread_handle(::CreateThread(
-    NULL, 0, RendererClientThread, NULL, CREATE_SUSPENDED, &thread_id));
-  if (thread_handle.get() == NULL) {
-    // Failed to create the thread. Restore the reference count of the DLL.
-    return;
-  }
-
-  // Increment the reference count of the IME DLL so that the DLL will not
-  // be unloaded while the sender thread is running. The reference count
-  // will be decremented by FreeLibraryAndExitThread API in the thread routine.
-  HMODULE loaded_module = NULL;
-  if (::GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
-                           reinterpret_cast<const wchar_t *>(::ImeGetResource()),
-                           &loaded_module) == FALSE) {
-    ::TerminateThread(thread_handle.get(), 0);
-    return;
-  }
-  if (loaded_module != ::ImeGetResource()) {
-    ::TerminateThread(thread_handle.get(), 0);
-    return;
-  }
-
-  // Crete shared objects. We use manual reset events for simplicity.
-  ScopedHandle renderer_event(::CreateEventW(NULL, TRUE, FALSE, NULL));
-  ScopedHandle quit_event(::CreateEventW(NULL, TRUE, FALSE, NULL));
-  if ((renderer_event.get() == NULL) || (quit_event.get() == NULL)) {
-    ::TerminateThread(thread_handle.get(), 0);
-    return;
-  }
-  g_renderer_thread_event = renderer_event.take();
-  g_renderer_quit_event = quit_event.take();
-  g_mutex = new Mutex();
-  AddRefSharedResource();  // for the current thread.
-  AddRefSharedResource();  // for the renderer thread.
-
-  // Resume the thread.
-  ::ResumeThread(thread_handle.get());
-}
-
-// This function is not thread safe.
-void EnsureRendererThreadLaunched() {
-  if (IsSharedResourceAvailable()) {
-    return;
-  }
-
-  // Callback functions in an IME is likely called even when the thread has
-  // loader lock. In such cases, we must not create any thread because it
-  // causes dead lock.
-  bool loader_locked = false;
-  if (!WinUtil::IsDLLSynchronizationHeld(&loader_locked)) {
-    return;
-  }
-  if (loader_locked) {
-    return;
-  }
-
-  CallOnce(&g_renderer_thread_launch_once, CreateRendererThread);
-}
 
 void LaunchSetDefaultDialog() {
   const config::Config &config = config::ConfigHandler::GetConfig();
@@ -338,13 +172,13 @@ class PrivateRendererMessageInitializer {
 
     // Skip windows XP.
     // ChangeWindowMessageFilter is only available on Windows Vista or Later
-    if (!mozc::Util::IsVistaOrLater()) {
+    if (!SystemUtil::IsVistaOrLater()) {
       FUNCTION_TRACE(L"Skip ChangeWindowMessageFilter on Windows XP");
       return true;
     }
 
-    const HMODULE lib = mozc::WinUtil::GetSystemModuleHandle(L"user32.dll");
-    if (lib == NULL) {
+    const HMODULE lib = WinUtil::GetSystemModuleHandle(L"user32.dll");
+    if (lib == nullptr) {
       FUNCTION_TRACE(L"GetModuleHandle for user32.dll failed.");
       return false;
     }
@@ -354,13 +188,13 @@ class PrivateRendererMessageInitializer {
     FPChangeWindowMessageFilterEx change_window_message_filter_ex
         = reinterpret_cast<FPChangeWindowMessageFilterEx>(
             ::GetProcAddress(lib, "ChangeWindowMessageFilterEx"));
-    if (change_window_message_filter_ex != NULL) {
+    if (change_window_message_filter_ex != nullptr) {
       // Windows 7 only
       if (!(*change_window_message_filter_ex)(handle, msg,
-                                              kMessageFilterAllow, NULL)) {
+                                              kMessageFilterAllow, nullptr)) {
         const int error = ::GetLastError();
         FUNCTION_TRACE_FORMAT(
-            L"ChangeWindowMessageFilterEx failed:. error = %1!d!", error);
+            L"ChangeWindowMessageFilterEx failed. error = %1!d!", error);
         return false;
       }
       return true;
@@ -370,14 +204,14 @@ class PrivateRendererMessageInitializer {
     FPChangeWindowMessageFilter change_window_message_filter
         = reinterpret_cast<FPChangeWindowMessageFilter>(
             ::GetProcAddress(lib, "ChangeWindowMessageFilter"));
-    if (change_window_message_filter == NULL) {
+    if (change_window_message_filter == nullptr) {
       const int error = ::GetLastError();
       FUNCTION_TRACE_FORMAT(
           L"GetProcAddress failed. error = %1!d!", error);
       return false;
     }
 
-    DCHECK(change_window_message_filter != NULL);
+    DCHECK(change_window_message_filter != nullptr);
     if (!(*change_window_message_filter)(msg, kMessageFilterAdd)) {
       const int error = ::GetLastError();
       FUNCTION_TRACE_FORMAT(
@@ -396,7 +230,10 @@ void UpdateCommand(const UIContext &context,
                    HWND ui_window,
                    const UIVisibilityTracker &ui_visibility_tracker,
                    mozc::commands::RendererCommand *command) {
-  typedef mozc::commands::RendererCommand::ApplicationInfo ApplicationInfo;
+  typedef ::mozc::commands::RendererCommand::ApplicationInfo ApplicationInfo;
+  typedef ::mozc::commands::RendererCommand_IndicatorInfo IndicatorInfo;
+  typedef ::mozc::commands::CompositionMode CompositionMode;
+
   const bool show_composition_window =
       ui_visibility_tracker.IsCompositionWindowVisible();
   const bool show_candidate_window =
@@ -471,6 +308,34 @@ void UpdateCommand(const UIContext &context,
   }
   app_info.set_ui_visibilities(visibility);
 
+  // Honor visibility bits for UI-less mode.
+  if (visibility != 0) {
+    IndicatorVisibilityTracker *indicator_tracker =
+        context.indicator_visibility_tracker();
+    if (indicator_tracker != nullptr) {
+      if (indicator_tracker->IsVisible()) {
+        DWORD native_mode = 0;
+        CompositionMode mode = commands::DIRECT;
+        if (context.GetConversionMode(&native_mode) &&
+            ConversionModeUtil::ToMozcMode(
+                native_mode,
+                &mode)) {
+          if (!command->has_output()) {
+            context.GetLastOutput(command->mutable_output());
+          }
+          command->set_visible(true);
+          IndicatorInfo *info = app_info.mutable_indicator_info();
+          info->mutable_status()->set_activated(context.GetOpenStatus());
+          info->mutable_status()->set_mode(mode);
+        }
+      }
+    }
+  }
+
+  context.FillFontInfo(&app_info);
+  context.FillCaretInfo(&app_info);
+  context.FillCompositionForm(&app_info);
+  context.FillCandidateForm(&app_info);
   // UIContext::FillCharPosition is subject to cause b/3208669, b/3096191,
   // b/3212271, b/3223011, and b/4285222.
   // So we do not retrieve IMM32 related positional information when the
@@ -479,19 +344,15 @@ void UpdateCommand(const UIContext &context,
   //  - there is no composition string.
   //  - |command->visible() == false|
   if (!context.IsCompositionStringEmpty() && command->visible()) {
-    context.FillFontInfo(&app_info);
-    context.FillCaretInfo(&app_info);
-    context.FillCompositionForm(&app_info);
     context.FillCharPosition(&app_info);
-    context.FillCandidateForm(&app_info);
   }
 }
 
 // Returns a HIMC assuming from the handle of a UI window.
-// Returns NULL if it is not available.
+// Returns nullptr if it is not available.
 HIMC GetSafeHIMC(HWND window_handle) {
   if (!::IsWindow(window_handle)) {
-    return NULL;
+    return nullptr;
   }
 
   const HIMC himc =
@@ -502,7 +363,7 @@ HIMC GetSafeHIMC(HWND window_handle) {
   // CUAS's implementation in XP.
   // We will not use a HIMC as long as it seems to be uninitialized.
   if (!ImeCore::IsInputContextInitialized(himc)) {
-    return NULL;
+    return nullptr;
   }
 
   return himc;
@@ -510,7 +371,7 @@ HIMC GetSafeHIMC(HWND window_handle) {
 
 bool TurnOnIMEAndTryToReconvertFromIME(HWND hwnd) {
   const HIMC himc = GetSafeHIMC(hwnd);
-  if (himc == NULL) {
+  if (himc == nullptr) {
     return false;
   }
   if (!mozc::win32::ImeCore::TurnOnIMEAndTryToReconvertFromIME(himc)) {
@@ -663,10 +524,9 @@ class LangBarCallbackImpl : public LangBarCallback {
  private:
   HRESULT SetInputMode(mozc::commands::CompositionMode mode) {
     const HIMC himc = GetSafeHIMC(hwnd_);
-    if (himc == NULL) {
+    if (himc == nullptr) {
       return E_FAIL;
     }
-
     if (mode == mozc::commands::DIRECT) {
       // Close IME.
       if (::ImmSetOpenStatus(himc, FALSE) == FALSE) {
@@ -682,10 +542,11 @@ class LangBarCallbackImpl : public LangBarCallback {
       }
     }
 
-    // TODO(yukawa): check kana-lock mode
+    const UIContext context(himc);
     uint32 imm32_composition_mode = 0;
-    if (!win32::ConversionModeUtil::ToNativeMode(mode, true,
-                                                 &imm32_composition_mode)) {
+    if (!win32::ConversionModeUtil::ToNativeMode(
+            mode, context.IsKanaInputPreferred(),
+            &imm32_composition_mode)) {
       return E_FAIL;
     }
 
@@ -718,12 +579,12 @@ class DefaultUIWindow {
       : hwnd_(hwnd),
         langbar_callback_(new LangBarCallbackImpl(hwnd)),
         language_bar_(new LanguageBar) {
-    EnsureRendererThreadLaunched();
+    Win32RendererClient::EnsureUIThreadInitialized();
   }
 
   ~DefaultUIWindow() {
     langbar_callback_->Release();
-    langbar_callback_ = NULL;
+    langbar_callback_ = nullptr;
   }
 
   void UninitLangBar() {
@@ -755,6 +616,7 @@ class DefaultUIWindow {
       case IMN_OPENSTATUSWINDOW:
         break;
       case IMN_SETCONVERSIONMODE:
+        UpdateIndicator(context);
         result = (UpdateLangBar(context) ? 0 : 1);
         break;
       case IMN_SETSENTENCEMODE:
@@ -763,11 +625,12 @@ class DefaultUIWindow {
         // See b/2913510, b/2954777, and b/2955175 for details.
         break;
       case IMN_SETOPENSTATUS:
+        UpdateIndicator(context);
         result = (UpdateLangBar(context) ? 0 : 1);
         break;
       case IMN_SETCANDIDATEPOS: {
         if (lParam & 0x1) {
-          UpdateCandidate(context);
+          UpdateCandidate(context, kMoveFocusedWindow);
         }
         break;
       }
@@ -781,7 +644,8 @@ class DefaultUIWindow {
         }
         break;
       case IMN_SETCOMPOSITIONWINDOW:
-        UpdateCandidate(context);
+        // TODO(yukawa): Use message hook instead.
+        UpdateCandidate(context, kMoveFocusedWindow);
         break;
       case IMN_SETSTATUSWINDOWPOS:
         // TODO(yukawa):
@@ -791,7 +655,7 @@ class DefaultUIWindow {
         break;
       case IMN_PRIVATE:
         if (lParam == kNotifyUpdateUI) {
-          UpdateCandidate(context);
+          UpdateCandidate(context, kNoEvent);
         } else if (lParam == kNotifyReconvertFromIME) {
           TurnOnIMEAndTryToReconvertFromIME(hwnd_);
         }
@@ -803,7 +667,7 @@ class DefaultUIWindow {
   LRESULT OnSetContext(const UIContext &context, bool activated,
                        const ShowUIAttributes &show_ui_attributes) {
     // |context| might be uninitialized.  See b/3099588.
-    if (context.ui_visibility_tracker() == NULL) {
+    if (context.ui_visibility_tracker() == nullptr) {
       return 0;
     }
 
@@ -811,7 +675,7 @@ class DefaultUIWindow {
       // The input context specified with |context| is activated.
       context.ui_visibility_tracker()->OnSetContext(show_ui_attributes);
     }
-    UpdateCandidate(context);
+    UpdateCandidate(context, activated ? kNoEvent : kDissociateContext);
     return (UpdateLangBar(context) ? 0 : 1);
   }
 
@@ -829,7 +693,7 @@ class DefaultUIWindow {
       UninitLangBar();
       return;
     }
-    UpdateCandidate(context);
+    UpdateCandidate(context, kNoEvent);
     UpdateLangBar(context);
 
     // If the application does not allow the IME to show any UI component,
@@ -852,7 +716,7 @@ class DefaultUIWindow {
   LRESULT OnSessionCommand(
       HIMC himc, commands::SessionCommand::CommandType command_type,
       LPARAM lParam) {
-    if (himc == NULL) {
+    if (himc == nullptr) {
       return 0;
     }
 
@@ -971,33 +835,58 @@ class DefaultUIWindow {
   }
 
  private:
+  enum IndicatorEventType {
+    kNoEvent,
+    kMoveFocusedWindow,
+    kDissociateContext,
+  };
+
   // Constructs RendererCommand based on various parameters in the input
   // context.  This implementation is very experimental, should be revised.
-  void UpdateCandidate(const UIContext &context) {
-    // In case the we could not launch the command sender thread due to loader
-    // lock in the previous chances, here we ensure that the command sender
-    // thread is launched.
-    CallOnce(&g_renderer_thread_launch_once, EnsureRendererThreadLaunched);
-    if (!IsSharedResourceAvailable()) {
-        // Do nothing if the command sender thread is not available.
-      return;
+  void UpdateCandidate(const UIContext &context,
+                       IndicatorEventType indicator_event_type) {
+    if (indicator_event_type != kNoEvent) {
+      // We need to send UI event to the renderer anyway.
+      // So the returned value from |tracker| will be ignored.
+      IndicatorVisibilityTracker *tracker =
+          context.indicator_visibility_tracker();
+      if (tracker != nullptr) {
+        switch (indicator_event_type) {
+          case kMoveFocusedWindow:
+            tracker->OnMoveFocusedWindow();
+            break;
+          case kDissociateContext:
+            tracker->OnDissociateContext();
+            break;
+        }
+      }
     }
 
-    scoped_ptr<commands::RendererCommand> command(
-        new commands::RendererCommand);
-    command->set_type(commands::RendererCommand::UPDATE);
-    command->set_visible(false);
+    commands::RendererCommand command;
+    command.set_type(commands::RendererCommand::UPDATE);
+    command.set_visible(false);
     UpdateCommand(context, hwnd_, *context.ui_visibility_tracker(),
-                  command.get());
+                  &command);
+    Win32RendererClient::OnUpdated(command);
+  }
 
-    // Transfer the ownership of |command| to the command sender thread via
-    // |g_renderer_command|.
-    {
-      scoped_lock lock(g_mutex);
-      // Delete the previous message if exists.
-      delete g_renderer_command;
-      g_renderer_command = command.release();
-      ::SetEvent(g_renderer_thread_event);
+  void UpdateIndicator(const UIContext &context) {
+    IndicatorVisibilityTracker *tracker =
+        context.indicator_visibility_tracker();
+    if (tracker == nullptr) {
+      return;
+    }
+    const IndicatorVisibilityTracker::Action action =
+        tracker->OnChangeInputMode();
+    if (action == IndicatorVisibilityTracker::kUpdateUI) {
+      commands::RendererCommand command;
+      command.set_type(commands::RendererCommand::UPDATE);
+      // Initialize as invisible just in case. Basically this flag will
+      // be set to true in UpdateCommand.
+      command.set_visible(false);
+      UpdateCommand(context, hwnd_, *context.ui_visibility_tracker(),
+                    &command);
+      Win32RendererClient::OnUpdated(command);
     }
   }
 
@@ -1138,7 +1027,7 @@ LRESULT WINAPI UIWindowProc(HWND hwnd,
   DANGLING_CALLBACK_GUARD(0);
 
   const bool is_ui_message =
-      (::ImmIsUIMessage(NULL, message, wParam, lParam) != FALSE);
+      (::ImmIsUIMessage(nullptr, message, wParam, lParam) != FALSE);
 
   // Create UI window object and associate it to the window.
   if (message == WM_NCCREATE) {
@@ -1171,7 +1060,7 @@ LRESULT WINAPI UIWindowProc(HWND hwnd,
   DefaultUIWindow* ui_window = reinterpret_cast<DefaultUIWindow*>(
       ::GetWindowLongPtrW(hwnd, IMMGWLP_PRIVATE));
 
-  if (ui_window == NULL) {
+  if (ui_window == nullptr) {
     if (is_ui_message) {
       return 0;
     } else {
@@ -1206,9 +1095,10 @@ LRESULT WINAPI UIWindowProc(HWND hwnd,
   } else if (message == WM_NCDESTROY) {
     // Unhook mouse events.
     ThreadLocalMouseTracker::EnsureUninstalled();
+    Win32RendererClient::OnUIThreadUninitialized();
 
     // Delete UI window object if the window is destroyed.
-    ::SetWindowLongPtr(hwnd, IMMGWLP_PRIVATE, NULL);
+    ::SetWindowLongPtr(hwnd, IMMGWLP_PRIVATE, 0);
     delete ui_window;
   }
   if (!is_handled) {
@@ -1217,13 +1107,8 @@ LRESULT WINAPI UIWindowProc(HWND hwnd,
   }
   return result;
 }
-}  // anonymous namespace
 
-void UIWindowManager::OnImeDestroy() {
-  if (IsSharedResourceAvailable()) {
-    ::SetEvent(g_renderer_quit_event);
-  }
-}
+}  // namespace
 
 bool UIWindowManager::OnDllProcessAttach(HINSTANCE module_handle,
                                          bool static_loading) {
@@ -1242,6 +1127,7 @@ bool UIWindowManager::OnDllProcessAttach(HINSTANCE module_handle,
     return false;
   }
 
+  Win32RendererClient::OnModuleLoaded(module_handle);
   return true;
 }
 
@@ -1253,10 +1139,10 @@ void UIWindowManager::OnDllProcessDetach(HINSTANCE module_handle,
     // unregister window class. See b/4271156.
     FUNCTION_TRACE(L"UnregisterClass failed");
   }
-  TryReleaseSharedResource();
   // This flag is used to inactivate out DefWindowProc and any other callbacks
   // to avoid further problems.
   g_module_unloaded = true;
+  Win32RendererClient::OnModuleUnloaded();
 }
 
 }  // namespace win32

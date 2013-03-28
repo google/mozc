@@ -1,4 +1,4 @@
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -37,28 +37,6 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-      ],
-    },
-    {
-      'target_name': 'transliteration_test',
-      'type': 'executable',
-      'sources': [
-        'transliteration_test.cc',
-      ],
-      'dependencies': [
-        '../testing/testing.gyp:gtest_main',
-        'transliteration',
-      ],
-      'variables': {
-        'test_size': 'small',
-      },
-    },
-    # Test cases meta target: this target is referred from gyp/tests.gyp
-    {
-      'target_name': 'transliteration_all_test',
-      'type': 'none',
-      'dependencies': [
-        'transliteration_test',
       ],
     },
   ],

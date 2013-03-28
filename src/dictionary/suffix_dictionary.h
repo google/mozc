@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,9 +32,12 @@
 
 #include <string>
 #include "base/base.h"
+#include "base/string_piece.h"
 #include "dictionary/dictionary_interface.h"
 
 namespace mozc {
+
+struct SuffixToken;
 
 // SuffixDictionary is a special dictionary which handles
 // Japanese bunsetsu suffixes.
@@ -49,17 +52,11 @@ namespace mozc {
 // functional word with this dictionary.
 class SuffixDictionary : public DictionaryInterface {
  public:
-  struct SuffixToken {
-    const char *key;
-    const char *value;
-    uint16 lid;
-    uint16 rid;
-    int16  wcost;
-  };
-
   SuffixDictionary(const SuffixToken *suffix_tokens,
                    size_t suffix_tokens_size);
   virtual ~SuffixDictionary();
+
+  virtual bool HasValue(const StringPiece value) const;
 
   // Even if size == 0, suffix dictionary returns all the suffix
   // in this dictionary.

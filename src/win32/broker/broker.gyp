@@ -1,4 +1,4 @@
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -68,7 +68,6 @@
           'product_name': '<(broker_product_name_win)32',
           'includes': [
             'mozc_broker.gypi',
-            '../../gyp/postbuilds_win.gypi',
           ],
         },
         {
@@ -76,7 +75,6 @@
           'product_name': '<(broker_product_name_win)64',
           'includes': [
             'mozc_broker.gypi',
-            '../../gyp/postbuilds_win.gypi',
           ],
         },
       ],

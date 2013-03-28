@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,7 @@
 #define MOZC_BASE_HASH_TABLES_H_
 
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <hash_map>
 #include <hash_set>
 #if _MSC_VER < 1310 || _MSC_VER >= 1600
@@ -44,7 +44,7 @@ using std::hash_set;
 using stdext::hash_map;
 using stdext::hash_set;
 #endif
-#else  // not OS_WINDOWS
+#else  // not OS_WIN
 
 #ifdef OS_ANDROID
 // Use stlport hash_set/hash_map for android.
@@ -72,6 +72,6 @@ struct hash<std::string> {
 };
 }
 #endif  // not OS_ANDROID
-#endif  // not OS_WINDOWS
+#endif  // not OS_WIN
 
 #endif  // MOZC_BASE_HASH_TABLES_H_

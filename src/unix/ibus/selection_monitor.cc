@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,6 +36,7 @@
 #include <string>
 
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/mutex.h"
 #include "base/scoped_ptr.h"
 #include "base/thread.h"
@@ -132,8 +133,23 @@ class SelectionMonitorServer {
     return true;
   }
 
+  bool checkConnection() {
+    if (!connection_) {
+      return false;
+    }
+    if (::xcb_connection_has_error(connection_)) {
+      LOG(ERROR) << "XCB connection has error.";
+      connection_ = NULL;
+      return false;
+    }
+    return true;
+  }
+
   bool WaitForNextSelectionEvent(size_t max_bytes, SelectionInfo *next_info) {
     DCHECK(next_info);
+    if (!connection_) {
+      return false;
+    }
 
     ::xcb_flush(connection_);
     scoped_ptr_malloc<xcb_generic_event_t> event(
@@ -163,7 +179,7 @@ class SelectionMonitorServer {
   // method to awake a message pump thread which is waiting for the next
   // X11 message for |requestor_window_|.
   void SendNoopEventMessage() {
-    if (connection_ == 0 || requestor_window_ == 0) {
+    if (!connection_ || !requestor_window_) {
       return;
     }
 
@@ -535,6 +551,13 @@ class SelectionMonitorImpl : public SelectionMonitorInterface,
   // Implements Thread::Run.
   virtual void Run() {
     while (!quit_) {
+      if (!server_->checkConnection()) {
+        scoped_lock l(&mutex_);
+        last_selection_info_ = SelectionInfo();
+        quit_ = true;
+        break;
+      }
+
       SelectionInfo next_info;
       // Note that this is blocking call and will not return until the next
       // X11 message is received. In order to interrupt, you can call
@@ -573,5 +596,5 @@ SelectionMonitorInterface *SelectionMonitorFactory::Create(
   return new SelectionMonitorImpl(server.release(), max_text_bytes);
 }
 
-} // namespace ibus
-} // namespace mozc
+}  // namespace ibus
+}  // namespace mozc

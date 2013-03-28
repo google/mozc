@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,10 +29,12 @@
 
 #include "dictionary/system/value_dictionary.h"
 
-#include "base/base.h"
+#include <vector>
+
+#include "base/file_util.h"
 #include "base/stl_util.h"
+#include "base/system_util.h"
 #include "base/trie.h"
-#include "base/util.h"
 #include "converter/node.h"
 #include "converter/node_allocator.h"
 #include "data_manager/user_pos_manager.h"
@@ -55,14 +57,14 @@ class ValueDictionaryTest : public testing::Test {
 
   virtual void SetUp() {
     STLDeleteElements(&tokens_);
-    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    Util::Unlink(dict_name_);
+    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    FileUtil::Unlink(dict_name_);
     pos_matcher_ = UserPosManager::GetUserPosManager()->GetPOSMatcher();
   }
 
   virtual void TearDown() {
     STLDeleteElements(&tokens_);
-    Util::Unlink(dict_name_);
+    FileUtil::Unlink(dict_name_);
   }
 
   void AddToken(const string &key, const string &value) {
@@ -87,6 +89,28 @@ class ValueDictionaryTest : public testing::Test {
  private:
   vector<Token *> tokens_;
 };
+
+TEST_F(ValueDictionaryTest, HasValue) {
+  // "うぃー"
+  AddToken("\xE3\x81\x86\xE3\x81\x83\xE3\x83\xBC", "we");
+  // "うぉー"
+  AddToken("\xE3\x81\x86\xE3\x81\x89\xE3\x83\xBC", "war");
+  // "わーど"
+  AddToken("\xE3\x82\x8F\xE3\x83\xBC\xE3\x81\xA9", "word");
+  // "わーるど"
+  AddToken("\xE3\x82\x8F\xE3\x83\xBC\xE3\x82\x8B\xE3\x81\xA9", "world");
+  BuildDictionary();
+  scoped_ptr<ValueDictionary> dictionary(
+      ValueDictionary::CreateValueDictionaryFromFile(*pos_matcher_,
+                                                     dict_name_));
+
+  EXPECT_TRUE(dictionary->HasValue("we"));
+  EXPECT_TRUE(dictionary->HasValue("war"));
+  EXPECT_TRUE(dictionary->HasValue("word"));
+  EXPECT_TRUE(dictionary->HasValue("world"));
+  EXPECT_FALSE(dictionary->HasValue("hoge"));
+  EXPECT_FALSE(dictionary->HasValue("piyo"));
+}
 
 TEST_F(ValueDictionaryTest, LookupPredictive) {
   NodeAllocator allocator;

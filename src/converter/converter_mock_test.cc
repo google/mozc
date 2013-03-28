@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -49,7 +49,7 @@ void SetSegments(Segments *segments, const string &cand_value) {
   meta_cand->Init();
   meta_cand->value = "TestT13N";
 }
-}
+}  // namespace
 
 class ConverterMockTest : public testing::Test {
  protected:
@@ -203,13 +203,13 @@ TEST_F(ConverterMockTest, SetFreeSegmentValue) {
   EXPECT_EQ(expect.DebugString(), output.DebugString());
 }
 
-TEST_F(ConverterMockTest, SetSubmitFirstSegment) {
+TEST_F(ConverterMockTest, SetCommitFirstSegment) {
   ConverterInterface *converter = GetMock();
 
   Segments output, expect;
-  SetSegments(&expect, "SubmitFirstSegment");
-  GetMock()->SetSubmitFirstSegment(&expect, true);
-  EXPECT_TRUE(converter->SubmitFirstSegment(&output, 1));
+  SetSegments(&expect, "CommitFirstSegment");
+  GetMock()->SetCommitFirstSegment(&expect, true);
+  EXPECT_TRUE(converter->CommitFirstSegment(&output, 1));
   EXPECT_EQ(expect.DebugString(), output.DebugString());
 }
 
@@ -219,7 +219,8 @@ TEST_F(ConverterMockTest, SetResizeSegment1) {
   Segments output, expect;
   SetSegments(&expect, "ResizeSegment1");
   GetMock()->SetResizeSegment1(&expect, true);
-  EXPECT_TRUE(converter->ResizeSegment(&output, ConversionRequest(), 1, 5));
+  const ConversionRequest default_request;
+  EXPECT_TRUE(converter->ResizeSegment(&output, default_request, 1, 5));
   EXPECT_EQ(expect.DebugString(), output.DebugString());
 }
 
@@ -230,7 +231,8 @@ TEST_F(ConverterMockTest, SetResizeSegment2) {
   SetSegments(&expect, "ResizeSegment2");
   GetMock()->SetResizeSegment2(&expect, true);
   uint8 size_array[] = {1, 2, 3};
-  EXPECT_TRUE(converter->ResizeSegment(&output, ConversionRequest(), 1, 5,
+  const ConversionRequest default_request;
+  EXPECT_TRUE(converter->ResizeSegment(&output, default_request, 1, 5,
                                        size_array, arraysize(size_array)));
   EXPECT_EQ(expect.DebugString(), output.DebugString());
 }
@@ -447,18 +449,18 @@ TEST_F(ConverterMockTest, GetFreeSegmentValue) {
   EXPECT_EQ(input_idx, last_idx);
 }
 
-TEST_F(ConverterMockTest, GetSubmitFirstSegment) {
+TEST_F(ConverterMockTest, GetCommitFirstSegment) {
   ConverterInterface *converter = GetMock();
 
   Segments input;
   size_t input_idx = 1;
-  SetSegments(&input, "SubmitFirstSegment");
+  SetSegments(&input, "CommitFirstSegment");
   const string input_str = input.DebugString();
-  converter->SubmitFirstSegment(&input, input_idx);
+  converter->CommitFirstSegment(&input, input_idx);
 
   Segments last_segment;
   size_t last_idx;
-  GetMock()->GetSubmitFirstSegment(&last_segment, &last_idx);
+  GetMock()->GetCommitFirstSegment(&last_segment, &last_idx);
   const string last_segment_str = last_segment.DebugString();
 
   EXPECT_EQ(input_str, last_segment_str);
@@ -473,8 +475,9 @@ TEST_F(ConverterMockTest, GetResizeSegment1) {
   int input_offset = 3;
   SetSegments(&input, "ResizeSegment1");
   const string input_str = input.DebugString();
+  const ConversionRequest default_request;
   converter->ResizeSegment(
-      &input, ConversionRequest(), input_idx, input_offset);
+      &input, default_request, input_idx, input_offset);
 
   Segments last_segment;
   size_t last_idx;
@@ -495,7 +498,8 @@ TEST_F(ConverterMockTest, GetResizeSegment2) {
   uint8 input_array[] = {1, 2, 3};
   SetSegments(&input, "ResizeSegment2");
   const string input_str = input.DebugString();
-  converter->ResizeSegment(&input, ConversionRequest(), input_idx, input_size,
+  const ConversionRequest default_request;
+  converter->ResizeSegment(&input, default_request, input_idx, input_size,
                            input_array, arraysize(input_array));
 
   Segments last_segment;

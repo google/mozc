@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -82,6 +82,9 @@ class RendererInterface;
   // want to call this every key events.
   BOOL checkInputMode_;
 
+  // |suppressSuggestion_| indicates whether to suppress the suggestion.
+  BOOL suppressSuggestion_;
+
   // |keyCodeMap_| manages the mapping between Mac key code and mozc
   // key events.
   KeyCodeMap *keyCodeMap_;
@@ -107,6 +110,9 @@ class RendererInterface;
 
   // |imkServer_| holds the reference to GoogleJapaneseInputServer.
   id<ServerCallback> imkServer_;
+
+  // |imkClientForTest_| holds the reference to the client object for unit test.
+  id imkClientForTest_;
 
   // |menu_| is the NSMenu to be shown in the pulldown menu-list of
   // the IME.

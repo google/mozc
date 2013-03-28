@@ -1,0 +1,308 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ Copyright 2010-2013, Google Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+     * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above
+ copyright notice, this list of conditions and the following disclaimer
+ in the documentation and/or other materials provided with the
+ distribution.
+     * Neither the name of Google Inc. nor the names of its
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<resources>
+    <string name="subtype_ja">日本語</string>
+
+    <!-- Preference titles -->
+    <string name="pref_software_keyboard_category_title">ソフトウェアキーボードの設定</string>
+        <string name="pref_software_keyboard_advanced_settings_title">ソフトウェアキーボードの詳細設定</string>
+
+    <string name="pref_software_keyboard_preferences_portrait_title">縦画面のソフトウェアキーボード設定</string>
+    <string name="pref_software_keyboard_preferences_landscape_title">横画面のソフトウェアキーボード設定</string>
+        <!-- Following entries are for configuration_dependent_preferences -->
+        <string name="pref_keyboard_layout_title">入力キーボード</string>
+        <string name="pref_input_style_title">入力スタイルの設定</string>
+        <string name="pref_qwerty_layout_for_alphabet_title">英字入力はQWERTY</string>
+        <string name="pref_flick_sensitivity_title">フリック感度</string>
+        <string name="pref_keyboard_height_ratio_title">キーボードの高さ</string>
+        <string name="pref_use_portrait_keyboard_settings_for_landscape_title">縦画面の設定を使用する</string>
+    <string name="pref_input_feedback_category_title">入力フィードバックの設定</string>
+        <string name="pref_haptic_feedback_title">キー操作バイブ</string>
+        <string name="pref_haptic_feedback_duration_title">キー操作バイブの振動時間</string>
+        <string name="pref_sound_feedback_title">キー操作音</string>
+        <string name="pref_sound_feedback_volume_title">キー操作音の音量</string>
+        <string name="pref_popup_feedback_title">キー押下時ポップアップ</string>
+    <string name="pref_other_input_support_preference_category_title">その他の入力サポートの設定</string>
+        <string name="pref_fullscreen_title">フルスクリーンモード</string>
+        <string name="pref_skin_type_title">スキンの選択</string>
+        <string name="pref_hardware_title">ハードウェアキーボードの設定</string>
+    <string name="pref_conversion_category_title">変換の設定</string>
+        <string name="pref_layout_adjustment_title">左右寄せ</string>
+        <string name="pref_space_character_form_title">常に半角スペースを使う</string>
+        <string name="pref_kana_modifier_insensitive_conversion_title">自動かな修飾変換</string>
+        <string name="pref_typing_correction_title">キー入力補正</string>
+        <string name="pref_other_incognito_mode_title">シークレットモード</string>
+        <string name="pref_emoji_provider_type_title">事業者別絵文字の選択</string>
+    <string name="pref_dictionry_category_title">辞書関連の設定</string>
+        <string name="pref_dictionary_personalization_title">学習機能</string>
+        <string name="pref_dictionary_user_dictionary_tool_title">辞書ツール</string>
+        <string name="pref_clear_category_title">履歴のクリア</string>
+            <string name="pref_clear_conversion_history_title">変換履歴</string>
+            <string name="pref_clear_symbol_history_title">記号入力</string>
+            <string name="pref_clear_user_dictionary_title">ユーザ辞書</string>
+    <string name="pref_user_feedback_category_title">ユーザフィードバック</string>
+      <string name="pref_other_usage_stats_title">利用統計を送信</string>
+    <string name="pref_about_about_this_software_title">このアプリケーションについて</string>
+        <string name="pref_about_version_title">バージョン</string>
+        <string name="pref_about_terms_of_service_title">モバイル利用規約</string>
+        <string name="pref_about_privacy_policy_title">プライバシーポリシー</string>
+        <string name="pref_about_oss_credits_title">オープンソースソフトウェア</string>
+
+    <!-- Preference description -->
+    <!-- Configuration Dependent Preferences -->
+        <!-- Following entries are for configuration_dependent_preferences -->
+        <string name="pref_haptic_feedback_description">キー操作時に振動します。</string>
+        <string name="pref_sound_feedback_description">キー操作時に音を鳴らします。</string>
+        <string name="pref_popup_feedback_description">キー押下時にポップアップを表示します。</string>
+        <string name="pref_keyboard_layout_description">キーボードレイアウトを切り替えます。</string>
+            <string name="pref_keyboard_layout_title_12keys">ケータイ配列</string>
+            <string name="pref_keyboard_layout_title_qwerty">QWERTY</string>
+            <string name="pref_keyboard_layout_title_godan">Godan キーボード</string>
+            <string name="pref_keyboard_layout_description_12keys">携帯電話のキーボードのようなレイアウトです。</string>
+            <string name="pref_keyboard_layout_description_qwerty">パソコンのキーボードのようなレイアウトです。</string>
+            <string name="pref_keyboard_layout_description_godan">ローマ字入力に特化したレイアウトです。 <![CDATA[<a href=\'http://support.google.com/ime/japanese/bin/answer.py?hl=ja&topic=25606&answer=2700298\'>使い方</a>]]></string>
+        <string name="pref_input_style_setting_description">ケータイ配列での入力方法を切り替えます。</string>
+        <string name="pref_qwerty_layout_for_alphabet_description">英字入力時は常にQWERTYレイアウトを使用します。</string>
+        <string name="pref_fullscreen_description">テキスト入力エリアをフルスクリーンで表示します。</string>
+        <string name="pref_flick_sensitivity_description">フリック感度を調整します。</string>
+        <string name="pref_layout_adjustment_description">キーボードを右寄せ、左寄せにします。</string>
+        <string name="pref_keyboard_height_ratio_description">キーボードの高さを変更します。</string>
+        <string name="pref_space_character_form_description">ひらがな入力時にも半角スペースを使います。</string>
+        <string name="pref_kana_modifier_insensitive_conversion_description">濁点、半濁点、小文字化を省略しても自動的に補って変換します。ケータイ配列とGodanキーボードの時に有効になります。例)かつこう→学校</string>
+        <string name="pref_typing_correction_description">誤入力を検出して、正しいと思われる候補を表示します。例)すんかい→深海</string>
+        <string name="pref_emoji_provider_type_description">絵文字を使う際の事業者を選択します。</string>
+        <string name="pref_skin_type_description">ソフトウェアキーボードのスキンを選択します。</string>
+    <!-- Hardware Keyboard -->
+        <string name="pref_hardware_keymap_description">ハードウェアキーボードの種類を選択します。</string>
+    <!-- Dictionary -->
+        <string name="pref_dictionary_personalization_description">連文節変換の学習機能の動作を調節します。予測入力の学習には影響しません。</string>
+        <string name="pref_dictionary_user_dictionary_tool_description">ユーザ辞書を編集します。</string>
+        <string name="pref_clear_category_description">辞書や予測入力の履歴をクリアします。</string>
+            <string name="pref_clear_conversion_history_description">変換結果や予測入力の学習履歴をクリアします。</string>
+            <string name="pref_clear_symbol_history_description">記号入力の履歴をクリアします。</string>
+            <string name="pref_clear_user_dictionary_description">ユーザ辞書をクリアします。</string>
+    <!-- Other -->
+        <string name="pref_other_incognito_mode_description">一時的に学習機能、入力からのサジェスト機能、ユーザー辞書機能を無効にします。</string>
+        <string name="pref_other_usage_stats_description">%1$sのサーバーに利用統計を送ります。送られた利用統計はソフトウェアの改善に利用されます。通信が発生します。</string>
+    <!-- About -->
+        <string name="pref_about_terms_of_service_description">モバイル利用規約を表示します(ウェブページ)。</string>
+        <string name="pref_about_privacy_policy_description">プライバシーポリシーを表示します(ウェブページ)。</string>
+        <string name="pref_about_oss_credits_description">本ソフトウェアはオープンソースソフトウェアを利用しています。</string>
+
+    <!-- Preference Values -->
+    <string name="pref_input_style_setting_entry_toggle">ケータイ打ち</string>
+    <string name="pref_input_style_setting_entry_flick">フリック入力</string>
+    <string name="pref_input_style_setting_entry_toggle_and_flick">ケータイ+フリック入力</string>
+
+    <string name="pref_fullscreen_portrait">縦画面で有効にする</string>
+    <string name="pref_fullscreen_landscape">横画面で有効にする</string>
+
+    <string name="pref_dictionary_personalization_entry_enabled">学習を利用する</string>
+    <string name="pref_dictionary_personalization_entry_readonly">学習を利用するが更新しない</string>
+    <string name="pref_dictionary_personalization_entry_disabled">学習を利用しない</string>
+
+    <string name="pref_skin_type_orange_lightgray">オレンジ/ライトグレー</string>
+    <string name="pref_skin_type_blue_lightgray">ブルー/ライトグレー</string>
+    <string name="pref_skin_type_blue_darkgray">ブルー/ダークグレー</string>
+
+    <string name="pref_hardware_keymap_default">システム配列</string>
+    <string name="pref_hardware_keymap_japanese109A">日本語109A配列</string>
+    <string name="pref_hardware_keymap_twelvekey">ケータイ配列</string>
+
+    <!-- Preference url -->
+    <string name="pref_oss_credits_url">file:///android_asset/credits_ja.html</string>
+
+    <string name="pref_layout_adjustment_entry_fill">全幅</string>
+    <string name="pref_layout_adjustment_entry_right">右寄せ</string>
+    <string name="pref_layout_adjustment_entry_left">左寄せ</string>
+
+    <!-- First time launch activity -->
+    <string name="firsttime_close_button">次へ</string>
+    <string name="firsttime_description_thank_you">%sをご利用いただき、ありがとうございます。</string>
+    <string name="firsttime_description_usage_stats"><![CDATA[本ソフトはご利用者の許諾を得た場合に限り、ソフトウェアがどのように利用されているかについての統計情報を%sに送信します。\n利用統計の送信にご同意いただける場合は、チェックボックスをオンにしてください。\nよりよい日本語入力を実現するため、ご協力をよろしくお願いいたします。\n\nこの設定は設定画面にて後から変更することができます。]]></string>
+    <string name="firsttime_send_usage_stats_devchannel">開発版のため、常に利用統計が送信されます。</string>
+
+    <!-- Alert messages -->
+    <string name="pref_ime_enable_alert_title">インストール後の設定</string>
+    <string name="pref_ime_enable_alert_message">%sを有効にしてください。</string>
+    <string name="pref_ime_switch_alert_title">入力方法の設定</string>
+    <string name="pref_ime_switch_alert_message">入力方法を%sに変更してください。</string>
+    <string name="pref_ime_alert_next">次へ</string>
+    <string name="pref_ime_alert_cancel">キャンセル</string>
+
+    <!-- Misc text for preferences -->
+    <string name="pref_flick_sensitivity_seekbar_low_text">低い</string>
+    <string name="pref_flick_sensitivity_seekbar_middle_text">標準</string>
+    <string name="pref_flick_sensitivity_seekbar_high_text">高い</string>
+
+    <string name="pref_haptic_feedback_duration_low_text">短い</string>
+    <string name="pref_haptic_feedback_duration_high_text">長い</string>
+
+    <string name="pref_sound_feedback_volume_low_text">小さい</string>
+    <string name="pref_sound_feedback_volume_middle_text">標準</string>
+    <string name="pref_sound_feedback_volume_high_text">大きい</string>
+
+
+    <string name="symbol_input_no_history">まだ履歴がありません。\n\n右にスライドして\n候補を選んでください。</string>
+    <string name="symbol_emoji_disabled_message">この入力先には、\n絵文字を入力できません。</string>
+
+    <string name="symbol_minor_symbol_history_title">履歴</string>
+    <string name="symbol_minor_symbol_general_title">一般\n記号</string>
+    <string name="symbol_minor_symbol_half_title">半角\n全角</string>
+    <string name="symbol_minor_symbol_parenthesis_title">括弧\n罫線</string>
+    <string name="symbol_minor_symbol_arrow_title">矢印\n数字</string>
+    <string name="symbol_minor_symbol_math_title">数式\n単位</string>
+
+    <string name="symbol_minor_emoticon_history_title">履歴</string>
+    <string name="symbol_minor_emoticon_smile_title">喜\n(^^)</string>
+    <string name="symbol_minor_emoticon_sweat_title">焦\n(^^;)</string>
+    <string name="symbol_minor_emoticon_surprise_title">驚\n(゜д゜)</string>
+    <string name="symbol_minor_emoticon_sadness_title">悲\n(T_T)</string>
+    <string name="symbol_minor_emoticon_displeasure_title">怒\n(-_-)</string>
+
+    <string name="symbol_minor_emoji_history_title">履歴</string>
+    <string name="symbol_minor_emoji_face_title">表情\n感情</string>
+    <string name="symbol_minor_emoji_food_title">食事\n遊び</string>
+    <string name="symbol_minor_emoji_activity_title">行事\n生活</string>
+    <string name="symbol_minor_emoji_city_title">街\n仕事</string>
+    <string name="symbol_minor_emoji_nature_title">自然\n図形</string>
+
+    <!--  Menu dialog -->
+    <string name="menu_dialog_title">入力オプション</string>
+    <string name="menu_item_input_method">入力方法の選択</string>
+    <string name="menu_item_preferences">%sの設定</string>
+    <string name="menu_item_mushroom">マッシュルームの起動</string>
+
+    <!-- User Dictionary Tool -->
+    <string name="user_dictionary_tool_app_name">辞書ツール</string>
+      <!-- Menu -->
+      <string name="user_dictionary_tool_menu_add_entry_title">新規単語登録</string>
+      <string name="user_dictionary_tool_menu_delete_entry_title">単語削除</string>
+      <string name="user_dictionary_tool_menu_undo_title">取り消す</string>
+      <string name="user_dictionary_tool_menu_create_dictionary_title">新規辞書作成</string>
+      <string name="user_dictionary_tool_menu_rename_dictionary_title">現在の辞書名を編集</string>
+      <string name="user_dictionary_tool_menu_delete_dictionary_title">現在の辞書を削除</string>
+
+      <!-- Dictionary editing -->
+      <string name="user_dictionary_tool_default_dictionary_name">ユーザ辞書 1</string>
+      <string name="user_dictionary_tool_create_dictionary_dialog_title">新規辞書作成</string>
+      <string name="user_dictionary_tool_rename_dictionary_dialog_title">辞書名の編集</string>
+      <string name="user_dictionary_tool_dictionary_name_dialog_dictionary_name_label">辞書名</string>
+
+      <!-- Word register dialog -->
+      <string name="user_dictionary_tool_add_entry_dialog_title">新規単語登録</string>
+      <string name="user_dictionary_tool_edit_entry_dialog_title">単語の編集</string>
+      <string name="user_dictionary_tool_word_register_dialog_reading_label">よみ</string>
+      <string name="user_dictionary_tool_word_register_dialog_word_label">単語</string>
+      <string name="user_dictionary_tool_word_register_dialog_pos_label">品詞</string>
+
+      <!-- Import dialog -->
+      <string name="user_dictionary_tool_zip_file_selection_dialog_title">インポート元ファイルの選択</string>
+      <string name="user_dictionary_tool_import_dictionary_selection_dialog_title">インポート先辞書の選択</string>
+      <string name="user_dictionary_tool_import_dictionary_selection_dialog_new_dictionary">新規辞書にインポート</string>
+
+      <!-- Message -->
+      <string name="user_dictionary_tool_delete_done_message">削除しました。</string>
+      <string name="user_dictionary_tool_undo_done_message">操作を取り消しました。</string>
+
+      <!-- Error messages -->
+      <string name="user_dictionary_tool_error_delete_entries_without_check">削除する単語を選択してください。</string>
+      <string name="user_dictionary_tool_error_import_source_invalid_scheme">ファイル以外のデータをインポートすることはできません。</string>
+      <string name="user_dictionary_tool_error_import_cannot_read_import_source">ファイルを読み込めません。</string>
+      <string name="user_dictionary_tool_error_import_no_zip_entry">空のZIPファイルです。</string>
+      <string name="user_dictionary_tool_status_error_general">操作を実行できません。</string>
+      <string name="user_dictionary_tool_status_error_file_not_found">ファイルを開けません。</string>
+      <string name="user_dictionary_tool_status_error_invalid_file_format">ファイルを読み込めません。</string>
+      <string name="user_dictionary_tool_status_error_file_size_limit_exceeded">ファイルが大きすぎます。</string>
+      <string name="user_dictionary_tool_status_error_dictionary_size_limit_exceeded">これ以上辞書を作成できません。</string>
+      <string name="user_dictionary_tool_status_error_entry_size_limit_exceeded">一つの辞書に含む単語が多すぎます。</string>
+      <string name="user_dictionary_tool_status_error_dictionary_name_empty">辞書名を入力してください。</string>
+      <string name="user_dictionary_tool_status_error_dictionary_name_too_long">辞書名が長すぎます。</string>
+      <string name="user_dictionary_tool_status_error_dictionary_name_contains_invalid_character">辞書名に使用できない文字が含まれています。</string>
+      <string name="user_dictionary_tool_status_error_dictionary_name_duplicated">その辞書名はすでに使われています。</string>
+      <string name="user_dictionary_tool_status_error_reading_empty">よみを入力してください。</string>
+      <string name="user_dictionary_tool_status_error_reading_too_long">よみが長すぎます。</string>
+      <string name="user_dictionary_tool_status_error_reading_contains_invalid_character">よみに使用できない文字が含まれています。</string>
+      <string name="user_dictionary_tool_status_error_word_empty">単語を入力してください。</string>
+      <string name="user_dictionary_tool_status_error_word_too_long">単語が長すぎます。</string>
+      <string name="user_dictionary_tool_status_error_word_contains_invalid_character">単語に使用できない文字が含まれています。</string>
+      <string name="user_dictionary_tool_status_error_import_too_many_words">インポートする単語が多すぎます。</string>
+      <string name="user_dictionary_tool_status_error_import_invalid_entries">インポートできない単語がありました。</string>
+      <string name="user_dictionary_tool_status_error_no_undo_history">これ以上操作を取り消せません。</string>
+
+      <!-- List of Japanese POS -->
+      <string name="japanese_pos_noun">名詞</string>
+      <string name="japanese_pos_abbreviation">短縮よみ</string>
+      <string name="japanese_pos_suggestion_only">サジェストのみ</string>
+      <string name="japanese_pos_proper_noun">固有名詞</string>
+      <string name="japanese_pos_personal_name">人名</string>
+      <string name="japanese_pos_family_name">姓</string>
+      <string name="japanese_pos_first_name">名</string>
+      <string name="japanese_pos_organization_name">組織</string>
+      <string name="japanese_pos_place_name">地名</string>
+      <string name="japanese_pos_sa_irregular_conjugation_noun">名詞サ変</string>
+      <string name="japanese_pos_adjective_verbal_noun">名詞形動</string>
+      <string name="japanese_pos_number">数字</string>
+      <string name="japanese_pos_alphabet">アルファベット</string>
+      <string name="japanese_pos_symbol">記号</string>
+      <string name="japanese_pos_emoticon">顔文字</string>
+      <string name="japanese_pos_adverb">副詞</string>
+      <string name="japanese_pos_prenoun_adjectival">連体詞</string>
+      <string name="japanese_pos_conjunction">接続詞</string>
+      <string name="japanese_pos_interjection">感動詞</string>
+      <string name="japanese_pos_prefix">接頭語</string>
+      <string name="japanese_pos_counter_suffix">助数詞</string>
+      <string name="japanese_pos_generic_suffix">接尾一般</string>
+      <string name="japanese_pos_person_name_suffix">接尾人名</string>
+      <string name="japanese_pos_place_name_suffix">接尾地名</string>
+      <string name="japanese_pos_wa_group1_verb">動詞ワ行五段</string>
+      <string name="japanese_pos_ka_group1_verb">動詞カ行五段</string>
+      <string name="japanese_pos_sa_group1_verb">動詞サ行五段</string>
+      <string name="japanese_pos_ta_group1_verb">動詞タ行五段</string>
+      <string name="japanese_pos_na_group1_verb">動詞ナ行五段</string>
+      <string name="japanese_pos_ma_group1_verb">動詞マ行五段</string>
+      <string name="japanese_pos_ra_group1_verb">動詞ラ行五段</string>
+      <string name="japanese_pos_ga_group1_verb">動詞ガ行五段</string>
+      <string name="japanese_pos_ba_group1_verb">動詞バ行五段</string>
+      <string name="japanese_pos_ha_group1_verb">動詞ハ行四段</string>
+      <string name="japanese_pos_group2_verb">動詞一段</string>
+      <string name="japanese_pos_kuru_group3_verb">動詞カ変</string>
+      <string name="japanese_pos_suru_group3_verb">動詞サ変</string>
+      <string name="japanese_pos_zuru_group3_verb">動詞ザ変</string>
+      <string name="japanese_pos_ru_group3_verb">動詞ラ変</string>
+      <string name="japanese_pos_adjective">形容詞</string>
+      <string name="japanese_pos_sentence_ending_particle">終助詞</string>
+      <string name="japanese_pos_punctuation">句読点</string>
+      <string name="japanese_pos_free_standing_word">独立語</string>
+      <string name="japanese_pos_suppression_word">抑制単語</string>
+
+</resources>

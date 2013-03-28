@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -58,11 +58,8 @@ inline uint32 BitsToWords(uint32 bits) {
 
 class ExistenceFilter::BlockBitmap {
  public:
-  explicit BlockBitmap(uint32 length);
   BlockBitmap(uint32 length, bool is_mutable);
   ~BlockBitmap();
-
-  size_t size() const;
   void Clear();
   bool Get(uint32 index) const;
   void Set(uint32 index);
@@ -90,18 +87,17 @@ class ExistenceFilter::BlockBitmap {
   static const int kBlockBytes = kBlockBits >> 3;
   static const int kBlockWords = kBlockBits >> 5;
 
-  // Array of blocks
+  // Array of blocks. Each block has kBlockBits region except for last block.
   uint32 **block_;
-  uint32 length_;
   uint32 num_blocks_;
   uint32 bytes_in_last_;
-  bool is_mutable_;
+  const bool is_mutable_;
 
   DISALLOW_COPY_AND_ASSIGN(BlockBitmap);
 };
 
 ExistenceFilter::BlockBitmap::BlockBitmap(uint32 length, bool is_mutable)
-    : length_(length), is_mutable_(is_mutable) {
+    : is_mutable_(is_mutable) {
   CHECK_GT(length, 0);
   const uint32 bits_in_last_block = (length & kBlockMask);
 
@@ -152,14 +148,8 @@ void ExistenceFilter::BlockBitmap::Clear() {
   memset(block_[num_blocks_-1], 0, bytes_in_last_);
 }
 
-size_t ExistenceFilter::BlockBitmap::size() const {
-  CHECK_GT(num_blocks_, 0);
-  return static_cast<size_t>(num_blocks_-1) * kBlockBytes + bytes_in_last_;
-}
-
 ExistenceFilter::ExistenceFilter(uint32 m, uint32 n, int k)
     : vec_size_(m ? m : 1),
-      is_power_of_two_((vec_size_ & (vec_size_ - 1)) == 0),
       expected_nelts_(n),
       num_hashes_(k) {
   CHECK_LT(num_hashes_, 8);
@@ -171,7 +161,6 @@ ExistenceFilter::ExistenceFilter(uint32 m, uint32 n, int k)
 ExistenceFilter::ExistenceFilter(uint32 m, uint32 n, int k,
                                  bool is_mutable)
     : vec_size_(m ? m : 1),
-      is_power_of_two_((vec_size_ & (vec_size_ - 1)) == 0),
       expected_nelts_(n),
       num_hashes_(k) {
   CHECK_LT(num_hashes_, 8);

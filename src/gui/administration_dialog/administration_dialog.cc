@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,8 +31,8 @@
 
 #include <QtGui/QMessageBox>
 #include "base/base.h"
-#include "base/util.h"
 #include "base/run_level.h"
+#include "base/system_util.h"
 #include "config/stats_config_util.h"
 #include "server/cache_service_manager.h"
 
@@ -60,7 +60,7 @@ AdministrationDialog::AdministrationDialog() {
   // clicked slot by default.
   usageStatsMessage->installEventFilter(this);
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 
 #ifdef CHANNEL_DEV
   usageStatsCheckBox->setEnabled(false);
@@ -68,7 +68,7 @@ AdministrationDialog::AdministrationDialog() {
 
   usageStatsCheckBox->setChecked(StatsConfigUtil::IsEnabled());
 
-  if (Util::IsVistaOrLater()) {
+  if (SystemUtil::IsVistaOrLater()) {
     ElevatedProcessDisabledcheckBox->setChecked
         (RunLevel::GetElevatedProcessDisabled());
   } else {
@@ -83,7 +83,7 @@ AdministrationDialog::AdministrationDialog() {
 AdministrationDialog::~AdministrationDialog() {}
 
 bool AdministrationDialog::CanStartService() {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   if (!CacheServiceEnabledcheckBox->isChecked()) {
     return true;
   }
@@ -96,13 +96,13 @@ bool AdministrationDialog::CanStartService() {
            "dictionary into physical memory."));
     return false;
   }
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
   return true;
 }
 
 void AdministrationDialog::clicked(QAbstractButton *button) {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   switch (AdministrationDialogbuttonBox->buttonRole(button)) {
     case QDialogButtonBox::ApplyRole:
     case QDialogButtonBox::AcceptRole:
@@ -154,7 +154,7 @@ void AdministrationDialog::clicked(QAbstractButton *button) {
     default:
       break;
   }
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 }
 
 // Catch MouseButtonRelease event to toggle the CheckBoxes

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,12 +44,16 @@ class ConversionRequest;
 class Segment;
 class Segments;
 
+namespace composer {
+class Composer;
+}
+
 class DateRewriter : public RewriterInterface  {
  public:
   DateRewriter();
   virtual ~DateRewriter();
 
-  virtual int capability() const;
+  virtual int capability(const ConversionRequest &request) const;
 
   virtual bool Rewrite(const ConversionRequest &request,
                        Segments *segments) const;
@@ -75,15 +79,16 @@ class DateRewriter : public RewriterInterface  {
   bool RewriteAd(Segment *segment) const;
   bool RewriteWeekday(Segment *segment) const;
 
-  // When segment has four number characters,this function adds date and time
-  // candidates.
+  // When only one conversion segment has four number characters,
+  // this function adds date and time candidates.
   // e.g.)
   //   key  -> candidates will be added
   //   ------------------------------------------------
   //   0101 -> "1月1日、01/01、1時1分,午前1時1分、1:01"
   //   2020 -> "20時20分、午後8時20分、20:20"
   //   2930 -> "29時30分、29時半、午前5時30分、午前5時半"
-  bool RewriteFourDigits(Segment *segment) const;
+  bool RewriteFourDigits(const composer::Composer &composer,
+                         Segments *segments) const;
 
   bool AdToEra(int year, vector<string> *results) const;
 

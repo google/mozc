@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -41,7 +41,11 @@ EngineInterface *OssEngineFactory::Create() {
   Engine *engine = new Engine;
   DCHECK(engine);
   const oss::OssDataManager data_manager;
+#ifdef OS_ANDROID
+  engine->Init(&data_manager, MobilePredictor::CreateMobilePredictor);
+#else  // OS_ANDROID
   engine->Init(&data_manager, DefaultPredictor::CreateDefaultPredictor);
+#endif  // OS_ANDROID
   return engine;
 }
 

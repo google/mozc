@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,7 @@
 #include "renderer/win32/win32_server.h"
 
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/run_level.h"
 #include "base/util.h"
 #include "renderer/renderer_command.pb.h"
@@ -38,6 +39,7 @@
 namespace mozc {
 namespace renderer {
 namespace {
+
 bool IsIMM32Message(const commands::RendererCommand &command) {
   if (!command.has_application_info()) {
     return false;
@@ -45,24 +47,34 @@ bool IsIMM32Message(const commands::RendererCommand &command) {
   if (!command.application_info().has_input_framework()) {
     return false;
   }
-  if (command.application_info().input_framework() !=
-      commands::RendererCommand::ApplicationInfo::IMM32) {
+  return (command.application_info().input_framework() ==
+          commands::RendererCommand::ApplicationInfo::IMM32);
+}
+
+bool IsTSFMessage(const commands::RendererCommand &command) {
+  if (!command.has_application_info()) {
     return false;
   }
-  return true;
+  if (!command.application_info().has_input_framework()) {
+    return false;
+  }
+  return (command.application_info().input_framework() ==
+          commands::RendererCommand::ApplicationInfo::TSF);
 }
-}  // anonymous namespace
+
+}  // namespace
 
 namespace win32 {
 
 Win32Server::Win32Server()
-    : event_(NULL),
+    : event_(nullptr),
       window_manager_(new WindowManager) {
   // Manual reset event to notify we have a renderer command
   // to be handled in the UI thread.
   // The renderer command is serialized into "message_".
-  event_ = ::CreateEvent(NULL, FALSE, FALSE, NULL);
-  DCHECK(event_ != NULL) << "CreateEvent failed, Error = " << ::GetLastError();
+  event_ = ::CreateEvent(nullptr, FALSE, FALSE, nullptr);
+  DCHECK_NE(nullptr, event_)
+      << "CreateEvent failed, Error = " << ::GetLastError();
 }
 
 Win32Server::~Win32Server() {
@@ -111,7 +123,9 @@ bool Win32Server::ExecCommand(const commands::RendererCommand &command) {
       if (!command.visible()) {
         window_manager_->HideAllWindows();
       } else if (IsIMM32Message(command)) {
-        window_manager_->UpdateLayout(command);
+        window_manager_->UpdateLayoutIMM32(command);
+      } else if (IsTSFMessage(command)) {
+        window_manager_->UpdateLayoutTSF(command);
       } else {
         LOG(WARNING) << "output/left/bottom are not set";
       }
@@ -187,7 +201,7 @@ int Win32Server::StartMessageLoop() {
       // We have at least one window message. Let's handle them.
       while (true) {
         MSG msg = {};
-        if (::PeekMessage(&msg, NULL, 0, 0, PM_REMOVE) == 0) {
+        if (::PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE) == 0) {
           // No more message.
           break;  // exit message pump.
         }
@@ -217,6 +231,6 @@ int Win32Server::StartMessageLoop() {
   window_manager_->DestroyAllWindows();
   return return_code;
 }
-}  // win32
-}  // renderer
-}  // mozc
+}  // namespace win32
+}  // namespace renderer
+}  // namespace mozc

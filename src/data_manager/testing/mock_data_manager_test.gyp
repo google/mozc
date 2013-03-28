@@ -1,4 +1,4 @@
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,7 @@
       ],
       'dependencies': [
         '../../testing/testing.gyp:gtest_main',
-        '../data_manager.gyp:data_manager_test_base',
+        '../data_manager_test.gyp:data_manager_test_base',
         'mock_data_manager.gyp:mock_data_manager',
         'mock_data_manager.gyp:gen_mock_segmenter_inl_header#host',
       ],

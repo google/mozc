@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,9 @@
 
 #include "base/base.h"
 #include "base/file_stream.h"
+#include "base/file_util.h"
 #include "base/process_mutex.h"
+#include "base/system_util.h"
 #include "base/thread.h"
 #include "base/util.h"
 #include "base/version.h"
@@ -44,13 +46,12 @@ DECLARE_string(test_tmpdir);
 
 namespace mozc {
 namespace {
-const char kName[] = "process_mutex_test";
 
 class CreateThread : public Thread {
  public:
   virtual void Run() {
-    mozc::IPCPathManager *manager =
-        mozc::IPCPathManager::GetIPCPathManager("test");
+    IPCPathManager *manager =
+        IPCPathManager::GetIPCPathManager("test");
     EXPECT_TRUE(manager->CreateNewPathName());
     EXPECT_TRUE(manager->SavePathName());
     EXPECT_TRUE(manager->GetPathName(&path_));
@@ -71,8 +72,8 @@ class BatchGetPathNameThread : public Thread {
  public:
   virtual void Run() {
     for (int i = 0; i < 100; ++i) {
-      mozc::IPCPathManager *manager =
-          mozc::IPCPathManager::GetIPCPathManager("test2");
+      IPCPathManager *manager =
+          IPCPathManager::GetIPCPathManager("test2");
       string path;
       EXPECT_TRUE(manager->CreateNewPathName());
       EXPECT_TRUE(manager->GetPathName(&path));
@@ -84,7 +85,7 @@ class BatchGetPathNameThread : public Thread {
 class IPCPathManagerTest : public ::testing::Test {
  protected:
   virtual void SetUp() {
-    mozc::Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
   }
 };
 
@@ -92,8 +93,8 @@ TEST_F(IPCPathManagerTest, IPCPathManagerTest) {
   CreateThread t;
   t.Start();
   Util::Sleep(1000);
-  mozc::IPCPathManager *manager =
-        mozc::IPCPathManager::GetIPCPathManager("test");
+  IPCPathManager *manager =
+      IPCPathManager::GetIPCPathManager("test");
   EXPECT_TRUE(manager->CreateNewPathName());
   EXPECT_TRUE(manager->SavePathName());
   string path;
@@ -128,9 +129,9 @@ TEST_F(IPCPathManagerTest, IPCPathManagerBatchTest) {
 
 TEST_F(IPCPathManagerTest, ReloadTest) {
   // We have only mock implementations for Windows, so no test should be run.
-#ifndef OS_WINDOWS
-  mozc::IPCPathManager *manager =
-      mozc::IPCPathManager::GetIPCPathManager("reload_test");
+#ifndef OS_WIN
+  IPCPathManager *manager =
+      IPCPathManager::GetIPCPathManager("reload_test");
 
   EXPECT_TRUE(manager->CreateNewPathName());
   EXPECT_TRUE(manager->SavePathName());
@@ -141,19 +142,19 @@ TEST_F(IPCPathManagerTest, ReloadTest) {
   // Modify the saved file explicitly.
   EXPECT_TRUE(manager->path_mutex_->UnLock());
   Util::Sleep(1000 /* msec */);
-  string filename = Util::JoinPath(
-      Util::GetUserProfileDirectory(), ".reload_test.ipc");
+  string filename = FileUtil::JoinPath(
+      SystemUtil::GetUserProfileDirectory(), ".reload_test.ipc");
   OutputFileStream outf(filename.c_str());
   outf << "foobar";
   outf.close();
 
   EXPECT_TRUE(manager->ShouldReload());
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 }
 
 TEST_F(IPCPathManagerTest, PathNameTest) {
-  mozc::IPCPathManager *manager =
-      mozc::IPCPathManager::GetIPCPathManager("path_name_test");
+  IPCPathManager *manager =
+      IPCPathManager::GetIPCPathManager("path_name_test");
 
   EXPECT_TRUE(manager->CreateNewPathName());
   EXPECT_TRUE(manager->SavePathName());

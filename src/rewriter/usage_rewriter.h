@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,7 @@
 
 #ifndef MOZC_REWRITER_USAGE_REWRITER_H_
 #define MOZC_REWRITER_USAGE_REWRITER_H_
+
 #include <list>
 #include <map>
 #include <string>
@@ -37,29 +38,26 @@
 #include "base/base.h"
 #include "converter/segments.h"
 #include "rewriter/rewriter_interface.h"
+#include "rewriter/usage_rewriter_data_structs.h"
 #include "testing/base/public/gunit_prod.h"  // for FRIEND_TEST()
 
 namespace mozc {
-struct UsageDictItem {
-  const int32 id;
-  const char *key;
-  const char *value;
-  const int32 conjugation_id;
-  const char *meaning;
-};
 
 class ConversionRequest;
+class DataManagerInterface;
 class POSMatcher;
+class UserDictionary;
 
 class UsageRewriter : public RewriterInterface  {
  public:
-  explicit UsageRewriter(const POSMatcher *pos_matcher);
+  UsageRewriter(const DataManagerInterface *data_manager,
+                const UserDictionary *user_dictionary);
   virtual ~UsageRewriter();
   virtual bool Rewrite(const ConversionRequest &request,
                        Segments *segments) const;
 
   // better to show usage when user type "tab" key.
-  virtual int capability() const {
+  virtual int capability(const ConversionRequest &request) const {
     return CONVERSION | PREDICTION;
   }
 
@@ -76,7 +74,10 @@ class UsageRewriter : public RewriterInterface  {
 
   map<StrPair, const UsageDictItem *> key_value_usageitem_map_;
   const POSMatcher *pos_matcher_;
+  const UserDictionary *user_dictionary_;
+  const ConjugationSuffix *base_conjugation_suffix_;
 };
 
 }  // namespace mozc
+
 #endif  // MOZC_REWRITER_USAGE_REWRITER_H_

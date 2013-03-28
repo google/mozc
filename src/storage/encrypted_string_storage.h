@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -52,6 +52,10 @@ class EncryptedStringStorage : public StringStorageInterface {
 
   virtual bool Load(string *output) const;
   virtual bool Save(const string &input) const;
+
+ protected:
+  virtual bool Encrypt(const string &salt, string *data) const;
+  virtual bool Decrypt(const string &salt, string *data) const;
 
  private:
   string filename_;

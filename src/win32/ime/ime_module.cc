@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -46,7 +46,7 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved) {
 #endif  // _DEBUG
       }
 #endif  // _DLL
-      return mozc::win32::OnDllProcessAttach(instance, reserved != NULL);
+      return mozc::win32::OnDllProcessAttach(instance, reserved != nullptr);
 #if defined(_DLL) && defined(_DEBUG)
     // If dynamic CRT is specified, neither DLL_THREAD_ATTACH
     // nor DLL_THREAD_DETACH should be passed to the DllMain.
@@ -59,7 +59,7 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved) {
       return FALSE;
 #endif  // _DLL && _DEBUG
     case DLL_PROCESS_DETACH:
-      return mozc::win32::OnDllProcessDetach(instance, reserved != NULL);
+      return mozc::win32::OnDllProcessDetach(instance, reserved != nullptr);
   }
   return TRUE;
 }

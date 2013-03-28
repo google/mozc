@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -42,6 +42,7 @@
 #include "base/const.h"
 #include "base/process.h"
 #include "base/scoped_ptr.h"
+#include "base/system_util.h"
 #include "base/url.h"
 #include "base/util.h"
 #include "base/win_util.h"
@@ -55,6 +56,7 @@
 #include "win32/base/imm_util.h"
 #include "win32/base/keyboard_layout_id.h"
 #include "win32/base/omaha_util.h"
+#include "win32/base/tsf_registrar.h"
 #include "win32/base/uninstall_helper.h"
 #include "win32/custom_action/resource.h"
 
@@ -77,7 +79,7 @@ using mozc::win32::OmahaUtil;
 const char kIEFrameDll[] = "ieframe.dll";
 const wchar_t kSystemSharedKey[] = L"Software\\Microsoft\\CTF\\SystemShared";
 
-HMODULE g_module = NULL;
+HMODULE g_module = nullptr;
 
 HRESULT CallSystemDllFunction(const char* dll_name,
                               const char* function_name) {
@@ -85,7 +87,7 @@ HRESULT CallSystemDllFunction(const char* dll_name,
   wstring wdll_name;
   mozc::Util::UTF8ToWide(dll_name, &wdll_name);
   const HMODULE dll = mozc::WinUtil::LoadSystemLibrary(wdll_name);
-  if (dll != NULL) {
+  if (dll != nullptr) {
     typedef HRESULT (*DllFunction)();
     DllFunction dll_function = reinterpret_cast<DllFunction>(
         ::GetProcAddress(dll, function_name));
@@ -103,7 +105,7 @@ HRESULT CallSystemDllFunction(const char* dll_name,
 }
 
 wstring GetMozcComponentPath(const string &filename) {
-  const string path = mozc::Util::GetServerDirectory() + "\\" + filename;
+  const string path = mozc::SystemUtil::GetServerDirectory() + "\\" + filename;
   wstring wpath;
   mozc::Util::UTF8ToWide(path.c_str(), &wpath);
   return wpath;
@@ -167,7 +169,7 @@ wstring FormatMessageByResourceId(int resourceID, ...) {
       return L"";
     }
   }
-  va_list va_args = NULL;
+  va_list va_args = nullptr;
   va_start(va_args, resourceID);
 
   wchar_t buffer[4096];  // should be less than 64KB.
@@ -243,7 +245,7 @@ BOOL APIENTRY DllMain(HMODULE module,
       g_module = module;
       break;
     case DLL_PROCESS_DETACH:
-      g_module = NULL;
+      g_module = nullptr;
       break;
     case DLL_THREAD_ATTACH:
     case DLL_THREAD_DETACH:
@@ -347,11 +349,11 @@ UINT __stdcall InitialInstallation(MSIHANDLE msi_handle) {
   // We cannot rely on the result of GetVersion(Ex) in custom actions.
   // http://b/2430094
   // http://blogs.msdn.com/cjacks/archive/2009/05/06/why-custom-actions-get-a-windows-vista-version-lie-on-windows-7.aspx
-  // Util::IsPlatformSupported uses VerifyVersionInfo, which is expected to be
-  // not affected by the version lie for GetVersion(Ex).
+  // SystemUtil::IsPlatformSupported uses VerifyVersionInfo, which is expected
+  // to be not affected by the version lie for GetVersion(Ex).
   // MsiEvaluateCondition API may be another way to check the condition.
   // http://msdn.microsoft.com/en-us/library/aa370104.aspx
-  if (!mozc::Util::IsPlatformSupported()) {
+  if (!mozc::SystemUtil::IsPlatformSupported()) {
     WriteOmahaErrorById(IDS_UNSUPPORTED_PLATFORM);
     return ERROR_INSTALL_FAILURE;
   }
@@ -481,7 +483,7 @@ UINT __stdcall InstallIME(MSIHANDLE msi_handle) {
   }
 
   // Install IME and obtain the corresponding HKL value.
-  HKL hkl = NULL;
+  HKL hkl = nullptr;
   HRESULT result = mozc::win32::ImmRegistrar::Register(
       ime_filename, layout_name, ime_path,
       mozc::win32::ImmRegistrar::GetLayoutDisplayNameResourceId(), &hkl);
@@ -516,56 +518,62 @@ UINT __stdcall UninstallIMERollback(MSIHANDLE msi_handle) {
   return ERROR_SUCCESS;
 }
 
-#ifndef NO_LOGGING
-UINT __stdcall DisableErrorReporting(MSIHANDLE msi_handle) {
+UINT __stdcall RegisterTIP(MSIHANDLE msi_handle) {
   DEBUG_BREAK_FOR_DEBUGGER();
-  wstring error_report_key;
-  wstring value_name;
-  DWORD value;
-  if (mozc::Util::IsVistaOrLater()) {
-    // Disable Windows Error Reporting on Vista or later.
-    // http://msdn.microsoft.com/en-us/library/bb513638(VS.85).aspx
-    error_report_key =
-        L"Software\\Microsoft\\Windows\\Windows Error Reporting";
-    value_name = L"Disabled";
-    value = 1;
-  } else {
-    error_report_key = L"Software\\Microsoft\\PCHealth\\ErrorReporting";
-    value_name = L"DoReport";
-    value = 0;
+  mozc::ScopedCOMInitializer com_initializer;
+
+#if defined(_M_X64)
+  const wstring &path = GetMozcComponentPath(mozc::kMozcTIP64);
+#elif defined(_M_IX86)
+  const wstring &path = GetMozcComponentPath(mozc::kMozcTIP32);
+#else
+#error "Unsupported CPU architecture"
+#endif  // _M_X64, _M_IX86, and others
+  HRESULT result = mozc::win32::TsfRegistrar::RegisterCOMServer(path.c_str(),
+                                                                path.length());
+  if (FAILED(result)) {
+    LOG_ERROR_FOR_OMAHA();
+    UnregisterTIP(msi_handle);
+    return ERROR_INSTALL_FAILURE;
   }
 
-  bool result = false;
-  if (mozc::Util::IsWindowsX64()) {
-    // Disable registry redirection on X64 Windows
-    // http://msdn.microsoft.com/en-us/library/aa384129(VS.85).aspx
-    result = DisableErrorReportingInternal(error_report_key.c_str(),
-                                           value_name.c_str(), value,
-                                           KEY_WOW64_64KEY);
-    if (!result) {
-      LOG_ERROR_FOR_OMAHA();
-      return ERROR_INSTALL_FAILURE;
-    }
-    // Write to 32 bit key, too.
-    // http://support.microsoft.com/kb/319404
-    result = DisableErrorReportingInternal(error_report_key.c_str(),
-                                           value_name.c_str(), value,
-                                           KEY_WOW64_32KEY);
-  } else {
-    result = DisableErrorReportingInternal(error_report_key.c_str(),
-                                           value_name.c_str(),
-                                           value, 0);
-  }
-  if (!result) {
+  result = mozc::win32::TsfRegistrar::RegisterProfiles(path.c_str(),
+                                                       path.length());
+  if (FAILED(result)) {
     LOG_ERROR_FOR_OMAHA();
+    UnregisterTIP(msi_handle);
+    return ERROR_INSTALL_FAILURE;
+  }
+
+  result = mozc::win32::TsfRegistrar::RegisterCategories();
+  if (FAILED(result)) {
+    LOG_ERROR_FOR_OMAHA();
+    UnregisterTIP(msi_handle);
     return ERROR_INSTALL_FAILURE;
   }
 
   return ERROR_SUCCESS;
 }
 
-UINT __stdcall Failure(MSIHANDLE msi_handle) {
+UINT __stdcall RegisterTIPRollback(MSIHANDLE msi_handle) {
   DEBUG_BREAK_FOR_DEBUGGER();
-  return ERROR_INSTALL_FAILURE;
+  return UnregisterTIP(msi_handle);
 }
-#endif
+
+// [Return='ignore']
+UINT __stdcall UnregisterTIP(MSIHANDLE msi_handle) {
+  DEBUG_BREAK_FOR_DEBUGGER();
+  mozc::ScopedCOMInitializer com_initializer;
+
+  mozc::win32::TsfRegistrar::UnregisterCategories();
+  mozc::win32::TsfRegistrar::UnregisterProfiles();
+  mozc::win32::TsfRegistrar::UnregisterCOMServer();
+
+  return ERROR_SUCCESS;
+}
+
+// [Return='ignore']
+UINT __stdcall UnregisterTIPRollback(MSIHANDLE msi_handle) {
+  DEBUG_BREAK_FOR_DEBUGGER();
+  return RegisterTIP(msi_handle);
+}

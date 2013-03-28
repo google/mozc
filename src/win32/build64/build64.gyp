@@ -1,4 +1,4 @@
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -45,6 +45,7 @@
           'dependencies': [
             '../broker/broker.gyp:mozc_broker64',
             '../ime/ime.gyp:mozc_ime',
+            '../tip/tip.gyp:mozc_tip64',
           ],
           'conditions': [
             ['branding=="GoogleJapaneseInput"', {

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,9 +29,9 @@
 
 #include "base/cpu_stats.h"
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <windows.h>
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 #ifdef OS_MACOSX
 #include <mach/mach_host.h>
@@ -47,12 +47,12 @@
 namespace mozc {
 namespace {
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 uint64 FileTimeToInt64(const FILETIME &file_time) {
   return (static_cast<uint64>(file_time.dwHighDateTime) << 32)
       | (static_cast<uint64>(file_time.dwLowDateTime));
 }
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 #ifdef OS_MACOSX
 uint64 TimeValueTToInt64(const time_value_t &time_value) {
@@ -90,7 +90,7 @@ CPUStats::CPUStats()
 CPUStats::~CPUStats() {}
 
 float CPUStats::GetSystemCPULoad() {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   FILETIME idle_time, kernel_time, user_time;
   // Note that GetSystemTimes is available in Windows XP SP1 or later.
   // http://msdn.microsoft.com/en-us/library/ms724400.aspx
@@ -104,7 +104,7 @@ float CPUStats::GetSystemCPULoad() {
   const uint64 total_times = FileTimeToInt64(kernel_time) +
       FileTimeToInt64(user_time);
   const uint64 cpu_times = total_times - FileTimeToInt64(idle_time);
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 #ifdef OS_MACOSX
   host_cpu_load_info_data_t cpu_info;
@@ -138,7 +138,7 @@ float CPUStats::GetSystemCPULoad() {
 }
 
 float CPUStats::GetCurrentProcessCPULoad() {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   FILETIME current_file_time;
   ::GetSystemTimeAsFileTime(&current_file_time);
 
@@ -153,7 +153,7 @@ float CPUStats::GetCurrentProcessCPULoad() {
       FileTimeToInt64(current_file_time) - FileTimeToInt64(create_time);
   const uint64 cpu_times =
       FileTimeToInt64(kernel_time) + FileTimeToInt64(user_time);
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 #ifdef OS_MACOSX
   task_thread_times_info task_times_info;
@@ -191,11 +191,11 @@ float CPUStats::GetCurrentProcessCPULoad() {
 }
 
 size_t CPUStats::GetNumberOfProcessors() const {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   SYSTEM_INFO info;
   ::GetSystemInfo(&info);
   return static_cast<size_t>(info.dwNumberOfProcessors);
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 #ifdef OS_MACOSX
   host_basic_info basic_info;

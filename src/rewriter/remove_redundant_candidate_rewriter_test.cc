@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,6 @@
 #include "rewriter/remove_redundant_candidate_rewriter.h"
 #include "testing/base/public/gunit.h"
 #include "session/commands.pb.h"
-#include "session/request_handler.h"
 
 namespace mozc {
 TEST(RemoveRedundantCandidateRewriterTest, RemoveTest) {
@@ -46,7 +45,8 @@ TEST(RemoveRedundantCandidateRewriterTest, RemoveTest) {
   candidate->key = "a";
   candidate->value = "a";
 
-  EXPECT_TRUE(rewriter.Rewrite(ConversionRequest(), &segments));
+  const ConversionRequest default_request;
+  EXPECT_TRUE(rewriter.Rewrite(default_request, &segments));
   EXPECT_EQ(0, segment->candidates_size());
 }
 
@@ -60,16 +60,23 @@ TEST(RemoveRedundantCandidateRewriterTest, NoRemoveTest) {
   candidate->key = "a";
   candidate->value = "aa";
 
-  EXPECT_FALSE(rewriter.Rewrite(ConversionRequest(), &segments));
+  const ConversionRequest default_request;
+  EXPECT_FALSE(rewriter.Rewrite(default_request, &segments));
   EXPECT_EQ(1, segment->candidates_size());
 }
 
 TEST(RemoveRedundantCandidateRewriterTest, CapabilityTest) {
   RemoveRedundantCandidateRewriter rewriter;
-  EXPECT_EQ(RewriterInterface::NOT_AVAILABLE, rewriter.capability());
   commands::Request input;
-  input.set_mixed_conversion(true);
-  commands::RequestHandler::SetRequest(input);
-  EXPECT_EQ(RewriterInterface::ALL, rewriter.capability());
+  {
+    const ConversionRequest request(NULL, &input);
+    EXPECT_EQ(RewriterInterface::NOT_AVAILABLE, rewriter.capability(request));
+  }
+
+  {
+    input.set_mixed_conversion(true);
+    const ConversionRequest request(NULL, &input);
+    EXPECT_EQ(RewriterInterface::ALL, rewriter.capability(request));
+  }
 }
 }  // namespace mozc

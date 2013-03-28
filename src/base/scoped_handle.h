@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@
 #ifndef MOZC_BASE_SCOPED_HANDLE_H_
 #define MOZC_BASE_SCOPED_HANDLE_H_
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 // Example:
 //   ScopedHandle hfile(CreateFile(...));
 //   if (!hfile.get())
@@ -73,5 +73,5 @@ class ScopedHandle {
 
 }  // namespace mozc
 
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 #endif  // MOZC_BASE_SCOPED_HANDLE_H_

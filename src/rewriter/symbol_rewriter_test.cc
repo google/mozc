@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,18 +31,18 @@
 
 #include <string>
 
-#include "base/base.h"
 #include "base/logging.h"
+#include "base/scoped_ptr.h"
+#include "base/system_util.h"
 #include "base/util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/conversion_request.h"
-#include "converter/converter_interface.h"
 #include "converter/segments.h"
+#include "data_manager/testing/mock_data_manager.h"
 #include "engine/engine_interface.h"
 #include "engine/mock_data_engine_factory.h"
 #include "session/commands.pb.h"
-#include "session/request_handler.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
@@ -95,13 +95,13 @@ bool HasCandidate(const Segments &segments, int index, const string &value) {
 }
 }  // namespace
 
-class SymbolRewriterTest : public testing::Test {
+class SymbolRewriterTest : public ::testing::Test {
  protected:
   SymbolRewriterTest() {}
   ~SymbolRewriterTest() {}
 
   virtual void SetUp() {
-    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     config::Config config;
     config::ConfigHandler::GetDefaultConfig(&config);
     config::ConfigHandler::SetConfig(config);
@@ -112,6 +112,8 @@ class SymbolRewriterTest : public testing::Test {
     // with mock data.
     engine_.reset(MockDataEngineFactory::Create());
     converter_ = engine_->GetConverter();
+
+    data_manager_.reset(new testing::MockDataManager);
   }
 
   virtual void TearDown() {
@@ -123,6 +125,7 @@ class SymbolRewriterTest : public testing::Test {
 
   scoped_ptr<EngineInterface> engine_;
   const ConverterInterface *converter_;
+  scoped_ptr<testing::MockDataManager> data_manager_;
 };
 
 // Note that these tests are using default symbol dictionary.
@@ -130,7 +133,7 @@ class SymbolRewriterTest : public testing::Test {
 // TODO(toshiyuki): Modify symbol rewriter so that we can use symbol dictionary
 // for testing.
 TEST_F(SymbolRewriterTest, TriggerRewriteTest) {
-  SymbolRewriter symbol_rewriter(converter_);
+  SymbolRewriter symbol_rewriter(converter_, data_manager_.get());
   const ConversionRequest request;
 
   {
@@ -158,7 +161,7 @@ TEST_F(SymbolRewriterTest, TriggerRewriteTest) {
 }
 
 TEST_F(SymbolRewriterTest, TriggerRewriteEntireTest) {
-  SymbolRewriter symbol_rewriter(converter_);
+  SymbolRewriter symbol_rewriter(converter_, data_manager_.get());
   const ConversionRequest request;
   {
     Segments segments;
@@ -181,7 +184,7 @@ TEST_F(SymbolRewriterTest, TriggerRewriteEntireTest) {
 }
 
 TEST_F(SymbolRewriterTest, TriggerRewriteEachTest) {
-  SymbolRewriter symbol_rewriter(converter_);
+  SymbolRewriter symbol_rewriter(converter_, data_manager_.get());
   {
     Segments segments;
     // "ー"
@@ -200,7 +203,7 @@ TEST_F(SymbolRewriterTest, TriggerRewriteEachTest) {
 }
 
 TEST_F(SymbolRewriterTest, TriggerRewriteDescriptionTest) {
-  SymbolRewriter symbol_rewriter(converter_);
+  SymbolRewriter symbol_rewriter(converter_, data_manager_.get());
   {
     Segments segments;
     // "したつき"
@@ -219,7 +222,7 @@ TEST_F(SymbolRewriterTest, TriggerRewriteDescriptionTest) {
 }
 
 TEST_F(SymbolRewriterTest, InsertAfterSingleKanjiAndT13n) {
-  SymbolRewriter symbol_rewriter(converter_);
+  SymbolRewriter symbol_rewriter(converter_, data_manager_.get());
   const ConversionRequest request;
   {
     Segments segments;
@@ -270,7 +273,7 @@ TEST_F(SymbolRewriterTest, InsertAfterSingleKanjiAndT13n) {
 }
 
 TEST_F(SymbolRewriterTest, SetKey) {
-  SymbolRewriter symbol_rewriter(converter_);
+  SymbolRewriter symbol_rewriter(converter_, data_manager_.get());
   Segments segments;
   const ConversionRequest request;
 
@@ -294,15 +297,19 @@ TEST_F(SymbolRewriterTest, SetKey) {
 
 TEST_F(SymbolRewriterTest, MobileEnvironmentTest) {
   commands::Request input;
-  SymbolRewriter rewriter(converter_);
+  SymbolRewriter rewriter(converter_, data_manager_.get());
 
-  input.set_mixed_conversion(true);
-  commands::RequestHandler::SetRequest(input);
-  EXPECT_EQ(RewriterInterface::ALL, rewriter.capability());
+  {
+    input.set_mixed_conversion(true);
+    const ConversionRequest request(NULL, &input);
+    EXPECT_EQ(RewriterInterface::ALL, rewriter.capability(request));
+  }
 
-  input.set_mixed_conversion(false);
-  commands::RequestHandler::SetRequest(input);
-  EXPECT_EQ(RewriterInterface::CONVERSION, rewriter.capability());
+  {
+    input.set_mixed_conversion(false);
+    const ConversionRequest request(NULL, &input);
+    EXPECT_EQ(RewriterInterface::CONVERSION, rewriter.capability(request));
+  }
 }
 
 }  // namespace mozc

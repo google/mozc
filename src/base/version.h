@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -45,7 +45,7 @@ class Version {
   // Get current mozc version (former called MOZC_VERSION)
   static string GetMozcVersion();
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   // Get current mozc version (former called MOZC_VERSION) by wstring
   static wstring GetMozcVersionW();
 #endif

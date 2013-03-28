@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -43,10 +43,10 @@
 #include "converter/conversion_request.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
+#include "data_manager/data_manager_interface.h"
 #include "rewriter/embedded_dictionary.h"
 #include "rewriter/rewriter_interface.h"
 #include "session/commands.pb.h"
-#include "session/request_handler.h"
 
 // SymbolRewriter:
 // When updating the rule
@@ -62,26 +62,6 @@ namespace {
 const size_t kOffsetSize = 3;
 // Number of symbols which are inserted to first part
 const size_t kMaxInsertToMedium = 15;
-// Insert rest symbols from this position
-const size_t kInsertRestSymbolsPos = 100;
-
-#include "rewriter/symbol_rewriter_data.h"
-
-class SymbolDictionary {
- public:
-  SymbolDictionary()
-      : dic_(new EmbeddedDictionary(kSymbolData_token_data,
-                                    kSymbolData_token_size)) {}
-
-  ~SymbolDictionary() {}
-
-  EmbeddedDictionary *GetDictionary() const {
-    return dic_.get();
-  }
-
- private:
-  scoped_ptr<EmbeddedDictionary> dic_;
-};
 }  // namespace
 
 // Some characters may have different description for full/half width forms.
@@ -289,13 +269,11 @@ void SymbolRewriter::AddDescForCurrentCandidates(
   }
 }
 
-// static function
-bool SymbolRewriter::RewriteEachCandidate(Segments *segments) {
+bool SymbolRewriter::RewriteEachCandidate(Segments *segments) const {
   bool modified = false;
   for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
     const string &key = segments->conversion_segment(i).key();
-    const EmbeddedDictionary::Token *token =
-        Singleton<SymbolDictionary>::get()->GetDictionary()->Lookup(key);
+    const EmbeddedDictionary::Token *token = dictionary_->Lookup(key);
     if (token == NULL) {
       continue;
     }
@@ -320,8 +298,7 @@ bool SymbolRewriter::RewriteEntireCandidate(const ConversionRequest &request,
     key += segments->conversion_segment(i).key();
   }
 
-  const EmbeddedDictionary::Token *token =
-      Singleton<SymbolDictionary>::get()->GetDictionary()->Lookup(key);
+  const EmbeddedDictionary::Token *token = dictionary_->Lookup(key);
   if (token == NULL) {
     return false;
   }
@@ -349,15 +326,22 @@ bool SymbolRewriter::RewriteEntireCandidate(const ConversionRequest &request,
   return true;
 }
 
-SymbolRewriter::SymbolRewriter(const ConverterInterface *parent_converter)
+SymbolRewriter::SymbolRewriter(const ConverterInterface *parent_converter,
+                               const DataManagerInterface *data_manager)
     : parent_converter_(parent_converter) {
   DCHECK(parent_converter_);
+  const EmbeddedDictionary::Token *data;
+  size_t size;
+  data_manager->GetSymbolRewriterData(&data, &size);
+  DCHECK(data);
+  DCHECK(size);
+  dictionary_.reset(new EmbeddedDictionary(data, size));
 }
 
 SymbolRewriter::~SymbolRewriter() {}
 
-int SymbolRewriter::capability() const {
-  if (GET_REQUEST(mixed_conversion)) {
+int SymbolRewriter::capability(const ConversionRequest &request) const {
+  if (request.request().mixed_conversion()) {
     return RewriterInterface::ALL;
   }
   return RewriterInterface::CONVERSION;

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -45,7 +45,6 @@
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
 #include "session/commands.pb.h"
-#include "session/request_handler.h"
 
 namespace mozc {
 namespace {
@@ -91,6 +90,8 @@ RewriteType GetRewriteTypeAndBase(
 
   if (Util::GetScriptType(c.content_value) == Util::NUMBER) {
     arabic_candidate->CopyFrom(c);
+    arabic_candidate->inner_segment_boundary.clear();
+    DCHECK(arabic_candidate->IsValid());
     return ARABIC_FIRST;
   }
 
@@ -108,8 +109,8 @@ RewriteType GetRewriteTypeAndBase(
       arabic_number == half_width_new_content_value) {
     return NO_REWRITE;
   }
-  const string suffix = c.value.substr(
-      c.content_value.size(), c.value.size() - c.content_value.size());
+  const string suffix(c.value, c.content_value.size(),
+                      c.value.size() - c.content_value.size());
   arabic_candidate->Init();
   arabic_candidate->value = arabic_number + number_suffix + suffix;
   arabic_candidate->content_value = arabic_number + number_suffix;
@@ -119,6 +120,7 @@ RewriteType GetRewriteTypeAndBase(
   arabic_candidate->structure_cost = c.structure_cost;
   arabic_candidate->lid = c.lid;
   arabic_candidate->rid = c.rid;
+  DCHECK(arabic_candidate->IsValid());
   return KANJI_FIRST;
 }
 
@@ -168,10 +170,9 @@ void PushBackCandidate(const string &value, const string &desc,
 
 void SetCandidatesInfo(const Segment::Candidate &arabic_cand,
                        vector<Segment::Candidate> *candidates) {
-  const string suffix =
-      arabic_cand.value.substr(arabic_cand.content_value.size(),
-                               arabic_cand.value.size() -
-                               arabic_cand.content_value.size());
+  const string suffix(
+      arabic_cand.value, arabic_cand.content_value.size(),
+      arabic_cand.value.size() - arabic_cand.content_value.size());
 
   for (vector<Segment::Candidate>::iterator it = candidates->begin();
        it != candidates->end(); ++it) {
@@ -412,8 +413,8 @@ NumberRewriter::NumberRewriter(const POSMatcher *pos_matcher)
 
 NumberRewriter::~NumberRewriter() {}
 
-int NumberRewriter::capability() const {
-  if (GET_REQUEST(mixed_conversion)) {
+int NumberRewriter::capability(const ConversionRequest &request) const {
+  if (request.request().mixed_conversion()) {
     return RewriterInterface::ALL;
   }
   return RewriterInterface::CONVERSION;

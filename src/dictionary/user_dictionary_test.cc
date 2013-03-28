@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,16 +32,17 @@
 #include "dictionary/user_dictionary.h"
 
 #include <algorithm>
-#include <set>
+#include <cstring>
 #include <sstream>
 #include <string>
 #include <vector>
 
-#include "base/base.h"
-#include "base/file_stream.h"
+#include "base/file_util.h"
 #include "base/logging.h"
 #include "base/number_util.h"
+#include "base/port.h"
 #include "base/singleton.h"
+#include "base/system_util.h"
 #include "base/trie.h"
 #include "base/util.h"
 #include "config/config.pb.h"
@@ -49,16 +50,14 @@
 #include "converter/node.h"
 #include "converter/node_allocator.h"
 #include "data_manager/testing/mock_user_pos_manager.h"
-#include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
 #include "dictionary/user_dictionary_storage.h"
-#include "dictionary/user_dictionary_util.h"
 #include "dictionary/user_pos.h"
 #include "dictionary/user_pos_interface.h"
-#include "storage/registry.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-#include "usage_stats/usage_stats.pb.h"
+#include "usage_stats/usage_stats.h"
+#include "usage_stats/usage_stats_testing_util.h"
 
 DECLARE_string(test_tmpdir);
 
@@ -85,7 +84,17 @@ const char kUserDictionary0[] =
     // Empty POS
     "star\tvalue\t\n"
     // Duplicate entry
-    "start\tstart\tverb\n";
+    "start\tstart\tverb\n"
+    // The following are for tests for LookupComment
+    // No comment
+    "comment_key1\tcomment_value1\tnoun\n"
+    // Has comment
+    "comment_key2\tcomment_value2\tnoun\tcomment\n"
+    // Different POS
+    "comment_key3\tcomment_value3\tnoun\tcomment1\n"
+    "comment_key3\tcomment_value3\tverb\tcomment2\n"
+    // White spaces comment
+    "comment_key4\tcomment_value4\tverb\t     \n";
 
 const char kUserDictionary1[] = "end\tend\tverb\n";
 
@@ -183,16 +192,14 @@ string GenRandomAlphabet(int size) {
 class UserDictionaryTest : public ::testing::Test {
  protected:
   virtual void SetUp() {
-    pos_mock_.reset(new UserPOSMock);
-    CHECK(pos_mock_.get() != NULL);
-    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    CHECK(storage::Registry::Clear());
+    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     suppression_dictionary_.reset(new SuppressionDictionary);
+
+    mozc::usage_stats::UsageStats::ClearAllStatsForTest();
   }
 
   virtual void TearDown() {
-    pos_mock_.reset();
-    CHECK(storage::Registry::Clear());
+    mozc::usage_stats::UsageStats::ClearAllStatsForTest();
   }
 
   // Workaround for the constructor of UserDictionary being protected.
@@ -200,7 +207,7 @@ class UserDictionaryTest : public ::testing::Test {
   UserDictionary *CreateDictionaryWithMockPos() {
     const testing::MockUserPosManager user_pos_manager;
     return new UserDictionary(
-        pos_mock_.get(),
+        new UserPOSMock(),
         user_pos_manager.GetPOSMatcher(),
         suppression_dictionary_.get());
   }
@@ -208,7 +215,7 @@ class UserDictionaryTest : public ::testing::Test {
   // Creates a user dictionary with actual pos data.
   UserDictionary *CreateDictionary() {
     const testing::MockUserPosManager user_pos_manager;
-    return new UserDictionary(user_pos_manager.GetUserPOS(),
+    return new UserDictionary(new UserPOS(user_pos_manager.GetUserPOSData()),
                               user_pos_manager.GetPOSMatcher(),
                               Singleton<SuppressionDictionary>::get());
   }
@@ -299,7 +306,7 @@ class UserDictionaryTest : public ::testing::Test {
   static void LoadFromString(const string &contents,
                              UserDictionaryStorage *storage) {
     istringstream is(contents);
-    CHECK(is);
+    CHECK(is.good());
 
     storage->Clear();
     UserDictionaryStorage::UserDictionary *dic
@@ -307,7 +314,7 @@ class UserDictionaryTest : public ::testing::Test {
     CHECK(dic);
 
     string line;
-    while (getline(is, line)) {
+    while (!getline(is, line).fail()) {
       if (line.empty() || line[0] == '#') {
         continue;
       }
@@ -324,11 +331,24 @@ class UserDictionaryTest : public ::testing::Test {
       } else if (fields[2] == "noun") {
         entry->set_pos(user_dictionary::UserDictionary::NOUN);
       }
+      if (fields.size() >= 4 && !fields[3].empty()) {
+        entry->set_comment(fields[3]);
+      }
     }
   }
 
-  scoped_ptr<const UserPOSMock> pos_mock_;
+  // Helper function to lookup comment string from |dic|.
+  static string LookupComment(const UserDictionary& dic,
+                              StringPiece key, StringPiece value) {
+    string comment;
+    dic.LookupComment(key, value, &comment);
+    return comment;
+  }
+
   scoped_ptr<SuppressionDictionary> suppression_dictionary_;
+
+ private:
+  mozc::usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;
 };
 
 TEST_F(UserDictionaryTest, TestLookupPredictive) {
@@ -556,9 +576,9 @@ TEST_F(UserDictionaryTest, IncognitoModeTest) {
 }
 
 TEST_F(UserDictionaryTest, AsyncLoadTest) {
-  const string filename = Util::JoinPath(FLAGS_test_tmpdir,
-                                         "async_load_test.db");
-  Util::Unlink(filename);
+  const string filename = FileUtil::JoinPath(FLAGS_test_tmpdir,
+                                             "async_load_test.db");
+  FileUtil::Unlink(filename);
 
   // Create dictionary
   vector<string> keys;
@@ -602,13 +622,13 @@ TEST_F(UserDictionaryTest, AsyncLoadTest) {
     }
     dic->WaitForReloader();
   }
-  Util::Unlink(filename);
+  FileUtil::Unlink(filename);
 }
 
 TEST_F(UserDictionaryTest, AddToAutoRegisteredDictionary) {
-  const string filename = Util::JoinPath(FLAGS_test_tmpdir,
-                                         "add_to_auto_registered.db");
-  Util::Unlink(filename);
+  const string filename = FileUtil::JoinPath(FLAGS_test_tmpdir,
+                                             "add_to_auto_registered.db");
+  FileUtil::Unlink(filename);
 
   // Create dictionary
   {
@@ -655,7 +675,7 @@ TEST_F(UserDictionaryTest, AddToAutoRegisteredDictionary) {
     }
   }
 
-  Util::Unlink(filename);
+  FileUtil::Unlink(filename);
 
   // Create dictionary
   {
@@ -706,9 +726,9 @@ TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
   scoped_ptr<UserDictionary> user_dic(CreateDictionaryWithMockPos());
   user_dic->WaitForReloader();
 
-  const string filename = Util::JoinPath(FLAGS_test_tmpdir,
-                                         "suppression_test.db");
-  Util::Unlink(filename);
+  const string filename = FileUtil::JoinPath(FLAGS_test_tmpdir,
+                                             "suppression_test.db");
+  FileUtil::Unlink(filename);
 
   UserDictionaryStorage storage(filename);
 
@@ -772,16 +792,16 @@ TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
           "suppress_value" + NumberUtil::SimpleItoa(j)));
     }
   }
-  Util::Unlink(filename);
+  FileUtil::Unlink(filename);
 }
 
 TEST_F(UserDictionaryTest, TestSuggestionOnlyWord) {
   scoped_ptr<UserDictionary> user_dic(CreateDictionary());
   user_dic->WaitForReloader();
 
-  const string filename = Util::JoinPath(FLAGS_test_tmpdir,
-                                         "suggestion_only_test.db");
-  Util::Unlink(filename);
+  const string filename = FileUtil::JoinPath(FLAGS_test_tmpdir,
+                                             "suggestion_only_test.db");
+  FileUtil::Unlink(filename);
 
   UserDictionaryStorage storage(filename);
 
@@ -835,7 +855,7 @@ TEST_F(UserDictionaryTest, TestSuggestionOnlyWord) {
     }
   }
 
-  Util::Unlink(filename);
+  FileUtil::Unlink(filename);
 }
 
 TEST_F(UserDictionaryTest, TestUsageStats) {
@@ -882,22 +902,46 @@ TEST_F(UserDictionaryTest, TestUsageStats) {
   }
   dic->Load(storage);
 
-  string reg_str;
-  usage_stats::Stats stats;
-
-  EXPECT_TRUE(storage::Registry::Lookup("usage_stats.UserRegisteredWord",
-                                         &reg_str));
-  EXPECT_TRUE(stats.ParseFromString(reg_str));
-  EXPECT_EQ("UserRegisteredWord", stats.name());
-  EXPECT_EQ(usage_stats::Stats::INTEGER, stats.type());
-  EXPECT_EQ(5, stats.int_value());
-
-  EXPECT_TRUE(storage::Registry::Lookup("usage_stats.UserRegisteredSyncWord",
-                                         &reg_str));
-  EXPECT_TRUE(stats.ParseFromString(reg_str));
-  EXPECT_EQ("UserRegisteredSyncWord", stats.name());
-  EXPECT_EQ(usage_stats::Stats::INTEGER, stats.type());
-  EXPECT_EQ(3, stats.int_value());
+  EXPECT_INTEGER_STATS("UserRegisteredWord", 5);
+  EXPECT_INTEGER_STATS("UserRegisteredSyncWord", 3);
 }
+
+TEST_F(UserDictionaryTest, LookupComment) {
+  scoped_ptr<UserDictionary> dic(CreateDictionaryWithMockPos());
+  // Wait for async reload called from the constructor.
+  dic->WaitForReloader();
+
+  {
+    UserDictionaryStorage storage("");
+    UserDictionaryTest::LoadFromString(kUserDictionary0, &storage);
+    dic->Load(storage);
+  }
+
+  // Entry is in user dictionary but has no comment.
+  EXPECT_TRUE(LookupComment(*dic, "comment_key1", "comment_value2").empty());
+
+  // Usual case: single key-value pair with comment.
+  EXPECT_EQ("comment", LookupComment(*dic, "comment_key2", "comment_value2"));
+
+  // There exist two entries having the same key, value and POS.  Since POS is
+  // irrelevant to comment lookup, the first nonempty comment should be found.
+  EXPECT_EQ("comment1", LookupComment(*dic, "comment_key3", "comment_value3"));
+
+  // White-space only comments should be cleared.
+  EXPECT_TRUE(LookupComment(*dic, "comment_key4", "comment_value4").empty());
+
+  // Comment should be found iff key and value match.
+  EXPECT_TRUE(LookupComment(*dic, "comment_key", "mismatching_value").empty());
+  EXPECT_TRUE(LookupComment(*dic, "comment_key1", "mismatching_value").empty());
+  EXPECT_TRUE(LookupComment(*dic, "comment_key2", "mismatching_value").empty());
+  EXPECT_TRUE(LookupComment(*dic, "comment_key3", "mismatching_value").empty());
+  EXPECT_TRUE(LookupComment(*dic, "comment_key4", "mismatching_value").empty());
+  EXPECT_TRUE(LookupComment(*dic, "mismatching_key", "comment_value").empty());
+  EXPECT_TRUE(LookupComment(*dic, "mismatching_key", "comment_value1").empty());
+  EXPECT_TRUE(LookupComment(*dic, "mismatching_key", "comment_value2").empty());
+  EXPECT_TRUE(LookupComment(*dic, "mismatching_key", "comment_value3").empty());
+  EXPECT_TRUE(LookupComment(*dic, "mismatching_key", "comment_value4").empty());
+}
+
 }  // namespace
 }  // namespace mozc

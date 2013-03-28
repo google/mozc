@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,37 +34,12 @@
 
 #include <string>
 #include <vector>
+#include "base/port.h"
 #include "converter/segments.h"
-#include "converter/user_data_manager_interface.h"
 
 namespace mozc {
 class ConverterMock : public ConverterInterface {
  public:
-  struct ConverterOutput {
-    Segments segments;
-    bool return_value;
-    bool initialized;
-    ConverterOutput() : return_value(false), initialized(false) {}
-  };
-
-  // TODO(toshiyuki): define more appropriate struct.
-  struct ConverterInput {
-    ConversionRequest request;
-    Segments segments;
-    string key;
-    const composer::Composer *composer;
-    size_t segment_index;
-    size_t candidate_size;
-    int candidate_index;
-    int offset_length;
-    size_t start_segment_index;
-    size_t segments_size;
-    vector<uint8> new_size_array;
-    string current_segment_key;
-    string new_segment_key;
-    ConverterInput() : request(NULL) {}
-  };
-
   ConverterMock();
   virtual ~ConverterMock();
 
@@ -88,7 +63,7 @@ class ConverterMock : public ConverterInterface {
   void SetCommitPartialSuggestionSegmentValue(Segments *segments, bool result);
   void SetFocusSegmentValue(Segments *segments, bool result);
   void SetFreeSegmentValue(Segments *segments, bool result);
-  void SetSubmitFirstSegment(Segments *segments, bool result);
+  void SetCommitFirstSegment(Segments *segments, bool result);
   void SetResizeSegment1(Segments *segments, bool result);
   void SetResizeSegment2(Segments *segments, bool result);
 
@@ -123,7 +98,7 @@ class ConverterMock : public ConverterInterface {
   void GetFocusSegmentValue(Segments *segments, size_t *segment_index,
                             int *candidate_index);
   void GetFreeSegmentValue(Segments *segments, size_t *segment_index);
-  void GetSubmitFirstSegment(Segments *segments, size_t *candidate_index);
+  void GetCommitFirstSegment(Segments *segments, size_t *candidate_index);
   void GetResizeSegment1(Segments *segments, size_t *segment_index,
                         int *offset_length);
   void GetResizeSegment2(Segments *segments, size_t *start_segment_index,
@@ -171,7 +146,7 @@ class ConverterMock : public ConverterInterface {
                          int candidate_index) const;
   bool FreeSegmentValue(Segments *segments,
                         size_t segment_index) const;
-  bool SubmitFirstSegment(Segments *segments,
+  bool CommitFirstSegment(Segments *segments,
                           size_t candidate_index) const;
   bool ResizeSegment(Segments *segments,
                      const ConversionRequest &request,
@@ -183,10 +158,31 @@ class ConverterMock : public ConverterInterface {
                      size_t segments_size,
                      const uint8 *new_size_array,
                      size_t array_size) const;
-  UserDataManagerInterface *GetUserDataManager();
-  void SetUserDataManager(UserDataManagerInterface *user_data_manager);
 
  private:
+  struct ConverterOutput {
+    Segments segments;
+    bool return_value;
+    bool initialized;
+    ConverterOutput() : return_value(false), initialized(false) {}
+  };
+
+  // TODO(toshiyuki): define more appropriate struct.
+  struct ConverterInput {
+    ConversionRequest request;
+    Segments segments;
+    string key;
+    size_t segment_index;
+    int candidate_index;
+    int offset_length;
+    size_t start_segment_index;
+    size_t segments_size;
+    vector<uint8> new_size_array;
+    string current_segment_key;
+    string new_segment_key;
+    ConverterInput() {}
+  };
+
   // mutable for recode input in const functions
   mutable ConverterInput startconversionwithrequest_input_;
   mutable ConverterInput startconversion_input_;
@@ -233,8 +229,6 @@ class ConverterMock : public ConverterInterface {
   ConverterOutput submitfirstsegment_output_;
   ConverterOutput resizesegment1_output_;
   ConverterOutput resizesegment2_output_;
-
-  scoped_ptr<UserDataManagerInterface> user_data_manager_;
 };
 
 }  // namespace mozc

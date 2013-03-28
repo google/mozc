@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
 
 #include "config/stats_config_util.h"
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <windows.h>
 #include <Lmcons.h>
 #include <shlobj.h>
@@ -53,20 +53,21 @@
 #include "base/mutex.h"
 #endif
 
-#ifdef OS_ANDROID
+#if defined(OS_ANDROID) || defined(__native_client__)
 #include "config/config_handler.h"
 #include "config/config.pb.h"
-#endif  // OS_ANDROID
+#endif  // OS_ANDROID || __native_client__
 
+#include "base/file_util.h"
 #include "base/singleton.h"
-#include "base/util.h"
+#include "base/system_util.h"
 
 namespace mozc {
 namespace config {
 namespace {
 
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 
 const wchar_t kOmahaGUID[] = L"{DDCCD2A9-025E-4142-BCEB-F467B88CF830}";
 const wchar_t kOmahaUsageKey[] =
@@ -84,18 +85,18 @@ class WinStatsConfigUtilImpl : public StatsConfigUtilInterface {
   }
   virtual ~WinStatsConfigUtilImpl() {
   }
-  virtual bool IsEnabled() const;
+  virtual bool IsEnabled();
   virtual bool SetEnabled(bool val);
  private:
   DISALLOW_COPY_AND_ASSIGN(WinStatsConfigUtilImpl);
 };
 
-bool WinStatsConfigUtilImpl::IsEnabled() const {
+bool WinStatsConfigUtilImpl::IsEnabled() {
 #ifdef CHANNEL_DEV
   return true;
 #else
   const REGSAM sam_desired = KEY_QUERY_VALUE |
-      (mozc::Util::IsWindowsX64() ? KEY_WOW64_32KEY : 0);
+      (SystemUtil::IsWindowsX64() ? KEY_WOW64_32KEY : 0);
   // Like the crash handler, check the "ClientStateMedium" key first.
   // Then we check "ClientState" key.
   {
@@ -137,7 +138,7 @@ bool WinStatsConfigUtilImpl::SetEnabled(bool val) {
 
   CRegKey key;
   const REGSAM sam_desired = KEY_WRITE |
-      (mozc::Util::IsWindowsX64() ? KEY_WOW64_32KEY : 0);
+      (SystemUtil::IsWindowsX64() ? KEY_WOW64_32KEY : 0);
   LONG result = key.Create(HKEY_LOCAL_MACHINE, kOmahaUsageKey,
                            REG_NONE, REG_OPTION_NON_VOLATILE,
                            sam_desired);
@@ -153,7 +154,7 @@ bool WinStatsConfigUtilImpl::SetEnabled(bool val) {
   return true;
 }
 
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 #ifdef OS_MACOSX
 class MacStatsConfigUtilImpl : public StatsConfigUtilInterface {
@@ -161,7 +162,7 @@ class MacStatsConfigUtilImpl : public StatsConfigUtilInterface {
   MacStatsConfigUtilImpl();
   virtual ~MacStatsConfigUtilImpl() {
   }
-  virtual bool IsEnabled() const;
+  virtual bool IsEnabled();
   virtual bool SetEnabled(bool val);
 
  private:
@@ -173,10 +174,10 @@ class MacStatsConfigUtilImpl : public StatsConfigUtilInterface {
 
 MacStatsConfigUtilImpl::MacStatsConfigUtilImpl() {
   config_file_ =
-      Util::GetUserProfileDirectory() + "/.usagestats.db";  // hidden file
+      SystemUtil::GetUserProfileDirectory() + "/.usagestats.db";  // hidden file
 }
 
-bool MacStatsConfigUtilImpl::IsEnabled() const {
+bool MacStatsConfigUtilImpl::IsEnabled() {
 #ifdef CHANNEL_DEV
   return true;
 #else
@@ -210,7 +211,7 @@ bool MacStatsConfigUtilImpl::SetEnabled(bool val) {
   scoped_lock l(&mutex_);
   const uint32 value = static_cast<uint32>(val);
 
-  if (Util::FileExists(config_file_)) {
+  if (FileUtil::FileExists(config_file_)) {
     ::chmod(config_file_.c_str(), S_IRUSR | S_IWUSR);  // read/write
   }
   ofstream ofs(config_file_.c_str(), ios::binary | ios::out | ios::trunc);
@@ -233,7 +234,7 @@ class AndroidStatsConfigUtilImpl : public StatsConfigUtilInterface {
   }
   virtual ~AndroidStatsConfigUtilImpl() {
   }
-  virtual bool IsEnabled() const {
+  virtual bool IsEnabled() {
     return ConfigHandler::GetConfig().general_config().upload_usage_stats();
   }
   virtual bool SetEnabled(bool val) {
@@ -246,13 +247,32 @@ class AndroidStatsConfigUtilImpl : public StatsConfigUtilInterface {
 };
 #endif  // OS_ANDROID
 
+#ifdef __native_client__
+class NaclStatsConfigUtilImpl : public StatsConfigUtilInterface {
+ public:
+  NaclStatsConfigUtilImpl() {
+  }
+  virtual ~NaclStatsConfigUtilImpl() {
+  }
+  virtual bool IsEnabled() {
+    return ConfigHandler::GetConfig().general_config().upload_usage_stats();
+  }
+  virtual bool SetEnabled(bool val) {
+    return false;
+  }
+
+ private:
+  DISALLOW_COPY_AND_ASSIGN(NaclStatsConfigUtilImpl);
+};
+#endif  // __native_client__
+
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
 class NullStatsConfigUtilImpl : public StatsConfigUtilInterface {
  public:
   NullStatsConfigUtilImpl() {}
   virtual ~NullStatsConfigUtilImpl() {}
-  virtual bool IsEnabled() const {
+  virtual bool IsEnabled() {
     return false;
   }
   virtual bool SetEnabled(bool val) {
@@ -269,12 +289,14 @@ StatsConfigUtilInterface *g_stats_config_util_handler = NULL;
 #if !defined(GOOGLE_JAPANESE_INPUT_BUILD)
 // For non-official build, use null implementation.
 typedef NullStatsConfigUtilImpl DefaultConfigUtilImpl;
-#elif defined(OS_WINDOWS)
+#elif defined(OS_WIN)
 typedef WinStatsConfigUtilImpl DefaultConfigUtilImpl;
 #elif defined(OS_MACOSX)
 typedef MacStatsConfigUtilImpl DefaultConfigUtilImpl;
 #elif defined(OS_ANDROID)
 typedef AndroidStatsConfigUtilImpl DefaultConfigUtilImpl;
+#elif __native_client__
+typedef NaclStatsConfigUtilImpl DefaultConfigUtilImpl;
 #else
 // Fall back mode.  Use null implementation.
 typedef NullStatsConfigUtilImpl DefaultConfigUtilImpl;

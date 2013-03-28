@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,14 +29,21 @@
 
 #include "sync/syncer.h"
 
-#include <string>
+#include <cstddef>
+#include <vector>
 
 #include "base/base.h"
 #include "base/logging.h"
-#include "base/util.h"
+#include "base/scoped_ptr.h"
+#include "base/system_util.h"
+#include "config/config.pb.h"
 #include "config/config_handler.h"
+#include "storage/memory_storage.h"
+#include "storage/registry.h"
+#include "storage/storage_interface.h"
 #include "sync/adapter_interface.h"
 #include "sync/inprocess_service.h"
+#include "sync/service_interface.h"
 #include "sync/sync.pb.h"
 #include "testing/base/public/gunit.h"
 
@@ -52,10 +59,11 @@ namespace sync {
 class SyncerTest : public testing::Test {
  public:
   virtual void SetUp() {
-    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     ConfigHandler::SetConfigFileName("memory://config");
 
-    Config config = ConfigHandler::GetConfig();
+    Config config;
+    ConfigHandler::GetDefaultConfig(&config);
     SyncConfig *sync_config = config.mutable_sync_config();
     sync_config->set_use_config_sync(true);
     sync_config->set_use_user_dictionary_sync(true);
@@ -63,9 +71,21 @@ class SyncerTest : public testing::Test {
     sync_config->set_use_contact_list_sync(true);
     sync_config->set_use_learning_preference_sync(true);
     ConfigHandler::SetConfig(config);
+
+    storage_.reset(mozc::storage::MemoryStorage::New());
+    mozc::storage::Registry::SetStorage(storage_.get());
   }
 
-  virtual void TearDown() {}
+  virtual void TearDown() {
+    mozc::storage::Registry::SetStorage(NULL);
+
+    Config config;
+    ConfigHandler::GetDefaultConfig(&config);
+    ConfigHandler::SetConfig(config);
+  }
+
+ private:
+  scoped_ptr<mozc::storage::StorageInterface> storage_;
 };
 
 class MockService : public ServiceInterface {
@@ -446,5 +466,5 @@ TEST_F(SyncerTest, CheckConfig) {
   EXPECT_TRUE(syncer.Clear());
 }
 
-}  // sync
-}  // mozc
+}  // namespace sync
+}  // namespace mozc

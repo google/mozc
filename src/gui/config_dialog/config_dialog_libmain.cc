@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,8 +34,7 @@
 #include <QtGui/QApplication>
 #include <QtGui/QDialog>
 #include <QtGui/QtGui>
-#include "base/base.h"
-#include "base/util.h"
+#include "base/system_util.h"
 #include "gui/base/locale_util.h"
 #include "gui/base/singleton_window_helper.h"
 #include "gui/config_dialog/config_dialog.h"
@@ -45,7 +44,7 @@ int RunConfigDialog(int argc, char *argv[]) {
   QApplication app(argc, argv);
 
   string name = "config_dialog.";
-  name += mozc::Util::GetDesktopNameAsString();
+  name += mozc::SystemUtil::GetDesktopNameAsString();
   mozc::gui::SingletonWindowHelper window_helper(name);
   if (window_helper.FindPreviousWindow()) {
     // already running

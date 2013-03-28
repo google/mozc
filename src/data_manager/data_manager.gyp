@@ -1,4 +1,4 @@
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -43,18 +43,15 @@
       'dependencies': [
         'oss/oss_data_manager_base.gyp:oss_user_pos_manager',
       ],
-    },
-    {
-      'target_name': 'data_manager_test_base',
-      'type': 'static_library',
-      'sources': [
-        'data_manager_test_base.cc',
-      ],
-      'dependencies': [
-        '../base/base.gyp:base',
-        '../dictionary/dictionary_base.gyp:pos_matcher',
-        '../prediction/prediction_base.gyp:suggestion_filter',
-        'user_pos_manager',
+      'conditions': [
+        ['use_packed_dictionary==1', {
+          'dependencies': [
+            'packed/packed_data_manager_base.gyp:packed_data_manager'
+          ],
+          'dependencies!': [
+            'oss/oss_data_manager_base.gyp:oss_user_pos_manager'
+          ]
+        }],
       ],
     },
   ],

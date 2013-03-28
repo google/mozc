@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,10 +27,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#if defined(OS_WINDOWS)
+#if defined(OS_WIN)
 #include <windows.h>
 #include <imm.h>
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 #include "session/commands.pb.h"
 #include "testing/base/public/googletest.h"
@@ -39,7 +39,7 @@
 
 namespace mozc {
 namespace win32 {
-#if !defined(OS_WINDOWS)
+#if !defined(OS_WIN)
 // Use the same naming convention to emulate imm32.h.
 const uint32 IME_CMODE_ALPHANUMERIC = 0x0;
 const uint32 IME_CMODE_NATIVE = 0x1;
@@ -54,7 +54,7 @@ const uint32 IME_CMODE_NOCONVERSION = 0x100;
 const uint32 IME_CMODE_EUDC = 0x200;
 const uint32 IME_CMODE_SYMBOL = 0x400;
 const uint32 IME_CMODE_SYMBOL = 0x800;
-#endif  // !OS_WINDOWS
+#endif  // !OS_WIN
 
 TEST(ConversionModeUtilTest, ToNativeMode) {
   uint32 native_code = 0;

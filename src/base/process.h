@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,11 +32,11 @@
 
 #include <string>
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include "base/port.h"
 #include "base/scoped_handle.h"
 #include "base/win_sandbox.h"
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 namespace mozc {
 class Process {

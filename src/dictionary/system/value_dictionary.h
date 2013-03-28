@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,6 +37,7 @@
 #include <string>
 
 #include "base/base.h"
+#include "base/string_piece.h"
 #include "dictionary/dictionary_interface.h"
 
 namespace mozc {
@@ -45,19 +46,11 @@ namespace dictionary {
 class SystemDictionaryCodecInterface;
 }  // namespace dictionary
 
-#ifdef MOZC_USE_MOZC_LOUDS
-namespace dictionary {
+namespace storage {
 namespace louds {
-struct Entry;
-class LoudsTrieAdapter;
+class LoudsTrie;
 }  // namespace louds
-}  // namespace dictionary
-#else
-namespace rx {
-class RxTrie;
-class RxEntry;
-}  // namespace rx
-#endif  // MOZC_USE_MOZC_LOUDS
+}  // namespace storage
 
 class DictionaryFile;
 class NodeAllocatorInterface;
@@ -75,36 +68,35 @@ class ValueDictionary : public DictionaryInterface {
   static ValueDictionary *CreateValueDictionaryFromImage(
       const POSMatcher& pos_matcher, const char *ptr, int len);
 
-  Node *LookupPredictiveWithLimit(const char *str, int size,
-                                  const Limit &limit,
-                                  NodeAllocatorInterface *allocator) const;
-  Node *LookupPredictive(const char *str, int size,
-                         NodeAllocatorInterface *allocator) const;
-  Node *LookupPrefixWithLimit(
+  // Implementation of DictionaryInterface
+  virtual bool HasValue(const StringPiece value) const;
+  virtual Node *LookupPredictiveWithLimit(
       const char *str, int size,
       const Limit &limit,
       NodeAllocatorInterface *allocator) const;
-  Node *LookupPrefix(const char *str, int size,
-                     NodeAllocatorInterface *allocator) const;
-  Node *LookupExact(const char *str, int size,
-                    NodeAllocatorInterface *allocator) const;
-  Node *LookupReverse(const char *str, int size,
-                      NodeAllocatorInterface *allocator) const;
+  virtual Node *LookupPredictive(
+      const char *str, int size,
+      NodeAllocatorInterface *allocator) const;
+  virtual Node *LookupPrefixWithLimit(
+      const char *str, int size,
+      const Limit &limit,
+      NodeAllocatorInterface *allocator) const;
+  virtual Node *LookupPrefix(
+      const char *str, int size,
+      NodeAllocatorInterface *allocator) const;
+  virtual Node *LookupExact(
+      const char *str, int size,
+      NodeAllocatorInterface *allocator) const;
+  virtual Node *LookupReverse(
+      const char *str, int size,
+      NodeAllocatorInterface *allocator) const;
 
  private:
   explicit ValueDictionary(const POSMatcher& pos_matcher);
 
   bool OpenDictionaryFile();
 
-#ifdef MOZC_USE_MOZC_LOUDS
-  typedef mozc::dictionary::louds::LoudsTrieAdapter TrieType;
-  typedef mozc::dictionary::louds::Entry EntryType;
-#else
-  typedef rx::RxTrie TrieType;
-  typedef rx::RxEntry EntryType;
-#endif  // MOZC_USE_MOZC_LOUDS
-  scoped_ptr<TrieType> value_trie_;
-
+  scoped_ptr<mozc::storage::louds::LoudsTrie> value_trie_;
   scoped_ptr<DictionaryFile> dictionary_file_;
   const SystemDictionaryCodecInterface *codec_;
   const Limit empty_limit_;

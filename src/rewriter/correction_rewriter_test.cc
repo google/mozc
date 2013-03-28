@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -86,7 +86,8 @@ class CorrectionRewriterTest : public testing::Test {
 };
 
 TEST_F(CorrectionRewriterTest, CapabilityTest) {
-  EXPECT_EQ(RewriterInterface::ALL, rewriter_->capability());
+  const ConversionRequest request;
+  EXPECT_EQ(RewriterInterface::ALL, rewriter_->capability(request));
 }
 
 TEST_F(CorrectionRewriterTest, RewriteTest) {

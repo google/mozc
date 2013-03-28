@@ -1,4 +1,4 @@
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -63,11 +63,6 @@
         '../rewriter/rewriter_base.gyp:install_gen_usage_rewriter_dictionary_main',
       ],
       'conditions': [
-        ['target_platform=="Android"', {
-          'dependencies': [
-            '../data_manager/android/android_data_manager.gyp:install_gen_android_segmenter_bitarray_main',
-          ],
-        }],
         ['language=="pinyin"', {
           'dependencies': [
             '../languages/pinyin/pinyin.gyp:'

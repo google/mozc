@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,18 +29,22 @@
 
 #include "sync/user_dictionary_sync_util.h"
 
+#include <algorithm>
+#include <cstddef>
 #include <string>
 
-#include "base/base.h"
 #include "base/clock_mock.h"
-#include "base/file_stream.h"
+#include "base/file_util.h"
 #include "base/freelist.h"
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/singleton.h"
+#include "base/system_util.h"
 #include "base/util.h"
 #include "dictionary/user_dictionary_storage.h"
+#include "session/commands.pb.h"
 #include "sync/sync_status_manager.h"
+#include "sync/sync_status_manager_interface.h"
 #include "sync/sync_util.h"
 #include "testing/base/public/gunit.h"
 
@@ -49,9 +53,39 @@ DECLARE_string(test_tmpdir);
 namespace mozc {
 namespace sync {
 
-using mozc::user_dictionary::UserDictionary;
+using user_dictionary::UserDictionary;
 
-TEST(UserDictionarySyncUtilTest, IsEqualStorage) {
+namespace {
+
+class UserDictionarySyncUtilTest : public testing::Test {
+ protected:
+  virtual void SetUp() {
+    original_user_profile_dir_ = SystemUtil::GetUserProfileDirectory();
+    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    Util::SetClockHandler(NULL);
+    SyncStatusReset();
+  }
+
+  virtual void TearDown() {
+    SyncStatusReset();
+    Util::SetClockHandler(NULL);
+    SystemUtil::SetUserProfileDirectory(original_user_profile_dir_);
+  }
+
+  void SyncStatusReset() {
+    // Reset sync status assuming authorization succeeds.
+    Singleton<SyncStatusManager>::get()->SetSyncGlobalStatus(
+        commands::CloudSyncStatus::INSYNC);
+    Singleton<SyncStatusManager>::get()->NewSyncStatusSession();
+  }
+
+ private:
+  string original_user_profile_dir_;
+};
+
+}  // namespace
+
+TEST_F(UserDictionarySyncUtilTest, IsEqualStorage) {
   UserDictionarySyncUtil::UserDictionaryStorageBase storage1, storage2;
 
   EXPECT_TRUE(UserDictionarySyncUtil::IsEqualStorage(storage1, storage2));
@@ -116,7 +150,7 @@ TEST(UserDictionarySyncUtilTest, IsEqualStorage) {
   EXPECT_TRUE(UserDictionarySyncUtil::IsEqualStorage(storage1, storage2));
 }
 
-TEST(UserDictionarySyncUtilTest, EntryFingerprint) {
+TEST_F(UserDictionarySyncUtilTest, EntryFingerprint) {
   UserDictionarySyncUtil::UserDictionaryEntry entry1, entry2;
 
   EXPECT_EQ(UserDictionarySyncUtil::EntryFingerprint(entry1),
@@ -200,7 +234,7 @@ void AddRandomUpdates(UserDictionaryStorage *storage) {
 }
 }  // namespace
 
-TEST(UserDictionarySyncUtilTest, NumEntryExceedsTest) {
+TEST_F(UserDictionarySyncUtilTest, NumEntryExceedsTest) {
   const int kMaxNumEntry = UserDictionaryStorage::max_sync_entry_size();
   const uint64 kSecond = 123;
   const uint32 kMicroSecond = 456789;
@@ -209,11 +243,9 @@ TEST(UserDictionarySyncUtilTest, NumEntryExceedsTest) {
   Util::SetClockHandler(mock_clock.get());
   SyncStatusManagerInterface *manager = Singleton<SyncStatusManager>::get();
 
-  // Set up test environment.
-  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
-
   // Actual test.
-  UserDictionaryStorage storage(Util::JoinPath(FLAGS_test_tmpdir, "test.db"));
+  UserDictionaryStorage storage(FileUtil::JoinPath(FLAGS_test_tmpdir,
+                                                   "test.db"));
   EXPECT_TRUE(storage.EnsureSyncDictionaryExists());
   UserDictionarySyncUtil::UserDictionary *dic = storage.mutable_dictionaries(0);
   EXPECT_TRUE(dic->syncable());
@@ -249,12 +281,9 @@ TEST(UserDictionarySyncUtilTest, NumEntryExceedsTest) {
   EXPECT_EQ(commands::CloudSyncStatus::USER_DICTIONARY_NUM_ENTRY_EXCEEDED,
             status.sync_errors(0).error_code());
   EXPECT_EQ(kSecond, status.sync_errors(0).timestamp());
-
-  // Unset clock handler
-  Util::SetClockHandler(NULL);
 }
 
-TEST(UserDictionarySyncUtilTest, CreateAndMergeTest) {
+TEST_F(UserDictionarySyncUtilTest, CreateAndMergeTest) {
   UserDictionaryStorage storage_orig("");
   UserDictionaryStorage storage_cur("");
   UserDictionarySyncUtil::UserDictionaryStorageBase storage_prev;
@@ -296,7 +325,7 @@ TEST(UserDictionarySyncUtilTest, CreateAndMergeTest) {
   }
 }
 
-TEST(UserDictionarySyncUtilTest, DuplicatedSyncDictionaryNameTest) {
+TEST_F(UserDictionarySyncUtilTest, DuplicatedSyncDictionaryNameTest) {
   UserDictionarySyncUtil::UserDictionaryStorageBase
       storage_orig, storage_cur, storage_new;
 
@@ -372,7 +401,7 @@ TEST(UserDictionarySyncUtilTest, DuplicatedSyncDictionaryNameTest) {
       UserDictionarySyncUtil::IsEqualStorage(storage_cur, storage_new));
 }
 
-TEST(UserDictionarySyncUtilTest, ShouldCreateSnapshot) {
+TEST_F(UserDictionarySyncUtilTest, ShouldCreateSnapshot) {
   UserDictionarySyncUtil::UserDictionaryStorageBase update;
   EXPECT_FALSE(UserDictionarySyncUtil::ShouldCreateSnapshot(update));
 
@@ -415,7 +444,7 @@ void DownloadUpdates(
 }
 }  // namespace
 
-TEST(UserDictionarySyncUtilTest, RealScenarioTest) {
+TEST_F(UserDictionarySyncUtilTest, RealScenarioTest) {
   const size_t kClientsSize = 10;
 
   // Make sure that every storage have a sync dictionary.

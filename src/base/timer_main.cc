@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -59,7 +59,7 @@ int main(int argc, char **argv) {
   mozc::TestTimer test_timer;
   string line;
   vector<string> tokens;
-  while (getline(cin, line)) {
+  while (!getline(cin, line).fail()) {
     if (line == "stop") {
       test_timer.Stop();
       continue;

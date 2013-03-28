@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -59,7 +59,8 @@ def _ErrorExit(message):
 
 
 def CopyFiles(src_list, dst, src_base='',
-              preserve=False, recursive=False, reference=None):
+              preserve=False, recursive=False, reference=None,
+              ignore_existence_check=False):
   """Copy files like 'cp' command on Unix.
 
   Args:
@@ -71,6 +72,7 @@ def CopyFiles(src_list, dst, src_base='',
     recursive: Copies files recursively.
     reference: Last update time in the form of (atime, mtime) to be copied
         to files.  The reference time is prioritized over preserving.
+    ignore_existence_check: Ignores existence check for src files.
   """
   if not src_list:
     return
@@ -78,6 +80,9 @@ def CopyFiles(src_list, dst, src_base='',
   def _CopyFile(src_file, dst_file):
     if os.path.isdir(dst_file):
       _ErrorExit('An unexpected dir `%s\' exists' % dst_file)
+    if ignore_existence_check and not os.path.exists(src_file):
+      # Skip non-existent src.
+      return
     shutil.copy(src_file, dst_file)
     _CopyUpdateTimeAndPermission(src_file, dst_file)
 
@@ -154,6 +159,9 @@ def main():
                     help='Copies directories recursively.')
   parser.add_option('--reference', dest='reference',
                     help='Uses this file\'s last update time.')
+  parser.add_option('--ignore_existence_check', dest='ignore_existence_check',
+                    action='store_true', default=False,
+                    help='Ignore existence check for src files.')
   (options, args) = parser.parse_args()
 
   if len(args) < 2:
@@ -167,7 +175,8 @@ def main():
 
   CopyFiles(src_list, dst,
             preserve=options.preserve, recursive=options.recursive,
-            reference=reference_time)
+            reference=reference_time,
+            ignore_existence_check=options.ignore_existence_check)
 
 
 if __name__ == '__main__':

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,33 +37,60 @@
 #include <atlbase_mozc.h>
 #include <atlstr.h>
 
+#include <strsafe.h>
+
 #include "base/const.h"
+#include "base/logging.h"
 #include "base/process.h"
 #include "base/scoped_handle.h"
-#include "base/util.h"
-#include "win32/base/imm_util.h"
+#include "base/scoped_ptr.h"
+#include "base/system_util.h"
 #include "win32/base/imm_registrar.h"
+#include "win32/base/imm_util.h"
 #include "win32/base/immdev.h"
+#include "win32/base/input_dll.h"
 #include "win32/base/keyboard_layout_id.h"
+#include "win32/base/tsf_profile.h"
+#include "win32/base/uninstall_helper.h"
 
 namespace mozc {
 namespace win32 {
+namespace {
+
 using ATL::CStringA;
 
-namespace {
 bool SpawnBroker(const string &arg) {
   // To workaround a bug around WoW version of LoadKeyboardLayout, 64-bit
   // version of mozc_broker should be launched on Windows x64.
   // See b/2958563 for details.
   const char *broker_name =
-      (Util::IsWindowsX64() ? kMozcBroker64 : kMozcBroker32);
+      (SystemUtil::IsWindowsX64() ? kMozcBroker64 : kMozcBroker32);
 
   return Process::SpawnMozcProcess(broker_name, arg);
 }
-}  // anonymous namespace
+
+}  // namespace
 
 bool MigrationUtil::IsFullIMEAvailable() {
   return ImmRegistrar::GetKLIDForIME().has_id();
+}
+
+bool MigrationUtil::IsFullTIPAvailable() {
+  const LANGID kLANGJaJP = MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN);
+  vector<LayoutProfileInfo> profile_list;
+  if (!UninstallHelper::GetInstalledProfilesByLanguage(kLANGJaJP,
+                                                       &profile_list)) {
+    return false;
+  }
+
+  for (size_t i = 0; i < profile_list.size(); ++i) {
+    const LayoutProfileInfo &profile = profile_list[i];
+    if (::IsEqualCLSID(TsfProfile::GetTextServiceGuid(), profile.clsid) &&
+        ::IsEqualGUID(TsfProfile::GetProfileGuid(), profile.profile_guid)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 bool MigrationUtil::RestorePreload() {
@@ -75,9 +102,16 @@ bool MigrationUtil::RestorePreload() {
 }
 
 bool MigrationUtil::LaunchBrokerForSetDefault(bool do_not_ask_me_again) {
-  if (!MigrationUtil::IsFullIMEAvailable()) {
-    LOG(ERROR) << "Full IME is not available";
-    return false;
+  if (SystemUtil::IsWindows8OrLater()) {
+    if (!MigrationUtil::IsFullTIPAvailable()) {
+      LOG(ERROR) << "Full TIP is not available";
+      return false;
+    }
+  } else {
+    if (!MigrationUtil::IsFullIMEAvailable()) {
+      LOG(ERROR) << "Full IME is not available";
+      return false;
+    }
   }
 
   string arg = "--mode=set_default";
@@ -87,5 +121,110 @@ bool MigrationUtil::LaunchBrokerForSetDefault(bool do_not_ask_me_again) {
 
   return SpawnBroker(arg);
 }
+
+bool MigrationUtil::DisableLegacyMozcForCurrentUserOnWin8() {
+  if (!SystemUtil::IsWindows8OrLater()) {
+    return false;
+  }
+
+  const KeyboardLayoutID imm32_mozc_klid(ImmRegistrar::GetKLIDForIME());
+  if (!imm32_mozc_klid.has_id()) {
+    // This means Mozc is not installed.
+    return true;
+  }
+
+  if (!InputDll::EnsureInitialized()) {
+    return false;
+  }
+  if (InputDll::enum_enabled_layout_or_tip() == nullptr) {
+    return false;
+  }
+  const UINT num_element = InputDll::enum_enabled_layout_or_tip()(
+      nullptr, nullptr, nullptr, nullptr, 0);
+
+  scoped_array<LAYOUTORTIPPROFILE> buffer(new LAYOUTORTIPPROFILE[num_element]);
+
+  const UINT num_copied = InputDll::enum_enabled_layout_or_tip()(
+      nullptr, nullptr, nullptr, buffer.get(), num_element);
+
+  // Look up IMM32 Mozc from |buffer|.
+  for (size_t i = 0; i < num_copied; ++i) {
+    const LAYOUTORTIPPROFILE &profile = buffer[i];
+    if (profile.dwProfileType != LOTP_KEYBOARDLAYOUT) {
+      // This profile is not a keyboard layout. Never be a IMM32 Mozc.
+      continue;
+    }
+    if (profile.clsid != GUID_NULL) {
+      // This profile is TIP. Never be a IMM32 Mozc.
+      continue;
+    }
+    if (profile.guidProfile != GUID_NULL) {
+      // This profile is TIP. Never be a IMM32 Mozc.
+      continue;
+    }
+    if ((profile.dwFlags & LOT_DISABLED) == LOT_DISABLED) {
+      // This profile is disabled.
+      continue;
+    }
+
+    const wstring id(profile.szId);
+    // A valid |profile.szId| should consists of language ID (LANGID) and
+    // keyboard layout ID (KILD) as follows.
+    //  <LangID 1>:<KLID 1>
+    //       "0411:E0200411"
+    // Check if |id.size()| is expected.
+    if (id.size() != 13) {
+      continue;
+    }
+
+    // Extract KLID.  It should be 8-letter hexadecimal code begins at 6th
+    // character in the |id|, that is, |id.substr(5, 8)|.
+    const KeyboardLayoutID klid(id.substr(5, 8));
+    if (klid.id() != imm32_mozc_klid.id()) {
+      continue;
+    }
+
+    // IMM32 Mozc is found.
+
+    // If IMM32 Mozc is the default IME, we need to set TSF Mozc to be the
+    // default IME before disabling the legacy IME.
+    if ((profile.dwFlags & LOT_DEFAULT) == LOT_DEFAULT) {
+      wchar_t clsid[64] = {};
+      if (!::StringFromGUID2(TsfProfile::GetTextServiceGuid(), clsid,
+                              arraysize(clsid))) {
+        return false;
+      }
+      wchar_t profile_id[64] = {};
+      if (!::StringFromGUID2(TsfProfile::GetProfileGuid(), profile_id,
+                              arraysize(profile_id))) {
+        return false;
+      }
+
+      const wstring &profile = wstring(L"0x0411:") + clsid + profile_id;
+      if (!InputDll::set_default_layout_or_tip()(profile.c_str(), 0)) {
+        DLOG(ERROR) << "SetDefaultLayoutOrTip failed";
+        return false;
+      }
+    }
+
+    // Disable IMM32 Mozc.
+    {
+      wchar_t profile_str[32] = {};
+      if (FAILED(::StringCchPrintf(profile_str, arraysize(profile_str),
+                                   L"%04x:%s", profile.langid,
+                                   klid.ToString().c_str()))) {
+        return false;
+      }
+      if (!InputDll::install_layout_or_tip()(profile_str, ILOT_DISABLED)) {
+        DLOG(ERROR) << "InstallLayoutOrTip failed";
+        return false;
+      }
+    }
+    return true;
+  }
+
+  return true;
+}
+
 }  // namespace win32
 }  // namespace mozc

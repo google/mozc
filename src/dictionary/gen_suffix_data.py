@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,31 +32,38 @@ __author__ = "taku"
 
 import sys
 
-def ConvertString(result):
-  return '"' + result.encode('string_escape') + '"'
+from build_tools import code_generator_util
 
 
 def main():
-  print 'const SuffixDictionary::SuffixToken kSuffixTokens[] = {'
+  result = []
+  with open(sys.argv[1], 'r') as stream:
+    for line in stream:
+      line = line.rstrip('\r\n')
+      fields = line.split('\t')
+      key = fields[0]
+      lid = int(fields[1])
+      rid = int(fields[2])
+      cost = int(fields[3])
+      value = fields[4]
 
-  n = 0
-  for line in open(sys.argv[1], "r"):
-    line = line.rstrip('\r\n')
-    fields = line.split('\t')
-    key = ConvertString(fields[0]);
-    lid = int(fields[1])
-    rid = int(fields[2])
-    cost = int(fields[3])
-    value = ConvertString(fields[4]);
-    if key == value:
-      value = "NULL"
-    if n != 0:
-      print ','
-    print '// "%s"' % (line)
-    print '{ %s, %s, %d, %d, %d }' % (key, value, lid, rid, cost)
-    n = n + 1
+      if key == value:
+        value = None
 
+      result.append((line, (key, value, lid, rid, cost)))
+
+  # Sort entries in the key-incremental order.
+  result.sort(key=lambda e: e[1][0])
+
+  print 'const SuffixToken kSuffixTokens[] = {'
+  for (line, (key, value, lid, rid, cost)) in result:
+    print '// "%s"' % line
+    print '{ %s, %s, %d, %d, %d },' % (
+        code_generator_util.ToCppStringLiteral(key),
+        code_generator_util.ToCppStringLiteral(value),
+        lid, rid, cost)
   print '};'
+
 
 if __name__ == "__main__":
   main()

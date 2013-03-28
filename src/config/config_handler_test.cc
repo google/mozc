@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,14 +27,16 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "config/config_handler.h"
+
 #include <string>
 
-#include "base/base.h"
+#include "base/file_util.h"
 #include "base/logging.h"
 #include "base/number_util.h"
-#include "base/util.h"
+#include "base/port.h"
+#include "base/system_util.h"
 #include "config/config.pb.h"
-#include "config/config_handler.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
@@ -46,7 +48,7 @@ namespace mozc {
 class ConfigHandlerTest : public testing::Test {
  protected:
   virtual void SetUp() {
-    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     default_config_filename_ = config::ConfigHandler::GetConfigFileName();
     config::Config default_config;
     config::ConfigHandler::GetDefaultConfig(&default_config);
@@ -84,9 +86,9 @@ TEST_F(ConfigHandlerTest, SetConfig) {
   config::Config input;
   config::Config output;
 
-  const string config_file = Util::JoinPath(FLAGS_test_tmpdir,
-                                            "mozc_config_test_tmp");
-  Util::Unlink(config_file);
+  const string config_file = FileUtil::JoinPath(FLAGS_test_tmpdir,
+                                                "mozc_config_test_tmp");
+  FileUtil::Unlink(config_file);
   ScopedSetConfigFileName scoped_config_file_name(config_file);
   EXPECT_EQ(config_file, config::ConfigHandler::GetConfigFileName());
   ASSERT_TRUE(config::ConfigHandler::Reload())
@@ -146,9 +148,9 @@ TEST_F(ConfigHandlerTest, SetImposedConfig) {
   config::Config input;
   config::Config output;
 
-  const string config_file = Util::JoinPath(FLAGS_test_tmpdir,
-                                            "mozc_config_test_tmp");
-  Util::Unlink(config_file);
+  const string config_file = FileUtil::JoinPath(FLAGS_test_tmpdir,
+                                                "mozc_config_test_tmp");
+  FileUtil::Unlink(config_file);
   ScopedSetConfigFileName scoped_config_file_name(config_file);
   ASSERT_TRUE(config::ConfigHandler::Reload())
       << "failed to reload: " << config::ConfigHandler::GetConfigFileName();
@@ -218,17 +220,14 @@ TEST_F(ConfigHandlerTest, SetImposedConfig) {
 }
 
 TEST_F(ConfigHandlerTest, ConfigFileNameConfig) {
-  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
-
   const string config_file = string("config")
       + NumberUtil::SimpleItoa(config::CONFIG_VERSION);
 
-  const string filename = Util::JoinPath(FLAGS_test_tmpdir,
-                                         config_file);
-  Util::Unlink(filename);
+  const string filename = FileUtil::JoinPath(FLAGS_test_tmpdir, config_file);
+  FileUtil::Unlink(filename);
   config::Config input;
   config::ConfigHandler::SetConfig(input);
-  Util::FileExists(filename);
+  FileUtil::FileExists(filename);
 }
 
 TEST_F(ConfigHandlerTest, SetConfigFileName) {
@@ -245,7 +244,7 @@ TEST_F(ConfigHandlerTest, SetConfigFileName) {
 }
 
 #ifndef OS_ANDROID
-// Temporarily disable this test because Util::CopyFile fails on
+// Temporarily disable this test because FileUtil::CopyFile fails on
 // Android for some reason.
 // TODO(yukawa): Enable this test on Android.
 TEST_F(ConfigHandlerTest, LoadTestConfig) {
@@ -262,12 +261,12 @@ TEST_F(ConfigHandlerTest, LoadTestConfig) {
 
   for (size_t i = 0; i < arraysize(kDataFiles); ++i) {
     const char *file_name = kDataFiles[i];
-    const string &src_path = Util::JoinPath(
-        Util::JoinPath(FLAGS_test_srcdir, kPathPrefix),
-        Util::JoinPath(KDataDir, file_name));
-    const string &dest_path = Util::JoinPath(
-        Util::GetUserProfileDirectory(), file_name);
-    ASSERT_TRUE(Util::CopyFile(src_path, dest_path));
+    const string &src_path = FileUtil::JoinPath(
+        FileUtil::JoinPath(FLAGS_test_srcdir, kPathPrefix),
+        FileUtil::JoinPath(KDataDir, file_name));
+    const string &dest_path = FileUtil::JoinPath(
+        SystemUtil::GetUserProfileDirectory(), file_name);
+    ASSERT_TRUE(FileUtil::CopyFile(src_path, dest_path));
 
     ScopedSetConfigFileName scoped_config_file_name(
         "user://" + string(file_name));
@@ -279,8 +278,8 @@ TEST_F(ConfigHandlerTest, LoadTestConfig) {
         << "failed to GetConfig from: " << file_name;
 
     // Remove test file just in case.
-    ASSERT_TRUE(Util::Unlink(dest_path));
-    EXPECT_FALSE(Util::FileExists(dest_path));
+    ASSERT_TRUE(FileUtil::Unlink(dest_path));
+    EXPECT_FALSE(FileUtil::FileExists(dest_path));
   }
 }
 #endif  // !OS_ANDROID

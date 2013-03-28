@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,7 @@
 #include <cstdio>
 #include <cstdlib>
 
+#include "base/logging.h"
 #include "session/commands.pb.h"
 #include "unix/ibus/mozc_engine_property.h"
 
@@ -50,7 +51,7 @@ IBusText *ComposeAuxiliaryText(const commands::Candidates &candidates) {
   }
   const commands::Footer &footer = candidates.footer();
 
-  std::string auxiliary_text;
+  string auxiliary_text;
   if (footer.has_label()) {
     // TODO(yusukes,mozc-team): label() is not localized. Currently, it's always
     // written in Japanese (in UTF-8).
@@ -133,17 +134,56 @@ bool IBusCandidateWindowHandler::UpdateCandidates(
                                                  cursor_pos,
                                                  cursor_visible,
                                                  kRound);
-#if IBUS_CHECK_VERSION(1, 3, 0)
   if (candidates.direction() == commands::Candidates::VERTICAL) {
     ibus_lookup_table_set_orientation(table, IBUS_ORIENTATION_VERTICAL);
   } else {
     ibus_lookup_table_set_orientation(table, IBUS_ORIENTATION_HORIZONTAL);
   }
-#endif
+
+#if defined(OS_CHROMEOS)
+  map<int32, pair<string, string> > usage_map;
+  if (candidates.has_usages()) {
+    const commands::InformationList& usages = candidates.usages();
+    for (size_t i = 0; i < usages.information().size(); ++i) {
+      const commands::Information& information = usages.information(i);
+      if (!information.has_id() || !information.has_description())
+        continue;
+      usage_map[information.id()].first = information.title();
+      usage_map[information.id()].second = information.description();
+    }
+  }
+#endif  // OS_CHROMEOS
 
   for (int i = 0; i < candidates.candidate_size(); ++i) {
     const commands::Candidates::Candidate &candidate = candidates.candidate(i);
     IBusText *text = ibus_text_new_from_string(candidate.value().c_str());
+#if defined(OS_CHROMEOS) && IBUS_CHECK_VERSION(1, 4, 2)
+    // IBus < 1.4.2 has a refcount related bug, so we don't use attachment.
+    // https://codereview.appspot.com/6445057
+    // Not to build this code on Linux for ChromeOS with old IBus, we should
+    // check both OS and IBus version.
+    if (candidate.has_annotation() &&
+        candidate.annotation().has_description()) {
+      ibus_serializable_set_attachment(
+          IBUS_SERIALIZABLE(text),
+          "annotation",
+          g_variant_new_string(candidate.annotation().description().c_str()));
+    }
+    if (candidate.has_information_id()) {
+      map<int32, pair<string, string> >::iterator it =
+          usage_map.find(candidate.information_id());
+      if (it != usage_map.end()) {
+        ibus_serializable_set_attachment(
+            IBUS_SERIALIZABLE(text),
+            "description_title",
+            g_variant_new_string(it->second.first.c_str()));
+        ibus_serializable_set_attachment(
+            IBUS_SERIALIZABLE(text),
+            "description_body",
+            g_variant_new_string(it->second.second.c_str()));
+      }
+    }
+#endif  // OS_CHROMEOS && IBUS_CHECK_VERSION(1, 4, 2)
     ibus_lookup_table_append_candidate(table, text);
     // |text| is released by ibus_engine_update_lookup_table along with |table|.
 
@@ -162,32 +202,18 @@ bool IBusCandidateWindowHandler::UpdateCandidates(
     // |table|.
   }
 
-#if defined(OS_CHROMEOS) and IBUS_CHECK_VERSION(1, 3, 99)
-  // The function ibus_serializable_set_attachment() had been changed
-  // to use GVariant in ibus-1.3.99.
-  // https://github.com/ibus/ibus/commit/ac9dfac13cef34288440a2ecdf067cd827fb2f8f
-  // But these codes are valid only for ChromeOS since:
-  //  1) IBus's default panel (main.py) does not support the attachment.
-  //  2) Ubuntu 10.10 uses ibus-1.3.99, but the version of ibus it uses is
-  //     very old.
-  // If we only use IBUS_CHECK_VERSION, ibus-mozc does not compile on
-  // Ubuntu 10.10.
-  // Also we do not use only OS_CHROMEOS, because we will compile ibus-mozc for
-  // ChromeOS on Ubuntu for debugging even if following feature is missed.
-  if (output.has_candidates()) {
-    string buf;
-    output.candidates().SerializeToString(&buf);
-
-    GByteArray *bytearray = g_byte_array_sized_new(buf.length());
-    g_byte_array_append(bytearray,
-        reinterpret_cast<const guint8*>(buf.c_str()), buf.length());
-    GVariant* variant = g_variant_new_from_data(G_VARIANT_TYPE("ay"),
-        bytearray->data, bytearray->len, TRUE,
-        reinterpret_cast<GDestroyNotify>(g_byte_array_unref), bytearray);
+#if defined(OS_CHROMEOS) && IBUS_CHECK_VERSION(1, 4, 2)
+  // IBus < 1.4.2 has a refcount related bug, so we don't use attachment.
+  // https://codereview.appspot.com/6445057
+  // Not to build this code on Linux for ChromeOS with old IBus, we should check
+  // both OS and IBus version.
+  if (candidates.has_category()) {
     ibus_serializable_set_attachment(
-        IBUS_SERIALIZABLE(table), "mozc.candidates", variant);
+        IBUS_SERIALIZABLE(table),
+        "show_window_at_composition",
+        g_variant_new_boolean(candidates.category() == commands::SUGGESTION));
   }
-#endif
+#endif  // OS_CHROMEOS && IBUS_CHECK_VERSION(1, 4, 2)
 
   ibus_engine_update_lookup_table(engine, table, TRUE);
   // |table| is released by ibus_engine_update_lookup_table.

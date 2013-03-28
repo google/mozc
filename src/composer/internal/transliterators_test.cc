@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,7 +36,7 @@ namespace composer {
 
 TEST(TransliteratorsTest, ConversionStringSelector) {
   const TransliteratorInterface *t12r =
-      Transliterators::GetConversionStringSelector();
+      Transliterators::GetTransliterator(Transliterators::CONVERSION_STRING);
   // "ず", "ず"
   EXPECT_EQ("\xe3\x81\x9a", t12r->Transliterate("zu", "\xe3\x81\x9a"));
   // "っk", "っk"
@@ -81,7 +81,7 @@ TEST(TransliteratorsTest, ConversionStringSelector) {
 
 TEST(TransliteratorsTest, RawStringSelector) {
   const TransliteratorInterface *t12r =
-      Transliterators::GetRawStringSelector();
+      Transliterators::GetTransliterator(Transliterators::RAW_STRING);
   // "ず"
   EXPECT_EQ("zu", t12r->Transliterate("zu", "\xe3\x81\x9a"));
   // "っk"
@@ -106,6 +106,216 @@ TEST(TransliteratorsTest, RawStringSelector) {
   // "っ"
   EXPECT_EQ("\xe3\x81\xa3", converted_lhs);
   EXPECT_EQ("k", converted_rhs);
+}
+
+TEST(TransliteratorsTest, HiraganaTransliterator) {
+  const TransliteratorInterface *t12r =
+      Transliterators::GetTransliterator(Transliterators::HIRAGANA);
+  // "ず", "ず"
+  EXPECT_EQ("\xe3\x81\x9a", t12r->Transliterate("zu", "\xe3\x81\x9a"));
+  // Half width "k" is transliterated into full width "ｋ".
+  // "っｋ", "っk"
+  EXPECT_EQ("\xe3\x81\xa3\xef\xbd\x8b",
+            t12r->Transliterate("kk", "\xe3\x81\xa3\x6b"));
+
+  string raw_lhs, raw_rhs, converted_lhs, converted_rhs;
+  // "ず"
+  EXPECT_TRUE(t12r->Split(1, "zu", "\xe3\x81\x9a",
+                          &raw_lhs, &raw_rhs,
+                          &converted_lhs, &converted_rhs));
+  EXPECT_EQ("zu", raw_lhs);
+  EXPECT_EQ("", raw_rhs);
+  // "ず"
+  EXPECT_EQ("\xe3\x81\x9a", converted_lhs);
+  EXPECT_EQ("", converted_rhs);
+
+  // "っk"
+  EXPECT_TRUE(t12r->Split(1, "kk", "\xe3\x81\xa3\x6b",
+                          &raw_lhs, &raw_rhs,
+                          &converted_lhs, &converted_rhs));
+  EXPECT_EQ("k", raw_lhs);
+  EXPECT_EQ("k", raw_rhs);
+  // "っ"
+  EXPECT_EQ("\xe3\x81\xa3", converted_lhs);
+  EXPECT_EQ("k", converted_rhs);
+
+  // Ideally "kkk" should be separated into "っ" and "っk", but it's
+  // not implemented yet.
+  // "っっk"
+  EXPECT_FALSE(t12r->Split(1, "kkk", "\xe3\x81\xa3\xe3\x81\xa3\x6b",
+                           &raw_lhs, &raw_rhs,
+                           &converted_lhs, &converted_rhs));
+  // "っ"
+  EXPECT_EQ("\xe3\x81\xa3", raw_lhs);
+  // "っk"
+  EXPECT_EQ("\xe3\x81\xa3\x6b", raw_rhs);
+  // "っ"
+  EXPECT_EQ("\xe3\x81\xa3", converted_lhs);
+  // "っk"
+  EXPECT_EQ("\xe3\x81\xa3\x6b", converted_rhs);
+
+  // "　"(full-width space), "　"(full-width space)
+  EXPECT_EQ("\xe3\x80\x80", t12r->Transliterate(" ", "\xe3\x80\x80"));
+  // " "(half-width space), "　"(full-width space)
+  EXPECT_EQ("\xe3\x80\x80", t12r->Transliterate(" ", " "));
+}
+
+TEST(TransliteratorsTest, FullKatakanaTransliterator) {
+  const TransliteratorInterface *t12r =
+      Transliterators::GetTransliterator(Transliterators::FULL_KATAKANA);
+  // "ズ", "ず"
+  EXPECT_EQ("\xe3\x82\xba", t12r->Transliterate("zu", "\xe3\x81\x9a"));
+  // Half width "k" is transliterated into full width "ｋ".
+  // "ッｋ", "っk"
+  EXPECT_EQ("\xe3\x83\x83\xef\xbd\x8b",
+            t12r->Transliterate("kk", "\xe3\x81\xa3\x6b"));
+
+  string raw_lhs, raw_rhs, converted_lhs, converted_rhs;
+  // "ず"
+  EXPECT_TRUE(t12r->Split(1, "zu", "\xe3\x81\x9a",
+                          &raw_lhs, &raw_rhs,
+                          &converted_lhs, &converted_rhs));
+  EXPECT_EQ("zu", raw_lhs);
+  EXPECT_EQ("", raw_rhs);
+  // "ず"
+  EXPECT_EQ("\xe3\x81\x9a", converted_lhs);
+  EXPECT_EQ("", converted_rhs);
+
+  // "っk"
+  EXPECT_TRUE(t12r->Split(1, "kk", "\xe3\x81\xa3\x6b",
+                          &raw_lhs, &raw_rhs,
+                          &converted_lhs, &converted_rhs));
+  EXPECT_EQ("k", raw_lhs);
+  EXPECT_EQ("k", raw_rhs);
+  // "っ"
+  EXPECT_EQ("\xe3\x81\xa3", converted_lhs);
+  EXPECT_EQ("k", converted_rhs);
+
+  // "　"(full-width space), "　"(full-width space)
+  EXPECT_EQ("\xe3\x80\x80", t12r->Transliterate(" ", "\xe3\x80\x80"));
+  // " "(half-width space), "　"(full-width space)
+  EXPECT_EQ("\xe3\x80\x80", t12r->Transliterate(" ", " "));
+}
+
+TEST(TransliteratorsTest, HalfKatakanaTransliterator) {
+  const TransliteratorInterface *t12r =
+      Transliterators::GetTransliterator(Transliterators::HALF_KATAKANA);
+  // "ｽﾞ", "ず"
+  EXPECT_EQ("\xef\xbd\xbd\xef\xbe\x9e",
+            t12r->Transliterate("zu", "\xe3\x81\x9a"));
+  // Half width "k" remains in the current implementation (can be changed).
+  // "ｯk", "っk"
+  EXPECT_EQ("\xef\xbd\xaf\x6b", t12r->Transliterate("kk", "\xe3\x81\xa3\x6b"));
+
+  string raw_lhs, raw_rhs, converted_lhs, converted_rhs;
+  // "ｽﾞ" is split to "ｽ" and "ﾞ".
+  // "ず"
+  EXPECT_FALSE(t12r->Split(1, "zu", "\xe3\x81\x9a",
+                           &raw_lhs, &raw_rhs,
+                           &converted_lhs, &converted_rhs));
+  // "す"
+  EXPECT_EQ("\xe3\x81\x99", raw_lhs);
+  // "゛"
+  EXPECT_EQ("\xe3\x82\x9b", raw_rhs);
+  // "す"
+  EXPECT_EQ("\xe3\x81\x99", converted_lhs);
+  // "゛"
+  EXPECT_EQ("\xe3\x82\x9b", converted_rhs);
+
+  // "ず"
+  EXPECT_TRUE(t12r->Split(2, "zu", "\xe3\x81\x9a",
+                           &raw_lhs, &raw_rhs,
+                           &converted_lhs, &converted_rhs));
+  EXPECT_EQ("zu", raw_lhs);
+  EXPECT_EQ("", raw_rhs);
+  // "ず"
+  EXPECT_EQ("\xe3\x81\x9a", converted_lhs);
+  EXPECT_EQ("", converted_rhs);
+
+  // "っk"
+  EXPECT_TRUE(t12r->Split(1, "kk", "\xe3\x81\xa3\x6b",
+                          &raw_lhs, &raw_rhs,
+                          &converted_lhs, &converted_rhs));
+  EXPECT_EQ("k", raw_lhs);
+  EXPECT_EQ("k", raw_rhs);
+  // "っ"
+  EXPECT_EQ("\xe3\x81\xa3", converted_lhs);
+  EXPECT_EQ("k", converted_rhs);
+
+  // "　"(full-width space), "　"(half-width space)
+  EXPECT_EQ(" ", t12r->Transliterate(" ", "\xe3\x80\x80"));
+  // " "(half-width space), "　"(half-width space)
+  EXPECT_EQ(" ", t12r->Transliterate(" ", " "));
+}
+
+TEST(TransliteratorsTest, HalfAsciiTransliterator) {
+  const TransliteratorInterface *t12r =
+      Transliterators::GetTransliterator(Transliterators::HALF_ASCII);
+  // "ず"
+  EXPECT_EQ("zu", t12r->Transliterate("zu", "\xe3\x81\x9a"));
+  // "っk"
+  EXPECT_EQ("kk", t12r->Transliterate("kk", "\xe3\x81\xa3\x6b"));
+
+  string raw_lhs, raw_rhs, converted_lhs, converted_rhs;
+  // "ず"
+  EXPECT_FALSE(t12r->Split(1, "zu", "\xe3\x81\x9a",
+                           &raw_lhs, &raw_rhs,
+                           &converted_lhs, &converted_rhs));
+  EXPECT_EQ("z", raw_lhs);
+  EXPECT_EQ("u", raw_rhs);
+  EXPECT_EQ("z", converted_lhs);
+  EXPECT_EQ("u", converted_rhs);
+
+  // "っk"
+  EXPECT_TRUE(t12r->Split(1, "kk", "\xe3\x81\xa3\x6b",
+                          &raw_lhs, &raw_rhs,
+                          &converted_lhs, &converted_rhs));
+  EXPECT_EQ("k", raw_lhs);
+  EXPECT_EQ("k", raw_rhs);
+  // "っ"
+  EXPECT_EQ("\xe3\x81\xa3", converted_lhs);
+  EXPECT_EQ("k", converted_rhs);
+
+  // "　"(full-width space), "　"(half-width space)
+  EXPECT_EQ(" ", t12r->Transliterate(" ", "\xe3\x80\x80"));
+  // " "(half-width space), "　"(half-width space)
+  EXPECT_EQ(" ", t12r->Transliterate(" ", " "));
+}
+
+TEST(TransliteratorsTest, FullAsciiTransliterator) {
+  const TransliteratorInterface *t12r =
+      Transliterators::GetTransliterator(Transliterators::FULL_ASCII);
+  // "ｚｕ", "ず"
+  EXPECT_EQ("\xef\xbd\x9a\xef\xbd\x95",
+            t12r->Transliterate("zu", "\xe3\x81\x9a"));
+  // "ｋｋ", "っk"
+  EXPECT_EQ("\xef\xbd\x8b\xef\xbd\x8b",
+            t12r->Transliterate("kk", "\xe3\x81\xa3\x6b"));
+
+  string raw_lhs, raw_rhs, converted_lhs, converted_rhs;
+  // "ず"
+  EXPECT_FALSE(t12r->Split(1, "zu", "\xe3\x81\x9a",
+                           &raw_lhs, &raw_rhs,
+                           &converted_lhs, &converted_rhs));
+  EXPECT_EQ("z", raw_lhs);
+  EXPECT_EQ("u", raw_rhs);
+  EXPECT_EQ("z", converted_lhs);
+  EXPECT_EQ("u", converted_rhs);
+
+  // "っk"
+  EXPECT_TRUE(t12r->Split(1, "kk", "\xe3\x81\xa3\x6b",
+                          &raw_lhs, &raw_rhs,
+                          &converted_lhs, &converted_rhs));
+  EXPECT_EQ("k", raw_lhs);
+  EXPECT_EQ("k", raw_rhs);
+  // "っ"
+  EXPECT_EQ("\xe3\x81\xa3", converted_lhs);
+  EXPECT_EQ("k", converted_rhs);
+
+  // "　"(full-width space), "　"(full-width space)
+  EXPECT_EQ("\xe3\x80\x80", t12r->Transliterate(" ", "\xe3\x80\x80"));
+  // " "(half-width space), "　"(full-width space)
+  EXPECT_EQ("\xe3\x80\x80", t12r->Transliterate(" ", " "));
 }
 
 }  // namespace composer

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -45,9 +45,6 @@
 
 namespace mozc {
 namespace session {
-namespace {
-  const commands::Request default_request_;
-}  // namespace
 
 TEST(ImeContextTest, DefaultValues) {
   ImeContext context;
@@ -74,15 +71,17 @@ TEST(ImeContextTest, BasicTest) {
   context.set_last_command_time(12345);
   EXPECT_EQ(12345, context.last_command_time());
 
+  const commands::Request default_request;
+
   // The ownership of composer is moved to context.
-  composer::Composer *composer = new composer::Composer(NULL, default_request_);
+  composer::Composer *composer = new composer::Composer(NULL, &default_request);
   context.set_composer(composer);
   EXPECT_EQ(composer, &context.composer());
   EXPECT_EQ(composer, context.mutable_composer());
 
   scoped_ptr<ConverterMock> converter_mock(new ConverterMock);
   SessionConverter *converter = new SessionConverter(
-      converter_mock.get(), commands::Request::default_instance());
+      converter_mock.get(), &default_request);
   context.set_converter(converter);
   EXPECT_EQ(converter, &context.converter());
   EXPECT_EQ(converter, context.mutable_converter());
@@ -91,7 +90,7 @@ TEST(ImeContextTest, BasicTest) {
   EXPECT_EQ(ImeContext::COMPOSITION, context.state());
 
   commands::Request request;
-  context.SetRequest(request);
+  context.SetRequest(&request);
   EXPECT_PROTO_EQ(request, context.GetRequest());
 
   context.mutable_client_capability()->set_text_deletion(
@@ -122,8 +121,6 @@ TEST(ImeContextTest, CopyContext) {
   table.AddRule("na", "\xE3\x81\xAA", "");
 
   scoped_ptr<MockConverterEngine> engine(new MockConverterEngine);
-  //  scoped_ptr<ConverterMock> convertermock(new ConverterMock);
-  //  ConverterFactory::SetConverter(convertermock.get());
 
   Segments segments;
   Segment *segment = segments.add_segment();
@@ -136,15 +133,17 @@ TEST(ImeContextTest, CopyContext) {
   engine->mutable_converter_mock()->SetStartConversionForRequest(&segments,
                                                                  true);
   {
+    const commands::Request default_request;
+
     ImeContext source;
-    source.set_composer(new composer::Composer(&table, default_request_));
+    source.set_composer(new composer::Composer(&table, &default_request));
     source.set_converter(new SessionConverter(
-        engine->GetConverter(), commands::Request::default_instance()));
+        engine->GetConverter(), &default_request));
 
     ImeContext destination;
-    destination.set_composer(new composer::Composer(&table, default_request_));
+    destination.set_composer(new composer::Composer(&table, &default_request));
     destination.set_converter(new SessionConverter(
-        engine->GetConverter(), commands::Request::default_instance()));
+        engine->GetConverter(), &default_request));
 
     source.set_state(ImeContext::COMPOSITION);
     source.mutable_composer()->InsertCharacter("a");
@@ -164,19 +163,21 @@ TEST(ImeContextTest, CopyContext) {
   }
 
   {
+    const commands::Request default_request;
+
     const uint64 kCreateTime = 100;
     const uint64 kLastCommandTime = 200;
     ImeContext source;
     source.set_create_time(kCreateTime);
     source.set_last_command_time(kLastCommandTime);
-    source.set_composer(new composer::Composer(&table, default_request_));
+    source.set_composer(new composer::Composer(&table, &default_request));
     source.set_converter(new SessionConverter(
-        engine->GetConverter(), commands::Request::default_instance()));
+        engine->GetConverter(), &default_request));
 
     ImeContext destination;
-    destination.set_composer(new composer::Composer(&table, default_request_));
+    destination.set_composer(new composer::Composer(&table, &default_request));
     destination.set_converter(new SessionConverter(
-        engine->GetConverter(), commands::Request::default_instance()));
+        engine->GetConverter(), &default_request));
 
     source.set_state(ImeContext::CONVERSION);
     source.mutable_composer()->InsertCharacter("a");

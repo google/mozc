@@ -1,4 +1,4 @@
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -48,6 +48,7 @@
             '../../server/server.gyp:mozc_server',
             '../broker/broker.gyp:mozc_broker32',
             '../ime/ime.gyp:mozc_ime',
+            '../tip/tip.gyp:mozc_tip32',
           ],
           'conditions': [
             ['use_dynamically_linked_qt!=1', {

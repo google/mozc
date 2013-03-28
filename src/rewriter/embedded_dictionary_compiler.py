@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,7 @@
 
 __author__ = "hidehiko"
 
+from build_tools import code_generator_util
 
 class Token(object):
   def __init__(
@@ -43,16 +44,6 @@ class Token(object):
     self.lid = lid
     self.rid = rid
     self.cost = cost
-
-
-def ToCConstCharPointer(s):
-  """Converts python string object to escaped C style const char* data.
-
-  Args:
-    s: a string to be converted.
-  Return: converted Cstyle escaped const char* data, or 'NULL' if s is empty.
-  """
-  return '"%s"' % ''.join('\\x%02X' % ord(c) for c in s) if s else 'NULL'
 
 
 def OutputValue(name, input_data, output_stream):
@@ -73,9 +64,9 @@ def OutputValue(name, input_data, output_stream):
   for _, token_list in sorted(input_data.items()):
     for token in sorted(token_list, key=lambda token: token.cost):
       output_stream.write('  { %s, %s, %s, %d, %d, %d },\n' % (
-          ToCConstCharPointer(token.value),
-          ToCConstCharPointer(token.description),
-          ToCConstCharPointer(token.additional_description),
+          code_generator_util.ToCppStringLiteral(token.value),
+          code_generator_util.ToCppStringLiteral(token.description),
+          code_generator_util.ToCppStringLiteral(token.additional_description),
           token.lid, token.rid, token.cost))
 
   # Output a sentinel.
@@ -112,7 +103,7 @@ def OutputTokenData(name, input_data, output_stream):
   for key, token_list in sorted(input_data.items()):
     size = len(token_list)
     output_stream.write('  { %s, k%s_value + %d, %d },\n' % (
-        ToCConstCharPointer(key), name, offset, size))
+        code_generator_util.ToCppStringLiteral(key), name, offset, size))
     offset += size
 
   # Sentinel.

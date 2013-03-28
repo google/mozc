@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,12 +27,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// A tiny CRT-free utilities.
-
 #ifndef MOZC_BASE_WIN_UTIL_H
 #define MOZC_BASE_WIN_UTIL_H
 
-#if defined(OS_WINDOWS)
+#if defined(OS_WIN)
 #include <windows.h>
 
 #include <string>
@@ -112,10 +110,43 @@ class WinUtil {
   // known service or not.  Otherwise, returns false.
   static bool IsServiceUser(HANDLE hToken, bool *is_service);
 
+  // Returns true if succeeds to determine whether the process specified by
+  // |process_handle| is in immersive mode or not. Otherwise, returns false.
+  static bool IsProcessImmersive(HANDLE process_handle, bool *is_immersive);
+
+  // Returns true if succeeds to determine whether the process specified by
+  // |process_handle| is running under AppContainer sandbox environment or not.
+  // Otherwise, returns false.
+  static bool IsProcessInAppContainer(HANDLE process_handle,
+                                      bool *in_appcontainer);
+
   // Returns true if CUAS (Cicero Unaware Application Support) is enabled.
   // Note: This method was previously defined in win32/base/imm_util.h but
   // moved to here because UsateStats depends on this method.
   static bool IsCuasEnabled();
+
+  // Returns true if |info| is filled with a valid file information that
+  // describes |path|. |path| can be a directory or a file.
+  static bool GetFileSystemInfoFromPath(const wstring &path,
+                                        BY_HANDLE_FILE_INFORMATION *info);
+
+  // Returns true if |left_path| and |right_path| are the same file system
+  // object. This method takes hard-link into consideration.
+  // Returns false if either |left_path| or |right_path| does not exist even
+  // when |left_path| == |right_path|.
+  static bool AreEqualFileSystemObject(const wstring &left_path,
+                                       const wstring &right_path);
+
+  // Returns true if the file or directory specified by |dos_path| exists and
+  // its NT path is retrieved as |nt_path|. This function can work only on
+  // Vista and later.
+  static bool GetNtPath(const wstring &dos_path, wstring *nt_path);
+
+  // Returns true if the process specified by |pid| exists and its *initial*
+  // NT path is retrieved as |nt_path|. Note that even when the process path is
+  // renamed after the process is launched, the *initial* path is retrieved.
+  // This is important whem MSI changes paths of executables.
+  static bool GetProcessInitialNtPath(DWORD pid, wstring *nt_path);
 
  private:
   // Compares |lhs| with |rhs| by CompareStringOrdinal and returns the result
@@ -149,7 +180,7 @@ class WinUtil {
   FRIEND_TEST(WinUtilTest, NativeEqualStringTest);
   FRIEND_TEST(WinUtilTest, CrtEqualStringTest);
 
-  DISALLOW_COPY_AND_ASSIGN(WinUtil);
+  DISALLOW_IMPLICIT_CONSTRUCTORS(WinUtil);
 };
 
 // Initializes COM in the constructor (STA), and uninitializes COM in the
@@ -173,5 +204,5 @@ class ScopedCOMInitializer {
 };
 }  // namespace mozc
 
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 #endif  // MOZC_BASE_WIN_UTIL_H

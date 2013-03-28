@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,9 +31,10 @@
 #define MOZC_STORAGE_LOUDS_LOUDS_TRIE_H_
 
 #include "base/port.h"
+#include "base/string_piece.h"
+#include "storage/louds/key_expansion_table.h"
 #include "storage/louds/louds.h"
 #include "storage/louds/simple_succinct_bit_vector_index.h"
-#include "storage/louds/key_expansion_table.h"
 
 namespace mozc {
 namespace storage {
@@ -52,13 +53,27 @@ class LoudsTrie {
   // Interface which is called back when the result is found.
   class Callback {
    public:
-    // The callback will be invoked when a target word is found.
-    // "s" may not be null-terminated.
-    virtual bool Run(const char *s, size_t len, int key_id) = 0;
+    enum ResultType {
+      // Finishes the current (prefix or predictive) search.
+      SEARCH_DONE,
 
-   protected:
+      // Continues the current (prefix or predictive) search.
+      SEARCH_CONTINUE,
+
+      // Finished the (prefix or predictive) search of the current edge,
+      // but still continues to search for other edges.
+      SEARCH_CULL,
+    };
+
     virtual ~Callback() {
     }
+
+    // The callback will be invoked when a target word is found.
+    // "s" may not be null-terminated.
+    virtual ResultType Run(const char *s, size_t len, int key_id) = 0;
+
+   protected:
+    Callback() {}
   };
 
   LoudsTrie() : edge_character_(NULL) {
@@ -74,6 +89,11 @@ class LoudsTrie {
 
   // Destructs the internal data structure.
   void Close();
+
+  // Searches the trie for the key that exactly matches the given key. Returns
+  // -1 if the key doesn't exist.
+  // TODO(noriyukit): Implement a callback style method if necessary.
+  int ExactSearch(const StringPiece key) const;
 
   // Searches the trie structure, and invokes callback->Run when for each word
   // which is a prefix of the key is found.
@@ -97,9 +117,9 @@ class LoudsTrie {
       Callback *callback) const;
 
 
-  // Traverse from leaf to root and store the characters annotated to the
-  // edges. The size of the buffer should be larger then kMaxDepth.
-  // Returns the pointer to the first character.
+  // Traverses the trie from leaf to root and store the characters annotated to
+  // the edges. The size of the buffer should be larger than kMaxDepth.  Returns
+  // the pointer to the first character.
   const char *Reverse(int key_id, char *buf) const;
 
  private:

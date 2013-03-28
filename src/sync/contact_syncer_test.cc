@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,17 +27,27 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <string>
-#include "base/base.h"
-#include "base/util.h"
-#include "config/config_handler.h"
-#include "config/config.pb.h"
-#include "dictionary/user_dictionary_storage.pb.h"
-#include "net/http_client_mock.h"
-#include "storage/registry.h"
 #include "sync/contact_syncer.h"
-#include "sync/inprocess_service.h"
+
+#include <cstddef>
+#include <string>
+#include <utility>
+#include <vector>
+
+#include "base/scoped_ptr.h"
+#include "base/system_util.h"
+#include "base/util.h"
+#include "config/config.pb.h"
+#include "config/config_handler.h"
+#include "dictionary/user_dictionary_storage.pb.h"
+#include "net/http_client.h"
+#include "net/http_client_mock.h"
+#include "storage/memory_storage.h"
+#include "storage/registry.h"
+#include "storage/storage_interface.h"
+#include "sync/oauth2.h"
 #include "sync/oauth2_client.h"
+#include "sync/oauth2_server.h"
 #include "sync/oauth2_util.h"
 #include "testing/base/public/gunit.h"
 
@@ -51,32 +61,39 @@ using config::ConfigHandler;
 using config::SyncConfig;
 
 namespace {
+
 const char kAuthorizeClientUrl[] = "https://accounts.google.com/o/oauth2/auth";
 const char kRedirectUri[] = "urn:ietf:wg:oauth:2.0:oob";
 const char kAuthorizeTokenUri[] = "https://accounts.google.com/o/oauth2/token";
 const char kScope[] = "https://www.google.com/m8/feeds/";
 
 const char kAuthToken[] = "4/correct_authorization_token";
-const char kWrongAuthToken[] = "4/wrong_authorization_token_a";
 const char kAccessToken[] = "1/first_correct_access_token_bbbbbbbbbbbbbbbb";
 const char kRefreshToken[] = "1/first_correct_refresh_token_ccccccccccccccc";
 const char kAccessToken2[] = "1/second_correct_access_token_bbbbbbbbbbbbbbb";
 const char kRefreshToken2[] = "1/second_correct_refresh_token_cccccccccccccc";
 const char kResourceUri[] =
     "https://www.google.com/m8/feeds/contacts/default/full";
+
 }  // namespace
 
 class ContactSyncerTest : public testing::Test {
  protected:
-  virtual void SetUp() {
-    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    HTTPClient::SetHTTPClientHandler(&client_);
-    oauth2_client_.reset(new OAuth2Client(
-        "google", "dummyclientid", "dummyclientsecret"));
-    ConfigHandler::SetConfigFileName("memory://config");
-    storage::Registry::Clear();
+  ContactSyncerTest()
+      : oauth2_client_("google", "dummyclientid", "dummyclientsecret"),
+        oauth2_server_(
+            kAuthorizeClientUrl, kRedirectUri, kAuthorizeTokenUri, kScope) {}
 
-    Config config = ConfigHandler::GetConfig();
+  virtual void SetUp() {
+    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    HTTPClient::SetHTTPClientHandler(&client_);
+    ConfigHandler::SetConfigFileName("memory://config");
+
+    storage_.reset(mozc::storage::MemoryStorage::New());
+    mozc::storage::Registry::SetStorage(storage_.get());
+
+    Config config;
+    ConfigHandler::GetDefaultConfig(&config);
     SyncConfig *sync_config = config.mutable_sync_config();
     sync_config->set_use_config_sync(true);
     sync_config->set_use_user_dictionary_sync(true);
@@ -86,18 +103,27 @@ class ContactSyncerTest : public testing::Test {
     ConfigHandler::SetConfig(config);
   }
 
+  virtual void TearDown() {
+    HTTPClient::SetHTTPClientHandler(NULL);
+    mozc::storage::Registry::SetStorage(NULL);
+    storage_.reset();
+
+    Config config;
+    ConfigHandler::GetDefaultConfig(&config);
+    ConfigHandler::SetConfig(config);
+  }
+
   void SetAuthorizationServer() {
     vector<pair<string, string> > params;
     params.push_back(make_pair("grant_type", "authorization_code"));
-    params.push_back(make_pair("client_id", oauth2_client_->client_id_));
-    params.push_back(make_pair("client_secret",
-                               oauth2_client_->client_secret_));
-    params.push_back(make_pair("redirect_uri", kRedirectUri));
+    params.push_back(make_pair("client_id", GetClient().client_id_));
+    params.push_back(make_pair("client_secret", GetClient().client_secret_));
+    params.push_back(make_pair("redirect_uri", GetServer().redirect_uri_));
     params.push_back(make_pair("code", kAuthToken));
-    params.push_back(make_pair("scope", kScope));
+    params.push_back(make_pair("scope", GetServer().scope_));
 
     HTTPClientMock::Result result;
-    result.expected_url = kAuthorizeTokenUri;
+    result.expected_url = GetServer().request_token_uri_;
     Util::AppendCGIParams(params, &result.expected_request);
     result.expected_result = string("{") +
         "\"access_token\":\"" + kAccessToken + "\",\"token_type\":\"Bearer\","
@@ -133,31 +159,24 @@ class ContactSyncerTest : public testing::Test {
     client_.set_option(option);
   }
 
-  void SetRefreshServer() {
-    vector<pair<string, string> > params;
-    params.push_back(make_pair("grant_type", "refresh_token"));
-    params.push_back(make_pair("client_id", oauth2_client_->client_id_));
-    params.push_back(make_pair("client_secret",
-                               oauth2_client_->client_secret_));
-    params.push_back(make_pair("refresh_token", kRefreshToken));
-    params.push_back(make_pair("scope", kScope));
-    HTTPClientMock::Result result;
-    result.expected_url = kAuthorizeTokenUri;
-    Util::AppendCGIParams(params, &result.expected_request);
-    result.expected_result = string("{") +
-        "\"access_token\":\"" + kAccessToken2 + "\",\"token_type\":\"Bearer\","
-        "\"expires_in\":3600,\"refresh_token\":\"" + kRefreshToken2 + "\"}";
-    client_.set_result(result);
+  const OAuth2Client &GetClient() const {
+    return oauth2_client_;
+  }
+  const OAuth2Server &GetServer() const {
+    return oauth2_server_;
   }
 
+ private:
+  const OAuth2Client oauth2_client_;
+  const OAuth2Server oauth2_server_;
   HTTPClientMock client_;
-  scoped_ptr<OAuth2Client> oauth2_client_;
+  scoped_ptr<mozc::storage::StorageInterface> storage_;
 };
 
 TEST_F(ContactSyncerTest, Timestamp) {
   SetAuthorizationServer();
-  OAuth2Util oauth2_util(oauth2_client_.get());
-  oauth2_util.set_scope(kScope);
+  OAuth2Util oauth2_util(GetClient(), GetServer());
+  oauth2_util.set_scope(GetServer().scope_);
   ContactSyncer syncer(&oauth2_util);
 
   string timestamp;
@@ -171,12 +190,11 @@ TEST_F(ContactSyncerTest, Timestamp) {
 
 TEST_F(ContactSyncerTest, Download) {
   SetAuthorizationServer();
-  OAuth2Util oauth2_util(oauth2_client_.get());
-  oauth2_util.set_scope(kScope);
+  OAuth2Util oauth2_util(GetClient(), GetServer());
+  oauth2_util.set_scope(GetServer().scope_);
   ContactSyncer syncer(&oauth2_util);
-  OAuth2::Error error;
 
-  EXPECT_TRUE(oauth2_util.RequestAccessToken(kAuthToken, &error));
+  EXPECT_EQ(OAuth2::kNone, oauth2_util.RequestAccessToken(kAuthToken));
 
   SetResourceServer();
   syncer.SetLastDownloadTimestamp("2011-05-22T04:00:00.000Z");

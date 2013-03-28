@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,12 +29,16 @@
 
 #include "dictionary/system/system_dictionary.h"
 
+#include <cstdlib>
 #include <string>
+#include <utility>
 #include <vector>
 
-#include "base/base.h"
+#include "base/file_util.h"
 #include "base/logging.h"
-#include "base/singleton.h"
+#include "base/port.h"
+#include "base/stl_util.h"
+#include "base/system_util.h"
 #include "base/trie.h"
 #include "base/util.h"
 #include "converter/node.h"
@@ -42,12 +46,9 @@
 #include "data_manager/user_pos_manager.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
-#include "dictionary/system/codec.h"
+#include "dictionary/system/codec_interface.h"
 #include "dictionary/system/system_dictionary_builder.h"
 #include "dictionary/text_dictionary_loader.h"
-#include "session/commands.pb.h"
-#include "session/request_handler.h"
-#include "session/request_test_util.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
@@ -83,20 +84,21 @@ namespace dictionary {
 namespace {
 }  // namespace
 
+using mozc::storage::louds::KeyExpansionTable;
+
 class SystemDictionaryTest : public testing::Test {
  protected:
   SystemDictionaryTest()
       : text_dict_(new TextDictionaryLoader(
           *UserPosManager::GetUserPosManager()->GetPOSMatcher())),
         dic_fn_(FLAGS_test_tmpdir + "/mozc.dic") {
-    const string dic_path = Util::JoinPath(FLAGS_test_srcdir,
-                                           FLAGS_dictionary_source);
-    CHECK(text_dict_->OpenWithLineLimit(dic_path.c_str(),
-                                        FLAGS_dictionary_test_size));
+    const string dic_path = FileUtil::JoinPath(FLAGS_test_srcdir,
+                                               FLAGS_dictionary_source);
+    text_dict_->LoadWithLineLimit(dic_path, "", FLAGS_dictionary_test_size);
   }
 
   virtual void SetUp() {
-    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
   }
 
   void BuildSystemDictionary(const vector <Token *>& tokens,
@@ -127,6 +129,29 @@ class SystemDictionaryTest : public testing::Test {
   const string dic_fn_;
 };
 
+namespace {
+void DeleteNodes(Node *node) {
+  while (node) {
+    Node *tmp_node = node;
+    node = node->bnext;
+    delete tmp_node;
+  }
+}
+
+const Node* FindNodeByToken(const Token &token, const Node &node) {
+  const Node *n = &node;
+  while (n) {
+    if (n->key == token.key &&
+        n->value == token.value &&
+        n->lid == token.lid &&
+        n->rid == token.rid) {  // Doesn't compare costs
+      return n;
+    }
+    n = n->bnext;
+  }
+  return NULL;
+}
+}  // namespace
 
 void SystemDictionaryTest::BuildSystemDictionary(const vector <Token *>& source,
                                                  int num_tokens) {
@@ -179,6 +204,49 @@ bool SystemDictionaryTest::CompareForLookup(const Node *node,
     return false;
   }
   return true;
+}
+
+TEST_F(SystemDictionaryTest, HasValue) {
+  vector<Token *> tokens(4);
+  for (size_t i = 0; i < 4; ++i) {
+    tokens[i] = new Token;
+    tokens[i]->key = Util::StringPrintf(
+        "\xE3\x81\x8D\xE3\x83\xBC%d",  // "きー%d"
+        static_cast<int>(i));
+    tokens[i]->value = Util::StringPrintf(
+        "\xE3\x83\x90\xE3\x83\xAA\xE3\x83\xA5\xE3\x83\xBC%d",  // "バリュー%d"
+        static_cast<int>(i));
+  }
+  BuildSystemDictionary(tokens, 4);
+
+  scoped_ptr<SystemDictionary> system_dic(
+      SystemDictionary::CreateSystemDictionaryFromFile(dic_fn_));
+  ASSERT_TRUE(system_dic.get() != NULL)
+      << "Failed to open dictionary source:" << dic_fn_;
+
+  EXPECT_TRUE(system_dic->HasValue(
+      // "バリュー0"
+      "\xE3\x83\x90\xE3\x83\xAA\xE3\x83\xA5\xE3\x83\xBC\x30"));
+  EXPECT_TRUE(system_dic->HasValue(
+      // "バリュー1"
+      "\xE3\x83\x90\xE3\x83\xAA\xE3\x83\xA5\xE3\x83\xBC\x31"));
+  EXPECT_TRUE(system_dic->HasValue(
+      // "バリュー2"
+      "\xE3\x83\x90\xE3\x83\xAA\xE3\x83\xA5\xE3\x83\xBC\x32"));
+  EXPECT_TRUE(system_dic->HasValue(
+      // "バリュー3"
+      "\xE3\x83\x90\xE3\x83\xAA\xE3\x83\xA5\xE3\x83\xBC\x33"));
+  EXPECT_FALSE(system_dic->HasValue(
+      // "バリュー4"
+      "\xE3\x83\x90\xE3\x83\xAA\xE3\x83\xA5\xE3\x83\xBC\x34"));
+  EXPECT_FALSE(system_dic->HasValue(
+      // "バリュー5"
+      "\xE3\x83\x90\xE3\x83\xAA\xE3\x83\xA5\xE3\x83\xBC\x35"));
+  EXPECT_FALSE(system_dic->HasValue(
+      // "バリュー6"
+      "\xE3\x83\x90\xE3\x83\xAA\xE3\x83\xA5\xE3\x83\xBC\x36"));
+
+  STLDeleteElements(&tokens);
 }
 
 TEST_F(SystemDictionaryTest, test_normal_word) {
@@ -287,8 +355,7 @@ TEST_F(SystemDictionaryTest, test_same_word) {
 }
 
 TEST_F(SystemDictionaryTest, test_words) {
-  vector<Token *> source_tokens;
-  text_dict_->CollectTokens(&source_tokens);
+  const vector<Token *> &source_tokens = text_dict_->tokens();
   BuildSystemDictionary(source_tokens, FLAGS_dictionary_test_size);
 
   scoped_ptr<SystemDictionary> system_dic(
@@ -355,6 +422,208 @@ TEST_F(SystemDictionaryTest, test_prefix) {
     delete tmp_node;
   }
   EXPECT_TRUE(found_k0) << "Failed to find " << k0;
+}
+
+namespace {
+
+class LookupPrefixTestCallback : public SystemDictionary::Callback {
+ public:
+  virtual ResultType OnKey(const string &key) {
+    if (key == "\xE3\x81\x8B\xE3\x81\x8D") {  // key == "かき"
+      return TRAVERSE_CULL;
+    } else if (key == "\xE3\x81\x95") {  // key == "さ"
+      return TRAVERSE_NEXT_KEY;
+    } else if (key == "\xE3\x81\x9F") {  // key == "た"
+      return TRAVERSE_DONE;
+    }
+    return TRAVERSE_CONTINUE;
+  }
+
+  virtual ResultType OnToken(const string &key, const string &actual_key,
+                             const TokenInfo &token_info) {
+    result_.insert(make_pair(token_info.token->key, token_info.token->value));
+    return TRAVERSE_CONTINUE;
+  }
+
+  const set<pair<string, string> > &result() const {
+    return result_;
+  }
+
+ private:
+  set<pair<string, string> > result_;
+};
+
+}  // namespace
+
+TEST_F(SystemDictionaryTest, LookupPrefixWithCallback) {
+  // Set up a test dictionary.
+  struct {
+    const char *key;
+    const char *value;
+  } kKeyValues[] = {
+    // "あ", "亜"
+    { "\xE3\x81\x82", "\xE4\xBA\x9C" },
+    // "あ", "安"
+    { "\xE3\x81\x82", "\xE5\xAE\x89" },
+    // "あ", "在"
+    { "\xE3\x81\x82", "\xE5\x9C\xA8" },
+    // "あい", "愛"
+    { "\xE3\x81\x82\xE3\x81\x84", "\xE6\x84\x9B" },
+    // "あい", "藍"
+    { "\xE3\x81\x82\xE3\x81\x84", "\xE8\x97\x8D" },
+    // "あいう", "藍雨"
+    { "\xE3\x81\x82\xE3\x81\x84\xE3\x81\x86", "\xE8\x97\x8D\xE9\x9B\xA8" },
+    // "か", "可"
+    { "\xE3\x81\x8B", "\xE5\x8F\xAF" },
+    // "かき", "牡蠣"
+    { "\xE3\x81\x8B\xE3\x81\x8D", "\xE7\x89\xA1\xE8\xA0\xA3" },
+    // "かき", "夏季"
+    { "\xE3\x81\x8B\xE3\x81\x8D", "\xE5\xA4\x8F\xE5\xAD\xA3" },
+    // "かきく", "柿久"
+    { "\xE3\x81\x8B\xE3\x81\x8D\xE3\x81\x8F", "\xE6\x9F\xBF\xE4\xB9\x85" },
+    // "さ", "差"
+    { "\xE3\x81\x95", "\xE5\xB7\xAE" },
+    // "さ", "左"
+    { "\xE3\x81\x95", "\xE5\xB7\xA6" },
+    // "さし", "刺"
+    { "\xE3\x81\x95\xE3\x81\x97", "\xE5\x88\xBA" },
+    // "た", "田"
+    { "\xE3\x81\x9F", "\xE7\x94\xB0" },
+    // "た", "多"
+    { "\xE3\x81\x9F", "\xE5\xA4\x9A" },
+    // "たち", 多値"
+    { "\xE3\x81\x9F\xE3\x81\xA1", "\xE5\xA4\x9A\xE5\x80\xA4" },
+    // "たちつ", "タチツ"
+    { "\xE3\x81\x9F\xE3\x81\xA1\xE3\x81\xA4",
+      "\xE3\x82\xBF\xE3\x83\x81\xE3\x83\x84" },
+    // "は", "葉"
+    { "\xE3\x81\xAF", "\xE8\x91\x89" },
+    // "は", "歯"
+    { "\xE3\x81\xAF", "\xE6\xAD\xAF" },
+    // "はひ", "ハヒ"
+    { "\xE3\x81\xAF\xE3\x81\xB2", "\xE3\x83\x8F\xE3\x83\x92" },
+    // "ば", "場"
+    { "\xE3\x81\xB0", "\xE5\xA0\xB4" },
+    // "はび", "波美"
+    { "\xE3\x81\xAF\xE3\x81\xB3", "\xE6\xB3\xA2\xE7\xBE\x8E" },
+    // "ばび", "馬尾"
+    { "\xE3\x81\xB0\xE3\x81\xB3", "\xE9\xA6\xAC\xE5\xB0\xBE" },
+    // "ばびぶ", "バビブ"
+    { "\xE3\x81\xB0\xE3\x81\xB3\xE3\x81\xB6",
+      "\xE3\x83\x90\xE3\x83\x93\xE3\x83\x96" },
+  };
+  const size_t kKeyValuesSize = ARRAYSIZE_UNSAFE(kKeyValues);
+  scoped_ptr<Token> tokens[kKeyValuesSize];
+  vector<Token *> source_tokens(kKeyValuesSize);
+  for (size_t i = 0; i < kKeyValuesSize; ++i) {
+    tokens[i].reset(CreateToken(kKeyValues[i].key, kKeyValues[i].value));
+    source_tokens[i] = tokens[i].get();
+  }
+  text_dict_->CollectTokens(&source_tokens);
+  BuildSystemDictionary(source_tokens, kKeyValuesSize);
+  scoped_ptr<SystemDictionary> system_dic(
+      SystemDictionary::CreateSystemDictionaryFromFile(dic_fn_));
+  ASSERT_TRUE(system_dic.get() != NULL)
+      << "Failed to open dictionary source:" << dic_fn_;
+
+  // Test for normal prefix lookup without key expansion.
+  {
+    LookupPrefixTestCallback callback;
+    system_dic->LookupPrefixWithCallback(
+        "\xE3\x81\x82\xE3\x81\x84",  // "あい"
+        false,
+        &callback);
+    const set<pair<string, string> > &result = callback.result();
+    // "あ" -- "あい" should be found.
+    for (size_t i = 0; i < 5; ++i) {
+      const pair<string, string> entry(
+          kKeyValues[i].key, kKeyValues[i].value);
+      EXPECT_TRUE(result.end() != result.find(entry));
+    }
+    // The others should not be found.
+    for (size_t i = 5; i < ARRAYSIZE_UNSAFE(kKeyValues); ++i) {
+      const pair<string, string> entry(
+          kKeyValues[i].key, kKeyValues[i].value);
+      EXPECT_TRUE(result.end() == result.find(entry));
+    }
+  }
+
+  // Test for normal prefix lookup without key expansion, but with culling
+  // feature.
+  {
+    LookupPrefixTestCallback callback;
+    system_dic->LookupPrefixWithCallback(
+        "\xE3\x81\x8B\xE3\x81\x8D\xE3\x81\x8F",  //"かきく"
+        false,
+        &callback);
+    const set<pair<string, string> > &result = callback.result();
+    // Only "か" should be found as the callback doesn't traverse the subtree of
+    // "かき" due to culling request from LookupPrefixTestCallback::OnKey().
+    for (size_t i = 0; i < kKeyValuesSize; ++i) {
+      const pair<string, string> entry(
+          kKeyValues[i].key, kKeyValues[i].value);
+      EXPECT_EQ(entry.first == "\xE3\x81\x8B",  // "か"
+                result.find(entry) != result.end());
+    }
+  }
+
+  // Test for TRAVERSE_NEXT_KEY.
+  {
+    LookupPrefixTestCallback callback;
+    system_dic->LookupPrefixWithCallback(
+        "\xE3\x81\x95\xE3\x81\x97\xE3\x81\x99",  // "さしす"
+        false,
+        &callback);
+    const set<pair<string, string> > &result = callback.result();
+    // Only "さし" should be found as tokens for "さ" is skipped (see
+    // LookupPrefixTestCallback::OnKey()).
+    for (size_t i = 0; i < kKeyValuesSize; ++i) {
+      const pair<string, string> entry(
+          kKeyValues[i].key, kKeyValues[i].value);
+      EXPECT_EQ(entry.first == "\xE3\x81\x95\xE3\x81\x97",  // "さし"
+                result.find(entry) != result.end());
+    }
+  }
+
+  // Test for TRAVERSE_DONE.
+  {
+    LookupPrefixTestCallback callback;
+    system_dic->LookupPrefixWithCallback(
+        "\xE3\x81\x9F\xE3\x81\xA1\xE3\x81\xA4",  // "たちつ"
+        false,
+        &callback);
+    const set<pair<string, string> > &result = callback.result();
+    // Nothing should be found as the traversal is immediately done after seeing
+    // "た"; see LookupPrefixTestCallback::OnKey().
+    EXPECT_TRUE(result.empty());
+  }
+
+  // Test for prefix lookup with key expansion.
+  {
+    LookupPrefixTestCallback callback;
+    system_dic->LookupPrefixWithCallback(
+        "\xE3\x81\xAF\xE3\x81\xB2",  // "はひ"
+        true,  // Use kana modifier insensitive lookup
+        &callback);
+    const set<pair<string, string> > &result = callback.result();
+    const char *kExpectedKeys[] = {
+      "\xE3\x81\xAF",  // "は"
+      "\xE3\x81\xB0",  // "ば"
+      "\xE3\x81\xAF\xE3\x81\xB2",  // "はひ"
+      "\xE3\x81\xB0\xE3\x81\xB2",  // "ばひ"
+      "\xE3\x81\xAF\xE3\x81\xB3",  // "はび"
+      "\xE3\x81\xB0\xE3\x81\xB3",  // "ばび"
+    };
+    const set<string> expected(kExpectedKeys,
+                               kExpectedKeys + arraysize(kExpectedKeys));
+    for (size_t i = 0; i < kKeyValuesSize; ++i) {
+      const bool to_be_found =
+          expected.find(kKeyValues[i].key) != expected.end();
+      const pair<string, string> entry(
+          kKeyValues[i].key, kKeyValues[i].value);
+      EXPECT_EQ(to_be_found, result.find(entry) != result.end());
+    }
+  }
 }
 
 TEST_F(SystemDictionaryTest, test_predictive) {
@@ -872,9 +1141,11 @@ class CodecForTest : public SystemDictionaryCodecInterface {
   const string GetSectionNameForValue() const { return "Mock"; }
   const string GetSectionNameForTokens() const { return "Mock"; }
   const string GetSectionNameForPos() const { return "Mock"; }
-  void EncodeKey(const string &src, string *dst) const {}
-  void DecodeKey(const string &src, string *dst) const {}
-  void EncodeValue(const string &src, string *dst) const {}
+  void EncodeKey(const StringPiece src, string *dst) const {}
+  void DecodeKey(const StringPiece src, string *dst) const {}
+  size_t GetEncodedKeyLength(const StringPiece src) const { return 0; }
+  size_t GetDecodedKeyLength(const StringPiece src) const { return 0; }
+  void EncodeValue(const StringPiece src, string *dst) const {}
   void EncodeTokens(
       const vector<TokenInfo> &tokens, string *output) const {}
   void DecodeTokens(
@@ -904,7 +1175,7 @@ class CodecForTest : public SystemDictionaryCodecInterface {
     return true;
   }
 
-  void DecodeValue(const string &src, string *dst) const {
+  void DecodeValue(const StringPiece src, string *dst) const {
     *dst = "DummyValue";
   }
 
@@ -950,6 +1221,211 @@ TEST_F(SystemDictionaryTest, TokenAfterSpellningToken) {
   }
 }
 
+TEST_F(SystemDictionaryTest, EnableNoModifierTargetWithLoudsTrie) {
+  DictionaryInterface::Limit limit;
+  limit.kana_modifier_insensitive_lookup_enabled = true;
+
+  vector<Token *> source_tokens;
+
+  // "かつ"
+  const string k0 = "\xE3\x81\x8B\xE3\x81\xA4";
+  // "かっこ"
+  const string k1 = "\xE3\x81\x8B\xE3\x81\xA3\xE3\x81\x93";
+  // "かつこう"
+  const string k2 = "\xE3\x81\x8B\xE3\x81\xA4\xE3\x81\x93\xE3\x81\x86";
+  // "かっこう"
+  const string k3 = "\xE3\x81\x8B\xE3\x81\xA3\xE3\x81\x93\xE3\x81\x86";
+  // "がっこう"
+  const string k4 = "\xE3\x81\x8C\xE3\x81\xA3\xE3\x81\x93\xE3\x81\x86";
+
+  scoped_ptr<Token> t0(CreateToken(k0, "aa"));
+  scoped_ptr<Token> t1(CreateToken(k1, "bb"));
+  scoped_ptr<Token> t2(CreateToken(k2, "cc"));
+  scoped_ptr<Token> t3(CreateToken(k3, "dd"));
+  scoped_ptr<Token> t4(CreateToken(k4, "ee"));
+  source_tokens.push_back(t0.get());
+  source_tokens.push_back(t1.get());
+  source_tokens.push_back(t2.get());
+  source_tokens.push_back(t3.get());
+  source_tokens.push_back(t4.get());
+
+  text_dict_->CollectTokens(&source_tokens);
+  BuildSystemDictionary(source_tokens, 100);
+
+  scoped_ptr<SystemDictionary> system_dic(
+      SystemDictionary::CreateSystemDictionaryFromFile(dic_fn_));
+  ASSERT_TRUE(system_dic.get() != NULL)
+      << "Failed to open dictionary source:" << dic_fn_;
+
+  // Prefix searches
+
+  // "かつこう" -> "かつ", "かっこ", "かつこう", "かっこう" and "がっこう"
+  Node *node = system_dic->LookupPrefixWithLimit(k2.c_str(), k2.size(), limit,
+                                                 NULL);
+
+  ASSERT_TRUE(node != NULL) << "no nodes found";
+  EXPECT_TRUE(FindNodeByToken(*t0, *node));
+  EXPECT_TRUE(FindNodeByToken(*t1, *node));
+  EXPECT_TRUE(FindNodeByToken(*t2, *node));
+  EXPECT_TRUE(FindNodeByToken(*t3, *node));
+  EXPECT_TRUE(FindNodeByToken(*t4, *node));
+
+  DeleteNodes(node);
+
+  // "かっこう" -> "かっこ", "かっこう" and "がっこう"
+  node = system_dic->LookupPrefixWithLimit(k3.c_str(), k3.size(), limit,
+                                           NULL);
+
+  ASSERT_TRUE(node != NULL) << "no nodes found";
+  EXPECT_TRUE(FindNodeByToken(*t1, *node));
+  EXPECT_TRUE(FindNodeByToken(*t3, *node));
+  EXPECT_TRUE(FindNodeByToken(*t4, *node));
+
+  // The costs for "かっこ" and "かっこう" should be the same
+  EXPECT_EQ(t1->cost, (FindNodeByToken(*t1, *node))->wcost);
+  EXPECT_EQ(t3->cost, (FindNodeByToken(*t3, *node))->wcost);
+
+  // The cost for "がっこう" should be higher
+  EXPECT_LT(t4->cost, (FindNodeByToken(*t4, *node))->wcost);
+
+  DeleteNodes(node);
+
+  // Predictive searches
+
+  // "かつ" -> "かつ", "かっこ", "かつこう", "かっこう" and "がっこう"
+  node = system_dic->LookupPredictiveWithLimit(k0.c_str(), k0.size(), limit,
+                                               NULL);
+
+  ASSERT_TRUE(node != NULL) << "no nodes found";
+  EXPECT_TRUE(FindNodeByToken(*t0, *node));
+  EXPECT_TRUE(FindNodeByToken(*t1, *node));
+  EXPECT_TRUE(FindNodeByToken(*t2, *node));
+  EXPECT_TRUE(FindNodeByToken(*t3, *node));
+  EXPECT_TRUE(FindNodeByToken(*t4, *node));
+
+  DeleteNodes(node);
+
+  // "かっこ" -> "かっこ", "かっこう" and "がっこう"
+  node = system_dic->LookupPredictiveWithLimit(k1.c_str(), k1.size(), limit,
+                                               NULL);
+
+  ASSERT_TRUE(node != NULL) << "no nodes found";
+  EXPECT_TRUE(FindNodeByToken(*t1, *node));
+  EXPECT_TRUE(FindNodeByToken(*t3, *node));
+  EXPECT_TRUE(FindNodeByToken(*t4, *node));
+
+  // The costs for "かっこ" and "かっこう" should be the same
+  EXPECT_EQ(t1->cost, (FindNodeByToken(*t1, *node))->wcost);
+  EXPECT_EQ(t3->cost, (FindNodeByToken(*t3, *node))->wcost);
+
+  // The cost for "がっこう" should be higher
+  EXPECT_LT(t4->cost, (FindNodeByToken(*t4, *node))->wcost);
+
+  DeleteNodes(node);
+}
+
+TEST_F(SystemDictionaryTest, NoModifierForKanaEntries) {
+  DictionaryInterface::Limit limit;
+  limit.kana_modifier_insensitive_lookup_enabled = true;
+
+  vector<Token *> source_tokens;
+
+  // "ていすてぃんぐ", "テイスティング"
+  scoped_ptr<Token> t0(CreateToken(
+      "\xe3\x81\xa6\xe3\x81\x84\xe3\x81\x99\xe3\x81\xa6"
+      "\xe3\x81\x83\xe3\x82\x93\xe3\x81\x90",
+      "\xe3\x83\x86\xe3\x82\xa4\xe3\x82\xb9\xe3\x83\x86"
+      "\xe3\x82\xa3\xe3\x83\xb3\xe3\x82\xb0"));
+  // "てすとです", "てすとです"
+  scoped_ptr<Token> t1(CreateToken(
+      "\xe3\x81\xa6\xe3\x81\x99\xe3\x81\xa8\xe3\x81\xa7\xe3\x81\x99",
+      "\xe3\x81\xa6\xe3\x81\x99\xe3\x81\xa8\xe3\x81\xa7\xe3\x81\x99"));
+  source_tokens.push_back(t0.get());
+  source_tokens.push_back(t1.get());
+
+  text_dict_->CollectTokens(&source_tokens);
+  BuildSystemDictionary(source_tokens, 100);
+
+  scoped_ptr<SystemDictionary> system_dic(
+      SystemDictionary::CreateSystemDictionaryFromFile(dic_fn_));
+  ASSERT_TRUE(system_dic.get() != NULL)
+      << "Failed to open dictionary source:" << dic_fn_;
+
+  // Prefix searches
+  // "ていすていんぐ"
+  const string k = "\xe3\x81\xa6\xe3\x81\x84\xe3\x81\x99\xe3\x81\xa6"
+      "\xe3\x81\x84\xe3\x82\x93\xe3\x81\x90";
+  Node *node = system_dic->LookupPrefixWithLimit(k.c_str(), k.size(), limit,
+                                                 NULL);
+
+  ASSERT_TRUE(node != NULL) << "no nodes found";
+  EXPECT_TRUE(FindNodeByToken(*t0, *node));
+
+  DeleteNodes(node);
+}
+
+TEST_F(SystemDictionaryTest, DoNotReturnNoModifierTargetWithLoudsTrie) {
+  DictionaryInterface::Limit limit;
+
+  vector<Token *> source_tokens;
+
+  // "かつ"
+  const string k0 = "\xE3\x81\x8B\xE3\x81\xA4";
+  // "かっこ"
+  const string k1 = "\xE3\x81\x8B\xE3\x81\xA3\xE3\x81\x93";
+  // "かつこう"
+  const string k2 = "\xE3\x81\x8B\xE3\x81\xA4\xE3\x81\x93\xE3\x81\x86";
+  // "かっこう"
+  const string k3 = "\xE3\x81\x8B\xE3\x81\xA3\xE3\x81\x93\xE3\x81\x86";
+  // "がっこう"
+  const string k4 = "\xE3\x81\x8C\xE3\x81\xA3\xE3\x81\x93\xE3\x81\x86";
+
+  scoped_ptr<Token> t0(CreateToken(k0, "aa"));
+  scoped_ptr<Token> t1(CreateToken(k1, "bb"));
+  scoped_ptr<Token> t2(CreateToken(k2, "cc"));
+  scoped_ptr<Token> t3(CreateToken(k3, "dd"));
+  scoped_ptr<Token> t4(CreateToken(k4, "ee"));
+  source_tokens.push_back(t0.get());
+  source_tokens.push_back(t1.get());
+  source_tokens.push_back(t2.get());
+  source_tokens.push_back(t3.get());
+  source_tokens.push_back(t4.get());
+
+  text_dict_->CollectTokens(&source_tokens);
+  BuildSystemDictionary(source_tokens, 100);
+
+  scoped_ptr<SystemDictionary> system_dic(
+      SystemDictionary::CreateSystemDictionaryFromFile(dic_fn_));
+  ASSERT_TRUE(system_dic.get() != NULL)
+      << "Failed to open dictionary source:" << dic_fn_;
+
+  // Prefix search
+
+  // "かっこう" -> "かっこ" and "かっこう"
+  // Make sure "がっこう" is not in the results when searched by "かっこう"
+  Node *node = system_dic->LookupPrefixWithLimit(k3.c_str(), k3.size(), limit,
+                                                 NULL);
+
+  ASSERT_TRUE(node != NULL) << "no nodes found";
+  EXPECT_TRUE(FindNodeByToken(*t1, *node));
+  EXPECT_TRUE(FindNodeByToken(*t3, *node));
+  EXPECT_FALSE(FindNodeByToken(*t4, *node));
+
+  DeleteNodes(node);
+
+  // Predictive search
+  // "かっこ" -> "かっこ" and "かっこう"
+  // Make sure "がっこう" is not in the results when searched by "かっこ"
+  node = system_dic->LookupPredictiveWithLimit(k1.c_str(), k1.size(), limit,
+                                               NULL);
+
+  ASSERT_TRUE(node != NULL) << "no nodes found";
+  EXPECT_TRUE(FindNodeByToken(*t1, *node));
+  EXPECT_TRUE(FindNodeByToken(*t3, *node));
+  EXPECT_FALSE(FindNodeByToken(*t4, *node));
+
+  DeleteNodes(node);
+}
 
 }  // namespace dictionary
 }  // namespace mozc

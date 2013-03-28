@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
 
 #include "gui/config_dialog/keybinding_editor.h"
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <windows.h>
 #include <imm.h>
 #include <ime.h>
@@ -42,6 +42,7 @@
 #include <QtGui/QMessageBox>
 
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/util.h"
 
 namespace mozc {
@@ -98,7 +99,7 @@ const QtKeyEntry kQtKeyModifierNonRequiredTable[] = {
   { Qt::Key_F24, "F24" }
 };
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 struct WinVirtualKeyEntry {
   DWORD virtual_key;
   const char *mozc_key_name;
@@ -143,14 +144,14 @@ const LinuxVirtualKeyEntry kLinuxVirtualKeyModifierNonRequiredTable[] = {
 // On Windows Hiragana/Eisu keys only emits KEY_DOWN event.
 // for these keys we don't hanlde auto-key repeat.
 bool IsDownOnlyKey(const QKeyEvent &key_event) {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   const DWORD virtual_key = key_event.nativeVirtualKey();
   return (virtual_key == VK_DBE_ALPHANUMERIC ||
           virtual_key == VK_DBE_HIRAGANA ||
           virtual_key == VK_DBE_KATAKANA);
 #else
   return false;
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 }
 
 bool IsAlphabet(const char key) {
@@ -378,7 +379,7 @@ KeyBindingFilter::KeyState KeyBindingFilter::AddKey(
     }
   }
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   // Handle JP109's Muhenkan/Henkan/katakana-hiragana and Zenkaku/Hankaku
   const DWORD virtual_key = key_event.nativeVirtualKey();
   for (size_t i = 0; i < arraysize(kWinVirtualKeyModifierNonRequiredTable);
@@ -522,7 +523,7 @@ KeyBindingEditor::KeyBindingEditor(QWidget *parent, QWidget *trigger_parent)
   KeyBindingLineEdit->setMaxLength(32);
   KeyBindingLineEdit->setAttribute(Qt::WA_InputMethodEnabled, false);
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   ::ImmAssociateContext(KeyBindingLineEdit->winId(), 0);
 #endif
 
@@ -555,5 +556,5 @@ void KeyBindingEditor::SetBinding(const QString &binding) {
   KeyBindingLineEdit->setText(binding);
   KeyBindingLineEdit->setCursorPosition(0);
 }
-}  // gui
-}  // mozc
+}  // namespace gui
+}  // namespace mozc

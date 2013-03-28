@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,7 @@
 
 namespace mozc {
 
+class ConversionRequest;
 class Segments;
 
 // Perform one-shot conversion with constraints.
@@ -39,7 +40,19 @@ class Segments;
 class ImmutableConverterInterface {
  public:
   virtual ~ImmutableConverterInterface() {}
-  virtual bool Convert(Segments *segments) const = 0;
+
+  // This method is equivalent to:
+  //   const ConversionRequest request;
+  //   ConvertForRequest(request, segments);
+  // TODO(hidehiko): Deprecate this method and use ConvertForRequest.
+  virtual bool Convert(Segments *segments) const;
+
+  // This method should be pure-virtual method in theory.
+  // However, to keep the backward compatibility untill the deprecation of
+  // Conversion method, we provide the default implementation.
+  // Please see the .cc file.
+  virtual bool ConvertForRequest(
+      const ConversionRequest &request, Segments *segments) const;
 
  protected:
   ImmutableConverterInterface() {}

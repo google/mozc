@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -70,20 +70,22 @@ void GetInputFileName(const string &input_file,
                       string *reading_correction_input) {
   CHECK(system_dictionary_input);
   CHECK(reading_correction_input);
-  vector<string> input_files;
-  Util::SplitStringUsing(input_file, " ", &input_files);
   system_dictionary_input->clear();
   reading_correction_input->clear();
-  for (size_t i = 0; i < input_files.size(); ++i) {
-    if (Util::EndsWith(input_files[i], kReadingCorrectionFile)) {
-      Util::AppendStringWithDelimiter(",", input_files[i],
+  const StringPiece kDelimiter(", ", 1);
+  for (SplitIterator<SingleDelimiter> iter(input_file, " ");
+       !iter.Done(); iter.Next()) {
+    const StringPiece &input_file = iter.Get();
+    if (Util::EndsWith(input_file, kReadingCorrectionFile)) {
+      Util::AppendStringWithDelimiter(kDelimiter, input_file,
                                       reading_correction_input);
     } else {
-      Util::AppendStringWithDelimiter(",", input_files[i],
+      Util::AppendStringWithDelimiter(kDelimiter, input_file,
                                       system_dictionary_input);
     }
   }
 }
+
 }  // namespace
 }  // namespace mozc
 
@@ -100,17 +102,10 @@ int main(int argc, char **argv) {
   CHECK(pos_matcher);
 
   mozc::TextDictionaryLoader loader(*pos_matcher);
-  loader.Open(system_dictionary_input);
-
-  if (!reading_correction_input.empty()) {
-    loader.OpenReadingCorrection(reading_correction_input);
-  }
-
-  vector<mozc::Token *> tokens;
-  loader.CollectTokens(&tokens);
+  loader.Load(system_dictionary_input, reading_correction_input);
 
   mozc::dictionary::SystemDictionaryBuilder builder;
-  builder.BuildFromTokens(tokens);
+  builder.BuildFromTokens(loader.tokens());
 
   scoped_ptr<ostream> output_stream(
       new mozc::OutputFileStream(FLAGS_output.c_str(),

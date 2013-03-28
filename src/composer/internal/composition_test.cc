@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,7 +35,7 @@
 
 #include "composer/internal/char_chunk.h"
 #include "composer/internal/composition_input.h"
-#include "composer/internal/transliterators_ja.h"
+#include "composer/internal/transliterators.h"
 #include "composer/table.h"
 #include "testing/base/public/gunit.h"
 
@@ -43,21 +43,6 @@ namespace mozc {
 namespace composer {
 
 namespace {
-const TransliteratorInterface *kNullT12r = NULL;
-const TransliteratorInterface *kRawT12r =
-    Transliterators::GetRawStringSelector();
-const TransliteratorInterface *kConvT12r =
-    Transliterators::GetConversionStringSelector();
-const TransliteratorInterface *kFullKatakanaT12r =
-    TransliteratorsJa::GetFullKatakanaTransliterator();
-const TransliteratorInterface *kHalfAsciiT12r =
-    TransliteratorsJa::GetHalfAsciiTransliterator();
-const TransliteratorInterface *kFullAsciiT12r =
-    TransliteratorsJa::GetFullAsciiTransliterator();
-const TransliteratorInterface *kHiraganaT12r =
-    TransliteratorsJa::GetHiraganaTransliterator();
-const TransliteratorInterface *kDefaultT12r =
-    Transliterators::GetConversionStringSelector();
 
 string GetString(const Composition &composition) {
   string output;
@@ -67,7 +52,7 @@ string GetString(const Composition &composition) {
 
 string GetRawString(const Composition &composition) {
   string output;
-  composition.GetStringWithTransliterator(kRawT12r, &output);
+  composition.GetStringWithTransliterator(Transliterators::RAW_STRING, &output);
   return output;
 }
 
@@ -99,7 +84,7 @@ class CompositionTest : public testing::Test {
   virtual void SetUp() {
     table_.reset(new Table);
     composition_.reset(new Composition(table_.get()));
-    composition_->SetInputMode(kConvT12r);
+    composition_->SetInputMode(Transliterators::CONVERSION_STRING);
   }
 
   scoped_ptr<Table> table_;
@@ -177,17 +162,18 @@ TEST_F(CompositionTest, GetChunkLength) {
     chunk->set_pending(test.pending);
     chunk->set_raw(test.raw);
 
-    const int conv_length = chunk->GetLength(kConvT12r);
+    const int conv_length =
+        chunk->GetLength(Transliterators::CONVERSION_STRING);
     EXPECT_EQ(test.expected_conv_length, conv_length);
 
-    const int raw_length = chunk->GetLength(kRawT12r);
+    const int raw_length = chunk->GetLength(Transliterators::RAW_STRING);
     EXPECT_EQ(test.expected_raw_length, raw_length);
   }
 }
 
 namespace {
 bool TestGetChunkAt(Composition *comp,
-                    const TransliteratorInterface *transliterator,
+                    Transliterators::Transliterator transliterator,
                     const size_t index,
                     const size_t expected_index,
                     const size_t expected_inner_position) {
@@ -196,7 +182,7 @@ bool TestGetChunkAt(Composition *comp,
   size_t inner_position;
 
   expected_it = comp->GetCharChunkList().begin();
-  for (int j = 0; j < expected_index; ++j, ++expected_it);
+  for (int j = 0; j < expected_index; ++j, ++expected_it) {}
 
   comp->GetChunkAt(index, transliterator, &it, &inner_position);
   if (it == comp->GetCharChunkList().end()) {
@@ -215,37 +201,50 @@ bool TestGetChunkAt(Composition *comp,
 
 TEST_F(CompositionTest, GetChunkAt) {
   InitComposition(composition_.get());
-  const TransliteratorInterface *transliterator;
 
-  transliterator = Transliterators::GetConversionStringSelector();
-  TestGetChunkAt(composition_.get(), transliterator, 0, 0, 0);
-  TestGetChunkAt(composition_.get(), transliterator, 1, 0, 1);
-  TestGetChunkAt(composition_.get(), transliterator, 2, 1, 1);
-  TestGetChunkAt(composition_.get(), transliterator, 3, 1, 2);
-  TestGetChunkAt(composition_.get(), transliterator, 4, 2, 1);
-  TestGetChunkAt(composition_.get(), transliterator, 5, 3, 1);
-  TestGetChunkAt(composition_.get(), transliterator, 6, 3, 2);
-  TestGetChunkAt(composition_.get(), transliterator, 7, 4, 1);
-  TestGetChunkAt(composition_.get(), transliterator, 8, 4, 2);
-  TestGetChunkAt(composition_.get(), transliterator, 9, 4, 3);
-  TestGetChunkAt(composition_.get(), transliterator, 10, 4, 3);  // end
-  TestGetChunkAt(composition_.get(), transliterator, 11, 4, 3);  // end
+  TestGetChunkAt(composition_.get(),
+                 Transliterators::CONVERSION_STRING, 0, 0, 0);
+  TestGetChunkAt(composition_.get(),
+                 Transliterators::CONVERSION_STRING, 1, 0, 1);
+  TestGetChunkAt(composition_.get(),
+                 Transliterators::CONVERSION_STRING, 2, 1, 1);
+  TestGetChunkAt(composition_.get(),
+                 Transliterators::CONVERSION_STRING, 3, 1, 2);
+  TestGetChunkAt(composition_.get(),
+                 Transliterators::CONVERSION_STRING, 4, 2, 1);
+  TestGetChunkAt(composition_.get(),
+                 Transliterators::CONVERSION_STRING, 5, 3, 1);
+  TestGetChunkAt(composition_.get(),
+                 Transliterators::CONVERSION_STRING, 6, 3, 2);
+  TestGetChunkAt(composition_.get(),
+                 Transliterators::CONVERSION_STRING, 7, 4, 1);
+  TestGetChunkAt(composition_.get(),
+                 Transliterators::CONVERSION_STRING, 8, 4, 2);
+  TestGetChunkAt(composition_.get(),
+                 Transliterators::CONVERSION_STRING, 9, 4, 3);
+  // end
+  TestGetChunkAt(composition_.get(),
+                 Transliterators::CONVERSION_STRING, 10, 4, 3);
+  // end
+  TestGetChunkAt(composition_.get(),
+                 Transliterators::CONVERSION_STRING, 11, 4, 3);
 
-  transliterator = Transliterators::GetRawStringSelector();
-  TestGetChunkAt(composition_.get(), transliterator, 0, 0, 0);
-  TestGetChunkAt(composition_.get(), transliterator, 1, 0, 1);
-  TestGetChunkAt(composition_.get(), transliterator, 2, 1, 1);
-  TestGetChunkAt(composition_.get(), transliterator, 3, 1, 2);
-  TestGetChunkAt(composition_.get(), transliterator, 4, 2, 1);
-  TestGetChunkAt(composition_.get(), transliterator, 5, 2, 2);
-  TestGetChunkAt(composition_.get(), transliterator, 6, 3, 1);
-  TestGetChunkAt(composition_.get(), transliterator, 7, 3, 2);
-  TestGetChunkAt(composition_.get(), transliterator, 8, 3, 3);
-  TestGetChunkAt(composition_.get(), transliterator, 9, 4, 1);
-  TestGetChunkAt(composition_.get(), transliterator, 10, 4, 2);
-  TestGetChunkAt(composition_.get(), transliterator, 11, 4, 3);
-  TestGetChunkAt(composition_.get(), transliterator, 12, 4, 3);  // end
-  TestGetChunkAt(composition_.get(), transliterator, 13, 4, 3);  // end
+  TestGetChunkAt(composition_.get(), Transliterators::RAW_STRING, 0, 0, 0);
+  TestGetChunkAt(composition_.get(), Transliterators::RAW_STRING, 1, 0, 1);
+  TestGetChunkAt(composition_.get(), Transliterators::RAW_STRING, 2, 1, 1);
+  TestGetChunkAt(composition_.get(), Transliterators::RAW_STRING, 3, 1, 2);
+  TestGetChunkAt(composition_.get(), Transliterators::RAW_STRING, 4, 2, 1);
+  TestGetChunkAt(composition_.get(), Transliterators::RAW_STRING, 5, 2, 2);
+  TestGetChunkAt(composition_.get(), Transliterators::RAW_STRING, 6, 3, 1);
+  TestGetChunkAt(composition_.get(), Transliterators::RAW_STRING, 7, 3, 2);
+  TestGetChunkAt(composition_.get(), Transliterators::RAW_STRING, 8, 3, 3);
+  TestGetChunkAt(composition_.get(), Transliterators::RAW_STRING, 9, 4, 1);
+  TestGetChunkAt(composition_.get(), Transliterators::RAW_STRING, 10, 4, 2);
+  TestGetChunkAt(composition_.get(), Transliterators::RAW_STRING, 11, 4, 3);
+  // end
+  TestGetChunkAt(composition_.get(), Transliterators::RAW_STRING, 12, 4, 3);
+  // end
+  TestGetChunkAt(composition_.get(), Transliterators::RAW_STRING, 13, 4, 3);
 }
 
 TEST_F(CompositionTest, GetString) {
@@ -255,14 +254,13 @@ TEST_F(CompositionTest, GetString) {
   const size_t dummy_position = 0;
 
   // Test RAW mode
-  composition_->SetDisplayMode(dummy_position,
-                      Transliterators::GetRawStringSelector());
+  composition_->SetDisplayMode(dummy_position, Transliterators::RAW_STRING);
   composition_->GetString(&composition);
   EXPECT_EQ("akykittatty", composition);
 
   // Test CONVERSION mode
   composition_->SetDisplayMode(dummy_position,
-                      Transliterators::GetConversionStringSelector());
+                               Transliterators::CONVERSION_STRING);
   composition_->GetString(&composition);
   // "あkyきったっty"
   EXPECT_EQ("\xe3\x81\x82\x6b\x79\xe3\x81\x8d\xe3\x81\xa3\xe3\x81\x9f\xe3\x81"
@@ -278,13 +276,13 @@ TEST_F(CompositionTest, GetStringWithDisplayMode) {
   AppendChunk("\xe3\x81\x8f", "", "c", composition_.get());
 
   string composition;
-  composition_->GetStringWithTransliterator(
-      Transliterators::GetConversionStringSelector(), &composition);
+  composition_->GetStringWithTransliterator(Transliterators::CONVERSION_STRING,
+                                            &composition);
   // "もずく"
   EXPECT_EQ("\xe3\x82\x82\xe3\x81\x9a\xe3\x81\x8f", composition);
 
-  composition_->GetStringWithTransliterator(
-      Transliterators::GetRawStringSelector(), &composition);
+  composition_->GetStringWithTransliterator(Transliterators::RAW_STRING,
+                                            &composition);
   EXPECT_EQ("mozc", composition);
 }
 
@@ -319,12 +317,13 @@ TEST_F(CompositionTest, SplitRawChunk) {
   };
   for (int i = 0; i < ARRAYSIZE_UNSAFE(test_cases); ++i) {
     const TestCase& test = test_cases[i];
-    CharChunk right_orig_chunk(NULL, NULL);
+    CharChunk right_orig_chunk(Transliterators::CONVERSION_STRING, NULL);
     right_orig_chunk.set_conversion(test.conversion);
     right_orig_chunk.set_pending(test.pending);
     right_orig_chunk.set_raw(test.raw);
     CharChunk *left_new_chunk_ptr = NULL;
-    right_orig_chunk.SplitChunk(kRawT12r, test.position, &left_new_chunk_ptr);
+    right_orig_chunk.SplitChunk(Transliterators::RAW_STRING,
+                                test.position, &left_new_chunk_ptr);
     scoped_ptr<CharChunk> left_new_chunk(left_new_chunk_ptr);
 
     if (left_new_chunk.get() != NULL) {
@@ -372,12 +371,13 @@ TEST_F(CompositionTest, SplitConversionChunk) {
   };
   for (int i = 0; i < ARRAYSIZE_UNSAFE(test_cases); ++i) {
     const TestCase& test = test_cases[i];
-    CharChunk right_orig_chunk(NULL, NULL);
+    CharChunk right_orig_chunk(Transliterators::CONVERSION_STRING, NULL);
     right_orig_chunk.set_conversion(test.conversion);
     right_orig_chunk.set_pending(test.pending);
     right_orig_chunk.set_raw(test.raw);
     CharChunk *left_new_chunk_ptr = NULL;
-    right_orig_chunk.SplitChunk(kConvT12r, test.position, &left_new_chunk_ptr);
+    right_orig_chunk.SplitChunk(Transliterators::CONVERSION_STRING,
+                                test.position, &left_new_chunk_ptr);
     scoped_ptr<CharChunk> left_new_chunk(left_new_chunk_ptr);
 
     if (left_new_chunk.get() != NULL) {
@@ -405,26 +405,24 @@ TEST_F(CompositionTest, GetLength) {
 TEST_F(CompositionTest, MaybeSplitChunkAt) {
   static const struct TestCase {
     const int position;
-    const bool expected_raw_result;
-    const bool expected_conv_result;
     const int expected_raw_chunks_size;
     const int expected_conv_chunks_size;
   } test_cases[] = {
     // "あ ky き った っty"  (9 chars)
     // a ky ki tta tty (11 chars)
-    {  0, false, false, 5, 5 },
-    {  1, false, false, 5, 5 },
-    {  2, true,  true,  6, 6 },
-    {  3, false, false, 5, 5 },
-    {  4, true,  false, 6, 5 },
-    {  5, false, true,  5, 6 },
-    {  6, true,  false, 6, 5 },
-    {  7, true,  true,  6, 6 },
-    {  8, false, true,  5, 6 },
-    {  9, true,  false, 6, 5 },
-    { 10, true,  false, 6, 5 },
-    { 11, false, false, 5, 5 },
-    { 12, false, false, 5, 5 },
+    {  0, 5, 5 },
+    {  1, 5, 5 },
+    {  2, 6, 6 },
+    {  3, 5, 5 },
+    {  4, 6, 5 },
+    {  5, 5, 6 },
+    {  6, 6, 5 },
+    {  7, 6, 6 },
+    {  8, 5, 6 },
+    {  9, 6, 5 },
+    { 10, 6, 5 },
+    { 11, 5, 5 },
+    { 12, 5, 5 },
   };
   const size_t dummy_position = 0;
   for (int i = 0; i < ARRAYSIZE_UNSAFE(test_cases); ++i) {
@@ -433,7 +431,7 @@ TEST_F(CompositionTest, MaybeSplitChunkAt) {
     {  // Test RAW mode
       Composition raw_comp(table_.get());
       InitComposition(&raw_comp);
-      raw_comp.SetDisplayMode(dummy_position, kRawT12r);
+      raw_comp.SetDisplayMode(dummy_position, Transliterators::RAW_STRING);
       CharChunkList::iterator raw_it;
 
       raw_comp.MaybeSplitChunkAt(test.position, &raw_it);
@@ -444,7 +442,8 @@ TEST_F(CompositionTest, MaybeSplitChunkAt) {
     {  // Test CONVERSION mode
       Composition conv_comp(table_.get());
       InitComposition(&conv_comp);
-      conv_comp.SetDisplayMode(dummy_position, kConvT12r);
+      conv_comp.SetDisplayMode(dummy_position,
+                               Transliterators::CONVERSION_STRING);
       CharChunkList::iterator conv_it;
 
       conv_comp.MaybeSplitChunkAt(test.position, &conv_it);
@@ -455,7 +454,7 @@ TEST_F(CompositionTest, MaybeSplitChunkAt) {
 }
 
 namespace {
-string GetDeletedString(const TransliteratorInterface* t12r,
+string GetDeletedString(Transliterators::Transliterator t12r,
                         const int position) {
   scoped_ptr<Table> table(new Table);
   scoped_ptr<Composition> comp(new Composition(table.get()));
@@ -477,58 +476,61 @@ TEST_F(CompositionTest, DeleteAt) {
 
   // "kyきったっty"
   EXPECT_EQ("\x6b\x79\xe3\x81\x8d\xe3\x81\xa3\xe3\x81\x9f\xe3\x81\xa3\x74\x79",
-            GetDeletedString(kConvT12r, 0));
+            GetDeletedString(Transliterators::CONVERSION_STRING, 0));
   // "あyきったっty"
   EXPECT_EQ("\xe3\x81\x82\x79\xe3\x81\x8d\xe3\x81\xa3\xe3\x81\x9f\xe3\x81\xa3"
             "\x74\x79",
-            GetDeletedString(kConvT12r, 1));
+            GetDeletedString(Transliterators::CONVERSION_STRING, 1));
   // "あkきったっty"
   EXPECT_EQ("\xe3\x81\x82\x6b\xe3\x81\x8d\xe3\x81\xa3\xe3\x81\x9f\xe3\x81\xa3"
             "\x74\x79",
-            GetDeletedString(kConvT12r, 2));
+            GetDeletedString(Transliterators::CONVERSION_STRING, 2));
   // "あkyったっty"
   EXPECT_EQ("\xe3\x81\x82\x6b\x79\xe3\x81\xa3\xe3\x81\x9f\xe3\x81\xa3\x74\x79",
-            GetDeletedString(kConvT12r, 3));
+            GetDeletedString(Transliterators::CONVERSION_STRING, 3));
   // "あkyきたっty"
   EXPECT_EQ("\xe3\x81\x82\x6b\x79\xe3\x81\x8d\xe3\x81\x9f\xe3\x81\xa3\x74\x79",
-            GetDeletedString(kConvT12r, 4));
+            GetDeletedString(Transliterators::CONVERSION_STRING, 4));
   // "あkyきっっty"
   EXPECT_EQ("\xe3\x81\x82\x6b\x79\xe3\x81\x8d\xe3\x81\xa3\xe3\x81\xa3\x74\x79",
-            GetDeletedString(kConvT12r, 5));
+            GetDeletedString(Transliterators::CONVERSION_STRING, 5));
   // "あkyきったty"
   EXPECT_EQ("\xe3\x81\x82\x6b\x79\xe3\x81\x8d\xe3\x81\xa3\xe3\x81\x9f\x74\x79",
-            GetDeletedString(kConvT12r, 6));
+            GetDeletedString(Transliterators::CONVERSION_STRING, 6));
   // "あkyきったっy"
   EXPECT_EQ("\xe3\x81\x82\x6b\x79\xe3\x81\x8d\xe3\x81\xa3\xe3\x81\x9f\xe3\x81"
             "\xa3\x79",
-            GetDeletedString(kConvT12r, 7));
+            GetDeletedString(Transliterators::CONVERSION_STRING, 7));
   // "あkyきったっt"
   EXPECT_EQ("\xe3\x81\x82\x6b\x79\xe3\x81\x8d\xe3\x81\xa3\xe3\x81\x9f\xe3\x81"
             "\xa3\x74",
-            GetDeletedString(kConvT12r, 8));
+            GetDeletedString(Transliterators::CONVERSION_STRING, 8));
+  // "あkyきったっty"
+  // end
+  EXPECT_EQ("\xe3\x81\x82\x6b\x79\xe3\x81\x8d\xe3\x81\xa3\xe3\x81\x9f"
+            "\xe3\x81\xa3\x74\x79",
+            GetDeletedString(Transliterators::CONVERSION_STRING, 9));
+
   // "あkyきったっty"
   EXPECT_EQ("\xe3\x81\x82\x6b\x79\xe3\x81\x8d\xe3\x81\xa3\xe3\x81\x9f"
             "\xe3\x81\xa3\x74\x79",
-            GetDeletedString(kConvT12r, 9));  // end
-  // "あkyきったっty"
-  EXPECT_EQ("\xe3\x81\x82\x6b\x79\xe3\x81\x8d\xe3\x81\xa3\xe3\x81\x9f"
-            "\xe3\x81\xa3\x74\x79",
-            GetDeletedString(kConvT12r, -1));
+            GetDeletedString(Transliterators::CONVERSION_STRING, -1));
 
   // "akykittatty" is the original string
-  EXPECT_EQ("kykittatty", GetDeletedString(kRawT12r, 0));
-  EXPECT_EQ("aykittatty", GetDeletedString(kRawT12r, 1));
-  EXPECT_EQ("akkittatty", GetDeletedString(kRawT12r, 2));
-  EXPECT_EQ("akyittatty", GetDeletedString(kRawT12r, 3));
-  EXPECT_EQ("akykttatty", GetDeletedString(kRawT12r, 4));
-  EXPECT_EQ("akykitatty", GetDeletedString(kRawT12r, 5));
-  EXPECT_EQ("akykitatty", GetDeletedString(kRawT12r, 6));
-  EXPECT_EQ("akykitttty", GetDeletedString(kRawT12r, 7));
-  EXPECT_EQ("akykittaty", GetDeletedString(kRawT12r, 8));
-  EXPECT_EQ("akykittaty", GetDeletedString(kRawT12r, 9));
-  EXPECT_EQ("akykittatt", GetDeletedString(kRawT12r, 10));
-  EXPECT_EQ("akykittatty", GetDeletedString(kRawT12r, 11));  // end
-  EXPECT_EQ("akykittatty", GetDeletedString(kRawT12r, -1));
+  EXPECT_EQ("kykittatty", GetDeletedString(Transliterators::RAW_STRING, 0));
+  EXPECT_EQ("aykittatty", GetDeletedString(Transliterators::RAW_STRING, 1));
+  EXPECT_EQ("akkittatty", GetDeletedString(Transliterators::RAW_STRING, 2));
+  EXPECT_EQ("akyittatty", GetDeletedString(Transliterators::RAW_STRING, 3));
+  EXPECT_EQ("akykttatty", GetDeletedString(Transliterators::RAW_STRING, 4));
+  EXPECT_EQ("akykitatty", GetDeletedString(Transliterators::RAW_STRING, 5));
+  EXPECT_EQ("akykitatty", GetDeletedString(Transliterators::RAW_STRING, 6));
+  EXPECT_EQ("akykitttty", GetDeletedString(Transliterators::RAW_STRING, 7));
+  EXPECT_EQ("akykittaty", GetDeletedString(Transliterators::RAW_STRING, 8));
+  EXPECT_EQ("akykittaty", GetDeletedString(Transliterators::RAW_STRING, 9));
+  EXPECT_EQ("akykittatt", GetDeletedString(Transliterators::RAW_STRING, 10));
+  // end
+  EXPECT_EQ("akykittatty", GetDeletedString(Transliterators::RAW_STRING, 11));
+  EXPECT_EQ("akykittatty", GetDeletedString(Transliterators::RAW_STRING, -1));
 }
 
 TEST_F(CompositionTest, DeleteAt_InvisibleCharacter) {
@@ -580,7 +582,7 @@ void InitTable(Table* table) {
   table->AddRule("yy", "\xe3\x81\xa3", "y");
 }
 
-string GetInsertedString(const TransliteratorInterface* t12r,
+string GetInsertedString(Transliterators::Transliterator t12r,
                          const size_t position,
                          const string &input) {
   scoped_ptr<Table> table(new Table);
@@ -608,93 +610,101 @@ TEST_F(CompositionTest, InsertAt) {
   // "いあkyきったっty"
   EXPECT_EQ("\xe3\x81\x84\xe3\x81\x82\x6b\x79\xe3\x81\x8d\xe3\x81\xa3"
             "\xe3\x81\x9f\xe3\x81\xa3\x74\x79",
-            GetInsertedString(kConvT12r, 0, "i"));
+            GetInsertedString(Transliterators::CONVERSION_STRING, 0, "i"));
 
   // "あいkyきったっty"
   EXPECT_EQ("\xE3\x81\x82\xE3\x81\x84\x6B\x79\xE3\x81\x8D\xE3\x81\xA3"
             "\xE3\x81\x9F\xE3\x81\xA3\x74\x79",
-            GetInsertedString(kConvT12r, 1, "i"));
+            GetInsertedString(Transliterators::CONVERSION_STRING, 1, "i"));
 
   // "あきyきったっty"
   EXPECT_EQ("\xE3\x81\x82\xE3\x81\x8D\x79\xE3\x81\x8D\xE3\x81\xA3"
             "\xE3\x81\x9F\xE3\x81\xA3\x74\x79",
-            GetInsertedString(kConvT12r, 2, "i"));
+            GetInsertedString(Transliterators::CONVERSION_STRING, 2, "i"));
 
   // "あきぃきったっty"
   EXPECT_EQ("\xE3\x81\x82\xE3\x81\x8D\xE3\x81\x83\xE3\x81\x8D\xE3\x81\xA3"
             "\xE3\x81\x9F\xE3\x81\xA3\x74\x79",
-            GetInsertedString(kConvT12r, 3, "i"));
+            GetInsertedString(Transliterators::CONVERSION_STRING, 3, "i"));
 
   // "あkyきいったっty"
   EXPECT_EQ("\xE3\x81\x82\x6B\x79\xE3\x81\x8D\xE3\x81\x84\xE3\x81\xA3"
             "\xE3\x81\x9F\xE3\x81\xA3\x74\x79",
-            GetInsertedString(kConvT12r, 4, "i"));
+            GetInsertedString(Transliterators::CONVERSION_STRING, 4, "i"));
 
   // "あkyきっいたっty"
   EXPECT_EQ("\xE3\x81\x82\x6B\x79\xE3\x81\x8D\xE3\x81\xA3\xE3\x81\x84"
             "\xE3\x81\x9F\xE3\x81\xA3\x74\x79",
-            GetInsertedString(kConvT12r, 5, "i"));
+            GetInsertedString(Transliterators::CONVERSION_STRING, 5, "i"));
 
   // "あkyきったっちぃ"
   EXPECT_EQ("\xE3\x81\x82\x6B\x79\xE3\x81\x8D\xE3\x81\xA3\xE3\x81\x9F"
             "\xE3\x81\xA3\xE3\x81\xA1\xE3\x81\x83",
-            GetInsertedString(kConvT12r, 9, "i"));
+            GetInsertedString(Transliterators::CONVERSION_STRING, 9, "i"));
 
   // "yあkyきったっty"
   EXPECT_EQ("\x79\xE3\x81\x82\x6B\x79\xE3\x81\x8D\xE3\x81\xA3\xE3\x81\x9F"
             "\xE3\x81\xA3\x74\x79",
-            GetInsertedString(kConvT12r, 0, "y"));
+            GetInsertedString(Transliterators::CONVERSION_STRING, 0, "y"));
 
   // "あykyきったっty"
   EXPECT_EQ("\xE3\x81\x82\x79\x6B\x79\xE3\x81\x8D\xE3\x81\xA3\xE3\x81\x9F"
             "\xE3\x81\xA3\x74\x79",
-            GetInsertedString(kConvT12r, 1, "y"));
+            GetInsertedString(Transliterators::CONVERSION_STRING, 1, "y"));
 
   // "あkyyきったっty"
   EXPECT_EQ("\xE3\x81\x82\x6B\x79\x79\xE3\x81\x8D\xE3\x81\xA3\xE3\x81\x9F"
             "\xE3\x81\xA3\x74\x79",
-            GetInsertedString(kConvT12r, 2, "y"));
+            GetInsertedString(Transliterators::CONVERSION_STRING, 2, "y"));
 
   // "あkyyきったっty"
   EXPECT_EQ("\xE3\x81\x82\x6B\x79\x79\xE3\x81\x8D\xE3\x81\xA3\xE3\x81\x9F"
             "\xE3\x81\xA3\x74\x79",
-            GetInsertedString(kConvT12r, 3, "y"));
+            GetInsertedString(Transliterators::CONVERSION_STRING, 3, "y"));
 
   // "あkyきyったっty"
   EXPECT_EQ("\xE3\x81\x82\x6B\x79\xE3\x81\x8D\x79\xE3\x81\xA3\xE3\x81\x9F"
             "\xE3\x81\xA3\x74\x79",
-            GetInsertedString(kConvT12r, 4, "y"));
+            GetInsertedString(Transliterators::CONVERSION_STRING, 4, "y"));
 
   // "あkyきっyたっty"
   EXPECT_EQ("\xE3\x81\x82\x6B\x79\xE3\x81\x8D\xE3\x81\xA3\x79\xE3\x81\x9F"
             "\xE3\x81\xA3\x74\x79",
-            GetInsertedString(kConvT12r, 5, "y"));
+            GetInsertedString(Transliterators::CONVERSION_STRING, 5, "y"));
 
   // "あkyきったっちぃ"
+  // end
   EXPECT_EQ("\xE3\x81\x82\x6B\x79\xE3\x81\x8D\xE3\x81\xA3\xE3\x81\x9F"
             "\xE3\x81\xA3\xE3\x81\xA1\xE3\x81\x83",
-            GetInsertedString(kConvT12r, 9, "i"));  // end
+            GetInsertedString(Transliterators::CONVERSION_STRING, 9, "i"));
 
   // "あkyきったっtyy"
+  // end
   EXPECT_EQ("\xE3\x81\x82\x6B\x79\xE3\x81\x8D\xE3\x81\xA3\xE3\x81\x9F"
             "\xE3\x81\xA3\x74\x79\x79",
-            GetInsertedString(kConvT12r, 9, "y"));  // end
-
+            GetInsertedString(Transliterators::CONVERSION_STRING, 9, "y"));
 
   // "akykittatty" is the original string
-  EXPECT_EQ("iakykittatty", GetInsertedString(kRawT12r, 0, "i"));
+  EXPECT_EQ("iakykittatty",
+            GetInsertedString(Transliterators::RAW_STRING, 0, "i"));
 
-  EXPECT_EQ("aikykittatty", GetInsertedString(kRawT12r, 1, "i"));
+  EXPECT_EQ("aikykittatty",
+            GetInsertedString(Transliterators::RAW_STRING, 1, "i"));
 
-  EXPECT_EQ("akiykittatty", GetInsertedString(kRawT12r, 2, "i"));
+  EXPECT_EQ("akiykittatty",
+            GetInsertedString(Transliterators::RAW_STRING, 2, "i"));
 
-  EXPECT_EQ("akyikittatty", GetInsertedString(kRawT12r, 3, "i"));
+  EXPECT_EQ("akyikittatty",
+            GetInsertedString(Transliterators::RAW_STRING, 3, "i"));
 
-  EXPECT_EQ("akykiittatty", GetInsertedString(kRawT12r, 4, "i"));
+  EXPECT_EQ("akykiittatty",
+            GetInsertedString(Transliterators::RAW_STRING, 4, "i"));
 
-  EXPECT_EQ("akykiittatty", GetInsertedString(kRawT12r, 5, "i"));
+  EXPECT_EQ("akykiittatty",
+            GetInsertedString(Transliterators::RAW_STRING, 5, "i"));
 
-  EXPECT_EQ("akykittattyi", GetInsertedString(kRawT12r, 11, "i"));  // end
+  EXPECT_EQ("akykittattyi",
+            GetInsertedString(Transliterators::RAW_STRING, 11, "i"));  // end
 }
 
 TEST_F(CompositionTest, GetExpandedStrings) {
@@ -726,14 +736,36 @@ TEST_F(CompositionTest, ConvertPosition) {
   // Test against http://b/1550597
 
   // Invalid positions.
-  EXPECT_EQ(0, composition_->ConvertPosition(static_cast<size_t>(-1),
-                                    kConvT12r, kRawT12r));
-  EXPECT_EQ(0, composition_->ConvertPosition(0, kConvT12r, kRawT12r));
-  EXPECT_EQ(0, composition_->ConvertPosition(1, kConvT12r, kRawT12r));
-  EXPECT_EQ(0, composition_->ConvertPosition(0, kRawT12r, kConvT12r));
-  EXPECT_EQ(0, composition_->ConvertPosition(static_cast<size_t>(-1),
-                                    kRawT12r, kConvT12r));
-  EXPECT_EQ(0, composition_->ConvertPosition(1, kRawT12r, kConvT12r));
+  EXPECT_EQ(0,
+            composition_->ConvertPosition(
+                static_cast<size_t>(-1),
+                Transliterators::CONVERSION_STRING,
+                Transliterators::RAW_STRING));
+  EXPECT_EQ(0,
+            composition_->ConvertPosition(
+                0,
+                Transliterators::CONVERSION_STRING,
+                Transliterators::RAW_STRING));
+  EXPECT_EQ(0,
+            composition_->ConvertPosition(
+                1,
+                Transliterators::CONVERSION_STRING,
+                Transliterators::RAW_STRING));
+  EXPECT_EQ(0,
+            composition_->ConvertPosition(
+                0,
+                Transliterators::RAW_STRING,
+                Transliterators::CONVERSION_STRING));
+  EXPECT_EQ(0,
+            composition_->ConvertPosition(
+                static_cast<size_t>(-1),
+                Transliterators::RAW_STRING,
+                Transliterators::CONVERSION_STRING));
+  EXPECT_EQ(0,
+            composition_->ConvertPosition(
+                1,
+                Transliterators::RAW_STRING,
+                Transliterators::CONVERSION_STRING));
 
   // "ね"
   AppendChunk("\xe3\x81\xad", "", "ne", composition_.get());
@@ -741,39 +773,94 @@ TEST_F(CompositionTest, ConvertPosition) {
   AppendChunk("\xe3\x81\xa3\xe3\x81\xa8", "", "tto", composition_.get());
 
   // "|ねっと" -> "|netto"
-  EXPECT_EQ(0, composition_->ConvertPosition(0, kConvT12r, kRawT12r));
+  EXPECT_EQ(0,
+            composition_->ConvertPosition(
+                0,
+                Transliterators::CONVERSION_STRING,
+                Transliterators::RAW_STRING));
   // "ね|っと" -> "ne|tto"
-  EXPECT_EQ(2, composition_->ConvertPosition(1, kConvT12r, kRawT12r));
+  EXPECT_EQ(2,
+            composition_->ConvertPosition(
+                1,
+                Transliterators::CONVERSION_STRING,
+                Transliterators::RAW_STRING));
   // "ねっ|と" -> "net|to"
-  EXPECT_EQ(3, composition_->ConvertPosition(2, kConvT12r, kRawT12r));
+  EXPECT_EQ(3,
+            composition_->ConvertPosition(
+                2,
+                Transliterators::CONVERSION_STRING,
+                Transliterators::RAW_STRING));
   // "ねっと|" -> "netto|"
-  EXPECT_EQ(5, composition_->ConvertPosition(3, kConvT12r, kRawT12r));
+  EXPECT_EQ(5,
+            composition_->ConvertPosition(
+                3,
+                Transliterators::CONVERSION_STRING,
+                Transliterators::RAW_STRING));
 
   // Invalid positions.
-  EXPECT_EQ(5, composition_->ConvertPosition(static_cast<size_t>(-1),
-                                    kConvT12r, kRawT12r));
-  EXPECT_EQ(5, composition_->ConvertPosition(4, kConvT12r, kRawT12r));
+  EXPECT_EQ(5,
+            composition_->ConvertPosition(
+                static_cast<size_t>(-1),
+                Transliterators::CONVERSION_STRING,
+                Transliterators::RAW_STRING));
+  EXPECT_EQ(5,
+            composition_->ConvertPosition(
+                4,
+                Transliterators::CONVERSION_STRING,
+                Transliterators::RAW_STRING));
 
   // "|netto" -> "|ねっと"
-  EXPECT_EQ(0, composition_->ConvertPosition(0, kRawT12r, kConvT12r));
+  EXPECT_EQ(0,
+            composition_->ConvertPosition(
+                0,
+                Transliterators::RAW_STRING,
+                Transliterators::CONVERSION_STRING));
   // "n|etto" -> "ね|っと"
-  EXPECT_EQ(1, composition_->ConvertPosition(1, kRawT12r, kConvT12r));
+  EXPECT_EQ(1,
+            composition_->ConvertPosition(
+                1,
+                Transliterators::RAW_STRING,
+                Transliterators::CONVERSION_STRING));
   // "ne|tto" -> "ね|っと"
-  EXPECT_EQ(1, composition_->ConvertPosition(2, kRawT12r, kConvT12r));
+  EXPECT_EQ(1,
+            composition_->ConvertPosition(
+                2,
+                Transliterators::RAW_STRING,
+                Transliterators::CONVERSION_STRING));
   // "net|to" -> "ねっ|と"
-  EXPECT_EQ(2, composition_->ConvertPosition(3, kRawT12r, kConvT12r));
+  EXPECT_EQ(2,
+            composition_->ConvertPosition(
+                3,
+                Transliterators::RAW_STRING,
+                Transliterators::CONVERSION_STRING));
   // "nett|o" -> "ねっと|"
-  EXPECT_EQ(3, composition_->ConvertPosition(4, kRawT12r, kConvT12r));
+  EXPECT_EQ(3,
+            composition_->ConvertPosition(
+                4,
+                Transliterators::RAW_STRING,
+                Transliterators::CONVERSION_STRING));
   // "netto|" -> "ねっと|"
-  EXPECT_EQ(3, composition_->ConvertPosition(5, kRawT12r, kConvT12r));
+  EXPECT_EQ(3,
+            composition_->ConvertPosition(
+                5,
+                Transliterators::RAW_STRING,
+                Transliterators::CONVERSION_STRING));
   // Invalid positions.
-  EXPECT_EQ(3, composition_->ConvertPosition(static_cast<size_t>(-1),
-                                    kRawT12r, kConvT12r));
-  EXPECT_EQ(3, composition_->ConvertPosition(6, kRawT12r, kConvT12r));
+  EXPECT_EQ(3,
+            composition_->ConvertPosition(
+                static_cast<size_t>(-1),
+                Transliterators::RAW_STRING,
+                Transliterators::CONVERSION_STRING));
+  EXPECT_EQ(3,
+            composition_->ConvertPosition(
+                6,
+                Transliterators::RAW_STRING,
+                Transliterators::CONVERSION_STRING));
 
   CharChunkList::iterator chunk_it;
   size_t inner_position;
-  composition_->GetChunkAt(5, kRawT12r, &chunk_it, &inner_position);
+  composition_->GetChunkAt(5, Transliterators::RAW_STRING,
+                           &chunk_it, &inner_position);
 
   EXPECT_EQ("tto", (*chunk_it)->raw());
   EXPECT_EQ(3, inner_position);
@@ -789,22 +876,32 @@ TEST_F(CompositionTest, SetDisplayMode) {
 
   CharChunkList::iterator chunk_it;
   size_t inner_position;
-  composition_->GetChunkAt(0, kConvT12r, &chunk_it, &inner_position);
+  composition_->GetChunkAt(0, Transliterators::CONVERSION_STRING,
+                           &chunk_it, &inner_position);
   EXPECT_EQ("mo", (*chunk_it)->raw());
   EXPECT_EQ(0, inner_position);
-  composition_->GetChunkAt(1, kConvT12r, &chunk_it, &inner_position);
+  composition_->GetChunkAt(1, Transliterators::CONVERSION_STRING,
+                           &chunk_it, &inner_position);
   EXPECT_EQ("mo", (*chunk_it)->raw());
   EXPECT_EQ(1, inner_position);
-  composition_->GetChunkAt(2, kConvT12r, &chunk_it, &inner_position);
+  composition_->GetChunkAt(2, Transliterators::CONVERSION_STRING,
+                           &chunk_it, &inner_position);
   EXPECT_EQ("zu", (*chunk_it)->raw());
   EXPECT_EQ(1, inner_position);
-  composition_->GetChunkAt(3, kConvT12r, &chunk_it, &inner_position);
+  composition_->GetChunkAt(3, Transliterators::CONVERSION_STRING,
+                           &chunk_it, &inner_position);
   EXPECT_EQ("ku", (*chunk_it)->raw());
   EXPECT_EQ(1, inner_position);
 
-  EXPECT_EQ(6, composition_->SetDisplayMode(1, kRawT12r));
-  EXPECT_EQ(3, composition_->SetDisplayMode(2, kConvT12r));
-  EXPECT_EQ(6, composition_->SetDisplayMode(2, kRawT12r));
+  EXPECT_EQ(6,
+            composition_->SetDisplayMode(1,
+                                         Transliterators::RAW_STRING));
+  EXPECT_EQ(3,
+            composition_->SetDisplayMode(2,
+                                         Transliterators::CONVERSION_STRING));
+  EXPECT_EQ(6,
+            composition_->SetDisplayMode(2,
+                                         Transliterators::RAW_STRING));
 }
 
 TEST_F(CompositionTest, GetStringWithTrimMode) {
@@ -868,7 +965,8 @@ TEST_F(CompositionTest, InsertKeyAndPreeditAt) {
   EXPECT_EQ("\xe3\x82\x82\xe3\x81\x9a\xe3\x81\x8f\x21", comp_str);
 
   string comp_ascii_str;
-  composition_->GetStringWithTransliterator(kRawT12r, &comp_ascii_str);
+  composition_->GetStringWithTransliterator(
+      Transliterators::RAW_STRING, &comp_ascii_str);
   EXPECT_EQ("mr@h!", comp_ascii_str);
 }
 
@@ -905,7 +1003,8 @@ TEST_F(CompositionTest, GetStringWithDisplayMode_ForKana) {
   pos = composition_->InsertKeyAndPreeditAt(pos, "m", "\xe3\x82\x82");
 
   string comp_str;
-  composition_->GetStringWithTransliterator(kRawT12r, &comp_str);
+  composition_->GetStringWithTransliterator(
+      Transliterators::RAW_STRING, &comp_str);
   EXPECT_EQ("m", comp_str);
 }
 
@@ -925,7 +1024,7 @@ TEST_F(CompositionTest, InputMode) {
   // "k"
   EXPECT_EQ("k", result);
 
-  composition_->SetInputMode(kFullKatakanaT12r);
+  composition_->SetInputMode(Transliterators::FULL_KATAKANA);
   pos = composition_->InsertAt(pos, "a");
   composition_->GetString(&result);
   // If a vowel and a consonant were typed with different
@@ -933,31 +1032,33 @@ TEST_F(CompositionTest, InputMode) {
   // "kア"
   EXPECT_EQ("\x6B\xE3\x82\xA2", result);
 
-  composition_->SetInputMode(kHalfAsciiT12r);
+  composition_->SetInputMode(Transliterators::HALF_ASCII);
   pos = composition_->InsertAt(pos, "k");
   composition_->GetString(&result);
   // "kアk"
   EXPECT_EQ("\x6B\xE3\x82\xA2\x6B", result);
 
-  composition_->SetInputMode(kHiraganaT12r);
+  composition_->SetInputMode(Transliterators::HIRAGANA);
   pos = composition_->InsertAt(pos, "a");
   composition_->GetString(&result);
   // "kアkあ"
   EXPECT_EQ("\x6B\xE3\x82\xA2\x6B\xE3\x81\x82", result);
 
   // "|kアkあ"
-  EXPECT_EQ(kDefaultT12r, composition_->GetTransliterator(0));
+  EXPECT_EQ(Transliterators::CONVERSION_STRING,
+            composition_->GetTransliterator(0));
   // "k|アkあ"
-  EXPECT_EQ(kDefaultT12r, composition_->GetTransliterator(1));
+  EXPECT_EQ(Transliterators::CONVERSION_STRING,
+            composition_->GetTransliterator(1));
   // "kア|kあ"
-  EXPECT_EQ(kFullKatakanaT12r, composition_->GetTransliterator(2));
+  EXPECT_EQ(Transliterators::FULL_KATAKANA, composition_->GetTransliterator(2));
   // "kアk|あ"
-  EXPECT_EQ(kHalfAsciiT12r, composition_->GetTransliterator(3));
+  EXPECT_EQ(Transliterators::HALF_ASCII, composition_->GetTransliterator(3));
   // "kアkあ|"
-  EXPECT_EQ(kHiraganaT12r, composition_->GetTransliterator(4));
+  EXPECT_EQ(Transliterators::HIRAGANA, composition_->GetTransliterator(4));
   // "kアkあ...|"
-  EXPECT_EQ(kHiraganaT12r, composition_->GetTransliterator(5));
-  EXPECT_EQ(kHiraganaT12r, composition_->GetTransliterator(10));
+  EXPECT_EQ(Transliterators::HIRAGANA, composition_->GetTransliterator(5));
+  EXPECT_EQ(Transliterators::HIRAGANA, composition_->GetTransliterator(10));
 }
 
 TEST_F(CompositionTest, SetTable) {
@@ -974,7 +1075,7 @@ TEST_F(CompositionTest, SetTable) {
   table2.AddRule("ka", "\xE3\x81\x8B", "");
 
   composition_->SetTable(&table);
-  composition_->SetInputMode(kHiraganaT12r);
+  composition_->SetInputMode(Transliterators::HIRAGANA);
 
   size_t pos = 0;
   pos = composition_->InsertAt(pos, "k");
@@ -1008,7 +1109,7 @@ TEST_F(CompositionTest, Transliterator) {
   EXPECT_EQ("\xE3\x81\x82", result);
 
   // Set transliterator for Half Ascii.
-  composition_->SetTransliterator(0, pos, kHalfAsciiT12r);
+  composition_->SetTransliterator(0, pos, Transliterators::HALF_ASCII);
   composition_->GetString(&result);
   EXPECT_EQ("a", result);
 
@@ -1021,7 +1122,7 @@ TEST_F(CompositionTest, Transliterator) {
   EXPECT_EQ("a\xE3\x81\x82", result);
 
   // Set transliterator for Full Katakana.
-  composition_->SetTransliterator(0, pos, kFullKatakanaT12r);
+  composition_->SetTransliterator(0, pos, Transliterators::FULL_KATAKANA);
   composition_->GetString(&result);
   // "アア"
   EXPECT_EQ("\xE3\x82\xA2\xE3\x82\xA2", result);
@@ -1032,7 +1133,7 @@ TEST_F(CompositionTest, HalfAsciiTransliterator) {
   // "ー"
   table.AddRule("-", "\xE3\x83\xBC", "");
   composition_->SetTable(&table);
-  composition_->SetInputMode(kHalfAsciiT12r);
+  composition_->SetInputMode(Transliterators::HALF_ASCII);
 
   size_t pos = 0;
   pos = composition_->InsertKeyAndPreeditAt(pos, "-", "-");
@@ -1088,7 +1189,7 @@ TEST_F(CompositionTest, Issue2190364) {
 
   size_t pos = 0;
 
-  composition_->SetInputMode(kFullAsciiT12r);
+  composition_->SetInputMode(Transliterators::FULL_ASCII);
   // "ち"
   pos = composition_->InsertKeyAndPreeditAt(pos, "a", "\xE3\x81\xA1");
   // "ａ"
@@ -1116,30 +1217,37 @@ TEST_F(CompositionTest, Issue1817410) {
   // "っs"
   EXPECT_EQ("\xE3\x81\xA3\x73", preedit);
 
-  EXPECT_EQ(0, composition_->ConvertPosition(0, kNullT12r, kHalfAsciiT12r));
-  EXPECT_EQ(1, composition_->ConvertPosition(1, kNullT12r, kHalfAsciiT12r));
-  EXPECT_EQ(2, composition_->ConvertPosition(2, kNullT12r, kHalfAsciiT12r));
+  EXPECT_EQ(0, composition_->ConvertPosition(0, Transliterators::LOCAL,
+                                             Transliterators::HALF_ASCII));
+  EXPECT_EQ(1, composition_->ConvertPosition(1, Transliterators::LOCAL,
+                                             Transliterators::HALF_ASCII));
+  EXPECT_EQ(2, composition_->ConvertPosition(2, Transliterators::LOCAL,
+                                             Transliterators::HALF_ASCII));
 
   {  // "s|s"
     CharChunkList::iterator chunk_it;
     size_t inner_position;
-    composition_->GetChunkAt(1, kNullT12r, &chunk_it, &inner_position);
+    composition_->GetChunkAt(1, Transliterators::LOCAL,
+                             &chunk_it, &inner_position);
     EXPECT_EQ(1, inner_position);
-    EXPECT_EQ(2, (*chunk_it)->GetLength(kNullT12r));
+    EXPECT_EQ(2, (*chunk_it)->GetLength(Transliterators::LOCAL));
 
-    EXPECT_EQ(0, composition_->GetPosition(kHalfAsciiT12r, chunk_it));
-    EXPECT_EQ(2, (*chunk_it)->GetLength(kHalfAsciiT12r));
+    EXPECT_EQ(0, composition_->GetPosition(Transliterators::HALF_ASCII,
+                                           chunk_it));
+    EXPECT_EQ(2, (*chunk_it)->GetLength(Transliterators::HALF_ASCII));
   }
 
   {  // "ss|"
     CharChunkList::iterator chunk_it;
     size_t inner_position;
-    composition_->GetChunkAt(2, kNullT12r, &chunk_it, &inner_position);
+    composition_->GetChunkAt(2, Transliterators::LOCAL,
+                             &chunk_it, &inner_position);
     EXPECT_EQ(2, inner_position);
-    EXPECT_EQ(2, (*chunk_it)->GetLength(kNullT12r));
+    EXPECT_EQ(2, (*chunk_it)->GetLength(Transliterators::LOCAL));
 
-    EXPECT_EQ(0, composition_->GetPosition(kHalfAsciiT12r, chunk_it));
-    EXPECT_EQ(2, (*chunk_it)->GetLength(kHalfAsciiT12r));
+    EXPECT_EQ(0, composition_->GetPosition(Transliterators::HALF_ASCII,
+                                           chunk_it));
+    EXPECT_EQ(2, (*chunk_it)->GetLength(Transliterators::HALF_ASCII));
   }
 }
 
@@ -1153,7 +1261,7 @@ TEST_F(CompositionTest, Issue2209634) {
   table.AddRule("\xE3\x81\x9F\x40", "\xE3\x81\xA0", "");
   composition_->SetTable(&table);
 
-  composition_->SetInputMode(kHalfAsciiT12r);
+  composition_->SetInputMode(Transliterators::HALF_ASCII);
 
   size_t pos = 0;
   pos = composition_->InsertAt(pos, "q");
@@ -1178,7 +1286,7 @@ TEST_F(CompositionTest, Issue2330530) {
   table.AddRule("na", "\xe3\x81\xaa", "");
   composition_->SetTable(&table);
 
-  composition_->SetInputMode(kHalfAsciiT12r);
+  composition_->SetInputMode(Transliterators::HALF_ASCII);
 
   size_t pos = 0;
   pos = composition_->InsertAt(pos, "W");
@@ -1213,7 +1321,7 @@ TEST_F(CompositionTest, Issue2819580) {
 
   composition_->SetTable(&table);
 
-  composition_->SetInputMode(kHiraganaT12r);
+  composition_->SetInputMode(Transliterators::HIRAGANA);
 
   size_t pos = 0;
   pos = composition_->InsertAt(pos, "n");
@@ -1253,7 +1361,7 @@ TEST_F(CompositionTest, Issue2990253) {
 
   composition_->SetTable(&table);
 
-  composition_->SetInputMode(kHiraganaT12r);
+  composition_->SetInputMode(Transliterators::HIRAGANA);
 
   size_t pos = 0;
   pos = composition_->InsertAt(pos, "n");
@@ -1298,7 +1406,7 @@ TEST_F(CompositionTest, InsertionIntoPreeditMakesInvalidText_1) {
 
   composition_->SetTable(&table);
 
-  composition_->SetInputMode(kHiraganaT12r);
+  composition_->SetInputMode(Transliterators::HIRAGANA);
 
   size_t pos = 0;
   pos = composition_->InsertAt(pos, "n");
@@ -1351,7 +1459,8 @@ TEST_F(CompositionTest, InsertionIntoPreeditMakesInvalidText_2) {
   EXPECT_EQ("\xe3\x82\x82\xe3\x81\x9a\xe3\x81\x8f\x21", comp_str);
 
   string comp_ascii_str;
-  composition_->GetStringWithTransliterator(kRawT12r, &comp_ascii_str);
+  composition_->GetStringWithTransliterator(
+      Transliterators::RAW_STRING, &comp_ascii_str);
   EXPECT_EQ("mr@h!", comp_ascii_str);
 }
 
@@ -1373,7 +1482,7 @@ TEST_F(CompositionTest, CombinePendingChunks) {
   {
     // empty chunks + "n" -> empty chunks + "n"
     Composition comp(&table);
-    comp.SetInputMode(kHiraganaT12r);
+    comp.SetInputMode(Transliterators::HIRAGANA);
 
     size_t pos = 0;
 
@@ -1393,7 +1502,7 @@ TEST_F(CompositionTest, CombinePendingChunks) {
     // [x] + "n" -> [x] + "n"
     // No combination performed.
     Composition comp(&table);
-    comp.SetInputMode(kHiraganaT12r);
+    comp.SetInputMode(Transliterators::HIRAGANA);
 
     size_t pos = 0;
     pos = comp.InsertAt(pos, "x");
@@ -1414,7 +1523,7 @@ TEST_F(CompositionTest, CombinePendingChunks) {
     // Append "a" to [n][y] -> [ny] + "a"
     // Combination performed.
     Composition comp(&table);
-    comp.SetInputMode(kHiraganaT12r);
+    comp.SetInputMode(Transliterators::HIRAGANA);
 
     size_t pos = 0;
     pos = comp.InsertAt(pos, "y");
@@ -1438,7 +1547,7 @@ TEST_F(CompositionTest, CombinePendingChunks) {
     // Combination performed.
     Composition comp(&table);
     comp.SetTable(&table);
-    comp.SetInputMode(kHiraganaT12r);
+    comp.SetInputMode(Transliterators::HIRAGANA);
 
     size_t pos = 0;
     pos = comp.InsertAt(pos, "x");
@@ -1464,7 +1573,7 @@ TEST_F(CompositionTest, CombinePendingChunks) {
     // Combination performed.  If composition input contains a
     // conversion, the conversion is used rather than a raw value.
     Composition comp(&table);
-    comp.SetInputMode(kHiraganaT12r);
+    comp.SetInputMode(Transliterators::HIRAGANA);
 
     size_t pos = 0;
     pos = comp.InsertAt(pos, "x");
@@ -1761,7 +1870,7 @@ TEST_F(CompositionTest, AlphanumericOfSSH) {
   table.AddRule("shi", "\xE3\x81\x97", "");
 
   composition_->SetTable(&table);
-  composition_->SetInputMode(kHiraganaT12r);
+  composition_->SetInputMode(Transliterators::HIRAGANA);
   size_t pos = 0;
   pos = composition_->InsertAt(pos, "s");
   pos = composition_->InsertAt(pos, "s");
@@ -1783,7 +1892,7 @@ TEST_F(CompositionTest, GrassHack) {
   table.AddRule("www", "w", "ww");
 
   composition_->SetTable(&table);
-  composition_->SetInputMode(kHiraganaT12r);
+  composition_->SetInputMode(Transliterators::HIRAGANA);
   size_t pos = 0;
   pos = composition_->InsertAt(pos, "w");
   pos = composition_->InsertAt(pos, "w");
@@ -1839,7 +1948,8 @@ TEST_F(CompositionTest, RulesForFirstKeyEvents) {
     EXPECT_EQ("[A][NA][A]", GetString(*composition_));
 
     string raw_t13n;
-    composition_->GetStringWithTransliterator(kRawT12r, &raw_t13n);
+    composition_->GetStringWithTransliterator(
+        Transliterators::RAW_STRING, &raw_t13n);
     EXPECT_EQ("anaa", raw_t13n);
   }
 
@@ -1855,7 +1965,8 @@ TEST_F(CompositionTest, RulesForFirstKeyEvents) {
     EXPECT_EQ("[A]n[NI]", GetString(*composition_));
 
     string raw_t13n;
-    composition_->GetStringWithTransliterator(kRawT12r, &raw_t13n);
+    composition_->GetStringWithTransliterator(
+        Transliterators::RAW_STRING, &raw_t13n);
     EXPECT_EQ("anni", raw_t13n);
   }
 }
@@ -1876,7 +1987,7 @@ TEST_F(CompositionTest, NoTransliteration) {
   // "た"
   table_->AddRuleWithAttributes("ta", "\xE3\x81\x9F", "", NO_TRANSLITERATION);
 
-  composition_->SetInputMode(kFullKatakanaT12r);
+  composition_->SetInputMode(Transliterators::FULL_KATAKANA);
 
   InsertCharacters("01kkassatta", 0, composition_.get());
   // "０1ッカっさった"
@@ -1892,7 +2003,7 @@ TEST_F(CompositionTest, NoTransliteration_Issue3497962) {
   table_->AddRuleWithAttributes("c2", "", "{2}2", NO_TABLE_ATTRIBUTE);
   table_->AddRuleWithAttributes("{2}22", "", "a", NO_TABLE_ATTRIBUTE);
 
-  composition_->SetInputMode(kHiraganaT12r);
+  composition_->SetInputMode(Transliterators::HIRAGANA);
 
   int pos = 0;
   pos = composition_->InsertAt(pos, "2");
@@ -1903,7 +2014,7 @@ TEST_F(CompositionTest, NoTransliteration_Issue3497962) {
 }
 
 TEST_F(CompositionTest, SetTransliteratorOnEmpty) {
-  composition_->SetTransliterator(0, 0, kHiraganaT12r);
+  composition_->SetTransliterator(0, 0, Transliterators::HIRAGANA);
   CompositionInput input;
   SetInput("a", "", true, &input);
   composition_->InsertInput(0, input);
@@ -1912,7 +2023,7 @@ TEST_F(CompositionTest, SetTransliteratorOnEmpty) {
 
 TEST_F(CompositionTest, Clone) {
   Composition src(table_.get());
-  src.SetInputMode(kFullKatakanaT12r);
+  src.SetInputMode(Transliterators::FULL_KATAKANA);
 
   // "も"
   AppendChunk("\xe3\x82\x82", "", "mo", &src);
@@ -1922,7 +2033,7 @@ TEST_F(CompositionTest, Clone) {
   AppendChunk("\xe3\x81\x8f", "", "c", &src);
 
   EXPECT_TRUE(table_.get() == src.table());
-  EXPECT_TRUE(kFullKatakanaT12r == src.input_t12r());
+  EXPECT_TRUE(Transliterators::FULL_KATAKANA == src.input_t12r());
   EXPECT_EQ(3, src.chunks().size());
 
   scoped_ptr<Composition> dest(src.CloneImpl());

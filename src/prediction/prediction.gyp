@@ -1,4 +1,4 @@
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -46,27 +46,21 @@
         '../base/base.gyp:config_file_stream',
         '../config/config.gyp:config_handler',
         '../composer/composer.gyp:composer',
+        '../converter/converter_base.gyp:conversion_request',
         '../converter/converter_base.gyp:immutable_converter',
         '../converter/converter_base.gyp:segments',
         '../dictionary/dictionary.gyp:dictionary',
         '../dictionary/dictionary.gyp:suffix_dictionary',
         '../dictionary/dictionary_base.gyp:suppression_dictionary',
         '../rewriter/rewriter.gyp:rewriter',
-        '../session/session_base.gyp:request_handler',
+        '../session/session_base.gyp:request_test_util',
         '../session/session_base.gyp:session_protocol',
         '../storage/storage.gyp:encrypted_string_storage',
         '../storage/storage.gyp:storage',
-        '../usage_stats/usage_stats.gyp:usage_stats',
+        '../usage_stats/usage_stats_base.gyp:usage_stats',
         'gen_zero_query_number_data#host',
         'prediction_base.gyp:suggestion_filter',
         'prediction_protocol',
-      ],
-      'conditions': [
-        ['target_platform=="NaCl" and _toolset=="target"', {
-          'dependencies!': [
-            '../storage/storage.gyp:encrypted_string_storage',
-          ],
-        }],
       ],
     },
     {

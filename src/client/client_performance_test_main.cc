@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,6 +37,7 @@
 #include "base/file_stream.h"
 #include "base/logging.h"
 #include "base/singleton.h"
+#include "base/stopwatch.h"
 #include "base/util.h"
 #include "client/client.h"
 #include "config/config_handler.h"
@@ -195,8 +196,11 @@ class PreeditCommon : public TestScenarioInterface {
         Singleton<TestSentenceGenerator>::get()->GetTestKeys();
     for (size_t i = 0; i < keys.size(); ++i) {
       for (int j = 0; j < keys[i].size(); ++j) {
+        Stopwatch stopwatch;
+        stopwatch.Start();
         client_.SendKey(keys[i][j], &output_);
-        result->operations_times.push_back(output_.elapsed_time());
+        stopwatch.Stop();
+        result->operations_times.push_back(stopwatch.GetElapsedMicroseconds());
       }
       commands::SessionCommand command;
       command.set_type(commands::SessionCommand::REVERT);
@@ -294,8 +298,11 @@ class PredictionCommon: public TestScenarioInterface {
       }
       commands::KeyEvent key;
       key.set_special_key(commands::KeyEvent::TAB);
+      Stopwatch stopwatch;
+      stopwatch.Start();
       client_.SendKey(key, &output_);
-      result->operations_times.push_back(output_.elapsed_time());
+      stopwatch.Stop();
+      result->operations_times.push_back(stopwatch.GetElapsedMicroseconds());
 
       commands::SessionCommand command;
       command.set_type(commands::SessionCommand::REVERT);
@@ -337,8 +344,11 @@ class Conversion : public TestScenarioInterface {
       }
       commands::KeyEvent key;
       key.set_special_key(commands::KeyEvent::SPACE);
+      Stopwatch stopwatch;
+      stopwatch.Start();
       client_.SendKey(key, &output_);
-      result->operations_times.push_back(output_.elapsed_time());
+      stopwatch.Stop();
+      result->operations_times.push_back(stopwatch.GetElapsedMicroseconds());
 
       commands::SessionCommand command;
       command.set_type(commands::SessionCommand::REVERT);

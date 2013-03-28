@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,24 +29,24 @@
 
 #include "prediction/predictor.h"
 
+#include <cstddef>
 #include <string>
 
-#include "base/base.h"
 #include "base/logging.h"
 #include "base/singleton.h"
-#include "base/util.h"
+#include "base/system_util.h"
+#include "composer/composer.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "data_manager/user_pos_manager.h"
 #include "dictionary/dictionary_mock.h"
-#include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
 #include "prediction/predictor_interface.h"
 #include "prediction/user_history_predictor.h"
 #include "session/commands.pb.h"
-#include "session/request_handler.h"
+#include "session/request_test_util.h"
 #include "testing/base/public/gmock.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
@@ -65,7 +65,8 @@ class CheckCandSizePredictor : public PredictorInterface {
       expected_cand_size_(expected_cand_size),
       predictor_name_("CheckCandSizePredictor") {
   }
-  virtual bool Predict(Segments *segments) const {
+  virtual bool PredictForRequest(const ConversionRequest &request,
+                                 Segments *segments) const {
     EXPECT_EQ(expected_cand_size_, segments->max_prediction_candidates_size());
     return true;
   }
@@ -82,7 +83,8 @@ class NullPredictor : public PredictorInterface {
   explicit NullPredictor(bool ret)
       : return_value_(ret), predict_called_(false),
         predictor_name_("NullPredictor") {}
-  virtual bool Predict(Segments *segments) const {
+  virtual bool PredictForRequest(const ConversionRequest &request,
+                                 Segments *segments) const {
     predict_called_ = true;
     return return_value_;
   }
@@ -117,30 +119,37 @@ class MockPredictor : public PredictorInterface {
   MOCK_CONST_METHOD0(GetPredictorName, const string &());
 };
 
-void SetMobilePreference(bool is_mobile) {
-  commands::Request request;
-  request.set_zero_query_suggestion(is_mobile);
-  request.set_mixed_conversion(is_mobile);
-  commands::RequestHandler::SetRequest(request);
-}
 }  // namespace
 
 class PredictorTest : public testing::Test {
  protected:
   virtual void SetUp() {
-    SetMobilePreference(false);
-    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    config::Config config;
+    config::ConfigHandler::GetDefaultConfig(&config);
+    config::ConfigHandler::SetConfig(config);
+
+    mobile_client_request_.reset(new commands::Request);
+    mozc::commands::RequestForUnitTest::FillMobileRequest(
+        mobile_client_request_.get());
+    mobile_composer_.reset(new composer::Composer(
+        NULL, mobile_client_request_.get()));
+
+    default_request_.reset(new ConversionRequest);
+    mobile_request_.reset(new ConversionRequest(mobile_composer_.get(),
+                                                mobile_client_request_.get()));
+  }
+
+  virtual void TearDown() {
     config::Config config;
     config::ConfigHandler::GetDefaultConfig(&config);
     config::ConfigHandler::SetConfig(config);
   }
 
-  virtual void TearDown() {
-    SetMobilePreference(false);
-    config::Config config;
-    config::ConfigHandler::GetDefaultConfig(&config);
-    config::ConfigHandler::SetConfig(config);
-  }
+  scoped_ptr<commands::Request> mobile_client_request_;
+  scoped_ptr<mozc::composer::Composer> mobile_composer_;
+  scoped_ptr<ConversionRequest> default_request_;
+  scoped_ptr<ConversionRequest> mobile_request_;
 };
 
 TEST_F(PredictorTest, AllPredictorsReturnTrue) {
@@ -155,7 +164,7 @@ TEST_F(PredictorTest, AllPredictorsReturnTrue) {
     segment = segments.add_segment();
     CHECK(segment);
   }
-  EXPECT_TRUE(predictor->Predict(&segments));
+  EXPECT_TRUE(predictor->PredictForRequest(*default_request_, &segments));
 }
 
 TEST_F(PredictorTest, MixedReturnValue) {
@@ -170,7 +179,7 @@ TEST_F(PredictorTest, MixedReturnValue) {
     segment = segments.add_segment();
     CHECK(segment);
   }
-  EXPECT_TRUE(predictor->Predict(&segments));
+  EXPECT_TRUE(predictor->PredictForRequest(*default_request_, &segments));
 }
 
 TEST_F(PredictorTest, AllPredictorsReturnFalse) {
@@ -185,7 +194,7 @@ TEST_F(PredictorTest, AllPredictorsReturnFalse) {
     segment = segments.add_segment();
     CHECK(segment);
   }
-  EXPECT_FALSE(predictor->Predict(&segments));
+  EXPECT_FALSE(predictor->PredictForRequest(*default_request_, &segments));
 }
 
 TEST_F(PredictorTest, CallPredictorsForSuggestion) {
@@ -201,7 +210,7 @@ TEST_F(PredictorTest, CallPredictorsForSuggestion) {
     segment = segments.add_segment();
     CHECK(segment);
   }
-  EXPECT_TRUE(predictor->Predict(&segments));
+  EXPECT_TRUE(predictor->PredictForRequest(*default_request_, &segments));
 }
 
 TEST_F(PredictorTest, CallPredictorsForPrediction) {
@@ -217,7 +226,7 @@ TEST_F(PredictorTest, CallPredictorsForPrediction) {
     segment = segments.add_segment();
     CHECK(segment);
   }
-  EXPECT_TRUE(predictor->Predict(&segments));
+  EXPECT_TRUE(predictor->PredictForRequest(*default_request_, &segments));
 }
 
 TEST_F(PredictorTest, CallPredictForRequet) {
@@ -241,13 +250,99 @@ TEST_F(PredictorTest, CallPredictForRequet) {
       .Times(AtMost(1)).WillOnce(Return(true));
   EXPECT_CALL(*predictor3, PredictForRequest(_, _))
       .Times(AtMost(1)).WillOnce(Return(true));
-  EXPECT_TRUE(predictor->Predict(&segments));
+  EXPECT_TRUE(predictor->PredictForRequest(*default_request_, &segments));
 }
 
+TEST_F(PredictorTest, CallPredictorsForMobileSuggestion) {
+  scoped_ptr<MobilePredictor> predictor(
+      new MobilePredictor(new CheckCandSizePredictor(20),
+                          new CheckCandSizePredictor(3),
+                          // We don't call cloud predictor
+                          new CheckCandSizePredictor(-1)));
+  Segments segments;
+  {
+    segments.set_request_type(Segments::SUGGESTION);
+    Segment *segment;
+    segment = segments.add_segment();
+    CHECK(segment);
+  }
+  EXPECT_TRUE(predictor->PredictForRequest(*mobile_request_, &segments));
+}
 
+TEST_F(PredictorTest, CallPredictorsForMobilePartialSuggestion) {
+  scoped_ptr<MobilePredictor> predictor(
+      new MobilePredictor(new CheckCandSizePredictor(20),
+                          // We don't call history predictior
+                          new CheckCandSizePredictor(-1),
+                          // We don't call cloud predictor
+                          new CheckCandSizePredictor(-1)));
+  Segments segments;
+  {
+    segments.set_request_type(Segments::PARTIAL_SUGGESTION);
+    Segment *segment;
+    segment = segments.add_segment();
+    CHECK(segment);
+  }
+  EXPECT_TRUE(predictor->PredictForRequest(*mobile_request_, &segments));
+}
 
+TEST_F(PredictorTest, CallPredictorsForMobilePrediction) {
+  scoped_ptr<MobilePredictor> predictor(
+      new MobilePredictor(new CheckCandSizePredictor(1000),
+                          new CheckCandSizePredictor(3),
+                          new CheckCandSizePredictor(40)));
+  Segments segments;
+  {
+    segments.set_request_type(Segments::PREDICTION);
+    Segment *segment;
+    segment = segments.add_segment();
+    CHECK(segment);
+  }
+  EXPECT_TRUE(predictor->PredictForRequest(*mobile_request_, &segments));
+}
 
+TEST_F(PredictorTest, CallPredictorsForMobilePartialPrediction) {
+  DictionaryMock dictionary_mock;
+  PredictorInterface *extra_predictor = NULL;
+  scoped_ptr<MobilePredictor> predictor(
+      new MobilePredictor(
+          new CheckCandSizePredictor(1000),
+          new UserHistoryPredictor(
+              &dictionary_mock,
+              UserPosManager::GetUserPosManager()->GetPOSMatcher(),
+              Singleton<SuppressionDictionary>::get()),
+          extra_predictor));
+  Segments segments;
+  {
+    segments.set_request_type(Segments::PARTIAL_PREDICTION);
+    Segment *segment;
+    segment = segments.add_segment();
+    CHECK(segment);
+  }
+  EXPECT_TRUE(predictor->PredictForRequest(*mobile_request_, &segments));
+}
 
+TEST_F(PredictorTest, CallPredictForRequetMobile) {
+  // Will be owned by MobilePredictor
+  MockPredictor *predictor1 = new MockPredictor;
+  MockPredictor *predictor2 = new MockPredictor;
+  PredictorInterface *extra_predictor = NULL;
+
+  scoped_ptr<MobilePredictor> predictor(
+      new MobilePredictor(predictor1, predictor2, extra_predictor));
+  Segments segments;
+  {
+    segments.set_request_type(Segments::SUGGESTION);
+    Segment *segment;
+    segment = segments.add_segment();
+    CHECK(segment);
+  }
+  EXPECT_CALL(*predictor1, PredictForRequest(_, _))
+      .Times(AtMost(1)).WillOnce(Return(true));
+  EXPECT_CALL(*predictor2, PredictForRequest(_, _))
+      .Times(AtMost(1)).WillOnce(Return(true));
+  EXPECT_TRUE(predictor->PredictForRequest(*mobile_request_, &segments));
+}
 
 TEST_F(PredictorTest, DisableAllSuggestion) {
   NullPredictor *predictor1 = new NullPredictor(true);
@@ -268,13 +363,13 @@ TEST_F(PredictorTest, DisableAllSuggestion) {
 
   config.set_presentation_mode(true);
   config::ConfigHandler::SetConfig(config);
-  EXPECT_FALSE(predictor->Predict(&segments));
+  EXPECT_FALSE(predictor->PredictForRequest(*default_request_, &segments));
   EXPECT_FALSE(predictor1->predict_called());
   EXPECT_FALSE(predictor2->predict_called());
 
   config.set_presentation_mode(false);
   config::ConfigHandler::SetConfig(config);
-  EXPECT_TRUE(predictor->Predict(&segments));
+  EXPECT_TRUE(predictor->PredictForRequest(*default_request_, &segments));
   EXPECT_TRUE(predictor1->predict_called());
   EXPECT_TRUE(predictor2->predict_called());
 }

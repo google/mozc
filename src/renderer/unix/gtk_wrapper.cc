@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -126,12 +126,14 @@ void GtkWrapper::GdkThreadsLeave() {
   gdk_threads_leave();
 }
 
-guint GtkWrapper::GdkScreenGetWidth(GdkScreen *screen) {
-  return gdk_screen_get_width(screen);
+gint GtkWrapper::GdkScreenGetMonitorAtPoint(
+    GdkScreen *screen, gint x, gint y) {
+  return gdk_screen_get_monitor_at_point(screen, x, y);
 }
 
-guint GtkWrapper::GdkScreenGetHeight(GdkScreen *screen) {
-  return gdk_screen_get_height(screen);
+void GtkWrapper::GdkScreenGetMonitorGeometry(
+    GdkScreen *screen, gint monitor, GdkRectangle *rectangle) {
+  gdk_screen_get_monitor_geometry(screen, monitor, rectangle);
 }
 
 bool GtkWrapper::GtkWindowIsActive(GtkWidget *window) {

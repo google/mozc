@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,8 +32,8 @@
 #include <cstdio>
 
 #include "base/base.h"
+#include "base/file_util.h"
 #include "base/logging.h"
-#include "base/util.h"
 #include "dictionary/file/dictionary_file_builder.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
@@ -42,6 +42,7 @@ DECLARE_string(test_tmpdir);
 
 namespace mozc {
 namespace {
+
 TEST(DictionaryFileTest, Basic) {
   const string dfn = FLAGS_test_tmpdir + "/test-dictionary";
   const string fn1 = FLAGS_test_tmpdir + "/sec1";
@@ -64,7 +65,7 @@ TEST(DictionaryFileTest, Basic) {
     builder.WriteImageToFile(dfn);
   }
 
-  EXPECT_TRUE(Util::FileExists(dfn));
+  EXPECT_TRUE(FileUtil::FileExists(dfn));
 
   {
     DictionaryFile df;
@@ -82,9 +83,10 @@ TEST(DictionaryFileTest, Basic) {
     EXPECT_TRUE(ptr == NULL);
   }
 
-  Util::Unlink(dfn);
-  Util::Unlink(fn1);
-  Util::Unlink(fn2);
+  FileUtil::Unlink(dfn);
+  FileUtil::Unlink(fn1);
+  FileUtil::Unlink(fn2);
 }
+
 }  // namespace
 }  // namespace mozc

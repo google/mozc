@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,6 +39,7 @@
 #include <mach/mach.h>
 #include <servers/bootstrap.h>
 
+#include "base/logging.h"
 #include "base/mac_util.h"
 #include "base/singleton.h"
 #include "base/thread.h"
@@ -367,8 +368,7 @@ bool IPCClient::Call(const char *request_,
                 0,  // receive size is 0 because sending
                 MACH_PORT_NULL,  // receive port
                 timeout,  // timeout in msec
-                MACH_PORT_NULL  // notoicication port in case of error
-                );
+                MACH_PORT_NULL);  // notoicication port in case of error
   if (kr == MACH_SEND_TIMED_OUT) {
     LOG(ERROR) << "sending message timeout";
     last_ipc_error_ = IPC_TIMEOUT_ERROR;
@@ -398,8 +398,7 @@ bool IPCClient::Call(const char *request_,
                   receive_header->msgh_size,  // receive size
                   client_port,  // receive port
                   timeout,  // timeout in msec
-                  MACH_PORT_NULL  // notification port in case of error
-                  );
+                  MACH_PORT_NULL);  // notification port in case of error
     if (kr == MACH_RCV_TIMED_OUT) {
       LOG(ERROR) << "receiving message timeout";
       last_ipc_error_ = IPC_TIMEOUT_ERROR;
@@ -513,8 +512,7 @@ void IPCServer::Loop() {
                   receive_header->msgh_size,  // receive size
                   server_port,  // receive port
                   MACH_MSG_TIMEOUT_NONE,  // no timeout
-                  MACH_PORT_NULL  // notification port in case of error
-                  );
+                  MACH_PORT_NULL);  // notification port in case of error
 
     if (kr != MACH_MSG_SUCCESS) {
       LOG(ERROR) << "Something around mach ports goes wrong: " << kr;
@@ -559,8 +557,7 @@ void IPCServer::Loop() {
                   0,  // receive size is 0 because sending
                   MACH_PORT_NULL,  // receive port
                   timeout_,  // timeout
-                  MACH_PORT_NULL  // notification port in case of error
-                  );
+                  MACH_PORT_NULL);  // notification port in case of error
     if (kr != MACH_MSG_SUCCESS) {
       LOG(ERROR) << "Something around mach ports goes wrong: " << kr;
       continue;

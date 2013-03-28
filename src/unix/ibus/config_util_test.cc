@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,25 +38,13 @@ TEST(ConfigUtilTest, IntValue) {
   mozc::config::Config config;
   EXPECT_EQ("", config.DebugString());
 
-#if IBUS_CHECK_VERSION(1, 3, 99)
   GVariant *value = g_variant_new_int32(-56);
-#else
-  g_type_init();
-  GValue actual_value = {0};
-  GValue *value = &actual_value;
-  g_value_init(value, G_TYPE_INT);
-  g_value_set_int(value, -56);
-#endif
   EXPECT_TRUE(mozc::ibus::ConfigUtil::SetFieldForName(
       "verbose_level", value, &config));
 
   EXPECT_EQ("verbose_level: -56\n",
             config.DebugString());
-#if IBUS_CHECK_VERSION(1, 3, 99)
   g_variant_unref(value);
-#else
-  g_value_unset(value);
-#endif
 }
 
 TEST(ConfigUtilTest, UnsignedIntValue) {
@@ -65,115 +53,59 @@ TEST(ConfigUtilTest, UnsignedIntValue) {
 
   // unsigned int is not supported as chrome's preference type and
   // int is used as an alternative type.
-#if IBUS_CHECK_VERSION(1, 3, 99)
   GVariant *value = g_variant_new_int32(42);
-#else
-  g_type_init();
-  GValue actual_value = {0};
-  GValue *value = &actual_value;
-  g_value_init(value, G_TYPE_INT);
-  g_value_set_int(value, 42);
-#endif
   EXPECT_TRUE(mozc::ibus::ConfigUtil::SetFieldForName(
       "suggestions_size", value, &config));
 
   EXPECT_EQ("suggestions_size: 42\n",
             config.DebugString());
-#if IBUS_CHECK_VERSION(1, 3, 99)
   g_variant_unref(value);
-#else
-  g_value_unset(value);
-#endif
 }
 
 TEST(ConfigUtilTest, EnumValue) {
   mozc::config::Config config;
   EXPECT_EQ("", config.DebugString());
 
-#if IBUS_CHECK_VERSION(1, 3, 99)
   GVariant *value = g_variant_new_string("ROMAN");
-#else
-  g_type_init();
-  GValue actual_value = {0};
-  GValue *value = &actual_value;
-  g_value_init(value, G_TYPE_STRING);
-  g_value_set_static_string(value, "ROMAN");
-#endif
   EXPECT_TRUE(mozc::ibus::ConfigUtil::SetFieldForName(
       "preedit_method", value, &config));
 
   EXPECT_EQ("preedit_method: ROMAN\n",
             config.DebugString());
-#if IBUS_CHECK_VERSION(1, 3, 99)
   g_variant_unref(value);
-#else
-  g_value_unset(value);
-#endif
 }
 
 TEST(ConfigUtilTest, BooleanValue) {
   mozc::config::Config config;
   EXPECT_EQ("", config.DebugString());
 
-#if IBUS_CHECK_VERSION(1, 3, 99)
   GVariant *value = g_variant_new_boolean(true);
-#else
-  g_type_init();
-  GValue actual_value = {0};
-  GValue *value = &actual_value;
-  g_value_init(value, G_TYPE_BOOLEAN);
-  g_value_set_boolean(value, true);
-#endif
   EXPECT_TRUE(mozc::ibus::ConfigUtil::SetFieldForName(
       "incognito_mode", value, &config));
 
   EXPECT_EQ("incognito_mode: true\n",
             config.DebugString());
-#if IBUS_CHECK_VERSION(1, 3, 99)
   g_variant_unref(value);
-#else
-  g_value_unset(value);
-#endif
 }
 
 TEST(ConfigUtilTest, NoSuchField) {
   mozc::config::Config config;
   EXPECT_EQ("", config.DebugString());
 
-#if IBUS_CHECK_VERSION(1, 3, 99)
   GVariant *value = g_variant_new_int32(10);
-#else
-  g_type_init();
-  GValue actual_value = {0};
-  GValue *value = &actual_value;
-  g_value_init(value, G_TYPE_INT);
-  g_value_set_int(value, 10);
-#endif
   EXPECT_FALSE(mozc::ibus::ConfigUtil::SetFieldForName(
       "no_such_field", value, &config));
 
   // Does not affect the config value.
   EXPECT_EQ("", config.DebugString());
-#if IBUS_CHECK_VERSION(1, 3, 99)
   g_variant_unref(value);
-#else
-  g_value_unset(value);
-#endif
 }
 
 TEST(ConfigUtilTest, TypeMismatch) {
   mozc::config::Config config;
   EXPECT_EQ("", config.DebugString());
 
-#if IBUS_CHECK_VERSION(1, 3, 99)
   GVariant *value = g_variant_new_int32(10);
-#else
-  g_type_init();
-  GValue actual_value = {0};
-  GValue *value = &actual_value;
-  g_value_init(value, G_TYPE_INT);
-  g_value_set_int(value, 10);
-#endif
 
   // enum field
   EXPECT_FALSE(mozc::ibus::ConfigUtil::SetFieldForName(
@@ -181,9 +113,5 @@ TEST(ConfigUtilTest, TypeMismatch) {
 
   // Does not affect the config value.
   EXPECT_EQ("", config.DebugString());
-#if IBUS_CHECK_VERSION(1, 3, 99)
   g_variant_unref(value);
-#else
-  g_value_unset(value);
-#endif
 }

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
 
 #include "renderer/renderer_style_handler.h"
 
-#if defined(OS_WINDOWS)
+#if defined(OS_WIN)
 #include <windows.h>
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
@@ -37,7 +37,7 @@
 #include <atlbase_mozc.h>
 #include <atlapp.h>
 #include <atlgdi.h>
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 #include "base/singleton.h"
 #include "renderer/renderer_style.pb.h"
@@ -45,9 +45,9 @@
 namespace mozc {
 namespace renderer {
 namespace {
-#if defined(OS_WINDOWS)
+#if defined(OS_WIN)
 const int kDefaultDPI = 96;
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 class RendererStyleHandlerImpl {
  public:
@@ -210,7 +210,7 @@ void RendererStyleHandler::GetDefaultRendererStyle(RendererStyle *style) {
 }
 
 void RendererStyleHandler::GetDPIScalingFactor(double *x, double *y) {
-#if defined OS_WINDOWS
+#if defined OS_WIN
   WTL::CDC desktop_dc(::GetDC(NULL));
   const int dpi_x = desktop_dc.GetDeviceCaps(LOGPIXELSX);
   const int dpi_y = desktop_dc.GetDeviceCaps(LOGPIXELSY);

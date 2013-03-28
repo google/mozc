@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,21 +29,25 @@
 
 #include "renderer/renderer_server.h"
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <windows.h>
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 #include <algorithm>
+
 #include "base/base.h"
+#include "base/compiler_specific.h"
 #include "base/const.h"
 #include "base/logging.h"
-#include "base/util.h"
+#include "base/system_util.h"
 #include "client/client_interface.h"
+#include "config/config.pb.h"  // for Config
 #include "config/config_handler.h"
 #include "ipc/ipc.h"
 #include "ipc/named_event.h"
 #include "ipc/process_watch_dog.h"
 #include "renderer/renderer_command.pb.h"
+#include "renderer/renderer_interface.h"
 
 // By default, mozc_renderer quits when user-input continues to be
 // idle for 10min.
@@ -52,21 +56,26 @@ DEFINE_bool(restricted, false,
             "launch candidates server with restricted mode");
 
 namespace mozc {
+
+namespace commands {
+class Output;
+class SessionCommand;
+}  // namespace commands
+
 namespace renderer {
 
 namespace {
-
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 const int kNumConnections   = 1;
 #else
 const int kNumConnections   = 10;
-#endif  // OS_WINDOWS or not
+#endif  // OS_WIN or not
 const int kIPCServerTimeOut = 1000;
 const char kServiceName[]   = "renderer";
 
 string GetServiceName() {
   string name = kServiceName;
-  const string desktop_name = Util::GetDesktopNameAsString();
+  const string desktop_name = SystemUtil::GetDesktopNameAsString();
   if (!desktop_name.empty()) {
     name += ".";
     name += desktop_name;
@@ -113,7 +122,7 @@ class RendererServerSendCommand : public client::SendCommandInterface {
 
   bool SendCommand(const mozc::commands::SessionCommand &command,
                    mozc::commands::Output* output) {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
     if ((command.type() != commands::SessionCommand::SELECT_CANDIDATE) &&
         (command.type() != commands::SessionCommand::HIGHLIGHT_CANDIDATE) &&
         (command.type() != commands::SessionCommand::USAGE_STATS_EVENT)) {
@@ -159,7 +168,8 @@ RendererServer::RendererServer()
     : IPCServer(GetServiceName(), kNumConnections, kIPCServerTimeOut),
       timeout_(0),
       renderer_interface_(NULL),
-      watch_dog_(new ParentApplicationWatchDog(this)),
+      ALLOW_THIS_IN_INITIALIZER_LIST(
+          watch_dog_(new ParentApplicationWatchDog(this))),
       send_command_(new RendererServerSendCommand) {
   if (FLAGS_restricted) {
     FLAGS_timeout = min(FLAGS_timeout, 60);   // set 60sec with restricted mode
@@ -236,7 +246,7 @@ bool RendererServer::ExecCommandInternal(
   VLOG(2) << command.DebugString();
 
   // Check process info if update mode
-  if (command.type() == commands::RendererCommand::UPDATE){
+  if (command.type() == commands::RendererCommand::UPDATE) {
     // set HWND of message-only window
     if (command.has_application_info() &&
         command.application_info().has_receiver_handle()) {
@@ -272,5 +282,5 @@ bool RendererServer::ExecCommandInternal(
 uint32 RendererServer::timeout() const {
   return timeout_;
 }
-}  // renderer
-}  // mozc
+}  // namespace renderer
+}  // namespace mozc

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,34 +29,18 @@
 
 // Test utility for Request.
 
-#include "session/request_handler.h"
 #include "session/request_test_util.h"
 
 namespace mozc {
 namespace commands {
-
-ScopedRequestForUnittest::ScopedRequestForUnittest(const Request &request)
-    : prev_request_(RequestHandler::GetRequest()) {
-  RequestHandler::SetRequest(request);
-}
-
-ScopedRequestForUnittest::~ScopedRequestForUnittest() {
-  RequestHandler::SetRequest(prev_request_);
-}
-
-ScopedMobileRequestForUnittest::ScopedMobileRequestForUnittest() {
-  Request request;
-  RequestForUnitTest::FillMobileRequest(&request);
-  scoped_request_.reset(new ScopedRequestForUnittest(request));
-}
-
-ScopedMobileRequestForUnittest::~ScopedMobileRequestForUnittest() {}
 
 void RequestForUnitTest::FillMobileRequest(Request *request) {
   request->set_zero_query_suggestion(true);
   request->set_mixed_conversion(true);
   request->set_update_input_mode_from_surrounding_text(false);
   request->set_special_romanji_table(Request::TWELVE_KEYS_TO_HIRAGANA);
+  request->set_kana_modifier_insensitive_conversion(true);
+  request->set_auto_partial_suggestion(true);
 }
 }  // namespace commands
 }  // namespace mozc

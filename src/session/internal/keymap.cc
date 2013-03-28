@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -381,7 +381,7 @@ void KeyMapManager::InitCommandData() {
   // Support InputMode command only on Windows for now.
   // TODO(toshiyuki): delete #ifdef when we support them on Mac, and
   // activate SessionTest.InputModeConsumedForTestSendKey.
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   RegisterDirectCommand("InputModeHiragana",
                         DirectInputState::INPUT_MODE_HIRAGANA);
   RegisterDirectCommand("InputModeFullKatakana",
@@ -403,7 +403,7 @@ void KeyMapManager::InitCommandData() {
                         DirectInputState::NONE);
   RegisterDirectCommand("InputModeHalfAlphanumeric",
                         DirectInputState::NONE);
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
   RegisterDirectCommand("Reconvert",
                         DirectInputState::RECONVERT);
 
@@ -637,6 +637,8 @@ void KeyMapManager::InitCommandData() {
                             ConversionState::TRANSLATE_FULL_ASCII);
   RegisterConversionCommand("DisplayAsHalfAlphanumeric",
                             ConversionState::TRANSLATE_HALF_ASCII);
+  RegisterConversionCommand("DeleteSelectedCandidate",
+                            ConversionState::DELETE_SELECTED_CANDIDATE);
   if (kInputModeXCommandSupported) {
     RegisterConversionCommand("InputModeHiragana",
                               ConversionState::INPUT_MODE_HIRAGANA);
@@ -667,8 +669,6 @@ void KeyMapManager::InitCommandData() {
   RegisterConversionCommand("Abort", ConversionState::ABORT);
 #endif  // DEBUG
 }
-
-#undef ADD_TO_COMMAND_MAP
 
 bool KeyMapManager::GetCommandDirect(
     const commands::KeyEvent &key_event,

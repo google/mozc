@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@
 #include "base/encryptor.h"
 
 
-#if defined(OS_WINDOWS)
+#if defined(OS_WIN)
 #include <windows.h>
 #include <wincrypt.h>
 #elif defined(OS_MACOSX)
@@ -38,7 +38,7 @@
 #include <sys/types.h>
 #else
 #include <string.h>
-#endif  // platforms (OS_WINDOWS, OS_MACOSX, ...)
+#endif  // platforms (OS_WIN, OS_MACOSX, ...)
 
 #ifdef HAVE_OPENSSL
 #include <openssl/sha.h>   // Use default openssl
@@ -66,7 +66,7 @@ namespace {
 using jni::JavaEncryptorProxy;
 const size_t kBlockSize = JavaEncryptorProxy::kBlockSizeInBytes;
 const size_t kKeySize = JavaEncryptorProxy::kKeySizeInBits;
-#elif defined(OS_WINDOWS)
+#elif defined(OS_WIN)
 const size_t kBlockSize = 16;  // 128bit
 const size_t kKeySize = 256;   // key length in bit
 // Use CBC mode:
@@ -140,7 +140,7 @@ string GetMSCryptDeriveKeyWithSHA1(const string &password,
   return HashSHA1(result1) + HashSHA1(result2);
 }
 #else
-// None of OS_ANDROID/OS_WINDOWS/HAVE_OPENSSL is defined.
+// None of OS_ANDROID/OS_WIN/HAVE_OPENSSL is defined.
 #error "Encryptor does not support your platform."
 #endif
 
@@ -149,7 +149,7 @@ string GetMSCryptDeriveKeyWithSHA1(const string &password,
 struct KeyData {
 #if defined(OS_ANDROID)
   uint8 key[kKeySize / 8];
-#elif defined(OS_WINDOWS)
+#elif defined(OS_WIN)
   HCRYPTPROV prov;
   HCRYPTHASH hash;
   HCRYPTKEY  key;
@@ -157,7 +157,7 @@ struct KeyData {
   AES_KEY encrypt_key;
   AES_KEY decrypt_key;
 #else
-// None of OS_ANDROID/OS_WINDOWS/HAVE_OPENSSL is defined.
+// None of OS_ANDROID/OS_WIN/HAVE_OPENSSL is defined.
 #error "Encryptor does not support your platform."
 #endif
 };
@@ -194,7 +194,7 @@ KeyData *Encryptor::Key::GetKeyData() const {
   return data_.get();
 }
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 bool Encryptor::Key::DeriveFromPassword(const string &password,
                                         const string &salt,
                                         const uint8 *iv) {
@@ -295,7 +295,7 @@ bool Encryptor::Key::DeriveFromPassword(const string &password,
 
   return true;
 }
-#else  // OS_WINDOWS
+#else  // OS_WIN
 
 bool Encryptor::Key::DeriveFromPassword(const string &password,
                                         const string &salt,
@@ -343,7 +343,7 @@ bool Encryptor::Key::DeriveFromPassword(const string &password,
 
   return true;
 }
-#endif   // OS_WINDOWS
+#endif   // OS_WIN
 
 Encryptor::Key::Key()
     : data_(new KeyData),
@@ -353,7 +353,7 @@ Encryptor::Key::Key()
 }
 
 Encryptor::Key::~Key() {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   if (is_available_) {
     ::CryptDestroyKey(GetKeyData()->key);
     ::CryptDestroyHash(GetKeyData()->hash);
@@ -415,7 +415,7 @@ bool Encryptor::EncryptArray(const Encryptor::Key &key,
     return false;
   }
   return true;
-#elif defined(OS_WINDOWS)
+#elif defined(OS_WIN)
   uint32 size = *buf_size;
   if (!::CryptEncrypt(key.GetKeyData()->key,
                       0, TRUE, 0,
@@ -446,7 +446,7 @@ bool Encryptor::EncryptArray(const Encryptor::Key &key,
   *buf_size = enc_size;
   return true;
 #else
-// None of OS_ANDROID/OS_WINDOWS/HAVE_OPENSSL is defined.
+// None of OS_ANDROID/OS_WIN/HAVE_OPENSSL is defined.
 #error "Encryptor does not support your platform."
   return false;
 #endif
@@ -476,7 +476,7 @@ bool Encryptor::DecryptArray(const Encryptor::Key &key,
     return false;
   }
   return true;
-#elif defined(OS_WINDOWS)
+#elif defined(OS_WIN)
   DWORD size = static_cast<DWORD>(*buf_size);
   if (!::CryptDecrypt(key.GetKeyData()->key,
                       0, TRUE, 0,
@@ -521,14 +521,14 @@ bool Encryptor::DecryptArray(const Encryptor::Key &key,
   *buf_size -= padding_size;   // remove padding part
   return true;
 #else
-// None of OS_ANDROID/OS_WINDOWS/HAVE_OPENSSL is defined.
+// None of OS_ANDROID/OS_WIN/HAVE_OPENSSL is defined.
 #error "Encryptor does not support your platform."
   return false;
 #endif
 }
 
 // Protect|Unprotect Data
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 // See. http://msdn.microsoft.com/en-us/library/aa380261.aspx
 bool Encryptor::ProtectData(const string &plain_text,
                             string *cipher_text) {
@@ -634,7 +634,7 @@ bool Encryptor::UnprotectData(const string &cipher_text,
   return true;
 }
 
-#else  // OS_WINDOWS | OS_MACOSX
+#else  // OS_WIN | OS_MACOSX
 
 namespace {
 
@@ -651,13 +651,7 @@ bool Encryptor::ProtectData(const string &plain_text, string *cipher_text) {
   }
 
   char salt_buf[kSaltSize];
-  if (!Util::GetSecureRandomSequence(salt_buf, sizeof(salt_buf))) {
-    LOG(ERROR) << "GetSecureRandomSequence failed. "
-               << "make random key with Util::Random()";
-    for (size_t i = 0; i < sizeof(salt_buf); ++i) {
-      salt_buf[i] = static_cast<char>(Util::Random(256));
-    }
-  }
+  Util::GetRandomSequence(salt_buf, sizeof(salt_buf));
 
   string salt(salt_buf, kSaltSize);
 
@@ -714,6 +708,6 @@ bool Encryptor::UnprotectData(const string &cipher_text, string *plain_text) {
 
   return true;
 }
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 }  // namespace mozc

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,9 +29,7 @@
 
 #include "base/process.h"
 
-#include "base/const.h"
-
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <windows.h>
 #include <shellapi.h>
 #include <shlobj.h>
@@ -42,11 +40,9 @@
 #endif  // WINDOWS
 
 #ifdef OS_MACOSX
-#include <cstdlib>
 #include <fcntl.h>
 #include <signal.h>
 #include <spawn.h>  // for posix_spawn().
-#include <sys/stat.h>
 #include "base/mac_process.h"
 #endif  // OS_MACOSX
 
@@ -55,11 +51,16 @@
 #include <signal.h>
 #include <spawn.h>  // for posix_spawn().
 #include <sys/types.h>
-#include <unistd.h>
 #endif
 
+#include <cstdlib>
 #include <vector>
+
+#include "base/const.h"
+#include "base/file_util.h"
 #include "base/logging.h"
+#include "base/scoped_ptr.h"
+#include "base/system_util.h"
 #include "base/util.h"
 
 #ifdef OS_MACOSX
@@ -69,7 +70,7 @@
 // detailed information.
 #include <crt_externs.h>
 static char **environ = *_NSGetEnviron();
-#elif !defined(OS_WINDOWS)
+#elif !defined(OS_WIN)
 // Defined somewhere in libc. We can't pass NULL as the 6th argument of
 // posix_spawn() since Qt applications use (at least) DISPLAY and QT_IM_MODULE
 // environment variables.
@@ -79,7 +80,7 @@ extern char **environ;
 namespace mozc {
 
 namespace {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 // ShellExecute to execute file in system dir.
 // Since Windows does not allow rename or delete a directory which
 // is set to the working directory by existing processes, we should
@@ -93,7 +94,7 @@ bool ShellExecuteInSystemDir(const wchar_t *verb,
                              INT show_command) {
   const int result =
       reinterpret_cast<int>(::ShellExecuteW(0, verb, file, parameters,
-                                            Util::GetSystemDir(),
+                                            SystemUtil::GetSystemDir(),
                                             show_command));
   LOG_IF(ERROR, result <= 32)
       << "ShellExecute failed."
@@ -103,7 +104,7 @@ bool ShellExecuteInSystemDir(const wchar_t *verb,
       << ", parameters: " << parameters;
   return result > 32;
 }
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 }  // namespace
 
 bool Process::OpenBrowser(const string &url) {
@@ -114,7 +115,7 @@ bool Process::OpenBrowser(const string &url) {
     return false;
   }
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   wstring wurl;
   Util::UTF8ToWide(url.c_str(), &wurl);
   return ShellExecuteInSystemDir(L"open", wurl.c_str(), NULL, SW_SHOW);
@@ -135,7 +136,7 @@ bool Process::OpenBrowser(const string &url) {
 
 bool Process::SpawnProcess(const string &path,
                            const string& arg, size_t *pid) {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   wstring wpath;
   Util::UTF8ToWide(path.c_str(), &wpath);
   wpath = L"\"" + wpath + L"\"";
@@ -167,7 +168,7 @@ bool Process::SpawnProcess(const string &path,
       // NOTE: Working directory will be locked by the system.
       // We use system directory to spawn process so that users will not
       // to be aware of any undeletable directory. (http://b/2017482)
-      Util::GetSystemDir(),
+      SystemUtil::GetSystemDir(),
       &si, &pi) != FALSE;
 
   if (create_process_succeeded) {
@@ -248,13 +249,13 @@ bool Process::SpawnProcess(const string &path,
     *pid = tmp_pid;
   }
   return result == 0;
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 }
 
 bool Process::SpawnMozcProcess(
     const string &filename, const string &arg, size_t *pid) {
   return Process::SpawnProcess(
-      Util::JoinPath(Util::GetServerDirectory(), filename),
+      FileUtil::JoinPath(SystemUtil::GetServerDirectory(), filename),
       arg, pid);
 }
 
@@ -269,7 +270,7 @@ bool Process::WaitProcess(size_t pid, int timeout) {
     return false;
   }
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   DWORD processe_id = static_cast<DWORD>(pid);
   ScopedHandle handle(::OpenProcess(SYNCHRONIZE, FALSE, processe_id));
   if (handle.get() == NULL) {
@@ -315,7 +316,7 @@ bool Process::IsProcessAlive(size_t pid, bool default_result) {
     return default_result;
   }
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   {
     ScopedHandle handle(::OpenProcess(SYNCHRONIZE, FALSE,
                                       static_cast<DWORD>(pid)));
@@ -335,7 +336,7 @@ bool Process::IsProcessAlive(size_t pid, bool default_result) {
 
   return default_result;  // unknown
 
-#else  // OS_WINDOWS
+#else  // OS_WIN
   const int kSig = 0;
   if (::kill(static_cast<pid_t>(pid), kSig) == -1) {
     if (errno == EPERM || errno == EINVAL) {
@@ -346,11 +347,11 @@ bool Process::IsProcessAlive(size_t pid, bool default_result) {
   }
 
   return true;
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 }
 
 bool Process::IsThreadAlive(size_t thread_id, bool default_result) {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   if (thread_id == 0) {
     return default_result;
   }
@@ -374,7 +375,7 @@ bool Process::IsThreadAlive(size_t thread_id, bool default_result) {
 
   return default_result;  // unknown
 
-#else   // OS_WINDOWS
+#else   // OS_WIN
   // On Linux/Mac, there is no way to check the status of thread id from
   // other process.
   return default_result;
@@ -389,20 +390,20 @@ bool Process::LaunchErrorMessageDialog(const string &error_type) {
   }
 #endif  // OS_MACOSX
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   const string arg = "--mode=error_message_dialog --error_type=" + error_type;
   size_t pid = 0;
-  if (!Process::SpawnProcess(Util::GetToolPath(), arg, &pid)) {
+  if (!Process::SpawnProcess(SystemUtil::GetToolPath(), arg, &pid)) {
     LOG(ERROR) << "cannot launch " << kMozcTool;
     return false;
   }
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 #ifdef OS_LINUX
   const char kMozcTool[] = "mozc_tool";
   const string arg = "--mode=error_message_dialog --error_type=" + error_type;
   size_t pid = 0;
-  if (!Process::SpawnProcess(Util::GetToolPath(), arg, &pid)) {
+  if (!Process::SpawnProcess(SystemUtil::GetToolPath(), arg, &pid)) {
     LOG(ERROR) << "cannot launch " << kMozcTool;
     return false;
   }

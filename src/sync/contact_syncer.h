@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -54,8 +54,11 @@ class ContactSyncer : public SyncerInterface {
   // Download data from GData server
   virtual bool Sync(bool *reload_required);
 
-  // Do nothing currently
+  // Clean up a user dictionary based on contact syncer.
   virtual bool Clear();
+
+  // Do nothing currently.
+  virtual bool ClearLocal();
 
  private:
   FRIEND_TEST(ContactSyncerTest, Timestamp);
@@ -65,7 +68,6 @@ class ContactSyncer : public SyncerInterface {
 
   bool Download(user_dictionary::UserDictionaryStorage *storage,
                 bool *reload_required);
-  bool Upload();
 
   // Getter and setter for dictionary information
   string GetUserDictionaryFileName() const;

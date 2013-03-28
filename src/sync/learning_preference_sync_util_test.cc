@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,11 +32,12 @@
 #include <string>
 #include "base/base.h"
 #include "base/file_stream.h"
+#include "base/file_util.h"
 #include "base/freelist.h"
 #include "base/util.h"
 #include "storage/lru_storage.h"
-#include "sync/sync_util.h"
 #include "sync/sync.pb.h"
+#include "sync/sync_util.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
@@ -45,24 +46,20 @@ namespace mozc {
 namespace sync {
 namespace {
 
-using mozc::storage::LRUStorage;
+using storage::LRUStorage;
 
 TEST(LearningPreferenceSyncUtilTest, CreateUpdate) {
-  const string filename1 = Util::JoinPath(FLAGS_test_tmpdir,
-                                          "file1");
-  const string filename2 = Util::JoinPath(FLAGS_test_tmpdir,
-                                          "file2");
+  const string filename1 = FileUtil::JoinPath(FLAGS_test_tmpdir, "file1");
+  const string filename2 = FileUtil::JoinPath(FLAGS_test_tmpdir, "file2");
 
-  Util::Unlink(filename1);
-  Util::Unlink(filename2);
+  FileUtil::Unlink(filename1);
+  FileUtil::Unlink(filename2);
 
   LRUStorage storage1;
   LRUStorage storage2;
 
-  EXPECT_TRUE(storage1.OpenOrCreate(
-      filename1.c_str(), 4, 10, 0xffede));
-  EXPECT_TRUE(storage2.OpenOrCreate(
-      filename2.c_str(), 4, 10, 0xffede));
+  EXPECT_TRUE(storage1.OpenOrCreate(filename1.c_str(), 4, 10, 0xffede));
+  EXPECT_TRUE(storage2.OpenOrCreate(filename2.c_str(), 4, 10, 0xffede));
 
   // index, key, value, timestamp
   storage1.Write(0, 0, "tst1", 0);
@@ -131,8 +128,8 @@ TEST(LearningPreferenceSyncUtilTest, CreateUpdate) {
   EXPECT_EQ(25, update.entries(3).last_access_time());
   EXPECT_EQ(35, update.entries(4).last_access_time());
 
-  Util::Unlink(filename1);
-  Util::Unlink(filename2);
+  FileUtil::Unlink(filename1);
+  FileUtil::Unlink(filename2);
 }
 
 TEST(LearningPreferenceSyncUtilTest, CreateMergePendingFile) {
@@ -164,20 +161,16 @@ TEST(LearningPreferenceSyncUtilTest, CreateMergePendingFile) {
   entry[3]->set_type(LearningPreference::Entry::USER_BOUNDARY_HISTORY);
 
   {
-    const string filename1 = Util::JoinPath(FLAGS_test_tmpdir,
-                                            "file1");
-    const string filename2 = Util::JoinPath(FLAGS_test_tmpdir,
-                                            "file2");
+    const string filename1 = FileUtil::JoinPath(FLAGS_test_tmpdir, "file1");
+    const string filename2 = FileUtil::JoinPath(FLAGS_test_tmpdir, "file2");
 
-    Util::Unlink(filename1);
-    Util::Unlink(filename2);
+    FileUtil::Unlink(filename1);
+    FileUtil::Unlink(filename2);
 
     LRUStorage storage1;
     LRUStorage storage2;
-    EXPECT_TRUE(storage1.OpenOrCreate(
-        filename1.c_str(), 4, 10, 0xffede));
-    EXPECT_TRUE(storage2.OpenOrCreate(
-        filename2.c_str(), 4, 10, 0xffede));
+    EXPECT_TRUE(storage1.OpenOrCreate(filename1.c_str(), 4, 10, 0xffede));
+    EXPECT_TRUE(storage2.OpenOrCreate(filename2.c_str(), 4, 10, 0xffede));
 
     LearningPreferenceSyncUtil::CreateMergePendingFile(
         storage1,
@@ -189,15 +182,15 @@ TEST(LearningPreferenceSyncUtilTest, CreateMergePendingFile) {
         LearningPreference::Entry::USER_BOUNDARY_HISTORY,
         update);
 
-    Util::Unlink(filename1);
-    Util::Unlink(filename2);
+    FileUtil::Unlink(filename1);
+    FileUtil::Unlink(filename2);
   }
 
   {
-    const string filename1 = Util::JoinPath(FLAGS_test_tmpdir,
-                                            "file1.merge_pending");
-    const string filename2 = Util::JoinPath(FLAGS_test_tmpdir,
-                                            "file2.merge_pending");
+    const string filename1 = FileUtil::JoinPath(FLAGS_test_tmpdir,
+                                                "file1.merge_pending");
+    const string filename2 = FileUtil::JoinPath(FLAGS_test_tmpdir,
+                                                "file2.merge_pending");
 
     LRUStorage storage1;
     LRUStorage storage2;
@@ -231,10 +224,11 @@ TEST(LearningPreferenceSyncUtilTest, CreateMergePendingFile) {
     EXPECT_EQ("tst3", value);
     EXPECT_EQ(30, last_access_time);
 
-    Util::Unlink(filename1);
-    Util::Unlink(filename2);
+    FileUtil::Unlink(filename1);
+    FileUtil::Unlink(filename2);
   }
 }
+
 }  // namespace
-}  // sync
-}  // mozc
+}  // namespace sync
+}  // namespace mozc

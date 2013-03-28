@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -42,12 +42,12 @@ namespace gui {
 SyncCustomizeDialog::SyncCustomizeDialog(QWidget *parent)
     : QDialog(parent) {
   setupUi(this);
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   Qt::WindowFlags flags = windowFlags();
   // Remove Context help button. b/5579590.
   flags &= ~Qt::WindowContextHelpButtonHint;
   setWindowFlags(flags);
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
   QObject::connect(syncEverythingCheckbox,
                    SIGNAL(clicked(bool)),

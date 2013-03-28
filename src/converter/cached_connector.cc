@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,6 @@
 
 #include "base/base.h"
 #include "base/logging.h"
-#include "base/thread.h"
 #include "converter/connector_interface.h"
 #include "converter/sparse_connector.h"
 
@@ -56,15 +55,11 @@ inline uint32 EncodeKey(uint16 rid, uint16 lid) {
 
 }  // namespace
 
-CachedConnector::CachedConnector(ConnectorInterface *connector,
-                                 bool *cache_initialized,
-                                 int *cache_key,
-                                 int *cache_value,
-                                 int cache_size)
+CachedConnector::CachedConnector(ConnectorInterface *connector, int cache_size)
     : connector_(connector),
-      cache_initialized_(cache_initialized),
-      cache_key_(cache_key),
-      cache_value_(cache_value),
+      cache_initialized_(false),
+      cache_key_(new int[cache_size]),
+      cache_value_(new int[cache_size]),
       cache_size_(cache_size),
       hash_mask_(cache_size - 1) {
   // Check if the cache_size is 2^k form.
@@ -75,12 +70,6 @@ CachedConnector::~CachedConnector() {}
 
 int CachedConnector::GetTransitionCost(uint16 rid, uint16 lid) const {
   InitializeCache();
-
-  // We should mutex lock if HAVE_TLS is false. Mac OS doesn't support TLS.
-  // However, we don't call it at this moment with the following reason.
-  // 1) On desktop, we can assume that converter is executed on
-  // single thread environment
-  // 2) Can see about 20% performance drop with Mutex lock.
 
   const uint32 index = EncodeKey(rid, lid);
   const int bucket = GetHashValue(rid, lid, hash_mask_);
@@ -94,14 +83,14 @@ int CachedConnector::GetTransitionCost(uint16 rid, uint16 lid) const {
 }
 
 void CachedConnector::InitializeCache() const {
-  if (*cache_initialized_) {
+  if (cache_initialized_) {
     return;
   }
   VLOG(2) << "Initializing Cache for CachedConnector.";
   for (int i = 0; i < cache_size_; ++i) {
     cache_key_[i] = kInvalidCacheKey;
   }
-  *cache_initialized_ = true;
+  cache_initialized_ = true;
 }
 
 // Test code can use this method to get acceptable error.
@@ -110,7 +99,8 @@ int CachedConnector::GetResolution() const {
 }
 
 void CachedConnector::ClearCache() {
-  *cache_initialized_ = false;
+  cache_initialized_ = false;
 }
+
 }  // namespace converter
 }  // namespace mozc

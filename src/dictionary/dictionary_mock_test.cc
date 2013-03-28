@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -78,6 +78,28 @@ Token *DictionaryMockTest::CreateToken(const string &key, const string &value) {
   token->key = key;
   token->value = value;
   return token;
+}
+
+TEST_F(DictionaryMockTest, test_has_value) {
+  DictionaryMock *dic = GetMock();
+
+  scoped_ptr<Token> t0(CreateToken("k0", "v0"));
+  scoped_ptr<Token> t1(CreateToken("k1", "v1"));
+  scoped_ptr<Token> t2(CreateToken("k2", "v2"));
+  scoped_ptr<Token> t3(CreateToken("k3", "v3"));
+
+  dic->AddLookupPrefix(t0->key, t0->key, t0->value, 0);
+  dic->AddLookupPredictive(t1->key, t1->key, t1->value, 0);
+  dic->AddLookupReverse(t2->key, t2->key, t2->value, 0);
+  dic->AddLookupExact(t3->key, t3->key, t3->value, 0);
+
+  EXPECT_TRUE(dic->HasValue("v0"));
+  EXPECT_TRUE(dic->HasValue("v1"));
+  EXPECT_TRUE(dic->HasValue("v2"));
+  EXPECT_TRUE(dic->HasValue("v3"));
+  EXPECT_FALSE(dic->HasValue("v4"));
+  EXPECT_FALSE(dic->HasValue("v5"));
+  EXPECT_FALSE(dic->HasValue("v6"));
 }
 
 TEST_F(DictionaryMockTest, test_prefix) {
@@ -187,13 +209,13 @@ TEST_F(DictionaryMockTest, test_exact) {
   }
   {
     NodeAllocator allocator;
-    Node *node = dic->LookupExact("hoge", key.size(), &allocator);
+    Node *node = dic->LookupExact("hoge", 4, &allocator);
     EXPECT_TRUE(node == NULL);
   }
   {
     NodeAllocator allocator;
     // "ほ"
-    Node *node = dic->LookupExact("\xE3\x81\xBB", key.size(), &allocator);
+    Node *node = dic->LookupExact("\xE3\x81\xBB", 3, &allocator);
     EXPECT_TRUE(node == NULL);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,6 +34,7 @@
 #include <string>
 
 #include "base/base.h"
+#include "base/string_piece.h"
 #include "base/logging.h"
 #include "base/singleton.h"
 #include "base/util.h"
@@ -59,7 +60,7 @@ static Node *LookupInternal(map<string, list<DictionaryMock::NodeData> > dic,
   const size_t end_len = lookup_str.size();
 
   for (size_t i = start_len; i <= end_len; ++i) {
-    const string prefix = lookup_str.substr(0, i);
+    const string prefix(lookup_str, 0, i);
     if (dic.find(prefix) != dic.end()) {
       list<DictionaryMock::NodeData> &node_list = dic[prefix];
       list<DictionaryMock::NodeData>::iterator it_list = node_list.begin();
@@ -88,6 +89,23 @@ static Node *LookupInternal(map<string, list<DictionaryMock::NodeData> > dic,
   }
   return cur_node;
 }
+
+bool HasValueInternal(const map<string, list<DictionaryMock::NodeData> > &dic,
+                      const StringPiece value) {
+  typedef list<DictionaryMock::NodeData> NodeDataList;
+  for (map<string, NodeDataList>::const_iterator map_it = dic.begin();
+       map_it != dic.end(); ++map_it) {
+    const NodeDataList &l = map_it->second;
+    for (NodeDataList::const_iterator list_it = l.begin();
+         list_it != l.end(); ++list_it) {
+      if (list_it->value == value) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 }  // namespace
 
 DictionaryMock::DictionaryMock() {
@@ -95,6 +113,13 @@ DictionaryMock::DictionaryMock() {
 }
 
 DictionaryMock::~DictionaryMock() {
+}
+
+bool DictionaryMock::HasValue(const StringPiece value) const {
+  return HasValueInternal(predictive_dictionary_, value) ||
+         HasValueInternal(prefix_dictionary_, value) ||
+         HasValueInternal(reverse_dictionary_, value) ||
+         HasValueInternal(exact_dictionary_, value);
 }
 
 Node *DictionaryMock::LookupPredictiveWithLimit(
@@ -196,15 +221,5 @@ void DictionaryMock::AddLookupExact(const string &str,
                                     uint32 attributes) {
   NodeData node_data(str, key, value, attributes);
   exact_dictionary_[str].push_back(node_data);
-}
-
-DictionaryMock *DictionaryMock::GetDictionaryMock() {
-  return Singleton<DictionaryMock>::get();
-}
-
-void DictionaryMock::ClearAll() {
-  predictive_dictionary_.clear();
-  prefix_dictionary_.clear();
-  reverse_dictionary_.clear();
 }
 }  // namespace mozc

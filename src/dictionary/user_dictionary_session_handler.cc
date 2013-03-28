@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,7 @@
 #include "dictionary/user_dictionary_session_handler.h"
 
 #include "base/base.h"
+#include "base/file_util.h"
 #include "base/logging.h"
 #include "base/scoped_ptr.h"
 #include "base/util.h"
@@ -118,6 +119,9 @@ bool UserDictionarySessionHandler::Evaluate(
     case UserDictionaryCommand::IMPORT_DATA:
       ImportData(command, status);
       break;
+    case UserDictionaryCommand::GET_STORAGE:
+      GetStorage(command, status);
+      break;
     default:
       status->set_status(UserDictionaryCommandStatus::UNKNOWN_COMMAND);
       break;
@@ -145,7 +149,7 @@ void UserDictionarySessionHandler::ClearStorage(
   // File operation is not supported on NaCl.
   status->set_status(UserDictionaryCommandStatus::UNKNOWN_ERROR);
 #else
-  Util::Unlink(dictionary_path_);
+  FileUtil::Unlink(dictionary_path_);
   status->set_status(
       UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS);
 #endif
@@ -522,6 +526,18 @@ void UserDictionarySessionHandler::ImportData(
   status->set_status(result_status);
 }
 
+void UserDictionarySessionHandler::GetStorage(
+    const UserDictionaryCommand &command,
+    UserDictionaryCommandStatus *status) {
+  UserDictionarySession *session = GetSession(command, status);
+  if (session == NULL) {
+    return;
+  }
+  status->mutable_storage()->CopyFrom(session->storage());
+  status->set_status(
+      UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS);
+}
+
 UserDictionarySession *UserDictionarySessionHandler::GetSession(
     const UserDictionaryCommand &command,
     UserDictionaryCommandStatus *status) {
@@ -541,11 +557,12 @@ UserDictionarySession *UserDictionarySessionHandler::GetSession(
 uint64 UserDictionarySessionHandler::CreateNewSessionId() const {
   uint64 id = kInvalidSessionId;
   while (true) {
-    if (!Util::GetSecureRandomSequence(
-            reinterpret_cast<char *>(&id), sizeof(id))) {
-      LOG(ERROR) << "GetSecureRandomSequence is failed. Use random instead.";
-      id = static_cast<uint64>(Util::Random(RAND_MAX));
-    }
+    Util::GetRandomSequence(reinterpret_cast<char *>(&id), sizeof(id));
+#ifdef  __native_client__
+    // Because JavaScript does not support uint64.
+    // So we downsize the session id range from uint64 to uint32 in NaCl.
+    id = static_cast<uint32>(id);
+#endif  // __native_client__
 
     if (id != kInvalidSessionId &&
         (session_.get() == NULL || session_id_ != id)) {

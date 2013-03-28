@@ -1,4 +1,4 @@
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -39,9 +39,6 @@
       # 'this' : used in base member initializer list
       # http://msdn.microsoft.com/en-us/library/3c594ae3.aspx
       '4355',
-      # 'function': was declared deprecated.
-      # http://msdn.microsoft.com/en-us/library/ttcz0bys.aspx
-      '4996',
     ],
     'protobuf_sources': [
       'files/src/google/protobuf/compiler/importer.cc',
@@ -66,8 +63,11 @@
       'files/src/google/protobuf/reflection_ops.cc',
       'files/src/google/protobuf/repeated_field.cc',
       'files/src/google/protobuf/service.cc',
+      'files/src/google/protobuf/stubs/atomicops_internals_x86_gcc.cc',
+      'files/src/google/protobuf/stubs/atomicops_internals_x86_msvc.cc',
       'files/src/google/protobuf/stubs/common.cc',
       'files/src/google/protobuf/stubs/once.cc',
+      'files/src/google/protobuf/stubs/stringprintf.cc',
       'files/src/google/protobuf/stubs/structurally_valid.cc',
       'files/src/google/protobuf/stubs/strutil.cc',
       'files/src/google/protobuf/stubs/substitute.cc',
@@ -91,6 +91,7 @@
       'files/src/google/protobuf/compiler/cpp/cpp_primitive_field.cc',
       'files/src/google/protobuf/compiler/cpp/cpp_service.cc',
       'files/src/google/protobuf/compiler/cpp/cpp_string_field.cc',
+      'files/src/google/protobuf/compiler/java/java_doc_comment.cc',
       'files/src/google/protobuf/compiler/java/java_enum.cc',
       'files/src/google/protobuf/compiler/java/java_enum_field.cc',
       'files/src/google/protobuf/compiler/java/java_extension.cc',
@@ -109,6 +110,7 @@
       'files/src/google/protobuf/compiler/python/python_generator.cc',
       'files/src/google/protobuf/compiler/subprocess.cc',
       'files/src/google/protobuf/compiler/zip_writer.cc',
+      'files/src/google/protobuf/stubs/stringprintf.cc',
     ],
   },
   'targets': [
@@ -127,15 +129,15 @@
           'sources': ['<@(protobuf_sources)'],
           'include_dirs': ['.'],
           'xcode_settings': {
-            'WARNING_CFLAGS': ['-Wno-error'],
+            'WARNING_CFLAGS': [
+              '-Wno-error',
+              # For GetEnumNumber in wire_format.cc:60.
+              '-Wno-unused-function',
+            ],
           },
-          'msvs_settings': {
-            'VCCLCompilerTool': {
-              'DisableSpecificWarnings': [
-                '<@(msvc_disabled_warnings_for_protoc)',
-              ],
-            },
-          },
+          'msvs_disabled_warnings': [
+            '<@(msvc_disabled_warnings_for_protoc)',
+          ],
           'conditions': [
             # for gcc and clang
             ['OS=="linux" or OS=="mac"', {
@@ -144,6 +146,21 @@
                 '-Wno-unused-function',
               ],
             }],
+            ['OS=="win"', {
+              'defines!': [
+                'WIN32_LEAN_AND_MEAN',  # protobuf already defines this
+              ],
+            }],
+          ],
+        }],
+        ['target_platform=="Android" and _toolset=="target"', {
+          'dependencies': [
+            '../android/android_base.gyp:android_pthread_once',
+          ],
+        }],
+        ['use_packed_dictionary==1', {
+          'dependencies': [
+            '<(DEPTH)/third_party/zlib/v1_2_3/zlib.gyp:zlib'
           ],
         }],
       ],
@@ -177,13 +194,12 @@
         }],
         ['OS=="win"', {
           'sources': ['<@(protoc_sources)'],
-          'msvs_settings': {
-            'VCCLCompilerTool': {
-              'DisableSpecificWarnings': [
-                '<@(msvc_disabled_warnings_for_protoc)'
-              ],
-            },
-          },
+          'defines!': [
+            'WIN32_LEAN_AND_MEAN',  # protobuf already defines this
+          ],
+          'msvs_disabled_warnings': [
+            '<@(msvc_disabled_warnings_for_protoc)',
+          ],
         }],
       ],
     },

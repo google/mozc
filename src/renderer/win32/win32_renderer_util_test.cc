@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,6 +40,7 @@
 #include <list>
 
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/mmap.h"
 #include "base/util.h"
 #include "renderer/renderer_command.pb.h"
@@ -319,11 +320,11 @@ class Win32RendererUtilTest : public testing::Test {
     return font;
   }
 
-  static SystemPreferenceEmulator *CreateDefaultGUIFontEmulator() {
+  static SystemPreferenceInterface *CreateDefaultGUIFontEmulator() {
     CLogFont font = GetFont(true, false);
     font.lfHeight = 18;
     font.lfWidth = 0;
-    return SystemPreferenceEmulator::Create(font);
+    return SystemPreferenceFactory::CreateMock(font);
   }
 
   static wstring GetTestMessageWithCompositeGlyph(int num_repeat) {
@@ -468,8 +469,6 @@ class Win32RendererUtilTest : public testing::Test {
         footer->set_logo_visible(true);
         footer->set_sub_label("build 000");
       }
-
-      output->set_elapsed_time(10000);
     }
 
     SetApplicationInfoForTest(
@@ -533,7 +532,6 @@ class Win32RendererUtilTest : public testing::Test {
           footer->set_sub_label("build 754");
         }
       }
-      output->set_elapsed_time(10000);
     }
 
     SetApplicationInfoForTest(
@@ -569,7 +567,6 @@ class Win32RendererUtilTest : public testing::Test {
         segment->set_value_length(num_characters);
         segment->set_key(value);
       }
-      output->set_elapsed_time(10000);
     }
 
     SetApplicationInfoForTest(
@@ -709,7 +706,6 @@ class Win32RendererUtilTest : public testing::Test {
           footer->set_sub_label("build 670");
         }
       }
-      output->set_elapsed_time(269);
       {
         Status *status = output->mutable_status();
         status->set_activated(true);
@@ -841,7 +837,7 @@ class Win32RendererUtilTest : public testing::Test {
 
     RendererCommand command;
 
-    HWND hwnd = NULL;
+    HWND hwnd = nullptr;
     LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                              CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
     vector<CompositionWindowLayout> layouts;
@@ -1062,8 +1058,8 @@ class Win32RendererUtilTest : public testing::Test {
 
   static void RegisterFonts() {
     // We assume the font exists in the local directory.
-    // See comments in renderer.gyp for details.
-    // Please note that this font is licensed for internal use only.
+    // See comments in renderer.gyp for details. Here we use OSS font so that
+    // developers can freely run these test cases.
     const wchar_t *kPrivateFonts[] = {
         L"data\\ipaexg.ttf",
         L"data\\ipaexm.ttf",
@@ -1073,7 +1069,7 @@ class Win32RendererUtilTest : public testing::Test {
 
       wchar_t w_path[MAX_PATH] = {};
       const DWORD char_size =
-          ::GetModuleFileNameW(NULL, w_path, ARRAYSIZE(w_path));
+          ::GetModuleFileNameW(nullptr, w_path, ARRAYSIZE(w_path));
       const DWORD get_module_file_name_error = ::GetLastError();
       if (char_size == 0) {
         LOG(ERROR) << "GetModuleFileNameW failed.  error = "
@@ -1102,8 +1098,8 @@ class Win32RendererUtilTest : public testing::Test {
 
       DWORD num_font = 0;
       const HANDLE handle =
-          ::AddFontMemResourceEx(mmap.begin(), mmap.size(), NULL, &num_font);
-      if (handle == NULL) {
+          ::AddFontMemResourceEx(mmap.begin(), mmap.size(), nullptr, &num_font);
+      if (handle == nullptr) {
         const int error = ::GetLastError();
         LOG(ERROR) << "AddFontMemResourceEx failed. error = " << error;
         return;
@@ -1139,7 +1135,7 @@ TEST_F(Win32RendererUtilTest, GetPointInPhysicalCoordsTest) {
 
   // Check DPI scale: 100%
   {
-    HWND hwnd = NULL;
+    HWND hwnd = nullptr;
     LayoutManager layout_mgr(
         CreateDefaultGUIFontEmulator(),
         CreateWindowEmulator(kWindowClassName, kWindowRect,
@@ -1161,7 +1157,7 @@ TEST_F(Win32RendererUtilTest, GetPointInPhysicalCoordsTest) {
 
   // Check DPI scale: 200%
   {
-    HWND hwnd = NULL;
+    HWND hwnd = nullptr;
     LayoutManager layout_mgr(
         CreateDefaultGUIFontEmulator(),
         CreateWindowEmulator(kWindowClassName, kWindowRect, kClientOffset,
@@ -1192,7 +1188,7 @@ TEST_F(Win32RendererUtilTest, GetRectInPhysicalCoordsTest) {
 
   // Check DPI scale: 100%
   {
-    HWND hwnd = NULL;
+    HWND hwnd = nullptr;
     LayoutManager layout_mgr(
         CreateDefaultGUIFontEmulator(),
         CreateWindowEmulator(kWindowClassName, kWindowRect,
@@ -1214,7 +1210,7 @@ TEST_F(Win32RendererUtilTest, GetRectInPhysicalCoordsTest) {
 
   // Check DPI scale: 200%
   {
-    HWND hwnd = NULL;
+    HWND hwnd = nullptr;
     LayoutManager layout_mgr(
         CreateDefaultGUIFontEmulator(),
         CreateWindowEmulator(kWindowClassName, kWindowRect,
@@ -1242,7 +1238,7 @@ TEST_F(Win32RendererUtilTest, GetScalingFactorTest) {
     const CPoint kClientOffset(0, 0);
     const CSize kClientSize(100, 200);
     const CRect kWindowRect(1000, 500, 1100, 700);
-    HWND hwnd = NULL;
+    HWND hwnd = nullptr;
     LayoutManager layout_mgr(
         CreateDefaultGUIFontEmulator(),
         CreateWindowEmulator(kWindowClassName, kWindowRect,
@@ -1258,7 +1254,7 @@ TEST_F(Win32RendererUtilTest, GetScalingFactorTest) {
     const CSize kClientSize(0, 200);
     const CRect kWindowRect(1000, 500, 1000, 700);
 
-    HWND hwnd = NULL;
+    HWND hwnd = nullptr;
     LayoutManager layout_mgr(
         CreateDefaultGUIFontEmulator(),
         CreateWindowEmulator(kWindowClassName, kWindowRect,
@@ -1273,7 +1269,7 @@ TEST_F(Win32RendererUtilTest, GetScalingFactorTest) {
     const CPoint kClientOffset(0, 0);
     const CSize kClientSize(100, 0);
     const CRect kWindowRect(1000, 500, 1100, 500);
-    HWND hwnd = NULL;
+    HWND hwnd = nullptr;
     LayoutManager layout_mgr(
         CreateDefaultGUIFontEmulator(),
         CreateWindowEmulator(kWindowClassName, kWindowRect,
@@ -1288,7 +1284,7 @@ TEST_F(Win32RendererUtilTest, GetScalingFactorTest) {
     const CPoint kClientOffset(0, 0);
     const CSize kClientSize(0, 0);
     const CRect kWindowRect(1000, 500, 1000, 500);
-    HWND hwnd = NULL;
+    HWND hwnd = nullptr;
     LayoutManager layout_mgr(
         CreateDefaultGUIFontEmulator(),
         CreateWindowEmulator(kWindowClassName, kWindowRect,
@@ -1320,11 +1316,11 @@ TEST_F(Win32RendererUtilTest, WindowPositionEmulatorTest) {
     CRect rect;
     CPoint point;
 
-    // You cannot pass NULL to |window_handle|.
-    EXPECT_FALSE(emulator->IsWindow(NULL));
-    EXPECT_FALSE(emulator->GetWindowRect(NULL, &rect));
-    EXPECT_FALSE(emulator->GetClientRect(NULL, &rect));
-    EXPECT_FALSE(emulator->ClientToScreen(NULL, &point));
+    // You cannot pass nullptr to |window_handle|.
+    EXPECT_FALSE(emulator->IsWindow(nullptr));
+    EXPECT_FALSE(emulator->GetWindowRect(nullptr, &rect));
+    EXPECT_FALSE(emulator->GetClientRect(nullptr, &rect));
+    EXPECT_FALSE(emulator->ClientToScreen(nullptr, &point));
 
     EXPECT_TRUE(emulator->GetWindowRect(hwnd, &rect));
     EXPECT_EQ(kWindowRect, rect);
@@ -1351,11 +1347,11 @@ TEST_F(Win32RendererUtilTest, WindowPositionEmulatorTest) {
     CRect rect;
     CPoint point;
 
-    // You cannot pass NULL to |window_handle|.
-    EXPECT_FALSE(emulator->IsWindow(NULL));
-    EXPECT_FALSE(emulator->GetWindowRect(NULL, &rect));
-    EXPECT_FALSE(emulator->GetClientRect(NULL, &rect));
-    EXPECT_FALSE(emulator->ClientToScreen(NULL, &point));
+    // You cannot pass nullptr to |window_handle|.
+    EXPECT_FALSE(emulator->IsWindow(nullptr));
+    EXPECT_FALSE(emulator->GetWindowRect(nullptr, &rect));
+    EXPECT_FALSE(emulator->GetClientRect(nullptr, &rect));
+    EXPECT_FALSE(emulator->ClientToScreen(nullptr, &point));
 
     EXPECT_TRUE(emulator->GetWindowRect(hwnd, &rect));
     EXPECT_EQ(kWindowRect, rect);
@@ -1690,7 +1686,7 @@ TEST_F(Win32RendererUtilTest,
 
   RendererCommand command;
 
-  HWND hwnd = NULL;
+  HWND hwnd = nullptr;
   LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                            CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
   vector<CompositionWindowLayout> layouts;
@@ -1815,7 +1811,7 @@ TEST_F(Win32RendererUtilTest,
 
   RendererCommand command;
 
-  HWND hwnd = NULL;
+  HWND hwnd = nullptr;
   LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                            CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
   vector<CompositionWindowLayout> layouts;
@@ -1944,7 +1940,7 @@ TEST_F(Win32RendererUtilTest,
 
   RendererCommand command;
 
-  HWND hwnd = NULL;
+  HWND hwnd = nullptr;
   LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                            CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
   vector<CompositionWindowLayout> layouts;
@@ -2090,7 +2086,7 @@ TEST_F(Win32RendererUtilTest,
 
   RendererCommand command;
 
-  HWND hwnd = NULL;
+  HWND hwnd = nullptr;
   LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                            CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
   vector<CompositionWindowLayout> layouts;
@@ -2239,7 +2235,7 @@ TEST_F(Win32RendererUtilTest,
 
   RendererCommand command;
 
-  HWND hwnd = NULL;
+  HWND hwnd = nullptr;
   LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                            CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
   vector<CompositionWindowLayout> layouts;
@@ -2364,7 +2360,7 @@ TEST_F(Win32RendererUtilTest,
 
   RendererCommand command;
 
-  HWND hwnd = NULL;
+  HWND hwnd = nullptr;
   LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                            CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
   vector<CompositionWindowLayout> layouts;
@@ -2493,7 +2489,7 @@ TEST_F(Win32RendererUtilTest,
 
   RendererCommand command;
 
-  HWND hwnd = NULL;
+  HWND hwnd = nullptr;
   LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                            CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
   vector<CompositionWindowLayout> layouts;
@@ -2639,7 +2635,7 @@ TEST_F(Win32RendererUtilTest,
 
   RendererCommand command;
 
-  HWND hwnd = NULL;
+  HWND hwnd = nullptr;
   LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                            CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
   vector<CompositionWindowLayout> layouts;
@@ -2788,7 +2784,7 @@ TEST_F(Win32RendererUtilTest,
 
   RendererCommand command;
 
-  HWND hwnd = NULL;
+  HWND hwnd = nullptr;
   LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                            CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
   vector<CompositionWindowLayout> layouts;
@@ -2851,7 +2847,7 @@ TEST_F(Win32RendererUtilTest,
 
   RendererCommand command;
 
-  HWND hwnd = NULL;
+  HWND hwnd = nullptr;
   LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                            CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
   vector<CompositionWindowLayout> layouts;
@@ -2914,7 +2910,7 @@ TEST_F(Win32RendererUtilTest,
 
   RendererCommand command;
 
-  HWND hwnd = NULL;
+  HWND hwnd = nullptr;
   LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                            CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
   vector<CompositionWindowLayout> layouts;
@@ -3017,7 +3013,7 @@ TEST_F(Win32RendererUtilTest,
 
   RendererCommand command;
 
-  HWND hwnd = NULL;
+  HWND hwnd = nullptr;
   LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                            CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
   vector<CompositionWindowLayout> layouts;
@@ -3118,7 +3114,7 @@ TEST_F(Win32RendererUtilTest, CheckCaretPosInHorizontalComposition) {
   // Check the caret points the first character.
   {
     const int kCursorOffsetX = -300;
-    HWND hwnd = NULL;
+    HWND hwnd = nullptr;
     LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                              CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
     vector<CompositionWindowLayout> layouts;
@@ -3149,7 +3145,7 @@ TEST_F(Win32RendererUtilTest, CheckCaretPosInHorizontalComposition) {
   // Check the caret points the middle character.
   {
     const int kCursorOffsetX = -300;
-    HWND hwnd = NULL;
+    HWND hwnd = nullptr;
     LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                              CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
     vector<CompositionWindowLayout> layouts;
@@ -3182,7 +3178,7 @@ TEST_F(Win32RendererUtilTest, CheckCaretPosInHorizontalComposition) {
   // caret except that there is no room to extend.
   {
     const int kCursorOffsetX = -300;
-    HWND hwnd = NULL;
+    HWND hwnd = nullptr;
     LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                              CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
     vector<CompositionWindowLayout> layouts;
@@ -3214,7 +3210,7 @@ TEST_F(Win32RendererUtilTest, CheckCaretPosInHorizontalComposition) {
   // inside of the line if it exceeds the end of line.
   {
     const int kCursorOffsetX = -287;
-    HWND hwnd = NULL;
+    HWND hwnd = nullptr;
     LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                              CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
     vector<CompositionWindowLayout> layouts;
@@ -3246,7 +3242,7 @@ TEST_F(Win32RendererUtilTest, CheckCaretPosInHorizontalComposition) {
   // not be adjusted.
   {
     const int kCursorOffsetX = -287;
-    HWND hwnd = NULL;
+    HWND hwnd = nullptr;
     LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                              CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
     vector<CompositionWindowLayout> layouts;
@@ -3285,7 +3281,7 @@ TEST_F(Win32RendererUtilTest, CheckCaretPosInVerticalComposition) {
   // Check the caret points the first character.
   {
     const int kCursorOffsetY = -10;
-    HWND hwnd = NULL;
+    HWND hwnd = nullptr;
     LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                              CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
     vector<CompositionWindowLayout> layouts;
@@ -3318,7 +3314,7 @@ TEST_F(Win32RendererUtilTest, CheckCaretPosInVerticalComposition) {
   // Check the caret points the middle character.
   {
     const int kCursorOffsetY = -10;
-    HWND hwnd = NULL;
+    HWND hwnd = nullptr;
     LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                              CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
     vector<CompositionWindowLayout> layouts;
@@ -3353,7 +3349,7 @@ TEST_F(Win32RendererUtilTest, CheckCaretPosInVerticalComposition) {
   // caret except that there is no room to extend.
   {
     const int kCursorOffsetY = -10;
-    HWND hwnd = NULL;
+    HWND hwnd = nullptr;
     LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                              CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
     vector<CompositionWindowLayout> layouts;
@@ -3387,7 +3383,7 @@ TEST_F(Win32RendererUtilTest, CheckCaretPosInVerticalComposition) {
   // inside of the line if it exceeds the end of line.
   {
     const int kCursorOffsetY = -2;
-    HWND hwnd = NULL;
+    HWND hwnd = nullptr;
     LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                              CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
     vector<CompositionWindowLayout> layouts;
@@ -3421,7 +3417,7 @@ TEST_F(Win32RendererUtilTest, CheckCaretPosInVerticalComposition) {
   // not be adjusted.
   {
     const int kCursorOffsetY = -2;
-    HWND hwnd = NULL;
+    HWND hwnd = nullptr;
     LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                              CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
     vector<CompositionWindowLayout> layouts;
@@ -3465,7 +3461,7 @@ TEST_F(Win32RendererUtilTest, SuggestWindowNeverHidesHorizontalPreedit) {
 
   RendererCommand command;
 
-  HWND hwnd = NULL;
+  HWND hwnd = nullptr;
   LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                            CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
   vector<CompositionWindowLayout> layouts;
@@ -3500,7 +3496,7 @@ TEST_F(Win32RendererUtilTest, SuggestWindowNeverHidesVerticalPreedit) {
 
   RendererCommand command;
 
-  HWND hwnd = NULL;
+  HWND hwnd = nullptr;
   LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                            CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
   vector<CompositionWindowLayout> layouts;
@@ -3532,7 +3528,7 @@ TEST_F(Win32RendererUtilTest, SuggestWindowNeverHidesVerticalPreedit) {
 
 TEST_F(Win32RendererUtilTest, RemoveUnderlineFromFont_Issue2935480) {
   const int kCursorOffsetY = 0;
-  HWND hwnd = NULL;
+  HWND hwnd = nullptr;
   LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                            CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
   vector<CompositionWindowLayout> layouts;
@@ -3565,7 +3561,7 @@ TEST_F(Win32RendererUtilTest, RemoveUnderlineFromFont_Issue2935480) {
 // We should consider the case where two or more style bits are specified
 // at the same time.
 TEST_F(Win32RendererUtilTest, CompositionFormRECTAsBitFlag_Issue3200425) {
-  // Check the backword compatibility.
+  // Check the backward compatibility.
   VerifyCompositionStyleBitsCompatibilityForIssue3200425(
       true, CompositionForm::RECT,
       false, CompositionForm::DEFAULT);
@@ -3597,7 +3593,7 @@ TEST_F(Win32RendererUtilTest, EvernoteEditorComposition) {
   const CSize kClientSize(238, 537);
   const double kScaleFactor = 1.0;
 
-  HWND hwnd = NULL;
+  HWND hwnd = nullptr;
   LayoutManager layout_mgr(
       CreateDefaultGUIFontEmulator(),
       CreateWindowEmulator(kClassName, kWindowRect, kClientOffset, kClientSize,
@@ -3710,7 +3706,7 @@ TEST_F(Win32RendererUtilTest, CrescentEveComposition_Issue3239031) {
   const CSize kClientSize(1107, 1230);
   const double kScaleFactor = 1.0;
 
-  HWND hwnd = NULL;
+  HWND hwnd = nullptr;
   LayoutManager layout_mgr(
       CreateDefaultGUIFontEmulator(),
       CreateWindowEmulator(kClassName, kWindowRect, kClientOffset, kClientSize,
@@ -3799,9 +3795,9 @@ TEST_F(Win32RendererUtilTest, CrescentEveComposition_Issue3239031) {
 TEST_F(Win32RendererUtilTest, MSInfo32Composition_Issue3433099) {
   const double kScaleFactor = 1.0;
 
-  WindowPositionEmulator *window_emulator = NULL;
-  HWND root_window = NULL;
-  HWND child_window = NULL;
+  WindowPositionEmulator *window_emulator = nullptr;
+  HWND root_window = nullptr;
+  HWND child_window = nullptr;
 
   {
     const wchar_t kRootClassName[] = L"#32770 (Dialog)";
@@ -3955,7 +3951,7 @@ TEST_F(Win32RendererUtilTest,
        DISABLED_CheckSurrogatePairInHorizontalComposition_Issue4159275) {
   const int kCursorOffsetX = 150;
 
-  HWND hwnd = NULL;
+  HWND hwnd = nullptr;
   LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                            CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
 
@@ -4018,7 +4014,7 @@ TEST_F(Win32RendererUtilTest,
        DISABLED_CheckSurrogatePairInVerticalComposition_Issue4159275) {
   const int kCursorOffsetY = 175;
 
-  HWND hwnd = NULL;
+  HWND hwnd = nullptr;
   LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                            CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
 
@@ -4078,13 +4074,13 @@ TEST_F(Win32RendererUtilTest, GetWritingDirectionTest) {
 
   // Horizontal
   SetRenderereCommandForTest(
-      false, true, false, 0, NULL, &command);
+      false, true, false, 0, nullptr, &command);
   EXPECT_EQ(LayoutManager::HORIZONTAL_WRITING,
             LayoutManager::GetWritingDirection(command.application_info()));
 
   // Vertical
   SetRenderereCommandForTest(
-      false, true, true, 0, NULL, &command);
+      false, true, true, 0, nullptr, &command);
   EXPECT_EQ(LayoutManager::VERTICAL_WRITING,
             LayoutManager::GetWritingDirection(command.application_info()));
 
@@ -4108,7 +4104,7 @@ TEST_F(Win32RendererUtilTest, Hidemaru_Horizontal_Suggest) {
   const CSize kClientSize(2000, 1000);
   const double kScaleFactor = 1.0;
 
-  HWND hwnd = NULL;
+  HWND hwnd = nullptr;
   LayoutManager layout_mgr(
       CreateDefaultGUIFontEmulator(),
       CreateWindowEmulator(kClassName, kWindowRect, kClientOffset, kClientSize,
@@ -4132,12 +4128,10 @@ TEST_F(Win32RendererUtilTest, Hidemaru_Horizontal_Suggest) {
   AppInfoUtil::SetCandidateForm(
       &app_info, CandidateForm::EXCLUDE, 112, 42, 112, 25, 752, 42);
 
-  AppInfoUtil::SetCaretInfo(
-      &app_info, true, 160, 25, 162, 40, hwnd);
+  AppInfoUtil::SetCaretInfo(&app_info, true, 160, 25, 162, 40, hwnd);
 
   CandidateWindowLayout layout;
-  EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForSuggestion(
-      app_info, &layout));
+  EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForSuggestion(app_info, &layout));
   EXPECT_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(
       168, 102, 168, 87, 170, 102, layout);
 }
@@ -4150,7 +4144,7 @@ TEST_F(Win32RendererUtilTest, Hidemaru_Horizontal_Convert) {
   const CSize kClientSize(2000, 1000);
   const double kScaleFactor = 1.0;
 
-  HWND hwnd = NULL;
+  HWND hwnd = nullptr;
   LayoutManager layout_mgr(
       CreateDefaultGUIFontEmulator(),
       CreateWindowEmulator(kClassName, kWindowRect, kClientOffset, kClientSize,
@@ -4175,8 +4169,7 @@ TEST_F(Win32RendererUtilTest, Hidemaru_Horizontal_Convert) {
   AppInfoUtil::SetCandidateForm(
       &app_info, CandidateForm::EXCLUDE, 128, 25, 128, 25, 144, 42);
 
-  AppInfoUtil::SetCaretInfo(
-      &app_info, true, 160, 25, 162, 40, hwnd);
+  AppInfoUtil::SetCaretInfo(&app_info, true, 160, 25, 162, 40, hwnd);
 
   CandidateWindowLayout layout;
   EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForConversion(
@@ -4193,7 +4186,7 @@ TEST_F(Win32RendererUtilTest, Hidemaru_Vertical_Suggest) {
   const CSize kClientSize(2000, 1000);
   const double kScaleFactor = 1.0;
 
-  HWND hwnd = NULL;
+  HWND hwnd = nullptr;
   LayoutManager layout_mgr(
       CreateDefaultGUIFontEmulator(),
       CreateWindowEmulator(kClassName, kWindowRect, kClientOffset, kClientSize,
@@ -4218,12 +4211,10 @@ TEST_F(Win32RendererUtilTest, Hidemaru_Vertical_Suggest) {
   AppInfoUtil::SetCandidateForm(
       &app_info, CandidateForm::EXCLUDE, 660, 67, 641, 48, 660, 400);
 
-  AppInfoUtil::SetCaretInfo(
-      &app_info, true, 644, 96, 661, 98, hwnd);
+  AppInfoUtil::SetCaretInfo(&app_info, true, 644, 96, 661, 98, hwnd);
 
   CandidateWindowLayout layout;
-  EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForSuggestion(
-      app_info, &layout));
+  EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForSuggestion(app_info, &layout));
   EXPECT_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(
       652, 158, 652, 158, 669, 160, layout);
 }
@@ -4236,7 +4227,7 @@ TEST_F(Win32RendererUtilTest, Hidemaru_Vertical_Convert) {
   const CSize kClientSize(2000, 1000);
   const double kScaleFactor = 1.0;
 
-  HWND hwnd = NULL;
+  HWND hwnd = nullptr;
   LayoutManager layout_mgr(
       CreateDefaultGUIFontEmulator(),
       CreateWindowEmulator(kClassName, kWindowRect, kClientOffset, kClientSize,
@@ -4263,8 +4254,7 @@ TEST_F(Win32RendererUtilTest, Hidemaru_Vertical_Convert) {
   AppInfoUtil::SetCandidateForm(
       &app_info, CandidateForm::EXCLUDE, 644, 63, 644, 63, 661, 80);
 
-  AppInfoUtil::SetCaretInfo(
-      &app_info, true, 644, 96, 661, 98, hwnd);
+  AppInfoUtil::SetCaretInfo(&app_info, true, 644, 96, 661, 98, hwnd);
 
   CandidateWindowLayout layout;
   EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForConversion(
@@ -4281,7 +4271,7 @@ TEST_F(Win32RendererUtilTest, OOo_Suggest) {
   const CSize kClientSize(2000, 1000);
   const double kScaleFactor = 1.0;
 
-  HWND hwnd = NULL;
+  HWND hwnd = nullptr;
   LayoutManager layout_mgr(
       CreateDefaultGUIFontEmulator(),
       CreateWindowEmulator(kClassName, kWindowRect, kClientOffset, kClientSize,
@@ -4302,12 +4292,10 @@ TEST_F(Win32RendererUtilTest, OOo_Suggest) {
   AppInfoUtil::SetCompositionForm(
       &app_info, CompositionForm::POINT, 292, 253, 0, 0, 0, 0);
 
-  AppInfoUtil::SetCaretInfo(
-      &app_info, true, 292, 253, 294, 273, hwnd);
+  AppInfoUtil::SetCaretInfo(&app_info, true, 292, 253, 294, 273, hwnd);
 
   CandidateWindowLayout layout;
-  EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForSuggestion(
-      app_info, &layout));
+  EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForSuggestion(app_info, &layout));
   EXPECT_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(
       300, 335, 300, 315, 302, 335, layout);
 }
@@ -4320,7 +4308,7 @@ TEST_F(Win32RendererUtilTest, OOo_Convert) {
   const CSize kClientSize(2000, 1000);
   const double kScaleFactor = 1.0;
 
-  HWND hwnd = NULL;
+  HWND hwnd = nullptr;
   LayoutManager layout_mgr(
       CreateDefaultGUIFontEmulator(),
       CreateWindowEmulator(kClassName, kWindowRect, kClientOffset, kClientSize,
@@ -4345,14 +4333,57 @@ TEST_F(Win32RendererUtilTest, OOo_Convert) {
   AppInfoUtil::SetCandidateForm(
       &app_info, CandidateForm::EXCLUDE, 250, 258, 250, 257, 253, 275);
 
-  AppInfoUtil::SetCaretInfo(
-      &app_info, true, 264, 253, 266, 273, hwnd);
+  AppInfoUtil::SetCaretInfo(&app_info, true, 264, 253, 266, 273, hwnd);
 
   CandidateWindowLayout layout;
   EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForConversion(
       app_info, &layout));
   EXPECT_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(
       258, 320, 258, 319, 261, 337, layout);
+}
+
+// Pidgin 2.6.1
+TEST_F(Win32RendererUtilTest, Pidgin_Indicator) {
+  const wchar_t kClassName[] = L"gdkWindowToplevel";
+  const CRect kWindowRect(0, 20, 2016, 1050);
+  const CPoint kClientOffset(8, 42);
+  const CSize kClientSize(2000, 1000);
+  const double kScaleFactor = 1.0;
+
+  HWND hwnd = nullptr;
+  LayoutManager layout_mgr(
+    CreateDefaultGUIFontEmulator(),
+    CreateWindowEmulator(kClassName, kWindowRect, kClientOffset, kClientSize,
+    kScaleFactor, &hwnd));
+
+  ApplicationInfo app_info;
+
+  AppInfoUtil::SetBasicApplicationInfo(
+    &app_info, hwnd,
+    ApplicationInfo::ShowCandidateWindow |
+    ApplicationInfo::ShowSuggestWindow);
+
+  AppInfoUtil::SetCompositionFont(
+      &app_info, -16, 0, 0, 0, FW_NORMAL, SHIFTJIS_CHARSET,
+      OUT_STROKE_PRECIS, CLIP_STROKE_PRECIS,
+      DRAFT_QUALITY, 50,
+      // "メイリオ"
+      "\343\203\241\343\202\244\343\203\252\343\202\252");
+
+  AppInfoUtil::SetCompositionForm(
+      &app_info, CompositionForm::POINT, 48, 589,
+      96504880, 2617504, 97141432, 2617480);
+
+  AppInfoUtil::SetCandidateForm(
+      &app_info, CandidateForm::CANDIDATEPOS, 32, 636,
+      40706080, 96552944, 2615824, 1815374140);
+
+  AppInfoUtil::SetCaretInfo(&app_info, false, 0, 0, 0, 0, nullptr);
+
+  IndicatorWindowLayout layout;
+  EXPECT_TRUE(layout_mgr.LayoutIndicatorWindow(app_info, &layout));
+  EXPECT_EQ(CRect(56, 651, 57, 667), layout.window_rect);
+  EXPECT_FALSE(layout.is_vertical);
 }
 
 // Pidgin 2.6.1
@@ -4363,7 +4394,7 @@ TEST_F(Win32RendererUtilTest, Pidgin_Suggest) {
   const CSize kClientSize(2000, 1000);
   const double kScaleFactor = 1.0;
 
-  HWND hwnd = NULL;
+  HWND hwnd = nullptr;
   LayoutManager layout_mgr(
       CreateDefaultGUIFontEmulator(),
       CreateWindowEmulator(kClassName, kWindowRect, kClientOffset, kClientSize,
@@ -4390,12 +4421,10 @@ TEST_F(Win32RendererUtilTest, Pidgin_Suggest) {
       &app_info, CandidateForm::CANDIDATEPOS, 48, 636,
       40706080, 96552944, 2615824, 1815374140);
 
-  AppInfoUtil::SetCaretInfo(
-      &app_info, false, 0, 0, 0, 0, NULL);
+  AppInfoUtil::SetCaretInfo(&app_info, false, 0, 0, 0, 0, nullptr);
 
   CandidateWindowLayout layout;
-  EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForSuggestion(
-      app_info, &layout));
+  EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForSuggestion(app_info, &layout));
   EXPECT_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(
       56, 667, 56, 651, 57, 667, layout);
 }
@@ -4408,7 +4437,7 @@ TEST_F(Win32RendererUtilTest, Pidgin_Convert) {
   const CSize kClientSize(2000, 1000);
   const double kScaleFactor = 1.0;
 
-  HWND hwnd = NULL;
+  HWND hwnd = nullptr;
   LayoutManager layout_mgr(
       CreateDefaultGUIFontEmulator(),
       CreateWindowEmulator(kClassName, kWindowRect, kClientOffset, kClientSize,
@@ -4436,8 +4465,7 @@ TEST_F(Win32RendererUtilTest, Pidgin_Convert) {
       &app_info, CandidateForm::CANDIDATEPOS, 32, 636,
       40706080, 96552944, 2615824, 1815374140);
 
-  AppInfoUtil::SetCaretInfo(
-      &app_info, false, 0, 0, 0, 0, NULL);
+  AppInfoUtil::SetCaretInfo(&app_info, false, 0, 0, 0, 0, nullptr);
 
   CandidateWindowLayout layout;
   EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForConversion(
@@ -4447,14 +4475,14 @@ TEST_F(Win32RendererUtilTest, Pidgin_Convert) {
 }
 
 // V2C 2.1.6 on JRE 1.6.0.21 (32-bit)
-TEST_F(Win32RendererUtilTest, V2C_Suggest) {
+TEST_F(Win32RendererUtilTest, V2C_Indicator) {
   const wchar_t kClassName[] = L"SunAwtFrame";
   const CRect kWindowRect(977, 446, 2042, 1052);
   const CPoint kClientOffset(8, 8);
   const CSize kClientSize(1049, 569);
   const double kScaleFactor = 1.0;
 
-  HWND hwnd = NULL;
+  HWND hwnd = nullptr;
   LayoutManager layout_mgr(
       CreateDefaultGUIFontEmulator(),
       CreateWindowEmulator(kClassName, kWindowRect, kClientOffset, kClientSize,
@@ -4471,12 +4499,41 @@ TEST_F(Win32RendererUtilTest, V2C_Suggest) {
   AppInfoUtil::SetCompositionForm(
       &app_info, CompositionForm::DEFAULT, 0, 0, 0, 0, 0, 0);
 
-  AppInfoUtil::SetCaretInfo(
-      &app_info, false, 0, 0, 0, 0, NULL);
+  AppInfoUtil::SetCaretInfo(&app_info, false, 0, 0, 0, 0, nullptr);
+
+  IndicatorWindowLayout layout;
+  EXPECT_FALSE(layout_mgr.LayoutIndicatorWindow(app_info, &layout));
+}
+
+// V2C 2.1.6 on JRE 1.6.0.21 (32-bit)
+TEST_F(Win32RendererUtilTest, V2C_Suggest) {
+  const wchar_t kClassName[] = L"SunAwtFrame";
+  const CRect kWindowRect(977, 446, 2042, 1052);
+  const CPoint kClientOffset(8, 8);
+  const CSize kClientSize(1049, 569);
+  const double kScaleFactor = 1.0;
+
+  HWND hwnd = nullptr;
+  LayoutManager layout_mgr(
+      CreateDefaultGUIFontEmulator(),
+      CreateWindowEmulator(kClassName, kWindowRect, kClientOffset, kClientSize,
+                           kScaleFactor, &hwnd));
+
+  ApplicationInfo app_info;
+
+  AppInfoUtil::SetBasicApplicationInfo(
+      &app_info, hwnd,
+      ApplicationInfo::ShowSuggestWindow);
+
+  // V2C occasionally creates zero-initialized CANDIDATEFORM and maintains
+  // it regardless of the actual position of the composition.
+  AppInfoUtil::SetCompositionForm(
+      &app_info, CompositionForm::DEFAULT, 0, 0, 0, 0, 0, 0);
+
+  AppInfoUtil::SetCaretInfo(&app_info, false, 0, 0, 0, 0, nullptr);
 
   CandidateWindowLayout layout;
-  EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForSuggestion(
-      app_info, &layout));
+  EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForSuggestion(app_info, &layout));
   EXPECT_NON_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(985, 1023, layout);
 }
 
@@ -4488,7 +4545,7 @@ TEST_F(Win32RendererUtilTest, V2C_Convert) {
   const CSize kClientSize(1049, 569);
   const double kScaleFactor = 1.0;
 
-  HWND hwnd = NULL;
+  HWND hwnd = nullptr;
   LayoutManager layout_mgr(
       CreateDefaultGUIFontEmulator(),
       CreateWindowEmulator(kClassName, kWindowRect, kClientOffset, kClientSize,
@@ -4510,8 +4567,7 @@ TEST_F(Win32RendererUtilTest, V2C_Convert) {
       &app_info, CandidateForm::CANDIDATEPOS, 234, 523,
       1272967816, 1974044135, -348494668, -2);
 
-  AppInfoUtil::SetCaretInfo(
-      &app_info, false, 0, 0, 0, 0, NULL);
+  AppInfoUtil::SetCaretInfo(&app_info, false, 0, 0, 0, 0, nullptr);
 
   CandidateWindowLayout layout;
   EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForConversion(
@@ -4529,7 +4585,7 @@ TEST_F(Win32RendererUtilTest, Qt_Suggest) {
   const CSize kClientSize(2000, 1000);
   const double kScaleFactor = 1.0;
 
-  HWND hwnd = NULL;
+  HWND hwnd = nullptr;
   LayoutManager layout_mgr(
       CreateDefaultGUIFontEmulator(),
       CreateWindowEmulator(kClassName, kWindowRect, kClientOffset, kClientSize,
@@ -4557,12 +4613,10 @@ TEST_F(Win32RendererUtilTest, Qt_Suggest) {
       &app_info, CandidateForm::EXCLUDE, 211, 87,
       211, 68, 221, 87);
 
-  AppInfoUtil::SetCaretInfo(
-      &app_info, false, 211, 68, 212, 69, hwnd);
+  AppInfoUtil::SetCaretInfo(&app_info, false, 211, 68, 212, 69, hwnd);
 
   CandidateWindowLayout layout;
-  EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForSuggestion(
-      app_info, &layout));
+  EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForSuggestion(app_info, &layout));
   EXPECT_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(
       219, 149, 219, 130, 229, 149, layout);
 }
@@ -4575,7 +4629,7 @@ TEST_F(Win32RendererUtilTest, Qt_Convert) {
   const CSize kClientSize(2000, 1000);
   const double kScaleFactor = 1.0;
 
-  HWND hwnd = NULL;
+  HWND hwnd = nullptr;
   LayoutManager layout_mgr(
       CreateDefaultGUIFontEmulator(),
       CreateWindowEmulator(kClassName, kWindowRect, kClientOffset, kClientSize,
@@ -4604,14 +4658,56 @@ TEST_F(Win32RendererUtilTest, Qt_Convert) {
       &app_info, CandidateForm::EXCLUDE, 187, 87,
       187, 68, 197, 87);
 
-  AppInfoUtil::SetCaretInfo(
-      &app_info, false, 187, 68, 188, 69, hwnd);
+  AppInfoUtil::SetCaretInfo(&app_info, false, 187, 68, 188, 69, hwnd);
 
   CandidateWindowLayout layout;
   EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForConversion(
       app_info, &layout));
   EXPECT_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(
       195, 149, 195, 130, 205, 149, layout);
+}
+
+// Wordpad x86 on Vista SP1
+TEST_F(Win32RendererUtilTest, Wordpad_Vista_Indicator) {
+  const wchar_t kClassName[] = L"RICHEDIT50W";
+  const CRect kWindowRect(617, 573, 1319, 881);
+  const CPoint kClientOffset(2, 22);
+  const CSize kClientSize(698, 304);
+  const double kScaleFactor = 1.0;
+
+  HWND hwnd = nullptr;
+  LayoutManager layout_mgr(
+      CreateDefaultGUIFontEmulator(),
+      CreateWindowEmulator(kClassName, kWindowRect, kClientOffset, kClientSize,
+      kScaleFactor, &hwnd));
+
+  ApplicationInfo app_info;
+
+  AppInfoUtil::SetBasicApplicationInfo(
+      &app_info, hwnd,
+      ApplicationInfo::ShowCandidateWindow |
+      ApplicationInfo::ShowSuggestWindow);
+
+  AppInfoUtil::SetCompositionFont(
+      &app_info, 10, 0, 0, 0, FW_DONTCARE, SHIFTJIS_CHARSET,
+      OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
+      DEFAULT_QUALITY, 17,
+      // "ＭＳＰゴシック"
+      "\357\274\255\357\274\263 "
+      "\357\274\260\343\202\264\343\202\267\343\203\203\343\202\257");
+
+  AppInfoUtil::SetCandidateForm(
+      &app_info, CandidateForm::EXCLUDE, 62, 42, 62, 21, 64, 42);
+
+  AppInfoUtil::SetCompositionTarget(
+      &app_info, 1, 693, 596, 17, 625, 579, 1317, 879);
+
+  AppInfoUtil::SetCaretInfo(&app_info, false, 74, 21, 75, 38, hwnd);
+
+  IndicatorWindowLayout layout;
+  EXPECT_TRUE(layout_mgr.LayoutIndicatorWindow(app_info, &layout));
+  EXPECT_EQ(CRect(693, 596, 694, 613), layout.window_rect);
+  EXPECT_FALSE(layout.is_vertical);
 }
 
 // Wordpad x86 on Vista SP1
@@ -4622,7 +4718,7 @@ TEST_F(Win32RendererUtilTest, Wordpad_Vista_Suggest) {
   const CSize kClientSize(698, 304);
   const double kScaleFactor = 1.0;
 
-  HWND hwnd = NULL;
+  HWND hwnd = nullptr;
   LayoutManager layout_mgr(
       CreateDefaultGUIFontEmulator(),
       CreateWindowEmulator(kClassName, kWindowRect, kClientOffset, kClientSize,
@@ -4645,12 +4741,10 @@ TEST_F(Win32RendererUtilTest, Wordpad_Vista_Suggest) {
   AppInfoUtil::SetCompositionTarget(
       &app_info, 0, 681, 596, 17, 625, 579, 1317, 879);
 
-  AppInfoUtil::SetCaretInfo(
-      &app_info, false, 98, 21, 99, 38, hwnd);
+  AppInfoUtil::SetCaretInfo(&app_info, false, 98, 21, 99, 38, hwnd);
 
   CandidateWindowLayout layout;
-  EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForSuggestion(
-      app_info, &layout));
+  EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForSuggestion(app_info, &layout));
   EXPECT_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(
       681, 613, 681, 596, 682, 613, layout);
 }
@@ -4663,7 +4757,7 @@ TEST_F(Win32RendererUtilTest, Wordpad_Vista_Convert) {
   const CSize kClientSize(698, 304);
   const double kScaleFactor = 1.0;
 
-  HWND hwnd = NULL;
+  HWND hwnd = nullptr;
   LayoutManager layout_mgr(
       CreateDefaultGUIFontEmulator(),
       CreateWindowEmulator(kClassName, kWindowRect, kClientOffset, kClientSize,
@@ -4690,8 +4784,7 @@ TEST_F(Win32RendererUtilTest, Wordpad_Vista_Convert) {
   AppInfoUtil::SetCompositionTarget(
       &app_info, 1, 693, 596, 17, 625, 579, 1317, 879);
 
-  AppInfoUtil::SetCaretInfo(
-      &app_info, false, 74, 21, 75, 38, hwnd);
+  AppInfoUtil::SetCaretInfo(&app_info, false, 74, 21, 75, 38, hwnd);
 
   CandidateWindowLayout layout;
   EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForConversion(
@@ -4708,7 +4801,7 @@ TEST_F(Win32RendererUtilTest, MSWord2010_Horizontal_Suggest) {
   const CSize kClientSize(841, 553);
   const double kScaleFactor = 1.0;
 
-  HWND hwnd = NULL;
+  HWND hwnd = nullptr;
   LayoutManager layout_mgr(
       CreateDefaultGUIFontEmulator(),
       CreateWindowEmulator(kClassName, kWindowRect, kClientOffset, kClientSize,
@@ -4734,12 +4827,10 @@ TEST_F(Win32RendererUtilTest, MSWord2010_Horizontal_Suggest) {
   AppInfoUtil::SetCompositionTarget(
       &app_info, 0, 626, 464, 17, 570, 288, 1137, 841);
 
-  AppInfoUtil::SetCaretInfo(
-      &app_info, false, 220, 176, 221, 194, hwnd);
+  AppInfoUtil::SetCaretInfo(&app_info, false, 220, 176, 221, 194, hwnd);
 
   CandidateWindowLayout layout;
-  EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForSuggestion(
-      app_info, &layout));
+  EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForSuggestion(app_info, &layout));
   EXPECT_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(
       626, 481, 626, 464, 627, 481, layout);
 }
@@ -4752,7 +4843,7 @@ TEST_F(Win32RendererUtilTest, MSWord2010_Horizontal_Convert) {
   const CSize kClientSize(841, 553);
   const double kScaleFactor = 1.0;
 
-  HWND hwnd = NULL;
+  HWND hwnd = nullptr;
   LayoutManager layout_mgr(
       CreateDefaultGUIFontEmulator(),
       CreateWindowEmulator(kClassName, kWindowRect, kClientOffset, kClientSize,
@@ -4779,8 +4870,7 @@ TEST_F(Win32RendererUtilTest, MSWord2010_Horizontal_Convert) {
   AppInfoUtil::SetCompositionTarget(
       &app_info, 1, 640, 466, 16, 570, 288, 1137, 841);
 
-  AppInfoUtil::SetCaretInfo(
-      &app_info, false, 192, 179, 193, 197, hwnd);
+  AppInfoUtil::SetCaretInfo(&app_info, false, 192, 179, 193, 197, hwnd);
 
   CandidateWindowLayout layout;
   EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForConversion(
@@ -4797,7 +4887,7 @@ TEST_F(Win32RendererUtilTest, MSWord2010_Vertical_Suggest) {
   const CSize kClientSize(841, 536);
   const double kScaleFactor = 1.0;
 
-  HWND hwnd = NULL;
+  HWND hwnd = nullptr;
   LayoutManager layout_mgr(
       CreateDefaultGUIFontEmulator(),
       CreateWindowEmulator(kClassName, kWindowRect, kClientOffset, kClientSize,
@@ -4823,12 +4913,10 @@ TEST_F(Win32RendererUtilTest, MSWord2010_Vertical_Suggest) {
   AppInfoUtil::SetCompositionTarget(
       &app_info, 0, 1096, 474, 18, 434, 418, 1275, 985);
 
-  AppInfoUtil::SetCaretInfo(
-      &app_info, false, 644, 214, 645, 235, hwnd);
+  AppInfoUtil::SetCaretInfo(&app_info, false, 644, 214, 645, 235, hwnd);
 
   CandidateWindowLayout layout;
-  EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForSuggestion(
-      app_info, &layout));
+  EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForSuggestion(app_info, &layout));
   EXPECT_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(
       1078, 474, 1078, 474, 1096, 475, layout);
 }
@@ -4841,7 +4929,7 @@ TEST_F(Win32RendererUtilTest, MSWord2010_Vertical_Convert) {
   const CSize kClientSize(841, 536);
   const double kScaleFactor = 1.0;
 
-  HWND hwnd = NULL;
+  HWND hwnd = nullptr;
   LayoutManager layout_mgr(
       CreateDefaultGUIFontEmulator(),
       CreateWindowEmulator(kClassName, kWindowRect, kClientOffset, kClientSize,
@@ -4868,8 +4956,7 @@ TEST_F(Win32RendererUtilTest, MSWord2010_Vertical_Convert) {
   AppInfoUtil::SetCompositionTarget(
       &app_info, 1, 1095, 488, 18, 434, 418, 1275, 985);
 
-  AppInfoUtil::SetCaretInfo(
-      &app_info, false, 643, 200, 644, 221, hwnd);
+  AppInfoUtil::SetCaretInfo(&app_info, false, 643, 200, 644, 221, hwnd);
 
   CandidateWindowLayout layout;
   EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForConversion(
@@ -4886,7 +4973,7 @@ TEST_F(Win32RendererUtilTest, Firefox_textarea_Suggest) {
   const CSize kClientSize(845, 804);
   const double kScaleFactor = 1.0;
 
-  HWND hwnd = NULL;
+  HWND hwnd = nullptr;
   LayoutManager layout_mgr(
       CreateDefaultGUIFontEmulator(),
       CreateWindowEmulator(kClassName, kWindowRect, kClientOffset, kClientSize,
@@ -4904,12 +4991,10 @@ TEST_F(Win32RendererUtilTest, Firefox_textarea_Suggest) {
   AppInfoUtil::SetCompositionTarget(
       &app_info, 0, 242, 707, 20, 198, 329, 1043, 1133);
 
-  AppInfoUtil::SetCaretInfo(
-      &app_info, false, 89, 378, 90, 398, hwnd);
+  AppInfoUtil::SetCaretInfo(&app_info, false, 89, 378, 90, 398, hwnd);
 
   CandidateWindowLayout layout;
-  EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForSuggestion(
-      app_info, &layout));
+  EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForSuggestion(app_info, &layout));
   EXPECT_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(
       242, 727, 242, 707, 243, 727, layout);
 }
@@ -4922,7 +5007,7 @@ TEST_F(Win32RendererUtilTest, Firefox_textarea_Convert) {
   const CSize kClientSize(845, 804);
   const double kScaleFactor = 1.0;
 
-  HWND hwnd = NULL;
+  HWND hwnd = nullptr;
   LayoutManager layout_mgr(
       CreateDefaultGUIFontEmulator(),
       CreateWindowEmulator(kClassName, kWindowRect, kClientOffset, kClientSize,
@@ -4941,8 +5026,7 @@ TEST_F(Win32RendererUtilTest, Firefox_textarea_Convert) {
   AppInfoUtil::SetCompositionTarget(
       &app_info, 1, 257, 707, 20, 198, 329, 1043, 1133);
 
-  AppInfoUtil::SetCaretInfo(
-      &app_info, false, 60, 378, 61, 398, hwnd);
+  AppInfoUtil::SetCaretInfo(&app_info, false, 60, 378, 61, 398, hwnd);
 
   CandidateWindowLayout layout;
   EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForConversion(
@@ -4959,7 +5043,7 @@ TEST_F(Win32RendererUtilTest, Chrome_textarea_Suggest) {
   const CSize kClientSize(738, 716);
   const double kScaleFactor = 1.0;
 
-  HWND hwnd = NULL;
+  HWND hwnd = nullptr;
   LayoutManager layout_mgr(
       CreateDefaultGUIFontEmulator(),
       CreateWindowEmulator(kClassName, kWindowRect, kClientOffset, kClientSize,
@@ -4981,12 +5065,10 @@ TEST_F(Win32RendererUtilTest, Chrome_textarea_Suggest) {
   AppInfoUtil::SetCandidateForm(
       &app_info, CandidateForm::EXCLUDE, 84, 424, 84, 424, 85, 444);
 
-  AppInfoUtil::SetCaretInfo(
-      &app_info, false, 84, 444, 85, 445, hwnd);
+  AppInfoUtil::SetCaretInfo(&app_info, false, 84, 444, 85, 445, hwnd);
 
   CandidateWindowLayout layout;
-  EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForSuggestion(
-      app_info, &layout));
+  EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForSuggestion(app_info, &layout));
   EXPECT_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(
       237, 614, 237, 614, 238, 634, layout);
 }
@@ -4999,7 +5081,7 @@ TEST_F(Win32RendererUtilTest, Chrome_textarea_Convert) {
   const CSize kClientSize(738, 716);
   const double kScaleFactor = 1.0;
 
-  HWND hwnd = NULL;
+  HWND hwnd = nullptr;
   LayoutManager layout_mgr(
       CreateDefaultGUIFontEmulator(),
       CreateWindowEmulator(kClassName, kWindowRect, kClientOffset, kClientSize,
@@ -5022,8 +5104,7 @@ TEST_F(Win32RendererUtilTest, Chrome_textarea_Convert) {
   AppInfoUtil::SetCandidateForm(
       &app_info, CandidateForm::EXCLUDE, 58, 424, 58, 424, 59, 444);
 
-  AppInfoUtil::SetCaretInfo(
-      &app_info, false, 58, 444, 59, 445, hwnd);
+  AppInfoUtil::SetCaretInfo(&app_info, false, 58, 444, 59, 445, hwnd);
 
   CandidateWindowLayout layout;
   EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForConversion(
@@ -5040,7 +5121,7 @@ TEST_F(Win32RendererUtilTest, IE8_textarea_Suggest) {
   const CSize kClientSize(1056, 718);
   const double kScaleFactor = 1.0;
 
-  HWND hwnd = NULL;
+  HWND hwnd = nullptr;
   LayoutManager layout_mgr(
       CreateDefaultGUIFontEmulator(),
       CreateWindowEmulator(kClassName, kWindowRect, kClientOffset, kClientSize,
@@ -5055,12 +5136,10 @@ TEST_F(Win32RendererUtilTest, IE8_textarea_Suggest) {
   AppInfoUtil::SetCandidateForm(
       &app_info, CandidateForm::EXCLUDE, 105, 376, 105, 356, 107, 376);
 
-  AppInfoUtil::SetCaretInfo(
-      &app_info, false, 105, 368, 106, 384, hwnd);
+  AppInfoUtil::SetCaretInfo(&app_info, false, 105, 368, 106, 384, hwnd);
 
   CandidateWindowLayout layout;
-  EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForSuggestion(
-      app_info, &layout));
+  EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForSuggestion(app_info, &layout));
   EXPECT_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(
       409, 735, 409, 717, 410, 735, layout);
 }
@@ -5073,7 +5152,7 @@ TEST_F(Win32RendererUtilTest, IE8_textarea_Convert) {
   const CSize kClientSize(1056, 718);
   const double kScaleFactor = 1.0;
 
-  HWND hwnd = NULL;
+  HWND hwnd = nullptr;
   LayoutManager layout_mgr(
       CreateDefaultGUIFontEmulator(),
       CreateWindowEmulator(kClassName, kWindowRect, kClientOffset, kClientSize,
@@ -5089,8 +5168,7 @@ TEST_F(Win32RendererUtilTest, IE8_textarea_Convert) {
   AppInfoUtil::SetCandidateForm(
       &app_info, CandidateForm::EXCLUDE, 91, 387, 91, 367, 93, 387);
 
-  AppInfoUtil::SetCaretInfo(
-      &app_info, false, 91, 379, 92, 380, hwnd);
+  AppInfoUtil::SetCaretInfo(&app_info, false, 91, 379, 92, 380, hwnd);
 
   CandidateWindowLayout layout;
   EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForConversion(
@@ -5100,7 +5178,7 @@ TEST_F(Win32RendererUtilTest, IE8_textarea_Convert) {
 }
 
 // Fudemame 21.  See b/3067011.
-// It provides no positional information for suggestiton. See b/3067011.
+// It provides no positional information for suggestion. See b/3067011.
 TEST_F(Win32RendererUtilTest, Fudemame21_Suggest) {
   const wchar_t kClassName[] = L"MrnDirectEdit4";
   const CRect kWindowRect(507, 588, 1024, 698);
@@ -5108,7 +5186,7 @@ TEST_F(Win32RendererUtilTest, Fudemame21_Suggest) {
   const CSize kClientSize(517, 110);
   const double kScaleFactor = 1.0;
 
-  HWND hwnd = NULL;
+  HWND hwnd = nullptr;
   LayoutManager layout_mgr(
       CreateDefaultGUIFontEmulator(),
       CreateWindowEmulator(kClassName, kWindowRect, kClientOffset, kClientSize,
@@ -5120,12 +5198,10 @@ TEST_F(Win32RendererUtilTest, Fudemame21_Suggest) {
       &app_info, hwnd,
       ApplicationInfo::ShowSuggestWindow);
 
-  AppInfoUtil::SetCaretInfo(
-      &app_info, false, 0, 0, 0, 0, NULL);
+  AppInfoUtil::SetCaretInfo(&app_info, false, 0, 0, 0, 0, nullptr);
 
   CandidateWindowLayout layout;
-  EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForSuggestion(
-      app_info, &layout));
+  EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForSuggestion(app_info, &layout));
   EXPECT_NON_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(507, 698, layout);
 }
 
@@ -5137,7 +5213,7 @@ TEST_F(Win32RendererUtilTest, Fudemame19_Convert) {
   const CSize kClientSize(517, 110);
   const double kScaleFactor = 1.0;
 
-  HWND hwnd = NULL;
+  HWND hwnd = nullptr;
   LayoutManager layout_mgr(
       CreateDefaultGUIFontEmulator(),
       CreateWindowEmulator(kClassName, kWindowRect, kClientOffset, kClientSize,
@@ -5153,8 +5229,7 @@ TEST_F(Win32RendererUtilTest, Fudemame19_Convert) {
   AppInfoUtil::SetCandidateForm(
       &app_info, CandidateForm::CANDIDATEPOS, 87, 87, 0, 0, 0, 0);
 
-  AppInfoUtil::SetCaretInfo(
-      &app_info, false, 0, 0, 0, 0, NULL);
+  AppInfoUtil::SetCaretInfo(&app_info, false, 0, 0, 0, 0, nullptr);
 
   CandidateWindowLayout layout;
   EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForConversion(
@@ -5182,7 +5257,7 @@ TEST_F(Win32RendererUtilTest, Opera10_Suggest) {
   const CSize kClientSize(1560, 1034);
   const double kScaleFactor = 1.0;
 
-  HWND hwnd = NULL;
+  HWND hwnd = nullptr;
   LayoutManager layout_mgr(
       CreateDefaultGUIFontEmulator(),
       CreateWindowEmulator(kClassName, kWindowRect, kClientOffset, kClientSize,
@@ -5197,12 +5272,10 @@ TEST_F(Win32RendererUtilTest, Opera10_Suggest) {
   AppInfoUtil::SetCandidateForm(
       &app_info, CandidateForm::EXCLUDE, 44, 444, 44, 444, 44, 459);
 
-  AppInfoUtil::SetCaretInfo(
-      &app_info, false, 44, 444, 667, 750, hwnd);
+  AppInfoUtil::SetCaretInfo(&app_info, false, 44, 444, 667, 750, hwnd);
 
   CandidateWindowLayout layout;
-  EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForSuggestion(
-      app_info, &layout));
+  EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForSuggestion(app_info, &layout));
   EXPECT_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(
       590, 673, 590, 673, 590, 688, layout);
 }
@@ -5226,7 +5299,7 @@ TEST_F(Win32RendererUtilTest, Opera10_Convert) {
   const CSize kClientSize(1560, 1034);
   const double kScaleFactor = 1.0;
 
-  HWND hwnd = NULL;
+  HWND hwnd = nullptr;
   LayoutManager layout_mgr(
       CreateDefaultGUIFontEmulator(),
       CreateWindowEmulator(kClassName, kWindowRect, kClientOffset, kClientSize,
@@ -5242,8 +5315,7 @@ TEST_F(Win32RendererUtilTest, Opera10_Convert) {
   AppInfoUtil::SetCandidateForm(
       &app_info, CandidateForm::EXCLUDE, 22, 444, 22, 444, 22, 459);
 
-  AppInfoUtil::SetCaretInfo(
-      &app_info, false, 22, 444, 645, 750, hwnd);
+  AppInfoUtil::SetCaretInfo(&app_info, false, 22, 444, 645, 750, hwnd);
 
   CandidateWindowLayout layout;
   EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForConversion(
@@ -5272,7 +5344,7 @@ TEST_F(Win32RendererUtilTest, Emacs22) {
   const CSize kClientSize(602, 686);
   const double kScaleFactor = 1.0;
 
-  HWND hwnd = NULL;
+  HWND hwnd = nullptr;
   LayoutManager layout_mgr(
       CreateDefaultGUIFontEmulator(),
       CreateWindowEmulator(kClassName, kWindowRect, kClientOffset, kClientSize,
@@ -5296,8 +5368,7 @@ TEST_F(Win32RendererUtilTest, Emacs22) {
       &app_info, CompositionForm::RECT, 66, 58,
       10, 42, 570, 658);
 
-  AppInfoUtil::SetCaretInfo(
-      &app_info, false, 66, 58, 67, 74, hwnd);
+  AppInfoUtil::SetCaretInfo(&app_info, false, 66, 58, 67, 74, hwnd);
 
   CandidateWindowLayout layout;
   EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForConversion(
@@ -5332,7 +5403,7 @@ TEST_F(Win32RendererUtilTest, Meadow3) {
   const CSize kClientSize(602, 690);
   const double kScaleFactor = 1.0;
 
-  HWND hwnd = NULL;
+  HWND hwnd = nullptr;
   LayoutManager layout_mgr(
       CreateDefaultGUIFontEmulator(),
       CreateWindowEmulator(kClassName, kWindowRect, kClientOffset, kClientSize,
@@ -5350,8 +5421,7 @@ TEST_F(Win32RendererUtilTest, Meadow3) {
       &app_info, CompositionForm::RECT, 73, 65,
       9, 49, 577, 657);
 
-  AppInfoUtil::SetCaretInfo(
-      &app_info, false, 0, 0, 0, 0, hwnd);
+  AppInfoUtil::SetCaretInfo(&app_info, false, 0, 0, 0, 0, hwnd);
 
   CandidateWindowLayout layout;
   EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForConversion(

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,9 +29,9 @@
 
 #include "base/svm.h"
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #define NO_MINMAX
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 #include <cstring>
 #include <iostream>

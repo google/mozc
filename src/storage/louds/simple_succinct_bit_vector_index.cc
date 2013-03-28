@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,7 @@
 #include <iterator>
 #include <vector>
 #include "base/base.h"
+#include "base/iterator_adapter.h"
 #include "base/logging.h"
 
 namespace mozc {
@@ -141,113 +142,27 @@ int SimpleSuccinctBitVectorIndex::Rank1(int n) const {
 
 namespace {
 
-// The vector<T>::const_iterator may be a typedef of the const pointer,
-// So, it may *NOT* have operator->() method. To support pointer-typedef
-// iterators, introduce thin wrapper of operator-> to fill the gap.
-template<typename It>
-typename iterator_traits<It>::pointer ArrowOperatorHelper(const It& it) {
-  return it.operator->();
-}
-template<typename T>
-typename iterator_traits<T*>::pointer ArrowOperatorHelper(T* it) {
-  return it;
-}
-
-// Iterator wrpper to convert 1-bit index to 0-bit index.
-// This class is declared as a template in order NOT to generate unused
-// functions, which depends on STL implementation.
-template<typename Container>
-class ZeroBitIter {
+// Simple adapter to convert from 1-bit index to 0-bit index.
+class ZeroBitAdapter : public AdapterBase<int> {
  public:
-  // Typedefs to be an iterator for C++.
-  typedef typename Container::const_iterator BaseIter;
-  typedef typename iterator_traits<BaseIter>::iterator_category
-      iterator_category;
-  typedef typename iterator_traits<BaseIter>::value_type value_type;
-  typedef typename iterator_traits<BaseIter>::difference_type
-    difference_type;
-  typedef typename iterator_traits<BaseIter>::pointer pointer;
-  typedef typename iterator_traits<BaseIter>::reference reference;
+  // Needs to be default constructive to create invalid iterator.
+  ZeroBitAdapter() {}
 
-  ZeroBitIter(const Container& index, int chunk_size, const BaseIter iter)
-      : index_(&index), chunk_size_(chunk_size), iter_(iter) {
+  ZeroBitAdapter(const vector<int>* index, int chunk_size)
+      : index_(index), chunk_size_(chunk_size) {
   }
 
-  ZeroBitIter() {
-  }
-
-  const BaseIter &base() const { return iter_; }
-
-  value_type operator*() {
-    return GetNumZeroBits(
-        chunk_size_, distance(index_->begin(), iter_), *iter_);
-  }
-
-  pointer operator->() const { return ArrowOperatorHelper(iter_); }
-
-  ZeroBitIter &operator++() { ++iter_; return *this; }
-  ZeroBitIter operator++(int) { return ZeroBitIter(*index_, iter_++); }
-  ZeroBitIter &operator--() { --iter_; return *this; }
-  ZeroBitIter operator--(int) { return ZeroBitIter(*index_, iter_--); }
-
-  ZeroBitIter &operator+=(const difference_type &diff) {
-    iter_ += diff;
-    return *this;
-  }
-  ZeroBitIter &operator-=(const difference_type &diff) {
-    iter_ -= diff;
-    return *this;
-  }
-  ZeroBitIter operator+(const difference_type &diff) const {
-    return ZeroBitIter(*index_, iter_ + diff);
-  }
-  ZeroBitIter operator-(const difference_type &diff) const {
-    return ZeroBitIter(*index_, iter_ - diff);
-  }
-  friend ZeroBitIter operator+(
-      const difference_type &diff, const ZeroBitIter &iter) {
-    return iter + diff;
-  }
-  difference_type operator-(const ZeroBitIter &other) const {
-    return iter_ - other.iter_;
-  }
-
-  value_type operator[](const difference_type &diff) const {
-    return GetNumZeroBits(
-        chunk_size_, distance(index_->begin(), iter_) + diff, iter_[diff]);
-  }
-
-  friend bool operator<(const ZeroBitIter &iter1, const ZeroBitIter &iter2) {
-    return iter1.iter_ < iter2.iter_;
-  }
-
-  friend bool operator>(const ZeroBitIter &iter1, const ZeroBitIter &iter2) {
-    return iter1.iter_ > iter2.iter_;
-  }
-
-  friend bool operator<=(const ZeroBitIter &iter1, const ZeroBitIter &iter2) {
-    return iter1.iter_ <= iter2.iter_;
-  }
-
-  friend bool operator>=(const ZeroBitIter &iter1, const ZeroBitIter &iter2) {
-    return iter1.iter_ >= iter2.iter_;
-  }
-
-  bool operator==(const ZeroBitIter &other) const {
-    return iter_ == other.iter_;
-  }
-  bool operator!=(const ZeroBitIter &other) const {
-    return iter_ != other.iter_;
+  template<typename Iter>
+  value_type operator()(Iter iter) const {
+    // The number of 0-bits
+    //   = (total num bits) - (1-bits)
+    //   = (chunk_size [bytes] * 8 [bits/byte] * (iter's position) - (1-bits)
+    return chunk_size_ * 8 * distance(index_->begin(), iter) - *iter;
   }
 
  private:
-  const Container* index_;
+  const vector<int> *index_;
   int chunk_size_;
-  BaseIter iter_;
-
-  static int GetNumZeroBits(int chunk_size, int index, int value) {
-    return chunk_size * 8 * index - value;
-  }
 };
 
 }  // namespace
@@ -256,9 +171,10 @@ int SimpleSuccinctBitVectorIndex::Select0(int n) const {
   DCHECK_GT(n, 0);
 
   // Binary search on chunks.
+  ZeroBitAdapter adapter(&index_, chunk_size_);
   const vector<int>::const_iterator iter = lower_bound(
-      ZeroBitIter<vector<int> >(index_, chunk_size_, index_.begin()),
-      ZeroBitIter<vector<int> >(index_, chunk_size_, index_.end()),
+      MakeIteratorAdapter(index_.begin(), adapter),
+      MakeIteratorAdapter(index_.end(), adapter),
       n).base();
   const int chunk_index = distance(index_.begin(), iter) - 1;
   DCHECK_GE(chunk_index, 0);

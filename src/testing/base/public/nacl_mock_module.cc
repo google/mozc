@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -28,11 +28,110 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <errno.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
 
+#include <ppapi/cpp/instance.h>
+#include <ppapi/cpp/module.h>
+#include <ppapi/cpp/url_loader.h>
+#include <ppapi/cpp/url_request_info.h>
+#include <ppapi/utility/completion_callback_factory.h>
+
 #include "base/base.h"
+#include "base/logging.h"
+#include "base/pepper_file_util.h"
+#include "net/http_client_pepper.h"
+#include "testing/base/public/googletest.h"
+#include "testing/base/public/gunit.h"
+
+namespace pp {
+namespace {
+
+class NaclTestInstance : public pp::Instance {
+ public:
+  explicit NaclTestInstance(PP_Instance instance)
+      : pp::Instance(instance) {
+    cc_factory_.Initialize(this);
+    pthread_create(&thread_handle_,
+                   0,
+                   &NaclTestInstance::ThreadFunc,
+                   static_cast<void *>(this));
+  }
+  virtual ~NaclTestInstance() {}
+  virtual void HandleMessage(const pp::Var &var_message) {}
+
+ private:
+  static void *ThreadFunc(void *ptr);
+  void TestFinish(int32_t result);
+  void OnUrlLoaderOpen(int32_t result);
+  pthread_t thread_handle_;
+  pp::CompletionCallbackFactory<NaclTestInstance> cc_factory_;
+  scoped_ptr<pp::URLRequestInfo> url_request_;
+  scoped_ptr<pp::URLLoader> url_loader_;
+
+  DISALLOW_COPY_AND_ASSIGN(NaclTestInstance);
+};
+
+void *NaclTestInstance::ThreadFunc(void *ptr) {
+  NaclTestInstance *self = static_cast<NaclTestInstance *>(ptr);
+  mozc::RegisterPepperInstanceForHTTPClient(self);
+  mozc::PepperFileUtil::Initialize(self, 1024);
+  const int ret = RUN_ALL_TESTS();
+  pp::Module::Get()->core()->CallOnMainThread(
+      0,
+      self->cc_factory_.NewCallback(&NaclTestInstance::TestFinish),
+      ret);
+  return NULL;
+}
+
+void NaclTestInstance::TestFinish(int32_t result) {
+  url_request_.reset(new pp::URLRequestInfo(this));
+  url_loader_.reset(new pp::URLLoader(this));
+  if (result == 0) {
+    url_request_->SetURL("http://127.0.0.1:9999/TEST_FIN?result=success");
+  } else {
+    url_request_->SetURL("http://127.0.0.1:9999/TEST_FIN?result=failed");
+  }
+  url_request_->SetMethod("GET");
+  url_loader_->Open(
+      *url_request_,
+      cc_factory_.NewCallback(&NaclTestInstance::OnUrlLoaderOpen));
+}
+
+void NaclTestInstance::OnUrlLoaderOpen(int32_t result) {
+  // Do Nothing
+}
+
+class NaclTestModule : public pp::Module {
+ public:
+  NaclTestModule() : pp::Module() {}
+  virtual ~NaclTestModule() {}
+
+ protected:
+  virtual pp::Instance *CreateInstance(PP_Instance instance) {
+    return new NaclTestInstance(instance);
+  }
+
+ private:
+  DISALLOW_COPY_AND_ASSIGN(NaclTestModule);
+};
+
+}  // namespace
+
+Module* CreateModule() {
+  int argc = 1;
+  char argv0[] = "NaclModule";
+  char *argv_body[] = {argv0, NULL};
+  char **argv = argv_body;
+  InitGoogle(argv[0], &argc, &argv, true);
+  testing::InitGoogleTest(&argc, argv);
+
+  return new NaclTestModule();
+}
+
+}  // namespace pp
 
 extern "C" {
 // The following functions are not implemented in NaCl environment.
@@ -65,5 +164,4 @@ int mkdir(const char *pathname, mode_t mode) {
                << " mode: " << mode;
   return -1;
 }
-
 }  // extern "C"

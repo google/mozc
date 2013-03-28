@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,9 +27,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <cstddef>
 #include <string>
-#include "base/base.h"
+
 #include "base/file_stream.h"
+#include "base/system_util.h"
 #include "base/util.h"
 #include "sync/logging.h"
 #include "testing/base/public/gunit.h"
@@ -43,7 +45,7 @@ namespace sync {
 class LoggingTest : public testing::Test {
  public:
   virtual void SetUp() {
-    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     sync::Logging::Reset();
   }
 
@@ -120,6 +122,8 @@ string DebugString() {
 }  // namespace
 
 TEST_F(LoggingTest, RightHandSideTest) {
+  g_counter = 0;
+
   SetVerboseLevel(0);
   SYNC_VLOG(1) << DebugString();
   SYNC_VLOG(2) << DebugString();
@@ -153,5 +157,5 @@ TEST_F(LoggingTest, TruncateTest) {
     old_cur = cur;
   }
 }
-}  // sync
-}  // mozc
+}  // namespace sync
+}  // namespace mozc

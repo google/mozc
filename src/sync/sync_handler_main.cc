@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,16 +30,16 @@
 #include <string>
 #include <iostream>
 
-#include "base/base.h"
 #include "base/logging.h"
-#include "base/util.h"
+#include "base/system_util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "session/commands.pb.h"
+#include "sync/oauth2.h"
 #include "sync/oauth2_client.h"
+#include "sync/oauth2_server.h"
 #include "sync/oauth2_util.h"
 #include "sync/sync_handler.h"
-#include "sync/syncer_interface.h"
 
 DEFINE_string(service, "goopy", "service");
 DEFINE_string(source, "ime-goopy", "source");
@@ -97,28 +97,31 @@ bool SetConfigures() {
 }
 
 bool OAuth2Login(OAuth2Util *oauth2) {
-  mozc::sync::OAuth2::Error error;
   string auth_token;
   cout << "Access " << oauth2->GetAuthenticateUri() << endl
        << "and enter the auth token: " << flush;
   cin >> auth_token;
-  if (!auth_token.empty() && !oauth2->RequestAccessToken(auth_token ,&error)) {
+  if (!auth_token.empty() &&
+      oauth2->RequestAccessToken(auth_token) != OAuth2::kNone) {
     return false;
   }
 
   return true;
 }
 
-bool Sync(OAuth2Util *oauth2) {
+bool Sync(SyncHandler *sync_handler, bool use_oauth2) {
   LOG(INFO) << "Start syncing...";
 
-  mozc::sync::OAuth2::Error error;
-  if (FLAGS_oauth2_login && oauth2 != NULL && OAuth2Login(oauth2)) {
-    SyncerFactory::SetOAuth2(oauth2);
-  } else if (FLAGS_oauth2_token_refresh && oauth2 != NULL &&
-             oauth2->RefreshAccessToken(&error)) {
-    SyncerFactory::SetOAuth2(oauth2);
-  } else if (oauth2 != NULL) {
+  scoped_ptr<OAuth2Util> oauth2_util(
+      new OAuth2Util(OAuth2Client::GetDefaultInstance(),
+                     OAuth2Server::GetDefaultInstance()));
+
+  if (FLAGS_oauth2_login && use_oauth2 && OAuth2Login(oauth2_util.get())) {
+    sync_handler->SetOAuth2UtilForUnittest(oauth2_util.release());
+  } else if (FLAGS_oauth2_token_refresh && use_oauth2 &&
+             oauth2_util->RefreshAccessToken() == OAuth2::kNone) {
+    sync_handler->SetOAuth2UtilForUnittest(oauth2_util.release());
+  } else if (use_oauth2) {
     LOG(ERROR) << "Something goes wrong with oauth2";
     return false;
   } else {
@@ -132,41 +135,34 @@ bool Sync(OAuth2Util *oauth2) {
   }
 
   if (FLAGS_clear) {
-    return SyncHandler::Clear();
+    return sync_handler->Clear();
   } else {
-    return SyncHandler::Sync();
+    return sync_handler->Sync();
   }
 
   return true;
 }
 }   // namespace
-}   // sync
-}   // mozc
+}   // namespace sync
+}   // namespace mozc
 
 int main(int argc, char **argv) {
   InitGoogle(argv[0], &argc, &argv, false);
 
   if (!FLAGS_work_dir.empty()) {
-    mozc::Util::SetUserProfileDirectory(FLAGS_work_dir);
+    mozc::SystemUtil::SetUserProfileDirectory(FLAGS_work_dir);
   }
 
-  // Unfortunately SyncerThread creates an OAuth2Util instance in its
-  // constructor and set it to SyncerFactory, which will overwrite the
-  // OAuth2 of the Sync() function above.  So here calls
-  // GetCloudSyncStatus() to run the constructor explicitly, *before*
-  // the Sync() function.
+  mozc::sync::SyncHandler sync_handler;
+
   mozc::commands::CloudSyncStatus dummy_status;
-  mozc::sync::SyncHandler::GetCloudSyncStatus(&dummy_status);
-  scoped_ptr<mozc::sync::OAuth2Util> oauth2;
-  if (FLAGS_oauth2_login || FLAGS_oauth2_token_refresh) {
-    oauth2.reset(new mozc::sync::OAuth2Util(
-        mozc::sync::OAuth2Client::GetDefaultClient()));
-  }
-  if (!mozc::sync::Sync(oauth2.get())) {
+  sync_handler.GetCloudSyncStatus(&dummy_status);
+  const bool use_oauth2 = (FLAGS_oauth2_login || FLAGS_oauth2_token_refresh);
+  if (!mozc::sync::Sync(&sync_handler, use_oauth2)) {
     LOG(ERROR) << "sync failed";
   }
 
-  mozc::sync::SyncHandler::Wait();
+  sync_handler.Wait();
 
   return 0;
 }

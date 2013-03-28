@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,16 +29,12 @@
 
 #include "dictionary/user_dictionary_session_handler.h"
 
-#ifndef OS_WINDOWS
-#include <sys/stat.h>
-#endif
-
 #include <string>
 
-#include "base/base.h"
 #include "base/file_stream.h"
+#include "base/file_util.h"
+#include "base/system_util.h"
 #include "base/testing_util.h"
-#include "base/util.h"
 #include "dictionary/user_dictionary_storage.pb.h"
 #include "testing/base/public/gunit.h"
 
@@ -72,9 +68,9 @@ const char kDictionaryData[] =
 class UserDictionarySessionHandlerTest : public ::testing::Test {
  protected:
   virtual void SetUp() {
-    original_user_profile_directory_ = Util::GetUserProfileDirectory();
-    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    Util::Unlink(GetUserDictionaryFile());
+    original_user_profile_directory_ = SystemUtil::GetUserProfileDirectory();
+    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    FileUtil::Unlink(GetUserDictionaryFile());
 
     handler_.reset(new UserDictionarySessionHandler);
     command_.reset(new UserDictionaryCommand);
@@ -84,8 +80,8 @@ class UserDictionarySessionHandlerTest : public ::testing::Test {
   }
 
   virtual void TearDown() {
-    Util::Unlink(GetUserDictionaryFile());
-    Util::SetUserProfileDirectory(original_user_profile_directory_);
+    FileUtil::Unlink(GetUserDictionaryFile());
+    SystemUtil::SetUserProfileDirectory(original_user_profile_directory_);
   }
 
   void Clear() {
@@ -94,10 +90,7 @@ class UserDictionarySessionHandlerTest : public ::testing::Test {
   }
 
   static string GetUserDictionaryFile() {
-#ifndef OS_WINDOWS
-    chmod(FLAGS_test_tmpdir.c_str(), 0777);
-#endif
-    return Util::JoinPath(FLAGS_test_tmpdir, "test.db");
+    return FileUtil::JoinPath(FLAGS_test_tmpdir, "test.db");
   }
 
   scoped_ptr<UserDictionarySessionHandler> handler_;
@@ -155,7 +148,7 @@ TEST_F(UserDictionarySessionHandlerTest, ClearStorage) {
   {
     OutputFileStream output(user_dictionary_file.c_str());
   }
-  ASSERT_TRUE(Util::FileExists(user_dictionary_file));
+  ASSERT_TRUE(FileUtil::FileExists(user_dictionary_file));
 
   command_->set_type(UserDictionaryCommand::CLEAR_STORAGE);
   ASSERT_TRUE(handler_->Evaluate(*command_, status_.get()));
@@ -164,8 +157,8 @@ TEST_F(UserDictionarySessionHandlerTest, ClearStorage) {
   EXPECT_PROTO_EQ("status: USER_DICTIONARY_COMMAND_SUCCESS", *status_);
 
   // The file should be removed.
-  EXPECT_FALSE(Util::FileExists(user_dictionary_file));
-#endif
+  EXPECT_FALSE(FileUtil::FileExists(user_dictionary_file));
+#endif  // __native_client__
 }
 
 TEST_F(UserDictionarySessionHandlerTest, CreateDeleteSession) {
@@ -310,7 +303,7 @@ TEST_F(UserDictionarySessionHandlerTest, LoadAndSave) {
       "  dictionaries: < name: \"dictionary\" >\n"
       ">",
       *status_);
-#endif
+#endif  // ENABLE_CLOUD_SYNC
 
   // Delete the session.
   Clear();
@@ -362,7 +355,7 @@ TEST_F(UserDictionarySessionHandlerTest, LoadWithEnsuringNonEmptyStorage) {
       "  dictionaries: < name: \"abcde\" >\n"
       ">",
       *status_);
-#endif
+#endif  // ENABLE_CLOUD_SYNC
 
   // Delete the session.
   Clear();
@@ -1035,4 +1028,104 @@ TEST_F(UserDictionarySessionHandlerTest, ImportDataFailure) {
   ASSERT_TRUE(handler_->Evaluate(*command_, status_.get()));
 }
 
+TEST_F(UserDictionarySessionHandlerTest, GetStorage) {
+  // Create a session.
+  command_->set_type(UserDictionaryCommand::CREATE_SESSION);
+  ASSERT_TRUE(handler_->Evaluate(*command_, status_.get()));
+  const uint64 session_id = status_->session_id();
+
+  // Create a dictionary named "dictionary1".
+  Clear();
+  command_->set_type(UserDictionaryCommand::CREATE_DICTIONARY);
+  command_->set_session_id(session_id);
+  command_->set_dictionary_name("dictionary1");
+  ASSERT_TRUE(handler_->Evaluate(*command_, status_.get()));
+  const uint64 dictionary_id1 = status_->dictionary_id();
+
+  Clear();
+  command_->set_type(UserDictionaryCommand::ADD_ENTRY);
+  command_->set_session_id(session_id);
+  command_->set_dictionary_id(dictionary_id1);
+  {
+    UserDictionary::Entry *entry = command_->mutable_entry();
+    entry->set_key("reading1_1");
+    entry->set_value("word1_1");
+    entry->set_pos(UserDictionary::NOUN);
+  }
+  ASSERT_TRUE(handler_->Evaluate(*command_, status_.get()));
+  EXPECT_PROTO_EQ("status: USER_DICTIONARY_COMMAND_SUCCESS", *status_);
+
+  Clear();
+  command_->set_type(UserDictionaryCommand::ADD_ENTRY);
+  command_->set_session_id(session_id);
+  command_->set_dictionary_id(dictionary_id1);
+  {
+    UserDictionary::Entry *entry = command_->mutable_entry();
+    entry->set_key("reading1_2");
+    entry->set_value("word1_2");
+    entry->set_pos(UserDictionary::NOUN);
+  }
+  ASSERT_TRUE(handler_->Evaluate(*command_, status_.get()));
+  EXPECT_PROTO_EQ("status: USER_DICTIONARY_COMMAND_SUCCESS", *status_);
+
+  // Create a dictionary named "dictionary2".
+  Clear();
+  command_->set_type(UserDictionaryCommand::CREATE_DICTIONARY);
+  command_->set_session_id(session_id);
+  command_->set_dictionary_name("dictionary2");
+  ASSERT_TRUE(handler_->Evaluate(*command_, status_.get()));
+  const uint64 dictionary_id2 = status_->dictionary_id();
+
+  Clear();
+  command_->set_type(UserDictionaryCommand::ADD_ENTRY);
+  command_->set_session_id(session_id);
+  command_->set_dictionary_id(dictionary_id2);
+  {
+    UserDictionary::Entry *entry = command_->mutable_entry();
+    entry->set_key("reading2_1");
+    entry->set_value("word2_1");
+    entry->set_pos(UserDictionary::NOUN);
+  }
+  ASSERT_TRUE(handler_->Evaluate(*command_, status_.get()));
+  EXPECT_PROTO_EQ("status: USER_DICTIONARY_COMMAND_SUCCESS", *status_);
+
+  Clear();
+  command_->set_type(UserDictionaryCommand::GET_STORAGE);
+  command_->set_session_id(session_id);
+  ASSERT_TRUE(handler_->Evaluate(*command_, status_.get()));
+  EXPECT_PROTO_PEQ("status: USER_DICTIONARY_COMMAND_SUCCESS\n"
+                   "storage <\n"
+                   "  dictionaries <\n"
+                   "    name: \"dictionary1\"\n"
+                   "    entries <\n"
+                   "      key: \"reading1_1\"\n"
+                   "      value: \"word1_1\"\n"
+                   "      comment: \"\"\n"
+                   "      pos: NOUN\n"
+                   "    >\n"
+                   "    entries <\n"
+                   "      key: \"reading1_2\"\n"
+                   "      value: \"word1_2\"\n"
+                   "      comment: \"\"\n"
+                   "      pos: NOUN\n"
+                   "    >\n"
+                   "  >\n"
+                   "  dictionaries <\n"
+                   "    name: \"dictionary2\"\n"
+                   "    entries <\n"
+                   "      key: \"reading2_1\"\n"
+                   "      value: \"word2_1\"\n"
+                   "      comment: \"\"\n"
+                   "      pos: NOUN\n"
+                   "    >\n"
+                   "  >\n"
+                   ">\n",
+                   *status_);
+
+  // Delete the session.
+  Clear();
+  command_->set_type(UserDictionaryCommand::DELETE_SESSION);
+  command_->set_session_id(session_id);
+  ASSERT_TRUE(handler_->Evaluate(*command_, status_.get()));
+}
 }  // namespace mozc

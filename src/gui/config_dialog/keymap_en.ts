@@ -251,5 +251,9 @@
         <source>Reconvert</source>
         <translation>Reconvert</translation>
     </message>
+    <message>
+        <source>DeleteSelectedCandidate</source>
+        <translation>Remove selected candidate from history</translation>
+    </message>
 </context>
 </TS>

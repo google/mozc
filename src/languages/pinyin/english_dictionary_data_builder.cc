@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,16 +38,13 @@
 #include "dictionary/file/codec_interface.h"
 #include "dictionary/file/dictionary_file.h"
 #include "dictionary/file/section.h"
-
-#ifdef MOZC_USE_MOZC_LOUDS
 #include "storage/louds/louds_trie_builder.h"
-#else
-#include "dictionary/rx/rx_trie_builder.h"
-#endif  // MOZC_USE_MOZC_LOUDS
 
 namespace mozc {
 namespace pinyin {
 namespace english {
+
+using mozc::storage::louds::LoudsTrieBuilder;
 
 namespace {
 // Priority = (1 / (sqrt(index + offset))) + used_count * multiplier
@@ -74,13 +71,9 @@ void EnglishDictionaryDataBuilder::BuildFromStream(istream *input_stream) {
     words.push_back(line);
   }
 
-  builder_.reset(new TrieBuilderType);
+  builder_.reset(new LoudsTrieBuilder);
   for (size_t i = 0; i < words.size(); ++i) {
-#ifdef MOZC_USE_MOZC_LOUDS
     builder_->Add(words[i]);
-#else
-    builder_->AddKey(words[i]);
-#endif  // MOZC_USE_MOZC_LOUDS
   }
   builder_->Build();
 
@@ -88,11 +81,7 @@ void EnglishDictionaryDataBuilder::BuildFromStream(istream *input_stream) {
   louds_id_to_priority_.reset(new float[words_num_]);
 
   for (size_t i = 0; i < words.size(); ++i) {
-#ifdef MOZC_USE_MOZC_LOUDS
       const int word_id = builder_->GetId(words[i]);
-#else
-      const int word_id = builder_->GetIdFromKey(words[i]);
-#endif  // MOZC_USE_MOZC_LOUDS
 
     DCHECK_LT(word_id, words.size());
     DCHECK_NE(-1, word_id);
@@ -110,17 +99,10 @@ void EnglishDictionaryDataBuilder::WriteToStream(ostream *output_stream) const {
   DictionaryFileCodecInterface *file_codec =
       DictionaryFileCodecFactory::GetCodec();
 
-#ifdef MOZC_USE_MOZC_LOUDS
   DictionaryFileSection dictionary_trie(
       builder_->image().data(),
       builder_->image().size(),
       file_codec->GetSectionName("english_dictionary_trie"));
-#else
-  DictionaryFileSection dictionary_trie(
-      builder_->GetImageBody(),
-      builder_->GetImageSize(),
-      file_codec->GetSectionName("english_dictionary_trie"));
-#endif  // MOZC_USE_MOZC_LOUDS
   sections.push_back(dictionary_trie);
 
   DictionaryFileSection word_priority_table(

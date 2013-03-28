@@ -1,4 +1,4 @@
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -48,25 +48,11 @@
       ],
       'dependencies': [
         '../../base/base.gyp:base_core',
-        '../dictionary_base.gyp:pos_matcher',
-        '../../session/session_base.gyp:request_handler',
-        '../../session/session_base.gyp:session_protocol',
+        '../../storage/louds/louds.gyp:bit_vector_based_array',
+        '../../storage/louds/louds.gyp:louds_trie',
+        '../dictionary_base.gyp:text_dictionary_loader',
         '../file/dictionary_file.gyp:dictionary_file',
-        '../rx/rx_storage.gyp:rbx_array',
-        '../rx/rx_storage.gyp:rx_trie',
         'system_dictionary_codec',
-      ],
-      'conditions': [
-        ['enable_mozc_louds==1', {
-          'dependencies!': [
-            '../rx/rx_storage.gyp:rbx_array',
-            '../rx/rx_storage.gyp:rx_trie',
-          ],
-          'dependencies': [
-            '../louds/louds_trie_adapter.gyp:louds_trie_adapter',
-            '../../storage/louds/louds.gyp:bit_vector_based_array',
-          ],
-        }],
       ],
     },
     {
@@ -77,20 +63,10 @@
       ],
       'dependencies': [
         '../../base/base.gyp:base_core',
-        '../dictionary_base.gyp:gen_pos_matcher#host',
+        '../../storage/louds/louds.gyp:louds_trie',
+        '../dictionary_base.gyp:pos_matcher',
         '../file/dictionary_file.gyp:dictionary_file',
-        '../rx/rx_storage.gyp:rx_trie',
         'system_dictionary_codec',
-      ],
-      'conditions': [
-        ['enable_mozc_louds==1', {
-          'dependencies!': [
-            '../rx/rx_storage.gyp:rx_trie',
-          ],
-          'dependencies': [
-            '../louds/louds_trie_adapter.gyp:louds_trie_adapter',
-          ],
-        }],
       ],
     },
     {
@@ -103,57 +79,13 @@
       'dependencies': [
         '../../base/base.gyp:base_core',
         '../../data_manager/data_manager.gyp:user_pos_manager',
+        '../../storage/louds/louds.gyp:bit_vector_based_array_builder',
+        '../../storage/louds/louds.gyp:louds_trie_builder',
         '../dictionary_base.gyp:pos_matcher',
         '../dictionary_base.gyp:text_dictionary_loader',
         '../file/dictionary_file.gyp:codec',
-        '../rx/rx_storage.gyp:rbx_array_builder',
-        '../rx/rx_storage.gyp:rx_trie_builder',
         'system_dictionary_codec',
       ],
-      'conditions': [
-        ['enable_mozc_louds==1', {
-          'dependencies!': [
-            '../rx/rx_storage.gyp:rbx_array_builder',
-            '../rx/rx_storage.gyp:rx_trie_builder',
-          ],
-          'dependencies': [
-            '../../storage/louds/louds.gyp:bit_vector_based_array_builder',
-            '../../storage/louds/louds.gyp:louds_trie_builder',
-          ],
-        }],
-      ],
-    },
-    {
-      'target_name': 'system_dictionary_codec_test',
-      'type': 'executable',
-      'sources': [
-        'codec_test.cc',
-      ],
-      'dependencies': [
-        '../../testing/testing.gyp:gtest_main',
-        'system_dictionary_codec',
-      ],
-      'variables': {
-        'test_size': 'small',
-      },
-    },
-    {
-      'target_name': 'system_dictionary_test',
-      'type': 'executable',
-      'sources': [
-        'system_dictionary_test.cc',
-      ],
-      'dependencies': [
-        '../../base/base.gyp:base_core',
-        '../../session/session_base.gyp:request_test_util',
-        '../../testing/testing.gyp:gtest_main',
-        'install_system_dictionary_test_data',
-        'system_dictionary',
-        'system_dictionary_builder',
-      ],
-      'variables': {
-        'test_size': 'small',
-      },
     },
     {
       # TODO(noriyukit): Ideally, the copy rule of
@@ -170,50 +102,6 @@
         ],
       },
       'includes': [ '../../gyp/install_testdata.gypi' ],
-    },
-    {
-      'target_name': 'value_dictionary_test',
-      'type': 'executable',
-      'sources': [
-        'value_dictionary_test.cc',
-      ],
-      'dependencies': [
-        '../../base/base.gyp:base_core',
-        '../../data_manager/data_manager.gyp:user_pos_manager',
-        '../../testing/testing.gyp:gtest_main',
-        'system_dictionary_builder',
-        'value_dictionary',
-      ],
-      'variables': {
-        'test_size': 'small',
-      },
-    },
-    {
-      'target_name': 'system_dictionary_builder_test',
-      'type': 'executable',
-      'sources': [
-        'system_dictionary_builder_test.cc',
-      ],
-      'dependencies': [
-        'system_dictionary_builder',
-        '../../base/base.gyp:base_core',
-        '../../data_manager/data_manager.gyp:user_pos_manager',
-        '../../testing/testing.gyp:gtest_main',
-      ],
-      'variables': {
-        'test_size': 'small',
-      },
-    },
-    # Test cases meta target: this target is referred from gyp/tests.gyp
-    {
-      'target_name': 'system_dictionary_all_test',
-      'type': 'none',
-      'dependencies': [
-        'system_dictionary_builder_test',
-        'system_dictionary_codec_test',
-        'system_dictionary_test',
-        'value_dictionary_test',
-      ],
     },
   ],
 }

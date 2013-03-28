@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,24 +29,24 @@
 
 #include "gui/config_dialog/auth_code_detector.h"
 
-#if defined(OS_WINDOWS)
+#if defined(OS_WIN)
 #include <Windows.h>
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 #if defined(OS_MACOSX)
 #include <Carbon/Carbon.h>
 #endif  // OS_MACOSX
 
-#if defined(OS_WINDOWS)
+#if defined(OS_WIN)
 #include "base/util.h"
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 #include "sync/oauth2_token_util.h"
 
 namespace mozc {
 namespace gui {
 namespace {
 
-#if defined(OS_WINDOWS)
+#if defined(OS_WIN)
 BOOL CALLBACK EnumWindowsProc(HWND window_handle, LPARAM lparam) {
   wchar_t buffer[512] = {};
   const int copied_len_without_null =
@@ -126,7 +126,7 @@ string GetAuthCodeForMac() {
 
   return "";
 }
-#endif  // OS_WINDOWS | OS_MACOSX
+#endif  // OS_WIN | OS_MACOSX
 
 }  // namespace
 
@@ -136,7 +136,7 @@ AuthCodeDetector::AuthCodeDetector() {
 void AuthCodeDetector::startFetchingAuthCode() {
   // when finished, emit setAuthCode(code) to tell the result back to
   // the dialog.
-#if defined(OS_WINDOWS)
+#if defined(OS_WIN)
   const string &auth_code = GetAuthCodeForWindows();
   if (!auth_code.empty()) {
     emit setAuthCode(auth_code.c_str());
@@ -146,7 +146,7 @@ void AuthCodeDetector::startFetchingAuthCode() {
   if (!auth_code.empty()) {
     emit setAuthCode(auth_code.c_str());
   }
-#endif  // OS_WINDOWS | OS_MACOSX
+#endif  // OS_WIN | OS_MACOSX
 }
 
 }  // namespace mozc::gui

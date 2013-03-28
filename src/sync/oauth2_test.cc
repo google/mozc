@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,13 +27,20 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <string>
+#include "sync/oauth2.h"
 
-#include "base/base.h"
+#include <string>
+#include <utility>
+#include <vector>
+
+#include "base/scoped_ptr.h"
+#include "base/system_util.h"
 #include "base/util.h"
 #include "net/http_client.h"
 #include "net/http_client_mock.h"
-#include "sync/oauth2.h"
+#include "storage/memory_storage.h"
+#include "storage/registry.h"
+#include "storage/storage_interface.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
@@ -63,7 +70,19 @@ class TestableOAuth2 : public OAuth2 {
 class OAuth2Test : public testing::Test {
  protected:
   virtual void SetUp() {
+    original_user_profile_dir_ = SystemUtil::GetUserProfileDirectory();
+    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    local_storage_.reset(storage::MemoryStorage::New());
+    storage::Registry::SetStorage(local_storage_.get());
+
     HTTPClient::SetHTTPClientHandler(&client_);
+  }
+
+  virtual void TearDown() {
+    storage::Registry::SetStorage(NULL);
+    local_storage_.reset(NULL);
+    HTTPClient::SetHTTPClientHandler(NULL);
+    SystemUtil::SetUserProfileDirectory(original_user_profile_dir_);
   }
 
   void SetLoginServer() {
@@ -79,22 +98,35 @@ class OAuth2Test : public testing::Test {
     client_.set_result(auth_result);
   }
 
-  void SetAuthorizationServer() {
+  void SetAuthorizationServerInternal(const string &auth_token,
+                                      const string &response) {
     vector<pair<string, string> > params;
     params.push_back(make_pair("grant_type", "authorization_code"));
     params.push_back(make_pair("client_id", kClientId));
     params.push_back(make_pair("client_secret", kClientSecret));
     params.push_back(make_pair("redirect_uri", kRedirectUri));
-    params.push_back(make_pair("code", kAuthToken));
+    params.push_back(make_pair("code", auth_token));
     params.push_back(make_pair("scope", kScope));
 
     HTTPClientMock::Result result;
     result.expected_url = kAuthorizeUri;
     Util::AppendCGIParams(params, &result.expected_request);
-    result.expected_result = string("{") +
+    result.expected_result = response;
+    client_.set_result(result);
+  }
+
+  void SetAuthorizationServer() {
+    const string response = string("{") +
         "\"access_token\":\"" + kAccessToken + "\",\"token_type\":\"Bearer\","
         "\"expires_in\":3600,\"refresh_token\":\"" + kRefreshToken + "\"}";
-    client_.set_result(result);
+
+    SetAuthorizationServerInternal(kAuthToken, response);
+  }
+
+  void SetAuthorizationServerError() {
+    const string response = "{\"error\":\"invalid_grant\"}";
+
+    SetAuthorizationServerInternal(kWrongAuthToken, response);
   }
 
   void SetResourceServer() {
@@ -126,6 +158,7 @@ class OAuth2Test : public testing::Test {
     HTTPClientMock::Result result;
     SetupRefreshTokenRequest(&result);
     result.expected_result = "{\"error\":\"invalid_client\"}";
+    client_.set_result(result);
   }
 
   void SetupRefreshTokenRequest(HTTPClientMock::Result *result) {
@@ -140,7 +173,10 @@ class OAuth2Test : public testing::Test {
     Util::AppendCGIParams(params, &result->expected_request);
   }
 
+ private:
   HTTPClientMock client_;
+  string original_user_profile_dir_;
+  scoped_ptr<storage::StorageInterface> local_storage_;
 };
 
 TEST_F(OAuth2Test, GetAuthorizeUri) {
@@ -157,26 +193,25 @@ TEST_F(OAuth2Test, GetAuthorizeUri) {
 TEST_F(OAuth2Test, OAuth2Test) {
   SetAuthorizationServer();
 
-  OAuth2::Error error;
   string access_token;
   string refresh_token;
-  EXPECT_TRUE(OAuth2::AuthorizeToken(kAuthorizeUri, kClientId, kClientSecret,
-                                     kRedirectUri, kAuthToken, kScope, "",
-                                     &error, &access_token, &refresh_token));
-  EXPECT_EQ(OAuth2::kNone, error);
+  EXPECT_EQ(OAuth2::kNone,
+            OAuth2::AuthorizeToken(kAuthorizeUri, kClientId, kClientSecret,
+                                   kRedirectUri, kAuthToken, kScope, "",
+                                   &access_token, &refresh_token));
   EXPECT_EQ(kAccessToken, access_token);
   EXPECT_EQ(kRefreshToken, refresh_token);
 }
 
 TEST_F(OAuth2Test, InvalidAuthorizationToken) {
-  SetAuthorizationServer();
+  SetAuthorizationServerError();
 
-  OAuth2::Error error;
   string access_token;
   string refresh_token;
-  EXPECT_FALSE(OAuth2::AuthorizeToken(kAuthorizeUri, kClientId, kClientSecret,
-                                      kRedirectUri, kWrongAuthToken, kScope, "",
-                                      &error, &access_token, &refresh_token));
+  EXPECT_EQ(OAuth2::kInvalidGrant,
+            OAuth2::AuthorizeToken(kAuthorizeUri, kClientId, kClientSecret,
+                                   kRedirectUri, kWrongAuthToken, kScope, "",
+                                   &access_token, &refresh_token));
 }
 
 TEST_F(OAuth2Test, RequestProtectedResource) {
@@ -193,13 +228,12 @@ TEST_F(OAuth2Test, RequestProtectedResource) {
 TEST_F(OAuth2Test, RefreshToken) {
   SetRefreshServer(true);
 
-  OAuth2::Error error;
   string access_token(kAccessToken);
   string refresh_token(kRefreshToken);
-  EXPECT_TRUE(OAuth2::RefreshTokens(kRefreshUri, kClientId, kClientSecret,
-      kScope, &error, &refresh_token, &access_token));
+  EXPECT_EQ(OAuth2::kNone,
+            OAuth2::RefreshTokens(kRefreshUri, kClientId, kClientSecret,
+                                  kScope, &refresh_token, &access_token));
 
-  EXPECT_EQ(OAuth2::kNone, error);
   EXPECT_EQ(kAccessToken2, access_token);
   EXPECT_EQ(kRefreshToken2, refresh_token);
 }
@@ -207,13 +241,12 @@ TEST_F(OAuth2Test, RefreshToken) {
 TEST_F(OAuth2Test, RefreshTokenWithoutNewRefreshToken) {
   SetRefreshServer(false);
 
-  OAuth2::Error error;
   string access_token(kAccessToken);
   string refresh_token(kRefreshToken);
-  EXPECT_TRUE(OAuth2::RefreshTokens(kRefreshUri, kClientId, kClientSecret,
-      kScope, &error, &refresh_token, &access_token));
+  EXPECT_EQ(OAuth2::kNone,
+            OAuth2::RefreshTokens(kRefreshUri, kClientId, kClientSecret,
+                                  kScope, &refresh_token, &access_token));
 
-  EXPECT_EQ(OAuth2::kNone, error);
   EXPECT_EQ(kAccessToken2, access_token);
   // Refresh token is not updated.
   EXPECT_EQ(kRefreshToken, refresh_token);
@@ -222,11 +255,11 @@ TEST_F(OAuth2Test, RefreshTokenWithoutNewRefreshToken) {
 TEST_F(OAuth2Test, RefreshTokenError) {
   SetRefreshServerError();
 
-  OAuth2::Error error;
   string access_token(kAccessToken);
   string refresh_token(kRefreshToken);
-  EXPECT_FALSE(OAuth2::RefreshTokens(kRefreshUri, kClientId, kClientSecret,
-      kScope, &error, &refresh_token, &access_token));
+  EXPECT_EQ(OAuth2::kInvalidClient,
+            OAuth2::RefreshTokens(kRefreshUri, kClientId, kClientSecret,
+                                  kScope, &refresh_token, &access_token));
 
   // Tokens unchanged.
   EXPECT_EQ(kAccessToken, access_token);

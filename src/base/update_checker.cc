@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
 
 #include "base/update_checker.h"
 
-#if defined(OS_WINDOWS)
+#if defined(OS_WIN)
 #include <Windows.h>
 #include <tchar.h>
 #include <strsafe.h>
@@ -41,13 +41,13 @@
 
 #include "base/scoped_handle.h"
 #include "base/win_util.h"
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 using namespace std;
 
 namespace mozc {
 namespace {
-#if defined(OS_WINDOWS) && defined(GOOGLE_JAPANESE_INPUT_BUILD)
+#if defined(OS_WIN) && defined(GOOGLE_JAPANESE_INPUT_BUILD)
 // This GUID is specific to Google Japanese Input.
 // Do not reuse this GUID for OSS Mozc.
 const wchar_t kOmahaGUID[] = L"{DDCCD2A9-025E-4142-BCEB-F467B88CF830}";
@@ -494,11 +494,11 @@ bool BeginUpdateWin(const UpdateInvoker::CallbackInfo &info) {
   }
   return true;
 }
-#endif  // OS_WINDOWS && GOOGLE_JAPANESE_INPUT_BUILD
+#endif  // OS_WIN && GOOGLE_JAPANESE_INPUT_BUILD
 }  // anonymouse namespace
 
 bool UpdateChecker::BeginCheck(const CallbackInfo &info) {
-#if !defined(OS_WINDOWS) || !defined(GOOGLE_JAPANESE_INPUT_BUILD)
+#if !defined(OS_WIN) || !defined(GOOGLE_JAPANESE_INPUT_BUILD)
   return false;
 #else
   return BeginUpdateCheckWin(info);
@@ -506,7 +506,7 @@ bool UpdateChecker::BeginCheck(const CallbackInfo &info) {
 }
 
 bool UpdateInvoker::BeginUpdate(const CallbackInfo &info) {
-#if !defined(OS_WINDOWS) || !defined(GOOGLE_JAPANESE_INPUT_BUILD)
+#if !defined(OS_WIN) || !defined(GOOGLE_JAPANESE_INPUT_BUILD)
   return false;
 #else
   return BeginUpdateWin(info);

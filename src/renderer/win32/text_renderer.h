@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -41,19 +41,13 @@
 #include <string>
 #include <vector>
 
-#include "base/base.h"
 #include "base/coordinates.h"
+#include "base/port.h"
 #include "base/scoped_ptr.h"
 
 namespace mozc {
 namespace renderer {
 namespace win32 {
-using WTL::CDC;
-using WTL::CDCHandle;
-using WTL::CFont;
-using WTL::CFontHandle;
-
-struct FontInfo;
 
 // text-rect pair for batch text rendering.
 struct TextRenderingInfo {
@@ -86,7 +80,7 @@ class TextRenderer {
   ~TextRenderer();
   void Init();
   // Retrieves the font handle
-  CFontHandle GetFont(FONT_TYPE font_type) const;
+  WTL::CFontHandle GetFont(FONT_TYPE font_type) const;
   // Retrieves the font color
   COLORREF GetFontColor(FONT_TYPE font_type) const;
   // Retrieves the font style
@@ -95,16 +89,19 @@ class TextRenderer {
   Size MeasureString(FONT_TYPE font_type, const wstring &str) const;
   Size MeasureStringMultiLine(FONT_TYPE font_type, const wstring &str,
       const int width) const;
-  void RenderText(CDCHandle dc, const wstring &text, const Rect &rect,
+  void RenderText(WTL::CDCHandle dc, const wstring &text, const Rect &rect,
                   FONT_TYPE font_type) const;
-  void RenderText(CDCHandle dc, const vector<TextRenderingInfo> &display_list,
+  void RenderText(WTL::CDCHandle dc,
+                  const vector<TextRenderingInfo> &display_list,
                   FONT_TYPE font_type) const;
  private:
+  struct FontInfo;
   scoped_array<FontInfo> fonts_;
-  mutable CDC mem_dc_;
+  mutable WTL::CDC mem_dc_;
 
   DISALLOW_COPY_AND_ASSIGN(TextRenderer);
 };
+
 }  // namespace win32
 }  // namespace renderer
 }  // namespace mozc

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,11 @@
 
 #include "sync/sync_status_manager.h"
 
-#include "base/base.h"
+#include <cstddef>
+#include <string>
+
+#include "base/file_util.h"
+#include "base/system_util.h"
 #include "base/util.h"
 #include "storage/registry.h"
 #include "storage/tiny_storage.h"
@@ -48,11 +52,11 @@ const int kNumSyncError = 4;
 class SyncStatusManagerTest : public testing::Test {
  protected:
   virtual void SetUp() {
-    original_user_profile_dir_ = Util::GetUserProfileDirectory();
-    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    original_user_profile_dir_ = SystemUtil::GetUserProfileDirectory();
+    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     string registory_file_path;
-    Util::JoinPath(original_user_profile_dir_, "registry.db",
-                   &registory_file_path);
+    FileUtil::JoinPath(original_user_profile_dir_, "registry.db",
+                       &registory_file_path);
     local_storage_.reset(storage::TinyStorage::Create(
         registory_file_path.c_str()));
     storage::Registry::SetStorage(local_storage_.get());
@@ -65,7 +69,7 @@ class SyncStatusManagerTest : public testing::Test {
     manager_.reset(NULL);
     storage::Registry::SetStorage(NULL);
     local_storage_.reset(NULL);
-    Util::SetUserProfileDirectory(original_user_profile_dir_);
+    SystemUtil::SetUserProfileDirectory(original_user_profile_dir_);
   }
 
   scoped_ptr<SyncStatusManager> manager_;
@@ -76,9 +80,6 @@ class SyncStatusManagerTest : public testing::Test {
 };
 
 TEST_F(SyncStatusManagerTest, GetSetLastSyncStatus) {
-  // Set up test environment.
-  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
-
   for (int i = 0; i < 10; ++i) {
     commands::CloudSyncStatus status_org;
     const uint64 t = Util::Random(1 << 30);
@@ -100,9 +101,6 @@ TEST_F(SyncStatusManagerTest, GetSetLastSyncStatus) {
 }
 
 TEST_F(SyncStatusManagerTest, UpdateSyncStatus) {
-  // Set up test environment.
-  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
-
   for (int i = 0; i < 10; ++i) {
     commands::CloudSyncStatus status;
     commands::CloudSyncStatus::SyncGlobalStatus global =
@@ -115,9 +113,6 @@ TEST_F(SyncStatusManagerTest, UpdateSyncStatus) {
 }
 
 TEST_F(SyncStatusManagerTest, StackOfSyncErrors) {
-  // Set up test environment.
-  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
-
   commands::CloudSyncStatus status;
   // global_status has no mean in this test, but it is required.
   status.set_global_status(commands::CloudSyncStatus::INSYNC);

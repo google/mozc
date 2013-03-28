@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,6 +35,7 @@
 
 #include "base/base.h"
 #include "base/config_file_stream.h"
+#include "base/file_util.h"
 #include "base/logging.h"
 #include "base/util.h"
 #include "config/config.pb.h"
@@ -49,7 +50,7 @@
 
 namespace mozc {
 
-using mozc::storage::LRUStorage;
+using storage::LRUStorage;
 
 namespace {
 const int kValueSize  = 4;
@@ -120,6 +121,10 @@ UserBoundaryHistoryRewriter::UserBoundaryHistoryRewriter(
 UserBoundaryHistoryRewriter::~UserBoundaryHistoryRewriter() {}
 
 void UserBoundaryHistoryRewriter::Finish(Segments *segments) {
+  if (segments->request_type() != Segments::CONVERSION) {
+    return;
+  }
+
   if (GET_CONFIG(incognito_mode)) {
     VLOG(2) << "incognito mode";
     return;
@@ -144,7 +149,8 @@ void UserBoundaryHistoryRewriter::Finish(Segments *segments) {
   if (segments->resized()) {
     // |ResizeOrInsert| does NOT call Converter::ResizeSegment since we pass
     // INSERT as an argument, so we can use dummy ConversionRequest.
-    ResizeOrInsert(segments, ConversionRequest(), INSERT);
+    const ConversionRequest default_request;
+    ResizeOrInsert(segments, default_request, INSERT);
 #ifdef OS_ANDROID
     // TODO(hidehiko): UsageStats requires some functionalities, e.g. network,
     // which are not needed for mozc's main features.
@@ -183,6 +189,10 @@ bool UserBoundaryHistoryRewriter::Rewrite(
     return false;
   }
 
+  if (request.skip_slow_rewriters()) {
+    return false;
+  }
+
   if (!segments->resized()) {
     return ResizeOrInsert(segments, request, RESIZE);
   }
@@ -204,9 +214,9 @@ bool UserBoundaryHistoryRewriter::Reload() {
   const string merge_pending_file = filename + kFileSuffix;
 
   // merge pending file does not always exist.
-  if (Util::FileExists(merge_pending_file)) {
+  if (FileUtil::FileExists(merge_pending_file)) {
     storage_->Merge(merge_pending_file.c_str());
-    Util::Unlink(merge_pending_file);
+    FileUtil::Unlink(merge_pending_file);
   }
 
   return true;
@@ -310,7 +320,7 @@ bool UserBoundaryHistoryRewriter::ResizeOrInsert(
       }
 
       length_array[j] = 0;
-      key = key.substr(0, key.size() - keys[j].first.size());
+      key.erase(key.size() - keys[j].first.size());
     }
 
     keys.pop_front();  // delete first item

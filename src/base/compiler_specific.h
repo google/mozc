@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -202,5 +202,38 @@ class SemicolonEater {};
 #define MOZC_COMPILE_MESSAGE(s) MOZC_SWALLOWING_SEMICOLON_HACK
 #endif  // compilers
 // === End compile message macro definitions ===
+
+// === Begin has warning macro definitions ===
+#if defined(__has_warning)
+#define MOZC_CLANG_HAS_WARNING_IMPL(s) __has_warning(#s)
+#else
+#define MOZC_CLANG_HAS_WARNING_IMPL(s) (0)
+#endif
+
+#if defined(__clang__)
+#define MOZC_CLANG_HAS_WARNING(type)         \
+    MOZC_CLANG_HAS_WARNING_IMPL(-W ## type)
+#else  // !__clang__
+#define MOZC_CLANG_HAS_WARNING(type) (0)
+#endif  // __clang__ or !__clang__
+// === End has warning macro definitions ===
+
+// === Begin suppress warning C4355 macro definitions ===
+// ALLOW_THIS_IN_INITIALIZER_LIST(code)
+//   description:
+//     Suppress the following warning of Visual C++
+//       "Compiler warning C4355: 'this': used in base member initializer list"
+//        http://msdn.microsoft.com/en-us/library/3c594ae3.aspx
+//   example:
+//     Foo::Foo() : x(NULL), ALLOW_THIS_IN_INITIALIZER_LIST(y(this)) {}
+#if defined(_MSC_VER)
+#define ALLOW_THIS_IN_INITIALIZER_LIST(code)                 \
+    __pragma(warning(push)) __pragma(warning(disable:4355))  \
+    code                                                     \
+    __pragma(warning(pop))
+#else
+#define ALLOW_THIS_IN_INITIALIZER_LIST(code) code
+#endif  // _MSC_VER or !_MSC_VER
+// === End suppress warning C4355 macro definitions ===
 
 #endif  // MOZC_BASE_COMPILER_SPECIFIC_H

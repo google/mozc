@@ -1,4 +1,4 @@
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -65,6 +65,15 @@
         ['OS=="mac"', {
           'sources': ['<@(zinnia_sources)'],
           'defines': ['HAVE_CONFIG_H'],
+          'xcode_settings': {
+            'conditions': [
+              ['clang==1', {
+                'WARNING_CFLAGS+': [
+                  '-Wno-tautological-compare',
+                ],
+              }],
+            ],
+          },
         }],
         ['clang==1', {
           'cflags+': [
@@ -78,6 +87,11 @@
              'VERSION="0.04"',
              'PACKAGE="zinnia"',
              'HAVE_WINDOWS_H',
+          ],
+          'msvs_disabled_warnings': [
+            # destructor never returns, potential memory leak
+            # http://msdn.microsoft.com/en-us/library/khwfyc5d.aspx
+            '4722',  # Zinnia contains this kind of code
           ],
         }],
       ],

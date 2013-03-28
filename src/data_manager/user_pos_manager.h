@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,9 +31,16 @@
 #define MOZC_DATA_MANAGER_USER_POS_MANAGER_H_
 
 
+#if defined(MOZC_USE_PACKED_DICTIONARY)
+#include "data_manager/packed/packed_data_manager.h"
+namespace mozc {
+typedef packed::PackedDataManager UserPosManager;
+}
+#else  // !MOZC_USE_PACKED_DICTIONARY
 #include "data_manager/oss/oss_user_pos_manager.h"
 namespace mozc {
 typedef oss::OssUserPosManager UserPosManager;
 }
+#endif  // MOZC_USE_PACKED_DICTIONARY
 
 #endif  // MOZC_DATA_MANAGER_USER_POS_MANAGER_H_

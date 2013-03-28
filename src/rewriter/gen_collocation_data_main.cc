@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -43,11 +43,12 @@
 #include "base/base.h"
 #include "base/file_stream.h"
 #include "base/logging.h"
-#include "rewriter/gen_existence_header.h"
+#include "rewriter/gen_existence_data.h"
 
 DEFINE_string(collocation_data, "", "collocation data text");
 DEFINE_string(output, "", "output file name (default: stdout)");
 DEFINE_double(error_rate, 0.00001, "error rate");
+DEFINE_bool(binary_mode, false, "outputs binary file");
 DECLARE_bool(logtostderr);
 
 namespace mozc {
@@ -57,7 +58,7 @@ void Convert() {
   InputFileStream ifs(FLAGS_collocation_data.c_str());
   string line;
   vector<string> entries;
-  while (getline(ifs, line)) {
+  while (!getline(ifs, line).fail()) {
     if (line.empty()) {
       continue;
     }
@@ -66,13 +67,19 @@ void Convert() {
 
   ostream *ofs = &cout;
   if (!FLAGS_output.empty()) {
-    ofs = new OutputFileStream(FLAGS_output.c_str());
+    if (FLAGS_binary_mode) {
+      ofs = new OutputFileStream(FLAGS_output.c_str(), ios::out | ios::binary);
+    } else {
+      ofs = new OutputFileStream(FLAGS_output.c_str());
+    }
   }
 
-  const string kNameSpace = "CollocationData";
-
-  GenExistenceHeader::GenExistenceHeader(entries, kNameSpace, ofs,
-                                               FLAGS_error_rate);
+  if (FLAGS_binary_mode) {
+    OutputExistenceBinary(entries, ofs, FLAGS_error_rate);
+  } else {
+    const string kNameSpace = "CollocationData";
+    OutputExistenceHeader(entries, kNameSpace, ofs, FLAGS_error_rate);
+  }
 
   if (ofs != &cout) {
     delete ofs;

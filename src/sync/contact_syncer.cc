@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -49,15 +49,12 @@ namespace sync {
 
 using config::Config;
 using config::ConfigHandler;
-using config::SyncConfig;
-
 using user_dictionary::UserDictionary;
 
 namespace {
 const char kGdataLastDownloadTimeKey[] = "gdata.last_download_time";
 const char kContactResourceUri[] = "https://www.google.com/m8/feeds/"
                                    "contacts/default/full";
-const char kScope[] = "https://www.google.com/m8/feeds/";
 const char kContactsDictionaryName[] = "UserContacts";
 
 bool CheckConfigureToSyncContactList() {
@@ -69,8 +66,7 @@ bool CheckConfigureToSyncContactList() {
   }
   return config.sync_config().use_contact_list_sync();
 }
-
-}
+}  // namespace
 
 ContactSyncer::ContactSyncer(OAuth2Util* oauth2_util)
     : oauth2_util_(oauth2_util) {}
@@ -108,7 +104,7 @@ bool ContactSyncer::Clear() {
     return false;
   }
 
-  const string dict_file = GetUserDictionaryFileName();
+  const string &dict_file = GetUserDictionaryFileName();
   UserDictionaryStorage dict_storage(dict_file);
   if (!dict_storage.Load()) {
     DLOG(INFO) << "Cannot find the dictionary file.";
@@ -121,6 +117,10 @@ bool ContactSyncer::Clear() {
   }
 
   return dict_storage.Save();
+}
+
+bool ContactSyncer::ClearLocal() {
+  return true;
 }
 
 bool ContactSyncer::Download(user_dictionary::UserDictionaryStorage *storage,
@@ -141,11 +141,11 @@ bool ContactSyncer::Download(user_dictionary::UserDictionaryStorage *storage,
   Util::AppendCGIParams(params, &resource_uri);
 
   string response;
-  OAuth2::Error error;
-  if (!oauth2_util_->RequestResource(resource_uri, &response) &&
-      (!oauth2_util_->RefreshAccessToken(&error) ||
-       !oauth2_util_->RequestResource(resource_uri, &response))) {
-    return false;
+  if (!oauth2_util_->RequestResource(resource_uri, &response)) {
+    oauth2_util_->RefreshAccessToken();
+    if (!oauth2_util_->RequestResource(resource_uri, &response)) {
+      return false;
+    }
   }
 
   UserDictionary *contact_dictionary = storage->add_dictionaries();
@@ -158,10 +158,6 @@ bool ContactSyncer::Download(user_dictionary::UserDictionaryStorage *storage,
   storage->set_storage_type(user_dictionary::UserDictionaryStorage::UPDATE);
 
   SetLastDownloadTimestamp(last_timestamp);
-  return true;
-}
-
-bool ContactSyncer::Upload() {
   return true;
 }
 

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,8 +29,11 @@
 
 #include <string>
 
+#include "base/base.h"
 #include "base/codegen_bytearray_stream.h"
 #include "base/file_stream.h"
+#include "base/logging.h"
+#include "base/scoped_ptr.h"
 #include "languages/pinyin/english_dictionary_data_builder.h"
 
 DEFINE_string(input, "", "space separated input text files");

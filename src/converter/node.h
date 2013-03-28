@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -48,20 +48,109 @@ struct Node {
   };
 
   enum Attribute {
-    DEFAULT_ATTRIBUTE     = 0,
-    SYSTEM_DICTIONARY     = 1,   // system dictionary (not used now)
-    USER_DICTIONARY       = 2,   // user dictionary
-    NO_VARIANTS_EXPANSION = 4,   // no need to expand full/half
-    WEAK_CONNECTED        = 8,   // internally used in the converter
-    STARTS_WITH_PARTICLE  = 16,  // user input starts with particle
-    SPELLING_CORRECTION   = 32,  // "did you mean"
-    ENABLE_CACHE          = 64,  // cache the node in lattice
+    DEFAULT_ATTRIBUTE = 0,
+    SYSTEM_DICTIONARY = 1 << 0,  // System dictionary (not used now)
+    USER_DICTIONARY = 1 << 1,  // User dictionary
+    NO_VARIANTS_EXPANSION = 1 << 2,  // No need to expand full/half
+    // Internally used in the converter
+    // TODO(toshiyuki): Delete this attribute.
+    WEAK_CONNECTED_OBSOLETE = 1 << 3,
+    STARTS_WITH_PARTICLE = 1 << 4,  // User input starts with particle
+    SPELLING_CORRECTION = 1 << 5,  // "Did you mean"
+    ENABLE_CACHE = 1 << 6,  // Cache the node in lattice
+    // Equal to that of Candidate.
+    // Life of suggestion candidates from realtime conversion is;
+    // 1. Created by ImmutableConverter as Candidate instance.
+    // 2. The Candidate instances are aggregated as Node instances
+    //    in DictionaryPredictor::AggregateRealtimeConversion.
+    // 3. The Node instances are converted into Candidate instances
+    //    in DictionaryPredictor::AddPredictionToCandidates.
+    // To propagate this information from Node to Candidate,
+    // Node should have the same information as Candidate.
+    PARTIALLY_KEY_CONSUMED = 1 << 7,
   };
 
+  // prev and next are linking pointers to connect minimum cost path
+  // in the lattice. In other words, we can think the doubly-linked list
+  // with prev/next represents the minimum cost path.
   Node     *prev;
   Node     *next;
+
+  // bnext points to another Node instance which shares the same beginning
+  // position of the key.
+  // enext points to another Node instance which shares the same ending
+  // position of the key.
+  //
+  // Here illustrates the image:
+  //
+  // key:         | 0 | 1 | 2 | 3 | 4 | 5 | 6 | ... | N |
+  // begin_nodes: | 0 | 1 | 2 | 3 | 4 | 5 | 6 | ... | N | (in lattice)
+  //                |   |   :   :   :   :   :         :
+  //                |   :
+  //                |   :          (NULL)
+  //                |   :           ^
+  //                |   :           :
+  //                v   :           |
+  //               +-----------------+
+  //               | Node1(len4)     |
+  //               +-----------------+
+  //           bnext|   :           ^
+  //                v   :           |enext
+  //               +-----------------+
+  //               | Node2(len4)     | (NULL)
+  //               +-----------------+  ^
+  //           bnext|   :           ^   :
+  //                |   :           |   :
+  //                v   :           :   |enext
+  //               +---------------------+
+  //               | Node3(len5)         |
+  //               +---------------------+ (NULL)
+  //           bnext|   :           :   ^   ^
+  //                |   :           :   |   :
+  //                v   :           :   :   |enext
+  //               +-------------------------+
+  //               | Node4(len6)             |
+  //               +-------------------------+
+  //           bnext|   :           :   :   ^
+  //                :   :           :   :   |
+  //                v   :           :   :   :
+  //             (NULL) |           :   :   :
+  //                    v           :   |enext
+  //                   +-----------------+  :
+  //                   | Node5(len4)     |  :
+  //                   +-----------------+  :
+  //               bnext|           :   ^   :
+  //                    v           :   |enext
+  //                   +-----------------+  :
+  //                   | Node6(len4)     |  :
+  //                   +-----------------+  :
+  //               bnext|           :   ^   :
+  //                    |           :   |   :
+  //                    v           :   :   |enext
+  //                   +---------------------+
+  //                   | Node7(len5)         |
+  //                   +---------------------+
+  //               bnext|           :   :   ^
+  //                    v           :   :   |enext
+  //                   +---------------------+
+  //                   | Node8(len5)         |
+  //                   +---------------------+
+  //               bnext|           :   :   ^
+  //                    :           :   :   |
+  //                    v           :   :   |
+  //                  (NULL)        :   :   |
+  //                                :   :   |
+  //                :   :   :   :   :   |   |         :
+  // end_nodes:   | 0 | 1 | 2 | 3 | 4 | 5 | 6 | ... | N |  (in lattice)
+  //
+  // Note:
+  // 1) Nodes 1, 2, 3 and 4 start with pos "0", so they are connected by
+  //    bnext. Same for Nodes 5, 6, 7 and 8.
+  // 2) Nodes 3, 5 and 6 end with pos "5", so they are connected by enext.
+  //    Same for Nodes 4, 7 and 8.
   Node     *bnext;
   Node     *enext;
+
   // if it is not NULL, transition cost
   // from constrained_prev to current node is defined,
   // other transition is set to be infinite
@@ -82,6 +171,9 @@ struct Node {
 
   NodeType  node_type;
   uint32    attributes;
+
+  // Equal to that of Candidate.
+  size_t consumed_key_size;
 
   // key: The user input.
   // actual_key: The actual search key that corresponds to the value.

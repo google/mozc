@@ -4,9 +4,10 @@
 // The following is the manual step to make *qm files.
 // - Edit source files
 //   % g4 edit *.cpp *.h *.ts
-// - Update *ts file. tr() messages are stored in .ts
-//   % lupdate . -ts config_dialog_ja.ts
-//   % lupdate . -ts config_dialog_en.ts
+// - Update *ts file. tr() messages are stored in .ts.
+//   The argument of -I figures the base path for includes.
+//   % lupdate . -ts config_dialog_ja.ts -I $INCLUDE_PATH
+//   % lupdate . -ts config_dialog_en.ts -I $INCLUDE_PATH
 // - open *.ts files with QT linguest and added translation
 // - convert *.ts file to *.qm file
 //   % lrelease config_dialog_ja.ts -qm config_dialog_ja.qm

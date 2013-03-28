@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,8 @@
 #include <string>
 #include <vector>
 
+#include "base/file_util.h"
+#include "base/system_util.h"
 #include "base/util.h"
 #include "storage/encrypted_string_storage.h"
 #include "testing/base/public/gmock.h"
@@ -69,7 +71,7 @@ class MockStorage : public storage::StringStorageInterface {
 class EnglishDictionaryTest : public ::testing::Test {
  protected:
   virtual void SetUp() {
-    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     UnlinkUserHistoryDatabase();
   }
 
@@ -79,7 +81,7 @@ class EnglishDictionaryTest : public ::testing::Test {
 
   // Unlinks user history database file to reset.
   void UnlinkUserHistoryDatabase() {
-    Util::Unlink(EnglishDictionary::user_dictionary_file_path());
+    FileUtil::Unlink(EnglishDictionary::user_dictionary_file_path());
   }
 
   // Sets mock user dictionary storage for unit testing.

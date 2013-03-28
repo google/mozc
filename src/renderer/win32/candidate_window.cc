@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,14 +33,15 @@
 
 #include <sstream>
 
-#include "base/util.h"
 #include "base/coordinates.h"
+#include "base/logging.h"
+#include "base/util.h"
 #include "client/client_interface.h"
 #include "renderer/renderer_command.pb.h"
 #include "renderer/renderer_style_handler.h"
 #include "renderer/table_layout.h"
-#include "renderer/win_resource.h"
 #include "renderer/win32/text_renderer.h"
+#include "renderer/win_resource.h"
 
 namespace mozc {
 namespace renderer {
@@ -216,7 +217,7 @@ wstring GetDisplayStringByColumn(
 // Loads a DIB from a Win32 resource in the specified module and returns its
 // handle.  This function will fail if you try to load a top-down bitmap in
 // Windows XP.
-// Returns NULL if failed to load the image.
+// Returns nullptr if failed to load the image.
 // Caller must delete the object if this function returns non-null value.
 HBITMAP LoadBitmapFromResource(HMODULE module, int resource_id) {
   // We can use LR_CREATEDIBSECTION to load a 32-bpp bitmap.
@@ -241,7 +242,7 @@ CandidateWindow::CandidateWindow()
       mouse_moving_(true),
       text_renderer_(new TextRenderer),
       table_layout_(new TableLayout),
-      send_command_interface_(NULL) {
+      send_command_interface_(nullptr) {
   double scale_factor_x = 1.0;
   double scale_factor_y = 1.0;
   RendererStyleHandler::GetDPIScalingFactor(&scale_factor_x,
@@ -249,19 +250,19 @@ CandidateWindow::CandidateWindow()
   double image_scale_factor = 1.0;
   if (scale_factor_x < 1.125 || scale_factor_y < 1.125) {
     footer_logo_.Attach(LoadBitmapFromResource(
-      ::GetModuleHandle(NULL), IDB_FOOTER_LOGO_COLOR_100));
+      ::GetModuleHandle(nullptr), IDB_FOOTER_LOGO_COLOR_100));
     image_scale_factor = 1.0;
   } else if (scale_factor_x < 1.375 || scale_factor_y < 1.375) {
     footer_logo_.Attach(LoadBitmapFromResource(
-      ::GetModuleHandle(NULL), IDB_FOOTER_LOGO_COLOR_125));
+      ::GetModuleHandle(nullptr), IDB_FOOTER_LOGO_COLOR_125));
     image_scale_factor = 1.25;
   } else if (scale_factor_x < 1.75 || scale_factor_y < 1.75) {
     footer_logo_.Attach(LoadBitmapFromResource(
-      ::GetModuleHandle(NULL), IDB_FOOTER_LOGO_COLOR_150));
+      ::GetModuleHandle(nullptr), IDB_FOOTER_LOGO_COLOR_150));
     image_scale_factor = 1.5;
   } else {
     footer_logo_.Attach(LoadBitmapFromResource(
-      ::GetModuleHandle(NULL), IDB_FOOTER_LOGO_COLOR_200));
+      ::GetModuleHandle(nullptr), IDB_FOOTER_LOGO_COLOR_200));
     image_scale_factor = 2.0;
   }
 
@@ -321,8 +322,8 @@ void CandidateWindow::OnGetMinMaxInfo(MINMAXINFO *min_max_info) {
 
 void CandidateWindow::HandleMouseEvent(
     UINT nFlags, const WTL::CPoint &point, bool close_candidatewindow) {
-  if (send_command_interface_ == NULL) {
-    LOG(ERROR) << "send_command_interface_ is NULL";
+  if (send_command_interface_ == nullptr) {
+    LOG(ERROR) << "send_command_interface_ is nullptr";
     return;
   }
 
@@ -378,7 +379,7 @@ void CandidateWindow::OnPaint(CDCHandle dc) {
   CRect client_rect;
   this->GetClientRect(&client_rect);
 
-  if (dc != NULL) {
+  if (dc != nullptr) {
     CMemoryDC memdc(dc, client_rect);
     DoPaint(memdc.m_hDC);
   } else  {
@@ -737,7 +738,7 @@ void CandidateWindow::DrawFooter(CDCHandle dc) {
        i < kFooterSeparatorHeight; y++, i++) {
     if (i < ARRAYSIZE(kFooterSeparatorColors)) {
       dc.SetDCPenColor(kFooterSeparatorColors[i]);
-      dc.MoveTo(footer_rect.Left(), y, NULL);
+      dc.MoveTo(footer_rect.Left(), y, nullptr);
       dc.LineTo(footer_rect.Right(), y);
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,8 +29,8 @@
 
 #include "base/win_sandbox.h"
 
-// skipp all unless OS_WINDOWS
-#ifdef OS_WINDOWS
+// skipp all unless OS_WIN
+#ifdef OS_WIN
 #include <Windows.h>
 #include <AclAPI.h>
 #include <sddl.h>
@@ -42,13 +42,14 @@
 #include "base/logging.h"
 #include "base/scoped_handle.h"
 #include "base/scoped_ptr.h"
+#include "base/system_util.h"
 #include "base/util.h"
 
 namespace mozc {
 namespace {
 
 bool OpenEffectiveToken(const DWORD dwDesiredAccess, HANDLE *phToken) {
-  HANDLE hToken = NULL;
+  HANDLE hToken = nullptr;
 
   if (!::OpenThreadToken(::GetCurrentThread(), dwDesiredAccess,
                          TRUE, &hToken)) {
@@ -75,7 +76,7 @@ bool AllocGetTokenInformation(const HANDLE hToken,
 
   const BOOL bReturn = ::GetTokenInformation(hToken,
                                              TokenInfoClass,
-                                             NULL,
+                                             nullptr,
                                              0,
                                              &dwBufferSizeBc);
   if (bReturn || (ERROR_INSUFFICIENT_BUFFER != ::GetLastError())) {
@@ -83,7 +84,7 @@ bool AllocGetTokenInformation(const HANDLE hToken,
   }
 
   PVOID pBuffer = ::LocalAlloc(LPTR, dwBufferSizeBc);
-  if (pBuffer == NULL) {
+  if (pBuffer == nullptr) {
     return false;
   }
 
@@ -96,11 +97,11 @@ bool AllocGetTokenInformation(const HANDLE hToken,
     return false;
   }
 
-  if (ppInfo != NULL) {
+  if (ppInfo != nullptr) {
     *ppInfo = pBuffer;
   }
 
-  if (pdwSizeBc != NULL) {
+  if (pdwSizeBc != nullptr) {
     *pdwSizeBc = dwReturnSizeBc;
   }
 
@@ -109,23 +110,23 @@ bool AllocGetTokenInformation(const HANDLE hToken,
 
 bool GetTokenUserSidStringW(const HANDLE hToken,
                             PWSTR *pwszSidString) {
-  PTOKEN_USER pTokenUser = NULL;
-  PWSTR wszSidString = NULL;
+  PTOKEN_USER pTokenUser = nullptr;
+  PWSTR wszSidString = nullptr;
 
   if (AllocGetTokenInformation(hToken, TokenUser,
                                reinterpret_cast<PVOID *>(&pTokenUser),
-                               NULL) &&
+                               nullptr) &&
       ::ConvertSidToStringSidW(pTokenUser->User.Sid, &wszSidString)) {
     ::LocalFree(pTokenUser);
     *pwszSidString = wszSidString;
     return true;
   }
 
-  if (wszSidString != NULL) {
+  if (wszSidString != nullptr) {
     ::LocalFree(wszSidString);
   }
 
-  if (pTokenUser != NULL) {
+  if (pTokenUser != nullptr) {
     ::LocalFree(pTokenUser);
   }
 
@@ -134,12 +135,12 @@ bool GetTokenUserSidStringW(const HANDLE hToken,
 
 bool GetTokenPrimaryGroupSidStringW(const HANDLE hToken,
                                     PWSTR *pwszSidString) {
-  PTOKEN_PRIMARY_GROUP pTokenPrimaryGroup = NULL;
-  PWSTR wszSidString = NULL;
+  PTOKEN_PRIMARY_GROUP pTokenPrimaryGroup = nullptr;
+  PWSTR wszSidString = nullptr;
 
   if (AllocGetTokenInformation(hToken, TokenPrimaryGroup,
                                reinterpret_cast<PVOID *>(&pTokenPrimaryGroup),
-                               NULL) &&
+                               nullptr) &&
       ::ConvertSidToStringSidW(pTokenPrimaryGroup->PrimaryGroup,
                                &wszSidString)) {
     ::LocalFree(pTokenPrimaryGroup);
@@ -147,11 +148,11 @@ bool GetTokenPrimaryGroupSidStringW(const HANDLE hToken,
     return true;
   }
 
-  if (wszSidString != NULL) {
+  if (wszSidString != nullptr) {
     ::LocalFree(wszSidString);
   }
 
-  if (pTokenPrimaryGroup != NULL) {
+  if (pTokenPrimaryGroup != nullptr) {
     ::LocalFree(pTokenPrimaryGroup);
   }
 
@@ -162,9 +163,9 @@ class ScopedLocalFreeInvoker {
  public:
   explicit ScopedLocalFreeInvoker(void *address) : address_(address) {}
   ~ScopedLocalFreeInvoker() {
-    if (address_ != NULL) {
+    if (address_ != nullptr) {
       ::LocalFree(address_);
-      address_ = NULL;
+      address_ = nullptr;
     }
   }
 
@@ -174,6 +175,143 @@ class ScopedLocalFreeInvoker {
   DISALLOW_COPY_AND_ASSIGN(ScopedLocalFreeInvoker);
 };
 
+bool GetUserSid(wstring *token_user_sid, wstring *token_primary_group_sid) {
+  DCHECK(token_user_sid);
+  DCHECK(token_primary_group_sid);
+  token_user_sid->clear();
+  token_primary_group_sid->clear();
+
+  ScopedHandle token;
+  {
+    HANDLE hToken = nullptr;
+    if (!OpenEffectiveToken(TOKEN_QUERY, &hToken)) {
+      LOG(ERROR) << "OpenEffectiveToken failed " << ::GetLastError();
+      return false;
+    }
+    token.reset(hToken);
+  }
+
+  // Get token user SID
+  {
+    wchar_t* sid_string = nullptr;
+    if (!GetTokenUserSidStringW(token.get(), &sid_string)) {
+      LOG(ERROR) << "GetTokenUserSidStringW failed " << ::GetLastError();
+      return false;
+    }
+    *token_user_sid = sid_string;
+    ::LocalFree(sid_string);
+  }
+
+  // Get token primary group SID
+  {
+    wchar_t* sid_string = nullptr;
+    if (!GetTokenPrimaryGroupSidStringW(token.get(), &sid_string)) {
+      LOG(ERROR) << "GetTokenPrimaryGroupSidStringW failed "
+                 << ::GetLastError();
+      return false;
+    }
+    *token_primary_group_sid = sid_string;
+    ::LocalFree(sid_string);
+  }
+
+  return true;
+}
+
+wstring GetSSDL(WinSandbox::ObjectSecurityType shareble_object_type,
+                const wstring &token_user_sid,
+                const wstring &token_primary_group_sid) {
+  const wstring &allow_user = L"(A;;GA;;;" + token_user_sid + L")";
+  const wchar_t allow_rw_low_integrity[] =
+      L"S:(ML;;" SDDL_NO_EXECUTE_UP L";;;" SDDL_ML_LOW L")";
+
+  const wchar_t allow_r_low_integrity[] =
+      L"S:(ML;;" SDDL_NO_WRITE_UP SDDL_NO_EXECUTE_UP
+      L";;;" SDDL_ML_LOW L")";
+
+  wstring ssdl = L"O:" + token_user_sid
+               + L"G:" + token_primary_group_sid;
+
+  // See http://social.msdn.microsoft.com/Forums/en-US/windowssecurity/thread/e92502b1-0b9f-4e02-9d72-e4e47e924a8f/
+  // for how to ccess named objects from an AppContainer.
+  switch (shareble_object_type) {
+    case WinSandbox::kSharablePipe:
+      // Sharable Named Pipe:
+      // - Deny Remote Acccess
+      // - Allow general access to LocalSystem
+      // - Allow general access to Built-in Administorators
+      // - Allow general access to the current user
+      // - Allow general access to ALL APPLICATION PACKAGES
+      // - Allow read/write access to low integrity
+      ssdl += L"D:(D;;GA;;;NU)(A;;GA;;;SY)(A;;GA;;;BA)";
+      if (SystemUtil::IsWindows8OrLater()) {
+        ssdl += L"(A;;GA;;;AC)";
+      }
+      ssdl += allow_user;
+      if (SystemUtil::IsVistaOrLater()) {
+        ssdl += allow_rw_low_integrity;
+      }
+      break;
+    case WinSandbox::kSharableEvent:
+      // Sharable Event:
+      // - Allow general access to LocalSystem
+      // - Allow general access to Built-in Administorators
+      // - Allow general access to the current user
+      // - Allow state change/synchronize to ALL APPLICATION PACKAGES
+      // - Allow read/write access to low integrity
+      ssdl += L"D:(A;;GA;;;SY)(A;;GA;;;BA)";
+      if (SystemUtil::IsWindows8OrLater()) {
+        ssdl += L"(A;;GX;;;AC)";
+      }
+      ssdl += allow_user;
+      if (SystemUtil::IsVistaOrLater()) {
+        ssdl += allow_rw_low_integrity;
+      }
+      break;
+    case WinSandbox::kSharableMutex:
+      // Sharable Mutex:
+      // - Allow general access to LocalSystem
+      // - Allow general access to Built-in Administorators
+      // - Allow general access to the current user
+      // - Allow state change/synchronize to ALL APPLICATION PACKAGES
+      // - Allow read/write access to low integrity
+      ssdl += L"D:(A;;GA;;;SY)(A;;GA;;;BA)";
+      if (SystemUtil::IsWindows8OrLater()) {
+        ssdl += L"(A;;GX;;;AC)";
+      }
+      ssdl += allow_user;
+      if (SystemUtil::IsVistaOrLater()) {
+        ssdl += allow_rw_low_integrity;
+      }
+      break;
+    case WinSandbox::kSharableFileForRead:
+      // Sharable Mutex:
+      // - Allow general access to LocalSystem
+      // - Allow general access to Built-in Administorators
+      // - Allow general access to the current user
+      // - Allow general read access to ALL APPLICATION PACKAGES
+      // - Allow read access to low integrity
+      ssdl += L"D:(A;;GA;;;SY)(A;;GA;;;BA)";
+      if (SystemUtil::IsWindows8OrLater()) {
+        ssdl += L"(A;;GR;;;AC)";
+      }
+      ssdl += allow_user;
+      if (SystemUtil::IsVistaOrLater()) {
+        ssdl += allow_r_low_integrity;
+      }
+      break;
+    case WinSandbox::kPrivateObject:
+    default:
+      // General private object:
+      // - Allow general access to LocalSystem
+      // - Allow general access to Built-in Administorators
+      // - Allow general access to the current user
+      ssdl += (L"D:(A;;GA;;;SY)(A;;GA;;;BA)" + allow_user);
+      break;
+  }
+
+  return ssdl;
+}
+
 }  // namespace
 
 Sid::Sid(const SID *sid) {
@@ -182,7 +320,7 @@ Sid::Sid(const SID *sid) {
 
 Sid::Sid(WELL_KNOWN_SID_TYPE type) {
   DWORD size_sid = sizeof(sid_);
-  ::CreateWellKnownSid(type, NULL, sid_, &size_sid);
+  ::CreateWellKnownSid(type, nullptr, sid_, &size_sid);
 }
 
 const SID *Sid::GetPSID() const {
@@ -194,7 +332,7 @@ SID *Sid::GetPSID() {
 }
 
 wstring Sid::GetName() const {
-  wchar_t *ptr = NULL;
+  wchar_t *ptr = nullptr;
   Sid temp_sid(GetPSID());
   ConvertSidToStringSidW(temp_sid.GetPSID(), &ptr);
   wstring name = ptr;
@@ -203,26 +341,26 @@ wstring Sid::GetName() const {
 }
 
 wstring Sid::GetAccountName() const {
-  wchar_t *ptr = NULL;
+  wchar_t *ptr = nullptr;
   DWORD name_size = 0;
   DWORD domain_name_size = 0;
   SID_NAME_USE name_use;
   Sid temp_sid(GetPSID());
-  ::LookupAccountSid(NULL, temp_sid.GetPSID(), NULL, &name_size,
-                     NULL, &domain_name_size, &name_use);
+  ::LookupAccountSid(nullptr, temp_sid.GetPSID(), nullptr, &name_size,
+                     nullptr, &domain_name_size, &name_use);
   if (domain_name_size == 0) {
     if (name_size == 0) {
       // Use string SID instead.
       return GetName();
     }
     scoped_array<wchar_t> name_buffer(new wchar_t[name_size]);
-    ::LookupAccountSid(NULL, temp_sid.GetPSID(), name_buffer.get(),
-                       &name_size, NULL, &domain_name_size, &name_use);
+    ::LookupAccountSid(nullptr, temp_sid.GetPSID(), name_buffer.get(),
+                       &name_size, nullptr, &domain_name_size, &name_use);
     return wstring(L"/") + name_buffer.get();
   }
   scoped_array<wchar_t> name_buffer(new wchar_t[name_size]);
   scoped_array<wchar_t> domain_name_buffer(new wchar_t[domain_name_size]);
-  ::LookupAccountSid(NULL, temp_sid.GetPSID(), name_buffer.get(), &name_size,
+  ::LookupAccountSid(nullptr, temp_sid.GetPSID(), name_buffer.get(), &name_size,
                      domain_name_buffer.get(), &domain_name_size, &name_use);
   const wstring domain_name = wstring(domain_name_buffer.get());
   const wstring user_name = wstring(name_buffer.get());
@@ -231,67 +369,26 @@ wstring Sid::GetAccountName() const {
 
 // make SecurityAttributes for the named pipe.
 bool WinSandbox::MakeSecurityAttributes(
+    ObjectSecurityType shareble_object_type,
     SECURITY_ATTRIBUTES *security_attributes) {
-  PWSTR wszTokenUserSid = NULL;
-  PWSTR wszTokenPrimaryGroupSid = NULL;
-  {
-    // Open effective token
-    ScopedHandle token;
-    {
-      HANDLE hToken = NULL;
-      if (!OpenEffectiveToken(TOKEN_QUERY, &hToken)) {
-        LOG(ERROR) << "OpenEffectiveToken failed "
-                   << ::GetLastError();
-        return false;
-      }
-      token.reset(hToken);
-    }
-
-    // Get token user SID
-    if (!GetTokenUserSidStringW(token.get(), &wszTokenUserSid)) {
-      LOG(ERROR) << "GetTokenUserSidStringW failed "
-                 << ::GetLastError();
-      return false;
-    }
-
-    // Get token primary group SID
-    if (!GetTokenPrimaryGroupSidStringW(token.get(),
-                                        &wszTokenPrimaryGroupSid)) {
-      LOG(ERROR) << "GetTokenPrimaryGroupSidStringW failed "
-                 << ::GetLastError();
-      return false;
-    }
-  }  // close effective token.
-
-  // Create SDDL
-  WCHAR wszSddl[2048];
-  const HRESULT hr = ::StringCbPrintfW(
-      wszSddl,
-      sizeof(wszSddl),
-      L"O:%s"  // SDDL_OWNER
-      L"G:%s"  // SDDL_GROUP
-      L"D:(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;%s)",
-      // SDDL_DACL:(SDDL_ACCESS_ALLOWED;;SDDL_GENERIC_ALL;SDDL_LOCAL_SYSTEM)
-      // (...SDDL_BUILTIN_ADMINISTRATORS)(...)
-      wszTokenUserSid,
-      wszTokenPrimaryGroupSid,
-      wszTokenUserSid);
-
-  ::LocalFree(wszTokenUserSid);
-  ::LocalFree(wszTokenPrimaryGroupSid);
-
-  if (S_OK != hr) {
+  wstring token_user_sid;
+  wstring token_primary_group_sid;
+  if (!GetUserSid(&token_user_sid, &token_primary_group_sid)) {
     return false;
   }
 
+  const wstring &ssdl = GetSSDL(
+      shareble_object_type, token_user_sid, token_primary_group_sid);
+
   // Create self-relative SD
-  PSECURITY_DESCRIPTOR pSelfRelativeSd = NULL;
-  if (!::ConvertStringSecurityDescriptorToSecurityDescriptorW(wszSddl,
-                                                              SDDL_REVISION_1,
-                                                              &pSelfRelativeSd,
-                                                              NULL)) {
-    if (pSelfRelativeSd != NULL) {
-      ::LocalFree(pSelfRelativeSd);
+  PSECURITY_DESCRIPTOR self_relative_desc = nullptr;
+  if (!::ConvertStringSecurityDescriptorToSecurityDescriptorW(
+          ssdl.c_str(),
+          SDDL_REVISION_1,
+          &self_relative_desc,
+          nullptr)) {
+    if (self_relative_desc != nullptr) {
+      ::LocalFree(self_relative_desc);
     }
     LOG(ERROR)
         << "ConvertStringSecurityDescriptorToSecurityDescriptorW failed: "
@@ -301,87 +398,24 @@ bool WinSandbox::MakeSecurityAttributes(
 
   // Set up security attributes
   security_attributes->nLength= sizeof(SECURITY_ATTRIBUTES);
-  security_attributes->lpSecurityDescriptor= pSelfRelativeSd;
+  security_attributes->lpSecurityDescriptor= self_relative_desc;
   security_attributes->bInheritHandle= FALSE;
 
   return true;
 }
 
-// SetMandatoryLabelW() function:
-bool WinSandbox::SetMandatoryLabelW(
-    const HANDLE handle,
-    const SE_OBJECT_TYPE object_type,
-    const wchar_t *desired_access_type,
-    const wchar_t *integrity_level) {
-  // SDDL_SACL(SDDL_MANDATORY_LABEL;;desired_access;;;integrity_level)
-  const wchar_t kSACLFormat[] = L"S:(ML;;%s;;;%s)";
-  // SDDL
-  WCHAR wszSddl[1024];  // assuming this is enough
-  if (S_OK != ::StringCbPrintfW(wszSddl,
-                                sizeof(wszSddl),
-                                kSACLFormat,
-                                desired_access_type,
-                                integrity_level)) {
-    LOG(ERROR) << "StringCbPrintfW() failed";
-    return false;
-  }
-
-  // SD
-  PSECURITY_DESCRIPTOR pSD = NULL;
-  if (!::ConvertStringSecurityDescriptorToSecurityDescriptorW(
-          wszSddl,
-          SDDL_REVISION_1,
-          &pSD,
-          NULL)) {
-    LOG(ERROR)
-        << "ConvertStringSecurityDescriptorToSecurityDescriptorW() faild: "
-        << ::GetLastError();
-    return false;
-  }
-
-  // SACL
-  PACL pSacl = NULL;
-  BOOL fSaclPresent, fSaclDefaulted;
-  if (!::GetSecurityDescriptorSacl(pSD,
-                                   &fSaclPresent,
-                                   &pSacl,
-                                   &fSaclDefaulted)) {
-    LOG(ERROR) << "GetSecurityDescriptorSacl() faield: "
-               << ::GetLastError();
-    return false;
-  }
-
-  // Set
-  if (ERROR_SUCCESS != ::SetSecurityInfo(handle,
-                                         object_type,
-                                         LABEL_SECURITY_INFORMATION,
-                                         NULL,
-                                         NULL,
-                                         NULL,
-                                         pSacl)) {
-    LOG(ERROR) << "SetSecurityInfo() failed: " << ::GetLastError();
-    return false;
-  }
-
-  if (pSD != NULL) {
-    ::LocalFree(pSD);
-  }
-
-  return true;
-}
-
 bool WinSandbox::AddKnownSidToKernelObject(HANDLE object, const SID *known_sid,
-                                           DWORD inhericance_flag,
+                                           DWORD inheritance_flag,
                                            ACCESS_MASK access_mask) {
   // We must pass |&descriptor| because 6th argument (|&old_dacl|) is
   // non-null.  Actually, returned |old_dacl| points the memory block
   // of |descriptor|, which must be freed by ::LocalFree API.
   // http://msdn.microsoft.com/en-us/library/aa446654.aspx
-  PSECURITY_DESCRIPTOR descriptor = NULL;
-  PACL old_dacl = NULL;
+  PSECURITY_DESCRIPTOR descriptor = nullptr;
+  PACL old_dacl = nullptr;
   DWORD error = ::GetSecurityInfo(
-      object, SE_KERNEL_OBJECT, DACL_SECURITY_INFORMATION, NULL, NULL,
-      &old_dacl, NULL, &descriptor);
+      object, SE_KERNEL_OBJECT, DACL_SECURITY_INFORMATION, nullptr, nullptr,
+      &old_dacl, nullptr, &descriptor);
   // You need not to free |old_dacl| because |old_dacl| points inside of
   // |descriptor|.
   ScopedLocalFreeInvoker descripter_deleter(descriptor);
@@ -394,8 +428,8 @@ bool WinSandbox::AddKnownSidToKernelObject(HANDLE object, const SID *known_sid,
   EXPLICIT_ACCESS new_access = {};
   new_access.grfAccessMode = GRANT_ACCESS;
   new_access.grfAccessPermissions = access_mask;
-  new_access.grfInheritance = inhericance_flag;
-  new_access.Trustee.pMultipleTrustee = NULL;
+  new_access.grfInheritance = inheritance_flag;
+  new_access.Trustee.pMultipleTrustee = nullptr;
   new_access.Trustee.MultipleTrusteeOperation = NO_MULTIPLE_TRUSTEE;
   new_access.Trustee.TrusteeForm = TRUSTEE_IS_SID;
   // When |TrusteeForm| is TRUSTEE_IS_SID, |ptstrName| is a pointer to the SID
@@ -404,7 +438,7 @@ bool WinSandbox::AddKnownSidToKernelObject(HANDLE object, const SID *known_sid,
   new_access.Trustee.ptstrName =
       reinterpret_cast<wchar_t *>(const_cast<SID *>(known_sid));
 
-  PACL new_dacl = NULL;
+  PACL new_dacl = nullptr;
   error = ::SetEntriesInAcl(1, &new_access, old_dacl, &new_dacl);
   ScopedLocalFreeInvoker new_decl_deleter(new_dacl);
   if (error != ERROR_SUCCESS) {
@@ -413,8 +447,8 @@ bool WinSandbox::AddKnownSidToKernelObject(HANDLE object, const SID *known_sid,
   }
 
   error = ::SetSecurityInfo(
-      object, SE_KERNEL_OBJECT, DACL_SECURITY_INFORMATION, NULL, NULL,
-      new_dacl, NULL);
+      object, SE_KERNEL_OBJECT, DACL_SECURITY_INFORMATION, nullptr, nullptr,
+      new_dacl, nullptr);
   if (error != ERROR_SUCCESS) {
     DLOG(ERROR) << "SetSecurityInfo failed" << error;
     return false;
@@ -431,25 +465,25 @@ namespace {
 // http://src.chromium.org/viewvc/chrome/trunk/src/sandbox/src/security_level.h?view=markup
 class LockedDownJob {
  public:
-  LockedDownJob() : job_handle_(NULL) {}
+  LockedDownJob() : job_handle_(nullptr) {}
 
   ~LockedDownJob() {
-    if (job_handle_ != NULL) {
+    if (job_handle_ != nullptr) {
       ::CloseHandle(job_handle_);
-      job_handle_ = NULL;
+      job_handle_ = nullptr;
     };
   }
 
   bool IsValid() const {
-    return (job_handle_ != NULL);
+    return (job_handle_ != nullptr);
   }
 
   DWORD Init(const wchar_t *job_name, bool allow_ui_operation) {
-    if (job_handle_ != NULL) {
+    if (job_handle_ != nullptr) {
       return ERROR_ALREADY_INITIALIZED;
     }
-    job_handle_ = ::CreateJobObject(NULL, job_name);
-    if (job_handle_ == NULL) {
+    job_handle_ = ::CreateJobObject(nullptr, job_name);
+    if (job_handle_ == nullptr) {
       return ::GetLastError();
     }
     {
@@ -492,7 +526,7 @@ class LockedDownJob {
   }
 
   DWORD AssignProcessToJob(HANDLE process_handle) {
-    if (job_handle_ == NULL) {
+    if (job_handle_ == nullptr) {
       return ERROR_NO_DATA;
     }
     if (!::AssignProcessToJobObject(job_handle_, process_handle)) {
@@ -512,7 +546,7 @@ bool CreateSuspendedRestrictedProcess(scoped_array<wchar_t> *command_line,
                                       ScopedHandle *process_handle,
                                       ScopedHandle *thread_handle,
                                       DWORD *pid) {
-  HANDLE process_token_ret = NULL;
+  HANDLE process_token_ret = nullptr;
   if (!::OpenProcessToken(::GetCurrentProcess(), TOKEN_ALL_ACCESS,
                           &process_token_ret)) {
     return false;
@@ -536,9 +570,10 @@ bool CreateSuspendedRestrictedProcess(scoped_array<wchar_t> *command_line,
     return false;
   }
 
-  PSECURITY_ATTRIBUTES security_attributes_ptr = NULL;
+  PSECURITY_ATTRIBUTES security_attributes_ptr = nullptr;
   SECURITY_ATTRIBUTES security_attributes = {};
-  if (WinSandbox::MakeSecurityAttributes(&security_attributes)) {
+  if (WinSandbox::MakeSecurityAttributes(WinSandbox::kPrivateObject,
+                                         &security_attributes)) {
     security_attributes_ptr = &security_attributes;
     // Override the impersonation thread token's DACL to avoid http://b/1728895
     // On Windows Server, the objects created by a member of
@@ -570,19 +605,19 @@ bool CreateSuspendedRestrictedProcess(scoped_array<wchar_t> *command_line,
   }
 
   const wchar_t *startup_directory =
-      (info.in_system_dir ? Util::GetSystemDir() : NULL);
+      (info.in_system_dir ? SystemUtil::GetSystemDir() : nullptr);
 
   STARTUPINFO startup_info = {sizeof(STARTUPINFO)};
   PROCESS_INFORMATION process_info = {};
   // 3rd parameter of CreateProcessAsUser must be a writable buffer.
   if (!::CreateProcessAsUser(primary_token.get(),
-                             NULL,   // No application name.
+                             nullptr,   // No application name.
                              command_line->get(),  // must be writable.
                              security_attributes_ptr,
-                             NULL,
+                             nullptr,
                              FALSE,  // Do not inherit handles.
                              creation_flags,
-                             NULL,   // Use the environment of the caller.
+                             nullptr,   // Use the environment of the caller.
                              startup_directory,
                              &startup_info,
                              &process_info)) {
@@ -591,7 +626,7 @@ bool CreateSuspendedRestrictedProcess(scoped_array<wchar_t> *command_line,
     return false;
   }
 
-  if (security_attributes_ptr != NULL) {
+  if (security_attributes_ptr != nullptr) {
     ::LocalFree(security_attributes_ptr->lpSecurityDescriptor);
   }
 
@@ -605,17 +640,17 @@ bool CreateSuspendedRestrictedProcess(scoped_array<wchar_t> *command_line,
     ::CloseHandle(process_info.hThread);
     return false;
   }
-  if (thread_handle != NULL) {
+  if (thread_handle != nullptr) {
     thread_handle->reset(process_info.hThread);
   } else {
     ::CloseHandle(process_info.hThread);
   }
-  if (process_handle != NULL) {
+  if (process_handle != nullptr) {
     process_handle->reset(process_info.hProcess);
   } else {
     ::CloseHandle(process_info.hProcess);
   }
-  if (pid != NULL) {
+  if (pid != nullptr) {
     *pid = process_info.dwProcessId;
   }
 
@@ -628,7 +663,7 @@ bool SpawnSandboxedProcessImpl(scoped_array<wchar_t> *command_line,
   LockedDownJob job;
 
   if (info.use_locked_down_job) {
-    const DWORD error_code = job.Init(NULL, info.allow_ui_operation);
+    const DWORD error_code = job.Init(nullptr, info.allow_ui_operation);
     if (error_code != ERROR_SUCCESS) {
       return false;
     }
@@ -730,7 +765,7 @@ class ScopedTokenInfo {
  public:
   explicit ScopedTokenInfo(HANDLE token) : initialized_(false) {
     DWORD num_bytes = 0;
-    ::GetTokenInformation(token, TokenClass, NULL, 0, &num_bytes);
+    ::GetTokenInformation(token, TokenClass, nullptr, 0, &num_bytes);
     if (num_bytes == 0) {
       return;
     }
@@ -741,7 +776,7 @@ class ScopedTokenInfo {
                                num_bytes, &num_bytes)) {
       const DWORD last_error = ::GetLastError();
       DLOG(ERROR) << "GetTokenInformation failed. Last error: " << last_error;
-      buffer_.reset(NULL);
+      buffer_.reset(nullptr);
       return;
     }
     initialized_ = true;
@@ -761,7 +796,7 @@ class ScopedTokenInfo {
 class SidAndAttributes {
  public:
   SidAndAttributes()
-    : sid_(static_cast<SID *>(NULL)),
+    : sid_(static_cast<SID *>(nullptr)),
       attributes_(0) {}
   SidAndAttributes(Sid sid, DWORD attributes)
     : sid_(sid),
@@ -784,7 +819,7 @@ class SidAndAttributes {
 vector<SidAndAttributes> GetAllTokenGroups(HANDLE token_handle) {
   vector<SidAndAttributes> result;
   ScopedTokenInfo<TokenGroups, TOKEN_GROUPS> all_token_groups(token_handle);
-  if (all_token_groups.get() == NULL) {
+  if (all_token_groups.get() == nullptr) {
     return result;
   }
   for (size_t i = 0; i < all_token_groups->GroupCount; ++i) {
@@ -852,7 +887,7 @@ vector<LUID> FilterPrivilegesExceptFor(
     for (size_t j = 0; j < NumExceptions; ++j) {
       const LUID source = source_privileges[i].Luid;
       LUID except = {};
-      ::LookupPrivilegeValue(NULL, exception_privileges[j], &except);
+      ::LookupPrivilegeValue(nullptr, exception_privileges[j], &except);
       if ((source.HighPart == except.HighPart) &&
           (source.LowPart == except.LowPart)) {
         in_the_exception_list = true;
@@ -868,7 +903,7 @@ vector<LUID> FilterPrivilegesExceptFor(
 
 Optional<SidAndAttributes> GetUserSid(HANDLE token) {
   ScopedTokenInfo<TokenUser, TOKEN_USER> token_user(token);
-  if (token_user.get() == NULL) {
+  if (token_user.get() == nullptr) {
     return Optional<SidAndAttributes>::None();
   }
 
@@ -880,7 +915,7 @@ Optional<SidAndAttributes> GetUserSid(HANDLE token) {
 vector<LUID_AND_ATTRIBUTES> GetPrivileges(HANDLE token) {
   vector<LUID_AND_ATTRIBUTES> result;
   ScopedTokenInfo<TokenPrivileges, TOKEN_PRIVILEGES> token_privileges(token);
-  if (token_privileges.get() == NULL) {
+  if (token_privileges.get() == nullptr) {
     return result;
   }
 
@@ -907,9 +942,9 @@ bool CreateRestrictedTokenImpl(HANDLE effective_token,
     // Duplicate the token even if it's not modified at this point
     // because any subsequent changes to this token would also affect the
     // current process.
-    HANDLE new_token = NULL;
+    HANDLE new_token = nullptr;
     const BOOL result = ::DuplicateTokenEx(
-        effective_token, TOKEN_ALL_ACCESS, NULL,
+        effective_token, TOKEN_ALL_ACCESS, nullptr,
         SecurityIdentification, TokenPrimary, &new_token);
     if (result == FALSE) {
       return false;
@@ -958,7 +993,7 @@ bool CreateRestrictedTokenImpl(HANDLE effective_token,
     }
   }
 
-  HANDLE new_token = NULL;
+  HANDLE new_token = nullptr;
   const BOOL result = ::CreateRestrictedToken(effective_token,
       SANDBOX_INERT,  // This flag is used on Windows 7
       static_cast<DWORD>(sids_to_disable.size()),
@@ -976,23 +1011,23 @@ bool CreateRestrictedTokenImpl(HANDLE effective_token,
 }
 
 bool AddSidToDefaultDacl(HANDLE token, const Sid& sid, ACCESS_MASK access) {
-  if (token == NULL) {
+  if (token == nullptr) {
     return false;
   }
 
   ScopedTokenInfo<TokenDefaultDacl, TOKEN_DEFAULT_DACL> default_dacl(token);
-  if (default_dacl.get() == NULL) {
+  if (default_dacl.get() == nullptr) {
     return false;
   }
 
-  ACL* new_dacl = NULL;
+  ACL* new_dacl = nullptr;
   {
     EXPLICIT_ACCESS new_access = {};
     new_access.grfAccessMode = GRANT_ACCESS;
     new_access.grfAccessPermissions = access;
     new_access.grfInheritance = NO_INHERITANCE;
 
-    new_access.Trustee.pMultipleTrustee = NULL;
+    new_access.Trustee.pMultipleTrustee = nullptr;
     new_access.Trustee.MultipleTrusteeOperation = NO_MULTIPLE_TRUSTEE;
     new_access.Trustee.TrusteeForm = TRUSTEE_IS_SID;
     Sid temp_sid(sid);
@@ -1030,25 +1065,25 @@ const wchar_t *GetPredefinedSidString(
     case WinSandbox::INTEGRITY_LEVEL_UNTRUSTED:
       return L"S-1-16-0";
     case WinSandbox::INTEGRITY_LEVEL_LAST:
-      return NULL;
+      return nullptr;
   }
 
-  return NULL;
+  return nullptr;
 }
 
 bool SetTokenIntegrityLevel(HANDLE token,
                             WinSandbox::IntegrityLevel integrity_level) {
-  if (!Util::IsVistaOrLater()) {
+  if (!SystemUtil::IsVistaOrLater()) {
     return true;
   }
 
   const wchar_t* sid_string = GetPredefinedSidString(integrity_level);
-  if (sid_string == NULL) {
+  if (sid_string == nullptr) {
     // do not change the integrity level.
     return true;
   }
 
-  PSID integrity_sid = NULL;
+  PSID integrity_sid = nullptr;
   if (!::ConvertStringSidToSid(sid_string, &integrity_sid)) {
     return false;
   }
@@ -1196,7 +1231,7 @@ vector<Sid> WinSandbox::GetSidsToRestrict(HANDLE effective_token,
       // On Windows Vista, the following token (current logon sid) is required
       // to create objects in BNO.  Consider to use low integrity level
       // so that it cannot access object created by other processes.
-      if (Util::IsVistaOrLater()) {
+      if (SystemUtil::IsVistaOrLater()) {
         for (size_t i = 0; i < token_logon_session.size(); ++i) {
           sids_to_restrict.push_back(token_logon_session[i].sid());
         }
@@ -1234,7 +1269,7 @@ bool WinSandbox::GetRestrictedTokenHandle(
 
   {
     ScopedTokenInfo<TokenUser, TOKEN_USER> token_user(new_token.get());
-    if (token_user.get() == NULL) {
+    if (token_user.get() == nullptr) {
       return false;
     }
     Sid user_sid(static_cast<SID *>(token_user->User.Sid));
@@ -1247,7 +1282,7 @@ bool WinSandbox::GetRestrictedTokenHandle(
     return false;
   }
 
-  HANDLE token_handle = NULL;
+  HANDLE token_handle = nullptr;
   const BOOL result = ::DuplicateHandle(
       ::GetCurrentProcess(),
       new_token.get(),
@@ -1275,14 +1310,14 @@ bool WinSandbox::GetRestrictedTokenHandleForImpersonation(
     return false;
   }
 
-  HANDLE impersonation_token_ret = NULL;
+  HANDLE impersonation_token_ret = nullptr;
   if (!::DuplicateToken(new_token.get(), SecurityImpersonation,
                         &impersonation_token_ret)) {
     return false;
   }
   ScopedHandle impersonation_token(impersonation_token_ret);
 
-  HANDLE restricted_token_ret = NULL;
+  HANDLE restricted_token_ret = nullptr;
   if (!::DuplicateHandle(::GetCurrentProcess(), impersonation_token.get(),
                          ::GetCurrentProcess(), &restricted_token_ret,
                          TOKEN_ALL_ACCESS, FALSE, 0)) {
@@ -1292,4 +1327,4 @@ bool WinSandbox::GetRestrictedTokenHandleForImpersonation(
   return true;
 }
 }   // namespace mozc
-#endif  // OS_WINDOWS
+#endif  // OS_WIN

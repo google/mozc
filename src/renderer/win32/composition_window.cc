@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,17 +34,18 @@
 #define _WTL_NO_AUTOMATIC_NAMESPACE
 // Workaround against KB813540
 #include <atlbase_mozc.h>
-#include <atlwin.h>
 #include <atlapp.h>
 #include <atlcrack.h>
-#include <atlmisc.h>
 #include <atlgdi.h>
+#include <atlmisc.h>
+#include <atlwin.h>
 
 #include <string>
 #include <vector>
 
 #include "base/const.h"
 #include "base/coordinates.h"
+#include "base/logging.h"
 #include "base/util.h"
 #include "renderer/renderer_command.pb.h"
 #include "renderer/win32/win32_renderer_util.h"
@@ -113,7 +114,7 @@ class CompositionLineWindow
     CRect client_rect;
     this->GetClientRect(&client_rect);
 
-    if (dc != NULL) {
+    if (dc != nullptr) {
       CMemoryDC memdc(dc, client_rect);
       DoPaint(memdc.m_hDC);
     } else  {
@@ -164,7 +165,7 @@ class CompositionLineWindow
           const LOGBRUSH logbrush = {
             BS_SOLID,      // lbStyle
             RGB(0, 0, 0),  // lbColor;
-            NULL,          // lbHatch;
+            0,             // lbHatch;
           };
           // TODO(yukawa): Check the following issue on remote desktop.
           // http://msdn.microsoft.com/en-us/library/dd162705.aspx#1
@@ -203,7 +204,7 @@ class CompositionWindowListImpl : public CompositionWindowList {
       const size_t num_windows = layouts.size() - line_windows_.size();
       for (size_t i = 0; i < num_windows; ++i) {
         CompositionLineWindow *window = new CompositionLineWindow();
-        window->Create(NULL);
+        window->Create(nullptr);
         line_windows_.push_back(window);
       }
     }
@@ -228,7 +229,7 @@ class CompositionWindowListImpl : public CompositionWindowList {
     const int kInitialNumberOfWindows = 3;
     for (size_t i = 0; i < kInitialNumberOfWindows; ++i) {
       CompositionLineWindow *window = new CompositionLineWindow();
-      window->Create(NULL);
+      window->Create(nullptr);
       line_windows_.push_back(window);
     }
   }

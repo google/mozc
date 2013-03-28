@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,6 +34,8 @@ syntax = "proto2";
 
 package mozc.commands;
 
+option java_outer_classname = "ProtoCandidates";
+option java_package = "org.mozc.android.inputmethod.japanese.protobuf";
 
 // Annotation against a candidate.
 message Annotation {
@@ -46,6 +48,8 @@ message Annotation {
   optional string description = 3;
   // Shortcut key to select this candidate.
   optional string shortcut = 4;
+  // Set to true if this candidate can be deleted from history.
+  optional bool deletable = 5 [default = false];
 };
 
 // Additional information to a candidate word.  This message is

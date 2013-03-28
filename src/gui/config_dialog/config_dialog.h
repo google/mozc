@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -91,6 +91,7 @@ class ConfigDialog : public QDialog,
   virtual void LaunchSyncCustomizationDialog();
   virtual void UpdateSyncStatus();
   virtual void ClearSyncClicked();
+  virtual void EnableApplyButton();
 
  protected:
   bool eventFilter(QObject *obj, QEvent *event);

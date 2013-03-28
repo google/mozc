@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,40 +30,52 @@
 // Qt component of configure dialog for Mozc
 #include "gui/config_dialog/config_dialog.h"
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <QtGui/QWindowsStyle>
 #include <windows.h>
 #endif
 
-#include <algorithm>
-#include <sstream>
-#include <stdlib.h>
 #include <QtGui/QMessageBox>
+#include <algorithm>
+#include <cstdlib>
+#include <sstream>
 #include "base/config_file_stream.h"
 #include "base/const.h"
-#ifdef OS_MACOSX
+#include "base/logging.h"
 #include "base/mac_util.h"
-#endif  // OS_MACOSX
-#include "base/util.h"
 #include "base/run_level.h"
-#include "config/config_handler.h"
+#include "base/system_util.h"
+#include "base/util.h"
+#include "client/client.h"
 #include "config/config.pb.h"
+#include "config/config_handler.h"
 #include "config/stats_config_util.h"
+#include "gui/base/win_util.h"
 #ifdef ENABLE_CLOUD_SYNC
 #include "gui/config_dialog/auth_dialog.h"
 #endif  // ENABLE_CLOUD_SYNC
 #include "gui/config_dialog/keymap_editor.h"
 #include "gui/config_dialog/roman_table_editor.h"
-#include "gui/base/win_util.h"
 #include "ipc/ipc.h"
 #include "session/commands.pb.h"
 #include "session/internal/keymap.h"
-#include "client/client.h"
+
+namespace {
+template<typename T>
+void Connect(const QList<T *> &objects,
+             const char *signal,
+             const QObject *receiver,
+             const char *slot) {
+  for (typename QList<T *>::const_iterator itr = objects.begin();
+       itr != objects.end(); ++itr) {
+    QObject::connect(*itr, signal, receiver, slot);
+  }
+}
+}  // namespace
 
 namespace mozc {
 
 namespace gui {
-
 using mozc::config::StatsConfigUtil;
 
 ConfigDialog::ConfigDialog()
@@ -74,13 +86,14 @@ ConfigDialog::ConfigDialog()
   setWindowFlags(Qt::WindowSystemMenuHint);
   setWindowModality(Qt::NonModal);
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   miscStartupWidget->setVisible(false);
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 #ifdef OS_MACOSX
   miscDefaultIMEWidget->setVisible(false);
   miscAdministrationWidget->setVisible(false);
+  setWindowTitle(tr("Mozc Preferences"));
 #endif  // OS_MACOSX
 
 #if defined(OS_LINUX)
@@ -159,12 +172,12 @@ ConfigDialog::ConfigDialog()
 
   inputModeComboBox->addItem(tr("Romaji"));
   inputModeComboBox->addItem(tr("Kana"));
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   // These options changing the preedit method by a hot key are only
   // supported by Windows.
   inputModeComboBox->addItem(tr("Romaji (switchable)"));
   inputModeComboBox->addItem(tr("Kana (switchable)"));
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
   spaceCharacterFormComboBox->addItem(tr("Follow input mode"));
   spaceCharacterFormComboBox->addItem(tr("Fullwidth"));
@@ -279,6 +292,18 @@ ConfigDialog::ConfigDialog()
                    SLOT(ClearSyncClicked()));
 #endif  // ENABLE_CLOUD_SYNC
 
+  // Event handlers to enable 'Apply' button.
+  Connect(findChildren<QPushButton *>(), SIGNAL(clicked()), this,
+          SLOT(EnableApplyButton()));
+  Connect(findChildren<QCheckBox *>(), SIGNAL(clicked()), this,
+          SLOT(EnableApplyButton()));
+  Connect(findChildren<QComboBox *>(), SIGNAL(activated(int)), this,
+          SLOT(EnableApplyButton()));
+  Connect(findChildren<QSpinBox *>(), SIGNAL(editingFinished()), this,
+          SLOT(EnableApplyButton()));
+  // 'Apply' button is disabled on launching.
+  configDialogButtonBox->button(QDialogButtonBox::Apply)->setEnabled(false);
+
   // When clicking these messages, CheckBoxs corresponding
   // to them should be toggled.
   // We cannot use connect/slot as QLabel doesn't define
@@ -286,17 +311,17 @@ ConfigDialog::ConfigDialog()
   usageStatsMessage->installEventFilter(this);
   incognitoModeMessage->installEventFilter(this);
 
-#ifndef OS_WINDOWS
+#ifndef OS_WIN
   checkDefaultCheckBox->setVisible(false);
   checkDefaultLine->setVisible(false);
   checkDefaultLabel->setVisible(false);
-#endif   // !OS_WINDOWS
+#endif   // !OS_WIN
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   launchAdministrationDialogButton->setEnabled(true);
   // if the current application is not elevated by UAC,
   // add a shield icon
-  if (mozc::Util::IsVistaOrLater()) {
+  if (mozc::SystemUtil::IsVistaOrLater()) {
     if (!mozc::RunLevel::IsElevatedByUAC()) {
       QWindowsStyle style;
       QIcon vista_icon(style.standardIcon(QStyle::SP_VistaShield));
@@ -320,7 +345,7 @@ ConfigDialog::ConfigDialog()
   administrationLine->setVisible(false);
   administrationLabel->setVisible(false);
   dictionaryPreloadingAndUACLabel->setVisible(false);
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 #ifdef OS_LINUX
   // On Linux, disable all fields for UsageStats
@@ -332,7 +357,7 @@ ConfigDialog::ConfigDialog()
   usageStatsMessage->setVisible(false);
   usageStatsCheckBox->setEnabled(false);
   usageStatsCheckBox->setVisible(false);
-#endif // OS_LINUX
+#endif  // OS_LINUX
 
   webUsageDictionaryCheckBox->setVisible(false);
   editWebServiceEntryButton->setVisible(false);
@@ -361,7 +386,7 @@ ConfigDialog::ConfigDialog()
   editWebServiceEntryButton->setEnabled(
       webUsageDictionaryCheckBox->isChecked());
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   IMEHotKeyDisabledCheckBox->setChecked(WinUtil::GetIMEHotKeyDisabled());
 #else
   IMEHotKeyDisabledCheckBox->setVisible(false);
@@ -409,9 +434,8 @@ bool ConfigDialog::GetConfig(config::Config *config) {
 void ConfigDialog::Reload() {
   config::Config config;
   if (!GetConfig(&config)) {
-    QMessageBox::critical(this,
-                          tr("Mozc settings"),
-                          tr("Failed to get current config values"));
+    QMessageBox::critical(this, windowTitle(),
+                          tr("Failed to get current config values."));
   }
   ConvertFromProto(config);
 
@@ -428,9 +452,7 @@ bool ConfigDialog::Update() {
 
   if (config.session_keymap() == config::Config::CUSTOM &&
       config.custom_keymap_table().empty()) {
-    QMessageBox::warning(
-        this,
-        tr("Mozc settings"),
+    QMessageBox::warning(this, windowTitle(),
         tr("The current custom keymap table is empty. "
            "When custom keymap is selected, "
            "you must customize it."));
@@ -438,25 +460,23 @@ bool ConfigDialog::Update() {
   }
 
 
-#if defined(OS_WINDOWS) || defined(OS_LINUX)
+#if defined(OS_WIN) || defined(OS_LINUX)
   if (initial_preedit_method_ !=
       static_cast<int>(config.preedit_method()) ||
       initial_use_keyboard_to_change_preedit_method_ !=
       static_cast<int>(config.use_keyboard_to_change_preedit_method())) {
-    QMessageBox::information(this,
-                             tr("Mozc settings"),
+    QMessageBox::information(this, windowTitle(),
                              tr("Romaji/Kana setting is enabled from"
                                 " new applications."));
   }
 #endif
 
   if (!SetConfig(config)) {
-    QMessageBox::critical(this,
-                          tr("Mozc settings"),
+    QMessageBox::critical(this, windowTitle(),
                           tr("Failed to update config"));
   }
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   if (!WinUtil::SetIMEHotKeyDisabled(IMEHotKeyDisabledCheckBox->isChecked())) {
     // Do not show any dialog here, since this operation will not fail
     // in almost all cases.
@@ -483,19 +503,19 @@ bool ConfigDialog::Update() {
 void ConfigDialog::SetSendStatsCheckBox() {
   // On windows, usage_stats flag is managed by
   // administration_dialog. http://b/2889759
-#ifndef OS_WINDOWS
+#ifndef OS_WIN
   const bool val = StatsConfigUtil::IsEnabled();
   usageStatsCheckBox->setChecked(val);
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 }
 
 void ConfigDialog::GetSendStatsCheckBox() const {
   // On windows, usage_stats flag is managed by
   // administration_dialog. http://b/2889759
-#ifndef OS_WINDOWS
+#ifndef OS_WIN
   const bool val = usageStatsCheckBox->isChecked();
   StatsConfigUtil::SetEnabled(val);
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 }
 
 #define SET_COMBOBOX(combobox, enumname, field) \
@@ -522,11 +542,11 @@ static const int kPreeditMethodSize = 2;
 void SetComboboxForPreeditMethod(const config::Config &config,
                                  QComboBox *combobox) {
   int index = static_cast<int>(config.preedit_method());
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   if (config.use_keyboard_to_change_preedit_method()) {
     index += kPreeditMethodSize;
   }
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
   combobox->setCurrentIndex(index);
 }
 
@@ -571,14 +591,15 @@ void ConfigDialog::ConvertFromProto(const config::Config &config) {
   // tab2
   SET_COMBOBOX(historyLearningLevelComboBox, HistoryLearningLevel,
                history_learning_level);
-  SET_CHECKBOX(singleKanjiDictionaryCheckBox, use_single_kanji_conversion);
-  SET_CHECKBOX(symbolDictionaryCheckBox, use_symbol_conversion);
-  SET_CHECKBOX(emoticonDictionaryCheckBox, use_emoticon_conversion);
+  SET_CHECKBOX(singleKanjiConversionCheckBox, use_single_kanji_conversion);
+  SET_CHECKBOX(symbolConversionCheckBox, use_symbol_conversion);
+  SET_CHECKBOX(emoticonConversionCheckBox, use_emoticon_conversion);
   SET_CHECKBOX(dateConversionCheckBox, use_date_conversion);
+  SET_CHECKBOX(emojiConversionCheckBox, use_emoji_conversion);
   SET_CHECKBOX(numberConversionCheckBox, use_number_conversion);
   SET_CHECKBOX(calculatorCheckBox, use_calculator);
-  SET_CHECKBOX(t13nDictionaryCheckBox, use_t13n_conversion);
-  SET_CHECKBOX(zipcodeDictionaryCheckBox, use_zip_code_conversion);
+  SET_CHECKBOX(t13nConversionCheckBox, use_t13n_conversion);
+  SET_CHECKBOX(zipcodeConversionCheckBox, use_zip_code_conversion);
   SET_CHECKBOX(spellingCorrectionCheckBox, use_spelling_correction);
 
   // InfoListConfig
@@ -644,7 +665,6 @@ void ConfigDialog::ConvertFromProto(const config::Config &config) {
   startupCheckBox->setChecked(
       MacUtil::CheckPrelauncherLoginItemStatus());
 #endif  // OS_MACOSX
-
 }
 
 void ConfigDialog::ConvertToProto(config::Config *config) const {
@@ -671,14 +691,15 @@ void ConfigDialog::ConvertToProto(config::Config *config) const {
   // tab2
   GET_COMBOBOX(historyLearningLevelComboBox, HistoryLearningLevel,
                history_learning_level);
-  GET_CHECKBOX(singleKanjiDictionaryCheckBox, use_single_kanji_conversion);
-  GET_CHECKBOX(symbolDictionaryCheckBox, use_symbol_conversion);
-  GET_CHECKBOX(emoticonDictionaryCheckBox, use_emoticon_conversion);
+  GET_CHECKBOX(singleKanjiConversionCheckBox, use_single_kanji_conversion);
+  GET_CHECKBOX(symbolConversionCheckBox, use_symbol_conversion);
+  GET_CHECKBOX(emoticonConversionCheckBox, use_emoticon_conversion);
   GET_CHECKBOX(dateConversionCheckBox, use_date_conversion);
+  GET_CHECKBOX(emojiConversionCheckBox, use_emoji_conversion);
   GET_CHECKBOX(numberConversionCheckBox, use_number_conversion);
   GET_CHECKBOX(calculatorCheckBox, use_calculator);
-  GET_CHECKBOX(t13nDictionaryCheckBox, use_t13n_conversion);
-  GET_CHECKBOX(zipcodeDictionaryCheckBox, use_zip_code_conversion);
+  GET_CHECKBOX(t13nConversionCheckBox, use_t13n_conversion);
+  GET_CHECKBOX(zipcodeConversionCheckBox, use_zip_code_conversion);
   GET_CHECKBOX(spellingCorrectionCheckBox, use_spelling_correction);
 
   // InformationListConfig
@@ -771,7 +792,7 @@ void ConfigDialog::ClearUserHistory() {
   if (QMessageBox::Ok !=
       QMessageBox::question(
           this,
-          tr("Mozc settings"),
+          windowTitle(),
           tr("Do you want to clear personalization data? "
              "Input history is not reset with this operation. "
              "Please open \"suggestion\" tab to remove input history data."),
@@ -785,7 +806,7 @@ void ConfigDialog::ClearUserHistory() {
   if (!client_->ClearUserHistory()) {
     QMessageBox::critical(
         this,
-        tr("Mozc settings"),
+        windowTitle(),
         tr("Mozc Converter is not running. "
            "Settings were not saved."));
   }
@@ -795,7 +816,7 @@ void ConfigDialog::ClearUserPrediction() {
   if (QMessageBox::Ok !=
       QMessageBox::question(
           this,
-          tr("Mozc settings"),
+          windowTitle(),
           tr("Do you want to clear all history data?"),
           QMessageBox::Ok | QMessageBox::Cancel,
           QMessageBox::Cancel)) {
@@ -807,7 +828,7 @@ void ConfigDialog::ClearUserPrediction() {
   if (!client_->ClearUserPrediction()) {
     QMessageBox::critical(
         this,
-        tr("Mozc settings"),
+        windowTitle(),
         tr("Mozc Converter is not running. "
            "Settings were not saved."));
   }
@@ -817,7 +838,7 @@ void ConfigDialog::ClearUnusedUserPrediction() {
   if (QMessageBox::Ok !=
       QMessageBox::question(
           this,
-          tr("Mozc settings"),
+          windowTitle(),
           tr("Do you want to clear unused history data?"),
           QMessageBox::Ok | QMessageBox::Cancel,
           QMessageBox::Cancel)) {
@@ -829,7 +850,7 @@ void ConfigDialog::ClearUnusedUserPrediction() {
   if (!client_->ClearUnusedUserPrediction()) {
     QMessageBox::critical(
         this,
-        tr("Mozc settings"),
+        windowTitle(),
         tr("Mozc Converter is not running. "
            "Operation was not executed."));
   }
@@ -905,7 +926,7 @@ void ConfigDialog::SelectWebUsageDictionarySetting(bool checked) {
   if (checked) {
     if (QMessageBox::question(
             this,
-            tr("Mozc settings"),
+            windowTitle(),
             tr("Web Service extension enables Mozc "
                "to display third party usage dictionaries provided as an "
                "Web service API, e.g. REST (POX/JSON over HTTP). "
@@ -928,9 +949,9 @@ void ConfigDialog::ResetToDefaults() {
   if (QMessageBox::Ok ==
       QMessageBox::question(
           this,
-          tr("Mozc settings"),
-          tr("When you reset Mozc settings, any changes you've made "
-             "will be reverted to the default settings. "
+          windowTitle(),
+          tr("When you reset Mozc settings, any changes "
+             "you've made will be reverted to the default settings. "
              "Do you want to reset settings? "
              "The following items are not reset with this operation.\n"
              " - Personalization data\n"
@@ -954,9 +975,9 @@ void ConfigDialog::ResetToDefaults() {
 }
 
 void ConfigDialog::LaunchAdministrationDialog() {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   client_->LaunchTool("administration_dialog", "");
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 }
 
 void ConfigDialog::SyncToggleButtonClicked() {
@@ -981,6 +1002,10 @@ void ConfigDialog::ClearSyncClicked() {
 #ifdef ENABLE_CLOUD_SYNC
   ClearSyncClickedImpl();
 #endif  // ENABLE_CLOUD_SYNC
+}
+
+void ConfigDialog::EnableApplyButton() {
+  configDialogButtonBox->button(QDialogButtonBox::Apply)->setEnabled(true);
 }
 
 #ifdef ENABLE_CLOUD_SYNC

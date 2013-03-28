@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,16 +36,6 @@
 #include "base/util.h"
 
 namespace mozc {
-// Password manager on Mac uses KeyChain and shows a keychain dialog.
-// It blocks automatic testing.  Although developpers of unittests can
-// change the password manager in their unittests, that way is very
-// risky to keep all unittests from blocking automation.  So we use
-// kUseMockPasswordManager to globally use a password manager mock.
-// This flag is used at testing/base/internal/gtest_main.cc and
-// base/password_manager.cc. This is intentionally a global variable
-// to privent users from changing freely in runtime.
-bool kUseMockPasswordManager = false;
-
 namespace {
 class RegisterModuleHandler {
  public:

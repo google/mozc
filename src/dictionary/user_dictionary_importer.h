@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -213,16 +213,6 @@ class UserDictionaryImporter {
   // Import from MS-IME's user dictionary directly.
   // Only available on Windows
   static ErrorType ImportFromMSIME(user_dictionary::UserDictionary *dic);
-
-  // Not implemented
-  static ErrorType ImportFromKotoeri(user_dictionary::UserDictionary *dic) {
-    return IMPORT_NOT_SUPPORTED;
-  }
-
-  // Not implemented
-  static ErrorType ImportFromATOK(user_dictionary::UserDictionary *dic) {
-    return IMPORT_NOT_SUPPORTED;
-  }
 
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(UserDictionaryImporter);

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,7 @@
 #include <string>
 #include <vector>
 
+#include "base/base.h"
 #include "base/port.h"
 #include "base/protobuf/message.h"
 #include "base/protobuf/protobuf.h"

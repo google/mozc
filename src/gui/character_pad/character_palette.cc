@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,10 +32,11 @@
 #include <QtGui/QtGui>
 #include <QtGui/QMessageBox>
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <Windows.h>
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
+#include "base/logging.h"
 #include "base/util.h"
 #include "client/client.h"
 #include "config/stats_config_util.h"
@@ -467,7 +468,7 @@ void CharacterPalette::showLocalTable(const LocalCharacterMap *local_map,
   tableWidget->show();
 }
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 bool CharacterPalette::winEvent(MSG *message, long *result) {
   if (message != NULL &&
       message->message == WM_LBUTTONDOWN &&
@@ -484,6 +485,6 @@ bool CharacterPalette::winEvent(MSG *message, long *result) {
 
   return QWidget::winEvent(message, result);
 }
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 }  // namespace gui
 }  // namespace mozc

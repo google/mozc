@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -48,22 +48,22 @@ class MergerRewriter : public RewriterInterface {
   }
 
   // return true if rewriter can be called with the segments.
-  bool CheckCapablity(Segments *segments,
+  bool CheckCapablity(const ConversionRequest &request, Segments *segments,
                       RewriterInterface *rewriter) const {
     if (segments == NULL) {
       return false;
     }
     switch (segments->request_type()) {
       case Segments::CONVERSION:
-        return (rewriter->capability() & RewriterInterface::CONVERSION);
+        return (rewriter->capability(request) & RewriterInterface::CONVERSION);
 
       case Segments::PREDICTION:
       case Segments::PARTIAL_PREDICTION:
-        return (rewriter->capability() & RewriterInterface::PREDICTION);
+        return (rewriter->capability(request) & RewriterInterface::PREDICTION);
 
       case Segments::SUGGESTION:
       case Segments::PARTIAL_SUGGESTION:
-        return (rewriter->capability() & RewriterInterface::SUGGESTION);
+        return (rewriter->capability(request) & RewriterInterface::SUGGESTION);
 
       case Segments::REVERSE_CONVERSION:
       default:
@@ -80,7 +80,7 @@ class MergerRewriter : public RewriterInterface {
                        Segments *segments) const {
     bool result = false;
     for (size_t i = 0; i < rewriters_.size(); ++i) {
-      if (CheckCapablity(segments, rewriters_[i])) {
+      if (CheckCapablity(request, segments, rewriters_[i])) {
         result |= rewriters_[i]->Rewrite(request, segments);
       }
     }

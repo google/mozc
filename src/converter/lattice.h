@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -51,6 +51,12 @@ class Lattice {
 
   // return key.
   const string& key() const;
+
+  // Set history end position.
+  // For cache, we have to reset lattice when the history size is changed.
+  void set_history_end_pos(size_t pos);
+
+  size_t history_end_pos() const;
 
   // allocate new node.
   Node *NewNode();
@@ -114,7 +120,9 @@ class Lattice {
   static void ResetDebugDisplayNode();
 
  private:
+  // TODO(team): Splitting the cache module may make this module simpler.
   string key_;
+  size_t history_end_pos_;
   vector<Node *> begin_nodes_;
   vector<Node *> end_nodes_;
   scoped_ptr<NodeAllocator> node_allocator_;

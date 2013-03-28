@@ -1,0 +1,14 @@
+# This file contains a scenario for testing transliteration candidate.
+# See also http://b/issue?id=7132535.
+
+# Enable IME
+SEND_KEY	ON
+RESET_CONTEXT
+
+# Set to Qwerty kana mode.
+SET_MOBILE_REQUEST
+UPDATE_MOBILE_KEYBOARD	QWERTY_MOBILE_TO_HALFWIDTHASCII	COMMIT
+SWITCH_INPUT_MODE	HALF_ASCII
+
+SEND_KEYS	abc
+SEND_KEY	ENTER

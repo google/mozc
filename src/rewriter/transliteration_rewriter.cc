@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -42,15 +42,14 @@
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
 #include "session/commands.pb.h"
-#include "session/request_handler.h"
 // For T13N normalize
 #include "transliteration/transliteration.h"
 
 namespace mozc {
 namespace {
 
-bool IsValidRequest(const ConversionRequest &request,
-                    const Segments *segments) {
+bool IsComposerApplicable(const ConversionRequest &request,
+                          const Segments *segments) {
   if (!request.has_composer()) {
     return false;
   }
@@ -92,34 +91,64 @@ void NormalizeT13Ns(vector<string> *t13ns) {
   }
 }
 
-void EraseNon12KeyT13Ns(const string &key, vector<string> *t13ns) {
-  using transliteration::TransliterationType;
-  static const TransliterationType kAsciiTransliterationTypeList[] = {
-    transliteration::HALF_ASCII,
-    transliteration::HALF_ASCII_UPPER,
-    transliteration::HALF_ASCII_LOWER,
-    transliteration::HALF_ASCII_CAPITALIZED,
-    transliteration::FULL_ASCII,
-    transliteration::FULL_ASCII_UPPER,
-    transliteration::FULL_ASCII_LOWER,
-    transliteration::FULL_ASCII_CAPITALIZED,
+void ModifyT13NsForGodan(const string &key, vector<string> *t13ns) {
+  static const char * const kKeycodeToT13nMap[] = {
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, "", "ya", "axtu", "ixtu", "uxtu", "", 0, 0, 0, "xi", 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "ann", "extu", "inn", 0,
+    "oxtu", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "nn", 0, "yu", "xe",
+    "", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "unn", "yo", "enn", "onn", 0,
   };
 
-  for (size_t i = 0; i < arraysize(kAsciiTransliterationTypeList); ++i) {
-    TransliterationType type = kAsciiTransliterationTypeList[i];
-    if (!NumberUtil::IsArabicNumber((*t13ns)[type])) {
-      // The translitarated string contains a non-number character.
-      // So erase it.
-      // Hack: because of the t13n implementation on upper layer, we cannot
-      //   "erase" the element because the number of t13n entries is fixed.
-      //   Also, just clearing it (i.e. make it an empty string) cannot work.
-      //   Thus, as a work around, we set original key, so that it'll be
-      //   reduced in the later phase by de-dupping.
-      (*t13ns)[type] = key;
+  const string &src = (*t13ns)[transliteration::HALF_ASCII];
+  string dst;
+  for (string::const_iterator c = src.begin(); c != src.end(); ++c) {
+    // Won't check "0 <= *c" here as string::value_type must be configured
+    // to be unsigned in Mozc.
+    // TODO(yukawa): use std::is_unsigned in <type_traits> instead
+    //     when C++11 becomes available.
+    COMPILE_ASSERT(string::value_type(-1) > 0,
+                   string_value_type_should_be_unsigned);
+    if (*c < arraysize(kKeycodeToT13nMap) && kKeycodeToT13nMap[*c] != NULL) {
+      dst.append(kKeycodeToT13nMap[*c]);
+    } else {
+      dst.append(1, *c);
     }
   }
-}
 
+  // Hack: Because of the t13n implementation on upper layer, we cannot
+  //   "erase" an element because the number of t13n entries is fixed.
+  //   Also, just clearing it (i.e. make it an empty string) doesn't work.
+  //   Thus, as a work around, we set the original key, so that it'll be
+  //   removed in the later phase of de-dupping.
+  const string &half_ascii = dst.empty() ? key : dst;
+  string full_ascii;
+  Util::HalfWidthAsciiToFullWidthAscii(half_ascii, &full_ascii);
+  string half_ascii_upper = half_ascii;
+  string half_ascii_lower = half_ascii;
+  string half_ascii_capitalized = half_ascii;
+  Util::UpperString(&half_ascii_upper);
+  Util::LowerString(&half_ascii_lower);
+  Util::CapitalizeString(&half_ascii_capitalized);
+  string full_ascii_upper = full_ascii;
+  string full_ascii_lower = full_ascii;
+  string full_ascii_capitalized = full_ascii;
+  Util::UpperString(&full_ascii_upper);
+  Util::LowerString(&full_ascii_lower);
+  Util::CapitalizeString(&full_ascii_capitalized);
+
+  (*t13ns)[transliteration::HALF_ASCII] = half_ascii;
+  (*t13ns)[transliteration::HALF_ASCII_UPPER] = half_ascii_upper;
+  (*t13ns)[transliteration::HALF_ASCII_LOWER] = half_ascii_lower;
+  (*t13ns)[transliteration::HALF_ASCII_CAPITALIZED] = half_ascii_capitalized;
+  (*t13ns)[transliteration::FULL_ASCII] = full_ascii;
+  (*t13ns)[transliteration::FULL_ASCII_UPPER] = full_ascii_upper;
+  (*t13ns)[transliteration::FULL_ASCII_LOWER] = full_ascii_lower;
+  (*t13ns)[transliteration::FULL_ASCII_CAPITALIZED] = full_ascii_capitalized;
+}
 
 bool IsTransliterated(const vector<string> &t13ns) {
   if (t13ns.empty() || t13ns[0].empty()) {
@@ -167,17 +196,12 @@ void GetIds(const Segment &segment, T13NIds *ids) {
   }
 }
 
-void ModifyT13Ns(const Segment &segment, vector<string> *t13ns) {
-  // Especially for mobile-flick input, the input key is sometimes
-  // non-transliteration. For example, the i-flick is '_', which is not
-  // the transliteration at all. So, for those input mode, we just accept
-  // only 12-keys number layouts.
+void ModifyT13Ns(const ConversionRequest &request,
+                 const Segment &segment, vector<string> *t13ns) {
   commands::Request::SpecialRomanjiTable special_romanji_table =
-      GET_REQUEST(special_romanji_table);
-  if (special_romanji_table == commands::Request::TWELVE_KEYS_TO_HIRAGANA ||
-      special_romanji_table == commands::Request::FLICK_TO_HIRAGANA ||
-      special_romanji_table == commands::Request::TOGGLE_FLICK_TO_HIRAGANA) {
-    EraseNon12KeyT13Ns(segment.key(), t13ns);
+      request.request().special_romanji_table();
+  if (special_romanji_table == commands::Request::GODAN_TO_HIRAGANA) {
+    ModifyT13NsForGodan(segment.key(), t13ns);
   }
 
   NormalizeT13Ns(t13ns);
@@ -198,7 +222,7 @@ bool TransliterationRewriter::FillT13NsFromComposer(
     request.composer().GetTransliterations(&t13ns);
     Segment *segment = segments->mutable_conversion_segment(0);
     CHECK(segment);
-    ModifyT13Ns(*segment, &t13ns);
+    ModifyT13Ns(request, *segment, &t13ns);
     string key;
     request.composer().GetQueryForConversion(&key);
     return SetTransliterations(t13ns, key, segment);
@@ -220,7 +244,7 @@ bool TransliterationRewriter::FillT13NsFromComposer(
                                               &t13ns);
     composition_pos += composition_len;
 
-    ModifyT13Ns(*segment, &t13ns);
+    ModifyT13Ns(request, *segment, &t13ns);
     modified |= SetTransliterations(t13ns, key, segment);
   }
   return modified;
@@ -283,21 +307,83 @@ TransliterationRewriter::TransliterationRewriter(const POSMatcher &pos_matcher)
 
 TransliterationRewriter::~TransliterationRewriter() {}
 
-int TransliterationRewriter::capability() const {
-  if (GET_REQUEST(mixed_conversion)) {
+int TransliterationRewriter::capability(
+    const ConversionRequest &request) const {
+  if (request.request().mixed_conversion()) {
     return RewriterInterface::ALL;
   }
   return RewriterInterface::CONVERSION;
 }
 
-bool TransliterationRewriter::Rewrite(
-    const ConversionRequest &request, Segments *segments) const {
-  if (!IsValidRequest(request, segments)) {
-    return FillT13NsFromKey(segments);
+bool TransliterationRewriter::AddRawNumberT13NCandidates(
+    const ConversionRequest &request,
+    Segments *segments) const {
+  if (segments->conversion_segments_size() != 1) {
+    // This method rewrites a segment only when the segments has only
+    // one conversion segment.
+    // This is spec matter.
+    // Rewriting multiple segments will not make users happier.
+    return false;
   }
-  return FillT13NsFromComposer(request, segments);
+  // This process is done on composer's data.
+  // If the request doesn't have a composer, this method can do nothing.
+  if (!request.has_composer()) {
+    return false;
+  }
+  const composer::Composer &composer = request.composer();
+  Segment *segment = segments->mutable_conversion_segment(0);
+  // Get the half_ascii T13N text (nearly equal Raw input).
+  string raw;
+  composer.GetRawText(0, Util::CharsLen(segment->key()), &raw);
+  if (raw.empty()) {
+    return false;
+  }
+  if (!NumberUtil::IsArabicNumber(raw)) {
+    return false;
+  }
+  // half_ascii is arabic number. So let's append additional candidates.
+  T13NIds ids;
+  GetIds(*segment, &ids);
+
+  // Append half_ascii as normal candidate.
+  // If half_ascii is equal to meta candidate's HALF_ASCII candidate, skip.
+  if (segment->meta_candidates_size() < transliteration::HALF_ASCII ||
+      segment->meta_candidate(transliteration::HALF_ASCII).value != raw) {
+    Segment::Candidate *half_candidate = segment->add_candidate();
+    InitT13NCandidate(raw, raw,
+                      ids.ascii_lid, ids.ascii_rid,
+                      half_candidate);
+    // Keep the character form.
+    // Without this attribute the form will be changed by VariantsRewriter.
+    half_candidate->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
+  }
+
+  // Do the same thing on full form.
+  string full_raw;
+  Util::HalfWidthAsciiToFullWidthAscii(raw, &full_raw);
+  DCHECK(!full_raw.empty());
+  if (segment->meta_candidates_size() < transliteration::FULL_ASCII ||
+      segment->meta_candidate(transliteration::FULL_ASCII).value != full_raw) {
+    Segment::Candidate *full_candidate = segment->add_candidate();
+    InitT13NCandidate(raw, full_raw,
+                      ids.ascii_lid, ids.ascii_rid,
+                      full_candidate);
+    full_candidate->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
+  }
+  return true;
 }
 
+bool TransliterationRewriter::Rewrite(
+    const ConversionRequest &request, Segments *segments) const {
+  if (request.skip_slow_rewriters()) {
+    return false;
+  }
+  bool modified = IsComposerApplicable(request, segments)
+                  ? FillT13NsFromComposer(request, segments)
+                  : FillT13NsFromKey(segments);
+  modified |= AddRawNumberT13NCandidates(request, segments);
+  return modified;
+}
 
 void TransliterationRewriter::InitT13NCandidate(
     const string &key,

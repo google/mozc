@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,12 +33,13 @@
 #define MOZC_SESSION_INTERNAL_KEYMAP_INTERFACE_H_
 
 #include <map>
+
 #include "base/base.h"
 
 namespace mozc {
 namespace commands {
 class KeyEvent;
-}
+}  // namespace commands
 
 namespace keymap {
 
@@ -190,6 +191,7 @@ enum Commands {
   INPUT_MODE_HALF_KATAKANA,
   INPUT_MODE_FULL_ALPHANUMERIC,
   INPUT_MODE_HALF_ALPHANUMERIC,
+  DELETE_SELECTED_CANDIDATE,
   REPORT_BUG,
   ABORT,  // Abort the server.  The process is killed.
 };
@@ -208,4 +210,5 @@ class KeyMapInterface {
 
 }  // namespace keymap
 }  // namespace mozc
+
 #endif  // MOZC_SESSION_INTERNAL_KEYMAP_INTERFACE_H_

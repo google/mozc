@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -221,3 +221,7 @@
 /* define if the compiler has hash_set */
 #define HAVE_HASH_SET 1
 #endif  /* _WINDOWS */
+
+#ifdef MOZC_USE_PACKED_DICTIONARY
+#define HAVE_ZLIB 1
+#endif  // MOZC_USE_PACKED_DICTIONARY

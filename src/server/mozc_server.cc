@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,20 +29,20 @@
 
 #include "server/mozc_server.h"
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <windows.h>
 #endif
 
-#include "base/base.h"
-#include "base/crash_report_util.h"
-#include "base/process.h"
+#include <cstddef>
+#include <string>
+
+#include "base/init.h"
+#include "base/crash_report_handler.h"
+#include "base/logging.h"
 #include "base/process_mutex.h"
 #include "base/run_level.h"
-#include "base/singleton.h"
-#include "base/util.h"
+#include "base/system_util.h"
 #include "config/stats_config_util.h"
-#include "ipc/ipc.h"
-#include "session/session_factory_manager.h"
 #include "session/session_server.h"
 
 DECLARE_bool(restricted);   // in SessionHandler
@@ -57,7 +57,7 @@ namespace {
 // Calling back a function when the mozc server is shutting down resulted in a
 // lot of crashes as filed in b/2696087.
 // TODO(yukawa): re-enable shutdown handler for Windows.
-#if !defined(OS_WINDOWS)
+#if !defined(OS_WIN)
 // When OS is about to shutdown/logoff,
 // ShutdownSessionCallback is kicked.
 void ShutdownSessionCallback() {
@@ -69,7 +69,7 @@ void ShutdownSessionCallback() {
 
 REGISTER_MODULE_SHUTDOWN_HANDLER(shutdown_session,
                                  ShutdownSessionCallback());
-#endif  // !OS_WINDOWS
+#endif  // !OS_WIN
 }  // namespace
 
 namespace server {
@@ -78,13 +78,13 @@ void InitGoogleAndMozcServer(const char *arg0,
                              int *argc,
                              char ***argv,
                              bool remove_flags) {
-  mozc::Util::DisableIME();
+  mozc::SystemUtil::DisableIME();
 
   // Big endian is not supported. The storage for user history is endian
   // dependent. If we want to sync the data via network sync feature, we
   // will see some problems.
-  CHECK(mozc::Util::IsLittleEndian()) << "Big endian is not supported.";
-#ifdef OS_WINDOWS
+  CHECK(mozc::SystemUtil::IsLittleEndian()) << "Big endian is not supported.";
+#ifdef OS_WIN
   // http://msdn.microsoft.com/en-us/library/ms686227.aspx
   // Make sure that mozc_server exits all after other processes.
   ::SetProcessShutdownParameters(0x100, SHUTDOWN_NORETRY);
@@ -102,7 +102,7 @@ void InitGoogleAndMozcServer(const char *arg0,
   }
 
   if (mozc::config::StatsConfigUtil::IsEnabled()) {
-    mozc::CrashReportUtil::InstallBreakpad();
+    mozc::CrashReportHandler::Initialize(false);
   }
   InitGoogle(arg0, argc, argv, remove_flags);
 
@@ -132,7 +132,7 @@ int MozcServer::Run() {
       return -1;
     }
 
-#if defined(OS_WINDOWS)
+#if defined(OS_WIN)
     // On Windows, ShutdownSessionCallback is not called intentionally in order
     // to avoid crashes oritinates from it. See b/2696087.
     g_session_server->Loop();

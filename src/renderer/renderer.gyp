@@ -1,4 +1,4 @@
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -232,7 +232,7 @@
         ['OS=="win"', {
           'dependencies': [
             'win32_font_util_test',
-            'win32_renderer_util_test',
+            'win32_renderer_core_test',
           ],
         }],
         ['enable_gtk_renderer==1', {
@@ -275,7 +275,7 @@
           'dependencies': [
             '../net/net.gyp:http_client_mock',
             '../testing/testing.gyp:gtest_main',
-            'renderer',
+            'renderer_server',
             'webservice_infolist_handler',
           ],
           'variables': {
@@ -327,32 +327,102 @@
           },
         },
         {
-          'target_name': 'win32_renderer_util',
+          'target_name': 'win32_renderer_core',
           'type': 'static_library',
           'sources': [
+            'win32/win32_image_util.cc',
             'win32/win32_renderer_util.cc',
           ],
           'dependencies': [
             '../base/base.gyp:base',
             '../config/config.gyp:config_protocol',
             '../session/session_base.gyp:session_protocol',
-            '../win32/base/win32_base.gyp:ime_base',
             'renderer_protocol',
             'win32_font_util',
           ],
         },
         {
-          'target_name': 'win32_renderer_util_test',
+          'target_name': 'install_renderer_core_test_data',
+          'type': 'none',
+          'variables': {
+            'test_data': [
+              '../<(test_data_subdir)/balloon_blur_alpha_-1.png',
+              '../<(test_data_subdir)/balloon_blur_alpha_-1.png.json',
+              '../<(test_data_subdir)/balloon_blur_alpha_0.png',
+              '../<(test_data_subdir)/balloon_blur_alpha_0.png.json',
+              '../<(test_data_subdir)/balloon_blur_alpha_10.png',
+              '../<(test_data_subdir)/balloon_blur_alpha_10.png.json',
+              '../<(test_data_subdir)/balloon_blur_color_32_64_128.png',
+              '../<(test_data_subdir)/balloon_blur_color_32_64_128.png.json',
+              '../<(test_data_subdir)/balloon_blur_offset_-20_-10.png',
+              '../<(test_data_subdir)/balloon_blur_offset_-20_-10.png.json',
+              '../<(test_data_subdir)/balloon_blur_offset_0_0.png',
+              '../<(test_data_subdir)/balloon_blur_offset_0_0.png.json',
+              '../<(test_data_subdir)/balloon_blur_offset_20_5.png',
+              '../<(test_data_subdir)/balloon_blur_offset_20_5.png.json',
+              '../<(test_data_subdir)/balloon_blur_sigma_0.0.png',
+              '../<(test_data_subdir)/balloon_blur_sigma_0.0.png.json',
+              '../<(test_data_subdir)/balloon_blur_sigma_0.5.png',
+              '../<(test_data_subdir)/balloon_blur_sigma_0.5.png.json',
+              '../<(test_data_subdir)/balloon_blur_sigma_1.0.png',
+              '../<(test_data_subdir)/balloon_blur_sigma_1.0.png.json',
+              '../<(test_data_subdir)/balloon_blur_sigma_2.0.png',
+              '../<(test_data_subdir)/balloon_blur_sigma_2.0.png.json',
+              '../<(test_data_subdir)/balloon_frame_thickness_-1.png',
+              '../<(test_data_subdir)/balloon_frame_thickness_-1.png.json',
+              '../<(test_data_subdir)/balloon_frame_thickness_0.png',
+              '../<(test_data_subdir)/balloon_frame_thickness_0.png.json',
+              '../<(test_data_subdir)/balloon_frame_thickness_1.5.png',
+              '../<(test_data_subdir)/balloon_frame_thickness_1.5.png.json',
+              '../<(test_data_subdir)/balloon_frame_thickness_3.png',
+              '../<(test_data_subdir)/balloon_frame_thickness_3.png.json',
+              '../<(test_data_subdir)/balloon_inside_color_32_64_128.png',
+              '../<(test_data_subdir)/balloon_inside_color_32_64_128.png.json',
+              '../<(test_data_subdir)/balloon_no_label.png',
+              '../<(test_data_subdir)/balloon_no_label.png.json',
+              '../<(test_data_subdir)/balloon_tail_bottom.png',
+              '../<(test_data_subdir)/balloon_tail_bottom.png.json',
+              '../<(test_data_subdir)/balloon_tail_left.png',
+              '../<(test_data_subdir)/balloon_tail_left.png.json',
+              '../<(test_data_subdir)/balloon_tail_right.png',
+              '../<(test_data_subdir)/balloon_tail_right.png.json',
+              '../<(test_data_subdir)/balloon_tail_top.png',
+              '../<(test_data_subdir)/balloon_tail_top.png.json',
+              '../<(test_data_subdir)/balloon_tail_width_height_-10_-10.png',
+              '../<(test_data_subdir)/balloon_tail_width_height_-10_-10.png.json',
+              '../<(test_data_subdir)/balloon_tail_width_height_0_0.png',
+              '../<(test_data_subdir)/balloon_tail_width_height_0_0.png.json',
+              '../<(test_data_subdir)/balloon_tail_width_height_10_20.png',
+              '../<(test_data_subdir)/balloon_tail_width_height_10_20.png.json',
+              '../<(test_data_subdir)/balloon_width_height_40_30.png',
+              '../<(test_data_subdir)/balloon_width_height_40_30.png.json',
+            ],
+            'test_data_subdir': 'data/test/renderer/win32',
+          },
+          'includes': ['../gyp/install_testdata.gypi'],
+        },
+        {
+          'target_name': 'win32_renderer_core_test',
           'type': 'executable',
           'sources': [
+            'win32/win32_image_util_test.cc',
             'win32/win32_renderer_util_test.cc',
           ],
           'dependencies': [
+            '../net/net.gyp:jsoncpp',
             '../testing/testing.gyp:gtest_main',
-            'win32_renderer_util',
+            'install_renderer_core_test_data',
+            'win32_renderer_core',
           ],
           'variables': {
             'test_size': 'small',
+          },
+          'msvs_settings': {
+            'VCLinkerTool': {
+              'AdditionalDependencies': [
+                'gdiplus.lib',  # used in 'win32_image_util_test.cc'
+              ],
+            },
           },
           # Use IPAex font, which contains IVS characters for b/2876066
           'copies': [
@@ -361,9 +431,20 @@
                 '<(DEPTH)/third_party/ipa_font/ipaexg.ttf',
                 '<(DEPTH)/third_party/ipa_font/ipaexm.ttf',
               ],
-              # Note $(TargetDir) is specific to Visual Studio.
-              'destination': '$(TargetDir)/data',
+              'destination': '<(PRODUCT_DIR)/data',
             },
+          ],
+        },
+        {
+          'target_name': 'win32_text_renderer',
+          'type': 'static_library',
+          'sources': [
+            'win32/text_renderer.cc',
+          ],
+          'dependencies': [
+            '../base/base.gyp:base',
+            'renderer_protocol',
+            'renderer_style_handler',
           ],
         },
         {
@@ -372,17 +453,16 @@
           'type': 'executable',
           'sources': [
             'mozc_renderer_main.cc',
-            'mozc_renderer.exe.manifest',
             'win32/win32_server.cc',
             'win32/window_manager.cc',
             'win32/candidate_window.cc',
             'win32/composition_window.cc',
             'win32/infolist_window.cc',
-            'win32/text_renderer.cc',
             '<(gen_out_dir)/mozc_renderer_autogen.rc',
           ],
           'dependencies': [
             '../base/base.gyp:base',
+            '../base/base.gyp:crash_report_handler',
             '../client/client.gyp:client',
             '../config/config.gyp:config_protocol',
             '../config/config.gyp:stats_config_util',
@@ -393,11 +473,27 @@
             'renderer_server',
             'renderer_style_handler',
             'table_layout',
-            'win32_renderer_util',
+            'win32_renderer_core',
+            'win32_text_renderer',
             'window_util',
           ],
-          'includes': [
-            '../gyp/postbuilds_win.gypi',
+          'msvs_settings': {
+            'VCManifestTool': {
+              'AdditionalManifestFiles': 'mozc_renderer.exe.manifest',
+              'EmbedManifest': 'false',
+            },
+          },
+        },
+        {
+          'target_name': 'win32_renderer_client',
+          'type': 'static_library',
+          'sources': [
+            'win32/win32_renderer_client.cc',
+          ],
+          'dependencies': [
+            '../base/base.gyp:base',
+            'renderer.gyp:renderer_client',
+            'renderer.gyp:renderer_protocol',
           ],
         },
       ],
@@ -427,6 +523,7 @@
           ],
           'dependencies': [
             '../base/base.gyp:base',
+            '../base/base.gyp:crash_report_handler',
             '../client/client.gyp:client',
             '../config/config.gyp:config_protocol',
             '../config/config.gyp:stats_config_util',
@@ -553,6 +650,7 @@
             'mozc_renderer_main.cc',
           ],
           'dependencies': [
+            '../base/base.gyp:crash_report_handler',
             'mozc_renderer_lib',
           ],
         },

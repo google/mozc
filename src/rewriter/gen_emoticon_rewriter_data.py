@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -90,7 +90,7 @@ def ReadEmoticonTsv(stream):
       logging.warning('ignore extra columns: %s', line)
 
     # \xE3\x80\x80 is full width space
-    key_list = re.split(r'( |\xE3\x80\x80)+', field_list[1].strip())
+    key_list = re.split(r'(?: |\xE3\x80\x80)+', field_list[1].strip())
     data.append((field_list[0], key_list))
     for key in key_list:
       key_count[key] += 1
@@ -98,10 +98,16 @@ def ReadEmoticonTsv(stream):
   input_data = defaultdict(list)
   cost = 10
   for value, key_list in data:
+    input_value = value
+    if input_value == "":
+      input_value = None
     description = GetDescription(key_list, key_count)
+    if description == "":
+      description = None
+
     for key in key_list:
       input_data[key].append(embedded_dictionary_compiler.Token(
-          key, value, description, '', 0, 0, cost))
+          key, input_value, description, None, 0, 0, cost))
     cost += 10
 
   return input_data

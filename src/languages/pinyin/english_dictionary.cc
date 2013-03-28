@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,19 +35,13 @@
 #include <vector>
 
 #include "base/config_file_stream.h"
+#include "base/logging.h"
 #include "base/scoped_ptr.h"
 #include "base/util.h"
 #include "dictionary/file/codec_interface.h"
 #include "dictionary/file/dictionary_file.h"
-// Includes generated dictionary data.
-#include "languages/pinyin/pinyin_embedded_english_dictionary_data.h"
 #include "storage/encrypted_string_storage.h"
-
-#ifdef MOZC_USE_MOZC_LOUDS
-#include "dictionary/louds/louds_trie_adapter.h"
-#else
-#include "dictionary/rx/rx_trie.h"
-#endif  // MOZC_USE_MOZC_LOUDS
+#include "storage/louds/louds_trie.h"
 
 // TODO(hsumita): Lock user dictionary file.
 
@@ -56,11 +50,9 @@ namespace pinyin {
 namespace english {
 
 namespace {
-#ifdef MOZC_USE_MOZC_LOUDS
-typedef dictionary::louds::Entry EntryType;
-#else
-typedef rx::RxEntry EntryType;
-#endif  // MOZC_USE_MOZC_LOUDS
+
+// Includes generated dictionary data.
+#include "languages/pinyin/pinyin_embedded_english_dictionary_data.h"
 
 const char *kUserDictionaryFileName = "user://pinyin_english.db";
 // The last printable character in ASCII code
@@ -79,7 +71,6 @@ const size_t kMaxWordLength = 80;
 //
 // |key| should be smaller than or equal to 80 bytes, and we can store the
 // length of |key| within 1byte w/o worry about signed vs unsigned conversion.
-
 void SerializeUserDictionary(const UserDictionary &dictionary,
                              string *output) {
   CHECK(output);
@@ -142,7 +133,7 @@ bool DictionaryEntryComparator(const DictionaryEntry &lhs,
 }  // namespace
 
 EnglishDictionary::EnglishDictionary()
-    : word_trie_(new TrieType),
+    : word_trie_(new mozc::storage::louds::LoudsTrie),
       storage_(new storage::EncryptedStringStorage(
           EnglishDictionary::user_dictionary_file_path())) {
   Init();
@@ -150,6 +141,31 @@ EnglishDictionary::EnglishDictionary()
 
 EnglishDictionary::~EnglishDictionary() {
 }
+
+namespace {
+
+// Used for predictive search from system dictionary.
+class WordCallback : public mozc::storage::louds::LoudsTrie::Callback {
+ public:
+  WordCallback(const vector<float> &priority_table,
+               DictionaryMap *dictionary_map)
+      : priority_table_(priority_table), dictionary_map_(dictionary_map) {}
+
+  // Updates dictionary map on each key found using the given priority table.
+  virtual ResultType Run(const char *s, size_t len, int key_id) {
+    const string key(s, len);
+    (*dictionary_map_)[key] += priority_table_[key_id];
+    return SEARCH_CONTINUE;
+  }
+
+ private:
+  const vector<float> &priority_table_;
+  DictionaryMap *dictionary_map_;
+
+  DISALLOW_COPY_AND_ASSIGN(WordCallback);
+};
+
+}  // namespace
 
 void EnglishDictionary::GetSuggestions(const string &input_prefix,
                                        vector<string> *output) const {
@@ -163,9 +179,6 @@ void EnglishDictionary::GetSuggestions(const string &input_prefix,
   string prefix = input_prefix;
   Util::LowerString(&prefix);
 
-  vector<EntryType> system_entries;
-  word_trie_->PredictiveSearch(prefix, &system_entries);
-
   DictionaryMap merged_entries;
   {
     const UserDictionary::const_iterator it_begin =
@@ -176,10 +189,9 @@ void EnglishDictionary::GetSuggestions(const string &input_prefix,
       merged_entries[it->first] = learning_multiplier_ * it->second;
     }
   }
-  for (size_t i = 0; i < system_entries.size(); ++i) {
-    const EntryType &entry = system_entries[i];
-    merged_entries[entry.key] += priority_table_[entry.id];
-  }
+
+  WordCallback callback(priority_table_, &merged_entries);
+  word_trie_->PredictiveSearch(prefix.c_str(), &callback);
 
   vector<DictionaryEntry> merged_vector(merged_entries.size());
   copy(merged_entries.begin(), merged_entries.end(), merged_vector.begin());
@@ -235,8 +247,7 @@ void EnglishDictionary::Init() {
   for (size_t i = 0; i < sections.size(); ++i) {
     const DictionaryFileSection &section = sections[i];
     if (section.name == word_trie_section_name) {
-      if (!word_trie_->OpenImage(
-              reinterpret_cast<const unsigned char *>(section.ptr))) {
+      if (!word_trie_->Open(reinterpret_cast<const uint8 *>(section.ptr))) {
         LOG(FATAL) << "Failed to open trie section data.";
       }
     } else if (section.name == priority_table_section_name) {

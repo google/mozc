@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -130,12 +130,36 @@ class ClientInterface {
   // SendKey/TestSendKey/SendCommand automatically
   // make a connection and issue an session id
   // if valid session id is not found.
-  virtual bool SendKey(const commands::KeyEvent &key,
-                       commands::Output *output) = 0;
-  virtual bool TestSendKey(const commands::KeyEvent &key,
-                           commands::Output *output) = 0;
-  virtual bool SendCommand(const commands::SessionCommand &command,
-                           commands::Output *output) = 0;
+  bool SendKey(const commands::KeyEvent &key,
+               commands::Output *output) {
+    return SendKeyWithContext(key,
+                              commands::Context::default_instance(),
+                              output);
+  }
+
+  bool TestSendKey(const commands::KeyEvent &key,
+                   commands::Output *output) {
+    return TestSendKeyWithContext(key,
+                                  commands::Context::default_instance(),
+                                  output);
+  }
+
+  bool SendCommand(const commands::SessionCommand &command,
+                   commands::Output *output) {
+    return SendCommandWithContext(command,
+                                  commands::Context::default_instance(),
+                                  output);
+  }
+
+  virtual bool SendKeyWithContext(const commands::KeyEvent &key,
+                                  const commands::Context &context,
+                                  commands::Output *output) = 0;
+  virtual bool TestSendKeyWithContext(const commands::KeyEvent &key,
+                                      const commands::Context &context,
+                                      commands::Output *output) = 0;
+  virtual bool SendCommandWithContext(const commands::SessionCommand &command,
+                                      const commands::Context &context,
+                                      commands::Output *output) = 0;
 
   // The methods below don't call
   // StartServer even if server is not available. This treatment

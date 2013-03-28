@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -97,7 +97,7 @@ TEST_F(CodeGenByteArrayStreamTest, NoInput) {
   const string expected = ExpectedOutput("NoInput", "0", "\"\"");
 #endif
   EXPECT_EQ(expected, ResultOutput());
-  EXPECT_TRUE(*codegen_stream_);
+  EXPECT_TRUE(codegen_stream_->good());
 }
 
 TEST_F(CodeGenByteArrayStreamTest, EmptyString) {
@@ -111,7 +111,7 @@ TEST_F(CodeGenByteArrayStreamTest, EmptyString) {
   const string expected = ExpectedOutput("EmptyString", "0", "\"\"");
 #endif
   EXPECT_EQ(expected, ResultOutput());
-  EXPECT_TRUE(*codegen_stream_);
+  EXPECT_TRUE(codegen_stream_->good());
 }
 
 TEST_F(CodeGenByteArrayStreamTest, SingleByte) {
@@ -125,7 +125,7 @@ TEST_F(CodeGenByteArrayStreamTest, SingleByte) {
   const string expected = ExpectedOutput("Test", "1", "\"\\x01\"");
 #endif
   EXPECT_EQ(expected, ResultOutput());
-  EXPECT_TRUE(*codegen_stream_);
+  EXPECT_TRUE(codegen_stream_->good());
 }
 
 TEST_F(CodeGenByteArrayStreamTest, SingleByteZero) {
@@ -139,7 +139,7 @@ TEST_F(CodeGenByteArrayStreamTest, SingleByteZero) {
   const string expected = ExpectedOutput("Test", "1", "\"\\x00\"");
 #endif
   EXPECT_EQ(expected, ResultOutput());
-  EXPECT_TRUE(*codegen_stream_);
+  EXPECT_TRUE(codegen_stream_->good());
 }
 
 TEST_F(CodeGenByteArrayStreamTest, SingleWord) {
@@ -155,7 +155,7 @@ TEST_F(CodeGenByteArrayStreamTest, SingleWord) {
       "\"\\x31\\x32\\x33\\x34\\x35\\x36\\x37\\x38\"");
 #endif
   EXPECT_EQ(expected, ResultOutput());
-  EXPECT_TRUE(*codegen_stream_);
+  EXPECT_TRUE(codegen_stream_->good());
 }
 
 TEST_F(CodeGenByteArrayStreamTest, SingleLine) {
@@ -179,7 +179,7 @@ TEST_F(CodeGenByteArrayStreamTest, SingleLine) {
       "\\x61\\x62\\x63\\x64\\x65\\x66\\x67\\x68\\x69\\x6A\"");
 #endif
   EXPECT_EQ(expected, ResultOutput());
-  EXPECT_TRUE(*codegen_stream_);
+  EXPECT_TRUE(codegen_stream_->good());
 }
 
 TEST_F(CodeGenByteArrayStreamTest, SingleLinePlusOne) {
@@ -205,7 +205,7 @@ TEST_F(CodeGenByteArrayStreamTest, SingleLinePlusOne) {
       "\"\\xFF\"");
 #endif
   EXPECT_EQ(expected, ResultOutput());
-  EXPECT_TRUE(*codegen_stream_);
+  EXPECT_TRUE(codegen_stream_->good());
 }
 
 TEST_F(CodeGenByteArrayStreamTest, FragmentaryFlush) {
@@ -225,7 +225,7 @@ TEST_F(CodeGenByteArrayStreamTest, FragmentaryFlush) {
       "\"\\x31\\x32\\x33\\x34\\x35\\x36\\x37\\x38\"");
 #endif
   EXPECT_EQ(expected, ResultOutput());
-  EXPECT_TRUE(*codegen_stream_);
+  EXPECT_TRUE(codegen_stream_->good());
 }
 
 TEST_F(CodeGenByteArrayStreamTest, MultipleVarDefs) {
@@ -248,20 +248,20 @@ TEST_F(CodeGenByteArrayStreamTest, MultipleVarDefs) {
                      "\"\\x61\\x62\\x63\\x64\\x65\\x66\\x67\\x68\"");
 #endif
   EXPECT_EQ(expected, ResultOutput());
-  EXPECT_TRUE(*codegen_stream_);
+  EXPECT_TRUE(codegen_stream_->good());
 }
 
 // error cases
 
 TEST_F(CodeGenByteArrayStreamTest, OpenDoubly) {
-  EXPECT_TRUE(*codegen_stream_);
+  EXPECT_TRUE(codegen_stream_->good());
   codegen_stream_->OpenVarDef("Test1");
   codegen_stream_->OpenVarDef("Test2");
-  EXPECT_FALSE(*codegen_stream_);
+  EXPECT_FALSE(codegen_stream_->good());
 
   // Recover from the above error.
   codegen_stream_->clear();
-  EXPECT_TRUE(*codegen_stream_);
+  EXPECT_TRUE(codegen_stream_->good());
   codegen_stream_->CloseVarDef();
 
 #ifdef MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
@@ -270,17 +270,17 @@ TEST_F(CodeGenByteArrayStreamTest, OpenDoubly) {
   const string expected = ExpectedOutput("Test1", "0", "\"\"");
 #endif
   EXPECT_EQ(expected, ResultOutput());
-  EXPECT_TRUE(*codegen_stream_);
+  EXPECT_TRUE(codegen_stream_->good());
 }
 
 TEST_F(CodeGenByteArrayStreamTest, CloseBeforeOpen) {
-  EXPECT_TRUE(*codegen_stream_);
+  EXPECT_TRUE(codegen_stream_->good());
   codegen_stream_->CloseVarDef();
-  EXPECT_FALSE(*codegen_stream_);
+  EXPECT_FALSE(codegen_stream_->good());
 
   // Recover from the above error.
   codegen_stream_->clear();
-  EXPECT_TRUE(*codegen_stream_);
+  EXPECT_TRUE(codegen_stream_->good());
 
   codegen_stream_->OpenVarDef("Test");
   codegen_stream_->CloseVarDef();
@@ -291,15 +291,15 @@ TEST_F(CodeGenByteArrayStreamTest, CloseBeforeOpen) {
   const string expected = ExpectedOutput("Test", "0", "\"\"");
 #endif
   EXPECT_EQ(expected, ResultOutput());
-  EXPECT_TRUE(*codegen_stream_);
+  EXPECT_TRUE(codegen_stream_->good());
 }
 
 TEST_F(CodeGenByteArrayStreamTest, CloseDoubly) {
-  EXPECT_TRUE(*codegen_stream_);
+  EXPECT_TRUE(codegen_stream_->good());
   codegen_stream_->OpenVarDef("Test");
   codegen_stream_->CloseVarDef();
   codegen_stream_->CloseVarDef();
-  EXPECT_FALSE(*codegen_stream_);
+  EXPECT_FALSE(codegen_stream_->good());
 
   // Recover from the above error.
   codegen_stream_->clear();
@@ -310,13 +310,13 @@ TEST_F(CodeGenByteArrayStreamTest, CloseDoubly) {
   const string expected = ExpectedOutput("Test", "0", "\"\"");
 #endif
   EXPECT_EQ(expected, ResultOutput());
-  EXPECT_TRUE(*codegen_stream_);
+  EXPECT_TRUE(codegen_stream_->good());
 }
 
 TEST_F(CodeGenByteArrayStreamTest, FlushBeforeOpen) {
-  EXPECT_TRUE(*codegen_stream_);
+  EXPECT_TRUE(codegen_stream_->good());
   *codegen_stream_ << "hello, world" << endl;
-  EXPECT_FALSE(*codegen_stream_);
+  EXPECT_FALSE(codegen_stream_->good());
 }
 
 // wide character type
@@ -348,7 +348,7 @@ TEST_F(CodeGenByteArrayStreamTest, WideCharType) {
       "\"\\x00\\x00\\x34\\x12\\x00\\xAB\\xCD\\x00\\x00\\x00\"");
 #endif
   EXPECT_EQ(expected, string_stream->str());
-  EXPECT_TRUE(*codegen_stream_);
+  EXPECT_TRUE(codegen_stream_->good());
 }
 
 }  // namespace

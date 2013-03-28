@@ -1,4 +1,4 @@
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -50,7 +50,7 @@
       '../../base/base.gyp:config_file_stream',
       '../../config/config.gyp:config_handler',
       '../../session/session.gyp:session_handler',
-      '../../usage_stats/usage_stats.gyp:usage_stats',
+      '../../usage_stats/usage_stats_base.gyp:usage_stats',
     ],
     'conditions': [
       # enable_x11_selection_monitor represents if ibus_mozc uses X11 selection
@@ -113,6 +113,7 @@
                 './gen_mozc_xml.py',
                 '--platform=ChromeOS',
                 '--branding=GoogleJapaneseInput',
+                '--pkg_config_command=<(pkg_config_command)',
               ],
             }],
             ['target_platform=="ChromeOS" and branding!="GoogleJapaneseInput"', {
@@ -122,6 +123,7 @@
                 './gen_mozc_xml.py',
                 '--platform=ChromeOS',
                 '--branding=Mozc',
+                '--pkg_config_command=<(pkg_config_command)',
               ],
             }],
             ['target_platform!="ChromeOS"', {
@@ -132,6 +134,7 @@
                 '--platform=Linux',
                 '--branding=Mozc',
                 '--server_dir=<(server_dir)',
+                '--pkg_config_command=<(pkg_config_command)',
               ],
             }],
           ],
@@ -366,6 +369,7 @@
           'dependencies': [
             '../../base/base.gyp:base',
             '../../engine/engine.gyp:mock_converter_engine',
+            '../../session/session_base.gyp:session_protocol',
             '../../testing/testing.gyp:googletest_lib',
             '../../testing/testing.gyp:testing',
             'ibus_mozc_lib',

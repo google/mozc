@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@
 
 
 #ifdef MOZC_ENABLE_HTTP_CLIENT
-#if defined(OS_WINDOWS)
+#if defined(OS_WIN)
 #include <windows.h>
 #include <wininet.h>
 #elif defined(OS_ANDROID)
@@ -49,6 +49,7 @@
 #include "net/http_client_common.h"
 #ifdef MOZC_ENABLE_HTTP_CLIENT
 #include "net/http_client_mac.h"
+#include "net/http_client_pepper.h"
 #include "net/proxy_manager.h"
 #endif  // MOZC_ENABLE_HTTP_CLIENT
 
@@ -97,7 +98,7 @@ class HTTPStream {
   size_t   output_size_;
 };
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 // RAII class for HINTERNET
 class ScopedHINTERNET {
  public:
@@ -411,6 +412,19 @@ bool RequestInternal(HTTPMethodType type,
                                         output_string);
 }
 
+#elif defined(__native_client__)
+
+bool RequestInternal(HTTPMethodType type,
+                     const string &url,
+                     const char *post_data,
+                     size_t post_size,
+                     const HTTPClient::Option &option,
+                     string *output_string) {
+  return PepperHTTPRequestHandler::Request(type, url,
+                                           post_data, post_size, option,
+                                           output_string);
+}
+
 #elif defined(OS_ANDROID)
 bool RequestInternal(HTTPMethodType type,
                      const string &url,
@@ -564,7 +578,7 @@ bool RequestInternal(HTTPMethodType type,
   return result;
 }
 #else  // defined(HAVE_CURL)
-// None of OS_WINDOWS/OS_MACOSX/HAVE_CURL is defined.
+// None of OS_WIN/OS_MACOSX/HAVE_CURL is defined.
 #error "HttpClient does not support your platform."
 #endif  // defined(HAVE_CURL)
 #else  // defined(MOZC_ENABLE_HTTP_CLIENT)

@@ -1,4 +1,4 @@
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -59,18 +59,12 @@
             'ime_candidate_info_test.cc',
             'ime_composition_string_test.cc',
             'ime_core_test.cc',
-            'ime_deleter_test.cc',
             'ime_input_context_test.cc',
-            'ime_keyevent_handler_test.cc',
-            'ime_keyboard_test.cc',
             'ime_mouse_tracker_test.cc',
-            'ime_reconvert_string_test.cc',
-            'ime_surrogate_pair_observer_test.cc',
             'ime_ui_visibility_tracker_test.cc',
           ],
           'dependencies': [
             'ime_core',
-            '../../session/session.gyp:session',
           ],
         }],
       ],
@@ -110,18 +104,12 @@
           'type': 'static_library',
           'sources': [
             'ime_candidate_info.cc',
-            'ime_core.cc',
             'ime_composition_string.cc',
-            'ime_deleter.cc',
+            'ime_core.cc',
             'ime_input_context.cc',
-            'ime_keyboard.cc',
-            'ime_keyevent_handler.cc',
             'ime_message_queue.cc',
             'ime_mouse_tracker.cc',
             'ime_private_context.cc',
-            'ime_reconvert_string.cc',
-            'ime_state.cc',
-            'ime_surrogate_pair_observer.cc',
             'ime_trace.cc',
             'ime_types.cc',
             'ime_ui_context.cc',
@@ -134,13 +122,12 @@
             '../../config/config.gyp:config_handler',
             '../../config/config.gyp:config_protocol',
             '../../ipc/ipc.gyp:ipc',
-            '../../renderer/renderer.gyp:renderer_client',
             '../../renderer/renderer.gyp:renderer_protocol',
             '../../renderer/renderer.gyp:win32_font_util',
-            '../../session/session_base.gyp:ime_switch_util',
-            '../../session/session_base.gyp:output_util',
+            '../../renderer/renderer.gyp:win32_renderer_client',
             '../../session/session_base.gyp:session_protocol',
             '../base/win32_base.gyp:ime_base',
+            '../base/win32_base.gyp:ime_impl_base',
           ],
         },
         {
@@ -149,18 +136,19 @@
           'product_extension': 'ime',
           'type': 'shared_library',
           'sources': [
+            '<(gen_out_dir)/GoogleIMEJa_autogen.rc',
+            'GoogleIMEJa.def',
             'ime_impl_imm.cc',
             'ime_language_bar.cc',
             'ime_language_bar_menu.cc',
             'ime_module.cc',
-            '<(gen_out_dir)/GoogleIMEJa_autogen.rc',
           ],
           'dependencies': [
             '../../base/base.gyp:base',
+            '../../base/base.gyp:crash_report_handler',
             '../../client/client.gyp:client',
             '../../config/config.gyp:stats_config_util',
             '../../ipc/ipc.gyp:ipc',
-            '../../session/session_base.gyp:ime_switch_util',
             '../../session/session_base.gyp:session_protocol',
             '../base/win32_base.gyp:ime_base',
             'gen_mozc_ime_resource_header',
@@ -169,12 +157,8 @@
           'msvs_settings': {
             'VCLinkerTool': {
               'BaseAddress': '0x06000000',
-              'ModuleDefinitionFile': 'GoogleIMEJa.def',
             },
           },
-          'includes': [
-            '../../gyp/postbuilds_win.gypi',
-          ],
         },
       ]
     }],

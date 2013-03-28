@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,8 +29,9 @@
 
 #include <QtGui/QApplication>
 #include <QtGui/QtGui>
-#include "base/base.h"
+#include "base/logging.h"
 #include "base/process_mutex.h"
+#include "base/system_util.h"
 #include "base/util.h"
 #include "gui/base/locale_util.h"
 #include "gui/confirmation_dialog/confirmation_dialog.h"
@@ -42,11 +43,11 @@ DEFINE_int32(confirmation_wait_time, 3600,
 int RunConfirmationDialog(int argc, char *argv[]) {
   Q_INIT_RESOURCE(qrc_confirmation_dialog);
 
-  mozc::Util::DisableIME();
+  mozc::SystemUtil::DisableIME();
   QApplication app(argc, argv);
 
   string name = "confirmation_dialog.";
-  name += mozc::Util::GetDesktopNameAsString();
+  name += mozc::SystemUtil::GetDesktopNameAsString();
 
   mozc::ProcessMutex mutex(name.c_str());
   if (!mutex.Lock()) {

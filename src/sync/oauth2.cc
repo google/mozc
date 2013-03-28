@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -70,16 +70,15 @@ void OAuth2::GetAuthorizeUri(const string &authorize_client_uri,
   Util::AppendCGIParams(params, auth_uri);
 }
 
-bool OAuth2::AuthorizeToken(const string &authorize_token_uri,
-                            const string &client_id,
-                            const string &client_secret,
-                            const string &redirect_uri,
-                            const string &auth_token,
-                            const string &scope,
-                            const string &state,
-                            Error *error,
-                            string *access_token,
-                            string *refresh_token) {
+OAuth2::Error OAuth2::AuthorizeToken(const string &authorize_token_uri,
+                                     const string &client_id,
+                                     const string &client_secret,
+                                     const string &redirect_uri,
+                                     const string &auth_token,
+                                     const string &scope,
+                                     const string &state,
+                                     string *access_token,
+                                     string *refresh_token) {
   DCHECK(access_token);
 
   vector<pair<string, string> > params;
@@ -110,20 +109,20 @@ bool OAuth2::AuthorizeToken(const string &authorize_token_uri,
   Json::Reader reader;
   if (!reader.parse(response, root)) {
     LOG(INFO) << "Parsing JSON error.";
-    return false;
+    return kNonOAuth2Error;
   }
 
   // Check errors in response
-  *error = GetError(root);
-  if (*error != kNone) {
+  Error error = GetError(root);
+  if (error != kNone) {
     LOG(INFO) << "OAuth error (code : " << error << ") in AuthorizeToken()";
-    return false;
+    return error;
   }
 
   if (!root.isMember(kOAuth2AccessTokenKey)) {
     LOG(ERROR) << "Cannot find access_token "
                << "in response from authorized server.";
-    return false;
+    return kNonOAuth2Error;
   }
 
   *access_token = root[kOAuth2AccessTokenKey].asString();
@@ -131,7 +130,7 @@ bool OAuth2::AuthorizeToken(const string &authorize_token_uri,
     *refresh_token = root[kOAuth2RefreshTokenKey].asString();
   }
 
-  return true;
+  return kNone;
 }
 
 // Currently, this method corresponds with only one style of requesting
@@ -147,13 +146,12 @@ bool OAuth2::GetProtectedResource(const string &resource_uri,
   return HTTPClient::Get(resource_uri, option, output);
 }
 
-bool OAuth2::RefreshTokens(const string &refresh_uri,
-                           const string &client_id,
-                           const string &client_secret,
-                           const string &scope,
-                           OAuth2::Error *error,
-                           string *refresh_token,
-                           string *access_token) {
+OAuth2::Error OAuth2::RefreshTokens(const string &refresh_uri,
+                                    const string &client_id,
+                                    const string &client_secret,
+                                    const string &scope,
+                                    string *refresh_token,
+                                    string *access_token) {
   DCHECK(refresh_token);
   DCHECK(access_token);
 
@@ -181,20 +179,20 @@ bool OAuth2::RefreshTokens(const string &refresh_uri,
   Json::Reader reader;
   if (!reader.parse(response, root)) {
     LOG(INFO) << "Erorr in parsing JSON.";
-    return false;
+    return kNonOAuth2Error;
   }
 
   // Check errors in response
-  *error = GetError(root);
-  if (*error != kNone) {
+  Error error = GetError(root);
+  if (error != kNone) {
     LOG(INFO) << "OAuth error (code : " << error << ") in RefreshToken()";
-    return false;
+    return error;
   }
 
   if (!root.isMember(kOAuth2AccessTokenKey)) {
     LOG(ERROR) << "cannot find " << kOAuth2AccessTokenKey
                << " in response from authorized server.";
-    return false;
+    return kUnknownError;
   }
   *access_token = root[kOAuth2AccessTokenKey].asString();
 
@@ -206,10 +204,10 @@ bool OAuth2::RefreshTokens(const string &refresh_uri,
     // This is not an error so pass through.
   }
 
-  return true;
+  return kNone;
 }
 
-OAuth2::Error OAuth2::GetError(Json::Value &root) {
+OAuth2::Error OAuth2::GetError(const Json::Value &root) {
   if (!root.isMember("error")) {
     return kNone;
   }

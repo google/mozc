@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -45,7 +45,7 @@ const char kProductNameLocalized[] = "Mozc";
 
 const char kVersionRewriterVersionPrefix[] = kProductPrefix "-";
 
-#if defined(OS_WINDOWS)
+#if defined(OS_WIN)
 // Safe length of IME name in terms of IME_ESC_IME_NAME request.
 // See http://msdn.microsoft.com/en-us/library/dd318166.aspx for details.
 const int kSafeIMENameLengthForNTInTchars = 64;
@@ -58,10 +58,13 @@ const wchar_t kDefaultKeyboardLayout[] = L"00000411";
 
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
 const char kCompanyNameInEnglish[] = "Google";
-const char kEventPathPrefix[] = "Global\\GoogleJapaneseInput.event.";
-const char kMutexPathPrefix[] = "Global\\GoogleJapaneseInput.mutex.";
+// Use Local prefix so that modules running under AppContainer can access.
+const char kEventPathPrefix[] = "Local\\GoogleJapaneseInput.event.";
+const char kMutexPathPrefix[] = "Local\\GoogleJapaneseInput.mutex.";
 const char kMozcServerName[] = "GoogleIMEJaConverter.exe";
 const char kIMEFile[] = "GIMEJa.ime";
+const char kMozcTIP32[] = "GoogleIMEJaTIP32.dll";
+const char kMozcTIP64[] = "GoogleIMEJaTIP64.dll";
 const char kMozcBroker32[] = "GoogleIMEJaBroker32.exe";
 const char kMozcBroker64[] = "GoogleIMEJaBroker64.exe";
 const char kMozcTool[] = "GoogleIMEJaTool.exe";
@@ -76,6 +79,8 @@ const wchar_t kCandidateWindowClassName[]
     = L"GoogleJapaneseInputCandidateWindow";
 const wchar_t kCompositionWindowClassName[]
     = L"GoogleJapaneseInputCompositionWindow";
+const wchar_t kIndicatorWindowClassName[]
+    = L"GoogleJapaneseInputIndicatorWindow";
 const wchar_t kInfolistWindowClassName[]
     = L"GoogleJapaneseInpuInfolistWindow";
 // This UIWnd class name should be used by and only by the actual IMM32
@@ -95,10 +100,13 @@ const wchar_t kElevatedProcessDisabledKey[]
     = L"Software\\Policies\\Google\\Google Japanese Input\\Preferences";
 #else
 const char kCompanyNameInEnglish[] = "Mozc Project";
-const char kEventPathPrefix[] = "Global\\Mozc.event.";
-const char kMutexPathPrefix[] = "Global\\Mozc.mutex.";
+// Use Local prefix so that modules running under AppContainer can access.
+const char kEventPathPrefix[] = "Local\\Mozc.event.";
+const char kMutexPathPrefix[] = "Local\\Mozc.mutex.";
 const char kMozcServerName[] = "mozc_server.exe";
 const char kIMEFile[] = "mozc_ja.ime";
+const char kMozcTIP32[] = "mozc_tip32.dll";
+const char kMozcTIP64[] = "mozc_tip64.dll";
 const char kMozcBroker32[] = "mozc_broker32.exe";
 const char kMozcBroker64[] = "mozc_broker64.exe";
 const char kMozcTool[] = "mozc_tool.exe";
@@ -113,6 +121,8 @@ const wchar_t kCandidateWindowClassName[]
     = L"MozcCandidateWindow";
 const wchar_t kCompositionWindowClassName[]
     = L"MozcCompositionWindow";
+const wchar_t kIndicatorWindowClassName[]
+    = L"MozcIndicatorWindow";
 const wchar_t kInfolistWindowClassName[]
     = L"MozcInfolistWindow";
 const wchar_t kIMEUIWndClassName[] = L"MozcUIWindow";

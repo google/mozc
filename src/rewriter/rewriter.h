@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,16 +38,26 @@ class ConverterInterface;
 class DataManagerInterface;
 class POSMatcher;
 class PosGroup;
+class UserDictionary;
 
 class RewriterImpl : public MergerRewriter {
  public:
   RewriterImpl(const ConverterInterface *parent_converter,
-               const DataManagerInterface *data_manager);
+               const DataManagerInterface *data_manager,
+               const PosGroup *pos_group);
+  RewriterImpl(const ConverterInterface *parent_converter,
+               const DataManagerInterface *data_manager,
+               const PosGroup *pos_group,
+               const UserDictionary *user_dictionary);
 
  private:
+  void Init(const ConverterInterface *parent_converter,
+            const DataManagerInterface *data_manager,
+            const PosGroup *pos_group,
+            const UserDictionary *user_dictionary);
+
   const ConverterInterface *parent_converter_;
   const POSMatcher *pos_matcher_;
-  const PosGroup *pos_group_;
 };
 
 }  // namespace mozc

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -95,7 +95,7 @@ class ImeContext {
     keymap_ = keymap;
   }
 
-  void SetRequest(const commands::Request &request);
+  void SetRequest(const commands::Request *request);
   const commands::Request &GetRequest() const;
 
   const commands::Capability &client_capability() const {
@@ -152,7 +152,7 @@ class ImeContext {
 
   State state_;
 
-  commands::Request request_;
+  const commands::Request *request_;
 
   config::Config::SessionKeymap keymap_;
 

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,6 +34,7 @@
 #include <string>
 
 #include "base/base.h"
+#include "composer/internal/transliterators.h"
 // For TableAttributes
 #include "composer/table.h"
 // for FRIEND_TEST()
@@ -43,7 +44,6 @@ namespace mozc {
 namespace composer {
 
 class CompositionInput;
-class TransliteratorInterface;
 class Table;
 
 // This class contains a unit of composition string.  The unit consists of
@@ -53,32 +53,32 @@ class Table;
 // "ka"} and {conversion: "っ", pending: "t", raw: "tt"}.
 class CharChunk {
  public:
-  CharChunk(const TransliteratorInterface *transliterator,
+  // LOCAL transliterator is not accepted.
+  CharChunk(Transliterators::Transliterator transliterator,
             const Table *table);
 
   void Clear();
 
-  size_t GetLength(const TransliteratorInterface *transliterator) const;
+  size_t GetLength(Transliterators::Transliterator transliterator) const;
 
   // Append the characters representing this CharChunk accoring to the
-  // transliterator.  If the transliterator is NULL, the local
+  // transliterator.  If the transliterator is LOCAL, the local
   // transliterator specified via SetTransliterator is used.
-  void AppendResult(const TransliteratorInterface *transliterator,
+  void AppendResult(Transliterators::Transliterator transliterator,
                     string *result) const;
-  void AppendTrimedResult(const TransliteratorInterface *transliterator,
+  void AppendTrimedResult(Transliterators::Transliterator transliterator,
                           string *result) const;
-  void AppendFixedResult(const TransliteratorInterface *transliterator,
+  void AppendFixedResult(Transliterators::Transliterator transliterator,
                          string *result) const;
 
   // Get possible results from current chunk
-  void GetExpandedResults(const TransliteratorInterface *transliterator,
-                          set<string> *results) const;
+  void GetExpandedResults(set<string> *results) const;
   bool IsFixed() const;
 
   // True if IsAppendable() is true and this object is fixed (|pending_|=="")
   // when |input| is appended.
   bool IsConvertible(
-      const TransliteratorInterface *transliterator,
+      Transliterators::Transliterator transliterator,
       const Table *table,
       const string &input) const;
 
@@ -91,12 +91,12 @@ class CharChunk {
 
   // Return true if this char chunk accepts additional characters with
   // the specified transliterator and the table.
-  bool IsAppendable(const TransliteratorInterface *transliterator,
+  bool IsAppendable(Transliterators::Transliterator transliterator,
                     const Table *table) const;
 
   // Split CharChunk at |position| and set split new chunk to |left_new_chunk|.
   // CharChunk doesn't have ownership of the new chunk.
-  bool SplitChunk(const TransliteratorInterface *transliterator,
+  bool SplitChunk(Transliterators::Transliterator transliterator,
                   size_t position,
                   CharChunk **left_new_chunk);
 
@@ -111,9 +111,28 @@ class CharChunk {
                                 string *converted_char);
   void AddCompositionInput(CompositionInput *input);
 
-  void SetTransliterator(const TransliteratorInterface *transliterator);
-  const TransliteratorInterface *GetTransliterator(
-      const TransliteratorInterface *transliterator) const;
+  void SetTransliterator(Transliterators::Transliterator transliterator);
+
+  // Gets a transliterator basing on the given |transliterator|.
+  // - If |transliterator| is |Transliterators::LOCAL|, the local transliterator
+  //   is returned. But if NO_TRANSLITERATION attribute is set,
+  //   |Transliterators::CONVERSION_STRING| is returned.
+  //   This behavior is for mobile. Without this behavior, raw string is used
+  //   on unexpected situation. For example, on 12keys-toggle-alphabet mode,
+  //   a user types "2223" to get "cd". In this case local transliterator is
+  //   HALF_ASCII and HALF_ASCII transliterator uses raw string
+  //   so withtout NO_TRANSLITERATION a user will get "2223" as preedit.
+  // - If |transliterator| is not LOCAL, given |transliterator| is returned.
+  //   But if NO_TRANSLITERATION attribute is set and |transliterator| is
+  //   HALF_ASCII or FULL_ASCII, |Transliterators::CONVERSION_STRING|
+  //   is returned.
+  //   NO_TRANSLITERATION means that raw input is (basically) meaningless
+  //   so HALF_ASCII and FULL_ASCII, which uses raw input, should not be used.
+  Transliterators::Transliterator GetTransliterator(
+      Transliterators::Transliterator transliterator) const;
+
+  string Transliterate(Transliterators::Transliterator transliterator,
+                       const string &raw, const string &converted) const;
 
   // Test only
   const string &raw() const;
@@ -142,8 +161,9 @@ class CharChunk {
 
  private:
   FRIEND_TEST(CharChunkTest, Clone);
+  FRIEND_TEST(CharChunkTest, GetTransliterator);
 
-  const TransliteratorInterface *transliterator_;
+  Transliterators::Transliterator transliterator_;
   const Table *table_;
 
   string raw_;

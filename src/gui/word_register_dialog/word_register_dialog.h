@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -113,7 +113,7 @@ class WordRegisterDialog : public QDialog,
   scoped_ptr<mozc::user_dictionary::UserDictionarySession> session_;
   scoped_ptr<client::ClientInterface> client_;
   QString window_title_;
-  const UserPOSInterface *user_pos_;
+  scoped_ptr<const UserPOSInterface> user_pos_;
 };
 }  // namespace mozc::gui
 }  // namespace mozc

@@ -1,4 +1,4 @@
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -80,7 +80,8 @@
         'config_handler',
       ],
       'conditions': [
-        ['target_platform=="Android"', {
+        ['(target_platform=="Android") or '
+         '(target_platform=="NaCl" and _toolset=="target")', {
           'dependencies': [
             'config_handler',
             'config_protocol',

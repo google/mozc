@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,12 +27,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "rewriter/normalization_rewriter.h"
+
 #include <string>
 
-#include "base/util.h"
+#include "base/system_util.h"
 #include "converter/conversion_request.h"
 #include "converter/segments.h"
-#include "rewriter/normalization_rewriter.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
@@ -58,7 +59,7 @@ class NormalizationRewriterTest : public testing::Test {
   ~NormalizationRewriterTest() {}
 
   virtual void SetUp() {
-    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
   }
 
   virtual void TearDown() {}
@@ -88,7 +89,7 @@ TEST_F(NormalizationRewriterTest, NormalizationTest) {
   //  AddSegment("なみ", "〜", &segments);
   AddSegment("\xE3\x81\xAA\xE3\x81\xBF",
              "\xE3\x80\x9C", &segments);
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   EXPECT_TRUE(normalization_rewriter.Rewrite(request, &segments));
   // U+FF5E
   //  EXPECT_EQ("～", segments.segment(0).candidate(0).value);

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,19 +29,24 @@
 
 #include "rewriter/number_rewriter.h"
 
+#include <cstddef>
 #include <string>
 
-#include "base/base.h"
 #include "base/logging.h"
+#include "base/port.h"
+#include "base/system_util.h"
 #include "base/util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/conversion_request.h"
 #include "converter/segments.h"
+#ifdef MOZC_USE_PACKED_DICTIONARY
+#include "data_manager/packed/packed_data_manager.h"
+#include "data_manager/packed/packed_data_mock.h"
+#endif  // MOZC_USE_PACKED_DICTIONARY
 #include "data_manager/user_pos_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "session/commands.pb.h"
-#include "session/request_handler.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
@@ -118,11 +123,26 @@ class NumberRewriterTest : public testing::Test {
   NumberRewriterTest() {}
 
   virtual void SetUp() {
-    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+#ifdef MOZC_USE_PACKED_DICTIONARY
+    // Registers mocked PackedDataManager.
+    scoped_ptr<packed::PackedDataManager>
+        data_manager(new packed::PackedDataManager());
+    CHECK(data_manager->Init(string(kPackedSystemDictionary_data,
+                                    kPackedSystemDictionary_size)));
+    packed::RegisterPackedDataManager(data_manager.release());
+#endif  // MOZC_USE_PACKED_DICTIONARY
+
+    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     config::Config default_config;
     config::ConfigHandler::GetDefaultConfig(&default_config);
     config::ConfigHandler::SetConfig(default_config);
     pos_matcher_ = UserPosManager::GetUserPosManager()->GetPOSMatcher();
+  }
+  virtual void TearDown() {
+#ifdef MOZC_USE_PACKED_DICTIONARY
+    // Unregisters mocked PackedDataManager.
+    packed::RegisterPackedDataManager(NULL);
+#endif  // MOZC_USE_PACKED_DICTIONARY
   }
 
   NumberRewriter *CreateNumberRewriter() {
@@ -130,6 +150,7 @@ class NumberRewriterTest : public testing::Test {
   }
 
   const POSMatcher *pos_matcher_;
+  const ConversionRequest default_request_;
 };
 
 namespace {
@@ -152,7 +173,7 @@ TEST_F(NumberRewriterTest, BasicTest) {
   candidate->value = "012";
   candidate->content_value = "012";
 
-  EXPECT_TRUE(number_rewriter->Rewrite(ConversionRequest(), &segments));
+  EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
 
   const ExpectResult kExpectResults[] = {
     {"012", "012", ""},
@@ -226,7 +247,7 @@ TEST_F(NumberRewriterTest, RequestType) {
     candidate->rid = pos_matcher_->GetNumberId();
     candidate->value = "012";
     candidate->content_value = "012";
-    EXPECT_TRUE(number_rewriter->Rewrite(ConversionRequest(), &segments));
+    EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
     EXPECT_EQ(test_data.expected_candidate_number_, seg->candidates_size());
   }
 }
@@ -243,7 +264,7 @@ TEST_F(NumberRewriterTest, BasicTestWithSuffix) {
   candidate->value = "012""\xE3\x81\x8C";   // "012が"
   candidate->content_value = "012";
 
-  EXPECT_TRUE(number_rewriter->Rewrite(ConversionRequest(), &segments));
+  EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
 
   const ExpectResult kExpectResults[] = {
     // "012"
@@ -301,7 +322,7 @@ TEST_F(NumberRewriterTest, BasicTestWithNumberSuffix) {
   candidate->value = "\xE5\x8D\x81\xE4\xBA\x94\xE5\x80\x8B";  // "十五個"
   candidate->content_value = "\xE5\x8D\x81\xE4\xBA\x94\xE5\x80\x8B";  // ditto
 
-  EXPECT_TRUE(number_rewriter->Rewrite(ConversionRequest(), &segments));
+  EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
 
   EXPECT_EQ(2, seg->candidates_size());
 
@@ -336,7 +357,7 @@ TEST_F(NumberRewriterTest, TestWithMultipleNumberSuffix) {
   candidate->value = "\xE5\x8D\x81\xE4\xBA\x94\xE9\x9A\x8E";  // "十五階"
   candidate->content_value = "\xE5\x8D\x81\xE4\xBA\x94\xE9\x9A\x8E";  // ditto
 
-  EXPECT_TRUE(number_rewriter->Rewrite(ConversionRequest(), &segments));
+  EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
 
   EXPECT_EQ(4, seg->candidates_size());
 
@@ -368,46 +389,45 @@ TEST_F(NumberRewriterTest, TestWithMultipleNumberSuffix) {
 TEST_F(NumberRewriterTest, SpecialFormBoundaries) {
   scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
   Segments segments;
-  const ConversionRequest request;
 
   // Special forms doesn't have zeros.
   Segment *seg = SetupSegments("0", &segments);
-  EXPECT_TRUE(number_rewriter->Rewrite(request, &segments));
+  EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
   EXPECT_FALSE(HasDescription(*seg, kMaruNumberDescription));
   EXPECT_FALSE(HasDescription(*seg, kRomanCapitalDescription));
   EXPECT_FALSE(HasDescription(*seg, kRomanNoCapitalDescription));
 
   // "1" has special forms.
   seg = SetupSegments("1", &segments);
-  EXPECT_TRUE(number_rewriter->Rewrite(request, &segments));
+  EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
   EXPECT_TRUE(HasDescription(*seg, kMaruNumberDescription));
   EXPECT_TRUE(HasDescription(*seg, kRomanCapitalDescription));
   EXPECT_TRUE(HasDescription(*seg, kRomanNoCapitalDescription));
 
   // "12" has every special forms.
   seg = SetupSegments("12", &segments);
-  EXPECT_TRUE(number_rewriter->Rewrite(request, &segments));
+  EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
   EXPECT_TRUE(HasDescription(*seg, kMaruNumberDescription));
   EXPECT_TRUE(HasDescription(*seg, kRomanCapitalDescription));
   EXPECT_TRUE(HasDescription(*seg, kRomanNoCapitalDescription));
 
   // "13" doesn't have roman forms.
   seg = SetupSegments("13", &segments);
-  EXPECT_TRUE(number_rewriter->Rewrite(request, &segments));
+  EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
   EXPECT_TRUE(HasDescription(*seg, kMaruNumberDescription));
   EXPECT_FALSE(HasDescription(*seg, kRomanCapitalDescription));
   EXPECT_FALSE(HasDescription(*seg, kRomanNoCapitalDescription));
 
   // "50" has circled numerics.
   seg = SetupSegments("50", &segments);
-  EXPECT_TRUE(number_rewriter->Rewrite(request, &segments));
+  EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
   EXPECT_TRUE(HasDescription(*seg, kMaruNumberDescription));
   EXPECT_FALSE(HasDescription(*seg, kRomanCapitalDescription));
   EXPECT_FALSE(HasDescription(*seg, kRomanNoCapitalDescription));
 
   // "51" doesn't have special forms.
   seg = SetupSegments("51", &segments);
-  EXPECT_TRUE(number_rewriter->Rewrite(request, &segments));
+  EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
   EXPECT_FALSE(HasDescription(*seg, kMaruNumberDescription));
   EXPECT_FALSE(HasDescription(*seg, kRomanCapitalDescription));
   EXPECT_FALSE(HasDescription(*seg, kRomanNoCapitalDescription));
@@ -433,7 +453,7 @@ TEST_F(NumberRewriterTest, OneOfCandidatesIsEmpty) {
   second_candidate->rid = pos_matcher_->GetNumberId();
   second_candidate->content_value = second_candidate->value;
 
-  EXPECT_TRUE(number_rewriter->Rewrite(ConversionRequest(), &segments));
+  EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
 
   EXPECT_EQ("", seg->candidate(0).value);
   EXPECT_EQ("", seg->candidate(0).content_value);
@@ -478,7 +498,7 @@ TEST_F(NumberRewriterTest, RewriteDoesNotHappen) {
   candidate->content_value = candidate->value;
 
   // Number rewrite should not occur
-  EXPECT_FALSE(number_rewriter->Rewrite(ConversionRequest(), &segments));
+  EXPECT_FALSE(number_rewriter->Rewrite(default_request_, &segments));
 
   // Number of cahdidates should be maintained
   EXPECT_EQ(1, seg->candidates_size());
@@ -498,7 +518,7 @@ TEST_F(NumberRewriterTest, NumberIsZero) {
   candidate->value = "0";
   candidate->content_value = "0";
 
-  EXPECT_TRUE(number_rewriter->Rewrite(ConversionRequest(), &segments));
+  EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
 
   EXPECT_EQ(4, seg->candidates_size());
 
@@ -540,7 +560,7 @@ TEST_F(NumberRewriterTest, NumberIsZeroZero) {
   candidate->value = "00";
   candidate->content_value = "00";
 
-  EXPECT_TRUE(number_rewriter->Rewrite(ConversionRequest(), &segments));
+  EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
 
   EXPECT_EQ(4, seg->candidates_size());
 
@@ -580,7 +600,7 @@ TEST_F(NumberRewriterTest, NumberIs19Digit) {
   candidate->value = "1000000000000000000";
   candidate->content_value = "1000000000000000000";
 
-  EXPECT_TRUE(number_rewriter->Rewrite(ConversionRequest(), &segments));
+  EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
 
   const ExpectResult kExpectResults[] = {
     {"1000000000000000000", "1000000000000000000", ""},
@@ -664,7 +684,7 @@ TEST_F(NumberRewriterTest, NumberIsGreaterThanUInt64Max) {
   candidate->value = "18446744073709551616";  // 2^64
   candidate->content_value = "18446744073709551616";
 
-  EXPECT_TRUE(number_rewriter->Rewrite(ConversionRequest(), &segments));
+  EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
 
   const ExpectResult kExpectResults[] = {
     {"18446744073709551616", "18446744073709551616", ""},
@@ -776,7 +796,7 @@ TEST_F(NumberRewriterTest, NumberIsGoogol) {
   candidate->value = input;
   candidate->content_value = input;
 
-  EXPECT_TRUE(number_rewriter->Rewrite(ConversionRequest(), &segments));
+  EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
 
   EXPECT_EQ(6, seg->candidates_size());
 
@@ -855,7 +875,7 @@ TEST_F(NumberRewriterTest, RankingForKanjiCandidate) {
     candidate->content_value = "\xe4\xb8\x89\xe7\x99\xbe";
   }
 
-  EXPECT_TRUE(number_rewriter->Rewrite(ConversionRequest(), &segments));
+  EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
   EXPECT_NE(0, segments.segments_size());
   int kanji_pos = 0, arabic_pos = 0;
   // "三百"
@@ -902,7 +922,7 @@ TEST_F(NumberRewriterTest, ModifyExsistingRanking) {
     candidate->content_value = "\xe4\xb8\x89\xe7\x99\xbe";
   }
 
-  EXPECT_TRUE(number_rewriter->Rewrite(ConversionRequest(), &segments));
+  EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
   int kanji_pos = 0, old_kanji_pos = 0;
   EXPECT_NE(0, segments.segments_size());
   // "三百"
@@ -950,7 +970,7 @@ TEST_F(NumberRewriterTest, EraseExistingCandidates) {
     candidate->content_value = "\xe4\xb8\x80";
   }
 
-  EXPECT_TRUE(number_rewriter->Rewrite(ConversionRequest(), &segments));
+  EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
 
   // "一" become the base candidate, instead of "壱"
   int base_pos = 0;
@@ -971,7 +991,6 @@ TEST_F(NumberRewriterTest, EraseExistingCandidates) {
 
 TEST_F(NumberRewriterTest, SeparatedArabicsTest) {
   scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
-  const ConversionRequest request;
 
   // Expected data to succeed tests.
   const char* kSuccess[][3] = {
@@ -996,7 +1015,7 @@ TEST_F(NumberRewriterTest, SeparatedArabicsTest) {
     candidate->rid = pos_matcher_->GetNumberId();
     candidate->value = kSuccess[i][0];
     candidate->content_value = kSuccess[i][0];
-    EXPECT_TRUE(number_rewriter->Rewrite(request, &segments));
+    EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
     EXPECT_TRUE(FindValue(segments.segment(0), kSuccess[i][1]))
         << "Input : " << kSuccess[i][0];
     EXPECT_TRUE(FindValue(segments.segment(0), kSuccess[i][2]))
@@ -1023,7 +1042,7 @@ TEST_F(NumberRewriterTest, SeparatedArabicsTest) {
     candidate->rid = pos_matcher_->GetNumberId();
     candidate->value = kFail[i][0];
     candidate->content_value = kFail[i][0];
-    EXPECT_TRUE(number_rewriter->Rewrite(request, &segments));
+    EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
     EXPECT_FALSE(FindValue(segments.segment(0), kFail[i][1]))
         << "Input : " << kFail[i][0];
     EXPECT_FALSE(FindValue(segments.segment(0), kFail[i][2]))
@@ -1059,7 +1078,7 @@ TEST_F(NumberRewriterTest, PreserveUserDictionaryAttibute) {
           Segment::Candidate::NO_VARIANTS_EXPANSION;
     }
 
-    EXPECT_TRUE(number_rewriter->Rewrite(ConversionRequest(), &segments));
+    EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
     bool base_candidate_found = false;
     {
       const Segment &segment = segments.segment(0);
@@ -1112,20 +1131,24 @@ TEST_F(NumberRewriterTest, DuplicateCandidateTest) {
     candidate->content_value = "\xe4\xb8\x80";
   }
 
-  EXPECT_TRUE(number_rewriter->Rewrite(ConversionRequest(), &segments));
+  EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
 }
 
 TEST_F(NumberRewriterTest, MobileEnvironmentTest) {
   commands::Request input;
   scoped_ptr<NumberRewriter> rewriter(CreateNumberRewriter());
 
-  input.set_mixed_conversion(true);
-  commands::RequestHandler::SetRequest(input);
-  EXPECT_EQ(RewriterInterface::ALL, rewriter->capability());
+  {
+    input.set_mixed_conversion(true);
+    const ConversionRequest request(NULL, &input);
+    EXPECT_EQ(RewriterInterface::ALL, rewriter->capability(request));
+  }
 
-  input.set_mixed_conversion(false);
-  commands::RequestHandler::SetRequest(input);
-  EXPECT_EQ(RewriterInterface::CONVERSION, rewriter->capability());
+  {
+    input.set_mixed_conversion(false);
+    const ConversionRequest request(NULL, &input);
+    EXPECT_EQ(RewriterInterface::CONVERSION, rewriter->capability(request));
+  }
 }
 
 }  // namespace mozc

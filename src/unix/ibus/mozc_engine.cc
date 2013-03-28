@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,11 +37,13 @@
 #include <sstream>
 #include <string>
 
-#include "base/base.h"
 #include "base/const.h"
+#include "base/file_util.h"
+#include "base/logging.h"
 #include "base/protobuf/descriptor.h"
 #include "base/protobuf/message.h"
 #include "base/singleton.h"
+#include "base/system_util.h"
 #include "base/util.h"
 #include "config/config.pb.h"
 #include "session/commands.pb.h"
@@ -234,7 +236,6 @@ MozcEngine::MozcEngine()
 #endif  // ENABLE_GTK_RENDERER
       ibus_candidate_window_handler_(new IBusCandidateWindowHandler()),
       preedit_method_(config::Config::ROMAN) {
-
   // Currently client capability is fixed.
   commands::Capability capability;
   capability.set_text_deletion(commands::Capability::DELETE_PRECEDING_TEXT);
@@ -285,6 +286,7 @@ void MozcEngine::CursorUp(IBusEngine *engine) {
 void MozcEngine::Disable(IBusEngine *engine) {
   RevertSession(engine);
   GetCandidateWindowHandler(engine)->Hide(engine);
+  key_event_handler_->Clear();
 }
 
 void MozcEngine::Enable(IBusEngine *engine) {
@@ -810,9 +812,9 @@ CandidateWindowHandlerInterface *MozcEngine::GetCandidateWindowHandler(
   }
 
   // TODO(nona): integrate with renderer/renderer_client.cc
-  const string renderer_path = mozc::Util::JoinPath(
-      mozc::Util::GetServerDirectory(), "mozc_renderer");
-  if (!Util::FileExists(renderer_path)) {
+  const string renderer_path = FileUtil::JoinPath(
+      SystemUtil::GetServerDirectory(), "mozc_renderer");
+  if (!FileUtil::FileExists(renderer_path)) {
     return ibus_candidate_window_handler_.get();
   }
 

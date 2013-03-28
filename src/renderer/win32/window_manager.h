@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,10 +31,9 @@
 #define MOZC_RENDERER_WIN32_WINDOW_MANAGER_H_
 
 #include <windows.h>
-#include <string>
 
-#include "base/base.h"
-#include "base/mutex.h"
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 
 namespace mozc {
 
@@ -52,6 +51,8 @@ namespace win32 {
 class CandidateWindow;
 class CompositionWindowList;
 class InfolistWindow;
+class LayoutManager;
+class WorkingAreaInterface;
 
 // This class is the controller of the candidate windows.
 class WindowManager {
@@ -63,10 +64,11 @@ class WindowManager {
   void AsyncQuitAllWindows();
   void DestroyAllWindows();
   void HideAllWindows();
-  void UpdateLayout(const commands::RendererCommand &command);
+  void UpdateLayoutIMM32(const commands::RendererCommand &command);
+  void UpdateLayoutTSF(const commands::RendererCommand &command);
   bool IsAvailable() const;
   void SetSendCommandInterface(
-     client::SendCommandInterface *send_command_interface);
+      client::SendCommandInterface *send_command_interface);
   void PreTranslateMessage(const MSG &message);
 
  private:
@@ -74,6 +76,8 @@ class WindowManager {
   scoped_ptr<CandidateWindow> cascading_window_;
   scoped_ptr<CompositionWindowList> composition_window_list_;
   scoped_ptr<InfolistWindow> infolist_window_;
+  scoped_ptr<LayoutManager> layout_manager_;
+  scoped_ptr<WorkingAreaInterface> working_area_;
   client::SendCommandInterface *send_command_interface_;
   POINT last_position_;
   int candidates_finger_print_;
@@ -81,6 +85,7 @@ class WindowManager {
 
   DISALLOW_COPY_AND_ASSIGN(WindowManager);
 };
+
 }  // namespace win32
 }  // namespace renderer
 }  // namespace mozc

@@ -1,4 +1,4 @@
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -41,21 +41,6 @@
       ],
     },
     {
-      'target_name': 'codec_test',
-      'type': 'executable',
-      'sources': [
-        'codec_test.cc',
-      ],
-      'dependencies': [
-        'codec',
-        '../../base/base.gyp:base_core',
-        '../../testing/testing.gyp:gtest_main',
-      ],
-      'variables': {
-        'test_size': 'small',
-      },
-    },
-    {
       'target_name': 'dictionary_file',
       'type': 'static_library',
       'toolsets': ['target', 'host'],
@@ -77,30 +62,6 @@
       'dependencies': [
         'codec',
         '../../base/base.gyp:base_core',
-      ],
-    },
-    {
-      'target_name': 'dictionary_file_test',
-      'type': 'executable',
-      'sources': [
-        'dictionary_file_test.cc',
-      ],
-      'dependencies': [
-        'dictionary_file',
-        'dictionary_file_builder',
-        '../../base/base.gyp:base_core',
-        '../../testing/testing.gyp:gtest_main',
-      ],
-      'variables': {
-        'test_size': 'small',
-      },
-    },
-    {
-      'target_name': 'dictionary_file_all_test',
-      'type': 'none',
-      'dependencies': [
-        'codec_test',
-        'dictionary_file_test',
       ],
     },
   ],

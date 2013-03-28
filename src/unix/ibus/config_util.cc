@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,13 +32,13 @@
 #include <map>
 
 #include "base/base.h"
-#include "base/singleton.h"
+#include "base/logging.h"
 #include "base/protobuf/descriptor.h"
+#include "base/singleton.h"
 
 namespace mozc {
 namespace ibus {
-#if IBUS_CHECK_VERSION(1, 3, 99)
-// IBus-1.4 uses Glib's GVariant for configration.
+
 bool ConfigUtil::GetString(GVariant *value, const gchar **out_string) {
   if (g_variant_classify(value) != G_VARIANT_CLASS_STRING) {
     return false;
@@ -62,39 +62,9 @@ bool ConfigUtil::GetBoolean(GVariant *value, gboolean *out_boolean) {
   *out_boolean = g_variant_get_boolean(value);
   return true;
 }
-#else
-// IBus-1.2 and 1.3 use GValue for configration.
-bool ConfigUtil::GetString(GValue *value, const gchar **out_string) {
-  if (!G_VALUE_HOLDS_STRING(value)) {
-    return false;
-  }
-  *out_string = g_value_get_string(value);
-  return true;
-}
-
-bool ConfigUtil::GetInteger(GValue *value, gint *out_integer) {
-  if (!G_VALUE_HOLDS_INT(value)) {
-    return false;
-  }
-  *out_integer = g_value_get_int(value);
-  return true;
-}
-
-bool ConfigUtil::GetBoolean(GValue *value, gboolean *out_boolean) {
-  if (!G_VALUE_HOLDS_BOOLEAN(value)) {
-    return false;
-  }
-  *out_boolean = g_value_get_boolean(value);
-  return true;
-}
-#endif
 
 bool ConfigUtil::SetFieldForName(const gchar *name,
-#if IBUS_CHECK_VERSION(1, 3, 99)
                                  GVariant *value,
-#else
-                                 GValue *value,
-#endif
                                  protobuf::Message *result) {
   if (!name || !value) {
     LOG(ERROR) << "name or value is not specified";
@@ -188,8 +158,7 @@ bool ConfigUtil::SetFieldForName(const gchar *name,
 void ConfigUtil::InitConfig(IBusConfig* config,
                             const char *section_name,
                             const map<string, const char*> &name_to_field) {
-#if IBUS_CHECK_VERSION(1, 4, 0)
-  // Following configuration codes are only for ChromeOS and IBus >= 1.4.
+  // Following configuration codes are only for ChromeOS.
   // On Linux, we can use GUI configuration tools.
   GVariant *values = ibus_config_get_values(config, section_name);
   if (!values) {
@@ -213,7 +182,6 @@ void ConfigUtil::InitConfig(IBusConfig* config,
     g_free(name);
   }
   g_variant_unref(values);
-#endif
 }
 
 #endif  // OS_CHROMEOS

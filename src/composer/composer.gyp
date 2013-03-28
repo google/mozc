@@ -1,4 +1,4 @@
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,6 +28,11 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 {
+  'variables': {
+    'mozc_dir': '..',
+    'relative_dir': 'composer',
+    'gen_out_dir': '<(SHARED_INTERMEDIATE_DIR)/<(relative_dir)',
+  },
   'targets': [
     {
       'target_name': 'composer',
@@ -40,18 +45,20 @@
         'internal/converter.cc',
         'internal/mode_switching_handler.cc',
         'internal/transliterators.cc',
-        'internal/transliterators_ja.cc',
+        'internal/typing_corrector.cc',
+        'internal/typing_model.cc',
         'table.cc',
       ],
       'dependencies': [
+        'embedded_typing_model#host',
         '../base/base.gyp:base',
         '../base/base.gyp:config_file_stream',
         '../config/config.gyp:character_form_manager',
         '../config/config.gyp:config_handler',
         '../config/config.gyp:config_protocol',
+        '../protobuf/protobuf.gyp:protobuf',
         '../session/session_base.gyp:key_event_util',
         '../session/session_base.gyp:key_parser',
-        '../session/session_base.gyp:request_handler',
         # This is needed. GYP is not smart enough about indirect dependencies.
         '../session/session_base.gyp:session_protocol',
         '../transliteration/transliteration.gyp:transliteration',
@@ -67,8 +74,8 @@
         'internal/composition_test.cc',
         'internal/converter_test.cc',
         'internal/mode_switching_handler_test.cc',
-        'internal/transliterators_ja_test.cc',
         'internal/transliterators_test.cc',
+        'internal/typing_corrector_test.cc',
         'table_test.cc',
       ],
       'dependencies': [
@@ -90,6 +97,150 @@
       'dependencies': [
         'composer_test',
       ],
+    },
+    {
+      'target_name': 'gen_typing_model',
+      'type': 'none',
+      'toolsets': ['host'],
+      'actions': [
+        {
+          'action_name': 'gen_qwerty_mobile-hiragana_typing_model',
+          'variables': {
+            'input_files': [
+              '<(mozc_dir)/data/typing/typing_model_qwerty_mobile-hiragana.tsv',
+            ],
+          },
+          'inputs': [
+            '<(mozc_dir)/composer/internal/gen_typing_model.py',
+            '<@(input_files)',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/internal/typing_model_qwerty_mobile-hiragana.h',
+          ],
+          'action': [
+            'python',
+            '<(mozc_dir)/composer/internal/gen_typing_model.py',
+            '--input_path',
+            '<@(input_files)',
+            '--output_path',
+            '<@(_outputs)',
+            '--variable_name',
+            'QwertyMobileHiragana'
+          ],
+        },
+        {
+          'action_name': 'gen_12keys-hiragana_typing_model',
+          'variables': {
+            'input_files': [
+              '<(mozc_dir)/data/typing/typing_model_12keys-hiragana.tsv',
+            ],
+          },
+          'inputs': [
+            '<(mozc_dir)/composer/internal/gen_typing_model.py',
+            '<@(input_files)',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/internal/typing_model_12keys-hiragana.h',
+          ],
+          'action': [
+            'python',
+            '<(mozc_dir)/composer/internal/gen_typing_model.py',
+            '--input_path',
+            '<@(input_files)',
+            '--output_path',
+            '<@(_outputs)',
+            '--variable_name',
+            '12keysHiragana'
+          ],
+        },
+        {
+          'action_name': 'gen_flick-hiragana_typing_model',
+          'variables': {
+            'input_files': [
+              '<(mozc_dir)/data/typing/typing_model_flick-hiragana.tsv',
+            ],
+          },
+          'inputs': [
+            '<(mozc_dir)/composer/internal/gen_typing_model.py',
+            '<@(input_files)',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/internal/typing_model_flick-hiragana.h',
+          ],
+          'action': [
+            'python',
+            '<(mozc_dir)/composer/internal/gen_typing_model.py',
+            '--input_path',
+            '<@(input_files)',
+            '--output_path',
+            '<@(_outputs)',
+            '--variable_name',
+            'FlickHiragana'
+          ],
+        },
+        {
+          'action_name': 'gen_godan-hiragana_typing_model',
+          'variables': {
+            'input_files': [
+              '<(mozc_dir)/data/typing/typing_model_godan-hiragana.tsv',
+            ],
+          },
+          'inputs': [
+            '<(mozc_dir)/composer/internal/gen_typing_model.py',
+            '<@(input_files)',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/internal/typing_model_godan-hiragana.h',
+          ],
+          'action': [
+            'python',
+            '<(mozc_dir)/composer/internal/gen_typing_model.py',
+            '--input_path',
+            '<@(input_files)',
+            '--output_path',
+            '<@(_outputs)',
+            '--variable_name',
+            'GodanHiragana'
+          ],
+        },
+        {
+          'action_name': 'gen_toggle_flick-hiragana_typing_model',
+          'variables': {
+            'input_files': [
+              '<(mozc_dir)/data/typing/typing_model_toggle_flick-hiragana.tsv',
+            ],
+          },
+          'inputs': [
+            '<(mozc_dir)/composer/internal/gen_typing_model.py',
+            '<@(input_files)',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/internal/typing_model_toggle_flick-hiragana.h',
+          ],
+          'action': [
+            'python',
+            '<(mozc_dir)/composer/internal/gen_typing_model.py',
+            '--input_path',
+            '<@(input_files)',
+            '--output_path',
+            '<@(_outputs)',
+            '--variable_name',
+            'ToggleFlickHiragana'
+          ],
+        },
+      ],
+    },
+    {
+      'target_name': 'embedded_typing_model',
+      'type': 'none',
+      'toolsets': ['host'],
+      'hard_dependency': 1,
+      'dependencies': [
+        'gen_typing_model#host',
+      ],
+      'export_dependent_settings': [
+        'gen_typing_model#host',
+      ]
     },
   ],
 }

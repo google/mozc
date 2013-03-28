@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -71,6 +71,7 @@ void Segment::Candidate::CopyFrom(const Candidate &src) {
   value = src.value;
   content_key = src.content_key;
   content_value = src.content_value;
+  consumed_key_size = src.consumed_key_size;
 
   prefix = src.prefix;
   suffix = src.suffix;
@@ -89,6 +90,59 @@ void Segment::Candidate::CopyFrom(const Candidate &src) {
 
   style = src.style;
   command = src.command;
+
+  inner_segment_boundary = src.inner_segment_boundary;
+}
+
+bool Segment::Candidate::IsValid() const {
+  if (!inner_segment_boundary.empty()) {
+    // The sums of the lengths of key and value components must coincide with
+    // those of key and value, respectively.
+    size_t sum_key_len = 0, sum_value_len = 0;
+    for (size_t i = 0; i < inner_segment_boundary.size(); ++i) {
+      sum_key_len += inner_segment_boundary[i].first;
+      sum_value_len += inner_segment_boundary[i].second;
+    }
+    if (sum_key_len != Util::CharsLen(key) ||
+        sum_value_len != Util::CharsLen(value)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+string Segment::Candidate::DebugString() const {
+  stringstream os;
+  os << "(key=" << key
+     << " ckey=" << content_key
+     << " val=" << value
+     << " cval=" << content_value
+     << " cost=" << cost
+     << " scost=" << structure_cost
+     << " wcost=" << wcost
+     << " lid=" << lid
+     << " rid=" << rid
+     << " attributes=" << attributes
+     << " consumed_key_size=" << consumed_key_size;
+  if (!prefix.empty()) {
+    os << " prefix=" << prefix;
+  }
+  if (!suffix.empty()) {
+    os << " suffix=" << suffix;
+  }
+  if (!description.empty()) {
+    os << " description=" << description;
+  }
+  if (!inner_segment_boundary.empty()) {
+    os << " segbdd=";
+    for (size_t i = 0; i < inner_segment_boundary.size(); ++i) {
+      os << Util::StringPrintf("<%d,%d>",
+                               inner_segment_boundary[i].first,
+                               inner_segment_boundary[i].second);
+    }
+  }
+  os << ")" << endl;
+  return os.str();
 }
 
 Segment::Segment()
@@ -99,10 +153,6 @@ Segment::~Segment() {}
 
 Segment::SegmentType Segment::segment_type() const {
   return segment_type_;
-}
-
-Segment::SegmentType *Segment::mutable_segment_type() {
-  return &segment_type_;
 }
 
 void Segment::set_segment_type(
@@ -122,6 +172,7 @@ const Segment::Candidate &Segment::candidate(int i) const {
   if (i < 0) {
     return meta_candidate(-i-1);
   }
+  DCHECK(i < candidates_.size());
   return *candidates_[i];
 }
 
@@ -327,6 +378,25 @@ void Segment::CopyFrom(const Segment &src) {
   }
 }
 
+string Segment::DebugString() const {
+  stringstream os;
+  os << "[segtype=" << segment_type()
+     << " key=" << key() << endl;
+  const int size =
+      static_cast<int>(candidates_size() + meta_candidates_size());
+  for (int l = 0; l < size; ++l) {
+    int j = 0;
+    if (l < meta_candidates_size()) {
+      j = -l - 1;
+    } else {
+      j = l - meta_candidates_size();
+    }
+    os << "    cand " << j << " " << candidate(j).DebugString();
+  }
+  os << "]" << endl;
+  return os.str();
+}
+
 void Segments::RevertEntry::CopyFrom(const RevertEntry &src) {
   revert_entry_type = src.revert_entry_type;
   id = src.id;
@@ -346,6 +416,14 @@ Segments::Segments()
 
 Segments::~Segments() {}
 
+Segments::RequestType Segments::request_type() const {
+  return request_type_;
+}
+
+void Segments::set_request_type(Segments::RequestType request_type) {
+  request_type_ = request_type;
+}
+
 void Segments::set_user_history_enabled(bool user_history_enabled) {
   user_history_enabled_ = user_history_enabled;
 }
@@ -354,13 +432,6 @@ bool Segments::user_history_enabled() const {
   return user_history_enabled_;
 }
 
-Segments::RequestType Segments::request_type() const {
-  return request_type_;
-}
-
-void Segments::set_request_type(Segments::RequestType request_type) {
-  request_type_ = request_type;
-}
 
 const Segment &Segments::segment(size_t i) const {
   return *segments_[i];
@@ -614,46 +685,12 @@ Lattice *Segments::mutable_cached_lattice() {
 
 string Segments::DebugString() const {
   stringstream os;
-  os << "(" << endl;
-  for (size_t i = 0; i < this->segments_size(); ++i) {
-    const mozc::Segment &seg = this->segment(i);
-    os << " (key " << seg.segment_type()
-       << " " << seg.key() << endl;
-    for (int l = 0;
-         l < static_cast<int>(seg.candidates_size() +
-                              seg.meta_candidates_size());
-         ++l) {
-      int j = 0;
-      if (l < seg.meta_candidates_size()) {
-        j = -l-1;
-      } else {
-        j = l - seg.meta_candidates_size();
-      }
-      const Segment::Candidate &cand = seg.candidate(j);
-      os << "   (value " << j << " " << cand.value << " "
-         << cand.content_value
-         << " key " << cand.key << " "
-         << cand.content_key
-         << " cost=" << cand.cost
-         << " scost=" << cand.structure_cost
-         << " wcost=" << cand.wcost
-         << " lid=" << cand.lid
-         << " rid=" << cand.rid
-         << " attributes=" << cand.attributes;
-      if (!cand.prefix.empty()) {
-        os << " prefix=" << cand.prefix;
-      }
-      if (!cand.suffix.empty()) {
-        os << " suffix=" << cand.suffix;
-      }
-      if (!cand.description.empty()) {
-        os << " description=" << cand.description;
-      }
-      os << ")" << endl;
-    }
+  os << "{" << endl;
+  for (size_t i = 0; i < segments_size(); ++i) {
+    os << "  seg " << i << " " << segment(i).DebugString();
   }
-  os << ")" << endl;
-
+  os << "}" << endl;
   return os.str();
 }
-}   // namespace mozc
+
+}  // namespace mozc

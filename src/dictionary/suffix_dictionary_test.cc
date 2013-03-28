@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,6 +36,7 @@
 #include "converter/node_allocator.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_interface.h"
+#include "dictionary/suffix_dictionary_token.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
@@ -43,7 +44,16 @@ namespace mozc {
 TEST(SuffixDictionaryTest, BasicTest) {
   // Test the SuffixDictionary with mock data.
   testing::MockDataManager manager;
-  const DictionaryInterface *d = manager.GetSuffixDictionary();
+
+  scoped_ptr<const DictionaryInterface> d;
+  {
+    const SuffixToken *tokens = NULL;
+    size_t tokens_size = 0;
+    manager.GetSuffixDictionaryData(&tokens, &tokens_size);
+    d.reset(new SuffixDictionary(tokens, tokens_size));
+    ASSERT_TRUE(d.get());
+  }
+
   NodeAllocator allocator;
 
   // doesn't support prefix/reverse lookup.

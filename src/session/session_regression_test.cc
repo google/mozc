@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,13 +32,13 @@
 
 #include <string>
 
-#include "base/base.h"
+#include "base/file_util.h"
 #include "base/logging.h"
-#include "base/util.h"
+#include "base/port.h"
+#include "base/system_util.h"
 #include "composer/table.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
-#include "converter/converter_interface.h"
 #include "converter/segments.h"
 #include "engine/engine_factory.h"
 #include "engine/engine_interface.h"
@@ -48,17 +48,24 @@
 #include "session/internal/keymap.h"
 #include "session/japanese_session_factory.h"
 #include "session/key_parser.h"
-#include "session/request_test_util.h"
+#include "session/candidates.pb.h"
 #include "session/session.h"
+#include "session/session_factory_manager.h"
 #include "session/session_converter_interface.h"
 #include "session/session_handler.h"
-#include "session/session_test_util.h"
+#include "session/request_test_util.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
+#ifdef OS_ANDROID
+#include "base/mmap.h"
+#include "base/singleton.h"
+#include "data_manager/android/android_data_manager.h"
+#endif
+
+DECLARE_string(test_srcdir);
 DECLARE_string(test_tmpdir);
 DECLARE_bool(use_history_rewriter);
-
 
 namespace mozc {
 
@@ -76,22 +83,62 @@ string GetComposition(const commands::Command &command) {
 }
 
 void InitSessionToPrecomposition(session::Session* session) {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   // Session is created with direct mode on Windows
   // Direct status
   commands::Command command;
   session->IMEOn(&command);
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 }
+
+#ifdef OS_ANDROID
+// In actual libmozc.so usage, the dictionary data will be given via JNI call
+// because only Java side code knows where the data is.
+// On native code unittest, we cannot do it, so instead we mmap the files
+// and use it.
+// Note that this technique works here because the no other test code doesn't
+// link to this binary.
+// TODO(hidehiko): Get rid of this hack by refactoring Engine/DataManager
+// related code.
+class AndroidInitializer {
+ private:
+  AndroidInitializer() {
+    string dictionary_data_path = FileUtil::JoinPath(
+        FLAGS_test_srcdir, "embedded_data/dictionary_data");
+    CHECK(dictionary_mmap_.Open(dictionary_data_path.c_str(), "r"));
+    mozc::android::AndroidDataManager::SetDictionaryData(
+        dictionary_mmap_.begin(), dictionary_mmap_.size());
+
+    string connection_data_path = FileUtil::JoinPath(
+        FLAGS_test_srcdir, "embedded_data/connection_data");
+    CHECK(connection_mmap_.Open(connection_data_path.c_str(), "r"));
+    mozc::android::AndroidDataManager::SetConnectionData(
+        connection_mmap_.begin(), connection_mmap_.size());
+    LOG(ERROR) << "mmap data initialized.";
+  }
+
+  friend class Singleton<AndroidInitializer>;
+
+  Mmap dictionary_mmap_;
+  Mmap connection_mmap_;
+
+  DISALLOW_COPY_AND_ASSIGN(AndroidInitializer);
+};
+#endif  // OS_ANDROID
+
 }  // anonymous namespace
 
 class SessionRegressionTest : public testing::Test {
  protected:
   virtual void SetUp() {
-    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
 
     orig_use_history_rewriter_ = FLAGS_use_history_rewriter;
     FLAGS_use_history_rewriter = true;
+
+#ifdef OS_ANDROID
+    Singleton<AndroidInitializer>::get();
+#endif
 
     // Note: engine must be created after setting all the flags, as it
     // internally depends on global flags, e.g., for creation of rewriters.
@@ -100,12 +147,11 @@ class SessionRegressionTest : public testing::Test {
     session_factory_.reset(new session::JapaneseSessionFactory(engine_.get()));
     session::SessionFactoryManager::SetSessionFactory(session_factory_.get());
 
-    config::Config config;
-    config::ConfigHandler::GetDefaultConfig(&config);
+    config::ConfigHandler::GetDefaultConfig(&config_);
     // TOOD(all): Add a test for the case where
     // use_realtime_conversion is true.
-    config.set_use_realtime_conversion(false);
-    config::ConfigHandler::SetConfig(config);
+    config_.set_use_realtime_conversion(false);
+    config::ConfigHandler::SetConfig(config_);
     handler_.reset(new SessionHandler());
     ResetSession();
     CHECK(session_.get());
@@ -144,8 +190,9 @@ class SessionRegressionTest : public testing::Test {
 
   void ResetSession() {
     session_.reset(static_cast<session::Session *>(handler_->NewSession()));
+    commands::Request request;
     table_.reset(new composer::Table());
-    table_->Initialize();
+    table_->InitializeWithRequestAndConfig(request, config_);
     session_->SetTable(table_.get());
   }
 
@@ -155,6 +202,7 @@ class SessionRegressionTest : public testing::Test {
   scoped_ptr<session::Session> session_;
   scoped_ptr<composer::Table> table_;
   scoped_ptr<session::JapaneseSessionFactory> session_factory_;
+  config::Config config_;
 };
 
 
@@ -247,6 +295,7 @@ TEST_F(SessionRegressionTest, HistoryLearning) {
     EXPECT_FALSE(command.output().has_preedit());
     EXPECT_EQ(candidate2, command.output().result().value());
   }
+
   {  // Second session.  The previous second candidate should be promoted.
     command.Clear();
     InsertCharacterChars("kanji", &command);
@@ -290,77 +339,6 @@ TEST_F(SessionRegressionTest, Undo) {
 
 // TODO(hsumita): This test may be moved to session_test.cc.
 // New converter mock is required if move this test.
-TEST_F(SessionRegressionTest, ConverterHandleHistorySegmentAfterUndo) {
-  // This is an unittest against http://b/3427618
-  InitSessionToPrecomposition(session_.get());
-
-  commands::Capability capability;
-  capability.set_text_deletion(commands::Capability::DELETE_PRECEDING_TEXT);
-  session_->set_client_capability(capability);
-
-  commands::Command command;
-  InsertCharacterChars("kiki", &command);
-  // "危機"
-  const char *kKikiString = "\xE5\x8D\xB1\xE6\xA9\x9F";
-
-  command.Clear();
-  session_->Convert(&command);
-  EXPECT_EQ(1, command.output().preedit().segment_size());
-
-  // Candidate contain "危機" or NOT
-  bool is_convert_success = false;
-  for (size_t i = 0; i < 10; ++i) {
-    if (GetComposition(command) == kKikiString) {
-      is_convert_success = true;
-      break;
-    }
-
-    command.Clear();
-    session_->ConvertNext(&command);
-  }
-  EXPECT_TRUE(is_convert_success);
-  EXPECT_EQ(kKikiString, GetComposition(command));
-
-  command.Clear();
-  session_->Commit(&command);
-  EXPECT_FALSE(command.output().has_preedit());
-  EXPECT_EQ(kKikiString, command.output().result().value());
-
-  Segments segments;
-  session_->context().converter().GetSegments(&segments);
-  EXPECT_EQ(1, segments.history_segments_size());
-  EXPECT_EQ(0, segments.conversion_segments_size());
-  EXPECT_EQ(kKikiString, segments.segment(0).candidate(0).value);
-
-  command.Clear();
-  InsertCharacterChars("ippatsu", &command);
-  // "一髪"
-  const string kIppatsuString = "\xE4\xB8\x80\xE9\xAB\xAA";
-
-  command.Clear();
-  session_->Convert(&command);
-  const string candidate = GetComposition(command);
-  // "一髪"
-  EXPECT_EQ(kIppatsuString, candidate);
-
-  command.Clear();
-  session_->Commit(&command);
-  EXPECT_FALSE(command.output().has_preedit());
-  EXPECT_EQ(kIppatsuString, command.output().result().value());
-
-  command.Clear();
-  session_->Undo(&command);
-
-  session_->context().converter().GetSegments(&segments);
-  EXPECT_EQ(1, segments.history_segments_size());
-  EXPECT_EQ(1, segments.conversion_segments_size());
-  EXPECT_EQ(kKikiString, segments.segment(0).candidate(0).value);
-  // Confirm the result contains suggestion which consider history segments.
-  EXPECT_EQ(candidate, GetComposition(command));
-}
-
-// TODO(hsumita): This test may be moved to session_test.cc.
-// New converter mock is required if move this test.
 TEST_F(SessionRegressionTest, PredictionAfterUndo) {
   // This is a unittest against http://b/3427619
   InitSessionToPrecomposition(session_.get());
@@ -398,21 +376,8 @@ TEST_F(SessionRegressionTest, PredictionAfterUndo) {
   EXPECT_FALSE(command.output().has_preedit());
   EXPECT_EQ(kYoroshikuString, command.output().result().value());
 
-  Segments segments;
-  session_->context().converter().GetSegments(&segments);
-  EXPECT_EQ(1, segments.history_segments_size());
-  EXPECT_EQ(0, segments.conversion_segments_size());
-  EXPECT_EQ(kYoroshikuString, segments.history_segment(0).candidate(0).value);
-
   command.Clear();
   session_->Undo(&command);
-
-  session_->context().converter().GetSegments(&segments);
-  EXPECT_EQ(0, segments.history_segments_size());
-  EXPECT_EQ(1, segments.conversion_segments_size());
-  // Confirm the result contains suggestion candidates from "よろし"
-  EXPECT_EQ(kYoroshikuString,
-            segments.conversion_segment(0).candidate(yoroshiku_id).value);
   EXPECT_EQ(kYoroshikuString, GetComposition(command));
 }
 
@@ -431,7 +396,10 @@ TEST_F(SessionRegressionTest, PredictionAfterUndo) {
 // works well or not.
 TEST_F(SessionRegressionTest, ConsistencyBetweenPredictionAndSuggesion) {
   const char kKey[] = "aio";
-  session::ScopedMobilePreference mobile_preference;
+
+  commands::Request request;
+  commands::RequestForUnitTest::FillMobileRequest(&request);
+  session_->SetRequest(&request);
 
   InitSessionToPrecomposition(session_.get());
   commands::Command command;
@@ -608,7 +576,9 @@ TEST_F(SessionRegressionTest, Transliteration_Issue6209563) {
 TEST_F(SessionRegressionTest, CommitT13nSuggestion) {
   // This is the test for http://b/6934881.
   // Pending char chunk remains after committing transliteration.
-  session::ScopedMobilePreference mobile_preference;
+  commands::Request request;
+  commands::RequestForUnitTest::FillMobileRequest(&request);
+  session_->SetRequest(&request);
 
   InitSessionToPrecomposition(session_.get());
 
@@ -618,6 +588,7 @@ TEST_F(SessionRegressionTest, CommitT13nSuggestion) {
   EXPECT_EQ("\xE3\x81\xA3\xEF\xBD\x93\xEF\xBD\x88", GetComposition(command));
 
   command.Clear();
+  command.mutable_input()->set_type(commands::Input::SEND_COMMAND);
   command.mutable_input()->mutable_command()->set_type(
       commands::SessionCommand::SUBMIT_CANDIDATE);
   const int kHiraganaId = -1;

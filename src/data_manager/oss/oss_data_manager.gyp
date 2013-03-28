@@ -1,4 +1,4 @@
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -40,7 +40,6 @@
     'platform_data_dir': '<(mozc_dir)/data/dictionary_oss',
     'boundary_def': '<(mozc_dir)/data/rules/boundary.def',
     'dataset_tag': 'oss',
-    'use_1byte_cost_for_connection_data': 'false',
     'dictionary_files': [
       '<(platform_data_dir)/dictionary00.txt',
       '<(platform_data_dir)/dictionary01.txt',
@@ -57,6 +56,8 @@
   },
   # This 'includes' defines the following targets:
   #   - oss_data_manager  (type: static_library)
+  #   - gen_separate_dictionary_data_for_oss (type: none)
+  #   - gen_separate_connection_data_for_oss (type: none)
   #   - gen_oss_embedded_data  (type: none)
   'includes': [ '../data_manager.gypi' ],
 }

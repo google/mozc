@@ -1,12 +1,12 @@
-1		あ
+1		あ	NoTransliteration
 あ*		ぁ
 ぁ*		あ
 あ`		ぁ
-_		い
+_		い	NoTransliteration
 い*		ぃ
 ぃ*		い
 い`		ぃ
-;		う
+;		う	NoTransliteration
 う*		ぅ
 ぅ*		ゔ
 ゔ*		う
@@ -14,63 +14,63 @@ _		い
 ゔ`		ぅ
 う[		ゔ
 ぅ[		ゔ
-:		え
+:		え	NoTransliteration
 え*		ぇ
 ぇ*		え
 え`		ぇ
-@		お
+@		お	NoTransliteration
 お*		ぉ
 ぉ*		お
 お`		ぉ
-2		か
+2		か	NoTransliteration
 か*		が
 が*		か
 か[		が
-a		き
+a		き	NoTransliteration
 き*		ぎ
 ぎ*		き
 き[		ぎ
-b		く
+b		く	NoTransliteration
 く*		ぐ
 ぐ*		く
 く[		ぐ
-c		け
+c		け	NoTransliteration
 け*		げ
 げ*		け
 け[		げ
-|		こ
+|		こ	NoTransliteration
 こ*		ご
 ご*		こ
 こ[		ご
-3		さ
+3		さ	NoTransliteration
 さ*		ざ
 ざ*		さ
 さ[		ざ
-d		し
+d		し	NoTransliteration
 し*		じ
 じ*		し
 し[		じ
-e		す
+e		す	NoTransliteration
 す*		ず
 ず*		す
 す[		ず
-f		せ
+f		せ	NoTransliteration
 せ*		ぜ
 ぜ*		せ
 せ[		ぜ
-~		そ
+~		そ	NoTransliteration
 そ*		ぞ
 ぞ*		そ
 そ[		ぞ
-4		た
+4		た	NoTransliteration
 た*		だ
 だ*		た
 た[		だ
-g		ち
+g		ち	NoTransliteration
 ち*		ぢ
 ぢ*		ち
 ち[		ぢ
-h		つ
+h		つ	NoTransliteration
 つ*		っ
 っ*		づ
 づ*		つ
@@ -78,20 +78,20 @@ h		つ
 づ`		っ
 つ[		づ
 っ[		づ
-i		て
+i		て	NoTransliteration
 て*		で
 で*		て
 て[		で
-$		と
+$		と	NoTransliteration
 と*		ど
 ど*		と
 と[		ど
-5		な
-j		に
-k		ぬ
-l		ね
-%		の
-6		は
+5		な	NoTransliteration
+j		に	NoTransliteration
+k		ぬ	NoTransliteration
+l		ね	NoTransliteration
+%		の	NoTransliteration
+6		は	NoTransliteration
 は*		ば
 ば*		ぱ
 ぱ*		は
@@ -99,7 +99,7 @@ l		ね
 ぱ[		ば
 は]		ぱ
 ば]		ぱ
-m		ひ
+m		ひ	NoTransliteration
 ひ*		び
 び*		ぴ
 ぴ*		ひ
@@ -107,7 +107,7 @@ m		ひ
 ぴ[		び
 ひ]		ぴ
 び]		ぴ
-n		ふ
+n		ふ	NoTransliteration
 ふ*		ぶ
 ぶ*		ぷ
 ぷ*		ふ
@@ -115,7 +115,7 @@ n		ふ
 ぷ[		ぶ
 ふ]		ぷ
 ぶ]		ぷ
-o		へ
+o		へ	NoTransliteration
 へ*		べ
 べ*		ぺ
 ぺ*		へ
@@ -123,7 +123,7 @@ o		へ
 ぺ[		べ
 へ]		ぺ
 べ]		ぺ
-&		ほ
+&		ほ	NoTransliteration
 ほ*		ぼ
 ぼ*		ぽ
 ぽ*		ほ
@@ -131,46 +131,46 @@ o		へ
 ぽ[		ぼ
 ほ]		ぽ
 ぼ]		ぽ
-7		ま
-p		み
-q		む
-r		め
-s		も
-8		や
+7		ま	NoTransliteration
+p		み	NoTransliteration
+q		む	NoTransliteration
+r		め	NoTransliteration
+s		も	NoTransliteration
+8		や	NoTransliteration
 や*		ゃ
 ゃ*		や
 や`		ゃ
-u		ゆ
+u		ゆ	NoTransliteration
 ゆ*		ゅ
 ゅ*		ゆ
 ゆ`		ゅ
-^		よ
+^		よ	NoTransliteration
 よ*		ょ
 ょ*		よ
 よ`		ょ
-t		「
-v		」
-9		ら
-w		り
-x		る
-y		れ
-z		ろ
-*		
-[		
-]		
-`		
-(		（
-'		’
-)		）
-0		わ
+t		「	NoTransliteration
+v		」	NoTransliteration
+9		ら	NoTransliteration
+w		り	NoTransliteration
+x		る	NoTransliteration
+y		れ	NoTransliteration
+z		ろ	NoTransliteration
+*			NoTransliteration
+[			NoTransliteration
+]			NoTransliteration
+`			NoTransliteration
+(		（	NoTransliteration
+'		’	NoTransliteration
+)		）	NoTransliteration
+0		わ	NoTransliteration
 わ*		ゎ
 ゎ*		わ
 わ`		ゎ
-+		を
-/		ん
--		ー
-#		、
-,		。
-?		？
-!		！
++		を	NoTransliteration
+/		ん	NoTransliteration
+-		ー	NoTransliteration
+#		、	NoTransliteration
+,		。	NoTransliteration
+?		？	NoTransliteration
+!		！	NoTransliteration
 {<}		

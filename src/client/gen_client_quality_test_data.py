@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -39,20 +39,27 @@ def escape(string):
 
 def convert_tsv(filename):
   tsv = codecs.open(filename, 'rb', 'utf-8')
-  while True:
-    line = tsv.readline()
-    if not line:
-      break
+  for line in tsv:
     line = line.rstrip()
+    if not line or line.startswith('#'):
+      continue
 
     fields = line.split('\t')
-    if len(fields) < 6:
+    if len(fields) == 3:
+      label = fields[0]
+      expected = fields[1]
+      query = fields[2]
+    elif len(fields) < 6:
       logging.warning('invalid row format: %s', line)
       continue
-    print ('  // {"%s", "%s", "%s"},'
-           % (fields[0], fields[4], fields[5]))
-    print ('  {"%s", "%s", "%s"},'
-           % (escape(fields[0]), escape(fields[4]), escape(fields[5])))
+    else:
+      label = fields[0]
+      expected = fields[4]
+      query = fields[5]
+
+    print '  // {"%s", "%s", "%s"},' % (label, expected, query)
+    print ('  {"%s", "%s", "%s"},' %
+           (escape(label), escape(expected), escape(query)))
   tsv.close()
 
 

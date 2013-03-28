@@ -1,4 +1,4 @@
-1		あ	NewChunk
+1		あ	NewChunk NoTransliteration
 あ1		い
 い1		う
 う1		え
@@ -41,7 +41,7 @@
 {*}ゔ*		{*}う
 {*}ぇ*		{*}え
 {*}ぉ*		{*}お
-2		か	NewChunk
+2		か	NewChunk NoTransliteration
 か2		き
 き2		く
 く2		け
@@ -72,7 +72,7 @@
 {*}げ*		{*}け
 {*}こ*		{*}ご
 {*}ご*		{*}こ
-3		さ	NewChunk
+3		さ	NewChunk NoTransliteration
 さ3		し
 し3		す
 す3		せ
@@ -103,7 +103,7 @@
 {*}ぜ*		{*}せ
 {*}そ*		{*}ぞ
 {*}ぞ*		{*}そ
-4		た	NewChunk
+4		た	NewChunk NoTransliteration
 た4		ち
 ち4		つ
 つ4		て
@@ -138,7 +138,7 @@
 {*}で*		{*}て
 {*}と*		{*}ど
 {*}ど*		{*}と
-5		な	NewChunk
+5		な	NewChunk NoTransliteration
 な5		に
 に5		ぬ
 ぬ5		ね
@@ -149,7 +149,7 @@
 ぬ{<}		に
 ね{<}		ぬ
 の{<}		ね
-6		は	NewChunk
+6		は	NewChunk NoTransliteration
 は6		ひ
 ひ6		ふ
 ふ6		へ
@@ -190,7 +190,7 @@
 {*}ほ*		{*}ぼ
 {*}ぼ*		{*}ぽ
 {*}ぽ*		{*}ほ
-7		ま	NewChunk
+7		ま	NewChunk NoTransliteration
 ま7		み
 み7		む
 む7		め
@@ -201,7 +201,7 @@
 む{<}		み
 め{<}		む
 も{<}		め
-8		や	NewChunk
+8		や	NewChunk NoTransliteration
 や8		ゆ
 ゆ8		よ
 よ8		ゃ
@@ -226,7 +226,7 @@
 {*}ゅ*		{*}ゆ
 {*}よ*		{*}ょ
 {*}ょ*		{*}よ
-9		ら	NewChunk
+9		ら	NewChunk NoTransliteration
 ら9		り
 り9		る
 る9		れ
@@ -237,7 +237,7 @@
 る{<}		り
 れ{<}		る
 ろ{<}		れ
-0		わ	NewChunk
+0		わ	NewChunk NoTransliteration
 わ0		を
 を0		ん
 ん0		ゎ
@@ -252,7 +252,7 @@
 ゎ*		{*}わ
 {*}わ*		{*}ゎ
 {*}ゎ*		{*}わ
-#		、	NewChunk
+#		、	NewChunk NoTransliteration
 、#		。
 。#		？
 ？#		！

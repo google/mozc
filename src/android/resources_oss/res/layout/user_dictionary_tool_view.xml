@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ Copyright 2010-2013, Google Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+     * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above
+ copyright notice, this list of conditions and the following disclaimer
+ in the documentation and/or other materials provided with the
+ distribution.
+     * Neither the name of Google Inc. nor the names of its
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent">
+  <!-- Drop down list of dictionaries. -->
+  <Spinner
+      android:id="@+id/user_dictionary_tool_dictionary_name_spinner"
+      android:layout_width="fill_parent"
+      android:layout_height="48dip" />
+
+  <!-- Main content view -->
+  <ListView
+      android:id="@+id/user_dictionary_tool_entry_list"
+      android:layout_width="fill_parent"
+      android:layout_height="fill_parent"
+      android:layout_below="@+id/user_dictionary_tool_dictionary_name_spinner"
+      android:layout_above="@+id/user_dictionary_tool_split_action_bar" />
+
+  <!-- Self implementation of SplitActionBar for older devices, such as Android 2.3 or earlier. -->
+  <LinearLayout
+      android:id="@+id/user_dictionary_tool_split_action_bar"
+      android:layout_width="fill_parent"
+      android:layout_height="wrap_content"
+      android:layout_alignParentBottom="true"
+      android:background="@color/action_bar_background"
+      android:orientation="vertical"
+      android:visibility="gone">
+    <!-- Thin shade of Split action bar. -->
+    <View
+        android:layout_width="fill_parent"
+        android:layout_height="1dip"
+        android:background="@color/action_bar_background_shade" />
+
+    <RelativeLayout
+        android:layout_width="fill_parent"
+        android:layout_height="48dip"
+        android:orientation="horizontal">
+      <ImageView
+          android:id="@+id/user_dictionary_tool_split_action_bar_add_entry"
+          android:src="@android:drawable/ic_menu_add"
+          android:clickable="true"
+          android:layout_alignParentLeft="true"
+          android:layout_width="48dip"
+          android:layout_height="fill_parent"
+          android:background="@drawable/action_bar_item_background" />
+
+      <ImageView
+          android:id="@+id/user_dictionary_tool_split_action_bar_delete_entry"
+          android:src="@android:drawable/ic_menu_delete"
+          android:clickable="true"
+          android:layout_alignParentRight="true"
+          android:layout_width="48dip"
+          android:layout_height="fill_parent"
+          android:background="@drawable/action_bar_item_background"/>
+    </RelativeLayout>
+  </LinearLayout>
+</RelativeLayout>

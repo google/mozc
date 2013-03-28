@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,7 @@
 
 #include "base/base.h"
 #include "base/file_stream.h"
+#include "base/file_util.h"
 #include "base/logging.h"
 #include "base/mmap.h"
 #include "base/number_util.h"
@@ -51,7 +52,7 @@ const char kTestConnectionFilePath[] = "data/test/dictionary/connection.txt";
 }  // namespace
 
 TEST(SarseConnectorTest, SparseConnectorTest) {
-  string path = Util::JoinPath(
+  string path = FileUtil::JoinPath(
       FLAGS_test_srcdir, kTestConnectionDataImagePath);
   Mmap cmmap;
   CHECK(cmmap.Open(path.c_str())) << "Failed to open image: " << path;
@@ -60,12 +61,12 @@ TEST(SarseConnectorTest, SparseConnectorTest) {
   ASSERT_EQ(1, connector->GetResolution());
 
   string connection_text_path =
-      Util::JoinPath(FLAGS_test_srcdir, kTestConnectionFilePath);
+      FileUtil::JoinPath(FLAGS_test_srcdir, kTestConnectionFilePath);
   InputFileStream input(connection_text_path.c_str());
   string line;
   getline(input, line);  // Discard the first line.
   vector<string> fields;
-  while (getline(input, line)) {
+  while (!getline(input, line).fail()) {
     fields.clear();
     Util::SplitStringUsing(line, "\t ", &fields);
     CHECK_GE(fields.size(), 3) << line;

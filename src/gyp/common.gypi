@@ -1,4 +1,4 @@
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -71,6 +71,8 @@
       '-fno-strict-aliasing',
       '-funsigned-char',
       '-include base/namespace.h',
+      '-fstack-protector',
+      '--param=ssp-buffer-size=4',
       '-pipe',
       '-pthread',
     ],
@@ -99,9 +101,6 @@
         ['OS=="win"', {
           # Variable 'MSVS_VERSION' is available on Windows only.
           'conditions': [
-            ['MSVS_VERSION=="2008"', {
-              'target_compiler': 'msvs2008',
-            }],
             ['MSVS_VERSION=="2010"', {
               'target_compiler': 'msvs2010',
             }],
@@ -113,7 +112,7 @@
       ],
     },
 
-    # The target compiler such as 'msvs2008', 'msvs2010' or, 'msvs2012'.
+    # The target compiler such as 'msvs2010' or 'msvs2012'.
     # This value is currently used only on Windows.
     'target_compiler': '<(target_compiler)',
 
@@ -138,14 +137,6 @@
       }, { # else
         'enable_gtk_renderer%': 0,
       }],
-      ['target_compiler=="msvs2008"', {
-        'additional_defines+': [
-          # Bind executables to the latest version of Visual C++ 2008
-          # CRTs supported in the build environment.  b/2842806
-          # http://msdn.microsoft.com/en-us/library/cc664727(v=vs.90).aspx
-          '_BIND_TO_CURRENT_VCLIBS_VERSION=1',
-        ],
-      }],
     ],
     'msvc_disabled_warnings': [
       # 'expression' : signed/unsigned mismatch
@@ -162,6 +153,12 @@
       # 'identifier' : truncation from 'type1' to 'type2'
       # http://msdn.microsoft.com/en-us/library/0as1ke3f.aspx
       '4305',
+      # previous versions of the compiler did not override when
+      # parameters only differed by const/volatile qualifiers.
+      # http://msdn.microsoft.com/en-us/library/bb384874.aspx
+      # See also the following discussion.
+      # http://code.google.com/p/googlemock/issues/detail?id=141
+      '4373',
       # 'type' : forcing value to bool 'true' or 'false'
       # (performance warning)
       # http://msdn.microsoft.com/en-us/library/b6801kcy.aspx
@@ -171,6 +168,12 @@
       # prevent data loss.
       # http://msdn.microsoft.com/en-us/library/ms173715.aspx
       '4819',
+      # Suppress warning against functions marked as 'deprecated'.
+      # http://msdn.microsoft.com/en-us/library/vstudio/8wsycdzs.aspx
+      '4995',
+      # Suppress warning against functions marked as 'deprecated'.
+      # http://msdn.microsoft.com/en-us/library/vstudio/ttcz0bys.aspx
+      '4996',
     ],
 
     # We wanted to have this directory under the build output directory
@@ -221,9 +224,6 @@
 
     # enable_http_client represents if http client feature is enabled or not.
     'enable_http_client%': 0,
-
-    # use self-implemented louds code, instead of using the rx library.
-    'enable_mozc_louds%': 1,
 
 
     # The pkg-config command to get the cflags/ldflags for Linux
@@ -293,11 +293,17 @@
               '<@(linux_ldflags)',
             ],
           }],
+          ['use_separate_collocation_data==1', {
+            'defines': ['MOZC_USE_SEPARATE_COLLOCATION_DATA'],
+          }],
           ['use_separate_connection_data==1', {
             'defines': ['MOZC_USE_SEPARATE_CONNECTION_DATA'],
           }],
           ['use_separate_dictionary==1', {
             'defines': ['MOZC_USE_SEPARATE_DICTIONARY'],
+          }],
+          ['use_packed_dictionary==1', {
+            'defines': ['MOZC_USE_PACKED_DICTIONARY'],
           }],
           ['enable_cloud_sync==1', {
             'defines': ['ENABLE_CLOUD_SYNC'],
@@ -319,8 +325,11 @@
           ['enable_unittest==1', {
             'defines': ['MOZC_ENABLE_UNITTEST'],
           }],
-          ['enable_mozc_louds==1', {
-            'defines': ['MOZC_USE_MOZC_LOUDS'],
+          ['target_platform=="Android"', {
+            'defines': ['NO_USAGE_REWRITER'],
+          }],
+          ['enable_history_deletion==1', {
+            'defines': ['MOZC_ENABLE_HISTORY_DELETION'],
           }],
         ],
       },
@@ -360,8 +369,8 @@
       'x64_Base': {
         'abstract': 1,
         'msvs_configuration_attributes': {
-          'OutputDirectory': '<(build_base)/$(ConfigurationName)64',
-          'IntermediateDirectory': '<(build_base)/$(ConfigurationName)64/obj/$(ProjectName)',
+          'OutputDirectory': '<(build_base)/$(ConfigurationName)_x64',
+          'IntermediateDirectory': '<(build_base)/$(ConfigurationName)_x64/obj/$(ProjectName)',
         },
         'msvs_configuration_platform': 'x64',
         'msvs_settings': {
@@ -491,15 +500,13 @@
           'IGNORE_INVALID_FLAG'
         ],
         'conditions': [
-          ['target_compiler=="msvs2008"', {
-            'msvs_configuration_attributes': {
-              'WholeProgramOptimization': '1',
-            },
-          }],
           ['target_compiler=="msvs2010" or target_compiler=="msvs2012"', {
             'msvs_settings': {
               'VCCLCompilerTool': {
                 'WholeProgramOptimization': 'true',
+              },
+              'VCLibrarianTool': {
+                'LinkTimeCodeGeneration': 'true',
               },
               'VCLinkerTool': {
                 # 1 = 'LinkTimeCodeGenerationOptionUse'
@@ -589,24 +596,6 @@
             'inherit_from': ['Common_Base', 'Android_Base', 'Optimize_Base', 'Release_Base'],
           },
         }],
-        ['target_platform=="NaCl"', {
-          # The following configurations, i.e. directories, are meant for binary
-          # files built with an NaCl toolchain.
-          # A special hack in build_for_nacl.py sets environment variables such
-          # as CC, LD, etc., so it builds NaCl binaries in these directories.
-          'Debug_NaCl_i686': {
-            'inherit_from': ['Common_Base', 'Debug_Base'],
-          },
-          'Release_NaCl_i686': {
-            'inherit_from': ['Common_Base', 'Optimize_Base', 'Release_Base'],
-          },
-          'Debug_NaCl_x86-64': {
-            'inherit_from': ['Common_Base', 'Debug_Base'],
-          },
-          'Release_NaCl_x86-64': {
-            'inherit_from': ['Common_Base', 'Optimize_Base', 'Release_Base'],
-          },
-        }],
       ],
     },
     'default_configuration': 'Debug',
@@ -637,7 +626,7 @@
           'COMPILER_MSVC',
           'BUILD_MOZC',  # for ime_shared library
           'ID_TRACE_LEVEL=1',
-          'OS_WINDOWS',
+          'OS_WIN',
           'UNICODE',
           'WIN32',
           'WIN32_IE=0x0600',
@@ -671,13 +660,12 @@
         'msvs_cygwin_dirs': [
           '<(third_party_dir)/cygwin',
         ],
+        'msvs_disabled_warnings': ['<@(msvc_disabled_warnings)'],  # /wdXXXX
         'msvs_settings': {
           'VCCLCompilerTool': {
             'BufferSecurityCheck': 'true',         # /GS
-            'CompileAs': '2',                      # /TP
             'DebugInformationFormat': '3',         # /Zi
             'DefaultCharIsUnsigned': 'true',       # /J
-            'DisableSpecificWarnings': ['<@(msvc_disabled_warnings)'],  # /wdXXXX
             'EnableFunctionLevelLinking': 'true',  # /Gy
             'EnableIntrinsicFunctions': 'true',    # /Oi
             'ExceptionHandling': '2',              # /EHs
@@ -687,13 +675,8 @@
             'TreatWChar_tAsBuiltInType': 'false',  # /Zc:wchar_t-
             'WarningLevel': '3',                   # /W3
             'conditions': [
-              # Unfortunately, 'OmitFramePointers': 'false' does not mean
-              # /Oy- on Visual C++ 2008 or prior.  You need to use
-              # 'AdditionalOptions' option to specify /Oy- instead.
-              ['target_compiler=="msvs2008"', {
-                'AdditionalOptions': ['/Oy-'],  # /Oy-
-              }],
               ['target_compiler=="msvs2010" or target_compiler=="msvs2012"', {
+                'AdditionalOptions': '/MP',    # /MP
                 'OmitFramePointers': 'false',  # /Oy- (for Visual C++ 2010)
               }],
             ],
@@ -759,7 +742,7 @@
             ],
           }],
           ['clang==1', {
-            'cflags+': [
+            'cflags': [
               '-Wno-unnamed-type-template-args',
               '-Wno-covered-switch-default',
               '-Wtype-limits',
@@ -781,9 +764,19 @@
                 'cflags': [
                   '<@(nacl_cflags)',
                 ],
+                'ldflags!': [  # Remove all libraries for GNU/Linux.
+                  '<@(linux_ldflags)',
+                ],
                 'defines': [
                   'MOZC_USE_PEPPER_FILE_IO',
                 ],
+              }],
+              ['_toolset=="target" and _type=="static_library"', {
+                # PNaCl's artools.py doesn't support thin archive file.
+                # (crbug/165096)
+                # But GYP creates thin archive files for static_library.
+                # To avoid this issue we turn on this flag.
+                'standalone_static_library': 1,
               }],
             ]
           }],
@@ -799,13 +792,14 @@
         ],
         'xcode_settings': {
           'GCC_ENABLE_CPP_EXCEPTIONS': 'NO',  # -fno-exceptions
+          'GCC_SYMBOLS_PRIVATE_EXTERN': 'NO',  # No -fvisibility=hidden
           'OTHER_CFLAGS': [
             '<@(gcc_cflags)',
           ],
           'WARNING_CFLAGS': ['<@(warning_cflags)'],
-
           'MACOSX_DEPLOYMENT_TARGET': '<(mac_deployment_target)',
           'SDKROOT': 'macosx<(mac_sdk)',
+          'PYTHONPATH': '<(abs_depth)/',
           'conditions': [
             ['clang==1', {
               'CC': '<(clang_bin_dir)/clang',
@@ -840,6 +834,23 @@
         ['CC.host', '$(CC)'],
         ['CXX.host', '$(CXX)'],
         ['LINK.host', '$(LINK)'],
+      ],
+    }],
+    ['target_platform=="NaCl"', {
+      'variables': {
+        'pnacl_bin_dir%':
+            '<(nacl_sdk_root)/toolchain/linux_x86_pnacl/newlib/bin',
+      },
+      'make_global_settings': [
+        ['AR.target', '<(pnacl_bin_dir)/pnacl-ar'],
+        ['AS.target', '<(pnacl_bin_dir)/pnacl-as'],
+        ['CC.target', '<(pnacl_bin_dir)/pnacl-clang'],
+        ['CXX.target', '<(pnacl_bin_dir)/pnacl-clang++'],
+        ['LD.target', '<(pnacl_bin_dir)/pnacl-ld'],
+        ['LINK.target', '<(pnacl_bin_dir)/pnacl-clang++'],
+        ['NM.target', '<(pnacl_bin_dir)/pnacl-nm'],
+        ['RANLIB.target', '<(pnacl_bin_dir)/pnacl-ranlib'],
+        ['STRIP.target', '<(pnacl_bin_dir)/pnacl-strip'],
       ],
     }],
   ],

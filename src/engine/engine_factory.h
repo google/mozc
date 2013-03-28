@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,9 +31,16 @@
 #define MOZC_ENGINE_ENGINE_FACTORY_H_
 
 
+#if defined(MOZC_USE_PACKED_DICTIONARY)
+#include "engine/packed_engine_factory.h"
+namespace mozc {
+typedef PackedEngineFactory EngineFactory;
+}
+#else  // !MOZC_USE_PACKED_DICTIONARY
 #include "engine/oss_engine_factory.h"
 namespace mozc {
 typedef OssEngineFactory EngineFactory;
 }
+#endif  // MOZC_USE_PACKED_DICTIONARY
 
 #endif  // MOZC_ENGINE_ENGINE_FACTORY_H_

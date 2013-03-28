@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ Copyright 2010-2013, Google Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+     * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above
+ copyright notice, this list of conditions and the following disclaimer
+ in the documentation and/or other materials provided with the
+ distribution.
+     * Neither the name of Google Inc. nor the names of its
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:clickable="true" >
+
+  <!--
+       TODO(hidehiko): Replace base class of SymbolInputView by LinearLayout so that we
+       don't need this nested view. We need to refactor InOutAnimatedFrameLayout for it.
+  -->
+  <LinearLayout
+      android:layout_width="fill_parent"
+      android:layout_height="fill_parent"
+      android:baselineAligned="false"
+      android:orientation="vertical" >
+
+    <FrameLayout
+        android:layout_width="fill_parent"
+        android:layout_height="0dip"
+        android:layout_weight="1" >
+
+      <TabHost
+          android:id="@android:id/tabhost"
+          android:background="@android:color/white"
+          android:layout_width="fill_parent"
+          android:layout_height="fill_parent">
+        <RelativeLayout
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent">
+          <android.support.v4.view.ViewPager
+              android:id="@+id/symbol_input_candidate_view_pager"
+              android:layout_width="fill_parent"
+              android:layout_height="fill_parent"
+              android:layout_above="@android:id/tabs">
+            <FrameLayout
+                android:id="@android:id/tabcontent"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:visibility="gone">
+              <View
+                  android:id="@+id/symbol_input_dummy"
+                  android:layout_width="0dip"
+                  android:layout_height="0dip"
+                  android:minHeight="0dip"
+                  android:minWidth="0dip" />
+            </FrameLayout>
+          </android.support.v4.view.ViewPager>
+          <TabWidget
+              android:id="@android:id/tabs"
+              android:layout_width="fill_parent"
+              android:layout_height="@dimen/symbol_view_minor_category_tab_widget_height"
+              android:layout_alignParentBottom="true"
+              android:background="@color/symbol_view_tab_background" />
+        </RelativeLayout>
+      </TabHost>
+
+      <!-- Drop shadow between minor category tabs and major category buttons. -->
+      <View
+          android:layout_width="fill_parent"
+          android:layout_height="@dimen/translucent_border_height"
+          android:background="@drawable/dropshadow_top"
+          android:layout_gravity="bottom" />
+
+      <!-- Displayed when emoji major category is selected on the non-emoji-allowed text view. -->
+      <TextView
+          android:id="@+id/symbol_emoji_disabled_message_view"
+          android:layout_width="fill_parent"
+          android:layout_height="fill_parent"
+          android:background="#C0000000"
+          android:clickable="true"
+          android:gravity="center"
+          android:shadowColor="@android:color/black"
+          android:shadowRadius="5"
+          android:text="@string/symbol_emoji_disabled_message"
+          android:textColor="@android:color/white"
+          android:textSize="20dip"
+          android:visibility="gone" />
+    </FrameLayout>
+
+    <LinearLayout
+        android:id="@+id/symbol_major_category"
+        android:layout_width="fill_parent"
+        android:layout_height="@dimen/symbol_view_major_category_height"
+        android:gravity="center"
+        android:paddingLeft="1dip"
+        android:paddingTop="2dip"
+        android:paddingRight="1dip"
+        android:paddingBottom="2dip" >
+
+      <ImageButton
+          android:id="@+id/symbol_view_close_button"
+          android:layout_width="0dip"
+          android:layout_height="fill_parent"
+          android:layout_gravity="center"
+          android:layout_weight="1"
+          android:scaleType="fitCenter" />
+
+      <!--
+          TODO(matsuzakit): padding{Bottom,Top} is just a work around.
+          Fixing the images themselves might be preferable.
+      -->
+
+      <LinearLayout
+          android:id="@+id/category_selector_major"
+          android:layout_width="0dip"
+          android:layout_height="fill_parent"
+          android:layout_marginLeft="3dip"
+          android:layout_marginRight="3dip"
+          android:layout_weight="5"
+          android:gravity="center"
+          android:paddingBottom="1dip"
+          android:paddingTop="2dip" >
+
+        <ImageButton
+            android:id="@+id/category_selector_major_symbol"
+            android:layout_width="0dip"
+            android:layout_height="fill_parent"
+            android:layout_weight="1"
+            android:padding="0dip"
+            android:scaleType="fitCenter" />
+
+        <ImageButton
+            android:id="@+id/category_selector_major_emoticon"
+            android:layout_width="0dip"
+            android:layout_height="fill_parent"
+            android:layout_weight="1"
+            android:padding="0dip"
+            android:scaleType="fitCenter" />
+
+        <ImageButton
+            android:id="@+id/category_selector_major_emoji"
+            android:layout_width="0dip"
+            android:layout_height="fill_parent"
+            android:layout_weight="1"
+            android:padding="0dip"
+            android:scaleType="fitCenter" />
+      </LinearLayout>
+
+      <ImageButton
+          android:id="@+id/symbol_view_delete_button"
+          android:layout_width="0dip"
+          android:layout_height="fill_parent"
+          android:layout_gravity="center"
+          android:layout_weight="1"
+          android:scaleType="fitCenter" />
+    </LinearLayout>
+  </LinearLayout>
+</merge>

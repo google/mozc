@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,8 +40,8 @@
 #include "testing/base/public/gunit_prod.h"
 // for FRIEND_TEST()
 #include "win32/base/immdev.h"
+#include "win32/base/keyevent_handler.h"
 #include "win32/ime/ime_input_context.h"
-#include "win32/ime/ime_keyevent_handler.h"
 #include "win32/ime/ime_message_queue.h"
 #include "win32/ime/ime_types.h"
 
@@ -56,8 +56,8 @@ class Output;
 
 namespace win32 {
 
-struct ImeBehavior;
-struct ImeState;
+struct InputBehavior;
+struct InputState;
 
 // Currently this class is a Kitchen-sink class and can be merged with
 // UIContext class.
@@ -73,9 +73,9 @@ class ImeCore {
       const VirtualKey &virtual_key,
       const LParamKeyInfo &lparam,
       const KeyboardStatus &keyboard_status,
-      const ImeBehavior &behavior,
-      const ImeState &initial_state,
-      ImeState *next_state,
+      const InputBehavior &behavior,
+      const InputState &initial_state,
+      InputState *next_state,
       commands::Output *output);
 
   // Main implementation of ImeToAsciiEx callback.
@@ -85,9 +85,9 @@ class ImeCore {
       BYTE scan_code,
       bool is_key_down,
       const KeyboardStatus &keyboard_status,
-      const ImeBehavior &behavior,
-      const ImeState &initial_state,
-      ImeState *next_state,
+      const InputBehavior &behavior,
+      const InputState &initial_state,
+      InputState *next_state,
       commands::Output *output);
 
   // This function sends IME open message to the server w/o generating any UI
@@ -141,7 +141,7 @@ class ImeCore {
   // function will not generate any UI message.
   // Returns true if the operation completed successfully.
   static bool UpdateContext(HIMC himc,
-                            const ImeState &next_state,
+                            const InputState &next_state,
                             const commands::Output &new_output,
                             MessageQueue *message_queue);
 
@@ -216,7 +216,7 @@ class ImeCore {
   // ignores callback field, which is supposed to be handled in the
   // UpdateContext before this method is called.
   static bool UpdateContextMain(HIMC himc,
-                                const ImeState &next_state,
+                                const InputState &next_state,
                                 const commands::Output &new_output,
                                 MessageQueue *message_queue);
 

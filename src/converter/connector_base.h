@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,6 +37,7 @@
 
 namespace mozc {
 
+class DataManagerInterface;
 class SparseConnector;
 
 namespace converter {
@@ -45,15 +46,15 @@ class CachedConnector;
 
 class ConnectorBase : public ConnectorInterface {
  public:
+  static ConnectorBase *CreateFromDataManager(
+      const DataManagerInterface &data_manager);
+
+  ConnectorBase(const char *connection_data, size_t connection_size,
+                int cache_size);
   virtual ~ConnectorBase();
 
   virtual int GetTransitionCost(uint16 rid, uint16 lid) const;
   virtual int GetResolution() const;
-
- protected:
-  ConnectorBase(const char *connection_data, size_t connection_size,
-                bool *cache_initialized,
-                int *cache_key, int *cache_value, int cache_size);
 
  private:
   scoped_ptr<SparseConnector> sparse_connector_;

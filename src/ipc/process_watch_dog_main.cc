@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,9 @@
 
 #include <iostream>
 #include <string>
+
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/util.h"
 #include "ipc/process_watch_dog.h"
 
@@ -42,7 +44,7 @@ class TestProcessWatchDog : public ProcessWatchDog {
     cout << "Signaled: " << static_cast<int>(type) << endl;
   }
 };
-}
+}  // namespace mozc
 
 int main(int argc, char **argv) {
   InitGoogle(argv[0], &argc, &argv, false);

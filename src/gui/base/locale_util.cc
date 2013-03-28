@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
 
 #include "gui/base/locale_util.h"
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <windows.h>
 #include <CommCtrl.h>  // for CCSIZEOF_STRUCT
 #endif
@@ -62,8 +62,9 @@
 #include <string>
 
 #include "base/base.h"
-#include "base/singleton.h"
+#include "base/logging.h"
 #include "base/scoped_cftyperef.h"
+#include "base/singleton.h"
 #include "base/util.h"
 #ifdef MOZC_SHOW_BUILD_NUMBER_ON_TITLE
 #include "gui/base/window_title_modifier.h"
@@ -77,7 +78,7 @@ QString GetUILocaleName() {
   // On Windows/Mac, QLocale::system().name() returns an invalid
   // value. For instance, QLocale::system().name() returns
   // system locale instead of user locale on Windows.
-#if defined(OS_WINDOWS)
+#if defined(OS_WIN)
   // Check UI locale instead of system locale on Windows
   const LANGID kJapaneseLangId = MAKELANGID(LANG_JAPANESE,
                                             SUBLANG_JAPANESE_JAPAN);
@@ -157,7 +158,7 @@ TranslationDataImpl::TranslationDataImpl()
   // qApplication must be loaded first
   CHECK(qApp);
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   // Get the font from MessageFont
   NONCLIENTMETRICSW ncm = { 0 };
 

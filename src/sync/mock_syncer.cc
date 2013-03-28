@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,6 +44,10 @@ bool MockSyncer::Sync(bool *reload_required) {
 }
 
 bool MockSyncer::Clear() {
+  return true;
+}
+
+bool MockSyncer::ClearLocal() {
   return true;
 }
 

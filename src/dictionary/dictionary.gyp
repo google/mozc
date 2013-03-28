@@ -1,4 +1,4 @@
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -34,6 +34,19 @@
   },
   'targets': [
     {
+      'target_name': 'dictionary',
+      'type': 'none',
+      'dependencies': [
+        '../base/base.gyp:base',
+        'dictionary_base.gyp:suppression_dictionary',
+        'dictionary_base.gyp:user_dictionary',
+        'dictionary_impl',
+        'suffix_dictionary',
+        'system/system_dictionary.gyp:system_dictionary',
+        'system/system_dictionary.gyp:value_dictionary',
+      ],
+    },
+    {
       'target_name': 'suffix_dictionary',
       'type': 'static_library',
       'sources': [
@@ -44,22 +57,6 @@
       ],
     },
     {
-      'target_name': 'dictionary',
-      'type': 'none',
-      'dependencies': [
-        '../base/base.gyp:base',
-        '<(DEPTH)/third_party/rx/rx.gyp:rx',
-        'dictionary_base.gyp:dictionary_protocol',
-        'dictionary_base.gyp:gen_pos_matcher#host',
-        'dictionary_base.gyp:suppression_dictionary',
-        'dictionary_base.gyp:user_dictionary',
-        'dictionary_impl',
-        'suffix_dictionary',
-        'system/system_dictionary.gyp:system_dictionary',
-        'system/system_dictionary.gyp:value_dictionary',
-      ],
-    },
-    {
       'target_name': 'dictionary_impl',
       'type': 'static_library',
       'sources': [
@@ -67,7 +64,10 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        '../config/config.gyp:config_handler',
+        '../config/config.gyp:config_protocol',
         'dictionary_base.gyp:dictionary_protocol',
+        'dictionary_base.gyp:pos_matcher',
         'dictionary_base.gyp:suppression_dictionary',
       ],
     },
@@ -80,9 +80,14 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        'dictionary_base.gyp:gen_pos_matcher',
+        'dictionary_base.gyp:pos_matcher',
         'system/system_dictionary.gyp:system_dictionary_builder',
       ],
+      'msvs_settings': {
+        'VCLinkerTool': {
+          'LargeAddressAware': '2',
+        },
+      },
     },
     {
       'target_name': 'install_gen_system_dictionary_data_main',
@@ -103,7 +108,6 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        '<(DEPTH)/third_party/rx/rx.gyp:rx',
       ],
     },
   ],

@@ -78,152 +78,131 @@
 <context>
     <name>QObject</name>
     <message>
-        <location filename="dictionary_tool.cc" line="243"/>
+        <location filename="dictionary_tool.cc" line="98"/>
+        <location filename="dictionary_tool.cc" line="108"/>
+        <source>Sync-able dictionary</source>
+        <translation>同期用辞書</translation>
+    </message>
+    <message>
+        <location filename="dictionary_tool.cc" line="274"/>
         <source>Importing new words...</source>
         <translation>単語をインポートしています...</translation>
     </message>
 </context>
 <context>
-    <name>RegisterForm</name>
-    <message>
-        <source>Reading</source>
-        <translation type="obsolete">よみ</translation>
-    </message>
-    <message>
-        <source>Word</source>
-        <translation type="obsolete">単語</translation>
-    </message>
-    <message>
-        <source>Part of speech</source>
-        <translation type="obsolete">品詞</translation>
-    </message>
-    <message>
-        <source>Comment</source>
-        <translation type="obsolete">コメント</translation>
-    </message>
-    <message>
-        <source>Register</source>
-        <translation type="obsolete">登録</translation>
-    </message>
-    <message>
-        <source>Clear</source>
-        <translation type="obsolete">クリア</translation>
-    </message>
-</context>
-<context>
     <name>mozc::gui::DictionaryTool</name>
     <message>
-        <location filename="dictionary_tool.cc" line="270"/>
+        <location filename="dictionary_tool.cc" line="300"/>
         <source>Mozc</source>
         <translation>Mozc</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="296"/>
+        <location filename="dictionary_tool.cc" line="329"/>
         <source>Another process is accessing the user dictionary file.</source>
         <translation>別のアプリケーションが辞書を編集中です。</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="360"/>
+        <location filename="dictionary_tool.cc" line="393"/>
         <source>Reading</source>
         <translation>よみ</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="360"/>
+        <location filename="dictionary_tool.cc" line="393"/>
         <source>Word</source>
         <translation>単語</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="361"/>
+        <location filename="dictionary_tool.cc" line="394"/>
         <source>Comment</source>
         <translation>コメント</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="395"/>
+        <location filename="dictionary_tool.cc" line="428"/>
         <source>Rename dictionary...</source>
         <translation>辞書名を変更...</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="396"/>
+        <location filename="dictionary_tool.cc" line="429"/>
         <source>Delete dictionary</source>
         <translation>選択した辞書を削除</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="400"/>
+        <location filename="dictionary_tool.cc" line="433"/>
         <source>Import as new dictionary...</source>
         <translation>新規辞書にインポート...</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="402"/>
+        <location filename="dictionary_tool.cc" line="435"/>
         <source>Import to current dictionary...</source>
         <translation>選択した辞書にインポート...</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="394"/>
+        <location filename="dictionary_tool.cc" line="427"/>
         <source>New dictionary...</source>
         <translation>辞書を作成...</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="403"/>
+        <location filename="dictionary_tool.cc" line="436"/>
         <source>Export current dictionary...</source>
         <translation>選択した辞書をエクスポート...</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="410"/>
+        <location filename="dictionary_tool.cc" line="443"/>
         <source>Import from %1&apos;s user dictionary...</source>
         <translation>%1 のユーザ辞書をインポート</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="475"/>
+        <location filename="dictionary_tool.cc" line="508"/>
         <source>User Dictionary 1</source>
         <translation>ユーザー辞書 1</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="521"/>
+        <location filename="dictionary_tool.cc" line="554"/>
         <source>Making dangerously large user dictionary file. If the dictionary file turns out to be larger than 256Mbyte, the dictionary loader skips to handle all the words to prevent the converter from being halted.</source>
         <translation>非常に大きなユーザ辞書を作成しようとしています。辞書サイズが 256MB を超える場合、変換エンジンプログラムのリソース不足による異常動作を回避するためすべての単語がロードされない場合があります。ご了承ください。</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="605"/>
+        <location filename="dictionary_tool.cc" line="638"/>
         <source>Updating the current view data...</source>
         <translation>テーブルを更新中です...</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="643"/>
-        <location filename="dictionary_tool.cc" line="719"/>
+        <location filename="dictionary_tool.cc" line="677"/>
+        <location filename="dictionary_tool.cc" line="754"/>
         <source>You can&apos;t have more than %1 dictionaries.</source>
         <translation>%1 個を超える辞書を作ることはできません。</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="648"/>
+        <location filename="dictionary_tool.cc" line="682"/>
         <source>Name of the new dictionary</source>
         <translation>辞書名</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="662"/>
-        <location filename="dictionary_tool.cc" line="691"/>
-        <location filename="dictionary_tool.cc" line="741"/>
-        <location filename="dictionary_tool.cc" line="890"/>
-        <location filename="dictionary_tool.cc" line="932"/>
+        <location filename="dictionary_tool.cc" line="696"/>
+        <location filename="dictionary_tool.cc" line="725"/>
+        <location filename="dictionary_tool.cc" line="776"/>
+        <location filename="dictionary_tool.cc" line="925"/>
+        <location filename="dictionary_tool.cc" line="967"/>
         <source>No dictionary is selected.</source>
         <translation>辞書が選択されていません。</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="668"/>
+        <location filename="dictionary_tool.cc" line="702"/>
         <source>Do you want to delete %1?</source>
         <translation>%1を削除しますか?</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="697"/>
+        <location filename="dictionary_tool.cc" line="731"/>
         <source>New name of the dictionary</source>
         <translation>辞書名</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="771"/>
+        <location filename="dictionary_tool.cc" line="806"/>
         <source>%1 entries are imported to %2.</source>
         <translation>%1 エントリーを %2 にインポートしました。</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="777"/>
+        <location filename="dictionary_tool.cc" line="812"/>
         <source>You have imported a file in an invalid or unsupported file format.
 
 Please check the file format. ATOK11 or older format is not supported by Mozc.</source>
@@ -234,12 +213,12 @@ Please check the file format. ATOK11 or older format is not supported by Mozc.</
 ATOK・ことえり・MS-IMEのバイナリ形式の辞書はインポートできません。一度ATOK・ことえり・MS-IMEの辞書ツールを使ってテキスト形式として書き出してから、インポートしてください。ATOK11 以前のファイル形式はサポートしていません。</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="786"/>
+        <location filename="dictionary_tool.cc" line="821"/>
         <source>%1 doesn&apos;t have enough space to import all words in the file. First %2 entries are imported.</source>
         <translation>%1 にはファイル中のすべての単語をインポートするための領域が不足しています。先頭の %2 単語のみインポートします。</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="793"/>
+        <location filename="dictionary_tool.cc" line="828"/>
         <source>%1 entries are imported to %2.
 
 Some imported words were not recognized by %3. Please check the original import file.</source>
@@ -248,191 +227,191 @@ Some imported words were not recognized by %3. Please check the original import 
 %3 で取り扱えない可能性がある単語が含まれています。元のインポート対象ファイルを確認してください。</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="881"/>
+        <location filename="dictionary_tool.cc" line="916"/>
         <source>Microsoft IME dictioanry import function doesn&apos;t work on UAC-elevated process.</source>
         <translation>UACで昇格されたアプリケーションからは、Microsoft IME のユーザ辞書を読み込むことができません。</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="896"/>
+        <location filename="dictionary_tool.cc" line="931"/>
         <source>All user-registered words in %1 are migrated into the current dictionary.</source>
         <translation>%1 のユーザ辞書にある単語を選択された辞書にインポートします</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="800"/>
+        <location filename="dictionary_tool.cc" line="835"/>
         <source>Failed to open user dictionary</source>
         <translation>ユーザ辞書のオープンに失敗しました。</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="1465"/>
+        <location filename="dictionary_tool.cc" line="1508"/>
         <source>Dictionary name is empty.</source>
         <translation>辞書名が入力されていません。</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="1470"/>
+        <location filename="dictionary_tool.cc" line="1513"/>
         <source>Dictionary name is too long.</source>
         <translation>辞書名が長すぎます。</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="1460"/>
+        <location filename="dictionary_tool.cc" line="1503"/>
         <source>An invalid character is included in the dictionary name.</source>
         <translation>辞書名に使用できない文字が含まれています。</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="311"/>
+        <location filename="dictionary_tool.cc" line="344"/>
         <source>Tools</source>
         <translation>管理</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="312"/>
+        <location filename="dictionary_tool.cc" line="345"/>
         <source>Add</source>
         <translation>追加</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="937"/>
+        <location filename="dictionary_tool.cc" line="972"/>
         <source>Export dictionary</source>
         <translation>辞書をエクスポート</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="313"/>
+        <location filename="dictionary_tool.cc" line="346"/>
         <source>Remove</source>
         <translation>削除</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="361"/>
+        <location filename="dictionary_tool.cc" line="394"/>
         <source>Category</source>
         <translation>品詞</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="747"/>
-        <location filename="dictionary_tool.cc" line="967"/>
+        <location filename="dictionary_tool.cc" line="782"/>
+        <location filename="dictionary_tool.cc" line="1002"/>
         <source>You can&apos;t have more than %1 words in one dictionary.</source>
         <translation>%1 語を超える単語を 1 つの辞書の中に持つことはできません。</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="938"/>
+        <location filename="dictionary_tool.cc" line="973"/>
         <source>Text Files (*.txt);;All Files (*)</source>
         <translation>テキスト ファイル (*.txt);;すべてのファイル(*)</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="816"/>
-        <location filename="dictionary_tool.cc" line="946"/>
+        <location filename="dictionary_tool.cc" line="851"/>
+        <location filename="dictionary_tool.cc" line="981"/>
         <source>Can&apos;t open %1.</source>
         <translation>%1を開けません。</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="397"/>
+        <location filename="dictionary_tool.cc" line="430"/>
         <source>Find...</source>
         <translation>検索...</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="959"/>
+        <location filename="dictionary_tool.cc" line="994"/>
         <source>Dictionary export finished.</source>
         <translation>辞書のエクスポートが完了しました。</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="1029"/>
+        <location filename="dictionary_tool.cc" line="1064"/>
         <source>Do you want to delete this word?</source>
         <translation>この単語を削除しますか？</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="1031"/>
+        <location filename="dictionary_tool.cc" line="1066"/>
         <source>Do you want to delete the selected words?</source>
         <translation>選択された単語を削除しますか？</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="1045"/>
+        <location filename="dictionary_tool.cc" line="1080"/>
         <source>Deleting the selected words...</source>
         <translation>単語を削除しています...</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="1116"/>
+        <location filename="dictionary_tool.cc" line="1151"/>
         <source>Cannot move all the selected items.
 The target dictionary can have maximum %1 entries.</source>
         <translation>選択された全ての単語を移動できません。
 移動先の辞書は最大 %1 エントリまで格納できます。</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="1129"/>
+        <location filename="dictionary_tool.cc" line="1164"/>
         <source>Moving the selected words...</source>
         <translation>単語を移動しています...</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="1173"/>
+        <location filename="dictionary_tool.cc" line="1208"/>
         <source>New comment</source>
         <translation>新しいコメント</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="1205"/>
+        <location filename="dictionary_tool.cc" line="1240"/>
         <source>An invalid character is included in the reading.</source>
         <translation>よみに使用できない文字が含まれています。</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="1238"/>
+        <location filename="dictionary_tool.cc" line="1273"/>
         <source>Add a word</source>
         <translation>単語を追加</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="1243"/>
+        <location filename="dictionary_tool.cc" line="1278"/>
         <source>Delete this word</source>
         <translation>この単語を削除</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="1250"/>
+        <location filename="dictionary_tool.cc" line="1285"/>
         <source>Delete the selected words</source>
         <translation>選択した単語を削除</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="1244"/>
+        <location filename="dictionary_tool.cc" line="1279"/>
         <source>Move this word to</source>
         <translation>この単語を移動</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="1251"/>
+        <location filename="dictionary_tool.cc" line="1286"/>
         <source>Move the selected words to</source>
         <translation>選択した単語を移動</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="1277"/>
+        <location filename="dictionary_tool.cc" line="1315"/>
         <source>Change category to</source>
         <translation>品詞を変更</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="1285"/>
+        <location filename="dictionary_tool.cc" line="1323"/>
         <source>Edit comment</source>
         <translation>コメントを編集</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="1329"/>
+        <location filename="dictionary_tool.cc" line="1367"/>
         <source>Rename...</source>
         <translation>辞書名を変更...</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="1330"/>
+        <location filename="dictionary_tool.cc" line="1368"/>
         <source>Delete</source>
         <translation>この辞書を削除</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="1332"/>
+        <location filename="dictionary_tool.cc" line="1370"/>
         <source>Import to this dictionary...</source>
         <translation>この辞書にインポート...</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="1333"/>
+        <location filename="dictionary_tool.cc" line="1371"/>
         <source>Export this dictionary...</source>
         <translation>この辞書をエクスポート...</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="1475"/>
+        <location filename="dictionary_tool.cc" line="1518"/>
         <source>Dictionary already exists.</source>
         <translation>同一名称の辞書がすでに存在します。</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="1480"/>
+        <location filename="dictionary_tool.cc" line="1523"/>
         <source>A fatal error occurred.</source>
         <translation>エラーが発生しました。</translation>
     </message>
     <message>
-        <location filename="dictionary_tool.cc" line="1597"/>
+        <location filename="dictionary_tool.cc" line="1641"/>
         <source>%1: %2 entries</source>
         <translation>%1: 総数 %2 個</translation>
     </message>
@@ -440,7 +419,7 @@ The target dictionary can have maximum %1 entries.</source>
 <context>
     <name>mozc::gui::FindDialog</name>
     <message>
-        <location filename="find_dialog.cc" line="126"/>
+        <location filename="find_dialog.cc" line="127"/>
         <source>Cannot find pattern %1</source>
         <translation>%1 は見つかりませんでした。</translation>
     </message>
@@ -505,17 +484,6 @@ The target dictionary can have maximum %1 entries.</source>
         <location filename="import_dialog.cc" line="163"/>
         <source>Text Files (*.txt);;All Files (*)</source>
         <translation>テキスト ファイル (*.txt);;すべてのファイル(*)</translation>
-    </message>
-</context>
-<context>
-    <name>mozc::gui::RegisterForm</name>
-    <message>
-        <source>Register word</source>
-        <translation type="obsolete">新しい単語</translation>
-    </message>
-    <message>
-        <source>Modify word</source>
-        <translation type="obsolete">単語を修正</translation>
     </message>
 </context>
 </TS>

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,11 +35,15 @@
 #include <vector>
 #include "base/base.h"
 #include "session/session_observer_interface.h"
+#include "usage_stats/usage_stats.h"
 
 namespace mozc {
 namespace commands {
 class Command;
 class Input;
+// We cannot use Input::TouchEvent because C++ does not allow forward
+// declaration of a nested-type.
+class Input_TouchEvent;
 class Output;
 }  // namespace commands
 
@@ -56,10 +60,19 @@ class SessionUsageObserver : public SessionObserverInterface {
 
  private:
   struct UsageCache {
-    map<string, uint32> count;
-    map<string, vector<uint32> > timing;
-    map<string, int> integer;
-    map<string, bool> boolean;
+    // The structure of touch_event_stat_cache_ and miss_touch_event_stat_cache_
+    // is as following:
+    //   (keyboard_name_01 : (source_id_1 : TouchEventStats,
+    //                        source_id_2 : TouchEventStats,
+    //                        source_id_3 : TouchEventStats),
+    //    keyboard_name_02 : (source_id_1 : TouchEventStats,
+    //                        source_id_2 : TouchEventStats,
+    //                        source_id_3 : TouchEventStats))
+    // Memory usage estimation: TouchEventStat message uses 240 bytes and
+    // the number of source_id can be a few hundreds, so these variables seem to
+    // use less than 100 KBytes.
+    map<string, usage_stats::TouchEventStatsMap> touch_event;
+    map<string, usage_stats::TouchEventStatsMap> miss_touch_event;
     void Clear();
   };
 
@@ -71,39 +84,34 @@ class SessionUsageObserver : public SessionObserverInterface {
   void EvalCreateSession(const commands::Input &input,
                         const commands::Output &output,
                         map<uint64, SessionState> *states);
-  void EvalSendKey(const commands::Input &input,
-                   const commands::Output &output);
   // Update state and update stats using input and output.
   void UpdateState(const commands::Input &input,
                    const commands::Output &output,
                    SessionState *state);
-  // Update selected indices of |state|.
-  void UpdateSelectedIndices(const commands::Input &input,
-                             const commands::Output &output,
-                             SessionState *state) const;
-  // Update mode of |state|.
-  void UpdateMode(const commands::Input &input, const commands::Output &output,
-                  SessionState *state) const;
-  // Check output and update stats.
-  void CheckOutput(const commands::Input &input,
-                   const commands::Output &output,
-                   const SessionState *state);
-  // Utility function for updating stats of candidates.
-  void UpdateCandidateStats(const string &base_name, uint32 index);
   // Update client side stats.
   void UpdateClientSideStats(const commands::Input &input,
                              SessionState *state);
-
-  // Update stats. Values are cached.
-  void IncrementCount(const string &name);
-  void IncrementCountBy(const string &name, uint64 count);
-  void UpdateTiming(const string &name, uint64 val);
-  void SetInteger(const string &name, int val);
-  void SetBoolean(const string &name, bool val);
+  // Evals touch events and saves touch event stats.
+  void LogTouchEvent(const commands::Input &input,
+                     const commands::Output &output,
+                     const SessionState &state);
+  // Stores KeyTouch message to TouchEventStats.
+  void StoreTouchEventStats(
+       const commands::Input_TouchEvent &touch_event,
+       usage_stats::TouchEventStatsMap *touch_event_stats_map);
 
   map<uint64, SessionState> states_;
   UsageCache usage_cache_;
 
+  // last_touchevents_ is used to keep the touch_events of last SEND_KEY
+  // message.
+  // When the subsequent command will be recieved, if the command is BACKSPACE
+  // last_touchevents_ will be aggregated to miss_touch_event_stat_cache_,
+  // if the command is not BACKSPACE last_touchevents_ will be aggregated to
+  // touch_event_stat_cache_.
+  // A vector is used for storing multi touch event.
+  // Because it will not be so large, reallocation will rarely happen.
+  vector<commands::Input_TouchEvent> last_touchevents_;
 
   DISALLOW_COPY_AND_ASSIGN(SessionUsageObserver);
 };

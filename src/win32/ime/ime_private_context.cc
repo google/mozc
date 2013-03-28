@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,11 +33,12 @@
 #include "client/client_interface.h"
 #include "config/config_handler.h"
 #include "session/commands.pb.h"
+#include "win32/base/deleter.h"
+#include "win32/base/indicator_visibility_tracker.h"
+#include "win32/base/input_state.h"
+#include "win32/base/surrogate_pair_observer.h"
 #include "win32/ime/ime_core.h"
-#include "win32/ime/ime_deleter.h"
 #include "win32/ime/ime_scoped_context.h"
-#include "win32/ime/ime_state.h"
-#include "win32/ime/ime_surrogate_pair_observer.h"
 #include "win32/ime/ime_trace.h"
 #include "win32/ime/ime_ui_visibility_tracker.h"
 
@@ -52,7 +53,7 @@ const uint32 kMagicNumber = 0x637a6f4d;  // 'cozM'
 #endif
 
 static HIMCC InitializeHIMCC(HIMCC himcc, DWORD size) {
-  if (himcc == NULL) {
+  if (himcc == nullptr) {
     return ::ImmCreateIMCC(size);
   } else {
     return ::ImmReSizeIMCC(himcc, size);
@@ -72,9 +73,10 @@ bool PrivateContext::Initialize() {
   capability.set_text_deletion(commands::Capability::DELETE_PRECEDING_TEXT);
   client->set_client_capability(capability);
 
-  ime_behavior = new ImeBehavior();
-  ime_state = new ImeState();
+  ime_behavior = new InputBehavior();
+  ime_state = new InputState();
   ui_visibility_tracker = new UIVisibilityTracker();
+  indicator_visibility_tracker = new IndicatorVisibilityTracker();
   last_output = new mozc::commands::Output();
   deleter = new VKBackBasedDeleter();
   surrogate_pair_observer = new SurrogatePairObserver();
@@ -88,19 +90,21 @@ bool PrivateContext::Uninitialize() {
   delete client;
   delete ime_state;
   delete ime_behavior;
+  delete indicator_visibility_tracker;
   delete ui_visibility_tracker;
   delete last_output;
   delete deleter;
   delete surrogate_pair_observer;
   magic_number = 0;
   thread_id = 0;
-  client = NULL;
-  ime_state = NULL;
-  ime_behavior = NULL;
-  ui_visibility_tracker = NULL;
-  last_output = NULL;
-  deleter = NULL;
-  surrogate_pair_observer = NULL;
+  client = nullptr;
+  ime_state = nullptr;
+  ime_behavior = nullptr;
+  ui_visibility_tracker = nullptr;
+  indicator_visibility_tracker = nullptr;
+  last_output = nullptr;
+  deleter = nullptr;
+  surrogate_pair_observer = nullptr;
   return true;
 }
 
@@ -117,7 +121,7 @@ bool PrivateContext::Validate() const {
 }
 
 bool PrivateContextUtil::IsValidPrivateContext(HIMCC private_data_handle) {
-  if (private_data_handle == NULL) {
+  if (private_data_handle == nullptr) {
     return false;
   }
   if (::ImmGetIMCCSize(private_data_handle) != sizeof(PrivateContext)) {
@@ -129,7 +133,7 @@ bool PrivateContextUtil::IsValidPrivateContext(HIMCC private_data_handle) {
 
 bool PrivateContextUtil::EnsurePrivateContextIsInitialized(
     HIMCC *private_data_handle_pointer) {
-  if (private_data_handle_pointer == NULL) {
+  if (private_data_handle_pointer == nullptr) {
     return false;
   }
 
@@ -144,7 +148,7 @@ bool PrivateContextUtil::EnsurePrivateContextIsInitialized(
   *private_data_handle_pointer = InitializeHIMCC(
       *private_data_handle_pointer, sizeof(mozc::win32::PrivateContext));
   const HIMCC new_private_data_handle = *private_data_handle_pointer;
-  if (new_private_data_handle == NULL) {
+  if (new_private_data_handle == nullptr) {
     // Failed to allocate memory.
     return false;
   }
@@ -169,7 +173,7 @@ bool PrivateContextUtil::EnsurePrivateContextIsInitialized(
 
   if (config.use_keyboard_to_change_preedit_method()) {
     private_context_allocator->ime_behavior->
-        use_kanji_key_to_toggle_input_style = true;
+        use_romaji_key_to_toggle_input_style = true;
   }
   return true;
 }

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,9 +35,11 @@
 #include "renderer/unix/gtk_wrapper_mock.h"
 
 using ::testing::Expectation;
+using ::testing::NotNull;
 using ::testing::Return;
-using ::testing::StrictMock;
+using ::testing::SetArgPointee;
 using ::testing::StrEq;
+using ::testing::StrictMock;
 using ::testing::_;
 
 namespace mozc {
@@ -327,6 +329,7 @@ TEST(WindowManagerTest, UpdateCandidateWindowTest) {
     const Rect client_cord_rect(10, 20, 30, 40);
     const Point window_position(15, 25);
     const Size window_size(35, 45);
+    const gint monitor = 0x7777;
 
     candidates->set_window_location(commands::Candidates::CARET);
     const Rect caret_rect(16, 26, 2, 13);
@@ -351,15 +354,20 @@ TEST(WindowManagerTest, UpdateCandidateWindowTest) {
 
     GtkWidget *toplevel_widget = reinterpret_cast<GtkWidget*>(0x12345678);
     GdkScreen *toplevel_screen = reinterpret_cast<GdkScreen*>(0x87654321);
-    const Rect screen_rect(0, 0, 4000, 4000);
+    const GdkRectangle monitor_rect = {0, 0, 4000, 4000};
     EXPECT_CALL(*gtk_mock, GtkWindowNew(GTK_WINDOW_TOPLEVEL))
         .WillOnce(Return(toplevel_widget));
     EXPECT_CALL(*gtk_mock, GtkWindowGetScreen(toplevel_widget))
         .WillOnce(Return(toplevel_screen));
-    EXPECT_CALL(*gtk_mock, GdkScreenGetWidth(toplevel_screen))
-        .WillOnce(Return(screen_rect.size.width));
-    EXPECT_CALL(*gtk_mock, GdkScreenGetHeight(toplevel_screen))
-        .WillOnce(Return(screen_rect.size.height));
+    EXPECT_CALL(*gtk_mock, GdkScreenGetMonitorAtPoint(toplevel_screen,
+                                                      caret_rect.Left(),
+                                                      caret_rect.Bottom()))
+        .WillOnce(Return(monitor));
+    EXPECT_CALL(*gtk_mock, GdkScreenGetMonitorGeometry(toplevel_screen,
+                                                       monitor,
+                                                       NotNull()))
+        .WillOnce(SetArgPointee<2>(monitor_rect));
+
     WindowManager manager(candidate_window_mock, infolist_window_mock,
                           gtk_mock);
     const Rect actual_rect = manager.UpdateCandidateWindow(command);
@@ -390,18 +398,19 @@ TEST(WindowManagerTest, UpdateCandidateWindowTest) {
     const Rect client_cord_rect(10, 20, 30, 40);
     const Point window_position(15, 25);
     const Size window_size(35, 45);
+    const gint monitor = 0x7777;
 
     candidates->set_window_location(commands::Candidates::COMPOSITION);
-    const Rect composition_rect(16, 26, 2, 13);
+    const Rect comp_rect(16, 26, 2, 13);
     commands::Rectangle *rectangle
         = candidates->mutable_composition_rectangle();
-    rectangle->set_x(composition_rect.Left());
-    rectangle->set_y(composition_rect.Top());
-    rectangle->set_width(composition_rect.Width());
-    rectangle->set_height(composition_rect.Height());
+    rectangle->set_x(comp_rect.Left());
+    rectangle->set_y(comp_rect.Top());
+    rectangle->set_width(comp_rect.Width());
+    rectangle->set_height(comp_rect.Height());
     const Point expected_window_position(
-        composition_rect.Left() - client_cord_rect.Left(),
-        composition_rect.Top() + composition_rect.Height());
+        comp_rect.Left() - client_cord_rect.Left(),
+        comp_rect.Top() + comp_rect.Height());
 
     EXPECT_CALL(*candidate_window_mock, Update(_))
         .WillOnce(Return(window_size));
@@ -415,15 +424,20 @@ TEST(WindowManagerTest, UpdateCandidateWindowTest) {
 
     GtkWidget *toplevel_widget = reinterpret_cast<GtkWidget*>(0x12345678);
     GdkScreen *toplevel_screen = reinterpret_cast<GdkScreen*>(0x87654321);
-    const Rect screen_rect(0, 0, 4000, 4000);
+    const GdkRectangle monitor_rect = {0, 0, 4000, 4000};
     EXPECT_CALL(*gtk_mock, GtkWindowNew(GTK_WINDOW_TOPLEVEL))
         .WillOnce(Return(toplevel_widget));
     EXPECT_CALL(*gtk_mock, GtkWindowGetScreen(toplevel_widget))
         .WillOnce(Return(toplevel_screen));
-    EXPECT_CALL(*gtk_mock, GdkScreenGetWidth(toplevel_screen))
-        .WillOnce(Return(screen_rect.size.width));
-    EXPECT_CALL(*gtk_mock, GdkScreenGetHeight(toplevel_screen))
-        .WillOnce(Return(screen_rect.size.height));
+    EXPECT_CALL(*gtk_mock, GdkScreenGetMonitorAtPoint(toplevel_screen,
+                                                      comp_rect.Left(),
+                                                      comp_rect.Bottom()))
+        .WillOnce(Return(monitor));
+    EXPECT_CALL(*gtk_mock, GdkScreenGetMonitorGeometry(toplevel_screen,
+                                                       monitor,
+                                                       NotNull()))
+        .WillOnce(SetArgPointee<2>(monitor_rect));
+
     WindowManager manager(candidate_window_mock, infolist_window_mock,
                           gtk_mock);
     const Rect actual_rect = manager.UpdateCandidateWindow(command);
@@ -449,7 +463,8 @@ TEST(WindowManagerTest, UpdateCandidateWindowTest) {
     const Rect client_cord_rect(0, 0, 30, 40);
     const Point window_position(1000, 1000);
     const Size window_size(300, 400);
-    const Rect screen_rect(0, 0, 1200, 1200);
+    const GdkRectangle monitor_rect = {0, 0, 1200, 1200};
+    const gint monitor = 0x7777;
 
     EXPECT_CALL(*candidate_window_mock, Update(_))
         .WillOnce(Return(window_size));
@@ -464,18 +479,23 @@ TEST(WindowManagerTest, UpdateCandidateWindowTest) {
         .WillOnce(Return(toplevel_widget));
     EXPECT_CALL(*gtk_mock, GtkWindowGetScreen(toplevel_widget))
         .WillOnce(Return(toplevel_screen));
-    EXPECT_CALL(*gtk_mock, GdkScreenGetWidth(toplevel_screen))
-        .WillOnce(Return(screen_rect.size.width));
-    EXPECT_CALL(*gtk_mock, GdkScreenGetHeight(toplevel_screen))
-        .WillOnce(Return(screen_rect.size.height));
+    EXPECT_CALL(*gtk_mock, GdkScreenGetMonitorAtPoint(toplevel_screen,
+                                                      window_position.x,
+                                                      window_position.y))
+        .WillOnce(Return(monitor));
+    EXPECT_CALL(*gtk_mock, GdkScreenGetMonitorGeometry(toplevel_screen,
+                                                       monitor,
+                                                       NotNull()))
+        .WillOnce(SetArgPointee<2>(monitor_rect));
+
     WindowManager manager(candidate_window_mock, infolist_window_mock,
                           gtk_mock);
     const Rect actual_rect = manager.UpdateCandidateWindow(command);
 
-    EXPECT_LE(actual_rect.Right(), screen_rect.Right());
-    EXPECT_LE(actual_rect.Bottom(), screen_rect.Bottom());
-    EXPECT_GE(actual_rect.Left(), screen_rect.Left());
-    EXPECT_GE(actual_rect.Top(), screen_rect.Top());
+    EXPECT_GE(actual_rect.Left(), monitor_rect.x);
+    EXPECT_GE(actual_rect.Top(), monitor_rect.y);
+    EXPECT_LE(actual_rect.Right(), monitor_rect.x + monitor_rect.width);
+    EXPECT_LE(actual_rect.Bottom(), monitor_rect.y + monitor_rect.height);
   }
 }
 
@@ -513,18 +533,25 @@ TEST(WindowManagerTest, UpdateInfolistWindowTest) {
     candidates->set_focused_index(0);
     candidate->set_information_id(0);
 
-
     GtkWidget *toplevel_widget = reinterpret_cast<GtkWidget*>(0x12345678);
     GdkScreen *toplevel_screen = reinterpret_cast<GdkScreen*>(0x87654321);
-    const Rect screen_rect(15, 25, 35, 45);
+    const GdkRectangle monitor_rect = {15, 25, 35, 45};
+    const gint monitor = 0x7777;
+    const Rect cand_window_rect(10, 20, 30, 40);
+
     EXPECT_CALL(*gtk_mock, GtkWindowNew(GTK_WINDOW_TOPLEVEL))
         .WillOnce(Return(toplevel_widget));
     EXPECT_CALL(*gtk_mock, GtkWindowGetScreen(toplevel_widget))
         .WillOnce(Return(toplevel_screen));
-    EXPECT_CALL(*gtk_mock, GdkScreenGetWidth(toplevel_screen))
-        .WillOnce(Return(screen_rect.size.width));
-    EXPECT_CALL(*gtk_mock, GdkScreenGetHeight(toplevel_screen))
-        .WillOnce(Return(screen_rect.size.height));
+    EXPECT_CALL(*gtk_mock, GdkScreenGetMonitorAtPoint(toplevel_screen,
+                                                      cand_window_rect.Left(),
+                                                      cand_window_rect.Top()))
+        .WillOnce(Return(monitor));
+    EXPECT_CALL(*gtk_mock, GdkScreenGetMonitorGeometry(toplevel_screen,
+                                                       monitor,
+                                                       NotNull()))
+        .WillOnce(SetArgPointee<2>(monitor_rect));
+
 
     // TODO(nona): Make precise expectation.
     const Size infolist_window_size(10, 20);
@@ -534,37 +561,44 @@ TEST(WindowManagerTest, UpdateInfolistWindowTest) {
     EXPECT_CALL(*infolist_window_mock, Update(_))
         .WillOnce(Return(infolist_window_size));
 
-    const Rect candidate_window_rect(10, 20, 30, 40);
     WindowManager manager(candidate_window_mock, infolist_window_mock,
                           gtk_mock);
 
     EXPECT_TRUE(manager.ShouldShowInfolistWindow(command));
-    manager.UpdateInfolistWindow(command, candidate_window_rect);
+    manager.UpdateInfolistWindow(command, cand_window_rect);
   }
 }
 
-TEST(WindowManagerTest, GetDesktopRectTest) {
+TEST(WindowManagerTest, GetMonitorRectTest) {
   GtkWindowMock *candidate_window_mock = new GtkWindowMock();
   GtkWindowMock *infolist_window_mock = new GtkWindowMock();
   GtkWrapperMock *gtk_mock = new GtkWrapperMock();
   GtkWidget *toplevel_widget = reinterpret_cast<GtkWidget*>(0x12345678);
   GdkScreen *toplevel_screen = reinterpret_cast<GdkScreen*>(0x87654321);
-  const Size screen_size(35, 45);
+  const gint monitor = 0x7777;
+  const Point cursor(123, 456);
+
+  const GdkRectangle monitor_rect = {10, 20, 35, 45};
   EXPECT_CALL(*gtk_mock, GtkWindowNew(GTK_WINDOW_TOPLEVEL))
       .WillOnce(Return(toplevel_widget));
   EXPECT_CALL(*gtk_mock, GtkWindowGetScreen(toplevel_widget))
       .WillOnce(Return(toplevel_screen));
-  EXPECT_CALL(*gtk_mock, GdkScreenGetWidth(toplevel_screen))
-      .WillOnce(Return(screen_size.width));
-  EXPECT_CALL(*gtk_mock, GdkScreenGetHeight(toplevel_screen))
-      .WillOnce(Return(screen_size.height));
+  EXPECT_CALL(*gtk_mock, GdkScreenGetMonitorAtPoint(toplevel_screen,
+                                                    cursor.x,
+                                                    cursor.y))
+      .WillOnce(Return(monitor));
+  EXPECT_CALL(*gtk_mock, GdkScreenGetMonitorGeometry(toplevel_screen,
+                                                     monitor,
+                                                     NotNull()))
+      .WillOnce(SetArgPointee<2>(monitor_rect));
+
   WindowManager manager(candidate_window_mock, infolist_window_mock, gtk_mock);
 
-  const Rect actual_screen_rect = manager.GetDesktopRect();
-  EXPECT_EQ(0, actual_screen_rect.origin.x);
-  EXPECT_EQ(0, actual_screen_rect.origin.y);
-  EXPECT_EQ(screen_size.width, actual_screen_rect.size.width);
-  EXPECT_EQ(screen_size.height, actual_screen_rect.size.height);
+  const Rect &actual_monitor_rect = manager.GetMonitorRect(cursor.x, cursor.y);
+  EXPECT_EQ(monitor_rect.x, actual_monitor_rect.origin.x);
+  EXPECT_EQ(monitor_rect.y, actual_monitor_rect.origin.y);
+  EXPECT_EQ(monitor_rect.width, actual_monitor_rect.size.width);
+  EXPECT_EQ(monitor_rect.height, actual_monitor_rect.size.height);
 }
 
 class FontUpdateTestableWindowManager : public WindowManager {

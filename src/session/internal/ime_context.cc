@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -46,8 +46,8 @@ ImeContext::ImeContext()
       last_command_time_(0),
       composer_(NULL),
       converter_(NULL),
-      state_(NONE) {
-  request_.CopyFrom(Request::default_instance());
+      state_(NONE),
+      request_(&Request::default_instance()) {
 }
 ImeContext::~ImeContext() {}
 
@@ -74,14 +74,15 @@ void ImeContext::set_converter(SessionConverterInterface *converter) {
   converter_.reset(converter);
 }
 
-void ImeContext::SetRequest(const commands::Request &request) {
-  request_.CopyFrom(request);
+void ImeContext::SetRequest(const commands::Request *request) {
+  request_ = request;
   converter_->SetRequest(request_);
   composer_->SetRequest(request_);
 }
 
 const commands::Request &ImeContext::GetRequest() const {
-  return request_;
+  DCHECK(request_);
+  return *request_;
 }
 
 // static
@@ -97,7 +98,7 @@ void ImeContext::CopyContext(const ImeContext &src, ImeContext *dest) {
   dest->set_state(src.state());
   dest->set_keymap(src.keymap());
 
-  dest->request_.CopyFrom(src.request_);
+  dest->request_ = src.request_;
 
   dest->mutable_client_capability()->CopyFrom(src.client_capability());
   dest->mutable_application_info()->CopyFrom(src.application_info());

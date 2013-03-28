@@ -1,0 +1,242 @@
+--- a/ProxyBuilder.java
++++ b/ProxyBuilder.java
+@@ -14,8 +14,9 @@
+  * limitations under the License.
+  */
+ 
+-package com.google.dexmaker.stock;
++package org.mozc.android.inputmethod.japanese.testing.mocking;
+ 
++import org.mozc.android.inputmethod.japanese.testing.VisibilityProxy;
+ import com.google.dexmaker.Code;
+ import com.google.dexmaker.Comparison;
+ import com.google.dexmaker.DexMaker;
+@@ -24,7 +25,15 @@
+ import com.google.dexmaker.Local;
+ import com.google.dexmaker.MethodId;
+ import com.google.dexmaker.TypeId;
++import com.google.dexmaker.dx.dex.DexFormat;
++
++import dalvik.system.DexClassLoader;
++import dalvik.system.DexFile;
++
++import junit.framework.AssertionFailedError;
++
+ import java.io.File;
++import java.io.FileOutputStream;
+ import java.io.IOException;
+ import java.lang.reflect.Constructor;
+ import java.lang.reflect.Field;
+@@ -40,9 +49,12 @@
+ import java.util.Collections;
+ import java.util.HashMap;
+ import java.util.HashSet;
++import java.util.Iterator;
+ import java.util.Map;
+ import java.util.Set;
+ import java.util.concurrent.CopyOnWriteArraySet;
++import java.util.jar.JarEntry;
++import java.util.jar.JarOutputStream;
+ 
+ /**
+  * Creates dynamic proxies of concrete classes.
+@@ -234,7 +246,7 @@
+         @SuppressWarnings("unchecked") // we only populate the map with matching types
+         Class<? extends T> proxyClass = (Class) generatedProxyClasses.get(baseClass);
+         if (proxyClass != null
+-                && proxyClass.getClassLoader().getParent() == parentClassLoader
++                && proxyClass.getClassLoader() == parentClassLoader
+                 && interfaces.equals(asSet(proxyClass.getInterfaces()))) {
+             return proxyClass; // cache hit!
+         }
+@@ -244,21 +256,19 @@
+         String generatedName = getMethodNameForProxyOf(baseClass);
+         TypeId<? extends T> generatedType = TypeId.get("L" + generatedName + ";");
+         TypeId<T> superType = TypeId.get(baseClass);
+-        generateConstructorsAndFields(dexMaker, generatedType, superType, baseClass);
++        generateConstructorsAndFields(
++            dexMaker, generatedType, superType, baseClass, parentClassLoader);
+         Method[] methodsToProxy = getMethodsToProxyRecursive();
+         generateCodeForAllMethods(dexMaker, generatedType, methodsToProxy, superType);
+         dexMaker.declare(generatedType, generatedName + ".generated", PUBLIC, superType,
+                 getInterfacesAsTypeIds());
+-        ClassLoader classLoader = dexMaker.generateAndLoad(parentClassLoader, dexCache);
++
+         try {
+-            proxyClass = loadClass(classLoader, generatedName);
++            proxyClass = loadClass(parentClassLoader, generatedName, dexMaker.generate(), dexCache);
+         } catch (IllegalAccessError e) {
+             // Thrown when the base class is not accessible.
+             throw new UnsupportedOperationException(
+                     "cannot proxy inaccessible class " + baseClass, e);
+-        } catch (ClassNotFoundException e) {
+-            // Should not be thrown, we're sure to have generated this class.
+-            throw new AssertionError(e);
+         }
+         setMethodsStaticField(proxyClass, methodsToProxy);
+         generatedProxyClasses.put(baseClass, proxyClass);
+@@ -267,9 +277,43 @@
+ 
+     // The type cast is safe: the generated type will extend the base class type.
+     @SuppressWarnings("unchecked")
+-    private Class<? extends T> loadClass(ClassLoader classLoader, String generatedName)
+-            throws ClassNotFoundException {
+-        return (Class<? extends T>) classLoader.loadClass(generatedName);
++    private Class<? extends T> loadClass(
++            ClassLoader classLoader, String generatedName, byte[] dex, File dexCache)
++            throws IOException {
++        File result = File.createTempFile("Generated", ".jar", dexCache);
++        result.deleteOnExit();
++        JarOutputStream jarOut = new JarOutputStream(new FileOutputStream(result));
++        jarOut.putNextEntry(new JarEntry(DexFormat.DEX_IN_JAR_NAME));
++        jarOut.write(dex);
++        jarOut.closeEntry();
++        jarOut.close();
++
++        DexFile dexFile = DexFile.loadDex(
++            result.getPath(), generateOutputName(result, dexCache), 0);
++
++        return dexFile.loadClass(generatedName, classLoader);
++    }
++
++    private static String generateOutputName(File sourcePath, File outputDir) {
++        try {
++            return VisibilityProxy.invokeStaticByName(
++                DexClassLoader.class, "generateOutputName",
++                sourcePath.getPath(), outputDir.getAbsolutePath());
++        } catch (InvocationTargetException e) {
++          throw new AssertionError(e);
++        } catch (AssertionFailedError e) {
++          // Ignoring method not found.
++        }
++
++        try {
++            Class<?> dexPathListClass = Class.forName("dalvik.system.DexPathList");
++            return VisibilityProxy.invokeStaticByName(
++                dexPathListClass, "optimizedPathFor", sourcePath, outputDir);
++        } catch (ClassNotFoundException e) {
++            throw new AssertionError(e);
++        } catch (InvocationTargetException e) {
++            throw new AssertionError(e);
++        }
+     }
+ 
+     private static RuntimeException launderCause(InvocationTargetException e) {
+@@ -545,7 +589,8 @@
+     }
+ 
+     private static <T, G extends T> void generateConstructorsAndFields(DexMaker dexMaker,
+-            TypeId<G> generatedType, TypeId<T> superType, Class<T> superClass) {
++        TypeId<G> generatedType, TypeId<T> superType, Class<T> superClass,
++        ClassLoader targetClassLoader) {
+         TypeId<InvocationHandler> handlerType = TypeId.get(InvocationHandler.class);
+         TypeId<Method[]> methodArrayType = TypeId.get(Method[].class);
+         FieldId<G, InvocationHandler> handlerField = generatedType.getField(
+@@ -558,6 +603,15 @@
+             if (constructor.getModifiers() == Modifier.FINAL) {
+                 continue;
+             }
++            if (Modifier.isPrivate(constructor.getModifiers())) {
++                continue;
++            }
++            if (!Modifier.isPublic(constructor.getModifiers()) &&
++                !Modifier.isProtected(constructor.getModifiers()) &&
++                constructor.getDeclaringClass().getClassLoader() != targetClassLoader) {
++                continue;
++            }
++
+             TypeId<?>[] types = classArrayToTypeArray(constructor.getParameterTypes());
+             MethodId<?, ?> method = generatedType.getConstructor(types);
+             Code constructorCode = dexMaker.declare(method, PUBLIC);
+@@ -603,6 +657,8 @@
+             getMethodsToProxy(methodsToProxy, seenFinalMethods, c);
+         }
+ 
++        methodsToProxy.removeAll(seenFinalMethods);
++
+         Method[] results = new Method[methodsToProxy.size()];
+         int i = 0;
+         for (MethodSetEntry entry : methodsToProxy) {
+@@ -625,10 +681,22 @@
+                 // Skip static methods, overriding them has no effect.
+                 continue;
+             }
+-            if (method.getName().equals("finalize") && method.getParameterTypes().length == 0) {
++            if (isFinalizeMethod(method) || isToStringMethod(method) || isEqualsMethod(method)) {
+                 // Skip finalize method, it's likely important that it execute as normal.
+                 continue;
+             }
++            if (Modifier.isPrivate(method.getModifiers())) {
++                // Don't mock private methods.
++                continue;
++            }
++            if (!Modifier.isPublic(method.getModifiers()) &&
++                !Modifier.isProtected(method.getModifiers()) &&
++                (method.getDeclaringClass().getClassLoader() != parentClassLoader ||
++                 !baseClass.getPackage().equals(method.getDeclaringClass().getPackage()))) {
++                // For package private methods, we need to check if the generated class can access to the
++                // original class. If not, we don't mock it.
++                continue;
++            }
+             MethodSetEntry entry = new MethodSetEntry(method);
+             if (seenFinalMethods.contains(entry)) {
+                 // This method is final in a child class.
+@@ -643,8 +711,26 @@
+         }
+     }
+ 
++    private static boolean isFinalizeMethod(Method method) {
++      return method.getName().equals("finalize") &&
++             method.getParameterTypes().length == 0;
++    }
++
++    private static boolean isToStringMethod(Method method) {
++      return method.getName().equals("toString") &&
++             method.getParameterTypes().length == 0;
++    }
++
++    private static boolean isEqualsMethod(Method method) {
++      if (!method.getName().equals("equals")) {
++        return false;
++      }
++      Class<?>[] parameterTypes = method.getParameterTypes();
++      return parameterTypes.length == 1 && parameterTypes[0] == Object.class;
++    }
++
+     private static <T> String getMethodNameForProxyOf(Class<T> clazz) {
+-        return clazz.getSimpleName() + "_Proxy";
++        return clazz.getName().replace('.', '/') + "$$_Proxy";
+     }
+ 
+     private static TypeId<?>[] classArrayToTypeArray(Class<?>[] input) {
+@@ -742,14 +828,12 @@
+     private static class MethodSetEntry {
+         private final String name;
+         private final Class<?>[] paramTypes;
+-        private final Class<?> returnType;
+         private final Method originalMethod;
+ 
+         public MethodSetEntry(Method method) {
+             originalMethod = method;
+             name = method.getName();
+             paramTypes = method.getParameterTypes();
+-            returnType = method.getReturnType();
+         }
+ 
+         @Override
+@@ -757,7 +841,6 @@
+             if (o instanceof MethodSetEntry) {
+                 MethodSetEntry other = (MethodSetEntry) o;
+                 return name.equals(other.name)
+-                        && returnType.equals(other.returnType)
+                         && Arrays.equals(paramTypes, other.paramTypes);
+             }
+             return false;
+@@ -767,7 +850,6 @@
+         public int hashCode() {
+             int result = 17;
+             result += 31 * result + name.hashCode();
+-            result += 31 * result + returnType.hashCode();
+             result += 31 * result + Arrays.hashCode(paramTypes);
+             return result;
+         }

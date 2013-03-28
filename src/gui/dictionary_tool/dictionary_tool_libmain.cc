@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,8 +30,9 @@
 #include <QtCore/QTextCodec>
 #include <QtCore/QTranslator>
 #include <QtGui/QApplication>
-#include "base/base.h"
-#include "base/util.h"
+#include <string>
+#include "base/logging.h"
+#include "base/system_util.h"
 #include "gui/base/locale_util.h"
 #include "gui/base/singleton_window_helper.h"
 #include "gui/dictionary_tool/dictionary_tool.h"
@@ -41,7 +42,7 @@ int RunDictionaryTool(int argc, char *argv[]) {
   QApplication app(argc, argv);
 
   string name = "dictionary_tool.";
-  name += mozc::Util::GetDesktopNameAsString();
+  name += mozc::SystemUtil::GetDesktopNameAsString();
   mozc::gui::SingletonWindowHelper window_helper(name);
   if (window_helper.FindPreviousWindow()) {
     // already running

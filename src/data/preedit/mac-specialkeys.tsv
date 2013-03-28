@@ -2,6 +2,7 @@ kVK_Return	ENTER
 kVK_Tab	TAB
 kVK_Space	SPACE
 kVK_Delete	BACKSPACE
+kVK_ForwardDelete	DEL
 kVK_Escape	ESCAPE
 kVK_Home	HOME
 kVK_PageUp	PAGE_UP

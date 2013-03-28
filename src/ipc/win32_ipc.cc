@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,8 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// skip all unless OS_WINDOWS
-#ifdef OS_WINDOWS
+// skip all unless OS_WIN
+#ifdef OS_WIN
 
 #include "ipc/ipc.h"
 
@@ -39,8 +39,10 @@
 
 #include "base/base.h"
 #include "base/const.h"
+#include "base/logging.h"
 #include "base/mutex.h"
 #include "base/singleton.h"
+#include "base/system_util.h"
 #include "base/thread.h"
 #include "base/util.h"
 #include "base/win_sandbox.h"
@@ -56,11 +58,11 @@ const bool kSendTypeData = false;
 const int kMaxSuccessiveConnectionFailureCount = 5;
 
 typedef BOOL (WINAPI *FPGetNamedPipeServerProcessId)(HANDLE, PULONG);
-FPGetNamedPipeServerProcessId g_get_named_pipe_server_process_id = NULL;
+FPGetNamedPipeServerProcessId g_get_named_pipe_server_process_id = nullptr;
 
 typedef BOOL (WINAPI *FPSetFileCompletionNotificationModes)(HANDLE, UCHAR);
 FPSetFileCompletionNotificationModes
-    g_set_file_completion_notification_modes = NULL;
+    g_set_file_completion_notification_modes = nullptr;
 
 // Defined when _WIN32_WINNT >= 0x600
 #ifndef FILE_SKIP_SET_EVENT_ON_HANDLE
@@ -72,14 +74,14 @@ static once_t g_once = MOZC_ONCE_INIT;
 void InitAPIsForVistaAndLater() {
   // We have to load the function pointer dynamically
   // as GetNamedPipeServerProcessId() is only available on Windows Vista.
-  if (!Util::IsVistaOrLater()) {
+  if (!SystemUtil::IsVistaOrLater()) {
     return;
   }
 
   VLOG(1) << "Initializing GetNamedPipeServerProcessId";
   // kernel32.dll must be loaded in client.
   const HMODULE lib = WinUtil::GetSystemModuleHandle(L"kernel32.dll");
-  if (lib == NULL) {
+  if (lib == nullptr) {
     LOG(ERROR) << "GetSystemModuleHandle for kernel32.dll failed.";
     return;
   }
@@ -132,16 +134,17 @@ class IPCClientMutexBase {
     // clients at the same time and only one client gets the connection.
     // This causes redundant and wasteful CreateFile calles.
     string mutex_name = kMutexPathPrefix;
-    mutex_name += Util::GetUserSidAsString();
+    mutex_name += SystemUtil::GetUserSidAsString();
     mutex_name += ".";
     mutex_name += ipc_channel_name;
     mutex_name += ".ipc";
     wstring wmutex_name;
     Util::UTF8ToWide(mutex_name.c_str(), &wmutex_name);
 
-    LPSECURITY_ATTRIBUTES security_attributes_ptr = NULL;
+    LPSECURITY_ATTRIBUTES security_attributes_ptr = nullptr;
     SECURITY_ATTRIBUTES security_attributes;
-    if (!WinSandbox::MakeSecurityAttributes(&security_attributes)) {
+    if (!WinSandbox::MakeSecurityAttributes(WinSandbox::kSharableMutex,
+                                            &security_attributes)) {
       LOG(ERROR) << "Cannot make SecurityAttributes";
     } else {
       security_attributes_ptr = &security_attributes;
@@ -159,16 +162,14 @@ class IPCClientMutexBase {
     // certain which process has initial ownership.
     ipc_mutex_.reset(::CreateMutex(security_attributes_ptr,
                                    FALSE, wmutex_name.c_str()));
-    const DWORD create_mutex_error = ::GetLastError();
-    if (ipc_mutex_.get() == NULL) {
-      LOG(ERROR) << "CreateMutex failed: " << create_mutex_error;
-      return;
+    if (security_attributes_ptr != nullptr) {
+      ::LocalFree(security_attributes_ptr->lpSecurityDescriptor);
     }
 
-    // permit the access from a process runinning with low integrity level
-    if (Util::IsVistaOrLater()) {
-      WinSandbox::SetMandatoryLabelW(ipc_mutex_.get(), SE_KERNEL_OBJECT,
-                                     SDDL_NO_EXECUTE_UP, SDDL_ML_LOW);
+    const DWORD create_mutex_error = ::GetLastError();
+    if (ipc_mutex_.get() == nullptr) {
+      LOG(ERROR) << "CreateMutex failed: " << create_mutex_error;
+      return;
     }
   }
 
@@ -231,10 +232,10 @@ class ScopedReleaseMutex {
       : pipe_handle_(handle) {}
 
   virtual ~ScopedReleaseMutex() {
-    if (NULL != pipe_handle_) {
+    if (nullptr != pipe_handle_) {
       ::ReleaseMutex(pipe_handle_);
     }
-    pipe_handle_ = NULL;
+    pipe_handle_ = nullptr;
   }
 
   HANDLE get() const {
@@ -250,7 +251,7 @@ class ScopedReleaseMutex {
 uint32 GetServerProcessIdImpl(HANDLE handle) {
   CallOnce(&g_once, &InitAPIsForVistaAndLater);
 
-  if (g_get_named_pipe_server_process_id == NULL) {
+  if (g_get_named_pipe_server_process_id == nullptr) {
     return static_cast<uint32>(0);   // must be Windows XP
   }
 
@@ -270,16 +271,12 @@ uint32 GetServerProcessIdImpl(HANDLE handle) {
 void SafeCancelIO(HANDLE device_handle, OVERLAPPED *overlapped) {
   if (::CancelIo(device_handle) == FALSE) {
     const DWORD cancel_error = ::GetLastError();
-    // In this case, the issued I/O is still on-going. We must keep
-    // |overlapped| and the memory block used for this I/O accessible from the
-    // I/O module. Otherwise, unexpected memory corruption may happen.
     LOG(ERROR) << "Failed to CancelIo: " << cancel_error;
-    return;
   }
 
-  // Wait for the completion of the cancel request forever. This is not _safe_
-  // and should be fixed anyway.
-  // TODO(yukawa): Do not use INFINITE here.
+  // Wait for the completion of the on-going request forever. This is not
+  // _safe_ and should be fixed anyway.
+  // TODO(yukawa): Avoid INFINITE if possible.
   ::WaitForSingleObject(GetEventHandleFromOverlapped(overlapped), INFINITE);
 }
 
@@ -343,7 +340,7 @@ bool WaitForIOImpl(HANDLE device_handle, DWORD timeout,
 bool WaitForQuitOrIO(
     HANDLE device_handle, HANDLE quit_event, DWORD timeout,
     OVERLAPPED *overlapped, IPCErrorType *last_ipc_error) {
-  if (quit_event != NULL) {
+  if (quit_event != nullptr) {
     return WaitForQuitOrIOImpl(device_handle, quit_event, timeout,
                                overlapped, last_ipc_error);
   }
@@ -413,7 +410,7 @@ bool SendIPCMessage(HANDLE device_handle, HANDLE write_wait_handle,
       return false;
     }
     if (!SafeWaitOverlappedResult(
-            write_wait_handle, NULL, timeout, &overlapped,
+            device_handle, nullptr, timeout, &overlapped,
             &num_bytes_written, last_ipc_error, kSendTypeData)) {
       return false;
     }
@@ -465,7 +462,7 @@ bool RecvIPCMessage(HANDLE device_handle, HANDLE read_wait_handle, char *buf,
     }
     // Actually this is an async operation. Let's wait for its completion.
     if (!SafeWaitOverlappedResult(
-            read_wait_handle, NULL, timeout, &overlapped,
+            device_handle, nullptr, timeout, &overlapped,
             &num_bytes_read, last_ipc_error, read_type_ack)) {
       return false;
     }
@@ -481,7 +478,7 @@ bool RecvIPCMessage(HANDLE device_handle, HANDLE read_wait_handle, char *buf,
 }
 
 HANDLE CreateManualResetEvent() {
-  return ::CreateEvent(NULL, TRUE, FALSE, NULL);
+  return ::CreateEvent(nullptr, TRUE, FALSE, nullptr);
 }
 
 // We do not care about the signaled state of the device handle itself.
@@ -489,7 +486,7 @@ HANDLE CreateManualResetEvent() {
 // See http://msdn.microsoft.com/en-us/library/windows/desktop/aa365538.aspx
 void MaybeDisableFileCompletionNotification(HANDLE device_handle) {
   CallOnce(&g_once, &InitAPIsForVistaAndLater);
-  if (g_set_file_completion_notification_modes != NULL) {
+  if (g_set_file_completion_notification_modes != nullptr) {
     // This is not a mandatory task. Just ignore the actual error (if any).
     g_set_file_completion_notification_modes(device_handle,
                                              FILE_SKIP_SET_EVENT_ON_HANDLE);
@@ -520,7 +517,8 @@ IPCServer::IPCServer(const string &name,
   DCHECK(!server_address.empty());
 
   SECURITY_ATTRIBUTES security_attributes;
-  if (!WinSandbox::MakeSecurityAttributes(&security_attributes)) {
+  if (!WinSandbox::MakeSecurityAttributes(WinSandbox::kSharablePipe,
+                                          &security_attributes)) {
     LOG(ERROR) << "Cannot make SecurityAttributes";
     return;
   }
@@ -570,7 +568,7 @@ bool IPCServer::Connected() const {
 }
 
 void IPCServer::Terminate() {
-  if (server_thread_.get() == NULL) {
+  if (server_thread_.get() == nullptr) {
     return;
   }
 
@@ -584,7 +582,7 @@ void IPCServer::Terminate() {
 
   // Close the named pipe.
   // This is a workaround for killing child thread
-  if (server_thread_.get() != NULL) {
+  if (server_thread_.get() != nullptr) {
     server_thread_->Join();
     server_thread_->Terminate();
   }
@@ -603,7 +601,7 @@ void IPCServer::Loop() {
       return;
     }
 
-    const HRESULT result = ::ConnectNamedPipe(pipe_handle_.get(), &overlapped);
+    const BOOL result = ::ConnectNamedPipe(pipe_handle_.get(), &overlapped);
     const DWORD connect_named_pipe_error = ::GetLastError();
     if (result == FALSE) {
       if (connect_named_pipe_error == ERROR_PIPE_CONNECTED) {
@@ -697,7 +695,7 @@ void IPCServer::Loop() {
 IPCClient::IPCClient(const string &name)
     : pipe_event_(CreateManualResetEvent()),
       connected_(false),
-      ipc_path_manager_(NULL),
+      ipc_path_manager_(nullptr),
       last_ipc_error_(IPC_NO_ERROR) {
   Init(name, "");
 }
@@ -705,7 +703,7 @@ IPCClient::IPCClient(const string &name)
 IPCClient::IPCClient(const string &name, const string &server_path)
     : pipe_event_(CreateManualResetEvent()),
       connected_(false),
-      ipc_path_manager_(NULL),
+      ipc_path_manager_(nullptr),
       last_ipc_error_(IPC_NO_ERROR) {
   Init(name, server_path);
 }
@@ -716,7 +714,7 @@ void IPCClient::Init(const string &name, const string &server_path) {
   // We should change the mutex based on which IPC server we will talk with.
   ScopedReleaseMutex ipc_mutex(GetClientMutex(name));
 
-  if (ipc_mutex.get() == NULL) {
+  if (ipc_mutex.get() == nullptr) {
     LOG(ERROR) << "IPC mutex is not available";
   } else {
     const int kMutexTimeout = 10 * 1000;  // wait at most 10sec.
@@ -739,7 +737,7 @@ void IPCClient::Init(const string &name, const string &server_path) {
   }
 
   IPCPathManager *manager = IPCPathManager::GetIPCPathManager(name);
-  if (manager == NULL) {
+  if (manager == nullptr) {
     LOG(ERROR) << "IPCPathManager::GetIPCPathManager failed";
     return;
   }
@@ -763,16 +761,16 @@ void IPCClient::Init(const string &name, const string &server_path) {
 
     const HANDLE handle = ::CreateFile(wserver_address.c_str(),
                                        GENERIC_READ | GENERIC_WRITE,
-                                       0, NULL, OPEN_EXISTING,
+                                       0, nullptr, OPEN_EXISTING,
                                        FILE_FLAG_OVERLAPPED |
                                        SECURITY_SQOS_PRESENT |
                                        SECURITY_IDENTIFICATION |
                                        SECURITY_EFFECTIVE_ONLY,
-                                       NULL);
+                                       nullptr);
     const DWORD create_file_error = ::GetLastError();
     if (INVALID_HANDLE_VALUE != handle) {
       DWORD mode = PIPE_READMODE_MESSAGE;
-      if (::SetNamedPipeHandleState(handle, &mode, NULL, NULL) == FALSE) {
+      if (::SetNamedPipeHandleState(handle, &mode, nullptr, nullptr) == FALSE) {
         const DWORD set_namedpipe_handle_state_error = ::GetLastError();
         LOG(ERROR) << "SetNamedPipeHandleState failed. error: "
                    << set_namedpipe_handle_state_error;
@@ -860,4 +858,4 @@ bool IPCClient::Call(const char *request, size_t request_size,
 
 }  // namespace mozc
 
-#endif  // OS_WINDOWS
+#endif  // OS_WIN

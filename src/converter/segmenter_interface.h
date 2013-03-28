@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,29 +38,27 @@ struct Node;
 
 class SegmenterInterface {
  public:
-  // return true if there is a segment boundary between
-  // |lnode| and |rnode|.
-  // if |is_single_segment| is true, this function basically
-  // reutrns false unless |lnode| or |rnode| is BOS/EOS.
-  // |is_single_segment| is used for prediction/suggestion mode.
+  virtual ~SegmenterInterface() {}
+
+  // Returns true if there is a segment boundary between |lnode| and |rnode|.
+  // If |is_single_segment| is true, this function basically reutrns false
+  // unless |lnode| or |rnode| is BOS/EOS.  |is_single_segment| is used for
+  // prediction/suggestion mode.
   virtual bool IsBoundary(const Node *lnode, const Node *rnode,
                           bool is_single_segment) const = 0;
 
   virtual bool IsBoundary(uint16 rid, uint16 lid) const = 0;
 
-  // return cost penalty of the word prefix.
-  // we can add cost penalty if a node->lid
-  // exists at the begging of user input.
+  // Returns cost penalty of the word prefix.  We can add cost penalty if a
+  // node->lid exists at the begging of user input.
   virtual int32 GetPrefixPenalty(uint16 lid) const = 0;
 
-  // return cost penalty of the word suffix.
-  // we can add cost penalty if a node->rid
-  // exists at the end of user input.
+  // Returns cost penalty of the word suffix.  We can add cost penalty if a
+  // node->rid exists at the end of user input.
   virtual int32 GetSuffixPenalty(uint16 rid) const = 0;
 
  protected:
   SegmenterInterface() {}
-  virtual ~SegmenterInterface() {}
 
  private:
   DISALLOW_COPY_AND_ASSIGN(SegmenterInterface);

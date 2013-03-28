@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,11 +29,14 @@
 
 #include "rewriter/collocation_util.h"
 
+#include <string>
+
+#include "base/string_piece.h"
 #include "base/util.h"
 
 namespace mozc {
 void CollocationUtil::GetNormalizedScript(
-    const string &str, bool remove_number, string *output) {
+    const StringPiece str, bool remove_number, string *output) {
   output->clear();
   string temp;
   RemoveExtraCharacters(str, remove_number, &temp);
@@ -74,7 +77,7 @@ bool CollocationUtil::IsNumber(char32 c) {
 }
 
 void CollocationUtil::RemoveExtraCharacters(
-    const string &input, bool remove_number, string *output) {
+    const StringPiece input, bool remove_number, string *output) {
   for (ConstChar32Iterator iter(input); !iter.Done(); iter.Next()) {
     const char32 w = iter.Get();
     if (((Util::GetScriptType(w) != Util::UNKNOWN_SCRIPT) &&

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,20 +29,20 @@
 
 #include "sync/learning_preference_adapter.h"
 
-#include <cmath>
-#include <map>
+#include <cstdlib>
 #include <string>
 
-#include "base/base.h"
-#include "base/file_stream.h"
+#include "base/file_util.h"
 #include "base/logging.h"
+#include "base/scoped_ptr.h"
+#include "base/system_util.h"
 #include "base/util.h"
 #include "storage/lru_storage.h"
-#include "sync/inprocess_service.h"
+#include "storage/memory_storage.h"
+#include "storage/registry.h"
+#include "storage/storage_interface.h"
 #include "sync/learning_preference_sync_util.h"
 #include "sync/sync.pb.h"
-#include "sync/sync_util.h"
-#include "sync/syncer.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
@@ -58,25 +58,36 @@ using mozc::storage::LRUStorage;
 class LearningPreferenceAdapterTest : public testing::Test {
  public:
   virtual void SetUp() {
-    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+
+    storage_.reset(mozc::storage::MemoryStorage::New());
+    mozc::storage::Registry::SetStorage(storage_.get());
+    adapter_.reset(new LearningPreferenceAdapter);
+    adapter_->ClearStorage();
+  }
+
+  virtual void TearDown() {
+    adapter_->ClearStorage();
+    adapter_.reset();
+    mozc::storage::Registry::SetStorage(NULL);
+    storage_.reset();
   }
 
   LRUStorage *CreateStorage(const string &filename) {
     LRUStorage *storage = new LRUStorage;
     EXPECT_TRUE(storage->OpenOrCreate(
-        Util::JoinPath(FLAGS_test_tmpdir, filename).c_str(),
+        FileUtil::JoinPath(FLAGS_test_tmpdir, filename).c_str(),
         4, 1000, 0xffff));
     return storage;
   }
 
-  virtual void TearDown() {}
-
   LearningPreferenceAdapter *GetAdapter() {
-    return &adapter_;
+    return adapter_.get();
   }
 
  private:
-  LearningPreferenceAdapter adapter_;
+  scoped_ptr<LearningPreferenceAdapter> adapter_;
+  scoped_ptr<mozc::storage::StorageInterface> storage_;
 };
 
 TEST_F(LearningPreferenceAdapterTest, BucketSize) {
@@ -247,8 +258,8 @@ TEST_F(LearningPreferenceAdapterTest, SetDownloadedItems) {
   EXPECT_EQ(update_expected.DebugString(),
             update_actual.DebugString());
 
-  Util::Unlink(storage.filename());
-  Util::Unlink(storage.filename() + ".merge_pending");
+  FileUtil::Unlink(storage.filename());
+  FileUtil::Unlink(storage.filename() + ".merge_pending");
 }
 
 TEST_F(LearningPreferenceAdapterTest, LastDownloadTimestamp) {
@@ -291,5 +302,6 @@ TEST_F(LearningPreferenceAdapterTest, MarkUploaded) {
                                         adapter->GetLastDownloadTimestamp()));
   EXPECT_LE(diff, 2);
 }
-}  // sync
-}  // mozc
+
+}  // namespace sync
+}  // namespace mozc

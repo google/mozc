@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,20 +35,23 @@
 #include <QtGui/QtGui>
 #include <QtGui/QMessageBox>
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <windows.h>
 #include <windowsx.h>
 #endif
 
 #ifdef ENABLE_CLOUD_HANDWRITING
-#include "config/config_handler.h"
 #include "config/config.pb.h"
+#include "config/config_handler.h"
+#include "handwriting/cloud_handwriting.h"
 #endif  // ENABLE_CLOUD_HANDWRITING
 
+#include "base/logging.h"
 #include "client/client.h"
 #include "config/stats_config_util.h"
 #include "gui/base/win_util.h"
 #include "handwriting/handwriting_manager.h"
+#include "handwriting/zinnia_handwriting.h"
 #include "session/commands.pb.h"
 
 namespace mozc {
@@ -109,7 +112,11 @@ namespace gui {
 
 HandWriting::HandWriting(QWidget *parent)
     : QMainWindow(parent),
-      usage_stats_enabled_(mozc::config::StatsConfigUtil::IsEnabled()) {
+      usage_stats_enabled_(mozc::config::StatsConfigUtil::IsEnabled()),
+#ifdef ENABLE_CLOUD_HANDWRITING
+      cloud_handwriting_(new mozc::handwriting::CloudHandwriting),
+#endif  // ENABLE_CLOUD_HANDWRITING
+      zinnia_handwriting_(new mozc::handwriting::ZinniaHandwriting) {
   // To reduce the disk IO of reading the stats config, we load it only when the
   // class is initialized. There is no problem because the config dialog (on
   // Mac) and the administrator dialog (on Windows) say that the usage stats
@@ -233,12 +240,12 @@ void HandWriting::updateHandwritingSource(int index) {
   switch (index) {
     case kZinniaHandwriting:
       mozc::handwriting::HandwritingManager::SetHandwritingModule(
-          &zinnia_handwriting_);
+          zinnia_handwriting_.get());
       break;
 #ifdef ENABLE_CLOUD_HANDWRITING
     case kCloudHandwriting:
       mozc::handwriting::HandwritingManager::SetHandwritingModule(
-          &cloud_handwriting_);
+          cloud_handwriting_.get());
       break;
 #endif  // ENABLE_CLOUD_HANDWRITING
     default:
@@ -293,7 +300,7 @@ void HandWriting::itemSelected(const QListWidgetItem *item) {
   client_->SendCommand(command, &dummy_output);
 }
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 bool HandWriting::winEvent(MSG *message, long *result) {
   if (message != NULL &&
       message->message == WM_LBUTTONDOWN &&
@@ -310,7 +317,7 @@ bool HandWriting::winEvent(MSG *message, long *result) {
 
   return QWidget::winEvent(message, result);
 }
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 #ifdef ENABLE_CLOUD_HANDWRITING
 bool HandWriting::TryToEnableCloudHandwriting() {
@@ -320,7 +327,7 @@ bool HandWriting::TryToEnableCloudHandwriting() {
   }
 
   // Currently custom style sheet is used only on Windows.
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   // When a custom style sheet is applied, temporarily disable it to
   // show a message box with default theme. See b/5949615.
   // Mysteriously, a message box launched from dictionary tool does
@@ -334,7 +341,7 @@ bool HandWriting::TryToEnableCloudHandwriting() {
   if (!custom_style_sheet.isEmpty()) {
     qApp->setStyleSheet("");
   }
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
   // When cloud handwriting is not allowed, ask the user to enable it.
   const QMessageBox::StandardButton result =
@@ -350,12 +357,12 @@ bool HandWriting::TryToEnableCloudHandwriting() {
           QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
 
   // Currently custom style sheet is used only on Windows.
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   // Restore the custom style sheet if necessary.
   if (!custom_style_sheet.isEmpty()) {
     qApp->setStyleSheet(custom_style_sheet);
   }
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
   if (result == QMessageBox::No) {
     // User refused.

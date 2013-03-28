@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -47,14 +47,8 @@
 #include "dictionary/system/codec_interface.h"
 #include "dictionary/system/words_info.h"
 #include "dictionary/text_dictionary_loader.h"
-
-#ifdef MOZC_USE_MOZC_LOUDS
 #include "storage/louds/bit_vector_based_array_builder.h"
 #include "storage/louds/louds_trie_builder.h"
-#else
-#include "dictionary/rx/rbx_array_builder.h"
-#include "dictionary/rx/rx_trie_builder.h"
-#endif  // MOZC_USE_MOZC_LOUDS
 
 DEFINE_bool(preserve_intermediate_dictionary, false,
             "preserve inetemediate dictionary file.");
@@ -62,14 +56,12 @@ DEFINE_int32(min_key_length_to_use_small_cost_encoding, 6,
              "minimum key length to use 1 byte cost encoding.");
 
 namespace mozc {
-namespace {
-
-void WriteSectionToFile(const DictionaryFileSection &section,
-                        const string &filename);
-
-}  // namespace
-
 namespace dictionary {
+
+using mozc::storage::louds::LoudsTrieBuilder;
+using mozc::storage::louds::BitVectorBasedArrayBuilder;
+
+namespace {
 
 struct TokenGreaterThan {
   inline bool operator()(const TokenInfo& lhs,
@@ -87,27 +79,21 @@ struct TokenGreaterThan {
   }
 };
 
+void WriteSectionToFile(const DictionaryFileSection &section,
+                        const string &filename) {
+  OutputFileStream ofs(filename.c_str(), ios::binary | ios::out);
+  ofs.write(section.ptr, section.len);
+}
+
+}  // namespace
+
 SystemDictionaryBuilder::SystemDictionaryBuilder()
-    : value_trie_builder_(new TrieBuilder),
-      key_trie_builder_(new TrieBuilder),
-      token_array_builder_(new ArrayBuilder),
+    : value_trie_builder_(new LoudsTrieBuilder),
+      key_trie_builder_(new LoudsTrieBuilder),
+      token_array_builder_(new BitVectorBasedArrayBuilder),
       codec_(SystemDictionaryCodecFactory::GetCodec()) {}
 
 SystemDictionaryBuilder::~SystemDictionaryBuilder() {}
-
-void SystemDictionaryBuilder::BuildFromFile(const string &input_file) {
-  VLOG(1) << "load file: " << input_file;
-  const POSMatcher *pos_matcher =
-      UserPosManager::GetUserPosManager()->GetPOSMatcher();
-  TextDictionaryLoader loader(*pos_matcher);
-  loader.Open(input_file.c_str());
-  // Get all tokens
-  vector<Token *> tokens;
-  loader.CollectTokens(&tokens);
-
-  VLOG(1) << tokens.size() << " tokens";
-  BuildFromTokens(tokens);
-}
 
 void SystemDictionaryBuilder::BuildFromTokens(const vector<Token *> &tokens) {
   KeyInfoList key_info_list;
@@ -139,43 +125,22 @@ void SystemDictionaryBuilder::WriteToStream(
   vector<DictionaryFileSection> sections;
   DictionaryFileCodecInterface *file_codec =
       DictionaryFileCodecFactory::GetCodec();
-#ifdef MOZC_USE_MOZC_LOUDS
   DictionaryFileSection value_trie_section(
     value_trie_builder_->image().data(),
     value_trie_builder_->image().size(),
     file_codec->GetSectionName(codec_->GetSectionNameForValue()));
-#else
-  DictionaryFileSection value_trie_section(
-    value_trie_builder_->GetImageBody(),
-    value_trie_builder_->GetImageSize(),
-    file_codec->GetSectionName(codec_->GetSectionNameForValue()));
-#endif  // MOZC_USE_MOZC_LOUDS
   sections.push_back(value_trie_section);
 
-#ifdef MOZC_USE_MOZC_LOUDS
   DictionaryFileSection key_trie_section(
     key_trie_builder_->image().data(),
     key_trie_builder_->image().size(),
     file_codec->GetSectionName(codec_->GetSectionNameForKey()));
-#else
-  DictionaryFileSection key_trie_section(
-    key_trie_builder_->GetImageBody(),
-    key_trie_builder_->GetImageSize(),
-    file_codec->GetSectionName(codec_->GetSectionNameForKey()));
-#endif  // MOZC_USE_MOZC_LOUDS
   sections.push_back(key_trie_section);
 
-#ifdef MOZC_USE_MOZC_LOUDS
   DictionaryFileSection token_array_section(
     token_array_builder_->image().data(),
     token_array_builder_->image().size(),
     file_codec->GetSectionName(codec_->GetSectionNameForTokens()));
-#else
-  DictionaryFileSection token_array_section(
-    token_array_builder_->GetImageBody(),
-    token_array_builder_->GetImageSize(),
-    file_codec->GetSectionName(codec_->GetSectionNameForTokens()));
-#endif  // MOZC_USE_MOZC_LOUDS
 
   sections.push_back(token_array_section);
   uint32 frequent_pos_array[256] = {0};
@@ -358,11 +323,7 @@ void SystemDictionaryBuilder::BuildValueTrie(const KeyInfoList &key_info_list) {
       }
       string value_str;
       codec_->EncodeValue(token_info.token->value, &value_str);
-#ifdef MOZC_USE_MOZC_LOUDS
       value_trie_builder_->Add(value_str);
-#else
-      value_trie_builder_->AddKey(value_str);
-#endif  // MOZC_USE_MOZC_LOUDS
     }
   }
   value_trie_builder_->Build();
@@ -375,13 +336,8 @@ void SystemDictionaryBuilder::SetIdForValue(KeyInfoList *key_info_list) const {
       TokenInfo *token_info = &(itr->tokens[i]);
       string value_str;
       codec_->EncodeValue(token_info->token->value, &value_str);
-#ifdef MOZC_USE_MOZC_LOUDS
       token_info->id_in_value_trie =
           value_trie_builder_->GetId(value_str);
-#else
-      token_info->id_in_value_trie =
-          value_trie_builder_->GetIdFromKey(value_str);
-#endif  // MOZC_USE_MOZC_LOUDS
     }
   }
 }
@@ -458,11 +414,7 @@ void SystemDictionaryBuilder::BuildKeyTrie(const KeyInfoList &key_info_list) {
        itr != key_info_list.end(); ++itr) {
     string key_str;
     codec_->EncodeKey(itr->key, &key_str);
-#ifdef MOZC_USE_MOZC_LOUDS
     key_trie_builder_->Add(key_str);
-#else
-    key_trie_builder_->AddKey(key_str);
-#endif  // MOZC_USE_MOZC_LOUDS
   }
   key_trie_builder_->Build();
 }
@@ -473,13 +425,8 @@ void SystemDictionaryBuilder::SetIdForKey(KeyInfoList *key_info_list) const {
     KeyInfo *key_info = &(*itr);
     string key_str;
     codec_->EncodeKey(key_info->key, &key_str);
-#ifdef MOZC_USE_MOZC_LOUDS
     key_info->id_in_key_trie =
         key_trie_builder_->GetId(key_str);
-#else
-    key_info->id_in_key_trie =
-        key_trie_builder_->GetIdFromKey(key_str);
-#endif  // MOZC_USE_MOZC_LOUDS
   }
 }
 
@@ -502,31 +449,13 @@ void SystemDictionaryBuilder::BuildTokenArray(
       const KeyInfo &key_info = *id_to_keyinfo_table[i];
       string tokens_str;
       codec_->EncodeTokens(key_info.tokens, &tokens_str);
-#ifdef MOZC_USE_MOZC_LOUDS
       token_array_builder_->Add(tokens_str);
-#else
-      token_array_builder_->Push(tokens_str);
-#endif  // MOZC_USE_MOZC_LOUDS
     }
   }
 
-#ifdef MOZC_USE_MOZC_LOUDS
   token_array_builder_->Add(string(1, codec_->GetTokensTerminationFlag()));
-#else
-  token_array_builder_->Push(string(1, codec_->GetTokensTerminationFlag()));
-#endif
   token_array_builder_->Build();
 }
 
 }  // namespace dictionary
-
-namespace {
-
-void WriteSectionToFile(const DictionaryFileSection &section,
-                        const string &filename) {
-  OutputFileStream ofs(filename.c_str(), ios::binary | ios::out);
-  ofs.write(section.ptr, section.len);
-}
-
-}  // namespace
 }  // namespace mozc

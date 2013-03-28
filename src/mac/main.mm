@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,7 +37,7 @@
 #include "base/base.h"
 #include "base/const.h"
 #include "base/crash_report_handler.h"
-#include "base/crash_report_util.h"
+#include "base/logging.h"
 #include "base/run_level.h"
 #include "client/client.h"
 #include "config/stats_config_util.h"
@@ -48,9 +48,11 @@ int main(int argc, char *argv[]) {
   }
 
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+#ifdef GOOGLE_JAPANESE_INPUT_BUILD
   if (mozc::config::StatsConfigUtil::IsEnabled()) {
-    mozc::CrashReportUtil::InstallBreakpad();
+    mozc::CrashReportHandler::Initialize(false);
   }
+#endif
   InitGoogle(argv[0], &argc, &argv, false);
 
   IMKServer *imkServer = [GoogleJapaneseInputServer getServer];

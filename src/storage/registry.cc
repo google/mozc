@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,11 +30,14 @@
 #include "storage/registry.h"
 
 #include <string>
-#include "base/base.h"
+
+#include "base/file_util.h"
 #include "base/logging.h"
 #include "base/mutex.h"
+#include "base/scoped_ptr.h"
 #include "base/singleton.h"
-#include "base/util.h"
+#include "base/system_util.h"
+#include "storage/storage_interface.h"
 #include "storage/tiny_storage.h"
 
 namespace mozc {
@@ -42,7 +45,7 @@ namespace storage {
 
 namespace {
 Mutex g_mutex;
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 const char kRegistryFileName[] = "registry.db";
 #else
 const char kRegistryFileName[] = ".registry.db";   // hidden file
@@ -52,8 +55,8 @@ class StorageInitializer {
  public:
   StorageInitializer() :
       default_storage_(TinyStorage::New()), current_storage_(NULL) {
-    if (!default_storage_->Open(Util::JoinPath(Util::GetUserProfileDirectory(),
-                                       kRegistryFileName))) {
+    if (!default_storage_->Open(FileUtil::JoinPath(
+            SystemUtil::GetUserProfileDirectory(), kRegistryFileName))) {
       LOG(ERROR) << "cannot open registry";
     }
   }

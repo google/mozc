@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,17 +31,15 @@
 #include "data_manager/chromeos/chromeos_data_manager_factory.h"
 
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/singleton.h"
-#include "base/thread.h"
 #include "converter/boundary_struct.h"
-#include "converter/connector_base.h"
-#include "converter/segmenter_base.h"
-#include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
-#include "dictionary/suffix_dictionary.h"
-#include "dictionary/system/system_dictionary.h"
-#include "dictionary/system/value_dictionary.h"
+#include "dictionary/suffix_dictionary_token.h"
 #include "rewriter/correction_rewriter.h"
+#ifndef NO_USAGE_REWRITER
+#include "rewriter/usage_rewriter_data_structs.h"
+#endif  // NO_USAGE_REWRITER
 
 namespace mozc {
 namespace chromeos {
@@ -57,43 +55,23 @@ void DeleteDataManager(const DataManagerInterface *data_manager) {
 namespace {
 // kLidGroup[] is defined in the following automatically generated header file.
 #include "data_manager/chromeos/pos_group_data.h"
-
-class ChromeOsPosGroup : public PosGroup {
- public:
-  ChromeOsPosGroup() : PosGroup(kLidGroup) {}
-};
 }  // namespace
 
-const PosGroup *ChromeOsDataManager::GetPosGroup() const {
-  return Singleton<ChromeOsPosGroup>::get();
+const uint8 *ChromeOsDataManager::GetPosGroupData() const {
+  DCHECK(kLidGroup != NULL);
+  return kLidGroup;
 }
 
 namespace {
 // Automatically generated header containing the definitions of
 // kConnectionData_data and kConnectionData_size.
 #include "data_manager/chromeos/embedded_connection_data.h"
-
-// Use Thread Local Storage for Cache of the Connector.
-const int kCacheSize = 1024;
-TLS_KEYWORD bool g_cache_initialized = false;
-TLS_KEYWORD int g_cache_key[kCacheSize];
-TLS_KEYWORD int g_cache_value[kCacheSize];
-
-class ChromeOsConnector : public ConnectorBase {
- private:
-  ChromeOsConnector() : ConnectorBase(kConnectionData_data,
-                                      kConnectionData_size,
-                                      &g_cache_initialized,
-                                      g_cache_key,
-                                      g_cache_value,
-                                      kCacheSize) {}
-  virtual ~ChromeOsConnector() {}
-  friend class Singleton<ChromeOsConnector>;
-};
 }  // namespace
 
-const ConnectorInterface *ChromeOsDataManager::GetConnector() const {
-  return Singleton<ChromeOsConnector>::get();
+void ChromeOsDataManager::GetConnectorData(const char **data,
+                                           size_t *size) const {
+  *data = kConnectionData_data;
+  *size = kConnectionData_size;
 }
 
 namespace {
@@ -102,51 +80,41 @@ namespace {
 #include "data_manager/chromeos/embedded_dictionary_data.h"
 }  // namespace
 
-DictionaryInterface *ChromeOsDataManager::CreateSystemDictionary() const {
-  return mozc::dictionary::SystemDictionary::CreateSystemDictionaryFromImage(
-      kDictionaryData_data, kDictionaryData_size);
-}
-
-DictionaryInterface *ChromeOsDataManager::CreateValueDictionary() const {
-  return mozc::dictionary::ValueDictionary::CreateValueDictionaryFromImage(
-      *GetPOSMatcher(), kDictionaryData_data, kDictionaryData_size);
+void ChromeOsDataManager::GetSystemDictionaryData(
+    const char **data, int *size) const {
+  *data = kDictionaryData_data;
+  *size = kDictionaryData_size;
 }
 
 namespace {
 // Automatically generated headers containing data set for segmenter.
 #include "data_manager/chromeos/boundary_data.h"
 #include "data_manager/chromeos/segmenter_data.h"
-
-class ChromeOsSegmenter : public SegmenterBase {
- private:
-  ChromeOsSegmenter() : SegmenterBase(kCompressedLSize, kCompressedRSize,
-                                      kCompressedLIDTable, kCompressedRIDTable,
-                                      kSegmenterBitArrayData_size,
-                                      kSegmenterBitArrayData_data,
-                                      kBoundaryData) {}
-  virtual ~ChromeOsSegmenter() {}
-  friend class Singleton<ChromeOsSegmenter>;
-};
 }  // namespace
 
-const SegmenterInterface *ChromeOsDataManager::GetSegmenter() const {
-  return Singleton<ChromeOsSegmenter>::get();
+void ChromeOsDataManager::GetSegmenterData(
+    size_t *l_num_elements, size_t *r_num_elements,
+    const uint16 **l_table, const uint16 **r_table,
+    size_t *bitarray_num_bytes, const char **bitarray_data,
+    const BoundaryData **boundary_data) const {
+  *l_num_elements = kCompressedLSize;
+  *r_num_elements = kCompressedRSize;
+  *l_table = kCompressedLIDTable;
+  *r_table = kCompressedRIDTable;
+  *bitarray_num_bytes = kSegmenterBitArrayData_size;
+  *bitarray_data = kSegmenterBitArrayData_data;
+  *boundary_data = kBoundaryData;
 }
 
 namespace {
 // The generated header defines kSuffixTokens[].
 #include "data_manager/chromeos/suffix_data.h"
-
-class ChromeOsSuffixDictionary : public SuffixDictionary {
- public:
-  ChromeOsSuffixDictionary() : SuffixDictionary(kSuffixTokens,
-                                                arraysize(kSuffixTokens)) {}
-  virtual ~ChromeOsSuffixDictionary() {}
-};
 }  // namespace
 
-const DictionaryInterface *ChromeOsDataManager::GetSuffixDictionary() const {
-  return Singleton<ChromeOsSuffixDictionary>::get();
+void ChromeOsDataManager::GetSuffixDictionaryData(const SuffixToken **tokens,
+                                                  size_t *size) const {
+  *tokens = kSuffixTokens;
+  *size = arraysize(kSuffixTokens);
 }
 
 namespace {
@@ -192,6 +160,35 @@ void ChromeOsDataManager::GetSuggestionFilterData(const char **data,
   *data = kSuggestionFilterData_data;
   *size = kSuggestionFilterData_size;
 }
+
+namespace {
+// Include kSymbolData_token_data and kSymbolData_token_size.
+#include "data_manager/chromeos/symbol_rewriter_data.h"
+}  // namespace
+
+void ChromeOsDataManager::GetSymbolRewriterData(
+    const EmbeddedDictionary::Token **data,
+    size_t *size) const {
+  *data = kSymbolData_token_data;
+  *size = kSymbolData_token_size;
+}
+
+#ifndef NO_USAGE_REWRITER
+namespace {
+#include "rewriter/usage_rewriter_data.h"
+}  // namespace
+
+void ChromeOsDataManager::GetUsageRewriterData(
+    const ConjugationSuffix **base_conjugation_suffix,
+    const ConjugationSuffix **conjugation_suffix_data,
+    const int **conjugation_suffix_data_index,
+    const UsageDictItem **usage_data_value) const {
+  *base_conjugation_suffix = kBaseConjugationSuffix;
+  *conjugation_suffix_data = kConjugationSuffixData;
+  *conjugation_suffix_data_index = kConjugationSuffixDataIndex;
+  *usage_data_value = kUsageData_value;
+}
+#endif  // NO_USAGE_REWRITER
 
 }  // namespace chromeos
 }  // namespace mozc

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,17 +31,20 @@
 #define MOZC_DATA_MANAGER_DATA_MANAGER_INTERFACE_H_
 
 #include "base/port.h"
+#include "dictionary/user_pos.h"
+#include "rewriter/embedded_dictionary.h"
 
 namespace mozc {
 
-class ConnectorInterface;
-class DictionaryInterface;
 class POSMatcher;
-class PosGroup;
-class SegmenterInterface;
-class UserDictionary;
-class UserPOSInterface;
+struct BoundaryData;
 struct ReadingCorrectionItem;
+struct SuffixToken;
+#ifndef NO_USAGE_REWRITER
+struct ConjugationSuffix;
+struct UsageDictItem;
+#endif  // NO_USAGE_REWRITER
+
 
 // Builds those objects that depend on a set of embedded data generated from
 // files in data/dictionary, such as dictionary.txt, id.def, etc.
@@ -49,36 +52,32 @@ class DataManagerInterface {
  public:
   virtual ~DataManagerInterface() {}
 
-  // Returns a reference to the UserPOS class handling user pos data.  Don't
-  // delete the returned pointer, which is owned by the manager.
-  virtual const UserPOSInterface *GetUserPOS() const = 0;
+  // Returns the address of an array of UserPOS::POSToken.
+  virtual const UserPOS::POSToken *GetUserPOSData() const = 0;
 
   // Returns a reference to POSMatcher class handling POS rules. Don't
   // delete the returned pointer, which is owned by the manager.
   virtual const POSMatcher *GetPOSMatcher() const = 0;
 
-  // Returns a reference to PosGroup class handling POS grouping rule. Don't
-  // delete the returned pointer, which is owned by the manager.
-  virtual const PosGroup *GetPosGroup() const = 0;
+  // Returns the address of an array of lid group.
+  virtual const uint8 *GetPosGroupData() const = 0;
 
-  // Returns a reference to Connector class handling connection data.  Don't
-  // delete the returned pointer, which is owned by the manager.
-  virtual const ConnectorInterface *GetConnector() const = 0;
+  // Returns the address of connection data and its size.
+  virtual void GetConnectorData(const char **data, size_t *size) const = 0;
 
-  // Returns a reference to Segmenter class handling segmentation data.  Don't
-  // delete the returned pointer, which is owned by the manager.
-  virtual const SegmenterInterface *GetSegmenter() const = 0;
+  // Returns the addresses and their sizes necessary to create a segmenter.
+  virtual void GetSegmenterData(
+      size_t *l_num_elements, size_t *r_num_elements,
+      const uint16 **l_table, const uint16 **r_table,
+      size_t *bitarray_num_bytes, const char **bitarray_data,
+      const BoundaryData **boundary_data) const = 0;
 
-  // Creates a system dictionary. The caller is responsible for deleting the
-  // returned object.
-  virtual DictionaryInterface *CreateSystemDictionary() const = 0;
+  // Returns the address of system dictionary data and its size.
+  virtual void GetSystemDictionaryData(const char **data, int *size) const = 0;
 
-  // Creates a value dictionary. The caller is responsible for deleting the
-  // returned object.
-  virtual DictionaryInterface *CreateValueDictionary() const = 0;
-
-  // Returns a reference to the suffix dictionary.
-  virtual const DictionaryInterface *GetSuffixDictionary() const = 0;
+  // Returns the address of suffix dictionary and its size.
+  virtual void GetSuffixDictionaryData(const SuffixToken **tokens,
+                                       size_t *size) const = 0;
 
   // Gets a reference to reading correction data array and its size.
   virtual void GetReadingCorrectionData(const ReadingCorrectionItem **array,
@@ -94,6 +93,19 @@ class DataManagerInterface {
   // Gets an address of suggestion filter data array and its size.
   virtual void GetSuggestionFilterData(const char **data,
                                        size_t *size) const = 0;
+
+  // Gets an address of symbol rewriter data array and its size.
+  virtual void GetSymbolRewriterData(const EmbeddedDictionary::Token **data,
+                                     size_t *size) const = 0;
+
+#ifndef NO_USAGE_REWRITER
+  // Gets the usage rewriter data.
+  virtual void GetUsageRewriterData(
+      const ConjugationSuffix **base_conjugation_suffix,
+      const ConjugationSuffix **conjugation_suffix_data,
+      const int **conjugation_suffix_data_index,
+      const UsageDictItem **usage_data_value) const = 0;
+#endif  // NO_USAGE_REWRITER
 
  protected:
   DataManagerInterface() {}

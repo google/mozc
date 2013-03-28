@@ -1,8 +1,8 @@
-1		{?}あ	NewChunk
-_		{*}い
-;		{*}う
-:		{*}え
-@		{*}お
+1		{?}あ	NewChunk NoTransliteration
+_		{*}い	NoTransliteration
+;		{*}う	NoTransliteration
+:		{*}え	NoTransliteration
+@		{*}お	NoTransliteration
 {?}あ1		{?}い
 {?}い1		{?}う
 {?}う1		{?}え
@@ -59,11 +59,11 @@ _		{*}い
 {?}お`		{*}ぉ
 {*}お`		{*}ぉ
 {?}ぉ`		{*}ぉ
-2		{?}か	NewChunk
-a		{*}き
-b		{*}く
-c		{*}け
-|		{*}こ
+2		{?}か	NewChunk NoTransliteration
+a		{*}き	NoTransliteration
+b		{*}く	NoTransliteration
+c		{*}け	NoTransliteration
+|		{*}こ	NoTransliteration
 {?}か2		{?}き
 {?}き2		{?}く
 {?}く2		{?}け
@@ -99,11 +99,11 @@ c		{*}け
 {*}け[		{*}げ
 {?}こ[		{*}ご
 {*}こ[		{*}ご
-3		{?}さ	NewChunk
-d		{*}し
-e		{*}す
-f		{*}せ
-~		{*}そ
+3		{?}さ	NewChunk NoTransliteration
+d		{*}し	NoTransliteration
+e		{*}す	NoTransliteration
+f		{*}せ	NoTransliteration
+~		{*}そ	NoTransliteration
 {?}さ3		{?}し
 {?}し3		{?}す
 {?}す3		{?}せ
@@ -139,11 +139,11 @@ f		{*}せ
 {*}せ[		{*}ぜ
 {?}そ[		{*}ぞ
 {*}そ[		{*}ぞ
-4		{?}た	NewChunk
-g		{*}ち
-h		{*}つ
-i		{*}て
-$		{*}と
+4		{?}た	NewChunk NoTransliteration
+g		{*}ち	NoTransliteration
+h		{*}つ	NoTransliteration
+i		{*}て	NoTransliteration
+$		{*}と	NoTransliteration
 {?}た4		{?}ち
 {?}ち4		{?}つ
 {?}つ4		{?}て
@@ -187,11 +187,11 @@ $		{*}と
 {*}て[		{*}で
 {?}と[		{*}ど
 {*}と[		{*}ど
-5		{?}な	NewChunk
-j		に
-k		ぬ
-l		ね
-%		の
+5		{?}な	NewChunk NoTransliteration
+j		に	NoTransliteration
+k		ぬ	NoTransliteration
+l		ね	NoTransliteration
+%		の	NoTransliteration
 {?}な5		{?}に
 {?}に5		{?}ぬ
 {?}ぬ5		{?}ね
@@ -202,11 +202,11 @@ l		ね
 {?}ぬ{<}		{?}に
 {?}ね{<}		{?}ぬ
 {?}の{<}		{?}ね
-6		{?}は	NewChunk
-m		{*}ひ
-n		{*}ふ
-o		{*}へ
-&		{*}ほ
+6		{?}は	NewChunk NoTransliteration
+m		{*}ひ	NoTransliteration
+n		{*}ふ	NoTransliteration
+o		{*}へ	NoTransliteration
+&		{*}ほ	NoTransliteration
 {?}は6		{?}ひ
 {?}ひ6		{?}ふ
 {?}ふ6		{?}へ
@@ -267,11 +267,11 @@ o		{*}へ
 {?}ほ]		{*}ぽ
 {*}ほ]		{*}ぽ
 {*}ぼ]		{*}ぽ
-7		{?}ま	NewChunk
-p		み
-q		む
-r		め
-s		も
+7		{?}ま	NewChunk NoTransliteration
+p		み	NoTransliteration
+q		む	NoTransliteration
+r		め	NoTransliteration
+s		も	NoTransliteration
 {?}ま7		{?}み
 {?}み7		{?}む
 {?}む7		{?}め
@@ -282,11 +282,11 @@ s		も
 {?}む{<}		{?}み
 {?}め{<}		{?}む
 {?}も{<}		{?}め
-8		{?}や	NewChunk
-u		{*}ゆ
-^		{*}よ
-t		「
-v		」
+8		{?}や	NewChunk NoTransliteration
+u		{*}ゆ	NoTransliteration
+^		{*}よ	NoTransliteration
+t		「	NoTransliteration
+v		」	NoTransliteration
 {?}や8		{?}ゆ
 {?}ゆ8		{?}よ
 {?}よ8		{?}ゃ
@@ -320,11 +320,11 @@ v		」
 {?}よ`		{*}ょ
 {*}よ`		{*}ょ
 {?}ょ`		{*}ょ
-9		{?}ら	NewChunk
-w		り
-x		る
-y		れ
-z		ろ
+9		{?}ら	NewChunk NoTransliteration
+w		り	NoTransliteration
+x		る	NoTransliteration
+y		れ	NoTransliteration
+z		ろ	NoTransliteration
 {?}ら9		{?}り
 {?}り9		{?}る
 {?}る9		{?}れ
@@ -335,17 +335,17 @@ z		ろ
 {?}る{<}		{?}り
 {?}れ{<}		{?}る
 {?}ろ{<}		{?}れ
-*		
-[		
-]		
-`		
-(		（
-'		’
-)		）
-0		{?}わ	NewChunk
-+		を
-/		ん
--		ー
+*			NoTransliteration
+[			NoTransliteration
+]			NoTransliteration
+`			NoTransliteration
+(		（	NoTransliteration
+'		’	NoTransliteration
+)		）	NoTransliteration
+0		{?}わ	NewChunk NoTransliteration
++		を	NoTransliteration
+/		ん	NoTransliteration
+-		ー	NoTransliteration
 {?}わ0		{?}を
 {?}を0		{?}ん
 {?}ん0		{?}ゎ
@@ -363,10 +363,10 @@ z		ろ
 {?}わ`		{*}ゎ
 {*}わ`		{*}ゎ
 {?}ゎ`		{*}ゎ
-#		{#}、	NewChunk
-,		。
-?		？
-!		！
+#		{#}、	NewChunk NoTransliteration
+,		。	NoTransliteration
+?		？	NoTransliteration
+!		！	NoTransliteration
 {#}、#		{#}。
 {#}。#		{#}？
 {#}？#		{#}！

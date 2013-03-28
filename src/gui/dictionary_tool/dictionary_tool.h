@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -79,9 +79,9 @@ class DictionaryTool : public QMainWindow,
 
   bool eventFilter(QObject *obj, QEvent *event);
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   bool winEvent(MSG * message, long * result);
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
  private slots:
   void CreateDictionary();
@@ -256,7 +256,7 @@ class DictionaryTool : public QMainWindow,
   // The maximum number of entries for a dictionary currently selected.
   int max_entry_size_;
 
-  const UserPOSInterface *user_pos_;
+  scoped_ptr<const UserPOSInterface> user_pos_;
 };
 }  // namespace gui
 }  // namespace mozc

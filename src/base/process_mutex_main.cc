@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,9 +27,9 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <windows.h>
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 #include <string>
 #include "base/base.h"
 #include "base/logging.h"
@@ -48,7 +48,7 @@ int main(int argc, char **argv) {
     return -1;
   }
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   ::Sleep(FLAGS_sleep_time * 1000);
 #else
   ::sleep(FLAGS_sleep_time);

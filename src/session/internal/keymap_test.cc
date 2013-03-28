@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,8 @@
 #include <sstream>
 #include <vector>
 #include "base/config_file_stream.h"
-#include "base/util.h"
+#include "base/scoped_ptr.h"
+#include "base/system_util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "session/commands.pb.h"
@@ -50,7 +51,7 @@ namespace keymap {
 class KeyMapTest : public testing::Test {
  protected:
   virtual void SetUp() {
-    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
 
     config::Config config;
     config::ConfigHandler::GetDefaultConfig(&config);

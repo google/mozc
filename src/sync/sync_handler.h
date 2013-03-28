@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,14 +30,32 @@
 #ifndef MOZC_SYNC_SYNC_HANDLER_H_
 #define MOZC_SYNC_SYNC_HANDLER_H_
 
+#include "base/mutex.h"
+#include "base/port.h"
 #include "base/scheduler.h"
-#include "session/commands.pb.h"
+#include "base/thread.h"
 
 namespace mozc {
+
+namespace commands {
+class CloudSyncStatus;
+class Input_AuthorizationInfo;
+}  // namespace commands
+
 namespace sync {
 
-class SyncHandler {
+class ConfigAdapter;
+class OAuth2Util;
+class ServiceInterface;
+class SyncStatusManagerInterface;
+class SyncerInterface;
+class UserDictionaryAdapter;
+
+class SyncHandler : public Thread {
  public:
+  SyncHandler();
+  ~SyncHandler();
+
   // Sync() does the following four steps in sequence.
   // 1. calls SyncerInterface::Start() in the current thread.
   // 2  creates a new thread and executes SyncerInterface::Sync() method.
@@ -50,7 +68,7 @@ class SyncHandler {
   // If a sync thread is already created in the step 2,
   // event is not be signaled, as currently running thread
   // will signal a event later.
-  static bool Sync();
+  bool Sync();
 
   // Clear() does the following two steps in sequence.
   // 1  creates a new thread and executes SyncerInterface::Clear() method.
@@ -58,30 +76,54 @@ class SyncHandler {
   // 2. Signal process-wide named event. Config dialog can
   //    wait for the named event
   //    to know the time when the Sync() method finishes.
-  static bool Clear();
+  bool Clear();
 
   // Wait Sync() or Clear() call until they finish.
-  static void Wait();
+  void Wait();
 
   // Get the current cloud sync status and set it into the argument.
-  static bool GetCloudSyncStatus(commands::CloudSyncStatus *cloud_sync_status);
+  bool GetCloudSyncStatus(commands::CloudSyncStatus *cloud_sync_status);
 
   // Set the authorization information and store it into the local storage.
-  static bool SetAuthorization(
-      const commands::Input::AuthorizationInfo &authorization_info);
+  bool SetAuthorization(
+      const commands::Input_AuthorizationInfo &authorization_info);
 
-  // Setter and Getter for scheduler job
-  static const Scheduler::JobSetting &GetSchedulerJobSetting();
+  // Getter for scheduler job
+  const Scheduler::JobSetting &GetSchedulerJobSetting() const;
 
-  static void SetSchedulerJobSetting(const Scheduler::JobSetting *setting);
+  // This class takes an ownership of |*syncer|;
+  void SetSyncerForUnittest(SyncerInterface *syncer);
 
-  // Clear the last command and sync time. Used by unit test.
-  static void ClearLastCommandAndSyncTime();
+  // This class takes an ownership of |*oauth2_util|;
+  void SetOAuth2UtilForUnittest(OAuth2Util *oauth2_util);
 
  private:
-  SyncHandler() {}
-  ~SyncHandler() {}
+  void InitializeSyncer();
+
+  // This method is executed outside of the
+  // main converter thread.
+  void Run();
+
+  enum CommandType {
+    COMMAND_NONE,
+    SYNC,
+    CLEAR,
+  };
+
+  const Scheduler::JobSetting cloud_sync_job_setting_;
+  const Scheduler::JobSetting clear_sync_job_setting_;
+  scoped_ptr<ConfigAdapter> config_adapter_;
+  scoped_ptr<UserDictionaryAdapter> user_dictionary_adapter_;
+  CommandType command_type_;
+  Mutex status_mutex_;
+  scoped_ptr<OAuth2Util> oauth2_util_;
+  uint64 last_sync_timestamp_;
+  SyncStatusManagerInterface *sync_status_manager_;
+  scoped_ptr<SyncerInterface> syncer_;
+
+  DISALLOW_COPY_AND_ASSIGN(SyncHandler);
 };
+
 }  // namespace sync
 }  // namespace mozc
 

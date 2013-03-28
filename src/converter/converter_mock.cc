@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,13 +33,12 @@
 
 #include "base/base.h"
 #include "base/logging.h"
+#include "converter/conversion_request.h"
 #include "converter/segments.h"
-#include "converter/user_data_manager_mock.h"
 
 namespace mozc {
 
-ConverterMock::ConverterMock()
-    : user_data_manager_(new UserDataManagerMock) {
+ConverterMock::ConverterMock() {
   LOG(INFO) << "ConverterMock is created";
 }
 
@@ -165,7 +164,7 @@ void ConverterMock::SetFreeSegmentValue(Segments *segments, bool result) {
   freesegmentvalue_output_.return_value = result;
 }
 
-void ConverterMock::SetSubmitFirstSegment(Segments *segments, bool result) {
+void ConverterMock::SetCommitFirstSegment(Segments *segments, bool result) {
   submitfirstsegment_output_.initialized = true;
   submitfirstsegment_output_.segments.CopyFrom(*segments);
   submitfirstsegment_output_.return_value = result;
@@ -186,7 +185,7 @@ void ConverterMock::SetResizeSegment2(Segments *segments, bool result) {
 void ConverterMock::GetStartConversionForRequest(
     Segments *segments, ConversionRequest *request) {
   segments->CopyFrom(startconversionwithrequest_input_.segments);
-  *request = startconversionwithrequest_input_.request;
+  request->CopyFrom(startconversionwithrequest_input_.request);
 }
 
 void ConverterMock::GetStartConversion(Segments *segments, string *key) {
@@ -203,7 +202,7 @@ void ConverterMock::GetStartReverseConversion(Segments *segments,
 void ConverterMock::GetStartPredictionForRequest(
     Segments *segments, ConversionRequest *request) {
   segments->CopyFrom(startpredictionwithrequest_input_.segments);
-  *request = startpredictionwithrequest_input_.request;
+  request->CopyFrom(startpredictionwithrequest_input_.request);
 }
 
 void ConverterMock::GetStartPrediction(Segments *segments, string *key) {
@@ -214,7 +213,7 @@ void ConverterMock::GetStartPrediction(Segments *segments, string *key) {
 void ConverterMock::GetStartSuggestionForRequest(
     Segments *segments, ConversionRequest *request) {
   segments->CopyFrom(startsuggestionforrequest_input_.segments);
-  *request = startsuggestionforrequest_input_.request;
+  request->CopyFrom(startsuggestionforrequest_input_.request);
 }
 
 void ConverterMock::GetStartSuggestion(Segments *segments, string *key) {
@@ -225,7 +224,7 @@ void ConverterMock::GetStartSuggestion(Segments *segments, string *key) {
 void ConverterMock::GetStartPartialPredictionForRequest(
     Segments *segments, ConversionRequest *request) {
   segments->CopyFrom(startpartialpredictionforrequest_input_.segments);
-  *request = startpartialpredictionforrequest_input_.request;
+  request->CopyFrom(startpartialpredictionforrequest_input_.request);
 }
 
 void ConverterMock::GetStartPartialPrediction(Segments *segments, string *key) {
@@ -287,7 +286,7 @@ void ConverterMock::GetFreeSegmentValue(Segments *segments,
   *segment_index = freesegmentvalue_input_.segment_index;
 }
 
-void ConverterMock::GetSubmitFirstSegment(Segments *segments,
+void ConverterMock::GetCommitFirstSegment(Segments *segments,
                                           size_t *candidate_index) {
   segments->CopyFrom(submitfirstsegment_input_.segments);
   *candidate_index = submitfirstsegment_input_.candidate_index;
@@ -316,7 +315,7 @@ bool ConverterMock::StartConversionForRequest(const ConversionRequest &request,
                                               Segments *segments) const {
   VLOG(2) << "mock function: StartConversion with ConversionRequest";
   startconversionwithrequest_input_.segments.CopyFrom(*segments);
-  startconversionwithrequest_input_.request = request;
+  startconversionwithrequest_input_.request.CopyFrom(request);
 
   if (!startconversionwithrequest_output_.initialized) {
     return false;
@@ -359,7 +358,7 @@ bool ConverterMock::StartPredictionForRequest(const ConversionRequest &request,
                                               Segments *segments) const {
   VLOG(2) << "mock function: StartPredictionForRequest";
   startpredictionwithrequest_input_.segments.CopyFrom(*segments);
-  startpredictionwithrequest_input_.request = request;
+  startpredictionwithrequest_input_.request.CopyFrom(request);
 
   if (!startpredictionwithrequest_output_.initialized) {
     return false;
@@ -387,7 +386,7 @@ bool ConverterMock::StartSuggestionForRequest(const ConversionRequest &request,
                                               Segments *segments) const {
   VLOG(2) << "mock function: StartSuggestionForRequest";
   startsuggestionforrequest_input_.segments.CopyFrom(*segments);
-  startsuggestionforrequest_input_.request = request;
+  startsuggestionforrequest_input_.request.CopyFrom(request);
 
   if (!startsuggestionforrequest_output_.initialized) {
     return false;
@@ -415,7 +414,7 @@ bool ConverterMock::StartPartialPredictionForRequest(
     const ConversionRequest &request, Segments *segments) const {
   VLOG(2) << "mock function: StartPartialPredictionForRequest";
   startpartialpredictionforrequest_input_.segments.CopyFrom(*segments);
-  startpartialpredictionforrequest_input_.request = request;
+  startpartialpredictionforrequest_input_.request.CopyFrom(request);
 
   if (!startpartialpredictionforrequest_output_.initialized) {
     return false;
@@ -443,7 +442,7 @@ bool ConverterMock::StartPartialSuggestionForRequest(
     const ConversionRequest &request, Segments *segments) const {
   VLOG(2) << "mock function: StartPartialSuggestionForRequest";
   startpartialsuggestionforrequest_input_.segments.CopyFrom(*segments);
-  startpartialsuggestionforrequest_input_.request = request;
+  startpartialsuggestionforrequest_input_.request.CopyFrom(request);
 
   if (!startpartialsuggestionforrequest_output_.initialized) {
     return false;
@@ -584,9 +583,9 @@ bool ConverterMock::FreeSegmentValue(Segments *segments,
   }
 }
 
-bool ConverterMock::SubmitFirstSegment(Segments *segments,
+bool ConverterMock::CommitFirstSegment(Segments *segments,
                                        size_t candidate_index) const {
-  VLOG(2) << "mock function: SubmitFirstSegment";
+  VLOG(2) << "mock function: CommitFirstSegment";
   submitfirstsegment_input_.segments.CopyFrom(*segments);
   submitfirstsegment_input_.candidate_index = candidate_index;
 
@@ -637,12 +636,4 @@ bool ConverterMock::ResizeSegment(Segments *segments,
   }
 }
 
-UserDataManagerInterface *ConverterMock::GetUserDataManager() {
-  return user_data_manager_.get();
-}
-
-void ConverterMock::SetUserDataManager(
-    UserDataManagerInterface *user_data_manager) {
-  user_data_manager_.reset(user_data_manager);
-}
 }  // namespace mozc

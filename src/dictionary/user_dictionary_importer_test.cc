@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -760,7 +760,7 @@ TEST(UserDictionaryImporter, ImportFromMSIMETest) {
   UserDictionaryImporter::ErrorType result =
       UserDictionaryImporter::ImportFromMSIME(&dic);
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   // Currently the following tests are disabled since necessary components
   // are not available on the continuous build system.
   // See http://b/237578 for details.

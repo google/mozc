@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -81,9 +81,9 @@ class CharacterPalette :  public QMainWindow,
   void itemSelected(const QTableWidgetItem *item);
 
  protected:
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   bool winEvent(MSG *message, long *result);
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
   scoped_ptr<client::ClientInterface> client_;
   bool usage_stats_enabled_;

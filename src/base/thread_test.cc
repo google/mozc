@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,8 +27,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <stdlib.h>
 #include "base/thread.h"
+
+#include <stdlib.h>
+
+#include "base/mutex.h"
+#include "base/unnamed_event.h"
 #include "base/util.h"
 #include "testing/base/public/gunit.h"
 
@@ -77,6 +81,7 @@ TEST(ThreadTest, BasicThreadTest) {
     Util::Sleep(3000);
     EXPECT_FALSE(t.IsRunning());
     EXPECT_TRUE(t.invoked());
+    t.Join();
   }
 
   {
@@ -155,4 +160,45 @@ TEST(ThreadTest, TLSTest) {
   }
 #endif
 }
+
+namespace {
+
+class SampleDetachedThread : public DetachedThread {
+ public:
+  explicit SampleDetachedThread(int time, Mutex *mutex, bool *done_flag,
+                                UnnamedEvent *event)
+      : mutex_(mutex), time_(time), done_flag_(done_flag), event_(event) {
+  }
+  virtual ~SampleDetachedThread() {
+    scoped_lock l(mutex_);
+    *done_flag_ = true;
+    event_->Notify();
+  }
+  virtual void Run() {
+    Util::Sleep(time_);
+  }
+
+ private:
+  Mutex *mutex_;
+  int time_;
+  bool *done_flag_;
+  UnnamedEvent *event_;
+};
+
+}  // namespace
+
+TEST(DetachedThread, SimpleTest) {
+  Mutex mutex;
+  UnnamedEvent event;
+  bool done_flag = false;
+  SampleDetachedThread *thread =
+      new SampleDetachedThread(50, &mutex, &done_flag, &event);
+  thread->Start();
+  ASSERT_TRUE(event.Wait(-1));
+  {
+    scoped_lock l(&mutex);
+    EXPECT_TRUE(done_flag);
+  }
+}
+
 }  // namespace mozc

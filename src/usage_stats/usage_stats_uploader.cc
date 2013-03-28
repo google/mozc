@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,24 +29,25 @@
 
 #include "usage_stats/usage_stats_uploader.h"
 
-#include <algorithm>
+#include <utility>
+#include <vector>
 
 #ifdef OS_ANDROID
 #include "base/android_util.h"
 #endif  // OS_ANDROID
 #include "base/encryptor.h"
-#include "base/mac_util.h"
 #include "base/mutex.h"
-#include "base/number_util.h"
+#include "base/port.h"
 #include "base/singleton.h"
+#include "base/system_util.h"
 #include "base/util.h"
 #include "base/version.h"
-#include "base/win_util.h"
 #include "config/stats_config_util.h"
 #include "storage/registry.h"
+#include "usage_stats/upload_util.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats.pb.h"
-#include "usage_stats/upload_util.h"
+#include "usage_stats/usage_stats_updater.h"
 
 namespace mozc {
 namespace usage_stats {
@@ -54,6 +55,7 @@ namespace usage_stats {
 namespace {
 const char kRegistryPrefix[] = "usage_stats.";
 const char kLastUploadKey[] = "last_upload";
+const char kMozcVersionKey[] = "mozc_version";
 const char kClientIdKey[] = "client_id";
 const uint32 kSendInterval = 23 * 60 * 60;  // 23 hours
 
@@ -64,7 +66,7 @@ void CreateAndInsertClientId(string *output) {
   DCHECK(output);
   const size_t kClientIdSize = 16;
   char rand_str[kClientIdSize + 1];
-  Util::GetSecureRandomAsciiSequence(rand_str, sizeof(rand_str));
+  Util::GetRandomAsciiSequence(rand_str, sizeof(rand_str));
   rand_str[kClientIdSize] = '\0';
   *output = rand_str;
 
@@ -114,7 +116,7 @@ void ClientIdImpl::GetClientId(string *output) {
 }
 
 ClientIdInterface *g_client_id_handler = NULL;
-Mutex g_mutex;
+Mutex g_mutex;  // NOLINT
 
 ClientIdInterface &GetClientIdHandler() {
   scoped_lock l(&g_mutex);
@@ -125,6 +127,101 @@ ClientIdInterface &GetClientIdHandler() {
   }
 }
 
+void AddDoubleValueStatsToUploadUtil(
+    const string &key_name_base,
+    const Stats::DoubleValueStats &double_stats,
+    double average_scale, double variance_scale,
+    UploadUtil *uploader) {
+  if (double_stats.num() == 0) {
+    return;
+  }
+  double average = double_stats.total() / double_stats.num();
+  double variance =
+      double_stats.square_total() / double_stats.num() - average * average;
+
+  uploader->AddIntegerValue(key_name_base + "a",
+                            static_cast<int>(average * average_scale));
+  uploader->AddIntegerValue(key_name_base + "v",
+                            static_cast<int>(variance * variance_scale));
+}
+
+void AddVirtualKeyboardStatsToUploadUtil(const Stats &stats,
+                                         UploadUtil *uploader) {
+  DCHECK(stats.type() == Stats::VIRTUAL_KEYBOARD);
+
+  string stats_name = stats.name();
+  // Change stats name to reduce network traffic
+  if (stats_name == "VirtualKeyboardStats") {
+    stats_name = "vks";
+  } else if (stats_name == "VirtualKeyboardMissStats") {
+    stats_name = "vkms";
+  } else {
+    LOG(ERROR) << "Unexpected stats_name: " << stats_name;
+    return;
+  }
+
+  for (size_t i = 0; i < stats.virtual_keyboard_stats_size(); ++i) {
+    const Stats::VirtualKeyboardStats &virtual_keyboard_stats =
+        stats.virtual_keyboard_stats(i);
+
+    // Set the keyboard_id
+    // example:
+    //  vks_name_TWELVE_KEY_TOGGLE_FLICK_KANA : 0
+    //  vks_name_TWELVE_KEY_TOGGLE_KANA : 1
+    //  vks_name_TWELVE_KEY_TOGGLE_NUMBER : 2
+    //  vkms_name_TWELVE_KEY_TOGGLE_FLICK_KANA : 0
+    //  vkms_name_TWELVE_KEY_TOGGLE_NUMBER : 1
+    uploader->AddIntegerValue(stats_name + "_name_" +
+                              virtual_keyboard_stats.keyboard_name(),
+                              i);
+    // Set the average and the variance of each stat.
+    // example:
+    //  vks_1_3_sxa (VirtualKeyboardStats_StartXAverage_keyboard1_sourceid3)
+    //  ^^^ | | ||| : vks(VirtualKeyboardStats), vkms(VirtualKeyboardMissStats)
+    //      ^ | ||| : keyboad_id
+    //        ^ ||| : source_id
+    //          ^^| : sx(StartX), sx(StartY), dx(DirectionX), dy(DirectionY),
+    //            |   tl(TimeLength)
+    //            ^ : a(Average), v(Variance)
+    for (size_t j = 0; j < virtual_keyboard_stats.touch_event_stats_size();
+         ++j) {
+      // Calculate average and variance
+      //   Average = total / num
+      //   Variance = square_total / num - (total / num) ^ 2
+      // Because the current log analysis system can only deal with int values,
+      // we multiply these values by a scale factor and send them to server.
+      //   sxa, sya, dxa, dya : scale = 10000000
+      //   sxv, syv, dxv, dyv : scale = 10000000
+      //   tla, tlv : scale = 10000000
+      const Stats::TouchEventStats &touch =
+          virtual_keyboard_stats.touch_event_stats(j);
+      const string key_name_base = Util::StringPrintf(
+          "%s_%d_%d_", stats_name.c_str(), static_cast<int>(i),
+          touch.source_id());
+
+      AddDoubleValueStatsToUploadUtil(key_name_base + "sx",
+                                      touch.start_x_stats(),
+                                      10000000.0, 10000000.0,
+                                      uploader);
+      AddDoubleValueStatsToUploadUtil(key_name_base + "sy",
+                                      touch.start_y_stats(),
+                                      10000000.0, 10000000.0,
+                                      uploader);
+      AddDoubleValueStatsToUploadUtil(key_name_base + "dx",
+                                      touch.direction_x_stats(),
+                                      10000000.0, 10000000.0,
+                                      uploader);
+      AddDoubleValueStatsToUploadUtil(key_name_base + "dy",
+                                      touch.direction_y_stats(),
+                                      10000000.0, 10000000.0,
+                                      uploader);
+      AddDoubleValueStatsToUploadUtil(key_name_base + "tl",
+                                      touch.time_length_stats(),
+                                      10000000.0, 10000000.0,
+                                      uploader);
+    }
+  }
+}
 
 }  // namespace
 
@@ -142,7 +239,7 @@ const uint32 UsageStatsUploader::kDefaultScheduleInterval = 5*60*1000;
 const uint32 UsageStatsUploader::kDefaultScheduleMaxInterval = 2*60*60*1000;
 
 void UsageStatsUploader::SetClientIdHandler(
-      ClientIdInterface *client_id_handler) {
+    ClientIdInterface *client_id_handler) {
   scoped_lock l(&g_mutex);
   g_client_id_handler = client_id_handler;
 }
@@ -183,6 +280,9 @@ void UsageStatsUploader::LoadStats(UploadUtil *uploader) {
         DCHECK(stats.has_boolean_value()) << name;
         uploader->AddBooleanValue(name, stats.boolean_value());
         break;
+      case Stats::VIRTUAL_KEYBOARD:
+        AddVirtualKeyboardStatsToUploadUtil(stats, uploader);
+        break;
       default:
         VLOG(3) << "stats " << name << " has no type";
         break;
@@ -195,23 +295,24 @@ void UsageStatsUploader::GetClientId(string *output) {
 }
 
 bool UsageStatsUploader::Send(void *data) {
-  UsageStats::Sync();
+  const string upload_key = string(kRegistryPrefix) + kLastUploadKey;
   const uint32 current_sec = static_cast<uint32>(Util::GetTime());
-  uint32 last_upload_sec;
-  const string upload_key = string(kRegistryPrefix) + string(kLastUploadKey);
+  uint32 last_upload_sec = 0;
+  const string mozc_version_key = string(kRegistryPrefix) + kMozcVersionKey;
+  const string &current_mozc_version = Version::GetMozcVersion();
+  string last_mozc_version;
   if (!storage::Registry::Lookup(upload_key, &last_upload_sec) ||
-      last_upload_sec > current_sec) {
-    // invalid value: time zone changed etc.
-
+      last_upload_sec > current_sec ||
+      !storage::Registry::Lookup(mozc_version_key, &last_mozc_version) ||
+      last_mozc_version != current_mozc_version) {
     // quit here just saving current time and clear stats
     UsageStats::ClearStats();
-    if (!storage::Registry::Insert(upload_key, current_sec)) {
-      LOG(ERROR) << "cannot save current_time to registry";
-      return false;
-    } else {
-      VLOG(2) << "saved current_time to registry";
-      return true;
-    }
+    bool result = true;
+    result &= storage::Registry::Insert(upload_key, current_sec);
+    result &= storage::Registry::Insert(mozc_version_key, current_mozc_version);
+
+    LOG_IF(ERROR, !result) << "cannot save usage stats metadata to registry";
+    return result;
   }
 
   // if usage stats is disabled, we simply clear stats here.
@@ -246,49 +347,18 @@ bool UsageStatsUploader::Send(void *data) {
   GetClientId(&client_id);
   DCHECK(!client_id.empty());
   params.push_back(make_pair("client_id", client_id));
-  params.push_back(make_pair("os_ver", Util::GetOSVersionString()));
+  params.push_back(make_pair("os_ver", SystemUtil::GetOSVersionString()));
 #ifdef OS_ANDROID
   params.push_back(
       make_pair("model",
                 AndroidUtil::GetSystemProperty(
                     AndroidUtil::kSystemPropertyModel, "Unknown")));
-  const int sdk_level = NumberUtil::SimpleAtoi(AndroidUtil::GetSystemProperty(
-                            AndroidUtil::kSystemPropertySdkVersion, "0"));
-  UsageStats::SetInteger("AndroidApiLevel", sdk_level);
 #endif  // OS_ANDROID
-  // Get total memory in MB.
-  const uint32 memory_in_mb = Util::GetTotalPhysicalMemory() / (1024 * 1024);
-  UsageStats::SetInteger("TotalPhysicalMemory", memory_in_mb);
+
+  UsageStatsUpdater::UpdateStats();
 
   UploadUtil uploader;
   uploader.SetHeader("Daily", elapsed_sec, params);
-
-#ifdef OS_WINDOWS
-  UsageStats::SetBoolean("WindowsX64", Util::IsWindowsX64());
-  {
-    // get msctf version
-    int major, minor, build, revision;
-    const wchar_t kDllName[] = L"msctf.dll";
-    wstring path = Util::GetSystemDir();
-    path += L"\\";
-    path += kDllName;
-    if (Util::GetFileVersion(path, &major, &minor, &build, &revision)) {
-      UsageStats::SetInteger("MsctfVerMajor", major);
-      UsageStats::SetInteger("MsctfVerMinor", minor);
-      UsageStats::SetInteger("MsctfVerBuild", build);
-      UsageStats::SetInteger("MsctfVerRevision", revision);
-    } else {
-      LOG(ERROR) << "get file version for msctf.dll failed";
-    }
-  }
-  UsageStats::SetBoolean("CuasEnabled", WinUtil::IsCuasEnabled());
-#endif  // OS_WINDOWS
-
-#ifdef OS_MACOSX
-  UsageStats::SetBoolean("PrelauncherEnabled",
-                         MacUtil::CheckPrelauncherLoginItemStatus());
-#endif  // OS_MACOSX
-
   LoadStats(&uploader);
 
   // Just check for confirming that we can insert the value to upload_key.
@@ -311,7 +381,11 @@ bool UsageStatsUploader::Send(void *data) {
     LOG(ERROR) << "cannot save current_time to registry";
     return false;
   }
-  UsageStats::Sync();
+  if (!UsageStats::Sync()) {
+    LOG(ERROR) << "Failed to sync cleared usage stats to disk storage.";
+    return false;
+  }
+
   VLOG(2) << "send success";
   return true;
 }

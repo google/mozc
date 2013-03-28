@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,11 +34,9 @@
 
 namespace mozc {
 namespace sync {
-class OAuth2Util;
 
 class SyncerInterface {
  public:
-  SyncerInterface() {}
   virtual ~SyncerInterface() {}
 
   // Note that Start are called in the main converter thread.
@@ -61,21 +59,13 @@ class SyncerInterface {
   // Note that Clear will be executed out of the main converter thread.
   // Sync method must be thread-safe.
   virtual bool Clear() = 0;
+
+  // Clear local data about synchronization.
+  // Return true if all sync adapters clear successfully.
+  virtual bool ClearLocal() = 0;
 };
 
-class SyncerFactory {
- public:
-  // return signleton object.
-  static SyncerInterface *GetSyncer();
-
-  // set syncer object for unittesting.
-  static void SetSyncer(SyncerInterface *syncer);
-
-  // set the authentication library which puts authentication to the
-  // syncer channel.
-  static void SetOAuth2(OAuth2Util *oauth2);
-};
-}  // sync
-}  // mozc
+}  // namespace sync
+}  // namespace mozc
 
 #endif  // MOZC_SYNC_SYNCER_H_

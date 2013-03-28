@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,6 +40,10 @@
 #include "base/trie.h"
 
 namespace mozc {
+
+// For friendship.
+class DictionaryPredictorTest;
+
 namespace commands {
 class Request;
 }  // namespace commands
@@ -48,6 +52,8 @@ namespace config {
 class Config;
 }  // namespace config
 namespace composer {
+
+class TypingModel;
 
 // This is a bitmap representing Entry's additional attributes.
 enum TableAttribute {
@@ -91,12 +97,6 @@ class Table {
   Table();
   virtual ~Table();
 
-  // TODO(yoichio): Initizalize and Reload methods use the system request
-  // and the config.
-  // These should be depericated.
-  bool Initialize();
-  bool Reload();
-
   bool InitializeWithRequestAndConfig(const commands::Request &request,
                                       const config::Config &config);
 
@@ -132,6 +132,8 @@ class Table {
   bool case_sensitive() const;
   void set_case_sensitive(bool case_sensitive);
 
+  const TypingModel* typing_model() const;
+
   // Parse special key strings escaped with the pair of "{" and "}"
   // and return the parsed string.
   static string ParseSpecialKey(const string &input);
@@ -141,6 +143,10 @@ class Table {
   static string DeleteSpecialKey(const string &input);
 
  private:
+  friend class mozc::DictionaryPredictorTest;
+  friend class TypingCorrectorTest;
+  friend class TypingCorrectionTest;
+
   bool LoadFromStream(istream *is);
   void DeleteEntry(const Entry *entry);
   void ResetEntrySet();
@@ -153,6 +159,9 @@ class Table {
   // If false, input alphabet characters are normalized to lower
   // characters.  The default value is false.
   bool case_sensitive_;
+
+  // Typing model. NULL if no corresponding model is available.
+  const TypingModel* typing_model_;
 
   DISALLOW_COPY_AND_ASSIGN(Table);
 };

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -56,11 +56,11 @@ int GetTableHeight(QTableWidget *widget) {
   const QRect rect =
       QFontMetrics(widget->font()).boundingRect(
           QObject::trUtf8(kHexBaseChar));
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   return static_cast<int>(rect.height() * 1.3);
 #else
   return static_cast<int>(rect.height() * 1.4);
-#endif   // OS_WINDOWS
+#endif   // OS_WIN
 }
 }  // namespace
 
@@ -160,7 +160,7 @@ void GenericTableEditorDialog::DeleteSelectedItems() {
 
   if (rows.empty()) {
     QMessageBox::warning(this,
-                         tr("Mozc settings"),
+                         windowTitle(),
                          tr("No entry is selected"));
     return;
   }
@@ -226,7 +226,7 @@ void GenericTableEditorDialog::InsertItem() {
   QTableWidgetItem *current = editorTableWidget->currentItem();
   if (current == NULL) {
     QMessageBox::warning(this,
-                         tr("Mozc settings"),
+                         windowTitle(),
                          tr("No entry is selected"));
     return;
   }
@@ -237,7 +237,7 @@ void GenericTableEditorDialog::AddNewItem() {
   if (editorTableWidget->rowCount() >= max_entry_size()) {
     QMessageBox::warning(
         this,
-        tr("Mozc settings"),
+        windowTitle(),
         tr("You can't have more than %1 entries").arg(max_entry_size()));
     return;
   }
@@ -256,7 +256,7 @@ void GenericTableEditorDialog::Import() {
   QFile file(filename);
   if (!file.exists()) {
     QMessageBox::warning(this,
-                         tr("Mozc settings"),
+                         windowTitle(),
                          tr("File not found"));
     return;
   }
@@ -264,7 +264,7 @@ void GenericTableEditorDialog::Import() {
   const qint64 kMaxSize = 100 * 1024;
   if (file.size() >= kMaxSize) {
     QMessageBox::warning(this,
-                         tr("Mozc settings"),
+                         windowTitle(),
                          tr("The specified file is too large (>=100K byte)"));
     return;
   }
@@ -272,7 +272,7 @@ void GenericTableEditorDialog::Import() {
   InputFileStream ifs(filename.toStdString().c_str());
   if (!LoadFromStream(&ifs)) {
     QMessageBox::warning(this,
-                         tr("Mozc settings"),
+                         windowTitle(),
                          tr("Import failed"));
     return;
   }
@@ -294,7 +294,7 @@ void GenericTableEditorDialog::Export() {
   OutputFileStream ofs(filename.toStdString().c_str());
   if (!ofs) {
     QMessageBox::warning(this,
-                         tr("Mozc settings"),
+                         windowTitle(),
                          tr("Export failed"));
     return;
   }

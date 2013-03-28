@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -50,19 +50,17 @@
 #include "config/config_handler.h"
 #include "converter/connector_interface.h"
 #include "converter/conversion_request.h"
+#include "converter/converter_interface.h"
 #include "converter/immutable_converter_interface.h"
-#include "converter/node.h"
 #include "converter/node_allocator.h"
 #include "converter/segmenter_interface.h"
 #include "converter/segments.h"
-#include "data_manager/data_manager_interface.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "prediction/predictor_interface.h"
 #include "prediction/suggestion_filter.h"
 #include "prediction/zero_query_number_data.h"
 #include "session/commands.pb.h"
-#include "session/request_handler.h"
 
 // This flag is set by predictor.cc
 // We can remove this after the ambiguity expansion feature get stable.
@@ -70,8 +68,22 @@ DEFINE_bool(enable_expansion_for_dictionary_predictor,
             false,
             "enable ambiguity expansion for dictionary_predictor");
 
+DEFINE_bool(enable_mixed_conversion,
+            false,
+            "Enable mixed conversion feature");
+
+DECLARE_bool(enable_typing_correction);
+
 namespace mozc {
 namespace {
+
+// Used to emulate positive infinity for cost. This value is set for those
+// candidates that are thought to be aggressive; thus we can eliminate such
+// candidates from suggestion or prediction. Note that for this purpose we don't
+// want to use INT_MAX because someone might further add penalty after cost is
+// set to INT_MAX, which leads to overflow and consequently aggressive
+// candidates would appear in the top results.
+const int kInfinity = (2 << 20);
 
 // Note that PREDICTION mode is much slower than SUGGESTION.
 // Number of prediction calls should be minimized.
@@ -127,35 +139,63 @@ bool IsLatinInputMode(const ConversionRequest &request) {
            request.composer().GetInputMode() == transliteration::FULL_ASCII));
 }
 
+// Returns true if |segments| contains number history.
+// Normalized number will be set to |number_key|
+// Note:
+//  Now this function supports arabic number candidates only and
+//  we don't support kanji number candidates for now.
+//  This is because We have several kanji number styles, for example,
+//  "一二", "十二", "壱拾弐", etc for 12.
+// TODO(toshiyuki): Define the spec and support Kanji.
+bool GetNumberHistory(const Segments &segments, string *number_key) {
+  DCHECK(number_key);
+  const size_t history_size = segments.history_segments_size();
+  if (history_size <= 0) {
+    return false;
+  }
+
+  const Segment &last_segment = segments.history_segment(history_size - 1);
+  DCHECK_GT(last_segment.candidates_size(), 0);
+  const string &history_value = last_segment.candidate(0).value;
+  if (!NumberUtil::IsArabicNumber(history_value)) {
+    return false;
+  }
+
+  Util::FullWidthToHalfWidth(history_value, number_key);
+  return true;
+}
+
+bool IsMixedConversionEnabled(const commands::Request& request) {
+  return request.mixed_conversion() || FLAGS_enable_mixed_conversion;
+}
+
+bool IsTypingCorrectionEnabled() {
+  return GET_CONFIG(use_typing_correction) ||
+         FLAGS_enable_typing_correction;
+}
+
 }  // namespace
 
 DictionaryPredictor::DictionaryPredictor(
+    const ConverterInterface *converter,
     const ImmutableConverterInterface *immutable_converter,
     const DictionaryInterface *dictionary,
     const DictionaryInterface *suffix_dictionary,
-    const DataManagerInterface *data_manager)
-    : immutable_converter_(immutable_converter),
+    const ConnectorInterface *connector,
+    const SegmenterInterface *segmenter,
+    const POSMatcher *pos_matcher,
+    const SuggestionFilter *suggestion_filter)
+    : converter_(converter),
+      immutable_converter_(immutable_converter),
       dictionary_(dictionary),
       suffix_dictionary_(suffix_dictionary),
-      connector_(data_manager->GetConnector()),
-      segmenter_(data_manager->GetSegmenter()),
-      counter_suffix_word_id_(
-          data_manager->GetPOSMatcher()->GetCounterSuffixWordId()),
-      predictor_name_("DictionaryPredictor") {
-  // Create suggestion filter.
-  const char *data = NULL;
-  size_t size = 0;
-  data_manager->GetSuggestionFilterData(&data, &size);
-  CHECK(data);
-  suggestion_filter_.reset(new SuggestionFilter(data, size));
-}
+      connector_(connector),
+      segmenter_(segmenter),
+      suggestion_filter_(suggestion_filter),
+      counter_suffix_word_id_(pos_matcher->GetCounterSuffixWordId()),
+      predictor_name_("DictionaryPredictor") {}
 
 DictionaryPredictor::~DictionaryPredictor() {}
-
-bool DictionaryPredictor::Predict(Segments *segments) const {
-  ConversionRequest default_request;
-  return PredictForRequest(default_request, segments);
-}
 
 bool DictionaryPredictor::PredictForRequest(const ConversionRequest &request,
                                             Segments *segments) const {
@@ -170,8 +210,8 @@ bool DictionaryPredictor::PredictForRequest(const ConversionRequest &request,
     return false;
   }
 
-  SetCost(*segments, &results);
-  RemovePrediction(*segments, &results);
+  SetCost(request, *segments, &results);
+  RemovePrediction(request, *segments, &results);
   return AddPredictionToCandidates(request, segments, &results);
 }
 
@@ -194,9 +234,11 @@ bool DictionaryPredictor::AggregatePrediction(
     // composition mode. Thus it should return only the candidates whose key
     // exactly matches the query.
     // Therefore, we use only the realtime conversion result.
-    AggregateRealtimeConversion(prediction_types, segments, allocator, results);
+    AggregateRealtimeConversion(
+        prediction_types, request, segments, allocator, results);
   } else {
-    AggregateRealtimeConversion(prediction_types, segments, allocator, results);
+    AggregateRealtimeConversion(prediction_types, request,
+                                segments, allocator, results);
     AggregateUnigramPrediction(prediction_types, request, segments,
                                allocator, results);
     AggregateBigramPrediction(prediction_types, request, segments,
@@ -205,6 +247,8 @@ bool DictionaryPredictor::AggregatePrediction(
                               allocator, results);
     AggregateEnglishPrediction(prediction_types, request, segments,
                                allocator, results);
+    AggregateTypeCorrectingPrediction(prediction_types, request, segments,
+                                      allocator, results);
   }
 
   if (results->empty()) {
@@ -215,11 +259,12 @@ bool DictionaryPredictor::AggregatePrediction(
   }
 }
 
-void DictionaryPredictor::SetCost(const Segments &segments,
+void DictionaryPredictor::SetCost(const ConversionRequest &request,
+                                  const Segments &segments,
                                   vector<Result> *results) const {
   DCHECK(results);
 
-  if (GET_REQUEST(mixed_conversion)) {
+  if (IsMixedConversionEnabled(request.request())) {
     SetLMCost(segments, results);
   } else {
     SetPredictionCost(segments, results);
@@ -228,11 +273,12 @@ void DictionaryPredictor::SetCost(const Segments &segments,
   ApplyPenaltyForKeyExpansion(segments, results);
 }
 
-void DictionaryPredictor::RemovePrediction(const Segments &segments,
+void DictionaryPredictor::RemovePrediction(const ConversionRequest &request,
+                                           const Segments &segments,
                                            vector<Result> *results) const {
   DCHECK(results);
 
-  if (!GET_REQUEST(mixed_conversion)) {
+  if (!IsMixedConversionEnabled(request.request())) {
     // Currently, we don't have spelling correction feature on mobile,
     // so we don't run RemoveMissSpelledCandidates.
     const string &input_key = segments.conversion_segment(0).key();
@@ -246,7 +292,7 @@ bool DictionaryPredictor::AddPredictionToCandidates(
     Segments *segments, vector<Result> *results) const {
   DCHECK(segments);
   DCHECK(results);
-  const bool mixed_conversion = GET_REQUEST(mixed_conversion);
+  const bool mixed_conversion = IsMixedConversionEnabled(request.request());
   const string &input_key = segments->conversion_segment(0).key();
   const size_t input_key_len = Util::CharsLen(input_key);
 
@@ -272,9 +318,12 @@ bool DictionaryPredictor::AddPredictionToCandidates(
   set<string> seen;
 
   int added_suffix = 0;
+  bool cursor_at_tail =
+      request.has_composer() &&
+      request.composer().GetCursor() == request.composer().GetLength();
 
   for (size_t i = 0; i < results->size(); ++i) {
-    if (added >= size || results->at(i).cost == INT_MAX) {
+    if (added >= size || results->at(i).cost >= kInfinity) {
       break;
     }
 
@@ -348,7 +397,7 @@ bool DictionaryPredictor::AddPredictionToCandidates(
     candidate->lid = node->lid;
     candidate->rid = node->rid;
     candidate->wcost = node->wcost;
-    candidate->cost = results->at(i).cost;
+    candidate->cost = result.cost;
     if (node->attributes & Node::SPELLING_CORRECTION) {
       candidate->attributes |= Segment::Candidate::SPELLING_CORRECTION;
     } else if (IsLatinInputMode(request)) {
@@ -361,42 +410,80 @@ bool DictionaryPredictor::AddPredictionToCandidates(
     if (node->attributes & Node::USER_DICTIONARY) {
       candidate->attributes |= Segment::Candidate::USER_DICTIONARY;
     }
+    if (node->attributes & Node::PARTIALLY_KEY_CONSUMED) {
+      candidate->attributes |= Segment::Candidate::PARTIALLY_KEY_CONSUMED;
+      candidate->consumed_key_size = node->consumed_key_size;
+      // There are two scenarios to reach here.
+      // 1. Auto partial suggestion.
+      //    e.g. composition わたしのなまえ| -> candidate 私の
+      // 2. Partial suggestion.
+      //    e.g. composition わたしの|なまえ -> candidate 私の
+      // To distinguish auto partial suggestion from (non-auto) partial
+      // suggestion, see the cursor position. If the cursor is at the tail
+      // of the composition, this is auto partial suggestion.
+      if (cursor_at_tail) {
+        candidate->attributes |= Segment::Candidate::AUTO_PARTIAL_SUGGESTION;
+      }
+    }
+    if (result.types & REALTIME) {
+      candidate->inner_segment_boundary = result.inner_segment_boundary;
+    }
+    if (result.types & TYPING_CORRECTION) {
+      candidate->attributes |= Segment::Candidate::TYPING_CORRECTION;
+    }
 
+    SetDescription(result.types, candidate->attributes,
+                   &candidate->description);
 #ifdef DEBUG
     SetDebugDescription(result.types, &candidate->description);
 #endif  // DEBUG
 
     ++added;
   }
-
   return added > 0;
 }
 
-#ifdef DEBUG
+void DictionaryPredictor::SetDescription(PredictionTypes types,
+                                         uint32 attributes,
+                                         string *description) {
+  if (types & TYPING_CORRECTION) {
+    // <入力補正>
+    Util::AppendStringWithDelimiter(
+        " ",
+        "<" "\xE5\x85\xA5\xE5\x8A\x9B\xE8\xA3\x9C\xE6\xAD\xA3" ">",
+        description);
+  }
+  if (attributes & Segment::Candidate::AUTO_PARTIAL_SUGGESTION) {
+    // <部分確定>
+    Util::AppendStringWithDelimiter(
+        " ",
+        "<" "\xE9\x83\xA8\xE5\x88\x86\xE7\xA2\xBA\xE5\xAE\x9A" ">",
+        description);
+  }
+}
+
 void DictionaryPredictor::SetDebugDescription(PredictionTypes types,
                                               string *description) {
-  vector<string> descriptions;
-  if (!description->empty()) {
-    descriptions.push_back(*description);
-  }
   if (types & UNIGRAM) {
-    descriptions.push_back("Unigram");
+    Util::AppendStringWithDelimiter(" ", "Unigram", description);
   }
   if (types & BIGRAM) {
-    descriptions.push_back("Bigram");
+    Util::AppendStringWithDelimiter(" ", "Bigram", description);
   }
-  if (types & REALTIME) {
-    descriptions.push_back("Realtime");
+  if (types & REALTIME_TOP) {
+    Util::AppendStringWithDelimiter(" ", "Realtime Top", description);
+  } else if (types & REALTIME) {
+    Util::AppendStringWithDelimiter(" ", "Realtime", description);
   }
   if (types & SUFFIX) {
-    descriptions.push_back("Suffix");
+    Util::AppendStringWithDelimiter(" ", "Suffix", description);
   }
   if (types & ENGLISH) {
-    descriptions.push_back("English");
+    Util::AppendStringWithDelimiter(" ", "English", description);
   }
-  Util::JoinStrings(descriptions, " ", description);
+  // Note that description for TYPING_CORRECTION is omitted
+  // because it is appended by SetDescription.
 }
-#endif  // DEBUG
 
 // return transition_cost[rid][node.lid] + node.wcost (+ penalties).
 int DictionaryPredictor::GetLMCost(PredictionTypes types,
@@ -474,9 +561,23 @@ void DictionaryPredictor::SetPredictionCost(const Segments &segments,
   const size_t bigram_key_len = Util::CharsLen(bigram_key);
   const size_t unigram_key_len = Util::CharsLen(input_key);
 
+  // In the loop below, we track the minimum cost among those REALTIME
+  // candidates that have the same key length as |input_key| so that we can set
+  // a slightly smaller cost to REALTIME_TOP than these.
+  int realtime_cost_min = kInfinity;
+  Result *realtime_top_result = NULL;
+
   for (size_t i = 0; i < results->size(); ++i) {
     const Node *node = (*results)[i].node;
     const PredictionTypes types = (*results)[i].types;
+
+    // The cost of REALTIME_TOP is determined after the loop based on the
+    // minimum cost for REALTIME. Just remember the pointer of result.
+    if (types & REALTIME_TOP) {
+      realtime_top_result = &(*results)[i];
+      continue;
+    }
+
     const int cost = GetLMCost(types, *node, rid);
     DCHECK(node);
 
@@ -486,7 +587,7 @@ void DictionaryPredictor::SetPredictionCost(const Segments &segments,
 
     if (IsAggressiveSuggestion(query_len, key_len, cost,
                                is_suggestion, results->size())) {
-      (*results)[i].cost = INT_MAX;
+      (*results)[i].cost = kInfinity;
       continue;
     }
 
@@ -530,6 +631,20 @@ void DictionaryPredictor::SetPredictionCost(const Segments &segments,
     const int kCostFactor = 500;
     (*results)[i].cost = cost -
         kCostFactor * log(1.0 + max(0, static_cast<int>(key_len - query_len)));
+
+    // Update the minimum cost for REALTIME candidates that have the same key
+    // length as input_key.
+    if (types & REALTIME &&
+        (*results)[i].cost < realtime_cost_min &&
+        node->key.size() == input_key.size()) {
+      realtime_cost_min = (*results)[i].cost;
+    }
+  }
+
+  // Ensure that the REALTIME_TOP candidate has relatively smaller cost than
+  // those of REALTIME candidates.
+  if (realtime_top_result != NULL) {
+    realtime_top_result->cost = max(0, realtime_cost_min - 10);
   }
 }
 
@@ -553,17 +668,18 @@ void DictionaryPredictor::SetLMCost(const Segments &segments,
     }
   }
 
+  const size_t input_key_len = Util::CharsLen(
+      segments.conversion_segment(0).key());
   for (size_t i = 0; i < results->size(); ++i) {
     const Node *node = (*results)[i].node;
     const PredictionTypes types = (*results)[i].types;
     DCHECK(node);
+
     int cost = GetLMCost(types, *node, rid);
     // Make exact candidates to have higher ranking.
     // Because for mobile, suggestion is the main candidates and
     // users expect the candidates for the input key on the candidates.
-    if (types & UNIGRAM) {
-      const size_t input_key_len = Util::CharsLen(
-          segments.conversion_segment(0).key());
+    if (types & (UNIGRAM | TYPING_CORRECTION)) {
       const size_t key_len = Util::CharsLen(node->key);
       if (key_len > input_key_len) {
         // Cost penalty means that exact candiates are evaluated
@@ -606,6 +722,9 @@ void DictionaryPredictor::ApplyPenaltyForKeyExpansion(
   const int kKeyExpansionPenalty = 1151;
   const string &conversion_key = segments.conversion_segment(0).key();
   for (size_t i = 0; i < results->size(); ++i) {
+    if ((*results)[i].types & TYPING_CORRECTION) {
+      continue;
+    }
     const Node *node = (*results)[i].node;
     if (!Util::StartsWith(node->key, conversion_key)) {
       (*results)[i].cost += kKeyExpansionPenalty;
@@ -730,18 +849,18 @@ size_t DictionaryPredictor::GetRealtimeCandidateMaxSize(
          request_type == Segments::PARTIAL_PREDICTION ||
          request_type == Segments::PARTIAL_SUGGESTION);
   const int kFewResultThreshold = 8;
-  size_t default_size = 6;
+  size_t default_size = 10;
   if (segments.segments_size() > 0 &&
       Util::CharsLen(segments.segment(0).key()) >= kFewResultThreshold) {
     // We don't make so many realtime conversion prediction
     // even if we have enough margin, as it's expected less useful.
     max_size = min(max_size, static_cast<size_t>(8));
-    default_size = 3;
+    default_size = 5;
   }
   size_t size = 0;
   switch (request_type) {
     case Segments::PREDICTION:
-      size = mixed_conversion ? max_size - default_size : default_size;
+      size = mixed_conversion ? max_size : default_size;
       break;
     case Segments::SUGGESTION:
       // Fewer candidatats are needed basically.
@@ -761,11 +880,68 @@ size_t DictionaryPredictor::GetRealtimeCandidateMaxSize(
     default:
       size = 0;  // Never reach here
   }
+
   return min(max_size, size);
+}
+
+bool DictionaryPredictor::PushBackTopConversionResult(
+    const ConversionRequest &request,
+    Segments *segments,
+    NodeAllocatorInterface *allocator,
+    vector<Result> *results) const {
+  DCHECK_EQ(1, segments->conversion_segments_size());
+
+  Segments tmp_segments;
+  tmp_segments.CopyFrom(*segments);
+  tmp_segments.set_max_conversion_candidates_size(20);
+  ConversionRequest tmp_request;
+  tmp_request.CopyFrom(request);
+  tmp_request.set_composer_key_selection(ConversionRequest::PREDICTION_KEY);
+  // Some rewriters cause significant performance loss. So we skip them.
+  tmp_request.set_skip_slow_rewriters(true);
+  // This method emulates usual converter's behavior so here disable
+  // partial candidates.
+  tmp_request.set_create_partial_candidates(false);
+  if (!converter_->StartConversionForRequest(tmp_request, &tmp_segments)) {
+    return false;
+  }
+
+  Node *node = allocator->NewNode();
+  DCHECK(node);
+  node->Init();
+  node->lid = tmp_segments.conversion_segment(0).candidate(0).lid;
+  node->rid = tmp_segments.conversion_segment(
+      tmp_segments.conversion_segments_size() - 1).candidate(0).rid;
+  node->key = segments->conversion_segment(0).key();
+  node->attributes |= Node::NO_VARIANTS_EXPANSION;
+
+  // Concatenate the top candidates.
+  node->value.clear();
+  node->wcost = 0;
+  // Note that since StartConversionForRequest() runs in conversion mode, the
+  // resulting |tmp_segments| doesn't have inner_segment_boundaries. We need to
+  // construct it manually here.
+  // TODO(noriyukit): This is code duplicate in converter/nbest_generator.cc and
+  // we should refactor code after finding more good design.
+  vector<pair<int, int> > inner_segment_boundaries;
+  for (size_t i = 0; i < tmp_segments.conversion_segments_size(); ++i) {
+    const Segment &segment = tmp_segments.conversion_segment(i);
+    const Segment::Candidate &candidate = segment.candidate(0);
+    node->value.append(candidate.value);
+    node->wcost += candidate.cost;
+    inner_segment_boundaries.push_back(
+        make_pair(Util::CharsLen(candidate.key),
+                  Util::CharsLen(candidate.value)));
+  }
+  results->push_back(Result(node, REALTIME | REALTIME_TOP,
+                            inner_segment_boundaries));
+
+  return true;
 }
 
 void DictionaryPredictor::AggregateRealtimeConversion(
     PredictionTypes types,
+    const ConversionRequest &request,
     Segments *segments,
     NodeAllocatorInterface *allocator,
     vector<Result> *results) const {
@@ -773,33 +949,53 @@ void DictionaryPredictor::AggregateRealtimeConversion(
     return;
   }
 
+  DCHECK(converter_);
   DCHECK(immutable_converter_);
   DCHECK(segments);
   DCHECK(results);
   DCHECK(allocator);
 
+  // TODO(noriyukit): Currently, |segments| is abused as a temporary output from
+  // the immutable converter. Therefore, the first segment needs to be
+  // mutable. Fix this bad abuse.
   Segment *segment = segments->mutable_conversion_segment(0);
-  DCHECK(segment);
   DCHECK(!segment->key().empty());
 
-  // preserve the previous max_prediction_candidates_size,
-  // and candidates_size.
+  // First insert a top conversion result.
+  if (request.use_actual_converter_for_realtime_conversion()) {
+    if (!PushBackTopConversionResult(request, segments, allocator, results)) {
+      LOG(WARNING) << "Realtime conversion with converter failed";
+    }
+  }
+
+  // In what follows, add results from immutable converter.
+  // TODO(noriyukit): The |immutable_converter_| used below can be replaced by
+  // |converter_| in principle.  There's a problem of ranking when we get
+  // multiple segments, i.e., how to concatenate candidates in each
+  // segment. Currently, immutable converter handles such ranking in prediction
+  // mode to generate single segment results. So we want to share that code.
+
+  // Preserve the current max_prediction_candidates_size and candidates_size to
+  // restore them at the end of this method.
   const size_t prev_candidates_size = segment->candidates_size();
   const size_t prev_max_prediction_candidates_size =
       segments->max_prediction_candidates_size();
 
-  // set how many candidates we want to obtain with
-  // immutable converter.
-  const bool mixed_conversion = GET_REQUEST(mixed_conversion);
-  const size_t realtime_candidates_size = GetRealtimeCandidateMaxSize(
+  // Set how many candidates we want to obtain with the immutable
+  // converter.
+  const bool mixed_conversion = IsMixedConversionEnabled(request.request());
+  size_t realtime_candidates_size = GetRealtimeCandidateMaxSize(
       *segments,
       mixed_conversion,
       prev_max_prediction_candidates_size - prev_candidates_size);
+  if (realtime_candidates_size == 0) {
+    return;
+  }
 
-  segments->set_max_prediction_candidates_size(prev_candidates_size +
-                                               realtime_candidates_size);
+  segments->set_max_prediction_candidates_size(
+      prev_candidates_size + realtime_candidates_size);
 
-  if (immutable_converter_->Convert(segments) &&
+  if (immutable_converter_->ConvertForRequest(request, segments) &&
       prev_candidates_size < segment->candidates_size()) {
     // A little tricky treatment:
     // Since ImmutableConverter::Converter creates a set of new candidates,
@@ -807,7 +1003,7 @@ void DictionaryPredictor::AggregateRealtimeConversion(
     for (size_t i = prev_candidates_size;
          i < segment->candidates_size(); ++i) {
       const Segment::Candidate &candidate = segment->candidate(i);
-      Node *node= allocator->NewNode();
+      Node *node = allocator->NewNode();
       DCHECK(node);
       node->Init();
       node->lid = candidate.lid;
@@ -824,13 +1020,22 @@ void DictionaryPredictor::AggregateRealtimeConversion(
       if (candidate.attributes & Segment::Candidate::USER_DICTIONARY) {
         node->attributes |= Node::USER_DICTIONARY;
       }
-      results->push_back(Result(node, REALTIME));
+      if (candidate.attributes & Segment::Candidate::PARTIALLY_KEY_CONSUMED) {
+        // The candidate has PARTIALLY_KEY_CONSUMED attribute so
+        // copy the attribute and consumed_key_size.
+        // The copied data will be copied againt to a Candidate
+        // and will be shown to a user.
+        node->attributes |= Node::PARTIALLY_KEY_CONSUMED;
+        node->consumed_key_size = candidate.consumed_key_size;
+      }
+      results->push_back(
+          Result(node, REALTIME, candidate.inner_segment_boundary));
     }
-    // remove candidates created by ImmutableConverter.
+    // Remove candidates created by ImmutableConverter.
     segment->erase_candidates(prev_candidates_size,
                               segment->candidates_size() -
                               prev_candidates_size);
-    // restore the max_prediction_candidates_size.
+    // Restore the max_prediction_candidates_size.
     segments->set_max_prediction_candidates_size(
         prev_max_prediction_candidates_size);
   } else {
@@ -865,7 +1070,7 @@ void DictionaryPredictor::AggregateUnigramPrediction(
   DCHECK(segments->request_type() == Segments::PREDICTION ||
          segments->request_type() == Segments::SUGGESTION);
 
-  const bool mixed_conversion = GET_REQUEST(mixed_conversion);
+  const bool mixed_conversion = IsMixedConversionEnabled(request.request());
   if (!mixed_conversion) {
     AggregateUnigramCandidate(request, segments, allocator, results);
   } else {
@@ -1181,6 +1386,8 @@ const Node *DictionaryPredictor::GetPredictiveNodes(
       }
       limit.begin_with_trie = trie.get();
     }
+    limit.kana_modifier_insensitive_lookup_enabled =
+        request.IsKanaModifierInsensitiveConversion();
     return dictionary->LookupPredictiveWithLimit(input_key.c_str(),
                                                  input_key.size(),
                                                  limit,
@@ -1243,6 +1450,60 @@ const Node *DictionaryPredictor::GetPredictiveNodesForEnglish(
   return head;
 }
 
+// static
+Node *DictionaryPredictor::AddCostToNodesWcost(int32 cost, Node *node) {
+  DCHECK(node);
+  for (;; node = node->bnext) {
+    node->wcost += cost;
+    if (!node->bnext) {
+      // Current node is the last one.
+      break;
+    }
+  }
+  return node;
+}
+
+const Node *DictionaryPredictor::GetPredictiveNodesUsingTypingCorrection(
+    const DictionaryInterface *dictionary,
+    const string &history_key,
+    const ConversionRequest &request,
+    const Segments &segments,
+    NodeAllocatorInterface *allocator) const {
+  if (!request.has_composer()) {
+    return NULL;
+  }
+
+  Node *head = NULL;
+  vector<composer::TypeCorrectedQuery> queries;
+  request.composer().GetTypeCorrectedQueriesForPrediction(&queries);
+  for (size_t i = 0; i < queries.size(); ++i) {
+    const string input_key = history_key + queries[i].base;
+    DictionaryInterface::Limit limit;
+    scoped_ptr<Trie<string> > trie(NULL);
+    if (!queries[i].expanded.empty()) {
+      trie.reset(new Trie<string>);
+      for (set<string>::const_iterator itr = queries[i].expanded.begin();
+           itr != queries[i].expanded.end(); ++itr) {
+        trie->AddEntry(*itr, "");
+      }
+      limit.begin_with_trie = trie.get();
+    }
+    limit.kana_modifier_insensitive_lookup_enabled =
+        request.IsKanaModifierInsensitiveConversion();
+    Node *node = dictionary->LookupPredictiveWithLimit(input_key.c_str(),
+                                                       input_key.size(),
+                                                       limit,
+                                                       allocator);
+    if (node == NULL) {
+      continue;
+    }
+    Node *tail = AddCostToNodesWcost(queries[i].cost, node);
+    tail->bnext = head;
+    head = node;
+  }
+  return head;
+}
+
 void DictionaryPredictor::AggregateSuffixPrediction(
     PredictionTypes types,
     const ConversionRequest &request,
@@ -1254,56 +1515,48 @@ void DictionaryPredictor::AggregateSuffixPrediction(
   }
 
   DCHECK(allocator);
+  DCHECK_GT(segments->conversion_segments_size(), 0);
 
-  size_t history_size = segments->history_segments_size();
-  bool has_number_history = false;
+  const bool is_zero_query = segments->conversion_segment(0).key().empty();
+  if (is_zero_query) {
+    string number_key;
+    if (GetNumberHistory(*segments, &number_key)) {
+      // Use number suffixes and do not add normal zero query.
+      vector<string> suffixes;
+      GetNumberSuffixArray(number_key, &suffixes);
+      DCHECK_GT(suffixes.size(), 0);
+      Node *result = NULL;
+      int cost = 0;
 
-  if (history_size) {
-    const string &history_key =
-        segments->history_segment(history_size - 1).key();
-    has_number_history = NumberUtil::IsDecimalInteger(history_key);
+      for (vector<string>::const_iterator it = suffixes.begin();
+           it != suffixes.end(); ++it) {
+        // Increment cost to show the candidates in order.
+        const int kSuffixPenalty = 10;
+
+        Node *node = allocator->NewNode();
+        DCHECK(node);
+        node->Init();
+        node->wcost = cost;
+        node->key = *it;  // Filler; same as the value
+        node->value = *it;
+        node->lid = counter_suffix_word_id_;
+        node->rid = counter_suffix_word_id_;
+        node->bnext = result;
+        result = node;
+        results->push_back(Result(node, SUFFIX));
+        cost += kSuffixPenalty;
+      }
+      return;
+    }
+    // Fall through
+    // Use normal suffix predictions
   }
 
-  if (has_number_history && segments->conversion_segment(0).key().size() == 0) {
-    const string &history_key =
-        segments->history_segment(history_size - 1).key();
-    vector<string> suffixes;
-    GetNumberSuffixArray(history_key, &suffixes);
-    DCHECK_GT(suffixes.size(), 0);
-    Node *result = NULL;
-    int cost = 0;
-
-    for (vector<string>::const_iterator it = suffixes.begin();
-         it != suffixes.end(); ++it) {
-      // Increment cost to show the candidates in order.
-      const int kSuffixPenalty = 10;
-
-      Node *node = allocator->NewNode();
-      DCHECK(node);
-      node->Init();
-      node->wcost = cost;
-      node->key = *it;  // Filler; same as the value
-      node->value = *it;
-      node->lid = counter_suffix_word_id_;
-      node->rid = counter_suffix_word_id_;
-      node->bnext = result;
-      result = node;
-      results->push_back(Result(node, SUFFIX));
-      cost += kSuffixPenalty;
-    }
-  } else {
-    const string kEmptyHistoryKey = "";
-    const Node *node = GetPredictiveNodes(
-        suffix_dictionary_, kEmptyHistoryKey, request, *segments, allocator);
-    for (; node != NULL; node = node->bnext) {
-      if (Util::CharsLen(node->value) <= 1) {
-        // Do not suggest one char suffix.
-        // TODO(toshiyuki): If this works well, fix from the dictionary
-        // generation process.
-        continue;
-      }
-      results->push_back(Result(node, SUFFIX));
-    }
+  const string kEmptyHistoryKey = "";
+  const Node *node = GetPredictiveNodes(
+      suffix_dictionary_, kEmptyHistoryKey, request, *segments, allocator);
+  for (; node != NULL; node = node->bnext) {
+    results->push_back(Result(node, SUFFIX));
   }
 }
 
@@ -1347,30 +1600,42 @@ void DictionaryPredictor::AggregateEnglishPrediction(
   }
 }
 
-bool DictionaryPredictor::IsZipCodeRequest(const string &key) const {
-  if (key.empty()) {
-    return false;
+void DictionaryPredictor::AggregateTypeCorrectingPrediction(
+    PredictionTypes types,
+    const ConversionRequest &request,
+    Segments *segments,
+    NodeAllocatorInterface *allocator,
+    vector<Result> *results) const {
+  if (!(types & TYPING_CORRECTION)) {
+    return;
   }
-  const char *begin = key.data();
-  const char *end = key.data() + key.size();
-  size_t mblen = 0;
-  while (begin < end) {
-    Util::UTF8ToUCS2(begin, end, &mblen);
-    if (mblen == 1 &&
-        ((*begin >= '0' && *begin <= '9') || *begin == '-')) {
-      // do nothing
-    } else {
-      return false;
+  DCHECK(segments);
+  DCHECK(allocator);
+  DCHECK(results);
+  DCHECK(dictionary_);
+
+  const size_t prev_results_size = results->size();
+  if (prev_results_size > 10000) {
+    return;
+  }
+
+  // Currently, history key is never utilized.
+  const string kEmptyHistoryKey = "";
+  const Node *node = GetPredictiveNodesUsingTypingCorrection(
+      dictionary_, kEmptyHistoryKey, request, *segments, allocator);
+  size_t results_size = 0;
+  for (; node != NULL; node = node->bnext) {
+    results->push_back(Result(node, TYPING_CORRECTION));
+    ++results_size;
+    if (results_size >= allocator->max_nodes_size()) {
+      results->resize(prev_results_size);
+      return;
     }
-
-    begin += mblen;
   }
-
-  return true;
 }
 
 DictionaryPredictor::PredictionTypes DictionaryPredictor::GetPredictionTypes(
-    const ConversionRequest &request, const Segments &segments) const {
+    const ConversionRequest &request, const Segments &segments) {
   if (segments.request_type() == Segments::CONVERSION) {
     VLOG(2) << "request type is CONVERSION";
     return NO_PREDICTION;
@@ -1381,25 +1646,23 @@ DictionaryPredictor::PredictionTypes DictionaryPredictor::GetPredictionTypes(
     return NO_PREDICTION;
   }
 
-  if (IsLatinInputMode(request)) {
-    return ENGLISH | REALTIME;
-  }
-
-  const string &key = segments.conversion_segment(0).key();
-
-  // default setting
   PredictionTypes result = NO_PREDICTION;
 
-  // support realtime conversion.
-  const size_t kMaxKeySize = 300;   // 300 bytes in UTF8
-
-  const bool mixed_conversion = GET_REQUEST(mixed_conversion);
-
-  if (segments.request_type() == Segments::PARTIAL_SUGGESTION) {
+  // Check if realtime conversion should be used.
+  if (ShouldRealTimeConversionEnabled(request, segments)) {
     result |= REALTIME;
-  } else if ((GET_CONFIG(use_realtime_conversion) || mixed_conversion) &&
-      key.size() > 0 && key.size() < kMaxKeySize) {
-    result |= REALTIME;
+  }
+
+  const bool zero_query_suggestion = request.request().zero_query_suggestion();
+  if (IsLatinInputMode(request) && !zero_query_suggestion) {
+    if (GET_CONFIG(use_dictionary_suggest)) {
+      // By following the dictionary_suggest config, enable English prediction.
+      result |= ENGLISH;
+    }
+
+    // Returns regardless of whether use_dictionary_suggest is enabled or not
+    // in the config, in order to avoid full-width candidates of English words.
+    return result;
   }
 
   if (!GET_CONFIG(use_dictionary_suggest) &&
@@ -1408,18 +1671,15 @@ DictionaryPredictor::PredictionTypes DictionaryPredictor::GetPredictionTypes(
     return result;
   }
 
-  const bool zero_query_suggestion = GET_REQUEST(zero_query_suggestion);
-
+  const string &key = segments.conversion_segment(0).key();
   const size_t key_len = Util::CharsLen(key);
   if (key_len == 0 && !zero_query_suggestion) {
     return result;
   }
 
   // Never trigger prediction if key looks like zip code.
-  const bool is_zip_code = DictionaryPredictor::IsZipCodeRequest(key);
-
   if (segments.request_type() == Segments::SUGGESTION &&
-      is_zip_code && key_len < 6) {
+      DictionaryPredictor::IsZipCodeRequest(key) && key_len < 6) {
     return result;
   }
 
@@ -1455,6 +1715,51 @@ DictionaryPredictor::PredictionTypes DictionaryPredictor::GetPredictionTypes(
     result |= SUFFIX;
   }
 
+  if (IsTypingCorrectionEnabled() && key_len >= 3) {
+    result |= TYPING_CORRECTION;
+  }
+
   return result;
 }
+
+bool DictionaryPredictor::ShouldRealTimeConversionEnabled(
+    const ConversionRequest &request,
+    const Segments &segments) {
+  const size_t kMaxRealtimeKeySize = 300;   // 300 bytes in UTF8
+  const string &key = segments.conversion_segment(0).key();
+  if (key.empty() || key.size() >= kMaxRealtimeKeySize) {
+    // 1) If key is empty, realtime conversion doesn't work.
+    // 2) If the key is too long, we'll hit a performance issue.
+    return false;
+  }
+
+  return (segments.request_type() == Segments::PARTIAL_SUGGESTION ||
+          GET_CONFIG(use_realtime_conversion) ||
+          IsMixedConversionEnabled(request.request()));
+}
+
+bool DictionaryPredictor::IsZipCodeRequest(const string &key) {
+  if (key.empty()) {
+    return false;
+  }
+
+  // TODO(hidehiko): Rewrite this method by using ConstChar32Iterator.
+  const char *begin = key.data();
+  const char *end = key.data() + key.size();
+  size_t mblen = 0;
+  while (begin < end) {
+    Util::UTF8ToUCS2(begin, end, &mblen);
+    if (mblen == 1 &&
+        ((*begin >= '0' && *begin <= '9') || *begin == '-')) {
+      // do nothing
+    } else {
+      return false;
+    }
+
+    begin += mblen;
+  }
+
+  return true;
+}
+
 }  // namespace mozc

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,18 +29,20 @@
 
 #include "base/config_file_stream.h"
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <windows.h>
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
+#include <cstring>
 #include <map>
-#include <string.h>
 #include <fstream>
 #include <sstream>
-#include "base/base.h"
 #include "base/file_stream.h"
+#include "base/file_util.h"
 #include "base/logging.h"
+#include "base/port.h"
 #include "base/singleton.h"
+#include "base/system_util.h"
 #include "base/util.h"
 
 namespace mozc {
@@ -101,7 +103,7 @@ istream *ConfigFileStream::Open(const string &filename,
         istringstream *ifs = new istringstream(
             string(kFileData[i].data, kFileData[i].size), mode);
         CHECK(ifs);
-        if (*ifs) {
+        if (ifs->good()) {
           return ifs;
         }
         delete ifs;
@@ -110,41 +112,31 @@ istream *ConfigFileStream::Open(const string &filename,
     }
   // user://foo.bar.txt
   } else if (Util::StartsWith(filename, kUserPrefix)) {
-#ifdef MOZC_USE_PEPPER_FILE_IO
-    // TODO(horo): implement this.
-    return NULL;
-#else
     const string new_filename =
-        Util::JoinPath(Util::GetUserProfileDirectory(),
-                       RemovePrefix(kUserPrefix, filename));
+        FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(),
+                           RemovePrefix(kUserPrefix, filename));
     InputFileStream *ifs = new InputFileStream(new_filename.c_str(), mode);
     CHECK(ifs);
-    if (*ifs) {
+    if (ifs->good()) {
       return ifs;
     }
     delete ifs;
     return NULL;
-#endif  // MOZC_USE_PEPPER_FILE_IO
   // file:///foo.map
   } else if (Util::StartsWith(filename, kFilePrefix)) {
-#ifdef MOZC_USE_PEPPER_FILE_IO
-    // TODO(horo): implement this.
-    return NULL;
-#else
     const string new_filename = RemovePrefix(kFilePrefix, filename);
     InputFileStream *ifs = new InputFileStream(new_filename.c_str(), mode);
     CHECK(ifs);
-    if (*ifs) {
+    if (ifs->good()) {
       return ifs;
     }
     delete ifs;
     return NULL;
-#endif  // MOZC_USE_PEPPER_FILE_IO
   } else if (Util::StartsWith(filename, kMemoryPrefix)) {
     istringstream *ifs = new istringstream(
         Singleton<OnMemoryFileMap>::get()->get(filename), mode);
     CHECK(ifs);
-    if (*ifs) {
+    if (ifs->good()) {
       return ifs;
     }
     delete ifs;
@@ -153,7 +145,7 @@ istream *ConfigFileStream::Open(const string &filename,
     LOG(WARNING) << filename << " has no prefix. open from localfile";
     InputFileStream *ifs = new InputFileStream(filename.c_str(), mode);
     CHECK(ifs);
-    if (*ifs) {
+    if (ifs->good()) {
       return ifs;
     }
     delete ifs;
@@ -172,10 +164,6 @@ bool ConfigFileStream::AtomicUpdate(const string &filename,
     LOG(ERROR) << "Cannot update system:// files.";
     return false;
   }
-#ifdef MOZC_USE_PEPPER_FILE_IO
-  // TODO(horo): implement this.
-  return false;
-#else
   // We should save the new config first,
   // as we may rewrite the original config according to platform.
   // The original config should be platform independent.
@@ -187,19 +175,19 @@ bool ConfigFileStream::AtomicUpdate(const string &filename,
   const string tmp_filename = real_filename + ".tmp";
   {
     OutputFileStream ofs(tmp_filename.c_str(), ios::out | ios::binary);
-    if (!ofs) {
+    if (!ofs.good()) {
       LOG(ERROR) << "cannot open " << tmp_filename;
       return false;
     }
     ofs << new_binary_contens;
   }
 
-  if (!Util::AtomicRename(tmp_filename, real_filename)) {
-    LOG(ERROR) << "Util::AtomicRename failed";
+  if (!FileUtil::AtomicRename(tmp_filename, real_filename)) {
+    LOG(ERROR) << "FileUtil::AtomicRename failed";
     return false;
   }
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   // If file name doesn't end with ".db", the file
   // is more likely a temporary file.
   if (!Util::EndsWith(real_filename, ".db")) {
@@ -215,22 +203,17 @@ bool ConfigFileStream::AtomicUpdate(const string &filename,
                  << " " << ::GetLastError();
     }
   }
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
   return true;
-#endif  // MOZC_USE_PEPPER_FILE_IO
 }
 
 string ConfigFileStream::GetFileName(const string &filename) {
-#ifdef MOZC_USE_PEPPER_FILE_IO
-  // TODO(horo): implement this.
-  return "";
-#else
   if (Util::StartsWith(filename, kSystemPrefix) ||
       Util::StartsWith(filename, kMemoryPrefix)) {
     return "";
   } else if (Util::StartsWith(filename, kUserPrefix)) {
-    return Util::JoinPath(Util::GetUserProfileDirectory(),
-                          RemovePrefix(kUserPrefix, filename));
+    return FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(),
+                              RemovePrefix(kUserPrefix, filename));
   } else if (Util::StartsWith(filename, kFilePrefix)) {
     return RemovePrefix(kUserPrefix, filename);
   } else {
@@ -238,7 +221,6 @@ string ConfigFileStream::GetFileName(const string &filename) {
     return filename;
   }
   return "";
-#endif  // MOZC_USE_PEPPER_FILE_IO
 }
 
 void ConfigFileStream::ClearOnMemoryFiles() {

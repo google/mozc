@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,10 @@
 #ifndef MOZC_BASE_MUTEX_H_
 #define MOZC_BASE_MUTEX_H_
 
+#ifdef MOZC_USE_PEPPER_FILE_IO
+#include <pthread.h>
+#endif  // MOZC_USE_PEPPER_FILE_IO
+
 #include "base/port.h"
 #include "base/thread_annotations.h"
 
@@ -52,8 +56,8 @@ namespace mozc {
 #define MOZC_RW_MUTEX_PTR_ARRAYSIZE 32
 #else
 // Currently following sizes seem to be enough to support all other platforms.
-#define MOZC_MUTEX_PTR_ARRAYSIZE 6
-#define MOZC_RW_MUTEX_PTR_ARRAYSIZE 10
+#define MOZC_MUTEX_PTR_ARRAYSIZE 8
+#define MOZC_RW_MUTEX_PTR_ARRAYSIZE 12
 #endif
 
 class LOCKABLE Mutex {
@@ -62,6 +66,12 @@ class LOCKABLE Mutex {
   ~Mutex();
   void Lock() EXCLUSIVE_LOCK_FUNCTION();
   void Unlock() UNLOCK_FUNCTION();
+
+#ifdef MOZC_USE_PEPPER_FILE_IO
+  // Returns the pointer to pthread_mutex_t.
+  // This method is used for a condition object in a BlockingQueue.
+  pthread_mutex_t *raw_mutex();
+#endif  // MOZC_USE_PEPPER_FILE_IO
 
  private:
   void *opaque_buffer_[MOZC_MUTEX_PTR_ARRAYSIZE];
@@ -165,7 +175,7 @@ enum CallOnceState {
 #define MOZC_ONCE_INIT { 0, 0 }
 
 struct once_t {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   volatile long state;    // NOLINT
   volatile long counter;  // NOLINT
 #else

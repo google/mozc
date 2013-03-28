@@ -1,4 +1,4 @@
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -68,28 +68,6 @@
           ],
         },
         {
-          'action_name': 'gen_symbol_rewriter_data',
-          'variables': {
-            'input_files': [
-              '../data/symbol/symbol.tsv',
-              '../data/rules/sorting_map.tsv',
-              '../data/symbol/ordering_rule.txt',
-            ],
-          },
-          'inputs': [
-            '<@(input_files)',
-          ],
-          'outputs': [
-            '<(gen_out_dir)/symbol_rewriter_data.h',
-          ],
-          'action': [
-            '<(mozc_build_tools_dir)/gen_symbol_rewriter_dictionary_main',
-            '<@(input_files)',
-            '--logtostderr',
-            '--output=<(gen_out_dir)/symbol_rewriter_data.h',
-          ],
-        },
-        {
           'action_name': 'gen_emoticon_rewriter_data',
           'variables': {
             'input_file': '../data/emoticon/emoticon.tsv',
@@ -105,6 +83,25 @@
           ],
           'action': [
             'python', 'gen_emoticon_rewriter_data.py',
+            '--input=<(input_file)',
+            '--output=<(output_file)',
+          ],
+        },
+        {
+          'action_name': 'gen_emoji_rewriter_data',
+          'variables': {
+            'input_file': '../data/emoji/emoji_data.tsv',
+            'output_file': '<(gen_out_dir)/emoji_rewriter_data.h',
+          },
+          'inputs': [
+            'gen_emoji_rewriter_data.py',
+            '<(input_file)',
+          ],
+          'outputs': [
+            '<(output_file)'
+          ],
+          'action': [
+            'python', 'gen_emoji_rewriter_data.py',
             '--input=<(input_file)',
             '--output=<(output_file)',
           ],
@@ -143,11 +140,11 @@
       ],
     },
     {
-      'target_name': 'gen_existence_header',
+      'target_name': 'gen_existence_data',
       'type': 'static_library',
       'toolsets': ['host'],
       'sources': [
-        'gen_existence_header.cc'
+        'gen_existence_data.cc'
       ],
       'dependencies': [
         '../storage/storage.gyp:storage#host',
@@ -162,7 +159,7 @@
         'gen_collocation_data_main.cc',
       ],
       'dependencies': [
-        'gen_existence_header',
+        'gen_existence_data',
       ],
     },
     {
@@ -184,7 +181,7 @@
         'gen_collocation_suppression_data_main.cc',
       ],
       'dependencies': [
-        'gen_existence_header',
+        'gen_existence_data',
       ],
     },
     {
@@ -211,6 +208,7 @@
         '../base/base.gyp:base',
         '../data_manager/data_manager.gyp:user_pos_manager',
         '../dictionary/dictionary_base.gyp:pos_matcher',
+        '../dictionary/dictionary_base.gyp:user_pos',
       ],
     },
     {

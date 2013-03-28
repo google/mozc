@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ Copyright 2010-2013, Google Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+     * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above
+ copyright notice, this list of conditions and the following disclaimer
+ in the documentation and/or other materials provided with the
+ distribution.
+     * Neither the name of Google Inc. nor the names of its
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<resources>
+  <!-- Compression rate in ppm (1000000 == 100% == no compression) -->
+  <integer name="candidate_width_compress_rate">998500</integer>
+  <!-- Duration for folding input frame -->
+  <integer name="input_frame_fold_duration">300</integer>
+  <!-- Overshoot rate for folding input frame in ppm -->
+  <integer name="input_frame_fold_overshoot_rate">30000</integer>
+  <!-- Overshoot duration rate for folding input frame in ppm -->
+  <integer name="input_frame_fold_overshoot_duration_rate">330000</integer>
+  <!-- Duration for expanding input frame -->
+  <integer name="input_frame_expand_duration">500</integer>
+  <!-- Overshoot rate for expanding input frame in ppm -->
+  <integer name="input_frame_expand_overshoot_rate">30000</integer>
+  <!-- Overshoot duration rate for expanding input frame in ppm -->
+  <integer name="input_frame_expand_overshoot_duration_rate">400000</integer>
+  <!-- The threshold velocity of snapping input window. -->
+  <integer name="input_frame_snap_velocity_threshold">100</integer>
+  <!-- Duration for fading in/out of candidate frame (in pixels/sec). -->
+  <integer name="candidate_frame_transition_duration">100</integer>
+  <!-- Candidate window scroll animation : Velocity decay rate in ppm -->
+  <integer name="candidate_scroller_velocity_decay_rate">547722</integer>
+  <!-- Candidate window scroll animation : Minimum velocity in pixels per sec -->
+  <integer name="candidate_scroller_minimum_velocity">300</integer>
+  <!-- Symbol input window scroll animation : Velocity decay rate in ppm -->
+  <integer name="symbol_input_scroller_velocity_decay_rate">200000</integer>
+  <!-- Symbol input window scroll animation : Minimum velocity in pixels per sec -->
+  <integer name="symbol_input_scroller_minimum_velocity">500</integer>
+  <!-- Symbol input window : The duration of the animation when a sub-category changes, in ms. -->
+  <integer name="symbol_input_slide_to_next_category_duration">200</integer>
+
+  <!-- Columns per screen in symbol input view (Emoticon). -->
+  <integer name="symbol_input_candidate_columns_emoticon">4</integer>
+  <!-- Columns per screen in symbol input view (Symbol). -->
+  <integer name="symbol_input_candidate_columns_symbol">5</integer>
+  <!-- Columns per screen in symbol input view (Emoji). -->
+  <integer name="symbol_input_candidate_columns_emoji">5</integer>
+  <!-- Rows per screen in symbol input view. -->
+  <integer name="symbol_input_candidate_rows">4</integer>
+  <!-- Transition duration of symbol input (in) -->
+  <integer name="symbol_input_transition_duration_in">200</integer>
+  <!-- Transition duration of symbol input (out) -->
+  <integer name="symbol_input_transition_duration_out">100</integer>
+  <!--  Configurations used by the classed from LatinIME -->
+  <integer name="config_delay_before_preview">0</integer>
+  <integer name="config_delay_after_preview">10</integer>
+  <integer name="config_keyboard_grid_width">8</integer>
+  <integer name="config_keyboard_grid_height">8</integer>
+
+  <!-- Configurations for key event timing (in milliseconds). -->
+  <integer name="config_repeat_key_delay">400</integer>
+  <integer name="config_repeat_key_interval">50</integer>
+  <integer name="config_long_press_key_delay">800</integer>
+
+  <integer name="config_popup_dismiss_delay">150</integer>
+
+  <!-- Duration for fading in/out of candidate frame (in pixels/sec). -->
+  <integer name="layout_adjustment_transition_duration">200</integer>
+</resources>

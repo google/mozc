@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@ void OutputMessage(const wchar_t *format, ...) {
   va_list arguments;
   va_start(arguments, format);
 
-  wchar_t *message = NULL;
+  wchar_t *message = nullptr;
   const DWORD length = ::FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER |
                                         FORMAT_MESSAGE_FROM_STRING,
                                         format, 0, 0,
@@ -95,7 +95,7 @@ void SimpleTracer::TraceFormat(const wchar_t *function_name, const int line,
   va_list arguments;
   va_start(arguments, format);
 
-  wchar_t *message = NULL;
+  wchar_t *message = nullptr;
   const DWORD length = ::FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER |
                                         FORMAT_MESSAGE_FROM_STRING,
                                         format, 0, 0,

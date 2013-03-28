@@ -1,0 +1,16 @@
+# Enable IME
+SEND_KEY	ON
+RESET_CONTEXT
+
+# Set to Qwerty kana mode.
+SWITCH_INPUT_MODE	HIRAGANA
+
+# Send key "toukyout"
+SEND_KEYS	toukyout
+
+EXPECT_PREEDIT	とうきょうｔ
+EXPECT_IN_ALL_CANDIDATE_WORDS	東京タワー
+SUBMIT_CANDIDATE_BY_VALUE	東京タワー
+
+# Preedit should be empty.
+EXPECT_PREEDIT

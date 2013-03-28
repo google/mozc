@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,13 +30,12 @@
 #ifndef MOZC_DICTIONARY_SYSTEM_CODEC_H_
 #define MOZC_DICTIONARY_SYSTEM_CODEC_H_
 
-#include "dictionary/system/codec_interface.h"
-
 #include <string>
 #include <vector>
 
-#include "base/base.h"
-#include "dictionary/system/words_info.h"
+#include "base/port.h"
+#include "base/string_piece.h"
+#include "dictionary/system/codec_interface.h"
 
 namespace mozc {
 namespace dictionary {
@@ -60,16 +59,22 @@ class SystemDictionaryCodec : public SystemDictionaryCodecInterface {
   virtual const string GetSectionNameForPos() const;
 
   // Compresses key string into small bytes.
-  virtual void EncodeKey(const string &src, string *dst) const;
+  virtual void EncodeKey(const StringPiece src, string *dst) const;
 
   // Decompress key string
-  virtual void DecodeKey(const string &src, string *dst) const;
+  virtual void DecodeKey(const StringPiece src, string *dst) const;
+
+  // Returns the length of encoded key string.
+  virtual size_t GetEncodedKeyLength(const StringPiece src) const;
+
+  // Returns the length of decoded key string.
+  virtual size_t GetDecodedKeyLength(const StringPiece src) const;
 
   // Compresses value string into small bytes.
-  virtual void EncodeValue(const string &src, string *dst) const;
+  virtual void EncodeValue(const StringPiece src, string *dst) const;
 
   // Decompress value string
-  virtual void DecodeValue(const string &src, string *dst) const;
+  virtual void DecodeValue(const StringPiece src, string *dst) const;
 
   // Compress tokens
   virtual void EncodeTokens(

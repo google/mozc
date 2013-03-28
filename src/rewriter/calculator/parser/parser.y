@@ -6,7 +6,7 @@
 
 %include {
 #include <assert.h>
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <float.h>
 #endif
 #include <string.h>
@@ -14,7 +14,7 @@
 
 namespace {
 bool IsFinite(double x) {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   return _finite(x);
 #else
   return isfinite(x);

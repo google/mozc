@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,6 +31,8 @@ syntax = "proto2";
 
 package mozc.user_dictionary;
 
+option java_outer_classname = "ProtoUserDictionaryStorage";
+option java_package = "org.mozc.android.inputmethod.japanese.protobuf";
 
 message UserDictionary {
   enum PosType {
@@ -45,7 +47,7 @@ message UserDictionary {
     PLACE_NAME = 9;  // "地名"
     SA_IRREGULAR_CONJUGATION_NOUN = 10;  // "名詞サ変"
     ADJECTIVE_VERBAL_NOUN = 11;  // "名詞形動"
-    NUMBER = 12;  // "数字"
+    NUMBER = 12;  // "数"
     ALPHABET = 13;  // "アルファベット"
     SYMBOL = 14;  // "記号"
     EMOTICON = 15;  // "顔文字"
@@ -227,6 +229,11 @@ message UserDictionaryCommand {
     // 1) set dictionary_id for the dictionary
     // 2) set dictionary_name to create a new dictionary with the name.
     IMPORT_DATA = 20;
+
+    // Gets the entire UserDictionaryStorage data.
+    // Note: The result of this command could be too large for IPC, which has a
+    // size limitation of the response data.
+    GET_STORAGE = 21;
   };
 
   required CommandType type = 1;

@@ -1,4 +1,4 @@
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,19 +30,18 @@
 # This file provides a common rule for genproto command.
 {
   'variables': {
-    'protobuf_dir%': '../protobuf',
-    'build_tools_dir%': '../build_tools',
+    'wrapper_path': '<(DEPTH)/build_tools/protoc_wrapper.py',
   },
   'conditions': [
-    ['OS!="linux"', {
+    ['target_platform!="linux"', {
       'variables': {
-        'protoc_command%': '<(relative_dir)/<(mozc_build_tools_dir)/protoc<(EXECUTABLE_SUFFIX)',
+        'protoc_command%': '<(mozc_build_tools_dir)/protoc<(EXECUTABLE_SUFFIX)',
       },
     }, {  # else
       'conditions': [
         ['use_libprotobuf==0', {
           'variables': {
-            'protoc_command%': '<(relative_dir)/<(mozc_build_tools_dir)/protoc<(EXECUTABLE_SUFFIX)',
+            'protoc_command%': '<(mozc_build_tools_dir)/protoc<(EXECUTABLE_SUFFIX)',
           },
         }, {  # else
           'variables': {
@@ -57,17 +56,17 @@
       'rule_name': 'genproto',
       'extension': 'proto',
       'inputs': [
-        '<(build_tools_dir)/run_after_chdir.py',
+        '<(wrapper_path)',
       ],
       'outputs': [
         '<(proto_out_dir)/<(relative_dir)/<(RULE_INPUT_ROOT).pb.h',
         '<(proto_out_dir)/<(relative_dir)/<(RULE_INPUT_ROOT).pb.cc',
       ],
       'action': [
-        'python', '<(build_tools_dir)/run_after_chdir.py',
-        '<(DEPTH)',
-        '<(protoc_command)',
-        '<(relative_dir)/<(RULE_INPUT_NAME)',
+        'python', '<(wrapper_path)',
+        '--project_root=<(DEPTH)',
+        '--protoc_path=<(protoc_command)',
+        '--proto=<(RULE_INPUT_PATH)',
         '--cpp_out=<(proto_out_dir)',
       ],
       'message': 'Generating C++ code from <(RULE_INPUT_PATH)',

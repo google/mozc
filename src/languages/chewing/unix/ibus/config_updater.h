@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -49,20 +49,11 @@ class ConfigUpdater {
   static void ConfigValueChanged(IBusConfig *config,
                                  const gchar *section,
                                  const gchar *name,
-#if IBUS_CHECK_VERSION(1, 3, 99)
                                  GVariant *value,
-#else
-                                 GValue *value,
-#endif
                                  gpointer user_data);
   void UpdateConfig(const gchar *section,
                     const gchar *name,
-#if IBUS_CHECK_VERSION(1, 3, 99)
-                                 GVariant *value
-#else
-                                 GValue *value
-#endif
-                    );
+                    GVariant *value);
 
   // Initializes mozc chewing config.
   static void InitConfig(IBusConfig *config);

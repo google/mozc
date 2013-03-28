@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
 
 #include "gui/base/singleton_window_helper.h"
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <windows.h>
 #else
 #include <unistd.h>  // for getpid()
@@ -37,6 +37,7 @@
 
 #include "base/base.h"
 #include "base/file_stream.h"
+#include "base/logging.h"
 #include "base/mutex.h"
 #include "base/process_mutex.h"
 #include "base/scoped_handle.h"
@@ -49,7 +50,7 @@ namespace gui {
 namespace {
 bool ReadWindowInfo(const string &lock_name,
                     ipc::WindowInfo *window_info) {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   wstring wfilename;
   mozc::Util::UTF8ToWide(lock_name.c_str(), &wfilename);
   {
@@ -118,7 +119,7 @@ SingletonWindowHelper::~SingletonWindowHelper() {}
 
 bool SingletonWindowHelper::FindPreviousWindow() {
   ipc::WindowInfo window_info;
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   window_info.set_process_id(static_cast<uint32>(::GetCurrentProcessId()));
 #else
   window_info.set_process_id(static_cast<uint32>(getpid()));
@@ -147,7 +148,7 @@ bool SingletonWindowHelper::ActivatePreviousWindow() {
     LOG(ERROR) << "ReadWindowInfo failed";
     return false;
   }
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   WinUtil::ActivateWindow(window_info.process_id());
   return true;
 #else

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,20 +29,20 @@
 
 #include "base/unnamed_event.h"
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <windows.h>
-#else  // OS_WINDOWS
+#else  // OS_WIN
 #include <errno.h>
 #include <pthread.h>
 #include <sys/time.h>
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 #include "base/base.h"
 #include "base/logging.h"
 
 namespace mozc {
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 UnnamedEvent::UnnamedEvent()
     : handle_(::CreateEvent(NULL, FALSE, FALSE, NULL)) {
   // Use Auto reset mode of Win32 Event. (2nd arg of CreateEvent).
@@ -86,7 +86,7 @@ bool UnnamedEvent::Wait(int msec) {
       ::WaitForSingleObject(handle_.get(), msec);
 }
 
-#else  // OS_WINDOWS
+#else  // OS_WIN
 
 namespace {
 class ScopedPthreadMutexLock {
@@ -191,5 +191,5 @@ bool UnnamedEvent::Wait(int msec) {
   notified_ = false;
   return true;
 }
-#endif   // OS_WINDOWS
+#endif   // OS_WIN
 }  // namespace mozc

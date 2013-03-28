@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,21 +29,12 @@
 
 #include "sync/oauth2_client.h"
 
-#include <string>
-
-#include "base/singleton.h"
-
 namespace mozc {
 namespace sync {
-namespace {
-struct DefaultOAuth2Client : public OAuth2Client {
-  DefaultOAuth2Client()
-      : OAuth2Client("google", "${CLIENT_ID}", "${CLIENT_SECRET}") {}
-};
-}  // anonymous namespace
 
-const OAuth2Client *OAuth2Client::GetDefaultClient() {
-  return Singleton<DefaultOAuth2Client>::get();
+OAuth2Client OAuth2Client::GetDefaultInstance() {
+  return OAuth2Client("google", "${CLIENT_ID}", "${CLIENT_SECRET}");
 }
-}  // namespace mozc::sync
+
+}  // namespace sync
 }  // namespace mozc

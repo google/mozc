@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,10 +30,12 @@
 #include <algorithm>
 #include <string>
 #include <vector>
+
 #include "base/base.h"
-#include "base/util.h"
+#include "base/file_util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
+#include "engine/engine_factory.h"
 #include "session/commands.pb.h"
 #include "session/japanese_session_factory.h"
 #include "session/random_keyevents_generator.h"
@@ -41,14 +43,78 @@
 #include "session/session_handler_test_util.h"
 #include "testing/base/public/gunit.h"
 
+#ifdef OS_ANDROID
+#include "base/mmap.h"
+#include "base/singleton.h"
+#include "data_manager/android/android_data_manager.h"
+#endif
+
+namespace {
+uint32 GenerateRandomSeed() {
+  uint32 seed = 0;
+  mozc::Util::GetRandomSequence(reinterpret_cast<char *>(&seed),
+                                sizeof(seed));
+  return seed;
+}
+}  // namespace
+
+// There is no DEFINE_uint32.
+DEFINE_uint64(random_seed, GenerateRandomSeed(),
+              "Random seed value. "
+              "This value will be interpreted as uint32.");
+DECLARE_string(test_srcdir);
 DECLARE_string(test_tmpdir);
 
 namespace mozc {
 
-using mozc::session::testing::TestSessionClient;
+using session::testing::TestSessionClient;
+using session::testing::JapaneseSessionHandlerTestBase;
 
-using mozc::session::testing::JapaneseSessionHandlerTestBase;
+namespace {
+#ifdef OS_ANDROID
+// In actual libmozc.so usage, the dictionary data will be given via JNI call
+// because only Java side code knows where the data is.
+// On native code unittest, we cannot do it, so instead we mmap the files
+// and use it.
+// Note that this technique works here because the no other test code doesn't
+// link to this binary.
+// TODO(hidehiko): Get rid of this hack by refactoring Engine/DataManager
+// related code.
+class AndroidInitializer {
+ private:
+  AndroidInitializer() {
+    string dictionary_data_path = FileUtil::JoinPath(
+        FLAGS_test_srcdir, "embedded_data/dictionary_data");
+    CHECK(dictionary_mmap_.Open(dictionary_data_path.c_str(), "r"));
+    android::AndroidDataManager::SetDictionaryData(
+        dictionary_mmap_.begin(), dictionary_mmap_.size());
+
+    string connection_data_path = FileUtil::JoinPath(
+        FLAGS_test_srcdir, "embedded_data/connection_data");
+    CHECK(connection_mmap_.Open(connection_data_path.c_str(), "r"));
+    android::AndroidDataManager::SetConnectionData(
+        connection_mmap_.begin(), connection_mmap_.size());
+    LOG(ERROR) << "mmap data initialized.";
+  }
+
+  friend class Singleton<AndroidInitializer>;
+
+  Mmap dictionary_mmap_;
+  Mmap connection_mmap_;
+
+  DISALLOW_COPY_AND_ASSIGN(AndroidInitializer);
+};
+#endif  // OS_ANDROID
+}  // namespace
+
 class SessionHandlerStressTest : public JapaneseSessionHandlerTestBase {
+ protected:
+  virtual EngineInterface *CreateEngine() {
+#ifdef OS_ANDROID
+    Singleton<AndroidInitializer>::get();
+#endif  // OS_ANDROID
+    return EngineFactory::Create();
+  }
 };
 
 TEST_F(SessionHandlerStressTest, BasicStressTest) {
@@ -59,15 +125,19 @@ TEST_F(SessionHandlerStressTest, BasicStressTest) {
   config.set_use_realtime_conversion(false);
   config::ConfigHandler::SetConfig(config);
 
-  vector<mozc::commands::KeyEvent> keys;
-  mozc::commands::Output output;
+  vector<commands::KeyEvent> keys;
+  commands::Output output;
   TestSessionClient client;
   size_t keyevents_size = 0;
   const size_t kMaxEventSize = 50000;
   ASSERT_TRUE(client.CreateSession());
+
+  const uint32 random_seed = static_cast<uint32>(FLAGS_random_seed);
+  LOG(INFO) << "Random seed: " << random_seed;
+  session::RandomKeyEventsGenerator::InitSeed(random_seed);
   while (keyevents_size < kMaxEventSize) {
     keys.clear();
-    mozc::session::RandomKeyEventsGenerator::GenerateSequence(&keys);
+    session::RandomKeyEventsGenerator::GenerateSequence(&keys);
     for (size_t i = 0; i < keys.size(); ++i) {
       ++keyevents_size;
       EXPECT_TRUE(client.TestSendKey(keys[i], &output));
@@ -77,4 +147,4 @@ TEST_F(SessionHandlerStressTest, BasicStressTest) {
   EXPECT_TRUE(client.DeleteSession());
 }
 
-}  // namespae mozc
+}  // namespace mozc

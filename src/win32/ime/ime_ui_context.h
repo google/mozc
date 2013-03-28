@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -51,6 +51,7 @@ class RendererCommand_ApplicationInfo;
 
 namespace win32 {
 struct PrivateContext;
+class IndicatorVisibilityTracker;
 class ImeCore;
 class UIVisibilityTracker;
 
@@ -60,7 +61,6 @@ class UIContext {
   explicit UIContext(HIMC context_handle);
   bool GetLastOutput(commands::Output *output) const;
   HWND GetAttachedWindow() const;
-  wstring GetAttachedWindowClass() const;
   bool IsEmpty() const;
   bool IsCompositionStringEmpty() const;
   bool GetFocusedCharacterIndexInComposition(DWORD *index) const;
@@ -75,6 +75,7 @@ class UIContext {
   mozc::client::ClientInterface *client() const;
   const INPUTCONTEXT *input_context() const;
   UIVisibilityTracker *ui_visibility_tracker() const;
+  IndicatorVisibilityTracker *indicator_visibility_tracker() const;
 
   bool FillCompositionForm(
       commands::RendererCommand_ApplicationInfo *info) const;

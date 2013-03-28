@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,9 +37,9 @@
 #ifdef USE_LIBZINNIA
 // Use default zinnia installed in /usr/include
 #include <zinnia.h>
-#else
+#else  // USE_LIBZINNIA
 #include "third_party/zinnia/v0_04/zinnia.h"
-#endif
+#endif  // USE_LIBZINNIA
 
 namespace mozc {
 class Mmap;
@@ -49,7 +49,7 @@ namespace handwriting {
 class ZinniaHandwriting : public HandwritingInterface {
  public:
   ZinniaHandwriting();
-  virtual ~ZinniaHandwriting() {}
+  virtual ~ZinniaHandwriting();
 
   HandwritingStatus Recognize(const Strokes &strokes,
                               vector<string> *candidates) const;

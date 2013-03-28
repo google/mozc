@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,11 +35,12 @@
 #include <string>
 
 #include "base/port.h"
+#include "base/scoped_ptr.h"
 #include "testing/base/public/gunit_prod.h"
 // for FRIEND_TEST()
 
 // TODO(yukawa): Use platform independent primitive types.
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 namespace mozc {
 
 namespace commands {
@@ -131,6 +132,15 @@ class CandidateWindowLayout {
   bool initialized_;
 };
 
+struct IndicatorWindowLayout {
+ public:
+  IndicatorWindowLayout();
+  void Clear();
+
+  RECT window_rect;
+  bool is_vertical;
+};
+
 // This interface is designed to hook API calls for unit test.
 class SystemPreferenceInterface {
  public:
@@ -143,11 +153,37 @@ class SystemPreferenceInterface {
 };
 
 // This class implements SystemPreferenceInterface for unit tests.
-class SystemPreferenceEmulator : public SystemPreferenceInterface {
+class SystemPreferenceFactory {
  public:
-  // Returns an instance of WindowPositionEmulator.   Caller must delete
+  // Returns an instance of WindowPositionEmulator. Caller must delete
   // the instance.
-  static SystemPreferenceEmulator *Create(const LOGFONTW &gui_font);
+  static SystemPreferenceInterface *CreateMock(const LOGFONTW &gui_font);
+
+ private:
+  DISALLOW_IMPLICIT_CONSTRUCTORS(SystemPreferenceFactory);
+};
+
+// This interface is designed to hook API calls for unit test.
+class WorkingAreaInterface {
+ public:
+  virtual ~WorkingAreaInterface() {}
+
+  virtual bool GetWorkingAreaFromPoint(const POINT &point,
+                                       RECT *working_area) = 0;
+};
+
+class WorkingAreaFactory {
+ public:
+  // Returns an instance of WorkingAreaInterface. Caller must delete
+  // the instance.
+  static WorkingAreaInterface *Create();
+
+  // Returns an instance of WorkingAreaInterface. Caller must delete
+  // the instance.
+  static WorkingAreaInterface *CreateMock(const RECT &working_area);
+
+ private:
+  DISALLOW_IMPLICIT_CONSTRUCTORS(WorkingAreaFactory);
 };
 
 // This interface is designed to hook API calls for unit test.
@@ -353,6 +389,11 @@ class LayoutManager {
   static WritingDirection GetWritingDirection(
       const commands::RendererCommand_ApplicationInfo &app_info);
 
+  // Returns true when the target rect is successfully obtained.
+  bool LayoutIndicatorWindow(
+      const commands::RendererCommand_ApplicationInfo &app_info,
+      IndicatorWindowLayout *indicator_layout);
+
  private:
   FRIEND_TEST(Win32RendererUtilTest, HorizontalProportional);
   FRIEND_TEST(Win32RendererUtilTest, VerticalProportional);
@@ -382,8 +423,8 @@ class LayoutManager {
       int initial_offset,
       vector<LineLayout> *line_layouts);
 
-  SystemPreferenceInterface *system_preference_;
-  WindowPositionInterface *window_position_;
+  scoped_ptr<SystemPreferenceInterface> system_preference_;
+  scoped_ptr<WindowPositionInterface> window_position_;
 
   DISALLOW_COPY_AND_ASSIGN(LayoutManager);
 };
@@ -392,5 +433,5 @@ class LayoutManager {
 }  // namespace renderer
 }  // namespace mozc
 
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 #endif  // MOZC_RENDERER_WIN32_WIN32_RENDERER_UTIL_H_

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -81,7 +81,8 @@ class WindowManager : public WindowManagerInterface {
   virtual void UpdateInfolistWindow(const commands::RendererCommand &command,
                                     const Rect &candidate_window_rect);
 
-  Rect GetDesktopRect();
+  // Returns monitor rectangle for the specified point.
+  Rect GetMonitorRect(gint x, gint y);
 
  private:
   FRIEND_TEST(WindowManagerTest, SetSendCommandInterfaceTest);
@@ -89,7 +90,7 @@ class WindowManager : public WindowManagerInterface {
   FRIEND_TEST(WindowManagerTest, ShouldShowInfolistWindowTest);
   FRIEND_TEST(WindowManagerTest, UpdateCandidateWindowTest);
   FRIEND_TEST(WindowManagerTest, UpdateInfolistWindowTest);
-  FRIEND_TEST(WindowManagerTest, GetDesktopRectTest);
+  FRIEND_TEST(WindowManagerTest, GetMonitorRectTest);
 
   scoped_ptr<GtkWindowInterface> candidate_window_;
   scoped_ptr<GtkWindowInterface> infolist_window_;

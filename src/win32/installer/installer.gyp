@@ -1,4 +1,4 @@
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -41,17 +41,22 @@
       'variables': {
         'relative_dir': 'win32/installer',
         'gen_out_dir': '<(SHARED_INTERMEDIATE_DIR)/<(relative_dir)',
-        'outdir32': '<(build_base)/$(ConfigurationName)',
-        'outdir32_dynamic': '<(build_base)/$(ConfigurationName)Dynamic',
-        'outdir64': '<(build_base)/$(ConfigurationName)64',
+        'outdir32': '<(build_base)/<(CONFIGURATION_NAME)',
+        'outdir32_dynamic': '<(build_base)/<(CONFIGURATION_NAME)Dynamic',
+        'outdir64': '<(build_base)/<(CONFIGURATION_NAME)_x64',
         'mozc_version_file': '<(gen_out_dir)/mozc_version.wxi',
         'mozc_ime32_path': '<(outdir32)/GIMEJa.ime',
         'mozc_ime64_path': '<(outdir64)/GIMEJa.ime',
-        'mozc_server_path': '<(outdir32)/GoogleIMEJaConverter.exe',
-        'mozc_cache_service_path': '<(outdir32)/GoogleIMEJaCacheService.exe',
-        'mozc_renderer_path': '<(outdir32)/GoogleIMEJaRenderer.exe',
-        'variables' : {
-          'variables' : {
+        'mozc_tip32_path': '<(outdir32)/GoogleIMEJaTIP32.dll',
+        'mozc_tip64_path': '<(outdir64)/GoogleIMEJaTIP64.dll',
+        'mozc_server32_path': '<(outdir32)/GoogleIMEJaConverter.exe',
+        'mozc_server64_path': '<(outdir64)/GoogleIMEJaConverter.exe',
+        'mozc_cache_service32_path': '<(outdir32)/GoogleIMEJaCacheService.exe',
+        'mozc_cache_service64_path': '<(outdir64)/GoogleIMEJaCacheService.exe',
+        'mozc_renderer32_path': '<(outdir32)/GoogleIMEJaRenderer.exe',
+        'mozc_renderer64_path': '<(outdir64)/GoogleIMEJaRenderer.exe',
+        'variables': {
+          'variables': {
             # TODO(yukawa): Support 32-bit environment.
             'merge_modules_dir': r'"C:\Program Files (x86)\Common Files\Merge Modules"',
           },
@@ -67,12 +72,6 @@
           'mozc_zinnia_model_data_path': '',
           'mozc_tool_path': '',
           'conditions': [
-            ['use_dynamically_linked_qt==1 and target_compiler=="msvs2008"', {
-              'debug_crt_merge_module_id_prefix': 'DebugCRT90',
-              'release_crt_merge_module_id_prefix': 'CRT90',
-              'debug_crt_merge_module_path': '<(merge_modules_dir)/Microsoft_VC90_DebugCRT_x86.msm',
-              'release_crt_merge_module_path': '<(merge_modules_dir)/Microsoft_VC90_CRT_x86.msm',
-            }],
             ['use_dynamically_linked_qt==1 and target_compiler=="msvs2010"', {
               'debug_crt_merge_module_id_prefix': 'DebugCRT100',
               'release_crt_merge_module_id_prefix': 'CRT100',
@@ -116,23 +115,41 @@
         'mozc_ca32_path': '<(outdir32)/GoogleIMEJaInstallerHelper32.dll',
         'mozc_ca64_path': '<(outdir64)/GoogleIMEJaInstallerHelper64.dll',
         'mozc_content_dir': '<(DEPTH)/data',
-        'mozc_imm_32bit_wixobj': '<(outdir32)/installer_imm_32bit.wixobj',
-        'mozc_imm_32bit_msi': '<(outdir32)/GoogleJapaneseInput32.msi',
-        'mozc_imm_64bit_wixobj': '<(outdir32)/installer_imm_64bit.wixobj',
-        'mozc_imm_64bit_msi': '<(outdir32)/GoogleJapaneseInput64.msi',
+        'mozc_32bit_wixobj': '<(outdir32)/installer_32bit.wixobj',
+        'mozc_64bit_wixobj': '<(outdir32)/installer_64bit.wixobj',
+        'mozc_32bit_msi': '<(outdir32)/GoogleJapaneseInput32.msi',
+        'mozc_64bit_msi': '<(outdir32)/GoogleJapaneseInput64.msi',
         'mozc_32bit_binaries': [
           '<(mozc_ime32_path)',
-          '<(mozc_server_path)',
-          '<(mozc_cache_service_path)',
-          '<(mozc_renderer_path)',
+          '<(mozc_tip32_path)',
+          '<(mozc_server32_path)',
+          '<(mozc_cache_service32_path)',
+          '<(mozc_renderer32_path)',
           '<(mozc_tool_path)',
           '<(mozc_broker32_path)',
           '<(mozc_ca32_path)',
         ],
+        'mozc_32bit_postbuild_targets': [
+          'mozc_ime32_postbuild',
+          'mozc_tip32_postbuild',
+          'mozc_server32_postbuild',
+          'mozc_cache_service32_postbuild',
+          'mozc_renderer32_postbuild',
+          'mozc_tool_postbuild',
+          'mozc_broker32_postbuild',
+          'mozc_ca32_postbuild',
+        ],
         'mozc_64bit_binaries': [
           '<(mozc_ime64_path)',
+          '<(mozc_tip64_path)',
           '<(mozc_broker64_path)',
           '<(mozc_ca64_path)',
+        ],
+        'mozc_64bit_postbuild_targets': [
+          'mozc_ime64_postbuild',
+          'mozc_tip64_postbuild',
+          'mozc_broker64_postbuild',
+          'mozc_ca64_postbuild',
         ],
       },
       'targets': [
@@ -161,32 +178,165 @@
           ],
         },
         {
-          'target_name': 'mozc_imm_32bit_installer',
+          'target_name': 'mozc_ime32_postbuild',
+          'variables': { 'target_file': '<(mozc_ime32_path)' },
+          'includes': [ 'postbuilds_win.gypi' ],
+        },
+        {
+          'target_name': 'mozc_tip32_postbuild',
+          'variables': { 'target_file': '<(mozc_tip32_path)' },
+          'includes': [ 'postbuilds_win.gypi' ],
+        },
+        {
+          'target_name': 'mozc_server32_postbuild',
+          'variables': { 'target_file': '<(mozc_server32_path)' },
+          'includes': [ 'postbuilds_win.gypi' ],
+        },
+        {
+          'target_name': 'mozc_server64_postbuild',
+          'variables': { 'target_file': '<(mozc_server64_path)' },
+          'includes': [ 'postbuilds_win.gypi' ],
+        },
+        {
+          'target_name': 'mozc_cache_service32_postbuild',
+          'variables': { 'target_file': '<(mozc_cache_service32_path)' },
+          'includes': [ 'postbuilds_win.gypi' ],
+        },
+        {
+          'target_name': 'mozc_cache_service64_postbuild',
+          'variables': { 'target_file': '<(mozc_cache_service64_path)' },
+          'includes': [ 'postbuilds_win.gypi' ],
+        },
+        {
+          'target_name': 'mozc_renderer32_postbuild',
+          'variables': { 'target_file': '<(mozc_renderer32_path)' },
+          'includes': [ 'postbuilds_win.gypi' ],
+        },
+        {
+          'target_name': 'mozc_renderer64_postbuild',
+          'variables': { 'target_file': '<(mozc_renderer64_path)' },
+          'includes': [ 'postbuilds_win.gypi' ],
+        },
+        {
+          'target_name': 'mozc_tool_postbuild',
+          'variables': { 'target_file': '<(mozc_tool_path)' },
+          'includes': [ 'postbuilds_win.gypi' ],
+        },
+        {
+          'target_name': 'mozc_broker32_postbuild',
+          'variables': { 'target_file': '<(mozc_broker32_path)' },
+          'includes': [ 'postbuilds_win.gypi' ],
+        },
+        {
+          'target_name': 'mozc_ca32_postbuild',
+          'variables': { 'target_file': '<(mozc_ca32_path)' },
+          'includes': [ 'postbuilds_win.gypi' ],
+        },
+        {
+          'target_name': 'mozc_ime64_postbuild',
+          'variables': { 'target_file': '<(mozc_ime64_path)' },
+          'includes': [ 'postbuilds_win.gypi' ],
+        },
+        {
+          'target_name': 'mozc_tip64_postbuild',
+          'variables': { 'target_file': '<(mozc_tip64_path)' },
+          'includes': [ 'postbuilds_win.gypi' ],
+        },
+        {
+          'target_name': 'mozc_broker64_postbuild',
+          'variables': { 'target_file': '<(mozc_broker64_path)' },
+          'includes': [ 'postbuilds_win.gypi' ],
+        },
+        {
+          'target_name': 'mozc_ca64_postbuild',
+          'variables': { 'target_file': '<(mozc_ca64_path)' },
+          'includes': [ 'postbuilds_win.gypi' ],
+        },
+        {
+          'target_name': 'mozc_32bit_installer',
           'variables': {
-            'wxs_file': '<(DEPTH)/win32/installer/installer_imm_32bit.wxs',
-            'wixobj_file': '<(mozc_imm_32bit_wixobj)',
-            'msi_file': '<(mozc_imm_32bit_msi)',
-            'dependent_binaries': [
-              '<@(mozc_32bit_binaries)',
-            ],
+            'wxs_file': '<(DEPTH)/win32/installer/installer_32bit.wxs',
+            'wixobj_file': '<(mozc_32bit_wixobj)',
+            'msi_file': '<(mozc_32bit_msi)',
           },
+          'dependencies': [
+            '<@(mozc_32bit_postbuild_targets)',
+          ],
           'includes': [
             'wix.gypi',
           ],
         },
         {
-          'target_name': 'mozc_imm_64bit_installer',
+          'target_name': 'mozc_64bit_installer',
           'variables': {
-            'wxs_file': '<(DEPTH)/win32/installer/installer_imm_64bit.wxs',
-            'wixobj_file': '<(mozc_imm_64bit_wixobj)',
-            'msi_file': '<(mozc_imm_64bit_msi)',
-            'dependent_binaries': [
-              '<@(mozc_32bit_binaries)',
-              '<@(mozc_64bit_binaries)',
-            ],
+            'wxs_file': '<(DEPTH)/win32/installer/installer_64bit.wxs',
+            'wixobj_file': '<(mozc_64bit_wixobj)',
+            'msi_file': '<(mozc_64bit_msi)',
           },
+          'dependencies': [
+            '<@(mozc_32bit_postbuild_targets)',
+            '<@(mozc_64bit_postbuild_targets)',
+          ],
           'includes': [
             'wix.gypi',
+          ],
+        },
+        {
+          'target_name': 'mozc_installer32_postbuild',
+          'variables': { 'target_file': '<(mozc_32bit_msi)' },
+          'includes': [ 'postbuilds_win.gypi' ],
+          'dependencies': [
+            'mozc_32bit_installer',
+          ],
+        },
+        {
+          'target_name': 'mozc_installer64_postbuild',
+          'variables': { 'target_file': '<(mozc_64bit_msi)' },
+          'includes': [ 'postbuilds_win.gypi' ],
+          'dependencies': [
+            'mozc_64bit_installer',
+          ],
+        },
+        {
+          'target_name': 'mozc_installers_win',
+          'type': 'none',
+          'dependencies': [
+            'mozc_installer32_postbuild',
+            'mozc_installer64_postbuild',
+          ],
+        },
+        {
+          'target_name': 'mozc_installers_win_versioning',
+          'type': 'none',
+          'actions': [
+            {
+              'action_name': 'mozc_installers_win_versioning',
+              'variables': {
+                'python_command': 'python',
+              },
+              'inputs': [
+                '../../mozc_version.txt',
+                '../../build_tools/versioning_files.py',
+                '<(mozc_32bit_msi).postbuild',
+                '<(mozc_64bit_msi).postbuild',
+                '<(mozc_32bit_msi)',
+                '<(mozc_64bit_msi)',
+              ],
+              'outputs': [
+                '<(PRODUCT_DIR)/mozc_installers_win_versioning_dummy',
+              ],
+              'action': [
+                '<(python_command)',
+                '../../build_tools/versioning_files.py',
+                '--version_file', '../../mozc_version.txt',
+                '--configuration', '<(CONFIGURATION_NAME)',
+                '<(mozc_32bit_msi)',
+                '<(mozc_64bit_msi)',
+              ],
+            },
+          ],
+          'dependencies': [
+            'mozc_installers_win',
           ],
         },
       ],

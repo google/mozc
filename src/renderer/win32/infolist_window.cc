@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,8 +33,9 @@
 
 #include <sstream>
 
-#include "base/util.h"
 #include "base/coordinates.h"
+#include "base/logging.h"
+#include "base/util.h"
 #include "client/client_interface.h"
 #include "renderer/renderer_command.pb.h"
 #include "renderer/renderer_style.pb.h"
@@ -71,7 +72,7 @@ const UINT_PTR kIdDelayShowHideTimer = 100;
 
 bool SendUsageStatsEvent(client::SendCommandInterface *command_sender,
                          const SessionCommand::UsageStatsEvent &event) {
-  if (command_sender == NULL) {
+  if (command_sender == nullptr) {
     return false;
   }
   SessionCommand command;
@@ -81,7 +82,7 @@ bool SendUsageStatsEvent(client::SendCommandInterface *command_sender,
   Output dummy_output;
   return command_sender->SendCommand(command, &dummy_output);
 }
-}
+}  // namespace
 
 
 // ------------------------------------------------------------------------
@@ -94,7 +95,7 @@ InfolistWindow::InfolistWindow()
       text_renderer_(new TextRenderer),
       style_(new RendererStyle),
       visible_(false),
-      send_command_interface_(NULL) {
+      send_command_interface_(nullptr) {
   text_renderer_->Init();
   mozc::renderer::RendererStyleHandler::GetRendererStyle(style_.get());
 }
@@ -126,7 +127,7 @@ void InfolistWindow::OnPaint(CDCHandle dc) {
   CRect client_rect;
   this->GetClientRect(&client_rect);
 
-  if (dc != NULL) {
+  if (dc != nullptr) {
     CMemoryDC memdc(dc, client_rect);
     DoPaint(memdc.m_hDC);
   } else  {
@@ -147,7 +148,7 @@ void InfolistWindow::OnPrintClient(CDCHandle dc, UINT uFlags) {
 }
 
 Size InfolistWindow::DoPaint(CDCHandle dc) {
-  if (dc.m_hDC != NULL) {
+  if (dc.m_hDC != nullptr) {
     dc.SetBkMode(TRANSPARENT);
   }
   const RendererStyle::InfolistStyle &infostyle = style_->infolist_style();
@@ -155,7 +156,7 @@ Size InfolistWindow::DoPaint(CDCHandle dc) {
 
   int ypos = infostyle.window_border();
 
-  if ((dc.m_hDC != NULL) && infostyle.has_caption_string()) {
+  if ((dc.m_hDC != nullptr) && infostyle.has_caption_string()) {
     const RendererStyle::TextStyle &caption_style =
       infostyle.caption_style();
     const int caption_height = infostyle.caption_height();
@@ -194,7 +195,7 @@ Size InfolistWindow::DoPaint(CDCHandle dc) {
   }
   ypos += infostyle.window_border();
 
-  if (dc.m_hDC != NULL) {
+  if (dc.m_hDC != nullptr) {
     const CRect rect(0, 0, infostyle.window_width(), ypos);
     dc.SetDCBrushColor(
         RGB(infostyle.border_color().r(),
@@ -236,7 +237,7 @@ Size InfolistWindow::DoPaintRow(CDCHandle dc, int row, int ypos) {
   int row_height = title_size.height + desc_size.height +
                    infostyle.row_rect_padding() * 2;
 
-  if (dc.m_hDC == NULL) {
+  if (dc.m_hDC == nullptr) {
     return Size(0, row_height);
   }
   const Rect title_rect(
@@ -345,7 +346,7 @@ void InfolistWindow::DelayShow(UINT mseconds) {
           SessionCommand::INFOLIST_WINDOW_SHOW);
     }
   } else {
-    SetTimer(kIdDelayShowHideTimer, mseconds, NULL);
+    SetTimer(kIdDelayShowHideTimer, mseconds, nullptr);
   }
 }
 
@@ -360,7 +361,7 @@ void InfolistWindow::DelayHide(UINT mseconds) {
           SessionCommand::INFOLIST_WINDOW_HIDE);
     }
   } else {
-    SetTimer(kIdDelayShowHideTimer, mseconds, NULL);
+    SetTimer(kIdDelayShowHideTimer, mseconds, nullptr);
   }
 }
 
@@ -380,7 +381,7 @@ void InfolistWindow::SetSendCommandInterface(
 }
 
 Size InfolistWindow::GetLayoutSize() {
-  CDCHandle dmyDc(NULL);
+  CDCHandle dmyDc(nullptr);
   return DoPaint(dmyDc);
 }
 }  // namespace win32

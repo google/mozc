@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,13 +35,6 @@
 #include "data_manager/testing/mock_user_pos_manager.h"
 
 namespace mozc {
-
-class ConnectorInterface;
-class DictionaryInterface;
-class DictionaryInterface;
-class PosGroup;
-class SegmenterInterface;
-
 namespace testing {
 
 class MockDataManager : public MockUserPosManager {
@@ -49,18 +42,31 @@ class MockDataManager : public MockUserPosManager {
   MockDataManager() {}
   virtual ~MockDataManager() {}
 
-  virtual const PosGroup *GetPosGroup() const;
-  virtual const ConnectorInterface *GetConnector() const;
-  virtual const SegmenterInterface *GetSegmenter() const;
-  virtual DictionaryInterface *CreateSystemDictionary() const;
-  virtual DictionaryInterface *CreateValueDictionary() const;
-  virtual const DictionaryInterface *GetSuffixDictionary() const;
+  virtual const uint8 *GetPosGroupData() const;
+  virtual void GetConnectorData(const char **data, size_t *size) const;
+  virtual void GetSegmenterData(
+      size_t *l_num_elements, size_t *r_num_elements,
+      const uint16 **l_table, const uint16 **r_table,
+      size_t *bitarray_num_bytes, const char **bitarray_data,
+      const BoundaryData **boundary_data) const;
+  virtual void GetSystemDictionaryData(const char **data, int *size) const;
+  virtual void GetSuffixDictionaryData(const SuffixToken **data,
+                                       size_t *size) const;
   virtual void GetReadingCorrectionData(const ReadingCorrectionItem **array,
                                         size_t *size) const;
   virtual void GetCollocationData(const char **array, size_t *size) const;
   virtual void GetCollocationSuppressionData(const char **array,
                                              size_t *size) const;
   virtual void GetSuggestionFilterData(const char **data, size_t *size) const;
+  virtual void GetSymbolRewriterData(const EmbeddedDictionary::Token **data,
+                                     size_t *size) const;
+#ifndef NO_USAGE_REWRITER
+  virtual void GetUsageRewriterData(
+      const ConjugationSuffix **base_conjugation_suffix,
+      const ConjugationSuffix **conjugation_suffix_data,
+      const int **conjugation_suffix_data_index,
+      const UsageDictItem **usage_data_value) const;
+#endif  // NO_USAGE_REWRITER
 
  private:
   DISALLOW_COPY_AND_ASSIGN(MockDataManager);

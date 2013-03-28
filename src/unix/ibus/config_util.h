@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -48,25 +48,15 @@ namespace ibus {
 // Each IME read IBus's memconf and update their configuration.
 class ConfigUtil {
  public:
-#if IBUS_CHECK_VERSION(1, 3, 99)
   static bool GetString(GVariant *value, const gchar **out_string);
   static bool GetInteger(GVariant *value, gint *out_integer);
   static bool GetBoolean(GVariant *value, gint *out_boolean);
-#else
-  static bool GetString(GValue *value, const gchar **out_string);
-  static bool GetInteger(GValue *value, gint *out_integer);
-  static bool GetBoolean(GValue *value, gint *out_boolean);
-#endif
 
   // Find the related field in |result| message by |name| and update
   // its value to |value|.  This function does not take ownership of
   // the |value|.
   static bool SetFieldForName(const gchar *name,
-#if IBUS_CHECK_VERSION(1, 3, 99)
                               GVariant *value,
-#else
-                              GValue *value,
-#endif
                               protobuf::Message *result);
 
 #ifdef OS_CHROMEOS

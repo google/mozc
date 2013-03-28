@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,6 +34,7 @@
 #include "base/base.h"
 #include "base/logging.h"
 #include "base/singleton.h"
+#include "base/string_piece.h"
 #include "base/util.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/system/words_info.h"
@@ -41,7 +42,8 @@
 namespace mozc {
 namespace dictionary {
 namespace {
-void EncodeDecodeKeyImpl(const string &src, string *dst);
+void EncodeDecodeKeyImpl(const StringPiece src, string *dst);
+size_t GetEncodedDecodedKeyLengthImpl(const StringPiece src);
 
 uint8 GetFlagsForToken(const vector<TokenInfo> &tokens, int index);
 
@@ -82,14 +84,6 @@ const int kPosMax = 0x0fff;
 const int kCostMax = 0x7fff;
 // 22 bits
 const int kValueTrieIdMax = 0x3fffff;
-
-//// Constants for key ////
-// This symbol in encoded index string escapes following 1 byte.
-const uint8 kKeyCharMarkEscape = 0xff;
-// following 2 characters in index string is encoded into 1 byte,
-// since they are frequent.
-const uint8 kKeyCharMiddleDot = 0xfd;
-const uint8 kKeyCharProlongedSound = 0xfe;
 
 //// Constants for value ////
 // Unused for now.
@@ -181,11 +175,11 @@ const uint8 kSpellingCorrectionFlag = 0x10;
 //// Id encoding flag ////
 // According to lower 6 bits of flags there are 2 patterns.
 //  1) lower 6 bits are used.
-//   - Store rx idx use 3 bytes
+//   - Store an id in a trie use 3 bytes
 //  2) lower 6 bits are not used.
 //   - Set CRAM_VALUE_FLAGS and use lower 6 bits.
-//     We need another 2 bytes to store rx idx.
-//     Note that we are assuming rx idx is less than 22 bits.
+//     We need another 2 bytes to store the id in the trie.
+//     Note that we are assuming each id in the trie is less than 22 bits.
 // Lower 6 bits of flags field are used to store upper part of id
 // in value trie.
 const uint8 kCrammedIDFlag = 0x40;
@@ -219,12 +213,24 @@ const string SystemDictionaryCodec::GetSectionNameForPos() const {
   return kPosSectionName;
 }
 
-void SystemDictionaryCodec::EncodeKey(const string &src, string *dst) const {
+void SystemDictionaryCodec::EncodeKey(
+    const StringPiece src, string *dst) const {
   EncodeDecodeKeyImpl(src, dst);
 }
 
-void SystemDictionaryCodec::DecodeKey(const string &src, string *dst) const {
+void SystemDictionaryCodec::DecodeKey(
+    const StringPiece src, string *dst) const {
   EncodeDecodeKeyImpl(src, dst);
+}
+
+size_t SystemDictionaryCodec::GetEncodedKeyLength(
+    const StringPiece src) const {
+  return GetEncodedDecodedKeyLengthImpl(src);
+}
+
+size_t SystemDictionaryCodec::GetDecodedKeyLength(
+    const StringPiece src) const {
+  return GetEncodedDecodedKeyLengthImpl(src);
 }
 
 // This encodes each UCS4 character into following areas
@@ -240,7 +246,7 @@ void SystemDictionaryCodec::DecodeKey(const string &src, string *dst) const {
 //  0x?????? -> VALUE_CHAR_MARK_BIG ?? ?? ??
 
 void SystemDictionaryCodec::EncodeValue(
-    const string &src, string *dst) const {
+    const StringPiece src, string *dst) const {
   DCHECK(dst);
   for (ConstChar32Iterator iter(src); !iter.Done(); iter.Next()) {
     COMPILE_ASSERT(sizeof(uint32) == sizeof(char32), check_sizeof_char32);
@@ -296,10 +302,11 @@ void SystemDictionaryCodec::EncodeValue(
 }
 
 void SystemDictionaryCodec::DecodeValue(
-    const string &src, string *dst) const {
+    const StringPiece src, string *dst) const {
   DCHECK(dst);
-  const uint8 *p = reinterpret_cast<const uint8 *>(src.c_str());
-  while (*p != '\0') {
+  const uint8 *p = reinterpret_cast<const uint8 *>(src.data());
+  const uint8 *const end = p + src.size();
+  while (p < end) {
     int cc = p[0];
     int c = 0;
     if (kValueHiraganaOffset <= cc && cc < kValueKatakanaOffset) {
@@ -475,7 +482,7 @@ namespace {
 // U+30FB - U+30FC ("・" - "ー") <=> U+0076 - U+0077
 //
 // U+0020 - U+003F are left intact to represent numbers and hyphen in 1 byte.
-void EncodeDecodeKeyImpl(const string &src, string *dst) {
+void EncodeDecodeKeyImpl(const StringPiece src, string *dst) {
   for (ConstChar32Iterator iter(src); !iter.Done(); iter.Next()) {
     COMPILE_ASSERT(sizeof(uint32) == sizeof(char32), check_sizeof_char32);
     uint32 code = iter.Get();
@@ -498,6 +505,29 @@ void EncodeDecodeKeyImpl(const string &src, string *dst) {
     DCHECK_GT(code, 0);
     Util::UCS4ToUTF8Append(code, dst);
   }
+}
+
+size_t GetEncodedDecodedKeyLengthImpl(const StringPiece src) {
+  size_t size = src.size();
+  for (ConstChar32Iterator iter(src); !iter.Done(); iter.Next()) {
+    COMPILE_ASSERT(sizeof(uint32) == sizeof(char32), check_sizeof_char32);
+    uint32 code = iter.Get();
+    if ((code >= 0x3041 && code <= 0x3095) ||
+        (code >= 0x30FB && code <= 0x30FC)) {
+      // This code point takes three bytes in UTF-8 encoding,
+      // and will be swapped with a code point which takes one byte in UTF-8
+      // encoding.
+      size -= 2;
+      continue;
+    }
+    if ((code >= 0x0001 && code <= 0x001F) ||
+        (code >= 0x0040 && code <= 0x0077)) {
+      // Vice versa on above.
+      size += 2;
+      continue;
+    }
+  }
+  return size;
 }
 
 // Return flags for token
@@ -641,7 +671,7 @@ void EncodeValueInfo(
   const uint32 id = token_info.id_in_value_trie;
   if (id > kValueTrieIdMax) {  // 22 bits
     // We can use LOG(FATAL) here.
-    LOG(FATAL) << "Too large word rx (should be less than 2^22)\t" << id;
+    LOG(FATAL) << "Too large word trie (should be less than 2^22)\t" << id;
   }
 
   if (flags & kCrammedIDFlag) {

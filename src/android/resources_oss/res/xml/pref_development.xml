@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ Copyright 2010-2013, Google Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+     * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above
+ copyright notice, this list of conditions and the following disclaimer
+ in the documentation and/or other materials provided with the
+ distribution.
+     * Neither the name of Google Inc. nor the names of its
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<!-- CONTRACT : All the key names must start with "pref_tweak_" -->
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+  <PreferenceCategory android:title="Socket session handler">
+    <CheckBoxPreference android:key="pref_tweak_use_socket_session_handler"
+        android:title="Use socket session handler" android:defaultValue="false"
+        android:summary="Enable if you want to communicate the Mozc engine via the network. This is very special option so useually disabled." />
+    <EditTextPreference android:key="pref_tweak_socket_session_handler_address"
+        android:title="Socket server's address" android:defaultValue="10.0.2.2"
+        android:dependency="pref_tweak_use_socket_session_handler"
+        android:summary="The address to the Mozc engine server." />
+    <EditTextPreference android:key="pref_tweak_socket_session_handler_port"
+        android:title="Socket server's port" android:defaultValue="8000"
+        android:numeric="integer" android:dependency="pref_tweak_use_socket_session_handler"
+        android:summary="The port of the Mozc engine server." />
+  </PreferenceCategory>
+  <PreferenceCategory android:title="Logging">
+    <CheckBoxPreference android:key="pref_tweak_logging_protocol_buffers"
+        android:title="Logging protocol buffers" android:defaultValue="false"
+        android:summary="Enable if you want verbose log of protocol buffers. This makes the performance far slower." />
+  </PreferenceCategory>
+</PreferenceScreen>

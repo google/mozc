@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,9 +29,9 @@
 
 #include "session/session_watch_dog.h"
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <windows.h>
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 #include <algorithm>
 #include <cstring>
@@ -41,6 +41,7 @@
 #include "base/base.h"
 #include "base/cpu_stats.h"
 #include "base/logging.h"
+#include "base/system_util.h"
 #include "base/unnamed_event.h"
 #include "base/util.h"
 #include "client/client_interface.h"
@@ -226,7 +227,7 @@ void SessionWatchDog::Run() {
       // Here we temporary save the user name into stack in order
       // to obtain the log file before the LOG(FATAL).
       char user_name[32];
-      const string tmp = Util::GetUserNameAsString();
+      const string tmp = SystemUtil::GetUserNameAsString();
       strncpy(user_name, tmp.c_str(), sizeof(user_name));
       VLOG(1) << "user_name: " << user_name;
 #endif

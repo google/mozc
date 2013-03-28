@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -46,8 +46,9 @@ class Output;
 }  // namespace commands
 
 namespace win32 {
-struct ImeState;
-struct ImeBehavior;
+class IndicatorVisibilityTracker;
+struct InputBehavior;
+struct InputState;
 class SurrogatePairObserver;
 class UIVisibilityTracker;
 class VKBackBasedDeleter;
@@ -59,10 +60,11 @@ struct PrivateContext {
   bool Validate() const;
   uint32 magic_number;
   DWORD thread_id;
-  ImeState *ime_state;
-  ImeBehavior *ime_behavior;
+  InputState *ime_state;
+  InputBehavior *ime_behavior;
   mozc::client::ClientInterface *client;
   UIVisibilityTracker *ui_visibility_tracker;
+  IndicatorVisibilityTracker *indicator_visibility_tracker;
   mozc::commands::Output *last_output;
   VKBackBasedDeleter *deleter;
   SurrogatePairObserver *surrogate_pair_observer;

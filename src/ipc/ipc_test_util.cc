@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,8 @@
 // Utility functions for testing with IPC.
 
 #include "ipc/ipc_test_util.h"
+
+#include "base/logging.h"
 
 namespace mozc {
 #ifdef OS_MACOSX

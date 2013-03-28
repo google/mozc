@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,32 +29,28 @@
 
 #include "dictionary/system/value_dictionary.h"
 
-#include <algorithm>
-#include <climits>
+#include <limits>
 #include <string>
 
-#include "base/base.h"
-#include "base/flags.h"
 #include "base/logging.h"
+#include "base/port.h"
+#include "base/string_piece.h"
+#include "base/system_util.h"
 #include "base/trie.h"
-#include "base/util.h"
 #include "converter/node.h"
 #include "dictionary/file/dictionary_file.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/system/codec_interface.h"
-
-#ifdef MOZC_USE_MOZC_LOUDS
-#include "dictionary/louds/louds_trie_adapter.h"
-#else
-#include "dictionary/rx/rx_trie.h"
-#endif  // MOZC_USE_MOZC_LOUDS
+#include "storage/louds/louds_trie.h"
 
 
 namespace mozc {
 namespace dictionary {
 
+using mozc::storage::louds::LoudsTrie;
+
 ValueDictionary::ValueDictionary(const POSMatcher& pos_matcher)
-    : value_trie_(new TrieType),
+    : value_trie_(new LoudsTrie),
       dictionary_file_(new DictionaryFile),
       codec_(SystemDictionaryCodecFactory::GetCodec()),
       empty_limit_(Limit()),
@@ -87,7 +83,7 @@ ValueDictionary *ValueDictionary::CreateValueDictionaryFromImage(
   // has the priviledge to mlock.
   // Note that we don't munlock the space because it's always better to keep
   // the singleton system dictionary paged in as long as the process runs.
-  Util::MaybeMLock(ptr, len);
+  SystemUtil::MaybeMLock(ptr, len);
   scoped_ptr<ValueDictionary> instance(new ValueDictionary(pos_matcher));
   DCHECK(instance.get());
   if (!instance->dictionary_file_->OpenFromImage(ptr, len)) {
@@ -104,98 +100,141 @@ ValueDictionary *ValueDictionary::CreateValueDictionaryFromImage(
 bool ValueDictionary::OpenDictionaryFile() {
   int image_len = 0;
   const unsigned char *value_image =
-      reinterpret_cast<const unsigned char *>(dictionary_file_->GetSection(
+      reinterpret_cast<const uint8 *>(dictionary_file_->GetSection(
           codec_->GetSectionNameForValue(), &image_len));
   CHECK(value_image) << "can not find value section";
-  if (!(value_trie_->OpenImage(value_image))) {
+  if (!(value_trie_->Open(value_image))) {
     DLOG(ERROR) << "Cannot open value trie";
     return false;
   }
   return true;
 }
 
+bool ValueDictionary::HasValue(const StringPiece value) const {
+  string encoded;
+  codec_->EncodeValue(value, &encoded);
+  return value_trie_->ExactSearch(encoded) != -1;
+}
+
+namespace {
+
+inline void FillNode(const uint16 suggestion_only_word_id,
+                     const char *value, size_t value_size,
+                     Node *node) {
+  // Set fake token information.
+  // Since value dictionary is intended to use for suggestion,
+  // we use SuggestOnlyWordId here.
+  // Cost is also set without lookup.
+  // TODO(toshiyuki): If necessary, implement simple cost lookup.
+  // Bloom filter may be one option.
+  node->lid = suggestion_only_word_id;
+  node->rid = suggestion_only_word_id;
+  node->wcost = 10000;
+  node->key.assign(value, value_size);
+  node->value.assign(value, value_size);
+  node->node_type = Node::NOR_NODE;
+  node->bnext = NULL;
+}
+
+class NodeListBuilder : public LoudsTrie::Callback {
+ public:
+  NodeListBuilder(const int original_key_len,
+                  const SystemDictionaryCodecInterface *codec,
+                  const uint16 suggestion_only_word_id,
+                  const Trie<string> *begin_with_trie,
+                  NodeAllocatorInterface *allocator)
+      : original_key_len_(original_key_len),
+        codec_(codec),
+        suggestion_only_word_id_(suggestion_only_word_id),
+        begin_with_trie_(begin_with_trie),
+        allocator_(allocator),
+        limit_(allocator == NULL ?
+            numeric_limits<int>::max() : allocator_->max_nodes_size()),
+        result_(NULL) {
+  }
+
+  virtual ResultType Run(const char *key_begin, size_t len, int key_id) {
+    if (limit_ <= 0) {
+      return SEARCH_DONE;
+    }
+
+    // The decoded key of value trie corresponds to value (surface form).
+    string value;
+    codec_->DecodeValue(StringPiece(key_begin, len), &value);
+
+    if (begin_with_trie_ != NULL) {
+      // If |begin_with_trie_| was provided, check if the value ends with some
+      // key in it. For example, if original key is "he" and "hello" was found,
+      // the node for "hello" is built only when "llo" is in |begin_with_trie_|.
+      string trie_value;
+      size_t key_length = 0;
+      bool has_subtrie = false;
+      if (!begin_with_trie_->LookUpPrefix(value.data() + original_key_len_,
+                                          &trie_value,
+                                          &key_length, &has_subtrie)) {
+        return SEARCH_CONTINUE;
+      }
+    }
+
+    // TODO(noriyukit): This is a very hacky way of injection for node
+    // allocation. We should implement an allocator that just creates new Node
+    // for unit tests.
+    Node *new_node = NULL;
+    if (allocator_ != NULL) {
+      new_node = allocator_->NewNode();
+    } else {
+      // for test
+      new_node = new Node();
+    }
+
+    FillNode(suggestion_only_word_id_, value.data(), value.size(), new_node);
+
+    // Update the list structure: insert |new_node| to the head.
+    new_node->bnext = result_;
+    result_ = new_node;
+
+    --limit_;
+    return SEARCH_CONTINUE;
+  }
+
+  Node *result() const {
+    return result_;
+  }
+
+ private:
+  const int original_key_len_;
+  const SystemDictionaryCodecInterface *codec_;
+  const uint16 suggestion_only_word_id_;
+  const Trie<string> *begin_with_trie_;
+  NodeAllocatorInterface *allocator_;
+  int limit_;
+  Node *result_;
+
+  DISALLOW_COPY_AND_ASSIGN(NodeListBuilder);
+};
+
+}  // namespace
+
 Node *ValueDictionary::LookupPredictiveWithLimit(
     const char *str, int size,
     const Limit &limit,
     NodeAllocatorInterface *allocator) const {
   if (size == 0) {
-    // To fill the gap of the behavior between rx/mozc's louds, return
-    // NULL immediately if the key is empty.
-    // Background:
-    // - For predictive search, RxTrie returns no entries because rx doesn't
-    //   invoke callbacks if the key is empty.
-    // - On the other hand, Mozc's louds trie returns all values in the trie.
-    // From the trie's point of view, returning all values looks a bit more
-    // natrual. So, we fill the gap at the dictionary layer as a short term
-    // fix.
+    // For empty key, return NULL (representing an empty result) immediately
+    // for backword compatibility.
     // TODO(hidehiko): Returning all entries in dictionary for predictive
     //   searching with an empty key may look natural as well. So we should
     //   find an appropriate handling point.
     return NULL;
   }
   string lookup_key_str;
-  codec_->EncodeValue(string(str, size), &lookup_key_str);
+  codec_->EncodeValue(StringPiece(str, size), &lookup_key_str);
 
   DCHECK(value_trie_.get() != NULL);
-
-  vector<EntryType> results;
-  // TODO(toshiyuki): node_size_limit can be defined in the Limit
-  int node_size_limit = -1;  // no limit
-  if (allocator != NULL) {
-    node_size_limit = allocator->max_nodes_size();
-    value_trie_->PredictiveSearchWithLimit(
-        lookup_key_str, node_size_limit, &results);
-  } else {
-    value_trie_->PredictiveSearch(lookup_key_str, &results);
-  }
-
-  Node *res = NULL;
-  for (size_t i = 0; i < results.size(); ++i) {
-    if (node_size_limit == 0) {
-      break;
-    }
-    if (!Util::StartsWith(results[i].key, lookup_key_str)) {
-      break;
-    }
-    string value;
-    codec_->DecodeValue(results[i].key, &value);
-    if (limit.begin_with_trie != NULL) {
-      string trie_value;
-      size_t key_length = 0;
-      bool has_subtrie = false;
-      if (!limit.begin_with_trie->LookUpPrefix(value.data() + size, &trie_value,
-                                               &key_length, &has_subtrie)) {
-        continue;
-      }
-    }
-
-    Node *new_node = NULL;
-    if (allocator != NULL) {
-      new_node = allocator->NewNode();
-    } else {
-      // for test
-      new_node = new Node();
-    }
-    // Set fake token information.
-    // Since value dictionary is intended to use for suggestion,
-    // we use SuggestOnlyWordId here.
-    // Cost is also set without lookup.
-    // TODO(toshiyuki): If necessary, implement simple cost lookup.
-    // Bloom filter may be one option.
-    new_node->lid = suggestion_only_word_id_;
-    new_node->rid = suggestion_only_word_id_;
-    new_node->wcost = 10000;
-    new_node->key = value;
-    new_node->value = value;
-    new_node->node_type = Node::NOR_NODE;
-
-    new_node->bnext = res;
-    res = new_node;
-    if (node_size_limit > 0) {
-      --node_size_limit;
-    }
-  }
-  return res;
+  NodeListBuilder builder(size, codec_, suggestion_only_word_id_,
+                          limit.begin_with_trie, allocator);
+  value_trie_->PredictiveSearch(lookup_key_str.c_str(), &builder);
+  return builder.result();
 }
 
 Node *ValueDictionary::LookupPredictive(
@@ -230,31 +269,13 @@ Node *ValueDictionary::LookupExact(const char *str, int size,
   DCHECK(allocator != NULL);
 
   string lookup_key_str;
-  codec_->EncodeValue(string(str, size), &lookup_key_str);
-
-  vector<EntryType> results;
-  // TODO(team): We may want to have ExactSearch implemented at trie layer for
-  // performance reason.
-  value_trie_->PrefixSearchWithLimit(
-      lookup_key_str, allocator->max_nodes_size(), &results);
-
-  Node *head = NULL;
-  for (size_t i = 0; i < results.size(); ++i) {
-    if (results[i].key != lookup_key_str) {
-      continue;
-    }
-    Node *node = allocator->NewNode();
-    // Set fake token information due to the same reason as LookupPredictive.
-    node->lid = suggestion_only_word_id_;
-    node->rid = suggestion_only_word_id_;
-    node->wcost = 10000;
-    codec_->DecodeValue(results[i].key, &node->value);
-    node->key = node->value;
-    node->node_type = Node::NOR_NODE;
-    node->bnext = head;
-    head = node;
+  codec_->EncodeValue(StringPiece(str, size), &lookup_key_str);
+  if (value_trie_->ExactSearch(lookup_key_str) == -1) {
+    return NULL;
   }
-  return head;
+  Node *node = allocator->NewNode();
+  FillNode(suggestion_only_word_id_, str, size, node);
+  return node;
 }
 
 Node *ValueDictionary::LookupReverse(const char *str, int size,

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,15 +29,25 @@
 
 #include "session/session_handler_test_util.h"
 
-#include "base/util.h"
+#include "base/config_file_stream.h"
+#include "base/file_util.h"
+#include "base/system_util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
-#include "engine/engine_factory.h"
+#include "config/stats_config_util.h"
+#include "config/stats_config_util_mock.h"
+#include "converter/converter_interface.h"
 #include "engine/engine_interface.h"
+#include "engine/mock_data_engine_factory.h"
+#include "engine/user_data_manager_interface.h"
+#include "prediction/user_history_predictor.h"
 #include "session/commands.pb.h"
+#include "session/japanese_session_factory.h"
 #include "session/session_factory_manager.h"
 #include "session/session_handler.h"
 #include "session/session_handler_interface.h"
+#include "session/session_usage_observer.h"
+#include "storage/registry.h"
 
 DECLARE_string(test_tmpdir);
 
@@ -51,6 +61,8 @@ using config::ConfigHandler;
 bool CreateSession(SessionHandlerInterface *handler, uint64 *id) {
   Command command;
   command.mutable_input()->set_type(commands::Input::CREATE_SESSION);
+  command.mutable_input()->mutable_capability()->set_text_deletion(
+      commands::Capability::DELETE_PRECEDING_TEXT);
   handler->EvalCommand(&command);
   if (id != NULL) {
     *id = command.has_output() ? command.output().id() : 0;
@@ -71,6 +83,12 @@ bool CleanUp(SessionHandlerInterface *handler) {
   return handler->EvalCommand(&command);
 }
 
+bool ClearUserPrediction(SessionHandlerInterface *handler) {
+  Command command;
+  command.mutable_input()->set_type(commands::Input::CLEAR_USER_PREDICTION);
+  return handler->EvalCommand(&command);
+}
+
 bool IsGoodSession(SessionHandlerInterface *handler, uint64 id) {
   Command command;
   command.mutable_input()->set_id(id);
@@ -87,24 +105,53 @@ JapaneseSessionHandlerTestBase::~JapaneseSessionHandlerTestBase() {
 }
 
 void JapaneseSessionHandlerTestBase::SetUp() {
-  user_profile_directory_backup_ = Util::GetUserProfileDirectory();
-  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+  user_profile_directory_backup_ = SystemUtil::GetUserProfileDirectory();
+  SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
 
   ConfigHandler::GetConfig(&config_backup_);
-  config::Config config;
-  ConfigHandler::GetDefaultConfig(&config);
-  ConfigHandler::SetConfig(config);
+  ClearState();
+
+  stats_config_util_.reset(new config::StatsConfigUtilMock);
+  mozc::config::StatsConfigUtil::SetHandler(stats_config_util_.get());
 
   // Store the origianl to restore it in TearDown.
   session_factory_backup_ = SessionFactoryManager::GetSessionFactory();
 
-  ResetEngine(EngineFactory::Create());
+  FileUtil::Unlink(UserHistoryPredictor::GetUserHistoryFileName());
+  ResetEngine(CreateEngine());
 }
 
 void JapaneseSessionHandlerTestBase::TearDown() {
   SessionFactoryManager::SetSessionFactory(session_factory_backup_);
+  ClearState();
   ConfigHandler::SetConfig(config_backup_);
-  Util::SetUserProfileDirectory(user_profile_directory_backup_);
+  SystemUtil::SetUserProfileDirectory(user_profile_directory_backup_);
+  FileUtil::Unlink(UserHistoryPredictor::GetUserHistoryFileName());
+}
+
+void JapaneseSessionHandlerTestBase::ClearState() {
+  config::StatsConfigUtil::SetHandler(NULL);
+
+  config::Config config;
+  ConfigHandler::GetDefaultConfig(&config);
+  ConfigHandler::SetConfig(config);
+
+  // Some destructors may save the state on storages. To clear the state, we
+  // explicitly call destructors before clearing storages.
+  session_factory_.reset();
+  engine_.reset();
+  stats_config_util_.reset();
+
+  storage::Registry::Clear();
+  FileUtil::Unlink(ConfigFileStream::GetFileName("user://boundary.db"));
+  FileUtil::Unlink(ConfigFileStream::GetFileName("user://segment.db"));
+  FileUtil::Unlink(UserHistoryPredictor::GetUserHistoryFileName());
+}
+
+EngineInterface *JapaneseSessionHandlerTestBase::CreateEngine() {
+  EngineInterface *engine = MockDataEngineFactory::Create();
+  engine->GetUserDataManager()->ClearUserHistory();
+  return engine;
 }
 
 void JapaneseSessionHandlerTestBase::ResetEngine(EngineInterface *engine) {
@@ -113,8 +160,13 @@ void JapaneseSessionHandlerTestBase::ResetEngine(EngineInterface *engine) {
   SessionFactoryManager::SetSessionFactory(session_factory_.get());
 }
 
-TestSessionClient::TestSessionClient() : id_(0), handler_(new SessionHandler) {
+TestSessionClient::TestSessionClient()
+  : id_(0),
+    usage_observer_(new SessionUsageObserver),
+    handler_(new SessionHandler) {
+  handler_->AddObserver(usage_observer_.get());
 }
+
 TestSessionClient::~TestSessionClient() {
 }
 
@@ -130,20 +182,50 @@ bool TestSessionClient::CleanUp() {
   return ::mozc::session::testing::CleanUp(handler_.get());
 }
 
-bool TestSessionClient::SendKey(const commands::KeyEvent &key,
-                                commands::Output *output) {
+bool TestSessionClient::ClearUserPrediction() {
+  return ::mozc::session::testing::ClearUserPrediction(handler_.get());
+}
+
+bool TestSessionClient::SendKeyWithOption(const commands::KeyEvent &key,
+                                          const commands::Input &option,
+                                          commands::Output *output) {
   commands::Input input;
   input.set_type(commands::Input::SEND_KEY);
   input.mutable_key()->CopyFrom(key);
+  input.MergeFrom(option);
   return EvalCommand(&input, output);
 }
 
-bool TestSessionClient::TestSendKey(const commands::KeyEvent &key,
-                                    commands::Output *output) {
+bool TestSessionClient::TestSendKeyWithOption(const commands::KeyEvent &key,
+                                              const commands::Input &option,
+                                              commands::Output *output) {
   commands::Input input;
   input.set_type(commands::Input::TEST_SEND_KEY);
   input.mutable_key()->CopyFrom(key);
+  input.MergeFrom(option);
   return EvalCommand(&input, output);
+}
+
+bool TestSessionClient::SelectCandidate(uint32 id, commands::Output *output) {
+  commands::Input input;
+  input.set_type(commands::Input::SEND_COMMAND);
+  input.mutable_command()->set_type(commands::SessionCommand::SELECT_CANDIDATE);
+  input.mutable_command()->set_id(id);
+  return EvalCommand(&input, output);
+}
+
+bool TestSessionClient::SubmitCandidate(uint32 id, commands::Output *output) {
+  commands::Input input;
+  input.set_type(commands::Input::SEND_COMMAND);
+  input.mutable_command()->set_type(commands::SessionCommand::SUBMIT_CANDIDATE);
+  input.mutable_command()->set_id(id);
+  return EvalCommand(&input, output);
+}
+
+bool TestSessionClient::Reload() {
+  commands::Input input;
+  input.set_type(commands::Input::RELOAD);
+  return EvalCommand(&input, NULL);
 }
 
 bool TestSessionClient::ResetContext() {

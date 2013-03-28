@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,7 @@
 
 #include "base/base.h"
 #include "base/logging.h"
+#include "base/string_piece.h"
 #include "base/util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
@@ -58,19 +59,24 @@ DictionaryImpl::DictionaryImpl(
   CHECK(pos_matcher_);
   CHECK(system_dictionary_.get());
   CHECK(value_dictionary_.get());
-#ifndef __native_client__
   CHECK(user_dictionary_);
-#endif  // __native_client__
   CHECK(suppression_dictionary_);
   dics_.push_back(system_dictionary_.get());
   dics_.push_back(value_dictionary_.get());
-  if (user_dictionary_) {
-    dics_.push_back(user_dictionary_);
-  }
+  dics_.push_back(user_dictionary_);
 }
 
 DictionaryImpl::~DictionaryImpl() {
   dics_.clear();
+}
+
+bool DictionaryImpl::HasValue(const StringPiece value) const {
+  for (size_t i = 0; i < dics_.size(); ++i) {
+    if (dics_[i]->HasValue(value)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 Node *DictionaryImpl::LookupPredictiveWithLimit(

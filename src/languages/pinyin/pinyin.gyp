@@ -1,4 +1,4 @@
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -210,19 +210,9 @@
         '../../base/base.gyp:config_file_stream',
         '../../dictionary/file/dictionary_file.gyp:codec',
         '../../dictionary/file/dictionary_file.gyp:dictionary_file',
-        '../../dictionary/rx/rx_storage.gyp:rx_trie',
+        '../../storage/louds/louds.gyp:louds_trie',
         '../../storage/storage.gyp:encrypted_string_storage',
         'gen_pinyin_english_dictionary_data#host',
-      ],
-      'conditions': [
-        ['enable_mozc_louds==1', {
-          'dependencies!': [
-              '../../dictionary/rx/rx_storage.gyp:rx_trie',
-          ],
-          'dependencies': [
-            '../../dictionary/louds/louds_trie_adapter.gyp:louds_trie_adapter',
-          ],
-        }],
       ],
     },
     {
@@ -483,17 +473,7 @@
         '../../base/base.gyp:base',
         '../../dictionary/file/dictionary_file.gyp:codec',
         '../../dictionary/file/dictionary_file.gyp:dictionary_file',
-        '../../dictionary/rx/rx_storage.gyp:rx_trie_builder',
-      ],
-      'conditions': [
-        ['enable_mozc_louds==1', {
-          'dependencies!': [
-            '../../dictionary/rx/rx_storage.gyp:rx_trie_builder',
-          ],
-          'dependencies': [
-            '../../storage/louds/louds.gyp:louds_trie_builder',
-          ],
-        }],
+        '../../storage/louds/louds.gyp:louds_trie_builder',
       ],
     },
     {

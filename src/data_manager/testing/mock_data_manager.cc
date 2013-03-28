@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,17 +30,15 @@
 #include "data_manager/testing/mock_data_manager.h"
 
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/singleton.h"
-#include "base/thread.h"
 #include "converter/boundary_struct.h"
-#include "converter/connector_base.h"
-#include "converter/segmenter_base.h"
-#include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
-#include "dictionary/suffix_dictionary.h"
-#include "dictionary/system/system_dictionary.h"
-#include "dictionary/system/value_dictionary.h"
+#include "dictionary/suffix_dictionary_token.h"
 #include "rewriter/correction_rewriter.h"
+#ifndef NO_USAGE_REWRITER
+#include "rewriter/usage_rewriter_data_structs.h"
+#endif  // NO_USAGE_REWRITER
 
 namespace mozc {
 namespace testing {
@@ -48,15 +46,11 @@ namespace testing {
 namespace {
 // kLidGroup[] is defined in the following automatically generated header file.
 #include "data_manager/testing/pos_group_data.h"
-
-class MockPosGroup : public PosGroup {
- public:
-  MockPosGroup() : PosGroup(kLidGroup) {}
-};
 }  // namespace
 
-const PosGroup *MockDataManager::GetPosGroup() const {
-  return Singleton<MockPosGroup>::get();
+const uint8 *MockDataManager::GetPosGroupData() const {
+  DCHECK(kLidGroup != NULL);
+  return kLidGroup;
 }
 
 namespace {
@@ -64,33 +58,11 @@ namespace {
 // kConnectionData_data and kConnectionData_size. We don't embed it when
 // connection data is supplied from outside.
 #include "data_manager/testing/embedded_connection_data.h"
-
-#ifdef OS_ANDROID
-const int kCacheSize = 256;
-#else
-const int kCacheSize = 1024;
-#endif
-
-// Use Thread Local Storage for Cache of the Connector.
-TLS_KEYWORD bool g_cache_initialized = false;
-TLS_KEYWORD int g_cache_key[kCacheSize];
-TLS_KEYWORD int g_cache_value[kCacheSize];
-
-class MockConnector : public ConnectorBase {
- private:
-  MockConnector() : ConnectorBase(kConnectionData_data,
-                                  kConnectionData_size,
-                                  &g_cache_initialized,
-                                  g_cache_key,
-                                  g_cache_value,
-                                  kCacheSize) {}
-  virtual ~MockConnector() {}
-  friend class Singleton<MockConnector>;
-};
 }  // namespace
 
-const ConnectorInterface *MockDataManager::GetConnector() const {
-  return Singleton<MockConnector>::get();
+void MockDataManager::GetConnectorData(const char **data, size_t *size) const {
+  *data = kConnectionData_data;
+  *size = kConnectionData_size;
 }
 
 namespace {
@@ -99,51 +71,41 @@ namespace {
 #include "data_manager/testing/embedded_dictionary_data.h"
 }  // namespace
 
-DictionaryInterface *MockDataManager::CreateSystemDictionary() const {
-  return mozc::dictionary::SystemDictionary::CreateSystemDictionaryFromImage(
-      kDictionaryData_data, kDictionaryData_size);
-}
-
-DictionaryInterface *MockDataManager::CreateValueDictionary() const {
-  return mozc::dictionary::ValueDictionary::CreateValueDictionaryFromImage(
-      *GetPOSMatcher(), kDictionaryData_data, kDictionaryData_size);
+void MockDataManager::GetSystemDictionaryData(
+    const char **data, int *size) const {
+  *data = kDictionaryData_data;
+  *size = kDictionaryData_size;
 }
 
 namespace {
 // Automatically generated headers containing data set for segmenter.
 #include "data_manager/testing/boundary_data.h"
 #include "data_manager/testing/segmenter_data.h"
-
-class MockSegmenter : public SegmenterBase {
- private:
-  MockSegmenter() : SegmenterBase(kCompressedLSize, kCompressedRSize,
-                                  kCompressedLIDTable, kCompressedRIDTable,
-                                  kSegmenterBitArrayData_size,
-                                  kSegmenterBitArrayData_data,
-                                  kBoundaryData) {}
-  virtual ~MockSegmenter() {}
-  friend class Singleton<MockSegmenter>;
-};
 }  // namespace
 
-const SegmenterInterface *MockDataManager::GetSegmenter() const {
-  return Singleton<MockSegmenter>::get();
+void MockDataManager::GetSegmenterData(
+    size_t *l_num_elements, size_t *r_num_elements,
+    const uint16 **l_table, const uint16 **r_table,
+    size_t *bitarray_num_bytes, const char **bitarray_data,
+    const BoundaryData **boundary_data) const {
+  *l_num_elements = kCompressedLSize;
+  *r_num_elements = kCompressedRSize;
+  *l_table = kCompressedLIDTable;
+  *r_table = kCompressedRIDTable;
+  *bitarray_num_bytes = kSegmenterBitArrayData_size;
+  *bitarray_data = kSegmenterBitArrayData_data;
+  *boundary_data = kBoundaryData;
 }
 
 namespace {
 // The generated header defines kSuffixTokens[].
 #include "data_manager/testing/suffix_data.h"
-
-class MockSuffixDictionary : public SuffixDictionary {
- public:
-  MockSuffixDictionary() : SuffixDictionary(kSuffixTokens,
-                                            arraysize(kSuffixTokens)) {}
-  virtual ~MockSuffixDictionary() {}
-};
 }  // namespace
 
-const DictionaryInterface *MockDataManager::GetSuffixDictionary() const {
-  return Singleton<MockSuffixDictionary>::get();
+void MockDataManager::GetSuffixDictionaryData(const SuffixToken **tokens,
+                                              size_t *size) const {
+  *tokens = kSuffixTokens;
+  *size = arraysize(kSuffixTokens);
 }
 
 namespace {
@@ -189,6 +151,35 @@ void MockDataManager::GetSuggestionFilterData(const char **data,
   *data = kSuggestionFilterData_data;
   *size = kSuggestionFilterData_size;
 }
+
+namespace {
+// Include kSymbolData_token_data and kSymbolData_token_size.
+#include "data_manager/testing/symbol_rewriter_data.h"
+}  // namespace
+
+void MockDataManager::GetSymbolRewriterData(
+    const EmbeddedDictionary::Token **data,
+    size_t *size) const {
+  *data = kSymbolData_token_data;
+  *size = kSymbolData_token_size;
+}
+
+#ifndef NO_USAGE_REWRITER
+namespace {
+#include "rewriter/usage_rewriter_data.h"
+}  // namespace
+
+void MockDataManager::GetUsageRewriterData(
+    const ConjugationSuffix **base_conjugation_suffix,
+    const ConjugationSuffix **conjugation_suffix_data,
+    const int **conjugation_suffix_data_index,
+    const UsageDictItem **usage_data_value) const {
+  *base_conjugation_suffix = kBaseConjugationSuffix;
+  *conjugation_suffix_data = kConjugationSuffixData;
+  *conjugation_suffix_data_index = kConjugationSuffixDataIndex;
+  *usage_data_value = kUsageData_value;
+}
+#endif  // NO_USAGE_REWRITER
 
 }  // namespace testing
 }  // namespace mozc

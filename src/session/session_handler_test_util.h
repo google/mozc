@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,17 +35,23 @@
 #include <string>
 #include "base/scoped_ptr.h"
 #include "config/config.pb.h"
-#include "engine/engine_interface.h"
 #include "session/commands.pb.h"
 #include "session/japanese_session_factory.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
 
+class EngineInterface;
 class SessionFactoryInterface;
 class SessionHandlerInterface;
 
+namespace config {
+class StatsConfigUtilMock;
+}  // namespace config
+
 namespace session {
+class SessionObserverInterface;
+
 namespace testing {
 
 // Sends CREATE_SESSION command to the given handler and returns its result.
@@ -60,6 +66,10 @@ bool DeleteSession(SessionHandlerInterface *handler, uint64 id);
 // Sends CLEANUP command to the given handler, and returns its result.
 bool CleanUp(SessionHandlerInterface *handler);
 
+// Sends CLEAR_USER_PREDICTION command to the given handler and returns its
+// result.
+bool CleanUserPrediction(SessionHandlerInterface *handler);
+
 // Returns the session represented by the given id is "good" or not, based
 // on sending a SPACE key. See the implementation for the detail.
 bool IsGoodSession(SessionHandlerInterface *handler, uint64 id);
@@ -72,9 +82,17 @@ class JapaneseSessionHandlerTestBase : public ::testing::Test {
 
   // This class should not be instantiated directly.
   JapaneseSessionHandlerTestBase();
-  ~JapaneseSessionHandlerTestBase();
+  virtual ~JapaneseSessionHandlerTestBase();
+
+  void ClearState();
 
   void ResetEngine(EngineInterface *engine);
+
+  // Injecting point to create an engine instance.
+  // The returned instance will be owned by this (base) class.
+  virtual EngineInterface *CreateEngine();
+
+  EngineInterface *engine() { return engine_.get(); }
 
  private:
   // Keep the global configurations here, and restore them in tear down phase.
@@ -82,6 +100,7 @@ class JapaneseSessionHandlerTestBase : public ::testing::Test {
   config::Config config_backup_;
   SessionFactoryInterface *session_factory_backup_;
 
+  scoped_ptr<config::StatsConfigUtilMock> stats_config_util_;
   scoped_ptr<EngineInterface> engine_;
   scoped_ptr<JapaneseSessionFactory> session_factory_;
 };
@@ -95,9 +114,25 @@ class TestSessionClient {
   bool CreateSession();
   bool DeleteSession();
   bool CleanUp();
-  bool SendKey(const commands::KeyEvent &key, commands::Output *output);
-  bool TestSendKey(const commands::KeyEvent &key, commands::Output *output);
+  bool ClearUserPrediction();
+  bool SendKey(const commands::KeyEvent &key, commands::Output *output) {
+    return SendKeyWithOption(
+        key, commands::Input::default_instance(), output);
+  }
+  bool SendKeyWithOption(const commands::KeyEvent &key,
+                         const commands::Input &option,
+                         commands::Output *output);
+  bool TestSendKey(const commands::KeyEvent &key, commands::Output *output) {
+    return TestSendKeyWithOption(
+        key, commands::Input::default_instance(), output);
+  }
+  bool TestSendKeyWithOption(const commands::KeyEvent &key,
+                             const commands::Input &option,
+                             commands::Output *output);
+  bool SelectCandidate(uint32 id, commands::Output *output);
+  bool SubmitCandidate(uint32 id, commands::Output *output);
 
+  bool Reload();
   bool ResetContext();
   bool UndoOrRewind(commands::Output *output);
   bool SwitchInputMode(commands::CompositionMode composition_mode);
@@ -107,6 +142,7 @@ class TestSessionClient {
   bool EvalCommand(commands::Input *input, commands::Output *output);
 
   uint64 id_;
+  scoped_ptr<SessionObserverInterface> usage_observer_;
   scoped_ptr<SessionHandlerInterface> handler_;
 };
 

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,12 +31,11 @@
 
 #include "handwriting/zinnia_handwriting.h"
 
-#include "base/mmap.h"
-#include "base/util.h"
-
-#ifdef OS_MACOSX
+#include "base/file_util.h"
+#include "base/logging.h"
 #include "base/mac_util.h"
-#endif
+#include "base/mmap.h"
+#include "base/system_util.h"
 
 namespace mozc {
 namespace handwriting {
@@ -48,7 +47,7 @@ string GetModelFileName() {
   // Windows implementation regardless which data file is actually
   // used.  See also gui.gyp:hand_writing_mac.
   const char kModelFile[] = "handwriting-light-ja.model";
-  return Util::JoinPath(MacUtil::GetResourcesDirectory(), kModelFile);
+  return FileUtil::JoinPath(MacUtil::GetResourcesDirectory(), kModelFile);
 #elif defined(USE_LIBZINNIA)
   // On Linux, use the model for tegaki-zinnia.
   const char kModelFile[] =
@@ -56,7 +55,7 @@ string GetModelFileName() {
   return kModelFile;
 #else
   const char kModelFile[] = "handwriting-ja.model";
-  return Util::JoinPath(Util::GetServerDirectory(), kModelFile);
+  return FileUtil::JoinPath(SystemUtil::GetServerDirectory(), kModelFile);
 #endif  // OS_MACOSX
 }
 
@@ -82,6 +81,8 @@ ZinniaHandwriting::ZinniaHandwriting()
     return;
   }
 }
+
+ZinniaHandwriting::~ZinniaHandwriting() {}
 
 HandwritingStatus ZinniaHandwriting::Recognize(
     const Strokes &strokes, vector<string> *candidates) const {

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,20 +30,20 @@
 #ifndef MOZC_BASE_TIMER_H_
 #define MOZC_BASE_TIMER_H_
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <windows.h>  // for HANDLE
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 #include "base/port.h"
 #include "base/scoped_ptr.h"
 
 namespace mozc {
 
-#ifndef OS_WINDOWS
+#ifndef OS_WIN
 class Mutex;
 class Thread;
 class UnnamedEvent;
-#endif  // !OS_WINDOWS
+#endif  // !OS_WIN
 
 class Timer {
  public:
@@ -69,9 +69,9 @@ class Timer {
   // Timer() call Stop() internally, so it is blocking
   virtual ~Timer();
 
-#ifndef OS_WINDOWS
+#ifndef OS_WIN
   void TimerCallback();
-#endif  // !OS_WINDOWS
+#endif  // !OS_WIN
 
  protected:
   // overwrite this function to implement
@@ -79,7 +79,7 @@ class Timer {
   virtual void Signaled() = 0;
 
  private:
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   // Covert: ScopedHandle cannot be used for them as they cannot be closed by
   //     ::CloseHandle API.
   HANDLE timer_queue_;
@@ -93,9 +93,9 @@ class Timer {
 
   uint32 num_signaled_;
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   static void CALLBACK TimerCallback(void *ptr, BOOLEAN timer_or_wait);
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 };
 
 }  // namespace mozc

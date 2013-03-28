@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
 
 #include "ipc/process_watch_dog.h"
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <windows.h>
 #else
 #include <signal.h>
@@ -37,13 +37,14 @@
 #endif
 
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/mutex.h"
 #include "base/scoped_handle.h"
 #include "base/util.h"
 
 namespace mozc {
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 ProcessWatchDog::ProcessWatchDog()
     : event_(::CreateEventW(NULL, TRUE, FALSE, NULL)),
       process_id_(UnknownProcessID),
@@ -212,7 +213,7 @@ void ProcessWatchDog::Run() {
   }
 }
 
-#else  // OS_WINDOWS
+#else  // OS_WIN
 
 ProcessWatchDog::ProcessWatchDog()
     : process_id_(UnknownProcessID),
@@ -288,6 +289,6 @@ void ProcessWatchDog::Run() {
     }
   }
 }
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 }  // namespace mozc

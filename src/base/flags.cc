@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,9 +31,9 @@
 #include "base/flags.h"
 
 #include <stdlib.h>  // for atexit, getenv
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <windows.h>
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 #include <cstring>
 #include <map>
 #include <sstream>
@@ -44,6 +44,7 @@
 #include "base/crash_report_handler.h"
 #include "base/init.h"
 #include "base/singleton.h"
+#include "base/system_util.h"
 #include "base/util.h"
 
 DEFINE_string(program_invocation_name, "", "Program name copied from argv[0].");
@@ -194,8 +195,8 @@ uint32 ParseCommandLineFlags(int *argc, char*** argv,
   int used_argc = 0;
   string key, value;
   for (int i = 1; i < *argc; i += used_argc) {
-    if (!mozc::Util::CommandLineGetFlag(*argc - i, *argv + i,
-                                  &key, &value, &used_argc)) {
+    if (!mozc::SystemUtil::CommandLineGetFlag(*argc - i, *argv + i,
+                                              &key, &value, &used_argc)) {
       // TODO(komatsu): Do error handling
       continue;
     }
@@ -260,7 +261,7 @@ uint32 ParseCommandLineFlags(int *argc, char*** argv,
 
 namespace {
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 LONG CALLBACK ExitProcessExceptionFilter(
     EXCEPTION_POINTERS *ExceptionInfo) {
   // Currently, we haven't found good way to perform both
@@ -268,7 +269,7 @@ LONG CALLBACK ExitProcessExceptionFilter(
   ::ExitProcess(static_cast<UINT>(-1));
   return EXCEPTION_EXECUTE_HANDLER;
 }
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 void InitGoogleInternal(const char *argv0,
                         int *argc, char ***argv,
@@ -291,14 +292,14 @@ void InitGoogleInternal(const char *argv0,
 void InitGoogle(const char *arg0,
                 int *argc, char ***argv,
                 bool remove_flags) {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   // InitGoogle() is supposed to be used for code generator or
   // other programs which are not included in the production code.
   // In these code, we don't want to show any error messages when
   // exceptions are raised. This is important to keep
   // our continuous build stable.
   ::SetUnhandledExceptionFilter(ExitProcessExceptionFilter);
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
   InitGoogleInternal(arg0, argc, argv, remove_flags);
 }

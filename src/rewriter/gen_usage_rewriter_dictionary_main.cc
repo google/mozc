@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -74,11 +74,11 @@ void LoadConjugation(const string &filename,
                      map<string, vector<ConjugationType> > *output,
                      map<string, ConjugationType> *baseform_map) {
   InputFileStream ifs(filename.c_str());
-  CHECK(ifs);
+  CHECK(ifs.good());
 
   string line;
   vector<string> fields;
-  while (getline(ifs, line)) {
+  while (!getline(ifs, line).fail()) {
     if (line.empty() || line[0] == '#') {
       continue;
     }
@@ -104,7 +104,7 @@ void LoadUsage(const string &filename,
                vector<string> *conjugation_list) {
   InputFileStream ifs(filename.c_str());
 
-  if (!ifs) {
+  if (!ifs.good()) {
     LOG(WARNING) << "Can't open file:" << filename;
     return;
   }
@@ -114,7 +114,7 @@ void LoadUsage(const string &filename,
   map<string, int> conjugation_id_map;
 
   int conjugation_id = 0;
-  while (getline(ifs, line)) {
+  while (!getline(ifs, line).fail()) {
     if (line.empty() || line[0] == '#') {
       // starting with '#' is a comment line.
       continue;
@@ -168,10 +168,9 @@ void RemoveBaseformConjugationSuffix(
                    << "\" : [" << type.value_suffix << "]";
     }
 
-    usage_itr->key = usage_itr->key.substr(0,
-      usage_itr->key.length() - type.key_suffix.length());
-    usage_itr->value = usage_itr->value.substr(0,
-      usage_itr->value.length() - type.value_suffix.length());
+    usage_itr->key.erase(usage_itr->key.length() - type.key_suffix.length());
+    usage_itr->value.erase(
+        usage_itr->value.length() - type.value_suffix.length());
   }
 }
 

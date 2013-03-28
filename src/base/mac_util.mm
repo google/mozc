@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,6 +37,7 @@
 #include <IOKit/IOKitLib.h>
 
 #include "base/const.h"
+#include "base/logging.h"
 #include "base/scoped_cftyperef.h"
 #include "base/singleton.h"
 #include "base/util.h"
@@ -360,4 +361,64 @@ void MacUtil::AddPrelauncherLoginItem() {
     return;
   }
 }
+
+bool MacUtil::GetFrontmostWindowNameAndOwner(string *name, string *owner) {
+  DCHECK(name);
+  DCHECK(owner);
+  scoped_cftyperef<CFArrayRef> window_list(
+      ::CGWindowListCopyWindowInfo(
+          kCGWindowListOptionOnScreenOnly | kCGWindowListExcludeDesktopElements,
+          kCGNullWindowID));
+  const CFIndex window_count = CFArrayGetCount(window_list.get());
+  for (CFIndex i = 0; i < window_count; ++i) {
+    const NSDictionary *window_data = static_cast<const NSDictionary *>(
+        CFArrayGetValueAtIndex(window_list.get(), i));
+    if ([[window_data objectForKey:(id)kCGWindowSharingState] intValue] ==
+        kCGWindowSharingNone) {
+      // Skips not shared window.
+      continue;
+    }
+    NSString *window_name = [window_data objectForKey:(id)kCGWindowName];
+    NSString *owner_name =
+      [window_data objectForKey:(id)kCGWindowOwnerName];
+    NSNumber *window_layer = [window_data objectForKey:(id)kCGWindowLayer];
+
+    if ((window_name == nil) || (owner_name == nil) || (window_layer == nil)) {
+      continue;
+    }
+    // Ignores the windows which aren't normal window level.
+    if ([window_layer intValue] != kCGNormalWindowLevel) {
+      continue;
+    }
+
+    // Hack to ignore the window (name == "" and owner == "Google Chrome")
+    // Chrome browser seems to create a window which has no name in front of the
+    // actual frontmost Chrome window.
+    if ([window_name isEqualToString:@""] &&
+        [owner_name isEqualToString:@"Google Chrome"]) {
+      continue;
+    }
+    name->assign([window_name UTF8String]);
+    owner->assign([owner_name UTF8String]);
+    return true;
+  }
+  return false;
+}
+
+bool MacUtil::IsSuppressSuggestionWindow(const string &name,
+                                         const string &owner) {
+  // TODO(horo): Make a function to check the name, then share it with the
+  //             Windows client.
+  // Currently we don't support "Firefox", because in Firefox "activateServer:"
+  // of IMKStateSetting Protocol is not called when the user changes the
+  // browsing tab.
+  return (("Google Chrome" == owner) ||
+          ("Safari" == owner)) &&
+         (("Google" == name) ||
+          Util::EndsWith(
+              name,
+              " - Google \xE6\xA4\x9C\xE7\xB4\xA2") ||  // " - Google 検索"
+          Util::EndsWith(name, " - Google Search"));
+}
+
 }  // namespace mozc

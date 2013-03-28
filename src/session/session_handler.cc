@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,11 +44,10 @@
 #include "composer/table.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
-#include "converter/user_data_manager_interface.h"
 #include "dictionary/user_dictionary_session_handler.h"
+#include "engine/user_data_manager_interface.h"
 #include "session/commands.pb.h"
 #include "session/generic_storage_manager.h"
-#include "session/request_handler.h"
 #include "session/session_factory_manager.h"
 #include "session/session_interface.h"
 #include "session/session_observer_handler.h"
@@ -61,8 +60,10 @@
 #endif  // MOZC_DISABLE_SESSION_WATCHDOG
 #ifdef ENABLE_CLOUD_SYNC
 #include "sync/sync_handler.h"
-#include "sync/syncer_interface.h"
 #endif  // ENABLE_CLOUD_SYNC
+#include "usage_stats/usage_stats.h"
+
+using mozc::usage_stats::UsageStats;
 
 DEFINE_int32(timeout, -1,
              "server timeout. "
@@ -104,17 +105,17 @@ bool IsApplicationAlive(const session::SessionInterface *session) {
   // Here, we want to kill the session only when the target thread/process
   // are terminated with 100% probability. Otherwise, it's better to do
   // nothing to prevent any side effects.
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   if (info.has_thread_id()) {
     return Process::IsThreadAlive(
         static_cast<size_t>(info.thread_id()), true);
   }
-#else   // OS_WINDOWS
+#else   // OS_WIN
   if (info.has_process_id()) {
     return Process::IsProcessAlive(
         static_cast<size_t>(info.process_id()), true);
   }
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 #else  // MOZC_DISABLE_SESSION_WATCHDOG
   // Currently the process is not available through android mozc and nacl mozc.
   // TODO(kkojima): remove this guard after
@@ -126,7 +127,6 @@ bool IsApplicationAlive(const session::SessionInterface *session) {
 
 SessionHandler::SessionHandler()
     : is_available_(false),
-      keyevent_counter_(0),
       max_session_size_(0),
       last_session_empty_time_(Util::GetTime()),
       last_cleanup_time_(0),
@@ -135,10 +135,8 @@ SessionHandler::SessionHandler()
           session::SessionFactoryManager::GetSessionFactory()),
       observer_handler_(new session::SessionObserverHandler()),
       stopwatch_(new Stopwatch),
-#ifndef __native_client__
       user_dictionary_session_handler_(
           new user_dictionary::UserDictionarySessionHandler),
-#endif  // __native_client__
       table_manager_(new composer::TableManager),
       request_(new commands::Request) {
   if (FLAGS_restricted) {
@@ -162,6 +160,10 @@ SessionHandler::SessionHandler()
   // TODO(kkojima): Remove this guard after
   // enabling session watch dog for android.
 #endif  // MOZC_DISABLE_SESSION_WATCHDOG
+
+#ifdef ENABLE_CLOUD_SYNC
+  sync_handler_ = NULL;
+#endif  // ENABLE_CLOUD_SYNC
 
   // allow [2..128] sessions
   max_session_size_ = max(2, min(FLAGS_max_session_size, 128));
@@ -225,7 +227,7 @@ void SessionHandler::ReloadConfig() {
        element != NULL; element = element->next) {
     if (element->value != NULL) {
       element->value->ReloadConfig();
-      element->value->SetRequest(*request_);
+      element->value->SetRequest(request_.get());
       element->value->SetTable(table);
     }
   }
@@ -243,6 +245,7 @@ bool SessionHandler::Shutdown(commands::Command *command) {
   SyncData(command);
   ReloadSession();   // for saving log_commands
   is_available_ = false;
+  UsageStats::IncrementCount("ShutDown");
   return true;
 }
 
@@ -259,6 +262,7 @@ bool SessionHandler::ClearUserHistory(commands::Command *command) {
   VLOG(1) << "Clearing user history";
   session_factory_->GetUserDataManager()->ClearUserHistory();
   command->mutable_output()->set_id(command->input().id());
+  UsageStats::IncrementCount("ClearUserHistory");
   return true;
 }
 
@@ -266,6 +270,7 @@ bool SessionHandler::ClearUserPrediction(commands::Command *command) {
   VLOG(1) << "Clearing user prediction";
   session_factory_->GetUserDataManager()->ClearUserPrediction();
   command->mutable_output()->set_id(command->input().id());
+  UsageStats::IncrementCount("ClearUserPrediction");
   return true;
 }
 
@@ -273,6 +278,7 @@ bool SessionHandler::ClearUnusedUserPrediction(commands::Command *command) {
   VLOG(1) << "Clearing unused user prediction";
   session_factory_->GetUserDataManager()->ClearUnusedUserPrediction();
   command->mutable_output()->set_id(command->input().id());
+  UsageStats::IncrementCount("ClearUnusedUserPrediction");
   return true;
 }
 
@@ -307,8 +313,8 @@ bool SessionHandler::SetStoredConfig(commands::Command *command) {
   }
 
   command->mutable_output()->mutable_config()->CopyFrom(config);
-
   Reload(command);
+  UsageStats::IncrementCount("SetConfig");
 
   return true;
 }
@@ -336,8 +342,6 @@ bool SessionHandler::SetRequest(commands::Command *command) {
   }
 
   request_->CopyFrom(command->input().request());
-  // TODO(yoichio): After refactoring  to remove all GET_REQUEST, delete this.
-  commands::RequestHandler::SetRequest(*request_);
 
   Reload(command);
 
@@ -348,7 +352,10 @@ bool SessionHandler::StartCloudSync(commands::Command *command) {
   VLOG(1) << "Start cloud sync operation";
   command->mutable_output()->set_id(command->input().id());
 #ifdef ENABLE_CLOUD_SYNC
-  return sync::SyncHandler::Sync();
+  if (!sync_handler_) {
+    return false;
+  }
+  return sync_handler_->Sync();
 #else
   return true;
 #endif  // ENABLE_CLOUD_SYNC
@@ -358,7 +365,10 @@ bool SessionHandler::ClearCloudSync(commands::Command *command) {
   VLOG(1) << "Clear cloud sync";
   command->mutable_output()->set_id(command->input().id());
 #ifdef ENABLE_CLOUD_SYNC
-  return sync::SyncHandler::Clear();
+  if (!sync_handler_) {
+    return false;
+  }
+  return sync_handler_->Clear();
 #else
   return true;
 #endif  // ENABLE_CLOUD_SYNC
@@ -367,7 +377,10 @@ bool SessionHandler::ClearCloudSync(commands::Command *command) {
 bool SessionHandler::GetCloudSyncStatus(commands::Command *command) {
   VLOG(1) << "GetSyncStatus";
 #ifdef ENABLE_CLOUD_SYNC
-  return sync::SyncHandler::GetCloudSyncStatus(
+  if (!sync_handler_) {
+    return false;
+  }
+  return sync_handler_->GetCloudSyncStatus(
       command->mutable_output()->mutable_cloud_sync_status());
 #else
   return false;
@@ -377,8 +390,10 @@ bool SessionHandler::GetCloudSyncStatus(commands::Command *command) {
 bool SessionHandler::AddAuthCode(commands::Command *command) {
   VLOG(1) << "AddAuthCode";
 #ifdef ENABLE_CLOUD_SYNC
-  return sync::SyncHandler::SetAuthorization(
-      command->input().auth_code());
+  if (!sync_handler_) {
+    return false;
+  }
+  return sync_handler_->SetAuthorization(command->input().auth_code());
 #else
   return false;
 #endif  // ENABLE_CLOUD_SYNC
@@ -559,25 +574,22 @@ bool SessionHandler::EvalCommand(commands::Command *command) {
       eval_succeeded = false;
   }
 
-  if (!eval_succeeded) {
+  if (eval_succeeded) {
+    UsageStats::IncrementCount("SessionAllEvent");
+  } else {
     command->mutable_output()->set_id(0);
     command->mutable_output()->set_error_code(
         commands::Output::SESSION_FAILURE);
   }
 
-
-  // Since ElappsedTime is processed by UsageStats,
-  // Stop the timer before usage stats aggregation.
-  // This won't be good if UsageStats aggregator consumes a lot of
-  // CPU time
-  stopwatch_->Stop();
-  command->mutable_output()->set_elapsed_time(
-      static_cast<int32>(stopwatch_->GetElapsedMicroseconds()));
-
   if (eval_succeeded) {
     // TODO(komatsu): Make sre if checking eval_succeeded is necessary or not.
     observer_handler_->EvalCommandHandler(*command);
   }
+
+  stopwatch_->Stop();
+  UsageStats::UpdateTiming("ElapsedTimeUSec",
+                           stopwatch_->GetElapsedMicroseconds());
 
   return is_available_;
 }
@@ -586,13 +598,14 @@ session::SessionInterface *SessionHandler::NewSession() {
   return session_factory_->NewSession();
 }
 
-void SessionHandler::SetSessionFactory(
-    session::SessionFactoryInterface *new_factory) {
-  session_factory_ = new_factory;
-}
-
 void SessionHandler::AddObserver(session::SessionObserverInterface *observer) {
   observer_handler_->AddObserver(observer);
+}
+
+void SessionHandler::SetSyncHandler(sync::SyncHandler *sync_handler) {
+#ifdef ENABLE_CLOUD_SYNC
+  sync_handler_ = sync_handler;
+#endif  // ENABLE_CLOUD_SYNC
 }
 
 bool SessionHandler::SendKey(commands::Command *command) {
@@ -692,6 +705,8 @@ bool SessionHandler::CreateSession(commands::Command *command) {
 
   // session is not empty.
   last_session_empty_time_ = 0;
+
+  UsageStats::IncrementCount("SessionCreated");
 
   return true;
 }
@@ -793,7 +808,6 @@ bool SessionHandler::SendUserDictionaryCommand(commands::Command *command) {
   if (!command->input().has_user_dictionary_command()) {
     return false;
   }
-#ifndef __native_client__
   user_dictionary::UserDictionaryCommandStatus status;
   const bool result = user_dictionary_session_handler_->Evaluate(
       command->input().user_dictionary_command(), &status);
@@ -802,10 +816,6 @@ bool SessionHandler::SendUserDictionaryCommand(commands::Command *command) {
         command->mutable_output()->mutable_user_dictionary_command_status());
   }
   return result;
-#else  // __native_client__
-  // TODO(horo): UserDictionaryCommand is not aviable from nacl mozc now.
-  return false;
-#endif  // __native_client__
 }
 
 bool SessionHandler::NoOperation(commands::Command *command) {
@@ -818,11 +828,7 @@ bool SessionHandler::NoOperation(commands::Command *command) {
 SessionID SessionHandler::CreateNewSessionID() {
   SessionID id = 0;
   while (true) {
-    if (!Util::GetSecureRandomSequence(
-            reinterpret_cast<char *>(&id), sizeof(id))) {
-      LOG(ERROR) << "GetSecureRandomSequence() failed. use random value";
-      id = static_cast<uint64>(Util::Random(RAND_MAX));
-    }
+    Util::GetRandomSequence(reinterpret_cast<char *>(&id), sizeof(id));
 #ifdef  __native_client__
     // Because JavaScript does not support uint64.
     // So we downsize the session id range from uint64 to uint32 in NaCl.

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@
 #ifndef MOZC_IPC_NAMED_EVENT_H_
 #define MOZC_IPC_NAMED_EVENT_H_
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <windows.h>
 #else
 #include <semaphore.h>
@@ -133,7 +133,7 @@ class NamedEventListener {
  private:
   bool is_owner_;
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   HANDLE handle_;
 #else
   sem_t *sem_;
@@ -156,7 +156,7 @@ class NamedEventNotifier {
   bool Notify();
 
  private:
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   HANDLE handle_;
 #else
   sem_t *sem_;

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,10 +36,10 @@
 #include "base/base.h"
 #include "gui/about_dialog/ui_about_dialog.h"
 
-#if defined(OS_WINDOWS) && defined(GOOGLE_JAPANESE_INPUT_BUILD) \
+#if defined(OS_WIN) && defined(GOOGLE_JAPANESE_INPUT_BUILD) \
     && defined(DEBUG)
 #define USE_UPDATE_CHECKER
-#endif  // OS_WINDOWS && GOOGLE_JAPANESE_INPUT_BUILD && DEBUG
+#endif  // OS_WIN && GOOGLE_JAPANESE_INPUT_BUILD && DEBUG
 
 class QImage;
 

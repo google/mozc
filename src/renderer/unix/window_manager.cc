@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,7 @@
 #include "renderer/unix/window_manager.h"
 
 #include "base/base.h"
+#include "base/logging.h"
 #include "renderer/renderer_command.pb.h"
 #include "renderer/unix/gtk_wrapper.h"
 #include "renderer/window_util.h"
@@ -115,7 +116,7 @@ Rect WindowManager::UpdateCandidateWindow(
     }
   }
 
-  const Rect working_area = GetDesktopRect();
+  const Rect working_area = GetMonitorRect(new_window_pos.x, new_window_pos.y);
   const Point alignment_base_point_in_local_window_coord(
       candidate_window_->GetCandidateColumnInClientCord().Left(), 0);
   const Rect caret_rect(candidates.caret_rectangle().x(),
@@ -132,7 +133,7 @@ Rect WindowManager::UpdateCandidateWindow(
           new_window_size,
           alignment_base_point_in_local_window_coord,
           working_area,
-          false); // GTK+ renderer only support horizontal window.
+          false);  // GTK+ renderer only support horizontal window.
   candidate_window_->Move(expected_window_rect_in_screen_coord.origin);
   candidate_window_->ShowWindow();
 
@@ -173,15 +174,14 @@ bool WindowManager::ShouldShowInfolistWindow(
   return true;
 }
 
-Rect WindowManager::GetDesktopRect() {
+Rect WindowManager::GetMonitorRect(gint x, gint y) {
   GtkWidget *window = gtk_->GtkWindowNew(GTK_WINDOW_TOPLEVEL);
   GdkScreen *screen = gtk_->GtkWindowGetScreen(window);
-  Rect screen_rect;
-  screen_rect.origin.x = 0;
-  screen_rect.origin.y = 0;
-  screen_rect.size.width = gtk_->GdkScreenGetWidth(screen);
-  screen_rect.size.height= gtk_->GdkScreenGetHeight(screen);
-  return screen_rect;
+  const gint monitor = gtk_->GdkScreenGetMonitorAtPoint(screen, x, y);
+  GdkRectangle screen_rect = {};
+  gtk_->GdkScreenGetMonitorGeometry(screen, monitor, &screen_rect);
+  return Rect(screen_rect.x, screen_rect.y,
+              screen_rect.width, screen_rect.height);
 }
 
 void WindowManager::UpdateInfolistWindow(
@@ -196,7 +196,8 @@ void WindowManager::UpdateInfolistWindow(
   const commands::Candidates &candidates = command.output().candidates();
   const Size infolist_window_size = infolist_window_->Update(candidates);
 
-  const Rect screen_rect = GetDesktopRect();
+  const Rect screen_rect = GetMonitorRect(candidate_window_rect.Left(),
+                                          candidate_window_rect.Top());
   const Rect infolist_rect =
       WindowUtil::WindowUtil::GetWindowRectForInfolistWindow(
           infolist_window_size, candidate_window_rect, screen_rect);

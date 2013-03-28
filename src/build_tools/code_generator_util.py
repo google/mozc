@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,25 +32,22 @@
 
 __author__ = "hidehiko"
 
+import string
 import struct
 import types
-
-
-CPP_STRING_LITERAL_EXCEPTION = ['\\', '"']
-
-
-def _CppCharEscape(c):
-  code = ord(c)
-  if 0x20 <= code <= 0x7E and c not in CPP_STRING_LITERAL_EXCEPTION:
-    return c
-  return r'\x%02X' % code
 
 
 def ToCppStringLiteral(s):
   """Returns C-style string literal, or NULL if given s is None."""
   if s is None:
     return 'NULL'
-  return '"%s"' % ''.join(_CppCharEscape(c) for c in s)
+
+  if all(0x20 <= ord(c) <= 0x7E for c in s):
+    # All characters are in ascii code.
+    return '"%s"' % s.replace('\\', r'\\').replace('"', r'\"')
+  else:
+    # One or more characters are non-ascii.
+    return '"%s"' % ''.join(r'\x%02X' % ord(c) for c in s)
 
 
 def FormatWithCppEscape(format, *args):

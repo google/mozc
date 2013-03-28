@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -127,8 +127,8 @@ bool UserPOS::GetTokens(const string &key,
         base_value_suffix.size() < value.size() &&
         Util::EndsWith(key, base_key_suffix) &&
         Util::EndsWith(value, base_value_suffix)) {
-      key_stem = key.substr(0, key.size() - base_key_suffix.size());
-      value_stem = value.substr(0, value.size() - base_value_suffix.size());
+      key_stem.assign(key, 0, key.size() - base_key_suffix.size());
+      value_stem.assign(value, 0, value.size() - base_value_suffix.size());
     }
     for (size_t i = 0; i < size; ++i) {
       (*tokens)[i].key   = key_stem   + conjugation_form[i].key_suffix;

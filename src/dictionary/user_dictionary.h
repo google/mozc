@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,6 +34,7 @@
 #include <vector>
 #include "base/base.h"
 #include "base/scoped_ptr.h"
+#include "base/string_piece.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/user_dictionary_storage.pb.h"
 
@@ -54,6 +55,7 @@ class UserDictionary : public DictionaryInterface {
                  SuppressionDictionary *suppression_dictionary);
   virtual ~UserDictionary();
 
+  virtual bool HasValue(const StringPiece value) const;
   virtual Node *LookupPredictiveWithLimit(
       const char *str, int size, const Limit &limit,
       NodeAllocatorInterface *allocator) const;
@@ -69,9 +71,15 @@ class UserDictionary : public DictionaryInterface {
   virtual Node *LookupReverse(const char *str, int size,
                               NodeAllocatorInterface *allocator) const;
 
+  // Looks up a user comment from a pair of key and value.  When (key, value)
+  // doesn't exist in this dictionary or user comment is empty, the empty string
+  // is set to comment.
+  void LookupComment(StringPiece key, StringPiece value,
+                     string *comment) const;
+
   // Load dictionary from UserDictionaryStorage.
   // mainly for unittesting
-  bool Load(const UserDictionaryStorage &storage);
+  bool Load(const user_dictionary::UserDictionaryStorage &storage);
 
   // Reload dictionary asynchronously
   bool Reload();
@@ -99,7 +107,7 @@ class UserDictionary : public DictionaryInterface {
   friend class UserDictionaryTest;
 
   scoped_ptr<UserDictionaryReloader> reloader_;
-  const UserPOSInterface *user_pos_;
+  scoped_ptr<const UserPOSInterface> user_pos_;
   const POSMatcher *pos_matcher_;
   SuppressionDictionary *suppression_dictionary_;
   const Limit empty_limit_;
@@ -108,6 +116,7 @@ class UserDictionary : public DictionaryInterface {
 
   DISALLOW_COPY_AND_ASSIGN(UserDictionary);
 };
+
 }  // namespace mozc
 
 #endif  // MOZC_DICTIONARY_USER_DICTIONARY_H_

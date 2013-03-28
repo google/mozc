@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,9 +31,10 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
-namespace mozc {
-extern bool kUseMockPasswordManager;
-}  // namespace mozc
+#ifdef __native_client__
+#include "base/pepper_file_system_mock.h"
+#include "base/pepper_file_util.h"
+#endif  // __native_client__
 
 int main(int argc, char **argv) {
   // TODO(yukawa, team): Implement b/2805528 so that you can specify any option
@@ -46,6 +47,12 @@ int main(int argc, char **argv) {
   // See b/2805521 for details.
   testing::GTEST_FLAG(catch_exceptions) = true;
 
-  mozc::kUseMockPasswordManager = true;
+#ifdef __native_client__
+  // Sets Pepper file system mock.
+  mozc::PepperFileSystemMock pepper_file_system_mock;
+  mozc::PepperFileUtil::SetPepperFileSystemInterfaceForTest(
+      &pepper_file_system_mock);
+#endif  // __native_client__
+
   return RUN_ALL_TESTS();
 }

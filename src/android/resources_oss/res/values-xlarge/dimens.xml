@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ Copyright 2010-2013, Google Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+     * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above
+ copyright notice, this list of conditions and the following disclaimer
+ in the documentation and/or other materials provided with the
+ distribution.
+     * Neither the name of Google Inc. nor the names of its
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<resources>
+  <dimen name="pref_inputstyle_description_width">150dip</dimen>
+
+  <dimen name="candidate_text_size">32dip</dimen>
+  <dimen name="candidate_description_text_size">12dip</dimen>
+  <!-- The size of the icon should equal to
+       (candidate_text_size + candidate_vertical_padding_size * 2) -->
+  <dimen name="keyboard_folding_icon_size">48dip</dimen>
+
+  <dimen name="symbol_view_scroll_guide_width_per_page">70dip</dimen>
+  <dimen name="symbol_view_minor_category_height">79.5dip</dimen>
+  <dimen name="symbol_view_major_category_height">79.5dip</dimen>
+
+  <dimen name="ime_window_height_portrait">500dip</dimen>
+  <dimen name="ime_window_height_landscape">450dip</dimen>
+  <dimen name="input_frame_height">325.4dip</dimen>
+
+  <dimen name="firsttime_app_name_text_size">32dip</dimen>
+  <dimen name="firsttime_description_text_size">25dip</dimen>
+  <dimen name="firsttime_padding_height">28dip</dimen>
+  <dimen name="firsttime_padding_width">40dip</dimen>
+
+  <!-- 3.5 Rows of candidates -->
+  <!-- (candidate_text_size + candidate_vertical_padding_size * 2) * 3.5
+       + narrow_frame_height -->
+  <dimen name="narrow_ime_window_height">205dip</dimen>
+</resources>

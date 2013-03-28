@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -41,9 +41,6 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/un.h>
-#ifdef OS_MACOSX
-#include <sys/ucred.h>
-#endif
 #include <sys/wait.h>
 #include <unistd.h>
 
@@ -51,13 +48,14 @@
 #include <cstring>
 #include <cstdlib>
 
+#include "base/file_util.h"
+#include "base/logging.h"
 #include "base/thread.h"
-#include "base/util.h"
 #include "ipc/ipc_path_manager.h"
 
 #ifndef UNIX_PATH_MAX
 #define UNIX_PATH_MAX 108
-#endif
+#endif  // UNIX_PATH_MAX
 
 namespace mozc {
 
@@ -66,13 +64,13 @@ namespace {
 const int kInvalidSocket = -1;
 
 void mkdir_p(const string &dirname) {
-  const string parent_dir = mozc::Util::Dirname(dirname);
+  const string parent_dir = FileUtil::Dirname(dirname);
   struct stat st;
   if (!parent_dir.empty() &&
       ::stat(parent_dir.c_str(), &st) < 0) {
     mkdir_p(parent_dir);
   }
-  mozc::Util::CreateDirectory(dirname);
+  FileUtil::CreateDirectory(dirname);
 }
 
 bool IsReadTimeout(int socket, int timeout) {
@@ -125,29 +123,6 @@ bool IsWriteTimeout(int socket, int timeout) {
 bool IsPeerValid(int socket, pid_t *pid) {
   *pid = 0;
 
-#ifdef OS_MACOSX
-  // If the OS is MAC, we should validate the peer by using LOCAL_PEERCRED.
-  struct xucred peer_cred;
-  socklen_t peer_cred_len = sizeof(struct xucred);
-  if (::getsockopt(socket, 0, LOCAL_PEERCRED,
-                   &peer_cred, &peer_cred_len) < 0) {
-    LOG(ERROR) << "cannot get peer credential.  NOT a Unix socket?";
-    return false;
-  }
-  if (peer_cred.cr_version != XUCRED_VERSION) {
-    LOG(WARNING) << "credential version mismatch.";
-    return false;
-  }
-  if (peer_cred.cr_uid != ::geteuid()) {
-    LOG(WARNING) << "uid mismatch." << peer_cred.cr_uid << "!=" << ::geteuid();
-    return false;
-  }
-
-  // MacOS doesn't have cr_pid;
-  *pid = 0;
-#endif
-
-#ifdef OS_LINUX
   // On ARM Linux, we do nothing and just return true since the platform
   // sometimes doesn't support the getsockopt(sock, SOL_SOCKET, SO_PEERCRED)
   // system call.
@@ -169,7 +144,6 @@ bool IsPeerValid(int socket, pid_t *pid) {
 
   *pid = peer_cred.pid;
 #endif  // __arm__
-#endif
 
   return true;
 }
@@ -185,13 +159,7 @@ bool SendMessage(int socket,
       *last_ipc_error = IPC_TIMEOUT_ERROR;
       return false;
     }
-    const ssize_t l = ::send(socket, buf, buf_length_left,
-#ifdef OS_MACOSX
-                             SO_NOSIGPIPE
-#else
-                             MSG_NOSIGNAL
-#endif
-                             );
+    const ssize_t l = ::send(socket, buf, buf_length_left, MSG_NOSIGNAL);
     if (l < 0) {
       // An error occurs.
       LOG(ERROR) << "an error occurred during sending \""
@@ -310,12 +278,7 @@ void IPCClient::Init(const string &name, const string &server_path) {
     address.sun_family = AF_UNIX;
     ::memcpy(address.sun_path, server_address.data(), server_address_length);
     address.sun_path[server_address_length] = '\0';
-#ifdef OS_MACOSX
-    address.sun_len = SUN_LEN(&address);
-    const size_t sun_len = sizeof(address);
-#else
     const size_t sun_len = sizeof(address.sun_family) + server_address_length;
-#endif
     pid_t pid = 0;
     if (::connect(socket_,
                   reinterpret_cast<const sockaddr*>(&address),
@@ -406,7 +369,7 @@ IPCServer::IPCServer(const string &name,
   }
   DCHECK(!server_address_.empty());
 
-  const string dirname = Util::Dirname(server_address_);
+  const string dirname = FileUtil::Dirname(server_address_);
   mkdir_p(dirname);
 
   sockaddr_un addr;
@@ -435,12 +398,7 @@ IPCServer::IPCServer(const string &name,
                SO_REUSEADDR,
                reinterpret_cast<char *>(&on),
                sizeof(on));
-#ifdef OS_MACOSX
-  addr.sun_len = SUN_LEN(&addr);
-  const size_t sun_len = sizeof(addr);
-#else
   const size_t sun_len = sizeof(addr.sun_family) + server_address_.size();
-#endif
   if (!IsAbstractSocket(server_address_)) {
     // Linux does not use files for IPC.
     ::chmod(server_address_.c_str(), 0600);

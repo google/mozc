@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,8 @@ syntax = "proto2";
 
 package mozc.config;
 
+option java_outer_classname = "ProtoConfig";
+option java_package = "org.mozc.android.inputmethod.japanese.protobuf";
 
 message GeneralConfig {
   //////////////////////////////////////////////////////////////
@@ -258,6 +260,21 @@ message Config {
   // Japanese layout for Japanese.  See http://b/2917320
   optional bool use_japanese_layout = 64 [ default = false ];
 
+  // Use kana modifier insensitive conversion.
+  // e.g. かつこう -> 学校
+  // Note that Request message has the same field.
+  // - Request's one is controlled by the client. A user cannot control it.
+  //   On the other hand Config's is under a user's control.
+  // - Whether the feature is activated or not is decided by logical-AND
+  //   of Request's and Config's.
+  optional bool use_kana_modifier_insensitive_conversion = 65 [ default = false ];
+
+  // Use typing correction feature.
+  // e.g. sunkai -> 深海
+  // Note that surely build configuration is prioritized.
+  // c.f. MOZC_ENABLE_TYPING_CORRECTION
+  optional bool use_typing_correction = 66 [ default = false ];
+
   //////////////////////////////////////////////////////////////
   //
   // Dictionary (80-99)
@@ -271,6 +288,7 @@ message Config {
   optional bool use_t13n_conversion = 86 [ default = true ];
   optional bool use_zip_code_conversion = 87  [ default = true ];
   optional bool use_spelling_correction = 88  [ default = true ];
+  optional bool use_emoji_conversion = 89 [ default = false ];
 
   message InformationListConfig {
     optional bool use_local_usage_dictionary = 1 [ default = true ];

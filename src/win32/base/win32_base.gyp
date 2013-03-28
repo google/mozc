@@ -1,4 +1,4 @@
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -44,24 +44,30 @@
   ],
   'conditions': [
     ['OS=="win"', {
+      # TODO(yukawa): Refactor following targets when the implementation of
+      #     TSF Mozc is completed.
       'targets': [
         {
-          'target_name': 'imm_util',
+          'target_name': 'imframework_util',
           'type': 'static_library',
           'sources': [
+            'imm_reconvert_string.cc',
             'imm_registrar.cc',
             'imm_util.cc',
             'input_dll.cc',
             'keyboard_layout_id.cc',
+            'tsf_profile.cc',
+            'tsf_registrar.cc',
           ],
           'dependencies': [
             '../../base/base.gyp:base',
           ],
         },
         {
-          'target_name': 'imm_util_test',
+          'target_name': 'imframework_util_test',
           'type': 'executable',
           'sources': [
+            'imm_reconvert_string_test.cc',
             'input_dll_test.cc',
             'keyboard_layout_id_test.cc',
           ],
@@ -69,19 +75,58 @@
             '../../base/base.gyp:base',
             '../../session/session_base.gyp:session_protocol',
             '../../testing/testing.gyp:gtest_main',
-            'imm_util',
+            'imframework_util',
           ],
           'variables': {
             'test_size': 'small',
           },
         },
         {
-          'target_name': 'ime_base',
+          'target_name': 'ime_impl_base',
           'type': 'static_library',
           'sources': [
             'conversion_mode_util.cc',
-            'migration_util.cc',
+            'deleter.cc',
+            'indicator_visibility_tracker.cc',
+            'input_state.cc',
+            'keyboard.cc',
+            'keyevent_handler.cc',
             'string_util.cc',
+            'surrogate_pair_observer.cc',
+            'win32_window_util.cc',
+          ],
+          'dependencies': [
+            '../../base/base.gyp:base',
+            '../../config/config.gyp:config_handler',
+            '../../config/config.gyp:config_protocol',
+            '../../session/session_base.gyp:session_protocol',
+            '../../session/session_base.gyp:ime_switch_util',
+            '../../session/session_base.gyp:output_util',
+          ],
+        },
+        {
+          'target_name': 'ime_impl_base_test',
+          'type': 'executable',
+          'sources': [
+            'conversion_mode_util_test.cc',
+            'deleter_test.cc',
+            'indicator_visibility_tracker_test.cc',
+            'keyboard_test.cc',
+            'keyevent_handler_test.cc',
+            'string_util_test.cc',
+            'surrogate_pair_observer_test.cc',
+          ],
+          'dependencies': [
+            '../../client/client.gyp:client',
+            '../../testing/testing.gyp:gtest_main',
+            'ime_impl_base',
+          ],
+        },
+        {
+          'target_name': 'ime_base',
+          'type': 'static_library',
+          'sources': [
+            'migration_util.cc',
             'uninstall_helper.cc',
           ],
           'conditions': [
@@ -93,17 +138,13 @@
           ],
           'dependencies': [
             '../../base/base.gyp:base',
-            '../../config/config.gyp:config_protocol',
-            '../../session/session_base.gyp:session_protocol',
-            'imm_util',
+            'imframework_util',
           ],
         },
         {
           'target_name': 'win32_base_test',
           'type': 'executable',
           'sources': [
-            'conversion_mode_util_test.cc',
-            'string_util_test.cc',
             'uninstall_helper_test.cc',
           ],
           'dependencies': [
@@ -187,7 +228,8 @@
       'conditions': [
         ['OS=="win"', {
           'dependencies': [
-            'imm_util_test',
+            'ime_impl_base_test',
+            'imframework_util_test',
             'win32_base_test',
             'win32_file_verifier_test',
           ],

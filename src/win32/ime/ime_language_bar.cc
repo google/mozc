@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,7 +35,8 @@
 #define _ATL_NO_HOSTING
 #include <atlcom.h>
 
-#include "base/util.h"
+#include "base/logging.h"
+#include "base/system_util.h"
 #include "base/win_util.h"
 #include "win32/ime/ime_impl_imm.h"
 #include "win32/ime/ime_language_bar_menu.h"
@@ -90,6 +91,8 @@ const GUID kImeLangBarItem_HelpMenu = {
 
 #endif
 
+const bool kShowInTaskbar = true;
+
 CComPtr<ITfLangBarItemMgr> GetLangBarItemMgr() {
   // "msctf.dll" is not always available.  For example, Windows XP can disable
   // TSF completely.  In this case, the "msctf.dll" is not loaded.
@@ -98,12 +101,12 @@ CComPtr<ITfLangBarItemMgr> GetLangBarItemMgr() {
   // b/4322508.
   const HMODULE module =
       mozc::WinUtil::GetSystemModuleHandleAndIncrementRefCount(L"msctf.dll");
-  if (module == NULL) {
-    return NULL;
+  if (module == nullptr) {
+    return nullptr;
   }
   void *function = ::GetProcAddress(module, "TF_CreateLangBarItemMgr");
-  if (function == NULL) {
-    return NULL;
+  if (function == nullptr) {
+    return nullptr;
   }
   typedef HRESULT (WINAPI *FPTF_CreateLangBarItemMgr)(
       ITfLangBarItemMgr **pplbim);
@@ -111,17 +114,18 @@ CComPtr<ITfLangBarItemMgr> GetLangBarItemMgr() {
   const HRESULT result = reinterpret_cast<FPTF_CreateLangBarItemMgr>(function)(
       &ptr);
   if (FAILED(result)) {
-    return NULL;
+    return nullptr;
   }
   return ptr;
 }
+
 }  // namespace
 
 LanguageBar::LanguageBar()
-    : input_button_menu_(NULL),
+    : input_button_menu_(nullptr),
       input_button_cookie_(TF_INVALID_COOKIE),
-      tool_button_menu_(NULL),
-      help_menu_(NULL),
+      tool_button_menu_(nullptr),
+      help_menu_(nullptr),
       help_menu_cookie_(TF_INVALID_COOKIE) {}
 
 LanguageBar::~LanguageBar() {}
@@ -134,7 +138,7 @@ HRESULT LanguageBar::InitLanguageBar(LangBarCallback *text_service) {
   // On Windows 8, keep the instance into |lang_bar_item_mgr_for_win8_|.
   // On prior OSes, always instanciate new LangBarItemMgr object.
   CComPtr<ITfLangBarItemMgr> item;
-  if (mozc::Util::IsWindows8OrLater()) {
+  if (mozc::SystemUtil::IsWindows8OrLater()) {
     if (!lang_bar_item_mgr_for_win8_) {
       lang_bar_item_mgr_for_win8_ = GetLangBarItemMgr();
     }
@@ -147,7 +151,7 @@ HRESULT LanguageBar::InitLanguageBar(LangBarCallback *text_service) {
     return E_FAIL;
   }
 
-  if (input_button_menu_ == NULL) {
+  if (input_button_menu_ == nullptr) {
     // Add the "Input Mode" button.
     const ImeLangBarMenuItem kInputMenu[] = {
       {kImeLangBarItemTypeDefault,
@@ -172,9 +176,9 @@ HRESULT LanguageBar::InitLanguageBar(LangBarCallback *text_service) {
       {kImeLangBarItemTypeDefault, LangBarCallback::kCancel, IDS_CANCEL, 0, 0},
     };
 
-    CComPtr<ImeToggleButtonMenu> input_button_menu(
-        new ImeToggleButtonMenu(text_service, kImeLangBarItem_Button));
-    if (input_button_menu == NULL) {
+    CComPtr<ImeToggleButtonMenu> input_button_menu(new ImeToggleButtonMenu(
+        text_service, kImeLangBarItem_Button, kShowInTaskbar));
+    if (input_button_menu == nullptr) {
       return E_OUTOFMEMORY;
     }
 
@@ -187,7 +191,7 @@ HRESULT LanguageBar::InitLanguageBar(LangBarCallback *text_service) {
     input_button_menu.QueryInterface(&input_button_menu_);
   }
 
-  if (tool_button_menu_ == NULL) {
+  if (tool_button_menu_ == nullptr) {
     // Add the "Tool" button.
     // TODO(taku): Make an Icon for kWordRegister
     // TODO(yukawa): Make an Icon for kWordRegister kReconversion.
@@ -209,9 +213,12 @@ HRESULT LanguageBar::InitLanguageBar(LangBarCallback *text_service) {
       {kImeLangBarItemTypeDefault, LangBarCallback::kCancel, IDS_CANCEL, 0, 0},
     };
 
-    CComPtr<ImeIconButtonMenu> tool_button_menu(
-        new ImeIconButtonMenu(text_service, kImeLangBarItem_ToolButton));
-    if (tool_button_menu == NULL) {
+    // Always show the tool icon so that a user can find the icon.
+    // This setting is different from that of MS-IME but we believe this is
+    // more friendly. See b/2275683
+    CComPtr<ImeIconButtonMenu> tool_button_menu(new ImeIconButtonMenu(
+        text_service, kImeLangBarItem_ToolButton, kShowInTaskbar));
+    if (tool_button_menu == nullptr) {
       return E_OUTOFMEMORY;
     }
 
@@ -225,7 +232,7 @@ HRESULT LanguageBar::InitLanguageBar(LangBarCallback *text_service) {
     tool_button_menu.QueryInterface(&tool_button_menu_);
   }
 
-  if (help_menu_ == NULL) {
+  if (help_menu_ == nullptr) {
     // Add the "Help" items to the system language bar help menu.
     const ImeLangBarMenuItem kHelpMenu[] = {
       {kImeLangBarItemTypeDefault, LangBarCallback::kAbout, IDS_ABOUT, 0, 0},
@@ -234,7 +241,7 @@ HRESULT LanguageBar::InitLanguageBar(LangBarCallback *text_service) {
 
     CComPtr<ImeSystemLangBarMenu> help_menu(
         new ImeSystemLangBarMenu(text_service, kImeLangBarItem_HelpMenu));
-    if (help_menu == NULL) {
+    if (help_menu == nullptr) {
       return E_OUTOFMEMORY;
     }
 
@@ -279,7 +286,7 @@ HRESULT LanguageBar::UninitLanguageBar() {
   // On Windows 8, retrieve the instance from |lang_bar_item_mgr_for_win8_|.
   // On prior OSes, always instanciate new LangBarItemMgr object.
   CComPtr<ITfLangBarItemMgr> item;
-  if (mozc::Util::IsWindows8OrLater()) {
+  if (mozc::SystemUtil::IsWindows8OrLater()) {
     // Move the ownership.
     item = lang_bar_item_mgr_for_win8_;
     lang_bar_item_mgr_for_win8_.Release();
@@ -290,16 +297,16 @@ HRESULT LanguageBar::UninitLanguageBar() {
     return E_FAIL;
   }
 
-  if (input_button_menu_ != NULL) {
+  if (input_button_menu_ != nullptr) {
     item->RemoveItem(input_button_menu_);
-    input_button_menu_ = NULL;
+    input_button_menu_ = nullptr;
   }
-  if (tool_button_menu_ != NULL) {
+  if (tool_button_menu_ != nullptr) {
     item->RemoveItem(tool_button_menu_);
-    tool_button_menu_ = NULL;
+    tool_button_menu_ = nullptr;
   }
 
-  if ((help_menu_ != NULL) && (help_menu_cookie_ != TF_INVALID_COOKIE)) {
+  if ((help_menu_ != nullptr) && (help_menu_cookie_ != TF_INVALID_COOKIE)) {
     CComPtr<ITfLangBarItem> help_menu_item;
     result = item->GetItem(
         kSystemLangBarHelpMenu, &help_menu_item);
@@ -311,7 +318,7 @@ HRESULT LanguageBar::UninitLanguageBar() {
         result = source->UnadviseSink(help_menu_cookie_);
         if (result == S_OK) {
           help_menu_cookie_ = TF_INVALID_COOKIE;
-          help_menu_ = NULL;
+          help_menu_ = nullptr;
         }
       }
     }

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -79,14 +79,17 @@ class Client : public client::ClientInterface {
   // TODO(nona): Implement this.
   virtual void SetServerLauncher(client::ServerLauncherInterface *interface);
 
-  // SendKey/TestSendKey/SendCommand automatically issue a session id if a valid
+  // Following |Send*| methods automatically issue a session id if a valid
   // session id is not found.
-  virtual bool SendKey(const commands::KeyEvent &key,
-                       commands::Output *output);
-  virtual bool TestSendKey(const commands::KeyEvent &key,
-                           commands::Output *output);
-  virtual bool SendCommand(const commands::SessionCommand &command,
-                           commands::Output *output);
+  virtual bool SendKeyWithContext(const commands::KeyEvent &key,
+                                  const commands::Context &context,
+                                  commands::Output *output);
+  virtual bool TestSendKeyWithContext(const commands::KeyEvent &key,
+                                      const commands::Context &context,
+                                      commands::Output *output);
+  virtual bool SendCommandWithContext(const commands::SessionCommand &command,
+                                      const commands::Context &context,
+                                      commands::Output *output);
 
   virtual bool GetConfig(config::Config *config);
   virtual bool SetConfig(const config::Config &config);
@@ -138,8 +141,6 @@ class Client : public client::ClientInterface {
 
   // Does nothing.
   virtual bool OpenBrowser(const string &url);
-
-  static void SetSessionFactory(session::SessionFactoryInterface *new_factory);
 
  private:
   bool CreateSession();

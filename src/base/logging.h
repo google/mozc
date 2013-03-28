@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -57,9 +57,9 @@ enum LogSeverity {
   LOG_WARNING = 1,
   LOG_ERROR   = 2,
   // Special hack for Windows build, where ERROR is defined as 0 in wingdi.h.
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   LOG_0       = LOG_ERROR,
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
   LOG_FATAL   = 3,
   LOG_SEVERITY_SIZE = 4,
 #endif
@@ -263,8 +263,9 @@ class NullLogFinalizer {
 #endif  // DEBUG
 
 #define DVLOG(verboselevel) DLOG_IF(INFO, VLOG_IS_ON(verboselevel))
+
+
 #define DVLOG_IF(verboselevel, condition) \
   DLOG_IF(INFO, (condition) && VLOG_IS_ON(verboselevel))
-
 
 #endif  // MOZC_BASE_LOGGING_H_

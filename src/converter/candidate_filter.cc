@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,6 +36,7 @@
 #include <climits>
 #include <map>
 #include <set>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -47,6 +48,7 @@
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
+#include "prediction/suggestion_filter.h"
 
 namespace mozc {
 namespace converter {
@@ -77,20 +79,21 @@ const int   kMinCost                 = 100;
 const int   kCostOffset              = 6907;
 const int   kStructureCostOffset     = 3453;
 const int   kMinStructureCostOffset  = 1151;
-const int32 kNoFilterRank            = 3;
-const int32 kNoFilterIfSameIdRank    = 10;
 const int32 kStopEnmerationCacheSize = 15;
 
 }  // anonymous namespace
 
 CandidateFilter::CandidateFilter(
     const SuppressionDictionary *suppression_dictionary,
-    const POSMatcher *pos_matcher)
+    const POSMatcher *pos_matcher,
+    const SuggestionFilter *suggestion_filter)
     : suppression_dictionary_(suppression_dictionary),
       pos_matcher_(pos_matcher),
+      suggestion_filter_(suggestion_filter),
       top_candidate_(NULL) {
   CHECK(suppression_dictionary_);
   CHECK(pos_matcher_);
+  CHECK(suggestion_filter_);
 }
 
 CandidateFilter::~CandidateFilter() {}
@@ -101,9 +104,49 @@ void CandidateFilter::Reset() {
 }
 
 CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
+    const string &original_key,
     const Segment::Candidate *candidate,
-    const vector<const Node *> &nodes) {
+    const vector<const Node *> &nodes,
+    Segments::RequestType request_type) {
   DCHECK(candidate);
+
+  // Filtering by the suggestion filter, which is applied only for the
+  // PREDICTION and SUGGESTION modes.
+  switch (request_type) {
+    case Segments::PREDICTION:
+      // In the PREDICTION mode, the suggestion filter is not applied and the
+      // same filtering rule as the CONVERSION mode is used because the
+      // PREDICTION is triggered by user action (hitting tab keys), i.e.,
+      // prediction candidates are not automatically shown to users. On the
+      // contrary, since a user hit tab keys to run prediction, even unfavorable
+      // words might be what the user wants to type.  Therefore, filtering rule
+      // is relaxed for the PREDICTION mode: we don't apply the suggestion
+      // filter if the user input key is exactly the same as candidate's.
+      if (original_key == candidate->key) {
+        break;
+      }
+      FALLTHROUGH_INTENDED;
+    case Segments::SUGGESTION:
+      // In contrast to the PREDICTION mode, the SUGGESTION is triggered without
+      // any user actions, i.e., suggestion candidates are automatically
+      // displayed to users.  Therefore, it's better to filter unfavorable words
+      // in this mode.
+      CHECK(suggestion_filter_);
+      if (suggestion_filter_->IsBadSuggestion(candidate->value)) {
+        return BAD_CANDIDATE;
+      }
+      // TODO(noriyukit): In the implementation below, the possibility remains
+      // that multiple nodes constitute bad candidates. For stronger filtering,
+      // we may want to check all the possibilities.
+      for (size_t i = 0; i < nodes.size(); ++i) {
+        if (suggestion_filter_->IsBadSuggestion(nodes[i]->value)) {
+          return BAD_CANDIDATE;
+        }
+      }
+      break;
+    default:
+      break;
+  }
 
   // In general, the cost of constrained node tends to be overestimated.
   // If the top candidate has constrained node, we skip the main body
@@ -181,6 +224,20 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
     return CandidateFilter::GOOD_CANDIDATE;
   }
 
+  // "好かっ|たり" vs  "良かっ|たり" have same non_content_value.
+  // "良かっ|たり" is also a good candidate but it is not the top candidate.
+  if (top_candidate_ != candidate &&
+      top_candidate_->content_value != top_candidate_->value &&
+      (top_candidate_->value.compare(
+          top_candidate_->content_value.size(),
+          top_candidate_->value.size() - top_candidate_->content_value.size(),
+          candidate->value,
+          candidate->content_value.size(),
+          candidate->value.size() - candidate->content_value.size()) == 0)) {
+    VLOG(1) << "don't filter if non-content value are the same";
+    return CandidateFilter::GOOD_CANDIDATE;
+  }
+
   // Check Katakana transliterations
   // Skip this check when the conversion mode is real-time;
   // otherwise this ruins the whole sentence
@@ -223,7 +280,7 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
   if (candidate_size >= 1 && nodes.size() > 1 &&
       nodes[0]->lid == nodes[0]->rid &&
       pos_matcher_->IsWeakCompoundPrefix(nodes[0]->lid)) {
-    VLOG(1) << "removing noisy prefix pattern";
+    VLOG(2) << "removing noisy prefix pattern";
     return CandidateFilter::BAD_CANDIDATE;
   }
 
@@ -265,11 +322,17 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
   }
 
   // Filters out candidates with higher cost structure.
-  if (top_structure_cost + kStructureCostOffset < candidate->structure_cost) {
+  if (max(top_structure_cost, kMinStructureCostOffset) + kStructureCostOffset <
+      candidate->structure_cost) {
     // We don't stop enumeration here. Just drops high cost structure
     // looks enough.
+    // |top_structure_cost| can be so small especially for compound or
+    // web dictionary entries.
+    // For avoiding over filtering, we use kMinStructureCostOffset if
+    // |top_structure_cost| is small.
     VLOG(2) << "structure cost is invalid:  "
-            << candidate->value << " " << candidate->structure_cost
+              << candidate->value << " " << candidate->content_value << " "
+              << candidate->structure_cost
             << " " << candidate->cost;
     return CandidateFilter::BAD_CANDIDATE;
   }
@@ -278,11 +341,13 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
 }
 
 CandidateFilter::ResultType CandidateFilter::FilterCandidate(
+    const string &original_key,
     const Segment::Candidate *candidate,
-    const vector<const Node *> &nodes) {
-  const CandidateFilter::ResultType result =
-      FilterCandidateInternal(candidate, nodes);
-  if (result != CandidateFilter::GOOD_CANDIDATE) {
+    const vector<const Node *> &nodes,
+    Segments::RequestType request_type) {
+  const ResultType result =
+      FilterCandidateInternal(original_key, candidate, nodes, request_type);
+  if (result != GOOD_CANDIDATE) {
     return result;
   }
   seen_.insert(candidate->value);

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,20 +31,22 @@
 #include <string>
 #include <vector>
 
-#include "base/base.h"
+#include "base/clock_mock.h"
+#include "base/port.h"
 #include "base/util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/converter_mock.h"
-#include "converter/user_data_manager_mock.h"
 #include "engine/mock_converter_engine.h"
+#include "engine/user_data_manager_mock.h"
 #include "session/commands.pb.h"
 #include "session/generic_storage_manager.h"
-#include "session/japanese_session_factory.h"
 #include "session/session_handler.h"
 #include "session/session_handler_test_util.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "usage_stats/usage_stats.h"
+#include "usage_stats/usage_stats_testing_util.h"
 
 DECLARE_int32(max_session_size);
 DECLARE_int32(create_session_min_interval);
@@ -64,6 +66,7 @@ class SessionHandlerTest : public JapaneseSessionHandlerTestBase {
 };
 
 TEST_F(SessionHandlerTest, MaxSessionSizeTest) {
+  uint32 expected_session_created_num = 0;
   FLAGS_create_session_min_interval = 1;
 
   // The oldest item is remvoed
@@ -77,6 +80,8 @@ TEST_F(SessionHandlerTest, MaxSessionSizeTest) {
     for (size_t i = 0; i <= session_size; ++i) {
       uint64 id = 0;
       EXPECT_TRUE(CreateSession(&handler, &id));
+      ++expected_session_created_num;
+      EXPECT_COUNT_STATS("SessionCreated", expected_session_created_num);
       ids.push_back(id);
       Util::Sleep(1500);  // 1.5 sec
     }
@@ -99,6 +104,8 @@ TEST_F(SessionHandlerTest, MaxSessionSizeTest) {
     for (size_t i = 0; i < session_size; ++i) {
       uint64 id = 0;
       EXPECT_TRUE(CreateSession(&handler, &id));
+      ++expected_session_created_num;
+      EXPECT_COUNT_STATS("SessionCreated", expected_session_created_num);
       ids.push_back(id);
       Util::Sleep(1500);  // 1.5 sec
     }
@@ -112,6 +119,8 @@ TEST_F(SessionHandlerTest, MaxSessionSizeTest) {
     // Create new session
     uint64 id = 0;
     EXPECT_TRUE(CreateSession(&handler, &id));
+    ++expected_session_created_num;
+    EXPECT_COUNT_STATS("SessionCreated", expected_session_created_num);
 
     // the oldest id no longer exists
     EXPECT_FALSE(IsGoodSession(&handler, oldest_id));
@@ -176,13 +185,130 @@ TEST_F(SessionHandlerTest, LastCommandTimeout) {
   EXPECT_FALSE(IsGoodSession(&handler, id));
 }
 
+TEST_F(SessionHandlerTest, ShutdownTest) {
+  SessionHandler handler;
+  uint64 session_id = 0;
+  EXPECT_TRUE(CreateSession(&handler, &session_id));
+
+  {
+    commands::Command command;
+    commands::Input *input = command.mutable_input();
+    input->set_id(session_id);
+    input->set_type(commands::Input::SHUTDOWN);
+    // EvalCommand returns false since the session no longer exists.
+    EXPECT_FALSE(handler.EvalCommand(&command));
+    EXPECT_EQ(session_id, command.output().id());
+  }
+
+  {  // Any command should be rejected after shutdown.
+    commands::Command command;
+    commands::Input *input = command.mutable_input();
+    input->set_id(session_id);
+    input->set_type(commands::Input::NO_OPERATION);
+    EXPECT_FALSE(handler.EvalCommand(&command));
+  }
+
+  EXPECT_COUNT_STATS("ShutDown", 1);
+  // CreateSession and Shutdown.
+  EXPECT_COUNT_STATS("SessionAllEvent", 2);
+}
+
+TEST_F(SessionHandlerTest, ClearHistoryTest) {
+  SessionHandler handler;
+  uint64 session_id = 0;
+  EXPECT_TRUE(CreateSession(&handler, &session_id));
+
+  {
+    commands::Command command;
+    commands::Input *input = command.mutable_input();
+    input->set_id(session_id);
+    input->set_type(commands::Input::CLEAR_USER_HISTORY);
+    EXPECT_TRUE(handler.EvalCommand(&command));
+    EXPECT_EQ(session_id, command.output().id());
+    EXPECT_COUNT_STATS("ClearUserHistory", 1);
+  }
+
+  {
+    commands::Command command;
+    commands::Input *input = command.mutable_input();
+    input->set_id(session_id);
+    input->set_type(commands::Input::CLEAR_USER_PREDICTION);
+    EXPECT_TRUE(handler.EvalCommand(&command));
+    EXPECT_EQ(session_id, command.output().id());
+    EXPECT_COUNT_STATS("ClearUserPrediction", 1);
+  }
+
+  {
+    commands::Command command;
+    commands::Input *input = command.mutable_input();
+    input->set_id(session_id);
+    input->set_type(commands::Input::CLEAR_UNUSED_USER_PREDICTION);
+    EXPECT_TRUE(handler.EvalCommand(&command));
+    EXPECT_EQ(session_id, command.output().id());
+    EXPECT_COUNT_STATS("ClearUnusedUserPrediction", 1);
+  }
+
+  // CreateSession and Clear{History|UserPrediction|UnusedUserPrediction}.
+  EXPECT_COUNT_STATS("SessionAllEvent", 4);
+}
+
+TEST_F(SessionHandlerTest, ElapsedTimeTest) {
+  SessionHandler handler;
+  uint64 id = 0;
+
+  ClockMock clock(0, 0);
+  Util::SetClockHandler(&clock);
+  EXPECT_TRUE(CreateSession(&handler, &id));
+  EXPECT_TIMING_STATS("ElapsedTimeUSec", 0, 1, 0, 0);
+  Util::SetClockHandler(NULL);
+}
+
+TEST_F(SessionHandlerTest, ConfigTest) {
+  config::Config config;
+  config::ConfigHandler::GetStoredConfig(&config);
+  config.set_incognito_mode(false);
+  config::ConfigHandler::SetConfig(config);
+
+  SessionHandler handler;
+  uint64 session_id = 0;
+  EXPECT_TRUE(CreateSession(&handler, &session_id));
+
+  {
+    commands::Command command;
+    commands::Input *input = command.mutable_input();
+    input->set_id(session_id);
+    input->set_type(commands::Input::GET_CONFIG);
+    EXPECT_TRUE(handler.EvalCommand(&command));
+    EXPECT_EQ(command.input().id(), command.output().id());
+    EXPECT_FALSE(command.output().config().incognito_mode());
+  }
+
+  {
+    commands::Command command;
+    commands::Input *input = command.mutable_input();
+    input->set_id(session_id);
+    input->set_type(commands::Input::SET_CONFIG);
+    config.set_incognito_mode(true);
+    input->mutable_config()->CopyFrom(config);
+    EXPECT_TRUE(handler.EvalCommand(&command));
+    EXPECT_EQ(command.input().id(), command.output().id());
+    EXPECT_TRUE(command.output().config().incognito_mode());
+    config::ConfigHandler::GetStoredConfig(&config);
+    EXPECT_TRUE(config.incognito_mode());
+  }
+
+  EXPECT_COUNT_STATS("SetConfig", 1);
+  // CreateSession, GetConfig and SetConfig.
+  EXPECT_COUNT_STATS("SessionAllEvent", 3);
+}
+
 TEST_F(SessionHandlerTest, VerifySyncIsCalled) {
   // Tests if sync is called for the following input commands.
   commands::Input::CommandType command_types[] = {
     commands::Input::DELETE_SESSION,
     commands::Input::CLEANUP,
   };
-  for (int i = 0; i < arraysize(command_types); ++i) {
+  for (size_t i = 0; i < arraysize(command_types); ++i) {
     // Set up engine with mock converter, where engine is owned by
     // SessionHandlerTest class through ResetEngine().
     MockConverterEngine *engine = new MockConverterEngine;
@@ -192,7 +318,7 @@ TEST_F(SessionHandlerTest, VerifySyncIsCalled) {
     // user_data_manager_mock is owned by the converter mock inside the engine
     // instance.
     UserDataManagerMock *user_data_mgr_mock = new UserDataManagerMock();
-    engine->mutable_converter_mock()->SetUserDataManager(user_data_mgr_mock);
+    engine->SetUserDataManager(user_data_mgr_mock);
 
     // Set up a session handler and a input command.
     SessionHandler handler;

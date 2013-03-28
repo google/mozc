@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,14 +29,14 @@
 
 #include "win32/ime/ime_candidate_info.h"
 
-// TODO(yukawa): Use <safeint.h> instead once it becomes available.
-#include <intsafe.h>
+#include <safeint.h>
 #include <windows.h>  // windows.h must be included before strsafe.h
 #include <strsafe.h>
 
 #include <algorithm>
 
 #include "google/protobuf/stubs/common.h"
+#include "base/logging.h"
 #include "base/util.h"
 #include "session/commands.pb.h"
 #include "win32/ime/ime_ui_window.h"
@@ -44,6 +44,12 @@
 namespace mozc {
 namespace win32 {
 namespace {
+
+using msl::utilities::SafeAdd;
+using msl::utilities::SafeCast;
+using msl::utilities::SafeMultiply;
+using msl::utilities::SafeSubtract;
+
 // Since IMM32 uses DWORD rather than size_t for data size in data structures,
 // relevant data size are stored into DWORD constants here.
 COMPILE_ASSERT(sizeof(DWORD) <= kint32max, SIZE_OF_DWORD_IS_TOO_LARGE);
@@ -81,8 +87,8 @@ const int kSafePageSize = 9;
 
 bool GetCandidateCountInternal(
     const CANDIDATEINFO *info, DWORD buffer_size, DWORD *count) {
-  DCHECK_NE(NULL, info);
-  DCHECK_NE(NULL, count);
+  DCHECK_NE(nullptr, info);
+  DCHECK_NE(nullptr, count);
 
   if (info->dwCount < 1) {
     return false;
@@ -90,15 +96,14 @@ bool GetCandidateCountInternal(
 
   // |count_data_offset = info->dwOffset[0] + offsetof(CANDIDATELIST, dwCount)|
   DWORD count_data_offset = info->dwOffset[0];
-  if (FAILED(DWordAdd(count_data_offset, offsetof(CANDIDATELIST, dwCount),
-                      &count_data_offset))) {
+  if (!SafeAdd(count_data_offset, offsetof(CANDIDATELIST, dwCount),
+               count_data_offset)) {
     return false;
   }
 
   // |count_next_data_offset = count_data_offset + sizeof(DWORD)|
   DWORD count_next_data_offset = count_data_offset;
-  if (FAILED(DWordAdd(
-          count_next_data_offset, kSizeOfDWORD, &count_next_data_offset))) {
+  if (!SafeAdd(count_next_data_offset, kSizeOfDWORD, count_next_data_offset)) {
     return false;
   }
 
@@ -116,10 +121,10 @@ bool GetCandidateCountInternal(
 }
 
 bool GetCandidateCount(HIMCC candidate_info_handle, DWORD *count) {
-  if (candidate_info_handle == NULL) {
+  if (candidate_info_handle == nullptr) {
     return false;
   }
-  if (count == NULL) {
+  if (count == nullptr) {
     return false;
   }
 
@@ -132,7 +137,7 @@ bool GetCandidateCount(HIMCC candidate_info_handle, DWORD *count) {
 
   const CANDIDATEINFO *info =
       static_cast<CANDIDATEINFO *>(::ImmLockIMCC(candidate_info_handle));
-  if (info == NULL) {
+  if (info == nullptr) {
     return false;
   }
 
@@ -160,7 +165,7 @@ void CandidateInfo::Clear() {
 }
 
 void CandidateInfoUtil::SetSafeDefault(CandidateInfo *info) {
-  DCHECK_NE(NULL, info);
+  DCHECK_NE(nullptr, info);
   info->Clear();
   info->candidate_info_size = kSizeOfCANDIDATEINFOAndCANDIDATELIST;
   info->candidate_list_size = kSizeOfCANDIDATELIST;
@@ -169,7 +174,7 @@ void CandidateInfoUtil::SetSafeDefault(CandidateInfo *info) {
 
 bool CandidateInfoUtil::Convert(const mozc::commands::Output &output,
                                 CandidateInfo *info) {
-  if (info == NULL) {
+  if (info == nullptr) {
     return false;
   }
   info->Clear();
@@ -220,7 +225,7 @@ bool CandidateInfoUtil::Convert(const mozc::commands::Output &output,
     return false;
   }
 
-  if (FAILED(IntToDWord(candidate_list.candidates_size(), &info->count))) {
+  if (!SafeCast(candidate_list.candidates_size(), info->count)) {
     return false;
   }
 
@@ -229,15 +234,15 @@ bool CandidateInfoUtil::Convert(const mozc::commands::Output &output,
 
   // |offset_buffer_size = sizeof(DWORD) * info.count|
   DWORD offset_buffer_size = 0;
-  if (FAILED(DWordMult(kSizeOfDWORD, info->count, &offset_buffer_size))) {
+  if (!SafeMultiply(kSizeOfDWORD, info->count, offset_buffer_size)) {
     return false;
   }
 
   // |text_buffer_initial_offset =
   //      sizeof(CANDIDATELIST) - sizeof(DWORD) + offset_buffer_size|
   DWORD text_buffer_initial_offset = kSizeOfCANDIDATELISTHeader;
-  if (FAILED(DWordAdd(text_buffer_initial_offset, offset_buffer_size,
-                      &text_buffer_initial_offset))) {
+  if (!SafeAdd(text_buffer_initial_offset, offset_buffer_size,
+               text_buffer_initial_offset)) {
     return false;
   }
 
@@ -245,7 +250,7 @@ bool CandidateInfoUtil::Convert(const mozc::commands::Output &output,
   for (size_t i = 0; i < candidate_list.candidates_size(); ++i) {
     // Calculates the offset from the top of CANDIDATELIST.
     DWORD offset = text_buffer_initial_offset;
-    if (FAILED(DWordAdd(offset, text_buffer_size, &offset))) {
+    if (!SafeAdd(offset, text_buffer_size, offset)) {
       return false;
     }
     info->offsets.push_back(offset);
@@ -261,11 +266,11 @@ bool CandidateInfoUtil::Convert(const mozc::commands::Output &output,
 
     DWORD text_len = 0;
     // |text_len = sizeof(wchar_t) * value.size()|
-    if (FAILED(DWordMult(kSizeOfWCHAR, value.size(), &text_len))) {
+    if (!SafeMultiply(kSizeOfWCHAR, value.size(), text_len)) {
       return false;
     }
     // |text_buffer_size += text_len|
-    if (FAILED(DWordAdd(text_buffer_size, text_len, &text_buffer_size))) {
+    if (!SafeAdd(text_buffer_size, text_len, text_buffer_size)) {
       return false;
     }
     for (size_t char_index = 0; char_index < value.size(); ++char_index) {
@@ -276,21 +281,18 @@ bool CandidateInfoUtil::Convert(const mozc::commands::Output &output,
   // |candidate_list_size = (sizeof(CANDIDATELIST) - sizeof(DWORD))|
   DWORD candidate_list_size = kSizeOfCANDIDATELISTHeader;
   // |candidate_list_size += offset_buffer_size|
-  if (FAILED(DWordAdd(
-          candidate_list_size, offset_buffer_size, &candidate_list_size))) {
+  if (!SafeAdd(candidate_list_size, offset_buffer_size, candidate_list_size)) {
     return false;
   }
   // |candidate_list_size += text_buffer_size|
-  if (FAILED(DWordAdd(
-          candidate_list_size, text_buffer_size, &candidate_list_size))) {
+  if (!SafeAdd(candidate_list_size, text_buffer_size, candidate_list_size)) {
     return false;
   }
 
   // |candidate_info_size = sizeof(CANDIDATEINFO)|
   DWORD candidate_info_size = kSizeOfCANDIDATEINFO;
   // |candidate_info_size += candidate_list_size|
-  if (FAILED(DWordAdd(
-          candidate_info_size, candidate_list_size, &candidate_info_size))) {
+  if (!SafeAdd(candidate_info_size, candidate_list_size, candidate_info_size)) {
     return false;
   }
 
@@ -302,7 +304,7 @@ bool CandidateInfoUtil::Convert(const mozc::commands::Output &output,
 
 void CandidateInfoUtil::Write(const CandidateInfo &info,
                               CANDIDATEINFO *target) {
-  if (target == NULL) {
+  if (target == nullptr) {
     return;
   }
 
@@ -373,7 +375,7 @@ HIMCC CandidateInfoUtil::Update(HIMCC current_handle,
   }
 
   bool was_empty = true;
-  if (current_handle != NULL) {
+  if (current_handle != nullptr) {
     DWORD previous_count = 0;
     if (GetCandidateCount(current_handle, &previous_count) &&
         previous_count != 0) {
@@ -383,7 +385,7 @@ HIMCC CandidateInfoUtil::Update(HIMCC current_handle,
 
   HIMCC new_handle = UpdateCandidateInfo(current_handle, info);
 
-  if (messages != NULL) {
+  if (messages != nullptr) {
     if (was_empty && info.show_candidate) {
       messages->push_back(UIMessage(WM_IME_NOTIFY, IMN_OPENCANDIDATE, 1));
     }
@@ -404,17 +406,17 @@ HIMCC CandidateInfoUtil::UpdateCandidateInfo(
     HIMCC current_handle, const CandidateInfo &list) {
   DCHECK_GE(list.candidate_info_size, kSizeOfCANDIDATEINFOAndCANDIDATELIST);
 
-  HIMCC new_handle = NULL;
-  if (current_handle == NULL) {
+  HIMCC new_handle = nullptr;
+  if (current_handle == nullptr) {
     new_handle = ::ImmCreateIMCC(list.candidate_info_size);
   } else {
     new_handle = ::ImmReSizeIMCC(current_handle, list.candidate_info_size);
   }
 
-  if (new_handle != NULL) {
+  if (new_handle != nullptr) {
     CANDIDATEINFO *buffer =
         static_cast<CANDIDATEINFO *>(::ImmLockIMCC(new_handle));
-    if (buffer != NULL) {
+    if (buffer != nullptr) {
       Write(list, buffer);
       ::ImmUnlockIMCC(new_handle);
     }

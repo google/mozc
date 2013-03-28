@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,16 +29,18 @@
 
 #include "testing/base/public/googletest.h"
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <windows.h>
 #else
 #include <unistd.h>
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 #include <climits>
 #include <string>
 
+#include "base/file_util.h"
 #include "base/init.h"
+#include "base/logging.h"
 #include "base/util.h"
 
 DEFINE_string(test_srcdir, "",
@@ -54,7 +56,7 @@ namespace {
 
 #include "testing/mozc_data_dir.h"
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 string GetProgramPath() {
   wchar_t w_path[MAX_PATH];
   const DWORD char_size = GetModuleFileNameW(NULL, w_path, arraysize(w_path));
@@ -72,20 +74,20 @@ string GetProgramPath() {
 
 string GetTestSrcdir() {
   const string srcdir(kMozcDataDir);
-  CHECK(Util::DirectoryExists(srcdir)) << srcdir << " is not a directory.";
+  CHECK(FileUtil::DirectoryExists(srcdir)) << srcdir << " is not a directory.";
   return srcdir;
 }
 
 string GetTestTmpdir() {
   const string tmpdir = GetProgramPath() + ".tmp";
 
-  if (!Util::DirectoryExists(tmpdir)) {
-    CHECK(Util::CreateDirectory(tmpdir));
+  if (!FileUtil::DirectoryExists(tmpdir)) {
+    CHECK(FileUtil::CreateDirectory(tmpdir));
   }
   return tmpdir;
 }
 
-#else  // OS_WINDOWS
+#else  // OS_WIN
 
 // Get absolute path to this executable. Corresponds to argv[0] plus
 // directory information. E.g like "/spam/eggs/foo_unittest".
@@ -99,7 +101,7 @@ string GetProgramPath() {
   char cwd_buf[PATH_MAX+1];
   CHECK_GT(getcwd(cwd_buf, PATH_MAX), 0);
   cwd_buf[PATH_MAX] = '\0';  // make sure it's terminated
-  return Util::JoinPath(cwd_buf, program_invocation_name);
+  return FileUtil::JoinPath(cwd_buf, program_invocation_name);
 }
 
 string GetTestSrcdir() {
@@ -123,12 +125,12 @@ string GetTestTmpdir() {
   // GetTestTmpdir is not supported in NaCl.
   // TODO(horo): Consider how to implement TestTmpdir in NaCl.
   if (access(tmpdir.c_str(), R_OK|X_OK) != 0) {
-    CHECK(Util::CreateDirectory(tmpdir));
+    CHECK(FileUtil::CreateDirectory(tmpdir));
   }
 #endif  // MOZC_USE_PEPPER_FILE_IO
   return tmpdir;
 }
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 }  // namespace
 

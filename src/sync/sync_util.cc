@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,11 +31,12 @@
 
 #include <stdlib.h>
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <windows.h>
 #endif
 
 #include "base/base.h"
+#include "base/file_util.h"
 #include "base/logging.h"
 #include "base/util.h"
 
@@ -53,12 +54,12 @@ string SyncUtil::GenRandomString(int size) {
 
 bool SyncUtil::CopyLastSyncedFile(const string &current,
                                   const string &prev) {
-  if (!Util::CopyFile(current, prev)) {
+  if (!FileUtil::CopyFile(current, prev)) {
     LOG(ERROR) << "cannot copy " << current << " prev " << prev;
     return false;
   }
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   // make the file |prev| 'system hidden'.
   wstring wfilename;
   Util::UTF8ToWide(prev.c_str(), &wfilename);
@@ -72,5 +73,6 @@ bool SyncUtil::CopyLastSyncedFile(const string &current,
 
   return true;
 }
-}  // sync
-}  // mozc
+
+}  // namespace sync
+}  // namespace mozc

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -55,6 +55,7 @@
 #include <map>
 #include <string>
 #include "base/base.h"
+#include "base/string_piece.h"
 #include "dictionary/dictionary_interface.h"
 
 namespace mozc {
@@ -77,6 +78,8 @@ class DictionaryMock : public DictionaryInterface {
 
   DictionaryMock();
   virtual ~DictionaryMock();
+
+  virtual bool HasValue(const StringPiece value) const;
 
   // DictionaryMock doesn't support a limitation
   virtual Node *LookupPredictiveWithLimit(
@@ -131,12 +134,6 @@ class DictionaryMock : public DictionaryInterface {
   void AddLookupExact(const string &str,
                       const string &key, const string &value,
                       const uint32 node_type);
-
-  // Erases all the dictinary contents.
-  void ClearAll();
-
-  // Returns a singleton object of DictionaryMock.
-  static DictionaryMock *GetDictionaryMock();
 
  private:
   map<string, list<NodeData> > predictive_dictionary_;

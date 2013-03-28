@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,9 +30,12 @@
 #include <iostream>
 #include <string>
 
-#include "base/base.h"
 #include "base/file_stream.h"
+#include "base/file_util.h"
 #include "base/logging.h"
+#include "base/port.h"
+#include "base/scoped_ptr.h"
+#include "base/system_util.h"
 #include "base/util.h"
 #include "engine/engine_factory.h"
 #include "engine/engine_interface.h"
@@ -89,8 +92,8 @@ int main(int argc, char **argv) {
 
   if (!FLAGS_profile_dir.empty()) {
     // TODO(komatsu): Make a tmp dir and use it.
-    mozc::Util::CreateDirectory(FLAGS_profile_dir);
-    mozc::Util::SetUserProfileDirectory(FLAGS_profile_dir);
+    mozc::FileUtil::CreateDirectory(FLAGS_profile_dir);
+    mozc::SystemUtil::SetUserProfileDirectory(FLAGS_profile_dir);
   }
 
   if (!FLAGS_input.empty()) {

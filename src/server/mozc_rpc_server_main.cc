@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 // Do not change the order of the following headers required for Windows.
 #include <winsock2.h>
 #include <windows.h>
@@ -36,29 +36,27 @@
 #pragma comment(lib, "ws2_32.lib")
 #define ssize_t SSIZE_T
 #else
-#include <arpa/inet.h>
 #include <fcntl.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
-#include <sys/types.h>
-#include <sys/wait.h>
 #include <unistd.h>
-#endif
+#endif  // OS_WIN
 
-#include <algorithm>
+#include <cstddef>
+#include <cstring>
 #include <vector>
 #include <string>
-#include "base/base.h"
+
 #include "base/number_util.h"
-#include "base/process_mutex.h"
 #include "base/singleton.h"
-#include "base/util.h"
+#include "base/system_util.h"
 #include "engine/engine_factory.h"
 #include "engine/engine_interface.h"
 #include "session/commands.pb.h"
 #include "session/japanese_session_factory.h"
 #include "session/random_keyevents_generator.h"
+#include "session/session_factory_manager.h"
 #include "session/session_handler.h"
 #include "session/session_usage_observer.h"
 
@@ -99,7 +97,7 @@ bool Send(int socket, const char *buf,
           size_t buf_size, int timeout) {
   ssize_t buf_left = buf_size;
   while (buf_left > 0) {
-#if defined(OS_WINDOWS)
+#if defined(OS_WIN)
     const int kFlag = 0;
 #elif defined(OS_MACOSX)
     const int kFlag = SO_NOSIGPIPE;
@@ -118,7 +116,7 @@ bool Send(int socket, const char *buf,
 }
 
 void CloseSocket(int client_socket) {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   ::closesocket(client_socket);
   ::shutdown(client_socket, SD_BOTH);
 #else
@@ -140,7 +138,7 @@ class RPCServer {
 
     CHECK_NE(server_socket_, kInvalidSocket) << "socket failed";
 
-#ifndef OS_WINDOWS
+#ifndef OS_WIN
     int flags = ::fcntl(server_socket_, F_GETFD, 0);
     CHECK_GE(flags, 0) << "fcntl(F_GETFD) failed";
     flags |= FD_CLOEXEC;
@@ -344,14 +342,14 @@ class RPCClient {
 class ScopedWSAData {
  public:
   ScopedWSAData() {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
     WSADATA wsaData;
     CHECK_EQ(::WSAStartup(MAKEWORD(2, 1), &wsaData), 0)
         << "WSAStartup failed";
 #endif
   }
   ~ScopedWSAData() {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
     ::WSACleanup();
 #endif
   }
@@ -368,8 +366,7 @@ int main(int argc, char *argv[]) {
   if (!FLAGS_user_profile_directory.empty()) {
     LOG(INFO) << "Setting user profile directory to "
               << FLAGS_user_profile_directory;
-    mozc::Util::SetUserProfileDirectory(
-        FLAGS_user_profile_directory);
+    mozc::SystemUtil::SetUserProfileDirectory(FLAGS_user_profile_directory);
   }
 
   if (FLAGS_client) {

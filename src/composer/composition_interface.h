@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,12 +32,12 @@
 
 #include <set>
 #include <string>
+#include "composer/internal/transliterators.h"
 
 namespace mozc {
 namespace composer {
 
 class Table;
-class TransliteratorInterface;
 class CompositionInput;
 
 enum TrimMode {
@@ -65,19 +65,20 @@ class CompositionInterface {
   // Get the position on mode_to from position_from on mode_from.
   virtual size_t ConvertPosition(
       size_t position_from,
-      const TransliteratorInterface *transliterator_from,
-      const TransliteratorInterface *transliterator_to) = 0;
+      Transliterators::Transliterator transliterator_from,
+      Transliterators::Transliterator transliterator_to) = 0;
 
   // TODO(komatsu): To be deleted.
   virtual size_t SetDisplayMode(
       size_t position,
-      const TransliteratorInterface *transliterator) = 0;
+      Transliterators::Transliterator transliterator) = 0;
 
   virtual void SetTransliterator(
       size_t position_from,
       size_t position_to,
-      const TransliteratorInterface *transliterator) = 0;
-  virtual const TransliteratorInterface *GetTransliterator(size_t position) = 0;
+      Transliterators::Transliterator transliterator) = 0;
+  virtual Transliterators::Transliterator GetTransliterator(
+      size_t position) = 0;
 
   virtual size_t GetLength() const = 0;
 
@@ -87,7 +88,7 @@ class CompositionInterface {
 
   // Return string with the specified transliterator and TrimeMode::FIX.
   virtual void GetStringWithTransliterator(
-      const TransliteratorInterface *transliterator,
+      Transliterators::Transliterator transliterator,
       string *output) const = 0;
 
   // Get string with consideration for ambiguity from pending input
@@ -95,7 +96,7 @@ class CompositionInterface {
                                   set<string> *expanded) const = 0;
 
   virtual void GetExpandedStringsWithTransliterator(
-      const TransliteratorInterface *transliterator, string *base,
+      Transliterators::Transliterator transliterator, string *base,
       set<string> *expanded) const = 0;
 
   // Return string with the specified trim mode and the current display mode.
@@ -109,7 +110,7 @@ class CompositionInterface {
                           string *focused,
                           string *right) const = 0;
 
-  virtual void SetInputMode(const TransliteratorInterface *transliterator) = 0;
+  virtual void SetInputMode(Transliterators::Transliterator transliterator) = 0;
 
   // Return true if the composition is adviced to be committed immediately.
   virtual bool ShouldCommit() const = 0;

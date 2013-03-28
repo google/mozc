@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,6 +35,7 @@
 
 #include "base/base.h"
 #include "base/file_stream.h"
+#include "base/file_util.h"
 #include "base/hash_tables.h"
 #include "base/logging.h"
 #include "base/util.h"
@@ -74,7 +75,7 @@ TEST(SuggestionFilter, IsBadSuggestionTest) {
   Util::SplitStringUsing(FLAGS_suggestion_filter_files, ",", &files);
   for (size_t i = 0; i < files.size(); ++i) {
     string line;
-    const string filter_file = Util::JoinPath(FLAGS_test_srcdir, files[i]);
+    const string filter_file = FileUtil::JoinPath(FLAGS_test_srcdir, files[i]);
     InputFileStream input(filter_file.c_str());
     CHECK(input) << "cannot open: " << filter_file;
     while (getline(input, line)) {
@@ -94,7 +95,8 @@ TEST(SuggestionFilter, IsBadSuggestionTest) {
   size_t num_words = 0;
   for (size_t i = 0; i < dic_files.size(); ++i) {
     LOG(INFO) << dic_files[i];
-    const string dic_file = Util::JoinPath(FLAGS_test_srcdir, dic_files[i]);
+    const string dic_file = FileUtil::JoinPath(FLAGS_test_srcdir,
+                                               dic_files[i]);
     InputFileStream input(dic_file.c_str());
     CHECK(input) << "cannot open: " << dic_file;
     vector<string> fields;

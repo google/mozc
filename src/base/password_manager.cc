@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,32 +29,31 @@
 
 #include "base/password_manager.h"
 
-#ifdef OS_WINDOWS
+#include <stddef.h>
+#ifdef OS_WIN
 #include <windows.h>
 #else
 #include <sys/stat.h>
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
-#ifdef OS_MACOSX
-#include <CoreFoundation/CoreFoundation.h>
-#include <Security/Security.h>
-#endif  // OS_MACOSX
-
+#include <cstdlib>
 #include <string>
-#include "base/base.h"
+
 #include "base/const.h"
 #include "base/encryptor.h"
 #include "base/file_stream.h"
+#include "base/file_util.h"
 #include "base/logging.h"
 #include "base/mmap.h"
 #include "base/mutex.h"
 #include "base/singleton.h"
+#include "base/system_util.h"
 #include "base/util.h"
 
 namespace mozc {
 namespace {
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 const char  kPasswordFile[] = "encrypt_key.db";
 #else
 const char  kPasswordFile[] = ".encrypt_key.db";   // dot-file (hidden file)
@@ -64,13 +63,7 @@ const size_t kPasswordSize  = 32;
 
 string CreateRandomPassword() {
   char buf[kPasswordSize];
-  if (!Util::GetSecureRandomSequence(buf, sizeof(buf))) {
-    LOG(ERROR) << "GetSecureRandomSequence failed. "
-               << "make random key with rand()";
-    for (size_t i = 0; i < sizeof(buf); ++i) {
-      buf[i] = static_cast<char>(rand() % 256);
-    }
-  }
+  Util::GetRandomSequence(buf, sizeof(buf));
   return string(buf, sizeof(buf));
 }
 
@@ -79,27 +72,27 @@ class ScopedReadWriteFile {
  public:
   explicit ScopedReadWriteFile(const string &filename)
       : filename_(filename) {
-    if (!Util::FileExists(filename_)) {
+    if (!FileUtil::FileExists(filename_)) {
       LOG(WARNING) << "file not found: " << filename;
       return;
     }
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
     wstring wfilename;
     Util::UTF8ToWide(filename_.c_str(), &wfilename);
     if (!::SetFileAttributesW(wfilename.c_str(), FILE_ATTRIBUTE_NORMAL)) {
       LOG(ERROR) << "Cannot make writable: " << filename_;
     }
-#else
+#elif !defined(MOZC_USE_PEPPER_FILE_IO)
     chmod(filename_.c_str(), 0600);  // write temporary
 #endif
   }
 
   ~ScopedReadWriteFile() {
-    if (!Util::FileExists(filename_)) {
+    if (!FileUtil::FileExists(filename_)) {
       LOG(WARNING) << "file not found: " << filename_;
       return;
     }
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
     wstring wfilename;
     Util::UTF8ToWide(filename_.c_str(), &wfilename);
     if (!::SetFileAttributesW(wfilename.c_str(),
@@ -109,7 +102,7 @@ class ScopedReadWriteFile {
                               FILE_ATTRIBUTE_READONLY)) {
       LOG(ERROR) << "Cannot make readonly: " << filename_;
     }
-#else
+#elif !defined(MOZC_USE_PEPPER_FILE_IO)
     chmod(filename_.c_str(), 0400);  // read only
 #endif
   }
@@ -119,8 +112,8 @@ class ScopedReadWriteFile {
 };
 
 string GetFileName() {
-  return Util::JoinPath(Util::GetUserProfileDirectory(),
-                        kPasswordFile);
+  return FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(),
+                            kPasswordFile);
 }
 
 bool SavePassword(const string &password) {
@@ -164,7 +157,7 @@ bool LoadPassword(string *password) {
 bool RemovePasswordFile() {
   const string filename = GetFileName();
   ScopedReadWriteFile l(filename);
-  return Util::Unlink(filename);
+  return FileUtil::Unlink(filename);
 }
 }  // namespace
 
@@ -219,7 +212,7 @@ bool PlainPasswordManager::RemovePassword() const {
 //////////////////////////////////////////////////////////////////
 // WinPasswordManager
 // We use this manager with both Windows and Mac
-#if (defined(OS_WINDOWS) || defined(OS_MACOSX))
+#if (defined(OS_WIN) || defined(OS_MACOSX))
 class WinMacPasswordManager : public PasswordManagerInterface {
  public:
   virtual bool SetPassword(const string &password) const;
@@ -271,94 +264,7 @@ bool WinMacPasswordManager::GetPassword(string *password) const {
 bool WinMacPasswordManager::RemovePassword() const {
   return RemovePasswordFile();
 }
-#endif  // OS_WINDOWS | OS_MACOSX
-
-#ifdef OS_MACOSX
-//////////////////////////////////////////////////////////////////
-// DeprecatedMacPasswordManager
-namespace {
-static const char kMacPasswordManagerName[] = kProductPrefix;
-}  // anonymous namespace
-
-// This is a deprecated Mac's keychain-based PasswordManager.  We
-// still don't remove it because it is used by the data transition
-// tool.
-// TODO(MUKAI): remove this class after the transition.
-class DeprecatedMacPasswordManager : public PasswordManagerInterface {
- public:
-  DeprecatedMacPasswordManager(const string &key = kProductPrefix)
-      : key_(key) {}
-
-  bool FindKeychainItem(string *password, SecKeychainItemRef *item_ref) const {
-    UInt32 password_length = 0;
-    void *password_data = NULL;
-    OSStatus status = SecKeychainFindGenericPassword(
-        NULL, strlen(kMacPasswordManagerName), kMacPasswordManagerName,
-        key_.size(), key_.data(),
-        &password_length, &password_data,
-        item_ref);
-    if (status == noErr) {
-      if (password != NULL) {
-        password->assign(
-            reinterpret_cast<char*>(password_data), password_length);
-      }
-      SecKeychainItemFreeContent(NULL, password_data);
-      return true;
-    }
-    return false;
-  }
-
-  bool SetPassword(const string &password) const {
-    SecKeychainItemRef item_ref = NULL;
-    string old_password;
-    OSStatus status;
-    if (FindKeychainItem(NULL, &item_ref)) {
-      status = SecKeychainItemModifyAttributesAndData(
-          item_ref, NULL, password.size(), password.data());
-    } else {
-      status = SecKeychainAddGenericPassword(
-          NULL, strlen(kMacPasswordManagerName), kMacPasswordManagerName,
-          key_.size(), key_.data(),
-          password.size(), password.data(),
-          NULL);
-    }
-    if (item_ref) {
-      CFRelease(item_ref);
-    }
-    if (status != noErr) {
-      LOG(ERROR) << "SetPassword failed.";
-      return false;
-    }
-    return true;
-  }
-
-  virtual bool GetPassword(string *password) const {
-    if (!FindKeychainItem(password, NULL)) {
-      LOG(ERROR) << "Password item not found.";
-      return false;
-    }
-    return true;
-  }
-
-  virtual bool RemovePassword() const {
-    SecKeychainItemRef item_ref = NULL;
-    if (FindKeychainItem(NULL, &item_ref)) {
-      OSStatus status = SecKeychainItemDelete(item_ref);
-      CFRelease(item_ref);
-      if (status != noErr) {
-        LOG(ERROR) << "RemovePassword failed.";
-        return false;
-      }
-      return true;
-    }
-    LOG(ERROR) << "Password item not found.";
-    return false;
-  }
-
- private:
-  string key_;
-};
-#endif
+#endif  // OS_WIN | OS_MACOSX
 
 // Chrome OS(Linux)
 // We use plain text file for password storage but this is ok
@@ -371,41 +277,9 @@ typedef PlainPasswordManager DefaultPasswordManager;
 #endif
 
 // Windows or Mac
-#if (defined(OS_WINDOWS) || defined(OS_MACOSX))
+#if (defined(OS_WIN) || defined(OS_MACOSX))
 typedef WinMacPasswordManager DefaultPasswordManager;
 #endif
-
-namespace {
-static const char kPassword[] = "DummyPasswordForUnittest";
-}
-
-class MockPasswordManager : public PasswordManagerInterface {
- public:
-  bool SetPassword(const string &password) const {
-    password_ = password;
-    return true;
-  }
-  bool GetPassword(string *password) const {
-    if (password_.empty()) {
-      return false;
-    }
-
-    *password = password_;
-    return true;
-  }
-  bool RemovePassword() const {
-    password_.clear();
-    return true;
-  }
-
-  MockPasswordManager()
-      : password_(kPassword) {}
-
-  virtual ~MockPasswordManager() {}
-
- private:
-  mutable string password_;
-};
 
 namespace {
 class PasswordManagerImpl {

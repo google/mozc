@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,27 +29,32 @@
 
 #include "usage_stats/usage_stats_uploader.h"
 
-#include <algorithm>
-#include <string>
-#include <vector>
-
 #ifdef OS_ANDROID
 #include <jni.h>
 #endif  // OS_ANDROID
 
-#include "base/number_util.h"
-#include "base/util.h"
-#include "base/version.h"
+#include <algorithm>
+#include <map>
+#include <string>
+#include <utility>
+#include <vector>
+
+#include "base/port.h"
 #include "base/scoped_ptr.h"
 #include "base/singleton.h"
-#include "base/win_util.h"  // IsCuasEnabled
-#include "config/stats_config_util.h"
+#include "base/system_util.h"
+#include "base/util.h"
+#include "base/version.h"
+#include "base/win_util.h"
+#include "config/config.pb.h"
+#include "config/config_handler.h"
 #include "net/http_client.h"
 #include "storage/registry.h"
-#include "storage/tiny_storage.h"
+#include "storage/storage_interface.h"
 #include "testing/base/public/gunit.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats.pb.h"
+#include "usage_stats/usage_stats_testing_util.h"
 
 #ifdef OS_ANDROID
 #include "base/android_util.h"
@@ -62,9 +67,6 @@ DECLARE_string(test_tmpdir);
 namespace mozc {
 namespace usage_stats {
 namespace {
-
-using mozc::config::StatsConfigUtil;
-using mozc::config::StatsConfigUtilInterface;
 
 class TestableUsageStatsUploader : public UsageStatsUploader {
  public:
@@ -123,30 +125,26 @@ class TestHTTPClient : public HTTPClientInterface {
   Result result_;
 };
 
-class TestStatsConfigUtil : public StatsConfigUtilInterface {
- public:
-  TestStatsConfigUtil() {
-    val_ = true;
-  }
-
-  virtual ~TestStatsConfigUtil() {}
-
-  virtual bool IsEnabled() const {
-    return val_;
-  }
-
-  virtual bool SetEnabled(bool val) {
-    val_ = val;
-    return true;
-  }
-
- private:
-  bool val_;
-};
-
+const uint32 kOneDaySec = 24 * 60 * 60;  // 24 hours
+const uint32 kHalfDaySec = 12 * 60 * 60;  // 12 hours
 const char kBaseUrl[] = "http://clients4.google.com/tbproxy/usagestats";
-
 const char kTestClientId[] = "TestClientId";
+const char kCountStatsKey[] = "Commit";
+const uint32 kCountStatsDefaultValue = 100;
+const char kIntegerStatsKey[] = "UserRegisteredWord";
+const int kIntegerStatsDefaultValue = 2;
+
+void SetUpMetaDataWithMozcVersion(uint32 last_upload_time,
+                                  const string &mozc_version) {
+  EXPECT_TRUE(storage::Registry::Insert("usage_stats.last_upload",
+                                        last_upload_time));
+  EXPECT_TRUE(storage::Registry::Insert("usage_stats.mozc_version",
+                                        mozc_version));
+}
+
+void SetUpMetaData(uint32 last_upload_time) {
+  SetUpMetaDataWithMozcVersion(last_upload_time, Version::GetMozcVersion());
+}
 
 class TestClientId : public ClientIdInterface {
  public:
@@ -161,36 +159,30 @@ class TestClientId : public ClientIdInterface {
 class UsageStatsUploaderTest : public ::testing::Test {
  protected:
   virtual void SetUp() {
-    TestableUsageStatsUploader::SetClientIdHandler(&client_id_);
-    stats_config_util_.SetEnabled(true);
-    StatsConfigUtil::SetHandler(&stats_config_util_);
-    EXPECT_TRUE(StatsConfigUtil::IsEnabled());
+    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
 
+    TestableUsageStatsUploader::SetClientIdHandler(&client_id_);
     HTTPClient::SetHTTPClientHandler(&client_);
-    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
     EXPECT_TRUE(storage::Registry::Clear());
 
-    // save count test stats
-    Stats stats;
-    stats.set_name("Commit");
-    stats.set_type(Stats::COUNT);
-    stats.set_count(100);
-    string stats_str;
-    stats.AppendToString(&stats_str);
-    EXPECT_TRUE(storage::Registry::Insert("usage_stats.Commit",
-                                        stats_str));
+    mozc::config::Config config;
+    mozc::config::ConfigHandler::GetDefaultConfig(&config);
+    mozc::config::ConfigHandler::SetConfig(config);
 
-    // integer test stats
-    stats.set_name("ConfigHistoryLearningLevel");
-    stats.set_type(Stats::INTEGER);
-    stats.set_int_value(0);
-    stats_str.clear();
-    stats.AppendToString(&stats_str);
-    EXPECT_TRUE(storage::Registry::Insert(
-        "usage_stats.ConfigHistoryLearningLevel", stats_str));
+    // save test stats
+    UsageStats::IncrementCountBy(kCountStatsKey, kCountStatsDefaultValue);
+    EXPECT_COUNT_STATS(kCountStatsKey, kCountStatsDefaultValue);
+    UsageStats::SetInteger(kIntegerStatsKey, kIntegerStatsDefaultValue);
+    EXPECT_INTEGER_STATS(kIntegerStatsKey, kIntegerStatsDefaultValue);
   }
 
   virtual void TearDown() {
+    mozc::config::Config config;
+    mozc::config::ConfigHandler::GetDefaultConfig(&config);
+    mozc::config::ConfigHandler::SetConfig(config);
+
+    TestableUsageStatsUploader::SetClientIdHandler(NULL);
+    HTTPClient::SetHTTPClientHandler(NULL);
     EXPECT_TRUE(storage::Registry::Clear());
   }
 
@@ -200,7 +192,7 @@ class UsageStatsUploaderTest : public ::testing::Test {
     params.push_back(make_pair("hl", "ja"));
     params.push_back(make_pair("v", Version::GetMozcVersion()));
     params.push_back(make_pair("client_id", kTestClientId));
-    params.push_back(make_pair("os_ver", Util::GetOSVersionString()));
+    params.push_back(make_pair("os_ver", SystemUtil::GetOSVersionString()));
 #ifdef OS_ANDROID
     params.push_back(
         make_pair("model",
@@ -217,73 +209,109 @@ class UsageStatsUploaderTest : public ::testing::Test {
 
   TestHTTPClient client_;
   TestClientId client_id_;
-  TestStatsConfigUtil stats_config_util_;
+  scoped_usage_stats_enabler usage_stats_enabler_;
 };
 
 TEST_F(UsageStatsUploaderTest, SendTest) {
-  // save last_upload
-  const uint32 kOneDaySec = 24 * 60 * 60;  // 24 hours
   const uint32 current_sec = static_cast<uint32>(Util::GetTime());
-  const uint32 yesterday_sec = current_sec - kOneDaySec;
-  EXPECT_TRUE(storage::Registry::Insert("usage_stats.last_upload",
-                                        yesterday_sec));
+  const uint32 last_upload_sec = current_sec - kOneDaySec;
+  SetUpMetaData(last_upload_sec);
   SetValidResult();
-  const uint32 send_sec = static_cast<uint32>(Util::GetTime());
+
   EXPECT_TRUE(TestableUsageStatsUploader::Send(NULL));
 
-  string stats_str;
   // COUNT stats are cleared
-  EXPECT_FALSE(storage::Registry::Lookup("usage_stats.Commit", &stats_str));
+  EXPECT_STATS_NOT_EXIST(kCountStatsKey);
   // INTEGER stats are not cleared
-  EXPECT_TRUE(storage::Registry::Lookup(
-      "usage_stats.ConfigHistoryLearningLevel", &stats_str));
+  EXPECT_INTEGER_STATS(kIntegerStatsKey, kIntegerStatsDefaultValue);
   uint32 recorded_sec;
+  string recorded_version;
   EXPECT_TRUE(storage::Registry::Lookup("usage_stats.last_upload",
                                         &recorded_sec));
-  EXPECT_GE(recorded_sec, send_sec);
+  EXPECT_TRUE(storage::Registry::Lookup("usage_stats.mozc_version",
+                                        &recorded_version));
+  EXPECT_LE(current_sec, recorded_sec);
+  EXPECT_EQ(Version::GetMozcVersion(), recorded_version);
+}
+
+TEST_F(UsageStatsUploaderTest, FirstTimeSendTest) {
+  const uint32 current_sec = static_cast<uint32>(Util::GetTime());
+  // Don't call SetUpMetaData()..
+  SetValidResult();
+
+  uint32 recorded_sec;
+  string recorded_version;
+  EXPECT_FALSE(storage::Registry::Lookup("usage_stats.last_upload",
+                                         &recorded_sec));
+  EXPECT_FALSE(storage::Registry::Lookup("usage_stats.mozc_version",
+                                         &recorded_version));
+
+  EXPECT_TRUE(TestableUsageStatsUploader::Send(NULL));
+
+  EXPECT_STATS_NOT_EXIST(kCountStatsKey);
+  EXPECT_INTEGER_STATS(kIntegerStatsKey, kIntegerStatsDefaultValue);
+  EXPECT_TRUE(storage::Registry::Lookup("usage_stats.last_upload",
+                                        &recorded_sec));
+  EXPECT_TRUE(storage::Registry::Lookup("usage_stats.mozc_version",
+                                        &recorded_version));
+  EXPECT_LE(current_sec, recorded_sec);
+  EXPECT_EQ(Version::GetMozcVersion(), recorded_version);
 }
 
 TEST_F(UsageStatsUploaderTest, SendFailTest) {
-  // save last_upload
-  const uint32 kHalfDaySec = 12 * 60 * 60;  // 12 hours
   const uint32 current_sec = static_cast<uint32>(Util::GetTime());
-  const uint32 yesterday_sec = current_sec - kHalfDaySec;
-  EXPECT_TRUE(storage::Registry::Insert("usage_stats.last_upload",
-                                        yesterday_sec));
+  const uint32 last_upload_sec = current_sec - kHalfDaySec;
+  SetUpMetaData(last_upload_sec);
   SetValidResult();
+
   EXPECT_FALSE(TestableUsageStatsUploader::Send(NULL));
 
-  string stats_str;
-  EXPECT_TRUE(storage::Registry::Lookup("usage_stats.Commit", &stats_str));
-  EXPECT_TRUE(storage::Registry::Lookup(
-      "usage_stats.ConfigHistoryLearningLevel", &stats_str));
+  EXPECT_COUNT_STATS(kCountStatsKey, kCountStatsDefaultValue);
+  EXPECT_INTEGER_STATS(kIntegerStatsKey, kIntegerStatsDefaultValue);
   uint32 recorded_sec;
   EXPECT_TRUE(storage::Registry::Lookup("usage_stats.last_upload",
                                         &recorded_sec));
-  EXPECT_EQ(recorded_sec, yesterday_sec);
+  EXPECT_EQ(last_upload_sec, recorded_sec);
 }
 
 TEST_F(UsageStatsUploaderTest, InvalidLastUploadTest) {
-  // save last_upload
-  const uint32 kHalfDaySec = 12 * 60 * 60;  // 12 hours
   const uint32 current_sec = static_cast<uint32>(Util::GetTime());
   // future time
   // for example: time zone has changed
   const uint32 invalid_sec = current_sec + kHalfDaySec;
-  EXPECT_TRUE(storage::Registry::Insert("usage_stats.last_upload",
-                                        invalid_sec));
+  SetUpMetaData(invalid_sec);
   SetValidResult();
+
   EXPECT_TRUE(TestableUsageStatsUploader::Send(NULL));
 
-  string stats_str;
-  EXPECT_FALSE(storage::Registry::Lookup("usage_stats.Commit", &stats_str));
-  EXPECT_TRUE(storage::Registry::Lookup(
-      "usage_stats.ConfigHistoryLearningLevel", &stats_str));
+  EXPECT_STATS_NOT_EXIST(kCountStatsKey);
+  EXPECT_INTEGER_STATS(kIntegerStatsKey, kIntegerStatsDefaultValue);
   uint32 recorded_sec;
   EXPECT_TRUE(storage::Registry::Lookup("usage_stats.last_upload",
                                         &recorded_sec));
   // Save new last_upload_time
-  EXPECT_GE(recorded_sec, current_sec);
+  EXPECT_LE(current_sec, recorded_sec);
+}
+
+TEST_F(UsageStatsUploaderTest, MozcVersionMismatchTest) {
+  const uint32 current_sec = static_cast<uint32>(Util::GetTime());
+  const uint32 last_upload_sec = current_sec - kOneDaySec;
+  SetUpMetaDataWithMozcVersion(last_upload_sec, "invalid_mozc_version");
+  SetValidResult();
+
+  EXPECT_TRUE(TestableUsageStatsUploader::Send(NULL));
+
+  EXPECT_STATS_NOT_EXIST(kCountStatsKey);
+  EXPECT_INTEGER_STATS(kIntegerStatsKey, kIntegerStatsDefaultValue);
+  uint32 recorded_sec;
+  string recorded_version;
+  EXPECT_TRUE(storage::Registry::Lookup("usage_stats.last_upload",
+                                        &recorded_sec));
+  EXPECT_TRUE(storage::Registry::Lookup("usage_stats.mozc_version",
+                                        &recorded_version));
+  // Save new last_upload_time and recorded_version.
+  EXPECT_LE(current_sec, recorded_sec);
+  EXPECT_EQ(Version::GetMozcVersion(), recorded_version);
 }
 
 namespace {
@@ -302,13 +330,11 @@ class TestStorage: public storage::StorageInterface {
 };
 }  // namespace
 
-TEST_F(UsageStatsUploaderTest, SaveCurrentTimeFailTest) {
-  // save last_upload
-  const uint32 kOneDaySec = 24 * 60 * 60;  // 24 hours
+TEST_F(UsageStatsUploaderTest, SaveMetadataFailTest) {
   const uint32 current_sec = static_cast<uint32>(Util::GetTime());
-  const uint32 yesterday_sec = current_sec - kOneDaySec;
-  EXPECT_TRUE(storage::Registry::Insert("usage_stats.last_upload",
-                                        yesterday_sec));
+  const uint32 last_upload_sec = current_sec - kOneDaySec;
+  const string current_version = Version::GetMozcVersion();
+  SetUpMetaData(last_upload_sec);
   SetValidResult();
 
   // set the TestStorage as a storage handler.
@@ -316,30 +342,31 @@ TEST_F(UsageStatsUploaderTest, SaveCurrentTimeFailTest) {
   storage::Registry::SetStorage(Singleton<TestStorage>::get());
   // confirm that we can not insert.
   EXPECT_FALSE(storage::Registry::Insert("usage_stats.last_upload",
-                                        yesterday_sec));
+                                         last_upload_sec));
+  EXPECT_FALSE(storage::Registry::Insert("usage_stats.mozc_version",
+                                         current_version));
 
   EXPECT_FALSE(TestableUsageStatsUploader::Send(NULL));
   // restore
   storage::Registry::SetStorage(NULL);
 
   // stats data are kept
-  string stats_str;
-  EXPECT_TRUE(storage::Registry::Lookup("usage_stats.Commit", &stats_str));
-  EXPECT_TRUE(storage::Registry::Lookup(
-      "usage_stats.ConfigHistoryLearningLevel", &stats_str));
+  EXPECT_COUNT_STATS(kCountStatsKey, kCountStatsDefaultValue);
+  EXPECT_INTEGER_STATS(kIntegerStatsKey, kIntegerStatsDefaultValue);
   uint32 recorded_sec;
+  string recorded_version;
   EXPECT_TRUE(storage::Registry::Lookup("usage_stats.last_upload",
                                         &recorded_sec));
-  EXPECT_EQ(recorded_sec, yesterday_sec);
+  EXPECT_TRUE(storage::Registry::Lookup("usage_stats.mozc_version",
+                                        &recorded_version));
+  EXPECT_EQ(last_upload_sec, recorded_sec);
+  EXPECT_EQ(current_version, recorded_version);
 }
 
 TEST_F(UsageStatsUploaderTest, UploadFailTest) {
-  // save last_upload
-  const uint32 kOneDaySec = 24 * 60 * 60;  // 24 hours
   const uint32 current_sec = static_cast<uint32>(Util::GetTime());
-  const uint32 yesterday_sec = current_sec - kOneDaySec;
-  EXPECT_TRUE(storage::Registry::Insert("usage_stats.last_upload",
-                                        yesterday_sec));
+  const uint32 last_upload_sec = current_sec - kOneDaySec;
+  SetUpMetaData(last_upload_sec);
   SetValidResult();
 
   TestHTTPClient::Result result;
@@ -350,31 +377,21 @@ TEST_F(UsageStatsUploaderTest, UploadFailTest) {
   EXPECT_FALSE(TestableUsageStatsUploader::Send(NULL));
 
   // stats data are not cleared
-  string stats_str;
-  EXPECT_TRUE(storage::Registry::Lookup("usage_stats.Commit", &stats_str));
-  EXPECT_TRUE(storage::Registry::Lookup(
-      "usage_stats.ConfigHistoryLearningLevel", &stats_str));
+  EXPECT_COUNT_STATS(kCountStatsKey, kCountStatsDefaultValue);
+  EXPECT_INTEGER_STATS(kIntegerStatsKey, kIntegerStatsDefaultValue);
   // "UsageStatsUploadFailed" is incremented
-  EXPECT_TRUE(storage::Registry::Lookup("usage_stats.UsageStatsUploadFailed",
-                                        &stats_str));
-  Stats stats;
-  EXPECT_TRUE(stats.ParseFromString(stats_str));
-  EXPECT_EQ(Stats::COUNT, stats.type());
-  EXPECT_EQ(1, stats.count());
+  EXPECT_COUNT_STATS("UsageStatsUploadFailed", 1);
   uint32 recorded_sec;
   EXPECT_TRUE(storage::Registry::Lookup("usage_stats.last_upload",
                                         &recorded_sec));
   // last_upload is not updated
-  EXPECT_EQ(recorded_sec, yesterday_sec);
+  EXPECT_EQ(last_upload_sec, recorded_sec);
 }
 
 TEST_F(UsageStatsUploaderTest, UploadRetryTest) {
-  // save last_upload
-  const uint32 kOneDaySec = 24 * 60 * 60;  // 24 hours
   const uint32 current_sec = static_cast<uint32>(Util::GetTime());
-  const uint32 yesterday_sec = current_sec - kOneDaySec;
-  EXPECT_TRUE(storage::Registry::Insert("usage_stats.last_upload",
-                                        yesterday_sec));
+  const uint32 last_upload_sec = current_sec - kOneDaySec;
+  SetUpMetaData(last_upload_sec);
   SetValidResult();
 
   TestHTTPClient::Result result;
@@ -385,15 +402,13 @@ TEST_F(UsageStatsUploaderTest, UploadRetryTest) {
   EXPECT_FALSE(TestableUsageStatsUploader::Send(NULL));
 
   // stats data are not cleared
-  string stats_str;
-  EXPECT_TRUE(storage::Registry::Lookup("usage_stats.Commit", &stats_str));
-  EXPECT_TRUE(storage::Registry::Lookup(
-      "usage_stats.ConfigHistoryLearningLevel", &stats_str));
+  EXPECT_COUNT_STATS(kCountStatsKey, kCountStatsDefaultValue);
+  EXPECT_INTEGER_STATS(kIntegerStatsKey, kIntegerStatsDefaultValue);
   uint32 recorded_sec;
   EXPECT_TRUE(storage::Registry::Lookup("usage_stats.last_upload",
                                         &recorded_sec));
   // last_upload is not updated
-  EXPECT_EQ(recorded_sec, yesterday_sec);
+  EXPECT_EQ(last_upload_sec, recorded_sec);
 
   // retry
   SetValidResult();
@@ -401,57 +416,181 @@ TEST_F(UsageStatsUploaderTest, UploadRetryTest) {
   EXPECT_TRUE(TestableUsageStatsUploader::Send(NULL));
 
   // Stats are cleared
-  EXPECT_FALSE(storage::Registry::Lookup("usage_stats.Commit", &stats_str));
+  EXPECT_STATS_NOT_EXIST(kCountStatsKey);
   // However, INTEGER stats are not cleared
-  EXPECT_TRUE(storage::Registry::Lookup(
-      "usage_stats.ConfigHistoryLearningLevel", &stats_str));
+  EXPECT_INTEGER_STATS(kIntegerStatsKey, kIntegerStatsDefaultValue);
   // last upload is updated
   EXPECT_TRUE(storage::Registry::Lookup("usage_stats.last_upload",
                                         &recorded_sec));
-  EXPECT_GT(recorded_sec, yesterday_sec);
+  EXPECT_LE(last_upload_sec, recorded_sec);
 }
 
 TEST_F(UsageStatsUploaderTest, UploadDataTest) {
-  // save last_upload
-  const uint32 kOneDaySec = 24 * 60 * 60;  // 24 hours
   const uint32 current_sec = static_cast<uint32>(Util::GetTime());
-  const uint32 yesterday_sec = current_sec - kOneDaySec;
-  EXPECT_TRUE(storage::Registry::Insert("usage_stats.last_upload",
-                                        yesterday_sec));
+  const uint32 last_upload_sec = current_sec - kOneDaySec;
+  SetUpMetaData(last_upload_sec);
   SetValidResult();
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   const string win64 = (string("WindowsX64:b=")
-                        + (Util::IsWindowsX64()? "t" : "f"));
+                        + (SystemUtil::IsWindowsX64()? "t" : "f"));
   client_.AddExpectedData(win64);
   int major, minor, build, revision;
   const wchar_t kDllName[] = L"msctf.dll";
-  wstring path = Util::GetSystemDir();
+  wstring path = SystemUtil::GetSystemDir();
   path += L"\\";
   path += kDllName;
-  if (Util::GetFileVersion(path, &major, &minor, &build, &revision)) {
-    client_.AddExpectedData(
-        string("MsctfVerMajor:i=") + NumberUtil::SimpleItoa(major));
-    client_.AddExpectedData(
-        string("MsctfVerMinor:i=") + NumberUtil::SimpleItoa(minor));
-    client_.AddExpectedData(
-        string("MsctfVerBuild:i=") + NumberUtil::SimpleItoa(build));
-    client_.AddExpectedData(
-        string("MsctfVerRevision:i=") + NumberUtil::SimpleItoa(revision));
+  if (SystemUtil::GetFileVersion(path, &major, &minor, &build, &revision)) {
+    client_.AddExpectedData(Util::StringPrintf("MsctfVerMajor:i=%d", major));
+    client_.AddExpectedData(Util::StringPrintf("MsctfVerMinor:i=%d", minor));
+    client_.AddExpectedData(Util::StringPrintf("MsctfVerBuild:i=%d", build));
+    client_.AddExpectedData(Util::StringPrintf("MsctfVerRevision:i=%d",
+                                               revision));
   } else {
     LOG(ERROR) << "get file version for msctf.dll failed";
   }
-  const string cuas = (string("CuasEnabled:b=")
-                       + (WinUtil::IsCuasEnabled() ? "t" : "f"));
-  client_.AddExpectedData(cuas);
+  client_.AddExpectedData(
+      string("CuasEnabled:b=") + (WinUtil::IsCuasEnabled() ? "t" : "f"));
 #endif
-  client_.AddExpectedData(string("Commit:c=100"));
-  client_.AddExpectedData(string("ConfigHistoryLearningLevel:i=0"));
-  client_.AddExpectedData(string("Daily"));
+  client_.AddExpectedData(Util::StringPrintf("%s:c=%u", kCountStatsKey,
+                                             kCountStatsDefaultValue));
+  client_.AddExpectedData(Util::StringPrintf("%s:i=%d", kIntegerStatsKey,
+                                             kIntegerStatsDefaultValue));
+  client_.AddExpectedData("Daily");
 
   EXPECT_TRUE(TestableUsageStatsUploader::Send(NULL));
 }
 
+namespace {
+void SetDoubleValueStats(
+    uint32 num, double total, double square_total,
+    usage_stats::Stats::DoubleValueStats *double_stats) {
+  double_stats->set_num(num);
+  double_stats->set_total(total);
+  double_stats->set_square_total(square_total);
+}
+
+void SetEventStats(
+    uint32 source_id,
+    uint32 sx_num, double sx_total, double sx_square_total,
+    uint32 sy_num, double sy_total, double sy_square_total,
+    uint32 dx_num, double dx_total, double dx_square_total,
+    uint32 dy_num, double dy_total, double dy_square_total,
+    uint32 tl_num, double tl_total, double tl_square_total,
+    usage_stats::Stats::TouchEventStats *event_stats) {
+  event_stats->set_source_id(source_id);
+  SetDoubleValueStats(sx_num, sx_total, sx_square_total,
+                      event_stats->mutable_start_x_stats());
+  SetDoubleValueStats(sy_num, sy_total, sy_square_total,
+                      event_stats->mutable_start_y_stats());
+  SetDoubleValueStats(dx_num, dx_total, dx_square_total,
+                      event_stats->mutable_direction_x_stats());
+  SetDoubleValueStats(dy_num, dy_total, dy_square_total,
+                      event_stats->mutable_direction_y_stats());
+  SetDoubleValueStats(tl_num, tl_total, tl_square_total,
+                      event_stats->mutable_time_length_stats());
+}
+}  // namespace
+
+TEST_F(UsageStatsUploaderTest, UploadTouchEventStats) {
+  // save last_upload
+  const uint32 current_sec = static_cast<uint32>(Util::GetTime());
+  const uint32 last_upload_sec = current_sec - kOneDaySec;
+  SetUpMetaData(last_upload_sec);
+  SetValidResult();
+
+  EXPECT_STATS_NOT_EXIST("VirtualKeyboardStats");
+  EXPECT_STATS_NOT_EXIST("VirtualKeyboardMissStats");
+  map<string, map<uint32, Stats::TouchEventStats> > touch_stats;
+  map<string, map<uint32, Stats::TouchEventStats> > miss_touch_stats;
+
+  Stats::TouchEventStats &event_stats1 = touch_stats["KEYBOARD_01"][10];
+  SetEventStats(10, 2, 3, 8, 2, 4, 10, 2, 5, 16, 2, 2, 2,
+                2, 3, 9, &event_stats1);
+
+  Stats::TouchEventStats &event_stats2 = touch_stats["KEYBOARD_02"][20];
+  SetEventStats(20, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113,
+                114, 115, 116, &event_stats2);
+
+  Stats::TouchEventStats &event_stats3 = touch_stats["KEYBOARD_01"][20];
+  SetEventStats(20, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213,
+                214, 215, 216, &event_stats3);
+
+  Stats::TouchEventStats &event_stats4 = miss_touch_stats["KEYBOARD_01"][20];
+  SetEventStats(20, 302, 303, 304, 305, 306, 307, 308, 309, 310, 311, 312, 313,
+                314, 315, 316, &event_stats4);
+
+  Stats::TouchEventStats &event_stats5 = miss_touch_stats["KEYBOARD_01"][30];
+  SetEventStats(30, 404, 406, 408, 410, 412, 414, 416, 418, 420, 422, 424, 426,
+                428, 430, 432, &event_stats5);
+
+  UsageStats::StoreTouchEventStats("VirtualKeyboardStats", touch_stats);
+  UsageStats::StoreTouchEventStats("VirtualKeyboardMissStats",
+                                   miss_touch_stats);
+
+  Stats stats;
+  EXPECT_TRUE(UsageStats::GetVirtualKeyboardForTest("VirtualKeyboardStats",
+                                                    &stats));
+  EXPECT_EQ(2, stats.virtual_keyboard_stats_size());
+  EXPECT_EQ("KEYBOARD_01",
+            stats.virtual_keyboard_stats(0).keyboard_name());
+  EXPECT_EQ("KEYBOARD_02",
+            stats.virtual_keyboard_stats(1).keyboard_name());
+  EXPECT_EQ(2, stats.virtual_keyboard_stats(0).touch_event_stats_size());
+  EXPECT_EQ(1, stats.virtual_keyboard_stats(1).touch_event_stats_size());
+
+  EXPECT_EQ(event_stats1.DebugString(),
+            stats.virtual_keyboard_stats(0).touch_event_stats(0).DebugString());
+  EXPECT_EQ(event_stats3.DebugString(),
+            stats.virtual_keyboard_stats(0).touch_event_stats(1).DebugString());
+  EXPECT_EQ(event_stats2.DebugString(),
+            stats.virtual_keyboard_stats(1).touch_event_stats(0).DebugString());
+
+  EXPECT_TRUE(UsageStats::GetVirtualKeyboardForTest("VirtualKeyboardMissStats",
+                                                    &stats));
+  EXPECT_EQ(1, stats.virtual_keyboard_stats_size());
+  EXPECT_EQ("KEYBOARD_01",
+            stats.virtual_keyboard_stats(0).keyboard_name());
+  EXPECT_EQ(2, stats.virtual_keyboard_stats(0).touch_event_stats_size());
+  EXPECT_EQ(event_stats4.DebugString(),
+            stats.virtual_keyboard_stats(0).touch_event_stats(0).DebugString());
+  EXPECT_EQ(event_stats5.DebugString(),
+            stats.virtual_keyboard_stats(0).touch_event_stats(1).DebugString());
+
+  client_.AddExpectedData(string("vks%5Fname%5FKEYBOARD%5F01:i=0"));
+  client_.AddExpectedData(string("vks%5Fname%5FKEYBOARD%5F02:i=1"));
+  client_.AddExpectedData(string("vkms%5Fname%5FKEYBOARD%5F01:i=0"));
+
+  // Average = total / num
+  // Variance = square_total / num - (total / num) ^ 2
+  // Because the current log analysis system can only deal with int values,
+  // we multiply these values by a scale factor and send them to server.
+  //   sxa, sya, dxa, dya : scale = 10000000
+  //   sxv, syv, dxv, dyv : scale = 10000000
+  //   tla, tlv : scale = 10000000
+
+  // (3 / 2) * 10000000
+  client_.AddExpectedData(string("vks%5F0%5F10%5Fsxa:i=15000000"));
+  // (8 / 2 - (3 / 2) ^ 2) * 10000000
+  client_.AddExpectedData(string("vks%5F0%5F10%5Fsxv:i=17500000"));
+  // (4 / 2) * 10000000
+  client_.AddExpectedData(string("vks%5F0%5F10%5Fsya:i=20000000"));
+  // (10 / 2 - (4 / 2) ^ 2) * 10000000
+  client_.AddExpectedData(string("vks%5F0%5F10%5Fsyv:i=10000000"));
+  // (5 / 2) * 10000000
+  client_.AddExpectedData(string("vks%5F0%5F10%5Fdxa:i=25000000"));
+  // (16 / 2 - (5 / 2) ^ 2) * 10000000
+  client_.AddExpectedData(string("vks%5F0%5F10%5Fdxv:i=17500000"));
+  // (2 / 2) * 10000000
+  client_.AddExpectedData(string("vks%5F0%5F10%5Fdya:i=10000000"));
+  // (2 / 2 - (2 / 2) ^ 2) * 10000000
+  client_.AddExpectedData(string("vks%5F0%5F10%5Fdyv:i=0"));
+  // (3 / 2) * 10000000
+  client_.AddExpectedData(string("vks%5F0%5F10%5Ftla:i=15000000"));
+  // (9 / 2 - (3 / 2) ^ 2) * 10000000
+  client_.AddExpectedData(string("vks%5F0%5F10%5Ftlv:i=22500000"));
+  EXPECT_TRUE(TestableUsageStatsUploader::Send(NULL));
+}
 
 namespace {
 #ifdef OS_ANDROID
@@ -527,7 +666,7 @@ class ClientIdTestMockJavaEncryptor : public ::mozc::jni::MockJavaEncryptor {
 
   static string GetRandomAsciiSequence(size_t size) {
     scoped_array<char> buffer(new char[size]);
-    Util::GetSecureRandomAsciiSequence(buffer.get(), size);
+    Util::GetRandomAsciiSequence(buffer.get(), size);
     return string(buffer.get(), size);
   }
 
@@ -564,7 +703,7 @@ class ClientIdTest : public ::testing::Test {
 TEST_F(ClientIdTest, CreateClientIdTest) {
   // test default client id handler here
   TestableUsageStatsUploader::SetClientIdHandler(NULL);
-  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+  SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
   EXPECT_TRUE(storage::Registry::Clear());
   string client_id1;
   TestableUsageStatsUploader::GetClientId(&client_id1);
@@ -585,7 +724,7 @@ TEST_F(ClientIdTest, CreateClientIdTest) {
 TEST_F(ClientIdTest, GetClientIdTest) {
   // test default client id handler here.
   TestableUsageStatsUploader::SetClientIdHandler(NULL);
-  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+  SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
   EXPECT_TRUE(storage::Registry::Clear());
   string client_id1;
   TestableUsageStatsUploader::GetClientId(&client_id1);
@@ -604,7 +743,7 @@ TEST_F(ClientIdTest, GetClientIdTest) {
 TEST_F(ClientIdTest, GetClientIdFailTest) {
   // test default client id handler here.
   TestableUsageStatsUploader::SetClientIdHandler(NULL);
-  Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+  SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
   EXPECT_TRUE(storage::Registry::Clear());
   string client_id1;
   TestableUsageStatsUploader::GetClientId(&client_id1);

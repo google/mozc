@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,16 +32,21 @@
 #import "base/crash_report_handler.h"
 
 #import <Cocoa/Cocoa.h>
+#if defined(GOOGLE_JAPANESE_INPUT_BUILD)
 #import <GoogleBreakpad/GoogleBreakpad.h>
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
 namespace mozc {
 
+#if defined(GOOGLE_JAPANESE_INPUT_BUILD)
 // The reference count for GoogleBreakpad
 int g_reference_count = 0;
 
 GoogleBreakpadRef g_breakpad = NULL;
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
 bool CrashReportHandler::Initialize(bool check_address) {
+#if defined(GOOGLE_JAPANESE_INPUT_BUILD)
   ++g_reference_count;
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   NSDictionary *plist = [[NSBundle mainBundle] infoDictionary];
@@ -51,16 +56,19 @@ bool CrashReportHandler::Initialize(bool check_address) {
     return true;
   }
   [pool release];
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
   return false;
 }
 
 bool CrashReportHandler::Uninitialize() {
+#if defined(GOOGLE_JAPANESE_INPUT_BUILD)
   --g_reference_count;
   if (0 == g_reference_count && NULL != g_breakpad) {
     GoogleBreakpadRelease(g_breakpad);
     g_breakpad = NULL;
     return true;
   }
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
   return false;
 }
 

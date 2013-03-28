@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,13 +34,14 @@
 #include <vector>
 
 #include "base/port.h"
-#include "dictionary/pos_matcher.h"
+#include "base/string_piece.h"
 #include "testing/base/public/gunit_prod.h"
 // for FRIEND_TEST
 
 namespace mozc {
 
 struct Token;
+class POSMatcher;
 
 class TextDictionaryLoader {
  public:
@@ -48,23 +49,31 @@ class TextDictionaryLoader {
   explicit TextDictionaryLoader(const POSMatcher& pos_matcher);
   virtual ~TextDictionaryLoader();
 
-  // Reads source dictionary file.
-  bool Open(const string &filename);
-  // Reads source dictionary file at most lines_limit lines. No limit will
-  // be applied when the limit is -1.
-  // This is mainly used for test to reduce run time.
-  // You can pass multiple filenames delimiterd by ",".
-  bool OpenWithLineLimit(const string &filename, int lines_limit);
+  // Loads tokens from system dictionary files and reading correction
+  // files. Each file name can take multiple file names by separating commas.
+  // The reading correction file is optional and can be an empty string.  Note
+  // that the tokens loaded so far are all cleared and that this class takes the
+  // ownership of the loaded tokens, i.e., they are deleted on destruction of
+  // this loader instance.
+  void Load(const string &dictionary_filename,
+            const string &reading_correction_filename);
 
-  // Reads reading correction data file.
-  // This method must be called after calling "Open".
-  bool OpenReadingCorrection(const string &filename);
+  // The same as Load() method above except that the number of tokens to be
+  // loaded is limited up to first |limit| entries.
+  void LoadWithLineLimit(const string &dictionary_filename,
+                         const string &reading_correction_filename,
+                         int limit);
 
-  void Close();
+  // Clears the loaded tokens.
+  void Clear();
 
-  // Get the pointers to dictionary tokens.
-  // Note that tokens will be deleted when TextDictionaryLoader is deleted
-  // or Close is called.
+  const vector<Token *> &tokens() const {
+    return tokens_;
+  }
+
+  // Appends the tokens owned by this instance to |res|.  Note that the appended
+  // tokens are still owned by this instance and deleted on destruction of this
+  // instance or when Clear() is called.
   void CollectTokens(vector<Token *> *res);
 
  private:
@@ -77,13 +86,14 @@ class TextDictionaryLoader {
   //   - "ZIP_CODE", or
   //   - "ENGLISH".
   // Otherwise, the method returns false.
-  bool RewriteSpecialToken(Token *token, const string &label);
+  bool RewriteSpecialToken(Token *token, StringPiece label);
 
-  void ParseTSV(const string &line);
+  Token *ParseTSV(const string &line);
 
   const POSMatcher *pos_matcher_;
   vector<Token *> tokens_;
 };
+
 }  // namespace mozc
 
 #endif  // MOZC_DICTIONARY_TEXT_DICTIONARY_LOADER_H_

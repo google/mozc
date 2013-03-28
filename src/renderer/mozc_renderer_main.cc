@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,19 +27,19 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <windows.h>
 #elif defined(ENABLE_GTK_RENDERER)
 #include <gtk/gtk.h>
-#endif  // OS_WINDOWS, ENABLE_GTK_RENDERER
+#endif  // OS_WIN, ENABLE_GTK_RENDERER
 
-#include "base/base.h"
+#include "base/crash_report_handler.h"
 #include "base/run_level.h"
+#include "base/system_util.h"
 #include "base/util.h"
-#include "base/crash_report_util.h"
 #include "config/stats_config_util.h"
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include "base/winmain.h"
 #include "base/win_util.h"
 #include "renderer/win32/win32_server.h"
@@ -60,7 +60,7 @@
 #include "renderer/unix/unix_renderer.h"
 #include "renderer/unix/unix_server.h"
 #include "renderer/unix/window_manager.h"
-#endif  // OS_WINDOWS, OS_MACOSX, ENABLE_GTK_RENDERER
+#endif  // OS_WIN, OS_MACOSX, ENABLE_GTK_RENDERER
 
 DECLARE_bool(restricted);
 
@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) {
     return -1;
   }
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   mozc::ScopedCOMInitializer com_initializer;
 #elif defined(ENABLE_GTK_RENDERER)
   gtk_set_locale();
@@ -83,9 +83,9 @@ int main(int argc, char *argv[]) {
 #endif  // GLIB>=2.31.0
   gdk_threads_init();
   gtk_init(&argc, &argv);
-#endif  // OS_WINDOWS, ENABLE_GTK_RENDERER
+#endif  // OS_WIN, ENABLE_GTK_RENDERER
 
-  mozc::Util::DisableIME();
+  mozc::SystemUtil::DisableIME();
 
   // restricted mode
   if (run_level == mozc::RunLevel::RESTRICTED) {
@@ -93,14 +93,14 @@ int main(int argc, char *argv[]) {
   }
 
   if (mozc::config::StatsConfigUtil::IsEnabled()) {
-    mozc::CrashReportUtil::InstallBreakpad();
+    mozc::CrashReportHandler::Initialize(false);
   }
   InitGoogle(argv[0], &argc, &argv, false);
 
   int result_code = 0;
 
   {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
     mozc::renderer::win32::Win32Server server;
     server.SetRendererInterface(&server);
     result_code = server.StartServer();
@@ -137,7 +137,7 @@ int main(int argc, char *argv[]) {
     renderer.Initialize();
     server.SetRendererInterface(&renderer);
     result_code = server.StartServer();
-#endif  // OS_WINDOWS, OS_MACOSX, ENABLE_GTK_RENDERER
+#endif  // OS_WIN, OS_MACOSX, ENABLE_GTK_RENDERER
   }
 
   return result_code;

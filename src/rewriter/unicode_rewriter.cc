@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -62,7 +62,7 @@ bool IsValidUCS4Expression(const string &input) {
     return false;
   }
 
-  const string hexcode = input.substr(2, input.npos);
+  const string hexcode(input, 2, input.npos);
 
   for (size_t i = 0; i < hexcode.size(); ++i) {
     if (!::isxdigit(hexcode.at(i))) {
@@ -75,7 +75,7 @@ bool IsValidUCS4Expression(const string &input) {
 // Converts given string to 32bit unsigned integer.
 bool UCS4ExpressionToInteger(const string &input, uint32 *ucs4) {
   DCHECK(ucs4);
-  const string hexcode = input.substr(2, input.npos);
+  const string hexcode(input, 2, input.npos);
   return NumberUtil::SafeHexStrToUInt32(hexcode, ucs4);
 }
 

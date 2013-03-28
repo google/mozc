@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,13 +38,34 @@ namespace composer {
 // Factory class providing basic TransliteratorInterface instances.
 class Transliterators {
  public:
-  // Return a singleton instance of TransliteratorInterface which
-  // always uses a converted string rather than a raw string.
-  static const TransliteratorInterface *GetConversionStringSelector();
+  enum Transliterator {
+    // Always uses a converted string rather than a raw string.
+    // This should be used as default value.
+    CONVERSION_STRING,
+    // Always uses a raw string rather than a converted string.
+    RAW_STRING,
+    // Returns hiragana.
+    HIRAGANA,
+    // Returns full katakana.
+    FULL_KATAKANA,
+    // Returns half katakana.
+    HALF_KATAKANA,
+    // Returns full ascii.
+    FULL_ASCII,
+    // Returns half ascii.
+    HALF_ASCII,
+    // Special transliterator.
+    // Use locally asigned transliterator.
+    // Many methods don't accept this value.
+    LOCAL,
 
-  // Return a singleton instance of TransliteratorInterface which
-  // always uses a raw string rather than a converted string.
-  static const TransliteratorInterface *GetRawStringSelector();
+    NUM_OF_TRANSLITERATOR,
+  };
+
+  // Return a singleton instance of a TransliteratorInterface.
+  // LOCAL transliterator is not accepted.
+  static const TransliteratorInterface *GetTransliterator(
+      Transliterator transliterator);
 
   static bool SplitRaw(const size_t position,
                        const string &raw,

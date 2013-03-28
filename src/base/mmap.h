@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,31 +30,54 @@
 #ifndef MOZC_BASE_MMAP_H_
 #define MOZC_BASE_MMAP_H_
 
+#include <string>
+
 #include "base/port.h"
+#ifdef MOZC_USE_PEPPER_FILE_IO
+#include "base/scoped_ptr.h"
+#endif  // MOZC_USE_PEPPER_FILE_IO
 
 namespace mozc {
 class Mmap {
  public:
-  Mmap() : text_(NULL), size_(0) {
-  }
+  Mmap();
   ~Mmap() {
     Close();
   }
-
   bool Open(const char *filename, const char *mode = "r");
   void Close();
 
+#ifndef MOZC_USE_PEPPER_FILE_IO
   char &operator[](size_t n) { return *(text_ + n); }
   char operator[](size_t n) const { return *(text_ + n); }
   char *begin() { return text_; }
   const char *begin() const { return text_; }
   char *end() { return text_ + size_; }
   const char *end() const { return text_ + size_; }
+#else  // MOZC_USE_PEPPER_FILE_IO
+  char &operator[](size_t n) { return *(text_.get() + n); }
+  char operator[](size_t n) const { return *(text_.get() + n); }
+  char *begin() { return text_.get(); }
+  const char *begin() const { return text_.get(); }
+  char *end() { return text_.get() + size_; }
+  const char *end() const { return text_.get() + size_; }
+#endif  // MOZC_USE_PEPPER_FILE_IO
 
   size_t size() const { return size_; }
 
+#ifdef MOZC_USE_PEPPER_FILE_IO
+  // Save the data in memory to the file.
+  bool SyncToFile();
+#endif  // MOZC_USE_PEPPER_FILE_IO
+
  private:
+#ifndef MOZC_USE_PEPPER_FILE_IO
   char *text_;
+#else  // MOZC_USE_PEPPER_FILE_IO
+  string filename_;
+  scoped_array<char> text_;
+  bool write_mode_;
+#endif  // MOZC_USE_PEPPER_FILE_IO
   size_t size_;
 
   DISALLOW_COPY_AND_ASSIGN(Mmap);

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,8 +39,8 @@
 
 #include "base/base.h"
 #include "base/file_stream.h"
-#include "base/logging.h"
-#include "base/util.h"
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 
 namespace mozc {
 
@@ -48,47 +48,14 @@ class InputMultiFile {
  public:
   // filenames must be separated by comma(s), e.g., "foo.txt,hoge.txt".
   InputMultiFile(const string& filenames,
-                 ios_base::openmode mode = ios_base::in)
-      : mode_(mode), ifs_(NULL) {
-    Util::SplitStringUsing(filenames, ",", &filenames_);
-    next_iter_ = filenames_.begin();
-    if (next_iter_ != filenames_.end()) {
-      OpenNext();
-    } else {
-      LOG(ERROR) << "empty filenames";
-    }
-  }
-
-  virtual ~InputMultiFile() {
-    ifs_.reset(NULL);
-  }
+                 ios_base::openmode mode = ios_base::in);
+  ~InputMultiFile();
 
   // Reads one line. Returns false after reading all the lines.
-  bool ReadLine(string* line) {
-    if (ifs_.get() == NULL) {
-      return false;
-    }
-    do {
-      if (getline(*ifs_, *line)) {
-        return true;
-      }
-    } while (OpenNext());
-    return false;
-  }
+  bool ReadLine(string* line);
 
  private:
-  bool OpenNext() {
-    while (next_iter_ != filenames_.end()) {
-      const char* filename = next_iter_->c_str();
-      ifs_.reset(new InputFileStream(filename, mode_));
-      ++next_iter_;
-      if (!ifs_->fail()) {
-        return true;
-      }
-      LOG(ERROR) << "Cannot open " << filename << endl;
-    }
-    return false;
-  }
+  bool OpenNext();
 
   vector<string> filenames_;
   const ios_base::openmode mode_;

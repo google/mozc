@@ -1,4 +1,4 @@
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -37,17 +37,6 @@
   },
   'targets': [
     {
-      'target_name': 'request_handler',
-      'type': 'static_library',
-      'sources': [
-        'request_handler.cc',
-      ],
-      'dependencies': [
-        '../config/config.gyp:config_protocol',
-        'session_protocol',
-      ],
-    },
-    {
       'target_name': 'request_test_util',
       'type': 'static_library',
       'sources': [
@@ -55,7 +44,6 @@
       ],
       'dependencies': [
         '../config/config.gyp:config_protocol',
-        'request_handler',
         'session_protocol',
       ],
     },
@@ -135,6 +123,19 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        'session_protocol',
+      ],
+    },
+    {
+      'target_name': 'session_usage_stats_util',
+      'type': 'static_library',
+      'sources': [
+        'session_usage_stats_util.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        '../protobuf/protobuf.gyp:protobuf',
+        '../usage_stats/usage_stats_base.gyp:usage_stats',
         'session_protocol',
       ],
     },

@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ Copyright 2010-2013, Google Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+     * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above
+ copyright notice, this list of conditions and the following disclaimer
+ in the documentation and/or other materials provided with the
+ distribution.
+     * Neither the name of Google Inc. nor the names of its
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          package="@ANDROID_APPLICATION_ID@"
+          android:versionCode="@ANDROID_VERSION_CODE@"
+          android:versionName="@MAJOR@.@MINOR@.@BUILD@.@REVISION@">
+  <uses-sdk android:minSdkVersion="7" android:targetSdkVersion="16" />
+
+  <!-- Google Japanese Input (the main code) requires the following permissions. -->
+  <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+  <uses-permission android:name="android.permission.INTERNET" />
+  <uses-permission android:name="android.permission.VIBRATE" />
+
+
+  <application android:icon="@drawable/application_icon" android:label="@string/app_full_name" >
+    <service android:name="@ANDROID_SERVICE_NAME@" android:permission="android.permission.BIND_INPUT_METHOD">
+      <intent-filter>
+        <action android:name="android.view.InputMethod" />
+      </intent-filter>
+      <meta-data android:name="android.view.im" android:resource="@xml/method" />
+    </service>
+
+    <!--  Preference -->
+    <activity android:name="org.mozc.android.inputmethod.japanese.MozcProxyPreferenceActivity"
+              android:label="@string/app_full_name">
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
+        <category android:name="android.intent.category.LAUNCHER" />
+      </intent-filter>
+    </activity>
+    <activity android:name="org.mozc.android.inputmethod.japanese.preference.MozcFragmentPreferenceActivity"
+              android:launchMode="singleTask" />
+    <activity android:name="org.mozc.android.inputmethod.japanese.preference.MozcFragmentSoftwareKeyboardAdvancedSettingsPreferenceActivity"
+              android:launchMode="singleTop" />
+    <activity android:name="org.mozc.android.inputmethod.japanese.preference.MozcClassicPreferenceActivity"
+              android:launchMode="singleTask" />
+    <activity android:name="org.mozc.android.inputmethod.japanese.preference.MozcClassicSoftwareKeyboardAdvancedSettingsPreferenceActivity"
+              android:launchMode="singleTop" />
+
+    <activity android:name="org.mozc.android.inputmethod.japanese.FirstTimeLaunchActivity" />
+    <activity android:name="org.mozc.android.inputmethod.japanese.preference.CreditsActivity" />
+
+    <!-- User dictionary tool -->
+    <activity android:name="org.mozc.android.inputmethod.japanese.userdictionary.UserDictionaryToolActivity"
+              android:label="@string/user_dictionary_tool_app_name"
+              android:theme="@style/MozcLightTheme"
+              android:uiOptions="splitActionBarWhenNarrow"
+              android:configChanges="orientation|screenSize">
+      <!-- Intent filters to receive a file-sending intent for user dictionary data importing. -->
+      <intent-filter>
+        <action android:name="android.intent.action.SEND" />
+        <category android:name="android.intent.category.DEFAULT" />
+        <data android:mimeType="text/plain" />
+        <data android:mimeType="application/zip" />
+      </intent-filter>
+      <intent-filter>
+        <action android:name="android.intent.action.VIEW" />
+        <category android:name="android.intent.category.DEFAULT" />
+        <data android:mimeType="text/plain" />
+        <data android:mimeType="application/zip" />
+      </intent-filter>
+    </activity>
+
+    <!-- For mushroom -->
+    <activity android:name="org.mozc.android.inputmethod.japanese.mushroom.MushroomSelectionActivity"
+              android:launchMode="singleTask"
+              android:taskAffinity=".mushroom"
+              android:theme="@style/MozcMushroomDialogTheme"
+              android:excludeFromRecents="true" />
+
+
+    <!-- Following entry is for unit tests. Do not remove. -->
+    <!-- The activity is used for testing views. -->
+    <activity android:name="android.app.Activity" />
+    <activity android:name="org.mozc.android.inputmethod.japanese.preference.MozcPreferenceDummy" />
+  </application>
+</manifest>

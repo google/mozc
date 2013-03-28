@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -50,10 +50,11 @@
 #include "renderer/renderer_command.pb.h"
 #include "renderer/win32/win32_font_util.h"
 #include "win32/base/immdev.h"
+#include "win32/base/indicator_visibility_tracker.h"
+#include "win32/base/input_state.h"
+#include "win32/base/win32_window_util.h"
 #include "win32/ime/ime_composition_string.h"
-#include "win32/ime/ime_keyevent_handler.h"
 #include "win32/ime/ime_private_context.h"
-#include "win32/ime/ime_state.h"
 
 #ifndef RWM_QUERYPOSITION
 #define RWM_QUERYPOSITION  TEXT("MSIMEQueryPosition")
@@ -82,12 +83,12 @@ const wchar_t *kTroublesomeWindowClassNames[] = {
 };
 
 HIMCC GetPrivateContextHandle(const INPUTCONTEXT *input_context) {
-  if (input_context == NULL) {
-    return NULL;
+  if (input_context == nullptr) {
+    return nullptr;
   }
   if (!PrivateContextUtil::IsValidPrivateContext(
            input_context->hPrivate)) {
-    return NULL;
+    return nullptr;
   }
   return input_context->hPrivate;
 }
@@ -126,10 +127,10 @@ UIContext::UIContext(HIMC context_handle)
       private_context_(GetPrivateContextHandle(input_context_.get())) {}
 
 bool UIContext::GetLastOutput(mozc::commands::Output *output) const {
-  if (output == NULL) {
+  if (output == nullptr) {
     return false;
   }
-  if (private_context_.get() == NULL) {
+  if (private_context_.get() == nullptr) {
     return false;
   }
   if (!private_context_->Validate()) {
@@ -141,44 +142,23 @@ bool UIContext::GetLastOutput(mozc::commands::Output *output) const {
 
 // TODO(yukawa): Check if this procedure is safe or not.
 HWND UIContext::GetAttachedWindow() const {
-  if (input_context_.get() == NULL) {
-    return NULL;
+  if (input_context_.get() == nullptr) {
+    return nullptr;
   }
   return input_context_->hWnd;
 }
 
-wstring UIContext::GetAttachedWindowClass() const {
-  if (input_context_.get() == NULL) {
-    return L"";
-  }
-  const HWND window_handle = GetAttachedWindow();
-  if (window_handle == NULL) {
-    return L"";
-  }
-  // Maximum length of WindowClass is assumed to be 256.
-  // http://msdn.microsoft.com/en-us/library/ms633576.aspx
-  const size_t kBufferSize = 256 + 1;
-  scoped_array<wchar_t> buffer(new wchar_t[kBufferSize]);
-  const int copied_num_without_null = ::GetClassName(
-      window_handle, buffer.get(), kBufferSize);
-  if (copied_num_without_null >= (kBufferSize - 1)) {
-    // Result is truncated because of too long WindowClass name.
-    return L"";
-  }
-  return wstring(buffer.get(), buffer.get() + copied_num_without_null);
-}
-
 bool UIContext::IsEmpty() const {
-  return (context_handle_ == NULL);
+  return (context_handle_ == nullptr);
 }
 
 bool UIContext::IsCompositionStringEmpty() const {
-  if (input_context_.get() == NULL) {
+  if (input_context_.get() == nullptr) {
     return true;
   }
   ScopedHIMCC<COMPOSITIONSTRING> composition_string(
       input_context_->hCompStr);
-  if (composition_string.get() == NULL) {
+  if (composition_string.get() == nullptr) {
     return true;
   }
   return (composition_string->dwCompStrLen == 0);
@@ -186,15 +166,15 @@ bool UIContext::IsCompositionStringEmpty() const {
 
 bool UIContext::GetFocusedCharacterIndexInComposition(DWORD *index) const {
   DWORD dummy_dword = 0;
-  if (index == NULL) {
+  if (index == nullptr) {
     index = &dummy_dword;
   }
 
   *index = 0;
-  if (input_context_.get() == NULL) {
+  if (input_context_.get() == nullptr) {
     return false;
   }
-  if (input_context_->hCompStr == NULL) {
+  if (input_context_->hCompStr == nullptr) {
     return false;
   }
   if (::ImmGetIMCCSize(input_context_->hCompStr) !=
@@ -203,7 +183,7 @@ bool UIContext::GetFocusedCharacterIndexInComposition(DWORD *index) const {
   }
   ScopedHIMCC<CompositionString> composition_string(
       input_context_->hCompStr);
-  if (composition_string.get() == NULL) {
+  if (composition_string.get() == nullptr) {
     return false;
   }
   *index = composition_string->focused_character_index();
@@ -211,10 +191,10 @@ bool UIContext::GetFocusedCharacterIndexInComposition(DWORD *index) const {
 }
 
 bool UIContext::GetCompositionForm(COMPOSITIONFORM *composition_form) const {
-  if (input_context_.get() == NULL) {
+  if (input_context_.get() == nullptr) {
     return false;
   }
-  if (composition_form == NULL) {
+  if (composition_form == nullptr) {
     return false;
   }
   if ((input_context_->fdwInit & INIT_COMPFORM) != INIT_COMPFORM) {
@@ -226,10 +206,10 @@ bool UIContext::GetCompositionForm(COMPOSITIONFORM *composition_form) const {
 
 bool UIContext::GetCandidateForm(
     DWORD form_index, CANDIDATEFORM *candidate_form) const {
-  if (input_context_.get() == NULL) {
+  if (input_context_.get() == nullptr) {
     return false;
   }
-  if (candidate_form == NULL) {
+  if (candidate_form == nullptr) {
     return false;
   }
 
@@ -246,10 +226,10 @@ bool UIContext::GetCandidateForm(
 }
 
 bool UIContext::GetCompositionFont(LOGFONTW *font) const {
-  if (input_context_.get() == NULL) {
+  if (input_context_.get() == nullptr) {
     return false;
   }
-  if (font == NULL) {
+  if (font == nullptr) {
     return false;
   }
   // ImmGetCompositionFontW internally checks if INPUTCONTEXT::fdwInit has
@@ -284,10 +264,10 @@ bool UIContext::GetCompositionFont(LOGFONTW *font) const {
 }
 
 bool UIContext::GetConversionMode(DWORD *conversion) const {
-  if (input_context_.get() == NULL) {
+  if (input_context_.get() == nullptr) {
     return false;
   }
-  if (conversion == NULL) {
+  if (conversion == nullptr) {
     return false;
   }
   if ((input_context_->fdwInit & INIT_CONVERSION) != INIT_CONVERSION) {
@@ -298,54 +278,65 @@ bool UIContext::GetConversionMode(DWORD *conversion) const {
 }
 
 bool UIContext::GetOpenStatus() const {
-  if (input_context_.get() == NULL) {
+  if (input_context_.get() == nullptr) {
     return false;
   }
   return input_context_->fOpen;
 }
 
 bool UIContext::IsKanaInputPreferred() const {
-  if (input_context_.get() == NULL) {
+  if (input_context_.get() == nullptr) {
     return false;
   }
-  if (private_context_.get() == NULL) {
+  if (private_context_.get() == nullptr) {
     return false;
   }
   if (!private_context_->Validate()) {
     return false;
   }
-  if (private_context_->ime_behavior == NULL) {
+  if (private_context_->ime_behavior == nullptr) {
     return false;
   }
   return private_context_->ime_behavior->prefer_kana_input;
 }
 
 mozc::client::ClientInterface *UIContext::client() const {
-  if (input_context_.get() == NULL) {
-    return NULL;
+  if (input_context_.get() == nullptr) {
+    return nullptr;
   }
-  if (private_context_.get() == NULL) {
-    return NULL;
+  if (private_context_.get() == nullptr) {
+    return nullptr;
   }
   return private_context_->client;
 }
 
 const INPUTCONTEXT *UIContext::input_context() const {
-  if (input_context_.get() == NULL) {
-    return NULL;
+  if (input_context_.get() == nullptr) {
+    return nullptr;
   }
   return input_context_.get();
 }
 
 UIVisibilityTracker *UIContext::ui_visibility_tracker() const {
-  if (input_context_.get() == NULL) {
-    return NULL;
+  if (input_context_.get() == nullptr) {
+    return nullptr;
   }
-  if (private_context_.get() == NULL) {
-    return NULL;
+  if (private_context_.get() == nullptr) {
+    return nullptr;
   }
   return private_context_->ui_visibility_tracker;
 }
+
+IndicatorVisibilityTracker *UIContext::indicator_visibility_tracker() const {
+  if (input_context_.get() == nullptr) {
+    return nullptr;
+  }
+  if (private_context_.get() == nullptr) {
+    return nullptr;
+  }
+  return private_context_->indicator_visibility_tracker;
+}
+
 
 bool UIContext::FillCompositionForm(ApplicationInfo *info) const {
   COMPOSITIONFORM composition_form = {0};
@@ -411,7 +402,8 @@ bool UIContext::FillCharPosition(ApplicationInfo *info) const {
 
   // Do not request character position to some troublesome windows.
   // See b/4285222 for details.
-  const wstring window_class_name = GetAttachedWindowClass();
+  const wstring &window_class_name =
+      WindowUtil::GetWindowClassName(window_handle);
   for (size_t i = 0; i < arraysize(kTroublesomeWindowClassNames); ++i) {
     if (window_class_name == kTroublesomeWindowClassNames[i]) {
       return false;

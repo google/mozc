@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,9 +27,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <string.h>
-#include "base/file_stream.h"
 #include "base/mmap.h"
+
+#include <string.h>
+
+#include "base/file_stream.h"
+#include "base/file_util.h"
+#include "base/scoped_ptr.h"
 #include "base/util.h"
 #include "testing/base/public/gunit.h"
 
@@ -39,25 +43,22 @@ namespace mozc {
 namespace {
 
 TEST(MmapTest, MmapTest) {
-  const string filename = Util::JoinPath(FLAGS_test_tmpdir, "test.db");
+  const string filename = FileUtil::JoinPath(FLAGS_test_tmpdir, "test.db");
 
   const size_t kFileNameSize[] = { 1, 100, 1024, 8192 };
-
   for (int i = 0; i < arraysize(kFileNameSize); ++i) {
-    Util::Unlink(filename);
+    FileUtil::Unlink(filename);
     scoped_array<char> buf(new char[kFileNameSize[i]]);
-
     memset(buf.get(), 0, kFileNameSize[i]);
 
     {
       OutputFileStream ofs(filename.c_str(),
                            ios::out | ios::binary);
-      EXPECT_TRUE(ofs);
+      EXPECT_TRUE(ofs.good());
       ofs.write(buf.get(), kFileNameSize[i]);
     }
 
-    EXPECT_TRUE(Util::GetSecureRandomSequence(buf.get(),
-                                              kFileNameSize[i]));
+    Util::GetRandomSequence(buf.get(), kFileNameSize[i]);
 
     // Write Test
     {
@@ -93,7 +94,7 @@ TEST(MmapTest, MmapTest) {
       }
     }
 
-    Util::Unlink(filename);
+    FileUtil::Unlink(filename);
   }
 }
 }  // namespace

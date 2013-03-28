@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,10 +27,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// Handler of commands::KeyEvent.
+// Utilities for commands::KeyEvent.
 
-#ifndef MOZC_SESSION_COMMANDS_HANDLER_H_
-#define MOZC_SESSION_COMMANDS_HANDLER_H_
+#ifndef MOZC_KEY_EVENT_UTIL_H_
+#define MOZC_KEY_EVENT_UTIL_H_
 
 #include "base/port.h"
 
@@ -98,4 +98,4 @@ class KeyEventUtil {
 
 }  // namespace mozc
 
-#endif  // MOZC_SESSION_COMMANDS_HANDLER_H_
+#endif  // MOZC_KEY_EVENT_UTIL_H_

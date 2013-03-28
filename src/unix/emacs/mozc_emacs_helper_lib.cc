@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,6 +35,7 @@
 #include <cstdlib>
 
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/number_util.h"
 #include "base/protobuf/descriptor.h"
 #include "base/util.h"
@@ -439,9 +440,9 @@ void PrintFieldValue(
     // We don't need any 64-bit values on Emacs so far, and 32-bit
     // integer values have never got over 28-bit yet.
     PRINT_FIELD_VALUE(INT32, Int32, "%d");
-    PRINT_FIELD_VALUE(INT64, Int64, "\"%"GG_LL_FORMAT"d\"");  // as a string
+    PRINT_FIELD_VALUE(INT64, Int64, "\"%" GG_LL_FORMAT "d\"");  // as a string
     PRINT_FIELD_VALUE(UINT32, UInt32, "%u");
-    PRINT_FIELD_VALUE(UINT64, UInt64, "\"%"GG_LL_FORMAT"u\"");  // as a string
+    PRINT_FIELD_VALUE(UINT64, UInt64, "\"%" GG_LL_FORMAT "u\"");  // as a string
     PRINT_FIELD_VALUE(DOUBLE, Double, "%f");
     PRINT_FIELD_VALUE(FLOAT, Float, "%f");
 #undef PRINT_FIELD_VALUE

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,19 +35,20 @@
 #include <algorithm>  // for unique
 #include <cctype>
 #include <set>
-#include <string>
 #include <sstream>
+#include <string>
 #include <vector>
 #include "base/base.h"
-#include "base/singleton.h"
 #include "base/config_file_stream.h"
+#include "base/logging.h"
+#include "base/singleton.h"
 #include "base/util.h"
 #include "gui/base/table_util.h"
 #include "gui/config_dialog/combobox_delegate.h"
 #include "gui/config_dialog/keybinding_editor_delegate.h"
 #include "session/commands.pb.h"
-#include "session/key_parser.h"
 #include "session/internal/keymap.h"
+#include "session/key_parser.h"
 // TODO(komatsu): internal files should not be used from external modules.
 
 namespace mozc {
@@ -186,6 +187,7 @@ class KeyMapValidator {
 
     return true;
   }
+
  private:
   set<uint32> invisible_modifiers_;
   set<uint32> invisible_key_events_;
@@ -391,10 +393,10 @@ bool KeyMapEditorDialog::LoadFromStream(istream *is) {
 bool KeyMapEditorDialog::Update() {
   if (mutable_table_widget()->rowCount() == 0) {
     QMessageBox::warning(this,
-                         tr("Mozc settings"),
+                         windowTitle(),
                          tr("Current keymap table is empty. "
                             "You might want to import a pre-defined "
-                            "keymap table first"));
+                            "keymap table first."));
     return false;
   }
 
@@ -431,7 +433,7 @@ bool KeyMapEditorDialog::Update() {
 
     if (!validator->IsVisibleKey(key)) {
       QMessageBox::warning(this,
-                           tr("Mozc settings"),
+                           windowTitle(),
                            (tr("Invalid key:\n%1")
                             .arg(QString::fromUtf8(key.c_str()))));
       return false;
@@ -447,13 +449,13 @@ bool KeyMapEditorDialog::Update() {
   *keymap_table += invisible_keymap_table_;
 
   if (new_ime_switch_keymap != ime_switch_keymap_) {
-#if defined(OS_WINDOWS) || defined(OS_LINUX)
+#if defined(OS_WIN) || defined(OS_LINUX)
     QMessageBox::information(
         this,
-        tr("Mozc settings"),
+        windowTitle(),
         tr("The keymaps for IME ON and Reconversion will be "
            "applied after new applications."));
-#endif  // OS_WINDOWS || OS_LINUX
+#endif  // OS_WIN || OS_LINUX
     ime_switch_keymap_ = new_ime_switch_keymap;
   }
 
@@ -486,7 +488,7 @@ void KeyMapEditorDialog::OnEditMenuAction(QAction *action) {
         QMessageBox::Ok !=
         QMessageBox::question(
             this,
-            tr("Mozc settings"),
+            windowTitle(),
             tr("Do you want to overwrite the current keymaps?"),
             QMessageBox::Ok | QMessageBox::Cancel,
             QMessageBox::Cancel)) {

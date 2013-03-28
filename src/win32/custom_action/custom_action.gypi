@@ -1,4 +1,4 @@
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -31,6 +31,7 @@
   'type': 'shared_library',
   'sources': [
     'custom_action.cc',
+    'custom_action.def',
     '<(gen_out_dir)/custom_action_autogen.rc',
   ],
   'dependencies': [
@@ -40,42 +41,15 @@
     '../../renderer/renderer.gyp:renderer_client',
     '../../server/server.gyp:cache_service_manager',
     '../base/win32_base.gyp:ime_base',
+    '../base/win32_base.gyp:imframework_util',
     'gen_custom_action_resource_header',
   ],
   'msvs_settings': {
     'VCLinkerTool': {
-      'ModuleDefinitionFile': '<(gen_out_dir)/custom_actions.def',
       'AdditionalDependencies': [
         'crypt32.lib',  # used in 'custom_action.cc'
         'msi.lib',      # used in 'custom_action.cc'
       ],
     },
   },
-  'actions': [
-    {
-      'action_name': 'gen_customaction_deffile',
-      'variables': {
-        'input_file': 'custom_action_template.def',
-        'output_file': '<(gen_out_dir)/custom_actions.def',
-      },
-      'inputs': [
-        '<(input_file)',
-      ],
-      'outputs': [
-        '<(output_file)',
-      ],
-      'action': [
-        'python', '../../build_tools/redirect.py',
-        '<(output_file)',
-        'cl.exe',
-        '/EP',
-        '/TP',
-        '/nologo',
-        '/DINTERNALONLY_Failure__=',
-        '/DINTERNALONLY_DisableErrorReporting__=',
-        '<(input_file)',
-      ],
-      'message': 'Generating deffile from <(input_file)',
-    },
-  ],
 }

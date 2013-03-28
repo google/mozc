@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,11 +30,13 @@
 #ifndef MOZC_CONVERTER_NBEST_GENERATOR_H_
 #define MOZC_CONVERTER_NBEST_GENERATOR_H_
 
+#include <string>
 #include <vector>
 
 #include "base/freelist.h"
 #include "base/port.h"
 #include "base/scoped_ptr.h"
+#include "converter/candidate_filter.h"
 #include "converter/segments.h"
 
 namespace mozc {
@@ -43,32 +45,70 @@ class ConnectorInterface;
 class Lattice;
 class POSMatcher;
 class SegmenterInterface;
+class SuggestionFilter;
 class SuppressionDictionary;
 struct Node;
-
-namespace converter {
-class CandidateFilter;
-}  // namespace converter
 
 // TODO(toshiyuki): write unittest for NBestGenerator.
 class NBestGenerator {
  public:
+  enum BoundaryCheckMode {
+    // Boundary check mode.
+    // For the case like;
+    //   Candidate edge:      |  candidate  |
+    //   Nodes:        |Node A|Node B|Node C|Node D|
+
+    // For normal converison.
+    //  Candidate boundary is strictly same as inner boundary.
+    // A-B: Should be the boundary
+    // B-C: Should not be the boundary
+    // C-D: Should be the boundary
+    STRICT = 0,
+
+    // For resegmented segment.
+    //  Check mid point only.
+    // A-B: Don't care
+    // B-C: Should not be the boundary
+    // C-D: Don't care
+    ONLY_MID,
+
+    // For Realtime conversion ("私の名前は中野です").
+    //  Check only for candidate edge.
+    // A-B: Should be the boundary
+    // B-C: Don't care
+    // C-D: Should be the boundary
+    ONLY_EDGE,
+  };
+
   // Try to enumurate N-best results between begin_node and end_node.
   NBestGenerator(const SuppressionDictionary *suppression_dictionary,
                  const SegmenterInterface *segmenter,
                  const ConnectorInterface *connector,
                  const POSMatcher *pos_matcher,
-                 const Lattice *lattice, bool is_prediction);
+                 const Lattice *lattice,
+                 const SuggestionFilter *suggestion_filter);
   ~NBestGenerator();
 
   // Reset the iterator status.
-  void Reset(const Node *begin_node, const Node *end_node);
+  void Reset(const Node *begin_node, const Node *end_node,
+             const BoundaryCheckMode mode);
 
   // Iterator:
   // Can obtain N-best results by calling Next() in sequence.
-  bool Next(Segment::Candidate *candidate, Segments::RequestType request_type);
+  bool Next(const string &original_key,
+            Segment::Candidate *candidate,
+            Segments::RequestType request_type);
 
  private:
+  enum BoundaryCheckResult {
+    VALID = 0,
+    VALID_WEAK_CONNECTED,  // Valid but should get penalty.
+    INVALID,
+  };
+
+  typedef BoundaryCheckResult (NBestGenerator::*BoundaryChecker)(
+      const Node *, const Node *, bool) const;
+
   struct QueueElement;
   struct QueueElementComparator;
 
@@ -96,20 +136,38 @@ class NBestGenerator {
 
     void Push(const QueueElement *element);
     void Pop();
+
    private:
     vector<const QueueElement*> priority_queue_;
 
     DISALLOW_COPY_AND_ASSIGN(Agenda);
   };
 
-  int InsertTopResult(Segment::Candidate *candidate,
+  int InsertTopResult(const string &original_key,
+                      Segment::Candidate *candidate,
                       Segments::RequestType request_type);
 
   void MakeCandidate(Segment::Candidate *candidate,
                      int32 cost, int32 structure_cost, int32 wcost,
                      const vector<const Node *> &nodes) const;
 
+  // Helper functions for Next(). Checks node boundary conditions.
+  BoundaryCheckResult CheckStrict(
+      const Node *lnode, const Node *rnode, bool is_edge) const;
+  BoundaryCheckResult CheckOnlyMid(
+      const Node *lnode, const Node *rnode, bool is_edge) const;
+  BoundaryCheckResult CheckOnlyEdge(
+      const Node *lnode, const Node *rnode, bool is_edge) const;
+
   int GetTransitionCost(const Node *lnode, const Node *rnode) const;
+
+  // Create queue element from freelist
+  const QueueElement *CreateNewElement(const Node *node,
+                                       const QueueElement *next,
+                                       int32 fx,
+                                       int32 gx,
+                                       int32 structure_gx,
+                                       int32 w_gx);
 
   // References to relevant modules.
   const SuppressionDictionary *suppression_dictionary_;
@@ -126,10 +184,13 @@ class NBestGenerator {
   vector<const Node *> nodes_;
   scoped_ptr<converter::CandidateFilter> filter_;
   bool viterbi_result_checked_;
-  bool is_prediction_;
+  BoundaryCheckMode check_mode_;
+
+  BoundaryChecker boundary_checker_;
 
   DISALLOW_COPY_AND_ASSIGN(NBestGenerator);
 };
+
 }  // namespace mozc
 
 #endif  // MOZC_CONVERTER_NBEST_GENERATOR_H_

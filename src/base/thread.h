@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,7 +37,7 @@
 // Definition of TLS (Thread Local Storage) keyword.
 #ifndef TLS_KEYWORD
 
-#if defined(OS_WINDOWS) && defined(_MSC_VER)
+#if defined(OS_WIN) && defined(_MSC_VER)
 // Use VC's keyword on Windows.
 //
 // On Windows XP, thread local has a limitation. Since thread local
@@ -51,7 +51,7 @@
 // running.
 #define TLS_KEYWORD __declspec(thread)
 #define HAVE_TLS 1
-#endif // OS_WINDOWS && _MSC_VER
+#endif // OS_WIN && _MSC_VER
 
 // Andorid NDK and NaCl don't support TLS.
 #if defined(OS_LINUX) && !defined(OS_ANDROID) && \
@@ -103,13 +103,24 @@ class Thread {
  private:
   void Detach();
 
-#ifndef OS_WINDOWS
+#ifndef OS_WIN
   static void *WrapperForPOSIX(void *ptr);
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
   scoped_ptr<ThreadInternalState> state_;
 
   DISALLOW_COPY_AND_ASSIGN(Thread);
+};
+
+class DetachedThread {
+ public:
+  DetachedThread();
+  virtual ~DetachedThread();
+  bool Start();
+  virtual void Run() = 0;
+
+ private:
+  DISALLOW_COPY_AND_ASSIGN(DetachedThread);
 };
 
 }  // namespace mozc

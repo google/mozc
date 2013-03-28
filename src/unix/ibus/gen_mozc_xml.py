@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -39,6 +39,7 @@ __author__ = "yusukes"
 
 import optparse
 import os
+import subprocess
 import sys
 
 # Information to generate <component> part of mozc.xml. %s will be replaced with
@@ -65,6 +66,15 @@ IBUS_ENGINE_COMMON_PROPS = {
     'rank': '80',
 }
 
+# Information to generate <engines> part of mozc.xml for IBus 1.5 or later.
+IBUS_1_5_ENGINE_COMMON_PROPS = {
+    'description': '%s (Japanese Input Method)',
+    'language': 'ja',
+    'icon': '/usr/share/ibus-mozc/product_icon.png',
+    'rank': '80',
+    'symbol': '&#x3042',
+}
+
 # A dictionary from --platform to engines that are used in the platform. The
 # information is used to generate <engines> part of mozc.xml.
 IBUS_ENGINES_PROPS = {
@@ -75,6 +85,15 @@ IBUS_ENGINES_PROPS = {
         'name': ['mozc-jp'],
         'longname': ['%s'],
         'layout': ['jp'],
+    },
+    # On Linux (IBus >= 1.5), we use special label 'default' for the keyboard
+    # layout.
+    'Linux-IBus1.5': {
+        # DO NOT change the engine name 'mozc-jp'. The names is referenced by
+        # unix/ibus/mozc_engine.cc.
+        'name': ['mozc-jp'],
+        'longname': ['%s'],
+        'layout': ['default'],
     },
     # On Chrome/Chromium OS, we provide three engines.
     'ChromeOS': {
@@ -173,6 +192,17 @@ def OutputCpp(product_name, component, engine_common, engines):
   print CPP_FOOTER % guard_name
 
 
+def IsIBus15OrGreater(options):
+  """Returns True when the version of ibus-1.0 is 1.5 or greater."""
+  command_line = [options.pkg_config_command, '--exists',
+                  'ibus-1.0 >= 1.5.0']
+  return_code = subprocess.call(command_line)
+  if return_code == 0:
+    return True
+  else:
+    return False
+
+
 def main():
   """The main function."""
   parser = optparse.OptionParser(usage='Usage: %prog [options]')
@@ -189,21 +219,30 @@ def main():
   parser.add_option('--server_dir', dest='server_dir', default='',
                     help='The absolute directory path to be installed the '
                     'server executable.')
+  parser.add_option('--pkg_config_command', dest='pkg_config_command',
+                    default='pkg-config',
+                    help='The path to pkg-config command.')
   (options, unused_args) = parser.parse_args()
 
   setup_arg = []
-  if options.platform == 'Linux':
+  platform = options.platform
+  common_props = IBUS_ENGINE_COMMON_PROPS
+  if platform == 'Linux':
     setup_arg.append(os.path.join(options.server_dir, 'mozc_tool'))
     setup_arg.append('--mode=config_dialog')
+    if IsIBus15OrGreater(options):
+      # A tentative workaround against IBus 1.5
+      platform = 'Linux-IBus1.5'
+      common_props = IBUS_1_5_ENGINE_COMMON_PROPS
 
   if options.output_cpp:
     OutputCpp(PRODUCT_NAMES[options.branding], IBUS_COMPONENT_PROPS,
-              IBUS_ENGINE_COMMON_PROPS,
-              IBUS_ENGINES_PROPS[options.platform])
+              common_props,
+              IBUS_ENGINES_PROPS[platform])
   else:
     OutputXml(PRODUCT_NAMES[options.branding], IBUS_COMPONENT_PROPS,
-              IBUS_ENGINE_COMMON_PROPS,
-              IBUS_ENGINES_PROPS[options.platform],
+              common_props,
+              IBUS_ENGINES_PROPS[platform],
               setup_arg)
   return 0
 

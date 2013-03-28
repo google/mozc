@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -71,14 +71,14 @@ int main(int argc, char **argv) {
   LOG(INFO) << "Input authorize token : ";
   cin >> auth_token;
 
-  mozc::sync::OAuth2::Error error;
   string access_token;
   string refresh_token;
-  CHECK(mozc::sync::OAuth2::AuthorizeToken(FLAGS_authorize_token_uri,
-                                           FLAGS_client_id, FLAGS_client_secret,
-                                           FLAGS_redirect_uri, auth_token,
-                                           FLAGS_scope, FLAGS_state, &error,
-                                           &access_token, &refresh_token));
+  const mozc::sync::OAuth2::Error error =
+      mozc::sync::OAuth2::AuthorizeToken(FLAGS_authorize_token_uri,
+                                         FLAGS_client_id, FLAGS_client_secret,
+                                         FLAGS_redirect_uri, auth_token,
+                                         FLAGS_scope, FLAGS_state,
+                                         &access_token, &refresh_token);
 
   if (error != mozc::sync::OAuth2::kNone) {
     LOG(INFO) << "Could not get access token. (error code : " << error << ")";

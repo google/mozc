@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,26 +35,20 @@
 
 #include <string>
 #include "base/base.h"
+#include "base/string_piece.h"
 
 namespace mozc {
 
 class TextNormalizer {
  public:
-  static void NormalizePreeditText(const string &input,
-                                   string *output);
-
-  static void NormalizeTransliterationText(const string &input,
-                                           string *output);
-
-  static void NormalizeConversionText(const string &input,
-                                      string *output);
-
-  static void NormalizeCandidateText(const string &input,
-                                     string *output);
+  static void NormalizePreeditText(StringPiece input, string *output);
+  static void NormalizeTransliterationText(StringPiece input, string *output);
+  static void NormalizeConversionText(StringPiece input, string *output);
+  static void NormalizeCandidateText(StringPiece input, string *output);
 
  private:
-  TextNormalizer() {}
-  virtual ~TextNormalizer() {}
+  TextNormalizer();
+  ~TextNormalizer();
   DISALLOW_COPY_AND_ASSIGN(TextNormalizer);
 };
 

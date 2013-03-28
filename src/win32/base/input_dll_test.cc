@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,27 +29,13 @@
 
 #include <string>
 
-#include "base/util.h"
+#include "base/system_util.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "win32/base/input_dll.h"
 
 namespace mozc {
 namespace win32 {
-namespace {
-// Since the NULL is simply defined as 0 in Visual C++, gtest sometimes fails
-// to infer which 'type' of NULL is expected in EXPECT_NE/EXPECT_EQ.
-// Following constants helps gtest and compiler to use NULL of correct type.
-const void * kNull_void = NULL;
-const InputDll::FPEnumEnabledLayoutOrTip
-    kNull_FPEnumEnabledLayoutOrTip = NULL;
-const InputDll::FPEnumLayoutOrTipForSetup
-    kNull_FPEnumLayoutOrTipForSetup = NULL;
-const InputDll::FPInstallLayoutOrTipUserReg
-    kNull_FPInstallLayoutOrTipUserReg = NULL;
-const InputDll::FPSetDefaultLayoutOrTip
-    kNull_FPSetDefaultLayoutOrTip = NULL;
-}  // anonymous namespace
 
 class InputDllTest : public testing::Test {
  public:
@@ -83,31 +69,24 @@ TEST_F(InputDllTest, EnsureInitializedTest) {
     EXPECT_FALSE(InputDll::not_found_);
     // gtest will cause compilation error if we use <volatile HMODULE> here.
     // Use <void *> instead.
-    EXPECT_NE(kNull_void, static_cast<void *>(InputDll::module_));
+    EXPECT_NE(nullptr, static_cast<void *>(InputDll::module_));
 
     // Actually input.dll exists on Windows XP.  However, it does not always
     // mean that input.dll exports the functions in which we are interested.
 
-    if (Util::IsVistaOrLater()) {
+    if (SystemUtil::IsVistaOrLater()) {
       // Assume that the following funcsions are available on Vista and later.
-      EXPECT_NE(kNull_FPEnumEnabledLayoutOrTip,
-                InputDll::enum_enabled_layout_or_tip());
-      EXPECT_NE(kNull_FPEnumLayoutOrTipForSetup,
-                InputDll::enum_layout_or_tip_for_setup());
-      EXPECT_NE(kNull_FPInstallLayoutOrTipUserReg,
-                InputDll::install_layout_or_tip_user_reg());
-      EXPECT_NE(kNull_FPSetDefaultLayoutOrTip,
-                InputDll::set_default_layout_or_tip());
+      EXPECT_NE(nullptr, InputDll::enum_enabled_layout_or_tip());
+      EXPECT_NE(nullptr, InputDll::enum_layout_or_tip_for_setup());
+      EXPECT_NE(nullptr, InputDll::install_layout_or_tip());
+      EXPECT_NE(nullptr, InputDll::install_layout_or_tip_user_reg());
+      EXPECT_NE(nullptr, InputDll::set_default_layout_or_tip());
     } else {
       // Assume that the following funcsions are not available on XP and prior.
-      EXPECT_EQ(kNull_FPEnumEnabledLayoutOrTip,
-                InputDll::enum_enabled_layout_or_tip());
-      EXPECT_EQ(kNull_FPEnumLayoutOrTipForSetup,
-                InputDll::enum_layout_or_tip_for_setup());
-      EXPECT_EQ(kNull_FPInstallLayoutOrTipUserReg,
-                InputDll::install_layout_or_tip_user_reg());
-      EXPECT_EQ(kNull_FPSetDefaultLayoutOrTip,
-                InputDll::set_default_layout_or_tip());
+      EXPECT_EQ(nullptr, InputDll::enum_enabled_layout_or_tip());
+      EXPECT_EQ(nullptr, InputDll::enum_layout_or_tip_for_setup());
+      EXPECT_EQ(nullptr, InputDll::install_layout_or_tip_user_reg());
+      EXPECT_EQ(nullptr, InputDll::set_default_layout_or_tip());
     }
 
     // Check the consistency of the retuls of second call.
@@ -119,19 +98,17 @@ TEST_F(InputDllTest, EnsureInitializedTest) {
   EXPECT_TRUE(InputDll::not_found_);
   // gtest will cause compilation error if we use <volatile HMODULE> here.
   // Use <void *> instead.
-  EXPECT_EQ(kNull_void, static_cast<void *>(InputDll::module_));
+  EXPECT_EQ(nullptr, static_cast<void *>(InputDll::module_));
 
-  EXPECT_EQ(kNull_FPEnumEnabledLayoutOrTip,
-            InputDll::enum_enabled_layout_or_tip());
-  EXPECT_EQ(kNull_FPEnumLayoutOrTipForSetup,
-            InputDll::enum_layout_or_tip_for_setup());
-  EXPECT_EQ(kNull_FPInstallLayoutOrTipUserReg,
-            InputDll::install_layout_or_tip_user_reg());
-  EXPECT_EQ(kNull_FPSetDefaultLayoutOrTip,
-            InputDll::set_default_layout_or_tip());
+  EXPECT_EQ(nullptr, InputDll::enum_enabled_layout_or_tip());
+  EXPECT_EQ(nullptr, InputDll::enum_layout_or_tip_for_setup());
+  EXPECT_EQ(nullptr, InputDll::install_layout_or_tip());
+  EXPECT_EQ(nullptr, InputDll::install_layout_or_tip_user_reg());
+  EXPECT_EQ(nullptr, InputDll::set_default_layout_or_tip());
 
   // Check the consistency of the retuls of second call.
   EXPECT_FALSE(InputDll::EnsureInitialized());
 }
+
 }  // namespace win32
 }  // namespace mozc

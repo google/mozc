@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -41,7 +41,6 @@
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
 #include "session/commands.pb.h"
-#include "session/request_handler.h"
 
 namespace mozc {
 
@@ -71,6 +70,9 @@ const char *VariantsRewriter::kPlatformDependent = "<\xE6\xA9\x9F\xE7\xA8\xAE"
 // "<もしかして>"
 const char *VariantsRewriter::kDidYouMean =
     "<\xE3\x82\x82\xE3\x81\x97\xE3\x81\x8B\xE3\x81\x97\xE3\x81\xA6>";
+// "円記号"
+const char *VariantsRewriter::kYenKigou =
+    "\xE5\x86\x86\xE8\xA8\x98\xE5\x8F\xB7";
 #else  // OS_ANDROID
 const char *VariantsRewriter::kHiragana = "";
 const char *VariantsRewriter::kKatakana = "";
@@ -87,6 +89,9 @@ const char *VariantsRewriter::kPlatformDependent = "<\xE6\xA9\x9F\xE7\xA8\xAE"
 // "<もしかして>"
 const char *VariantsRewriter::kDidYouMean =
     "<\xE3\x82\x82\xE3\x81\x97\xE3\x81\x8B\xE3\x81\x97\xE3\x81\xA6>";
+// "円記号"
+const char *VariantsRewriter::kYenKigou =
+    "\xE5\x86\x86\xE8\xA8\x98\xE5\x8F\xB7";
 #endif  // OS_ANDROID
 
 // Append |src| to |dst| with a separator ' '.
@@ -200,7 +205,8 @@ void VariantsRewriter::SetDescription(const POSMatcher &pos_matcher,
         character_form_message = kAlphabet;
         break;
       case Util::KANJI:
-        // don't need to have full/half annotation for kanji,
+      case Util::EMOJI:
+        // don't need to have full/half annotation for kanji and emoji,
         // since it's obvious
         description_type &= ~FULL_HALF_WIDTH;
         break;
@@ -258,12 +264,13 @@ void VariantsRewriter::SetDescription(const POSMatcher &pos_matcher,
     AppendString("\xE3\x83\x90\xE3\x83\x83\xE3\x82\xAF\xE3\x82\xB9"
                  "\xE3\x83\xA9\xE3\x83\x83\xE3\x82\xB7\xE3\x83\xA5",
                  &description);
-  } else if (candidate->value == "\xC2\xA5" ||
-             candidate->value == "\xEF\xBF\xA5") {
-    // if "¥" (harlf-width Yen sign) or "￥" (full-width Yen sign)
-    // AppendString("通貨記号(円)", &description);
-    AppendString("\xE9\x80\x9A\xE8\xB2\xA8\xE8\xA8\x98\xE5\x8F\xB7\x28"
-                 "\xE5\x86\x86\x29", &description);
+  } else if (candidate->value == "\xC2\xA5") {
+    // if "¥" (harlf-width Yen sign), append kYenKigou and kPlatformDependent.
+    AppendString(kYenKigou, &description);
+    AppendString(kPlatformDependent, &description);
+  } else if (candidate->value == "\xEF\xBF\xA5") {
+    // if "￥" (full-width Yen sign), append only kYenKigou
+    AppendString(kYenKigou, &description);
   } else {
     AppendString(candidate->description, &description);
   }
@@ -302,7 +309,7 @@ void VariantsRewriter::SetDescription(const POSMatcher &pos_matcher,
   candidate->attributes |= Segment::Candidate::NO_EXTRA_DESCRIPTION;
 }
 
-int VariantsRewriter::capability() const {
+int VariantsRewriter::capability(const ConversionRequest &request) const {
   return RewriterInterface::ALL;
 }
 
@@ -428,6 +435,10 @@ bool VariantsRewriter::RewriteSegment(RewriteType type, Segment *seg) const {
 }
 
 void VariantsRewriter::Finish(Segments *segments) {
+  if (segments->request_type() != Segments::CONVERSION) {
+    return;
+  }
+
   // save character form
   for (int i = 0; i < segments->conversion_segments_size(); ++i) {
     const Segment &segment = segments->conversion_segment(i);

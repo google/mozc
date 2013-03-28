@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,13 +29,16 @@
 
 #include "rewriter/version_rewriter.h"
 
+#include <cstddef>
+#include <string>
+
+#include "base/system_util.h"
 #include "base/util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "session/commands.pb.h"
-#include "session/request_handler.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
@@ -45,17 +48,10 @@ namespace mozc {
 class VersionRewriterTest : public testing::Test {
  protected:
   virtual void SetUp() {
-    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     config::Config config;
     config::ConfigHandler::GetDefaultConfig(&config);
     config::ConfigHandler::SetConfig(config);
-    // Reserve the previous request before starting a test.
-    previous_request_.CopyFrom(commands::RequestHandler::GetRequest());
-  }
-
-  virtual void TearDown() {
-    // and gets back to the request at the end of a test.
-    commands::RequestHandler::SetRequest(previous_request_);
   }
 
   static void AddSegment(const string &key, const string &value,
@@ -85,31 +81,33 @@ class VersionRewriterTest : public testing::Test {
     }
     return false;
   }
-
- private:
-  commands::Request previous_request_;
 };
 
 TEST_F(VersionRewriterTest, CapabilityTest) {
   // default_request is just declared but not touched at all, so it
   // holds all default values.
   commands::Request default_request;
-  commands::RequestHandler::SetRequest(default_request);
+  const ConversionRequest request(NULL, &default_request);
   VersionRewriter rewriter;
-  EXPECT_EQ(RewriterInterface::CONVERSION, rewriter.capability());
+  EXPECT_EQ(RewriterInterface::CONVERSION,
+            rewriter.capability(request));
 }
 
 TEST_F(VersionRewriterTest, MobileEnvironmentTest) {
   commands::Request input;
   VersionRewriter rewriter;
 
-  input.set_mixed_conversion(true);
-  commands::RequestHandler::SetRequest(input);
-  EXPECT_EQ(RewriterInterface::ALL, rewriter.capability());
+  {
+    input.set_mixed_conversion(true);
+    const ConversionRequest request(NULL, &input);
+    EXPECT_EQ(RewriterInterface::ALL, rewriter.capability(request));
+  }
 
-  input.set_mixed_conversion(false);
-  commands::RequestHandler::SetRequest(input);
-  EXPECT_EQ(RewriterInterface::CONVERSION, rewriter.capability());
+  {
+    input.set_mixed_conversion(false);
+    const ConversionRequest request(NULL, &input);
+    EXPECT_EQ(RewriterInterface::CONVERSION, rewriter.capability(request));
+  }
 }
 
 

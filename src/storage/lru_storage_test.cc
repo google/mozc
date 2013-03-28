@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,6 +37,7 @@
 
 #include "base/base.h"
 #include "base/file_stream.h"
+#include "base/file_util.h"
 #include "base/logging.h"
 #include "base/util.h"
 #include "storage/lru_cache.h"
@@ -116,14 +117,14 @@ class LRUStorageTest : public testing::Test {
 
   static void UnlinkDBFileIfExists() {
     const string path = GetTemporaryFilePath();
-    if (Util::FileExists(path)) {
-      Util::Unlink(path);
+    if (FileUtil::FileExists(path)) {
+      FileUtil::Unlink(path);
     }
   }
 
   static string GetTemporaryFilePath() {
     // This name should be unique to each test.
-    return Util::JoinPath(FLAGS_test_tmpdir, "LRUStorageTest_test.db");
+    return FileUtil::JoinPath(FLAGS_test_tmpdir, "LRUStorageTest_test.db");
   }
 
  private:
@@ -307,8 +308,8 @@ TEST_F(LRUStorageTest, Merge) {
     EXPECT_EQ(0, last_access_time);
   }
 
-  Util::Unlink(file1);
-  Util::Unlink(file2);
+  FileUtil::Unlink(file1);
+  FileUtil::Unlink(file2);
 }
 
 TEST_F(LRUStorageTest, InvalidFileOpenTest) {
@@ -316,7 +317,7 @@ TEST_F(LRUStorageTest, InvalidFileOpenTest) {
   EXPECT_FALSE(storage.Insert("test", NULL));
 
   const string filename = GetTemporaryFilePath();
-  Util::Unlink(filename);
+  FileUtil::Unlink(filename);
 
   // cannot open
   EXPECT_FALSE(storage.Open(filename.c_str()));
@@ -337,15 +338,15 @@ class LRUStorageOpenOrCreateTest : public testing::Test {
 
   static void UnlinkDBFileIfExists() {
     const string path = GetTemporaryFilePath();
-    if (Util::FileExists(path)) {
-      Util::Unlink(path);
+    if (FileUtil::FileExists(path)) {
+      FileUtil::Unlink(path);
     }
   }
 
   static string GetTemporaryFilePath() {
     // This name should be unique to each test.
-    return Util::JoinPath(FLAGS_test_tmpdir,
-                          "LRUStorageOpenOrCreateTest_test.db");
+    return FileUtil::JoinPath(FLAGS_test_tmpdir,
+                              "LRUStorageOpenOrCreateTest_test.db");
   }
 
  private:

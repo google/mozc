@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,67 +27,15 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
+
+#include "base/crash_report_util.h"
 
 #include <string>
 
-#include "base/crash_report_util.h"
 #include "testing/base/public/gunit.h"
 
-namespace {
-const char kCrashId[] = "170ca4b0-d49e-49c3-b815-909dcd5ad6fa";
-const char kVersion[] = "1.2.3.4";
-const char kDumpFilename[] = "170ca4b0-d49e-49c3-b815-909dcd5ad6fa_1.2.3.4.dmp";
-}  // namespace
-
 namespace mozc {
-
-TEST(CrashReportUtilTest, EncodeDumpFileName) {
-  string filename = CrashReportUtil::EncodeDumpFileName(kCrashId, kVersion);
-  EXPECT_EQ(kDumpFilename, filename);
-}
-
-TEST(CrashReportUtilTest, DecodeDumpFileName) {
-  string crash_id;
-  string version;
-  EXPECT_TRUE(CrashReportUtil::DecodeDumpFileName(kDumpFilename, &crash_id,
-                                                     &version));
-  EXPECT_EQ(kCrashId, crash_id);
-  EXPECT_EQ(kVersion, version);
-
-  string crash_id2;
-  EXPECT_TRUE(CrashReportUtil::DecodeDumpFileName(kDumpFilename, &crash_id2,
-                                                     NULL));
-  EXPECT_EQ(kCrashId, crash_id2);
-
-  string version2;
-  EXPECT_TRUE(CrashReportUtil::DecodeDumpFileName(kDumpFilename, NULL,
-                                                     &version2));
-  EXPECT_EQ(kVersion, version2);
-
-  EXPECT_FALSE(CrashReportUtil::DecodeDumpFileName(kDumpFilename, NULL,
-                                                      NULL));
-}
-
-TEST(CrashReportUtilTest, EncodeAndDecodeDumpFileName) {
-  string filename = CrashReportUtil::EncodeDumpFileName(kCrashId, kVersion);
-  EXPECT_FALSE(filename.empty());
-  string crash_id;
-  string version;
-  EXPECT_TRUE(CrashReportUtil::DecodeDumpFileName(filename, &crash_id,
-                                                     &version));
-  EXPECT_EQ(kCrashId, crash_id);
-  EXPECT_EQ(kVersion, version);
-}
-
-TEST(CrashReportUtilTest, DecodeAndEncodeDumpFileName) {
-  string crash_id;
-  string version;
-  EXPECT_TRUE(CrashReportUtil::DecodeDumpFileName(kDumpFilename, &crash_id,
-                                                     &version));
-  string filename = CrashReportUtil::EncodeDumpFileName(crash_id, version);
-  EXPECT_EQ(kDumpFilename, filename);
-}
 
 TEST(CrashReportUtilTest, ValdateCrashId) {
   EXPECT_TRUE(CrashReportUtil::ValidateCrashId(
@@ -160,4 +108,4 @@ TEST(CrashReportUtilTest, ValidateVersion) {
 }
 }  // namespace mozc
 
-#endif  // OS_WINDOWS
+#endif  // OS_WIN

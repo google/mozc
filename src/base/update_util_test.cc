@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,11 +32,11 @@
 #include "base/update_util.h"
 #include "base/version.h"
 #include "testing/base/public/gunit.h"
-#if defined(OS_WINDOWS) && defined(GOOGLE_JAPANESE_INPUT_BUILD)
+#if defined(OS_WIN) && defined(GOOGLE_JAPANESE_INPUT_BUILD)
 #include "shared/opensource/patching/sidestep/cross/auto_testing_hook.h"
-#endif  // OS_WINDOWS && GOOGLE_JAPANESE_INPUT_BUILD
+#endif  // OS_WIN && GOOGLE_JAPANESE_INPUT_BUILD
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
 
 namespace {
@@ -196,7 +196,7 @@ TEST(UpdateUtilTestWin, IsNewVersionAvailable) {
 }  // namespace mozc
 
 #endif  // branding (GOOGLE_JAPANESE_INPUT_BUILD or not)
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 namespace mozc {
 

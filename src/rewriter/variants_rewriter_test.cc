@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,9 +31,9 @@
 
 #include <string>
 
-#include "base/base.h"
 #include "base/logging.h"
 #include "base/number_util.h"
+#include "base/system_util.h"
 #include "base/util.h"
 #include "config/character_form_manager.h"
 #include "config/config.pb.h"
@@ -77,7 +77,7 @@ class VariantsRewriterTest : public testing::Test {
   }
 
   void Reset() {
-    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     Config config;
     ConfigHandler::GetDefaultConfig(&config);
     ConfigHandler::SetConfig(config);
@@ -442,6 +442,79 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
     // "<機種依存文字>"
     EXPECT_EQ(VariantsRewriter::kPlatformDependent, candidate.description);
   }
+  {
+    Segment::Candidate candidate;
+    candidate.Init();
+    candidate.value = "\x5C";  // Half-width backslash
+    candidate.content_value = candidate.value;
+    // "えん"
+    candidate.content_key = "\xE3\x81\x88\xE3\x82\x93";
+    VariantsRewriter::SetDescriptionForCandidate(*pos_matcher_, &candidate);
+    // "[半] バックスラッシュ"
+    const char *expected =
+        "\x5B\xE5\x8D\x8A\x5D\x20\xE3\x83\x90\xE3\x83\x83"
+        "\xE3\x82\xAF\xE3\x82\xB9\xE3\x83\xA9\xE3\x83\x83"
+        "\xE3\x82\xB7\xE3\x83\xA5";
+    EXPECT_EQ(expected, candidate.description);
+  }
+  {
+    Segment::Candidate candidate;
+    candidate.Init();
+    candidate.value = "\xEF\xBC\xBC";  // Full-width backslash
+    candidate.content_value = candidate.value;
+    // "えん"
+    candidate.content_key = "\xE3\x81\x88\xE3\x82\x93";
+    VariantsRewriter::SetDescriptionForCandidate(*pos_matcher_, &candidate);
+    // "[全] バックスラッシュ"
+    const char *expected =
+        "\x5B\xE5\x85\xA8\x5D\x20\xE3\x83\x90\xE3\x83\x83\xE3\x82\xAF"
+        "\xE3\x82\xB9\xE3\x83\xA9\xE3\x83\x83\xE3\x82\xB7\xE3\x83\xA5";
+    EXPECT_EQ(expected, candidate.description);
+  }
+  {
+    Segment::Candidate candidate;
+    candidate.Init();
+    candidate.value = "\xC2\xA5";  // Half-width yen-symbol
+    candidate.content_value = candidate.value;
+    // "えん"
+    candidate.content_key = "\xE3\x81\x88\xE3\x82\x93";
+    VariantsRewriter::SetDescriptionForCandidate(*pos_matcher_, &candidate);
+    // "[半] 円記号 <機種依存文字>" for Desktop,
+    // "[半] 円記号 <機種依存>" for Android
+    string expected =("[" "\xE5\x8D\x8A" "] "
+                      "\xE5\x86\x86\xE8\xA8\x98\xE5\x8F\xB7" " ");
+    expected.append(VariantsRewriter::kPlatformDependent);
+    EXPECT_EQ(expected, candidate.description);
+  }
+  {
+    Segment::Candidate candidate;
+    candidate.Init();
+    candidate.value = "\xEF\xBF\xA5";  // Full-width yen-symbol
+    candidate.content_value = candidate.value;
+    // "えん"
+    candidate.content_key = "\xE3\x81\x88\xE3\x82\x93";
+    VariantsRewriter::SetDescriptionForCandidate(*pos_matcher_, &candidate);
+    // "[全] 円記号"
+    const char *expected =
+        "[" "\xE5\x85\xA8" "] " "\xE5\x86\x86\xE8\xA8\x98\xE5\x8F\xB7";
+    EXPECT_EQ(expected, candidate.description);
+  }
+  {
+    Segment::Candidate candidate;
+    candidate.Init();
+    // An emoji character of mouse face.
+    candidate.value = "\xF0\x9F\x90\xAD";
+    candidate.content_value = candidate.value;
+    // "ねずみ"
+    candidate.content_key = "\xE3\x81\xAD\xE3\x81\x9A\xE3\x81\xBF";
+    // "絵文字"
+    candidate.description = "\xE7\xB5\xB5\xE6\x96\x87\xE5\xAD\x97";
+    VariantsRewriter::SetDescriptionForCandidate(*pos_matcher_, &candidate);
+    // "絵文字 <機種依存文字>" for Desktop, "絵文字 <機種依存>" for Andorid
+    string expected("\xE7\xB5\xB5\xE6\x96\x87\xE5\xAD\x97" " ");
+    expected.append(VariantsRewriter::kPlatformDependent);
+    EXPECT_EQ(expected, candidate.description);
+  }
 }
 
 TEST_F(VariantsRewriterTest, SetDescriptionForTransliteration) {
@@ -712,6 +785,7 @@ TEST_F(VariantsRewriterTest, RewriteForSuggestion) {
 
 TEST_F(VariantsRewriterTest, Capability) {
   scoped_ptr<VariantsRewriter> rewriter(CreateVariantsRewriter());
-  EXPECT_EQ(RewriterInterface::ALL, rewriter->capability());
+  const ConversionRequest request;
+  EXPECT_EQ(RewriterInterface::ALL, rewriter->capability(request));
 }
 }  // namespace mozc

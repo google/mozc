@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,17 +31,18 @@
 
 #include <string>
 
-#include "base/base.h"
 #include "base/logging.h"
-#include "base/singleton.h"
-#include "base/util.h"
+#include "base/system_util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/conversion_request.h"
 #include "converter/segments.h"
+#ifdef MOZC_USE_PACKED_DICTIONARY
+#include "data_manager/packed/packed_data_manager.h"
+#include "data_manager/packed/packed_data_mock.h"
+#endif  // MOZC_USE_PACKED_DICTIONARY
 #include "data_manager/user_pos_manager.h"
 #include "dictionary/pos_matcher.h"
-#include "session/commands.pb.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
@@ -96,7 +97,16 @@ bool HasZipcodeAndAddress(const Segments &segments,
 class ZipcodeRewriterTest : public ::testing::Test {
  protected:
   virtual void SetUp() {
-    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+#ifdef MOZC_USE_PACKED_DICTIONARY
+    // Registers mocked PackedDataManager.
+    scoped_ptr<packed::PackedDataManager>
+        data_manager(new packed::PackedDataManager());
+    CHECK(data_manager->Init(string(kPackedSystemDictionary_data,
+                                    kPackedSystemDictionary_size)));
+    packed::RegisterPackedDataManager(data_manager.release());
+#endif  // MOZC_USE_PACKED_DICTIONARY
+
+    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     config::Config default_config;
     config::ConfigHandler::GetDefaultConfig(&default_config);
     config::ConfigHandler::SetConfig(default_config);
@@ -107,6 +117,11 @@ class ZipcodeRewriterTest : public ::testing::Test {
     config::Config default_config;
     config::ConfigHandler::GetDefaultConfig(&default_config);
     config::ConfigHandler::SetConfig(default_config);
+
+#ifdef MOZC_USE_PACKED_DICTIONARY
+    // Unregisters mocked PackedDataManager.
+    packed::RegisterPackedDataManager(NULL);
+#endif  // MOZC_USE_PACKED_DICTIONARY
   }
 
   ZipcodeRewriter *CreateZipcodeRewriter() const {
@@ -123,11 +138,12 @@ TEST_F(ZipcodeRewriterTest, BasicTest) {
      // "東京都港区赤坂"
      "\xE6\x9D\xB1\xE4\xBA\xAC\xE9\x83\xBD\xE6"
      "\xB8\xAF\xE5\x8C\xBA\xE8\xB5\xA4\xE5\x9D\x82";
+  const ConversionRequest default_request;
 
   {
     Segments segments;
     AddSegment("test", "test", NON_ZIPCODE, &segments);
-    EXPECT_FALSE(zipcode_rewriter->Rewrite(ConversionRequest(), &segments));
+    EXPECT_FALSE(zipcode_rewriter->Rewrite(default_request, &segments));
   }
 
   {
@@ -139,7 +155,7 @@ TEST_F(ZipcodeRewriterTest, BasicTest) {
 
     Segments segments;
     AddSegment(kZipcode, kAddress, ZIPCODE, &segments);
-    zipcode_rewriter->Rewrite(ConversionRequest(), &segments);
+    zipcode_rewriter->Rewrite(default_request, &segments);
     EXPECT_TRUE(HasZipcodeAndAddress(segments,
                                      kZipcode + " " + kAddress));
   }
@@ -153,7 +169,7 @@ TEST_F(ZipcodeRewriterTest, BasicTest) {
 
     Segments segments;
     AddSegment(kZipcode, kAddress, ZIPCODE, &segments);
-    zipcode_rewriter->Rewrite(ConversionRequest(), &segments);
+    zipcode_rewriter->Rewrite(default_request, &segments);
     EXPECT_TRUE(HasZipcodeAndAddress(segments,
                                      // "　" (full-width space)
                                      kZipcode + "\xE3\x80\x80" + kAddress));

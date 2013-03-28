@@ -1,0 +1,153 @@
+// Copyright 2010-2013, Google Inc.
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+//     * Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//     * Redistributions in binary form must reproduce the above
+// copyright notice, this list of conditions and the following disclaimer
+// in the documentation and/or other materials provided with the
+// distribution.
+//     * Neither the name of Google Inc. nor the names of its
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+{
+  "appName": {
+    "message": "@APP_NAME_EN@",
+    "description": "The title of the application, displayed in the web store."
+  },
+  "appDesc": {
+    "message": "Featuring a rich and relevant vocabulary set and convenient conversion capability to increase the efficiency of Japanese Input.",
+    "description": "The description of the application, displayed in the web store."
+  },
+  "branding": {
+    "message": "@BRANDING@"
+  },
+  "compositionModeHiragana": {
+    "message": "Hiragana"
+  },
+  "compositionModeFullKatakana": {
+    "message": "Katakana"
+  },
+  "compositionModeFullAscii": {
+    "message": "Wide Latin"
+  },
+  "compositionModeHalfKatakana": {
+    "message": "Half width katakana"
+  },
+  "compositionModeHalfAscii": {
+    "message": "Latin"
+  },
+  "compositionModeDirect": {
+    "message": "Direct input"
+  },
+  "configPunctuationMethod": {
+    "message": "Punctuation style"
+  },
+  "configPreeditMethod": {
+    "message": "Input mode"
+  },
+  "configPreeditMethodRomaji": {
+    "message": "Romaji"
+  },
+  "configPreeditMethodKana": {
+    "message": "Kana"
+  },
+  "configSymbolMethod": {
+    "message": "Symbol style"
+  },
+  "configSpaceCharacterForm": {
+    "message": "Space input style"
+  },
+  "configSpaceCharacterFormFollow": {
+    "message": "Follow input mode"
+  },
+  "configSpaceCharacterFormFull": {
+    "message": "Fullwidth"
+  },
+  "configSpaceCharacterFormHalf": {
+    "message": "Halfwidth"
+  },
+  "configHistoryLarningLevel": {
+    "message": "Adjust conversion based on previous input"
+  },
+  "configHistoryLarningLevelDefault": {
+    "message": "Yes"
+  },
+  "configHistoryLarningLevelReadOnly": {
+    "message": "Yes (don't record new data)"
+  },
+  "configHistoryLarningLevelOff": {
+    "message": "No"
+  },
+  "configSelectionShortcut": {
+    "message": "Selection shortcut"
+  },
+  "configSelectionShortcutNo": {
+    "message": "No shortcut"
+  },
+  "configShiftKeyModeSwitch": {
+    "message": "Shift key mode switch"
+  },
+  "configShiftKeyModeSwitchOff": {
+    "message": "Off"
+  },
+  "configShiftKeyModeSwitchAlphanumeric": {
+    "message": "Alphanumeric"
+  },
+  "configShiftKeyModeSwitchKatakana": {
+    "message": "Katakana"
+  },
+  "configSessionKeymap": {
+    "message": "Keymap style"
+  },
+  "configSessionKeymapAtok": {
+    "message": "ATOK"
+  },
+  "configSessionKeymapMsIme": {
+    "message": "MS-IME"
+  },
+  "configSessionKeymapKotoeri": {
+    "message": "Kotoeri"
+  },
+  "configIncognitoMode": {
+    "message": "Temporarily disable conversion personalization, history-based suggestions and user dictionary"
+  },
+  "configUseAutoImeTurnOff": {
+    "message": "Automatically switch to halfwidth"
+  },
+  "configUseHistorySuggest": {
+    "message": "Use input history"
+  },
+  "configUseDictionarySuggest": {
+    "message": "Use system dictionary"
+  },
+  "configSuggestionsSize": {
+    "message": "Maximum number of suggestions"
+  },
+  "configCreditsDescription": {
+    "message": "Copyright © 2012 Google Inc. All Rights Reserved."
+  },
+  "configOssCreditsDescription": {
+    "message": "This software is made possible by <a href=\"./credits_en.html\">open source software</a>."
+  },
+  "configUploadUsageStats": {
+    "message": "Help make Mozc better by automatically sending usage statistics and crash reports to Google."
+  }
+}

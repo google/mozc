@@ -1,9 +1,9 @@
-@	@		NoTransliteration
+1	@		NoTransliteration
 -	-		NoTransliteration
 _	_		NoTransliteration
 /	/		NoTransliteration
 &	&		NoTransliteration
-a		{*}a	NoTransliteration
+2		{*}a	NoTransliteration
 b		{*}b	NoTransliteration
 c		{*}c	NoTransliteration
 {*}a*		{*}A
@@ -12,7 +12,7 @@ c		{*}c	NoTransliteration
 {*}A*		{*}a
 {*}B*		{*}b
 {*}C*		{*}c
-d		{*}d	NoTransliteration
+3		{*}d	NoTransliteration
 e		{*}e	NoTransliteration
 f		{*}f	NoTransliteration
 {*}d*		{*}D
@@ -21,7 +21,7 @@ f		{*}f	NoTransliteration
 {*}D*		{*}d
 {*}E*		{*}e
 {*}F*		{*}f
-g		{*}g	NoTransliteration
+4		{*}g	NoTransliteration
 h		{*}h	NoTransliteration
 i		{*}i	NoTransliteration
 {*}g*		{*}G
@@ -30,7 +30,7 @@ i		{*}i	NoTransliteration
 {*}G*		{*}g
 {*}H*		{*}h
 {*}I*		{*}i
-j		{*}j	NoTransliteration
+5		{*}j	NoTransliteration
 k		{*}k	NoTransliteration
 l		{*}l	NoTransliteration
 {*}j*		{*}J
@@ -39,7 +39,7 @@ l		{*}l	NoTransliteration
 {*}J*		{*}j
 {*}K*		{*}k
 {*}L*		{*}l
-m		{*}m	NoTransliteration
+6		{*}m	NoTransliteration
 n		{*}n	NoTransliteration
 o		{*}o	NoTransliteration
 {*}m*		{*}M
@@ -48,7 +48,7 @@ o		{*}o	NoTransliteration
 {*}M*		{*}m
 {*}N*		{*}n
 {*}O*		{*}o
-p		{*}p	NoTransliteration
+7		{*}p	NoTransliteration
 q		{*}q	NoTransliteration
 r		{*}r	NoTransliteration
 s		{*}s	NoTransliteration
@@ -60,7 +60,7 @@ s		{*}s	NoTransliteration
 {*}Q*		{*}q
 {*}R*		{*}r
 {*}S*		{*}s
-t		{*}t	NoTransliteration
+8		{*}t	NoTransliteration
 u		{*}u	NoTransliteration
 v		{*}v	NoTransliteration
 {*}t*		{*}T
@@ -69,7 +69,7 @@ v		{*}v	NoTransliteration
 {*}T*		{*}t
 {*}U*		{*}u
 {*}V*		{*}v
-w		{*}w	NoTransliteration
+9		{*}w	NoTransliteration
 x		{*}x	NoTransliteration
 y		{*}y	NoTransliteration
 z		{*}z	NoTransliteration
@@ -82,7 +82,7 @@ z		{*}z	NoTransliteration
 {*}Y*		{*}y
 {*}Z*		{*}z
 *			NoTransliteration
-'	'		NoTransliteration
+0	'		NoTransliteration
 "	"		NoTransliteration
 :	:		NoTransliteration
 ;	;		NoTransliteration

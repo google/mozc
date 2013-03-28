@@ -1,0 +1,302 @@
+# SCENARIO 1 (Unigram history deletion)
+#   1. A user inputs グーグルー.
+#   2. グーグルー appears in suggestion and prediction.
+#   3. グーグルー is deleted from the history.
+#   4. After deletion, グーグルー shouldn't appear.
+
+# Set up Hiragana mode
+SEND_KEY	ON
+RESET_CONTEXT
+SET_CONFIG	session_keymap	MSIME
+SWITCH_INPUT_MODE	HIRAGANA
+
+# Set up input history.  Convert gu-guru- (ぐーぐるー) to グーグルー so that it
+# appears at the top of suggestion/prediciton.
+SEND_KEYS	gu-guru-
+EXPECT_PREEDIT	ぐーぐるー
+SEND_KEY	F7
+SEND_KEY	ENTER
+
+# Typing gu-guru (ぐーぐる) shows グーグルー in suggestion.
+SEND_KEYS	gu-guru
+EXPECT_PREEDIT	ぐーぐる
+EXPECT_IN_ALL_CANDIDATE_WORDS	グーグルー
+
+# Hitting TAB performs prediction.  Now グーグルー should be shown at the top.
+SEND_KEY	TAB
+EXPECT_PREEDIT	グーグルー
+EXPECT_IN_ALL_CANDIDATE_WORDS	グーグルー
+
+# Delete グーグルー from the history.
+SEND_KEY	CTRL DELETE
+
+# After invoking CTRL DELETE, the state should be back in composition with the
+# original input, ぐーぐる.
+EXPECT_PREEDIT	ぐーぐる
+
+# The history グーグルー should not be shown in suggestions.
+EXPECT_NOT_IN_ALL_CANDIDATE_WORDS	グーグルー
+
+# It should not be shown in prediction as well.
+SEND_KEY	TAB
+SEND_KEY	TAB
+SEND_KEY	TAB
+EXPECT_NOT_IN_ALL_CANDIDATE_WORDS	グーグルー
+SEND_KEY	ENTER
+
+
+# SCENARIO 2 (Trigram history: deletion of user input itself)
+#   1. A user inputs 今日は晴れです！.
+#   2. Both 今日は晴れです and 今日は晴れです！ are suggested.
+#   3. The user deletes 今日は晴れです！.
+#   4. After deletion, only 今日は晴れです should be shown.
+
+# Reset.
+CLEAR_USER_PREDICTION
+SEND_KEY	OFF
+SEND_KEY	ON
+RESET_CONTEXT
+SET_CONFIG	session_keymap	MSIME
+SWITCH_INPUT_MODE	HIRAGANA
+
+# Set up input history.
+SEND_KEYS	kyouhaharedesu!
+SEND_KEY	SPACE
+EXPECT_PREEDIT	今日は晴れです！
+SEND_KEY	ENTER
+
+# Now both 今日は晴れです and 今日は晴れです！ are shown.
+SEND_KEYS	kyou
+EXPECT_PREEDIT	きょう
+
+# Shown in suggestions.
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日は
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れです
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れです！
+
+# Select the one ending with ！.
+SEND_KEY	TAB
+SEND_KEY	TAB
+SEND_KEY	TAB
+EXPECT_PREEDIT	今日は晴れです！
+
+# Delete 今日は晴れです！ from the input history.
+SEND_KEY	CTRL DELETE
+
+# Now the state is back to composition and suggestion is shown.
+EXPECT_PREEDIT	きょう
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日は
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れです
+EXPECT_NOT_IN_ALL_CANDIDATE_WORDS	今日は晴れです！
+
+# Again kick the prediction. But this time 今日は晴れです！ is not shown.
+SEND_KEY	TAB
+SEND_KEY	TAB
+SEND_KEY	TAB
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日は
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れです
+EXPECT_NOT_IN_ALL_CANDIDATE_WORDS	今日は晴れです！
+
+# Cancel the input to go back to the precomposition.
+SEND_KEY	ESC
+SEND_KEY	ESC
+EXPECT_PREEDIT	
+
+# Type きょう again to see 今日は and 今日は晴れです in suggestions in this
+# order.
+SEND_KEYS	kyou
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日は
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れです
+SEND_KEY	TAB
+EXPECT_PREEDIT	今日は
+SEND_KEY	TAB
+EXPECT_PREEDIT	今日は晴れです
+
+
+# SCENARIO 3 (Trigram history: deletion of derived bigram chain)
+#   1. A user inputs 今日は晴れです！, as in the SCENARIO 2.
+#   2. Both 今日は晴れです and 今日は晴れです！ are suggested.
+#   3. The user deletes 今日は晴れです (the one without exclamation mark).
+#   4. After deletion, only 今日は晴れです！ should be shown.
+
+# Reset.
+CLEAR_USER_PREDICTION
+SEND_KEY	OFF
+SEND_KEY	ON
+RESET_CONTEXT
+SET_CONFIG	session_keymap	MSIME
+SWITCH_INPUT_MODE	HIRAGANA
+
+# Set up input history.
+SEND_KEYS	kyouhaharedesu!
+SEND_KEY	SPACE
+EXPECT_PREEDIT	今日は晴れです！
+SEND_KEY	ENTER
+
+# Now both 今日は晴れです and 今日は晴れです！ are shown.
+SEND_KEYS	kyou
+EXPECT_PREEDIT	きょう
+
+# Shown in suggestions.
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日は
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れです
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れです！
+
+# Select 今日は晴れです.
+SEND_KEY	TAB
+SEND_KEY	TAB
+EXPECT_PREEDIT	今日は晴れです
+
+# Delete 今日は晴れです from the input history.
+SEND_KEY	CTRL DELETE
+
+# Now the state is back to composition and suggestion is shown.
+EXPECT_PREEDIT	きょう
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日は
+EXPECT_NOT_IN_ALL_CANDIDATE_WORDS	今日は晴れです
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れです！
+
+# Again kick the prediction. But this time 今日は晴れです is not shown.
+SEND_KEY	TAB
+SEND_KEY	TAB
+SEND_KEY	TAB
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日は
+EXPECT_NOT_IN_ALL_CANDIDATE_WORDS	今日は晴れです
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れです！
+
+# Cancel the input to go back to the precomposition.
+SEND_KEY	ESC
+SEND_KEY	ESC
+EXPECT_PREEDIT	
+
+# Type きょう again to see 今日は and 今日は晴れです！ in suggestions.
+SEND_KEYS	kyou
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日は
+EXPECT_NOT_IN_ALL_CANDIDATE_WORDS	今日は晴れです
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れです！
+SEND_KEY	TAB
+EXPECT_PREEDIT	今日は
+SEND_KEY	TAB
+EXPECT_PREEDIT	今日は晴れです！
+
+
+# SCENARIO 4 (Trigram history: deletion of the first node)
+#   1. A user inputs 今日は晴れです！, as in the SCENARIO 2.
+#   2. All of 今日は, 今日は晴れです and 今日は晴れです！ are suggested.
+#   3. The user deletes 今日は.
+#   4. After deletion, 今日は晴れです and 今日は晴れです！ should be shown.
+
+# Reset.
+CLEAR_USER_PREDICTION
+SEND_KEY	OFF
+SEND_KEY	ON
+RESET_CONTEXT
+SET_CONFIG	session_keymap	MSIME
+SWITCH_INPUT_MODE	HIRAGANA
+
+# Set up input history.
+SEND_KEYS	kyouhaharedesu!
+SEND_KEY	SPACE
+EXPECT_PREEDIT	今日は晴れです！
+SEND_KEY	ENTER
+
+# Now three candidates are suggested by きょう.
+SEND_KEYS	kyou
+EXPECT_PREEDIT	きょう
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日は
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れです
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れです！
+
+# Select 今日は.
+SEND_KEY	TAB
+EXPECT_PREEDIT	今日は
+
+# Delete 今日は from the input history.
+SEND_KEY	CTRL DELETE
+
+# Now the state is back to composition and only 今日は was removed from
+# suggestion candidates.
+EXPECT_PREEDIT	きょう
+EXPECT_NOT_IN_ALL_CANDIDATE_WORDS	今日は
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れです
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れです！
+
+# Again kick the prediction.
+SEND_KEY	TAB
+SEND_KEY	TAB
+SEND_KEY	TAB
+EXPECT_NOT_IN_ALL_CANDIDATE_WORDS	今日は
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れです
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れです！
+
+# Cancel the input to go back to the precomposition.
+SEND_KEY	ESC
+SEND_KEY	ESC
+EXPECT_PREEDIT	
+
+# Type きょう again to see 今日は晴れです in suggestions.
+SEND_KEYS	kyou
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れです
+EXPECT_IN_ALL_CANDIDATE_WORDS	今日は晴れです！
+SEND_KEY	TAB
+EXPECT_PREEDIT	今日は晴れです
+
+# SCENARIO 5 (Deletion of non-history candidate)
+
+# Reset.
+CLEAR_USER_PREDICTION
+SEND_KEY	OFF
+SEND_KEY	ON
+RESET_CONTEXT
+SET_CONFIG	session_keymap	MSIME
+SWITCH_INPUT_MODE	HIRAGANA
+
+# Set up input history.
+SEND_KEYS	heimenzu
+EXPECT_PREEDIT	へいめんず
+SEND_KEY	SPACE
+EXPECT_PREEDIT	平面図
+SEND_KEY	ENTER
+
+# Typing hei
+SEND_KEYS	heime
+EXPECT_PREEDIT	へいめ
+EXPECT_IN_ALL_CANDIDATE_WORDS	平面図
+EXPECT_IN_ALL_CANDIDATE_WORDS	経い目
+
+# Select non-history candidate.
+SEND_KEY	TAB
+EXPECT_PREEDIT	平面図
+SEND_KEY	TAB
+EXPECT_PREEDIT	経い目
+
+# Try deleting it. Nothing should happen.
+SEND_KEY	CTRL DELETE
+
+# After hitting Ctrl-Del, nothing happend and preedit is kept as before.
+EXPECT_PREEDIT	経い目
+
+# Next commit 平面図 and delete it
+SEND_KEY	ESC
+SEND_KEY	TAB
+EXPECT_PREEDIT	平面図
+SEND_KEY	ENTER
+SEND_KEYS	heime
+EXPECT_PREEDIT	へいめ
+SEND_KEY	TAB
+EXPECT_PREEDIT	平面図
+SEND_KEY	CTRL DELETE
+EXPECT_PREEDIT	へいめ
+
+# Back to precomposition
+SEND_KEY	ESC
+
+# Even if the history is deleted, realtime conversion appears.
+SEND_KEYS	heimenzu
+EXPECT_PREEDIT	へいめんず
+SEND_KEY	TAB
+EXPECT_PREEDIT	平面図
+
+# Try deleting it. Nothing should happen for the already deleted history.
+SEND_KEY	CTRL DELETE
+EXPECT_PREEDIT	平面図

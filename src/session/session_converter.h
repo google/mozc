@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,15 +35,24 @@
 #include <string>
 #include <vector>
 
-#include "session/commands.pb.h"
 #include "session/session_converter_interface.h"
 // for FRIEND_TEST()
 #include "testing/base/public/gunit_prod.h"
 
 namespace mozc {
+namespace commands {
+class CandidateList;
+class Candidates;
+class Context;
+class Output;
+class Preedit;
+class Request;
+class Result;
+}  // namespace commands
+
 namespace config {
 class Config;
-}
+}  // namespace config
 
 namespace session {
 class CandidateList;
@@ -52,238 +61,264 @@ class CandidateList;
 // support stateful operations related with the converter.
 class SessionConverter : public SessionConverterInterface {
  public:
-  explicit SessionConverter(const ConverterInterface *converter,
-                            const commands::Request &request);
+  SessionConverter(const ConverterInterface *converter,
+                   const commands::Request *request);
   virtual ~SessionConverter();
 
-  // Update OperationPreferences.
-  void SetOperationPreferences(const OperationPreferences &preferences);
+  // Updates OperationPreferences.
+  virtual void SetOperationPreferences(const OperationPreferences &preferences);
 
-  // Check if the current state is in the state bitmap.
-  bool CheckState(States) const;
+  // Checks if the current state is in the state bitmap.
+  virtual bool CheckState(States) const;
 
-  // Indicate if the conversion session is active or not.  In general,
+  // Indicates if the conversion session is active or not.  In general,
   // Convert functions make it active and Cancel, Reset and Commit
   // functions make it deactive.
-  bool IsActive() const;
+  virtual bool IsActive() const;
 
-  // Return the default conversion preferences to be used for custom
+  // Returns the default conversion preferences to be used for custom
   // conversion.
-  const ConversionPreferences &conversion_preferences() const;
+  virtual const ConversionPreferences &conversion_preferences() const;
 
-  // Send a conversion request to the converter.
-  bool Convert(const composer::Composer &composer);
-  bool ConvertWithPreferences(const composer::Composer &composer,
-                              const ConversionPreferences &preferences);
+  // Gets the selected candidate. If no candidate is selected, returns NULL.
+  virtual const Segment::Candidate *
+  GetSelectedCandidateOfFocusedSegment() const;
 
-  // Get reading text (e.g. from "猫" to "ねこ").
-  bool GetReadingText(const string &source_text, string *reading);
+  // Sends a conversion request to the converter.
+  virtual bool Convert(const composer::Composer &composer);
+  virtual bool ConvertWithPreferences(const composer::Composer &composer,
+                                      const ConversionPreferences &preferences);
 
-  // Send a transliteration request to the converter.
-  bool ConvertToTransliteration(const composer::Composer &composer,
-                                transliteration::TransliterationType type);
+  // Gets reading text (e.g. from "猫" to "ねこ").
+  virtual bool GetReadingText(const string &source_text, string *reading);
 
-  // Convert the current composition to half-width characters.
+  // Sends a transliteration request to the converter.
+  virtual bool ConvertToTransliteration(
+      const composer::Composer &composer,
+      transliteration::TransliterationType type);
+
+  // Converts the current composition to half-width characters.
   // NOTE(komatsu): This function might be merged to ConvertToTransliteration.
-  bool ConvertToHalfWidth(const composer::Composer &composer);
+  virtual bool ConvertToHalfWidth(const composer::Composer &composer);
 
-  // Switch the composition to Hiragana, full-width Katakana or
+  // Switches the composition to Hiragana, full-width Katakana or
   // half-width Katakana by rotation.
-  bool SwitchKanaType(const composer::Composer &composer);
+  virtual bool SwitchKanaType(const composer::Composer &composer);
 
-  // Send a suggestion request to the converter.
-  bool Suggest(const composer::Composer &composer);
-  bool SuggestWithPreferences(const composer::Composer &composer,
-                              const ConversionPreferences &preferences);
+  // Sends a suggestion request to the converter.
+  virtual bool Suggest(const composer::Composer &composer);
+  virtual bool SuggestWithPreferences(const composer::Composer &composer,
+                                      const ConversionPreferences &preferences);
 
-  // Send a prediction request to the converter.
-  bool Predict(const composer::Composer &composer);
-  bool PredictWithPreferences(const composer::Composer &composer,
-                              const ConversionPreferences &preferences);
+  // Sends a prediction request to the converter.
+  virtual bool Predict(const composer::Composer &composer);
+  virtual bool PredictWithPreferences(const composer::Composer &composer,
+                                      const ConversionPreferences &preferences);
 
-  // Send a prediction request to the converter.
+  // Sends a prediction request to the converter.
   // The result is added at the tail of existing candidate list as "suggestion"
   // candidates.
-  bool ExpandSuggestion(const composer::Composer &composer);
-  bool ExpandSuggestionWithPreferences(
+  virtual bool ExpandSuggestion(const composer::Composer &composer);
+  virtual bool ExpandSuggestionWithPreferences(
       const composer::Composer &composer,
       const ConversionPreferences &preferences);
 
-  // Clear conversion segments, but keep the context.
-  void Cancel();
+  // Clears conversion segments, but keep the context.
+  virtual void Cancel();
 
-  // Clear conversion segments and the context.
-  void Reset();
+  // Clears conversion segments and the context.
+  virtual void Reset();
 
-  // Fix the conversion with the current status.
-  void Commit();
+  // Fixes the conversion with the current status.
+  virtual void Commit(const commands::Context &context);
 
-  // Fix the suggestion candidate. Stores the number of characters in the key
+  // Fixes the suggestion candidate. Stores the number of characters in the key
   // of the committed candidate to committed_key_size.
   // For example, assume that "日本語" was suggested as a candidate for "にほ".
   // The key of the candidate is "にほんご". Therefore, when the candidate is
-  // committed by this function, committed_key_size will be set to 4.
+  // committed by this function, consumed_key_size will be set to 4.
+  // |consumed_key_size| can be very large value
+  // (i.e. SessionConverter::kConsumedAllCharacters).
+  // In this case all the composition characters are consumed.
+  // Examples:
+  // - {composition: "にほんご|", value: "日本語", consumed_key_size: 4}
+  //   This is usual case of suggestion/composition.
+  // - {composition: "にほんg|", value: "日本語",
+  //    consumed_key_size: kConsumedAllCharacters}
+  //   kConsumedAllCharacters can be very large value.
+  // - {composition: "わた|しのなまえ", value: "綿",
+  //    consumed_key_size: 2}
+  //   (Non-Auto) Partial suggestion.
+  //   New composition is "しのなまえ".
+  // - {composition: "わたしのなまえ|", value: "私の",
+  //    consumed_key_size: 4}
+  //   Auto partial suggestion.
+  //   Consumed the composition partially and "なまえ" becomes composition.
+  // - {composition: "じゅえり", value: "クエリ",
+  //    consumed_key_size: 4}
+  //   Typing correction.
+  //   The value クエリ corresponds to raw composition "じゅえり".
   // True is returned if the suggestion is successfully committed.
-  bool CommitSuggestionByIndex(size_t index,
-                               const composer::Composer &composer,
-                               size_t *committed_key_size);
+  virtual bool CommitSuggestionByIndex(size_t index,
+                                       const composer::Composer &composer,
+                                       const commands::Context &context,
+                                       size_t *consumed_key_size);
 
-  // Select a candidate and commit the selected candidate.  True is
+  // Selects a candidate and commit the selected candidate.  True is
   // returned if the suggestion is successfully committed.
-  bool CommitSuggestionById(int id,
-                            const composer::Composer &composer,
-                            size_t *committed_key_size);
+  // c.f. CommitSuggestionInternal
+  virtual bool CommitSuggestionById(int id,
+                                    const composer::Composer &composer,
+                                    const commands::Context &context,
+                                    size_t *consumed_key_size);
 
-  // Fix only the conversion of the first segment, and keep the rest.
+  // Fixes only the conversion of the first segment, and keep the rest.
   // The caller should delete characters from composer based on returned
   // |committed_key_size|.
-  // If |committed_key_size| is 0, this means that there is only a segment
+  // If |consumed_key_size| is 0, this means that there is only a segment
   // so Commit() method is called instead. In this case, the caller
   // should not delete any characters.
-  void CommitFirstSegment(size_t *committed_key_size);
+  // c.f. CommitSuggestionInternal
+  virtual void CommitFirstSegment(const commands::Context &context,
+                                  size_t *consumed_key_size);
 
-  // Commit the preedit string as is form.
-  // Any transliteration or text normalization ("ゔ" -> "ヴ", or vender
-  // specific code replacement) will not be performed.
-  void CommitPreeditString(const string &key, const string &preedit);
+  // Commits the preedit string represented by Composer.
+  virtual void CommitPreedit(const composer::Composer &composer,
+                             const commands::Context &context);
 
-  // Commit the preedit string represented by Composer.
-  void CommitPreedit(const composer::Composer &composer);
-
-  // Commit the specified number of characters at the head of the preedit
+  // Commits the specified number of characters at the head of the preedit
   // string represented by Composer.
   // The caller should delete characters from composer based on returned
-  // |committed_size|.
+  // |consumed_key_size|.
+  // c.f. CommitSuggestionInternal
   // TODO(yamaguchi): Enhance to support the conversion mode.
-  void CommitHead(size_t count,
-                  const composer::Composer &composer,
-                  size_t *committed_size);
+  virtual void CommitHead(size_t count,
+                          const composer::Composer &composer,
+                          size_t *consumed_key_size);
 
-  // Revert the last "Commit" operation
-  void Revert();
+  // Reverts the last "Commit" operation
+  virtual void Revert();
 
-  // Move the focus of segments.
-  void SegmentFocusRight();
-  void SegmentFocusLast();
-  void SegmentFocusLeft();
-  void SegmentFocusLeftEdge();
+  // Moves the focus of segments.
+  virtual void SegmentFocusRight();
+  virtual void SegmentFocusLast();
+  virtual void SegmentFocusLeft();
+  virtual void SegmentFocusLeftEdge();
 
-  // Resize the focused segment.
-  void SegmentWidthExpand(const composer::Composer &composer);
-  void SegmentWidthShrink(const composer::Composer &composer);
+  // Resizes the focused segment.
+  virtual void SegmentWidthExpand(const composer::Composer &composer);
+  virtual void SegmentWidthShrink(const composer::Composer &composer);
 
-  // Move the focus of candidates.
-  void CandidateNext(const composer::Composer &composer);
-  void CandidateNextPage();
-  void CandidatePrev();
-  void CandidatePrevPage();
-  // Move the focus to the candidate represented by the id.
-  void CandidateMoveToId(int id, const composer::Composer &composer);
-  // Move the focus to the index from the beginning of the current page.
-  void CandidateMoveToPageIndex(size_t index);
-  // Move the focus to the candidate represented by the shortcut.  If
+  // Moves the focus of candidates.
+  virtual void CandidateNext(const composer::Composer &composer);
+  virtual void CandidateNextPage();
+  virtual void CandidatePrev();
+  virtual void CandidatePrevPage();
+  // Moves the focus to the candidate represented by the id.
+  virtual void CandidateMoveToId(int id, const composer::Composer &composer);
+  // Moves the focus to the index from the beginning of the current page.
+  virtual void CandidateMoveToPageIndex(size_t index);
+  // Moves the focus to the candidate represented by the shortcut.  If
   // the shortcut is not bound with any candidate, false is returned.
-  bool CandidateMoveToShortcut(char shortcut);
+  virtual bool CandidateMoveToShortcut(char shortcut);
 
   // Operation for the candidate list.
-  bool IsCandidateListVisible() const;
-  void SetCandidateListVisible(bool visible);
+  virtual void SetCandidateListVisible(bool visible);
 
-  // Fill protocol buffers and update the internal status.
-  void PopOutput(const composer::Composer &composer, commands::Output *output);
+  // Fills protocol buffers and update the internal status.
+  virtual void PopOutput(const composer::Composer &composer,
+                         commands::Output *output);
 
-  // Fill protocol buffers
-  void FillOutput(
-      const composer::Composer &composer, commands::Output *output) const;
+  // Fills protocol buffers
+  virtual void FillOutput(const composer::Composer &composer,
+                          commands::Output *output) const;
 
-  // Fill context information
-  void FillContext(commands::Context *context) const;
+  // Fills context information
+  virtual void FillContext(commands::Context *context) const;
 
-  // Get/Set segments
-  void GetSegments(Segments *dest) const;
-  void SetSegments(const Segments &src);
+  // Removes tail part of history segments
+  virtual void RemoveTailOfHistorySegments(size_t num_of_characters);
 
-  // Remove tail part of history segments
-  void RemoveTailOfHistorySegments(size_t num_of_characters);
+  // Sets setting by the request;
+  virtual void SetRequest(const commands::Request *request);
 
-  // Fill protocol buffers with all flatten candidate words.
-  void FillAllCandidateWords(commands::CandidateList *candidates) const;
-
-  // Set setting by the request;
-  void SetRequest(const commands::Request &request);
-
-  // Accessor
-  const commands::Result &GetResult() const;
-  const CandidateList &GetCandidateList() const;
-  const OperationPreferences &GetOperationPreferences() const;
-  SessionConverterInterface::State GetState() const;
-  size_t GetSegmentIndex() const;
-  const Segment &GetPreviousSuggestions() const;
-
-  // Fill segments with the conversion preferences.
+  // Fills segments with the conversion preferences.
   static void SetConversionPreferences(
       const ConversionPreferences &preferences,
       Segments *segments);
 
-  // Copy SessionConverter
+  // Copies SessionConverter
   // TODO(hsumita): Copy all member variables.
   // Currently, converter_ is not copied.
-  SessionConverterInterface *Clone() const;
+  virtual SessionConverter *Clone() const;
+
+  // Fills protocol buffers with all flatten candidate words.
+  void FillAllCandidateWords(commands::CandidateList *candidates) const;
+
+  // Meaning that all the composition characters are consumed.
+  // c.f. CommitSuggestionInternal
+  static const size_t kConsumedAllCharacters;
 
  private:
-  FRIEND_TEST(SessionConverterTest, AppendCandidateList);
-  FRIEND_TEST(SessionConverterTest, GetPreeditAndGetConversion);
-  FRIEND_TEST(SessionConverterTest, PartialSuggestion);
+  friend class SessionConverterTest;
 
-  // Reset the result value stored at the previous command.
+  // Resets the result value stored at the previous command.
   void ResetResult();
 
-  // Reset the session state variables.
+  // Resets the session state variables.
   void ResetState();
 
-  // Notify the converter that the current segment is focused.
+  // Notifies the converter that the current segment is focused.
   void SegmentFocus();
 
-  // Notify the converter that the current segment is fixed.
+  // Notifies the converter that the current segment is fixed.
   void SegmentFix();
 
-  // Get preedit from segment(index) to segment(index + size).
+  // Gets preedit from segment(index) to segment(index + size).
   void GetPreedit(size_t index, size_t size, string *preedit) const;
-  // Get conversion from segment(index) to segment(index + size).
+  // Gets conversion from segment(index) to segment(index + size).
   void GetConversion(size_t index, size_t size, string *conversion) const;
+  // Gets consumed size of the preedit characters.
+  // c.f. CommitSuggestionInternal
+  size_t GetConsumedPreeditSize(const size_t index, size_t size) const;
 
-  // Perform the command if the command candidate is selected.  True
+  // Performs the command if the command candidate is selected.  True
   // is returned if a command is performed.
   bool MaybePerformCommandCandidate(size_t index, size_t size) const;
 
-  // Update internal states
-  bool UpdateResult(size_t index, size_t size);
+  // Updates internal states
+  bool UpdateResult(size_t index, size_t size, size_t *consumed_key_size);
 
-  // Fill the candidate list with the focused segment's candidates.
+  // Fills the candidate list with the focused segment's candidates.
   // This method does not clear the candidate list before processing.
   // Only the candidates of which id is not existent in the candidate list
   // are appended. Other candidates are ignored.
   void AppendCandidateList();
-  // Clear the candidate list and fill it with the focused segment's candidates.
+  // Clears the candidate list and fill it with the focused segment's
+  // candidates.
   void UpdateCandidateList();
 
-  // Return the candidate index to be used by the converter.
+  // Returns the candidate index to be used by the converter.
   int GetCandidateIndexForConverter(const size_t segment_index) const;
 
-  // if focus_id is pointing to the last of suggestions,
+  // If focus_id is pointing to the last of suggestions,
   // call StartPrediction().
   void MaybeExpandPrediction(const composer::Composer &composer);
 
-  // Return the value of candidate to be used by the converter.
+  // Returns the value of candidate to be used by the converter.
   string GetSelectedCandidateValue(size_t segment_index) const;
 
-  // Return the candidate to be used by the converter.
+  // Returns the candidate to be used by the converter.
   const Segment::Candidate &GetSelectedCandidate(size_t segment_index) const;
 
   // Returns the length of committed candidate's key in characters.
   // True is returned if the selected candidate is successfully committed.
   bool CommitSuggestionInternal(const composer::Composer &composer,
+                                const commands::Context &context,
                                 size_t *committed_length);
+
+  void SegmentFocusInternal(size_t segment_index);
+  void ResizeSegmentWidth(const composer::Composer &composer, int delta);
 
   void FillConversion(commands::Preedit *preedit) const;
   void FillResult(commands::Result *result) const;
@@ -291,11 +326,23 @@ class SessionConverter : public SessionConverterInterface {
 
   bool IsEmptySegment(const Segment &segment) const;
 
-  // Propagete config proto to |output|.
+  // Propagetes config proto to |output|.
   // Renderer might need to refer mozc config saved in |output|.
   // In order to reduce IPC latency, we only propagete config only
   // when it is really required.
   void PropagateConfigToRenderer(commands::Output *output) const;
+
+  // Handles selected_indices for usage stats.
+  void InitializeSelectedCandidateIndices();
+  void UpdateSelectedCandidateIndex();
+  void UpdateCandidateStats(const string &base_name, int32 index);
+  void CommitUsageStats(
+      SessionConverterInterface::State commit_state,
+      const commands::Context &context);
+  void CommitUsageStatsWithSegmentsSize(
+      SessionConverterInterface::State commit_state,
+      const commands::Context &context,
+      size_t submit_segment_size);
 
   SessionConverterInterface::State state_;
 
@@ -312,12 +359,15 @@ class SessionConverter : public SessionConverterInterface {
   // Preferences for user's operation.
   OperationPreferences operation_preferences_;
 
-  commands::Result result_;
+  scoped_ptr<commands::Result> result_;
 
   scoped_ptr<CandidateList> candidate_list_;
   bool candidate_list_visible_;
 
-  commands::Request request_;
+  const commands::Request *request_;
+
+  // Selected index data of each segments for usage stats.
+  vector<int> selected_candidate_indices_;
 
   DISALLOW_COPY_AND_ASSIGN(SessionConverter);
 };

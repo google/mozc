@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -46,14 +46,14 @@ Converter::Converter(const Table& table)
 
 void Converter::Convert(const string& input, string* output) const {
   string key = input;
-  output->assign("");
+  output->clear();  // equivalent to output->assign("")
   while (!key.empty()) {
     size_t key_length;
     bool fixed;
     const Entry* entry = table_.LookUpPrefix(key, &key_length, &fixed);
     if (entry == NULL) {
-      output->append(key.substr(0, 1));
-      key = key.substr(1);
+      output->append(key, 0, 1);
+      key.erase(0, 1);
     } else {
       output->append(entry->result());
       key = entry->pending() + key.substr(key_length);

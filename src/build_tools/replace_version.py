@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2012, Google Inc.
+# Copyright 2010-2013, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -58,6 +58,17 @@ def ParseOptions():
   (options, unused_args) = parser.parse_args()
   return options
 
+
+def GetBrandingName(version):
+  """Returns the branding name dictionary."""
+  branding_name = {
+      'APP_NAME_JA': 'Mozc',
+      'APP_NAME_EN': 'Mozc',
+      'BRANDING': 'Mozc',
+  }
+  return branding_name
+
+
 def main():
   """The main function."""
   options = ParseOptions()
@@ -72,8 +83,15 @@ def main():
     exit(-1)
 
   version = mozc_version.MozcVersion(options.version_file)
-  open(options.output, 'w').write(
-      version.GetVersionInFormat(open(options.input).read()))
+  branding_name = GetBrandingName(version)
+  with open(options.input) as f:
+    result = f.read()
+  result = version.GetVersionInFormat(result)
+  for (key, value) in branding_name.items():
+    result = result.replace('@%s@' % key, value)
+
+  with open(options.output, 'w') as f:
+    f.write(result)
 
 
 if __name__ == '__main__':

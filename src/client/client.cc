@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,26 +31,27 @@
 
 #include "client/client.h"
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <Windows.h>
 #include <ShellAPI.h>
 #else
-#include <sys/types.h>
 #include <unistd.h>
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 #include <cstddef>
 
-#include "base/base.h"
 #include "base/const.h"
 #include "base/crash_report_util.h"
 #include "base/file_stream.h"
+#include "base/file_util.h"
 #include "base/logging.h"
 #include "base/process.h"
 #include "base/run_level.h"
 #include "base/singleton.h"
+#include "base/system_util.h"
 #include "base/util.h"
 #include "base/version.h"
+#include "config/config.pb.h"
 #include "ipc/ipc.h"
 #include "session/commands.pb.h"
 
@@ -192,8 +193,8 @@ void Client::DumpQueryOfDeath() {
 
 void Client::DumpHistorySnapshot(const string &filename,
                                   const string &label) const {
-  const string snapshot_file = Util::JoinPath(Util::GetUserProfileDirectory(),
-                                              filename);
+  const string snapshot_file =
+      FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(), filename);
   // open with append mode
   OutputFileStream output(snapshot_file.c_str(), ios::app);
 
@@ -254,7 +255,7 @@ void Client::PushHistory(const commands::Input &input,
 // Clear the history and push IMEOn command for initialize session.
 void Client::ResetHistory() {
   history_inputs_.clear();
-#if defined(OS_WINDOWS) || defined(OS_MACOSX)
+#if defined(OS_WIN) || defined(OS_MACOSX)
   // On Windows/Mac, we should send ON key at the first of each input session
   // excepting the very first session, because when the session is restored,
   // its state is direct. On the first session, users should send ON key
@@ -279,8 +280,9 @@ void Client::GetHistoryInputs(vector<commands::Input> *output) const {
   }
 }
 
-bool Client::SendKey(const commands::KeyEvent &key,
-                      commands::Output *output) {
+bool Client::SendKeyWithContext(const commands::KeyEvent &key,
+                                const commands::Context &context,
+                                commands::Output *output) {
 #ifdef DEBUG
   if (IsAbortKey(key)) {
     DCHECK(CrashReportUtil::Abort()) << "Not aborted by CrashReportUtil::Abort";
@@ -289,11 +291,16 @@ bool Client::SendKey(const commands::KeyEvent &key,
   commands::Input input;
   input.set_type(commands::Input::SEND_KEY);
   input.mutable_key()->CopyFrom(key);
+  // If the pointer of |context| is not the default_instance, update the data.
+  if (&context != &commands::Context::default_instance()) {
+    input.mutable_context()->CopyFrom(context);
+  }
   return EnsureCallCommand(&input, output);
 }
 
-bool Client::TestSendKey(const commands::KeyEvent &key,
-                          commands::Output *output) {
+bool Client::TestSendKeyWithContext(const commands::KeyEvent &key,
+                                    const commands::Context &context,
+                                    commands::Output *output) {
 #ifdef DEBUG
   if (IsAbortKey(key)) {
     DCHECK(CrashReportUtil::Abort()) << "Not aborted by CrashReportUtil::Abort";
@@ -301,15 +308,24 @@ bool Client::TestSendKey(const commands::KeyEvent &key,
 #endif  // DEBUG
   commands::Input input;
   input.set_type(commands::Input::TEST_SEND_KEY);
+  // If the pointer of |context| is not the default_instance, update the data.
+  if (&context != &commands::Context::default_instance()) {
+    input.mutable_context()->CopyFrom(context);
+  }
   input.mutable_key()->CopyFrom(key);
   return EnsureCallCommand(&input, output);
 }
 
-bool Client::SendCommand(const commands::SessionCommand &command,
-                          commands::Output *output) {
+bool Client::SendCommandWithContext(const commands::SessionCommand &command,
+                                    const commands::Context &context,
+                                    commands::Output *output) {
   commands::Input input;
   input.set_type(commands::Input::SEND_COMMAND);
   input.mutable_command()->CopyFrom(command);
+  // If the pointer of |context| is not the default_instance, update the data.
+  if (&context != &commands::Context::default_instance()) {
+    input.mutable_context()->CopyFrom(context);
+  }
   return EnsureCallCommand(&input, output);
 }
 
@@ -421,7 +437,7 @@ bool Client::CreateSession() {
   commands::ApplicationInfo *info = input.mutable_application_info();
   DCHECK(info);
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   info->set_process_id(static_cast<uint32>(::GetCurrentProcessId()));
   info->set_thread_id(static_cast<uint32>(::GetCurrentThreadId()));
 #else
@@ -903,8 +919,8 @@ bool Client::LaunchTool(const string &mode, const string &extra_arg) {
   }
 
   if (mode == "administration_dialog") {
-#ifdef OS_WINDOWS
-    const string &path = mozc::Util::GetToolPath();
+#ifdef OS_WIN
+    const string &path = mozc::SystemUtil::GetToolPath();
     wstring wpath;
     Util::UTF8ToWide(path.c_str(), &wpath);
     wpath = L"\"" + wpath + L"\"";
@@ -919,22 +935,22 @@ bool Client::LaunchTool(const string &mode, const string &extra_arg) {
     // http://b/2415191
     const int result =
         reinterpret_cast<int>(::ShellExecute(0,
-                                             mozc::Util::IsVistaOrLater() ?
+                                             SystemUtil::IsVistaOrLater() ?
                                              L"runas" : L"open",
                                              wpath.c_str(),
                                              L"--mode=administration_dialog",
-                                             mozc::Util::GetSystemDir(),
+                                             SystemUtil::GetSystemDir(),
                                              SW_SHOW));
     if (result <= 32) {
       LOG(ERROR) << "::ShellExecute failed: " << result;
       return false;
     }
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
     return false;
   }
 
-#if defined(OS_WINDOWS) || defined(OS_LINUX)
+#if defined(OS_WIN) || defined(OS_LINUX)
   string arg = "--mode=" + mode;
   if (!extra_arg.empty()) {
     arg += " ";
@@ -944,7 +960,7 @@ bool Client::LaunchTool(const string &mode, const string &extra_arg) {
     LOG(ERROR) << "Cannot execute: " << kMozcTool << " " << arg;
     return false;
   }
-#endif  // OS_WINDOWS || OS_LINUX
+#endif  // OS_WIN || OS_LINUX
 
   // TODO(taku): move MacProcess inside SpawnMozcProcess.
   // TODO(taku): support extra_arg.

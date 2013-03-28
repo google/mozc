@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,6 +27,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "rewriter/single_kanji_rewriter.h"
+
+#include <cstddef>
+#include <string>
+
+#include "base/scoped_ptr.h"
+#include "base/system_util.h"
 #include "base/util.h"
 #include "config/config_handler.h"
 #include "config/config.pb.h"
@@ -34,9 +41,7 @@
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_matcher.h"
-#include "rewriter/single_kanji_rewriter.h"
 #include "session/commands.pb.h"
-#include "session/request_test_util.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
@@ -53,7 +58,7 @@ class SingleKanjiRewriterTest : public ::testing::Test {
   virtual ~SingleKanjiRewriterTest() {}
 
   virtual void SetUp() {
-    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     config::Config default_config;
     config::ConfigHandler::GetDefaultConfig(&default_config);
     config::ConfigHandler::SetConfig(default_config);
@@ -67,6 +72,8 @@ class SingleKanjiRewriterTest : public ::testing::Test {
     return *pos_matcher_;
   }
 
+  const ConversionRequest default_request_;
+
  private:
   scoped_ptr<testing::MockDataManager> data_manager_;
   const POSMatcher *pos_matcher_;
@@ -75,10 +82,10 @@ class SingleKanjiRewriterTest : public ::testing::Test {
 TEST_F(SingleKanjiRewriterTest, CapabilityTest) {
   scoped_ptr<SingleKanjiRewriter> rewriter(CreateSingleKanjiRewriter());
 
-  commands::Request request;
-  request.set_mixed_conversion(false);
-  commands::ScopedRequestForUnittest scoped_request(request);
-  EXPECT_EQ(RewriterInterface::CONVERSION, rewriter->capability());
+  commands::Request client_request;
+  client_request.set_mixed_conversion(false);
+  const ConversionRequest request(NULL, &client_request);
+  EXPECT_EQ(RewriterInterface::CONVERSION, rewriter->capability(request));
 }
 
 TEST_F(SingleKanjiRewriterTest, SetKeyTest) {
@@ -98,7 +105,7 @@ TEST_F(SingleKanjiRewriterTest, SetKeyTest) {
   candidate->content_value = "strange value";
 
   EXPECT_EQ(1, segment->candidates_size());
-  rewriter->Rewrite(ConversionRequest(), &segments);
+  rewriter->Rewrite(default_request_, &segments);
   EXPECT_GT(segment->candidates_size(), 1);
   for (size_t i = 1; i < segment->candidates_size(); ++i) {
     EXPECT_EQ(kKey, segment->candidate(i).key);
@@ -106,19 +113,19 @@ TEST_F(SingleKanjiRewriterTest, SetKeyTest) {
 }
 
 TEST_F(SingleKanjiRewriterTest, MobileEnvironmentTest) {
-  commands::Request request;
+  commands::Request client_request;
   scoped_ptr<SingleKanjiRewriter> rewriter(CreateSingleKanjiRewriter());
 
   {
-    request.set_mixed_conversion(true);
-    commands::ScopedRequestForUnittest scoped_request(request);
-    EXPECT_EQ(RewriterInterface::ALL, rewriter->capability());
+    client_request.set_mixed_conversion(true);
+    const ConversionRequest request(NULL, &client_request);
+    EXPECT_EQ(RewriterInterface::ALL, rewriter->capability(request));
   }
 
   {
-    request.set_mixed_conversion(false);
-    commands::ScopedRequestForUnittest scoped_request(request);
-    EXPECT_EQ(RewriterInterface::CONVERSION, rewriter->capability());
+    client_request.set_mixed_conversion(false);
+    const ConversionRequest request(NULL, &client_request);
+    EXPECT_EQ(RewriterInterface::CONVERSION, rewriter->capability(request));
   }
 }
 
@@ -142,7 +149,7 @@ TEST_F(SingleKanjiRewriterTest, NounPrefixTest) {
   candidate1->content_value = "\xE8\xA6\x8B";
 
   EXPECT_EQ(1, segment1->candidates_size());
-  rewriter.Rewrite(ConversionRequest(), &segments);
+  rewriter.Rewrite(default_request_, &segments);
 
   // "未"
   EXPECT_EQ("\xE6\x9C\xAA", segment1->candidate(0).value);
@@ -175,7 +182,7 @@ TEST_F(SingleKanjiRewriterTest, NounPrefixTest) {
   candidate1->value = "\xE8\xA6\x8B";
   candidate1->content_value = "\xE8\xA6\x8B";
 
-  rewriter.Rewrite(ConversionRequest(), &segments);
+  rewriter.Rewrite(default_request_, &segments);
   // "見"
   EXPECT_EQ("\xE8\xA6\x8B", segment1->candidate(0).value);
 
@@ -183,7 +190,7 @@ TEST_F(SingleKanjiRewriterTest, NounPrefixTest) {
   candidate2->lid = pos_matcher().GetContentNounId();
   candidate2->rid = pos_matcher().GetContentNounId();
 
-  rewriter.Rewrite(ConversionRequest(), &segments);
+  rewriter.Rewrite(default_request_, &segments);
   // "未"
   EXPECT_EQ("\xE6\x9C\xAA", segment1->candidate(0).value);
 
@@ -208,7 +215,7 @@ TEST_F(SingleKanjiRewriterTest, InsertionPositionTest) {
   }
 
   EXPECT_EQ(10, segment->candidates_size());
-  EXPECT_TRUE(rewriter.Rewrite(ConversionRequest(), &segments));
+  EXPECT_TRUE(rewriter.Rewrite(default_request_, &segments));
   EXPECT_LT(10, segment->candidates_size());  // Some candidates were inserted.
 
   for (int i = 0; i < 10; ++i) {
@@ -237,7 +244,7 @@ TEST_F(SingleKanjiRewriterTest, AddDescriptionTest) {
 
   EXPECT_EQ(1, segment->candidates_size());
   EXPECT_TRUE(segment->candidate(0).description.empty());
-  EXPECT_TRUE(rewriter.Rewrite(ConversionRequest(), &segments));
+  EXPECT_TRUE(rewriter.Rewrite(default_request_, &segments));
   EXPECT_LT(1, segment->candidates_size());  // Some candidates were inserted.
   // "亜の旧字体"
   EXPECT_EQ("\xe4\xba\x9c\xe3\x81\xae\xe6\x97\xa7\xe5\xad\x97\xe4\xbd\x93",

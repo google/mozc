@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<script type="text/javascript" src="nacltest.js"></script>
+<script type="text/javascript" src="nacl_mozc_test_util.js"></script>
+<script type="text/javascript" src="nacl_mozc.js"></script>
+<title>Chrome NaCl Mozc exntension Test</title>
+</head>
+<body>
+
+<script type="text/javascript">
+
+var CONTEXT_ID = 1;
+var ENGINE_ID = 'dummy_id';
+
+var tester = new Tester();
+
+tester.addAsyncTest('OnKeyEventAsyncTest', function(status) {
+  new mozc_test_util.Executer(status, function(registerer, mozc) {
+    var requestId = 0;
+
+    registerer(mozc.onActivate_.bind(mozc, ENGINE_ID), 0);
+
+    registerer(mozc.onFocus_.bind(mozc, {
+      contextID: CONTEXT_ID,
+      type: 'text'
+    }), 1);
+
+    registerer(function() {
+      original_api = chrome.input.ime.setComposition;
+      chrome.input.ime.setComposition = function(param, callback) {
+        chrome.input.ime.setComposition = original_api;
+        // 'あ'
+        status.assertEqual('\u3042', param.text);
+      };
+
+      mozc.onKeyEventAsync_(ENGINE_ID, {
+        requestId: ++requestId,
+        key: 'a',
+        type: 'keydown'
+      });
+    }, 1);
+
+    registerer(function() {
+      original_api = chrome.input.ime.setComposition;
+      chrome.input.ime.setComposition = function(param, callback) {
+        chrome.input.ime.setComposition = original_api;
+        // 'ア'
+        status.assertEqual('\u30A2', param.text);
+      }
+
+      mozc.onKeyEventAsync_(ENGINE_ID, {
+        requestId: 2,
+        key: 'BrightnessUp',  // 'F7'
+        type: 'keydown'
+      });
+    }, 1);
+
+    registerer(function() {
+      original_api = chrome.input.ime.commitText;
+      chrome.input.ime.commitText = function(data) {
+        chrome.input.ime.commitText = original_api;
+        // 'ア'
+        status.assertEqual(CONTEXT_ID, data.contextID);
+        status.assertEqual('\u30A2', data.text);
+      }
+
+      mozc.onKeyEventAsync_(ENGINE_ID, {
+        requestId: ++requestId,
+        key: 'Enter',
+        type: 'keydown'
+      });
+    }, 1);
+
+    // All tests succeeded.
+    registerer(status.pass.bind(status), 0);
+  });
+});
+
+tester.run();
+
+</script>
+
+</body>
+</html>

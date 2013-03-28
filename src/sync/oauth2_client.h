@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,7 +44,7 @@ struct OAuth2Client {
       const string &name, const string &client_id, const string &client_secret)
       : name_(name), client_id_(client_id), client_secret_(client_secret) {}
 
-  static const OAuth2Client *GetDefaultClient();
+  static OAuth2Client GetDefaultInstance();
 };
 }  // namespace mozc::sync
 }  // namespace mozc

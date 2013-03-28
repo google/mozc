@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,18 +31,16 @@
 
 #include <string>
 
-#include "base/base.h"
 #include "base/clock_mock.h"
-#include "base/init.h"
+#include "base/file_util.h"
 #include "base/logging.h"
 #include "base/number_util.h"
+#include "base/system_util.h"
 #include "base/util.h"
 #include "config/character_form_manager.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/conversion_request.h"
-#include "converter/converter_interface.h"
-#include "converter/converter_mock.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_group.h"
@@ -144,7 +142,7 @@ class UserSegmentHistoryRewriterTest : public ::testing::Test {
   UserSegmentHistoryRewriterTest() {}
 
   virtual void SetUp() {
-    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
 
     Config config;
     ConfigHandler::GetDefaultConfig(&config);
@@ -164,9 +162,9 @@ class UserSegmentHistoryRewriterTest : public ::testing::Test {
 
     testing::MockDataManager data_manager;
     pos_matcher_ = data_manager.GetPOSMatcher();
-    pos_group_ = data_manager.GetPosGroup();
+    pos_group_.reset(new PosGroup(data_manager.GetPosGroupData()));
     ASSERT_TRUE(pos_matcher_ != NULL);
-    ASSERT_TRUE(pos_group_ != NULL);
+    ASSERT_TRUE(pos_group_.get() != NULL);
   }
 
   virtual void TearDown() {
@@ -182,10 +180,6 @@ class UserSegmentHistoryRewriterTest : public ::testing::Test {
     CharacterFormManager::GetCharacterFormManager()->SetDefaultRule();
   }
 
-  ConverterMock &mock() {
-    return mock_;
-  }
-
   const POSMatcher &pos_matcher() const {
     return *pos_matcher_;
   }
@@ -195,21 +189,21 @@ class UserSegmentHistoryRewriterTest : public ::testing::Test {
   }
 
   UserSegmentHistoryRewriter *CreateUserSegmentHistoryRewriter() const {
-    return new UserSegmentHistoryRewriter(pos_matcher_, pos_group_);
+    return new UserSegmentHistoryRewriter(pos_matcher_, pos_group_.get());
   }
 
  private:
-  ConverterMock mock_;
   const POSMatcher *pos_matcher_;
-  const PosGroup *pos_group_;
+  scoped_ptr<const PosGroup> pos_group_;
   DISALLOW_COPY_AND_ASSIGN(UserSegmentHistoryRewriterTest);
 };
 
 TEST_F(UserSegmentHistoryRewriterTest, CreateFile) {
   scoped_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
-  const string history_file = Util::JoinPath(FLAGS_test_tmpdir, "/segment.db");
-  EXPECT_TRUE(Util::FileExists(history_file));
+  const string history_file = FileUtil::JoinPath(FLAGS_test_tmpdir,
+                                                 "/segment.db");
+  EXPECT_TRUE(FileUtil::FileExists(history_file));
 }
 
 TEST_F(UserSegmentHistoryRewriterTest, InvalidInputsTest) {
@@ -219,7 +213,8 @@ TEST_F(UserSegmentHistoryRewriterTest, InvalidInputsTest) {
   scoped_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
   segments.Clear();
-  EXPECT_FALSE(rewriter->Rewrite(ConversionRequest(), &segments));
+  const ConversionRequest default_request;
+  EXPECT_FALSE(rewriter->Rewrite(default_request, &segments));
   rewriter->Finish(&segments);
 }
 

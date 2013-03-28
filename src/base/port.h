@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,7 @@
 
 
 #include <sys/types.h>
+#include <cstddef>
 #include "base/compiler_specific.h"
 
 // basic macros
@@ -42,13 +43,13 @@ typedef unsigned char      uint8;
 typedef unsigned short     uint16;
 typedef unsigned int       uint32;
 typedef unsigned int       char32;
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 typedef unsigned __int64   uint64;
 typedef __int64             int64;
 #else
 typedef unsigned long long uint64;
 typedef long long           int64;
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 #define atoi32 atoi
 #define strto32 strtol
@@ -59,7 +60,7 @@ typedef long long           int64;
 #include <stdint.h>
 #endif  // !COMPILER_MSVC or MSVC 2010+
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -80,19 +81,19 @@ inline void va_copy(va_list& a, va_list& b) {
   a = b;
 }
 #endif  // COMPILER_MSVC
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 template <typename T, size_t N>
 char (&ArraySizeHelper(T (&array)[N]))[N];
 
-#ifndef OS_WINDOWS
+#ifndef OS_WIN
 template <typename T, size_t N>
 char (&ArraySizeHelper(const T (&array)[N]))[N];
-#endif  // !OS_WINDOWS
+#endif  // !OS_WIN
 
 #define arraysize(array) (sizeof(ArraySizeHelper(array)))
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 // I64/UI64 postfixes are equivalent to LL/ULL and "I64" is equivalent to
 // "ll" since Visual C++ 2005, so we no longer need Windows-specific hack
 // for these, but we keep using old hacks.  The reasons are
@@ -113,7 +114,7 @@ char (&ArraySizeHelper(const T (&array)[N]))[N];
 #define GG_ULONGLONG(x) x##ULL
 #define GG_LL_FORMAT "ll"  // As in "%lld". Note that "q" is poor form also.
 #define GG_LL_FORMAT_W L"ll"
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 // INT_MIN, INT_MAX, UINT_MAX family at Google
 static const uint8  kuint8max  = (( uint8) 0xFF);
@@ -137,6 +138,10 @@ static const  int64 kint64max  = (( int64) GG_LONGLONG(0x7FFFFFFFFFFFFFFF));
     TypeName();                                  \
     DISALLOW_COPY_AND_ASSIGN(TypeName)
 
+// Macro for annotating implicit fall-through
+// TODO(team): Implement this.
+#define  FALLTHROUGH_INTENDED do { } while (0)
+
 #if (defined(COMPILER_GCC3) || defined(COMPILER_ICC) || defined(OS_MACOSX)) && !defined(SWIG)
 // Tell the compiler to do printf format string checking if the
 // compiler supports it; see the 'format' attribute in
@@ -158,15 +163,19 @@ static const  int64 kint64max  = (( int64) GG_LONGLONG(0x7FFFFFFFFFFFFFFF));
 # define ABSTRACT = 0
 #endif
 
+#define AS_STRING(x)   AS_STRING_INTERNAL(x)
+#define AS_STRING_INTERNAL(x)   #x
+
+#if MOZC_MSVC_VERSION_GE(16, 0)
+#define COMPILE_ASSERT(expr, msg) static_assert(expr, AS_STRING(msg))
+#else
+// Use nagative index hack if static_assert is not available.
 template <bool>
 struct CompileAssert {
 };
-
 #define COMPILE_ASSERT(expr, msg) \
   typedef CompileAssert<(bool(expr))> msg[bool(expr) ? 1 : -1]
-
-#define AS_STRING(x)   AS_STRING_INTERNAL(x)
-#define AS_STRING_INTERNAL(x)   #x
+#endif
 
 
 // ARRAYSIZE_UNSAFE performs essentially the same calculation as arraysize,
@@ -182,6 +191,5 @@ struct CompileAssert {
 
 #include "base/flags.h"
 #include "base/init.h"
-#include "base/logging.h"
 
 #endif  // MOZC_BASE_PORT_H_

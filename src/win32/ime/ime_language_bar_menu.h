@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -41,8 +41,8 @@
 #define IIDSTR_IMozcLangBarMenu "85B8A2CD-88A0-469f-BC39-8333620AE1F5"
 #define IIDSTR_IMozcToggleButtonMenu "E625A19B-C56D-4511-8B48-5A7C2AA10DF5"
 #else
-#define IIDSTR_IMozcLangBarItem "6419BEBA-28B7-458D-B7C7-46657FE468D9"
-#define IIDSTR_IMozcLangBarToggleItem "14CAC0FE-90C3-4DFC-97FA-B7113F93BD74"
+#define IIDSTR_IMozcLangBarMenu "6419BEBA-28B7-458D-B7C7-46657FE468D9"
+#define IIDSTR_IMozcToggleButtonMenu "14CAC0FE-90C3-4DFC-97FA-B7113F93BD74"
 #endif
 
 class LangBarCallback;
@@ -109,7 +109,8 @@ class ImeLangBarMenu
       public IMozcLangBarMenu {
  public:
   explicit ImeLangBarMenu(LangBarCallback* langbar_callback,
-                         const GUID& guid);
+                          const GUID& guid,
+                          bool show_in_tray);
   // It is OK to declare the destructor as non-virtual because all the
   // insbtances will be deleted from and only from the Release() method by
   // |delete this| where |this| has the true (derived) type of the instance.
@@ -193,7 +194,8 @@ class ImeLangBarMenu
 class ImeIconButtonMenu : public ImeLangBarMenu {
  public:
   explicit ImeIconButtonMenu(LangBarCallback* langbar_callback,
-                             const GUID& guid);
+                             const GUID& guid,
+                             bool show_in_tray);
 
   // The IUnknown interface methods
   virtual STDMETHODIMP QueryInterface(REFIID guid, void** object);
@@ -233,7 +235,8 @@ class ImeToggleButtonMenu
       public IMozcToggleButtonMenu {
  public:
   explicit ImeToggleButtonMenu(LangBarCallback* langbar_callback,
-                               const GUID& guid);
+                               const GUID& guid,
+                               bool show_in_tray);
   ~ImeToggleButtonMenu();
 
   // The IUnknown interface methods
@@ -272,7 +275,7 @@ class ImeSystemLangBarMenu
     : public ITfSystemLangBarItemSink {
  public:
   explicit ImeSystemLangBarMenu(LangBarCallback* langbar_callback,
-                         const GUID& guid);
+                                const GUID& guid);
   ~ImeSystemLangBarMenu();
 
   // The IUnknown interface methods

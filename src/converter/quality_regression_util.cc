@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,12 +36,15 @@
 #include "base/base.h"
 #include "base/file_stream.h"
 #include "base/logging.h"
+#include "base/string_piece.h"
 #include "base/text_normalizer.h"
 #include "base/util.h"
-#include "config/config.pb.h"
-#include "config/config_handler.h"
+#include "composer/composer.h"
+#include "composer/table.h"
+#include "converter/conversion_request.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
+#include "session/commands.pb.h"
 
 namespace mozc {
 namespace quality_regression {
@@ -59,7 +62,7 @@ const char kSuggestionNotExpect[] = "Suggestion Not Expected";
 
 // copied from evaluation/quality_regression/evaluator.cc
 int GetRank(const string &value, const Segments *segments,
-              size_t current_pos, size_t current_segment) {
+            size_t current_pos, size_t current_segment) {
   if (current_segment == segments->segments_size()) {
     if (current_pos == value.size()) {
       return 0;
@@ -88,8 +91,9 @@ int GetRank(const string &value, const Segments *segments,
   return -1;
 }
 
-uint32 GetPlatfromFromString(const string &str) {
-  string lower = str;
+uint32 GetPlatfromFromString(StringPiece str) {
+  string lower;
+  str.CopyToString(&lower);
   Util::LowerString(&lower);
   if (str == "desktop") {
     return QualityRegressionUtil::DESKTOP;
@@ -99,6 +103,12 @@ uint32 GetPlatfromFromString(const string &str) {
   }
   if (str == "mobile") {
     return QualityRegressionUtil::MOBILE;
+  }
+  if (str == "mobile_ambiguous") {
+    return QualityRegressionUtil::MOBILE_AMBIGUOUS;
+  }
+  if (str == "chromeos") {
+    return QualityRegressionUtil::CHROMEOS;
   }
   LOG(FATAL) << "Unknown platform name: " << str;
   return QualityRegressionUtil::DESKTOP;
@@ -115,20 +125,20 @@ string QualityRegressionUtil::TestItem::OutputAsTSV() const {
 }
 
 bool QualityRegressionUtil::TestItem::ParseFromTSV(const string &line) {
-  vector<string> tokens;
+  vector<StringPiece> tokens;
   Util::SplitStringUsing(line, "\t", &tokens);
   if (tokens.size() < 6) {
     return false;
   }
-  label          = tokens[0];
-  key            = tokens[1];
+  tokens[0].CopyToString(&label);
+  tokens[1].CopyToString(&key);
   TextNormalizer::NormalizeCandidateText(tokens[2], &expected_value);
-  command        = tokens[3];
-  expected_rank  = NumberUtil::SimpleAtoi(tokens[4].c_str());
-  NumberUtil::SafeStrToDouble(tokens[5].c_str(), &accuracy);
-  platform       = 0;
+  tokens[3].CopyToString(&command);
+  expected_rank  = NumberUtil::SimpleAtoi(tokens[4]);
+  NumberUtil::SafeStrToDouble(tokens[5], &accuracy);
+  platform = 0;
   if (tokens.size() >= 7) {
-    vector<string> platforms;
+    vector<StringPiece> platforms;
     Util::SplitStringUsing(tokens[6], ",", &platforms);
     for (size_t i = 0; i < platforms.size(); ++i) {
       platform |= GetPlatfromFromString(platforms[i]);
@@ -142,13 +152,12 @@ bool QualityRegressionUtil::TestItem::ParseFromTSV(const string &line) {
 
 QualityRegressionUtil::QualityRegressionUtil(ConverterInterface *converter)
     : converter_(converter),
+      request_(new commands::Request(commands::Request::default_instance())),
       segments_(new Segments) {
-  config::Config config;
-  config::ConfigHandler::GetDefaultConfig(&config);
-  config::ConfigHandler::SetConfig(config);
 }
 
-QualityRegressionUtil::~QualityRegressionUtil() {}
+QualityRegressionUtil::~QualityRegressionUtil() {
+}
 
 // static
 bool QualityRegressionUtil::ParseFile(const string &filename,
@@ -156,11 +165,11 @@ bool QualityRegressionUtil::ParseFile(const string &filename,
   // TODO(taku): support an XML file of Mozcsu.
   outputs->clear();
   InputFileStream ifs(filename.c_str());
-  if (!ifs) {
+  if (!ifs.good()) {
     return false;
   }
   string line;
-  while (getline(ifs, line)) {
+  while (!getline(ifs, line).fail()) {
     if (line.empty() || line.c_str()[0] == '#') {
       continue;
     }
@@ -188,17 +197,29 @@ bool QualityRegressionUtil::ConvertAndTest(const TestItem &item,
   converter_->ResetConversion(segments_.get());
   actual_value->clear();
 
+  composer::Table table;
+
   if (command == kConversionExpect ||
       command == kConversionNotExpect) {
-    converter_->StartConversion(segments_.get(), key);
+    composer::Composer composer(&table, request_.get());
+    composer.InsertCharacterPreedit(key);
+    ConversionRequest request(&composer, request_.get());
+    converter_->StartConversionForRequest(request, segments_.get());
   } else if (command == kReverseConversionExpect ||
     command == kReverseConversionNotExpect) {
     converter_->StartReverseConversion(segments_.get(), key);
   } else if (command == kPredictionExpect ||
-             command == kPredictionNotExpect||
-             command == kSuggestionExpect ||
+             command == kPredictionNotExpect) {
+    composer::Composer composer(&table, request_.get());
+    composer.InsertCharacterPreedit(key);
+    ConversionRequest request(&composer, request_.get());
+    converter_->StartPredictionForRequest(request, segments_.get());
+  } else if (command == kSuggestionExpect ||
              command == kSuggestionNotExpect) {
-    converter_->StartPrediction(segments_.get(), key);
+    composer::Composer composer(&table, request_.get());
+    composer.InsertCharacterPreedit(key);
+    ConversionRequest request(&composer, request_.get());
+    converter_->StartSuggestionForRequest(request, segments_.get());
   } else {
     LOG(FATAL) << "Unknown command: " << command;
   }
@@ -230,5 +251,10 @@ bool QualityRegressionUtil::ConvertAndTest(const TestItem &item,
 
   return result;
 }
+
+void QualityRegressionUtil::SetRequest(const commands::Request &request) {
+  request_->CopyFrom(request);
+}
+
 }   // namespace quality_regression
 }   // namespace mozc

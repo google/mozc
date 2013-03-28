@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@
 #ifndef MOZC_SERVER_CACHE_SERVICE_MANAGER_H_
 #define MOZC_SERVER_CACHE_SERVICE_MANAGER_H_
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <stdio.h>
 #include <string>
 
@@ -104,5 +104,5 @@ class CacheServiceManager {
   ~CacheServiceManager() {}
 };
 }  // namespace mozc
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 #endif  // MOZC_SERVER_CAC_SERVICE_MANAGER_H_

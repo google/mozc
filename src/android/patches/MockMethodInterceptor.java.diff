@@ -1,0 +1,238 @@
+--- a/./android/tests/gen_for_adt/org/mozc/android/inputmethod/japanese/testing/mocking/MockMethodInterceptor.java
++++ b/./android/tests/gen_for_adt/org/mozc/android/inputmethod/japanese/testing/mocking/MockMethodInterceptor.java
+@@ -13,7 +13,9 @@
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  */
+-package org.easymock.internal;
++package org.mozc.android.inputmethod.japanese.testing.mocking;
++
++import com.google.dexmaker.stock.ProxyBuilder;
+ 
+ import java.io.IOException;
+ import java.io.Serializable;
+@@ -24,10 +26,8 @@
+ import java.util.List;
+ import java.util.Set;
+ 
+-import net.sf.cglib.core.*;
+-import net.sf.cglib.proxy.*;
+-
+ import org.easymock.ConstructorArgs;
++import org.easymock.internal.BridgeMethodResolver;
+ 
+ /**
+  * Factory generating a mock for a class.
+@@ -37,11 +37,7 @@
+  * 
+  * @author Henri Tremblay
+  */
+-public class ClassProxyFactory<T> implements IProxyFactory<T> {
+-
+-    public static class MockMethodInterceptor implements MethodInterceptor, Serializable {
+-
+-        private static final long serialVersionUID = -9054190871232972342L;
++    public class MockMethodInterceptor implements InvocationHandler {
+ 
+         private final InvocationHandler handler;
+ 
+@@ -51,7 +47,8 @@
+             this.handler = handler;
+         }
+ 
+-        public Object intercept(final Object obj, Method method, final Object[] args, final MethodProxy proxy)
++        @Override
++        public Object invoke(final Object obj, Method method, final Object[] args)
+                 throws Throwable {
+ 
+             // We conveniently mock abstract methods be default
+@@ -70,7 +67,7 @@
+                     final StackTraceElement element = elements[2];
+                     if (element.getClassName().equals("org.easymock.internal.MockInvocationHandler")
+                             && element.getMethodName().equals("invoke")) {
+-                        return proxy.invokeSuper(obj, args);
++                        return ProxyBuilder.callSuper(obj, method, args);
+                     }
+                 }
+             }
+@@ -88,7 +85,7 @@
+             }
+ 
+             if (mockedMethods != null && !mockedMethods.contains(method)) {
+-                return proxy.invokeSuper(obj, args);
++                return ProxyBuilder.callSuper(obj, method, args);
+             }
+ 
+             return handler.invoke(obj, method, args);
+@@ -101,171 +98,4 @@
+         public void setMockedMethods(final Method... mockedMethods) {
+             this.mockedMethods = new HashSet<Method>(Arrays.asList(mockedMethods));
+         }
+-
+-        @SuppressWarnings("unchecked")
+-        private void readObject(final java.io.ObjectInputStream stream) throws IOException,
+-                ClassNotFoundException {
+-            stream.defaultReadObject();
+-            final Set<MethodSerializationWrapper> methods = (Set<MethodSerializationWrapper>) stream
+-                    .readObject();
+-            if (methods == null) {
+-                return;
+-            }
+-
+-            mockedMethods = new HashSet<Method>(methods.size());
+-            for (final MethodSerializationWrapper m : methods) {
+-                try {
+-                    mockedMethods.add(m.getMethod());
+-                } catch (final NoSuchMethodException e) {
+-                    // ///CLOVER:OFF
+-                    throw new IOException(e.toString());
+-                    // ///CLOVER:ON
+-                }
+-            }
+-        }
+-
+-        private void writeObject(final java.io.ObjectOutputStream stream) throws IOException {
+-            stream.defaultWriteObject();
+-
+-            if (mockedMethods == null) {
+-                stream.writeObject(null);
+-                return;
+-            }
+-
+-            final Set<MethodSerializationWrapper> methods = new HashSet<MethodSerializationWrapper>(
+-                    mockedMethods.size());
+-            for (final Method m : mockedMethods) {
+-                methods.add(new MethodSerializationWrapper(m));
+-            }
+-
+-            stream.writeObject(methods);
+-        }
+-    }
+-
+-    // ///CLOVER:OFF (I don't know how to test it automatically yet)
+-    private static final NamingPolicy ALLOWS_MOCKING_CLASSES_IN_SIGNED_PACKAGES = new DefaultNamingPolicy() {
+-        @Override
+-        public String getClassName(final String prefix, final String source, final Object key,
+-                final Predicate names) {
+-            return "codegen." + super.getClassName(prefix, source, key, names);
+-        }
+-    };
+-
+-    // ///CLOVER:ON
+-
+-    @SuppressWarnings("unchecked")
+-    public T createProxy(final Class<T> toMock, final InvocationHandler handler) {
+-
+-        final Enhancer enhancer = createEnhancer(toMock);
+-
+-        final MethodInterceptor interceptor = new MockMethodInterceptor(handler);
+-        enhancer.setCallbackType(interceptor.getClass());
+-
+-        Class mockClass;
+-        try {
+-            mockClass = enhancer.createClass();
+-        } catch (final CodeGenerationException e) {
+-            // ///CLOVER:OFF (don't know how to test it automatically)
+-            // Probably caused by a NoClassDefFoundError, let's try EasyMock class loader
+-            // instead of the default one (which is the class to mock one
+-            // This is required by Eclipse Plug-ins, the mock class loader doesn't see
+-            // cglib most of the time. Using EasyMock class loader solves this
+-            // See issue ID: 2994002
+-            enhancer.setClassLoader(getClass().getClassLoader());
+-            mockClass = enhancer.createClass();
+-            // ///CLOVER:ON
+-        }
+-
+-        try {
+-            Enhancer.registerCallbacks(mockClass, new Callback[] { interceptor });
+-
+-            if (ClassExtensionHelper.getCurrentConstructorArgs() != null) {
+-                // Really instantiate the class
+-                final ConstructorArgs args = ClassExtensionHelper.getCurrentConstructorArgs();
+-                Constructor cstr;
+-                try {
+-                    // Get the constructor with the same params
+-                    cstr = mockClass.getDeclaredConstructor(args.getConstructor().getParameterTypes());
+-                } catch (final NoSuchMethodException e) {
+-                    // Shouldn't happen, constructor is checked when ConstructorArgs is instantiated
+-                    // ///CLOVER:OFF
+-                    throw new RuntimeException("Fail to find constructor for param types", e);
+-                    // ///CLOVER:ON
+-                }
+-                T mock;
+-                try {
+-                    cstr.setAccessible(true); // So we can call a protected
+-                    // constructor
+-                    mock = (T) cstr.newInstance(args.getInitArgs());
+-                } catch (final InstantiationException e) {
+-                    // ///CLOVER:OFF
+-                    throw new RuntimeException("Failed to instantiate mock calling constructor", e);
+-                    // ///CLOVER:ON
+-                } catch (final IllegalAccessException e) {
+-                    // ///CLOVER:OFF
+-                    throw new RuntimeException("Failed to instantiate mock calling constructor", e);
+-                    // ///CLOVER:ON
+-                } catch (final InvocationTargetException e) {
+-                    throw new RuntimeException(
+-                            "Failed to instantiate mock calling constructor: Exception in constructor", e
+-                                    .getTargetException());
+-                }
+-                return mock;
+-            } else {
+-                // Do not call any constructor
+-
+-                Factory mock;
+-                try {
+-                    mock = (Factory) ClassInstantiatorFactory.getInstantiator().newInstance(mockClass);
+-                } catch (final InstantiationException e) {
+-                    // ///CLOVER:OFF
+-                    throw new RuntimeException("Fail to instantiate mock for " + toMock + " on "
+-                            + ClassInstantiatorFactory.getJVM() + " JVM");
+-                    // ///CLOVER:ON
+-                }
+-
+-                // This call is required. CGlib has some "magic code" making sure a
+-                // callback is used by only one instance of a given class. So only
+-                // the
+-                // instance created right after registering the callback will get
+-                // it.
+-                // However, this is done in the constructor which I'm bypassing to
+-                // allow class instantiation without calling a constructor.
+-                // Fortunately, the "magic code" is also called in getCallback which
+-                // is
+-                // why I'm calling it here mock.getCallback(0);
+-                mock.getCallback(0);
+-
+-                return (T) mock;
+-            }
+-        } finally {
+-            // To avoid CGLib out of memory issues
+-            Enhancer.registerCallbacks(mockClass, null);
+-        }
+-    }
+-
+-    private Enhancer createEnhancer(final Class<T> toMock) {
+-        // Create the mock
+-        final Enhancer enhancer = new Enhancer() {
+-            /**
+-             * Filter all private constructors but do not check that there are
+-             * some left
+-             */
+-            @SuppressWarnings("unchecked")
+-            @Override
+-            protected void filterConstructors(final Class sc, final List constructors) {
+-                CollectionUtils.filter(constructors, new VisibilityPredicate(sc, true));
+-            }
+-        };
+-        enhancer.setSuperclass(toMock);
+-
+-        // ///CLOVER:OFF (I don't know how to test it automatically yet)
+-        // See issue ID: 2994002
+-        if (toMock.getSigners() != null) {
+-            enhancer.setNamingPolicy(ALLOWS_MOCKING_CLASSES_IN_SIGNED_PACKAGES);
+-        }
+-        // ///CLOVER:ON
+-
+-        return enhancer;
+     }
+-}

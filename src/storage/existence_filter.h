@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -94,7 +94,6 @@ class ExistenceFilter {
 
   scoped_ptr<BlockBitmap> rep_;  // points to bitmap
   const uint32 vec_size_;  // size of bitmap (in bits)
-  const bool is_power_of_two_;  // true if vec_size_ is a power of two
   const uint32 expected_nelts_;  // expected number of inserts
   const int32 num_hashes_;  // number of hashes per lookup
 

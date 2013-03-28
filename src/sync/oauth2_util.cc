@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,62 +39,70 @@
 #include "storage/registry.h"
 #include "sync/oauth2.h"
 #include "sync/oauth2_client.h"
+#include "sync/oauth2_server.h"
 
 namespace mozc {
 namespace sync {
 namespace {
-const char kAuthenticateUri[] = "https://accounts.google.com/o/oauth2/auth";
-const char kRedirectUri[] = "urn:ietf:wg:oauth:2.0:oob";
-const char kRequestTokenUri[] = "https://accounts.google.com/o/oauth2/token";
-const char kScope[] = "https://www.googleapis.com/auth/imesync";
-const char kMachineIdKey[] = "oauth2.mid";
-}
 
-OAuth2Util::OAuth2Util(const OAuth2Client *client)
-    : client_(client), authenticate_uri_(kAuthenticateUri),
-      redirect_uri_(kRedirectUri), request_token_uri_(kRequestTokenUri),
-      scope_(kScope) {}
+const char kMachineIdKey[] = "oauth2.mid";
+
+}  // namespace
+
+OAuth2Util::OAuth2Util(const OAuth2Client &client,
+                       const OAuth2Server &server)
+    : client_name_(client.name_),
+      client_id_(client.client_id_),
+      client_secret_(client.client_secret_),
+      authenticate_uri_(server.authenticate_uri_),
+      redirect_uri_(server.redirect_uri_),
+      request_token_uri_(server.request_token_uri_),
+      scope_(server.scope_) {}
 
 OAuth2Util::~OAuth2Util() {}
 
 string OAuth2Util::GetAuthenticateUri() {
   string uri;
-  OAuth2::GetAuthorizeUri(authenticate_uri_, client_->client_id_, redirect_uri_,
+  OAuth2::GetAuthorizeUri(authenticate_uri_, client_id_, redirect_uri_,
                           scope_, "", &uri);
   return uri;
 }
 
-bool OAuth2Util::RequestAccessToken(const string &auth_token,
-                                    OAuth2::Error *error) {
+OAuth2::Error OAuth2Util::RequestAccessToken(const string &auth_token) {
   string access_token;
   string refresh_token;
-  if (!OAuth2::AuthorizeToken(request_token_uri_, client_->client_id_,
-                              client_->client_secret_, redirect_uri_,
-                              auth_token, scope_, "", error,
-                              &access_token, &refresh_token)) {
-    LOG(ERROR) << "Authorization in " << authenticate_uri_ << " failed";
-    return false;
+  const OAuth2::Error error = OAuth2::AuthorizeToken(
+      request_token_uri_, client_id_, client_secret_,
+      redirect_uri_, auth_token, scope_, "", &access_token, &refresh_token);
+  if (error != OAuth2::kNone) {
+    LOG(ERROR) << "Authorization in " << authenticate_uri_ << " failed."
+               << " Error: " << error;
+    return error;
   }
   if (!RegisterTokens(access_token, refresh_token)) {
     LOG(ERROR) << "Registration of Access Token and Refresh Token failed";
-    return false;
+    return OAuth2::kNonOAuth2Error;
   }
-  return true;
+  return OAuth2::kNone;
 }
 
-bool OAuth2Util::RefreshAccessToken(OAuth2::Error *error) {
+OAuth2::Error OAuth2Util::RefreshAccessToken() {
   string access_token;
   string refresh_token;
   if (!GetTokens(&access_token, &refresh_token)) {
-    return false;
+    return OAuth2::kNonOAuth2Error;
   }
-  if (!OAuth2::RefreshTokens(request_token_uri_, client_->client_id_,
-                             client_->client_secret_, scope_, error,
-                             &refresh_token, &access_token)) {
-    LOG(ERROR) << "Refreshtokens failed";
-    return false;
+  const OAuth2::Error error = OAuth2::RefreshTokens(
+      request_token_uri_, client_id_, client_secret_,
+      scope_, &refresh_token, &access_token);
+  if (error != OAuth2::kNone) {
+    LOG(ERROR) << "Refreshtokens failed. Error: " << error;
+    return error;
   }
-  return RegisterTokens(access_token, refresh_token);
+  if (!RegisterTokens(access_token, refresh_token)) {
+    return OAuth2::kNonOAuth2Error;
+  }
+  return OAuth2::kNone;
 }
 
 bool OAuth2Util::RequestResource(const string &resource_uri, string *resource) {
@@ -124,7 +132,7 @@ void OAuth2Util::Clear() {
 bool OAuth2Util::InitMID() {
   const size_t kMidSize = 64;
   char tmp[kMidSize + 1];
-  Util::GetSecureRandomAsciiSequence(tmp, sizeof(tmp));
+  Util::GetRandomAsciiSequence(tmp, sizeof(tmp));
   tmp[kMidSize] = '\0';
   const string mid = tmp;
   if (!mozc::storage::Registry::Insert(kMachineIdKey, mid)) {
@@ -263,11 +271,11 @@ bool OAuth2Util::DecryptString(const string &crypt, string *plain) {
 }
 
 string OAuth2Util::GetAccessKey() {
-  return "oauth2." + client_->name_ + ".access_token";
+  return "oauth2." + client_name_ + ".access_token";
 }
 
 string OAuth2Util::GetRefreshKey() {
-  return "oauth2." + client_->name_ + ".refresh_token";
+  return "oauth2." + client_name_ + ".refresh_token";
 }
 
 }  // namespace sync

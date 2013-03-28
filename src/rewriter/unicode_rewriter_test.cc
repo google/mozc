@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,18 +27,22 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "rewriter/unicode_rewriter.h"
+
+#include <cstddef>
 #include <cstdlib>
 #include <string>
+
+#include "base/port.h"
+#include "base/system_util.h"
 #include "base/util.h"
 #include "composer/composer.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/conversion_request.h"
-#include "converter/converter_interface.h"
 #include "converter/segments.h"
 #include "engine/engine_interface.h"
 #include "engine/mock_data_engine_factory.h"
-#include "rewriter/unicode_rewriter.h"
 #include "session/commands.pb.h"
 #include "testing/base/public/gunit.h"
 
@@ -80,7 +84,7 @@ class UnicodeRewriterTest : public testing::Test {
   virtual ~UnicodeRewriterTest() {}
 
   virtual void SetUp() {
-    Util::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     config::Config config;
     config::ConfigHandler::GetDefaultConfig(&config);
     config::ConfigHandler::SetConfig(config);
@@ -224,9 +228,9 @@ TEST_F(UnicodeRewriterTest, MultipleSegment) {
 TEST_F(UnicodeRewriterTest, RewriteToUnicodeCharFormat) {
   UnicodeRewriter rewriter(engine_->GetConverter());
   {  // Typical case
-    composer::Composer composer(NULL, default_request());
+    composer::Composer composer(NULL, &default_request());
     composer.set_source_text("A");
-    ConversionRequest request(&composer);
+    ConversionRequest request(&composer, &default_request());
 
     Segments segments;
     AddSegment("A", "A", &segments);
@@ -236,8 +240,8 @@ TEST_F(UnicodeRewriterTest, RewriteToUnicodeCharFormat) {
   }
 
   {  // If source_text is not set, this rewrite is not triggered.
-    composer::Composer composer(NULL, default_request());
-    ConversionRequest request(&composer);
+    composer::Composer composer(NULL, &default_request());
+    ConversionRequest request(&composer, &default_request());
 
     Segments segments;
     AddSegment("A", "A", &segments);
@@ -248,9 +252,9 @@ TEST_F(UnicodeRewriterTest, RewriteToUnicodeCharFormat) {
 
   {  // If source_text is not a single character, this rewrite is not
      // triggered.
-    composer::Composer composer(NULL, default_request());
+    composer::Composer composer(NULL, &default_request());
     composer.set_source_text("AB");
-    ConversionRequest request(&composer);
+    ConversionRequest request(&composer, &default_request());
 
     Segments segments;
     AddSegment("AB", "AB", &segments);
@@ -259,9 +263,9 @@ TEST_F(UnicodeRewriterTest, RewriteToUnicodeCharFormat) {
   }
 
   {  // Multibyte character is also supported.
-    composer::Composer composer(NULL, default_request());
+    composer::Composer composer(NULL, &default_request());
     composer.set_source_text("\xE6\x84\x9B");  // "愛"
-    ConversionRequest request(&composer);
+    ConversionRequest request(&composer, &default_request());
 
     Segments segments;
     AddSegment("\xE3\x81\x82\xE3\x81\x84", "\xE6\x84\x9B", &segments);

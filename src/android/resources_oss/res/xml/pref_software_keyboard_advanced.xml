@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ Copyright 2010-2013, Google Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+     * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+     * Redistributions in binary form must reproduce the above
+ copyright notice, this list of conditions and the following disclaimer
+ in the documentation and/or other materials provided with the
+ distribution.
+     * Neither the name of Google Inc. nor the names of its
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+                  xmlns:mozc="http://schemas.android.com/apk/res-auto" >
+  <PreferenceCategory android:title="@string/pref_software_keyboard_preferences_portrait_title"
+                      android:key="pref_software_keyboard_advanced_portrait_key"
+                      android:persistent="false" >
+    <org.mozc.android.inputmethod.japanese.preference.KeyboardLayoutPreference
+        android:defaultValue="TWELVE_KEYS"
+        android:key="pref_portrait_keyboard_layout_key"
+        android:layout="@layout/pref_large_widget"
+        android:summary="@string/pref_keyboard_layout_description"
+        android:title="@string/pref_keyboard_layout_title"
+        android:widgetLayout="@layout/pref_keyboard_layout" />
+
+    <ListPreference
+        android:defaultValue="TOGGLE_FLICK"
+        android:entries="@array/input_style_setting_entries"
+        android:entryValues="@array/input_style_setting_entry_values"
+        android:key="pref_portrait_input_style_key"
+        android:summary="@string/pref_input_style_setting_description"
+        android:title="@string/pref_input_style_title" />
+
+    <CheckBoxPreference
+        android:defaultValue="false"
+        android:key="pref_portrait_qwerty_layout_for_alphabet_key"
+        android:summary="@string/pref_qwerty_layout_for_alphabet_description"
+        android:title="@string/pref_qwerty_layout_for_alphabet_title" />
+
+    <org.mozc.android.inputmethod.japanese.preference.SeekbarPreference
+        android:key="pref_portrait_flick_sensitivity_key"
+        android:summary="@string/pref_flick_sensitivity_description"
+        android:title="@string/pref_flick_sensitivity_title"
+        android:max="10"
+        android:defaultValue="0"
+        mozc:seekbar_offset="-10"
+        mozc:seekbar_low_text="@string/pref_flick_sensitivity_seekbar_low_text"
+        mozc:seekbar_middle_text="@string/pref_flick_sensitivity_seekbar_middle_text"
+        mozc:seekbar_high_text="@string/pref_flick_sensitivity_seekbar_high_text" />
+
+    <ListPreference
+        android:defaultValue="FILL"
+        android:entries="@array/layout_adjustment_entries"
+        android:entryValues="@array/layout_adjustment_values"
+        android:key="pref_portrait_layout_adjustment_key"
+        android:summary="@string/pref_layout_adjustment_description"
+        android:title="@string/pref_layout_adjustment_title"/>
+
+    <org.mozc.android.inputmethod.japanese.preference.SeekbarPreference
+        android:key="pref_portrait_keyboard_height_ratio_key"
+        android:summary="@string/pref_keyboard_height_ratio_description"
+        android:title="@string/pref_keyboard_height_ratio_title"
+        android:max="130"
+        android:defaultValue="100"
+        mozc:seekbar_offset="70"
+        mozc:seekbar_low_text="@string/pref_flick_sensitivity_seekbar_low_text"
+        mozc:seekbar_middle_text="@string/pref_flick_sensitivity_seekbar_middle_text"
+        mozc:seekbar_high_text="@string/pref_flick_sensitivity_seekbar_high_text" />
+    </PreferenceCategory>
+
+  <PreferenceCategory android:title="@string/pref_software_keyboard_preferences_landscape_title"
+                      android:key="pref_software_keyboard_advanced_landscape_key"
+                      android:persistent="false" >
+    <CheckBoxPreference
+        android:defaultValue="true"
+        android:key="pref_use_portrait_keyboard_settings_for_landscape_key"
+        android:disableDependentsState="true"
+        android:title="@string/pref_use_portrait_keyboard_settings_for_landscape_title" />
+
+    <org.mozc.android.inputmethod.japanese.preference.KeyboardLayoutPreference
+        android:defaultValue="TWELVE_KEYS"
+        android:key="pref_landscape_keyboard_layout_key"
+        android:layout="@layout/pref_large_widget"
+        android:summary="@string/pref_keyboard_layout_description"
+        android:title="@string/pref_keyboard_layout_title"
+        android:widgetLayout="@layout/pref_keyboard_layout"
+        android:dependency="pref_use_portrait_keyboard_settings_for_landscape_key" />
+
+    <ListPreference
+        android:defaultValue="TOGGLE_FLICK"
+        android:entries="@array/input_style_setting_entries"
+        android:entryValues="@array/input_style_setting_entry_values"
+        android:key="pref_landscape_input_style_key"
+        android:summary="@string/pref_input_style_setting_description"
+        android:title="@string/pref_input_style_title"
+        android:dependency="pref_use_portrait_keyboard_settings_for_landscape_key" />
+
+    <CheckBoxPreference
+        android:defaultValue="false"
+        android:key="pref_landscape_qwerty_layout_for_alphabet_key"
+        android:summary="@string/pref_qwerty_layout_for_alphabet_description"
+        android:title="@string/pref_qwerty_layout_for_alphabet_title"
+        android:dependency="pref_use_portrait_keyboard_settings_for_landscape_key" />
+
+    <org.mozc.android.inputmethod.japanese.preference.SeekbarPreference
+        android:key="pref_landscape_flick_sensitivity_key"
+        android:summary="@string/pref_flick_sensitivity_description"
+        android:title="@string/pref_flick_sensitivity_title"
+        android:dependency="pref_use_portrait_keyboard_settings_for_landscape_key"
+        android:max="10"
+        android:defaultValue="0"
+        mozc:seekbar_offset="-10"
+        mozc:seekbar_low_text="@string/pref_flick_sensitivity_seekbar_low_text"
+        mozc:seekbar_middle_text="@string/pref_flick_sensitivity_seekbar_middle_text"
+        mozc:seekbar_high_text="@string/pref_flick_sensitivity_seekbar_high_text" />
+    <ListPreference
+        android:dependency="pref_use_portrait_keyboard_settings_for_landscape_key"
+        android:defaultValue="FILL"
+        android:entries="@array/layout_adjustment_entries"
+        android:entryValues="@array/layout_adjustment_values"
+        android:key="pref_landscape_layout_adjustment_key"
+        android:summary="@string/pref_layout_adjustment_description"
+        android:title="@string/pref_layout_adjustment_title" />
+
+    <org.mozc.android.inputmethod.japanese.preference.SeekbarPreference
+        android:key="pref_landscape_keyboard_height_ratio_key"
+        android:summary="@string/pref_keyboard_height_ratio_description"
+        android:title="@string/pref_keyboard_height_ratio_title"
+        android:dependency="pref_use_portrait_keyboard_settings_for_landscape_key"
+        android:max="130"
+        android:defaultValue="100"
+        mozc:seekbar_offset="70"
+        mozc:seekbar_low_text="@string/pref_flick_sensitivity_seekbar_low_text"
+        mozc:seekbar_middle_text="@string/pref_flick_sensitivity_seekbar_middle_text"
+        mozc:seekbar_high_text="@string/pref_flick_sensitivity_seekbar_high_text" />
+  </PreferenceCategory>
+</PreferenceScreen>

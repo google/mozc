@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -55,7 +55,7 @@
 #error "base/codegen_bytearray_stream.h shouldn't be used from android platform."
 #endif
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 // Visual C++ does not support string literals longer than 65535 characters
 // so integer arrays (e.g. arrays of uint64) are used to represent byte arrays
 // on Windows.
@@ -76,7 +76,7 @@
 //       "\\x12\\x34\\x56\\x78...";
 //   const size_t kVAR_size = 123;
 #define MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 #ifdef MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
 #include <iomanip>
@@ -150,7 +150,7 @@ class BasicCodeGenByteArrayStreamBuf
     *output_stream_ << "const char k" << var_name_base_ << "_data[] =\n";
 #endif
     output_count_ = 0;
-    return is_open_ = *output_stream_;
+    return is_open_ = !output_stream_->fail();
   }
 
   // Writes the end of a variable definition.
@@ -181,14 +181,14 @@ class BasicCodeGenByteArrayStreamBuf
     *output_stream_ << "const size_t k" << var_name_base_ << "_size = "
                     << output_count_ << ";\n";
     is_open_ = false;
-    return *output_stream_;
+    return !output_stream_->fail();
   }
 
  protected:
   // Flushes.
   virtual int sync() {
     return (overflow() != traits_type::eof() &&
-            output_stream_->flush())
+            !output_stream_->flush().fail())
         ? 0 : -1;
   }
 
@@ -223,7 +223,7 @@ class BasicCodeGenByteArrayStreamBuf
     }
     this->setp(internal_output_buffer_.get(),
                internal_output_buffer_.get() + internal_output_buffer_size_);
-    return !*output_stream_
+    return output_stream_->fail()
         ? traits_type::eof()
         : (traits_type::eq_int_type(c, traits_type::eof())
            ? traits_type::not_eof(c) : c);

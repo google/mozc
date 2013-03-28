@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,6 +31,8 @@
 
 #include "session/session_converter.h"
 
+#include <algorithm>
+#include <limits>
 #include <string>
 
 #include "base/base.h"
@@ -41,51 +43,74 @@
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/converter_interface.h"
+#include "converter/converter_util.h"
 #include "converter/segments.h"
+#include "session/commands.pb.h"
 #include "session/internal/candidate_list.h"
 #include "session/internal/session_output.h"
+#include "session/session_usage_stats_util.h"
 #include "transliteration/transliteration.h"
+#include "usage_stats/usage_stats.h"
+
+using mozc::usage_stats::UsageStats;
+
+#ifdef OS_ANDROID
+const bool kDefaultUseActualConverterForRealtimeConversion = false;
+#else
+const bool kDefaultUseActualConverterForRealtimeConversion = true;
+#endif  // OS_ANDROID
+
+DEFINE_bool(use_actual_converter_for_realtime_conversion,
+            kDefaultUseActualConverterForRealtimeConversion,
+            "If true, use the actual (non-immutable) converter for real "
+            "time conversion.");
 
 namespace mozc {
 namespace session {
 
 namespace {
 
-using ::mozc::commands::Request;
+using mozc::commands::Request;
+using mozc::config::Config;
+using mozc::config::ConfigHandler;
 
 const size_t kDefaultMaxHistorySize = 3;
 
 void SetPresentationMode(bool enabled) {
-  config::Config config;
-  config::ConfigHandler::GetConfig(&config);
+  Config config;
+  ConfigHandler::GetConfig(&config);
   config.set_presentation_mode(enabled);
-  config::ConfigHandler::SetConfig(config);
+  ConfigHandler::SetConfig(config);
 }
 
 void SetIncognitoMode(bool enabled) {
-  config::Config config;
-  config::ConfigHandler::GetConfig(&config);
+  Config config;
+  ConfigHandler::GetConfig(&config);
   config.set_incognito_mode(enabled);
-  config::ConfigHandler::SetConfig(config);
+  ConfigHandler::SetConfig(config);
 }
 
 }  // namespace
 
+const size_t SessionConverter::kConsumedAllCharacters =
+    numeric_limits<size_t>::max();
+
 SessionConverter::SessionConverter(const ConverterInterface *converter,
-                                   const Request &request)
+                                   const Request *request)
     : SessionConverterInterface(),
       state_(COMPOSITION),
       converter_(converter),
       segments_(new Segments),
       segment_index_(0),
+      result_(new commands::Result),
       candidate_list_(new CandidateList(true)),
-      candidate_list_visible_(false) {
+      candidate_list_visible_(false),
+      request_(request) {
   conversion_preferences_.use_history = true;
   conversion_preferences_.max_history_size = kDefaultMaxHistorySize;
   conversion_preferences_.request_suggestion = true;
   operation_preferences_.use_cascading_window = true;
   operation_preferences_.candidate_shortcuts.clear();
-  request_.CopyFrom(request);
 }
 
 SessionConverter::~SessionConverter() {}
@@ -123,9 +148,11 @@ bool SessionConverter::ConvertWithPreferences(
   segments_->set_request_type(Segments::CONVERSION);
   SetConversionPreferences(preferences, segments_.get());
 
-  if (!converter_->StartConversionForRequest(
-          ConversionRequest(&composer), segments_.get())) {
+  const ConversionRequest conversion_request(&composer, request_);
+  if (!converter_->StartConversionForRequest(conversion_request,
+                                             segments_.get())) {
     LOG(WARNING) << "StartConversionForRequest() failed";
+    ResetState();
     return false;
   }
 
@@ -133,6 +160,7 @@ bool SessionConverter::ConvertWithPreferences(
   state_ = CONVERSION;
   candidate_list_visible_ = false;
   UpdateCandidateList();
+  InitializeSelectedCandidateIndices();
   return true;
 }
 
@@ -148,7 +176,7 @@ bool SessionConverter::GetReadingText(const string &source_text,
     LOG(WARNING) << "no segments from reverse conversion";
     return false;
   }
-  for (int i = 0; i < reverse_segments.segments_size(); ++i) {
+  for (size_t i = 0; i < reverse_segments.segments_size(); ++i) {
     const mozc::Segment &segment = reverse_segments.segment(i);
     if (segment.candidates_size() == 0) {
       LOG(WARNING) << "got an empty segment from reverse conversion";
@@ -232,9 +260,7 @@ bool SessionConverter::ConvertToTransliteration(
     if (segments_->conversion_segments_size() != 1) {
       string composition;
       GetPreedit(0, segments_->conversion_segments_size(), &composition);
-      converter_->ResizeSegment(segments_.get(), ConversionRequest(&composer),
-                                0, Util::CharsLen(composition));
-      UpdateCandidateList();
+      ResizeSegmentWidth(composer, Util::CharsLen(composition));
     }
 
     DCHECK(CheckState(CONVERSION));
@@ -253,6 +279,8 @@ bool SessionConverter::ConvertToTransliteration(
     candidate_list_->MoveNextAttributes(query_attr);
   }
   candidate_list_visible_ = false;
+  // Treat as top conversion candidate on usage stats.
+  selected_candidate_indices_[segment_index_] = 0;
   SegmentFocus();
   return true;
 }
@@ -278,9 +306,7 @@ bool SessionConverter::ConvertToHalfWidth(const composer::Composer &composer) {
     // converter/converter.cc to enable to accept mozc::Segment::FIXED
     // from the session layer.
     if (segments_->conversion_segments_size() != 1) {
-      converter_->ResizeSegment(segments_.get(), ConversionRequest(&composer),
-                                0, Util::CharsLen(composition));
-      UpdateCandidateList();
+      ResizeSegmentWidth(composer, Util::CharsLen(composition));
     }
   } else {
     composition = GetSelectedCandidate(segment_index_).value;
@@ -303,6 +329,8 @@ bool SessionConverter::ConvertToHalfWidth(const composer::Composer &composer) {
   }
   candidate_list_->MoveNextAttributes(attributes);
   candidate_list_visible_ = false;
+  // Treat as top conversion candidate on usage stats.
+  selected_candidate_indices_[segment_index_] = 0;
   SegmentFocus();
   return true;
 }
@@ -330,7 +358,9 @@ bool SessionConverter::SwitchKanaType(const composer::Composer &composer) {
     if (segments_->conversion_segments_size() != 1) {
       string composition;
       GetPreedit(0, segments_->conversion_segments_size(), &composition);
-      converter_->ResizeSegment(segments_.get(), ConversionRequest(&composer),
+      const ConversionRequest conversion_request(&composer, request_);
+      converter_->ResizeSegment(segments_.get(),
+                                conversion_request,
                                 0, Util::CharsLen(composition));
       UpdateCandidateList();
     }
@@ -353,6 +383,8 @@ bool SessionConverter::SwitchKanaType(const composer::Composer &composer) {
   DCHECK(CheckState(CONVERSION));
   candidate_list_->MoveNextAttributes(attributes);
   candidate_list_visible_ = false;
+  // Treat as top conversion candidate on usage stats.
+  selected_candidate_indices_[segment_index_] = 0;
   SegmentFocus();
   return true;
 }
@@ -402,34 +434,43 @@ bool SessionConverter::SuggestWithPreferences(
 
   // If we are on a password field, suppress suggestion.
   if (!preferences.request_suggestion ||
-      composer.GetInputFieldType() == commands::SessionCommand::PASSWORD) {
+      composer.GetInputFieldType() == commands::Context::PASSWORD) {
     return false;
   }
 
   // Initialize the segments for suggestion.
   SetConversionPreferences(preferences, segments_.get());
 
+  ConversionRequest conversion_request(&composer, request_);
+
   const size_t cursor = composer.GetCursor();
   if (cursor == composer.GetLength() || cursor == 0 ||
-      !request_.mixed_conversion()) {
-    if (!converter_->StartSuggestionForRequest(
-            ConversionRequest(&composer), segments_.get())) {
+      !request_->mixed_conversion()) {
+    conversion_request.set_create_partial_candidates(
+        request_->auto_partial_suggestion());
+    conversion_request.set_use_actual_converter_for_realtime_conversion(
+        FLAGS_use_actual_converter_for_realtime_conversion);
+    if (!converter_->StartSuggestionForRequest(conversion_request,
+                                               segments_.get())) {
       // TODO(komatsu): Because suggestion is a prefix search, once
       // StartSuggestion returns false, this GetSuggestion always
       // returns false.  Refactor it.
       VLOG(1) << "StartSuggestionForRequest() returns no suggestions.";
-
       // Clear segments and keep the context
       converter_->CancelConversion(segments_.get());
       return false;
     }
   } else {
-    string preedit;
-    composer.GetQueryForPrediction(&preedit);
-    string query;
-    Util::SubString(preedit, 0, cursor, &query);
-    if (!converter_->StartPartialSuggestion(segments_.get(), query)) {
-      VLOG(1) << "StartPartialSuggestion() returns no suggestions.";
+    // create_partial_candidates is false because auto partial suggestion
+    // should be activated only when the cursor is at the tail or head from
+    // the view point of UX.
+    // use_actual_converter_for_realtime_conversion is also false because of
+    // implementation reason. If the flag is true, all the composition
+    // characters will be used in the below process, which conflicts
+    // with *partial* prediction.
+    if (!converter_->StartPartialSuggestionForRequest(conversion_request,
+                                                      segments_.get())) {
+      VLOG(1) << "StartPartialSuggestionForRequest() returns no suggestions.";
       // Clear segments and keep the context
       converter_->CancelConversion(segments_.get());
       return false;
@@ -446,6 +487,7 @@ bool SessionConverter::SuggestWithPreferences(
   state_ = SUGGESTION;
   UpdateCandidateList();
   candidate_list_visible_ = true;
+  InitializeSelectedCandidateIndices();
   return true;
 }
 
@@ -484,8 +526,11 @@ bool SessionConverter::PredictWithPreferences(
   segments_->clear_conversion_segments();
 
   if (predict_expand || predict_first) {
-    if (!converter_->StartPredictionForRequest(
-            ConversionRequest(&composer), segments_.get())) {
+    ConversionRequest conversion_request(&composer, request_);
+    conversion_request.set_use_actual_converter_for_realtime_conversion(
+        FLAGS_use_actual_converter_for_realtime_conversion);
+    if (!converter_->StartPredictionForRequest(conversion_request,
+                                               segments_.get())) {
       LOG(WARNING) << "StartPredictionForRequest() failed";
 
       // TODO(komatsu): Perform refactoring after checking the stability test.
@@ -508,6 +553,7 @@ bool SessionConverter::PredictWithPreferences(
   state_ = PREDICTION;
   UpdateCandidateList();
   candidate_list_visible_ = true;
+  InitializeSelectedCandidateIndices();
 
   return true;
 }
@@ -546,21 +592,27 @@ bool SessionConverter::ExpandSuggestionWithPreferences(
   // Without this statement we can add additional candidates into
   // existing segments.
 
+  ConversionRequest conversion_request(&composer, request_);
+
   const size_t cursor = composer.GetCursor();
   if (cursor == composer.GetLength() || cursor == 0 ||
-      !request_.mixed_conversion()) {
+      !request_->mixed_conversion()) {
+    conversion_request.set_create_partial_candidates(
+        request_->auto_partial_suggestion());
+    conversion_request.set_use_actual_converter_for_realtime_conversion(
+        FLAGS_use_actual_converter_for_realtime_conversion);
     // This is abuse of StartPrediction().
     // TODO(matsuzakit or yamaguchi): Add ExpandSuggestion method
     //    to Converter class.
-    if (!converter_->StartPredictionForRequest(
-            ConversionRequest(&composer), segments_.get())) {
+    if (!converter_->StartPredictionForRequest(conversion_request,
+                                               segments_.get())) {
       LOG(WARNING) << "StartPredictionForRequest() failed";
     }
   } else {
-    string query;
-    Util::SubString(preedit, 0, cursor, &query);
-    if (!converter_->StartPartialPrediction(segments_.get(), query)) {
-      VLOG(1) << "StartPartialPrediction() returns no suggestions.";
+    // c.f. SuggestWithPreferences for ConversionRequest flags.
+    if (!converter_->StartPartialPredictionForRequest(conversion_request,
+                                                      segments_.get())) {
+      VLOG(1) << "StartPartialPredictionForRequest() returns no suggestions.";
       // Clear segments and keep the context
       converter_->CancelConversion(segments_.get());
       return false;
@@ -598,12 +650,17 @@ void SessionConverter::MaybeExpandPrediction(
   DCHECK(CheckState(PREDICTION));
   ResetResult();
 
-  const int previous_index = static_cast<int>(candidate_list_->focused_index());
-  PredictWithPreferences(composer, conversion_preferences_);
+  const size_t previous_index = candidate_list_->focused_index();
+  if (!PredictWithPreferences(composer, conversion_preferences_)) {
+    // TODO(komatsu): Consider the case when PredictWithPreferences fails.
+    return;
+  }
 
-  // Move to the last suggestion if expand mode
-  if (previous_index >= 0) {
+  if (previous_index < candidate_list_->size()) {
     candidate_list_->MoveToId(candidate_list_->candidate(previous_index).id());
+    UpdateSelectedCandidateIndex();
+  } else {
+    // Ideally this should not happen.
   }
 }
 
@@ -632,11 +689,11 @@ void SessionConverter::Reset() {
   ResetState();
 }
 
-void SessionConverter::Commit() {
+void SessionConverter::Commit(const commands::Context &context) {
   DCHECK(CheckState(PREDICTION | CONVERSION));
   ResetResult();
 
-  if (!UpdateResult(0, segments_->conversion_segments_size())) {
+  if (!UpdateResult(0, segments_->conversion_segments_size(), NULL)) {
     Cancel();
     ResetState();
     return;
@@ -647,40 +704,46 @@ void SessionConverter::Commit() {
                                    i,
                                    GetCandidateIndexForConverter(i));
   }
+  CommitUsageStats(state_, context);
   converter_->FinishConversion(segments_.get());
   ResetState();
 }
 
 bool SessionConverter::CommitSuggestionInternal(
     const composer::Composer &composer,
-    size_t *committed_length) {
+    const commands::Context &context,
+    size_t *consumed_key_size) {
+  DCHECK(consumed_key_size);
   DCHECK(CheckState(SUGGESTION));
   ResetResult();
   string preedit;
   composer.GetStringForPreedit(&preedit);
 
-  if (!UpdateResult(0, segments_->conversion_segments_size())) {
+  if (!UpdateResult(0, segments_->conversion_segments_size(),
+                    consumed_key_size)) {
     // Do not need to call Cancel like Commit because the current
     // state is SUGGESTION.
     ResetState();
     return false;
   }
 
-  const size_t result_length = Util::CharsLen(result_.key());
   const size_t preedit_length = Util::CharsLen(preedit);
 
   // TODO(horo): When we will support hardware keyboard and introduce
   // shift+enter keymap in Android, this if condition may be insufficient.
-  if (request_.zero_query_suggestion() && (result_length < preedit_length)) {
+  if (request_->zero_query_suggestion() &&
+      *consumed_key_size < composer.GetLength()) {
     // A candidate was chosen from partial suggestion.
     converter_->CommitPartialSuggestionSegmentValue(
         segments_.get(),
         0,
         GetCandidateIndexForConverter(0),
-        Util::SubString(preedit, 0, result_length),
+        Util::SubString(preedit, 0, *consumed_key_size),
         Util::SubString(preedit,
-                        result_length,
-                        preedit_length - result_length));
+                        *consumed_key_size,
+                        preedit_length - *consumed_key_size));
+    CommitUsageStats(SessionConverterInterface::SUGGESTION, context);
+    InitializeSelectedCandidateIndices();
     // One or more segments must exist because new segment is inserted
     // just after the commited segment.
     DCHECK_GT(segments_->conversion_segments_size(), 0);
@@ -689,31 +752,34 @@ bool SessionConverter::CommitSuggestionInternal(
     converter_->CommitSegmentValue(segments_.get(),
                                    0,
                                    GetCandidateIndexForConverter(0));
+    CommitUsageStats(SessionConverterInterface::SUGGESTION, context);
     converter_->FinishConversion(segments_.get());
     DCHECK_EQ(0, segments_->conversion_segments_size());
     ResetState();
   }
-  *committed_length = result_length;
   return true;
 }
 
 bool SessionConverter::CommitSuggestionByIndex(
     const size_t index,
     const composer::Composer &composer,
-    size_t *committed_key_size) {
+    const commands::Context &context,
+    size_t *consumed_key_size) {
   DCHECK(CheckState(SUGGESTION));
   if (index >= candidate_list_->size()) {
     LOG(ERROR) << "index is out of the range: " << index;
     return false;
   }
   candidate_list_->MoveToPageIndex(index);
-  return CommitSuggestionInternal(composer, committed_key_size);
+  UpdateSelectedCandidateIndex();
+  return CommitSuggestionInternal(composer, context, consumed_key_size);
 }
 
 bool SessionConverter::CommitSuggestionById(
     const int id,
     const composer::Composer &composer,
-    size_t *committed_key_size) {
+    const commands::Context &context,
+    size_t *consumed_key_size) {
   DCHECK(CheckState(SUGGESTION));
   if (!candidate_list_->MoveToId(id)) {
     // Don't use CandidateMoveToId() method, which overwrites candidates.
@@ -721,23 +787,25 @@ bool SessionConverter::CommitSuggestionById(
     LOG(ERROR) << "No id found";
     return false;
   }
-  return CommitSuggestionInternal(composer, committed_key_size);
+  UpdateSelectedCandidateIndex();
+  return CommitSuggestionInternal(composer, context, consumed_key_size);
 }
 
-void SessionConverter::CommitFirstSegment(size_t *committed_key_size) {
+void SessionConverter::CommitFirstSegment(const commands::Context &context,
+                                          size_t *consumed_key_size) {
   DCHECK(CheckState(PREDICTION | CONVERSION));
   ResetResult();
   candidate_list_visible_ = false;
-  *committed_key_size = 0;
+  *consumed_key_size = 0;
 
   // If the number of segments is one, just call Commit.
   if (segments_->conversion_segments_size() == 1) {
-    Commit();
+    Commit(context);
     return;
   }
 
   // Store the first conversion segment to the result.
-  if (!UpdateResult(0, 1)) {
+  if (!UpdateResult(0, 1, NULL)) {
     // If the selected candidate of the first segment has the command
     // attribute, Cancel is performed instead of Commit.
     Cancel();
@@ -754,7 +822,7 @@ void SessionConverter::CommitFirstSegment(size_t *committed_key_size) {
 
   // Set the size of 1st segment's key.
   // The caller will remove corresponding characters from the composer.
-  *committed_key_size = Util::CharsLen(first_segment->key());
+  *consumed_key_size = Util::CharsLen(first_segment->key());
 
   // Adjust the segment_index, since the first segment disappeared.
   if (segment_index_ > 0) {
@@ -762,112 +830,96 @@ void SessionConverter::CommitFirstSegment(size_t *committed_key_size) {
   }
 
   // Commit the first conversion segment only.
-  converter_->SubmitFirstSegment(segments_.get(),
+  CommitUsageStatsWithSegmentsSize(state_, context, 1);
+  converter_->CommitFirstSegment(segments_.get(),
                                  candidate_list_->focused_id());
   UpdateCandidateList();
 }
 
-void SessionConverter::CommitPreeditString(const string &key,
-                                           const string &preedit) {
-  SessionOutput::FillConversionResultWithoutNormalization(
-      key, preedit, &result_);
-
-  ConverterUtil::InitSegmentsFromString(key, preedit, segments_.get());
-  converter_->FinishConversion(segments_.get());
-  ResetState();
-}
-
-void SessionConverter::CommitPreedit(const composer::Composer &composer) {
+void SessionConverter::CommitPreedit(const composer::Composer &composer,
+                                     const commands::Context &context) {
   string key, preedit, normalized_preedit;
   composer.GetQueryForConversion(&key);
   composer.GetStringForSubmission(&preedit);
   TextNormalizer::NormalizePreeditText(preedit, &normalized_preedit);
-  SessionOutput::FillPreeditResult(preedit, &result_);
+  SessionOutput::FillPreeditResult(preedit, result_.get());
 
   ConverterUtil::InitSegmentsFromString(key, normalized_preedit,
                                         segments_.get());
 
+  CommitUsageStats(SessionConverterInterface::COMPOSITION, context);
   converter_->FinishConversion(segments_.get());
   ResetState();
 }
 
 void SessionConverter::CommitHead(
-    size_t count, const composer::Composer &composer, size_t *committed_size) {
+    size_t count, const composer::Composer &composer,
+    size_t *consumed_key_size) {
   string preedit;
   composer.GetStringForSubmission(&preedit);
   if (count > preedit.length()) {
-    *committed_size = preedit.length();
+    *consumed_key_size = preedit.length();
   } else {
-    *committed_size = count;
+    *consumed_key_size = count;
   }
-  preedit = Util::SubString(preedit, 0, *committed_size);
+  preedit = Util::SubString(preedit, 0, *consumed_key_size);
   string composition;
   TextNormalizer::NormalizePreeditText(preedit, &composition);
-  SessionOutput::FillPreeditResult(composition, &result_);
+  SessionOutput::FillPreeditResult(composition, result_.get());
 }
 
 void SessionConverter::Revert() {
   converter_->RevertConversion(segments_.get());
 }
 
-void SessionConverter::SegmentFocusRight() {
+void SessionConverter::SegmentFocusInternal(size_t index) {
   DCHECK(CheckState(PREDICTION | CONVERSION));
   candidate_list_visible_ = false;
   if (CheckState(PREDICTION)) {
     return;  // Do nothing.
   }
   ResetResult();
-  SegmentFix();
 
+  if (segment_index_ == index) {
+    return;
+  }
+
+  SegmentFix();
+  segment_index_ = index;
+  UpdateCandidateList();
+}
+
+void SessionConverter::SegmentFocusRight() {
   if (segment_index_ + 1 >= segments_->conversion_segments_size()) {
     // If |segment_index_| is at the tail of the segments,
     // focus on the head.
-    segment_index_ = 0;
+    SegmentFocusLeftEdge();
   } else {
-    ++segment_index_;
+    SegmentFocusInternal(segment_index_ + 1);
   }
-  UpdateCandidateList();
 }
 
 void SessionConverter::SegmentFocusLast() {
-  DCHECK(CheckState(PREDICTION | CONVERSION));
-  candidate_list_visible_ = false;
-  if (CheckState(PREDICTION)) {
-    return;  // Do nothing.
-  }
-  ResetResult();
-
   const size_t r_edge = segments_->conversion_segments_size() - 1;
-  if (segment_index_ >= r_edge) {
-    return;
-  }
-
-  SegmentFix();
-  segment_index_ = r_edge;
-  UpdateCandidateList();
+  SegmentFocusInternal(r_edge);
 }
 
 void SessionConverter::SegmentFocusLeft() {
-  DCHECK(CheckState(PREDICTION | CONVERSION));
-  candidate_list_visible_ = false;
-  if (CheckState(PREDICTION)) {
-    return;  // Do nothing.
-  }
-  ResetResult();
-  SegmentFix();
-
   if (segment_index_ <= 0) {
     // If |segment_index_| is at the head of the segments,
     // focus on the tail.
-    segment_index_ = segments_->conversion_segments_size() - 1;
+    SegmentFocusLast();
   } else {
-    --segment_index_;
+    SegmentFocusInternal(segment_index_ - 1);
   }
-
-  UpdateCandidateList();
 }
 
 void SessionConverter::SegmentFocusLeftEdge() {
+  SegmentFocusInternal(0);
+}
+
+void SessionConverter::ResizeSegmentWidth(const composer::Composer &composer,
+                                          int delta) {
   DCHECK(CheckState(PREDICTION | CONVERSION));
   candidate_list_visible_ = false;
   if (CheckState(PREDICTION)) {
@@ -875,45 +927,38 @@ void SessionConverter::SegmentFocusLeftEdge() {
   }
   ResetResult();
 
-  if (segment_index_ <= 0) {
+  const ConversionRequest conversion_request(&composer, request_);
+  if (!converter_->ResizeSegment(segments_.get(),
+                                 conversion_request,
+                                 segment_index_, delta)) {
     return;
   }
 
-  SegmentFix();
-  segment_index_ = 0;
   UpdateCandidateList();
+  // Clears selected index of a focused segment and trailing segments.
+  // TODO(hsumita): Keep the indices if the segment type is FIXED_VALUE.
+  selected_candidate_indices_.resize(segments_->conversion_segments_size());
+  fill(selected_candidate_indices_.begin() + segment_index_ + 1,
+       selected_candidate_indices_.end(), 0);
+  UpdateSelectedCandidateIndex();
 }
 
 void SessionConverter::SegmentWidthExpand(const composer::Composer &composer) {
-  DCHECK(CheckState(PREDICTION | CONVERSION));
-  candidate_list_visible_ = false;
-  if (CheckState(PREDICTION)) {
-    return;  // Do nothing.
-  }
-  ResetResult();
-
-  if (!converter_->ResizeSegment(segments_.get(), ConversionRequest(&composer),
-                                 segment_index_, 1)) {
-    return;
-  }
-
-  UpdateCandidateList();
+  ResizeSegmentWidth(composer, 1);
 }
 
 void SessionConverter::SegmentWidthShrink(const composer::Composer &composer) {
-  DCHECK(CheckState(PREDICTION | CONVERSION));
-  candidate_list_visible_ = false;
-  if (CheckState(PREDICTION)) {
-    return;  // Do nothing.
-  }
-  ResetResult();
+  ResizeSegmentWidth(composer, -1);
+}
 
-  if (!converter_->ResizeSegment(segments_.get(), ConversionRequest(&composer),
-                                 segment_index_, -1)) {
-    return;
+const Segment::Candidate *
+SessionConverter::GetSelectedCandidateOfFocusedSegment() const {
+  if (!candidate_list_->focused()) {
+    return NULL;
   }
-
-  UpdateCandidateList();
+  const Candidate &cand = candidate_list_->focused_candidate();
+  const Segment &seg = segments_->conversion_segment(segment_index_);
+  return &seg.candidate(cand.id());
 }
 
 void SessionConverter::CandidateNext(const composer::Composer &composer) {
@@ -923,6 +968,7 @@ void SessionConverter::CandidateNext(const composer::Composer &composer) {
   MaybeExpandPrediction(composer);
   candidate_list_->MoveNext();
   candidate_list_visible_ = true;
+  UpdateSelectedCandidateIndex();
   SegmentFocus();
 }
 
@@ -932,6 +978,7 @@ void SessionConverter::CandidateNextPage() {
 
   candidate_list_->MoveNextPage();
   candidate_list_visible_ = true;
+  UpdateSelectedCandidateIndex();
   SegmentFocus();
 }
 
@@ -941,6 +988,7 @@ void SessionConverter::CandidatePrev() {
 
   candidate_list_->MovePrev();
   candidate_list_visible_ = true;
+  UpdateSelectedCandidateIndex();
   SegmentFocus();
 }
 
@@ -950,6 +998,7 @@ void SessionConverter::CandidatePrevPage() {
 
   candidate_list_->MovePrevPage();
   candidate_list_visible_ = true;
+  UpdateSelectedCandidateIndex();
   SegmentFocus();
 }
 
@@ -969,6 +1018,7 @@ void SessionConverter::CandidateMoveToId(
 
   candidate_list_->MoveToId(id);
   candidate_list_visible_ = false;
+  UpdateSelectedCandidateIndex();
   SegmentFocus();
 }
 
@@ -978,6 +1028,7 @@ void SessionConverter::CandidateMoveToPageIndex(const size_t index) {
 
   candidate_list_->MoveToPageIndex(index);
   candidate_list_visible_ = false;
+  UpdateSelectedCandidateIndex();
   SegmentFocus();
 }
 
@@ -1008,13 +1059,10 @@ bool SessionConverter::CandidateMoveToShortcut(const char shortcut) {
     VLOG(1) << "shortcut is out of the range.";
     return false;
   }
+  UpdateSelectedCandidateIndex();
   ResetResult();
   SegmentFocus();
   return true;
-}
-
-bool SessionConverter::IsCandidateListVisible() const {
-  return candidate_list_visible_;
 }
 
 void SessionConverter::SetCandidateListVisible(bool visible) {
@@ -1033,7 +1081,7 @@ void SessionConverter::FillOutput(
     LOG(ERROR) << "output is NULL.";
     return;
   }
-  if (result_.has_value()) {
+  if (result_->has_value()) {
     FillResult(output->mutable_result());
   }
   if (CheckState(COMPOSITION)) {
@@ -1063,10 +1111,13 @@ void SessionConverter::FillOutput(
       candidate_list_visible_) {
     FillCandidates(output->mutable_candidates());
   }
+#ifndef __native_client__
   // All candidate words
+  // In NaCl, we don't use the all candidate word data.
   if (CheckState(SUGGESTION | PREDICTION | CONVERSION)) {
     FillAllCandidateWords(output->mutable_all_candidate_words());
   }
+#endif  // __native_client__
 
   // Propagate config information to renderer.
   PropagateConfigToRenderer(output);
@@ -1088,44 +1139,8 @@ void SessionConverter::FillContext(commands::Context *context) const {
   }
 }
 
-void SessionConverter::GetSegments(Segments *dest) const {
-  DCHECK(dest);
-  dest->Clear();
-  dest->CopyFrom(*segments_.get());
-}
-
-void SessionConverter::SetSegments(const Segments &src) {
-  segments_->Clear();
-  segments_->CopyFrom(src);
-}
-
 void SessionConverter::RemoveTailOfHistorySegments(size_t num_of_characters) {
   segments_->RemoveTailOfHistorySegments(num_of_characters);
-}
-
-const commands::Result &SessionConverter::GetResult() const {
-  return result_;
-}
-
-const CandidateList &SessionConverter::GetCandidateList() const {
-  return *candidate_list_;
-}
-
-const OperationPreferences &SessionConverter::GetOperationPreferences() const {
-  return operation_preferences_;
-}
-
-SessionConverterInterface::State SessionConverter::GetState() const {
-  return state_;
-}
-
-size_t SessionConverter::GetSegmentIndex() const {
-  return segment_index_;
-}
-
-const Segment &SessionConverter::GetPreviousSuggestions()
-    const {
-  return previous_suggestions_;
 }
 
 // static
@@ -1136,37 +1151,39 @@ void SessionConverter::SetConversionPreferences(
   segments->set_max_history_segments_size(preferences.max_history_size);
 }
 
-SessionConverterInterface* SessionConverter::Clone() const {
+SessionConverter* SessionConverter::Clone() const {
   SessionConverter *session_converter =
       new SessionConverter(converter_, request_);
 
   // Copy the members in order of their declarations.
-  session_converter->state_ = GetState();
+  session_converter->state_ = state_;
   // TODO(team): copy of |converter_| member.
   // We cannot copy the member converter_ from SessionConverterInterface becase
   // it doesn't (and shouldn't) define a method like GetConverter(). At the
   // moment it's ok because the current design guarantees that the converter is
   // singleton. However, we should refactor such bad design; see also the
   // comment right above.
-  GetSegments(session_converter->segments_.get());
-  session_converter->segment_index_ = GetSegmentIndex();
-  session_converter->previous_suggestions_.CopyFrom(GetPreviousSuggestions());
+  session_converter->segments_->CopyFrom(*segments_);
+  session_converter->segment_index_ = segment_index_;
+  session_converter->previous_suggestions_.CopyFrom(previous_suggestions_);
   session_converter->conversion_preferences_ = conversion_preferences();
-  session_converter->operation_preferences_ = GetOperationPreferences();
-  session_converter->result_.CopyFrom(GetResult());
+  session_converter->operation_preferences_ = operation_preferences_;
+  session_converter->result_->CopyFrom(*result_);
 
   if (session_converter->CheckState(SUGGESTION | PREDICTION | CONVERSION)) {
     session_converter->UpdateCandidateList();
-    session_converter->candidate_list_->MoveToId(
-        GetCandidateList().focused_id());
-    session_converter->SetCandidateListVisible(IsCandidateListVisible());
+    session_converter->candidate_list_->MoveToId(candidate_list_->focused_id());
+    session_converter->SetCandidateListVisible(candidate_list_visible_);
   }
+
+  session_converter->request_ = request_;
+  session_converter->selected_candidate_indices_ = selected_candidate_indices_;
 
   return session_converter;
 }
 
 void SessionConverter::ResetResult() {
-  result_.Clear();
+  result_->Clear();
 }
 
 void SessionConverter::ResetState() {
@@ -1175,6 +1192,7 @@ void SessionConverter::ResetState() {
   previous_suggestions_.clear();
   candidate_list_visible_ = false;
   candidate_list_->Clear();
+  selected_candidate_indices_.clear();
 }
 
 void SessionConverter::SegmentFocus() {
@@ -1227,6 +1245,33 @@ void SessionConverter::GetConversion(const size_t index,
   }
 }
 
+size_t SessionConverter::GetConsumedPreeditSize(const size_t index,
+                                                const size_t size) const {
+  DCHECK(CheckState(SUGGESTION | PREDICTION | CONVERSION));
+  DCHECK(index + size <= segments_->conversion_segments_size());
+
+  if (CheckState(SUGGESTION | PREDICTION)) {
+    DCHECK_EQ(1, size);
+    const Segment &segment = segments_->conversion_segment(0);
+    const int id = GetCandidateIndexForConverter(0);
+    const Segment::Candidate &candidate = segment.candidate(id);
+    return (candidate.attributes & Segment::Candidate::PARTIALLY_KEY_CONSUMED)
+               ? candidate.consumed_key_size : kConsumedAllCharacters;
+  }
+
+  DCHECK(CheckState(CONVERSION));
+  size_t result = 0;
+  for (size_t i = index; i < size; ++i) {
+    const int id = GetCandidateIndexForConverter(i);
+    const Segment::Candidate &candidate =
+        segments_->conversion_segment(i).candidate(id);
+    DCHECK(!(candidate.attributes &
+             Segment::Candidate::PARTIALLY_KEY_CONSUMED));
+    result += Util::CharsLen(segments_->conversion_segment(i).key());
+  }
+  return result;
+}
+
 bool SessionConverter::MaybePerformCommandCandidate(
     const size_t index,
     const size_t size) const {
@@ -1263,7 +1308,8 @@ bool SessionConverter::MaybePerformCommandCandidate(
   return false;
 }
 
-bool SessionConverter::UpdateResult(const size_t index, const size_t size) {
+bool SessionConverter::UpdateResult(size_t index, size_t size,
+                                    size_t *consumed_key_size) {
   DCHECK(CheckState(SUGGESTION | PREDICTION | CONVERSION));
 
   // If command candidate is performed, result is not updated and
@@ -1275,7 +1321,10 @@ bool SessionConverter::UpdateResult(const size_t index, const size_t size) {
   string preedit, conversion;
   GetPreedit(index, size, &preedit);
   GetConversion(index, size, &conversion);
-  SessionOutput::FillConversionResult(preedit, conversion, &result_);
+  if (consumed_key_size) {
+    *consumed_key_size = GetConsumedPreeditSize(index, size);
+  }
+  SessionOutput::FillConversionResult(preedit, conversion, result_.get());
   return true;
 }
 
@@ -1315,7 +1364,10 @@ void SessionConverter::AppendCandidateList() {
     }
   }
 
-  const bool focused = (segments_->request_type() != Segments::SUGGESTION);
+  const bool focused = (
+      segments_->request_type() != Segments::SUGGESTION &&
+      segments_->request_type() != Segments::PARTIAL_SUGGESTION &&
+      segments_->request_type() != Segments::PARTIAL_PREDICTION);
   candidate_list_->set_focused(focused);
 
   if (segment.meta_candidates_size() == 0) {
@@ -1405,7 +1457,7 @@ void SessionConverter::FillConversion(commands::Preedit *preedit) const {
 }
 
 void SessionConverter::FillResult(commands::Result *result) const {
-  result->CopyFrom(result_);
+  result->CopyFrom(*result_);
 }
 
 void SessionConverter::FillCandidates(commands::Candidates *candidates) const {
@@ -1528,8 +1580,116 @@ void SessionConverter::PropagateConfigToRenderer(
   }
 }
 
-void SessionConverter::SetRequest(const commands::Request &request) {
-  request_.CopyFrom(request);
+void SessionConverter::SetRequest(const commands::Request *request) {
+  request_ = request;
 }
+
+void SessionConverter::UpdateSelectedCandidateIndex() {
+  int index;
+  const Candidate &focused_candidate = candidate_list_->focused_candidate();
+  if (focused_candidate.IsSubcandidateList()) {
+    const int t13n_index =
+        focused_candidate.subcandidate_list().focused_index();
+    index = -1 - t13n_index;
+  } else {
+    // TODO(hsumita): Use id instead of focused index.
+    index = candidate_list_->focused_index();
+  }
+  selected_candidate_indices_[segment_index_] = index;
+}
+
+void SessionConverter::InitializeSelectedCandidateIndices() {
+  selected_candidate_indices_.clear();
+  selected_candidate_indices_.resize(segments_->conversion_segments_size());
+}
+
+void SessionConverter::UpdateCandidateStats(const string &base_name,
+                                            int32 index) {
+  string prefix;
+  if (index < 0) {
+    prefix = "TransliterationCandidates";
+    index = -1 - index;
+  } else {
+    prefix = base_name + "Candidates";
+  }
+
+  if (index <= 9) {
+    const string stats_name = prefix + NumberUtil::SimpleItoa(index);
+    UsageStats::IncrementCount(stats_name);
+  } else {
+    const string stats_name = prefix + "GE10";
+    UsageStats::IncrementCount(stats_name);
+  }
+}
+
+void SessionConverter::CommitUsageStats(
+    SessionConverterInterface::State commit_state,
+    const commands::Context &context) {
+  size_t commit_segment_size = 0;
+  switch (commit_state) {
+    case COMPOSITION:
+      commit_segment_size = 0;
+      break;
+    case SUGGESTION:
+    case PREDICTION:
+      commit_segment_size = 1;
+      break;
+    case CONVERSION:
+      commit_segment_size = segments_->conversion_segments_size();
+      break;
+    default:
+      LOG(DFATAL) << "Unexpected state: " << commit_state;
+  }
+  CommitUsageStatsWithSegmentsSize(commit_state, context, commit_segment_size);
+}
+
+void SessionConverter::CommitUsageStatsWithSegmentsSize(
+    SessionConverterInterface::State commit_state,
+    const commands::Context &context,
+    size_t commit_segments_size) {
+  CHECK_LE(commit_segments_size, selected_candidate_indices_.size());
+
+  string stats_str;
+  switch (commit_state) {
+    case COMPOSITION:
+      stats_str = "Composition";
+      break;
+    case SUGGESTION:
+    case PREDICTION:
+      // Suggestion related usage stats are collected as Prediction.
+      stats_str = "Prediction";
+      UpdateCandidateStats(stats_str, selected_candidate_indices_[0]);
+      break;
+    case CONVERSION:
+      stats_str = "Conversion";
+      for (size_t i = 0; i < commit_segments_size; ++i) {
+        UpdateCandidateStats(stats_str,
+                             selected_candidate_indices_[i]);
+      }
+      break;
+    default:
+      LOG(DFATAL) << "Unexpected state: " << commit_state;
+      stats_str = "Unknown";
+  }
+
+  UsageStats::IncrementCount("Commit");
+  UsageStats::IncrementCount("CommitFrom" + stats_str);
+
+  if (stats_str != "Unknown") {
+    if (SessionUsageStatsUtil::HasExperimentalFeature(context,
+                                                      "chrome_omnibox")) {
+      UsageStats::IncrementCount("CommitFrom" + stats_str + "InChromeOmnibox");
+    }
+    if (SessionUsageStatsUtil::HasExperimentalFeature(context,
+                                                      "google_search_box")) {
+      UsageStats::IncrementCount(
+          "CommitFrom" + stats_str + "InGoogleSearchBox");
+    }
+  }
+
+  const vector<int>::iterator it = selected_candidate_indices_.begin();
+  selected_candidate_indices_.erase(it, it + commit_segments_size);
+}
+
 }  // namespace session
 }  // namespace mozc

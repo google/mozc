@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,28 +27,26 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <windows.h>
 #endif
 
 #include <QtGui/QApplication>
 #include <QtGui/QtGui>
-#include "base/base.h"
-#include "base/util.h"
-#ifdef OS_WINDOWS
-#include "base/win_util.h"
-#endif  // OS_WINDOWS
+#include "base/logging.h"
 #include "base/process_mutex.h"
+#include "base/system_util.h"
+#include "base/win_util.h"
 #include "gui/base/locale_util.h"
 #include "gui/set_default_dialog/set_default_dialog.h"
 
 int RunSetDefaultDialog(int argc, char *argv[]) {
   Q_INIT_RESOURCE(qrc_set_default_dialog);
 
-  mozc::Util::DisableIME();
+  mozc::SystemUtil::DisableIME();
 
   string name = "set_default_dialog.";
-  name += mozc::Util::GetDesktopNameAsString();
+  name += mozc::SystemUtil::GetDesktopNameAsString();
 
   mozc::ProcessMutex mutex(name.c_str());
   if (!mutex.Lock()) {
@@ -56,7 +54,7 @@ int RunSetDefaultDialog(int argc, char *argv[]) {
     return -1;
   }
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   // For ImeUtil::SetDefault.
   mozc::ScopedCOMInitializer com_initializer;
 #endif

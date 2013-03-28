@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,17 +30,21 @@
 #ifndef MOZC_BASE_WIN32_CRASH_REPORT_HANDLER_H_
 #define MOZC_BASE_WIN32_CRASH_REPORT_HANDLER_H_
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <windows.h>
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 #include <string>
 
 namespace mozc {
 class CrashReportHandler {
  public:
-  // Increments the reference count for per-process ExceptionHandler and
-  // initialize it if it does not exist.
+  // For official branding build, installs breakpad regardless of the
+  // usagestats settings. You must call this method when and only when the
+  // usagestats is enabled.
+  // For non-official branding build, does nothing.
+  // This method increments the reference count for per-process ExceptionHandler
+  // and initialize it if it does not exist.
   // Returns true if a new ExceptionHandler is created.
   // |check_address| is supported only on Windows and ignored on other
   // platforms.
@@ -61,11 +65,11 @@ class CrashReportHandler {
   // SetCriticalSection on Windows and NOT thread-safe on Mac.
   static bool Uninitialize();
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   // Set the CRITICAL_SECTION struct used when initializing or uninitializing
   // ExceptionHandler.
   static void SetCriticalSection(CRITICAL_SECTION *critical_section);
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
  private:
   // Disallow all constructors, destructors, and operator=.

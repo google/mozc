@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -139,7 +139,7 @@ struct NumberStringVariation {
 
 // Judges given string is a decimal number (including integer) or not.
 // It accepts strings whose last point is a decimal point like "123456."
-bool IsDecimalNumber(const string &str) {
+bool IsDecimalNumber(StringPiece str) {
   int num_point = 0;
   for (size_t i = 0; i < str.size(); ++i) {
     if (str[i] == '.') {
@@ -158,6 +158,10 @@ bool IsDecimalNumber(const string &str) {
 
 const int kInt32BufferSize = 12;  // "-2147483648\0"
 
+const char kAsciiZero = '0';
+const char kAsciiOne = '1';
+const char kAsciiNine = '9';
+
 }  // namespace
 
 string NumberUtil::SimpleItoa(int32 number) {
@@ -166,7 +170,7 @@ string NumberUtil::SimpleItoa(int32 number) {
   return string(buffer, length);
 }
 
-int NumberUtil::SimpleAtoi(const string &str) {
+int NumberUtil::SimpleAtoi(StringPiece str) {
   stringstream ss;
   ss << str;
   int i = 0;
@@ -179,7 +183,7 @@ namespace {
 // TODO(hidehiko): Refactoring with GetScriptType in Util class.
 inline bool IsArabicDecimalChar32(char32 ucs4) {
   // Halfwidth digit.
-  if ('0' <= ucs4 && ucs4 <= '9') {
+  if (kAsciiZero <= ucs4 && ucs4 <= kAsciiNine) {
     return true;
   }
 
@@ -193,7 +197,10 @@ inline bool IsArabicDecimalChar32(char32 ucs4) {
 
 }  // namespace
 
-bool NumberUtil::IsArabicNumber(const string &input_string) {
+bool NumberUtil::IsArabicNumber(StringPiece input_string) {
+  if (input_string.empty()) {
+    return false;
+  }
   for (ConstChar32Iterator iter(input_string); !iter.Done(); iter.Next()) {
     if (!IsArabicDecimalChar32(iter.Get())) {
       // Found non-Arabic decimal character.
@@ -205,7 +212,10 @@ bool NumberUtil::IsArabicNumber(const string &input_string) {
   return true;
 }
 
-bool NumberUtil::IsDecimalInteger(const string &str) {
+bool NumberUtil::IsDecimalInteger(StringPiece str) {
+  if (str.empty()) {
+    return false;
+  }
   for (size_t i = 0; i < str.size(); ++i) {
     if (!isdigit(str[i])) {
       return false;
@@ -241,7 +251,7 @@ const char kOldTwenty[] = "\xE5\xBB\xBF";
 
 }  // namespace
 
-bool NumberUtil::ArabicToKanji(const string &input_num,
+bool NumberUtil::ArabicToKanji(StringPiece input_num,
                                vector<NumberString> *output) {
   DCHECK(output);
   // "零"
@@ -252,13 +262,11 @@ bool NumberUtil::ArabicToKanji(const string &input_num,
     return false;
   }
 
-  // We don't convert a number starting with '0', other than 0 itself.
-  if (input_num[0] == '0') {
-    const char *p = input_num.c_str();
-    while (*p == '0') {
-      ++p;
-    }
-    if (*p == '\0') {
+  {
+    // We don't convert a number starting with '0', other than 0 itself.
+    StringPiece::size_type i;
+    for (i = 0; i < input_num.size() && input_num[i] == kAsciiZero; ++i) {}
+    if (i == input_num.size()) {
       output->push_back(
           // "大字"
           NumberString(kNumZero, "\xE5\xA4\xA7\xE5\xAD\x97",
@@ -277,8 +285,8 @@ bool NumberUtil::ArabicToKanji(const string &input_num,
   // (N * kDigitsInBigRank).
   const int filled_zero_num = (kDigitsInBigRank -
       (input_num.size() % kDigitsInBigRank)) % kDigitsInBigRank;
-  string input(filled_zero_num, '0');
-  input.append(input_num);
+  string input(filled_zero_num, kAsciiZero);
+  input_num.AppendToString(&input);
 
   // Segment into kDigitsInBigRank-digits pieces
   vector<string> ranked_numbers;
@@ -319,22 +327,22 @@ bool NumberUtil::ArabicToKanji(const string &input_num,
       string segment_result;
       bool leading = true;
       for (size_t i = 0; i < segment.size(); ++i) {
-        if (leading && segment[i] == '0') {
+        if (leading && segment[i] == kAsciiZero) {
           continue;
         }
 
         leading = false;
         if (style == NumberString::NUMBER_ARABIC_AND_KANJI_HALFWIDTH ||
             style == NumberString::NUMBER_ARABIC_AND_KANJI_FULLWIDTH) {
-          segment_result += digits[segment[i] - '0'];
+          segment_result += digits[segment[i] - kAsciiZero];
         } else {
-          if (segment[i] == '0') {
+          if (segment[i] == kAsciiZero) {
             continue;
           }
           // In "大字" style, "壱" is also required on every rank.
           if (style == NumberString::NUMBER_OLD_KANJI ||
-              i == kDigitsInBigRank - 1 || segment[i] != '1') {
-            segment_result += digits[segment[i] - '0'];
+              i == kDigitsInBigRank - 1 || segment[i] != kAsciiOne) {
+            segment_result += digits[segment[i] - kAsciiZero];
           }
           segment_result += ranks[kDigitsInBigRank - i];
         }
@@ -389,7 +397,7 @@ const NumberStringVariation kNumDigitsVariations[] = {
 }  // namespace
 
 bool NumberUtil::ArabicToSeparatedArabic(
-    const string &input_num, vector<NumberString> *output) {
+    StringPiece input_num, vector<NumberString> *output) {
   DCHECK(output);
 
   if (!IsDecimalNumber(input_num)) {
@@ -397,16 +405,17 @@ bool NumberUtil::ArabicToSeparatedArabic(
   }
 
   // Separate a number into an integral part and a fractional part.
-  size_t point_pos = input_num.find('.');
-  string integer(input_num, 0, point_pos);
-  // |fraction| has the decimal point with digits in fractional part.
-  string fraction;
-  if (point_pos != string::npos) {
-    fraction.assign(input_num, point_pos, input_num.size() - point_pos);
+  StringPiece::size_type point_pos = input_num.find('.');
+  if (point_pos == StringPiece::npos) {
+    point_pos = input_num.size();
   }
+  const StringPiece integer(input_num, 0, point_pos);
+  // |fraction| has the decimal point with digits in fractional part.
+  const StringPiece fraction(input_num, point_pos,
+                             input_num.size() - point_pos);
 
   // We don't add separator to number whose integral part starts with '0'
-  if (integer[0] == '0') {
+  if (integer[0] == kAsciiZero) {
     return false;
   }
 
@@ -417,12 +426,12 @@ bool NumberUtil::ArabicToSeparatedArabic(
     string result;
 
     // integral part
-    for (size_t j = 0; j < integer.size(); ++j) {
+    for (StringPiece::size_type j = 0; j < integer.size(); ++j) {
       // We don't add separater first
       if (j != 0 && (integer.size() - j) % 3 == 0) {
         result.append(variation.separator);
       }
-      const uint32 d = integer[j] - '0';
+      const uint32 d = static_cast<uint32>(integer[j] - kAsciiZero);
       if (d <= 9 && digits[d]) {
         result.append(digits[d]);
       }
@@ -432,8 +441,8 @@ bool NumberUtil::ArabicToSeparatedArabic(
     if (!fraction.empty()) {
       DCHECK_EQ(fraction[0], '.');
       result.append(variation.point);
-      for (size_t j = 1; j < fraction.size(); ++j) {
-        result.append(digits[static_cast<int>(fraction[j] - '0')]);
+      for (StringPiece::size_type j = 1; j < fraction.size(); ++j) {
+        result.append(digits[static_cast<int>(fraction[j] - kAsciiZero)]);
       }
     }
 
@@ -459,7 +468,7 @@ const NumberStringVariation kSingleDigitsVariations[] = {
 }  // namespace
 
 bool NumberUtil::ArabicToWideArabic(
-    const string &input_num, vector<NumberString> *output) {
+    StringPiece input_num, vector<NumberString> *output) {
   DCHECK(output);
 
   if (!IsDecimalInteger(input_num)) {
@@ -470,8 +479,9 @@ bool NumberUtil::ArabicToWideArabic(
     const NumberStringVariation &variation = kSingleDigitsVariations[i];
     // TODO(peria): Bring |result| out if it improves the performance.
     string result;
-    for (size_t j = 0; j < input_num.size(); ++j) {
-      result.append(variation.digits[static_cast<int>(input_num[j] - '0')]);
+    for (StringPiece::size_type j = 0; j < input_num.size(); ++j) {
+      result.append(
+          variation.digits[static_cast<int>(input_num[j] - kAsciiZero)]);
     }
     if (!result.empty()) {
       output->push_back(
@@ -503,7 +513,7 @@ const NumberStringVariation kSpecialNumericVariations[] = {
 }  // namespace
 
 bool NumberUtil::ArabicToOtherForms(
-    const string &input_num, vector<NumberString> *output) {
+    StringPiece input_num, vector<NumberString> *output) {
   DCHECK(output);
 
   if (!IsDecimalInteger(input_num)) {
@@ -555,7 +565,7 @@ const int kMaxInt64Size = 24;
 }  // namespace
 
 bool NumberUtil::ArabicToOtherRadixes(
-    const string &input_num, vector<NumberString> *output) {
+    StringPiece input_num, vector<NumberString> *output) {
   DCHECK(output);
 
   if (!IsDecimalInteger(input_num)) {
@@ -590,7 +600,7 @@ bool NumberUtil::ArabicToOtherRadixes(
   if (n > 1) {
     string binary;
     for (uint64 num = n; num; num >>= 1) {
-      binary.push_back('0' + static_cast<char>(num & 0x1));
+      binary.push_back(kAsciiZero + static_cast<char>(num & 0x1));
     }
     // "b0" will be "0b" in head of |binary|
     binary.append("b0");
@@ -605,11 +615,11 @@ bool NumberUtil::ArabicToOtherRadixes(
 
 namespace {
 
-const char *SkipWhiteSpace(const char *ptr) {
-  while (isspace(*ptr)) {
-    ++ptr;
-  }
-  return ptr;
+const StringPiece SkipWhiteSpace(StringPiece str) {
+  StringPiece::size_type i;
+  for (i = 0; i < str.size() && isspace(str[i]); ++i) {}
+  DCHECK(i == str.size() || !isspace(str[i]));
+  return StringPiece(str, i);
 }
 
 // TODO(yukawa): this should be moved into ports.h
@@ -641,37 +651,56 @@ bool MultiplyAndCheckOverflow(uint64 arg1, uint64 arg2, uint64 *output) {
   return true;
 }
 
+// A simple wrapper of strtoull function. |c_str| must be terminated by '\0'.
+inline uint64 StrToUint64(const char* c_str, char** end_ptr, int base) {
+#ifdef OS_WIN
+  return _strtoui64(c_str, end_ptr, base);
+#else  // OS_WIN
+  return strtoull(c_str, end_ptr, base);
+#endif  // OS_WIN
+}
+
 // Converts a string which describes a number into an uint64 value in |base|
 // radix.  Does not convert octal or hexadecimal strings with "0" or "0x"
 // suffixes.
-bool SafeStrToUInt64WithBase(const string &str, int base, uint64 *value) {
+bool SafeStrToUInt64WithBase(StringPiece str, int base, uint64 *value) {
   DCHECK(value);
 
-  const char *ptr = SkipWhiteSpace(str.c_str());
-  // strtoull() does not check if the input is negative.
-  if (*ptr == '-') {
+  // Maximum possible length of number string, including terminating '\0'. Note
+  // that the maximum possible length is achieved when str="111...11" (64
+  // unities) and base=2.
+  const size_t kMaxPossibleLength = 65;
+
+  // Leading white spaces are allowed.
+  const StringPiece stripped_str = SkipWhiteSpace(str);
+  if (stripped_str.empty() || stripped_str.size() >= kMaxPossibleLength) {
+    return false;
+  }
+  // StrToUint64() does not check if the input is negative.  However, a leading
+  // '+' is OK.
+  if (stripped_str[0] == '-') {
     return false;
   }
 
-  char *end_ptr;
+  // Since StringPiece doesn't end with '\0', we make a c-string on stack here.
+  char buf[kMaxPossibleLength];
+  memcpy(buf, str.data(), str.size());
+  buf[str.size()] = '\0';
+
+  char *end_ptr = NULL;
   errno = 0;
-#ifdef OS_WINDOWS
-  *value = _strtoui64(ptr, &end_ptr, base);
-#else  // OS_WINDOWS
-  *value = strtoull(ptr, &end_ptr, base);
-#endif  // OS_WINDOWS
-  if (errno) {
+  *value = StrToUint64(buf, &end_ptr, base);
+  if (errno != 0 || end_ptr == buf) {  // Failed to parse uint64.
     return false;
   }
-  if (ptr == end_ptr) {
-    return false;
-  }
-  return *SkipWhiteSpace(end_ptr) == '\0';
+  // Trailing white spaces are allowed.
+  const StringPiece trailing_str(end_ptr, buf + str.size() - end_ptr);
+  return SkipWhiteSpace(trailing_str).empty();
 }
 
 }  // namespace
 
-bool NumberUtil::SafeStrToUInt32(const string &str, uint32 *value) {
+bool NumberUtil::SafeStrToUInt32(StringPiece str, uint32 *value) {
   uint64 tmp;
   if (!SafeStrToUInt64WithBase(str, 10, &tmp)) {
     return false;
@@ -680,7 +709,7 @@ bool NumberUtil::SafeStrToUInt32(const string &str, uint32 *value) {
   return static_cast<uint64>(*value) == tmp;
 }
 
-bool NumberUtil::SafeHexStrToUInt32(const string &str, uint32 *value) {
+bool NumberUtil::SafeHexStrToUInt32(StringPiece str, uint32 *value) {
   uint64 tmp;
   if (!SafeStrToUInt64WithBase(str, 16, &tmp)) {
     return false;
@@ -689,7 +718,7 @@ bool NumberUtil::SafeHexStrToUInt32(const string &str, uint32 *value) {
   return static_cast<uint64>(*value) == tmp;
 }
 
-bool NumberUtil::SafeOctStrToUInt32(const string &str, uint32 *value) {
+bool NumberUtil::SafeOctStrToUInt32(StringPiece str, uint32 *value) {
   uint64 tmp;
   if (!SafeStrToUInt64WithBase(str, 8, &tmp)) {
     return false;
@@ -698,34 +727,38 @@ bool NumberUtil::SafeOctStrToUInt32(const string &str, uint32 *value) {
   return static_cast<uint64>(*value) == tmp;
 }
 
-bool NumberUtil::SafeStrToUInt64(const string &str, uint64 *value) {
+bool NumberUtil::SafeStrToUInt64(StringPiece str, uint64 *value) {
   return SafeStrToUInt64WithBase(str, 10, value);
 }
 
-bool NumberUtil::SafeStrToDouble(const string &str, double *value) {
+bool NumberUtil::SafeStrToDouble(StringPiece str, double *value) {
   DCHECK(value);
-
-  const char *ptr = SkipWhiteSpace(str.c_str());
+  // Note that StringPiece isn't terminated by '\0'.  However, since strtod
+  // requires null-terminated string, we make a string here. If we have a good
+  // estimate of the maximum possible length of the input string, we may be able
+  // to use char buffer instead.  Note: const reference ensures the life of this
+  // temporary string until the end!
+  const string &s = str.as_string();
+  const char* ptr = s.c_str();
 
   char *end_ptr;
   errno = 0;  // errno only gets set on errors
   // strtod of GCC accepts hexadecimal number like "0x1234", but that of
   // VisualC++ does not.
+  // Note that strtod accepts white spaces at the beginning of the parameter.
   *value = strtod(ptr, &end_ptr);
-  if (errno) {
+  if (errno != 0 ||
+      ptr == end_ptr ||
+      *value ==  numeric_limits<double>::infinity() ||
+      *value == -numeric_limits<double>::infinity()) {
     return false;
   }
-  if ((*value ==  numeric_limits<double>::infinity()) ||
-      (*value == -numeric_limits<double>::infinity())) {
-    return false;
-  }
-  if (ptr == end_ptr) {
-    return false;
-  }
-  return *SkipWhiteSpace(end_ptr) == '\0';
+  // Trailing white spaces are allowed.
+  const StringPiece trailing_str(end_ptr, ptr + s.size() - end_ptr);
+  return SkipWhiteSpace(trailing_str).empty();
 }
 
-bool NumberUtil::SafeStrToFloat(const string &str, float *value) {
+bool NumberUtil::SafeStrToFloat(StringPiece str, float *value) {
   double double_value;
   if (!SafeStrToDouble(str, &double_value)) {
     return false;
@@ -965,7 +998,7 @@ bool NormalizeNumbersHelper(const vector<uint64> &numbers,
 }
 
 // TODO(peria): Do refactoring this method.
-bool NormalizeNumbersInternal(const string &input,
+bool NormalizeNumbersInternal(StringPiece input,
                               bool trim_leading_zeros,
                               bool allow_suffix,
                               string *kanji_output,
@@ -1036,7 +1069,7 @@ bool NormalizeNumbersInternal(const string &input,
     if (num_zeros == numbers.size()) {
       --num_zeros;
     }
-    arabic_output->append(num_zeros, '0');
+    arabic_output->append(num_zeros, kAsciiZero);
   }
 
   char buf[kMaxInt64Size];
@@ -1049,7 +1082,7 @@ bool NormalizeNumbersInternal(const string &input,
 
 // Convert Kanji numbers into Arabic numbers:
 // e.g. "百二十万" -> 1200000
-bool NumberUtil::NormalizeNumbers(const string &input,
+bool NumberUtil::NormalizeNumbers(StringPiece input,
                                   bool trim_leading_zeros,
                                   string *kanji_output,
                                   string *arabic_output) {
@@ -1061,7 +1094,7 @@ bool NumberUtil::NormalizeNumbers(const string &input,
                                   NULL);
 }
 
-bool NumberUtil::NormalizeNumbersWithSuffix(const string &input,
+bool NumberUtil::NormalizeNumbersWithSuffix(StringPiece input,
                                             bool trim_leading_zeros,
                                             string *kanji_output,
                                             string *arabic_output,
@@ -1083,7 +1116,7 @@ namespace {
 
 }  // namespace
 
-void NumberUtil::KanjiNumberToArabicNumber(const string &input,
+void NumberUtil::KanjiNumberToArabicNumber(StringPiece input,
                                            string *output) {
   TextConverter::Convert(kanjinumber_to_arabicnumber_da,
                          kanjinumber_to_arabicnumber_table,

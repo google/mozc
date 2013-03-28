@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,11 +29,11 @@
 
 #include "gui/base/win_util.h"
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #define NTDDI_VERSION NTDDI_WIN7  // for JumpList.
 #include <dwmapi.h>
-#include <tmschema.h>
 #include <uxtheme.h>
+#include <vssym32.h>
 #include <windows.h>
 #include <winuser.h>
 // Workaround against KB813540
@@ -42,13 +42,13 @@
 #include <atlstr.h>
 #include <atlwin.h>
 
+#include <knownfolders.h>
 #include <objectarray.h>
-#include <shobjidl.h>
 #include <propkey.h>
 #include <propvarutil.h>
-#include <knownfolders.h>
 #include <shlobj.h>
-#endif  // OS_WINDOWS
+#include <shobjidl.h>
+#endif  // OS_WIN
 
 #include <QtCore/QFile>
 #include <QtCore/QLibrary>
@@ -59,19 +59,18 @@
 #include <QtGui/QPainter>
 #include <QtGui/QPaintEngine>
 #include <QtGui/QWidget>
-#ifdef OS_WINDOWS
-#include <Qt/qt_windows.h>
-#endif  // OS_WINDOWS
 
 #include "base/base.h"
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include "base/const.h"
-#endif  // OS_WINDOWS
-#include "base/util.h"
+#endif  // OS_WIN
+#include "base/logging.h"
 #include "base/singleton.h"
+#include "base/system_util.h"
+#include "base/util.h"
 #include "base/win_util.h"
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #ifndef WM_DWMCOMPOSITIONCHANGED
 #define WM_DWMCOMPOSITIONCHANGED        0x031E
 #endif  // WM_DWMCOMPOSITIONCHANGED
@@ -98,12 +97,12 @@ typedef HRESULT (WINAPI *FPDrawThemeTextEx)
 typedef HRESULT (WINAPI *FPGetThemeSysFont)
     (HANDLE hTheme, int iFontId, LOGFONTW *plf);
 
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 namespace mozc {
 namespace gui {
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 namespace {
 
 FPDwmIsCompositionEnabled      gDwmIsCompositionEnabled      = NULL;
@@ -216,7 +215,7 @@ CComPtr<IShellLink> InitializeShellLinkItem(const char *argument,
 
   {
     wstring mozc_tool_path_wide;
-    Util::UTF8ToWide(Util::GetToolPath(), &mozc_tool_path_wide);
+    Util::UTF8ToWide(SystemUtil::GetToolPath(), &mozc_tool_path_wide);
     hr = link->SetPath(mozc_tool_path_wide.c_str());
     if (FAILED(hr)) {
       DLOG(ERROR) << "SetPath failed. hr = " << hr;
@@ -373,11 +372,11 @@ void InitializeJumpList() {
     return;
   }
 }
-}  //namespace
-#endif  // OS_WINDOWS
+}  // namespace
+#endif  // OS_WIN
 
 bool WinUtil::IsCompositionEnabled() {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   if (!DwmResolver::ResolveLibs()) {
     return false;
   }
@@ -391,7 +390,7 @@ bool WinUtil::IsCompositionEnabled() {
     LOG(ERROR) << "DwmIsCompositionEnabled() failed: "
                << static_cast<long>(hr);
   }
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
   return false;
 }
@@ -401,7 +400,7 @@ bool WinUtil::ExtendFrameIntoClientArea(QWidget *widget,
                                         int right, int bottom) {
   DCHECK(widget);
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   if (!DwmResolver::ResolveLibs()) {
     return false;
   }
@@ -417,12 +416,12 @@ bool WinUtil::ExtendFrameIntoClientArea(QWidget *widget,
     LOG(ERROR) << "DwmExtendFrameIntoClientArea() failed: "
                << static_cast<long>(hr);
   }
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
   return false;
 }
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 bool WindowNotifier::winEvent(MSG *message, long *result) {
   if (message != NULL && message->message == WM_DWMCOMPOSITIONCHANGED) {
     const bool composition_enabled = WinUtil::IsCompositionEnabled();
@@ -455,7 +454,7 @@ bool WindowNotifier::winEvent(MSG *message, long *result) {
   // call default
   return QWidget::winEvent(message, result);
 }
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 QRect WinUtil::GetTextRect(QWidget *widget, const QString &text) {
   DCHECK(widget);
@@ -466,22 +465,22 @@ QRect WinUtil::GetTextRect(QWidget *widget, const QString &text) {
 
 void WinUtil::InstallStyleSheets(const QString &dwm_on_style,
                                  const QString &dwm_off_style) {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   WindowNotifier::Get()->InstallStyleSheets(dwm_on_style,
                                             dwm_off_style);
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 }
 
 void WinUtil::InstallStyleSheetsFiles(const QString &dwm_on_style_file,
                                       const QString &dwm_off_style_file) {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   QFile file1(dwm_on_style_file);
   file1.open(QFile::ReadOnly);
   QFile file2(dwm_off_style_file);
   file2.open(QFile::ReadOnly);
   WinUtil::InstallStyleSheets(QLatin1String(file1.readAll()),
                               QLatin1String(file2.readAll()));
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 }
 
 void WinUtil::DrawThemeText(const QString &text,
@@ -490,7 +489,7 @@ void WinUtil::DrawThemeText(const QString &text,
                             QPainter *painter) {
   DCHECK(painter);
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   if (!DwmResolver::ResolveLibs()) {
     return;
   }
@@ -552,7 +551,7 @@ void WinUtil::DrawThemeText(const QString &text,
 
   DTTOPTS dto = { sizeof(DTTOPTS) };
   const UINT format = DT_SINGLELINE | DT_CENTER | DT_VCENTER | DT_NOPREFIX;
-  RECT rctext ={ 0, 0, rect.width(), rect.height() };
+  RECT rctext = { 0, 0, rect.width(), rect.height() };
 
   dto.dwFlags = DTT_COMPOSITED | DTT_GLOWSIZE;
   dto.iGlowSize = glow_size;
@@ -578,10 +577,10 @@ void WinUtil::DrawThemeText(const QString &text,
   ::DeleteDC(dc_mem);
   gCloseThemeData(theme);
 
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 }
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 namespace {
 
 struct FindVisibleWindowInfo {
@@ -606,10 +605,10 @@ BOOL CALLBACK FindVisibleWindowProc(HWND hwnd, LPARAM lp) {
 }
 
 }  // namespace
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 void WinUtil::ActivateWindow(uint32 process_id) {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   FindVisibleWindowInfo info = {};
   info.target_process_id = process_id;
 
@@ -647,20 +646,20 @@ void WinUtil::ActivateWindow(uint32 process_id) {
   if (::SetForegroundWindow(window.m_hWnd) == FALSE) {
     LOG(ERROR) << "::SetForegroundWindow() failed.";
   }
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 }
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 namespace {
 const wchar_t kIMEHotKeyEntryKey[]   = L"Keyboard Layout\\Toggle";
 const wchar_t kIMEHotKeyEntryValue[] = L"Layout Hotkey";
 const wchar_t kIMEHotKeyEntryData[]  = L"3";
 }
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 // static
 bool WinUtil::GetIMEHotKeyDisabled() {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   CRegKey key;
   LONG result = key.Open(HKEY_CURRENT_USER, kIMEHotKeyEntryKey, KEY_READ);
 
@@ -683,14 +682,14 @@ bool WinUtil::GetIMEHotKeyDisabled() {
   }
 
   return false;
-#else   // OS_WINDOWS
+#else   // OS_WIN
   return false;
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 }
 
 // static
 bool WinUtil::SetIMEHotKeyDisabled(bool disabled) {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   if (WinUtil::GetIMEHotKeyDisabled() == disabled) {
     // Do not need to update this entry.
     return true;
@@ -723,13 +722,13 @@ bool WinUtil::SetIMEHotKeyDisabled(bool disabled) {
 
     return (ERROR_SUCCESS == result || ERROR_FILE_NOT_FOUND == result);
   }
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
   return false;
 }
 
 void WinUtil::KeepJumpListUpToDate() {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   HRESULT hr = S_OK;
 
   hr = ::CoInitializeEx(NULL,
@@ -740,7 +739,7 @@ void WinUtil::KeepJumpListUpToDate() {
   }
   InitializeJumpList();
   ::CoUninitialize();
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 }
 }  // namespace gui
 }  // namespace mozc

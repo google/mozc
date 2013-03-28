@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -284,7 +284,6 @@ void SetTestDataForConversion(commands::Output *output) {
       footer->set_sub_label("build 436");
     }
   }
-  output->set_elapsed_time(1000);
   {
     commands::Status *status = output->mutable_status();
     status->set_activated(true);

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,14 +29,14 @@
 
 #import "mac/GoogleJapaneseInputController.h"
 
-#import <Cocoa/Cocoa.h>
 #import <Carbon/Carbon.h>
-#import <InputMethodKit/IMKServer.h>
+#import <Cocoa/Cocoa.h>
 #import <InputMethodKit/IMKInputController.h>
+#import <InputMethodKit/IMKServer.h>
 
 #include <unistd.h>
-#include <stdlib.h>
 
+#include <cstdlib>
 #include <set>
 
 #import "mac/GoogleJapaneseInputControllerInterface.h"
@@ -153,6 +153,7 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
 @synthesize mode = mode_;
 @synthesize rendererCommand = rendererCommand_;
 @synthesize replacementRange = replacementRange_;
+@synthesize imkClientForTest = imkClientForTest_;
 - (mozc::client::ClientInterface *)mozcClient {
   return mozcClient_;
 }
@@ -188,11 +189,13 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
   cursorPosition_ = NSNotFound;
   mode_ = mozc::commands::DIRECT;
   checkInputMode_ = YES;
+  suppressSuggestion_ = NO;
   yenSignCharacter_ = mozc::config::Config::YEN_SIGN;
   candidateController_ = new(nothrow) mozc::renderer::RendererClient;
   rendererCommand_ = new(nothrow)RendererCommand;
   mozcClient_ = mozc::client::ClientFactory::NewClient();
   imkServer_ = reinterpret_cast<id<ServerCallback> >(server);
+  imkClientForTest_ = nil;
   lastKanaKeyTime_ = 0;
 
   // We don't check the return value of NSBundle because it fails during tests.
@@ -227,12 +230,20 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
   [keyCodeMap_ release];
   [originalString_ release];
   [composedString_ release];
+  [imkClientForTest_ release];
   delete clientBundle_;
   delete candidateController_;
   delete mozcClient_;
   delete rendererCommand_;
   DLOG(INFO) << "dealloc server";
   [super dealloc];
+}
+
+- (id)client {
+  if (imkClientForTest_) {
+    return imkClientForTest_;
+  }
+  return [super client];
 }
 
 - (NSMenu*)menu {
@@ -298,6 +309,19 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
   }
   [self handleConfig];
   [imkServer_ setCurrentController:self];
+
+  string window_name, window_owner;
+  if (mozc::MacUtil::GetFrontmostWindowNameAndOwner(&window_name,
+                                                    &window_owner)) {
+    DLOG(INFO) << "frontmost window name: \"" << window_name << "\" "
+               << "owner: \"" << window_owner << "\"";
+    if (mozc::MacUtil::IsSuppressSuggestionWindow(window_name, window_owner)) {
+      suppressSuggestion_ = YES;
+    } else {
+      suppressSuggestion_ = NO;
+    }
+  }
+
   DLOG(INFO) << kProductNameInEnglish << " client (" << self
              << "): activated for " << sender;
   DLOG(INFO) << "sender bundleID: " << *clientBundle_;
@@ -903,8 +927,13 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
     [originalString_ appendFormat:@"%c", keyEvent.key_code()];
   }
 
+  mozc::commands::Context context;
+  if (suppressSuggestion_) {
+    // TODO(komatsu, horo): Support Google Omnibox too.
+    context.add_experimental_features("google_search_box");
+  }
   keyEvent.set_mode(mode_);
-  if (!mozcClient_->SendKey(keyEvent, &output)) {
+  if (!mozcClient_->SendKeyWithContext(keyEvent, context, &output)) {
     return NO;
   }
 

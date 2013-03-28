@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,10 +34,12 @@
 #include <string>
 
 #include "base/const.h"
+#include "base/file_util.h"
 #include "base/process.h"
 #include "base/run_level.h"
-#include "base/util.h"
+#include "base/system_util.h"
 #include "base/update_checker.h"
+#include "base/util.h"
 #include "base/version.h"
 
 namespace mozc {
@@ -59,8 +61,8 @@ bool AddLocalPath(string *str) {
   for (size_t i = 0; i < arraysize(filenames); ++i) {
     if (str->find(filenames[i]) != string::npos) {
       string tmp;
-      const string file_path = Util::JoinPath(Util::GetDocumentDirectory(),
-                                              filenames[i]);
+      const string file_path =
+          FileUtil::JoinPath(SystemUtil::GetDocumentDirectory(), filenames[i]);
       Util::StringReplace(*str, filenames[i], file_path, false, &tmp);
       *str = tmp;
       return true;
@@ -106,9 +108,9 @@ AboutDialog::AboutDialog(QWidget *parent)
 
   // change font size for product name
   QFont font = label->font();
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   font.setPointSize(22);
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 #ifdef OS_MACOSX
   font.setPointSize(26);
@@ -159,8 +161,8 @@ bool AboutDialog::winEvent(MSG *message, long *result) {
     switch (message->wParam) {
       case UpdateChecker::UPGRADE_IS_AVAILABLE:
         version_info += tr("New version is available");
-        if (mozc::Util::IsVistaOrLater()) {
-          if (!mozc::RunLevel::IsElevatedByUAC()) {
+        if (SystemUtil::IsVistaOrLater()) {
+          if (!RunLevel::IsElevatedByUAC()) {
             QWindowsStyle style;
             QIcon vista_icon(style.standardIcon(QStyle::SP_VistaShield));
             updateButton->setIcon(vista_icon);
@@ -182,14 +184,14 @@ bool AboutDialog::winEvent(MSG *message, long *result) {
 
   return QWidget::winEvent(message, result);
 }
-#endif
+#endif  // USE_UPDATE_CHECKER
 
 void AboutDialog::updateButtonPushed() {
   updateButton->setEnabled(false);
   // Currently, update_dialog is available only on Windows.
-#if defined(OS_WINDOWS)
-  mozc::Process::SpawnMozcProcess(mozc::kMozcTool, "--mode=update_dialog");
-#endif  // OS_WINDOWS
+#if defined(OS_WIN)
+  Process::SpawnMozcProcess(mozc::kMozcTool, "--mode=update_dialog");
+#endif  // OS_WIN
 }
-}  // namespace mozc::gui
+}  // namespace gui
 }  // namespace mozc

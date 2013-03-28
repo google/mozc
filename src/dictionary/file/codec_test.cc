@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,6 +31,7 @@
 
 #include "base/base.h"
 #include "base/file_stream.h"
+#include "base/file_util.h"
 #include "base/logging.h"
 #include "base/util.h"
 #include "dictionary/file/codec_interface.h"
@@ -50,13 +51,13 @@ class CodecTest : public ::testing::Test {
  protected:
   virtual void SetUp() {
     DictionaryFileCodecFactory::SetCodec(NULL);
-    Util::Unlink(test_file_);
+    FileUtil::Unlink(test_file_);
   }
 
   virtual void TearDown() {
     // Reset to default setting
     DictionaryFileCodecFactory::SetCodec(NULL);
-    Util::Unlink(test_file_);
+    FileUtil::Unlink(test_file_);
   }
 
   void AddSection(const DictionaryFileCodecInterface *codec,
@@ -127,7 +128,7 @@ TEST_F(CodecTest, FactoryTest) {
     codec->WriteSections(sections, &ofs);
   }
   {
-    EXPECT_TRUE(Util::FileExists(test_file_));
+    EXPECT_TRUE(FileUtil::FileExists(test_file_));
     InputFileStream ifs;
     ifs.open(test_file_.c_str(), ios_base::in | ios_base::binary);
     ifs.seekg(0, ios::end);
@@ -167,7 +168,7 @@ TEST_F(CodecTest, DefaultTest) {
   char buf[1024] = {};  // sections will reference this buffer.
   vector<DictionaryFileSection> sections;
   {
-    EXPECT_TRUE(Util::FileExists(test_file_));
+    EXPECT_TRUE(FileUtil::FileExists(test_file_));
     InputFileStream ifs;
     ifs.open(test_file_.c_str(), ios_base::in | ios_base::binary);
     ifs.read(buf, 1024);
@@ -204,7 +205,7 @@ TEST_F(CodecTest, CodecTest) {
   char buf[1024] = {};  // sections will reference this buffer.
   vector<DictionaryFileSection> sections;
   {
-    EXPECT_TRUE(Util::FileExists(test_file_));
+    EXPECT_TRUE(FileUtil::FileExists(test_file_));
     InputFileStream ifs;
     ifs.open(test_file_.c_str(), ios_base::in | ios_base::binary);
     ifs.read(buf, 1024);

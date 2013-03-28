@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,20 +33,20 @@
 #include <QtGui/QtGui>
 #include <QtGui/QProgressDialog>
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <Windows.h>
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
 #include <algorithm>
 #include <functional>
 #include <string>
 #include <vector>
 
-#include "base/base.h"
 #include "base/file_stream.h"
+#include "base/logging.h"
 #include "base/run_level.h"
+#include "base/system_util.h"
 #include "base/util.h"
-#include "gui/base/win_util.h"
 #include "client/client.h"
 #include "data_manager/user_pos_manager.h"
 #include "dictionary/user_dictionary_importer.h"
@@ -55,6 +55,7 @@
 #include "dictionary/user_dictionary_storage.pb.h"
 #include "dictionary/user_dictionary_util.h"
 #include "dictionary/user_pos.h"
+#include "gui/base/win_util.h"
 #include "gui/config_dialog/combobox_delegate.h"
 #include "gui/dictionary_tool/find_dialog.h"
 #include "gui/dictionary_tool/import_dialog.h"
@@ -111,13 +112,30 @@ size_t GetMaxDictionaryEntrySize(bool is_syncable) {
   }
 }
 
-#if defined(OS_WINDOWS) || defined(OS_MACOSX)
+#if defined(OS_WIN) || defined(OS_MACOSX)
 void InstallStyleSheet(const QString &filename) {
   QFile file(filename);
   file.open(QFile::ReadOnly);
   qApp->setStyleSheet(QLatin1String(file.readAll()));
 }
 #endif
+
+const string ConvertDictNameFromGui(const QString& gui_name) {
+  if (gui_name == QObject::tr("Sync-able dictionary")) {
+    return mozc::UserDictionaryStorage::default_sync_dictionary_name();
+  } else {
+    return gui_name.toStdString();
+  }
+}
+
+const string ConvertDictNameToGui(const string& logical_name) {
+  if (logical_name ==
+      mozc::UserDictionaryStorage::default_sync_dictionary_name()) {
+    return QObject::tr("Sync-able dictionary").toStdString();
+  } else {
+    return logical_name;
+  }
+}
 
 // Use QTextStream to read UTF16 text -- we can't use ifstream,
 // since ifstream cannot handle Wide character.
@@ -270,7 +288,7 @@ UserDictionaryImporter::TextLineIteratorInterface *CreateTextLineIterator(
   if (encoding_type == UserDictionaryImporter::NUM_ENCODINGS) {
     LOG(ERROR) << "GuessFileEncodingType() returns UNKNOWN encoding.";
     // set default encoding
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
     encoding_type = UserDictionaryImporter::SHIFT_JIS;
 #else
     encoding_type = UserDictionaryImporter::UTF16;
@@ -314,7 +332,8 @@ DictionaryTool::DictionaryTool(QWidget *parent)
       client_(client::ClientFactory::NewClient()),
       is_available_(true),
       max_entry_size_(mozc::UserDictionaryStorage::max_entry_size()),
-      user_pos_(UserPosManager::GetUserPosManager()->GetUserPOS()) {
+      user_pos_(new UserPOS(
+          UserPosManager::GetUserPosManager()->GetUserPOSData())) {
   setupUi(this);
 
   // Create and set up ImportDialog object.
@@ -443,12 +462,12 @@ DictionaryTool::DictionaryTool(QWidget *parent)
   export_action_ = dic_menu_->addAction(tr("Export current dictionary..."));
 
   // add Import from MS-IME's dictionary
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   dic_menu_->addSeparator();
   import_default_ime_action_ =
       dic_menu_->addAction(
           tr("Import from %1's user dictionary...").arg("Microsoft IME"));
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
   dic_menu_button_->setMenu(dic_menu_);
   connect(new_action_, SIGNAL(triggered()),
@@ -466,10 +485,10 @@ DictionaryTool::DictionaryTool(QWidget *parent)
   connect(export_action_, SIGNAL(triggered()),
           this, SLOT(ExportDictionary()));
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   connect(import_default_ime_action_, SIGNAL(triggered()),
           this, SLOT(ImportFromDefaultIME()));
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
   // Signals and slots to connect buttons to actions.
   connect(new_word_button_, SIGNAL(clicked()),
@@ -522,8 +541,8 @@ DictionaryTool::DictionaryTool(QWidget *parent)
 #endif
 
   // for Window Aero Glass support
-#ifdef OS_WINDOWS
-  if (Util::IsVistaOrLater()) {
+#ifdef OS_WIN
+  if (SystemUtil::IsVistaOrLater()) {
     setContentsMargins(0, 0, 0, 0);
     WinUtil::InstallStyleSheetsFiles(":win_aero_style.qss",
                                      ":win_style.qss");
@@ -608,10 +627,10 @@ void DictionaryTool::OnDictionarySelectionChanged() {
     export_action_->setEnabled(false);
   } else {
     current_dic_id_ = dic_info.id;
-    SetupDicContentEditor(dic_info);
     const UserDictionary *dic =
         session_->mutable_storage()->GetUserDictionary(current_dic_id_);
     max_entry_size_ = GetMaxDictionaryEntrySize(dic->syncable());
+    SetupDicContentEditor(dic_info);
   }
 }
 
@@ -769,7 +788,7 @@ void DictionaryTool::ImportAndCreateDictionary() {
   }
 
   ImportHelper(0,   // dic_id == 0 means that "CreateNewDictonary" mode
-               import_dialog_->dic_name().toStdString(),
+               ConvertDictNameFromGui(import_dialog_->dic_name()),
                import_dialog_->file_name().toStdString(),
                import_dialog_->ime_type(),
                import_dialog_->encoding_type());
@@ -797,7 +816,7 @@ void DictionaryTool::ImportAndAppendDictionary() {
   }
 
   ImportHelper(dic_info.id,
-               dic_info.item->text().toStdString(),
+               ConvertDictNameFromGui(dic_info.item->text()),
                import_dialog_->file_name().toStdString(),
                import_dialog_->ime_type(),
                import_dialog_->encoding_type());
@@ -909,11 +928,11 @@ void DictionaryTool::ImportHelper(
 
   UpdateUIStatus();
 
-  ReportImportError(error, dic_name, added_entries_size);
+  ReportImportError(error, ConvertDictNameToGui(dic_name), added_entries_size);
 }
 
 void DictionaryTool::ImportFromDefaultIME() {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   if (RunLevel::IsElevatedByUAC()) {
     // MS-IME's dictionary importer doesn't work if the current
     // process is already elevated by UAC. If user disables UAC<
@@ -1446,7 +1465,8 @@ void DictionaryTool::SyncToStorage() {
 void DictionaryTool::CreateDictionaryHelper(const QString &dic_name) {
   uint64 new_dic_id = 0;
   if (!session_->mutable_storage()->CreateDictionary(
-          dic_name.toStdString(), &new_dic_id)) {
+          ConvertDictNameFromGui(dic_name),
+          &new_dic_id)) {
     LOG(ERROR) << "Failed to create a new dictionary.";
     ReportError();
     return;
@@ -1466,10 +1486,11 @@ void DictionaryTool::CreateDictionaryHelper(const QString &dic_name) {
 bool DictionaryTool::InitDictionaryList() {
   dic_list_->clear();
   const UserDictionaryStorage &storage = session_->storage();
+
   for (size_t i = 0; i < storage.dictionaries_size(); ++i) {
     QListWidgetItem *item = new QListWidgetItem(dic_list_);
     DCHECK(item);
-    item->setText(storage.dictionaries(i).name().c_str());
+    item->setText(ConvertDictNameToGui(storage.dictionaries(i).name()).c_str());
     item->setData(Qt::UserRole,
                   QVariant(
                       static_cast<qulonglong>(storage.dictionaries(i).id())));
@@ -1589,7 +1610,7 @@ bool DictionaryTool::IsWritableToExport(const string &file_name) {
     QFileInfo dir_info(file_info.dir().absolutePath());
     // This preprocessor conditional is a workaround for a problem
     // that export fails on Windows.
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
     return dir_info.isExecutable();
 #else
     return dir_info.isExecutable() && dir_info.isWritable();
@@ -1598,7 +1619,7 @@ bool DictionaryTool::IsWritableToExport(const string &file_name) {
 }
 
 void DictionaryTool::paintEvent(QPaintEvent *event) {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   if (!gui::WinUtil::IsCompositionEnabled()) {
     return;
   }
@@ -1630,7 +1651,7 @@ void DictionaryTool::UpdateUIStatus() {
     delete_action_->setEnabled(dic_list_->count() > 0);
   }
   import_append_action_->setEnabled(dic_list_->count() > 0);
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   import_default_ime_action_->setEnabled(dic_list_->count() > 0);
 #endif
 
@@ -1650,7 +1671,7 @@ void DictionaryTool::UpdateUIStatus() {
     statusbar_message_.clear();
   }
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   if (!gui::WinUtil::IsCompositionEnabled()) {
     statusbar_->showMessage(statusbar_message_);
   } else {
@@ -1661,7 +1682,7 @@ void DictionaryTool::UpdateUIStatus() {
 #endif
 }
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 bool DictionaryTool::winEvent(MSG *message, long *result) {
   if (message != NULL &&
       message->message == WM_LBUTTONDOWN &&

@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -55,7 +55,7 @@ ImportDialog::ImportDialog(QWidget *parent)
       tr("Google"),
       static_cast<int>(UserDictionaryImporter::MOZC));
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   ime_combobox_->addItem(
       tr("Microsoft IME"),
       static_cast<int>(UserDictionaryImporter::MSIME));

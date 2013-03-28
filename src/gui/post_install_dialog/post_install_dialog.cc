@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,21 +29,22 @@
 
 #include "gui/post_install_dialog/post_install_dialog.h"
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 #include <windows.h>
 #endif
 
 #include <QtGui/QtGui>
 #include "base/base.h"
+#include "base/logging.h"
 #include "base/process.h"
 #include "base/run_level.h"
 #include "base/util.h"
 #include "gui/base/setup_util.h"
 #include "usage_stats/usage_stats.h"
 
-#ifdef OS_WINDOWS
-#include "win32/base/imm_util.h"
+#ifdef OS_WIN
 #include "base/win_util.h"
+#include "win32/base/imm_util.h"
 #endif
 
 namespace mozc {
@@ -169,11 +170,11 @@ bool PostInstallDialog::ShowHelpPageIfRequired() {
 void PostInstallDialog::OnLogoffNow() {
   usage_stats::UsageStats::IncrementCount("PostInstallLogoffNowButton");
   ApplySettings();
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   mozc::WinUtil::Logoff();
 #else
   // not supported on Mac and Linux
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
   done(QDialog::Accepted);
 }
 
@@ -195,7 +196,7 @@ void PostInstallDialog::reject() {
 }
 
 void PostInstallDialog::ApplySettings() {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   uint32 flags = SetupUtil::NONE;
   if (setAsDefaultCheckBox->isChecked()) {
     flags |= SetupUtil::IME_DEFAULT;
@@ -211,11 +212,11 @@ void PostInstallDialog::ApplySettings() {
   setuputil_->SetDefaultProperty(flags);
 #else
   // not supported on Mac and Linux
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 }
 
 void PostInstallDialog::OnsetAsDefaultCheckBoxToggled(int state) {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   // IMEHotKey is only activated when setAsDefaultCheckBox is checked.
   IMEHotKeyDisabledCheckBox->setChecked(state);
   IMEHotKeyDisabledCheckBox->setEnabled(static_cast<bool>(state));
@@ -223,12 +224,12 @@ void PostInstallDialog::OnsetAsDefaultCheckBoxToggled(int state) {
 }
 
 bool PostInstallDialog::IsShowHelpPageRequired() {
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   return !win32::ImeUtil::IsCtfmonRunning();
 #else
   // not supported on Mac and Linux
   return false;
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 }
 
 }  // namespace gui

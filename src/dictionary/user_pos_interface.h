@@ -1,4 +1,4 @@
-// Copyright 2010-2012, Google Inc.
+// Copyright 2010-2013, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,8 +36,7 @@
 
 namespace mozc {
 
-// Interface that defines interface of the helper class used by
-// POS. Default implementation is defined in the .cc file.
+// Interface of the helper class used by POS.
 class UserPOSInterface {
  public:
   struct Token {
@@ -45,7 +44,10 @@ class UserPOSInterface {
     string value;
     uint16 id;
     int16  cost;
+    string comment;  // This field comes from user dictionary.
   };
+
+  virtual ~UserPOSInterface() {}
 
   // Sets posssible list of part-of-speech Mozc can handle
   virtual void GetPOSList(vector<string> *pos_list) const = 0;
@@ -66,7 +68,6 @@ class UserPOSInterface {
 
  protected:
   UserPOSInterface() {}
-  virtual ~UserPOSInterface() {}
 
  private:
   DISALLOW_COPY_AND_ASSIGN(UserPOSInterface);
