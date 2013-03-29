@@ -2,20 +2,5 @@
 
 TARGETS="server/server.gyp:mozc_server gui/gui.gyp:mozc_tool unix/fcitx/fcitx.gyp:fcitx-mozc"
 
-_protobuf_ver=2.4.1
-protobuf_url="http://protobuf.googlecode.com/files/protobuf-${_protobuf_ver}.tar.bz2"
-
-
-pushd .
-cd ..
-if [ ! -f protobuf-${_protobuf_ver}.tar.bz2 ]; then
-    wget -c ${protobuf_url} -O protobuf-${_protobuf_ver}.tar.bz2
-fi
-rm -rf protobuf-${_protobuf_ver}
-tar xvf protobuf-${_protobuf_ver}.tar.bz2
-cp -rf "protobuf-${_protobuf_ver}" src/protobuf/files
-
-popd
-
 python build_mozc.py build_tools -c Debug --jobs=1
 python build_mozc.py build ${TARGETS} -c Debug --jobs=1

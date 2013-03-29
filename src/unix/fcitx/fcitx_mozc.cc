@@ -41,6 +41,8 @@
 #include "base/logging.h"
 #include "base/process.h"
 #include "base/util.h"
+#include "base/file_util.h"
+#include "base/system_util.h"
 #include "unix/fcitx/mozc_connection.h"
 #include "unix/fcitx/mozc_response_parser.h"
 #include <fcitx/context.h>
@@ -390,8 +392,8 @@ void FcitxMozc::InitializeBar()
         GetCompositionIconName
     );
 
-    if ( mozc::Util::FileExists ( mozc::Util::JoinPath (
-                                      mozc::Util::GetServerDirectory(), mozc::kMozcTool ) ) )
+    if ( mozc::FileUtil::FileExists ( mozc::FileUtil::JoinPath (
+                                      mozc::SystemUtil::GetServerDirectory(), mozc::kMozcTool ) ) )
     {
         FcitxUIRegisterComplexStatus(instance, this,
             "mozc-tool",
