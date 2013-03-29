@@ -210,25 +210,18 @@ def GetGypFileNames(options):
   # Include subdirectory of rewriter
   gyp_file_names.extend(glob.glob('%s/rewriter/*/*.gyp' % SRC_DIR))
   # Include subdirectory of win32 and breakpad for Windows
-  if IsWindows():
+  if options.target_platform == 'Windows':
     gyp_file_names.extend(glob.glob('%s/win32/*/*.gyp' % SRC_DIR))
     gyp_file_names.extend(glob.glob('third_party/breakpad/*.gyp'))
-  elif IsLinux():
+  elif options.target_platform == 'Linux':
     gyp_file_names.extend(glob.glob('%s/unix/*/*.gyp' % SRC_DIR))
     # Add ibus.gyp if ibus version is >=1.4.1.
     if not PkgExists('ibus-1.0 >= 1.4.1'):
       logging.info('removing ibus.gyp.')
       gyp_file_names.remove('%s/unix/ibus/ibus.gyp' % SRC_DIR)
-    # Check if Qt libraries are installed.
-    qt_found = PkgExists('QtCore', 'QtGui')
-    if options.ensure_value('qtdir', None):
-      qt_found = True
-    if not qt_found:
-      # Fall back to --noqt mode.  Ensure options.noqt is available and
-      # force it to be True.
-      options.ensure_value('noqt', True)
-      options.noqt = True
-  if options.target_platform == 'NaCl':
+  elif options.target_platform == 'ChromeOS':
+    gyp_file_names.extend(glob.glob('%s/unix/ibus/*.gyp' % SRC_DIR))
+  elif options.target_platform == 'NaCl':
     # Add chrome NaCl Mozc gyp scripts.
     gyp_file_names.append('%s/chrome/nacl/nacl_extension.gyp' % SRC_DIR)
     gyp_file_names.extend(glob.glob('third_party/zlib/v1_2_3/zlib.gyp'))
@@ -484,6 +477,8 @@ def ExpandMetaTarget(options, meta_target_name):
                SRC_DIR + '/gui/gui.gyp:mozc_tool']
     if PkgExists('ibus-1.0 >= 1.4.1'):
       targets.append(SRC_DIR + '/unix/ibus/ibus.gyp:ibus_mozc')
+  elif target_platform == 'ChromeOS':
+    targets.append(SRC_DIR + '/unix/ibus/ibus.gyp:ibus_mozc')
   elif target_platform == 'Mac':
     targets = [SRC_DIR + '/mac/mac.gyp:DiskImage']
   elif target_platform == 'Windows':
@@ -656,16 +651,24 @@ def GypMain(options, unused_args):
 
   if options.branding:
     command_line.extend(['-D', 'branding=%s' % options.branding])
+
   if options.noqt:
     command_line.extend(['-D', 'use_qt=NO'])
   else:
+    if options.target_platform == 'Linux' and not options.qtdir:
+      # Check if Qt libraries are installed.
+      system_qt_found = PkgExists('QtCore >= 4.0', 'QtCore < 5.0',
+                                  'QtGui >= 4.0', 'QtGui < 5.0')
+      if not system_qt_found:
+        PrintErrorAndExit('Qt4 is required to build GUI Tool. '
+                          'Specify --noqt to skip building GUI Tool.')
     command_line.extend(['-D', 'use_qt=YES'])
   if options.qtdir:
     command_line.extend(['-D', 'qt_dir=%s' % os.path.abspath(options.qtdir)])
   else:
     command_line.extend(['-D', 'qt_dir='])
 
-  if IsWindows() and options.wix_dir:
+  if options.target_platform == 'Windows' and options.wix_dir:
     command_line.extend(['-D', 'use_wix=YES'])
     command_line.extend(['-D', 'wix_dir=%s' % options.wix_dir])
   else:
@@ -825,9 +828,10 @@ def GypMain(options, unused_args):
   else:
     command_line.extend(['-D', 'use_zinnia=NO'])
 
-  if IsLinux():
-    if '%s/unix/ibus/ibus.gyp' % SRC_DIR in gyp_file_names:
-      command_line.extend(['-D', 'use_libibus=1'])
+  if ((options.target_platform == 'Linux' or
+       options.target_platform == 'ChromeOS') and
+      '%s/unix/ibus/ibus.gyp' % SRC_DIR in gyp_file_names):
+    command_line.extend(['-D', 'use_libibus=1'])
 
 
   # Generate make rules for Android NDK.

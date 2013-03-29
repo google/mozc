@@ -72,7 +72,7 @@ IBUS_1_5_ENGINE_COMMON_PROPS = {
     'language': 'ja',
     'icon': '/usr/share/ibus-mozc/product_icon.png',
     'rank': '80',
-    'symbol': '&#x3042',
+    'symbol': '&#x3042;',
 }
 
 # A dictionary from --platform to engines that are used in the platform. The

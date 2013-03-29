@@ -770,6 +770,9 @@
                 'defines': [
                   'MOZC_USE_PEPPER_FILE_IO',
                 ],
+                'include_dirs': [
+                  '<(nacl_sdk_root)/include',
+                ],
               }],
               ['_toolset=="target" and _type=="static_library"', {
                 # PNaCl's artools.py doesn't support thin archive file.
