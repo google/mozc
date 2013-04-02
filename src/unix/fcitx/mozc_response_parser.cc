@@ -172,6 +172,7 @@ void MozcResponseParser::ParseCandidates(
     FcitxCandidateWordList* candList = FcitxInputStateGetCandidateList(fcitx_mozc->GetInputState());
     FcitxCandidateWordReset(candList);
     FcitxCandidateWordSetPageSize(candList, 9);
+    FcitxCandidateWordSetLayoutHint(candList, CLH_Vertical);
     char strChoose[] = "\0\0\0\0\0\0\0\0\0\0\0";
 
     int focused_index = -1;
