@@ -37,6 +37,7 @@
 #include <vector>
 
 #include "base/logging.h"
+#include "base/process.h"
 #include "session/commands.pb.h"
 #include "unix/fcitx/fcitx_mozc.h"
 #include <fcitx/candidate.h>
@@ -116,6 +117,23 @@ bool MozcResponseParser::ParseResponse(const mozc::commands::Output &response,
     if (response.has_url()) {
         const string &url = response.url();
         fcitx_mozc->SetUrl(url);
+    }
+
+    if (response.has_launch_tool_mode()) {
+        switch (response.launch_tool_mode()) {
+            case mozc::commands::Output_ToolMode_CONFIG_DIALOG:
+                mozc::Process::SpawnMozcProcess("mozc_tool", "--mode=config_dialog");
+                break;
+            case mozc::commands::Output_ToolMode_DICTIONARY_TOOL:
+                mozc::Process::SpawnMozcProcess("mozc_tool", "--mode=dictionary_tool");
+                break;
+            case mozc::commands::Output_ToolMode_WORD_REGISTER_DIALOG:
+                mozc::Process::SpawnMozcProcess("mozc_tool", "--mode=word_register_dialog");
+                break;
+            default:
+            case mozc::commands::Output_ToolMode_NO_TOOL:
+                break;
+        }
     }
 
     return true;  // mozc consumed the key.
