@@ -191,7 +191,9 @@ void MozcResponseParser::ParseCandidates(
     FcitxCandidateWordReset(candList);
     FcitxCandidateWordSetPageSize(candList, 9);
     FcitxCandidateWordSetLayoutHint(candList, CLH_Vertical);
-    char strChoose[] = "\0\0\0\0\0\0\0\0\0\0\0";
+
+#define EMPTY_STR_CHOOSE "\0\0\0\0\0\0\0\0\0\0"
+    std::string choose;
 
     int focused_index = -1;
     int local_index = -1;
@@ -237,6 +239,12 @@ void MozcResponseParser::ParseCandidates(
                          candidates.candidate(i).annotation().description());
         }
 
+        if (use_annotation_ &&
+            candidates.candidate(i).has_annotation() &&
+            candidates.candidate(i).annotation().has_shortcut()) {
+            choose.append(1, candidates.candidate(i).annotation().shortcut().c_str()[0]);
+        }
+
         candWord.strWord = strdup(value.c_str());
 
         if (candidates.candidate(i).has_id()) {
@@ -252,9 +260,9 @@ void MozcResponseParser::ParseCandidates(
     }
 
     if (footer.has_index_visible() && footer.index_visible())
-        FcitxCandidateWordSetChoose(candList, DIGIT_STR_CHOOSE);
+        FcitxCandidateWordSetChoose(candList, choose.c_str());
     else
-        FcitxCandidateWordSetChoose(candList, strChoose);
+        FcitxCandidateWordSetChoose(candList, EMPTY_STR_CHOOSE);
     FcitxCandidateWordSetFocus(candList, local_index);
 }
 

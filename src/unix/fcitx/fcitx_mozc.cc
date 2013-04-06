@@ -130,8 +130,7 @@ FcitxMozc::FcitxMozc ( FcitxInstance* inst,
         composition_mode_ ( mozc::commands::HIRAGANA )
 {
     VLOG ( 1 ) << "FcitxMozc created.";
-    const bool is_vertical
-    = false;
+    const bool is_vertical = true;
     parser_->set_use_annotation ( is_vertical );
     InitializeBar();
     InitializeMenu();
