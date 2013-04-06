@@ -82,6 +82,7 @@
         'fcitx_key_event_handler.cc',
         'mozc_connection.cc',
         'mozc_response_parser.cc',
+        'surrounding_text_util.cc',
         'eim.cc',
       ],
       'dependencies': [

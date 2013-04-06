@@ -124,7 +124,7 @@ bool MozcConnection::TrySendClick(int32 unique_id,
   mozc::commands::SessionCommand command;
   command.set_type(mozc::commands::SessionCommand::SELECT_CANDIDATE);
   command.set_id(unique_id);
-  return TrySendCommandInternal(command, out, out_error);
+  return TrySendRawCommand(command, out, out_error);
 }
 
 bool MozcConnection::TrySendCompositionMode(
@@ -137,7 +137,7 @@ bool MozcConnection::TrySendCompositionMode(
   mozc::commands::SessionCommand command;
   command.set_type(mozc::commands::SessionCommand::SWITCH_INPUT_MODE);
   command.set_composition_mode(mode);
-  return TrySendCommandInternal(command, out, out_error);
+  return TrySendRawCommand(command, out, out_error);
 }
 
 bool MozcConnection::TrySendCommand(
@@ -149,14 +149,16 @@ bool MozcConnection::TrySendCommand(
 
   mozc::commands::SessionCommand command;
   command.set_type(type);
-  return TrySendCommandInternal(command, out, out_error);
+  return TrySendRawCommand(command, out, out_error);
 }
 
-bool MozcConnection::TrySendCommandInternal(
+
+
+bool MozcConnection::TrySendRawCommand(
     const mozc::commands::SessionCommand& command,
     mozc::commands::Output *out,
     string *out_error) const {
-  VLOG(1) << "TrySendCommandInternal: " << endl << command.DebugString();
+  VLOG(1) << "TrySendRawCommand: " << endl << command.DebugString();
   if (!client_->SendCommand(command, out)) {
     *out_error = "SendCommand failed";
     VLOG(1) << "ERROR";
@@ -164,6 +166,11 @@ bool MozcConnection::TrySendCommandInternal(
   }
   VLOG(1) << "OK: " << endl << out->DebugString();
   return true;
+}
+
+mozc::client::ClientInterface* MozcConnection::GetClient()
+{
+    return client_.get();
 }
 
 MozcConnection *MozcConnection::CreateMozcConnection() {

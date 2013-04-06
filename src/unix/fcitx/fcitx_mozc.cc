@@ -129,12 +129,17 @@ FcitxMozc::FcitxMozc ( FcitxInstance* inst,
         parser_ ( parser ),
         composition_mode_ ( mozc::commands::HIRAGANA )
 {
+    mozc::Logging::SetVerboseLevel(1);
     VLOG ( 1 ) << "FcitxMozc created.";
     const bool is_vertical = true;
     parser_->set_use_annotation ( is_vertical );
     InitializeBar();
     InitializeMenu();
     SetCompositionMode( mozc::commands::HIRAGANA );
+
+    commands::Capability capability;
+    capability.set_text_deletion(commands::Capability::DELETE_PRECEDING_TEXT);
+    GetClient()->set_client_capability(capability);
 }
 
 FcitxMozc::~FcitxMozc()
@@ -333,9 +338,10 @@ void FcitxMozc::DrawPreeditInfo()
         if (ic && ((ic->contextCaps & CAPACITY_PREEDIT) == 0 || !profile->bUsePreedit))
             FcitxInputStateSetCursorPos(input, preedit_info_->cursor_pos);
         FcitxInputStateSetClientCursorPos(input, preedit_info_->cursor_pos);
+        FcitxInputStateSetShowCursor(input, true);
     }
     else {
-        FcitxInputStateSetShowCursor(input, true);
+        FcitxInputStateSetShowCursor(input, false);
     }
 }
 
@@ -491,6 +497,13 @@ void FcitxMozc::InitializeMenu()
     FcitxMenuAddMenuItem(&toolMenu, _("About Mozc"), MENUTYPE_SIMPLE, NULL);
     FcitxUIRegisterMenu(instance, &toolMenu);
 }
+
+bool FcitxMozc::SendCommand(const mozc::commands::SessionCommand& session_command, commands::Output* new_output)
+{
+    string error;
+    return connection_->TrySendRawCommand(session_command, new_output, &error);
+}
+
 
 FcitxInputState* FcitxMozc::GetInputState()
 {

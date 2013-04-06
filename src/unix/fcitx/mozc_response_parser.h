@@ -74,6 +74,9 @@ public:
     void set_use_annotation ( bool use_annotation );
 
 private:
+    void UpdateDeletionRange(const mozc::commands::Output& response, FcitxMozc* fcitx_mozc) const;
+    void LaunchTool(const mozc::commands::Output& response, FcitxMozc* fcitx_mozc) const;
+    void ExecuteCallback(const mozc::commands::Output& response, FcitxMozc* fcitx_mozc) const;
     void ParseResult ( const mozc::commands::Result &result,
                        FcitxMozc *fcitx_mozc ) const;
     void ParseCandidates ( const mozc::commands::Candidates &candidates,

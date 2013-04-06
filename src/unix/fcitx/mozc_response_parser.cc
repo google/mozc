@@ -38,8 +38,10 @@
 
 #include "base/logging.h"
 #include "base/process.h"
+#include "base/util.h"
 #include "session/commands.pb.h"
 #include "unix/fcitx/fcitx_mozc.h"
+#include "unix/fcitx/surrounding_text_util.h"
 #include <fcitx/candidate.h>
 
 namespace {
@@ -79,12 +81,142 @@ MozcResponseParser::MozcResponseParser()
 MozcResponseParser::~MozcResponseParser() {
 }
 
+void MozcResponseParser::UpdateDeletionRange(const mozc::commands::Output& response, FcitxMozc* fcitx_mozc) const
+{
+    if (response.has_deletion_range() &&
+        response.deletion_range().offset() < 0 &&
+        response.deletion_range().offset() + response.deletion_range().length() >= 0) {
+        FcitxInstanceDeleteSurroundingText(fcitx_mozc->GetInstance(),
+                                           FcitxInstanceGetCurrentIC(fcitx_mozc->GetInstance()),
+                                           response.deletion_range().offset(),
+                                           response.deletion_range().length());
+    }
+}
+
+void MozcResponseParser::LaunchTool(const mozc::commands::Output& response, FcitxMozc* fcitx_mozc) const
+{
+    FCITX_UNUSED(fcitx_mozc);
+    if (response.has_launch_tool_mode()) {
+        fcitx_mozc->GetClient()->LaunchToolWithProtoBuf(response);
+    }
+}
+
+void MozcResponseParser::ExecuteCallback(const mozc::commands::Output& response, FcitxMozc* fcitx_mozc) const
+{
+    if (!response.has_callback()) {
+        return;
+    }
+
+    if (!response.callback().has_session_command()) {
+        LOG(ERROR) << "callback does not have session_command";
+        return;
+    }
+
+    const commands::SessionCommand &callback_command =
+        response.callback().session_command();
+
+    if (!callback_command.has_type()) {
+        LOG(ERROR) << "callback_command has no type";
+        return;
+    }
+
+    commands::SessionCommand session_command;
+    session_command.set_type(callback_command.type());
+
+    // TODO(nona): Make a function to handle CONVERT_REVERSE.
+    // Used by CONVERT_REVERSE and/or UNDO
+    // This value represents how many characters are selected as a relative
+    // distance of characters. Positive value represents forward text selection
+    // and negative value represents backword text selection.
+    // Note that you should not allow 0x80000000 for |relative_selected_length|
+    // because you cannot safely use |-relative_selected_length| nor
+    // |abs(relative_selected_length)| in this case due to integer overflow.
+    int32 relative_selected_length = 0;
+
+    switch (callback_command.type()) {
+        case commands::SessionCommand::UNDO:
+            break;
+        case commands::SessionCommand::CONVERT_REVERSE: {
+            FcitxInputContext* ic = FcitxInstanceGetCurrentIC(fcitx_mozc->GetInstance());
+            if (!ic || !(ic->contextCaps & CAPACITY_SURROUNDING_TEXT)) {
+                return;
+            }
+            uint cursor_pos = 0;
+            uint anchor_pos = 0;
+
+            char* str = NULL;
+            if (!FcitxInstanceGetSurroundingText(fcitx_mozc->GetInstance(), ic, &str, &cursor_pos, &anchor_pos)) {
+                return;
+            }
+
+            const string surrounding_text(str);
+
+            LOG(ERROR) << "SurroundingText" << str;
+
+            if (cursor_pos == anchor_pos) {
+                // There is no selection text.
+                VLOG(1) << "Failed to retrieve non-empty text selection.";
+                return;
+            }
+
+            if (!SurroundingTextUtil::GetSafeDelta(cursor_pos, anchor_pos,
+                                                   &relative_selected_length)) {
+                LOG(ERROR) << "Too long text selection.";
+                return;
+            }
+
+            // TODO(nona): Write a test for this logic (especially selection_length).
+            // TODO(nona): Check integer range because Util::SubString works
+            //     on size_t, not uint32.
+            string selection_text;
+            const uint32 selection_start = min(cursor_pos, anchor_pos);
+            const uint32 selection_length = abs(relative_selected_length);
+            Util::SubString(surrounding_text,
+                            selection_start,
+                            selection_length,
+                            &selection_text);
+
+            session_command.set_text(selection_text);
+            break;
+        }
+        default:
+            return;
+    }
+
+    commands::Output new_output;
+    if (!fcitx_mozc->SendCommand(session_command, &new_output)) {
+        LOG(ERROR) << "Callback Command Failed";
+        return;
+    }
+
+    if (callback_command.type() == commands::SessionCommand::CONVERT_REVERSE) {
+        // We need to remove selected text as a first step of reconversion.
+        commands::DeletionRange *range = new_output.mutable_deletion_range();
+        // Use DeletionRange field to remove the selected text.
+        // For forward selection (that is, |relative_selected_length > 0|), the
+        // offset should be a negative value to delete preceding text.
+        // For backward selection (that is, |relative_selected_length < 0|),
+        // IBus and/or some applications seem to expect |offset == 0| somehow.
+        const int32 offset = relative_selected_length > 0
+            ? -relative_selected_length  // forward selection
+            : 0;                         // backward selection
+        range->set_offset(offset);
+        range->set_length(abs(relative_selected_length));
+    }
+
+    VLOG(1) << "New output" << new_output.DebugString();
+
+    ParseResponse(new_output, fcitx_mozc);
+}
+
 bool MozcResponseParser::ParseResponse(const mozc::commands::Output &response,
                                        FcitxMozc *fcitx_mozc) const {
     DCHECK(fcitx_mozc);
     if (!fcitx_mozc) {
         return false;
     }
+
+    UpdateDeletionRange(response, fcitx_mozc);
 
     // We should check the mode field first since the response for a
     // SWITCH_INPUT_MODE request only contains mode and id fields.
@@ -118,23 +250,8 @@ bool MozcResponseParser::ParseResponse(const mozc::commands::Output &response,
         const string &url = response.url();
         fcitx_mozc->SetUrl(url);
     }
-
-    if (response.has_launch_tool_mode()) {
-        switch (response.launch_tool_mode()) {
-            case mozc::commands::Output_ToolMode_CONFIG_DIALOG:
-                mozc::Process::SpawnMozcProcess("mozc_tool", "--mode=config_dialog");
-                break;
-            case mozc::commands::Output_ToolMode_DICTIONARY_TOOL:
-                mozc::Process::SpawnMozcProcess("mozc_tool", "--mode=dictionary_tool");
-                break;
-            case mozc::commands::Output_ToolMode_WORD_REGISTER_DIALOG:
-                mozc::Process::SpawnMozcProcess("mozc_tool", "--mode=word_register_dialog");
-                break;
-            default:
-            case mozc::commands::Output_ToolMode_NO_TOOL:
-                break;
-        }
-    }
+    LaunchTool(response, fcitx_mozc);
+    ExecuteCallback(response, fcitx_mozc);
 
     return true;  // mozc consumed the key.
 }
@@ -193,7 +310,7 @@ void MozcResponseParser::ParseCandidates(
     FcitxCandidateWordSetLayoutHint(candList, CLH_Vertical);
 
 #define EMPTY_STR_CHOOSE "\0\0\0\0\0\0\0\0\0\0"
-    std::string choose;
+    std::vector<char> choose;
 
     int focused_index = -1;
     int local_index = -1;
@@ -239,10 +356,9 @@ void MozcResponseParser::ParseCandidates(
                          candidates.candidate(i).annotation().description());
         }
 
-        if (use_annotation_ &&
-            candidates.candidate(i).has_annotation() &&
+        if (candidates.candidate(i).has_annotation() &&
             candidates.candidate(i).annotation().has_shortcut()) {
-            choose.append(1, candidates.candidate(i).annotation().shortcut().c_str()[0]);
+            choose.push_back(candidates.candidate(i).annotation().shortcut().c_str()[0]);
         }
 
         candWord.strWord = strdup(value.c_str());
@@ -259,8 +375,12 @@ void MozcResponseParser::ParseCandidates(
         FcitxCandidateWordAppend(candList, &candWord);
     }
 
+    while (choose.size() < 10) {
+        choose.push_back('\0');
+    }
+
     if (footer.has_index_visible() && footer.index_visible())
-        FcitxCandidateWordSetChoose(candList, choose.c_str());
+        FcitxCandidateWordSetChoose(candList, choose.data());
     else
         FcitxCandidateWordSetChoose(candList, EMPTY_STR_CHOOSE);
     FcitxCandidateWordSetFocus(candList, local_index);

@@ -37,6 +37,8 @@
 #include "base/base.h"  // for DISALLOW_COPY_AND_ASSIGN.
 #include "base/run_level.h"
 #include "session/commands.pb.h"
+#include "client/client_interface.h"
+#include "mozc_connection.h"
 
 #define _(x) dgettext("fcitx-mozc", (x))
 
@@ -111,6 +113,10 @@ public:
     FcitxInstance* GetInstance() { return instance; }
     
     FcitxInputState* GetInputState();
+
+    mozc::client::ClientInterface* GetClient() { return connection_->GetClient(); }
+
+    bool SendCommand(const mozc::commands::SessionCommand& session_command, mozc::commands::Output* new_output);
 
 private:
     friend class FcitxMozcTest;

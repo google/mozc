@@ -76,6 +76,11 @@ class MozcConnectionInterface {
   virtual bool TrySendCommand(mozc::commands::SessionCommand::CommandType type,
                               mozc::commands::Output *out,
                               string *out_error) const = 0;
+
+  virtual bool TrySendRawCommand(const mozc::commands::SessionCommand& command,
+                                 mozc::commands::Output *out,
+                                 string *out_error) const = 0;
+  virtual mozc::client::ClientInterface* GetClient() = 0;
 };
 
 class MozcConnection : public MozcConnectionInterface {
@@ -111,15 +116,16 @@ class MozcConnection : public MozcConnectionInterface {
                               mozc::commands::Output *out,
                               string *out_error) const;
 
+  virtual bool TrySendRawCommand(const mozc::commands::SessionCommand& command,
+                                 mozc::commands::Output *out,
+                                 string *out_error) const;
+
+  virtual mozc::client::ClientInterface* GetClient();
+
  private:
   friend class MozcConnectionTest;
   MozcConnection(mozc::client::ServerLauncherInterface *server_launcher,
                  mozc::IPCClientFactoryInterface *client_factory);
-
-  bool TrySendCommandInternal(
-      const mozc::commands::SessionCommand& command,
-      mozc::commands::Output *out,
-      string *out_error) const;
 
   const scoped_ptr<KeyEventHandler> handler_;
   mozc::config::Config::PreeditMethod preedit_method_;
