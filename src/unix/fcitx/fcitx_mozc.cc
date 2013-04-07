@@ -129,7 +129,7 @@ FcitxMozc::FcitxMozc ( FcitxInstance* inst,
         parser_ ( parser ),
         composition_mode_ ( mozc::commands::HIRAGANA )
 {
-    mozc::Logging::SetVerboseLevel(1);
+    // mozc::Logging::SetVerboseLevel(1);
     VLOG ( 1 ) << "FcitxMozc created.";
     const bool is_vertical = true;
     parser_->set_use_annotation ( is_vertical );

@@ -43,6 +43,7 @@
 #include "unix/fcitx/fcitx_mozc.h"
 #include "unix/fcitx/surrounding_text_util.h"
 #include <fcitx/candidate.h>
+#include <fcitx/module/clipboard/fcitx-clipboard.h>
 
 namespace {
 
@@ -154,9 +155,20 @@ void MozcResponseParser::ExecuteCallback(const mozc::commands::Output& response,
             LOG(ERROR) << "SurroundingText" << str;
 
             if (cursor_pos == anchor_pos) {
-                // There is no selection text.
-                VLOG(1) << "Failed to retrieve non-empty text selection.";
-                return;
+                const char* primary = NULL;
+
+                if ((primary = FcitxClipboardGetPrimarySelection(fcitx_mozc->GetInstance(), NULL)) != NULL) {
+                    uint new_anchor_pos = 0;
+                    if (SurroundingTextUtil::GetAnchorPosFromSelection(
+                            surrounding_text, string(primary),
+                            cursor_pos, &new_anchor_pos)) {
+                    anchor_pos = new_anchor_pos;
+                    }
+                } else {
+                    // There is no selection text.
+                    VLOG(1) << "Failed to retrieve non-empty text selection.";
+                    return;
+                }
             }
 
             if (!SurroundingTextUtil::GetSafeDelta(cursor_pos, anchor_pos,
