@@ -152,17 +152,18 @@ void MozcResponseParser::ExecuteCallback(const mozc::commands::Output& response,
 
             const string surrounding_text(str);
 
-            LOG(ERROR) << "SurroundingText" << str;
-
             if (cursor_pos == anchor_pos) {
                 const char* primary = NULL;
 
                 if ((primary = FcitxClipboardGetPrimarySelection(fcitx_mozc->GetInstance(), NULL)) != NULL) {
                     uint new_anchor_pos = 0;
+                    const string primary_text(primary);
                     if (SurroundingTextUtil::GetAnchorPosFromSelection(
-                            surrounding_text, string(primary),
+                            surrounding_text, primary_text,
                             cursor_pos, &new_anchor_pos)) {
-                    anchor_pos = new_anchor_pos;
+                        anchor_pos = new_anchor_pos;
+                    } else {
+                        return;
                     }
                 } else {
                     // There is no selection text.
