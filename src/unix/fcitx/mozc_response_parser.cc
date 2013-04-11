@@ -85,7 +85,7 @@ MozcResponseParser::~MozcResponseParser() {
 void MozcResponseParser::UpdateDeletionRange(const mozc::commands::Output& response, FcitxMozc* fcitx_mozc) const
 {
     if (response.has_deletion_range() &&
-        response.deletion_range().offset() < 0 &&
+        response.deletion_range().offset() <= 0 &&
         response.deletion_range().offset() + response.deletion_range().length() >= 0) {
         FcitxInstanceDeleteSurroundingText(fcitx_mozc->GetInstance(),
                                            FcitxInstanceGetCurrentIC(fcitx_mozc->GetInstance()),
