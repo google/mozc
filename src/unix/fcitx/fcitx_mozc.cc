@@ -317,31 +317,34 @@ void FcitxMozc::ClearAll()
 
 void FcitxMozc::DrawPreeditInfo()
 {
-    FcitxProfile* profile = FcitxInstanceGetProfile(instance);
     FcitxMessages* preedit = FcitxInputStateGetPreedit(input);
     FcitxMessages* clientpreedit = FcitxInputStateGetClientPreedit(input);
     FcitxMessagesSetMessageCount(preedit, 0);
     FcitxMessagesSetMessageCount(clientpreedit, 0);
-    FcitxInputContext* ic = FcitxInstanceGetCurrentIC(instance);
     if ( preedit_info_.get() )
     {
         VLOG ( 1 ) << "DrawPreeditInfo: cursor=" << preedit_info_->cursor_pos;
 
-        if (ic && ((ic->contextCaps & CAPACITY_PREEDIT) == 0 || !profile->bUsePreedit))
+        FcitxInputContext* ic = FcitxInstanceGetCurrentIC(instance);
+        boolean supportPreedit = FcitxInstanceICSupportPreedit(instance, ic);
+
+        if (!supportPreedit)
             FcitxInputStateSetShowCursor(input, true);
 
         for (int i = 0; i < preedit_info_->preedit.size(); i ++) {
-            if (ic && ((ic->contextCaps & CAPACITY_PREEDIT) == 0 || !profile->bUsePreedit))
+            if (!supportPreedit)
                 FcitxMessagesAddMessageAtLast(preedit, preedit_info_->preedit[i].type, "%s", preedit_info_->preedit[i].str.c_str());
             FcitxMessagesAddMessageAtLast(clientpreedit, preedit_info_->preedit[i].type, "%s", preedit_info_->preedit[i].str.c_str());
         }
-        if (ic && ((ic->contextCaps & CAPACITY_PREEDIT) == 0 || !profile->bUsePreedit))
+        if (!supportPreedit)
             FcitxInputStateSetCursorPos(input, preedit_info_->cursor_pos);
         FcitxInputStateSetClientCursorPos(input, preedit_info_->cursor_pos);
-        FcitxInputStateSetShowCursor(input, true);
     }
     else {
         FcitxInputStateSetShowCursor(input, false);
+    }
+    if ( !aux_.empty() ) {
+        FcitxMessagesAddMessageAtLast(preedit, MSG_TIPS, "%s[%s]", preedit_info_.get() ? " " : "", aux_.c_str());
     }
 }
 
@@ -351,9 +354,6 @@ void FcitxMozc::DrawAux()
     FcitxMessages* auxDown = FcitxInputStateGetAuxDown(input);
     FcitxMessagesSetMessageCount(auxUp, 0);
     FcitxMessagesSetMessageCount(auxDown, 0);
-    if ( !aux_.empty() ) {
-        FcitxMessagesAddMessageAtLast(auxUp, MSG_TIPS, "%s ", aux_.c_str());
-    }
 }
 
 void FcitxMozc::DrawAll()
