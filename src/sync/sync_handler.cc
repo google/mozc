@@ -40,7 +40,6 @@
 #include "base/thread.h"
 #include "base/util.h"
 #include "config/config_handler.h"
-#include "ipc/named_event.h"
 #include "session/commands.pb.h"
 #include "sync/config_adapter.h"
 #include "sync/logging.h"
@@ -51,9 +50,9 @@
 #include "sync/sync_status_manager.h"
 #include "sync/syncer.h"
 #include "sync/user_dictionary_adapter.h"
-#ifndef OS_ANDROID
+#if !defined(OS_ANDROID) && !defined(__native_client__)
 #include "client/client_interface.h"
-#endif  // OS_ANDROID
+#endif  // !OS_ANDROID && !__native_client__
 
 DEFINE_int32(min_sync_interval, 120, "min sync interval");
 DEFINE_string(sync_url,
@@ -107,23 +106,15 @@ bool ClearSyncFromScheduler(void *handler) {
       commands::CloudSyncStatus::SYNC_FAILURE;
 }
 
-void NotifyEvent() {
-  NamedEventNotifier notifier(kEventName);
-  SYNC_VLOG(1) << "notifiying named event: " << kEventName;
-  if (!notifier.Notify()) {
-    LOG(WARNING) << "cannot notify event: " << kEventName;
-  }
-}
-
 void SendReloadCommand() {
-#ifndef OS_ANDROID
+#if !defined(OS_ANDROID) && !defined(__native_client__)
   scoped_ptr<client::ClientInterface> client(
       client::ClientFactory::NewClient());
   DCHECK(client.get());
   SYNC_VLOG(1) << "realoading server...";
   client->Reload();
   SYNC_VLOG(1) << "done. reloaded";
-#endif  // OS_ANDROID
+#endif  // !OS_ANDROID && !__native_client__
 }
 
 }  // namespace
@@ -150,7 +141,8 @@ SyncHandler::SyncHandler()
       command_type_(COMMAND_NONE),
       oauth2_util_(new OAuth2Util(OAuth2Client::GetDefaultInstance(),
                                   OAuth2Server::GetDefaultInstance())),
-      last_sync_timestamp_(0) {
+      last_sync_timestamp_(0),
+      reload_required_timestamp_(0) {
   // Singleton of SyncStatusManager is also used in each sync_adapter and
   // each sync_util.
   sync_status_manager_ = Singleton<SyncStatusManager>::get();
@@ -193,7 +185,12 @@ void SyncHandler::Run() {
     // coding this part with leaving some comments.
   }
 
-  const OAuth2::Error error = oauth2_util_->RefreshAccessToken();
+  OAuth2::Error error = OAuth2::kNone;
+
+  if (oauth2_util_->GetClientType() == INSTALLED_APP) {
+    // RefreshAccessToken is only needed for installed application client.
+    error = oauth2_util_->RefreshAccessToken();
+  }
 
   // Clear sync errors other than authorization error before stacking new
   // errors in syncers' works.
@@ -267,6 +264,9 @@ void SyncHandler::Run() {
                          << "for sync_status_manager";
             sync_status_manager_->SetLastSyncedTimestamp(current_timestamp);
           }
+          if (reload_required) {
+            reload_required_timestamp_ = current_timestamp;
+          }
         }
         // Update last_sync_timestamp_
         last_sync_timestamp_ = current_timestamp;
@@ -312,10 +312,6 @@ void SyncHandler::Run() {
   SYNC_VLOG(1) << "saving new sync status";
   sync_status_manager_->SaveSyncStatus();
 
-  // Emit a notification event to the caller of Sync|Clear method.
-  SYNC_VLOG(1) << "sending notification event";
-  NotifyEvent();
-
   SYNC_VLOG(1) << "last_sync_timestamp is updated: " << last_sync_timestamp_;
 }
 
@@ -324,8 +320,6 @@ bool SyncHandler::Sync() {
 
   if (IsRunning()) {
     LOG(WARNING) << "Sync|Clear command is already running";
-    // Don't call NotifyEvent as currently running instance
-    // will emit the event later.
     return true;
   }
 
@@ -335,7 +329,6 @@ bool SyncHandler::Sync() {
     LOG(ERROR) << "SyncerInterface::Start() failed";
     sync_status_manager_->SetSyncGlobalStatus(
         commands::CloudSyncStatus::SYNC_FAILURE);
-    NotifyEvent();
     return false;
   }
 
@@ -394,6 +387,28 @@ bool SyncHandler::GetCloudSyncStatus(
 
 bool SyncHandler::SetAuthorization(
     const commands::Input::AuthorizationInfo &authorization_info) {
+  if (oauth2_util_->GetClientType() == CHROME_APP) {
+#ifdef __native_client__
+    if (authorization_info.has_access_token() &&
+        !authorization_info.access_token().empty()) {
+      // In NaCl Mozc, access token which is gotten using Chrome Identity
+      // JavaScript API is set in access_token.
+      // But we don't need to save it. Just checks if it is not empty here.
+      // TODO(horo): It may be better to check if this access_token is really
+      //             valid using IME Sync API.
+      sync_status_manager_->NewSyncStatusSession();
+      sync_status_manager_->SetSyncGlobalStatus(
+          commands::CloudSyncStatus::INSYNC);
+    } else {
+      sync_status_manager_->SetSyncGlobalStatus(
+          commands::CloudSyncStatus::NOSYNC);
+    }
+    return true;
+#else  // __native_client__
+    LOG(FATAL) << "CHROME_APP client type is only supported in NaCl Mozc";
+    return false;
+#endif  // __native_client__
+  }
   SYNC_VLOG(1) << "SetAuthorization is called";
   if (authorization_info.has_auth_code() &&
       !authorization_info.auth_code().empty()) {
@@ -431,6 +446,11 @@ void SyncHandler::SetSyncerForUnittest(SyncerInterface *syncer) {
 
 void SyncHandler::SetOAuth2UtilForUnittest(OAuth2Util *oauth2_util) {
   oauth2_util_.reset(oauth2_util);
+}
+
+uint64 SyncHandler::GetReloadRequiredTimestamp() {
+  scoped_lock lock(&status_mutex_);
+  return reload_required_timestamp_;
 }
 
 }  // namespace sync

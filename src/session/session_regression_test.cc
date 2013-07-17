@@ -175,6 +175,18 @@ class SessionRegressionTest : public testing::Test {
     return session_->SendKey(command);
   }
 
+  bool SendKeyWithContext(const string &key,
+                          const commands::Context &context,
+                          commands::Command *command) {
+    command->Clear();
+    command->mutable_input()->mutable_context()->CopyFrom(context);
+    command->mutable_input()->set_type(commands::Input::SEND_KEY);
+    if (!KeyParser::ParseKey(key, command->mutable_input()->mutable_key())) {
+      return false;
+    }
+    return session_->SendKey(command);
+  }
+
   void InsertCharacterChars(const string &chars,
                             commands::Command *command) {
     const uint32 kNoModifiers = 0;
@@ -210,7 +222,7 @@ TEST_F(SessionRegressionTest, ConvertToTransliterationWithMultipleSegments) {
   InitSessionToPrecomposition(session_.get());
 
   commands::Command command;
-  InsertCharacterChars("like", &command);
+  InsertCharacterChars("liie", &command);
 
   // Convert
   command.Clear();
@@ -222,11 +234,9 @@ TEST_F(SessionRegressionTest, ConvertToTransliterationWithMultipleSegments) {
     EXPECT_FALSE(output.has_candidates());
 
     const commands::Preedit &conversion = output.preedit();
-    EXPECT_EQ(2, conversion.segment_size());
+    ASSERT_LE(2, conversion.segment_size());
     // "ぃ"
     EXPECT_EQ("\xE3\x81\x83", conversion.segment(0).value());
-    // "家"
-    EXPECT_EQ("\xE5\xAE\xB6", conversion.segment(1).value());
   }
 
   // TranslateHalfASCII
@@ -239,7 +249,7 @@ TEST_F(SessionRegressionTest, ConvertToTransliterationWithMultipleSegments) {
     EXPECT_FALSE(output.has_candidates());
 
     const commands::Preedit &conversion = output.preedit();
-    EXPECT_EQ(2, conversion.segment_size());
+    ASSERT_EQ(2, conversion.segment_size());
     EXPECT_EQ("li", conversion.segment(0).value());
   }
 }
@@ -602,4 +612,5 @@ TEST_F(SessionRegressionTest, CommitT13nSuggestion) {
   EXPECT_EQ("\xE3\x81\xA3\xEF\xBD\x93\xEF\xBD\x88",
             command.output().result().value());
 }
+
 }  // namespace mozc

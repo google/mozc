@@ -104,7 +104,7 @@ struct PtrHashCompare : public hash_compare<T> {
 class UiElementMap
     : public hash_map<ITfUIElement *,
                       HWND,
-                      PtrHashCompare<ITfUIElement *> > {
+                      PtrHashCompare<IUnknown *> > {
 };
 
 class ThreadLocalInfo {
@@ -259,14 +259,6 @@ void TipUiHandlerImmersive::OnFocusChange(
   UpdateUI(text_service, context);
 }
 
-bool TipUiHandlerImmersive::OnLayoutChange(TipTextService *text_service,
-                                           ITfContext *context,
-                                           TfLayoutCode layout_code,
-                                           ITfContextView *context_view) {
-  UpdateUI(text_service, context);
-  return true;
-}
-
 bool TipUiHandlerImmersive::Update(TipTextService *text_service,
                                    ITfContext *context,
                                    TfEditCookie read_cookie) {
@@ -286,7 +278,7 @@ void TipUiHandlerImmersive::OnDllProcessDetach(HINSTANCE module_handle,
                                                bool process_shutdown) {
   if (g_tls_index != TLS_OUT_OF_INDEXES) {
     ::TlsFree(g_tls_index);
-    g_tls_index = g_tls_index;
+    g_tls_index = TLS_OUT_OF_INDEXES;
   }
   g_module_unloaded = true;
   g_module = nullptr;

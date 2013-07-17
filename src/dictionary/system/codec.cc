@@ -249,7 +249,8 @@ void SystemDictionaryCodec::EncodeValue(
     const StringPiece src, string *dst) const {
   DCHECK(dst);
   for (ConstChar32Iterator iter(src); !iter.Done(); iter.Next()) {
-    COMPILE_ASSERT(sizeof(uint32) == sizeof(char32), check_sizeof_char32);
+    static_assert(sizeof(uint32) == sizeof(char32),
+                  "char32 must be 32-bit integer size.");
     const uint32 c = iter.Get();
     if (c >= 0x3041 && c < 0x3095) {
       // Hiragana(85 characters) are encoded into 1 byte.
@@ -484,7 +485,8 @@ namespace {
 // U+0020 - U+003F are left intact to represent numbers and hyphen in 1 byte.
 void EncodeDecodeKeyImpl(const StringPiece src, string *dst) {
   for (ConstChar32Iterator iter(src); !iter.Done(); iter.Next()) {
-    COMPILE_ASSERT(sizeof(uint32) == sizeof(char32), check_sizeof_char32);
+    static_assert(sizeof(uint32) == sizeof(char32),
+                  "char32 must be 32-bit integer size.");
     uint32 code = iter.Get();
     int32 offset = 0;
     if ((code >= 0x0001 && code <= 0x001f) ||
@@ -510,7 +512,8 @@ void EncodeDecodeKeyImpl(const StringPiece src, string *dst) {
 size_t GetEncodedDecodedKeyLengthImpl(const StringPiece src) {
   size_t size = src.size();
   for (ConstChar32Iterator iter(src); !iter.Done(); iter.Next()) {
-    COMPILE_ASSERT(sizeof(uint32) == sizeof(char32), check_sizeof_char32);
+    static_assert(sizeof(uint32) == sizeof(char32),
+                  "char32 must be 32-bit integer size.");
     uint32 code = iter.Get();
     if ((code >= 0x3041 && code <= 0x3095) ||
         (code >= 0x30FB && code <= 0x30FC)) {

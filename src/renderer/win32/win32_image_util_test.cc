@@ -40,12 +40,12 @@
 
 #include <fstream>
 #include <list>
+#include <memory>
 
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/mmap.h"
-#include "base/scoped_ptr.h"
 #include "base/util.h"
 #include "net/jsoncpp.h"
 #include "testing/base/public/gunit.h"
@@ -61,14 +61,16 @@ using ::mozc::renderer::win32::internal::GaussianBlur;
 using ::mozc::renderer::win32::internal::SafeFrameBuffer;
 using ::mozc::renderer::win32::internal::SubdivisionalPixel;
 using ::mozc::renderer::win32::internal::TextLabel;
-typedef SubdivisionalPixel::SubdivisionalPixelIterator
-    SubdivisionalPixelIterator;
+using ::std::unique_ptr;
 
 using ::WTL::CBitmap;
 using ::WTL::CDC;
 using ::WTL::CLogFont;
 using ::WTL::CPoint;
 using ::WTL::CSize;
+
+typedef SubdivisionalPixel::SubdivisionalPixelIterator
+    SubdivisionalPixelIterator;
 
 class BalloonImageTest : public testing::Test,
                          public testing::WithParamInterface<const char *> {
@@ -190,7 +192,7 @@ class BalloonImageTest : public testing::Test,
       return false;
     }
 
-    scoped_array<uint8> codesc_buffer(new uint8[codecs_buffer_size]);
+    unique_ptr<uint8[]> codesc_buffer(new uint8[codecs_buffer_size]);
     Gdiplus::ImageCodecInfo *codecs =
         reinterpret_cast<Gdiplus::ImageCodecInfo *>(codesc_buffer.get());
 

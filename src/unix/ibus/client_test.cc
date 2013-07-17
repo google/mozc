@@ -29,7 +29,6 @@
 
 #include "unix/ibus/client.h"
 
-#include "base/base.h"
 #include "base/scoped_ptr.h"
 #include "client/client.h"
 #include "engine/mock_converter_engine.h"

@@ -56,6 +56,7 @@
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_mock.h"
 #include "dictionary/pos_group.h"
+#include "dictionary/pos_matcher.h"
 #include "dictionary/suffix_dictionary.h"
 #include "dictionary/suppression_dictionary.h"
 #include "dictionary/system/system_dictionary.h"
@@ -896,107 +897,6 @@ TEST_F(ConverterTest, CompletePOSIds) {
   }
 }
 
-TEST_F(ConverterTest, SetupHistorySegmentsFromPrecedingText) {
-  scoped_ptr<ConverterAndData> converter_and_data(
-      CreateStubbedConverterAndData());
-  ConverterImpl *converter = converter_and_data->converter.get();
-
-  // Test for short preceding text.
-  {
-    Segments segments;
-    segments.set_max_history_segments_size(4);
-    converter->SetupHistorySegmentsFromPrecedingText(
-        "\xE7\xA7\x81\xE3\x81\xAF\xE9\x88\xB4\xE6\x9C\xA8",  // "私は鈴木"
-        &segments);
-    EXPECT_EQ(2, segments.history_segments_size());
-
-    // Check the first segment
-    EXPECT_EQ(Segment::HISTORY, segments.segment(0).segment_type());
-    EXPECT_EQ(1, segments.segment(0).candidates_size());
-    EXPECT_EQ("\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAF",  // "わたしは"
-              segments.segment(0).candidate(0).key);
-    EXPECT_EQ("\xE7\xA7\x81\xE3\x81\xAF",  // "私は"
-              segments.segment(0).candidate(0).value);
-
-    // Check the second segment
-    EXPECT_EQ(Segment::HISTORY, segments.segment(1).segment_type());
-    EXPECT_EQ(1, segments.segment(1).candidates_size());
-    EXPECT_EQ("\xE3\x81\x99\xE3\x81\x9A\xE3\x81\x8D",  // "すずき"
-              segments.segment(1).candidate(0).key);
-    EXPECT_EQ("\xE9\x88\xB4\xE6\x9C\xA8",  // "鈴木"
-              segments.segment(1).candidate(0).value);
-  }
-  // Test for long preceding text having 6 segments. The results should have 4
-  // history segments.
-  {
-    Segments segments;
-    segments.set_max_history_segments_size(4);
-    converter->SetupHistorySegmentsFromPrecedingText(
-        // "私は鈴木私は鈴木私は鈴木"
-        "\xE7\xA7\x81\xE3\x81\xAF\xE9\x88\xB4\xE6\x9C\xA8"
-        "\xE7\xA7\x81\xE3\x81\xAF\xE9\x88\xB4\xE6\x9C\xA8"
-        "\xE7\xA7\x81\xE3\x81\xAF\xE9\x88\xB4\xE6\x9C\xA8",
-        &segments);
-    EXPECT_EQ(4, segments.history_segments_size());
-
-    for (int i = 0; i < 4; ++i) {
-      EXPECT_EQ(Segment::HISTORY, segments.segment(i).segment_type());
-      // Check the first and third segments
-      if (i % 2 == 0) {
-        EXPECT_EQ(1, segments.segment(i).candidates_size());
-        EXPECT_EQ(
-            "\xE3\x82\x8F\xE3\x81\x9F\xE3\x81\x97\xE3\x81\xAF",  // "わたしは"
-            segments.segment(i).candidate(0).key);
-        EXPECT_EQ("\xE7\xA7\x81\xE3\x81\xAF",  // "私は"
-                  segments.segment(i).candidate(0).value);
-      } else {
-        // Check the second and fourth segments
-        EXPECT_EQ(1, segments.segment(i).candidates_size());
-        EXPECT_EQ("\xE3\x81\x99\xE3\x81\x9A\xE3\x81\x8D",  // "すずき"
-                  segments.segment(i).candidate(0).key);
-        EXPECT_EQ("\xE9\x88\xB4\xE6\x9C\xA8",  // "鈴木"
-                  segments.segment(i).candidate(0).value);
-      }
-    }
-  }
-}
-
-TEST_F(ConverterTest, ConvertUsingPrecedingText_KikiIppatsu) {
-  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
-  ConverterInterface *converter = engine->GetConverter();
-  composer::Table table;
-  // To see preceding text helps conversion, consider the case where user
-  // converts "いっぱつ".
-  {
-    // Without preceding text, test dictionary converts "いっぱつ" to "一発".
-    Segments segments;
-    composer::Composer composer(&table, &default_request());
-    composer.InsertCharacter(
-        "\xE3\x81\x84\xE3\x81\xA3\xE3\x81\xB1\xE3\x81\xA4");  // "いっぱつ"
-    const ConversionRequest request(&composer, &default_request());
-    converter->StartConversionForRequest(request, &segments);
-
-    EXPECT_EQ(1, segments.conversion_segments_size());
-    EXPECT_EQ("\xE4\xB8\x80\xE7\x99\xBA",  // "一発"
-              segments.conversion_segment(0).candidate(0).value);
-  }
-  {
-    // However, with preceding text "危機", test dictionary converts "いっぱつ"
-    // to "一髪".
-    Segments segments;
-    composer::Composer composer(&table, &default_request());
-    composer.InsertCharacter(
-        "\xE3\x81\x84\xE3\x81\xA3\xE3\x81\xB1\xE3\x81\xA4");  // "いっぱつ"
-    ConversionRequest request(&composer, &default_request());
-    request.set_preceding_text("\xE5\x8D\xB1\xE6\xA9\x9F");  // "危機"
-    converter->StartConversionForRequest(request, &segments);
-
-    EXPECT_EQ(1, segments.conversion_segments_size());
-    EXPECT_EQ("\xE4\xB8\x80\xE9\xAB\xAA",  // "一髪"
-              segments.conversion_segment(0).candidate(0).value);
-  }
-}
-
 TEST_F(ConverterTest, Regression3046266) {
   // Shouldn't correct nodes at the beginning of a sentence.
   scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
@@ -1303,42 +1203,6 @@ TEST_F(ConverterTest, Predict_SetKey) {
   }
 }
 
-TEST_F(ConverterTest, StartPredictionForRequest_KikiIppatsu) {
-  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
-  ConverterInterface *converter = engine->GetConverter();
-  composer::Table table;
-  // To see preceding text helps prediction, consider the case where user
-  // converts "いっぱつ".
-  {
-    // Without preceding text, test dictionary predicts "いっぱつ" to "一発".
-    Segments segments;
-    composer::Composer composer(&table, &default_request());
-    composer.InsertCharacter(
-        "\xE3\x81\x84\xE3\x81\xA3\xE3\x81\xB1\xE3\x81\xA4");  // "いっぱつ"
-    const ConversionRequest request(&composer, &default_request());
-    converter->StartPredictionForRequest(request, &segments);
-
-    EXPECT_EQ(1, segments.conversion_segments_size());
-    EXPECT_EQ("\xE4\xB8\x80\xE7\x99\xBA",  // "一発"
-              segments.conversion_segment(0).candidate(0).value);
-  }
-  {
-    // However, with preceding text "危機", test dictionary converts "いっぱつ"
-    // to "一髪".
-    Segments segments;
-    composer::Composer composer(&table, &default_request());
-    composer.InsertCharacter(
-        "\xE3\x81\x84\xE3\x81\xA3\xE3\x81\xB1\xE3\x81\xA4");  // "いっぱつ"
-    ConversionRequest request(&composer, &default_request());
-    request.set_preceding_text("\xE5\x8D\xB1\xE6\xA9\x9F");  // "危機"
-    converter->StartPredictionForRequest(request, &segments);
-
-    EXPECT_EQ(1, segments.conversion_segments_size());
-    EXPECT_EQ("\xE4\xB8\x80\xE9\xAB\xAA",  // "一髪"
-              segments.conversion_segment(0).candidate(0).value);
-  }
-}
-
 TEST_F(ConverterTest, VariantExpansionForSuggestion) {
   // Create Converter with mock user dictionary
   testing::MockDataManager data_manager;
@@ -1395,6 +1259,7 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
   scoped_ptr<const SuggestionFilter> suggegstion_filter(
       CreateSuggestionFilter(data_manager));
   scoped_ptr<ConverterImpl> converter(new ConverterImpl);
+  const DictionaryInterface *kNullDictionary = NULL;
   converter->Init(data_manager.GetPOSMatcher(),
                   suppression_dictionary.get(),
                   DefaultPredictor::CreateDefaultPredictor(
@@ -1411,8 +1276,10 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
                                                data_manager.GetPOSMatcher(),
                                                suppression_dictionary.get()),
                       NULL),
-                  new RewriterImpl(converter.get(), &data_manager,
-                                   pos_group.get()),
+                  new RewriterImpl(converter.get(),
+                                   &data_manager,
+                                   pos_group.get(),
+                                   kNullDictionary),
                   immutable_converter.get());
 
   Segments segments;
@@ -1447,40 +1314,6 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
         // "＜＞！？の"
         "\xef\xbc\x9c\xef\xbc\x9e\xef\xbc\x81\xef\xbc\x9f\xe3\x81\xae",
         segments.conversion_segment(0)));
-  }
-}
-
-TEST_F(ConverterTest, DISABLED_StartPredictionForRequest_Jyosushi) {
-  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
-  ConverterInterface *converter = engine->GetConverter();
-  composer::Table table;
-  // To see preceding text helps prediction after number characters, consider
-  // the case where user converts "ひき".
-  {
-    // Without preceding text, test dictionary predicts "ひき" as "引換".
-    Segments segments;
-    composer::Composer composer(&table, &default_request());
-    composer.InsertCharacter("\xE3\x81\xB2\xE3\x81\x8D");  // "ひき"
-    const ConversionRequest request(&composer, &default_request());
-    converter->StartPredictionForRequest(request, &segments);
-
-    EXPECT_EQ(1, segments.conversion_segments_size());
-    EXPECT_EQ("\xE5\xBC\x95\xE6\x8F\x9B",  // "引換"
-              segments.conversion_segment(0).candidate(0).value);
-  }
-  {
-    // However, if providing "猫が5" as preceding text, "匹" is predicted from
-    // "ひき" with test dictionary.
-    Segments segments;
-    composer::Composer composer(&table, &default_request());
-    composer.InsertCharacter("\xE3\x81\xB2\xE3\x81\x8D");  // "ひき"
-    ConversionRequest request(&composer, &default_request());
-    request.set_preceding_text("\xE7\x8C\xAB\xE3\x81\x8C\x35");  // "猫が5"
-    converter->StartPredictionForRequest(request, &segments);
-
-    EXPECT_EQ(1, segments.conversion_segments_size());
-    EXPECT_EQ("\xE5\x8C\xB9",  // "匹"
-              segments.conversion_segment(0).candidate(0).value);
   }
 }
 
@@ -1540,6 +1373,255 @@ TEST_F(ConverterTest, SuppressionDictionaryForRewriter) {
     EXPECT_FALSE(FindCandidateByValue("ToBeFiltered", seg));
     EXPECT_TRUE(FindCandidateByValue("NotToBeFiltered", seg));
   }
+}
+
+TEST_F(ConverterTest, EmptyConvertReverse_Issue8661091) {
+  // This is a test case against b/8661091.
+  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  ConverterInterface *converter = engine->GetConverter();
+
+  Segments segments;
+  EXPECT_FALSE(converter->StartReverseConversion(&segments, ""));
+}
+
+TEST_F(ConverterTest, StartReverseConversion) {
+  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  const ConverterInterface *converter = engine->GetConverter();
+
+  const string kHonKanji = "\xE6\x9C\xAC";  // "本"
+  const string kHonHiragana = "\xE3\x81\xBB\xE3\x82\x93";  // "ほん"
+  const string kMuryouKanji = "\xE7\x84\xA1\xE6\x96\x99";  // "無料"
+  const string kMuryouHiragana =
+      "\xE3\x82\x80\xE3\x82\x8A\xE3\x82\x87\xE3\x81\x86";  // "むりょう"
+  const string kFullWidthSpace = "\xE3\x80\x80";  // full-width space
+  {
+    // Test for single Kanji character.
+    const string &kInput = kHonKanji;  // "本"
+    Segments segments;
+    EXPECT_TRUE(converter->StartReverseConversion(&segments, kInput));
+    ASSERT_EQ(1, segments.segments_size());
+    ASSERT_LE(1, segments.conversion_segment(0).candidates_size());
+    EXPECT_EQ(kHonHiragana, segments.conversion_segment(0).candidate(0).value);
+  }
+  {
+    // Test for multi-Kanji character.
+    const string &kInput = kMuryouKanji;  // "無料"
+    Segments segments;
+    EXPECT_TRUE(converter->StartReverseConversion(&segments, kInput));
+    ASSERT_EQ(1, segments.segments_size());
+    ASSERT_LE(1, segments.conversion_segment(0).candidates_size());
+    EXPECT_EQ(kMuryouHiragana,
+              segments.conversion_segment(0).candidate(0).value);
+  }
+  {
+    // Test for multi terms separated by a space.
+    const string &kInput = kHonKanji + " " + kMuryouKanji;  // "本 無料"
+    Segments segments;
+    EXPECT_TRUE(converter->StartReverseConversion(&segments, kInput));
+    ASSERT_EQ(3, segments.segments_size());
+    ASSERT_LT(0, segments.conversion_segment(0).candidates_size());
+    EXPECT_EQ(kHonHiragana,
+              segments.conversion_segment(0).candidate(0).value);
+    ASSERT_LT(0, segments.conversion_segment(1).candidates_size());
+    EXPECT_EQ(" ", segments.conversion_segment(1).candidate(0).value);
+    ASSERT_LT(0, segments.conversion_segment(2).candidates_size());
+    EXPECT_EQ(kMuryouHiragana,
+              segments.conversion_segment(2).candidate(0).value);
+  }
+  {
+    // Test for multi terms separated by multiple spaces.
+    const string &kInput = kHonKanji + "   " + kMuryouKanji;  // "本   無料"
+    Segments segments;
+    EXPECT_TRUE(converter->StartReverseConversion(&segments, kInput));
+    ASSERT_EQ(3, segments.segments_size());
+    ASSERT_LT(0, segments.conversion_segment(0).candidates_size());
+    EXPECT_EQ(kHonHiragana,
+              segments.conversion_segment(0).candidate(0).value);
+    ASSERT_LT(0, segments.conversion_segment(1).candidates_size());
+    EXPECT_EQ("   ", segments.conversion_segment(1).candidate(0).value);
+    ASSERT_LT(0, segments.conversion_segment(2).candidates_size());
+    EXPECT_EQ(kMuryouHiragana,
+              segments.conversion_segment(2).candidate(0).value);
+  }
+  {
+    // Test for leading white spaces.
+    const string &kInput = "  " + kHonKanji;  // "  本"
+    Segments segments;
+    EXPECT_TRUE(converter->StartReverseConversion(&segments, kInput));
+    ASSERT_EQ(2, segments.segments_size());
+    ASSERT_LT(0, segments.conversion_segment(0).candidates_size());
+    EXPECT_EQ("  ", segments.conversion_segment(0).candidate(0).value);
+    ASSERT_LT(0, segments.conversion_segment(1).candidates_size());
+    EXPECT_EQ(kHonHiragana,
+              segments.conversion_segment(1).candidate(0).value);
+  }
+  {
+    // Test for trailing white spaces.
+    const string &kInput = kMuryouKanji + "  ";  // "無料  "
+    Segments segments;
+    EXPECT_TRUE(converter->StartReverseConversion(&segments, kInput));
+    ASSERT_EQ(2, segments.segments_size());
+    ASSERT_LT(0, segments.conversion_segment(0).candidates_size());
+    EXPECT_EQ(kMuryouHiragana,
+              segments.conversion_segment(0).candidate(0).value);
+    ASSERT_LT(0, segments.conversion_segment(1).candidates_size());
+    EXPECT_EQ("  ",
+              segments.conversion_segment(1).candidate(0).value);
+  }
+  {
+    // Test for multi terms separated by a full-width space.
+    // "本　無料"
+    const string &kInput = kHonKanji + kFullWidthSpace + kMuryouKanji;
+    Segments segments;
+    EXPECT_TRUE(converter->StartReverseConversion(&segments, kInput));
+    ASSERT_EQ(3, segments.segments_size());
+    ASSERT_LT(0, segments.conversion_segment(0).candidates_size());
+    EXPECT_EQ(kHonHiragana,
+              segments.conversion_segment(0).candidate(0).value);
+    ASSERT_LT(0, segments.conversion_segment(1).candidates_size());
+    EXPECT_EQ(kFullWidthSpace,
+              segments.conversion_segment(1).candidate(0).value);
+    ASSERT_LT(0, segments.conversion_segment(2).candidates_size());
+    EXPECT_EQ(kMuryouHiragana,
+              segments.conversion_segment(2).candidate(0).value);
+  }
+  {
+    // Test for multi terms separated by two full-width spaces.
+    // "本　　無料"
+    const string &kFullWidthSpace2 = kFullWidthSpace + kFullWidthSpace;
+    const string &kInput = kHonKanji + kFullWidthSpace2 + kMuryouKanji;
+    Segments segments;
+    EXPECT_TRUE(converter->StartReverseConversion(&segments, kInput));
+    ASSERT_EQ(3, segments.segments_size());
+    ASSERT_LT(0, segments.conversion_segment(0).candidates_size());
+    EXPECT_EQ(kHonHiragana,
+              segments.conversion_segment(0).candidate(0).value);
+    ASSERT_LT(0, segments.conversion_segment(1).candidates_size());
+    EXPECT_EQ(kFullWidthSpace2,
+              segments.conversion_segment(1).candidate(0).value);
+    ASSERT_LT(0, segments.conversion_segment(2).candidates_size());
+    EXPECT_EQ(kMuryouHiragana,
+              segments.conversion_segment(2).candidate(0).value);
+  }
+  {
+    // Test for multi terms separated by the mix of full- and half-width spaces.
+    // "本　 無料"
+    const string &kFullWidthSpace2 = kFullWidthSpace + " ";
+    const string &kInput = kHonKanji + kFullWidthSpace2 + kMuryouKanji;
+    Segments segments;
+    EXPECT_TRUE(converter->StartReverseConversion(&segments, kInput));
+    ASSERT_EQ(3, segments.segments_size());
+    ASSERT_LT(0, segments.conversion_segment(0).candidates_size());
+    EXPECT_EQ(kHonHiragana,
+              segments.conversion_segment(0).candidate(0).value);
+    ASSERT_LT(0, segments.conversion_segment(1).candidates_size());
+    EXPECT_EQ(kFullWidthSpace2,
+              segments.conversion_segment(1).candidate(0).value);
+    ASSERT_LT(0, segments.conversion_segment(2).candidates_size());
+    EXPECT_EQ(kMuryouHiragana,
+              segments.conversion_segment(2).candidate(0).value);
+  }
+}
+
+TEST_F(ConverterTest, GetLastConnectivePart) {
+  scoped_ptr<ConverterAndData> converter_and_data(
+      CreateStubbedConverterAndData());
+  ConverterImpl *converter = converter_and_data->converter.get();
+
+  {
+    string key;
+    string value;
+    uint16 id = 0;
+    EXPECT_FALSE(converter->GetLastConnectivePart("", &key, &value, &id));
+    EXPECT_FALSE(converter->GetLastConnectivePart(" ", &key, &value, &id));
+    EXPECT_FALSE(converter->GetLastConnectivePart("  ", &key, &value, &id));
+  }
+
+  {
+    string key;
+    string value;
+    uint16 id = 0;
+    EXPECT_TRUE(converter->GetLastConnectivePart("a", &key, &value, &id));
+    EXPECT_EQ("a", key);
+    EXPECT_EQ("a", value);
+    EXPECT_EQ(
+        converter_and_data->converter.get()->pos_matcher_->GetUniqueNounId(),
+        id);
+
+    EXPECT_TRUE(converter->GetLastConnectivePart("a ", &key, &value, &id));
+    EXPECT_EQ("a", key);
+    EXPECT_EQ("a", value);
+
+    EXPECT_FALSE(converter->GetLastConnectivePart("a  ", &key, &value, &id));
+
+    EXPECT_TRUE(converter->GetLastConnectivePart("a ", &key, &value, &id));
+    EXPECT_EQ("a", key);
+    EXPECT_EQ("a", value);
+
+    EXPECT_TRUE(converter->GetLastConnectivePart("a10a", &key, &value, &id));
+    EXPECT_EQ("a", key);
+    EXPECT_EQ("a", value);
+
+    // "ａ"
+    EXPECT_TRUE(converter->GetLastConnectivePart(
+        "\xEF\xBD\x81", &key, &value, &id));
+    EXPECT_EQ("a", key);
+    EXPECT_EQ("\xEF\xBD\x81", value);
+  }
+
+  {
+    string key;
+    string value;
+    uint16 id = 0;
+    EXPECT_TRUE(converter->GetLastConnectivePart("10", &key, &value, &id));
+    EXPECT_EQ("10", key);
+    EXPECT_EQ("10", value);
+    EXPECT_EQ(
+        converter_and_data->converter.get()->pos_matcher_->GetNumberId(), id);
+
+    EXPECT_TRUE(converter->GetLastConnectivePart("10a10", &key, &value, &id));
+    EXPECT_EQ("10", key);
+    EXPECT_EQ("10", value);
+
+    // "１０"
+    EXPECT_TRUE(converter->GetLastConnectivePart(
+        "\xEF\xBC\x91\xEF\xBC\x90", &key, &value, &id));
+    EXPECT_EQ("10", key);
+    EXPECT_EQ("\xEF\xBC\x91\xEF\xBC\x90", value);
+  }
+
+  {
+    string key;
+    string value;
+    uint16 id = 0;
+    // "あ"
+    EXPECT_FALSE(converter->GetLastConnectivePart(
+        "\xE3\x81\x82", &key, &value, &id));
+  }
+}
+
+TEST_F(ConverterTest, ReconstructHistory) {
+  scoped_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  ConverterInterface *converter = engine->GetConverter();
+
+  // "１０"
+  const char kTen[] = "\xEF\xBC\x91\xEF\xBC\x90";
+
+  Segments segments;
+  EXPECT_TRUE(converter->ReconstructHistory(&segments, kTen));
+  EXPECT_EQ(1, segments.segments_size());
+  const Segment &segment = segments.segment(0);
+  EXPECT_EQ(Segment::HISTORY, segment.segment_type());
+  EXPECT_EQ("10", segment.key());
+  EXPECT_EQ(1, segment.candidates_size());
+  const Segment::Candidate &candidate = segment.candidate(0);
+  EXPECT_EQ(Segment::Candidate::NO_LEARNING, candidate.attributes);
+  EXPECT_EQ("10", candidate.content_key);
+  EXPECT_EQ("10", candidate.key);
+  EXPECT_EQ(kTen, candidate.content_value);
+  EXPECT_EQ(kTen, candidate.value);
+  EXPECT_NE(0, candidate.lid);
+  EXPECT_NE(0, candidate.rid);
 }
 
 }  // namespace mozc

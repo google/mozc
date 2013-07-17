@@ -29,6 +29,8 @@
 
 package org.mozc.android.inputmethod.japanese;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import android.content.Context;
 import android.util.AttributeSet;
 import android.view.View;
@@ -87,10 +89,10 @@ public abstract class InOutAnimatedFrameLayout extends FrameLayout {
   }
 
   /** Animation used when this view is shown. */
-  private Animation inAnimation;
+  @VisibleForTesting Animation inAnimation;
 
   /** Animation used when this view is hidden. */
-  private Animation outAnimation;
+  @VisibleForTesting Animation outAnimation;
 
   /** AnimationListener for in-animation. */
   private AnimationListener inAnimationListener;
@@ -98,7 +100,7 @@ public abstract class InOutAnimatedFrameLayout extends FrameLayout {
   /** AnimationListener for out-animation. */
   private AnimationListener outAnimationListener;
 
-  private VisibilityChangeListener onVisibilityChangeListener = null;
+  @VisibleForTesting VisibilityChangeListener onVisibilityChangeListener = null;
 
 
   public InOutAnimatedFrameLayout(Context context) {

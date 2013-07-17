@@ -128,58 +128,16 @@ bool TipStatus::SetIMEOpen(ITfThreadMgr *thread_mgr,
                                  var);
 }
 
-bool TipStatus::UpdateFromMozcMode(ITfThreadMgr *thread_mgr,
-                                   TfClientId client_id,
-                                   bool is_kana_input_preferred,
-                                   DWORD mozc_composition_mode) {
-  const commands::CompositionMode mode =
-      static_cast<commands::CompositionMode>(mozc_composition_mode);
-  if (mode == commands::DIRECT) {
-    // If the Direct mode is specified, simply close the keyboard.
-    return SetIMEOpen(thread_mgr, client_id, false);
-  }
-
-  if (!SetIMEOpen(thread_mgr, client_id, true)) {
-    return false;
-  }
-
-  // Convert Mozc's composition mode to TSF's conversion mode.
-  uint32 tsf_conversion_mode = 0;
-  if (!win32::ConversionModeUtil::ToNativeMode(mode, is_kana_input_preferred,
-                                               &tsf_conversion_mode)) {
-    return false;
-  }
+bool TipStatus::SetInputModeConversion(ITfThreadMgr *thread_mgr,
+                                       DWORD client_id,
+                                       DWORD native_mode) {
   CComVariant var;
   var.vt = VT_I4;
-  var.lVal = tsf_conversion_mode;
-  return TipCompartmentUtil::Set(
-      thread_mgr,
-      GUID_COMPARTMENT_KEYBOARD_INPUTMODE_CONVERSION,
-      client_id,
-      var);
-}
-
-bool TipStatus::UpdateFromMozcStatus(ITfThreadMgr *thread_mgr,
-                                     DWORD client_id,
-                                     bool is_kana_input_preferred,
-                                     const commands::Status &status) {
-  const commands::CompositionMode mode = status.mode();
-  SetIMEOpen(thread_mgr, client_id, status.activated());
-
-  // Convert Mozc's composition mode to TSF's conversion mode.
-  uint32 tsf_conversion_mode = 0;
-  if (!win32::ConversionModeUtil::ToNativeMode(mode, is_kana_input_preferred,
-                                               &tsf_conversion_mode)) {
-    return false;
-  }
-  CComVariant var;
-  var.vt = VT_I4;
-  var.lVal = tsf_conversion_mode;
-  return TipCompartmentUtil::Set(
-      thread_mgr,
-      GUID_COMPARTMENT_KEYBOARD_INPUTMODE_CONVERSION,
-      client_id,
-      var);
+  var.lVal = native_mode;
+  return TipCompartmentUtil::Set(thread_mgr,
+                                 GUID_COMPARTMENT_KEYBOARD_INPUTMODE_CONVERSION,
+                                 client_id,
+                                 var);
 }
 
 }  // namespace tsf

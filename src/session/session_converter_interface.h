@@ -165,8 +165,8 @@ class SessionConverterInterface {
   // Fix the conversion with the current status.
   virtual void Commit(const commands::Context &context) ABSTRACT;
 
-  // Fix the suggestion candidate.  True is returned if teh selected
-  // candidate is successfully commited.
+  // Fix the suggestion candidate.  True is returned if the selected
+  // candidate is successfully committed.
   virtual bool CommitSuggestionByIndex(
       size_t index,
       const composer::Composer &composer,
@@ -174,7 +174,7 @@ class SessionConverterInterface {
       size_t *committed_key_size) ABSTRACT;
 
   // Select a candidate and commit the selected candidate.  True is
-  // returned if teh selected candidate is successfully commited.
+  // returned if the selected candidate is successfully committed.
   virtual bool CommitSuggestionById(
       int id,
       const composer::Composer &composer,
@@ -237,15 +237,12 @@ class SessionConverterInterface {
       const composer::Composer &composer,
       commands::Output *output) const ABSTRACT;
 
-  // Fill context information
-  virtual void FillContext(commands::Context *context) const ABSTRACT;
-
-  // Remove tail part of history segments
-  virtual void RemoveTailOfHistorySegments(size_t num_of_characters) ABSTRACT;
-
   // Set setting by the request.
   // Currently this is especially for SessionConverter.
   virtual void SetRequest(const commands::Request *request) ABSTRACT;
+
+  // Update the internal state by the context.
+  virtual void OnStartComposition(const commands::Context &context) ABSTRACT;
 
   // Clone instance.
   // Callee object doesn't have the ownership of the cloned instance.

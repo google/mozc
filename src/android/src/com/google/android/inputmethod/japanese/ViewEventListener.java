@@ -117,4 +117,9 @@ public interface ViewEventListener {
    * Called when the hardware_composition_button is clicked.
    */
   public void onClickHardwareKeyboardCompositionModeButton();
+
+  /**
+   * Called when the key for editor action is pressed.
+   */
+  public void onActionKey();
 }

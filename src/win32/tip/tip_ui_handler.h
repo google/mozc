@@ -46,6 +46,7 @@ class TipUiHandler {
   enum UiType {
     kSuggestWindow,
     kCandidateWindow,
+    kIndicatorWindow,
   };
 
   static ITfUIElement *CreateUI(UiType type,
@@ -58,10 +59,6 @@ class TipUiHandler {
   static void OnDeactivate(TipTextService *text_service);
   static void OnFocusChange(TipTextService *text_service,
                             ITfDocumentMgr *focused_document_manager);
-  static bool OnLayoutChange(TipTextService *text_service,
-                             ITfContext *context,
-                             TfLayoutCode layout_code,
-                             ITfContextView *context_view);
   static bool Update(TipTextService *text_service,
                      ITfContext *context,
                      TfEditCookie readable_cookie);

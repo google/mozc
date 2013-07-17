@@ -43,17 +43,10 @@
 
 namespace mozc {
 namespace {
+
 void WriteInt(int value, ostream *ofs) {
   DCHECK(ofs);
   ofs->write(reinterpret_cast<const char *>(&value), sizeof(value));
-}
-
-// Write padding
-void Pad4(int length, ostream *ofs) {
-  DCHECK(ofs);
-  for (int i = length; (i % 4) != 0; ++i) {
-    (*ofs) << static_cast<char>(Util::Random(CHAR_MAX));
-  }
 }
 
 int ReadInt(const char *ptr) {
@@ -66,6 +59,7 @@ int Rup4(int length) {
   const int rem = (length % 4);
   return ((4 - rem) % 4);
 }
+
 }  // namespace
 
 
@@ -122,7 +116,7 @@ bool DictionaryFileCodec::ReadSections(
   int size;
   while ((size = ReadInt(ptr))) {
     ptr += sizeof(size);
-    string name(ptr);
+    const string name(ptr);
     VLOG(1) << "section=" << name << " length=" << size;
     const int name_len = name.size() + 1;
     ptr += name_len;
@@ -137,6 +131,14 @@ bool DictionaryFileCodec::ReadSections(
     }
   }
   return true;
+}
+
+// Write padding
+void DictionaryFileCodec::Pad4(int length, ostream *ofs) {
+  DCHECK(ofs);
+  for (int i = length; (i % 4) != 0; ++i) {
+    (*ofs) << static_cast<char>(Util::Random(CHAR_MAX));
+  }
 }
 
 namespace {

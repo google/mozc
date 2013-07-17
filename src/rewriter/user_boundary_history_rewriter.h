@@ -32,8 +32,10 @@
 
 #include <vector>
 #include <string>
+
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 #include "rewriter/rewriter_interface.h"
-#include "base/base.h"
 
 namespace mozc {
 

@@ -52,9 +52,9 @@ document.addEventListener('readystatechange', function() {
     naclModule.height = 0;
     var naclMozc =
         new mozc.NaclMozc(/** @type {!HTMLEmbedElement} */ (naclModule));
-    // Makes newOptionPage_ method accessable using
+    // Makes newOptionPage method accessable using
     // chrome.extension.getBackgroundPage()['newOptionPage'].
-    window['newOptionPage'] = naclMozc.newOptionPage_.bind(naclMozc);
+    window['newOptionPage'] = naclMozc.newOptionPage.bind(naclMozc);
     var body = document.getElementsByTagName('body').item(0);
     body.appendChild(naclModule);
   }

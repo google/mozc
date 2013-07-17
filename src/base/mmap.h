@@ -30,12 +30,12 @@
 #ifndef MOZC_BASE_MMAP_H_
 #define MOZC_BASE_MMAP_H_
 
+#ifdef MOZC_USE_PEPPER_FILE_IO
+#include <memory>
+#endif  // MOZC_USE_PEPPER_FILE_IO
 #include <string>
 
 #include "base/port.h"
-#ifdef MOZC_USE_PEPPER_FILE_IO
-#include "base/scoped_ptr.h"
-#endif  // MOZC_USE_PEPPER_FILE_IO
 
 namespace mozc {
 class Mmap {
@@ -75,7 +75,7 @@ class Mmap {
   char *text_;
 #else  // MOZC_USE_PEPPER_FILE_IO
   string filename_;
-  scoped_array<char> text_;
+  std::unique_ptr<char[]> text_;
   bool write_mode_;
 #endif  // MOZC_USE_PEPPER_FILE_IO
   size_t size_;

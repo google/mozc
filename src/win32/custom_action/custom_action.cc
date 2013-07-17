@@ -36,12 +36,13 @@
 #include <atlstr.h>
 #endif  // !NO_LOGGING
 #include <msiquery.h>
+
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "base/const.h"
 #include "base/process.h"
-#include "base/scoped_ptr.h"
 #include "base/system_util.h"
 #include "base/url.h"
 #include "base/util.h"
@@ -74,6 +75,8 @@ if (::IsDebuggerPresent()) {        \
 
 
 namespace {
+
+using std::unique_ptr;
 using mozc::win32::OmahaUtil;
 
 const char kIEFrameDll[] = "ieframe.dll";
@@ -124,7 +127,7 @@ wstring GetProperty(MSIHANDLE msi, const wstring &name) {
 
   // add 1 for null termination
   ++num_buf;
-  scoped_array<wchar_t> buf(new wchar_t[num_buf]);
+  unique_ptr<wchar_t[]> buf(new wchar_t[num_buf]);
   result = MsiGetProperty(msi, name.c_str(), buf.get(), &num_buf);
   if (ERROR_SUCCESS != result) {
     return L"";
@@ -277,7 +280,7 @@ UINT __stdcall OpenUninstallSurveyPage(MSIHANDLE msi_handle) {
 
 UINT __stdcall ShutdownServer(MSIHANDLE msi_handle) {
   DEBUG_BREAK_FOR_DEBUGGER();
-  scoped_ptr<mozc::client::ClientInterface> server_client(
+  unique_ptr<mozc::client::ClientInterface> server_client(
       mozc::client::ClientFactory::NewClient());
   bool server_result = true;
   if (server_client->PingServer()) {

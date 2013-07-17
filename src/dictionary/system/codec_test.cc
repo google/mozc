@@ -32,8 +32,8 @@
 #include <string>
 #include <vector>
 
-#include "base/base.h"
 #include "base/logging.h"
+#include "base/scoped_ptr.h"
 #include "base/util.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/system/codec_interface.h"
@@ -782,12 +782,12 @@ TEST_F(SystemDictionaryCodecTest, CodecTest) {
   {  // Value
     string original;
     {
-      uint16 a_ucs2 = '!';
+      char32 a_ucs4 = '!';
       Util::SetRandomSeed(0);
       for (size_t i = 0; i < 10000; ++i) {
         // U+4E00-9FFF CJK Unified Ideographs
-        uint16 c = a_ucs2 + static_cast<uint16>(Util::Random(0x9f00));
-        Util::UCS2ToUTF8Append(c, &original);
+        const char32 c = a_ucs4 + static_cast<uint16>(Util::Random(0x9f00));
+        Util::UCS4ToUTF8Append(c, &original);
       }
     }
     string encoded;
@@ -799,11 +799,11 @@ TEST_F(SystemDictionaryCodecTest, CodecTest) {
   {  // Key
     string original;
     {
-      uint16 a_ucs2 = 0x3041;  // "ぁ"
+      char32 a_ucs4 = 0x3041;  // "ぁ"
       Util::SetRandomSeed(0);
       for (size_t i = 0; i < 1000; ++i) {
-        uint16 c = a_ucs2 + static_cast<uint16>(Util::Random(1000));
-        Util::UCS2ToUTF8Append(c, &original);
+        const char32 c = a_ucs4 + static_cast<uint16>(Util::Random(1000));
+        Util::UCS4ToUTF8Append(c, &original);
       }
     }
     string encoded;

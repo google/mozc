@@ -50,4 +50,5 @@
 
   <color name="dropshadow_start">#50000000</color>
   <color name="dropshadow_end">#00000000</color>
+
 </resources>

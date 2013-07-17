@@ -30,10 +30,11 @@
 
 """Script to invoke protoc with considering project root directory.
 
-  % python protoc_wrapper.py         \
-      --protoc_path=/usr/bin/protoc  \
-      --proto=my_data.proto          \
-      --cpp_out=../out/debug/gen     \
+  % python protoc_wrapper.py               \
+      --protoc_command=protoc              \
+      --protoc_dir=/usr/bin    (optional)  \
+      --proto=my_data.proto                \
+      --cpp_out=../out/debug/gen           \
       --project_root=../
 """
 
@@ -47,7 +48,10 @@ import sys
 def ParseOption():
   """Parse command line options."""
   parser = optparse.OptionParser()
-  parser.add_option('--protoc_path', dest='protoc_path', help='path to protoc')
+  parser.add_option('--protoc_command', dest='protoc_command',
+                    help='executable name of protoc')
+  parser.add_option('--protoc_dir', dest='protoc_dir',
+                    help='directory where protoc is located')
   parser.add_option('--proto', dest='proto', help='path of the *.proto file')
   parser.add_option('--cpp_out', dest='cpp_out', default='.',
                     help='path where cpp files should be generated')
@@ -65,7 +69,9 @@ def main():
 
   # Convert to absolute paths before changing the current directory.
   project_root = os.path.abspath(opts.project_root)
-  protoc_path = os.path.abspath(opts.protoc_path)
+  protoc_path = opts.protoc_command
+  if opts.protoc_dir:
+    protoc_path = os.path.join(os.path.abspath(opts.protoc_dir), protoc_path)
   cpp_out = os.path.abspath(opts.cpp_out)
 
   # The path of proto file should be recalculated as a relative path from

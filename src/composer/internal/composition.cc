@@ -281,7 +281,7 @@ void Composition::GetExpandedStringsWithTransliterator(
   base->clear();
   expanded->clear();
   if (chunks_.empty()) {
-    LOG(WARNING) << "The composition size is zero.";
+    VLOG(1) << "The composition size is zero.";
     return;
   }
 
@@ -298,7 +298,7 @@ void Composition::GetExpandedStringsWithTransliterator(
 void Composition::GetString(string *composition) const {
   composition->clear();
   if (chunks_.empty()) {
-    LOG(WARNING) << "The composition size is zero.";
+    VLOG(1) << "The composition size is zero.";
     return;
   }
 

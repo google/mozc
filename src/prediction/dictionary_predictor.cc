@@ -1377,7 +1377,7 @@ const Node *DictionaryPredictor::GetPredictiveNodes(
     request.composer().GetQueriesForPrediction(&base, &expanded);
     const string input_key = history_key + base;
     DictionaryInterface::Limit limit;
-    scoped_ptr<Trie<string> > trie(NULL);
+    scoped_ptr<Trie<string> > trie;
     if (expanded.size() > 0) {
       trie.reset(new Trie<string>);
       for (set<string>::const_iterator itr = expanded.begin();
@@ -1479,7 +1479,7 @@ const Node *DictionaryPredictor::GetPredictiveNodesUsingTypingCorrection(
   for (size_t i = 0; i < queries.size(); ++i) {
     const string input_key = history_key + queries[i].base;
     DictionaryInterface::Limit limit;
-    scoped_ptr<Trie<string> > trie(NULL);
+    scoped_ptr<Trie<string> > trie;
     if (!queries[i].expanded.empty()) {
       trie.reset(new Trie<string>);
       for (set<string>::const_iterator itr = queries[i].expanded.begin();
@@ -1743,22 +1743,12 @@ bool DictionaryPredictor::IsZipCodeRequest(const string &key) {
     return false;
   }
 
-  // TODO(hidehiko): Rewrite this method by using ConstChar32Iterator.
-  const char *begin = key.data();
-  const char *end = key.data() + key.size();
-  size_t mblen = 0;
-  while (begin < end) {
-    Util::UTF8ToUCS2(begin, end, &mblen);
-    if (mblen == 1 &&
-        ((*begin >= '0' && *begin <= '9') || *begin == '-')) {
-      // do nothing
-    } else {
+  for (ConstChar32Iterator iter(key); !iter.Done(); iter.Next()) {
+    const char32 c = iter.Get();
+    if (!('0' <= c && c <= '9') && (c != '-')) {
       return false;
     }
-
-    begin += mblen;
   }
-
   return true;
 }
 

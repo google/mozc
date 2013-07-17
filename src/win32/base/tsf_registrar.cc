@@ -37,9 +37,10 @@
 #include <msctf.h>
 #include <objbase.h>
 
+#include <memory>
+
 #include "base/const.h"
 #include "base/logging.h"
-#include "base/scoped_ptr.h"
 #include "base/util.h"
 #include "win32/base/display_name_resource.h"
 #include "win32/base/input_dll.h"
@@ -49,6 +50,8 @@ namespace mozc {
 namespace win32 {
 
 namespace {
+
+using std::unique_ptr;
 
 // Defines the constant strings used in the TsfRegistrar::RegisterCOMServer()
 // function and the TsfRegistrar::UnregisterCOMServer() function.
@@ -319,7 +322,7 @@ HRESULT TsfRegistrar::GetProfileEnabled(BOOL *enabled) {
 
   const int num_profiles = InputDll::enum_enabled_layout_or_tip()(
       nullptr, nullptr, nullptr, nullptr, 0);
-  scoped_array<LAYOUTORTIPPROFILE> profiles(
+  unique_ptr<LAYOUTORTIPPROFILE[]> profiles(
       new LAYOUTORTIPPROFILE[num_profiles]);
   const int num_copied = InputDll::enum_enabled_layout_or_tip()(
       nullptr, nullptr, nullptr, profiles.get(), num_profiles);

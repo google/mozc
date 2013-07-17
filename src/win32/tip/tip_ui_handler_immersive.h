@@ -56,10 +56,6 @@ class TipUiHandlerImmersive {
   static void OnDeactivate();
   static void OnFocusChange(TipTextService *text_service,
                             ITfDocumentMgr *focused_document_manager);
-  static bool OnLayoutChange(TipTextService *text_service,
-                             ITfContext *context,
-                             TfLayoutCode layout_code,
-                             ITfContextView *context_view);
   static bool Update(TipTextService *text_service,
                      ITfContext *context,
                      TfEditCookie read_cookie);

@@ -732,6 +732,9 @@ UserDictionaryImporter::GuessEncodingType(const char *str, size_t size) {
   while (begin < end) {
     size_t mblen = 0;
     const char32 ucs4 = Util::UTF8ToUCS4(begin, end, &mblen);
+    if (mblen == 0) {
+      break;
+    }
     ++valid_utf8;
     for (size_t i = 1; i < mblen; ++i) {
       if (begin[i] >= 0x80 && begin[i] <= 0xBF) {
@@ -749,7 +752,7 @@ UserDictionaryImporter::GuessEncodingType(const char *str, size_t size) {
     begin += mblen;
   }
 
-  // TODO(taku): no theoritical justification for these
+  // TODO(taku): no theoretical justification for these
   // parameters
   if (1.0 * valid_utf8 / size >= 0.9 &&
       1.0 * valid_script / size >= 0.5) {

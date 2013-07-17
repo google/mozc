@@ -36,7 +36,8 @@
 
 #include <string>
 
-#include "base/base.h"
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 #include "base/string_piece.h"
 #include "dictionary/dictionary_interface.h"
 

@@ -166,17 +166,6 @@ static const  int64 kint64max  = (( int64) GG_LONGLONG(0x7FFFFFFFFFFFFFFF));
 #define AS_STRING(x)   AS_STRING_INTERNAL(x)
 #define AS_STRING_INTERNAL(x)   #x
 
-#if MOZC_MSVC_VERSION_GE(16, 0)
-#define COMPILE_ASSERT(expr, msg) static_assert(expr, AS_STRING(msg))
-#else
-// Use nagative index hack if static_assert is not available.
-template <bool>
-struct CompileAssert {
-};
-#define COMPILE_ASSERT(expr, msg) \
-  typedef CompileAssert<(bool(expr))> msg[bool(expr) ? 1 : -1]
-#endif
-
 
 // ARRAYSIZE_UNSAFE performs essentially the same calculation as arraysize,
 // but can be used on anonymous types or types defined inside functions.

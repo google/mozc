@@ -256,5 +256,30 @@ void QualityRegressionUtil::SetRequest(const commands::Request &request) {
   request_->CopyFrom(request);
 }
 
+string QualityRegressionUtil::GetPlatformString(uint32 platform_bitfiled) {
+  vector<string> v;
+  if (platform_bitfiled & DESKTOP) {
+    v.push_back("DESKTOP");
+  }
+  if (platform_bitfiled & OSS) {
+    v.push_back("OSS");
+  }
+  if (platform_bitfiled & MOBILE) {
+    v.push_back("MOBILE");
+  }
+  if (platform_bitfiled & MOBILE_AMBIGUOUS) {
+    v.push_back("MOBILE_AMBIGUOUS");
+  }
+  if (platform_bitfiled & CHROMEOS) {
+    v.push_back("CHROMEOS");
+  }
+  if (v.empty()) {
+    v.push_back("UNKNOWN");
+  }
+  string s;
+  Util::JoinStrings(v, "|", &s);
+  return s;
+}
+
 }   // namespace quality_regression
 }   // namespace mozc

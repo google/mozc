@@ -128,6 +128,7 @@
     <attr name="keyCode" format="integer|string" />
     <attr name="longPressKeyCode" format="integer|string" />
     <attr name="keyIcon" format="reference" />
+    <attr name="keyCharacter" format="string" />
     <attr name="flickHighlight" format="boolean" />
   </declare-styleable>
 

@@ -30,10 +30,9 @@
 #ifndef MOZC_WIN32_TIP_TIP_EDIT_SESSION_H_
 #define MOZC_WIN32_TIP_TIP_EDIT_SESSION_H_
 
-#include "base/port.h"
+#include <msctf.h>
 
-struct ITfContext;
-struct ITfEditSession;
+#include "base/port.h"
 
 namespace mozc {
 
@@ -46,15 +45,55 @@ namespace tsf {
 
 class TipTextService;
 
+// Utility functions to begin edit session for various purposes.
 class TipEditSession {
  public:
-  // Returns a TSF EditSession object that updates TSF context by using Mozc
-  // command output. Caller can path the returned object to
-  // ITfContext::RequestEditSession.
-  // Caller must maintain the reference count.
-  static ITfEditSession *New(TipTextService *text_service,
-                             ITfContext *context,
-                             const commands::Output &output);
+  // Begins a sync edit session with |new_output| to update the context. Note
+  // that  sync edit session is guaranteed to be capable only in key event
+  // handler and ITfFnReconversion::QueryRange. In other cases, you should use
+  // an async edit session to update the context.
+  static bool OnOutputReceivedSync(TipTextService *text_service,
+                                   ITfContext *context,
+                                   const commands::Output &new_output);
+  // Begins a sync edit session to invoke reconversion that is initialized by
+  // the application.
+  static bool ReconvertFromApplicationSync(TipTextService *text_service,
+                                           ITfRange *range);
+
+  // Begins an async edit session to handle on-layout-changed event.
+  static bool OnLayoutChangedAsync(TipTextService *text_service,
+                                   ITfContext *context);
+
+  // Begins an async edit session to handle on-mode-changed event.
+  static bool OnSetFocusAsync(TipTextService *text_service,
+                              ITfDocumentMgr *document_manager);
+
+  // Begins an async edit session to handle on-mode-changed event.
+  static bool OnModeChangedAsync(TipTextService *text_service);
+  // Begins an async edit session to handle on-open-close-changed event.
+  static bool OnOpenCloseChangedAsync(TipTextService *text_service);
+  // Begins an async edit session to handle a renderer callback event.
+  static bool OnRendererCallbackAsync(TipTextService *text_service,
+                                      ITfContext *context,
+                                      WPARAM wparam,
+                                      LPARAM lparam);
+  // Begins an async edit session to submit the current candidate.
+  static bool SubmitAsync(TipTextService *text_service, ITfContext *context);
+  // Begins an async edit session to highlight the candidate specified by
+  // |candidate_id|.
+  static bool HilightCandidateAsync(TipTextService *text_service,
+                                    ITfContext *context,
+                                    int candidate_id);
+  // Begins an async edit session to select the candidate specified by
+  // |candidate_id|.
+  static bool SelectCandidateAsync(TipTextService *text_service,
+                                   ITfContext *context,
+                                   int candidate_id);
+
+  // Begins an async edit session to change input mode specified by
+  // |native_mode|.
+  static bool SwitchInputModeAsync(TipTextService *text_service,
+                                   uint32 mozc_mode);
 
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(TipEditSession);
@@ -64,4 +103,4 @@ class TipEditSession {
 }  // namespace win32
 }  // namespace mozc
 
-#endif  // MOZC_WIN32_TIP_TIP_COMMAND_EDIT_SESSION_H_
+#endif  // MOZC_WIN32_TIP_TIP_EDIT_SESSION_H_

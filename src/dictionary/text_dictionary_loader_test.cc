@@ -30,9 +30,9 @@
 #include <string>
 #include <vector>
 
-#include "base/base.h"
 #include "base/file_stream.h"
 #include "base/file_util.h"
+#include "base/scoped_ptr.h"
 #include "base/util.h"
 #include "data_manager/user_pos_manager.h"
 #include "dictionary/dictionary_token.h"

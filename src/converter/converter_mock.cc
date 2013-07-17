@@ -139,6 +139,12 @@ void ConverterMock::SetRevertConversion(Segments *segments, bool result) {
   revertconversion_output_.return_value = result;
 }
 
+void ConverterMock::SetReconstructHistory(Segments *segments, bool result) {
+  reconstructhistory_output_.initialized = true;
+  reconstructhistory_output_.segments.CopyFrom(*segments);
+  reconstructhistory_output_.return_value = result;
+}
+
 void ConverterMock::SetCommitSegmentValue(Segments *segments, bool result) {
   commitsegmentvalue_output_.initialized = true;
   commitsegmentvalue_output_.segments.CopyFrom(*segments);
@@ -251,6 +257,10 @@ void ConverterMock::GetResetConversion(Segments *segments) {
 
 void ConverterMock::GetRevertConversion(Segments *segments) {
   segments->CopyFrom(revertconversion_input_.segments);
+}
+
+void ConverterMock::GetReconstructHistory(Segments *segments) {
+  segments->CopyFrom(reconstructhistory_input_.segments);
 }
 
 void ConverterMock::GetCommitSegmentValue(Segments *segments,
@@ -511,6 +521,19 @@ bool ConverterMock::RevertConversion(Segments *segments) const {
   } else {
     segments->CopyFrom(revertconversion_output_.segments);
     return revertconversion_output_.return_value;
+  }
+}
+
+bool ConverterMock::ReconstructHistory(Segments *segments,
+                                       const string &preceding_text) const {
+  VLOG(2) << "mock function: ReconstructHistory";
+  reconstructhistory_input_.segments.CopyFrom(*segments);
+
+  if (!reconstructhistory_output_.initialized) {
+    return false;
+  } else {
+    segments->CopyFrom(reconstructhistory_output_.segments);
+    return reconstructhistory_output_.return_value;
   }
 }
 

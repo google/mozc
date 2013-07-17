@@ -35,6 +35,9 @@
 #include "base/encryptor.h"
 #endif  // OS_ANDROID
 #include "base/logging.h"
+#ifdef __native_client__
+#include "base/nacl_js_proxy.h"
+#endif  // __native_client__
 #include "base/password_manager.h"
 #include "storage/registry.h"
 #include "sync/oauth2.h"
@@ -54,6 +57,7 @@ OAuth2Util::OAuth2Util(const OAuth2Client &client,
     : client_name_(client.name_),
       client_id_(client.client_id_),
       client_secret_(client.client_secret_),
+      client_type_(client.client_type_),
       authenticate_uri_(server.authenticate_uri_),
       redirect_uri_(server.redirect_uri_),
       request_token_uri_(server.request_token_uri_),
@@ -62,6 +66,10 @@ OAuth2Util::OAuth2Util(const OAuth2Client &client,
 OAuth2Util::~OAuth2Util() {}
 
 string OAuth2Util::GetAuthenticateUri() {
+  if (client_type_ == CHROME_APP) {
+    LOG(ERROR) << "GetAuthenticateUri is not supported for Chrome App";
+    return "";
+  }
   string uri;
   OAuth2::GetAuthorizeUri(authenticate_uri_, client_id_, redirect_uri_,
                           scope_, "", &uri);
@@ -69,6 +77,10 @@ string OAuth2Util::GetAuthenticateUri() {
 }
 
 OAuth2::Error OAuth2Util::RequestAccessToken(const string &auth_token) {
+  if (client_type_ == CHROME_APP) {
+    LOG(ERROR) << "RequestAccessToken is not supported for Chrome App";
+    return OAuth2::kInvalidRequest;
+  }
   string access_token;
   string refresh_token;
   const OAuth2::Error error = OAuth2::AuthorizeToken(
@@ -87,6 +99,10 @@ OAuth2::Error OAuth2Util::RequestAccessToken(const string &auth_token) {
 }
 
 OAuth2::Error OAuth2Util::RefreshAccessToken() {
+  if (client_type_ == CHROME_APP) {
+    LOG(ERROR) << "RefreshAccessToken is not supported for Chrome App";
+    return OAuth2::kInvalidRequest;
+  }
   string access_token;
   string refresh_token;
   if (!GetTokens(&access_token, &refresh_token)) {
@@ -119,6 +135,10 @@ bool OAuth2Util::RequestResource(const string &resource_uri, string *resource) {
 }
 
 void OAuth2Util::Clear() {
+  if (client_type_ == CHROME_APP) {
+    LOG(ERROR) << "OAuth2Util::Clear is not supported for Chrome App";
+    return;
+  }
   const string access_key(GetAccessKey());
   const string refresh_key(GetRefreshKey());
   if (!storage::Registry::Erase(access_key)) {
@@ -156,16 +176,36 @@ bool OAuth2Util::GetMID(string *mid) {
   return false;
 }
 
+OAuth2ClientType OAuth2Util::GetClientType() const {
+  return client_type_;
+}
+
 void OAuth2Util::set_scope(const string &scope) {
   scope_ = scope;
 }
 
 bool OAuth2Util::GetAccessToken(string *access_token) {
+  if (client_type_ == CHROME_APP) {
+#ifdef __native_client__
+    return mozc::NaclJsProxy::GetAuthToken(true, access_token);
+#else  // __native_client__
+    LOG(ERROR) << "Chrome App OAuth2 client is only supported in NaCl Mozc";
+    return false;
+#endif  // __native_client__
+  }
   string dummy_refresh_token;
   return GetTokens(access_token, &dummy_refresh_token);
 }
 
 bool OAuth2Util::GetTokens(string *access_token, string *refresh_token) {
+  if (client_type_ == CHROME_APP) {
+#ifdef __native_client__
+    return mozc::NaclJsProxy::GetAuthToken(true, access_token);
+#else  // __native_client__
+    LOG(ERROR) << "Chrome App OAuth2 client is only supported in NaCl Mozc";
+    return false;
+#endif  // __native_client__
+  }
   const string access_key(GetAccessKey());
   const string refresh_key(GetRefreshKey());
 
@@ -188,6 +228,10 @@ bool OAuth2Util::GetTokens(string *access_token, string *refresh_token) {
 
 bool OAuth2Util::RegisterTokens(const string &access_token,
                                 const string &refresh_token) {
+  if (client_type_ == CHROME_APP) {
+    LOG(ERROR) << "OAuth2Util::RegisterTokens is not supported for Chrome App";
+    return false;
+  }
   const string access_key(GetAccessKey());
   const string refresh_key(GetRefreshKey());
 

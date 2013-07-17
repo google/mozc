@@ -42,7 +42,7 @@
       'dependencies': [
         '../composer/composer.gyp:composer',
         '../config/config.gyp:config_protocol',
-        '../engine/engine.gyp:chromeos_engine_factory',
+        '../engine/engine.gyp:oss_engine_factory',
         '../engine/engine.gyp:engine',
         '../engine/engine.gyp:engine_factory',
         '../engine/engine.gyp:mock_data_engine_factory',

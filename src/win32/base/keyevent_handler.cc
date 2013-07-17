@@ -69,7 +69,7 @@ const KeyEvent::SpecialKey kSpecialKeyMap[] = {
   KeyEvent::TAB,                  // 0x09: VK_TAB
   KeyEvent::NO_SPECIALKEY,        // 0x0A:
   KeyEvent::NO_SPECIALKEY,        // 0x0B:
-  KeyEvent::NO_SPECIALKEY,        // 0x0C: VK_CLEAR
+  KeyEvent::CLEAR,                // 0x0C: VK_CLEAR
   KeyEvent::ENTER,                // 0x0D: VK_RETURN
   KeyEvent::NO_SPECIALKEY,        // 0x0E:
   KeyEvent::NO_SPECIALKEY,        // 0x0F:
@@ -350,15 +350,6 @@ void ClearModifyerKeyIfNeeded(
   }
 }
 
-bool ToMozcMode(uint32 flag, bool is_ime_open,
-                mozc::commands::CompositionMode *mode) {
-  if (!is_ime_open) {
-    *mode = mozc::commands::DIRECT;
-    return true;
-  }
-  return ConversionModeUtil::ToMozcMode(flag, mode);
-}
-
 // See b/2576120 for details.
 bool IsNotimplementedKey(const VirtualKey &virtual_key) {
   switch (virtual_key.virtual_key()) {
@@ -402,7 +393,7 @@ bool ConvertToKeyEventMain(const VirtualKey &virtual_key,
                            const InputState &ime_state,
                            const KeyboardStatus &keyboard_status,
                            Win32KeyboardInterface *keyboard,
-                           mozc::commands::KeyEvent *key,
+                           commands::KeyEvent *key,
                            set<KeyEvent::ModifierKey> *modifer_keys) {
   if (key == nullptr) {
     return false;
@@ -414,12 +405,7 @@ bool ConvertToKeyEventMain(const VirtualKey &virtual_key,
   }
   modifer_keys->clear();
 
-  // To fix 3504241, VK_PACKET must be supported.
-  // Here, we choose a character '?' temporarily and an UCS2 character L'XX'
-  // stored in the VK_PACKET will be paired into mozc::commands::KeyEvent as if
-  // the Kana character of the key '?' is 'XX'.
-  // TODO(yukawa, komatsu): Assign more appropriate key code rather than '?'.
-  // TODO(yukawa, komatsu): Considier surrogate pairs.
+  // Support VK_PACKET.
   if (virtual_key.virtual_key() == VK_PACKET) {
     const char32 character = virtual_key.unicode_char();
     string utf8_characters;
@@ -427,7 +413,8 @@ bool ConvertToKeyEventMain(const VirtualKey &virtual_key,
     if (utf8_characters.empty()) {
       return false;
     }
-    key->set_key_code('?');
+    // Setting |key_string| only to pass an arbitrary character to the
+    // converter.
     key->set_key_string(utf8_characters);
     return true;
   }
@@ -492,8 +479,9 @@ bool ConvertToKeyEventMain(const VirtualKey &virtual_key,
   // toggle state of the Kana-lock is emulated based on the IME open/close
   // state and conversion mode.  See b/3046717 for details.
   const bool use_kana_input =
-    behavior.prefer_kana_input && ime_state.open &&
-    ((ime_state.conversion_status & IME_CMODE_NATIVE) == IME_CMODE_NATIVE);
+      behavior.prefer_kana_input && ime_state.open &&
+      ((ime_state.logical_conversion_mode & IME_CMODE_NATIVE) ==
+       IME_CMODE_NATIVE);
 
   if (use_kana_input) {
     // Make a snapshot of keyboard state, then update it so that the
@@ -705,15 +693,19 @@ KeyEventHandlerResult KeyEventHandler::HandleKey(
       return result;
     }
 
-    commands::Status status;
-    if (!ConversionModeUtil::ConvertStatusFromNativeToMozc(
-            ime_state.open, ime_state.conversion_status, &status)) {
+    // For historical reasons, pass the visible conversion mode to the
+    // converter.
+    const DWORD repotring_mode = ime_state.visible_conversion_mode;
+    commands::CompositionMode mozc_mode = commands::DIRECT;
+    if (!ConversionModeUtil::GetMozcModeFromNativeMode(
+            repotring_mode, &mozc_mode)) {
       result.succeeded = false;
       result.should_be_eaten = false;
       result.should_be_sent_to_server = false;
       return result;
     }
-    key->set_mode(status.mode());
+    key->set_activated(ime_state.open);
+    key->set_mode(mozc_mode);
     result.succeeded = true;
     result.should_be_eaten = true;
     result.should_be_sent_to_server = true;
@@ -721,16 +713,21 @@ KeyEventHandlerResult KeyEventHandler::HandleKey(
   }
 
   DCHECK(ime_state.open);
-  commands::Status status;
-  if (!ConversionModeUtil::ConvertStatusFromNativeToMozc(
-          ime_state.open, ime_state.conversion_status, &status)) {
+
+  // For historical reasons, pass the visible conversion mode to the converter.
+  const DWORD repotring_mode = ime_state.visible_conversion_mode;
+
+  commands::CompositionMode mozc_mode = commands::HIRAGANA;
+  if (!ConversionModeUtil::GetMozcModeFromNativeMode(
+          repotring_mode, &mozc_mode)) {
     result.succeeded = false;
     result.should_be_eaten = false;
     result.should_be_sent_to_server = false;
     return result;
   }
 
-  key->set_mode(status.mode());
+  key->set_activated(ime_state.open);
+  key->set_mode(mozc_mode);
 
   switch (virtual_key.virtual_key()) {
     case VK_SHIFT:
@@ -775,18 +772,6 @@ KeyEventHandlerResult KeyEventHandler::HandleKey(
   return result;
 }
 
-namespace {
-void SetExperimentalFeatures(const InputBehavior &behavior,
-                             commands::Context *context) {
-  if (behavior.experimental_features & InputBehavior::CHROME_OMNIBOX) {
-    context->add_experimental_features("chrome_omnibox");
-  }
-  if (behavior.experimental_features & InputBehavior::GOOGLE_SEARCH_BOX) {
-    context->add_experimental_features("google_search_box");
-  }
-}
-}  // namespace
-
 KeyEventHandlerResult KeyEventHandler::ImeProcessKey(
     const VirtualKey &virtual_key,
     BYTE scan_code,
@@ -794,6 +779,7 @@ KeyEventHandlerResult KeyEventHandler::ImeProcessKey(
     const KeyboardStatus &keyboard_status,
     const InputBehavior &behavior,
     const InputState &initial_state,
+    const commands::Context &context,
     client::ClientInterface *client,
     Win32KeyboardInterface *keyboard,
     InputState *next_state,
@@ -860,11 +846,6 @@ KeyEventHandlerResult KeyEventHandler::ImeProcessKey(
     return result;
   }
 
-  commands::Context context;
-  // TODO(komatsu): Delete this set_suppress_suggestion when
-  // experimental_features has replaced it.
-  context.set_suppress_suggestion(behavior.suppress_suggestion);
-  SetExperimentalFeatures(behavior, &context);
   if (!client->TestSendKeyWithContext(key, context, output)) {
     result.succeeded = false;
     return result;
@@ -876,16 +857,14 @@ KeyEventHandlerResult KeyEventHandler::ImeProcessKey(
   }
 
   if (output->has_status()) {
-    bool next_open = false;
-    DWORD next_mode = 0;
     if (!mozc::win32::ConversionModeUtil::ConvertStatusFromMozcToNative(
             output->status(), behavior.prefer_kana_input,
-            &next_open, &next_mode)) {
+            &next_state->open,
+            &next_state->logical_conversion_mode,
+            &next_state->visible_conversion_mode)) {
       result.succeeded = false;
       return result;
     }
-    next_state->open = next_open;
-    next_state->conversion_status = next_mode;
   }
 
   result.should_be_eaten = output->consumed();
@@ -899,7 +878,8 @@ KeyEventHandlerResult KeyEventHandler::ImeToAsciiEx(
     const KeyboardStatus &keyboard_status,
     const InputBehavior &behavior,
     const InputState &initial_state,
-    mozc::client::ClientInterface *client,
+    const commands::Context &context,
+    client::ClientInterface *client,
     Win32KeyboardInterface *keyboard,
     InputState *next_state,
     commands::Output *output) {
@@ -931,12 +911,6 @@ KeyEventHandlerResult KeyEventHandler::ImeToAsciiEx(
     return result;
   }
 
-  commands::Context context;
-  // TODO(komatsu): Delete this set_suppress_suggestion when
-  // experimental_features has replaced it.
-  context.set_suppress_suggestion(behavior.suppress_suggestion);
-  SetExperimentalFeatures(behavior, &context);
-
   if (!client->SendKeyWithContext(key, context, output)) {
     result.succeeded = false;
     return result;
@@ -951,16 +925,14 @@ KeyEventHandlerResult KeyEventHandler::ImeToAsciiEx(
   }
 
   if (output->has_status()) {
-    bool next_open = false;
-    DWORD next_mode = 0;
     if (!mozc::win32::ConversionModeUtil::ConvertStatusFromMozcToNative(
             output->status(), behavior.prefer_kana_input,
-            &next_open, &next_mode)) {
+            &next_state->open,
+            &next_state->logical_conversion_mode,
+            &next_state->visible_conversion_mode)) {
       result.succeeded = false;
       return result;
     }
-    next_state->open = next_open;
-    next_state->conversion_status = next_mode;
   }
 
   result.should_be_eaten = output->consumed();

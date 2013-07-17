@@ -42,8 +42,8 @@
   <dimen name="symbol_view_minor_category_height">79.5dip</dimen>
   <dimen name="symbol_view_major_category_height">79.5dip</dimen>
 
-  <dimen name="ime_window_height_portrait">500dip</dimen>
-  <dimen name="ime_window_height_landscape">450dip</dimen>
+  <dimen name="ime_window_height_portrait">@dimen/ime_window_height_portrait_xlarge</dimen>
+  <dimen name="ime_window_height_landscape">@dimen/ime_window_height_landscape_xlarge</dimen>
   <dimen name="input_frame_height">325.4dip</dimen>
 
   <dimen name="firsttime_app_name_text_size">32dip</dimen>

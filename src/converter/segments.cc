@@ -75,6 +75,7 @@ void Segment::Candidate::CopyFrom(const Candidate &src) {
 
   prefix = src.prefix;
   suffix = src.suffix;
+  usage_id = src.usage_id;
   description = src.description;
   usage_title = src.usage_title;
   usage_description = src.usage_description;
@@ -535,34 +536,6 @@ void Segments::pop_back_segment() {
     Segment *seg = segments_.back();
     pool_->Release(seg);
     segments_.pop_back();
-  }
-}
-
-void Segments::RemoveTailOfHistorySegments(size_t num_of_characters) {
-  size_t history_size = history_segments_size();
-  while (history_size > 0 &&
-         num_of_characters > 0) {
-    Segment *last_history_segment =
-        mutable_history_segment(history_size - 1);
-
-    const size_t length_of_last_history_segment =
-        Util::CharsLen(last_history_segment->candidate(0).value);
-
-    if (length_of_last_history_segment <= num_of_characters) {
-      num_of_characters -= length_of_last_history_segment;
-      --history_size;
-      erase_segment(history_size);
-      continue;
-    }
-
-    // Remove part of last history segment.
-    // We should change rId of the candidate too, but currently ignore it.
-    // TODO(komatsu): Treat rId properly.
-    last_history_segment->mutable_candidate(0)->value =
-        Util::SubString(last_history_segment->candidate(0).value,
-                        0,
-                        length_of_last_history_segment - num_of_characters);
-    break;
   }
 }
 

@@ -409,7 +409,7 @@
             'win32/win32_renderer_util_test.cc',
           ],
           'dependencies': [
-            '../net/net.gyp:jsoncpp',
+            '../net/jsoncpp.gyp:jsoncpp',
             '../testing/testing.gyp:gtest_main',
             'install_renderer_core_test_data',
             'win32_renderer_core',
@@ -458,6 +458,7 @@
             'win32/candidate_window.cc',
             'win32/composition_window.cc',
             'win32/infolist_window.cc',
+            'win32/indicator_window.cc',
             '<(gen_out_dir)/mozc_renderer_autogen.rc',
           ],
           'dependencies': [

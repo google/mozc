@@ -29,15 +29,15 @@
 
 package org.mozc.android.inputmethod.japanese.view;
 
+import org.mozc.android.inputmethod.japanese.MemoryManageable;
 import org.mozc.android.inputmethod.japanese.MozcLog;
 import org.mozc.android.inputmethod.japanese.emoji.EmojiProviderType;
+import com.google.common.base.Preconditions;
 
 import android.content.res.Resources;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
-
-import java.util.HashMap;
-import java.util.Map;
+import android.util.SparseArray;
 
 /**
  * Factory to create Japanese carrier dependent Emoji drawables.
@@ -53,7 +53,7 @@ import java.util.Map;
  * In order to reduce IO, this class caches the created Drawables.
  *
  */
-class EmojiDrawableFactory {
+class EmojiDrawableFactory implements MemoryManageable {
 
   /**
    * Dummy {@code Drawable} instance to represent {@code null} inside the {@code cacheMap}.
@@ -72,8 +72,10 @@ class EmojiDrawableFactory {
 
   private final Resources resources;
   private final MozcDrawableFactory factory;
-  private final Map<Integer, Drawable> cacheMap = new HashMap<Integer, Drawable>();
-  private EmojiProviderType providerType;
+  // Initial size is zero for memory performance.
+  // We can prepare large array for cache but it is useless for the uses who don't want Emoji.
+  private final SparseArray<Drawable> cacheMap = new SparseArray<Drawable>(0);
+  private EmojiProviderType providerType = EmojiProviderType.NONE;
 
   EmojiDrawableFactory(Resources resources) {
     this.resources = resources;
@@ -81,6 +83,8 @@ class EmojiDrawableFactory {
   }
 
   void setProviderType(EmojiProviderType providerType) {
+    Preconditions.checkNotNull(providerType);
+
     if (this.providerType != providerType) {
       cacheMap.clear();
     }
@@ -163,6 +167,8 @@ class EmojiDrawableFactory {
   /** @return the resource id for the code point. */
   private static int getIdentifier(
       Resources resources, EmojiProviderType providerType, int codePoint) {
+    Preconditions.checkNotNull(providerType);
+
     return resources.getIdentifier(
         toResourceName(providerType, codePoint),
         "raw", "org.mozc.android.inputmethod.japanese");
@@ -170,18 +176,23 @@ class EmojiDrawableFactory {
 
   /** @return the resource name for the code point. */
   private static String toResourceName(EmojiProviderType providerType, int codePoint) {
-    if (providerType != null) {
-      switch (providerType) {
-        case DOCOMO:
-          return "docomo_emoji_" + Integer.toHexString(codePoint);
-        case SOFTBANK:
-          return "softbank_emoji_" + Integer.toHexString(codePoint);
-        case KDDI:
-          return "kddi_emoji_" + Integer.toHexString(codePoint);
-        default:
-          MozcLog.e("Unknown providerType: " + providerType.name());
-      }
+    Preconditions.checkNotNull(providerType);
+
+    switch (providerType) {
+      case DOCOMO:
+        return "docomo_emoji_" + Integer.toHexString(codePoint);
+      case SOFTBANK:
+        return "softbank_emoji_" + Integer.toHexString(codePoint);
+      case KDDI:
+        return "kddi_emoji_" + Integer.toHexString(codePoint);
+      default:
+        MozcLog.e("Unknown providerType: " + providerType.name());
     }
     return null;
+  }
+
+  @Override
+  public void trimMemory() {
+    cacheMap.clear();
   }
 }

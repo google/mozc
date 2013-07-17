@@ -39,6 +39,7 @@
 
 #include "base/logging.h"
 #include "base/mutex.h"
+#include "base/nacl_js_proxy.h"
 #include "base/pepper_file_util.h"
 #include "base/scheduler.h"
 #include "base/thread.h"
@@ -58,6 +59,9 @@
 #include "session/japanese_session_factory.h"
 #include "session/session_handler.h"
 #include "session/session_usage_observer.h"
+#ifdef ENABLE_CLOUD_SYNC
+#include "sync/sync_handler.h"
+#endif  // ENABLE_CLOUD_SYNC
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_uploader.h"
 
@@ -180,6 +184,13 @@ class MozcSessionHandlerThread : public Thread {
     handler_.reset(new SessionHandler());
 
 
+#ifdef ENABLE_CLOUD_SYNC
+    sync_handler_.reset(new sync::SyncHandler);
+    handler_->SetSyncHandler(sync_handler_.get());
+    Scheduler::AddJob(sync_handler_->GetSchedulerJobSetting());
+    uint64 last_reload_required_timestamp = 0;
+#endif  // ENABLE_CLOUD_SYNC
+
     // Gets the current config.
     config::Config config;
     config::ConfigHandler::GetStoredConfig(&config);
@@ -204,6 +215,16 @@ class MozcSessionHandlerThread : public Thread {
         LOG(ERROR) << " message_queue_ stopped";
         return;
       }
+#ifdef ENABLE_CLOUD_SYNC
+      uint64 reload_required_timestamp =
+          sync_handler_->GetReloadRequiredTimestamp();
+      if (last_reload_required_timestamp != reload_required_timestamp) {
+        last_reload_required_timestamp = reload_required_timestamp;
+        commands::Command command;
+        command.mutable_input()->set_type(commands::Input::RELOAD);
+        handler_->EvalCommand(&command);
+      }
+#endif  // ENABLE_CLOUD_SYNC
       if (!message->isMember("id") ||
           (!message->isMember("cmd") && !message->isMember("event"))) {
         LOG(ERROR) << "request error";
@@ -222,6 +243,8 @@ class MozcSessionHandlerThread : public Thread {
         response["event"]["type"] = (*message)["event"]["type"].asString();
         if ((*message)["event"]["type"].asString() == "SyncToFile") {
           response["event"]["result"] = PepperFileUtil::SyncMmapToFile();
+        } else if ((*message)["event"]["type"].asString() == "GetVersionInfo") {
+          response["event"]["version"] = Version::GetMozcVersion();
         } else {
           response["event"]["error"] = "Unsupported event";
         }
@@ -260,6 +283,9 @@ class MozcSessionHandlerThread : public Thread {
   scoped_ptr<EngineInterface> engine_;
   scoped_ptr<SessionHandlerInterface> handler_;
   scoped_ptr<JapaneseSessionFactory> session_factory_;
+#ifdef ENABLE_CLOUD_SYNC
+  scoped_ptr<sync::SyncHandler> sync_handler_;
+#endif  // ENABLE_CLOUD_SYNC
   DISALLOW_COPY_AND_ASSIGN(MozcSessionHandlerThread);
 };
 
@@ -280,6 +306,7 @@ class NaclSessionHandlerInstance : public pp::Instance {
 
 NaclSessionHandlerInstance::NaclSessionHandlerInstance(PP_Instance instance)
     : pp::Instance(instance) {
+  NaclJsProxy::Initialize(this);
   mozc_thread_.reset(new MozcSessionHandlerThread(this, &message_queue_));
   mozc_thread_->Start();
 }
@@ -291,7 +318,11 @@ void NaclSessionHandlerInstance::HandleMessage(const pp::Var &var_message) {
 
   scoped_ptr<Json::Value> message(new Json::Value);
   if (Json::Reader().parse(var_message.AsString(), *message.get())) {
-    message_queue_.put(message.release());
+    if (message->isMember("jscall")) {
+      NaclJsProxy::OnProxyCallResult(message.release());
+    } else {
+      message_queue_.put(message.release());
+    }
   }
 }
 

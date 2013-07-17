@@ -34,6 +34,8 @@
 #include <QtGui/QtGui>
 #include <QtGui/QDialog>
 #include <string>
+
+#include "base/scoped_ptr.h"
 #include "gui/config_dialog/auth_code_detector.h"
 #include "gui/config_dialog/ui_auth_dialog.h"
 

@@ -38,8 +38,15 @@ namespace mozc {
 namespace win32 {
 
 struct InputState {
+  // Represents the IME is turned on or not.
   bool open;
-  DWORD conversion_status;
+  // Represents the expected conversion mode visible from the input method
+  // framework (IMM32/TSF).
+  DWORD logical_conversion_mode;
+  // Represents the expected conversion mode visible from the user. So the
+  // language bar should show this mode.
+  DWORD visible_conversion_mode;
+  // Tracks the last down key mainly for handling modifer key-up event.
   VirtualKey last_down_key;
   InputState();
 };
@@ -47,15 +54,8 @@ struct InputState {
 struct InputBehavior {
   bool disabled;
   bool prefer_kana_input;
+  bool use_mode_indicator;
   bool use_romaji_key_to_toggle_input_style;
-  bool suppress_suggestion;
-  // Bitmap of experimental features.
-  enum ExperimentalFeature {
-    NO_FEATURE = 0,
-    CHROME_OMNIBOX = 1,
-    GOOGLE_SEARCH_BOX = 2,
-  };
-  uint32 experimental_features;
   InputBehavior();
 };
 

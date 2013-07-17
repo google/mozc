@@ -238,88 +238,97 @@ TEST(ConversionModeUtilTest, ToMozcModeUnsupportedModes) {
 
 TEST(ConversionModeUtilTest, ConvertStatusFromMozcToNative) {
   bool is_open = false;
-  DWORD native_mode = 0;
+  DWORD logical_mode = 0;
+  DWORD visible_mode = 0;
   mozc::commands::Status status;
 
-  // Should succeeds only when |status| has both |activated| and |mode|.
+  // Should succeeds only when |status| has all the fields.
   is_open = false;
-  native_mode = 0;
+  logical_mode = 0;
   status.Clear();
   EXPECT_FALSE(ConversionModeUtil::ConvertStatusFromMozcToNative(
-      status, false, &is_open, &native_mode));
+      status, false, &is_open, &logical_mode, &visible_mode));
 
-  // Should succeeds only when |status| has both |activated| and |mode|.
+  // Should succeeds only when |status| has all the fields.
   is_open = false;
-  native_mode = 0;
+  logical_mode = 0;
+  visible_mode = 0;
   status.Clear();
   status.set_activated(true);
   EXPECT_FALSE(ConversionModeUtil::ConvertStatusFromMozcToNative(
-      status, false, &is_open, &native_mode));
+      status, false, &is_open, &logical_mode, &visible_mode));
 
-  // Should succeeds only when |status| has both |activated| and |mode|.
+  // Should succeeds only when |status| has all the fields.
   is_open = false;
-  native_mode = 0;
+  logical_mode = 0;
+  visible_mode = 0;
   status.Clear();
   status.set_mode(commands::HIRAGANA);
   EXPECT_FALSE(ConversionModeUtil::ConvertStatusFromMozcToNative(
-      status, false, &is_open, &native_mode));
+      status, false, &is_open, &logical_mode, &visible_mode));
+
+  // Should succeeds only when |status| has all the fields.
+  is_open = false;
+  logical_mode = 0;
+  visible_mode = 0;
+  status.Clear();
+  status.set_comeback_mode(commands::HIRAGANA);
+  EXPECT_FALSE(ConversionModeUtil::ConvertStatusFromMozcToNative(
+      status, false, &is_open, &logical_mode, &visible_mode));
 
   // commands::DIRECT should not be used in |status|.
   is_open = false;
-  native_mode = 0;
+  logical_mode = 0;
+  visible_mode = 0;
   status.Clear();
   status.set_activated(false);
   status.set_mode(commands::DIRECT);
   EXPECT_FALSE(ConversionModeUtil::ConvertStatusFromMozcToNative(
-      status, false, &is_open, &native_mode));
+      status, false, &is_open, &logical_mode, &visible_mode));
 
   // The mode conversion should always be done regardless of open/close status.
   is_open = false;
-  native_mode = 0;
+  logical_mode = 0;
+  visible_mode = 0;
   status.Clear();
   status.set_activated(false);
-  status.set_mode(commands::HIRAGANA);
+  status.set_comeback_mode(commands::HIRAGANA);
+  status.set_mode(commands::HALF_ASCII);
   EXPECT_TRUE(ConversionModeUtil::ConvertStatusFromMozcToNative(
-      status, false, &is_open, &native_mode));
+      status, false, &is_open, &logical_mode, &visible_mode));
   EXPECT_EQ(IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN,
-            native_mode);
+      logical_mode);
+  EXPECT_EQ(IME_CMODE_ALPHANUMERIC | IME_CMODE_ROMAN, visible_mode);
 
   // The mode conversion should always be done regardless of open/close status.
   is_open = false;
-  native_mode = 0;
+  logical_mode = 0;
+  visible_mode = 0;
   status.Clear();
   status.set_activated(true);
-  status.set_mode(commands::HIRAGANA);
+  status.set_comeback_mode(commands::HIRAGANA);
+  status.set_mode(commands::HALF_ASCII);
   EXPECT_TRUE(ConversionModeUtil::ConvertStatusFromMozcToNative(
-      status, false, &is_open, &native_mode));
+      status, false, &is_open, &logical_mode, &visible_mode));
   EXPECT_EQ(IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN,
-            native_mode);
+      logical_mode);
+  EXPECT_EQ(IME_CMODE_ALPHANUMERIC | IME_CMODE_ROMAN, visible_mode);
 }
 
-TEST(ConversionModeUtilTest, ConvertStatusFromNativeToMozc) {
-  mozc::commands::Status status;
+TEST(ConversionModeUtilTest, GetMozcModeFromNativeMode) {
+  // The mode conversion should always be done regardless of open/close status,
+  // that is, we no longer rely on |mozc::commands::DIRECT|.
+  bool open = false;
+  commands::CompositionMode mozc_mode = commands::HIRAGANA;
+  EXPECT_TRUE(ConversionModeUtil::GetMozcModeFromNativeMode(
+      IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN, &mozc_mode));
+  EXPECT_EQ(commands::HIRAGANA, mozc_mode);
 
   // The mode conversion should always be done regardless of open/close status,
   // that is, we no longer rely on |mozc::commands::DIRECT|.
-  status.Clear();
-  EXPECT_TRUE(ConversionModeUtil::ConvertStatusFromNativeToMozc(
-      false, IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN,
-      &status));
-  EXPECT_TRUE(status.has_activated());
-  EXPECT_FALSE(status.activated());
-  EXPECT_TRUE(status.has_mode());
-  EXPECT_EQ(commands::HIRAGANA, status.mode());
-
-  // The mode conversion should always be done regardless of open/close status,
-  // that is, we no longer rely on |mozc::commands::DIRECT|.
-  status.Clear();
-  EXPECT_TRUE(ConversionModeUtil::ConvertStatusFromNativeToMozc(
-      true, IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN,
-      &status));
-  EXPECT_TRUE(status.has_activated());
-  EXPECT_TRUE(status.activated());
-  EXPECT_TRUE(status.has_mode());
-  EXPECT_EQ(commands::HIRAGANA, status.mode());
+  EXPECT_TRUE(ConversionModeUtil::GetMozcModeFromNativeMode(
+      IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN, &mozc_mode));
+  EXPECT_EQ(commands::HIRAGANA, mozc_mode);
 }
 }  // namespace win32
 }  // namespace mozc

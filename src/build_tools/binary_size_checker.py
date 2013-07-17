@@ -48,10 +48,36 @@ import sys
 # in Megabytes.
 EXPECTED_MAXIMUM_SIZES = {
     # Distribution package files:
-    'GoogleJapaneseInput.dmg': 55,
-    'GoogleJapaneseInput32.msi': 55,
+    # TODO(team): We should target 55MB or less.
+    'GoogleJapaneseInput.dmg': 60,
+    'GoogleJapaneseInput32.msi': 60,
     'GoogleJapaneseInput64.msi': 60,
     }
+
+
+def CheckFileSize(filename):
+  """Check the size of filename.
+
+  Args:
+    filename: the file name to be scanned.
+
+  Returns:
+    True is returned when filename is not target or does not exceed the limit.
+  """
+  basename = os.path.basename(filename)
+  if basename not in EXPECTED_MAXIMUM_SIZES:
+    return True
+
+  actual_size = os.stat(filename).st_size
+  expected_size = EXPECTED_MAXIMUM_SIZES[basename]
+  if actual_size < expected_size * 1024 * 1024:
+    print 'Pass: %s (size: %d) is smaller than expected (%d MB)' % (
+        filename, actual_size, expected_size)
+    return True
+  else:
+    print 'WARNING: %s (size: %d) is larger than expected (%d MB)' % (
+        filename, actual_size, expected_size)
+    return False
 
 
 def ScanAndCheckSize(directory):
@@ -59,17 +85,14 @@ def ScanAndCheckSize(directory):
 
   Args:
     directory: the directory file name to be scanned.
+
+  Returns:
+    True is returned when all criteria is passed.
   """
+  result = True
   for filename in os.listdir(directory):
-    if filename in EXPECTED_MAXIMUM_SIZES:
-      actual_size = os.stat(os.path.join(directory, filename)).st_size
-      expected_size = EXPECTED_MAXIMUM_SIZES[filename]
-      if actual_size < expected_size * 1024 * 1024:
-        print 'Pass: %s (size: %d) is smaller than expected (%d MB)' % (
-            filename, actual_size, expected_size)
-      else:
-        print 'WARNING: %s (size: %d) is larger than expected (%d MB)' % (
-            filename, actual_size, expected_size)
+    result &= CheckFileSize(os.path.join(directory, filename))
+  return result
 
 
 def ParseOptions():
@@ -82,6 +105,8 @@ def ParseOptions():
   parser.add_option('--target_directory', dest='target_directory',
                     help='The directory which will contain target binaries '
                     'and packages.')
+  parser.add_option('--target_filename', dest='target_filename',
+                    help='The target filename.')
   (options, unused_args) = parser.parse_args()
   return options
 
@@ -89,10 +114,18 @@ def ParseOptions():
 def main():
   """The main function."""
   options = ParseOptions()
-  if not options.target_directory:
-    logging.error('--target_directory is not specified.')
+  if not (options.target_directory or options.target_filename):
+    logging.error('--target_directory or --target_filename is not specified.')
     sys.exit(-1)
-  ScanAndCheckSize(options.target_directory)
+
+  if options.target_directory:
+    if not ScanAndCheckSize(options.target_directory):
+      logging.error('Files in target_directory exceeds the limit.')
+      sys.exit(-1)
+  if options.target_filename:
+    if not CheckFileSize(options.target_filename):
+      logging.error('The target_filename exceeds the limit.')
+      sys.exit(-1)
 
 
 if __name__ == '__main__':

@@ -31,21 +31,19 @@ package org.mozc.android.inputmethod.japanese.userdictionary;
 
 import static android.test.MoreAsserts.assertContentsInOrder;
 import static android.test.MoreAsserts.assertEmpty;
-
 import static org.easymock.EasyMock.expect;
 
+import org.mozc.android.inputmethod.japanese.protobuf.ProtoUserDictionaryStorage.UserDictionary;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoUserDictionaryStorage.UserDictionary.Entry;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoUserDictionaryStorage.UserDictionary.PosType;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoUserDictionaryStorage.UserDictionaryCommand;
-import org.mozc.android.inputmethod.japanese.protobuf.ProtoUserDictionaryStorage.UserDictionaryStorage;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoUserDictionaryStorage.UserDictionaryCommand.CommandType;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoUserDictionaryStorage.UserDictionaryCommandStatus;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoUserDictionaryStorage.UserDictionaryCommandStatus.Status;
-import org.mozc.android.inputmethod.japanese.protobuf.ProtoUserDictionaryStorage.UserDictionary;
+import org.mozc.android.inputmethod.japanese.protobuf.ProtoUserDictionaryStorage.UserDictionaryStorage;
 import org.mozc.android.inputmethod.japanese.session.SessionExecutor;
 import org.mozc.android.inputmethod.japanese.testing.InstrumentationTestCaseWithMock;
 import org.mozc.android.inputmethod.japanese.testing.Parameter;
-import org.mozc.android.inputmethod.japanese.testing.VisibilityProxy;
 
 import android.net.Uri;
 import android.test.suitebuilder.annotation.SmallTest;
@@ -76,7 +74,7 @@ public class UserDictionaryToolModelTest extends InstrumentationTestCaseWithMock
     model.createSession();
 
     verifyAll();
-    assertEquals(100L, VisibilityProxy.getField(model, "sessionId"));
+    assertEquals(100L, model.sessionId);
   }
 
   @SmallTest
@@ -93,11 +91,11 @@ public class UserDictionaryToolModelTest extends InstrumentationTestCaseWithMock
     replayAll();
 
     UserDictionaryToolModel model = new UserDictionaryToolModel(executor);
-    VisibilityProxy.setField(model, "sessionId", 100L);
+    model.sessionId = 100L;
     model.deleteSession();
 
     verifyAll();
-    assertEquals(0L, VisibilityProxy.getField(model, "sessionId"));
+    assertEquals(0L, model.sessionId);
   }
 
   @SmallTest
@@ -147,7 +145,7 @@ public class UserDictionaryToolModelTest extends InstrumentationTestCaseWithMock
     replayAll();
 
     UserDictionaryToolModel model = new UserDictionaryToolModel(executor);
-    VisibilityProxy.setField(model, "sessionId", 100L);
+    model.sessionId = 100L;
 
     assertEquals(Status.USER_DICTIONARY_COMMAND_SUCCESS,
                  model.resumeSession("default dictionary name"));
@@ -201,7 +199,7 @@ public class UserDictionaryToolModelTest extends InstrumentationTestCaseWithMock
     replayAll();
 
     UserDictionaryToolModel model = new UserDictionaryToolModel(executor);
-    VisibilityProxy.setField(model, "sessionId", 100L);
+    model.sessionId = 100L;
 
     // Even if the file is not found, the load should be succeeded.
     // This is because it is expected case, e.g., in the first time launching of the tool.
@@ -261,7 +259,7 @@ public class UserDictionaryToolModelTest extends InstrumentationTestCaseWithMock
     replayAll();
 
     UserDictionaryToolModel model = new UserDictionaryToolModel(executor);
-    VisibilityProxy.setField(model, "sessionId", 100L);
+    model.sessionId = 100L;
 
     assertEquals(Status.UNKNOWN_ERROR, model.resumeSession("default dictionary name"));
   }
@@ -325,7 +323,7 @@ public class UserDictionaryToolModelTest extends InstrumentationTestCaseWithMock
     replayAll();
 
     UserDictionaryToolModel model = new UserDictionaryToolModel(executor);
-    VisibilityProxy.setField(model, "sessionId", 100L);
+    model.sessionId = 100L;
 
     assertEquals(Status.USER_DICTIONARY_COMMAND_SUCCESS,
                  model.resumeSession("default dictionary name"));
@@ -376,7 +374,7 @@ public class UserDictionaryToolModelTest extends InstrumentationTestCaseWithMock
     replayAll();
 
     UserDictionaryToolModel model = new UserDictionaryToolModel(executor);
-    VisibilityProxy.setField(model, "sessionId", 100L);
+    model.sessionId = 100L;
 
     // The loading itself is succeeded.
     assertEquals(Status.USER_DICTIONARY_COMMAND_SUCCESS,
@@ -394,8 +392,8 @@ public class UserDictionaryToolModelTest extends InstrumentationTestCaseWithMock
     replayAll();
 
     UserDictionaryToolModel model = new UserDictionaryToolModel(executor);
-    VisibilityProxy.setField(model, "sessionId", 100L);
-    VisibilityProxy.setField(model, "dirty", false);  // Ensure it's clean.
+    model.sessionId = 100L;
+    model.dirty = false;  // Ensure it's clean.
 
     assertEquals(Status.USER_DICTIONARY_COMMAND_SUCCESS, model.pauseSession());
     verifyAll();
@@ -416,8 +414,8 @@ public class UserDictionaryToolModelTest extends InstrumentationTestCaseWithMock
     replayAll();
 
     UserDictionaryToolModel model = new UserDictionaryToolModel(executor);
-    VisibilityProxy.setField(model, "sessionId", 100L);
-    VisibilityProxy.setField(model, "dirty", true);  // Ensure it's dirty.
+    model.sessionId = 100L;
+    model.dirty = true;  // Ensure it's dirty.
 
     assertEquals(Status.USER_DICTIONARY_COMMAND_SUCCESS, model.pauseSession());
     verifyAll();
@@ -437,8 +435,8 @@ public class UserDictionaryToolModelTest extends InstrumentationTestCaseWithMock
     replayAll();
 
     UserDictionaryToolModel model = new UserDictionaryToolModel(executor);
-    VisibilityProxy.setField(model, "sessionId", 100L);
-    VisibilityProxy.setField(model, "dirty", true);  // Ensure it's dirty.
+    model.sessionId = 100L;
+    model.dirty = true;  // Ensure it's dirty.
 
     assertEquals(Status.UNKNOWN_ERROR, model.pauseSession());
     verifyAll();
@@ -448,7 +446,7 @@ public class UserDictionaryToolModelTest extends InstrumentationTestCaseWithMock
   public void testCheckUndoability() {
     SessionExecutor executor = createMock(SessionExecutor.class);
     UserDictionaryToolModel model = new UserDictionaryToolModel(executor);
-    VisibilityProxy.setField(model, "sessionId", 100L);
+    model.sessionId = 100L;
     expect(executor.sendUserDictionaryCommand(
         UserDictionaryCommand.newBuilder()
             .setType(CommandType.CHECK_UNDOABILITY)
@@ -468,16 +466,15 @@ public class UserDictionaryToolModelTest extends InstrumentationTestCaseWithMock
   public void testUndo() {
     SessionExecutor executor = createMock(SessionExecutor.class);
     UserDictionaryToolModel model = new UserDictionaryToolModel(executor);
-    VisibilityProxy.setField(model, "sessionId", 100L);
-    VisibilityProxy.setField(model, "selectedDictionaryId", 400L);
-    VisibilityProxy.setField(
-        model, "storage",
+    model.sessionId = 100L;
+    model.selectedDictionaryId = 400L;
+    model.storage =
         UserDictionaryStorage.newBuilder()
             .addDictionaries(UserDictionary.newBuilder()
                 .setId(400L))
             .addDictionaries(UserDictionary.newBuilder()
                 .setId(500L))
-            .build());
+            .build();
 
     expect(executor.sendUserDictionaryCommand(
         UserDictionaryCommand.newBuilder()
@@ -510,7 +507,7 @@ public class UserDictionaryToolModelTest extends InstrumentationTestCaseWithMock
     assertTrue(model.isDirty());
     assertEquals(0, model.getSelectedDictionaryIndex());
 
-    VisibilityProxy.setField(model, "dirty", false);
+    model.dirty = false;
     resetAll();
     expect(executor.sendUserDictionaryCommand(
         UserDictionaryCommand.newBuilder()
@@ -545,7 +542,7 @@ public class UserDictionaryToolModelTest extends InstrumentationTestCaseWithMock
     assertTrue(model.isDirty());
     assertEquals(1, model.getSelectedDictionaryIndex());
 
-    VisibilityProxy.setField(model, "dirty", false);
+    model.dirty = false;
     resetAll();
     expect(executor.sendUserDictionaryCommand(
         UserDictionaryCommand.newBuilder()
@@ -583,16 +580,15 @@ public class UserDictionaryToolModelTest extends InstrumentationTestCaseWithMock
   public void testUndo_fail() {
     SessionExecutor executor = createMock(SessionExecutor.class);
     UserDictionaryToolModel model = new UserDictionaryToolModel(executor);
-    VisibilityProxy.setField(model, "sessionId", 100L);
-    VisibilityProxy.setField(model, "selectedDictionaryId", 400L);
-    VisibilityProxy.setField(
-        model, "storage",
+    model.sessionId = 100L;
+    model.selectedDictionaryId = 400L;
+    model.storage =
         UserDictionaryStorage.newBuilder()
             .addDictionaries(UserDictionary.newBuilder()
                 .setId(400L))
             .addDictionaries(UserDictionary.newBuilder()
                 .setId(500L))
-            .build());
+            .build();
 
     expect(executor.sendUserDictionaryCommand(
         UserDictionaryCommand.newBuilder()
@@ -626,7 +622,7 @@ public class UserDictionaryToolModelTest extends InstrumentationTestCaseWithMock
     replayAll();
 
     UserDictionaryToolModel model = new UserDictionaryToolModel(executor);
-    VisibilityProxy.setField(model, "sessionId", 100L);
+    model.sessionId = 100L;
 
     assertEquals(Status.USER_DICTIONARY_COMMAND_SUCCESS, model.checkNewDictionaryAvailability());
     verifyAll();
@@ -667,7 +663,7 @@ public class UserDictionaryToolModelTest extends InstrumentationTestCaseWithMock
     replayAll();
 
     UserDictionaryToolModel model = new UserDictionaryToolModel(executor);
-    VisibilityProxy.setField(model, "sessionId", 100L);
+    model.sessionId = 100L;
 
     assertEquals(Status.USER_DICTIONARY_COMMAND_SUCCESS,
                  model.createDictionary("New User Dictionary"));
@@ -697,7 +693,7 @@ public class UserDictionaryToolModelTest extends InstrumentationTestCaseWithMock
     replayAll();
 
     UserDictionaryToolModel model = new UserDictionaryToolModel(executor);
-    VisibilityProxy.setField(model, "sessionId", 100L);
+    model.sessionId = 100L;
 
     assertEquals(Status.DICTIONARY_NAME_EMPTY, model.createDictionary(""));
     verifyAll();
@@ -738,8 +734,8 @@ public class UserDictionaryToolModelTest extends InstrumentationTestCaseWithMock
     replayAll();
 
     UserDictionaryToolModel model = new UserDictionaryToolModel(executor);
-    VisibilityProxy.setField(model, "sessionId", 100L);
-    VisibilityProxy.setField(model, "selectedDictionaryId", 500L);
+    model.sessionId = 100L;
+    model.selectedDictionaryId = 500L;
 
     assertEquals(Status.USER_DICTIONARY_COMMAND_SUCCESS,
                  model.renameSelectedDictionary("Another User Dictionary"));
@@ -770,8 +766,8 @@ public class UserDictionaryToolModelTest extends InstrumentationTestCaseWithMock
     replayAll();
 
     UserDictionaryToolModel model = new UserDictionaryToolModel(executor);
-    VisibilityProxy.setField(model, "sessionId", 100L);
-    VisibilityProxy.setField(model, "selectedDictionaryId", 500L);
+    model.sessionId = 100L;
+    model.selectedDictionaryId = 500L;
 
     assertEquals(Status.DICTIONARY_NAME_EMPTY, model.renameSelectedDictionary(""));
     verifyAll();
@@ -863,9 +859,9 @@ public class UserDictionaryToolModelTest extends InstrumentationTestCaseWithMock
       replayAll();
 
       UserDictionaryToolModel model = new UserDictionaryToolModel(executor);
-      VisibilityProxy.setField(model, "sessionId", 100L);
-      VisibilityProxy.setField(model, "selectedDictionaryId", 500L);
-      VisibilityProxy.setField(model, "storage", testData.storage);
+      model.sessionId = 100L;
+      model.selectedDictionaryId = 500L;
+      model.storage = testData.storage;
 
       assertEquals(Status.USER_DICTIONARY_COMMAND_SUCCESS,
                    model.deleteSelectedDictionary());
@@ -895,8 +891,8 @@ public class UserDictionaryToolModelTest extends InstrumentationTestCaseWithMock
     replayAll();
 
     UserDictionaryToolModel model = new UserDictionaryToolModel(executor);
-    VisibilityProxy.setField(model, "sessionId", 100L);
-    VisibilityProxy.setField(model, "selectedDictionaryId", 500L);
+    model.sessionId = 100L;
+    model.selectedDictionaryId = 500L;
 
     assertEquals(Status.UNKNOWN_DICTIONARY_ID, model.deleteSelectedDictionary());
     verifyAll();
@@ -906,7 +902,7 @@ public class UserDictionaryToolModelTest extends InstrumentationTestCaseWithMock
   public void testGetEntryList() {
     SessionExecutor executor = createMock(SessionExecutor.class);
     UserDictionaryToolModel model = new UserDictionaryToolModel(executor);
-    VisibilityProxy.setField(model, "sessionId", 100L);
+    model.sessionId = 100L;
     List<Entry> entryList = model.getEntryList();
 
     // Test without selected dictionary.
@@ -916,7 +912,7 @@ public class UserDictionaryToolModelTest extends InstrumentationTestCaseWithMock
     verifyAll();
 
     // Test with selected dictionary.
-    VisibilityProxy.setField(model, "selectedDictionaryId", 500L);
+    model.selectedDictionaryId = 500L;
     resetAll();
     expect(executor.sendUserDictionaryCommand(
         UserDictionaryCommand.newBuilder()
@@ -960,8 +956,8 @@ public class UserDictionaryToolModelTest extends InstrumentationTestCaseWithMock
   public void testEditTargetIndex() {
     SessionExecutor executor = createMock(SessionExecutor.class);
     UserDictionaryToolModel model = new UserDictionaryToolModel(executor);
-    VisibilityProxy.setField(model, "sessionId", 100L);
-    VisibilityProxy.setField(model, "selectedDictionaryId", 500L);
+    model.sessionId = 100L;
+    model.selectedDictionaryId = 500L;
 
     replayAll();
     model.setEditTargetIndex(10);
@@ -997,8 +993,8 @@ public class UserDictionaryToolModelTest extends InstrumentationTestCaseWithMock
   public void testCheckNewEntryAvailability() {
     SessionExecutor executor = createMock(SessionExecutor.class);
     UserDictionaryToolModel model = new UserDictionaryToolModel(executor);
-    VisibilityProxy.setField(model, "sessionId", 100L);
-    VisibilityProxy.setField(model, "selectedDictionaryId", 500L);
+    model.sessionId = 100L;
+    model.selectedDictionaryId = 500L;
 
     expect(executor.sendUserDictionaryCommand(
         UserDictionaryCommand.newBuilder()
@@ -1020,8 +1016,8 @@ public class UserDictionaryToolModelTest extends InstrumentationTestCaseWithMock
   public void testAddEntry() {
     SessionExecutor executor = createMock(SessionExecutor.class);
     UserDictionaryToolModel model = new UserDictionaryToolModel(executor);
-    VisibilityProxy.setField(model, "sessionId", 100L);
-    VisibilityProxy.setField(model, "selectedDictionaryId", 500L);
+    model.sessionId = 100L;
+    model.selectedDictionaryId = 500L;
 
     expect(executor.sendUserDictionaryCommand(
         UserDictionaryCommand.newBuilder()
@@ -1049,8 +1045,8 @@ public class UserDictionaryToolModelTest extends InstrumentationTestCaseWithMock
   public void testEditEntry() {
     SessionExecutor executor = createMock(SessionExecutor.class);
     UserDictionaryToolModel model = new UserDictionaryToolModel(executor);
-    VisibilityProxy.setField(model, "sessionId", 100L);
-    VisibilityProxy.setField(model, "selectedDictionaryId", 500L);
+    model.sessionId = 100L;
+    model.selectedDictionaryId = 500L;
 
     expect(executor.sendUserDictionaryCommand(
         UserDictionaryCommand.newBuilder()
@@ -1080,8 +1076,8 @@ public class UserDictionaryToolModelTest extends InstrumentationTestCaseWithMock
   public void testDeleteEntry() {
     SessionExecutor executor = createMock(SessionExecutor.class);
     UserDictionaryToolModel model = new UserDictionaryToolModel(executor);
-    VisibilityProxy.setField(model, "sessionId", 100L);
-    VisibilityProxy.setField(model, "selectedDictionaryId", 500L);
+    model.sessionId = 100L;
+    model.selectedDictionaryId = 500L;
 
     expect(executor.sendUserDictionaryCommand(
         UserDictionaryCommand.newBuilder()
@@ -1171,15 +1167,14 @@ public class UserDictionaryToolModelTest extends InstrumentationTestCaseWithMock
   public void testImportData() {
     SessionExecutor executor = createMock(SessionExecutor.class);
     UserDictionaryToolModel model = new UserDictionaryToolModel(executor);
-    VisibilityProxy.setField(model, "sessionId", 100L);
-    VisibilityProxy.setField(
-        model, "storage",
+    model.sessionId = 100L;
+    model.storage =
         UserDictionaryStorage.newBuilder()
             .addDictionaries(UserDictionary.newBuilder()
                 .setId(400L))
             .addDictionaries(UserDictionary.newBuilder()
                 .setId(500L))
-            .build());
+            .build();
 
     expect(executor.sendUserDictionaryCommand(
         UserDictionaryCommand.newBuilder()
@@ -1222,15 +1217,14 @@ public class UserDictionaryToolModelTest extends InstrumentationTestCaseWithMock
   public void testImportDataToNewDictionary() {
     SessionExecutor executor = createMock(SessionExecutor.class);
     UserDictionaryToolModel model = new UserDictionaryToolModel(executor);
-    VisibilityProxy.setField(model, "sessionId", 100L);
-    VisibilityProxy.setField(
-        model, "storage",
+    model.sessionId = 100L;
+    model.storage =
         UserDictionaryStorage.newBuilder()
             .addDictionaries(UserDictionary.newBuilder()
                 .setId(400L))
             .addDictionaries(UserDictionary.newBuilder()
                 .setId(500L))
-            .build());
+            .build();
 
     expect(executor.sendUserDictionaryCommand(
         UserDictionaryCommand.newBuilder()
@@ -1275,15 +1269,14 @@ public class UserDictionaryToolModelTest extends InstrumentationTestCaseWithMock
   public void testImportData_partiallySuccess() {
     SessionExecutor executor = createMock(SessionExecutor.class);
     UserDictionaryToolModel model = new UserDictionaryToolModel(executor);
-    VisibilityProxy.setField(model, "sessionId", 100L);
-    VisibilityProxy.setField(
-        model, "storage",
+    model.sessionId = 100L;
+    model.storage =
         UserDictionaryStorage.newBuilder()
             .addDictionaries(UserDictionary.newBuilder()
                 .setId(400L))
             .addDictionaries(UserDictionary.newBuilder()
                 .setId(500L))
-            .build());
+            .build();
 
     expect(executor.sendUserDictionaryCommand(
         UserDictionaryCommand.newBuilder()
@@ -1328,17 +1321,16 @@ public class UserDictionaryToolModelTest extends InstrumentationTestCaseWithMock
   public void testImportData_failed() {
     SessionExecutor executor = createMock(SessionExecutor.class);
     UserDictionaryToolModel model = new UserDictionaryToolModel(executor);
-    VisibilityProxy.setField(model, "sessionId", 100L);
-    VisibilityProxy.setField(model, "selectedDictionaryId", 400L);
-    VisibilityProxy.setField(model, "dirty", false);
-    VisibilityProxy.setField(
-        model, "storage",
+    model.sessionId = 100L;
+    model.selectedDictionaryId = 400L;
+    model.dirty = false;
+    model.storage =
         UserDictionaryStorage.newBuilder()
             .addDictionaries(UserDictionary.newBuilder()
                 .setId(400L))
             .addDictionaries(UserDictionary.newBuilder()
                 .setId(500L))
-            .build());
+            .build();
 
     expect(executor.sendUserDictionaryCommand(
         UserDictionaryCommand.newBuilder()

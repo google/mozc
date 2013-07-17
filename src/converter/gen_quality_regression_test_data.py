@@ -56,17 +56,17 @@ def EscapeString(s):
     result += '\\x' + hexstr[2:]
   return result
 
+_DISABLED = 'false'
+_ENABLED = 'true'
 
 def ParseTSV(file):
-  result = []
-  for line in open(file, "r"):
+  for line in open(file, 'r'):
     if line.startswith('#'):
       continue
     line = line.rstrip('\r\n')
     if not line:
       continue
-    result.append(line)
-  return result
+    yield (_ENABLED, line)
 
 
 def GetText(node):
@@ -77,12 +77,11 @@ def GetText(node):
 
 
 def ParseXML(file):
-  result = []
   dom = xml.dom.minidom.parse(file)
   for issue in dom.getElementsByTagName('issue'):
     status = GetText(issue.getElementsByTagName('status'))
-    if status != 'Fixed' and status != 'Verified':
-      continue
+    enabled = (_DISABLED if status != 'Fixed' and status != 'Verified'
+               else _ENABLED)
     id = issue.attributes['id'].value
     target = GetText(issue.getElementsByTagName('target'))
     for detail in issue.getElementsByTagName(u'detail'):
@@ -92,8 +91,8 @@ def ParseXML(file):
         fields.append(GetText(detail.getElementsByTagName(key)))
       if target:
         fields.append(target)
-      result.append(('\t'.join(fields)).encode('utf-8'))
-  return result
+      tsv_line = ('\t'.join(fields)).encode('utf-8')
+      yield (enabled, tsv_line)
 
 
 def ParseFile(file):
@@ -105,20 +104,24 @@ def ParseFile(file):
 
 def GenerateHeader(files):
   try:
-    print "#include <cstddef>"  # for NULL
-    print "const char *kTestData[] = {"
+    print 'namespace mozc{'
+    print 'struct TestCase {'
+    print '  const bool enabled;'
+    print '  const char *tsv;'
+    print '} kTestData[] = {'
     for file in files:
-      for line in ParseFile(file):
-        print " \"%s\"," % EscapeString(line)
-    print "NULL,"
-    print "};"
+      for enabled, line in ParseFile(file):
+        print ' {%s, "%s"},' % (enabled, EscapeString(line))
+    print '  {false, nullptr},'
+    print '};'
+    print '}  // namespace mozc'
   except:
-    print "cannot open %s" % (file)
+    print 'cannot open %s' % (file)
     sys.exit(1)
 
 
 def main():
   GenerateHeader(sys.argv[1:])
 
-if __name__ == "__main__":
+if __name__ == '__main__':
   main()

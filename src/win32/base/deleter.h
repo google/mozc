@@ -32,8 +32,9 @@
 
 #include <windows.h>
 
+#include <memory>
+
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 
 namespace mozc {
 namespace commands {
@@ -146,10 +147,10 @@ class VKBackBasedDeleter {
  private:
   void UnsetModifiers();
 
-  scoped_ptr<VKBackBasedDeleterQueue> wait_queue_;
-  scoped_ptr<Win32KeyboardInterface> keyboard_;
-  scoped_ptr<InputState> pending_ime_state_;
-  scoped_ptr<mozc::commands::Output> pending_output_;
+  std::unique_ptr<VKBackBasedDeleterQueue> wait_queue_;
+  std::unique_ptr<Win32KeyboardInterface> keyboard_;
+  std::unique_ptr<InputState> pending_ime_state_;
+  std::unique_ptr<mozc::commands::Output> pending_output_;
 
   DISALLOW_COPY_AND_ASSIGN(VKBackBasedDeleter);
 };

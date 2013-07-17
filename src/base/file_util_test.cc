@@ -89,6 +89,8 @@ TEST_F(FileUtilTest, DirectoryExists) {
   ASSERT_FALSE(FileUtil::FileExists(filepath));
 }
 
+#endif  // MOZC_USE_PEPPER_FILE_IO
+
 TEST_F(FileUtilTest, CopyFile) {
   // just test rename operation works as intended
   const string from = FileUtil::JoinPath(FLAGS_test_tmpdir, "copy_from");
@@ -202,8 +204,6 @@ TEST_F(FileUtilTest, AtomicRename) {
   FileUtil::Unlink(from);
   FileUtil::Unlink(to);
 }
-
-#endif  // MOZC_USE_PEPPER_FILE_IO
 
 TEST_F(FileUtilTest, Dirname) {
 #ifdef OS_WIN

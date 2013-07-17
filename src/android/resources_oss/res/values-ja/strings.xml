@@ -130,6 +130,8 @@
     <string name="pref_dictionary_personalization_entry_readonly">学習を利用するが更新しない</string>
     <string name="pref_dictionary_personalization_entry_disabled">学習を利用しない</string>
 
+    <string name="pref_emoji_provider_type_none">絵文字を利用しない</string>
+
     <string name="pref_skin_type_orange_lightgray">オレンジ/ライトグレー</string>
     <string name="pref_skin_type_blue_lightgray">ブルー/ライトグレー</string>
     <string name="pref_skin_type_blue_darkgray">ブルー/ダークグレー</string>
@@ -305,4 +307,7 @@
       <string name="japanese_pos_free_standing_word">独立語</string>
       <string name="japanese_pos_suppression_word">抑制単語</string>
 
+      <!-- Yes/No -->
+      <string name="yes">はい</string>
+      <string name="no">いいえ</string>
 </resources>

@@ -739,9 +739,9 @@ bool Session::SendKey(commands::Command *command) {
 
   // Hangul IME does not concern ordinal number key and numpad number key.
   // Following code replaces numpad event to corresponding ordinal key event.
-  COMPILE_ASSERT((KeyEvent::NUMPAD0 < KeyEvent::NUMPAD9) &&
-                 (KeyEvent::NUMPAD9 - KeyEvent::NUMPAD0 == 9),
-                 NumPad_is_not_numerical_order);
+  static_assert((KeyEvent::NUMPAD0 < KeyEvent::NUMPAD9) &&
+                (KeyEvent::NUMPAD9 - KeyEvent::NUMPAD0 == 9),
+                 "Checking KeyEvent::NUMPAD? constants.");
   if (key_event->has_special_key() &&
       (key_event->special_key() >= KeyEvent::NUMPAD0 &&
        key_event->special_key() <= KeyEvent::NUMPAD9)) {

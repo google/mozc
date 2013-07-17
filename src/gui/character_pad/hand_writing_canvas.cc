@@ -30,7 +30,6 @@
 #include "gui/character_pad/hand_writing_canvas.h"
 
 #include <QtGui/QtGui>
-#include "base/base.h"
 #include "gui/character_pad/hand_writing.h"
 
 namespace mozc {

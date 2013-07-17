@@ -184,6 +184,7 @@ public class KeyboardParser {
     R.attr.keyCode,
     R.attr.longPressKeyCode,
     R.attr.keyIcon,
+    R.attr.keyCharacter,
     R.attr.flickHighlight,
   };
   static {
@@ -197,6 +198,8 @@ public class KeyboardParser {
       Arrays.binarySearch(KEY_ENTITY_ATTRIBUTES, R.attr.longPressKeyCode);
   private static final int KEY_ENTITY_KEY_ICON_INDEX =
       Arrays.binarySearch(KEY_ENTITY_ATTRIBUTES, R.attr.keyIcon);
+  private static final int KEY_ENTITY_KEY_CHAR_INDEX =
+      Arrays.binarySearch(KEY_ENTITY_ATTRIBUTES, R.attr.keyCharacter);
   private static final int KEY_ENTITY_FLICK_HIGHLIGHT_INDEX =
       Arrays.binarySearch(KEY_ENTITY_ATTRIBUTES, R.attr.flickHighlight);
 
@@ -712,6 +715,7 @@ public class KeyboardParser {
     int keyCode;
     int longPressKeyCode;
     int keyIconResourceId;
+    String keyCharacter;
     DrawableType keyBackgroundDrawableType;
     boolean flickHighlight;
     {
@@ -728,6 +732,7 @@ public class KeyboardParser {
         longPressKeyCode = getCode(attributes.peekValue(KEY_ENTITY_LONG_PRESS_KEY_CODE_INDEX),
                                    KeyEntity.INVALID_KEY_CODE);
         keyIconResourceId = attributes.getResourceId(KEY_ENTITY_KEY_ICON_INDEX, 0);
+        keyCharacter = attributes.getString(KEY_ENTITY_KEY_CHAR_INDEX);
         flickHighlight = attributes.getBoolean(KEY_ENTITY_FLICK_HIGHLIGHT_INDEX, false);
       } finally {
         attributes.recycle();
@@ -746,7 +751,7 @@ public class KeyboardParser {
 
     assertEndTag(parser, "KeyEntity");
 
-    return new KeyEntity(sourceId, keyCode, longPressKeyCode, keyIconResourceId,
+    return new KeyEntity(sourceId, keyCode, longPressKeyCode, keyIconResourceId, keyCharacter,
                          backgroundDrawableType, flickHighlight, popUp);
   }
 

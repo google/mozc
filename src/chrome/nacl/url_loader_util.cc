@@ -29,6 +29,8 @@
 
 #include "chrome/nacl/url_loader_util.h"
 
+#include <memory>
+
 #include <ppapi/c/pp_file_info.h>
 #include <ppapi/c/ppb_file_io.h>
 #include <ppapi/cpp/file_io.h>
@@ -43,6 +45,8 @@
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/scoped_ptr.h"
+
+using std::unique_ptr;
 
 namespace mozc {
 namespace chrome {
@@ -79,20 +83,20 @@ class URLLoaderStreamToFileHandler {
   const string url_;
   const string file_name_;
   pp::CompletionCallback callback_;
-  scoped_ptr<pp::URLRequestInfo> url_request_;
-  scoped_ptr<pp::URLLoader> url_loader_;
+  unique_ptr<pp::URLRequestInfo> url_request_;
+  unique_ptr<pp::URLLoader> url_loader_;
   pp::URLResponseInfo url_response_;
   pp::FileRef body_file_ref_;
   pp::CompletionCallbackFactory<URLLoaderStreamToFileHandler> callback_factory_;
-  scoped_ptr<pp::FileSystem> file_system_;
-  scoped_ptr<pp::FileRef> output_file_ref_;
-  scoped_ptr<pp::FileIO> output_file_io_;
-  scoped_ptr<pp::FileIO> input_file_io_;
+  unique_ptr<pp::FileSystem> file_system_;
+  unique_ptr<pp::FileRef> output_file_ref_;
+  unique_ptr<pp::FileIO> output_file_io_;
+  unique_ptr<pp::FileIO> input_file_io_;
   PP_FileInfo input_file_info_;
   int64_t total_read_bytes_;
   int64_t total_written_bytes_;
   int64_t buffer_written_bytes_;
-  scoped_array<char> tmp_buffer_;
+  unique_ptr<char[]> tmp_buffer_;
 
   DISALLOW_COPY_AND_ASSIGN(URLLoaderStreamToFileHandler);
 };
@@ -131,6 +135,7 @@ void URLLoaderStreamToFileHandler::StartImpl(int32_t result) {
   CHECK(!url_loader_.get());
   url_request_.reset(new pp::URLRequestInfo(instance_));
   url_loader_.reset(new pp::URLLoader(instance_));
+  url_request_->SetAllowCrossOriginRequests(true);
   url_request_->SetURL(url_);
   url_request_->SetMethod("GET");
   url_request_->SetStreamToFile(true);

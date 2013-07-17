@@ -45,6 +45,8 @@ class Request;
 // Contains utilizable information for conversion, suggestion and prediction,
 // including composition, preceding text, etc.
 // This class doesn't take ownerships of any Composer* argument.
+// TODO(team, yukawa): Refactor this class so it can represents that more
+// detailed context information such as commands::Context.
 class ConversionRequest {
  public:
   enum ComposerKeySelection {
@@ -71,9 +73,6 @@ class ConversionRequest {
   bool has_composer() const;
   const composer::Composer &composer() const;
   void set_composer(const composer::Composer *c);
-
-  const string &preceding_text() const;
-  void set_preceding_text(const string &preceding_text);
 
   bool use_actual_converter_for_realtime_conversion() const;
   void set_use_actual_converter_for_realtime_conversion(bool value);

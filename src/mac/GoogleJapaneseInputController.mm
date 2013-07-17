@@ -86,6 +86,8 @@ const set<string> *gNoDisplayModeSwitchApps = NULL;
 //  DoubleClickInterval can be get from NSEvent (MacOSX ver >= 10.6)
 const NSTimeInterval kDoubleTapInterval = 0.5;
 
+const int kMaxSurroundingLength = 20;
+
 NSString *GetLabelForSuffix(const string &suffix) {
   string label = mozc::MacUtil::GetLabelForSuffix(suffix);
   return [[NSString stringWithUTF8String:label.c_str()] retain];
@@ -196,7 +198,8 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
   mozcClient_ = mozc::client::ClientFactory::NewClient();
   imkServer_ = reinterpret_cast<id<ServerCallback> >(server);
   imkClientForTest_ = nil;
-  lastKanaKeyTime_ = 0;
+  lastKeyDownTime_ = 0;
+  lastKeyCode_ = 0;
 
   // We don't check the return value of NSBundle because it fails during tests.
   [NSBundle loadNibNamed:@"Config" owner:self];
@@ -644,6 +647,16 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
 
   // Handle callbacks.
   if (output->has_callback() && output->callback().has_session_command()) {
+    if (output->callback().has_delay_millisec()) {
+      callback_command_.CopyFrom(output->callback());
+      // In the current implementation, if the subsequent key event also makes
+      // callback, the second callback will be called in the timimg of the first
+      // callback.
+      [self performSelector:@selector(sendCallbackCommand)
+                 withObject:nil
+                 afterDelay:output->callback().has_delay_millisec() / 1000.0];
+      return;
+    }
     const SessionCommand &callback_command =
         output->callback().session_command();
     if (callback_command.type() == SessionCommand::CONVERT_REVERSE) {
@@ -838,6 +851,48 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
   [[NSWorkspace sharedWorkspace] openURL:url];
 }
 
+- (BOOL)fillSurroundingContext:(mozc::commands::Context *)context
+                        client:(id<IMKTextInput>)client {
+  NSRange selectedRange;
+  if ([composedString_ length] == 0) {
+    selectedRange = [client selectedRange];
+  } else {
+    // When composed string exists we calls markedRange to get the surrounding
+    // text of the composed string.
+    selectedRange = [client markedRange];
+  }
+  if (selectedRange.location == NSNotFound ||
+      selectedRange.length == NSNotFound) {
+    return false;
+  }
+  NSInteger totalLength = [client length];
+  NSRange precedingRange = NSMakeRange(0, selectedRange.location);
+  if (selectedRange.location > kMaxSurroundingLength) {
+    precedingRange =
+        NSMakeRange(selectedRange.location - kMaxSurroundingLength,
+                    kMaxSurroundingLength);
+  }
+  NSRange followingRange =
+      NSMakeRange(selectedRange.location + selectedRange.length,
+                  totalLength - selectedRange.location - selectedRange.length);
+  if (followingRange.length > kMaxSurroundingLength) {
+    followingRange.length = kMaxSurroundingLength;
+  }
+  NSString *precedingString =
+    [[client attributedSubstringFromRange:precedingRange] string];
+  NSString *followingString =
+    [[client attributedSubstringFromRange:followingRange] string];
+  if (precedingString) {
+    context->set_preceding_text([precedingString UTF8String]);
+    DLOG(INFO) << "preceding_text: \"" << context->preceding_text() << "\"";
+  }
+  if (followingString) {
+    context->set_following_text([followingString UTF8String]);
+    DLOG(INFO) << "following_text: \"" << context->following_text() << "\"";
+  }
+  return true;
+}
+
 - (BOOL)handleEvent:(NSEvent *)event client:(id)sender {
   if ([event type] == NSCursorUpdate) {
     [self updateComposition];
@@ -846,12 +901,21 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
   if ([event type] != NSKeyDown && [event type] != NSFlagsChanged) {
     return NO;
   }
+  // Cancels the callback.
+  callback_command_.Clear();
 
   // Handle KANA key and EISU key.  We explicitly handles this here
   // for mode switch because some text area such like iPhoto person
   // name editor does not call setValue:forTag:client: method.
   // see: http://www.google.com/support/forum/p/ime/thread?tid=3aafb74ff71a1a69&hl=ja&fid=3aafb74ff71a1a690004aa3383bc9f5d
   if ([event type] == NSKeyDown) {
+    NSTimeInterval currentTime = [[NSDate date] timeIntervalSince1970];
+    const NSTimeInterval elapsedTime = currentTime - lastKeyDownTime_;
+    const bool isDoubleTap = ([event keyCode] == lastKeyCode_) &&
+                             (elapsedTime < kDoubleTapInterval);
+    lastKeyDownTime_ = currentTime;
+    lastKeyCode_ = [event keyCode];
+
     // these calling of switchMode: can be duplicated if the
     // application sends the setValue:forTag:client: and handleEvent:
     // at the same key event, but that's okay because switchMode:
@@ -860,7 +924,17 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
     if ([event keyCode] == kVK_JIS_Kana) {
       [self switchMode:mozc::commands::HIRAGANA client:sender];
       [self switchDisplayMode];
+      if (isDoubleTap) {
+        SessionCommand command;
+        command.set_type(SessionCommand::CONVERT_REVERSE);
+        [self invokeReconvert:&command client:sender];
+      }
     } else if ([event keyCode] == kVK_JIS_Eisu) {
+      if (isDoubleTap) {
+        SessionCommand command;
+        command.set_type(SessionCommand::COMMIT_RAW_TEXT);
+        [self sendCommand:command];
+      }
       CompositionMode new_mode = ([composedString_ length] == 0) ?
           mozc::commands::DIRECT : mozc::commands::HALF_ASCII;
       [self switchMode:new_mode client:sender];
@@ -868,26 +942,6 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
     }
   }
 
-  // UNDO by double tapping Kana-key
-  if ([event type] == NSKeyDown) {
-    if ([event keyCode] == kVK_JIS_Kana) {
-      NSTimeInterval currentTime = [[NSDate date] timeIntervalSince1970];
-      if (lastKanaKeyTime_ == 0){
-        lastKanaKeyTime_ = currentTime;
-      } else {
-        NSTimeInterval elapsedTime = currentTime - lastKanaKeyTime_;
-        lastKanaKeyTime_ = currentTime;
-        if (elapsedTime < kDoubleTapInterval) {
-          DLOG(INFO) << "UNDO";
-          [self invokeUndo:sender];
-          return YES;
-        }
-      }
-    } else {
-      lastKanaKeyTime_ = 0;
-    }
-  }
- 
   if ([keyCodeMap_ isModeSwitchingKey:event]) {
     // Special hack for Eisu/Kana keys.  Sometimes those key events
     // come to this method but we should ignore them because some
@@ -933,6 +987,10 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
     context.add_experimental_features("google_search_box");
   }
   keyEvent.set_mode(mode_);
+
+  if (!IsBannedApplication(gNoSelectedRangeApps, *clientBundle_)) {
+    [self fillSurroundingContext:&context client:sender];
+  }
   if (!mozcClient_->SendKeyWithContext(keyEvent, context, &output)) {
     return NO;
   }
@@ -941,8 +999,16 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
   return output.consumed();
 }
 
+- (void)sendCallbackCommand {
+  if (callback_command_.has_session_command()) {
+    const SessionCommand command = callback_command_.session_command();
+    callback_command_.Clear();
+    [self sendCommand:command];
+  }
+}
+
 #pragma mark callbacks
-- (void)sendCommand:(SessionCommand &)command {
+- (void)sendCommand:(const SessionCommand &)command {
   Output output;
   if (!mozcClient_->SendCommand(command, &output)) {
     return;

@@ -43,199 +43,89 @@ namespace mozc {
 namespace renderer{
 namespace mac {
 
-namespace {
-  // kWindowHighResolutionCapableAttribute is defined in HIToolbox/MacWindows.h
-  // (version >= 10.7.4)
-  // http://developer.apple.com/library/mac/#documentation/GraphicsAnimation/Conceptual/HighResolutionOSX/APIs/APIs.html
-  // TODO(horo): Remove this line once we update the SDK version to 10.7.
-  const WindowAttributes kWindowHighResolutionCapableAttribute = 1 << 20;
-  enum CandidateStatusCode {
-    userDataMissingErr = 1000,
-    unknownEventErr = 1001,
-  };
-
-  OSStatus EventHandler(EventHandlerCallRef handlerCallRef,
-                        EventRef carbonEvent,
-                        void *userData) {
-    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-    NSEvent *event = [NSEvent eventWithEventRef:carbonEvent];
-
-    if (!userData) {
-      [pool drain];
-      return userDataMissingErr;
-    }
-
-    NSView *target = reinterpret_cast<NSView *>(userData);
-    SEL eventType = @selector(unknownEvent);
-    switch ([event type]) {
-      case NSLeftMouseDown:
-      case NSRightMouseDown:
-      case NSOtherMouseDown:
-        eventType = @selector(mouseDown:);
-        break;
-
-      case NSLeftMouseUp:
-      case NSRightMouseUp:
-      case NSOtherMouseUp:
-        eventType = @selector(mouseUp:);
-        break;
-
-      case NSLeftMouseDragged:
-      case NSRightMouseDragged:
-      case NSOtherMouseDragged:
-        eventType = @selector(mouseDragged:);
-        break;
-
-      case NSScrollWheel:
-        eventType = @selector(scrollWheel:);
-        break;
-
-      default:
-        break;
-    }
-
-    if (eventType == @selector(unknownEvent)) {
-      [pool drain];
-      return unknownEventErr;
-    }
-
-    NSEvent *actualEvent = [NSEvent mouseEventWithType:[event type]
-                                              location:[event locationInWindow]
-                                         modifierFlags:[event modifierFlags]
-                                             timestamp:[event timestamp]
-                                          windowNumber:[event windowNumber]
-                                               context:[event context]
-                                           eventNumber:[event eventNumber]
-                                            clickCount:[event clickCount]
-                                              pressure:[event pressure]];
-
-    objc_msgSend(target, eventType, actualEvent);
-    [pool drain];
-    return noErr;
-  }
-}  // anonymous namespace
-
 RendererBaseWindow::RendererBaseWindow()
-    : window_(NULL){
+    : window_level_(NSPopUpMenuWindowLevel) {
 }
 
 void RendererBaseWindow::InitWindow() {
-  if (window_ != NULL) {
+  if (window_.get()) {
     LOG(ERROR) << "window is already initialized.";
+    return;
   }
-  DLOG(INFO) << "RendererBaseWindow::InitWindow";
-  // Creating Window
-  ::Rect rect;
-  rect.top = 0;
-  rect.left = 0;
-  rect.bottom = 1;
-  rect.right = 1;
-  WindowAttributes attributes = kWindowNoTitleBarAttribute |
-                                kWindowCompositingAttribute |
-                                kWindowStandardHandlerAttribute;
-  if (MacUtil::OSVersionIsGreaterOrEqual(10, 7, 4)) {
-    // kWindowHighResolutionCapableAttribute is available in 10.7.4 and later.
-    attributes |= kWindowHighResolutionCapableAttribute;
-  }
-  CreateNewWindow(kUtilityWindowClass, attributes, &rect, &window_);
-
-  // Changing the window level as same as overlay window class, which
-  // means "top".
-  WindowGroupRef groupRef = GetWindowGroup(window_);
-  int groupLevel;
-  GetWindowGroupLevelOfType(GetWindowGroupOfClass(kOverlayWindowClass),
-                            kWindowGroupLevelPromoted, &groupLevel);
-  SetWindowGroupLevel(groupRef, groupLevel);
-  SetWindowGroupParent(groupRef, GetWindowGroupOfClass(kAllWindowClasses));
-
+  const NSUInteger style_mask =
+      NSUtilityWindowMask | NSDocModalWindowMask | NSNonactivatingPanelMask;
+  window_.reset([[NSPanel alloc] initWithContentRect:NSMakeRect(0, 0, 1, 1)
+                                           styleMask:style_mask
+                                             backing:NSBackingStoreBuffered
+                                               defer:YES]);
   ResetView();
-
-  // Embedding CandidateView into the |window_| using Carbon API
-  HIViewRef hiView, contentView;
-  HIRect bounds;
-  HICocoaViewCreate(view_.get(), 0, &hiView);
-  HIViewFindByID(HIViewGetRoot(window_), kHIViewWindowContentID,
-                 &contentView);
-  HIViewGetBounds(contentView, &bounds);
-  HIViewSetFrame(hiView, &bounds);
-  HIViewAddSubview(contentView, hiView);
-  HIViewSetVisible(hiView, true);
-
-  // Adjust Carbon layouts
-  HILayoutInfo layoutInfo;
-  layoutInfo.version = kHILayoutInfoVersionZero;
-  HIViewGetLayoutInfo(hiView, &layoutInfo);
-  layoutInfo.binding.top.toView = contentView;
-  layoutInfo.binding.top.kind = kHILayoutBindTop;
-  layoutInfo.binding.left.toView = contentView;
-  layoutInfo.binding.left.kind = kHILayoutBindLeft;
-  layoutInfo.binding.right.toView = contentView;
-  layoutInfo.binding.right.kind = kHILayoutBindRight;
-  layoutInfo.binding.bottom.toView = contentView;
-  layoutInfo.binding.bottom.kind = kHILayoutBindBottom;
-  HIViewSetLayoutInfo(hiView, &layoutInfo);
-  HIViewApplyLayout(hiView);
-
-  // Setting mouse event handler
-  EventHandlerUPP handler = NewEventHandlerUPP(EventHandler);
-  EventTypeSpec spec[] = { { kEventClassMouse, kEventMouseDown },
-    { kEventClassMouse, kEventMouseUp },
-    { kEventClassMouse, kEventMouseDragged },
-    { kEventClassMouse, kEventMouseScroll } };
-  InstallEventHandler(GetWindowEventTarget(window_), handler,
-                      arraysize(spec), spec, view_.get(), NULL);
+  [window_.get() setContentView:view_.get()];
+  [window_.get() setDisplaysWhenScreenProfileChanges:YES];
+  [window_.get() makeKeyAndOrderFront:nil];
+  [window_.get() setFloatingPanel:YES];
+  [window_.get() setWorksWhenModal:YES];
+  [window_.get() setBackgroundColor:NSColor.whiteColor];
+  [window_.get() setReleasedWhenClosed:NO];
+  [window_.get() setLevel:window_level_];
+  [window_.get() orderOut:window_.get()];
 }
 
 RendererBaseWindow::~RendererBaseWindow() {
-    ::DisposeWindow(window_);
+  [window_.get() close];
+  window_.reset();
 }
 
 Size RendererBaseWindow::GetWindowSize() const {
-  if (!window_) {
-    LOG(ERROR) << "You have to intialize window beforehand";
+  if (!window_.get()) {
     return Size(0, 0);
   }
-  ::Rect globalBounds;
-  ::GetWindowBounds(window_, kWindowContentRgn, &globalBounds);
-  return Size(globalBounds.right - globalBounds.left,
-                        globalBounds.bottom - globalBounds.top);
+  NSRect rect = [window_.get() frame];
+  return Size(rect.size.width, rect.size.height);
 }
 
 void RendererBaseWindow::Hide() {
-  if (window_) {
-    ::HideWindow(window_);
-    ::DisposeWindow(window_);
-    window_ = NULL;
+  if (window_.get()) {
+    [window_.get() orderOut:window_.get()];
   }
 }
 
 void RendererBaseWindow::Show() {
-  if (!window_) {
+  if (!window_.get()) {
     InitWindow();
   }
-  ::MoveWindow(window_, pos_.x, pos_.y, YES);
-  ::ShowWindow(window_);
+  [window_.get() orderFront:window_.get()];
 }
 
 bool RendererBaseWindow::IsVisible() {
   if (!window_) {
     return false;
   }
-  return (IsWindowVisible(window_) == YES);
+  return ([window_.get() isVisible] == YES);
 }
 
 void RendererBaseWindow::ResetView() {
-  DLOG(INFO) << "RendererBaseWindow::ResetView()";
   view_.reset([[NSView alloc] initWithFrame:NSMakeRect(0, 0, 1, 1)]);
 }
 
-void RendererBaseWindow::MoveWindow(const Point &point) {
-  DLOG(INFO) << "RendererBaseWindow::MoveWindow()";
-  pos_ = point;
-  if (!window_) {
-    InitWindow();
+void RendererBaseWindow::MoveWindow(const NSPoint &point) {
+  NSRect rect = [window_.get() frame];
+  rect.origin.x = point.x;
+  rect.origin.y = point.y;
+  [window_.get() setFrame:rect display:FALSE];
+}
+
+void RendererBaseWindow::ResizeWindow(int32 width, int32 height) {
+  NSRect rect = [window_.get() frame];
+  rect.size.width = width;
+  rect.size.height = height;
+  [window_.get() setFrame:rect display:FALSE];
+}
+
+void RendererBaseWindow::SetWindowLevel(int32 window_level) {
+  if (window_level_ != window_level) {
+    window_level_ = window_level;
+    [window_.get() setLevel:window_level_];
   }
-  ::MoveWindow(window_, point.x, point.y, YES);
 }
 
 }  // namespace mozc::renderer::mac

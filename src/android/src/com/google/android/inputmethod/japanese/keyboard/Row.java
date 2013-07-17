@@ -35,26 +35,27 @@ import java.util.List;
 /**
  * A simple model class of a row. This class corresponds to {@code &lt;Row&gt;} element
  * in a xml resource file. Each row can contain a sequence of {@code Key}s.
- * 
+ *
  * Here is a list this class supports.
  * <ul>
  *   <li> {@code height}: the row's height.
  *   <li> {@code verticalGap}: the gap between the next row and this class.
  * </ul>
- * 
+ *
  */
 public class Row {
-  private final List<? extends Key> keyList;
+
+  private final List<Key> keyList;
   private final int height;
   private final int verticalGap;
-  
+
   public Row(List<? extends Key> keyList, int height, int verticalGap) {
     this.keyList = Collections.unmodifiableList(keyList);
     this.height = height;
     this.verticalGap = verticalGap;
   }
 
-  public List<? extends Key> getKeyList() {
+  public List<Key> getKeyList() {
     return keyList;
   }
 

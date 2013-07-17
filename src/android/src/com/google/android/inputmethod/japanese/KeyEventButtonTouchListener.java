@@ -39,6 +39,7 @@ import org.mozc.android.inputmethod.japanese.keyboard.KeyEventHandler;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyState;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyState.MetaState;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Input.TouchAction;
+import com.google.common.annotations.VisibleForTesting;
 
 import android.view.MotionEvent;
 import android.view.View;
@@ -58,7 +59,7 @@ public class KeyEventButtonTouchListener implements OnTouchListener {
   private final int sourceId;
   private final int keyCode;
   private KeyEventHandler keyEventHandler = null;
-  private KeyEventContext keyEventContext = null;
+  @VisibleForTesting KeyEventContext keyEventContext = null;
 
   /**
    * This is exported as protected for testing.
@@ -98,7 +99,7 @@ public class KeyEventButtonTouchListener implements OnTouchListener {
    */
   static Key createKey(View button, int sourceId, int keyCode) {
     KeyEntity keyEntity =
-        new KeyEntity(sourceId, keyCode, KeyEntity.INVALID_KEY_CODE, 0, null, false, null);
+        new KeyEntity(sourceId, keyCode, KeyEntity.INVALID_KEY_CODE, 0, null, null, false, null);
     Flick flick = new Flick(Direction.CENTER, keyEntity);
     KeyState keyState =
         new KeyState(EnumSet.of(MetaState.UNMODIFIED), null, Collections.singletonList(flick));

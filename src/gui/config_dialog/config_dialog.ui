@@ -835,6 +835,16 @@
          </property>
         </widget>
        </item>
+       <item row="4" column="0" colspan="7">
+        <widget class="QCheckBox" name="useModeIndicator">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="text">
+          <string>Show input mode indicator near the cursor</string>
+         </property>
+        </widget>
+       </item>
       </layout>
      </widget>
     </widget>
@@ -1282,7 +1292,7 @@
       <property name="geometry">
        <rect>
         <x>30</x>
-        <y>110</y>
+        <y>120</y>
         <width>441</width>
         <height>32</height>
        </rect>
@@ -1333,7 +1343,7 @@
       <property name="geometry">
        <rect>
         <x>30</x>
-        <y>90</y>
+        <y>100</y>
         <width>401</width>
         <height>20</height>
        </rect>
@@ -1342,48 +1352,22 @@
        <string>latest sync</string>
       </property>
      </widget>
-     <widget class="QLabel" name="removeAllDescriptionLabel">
-      <property name="geometry">
-       <rect>
-        <x>30</x>
-        <y>150</y>
-        <width>431</width>
-        <height>51</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Clear all sync data in Google servers. To delete data completely, make sure there is no other machine which is running sync and stop sync on this machine after clearing the data.</string>
-      </property>
-      <property name="wordWrap">
-       <bool>true</bool>
-      </property>
-     </widget>
-     <widget class="QPushButton" name="clearSyncButton">
-      <property name="geometry">
-       <rect>
-        <x>30</x>
-        <y>205</y>
-        <width>111</width>
-        <height>31</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Remove all</string>
-      </property>
-     </widget>
      <widget class="QLabel" name="syncDescriptionLabel">
       <property name="geometry">
        <rect>
         <x>29</x>
         <y>40</y>
         <width>441</width>
-        <height>41</height>
+        <height>61</height>
        </rect>
       </property>
       <property name="text">
-       <string>Mozc can securely syncs your settings and a user sync-dictionary among different machines</string>
+       <string>Mozc can securely syncs your settings and a user sync-dictionary among different machines. Synced data can be cleared by &lt;a href=&quot;https://www.google.com/settings/dashboard&quot;&gt;Google Dashboard&lt;/a&gt;.</string>
       </property>
       <property name="wordWrap">
+       <bool>true</bool>
+      </property>
+      <property name="openExternalLinks">
        <bool>true</bool>
       </property>
      </widget>
@@ -1391,7 +1375,7 @@
       <property name="geometry">
        <rect>
         <x>30</x>
-        <y>300</y>
+        <y>200</y>
         <width>441</width>
         <height>21</height>
        </rect>
@@ -1404,7 +1388,7 @@
       <property name="geometry">
        <rect>
         <x>20</x>
-        <y>270</y>
+        <y>160</y>
         <width>461</width>
         <height>21</height>
        </rect>
@@ -2037,7 +2021,6 @@
   <tabstop>launchAdministrationDialogButtonForUsageStats</tabstop>
   <tabstop>syncToggleButton</tabstop>
   <tabstop>syncCustomizationButton</tabstop>
-  <tabstop>clearSyncButton</tabstop>
   <tabstop>cloudHandwritingCheckBox</tabstop>
   <tabstop>checkDefaultCheckBox</tabstop>
   <tabstop>IMEHotKeyDisabledCheckBox</tabstop>

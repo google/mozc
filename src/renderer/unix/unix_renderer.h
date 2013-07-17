@@ -30,6 +30,7 @@
 #ifndef MOZC_RENDERER_UNIX_UNIX_RENDERER_H_
 #define MOZC_RENDERER_UNIX_UNIX_RENDERER_H_
 
+#include "base/scoped_ptr.h"
 #include "renderer/renderer_interface.h"
 #include "renderer/unix/gtk_wrapper_interface.h"
 #include "renderer/unix/window_manager.h"

@@ -43,9 +43,10 @@
 
 #include <string>
 
-#include "base/base.h"
 #include "base/const.h"
 #include "base/coordinates.h"
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 
 namespace mozc {
 

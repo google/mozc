@@ -41,6 +41,8 @@ import org.mozc.android.inputmethod.japanese.ui.CandidateLayoutRenderer;
 import org.mozc.android.inputmethod.japanese.ui.CandidateLayouter;
 import org.mozc.android.inputmethod.japanese.ui.SnapScroller;
 import org.mozc.android.inputmethod.japanese.view.SkinType;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -59,18 +61,7 @@ import android.view.View;
  * A view for candidate words.
  *
  */
-abstract class CandidateWordView extends View {
-
-  /**
-   * Callback interface to handle candidate selection.
-   */
-  interface CandidateSelectListener {
-
-    /**
-     * Called {@code onCandidateSelected}, when a candidate is selected by user's action.
-     */
-    public void onCandidateSelected(CandidateWord candidateWord);
-  }
+abstract class CandidateWordView extends View implements MemoryManageable {
 
   /**
    * Handles gestures to scroll candidate list and choose a candidate.
@@ -352,7 +343,7 @@ abstract class CandidateWordView extends View {
   // TODO(matsuzakit): The parameter is TBD (needs UX study?).
   protected final SnapScroller scroller = new SnapScroller();
   // The CandidateLayouter which calculates the layout of candidate words.
-  private CandidateLayouter layouter;
+  @VisibleForTesting CandidateLayouter layouter;
   // The calculated layout, created by this.layouter.
   protected CandidateLayout calculatedLayout;
   // The CandidateList which is currently shown on the view.
@@ -439,6 +430,8 @@ abstract class CandidateWordView extends View {
   }
 
   public void setEmojiProviderType(EmojiProviderType providerType) {
+    Preconditions.checkNotNull(providerType);
+
     candidateLayoutRenderer.setEmojiProviderType(providerType);
   }
 
@@ -491,7 +484,7 @@ abstract class CandidateWordView extends View {
     }
 
     // Paint the candidates.
-    canvas.save();
+    int saveCount = canvas.save();
     try {
       canvas.translate(horizontalPadding, 0);
       CandidateWord pressedCandidate = candidateWordGestureDetector.getPressedCandidate();
@@ -499,7 +492,7 @@ abstract class CandidateWordView extends View {
           ? pressedCandidate.getIndex() : -1;
       candidateLayoutRenderer.drawCandidateLayout(canvas, calculatedLayout, pressedCandidateIndex);
     } finally {
-      canvas.restore();
+      canvas.restoreToCount(saveCount);
     }
   }
 
@@ -530,7 +523,7 @@ abstract class CandidateWordView extends View {
     super.computeScroll();
   }
 
-  private int getUpdatedScrollPosition(Row row, Span span) {
+  @VisibleForTesting int getUpdatedScrollPosition(Row row, Span span) {
     int scrollPosition = orientationTrait.getScrollPosition(this);
     float candidatePosition = orientationTrait.getCandidatePosition(row, span);
     float candidateLength = orientationTrait.getCandidateLength(row, span);
@@ -667,5 +660,12 @@ abstract class CandidateWordView extends View {
   void setSkinType(SkinType skinType) {
     backgroundDrawableFactory.setSkinType(skinType);
     resetBackground();
+  }
+
+  @Override
+  public void trimMemory() {
+    calculatedLayout = null;
+    currentCandidateList = null;
+    candidateLayoutRenderer.trimMemory();
   }
 }

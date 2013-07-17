@@ -30,7 +30,8 @@
 #ifndef MOZC_DATA_MANAGER_DATA_MANAGER_TEST_BASE_H_
 #define MOZC_DATA_MANAGER_DATA_MANAGER_TEST_BASE_H_
 
-#include "base/base.h"
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {

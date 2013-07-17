@@ -41,7 +41,7 @@ const wchar_t kInputDllName[] = L"input.dll";
 
 const char kEnumEnabledLayoutOrTipName[]    = "EnumEnabledLayoutOrTip";
 const char kEnumLayoutOrTipForSetup[]       = "EnumLayoutOrTipForSetup";
-const char kInstallLayoutOrTipName[] = "InstallLayoutOrTip";
+const char kInstallLayoutOrTipName[]        = "InstallLayoutOrTip";
 const char kInstallLayoutOrTipUserRegName[] = "InstallLayoutOrTipUserReg";
 const char kSetDefaultLayoutOrTipName[]     = "SetDefaultLayoutOrTip";
 
@@ -80,23 +80,23 @@ bool InputDll::EnsureInitialized() {
 
   enum_enabled_layout_or_tip_ =
       reinterpret_cast<FPEnumEnabledLayoutOrTip>(
-        ::GetProcAddress(input_dll, kEnumEnabledLayoutOrTipName));
+          ::GetProcAddress(input_dll, kEnumEnabledLayoutOrTipName));
 
   enum_layout_or_tip_for_setup_ =
       reinterpret_cast<FPEnumLayoutOrTipForSetup>(
-        ::GetProcAddress(input_dll, kEnumLayoutOrTipForSetup));
+          ::GetProcAddress(input_dll, kEnumLayoutOrTipForSetup));
 
   install_layout_or_tip_ =
       reinterpret_cast<FPInstallLayoutOrTip>(
-        ::GetProcAddress(input_dll, kInstallLayoutOrTipName));
+          ::GetProcAddress(input_dll, kInstallLayoutOrTipName));
 
   install_layout_or_tip_user_reg_ =
       reinterpret_cast<FPInstallLayoutOrTipUserReg>(
-        ::GetProcAddress(input_dll, kInstallLayoutOrTipUserRegName));
+          ::GetProcAddress(input_dll, kInstallLayoutOrTipUserRegName));
 
   set_default_layout_or_tip_ =
       reinterpret_cast<FPSetDefaultLayoutOrTip>(
-        ::GetProcAddress(input_dll, kSetDefaultLayoutOrTipName));
+          ::GetProcAddress(input_dll, kSetDefaultLayoutOrTipName));
 
   // Other threads may load the same DLL concurrently.
   // Check if this thread is the first thread which updated the |module_|.
@@ -143,7 +143,7 @@ InputDll::FPEnumEnabledLayoutOrTip InputDll::enum_enabled_layout_or_tip_;
 InputDll::FPEnumLayoutOrTipForSetup InputDll::enum_layout_or_tip_for_setup_;
 InputDll::FPInstallLayoutOrTip InputDll::install_layout_or_tip_;
 InputDll::FPInstallLayoutOrTipUserReg
-    InputDll::install_layout_or_tip_user_reg_;
+InputDll::install_layout_or_tip_user_reg_;
 InputDll::FPSetDefaultLayoutOrTip InputDll::set_default_layout_or_tip_;
 
 }  // namespace win32

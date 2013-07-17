@@ -30,9 +30,10 @@
 #ifndef MOZC_LANGUAGES_PINYIN_SESSION_H_
 #define MOZC_LANGUAGES_PINYIN_SESSION_H_
 
+#include <memory>
 #include <string>
 
-#include "base/base.h"
+#include "base/port.h"
 #include "languages/pinyin/pinyin_constant.h"
 #include "session/commands.pb.h"
 #include "session/session_interface.h"
@@ -91,8 +92,8 @@ class Session : public mozc::session::SessionInterface {
   void HandleLanguageBarCommand(
       const commands::SessionCommand &session_command);
 
-  scoped_ptr<SessionConfig> session_config_;
-  scoped_ptr<SessionConverterInterface> converter_;
+  std::unique_ptr<SessionConfig> session_config_;
+  std::unique_ptr<SessionConverterInterface> converter_;
   const keymap::KeymapInterface *keymap_;
   ConversionMode conversion_mode_;
   // Stores conversion mode which we should switched to at the end of SendKey()

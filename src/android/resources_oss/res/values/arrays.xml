@@ -45,12 +45,14 @@
   </string-array>
 
   <string-array name="pref_emoji_provider_type_entries">
+    <item>@string/pref_emoji_provider_type_none</item>
     <item>@string/pref_emoji_provider_type_docomo</item>
     <item>@string/pref_emoji_provider_type_kddi</item>
     <item>@string/pref_emoji_provider_type_softbank</item>
   </string-array>
 
   <string-array name="pref_emoji_provider_type_values">
+    <item>NONE</item>
     <item>DOCOMO</item>
     <item>KDDI</item>
     <item>SOFTBANK</item>

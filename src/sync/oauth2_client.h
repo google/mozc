@@ -36,13 +36,28 @@
 
 namespace mozc {
 namespace sync {
+
+// There are several kinds of OAuth2 client with which we can access to Google
+// APIs. See: https://code.google.com/apis/console/
+// We support normal installed application and Chrome application now.
+enum OAuth2ClientType {
+  INSTALLED_APP,
+  CHROME_APP
+};
+
 struct OAuth2Client {
-  string name_;
-  string client_id_;
-  string client_secret_;
-  OAuth2Client(
-      const string &name, const string &client_id, const string &client_secret)
-      : name_(name), client_id_(client_id), client_secret_(client_secret) {}
+  const string name_;
+  const string client_id_;
+  const string client_secret_;
+  OAuth2ClientType client_type_;
+  OAuth2Client(const string &name,
+               const string &client_id,
+               const string &client_secret,
+               OAuth2ClientType client_type)
+      : name_(name),
+        client_id_(client_id),
+        client_secret_(client_secret),
+        client_type_(client_type) {}
 
   static OAuth2Client GetDefaultInstance();
 };

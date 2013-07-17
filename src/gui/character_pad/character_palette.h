@@ -32,7 +32,8 @@
 
 #include <QtCore/QMap>
 #include <QtGui/QMainWindow>
-#include "base/base.h"
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 #include "gui/character_pad/ui_character_palette.h"
 
 class QTextCodec;

@@ -183,8 +183,8 @@ string GenRandomAlphabet(int size) {
   string result;
   const size_t len = Util::Random(size) + 1;
   for (int i = 0; i < len; ++i) {
-    const uint16 l = Util::Random(static_cast<int>('z' - 'a')) + 'a';
-    Util::UCS2ToUTF8Append(l, &result);
+    const char32 l = Util::Random(static_cast<int>('z' - 'a')) + 'a';
+    Util::UCS4ToUTF8Append(l, &result);
   }
   return result;
 }
@@ -918,17 +918,24 @@ TEST_F(UserDictionaryTest, LookupComment) {
   }
 
   // Entry is in user dictionary but has no comment.
-  EXPECT_TRUE(LookupComment(*dic, "comment_key1", "comment_value2").empty());
+  string comment;
+  comment = "prev comment";
+  EXPECT_FALSE(dic->LookupComment("comment_key1", "comment_value2", &comment));
+  EXPECT_EQ("prev comment", comment);
 
   // Usual case: single key-value pair with comment.
-  EXPECT_EQ("comment", LookupComment(*dic, "comment_key2", "comment_value2"));
+  EXPECT_TRUE(dic->LookupComment("comment_key2", "comment_value2", &comment));
+  EXPECT_EQ("comment", comment);
 
   // There exist two entries having the same key, value and POS.  Since POS is
   // irrelevant to comment lookup, the first nonempty comment should be found.
-  EXPECT_EQ("comment1", LookupComment(*dic, "comment_key3", "comment_value3"));
+  EXPECT_TRUE(dic->LookupComment("comment_key3", "comment_value3", &comment));
+  EXPECT_EQ("comment1", comment);
 
   // White-space only comments should be cleared.
-  EXPECT_TRUE(LookupComment(*dic, "comment_key4", "comment_value4").empty());
+  EXPECT_FALSE(dic->LookupComment("comment_key4", "comment_value4", &comment));
+  // The previous comment should remain.
+  EXPECT_EQ("comment1", comment);
 
   // Comment should be found iff key and value match.
   EXPECT_TRUE(LookupComment(*dic, "comment_key", "mismatching_value").empty());

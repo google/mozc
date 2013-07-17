@@ -33,19 +33,21 @@
 #include <xcb/xfixes.h>
 
 #include <cstdlib>
+#include <memory>
 #include <string>
 
-#include "base/base.h"
 #include "base/logging.h"
 #include "base/mutex.h"
-#include "base/scoped_ptr.h"
 #include "base/thread.h"
+#include "base/port.h"
 #include "base/util.h"
 
 namespace mozc {
 namespace ibus {
 
 namespace {
+
+using std::unique_ptr;
 
 class ScopedXcbGenericError {
  public:
@@ -66,6 +68,27 @@ class ScopedXcbGenericError {
  private:
   xcb_generic_error_t *error_;
 };
+
+template <typename T>
+struct FreeDeleter {
+  void operator()(T *ptr) const {
+    free(ptr);
+  }
+};
+
+// TODO(yukawa): Use template aliases when GCC 4.6 is retired.
+typedef unique_ptr<xcb_get_property_reply_t,
+                   FreeDeleter<xcb_get_property_reply_t>>
+    ScopedXcbGetPropertyReply;
+typedef unique_ptr<xcb_get_atom_name_reply_t,
+                   FreeDeleter<xcb_get_atom_name_reply_t>>
+    ScopedXcbGetAtomNameReply;
+typedef unique_ptr<xcb_intern_atom_reply_t,
+                   FreeDeleter<xcb_intern_atom_reply_t>>
+    ScopedXcbInternAtomReply;
+typedef unique_ptr<xcb_xfixes_query_version_reply_t,
+                   FreeDeleter<xcb_xfixes_query_version_reply_t>>
+    ScopedXcbXFixesQueqyVersionReply;
 
 struct XcbAtoms {
   xcb_atom_t mozc_selection_monitor;
@@ -208,7 +231,7 @@ class SelectionMonitorServer {
     *atom = XCB_NONE;
     xcb_intern_atom_cookie_t cookie =
         ::xcb_intern_atom(connection_, false, name.size(), name.c_str());
-    scoped_ptr_malloc<xcb_intern_atom_reply_t> reply(
+    ScopedXcbInternAtomReply reply(
         ::xcb_intern_atom_reply(connection_, cookie, 0));
     if (reply.get() == NULL) {
       LOG(ERROR) << "xcb_intern_atom_reply returned NULL reply.";
@@ -244,7 +267,7 @@ class SelectionMonitorServer {
             XCB_XFIXES_MAJOR_VERSION,
             XCB_XFIXES_MINOR_VERSION);
     ScopedXcbGenericError xcb_error;
-    scoped_ptr_malloc<xcb_xfixes_query_version_reply_t> xfixes_query(
+    ScopedXcbXFixesQueqyVersionReply xfixes_query(
         ::xcb_xfixes_query_version_reply(
             connection_, xfixes_query_cookie, xcb_error.mutable_get()));
     if (xcb_error.get() != NULL) {
@@ -275,7 +298,7 @@ class SelectionMonitorServer {
     const xcb_get_atom_name_cookie_t cookie = ::xcb_get_atom_name(
         connection_, atom);
     ScopedXcbGenericError xcb_error;
-    scoped_ptr_malloc<xcb_get_atom_name_reply_t> reply(
+    ScopedXcbGetAtomNameReply reply(
         ::xcb_get_atom_name_reply(
             connection_, cookie, xcb_error.mutable_get()));
     if (xcb_error.get() != NULL) {
@@ -284,7 +307,7 @@ class SelectionMonitorServer {
       return "";
     }
     if (reply.get() == NULL) {
-      LOG(ERROR) << "reply is NULL";
+      VLOG(2) << "reply is NULL";
       return "";
     }
 
@@ -308,10 +331,10 @@ class SelectionMonitorServer {
                              property_atom,
                              property_type_atom,
                              0, 0);
-      scoped_ptr_malloc<xcb_get_property_reply_t> reply(
+      ScopedXcbGetPropertyReply reply(
           ::xcb_get_property_reply(connection_, cookie, 0));
       if (reply.get() == NULL) {
-        LOG(ERROR) << "reply is NULL";
+        VLOG(2) << "reply is NULL";
         return false;
       }
       if (reply->type == XCB_NONE) {
@@ -355,10 +378,10 @@ class SelectionMonitorServer {
                              property_type_atom,
                              byte_offset,
                              max_bytes);
-      scoped_ptr_malloc<xcb_get_property_reply_t> reply(
+      ScopedXcbGetPropertyReply reply(
           ::xcb_get_property_reply(connection_, cookie, 0));
       if (reply.get() == NULL) {
-        LOG(ERROR) << "reply is NULL";
+        VLOG(2) << "reply is NULL";
         return false;
       }
       if (reply->format != element_bit_size) {
@@ -385,10 +408,10 @@ class SelectionMonitorServer {
                            property_atom,
                            XCB_ATOM_CARDINAL,
                            0, sizeof(T) * 8);
-    scoped_ptr_malloc<xcb_get_property_reply_t> reply(
+    ScopedXcbGetPropertyReply reply(
         ::xcb_get_property_reply(connection_, cookie, 0));
     if (reply.get() == NULL) {
-      LOG(ERROR) << "reply is NULL";
+      VLOG(2) << "reply is NULL";
       return false;
     }
 

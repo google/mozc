@@ -105,9 +105,9 @@ class LogStreamImpl {
   void Open(const string &filename) {
     stream_.reset(new OutputFileStream(filename.c_str(), ios::app));
     CHECK(stream_.get());
-#ifndef OS_WIN
+#if !defined(OS_WIN) && !defined(__native_client__)
     ::chmod(filename.c_str(), 0600);
-#endif
+#endif  // !OS_WIN && !__native_client_
   }
 
   scoped_ptr<ostream> stream_;

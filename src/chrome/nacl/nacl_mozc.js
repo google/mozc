@@ -30,8 +30,6 @@
 /**
  * @fileoverview This file contains NaclMozc class implementation.
  *
- * TODO(horo): Write tests of nacl_mozc.js.
- *
  */
 
 'use strict';
@@ -40,243 +38,6 @@
  * Namespace for this extension.
  */
 var mozc = window.mozc || {};
-
-/**
- * Special key mapping table.
- * @const
- * @type {!Object.<string, string>}
- * @private
- */
-mozc.SPECIAL_KEY_MAP_ = {
-  'Backspace': 'BACKSPACE',
-  'Tab': 'TAB',
-  'Enter': 'ENTER',
-  'Esc': 'ESCAPE',
-  ' ': 'SPACE',
-  'PageUp': 'PAGE_UP',
-  'PageDown': 'PAGE_DOWN',
-  'End': 'END',
-  'Home': 'HOME',
-  'Left': 'LEFT',
-  'Up': 'UP',
-  'Right': 'RIGHT',
-  'Down': 'DOWN',
-  'Insert': 'INSERT',
-  'Delete': 'DEL',
-  'HistoryBack': 'F1',
-  'HistoryForward': 'F2',
-  'BrowserRefresh': 'F3',
-  'ChromeOSFullscreen': 'F4',
-  'ChromeOSSwitchWindow': 'F5',
-  'BrightnessDown': 'F6',
-  'BrightnessUp': 'F7',
-  'AudioVolumeMute': 'F8',
-  'AudioVolumeDown': 'F9',
-  'AudioVolumeUp': 'F10'
-};
-
-/**
- * Kana key mapping table for JP keyboard.
- * @const
- * @type {!Object.<string, Array.<string>>}
- * @private
- */
-mozc.KANA_MAP_JP_ = {
-  '1': ['\u306C', '\u306C'],  // 'ぬ', 'ぬ'
-  '!': ['\u306C', '\u306C'],  // 'ぬ', 'ぬ'
-  '2': ['\u3075', '\u3075'],  // 'ふ', 'ふ'
-  '"': ['\u3075', '\u3075'],  // 'ふ', 'ふ'
-  '3': ['\u3042', '\u3041'],  // 'あ', 'ぁ'
-  '#': ['\u3042', '\u3041'],  // 'あ', 'ぁ'
-  '4': ['\u3046', '\u3045'],  // 'う', 'ぅ'
-  '$': ['\u3046', '\u3045'],  // 'う', 'ぅ'
-  '5': ['\u3048', '\u3047'],  // 'え', 'ぇ'
-  '%': ['\u3048', '\u3047'],  // 'え', 'ぇ'
-  '6': ['\u304A', '\u3049'],  // 'お', 'ぉ'
-  '&': ['\u304A', '\u3049'],  // 'お', 'ぉ'
-  '7': ['\u3084', '\u3083'],  // 'や', 'ゃ'
-  '\'': ['\u3084', '\u3083'],  // 'や', 'ゃ'
-  '8': ['\u3086', '\u3085'],  // 'ゆ', 'ゅ'
-  '(': ['\u3086', '\u3085'],  // 'ゆ', 'ゅ'
-  '9': ['\u3088', '\u3087'],  // 'よ', 'ょ'
-  ')': ['\u3088', '\u3087'],  // 'よ', 'ょ'
-  '0': ['\u308F', '\u3092'],  // 'わ', 'を'
-  '-': ['\u307B', '\u307B'],  // 'ほ', 'ほ'
-  '=': ['\u307B', '\u307B'],  // 'ほ', 'ほ'
-  '^': ['\u3078', '\u3078'],  // 'へ', 'へ'
-  '~': ['\u3078', '\u3078'],  // 'へ', 'へ'
-  'q': ['\u305F', '\u305F'],  // 'た', 'た'
-  'Q': ['\u305F', '\u305F'],  // 'た', 'た'
-  'w': ['\u3066', '\u3066'],  // 'て', 'て'
-  'W': ['\u3066', '\u3066'],  // 'て', 'て'
-  'e': ['\u3044', '\u3043'],  // 'い', 'ぃ'
-  'E': ['\u3044', '\u3043'],  // 'い', 'ぃ'
-  'r': ['\u3059', '\u3059'],  // 'す', 'す'
-  'R': ['\u3059', '\u3059'],  // 'す', 'す'
-  't': ['\u304B', '\u304B'],  // 'か', 'か'
-  'T': ['\u304B', '\u304B'],  // 'か', 'か'
-  'y': ['\u3093', '\u3093'],  // 'ん', 'ん'
-  'Y': ['\u3093', '\u3093'],  // 'ん', 'ん'
-  'u': ['\u306A', '\u306A'],  // 'な', 'な'
-  'U': ['\u306A', '\u306A'],  // 'な', 'な'
-  'i': ['\u306B', '\u306B'],  // 'に', 'に'
-  'I': ['\u306B', '\u306B'],  // 'に', 'に'
-  'o': ['\u3089', '\u3089'],  // 'ら', 'ら'
-  'O': ['\u3089', '\u3089'],  // 'ら', 'ら'
-  'p': ['\u305B', '\u305B'],  // 'せ', 'せ'
-  'P': ['\u305B', '\u305B'],  // 'せ', 'せ'
-  '@': ['\u309B', '\u309B'],  // '゛', '゛'
-  '`': ['\u309B', '\u309B'],  // '゛', '゛'
-  '[': ['\u309C', '\u300C'],  // '゜', '「'
-  '{': ['\u309C', '\u300C'],  // '゜', '「'
-  'a': ['\u3061', '\u3061'],  // 'ち', 'ち'
-  'A': ['\u3061', '\u3061'],  // 'ち', 'ち'
-  's': ['\u3068', '\u3068'],  // 'と', 'と'
-  'S': ['\u3068', '\u3068'],  // 'と', 'と'
-  'd': ['\u3057', '\u3057'],  // 'し', 'し'
-  'D': ['\u3057', '\u3057'],  // 'し', 'し'
-  'f': ['\u306F', '\u306F'],  // 'は', 'は'
-  'F': ['\u306F', '\u306F'],  // 'は', 'は'
-  'g': ['\u304D', '\u304D'],  // 'き', 'き'
-  'G': ['\u304D', '\u304D'],  // 'き', 'き'
-  'h': ['\u304F', '\u304F'],  // 'く', 'く'
-  'H': ['\u304F', '\u304F'],  // 'く', 'く'
-  'j': ['\u307E', '\u307E'],  // 'ま', 'ま'
-  'J': ['\u307E', '\u307E'],  // 'ま', 'ま'
-  'k': ['\u306E', '\u306E'],  // 'の', 'の'
-  'K': ['\u306E', '\u306E'],  // 'の', 'の'
-  'l': ['\u308A', '\u308A'],  // 'り', 'り'
-  'L': ['\u308A', '\u308A'],  // 'り', 'り'
-  ';': ['\u308C', '\u308C'],  // 'れ', 'れ'
-  '+': ['\u308C', '\u308C'],  // 'れ', 'れ'
-  ':': ['\u3051', '\u3051'],  // 'け', 'け'
-  '*': ['\u3051', '\u3051'],  // 'け', 'け'
-  ']': ['\u3080', '\u300D'],  // 'む', '」'
-  '}': ['\u3080', '\u300D'],  // 'む', '」'
-  'z': ['\u3064', '\u3063'],  // 'つ', 'っ'
-  'Z': ['\u3064', '\u3063'],  // 'つ', 'っ'
-  'x': ['\u3055', '\u3055'],  // 'さ', 'さ'
-  'X': ['\u3055', '\u3055'],  // 'さ', 'さ'
-  'c': ['\u305D', '\u305D'],  // 'そ', 'そ'
-  'C': ['\u305D', '\u305D'],  // 'そ', 'そ'
-  'v': ['\u3072', '\u3072'],  // 'ひ', 'ひ'
-  'V': ['\u3072', '\u3072'],  // 'ひ', 'ひ'
-  'b': ['\u3053', '\u3053'],  // 'こ', 'こ'
-  'B': ['\u3053', '\u3053'],  // 'こ', 'こ'
-  'n': ['\u307F', '\u307F'],  // 'み', 'み'
-  'N': ['\u307F', '\u307F'],  // 'み', 'み'
-  'm': ['\u3082', '\u3082'],  // 'も', 'も'
-  'M': ['\u3082', '\u3082'],  // 'も', 'も'
-  ',': ['\u306D', '\u3001'],  // 'ね', '、'
-  '<': ['\u306D', '\u3001'],  // 'ね', '、'
-  '.': ['\u308B', '\u3002'],  // 'る', '。'
-  '>': ['\u308B', '\u3002'],  // 'る', '。'
-  '/': ['\u3081', '\u30FB'],  // 'め', '・'
-  '?': ['\u3081', '\u30FB']  // 'め', '・'
-};
-
-/**
- * Kana key mapping table for US keyboard.
- * @const
- * @type {!Object.<string, Array.<string>>}
- * @private
- */
-mozc.KANA_MAP_US_ = {
-  '`': ['\u308D', '\u308D'],  // 'ろ', 'ろ'
-  '~': ['\u308D', '\u308D'],  // 'ろ', 'ろ'
-  '1': ['\u306C', '\u306C'],  // 'ぬ', 'ぬ'
-  '!': ['\u306C', '\u306C'],  // 'ぬ', 'ぬ'
-  '2': ['\u3075', '\u3075'],  // 'ふ', 'ふ'
-  '@': ['\u3075', '\u3075'],  // 'ふ', 'ふ'
-  '3': ['\u3042', '\u3041'],  // 'あ', 'ぁ'
-  '#': ['\u3042', '\u3041'],  // 'あ', 'ぁ'
-  '4': ['\u3046', '\u3045'],  // 'う', 'ぅ'
-  '$': ['\u3046', '\u3045'],  // 'う', 'ぅ'
-  '5': ['\u3048', '\u3047'],  // 'え', 'ぇ'
-  '%': ['\u3048', '\u3047'],  // 'え', 'ぇ'
-  '6': ['\u304A', '\u3049'],  // 'お', 'ぉ'
-  '^': ['\u304A', '\u3049'],  // 'お', 'ぉ'
-  '7': ['\u3084', '\u3083'],  // 'や', 'ゃ'
-  '&': ['\u3084', '\u3083'],  // 'や', 'ゃ'
-  '8': ['\u3086', '\u3085'],  // 'ゆ', 'ゅ'
-  '*': ['\u3086', '\u3085'],  // 'ゆ', 'ゅ'
-  '9': ['\u3088', '\u3087'],  // 'よ', 'ょ'
-  '(': ['\u3088', '\u3087'],  // 'よ', 'ょ'
-  '0': ['\u308F', '\u3092'],  // 'わ', 'を'
-  ')': ['\u308F', '\u3092'],  // 'わ', 'を'
-  '-': ['\u307B', '\u30FC'],  // 'ほ', 'ー'
-  '_': ['\u307B', '\u30FC'],  // 'ほ', 'ー'
-  '=': ['\u3078', '\u3078'],  // 'へ', 'へ'
-  '+': ['\u3078', '\u3078'],  // 'へ', 'へ'
-  'q': ['\u305F', '\u305F'],  // 'た', 'た'
-  'Q': ['\u305F', '\u305F'],  // 'た', 'た'
-  'w': ['\u3066', '\u3066'],  // 'て', 'て'
-  'W': ['\u3066', '\u3066'],  // 'て', 'て'
-  'e': ['\u3044', '\u3043'],  // 'い', 'ぃ'
-  'E': ['\u3044', '\u3043'],  // 'い', 'ぃ'
-  'r': ['\u3059', '\u3059'],  // 'す', 'す'
-  'R': ['\u3059', '\u3059'],  // 'す', 'す'
-  't': ['\u304B', '\u304B'],  // 'か', 'か'
-  'T': ['\u304B', '\u304B'],  // 'か', 'か'
-  'y': ['\u3093', '\u3093'],  // 'ん', 'ん'
-  'Y': ['\u3093', '\u3093'],  // 'ん', 'ん'
-  'u': ['\u306A', '\u306A'],  // 'な', 'な'
-  'U': ['\u306A', '\u306A'],  // 'な', 'な'
-  'i': ['\u306B', '\u306B'],  // 'に', 'に'
-  'I': ['\u306B', '\u306B'],  // 'に', 'に'
-  'o': ['\u3089', '\u3089'],  // 'ら', 'ら'
-  'O': ['\u3089', '\u3089'],  // 'ら', 'ら'
-  'p': ['\u305B', '\u305B'],  // 'せ', 'せ'
-  'P': ['\u305B', '\u305B'],  // 'せ', 'せ'
-  '[': ['\u309B', '\u309B'],  // '゛', '゛'
-  '{': ['\u309B', '\u309B'],  // '゛', '゛'
-  ']': ['\u309C', '\u300C'],  // '゜', '「'
-  '}': ['\u309C', '\u300C'],  // '゜', '「'
-  '\\': ['\u3080', '\u300D'],  // 'む', '」'
-  '|': ['\u3080', '\u300D'],  // 'む', '」'
-  'a': ['\u3061', '\u3061'],  // 'ち', 'ち'
-  'A': ['\u3061', '\u3061'],  // 'ち', 'ち'
-  's': ['\u3068', '\u3068'],  // 'と', 'と'
-  'S': ['\u3068', '\u3068'],  // 'と', 'と'
-  'd': ['\u3057', '\u3057'],  // 'し', 'し'
-  'D': ['\u3057', '\u3057'],  // 'し', 'し'
-  'f': ['\u306F', '\u306F'],  // 'は', 'は'
-  'F': ['\u306F', '\u306F'],  // 'は', 'は'
-  'g': ['\u304D', '\u304D'],  // 'き', 'き'
-  'G': ['\u304D', '\u304D'],  // 'き', 'き'
-  'h': ['\u304F', '\u304F'],  // 'く', 'く'
-  'H': ['\u304F', '\u304F'],  // 'く', 'く'
-  'j': ['\u307E', '\u307E'],  // 'ま', 'ま'
-  'J': ['\u307E', '\u307E'],  // 'ま', 'ま'
-  'k': ['\u306E', '\u306E'],  // 'の', 'の'
-  'K': ['\u306E', '\u306E'],  // 'の', 'の'
-  'l': ['\u308A', '\u308A'],  // 'り', 'り'
-  'L': ['\u308A', '\u308A'],  // 'り', 'り'
-  ';': ['\u308C', '\u308C'],  // 'れ', 'れ'
-  ':': ['\u308C', '\u308C'],  // 'れ', 'れ'
-  '\'': ['\u3051', '\u3051'],  // 'け', 'け'
-  '\"': ['\u3051', '\u3051'],  // 'け', 'け'
-  'z': ['\u3064', '\u3063'],  // 'つ', 'っ'
-  'Z': ['\u3064', '\u3063'],  // 'つ', 'っ'
-  'x': ['\u3055', '\u3055'],  // 'さ', 'さ'
-  'X': ['\u3055', '\u3055'],  // 'さ', 'さ'
-  'c': ['\u305D', '\u305D'],  // 'そ', 'そ'
-  'C': ['\u305D', '\u305D'],  // 'そ', 'そ'
-  'v': ['\u3072', '\u3072'],  // 'ひ', 'ひ'
-  'V': ['\u3072', '\u3072'],  // 'ひ', 'ひ'
-  'b': ['\u3053', '\u3053'],  // 'こ', 'こ'
-  'B': ['\u3053', '\u3053'],  // 'こ', 'こ'
-  'n': ['\u307F', '\u307F'],  // 'み', 'み'
-  'N': ['\u307F', '\u307F'],  // 'み', 'み'
-  'm': ['\u3082', '\u3082'],  // 'も', 'も'
-  'M': ['\u3082', '\u3082'],  // 'も', 'も'
-  ',': ['\u306D', '\u3001'],  // 'ね', '、'
-  '<': ['\u306D', '\u3001'],  // 'ね', '、'
-  '.': ['\u308B', '\u3002'],  // 'る', '。'
-  '>': ['\u308B', '\u3002'],  // 'る', '。'
-  '/': ['\u3081', '\u30FB'],  // 'め', '・'
-  '?': ['\u3081', '\u30FB']  // 'め', '・'
-};
 
 /**
  * The candidate window size.
@@ -332,32 +93,32 @@ mozc.COMPOSITION_MENU_TABLE_ = [
   {
     menu: mozc.MenuItemId.MENU_COMPOSITION_HIRAGANA,
     mode: mozc.CompositionMode.HIRAGANA,
-    label: chrome.i18n.getMessage('compositionModeHiragana')
+    labelId: 'compositionModeHiragana'
   },
   {
     menu: mozc.MenuItemId.MENU_COMPOSITION_FULL_KATAKANA,
     mode: mozc.CompositionMode.FULL_KATAKANA,
-    label: chrome.i18n.getMessage('compositionModeFullKatakana')
+    labelId: 'compositionModeFullKatakana'
   },
   {
     menu: mozc.MenuItemId.MENU_COMPOSITION_FULL_ASCII,
     mode: mozc.CompositionMode.FULL_ASCII,
-    label: chrome.i18n.getMessage('compositionModeFullAscii')
+    labelId: 'compositionModeFullAscii'
   },
   {
     menu: mozc.MenuItemId.MENU_COMPOSITION_HALF_KATAKANA,
     mode: mozc.CompositionMode.HALF_KATAKANA,
-    label: chrome.i18n.getMessage('compositionModeHalfKatakana')
+    labelId: 'compositionModeHalfKatakana'
   },
   {
     menu: mozc.MenuItemId.MENU_COMPOSITION_HALF_ASCII,
     mode: mozc.CompositionMode.HALF_ASCII,
-    label: chrome.i18n.getMessage('compositionModeHalfAscii')
+    labelId: 'compositionModeHalfAscii'
   },
   {
     menu: mozc.MenuItemId.MENU_COMPOSITION_DIRECT,
     mode: mozc.CompositionMode.DIRECT,
-    label: chrome.i18n.getMessage('compositionModeDirect')
+    labelId: 'compositionModeDirect'
   }
 ];
 
@@ -464,6 +225,44 @@ mozc.NaclMozc = function(naclModule) {
   this.engine_id_ = '';
 
   /**
+   * Key event translator.
+   * @type {Object}
+   * @private
+   */
+  this.keyTranslator_ = new mozc.KeyTranslator();
+
+  /**
+   * callbackCommand_ stores the callback message which is recieved from NaCl
+   * module. This callback will be cancelled when the user presses the
+   * subsequent key. In the current implementation, if the subsequent key event
+   * also makes callback, the second callback will be called in the timimg of
+   * the first callback.
+   * @type {!Object.<string, *>}
+   * @private
+   */
+  this.callbackCommand_ = {};
+
+  /**
+   * The surrounding information.
+   * @type {Object}
+   * @private
+   */
+  this.surroundingInfo_ = null;
+
+  /**
+   * The build number of Chrome.
+   * See: http://www.chromium.org/releases/version-numbers
+   * @type {number}
+   * @private
+   */
+  this.chromeBuildNumber_ = 0;
+  var versionStrings =
+      window.navigator.appVersion.match(/Chrome\/(\d+)\.(\d+)\.(\d+)\.(\d+)/);
+  if (versionStrings) {
+    this.chromeBuildNumber_ = parseInt(versionStrings[3], 10);
+  }
+
+  /**
    * DOM Element of NaCl module.
    * @type {!HTMLElement}
    * @private
@@ -495,6 +294,15 @@ mozc.NaclMozc = function(naclModule) {
       this.wrapAsyncHandler_(this.onCandidateClicked_));
   chrome.input.ime.onMenuItemActivated.addListener(
       this.wrapAsyncHandler_(this.onMenuItemActivated_));
+  // chrome.input.ime.onSurroundingTextChanged is available from ChromeOS 27.
+  if (chrome.input.ime.onSurroundingTextChanged) {
+    chrome.input.ime.onSurroundingTextChanged.addListener(
+        this.wrapAsyncHandler_(this.onSurroundingTextChanged_));
+  }
+  // chrome.input.ime.onReset is available from ChromeOS 29.
+  if (chrome.input.ime.onReset) {
+    chrome.input.ime.onReset.addListener(this.wrapAsyncHandler_(this.onReset_));
+  }
 };
 
 /**
@@ -516,13 +324,7 @@ mozc.NaclMozc.prototype.callWhenInitialized = function(callback) {
  *     from NaCl module.
  */
 mozc.NaclMozc.prototype.sendReload = function(opt_callback) {
-  this.postMozcCommand_(
-      {'input': {'type': 'RELOAD'}},
-      opt_callback ?
-          (function(callback, response) {
-            callback(response);
-          }).bind(this, opt_callback) :
-          undefined);
+  this.postMozcCommand_({'input': {'type': 'RELOAD'}}, opt_callback);
 };
 
 /**
@@ -531,13 +333,7 @@ mozc.NaclMozc.prototype.sendReload = function(opt_callback) {
  *     from NaCl module.
  */
 mozc.NaclMozc.prototype.getConfig = function(opt_callback) {
-  this.postMozcCommand_(
-      {'input': {'type': 'GET_CONFIG'}},
-      opt_callback ?
-          (function(callback, response) {
-            callback(response);
-          }).bind(this, opt_callback) :
-          undefined);
+  this.postMozcCommand_({'input': {'type': 'GET_CONFIG'}}, opt_callback);
 };
 
 /**
@@ -550,13 +346,60 @@ mozc.NaclMozc.prototype.setConfig = function(config, opt_callback) {
   if (config['preedit_method']) {
     this.setPreeditMethod(config['preedit_method']);
   }
+  this.postMozcCommand_({'input': {'type': 'SET_CONFIG', 'config': config}},
+                        opt_callback);
+};
+
+/**
+ * Sends CLEAR_USER_HISTORY command to NaCl module.
+ * @param {!function(Object)=} opt_callback Function to be called with results
+ *     from NaCl module.
+ */
+mozc.NaclMozc.prototype.clearUserHistory = function(opt_callback) {
+  this.postMozcCommand_({'input': {'type': 'CLEAR_USER_HISTORY'}},
+                        opt_callback);
+};
+
+/**
+ * Sends CLEAR_USER_PREDICTION command to NaCl module.
+ * @param {!function(Object)=} opt_callback Function to be called with results
+ *     from NaCl module.
+ */
+mozc.NaclMozc.prototype.clearUserPrediction = function(opt_callback) {
+  this.postMozcCommand_({'input': {'type': 'CLEAR_USER_PREDICTION'}},
+                        opt_callback);
+};
+
+/**
+ * Sends START_CLOUD_SYNC command to NaCl module.
+ * @param {!function(Object)=} opt_callback Function to be called with results
+ *     from NaCl module.
+ */
+mozc.NaclMozc.prototype.startCloudSync = function(opt_callback) {
+  this.postMozcCommand_({'input': {'type': 'START_CLOUD_SYNC'}},
+                        opt_callback);
+};
+
+/**
+ * Sends GET_CLOUD_SYNC_STATUS command to NaCl module.
+ * @param {!function(Object)=} opt_callback Function to be called with results
+ *     from NaCl module.
+ */
+mozc.NaclMozc.prototype.getCloudSyncStatus = function(opt_callback) {
+  this.postMozcCommand_({'input': {'type': 'GET_CLOUD_SYNC_STATUS'}},
+                        opt_callback);
+};
+
+/**
+ * Sends ADD_AUTH_CODE command to NaCl module.
+ * @param {!Object} authInfo Authorization information for Sync.
+ * @param {!function(Object)=} opt_callback Function to be called with results
+ *     from NaCl module.
+ */
+mozc.NaclMozc.prototype.addAuthCode = function(authInfo, opt_callback) {
   this.postMozcCommand_(
-      {'input': {'type': 'SET_CONFIG', 'config': config}},
-      opt_callback ?
-          (function(callback, response) {
-            callback(response);
-          }).bind(this, opt_callback) :
-          undefined);
+      {'input': {'type': 'ADD_AUTH_CODE', 'auth_code': authInfo}},
+      opt_callback);
 };
 
 /**
@@ -594,6 +437,53 @@ mozc.NaclMozc.prototype.sendUserDictionaryCommand = function(command,
           callback(response['output']['user_dictionary_command_status']);
         }).bind(this, opt_callback) :
         undefined);
+};
+
+/**
+ * Gets the version information of NaCl Mozc module.
+ * @param {!function(Object)} callback Function to be called with results
+ *     from NaCl module.
+ */
+mozc.NaclMozc.prototype.getVersionInfo = function(callback) {
+  this.postNaclMozcEvent_({'type': 'GetVersionInfo'}, callback);
+};
+
+/**
+ * Sends callback command to NaCl module.
+ * @param {!function(Object)=} opt_callback Function to be called with results
+ *     from NaCl module.
+ * @private
+ */
+mozc.NaclMozc.prototype.sendCallbackCommand_ = function(opt_callback) {
+  if (!this.sessionID_) {
+    console.error('Session has not been created.');
+    return;
+  }
+  if (!this.callbackCommand_['session_command']) {
+    return;
+  }
+  var command = this.callbackCommand_['session_command'];
+  if (command['type'] == 'CONVERT_REVERSE' && this.surroundingInfo_) {
+    if (this.surroundingInfo_['focus'] < this.surroundingInfo_['anchor']) {
+      command['text'] = this.surroundingInfo_['text'].substring(
+                            this.surroundingInfo_['focus'],
+                            this.surroundingInfo_['anchor']);
+    } else {
+      command['text'] = this.surroundingInfo_['text'].substring(
+                            this.surroundingInfo_['anchor'],
+                            this.surroundingInfo_['focus']);
+    }
+  }
+  this.callbackCommand_ = {};
+  this.postMozcCommand_(
+      {
+        'input': {
+          'type': 'SEND_COMMAND',
+          'id': this.sessionID_,
+          'command': command
+        }
+      },
+      opt_callback);
 };
 
 /**
@@ -695,16 +585,43 @@ mozc.NaclMozc.prototype.outputResponse_ = function(mozcCommand) {
   if (!mozcCommand || !mozcCommand['output']) {
     return;
   }
-  this.updatePreedit_(mozcCommand['output']['preedit'] || null);
-  this.commitResult_(mozcCommand['output']['result'] || null);
-  this.updateCandidates_(mozcCommand['output']['candidates'] || null);
-  if (mozcCommand['output']['mode']) {
-    var new_mode = mozcCommand['output']['mode'];
-    if (this.compositionMode_ != new_mode) {
-      this.compositionMode_ = new_mode;
-      this.updateMenuItems_();
+  var outputFinction = (function(mozcCommand) {
+    this.updatePreedit_(mozcCommand['output']['preedit'] || null);
+    this.commitResult_(mozcCommand['output']['result'] || null);
+    this.updateCandidates_(mozcCommand['output']['candidates'] || null);
+    if (mozcCommand['output']['mode']) {
+      var new_mode = mozcCommand['output']['mode'];
+      if (this.compositionMode_ != new_mode) {
+        this.compositionMode_ = new_mode;
+        this.updateMenuItems_();
+      }
+    }
+    if (mozcCommand['output']['callback']) {
+      this.callbackCommand_ = mozcCommand['output']['callback'];
+      if (this.callbackCommand_['delay_millisec']) {
+        setTimeout(
+            this.sendCallbackCommand_.bind(
+                this,
+                this.outputResponse_.bind(this)),
+            this.callbackCommand_['delay_millisec']);
+      } else {
+        this.sendCallbackCommand_(this.outputResponse_.bind(this));
+      }
+    }
+  }).bind(this, mozcCommand);
+  if (mozcCommand['output']['deletion_range']) {
+    // chrome.input.ime.deleteSurroundingText is available from ChromeOS 27.
+    if (chrome.input.ime.deleteSurroundingText) {
+      chrome.input.ime.deleteSurroundingText({
+          'engineID': this.engine_id_,
+          'contextID': this.context_.contextID,
+          'offset': mozcCommand['output']['deletion_range']['offset'],
+          'length': mozcCommand['output']['deletion_range']['length']},
+          outputFinction);
+      return;
     }
   }
+  outputFinction();
 };
 
 /**
@@ -727,7 +644,7 @@ mozc.NaclMozc.prototype.updatePreedit_ = function(mozcPreedit) {
   for (var i = 0; i < mozcPreedit['segment']['length']; ++i) {
     var segment = {
       'start': preeditString.length,
-      'end': preeditString.length + mozcPreedit['segment'][i]['value']['length']
+      'end': preeditString.length + mozcPreedit['segment'][i]['value_length']
     };
     if (mozcPreedit['segment'][i]['annotation'] == 'UNDERLINE') {
       segment.style = 'underline';
@@ -771,6 +688,15 @@ mozc.NaclMozc.prototype.updateCandidateWindowProperties_ =
                        'auxiliaryText',
                        'visible'];
   var changed = false;
+
+  if (this.chromeBuildNumber_ >= 1492) {
+    // Chrome before this patch, setCandidateWindowProperties does not support
+    // windowPosition. https://chromiumcodereview.appspot.com/14054009/
+    // TODO(horo): Remove this hack and add 'windowPosition' in the definition
+    // line of propertyNames when Chrome 28 become stable.
+    propertyNames.push('windowPosition');
+  }
+
   for (var i = 0; i < propertyNames.length; ++i) {
     var name = propertyNames[i];
     if (this.candidateWindowProperties_[name] != properties[name]) {
@@ -788,7 +714,6 @@ mozc.NaclMozc.prototype.updateCandidateWindowProperties_ =
 
 /**
  * Checks two objects are the same objects.
- * TODO(horo): Write unit test.
  * @param {Object} object1 The first object to compare.
  * @param {Object} object2 The second object to compare.
  * @return {boolean} Whether object1 and object2 are the same objects.
@@ -841,7 +766,7 @@ mozc.NaclMozc.prototype.updateCandidates_ = function(mozcCandidates) {
     return;
   }
 
-  var focusedID = 0;
+  var focusedID = null;
   var newCandidates = [];
   var candidatesIdMap = {};
   for (var i = 0; i < mozcCandidates['candidate']['length']; ++i) {
@@ -882,9 +807,21 @@ mozc.NaclMozc.prototype.updateCandidates_ = function(mozcCandidates) {
     this.candidates_ = newCandidates;
   }
 
+  if (this.chromeBuildNumber_ < 1490 && focusedID == null) {
+    // https://src.chromium.org/viewvc/chrome?revision=196321&view=revision
+    // Chrome before this patch, cursorVisible = false doesn't work correctly.
+    // So we set candidateID = 0 and cursorVisible = true.
+    // TODO(horo): Remove this hack when Chrome 28 become stable.
+    focusedID = 0;
+  }
+
+  // If focusedID is null we don't need to call setCursorPosition. But Chrome
+  // does not update candidates if we don't call setCursorPosition.
+  // TODO(horo): Don't call setCursorPosition if focusedID is null after the bug
+  // will be fixed. http://crbug.com/234868
   chrome.input.ime.setCursorPosition({
     'contextID': this.context_.contextID,
-    'candidateID': focusedID});
+    'candidateID': (focusedID != null) ? focusedID : 0});
 
   var auxiliaryText = '';
   if (mozcCandidates['footer']) {
@@ -908,13 +845,19 @@ mozc.NaclMozc.prototype.updateCandidates_ = function(mozcCandidates) {
     pageSize = Math.min(pageSize,
                         mozcCandidates['candidate']['length']);
   }
+
+  var windowPosition = (mozcCandidates['category'] == 'SUGGESTION' ||
+                        mozcCandidates['category'] == 'PREDICTION') ?
+                       'composition' : 'cursor';
+
   this.updateCandidateWindowProperties_({
     'visible': true,
-    'cursorVisible': true,
+    'cursorVisible': (focusedID != null),
     'vertical': true,
     'pageSize': pageSize,
     'auxiliaryTextVisible': (auxiliaryText.length != 0),
-    'auxiliaryText': auxiliaryText});
+    'auxiliaryText': auxiliaryText,
+    'windowPosition': windowPosition});
 };
 
 /**
@@ -968,7 +911,14 @@ mozc.NaclMozc.prototype.onDeactivated_ = function(engineID) {
 mozc.NaclMozc.prototype.onFocus_ = function(context) {
   this.context_ = context;
   this.postMozcCommand_(
-      {'input': {'type': 'CREATE_SESSION'}},
+      {
+        'input': {
+          'type': 'CREATE_SESSION',
+          'capability': {
+            'text_deletion': 'DELETE_PRECEDING_TEXT'
+          }
+        }
+      },
       (function(response) {
         this.sessionID_ = response['output']['id'];
       }).bind(this));
@@ -1001,6 +951,7 @@ mozc.NaclMozc.prototype.onInputContextUpdate_ = function(context) {
   this.context_ = context;
 };
 
+
 /**
  * Callback method called when IME catches a new key event.
  * @param {string} engineID ID of the engine.
@@ -1016,74 +967,48 @@ mozc.NaclMozc.prototype.onKeyEventAsync_ = function(engineID, keyData) {
     chrome.input.ime.keyEventHandled(keyData.requestId, false);
     return;
   }
-  // Currently we only handle keydown events.
-  // TODO(horo): Handle keyup event of modifier keys.
-  //             See unix/ibus/key_event_handler.cc
-  // TODO(horo): Consider Kana input mode.
-  if (keyData.type != 'keydown') {
-    chrome.input.ime.keyEventHandled(keyData.requestId, false);
-    return;
-  }
 
-  // Do not disturb taking screenshot.
-  if (keyData.ctrlKey && keyData.key == 'ChromeOSSwitchWindow') {
-    chrome.input.ime.keyEventHandled(keyData.requestId, false);
-    return;
-  }
+  var keyEvent =
+      this.keyTranslator_.translateKeyEvent(keyData,
+                                            this.preeditMethod_ == 'KANA',
+                                            this.keyboardLayout_);
 
-  var keyEvent = {};
-  if (keyData.key.length == 1) {
-    var charCode = keyData.key.charCodeAt(0);
-    if (33 <= charCode && charCode <= 126) {
-      // [33, 126] means printable characters.
-      keyEvent['key_code'] = charCode;
-
-      if (this.preeditMethod_ == 'KANA') {
-        var kana = (this.keyboardLayout_ == 'jp') ?
-                    mozc.KANA_MAP_JP_[keyData.key] :
-                    mozc.KANA_MAP_US_[keyData.key];
-        if (keyData.code == 'IntlYen') {
-          kana = ['\u30FC', '\u30FC'];  // 'ー', 'ー'
-        } else if (keyData.code == 'IntlRo') {
-          kana = ['\u308D', '\u308D'];  // 'ろ', 'ろ'
-        }
-        if (kana != undefined) {
-          keyEvent['key_string'] = keyData.shiftKey ?
-                                   kana[1] : kana[0];
-        }
-      }
-    }
-  }
-  if (mozc.SPECIAL_KEY_MAP_[keyData.key] != undefined) {
-    keyEvent['special_key'] = mozc.SPECIAL_KEY_MAP_[keyData.key];
-  }
-  if ((keyEvent['key_code'] == undefined) &&
-      (keyEvent['special_key'] == undefined)) {
-    chrome.input.ime.keyEventHandled(keyData.requestId, false);
-    return;
-  }
-
-  var modifiersKey = [];
-  if (keyData.altKey) {
-    modifiersKey.push('ALT');
-  }
-  if (keyData.ctrlKey) {
-    modifiersKey.push('CTRL');
-  }
-  if (keyData.shiftKey) {
-    if (keyEvent['special_key'] != undefined) {
-      modifiersKey.push('SHIFT');
-    }
-  }
-  if (modifiersKey.length) {
-    keyEvent['modifier_keys'] = modifiersKey;
-  }
-
-  // TODO(horo): mode switching key handling
-  keyEvent['mode'] = this.compositionMode_;
   if (this.compositionMode_ == 'DIRECT') {
+    // TODO(horo): Support custom keymap table.
+    if (keyEvent['special_key'] == 'HANKAKU' ||
+        keyEvent['special_key'] == 'HENKAN') {
+      chrome.input.ime.keyEventHandled(keyData.requestId, true);
+      this.switchCompositionMode_(mozc.CompositionMode.HIRAGANA);
+      this.updateMenuItems_();
+    } else {
+      chrome.input.ime.keyEventHandled(keyData.requestId, false);
+    }
+    return;
+  }
+
+  if (keyEvent['key_code'] == undefined &&
+      keyEvent['special_key'] == undefined &&
+      keyEvent['modifier_keys'] == undefined) {
     chrome.input.ime.keyEventHandled(keyData.requestId, false);
     return;
+  }
+
+  // Cancels the callback request.
+  this.callbackCommand_ = {};
+
+  keyEvent['mode'] = this.compositionMode_;
+
+  var context = {};
+  if (this.surroundingInfo_) {
+    context['preceding_text'] =
+        this.surroundingInfo_['text'].substring(
+            0,
+            Math.min(this.surroundingInfo_['focus'],
+                     this.surroundingInfo_['anchor']));
+    context['following_text'] =
+        this.surroundingInfo_['text'].substring(
+            Math.max(this.surroundingInfo_['focus'],
+                     this.surroundingInfo_['anchor']));
   }
 
   this.postMozcCommand_(
@@ -1091,7 +1016,8 @@ mozc.NaclMozc.prototype.onKeyEventAsync_ = function(engineID, keyData) {
         'input': {
           'type': 'SEND_KEY',
           'id': this.sessionID_,
-          'key': keyEvent
+          'key': keyEvent,
+          'context': context
         }
       },
       (function(requestId, response) {
@@ -1141,6 +1067,41 @@ mozc.NaclMozc.prototype.onMenuItemActivated_ = function(engineID, name) {
     }
   }
   console.error('Menu item ' + name + ' is not supported.');
+};
+
+/**
+ * Callback method called the editable string around caret is changed or when
+ * the caret position is moved. The text length is limited to 100 characters for
+ * each back and forth direction.
+ * @param {string} engineID ID of the engine.
+ * @param {!Object} info The surrounding information.
+ * @private
+ */
+mozc.NaclMozc.prototype.onSurroundingTextChanged_ = function(engineID, info) {
+  this.surroundingInfo_ = info;
+};
+
+/**
+ * Callback method called when Chrome terminates ongoing text input session.
+ * @param {string} engineID ID of the engine.
+ * @private
+ */
+mozc.NaclMozc.prototype.onReset_ = function(engineID) {
+  if (!this.sessionID_) {
+    console.error('Session has not been created.');
+    return;
+  }
+  this.postMozcCommand_(
+      {
+        'input': {
+          'type': 'SEND_COMMAND',
+          'id': this.sessionID_,
+          'command': {
+            'type': 'RESET_CONTEXT'
+          }
+        }
+      },
+      this.outputResponse_.bind(this));
 };
 
 /**
@@ -1209,7 +1170,7 @@ mozc.NaclMozc.prototype.updateMenuItems_ = function() {
   for (var i = 0; i < mozc.COMPOSITION_MENU_TABLE_.length; ++i) {
     menuItems.push({
       'id': mozc.COMPOSITION_MENU_TABLE_[i].menu,
-      'label': mozc.COMPOSITION_MENU_TABLE_[i].label,
+      'label': chrome.i18n.getMessage(mozc.COMPOSITION_MENU_TABLE_[i].labelId),
       'checked': this.compositionMode_ == mozc.COMPOSITION_MENU_TABLE_[i].mode,
       'enabled': true,
       'visible': true
@@ -1220,6 +1181,32 @@ mozc.NaclMozc.prototype.updateMenuItems_ = function() {
     engineID: this.engine_id_,
     'items': menuItems
   });
+};
+
+/**
+ * Calls chrome.identity.getAuthToken and returns the result to NaCl module.
+ * This method is called from NaCl via NaclJsProxy.
+ * @param {Object} args arguments which are used to call getAuthToken.
+ * @private
+ */
+mozc.NaclMozc.prototype.jsCallGetAuthToken_ = function(args) {
+  if (!chrome.identity ||
+      !chrome.identity.getAuthToken) {
+    // chrome.identity.getAuthToken is available from ChromeOS 29.
+    // See: https://code.google.com/p/chromium/issues/detail?id=233250
+    this.naclModule_['postMessage'](JSON.stringify({
+      'jscall': 'GetAuthToken'
+    }));
+    return;
+  }
+  chrome.identity.getAuthToken(
+      {interactive: !!args['interactive']},
+      (function(token) {
+        this.naclModule_['postMessage'](JSON.stringify({
+          'jscall': 'GetAuthToken',
+          'access_token': token
+        }));
+      }).bind(this));
 };
 
 /**
@@ -1254,6 +1241,12 @@ mozc.NaclMozc.prototype.onModuleMessage_ = function(message) {
     }
     this.executeWatingEventHandlers_();
     return;
+  }
+  if (mozcResponse['jscall']) {
+    if (mozcResponse['jscall'] == 'GetAuthToken') {
+      this.jsCallGetAuthToken_(mozcResponse['args']);
+      return;
+    }
   }
 
   var callback = this.naclMessageCallbacks_[mozcResponse['id']];
@@ -1296,9 +1289,11 @@ mozc.NaclMozc.prototype.onModuleError_ = function() {
 /**
  * New option page.
  * @param {!HTMLDocument} domDocument Document object of the option page.
- * @private
+ * @param {!Object} consoleObject Console object of the option page.
+ * @return {!mozc.OptionPage} Option page object.
  */
-mozc.NaclMozc.prototype.newOptionPage_ = function(domDocument) {
-  var optionPage = new mozc.OptionPage(this, domDocument);
+mozc.NaclMozc.prototype.newOptionPage = function(domDocument, consoleObject) {
+  var optionPage = new mozc.OptionPage(this, domDocument, consoleObject);
   optionPage.initialize();
+  return optionPage;
 };

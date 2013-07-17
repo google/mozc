@@ -29,7 +29,7 @@
 
 package org.mozc.android.inputmethod.japanese.preference;
 
-import org.mozc.android.inputmethod.japanese.ViewManager.LayoutAdjustment;
+import org.mozc.android.inputmethod.japanese.ViewManagerInterface.LayoutAdjustment;
 import org.mozc.android.inputmethod.japanese.preference.ClientSidePreference.InputStyle;
 import org.mozc.android.inputmethod.japanese.preference.ClientSidePreference.KeyboardLayout;
 import org.mozc.android.inputmethod.japanese.testing.MozcPreferenceUtil;
@@ -104,7 +104,7 @@ public class ClientSidePreferenceTest extends InstrumentationTestCase {
         LANDSCAPE_LAYOUT_ADJUSTMENT.name());
 
     MozcPreferenceUtil.updateSharedPreference(
-        sharedPreferences, "pref_skin_type_key", SkinType.BLUE_LIGHTGRAY.name());
+        sharedPreferences, PreferenceUtil.PREF_SKIN_TYPE, SkinType.BLUE_LIGHTGRAY.name());
 
     class TestData extends Parameter {
       final int orientation;
@@ -226,13 +226,13 @@ public class ClientSidePreferenceTest extends InstrumentationTestCase {
     editor.putString(key2, "DELTA");
     editor.commit();
     assertEquals(TestGetEnum.BETA,
-        ClientSidePreference.getEnum(sharedPreferences, key1, TestGetEnum.class,
-                                     TestGetEnum.GAMMA, TestGetEnum.BETA));
+                 PreferenceUtil.getEnum(sharedPreferences, key1, TestGetEnum.class,
+                                        TestGetEnum.GAMMA, TestGetEnum.BETA));
     assertEquals(TestGetEnum.GAMMA,
-        ClientSidePreference.getEnum(sharedPreferences, key1, TestGetEnum.class,
-                                     TestGetEnum.GAMMA));
+                 PreferenceUtil.getEnum(sharedPreferences, key1, TestGetEnum.class,
+                                        TestGetEnum.GAMMA));
     assertEquals(TestGetEnum.DELTA,
-        ClientSidePreference.getEnum(sharedPreferences, key2, TestGetEnum.class,
-                                     TestGetEnum.GAMMA));
+                 PreferenceUtil.getEnum(sharedPreferences, key2, TestGetEnum.class,
+                                        TestGetEnum.GAMMA));
   }
 }

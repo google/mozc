@@ -5,6 +5,7 @@
 <script type="text/javascript" src="nacltest.js"></script>
 <script type="text/javascript" src="nacl_mozc_test_util.js"></script>
 <script type="text/javascript" src="nacl_mozc.js"></script>
+<script type="text/javascript" src="key_translator.js"></script>
 <title>Chrome NaCl Mozc exntension Test</title>
 </head>
 <body>
@@ -37,6 +38,7 @@ tester.addAsyncTest('OnKeyEventAsyncTest', function(status) {
 
       mozc.onKeyEventAsync_(ENGINE_ID, {
         requestId: ++requestId,
+        code: 'KeyA',
         key: 'a',
         type: 'keydown'
       });
@@ -52,6 +54,7 @@ tester.addAsyncTest('OnKeyEventAsyncTest', function(status) {
 
       mozc.onKeyEventAsync_(ENGINE_ID, {
         requestId: 2,
+        code: '',  // code is not set while typing function keys.
         key: 'BrightnessUp',  // 'F7'
         type: 'keydown'
       });
@@ -68,6 +71,7 @@ tester.addAsyncTest('OnKeyEventAsyncTest', function(status) {
 
       mozc.onKeyEventAsync_(ENGINE_ID, {
         requestId: ++requestId,
+        code: 'Enter',
         key: 'Enter',
         type: 'keydown'
       });

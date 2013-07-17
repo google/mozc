@@ -33,7 +33,8 @@
 #ifndef MOZC_SESSION_INTERNAL_IME_CONTEXT_H_
 #define MOZC_SESSION_INTERNAL_IME_CONTEXT_H_
 
-#include "base/base.h"
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 #include "session/commands.pb.h"
 
 namespace mozc {
@@ -112,6 +113,16 @@ class ImeContext {
     return &application_info_;
   }
 
+  // Note that this may not be the latest info: this is likely to be a snapshot
+  // of during the precomposition state and may not be updated during
+  // composition/conversion state.
+  const commands::Context &client_context() const {
+    return client_context_;
+  }
+  commands::Context *mutable_client_context() {
+    return &client_context_;
+  }
+
   const commands::Rectangle &composition_rectangle() const {
     return composition_rectangle_;
   }
@@ -160,8 +171,10 @@ class ImeContext {
 
   commands::ApplicationInfo application_info_;
 
+  commands::Context client_context_;
+
   // TODO(nona): remove these fields by moving the rectangle calculation logic
-  //   to the linux client.
+  //   to the Linux client.
   commands::Rectangle composition_rectangle_;
   commands::Rectangle caret_rectangle_;
 

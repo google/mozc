@@ -29,6 +29,8 @@
 
 #include "win32/base/keyboard.h"
 
+#include <memory>
+
 #include "base/base.h"
 #include "base/logging.h"
 
@@ -36,6 +38,8 @@ namespace mozc {
 namespace win32 {
 
 namespace {
+
+using std::unique_ptr;
 
 BYTE ParseVirtualKey(UINT combined_virtual_key) {
   const uint16 loword = LOWORD(combined_virtual_key);
@@ -203,7 +207,7 @@ class DefaultKeyboardInterface : public Win32KeyboardInterface {
 
     // Unfortunately, SendInput API requires LPINPUT (NOT const INPUT *).
     // This is why we make a temporary array with the same data here.
-    scoped_array<INPUT> input_array(new INPUT[inputs.size()]);
+    unique_ptr<INPUT[]> input_array(new INPUT[inputs.size()]);
     for (size_t i = 0; i < inputs.size(); ++i) {
       input_array[i] = inputs[i];
     }

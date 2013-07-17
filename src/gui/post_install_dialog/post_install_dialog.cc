@@ -34,7 +34,6 @@
 #endif
 
 #include <QtGui/QtGui>
-#include "base/base.h"
 #include "base/logging.h"
 #include "base/process.h"
 #include "base/run_level.h"

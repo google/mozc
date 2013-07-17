@@ -32,7 +32,7 @@
 
 #include <QtGui/QWidget>
 
-#include "base/base.h"
+#include "base/port.h"
 
 namespace mozc {
 namespace gui {

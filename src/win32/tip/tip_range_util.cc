@@ -35,13 +35,24 @@
 #include <atlbase_mozc.h>
 #include <atlcom.h>
 
-#include "base/scoped_ptr.h"
+#include <memory>
 
 namespace mozc {
 namespace win32 {
 namespace tsf {
+namespace {
 
 using ATL::CComPtr;
+using ATL::CComQIPtr;
+using ATL::CComVariant;
+using std::unique_ptr;
+
+// GUID_PROP_INPUTSCOPE
+GUID kGuidPropInputscope = {
+  0x1713dd5a, 0x68e7, 0x4a5b, {0x9a, 0xf6, 0x59, 0x2a, 0x59, 0x5c, 0x77, 0x8d}
+};
+
+}  // namespace
 
 HRESULT TipRangeUtil::SetSelection(
       ITfContext *context, TfEditCookie edit_cookie, ITfRange *range,
@@ -122,7 +133,7 @@ HRESULT TipRangeUtil::GetText(
   // Use a buffer on heap for longer size case.
   {
     const size_t kBufferSize = 1024;
-    scoped_array<wchar_t> buffer(new wchar_t[kBufferSize]);
+    unique_ptr<wchar_t[]> buffer(new wchar_t[kBufferSize]);
     while (true) {
       ULONG fetched = 0;
       const HRESULT result = range_view->GetText(
@@ -142,7 +153,51 @@ HRESULT TipRangeUtil::GetText(
   return S_OK;
 }
 
-// Checks whether or not |range_test| becomes a subset of |range_cover|.
+HRESULT TipRangeUtil::GetInputScopes(ITfRange *range,
+                                     TfEditCookie read_cookie,
+                                     vector<InputScope> *input_scopes) {
+  if (input_scopes == nullptr) {
+    return E_FAIL;
+  }
+  input_scopes->clear();
+
+  HRESULT result = S_OK;
+  CComPtr<ITfContext> context;
+  result = range->GetContext(&context);
+  if (FAILED(result)) {
+    return result;
+  }
+
+  CComPtr<ITfReadOnlyProperty> readonly_property;
+  result = context->GetAppProperty(kGuidPropInputscope, &readonly_property);
+  if (FAILED(result)) {
+    return result;
+  }
+  if (!readonly_property) {
+    return E_FAIL;
+  }
+  CComVariant variant;
+  result = readonly_property->GetValue(read_cookie, range, &variant);
+  if (FAILED(result)) {
+    return result;
+  }
+  if (variant.vt != VT_UNKNOWN) {
+    return S_OK;
+  }
+
+  CComQIPtr<ITfInputScope> input_scope = variant.punkVal;
+  InputScope *input_scopes_buffer = NULL;
+  UINT num_input_scopes = 0;
+  result = input_scope->GetInputScopes(&input_scopes_buffer, &num_input_scopes);
+  if (FAILED(result)) {
+    return result;
+  }
+  input_scopes->assign(input_scopes_buffer,
+                       input_scopes_buffer + num_input_scopes);
+  ::CoTaskMemFree(input_scopes_buffer);
+  return S_OK;
+}
+
 bool TipRangeUtil::IsRangeCovered(TfEditCookie edit_cookie,
                                   ITfRange* range_test,
                                   ITfRange* range_cover) {

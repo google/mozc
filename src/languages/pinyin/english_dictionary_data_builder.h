@@ -32,7 +32,9 @@
 #ifndef MOZC_LANGUAGES_PINYIN_ENGLISH_DICTIONARY_DATA_BUILDER_H_
 #define MOZC_LANGUAGES_PINYIN_ENGLISH_DICTIONARY_DATA_BUILDER_H_
 
-#include "base/base.h"
+#include <memory>
+
+#include "base/port.h"
 
 namespace mozc {
 namespace storage {
@@ -55,8 +57,8 @@ class EnglishDictionaryDataBuilder {
   void WriteToStream(ostream *output_stream) const;
 
  private:
-  scoped_ptr<mozc::storage::louds::LoudsTrieBuilder> builder_;
-  scoped_array<float> louds_id_to_priority_;
+  std::unique_ptr<mozc::storage::louds::LoudsTrieBuilder> builder_;
+  std::unique_ptr<float[]> louds_id_to_priority_;
   int words_num_;
 
   DISALLOW_COPY_AND_ASSIGN(EnglishDictionaryDataBuilder);

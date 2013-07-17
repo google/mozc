@@ -29,20 +29,47 @@
 
 #include "win32/tip/tip_thread_context.h"
 
-#include "win32/base/indicator_visibility_tracker.h"
+#include "base/win_util.h"
+#include "win32/tip/tip_input_mode_manager.h"
 
 namespace mozc {
 namespace win32 {
 namespace tsf {
 
+namespace {
+
+TipInputModeManager::Config GetConfig() {
+  TipInputModeManager::Config config;
+  config.use_global_mode = WinUtil::IsPerUserInputSettingsEnabled();
+  return config;
+}
+
+}  // namespace
+
+class TipThreadContext::InternalState {
+ public:
+  InternalState()
+      : input_mode_manager(GetConfig()),
+        focus_revision(0) {}
+  TipInputModeManager input_mode_manager;
+  int32 focus_revision;
+};
+
 TipThreadContext::TipThreadContext()
-    : indicator_visibility_tracker_(new IndicatorVisibilityTracker) {}
+    : state_(new InternalState) {}
 
 TipThreadContext::~TipThreadContext() {}
 
-IndicatorVisibilityTracker *
-TipThreadContext::GetIndicatorVisibilityTracker() {
-  return indicator_visibility_tracker_.get();
+TipInputModeManager *TipThreadContext::GetInputModeManager() {
+  return &state_->input_mode_manager;
+}
+
+int32 TipThreadContext::GetFocusRevision() const {
+  return state_->focus_revision;
+}
+
+void TipThreadContext::IncrementFocusRevision() {
+  ++state_->focus_revision;
 }
 
 }  // namespace tsf

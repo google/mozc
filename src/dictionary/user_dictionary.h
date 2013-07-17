@@ -72,10 +72,10 @@ class UserDictionary : public DictionaryInterface {
                               NodeAllocatorInterface *allocator) const;
 
   // Looks up a user comment from a pair of key and value.  When (key, value)
-  // doesn't exist in this dictionary or user comment is empty, the empty string
-  // is set to comment.
-  void LookupComment(StringPiece key, StringPiece value,
-                     string *comment) const;
+  // doesn't exist in this dictionary or user comment is empty, bool is
+  // returned and string is kept as-is.
+  virtual bool LookupComment(StringPiece key, StringPiece value,
+                             string *comment) const;
 
   // Load dictionary from UserDictionaryStorage.
   // mainly for unittesting

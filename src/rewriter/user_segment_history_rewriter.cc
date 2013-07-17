@@ -877,7 +877,8 @@ void UserSegmentHistoryRewriter::InsertTriggerKey(const Segment &segment) {
   DCHECK(storage_.get());
 
   KeyTriggerValue v;
-  COMPILE_ASSERT(sizeof(uint32) == sizeof(v), check_sizeof_KeyTriggerValue);
+  static_assert(sizeof(uint32) == sizeof(v),
+                "KeyTriggerValue must be 32-bit int size.");
 
   // TODO(taku): saving segment.candidate_size() might be too heavy and
   // increases the chance of hash collisions.

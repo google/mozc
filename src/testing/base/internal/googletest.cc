@@ -89,6 +89,7 @@ string GetTestTmpdir() {
 
 #else  // OS_WIN
 
+#ifndef MOZC_USE_PEPPER_FILE_IO
 // Get absolute path to this executable. Corresponds to argv[0] plus
 // directory information. E.g like "/spam/eggs/foo_unittest".
 string GetProgramPath() {
@@ -103,6 +104,7 @@ string GetProgramPath() {
   cwd_buf[PATH_MAX] = '\0';  // make sure it's terminated
   return FileUtil::JoinPath(cwd_buf, program_invocation_name);
 }
+#endif  // MOZC_USE_PEPPER_FILE_IO
 
 string GetTestSrcdir() {
   const string srcdir(kMozcDataDir);
@@ -118,18 +120,18 @@ string GetTestSrcdir() {
   return srcdir;
 }
 
+#ifndef MOZC_USE_PEPPER_FILE_IO
 string GetTestTmpdir() {
   const string tmpdir = GetProgramPath() + ".tmp";
 
-#ifndef MOZC_USE_PEPPER_FILE_IO
   // GetTestTmpdir is not supported in NaCl.
   // TODO(horo): Consider how to implement TestTmpdir in NaCl.
   if (access(tmpdir.c_str(), R_OK|X_OK) != 0) {
     CHECK(FileUtil::CreateDirectory(tmpdir));
   }
-#endif  // MOZC_USE_PEPPER_FILE_IO
   return tmpdir;
 }
+#endif  // MOZC_USE_PEPPER_FILE_IO
 #endif  // OS_WIN
 
 }  // namespace
@@ -139,7 +141,11 @@ void InitTestFlags() {
     FLAGS_test_srcdir = GetTestSrcdir();
   }
   if (FLAGS_test_tmpdir.empty()) {
+#ifndef MOZC_USE_PEPPER_FILE_IO
     FLAGS_test_tmpdir = GetTestTmpdir();
+#else  // MOZC_USE_PEPPER_FILE_IO
+    FLAGS_test_tmpdir = "/";
+#endif  // MOZC_USE_PEPPER_FILE_IO
   }
 }
 

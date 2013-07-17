@@ -36,7 +36,8 @@
 #include <QtGui/QSplitterHandle>
 #include <QtGui/QSplitter>
 
-#include "base/base.h"
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 #include "gui/dictionary_tool/ui_dictionary_tool.h"
 #include "dictionary/user_dictionary_importer.h"
 

@@ -35,7 +35,9 @@ import org.mozc.android.inputmethod.japanese.KeycodeConverter.KeyEventInterface;
 import com.google.protobuf.Message;
 
 import android.graphics.Canvas;
+import android.graphics.Paint;
 
+import org.easymock.Capture;
 import org.easymock.IArgumentMatcher;
 
 import java.util.Arrays;
@@ -45,6 +47,23 @@ import java.util.Arrays;
  *
  */
 public class MozcMatcher {
+
+  /**
+   * Capture for Paint, with deep copy.
+   *
+   * Capture holds only reference so it cannot be used for capturing the snapshot.
+   * This subclass hold copied instance instead.
+   */
+  public static class DeepCopyPaintCapture extends Capture<Paint> {
+    @Override
+    public void setValue(Paint value) {
+      // Don't user Paint(Paint) constructor, which doesn't copy the fields.
+      // This behavior is fixed new OS but older ones have this issue.
+      Paint newValue = new Paint();
+      newValue.set(value);
+      super.setValue(newValue);
+    }
+  }
 
   /**
    * Matcher implementation for protobuf's MessageBuilder.

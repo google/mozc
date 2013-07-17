@@ -37,10 +37,10 @@
 #include <wincrypt.h>
 #include <string>
 
-#include "base/base.h"
 #include "base/const.h"
 #include "base/file_util.h"
 #include "base/scoped_handle.h"
+#include "base/scoped_ptr.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "server/mozc_cache_service_resource.h"

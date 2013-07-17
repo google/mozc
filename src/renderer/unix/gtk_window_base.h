@@ -32,8 +32,9 @@
 
 #include <gtk/gtk.h>
 
-#include "base/base.h"
 #include "base/coordinates.h"
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 #include "renderer/unix/gtk_window_interface.h"
 #include "renderer/unix/gtk_wrapper_interface.h"
 

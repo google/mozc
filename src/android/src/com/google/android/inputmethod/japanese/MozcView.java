@@ -31,7 +31,7 @@ package org.mozc.android.inputmethod.japanese;
 
 import org.mozc.android.inputmethod.japanese.FeedbackManager.FeedbackEvent;
 import org.mozc.android.inputmethod.japanese.LayoutParamsAnimator.InterpolationListener;
-import org.mozc.android.inputmethod.japanese.ViewManager.LayoutAdjustment;
+import org.mozc.android.inputmethod.japanese.ViewManagerInterface.LayoutAdjustment;
 import org.mozc.android.inputmethod.japanese.emoji.EmojiProviderType;
 import org.mozc.android.inputmethod.japanese.keyboard.BackgroundDrawableFactory;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyEventHandler;
@@ -43,6 +43,8 @@ import org.mozc.android.inputmethod.japanese.ui.SideFrameStubProxy;
 import org.mozc.android.inputmethod.japanese.view.MozcDrawableFactory;
 import org.mozc.android.inputmethod.japanese.view.RoundRectKeyDrawable;
 import org.mozc.android.inputmethod.japanese.view.SkinType;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 
 import android.annotation.TargetApi;
 import android.content.Context;
@@ -75,7 +77,7 @@ import android.widget.LinearLayout;
  * It is expected that instance methods are used after inflation is done.
  *
  */
-public class MozcView extends LinearLayout {
+public class MozcView extends LinearLayout implements MemoryManageable {
 
   /**
    * Decides insets.
@@ -167,8 +169,8 @@ public class MozcView extends LinearLayout {
   }
 
   static class HeightLinearInterpolationListener implements InterpolationListener {
-    private final int fromHeight;
-    private final int toHeight;
+    @VisibleForTesting final int fromHeight;
+    @VisibleForTesting final int toHeight;
 
     public HeightLinearInterpolationListener(int fromHeight, int toHeight) {
       this.fromHeight = fromHeight;
@@ -235,7 +237,8 @@ public class MozcView extends LinearLayout {
   private static final float NARROW_MODE_BUTTON_BOTTOM_OFFSET = 3.0f;
   private static final InsetsCalculator insetsCalculator;
 
-  private final InOutAnimatedFrameLayout.VisibilityChangeListener onVisibilityChangeListener =
+  @VisibleForTesting
+  final InOutAnimatedFrameLayout.VisibilityChangeListener onVisibilityChangeListener =
       new InOutAnimatedFrameLayout.VisibilityChangeListener() {
         @Override
         public void onVisibilityChange(int oldvisibility, int newvisibility) {
@@ -249,21 +252,21 @@ public class MozcView extends LinearLayout {
 
   private MozcDrawableFactory mozcDrawableFactory = new MozcDrawableFactory(getResources());
 
-  private boolean fullscreenMode = false;
-  private boolean narrowMode = false;
+  @VisibleForTesting boolean fullscreenMode = false;
+  boolean narrowMode = false;
   private SkinType skinType = SkinType.ORANGE_LIGHTGRAY;
-  private LayoutAdjustment layoutAdjustment = LayoutAdjustment.FILL;
+  @VisibleForTesting LayoutAdjustment layoutAdjustment = LayoutAdjustment.FILL;
   private int inputFrameHeight = 0;
-  private int imeWindowHeight = 0;
-  private Animation candidateViewInAnimation;
-  private Animation candidateViewOutAnimation;
-  private Animation symbolInputViewInAnimation;
-  private Animation symbolInputViewOutAnimation;
-  private Animation dropShadowCandidateViewInAnimation;
-  private Animation dropShadowCandidateViewOutAnimation;
-  private Animation dropShadowSymbolInputViewInAnimation;
-  private Animation dropShadowSymbolInputViewOutAnimation;
-  private boolean isDropShadowExpanded = false;
+  @VisibleForTesting int imeWindowHeight = 0;
+  @VisibleForTesting Animation candidateViewInAnimation;
+  @VisibleForTesting Animation candidateViewOutAnimation;
+  @VisibleForTesting Animation symbolInputViewInAnimation;
+  @VisibleForTesting Animation symbolInputViewOutAnimation;
+  @VisibleForTesting Animation dropShadowCandidateViewInAnimation;
+  @VisibleForTesting Animation dropShadowCandidateViewOutAnimation;
+  @VisibleForTesting Animation dropShadowSymbolInputViewInAnimation;
+  @VisibleForTesting Animation dropShadowSymbolInputViewOutAnimation;
+  @VisibleForTesting boolean isDropShadowExpanded = false;
 
   static {
     // API Level 11 is Build.VERSION_CODES.HONEYCOMB.
@@ -464,6 +467,8 @@ public class MozcView extends LinearLayout {
   }
 
   public void setEmojiProviderType(EmojiProviderType emojiProviderType) {
+    Preconditions.checkNotNull(emojiProviderType);
+
     checkInflated();
     getSymbolInputView().setEmojiProviderType(emojiProviderType);
   }
@@ -989,5 +994,12 @@ public class MozcView extends LinearLayout {
 
   View getBottomBackground() {
     return findViewById(R.id.bottom_background);
+  }
+
+  @Override
+  public void trimMemory() {
+    getKeyboardView().trimMemory();
+    getCandidateView().trimMemory();
+    getSymbolInputView().trimMemory();
   }
 }

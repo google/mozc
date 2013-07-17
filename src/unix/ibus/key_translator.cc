@@ -32,8 +32,8 @@
 #include <map>
 #include <string>
 
-#include "base/base.h"
 #include "base/logging.h"
+#include "base/port.h"
 #include "unix/ibus/ibus_extra_keysyms.h"
 
 namespace {

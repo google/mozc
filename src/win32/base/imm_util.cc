@@ -37,6 +37,7 @@
 #include <msctf.h>
 #include <strsafe.h>
 
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -44,7 +45,6 @@
 #include "base/const.h"
 #include "base/logging.h"
 #include "base/scoped_handle.h"
-#include "base/scoped_ptr.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "base/win_util.h"
@@ -56,6 +56,9 @@
 namespace mozc {
 namespace win32 {
 namespace {
+
+using std::unique_ptr;
+
 // The registry key for the CUAS setting.
 // Note: We have the same values in base/win_util.cc
 // TODO(yukawa): Define these constants at the same place.
@@ -80,7 +83,7 @@ bool GetDefaultLayout(LAYOUTORTIPPROFILE *profile) {
   const UINT num_element = InputDll::enum_enabled_layout_or_tip()(
       nullptr, nullptr, nullptr, nullptr, 0);
 
-  scoped_array<LAYOUTORTIPPROFILE> buffer(new LAYOUTORTIPPROFILE[num_element]);
+  unique_ptr<LAYOUTORTIPPROFILE[]> buffer(new LAYOUTORTIPPROFILE[num_element]);
 
   const UINT num_copied = InputDll::enum_enabled_layout_or_tip()(
       nullptr, nullptr, nullptr, buffer.get(), num_element);

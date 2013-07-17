@@ -29,8 +29,11 @@
 
 #include "data_manager/packed/packed_data_manager.h"
 
+#include <memory>
+
 #include "base/logging.h"
 #include "base/mmap.h"
+#include "base/protobuf/coded_stream.h"
 #include "base/protobuf/gzip_stream.h"
 #include "base/protobuf/zero_copy_stream_impl.h"
 #include "converter/boundary_struct.h"
@@ -48,10 +51,15 @@ DEFINE_string(dataset,
               "",
               "The dataset tag of the POS data.");
 
+using std::unique_ptr;
+
 namespace mozc {
 namespace packed {
 namespace {
 const int kSystemDictionaryFormatVersion = 1;
+// Default value of the total bytes limit defined in protobuf library is 64MB.
+// Our big dictionary size is about 50MB. So we don't need to change it.
+const size_t kDefaultTotalBytesLimit = 64 << 20;
 
 class PackedPOSMatcher : public POSMatcher {
  public:
@@ -61,7 +69,7 @@ class PackedPOSMatcher : public POSMatcher {
   }
 };
 
-scoped_ptr<PackedDataManager> g_data_manager;
+unique_ptr<PackedDataManager> g_data_manager;
 
 }  // namespace
 
@@ -111,28 +119,28 @@ class PackedDataManager::Impl {
   };
   bool InitializeWithSystemDictionaryData();
 
-  scoped_array<UserPOS::POSToken> pos_token_;
-  scoped_array<UserPOS::ConjugationType> conjugation_array_;
-  scoped_array<uint16> rule_id_table_;
-  scoped_array<POSMatcher::Range *> range_tables_;
-  scoped_array<Range> range_table_items_;
-  scoped_array<BoundaryData> boundary_data_;
-  scoped_array<SuffixToken> suffix_tokens_;
-  scoped_array<ReadingCorrectionItem> reading_corrections_;
+  unique_ptr<UserPOS::POSToken[]> pos_token_;
+  unique_ptr<UserPOS::ConjugationType[]> conjugation_array_;
+  unique_ptr<uint16[]> rule_id_table_;
+  unique_ptr<POSMatcher::Range *[]> range_tables_;
+  unique_ptr<Range[]> range_table_items_;
+  unique_ptr<BoundaryData[]> boundary_data_;
+  unique_ptr<SuffixToken[]> suffix_tokens_;
+  unique_ptr<ReadingCorrectionItem[]> reading_corrections_;
   size_t compressed_l_size_;
   size_t compressed_r_size_;
-  scoped_array<uint16> compressed_lid_table_;
-  scoped_array<uint16> compressed_rid_table_;
-  scoped_array<EmbeddedDictionary::Value> symbol_data_values_;
+  unique_ptr<uint16[]> compressed_lid_table_;
+  unique_ptr<uint16[]> compressed_rid_table_;
+  unique_ptr<EmbeddedDictionary::Value[]> symbol_data_values_;
   size_t symbol_data_token_size_;
-  scoped_array<EmbeddedDictionary::Token> symbol_data_tokens_;
-  scoped_ptr<POSMatcher> pos_matcher_;
-  scoped_ptr<SystemDictionaryData> system_dictionary_data_;
+  unique_ptr<EmbeddedDictionary::Token[]> symbol_data_tokens_;
+  unique_ptr<POSMatcher> pos_matcher_;
+  unique_ptr<SystemDictionaryData> system_dictionary_data_;
 #ifndef NO_USAGE_REWRITER
-  scoped_array<ConjugationSuffix> base_conjugation_suffix_;
-  scoped_array<ConjugationSuffix> conjugation_suffix_data_;
-  scoped_array<int> conjugation_suffix_data_index_;
-  scoped_array<UsageDictItem> usage_data_value_;
+  unique_ptr<ConjugationSuffix[]> base_conjugation_suffix_;
+  unique_ptr<ConjugationSuffix[]> conjugation_suffix_data_;
+  unique_ptr<int[]> conjugation_suffix_data_index_;
+  unique_ptr<UsageDictItem[]> usage_data_value_;
 #endif  // NO_USAGE_REWRITER
 };
 
@@ -159,8 +167,11 @@ bool PackedDataManager::Impl::InitWithZippedData(
   protobuf::io::ArrayInputStream input(zipped_system_dictionary_data.data(),
                                        zipped_system_dictionary_data.size());
   protobuf::io::GzipInputStream gzip_stream(&input);
+  protobuf::io::CodedInputStream coded_stream(&gzip_stream);
+  // Disables the total bytes warning.
+  coded_stream.SetTotalBytesLimit(kDefaultTotalBytesLimit, -1);
   system_dictionary_data_.reset(new SystemDictionaryData);
-  if (!system_dictionary_data_->ParseFromZeroCopyStream(&gzip_stream)) {
+  if (!system_dictionary_data_->ParseFromCodedStream(&coded_stream)) {
     LOG(ERROR) << "System dictionary data protobuf format error!";
     return false;
   }
@@ -603,7 +614,7 @@ PackedDataManager *PackedDataManager::GetUserPosManager() {
     if (FLAGS_dataset.empty()) {
       LOG(FATAL) << "PackedDataManager::GetUserPosManager ERROR!";
     } else {
-      scoped_ptr<PackedDataManager> data_manager(new PackedDataManager);
+      unique_ptr<PackedDataManager> data_manager(new PackedDataManager);
       string buffer;
       {
         Mmap mmap;

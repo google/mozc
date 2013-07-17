@@ -34,11 +34,14 @@
 #endif
 
 #include <QtGui/QtGui>
-#include "base/base.h"
 #include "base/const.h"
 #include "base/crash_report_handler.h"
 #include "base/file_util.h"
+#include "base/flags.h"
 #include "base/logging.h"
+#ifdef OS_MACOSX
+#include "base/scoped_ptr.h"
+#endif
 #include "base/password_manager.h"
 #include "base/run_level.h"
 #include "base/util.h"

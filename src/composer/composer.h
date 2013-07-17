@@ -36,8 +36,9 @@
 #include <string>
 #include <vector>
 
-#include "base/base.h"
+#include "base/port.h"
 #include "base/protobuf/repeated_field.h"
+#include "base/scoped_ptr.h"
 #include "composer/internal/typing_corrector.h"
 #include "composer/internal/transliterators.h"
 #include "composer/type_corrected_query.h"
@@ -148,10 +149,6 @@ class Composer {
       const string &key,
       const string &preedit,
       const ProbableKeyEvents &probable_key_events);
-  void InsertCharacterPreeditAt(size_t pos, const string &input);
-  void InsertCharacterKeyAndPreeditAt(size_t pos,
-                                      const string &key,
-                                      const string &preedit);
   bool InsertCharacterKeyEvent(const commands::KeyEvent &key);
   void InsertCommandCharacter(const InternalCommand internal_command);
   void Delete();
@@ -164,11 +161,16 @@ class Composer {
   void MoveCursorToEnd();
   void MoveCursorTo(uint32 new_position);
 
-  // Gets raw input from a user.
-  // The main purpose is T13N.
-  void GetRawText(const size_t position,
-                  const size_t size,
-                  string *output) const;
+  // Returns raw input from a user.
+  // The main purpose is Transliteration.
+  void GetRawString(string *raw_string) const;
+
+  // Returns substring of raw input.  The position and size is based on the
+  // composed string.  For example, when [さ|sa][し|shi][み|mi] is the
+  // composition, GetRawSubString(0, 2) returns "sashi".
+  void GetRawSubString(const size_t position,
+                       const size_t size,
+                       string *raw_sub_string) const;
 
   // Generate transliterations.
   void GetTransliterations(transliteration::Transliterations *t13ns) const;

@@ -30,9 +30,6 @@
 package org.mozc.android.inputmethod.japanese;
 
 import org.mozc.android.inputmethod.japanese.mushroom.MushroomUtil;
-import org.mozc.android.inputmethod.japanese.preference.MozcBasePreferenceActivity;
-import org.mozc.android.inputmethod.japanese.preference.MozcClassicPreferenceActivity;
-import org.mozc.android.inputmethod.japanese.resources.R;
 import org.mozc.android.inputmethod.japanese.ui.MenuDialog.MenuDialogListener;
 
 import android.content.Context;
@@ -77,31 +74,11 @@ class MozcMenuDialogListenerImpl implements MenuDialogListener {
   @Override
   public void onLaunchPreferenceActivitySelected(Context context) {
     // Launch the preference activity.
-    String activityClassName = context.getResources().getString(R.string.settings_activity);
-    Intent intent = new Intent(context, getAvailablePreferenceActivityClass(activityClassName));
+    Intent intent =
+        new Intent(context,
+                   DependencyFactory.getDependency(context).getPreferenceActivityClass());
     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
     context.startActivity(intent);
-  }
-
-  /**
-   * @return the preference activity {@link Class} instance for the given name. If some error is
-   * found, returns fall-back activity's class (MozcClassicPreferenceActivity.class for now).
-   */
-  static Class<? extends MozcBasePreferenceActivity> getAvailablePreferenceActivityClass(
-      String className) {
-    try {
-      // Don't use MozcFragmentPreferenceActivity directly
-      // because classic AndroidOS doesn't have it.
-      return Class.forName(className).asSubclass(MozcBasePreferenceActivity.class);
-    } catch (ClassCastException e) {
-      MozcLog.e(e.getMessage(), e);
-    } catch (ClassNotFoundException e) {
-      MozcLog.e(e.getMessage(), e);
-    }
-
-    // Invalid parameter is passed. Use safer one.
-    MozcLog.e("Invalid preference activity name; " + className);
-    return MozcClassicPreferenceActivity.class;
   }
 
   @Override

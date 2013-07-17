@@ -205,6 +205,7 @@ public class JapaneseKeyboard extends Keyboard {
         SpaceOnAlphanumeric.COMMIT,
         false,
         CrossingEdgeBehavior.DO_NOTHING),
+
     ;
 
     private final KeyboardSpecificationName specName;

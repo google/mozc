@@ -35,9 +35,9 @@
 #include <string>
 #include <vector>
 
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 #include "session/session_converter_interface.h"
-// for FRIEND_TEST()
-#include "testing/base/public/gunit_prod.h"
 
 namespace mozc {
 namespace commands {
@@ -233,14 +233,11 @@ class SessionConverter : public SessionConverterInterface {
   virtual void FillOutput(const composer::Composer &composer,
                           commands::Output *output) const;
 
-  // Fills context information
-  virtual void FillContext(commands::Context *context) const;
-
-  // Removes tail part of history segments
-  virtual void RemoveTailOfHistorySegments(size_t num_of_characters);
-
   // Sets setting by the request;
   virtual void SetRequest(const commands::Request *request);
+
+  // Set setting by the context.
+  virtual void OnStartComposition(const commands::Context &context);
 
   // Fills segments with the conversion preferences.
   static void SetConversionPreferences(
@@ -326,9 +323,9 @@ class SessionConverter : public SessionConverterInterface {
 
   bool IsEmptySegment(const Segment &segment) const;
 
-  // Propagetes config proto to |output|.
+  // Propagates config proto to |output|.
   // Renderer might need to refer mozc config saved in |output|.
-  // In order to reduce IPC latency, we only propagete config only
+  // In order to reduce IPC latency, we only propagate config only
   // when it is really required.
   void PropagateConfigToRenderer(commands::Output *output) const;
 
@@ -368,6 +365,11 @@ class SessionConverter : public SessionConverterInterface {
 
   // Selected index data of each segments for usage stats.
   vector<int> selected_candidate_indices_;
+
+  // Revision number of client context with which the converter determines when
+  // the history segments should be invalidated. See the implemenation of
+  // OnStartComposition for details.
+  int32 client_revision_;
 
   DISALLOW_COPY_AND_ASSIGN(SessionConverter);
 };

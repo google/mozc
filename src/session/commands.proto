@@ -131,13 +131,14 @@ message KeyEvent {
     CAPS_LOCK = 68;
     HANJA = 69;
     COMMA = 70;  // Numpad [,]
-    NUM_SPECIALKEYS = 71;
+    CLEAR = 71;  // Numpad [5] without NUMLOCK
+    NUM_SPECIALKEYS = 72;
   };
 
   // CTRL, ALT and SHIFT cover both LEFT and RIGHT keys.  If the
   // difference between LEFT and RIGHT is no matter, using CTRL (or ALT, SHIFT)
   // is preferred.
-  // If LEFT (or RIGHT) CTRL(or ALT, SHIFT) is pressed, LEFT_CTRL is set on 
+  // If LEFT (or RIGHT) CTRL(or ALT, SHIFT) is pressed, LEFT_CTRL is set on
   // Windows or Mac client, or LEFT_CTRL and CTRL are set on Unix client.
   // Mozc key translation logic is as follows
   //
@@ -237,9 +238,11 @@ message KeyEvent {
   repeated ModifierKey modifier_keys = 4;  // ModifierKeys
 
   // String used for preedit.  Kana characters and strings typed from
-  // a software keyboard are supposed to be stored here.  To set kana
-  // value, key_code=1 should be stored an ascii character for the
-  // kana key.
+  // a software keyboard are supposed to be stored here.  If key_code
+  // is also set, key_code is treated as the raw input and key_string is
+  // treated as the composition input.  For example, to set Kana value,
+  // when key_string is "ち", key_code should be 'a' (97).  If key_code
+  // is empty, key_string is also treated as the raw input.
   optional string key_string = 5;
 
   enum InputStyle {
@@ -254,6 +257,8 @@ message KeyEvent {
   optional InputStyle input_style = 6 [default = FOLLOW_MODE];
 
   // Input mode
+  // For histrical reasons, this field expects a temporary conversion
+  // mode rather than comeback input mode.
   optional CompositionMode mode = 7;
 
   // Probable key events
@@ -261,6 +266,20 @@ message KeyEvent {
   // don't omit Input.key_code and so on
   // because preedit string is composed based on them.
   repeated ProbableKeyEvent probable_key_event = 8;
+
+  // IME on/off mode
+  // You can use this field to change the IME on/off mode indirectly without
+  // sending SpecialKey:ON or SpecialKey:OFF events.
+  // If the internal ImeContext::State is DIRECT and this field is true, the
+  // converter will change the state to PRECONPOSITION and then handles this key
+  // event.
+  // If the internal ImeContext::State is not DIRECT and this field is false,
+  // the converter will change the state to DIRECT and then handles this key
+  // event.
+  // Implementation note: We need both |mode| and |activated| to support
+  // indirect IME off, where |mode| should contain the next mode. If this field
+  // is not set, the server will act as if indirect on/off was not supported. 
+  optional bool activated = 9;
 };
 
 message GenericStorageEntry {
@@ -383,10 +402,18 @@ message SessionCommand {
     // Exact command is specified by language_bar_command_id.
     SEND_LANGUAGE_BAR_COMMAND = 17;
 
+    // When the server is hadling asynchronous request, the server returns the
+    // message with callback request which session_command is GET_ASYNC_RESULT.
+    // After the delay_millisec, the client sends this command to the server.
+    GET_ASYNC_RESULT = 18;
+
+    // Commit the raw text of the composed string.
+    COMMIT_RAW_TEXT = 19;
+
     // Number of commands.
     // When new command is added, the command should use below number
     // and NUM_OF_COMMANDS should be incremented.
-    NUM_OF_COMMANDS = 18;
+    NUM_OF_COMMANDS = 20;
   };
   required CommandType type = 1;
 
@@ -425,6 +452,9 @@ message SessionCommand {
     TOGGLE_PINYIN_SIMPLIFIED_CHINESE_MODE = 4;
   };
   optional LanguageBarCommandId language_bar_command_id = 9;
+
+  // Unique number specifying an asynchronous request.
+  optional int32 asynchronous_request_id = 10;
 };
 
 message Context {
@@ -464,6 +494,14 @@ message Context {
   };
   // Type of the input field being focused.
   optional InputFieldType input_field_type = 4;
+
+  // An unique revision ID to specify one specific typing session. A client can
+  // use arbitrary value for this field. The converter is expected to clear its
+  // internal history segments whenever this value is changed. A client should
+  // use the same revision ID whenever the converter should keep it internal
+  // history segments. In order to avoid unexpected history learnings, a client
+  // should update the revision whenever the input focus is changed.
+  optional int32 revision = 5 [default = 0];
 
   // Repeated fields to be used for experimental features.
   repeated string experimental_features = 100;
@@ -550,6 +588,7 @@ message Request {
 
     // Use special table for Godan (to number).
     GODAN_TO_NUMBER = 32;
+
   };
 
   // Use special Romanji table.
@@ -820,6 +859,12 @@ message Input {
     optional string name = 2;
     // The scope of the authorization.  Ditto.
     optional string scope = 3;
+    // The access token. In NaCl Mozc, we can get the access token using Chrome
+    // Identity JavaScript API. This field is only used when the user enables
+    // the sync feature. When once the sync task has started, the access token
+    // will be gotten using Chrome Identity JavaScript API via NaclJsProxy.
+    // auth_code field and this are exclusive.
+    optional string access_token = 4;
   };
   // Specify the authorization info if the command is SET_AUTH_CODE.
   optional AuthorizationInfo auth_code = 11;
@@ -931,8 +976,16 @@ message Status {
   // Whether IME is ON or OFF
   optional bool activated = 1;
 
-  // Composition mode when IME is activated.
+  // Visible composition mode when IME is activated. This mode may come from a
+  // temporary composition mode. See |comeback_mode|.
+  // TODO(yukawa): Rename this field to "visible_mode".
   optional CompositionMode mode = 2;
+
+  // True composition mode that is suitable for system global and permanent
+  // composition mode. When a temporary composition mode exists,
+  // |comeback_mode| can be different from |mode|.
+  // TODO(yukawa): Use more appropriate name.
+  optional CompositionMode comeback_mode = 3;
 };
 
 // This messsage contains which characters are to be deleted by client.
@@ -1050,6 +1103,9 @@ message Output {
     // optional values such as id and composition_mode can be modified
     // or added by the client.
     optional SessionCommand session_command = 1;
+
+    // Callback command should be sent after this delay.
+    optional uint32 delay_millisec = 2;
   };
   optional Callback callback = 18;
 

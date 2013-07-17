@@ -27,9 +27,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// TODO(horo) Implement correctly and write tests.
-
 #include "base/pepper_file_system_mock.h"
+
+#include <map>
+#include <string>
+
+#include "base/mmap.h"
+#include "base/mutex.h"
 
 namespace mozc {
 
@@ -40,52 +44,72 @@ PepperFileSystemMock::~PepperFileSystemMock() {
 }
 
 bool PepperFileSystemMock::Open(pp::Instance *instance, int64 expected_size) {
-  // TODO(horo) Implement this method correctly.
-  return false;
+  scoped_lock l(&mutex_);
+  return true;
 }
 
 bool PepperFileSystemMock::FileExists(const string &filename) {
-  // TODO(horo) Implement this method correctly.
-  return false;
+  scoped_lock l(&mutex_);
+  return file_storage_.find(filename) != file_storage_.end();
 }
 
 bool PepperFileSystemMock::DirectoryExists(const string &dirname) {
-  // TODO(horo) Implement this method correctly.
+  scoped_lock l(&mutex_);
+  // Currently we don't use directory in NaCl Mozc.
   return false;
 }
 
 bool PepperFileSystemMock::ReadBinaryFile(const string &filename,
                                           string *buffer) {
-  // TODO(horo) Implement this method correctly.
-  return false;
+  scoped_lock l(&mutex_);
+  map<string, string>::const_iterator it = file_storage_.find(filename);
+  if (it == file_storage_.end()) {
+    return false;
+  }
+  *buffer = it->second;
+  return true;
 }
 
 bool PepperFileSystemMock::WriteBinaryFile(const string &filename,
                                            const string &buffer) {
-  // TODO(horo) Implement this method correctly.
-  return false;
+  scoped_lock l(&mutex_);
+  file_storage_[filename] = buffer;
+  return true;
 }
 
 bool PepperFileSystemMock::DeleteFile(const string &filename) {
-  // TODO(horo) Implement this method correctly.
-  return false;
+  scoped_lock l(&mutex_);
+  return file_storage_.erase(filename);
 }
+
 bool PepperFileSystemMock::RenameFile(const string &from, const string &to) {
-  // TODO(horo) Implement this method correctly.
-  return false;
+  scoped_lock l(&mutex_);
+  map<string, string>::iterator it = file_storage_.find(from);
+  if (it == file_storage_.end()) {
+    return false;
+  }
+  file_storage_[to] = it->second;
+  file_storage_.erase(from);
+  return true;
 }
 
 bool PepperFileSystemMock::RegisterMmap(Mmap *mmap) {
-  // TODO(horo) Implement this method correctly.
-  return false;
+  scoped_lock l(&mutex_);
+  return mmap_set_.insert(mmap).second;
 }
+
 bool PepperFileSystemMock::UnRegisterMmap(Mmap *mmap) {
-  // TODO(horo) Implement this method correctly.
-  return false;
+  scoped_lock l(&mutex_);
+  return mmap_set_.erase(mmap);
 }
+
 bool PepperFileSystemMock::SyncMmapToFile() {
-  // TODO(horo) Implement this method correctly.
-  return false;
+  scoped_lock l(&mutex_);
+  for (set<Mmap*>::iterator it = mmap_set_.begin();
+       it != mmap_set_.end(); ++it) {
+    (*it)->SyncToFile();
+  }
+  return true;
 }
 
 }  // namespace mozc

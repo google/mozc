@@ -46,7 +46,6 @@ import shutil
 import stat
 import subprocess
 import sys
-import warnings
 import zipfile
 
 
@@ -104,7 +103,7 @@ def GetApkProperties(apk_path):
 
   zip_file = zipfile.ZipFile(apk_path)
   try:
-    _CollectSingleFileMetrics(
+    _CollectMultipleFileMetrics(
         zip_file, r'lib/[^/]+/libmozc.so', 'libmozc', props)
     _CollectSingleFileMetrics(
         zip_file, r'classes.dex', 'classdex', props)
@@ -140,8 +139,12 @@ def _CollectBadgingProperties(apk_path, props):
   logging.info('Collecting badging props; %s', args)
   (output, _) = subprocess.Popen(args, stdout=subprocess.PIPE).communicate()
   logging.debug(output)
-  native_code = re.search(r'^native-code: (.*)$', output, re.MULTILINE).group(1)
-  props['native_code'] = native_code.replace('\'', '').split(' ')
+  native_code_match = re.search(r'^native-code: (.*)$', output, re.MULTILINE)
+  if native_code_match:
+    native_code = native_code_match.group(1)
+    props['native_code'] = native_code.replace('\'', '').split(' ')
+  else:
+    props['native_code'] = []
   props['uses_permissions'] = re.findall(r'^uses-permission:\'(.*)\'$',
                                          output, re.MULTILINE)
   props['version_code'] = int(re.search(r'versionCode=\'(\d+)\'',

@@ -604,8 +604,8 @@ HBITMAP BalloonImage::CreateInternal(const BalloonImageInfo &info,
       const RGBColor color = sub_pixel.GetPixelColor();
       const double coverage = sub_pixel.GetCoverage();
       // As ARGBColor::ValueType is integer type, add +0.5 for rounding off.
-      COMPILE_ASSERT(ARGBColor::ValueType(0.5) == ARGBColor::ValueType(),
-                     integer_type);
+      static_assert(ARGBColor::ValueType(0.5) == ARGBColor::ValueType(),
+                    "ARGBColor::ValueType should be integer type");
       const ARGBColor::ValueType alpha =
           static_cast<ARGBColor::ValueType>(coverage * 255.0 + 0.5);
       frame_buffer.SetPixel(x, y, ARGBColor(color, alpha));
@@ -729,8 +729,8 @@ HBITMAP BalloonImage::CreateInternal(const BalloonImageInfo &info,
       {
         const double norm_alpha = alpha / 255.0;
         // As ARGBColor::ValueType is integer type, add +0.5 for rounding off.
-        COMPILE_ASSERT(ARGBColor::ValueType(0.5) == ARGBColor::ValueType(),
-                       integer_type);
+        static_assert(ARGBColor::ValueType(0.5) == ARGBColor::ValueType(),
+                      "ARGBColor::ValueType should be integer type");
         dest->b = static_cast<RGBColor::ValueType>(norm_alpha * b + 0.5);
         dest->g = static_cast<RGBColor::ValueType>(norm_alpha * g + 0.5);
         dest->r = static_cast<RGBColor::ValueType>(norm_alpha * r + 0.5);
@@ -740,8 +740,8 @@ HBITMAP BalloonImage::CreateInternal(const BalloonImageInfo &info,
       // Store the original ARGB image for unit test.
       if (arbg_buffer != nullptr) {
         // As ARGBColor::ValueType is integer type, add +0.5 for rounding off.
-        COMPILE_ASSERT(ARGBColor::ValueType(0.5) == ARGBColor::ValueType(),
-                       integer_type);
+        static_assert(ARGBColor::ValueType(0.5) == ARGBColor::ValueType(),
+                      "ARGBColor::ValueType should be integer type");
         arbg_buffer->at(index) = ARGBColor(
             static_cast<ARGBColor::ValueType>(alpha + 0.5),
             static_cast<ARGBColor::ValueType>(r + 0.5),
@@ -835,8 +835,8 @@ const SubdivisionalPixel::ColorType SubdivisionalPixel::GetPixelColor() const {
         b += colors_[i].b;
       }
       // As ColorType::ValueType is integer type, add +0.5 for rounding off.
-      COMPILE_ASSERT(ColorType::ValueType(0.5) == ColorType::ValueType(),
-                     integer_type);
+      static_assert(ARGBColor::ValueType(0.5) == ARGBColor::ValueType(),
+                    "ARGBColor::ValueType should be integer type");
       return ColorType(ColorType::ValueType(r / filled_.count() + 0.5),
                        ColorType::ValueType(g / filled_.count() + 0.5),
                        ColorType::ValueType(b / filled_.count() + 0.5));

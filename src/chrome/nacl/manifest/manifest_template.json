@@ -42,14 +42,14 @@
     "page": "nacl_mozc.html"
   },
   "input_components": [{
-    "name": "@APP_NAME_EN@ (for US keyboard)",
+    "name": "__MSG_appNameUSKeyboard__",
     "type": "ime",
     "id": "nacl_mozc_us",
     "description": "Japanese input method.",
     "language": "ja",
     "layouts": ["us"]
   },{
-    "name": "@APP_NAME_EN@ (for Japanese keyboard)",
+    "name": "__MSG_appNameJPKeyboard__",
     "type": "ime",
     "id": "nacl_mozc_jp",
     "description": "Japanese input method.",

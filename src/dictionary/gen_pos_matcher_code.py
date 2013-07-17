@@ -108,7 +108,7 @@ def OutputPosMatcherHeader(pos_matcher, output):
   output.write(
       '#ifndef MOZC_DICTIONARY_POS_MATCHER_H_\n'
       '#define MOZC_DICTIONARY_POS_MATCHER_H_\n'
-      '#include "./base/base.h"\n'
+      '#include "./base/port.h"\n'
       'namespace mozc {\n'
       'class POSMatcher {\n'
       ' public:\n'

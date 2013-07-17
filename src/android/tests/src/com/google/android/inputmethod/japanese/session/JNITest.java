@@ -30,9 +30,14 @@
 package org.mozc.android.inputmethod.japanese.session;
 
 import org.mozc.android.inputmethod.japanese.MozcUtil;
+import org.mozc.android.inputmethod.japanese.stresstest.StressTest;
 import org.mozc.android.inputmethod.japanese.testing.HttpTestServer;
+import org.mozc.android.inputmethod.japanese.testing.MemoryLogger;
+import com.google.common.base.Strings;
 
 import android.test.InstrumentationTestCase;
+import android.test.suitebuilder.annotation.LargeTest;
+import android.test.suitebuilder.annotation.SmallTest;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -62,6 +67,7 @@ public class JNITest extends InstrumentationTestCase {
     }
   }
 
+  @SmallTest
   public void testHttpClientIntegration() throws IOException {
     HttpTestServer testServer = HttpTestServer.startServer();
     int port = testServer.getPort();
@@ -101,6 +107,32 @@ public class JNITest extends InstrumentationTestCase {
                                            toBytes(testData.content));
         assertEquals(testData.toString(), testData.expectedResult, toString(resultBytes));
       }
+    } finally {
+      if (testServer != null) {
+        MozcUtil.close(testServer, true);
+      }
+    }
+  }
+
+  @StressTest
+  @LargeTest
+  public void testRepeatedHttpRequest() throws IOException {
+    MemoryLogger memoryLogger = new MemoryLogger("testRepeatedHttpRequest", 100);
+    HttpTestServer testServer = HttpTestServer.startServer();
+    // To detect object leak, we have to repeat 1024 or more times.
+    int repeatCount = 1200;
+    int port = testServer.getPort();
+    String urlPrefix = "http://localhost:" + port;
+    String content = Strings.repeat("a", 100 * 1000);  // 100K characters
+    memoryLogger.logMemory("start");
+    try {
+      for (int i = 0; i < repeatCount; ++i) {
+        JNITestingBackdoor.httpRequest(toBytes("POST"),
+                                       toBytes(urlPrefix),
+                                       toBytes(content));
+        memoryLogger.logMemoryInterval();
+      }
+      memoryLogger.logMemory("end");
     } finally {
       if (testServer != null) {
         MozcUtil.close(testServer, true);

@@ -150,8 +150,8 @@ bool CompositionString::HandleResult(const mozc::commands::Output &output) {
   // Since the Mozc server does not support clause information for the
   // result string, we always declare the result string to be one segment.
   // TODO(yukawa): Set clause after b/3135804 is implemented.
-  COMPILE_ASSERT(arraysize(result_reading_clause_) >= 2,
-                 RESULT_CLAUSE_ARRAY_IS_TOO_SMALL);
+  static_assert(arraysize(result_reading_clause_) >= 2,
+                "|result_reading_clause_| must has at least 2 elements.");
   info.dwResultClauseLen = sizeof(result_clause_[0]) +
                            sizeof(result_clause_[1]);
   result_clause_[0] = 0;
@@ -176,8 +176,8 @@ bool CompositionString::HandleResult(const mozc::commands::Output &output) {
     // Since the Mozc server does not return clause information for the
     // result string, we always declare the result string to be one segment.
     // TODO(yukawa): Set clause after b/3135804 is implemented.
-    COMPILE_ASSERT(arraysize(result_reading_clause_) >= 2,
-                   RESULT_READING_CLAUSE_ARRAY_IS_TOO_SMALL);
+    static_assert(arraysize(result_reading_clause_) >= 2,
+                  "|result_reading_clause_| must has at least 2 elements.");
     info.dwResultReadClauseLen = sizeof(result_reading_clause_[0]) +
                                  sizeof(result_reading_clause_[1]);
     result_reading_clause_[0] = 0;

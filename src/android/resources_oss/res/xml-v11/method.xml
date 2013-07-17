@@ -31,12 +31,12 @@
 -->
 
 <input-method xmlns:android="http://schemas.android.com/apk/res/android"
-    android:isDefault="true"
-    android:settingsActivity="@string/settings_activity" >
+    android:isDefault="@bool/im_is_default"
+    android:settingsActivity="org.mozc.android.inputmethod.japanese.MozcProxyPreferenceActivity" >
 
     <subtype
         android:icon="@drawable/application_icon"
-        android:imeSubtypeLocale="ja"
+        android:imeSubtypeLocale="ja_JP"
         android:imeSubtypeMode="keyboard"
         android:label="@string/subtype_ja" />
 

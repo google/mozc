@@ -33,7 +33,6 @@
 #include <QtGui/QtGui>
 #include <algorithm>
 #include <string>
-#include "base/base.h"
 #include "base/logging.h"
 #include "base/util.h"
 #include "gui/character_pad/data/cp932_map.h"

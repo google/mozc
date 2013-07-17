@@ -63,7 +63,7 @@ once_t g_OnceForInitializeStyle = MOZC_ONCE_INIT;
 
 void InitializeDefaultStyle() {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-  
+
   RendererStyle style;
   RendererStyleHandler::GetRendererStyle(&style);
 
@@ -139,7 +139,7 @@ void InitializeDefaultStyle() {
 }
 
 - (void)setCandidates:(const Candidates *)candidates {
-  candidates_ = candidates;
+  candidates_.CopyFrom(*candidates);
 }
 
 - (void)setSendCommandInterface:(SendCommandInterface *)command_sender {
@@ -167,22 +167,22 @@ void InitializeDefaultStyle() {
 - (NSSize)updateLayout {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   [candidateStringsCache_ release];
-  tableLayout_->Initialize(candidates_->candidate_size(), NUMBER_OF_COLUMNS);
+  tableLayout_->Initialize(candidates_.candidate_size(), NUMBER_OF_COLUMNS);
   tableLayout_->SetWindowBorder(style_->window_border());
 
   // calculating focusedRow_
-  if (candidates_->has_focused_index() && candidates_->candidate_size() > 0) {
-    const int focusedIndex = candidates_->focused_index();
-    focusedRow_ = focusedIndex - candidates_->candidate(0).index();
+  if (candidates_.has_focused_index() && candidates_.candidate_size() > 0) {
+    const int focusedIndex = candidates_.focused_index();
+    focusedRow_ = focusedIndex - candidates_.candidate(0).index();
   } else {
     focusedRow_ = -1;
   }
 
   // Reserve footer space.
-  if (candidates_->has_footer()) {
+  if (candidates_.has_footer()) {
     NSSize footerSize = NSZeroSize;
 
-    const mozc::commands::Footer &footer = candidates_->footer();
+    const mozc::commands::Footer &footer = candidates_.footer();
 
     if (footer.has_label()) {
       NSAttributedString *footerLabel = MacViewUtil::ToNSAttributedString(
@@ -209,11 +209,11 @@ void InitializeDefaultStyle() {
     }
 
     if (footer.index_visible()) {
-      const int focusedIndex = candidates_->focused_index();
-      const int totalItems = candidates_->size();
+      const int focusedIndex = candidates_.focused_index();
+      const int totalItems = candidates_.size();
       NSString *footerIndex =
           [NSString stringWithFormat:@"%d/%d", focusedIndex + 1, totalItems];
-      NSAttributedString *footerAttributedIndex = 
+      NSAttributedString *footerAttributedIndex =
           MacViewUtil::ToNSAttributedString([footerIndex UTF8String],
                                             style_->footer_style());
       NSSize footerIndexSize =
@@ -228,7 +228,7 @@ void InitializeDefaultStyle() {
   }
 
   tableLayout_->SetRowRectPadding(style_->row_rect_padding());
-  if (candidates_->candidate_size() < candidates_->size()) {
+  if (candidates_.candidate_size() < candidates_.size()) {
     tableLayout_->SetVScrollBar(style_->scrollbar_width());
   }
 
@@ -237,8 +237,8 @@ void InitializeDefaultStyle() {
   tableLayout_->EnsureCellSize(COLUMN_GAP1, MacViewUtil::ToSize([gap1 size]));
 
   NSMutableArray *newCache = [[NSMutableArray array] retain];
-  for (size_t i = 0; i < candidates_->candidate_size(); ++i) {
-    const Candidates::Candidate &candidate = candidates_->candidate(i);
+  for (size_t i = 0; i < candidates_.candidate_size(); ++i) {
+    const Candidates::Candidate &candidate = candidates_.candidate(i);
     NSAttributedString *shortcut = MacViewUtil::ToNSAttributedString(
        candidate.annotation().shortcut(),
        style_->text_styles(COLUMN_SHORTCUT));
@@ -291,20 +291,16 @@ void InitializeDefaultStyle() {
 }
 
 - (void)drawRect:(NSRect)rect {
-  if (!candidates_) {
+  if (!Category_IsValid(candidates_.category())) {
+    LOG(WARNING) << "Unknown candidates category: " << candidates_.category();
     return;
   }
 
-  if (!Category_IsValid(candidates_->category())) {
-    LOG(WARNING) << "Unknown candidates category: " << candidates_->category();
-    return;
-  }
-
-  for (int i = 0; i < candidates_->candidate_size(); ++i) {
+  for (int i = 0; i < candidates_.candidate_size(); ++i) {
     [self drawRow:i];
   }
 
-  if (candidates_->candidate_size() < candidates_->size()) {
+  if (candidates_.candidate_size() < candidates_.size()) {
     [self drawVScrollBar];
   }
   [self drawFooter];
@@ -356,7 +352,7 @@ void InitializeDefaultStyle() {
     [text drawAtPoint:candidatePosition];
   }
 
-  if (candidates_->candidate(row).has_information_id()) {
+  if (candidates_.candidate(row).has_information_id()) {
       NSRect rect = MacViewUtil::ToNSRect(tableLayout_->GetRowRect(row));
       [MacViewUtil::ToNSColor(style_->focused_border_color()) set];
       rect.origin.x += rect.size.width - 6.0;
@@ -369,8 +365,8 @@ void InitializeDefaultStyle() {
 
 - (void)drawFooter {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-  if (candidates_->has_footer()) {
-    const mozc::commands::Footer &footer = candidates_->footer();
+  if (candidates_.has_footer()) {
+    const mozc::commands::Footer &footer = candidates_.footer();
     NSRect footerRect = MacViewUtil::ToNSRect(tableLayout_->GetFooterRect());
 
     // Draw footer border
@@ -427,8 +423,8 @@ void InitializeDefaultStyle() {
 
     // Draw footer index (e.g. "10/120")
     if (footer.index_visible()) {
-      int focusedIndex = candidates_->focused_index();
-      int totalItems = candidates_->size();
+      int focusedIndex = candidates_.focused_index();
+      int totalItems = candidates_.size();
       NSString *footerIndex =
           [NSString stringWithFormat:@"%d/%d", focusedIndex + 1, totalItems];
       NSAttributedString *footerAttributedIndex =
@@ -447,11 +443,11 @@ void InitializeDefaultStyle() {
 - (void)drawVScrollBar {
   const mozc::Rect &vscrollRect = tableLayout_->GetVScrollBarRect();
 
-  if (!vscrollRect.IsRectEmpty() && candidates_->candidate_size() > 0) {
-    const int beginIndex = candidates_->candidate(0).index();
-    const int candidatesTotal = candidates_->size();
+  if (!vscrollRect.IsRectEmpty() && candidates_.candidate_size() > 0) {
+    const int beginIndex = candidates_.candidate(0).index();
+    const int candidatesTotal = candidates_.size();
     const int endIndex =
-        candidates_->candidate(candidates_->candidate_size() - 1).index();
+        candidates_.candidate(candidates_.candidate_size() - 1).index();
 
     [MacViewUtil::ToNSColor(style_->scrollbar_background_color()) set];
     [NSBezierPath fillRect:MacViewUtil::ToNSRect(vscrollRect)];
@@ -494,13 +490,15 @@ const char *Inspect(id obj) {
   if (command_sender_ == NULL) {
     return;
   }
-
+  if (candidates_.candidate_size() < tableLayout_->number_of_rows()) {
+    return;
+  }
   for (int i = 0; i < tableLayout_->number_of_rows(); ++i) {
     mozc::Rect rowRect = tableLayout_->GetRowRect(i);
     if (rowRect.PtrInRect(localPos)) {
       SessionCommand command;
       command.set_type(SessionCommand::SELECT_CANDIDATE);
-      command.set_id(candidates_->candidate(i).id());
+      command.set_id(candidates_.candidate(i).id());
       Output dummy_output;
       command_sender_->SendCommand(command, &dummy_output);
       break;

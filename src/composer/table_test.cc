@@ -838,6 +838,7 @@ TEST_F(TableTest, MobileMode) {
     // "き"
     EXPECT_EQ("\xE3\x81\x8D", entry->pending());
   }
+
 }
 
 TEST_F(TableTest, OrderOfAddRule) {

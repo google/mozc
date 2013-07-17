@@ -33,7 +33,7 @@
           package="@ANDROID_APPLICATION_ID@"
           android:versionCode="@ANDROID_VERSION_CODE@"
           android:versionName="@MAJOR@.@MINOR@.@BUILD@.@REVISION@">
-  <uses-sdk android:minSdkVersion="7" android:targetSdkVersion="16" />
+  <uses-sdk android:minSdkVersion="7" android:targetSdkVersion="17" />
 
   <!-- Google Japanese Input (the main code) requires the following permissions. -->
   <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -49,7 +49,7 @@
       <meta-data android:name="android.view.im" android:resource="@xml/method" />
     </service>
 
-    <!--  Preference -->
+    <!-- Preference -->
     <activity android:name="org.mozc.android.inputmethod.japanese.MozcProxyPreferenceActivity"
               android:label="@string/app_full_name">
       <intent-filter>
@@ -57,6 +57,7 @@
         <category android:name="android.intent.category.LAUNCHER" />
       </intent-filter>
     </activity>
+    <activity android:name="org.mozc.android.inputmethod.japanese.MozcProxySoftwareKeyboardAdvancedSettingActivity" />
     <activity android:name="org.mozc.android.inputmethod.japanese.preference.MozcFragmentPreferenceActivity"
               android:launchMode="singleTask" />
     <activity android:name="org.mozc.android.inputmethod.japanese.preference.MozcFragmentSoftwareKeyboardAdvancedSettingsPreferenceActivity"
@@ -67,7 +68,8 @@
               android:launchMode="singleTop" />
 
     <activity android:name="org.mozc.android.inputmethod.japanese.FirstTimeLaunchActivity" />
-    <activity android:name="org.mozc.android.inputmethod.japanese.preference.CreditsActivity" />
+    <activity android:name="org.mozc.android.inputmethod.japanese.preference.MiniBrowserActivity"
+              android:launchMode="singleTop" />
 
     <!-- User dictionary tool -->
     <activity android:name="org.mozc.android.inputmethod.japanese.userdictionary.UserDictionaryToolActivity"
@@ -90,11 +92,24 @@
       </intent-filter>
     </activity>
 
-    <!-- For mushroom -->
+    <!-- For mushroom.
+         Note about the attributes:
+         - launchMode: this activity is singleTask, in order to be the root
+           activity launched from the menu dialog.
+         - taskAffinity: set taskAffinity so that the task is split from
+           other activities, such as preference activity.
+         - windowSoftInputMode: because this activity looks dialog with a
+           ListView. So, in theory it is not necessary to connect with IME.
+           Without this option, some unexpected connection happens, and
+           it causes an issue that mushroom result is not committed.
+         - excludeFromRecents: this pseudo dialog shouldn't be shown on history
+           list.
+    -->
     <activity android:name="org.mozc.android.inputmethod.japanese.mushroom.MushroomSelectionActivity"
               android:launchMode="singleTask"
               android:taskAffinity=".mushroom"
               android:theme="@style/MozcMushroomDialogTheme"
+              android:windowSoftInputMode="stateAlwaysHidden"
               android:excludeFromRecents="true" />
 
 

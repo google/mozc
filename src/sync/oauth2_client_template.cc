@@ -33,7 +33,17 @@ namespace mozc {
 namespace sync {
 
 OAuth2Client OAuth2Client::GetDefaultInstance() {
-  return OAuth2Client("google", "${CLIENT_ID}", "${CLIENT_SECRET}");
+#ifdef __native_client__
+  return OAuth2Client("google",
+                      "",
+                      "",
+                      CHROME_APP);
+#else  // __native_client__
+  return OAuth2Client("google",
+                      "${CLIENT_ID}",
+                      "${CLIENT_SECRET}",
+                      INSTALLED_APP);
+#endif  // __native_client__
 }
 
 }  // namespace sync

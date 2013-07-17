@@ -152,12 +152,16 @@ bool ConfigHandlerImpl::SetConfigInternal(const Config &config) {
 #endif  // OS_ANDROID
 
   // Enable Unicode emoji conversion in default on specific platforms.
-  // Windows 8 or Mac 10.7(Lion) or later.
+  // NaCl Mozc or Windows 8 or Mac 10.7(Lion) or later.
+#ifdef __native_client__
+  bool use_emoji_conversion_default = true;
+#else  // __native_client__
   bool use_emoji_conversion_default = false;
   if (SystemUtil::MacOSVersionIsGreaterOrEqual(10, 7, 0) ||
       SystemUtil::IsWindows8OrLater()) {
     use_emoji_conversion_default = true;
   }
+#endif  // __native_client__
 
   if (use_emoji_conversion_default &&
       !stored_config_.has_use_emoji_conversion()) {

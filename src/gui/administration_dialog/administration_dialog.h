@@ -33,7 +33,6 @@
 #include <QtGui/QtGui>
 #include <QtGui/QDialog>
 #include <string>
-#include "base/base.h"
 #include "gui/administration_dialog/ui_administration_dialog.h"
 
 namespace mozc {

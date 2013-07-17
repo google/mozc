@@ -301,6 +301,8 @@ SendCommand_UndoOrRewind
 SendCommand_ExpandSuggestion
 SendCommand_SendCaretLocation
 SendCommand_SendLanguageBarCommand
+SendCommand_GetAsyncResult
+SendCommand_CommitRawText
 
 # The count of revert in Chrome Omnibox or Google search box
 SendCommand_RevertInChromeOmnibox
@@ -388,6 +390,8 @@ CAPS_LOCK
 HANJA
 # Numpad [,]
 COMMA
+# Numpad [5]
+CLEAR
 
 # Stats for config
 # Keymap style
@@ -472,6 +476,8 @@ ConfigUseLocalUsageDictionary
 ConfigUseWebUsageDictionary
 # Prelauncher is enabled or not
 PrelauncherEnabled
+# Use Mode Indicator
+ConfigUseModeIndicator
 
 # Need to show the help page after install (TSF is disabled)
 PostInstallShowPageRequired
@@ -532,6 +538,8 @@ MsctfVerBuild
 MsctfVerRevision
 # CUAS status
 CuasEnabled
+# Windows 8
+PerUserInputSettingsEnabled
 
 # Virtual keyboard touch event stats
 VirtualKeyboardStats

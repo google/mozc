@@ -39,7 +39,6 @@
 #include "win32/base/surrogate_pair_observer.h"
 #include "win32/ime/ime_core.h"
 #include "win32/ime/ime_scoped_context.h"
-#include "win32/ime/ime_trace.h"
 #include "win32/ime/ime_ui_visibility_tracker.h"
 
 namespace mozc {
@@ -63,7 +62,6 @@ static HIMCC InitializeHIMCC(HIMCC himcc, DWORD size) {
 }  // namespace
 
 bool PrivateContext::Initialize() {
-  FUNCTION_ENTER();
   magic_number = kMagicNumber;
   thread_id = ::GetCurrentThreadId();
 
@@ -111,7 +109,6 @@ bool PrivateContext::Uninitialize() {
 bool PrivateContext::Validate() const {
   if (magic_number != kMagicNumber) {
     // This object has not been initialized, or unknown data structure.
-    FUNCTION_TRACE(L"Not initialized");
     return false;
   }
   // As revealed in b/3195434, HIMC behaves as if it is *NOT* bound to a
@@ -167,15 +164,18 @@ bool PrivateContextUtil::EnsurePrivateContextIsInitialized(
   // current kana lock state.
   const mozc::config::Config &config =
       mozc::config::ConfigHandler::GetConfig();
-  if (config.preedit_method() == mozc::config::Config::KANA) {
-    private_context_allocator->ime_behavior->prefer_kana_input = true;
-  }
+  private_context_allocator->ime_behavior->prefer_kana_input =
+      (config.preedit_method() == mozc::config::Config::KANA);
 
-  if (config.use_keyboard_to_change_preedit_method()) {
-    private_context_allocator->ime_behavior->
-        use_romaji_key_to_toggle_input_style = true;
-  }
+  private_context_allocator->ime_behavior->
+      use_romaji_key_to_toggle_input_style =
+          config.use_keyboard_to_change_preedit_method();
+
+  private_context_allocator->ime_behavior->use_mode_indicator =
+      config.use_mode_indicator();
+
   return true;
 }
+
 }  // namespace win32
 }  // namespace mozc

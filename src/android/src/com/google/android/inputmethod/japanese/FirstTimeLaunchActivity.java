@@ -33,11 +33,8 @@ import org.mozc.android.inputmethod.japanese.preference.PreferenceUtil;
 import org.mozc.android.inputmethod.japanese.resources.R;
 
 import android.app.Activity;
-import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
-import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -45,7 +42,6 @@ import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.method.LinkMovementMethod;
 import android.text.style.URLSpan;
-import android.util.DisplayMetrics;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.Window;
@@ -172,90 +168,5 @@ public class FirstTimeLaunchActivity extends Activity {
   private void updateView(SharedPreferences sharedPreferences) {
     CheckBox.class.cast(findViewById(R.id.send_usage_stats)).setChecked(
         sharedPreferences.getBoolean(PreferenceUtil.PREF_OTHER_USAGE_STATS_KEY, false));
-  }
-
-  /**
-   * Processes something which should be done at the first launch.
-   * If this is not the first launch, does nothing.
-   *
-   * This method is static because this is also called from MozcPreference.
-   * @return {@code true} if activity has been started.
-   */
-  public static boolean maybeProcessFirstTimeLaunchAction(
-      SharedPreferences sharedPreferences, Context context) {
-    if (sharedPreferences == null) {
-      MozcLog.w("sharedPreferences must be non-null.");
-      return false;
-    }
-    if (sharedPreferences.getBoolean("pref_launched_at_least_once", false)) {
-      return false;
-    }
-
-    // Make pref_other_usage_stats_key enabled when dev channel.
-    if (MozcUtil.isDevChannel(context)) {
-      sharedPreferences.edit()
-          .putBoolean(PreferenceUtil.PREF_OTHER_USAGE_STATS_KEY, true)
-          .commit();
-    }
-
-    // TODO(matsuzakit): Following block should be extracted into separate class,
-    //                   like "Main" class (surely better name should be used).
-    Resources resources = context.getResources();
-    storeDefaultFullscreenMode(
-        sharedPreferences,
-        getPortraitDisplayMetrics(resources.getDisplayMetrics(),
-                                  resources.getConfiguration().orientation),
-        resources.getDimension(R.dimen.fullscreen_threshold),
-        resources.getDimension(R.dimen.ime_window_height_portrait),
-        resources.getDimension(R.dimen.ime_window_height_landscape));
-
-    // Turn on pref_launched_at_least_once flag after all other preference relating
-    // processes are done.
-    sharedPreferences.edit().putBoolean("pref_launched_at_least_once", true).commit();
-
-    Intent intent = new Intent(context, FirstTimeLaunchActivity.class);
-    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-    context.startActivity(intent);
-    return true;
-  }
-
-  /**
-   * Stores the default value of "fullscreen mode" to the shared preference.
-   *
-   * Package private for testing purpose.
-   */
-  static void storeDefaultFullscreenMode(
-      SharedPreferences sharedPreferences, DisplayMetrics displayMetrics,
-      float fullscreenThresholdInPixel,
-      float portraitImeHeightInPixel, float landscapeImeHeightInPixel) {
-    SharedPreferences.Editor editor = sharedPreferences.edit();
-    editor.putBoolean(
-        "pref_portrait_fullscreen_key",
-        displayMetrics.heightPixels - portraitImeHeightInPixel
-            < fullscreenThresholdInPixel);
-    editor.putBoolean(
-        "pref_landscape_fullscreen_key",
-        displayMetrics.widthPixels - landscapeImeHeightInPixel
-            < fullscreenThresholdInPixel);
-    editor.commit();
-  }
-
-  /**
-   * Returns a modified {@code DisplayMetrics} which equals to portrait modes's one.
-   *
-   * If current orientation is PORTRAIT, given {@code currentMetrics} is returned.
-   * Otherwise {@code currentMetrics}'s {@code heightPixels} and {@code widthPixels} are swapped.
-   *
-   * Package private for testing purpose.
-   */
-  static DisplayMetrics getPortraitDisplayMetrics(DisplayMetrics currentMetrics,
-                                                  int currnetOrientation) {
-    DisplayMetrics result = new DisplayMetrics();
-    result.setTo(currentMetrics);
-    if (currnetOrientation == Configuration.ORIENTATION_LANDSCAPE) {
-      result.heightPixels = currentMetrics.widthPixels;
-      result.widthPixels = currentMetrics.heightPixels;
-    }
-    return result;
   }
 }

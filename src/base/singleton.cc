@@ -31,6 +31,8 @@
 
 #ifdef OS_WIN
 #include <Windows.h>
+#else
+#include <cstdlib>
 #endif  // OS_WIN
 
 #include "base/base.h"

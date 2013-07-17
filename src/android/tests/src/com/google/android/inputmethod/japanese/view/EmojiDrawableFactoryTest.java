@@ -150,7 +150,7 @@ public class EmojiDrawableFactoryTest extends InstrumentationTestCaseWithMock {
       expect(drawableFactory.getDrawable(1)).andReturn(mockDrawable);
       replayAll();
 
-      emojiFactory.setProviderType(null);
+      emojiFactory.setProviderType(EmojiProviderType.NONE);
       emojiFactory.setProviderType(testData.emojiProviderType);
       assertSame(mockDrawable, emojiFactory.getDrawable(testData.codePoint));
 

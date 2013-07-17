@@ -188,6 +188,10 @@ public class MenuDialog {
   }
 
   public void setWindowToken(IBinder windowToken) {
-    MozcUtil.setWindowToken(windowToken, dialog);
+    if (windowToken != null) {
+      MozcUtil.setWindowToken(windowToken, dialog);
+    } else {
+      MozcLog.w("Unknown window token.");
+    }
   }
 }

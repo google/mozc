@@ -32,6 +32,11 @@
 #ifndef MOZC_HANDWRITING_ZINNIA_HANDWRITING_H_
 #define MOZC_HANDWRITING_ZINNIA_HANDWRITING_H_
 
+#include <string>
+
+#include "base/port.h"
+#include "base/scoped_ptr.h"
+#include "base/string_piece.h"
 #include "handwriting/handwriting_manager.h"
 
 #ifdef USE_LIBZINNIA
@@ -48,8 +53,10 @@ namespace handwriting {
 
 class ZinniaHandwriting : public HandwritingInterface {
  public:
-  ZinniaHandwriting();
+  explicit ZinniaHandwriting(StringPiece model_file);
   virtual ~ZinniaHandwriting();
+
+  static string GetModelFileName();
 
   HandwritingStatus Recognize(const Strokes &strokes,
                               vector<string> *candidates) const;

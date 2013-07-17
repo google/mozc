@@ -32,19 +32,20 @@ package org.mozc.android.inputmethod.japanese;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.expect;
 
+import org.mozc.android.inputmethod.japanese.DependencyFactory.Dependency;
+import org.mozc.android.inputmethod.japanese.model.SymbolCandidateStorage.SymbolHistoryStorage;
 import org.mozc.android.inputmethod.japanese.mushroom.MushroomUtil;
-import org.mozc.android.inputmethod.japanese.preference.MozcClassicPreferenceActivity;
-import org.mozc.android.inputmethod.japanese.preference.MozcFragmentPreferenceActivity;
 import org.mozc.android.inputmethod.japanese.testing.InstrumentationTestCaseWithMock;
 import org.mozc.android.inputmethod.japanese.ui.MenuDialog.MenuDialogListener;
+import org.mozc.android.inputmethod.japanese.util.ImeSwitcherFactory.ImeSwitcher;
+import com.google.common.base.Optional;
 
+import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.Resources;
 import android.inputmethodservice.InputMethodService;
 import android.test.mock.MockContext;
-import android.test.mock.MockResources;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
@@ -106,45 +107,61 @@ public class MozcMenuDialogListenerImplTest extends InstrumentationTestCaseWithM
 
   @SmallTest
   public void testLaunchPreferenceActivitySelected() {
-    Resources resources = createMock(MockResources.class);
-    expect(resources.getString(R.string.settings_activity))
-        .andStubReturn(
-            "org.mozc.android.inputmethod.japanese.preference.MozcClassicPreferenceActivity");
-    expect(context.getResources()).andStubReturn(resources);
-    expect(context.getPackageName()).andStubReturn("org.mozc.android.inputmethod.japanese");
-    Capture<Intent> intentCapture = new Capture<Intent>();
-    context.startActivity(capture(intentCapture));
-    replayAll();
+    final ViewManagerInterface stubViewManager = createNiceMock(ViewManagerInterface.class);
+    final Activity stubPreferenceActivity = createNiceMock(Activity.class);
+    final Activity stubSoftwareKeyboardAdvancedSettingActivity = createNiceMock(Activity.class);
 
-    listener.onShow(context);
-    listener.onLaunchPreferenceActivitySelected(context);
-    listener.onDismiss(context);
+    Context context = createNiceMock(Context.class);
+    String packageName = "test.package.name";
 
-    verifyAll();
+    try {
+      DependencyFactory.setDependency(
+          Optional.<Dependency>of(new Dependency(){
 
-    // Make sure that the preference activity is launched.
-    Intent intent = intentCapture.getValue();
-    ComponentName componentName = intent.getComponent();
-    assertEquals(
-        "org.mozc.android.inputmethod.japanese", componentName.getPackageName());
-    assertEquals(
-        "org.mozc.android.inputmethod.japanese.preference.MozcClassicPreferenceActivity",
-        componentName.getClassName());
-    assertTrue((intent.getFlags() & Intent.FLAG_ACTIVITY_NEW_TASK) != 0);
-  }
+            @Override
+            public ViewManagerInterface createViewManager(Context context,
+                ViewEventListener listener, SymbolHistoryStorage symbolHistoryStorage,
+                ImeSwitcher imeSwitcher, MenuDialogListener menuDialogListener) {
+              return stubViewManager;
+            }
 
-  @SmallTest
-  public void testGetAppropriatePreferenceActivityClass() {
-    assertSame(MozcClassicPreferenceActivity.class,
-               MozcMenuDialogListenerImpl.getAvailablePreferenceActivityClass(
-                   MozcClassicPreferenceActivity.class.getCanonicalName()));
-    // Note that class load of MozcFragmentPreferenceActivity itself succeeds on any Android OS.
-    assertSame(MozcFragmentPreferenceActivity.class,
-               MozcMenuDialogListenerImpl.getAvailablePreferenceActivityClass(
-                   MozcFragmentPreferenceActivity.class.getCanonicalName()));
-    assertSame(MozcClassicPreferenceActivity.class,
-               MozcMenuDialogListenerImpl.getAvailablePreferenceActivityClass(
-                   "invalid class name"));
+            @Override
+            public Class<? extends Activity> getPreferenceActivityClass() {
+              return stubPreferenceActivity.getClass();
+            }
+
+            @Override
+            public Optional<Class<? extends Activity>>
+                getSoftwareKeyboardAdvancedSettingActivityClass() {
+              return Optional.<Class<? extends Activity>>of(
+                  stubSoftwareKeyboardAdvancedSettingActivity.getClass());
+            }
+
+            @Override
+            public boolean isWelcomeActivityPreferrable() {
+              return true;
+            }
+          }));
+      Capture<Intent> intentCapture = new Capture<Intent>();
+      expect(context.getPackageName()).andStubReturn(packageName);
+      context.startActivity(capture(intentCapture));
+      replayAll();
+
+      listener.onShow(context);
+      listener.onLaunchPreferenceActivitySelected(context);
+      listener.onDismiss(context);
+
+      verifyAll();
+
+      // Make sure that the preference activity is launched.
+      Intent intent = intentCapture.getValue();
+      assertEquals(stubPreferenceActivity.getClass().getName(),
+                   intent.getComponent().getClassName());
+      assertEquals(packageName, intent.getComponent().getPackageName());
+      assertTrue((intent.getFlags() & Intent.FLAG_ACTIVITY_NEW_TASK) != 0);
+    } finally {
+      DependencyFactory.setDependency(Optional.<Dependency>absent());
+    }
   }
 
   @SmallTest

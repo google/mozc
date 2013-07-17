@@ -270,23 +270,24 @@ CBitmapHandle RenderImpl(const Candidates &candidates,
 }  // namespace
 
 HBITMAP TipUiRendererImmersive::Render(
-      const Candidates &candidates, SIZE *size, int *left_align_offset) {
-  TableLayout table_layout;
+    const Candidates &candidates, renderer::TableLayout *table_layout,
+    SIZE *size, int *left_align_offset) {
   TextRenderer text_renderer;
   text_renderer.Init();
 
   vector<wstring> candidate_strings;
-  CalcLayout(candidates, text_renderer, &table_layout, &candidate_strings);
+  CalcLayout(candidates, text_renderer, table_layout, &candidate_strings);
 
-  const Size &total_size = table_layout.GetTotalSize();
+  const Size &total_size = table_layout->GetTotalSize();
   if (size != nullptr) {
     size->cx = total_size.width;
     size->cy = total_size.height;
   }
   if (left_align_offset != nullptr) {
-    *left_align_offset = table_layout.GetColumnRect(COLUMN_CANDIDATE).Left();
+    *left_align_offset = table_layout->GetColumnRect(COLUMN_CANDIDATE).Left();
   }
-  return RenderImpl(candidates, table_layout, text_renderer, candidate_strings);
+  return RenderImpl(
+      candidates, *table_layout, text_renderer, candidate_strings);
 }
 
 }  // namespace tsf

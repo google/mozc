@@ -54,7 +54,7 @@ class TransliterationRewriter : public RewriterInterface  {
                        Segments *segments) const;
 
  private:
-  void InitT13NCandidate(const string &key,
+  void InitT13nCandidate(const string &key,
                          const string &value,
                          uint16 lid,
                          uint16 rid,
@@ -64,10 +64,10 @@ class TransliterationRewriter : public RewriterInterface  {
   bool SetTransliterations(const vector<string> &t13ns,
                            const string &key,
                            Segment *segment) const;
-  bool FillT13NsFromComposer(const ConversionRequest &request,
+  bool FillT13nsFromComposer(const ConversionRequest &request,
                              Segments *segments) const;
-  bool FillT13NsFromKey(Segments *segments) const;
-  bool AddRawNumberT13NCandidates(const ConversionRequest &request,
+  bool FillT13nsFromKey(Segments *segments) const;
+  bool AddRawNumberT13nCandidates(const ConversionRequest &request,
                                   Segments *segments) const;
 
   const uint16 unknown_id_;

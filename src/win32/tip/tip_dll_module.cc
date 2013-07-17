@@ -40,6 +40,7 @@
 #include "win32/base/tsf_registrar.h"
 #include "win32/tip/tip_class_factory.h"
 #include "win32/tip/tip_ui_handler.h"
+#include "win32/tip/tip_text_service.h"
 
 namespace {
 
@@ -49,6 +50,7 @@ using mozc::config::StatsConfigUtil;
 using mozc::once_t;
 using mozc::win32::TsfProfile;
 using mozc::win32::TsfRegistrar;
+using mozc::win32::tsf::TipTextServiceFactory;
 using mozc::win32::tsf::TipUiHandler;
 
 // True if the boot mode is safe mode.
@@ -118,12 +120,14 @@ class ModuleImpl {
         return FALSE;
     }
     CrashReportHandler::SetCriticalSection(&critical_section_for_breakpad_);
+    TipTextServiceFactory::OnDllProcessAttach(instance, static_loading);
     TipUiHandler::OnDllProcessAttach(instance, static_loading);
     return TRUE;
   }
 
   static BOOL OnDllProcessDetach(HINSTANCE instance, bool process_shutdown) {
     TipUiHandler::OnDllProcessDetach(instance, process_shutdown);
+    TipTextServiceFactory::OnDllProcessDetach(instance, process_shutdown);
     if (!g_in_safe_mode && !process_shutdown) {
       // It is our responsibility to make sure that our code never touch
       // protobuf library after google::protobuf::ShutdownProtobufLibrary is

@@ -39,6 +39,12 @@
   "branding": {
     "message": "@BRANDING@"
   },
+  "appNameJPKeyboard": {
+    "message": "@APP_NAME_JA@（日本語キーボード用）"
+  },
+  "appNameUSKeyboard": {
+    "message": "@APP_NAME_JA@（USキーボード用）"
+  },
   "compositionModeHiragana": {
     "message": "ひらがな"
   },
@@ -126,6 +132,9 @@
   "configSessionKeymapKotoeri": {
     "message": "ことえり"
   },
+  "configSessionKeymapCustom": {
+    "message": "カスタム"
+  },
   "configIncognitoMode": {
     "message": "一時的に学習機能、入力履歴からのサジェスト機能、ユーザ辞書機能を無効にする"
   },
@@ -141,11 +150,101 @@
   "configSuggestionsSize": {
     "message": "サジェストの最大候補数"
   },
+  "configSettingsTitle": {
+    "message": "日本語入力の設定"
+  },
+  "configBasicsTitle": {
+    "message": "基本設定"
+  },
+  "configInputAssistanceTitle": {
+    "message": "入力補助"
+  },
+  "configSuggestTitle": {
+    "message": "サジェスト"
+  },
+  "configPrivacyTitle": {
+    "message": "プライバシー"
+  },
+  "configClearUserHistory": {
+    "message": "入力履歴の削除"
+  },
+  "configClearUserHistoryMessage": {
+    "message": "すべての入力履歴が削除されます。実行しますか？"
+  },
   "configCreditsDescription": {
-    "message": "Copyright © 2012 Google Inc. All Rights Reserved."
+    "message": "Copyright © 2013 Google Inc. All Rights Reserved."
   },
   "configOssCreditsDescription": {
     "message": "本ソフトウェアは<a href=\"./credits_ja.html\">オープンソースソフトウェア</a>を利用しています。"
+  },
+  "configSyncConfigCancel": {
+    "message": "キャンセル"
+  },
+  "configSyncConfigOk": {
+    "message": "OK"
+  },
+  "configSyncStartSync": {
+    "message": "同期する"
+  },
+  "configSyncStopSync": {
+    "message": "同期の解除"
+  },
+  "configSyncNotSyncedYet": {
+    "message": "同期されていません"
+  },
+  "configSyncLastSyncedTime": {
+    "message": "最終同期時刻: "
+  },
+  "configSyncWaiting": {
+    "message": "サーバの状態を確認しています.. この処理は最大2分かかります"
+  },
+  "configSyncDuringSync": {
+    "message": "同期中です"
+  },
+  "configSyncNoSync": {
+    "message": "同期機能：オフ"
+  },
+  "configSyncCustomization": {
+    "message": "詳細設定"
+  },
+  "configSyncAdvancedSettings": {
+    "message": "同期の詳細設定"
+  },
+  "configSyncDescription": {
+    "message": "設定や同期用ユーザー辞書を、異なるコンピュータ間で安全に同期します。同期済みのデータは <a href=\"https://www.google.com/settings/dashboard\" target=\"_blank\">Google ダッシュボード</a> から削除できます。"
+  },
+  "configSyncTitle": {
+    "message": "同期"
+  },
+  "configUseConfigSync": {
+    "message": "設定の同期"
+  },
+  "configUseUserDictionarySync": {
+    "message": "ユーザー辞書の同期"
+  },
+  "configSyncAuthorizationFail": {
+    "message": "認証に失敗しました。"
+  },
+  "configSyncUserDictionaryNumEntryExceeded": {
+    "message": "単語数の上限を超えたため同期用辞書をセーブできません。"
+  },
+  "configSyncUserDictionaryByteSizeExceeded": {
+    "message": "ファイルサイズの上限を超えたため同期用辞書をセーブできません。"
+  },
+  "configSyncUserDictionaryNumDicrionaryExceeded": {
+    "message": "同期用辞書の数が上限を超えたため辞書をセーブできません。"
+  },
+  "configSyncUnknownErrorFound": {
+    "message": "未知のエラーです。"
+  },
+  "configSyncAuthorizationError": {
+    "message": "認証失敗"
+  },
+  "configSyncDictionaryError": {
+    "message": "辞書同期エラー"
+  },
+  "configSyncUnknownError": {
+    "message": "未知の同期エラー"
   },
   "configUploadUsageStats": {
     "message": "使用統計データや障害レポートを Google に自動送信して Mozcの機能向上に役立てる"

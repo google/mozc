@@ -34,7 +34,6 @@ import org.mozc.android.inputmethod.japanese.MozcLog;
 import org.mozc.android.inputmethod.japanese.preference.ClientSidePreference.InputStyle;
 import org.mozc.android.inputmethod.japanese.preference.ClientSidePreference.KeyboardLayout;
 
-import android.inputmethodservice.InputMethodService;
 import android.text.InputType;
 
 /**
@@ -71,6 +70,10 @@ import android.text.InputType;
  *
  */
 public class JapaneseSoftwareKeyboardModel {
+
+  /**
+   * Keyboard mode that indicates supported character types.
+   */
   public enum KeyboardMode {
     KANA, ALPHABET, KANA_NUMBER, ALPHABET_NUMBER,
   }
@@ -286,4 +289,5 @@ public class JapaneseSoftwareKeyboardModel {
     // KANA_NUMBER must be never used.
     throw new IllegalArgumentException("Unknown keyboard mode: " + keyboardMode);
   }
+
 }

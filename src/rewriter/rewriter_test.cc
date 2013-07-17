@@ -71,8 +71,11 @@ class RewriterTest : public ::testing::Test {
     converter_mock_.reset(new ConverterMock);
     const testing::MockDataManager data_manager;
     pos_group_.reset(new PosGroup(data_manager.GetPosGroupData()));
-    rewriter_.reset(new RewriterImpl(converter_mock_.get(), &data_manager,
-                                     pos_group_.get()));
+    const DictionaryInterface *kNullDictionary = NULL;
+    rewriter_.reset(new RewriterImpl(converter_mock_.get(),
+                                     &data_manager,
+                                     pos_group_.get(),
+                                     kNullDictionary));
   }
 
   virtual void TearDown() {

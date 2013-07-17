@@ -104,10 +104,15 @@ TEST_F(ValueDictionaryTest, HasValue) {
       ValueDictionary::CreateValueDictionaryFromFile(*pos_matcher_,
                                                      dict_name_));
 
-  EXPECT_TRUE(dictionary->HasValue("we"));
-  EXPECT_TRUE(dictionary->HasValue("war"));
-  EXPECT_TRUE(dictionary->HasValue("word"));
-  EXPECT_TRUE(dictionary->HasValue("world"));
+  // ValueDictionary is supposed to use the same data with SystemDictionary
+  // and SystemDictionary::HasValue should return the same result with
+  // ValueDictionary::HasValue.  So we can skip the actual logic of HasValue
+  // and return just false.
+  EXPECT_FALSE(dictionary->HasValue("we"));
+  EXPECT_FALSE(dictionary->HasValue("war"));
+  EXPECT_FALSE(dictionary->HasValue("word"));
+  EXPECT_FALSE(dictionary->HasValue("world"));
+
   EXPECT_FALSE(dictionary->HasValue("hoge"));
   EXPECT_FALSE(dictionary->HasValue("piyo"));
 }

@@ -52,52 +52,19 @@
     'chromeos%': 0,
 
     # Versioning stuff for Mac.
-    'mac_sdk%': '10.5',
+    'mac_sdk%': '10.8',
     'mac_deployment_target%': '10.5',
-
-    # warning_cflags will be shared with Mac and Linux.
-    'warning_cflags': [
-      '-Wall',
-      '-Werror',
-      '-Wno-char-subscripts',
-      '-Wno-sign-compare',
-      '-Wno-deprecated-declarations',
-      '-Wwrite-strings',
-    ],
-    # gcc_cflags will be shared with Mac and Linux except for NaCl.
-    'gcc_cflags': [
-      '-fmessage-length=0',
-      '-fno-omit-frame-pointer',
-      '-fno-strict-aliasing',
-      '-funsigned-char',
-      '-include base/namespace.h',
-      '-fstack-protector',
-      '--param=ssp-buffer-size=4',
-      '-pipe',
-      '-pthread',
-    ],
-    # cflags for NaCl.
-    # -fno-omit-frame-pointer flag does not work correctly.
-    #   http://code.google.com/p/chromium/issues/detail?id=122623
-    'nacl_cflags': [
-      '-fmessage-length=0',
-      '-fno-strict-aliasing',
-      '-funsigned-char',
-      '-include base/namespace.h',
-      '-pipe',
-      '-pthread',
-    ],
-    # Libraries for GNU/Linux environment.
-    'linux_ldflags': [
-      '-pthread',
-    ],
 
     # 'conditions' is put inside of 'variables' so that we can use
     # another 'conditions' in this gyp element level later. Note that
     # you can have only one 'conditions' in a gyp element.
     'variables': {
       'target_compiler': '',
+      'extra_warning_cflags': '',
       'conditions': [
+        ['warn_as_error!=0', {
+          'extra_warning_cflags': '-Werror',
+        }],
         ['OS=="win"', {
           # Variable 'MSVS_VERSION' is available on Windows only.
           'conditions': [
@@ -116,6 +83,52 @@
     # This value is currently used only on Windows.
     'target_compiler': '<(target_compiler)',
 
+    # warning_cflags will be shared with Mac and Linux.
+    'warning_cflags': [
+      '-Wall',
+      '-Wno-char-subscripts',
+      '-Wno-sign-compare',
+      '-Wno-deprecated-declarations',
+      '-Wwrite-strings',
+      '<@(extra_warning_cflags)',
+    ],
+
+    # gcc_cflags will be shared with Mac and Linux
+    'gcc_cflags': [
+      '-fmessage-length=0',
+      '-fno-strict-aliasing',
+      '-funsigned-char',
+      '-include base/namespace.h',
+      '-pipe',
+      '-pthread',
+    ],
+    # linux_cflags will be used in Linux except for NaCl.
+    'linux_cflags': [
+      '<@(gcc_cflags)',
+      '-fno-omit-frame-pointer',
+      '-fstack-protector',
+      '--param=ssp-buffer-size=4',
+    ],
+    # nacl_cflags will be used for NaCl.
+    # -fno-omit-frame-pointer flag does not work correctly.
+    #   http://code.google.com/p/chromium/issues/detail?id=122623
+    'nacl_cflags': [
+      '<@(gcc_cflags)',
+    ],
+    # mac_cflags will be used in Mac.
+    # Xcode 4.5 which we are currently using does not support ssp-buffer-size.
+    # TODO(horo): When we can use Xcode 4.6 which supports ssp-buffer-size,
+    # set ssp-buffer-size in Mac.
+    'mac_cflags': [
+      '<@(gcc_cflags)',
+      '-fno-omit-frame-pointer',
+      '-fstack-protector',
+    ],
+    # Libraries for GNU/Linux environment.
+    'linux_ldflags': [
+      '-pthread',
+    ],
+
     # Extra defines
     'additional_defines%': [],
 
@@ -130,6 +143,11 @@
     'enable_unittest%': '1',
 
     'conditions': [
+      ['OS=="mac"', {
+        'clang': 1,
+        'clang_bin_dir': '/Applications/Xcode.app/Contents/Developer/Toolchains'
+                         '/XcodeDefault.xctoolchain/usr/bin/',
+      }],
       # enable_gtk_renderer represents if mozc_renderer is supported on Linux
       # or not.
       ['target_platform=="Linux" and language=="japanese"', {
@@ -186,6 +204,10 @@
     # use_qt is 'YES' only if you want to use GUI binaries.
     'use_qt%': 'YES',
 
+    # server_dir represents the directory where mozc_server is
+    # installed. This option is only for Linux.
+    'server_dir%': '/usr/lib/mozc',
+
     # use_libprotobuf represents if protobuf library is used or not.
     # This option is only for Linux.
     # You should not set this flag if you want to use "dlopen" to
@@ -225,6 +247,10 @@
     # enable_http_client represents if http client feature is enabled or not.
     'enable_http_client%': 0,
 
+    # enable ambiguous search (a.k.a. KATSUKOU-conversion).
+    'enable_ambiguous_search%': 0,
+    # enable typing correction.
+    'enable_typing_correction%': 0,
 
     # The pkg-config command to get the cflags/ldflags for Linux
     # builds.  We make it customizable to allow building in a special
@@ -328,8 +354,8 @@
           ['target_platform=="Android"', {
             'defines': ['NO_USAGE_REWRITER'],
           }],
-          ['enable_history_deletion==1', {
-            'defines': ['MOZC_ENABLE_HISTORY_DELETION'],
+          ['enable_mode_indicator==1', {
+            'defines': ['MOZC_ENABLE_MODE_INDICATOR'],
           }],
         ],
       },
@@ -723,7 +749,6 @@
       ['OS=="linux"', {
         'defines': [
           'OS_LINUX',
-          'MOZC_SERVER_DIRECTORY="<@(server_dir)"',
         ],
         'cflags': [
           '<@(warning_cflags)',
@@ -743,26 +768,41 @@
           }],
           ['clang==1', {
             'cflags': [
-              '-Wno-unnamed-type-template-args',
-              '-Wno-covered-switch-default',
               '-Wtype-limits',
+            ],
+            'cflags_cc': [
+              '-Wno-covered-switch-default',
+              '-Wno-unnamed-type-template-args',
+              '-Wno-c++11-narrowing',
+              '-std=gnu++0x',
+            ],
+          }],
+          ['clang==0 and target_platform!="Windows"', {
+            'cflags_cc': [
+              '-std=gnu++0x',
+            ],
+            'defines': [
+              'GTEST_LANG_CXX11=0',
             ],
           }],
           ['target_platform!="NaCl"', {
             'cflags': [
-              '<@(gcc_cflags)',
+              '<@(linux_cflags)',
             ],
           }],
           ['target_platform=="NaCl"', {
             'target_conditions' : [
               ['_toolset=="host"', {
                 'cflags': [
-                  '<@(gcc_cflags)',
+                  '<@(linux_cflags)',
                 ],
               }],
               ['_toolset=="target"', {
                 'cflags': [
                   '<@(nacl_cflags)',
+                ],
+                'cflags_cc': [
+                  '-std=gnu++0x',
                 ],
                 'ldflags!': [  # Remove all libraries for GNU/Linux.
                   '<@(linux_ldflags)',
@@ -797,7 +837,7 @@
           'GCC_ENABLE_CPP_EXCEPTIONS': 'NO',  # -fno-exceptions
           'GCC_SYMBOLS_PRIVATE_EXTERN': 'NO',  # No -fvisibility=hidden
           'OTHER_CFLAGS': [
-            '<@(gcc_cflags)',
+            '<@(mac_cflags)',
           ],
           'WARNING_CFLAGS': ['<@(warning_cflags)'],
           'MACOSX_DEPLOYMENT_TARGET': '<(mac_deployment_target)',
@@ -809,9 +849,13 @@
               'LDPLUSPLUS': '<(clang_bin_dir)/clang++',
               'CLANG_WARN_CXX0X_EXTENSIONS': 'NO',
               'GCC_VERSION': 'com.apple.compilers.llvm.clang.1_0',
-              'WARNING_CFLAGS+': [
-                '-Wno-unnamed-type-template-args',
+              'WARNING_CFLAGS': [
+                '-Wno-c++11-narrowing',
                 '-Wno-covered-switch-default',
+                '-Wno-unnamed-type-template-args',
+              ],
+              'OTHER_CPLUSPLUSFLAGS': [
+                '$(inherited)', '-std=gnu++11',
               ],
             }],
           ],

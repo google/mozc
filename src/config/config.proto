@@ -329,6 +329,13 @@ message Config {
 
   //////////////////////////////////////////////////////////////
   //
+  // Renderer (120-139)
+  //
+  // Use mode indicator feature.
+  optional bool use_mode_indicator = 120 [ default = true ];
+
+  //////////////////////////////////////////////////////////////
+  //
   // Cloud (300-319)
   //
   // Configuration for cloud sync feature.

@@ -32,11 +32,12 @@
 #ifndef MOZC_DICTIONARY_FILE_CODEC_H_
 #define MOZC_DICTIONARY_FILE_CODEC_H_
 
-#include "dictionary/file/codec_interface.h"
-
+#include <ostream>
+#include <string>
 #include <vector>
 
 #include "base/base.h"
+#include "dictionary/file/codec_interface.h"
 #include "dictionary/file/section.h"
 
 namespace mozc {
@@ -45,22 +46,19 @@ namespace mozc {
 class DictionaryFileCodec : public DictionaryFileCodecInterface {
  public:
   DictionaryFileCodec();
-
   virtual ~DictionaryFileCodec();
 
   virtual void WriteSections(const vector<DictionaryFileSection> &sections,
                              ostream *ofs) const;
-
   virtual bool ReadSections(const char *image, int length,
                             vector<DictionaryFileSection> *sections) const;
-
   virtual string GetSectionName(const string &name) const;
 
  private:
   void WriteHeader(ostream *ofs) const;
+  void WriteSection(const DictionaryFileSection &section, ostream *ofs) const;
 
-  void WriteSection(const DictionaryFileSection &section,
-                    ostream *ofs) const;
+  static void Pad4(int length, ostream *ofs);
 
   // Magic value for simple file validation
   const int filemagic_;
@@ -69,4 +67,5 @@ class DictionaryFileCodec : public DictionaryFileCodecInterface {
 };
 
 }  // namespace mozc
+
 #endif  // MOZC_DICTIONARY_FILE_CODEC_H_

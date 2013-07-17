@@ -62,20 +62,13 @@ class SyncHandler : public Thread {
   //    Sync operation (network connections) is executed asynchronously.
   // 3. sends "Reload" IPC command to the main converter thread,
   //    if reload is required, i.e. there exists an update on the cloud.
-  // 4. Signal process-wide named event. Config dialog can
-  //    wait for the named event to know the time when the Sync()
-  //    method finishes.
   // If a sync thread is already created in the step 2,
   // event is not be signaled, as currently running thread
   // will signal a event later.
   bool Sync();
 
-  // Clear() does the following two steps in sequence.
-  // 1  creates a new thread and executes SyncerInterface::Clear() method.
-  //    Clear operation (network connections) is executed asynchronously.
-  // 2. Signal process-wide named event. Config dialog can
-  //    wait for the named event
-  //    to know the time when the Sync() method finishes.
+  // Creates a new thread and executes SyncerInterface::Clear() method.
+  // Clear operation (network connections) is executed asynchronously.
   bool Clear();
 
   // Wait Sync() or Clear() call until they finish.
@@ -96,6 +89,10 @@ class SyncHandler : public Thread {
 
   // This class takes an ownership of |*oauth2_util|;
   void SetOAuth2UtilForUnittest(OAuth2Util *oauth2_util);
+
+  // Returns reload_required_timestamp_.
+  // This value can be used to reload SessionHandler from the main event loop.
+  uint64 GetReloadRequiredTimestamp();
 
  private:
   void InitializeSyncer();
@@ -118,6 +115,7 @@ class SyncHandler : public Thread {
   Mutex status_mutex_;
   scoped_ptr<OAuth2Util> oauth2_util_;
   uint64 last_sync_timestamp_;
+  uint64 reload_required_timestamp_;
   SyncStatusManagerInterface *sync_status_manager_;
   scoped_ptr<SyncerInterface> syncer_;
 

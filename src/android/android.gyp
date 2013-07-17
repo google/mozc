@@ -65,7 +65,7 @@
       # Path of support-v4 has been changed for new SDK.
       '<(android_sdk_home)/extras/android/compatibility/v4/android-support-v4.jar',
       '<(android_sdk_home)/extras/android/support/v4/android-support-v4.jar',
-      ],
+    ],
     'ndk_app_dst_dir': 'libs',
     'ndk_build_with_args': [
       'ndk-build',
@@ -191,6 +191,9 @@
         'easymock_jar_path': '<(DEPTH)/third_party/easymock/easymock-3_1.jar',
         # TODO(matsuzakit): Make copy_and_patch.py support non-jar file tree.
         'easymock_src_path': '<(DEPTH)/third_party/easymock/src/main/java',
+        'guava_jar_path': '<(DEPTH)/third_party/guava/guava-jdk5-13.0.jar',
+        'guava_testlib_jar_path': '<(DEPTH)/third_party/guava/guava-testlib-jdk5-13.0.jar',
+        'jsr305_jar_path': '<(DEPTH)/third_party/findbug/jsr305-2.0.2.jar',
         'dictionary_data': '<(SHARED_INTERMEDIATE_DIR)/data_manager/oss/system.dictionary',
         'connection_data': '<(SHARED_INTERMEDIATE_DIR)/data_manager/oss/connection_data.data',
         'native_test_small_targets': [
@@ -326,7 +329,8 @@
         'assets',
         'build_native_library',
         'gen_mozc_drawable',
-        'support_v4_library',
+        'guava_library',
+        'support_libraries',
       ],
     },
     {
@@ -603,7 +607,7 @@
       ],
     },
     {
-      'target_name': 'support_v4_library',
+      'target_name': 'support_libraries',
       'type': 'none',
       'actions': [
         {
@@ -619,6 +623,55 @@
             '--ignore_existence_check',
             '<@(support_v4_jar_paths)',
             'libs',
+          ]
+        },
+      ],
+    },
+    {
+      'target_name': 'guava_library',
+      'type': 'none',
+      'actions': [
+        {
+          'action_name': 'copy_guava_library',
+          'inputs': [
+            '<(guava_jar_path)',
+          ],
+          'outputs': [
+            'libs/guava.jar',
+          ],
+          'action': [
+            '<@(copy_file)',
+            '<(_inputs)',
+            'libs/guava.jar',
+          ]
+        },
+        {
+          'action_name': 'copy_guava_test_library',
+          'inputs': [
+            '<(guava_testlib_jar_path)',
+          ],
+          'outputs': [
+            'tests/libs/guava-testlib.jar',
+          ],
+          'action': [
+            '<@(copy_file)',
+            '<(_inputs)',
+            'tests/libs/guava-testlib.jar',
+          ]
+        },
+        {
+          # Needed for Guava libarary.
+          'action_name': 'copy_jr305_library',
+          'inputs': [
+            '<(jsr305_jar_path)',
+          ],
+          'outputs': [
+            'libs/jsr305.jar',
+          ],
+          'action': [
+            '<@(copy_file)',
+            '<(_inputs)',
+            'libs/jsr305.jar',
           ]
         },
       ],

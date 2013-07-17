@@ -82,6 +82,55 @@ mozc.DEFAULT_CONFIG_ = {
 };
 
 /**
+ * Option title information data.
+ * @const
+ * @type {Array.<!Object>}
+ * @private
+ */
+mozc.OPTION_TITLES_ = [
+  {
+    id: 'settings_title',
+    name: chrome.i18n.getMessage('configSettingsTitle')
+  },
+  {
+    id: 'basics_title',
+    name: chrome.i18n.getMessage('configBasicsTitle')
+  },
+  {
+    id: 'input_assistance_title',
+    name: chrome.i18n.getMessage('configInputAssistanceTitle')
+  },
+  {
+    id: 'suggest_title',
+    name: chrome.i18n.getMessage('configSuggestTitle')
+  },
+  {
+    id: 'privacy_title',
+    name: chrome.i18n.getMessage('configPrivacyTitle')
+  },
+  {
+    id: 'credits_title',
+    name: chrome.i18n.getMessage('configCreditsDescription')
+  },
+  {
+    id: 'oss_credits_title',
+    name: chrome.i18n.getMessage('configOssCreditsDescription')
+  },
+  {
+    id: 'sync_advanced_settings_title',
+    name: chrome.i18n.getMessage('configSyncAdvancedSettings')
+  },
+  {
+    id: 'sync_description',
+    name: chrome.i18n.getMessage('configSyncDescription')
+  },
+  {
+    id: 'sync_title',
+    name: chrome.i18n.getMessage('configSyncTitle')
+  }
+];
+
+/**
  * Option checkbox information data.
  * @const
  * @type {Array.<!Object>}
@@ -265,14 +314,78 @@ mozc.OPTION_NUMBERS_ = [
 ];
 
 /**
+ * Option button information data.
+ * @const
+ * @type {Array.<!Object>}
+ * @private
+ */
+mozc.OPTION_BUTTONS_ = [
+  {
+    id: 'clear_user_history',
+    name: chrome.i18n.getMessage('configClearUserHistory')
+  },
+  {
+    id: 'sync_config_cancel',
+    name: chrome.i18n.getMessage('configSyncConfigCancel')
+  },
+  {
+    id: 'sync_config_ok',
+    name: chrome.i18n.getMessage('configSyncConfigOk')
+  },
+  {
+    id: 'sync_toggle_button',
+    name: chrome.i18n.getMessage('configSyncStartSync')
+  },
+  {
+    id: 'sync_customization_button',
+    name: chrome.i18n.getMessage('configSyncCustomization')
+  }
+];
+
+/**
+ * Option sync checkbox information data.
+ * @const
+ * @type {Array.<!Object>}
+ * @private
+ */
+mozc.OPTION_SYNC_CHECKBOXES_ = [
+  {
+    id: 'sync_settings',
+    syncConfigId: 'use_config_sync',
+    name: chrome.i18n.getMessage('configUseConfigSync')
+  },
+  {
+    id: 'sync_user_dictionary',
+    configId: 'use_user_dictionary_sync',
+    name: chrome.i18n.getMessage('configUseUserDictionarySync')
+  }
+];
+
+/**
+ * The refresh interval of sync status in milliseconds.
+ * @type {number}
+ * @private
+ */
+mozc.SYNC_STATUS_REFRESH_INTERVAL_ = 3000;
+
+/**
+ * Cloud sync feature is only available in official dev channel.
+ * @type {boolean}
+ * @private
+ */
+mozc.ENABLE_CLOUD_SYNC_ = mozc.VERSION_.DEV && mozc.VERSION_.OFFICIAL;
+
+/**
  * An empty constructor.
  * @param {!mozc.NaclMozc} naclMozc NaCl Mozc.
  * @param {!HTMLDocument} domDocument Document object of the option page.
+ * @param {!Object} consoleObject Console object of the option page.
  * @constructor
  */
-mozc.OptionPage = function(naclMozc, domDocument) {
+mozc.OptionPage = function(naclMozc, domDocument, consoleObject) {
   /**
    * NaclMozc object.
+   * This value will be null when the option page is unloaded.
    * @type {mozc.NaclMozc}
    * @private
    */
@@ -280,39 +393,76 @@ mozc.OptionPage = function(naclMozc, domDocument) {
 
   /**
    * Document object of the option page.
-   * @type {!HTMLDocument}
+   * This value will be null when the option page is unloaded.
+   * @type {HTMLDocument}
    * @private
    */
   this.document_ = domDocument;
+
+  /**
+   * Console object of the option page.
+   * This value will be null when the option page is unloaded.
+   * @type {Object}
+   * @private
+   */
+  this.console_ = consoleObject;
+
+  /**
+   * Timer ID which is used to refresh sync status.
+   * @type {undefined|number}
+   * @private
+   */
+  this.timeoutID_ = undefined;
+
+  /**
+   * The last synced time which is acquired from NaCl module using
+   * getCloudSyncStatus().
+   * @type {number}
+   * @private
+   */
+  this.lastSyncedTimestamp_ = 0;
 };
 
 /**
  * Initializes the option page.
  */
 mozc.OptionPage.prototype.initialize = function() {
-  this.naclMozc_.callWhenInitialized(
-      this.naclMozc_.getConfig.bind(
-          this.naclMozc_,
-          this.initPages_.bind(this))
-  );
+  if (!this.naclMozc_) {
+    console.error('The option page is already unloaded.');
+    return;
+  }
+  this.initPages_();
+  this.naclMozc_.callWhenInitialized((function() {
+    this.naclMozc_.getConfig(this.onConfigLoaded_.bind(this));
+    if (mozc.ENABLE_CLOUD_SYNC_) {
+      this.updateSyncStatus_();
+    }
+    // Outputs the version information to JavaScript console.
+    this.naclMozc_.getVersionInfo((function(message) {
+      this.console_.log(JSON.stringify(message));
+    }).bind(this));
+  }).bind(this));
 };
 
 /**
- * Creates an TR element including title string and element.
- * @param {string} title Title string.
- * @param {!Element} element Element object to be inserted.
- * @return {!Element} Created TR element.
- * @private
+ * Unloads the option page.
  */
-mozc.OptionPage.prototype.createTrElement_ = function(title, element) {
-  var tr = this.document_.createElement('tr');
-  var labelTh = this.document_.createElement('th');
-  labelTh.appendChild(this.document_.createTextNode(title));
-  var elementTd = this.document_.createElement('td');
-  elementTd.appendChild(element);
-  tr.appendChild(labelTh);
-  tr.appendChild(elementTd);
-  return tr;
+mozc.OptionPage.prototype.unload = function() {
+  if (this.timeoutID_ != undefined) {
+    clearTimeout(this.timeoutID_);
+    this.timeoutID_ = undefined;
+  }
+  this.naclMozc_ = null;
+  this.document_ = null;
+  this.console_ = null;
+};
+
+/**
+ * Gets whether the option page is unloaded.
+ * @return {boolean} Whether the option page is already unloaded.
+ */
+mozc.OptionPage.prototype.isUnloaded = function() {
+  return this.naclMozc_ == null;
 };
 
 /**
@@ -331,11 +481,156 @@ mozc.OptionPage.prototype.createOptionElement_ = function(name, value) {
 
 /**
  * Initializes the page.
+ * @private
+ */
+mozc.OptionPage.prototype.initPages_ = function() {
+  this.document_.title = chrome.i18n.getMessage('configSettingsTitle');
+  for (var i = 0; i < mozc.OPTION_TITLES_.length; ++i) {
+    var optionTitle = mozc.OPTION_TITLES_[i];
+    this.document_.getElementById(optionTitle.id).innerHTML =
+        optionTitle.name;
+  }
+
+  // A checkbox (id:"CHECK_BOX_ID") is in a DIV (id:"CHECK_BOX_ID_div") and has
+  // a label (id:"CHECK_BOX_ID_label").
+  // <div id="CHECK_BOX_ID_div">
+  //   <span>
+  //     <input type="checkbox" id="CHECK_BOX_ID">
+  //     <span>
+  //       <label for="CHECK_BOX_ID" id="CHECK_BOX_ID_label">...</label>
+  //     </span>
+  //   </span>
+  // </div>
+  for (var i = 0; i < mozc.OPTION_CHECKBOXES_.length; ++i) {
+    var optionCheckbox = mozc.OPTION_CHECKBOXES_[i];
+    if (optionCheckbox.disabled) {
+      this.document_.getElementById(optionCheckbox.id + '_div').style
+          .visibility = 'hidden';
+    }
+    this.document_.getElementById(optionCheckbox.id + '_label').innerHTML =
+        optionCheckbox.name;
+    this.document_.getElementById(optionCheckbox.id).addEventListener(
+        'change', this.saveConfig_.bind(this), true);
+  }
+
+  // A selection (id:"SELECTION_ID") is in a DIV (id:"SELECTION_ID_div") and has
+  // a label (id:"SELECTION_ID_label")
+  // <div id="SELECTION_ID_div">
+  //   <span class="controlled-setting-with-label">
+  //     <span class="selection-label" id="SELECTION_ID_label">...</span>
+  //     <select id="SELECTION_ID"></select>
+  //   </span>
+  // </div>
+  for (var i = 0; i < mozc.OPTION_SELECTIONS_.length; ++i) {
+    var optionSelection = mozc.OPTION_SELECTIONS_[i];
+    this.document_.getElementById(optionSelection.id + '_label').innerHTML =
+        optionSelection.name;
+    var selectionElement = this.document_.getElementById(optionSelection.id);
+    selectionElement.innerHTML = optionSelection.name;
+    while (selectionElement.hasChildNodes()) {
+      selectionElement.removeChild(selectionElement.firstChild);
+    }
+    for (var j = 0; j < optionSelection.items.length; ++j) {
+      selectionElement.appendChild(this.createOptionElement_(
+          optionSelection.items[j].name,
+          optionSelection.items[j].value));
+    }
+    selectionElement.addEventListener(
+        'change', this.saveConfig_.bind(this), true);
+  }
+
+  // We use a select element for number selection.
+  // A selection (id:"NUMBER_ID") is in a DIV (id:"NUMBER_ID_div") and has a
+  // label (id:"NUMBER_ID_label")
+  // <div id="NUMBER_ID_div">
+  //   <span class="controlled-setting-with-label">
+  //     <span class="selection-label" id="NUMBER_ID_label">...</span>
+  //     <select id="NUMBER_ID"></select>
+  //   </span>
+  // </div>
+  for (var i = 0; i < mozc.OPTION_NUMBERS_.length; ++i) {
+    var optionNumber = mozc.OPTION_NUMBERS_[i];
+    this.document_.getElementById(optionNumber.id + '_label').innerHTML =
+        optionNumber.name;
+    var selectionElement = this.document_.getElementById(optionNumber.id);
+    selectionElement.innerHTML = optionNumber.name;
+    while (selectionElement.hasChildNodes()) {
+      selectionElement.removeChild(selectionElement.firstChild);
+    }
+    for (var j = optionNumber.min; j <= optionNumber.max; ++j) {
+      selectionElement.appendChild(this.createOptionElement_(j, j));
+    }
+    selectionElement.addEventListener(
+        'change', this.saveConfig_.bind(this), true);
+  }
+
+  // A button (id:"BUTTON_ID") is in a DIV (id:"BUTTON_ID_div").
+  // <div id="BUTTON_ID_div">
+  //   <span class="controlled-setting-with-label">
+  //     <input type="button" id="BUTTON_ID" value="...">
+  //   </span>
+  // </div>
+  for (var i = 0; i < mozc.OPTION_BUTTONS_.length; ++i) {
+    var optionButton = mozc.OPTION_BUTTONS_[i];
+    var buttonElement = this.document_.getElementById(optionButton.id);
+    buttonElement.value = optionButton.name;
+    buttonElement.addEventListener('click',
+                                   this.onButtonClick_.bind(this,
+                                                            optionButton.id),
+                                   true);
+  }
+
+  // A sync checkbox (id:"CHECK_BOX_ID") has a label (id:"CHECK_BOX_ID_label").
+  // <span>
+  //   <input type="checkbox" id="CHECK_BOX_ID">
+  //   <span>
+  //     <label for="CHECK_BOX_ID" id="CHECK_BOX_ID_label">...</label>
+  //   </span>
+  // </span>
+  for (var i = 0; i < mozc.OPTION_SYNC_CHECKBOXES_.length; ++i) {
+    var optionCheckbox = mozc.OPTION_SYNC_CHECKBOXES_[i];
+    this.document_.getElementById(optionCheckbox.id + '_label').innerHTML =
+        optionCheckbox.name;
+  }
+
+  // Removes cloud_sync_div if cloud sync is not enabled.
+  if (!mozc.ENABLE_CLOUD_SYNC_) {
+    this.document_.getElementById('settings_div').removeChild(
+      this.document_.getElementById('cloud_sync_div'));
+  }
+};
+
+/**
+ * Called when the configuration is loaded.
  * @param {Object} response Response data of GET_CONFIG from NaCl module.
  * @private
  */
-mozc.OptionPage.prototype.initPages_ = function(response) {
+mozc.OptionPage.prototype.onConfigLoaded_ = function(response) {
+  if (this.isUnloaded()) {
+    console.error('The option page is already unloaded.');
+    return;
+  }
   var config = response['output']['config'];
+
+  // Custom keymap option is available only when custom_keymap_table exists or
+  // session_keymap is already set to 'CUSTOM'.
+  // This is because the user can't edit custom keymap table in NaCl Mozc.
+  // It can be downloaded form the sync server if the user has already uploaded
+  // from other platform's Mozc.
+  var session_keymap_select = this.document_.getElementById('session_keymap');
+  var session_keymap_custom =
+      this.document_.getElementById('session_keymap_custom');
+  if (config['custom_keymap_table'] || config['session_keymap'] == 'CUSTOM') {
+    if (!session_keymap_custom) {
+      session_keymap_custom = this.createOptionElement_(
+          chrome.i18n.getMessage('configSessionKeymapCustom'),
+          'CUSTOM');
+      session_keymap_custom.id = 'session_keymap_custom';
+      session_keymap_select.appendChild(session_keymap_custom);
+    }
+  } else if (session_keymap_custom) {
+    session_keymap_select.removeChild(session_keymap_custom);
+  }
 
   for (var i = 0; i < mozc.OPTION_CHECKBOXES_.length; ++i) {
     var optionCheckbox = mozc.OPTION_CHECKBOXES_[i];
@@ -354,66 +649,24 @@ mozc.OptionPage.prototype.initPages_ = function(response) {
                   config[optionCheckbox.configId] :
                   mozc.DEFAULT_CONFIG_[optionCheckbox.configId];
     }
-    var checkbox = this.document_.createElement('input');
-    checkbox.type = 'checkbox';
-    checkbox.id = optionCheckbox.id;
-    checkbox.checked = value;
-    checkbox.addEventListener('change', this.saveConfig_.bind(this), true);
-    var label = this.document_.createElement('label');
-    label.setAttribute('for', optionCheckbox.id);
-    label.appendChild(this.document_.createTextNode(optionCheckbox.name));
-    var checkboxDiv = this.document_.createElement('div');
-    checkboxDiv.appendChild(checkbox);
-    checkboxDiv.appendChild(label);
-    this.document_.body.appendChild(checkboxDiv);
+    this.document_.getElementById(optionCheckbox.id).checked = value;
   }
-
-  var optionTable = this.document_.createElement('table');
-
   for (var i = 0; i < mozc.OPTION_SELECTIONS_.length; ++i) {
     var optionSelection = mozc.OPTION_SELECTIONS_[i];
     var value = (config[optionSelection.configId] != undefined) ?
                 config[optionSelection.configId] :
                 mozc.DEFAULT_CONFIG_[optionSelection.configId];
-    var select = this.document_.createElement('select');
-    select.id = optionSelection.id;
-    select.addEventListener('change', this.saveConfig_.bind(this), true);
-    for (var j = 0; j < optionSelection.items.length; ++j) {
-      select.appendChild(this.createOptionElement_(
-          optionSelection.items[j].name,
-          optionSelection.items[j].value));
-      if (optionSelection.items[j].value == value) {
-        select.selectedIndex = j;
-      }
-    }
-    optionTable.appendChild(this.createTrElement_(
-        optionSelection.name, select));
+    this.document_.getElementById(optionSelection.id).value = value;
   }
-
   for (var i = 0; i < mozc.OPTION_NUMBERS_.length; ++i) {
     var optionNumber = mozc.OPTION_NUMBERS_[i];
     var value = (config[optionNumber.configId] != undefined) ?
                 config[optionNumber.configId] :
                 mozc.DEFAULT_CONFIG_[optionNumber.configId];
-    var number = this.document_.createElement('input');
-    number.id = optionNumber.id;
-    number.min = optionNumber.min;
-    number.max = optionNumber.max;
-    number.type = 'number';
-    number.value = value;
-    number.addEventListener('change', this.saveConfig_.bind(this), true);
-    optionTable.appendChild(this.createTrElement_(optionNumber.name, number));
+    this.document_.getElementById(optionNumber.id).value = value;
   }
-  this.document_.body.appendChild(optionTable);
 
-  this.document_.body.appendChild(this.document_.createElement('hr'));
-  var creditDiv = this.document_.createElement('div');
-  creditDiv.innerHTML = chrome.i18n.getMessage('configCreditsDescription');
-  this.document_.body.appendChild(creditDiv);
-  var ossCreditDiv = this.document_.createElement('div');
-  ossCreditDiv.innerHTML =
-      chrome.i18n.getMessage('configOssCreditsDescription');
-  this.document_.body.appendChild(ossCreditDiv);
+  this.document_.body.style.visibility = 'visible';
 };
 
 /**
@@ -421,35 +674,358 @@ mozc.OptionPage.prototype.initPages_ = function(response) {
  * @private
  */
 mozc.OptionPage.prototype.saveConfig_ = function() {
-  var config = {};
-  for (var i = 0; i < mozc.OPTION_CHECKBOXES_.length; ++i) {
-    var optionCheckbox = mozc.OPTION_CHECKBOXES_[i];
-    if (optionCheckbox.disabled) {
-      continue;
-    }
-    if (optionCheckbox.configType == 'general_config') {
-      if (config['general_config'] == undefined) {
-        config['general_config'] = {};
+  if (this.isUnloaded()) {
+    console.error('The option page is already unloaded.');
+    return;
+  }
+
+  this.naclMozc_.getConfig((function(response) {
+    var config = response['output']['config'];
+    for (var i = 0; i < mozc.OPTION_CHECKBOXES_.length; ++i) {
+      var optionCheckbox = mozc.OPTION_CHECKBOXES_[i];
+      if (optionCheckbox.disabled) {
+        continue;
       }
-      config['general_config'][optionCheckbox.configId] =
-          this.document_.getElementById(optionCheckbox.id).checked;
-    } else {
-      config[optionCheckbox.configId] =
-          this.document_.getElementById(optionCheckbox.id).checked;
+      if (optionCheckbox.configType == 'general_config') {
+        if (config['general_config'] == undefined) {
+          config['general_config'] = {};
+        }
+        config['general_config'][optionCheckbox.configId] =
+            this.document_.getElementById(optionCheckbox.id).checked;
+      } else {
+        config[optionCheckbox.configId] =
+            this.document_.getElementById(optionCheckbox.id).checked;
+      }
     }
+    for (var i = 0; i < mozc.OPTION_NUMBERS_.length; ++i) {
+      var optionNumber = mozc.OPTION_NUMBERS_[i];
+      config[optionNumber.configId] =
+          Number(this.document_.getElementById(optionNumber.id).value);
+    }
+    for (var i = 0; i < mozc.OPTION_SELECTIONS_.length; ++i) {
+      var optionSelection = mozc.OPTION_SELECTIONS_[i];
+      config[optionSelection.configId] =
+          this.document_.getElementById(optionSelection.id).value;
+    }
+    this.console_.log(config);
+    this.naclMozc_.setConfig(
+        config,
+        (function() {this.naclMozc_.sendReload()}).bind(this));
+  }).bind(this));
+};
+
+/**
+ * Enables the dom element which is specified by id in the option page.
+ * @param {string} id The element ID.
+ * @private
+ */
+mozc.OptionPage.prototype.enableElementById_ = function(id) {
+  this.document_.getElementById(id).disabled = false;
+};
+
+/**
+ * Disables the dom element which is specified by id in the option page.
+ * @param {string} id The element ID.
+ * @private
+ */
+mozc.OptionPage.prototype.disableElementById_ = function(id) {
+  this.document_.getElementById(id).disabled = true;
+};
+
+/**
+ * Shows the dom element which is specified by id in the option page.
+ * @param {string} id The element ID.
+ * @private
+ */
+mozc.OptionPage.prototype.showElementById_ = function(id) {
+  this.document_.getElementById(id).style.visibility = 'visible';
+};
+
+/**
+ * Hides the dom element which is specified by id in the option page.
+ * @param {string} id The element ID.
+ * @private
+ */
+mozc.OptionPage.prototype.hideElementById_ = function(id) {
+  this.document_.getElementById(id).style.visibility = 'hidden';
+};
+
+/**
+ * Called when a button is clicked.
+ * @param {string} buttonId The clicked button ID.
+ * @private
+ */
+mozc.OptionPage.prototype.onButtonClick_ = function(buttonId) {
+  if (buttonId == 'clear_user_history') {
+    this.onClearUserHistoryClicked_();
+  } else if (buttonId == 'sync_config_cancel') {
+    this.onSyncConfigCancelClicked_();
+  } else if (buttonId == 'sync_config_ok') {
+    this.onSyncConfigOkClicked_();
+  } else if (buttonId == 'sync_toggle_button') {
+    this.onSyncToggleButtonClicked_();
+  } else if (buttonId == 'sync_customization_button') {
+    this.onSyncCustomizationButtonClicked_();
   }
-  for (var i = 0; i < mozc.OPTION_NUMBERS_.length; ++i) {
-    var optionNumber = mozc.OPTION_NUMBERS_[i];
-    config[optionNumber.configId] =
-        Number(this.document_.getElementById(optionNumber.id).value);
+};
+
+/**
+ * Called when clear_user_history button is clicked.
+ * @private
+ */
+mozc.OptionPage.prototype.onClearUserHistoryClicked_ = function() {
+  if (!confirm(chrome.i18n.getMessage('configClearUserHistoryMessage'))) {
+    return;
   }
-  for (var i = 0; i < mozc.OPTION_SELECTIONS_.length; ++i) {
-    var optionSelection = mozc.OPTION_SELECTIONS_[i];
-    config[optionSelection.configId] =
-        this.document_.getElementById(optionSelection.id).value;
+  this.disableElementById_('clear_user_history');
+  this.naclMozc_.clearUserHistory((function(response) {
+    this.naclMozc_.clearUserPrediction((function(response) {
+      this.enableElementById_('clear_user_history');
+    }).bind(this));
+  }).bind(this));
+};
+
+/**
+ * Called when sync_config_cancel button is clicked.
+ * @private
+ */
+mozc.OptionPage.prototype.onSyncConfigCancelClicked_ = function() {
+  this.naclMozc_.getCloudSyncStatus((function(res) {
+    this.displaySyncStatus_(res);
+    this.hideElementById_('sync_config_overlay');
+  }).bind(this));
+};
+
+/**
+ * Called when sync_config_ok button is clicked.
+ * @private
+ */
+mozc.OptionPage.prototype.onSyncConfigOkClicked_ = function() {
+  if (!this.document_.getElementById('sync_settings').checked &&
+      !this.document_.getElementById('sync_user_dictionary').checked) {
+    // Stop sync
+    this.naclMozc_.addAuthCode(
+        {'access_token': ''},
+        (function() {
+          this.naclMozc_.getCloudSyncStatus((function(res) {
+            this.displaySyncStatus_(res);
+            this.hideElementById_('sync_config_overlay');
+          }).bind(this));
+        }).bind(this));
+    return;
   }
-  console.log(config);
-  this.naclMozc_.setConfig(
-      config,
-      (function() {this.naclMozc_.sendReload()}).bind(this));
+  this.naclMozc_.getConfig((function(response) {
+    var config = response['output']['config'];
+    if (!config['sync_config']) {
+      config['sync_config'] = {};
+    }
+    config['sync_config']['use_config_sync'] =
+        this.document_.getElementById('sync_settings').checked;
+    config['sync_config']['use_user_dictionary_sync'] =
+        this.document_.getElementById('sync_user_dictionary').checked;
+    this.naclMozc_.setConfig(
+        config,
+        (function() {
+          this.naclMozc_.sendReload();
+          this.getAuthTokenAndStartCloudSync_(
+            this.naclMozc_.getCloudSyncStatus.bind(
+                this.naclMozc_,
+                (function(res) {
+                  this.displaySyncStatus_(res);
+                  this.hideElementById_('sync_config_overlay');
+                }).bind(this)));
+        }).bind(this));
+  }).bind(this));
+};
+
+/**
+ * Gets the auth token and starts cloud sync.
+ * @param {!function(Object)=} opt_callback Function to be called with results
+ *     of START_CLOUD_SYNC.
+ * @private
+ */
+mozc.OptionPage.prototype.getAuthTokenAndStartCloudSync_ =
+    function(opt_callback) {
+  chrome.identity.getAuthToken(
+      {interactive: true},
+      (function(token) {
+        this.naclMozc_.addAuthCode(
+            {'access_token': token},
+            this.naclMozc_.startCloudSync.bind(this.naclMozc_, opt_callback));
+      }).bind(this));
+};
+
+/**
+ * Called when sync_toggle_button button is clicked.
+ * @private
+ */
+mozc.OptionPage.prototype.onSyncToggleButtonClicked_ = function() {
+  this.disableElementById_('sync_toggle_button');
+  this.disableElementById_('sync_customization_button');
+  this.naclMozc_.getCloudSyncStatus((function(response) {
+    if (response['output']['cloud_sync_status']['global_status'] == 'NOSYNC') {
+      this.document_.getElementById('sync_settings').checked = true;
+      this.document_.getElementById('sync_user_dictionary').checked = true;
+      this.showElementById_('sync_config_overlay');
+    } else {
+      // Stop sync
+      this.naclMozc_.addAuthCode(
+          {'access_token': ''},
+          (function() {
+            this.naclMozc_.getCloudSyncStatus(
+                this.displaySyncStatus_.bind(this));
+          }).bind(this));
+    }
+  }).bind(this));
+};
+
+/**
+ * Called when sync_customization_button button is clicked.
+ * @private
+ */
+mozc.OptionPage.prototype.onSyncCustomizationButtonClicked_ = function() {
+  this.disableElementById_('sync_toggle_button');
+  this.disableElementById_('sync_customization_button');
+  this.naclMozc_.getConfig((function(response) {
+    var sync_config = response['output']['config']['sync_config'];
+    this.document_.getElementById('sync_settings').checked =
+        sync_config && sync_config['use_config_sync'];
+    this.document_.getElementById('sync_user_dictionary').checked =
+        sync_config && sync_config['use_user_dictionary_sync'];
+    this.showElementById_('sync_config_overlay');
+  }).bind(this));
+};
+
+/**
+ * Updates the sync status. This function is first called from initialize method
+ * of OptionPage and periodically called using setTimeout.
+ * @private
+ */
+mozc.OptionPage.prototype.updateSyncStatus_ = function() {
+  this.naclMozc_.getCloudSyncStatus(
+    (function(response) {
+      if (this.isUnloaded()) {
+        return;
+      }
+      this.timeoutID_ = setTimeout(this.updateSyncStatus_.bind(this),
+                                   mozc.SYNC_STATUS_REFRESH_INTERVAL_);
+      this.displaySyncStatus_(response);
+    }).bind(this));
+};
+
+/**
+ * Returns the 'yyyy/MM/dd hh:mm:ss' formatted string of the date object.
+ * @param {!Date} date Date object to be formatted into a string.
+ * @return {string} The formatted string.
+ * @private
+ */
+mozc.OptionPage.prototype.getFormattedDateTimeString_ = function(date) {
+  var year = date.getFullYear();
+  var month = date.getMonth() + 1;
+  var day = date.getDate();
+  var hour = date.getHours();
+  var min = date.getMinutes();
+  var sec = date.getSeconds();
+  if (month < 10) month = '0' + month;
+  if (day < 10) day = '0' + day;
+  if (hour < 10) hour = '0' + hour;
+  if (min < 10) min = '0' + min;
+  if (sec < 10) sec = '0' + sec;
+  return year + '/' + month + '/' + day + ' ' + hour + ':' + min + ':' + sec;
+};
+
+/**
+ * Displays sync status which is acquired from NaCl module using
+ * getCloudSyncStatus.
+ * @param {!Object} response Response data of GET_CLOUD_SYNC_STATUS from NaCl
+ * module.
+ * @private
+ */
+mozc.OptionPage.prototype.displaySyncStatus_ = function(response) {
+  var sync_status_div = this.document_.getElementById('sync_status');
+  if (!response['output'] ||
+      !response['output']['cloud_sync_status']) {
+    sync_status_div.innerHTML = '';
+    return;
+  }
+  var cloud_sync_status = response['output']['cloud_sync_status'];
+  var sync_global_status = cloud_sync_status['global_status'];
+  var sync_message = '';
+  if (sync_global_status == 'SYNC_SUCCESS' ||
+      sync_global_status == 'SYNC_FAILURE') {
+    var lastSyncedTimestamp = cloud_sync_status['last_synced_timestamp'];
+    if (!lastSyncedTimestamp) {
+      sync_message += chrome.i18n.getMessage('configSyncNotSyncedYet');
+    } else {
+      sync_message += chrome.i18n.getMessage('configSyncLastSyncedTime');
+      sync_message += this.getFormattedDateTimeString_(
+          new Date(lastSyncedTimestamp * 1000));
+    }
+    if (this.lastSyncedTimestamp_ != lastSyncedTimestamp) {
+      this.lastSyncedTimestamp_ = lastSyncedTimestamp;
+      this.naclMozc_.getConfig(this.onConfigLoaded_.bind(this));
+    }
+    this.document_.getElementById('sync_toggle_button').value =
+        chrome.i18n.getMessage('configSyncStopSync');
+    this.enableElementById_('sync_toggle_button');
+    this.enableElementById_('sync_customization_button');
+  } else if (sync_global_status == 'WAITSYNC') {
+    this.document_.getElementById('sync_toggle_button').value =
+        chrome.i18n.getMessage('configSyncStopSync');
+    sync_message += chrome.i18n.getMessage('configSyncWaiting');
+    this.disableElementById_('sync_toggle_button');
+    this.disableElementById_('sync_customization_button');
+  } else if (sync_global_status == 'INSYNC') {
+    this.document_.getElementById('sync_toggle_button').value =
+        chrome.i18n.getMessage('configSyncStopSync');
+    sync_message += chrome.i18n.getMessage('configSyncDuringSync');
+    this.disableElementById_('sync_toggle_button');
+    this.disableElementById_('sync_customization_button');
+  } else if (sync_global_status == 'NOSYNC') {
+    this.document_.getElementById('sync_toggle_button').value =
+        chrome.i18n.getMessage('configSyncStartSync');
+    sync_message += chrome.i18n.getMessage('configSyncNoSync');
+    this.enableElementById_('sync_toggle_button');
+    this.disableElementById_('sync_customization_button');
+  }
+  var tooltip = '';
+  if (cloud_sync_status['sync_errors'] &&
+      cloud_sync_status['sync_errors'].length) {
+    for (var i = 0; i < cloud_sync_status['sync_errors'].length; ++i) {
+      if (i) {
+        tooltip += '\n';
+      }
+      var error_code = cloud_sync_status['sync_errors'][i]['error_code'];
+      if (error_code == 'AUTHORIZATION_FAIL') {
+        tooltip += chrome.i18n.getMessage('configSyncAuthorizationFail');
+      } else if (error_code == 'USER_DICTIONARY_NUM_ENTRY_EXCEEDED') {
+        tooltip +=
+            chrome.i18n.getMessage('configSyncUserDictionaryNumEntryExceeded');
+      } else if (error_code == 'USER_DICTIONARY_BYTESIZE_EXCEEDED') {
+        tooltip +=
+            chrome.i18n.getMessage('configSyncUserDictionaryByteSizeExceeded');
+      } else if (error_code == 'USER_DICTIONARY_NUM_DICTIONARY_EXCEEDED') {
+        tooltip +=
+            chrome.i18n.getMessage(
+                'configSyncUserDictionaryNumDicrionaryExceeded');
+      } else {
+        tooltip += chrome.i18n.getMessage('configSyncUnknownErrorFound');
+      }
+    }
+    sync_message += ' ';
+    var last_error_code = cloud_sync_status['sync_errors'][0]['error_code'];
+      if (last_error_code == 'AUTHORIZATION_FAIL') {
+        sync_message += chrome.i18n.getMessage('configSyncAuthorizationError');
+      } else if (last_error_code == 'USER_DICTIONARY_NUM_ENTRY_EXCEEDED' ||
+                 last_error_code == 'USER_DICTIONARY_BYTESIZE_EXCEEDED' ||
+                 last_error_code == 'USER_DICTIONARY_NUM_DICTIONARY_EXCEEDED') {
+        sync_message += chrome.i18n.getMessage('configSyncDictionaryError');
+      } else {
+        sync_message += chrome.i18n.getMessage('configSyncUnknownError');
+      }
+  }
+  if (sync_status_div.innerHTML != sync_message) {
+    sync_status_div.innerHTML = sync_message;
+  }
+  sync_status_div.title = tooltip;
 };

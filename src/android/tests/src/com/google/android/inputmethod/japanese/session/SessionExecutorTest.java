@@ -30,7 +30,6 @@
 package org.mozc.android.inputmethod.japanese.session;
 
 import static org.mozc.android.inputmethod.japanese.testing.MozcMatcher.matchesBuilder;
-
 import static org.easymock.EasyMock.anyLong;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.expect;
@@ -68,15 +67,18 @@ import org.mozc.android.inputmethod.japanese.session.SessionExecutor.CallbackHan
 import org.mozc.android.inputmethod.japanese.session.SessionExecutor.EvaluationCallback;
 import org.mozc.android.inputmethod.japanese.session.SessionExecutor.ExecutorMainCallback;
 import org.mozc.android.inputmethod.japanese.session.SessionExecutor.SynchronousEvaluationContext;
+import org.mozc.android.inputmethod.japanese.stresstest.StressTest;
 import org.mozc.android.inputmethod.japanese.testing.InstrumentationTestCaseWithMock;
+import org.mozc.android.inputmethod.japanese.testing.MemoryLogger;
 import org.mozc.android.inputmethod.japanese.testing.Parameter;
-import org.mozc.android.inputmethod.japanese.testing.VisibilityProxy;
+import com.google.common.base.Strings;
 import com.google.protobuf.ByteString;
 
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.test.suitebuilder.annotation.LargeTest;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.view.KeyEvent;
 
@@ -85,6 +87,7 @@ import org.easymock.IAnswer;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 
 /**
@@ -99,7 +102,7 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
 
   @Override
   protected void tearDown() throws Exception {
-    VisibilityProxy.setStaticField(SessionExecutor.class, "instance", null);
+    SessionExecutor.instance = null;
     super.tearDown();
   }
 
@@ -144,7 +147,7 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
   }
 
   @SmallTest
-  public void testCallbackCreateSession() {
+  public void testCallbackEnsureSession() {
     SessionHandler sessionHandler = createMock(SessionHandler.class);
     long sessionId = 1;
     Request initialRequest = Request.newBuilder()
@@ -180,7 +183,7 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
     replayAll();
 
     ExecutorMainCallback callback = new ExecutorMainCallback(sessionHandler);
-    callback.createSession();
+    callback.ensureSession();
 
     verifyAll();
 
@@ -317,7 +320,7 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
       replayAll();
 
       ExecutorMainCallback callback = new ExecutorMainCallback(sessionHandler);
-      VisibilityProxy.setField(callback, "sessionId", sessionId);
+      callback.sessionId = sessionId;
 
       callback.evaluateAsynchronously(context, currentHandler);
 
@@ -378,8 +381,8 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
     replayAll();
 
     ExecutorMainCallback callback = new ExecutorMainCallback(sessionHandler);
-    VisibilityProxy.setField(callback, "sessionId", sessionId);
-    VisibilityProxy.setField(callback, "request", initialRequest);
+    callback.sessionId = sessionId;
+    callback.request = initialRequest;
 
     callback.updateRequest(
         Input.newBuilder().setRequest(diffRequest).addAllTouchEvents(touchEventList));
@@ -428,19 +431,19 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
   }
 
   @SmallTest
-  public void testCreateSession() {
+  public void testDeleteSession() {
     Capture<Message> messageCapture = new Capture<Message>();
     Handler handler = createMock(Handler.class);
     expect(handler.sendMessageAtTime(capture(messageCapture), anyLong())).andReturn(true);
     replayAll();
 
     SessionExecutor executor = new SessionExecutor();
-    VisibilityProxy.setField(executor, "handler", handler);
+    executor.handler = handler;
 
-    executor.createSession();
+    executor.deleteSession();
 
     verifyAll();
-    assertEquals(ExecutorMainCallback.CREATE_SESSION, messageCapture.getValue().what);
+    assertEquals(ExecutorMainCallback.DELETE_SESSION, messageCapture.getValue().what);
   }
 
   @SmallTest
@@ -451,7 +454,7 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
     replayAll();
 
     SessionExecutor executor = new SessionExecutor();
-    VisibilityProxy.setField(executor, "handler", handler);
+    executor.handler = handler;
 
     Input.Builder inputBuilder = Input.newBuilder();
     KeyEventInterface keyEvent = KeycodeConverter.getKeyEventInterface(KeyEvent.KEYCODE_A);
@@ -476,7 +479,7 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
     replayAll();
 
     SessionExecutor executor = new SessionExecutor();
-    VisibilityProxy.setField(executor, "handler", handler);
+    executor.handler = handler;
 
     Input.Builder inputBuilder = Input.newBuilder();
 
@@ -519,7 +522,7 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
     replayAll();
 
     SessionExecutor executor = new SessionExecutor();
-    VisibilityProxy.setField(executor, "handler", handler);
+    executor.handler = handler;
 
     executor.evaluateSynchronously(Input.getDefaultInstance());
 
@@ -531,7 +534,8 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
   public void testSendKey() {
     SessionExecutor executor = createSessionExecutorMock();
     ProtoCommands.KeyEvent mozcKeyEvent = ProtoCommands.KeyEvent.getDefaultInstance();
-    KeyEventInterface triggeringKeyEvent = KeycodeConverter.getKeyEventInterface(KeyEvent.KEYCODE_A);
+    KeyEventInterface triggeringKeyEvent =
+        KeycodeConverter.getKeyEventInterface(KeyEvent.KEYCODE_A);
     EvaluationCallback evaluationCallback = createNiceMock(EvaluationCallback.class);
     List<TouchEvent> touchEventList = Collections.singletonList(TouchEvent.getDefaultInstance());
     executor.evaluateAsynchronously(
@@ -922,5 +926,82 @@ public class SessionExecutorTest extends InstrumentationTestCaseWithMock {
                  executor.sendUserDictionaryCommand(command));
 
     verifyAll();
+  }
+
+  @LargeTest
+  @StressTest
+  public void testStressConversion() throws InterruptedException {
+    MemoryLogger memoryLogger = new MemoryLogger("testStressConversion", 100);
+
+    SessionExecutor session = SessionExecutor.getInstance(null);
+    Context context = getInstrumentation().getTargetContext();
+    session.reset(new SessionHandlerFactory(context), context);
+
+    int actions = 1200;
+    char minHiragana = 0x3041;
+    char maxHiragana = 0x3096;
+    int compositionLength = 20;
+    Random random = new Random(0);  // Make the result deterministic.
+    StringBuilder composition = new StringBuilder();
+    memoryLogger.logMemory("start");
+    for (int i = 0; i < actions; ++i) {
+      composition.setLength(0);
+      for (int j = 0; j < compositionLength; ++j) {
+        composition.append((char) (random.nextInt(maxHiragana - minHiragana + 1) + minHiragana));
+      }
+      session.sendKey(ProtoCommands.KeyEvent.newBuilder()
+                          .setKeyString(composition.toString()).build(),
+                      null, Collections.<TouchEvent>emptyList(), null);
+      session.sendKey(ProtoCommands.KeyEvent.newBuilder()
+                          .setSpecialKey(SpecialKey.SPACE).build(),
+                      null, Collections.<TouchEvent>emptyList(), null);
+      final CountDownLatch latch = new CountDownLatch(1);
+      session.submit(new EvaluationCallback() {
+        @Override
+        public void onCompleted(Command command, KeyEventInterface triggeringKeyEvent) {
+          latch.countDown();
+        }
+      });
+      latch.await();
+      session.deleteSession();
+      memoryLogger.logMemoryInterval();
+    }
+    memoryLogger.logMemory("end");
+
+    Thread.sleep(30 * 1000);
+    memoryLogger.logMemory("waited");
+  }
+
+  @LargeTest
+  @StressTest
+  public void testStressConversionKao() throws InterruptedException {
+    MemoryLogger memoryLogger = new MemoryLogger("testStressConversionKao", 10);
+
+    SessionExecutor session = SessionExecutor.getInstance(null);
+    Context context = getInstrumentation().getTargetContext();
+    session.reset(new SessionHandlerFactory(context), context);
+
+    String composition = Strings.repeat("かお、", 100);
+    memoryLogger.logMemory("start");
+    session.sendKey(ProtoCommands.KeyEvent.newBuilder()
+                        .setKeyString(composition.toString()).build(),
+                    null, Collections.<TouchEvent>emptyList(), null);
+    session.sendKey(ProtoCommands.KeyEvent.newBuilder()
+                        .setSpecialKey(SpecialKey.SPACE).build(),
+                    null, Collections.<TouchEvent>emptyList(), null);
+    final CountDownLatch latch = new CountDownLatch(1);
+    session.submit(new EvaluationCallback() {
+      @Override
+      public void onCompleted(Command command, KeyEventInterface triggeringKeyEvent) {
+        latch.countDown();
+      }
+    });
+    latch.await();
+    memoryLogger.logMemory("beforedelete");
+    session.deleteSession();
+    memoryLogger.logMemory("end");
+
+    Thread.sleep(60 * 1000);
+    memoryLogger.logMemory("waited");
   }
 }

@@ -45,7 +45,7 @@ import org.mozc.android.inputmethod.japanese.MozcView.DimensionPixelSize;
 import org.mozc.android.inputmethod.japanese.MozcView.HeightLinearInterpolationListener;
 import org.mozc.android.inputmethod.japanese.MozcView.InsetsCalculator;
 import org.mozc.android.inputmethod.japanese.SymbolInputView.MinorCategory;
-import org.mozc.android.inputmethod.japanese.ViewManager.LayoutAdjustment;
+import org.mozc.android.inputmethod.japanese.ViewManagerInterface.LayoutAdjustment;
 import org.mozc.android.inputmethod.japanese.emoji.EmojiProviderType;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyEventHandler;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyboardActionListener;
@@ -84,7 +84,9 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
+
 import org.easymock.Capture;
+
 import java.util.Collections;
 
 /**
@@ -428,7 +430,7 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
   public void testSymbolInputViewInitializationLazily() {
     LayoutInflater inflater = LayoutInflater.from(getInstrumentation().getTargetContext());
     MozcView mozcView = MozcView.class.cast(inflater.inflate(R.layout.mozc_view, null));
-    VisibilityProxy.setField(mozcView, "isDropShadowExpanded", true);
+    mozcView.isDropShadowExpanded = true;
     SymbolCandidateStorage candidateStorage = createMockBuilder(SymbolCandidateStorage.class)
         .withConstructor(SymbolHistoryStorage.class)
         .withArgs(SymbolHistoryStorage.class.cast(null))
@@ -539,36 +541,30 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
     MozcView mozcView = MozcView.class.cast(inflater.inflate(R.layout.mozc_view, null));
     View overlayView =  mozcView.getOverlayView();
     LinearLayout textInputFrame = mozcView.getTextInputFrame();
-    VisibilityChangeListener onVisibilityChangeListener =
-        VisibilityProxy.getField(mozcView, "onVisibilityChangeListener");
+    VisibilityChangeListener onVisibilityChangeListener = mozcView.onVisibilityChangeListener;
 
     mozcView.setFullscreenMode(true);
     mozcView.resetFullscreenMode();
     assertEquals(0, overlayView.getLayoutParams().height);
     assertEquals(FrameLayout.LayoutParams.WRAP_CONTENT, textInputFrame.getLayoutParams().height);
     assertSame(onVisibilityChangeListener,
-               VisibilityProxy.getField(mozcView.getCandidateView(),
-                                        "onVisibilityChangeListener"));
+               mozcView.getCandidateView().onVisibilityChangeListener);
     assertSame(onVisibilityChangeListener,
-               VisibilityProxy.getField(mozcView.getSymbolInputView(),
-                                        "onVisibilityChangeListener"));
+               mozcView.getSymbolInputView().onVisibilityChangeListener);
 
     mozcView.setFullscreenMode(false);
     mozcView.resetFullscreenMode();
     assertEquals(LinearLayout.LayoutParams.MATCH_PARENT, overlayView.getLayoutParams().height);
     assertEquals(FrameLayout.LayoutParams.MATCH_PARENT, textInputFrame.getLayoutParams().height);
-    assertNull(
-        VisibilityProxy.getField(mozcView.getCandidateView(), "onVisibilityChangeListener"));
-    assertNull(
-        VisibilityProxy.getField(mozcView.getSymbolInputView(), "onVisibilityChangeListener"));
+    assertNull(mozcView.getCandidateView().onVisibilityChangeListener);
+    assertNull(mozcView.getSymbolInputView().onVisibilityChangeListener);
   }
 
   @SmallTest
   public void testOnVisibilityChangeListener() {
     MozcView mozcView = createViewMockBuilder(MozcView.class)
         .addMockedMethod("updateInputFrameHeight").createMock();
-    VisibilityChangeListener onVisibilityChangeListener =
-        VisibilityProxy.getField(mozcView, "onVisibilityChangeListener");
+    VisibilityChangeListener onVisibilityChangeListener = mozcView.onVisibilityChangeListener;
 
     mozcView.updateInputFrameHeight();
 
@@ -700,13 +696,11 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
       mozcView.updateBackgroundColor();
 
       replayAll();
-      VisibilityProxy.setField(mozcView, "narrowMode", testData.narrowMode);
+      mozcView.narrowMode = testData.narrowMode;
       mozcView.setLayoutAdjustment(testData.layoutAdjustment);
 
       verifyAll();
-      assertEquals(testData.toString(),
-                   testData.layoutAdjustment,
-                   VisibilityProxy.getField(mozcView, "layoutAdjustment"));
+      assertEquals(testData.toString(), testData.layoutAdjustment, mozcView.layoutAdjustment);
       assertEquals(testData.toString(),
                    testData.expectForegroundFrameWidth, layoutCapture.getValue().width);
       assertEquals(testData.toString(),
@@ -758,8 +752,8 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
     };
 
     for (TestData testData : testDataList) {
-      VisibilityProxy.setField(mozcView, "fullscreenMode", testData.fullscreenMode);
-      VisibilityProxy.setField(mozcView, "narrowMode", testData.narrowMode);
+      mozcView.fullscreenMode = testData.fullscreenMode;
+      mozcView.narrowMode = testData.narrowMode;
 
       resetAll();
       expect(mozcView.getBottomBackground()).andStubReturn(bottomBackground);
@@ -826,7 +820,7 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
     VisibilityProxy.setField(mozcView, "dimensionPixelSize", dimensionPixelSize);
 
     {
-      VisibilityProxy.setField(mozcView, "layoutAdjustment", LayoutAdjustment.FILL);
+      mozcView.layoutAdjustment = LayoutAdjustment.FILL;
       assertFalse(insetsCalculator.isFloatingMode(mozcView));
 
       Insets outInsets = new Insets();
@@ -837,8 +831,8 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
     }
 
     {
-      VisibilityProxy.setField(mozcView, "layoutAdjustment", LayoutAdjustment.LEFT);
-      VisibilityProxy.setField(mozcView, "narrowMode", false);
+      mozcView.layoutAdjustment = LayoutAdjustment.LEFT;
+      mozcView.narrowMode = false;
       assertTrue(insetsCalculator.isFloatingMode(mozcView));
 
       Insets outInsets = new Insets();
@@ -854,8 +848,8 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
     }
 
     {
-      VisibilityProxy.setField(mozcView, "layoutAdjustment", LayoutAdjustment.RIGHT);
-      VisibilityProxy.setField(mozcView, "narrowMode", false);
+      mozcView.layoutAdjustment = LayoutAdjustment.RIGHT;
+      mozcView.narrowMode = false;
       assertTrue(insetsCalculator.isFloatingMode(mozcView));
 
       Insets outInsets = new Insets();
@@ -889,7 +883,7 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
 
     {
       resetAll();
-      VisibilityProxy.setField(mozcView, "imeWindowHeight", imeWindowHeight);
+      mozcView.imeWindowHeight = imeWindowHeight;
       expect(mozcView.getDropShadowTop()).andStubReturn(dropShadowTop);
       expect(mozcView.getBottomBackground()).andStubReturn(bottomBackground);
       leftFrameStubProxy.flipDropShadowVisibility(View.INVISIBLE);
@@ -900,7 +894,7 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
       bottomBackground.setLayoutParams(capture(captureBottomBackground));
 
       replayAll();
-      VisibilityProxy.setField(mozcView, "fullscreenMode", false);
+      mozcView.fullscreenMode = false;
       mozcView.expandDropShadowAndBackground();
 
       verifyAll();
@@ -910,7 +904,7 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
     }
     {
       resetAll();
-      VisibilityProxy.setField(mozcView, "imeWindowHeight", imeWindowHeight);
+      mozcView.imeWindowHeight = imeWindowHeight;
       expect(mozcView.getDropShadowTop()).andStubReturn(dropShadowTop);
       expect(mozcView.getBottomBackground()).andStubReturn(bottomBackground);
       leftFrameStubProxy.flipDropShadowVisibility(View.INVISIBLE);
@@ -921,7 +915,7 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
       bottomBackground.setLayoutParams(capture(captureBottomBackground));
 
       replayAll();
-      VisibilityProxy.setField(mozcView, "fullscreenMode", true);
+      mozcView.fullscreenMode = true;
       mozcView.expandDropShadowAndBackground();
 
       verifyAll();
@@ -958,7 +952,7 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
       bottomBackground.setLayoutParams(capture(captureBottomBackground));
 
       replayAll();
-      VisibilityProxy.setField(mozcView, "fullscreenMode", false);
+      mozcView.fullscreenMode = false;
       mozcView.collapseDropShadowAndBackground();
 
       verifyAll();
@@ -977,7 +971,7 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
       bottomBackground.setLayoutParams(capture(captureBottomBackground));
 
       replayAll();
-      VisibilityProxy.setField(mozcView, "fullscreenMode", true);
+      mozcView.fullscreenMode = true;
       mozcView.collapseDropShadowAndBackground();
 
       verifyAll();
@@ -1009,23 +1003,19 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
     Animation dropShadowCandidateViewOutAnimation = createMock(Animation.class);
     Animation dropShadowSymbolInputViewInAnimation = createMock(Animation.class);
     Animation dropShadowSymbolInputViewOutAnimation = createMock(Animation.class);
-    VisibilityProxy.setField(mozcView, "candidateViewInAnimation", candidateViewInAnimation);
-    VisibilityProxy.setField(mozcView, "candidateViewOutAnimation", candidateViewOutAnimation);
-    VisibilityProxy.setField(mozcView, "symbolInputViewInAnimation", symbolInputViewInAnimation);
-    VisibilityProxy.setField(mozcView, "symbolInputViewOutAnimation", symbolInputViewOutAnimation);
-    VisibilityProxy.setField(mozcView, "dropShadowCandidateViewInAnimation",
-                             dropShadowCandidateViewInAnimation);
-    VisibilityProxy.setField(mozcView, "dropShadowCandidateViewOutAnimation",
-                             dropShadowCandidateViewOutAnimation);
-    VisibilityProxy.setField(mozcView, "dropShadowSymbolInputViewInAnimation",
-                             dropShadowSymbolInputViewInAnimation);
-    VisibilityProxy.setField(mozcView, "dropShadowSymbolInputViewOutAnimation",
-                             dropShadowSymbolInputViewOutAnimation);
+    mozcView.candidateViewInAnimation = candidateViewInAnimation;
+    mozcView.candidateViewOutAnimation = candidateViewOutAnimation;
+    mozcView.symbolInputViewInAnimation = symbolInputViewInAnimation;
+    mozcView.symbolInputViewOutAnimation = symbolInputViewOutAnimation;
+    mozcView.dropShadowCandidateViewInAnimation = dropShadowCandidateViewInAnimation;
+    mozcView.dropShadowCandidateViewOutAnimation = dropShadowCandidateViewOutAnimation;
+    mozcView.dropShadowSymbolInputViewInAnimation = dropShadowSymbolInputViewInAnimation;
+    mozcView.dropShadowSymbolInputViewOutAnimation = dropShadowSymbolInputViewOutAnimation;
 
     // Test startCandidateViewInAnimation.
     {
       resetAll();
-      VisibilityProxy.setField(mozcView, "isDropShadowExpanded", true);
+      mozcView.isDropShadowExpanded = true;
       expect(mozcView.getCandidateView()).andReturn(candidateView);
       candidateView.startInAnimation();
 
@@ -1036,7 +1026,7 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
     }
     {
       resetAll();
-      VisibilityProxy.setField(mozcView, "isDropShadowExpanded", false);
+      mozcView.isDropShadowExpanded = false;
       expect(mozcView.getCandidateView()).andReturn(candidateView);
       candidateView.startInAnimation();
       mozcView.expandDropShadowAndBackground();
@@ -1064,7 +1054,7 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
     }
     {
       resetAll();
-      VisibilityProxy.setField(mozcView, "isDropShadowExpanded", true);
+      mozcView.isDropShadowExpanded = true;
       expect(mozcView.getCandidateView()).andReturn(candidateView);
       candidateView.startOutAnimation();
       expect(mozcView.getSymbolInputView()).andReturn(symbolInputView);
@@ -1082,7 +1072,7 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
     // Test startSymbolInputViewInAnimation.
     {
       resetAll();
-      VisibilityProxy.setField(mozcView, "isDropShadowExpanded", true);
+      mozcView.isDropShadowExpanded = true;
       expect(mozcView.getSymbolInputView()).andReturn(symbolInputView);
       symbolInputView.startInAnimation();
 
@@ -1093,7 +1083,7 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
     }
     {
       resetAll();
-      VisibilityProxy.setField(mozcView, "isDropShadowExpanded", false);
+      mozcView.isDropShadowExpanded = false;
       expect(mozcView.getSymbolInputView()).andReturn(symbolInputView);
       symbolInputView.startInAnimation();
 
@@ -1122,7 +1112,7 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
     }
     {
       resetAll();
-      VisibilityProxy.setField(mozcView, "isDropShadowExpanded", true);
+      mozcView.isDropShadowExpanded = true;
       expect(mozcView.getSymbolInputView()).andReturn(symbolInputView);
       symbolInputView.startOutAnimation();
       expect(mozcView.getCandidateView()).andReturn(candidateView);
@@ -1157,7 +1147,7 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
     mozcView.setKeyboardHeightRatio(120);
 
     verifyAll();
-    assertEquals(360, VisibilityProxy.getField(mozcView, "imeWindowHeight"));
+    assertEquals(360, mozcView.imeWindowHeight);
     assertEquals(240, mozcView.getInputFrameHeight());
   }
 
@@ -1180,7 +1170,7 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
     assertNull(mozcView.findViewById(R.id.left_adjust_button));
     assertNull(mozcView.findViewById(R.id.left_dropshadow_short));
     assertNull(mozcView.findViewById(R.id.left_dropshadow_long));
-    assertFalse(Boolean.class.cast(VisibilityProxy.getField(sideFrameStubProxy, "inflated")));
+    assertFalse(sideFrameStubProxy.inflated);
     sideFrameStubProxy.setButtonOnClickListener(buttonClickListener);
     sideFrameStubProxy.flipDropShadowVisibility(View.VISIBLE);
     sideFrameStubProxy.setDropShadowHeight(3, 4);
@@ -1195,7 +1185,7 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
     assertNotNull(mozcView.findViewById(R.id.left_adjust_button));
     assertNotNull(mozcView.findViewById(R.id.left_dropshadow_short));
     assertNotNull(mozcView.findViewById(R.id.left_dropshadow_long));
-    assertTrue(Boolean.class.cast(VisibilityProxy.getField(sideFrameStubProxy, "inflated")));
+    assertTrue(sideFrameStubProxy.inflated);
     ImageView imageView = ImageView.class.cast(mozcView.findViewById(R.id.left_adjust_button));
     imageView.performClick();
     assertEquals(View.VISIBLE, mozcView.findViewById(R.id.left_frame).getVisibility());
@@ -1267,8 +1257,10 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
 
       InterpolationListener interpolationListener = interpolationListenerCapture.getValue();
       assertSame(HeightLinearInterpolationListener.class, interpolationListener.getClass());
-      assertEquals(200, VisibilityProxy.getField(interpolationListener, "fromHeight"));
-      assertEquals(0, VisibilityProxy.getField(interpolationListener, "toHeight"));
+      HeightLinearInterpolationListener castedListener =
+          HeightLinearInterpolationListener.class.cast(interpolationListener);
+      assertEquals(200, castedListener.fromHeight);
+      assertEquals(0, castedListener.toHeight);
     }
 
     {
@@ -1289,8 +1281,10 @@ public class MozcViewTest extends InstrumentationTestCaseWithMock {
 
       InterpolationListener interpolationListener = interpolationListenerCapture.getValue();
       assertSame(HeightLinearInterpolationListener.class, interpolationListener.getClass());
-      assertEquals(100, VisibilityProxy.getField(interpolationListener, "fromHeight"));
-      assertEquals(200, VisibilityProxy.getField(interpolationListener, "toHeight"));
+      HeightLinearInterpolationListener castedListener =
+          HeightLinearInterpolationListener.class.cast(interpolationListener);
+      assertEquals(100, castedListener.fromHeight);
+      assertEquals(200, castedListener.toHeight);
     }
   }
 }

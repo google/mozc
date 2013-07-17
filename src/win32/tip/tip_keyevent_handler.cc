@@ -37,29 +37,37 @@
 #include <atlcom.h>
 #include <msctf.h>
 
+#include <memory>
 #include <string>
 
 #include "base/util.h"
 #include "session/commands.pb.h"
 #include "win32/base/conversion_mode_util.h"
 #include "win32/base/deleter.h"
+#include "win32/base/indicator_visibility_tracker.h"
 #include "win32/base/input_state.h"
 #include "win32/base/keyboard.h"
 #include "win32/base/keyevent_handler.h"
 #include "win32/base/surrogate_pair_observer.h"
 #include "win32/base/win32_window_util.h"
-#include "win32/tip/tip_command_handler.h"
+#include "win32/tip/tip_edit_session.h"
+#include "win32/tip/tip_input_mode_manager.h"
 #include "win32/tip/tip_private_context.h"
 #include "win32/tip/tip_ref_count.h"
 #include "win32/tip/tip_status.h"
+#include "win32/tip/tip_surrounding_text.h"
 #include "win32/tip/tip_text_service.h"
+#include "win32/tip/tip_thread_context.h"
 
 namespace mozc {
 namespace win32 {
 namespace tsf {
 
 using ATL::CComPtr;
-using ::mozc::commands::Output;
+using mozc::commands::Context;
+using mozc::commands::Output;
+using std::unique_ptr;
+typedef commands::CompositionMode CompositionMode;
 
 namespace {
 
@@ -109,44 +117,61 @@ VirtualKey GetVK(WPARAM wparam, const KeyboardStatus &keyboad_status) {
 }
 
 bool GetOpenAndMode(TipTextService *text_service, ITfContext *context,
-                    bool *open, DWORD *mode) {
+                    bool *open, uint32 *logical_mode, uint32 *visible_mode) {
   DCHECK(text_service);
   DCHECK(context);
   DCHECK(open);
-  DCHECK(mode);
-  *open = (!TipStatus::IsDisabledContext(context) &&
-           TipStatus::IsOpen(text_service->GetThreadManager()));
-  return TipStatus::GetInputModeConversion(text_service->GetThreadManager(),
-                                           text_service->GetClientID(), mode);
+  DCHECK(logical_mode);
+  DCHECK(visible_mode);
+  const TipInputModeManager *input_mode_manager =
+      text_service->GetThreadContext()->GetInputModeManager();
+  const bool is_open = input_mode_manager->GetEffectiveOpenClose();
+  *open = (!TipStatus::IsDisabledContext(context) && is_open);
+
+  bool prefer_kana_input = false;
+  TipPrivateContext *private_context = text_service->GetPrivateContext(context);
+  if (private_context) {
+    prefer_kana_input = private_context->input_behavior().prefer_kana_input;
+  }
+  const CompositionMode tsf_mode = static_cast<CompositionMode>(
+      input_mode_manager->GetTsfConversionMode());
+  const CompositionMode effective_mode = static_cast<CompositionMode>(
+      input_mode_manager->GetEffectiveConversionMode());
+
+  const bool has_valid_logical_mode = ConversionModeUtil::ToNativeMode(
+      tsf_mode, prefer_kana_input, logical_mode);
+  const bool has_valid_visible_mode = ConversionModeUtil::ToNativeMode(
+      effective_mode, prefer_kana_input, visible_mode);
+  return has_valid_logical_mode && has_valid_visible_mode;
 }
 
-// Returns a bitmap of experimental features.
-bool GetExperimentalFeatures(ITfContext *context, InputBehavior *behavior) {
-  if (behavior == nullptr) {
-    return false;
+void FillMozcContextCommon(TipTextService *text_service,
+                           ITfContext *context,
+                           Context *mozc_context) {
+  if (mozc_context == nullptr) {
+    return;
   }
-  behavior->suppress_suggestion = false;
-  behavior->experimental_features = InputBehavior::NO_FEATURE;
+  mozc_context->set_revision(
+      text_service->GetThreadContext()->GetFocusRevision());
   CComPtr<ITfContextView> context_view;
   if (FAILED(context->GetActiveView(&context_view))) {
-    return false;
+    return;
   }
   if (context_view == nullptr) {
-    return false;
+    return;
   }
   HWND attached_window = nullptr;
   if (FAILED(context_view->GetWnd(&attached_window))) {
-    return false;
+    return;
   }
   if (WindowUtil::IsInChromeOmnibox(attached_window)) {
-    behavior->suppress_suggestion = true;
-    behavior->experimental_features |= InputBehavior::CHROME_OMNIBOX;
+    mozc_context->set_suppress_suggestion(true);
+    mozc_context->add_experimental_features("chrome_omnibox");
   }
   if (WindowUtil::IsInGoogleSearchBox(attached_window)) {
-    behavior->suppress_suggestion = true;
-    behavior->experimental_features |= InputBehavior::GOOGLE_SEARCH_BOX;
+    mozc_context->set_suppress_suggestion(true);
+    mozc_context->add_experimental_features("google_search_box");
   }
-  return true;
 }
 
 HRESULT OnTestKey(TipTextService *text_service, ITfContext *context,
@@ -154,8 +179,7 @@ HRESULT OnTestKey(TipTextService *text_service, ITfContext *context,
                   BOOL *eaten) {
   DCHECK(text_service);
   DCHECK(eaten);
-  TipPrivateContext *private_context =
-      text_service->GetPrivateContext(context);
+  TipPrivateContext *private_context = text_service->GetPrivateContext(context);
   if (private_context == nullptr) {
     *eaten = FALSE;
     return S_OK;
@@ -168,8 +192,10 @@ HRESULT OnTestKey(TipTextService *text_service, ITfContext *context,
   }
 
   bool open = false;
-  DWORD mode = 0;
-  if (!GetOpenAndMode(text_service, context, &open, &mode)) {
+  uint32 logical_mode = 0;
+  uint32 visible_mode = 0;
+  if (!GetOpenAndMode(text_service, context, &open, &logical_mode,
+                      &visible_mode)) {
     *eaten = FALSE;
     return S_OK;
   }
@@ -223,45 +249,79 @@ HRESULT OnTestKey(TipTextService *text_service, ITfContext *context,
     }
   }
 
-  InputState input_state = private_context->input_state();
 
   // Make an immutable snapshot of |private_context->ime_behavior_|, which
   // cannot be substituted for by const reference.
   InputBehavior behavior = private_context->input_behavior();
-  GetExperimentalFeatures(context, &behavior);
+  Context mozc_context;
+  FillMozcContextCommon(text_service, context, &mozc_context);
 
-  input_state.conversion_status = mode;
+  // Update On/Off mode and conversion mode.
+  InputState input_state;
+  input_state.last_down_key = private_context->last_down_key();
+  input_state.logical_conversion_mode = logical_mode;
+  input_state.visible_conversion_mode = visible_mode;
   input_state.open = open;
+
   InputState next_state;
   commands::Output temporal_output;
-  scoped_ptr<Win32KeyboardInterface>
+  unique_ptr<Win32KeyboardInterface>
       keyboard(Win32KeyboardInterface::CreateDefault());
 
   const KeyEventHandlerResult result = KeyEventHandler::ImeProcessKey(
       vk, key_info.GetScanCode(), is_key_down, keyboard_status, behavior,
-      input_state, private_context->GetClient(), keyboard.get(), &next_state,
-      &temporal_output);
+      input_state, mozc_context, private_context->GetClient(), keyboard.get(),
+      &next_state, &temporal_output);
   if (!result.succeeded) {
     *eaten = FALSE;
     return S_OK;
   }
 
-  *private_context->mutable_input_state() = next_state;
+  *private_context->mutable_last_down_key() = next_state.last_down_key;
 
   if (result.should_be_sent_to_server && temporal_output.has_consumed()) {
     private_context->mutable_last_output()->CopyFrom(temporal_output);
   }
-
+  const TipInputModeManager::Action action =
+      text_service->GetThreadContext()->GetInputModeManager()
+          ->OnTestKey(vk, is_key_down, result.should_be_eaten);
+  if (action == TipInputModeManager::kUpdateUI) {
+    text_service->PostUIUpdateMessage();
+  }
   *eaten = result.should_be_eaten ? TRUE : FALSE;
   return S_OK;
+}
+
+void FillMozcContextForOnKey(TipTextService *text_service,
+                             ITfContext *context,
+                             Context *mozc_context) {
+  FillMozcContextCommon(text_service, context, mozc_context);
+  TipSurroundingTextInfo info;
+  if (!TipSurroundingText::Get(text_service, context, &info)) {
+    return;
+  }
+  if (info.is_transitory) {
+    // Ignore transitory context as it may not contain correct
+    // surrounding text info.
+    return;
+  }
+  if (info.has_preceding_text) {
+    string utf8_preceding_text;
+    Util::WideToUTF8(info.preceding_text, &utf8_preceding_text);
+    mozc_context->set_preceding_text(utf8_preceding_text);
+  }
+  if (info.has_following_text) {
+    string utf8_following_text;
+    Util::WideToUTF8(info.following_text, &utf8_following_text);
+    mozc_context->set_following_text(utf8_following_text);
+  }
 }
 
 HRESULT OnKey(TipTextService *text_service, ITfContext *context,
               bool is_key_down, WPARAM wparam, LPARAM lparam, BOOL *eaten) {
   DCHECK(text_service);
   DCHECK(eaten);
-  TipPrivateContext *private_context =
-      text_service->GetPrivateContext(context);
+  TipPrivateContext *private_context = text_service->GetPrivateContext(context);
   if (private_context == nullptr) {
     *eaten = FALSE;
     return S_OK;
@@ -274,8 +334,10 @@ HRESULT OnKey(TipTextService *text_service, ITfContext *context,
   }
 
   bool open = false;
-  DWORD mode = 0;
-  if (!GetOpenAndMode(text_service, context, &open, &mode)) {
+  uint32 logical_mode = 0;
+  uint32 visible_mode = 0;
+  if (!GetOpenAndMode(text_service, context, &open, &logical_mode,
+                      &visible_mode)) {
     *eaten = FALSE;
     return S_OK;
   }
@@ -352,11 +414,13 @@ HRESULT OnKey(TipTextService *text_service, ITfContext *context,
         private_context->GetDeleter()->pending_output());
   } else {
     InputBehavior behavior = private_context->input_behavior();
-    GetExperimentalFeatures(context, &behavior);
 
-    InputState ime_state = private_context->input_state();
-    ime_state.conversion_status = mode;
+    // Update On/Off state an conversion mode.
+    InputState ime_state;
+    ime_state.logical_conversion_mode = logical_mode;
+    ime_state.visible_conversion_mode = visible_mode;
     ime_state.open = open;
+    ime_state.last_down_key = private_context->last_down_key();
 
     // This call is placed in OnKey instead on OnTestKey because VK_DBE_ROMAN
     // and VK_DBE_NOROMAN are handled as preserved keys in TSF Mozc.
@@ -364,19 +428,29 @@ HRESULT OnKey(TipTextService *text_service, ITfContext *context,
     KeyEventHandler::UpdateBehaviorInImeProcessKey(
         vk, is_key_down, ime_state, private_context->mutable_input_behavior());
 
-    scoped_ptr<Win32KeyboardInterface>
+    unique_ptr<Win32KeyboardInterface>
         keyboard(Win32KeyboardInterface::CreateDefault());
+
+    Context mozc_context;
+    FillMozcContextForOnKey(text_service, context, &mozc_context);
 
     InputState unused_next_state;
     const KeyEventHandlerResult result = KeyEventHandler::ImeToAsciiEx(
         vk, key_info.GetScanCode(), is_key_down, keyboard_status, behavior,
-        ime_state, private_context->GetClient(), keyboard.get(),
+        ime_state, mozc_context, private_context->GetClient(), keyboard.get(),
         &unused_next_state, &temporal_output);
 
     if (!result.succeeded) {
       // no message generated.
       *eaten = FALSE;
       return S_OK;
+    }
+
+    const TipInputModeManager::Action action =
+        text_service->GetThreadContext()->GetInputModeManager()->
+            OnKey(vk, is_key_down, result.should_be_eaten);
+    if (action == IndicatorVisibilityTracker::kUpdateUI) {
+      text_service->PostUIUpdateMessage();
     }
 
     if (!result.should_be_sent_to_server) {
@@ -388,7 +462,9 @@ HRESULT OnKey(TipTextService *text_service, ITfContext *context,
     ignore_this_keyevent = !result.should_be_eaten;
   }
 
-  TipCommandHandler::OnCommandReceived(text_service, context, temporal_output);
+  // TSF spec guarantees that key event handling can always be a synchronous
+  // operation.
+  TipEditSession::OnOutputReceivedSync(text_service, context, temporal_output);
   *eaten = !ignore_this_keyevent ? TRUE : FALSE;
 
   return S_OK;

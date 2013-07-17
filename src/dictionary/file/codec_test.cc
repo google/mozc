@@ -29,10 +29,10 @@
 
 #include "dictionary/file/codec.h"
 
-#include "base/base.h"
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/logging.h"
+#include "base/scoped_ptr.h"
 #include "base/util.h"
 #include "dictionary/file/codec_interface.h"
 #include "dictionary/file/section.h"

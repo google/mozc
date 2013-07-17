@@ -32,6 +32,7 @@ package org.mozc.android.inputmethod.japanese.ui;
 import org.mozc.android.inputmethod.japanese.resources.R;
 import org.mozc.android.inputmethod.japanese.view.RectKeyDrawable;
 import org.mozc.android.inputmethod.japanese.view.SkinType;
+import com.google.common.annotations.VisibleForTesting;
 
 import android.content.Context;
 import android.content.res.Resources;
@@ -48,7 +49,7 @@ public class ScrollGuideView extends View {
   private final int scrollBarMinimumHeight = getScrollBarMinimumHeight(getResources());
   private SnapScroller scroller = null;
   private SkinType skinType = SkinType.BLUE_LIGHTGRAY;
-  private Drawable scrollBarDrawable = createScrollBarDrawable(skinType);
+  @VisibleForTesting Drawable scrollBarDrawable = createScrollBarDrawable(skinType);
 
   public ScrollGuideView(Context context) {
     super(context);

@@ -123,6 +123,12 @@ bool UserDictionaryAdapter::SetDownloadedItems(
     SYNC_VLOG(1) << "cannot save bucket id";
     return false;
   }
+  SYNC_VLOG(1) << "current bucket_id=" << bucket_id;
+
+  if (remote_updates.empty()) {
+    SYNC_VLOG(1) << "no remote_updates.";
+    return true;
+  }
 
   // Run migration code, because the incoming data from the server may in
   // the older format.
@@ -130,105 +136,56 @@ bool UserDictionaryAdapter::SetDownloadedItems(
     UserDictionaryUtil::ResolveUnknownFieldSet(remote_updates[i]);
   }
 
-  SYNC_VLOG(1) << "current backet_id=" << bucket_id;
-
+  // Apply updates from the server to local files.
   const string prev_file = GetLastSyncedUserDictionaryFileName();
   const string &cur_file = user_dictionary_filename();
 
-  SYNC_VLOG(1) << "comparing " << prev_file << " with " << cur_file;
-  if (FileUtil::IsEqualFile(prev_file, cur_file)) {
-    if (remote_updates.empty()) {
-      SYNC_VLOG(1) << "no local_update and no remote_updates.";
-      return true;
-    }
+  UserDictionaryStorage cur_storage(cur_file);
+  UserDictionaryStorage prev_storage(prev_file);
+  cur_storage.Load();
 
-    SYNC_VLOG(1) << "no local_update and has remote_updates.";
-    UserDictionaryStorage cur_storage(cur_file);
-    cur_storage.Load();
-    SYNC_VLOG(1) << "merging remote_updates to current storage.";
-    UserDictionarySyncUtil::MergeUpdates(remote_updates, &cur_storage);
-    if (!UserDictionarySyncUtil::VerifyLockAndSaveStorage(&cur_storage)) {
-      SYNC_VLOG(1) << "cannot save cur_storage.";
+  SYNC_VLOG(1) << "comparing local files and making local updates";
+  UserDictionarySyncUtil::UserDictionaryStorageBase local_update;
+  if (!FileUtil::IsEqualFile(prev_file, cur_file)) {
+    prev_storage.Load();
+    UserDictionarySyncUtil::CreateUpdate(prev_storage, cur_storage,
+                                         &local_update);
+  }
+  bool do_local_update = (local_update.dictionaries_size() > 0);
+
+  // Apply the remote updates
+  SYNC_VLOG(1) << "merging remote updates";
+  UserDictionarySyncUtil::MergeUpdates(remote_updates,
+      do_local_update ? &prev_storage : &cur_storage);
+
+  if (do_local_update) {
+    SYNC_VLOG(1) << "merging local_update to prev_storage, "
+                    "and copy it to cur_storage";
+    cur_storage.CopyFrom(prev_storage);
+    UserDictionarySyncUtil::MergeUpdate(local_update, &cur_storage);
+  }
+
+  SYNC_VLOG(1) << "saving cur_storage";
+  if (!UserDictionarySyncUtil::VerifyLockAndSaveStorage(&cur_storage)) {
+    SYNC_VLOG(1) << "cannot save cur_storage.";
+    return false;
+  }
+
+  if (do_local_update) {
+    // Even if a sync dictionary of |prev_storage| exceeds its limit after
+    // applying |remote_update| on prev_storage, we must save it. So we use
+    // LockAndSaveStorage() without verifications. Please refer
+    // http://b/5948831 for details.
+    SYNC_VLOG(1) << "saving prev_storage";
+    if (!UserDictionarySyncUtil::LockAndSaveStorage(&prev_storage)) {
+      SYNC_VLOG(1) << "cannot save prev_storage.";
       return false;
     }
+  } else {
     SYNC_VLOG(1) << "copying " << cur_file << " to " << prev_file;
     if (!SyncUtil::CopyLastSyncedFile(cur_file, prev_file)) {
       SYNC_VLOG(1) << "cannot copy " << cur_file << " to " << prev_file;
       return false;
-    }
-  } else {   // Updates found on the local.
-    if (remote_updates.empty()) {
-      SYNC_VLOG(1) << "has local_update and no remote_updates.";
-      return true;
-    }
-
-    // In this case, we simply merge the |local_update| and |remote_updates|.
-    SYNC_VLOG(1) << "has local_update and has remote_updates.";
-
-    SYNC_VLOG(1) << "loading " << prev_file;
-    UserDictionaryStorage prev_storage(prev_file);
-    prev_storage.Load();
-
-    SYNC_VLOG(1) << "loading " << cur_file;
-    UserDictionaryStorage cur_storage(cur_file);
-    cur_storage.Load();
-
-    // Obtain local update.
-    SYNC_VLOG(1) << "making local update";
-    UserDictionarySyncUtil::UserDictionaryStorageBase local_update;
-    UserDictionarySyncUtil::CreateUpdate(prev_storage, cur_storage,
-                                         &local_update);
-
-    if (local_update.dictionaries_size() == 0) {
-      SYNC_VLOG(1) << "has no local_update in actual.";
-      // no updates are found on the local.
-      UserDictionarySyncUtil::MergeUpdates(remote_updates, &cur_storage);
-      if (!UserDictionarySyncUtil::VerifyLockAndSaveStorage(&cur_storage)) {
-        SYNC_VLOG(1) << "cannot save cur_storage.";
-        return false;
-      }
-      SYNC_VLOG(1) << "copying " << cur_file << " to " << prev_file;
-      if (!SyncUtil::CopyLastSyncedFile(cur_file, prev_file)) {
-        SYNC_VLOG(1) << "cannot copy " << cur_file << " to " << prev_file;
-        return false;
-      }
-    } else {
-      // This case causes a conflict, so we make a backup just in case.
-      SYNC_VLOG(1) << "making a backup " << cur_storage.filename() << ".bak";
-      if (!FileUtil::CopyFile(cur_storage.filename(),
-                              cur_storage.filename() + ".bak")) {
-        SYNC_VLOG(1) << "cannot make backup file";
-      }
-
-      // First, apply the |remote_updates| to the previous storage.
-      // |prev_storage| only reflects the |remote_updates|.
-      SYNC_VLOG(1) << "merging remote_updates into prev_storage";
-      UserDictionarySyncUtil::MergeUpdates(remote_updates, &prev_storage);
-
-      // We apply the |remote_updates| and |local_update| to
-      // the prev_storage. It can be seen as an approximation of
-      // mixing |remote_updates| and |local_update|, it is not
-      // perfect though.
-      SYNC_VLOG(1) << "coping prev_storage into cur_storage";
-      cur_storage.CopyFrom(prev_storage);
-
-      SYNC_VLOG(1) << "merging local_update to cur_storage";
-      UserDictionarySyncUtil::MergeUpdate(local_update, &cur_storage);
-
-      SYNC_VLOG(1) << "saving cur_storage";
-      if (!UserDictionarySyncUtil::VerifyLockAndSaveStorage(&cur_storage)) {
-        SYNC_VLOG(1) << "cannot save cur_storage.";
-        return false;
-      }
-      // Even if a sync dictionary of |prev_storage| exceeds its limit after
-      // applying |remote_update| on prev_storage, we must save it. So we use
-      // LockAndSaveStorage() without verifications. Please refer
-      // http://b/5948831 for details.
-      SYNC_VLOG(1) << "saving prev_storage";
-      if (!UserDictionarySyncUtil::LockAndSaveStorage(&prev_storage)) {
-        SYNC_VLOG(1) << "cannot save prev_storage.";
-        return false;
-      }
     }
   }
 
@@ -369,7 +326,8 @@ ime_sync::Component UserDictionaryAdapter::component_id() const {
 
 string UserDictionaryAdapter::GetLastSyncedUserDictionaryFileName() const {
   const char kSuffix[] = ".last_synced";
-#ifdef OS_WIN
+#if defined(OS_WIN) || defined(__native_client__)
+  // In NaCl we don't use directory.
   return user_dictionary_filename() + kSuffix;
 #else
   const string dirname = FileUtil::Dirname(user_dictionary_filename());

@@ -35,7 +35,9 @@
 #include <map>
 #include <string>
 #include <vector>
-#include "base/base.h"
+
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 
 namespace mozc {
 

@@ -115,10 +115,7 @@ void Thread::Terminate() {
 
 struct ThreadInternalState {
  public:
-  ThreadInternalState()
-    : handle_(NULL),
-      is_running_(false),
-      joinable_(true) {}
+  ThreadInternalState() : is_running_(false), joinable_(true) {}
 
   // As pthread_t is an opaque object, we use (pthread_t *)NULL to
   // indicate that no thread is attached to this object.

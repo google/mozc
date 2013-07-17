@@ -1,0 +1,75 @@
+# This file tests UNDO command.
+
+################################################################################
+# Test for MS-IME keymap
+SET_CONFIG	session_keymap	MSIME
+SEND_KEY	ON
+RESET_CONTEXT
+
+# Test Ctrl-Backspace (Undo).
+
+# Commit 集合
+SWITCH_INPUT_MODE	HIRAGANA
+SEND_KEYS	syuugou
+SEND_KEY	SPACE
+EXPECT_PREEDIT	集合
+EXPECT_IN_ALL_CANDIDATE_WORDS	しゅうごう
+EXPECT_IN_ALL_CANDIDATE_WORDS	宗号
+SEND_KEY	ENTER
+EXPECT_PREEDIT
+
+# Perform Undo
+SEND_KEY	CTRL BACKSPACE
+EXPECT_PREEDIT	集合
+EXPECT_IN_ALL_CANDIDATE_WORDS	しゅうごう
+EXPECT_IN_ALL_CANDIDATE_WORDS	宗号
+
+
+################################################################################
+# Test for Kotoeri keymap
+SET_CONFIG	session_keymap	KOTOERI
+SEND_KEY	ON
+RESET_CONTEXT
+
+# Test Ctrl-Backspace (Undo).
+
+# Commit 集合
+SWITCH_INPUT_MODE	HIRAGANA
+SEND_KEYS	syuugou
+SEND_KEY	SPACE
+EXPECT_PREEDIT	集合
+EXPECT_IN_ALL_CANDIDATE_WORDS	しゅうごう
+EXPECT_IN_ALL_CANDIDATE_WORDS	宗号
+SEND_KEY	ENTER
+EXPECT_PREEDIT
+
+# Perform Undo
+SEND_KEY	CTRL BACKSPACE
+EXPECT_PREEDIT	集合
+EXPECT_IN_ALL_CANDIDATE_WORDS	しゅうごう
+EXPECT_IN_ALL_CANDIDATE_WORDS	宗号
+
+
+################################################################################
+# Test for ATOK keymap
+SET_CONFIG	session_keymap	ATOK
+SEND_KEY	ON
+RESET_CONTEXT
+
+# Test Ctrl-Backspace (Undo).
+
+# Commit 集合
+SWITCH_INPUT_MODE	HIRAGANA
+SEND_KEYS	syuugou
+SEND_KEY	SPACE
+EXPECT_PREEDIT	集合
+EXPECT_IN_ALL_CANDIDATE_WORDS	しゅうごう
+EXPECT_IN_ALL_CANDIDATE_WORDS	宗号
+SEND_KEY	ENTER
+EXPECT_PREEDIT
+
+# Perform Undo
+SEND_KEY	CTRL BACKSPACE
+EXPECT_PREEDIT	集合
+EXPECT_IN_ALL_CANDIDATE_WORDS	しゅうごう
+EXPECT_IN_ALL_CANDIDATE_WORDS	宗号

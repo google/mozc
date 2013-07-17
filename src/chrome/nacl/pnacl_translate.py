@@ -49,25 +49,16 @@ import tempfile
 def Translate(toolchain_root, input_file, output_base):
   """Translates the input file for three architectures."""
   targets = (('arm', 'arm'), ('x86-32', 'x86_32'), ('x86-64', 'x86_64'))
-  commands = []
-  processes = []
   translate_command = os.path.join(toolchain_root,
                                    'newlib/bin64/pnacl-translate')
   for target in targets:
     cmd = (translate_command, '-arch', target[0], input_file,
            '-o', '%s_%s.nexe' % (output_base, target[1]))
-    commands.append(' '.join(cmd))
     print 'Running: ' + ' '.join(cmd)
-    processes.append(subprocess.Popen(cmd))
-  failed = False
-  for i, process in enumerate(processes):
-    if process.wait() == 0:
-      print 'Done: ' + commands[i]
-    else:
-      print >> sys.stderr, 'ERROR: ' + commands[i]
-      failed = True
-  if failed:
-    raise RuntimeError('Translate Error')
+    if subprocess.Popen(cmd).wait() != 0:
+      print >> sys.stderr, 'ERROR: ' + ' '.join(cmd)
+      raise RuntimeError('Translate Error')
+    print 'Done: ' + ' '.join(cmd)
 
 
 def StripAndTranslate(toolchain_root, input_file, output_base):

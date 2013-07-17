@@ -30,7 +30,7 @@
 #include "win32/tip/tip_composition_util.h"
 
 #include "win32/base/tsf_profile.h"
-#include "win32/tip/tip_command_handler.h"
+#include "win32/tip/tip_edit_session_impl.h"
 #include "win32/tip/tip_range_util.h"
 #include "win32/tip/tip_text_service.h"
 
@@ -75,9 +75,9 @@ CComPtr<ITfCompositionView> TipCompositionUtil::GetComposition(
   }
 }
 
-HRESULT TipCompositionUtil::ClearProperties(ITfContext *context,
-                                            ITfComposition *composition,
-                                            TfEditCookie write_cookie) {
+HRESULT TipCompositionUtil::ClearDisplayAttributes(ITfContext *context,
+                                                   ITfComposition *composition,
+                                                   TfEditCookie write_cookie) {
   HRESULT result = S_OK;
 
   // Retrieve the current composition range.
@@ -87,95 +87,17 @@ HRESULT TipCompositionUtil::ClearProperties(ITfContext *context,
     return result;
   }
 
-  {
-    // Get out the display attribute property
-    CComPtr<ITfProperty> display_attribute;
-    result = context->GetProperty(GUID_PROP_ATTRIBUTE, &display_attribute);
-    if (FAILED(result)) {
-      return result;
-    }
-    // Clear existing attributes.
-    result = display_attribute->Clear(write_cookie, composition_range);
-    if (FAILED(result)) {
-      return result;
-    }
-  }
-
-  {
-    // Get out the reading property
-    CComPtr<ITfProperty> reading_property;
-    result = context->GetProperty(GUID_PROP_READING, &reading_property);
-    if (FAILED(result)) {
-      return result;
-    }
-    // Clear existing attributes.
-    result = reading_property->Clear(write_cookie, composition_range);
-    if (FAILED(result)) {
-      return result;
-    }
-  }
-  return S_OK;
-}
-
-HRESULT TipCompositionUtil::OnEndEdit(TipTextService *text_service,
-                                      ITfContext *context,
-                                      ITfComposition *composition,
-                                      TfEditCookie edit_cookie,
-                                      ITfEditRecord *edit_record) {
-  HRESULT result = S_OK;
-  if (!composition) {
-    // Nothing to do.
-    return S_OK;
-  }
-
-  CComPtr<ITfRange> composition_range;
-  result = composition->GetRange(&composition_range);
+  // Get out the display attribute property
+  CComPtr<ITfProperty> display_attribute;
+  result = context->GetProperty(GUID_PROP_ATTRIBUTE, &display_attribute);
   if (FAILED(result)) {
     return result;
   }
-
-  BOOL selection_changed = FALSE;
-  result = edit_record->GetSelectionStatus(&selection_changed);
+  // Clear existing attributes.
+  result = display_attribute->Clear(write_cookie, composition_range);
   if (FAILED(result)) {
     return result;
   }
-  if (selection_changed) {
-    // When the selection is changed, make sure the new selection range is
-    // covered by the compositon range. Otherwise, terminate the composition.
-    CComPtr<ITfRange> selected_range;
-    TfActiveSelEnd active_sel_end = TF_AE_NONE;
-    if (!TipRangeUtil::GetDefaultSelection(
-            context, edit_cookie, &selected_range, &active_sel_end)) {
-      return E_FAIL;
-    }
-    if (!TipRangeUtil::IsRangeCovered(
-            edit_cookie, selected_range, composition_range)) {
-      if (!TipCommandHandler::OnCompositionTerminated(
-              text_service, context, composition, edit_cookie)) {
-        return E_FAIL;
-      }
-      // Cancels further operations.
-      return S_OK;
-    }
-  }
-
-  BOOL is_empty = FALSE;
-  result = composition_range->IsEmpty(edit_cookie, &is_empty);
-  if (FAILED(result)) {
-    return result;
-  }
-  if (is_empty) {
-    // When the composition range is empty, we assume the composition is
-    // cancelled by the application or something. Actually CUAS does this
-    // when it receives NI_COMPOSITIONSTR/CPS_CANCEL. You can see this as
-    // Excel's auto-completion. If this happens, send REVERT command to
-    // the server to keep the state consistent. See b/1793331 for details.
-    if (!TipCommandHandler::NotifyCompositionReverted(
-            text_service, context, composition, edit_cookie)) {
-      return E_FAIL;
-    }
-  }
-
   return S_OK;
 }
 

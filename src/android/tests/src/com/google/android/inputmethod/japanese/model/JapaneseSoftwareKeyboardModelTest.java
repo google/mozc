@@ -455,6 +455,7 @@ public class JapaneseSoftwareKeyboardModelTest extends TestCase {
         assertEquals(test.toString(), test.expectedKeyboardMode, model.getKeyboardMode());
       }
     }
+
   }
 
   public void testInputTypeScenario() {

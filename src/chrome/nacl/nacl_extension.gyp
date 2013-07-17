@@ -41,16 +41,19 @@
       '<(gen_out_dir)/nacl_mozc/_locales/ja/messages.json',
       '<(gen_out_dir)/nacl_mozc/credits_en.html',
       '<(gen_out_dir)/nacl_mozc/credits_ja.html',
+      '<(gen_out_dir)/nacl_mozc/key_translator.js',
       '<(gen_out_dir)/nacl_mozc/manifest.json',
       '<(gen_out_dir)/nacl_mozc/nacl_mozc.html',
       '<(gen_out_dir)/nacl_mozc/nacl_mozc.js',
       '<(gen_out_dir)/nacl_mozc/nacl_mozc_init.js',
+      '<(gen_out_dir)/nacl_mozc/nacl_mozc_version.js',
       '<(gen_out_dir)/nacl_mozc/nacl_session_handler.nmf',
       '<(gen_out_dir)/nacl_mozc/nacl_session_handler_x86_32.nexe',
       '<(gen_out_dir)/nacl_mozc/nacl_session_handler_x86_64.nexe',
       '<(gen_out_dir)/nacl_mozc/nacl_session_handler_arm.nexe',
       '<(gen_out_dir)/nacl_mozc/product_icon_32bpp-128.png',
       '<(gen_out_dir)/nacl_mozc/option_page.js',
+      '<(gen_out_dir)/nacl_mozc/options.css',
       '<(gen_out_dir)/nacl_mozc/options.html',
       '<(gen_out_dir)/nacl_mozc/options.js',
     ],
@@ -82,6 +85,7 @@
       'dependencies': [
         'dictionary_downloader',
         '../../base/base.gyp:base',
+        '../../base/base.gyp:nacl_js_proxy',
         '../../engine/engine.gyp:engine_factory',
         '../../net/net.gyp:http_client',
         '../../net/net.gyp:json_util',
@@ -92,6 +96,13 @@
         '../../session/session.gyp:session_usage_observer',
         '../../usage_stats/usage_stats_base.gyp:usage_stats',
         '../../usage_stats/usage_stats.gyp:usage_stats_uploader',
+      ],
+      'conditions': [
+        ['enable_cloud_sync==1', {
+          'dependencies': [
+            '../../sync/sync.gyp:sync',
+          ]
+        }],
       ],
     },
     {
@@ -175,6 +186,7 @@
       'target_name': 'nacl_net_test_module',
       'type': 'executable',
       'sources': [
+        '../../base/file_util_test.cc',
         'nacl_net_test_module.cc',
       ],
       'link_settings': {
@@ -185,7 +197,7 @@
         '../../base/base.gyp:base',
         '../../net/net.gyp:http_client',
         '../../net/net.gyp:json_util',
-        '../../testing/testing.gyp:testing',
+        '../../testing/testing.gyp:nacl_mock_module',
       ],
     },
     {
@@ -308,14 +320,17 @@
           '../../data/installer/credits_en.html',
           '../../data/installer/credits_ja.html',
           '<(gen_out_dir)/manifest.json',
+          '<(gen_out_dir)/nacl_mozc_version.js',
           '<(PRODUCT_DIR)/nacl_session_handler_x86_32.nexe',
           '<(PRODUCT_DIR)/nacl_session_handler_x86_64.nexe',
           '<(PRODUCT_DIR)/nacl_session_handler_arm.nexe',
+          'key_translator.js',
           'nacl_mozc.html',
           'nacl_mozc.js',
           'nacl_mozc_init.js',
           'nacl_session_handler.nmf',
           'option_page.js',
+          'options.css',
           'options.html',
           'options.js',
         ],
@@ -348,6 +363,23 @@
             '--version_file', '../../mozc_version.txt',
             '--input', 'manifest/manifest_template.json',
             '--output', '<(gen_out_dir)/manifest.json',
+          ],
+        },
+        {
+          'action_name': 'gen_nacl_mozc_version',
+          'inputs': [
+            '../../mozc_version.txt',
+            '../../build_tools/replace_version.py',
+            'nacl_mozc_version_template.js',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/nacl_mozc_version.js',
+          ],
+          'action': [
+            'python', '../../build_tools/replace_version.py',
+            '--version_file', '../../mozc_version.txt',
+            '--input', 'nacl_mozc_version_template.js',
+            '--output', '<(gen_out_dir)/nacl_mozc_version.js',
           ],
         },
         {
@@ -414,8 +446,11 @@
     {
       'target_name': 'build_nacl_test',
       'sources': [
+        '<(PRODUCT_DIR)/base_test',
+        '<(PRODUCT_DIR)/oauth2_token_util_test',
         '<(PRODUCT_DIR)/rewriter_test',
         '<(PRODUCT_DIR)/session_handler_test',
+        '<(PRODUCT_DIR)/sync_base_test',
       ],
       'includes': ['pnacl_translate.gypi'],
     },
@@ -428,9 +463,11 @@
         {
           'action_name': 'run_nacl_end_to_end_test',
           'inputs': [
+            '<(gen_out_dir)/nacl_mozc/key_translator.js',
             '<(gen_out_dir)/nacl_mozc/manifest.json',
             '<(gen_out_dir)/nacl_mozc/nacl_mozc.html',
             '<(gen_out_dir)/nacl_mozc/nacl_mozc.js',
+            '<(gen_out_dir)/nacl_mozc/nacl_mozc_version.js',
             '<(gen_out_dir)/nacl_mozc/nacl_session_handler.nmf',
             '<(gen_out_dir)/nacl_mozc/nacl_session_handler_x86_32.nexe',
             '<(gen_out_dir)/nacl_mozc/nacl_session_handler_x86_64.nexe',

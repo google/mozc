@@ -38,7 +38,6 @@ import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.CandidateL
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.CandidateWord;
 import org.mozc.android.inputmethod.japanese.testing.InstrumentationTestCaseWithMock;
 import org.mozc.android.inputmethod.japanese.testing.MozcLayoutUtil;
-import org.mozc.android.inputmethod.japanese.testing.VisibilityProxy;
 import org.mozc.android.inputmethod.japanese.ui.CandidateLayout;
 import org.mozc.android.inputmethod.japanese.ui.CandidateLayout.Row;
 import org.mozc.android.inputmethod.japanese.ui.CandidateLayouter;
@@ -110,9 +109,8 @@ public class CandidateViewTest extends InstrumentationTestCaseWithMock {
     // Check postcondition.
     assertEquals(0, candidateWordView.getScrollX());
     assertEquals(0, candidateWordView.getScrollY());
-    assertNotNull(VisibilityProxy.getField(candidateWordView, "calculatedLayout"));
-    assertSame(candidateList,
-               VisibilityProxy.getField(candidateWordView, "currentCandidateList"));
+    assertNotNull(candidateWordView.calculatedLayout);
+    assertSame(candidateList, candidateWordView.currentCandidateList);
   }
 
   @SmallTest
@@ -138,9 +136,8 @@ public class CandidateViewTest extends InstrumentationTestCaseWithMock {
     verifyAll();
     assertEquals(0, candidateWordView.getScrollX());
     assertEquals(0, candidateWordView.getScrollY());
-    assertNotNull(VisibilityProxy.getField(candidateWordView, "calculatedLayout"));
-    assertSame(CandidateList.getDefaultInstance(),
-               VisibilityProxy.getField(candidateWordView, "currentCandidateList"));
+    assertNotNull(candidateWordView.calculatedLayout);
+    assertSame(CandidateList.getDefaultInstance(), candidateWordView.currentCandidateList);
   }
 
   @SmallTest
@@ -152,17 +149,16 @@ public class CandidateViewTest extends InstrumentationTestCaseWithMock {
     candidateWordView.scrollTo(100, 100);
 
     // Clear the layouter.
-    VisibilityProxy.setField(candidateWordView, "layouter", null);
+    candidateWordView.layouter = null;
 
     // Calling before setting up a layouter.
     candidateWordView.update(CandidateList.getDefaultInstance());
     assertEquals(0, candidateWordView.getScrollX());
     assertEquals(0, candidateWordView.getScrollY());
-    assertNull(VisibilityProxy.getField(candidateWordView, "calculatedLayout"));
+    assertNull(candidateWordView.calculatedLayout);
 
     // Set currentCandidateList field.
-    VisibilityProxy.setField(
-        candidateWordView, "currentCandidateList", CandidateList.getDefaultInstance());
+    candidateWordView.currentCandidateList = CandidateList.getDefaultInstance();
 
     // Setup precondition
     candidateWordView.scrollTo(100, 100);
@@ -171,6 +167,6 @@ public class CandidateViewTest extends InstrumentationTestCaseWithMock {
     candidateWordView.update(CandidateList.getDefaultInstance());
     assertEquals(0, candidateWordView.getScrollX());
     assertEquals(0, candidateWordView.getScrollY());
-    assertNull(VisibilityProxy.getField(candidateWordView, "calculatedLayout"));
+    assertNull(candidateWordView.calculatedLayout);
   }
 }

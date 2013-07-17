@@ -38,12 +38,12 @@
 #include <atlapp.h>
 #include <atlmisc.h>
 
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "base/coordinates.h"
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 
 namespace mozc {
 namespace renderer {
@@ -96,7 +96,7 @@ class TextRenderer {
                   FONT_TYPE font_type) const;
  private:
   struct FontInfo;
-  scoped_array<FontInfo> fonts_;
+  std::unique_ptr<FontInfo[]> fonts_;
   mutable WTL::CDC mem_dc_;
 
   DISALLOW_COPY_AND_ASSIGN(TextRenderer);

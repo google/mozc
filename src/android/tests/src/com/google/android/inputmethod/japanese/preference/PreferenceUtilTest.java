@@ -39,6 +39,7 @@ import org.mozc.android.inputmethod.japanese.preference.PreferenceUtil.Preferenc
 import org.mozc.android.inputmethod.japanese.resources.R;
 import org.mozc.android.inputmethod.japanese.testing.InstrumentationTestCaseWithMock;
 import org.mozc.android.inputmethod.japanese.testing.Parameter;
+import com.google.common.base.Optional;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -60,7 +61,7 @@ public class PreferenceUtilTest extends InstrumentationTestCaseWithMock {
 
   @Override
   protected void tearDown() throws Exception {
-    MozcUtil.setDevChannel(null);
+    MozcUtil.setDevChannel(Optional.<Boolean>absent());
     super.tearDown();
   }
 
@@ -76,7 +77,7 @@ public class PreferenceUtilTest extends InstrumentationTestCaseWithMock {
     PreferenceManagerInterface preferenceManager = createMock(PreferenceManagerInterface.class);
 
     // PREF_OTHER_USAGE_STATS_KEY, devChannel==true
-    MozcUtil.setDevChannel(true);
+    MozcUtil.setDevChannel(Optional.of(true));
 
     expect(preferenceManager.findPreference(PreferenceUtil.PREF_OTHER_USAGE_STATS_KEY))
         .andStubReturn(preference);
@@ -91,7 +92,7 @@ public class PreferenceUtilTest extends InstrumentationTestCaseWithMock {
 
     // PREF_OTHER_USAGE_STATS_KEY, devChannel==false
     resetAll();
-    MozcUtil.setDevChannel(false);
+    MozcUtil.setDevChannel(Optional.of(false));
 
     expect(preferenceManager.findPreference(PreferenceUtil.PREF_OTHER_USAGE_STATS_KEY))
         .andStubReturn(preference);

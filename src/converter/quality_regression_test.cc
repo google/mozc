@@ -27,6 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+
 #include <algorithm>
 #include <map>
 #include <string>
@@ -39,21 +40,26 @@
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "converter/quality_regression_util.h"
+#include "engine/chromeos_engine_factory.h"
 #include "engine/engine_factory.h"
 #include "engine/engine_interface.h"
 #include "session/commands.pb.h"
-#include "testing/base/public/gunit.h"
-#include "engine/chromeos_engine_factory.h"
 #include "session/request_test_util.h"
+#include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
 
 using mozc::quality_regression::QualityRegressionUtil;
 
-// Test data is provided in external file.
-extern const char *kTestData[];
-
 namespace mozc {
+
+// Test data is provided in external file.
+struct TestCase {
+  const bool enabled;
+  const char *line;
+};
+extern TestCase kTestData[];
+
 namespace {
 
 class QualityRegressionTest : public testing::Test {
@@ -71,53 +77,91 @@ class QualityRegressionTest : public testing::Test {
     config::ConfigHandler::SetConfig(config);
   }
 
-  void RunTestForPlatform(uint32 platform, QualityRegressionUtil *util) {
+  static void RunTestForPlatform(uint32 platform, QualityRegressionUtil *util) {
     CHECK(util);
-    map<string, vector<pair<float, string> > > results;
+    map<string, vector<pair<float, string>>> results, disabled_results;
 
-    int testcase_count = 0;
-    for (size_t i = 0; kTestData[i]; ++i) {
+    int num_executed_cases = 0, num_disabled_cases = 0;
+    for (size_t i = 0; kTestData[i].line; ++i) {
+      const string &tsv_line = kTestData[i].line;
       QualityRegressionUtil::TestItem item;
-      CHECK(item.ParseFromTSV(kTestData[i]));
+      CHECK(item.ParseFromTSV(tsv_line));
       if (!(item.platform & platform)) {
         continue;
       }
       string actual_value;
       const bool test_result = util->ConvertAndTest(item, &actual_value);
+
+      map<string, vector<pair<float, string>>> *table = nullptr;
+      if (kTestData[i].enabled) {
+        ++num_executed_cases;
+        table = &results;
+      } else {
+        LOG(INFO) << "DISABLED: " << kTestData[i].line;
+        ++num_disabled_cases;
+        table = &disabled_results;
+      }
+
       const string &label = item.label;
-      string line = kTestData[i];
-      line += "\tActual: ";
-      line += actual_value;
+      string line = tsv_line;
+      line.append("\tActual: ").append(actual_value);
       if (test_result) {
         // use "-1.0" as a dummy expected ratio
-        results[label].push_back(make_pair(-1.0, line));
+        (*table)[label].push_back(make_pair(-1.0, line));
       } else {
-        results[label].push_back(make_pair(item.accuracy, line));
+        (*table)[label].push_back(make_pair(item.accuracy, line));
       }
-      ++testcase_count;
     }
 
-    for (map<string, vector<pair<float, string > > >::iterator
-             it = results.begin(); it != results.end(); ++it) {
-      vector<pair<float, string> > &values = it->second;
-      sort(values.begin(), values.end());
+    ExamineResults(true, platform, &results);
+    ExamineResults(false, platform, &disabled_results);
+
+    const int total_cases = num_executed_cases + num_disabled_cases;
+    LOG(INFO) << "Tested " << num_executed_cases << " / "
+              << total_cases << " entries.";
+  }
+
+  // If |enabled| parameter is true, then actual conversion results are tested
+  // and any failure is reported as test failure.  If false, actual conversion
+  // results don't affect test results but closable issues are reported.
+  static void ExamineResults(
+      const bool enabled, uint32 platform,
+      map<string, vector<pair<float, string>>> *results) {
+    for (auto it = results->begin(); it != results->end(); ++it) {
+      vector<pair<float, string>> *values = &it->second;
+      sort(values->begin(), values->end());
       size_t correct = 0;
-      for (int n = 0; n < values.size(); ++n) {
-        const float accuracy = values[n].first;
+      bool all_passed = true;
+      for (const auto &value : *values) {
+        const float accuracy = value.first;
         if (accuracy < 0) {
           ++correct;
           continue;
         }
         // Print failed example for failed label
-        const float actual_ratio = 1.0 * correct / values.size();
-        EXPECT_TRUE(accuracy < actual_ratio) << values[n].second
-                                             << " " << accuracy
-                                             << " " << actual_ratio;
+        const float actual_ratio = 1.0 * correct / values->size();
+        if (enabled) {
+          EXPECT_LT(accuracy, actual_ratio) << value.second
+                                            << " " << accuracy
+                                            << " " << actual_ratio;
+        } else {
+          if (accuracy < actual_ratio) {
+            LOG(INFO) << "PASSED (DISABLED): "
+                      << it->first << ": " << value.second;
+          } else {
+            all_passed = false;
+          }
+        }
       }
       LOG(INFO) << "Accuracy: " << it->first << " "
-                << 1.0 * correct / values.size();
+                << 1.0 * correct / values->size();
+      if (!enabled && all_passed) {
+        LOG(INFO) << "CLOSED ISSUE [platform = "
+                  << QualityRegressionUtil::GetPlatformString(platform)
+                  << "]: " << it->first << " with "
+                  << it->second.size() << " cases";
+      }
     }
-    LOG(INFO) << "Tested " << testcase_count << " entries.";
   }
 };
 

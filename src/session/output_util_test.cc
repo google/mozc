@@ -288,6 +288,7 @@ void SetTestDataForConversion(commands::Output *output) {
     commands::Status *status = output->mutable_status();
     status->set_activated(true);
     status->set_mode(commands::HIRAGANA);
+    status->set_comeback_mode(commands::HIRAGANA);
   }
   {
     commands::CandidateList *candidate_list =

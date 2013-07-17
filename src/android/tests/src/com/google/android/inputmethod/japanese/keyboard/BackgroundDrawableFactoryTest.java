@@ -36,6 +36,7 @@ import static org.easymock.EasyMock.isA;
 
 import org.mozc.android.inputmethod.japanese.keyboard.BackgroundDrawableFactory.DrawableType;
 import org.mozc.android.inputmethod.japanese.testing.InstrumentationTestCaseWithMock;
+import org.mozc.android.inputmethod.japanese.testing.MozcMatcher.DeepCopyPaintCapture;
 import org.mozc.android.inputmethod.japanese.view.SkinType;
 
 import android.graphics.Canvas;
@@ -71,7 +72,7 @@ public class BackgroundDrawableFactoryTest extends InstrumentationTestCaseWithMo
   @SmallTest
   public void testFlickCenterDrawable() {
     Capture<RectF> ovalCapture = new Capture<RectF>();
-    Capture<Paint> paintCapture = new Capture<Paint>();
+    Capture<Paint> paintCapture = new DeepCopyPaintCapture();
     Canvas canvas = createMock(Canvas.class);
     canvas.drawCircle(gt(0f), gt(0f), gt(0f), capture(paintCapture));
     replayAll();
@@ -113,7 +114,7 @@ public class BackgroundDrawableFactoryTest extends InstrumentationTestCaseWithMo
     for (DrawableType drawableType: drawableTypeList) {
       resetAll();
       Capture<Path> pathCapture = new Capture<Path>();
-      Capture<Paint> paintCapture = new Capture<Paint>();
+      Capture<Paint> paintCapture = new DeepCopyPaintCapture();
       canvas.drawPath(capture(pathCapture), capture(paintCapture));
       replayAll();
 
@@ -152,7 +153,7 @@ public class BackgroundDrawableFactoryTest extends InstrumentationTestCaseWithMo
     };
 
     for (DrawableType drawableType : drawableTypeList) {
-      Capture<Paint> paintCapture = new Capture<Paint>();
+      Capture<Paint> paintCapture = new DeepCopyPaintCapture();
       resetAll();
       canvas.drawRect(geq(0f), geq(0f), geq(0f), geq(0f), isA(Paint.class));  // Shadow.
       canvas.drawRect(geq(0f), geq(0f), geq(0f), geq(0f), capture(paintCapture));  // Base.
@@ -201,7 +202,7 @@ public class BackgroundDrawableFactoryTest extends InstrumentationTestCaseWithMo
     };
 
     for (DrawableType drawableType : drawableTypeList) {
-      Capture<Paint> paintCapture = new Capture<Paint>();
+      Capture<Paint> paintCapture = new DeepCopyPaintCapture();
       resetAll();
       canvas.drawRect(geq(0f), geq(0f), geq(0f), geq(0f), capture(paintCapture));
       replayAll();
@@ -248,7 +249,7 @@ public class BackgroundDrawableFactoryTest extends InstrumentationTestCaseWithMo
 
     for (int[] state : stateList) {
       for (DrawableType drawableType : drawableTypeList) {
-        Capture<Paint> paintCapture = new Capture<Paint>();
+        Capture<Paint> paintCapture = new DeepCopyPaintCapture();
         resetAll();
         canvas.drawRoundRect(isA(RectF.class), gt(0f), gt(0f), isA(Paint.class));  // Shadow.
         canvas.drawRoundRect(isA(RectF.class), gt(0f), gt(0f), capture(paintCapture));  // Base.

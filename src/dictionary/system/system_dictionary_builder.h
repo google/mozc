@@ -36,7 +36,8 @@
 #include <string>
 #include <vector>
 
-#include "base/base.h"
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 #include "dictionary/system/words_info.h"
 
 namespace mozc {

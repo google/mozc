@@ -31,10 +31,12 @@ package org.mozc.android.inputmethod.japanese.keyboard;
 
 import org.mozc.android.inputmethod.japanese.keyboard.BackgroundDrawableFactory.DrawableType;
 import org.mozc.android.inputmethod.japanese.view.DrawableCache;
+import com.google.common.annotations.VisibleForTesting;
 
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.util.SparseArray;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -43,9 +45,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * This class represents a popup preview which is shown at key-pressing timing.
@@ -68,7 +68,8 @@ public class PopUpPreview {
    *
    */
   static class Pool {
-    private final Map<Integer, PopUpPreview> pool = new HashMap<Integer, PopUpPreview>();
+    // Typically 2 or 3 popups are shown in maximum.
+    private final SparseArray<PopUpPreview> pool = new SparseArray<PopUpPreview>(3);
     private final List<PopUpPreview> freeList = new ArrayList<PopUpPreview>();
     private final View parent;
     private final BackgroundDrawableFactory backgroundDrawableFactory;
@@ -105,10 +106,11 @@ public class PopUpPreview {
     }
 
     void releaseDelayed(int pointerId, long delay) {
-      PopUpPreview preview = pool.remove(pointerId);
+      PopUpPreview preview = pool.get(pointerId);
       if (preview == null) {
         return;
       }
+      pool.remove(pointerId);
       dismissHandler.sendMessageDelayed(
           dismissHandler.obtainMessage(0, preview), delay);
     }
@@ -117,8 +119,8 @@ public class PopUpPreview {
       // Remove all messages.
       dismissHandler.removeMessages(0);
 
-      for (PopUpPreview preview : pool.values()) {
-        preview.dismiss();
+      for (int i = 0; i < pool.size(); ++i) {
+        pool.valueAt(i).dismiss();
       }
       pool.clear();
 
@@ -137,7 +139,7 @@ public class PopUpPreview {
   private final View parent;
   private final BackgroundDrawableFactory backgroundDrawableFactory;
   private final DrawableCache drawableCache;
-  private final ImageView popupView;
+  @VisibleForTesting final ImageView popupView;
 
   protected PopUpPreview(
       View parent, BackgroundDrawableFactory backgroundDrawableFactory,

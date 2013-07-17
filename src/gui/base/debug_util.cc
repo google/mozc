@@ -34,7 +34,6 @@
 #include <windows.h>
 #endif
 
-#include "base/base.h"
 #include "base/logging.h"
 #include "base/util.h"
 

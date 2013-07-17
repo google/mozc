@@ -57,20 +57,6 @@
         '<(DEPTH)/third_party/gtest/include',
       ],
       'conditions': [
-        ['target_platform=="NaCl" and _toolset=="target"', {
-          'sources': [
-            'base/public/nacl_mock_module.cc',
-          ],
-          'all_dependent_settings': {
-            'link_settings': {
-              'libraries': ['-lppapi', '-lppapi_cpp'],
-            },
-          },
-          'dependencies': [
-            '../base/base.gyp:base',
-            '../net/net.gyp:http_client',
-          ],
-        }],
         ['clang==1', {
           'cflags+': [
             '-Wno-missing-field-initializers',
@@ -116,6 +102,23 @@
       ],
     },
     {
+      'target_name': 'nacl_mock_module',
+      'type': 'static_library',
+      'sources': [
+        'base/public/nacl_mock_module.cc',
+      ],
+      'all_dependent_settings': {
+        'link_settings': {
+          'libraries': ['-lppapi', '-lppapi_cpp'],
+        },
+      },
+      'dependencies': [
+        '../base/base.gyp:base',
+        '../net/net.gyp:http_client',
+        'googletest_lib',
+      ],
+    },
+    {
       'target_name': 'gtest_main',
       'type': 'static_library',
       'sources': [
@@ -156,6 +159,7 @@
         ['target_platform=="NaCl" and _toolset=="target"', {
           'dependencies': [
             '../base/base.gyp:pepper_file_system_mock',
+            'nacl_mock_module',
           ],
         }],
       ],

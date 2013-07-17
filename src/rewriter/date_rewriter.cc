@@ -2343,8 +2343,10 @@ const bool GetFourDigits(const composer::Composer &composer,
 
   // 3. Raw input
   string raw;
-  // Note that given segment is the only segment in the Segments.
-  composer.GetRawText(0, Util::CharsLen(segment.key()), &raw);
+  // Note that only one segment is in the Segments, but sometimes like
+  // on partial conversion, segment.key() is different from the size of
+  // the whole composition.
+  composer.GetRawSubString(0, Util::CharsLen(segment.key()), &raw);
   if (IsFourDigits(raw)) {
     *output = raw;
     return true;

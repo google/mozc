@@ -38,9 +38,13 @@
 #include <msctf.h>
 
 #include "base/hash_tables.h"
+#include "renderer/renderer_command.pb.h"
 #include "session/commands.pb.h"
+#include "win32/base/input_state.h"
+#include "win32/tip/tip_input_mode_manager.h"
 #include "win32/tip/tip_private_context.h"
 #include "win32/tip/tip_text_service.h"
+#include "win32/tip/tip_thread_context.h"
 #include "win32/tip/tip_ui_handler.h"
 
 namespace mozc {
@@ -52,6 +56,7 @@ namespace {
 using ATL::CComPtr;
 using ATL::CComQIPtr;
 using ::mozc::commands::Output;
+typedef ::mozc::commands::RendererCommand_IndicatorInfo IndicatorInfo;
 
 struct UIElementInfo {
   UIElementInfo()
@@ -142,6 +147,11 @@ HRESULT TipUiElementManager::OnUpdate(
         break;
     }
   }
+  if (private_context->input_behavior().use_mode_indicator &&
+      text_service->GetThreadContext()->GetInputModeManager()->
+          IsIndicatorVisible()) {
+    existence_bits |= kIndicatorWindow;
+  }
 
   DWORD suggest_ui_id = TF_INVALID_UIELEMENTID;
   CComPtr<ITfUIElement> suggest_ui;
@@ -161,6 +171,16 @@ HRESULT TipUiElementManager::OnUpdate(
     if (it != ui_element_map_->end()) {
       candidate_ui_id = it->second.id;
       candidate_ui = it->second.element;
+    }
+  }
+  DWORD indicator_ui_id = TF_INVALID_UIELEMENTID;
+  CComPtr<ITfUIElement> indicator_ui;
+  {
+    const UiElementMap::const_iterator it =
+        ui_element_map_->find(kIndicatorWindow);
+    if (it != ui_element_map_->end()) {
+      indicator_ui_id = it->second.id;
+      indicator_ui = it->second.element;
     }
   }
 
@@ -197,6 +217,19 @@ HRESULT TipUiElementManager::OnUpdate(
     }
   }
 
+  UpdateMode indicator_mode = kUINone;
+  if ((existence_bits & kIndicatorWindow) == kIndicatorWindow) {
+    if (indicator_ui_id == TF_INVALID_UIELEMENTID) {
+      indicator_mode = kUIBeginAndUpdate;
+    } else {
+      indicator_mode = kUIUpdate;
+    }
+  } else {
+    if (indicator_ui_id != TF_INVALID_UIELEMENTID) {
+      indicator_mode = kUIEnd;
+    }
+  }
+
   if (suggest_mode == kUIEnd) {
     EndUI(ui_element_manager, suggest_ui_id);
     suggest_ui_id = TF_INVALID_UIELEMENTID;
@@ -211,6 +244,14 @@ HRESULT TipUiElementManager::OnUpdate(
     ui_element_map_->erase(kCandidateWindow);
     if (candidate_ui) {
       TipUiHandler::OnDestroyElement(text_service, candidate_ui);
+    }
+  }
+  if (indicator_mode == kUIEnd) {
+    EndUI(ui_element_manager, indicator_ui_id);
+    indicator_ui_id = TF_INVALID_UIELEMENTID;
+    ui_element_map_->erase(kIndicatorWindow);
+    if (indicator_ui) {
+      TipUiHandler::OnDestroyElement(text_service, indicator_ui);
     }
   }
 
@@ -242,12 +283,29 @@ HRESULT TipUiElementManager::OnUpdate(
       }
     }
   }
+  if (indicator_mode == kUIBeginAndUpdate) {
+    CComPtr<ITfUIElement> indicator_ui = TipUiHandler::CreateUI(
+        TipUiHandler::kIndicatorWindow, text_service, context);
+    if (indicator_ui) {
+      DWORD new_indicator_ui_id = TF_INVALID_UIELEMENTID;
+      if (SUCCEEDED(BeginUI(ui_element_manager,
+                            indicator_ui,
+                            &new_indicator_ui_id))) {
+        (*ui_element_map_)[kIndicatorWindow].element = indicator_ui;
+        (*ui_element_map_)[kIndicatorWindow].id = new_indicator_ui_id;
+        candidate_ui_id = new_indicator_ui_id;
+      }
+    }
+  }
 
   if (suggest_mode == kUIUpdate || suggest_mode == kUIBeginAndUpdate) {
     ui_element_manager->UpdateUIElement(suggest_ui_id);
   }
   if (candidate_mode == kUIUpdate || candidate_mode == kUIBeginAndUpdate) {
     ui_element_manager->UpdateUIElement(candidate_ui_id);
+  }
+  if (indicator_mode == kUIUpdate || indicator_mode == kUIBeginAndUpdate) {
+    ui_element_manager->UpdateUIElement(indicator_ui_id);
   }
   return S_OK;
 }

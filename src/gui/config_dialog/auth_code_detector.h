@@ -37,7 +37,7 @@
 #include <QtCore/QThread>
 #include <string>
 
-#include "base/base.h"
+#include "base/port.h"
 
 namespace mozc {
 namespace gui {

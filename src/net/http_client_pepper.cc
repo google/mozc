@@ -36,11 +36,11 @@
 #include <ppapi/cpp/var.h>
 #include <ppapi/utility/completion_callback_factory.h>
 
-#include "base/base.h"
 #include "base/logging.h"
 #include "base/mutex.h"
 #include "base/number_util.h"
 #include "base/pepper_scoped_obj.h"
+#include "base/scoped_ptr.h"
 #include "base/util.h"
 
 namespace mozc {
@@ -126,6 +126,7 @@ void PepperURLLoader::StartImpl(int32_t result) {
   CHECK(!url_loader_.get());
   url_request_.reset(new pp::URLRequestInfo(g_pepper_instance));
   url_loader_.reset(new pp::URLLoader(g_pepper_instance));
+  url_request_->SetAllowCrossOriginRequests(true);
   url_request_->SetURL(url_);
   switch (type_) {
     case HTTP_GET:

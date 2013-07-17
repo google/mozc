@@ -30,7 +30,8 @@
 #ifndef MOZC_GUI_BASE_SETUP_UTIL_H_
 #define MOZC_GUI_BASE_SETUP_UTIL_H_
 
-#include "base/base.h"
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 
 namespace mozc {
 

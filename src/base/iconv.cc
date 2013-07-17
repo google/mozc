@@ -34,8 +34,8 @@
 #endif
 
 #include <string>
-#include "base/base.h"
 #include "base/logging.h"
+#include "base/scoped_ptr.h"
 #include "base/util.h"
 
 namespace {

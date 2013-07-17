@@ -95,9 +95,9 @@ class RendererInterface;
 
   NSRange replacementRange_;
 
-  // |lastKanaKeyTime_| is set to the time when Kana-key is tapped,
-  // and is set to 0 when other key is tapped.
-  NSTimeInterval lastKanaKeyTime_;
+  // |lastKeyDownTime_| and |lastKeyCode_| are used to handle double tapping.
+  NSTimeInterval lastKeyDownTime_;
+  uint16 lastKeyCode_;
 
   // |candidateController_| controls the candidate windows.
   mozc::renderer::RendererInterface *candidateController_;
@@ -117,13 +117,20 @@ class RendererInterface;
   // |menu_| is the NSMenu to be shown in the pulldown menu-list of
   // the IME.
   IBOutlet NSMenu *menu_;
+
+  // |callback_command_| stores the callback message which is recieved from the
+  // server. This callback will be cancelled when the user presses the
+  // subsequent key. In the current implementation, if the subsequent key event
+  // also makes callback, the second callback will be called in the timimg of
+  // the first callback.
+  mozc::commands::Output::Callback callback_command_;
 }
 
 // sendCommand: is called to send SessionCommand to the server
 // from the renderer, when the user clicks a candidate item
 // in candidate windows or when the renderer sends the usage stats
 // event information.
-- (void)sendCommand:(mozc::commands::SessionCommand&)command;
+- (void)sendCommand:(const mozc::commands::SessionCommand&)command;
 
 // reconversionClicked: is called when the user clicks "Reconversion"
 // menu item.

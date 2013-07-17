@@ -29,8 +29,8 @@
 
 #include "unix/ibus/client.h"
 
-#include "base/base.h"
 #include "base/logging.h"
+#include "base/mutex.h"
 #include "base/singleton.h"
 #include "session/commands.pb.h"
 #include "session/session_handler.h"

@@ -40,6 +40,8 @@
 #include <atlmisc.h>
 #include <strsafe.h>
 
+#include <memory>
+
 #include "base/const.h"
 #include "base/logging.h"
 #include "base/process.h"
@@ -47,8 +49,6 @@
 #include "base/run_level.h"
 #include "base/scoped_handle.h"
 #include "base/singleton.h"
-#include "base/system_util.h"
-#include "base/win_util.h"
 #include "client/client_interface.h"
 #include "config/config_handler.h"
 #include "renderer/renderer_command.pb.h"
@@ -58,12 +58,11 @@
 #include "win32/base/indicator_visibility_tracker.h"
 #include "win32/base/imm_util.h"
 #include "win32/base/string_util.h"
+#include "win32/base/win32_window_util.h"
 #include "win32/ime/ime_core.h"
 #include "win32/ime/ime_impl_imm.h"
 #include "win32/ime/ime_language_bar.h"
-#include "win32/ime/ime_mouse_tracker.h"
 #include "win32/ime/ime_scoped_context.h"
-#include "win32/ime/ime_trace.h"
 #include "win32/ime/ime_types.h"
 #include "win32/ime/ime_ui_context.h"
 #include "win32/ime/ime_ui_visibility_tracker.h"
@@ -79,6 +78,7 @@ using WTL::CPoint;
 using WTL::CRect;
 
 using ::mozc::renderer::win32::Win32RendererClient;
+using ::std::unique_ptr;
 
 // True if the the DLL received DLL_PROCESS_DETACH notification.
 volatile bool g_module_unloaded = false;
@@ -140,15 +140,13 @@ class PrivateRendererMessageInitializer {
   // call this method once per window, otherwise this function returns false.
   bool Initialize(HWND target_window) {
     if (private_renderer_message_ == 0) {
-      FUNCTION_TRACE(
-          L"Failed to retrieve a private message ID for the renderer.");
       return false;
     }
     if (!::IsWindow(target_window)) {
-      FUNCTION_TRACE(L"Invalid windows handle is specified.");
       return false;
     }
-    return ChangeMessageFilter(private_renderer_message_, target_window);
+    return WindowUtil::ChangeMessageFilter(
+        target_window, private_renderer_message_);
   }
 
   // Returns true if the specified message ID is the callback message.
@@ -160,68 +158,6 @@ class PrivateRendererMessageInitializer {
   }
 
  private:
-  static bool ChangeMessageFilter(UINT msg, HWND handle) {
-    typedef BOOL (WINAPI *FPChangeWindowMessageFilter)(UINT, DWORD);
-    typedef BOOL (WINAPI *FPChangeWindowMessageFilterEx)(
-        HWND, UINT, DWORD, LPVOID);
-
-    // Following constants are not available unless we change the WINVER
-    // higher enough.
-    const int kMessageFilterAdd = 1;    // MSGFLT_ADD    (WINVER >=0x0600)
-    const int kMessageFilterAllow = 1;  // MSGFLT_ALLOW  (WINVER >=0x0601)
-
-    // Skip windows XP.
-    // ChangeWindowMessageFilter is only available on Windows Vista or Later
-    if (!SystemUtil::IsVistaOrLater()) {
-      FUNCTION_TRACE(L"Skip ChangeWindowMessageFilter on Windows XP");
-      return true;
-    }
-
-    const HMODULE lib = WinUtil::GetSystemModuleHandle(L"user32.dll");
-    if (lib == nullptr) {
-      FUNCTION_TRACE(L"GetModuleHandle for user32.dll failed.");
-      return false;
-    }
-
-    // Windows 7
-    // http://msdn.microsoft.com/en-us/library/dd388202.aspx
-    FPChangeWindowMessageFilterEx change_window_message_filter_ex
-        = reinterpret_cast<FPChangeWindowMessageFilterEx>(
-            ::GetProcAddress(lib, "ChangeWindowMessageFilterEx"));
-    if (change_window_message_filter_ex != nullptr) {
-      // Windows 7 only
-      if (!(*change_window_message_filter_ex)(handle, msg,
-                                              kMessageFilterAllow, nullptr)) {
-        const int error = ::GetLastError();
-        FUNCTION_TRACE_FORMAT(
-            L"ChangeWindowMessageFilterEx failed. error = %1!d!", error);
-        return false;
-      }
-      return true;
-    }
-
-    // Windows Vista
-    FPChangeWindowMessageFilter change_window_message_filter
-        = reinterpret_cast<FPChangeWindowMessageFilter>(
-            ::GetProcAddress(lib, "ChangeWindowMessageFilter"));
-    if (change_window_message_filter == nullptr) {
-      const int error = ::GetLastError();
-      FUNCTION_TRACE_FORMAT(
-          L"GetProcAddress failed. error = %1!d!", error);
-      return false;
-    }
-
-    DCHECK(change_window_message_filter != nullptr);
-    if (!(*change_window_message_filter)(msg, kMessageFilterAdd)) {
-      const int error = ::GetLastError();
-      FUNCTION_TRACE_FORMAT(
-          L"ChangeWindowMessageFilter failed. error = %1!d!", error);
-      return false;
-    }
-
-    return true;
-  }
-
   UINT private_renderer_message_;
   DISALLOW_COPY_AND_ASSIGN(PrivateRendererMessageInitializer);
 };
@@ -309,7 +245,7 @@ void UpdateCommand(const UIContext &context,
   app_info.set_ui_visibilities(visibility);
 
   // Honor visibility bits for UI-less mode.
-  if (visibility != 0) {
+  if (visibility != 0 && context.IsModeIndicatorEnabled()) {
     IndicatorVisibilityTracker *indicator_tracker =
         context.indicator_visibility_tracker();
     if (indicator_tracker != nullptr) {
@@ -340,10 +276,7 @@ void UpdateCommand(const UIContext &context,
   // b/3212271, b/3223011, and b/4285222.
   // So we do not retrieve IMM32 related positional information when the
   // renderer hides all the UI windows.
-  // Currently, the following two cases are considered.
-  //  - there is no composition string.
-  //  - |command->visible() == false|
-  if (!context.IsCompositionStringEmpty() && command->visible()) {
+  if (command->visible()) {
     context.FillCharPosition(&app_info);
   }
 }
@@ -385,32 +318,18 @@ class LangBarCallbackImpl : public LangBarCallback {
   explicit LangBarCallbackImpl(HWND hwnd)
       : hwnd_(hwnd),
         reference_count_(1) {
-    FUNCTION_TRACE_FORMAT(L"thread = %1!d!, hwnd_ = %2!d!.",
-                          ::GetCurrentThreadId(),
-                          reinterpret_cast<DWORD>(hwnd_));
   }
 
   virtual ~LangBarCallbackImpl() {
-    FUNCTION_TRACE_FORMAT(L"thread = %1!d!, hwnd_ = %2!d!.",
-                          ::GetCurrentThreadId(),
-                          reinterpret_cast<DWORD>(hwnd_));
   }
 
   virtual ULONG AddRef() {
     const LONG count = ::InterlockedIncrement(&reference_count_);
-    FUNCTION_TRACE_FORMAT(L"thread = %1!d!, hwnd_ = %2!d!, refcount = %3!d!.",
-                          ::GetCurrentThreadId(),
-                          reinterpret_cast<DWORD>(hwnd_),
-                          reference_count_);
     return max(count, 0);
   }
 
   virtual ULONG Release() {
     const LONG count = ::InterlockedDecrement(&reference_count_);
-    FUNCTION_TRACE_FORMAT(L"thread = %1!d!, hwnd_ = %2!d!, refcount = %3!d!.",
-                          ::GetCurrentThreadId(),
-                          reinterpret_cast<DWORD>(hwnd_),
-                          reference_count_);
     if (count <= 0) {
       delete this;
       return 0;
@@ -557,8 +476,20 @@ class LangBarCallbackImpl : public LangBarCallback {
       return E_FAIL;
     }
     composition_mode = static_cast<DWORD>(imm32_composition_mode);
-    if (::ImmSetConversionStatus(himc, composition_mode, sentence_mode) ==
-        FALSE) {
+    DWORD visible_composition_mode = 0;
+    DWORD logical_composition_mode = 0;
+    if (context.GetVisibleConversionMode(&visible_composition_mode) &&
+        context.GetLogicalConversionMode(&logical_composition_mode) &&
+        (composition_mode != visible_composition_mode) &&
+        (composition_mode == logical_composition_mode)) {
+      // The visible conversion mode is different from the selected mode but the
+      // actual conversion mode is the same to the selected mode. In this case,
+      // ImmSetConversionStatus cannot be suitable because the actual conversion
+      // mode will not be changed. So we will send SwitchInputMode command
+      // explicitly.
+      mozc::win32::ImeCore::SwitchInputMode(himc, composition_mode, true);
+    } else if (::ImmSetConversionStatus(
+                   himc, composition_mode, sentence_mode) == FALSE) {
       return E_FAIL;
     }
     return S_OK;
@@ -575,6 +506,9 @@ class LangBarCallbackImpl : public LangBarCallback {
 // TODO(yukawa): Refactor for unit tests and better integration with ImeCore.
 class DefaultUIWindow {
  public:
+  // ID of the timer that send callback command.
+  static const int kCallbackTimerID = 1;
+
   explicit DefaultUIWindow(HWND hwnd)
       : hwnd_(hwnd),
         langbar_callback_(new LangBarCallbackImpl(hwnd)),
@@ -655,9 +589,12 @@ class DefaultUIWindow {
         break;
       case IMN_PRIVATE:
         if (lParam == kNotifyUpdateUI) {
+          UpdateLangBar(context);
           UpdateCandidate(context, kNoEvent);
         } else if (lParam == kNotifyReconvertFromIME) {
           TurnOnIMEAndTryToReconvertFromIME(hwnd_);
+        } else if (lParam == kNotifyDelayedCallback) {
+          SetCallbackTimer(context);
         }
         break;
     }
@@ -834,12 +771,35 @@ class DefaultUIWindow {
     return 0;
   }
 
+  // Timer callback function which is set in SetCallbackTimer.
+  void OnTimer(WPARAM idEvent) {
+    if (idEvent != kCallbackTimerID) {
+      return;
+    }
+    ::KillTimer(hwnd_, idEvent);
+    const HIMC himc = GetSafeHIMC(hwnd_);
+    const bool generate_message = mozc::win32::ImeCore::IsActiveContext(himc);
+    ImeCore::SendCallbackCommand(himc, generate_message);
+  }
+
  private:
   enum IndicatorEventType {
     kNoEvent,
     kMoveFocusedWindow,
     kDissociateContext,
   };
+
+  // Sets the timer that send callback command.
+  void SetCallbackTimer(const UIContext &context) {
+    commands::Output output;
+    context.GetLastOutput(&output);
+    if (output.has_callback() && output.callback().has_delay_millisec()) {
+      ::SetTimer(hwnd_,
+                 kCallbackTimerID,
+                 output.callback().delay_millisec(),
+                 NULL);
+    }
+  }
 
   // Constructs RendererCommand based on various parameters in the input
   // context.  This implementation is very experimental, should be revised.
@@ -905,13 +865,13 @@ class DefaultUIWindow {
       language_bar_->SetLangbarMenuEnabled(true);
       return true;
     }
-    DWORD imm32_composition_mode = 0;
-    if (!context.GetConversionMode(&imm32_composition_mode)) {
+    DWORD imm32_visible_mode = 0;
+    if (!context.GetVisibleConversionMode(&imm32_visible_mode)) {
       return false;
     }
-    commands::CompositionMode mozc_mode;
-    if (!win32::ConversionModeUtil::ToMozcMode(imm32_composition_mode,
-      &mozc_mode)) {
+    commands::CompositionMode mozc_mode = commands::HIRAGANA;
+    if (!win32::ConversionModeUtil::ToMozcMode(imm32_visible_mode,
+                                               &mozc_mode)) {
         return false;
     }
     language_bar_->UpdateLangbarMenu(mozc_mode);
@@ -920,7 +880,7 @@ class DefaultUIWindow {
   }
 
   HWND hwnd_;
-  scoped_ptr<LanguageBar> language_bar_;
+  unique_ptr<LanguageBar> language_bar_;
   LangBarCallbackImpl *langbar_callback_;
 
   DISALLOW_COPY_AND_ASSIGN(DefaultUIWindow);
@@ -1000,7 +960,7 @@ MSG AggregateRendererCallbackMessage(
     MSG removed_msg = {};
     if (::PeekMessageW(&removed_msg, hwnd, private_message, private_message,
                        PM_REMOVE | PM_QS_POSTMESSAGE | PM_NOYIELD) == 0) {
-      // Someting wrong.
+      // Something wrong.
       // give up aggregating the message.
       return current_msg;
     }
@@ -1033,7 +993,7 @@ LRESULT WINAPI UIWindowProc(HWND hwnd,
   if (message == WM_NCCREATE) {
     if (mozc::win32::IsInLockdownMode() ||
         !mozc::RunLevel::IsValidClientRunLevel()) {
-      // Clear kana-lock state not to prevent users from typing their
+      // Clear Kana-lock state not to prevent users from typing their
       // correct passwords.
       // TODO(yukawa): Move this code to somewhere appropriate.
       BYTE keyboard_state[256] = {};
@@ -1052,7 +1012,6 @@ LRESULT WINAPI UIWindowProc(HWND hwnd,
     ::SetWindowLongPtr(hwnd,
                        IMMGWLP_PRIVATE,
                        reinterpret_cast<LONG_PTR>(ui_window));
-    ThreadLocalMouseTracker::EnsureInstalled();
 
     Singleton<PrivateRendererMessageInitializer>::get()->Initialize(hwnd);
   }
@@ -1093,13 +1052,16 @@ LRESULT WINAPI UIWindowProc(HWND hwnd,
     // Ensure the LangBar is uninitialized.
     ui_window->UninitLangBar();
   } else if (message == WM_NCDESTROY) {
-    // Unhook mouse events.
-    ThreadLocalMouseTracker::EnsureUninstalled();
     Win32RendererClient::OnUIThreadUninitialized();
 
     // Delete UI window object if the window is destroyed.
     ::SetWindowLongPtr(hwnd, IMMGWLP_PRIVATE, 0);
     delete ui_window;
+  } else if (message == WM_TIMER) {
+    ui_window->OnTimer(wParam);
+    // In order to reduce the potential risk of shatter attack, we don't want
+    // to pass the WM_TIMER to ::DefWindowProc.
+    is_handled = true;
   }
   if (!is_handled) {
     result = ::DefWindowProcW(hwnd, message, wParam, lParam);
@@ -1123,7 +1085,6 @@ bool UIWindowManager::OnDllProcessAttach(HINSTANCE module_handle,
   const ATOM atom = ::RegisterClassExW(&wc);
   if (atom == INVALID_ATOM) {
     const DWORD error = ::GetLastError();
-    FUNCTION_TRACE_FORMAT(L"RegisterClass failed. error = %1!d!", error);
     return false;
   }
 
@@ -1137,7 +1098,6 @@ void UIWindowManager::OnDllProcessDetach(HINSTANCE module_handle,
     // Sometimes the IME DLL is unloaded before all the UI message windows
     // which belong to the DLL are destroyed.  In such a situation, we cannot
     // unregister window class. See b/4271156.
-    FUNCTION_TRACE(L"UnregisterClass failed");
   }
   // This flag is used to inactivate out DefWindowProc and any other callbacks
   // to avoid further problems.

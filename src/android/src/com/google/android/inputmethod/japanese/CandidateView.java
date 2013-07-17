@@ -29,7 +29,6 @@
 
 package org.mozc.android.inputmethod.japanese;
 
-import org.mozc.android.inputmethod.japanese.CandidateWordView.CandidateSelectListener;
 import org.mozc.android.inputmethod.japanese.keyboard.BackgroundDrawableFactory.DrawableType;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.CandidateList;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCandidates.CandidateWord;
@@ -50,16 +49,14 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
-import android.view.View;
 import android.view.animation.Animation;
 import android.widget.CompoundButton;
-import android.widget.FrameLayout;
 
 /**
  * The view to show candidates.
  *
  */
-public class CandidateView extends InOutAnimatedFrameLayout {
+public class CandidateView extends InOutAnimatedFrameLayout implements MemoryManageable {
 
   /**
    * Adapter for conversion candidate selection.
@@ -252,23 +249,6 @@ public class CandidateView extends InOutAnimatedFrameLayout {
     reset();
   }
 
-  @Override
-  protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
-    super.onLayout(changed, left, top, right, bottom);
-
-    View inputFrameFoldButton = getInputFrameFoldButton();
-    if (inputFrameFoldButton.getVisibility() != VISIBLE) {
-      return;
-    }
-    FrameLayout.LayoutParams params =
-        FrameLayout.LayoutParams.class.cast(inputFrameFoldButton.getLayoutParams());
-    ConversionCandidateLayouter layouter = getConversionCandidateWordView().getCandidateLayouter();
-    params.setMargins(
-        0, (layouter.getRowHeight() - inputFrameFoldButton.getMeasuredHeight()) / 2,
-        ((int) layouter.getChunkWidth() - inputFrameFoldButton.getMeasuredWidth()) / 2, 0);
-    inputFrameFoldButton.setLayoutParams(params);
-  }
-
   CompoundButton getInputFrameFoldButton() {
     return CompoundButton.class.cast(findViewById(R.id.input_frame_fold_button));
   }
@@ -336,5 +316,10 @@ public class CandidateView extends InOutAnimatedFrameLayout {
     getInputFrameFoldButton().setVisibility(narrowMode ? GONE : VISIBLE);
     getConversionCandidateWordView().getCandidateLayouter()
         .reserveEmptySpanForInputFoldButton(!narrowMode);
+  }
+
+  @Override
+  public void trimMemory() {
+    getConversionCandidateWordView().trimMemory();
   }
 }

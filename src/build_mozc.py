@@ -121,7 +121,7 @@ def GetBuildBaseName(options, target_platform):
   elif target_platform == 'NaCl':
     build_base = 'out_nacl'
   else:
-    logging.error('Unsupported platform: %s', target_platform)
+    raise RuntimeError('Unsupported platform: %s' % target_platform)
 
   # On Linux, seems there is no way to specify the build_base directory
   # inside common.gypi
@@ -332,10 +332,27 @@ def ParseGypOptions(args=None, values=None):
                     help='use rsync to copy files instead of builtin function')
   AddTargetPlatformOption(parser)
 
+
+  # Mac and Linux
+  warn_as_error_default = False
+  parser.add_option('--warn_as_error', action='store_true',
+                    dest='warn_as_error', default=warn_as_error_default,
+                    help='Treat compiler warning as error. This option is used '
+                    'on Mac and Linux.')
+
+  # Mac
   parser.add_option('--mac_dir', dest='mac_dir',
                     help='A path to the root directory of third party '
                     'libraries for Mac build which will be passed to gyp '
                     'files.')
+
+  # Linux
+  parser.add_option('--server_dir', dest='server_dir',
+                    default='',
+                    help='A path to the directory where the server executable'
+                    'is installed. This option is used only on Linux.')
+
+  # Android
   parser.add_option('--android_arch_abi', dest='android_arch_abi',
                     default='armeabi',
                     help='Arndoid abi list. e.g. "armeabi x86".')
@@ -345,12 +362,14 @@ def ParseGypOptions(args=None, values=None):
                     'If set, On Android2.1 preference screen works '
                     'incorrectly and some Java test cases failes because of '
                     'test framework\s update.')
-  parser.add_option('--nacl_sdk_root', dest='nacl_sdk_root', default='',
-                    help='A path to the root directory of Native Client SDK. '
-                    'This is used when NaCl module build.')
   parser.add_option('--android_sdk_home', dest='android_sdk_home', default=None,
                     help='[Android build only] A path to the Android SDK Home. '
                     'If not specified, automatically detected from PATH.')
+
+  # NaCl
+  parser.add_option('--nacl_sdk_root', dest='nacl_sdk_root', default='',
+                    help='A path to the root directory of Native Client SDK. '
+                    'This is used when NaCl module build.')
 
   def AddFeatureOption(option_parser, feature_name, macro_name,
                        option_name):
@@ -414,19 +433,13 @@ def ParseGypOptions(args=None, values=None):
   AddFeatureOption(parser, feature_name='typing correction',
                    macro_name='MOZC_ENABLE_TYPING_CORRECTION',
                    option_name='typing_correction')
-  AddFeatureOption(parser, feature_name='history_deletion',
-                   macro_name='MOZC_ENABLE_HISTORY_DELETION',
-                   option_name='history_deletion')
+  AddFeatureOption(parser, feature_name='mode_indicator',
+                   macro_name='MOZC_ENABLE_MODE_INDICATOR',
+                   option_name='mode_indicator')
 
   # TODO(yukawa): Remove this option when Zinnia can be built on Windows with
   #               enabling Unicode.
   use_zinnia_default = True
-
-  parser.add_option('--server_dir', dest='server_dir',
-                    default='/usr/lib/mozc',
-                    help='A path to the directory to be installed server '
-                    'executable. This option is only available for Linux.')
-
   if IsWindows():
     # Zinnia on Windows cannot be enabled because of compile error.
     use_zinnia_default = False
@@ -493,8 +506,7 @@ def ExpandMetaTarget(options, meta_target_name):
       # Let's build Mozc with DLL version of C++ runtime for the compatibility.
       targets += [
           'out/%sDynamic:mozc_win32_build32_dynamic' % options.configuration]
-    targets += ['out/%s_x64:mozc_win32_build64' % options.configuration,
-                'out/%s:mozc_installers_win' % options.configuration]
+    targets.append('out/%s_x64:mozc_win32_build64' % options.configuration)
   elif target_platform == 'NaCl':
     targets = [SRC_DIR + '/chrome/nacl/nacl_extension.gyp:nacl_mozc']
 
@@ -555,6 +567,26 @@ def ParseCleanOptions(args=None, values=None):
   return parser.parse_args(args, values)
 
 
+
+
+def AddPythonPathToEnvironmentFilesForWindows(out_dir):
+  """Add PYTHONPATH to environment files for Ninja."""
+  mozc_root = os.path.abspath(GetTopLevelSourceDirectoryName())
+  python_path = os.pathsep.join([os.environ.get('PYTHONPATH', ''), mozc_root])
+
+  nul = chr(0)
+  for d in os.listdir(out_dir):
+    abs_dir = os.path.abspath(os.path.join(out_dir, d))
+    with open(os.path.join(abs_dir, 'environment.x86'), 'rb') as x86_file:
+      x86_content = (x86_file.read()[:-1] + 'PYTHONPATH' + '=' +
+                     python_path + nul + nul)
+    with open(os.path.join(abs_dir, 'environment.x86'), 'wb') as x86_file:
+      x86_file.write(x86_content)
+    with open(os.path.join(abs_dir, 'environment.x64'), 'rb') as x64_file:
+      x64_content = (x64_file.read()[:-1] + 'PYTHONPATH' + '=' +
+                     python_path + nul + nul)
+    with open(os.path.join(abs_dir, 'environment.x64'), 'wb') as x64_file:
+      x64_file.write(x64_content)
 
 
 def GypMain(options, unused_args):
@@ -709,11 +741,20 @@ def GypMain(options, unused_args):
         command_line.extend(['-D', 'enable_unittest=0'])
         break
 
+  if options.warn_as_error:
+    command_line.extend(['-D', 'warn_as_error=1'])
+  else:
+    command_line.extend(['-D', 'warn_as_error=0'])
 
 
+  # mac_dir should be started with '<(DEPTH)', otherwise some
+  # operations in XCode fails.  So if the mac_dir option is an
+  # absolute path, it will be changed to a relative path.
   mac_dir = options.mac_dir or '../mac'
-  if not os.path.isabs(mac_dir):
-    mac_dir = os.path.join('<(DEPTH)', mac_dir)
+  if os.path.isabs(mac_dir):
+    mac_dir = GetRelPath(mac_dir, GetTopLevelSourceDirectoryName())
+  mac_dir = os.path.join('<(DEPTH)', mac_dir)
+
   command_line.extend(['-D', 'mac_dir=%s' % mac_dir])
 
   # Check the version and determine if the building version is dev-channel or
@@ -772,12 +813,16 @@ def GypMain(options, unused_args):
   is_official = ((options.language == 'japanese') and
                  (options.branding == 'GoogleJapaneseInput'))
   is_official_dev = (is_official and options.channel_dev)
+  is_official_dev_or_oss = (is_official_dev or
+                            ((options.language == 'japanese') and
+                             (options.branding == 'Mozc')))
 
   SetCommandLineForFeature(option_name='webservice_infolist')
   SetCommandLineForFeature(option_name='cloud_sync',
                            linux=is_official_dev,
                            windows=is_official_dev,
-                           mac=is_official_dev)
+                           mac=is_official_dev,
+                           nacl=is_official_dev)
   SetCommandLineForFeature(option_name='cloud_handwriting',
                            linux=is_official_dev,
                            windows=is_official_dev,
@@ -794,10 +839,8 @@ def GypMain(options, unused_args):
                            android=True)
   SetCommandLineForFeature(option_name='typing_correction',
                            android=True)
-  SetCommandLineForFeature(option_name='history_deletion',
-                           linux=is_official_dev,
-                           windows=is_official_dev,
-                           mac=is_official_dev)
+  SetCommandLineForFeature(option_name='mode_indicator',
+                           windows=is_official_dev_or_oss)
 
   command_line.extend(['-D', 'target_platform=%s' % options.target_platform])
 
@@ -890,8 +933,9 @@ def GypMain(options, unused_args):
 
   command_line.extend(['-D', 'language=%s' % options.language])
 
-  command_line.extend([
-      '-D', 'server_dir=%s' % os.path.abspath(options.server_dir)])
+  if options.server_dir:
+    command_line.extend([
+        '-D', 'server_dir=%s' % os.path.abspath(options.server_dir)])
 
   # Run GYP.
   logging.info('Running GYP...')
@@ -904,6 +948,10 @@ def GypMain(options, unused_args):
   # Done!
   logging.info('Done')
 
+  # For internal Ninja build on Windows, set up environment files
+  if IsWindows() and generator == 'ninja':
+    out_dir = os.path.join(GetTopLevelSourceDirectoryName(), 'out')
+    AddPythonPathToEnvironmentFilesForWindows(out_dir)
 
   # When Windows build is configured to use DLL version of Qt, copy Qt's DLLs
   # and debug symbols into Mozc's build directory. This is important because:
@@ -937,11 +985,6 @@ def GypMain(options, unused_args):
       RunOrDie(copy_commands)
 
 
-def BuildNinja():
-  """Builds ninja.exe on the fly for Windows."""
-  build_ninja_bat = os.path.join(
-      GetBuildScriptDirectoryName(), 'tools', 'build_ninja.bat')
-  RunOrDie(['cmd.exe', '/C', build_ninja_bat])
 
 
 def GetNinjaDir():
@@ -955,10 +998,6 @@ def GetNinjaDir():
 
 def BuildToolsMain(options, unused_args, original_directory_name):
   """The main function for 'build_tools' command."""
-  # Make sure Ninja.exe is ready to be used on Windows.
-  if IsWindows():
-    BuildNinja()
-
   build_tools_dir = os.path.join(GetRelPath(os.getcwd(),
                                             original_directory_name),
                                  SRC_DIR, 'build_tools')

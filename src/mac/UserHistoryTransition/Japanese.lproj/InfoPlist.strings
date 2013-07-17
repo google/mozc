@@ -1,8 +1,0 @@
- /*
-   InfoPlist.strings
-   GoogleJapaneseInput
-
-   Created by Jun Mukai on 2011/05/31.
-   Copyright 2011 Google Inc. All rights reserved.
- */
-CFBundleName = "確定履歴データの移行ツール";

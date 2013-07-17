@@ -32,7 +32,6 @@
 #include <QtGui/QtGui>
 #include <QtGui/QPushButton>
 
-#include "base/base.h"
 #include "base/logging.h"
 #include "gui/config_dialog/keybinding_editor.h"
 

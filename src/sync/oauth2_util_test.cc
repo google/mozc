@@ -33,6 +33,9 @@
 #include <utility>
 #include <vector>
 
+#ifdef __native_client__
+#include "base/nacl_js_proxy.h"
+#endif  // __native_client__
 #include "base/scoped_ptr.h"
 #include "base/system_util.h"
 #include "base/util.h"
@@ -43,6 +46,7 @@
 #include "storage/storage_interface.h"
 #include "sync/oauth2_client.h"
 #include "sync/oauth2_server.h"
+#include "testing/base/public/gmock.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
@@ -65,7 +69,10 @@ const char kResourceUri[] =
 class OAuth2UtilTest : public testing::Test {
  protected:
   OAuth2UtilTest()
-      : oauth2_client_("test", "dummyclientid", "dummyclientsecret"),
+      : oauth2_client_("test",
+                       "dummyclientid",
+                       "dummyclientsecret",
+                       INSTALLED_APP),
         oauth2_server_(OAuth2Server::GetDefaultInstance()) {}
 
   virtual void SetUp() {
@@ -190,6 +197,82 @@ TEST_F(OAuth2UtilTest, RefeshToken) {
   EXPECT_EQ(kAccessToken2, access_token);
   EXPECT_EQ(kRefreshToken2, refresh_token);
 }
+
+#ifdef __native_client__
+
+class NaclJsProxyImplMock : public NaclJsProxyImplInterface {
+ public:
+  NaclJsProxyImplMock() {}
+  virtual ~NaclJsProxyImplMock() {}
+  MOCK_METHOD2(GetAuthToken, bool(bool interactive, string *access_token));
+  MOCK_METHOD1(OnProxyCallResult, void(Json::Value *result));
+};
+
+class OAuth2UtilChromeAppTest : public testing::Test {
+ protected:
+  OAuth2UtilChromeAppTest()
+      : nacl_js_proxy_mock_(NULL),
+        oauth2_client_("test", "", "", CHROME_APP),
+        oauth2_server_(OAuth2Server::GetDefaultInstance()) {
+  }
+
+  virtual void SetUp() {
+    nacl_js_proxy_mock_ = new NaclJsProxyImplMock();
+    NaclJsProxy::RegisterNaclJsProxyImplForTest(nacl_js_proxy_mock_);
+  }
+
+  virtual void TearDown() {
+    nacl_js_proxy_mock_ = NULL;
+    NaclJsProxy::RegisterNaclJsProxyImplForTest(NULL);
+  }
+
+  const OAuth2Client &GetClient() const {
+    return oauth2_client_;
+  }
+  const OAuth2Server &GetServer() const {
+    return oauth2_server_;
+  }
+  NaclJsProxyImplMock *nacl_js_proxy_mock_;
+
+ private:
+  const OAuth2Client oauth2_client_;
+  const OAuth2Server oauth2_server_;
+};
+
+TEST_F(OAuth2UtilChromeAppTest, GetAuthenticateUri) {
+  OAuth2Util oauth2(GetClient(), GetServer());
+  EXPECT_EQ("", oauth2.GetAuthenticateUri());
+}
+
+TEST_F(OAuth2UtilChromeAppTest, RequestAccessToken) {
+  OAuth2Util oauth2(GetClient(), GetServer());
+  EXPECT_EQ(OAuth2::kInvalidRequest, oauth2.RequestAccessToken(kAuthToken));
+}
+
+TEST_F(OAuth2UtilChromeAppTest, RefreshAccessToken) {
+  OAuth2Util oauth2(GetClient(), GetServer());
+  EXPECT_EQ(OAuth2::kInvalidRequest, oauth2.RefreshAccessToken());
+}
+
+TEST_F(OAuth2UtilChromeAppTest, GetAccessToken) {
+  OAuth2Util oauth2(GetClient(), GetServer());
+  EXPECT_CALL(*nacl_js_proxy_mock_, GetAuthToken(true, testing::_))
+      .WillOnce(testing::DoAll(testing::SetArgPointee<1>("abcd"),
+                               testing::Return(true)));
+  string access_token;
+  EXPECT_EQ(true, oauth2.GetAccessToken(&access_token));
+  EXPECT_EQ("abcd", access_token);
+}
+
+TEST_F(OAuth2UtilChromeAppTest, GetAccessTokenFailure) {
+  OAuth2Util oauth2(GetClient(), GetServer());
+  EXPECT_CALL(*nacl_js_proxy_mock_, GetAuthToken(true, testing::_))
+      .WillOnce(testing::Return(false));
+  string access_token;
+  EXPECT_EQ(false, oauth2.GetAccessToken(&access_token));
+}
+
+#endif  // __native_client__
 
 }  // namespace sync
 }  // namespace mozc

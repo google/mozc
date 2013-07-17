@@ -40,11 +40,11 @@
 
 #include <iomanip>
 #include <map>
+#include <memory>
 #include <sstream>
 
 #include "base/logging.h"
 #include "base/scoped_handle.h"
-#include "base/scoped_ptr.h"
 #include "base/system_util.h"
 #include "base/win_util.h"
 #include "win32/base/imm_registrar.h"
@@ -56,6 +56,7 @@ namespace mozc {
 namespace win32 {
 using ATL::CComPtr;
 using ATL::CRegKey;
+using std::unique_ptr;
 
 namespace {
 
@@ -180,7 +181,7 @@ bool GenerateKeyboardLayoutMap(map<DWORD, wstring> *keyboard_layouts) {
 wstring GetIMEFileName(HKL hkl) {
   const UINT num_chars_without_null = ::ImmGetIMEFileName(hkl, nullptr, 0);
   const size_t num_chars_with_null = num_chars_without_null + 1;
-  scoped_array<wchar_t> buffer(new wchar_t[num_chars_with_null]);
+  unique_ptr<wchar_t[]> buffer(new wchar_t[num_chars_with_null]);
   const UINT num_copied =
       ::ImmGetIMEFileName(hkl, buffer.get(), num_chars_with_null);
 
@@ -461,7 +462,7 @@ bool GetActiveKeyboardLayouts(vector<HKL> *keyboard_layouts) {
   keyboard_layouts->clear();
 
   const int num_keyboard_layout = ::GetKeyboardLayoutList(0, nullptr);
-  scoped_array<HKL> buffer(new HKL[num_keyboard_layout]);
+  unique_ptr<HKL[]> buffer(new HKL[num_keyboard_layout]);
   const int num_copied = ::GetKeyboardLayoutList(num_keyboard_layout,
                                                  buffer.get());
   keyboard_layouts->assign(buffer.get(), buffer.get() + num_copied);
@@ -935,7 +936,7 @@ bool UninstallHelper::GetCurrentProfilesForVista(
   {
     const UINT num_element = InputDll::enum_enabled_layout_or_tip()(
         nullptr, nullptr, nullptr, nullptr, 0);
-    scoped_array<LAYOUTORTIPPROFILE> buffer(
+    unique_ptr<LAYOUTORTIPPROFILE[]> buffer(
         new LAYOUTORTIPPROFILE[num_element]);
     const UINT num_copied = InputDll::enum_enabled_layout_or_tip()(
         nullptr, nullptr, nullptr, buffer.get(), num_element);

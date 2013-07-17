@@ -1,0 +1,58 @@
+# This file tests REVERT command.
+
+# Enable IME
+SEND_KEY	ON
+RESET_CONTEXT
+SWITCH_INPUT_MODE	HIRAGANA
+
+################################################################################
+# Test for MS-IME keymap
+SET_CONFIG	session_keymap	MSIME
+
+# Verify that input is learned.
+SEND_KEYS	aiueokakikukeko
+EXPECT_PREEDIT	あいうえおかきくけこ
+SEND_KEY	ENTER
+SEND_KEYS	aiu
+EXPECT_IN_ALL_CANDIDATE_WORDS	あいうえおかきくけこ
+
+RESET_CONTEXT
+
+# Next, verify that input is not learned if backspace key is hit immediately
+# after the commit.
+SEND_KEYS	sasisusesotatituteto
+EXPECT_PREEDIT	さしすせそたちつてと
+SEND_KEY	ENTER
+SEND_KEY	BACKSPACE
+SEND_KEYS	sasisu
+EXPECT_NOT_IN_ALL_CANDIDATE_WORDS	さしすせそたちつてと
+
+
+################################################################################
+# Test for Kotoeri keymap
+RESET_CONTEXT
+CLEAR_ALL
+SET_CONFIG	session_keymap	KOTOERI
+
+# The same test as that of MS-IME.
+SEND_KEYS	sasisusesotatituteto
+EXPECT_PREEDIT	さしすせそたちつてと
+SEND_KEY	ENTER
+SEND_KEY	BACKSPACE
+SEND_KEYS	sasisu
+EXPECT_NOT_IN_ALL_CANDIDATE_WORDS	さしすせそたちつてと
+
+
+################################################################################
+# Test for ATOK keymap
+RESET_CONTEXT
+CLEAR_ALL
+SET_CONFIG	session_keymap	ATOK
+
+# The same test as that of MS-IME.
+SEND_KEYS	sasisusesotatituteto
+EXPECT_PREEDIT	さしすせそたちつてと
+SEND_KEY	ENTER
+SEND_KEY	BACKSPACE
+SEND_KEYS	sasisu
+EXPECT_NOT_IN_ALL_CANDIDATE_WORDS	さしすせそたちつてと

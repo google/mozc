@@ -31,6 +31,7 @@ package org.mozc.android.inputmethod.japanese.preference;
 
 import org.mozc.android.inputmethod.japanese.MozcUtil;
 import org.mozc.android.inputmethod.japanese.testing.ActivityInstrumentationTestCase2WithMock;
+import com.google.common.base.Optional;
 
 import android.content.SharedPreferences;
 import android.preference.PreferenceScreen;
@@ -46,8 +47,8 @@ public class MozcClassicPreferenceActivityTest
 
   @Override
   protected void tearDown() throws Exception {
-    MozcUtil.setDebug(null);
-    MozcUtil.setDebug(null);
+    MozcUtil.setDebug(Optional.<Boolean>absent());
+    MozcUtil.setDebug(Optional.<Boolean>absent());
     super.tearDown();
   }
 
@@ -73,23 +74,23 @@ public class MozcClassicPreferenceActivityTest
     activity.initializeScreen();
 
     // Preference for tweak should exist only when debug build.
-    MozcUtil.setDebug(true);
+    MozcUtil.setDebug(Optional.of(true));
     activity.onResume();
     assertNotNull(activity.findPreference("pref_tweak_logging_protocol_buffers"));
 
-    MozcUtil.setDebug(false);
+    MozcUtil.setDebug(Optional.of(false));
     activity.onResume();
     assertNull(activity.findPreference("pref_tweak_logging_protocol_buffers"));
 
     SharedPreferences sharedPreferences = activity.getPreferenceManager().getSharedPreferences();
     String usageStatsKey = "pref_other_usage_stats_key";
     // If on dev channel, the preference should be disabled.
-    MozcUtil.setDevChannel(true);
+    MozcUtil.setDevChannel(Optional.of(true));
     activity.onResume();
     assertFalse(activity.findPreference(usageStatsKey).isEnabled());
 
     // If not on dev channel, the preference should be enabled.
-    MozcUtil.setDevChannel(false);
+    MozcUtil.setDevChannel(Optional.of(false));
     activity.onResume();
     assertTrue(activity.findPreference(usageStatsKey).isEnabled());
   }

@@ -101,6 +101,12 @@ class DictionaryInterface {
   virtual Node *LookupReverse(const char *str, int size,
                               NodeAllocatorInterface *allocator) const = 0;
 
+  // Looks up a user comment from a pair of key and value.  When (key, value)
+  // doesn't exist in this dictionary or user comment is empty, bool is
+  // returned and string is kept as-is.
+  virtual bool LookupComment(StringPiece key, StringPiece value,
+                             string *comment) const { return false; }
+
   virtual void PopulateReverseLookupCache(
       const char *str, int size, NodeAllocatorInterface *allocator) const {}
   virtual void ClearReverseLookupCache(

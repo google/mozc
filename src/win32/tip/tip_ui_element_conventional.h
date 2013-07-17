@@ -47,16 +47,20 @@ class TipUiElementConventional {
  public:
   enum UIType {
     // The UI element is a suggest window whose contents is not observable
-    // from the application and no candidate UI notifications will not be
+    // from the application. No candidate UI notifications will not be
     // generated.
     kUnobservableSuggestWindow,
     // The UI element is a suggest window whose contents is observable from
-    // the application and candidate UI notifications will be generated
-    // as if the window is a candidate window.
+    // the application. Candidate UI notifications will be generated as if the
+    // window is a candidate window.
     kObservableSuggestWindow,
     // The UI element is a candidate window whose contents is observable from
-    // the application and candidate UI notifications will be generated.
+    // the application. Candidate UI notifications will be generated.
     kCandidateWindow,
+    // The UI element is a mode indicator window whose contents is observable
+    // from the application. No candidate UI notifications will be generated
+    // because this is not a candidate window.
+    KIndicatorWindow,
   };
 
   // Returns a ITfUIElement object based of the given parameters. Caller must

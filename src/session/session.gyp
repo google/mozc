@@ -46,7 +46,6 @@
         '../config/config.gyp:config_handler',
         '../config/config.gyp:config_protocol',
         '../converter/converter_base.gyp:converter_util',
-        '../rewriter/calculator/calculator.gyp:calculator',
         '../transliteration/transliteration.gyp:transliteration',
         '../usage_stats/usage_stats_base.gyp:usage_stats',
         'session_base.gyp:key_parser',

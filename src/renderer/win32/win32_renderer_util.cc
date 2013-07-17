@@ -48,12 +48,12 @@
 #endif  // max
 
 #include <limits>
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "base/base.h"
 #include "base/logging.h"
-#include "base/scoped_ptr.h"
 #include "base/util.h"
 #include "base/win_util.h"
 #include "renderer/renderer_command.pb.h"
@@ -71,6 +71,7 @@ using WTL::CPoint;
 using WTL::CFont;
 using WTL::CFontHandle;
 using WTL::CLogFont;
+using std::unique_ptr;
 
 typedef mozc::commands::RendererCommand::CompositionForm CompositionForm;
 typedef mozc::commands::RendererCommand::CandidateForm CandidateForm;
@@ -545,7 +546,7 @@ bool CalcLayoutWithTextWrappingInternal(
       } else {
         CSize line_size;
         int allowable_chars_for_confirmation = 0;
-        scoped_array<int> size_buffer(new int[allowable_chars]);
+        unique_ptr<int[]> size_buffer(new int[allowable_chars]);
         result = dc.GetTextExtentExPoint(
             layout.text.c_str(),
             layout.text.size(),

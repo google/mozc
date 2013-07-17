@@ -32,6 +32,7 @@
 
 #include <string>
 
+#include "base/scoped_ptr.h"
 #include "converter/conversion_request.h"
 #include "prediction/predictor_interface.h"
 

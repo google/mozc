@@ -44,6 +44,7 @@
 #include "renderer/renderer_interface.h"
 #include "renderer/win32/candidate_window.h"
 #include "renderer/win32/composition_window.h"
+#include "renderer/win32/indicator_window.h"
 #include "renderer/win32/infolist_window.h"
 #include "renderer/win32/win32_renderer_util.h"
 #include "renderer/window_util.h"
@@ -66,6 +67,7 @@ WindowManager::WindowManager()
     : main_window_(new CandidateWindow),
       cascading_window_(new CandidateWindow),
       composition_window_list_(CompositionWindowList::CreateInstance()),
+      indicator_window_(new IndicatorWindow),
       infolist_window_(new InfolistWindow),
       layout_manager_(new LayoutManager),
       working_area_(WorkingAreaFactory::Create()),
@@ -85,6 +87,7 @@ void WindowManager::Initialize() {
   main_window_->ShowWindow(SW_HIDE);
   cascading_window_->Create(nullptr);
   cascading_window_->ShowWindow(SW_HIDE);
+  indicator_window_->Initialize();
   infolist_window_->Create(nullptr);
   infolist_window_->ShowWindow(SW_HIDE);
   composition_window_list_->Initialize();
@@ -111,6 +114,7 @@ void WindowManager::DestroyAllWindows() {
   if (cascading_window_->IsWindow()) {
     cascading_window_->DestroyWindow();
   }
+  indicator_window_->Destroy();
   if (infolist_window_->IsWindow()) {
     infolist_window_->DestroyWindow();
   }
@@ -120,6 +124,7 @@ void WindowManager::DestroyAllWindows() {
 void WindowManager::HideAllWindows() {
   main_window_->ShowWindow(SW_HIDE);
   cascading_window_->ShowWindow(SW_HIDE);
+  indicator_window_->Hide();
   infolist_window_->DelayHide(0);
   composition_window_list_->Hide();
 }
@@ -137,6 +142,7 @@ void WindowManager::UpdateLayoutIMM32(
     composition_window_list_->Hide();
     cascading_window_->ShowWindow(SW_HIDE);
     main_window_->ShowWindow(SW_HIDE);
+    indicator_window_->Hide();
     infolist_window_->DelayHide(0);
     return;
   }
@@ -177,21 +183,9 @@ void WindowManager::UpdateLayoutIMM32(
     }
   }
 
-  // CompositionWindowList::UpdateLayout will hides all windows if
-  // |layouts| is empty.
-  composition_window_list_->UpdateLayout(layouts);
-
-  if (!output.has_candidates()) {
-    // Hide candidate windows because there is no candidate to be displayed.
-    cascading_window_->ShowWindow(SW_HIDE);
-    main_window_->ShowWindow(SW_HIDE);
-    infolist_window_->DelayHide(0);
-    return;
-  }
-
   bool is_suggest = false;
   bool is_convert_or_predict = false;
-  if (output.candidates().has_category()) {
+  if (output.has_candidates() && output.candidates().has_category()) {
     switch (output.candidates().category()) {
       case commands::SUGGESTION:
         is_suggest = true;
@@ -204,6 +198,26 @@ void WindowManager::UpdateLayoutIMM32(
         // do nothing.
         break;
     }
+  }
+
+  // Currently the indicator will be displayed if and only if no other window
+  // (suggestion, prediction, nor conversion) is not displayed.
+  if (is_suggest || is_convert_or_predict) {
+    indicator_window_->Hide();
+  } else if (app_info.has_indicator_info()) {
+    indicator_window_->OnUpdate(command, layout_manager_.get());
+  }
+
+  // CompositionWindowList::UpdateLayout will hides all windows if
+  // |layouts| is empty.
+  composition_window_list_->UpdateLayout(layouts);
+
+  if (!output.has_candidates()) {
+    // Hide candidate windows because there is no candidate to be displayed.
+    cascading_window_->ShowWindow(SW_HIDE);
+    main_window_->ShowWindow(SW_HIDE);
+    infolist_window_->DelayHide(0);
+    return;
   }
 
   if (is_suggest && !show_suggest) {

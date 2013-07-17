@@ -37,6 +37,12 @@
     <string name="mozc_preference">Preferences for Mozc</string>
     <string name="pref_about_terms_of_service_url">http://code.google.com/p/mozc/</string>
     <string name="pref_about_privacy_policy_url">http://code.google.com/p/mozc/</string>
+    <!--
+    MiniBrowser can access only the url which matches below pattern.
+    This restriction is introduced in order not to show unexpected website in "EULA" activity.
+    By default no restriction is applied in order to avoid from breaking existing implemntation.
+    -->
+    <string name="pref_url_restriction_regex">.*</string>
 
     <!--
       If you developer want to activate usage stats collection feature, turn the property on

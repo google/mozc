@@ -29,6 +29,7 @@
 
 #include "languages/pinyin/english_context.h"
 
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -152,8 +153,8 @@ class EnglishContextTest : public testing::Test {
   }
 
   EnglishMockDictionary dictionary_;
-  scoped_ptr<SessionConfig> session_config_;
-  scoped_ptr<EnglishContext> context_;
+  std::unique_ptr<SessionConfig> session_config_;
+  std::unique_ptr<EnglishContext> context_;
 };
 
 TEST_F(EnglishContextTest, InsertTest) {

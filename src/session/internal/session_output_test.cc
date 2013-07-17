@@ -623,7 +623,6 @@ TEST(SessionOutputTest, FillFooter) {
   EXPECT_FALSE(SessionOutput::FillFooter(commands::USAGE, &candidates));
   EXPECT_FALSE(candidates.has_footer());
 
-#ifdef MOZC_ENABLE_HISTORY_DELETION
   candidates.Clear();
   for (int i = 0; i < 20; ++i) {
     commands::Candidates::Candidate *c = candidates.add_candidate();
@@ -640,9 +639,21 @@ TEST(SessionOutputTest, FillFooter) {
     if (i % 2 == 0) {
       ASSERT_TRUE(candidates.has_footer());
       ASSERT_TRUE(candidates.footer().has_label());
+#if defined(OS_MACOSX)
+      const char kDeleteInstruction[] =  // "control+fn+deleteで履歴から削除"
+          "\x63\x6F\x6E\x74\x72\x6F\x6C\x2B\x66\x6E\x2B\x64\x65\x6C\x65"
+          "\x74\x65\xE3\x81\xA7\xE5\xB1\xA5\xE6\xAD\xB4\xE3\x81\x8B\xE3"
+          "\x82\x89\xE5\x89\x8A\xE9\x99\xA4";
+#elif defined(__native_client__)
+      const char kDeleteInstruction[] =  // "ctrl+alt+backspaceで履歴から削除"
+          "\x63\x74\x72\x6C\x2B\x61\x6C\x74\x2B\x62\x61\x63\x6B\x73\x70"
+          "\x61\x63\x65\xE3\x81\xA7\xE5\xB1\xA5\xE6\xAD\xB4\xE3\x81\x8B"
+          "\xE3\x82\x89\xE5\x89\x8A\xE9\x99\xA4";
+#else  // !OS_MACOSX && !__native_client__
       const char kDeleteInstruction[] =  // "Ctrl+Delで履歴から削除"
           "\x43\x74\x72\x6C\x2B\x44\x65\x6C\xE3\x81\xA7\xE5\xB1\xA5"
           "\xE6\xAD\xB4\xE3\x81\x8B\xE3\x82\x89\xE5\x89\x8A\xE9\x99\xA4";
+#endif  // OS_MACOSX || __native_client__
       EXPECT_EQ(kDeleteInstruction, candidates.footer().label());
 #if defined(CHANNEL_DEV) && defined(GOOGLE_JAPANESE_INPUT_BUILD)
     } else {
@@ -652,7 +663,6 @@ TEST(SessionOutputTest, FillFooter) {
 #endif  // CHANNEL_DEV && GOOGLE_JAPANESE_INPUT_BUILD
     }
   }
-#endif  // MOZC_ENABLE_HISTORY_DELETION
 }
 
 TEST(SessionOutputTest, FillSubLabel) {

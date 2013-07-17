@@ -135,7 +135,8 @@ public class MozcTestRunner extends InstrumentationTestRunner {
 
   private static final String ROOT_TARGET_PACKAGE = "org.mozc.android.inputmethod.japanese";
   private static final String[] SUB_PACKAGE_NAME_LIST = {
-    "emoji", "keyboard", "model", "mushroom", "nativecallback", "preference", "session",
+    "emoji",
+    "keyboard", "model", "mushroom", "nativecallback", "preference", "session",
     "stresstest", "testing", "ui", "userdictionary", "util", "view",
   };
 

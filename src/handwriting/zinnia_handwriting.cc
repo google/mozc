@@ -39,9 +39,12 @@
 
 namespace mozc {
 namespace handwriting {
-
 namespace {
-string GetModelFileName() {
+const uint32 kBoxSize = 200;
+}  // namespace
+
+// static
+string ZinniaHandwriting::GetModelFileName() {
 #ifdef OS_MACOSX
   // TODO(komatsu): Fix the file name to "handwriting-ja.model" like the
   // Windows implementation regardless which data file is actually
@@ -50,8 +53,12 @@ string GetModelFileName() {
   return FileUtil::JoinPath(MacUtil::GetResourcesDirectory(), kModelFile);
 #elif defined(USE_LIBZINNIA)
   // On Linux, use the model for tegaki-zinnia.
+#if defined(MOZC_ZINNIA_MODEL_FILE)
+  const char kModelFile[] = MOZC_ZINNIA_MODEL_FILE;
+#else
   const char kModelFile[] =
       "/usr/share/tegaki/models/zinnia/handwriting-ja.model";
+#endif  // MOZC_ZINNIA_MODEL_FILE
   return kModelFile;
 #else
   const char kModelFile[] = "handwriting-ja.model";
@@ -59,18 +66,15 @@ string GetModelFileName() {
 #endif  // OS_MACOSX
 }
 
-const uint32 kBoxSize = 200;
-}  // namespace
-
-ZinniaHandwriting::ZinniaHandwriting()
+ZinniaHandwriting::ZinniaHandwriting(StringPiece model_file)
     : recognizer_(zinnia::Recognizer::create()),
       character_(zinnia::Character::create()),
       mmap_(new Mmap),
       zinnia_model_error_(false) {
-  const string model_file = GetModelFileName();
   DCHECK(recognizer_.get());
   DCHECK(character_.get());
-  if (!mmap_->Open(model_file.c_str())) {
+
+  if (!mmap_->Open(model_file.as_string().c_str())) {
     LOG(ERROR) << "Cannot open model file:" << model_file;
     zinnia_model_error_ = true;
     return;

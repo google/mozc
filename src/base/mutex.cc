@@ -102,14 +102,17 @@ namespace {
 
 template <typename T>
 CRITICAL_SECTION *AsCriticalSection(T* opaque_buffer) {
-  COMPILE_ASSERT(sizeof(T) >= sizeof(CRITICAL_SECTION),
-                 opaque_buffer_size_check);
+  static_assert(sizeof(T) >= sizeof(CRITICAL_SECTION),
+                "The opaque buffer must have sufficient space to store a "
+                "CRITICAL_SECTION structure");
   return reinterpret_cast<CRITICAL_SECTION *>(opaque_buffer);
 }
 
 template <typename T>
 SRWLOCK *AsSRWLock(T* opaque_buffer) {
-  COMPILE_ASSERT(sizeof(T) >= sizeof(SRWLOCK), opaque_buffer_size_check);
+  static_assert(sizeof(T) >= sizeof(SRWLOCK),
+                "The opaque buffer must have sufficient space to store a "
+                "SRWLOCK structure");
   return reinterpret_cast<SRWLOCK *>(opaque_buffer);
 }
 
@@ -277,8 +280,9 @@ namespace {
 
 template <typename T>
 pthread_mutex_t *AsPthreadMutexT(T* opaque_buffer) {
-  COMPILE_ASSERT(sizeof(T) >= sizeof(pthread_mutex_t),
-                 opaque_buffer_size_check);
+  static_assert(sizeof(T) >= sizeof(pthread_mutex_t),
+                "The opaque buffer must have sufficient space to store a "
+                "pthread_mutex_t structure");
   return reinterpret_cast<pthread_mutex_t *>(opaque_buffer);
 }
 
@@ -330,8 +334,9 @@ namespace {
 
 template <typename T>
 pthread_rwlock_t *AsPthreadRWLockT(T* opaque_buffer) {
-  COMPILE_ASSERT(sizeof(T) >= sizeof(pthread_rwlock_t),
-                 opaque_buffer_size_check);
+  static_assert(sizeof(T) >= sizeof(pthread_rwlock_t),
+                "The opaque buffer must have sufficient space to store a "
+                "pthread_rwlock_t structure");
   return reinterpret_cast<pthread_rwlock_t *>(opaque_buffer);
 }
 

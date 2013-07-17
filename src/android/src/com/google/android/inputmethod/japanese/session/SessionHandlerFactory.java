@@ -30,6 +30,7 @@
 package org.mozc.android.inputmethod.japanese.session;
 
 import org.mozc.android.inputmethod.japanese.MozcLog;
+import com.google.common.annotations.VisibleForTesting;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -47,11 +48,11 @@ import java.net.UnknownHostException;
  *
  */
 public class SessionHandlerFactory {
-  private static final String PREF_TWEAK_USE_SOCKET_SESSION_HANDLER_KEY =
+  @VisibleForTesting static final String PREF_TWEAK_USE_SOCKET_SESSION_HANDLER_KEY =
       "pref_tweak_use_socket_session_handler";
-  private static final String PREF_TWEAK_SOCKET_SESSION_HANDLER_ADDRESS_KEY =
+  @VisibleForTesting static final String PREF_TWEAK_SOCKET_SESSION_HANDLER_ADDRESS_KEY =
       "pref_tweak_socket_session_handler_address";
-  private static final String PREF_TWEAK_SOCKET_SESSION_HANDLER_PORT_KEY =
+  @VisibleForTesting static final String PREF_TWEAK_SOCKET_SESSION_HANDLER_PORT_KEY =
       "pref_tweak_socket_session_handler_port";
 
   private final SharedPreferences sharedPreferences;

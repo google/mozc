@@ -472,17 +472,15 @@ Node *UserDictionary::LookupReverse(const char *str, int size,
   return NULL;
 }
 
-void UserDictionary::LookupComment(StringPiece key, StringPiece value,
+bool UserDictionary::LookupComment(StringPiece key, StringPiece value,
                                    string *comment) const {
-  comment->clear();
-
   if (key.empty() || GET_CONFIG(incognito_mode)) {
-    return;
+    return false;
   }
 
   scoped_reader_lock l(mutex_.get());
   if (tokens_->empty()) {
-    return;
+    return false;
   }
 
   UserPOS::Token key_token;
@@ -496,9 +494,10 @@ void UserDictionary::LookupComment(StringPiece key, StringPiece value,
     const UserPOS::Token *token = *range.first;
     if (token->value == value && !token->comment.empty()) {
       comment->assign(token->comment);
-      return;
+      return true;
     }
   }
+  return false;
 }
 
 bool UserDictionary::Reload() {
@@ -536,7 +535,6 @@ bool UserDictionary::AddToAutoRegisteredDictionary(
   return true;
 }
 
-// UserDictionary::WaitForReloader() is not implemented in NaCl.
 void UserDictionary::WaitForReloader() {
   reloader_->Join();
 }

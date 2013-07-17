@@ -91,6 +91,9 @@ class ConverterImpl : public ConverterInterface {
   virtual bool CancelConversion(Segments *segments) const;
   virtual bool ResetConversion(Segments *segments) const;
   virtual bool RevertConversion(Segments *segments) const;
+  virtual bool ReconstructHistory(Segments *segments,
+                                  const string &preceding_text) const;
+
   virtual bool CommitSegmentValue(Segments *segments,
                                   size_t segment_index,
                                   int candidate_index) const;
@@ -120,9 +123,9 @@ class ConverterImpl : public ConverterInterface {
 
  private:
   FRIEND_TEST(ConverterTest, CompletePOSIds);
-  FRIEND_TEST(ConverterTest, SetupHistorySegmentsFromPrecedingText);
   FRIEND_TEST(ConverterTest, DefaultPredictor);
   FRIEND_TEST(ConverterTest, MaybeSetConsumedKeySizeToSegment);
+  FRIEND_TEST(ConverterTest, GetLastConnectivePart);
 
   // Complete Left id/Right id if they are not defined.
   // Some users don't push conversion button but directly
@@ -146,21 +149,23 @@ class ConverterImpl : public ConverterInterface {
   static void MaybeSetConsumedKeySizeToSegment(size_t consumed_key_size,
                                                Segment* segment);
 
-  // Reconstructs history segments from preceding text to emulate user input
-  // from preceding (surrounding) text.
-  bool SetupHistorySegmentsFromPrecedingText(const string &preceding_text,
-                                             Segments *segments) const;
-
   // Rewrites and applies the suppression dictionary.
   void RewriteAndSuppressCandidates(const ConversionRequest &request,
                                     Segments *segments) const;
 
-  // Commits usage stats for commited text.
+  // Commits usage stats for committed text.
   // |begin_segment_index| is a index of whole segments. (history and conversion
   // segments)
   void CommitUsageStats(const Segments *segments,
                         size_t begin_segment_index,
                         size_t segment_length) const;
+
+  // Returns the substring of |str|. This substring consists of similar script
+  // type and you can use it as preceding text for conversion.
+  bool GetLastConnectivePart(const string &preceding_text,
+                             string *key,
+                             string *value,
+                             uint16 *id) const;
 
   const POSMatcher *pos_matcher_;
   const SuppressionDictionary *suppression_dictionary_;

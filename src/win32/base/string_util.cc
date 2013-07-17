@@ -29,12 +29,16 @@
 
 #include "win32/base/string_util.h"
 
+#include <memory>
+
 #include "base/base.h"
 #include "base/util.h"
 #include "session/commands.pb.h"
 
 namespace mozc {
 namespace win32 {
+
+using std::unique_ptr;
 
 wstring StringUtil::KeyToReading(const string &key) {
   string katakana;
@@ -64,7 +68,7 @@ wstring StringUtil::KeyToReading(const string &key) {
     return L"";
   }
 
-  scoped_array<wchar_t> input_wide(new wchar_t[output_length + 1]);
+  unique_ptr<wchar_t[]> input_wide(new wchar_t[output_length + 1]);
   const int result = MultiByteToWideChar(cp_sjis, 0, hankaku, -1,
                                          input_wide.get(), output_length + 1);
   if (result == 0) {

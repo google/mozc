@@ -47,7 +47,8 @@
 #include <streambuf>
 #include <string>
 
-#include "base/base.h"
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 
 #ifdef OS_ANDROID
 // This is used only for code generation, so shouldn't be used from android

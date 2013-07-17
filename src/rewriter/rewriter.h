@@ -36,28 +36,16 @@ namespace mozc {
 
 class ConverterInterface;
 class DataManagerInterface;
+class DictionaryInterface;
 class POSMatcher;
 class PosGroup;
-class UserDictionary;
 
 class RewriterImpl : public MergerRewriter {
  public:
   RewriterImpl(const ConverterInterface *parent_converter,
                const DataManagerInterface *data_manager,
-               const PosGroup *pos_group);
-  RewriterImpl(const ConverterInterface *parent_converter,
-               const DataManagerInterface *data_manager,
                const PosGroup *pos_group,
-               const UserDictionary *user_dictionary);
-
- private:
-  void Init(const ConverterInterface *parent_converter,
-            const DataManagerInterface *data_manager,
-            const PosGroup *pos_group,
-            const UserDictionary *user_dictionary);
-
-  const ConverterInterface *parent_converter_;
-  const POSMatcher *pos_matcher_;
+               const DictionaryInterface *dictionary);
 };
 
 }  // namespace mozc

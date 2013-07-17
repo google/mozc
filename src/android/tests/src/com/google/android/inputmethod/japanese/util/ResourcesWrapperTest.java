@@ -29,24 +29,26 @@
 
 package org.mozc.android.inputmethod.japanese.util;
 
-import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.eq;
+import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.same;
 
+import org.mozc.android.inputmethod.japanese.MozcUtil;
 import org.mozc.android.inputmethod.japanese.testing.ApiLevel;
 import org.mozc.android.inputmethod.japanese.testing.InstrumentationTestCaseWithMock;
 
 import android.annotation.TargetApi;
+import android.content.Context;
 import android.content.res.AssetFileDescriptor;
-import android.content.res.AssetManager;
 import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.content.res.Resources;
-import android.content.res.XmlResourceParser;
 import android.content.res.Resources.NotFoundException;
+import android.content.res.XmlResourceParser;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.os.ParcelFileDescriptor;
 import android.test.mock.MockResources;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.util.AttributeSet;
@@ -55,6 +57,7 @@ import android.util.TypedValue;
 
 import org.xmlpull.v1.XmlPullParserException;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -457,14 +460,28 @@ public class ResourcesWrapperTest extends InstrumentationTestCaseWithMock {
   }
 
   @SmallTest
-  public void testOpenRawResourceFd() {
-    AssetFileDescriptor fd = new AssetFileDescriptor(null, 0, 0);
-    expect(base.openRawResourceFd(10)).andReturn(fd);
-    replayAll();
+  public void testOpenRawResourceFd() throws IOException {
+    File tempDir = getInstrumentation().getTargetContext().getDir("test", Context.MODE_PRIVATE);
+    ParcelFileDescriptor parcelFileDescriptor =
+        ParcelFileDescriptor.open(
+            File.createTempFile("temp", "file", tempDir),
+            ParcelFileDescriptor.MODE_READ_ONLY);
+    boolean succeeded = false;
+    try {
+      // The constructor doesn't accept null 1st parameter.
+      // We need temporal descriptor.
+      AssetFileDescriptor fd = new AssetFileDescriptor(parcelFileDescriptor, 0, 0);
+      expect(base.openRawResourceFd(10)).andReturn(fd);
+      replayAll();
 
-    assertSame(fd, resources.openRawResourceFd(10));
+      assertSame(fd, resources.openRawResourceFd(10));
 
-    verifyAll();
+      verifyAll();
+
+      succeeded = true;
+    } finally {
+      MozcUtil.close(parcelFileDescriptor, !succeeded);
+    }
   }
 
   @SmallTest

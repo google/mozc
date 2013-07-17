@@ -34,7 +34,6 @@
 #include <QtCore/QVector>
 #include <QtCore/QPair>
 
-#include "base/base.h"
 #include "gui/character_pad/hand_writing_thread.h"
 #include "handwriting/handwriting_manager.h"
 

@@ -29,6 +29,7 @@
 
 package org.mozc.android.inputmethod.japanese.keyboard;
 
+import org.mozc.android.inputmethod.japanese.MemoryManageable;
 import org.mozc.android.inputmethod.japanese.MozcUtil;
 import org.mozc.android.inputmethod.japanese.keyboard.BackgroundDrawableFactory.DrawableType;
 import org.mozc.android.inputmethod.japanese.keyboard.KeyState.MetaState;
@@ -82,7 +83,7 @@ import java.util.Map;
  * This class is exposed as public in order to mock for testing purpose.
  *
  */
-public class KeyboardViewBackgroundSurface {
+public class KeyboardViewBackgroundSurface implements MemoryManageable {
 
   /**
    * A simple rendering related utilities for keyboard rendering.
@@ -126,12 +127,12 @@ public class KeyboardViewBackgroundSurface {
     @Override
     public void clearRegion(int x, int y, int width, int height) {
       Canvas canvas = this.canvas;
-      canvas.save();
+      int saveCount = canvas.save();
       try {
         canvas.clipRect(x, y, x + width, y + height, Op.REPLACE);
         canvas.drawColor(CLEAR_COLOR, PorterDuff.Mode.CLEAR);
       } finally {
-        canvas.restore();
+        canvas.restoreToCount(saveCount);
       }
     }
 
@@ -163,7 +164,7 @@ public class KeyboardViewBackgroundSurface {
                                       float scale) {
       Canvas canvas = this.canvas;
 
-      canvas.save();
+      int saveCount = canvas.save();
       try {
         canvas.translate(x, y);
         if (drawable.getCurrent() instanceof PictureDrawable) {
@@ -174,7 +175,7 @@ public class KeyboardViewBackgroundSurface {
         }
         drawable.draw(canvas);
       } finally {
-        canvas.restore();
+        canvas.restoreToCount(saveCount);
       }
     }
   }
@@ -445,5 +446,11 @@ public class KeyboardViewBackgroundSurface {
     }
     return setDrawableState(
         drawableCache.getDrawable(keyEntity.getKeyIconResourceId()), isPressed);
+  }
+
+  @Override
+  public void trimMemory() {
+    // drawableCache is not cleared here. It's done in KeyboardView where it is created.
+    reset();
   }
 }
