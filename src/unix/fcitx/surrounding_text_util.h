@@ -31,11 +31,22 @@
 #define MOZC_UNIX_FCITX_SURROUNDING_TEXT_URIL_H_
 
 #include <string>
+#include <fcitx/instance.h>
 
 #include "base/port.h"
 
 namespace mozc {
 namespace fcitx {
+
+struct SurroundingTextInfo {
+    SurroundingTextInfo()
+        : relative_selected_length(0) {}
+
+    int32 relative_selected_length;
+    std::string preceding_text;
+    std::string selection_text;
+    std::string following_text;
+};
 
 class SurroundingTextUtil {
  public:
@@ -67,7 +78,10 @@ class SurroundingTextUtil {
   DISALLOW_IMPLICIT_CONSTRUCTORS(SurroundingTextUtil);
 };
 
-}  // namespace ibus
+bool GetSurroundingText(FcitxInstance* instance,
+                        SurroundingTextInfo *info);
+
+}  // namespace fcitx
 }  // namespace mozc
 
 #endif  // MOZC_UNIX_FCITX_SURROUNDING_TEXT_URIL_H_

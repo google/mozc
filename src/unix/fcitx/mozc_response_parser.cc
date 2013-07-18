@@ -43,7 +43,6 @@
 #include "unix/fcitx/fcitx_mozc.h"
 #include "unix/fcitx/surrounding_text_util.h"
 #include <fcitx/candidate.h>
-#include <fcitx/module/clipboard/fcitx-clipboard.h>
 
 namespace {
 
@@ -132,64 +131,19 @@ void MozcResponseParser::ExecuteCallback(const mozc::commands::Output& response,
     // Note that you should not allow 0x80000000 for |relative_selected_length|
     // because you cannot safely use |-relative_selected_length| nor
     // |abs(relative_selected_length)| in this case due to integer overflow.
-    int32 relative_selected_length = 0;
+    SurroundingTextInfo surrounding_text_info;
 
     switch (callback_command.type()) {
         case commands::SessionCommand::UNDO:
             break;
         case commands::SessionCommand::CONVERT_REVERSE: {
-            FcitxInputContext* ic = FcitxInstanceGetCurrentIC(fcitx_mozc->GetInstance());
-            if (!ic || !(ic->contextCaps & CAPACITY_SURROUNDING_TEXT)) {
-                return;
-            }
-            uint cursor_pos = 0;
-            uint anchor_pos = 0;
 
-            char* str = NULL;
-            if (!FcitxInstanceGetSurroundingText(fcitx_mozc->GetInstance(), ic, &str, &cursor_pos, &anchor_pos)) {
+            if (!GetSurroundingText(fcitx_mozc->GetInstance(),
+                                    &surrounding_text_info)) {
                 return;
             }
 
-            const string surrounding_text(str);
-
-            if (cursor_pos == anchor_pos) {
-                const char* primary = NULL;
-
-                if ((primary = FcitxClipboardGetPrimarySelection(fcitx_mozc->GetInstance(), NULL)) != NULL) {
-                    uint new_anchor_pos = 0;
-                    const string primary_text(primary);
-                    if (SurroundingTextUtil::GetAnchorPosFromSelection(
-                            surrounding_text, primary_text,
-                            cursor_pos, &new_anchor_pos)) {
-                        anchor_pos = new_anchor_pos;
-                    } else {
-                        return;
-                    }
-                } else {
-                    // There is no selection text.
-                    VLOG(1) << "Failed to retrieve non-empty text selection.";
-                    return;
-                }
-            }
-
-            if (!SurroundingTextUtil::GetSafeDelta(cursor_pos, anchor_pos,
-                                                   &relative_selected_length)) {
-                LOG(ERROR) << "Too long text selection.";
-                return;
-            }
-
-            // TODO(nona): Write a test for this logic (especially selection_length).
-            // TODO(nona): Check integer range because Util::SubString works
-            //     on size_t, not uint32.
-            string selection_text;
-            const uint32 selection_start = min(cursor_pos, anchor_pos);
-            const uint32 selection_length = abs(relative_selected_length);
-            Util::SubString(surrounding_text,
-                            selection_start,
-                            selection_length,
-                            &selection_text);
-
-            session_command.set_text(selection_text);
+            session_command.set_text(surrounding_text_info.selection_text);
             break;
         }
         default:
@@ -210,11 +164,11 @@ void MozcResponseParser::ExecuteCallback(const mozc::commands::Output& response,
         // offset should be a negative value to delete preceding text.
         // For backward selection (that is, |relative_selected_length < 0|),
         // IBus and/or some applications seem to expect |offset == 0| somehow.
-        const int32 offset = relative_selected_length > 0
-            ? -relative_selected_length  // forward selection
+        const int32 offset = surrounding_text_info.relative_selected_length > 0
+            ? -surrounding_text_info.relative_selected_length  // forward selection
             : 0;                         // backward selection
         range->set_offset(offset);
-        range->set_length(abs(relative_selected_length));
+        range->set_length(abs(surrounding_text_info.relative_selected_length));
     }
 
     VLOG(1) << "New output" << new_output.DebugString();

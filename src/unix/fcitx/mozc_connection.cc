@@ -42,6 +42,8 @@
 #include "session/commands.pb.h"
 #include "session/ime_switch_util.h"
 #include "unix/fcitx/fcitx_key_event_handler.h"
+#include "unix/fcitx/surrounding_text_util.h"
+#include "fcitx_mozc.h"
 
 namespace mozc {
 namespace fcitx {
@@ -78,6 +80,7 @@ MozcConnection::~MozcConnection() {
 }
 
 bool MozcConnection::TrySendKeyEvent(
+    FcitxInstance* instance,
     FcitxKeySym sym, uint32 keycode, uint32 state,
     mozc::commands::CompositionMode composition_mode,
     bool layout_is_jp,
@@ -105,8 +108,16 @@ bool MozcConnection::TrySendKeyEvent(
     return false;  // not consumed.
   }
 
+  commands::Context context;
+  SurroundingTextInfo surrounding_text_info;
+  if (GetSurroundingText(instance,
+                         &surrounding_text_info)) {
+    context.set_preceding_text(surrounding_text_info.preceding_text);
+    context.set_following_text(surrounding_text_info.following_text);
+  }
+
   VLOG(1) << "TrySendKeyEvent: " << endl << event.DebugString();
-  if (!client_->SendKey(event, out)) {
+  if (!client_->SendKeyWithContext(event, context, out)) {
     *out_error = "SendKey failed";
     VLOG(1) << "ERROR";
     return false;

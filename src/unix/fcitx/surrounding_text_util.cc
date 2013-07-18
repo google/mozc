@@ -31,6 +31,8 @@
 
 #include <limits>
 #include <string>
+#include <fcitx/instance.h>
+#include <fcitx/module/clipboard/fcitx-clipboard.h>
 
 #include "base/base.h"
 #include "base/logging.h"
@@ -42,8 +44,10 @@ namespace fcitx {
 bool SurroundingTextUtil::GetSafeDelta(uint from, uint to, int32 *delta) {
   DCHECK(delta);
 
-  COMPILE_ASSERT(sizeof(int64) > sizeof(uint), int64_uint_check);
-  COMPILE_ASSERT(sizeof(int64) == sizeof(llabs(0)), int64_llabs_check);
+  static_assert(sizeof(int64) >= sizeof(uint),
+                "int64 must be sufficient to store a guint value.");
+  static_assert(sizeof(int64) == sizeof(llabs(0)),
+                "|llabs(0)| must returns a 64-bit integer.");
   const int64 kInt32AbsMax =
       llabs(static_cast<int64>(numeric_limits<int32>::max()));
   const int64 kInt32AbsMin =
@@ -185,5 +189,55 @@ bool SurroundingTextUtil::GetAnchorPosFromSelection(
                                  cursor_pos, anchor_pos);
 }
 
-}  // namespace ibus
+bool GetSurroundingText(FcitxInstance* instance,
+                        SurroundingTextInfo *info) {
+    FcitxInputContext* ic = FcitxInstanceGetCurrentIC(instance);
+    if (!ic || !(ic->contextCaps & CAPACITY_SURROUNDING_TEXT)) {
+        return false;
+    }
+
+    uint cursor_pos = 0;
+    uint anchor_pos = 0;
+    char* str = NULL;
+
+    if (!FcitxInstanceGetSurroundingText(instance, ic, &str, &cursor_pos, &anchor_pos)) {
+        return false;
+    }
+
+    const string surrounding_text(str);
+    free(str);
+
+    if (cursor_pos == anchor_pos) {
+        const char* primary = NULL;
+
+        if ((primary = FcitxClipboardGetPrimarySelection(instance, NULL)) != NULL) {
+            uint new_anchor_pos = 0;
+            const string primary_text(primary);
+            if (SurroundingTextUtil::GetAnchorPosFromSelection(
+                surrounding_text, primary_text,
+                cursor_pos, &new_anchor_pos)) {
+                anchor_pos = new_anchor_pos;
+            }
+        }
+    }
+
+    if (!SurroundingTextUtil::GetSafeDelta(cursor_pos, anchor_pos,
+                                           &info->relative_selected_length)) {
+        LOG(ERROR) << "Too long text selection.";
+        return false;
+    }
+
+    const uint32 selection_start = min(cursor_pos, anchor_pos);
+    const uint32 selection_length = abs(info->relative_selected_length);
+    info->preceding_text = surrounding_text.substr(0, selection_start);
+    Util::SubString(surrounding_text,
+                    selection_start,
+                    selection_length,
+                    &info->selection_text);
+    info->following_text = surrounding_text.substr(
+        selection_start + selection_length);
+    return true;
+}
+
+}  // namespace fcitx
 }  // namespace mozc

@@ -98,9 +98,9 @@ const size_t kNumCompositionModes = arraysize ( kPropCompositionModes );
 
 // This array must correspond with the CompositionMode enum in the
 // mozc/session/command.proto file.
-COMPILE_ASSERT (
+static_assert (
     mozc::commands::NUM_OF_COMPOSITIONS == arraysize ( kPropCompositionModes ),
-    bad_number_of_modes );
+    "number of modes must match" );
 
 }  // namespace
 
@@ -154,7 +154,7 @@ bool FcitxMozc::process_key_event (FcitxKeySym sym, uint32 keycode, uint32 state
     string error;
     mozc::commands::Output raw_response;
     if ( !connection_->TrySendKeyEvent (
-                sym, keycode, state, composition_mode_, layout_is_jp, is_key_up, &raw_response, &error ) )
+                GetInstance(), sym, keycode, state, composition_mode_, layout_is_jp, is_key_up, &raw_response, &error ) )
     {
         // TODO(yusukes): Show |error|.
         return false;  // not consumed.

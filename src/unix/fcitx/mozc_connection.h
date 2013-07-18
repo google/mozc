@@ -33,6 +33,7 @@
 
 #include <string>
 #include <fcitx-config/hotkey.h>
+#include <fcitx/instance.h>
 
 #include "base/base.h"
 #include "session/commands.pb.h"
@@ -61,7 +62,8 @@ class MozcConnectionInterface {
  public:
   virtual ~MozcConnectionInterface();
 
-  virtual bool TrySendKeyEvent(FcitxKeySym sym, uint32 keycode, uint32 state,
+  virtual bool TrySendKeyEvent(FcitxInstance* instance,
+                               FcitxKeySym sym, uint32 keycode, uint32 state,
                                mozc::commands::CompositionMode composition_mode,
                                bool layout_is_jp,
                                bool is_key_up,
@@ -94,7 +96,8 @@ class MozcConnection : public MozcConnectionInterface {
   // response is stored on 'out' (and 'out_error' is not modified). If the IPC
   // fails, returns false and the error message is stored on 'out_error'. In
   // this case, 'out' is not modified.
-  virtual bool TrySendKeyEvent(FcitxKeySym sym, uint32 keycode, uint32 state,
+  virtual bool TrySendKeyEvent(FcitxInstance* instance,
+                               FcitxKeySym sym, uint32 keycode, uint32 state,
                                mozc::commands::CompositionMode composition_mode,
                                bool layout_is_jp,
                                bool is_key_up,
