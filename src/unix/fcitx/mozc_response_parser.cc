@@ -276,6 +276,18 @@ void MozcResponseParser::ParseCandidates(
     FcitxCandidateWordSetPageSize(candList, 9);
     FcitxCandidateWordSetLayoutHint(candList, CLH_Vertical);
 
+    map<int32, pair<string, string> > usage_map;
+    if (candidates.has_usages()) {
+        const commands::InformationList& usages = candidates.usages();
+        for (size_t i = 0; i < usages.information().size(); ++i) {
+            const commands::Information& information = usages.information(i);
+            if (!information.has_id() || !information.has_description())
+                continue;
+            usage_map[information.id()].first = information.title();
+            usage_map[information.id()].second = information.description();
+        }
+    }
+
 #define EMPTY_STR_CHOOSE "\0\0\0\0\0\0\0\0\0\0"
     std::vector<char> choose;
 
@@ -285,14 +297,20 @@ void MozcResponseParser::ParseCandidates(
         focused_index = candidates.focused_index();
     }
     for (int i = 0; i < candidates.candidate_size(); ++i) {
-        const uint32 index = candidates.candidate(i).index();
+        const commands::Candidates::Candidate& candidate = candidates.candidate(i);
+        const uint32 index = candidate.index();
         FcitxMessageType type;
         if (focused_index != -1 && index == focused_index) {
             local_index = i;
             type = MSG_FIRSTCAND;
-        }
-        else
+
+            if (candidate.has_information_id()) {
+                map<int32, pair<string, string> >::iterator it =
+                    usage_map.find(candidate.information_id());
+            }
+        } else {
             type = MSG_OTHER;
+        }
         int32* id = (int32*) fcitx_utils_malloc0(sizeof(int32));
         FcitxCandidateWord candWord;
         candWord.callback = FcitxMozcGetCandidateWord;
@@ -305,33 +323,44 @@ void MozcResponseParser::ParseCandidates(
 
         string value;
         if (use_annotation_ &&
-                candidates.candidate(i).has_annotation() &&
-                candidates.candidate(i).annotation().has_prefix()) {
-            value = candidates.candidate(i).annotation().prefix();
+                candidate.has_annotation() &&
+                candidate.annotation().has_prefix()) {
+            value = candidate.annotation().prefix();
         }
-        value += candidates.candidate(i).value();
+        value += candidate.value();
         if (use_annotation_ &&
-                candidates.candidate(i).has_annotation() &&
-                candidates.candidate(i).annotation().has_suffix()) {
-            value += candidates.candidate(i).annotation().suffix();
+                candidate.has_annotation() &&
+                candidate.annotation().has_suffix()) {
+            value += candidate.annotation().suffix();
         }
         if (use_annotation_ &&
-                candidates.candidate(i).has_annotation() &&
-                candidates.candidate(i).annotation().has_description()) {
+                candidate.has_annotation() &&
+                candidate.annotation().has_description()) {
             // Display descriptions ([HALF][KATAKANA], [GREEK], [Black square], etc).
             value += CreateDescriptionString(
-                         candidates.candidate(i).annotation().description());
+                         candidate.annotation().description());
+        }
+        if (use_annotation_ && focused_index != -1 && index == focused_index) {
+            local_index = i;
+            type = MSG_FIRSTCAND;
+
+            if (candidate.has_information_id()) {
+                map<int32, pair<string, string> >::iterator it =
+                    usage_map.find(candidate.information_id());
+                value += CreateDescriptionString(
+                            it->second.second);
+            }
         }
 
-        if (candidates.candidate(i).has_annotation() &&
-            candidates.candidate(i).annotation().has_shortcut()) {
-            choose.push_back(candidates.candidate(i).annotation().shortcut().c_str()[0]);
+        if (candidate.has_annotation() &&
+            candidate.annotation().has_shortcut()) {
+            choose.push_back(candidate.annotation().shortcut().c_str()[0]);
         }
 
         candWord.strWord = strdup(value.c_str());
 
-        if (candidates.candidate(i).has_id()) {
-            const int32 cid = candidates.candidate(i).id();
+        if (candidate.has_id()) {
+            const int32 cid = candidate.id();
             DCHECK_NE(kBadCandidateId, cid) << "Unexpected id is passed.";
             *id = cid;
         } else {

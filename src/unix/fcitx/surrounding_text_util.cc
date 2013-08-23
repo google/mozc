@@ -229,6 +229,14 @@ bool GetSurroundingText(FcitxInstance* instance,
 
     const uint32 selection_start = min(cursor_pos, anchor_pos);
     const uint32 selection_length = abs(info->relative_selected_length);
+
+    if (selection_start > surrounding_text.length()) {
+        return false;
+    }
+    if (selection_start + selection_length > surrounding_text.length()) {
+        return false;
+    }
+
     info->preceding_text = surrounding_text.substr(0, selection_start);
     Util::SubString(surrounding_text,
                     selection_start,
