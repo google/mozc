@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: fcitx\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2013-04-25 00:02-0400\n"
-"PO-Revision-Date: 2012-04-07 03:47+0000\n"
+"POT-Creation-Date: 2013-08-24 12:02-0400\n"
+"PO-Revision-Date: 2013-04-29 10:04+0000\n"
 "Last-Translator: Xuetian Weng <wengxt@gmail.com>\n"
 "Language-Team: Chinese (China) <fcitx-dev@googlegroups.com>\n"
 "Language: zh_CN\n"
@@ -18,62 +18,66 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: ../fcitx_mozc.cc:68
+#: ../fcitx_mozc.cc:69
 msgid "Direct"
 msgstr "直接键盘输入"
 
-#: ../fcitx_mozc.cc:73
+#: ../fcitx_mozc.cc:74
 msgid "Hiragana"
 msgstr "平假名"
 
-#: ../fcitx_mozc.cc:78
+#: ../fcitx_mozc.cc:79
 msgid "Full Katakana"
 msgstr "全角片假名"
 
-#: ../fcitx_mozc.cc:83
+#: ../fcitx_mozc.cc:84
 msgid "Half ASCII"
 msgstr "半角 ASCII"
 
-#: ../fcitx_mozc.cc:88
+#: ../fcitx_mozc.cc:89
 msgid "Full ASCII"
 msgstr "全角 ASCII"
 
-#: ../fcitx_mozc.cc:93
+#: ../fcitx_mozc.cc:94
 msgid "Half Katakana"
 msgstr "半角片假名"
 
-#: ../fcitx_mozc.cc:394 ../fcitx_mozc.cc:395 ../fcitx_mozc.cc:473
+#: ../fcitx_mozc.cc:395 ../fcitx_mozc.cc:396 ../fcitx_mozc.cc:474
 msgid "Composition Mode"
 msgstr "编辑模式"
 
-#: ../fcitx_mozc.cc:405 ../fcitx_mozc.cc:406
+#: ../fcitx_mozc.cc:406 ../fcitx_mozc.cc:407
 msgid "Tool"
 msgstr "工具"
 
-#: ../fcitx_mozc.cc:486
+#: ../fcitx_mozc.cc:487
 msgid "Mozc Tool"
 msgstr "Mozc 工具"
 
-#: ../fcitx_mozc.cc:492
+#: ../fcitx_mozc.cc:493
 msgid "Configuration Tool"
 msgstr "配置工具"
 
-#: ../fcitx_mozc.cc:493
+#: ../fcitx_mozc.cc:494
 msgid "Dictionary Tool"
 msgstr "词典工具"
 
-#: ../fcitx_mozc.cc:494
+#: ../fcitx_mozc.cc:495
 msgid "Hand Writing"
 msgstr "手写输入"
 
-#: ../fcitx_mozc.cc:495
+#: ../fcitx_mozc.cc:496
 msgid "Character Palette"
 msgstr "字符映射表"
 
-#: ../fcitx_mozc.cc:496
+#: ../fcitx_mozc.cc:497
 msgid "Add Word"
 msgstr "添加单词"
 
-#: ../fcitx_mozc.cc:497
+#: ../fcitx_mozc.cc:498
 msgid "About Mozc"
 msgstr "关于 Mozc"
+
+#: ../mozc_response_parser.cc:351
+msgid "Press Ctrl+Alt+H to show usages."
+msgstr ""
