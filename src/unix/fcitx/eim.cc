@@ -34,6 +34,7 @@
 #include <fcitx/ime.h>
 #include <fcitx/hook.h>
 #include <fcitx/module.h>
+#include <fcitx/module/freedesktop-notify/fcitx-freedesktop-notify.h>
 #include <fcitx-config/xdg.h>
 #include "fcitx_mozc.h"
 #include "mozc_connection.h"
@@ -134,11 +135,29 @@ static void FcitxMozcDestroy(void *arg)
     free(mozcState);
 }
 
+static const FcitxHotkey MOZC_CTRL_ALT_H[2] = {
+    {NULL, FcitxKey_H, FcitxKeyState_Ctrl_Alt},
+    {NULL, FcitxKey_None, 0}
+};
+
 INPUT_RETURN_VALUE FcitxMozcDoInput(void* arg, FcitxKeySym _sym, unsigned int _state)
 {
     FcitxMozcState* mozcState = (FcitxMozcState*) arg;
     FcitxInstance* instance = mozcState->mozc->GetInstance();
     FcitxInputState* input = FcitxInstanceGetInputState(mozcState->mozc->GetInstance());
+
+    if (FcitxHotkeyIsHotKey(_sym, _state, MOZC_CTRL_ALT_H)) {
+        pair< string, string > usage = mozcState->mozc->GetUsage();
+        if (usage.first.size() != 0 || usage.second.size() != 0) {
+            FcitxFreeDesktopNotifyShow(
+                instance, "fcitx-mozc-usage",
+                0, mozcState->mozc->GetIconFile("mozc.png").c_str(),
+                usage.first.c_str(), usage.second.c_str(),
+                NULL, -1, NULL, NULL, NULL);
+            return IRV_DO_NOTHING;
+        }
+    }
+
     FCITX_UNUSED(_sym);
     FCITX_UNUSED(_state);
     FcitxKeySym sym = (FcitxKeySym) FcitxInputStateGetKeySym(input);

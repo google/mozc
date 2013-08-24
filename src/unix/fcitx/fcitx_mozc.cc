@@ -46,6 +46,7 @@
 #include "unix/fcitx/mozc_connection.h"
 #include "unix/fcitx/mozc_response_parser.h"
 #include <fcitx/context.h>
+#include <fcitx/module/freedesktop-notify/fcitx-freedesktop-notify.h>
 
 #define N_(x) (x)
 
@@ -537,6 +538,17 @@ const std::string& FcitxMozc::GetCurrentCompositionModeIcon() {
         return GetIconFile(kPropCompositionModes[composition_mode_].icon);
     }
     return empty_string;
+}
+
+void FcitxMozc::SetUsage(const string& title_, const string& description_)
+{
+    title = title_;
+    description = description_;
+}
+
+pair< string, string > FcitxMozc::GetUsage()
+{
+    return make_pair(title, description);
 }
 
 }  // namespace fcitx

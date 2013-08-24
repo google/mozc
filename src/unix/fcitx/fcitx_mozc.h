@@ -118,6 +118,10 @@ public:
 
     bool SendCommand(const mozc::commands::SessionCommand& session_command, mozc::commands::Output* new_output);
 
+    void SetUsage(const std::string& title, const std::string& description);
+
+    std::pair<std::string, std::string> GetUsage();
+
 private:
     friend class FcitxMozcTest;
 
@@ -153,6 +157,8 @@ private:
     
     FcitxUIMenu compositionMenu;
     FcitxUIMenu toolMenu;
+    string description;
+    string title;
 
     DISALLOW_COPY_AND_ASSIGN ( FcitxMozc );
 };

@@ -183,6 +183,8 @@ bool MozcResponseParser::ParseResponse(const mozc::commands::Output &response,
         return false;
     }
 
+    fcitx_mozc->SetUsage("", "");
+
     UpdateDeletionRange(response, fcitx_mozc);
 
     // We should check the mode field first since the response for a
@@ -303,11 +305,6 @@ void MozcResponseParser::ParseCandidates(
         if (focused_index != -1 && index == focused_index) {
             local_index = i;
             type = MSG_FIRSTCAND;
-
-            if (candidate.has_information_id()) {
-                map<int32, pair<string, string> >::iterator it =
-                    usage_map.find(candidate.information_id());
-            }
         } else {
             type = MSG_OTHER;
         }
@@ -340,6 +337,7 @@ void MozcResponseParser::ParseCandidates(
             value += CreateDescriptionString(
                          candidate.annotation().description());
         }
+
         if (use_annotation_ && focused_index != -1 && index == focused_index) {
             local_index = i;
             type = MSG_FIRSTCAND;
@@ -347,8 +345,10 @@ void MozcResponseParser::ParseCandidates(
             if (candidate.has_information_id()) {
                 map<int32, pair<string, string> >::iterator it =
                     usage_map.find(candidate.information_id());
-                value += CreateDescriptionString(
-                            it->second.second);
+                if (it != usage_map.end()) {
+                    fcitx_mozc->SetUsage(it->second.first, it->second.second);
+                }
+                value += CreateDescriptionString(_("Press Ctrl+Alt+H to show usages."));
             }
         }
 
