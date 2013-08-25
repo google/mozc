@@ -8,9 +8,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: fcitx\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2013-08-24 12:02-0400\n"
-"PO-Revision-Date: 2013-06-01 10:18+0000\n"
-"Last-Translator: mar well <marwell.1980@freenet.de>\n"
+"POT-Creation-Date: 2013-08-25 18:02-0400\n"
+"PO-Revision-Date: 2013-08-25 10:07+0000\n"
+"Last-Translator: Xuetian Weng <wengxt@gmail.com>\n"
 "Language-Team: German (http://www.transifex.com/projects/p/fcitx/language/"
 "de/)\n"
 "Language: de\n"
@@ -19,63 +19,67 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: ../fcitx_mozc.cc:69
+#: ../eim.cc:183
+msgid "Press Escape to go back"
+msgstr ""
+
+#: ../fcitx_mozc.cc:68
 msgid "Direct"
 msgstr "Direkt"
 
-#: ../fcitx_mozc.cc:74
+#: ../fcitx_mozc.cc:73
 msgid "Hiragana"
 msgstr "Hiragana"
 
-#: ../fcitx_mozc.cc:79
+#: ../fcitx_mozc.cc:78
 msgid "Full Katakana"
 msgstr "Normalbreite Katakana"
 
-#: ../fcitx_mozc.cc:84
+#: ../fcitx_mozc.cc:83
 msgid "Half ASCII"
 msgstr ""
 
-#: ../fcitx_mozc.cc:89
+#: ../fcitx_mozc.cc:88
 msgid "Full ASCII"
 msgstr ""
 
-#: ../fcitx_mozc.cc:94
+#: ../fcitx_mozc.cc:93
 msgid "Half Katakana"
 msgstr "Halbbreite Katakana"
 
-#: ../fcitx_mozc.cc:395 ../fcitx_mozc.cc:396 ../fcitx_mozc.cc:474
+#: ../fcitx_mozc.cc:394 ../fcitx_mozc.cc:395 ../fcitx_mozc.cc:473
 msgid "Composition Mode"
 msgstr "Kompositionsmodus"
 
-#: ../fcitx_mozc.cc:406 ../fcitx_mozc.cc:407
+#: ../fcitx_mozc.cc:405 ../fcitx_mozc.cc:406
 msgid "Tool"
 msgstr "Werkzeug"
 
-#: ../fcitx_mozc.cc:487
+#: ../fcitx_mozc.cc:486
 msgid "Mozc Tool"
 msgstr "Mozc Werkzeug"
 
-#: ../fcitx_mozc.cc:493
+#: ../fcitx_mozc.cc:492
 msgid "Configuration Tool"
 msgstr "Konfigurationswerkzeug"
 
-#: ../fcitx_mozc.cc:494
+#: ../fcitx_mozc.cc:493
 msgid "Dictionary Tool"
 msgstr "Wörterbuchwerkzeug"
 
-#: ../fcitx_mozc.cc:495
+#: ../fcitx_mozc.cc:494
 msgid "Hand Writing"
 msgstr "Eingabe Handschrift"
 
-#: ../fcitx_mozc.cc:496
+#: ../fcitx_mozc.cc:495
 msgid "Character Palette"
 msgstr "Palette Symbole"
 
-#: ../fcitx_mozc.cc:497
+#: ../fcitx_mozc.cc:496
 msgid "Add Word"
 msgstr "Wort hinzufügen"
 
-#: ../fcitx_mozc.cc:498
+#: ../fcitx_mozc.cc:497
 msgid "About Mozc"
 msgstr "Über Mozc"
 
