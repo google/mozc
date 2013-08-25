@@ -46,7 +46,6 @@
 #include "unix/fcitx/mozc_connection.h"
 #include "unix/fcitx/mozc_response_parser.h"
 #include <fcitx/context.h>
-#include <fcitx/module/freedesktop-notify/fcitx-freedesktop-notify.h>
 
 #define N_(x) (x)
 

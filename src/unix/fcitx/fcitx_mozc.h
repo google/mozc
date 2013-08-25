@@ -122,6 +122,8 @@ public:
 
     std::pair<std::string, std::string> GetUsage();
 
+    void DrawAll();
+
 private:
     friend class FcitxMozcTest;
 
@@ -135,7 +137,6 @@ private:
     bool ParseResponse ( const mozc::commands::Output &request );
 
     void ClearAll();
-    void DrawAll();
     void DrawPreeditInfo();
     void DrawAux();
 

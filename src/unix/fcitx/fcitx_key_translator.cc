@@ -41,6 +41,7 @@ const struct SpecialKeyMap {
   uint32 from;
   mozc::commands::KeyEvent::SpecialKey to;
 } special_key_map[] = {
+  {FcitxKey_VoidSymbol, mozc::commands::KeyEvent::NO_SPECIALKEY},
   {FcitxKey_space, mozc::commands::KeyEvent::SPACE},
   {FcitxKey_Return, mozc::commands::KeyEvent::ENTER},
   {FcitxKey_Left, mozc::commands::KeyEvent::LEFT},

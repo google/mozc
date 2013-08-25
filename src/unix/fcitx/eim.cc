@@ -34,7 +34,7 @@
 #include <fcitx/ime.h>
 #include <fcitx/hook.h>
 #include <fcitx/module.h>
-#include <fcitx/module/freedesktop-notify/fcitx-freedesktop-notify.h>
+#include <fcitx/keys.h>
 #include <fcitx-config/xdg.h>
 #include "fcitx_mozc.h"
 #include "mozc_connection.h"
@@ -42,6 +42,7 @@
 
 typedef struct _FcitxMozcState {
     mozc::fcitx::FcitxMozc* mozc;
+    int inUsageState;
 } FcitxMozcState;
 
 
@@ -146,15 +147,43 @@ INPUT_RETURN_VALUE FcitxMozcDoInput(void* arg, FcitxKeySym _sym, unsigned int _s
     FcitxInstance* instance = mozcState->mozc->GetInstance();
     FcitxInputState* input = FcitxInstanceGetInputState(mozcState->mozc->GetInstance());
 
+    if (mozcState->inUsageState) {
+        if (FcitxHotkeyIsHotKey(_sym, _state, FCITX_ESCAPE)) {
+            mozcState->inUsageState = false;
+            mozcState->mozc->process_key_event(FcitxKey_VoidSymbol, 0, 0, CheckLayout(instance), false);
+            return IRV_DISPLAY_CANDWORDS;
+        } else {
+            return IRV_DO_NOTHING;
+        }
+    }
+
     if (FcitxHotkeyIsHotKey(_sym, _state, MOZC_CTRL_ALT_H)) {
         pair< string, string > usage = mozcState->mozc->GetUsage();
         if (usage.first.size() != 0 || usage.second.size() != 0) {
-            FcitxFreeDesktopNotifyShow(
-                instance, "fcitx-mozc-usage",
-                0, mozcState->mozc->GetIconFile("mozc.png").c_str(),
-                usage.first.c_str(), usage.second.c_str(),
-                NULL, -1, NULL, NULL, NULL);
-            return IRV_DO_NOTHING;
+            mozcState->inUsageState = true;
+            FcitxCandidateWordList* candList = FcitxInputStateGetCandidateList(mozcState->mozc->GetInputState());
+            FcitxInstanceCleanInputWindow(instance);
+            FcitxCandidateWordReset(candList);
+            FcitxCandidateWordSetPageSize(candList, 9);
+            FcitxCandidateWordSetLayoutHint(candList, CLH_Vertical);
+            FcitxCandidateWordSetChoose(candList, "\0\0\0\0\0\0\0\0\0\0");
+            FcitxMessages* preedit = FcitxInputStateGetPreedit(input);
+            FcitxMessagesAddMessageAtLast(preedit, MSG_TIPS, "%s[%s]", usage.first.c_str(), _("Press Escape to go back"));
+
+            UT_array* lines = fcitx_utils_split_string(usage.second.c_str(), '\n');
+            utarray_foreach(line, lines, char*) {
+                FcitxCandidateWord candWord;
+                candWord.callback = NULL;
+                candWord.extraType = MSG_OTHER;
+                candWord.strExtra = NULL;
+                candWord.priv = NULL;
+                candWord.strWord = strdup(*line);
+                candWord.wordType = MSG_OTHER;
+                candWord.owner = NULL;
+                FcitxCandidateWordAppend(candList, &candWord);
+            }
+            utarray_free(lines);
+            return IRV_DISPLAY_MESSAGE;
         }
     }
 
@@ -177,6 +206,11 @@ INPUT_RETURN_VALUE FcitxMozcDoReleaseInput(void* arg, FcitxKeySym _sym, unsigned
     FcitxInputState* input = FcitxInstanceGetInputState(mozcState->mozc->GetInstance());
     FCITX_UNUSED(_sym);
     FCITX_UNUSED(_state);
+
+    if (mozcState->inUsageState) {
+        return IRV_DONOT_PROCESS;
+    }
+
     FcitxKeySym sym = (FcitxKeySym) FcitxInputStateGetKeySym(input);
     uint32 keycode = FcitxInputStateGetKeyCode(input);
     uint32 state = FcitxInputStateGetKeyState(input);
@@ -209,6 +243,7 @@ void FcitxMozcSave(void* arg)
 void FcitxMozcResetIM(void* arg)
 {
     FcitxMozcState* mozcState = (FcitxMozcState*) arg;
+    mozcState->inUsageState = false;
     mozcState->mozc->resetim();
 }
 
