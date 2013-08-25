@@ -150,6 +150,7 @@ INPUT_RETURN_VALUE FcitxMozcDoInput(void* arg, FcitxKeySym _sym, unsigned int _s
     if (mozcState->inUsageState) {
         if (FcitxHotkeyIsHotKey(_sym, _state, FCITX_ESCAPE)) {
             mozcState->inUsageState = false;
+            // send a dummy key to let server send us the candidate info back without side effect
             mozcState->mozc->process_key_event(FcitxKey_VoidSymbol, 0, 0, CheckLayout(instance), false);
             return IRV_DISPLAY_CANDWORDS;
         } else {
@@ -162,13 +163,24 @@ INPUT_RETURN_VALUE FcitxMozcDoInput(void* arg, FcitxKeySym _sym, unsigned int _s
         if (usage.first.size() != 0 || usage.second.size() != 0) {
             mozcState->inUsageState = true;
             FcitxCandidateWordList* candList = FcitxInputStateGetCandidateList(mozcState->mozc->GetInputState());
-            FcitxInstanceCleanInputWindow(instance);
+
+            // clear preedit, but keep client preedit
+            FcitxMessages* preedit = FcitxInputStateGetPreedit(input);
+            FcitxMessagesSetMessageCount(preedit, 0);
+            FcitxInputStateSetShowCursor(input, false);
+
+            // clear aux
+            FcitxMessages* auxUp = FcitxInputStateGetAuxUp(input);
+            FcitxMessages* auxDown = FcitxInputStateGetAuxDown(input);
+            FcitxMessagesSetMessageCount(auxUp, 0);
+            FcitxMessagesSetMessageCount(auxDown, 0);
+
+            // clear candidate table
             FcitxCandidateWordReset(candList);
             FcitxCandidateWordSetPageSize(candList, 9);
             FcitxCandidateWordSetLayoutHint(candList, CLH_Vertical);
             FcitxCandidateWordSetChoose(candList, "\0\0\0\0\0\0\0\0\0\0");
-            FcitxMessages* preedit = FcitxInputStateGetPreedit(input);
-            FcitxMessagesAddMessageAtLast(preedit, MSG_TIPS, "%s[%s]", usage.first.c_str(), _("Press Escape to go back"));
+            FcitxMessagesAddMessageAtLast(preedit, MSG_TIPS, "%s [%s]", usage.first.c_str(), _("Press Escape to go back"));
 
             UT_array* lines = fcitx_utils_split_string(usage.second.c_str(), '\n');
             utarray_foreach(line, lines, char*) {
