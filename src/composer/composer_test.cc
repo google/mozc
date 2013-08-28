@@ -798,7 +798,7 @@ TEST_F(ComposerTest, GetStringFunctions_InputFieldType) {
 
   composer_->SetInputMode(transliteration::HIRAGANA);
   for (size_t test_data_index = 0;
-       test_data_index < ARRAYSIZE_UNSAFE(test_data_list);
+       test_data_index < arraysize(test_data_list);
        ++test_data_index) {
     const TestData &test_data = test_data_list[test_data_index];
     composer_->SetInputFieldType(test_data.field_type_);
@@ -3041,7 +3041,7 @@ TEST_F(ComposerTest, ShouldCommitHead) {
       TestData("ABCDEFGHI", commands::Context::TEL, true, 9),
   };
 
-  for (size_t i = 0; i < ARRAYSIZE_UNSAFE(test_data_list); ++i) {
+  for (size_t i = 0; i < arraysize(test_data_list); ++i) {
     const TestData &test_data = test_data_list[i];
     SCOPED_TRACE(test_data.input_text);
     SCOPED_TRACE(test_data.field_type);

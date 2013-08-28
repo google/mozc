@@ -285,8 +285,8 @@ s		も	NoTransliteration
 8		{?}や	NewChunk NoTransliteration
 u		{*}ゆ	NoTransliteration
 ^		{*}よ	NoTransliteration
-t		「	NoTransliteration
-v		」	NoTransliteration
+t		(	NoTransliteration
+v		)	NoTransliteration
 {?}や8		{?}ゆ
 {?}ゆ8		{?}よ
 {?}よ8		{?}ゃ
@@ -339,9 +339,7 @@ z		ろ	NoTransliteration
 [			NoTransliteration
 ]			NoTransliteration
 `			NoTransliteration
-(		（	NoTransliteration
 '		’	NoTransliteration
-)		）	NoTransliteration
 0		{?}わ	NewChunk NoTransliteration
 +		を	NoTransliteration
 /		ん	NoTransliteration

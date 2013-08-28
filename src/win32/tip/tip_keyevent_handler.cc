@@ -41,6 +41,7 @@
 #include <string>
 
 #include "base/util.h"
+#include "client/client_interface.h"
 #include "session/commands.pb.h"
 #include "win32/base/conversion_mode_util.h"
 #include "win32/base/deleter.h"
@@ -67,7 +68,8 @@ using ATL::CComPtr;
 using mozc::commands::Context;
 using mozc::commands::Output;
 using std::unique_ptr;
-typedef commands::CompositionMode CompositionMode;
+typedef mozc::commands::CompositionMode CompositionMode;
+typedef mozc::commands::SessionCommand SessionCommand;
 
 namespace {
 
@@ -104,12 +106,6 @@ VirtualKey GetVK(WPARAM wparam, const KeyboardStatus &keyboad_status) {
   }
   if (L'A' <= ucs2 && ucs2 <= L'Z') {
     return VirtualKey::FromVirtualKey(ucs2);
-  }
-  if (ucs2 == kTouchKeyboardNextPage) {
-    return VirtualKey::FromVirtualKey(VK_NEXT);
-  }
-  if (ucs2 == kTouchKeyboardPreviousPage) {
-    return VirtualKey::FromVirtualKey(VK_PRIOR);
   }
 
   // Emulate IME_PROP_ACCEPT_WIDE_VKEY.
@@ -247,8 +243,15 @@ HRESULT OnTestKey(TipTextService *text_service, ITfContext *context,
         DLOG(FATAL) << "this action is not applicable to OnTestKey.";
         break;
     }
-  }
 
+    // Handle NextPage/PrevPage button on the on-screen keyboard.
+    if (key_info.IsKeyDownInImeProcessKey() &&
+        ((vk.wide_char() == kTouchKeyboardNextPage) ||
+         (vk.wide_char() == kTouchKeyboardPreviousPage))) {
+      *eaten = TRUE;
+      return S_OK;
+    }
+  }
 
   // Make an immutable snapshot of |private_context->ime_behavior_|, which
   // cannot be substituted for by const reference.
@@ -412,6 +415,26 @@ HRESULT OnKey(TipTextService *text_service, ITfContext *context,
     // KeyEventHandler::ImeToAsciiEx.
     temporal_output.CopyFrom(
         private_context->GetDeleter()->pending_output());
+  } else if (open && is_key_down &&
+             (vk.wide_char() == kTouchKeyboardPreviousPage)) {
+    // Handle PrevPage button on the on-screen keyboard.
+    SessionCommand command;
+    command.set_type(SessionCommand::CONVERT_PREV_PAGE);
+    if (!private_context->GetClient()->SendCommand(command, &temporal_output)) {
+      *eaten = FALSE;
+      return E_FAIL;
+    }
+    ignore_this_keyevent = false;
+  } else if (open && is_key_down &&
+             (vk.wide_char() == kTouchKeyboardNextPage)) {
+    // Handle NextPage button on the on-screen keyboard.
+    SessionCommand command;
+    command.set_type(SessionCommand::CONVERT_NEXT_PAGE);
+    if (!private_context->GetClient()->SendCommand(command, &temporal_output)) {
+      *eaten = FALSE;
+      return E_FAIL;
+    }
+    ignore_this_keyevent = false;
   } else {
     InputBehavior behavior = private_context->input_behavior();
 

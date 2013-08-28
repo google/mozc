@@ -96,6 +96,12 @@ const wchar_t kImmersiveUIWindowClassName[] = L"Mozc Immersive UI Window";
 
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
+#ifndef EVENT_OBJECT_IME_SHOW
+#define EVENT_OBJECT_IME_SHOW    0x8027
+#define EVENT_OBJECT_IME_HIDE    0x8028
+#define EVENT_OBJECT_IME_CHANGE  0x8029
+#endif  // EVENT_OBJECT_IME_SHOW
+
 // Represents the module handle of this module.
 volatile HMODULE g_module = nullptr;
 
@@ -259,7 +265,8 @@ class TipImmersiveUiElementImpl : public ITfCandidateListUIElementBehavior {
             text_service, context,
             TipUiElementDelegateFactory::kImmersiveCandidateWindow)),
         working_area_(renderer::win32::WorkingAreaFactory::Create()),
-        window_(window_handle) {
+        window_(window_handle),
+        window_visible_(false) {
   }
 
   // Destructor is kept as non-virtual because this class is designed to be
@@ -352,11 +359,37 @@ class TipImmersiveUiElementImpl : public ITfCandidateListUIElementBehavior {
     return false;
   }
 
+  void ShowWindow(bool content_changed) {
+    window_.ShowWindow(SW_SHOWNA);
+    if (!window_visible_) {
+      ::NotifyWinEvent(
+          EVENT_OBJECT_IME_SHOW, window_.m_hWnd, OBJID_WINDOW, CHILDID_SELF);
+    } else if (content_changed) {
+      ::NotifyWinEvent(
+          EVENT_OBJECT_IME_CHANGE, window_.m_hWnd, OBJID_WINDOW, CHILDID_SELF);
+    }
+    window_visible_ = true;
+  }
+
+  void HideWindow() {
+    window_.ShowWindow(SW_HIDE);
+    if (window_visible_) {
+      ::NotifyWinEvent(
+          EVENT_OBJECT_IME_HIDE, window_.m_hWnd, OBJID_WINDOW, CHILDID_SELF);
+    }
+    window_visible_ = false;
+  }
+
   void Render(const RenderingInfo &info) {
     if (!info.output.has_candidates()) {
-      window_.ShowWindow(SW_HIDE);
+      HideWindow();
       return;
     }
+
+    const bool content_changed =
+        (rendering_info_.target_rect != info.target_rect) ||
+        (rendering_info_.output.SerializeAsString() !=
+         info.output.SerializeAsString());
 
     rendering_info_.target_rect = info.target_rect;
     rendering_info_.output.CopyFrom(info.output);
@@ -365,9 +398,9 @@ class TipImmersiveUiElementImpl : public ITfCandidateListUIElementBehavior {
     BOOL shown = FALSE;
     delegate_->IsShown(&shown);
     if (!shown) {
-      window_.ShowWindow(SW_HIDE);
+      HideWindow();
     } else {
-      window_.ShowWindow(SW_SHOWNA);
+      ShowWindow(content_changed);
     }
   }
 
@@ -540,6 +573,7 @@ class TipImmersiveUiElementImpl : public ITfCandidateListUIElementBehavior {
   unique_ptr<TipUiElementDelegate> delegate_;
   unique_ptr<renderer::win32::WorkingAreaInterface> working_area_;
   CWindow window_;
+  bool window_visible_;
   TableLayout table_layout_;
   RenderingInfo rendering_info_;
   DISALLOW_COPY_AND_ASSIGN(TipImmersiveUiElementImpl);

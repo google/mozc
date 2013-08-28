@@ -498,6 +498,9 @@ public class ViewManager implements ViewManagerInterface {
     inflater = inflater.cloneInContext(MozcUtil.getContextWithOutOfMemoryRetrial(context));
     mozcView = MozcUtil.inflateWithOutOfMemoryRetrial(
         MozcView.class, inflater, R.layout.mozc_view, null, false);
+    // Suppress update of View's internal state
+    // until all the updates done in this method are finished. Just in case.
+    mozcView.setVisibility(View.GONE);
     mozcView.setKeyboardHeightRatio(keyboardHeightRatio);
     mozcView.setEventListener(
         eventListener,
@@ -529,7 +532,7 @@ public class ViewManager implements ViewManagerInterface {
     setJapaneseKeyboard(japaneseSoftwareKeyboardModel.getKeyboardSpecification(),
                         Collections.<TouchEvent>emptyList());
     mozcView.setFullscreenMode(fullscreenMode);
-    mozcView.setNarrowMode(narrowMode);
+    mozcView.setLayoutAdjustmentAndNarrowMode(layoutAdjustment, narrowMode);
     // At the moment, it is necessary to set the storage to the view, *before* setting emoji
     // provider type.
     // TODO(hidehiko): Remove the restriction.
@@ -539,12 +542,13 @@ public class ViewManager implements ViewManagerInterface {
     mozcView.setPopupEnabled(popupEnabled);
     mozcView.setFlickSensitivity(flickSensitivity);
     mozcView.setSkinType(skinType);
-    mozcView.setLayoutAdjustment(layoutAdjustment);
 
     // Clear the menu dialog.
     menuDialog = null;
 
     reset();
+
+    mozcView.setVisibility(View.VISIBLE);
     return mozcView;
   }
 
@@ -757,7 +761,7 @@ public class ViewManager implements ViewManagerInterface {
   public void setNarrowMode(boolean isNarrowMode) {
     this.narrowMode = isNarrowMode;
     if (mozcView != null) {
-      mozcView.setNarrowMode(isNarrowMode);
+      mozcView.setLayoutAdjustmentAndNarrowMode(layoutAdjustment, isNarrowMode);
     }
   }
 
@@ -795,7 +799,7 @@ public class ViewManager implements ViewManagerInterface {
     this.layoutAdjustment = layoutAdjustment;
 
     if (mozcView != null) {
-      mozcView.setLayoutAdjustment(layoutAdjustment);
+      mozcView.setLayoutAdjustmentAndNarrowMode(layoutAdjustment, narrowMode);
     }
   }
 

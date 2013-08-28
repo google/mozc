@@ -38,12 +38,15 @@ namespace usage_stats {
 namespace {
 const char kStatServerAddress[] =
     "http://clients4.google.com/tbproxy/usagestats";
+const char kStatServerSecureAddress[] =
+    "https://clients4.google.com/tbproxy/usagestats";
 const char kStatServerSourceId[] = "sourceid=ime";
 const char kStatServerAddedSendHeader[] =
     "Content-Type: application/x-www-form-urlencoded";
 }  // namespace
 
-UploadUtil::UploadUtil() {
+UploadUtil::UploadUtil()
+    : use_https_(false) {
 }
 
 UploadUtil::~UploadUtil() {
@@ -60,6 +63,10 @@ void UploadUtil::SetHeader(
   stat_header_ = type + "&" +
       NumberUtil::SimpleItoa(static_cast<uint32>(elapsed_sec));
   optional_url_params_ = optional_url_params;
+}
+
+void UploadUtil::SetUseHttps(bool use_https) {
+  use_https_ = use_https;
 }
 
 void UploadUtil::AddCountValue(const string &name, uint32 count) {
@@ -113,7 +120,9 @@ void UploadUtil::RemoveAllValues() {
 bool UploadUtil::Upload() {
   DCHECK(!stat_header_.empty());
   const string header_values = stat_header_ + stat_values_;
-  string url = string(kStatServerAddress) + "?" + string(kStatServerSourceId);
+  string url =
+      string(use_https_ ? kStatServerSecureAddress : kStatServerAddress) +
+      "?" + string(kStatServerSourceId);
   if (!optional_url_params_.empty()) {
     url.append("&");
     Util::AppendCGIParams(optional_url_params_, &url);

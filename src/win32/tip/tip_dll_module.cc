@@ -75,18 +75,11 @@ void TipBuildGlobalObjects() {
   }
 }
 
-// Release the global resources attached to this module.
-void TipFreeGlobalObjects() {
-  // Free all singleton instances
-  SingletonFinalizer::Finalize();
-
+void TipShutdownCrashReportHandler() {
   if (CrashReportHandler::IsInitialized()) {
     // Uninitialize the breakpad.
     CrashReportHandler::Uninitialize();
   }
-
-  // We intentionaly call google::protobuf::ShutdownProtobufLibrary from
-  // DllProcessDetachImpl rather than here.  See b/2126375 for details.
 }
 
 class ModuleImpl {
@@ -101,7 +94,19 @@ class ModuleImpl {
   static LONG Release() {
     if (::InterlockedDecrement(&ref_count_) == 0) {
       if (!in_unit_test_) {
-        CallOnce(&g_uninitialize_once, TipFreeGlobalObjects);
+        // |ref_count_| is now decremented to be 0. So our DLL is likely to be
+        // unloaded soon. Here is the good point to release global resources
+        // that should not be unloaded in DllMain due to the loader lock.
+        // However, it should also be noted that there is a chance that
+        // AddRef() is called again and the application continues to use Mozc
+        // client DLL. Actually we can observe this situation inside
+        // "Visual Studio 2012 Remote Debugging Monitor" running on Windows 8.
+        // Thus we must not shut down libraries that cannot be designed to be
+        // re-initializable. For instance, we must not call following
+        // functions here.
+        // - SingletonFinalizer::Finalize()               // see b/10233768
+        // - google::protobuf::ShutdownProtobufLibrary()  // see b/2126375
+        CallOnce(&g_uninitialize_once, TipShutdownCrashReportHandler);
       }
     }
     return ref_count_;

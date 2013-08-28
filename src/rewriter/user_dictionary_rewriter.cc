@@ -71,7 +71,7 @@ bool UserDictionaryRewriter::Rewrite(const ConversionRequest &request,
         continue;
       }
 
-      // find the final destination of user dictioanry
+      // find the final destination of user dictionary
       // from [move_to_start .. move_from).
       int move_to = -1;
       for (int j = move_to_start; j < static_cast<int>(move_from); ++j) {

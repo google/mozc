@@ -359,6 +359,11 @@ bool UsageStatsUploader::Send(void *data) {
 
   UploadUtil uploader;
   uploader.SetHeader("Daily", elapsed_sec, params);
+#ifdef __native_client__
+  // In NaCl Mozc we use HTTPS to send usage stats to follow Chrome OS
+  // convention. https://code.google.com/p/chromium/issues/detail?id=255327
+  uploader.SetUseHttps(true);
+#endif  // __native_client__
   LoadStats(&uploader);
 
   // Just check for confirming that we can insert the value to upload_key.

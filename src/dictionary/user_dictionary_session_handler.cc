@@ -558,11 +558,6 @@ uint64 UserDictionarySessionHandler::CreateNewSessionId() const {
   uint64 id = kInvalidSessionId;
   while (true) {
     Util::GetRandomSequence(reinterpret_cast<char *>(&id), sizeof(id));
-#ifdef  __native_client__
-    // Because JavaScript does not support uint64.
-    // So we downsize the session id range from uint64 to uint32 in NaCl.
-    id = static_cast<uint32>(id);
-#endif  // __native_client__
 
     if (id != kInvalidSessionId &&
         (session_.get() == NULL || session_id_ != id)) {

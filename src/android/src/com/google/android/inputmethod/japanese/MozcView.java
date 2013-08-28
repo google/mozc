@@ -30,6 +30,7 @@
 package org.mozc.android.inputmethod.japanese;
 
 import org.mozc.android.inputmethod.japanese.FeedbackManager.FeedbackEvent;
+import org.mozc.android.inputmethod.japanese.HardwareKeyboard.CompositionSwitchMode;
 import org.mozc.android.inputmethod.japanese.LayoutParamsAnimator.InterpolationListener;
 import org.mozc.android.inputmethod.japanese.ViewManagerInterface.LayoutAdjustment;
 import org.mozc.android.inputmethod.japanese.emoji.EmojiProviderType;
@@ -427,7 +428,7 @@ public class MozcView extends LinearLayout implements MemoryManageable {
     getHardwareCompositionButton().setOnClickListener(new OnClickListener() {
       @Override
       public void onClick(View v) {
-        viewEventListener.onClickHardwareKeyboardCompositionModeButton();
+        viewEventListener.onHardwareKeyboardCompositionModeChange(CompositionSwitchMode.TOGGLE);
       }
     });
 
@@ -548,8 +549,7 @@ public class MozcView extends LinearLayout implements MemoryManageable {
     symbolInputView.setVisibility(View.GONE);
 
     resetFullscreenMode();
-    setNarrowMode(narrowMode);
-    setLayoutAdjustment(layoutAdjustment);
+    setLayoutAdjustmentAndNarrowMode(layoutAdjustment, narrowMode);
     collapseDropShadowAndBackground();
     updateBackgroundColor();
   }
@@ -696,25 +696,6 @@ public class MozcView extends LinearLayout implements MemoryManageable {
     return narrowMode;
   }
 
-  public void setNarrowMode(boolean narrowMode) {
-    this.narrowMode = narrowMode;
-
-    // In narrow mode, hide software keyboard and show narrow status bar.
-    getCandidateView().setNarrowMode(narrowMode);
-    if (narrowMode) {
-      getKeyboardFrame().setVisibility(GONE);
-      getNarrowFrame().setVisibility(VISIBLE);
-    } else {
-      getKeyboardFrame().setVisibility(VISIBLE);
-      getNarrowFrame().setVisibility(GONE);
-      resetKeyboardFrameVisibility();
-    }
-
-    setLayoutAdjustment(layoutAdjustment);
-    updateInputFrameHeight();
-    updateBackgroundColor();
-  }
-
   public void setHardwareCompositionButtonImage(CompositionMode compositionMode) {
     switch (compositionMode) {
       case HIRAGANA:
@@ -738,10 +719,18 @@ public class MozcView extends LinearLayout implements MemoryManageable {
                     getInputFrameHeight());
   }
 
-  public void setLayoutAdjustment(LayoutAdjustment layoutAdjustment) {
+  /**
+   * Sets {@code LayoutAdjustment} and {@code narrowMode}.
+   *
+   * <p>They are highly dependent on one another so this method sets both at the same time.
+   * This decision makes caller-side simpler.
+   */
+  public void setLayoutAdjustmentAndNarrowMode(LayoutAdjustment layoutAdjustment,
+                                               boolean narrowMode) {
     checkInflated();
 
     this.layoutAdjustment = layoutAdjustment;
+    this.narrowMode = narrowMode;
 
     // If on narrowMode, the view is always shown with full-width regard less of given
     // layoutAdjustment.
@@ -766,11 +755,30 @@ public class MozcView extends LinearLayout implements MemoryManageable {
     rightFrameStubProxy.setFrameVisibility(
         temporaryAdjustment == LayoutAdjustment.LEFT ? VISIBLE : GONE);
 
-    updateBackgroundColor();
+    // Set candidate and desciption text size.
+    float candidateTextSize = layoutAdjustment == LayoutAdjustment.FILL
+        ? resources.getDimension(R.dimen.candidate_text_size)
+        : resources.getDimension(R.dimen.candidate_text_size_aligned_layout);
+    float descriptionTextSize = layoutAdjustment == LayoutAdjustment.FILL
+        ? resources.getDimension(R.dimen.candidate_description_text_size)
+        : resources.getDimension(R.dimen.candidate_description_text_size_aligned_layout);
+    getCandidateView().setCandidateTextDimension(candidateTextSize, descriptionTextSize);
+    getSymbolInputView().setCandidateTextDimension(candidateTextSize, descriptionTextSize);
+    getConversionCandidateWordContainerView().setCandidateTextDimension(candidateTextSize);
 
-    // TODO(yoichio): Update SymbolInputView width scale.
-    // getSymbolInputView().setWidthScale(layoutParams.width
-    //     / (float)resources.getDisplayMetrics().widthPixels);
+    // In narrow mode, hide software keyboard and show narrow status bar.
+    getCandidateView().setNarrowMode(narrowMode);
+    if (narrowMode) {
+      getKeyboardFrame().setVisibility(GONE);
+      getNarrowFrame().setVisibility(VISIBLE);
+    } else {
+      getKeyboardFrame().setVisibility(VISIBLE);
+      getNarrowFrame().setVisibility(GONE);
+      resetKeyboardFrameVisibility();
+    }
+
+    updateInputFrameHeight();
+    updateBackgroundColor();
   }
 
   public void startLayoutAdjustmentAnimation() {
@@ -946,6 +954,11 @@ public class MozcView extends LinearLayout implements MemoryManageable {
   //   those child views from other components.
   public CandidateView getCandidateView() {
     return CandidateView.class.cast(findViewById(R.id.candidate_view));
+  }
+
+  public ConversionCandidateWordContainerView getConversionCandidateWordContainerView() {
+    return ConversionCandidateWordContainerView.class.cast(
+        findViewById(R.id.conversion_candidate_word_container_view));
   }
 
   public View getKeyboardFrame() {

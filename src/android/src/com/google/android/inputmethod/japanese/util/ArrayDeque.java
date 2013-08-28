@@ -29,7 +29,12 @@
 
 package org.mozc.android.inputmethod.japanese.util;
 
+import com.google.common.base.Joiner;
+
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 /**
@@ -39,8 +44,10 @@ import java.util.NoSuchElementException;
  * This class should be replaced by java.util.ArrayDeque, when we start to support only API level 9
  * or later.
  *
+ * @param <T> type of elements
+ *
  */
-public class ArrayDeque<T> {
+public class ArrayDeque<T> implements Iterable<T> {
   private int headIndex;
   private int tailIndex;
   private final T[] elements;
@@ -128,5 +135,43 @@ public class ArrayDeque<T> {
       return r2 == null;
     }
     return r1.equals(r2);
+  }
+
+  @Override
+  public String toString() {
+    int size = size();
+    if (size == 0) {
+      return "[empty]";
+    }
+    List<T> resultList = new ArrayList<T>(size);
+    for (int i = 0; i < size; ++i) {
+      resultList.add(elements[(headIndex + i) % elements.length]);
+    }
+    return new StringBuilder()
+        .append("[(")
+        .append(Joiner.on(")(").join(resultList))
+        .append(")]")
+        .toString();
+  }
+
+  @Override
+  public Iterator<T> iterator() {
+    return new Iterator<T>() {
+      private int index = 0;
+
+      @Override
+      public boolean hasNext() {
+        return index < size();
+      }
+
+      @Override
+      public T next() {
+        return elements[(headIndex + index++) % elements.length];
+      }
+
+      @Override
+      public void remove() {
+        throw new UnsupportedOperationException();
+      }};
   }
 }

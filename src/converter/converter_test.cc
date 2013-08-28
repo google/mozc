@@ -327,8 +327,9 @@ string ContextAwareConvert(const string &first_key,
     }
   }
   EXPECT_EQ(first_value, converted) << first_value;
-  EXPECT_TRUE(converter->FinishConversion(&segments));
-
+  // TODO(team): Use StartConversionForRequest instead of StartConversion.
+  const ConversionRequest default_request;
+  EXPECT_TRUE(converter->FinishConversion(default_request, &segments));
   EXPECT_TRUE(converter->StartConversion(&segments, second_key));
   EXPECT_EQ(segment_num + 1, segments.segments_size());
 
@@ -919,7 +920,10 @@ TEST_F(ConverterTest, Regression3046266) {
   EXPECT_EQ(1, segments.conversion_segments_size());
   EXPECT_TRUE(converter->CommitSegmentValue(
       &segments, 0, 0));
-  EXPECT_TRUE(converter->FinishConversion(&segments));
+
+  // TODO(team): Use StartConversionForRequest instead of StartConversion.
+  const ConversionRequest default_request;
+  EXPECT_TRUE(converter->FinishConversion(default_request, &segments));
 
   EXPECT_TRUE(converter->StartConversion(
       &segments, kKey2));
@@ -1180,7 +1184,7 @@ TEST_F(ConverterTest, Predict_SetKey) {
 
   // Note that TearDown method will reset above stubs.
 
-  for (size_t i = 0; i < ARRAYSIZE_UNSAFE(test_data_list); ++i) {
+  for (size_t i = 0; i < arraysize(test_data_list); ++i) {
     const TestData &test_data = test_data_list[i];
     Segments segments;
     segments.set_request_type(test_data.request_type_);

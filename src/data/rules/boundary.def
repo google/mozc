@@ -103,6 +103,7 @@ SUFFIX 動詞,自立,*,五段・カ行イ音便,連用形,3	2000
 # Suppress incomplete X-接続 forms, e.g.:
 #   - かい -> 書い and かい -> 描い   (連用タ接続)
 #   - いお -> 言お and ひらこ -> 開こ  (未然ウ接続)
+#   - こうふか -> 耕深  (ガル接続)
 # See http://mozcsuorg.appspot.com/#issue/187 for more examples.  Putting large
 # penalty will be safe because users will input those words in complete forms,
 # like かいた.  This rule should be SUFFIX because, if it is PREFIX,
@@ -110,6 +111,7 @@ SUFFIX 動詞,自立,*,五段・カ行イ音便,連用形,3	2000
 SUFFIX 動詞,*,*,*,連用タ接続,	7000
 SUFFIX 動詞,*,*,*,*,連用タ接続,	7000
 SUFFIX 形容詞,*,*,*,*,連用タ接続,	7000
+SUFFIX 形容詞,*,*,*,*,ガル接続,	7000
 SUFFIX 動詞,自立,*,五段・カ行イ音便,未然ウ接続,	7000
 SUFFIX 動詞,自立,*,五段・ワ行ウ音便,未然ウ接続,	7000
 
@@ -118,6 +120,7 @@ SUFFIX 動詞,自立,*,五段・ワ行ウ音便,未然ウ接続,	7000
 #   - あいの -> 会い+の  (五段・ワ行促音便,丁寧連用形)
 #   - ふけ -> ふけ  (仮定形 of ふく, 五段・カ行イ音便)
 #   - いとい -> いとい  (連用形 of いとう, 五段・ワ行ウ音便,連用形)
+#   - こうふか -> 高付加 vs 交付か  (サ変名詞 + 助詞,か)
 # TODO(noriyukit): 仮定形 may be more agressively demoted as users will input
 # 仮定形 with particles, like すれ+ば.
 PREFIX 動詞,自立,*,*,五段・ワ行促音便,丁寧連用形,*	500
@@ -126,6 +129,7 @@ SUFFIX 動詞,自立,*,五段・カ行イ音便,仮定形,	3000
 SUFFIX 動詞,自立,*,五段・カ行イ音便,未然形,	2000
 SUFFIX 動詞,自立,*,五段・カ行イ音便,連用形,	1000
 SUFFIX 動詞,自立,*,五段・ワ行ウ音便,連用形,	1000
+SUFFIX 助詞,副助詞／並立助詞／終助詞,*,*,*,*,か	700
 
 #####################################################
 # Automatic rules.

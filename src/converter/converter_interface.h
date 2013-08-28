@@ -93,7 +93,8 @@ class ConverterInterface {
 
   // Finish conversion.
   // Segments are cleared. Context is not cleared
-  virtual bool FinishConversion(Segments *segments) const = 0;
+  virtual bool FinishConversion(const ConversionRequest &request,
+                                Segments *segments) const = 0;
 
   // Clear segments and keep the context
   virtual bool CancelConversion(Segments *segments) const = 0;

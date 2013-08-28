@@ -35,8 +35,10 @@ import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.DeletionRang
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Preedit;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Preedit.Segment;
 import org.mozc.android.inputmethod.japanese.util.ArrayDeque;
+import com.google.common.base.Objects;
 
 import android.content.res.Configuration;
+import android.util.Log;
 
 /**
  * This class tracks the caret position based on the callback from MozcService.
@@ -86,6 +88,12 @@ public class SelectionTracker {
           && (selectionEnd == other.selectionEnd);
     }
 
+    @Override
+    public String toString() {
+      return String.format("candidates(%d, %d), selection(%d, %d)",
+          candidatesStart, candidatesEnd, selectionStart, selectionEnd);
+    }
+
     // Skipped to implement hashCode intentionally, as we don't expect use it.
   }
 
@@ -108,6 +116,9 @@ public class SelectionTracker {
 
   private void clear() {
     recordQueue.clear();
+    if (MozcLog.isLoggable(Log.DEBUG)) {
+      MozcLog.d("clear: " + toString());
+    }
   }
 
   private void offerInternal(int candidatesStart, int candidatesEnd,
@@ -117,17 +128,22 @@ public class SelectionTracker {
     }
     recordQueue.offerLast(
         new Record(candidatesStart, candidatesEnd, selectionStart, selectionEnd));
+    if (MozcLog.isLoggable(Log.DEBUG)) {
+      MozcLog.d("offerInternal: " + toString());
+    }
   }
 
   public void onStartInput(
       int initialSelectionStart, int initialSelectionEnd, boolean webTextView) {
+    if (MozcLog.isLoggable(Log.DEBUG)) {
+      MozcLog.d(String.format("onStartInput: %d %d %b",
+                              initialSelectionStart, initialSelectionEnd, webTextView));
+    }
     this.webTextView = webTextView;
 
     if (initialSelectionStart == -1 && initialSelectionEnd == -1) {
-      // Ignores (-1, -1). This case can be observed when
-      // - The IME is not connected to any field, or
-      // - on FireFox beta.
-      // See onUpdateSelection for more details about Firefox issue.
+      // Ignores (-1, -1).
+      // This case can be observed when the IME is not connected to any field.
       return;
     }
 
@@ -202,7 +218,6 @@ public class SelectionTracker {
     }
 
     // When both are failed, give up to return the correct position.
-    // TODO(hidehiko): FIX ME. E.g., firefox set initialSelectionStart, End to -1, -1...
     return -1;
   }
 
@@ -210,6 +225,9 @@ public class SelectionTracker {
    * Should be invoked when the MozcService sends text to the connected application.
    */
   public void onRender(DeletionRange deletionRange, String commitText, Preedit preedit) {
+    if (MozcLog.isLoggable(Log.DEBUG)) {
+      MozcLog.d("onRender: " + Objects.firstNonNull(preedit, "").toString());
+    }
     int preeditStartPosition = getPreeditStartPosition();
     if (deletionRange != null) {
       // Note that deletionRange#getOffset usually returns negative value.
@@ -280,6 +298,19 @@ public class SelectionTracker {
   }
 
   /**
+   * @return true if any record has the same candidate length of given {@code record}
+   */
+  private boolean containsSeeingOnlyCandidateLength(Record record) {
+    int recoredLength = Math.abs(record.candidatesStart - record.candidatesEnd);
+    for (Record recorded : recordQueue) {
+      if (Math.abs(recorded.candidatesStart - recorded.candidatesEnd) == recoredLength) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
    * Should be invoked when MozcServer receives the callback {@code onUpdateSelection}.
    * @return the move cursor position, or one of special values
    *    {@code DO_NOTHING, RESET_CONTEXT}. The caller should follow the result.
@@ -287,16 +318,21 @@ public class SelectionTracker {
   public int onUpdateSelection(int oldSelStart, int oldSelEnd,
                                int newSelStart, int newSelEnd,
                                int candidatesStart, int candidatesEnd) {
+    if (MozcLog.isLoggable(Log.DEBUG)) {
+      MozcLog.d(String.format("onUpdateSelection: %d %d %d %d %d %d",
+                              oldSelStart, oldSelEnd, newSelStart, newSelEnd,
+                              candidatesStart, candidatesEnd));
+      MozcLog.d(recordQueue.toString());
+    }
     Record record = new Record(candidatesStart, candidatesEnd, newSelStart, newSelEnd);
 
-    // There are five cases to come here.
+    // There are four cases to come here.
     // 1) Framework invokes this callback when the caret position is updated due to the text
     //    change from IME, i.e. MozcService.
     // 2-1) During composition, users can move the caret position by tapping somewhere around the
     //    current preedit text.
     // 2-2) During composition, users can make a selection region by long-tapping somewhere text.
-    // 3) Some applications send this message as "initialization of the caret position".
-    // 4) Unexpected cursor/selection moving coming from outside of MozcService.
+    // 3) Unexpected cursor/selection moving coming from outside of MozcService.
 
     // At first, we checks 1) state.
     if (recordQueue.contains(record)) {
@@ -313,7 +349,7 @@ public class SelectionTracker {
       return DO_NOTHING;
     }
 
-    // Here, the event is not caused by MozcService.
+    // Here, the event is not caused by MozcService (probably).
     Record lastRecord = recordQueue.peekLast();
     if (lastRecord != null &&
         lastRecord.candidatesStart >= 0 &&
@@ -335,23 +371,41 @@ public class SelectionTracker {
       return RESET_CONTEXT;
     }
 
-    // Here is the case 3).
-    // Some applications send us the oldSel{Start, End} == (-1, -1) as the initialization of
-    // the caret position, such as FireFox.
-    if (oldSelStart == -1 && oldSelEnd == -1) {
-      clear();
-      offerInternal(candidatesStart, candidatesEnd, newSelStart, newSelEnd);
-      return RESET_CONTEXT;
-    }
-
-    // Here is the case 4), i.e. totally unknown state.
-    // This can happen, e.g., the text message is sent to the chat by tapping sending button
-    // or the field is filled by the application's suggestion.
+    // Here is the case 3), i.e. totally unknown state.
+    // This can happen, e.g.,
+    // - the cursor is moved when there are no preedit
+    // - the text message is sent to the chat by tapping sending button
+    // - the field is filled by the application's suggestion
     // Thus, we reset the context.
+    // But on problematic views, which don't call onUpdateSelection when there is not preedit
+    // (e.g. WebView), execution flow reaches here unexpectedly.
+    // In such case the context is reset unexpectedly, which causes serious unpleasantness.
+    // Therefore fall-back logic is implemented here.
+    // If any recorded entry has given candidate length (candidatesEnd - candidatesStart),
+    // reset the queue and return DO_NOTHING instead. Such recored entry was recorded in
+    // previous call of onRender.
+    // For example on problematic views following scenario would be seen.
+    // - onRender (commit)
+    // - onUpdateSelection (caused by last commit)
+    // - undetectable cursor move (causes record inconsistency)
+    // - onRender (records invalid entry but its length is correct)
+    // - onUpdateSelection (here)
+    //   - Records are basically unreliable but the last one has correct length)
     if (candidatesStart != -1 || candidatesEnd != -1) {
-      // Now, we assume that the composition text is also cleared. If not log it for future
-      // debugging.
-      MozcLog.i("Unknown candidates: " + candidatesStart + ":" + candidatesEnd);
+      if (MozcLog.isLoggable(Log.DEBUG)) {
+        MozcLog.d("Unknown candidates: " + candidatesStart + ":" + candidatesEnd);
+      }
+      if (webTextView && containsSeeingOnlyCandidateLength(record)) {
+        if (MozcLog.isLoggable(Log.DEBUG)) {
+          MozcLog.d(String.format(
+              "Fall-back is applied as " +
+                  "there is a entry of which the candidate length (%d) meets expectation.",
+              candidatesEnd - candidatesStart));
+        }
+        clear();
+        offerInternal(candidatesStart, candidatesEnd, newSelStart, newSelEnd);
+        return DO_NOTHING;
+      }
     }
 
     // For the next handling, we should remember the newest position.
@@ -360,5 +414,15 @@ public class SelectionTracker {
 
     // Tell the caller to reset the context.
     return RESET_CONTEXT;
+  }
+
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+        .add("recordQueue", recordQueue)
+        .add("initialSelectionStart", initialSelectionStart)
+        .add("initialSelectionEnd", initialSelectionEnd)
+        .add("webTextView", webTextView)
+        .toString();
   }
 }

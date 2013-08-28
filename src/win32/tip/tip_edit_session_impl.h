@@ -51,16 +51,11 @@ class TipTextService;
 // TODO(yukawa): Use more descriptive class name.
 class TipEditSessionImpl {
  public:
-  // A high level logic to handle on-composition-reverted event.
-  static bool OnCompositionReverted(TipTextService *text_service,
-                                    ITfContext *context,
-                                    ITfComposition *composition,
-                                    TfEditCookie write_cookie);
   // A high level logic to handle on-composition-terminated event.
-  static bool OnCompositionTerminated(TipTextService *text_service,
-                                      ITfContext *context,
-                                      ITfComposition *composition,
-                                      TfEditCookie write_cookie);
+  static HRESULT OnCompositionTerminated(TipTextService *text_service,
+                                         ITfContext *context,
+                                         ITfComposition *composition,
+                                         TfEditCookie write_cookie);
 
 
   // Does post-edit status checking for composition (if exists). For example,

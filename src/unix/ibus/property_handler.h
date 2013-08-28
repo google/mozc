@@ -67,7 +67,6 @@ class PropertyHandler : public PropertyHandlerInterface {
   // Appends tool properties into panel
   void AppendToolPropertyToPanel();
   // Appends switch properties into panel
-  void AppendSwitchPropertyToPanel();
   void UpdateCompositionModeIcon(
       IBusEngine* engine, const commands::CompositionMode new_composition_mode);
   void SetCompositionMode(IBusEngine *engine,
@@ -76,7 +75,6 @@ class PropertyHandler : public PropertyHandlerInterface {
   IBusPropList *prop_root_;
   IBusProperty *prop_composition_mode_;
   IBusProperty *prop_mozc_tool_;
-  vector<IBusProperty *> prop_switch_properties_;
   client::ClientInterface *client_;
   scoped_ptr<MessageTranslatorInterface> translator_;
   commands::CompositionMode original_composition_mode_;

@@ -130,7 +130,8 @@ class ConverterMock : public ConverterInterface {
                                         Segments *segments) const;
   bool StartPartialSuggestion(Segments *segments,
                               const string &key) const;
-  bool FinishConversion(Segments *segments) const;
+  bool FinishConversion(const ConversionRequest &request,
+                        Segments *segments) const;
   bool CancelConversion(Segments *segments) const;
   bool ResetConversion(Segments *segments) const;
   bool RevertConversion(Segments *segments) const;

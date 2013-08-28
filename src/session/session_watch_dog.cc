@@ -247,12 +247,12 @@ bool SessionWatchDog::CanSendCleanupCommand(
   }
 
   const float all_avg =
-      accumulate(cpu_loads, cpu_loads + cpu_loads_index, 0.0)
+      std::accumulate(cpu_loads, cpu_loads + cpu_loads_index, 0.0)
       / cpu_loads_index;
 
   const size_t latest_size = min(2, cpu_loads_index);
   const float latest_avg =
-      accumulate(cpu_loads, cpu_loads + latest_size, 0.0)
+      std::accumulate(cpu_loads, cpu_loads + latest_size, 0.0)
       / latest_size;
 
   VLOG(1) << "Average CPU load=" << all_avg

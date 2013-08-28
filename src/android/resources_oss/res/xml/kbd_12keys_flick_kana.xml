@@ -443,12 +443,31 @@
             <PopUp mozc:popUpIcon="@raw/twelvekeys__kana__support__popup__08" />
           </KeyEntity>
         </Flick>
+        <Flick mozc:direction="left">
+          <!-- flickHighlight is intentionally false because there are no coresponding keyIcon,
+               which is required for rendering flick highlight. -->
+          <KeyEntity mozc:sourceId="64"
+                     mozc:keyCode="@integer/uchar_latin_small_letter_t"
+                     mozc:keyIcon="@raw/twelvekeys__kana__support__08_center"
+                     mozc:flickHighlight="false">
+            <PopUp mozc:popUpIcon="@raw/qwerty__keyicon__fullwidth_left_parenthesis" />
+          </KeyEntity>
+        </Flick>
         <Flick mozc:direction="up">
           <KeyEntity mozc:sourceId="42"
                      mozc:keyCode="@integer/uchar_latin_small_letter_u"
                      mozc:keyIcon="@raw/twelvekeys__kana__support__08_up"
                      mozc:flickHighlight="true">
             <PopUp mozc:popUpIcon="@raw/twelvekeys__kana__keyicon__yu" />
+          </KeyEntity>
+        </Flick>
+        <!-- c.f. flick left about flickHighlight=false -->
+        <Flick mozc:direction="right">
+          <KeyEntity mozc:sourceId="65"
+                     mozc:keyCode="@integer/uchar_latin_small_letter_v"
+                     mozc:keyIcon="@raw/twelvekeys__kana__support__08_center"
+                     mozc:flickHighlight="false">
+            <PopUp mozc:popUpIcon="@raw/qwerty__keyicon__fullwidth_right_parenthesis" />
           </KeyEntity>
         </Flick>
         <Flick mozc:direction="down">
@@ -652,5 +671,5 @@
       </KeyState>
     </Key>
   </Row>
-  <!-- Next sourceId: 61 -->
+  <!-- Next sourceId: 66 -->
 </Keyboard>

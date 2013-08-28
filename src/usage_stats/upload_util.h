@@ -62,6 +62,9 @@ class UploadUtil {
                  int elapsed_sec,
                  const vector<pair<string, string> > &optional_url_params);
 
+  // Enables using HTTPS. Default is false.
+  void SetUseHttps(bool use_https);
+
   // Adds count data.
   // &<name>:c=<count>
   void AddCountValue(const string &name, uint32 count);
@@ -89,6 +92,7 @@ class UploadUtil {
   string stat_header_;
   string stat_values_;
   vector<pair<string, string> > optional_url_params_;
+  bool use_https_;
   DISALLOW_COPY_AND_ASSIGN(UploadUtil);
 };
 }  // namespace mozc::usage_stats

@@ -1932,6 +1932,7 @@ TEST_F(KeyEventHandlerTest,
     initial_state.open = true;
 
     KeyboardStatus keyboard_status;
+    keyboard_status.SetState('A', kPressed);
 
     const VirtualKey virtual_key = VirtualKey::FromVirtualKey('A');
     const LParamKeyInfo lparam(CreateLParam(
@@ -2053,6 +2054,86 @@ TEST_F(KeyEventHandlerTest,
     EXPECT_FALSE(actual_input.key().has_special_key());
   }
 }
+
+TEST_F(KeyEventHandlerTest,
+       CheckKeyCodeWhenAlphabeticalKeyIsPressedWithCtrlInKanaMode) {
+  // When a user presses an alphabet key and a control key, keyboard-layout
+  // drivers produce a control code (0x01,...,0x20), to which the session
+  // server assigns its own code.  This should not be passed to the server
+  // as a Kana-input character. See b/9684668.
+
+  // Force ImeSwitchUtil to reflect the config.
+  config::ImeSwitchUtil::Reload();
+  const bool kKanaLocked = true;
+
+  Output mock_output;
+  mock_output.set_consumed(true);
+
+  MockState mock(mock_output);
+  KeyboardMock keyboard(kKanaLocked);
+
+  InputState next_state;
+  KeyEventHandlerResult result;
+
+  InputBehavior behavior;
+  behavior.prefer_kana_input = kKanaLocked;
+  behavior.disabled = false;
+
+  Context context;
+
+  // Press 'Ctrl+A'
+  {
+    InputState initial_state;
+    initial_state.logical_conversion_mode =
+        IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN;
+    initial_state.visible_conversion_mode =
+        initial_state.logical_conversion_mode;
+    initial_state.open = true;
+
+    KeyboardStatus keyboard_status;
+    keyboard_status.SetState(VK_CONTROL, kPressed);
+    keyboard_status.SetState('A', kPressed);
+
+    const VirtualKey virtual_key = VirtualKey::FromVirtualKey('A');
+    const LParamKeyInfo lparam(CreateLParam(
+        0x0001,   // repeat_count
+        0x1e,     // scan_code
+        false,    // is_extended_key,
+        false,    // has_context_code,
+        false,    // is_previous_state_down,
+        false));  // is_in_transition_state
+    EXPECT_EQ(0x1e0001, lparam.lparam());
+
+    Output output;
+    result = TestableKeyEventHandler::ImeProcessKey(
+        virtual_key, lparam.GetScanCode(), lparam.IsKeyDownInImeProcessKey(),
+        keyboard_status, behavior, initial_state, context,
+        mock.mutable_client(), &keyboard, &next_state, &output);
+
+    EXPECT_TRUE(result.succeeded);
+    EXPECT_TRUE(result.should_be_eaten);
+    EXPECT_TRUE(result.should_be_sent_to_server);
+  }
+
+  {
+    commands::Input actual_input;
+    EXPECT_TRUE(mock.GetGeneratedRequest(&actual_input));
+    EXPECT_EQ(commands::Input::TEST_SEND_KEY, actual_input.type());
+    EXPECT_TRUE(actual_input.has_key());
+    EXPECT_TRUE(actual_input.key().has_key_code());
+    EXPECT_EQ('a', actual_input.key().key_code());
+    EXPECT_FALSE(actual_input.key().has_key_string());
+    EXPECT_TRUE(actual_input.key().has_activated());
+    EXPECT_TRUE(actual_input.key().activated());
+    EXPECT_TRUE(actual_input.key().has_mode());
+    EXPECT_EQ(commands::HIRAGANA, actual_input.key().mode());
+    EXPECT_FALSE(actual_input.key().has_modifiers());
+    EXPECT_EQ(1, actual_input.key().modifier_keys_size());
+    EXPECT_EQ(commands::KeyEvent::CTRL, actual_input.key().modifier_keys(0));
+    EXPECT_FALSE(actual_input.key().has_special_key());
+  }
+}
+
 
 TEST_F(KeyEventHandlerTest,
        Issue2801503_ModeChangeWhenIMEIsGoingToBeTurnedOff) {
@@ -2654,7 +2735,7 @@ TEST(SimpleImeKeyEventHandlerTest, ToggleInputStyleByRomanKey) {
   }
 }
 
-TEST_F(KeyEventHandlerTest, Issue3504241_VKPacketByQuestionKey) {
+TEST_F(KeyEventHandlerTest, Issue3504241_VKPacketAsRawInput) {
   // To fix b/3504241, VK_PACKET must be supported.
 
   // Force ImeSwitchUtil to reflect the config.

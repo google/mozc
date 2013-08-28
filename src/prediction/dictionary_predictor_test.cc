@@ -2101,7 +2101,7 @@ TEST_F(DictionaryPredictorTest, TriggerNumberZeroQuerySuggestion) {
       "\xe6\x99\x82", false },
   };
 
-  for (size_t i = 0; i < ARRAYSIZE_UNSAFE(kTestCases); ++i) {
+  for (size_t i = 0; i < arraysize(kTestCases); ++i) {
     Segments segments;
     MakeSegmentsForSuggestion("", &segments);
 
@@ -2977,7 +2977,7 @@ TEST_F(DictionaryPredictorTest, DISABLED_MobileZeroQuerySuggestionAfterEOS) {
       true },
   };
 
-  for (size_t i = 0; i < ARRAYSIZE_UNSAFE(kTestcases); ++i) {
+  for (size_t i = 0; i < arraysize(kTestcases); ++i) {
     const TestCase &test_case = kTestcases[i];
 
     Segments segments;

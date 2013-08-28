@@ -42,33 +42,6 @@ class KeyEvent;
 }  // namespace commands
 
 namespace keymap {
-namespace internal {
-
-// Returns true if the key event originates from "Raw Unicode input"
-//  (a.k.a. VK_PACKET on Windows). See b/4170089.
-// TODO(team): Remove this function by updating KeyEventUtil::MaybeGetKeyStub.
-// See b/9697808 for details.
-template <typename T>
-inline bool HandleRawUnicodeInput(const commands::KeyEvent &key_event,
-                                  typename T::Commands* command) {
-  if (key_event.has_key_string() && !key_event.has_key_code()) {
-    *command = T::INSERT_CHARACTER;
-    return true;
-  }
-  return false;
-}
-
-// Specialization for DirectInputState. This state doesn't have INSERT_CHARACTER
-// command and shouldn't handle Unicode input.
-// TODO(team): Remove this function by updating KeyEventUtil::MaybeGetKeyStub.
-// See b/9697808 for details.
-template <>
-inline bool HandleRawUnicodeInput<DirectInputState>(
-    const commands::KeyEvent &, DirectInputState::Commands*) {
-  return false;
-}
-
-}  // namespace internal
 
 template<typename T>
 bool KeyMap<T>::GetCommand(const commands::KeyEvent &key_event,
@@ -94,10 +67,6 @@ bool KeyMap<T>::GetCommand(const commands::KeyEvent &key_event,
       *command = it->second;
       return true;
     }
-  }
-
-  if (internal::HandleRawUnicodeInput<T>(key_event, command)) {
-    return true;
   }
 
   return false;

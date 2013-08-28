@@ -46,10 +46,8 @@ import sys
 # a product name, 'Mozc' or 'Google Japanese Input'.
 IBUS_COMPONENT_PROPS = {
     'name': 'com.google.IBus.Mozc',
-    'description': '%s Component',
-    # TODO(yusukes): Support Linux distributions other than Gentoo/ChromeOS.
-    # For example, Ubuntu uses /usr/lib/ibus-mozc/.
-    'exec': '/usr/libexec/ibus-engine-mozc --ibus',
+    'description': '%(product_name)s Component',
+    'exec': '%(ibus_mozc_path)s --ibus',
     # TODO(mazda): Generate the version number.
     'version': '0.0.0.0',
     'author': 'Google Inc.',
@@ -60,17 +58,17 @@ IBUS_COMPONENT_PROPS = {
 
 # Information to generate <engines> part of mozc.xml.
 IBUS_ENGINE_COMMON_PROPS = {
-    'description': '%s (Japanese Input Method)',
+    'description': '%(product_name)s (Japanese Input Method)',
     'language': 'ja',
-    'icon': '/usr/share/ibus-mozc/product_icon.png',
+    'icon': '%(ibus_mozc_icon_path)s',
     'rank': '80',
 }
 
 # Information to generate <engines> part of mozc.xml for IBus 1.5 or later.
 IBUS_1_5_ENGINE_COMMON_PROPS = {
-    'description': '%s (Japanese Input Method)',
+    'description': '%(product_name)s (Japanese Input Method)',
     'language': 'ja',
-    'icon': '/usr/share/ibus-mozc/product_icon.png',
+    'icon': '%(ibus_mozc_icon_path)s',
     'rank': '80',
     'symbol': '&#x3042;',
 }
@@ -83,7 +81,7 @@ IBUS_ENGINES_PROPS = {
         # DO NOT change the engine name 'mozc-jp'. The names is referenced by
         # unix/ibus/mozc_engine.cc.
         'name': ['mozc-jp'],
-        'longname': ['%s'],
+        'longname': ['%(product_name)s'],
         'layout': ['jp'],
     },
     # On Linux (IBus >= 1.5), we use special label 'default' for the keyboard
@@ -92,7 +90,7 @@ IBUS_ENGINES_PROPS = {
         # DO NOT change the engine name 'mozc-jp'. The names is referenced by
         # unix/ibus/mozc_engine.cc.
         'name': ['mozc-jp'],
-        'longname': ['%s'],
+        'longname': ['%(product_name)s'],
         'layout': ['default'],
     },
     # On Chrome/Chromium OS, we provide three engines.
@@ -100,8 +98,9 @@ IBUS_ENGINES_PROPS = {
         # DO NOT change the engine name 'mozc-jp'. The names is referenced by
         # unix/ibus/mozc_engine.cc.
         'name': ['mozc-jp', 'mozc', 'mozc-dv'],
-        'longname': ['%s (Japanese keyboard layout)', '%s (US keyboard layout)',
-                     '%s (US Dvorak keyboard layout)'],
+        'longname': ['%(product_name)s (Japanese keyboard layout)',
+                     '%(product_name)s (US keyboard layout)',
+                     '%(product_name)s (US Dvorak keyboard layout)'],
         'layout': ['jp', 'us', 'us(dvorak)'],
     },
 }
@@ -123,22 +122,16 @@ CPP_FOOTER = """}  // namespace
 #endif  // %s"""
 
 
-def EmbedProductName(product_name, format_string):
-  if format_string.find('%s') != -1:
-    return format_string % product_name
-  return format_string
+def OutputXmlElement(param_dict, element_name, value):
+  print '  <%s>%s</%s>' % (element_name, (value % param_dict), element_name)
 
 
-def OutputXmlElement(product_name, element_name, value):
-  print '  <%s>%s</%s>' % (element_name, EmbedProductName(product_name, value),
-                           element_name)
-
-
-def OutputXml(product_name, component, engine_common, engines, setup_arg):
+def OutputXml(param_dict, component, engine_common, engines, setup_arg):
   """Outputs a XML data for ibus-daemon.
 
   Args:
-    product_name: 'Mozc' or 'Google Japanese Input'
+    param_dict: A dictionary to embed options into output string.
+        For example, {'product_name': 'Mozc'}.
     component: A dictionary from a property name to a property value of the
         ibus-mozc component. For example, {'name': 'com.google.IBus.Mozc'}.
     engine_common: A dictionary from a property name to a property value that
@@ -148,31 +141,31 @@ def OutputXml(product_name, component, engine_common, engines, setup_arg):
   """
   print '<component>'
   for key in component:
-    OutputXmlElement(product_name, key, component[key])
+    OutputXmlElement(param_dict, key, component[key])
   print '<engines>'
   for i in range(len(engines['name'])):
     print '<engine>'
     for key in engine_common:
-      OutputXmlElement(product_name, key, engine_common[key])
+      OutputXmlElement(param_dict, key, engine_common[key])
     if setup_arg:
-      OutputXmlElement(product_name, 'setup', ' '.join(setup_arg))
+      OutputXmlElement(param_dict, 'setup', ' '.join(setup_arg))
     for key in engines:
-      OutputXmlElement(product_name, key, engines[key][i])
+      OutputXmlElement(param_dict, key, engines[key][i])
     print '</engine>'
   print '</engines>'
   print '</component>'
 
 
-def OutputCppVariable(product_name, prefix, variable_name, value):
+def OutputCppVariable(param_dict, prefix, variable_name, value):
   print 'const char k%s%s[] = "%s";' % (prefix, variable_name.capitalize(),
-                                        EmbedProductName(product_name, value))
+                                        (value % param_dict))
 
 
-def OutputCpp(product_name, component, engine_common, engines):
+def OutputCpp(param_dict, component, engine_common, engines):
   """Outputs a C++ header file for mozc/unix/ibus/main.cc.
 
   Args:
-    product_name: see OutputXml.
+    param_dict: see OutputXml.
     component: ditto.
     engine_common: ditto.
     engines: ditto.
@@ -180,13 +173,13 @@ def OutputCpp(product_name, component, engine_common, engines):
   guard_name = 'MOZC_UNIX_IBUS_MAIN_H_'
   print CPP_HEADER % (guard_name, guard_name)
   for key in component:
-    OutputCppVariable(product_name, 'Component', key, component[key])
+    OutputCppVariable(param_dict, 'Component', key, component[key])
   for key in engine_common:
-    OutputCppVariable(product_name, 'Engine', key, engine_common[key])
+    OutputCppVariable(param_dict, 'Engine', key, engine_common[key])
   for key in engines:
     print 'const char* kEngine%sArray[] = {' % key.capitalize()
     for i in range(len(engines[key])):
-      print '"%s",' % EmbedProductName(product_name, engines[key][i])
+      print '"%s",' % (engines[key][i] % param_dict)
     print '};'
   print 'const size_t kEngineArrayLen = %s;' % len(engines['name'])
   print CPP_FOOTER % guard_name
@@ -216,6 +209,10 @@ def main():
   parser.add_option('--branding', dest='branding', default=None,
                     help='GoogleJapaneseInput for the ChromeOS official build. '
                     'Otherwise, Mozc.')
+  parser.add_option('--ibus_mozc_path', dest='ibus_mozc_path', default='',
+                    help='The absolute path of ibus_mozc executable.')
+  parser.add_option('--ibus_mozc_icon_path', dest='ibus_mozc_icon_path',
+                    default='', help='The absolute path of ibus_mozc icon.')
   parser.add_option('--server_dir', dest='server_dir', default='',
                     help='The absolute directory path to be installed the '
                     'server executable.')
@@ -235,15 +232,16 @@ def main():
       platform = 'Linux-IBus1.5'
       common_props = IBUS_1_5_ENGINE_COMMON_PROPS
 
+  param_dict = {'product_name': PRODUCT_NAMES[options.branding],
+                'ibus_mozc_path': options.ibus_mozc_path,
+                'ibus_mozc_icon_path': options.ibus_mozc_icon_path}
+
   if options.output_cpp:
-    OutputCpp(PRODUCT_NAMES[options.branding], IBUS_COMPONENT_PROPS,
-              common_props,
+    OutputCpp(param_dict, IBUS_COMPONENT_PROPS, common_props,
               IBUS_ENGINES_PROPS[platform])
   else:
-    OutputXml(PRODUCT_NAMES[options.branding], IBUS_COMPONENT_PROPS,
-              common_props,
-              IBUS_ENGINES_PROPS[platform],
-              setup_arg)
+    OutputXml(param_dict, IBUS_COMPONENT_PROPS, common_props,
+              IBUS_ENGINES_PROPS[platform], setup_arg)
   return 0
 
 if __name__ == '__main__':

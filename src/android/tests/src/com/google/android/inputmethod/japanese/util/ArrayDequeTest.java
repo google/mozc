@@ -33,6 +33,7 @@ import android.test.suitebuilder.annotation.SmallTest;
 
 import junit.framework.TestCase;
 
+import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 /**
@@ -140,5 +141,35 @@ public class ArrayDequeTest extends TestCase {
     assertFalse(deque.contains(5));
     assertFalse(deque.contains(Integer.MAX_VALUE));
     assertFalse(deque.contains(Integer.MIN_VALUE));
+  }
+
+  @SmallTest
+  public void testIterator() {
+    ArrayDeque<Integer> deque = new ArrayDeque<Integer>(3);
+
+    for (int i = 0; i < 3; ++i) {
+      deque.offerLast(i);
+    }
+
+    Iterator<Integer> iterator = deque.iterator();
+    assertTrue(iterator.hasNext());
+    assertEquals(Integer.valueOf(0), iterator.next());
+    assertTrue(iterator.hasNext());
+    assertEquals(Integer.valueOf(1), iterator.next());
+    assertTrue(iterator.hasNext());
+    assertEquals(Integer.valueOf(2), iterator.next());
+    assertFalse(iterator.hasNext());
+
+    deque.removeFirst();
+    deque.offerLast(3);
+
+    iterator = deque.iterator();
+    assertTrue(iterator.hasNext());
+    assertEquals(Integer.valueOf(1), iterator.next());
+    assertTrue(iterator.hasNext());
+    assertEquals(Integer.valueOf(2), iterator.next());
+    assertTrue(iterator.hasNext());
+    assertEquals(Integer.valueOf(3), iterator.next());
+    assertFalse(iterator.hasNext());
   }
 }

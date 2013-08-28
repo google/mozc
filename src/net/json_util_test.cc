@@ -70,15 +70,53 @@ TEST(JsonUtilTest, ConvertItemTest) {
   TEST_CONVERT_ITEM(set_double_value, 1.0, "double_value", 1.0)
   TEST_CONVERT_ITEM(set_float_value, 2.0, "float_value", 2.0)
   TEST_CONVERT_ITEM(set_int32_value, 3, "int32_value", Json::Int(3))
-  TEST_CONVERT_ITEM(set_int64_value, 4, "int64_value", Json::Int64(4))
+  TEST_CONVERT_ITEM(set_int32_value, -3, "int32_value", Json::Int(-3))
+  TEST_CONVERT_ITEM(set_int32_value, kint32min,
+                    "int32_value", Json::Int(kint32min))
+  TEST_CONVERT_ITEM(set_int32_value, kint32max,
+                    "int32_value", Json::Int(kint32max))
+  TEST_CONVERT_ITEM(set_int64_value, 4, "int64_value", "4")
+  TEST_CONVERT_ITEM(set_int64_value, -4, "int64_value", "-4")
+  TEST_CONVERT_ITEM(set_int64_value, kint64min,
+                    "int64_value", "-9223372036854775808")
+  TEST_CONVERT_ITEM(set_int64_value, kint64max,
+                    "int64_value", "9223372036854775807")
   TEST_CONVERT_ITEM(set_uint32_value, 5, "uint32_value", Json::UInt(5))
-  TEST_CONVERT_ITEM(set_uint64_value, 6, "uint64_value", Json::UInt64(6))
+  TEST_CONVERT_ITEM(set_uint32_value, kuint32max,
+                    "uint32_value", Json::UInt(kuint32max))
+  TEST_CONVERT_ITEM(set_uint64_value, 6, "uint64_value", "6")
+  TEST_CONVERT_ITEM(set_uint64_value, kuint64max,
+                    "uint64_value", "18446744073709551615")
   TEST_CONVERT_ITEM(set_sint32_value, 7, "sint32_value", Json::Int(7))
-  TEST_CONVERT_ITEM(set_sint64_value, 8, "sint64_value", Json::Int64(8))
+  TEST_CONVERT_ITEM(set_sint32_value, -7, "sint32_value", Json::Int(-7))
+  TEST_CONVERT_ITEM(set_sint32_value, kint32min,
+                    "sint32_value", Json::Int(kint32min))
+  TEST_CONVERT_ITEM(set_sint32_value, kint32max,
+                    "sint32_value", Json::Int(kint32max))
+  TEST_CONVERT_ITEM(set_sint64_value, 8, "sint64_value", "8")
+  TEST_CONVERT_ITEM(set_sint64_value, -8, "sint64_value", "-8")
+  TEST_CONVERT_ITEM(set_sint64_value, kint64min,
+                    "sint64_value", "-9223372036854775808")
+  TEST_CONVERT_ITEM(set_sint64_value, kint64max,
+                    "sint64_value", "9223372036854775807")
   TEST_CONVERT_ITEM(set_fixed32_value, 9, "fixed32_value", Json::UInt(9))
-  TEST_CONVERT_ITEM(set_fixed64_value, 10, "fixed64_value", Json::UInt64(10))
+  TEST_CONVERT_ITEM(set_fixed32_value, kuint32max,
+                    "fixed32_value", Json::UInt(kuint32max))
+  TEST_CONVERT_ITEM(set_fixed64_value, 10, "fixed64_value", "10")
+  TEST_CONVERT_ITEM(set_fixed64_value, kuint64max,
+                    "fixed64_value", "18446744073709551615")
   TEST_CONVERT_ITEM(set_sfixed32_value, 11, "sfixed32_value", Json::Int(11))
-  TEST_CONVERT_ITEM(set_sfixed64_value, 12, "sfixed64_value", Json::Int64(12))
+  TEST_CONVERT_ITEM(set_sfixed32_value, -11, "sfixed32_value", Json::Int(-11))
+  TEST_CONVERT_ITEM(set_sfixed32_value, kint32min,
+                    "sfixed32_value", Json::Int(kint32min))
+  TEST_CONVERT_ITEM(set_sfixed32_value, kint32max,
+                    "sfixed32_value", Json::Int(kint32max))
+  TEST_CONVERT_ITEM(set_sfixed64_value, 12, "sfixed64_value", "12")
+  TEST_CONVERT_ITEM(set_sfixed64_value, -12, "sfixed64_value", "-12")
+  TEST_CONVERT_ITEM(set_sfixed64_value, kint64min,
+                    "sfixed64_value", "-9223372036854775808")
+  TEST_CONVERT_ITEM(set_sfixed64_value, kint64max,
+                    "sfixed64_value", "9223372036854775807")
   TEST_CONVERT_ITEM(set_bool_value, true, "bool_value", true)
   TEST_CONVERT_ITEM(set_bool_value, false, "bool_value", false)
   TEST_CONVERT_ITEM(set_string_value, "string", "string_value", "string")
@@ -116,33 +154,113 @@ TEST(JsonUtilTest, ConvertRepeatedItemTest) {
   TEST_CONVERT_REPEATED_ITEM(add_repeated_int32_value, 1, 2, 3,
                              "repeated_int32_value",
                              Json::Int(1), Json::Int(2), Json::Int(3))
+  TEST_CONVERT_REPEATED_ITEM(
+      add_repeated_int32_value,
+      kint32min, kint32min, kint32min,
+      "repeated_int32_value",
+      Json::Int(kint32min), Json::Int(kint32min), Json::Int(kint32min))
+  TEST_CONVERT_REPEATED_ITEM(
+      add_repeated_int32_value,
+      kint32max, kint32max, kint32max,
+      "repeated_int32_value",
+      Json::Int(kint32max), Json::Int(kint32max), Json::Int(kint32max))
   TEST_CONVERT_REPEATED_ITEM(add_repeated_int64_value, 1, 2, 3,
                              "repeated_int64_value",
-                             Json::Int64(1), Json::Int64(2), Json::Int64(3))
+                             "1", "2", "3")
+  TEST_CONVERT_REPEATED_ITEM(
+      add_repeated_int64_value,
+      kint64min, kint64min, kint64min,
+      "repeated_int64_value",
+      "-9223372036854775808", "-9223372036854775808", "-9223372036854775808")
+  TEST_CONVERT_REPEATED_ITEM(
+      add_repeated_int64_value,
+      kint64max, kint64max, kint64max,
+      "repeated_int64_value",
+      "9223372036854775807", "9223372036854775807", "9223372036854775807")
   TEST_CONVERT_REPEATED_ITEM(add_repeated_uint32_value, 1, 2, 3,
                              "repeated_uint32_value",
                              Json::UInt(1), Json::UInt(2), Json::UInt(3))
+  TEST_CONVERT_REPEATED_ITEM(
+      add_repeated_uint32_value,
+      kuint32max, kuint32max, kuint32max,
+      "repeated_uint32_value",
+      Json::UInt(kuint32max), Json::UInt(kuint32max), Json::UInt(kuint32max))
   TEST_CONVERT_REPEATED_ITEM(add_repeated_uint64_value, 1, 2, 3,
                              "repeated_uint64_value",
-                             Json::UInt64(1), Json::UInt64(2), Json::UInt64(3))
+                             "1", "2", "3")
+  TEST_CONVERT_REPEATED_ITEM(
+      add_repeated_uint64_value,
+      kuint64max, kuint64max, kuint64max,
+      "repeated_uint64_value",
+      "18446744073709551615", "18446744073709551615", "18446744073709551615")
   TEST_CONVERT_REPEATED_ITEM(add_repeated_sint32_value, 1, 2, 3,
                              "repeated_sint32_value",
                              Json::Int(1), Json::Int(2), Json::Int(3))
+  TEST_CONVERT_REPEATED_ITEM(
+      add_repeated_sint32_value,
+      kint32min, kint32min, kint32min,
+      "repeated_sint32_value",
+      Json::Int(kint32min), Json::Int(kint32min), Json::Int(kint32min))
+  TEST_CONVERT_REPEATED_ITEM(
+      add_repeated_sint32_value,
+      kint32max, kint32max, kint32max,
+      "repeated_sint32_value",
+      Json::Int(kint32max), Json::Int(kint32max), Json::Int(kint32max))
   TEST_CONVERT_REPEATED_ITEM(add_repeated_sint64_value, 1, 2, 3,
                              "repeated_sint64_value",
-                             Json::Int64(1), Json::Int64(2), Json::Int64(3))
+                             "1", "2", "3")
+  TEST_CONVERT_REPEATED_ITEM(
+      add_repeated_sint64_value,
+      kint64min, kint64min, kint64min,
+      "repeated_sint64_value",
+      "-9223372036854775808", "-9223372036854775808", "-9223372036854775808")
+  TEST_CONVERT_REPEATED_ITEM(
+      add_repeated_sint64_value,
+      kint64max, kint64max, kint64max,
+      "repeated_sint64_value",
+      "9223372036854775807", "9223372036854775807", "9223372036854775807")
   TEST_CONVERT_REPEATED_ITEM(add_repeated_fixed32_value, 1, 2, 3,
                              "repeated_fixed32_value",
                              Json::UInt(1), Json::UInt(2), Json::UInt(3))
+  TEST_CONVERT_REPEATED_ITEM(
+      add_repeated_fixed32_value,
+      kuint32max, kuint32max, kuint32max,
+      "repeated_fixed32_value",
+      Json::UInt(kuint32max), Json::UInt(kuint32max), Json::UInt(kuint32max))
   TEST_CONVERT_REPEATED_ITEM(add_repeated_fixed64_value, 1, 2, 3,
                              "repeated_fixed64_value",
-                             Json::UInt64(1), Json::UInt64(2), Json::UInt64(3))
+                             "1", "2", "3")
+  TEST_CONVERT_REPEATED_ITEM(
+      add_repeated_fixed64_value,
+      kuint64max, kuint64max, kuint64max,
+      "repeated_fixed64_value",
+      "18446744073709551615", "18446744073709551615", "18446744073709551615")
   TEST_CONVERT_REPEATED_ITEM(add_repeated_sfixed32_value, 1, 2, 3,
                              "repeated_sfixed32_value",
                              Json::Int(1), Json::Int(2), Json::Int(3))
+  TEST_CONVERT_REPEATED_ITEM(
+      add_repeated_sfixed32_value,
+      kint32min, kint32min, kint32min,
+      "repeated_sfixed32_value",
+      Json::Int(kint32min), Json::Int(kint32min), Json::Int(kint32min))
+  TEST_CONVERT_REPEATED_ITEM(
+      add_repeated_sfixed32_value,
+      kint32max, kint32max, kint32max,
+      "repeated_sfixed32_value",
+      Json::Int(kint32max), Json::Int(kint32max), Json::Int(kint32max))
   TEST_CONVERT_REPEATED_ITEM(add_repeated_sfixed64_value, 1, 2, 3,
                              "repeated_sfixed64_value",
-                             Json::Int64(1), Json::Int64(2), Json::Int64(3))
+                             "1", "2", "3")
+  TEST_CONVERT_REPEATED_ITEM(
+      add_repeated_sfixed64_value,
+      kint64min, kint64min, kint64min,
+      "repeated_sfixed64_value",
+      "-9223372036854775808", "-9223372036854775808", "-9223372036854775808")
+  TEST_CONVERT_REPEATED_ITEM(
+      add_repeated_sfixed64_value,
+      kint64max, kint64max, kint64max,
+      "repeated_sfixed64_value",
+      "9223372036854775807", "9223372036854775807", "9223372036854775807")
   TEST_CONVERT_REPEATED_ITEM(add_repeated_bool_value, true, true, false,
                              "repeated_bool_value", true, true, false)
   TEST_CONVERT_REPEATED_ITEM(add_repeated_string_value, "ABC", "DEF", "GHQ",
@@ -244,6 +362,110 @@ TEST(JsonUtilTest, CombinedTest) {
   EXPECT_PROTO_EQ(msg, new_msg);
 }
 
+namespace {
+
+bool ParseToMessage(const string &json_string, TestMsg *message) {
+  message->Clear();
+  Json::Value value;
+  EXPECT_TRUE(Json::Reader().parse(json_string, value));
+  return JsonUtil::JsonValueToProtobufMessage(value, message);
+}
+
+}  // namespace
+
+TEST(JsonUtilTest, JsonParseTest) {
+  TestMsg msg;
+  // signed int 32
+  EXPECT_FALSE(ParseToMessage("{\"int32_value\": -2147483649}", &msg));
+  EXPECT_TRUE(ParseToMessage("{\"int32_value\": -2147483648}", &msg));
+  EXPECT_EQ(kint32min, msg.int32_value());
+  EXPECT_TRUE(ParseToMessage("{\"int32_value\": 2147483647}", &msg));
+  EXPECT_EQ(kint32max, msg.int32_value());
+  EXPECT_FALSE(ParseToMessage("{\"int32_value\": 2147483648}", &msg));
+
+  EXPECT_FALSE(ParseToMessage("{\"sint32_value\": -2147483649}", &msg));
+  EXPECT_TRUE(ParseToMessage("{\"sint32_value\": -2147483648}", &msg));
+  EXPECT_EQ(kint32min, msg.sint32_value());
+  EXPECT_TRUE(ParseToMessage("{\"sint32_value\": 2147483647}", &msg));
+  EXPECT_EQ(kint32max, msg.sint32_value());
+  EXPECT_FALSE(ParseToMessage("{\"sint32_value\": 2147483648}", &msg));
+
+  EXPECT_FALSE(ParseToMessage("{\"sfixed32_value\": -2147483649}", &msg));
+  EXPECT_TRUE(ParseToMessage("{\"sfixed32_value\": -2147483648}", &msg));
+  EXPECT_EQ(kint32min, msg.sfixed32_value());
+  EXPECT_TRUE(ParseToMessage("{\"sfixed32_value\": 2147483647}", &msg));
+  EXPECT_EQ(kint32max, msg.sfixed32_value());
+  EXPECT_FALSE(ParseToMessage("{\"sfixed32_value\": 2147483648}", &msg));
+
+  // unsigned int 32
+  EXPECT_FALSE(ParseToMessage("{\"uint32_value\": -1}", &msg));
+  EXPECT_TRUE(ParseToMessage("{\"uint32_value\": 0}", &msg));
+  EXPECT_EQ(0, msg.uint32_value());
+  EXPECT_TRUE(ParseToMessage("{\"uint32_value\": 4294967295}", &msg));
+  EXPECT_EQ(kuint32max, msg.uint32_value());
+  EXPECT_FALSE(ParseToMessage("{\"uint32_value\": 4294967296}", &msg));
+
+  EXPECT_FALSE(ParseToMessage("{\"fixed32_value\": -1}", &msg));
+  EXPECT_TRUE(ParseToMessage("{\"fixed32_value\": 0}", &msg));
+  EXPECT_EQ(0, msg.fixed32_value());
+  EXPECT_TRUE(ParseToMessage("{\"fixed32_value\": 4294967295}", &msg));
+  EXPECT_EQ(kuint32max, msg.fixed32_value());
+  EXPECT_FALSE(ParseToMessage("{\"fixed32_value\": 4294967296}", &msg));
+
+  // signed int 64
+  EXPECT_FALSE(ParseToMessage("{\"int64_value\": \"-9223372036854775809\"}",
+                              &msg));
+  EXPECT_TRUE(ParseToMessage("{\"int64_value\": \"-9223372036854775808\"}",
+                             &msg));
+  EXPECT_EQ(kint64min, msg.int64_value());
+  EXPECT_TRUE(ParseToMessage("{\"int64_value\": \"9223372036854775807\"}",
+                             &msg));
+  EXPECT_EQ(kint64max, msg.int64_value());
+  EXPECT_FALSE(ParseToMessage("{\"int64_value\": \"9223372036854775808\"}",
+                              &msg));
+
+  EXPECT_FALSE(ParseToMessage("{\"sint64_value\": \"-9223372036854775809\"}",
+                              &msg));
+  EXPECT_TRUE(ParseToMessage("{\"sint64_value\": \"-9223372036854775808\"}",
+                             &msg));
+  EXPECT_EQ(kint64min, msg.sint64_value());
+  EXPECT_TRUE(ParseToMessage("{\"sint64_value\": \"9223372036854775807\"}",
+                             &msg));
+  EXPECT_EQ(kint64max, msg.sint64_value());
+  EXPECT_FALSE(ParseToMessage("{\"sint64_value\": \"9223372036854775808\"}",
+                              &msg));
+
+  EXPECT_FALSE(ParseToMessage("{\"sfixed64_value\": \"-9223372036854775809\"}",
+                              &msg));
+  EXPECT_TRUE(ParseToMessage("{\"sfixed64_value\": \"-9223372036854775808\"}",
+                             &msg));
+  EXPECT_EQ(kint64min, msg.sfixed64_value());
+  EXPECT_TRUE(ParseToMessage("{\"sfixed64_value\": \"9223372036854775807\"}",
+                             &msg));
+  EXPECT_EQ(kint64max, msg.sfixed64_value());
+  EXPECT_FALSE(ParseToMessage("{\"sfixed64_value\": \"9223372036854775808\"}",
+                              &msg));
+
+  // unsigned int 64
+  EXPECT_FALSE(ParseToMessage("{\"uint64_value\": \"-1\"}", &msg));
+  EXPECT_TRUE(ParseToMessage("{\"uint64_value\": \"0\"}", &msg));
+  EXPECT_EQ(0, msg.uint64_value());
+  EXPECT_TRUE(ParseToMessage("{\"uint64_value\": \"18446744073709551615\"}",
+                             &msg));
+  EXPECT_EQ(kuint64max, msg.uint64_value());
+  EXPECT_FALSE(ParseToMessage("{\"uint64_value\": \"18446744073709551616\"}",
+                              &msg));
+
+  EXPECT_FALSE(ParseToMessage("{\"fixed64_value\": \"-1\"}", &msg));
+  EXPECT_TRUE(ParseToMessage("{\"fixed64_value\": \"0\"}", &msg));
+  EXPECT_EQ(0, msg.fixed64_value());
+  EXPECT_TRUE(ParseToMessage("{\"fixed64_value\": \"18446744073709551615\"}",
+                             &msg));
+  EXPECT_EQ(kuint64max, msg.fixed64_value());
+  EXPECT_FALSE(ParseToMessage("{\"fixed64_value\": \"18446744073709551616\"}",
+                              &msg));
+}
+
 TEST(JsonUtilTest, FailureTest) {
   const char *kNumValueKeys[] = {
     "double_value", "float_value", "int32_value", "int64_value",
@@ -269,13 +491,70 @@ TEST(JsonUtilTest, FailureTest) {
       EXPECT_FALSE(JsonUtil::JsonValueToProtobufMessage(json_value, &msg));
     }
   }
-  const char *kUnsignedNumValueKeys[] = {"uint32_value", "uint64_value"};
-  for (size_t i = 0; i <  arraysize(kUnsignedNumValueKeys); ++i) {
-    Json::Value json_value;
-    json_value[kUnsignedNumValueKeys[i]] = -1;
-    TestMsg msg;
-    EXPECT_FALSE(JsonUtil::JsonValueToProtobufMessage(json_value, &msg));
+  const char *kNumS32ValueKeys[] =
+      {"int32_value", "sint32_value", "sfixed32_value"};
+  const char *kNumU32ValueKeys[] = {"uint32_value", "fixed32_value"};
+  const char *kNumS64ValueKeys[] =
+      {"int64_value", "sint64_value", "sfixed64_value"};
+  const char *kNumU64ValueKeys[] = {"uint64_value", "fixed64_value"};
+  for (size_t i = 0; i <  arraysize(kNumS32ValueKeys); ++i) {
+    {
+      Json::Value json_value;
+      json_value[kNumS32ValueKeys[i]] = -2147483649ll;
+      TestMsg msg;
+      EXPECT_FALSE(JsonUtil::JsonValueToProtobufMessage(json_value, &msg));
+    }
+    {
+      Json::Value json_value;
+      json_value[kNumS32ValueKeys[i]] = 2147483648ull;
+      TestMsg msg;
+      EXPECT_FALSE(JsonUtil::JsonValueToProtobufMessage(json_value, &msg));
+    }
   }
+
+  for (size_t i = 0; i <  arraysize(kNumU32ValueKeys); ++i) {
+    {
+      Json::Value json_value;
+      json_value[kNumU32ValueKeys[i]] = -1;
+      TestMsg msg;
+      EXPECT_FALSE(JsonUtil::JsonValueToProtobufMessage(json_value, &msg));
+    }
+    {
+      Json::Value json_value;
+      json_value[kNumU32ValueKeys[i]] = 4294967296ull;
+      TestMsg msg;
+      EXPECT_FALSE(JsonUtil::JsonValueToProtobufMessage(json_value, &msg));
+    }
+  }
+  for (size_t i = 0; i <  arraysize(kNumS64ValueKeys); ++i) {
+    {
+      Json::Value json_value;
+      json_value[kNumS64ValueKeys[i]] = "-9223372036854775809";
+      TestMsg msg;
+      EXPECT_FALSE(JsonUtil::JsonValueToProtobufMessage(json_value, &msg));
+    }
+    {
+      Json::Value json_value;
+      json_value[kNumS64ValueKeys[i]] = "9223372036854775808";
+      TestMsg msg;
+      EXPECT_FALSE(JsonUtil::JsonValueToProtobufMessage(json_value, &msg));
+    }
+  }
+  for (size_t i = 0; i <  arraysize(kNumU64ValueKeys); ++i) {
+    {
+      Json::Value json_value;
+      json_value[kNumU64ValueKeys[i]] = "-1";
+      TestMsg msg;
+      EXPECT_FALSE(JsonUtil::JsonValueToProtobufMessage(json_value, &msg));
+    }
+    {
+      Json::Value json_value;
+      json_value[kNumU64ValueKeys[i]] = "18446744073709551616";
+      TestMsg msg;
+      EXPECT_FALSE(JsonUtil::JsonValueToProtobufMessage(json_value, &msg));
+    }
+  }
+
   {
     Json::Value json_value;
     json_value["bool_value"] = "str";

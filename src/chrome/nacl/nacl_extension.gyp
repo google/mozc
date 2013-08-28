@@ -86,6 +86,8 @@
         'dictionary_downloader',
         '../../base/base.gyp:base',
         '../../base/base.gyp:nacl_js_proxy',
+        '../../dictionary/dictionary_base.gyp:user_dictionary',
+        '../../dictionary/dictionary_base.gyp:user_pos',
         '../../engine/engine.gyp:engine_factory',
         '../../net/net.gyp:http_client',
         '../../net/net.gyp:json_util',
@@ -352,17 +354,24 @@
           'action_name': 'gen_manifest',
           'inputs': [
             '../../mozc_version.txt',
-            '../../build_tools/replace_version.py',
+            '../../build_tools/tweak_manifest.py',
             'manifest/manifest_template.json',
           ],
           'outputs': [
             '<(gen_out_dir)/manifest.json',
           ],
           'action': [
-            'python', '../../build_tools/replace_version.py',
+            'python', '../../build_tools/tweak_manifest.py',
             '--version_file', '../../mozc_version.txt',
             '--input', 'manifest/manifest_template.json',
             '--output', '<(gen_out_dir)/manifest.json',
+          ],
+          'conditions': [
+            ['enable_cloud_sync==1', {
+              'action': [
+                '--enable_cloud_sync',
+              ]
+            }],
           ],
         },
         {

@@ -43,6 +43,7 @@
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
 #include "data_manager/user_pos_manager.h"
+#include "dictionary/dictionary_mock.h"
 #include "engine/engine_interface.h"
 #include "engine/mock_converter_engine.h"
 #include "engine/mock_data_engine_factory.h"
@@ -554,9 +555,11 @@ class SessionTest : public testing::Test {
     session::SessionFactoryManager::SetSessionFactory(session_factory_.get());
 
     handler_.reset(new SessionHandler);
+    dictionary_mock_.reset(new DictionaryMock);
     t13n_rewriter_.reset(
         new TransliterationRewriter(
-            *UserPosManager::GetUserPosManager()->GetPOSMatcher()));
+            *UserPosManager::GetUserPosManager()->GetPOSMatcher(),
+            dictionary_mock_.get()));
   }
 
   virtual void TearDown() {
@@ -871,6 +874,7 @@ class SessionTest : public testing::Test {
   scoped_ptr<MockConverterEngine> engine_;
   scoped_ptr<EngineInterface> mock_data_engine_;
   scoped_ptr<SessionHandler> handler_;
+  scoped_ptr<DictionaryMock> dictionary_mock_;
   scoped_ptr<TransliterationRewriter> t13n_rewriter_;
   scoped_ptr<JapaneseSessionFactory> session_factory_;
   scoped_ptr<composer::Table> table_;
@@ -3043,6 +3047,109 @@ TEST_F(SessionTest, CommitRawText_KanaInput) {
   // "abc"
   EXPECT_RESULT_AND_KEY("mr@h!", "mr@h!", command);
   EXPECT_EQ(ImeContext::PRECOMPOSITION, session->context().state());
+}
+
+TEST_F(SessionTest, ConvertNextPage_PrevPage) {
+  commands::Command command;
+  scoped_ptr<Session> session(new Session(engine_.get()));
+
+  InitSessionToPrecomposition(session.get());
+
+  // Should be ignored in precomposition state.
+  {
+    command.Clear();
+    command.mutable_input()->set_type(commands::Input::SEND_COMMAND);
+    command.mutable_input()->mutable_command()->set_type(
+        commands::SessionCommand::CONVERT_NEXT_PAGE);
+    ASSERT_TRUE(session->SendCommand(&command));
+    EXPECT_TRUE(command.output().consumed());
+
+    command.Clear();
+    command.mutable_input()->set_type(commands::Input::SEND_COMMAND);
+    command.mutable_input()->mutable_command()->set_type(
+        commands::SessionCommand::CONVERT_PREV_PAGE);
+    ASSERT_TRUE(session->SendCommand(&command));
+    EXPECT_TRUE(command.output().consumed());
+  }
+
+  InsertCharacterChars("aiueo", session.get(), &command);
+  EXPECT_PREEDIT(kAiueo, command);
+
+  // Should be ignored in composition state.
+  {
+    command.Clear();
+    command.mutable_input()->set_type(commands::Input::SEND_COMMAND);
+    command.mutable_input()->mutable_command()->set_type(
+        commands::SessionCommand::CONVERT_NEXT_PAGE);
+    ASSERT_TRUE(session->SendCommand(&command));
+    EXPECT_TRUE(command.output().consumed());
+    EXPECT_PREEDIT(kAiueo, command) << "should do nothing";
+
+    command.Clear();
+    command.mutable_input()->set_type(commands::Input::SEND_COMMAND);
+    command.mutable_input()->mutable_command()->set_type(
+        commands::SessionCommand::CONVERT_PREV_PAGE);
+    ASSERT_TRUE(session->SendCommand(&command));
+    EXPECT_TRUE(command.output().consumed());
+    EXPECT_PREEDIT(kAiueo, command) << "should do nothing";
+  }
+
+  // Generate sequential candidates as follows.
+  //   "page0-cand0"
+  //   "page0-cand1"
+  //   ...
+  //   "page0-cand8"
+  //   "page1-cand0"
+  //   ...
+  //   "page1-cand8"
+  //   "page2-cand0"
+  //   ...
+  //   "page2-cand8"
+  {
+    Segments segments;
+    Segment *segment = NULL;
+    segment = segments.add_segment();
+    segment->set_key(kAiueo);
+    for (int page_index = 0; page_index < 3; ++page_index) {
+      for (int cand_index = 0; cand_index < 9; ++cand_index) {
+        segment->add_candidate()->value = Util::StringPrintf(
+            "page%d-cand%d", page_index, cand_index);
+      }
+    }
+    GetConverterMock()->SetStartConversionForRequest(&segments, true);
+  }
+
+  // Make sure the selected candidate changes as follows.
+  //                              -> Convert
+  //  -> "page0-cand0" -> SendCommand/CONVERT_NEXT_PAGE
+  //  -> "page1-cand0" -> SendCommand/CONVERT_PREV_PAGE
+  //  -> "page0-cand0" -> SendCommand/CONVERT_PREV_PAGE
+  //  -> "page2-cand0"
+
+  command.Clear();
+  ASSERT_TRUE(session->Convert(&command));
+  EXPECT_PREEDIT("page0-cand0", command);
+
+  command.Clear();
+  command.mutable_input()->set_type(commands::Input::SEND_COMMAND);
+  command.mutable_input()->mutable_command()->set_type(
+      commands::SessionCommand::CONVERT_NEXT_PAGE);
+  ASSERT_TRUE(session->SendCommand(&command));
+  EXPECT_PREEDIT("page1-cand0", command);
+
+  command.Clear();
+  command.mutable_input()->set_type(commands::Input::SEND_COMMAND);
+  command.mutable_input()->mutable_command()->set_type(
+      commands::SessionCommand::CONVERT_PREV_PAGE);
+  ASSERT_TRUE(session->SendCommand(&command));
+  EXPECT_PREEDIT("page0-cand0", command);
+
+  command.Clear();
+  command.mutable_input()->set_type(commands::Input::SEND_COMMAND);
+  command.mutable_input()->mutable_command()->set_type(
+      commands::SessionCommand::CONVERT_PREV_PAGE);
+  ASSERT_TRUE(session->SendCommand(&command));
+  EXPECT_PREEDIT("page2-cand0", command);
 }
 
 TEST_F(SessionTest, NeedlessClearUndoContext) {

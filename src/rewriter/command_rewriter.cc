@@ -224,10 +224,6 @@ void CommandRewriter::InsertDisableAllSuggestionToggleCommand(
   candidate->content_value = candidate->value;
 }
 
-void CommandRewriter::Finish(Segments *segments) {
-  // Do nothing in finish.
-}
-
 bool CommandRewriter::RewriteSegment(Segment *segment) const {
   DCHECK(segment);
 

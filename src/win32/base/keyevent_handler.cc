@@ -478,8 +478,11 @@ bool ConvertToKeyEventMain(const VirtualKey &virtual_key,
   // Instead of using the actual toggle state of Kana-lock key, an expected
   // toggle state of the Kana-lock is emulated based on the IME open/close
   // state and conversion mode.  See b/3046717 for details.
+  // Note that we never set |key_string| when Ctrl key is pressed because
+  // no valid Kana character will be generated with Ctrl key. See b/9684668.
   const bool use_kana_input =
       behavior.prefer_kana_input && ime_state.open &&
+      !keyboard_status_wo_kana_lock.IsPressed(VK_CONTROL) &&
       ((ime_state.logical_conversion_mode & IME_CMODE_NATIVE) ==
        IME_CMODE_NATIVE);
 

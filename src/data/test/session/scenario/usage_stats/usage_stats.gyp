@@ -28,39 +28,44 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 {
-  'type': 'executable',
-  'sources': [
-    'mozc_broker_main.cc',
-  ],
-  'dependencies': [
-    '../../base/base.gyp:base',
-  ],
-  'conditions': [
-    ['OS=="win"', {
-      'sources': [
-        '<(gen_out_dir)/mozc_broker_autogen.rc',
-        'ime_switcher.cc',
-        'prelauncher.cc',
-        'register_ime.cc',
-      ],
-      'dependencies': [
-        '../../base/base.gyp:crash_report_handler',
-        '../../client/client.gyp:client',
-        '../../config/config.gyp:genproto_config',
-        '../../config/config.gyp:stats_config_util',
-        '../../ipc/ipc.gyp:ipc',
-        '../../renderer/renderer.gyp:renderer_client',
-        '../../session/session_base.gyp:genproto_session',
-        '../base/win32_base.gyp:ime_base',
-        '../base/win32_base.gyp:win32_file_verifier',
-        'gen_mozc_broker_resource_header',
-      ],
-      'msvs_settings': {
-        'VCManifestTool': {
-          'AdditionalManifestFiles': 'mozc_broker.exe.manifest',
-          'EmbedManifest': 'true',
-        },
+  'variables': {
+    'relative_dir': 'data/test/session/scenario/usage_stats',
+    'gen_out_dir': '<(SHARED_INTERMEDIATE_DIR)/<(relative_dir)',
+  },
+  'targets': [
+    {
+      'target_name': 'install_session_handler_usage_stats_scenario_test_data',
+      'type': 'none',
+      'variables': {
+        'test_data': [
+          "conversion.txt",
+          "prediction.txt",
+          "suggestion.txt",
+          "composition.txt",
+          "select_prediction.txt",
+          "select_minor_conversion.txt",
+          "select_minor_prediction.txt",
+          "mouse_select_from_suggestion.txt",
+          "select_t13n_by_key.txt",
+          "select_t13n_on_cascading_window.txt",
+          "switch_kana_type.txt",
+          "multiple_segments.txt",
+          "select_candidates_in_multiple_segments.txt",
+          "select_candidates_in_multiple_segments_and_expand_segment.txt",
+          "continue_input.txt",
+          "continuous_input.txt",
+          "multiple_sessions.txt",
+          "backspace_after_commit.txt",
+          "backspace_after_commit_after_backspace.txt",
+          "multiple_backspace_after_commit.txt",
+          "zero_query_suggestion.txt",
+          "auto_partial_suggestion.txt",
+          "insert_space.txt",
+          "numpad_in_direct_input_mode.txt",
+        ],
+        'test_data_subdir': 'data/test/session/scenario/usage_stats',
       },
-    }],
+      'includes': ['../../../../../gyp/install_testdata.gypi'],
+    },
   ],
 }

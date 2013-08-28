@@ -46,6 +46,7 @@
 #include "win32/base/input_state.h"
 #include "win32/base/string_util.h"
 #include "win32/tip/tip_composition_util.h"
+#include "win32/tip/tip_edit_session.h"
 #include "win32/tip/tip_input_mode_manager.h"
 #include "win32/tip/tip_private_context.h"
 #include "win32/tip/tip_range_util.h"
@@ -115,9 +116,9 @@ HRESULT ClearReadingProperties(ITfContext *context,
   return result;
 }
 
-CComPtr<ITfComposition> CreateCompositioin(TipTextService *text_service,
-                                           ITfContext *context,
-                                           TfEditCookie write_cookie) {
+CComPtr<ITfComposition> CreateComposition(TipTextService *text_service,
+                                          ITfContext *context,
+                                          TfEditCookie write_cookie) {
   CComQIPtr<ITfContextComposition> composition_context = context;
   if (!composition_context) {
     return nullptr;
@@ -153,14 +154,17 @@ CComPtr<ITfComposition> CreateCompositioin(TipTextService *text_service,
 //   3. Call ITfComposition::ShiftStart to shrink the composition range. Note
 //      that the text that is pushed out from the composition range is
 //      interpreted as the "committed text".
-// See also b/8406545.
+//   4. Update the caret position explicitly. Note that some applications
+//      such as WPF's TextBox do not update the caret position automatically
+//      when an composition is commited.
+// See also b/8406545 and b/9747361.
 CComPtr<ITfComposition> CommitText(TipTextService *text_service,
                                    ITfContext *context,
                                    TfEditCookie write_cookie,
                                    CComPtr<ITfComposition> composition,
                                    const Output &output) {
   if (!composition) {
-    composition = CreateCompositioin(text_service, context, write_cookie);
+    composition = CreateComposition(text_service, context, write_cookie);
   }
   if (!composition) {
     return nullptr;
@@ -215,6 +219,14 @@ CComPtr<ITfComposition> CommitText(TipTextService *text_service,
   if (FAILED(result)) {
     return nullptr;
   }
+  // We need to update the caret position manually for WPF's TextBox, where
+  // caret position is not updated automatically when a composition text is
+  // committed by ITfComposition::ShiftStart.
+  result = TipRangeUtil::SetSelection(
+      context, write_cookie, new_composition_start, TF_AE_END);
+  if (FAILED(result)) {
+    return nullptr;
+  }
   return composition;
 }
 
@@ -232,13 +244,22 @@ HRESULT UpdateComposition(TipTextService *text_service,
     if (FAILED(result)) {
       return result;
     }
-    result = composition_range->SetText(write_cookie, 0, L"", 0);
+    BOOL is_empty = FALSE;
+    result = composition_range->IsEmpty(write_cookie, &is_empty);
     if (FAILED(result)) {
       return result;
     }
-    result = ClearReadingProperties(context, composition_range, write_cookie);
-    if (FAILED(result)) {
-      return result;
+    if (is_empty != TRUE) {
+      wstring str;
+      TipRangeUtil::GetText(composition_range, write_cookie, &str);
+      result = composition_range->SetText(write_cookie, 0, L"", 0);
+      if (FAILED(result)) {
+        return result;
+      }
+      result = ClearReadingProperties(context, composition_range, write_cookie);
+      if (FAILED(result)) {
+        return result;
+      }
     }
   }
 
@@ -265,7 +286,7 @@ HRESULT UpdateComposition(TipTextService *text_service,
     if (FAILED(result)) {
       return result;
     }
-    composition = CreateCompositioin(text_service, context, write_cookie);
+    composition = CreateComposition(text_service, context, write_cookie);
   }
   if (!composition) {
     return E_FAIL;
@@ -385,52 +406,60 @@ HRESULT UpdateComposition(TipTextService *text_service,
   return result;
 }
 
-HRESULT DoEditSessionImpl(TipTextService *text_service,
-                          ITfContext *context,
-                          TfEditCookie write_cookie,
-                          const Output &output) {
-  HRESULT result = S_OK;
-
+HRESULT UpdatePrivateContext(TipTextService *text_service,
+                             ITfContext *context,
+                             TfEditCookie write_cookie,
+                             const Output &output) {
   TipPrivateContext *private_context = text_service->GetPrivateContext(context);
-  if (private_context != nullptr) {
-    private_context->mutable_last_output()->CopyFrom(output);
-    if (output.has_status()) {
-      const Status &status = output.status();
-      TipInputModeManager *input_mode_manager =
-          text_service->GetThreadContext()->GetInputModeManager();
-      const TipInputModeManager::NotifyActionSet action_set =
-          input_mode_manager->OnReceiveCommand(status.activated(),
-                                               status.comeback_mode(),
-                                               status.mode());
-      if ((action_set & TipInputModeManager::kNotifySystemOpenClose) ==
-          TipInputModeManager::kNotifySystemOpenClose) {
-        TipStatus::SetIMEOpen(text_service->GetThreadManager(),
-                              text_service->GetClientID(),
-                              input_mode_manager->GetEffectiveOpenClose());
-      }
-      if ((action_set & TipInputModeManager::kNotifySystemConversionMode) ==
-          TipInputModeManager::kNotifySystemConversionMode) {
-        const CompositionMode mozc_mode = static_cast<CompositionMode>(
-            input_mode_manager->GetEffectiveConversionMode());
-        uint32 native_mode = 0;
-        if (ConversionModeUtil::ToNativeMode(
-                mozc_mode,
-                private_context->input_behavior().prefer_kana_input,
-                &native_mode)) {
-          TipStatus::SetInputModeConversion(text_service->GetThreadManager(),
-                                            text_service->GetClientID(),
-                                            native_mode);
-        }
-      }
-    }
+  if (private_context == nullptr) {
+    return S_FALSE;
+  }
+  private_context->mutable_last_output()->CopyFrom(output);
+  if (!output.has_status()) {
+    return S_FALSE;
   }
 
+  const Status &status = output.status();
+  TipInputModeManager *input_mode_manager =
+      text_service->GetThreadContext()->GetInputModeManager();
+  const TipInputModeManager::NotifyActionSet action_set =
+      input_mode_manager->OnReceiveCommand(status.activated(),
+                                            status.comeback_mode(),
+                                            status.mode());
+  if ((action_set & TipInputModeManager::kNotifySystemOpenClose) ==
+      TipInputModeManager::kNotifySystemOpenClose) {
+    TipStatus::SetIMEOpen(text_service->GetThreadManager(),
+                          text_service->GetClientID(),
+                          input_mode_manager->GetEffectiveOpenClose());
+  }
+
+  if ((action_set & TipInputModeManager::kNotifySystemConversionMode) ==
+      TipInputModeManager::kNotifySystemConversionMode) {
+    const CompositionMode mozc_mode = static_cast<CompositionMode>(
+        input_mode_manager->GetEffectiveConversionMode());
+    uint32 native_mode = 0;
+    if (ConversionModeUtil::ToNativeMode(
+            mozc_mode,
+            private_context->input_behavior().prefer_kana_input,
+            &native_mode)) {
+      TipStatus::SetInputModeConversion(text_service->GetThreadManager(),
+                                        text_service->GetClientID(),
+                                        native_mode);
+    }
+  }
+  return S_OK;
+}
+
+HRESULT UpdatePreeditAndComposition(TipTextService *text_service,
+                                    ITfContext *context,
+                                    TfEditCookie write_cookie,
+                                    const Output &output) {
   CComPtr<ITfComposition> composition = CComQIPtr<ITfComposition>(
       TipCompositionUtil::GetComposition(context, write_cookie));
 
   // Clear the display attributes first.
   if (composition) {
-    result = TipCompositionUtil::ClearDisplayAttributes(
+    const HRESULT result = TipCompositionUtil::ClearDisplayAttributes(
         context, composition, write_cookie);
     if (FAILED(result)) {
       return result;
@@ -448,6 +477,27 @@ HRESULT DoEditSessionImpl(TipTextService *text_service,
 
   return UpdateComposition(
       text_service, context, composition, write_cookie, output);
+}
+
+HRESULT DoEditSessionInComposition(TipTextService *text_service,
+                                   ITfContext *context,
+                                   TfEditCookie write_cookie,
+                                   const Output &output) {
+  const HRESULT result = UpdatePrivateContext(
+      text_service, context, write_cookie, output);
+  if (FAILED(result)) {
+    return result;
+  }
+  return UpdatePreeditAndComposition(
+      text_service, context, write_cookie, output);
+}
+
+HRESULT DoEditSessionAfterComposition(TipTextService *text_service,
+                                      ITfContext *context,
+                                      TfEditCookie write_cookie,
+                                      const Output &output) {
+  return UpdatePrivateContext(
+      text_service, context, write_cookie, output);
 }
 
 HRESULT OnEndEditImpl(TipTextService *text_service,
@@ -469,7 +519,7 @@ HRESULT OnEndEditImpl(TipTextService *text_service,
     result = TipRangeUtil::GetDefaultSelection(
         context, write_cookie, &selection_range, &active_sel_end);
     if (FAILED(result)) {
-        return result;
+      return result;
     }
     vector<InputScope> input_scopes;
     result = TipRangeUtil::GetInputScopes(
@@ -487,7 +537,7 @@ HRESULT OnEndEditImpl(TipTextService *text_service,
   }
 
   CComPtr<ITfCompositionView> composition_view =
-    TipCompositionUtil::GetComposition(context, write_cookie);
+      TipCompositionUtil::GetComposition(context, write_cookie);
   if (!composition_view) {
     // If there is no composition, nothing to check.
     return S_OK;
@@ -526,9 +576,14 @@ HRESULT OnEndEditImpl(TipTextService *text_service,
     }
     if (!TipRangeUtil::IsRangeCovered(
             write_cookie, selected_range, composition_range)) {
-      if (!TipEditSessionImpl::OnCompositionTerminated(
-              text_service, context, composition, write_cookie)) {
-        return E_FAIL;
+      // We enqueue another edit session to sync the composition state between
+      // the application and Mozc server because we are already in
+      // ITfTextEditSink::OnEndEdit and some operations (e.g.,
+      // ITfComposition::EndComposition) result in failure in this edit
+      // session.
+      result = TipEditSession::SubmitAsync(text_service, context);
+      if (FAILED(result)) {
+        return result;
       }
       // Cancels further operations.
       return S_OK;
@@ -542,77 +597,25 @@ HRESULT OnEndEditImpl(TipTextService *text_service,
   }
   if (is_empty) {
     // When the composition range is empty, we assume the composition is
-    // canceled by the application or something. Actually CUAS does this
-    // when it receives NI_COMPOSITIONSTR/CPS_CANCEL. You can see this as
-    // Excel's auto-completion. If this happens, send REVERT command to
-    // the server to keep the state consistent. See b/1793331 for details.
-    if (!TipEditSessionImpl::OnCompositionReverted(
-            text_service, context, composition, write_cookie)) {
-      return E_FAIL;
+    // canceled by the application or something. Actually CUAS does this when
+    // it receives NI_COMPOSITIONSTR/CPS_CANCEL. You can see this as Excel's
+    // auto-completion. If this happens, send REVERT command to the server to
+    // keep the state consistent. See b/1793331 for details.
+
+    // We enqueue another edit session to sync the composition state between
+    // the application and Mozc server because we are already in
+    // ITfTextEditSink::OnEndEdit and some operations (e.g.,
+    // ITfComposition::EndComposition) result in failure in this edit session.
+    result = TipEditSession::CanceleCompositionAsync(text_service, context);
+    *update_ui = false;
+    if (FAILED(result)) {
+      return result;
     }
   }
   return S_OK;
 }
 
 }  // namespace
-
-HRESULT TipEditSessionImpl::UpdateContext(
-    TipTextService *text_service,
-    ITfContext *context,
-    TfEditCookie write_cookie,
-    const commands::Output &output) {
-  const HRESULT result = DoEditSessionImpl(
-      text_service, context, write_cookie, output);
-  UpdateUI(text_service, context, write_cookie);
-  return result;
-}
-
-bool TipEditSessionImpl::OnCompositionReverted(TipTextService *text_service,
-                                               ITfContext *context,
-                                               ITfComposition *composition,
-                                               TfEditCookie write_cookie) {
-  // Ignore any error.
-  TipCompositionUtil::ClearDisplayAttributes(
-      context, composition, write_cookie);
-
-  TipPrivateContext *private_context = text_service->GetPrivateContext(context);
-  if (!private_context) {
-    return false;
-  }
-
-  Output output;
-  SessionCommand command;
-  command.set_type(SessionCommand::REVERT);
-  if (!private_context->GetClient()->SendCommand(command, &output)) {
-    return false;
-  }
-
-  return SUCCEEDED(UpdateContext(text_service, context, write_cookie, output));
-}
-
-bool TipEditSessionImpl::OnCompositionTerminated(TipTextService *text_service,
-                                                 ITfContext *context,
-                                                 ITfComposition *composition,
-                                                 TfEditCookie write_cookie) {
-  if (!composition) {
-    return false;
-  }
-  // Ignore any error.
-  TipCompositionUtil::ClearDisplayAttributes(
-      context, composition, write_cookie);
-
-  TipPrivateContext *private_context = text_service->GetPrivateContext(context);
-  if (!private_context) {
-    return false;
-  }
-  Output output;
-  SessionCommand command;
-  command.set_type(SessionCommand::SUBMIT);
-  if (!private_context->GetClient()->SendCommand(command, &output)) {
-    return false;
-  }
-  return SUCCEEDED(UpdateContext(text_service, context, write_cookie, output));
-}
 
 HRESULT TipEditSessionImpl::OnEndEdit(TipTextService *text_service,
                                       ITfContext *context,
@@ -624,6 +627,54 @@ HRESULT TipEditSessionImpl::OnEndEdit(TipTextService *text_service,
   if (update_ui) {
     TipEditSessionImpl::UpdateUI(text_service, context, write_cookie);
   }
+  return result;
+}
+
+HRESULT TipEditSessionImpl::OnCompositionTerminated(
+    TipTextService *text_service,
+    ITfContext *context,
+    ITfComposition *composition,
+    TfEditCookie write_cookie) {
+  if (text_service == nullptr) {
+    return E_FAIL;
+  }
+  if (context == nullptr) {
+    return E_FAIL;
+  }
+
+  // Clear the display attributes first.
+  if (composition) {
+    const HRESULT result = TipCompositionUtil::ClearDisplayAttributes(
+        context, composition, write_cookie);
+    if (FAILED(result)) {
+      return result;
+    }
+  }
+
+  SessionCommand command;
+  command.set_type(SessionCommand::SUBMIT);
+  Output output;
+  TipPrivateContext *private_context = text_service->GetPrivateContext(context);
+  if (private_context == nullptr) {
+    return E_FAIL;
+  }
+  if (!private_context->GetClient()->SendCommand(command, &output)) {
+    return E_FAIL;
+  }
+  const HRESULT result = DoEditSessionAfterComposition(
+      text_service, context, write_cookie, output);
+  UpdateUI(text_service, context, write_cookie);
+  return result;
+}
+
+HRESULT TipEditSessionImpl::UpdateContext(
+    TipTextService *text_service,
+    ITfContext *context,
+    TfEditCookie write_cookie,
+    const commands::Output &output) {
+  const HRESULT result = DoEditSessionInComposition(
+      text_service, context, write_cookie, output);
+  UpdateUI(text_service, context, write_cookie);
   return result;
 }
 

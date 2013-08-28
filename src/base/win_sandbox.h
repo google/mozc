@@ -109,13 +109,19 @@ class WinSandbox {
     // Used for an object that is inaccessible from lower sandbox level.
     kPrivateObject = 0,
     // Used for a namedpipe object that is accessible from lower sandbox level.
-    kSharablePipe = 1,
+    kSharablePipe,
+    // Used for a namedpipe object that is accessible from lower sandbox level
+    // including processes with restricted tokens.
+    kLooseSharablePipe,
     // Used for an event object that is accessible from lower sandbox level.
-    kSharableEvent = 2,
+    kSharableEvent,
     // Used for a mutex object that is accessible from lower sandbox level.
-    kSharableMutex = 3,
+    kSharableMutex,
     // Used for a file object that can be read from lower sandbox level.
-    kSharableFileForRead = 4,
+    kSharableFileForRead,
+    // Used for an IPC process object that is queriable from lower sandbox
+    // level.
+    kIPCServerProcess,
   };
   static bool MakeSecurityAttributes(ObjectSecurityType shareble_object_type,
                                      SECURITY_ATTRIBUTES *security_descriptor);
@@ -178,9 +184,19 @@ class WinSandbox {
       IntegrityLevel integrity_level,
       ScopedHandle* restricted_token);
 
+ protected:
+  // Returns SDDL for given |shareble_object_type|.
+  // This method is placed here for unit testing.
+  static wstring GetSDDL(ObjectSecurityType shareble_object_type,
+                         const wstring &token_user_sid,
+                         const wstring &token_primary_group_sid,
+                         bool is_windows_vista_or_later,
+                         bool is_windows_8_or_later);
+
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(WinSandbox);
 };
+
 }  // namespace mozc
 #endif  // OS_WIN
 #endif  // MOZC_BASE_WIN_SANDBOX_H_

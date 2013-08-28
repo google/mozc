@@ -64,10 +64,10 @@
     "message": "直接入力"
   },
   "configPunctuationMethod": {
-    "message": "句読点"
+    "message": "句読点:"
   },
   "configPreeditMethod": {
-    "message": "ローマ字入力・かな入力"
+    "message": "ローマ字入力・かな入力:"
   },
   "configPreeditMethodRomaji": {
     "message": "ローマ字入力"
@@ -76,10 +76,10 @@
     "message": "かな入力"
   },
   "configSymbolMethod": {
-    "message": "記号"
+    "message": "記号:"
   },
   "configSpaceCharacterForm": {
-    "message": "スペースの入力"
+    "message": "スペースの入力:"
   },
   "configSpaceCharacterFormFollow": {
     "message": "入力モードに従う"
@@ -90,26 +90,14 @@
   "configSpaceCharacterFormHalf": {
     "message": "半角"
   },
-  "configHistoryLarningLevel": {
-    "message": "学習機能"
-  },
-  "configHistoryLarningLevelDefault": {
-    "message": "学習機能有効"
-  },
-  "configHistoryLarningLevelReadOnly": {
-    "message": "学習機能有効(新規学習はしない)"
-  },
-  "configHistoryLarningLevelOff": {
-    "message": "学習機能無効"
-  },
   "configSelectionShortcut": {
-    "message": "候補選択ショートカット"
+    "message": "候補選択ショートカット:"
   },
   "configSelectionShortcutNo": {
     "message": "なし"
   },
   "configShiftKeyModeSwitch": {
-    "message": "シフトキーでの入力切替"
+    "message": "シフトキーでの入力切替:"
   },
   "configShiftKeyModeSwitchOff": {
     "message": "オフ"
@@ -121,7 +109,7 @@
     "message": "カタカナ"
   },
   "configSessionKeymap": {
-    "message": "キー設定の選択"
+    "message": "キー設定の選択:"
   },
   "configSessionKeymapAtok": {
     "message": "ATOK"
@@ -148,7 +136,7 @@
     "message": "システム辞書からのサジェスト自動表示を有効にする"
   },
   "configSuggestionsSize": {
-    "message": "サジェストの最大候補数"
+    "message": "サジェストの最大候補数:"
   },
   "configSettingsTitle": {
     "message": "日本語入力の設定"
@@ -165,17 +153,35 @@
   "configPrivacyTitle": {
     "message": "プライバシー"
   },
-  "configClearUserHistory": {
+  "configClearHistory": {
+    "message": "入力履歴の削除..."
+  },
+  "configClearHistoryTitle": {
     "message": "入力履歴の削除"
   },
-  "configClearUserHistoryMessage": {
-    "message": "すべての入力履歴が削除されます。実行しますか？"
+  "configClearHistoryConversionHistory": {
+    "message": "変換履歴"
+  },
+  "configClearHistorySuggestionHistory": {
+    "message": "サジェスト用履歴"
+  },
+  "configClearHistoryOkButton": {
+    "message": "履歴データの削除"
+  },
+  "configClearHistoryCancelButton": {
+    "message": "キャンセル"
   },
   "configCreditsDescription": {
     "message": "Copyright © 2013 Google Inc. All Rights Reserved."
   },
   "configOssCreditsDescription": {
     "message": "本ソフトウェアは<a href=\"./credits_ja.html\">オープンソースソフトウェア</a>を利用しています。"
+  },
+  "configDialogCancel": {
+    "message": "キャンセル"
+  },
+  "configDialogOk": {
+    "message": "OK"
   },
   "configSyncConfigCancel": {
     "message": "キャンセル"
@@ -184,7 +190,7 @@
     "message": "OK"
   },
   "configSyncStartSync": {
-    "message": "同期する"
+    "message": "同期する..."
   },
   "configSyncStopSync": {
     "message": "同期の解除"
@@ -205,7 +211,7 @@
     "message": "同期機能：オフ"
   },
   "configSyncCustomization": {
-    "message": "詳細設定"
+    "message": "詳細設定..."
   },
   "configSyncAdvancedSettings": {
     "message": "同期の詳細設定"
@@ -231,7 +237,7 @@
   "configSyncUserDictionaryByteSizeExceeded": {
     "message": "ファイルサイズの上限を超えたため同期用辞書をセーブできません。"
   },
-  "configSyncUserDictionaryNumDicrionaryExceeded": {
+  "configSyncUserDictionaryNumDictionaryExceeded": {
     "message": "同期用辞書の数が上限を超えたため辞書をセーブできません。"
   },
   "configSyncUnknownErrorFound": {
@@ -245,6 +251,126 @@
   },
   "configSyncUnknownError": {
     "message": "未知の同期エラー"
+  },
+  "configDictionaryToolTitle": {
+    "message": "ユーザー辞書"
+  },
+  "configDictionaryToolDescription": {
+    "message": "よく使う単語をユーザー辞書に登録することができます。"
+  },
+  "configDictionaryToolButton": {
+    "message": "ユーザー辞書の管理..."
+  },
+  "dictionaryToolPageTitle": {
+    "message": "ユーザー辞書"
+  },
+  "dictionaryToolReadingTitle": {
+    "message": "よみ"
+  },
+  "dictionaryToolWordTitle": {
+    "message": "単語"
+  },
+  "dictionaryToolCategoryTitle": {
+    "message": "品詞"
+  },
+  "dictionaryToolCommentTitle": {
+    "message": "コメント"
+  },
+  "dictionaryToolCreateButton": {
+    "message": "辞書を作成"
+  },
+  "dictionaryToolRenameButton": {
+    "message": "辞書名を変更"
+  },
+  "dictionaryToolDeleteButton": {
+    "message": "辞書を削除"
+  },
+  "dictionaryToolExportButton": {
+    "message": "辞書をエクスポート"
+  },
+  "dictionaryToolDoneButton": {
+    "message": "完了"
+  },
+  "dictionaryToolReadingNewInput": {
+    "message": "新しい単語のよみ"
+  },
+  "dictionaryToolWordNewInput": {
+    "message": "新しい単語"
+  },
+  "dictionaryToolCommentNewInput": {
+    "message": "コメント"
+  },
+  "dictionaryToolDictionaryName": {
+    "message": "辞書名"
+  },
+  "dictionaryToolSyncableDictionaryName": {
+    "message": "同期用辞書"
+  },
+  "dictionaryToolDeleteDictionaryConfirm": {
+    "message": "$dictName$を削除しますか?",
+    "placeholders": {
+      "dictName": {
+        "content": "$1",
+        "example": "Dictionary Name"
+      }
+    }
+  },
+  "dictionaryToolStatuErrorGeneral": {
+    "message": "操作を実行できません。"
+  },
+  "dictionaryToolStatuErrorFileNotFound": {
+    "message": "ファイルを開けません。"
+  },
+  "dictionaryToolStatuErrorInvalidFileFormat": {
+    "message": "ファイルを読み込めません。"
+  },
+  "dictionaryToolStatuErrorFileSizeLimitExceeded": {
+    "message": "ファイルが大きすぎます。"
+  },
+  "dictionaryToolStatuErrorDictionarySizeLimitExceeded": {
+    "message": "これ以上辞書を作成できません。"
+  },
+  "dictionaryToolStatuErrorEntrySizeLimitExceeded": {
+    "message": "一つの辞書に含む単語が多すぎます。"
+  },
+  "dictionaryToolStatuErrorDictionaryNameEmpty": {
+    "message": "辞書名を入力してください。"
+  },
+  "dictionaryToolStatuErrorDictionaryNameTooLong": {
+    "message": "辞書名が長すぎます。"
+  },
+  "dictionaryToolStatuErrorDictionaryNameContainsInvalidCharacter": {
+    "message": "辞書名に使用できない文字が含まれています。"
+  },
+  "dictionaryToolStatuErrorDictionaryNameDuplicated": {
+    "message": "その辞書名はすでに使われています。"
+  },
+  "dictionaryToolStatuErrorReadingEmpty": {
+    "message": "よみを入力してください。"
+  },
+  "dictionaryToolStatuErrorReadingTooLong": {
+    "message": "よみが長すぎます。"
+  },
+  "dictionaryToolStatuErrorReadingContainsInvalidCharacter": {
+    "message": "よみに使用できない文字が含まれています。"
+  },
+  "dictionaryToolStatuErrorWordEmpty": {
+    "message": "単語を入力してください。"
+  },
+  "dictionaryToolStatuErrorWordTooLong": {
+    "message": "単語が長すぎます。"
+  },
+  "dictionaryToolStatuErrorWordContainsInvalidCharacter": {
+    "message": "単語に使用できない文字が含まれています。"
+  },
+  "dictionaryToolStatuErrorImportTooManyWords": {
+    "message": "インポートする単語が多すぎます。"
+  },
+  "dictionaryToolStatuErrorImportInvalidEntries": {
+    "message": "インポートできない単語がありました。"
+  },
+  "dictionaryToolStatuErrorNoUndoHistory": {
+    "message": "これ以上操作を取り消せません。"
   },
   "configUploadUsageStats": {
     "message": "使用統計データや障害レポートを Google に自動送信して Mozcの機能向上に役立てる"

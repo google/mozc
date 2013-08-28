@@ -741,16 +741,20 @@ TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
     for (size_t j = 0; j < 10000; ++j) {
       UserDictionaryStorage::UserDictionaryEntry *entry =
           dic->add_entries();
-      entry->set_key("no_suppress_key" + NumberUtil::SimpleItoa(j));
-      entry->set_value("no_suppress_value" + NumberUtil::SimpleItoa(j));
+      entry->set_key("no_suppress_key" +
+                     NumberUtil::SimpleItoa(static_cast<uint32>(j)));
+      entry->set_value("no_suppress_value" +
+                       NumberUtil::SimpleItoa(static_cast<uint32>(j)));
       entry->set_pos(user_dictionary::UserDictionary::NOUN);
     }
 
     for (size_t j = 0; j < 10; ++j) {
       UserDictionaryStorage::UserDictionaryEntry *entry =
           dic->add_entries();
-      entry->set_key("suppress_key" + NumberUtil::SimpleItoa(j));
-      entry->set_value("suppress_value" + NumberUtil::SimpleItoa(j));
+      entry->set_key(
+          "suppress_key" + NumberUtil::SimpleItoa(static_cast<uint32>(j)));
+      entry->set_value(
+          "suppress_value" + NumberUtil::SimpleItoa(static_cast<uint32>(j)));
       // entry->set_pos("抑制単語");
       entry->set_pos(user_dictionary::UserDictionary::SUPPRESSION_WORD);
     }
@@ -762,8 +766,8 @@ TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
 
     for (size_t j = 0; j < 10; ++j) {
       EXPECT_TRUE(suppression_dictionary_->SuppressEntry(
-          "suppress_key" + NumberUtil::SimpleItoa(j),
-          "suppress_value" + NumberUtil::SimpleItoa(j)));
+          "suppress_key" + NumberUtil::SimpleItoa(static_cast<uint32>(j)),
+          "suppress_value" + NumberUtil::SimpleItoa(static_cast<uint32>(j))));
     }
   }
 
@@ -777,8 +781,10 @@ TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
     for (size_t j = 0; j < 10000; ++j) {
       UserDictionaryStorage::UserDictionaryEntry *entry =
           dic->add_entries();
-      entry->set_key("no_suppress_key" + NumberUtil::SimpleItoa(j));
-      entry->set_value("no_suppress_value" + NumberUtil::SimpleItoa(j));
+      entry->set_key(
+          "no_suppress_key" + NumberUtil::SimpleItoa(static_cast<uint32>(j)));
+      entry->set_value(
+          "no_suppress_value" + NumberUtil::SimpleItoa(static_cast<uint32>(j)));
       entry->set_pos(user_dictionary::UserDictionary::NOUN);
     }
 
@@ -788,8 +794,8 @@ TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
 
     for (size_t j = 0; j < 10; ++j) {
       EXPECT_FALSE(suppression_dictionary_->SuppressEntry(
-          "suppress_key" + NumberUtil::SimpleItoa(j),
-          "suppress_value" + NumberUtil::SimpleItoa(j)));
+          "suppress_key" + NumberUtil::SimpleItoa(static_cast<uint32>(j)),
+          "suppress_value" + NumberUtil::SimpleItoa(static_cast<uint32>(j))));
     }
   }
   FileUtil::Unlink(filename);
@@ -815,7 +821,7 @@ TEST_F(UserDictionaryTest, TestSuggestionOnlyWord) {
     for (size_t j = 0; j < 10; ++j) {
       UserDictionaryStorage::UserDictionaryEntry *entry =
           dic->add_entries();
-      entry->set_key("key" + NumberUtil::SimpleItoa(j));
+      entry->set_key("key" + NumberUtil::SimpleItoa(static_cast<uint32>(j)));
       entry->set_value("default");
       // "名詞"
       entry->set_pos(user_dictionary::UserDictionary::NOUN);
@@ -824,7 +830,7 @@ TEST_F(UserDictionaryTest, TestSuggestionOnlyWord) {
     for (size_t j = 0; j < 10; ++j) {
       UserDictionaryStorage::UserDictionaryEntry *entry =
           dic->add_entries();
-      entry->set_key("key" + NumberUtil::SimpleItoa(j));
+      entry->set_key("key" + NumberUtil::SimpleItoa(static_cast<uint32>(j)));
       entry->set_value("suggest_only");
       // "サジェストのみ"
       entry->set_pos(user_dictionary::UserDictionary::SUGGESTION_ONLY);

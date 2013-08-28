@@ -169,7 +169,7 @@ TEST_F(ConfigHandlerTest, SetImposedConfig) {
     {false, Testcase::DO_NOT_IMPOSE, false},
   };
 
-  for (size_t i = 0; i < ARRAYSIZE_UNSAFE(kTestcases); ++i) {
+  for (size_t i = 0; i < arraysize(kTestcases); ++i) {
     const bool stored_config_value = kTestcases[i].stored_config_value;
     const bool expected = kTestcases[i].expected_value;
 
@@ -321,8 +321,8 @@ TEST_F(ConfigHandlerTest, GetDefaultConfig) {
     {"<>=+-/*", config::Config::FULL_WIDTH, config::Config::LAST_FORM},
     {"?!", config::Config::FULL_WIDTH, config::Config::LAST_FORM},
   };
-  EXPECT_EQ(output.character_form_rules_size(), ARRAYSIZE_UNSAFE(testcases));
-  for (size_t i = 0; i < ARRAYSIZE_UNSAFE(testcases); ++i) {
+  EXPECT_EQ(output.character_form_rules_size(), arraysize(testcases));
+  for (size_t i = 0; i < arraysize(testcases); ++i) {
     EXPECT_EQ(output.character_form_rules(i).group(),
               testcases[i].group);
     EXPECT_EQ(output.character_form_rules(i).preedit_character_form(),

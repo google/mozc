@@ -44,7 +44,7 @@ class SuppressionDictionary {
   SuppressionDictionary();
   virtual ~SuppressionDictionary();
 
-  // Lock dictioanry.
+  // Lock dictionary.
   // call Lock() before calling AddWord() or Clear();
   // When the dictionary is locked, Supress() return false.
   //
@@ -86,6 +86,6 @@ class SuppressionDictionary {
   bool has_value_empty_;
   Mutex mutex_;
 };
-}
+}  // namespace mozc
 
 #endif  // MOZC_DICTIONARY_SUPPRESSION_DICTIONARY_H_

@@ -417,8 +417,9 @@ TEST(UserDictionaryImporter, ImportFromIteratorNormalTest) {
     vector<UserDictionaryImporter::RawEntry> entries;
     for (size_t j = 0; j < kSize[i]; ++j) {
       UserDictionaryImporter::RawEntry entry;
-      const string key = "key" + NumberUtil::SimpleItoa(j);
-      const string value = "value" + NumberUtil::SimpleItoa(j);
+      const string key = "key" + NumberUtil::SimpleItoa(static_cast<uint32>(j));
+      const string value =
+          "value" + NumberUtil::SimpleItoa(static_cast<uint32>(j));
       entry.key = key;
       entry.value = value;
       // entry.set_pos("名詞");
@@ -460,8 +461,9 @@ TEST(UserDictionaryImporter, ImportFromIteratorSyncableTest) {
     vector<UserDictionaryImporter::RawEntry> entries;
     for (size_t j = 0; j < kSize[i]; ++j) {
       UserDictionaryImporter::RawEntry entry;
-      const string key = "key" + NumberUtil::SimpleItoa(j);
-      const string value = "value" + NumberUtil::SimpleItoa(j);
+      const string key = "key" + NumberUtil::SimpleItoa(static_cast<uint32>(j));
+      const string value =
+          "value" + NumberUtil::SimpleItoa(static_cast<uint32>(j));
       entry.key = key;
       entry.value = value;
       // entry.set_pos("名詞");
@@ -503,8 +505,9 @@ TEST(UserDictionaryImporter, ImportFromIteratorInvalidEntriesTest) {
     vector<UserDictionaryImporter::RawEntry> entries;
     for (size_t j = 0; j < kSize[i]; ++j) {
       UserDictionaryImporter::RawEntry entry;
-      const string key = "key" + NumberUtil::SimpleItoa(j);
-      const string value = "value" + NumberUtil::SimpleItoa(j);
+      const string key = "key" + NumberUtil::SimpleItoa(static_cast<uint32>(j));
+      const string value =
+          "value" + NumberUtil::SimpleItoa(static_cast<uint32>(j));
       entry.key = key;
       entry.value = value;
       if (j % 2 == 0) {

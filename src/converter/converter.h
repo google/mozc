@@ -87,7 +87,8 @@ class ConverterImpl : public ConverterInterface {
   virtual bool StartPartialSuggestion(Segments *segments,
                                       const string &key) const;
 
-  virtual bool FinishConversion(Segments *segments) const;
+  virtual bool FinishConversion(const ConversionRequest &request,
+                                Segments *segments) const;
   virtual bool CancelConversion(Segments *segments) const;
   virtual bool ResetConversion(Segments *segments) const;
   virtual bool RevertConversion(Segments *segments) const;

@@ -64,10 +64,10 @@
     "message": "Direct input"
   },
   "configPunctuationMethod": {
-    "message": "Punctuation style"
+    "message": "Punctuation style:"
   },
   "configPreeditMethod": {
-    "message": "Input mode"
+    "message": "Input mode:"
   },
   "configPreeditMethodRomaji": {
     "message": "Romaji"
@@ -76,10 +76,10 @@
     "message": "Kana"
   },
   "configSymbolMethod": {
-    "message": "Symbol style"
+    "message": "Symbol style:"
   },
   "configSpaceCharacterForm": {
-    "message": "Space input style"
+    "message": "Space input style:"
   },
   "configSpaceCharacterFormFollow": {
     "message": "Follow input mode"
@@ -90,26 +90,14 @@
   "configSpaceCharacterFormHalf": {
     "message": "Halfwidth"
   },
-  "configHistoryLarningLevel": {
-    "message": "Adjust conversion based on previous input"
-  },
-  "configHistoryLarningLevelDefault": {
-    "message": "Yes"
-  },
-  "configHistoryLarningLevelReadOnly": {
-    "message": "Yes (don't record new data)"
-  },
-  "configHistoryLarningLevelOff": {
-    "message": "No"
-  },
   "configSelectionShortcut": {
-    "message": "Selection shortcut"
+    "message": "Selection shortcut:"
   },
   "configSelectionShortcutNo": {
     "message": "No shortcut"
   },
   "configShiftKeyModeSwitch": {
-    "message": "Shift key mode switch"
+    "message": "Shift key mode switch:"
   },
   "configShiftKeyModeSwitchOff": {
     "message": "Off"
@@ -121,7 +109,7 @@
     "message": "Katakana"
   },
   "configSessionKeymap": {
-    "message": "Keymap style"
+    "message": "Keymap style:"
   },
   "configSessionKeymapAtok": {
     "message": "ATOK"
@@ -148,7 +136,7 @@
     "message": "Use system dictionary"
   },
   "configSuggestionsSize": {
-    "message": "Maximum number of suggestions"
+    "message": "Number of suggestions:"
   },
   "configSettingsTitle": {
     "message": "Japanese input settings"
@@ -157,7 +145,7 @@
     "message": "Basics"
   },
   "configInputAssistanceTitle": {
-    "message": "Input Assistance"
+    "message": "Input assistance"
   },
   "configSuggestTitle": {
     "message": "Suggest"
@@ -165,17 +153,35 @@
   "configPrivacyTitle": {
     "message": "Privacy"
   },
-  "configClearUserHistory": {
+  "configClearHistory": {
+    "message": "Clear personalization data..."
+  },
+  "configClearHistoryTitle": {
     "message": "Clear personalization data"
   },
-  "configClearUserHistoryMessage": {
-    "message": "Do you want to clear all personalization data?"
+  "configClearHistoryConversionHistory": {
+    "message": "Conversion history"
+  },
+  "configClearHistorySuggestionHistory": {
+    "message": "Suggestion history"
+  },
+  "configClearHistoryOkButton": {
+    "message": "Clear personalization data"
+  },
+  "configClearHistoryCancelButton": {
+    "message": "Cancel"
   },
   "configCreditsDescription": {
     "message": "Copyright © 2013 Google Inc. All Rights Reserved."
   },
   "configOssCreditsDescription": {
     "message": "This software is made possible by <a href=\"./credits_en.html\">open source software</a>."
+  },
+  "configDialogCancel": {
+    "message": "Cancel"
+  },
+  "configDialogOk": {
+    "message": "OK"
   },
   "configSyncConfigCancel": {
     "message": "Cancel"
@@ -184,7 +190,7 @@
     "message": "OK"
   },
   "configSyncStartSync": {
-    "message": "Start Sync"
+    "message": "Start Sync..."
   },
   "configSyncStopSync": {
     "message": "Stop Sync"
@@ -231,7 +237,7 @@
   "configSyncUserDictionaryByteSizeExceeded": {
     "message": "Cannot save dictionaries because Sync Dictionary exceeds its binary size limit."
   },
-  "configSyncUserDictionaryNumDicrionaryExceeded": {
+  "configSyncUserDictionaryNumDictionaryExceeded": {
     "message": "Cannot save dictionaries because the number of dictionaries for sync exceeds its limit."
   },
   "configSyncUnknownErrorFound": {
@@ -246,7 +252,127 @@
   "configSyncUnknownError": {
     "message": "Unknown sync error"
   },
+  "configDictionaryToolTitle": {
+    "message": "User dictionary"
+  },
+  "configDictionaryToolDescription": {
+    "message": "Add your own words to the user dictionary in order to customize the conversion candidates."
+  },
+  "configDictionaryToolButton": {
+    "message": "Manage user dictionary..."
+  },
+  "dictionaryToolPageTitle": {
+    "message": "User dictionary"
+  },
+  "dictionaryToolReadingTitle": {
+    "message": "Reading"
+  },
+  "dictionaryToolWordTitle": {
+    "message": "Word"
+  },
+  "dictionaryToolCategoryTitle": {
+    "message": "Category"
+  },
+  "dictionaryToolCommentTitle": {
+    "message": "Comment"
+  },
+  "dictionaryToolCreateButton": {
+    "message": "New dictionary"
+  },
+  "dictionaryToolRenameButton": {
+    "message": "Rename"
+  },
+  "dictionaryToolDeleteButton": {
+    "message": "Delete"
+  },
+  "dictionaryToolExportButton": {
+    "message": "Export"
+  },
+  "dictionaryToolDoneButton": {
+    "message": "Done"
+  },
+  "dictionaryToolReadingNewInput": {
+    "message": "New reading"
+  },
+  "dictionaryToolWordNewInput": {
+    "message": "New word"
+  },
+  "dictionaryToolCommentNewInput": {
+    "message": "Comment"
+  },
+  "dictionaryToolDictionaryName": {
+    "message": "Dictionary Name"
+  },
+  "dictionaryToolSyncableDictionaryName": {
+    "message": "Sync-able dictionary"
+  },
+  "dictionaryToolDeleteDictionaryConfirm": {
+    "message": "Do you want to delete $dictName$?",
+    "placeholders": {
+      "dictName": {
+        "content": "$1",
+        "example": "Dictionary Name"
+      }
+    }
+  },
+  "dictionaryToolStatuErrorGeneral": {
+    "message": "The operation has failed."
+  },
+  "dictionaryToolStatuErrorFileNotFound": {
+    "message": "Could not open the file."
+  },
+  "dictionaryToolStatuErrorInvalidFileFormat": {
+    "message": "Could not read the file."
+  },
+  "dictionaryToolStatuErrorFileSizeLimitExceeded": {
+    "message": "The data size exceeds the file size limit."
+  },
+  "dictionaryToolStatuErrorDictionarySizeLimitExceeded": {
+    "message": "Can't create any more dictionaries."
+  },
+  "dictionaryToolStatuErrorEntrySizeLimitExceeded": {
+    "message": "Can't create any more entries in this dictionary."
+  },
+  "dictionaryToolStatuErrorDictionaryNameEmpty": {
+    "message": "Please type a dictionary name."
+  },
+  "dictionaryToolStatuErrorDictionaryNameTooLong": {
+    "message": "The name is too long."
+  },
+  "dictionaryToolStatuErrorDictionaryNameContainsInvalidCharacter": {
+    "message": "The name contains invalid character(s)."
+  },
+  "dictionaryToolStatuErrorDictionaryNameDuplicated": {
+    "message": "The name already exists."
+  },
+  "dictionaryToolStatuErrorReadingEmpty": {
+    "message": "Please type the reading."
+  },
+  "dictionaryToolStatuErrorReadingTooLong": {
+    "message": "The reading is too long."
+  },
+  "dictionaryToolStatuErrorReadingContainsInvalidCharacter": {
+    "message": "The reading contains invalid character(s)."
+  },
+  "dictionaryToolStatuErrorWordEmpty": {
+    "message": "Please type the word."
+  },
+  "dictionaryToolStatuErrorWordTooLong": {
+    "message": "The word is too long."
+  },
+  "dictionaryToolStatuErrorWordContainsInvalidCharacter": {
+    "message": "Thw word contains invalid character(s)."
+  },
+  "dictionaryToolStatuErrorImportTooManyWords": {
+    "message": "The import source contains too many words."
+  },
+  "dictionaryToolStatuErrorImportInvalidEntries": {
+    "message": "Some words could not be imported."
+  },
+  "dictionaryToolStatuErrorNoUndoHistory": {
+    "message": "No more undo-able operation."
+  },
   "configUploadUsageStats": {
-    "message": "Help make Mozc better by automatically sending usage statistics and crash reports to Google."
+    "message": "Help make Mozc better by automatically sending usage statistics and crash reports to Google"
   }
 }

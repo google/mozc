@@ -93,7 +93,7 @@ RewriterImpl::RewriterImpl(const ConverterInterface *parent_converter,
 
   AddRewriter(new UserDictionaryRewriter);
   AddRewriter(new FocusCandidateRewriter);
-  AddRewriter(new TransliterationRewriter(*pos_matcher));
+  AddRewriter(new TransliterationRewriter(*pos_matcher, dictionary));
   AddRewriter(new EnglishVariantsRewriter);
   AddRewriter(new NumberRewriter(pos_matcher));
   AddRewriter(new CollocationRewriter(data_manager));

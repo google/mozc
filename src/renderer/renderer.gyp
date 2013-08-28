@@ -481,7 +481,7 @@
           'msvs_settings': {
             'VCManifestTool': {
               'AdditionalManifestFiles': 'mozc_renderer.exe.manifest',
-              'EmbedManifest': 'false',
+              'EmbedManifest': 'true',
             },
           },
         },

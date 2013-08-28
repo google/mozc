@@ -76,7 +76,7 @@ TEST(AndroidUtilTest, ParseLine_valid) {
   };
   string lhs;
   string rhs;
-  for (size_t i = 0; i < ARRAYSIZE_UNSAFE(testcases); ++i) {
+  for (size_t i = 0; i < arraysize(testcases); ++i) {
     const TestCase &testcase = testcases[i];
     SCOPED_TRACE(testcase.line);
     SCOPED_TRACE(testcase.lhs);

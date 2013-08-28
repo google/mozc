@@ -106,7 +106,7 @@ def ParseOptions():
                     help='The directory which will contain target binaries '
                     'and packages.')
   parser.add_option('--target_filename', dest='target_filename',
-                    help='The target filename.')
+                    help='The target filenames (comma separated).')
   (options, unused_args) = parser.parse_args()
   return options
 
@@ -123,9 +123,10 @@ def main():
       logging.error('Files in target_directory exceeds the limit.')
       sys.exit(-1)
   if options.target_filename:
-    if not CheckFileSize(options.target_filename):
-      logging.error('The target_filename exceeds the limit.')
-      sys.exit(-1)
+    for filename in options.target_filename.split(','):
+      if not CheckFileSize(filename):
+        logging.error('The target_filename exceeds the limit.')
+        sys.exit(-1)
 
 
 if __name__ == '__main__':

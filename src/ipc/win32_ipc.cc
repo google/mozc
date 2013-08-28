@@ -770,15 +770,6 @@ void IPCClient::Init(const string &name, const string &server_path) {
     const DWORD create_file_error = ::GetLastError();
     // ScopedHandle returns nullptr even when it received INVALID_HANDLE_VALUE.
     if (new_handle.get() != nullptr) {
-      DWORD mode = PIPE_READMODE_MESSAGE;
-      if (::SetNamedPipeHandleState(new_handle.get(), &mode, nullptr, nullptr)
-          == FALSE) {
-        const DWORD set_namedpipe_handle_state_error = ::GetLastError();
-        LOG(ERROR) << "SetNamedPipeHandleState failed. error: "
-                   << set_namedpipe_handle_state_error;
-        last_ipc_error_ = IPC_UNKNOWN_ERROR;
-        return;
-      }
       pipe_handle_.reset(new_handle.take());
       MaybeDisableFileCompletionNotification(pipe_handle_.get());
       if (!manager->IsValidServer(GetServerProcessIdImpl(pipe_handle_.get()),

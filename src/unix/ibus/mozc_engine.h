@@ -170,7 +170,6 @@ class MozcEngine : public EngineInterface {
   // TODO(nona): Introduce CandidateWindowHandlerManager to avoid direct access.
   scoped_ptr<CandidateWindowHandlerInterface> gtk_candidate_window_handler_;
   scoped_ptr<CandidateWindowHandlerInterface> ibus_candidate_window_handler_;
-  vector<IBusProperty *> prop_switch_properties_;
   config::Config::PreeditMethod preedit_method_;
 
   // Unique IDs of candidates that are currently shown.

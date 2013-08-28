@@ -56,7 +56,6 @@
         'remove_redundant_candidate_rewriter_test.cc',
         'rewriter_test.cc',
         'symbol_rewriter_test.cc',
-        'transliteration_rewriter_test.cc',
         'unicode_rewriter_test.cc',
         'user_boundary_history_rewriter_test.cc',
         'user_dictionary_rewriter_test.cc',
@@ -129,6 +128,38 @@
         'test_size': 'small',
       },
     },
+    {
+      'target_name': 'transliteration_rewriter_test',
+      'type': 'executable',
+      'sources': [
+        'transliteration_rewriter_test.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        '../composer/composer.gyp:composer',
+        '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
+        '../dictionary/dictionary.gyp:dictionary_mock',
+        '../session/session_base.gyp:request_test_util',
+        '../session/session_base.gyp:session_protocol',
+        '../testing/testing.gyp:gtest_main',
+        '../usage_stats/usage_stats_test.gyp:usage_stats_testing_util',
+        'rewriter.gyp:rewriter',
+      ],
+      'conditions': [
+        ['use_packed_dictionary==1', {
+          'dependencies': [
+            '../data_manager/packed/packed_data_manager.gyp:gen_packed_data_header_mock#host',
+          ],
+          'hard_dependency': 1,
+          'export_dependent_settings': [
+            '../data_manager/packed/packed_data_manager.gyp:gen_packed_data_header_mock#host',
+          ],
+        }],
+      ],
+      'variables': {
+        'test_size': 'small',
+      },
+    },
     # Test cases meta target: this target is referred from gyp/tests.gyp
     {
       'target_name': 'rewriter_all_test',
@@ -137,6 +168,7 @@
         'calculator/calculator.gyp:calculator_all_test',
         'rewriter_test',
         'single_kanji_rewriter_test',
+        'transliteration_rewriter_test',
       ],
     },
   ],

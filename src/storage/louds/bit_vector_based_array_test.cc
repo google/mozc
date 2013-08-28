@@ -62,7 +62,7 @@ TEST_F(BitVectorBasedArrayTest, Get) {
   };
 
   BitVectorBasedArrayBuilder builder;
-  for (size_t i = 0; i < ARRAYSIZE_UNSAFE(kTestData); ++i) {
+  for (size_t i = 0; i < arraysize(kTestData); ++i) {
     builder.Add(string(kTestData[i].element, kTestData[i].length));
   }
   builder.SetSize(4, 2);
@@ -70,7 +70,7 @@ TEST_F(BitVectorBasedArrayTest, Get) {
 
   BitVectorBasedArray array;
   array.Open(reinterpret_cast<const uint8*>(builder.image().data()));
-  for (size_t i = 0; i < ARRAYSIZE_UNSAFE(kTestData); ++i) {
+  for (size_t i = 0; i < arraysize(kTestData); ++i) {
     size_t length;
     const char *result = array.Get(i, &length);
     EXPECT_EQ(

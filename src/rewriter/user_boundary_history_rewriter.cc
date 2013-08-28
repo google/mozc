@@ -120,7 +120,8 @@ UserBoundaryHistoryRewriter::UserBoundaryHistoryRewriter(
 
 UserBoundaryHistoryRewriter::~UserBoundaryHistoryRewriter() {}
 
-void UserBoundaryHistoryRewriter::Finish(Segments *segments) {
+void UserBoundaryHistoryRewriter::Finish(const ConversionRequest &request,
+                                         Segments *segments) {
   if (segments->request_type() != Segments::CONVERSION) {
     return;
   }
@@ -147,10 +148,7 @@ void UserBoundaryHistoryRewriter::Finish(Segments *segments) {
   }
 
   if (segments->resized()) {
-    // |ResizeOrInsert| does NOT call Converter::ResizeSegment since we pass
-    // INSERT as an argument, so we can use dummy ConversionRequest.
-    const ConversionRequest default_request;
-    ResizeOrInsert(segments, default_request, INSERT);
+    ResizeOrInsert(segments, request, INSERT);
 #ifdef OS_ANDROID
     // TODO(hidehiko): UsageStats requires some functionalities, e.g. network,
     // which are not needed for mozc's main features.

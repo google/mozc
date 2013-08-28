@@ -49,8 +49,6 @@ class CommandRewriter : public RewriterInterface  {
   virtual bool Rewrite(const ConversionRequest &request,
                        Segments *segments) const;
 
-  virtual void Finish(Segments *segments);
-
  private:
   bool RewriteSegment(Segment *segment) const;
 

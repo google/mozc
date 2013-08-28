@@ -48,7 +48,7 @@ import java.util.ListIterator;
  *
  */
 public class SymbolCandidateLayouter implements CandidateLayouter {
-  private final SpanFactory spanFactory;
+  private SpanFactory spanFactory;
 
   /** The minimum width for each column. */
   private float minColumnWidth;
@@ -58,10 +58,6 @@ public class SymbolCandidateLayouter implements CandidateLayouter {
 
   /** The current view's width. */
   private int viewWidth;
-
-  public SymbolCandidateLayouter(SpanFactory spanFactory) {
-    this.spanFactory = spanFactory;
-  }
 
   public void setMinColumnWidth(float minColumnWidth) {
     this.minColumnWidth = minColumnWidth;
@@ -95,7 +91,8 @@ public class SymbolCandidateLayouter implements CandidateLayouter {
   @Override
   public CandidateLayout layout(CandidateList candidateList) {
     if (viewWidth <= 0 || rowHeight <= 0 || minColumnWidth <= 0 ||
-        candidateList == null || candidateList.getCandidatesCount() == 0) {
+        candidateList == null || candidateList.getCandidatesCount() == 0 ||
+        spanFactory == null) {
       return null;
     }
 
@@ -160,5 +157,12 @@ public class SymbolCandidateLayouter implements CandidateLayouter {
       List<Span> spanList = row.getSpanList();
       row.setWidth(spanList.isEmpty() ? 0 : spanList.get(spanList.size() - 1).getRight());
     }
+  }
+
+  /**
+   * @param spanFactory the spanFactory to set
+   */
+  public void setSpanFactory(SpanFactory spanFactory) {
+    this.spanFactory = spanFactory;
   }
 }

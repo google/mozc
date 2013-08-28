@@ -44,6 +44,7 @@ import org.mozc.android.inputmethod.japanese.ui.ScrollGuideView;
 import org.mozc.android.inputmethod.japanese.ui.SpanFactory;
 import org.mozc.android.inputmethod.japanese.view.MozcDrawableFactory;
 import org.mozc.android.inputmethod.japanese.view.SkinType;
+import com.google.common.base.Preconditions;
 
 import android.content.Context;
 import android.content.res.Resources;
@@ -102,6 +103,7 @@ public class CandidateView extends InOutAnimatedFrameLayout implements MemoryMan
 
     {
       setBackgroundDrawableType(DrawableType.CANDIDATE_BACKGROUND);
+      layouter = new ConversionCandidateLayouter();
     }
 
     public ConversionCandidateWordView(Context context, AttributeSet attributeSet) {
@@ -111,18 +113,23 @@ public class CandidateView extends InOutAnimatedFrameLayout implements MemoryMan
           resources.getInteger(R.integer.candidate_scroller_velocity_decay_rate) / 1000000f);
       scroller.setMinimumVelocity(
           resources.getInteger(R.integer.candidate_scroller_minimum_velocity));
+    }
 
-      float valueTextSize = resources.getDimension(R.dimen.candidate_text_size);
+    void setCandidateTextDimension(float candidateTextSize, float descriptionTextSize) {
+      Preconditions.checkArgument(candidateTextSize > 0);
+      Preconditions.checkArgument(descriptionTextSize > 0);
+
+      Resources resources = getResources();
+
       float valueHorizontalPadding =
           resources.getDimension(R.dimen.candidate_horizontal_padding_size);
       float valueVerticalPadding = resources.getDimension(R.dimen.candidate_vertical_padding_size);
-      float descriptionTextSize = resources.getDimension(R.dimen.candidate_description_text_size);
       float descriptionHorizontalPadding =
           resources.getDimension(R.dimen.symbol_description_right_padding);
       float descriptionVerticalPadding =
           resources.getDimension(R.dimen.symbol_description_bottom_padding);
 
-      candidateLayoutRenderer.setValueTextSize(valueTextSize);
+      candidateLayoutRenderer.setValueTextSize(candidateTextSize);
       candidateLayoutRenderer.setValueHorizontalPadding(valueHorizontalPadding);
       candidateLayoutRenderer.setValueScalingPolicy(ValueScalingPolicy.HORIZONTAL);
       candidateLayoutRenderer.setDescriptionTextSize(descriptionTextSize);
@@ -131,7 +138,7 @@ public class CandidateView extends InOutAnimatedFrameLayout implements MemoryMan
       candidateLayoutRenderer.setDescriptionLayoutPolicy(DescriptionLayoutPolicy.EXCLUSIVE);
 
       SpanFactory spanFactory = new SpanFactory();
-      spanFactory.setValueTextSize(valueTextSize);
+      spanFactory.setValueTextSize(candidateTextSize);
       spanFactory.setDescriptionTextSize(descriptionTextSize);
       spanFactory.setDescriptionDelimiter(DESCRIPTION_DELIMITER);
 
@@ -141,16 +148,16 @@ public class CandidateView extends InOutAnimatedFrameLayout implements MemoryMan
       float candidateTextMinimumWidth =
           resources.getDimension(R.dimen.candidate_text_minimum_width);
       float candidateChunkMinimumWidth =
-          resources.getDimension(R.dimen.keyboard_folding_icon_size);
+          candidateTextSize + resources.getDimension(R.dimen.candidate_vertical_padding_size) * 2;
 
-      setCandidateLayouter(new ConversionCandidateLayouter(
-          spanFactory,
-          candidateWidthCompressionRate,
-          candidateTextMinimumWidth,
-          candidateChunkMinimumWidth,
-          valueTextSize,
-          valueHorizontalPadding,
-          valueVerticalPadding));
+      ConversionCandidateLayouter layouter = ConversionCandidateLayouter.class.cast(this.layouter);
+      layouter.setSpanFactory(spanFactory);
+      layouter.setValueWidthCompressionRate(candidateWidthCompressionRate);
+      layouter.setMinValueWidth(candidateTextMinimumWidth);
+      layouter.setMinChunkWidth(candidateChunkMinimumWidth);
+      layouter.setValueHeight(candidateTextSize);
+      layouter.setValueHorizontalPadding(valueHorizontalPadding);
+      layouter.setValueVerticalPadding(valueVerticalPadding);
     }
 
     @Override
@@ -310,6 +317,14 @@ public class CandidateView extends InOutAnimatedFrameLayout implements MemoryMan
   void setSkinType(SkinType skinType) {
     getScrollGuideView().setSkinType(skinType);
     getConversionCandidateWordView().setSkinType(skinType);
+  }
+
+  void setCandidateTextDimension(float candidateTextSize, float descriptionTextSize) {
+    Preconditions.checkArgument(candidateTextSize > 0);
+    Preconditions.checkArgument(descriptionTextSize > 0);
+
+    getConversionCandidateWordView().setCandidateTextDimension(candidateTextSize,
+                                                               descriptionTextSize);
   }
 
   void setNarrowMode(boolean narrowMode) {

@@ -34,6 +34,7 @@
 
 #include "base/base.h"
 #include "base/logging.h"
+#include "base/number_util.h"
 #include "base/protobuf/descriptor.h"
 #include "base/util.h"
 #include "net/jsoncpp.h"
@@ -64,8 +65,8 @@ bool ProtobufRepeatedFieldValueToJsonValue(
       return true;
     }
     case FieldDescriptor::CPPTYPE_INT64: {
-      *value = Json::Value(Json::Int64(
-                   reflection.GetRepeatedInt64(message, &field, index)));
+      *value = Json::Value(NumberUtil::SimpleItoa(static_cast<int64>(
+                   reflection.GetRepeatedInt64(message, &field, index))));
       return true;
     }
     case FieldDescriptor::CPPTYPE_UINT32: {
@@ -74,8 +75,8 @@ bool ProtobufRepeatedFieldValueToJsonValue(
       return true;
     }
     case FieldDescriptor::CPPTYPE_UINT64: {
-      *value = Json::Value(Json::UInt64(
-                   reflection.GetRepeatedUInt64(message, &field, index)));
+      *value = Json::Value(NumberUtil::SimpleItoa(static_cast<uint64>(
+                   reflection.GetRepeatedUInt64(message, &field, index))));
       return true;
     }
     case FieldDescriptor::CPPTYPE_FLOAT: {
@@ -124,7 +125,8 @@ bool ProtobufFieldValueToJsonValue(
       return true;
     }
     case FieldDescriptor::CPPTYPE_INT64: {
-      *value = Json::Value(Json::Int64(reflection.GetInt64(message, &field)));
+      *value = Json::Value(NumberUtil::SimpleItoa(static_cast<int64>(
+                   reflection.GetInt64(message, &field))));
       return true;
     }
     case FieldDescriptor::CPPTYPE_UINT32: {
@@ -132,7 +134,8 @@ bool ProtobufFieldValueToJsonValue(
       return true;
     }
     case FieldDescriptor::CPPTYPE_UINT64: {
-      *value = Json::Value(Json::UInt64(reflection.GetUInt64(message, &field)));
+      *value = Json::Value(NumberUtil::SimpleItoa(static_cast<uint64>(
+                   reflection.GetUInt64(message, &field))));
       return true;
     }
     case FieldDescriptor::CPPTYPE_FLOAT: {
@@ -185,12 +188,18 @@ bool JsonValueToProtobufFieldValue(
       break;
     }
     case FieldDescriptor::CPPTYPE_INT64: {
-      if (!value.isConvertibleTo(Json::intValue)) {
-        DLOG(ERROR) << "value is not convertible to intValue: "
+      if (!value.isConvertibleTo(Json::stringValue)) {
+        DLOG(ERROR) << "value is not convertible to stringValue: "
                     << Json::FastWriter().write(value);
         return false;
       }
-      reflection->SetInt64(message, field, value.asInt64());
+      int64 int_value;
+      if (!NumberUtil::SafeStrToInt64(value.asString(), &int_value)) {
+        DLOG(ERROR) << "value is not convertible to int64: "
+                    << Json::FastWriter().write(value);
+        return false;
+      }
+      reflection->SetInt64(message, field, int_value);
       break;
     }
     case FieldDescriptor::CPPTYPE_UINT32: {
@@ -203,12 +212,18 @@ bool JsonValueToProtobufFieldValue(
       break;
     }
     case FieldDescriptor::CPPTYPE_UINT64: {
-      if (!value.isConvertibleTo(Json::uintValue)) {
-        DLOG(ERROR) << "value is not convertible to uintValue: "
+      if (!value.isConvertibleTo(Json::stringValue)) {
+        DLOG(ERROR) << "value is not convertible to stringValue: "
                     << Json::FastWriter().write(value);
         return false;
       }
-      reflection->SetUInt64(message, field, value.asUInt64());
+      uint64 uint_value;
+      if (!NumberUtil::SafeStrToUInt64(value.asString(), &uint_value)) {
+        DLOG(ERROR) << "value is not convertible to uint64: "
+                    << Json::FastWriter().write(value);
+        return false;
+      }
+      reflection->SetUInt64(message, field, uint_value);
       break;
     }
     case FieldDescriptor::CPPTYPE_DOUBLE: {
@@ -302,12 +317,18 @@ bool JsonValueToProtobufRepeatedFieldValue(
     }
     case FieldDescriptor::CPPTYPE_INT64: {
       for (Json::ArrayIndex i = 0; i < value.size(); ++i) {
-        if (!value[i].isConvertibleTo(Json::intValue)) {
-          DLOG(ERROR) << "value is not convertible to intValue: "
+        int64 int_value;
+        if (!value[i].isConvertibleTo(Json::stringValue)) {
+          DLOG(ERROR) << "value is not convertible to stringValue: "
+                      << Json::FastWriter().write(value[i]);
+          result = false;
+        } else if (!NumberUtil::SafeStrToInt64(value[i].asString(),
+                                               &int_value)) {
+          DLOG(ERROR) << "value is not convertible to int64: "
                       << Json::FastWriter().write(value[i]);
           result = false;
         } else {
-          reflection->AddInt64(message, field, value[i].asInt64());
+          reflection->AddInt64(message, field, int_value);
         }
       }
       break;
@@ -326,12 +347,18 @@ bool JsonValueToProtobufRepeatedFieldValue(
     }
     case FieldDescriptor::CPPTYPE_UINT64: {
       for (Json::ArrayIndex i = 0; i < value.size(); ++i) {
-        if (!value[i].isConvertibleTo(Json::uintValue)) {
-          DLOG(ERROR) << "value is not convertible to uintValue: "
+        uint64 uint_value;
+        if (!value[i].isConvertibleTo(Json::stringValue)) {
+          DLOG(ERROR) << "value is not convertible to stringValue: "
+                      << Json::FastWriter().write(value[i]);
+          result = false;
+        } else if (!NumberUtil::SafeStrToUInt64(value[i].asString(),
+                                                &uint_value)) {
+          DLOG(ERROR) << "value is not convertible to uint64: "
                       << Json::FastWriter().write(value[i]);
           result = false;
         } else {
-          reflection->AddUInt64(message, field, value[i].asUInt64());
+          reflection->AddUInt64(message, field, uint_value);
         }
       }
       break;

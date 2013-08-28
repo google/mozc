@@ -147,11 +147,6 @@ class SessionRegressionTest : public testing::Test {
     session_factory_.reset(new session::JapaneseSessionFactory(engine_.get()));
     session::SessionFactoryManager::SetSessionFactory(session_factory_.get());
 
-    config::ConfigHandler::GetDefaultConfig(&config_);
-    // TOOD(all): Add a test for the case where
-    // use_realtime_conversion is true.
-    config_.set_use_realtime_conversion(false);
-    config::ConfigHandler::SetConfig(config_);
     handler_.reset(new SessionHandler());
     ResetSession();
     CHECK(session_.get());
@@ -269,7 +264,6 @@ TEST_F(SessionRegressionTest,
     EXPECT_FALSE(command.output().has_result());
 
     EXPECT_TRUE(SendKey("a", &command));
-    EXPECT_FALSE(command.output().has_candidates());
 #if OS_MACOSX
     // The MacOS default short cut of F10 is DisplayAsHalfAlphanumeric.
     // It does not start the conversion so output does not have any result.

@@ -154,7 +154,7 @@ TEST_F(UserBoundaryHistoryRewriterTest, Rewrite1) {
   bounded_segments.set_resized(true);
   bounded_segments.set_user_history_enabled(true);
 
-  rewriter.Finish(&bounded_segments);
+  rewriter.Finish(default_request_, &bounded_segments);
   const string bounded_segments_str = bounded_segments.DebugString();
 
   Segments segments;
@@ -199,7 +199,7 @@ TEST_F(UserBoundaryHistoryRewriterTest, Rewrite2) {
   segments.set_resized(true);
   segments.set_user_history_enabled(true);
 
-  rewriter.Finish(&segments);
+  rewriter.Finish(default_request_, &segments);
   const string segments_str = segments.DebugString();
 
   Segments bounded_segments;
@@ -242,7 +242,7 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoInsertWhenIncognito) {
   bounded_segments.set_resized(true);
   bounded_segments.set_user_history_enabled(true);
 
-  rewriter.Finish(&bounded_segments);
+  rewriter.Finish(default_request_, &bounded_segments);
   const string bounded_segments_str = bounded_segments.DebugString();
 
   Segments segments;
@@ -266,7 +266,7 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoInsertWhenReadOnly) {
   bounded_segments.set_resized(true);
   bounded_segments.set_user_history_enabled(true);
 
-  rewriter.Finish(&bounded_segments);
+  rewriter.Finish(default_request_, &bounded_segments);
   const string bounded_segments_str = bounded_segments.DebugString();
 
   Segments segments;
@@ -289,7 +289,7 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoInsertWhenDisableUserHistory) {
   bounded_segments.set_resized(true);
   bounded_segments.set_user_history_enabled(false);
 
-  rewriter.Finish(&bounded_segments);
+  rewriter.Finish(default_request_, &bounded_segments);
   const string bounded_segments_str = bounded_segments.DebugString();
 
   Segments segments;
@@ -312,7 +312,7 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoInsertWhenNotResized) {
   bounded_segments.set_resized(false);
   bounded_segments.set_user_history_enabled(true);
 
-  rewriter.Finish(&bounded_segments);
+  rewriter.Finish(default_request_, &bounded_segments);
   const string bounded_segments_str = bounded_segments.DebugString();
 
   Segments segments;
@@ -335,7 +335,7 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoRewriteAfterClear) {
   bounded_segments.set_resized(true);
   bounded_segments.set_user_history_enabled(true);
 
-  rewriter.Finish(&bounded_segments);
+  rewriter.Finish(default_request_, &bounded_segments);
   const string bounded_segments_str = bounded_segments.DebugString();
 
   Segments segments;
@@ -361,7 +361,7 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoRewriteWhenIncognito) {
   bounded_segments.set_resized(true);
   bounded_segments.set_user_history_enabled(true);
 
-  rewriter.Finish(&bounded_segments);
+  rewriter.Finish(default_request_, &bounded_segments);
   const string bounded_segments_str = bounded_segments.DebugString();
 
   Segments segments;
@@ -385,7 +385,7 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoRewriteWhenNoHistory) {
   bounded_segments.set_resized(true);
   bounded_segments.set_user_history_enabled(true);
 
-  rewriter.Finish(&bounded_segments);
+  rewriter.Finish(default_request_, &bounded_segments);
   const string bounded_segments_str =bounded_segments.DebugString();
 
   Segments segments;
@@ -409,7 +409,7 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoRewriteWhenDisabledUserHistory) {
   bounded_segments.set_resized(true);
   bounded_segments.set_user_history_enabled(true);
 
-  rewriter.Finish(&bounded_segments);
+  rewriter.Finish(default_request_, &bounded_segments);
   const string bounded_segments_str =bounded_segments.DebugString();
 
   Segments segments;
@@ -432,7 +432,7 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoRewriteWhenAlreadyResized) {
   bounded_segments.set_resized(true);
   bounded_segments.set_user_history_enabled(true);
 
-  rewriter.Finish(&bounded_segments);
+  rewriter.Finish(default_request_, &bounded_segments);
   const string bounded_segments_str =bounded_segments.DebugString();
 
   Segments segments;

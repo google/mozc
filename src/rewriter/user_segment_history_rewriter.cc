@@ -782,7 +782,8 @@ bool UserSegmentHistoryRewriter::IsAvailable(const Segments &segments) const {
   return true;
 }
 
-void UserSegmentHistoryRewriter::Finish(Segments *segments) {
+void UserSegmentHistoryRewriter::Finish(const ConversionRequest &request,
+                                        Segments *segments) {
   if (segments->request_type() != Segments::CONVERSION) {
     return;
   }

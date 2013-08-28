@@ -245,7 +245,7 @@ Node *ValueDictionary::LookupPredictive(
   return LookupPredictiveWithLimit(str, size, empty_limit_, allocator);
 }
 
-// Value dictioanry is intended to use for prediction,
+// Value dictionary is intended to use for prediction,
 // so we don't support LookupPrefix
 Node *ValueDictionary::LookupPrefixWithLimit(
     const char *str, int size,

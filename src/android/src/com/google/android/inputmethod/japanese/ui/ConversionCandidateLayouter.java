@@ -97,42 +97,74 @@ public class ConversionCandidateLayouter implements CandidateLayouter {
     }
   }
 
-  private final SpanFactory spanFactory;
+  private SpanFactory spanFactory;
 
   /** Horizontal common ratio of the value size. */
-  private final float valueWidthCompressionRate;
+  private float valueWidthCompressionRate;
 
   /** Minimum width of the value. */
-  private final float minValueWidth;
+  private float minValueWidth;
 
   /** The Minimum width of the chunk. */
-  private final float minChunkWidth;
+  private float minChunkWidth;
 
   /** Height of the value. */
-  private final float valueHeight;
+  private float valueHeight;
 
-  private final float valueHorizontalPadding;
-  private final float valueVerticalPadding;
+  private float valueHorizontalPadding;
+  private float valueVerticalPadding;
 
   /** The current view's width. */
   private int viewWidth;
 
   private boolean reserveEmptySpan = false;
 
-  public ConversionCandidateLayouter(
-      SpanFactory spanFactory,
-      float valueWidthCompressionRate,
-      float minValueWidth,
-      float minChunkWidth,
-      float valueHeight,
-      float valueHorizontalPadding,
-      float valueVerticalPadding) {
+  /**
+   * @param spanFactory the spanFactory to set
+   */
+  public void setSpanFactory(SpanFactory spanFactory) {
     this.spanFactory = spanFactory;
+  }
+
+  /**
+   * @param valueWidthCompressionRate the valueWidthCompressionRate to set
+   */
+  public void setValueWidthCompressionRate(float valueWidthCompressionRate) {
     this.valueWidthCompressionRate = valueWidthCompressionRate;
+  }
+
+  /**
+   * @param minValueWidth the minValueWidth to set
+   */
+  public void setMinValueWidth(float minValueWidth) {
     this.minValueWidth = minValueWidth;
+  }
+
+  /**
+   * @param minChunkWidth the minChunkWidth to set
+   */
+  public void setMinChunkWidth(float minChunkWidth) {
     this.minChunkWidth = minChunkWidth;
+  }
+
+  /**
+   * @param valueHeight the valueHeight to set
+   */
+  public void setValueHeight(float valueHeight) {
     this.valueHeight = valueHeight;
+  }
+
+  /**
+   * @param valueHorizontalPadding the valueHorizontalPadding to set
+   */
+  public void setValueHorizontalPadding(float valueHorizontalPadding) {
     this.valueHorizontalPadding = valueHorizontalPadding;
+  }
+
+  /**
+   * @param valueVerticalPadding the valueVerticalPadding to set
+   */
+  public void setValueVerticalPadding(float valueVerticalPadding) {
     this.valueVerticalPadding = valueVerticalPadding;
   }
 
@@ -171,7 +203,8 @@ public class ConversionCandidateLayouter implements CandidateLayouter {
   @Override
   public CandidateLayout layout(CandidateList candidateList) {
     if (minChunkWidth <= 0 || viewWidth <= 0 ||
-        candidateList == null || candidateList.getCandidatesCount() == 0) {
+        candidateList == null || candidateList.getCandidatesCount() == 0 ||
+        spanFactory == null) {
       return null;
     }
 

@@ -39,8 +39,12 @@ namespace net {
 
 class JsonUtil {
  public:
+  // Converts protobuf message to JSON value.
+  // Note: JavaScript JSON parser can't handle int64/uint64.
+  // So it converts int64/uint64 value in protobuf to string value in JSON.
   static bool ProtobufMessageToJsonValue(
       const protobuf::Message &message, Json::Value *value);
+  // Converts JSON value to protobuf message.
   static bool JsonValueToProtobufMessage(
       const Json::Value &value, protobuf::Message *message);
 

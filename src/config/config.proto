@@ -271,8 +271,6 @@ message Config {
 
   // Use typing correction feature.
   // e.g. sunkai -> 深海
-  // Note that surely build configuration is prioritized.
-  // c.f. MOZC_ENABLE_TYPING_CORRECTION
   optional bool use_typing_correction = 66 [ default = false ];
 
   //////////////////////////////////////////////////////////////
@@ -350,38 +348,7 @@ message Config {
 
   // Multilingual config.  It resides here for historical reason.
   // TODO(mukai): apply extension for multilingual config.
-  optional PinyinConfig pinyin_config = 996;
   optional HangulConfig hangul_config = 998;
-  optional ChewingConfig chewing_config = 999;
-};
-
-// Config for Chinese PinYin input.  Those items are based on the libpyzy
-// configurations and current ChromeOS ibus-pinyin config items.
-message PinyinConfig {
-  // These default values are not used on ChromeOS.
-
-  // Corrects some typos or not.  (e.g. gn -> ng)
-  optional bool correct_pinyin = 1 [default = true];
-  // Accepts pinyin which is based on the pronunciation of Mandarin Chinese.
-  optional bool fuzzy_pinyin = 2 [default = false];
-  optional bool select_with_shift = 3 [default = false];
-  optional bool paging_with_minus_equal = 4 [default = true];
-  optional bool paging_with_comma_period = 5 [default = true];
-  optional bool auto_commit = 6 [default = false];
-  optional bool double_pinyin = 7 [default = false];
-  optional bool initial_mode_chinese = 8 [default = true];
-  optional bool initial_mode_full_width_word = 9 [default = false];
-  optional bool initial_mode_full_width_punctuation = 10 [default = true];
-  optional bool initial_mode_simplified_chinese = 11 [default = true];
-
-  // Double pinyin shcema list.
-  // MSPY = 0;
-  // ZRM = 1;
-  // ABC = 2;
-  // ZGPY = 3;
-  // PYJJ = 4;
-  // XHE = 5;
-  optional int32 double_pinyin_schema = 12 [default = 0];
 };
 
 
@@ -402,53 +369,4 @@ message HangulConfig {
 
   // custom hanja keymap
   repeated bytes hanja_keys = 2;
-};
-
-// Config for Taiwanese chewing input.  Those items are based on the
-// libchewing configurations and current ChromeOS ibus-chewing config
-// items.
-message ChewingConfig {
-  optional bool automatic_shift_cursor = 1 [ default = false ];
-  optional bool add_phrase_direction = 2 [ default = false ];
-  optional bool easy_symbol_input = 3 [ default = false ];
-  optional bool escape_cleans_all_buffer = 4 [ default = false ];
-  optional bool force_lowercase_english = 5 [ default = false ];
-  // does not make sense with the current code because libchewing does
-  // not care this item.
-  // TODO(mukai): implement it.
-  optional bool plain_zhuyin = 6 [ default = false ];
-  optional bool phrase_choice_rearward = 7 [ default = true ];
-  optional bool space_as_selection = 8 [ default = true ];
-  optional uint32 maximum_chinese_character_length = 9 [ default = 40 ];
-  optional uint32 candidates_per_page = 10 [ default = 10 ];
-  enum KeyboardType {
-    DEFAULT = 0;
-    HSU = 1;
-    IBM = 2;
-    GIN_YIEH = 3;
-    ETEN = 4;
-    ETEN26 = 5;
-    DVORAK = 6;
-    DVORAK_HSU = 7;
-    DACHEN_26 = 8;
-    HANYU = 9;
-  };
-  optional KeyboardType keyboard_type = 11 [ default = DEFAULT ];
-  enum SelectionKeys {
-    SELECTION_1234567890 = 0;
-    SELECTION_asdfghjkl = 1;
-    SELECTION_asdfzxcv89 = 2;
-    SELECTION_asdfjkl789 = 3;
-    SELECTION_aoeuqjkix = 4;
-    SELECTION_aoeuhtnsid = 5;
-    SELECTION_aoeuidhtns = 6;
-    SELECTION_1234qweras = 7;
-  };
-  optional SelectionKeys selection_keys = 12 [ default = SELECTION_1234567890 ];
-  enum HsuSelectionKeys {
-    HSU_asdfjkl789 = 0;
-    HSU_asdfzxcv89 = 1;
-  };
-  optional HsuSelectionKeys hsu_selection_keys = 13
-      [ default = HSU_asdfjkl789 ];
 };

@@ -33,7 +33,9 @@ import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.DeletionRang
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Preedit;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Preedit.Segment;
 import org.mozc.android.inputmethod.japanese.protobuf.ProtoCommands.Preedit.Segment.Annotation;
+import com.google.common.base.Strings;
 
+import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 
 import java.util.Arrays;
@@ -657,5 +659,173 @@ public class SelectionTrackerTest extends TestCase {
     tracker.onRender(null, null, createPreedit(1, createSegment("あ")));
     assertEquals(SelectionTracker.DO_NOTHING, tracker.onUpdateSelection(0, 3, 1, 1, 0, 1));
     assertTracker(0, 1, 1, tracker);
+  }
+
+  interface ScenarioPiece {
+    void execute(SelectionTracker tracker);
+  }
+
+  static class RenderCommit implements ScenarioPiece {
+
+    private int commitLength;
+
+    RenderCommit(int commitLength) {
+      this.commitLength = commitLength;
+    }
+
+    @Override
+    public void execute(SelectionTracker tracker) {
+      tracker.onRender(null, Strings.repeat("a", commitLength), null);
+    }
+  }
+
+  static class RenderPreedit implements ScenarioPiece {
+
+    private int preeditLength;
+
+    RenderPreedit(int preeditLength) {
+      this.preeditLength = preeditLength;
+    }
+
+    @Override
+    public void execute(SelectionTracker tracker) {
+      tracker.onRender(null,  null,
+          Preedit.newBuilder()
+              .addSegment(Segment.newBuilder()
+                              .setValue(Strings.repeat("a", preeditLength))
+                              .buildPartial())
+              .setCursor(preeditLength)
+              .buildPartial());
+    }
+  }
+
+  static class Selection implements ScenarioPiece {
+
+    private int oldSelStart;
+    private int oldSelEnd;
+    private int newSelStart;
+    private int newSelEnd;
+    private int candidatesStart;
+    private int candidatesEnd;
+    private int expectedResult;
+
+    Selection(int oldSelStart, int oldSelEnd,
+        int newSelStart, int newSelEnd,
+        int candidatesStart, int candidatesEnd,
+        int expectedResult) {
+      this.oldSelStart = oldSelStart;
+      this.oldSelEnd = oldSelEnd;
+      this.newSelStart = newSelStart;
+      this.newSelEnd = newSelEnd;
+      this.candidatesStart = candidatesStart;
+      this.candidatesEnd = candidatesEnd;
+      this.expectedResult = expectedResult;
+    }
+
+    @Override
+    public void execute(SelectionTracker tracker) {
+      assertEquals(
+          expectedResult,
+          tracker.onUpdateSelection(oldSelStart, oldSelEnd, newSelStart,
+                                    newSelEnd, candidatesStart, candidatesEnd));
+    }
+  }
+
+  static void runScenario(boolean webTextView, ScenarioPiece... scenaroPieces) {
+    SelectionTracker tracker = new SelectionTracker();
+    tracker.onStartInput(0, 0, webTextView);
+    for (int i = 0; i < scenaroPieces.length; ++i) {
+      try {
+        scenaroPieces[i].execute(tracker);
+      } catch (AssertionFailedError e) {
+        throw new AssertionFailedError(
+            String.format("step %d (%s): %s",
+                i + 1, scenaroPieces[i].getClass().getSimpleName(), e.toString()));
+      }
+    }
+  }
+
+  public void testBackSpaceOnWebView() {
+    runScenario(true,
+        new RenderPreedit(1),
+        new Selection(0, 0, 1, 1, 0, 1, SelectionTracker.DO_NOTHING),
+        new RenderCommit(1),
+        new Selection(1, 1, 1, 1, -1, -1, SelectionTracker.DO_NOTHING),
+        // Here undetectable cursor move.
+        new RenderPreedit(1),
+        new Selection(1, 1, 1, 1, 0, 1, SelectionTracker.DO_NOTHING));
+  }
+
+  public void testBackSpaceOnTextEdit() {
+    runScenario(false,
+        new RenderPreedit(1),
+        new Selection(0, 0, 1, 1, 0, 1, SelectionTracker.DO_NOTHING),
+        new RenderCommit(1),
+        new Selection(1, 1, 1, 1, -1, -1, SelectionTracker.DO_NOTHING),
+        // Here undetectable cursor move.
+        new RenderPreedit(1),
+        new Selection(1, 1, 1, 1, 0, 1, SelectionTracker.RESET_CONTEXT));
+  }
+
+  public void testBackSpaceOnWebView2() {
+    runScenario(true,
+        new RenderPreedit(4),
+        new Selection(0, 0, 4, 4, 0, 4, SelectionTracker.DO_NOTHING),
+        new RenderCommit(4),
+        new Selection(4, 4, 4, 4, -1, -1, SelectionTracker.DO_NOTHING),
+        // Here undetectable cursor move to the beginning.
+        new RenderPreedit(1),
+        new Selection(4, 4, 1, 1, 0, 1, SelectionTracker.DO_NOTHING));
+  }
+
+  public void testBackSpaceOnTextEdit2() {
+    runScenario(false,
+        new RenderPreedit(4),
+        new Selection(0, 0, 4, 4, 0, 4, SelectionTracker.DO_NOTHING),
+        new RenderCommit(4),
+        new Selection(4, 4, 4, 4, -1, -1, SelectionTracker.DO_NOTHING),
+        // Here undetectable cursor move to the beginning.
+        new RenderPreedit(1),
+        new Selection(4, 4, 1, 1, 0, 1, SelectionTracker.RESET_CONTEXT));
+  }
+
+  public void testQuickTypeOnWebView() {
+    runScenario(true,
+        new RenderPreedit(10),  // If a user types very quickly, merged result will be arrive.
+        new Selection(0, 0, 10, 10, 0, 10, SelectionTracker.DO_NOTHING));
+  }
+
+  public void testQuickTypeOnTextEdit() {
+    runScenario(false,
+        new RenderPreedit(10),  // If a user types very quickly, merged result will be arrive.
+        new Selection(0, 0, 10, 10, 0, 10, SelectionTracker.DO_NOTHING));
+  }
+
+  public void testCompletionOnWebView() {
+    runScenario(true,
+        // Type two characters. Corresponding selection updates are done later.
+        new RenderPreedit(1),
+        new RenderPreedit(2),
+
+        // 1st call-back correspoing to 1st character.
+        new Selection(0, 0, 1, 1, 0, 1, SelectionTracker.DO_NOTHING),
+
+        // Here completion is applied without selection update call-back.
+        // The cursor moves to position 10. No preedit is shown.
+
+        // 2nd call-back correspoing to 2nd character.
+        // Note that old selection is 10 because of undetactable completion.
+        // NOTE: What should expected here? Both resetting and keeping as-is are
+        // uncomfortable for the users. Here DO_NOTHING is set as expectation but
+        // RESET_CONTEXT is also acceptable here.
+        new Selection(10, 10, 12, 12, 10, 12, SelectionTracker.DO_NOTHING));
+  }
+
+  public void testCompletionOnTextEdit() {
+    runScenario(false,
+        new RenderPreedit(1),
+        new RenderPreedit(2),
+        new Selection(0, 0, 1, 1, 0, 1, SelectionTracker.DO_NOTHING),
+        new Selection(10, 10, 12, 12, 10, 12, SelectionTracker.RESET_CONTEXT));
   }
 }

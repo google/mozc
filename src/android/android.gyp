@@ -745,6 +745,7 @@
         '../base/base.gyp:gen_character_set',
         '../base/base.gyp:gen_config_file_stream_data',
         '../base/base.gyp:gen_version_def',
+        '../composer/composer.gyp:gen_typing_model',
         '../config/config.gyp:genproto_config',
         '../dictionary/dictionary_base.gyp:gen_pos_map',
         '../dictionary/dictionary_base.gyp:genproto_dictionary',
@@ -758,14 +759,6 @@
         '../usage_stats/usage_stats_base.gyp:genproto_usage_stats',
       ],
       'conditions': [
-        ['enable_typing_correction==1', {
-          'defines': [
-            'MOZC_ENABLE_TYPING_CORRECTION'
-          ],
-          'dependencies': [
-            '../composer/composer.gyp:gen_typing_model',
-          ],
-        }],
         ['branding=="GoogleJapaneseInput"', {
           'dependencies': [
             '../data_manager/android/android_data_manager.gyp:gen_android_embedded_data#host',
@@ -871,8 +864,8 @@
         '../dictionary/system/system_dictionary.gyp:install_system_dictionary_test_data',
         '../config/config_test.gyp:install_stats_config_util_test_data',
         '../rewriter/calculator/calculator.gyp:install_calculator_test_data',
-        '../session/session_test.gyp:install_session_handler_scenario_test_data',
-        '../session/session_test.gyp:install_session_handler_usage_stats_scenario_test_data',
+        '../data/test/session/scenario/scenario.gyp:install_session_handler_scenario_test_data',
+        '../data/test/session/scenario/usage_stats/usage_stats.gyp:install_session_handler_usage_stats_scenario_test_data',
       ],
       'conditions': [
         ['branding=="GoogleJapaneseInput"', {

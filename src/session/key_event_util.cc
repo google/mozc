@@ -210,12 +210,14 @@ bool KeyEventUtil::MaybeGetKeyStub(const KeyEvent &key_event,
     return false;
   }
 
-  if (!key_event.has_key_code() || key_event.key_code() <= 32) {
+  // Check if both key_code and key_string are invalid.
+  if ((!key_event.has_key_code() || key_event.key_code() <= 32) &&
+      (!key_event.has_key_string() || key_event.key_string().empty())) {
     return false;
   }
 
   KeyEvent stub_key_event;
-  stub_key_event.set_special_key(KeyEvent::ASCII);
+  stub_key_event.set_special_key(KeyEvent::TEXT_INPUT);
   if (!GetKeyInformation(stub_key_event, key)) {
     return false;
   }

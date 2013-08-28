@@ -452,7 +452,7 @@ TEST_F(SessionConverterTest, Convert) {
   EXPECT_TRUE(converter.IsActive());
   EXPECT_FALSE(IsCandidateListVisible(converter));
 
-  converter.Commit(Context::default_instance());
+  converter.Commit(*composer_, Context::default_instance());
   composer_->Reset();
   output.Clear();
   converter.FillOutput(*composer_, &output);
@@ -550,7 +550,7 @@ TEST_F(SessionConverterTest, ConvertToTransliteration) {
     EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
   }
 
-  converter.Commit(Context::default_instance());
+  converter.Commit(*composer_, Context::default_instance());
 
   EXPECT_COUNT_STATS("Commit", 1);
   EXPECT_COUNT_STATS("CommitFromConversion", 1);
@@ -985,7 +985,7 @@ TEST_F(SessionConverterTest, MultiSegmentsConversion) {
     EXPECT_EQ("\xe5\x8d\xb0\xe6\x88\xbf", conversion.segment(1).value());
   }
 
-  converter.Commit(Context::default_instance());
+  converter.Commit(*composer_, Context::default_instance());
   expected_indices.clear();
   {
     composer_->Reset();
@@ -1532,7 +1532,7 @@ TEST_F(SessionConverterTest, CommitFirstSegment) {
     convertermock_->SetCommitFirstSegment(&segments_after_submit, true);
   }
   size_t size;
-  converter.CommitFirstSegment(Context::default_instance(), &size);
+  converter.CommitFirstSegment(*composer_, Context::default_instance(), &size);
   expected_indices.erase(expected_indices.begin(),
                          expected_indices.begin() + 1);
   EXPECT_FALSE(IsCandidateListVisible(converter));
@@ -2011,7 +2011,7 @@ TEST_F(SessionConverterTest, SuggestAndPredict) {
   converter.CandidateNext(*composer_);
   expected_indices[0] += 1;
   EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
-  converter.Commit(Context::default_instance());
+  converter.Commit(*composer_, Context::default_instance());
   composer_->Reset();
   expected_indices.clear();
   EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
@@ -3311,7 +3311,7 @@ TEST_F(SessionConverterTest, CommandCandidate) {
   composer_->InsertCharacterPreedit(kChars_Aiueo);
   EXPECT_TRUE(converter.Convert(*composer_));
 
-  converter.Commit(Context::default_instance());
+  converter.Commit(*composer_, Context::default_instance());
   commands::Output output;
   converter.FillOutput(*composer_, &output);
   EXPECT_FALSE(output.has_result());
@@ -3337,7 +3337,8 @@ TEST_F(SessionConverterTest, CommandCandidateWithCommitCommands) {
     converter.Convert(*composer_);
 
     size_t committed_size = 0;
-    converter.CommitFirstSegment(Context::default_instance(),
+    converter.CommitFirstSegment(*composer_,
+                                 Context::default_instance(),
                                  &committed_size);
     EXPECT_EQ(0, committed_size);
 
@@ -3360,7 +3361,8 @@ TEST_F(SessionConverterTest, CommandCandidateWithCommitCommands) {
     converter.Convert(*composer_);
 
     size_t committed_size = 0;
-    converter.CommitFirstSegment(Context::default_instance(),
+    converter.CommitFirstSegment(*composer_,
+                                 Context::default_instance(),
                                  &committed_size);
     EXPECT_EQ(Util::CharsLen(kKamabokono), committed_size);
 
@@ -3424,7 +3426,7 @@ TEST_F(SessionConverterTest, ExecuteCommandCandidate) {
     composer_->InsertCharacterPreedit(kChars_Aiueo);
     EXPECT_TRUE(converter.Convert(*composer_));
 
-    converter.Commit(Context::default_instance());
+    converter.Commit(*composer_, Context::default_instance());
     commands::Output output;
     converter.FillOutput(*composer_, &output);
     EXPECT_FALSE(output.has_result());
@@ -3452,7 +3454,7 @@ TEST_F(SessionConverterTest, ExecuteCommandCandidate) {
     composer_->InsertCharacterPreedit(kChars_Aiueo);
     EXPECT_TRUE(converter.Convert(*composer_));
 
-    converter.Commit(Context::default_instance());
+    converter.Commit(*composer_, Context::default_instance());
     commands::Output output;
     converter.FillOutput(*composer_, &output);
     EXPECT_FALSE(output.has_result());
@@ -3480,7 +3482,7 @@ TEST_F(SessionConverterTest, ExecuteCommandCandidate) {
     composer_->InsertCharacterPreedit(kChars_Aiueo);
     EXPECT_TRUE(converter.Convert(*composer_));
 
-    converter.Commit(Context::default_instance());
+    converter.Commit(*composer_, Context::default_instance());
     commands::Output output;
     converter.FillOutput(*composer_, &output);
     EXPECT_FALSE(output.has_result());
@@ -3508,7 +3510,7 @@ TEST_F(SessionConverterTest, ExecuteCommandCandidate) {
     composer_->InsertCharacterPreedit(kChars_Aiueo);
     EXPECT_TRUE(converter.Convert(*composer_));
 
-    converter.Commit(Context::default_instance());
+    converter.Commit(*composer_, Context::default_instance());
     commands::Output output;
     converter.FillOutput(*composer_, &output);
     EXPECT_FALSE(output.has_result());

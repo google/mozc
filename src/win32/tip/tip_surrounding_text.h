@@ -78,10 +78,14 @@ class TipSurroundingText {
   // moves the anchor position of the selection at the end of the range.
   // Another difference is that this method uses IMM32 message when fails to
   // retrieve/update the selection.
+  // In order to emulate the IMM32 reconversion, we need to use async edit
+  // session if |need_async_reconversion| is set to be true. See
+  // IMN_PRIVATE/kNotifyReconvertFromIME in IMM32-Mozc about IMM32 reconversion.
   // TODO(yukawa): Consider to unify this method with TipSurroundingText::Get.
-  static bool PrepareForReconversion(TipTextService *text_service,
-                                     ITfContext *context,
-                                     TipSurroundingTextInfo *info);
+  static bool PrepareForReconversionFromIme(TipTextService *text_service,
+                                            ITfContext *context,
+                                            TipSurroundingTextInfo *info,
+                                            bool *need_async_reconversion);
 
   // Returns true when succeeds to delete preceeding text from the beginning of
   // the selected range.

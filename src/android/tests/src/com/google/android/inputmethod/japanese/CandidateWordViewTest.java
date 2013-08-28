@@ -306,7 +306,7 @@ public class CandidateWordViewTest extends InstrumentationTestCaseWithMock {
     CandidateLayouter layouter = createMock(CandidateLayouter.class);
     expect(layouter.layout(isA(CandidateList.class)))
         .andReturn(MozcLayoutUtil.createNiceCandidateLayoutMock(getMockSupport()));
-    candidateWordView.setCandidateLayouter(layouter);
+    candidateWordView.layouter = layouter;
     expect(layouter.getPageHeight()).andReturn(50);
     replayAll();
 
@@ -327,7 +327,7 @@ public class CandidateWordViewTest extends InstrumentationTestCaseWithMock {
     expect(layouter.layout(isA(CandidateList.class)))
         .andStubReturn(MozcLayoutUtil.createNiceCandidateLayoutMock(getMockSupport()));
     expect(layouter.getPageHeight()).andStubReturn(50);
-    candidateWordView.setCandidateLayouter(layouter);
+    candidateWordView.layouter = layouter;
     replayAll();
 
     candidateWordView.updateLayouter();
@@ -349,7 +349,7 @@ public class CandidateWordViewTest extends InstrumentationTestCaseWithMock {
     expect(layouter.layout(isA(CandidateList.class)))
         .andStubReturn(MozcLayoutUtil.createNiceCandidateLayoutMock(getMockSupport()));
     expect(layouter.getPageHeight()).andReturn(50);
-    candidateWordView.setCandidateLayouter(layouter);
+    candidateWordView.layouter = layouter;
 
     replayAll();
 
@@ -475,7 +475,7 @@ public class CandidateWordViewTest extends InstrumentationTestCaseWithMock {
     CandidateWordView candWordView = new StubCandidateWordView(
         getInstrumentation().getTargetContext(), Orientation.VERTICAL);
     CandidateLayouter layouter = createMock(CandidateLayouter.class);
-    candWordView.setCandidateLayouter(layouter);
+    candWordView.layouter = layouter;
     replayAll();
 
     // Check pre-condition.

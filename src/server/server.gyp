@@ -95,7 +95,7 @@
           'msvs_settings': {
             'VCManifestTool': {
               'AdditionalManifestFiles': 'mozc_server.exe.manifest',
-              'EmbedManifest': 'false',
+              'EmbedManifest': 'true',
             },
             'VCLinkerTool': {
               'DelayLoadDLLs': [
@@ -212,7 +212,7 @@
           'msvs_settings': {
             'VCManifestTool': {
               'AdditionalManifestFiles': 'mozc_cache_service.exe.manifest',
-              'EmbedManifest': 'false',
+              'EmbedManifest': 'true',
             },
             'VCLinkerTool': {
               'AdditionalDependencies': [

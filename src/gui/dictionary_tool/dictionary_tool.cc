@@ -939,7 +939,7 @@ void DictionaryTool::ImportFromDefaultIME() {
     // it's not the case. Here we simply remove the MS-IME import function
     // if dictionary tool is UAC-elevated
     QMessageBox::warning(this, window_title_,
-                         tr("Microsoft IME dictioanry import function doesn't "
+                         tr("Microsoft IME dictionary import function doesn't "
                             "work on UAC-elevated process."));
     return;
   }

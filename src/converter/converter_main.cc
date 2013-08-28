@@ -307,7 +307,10 @@ bool ExecCommand(const ConverterInterface &converter,
       return converter.StartSuggestionForRequest(conversion_request, segments);
     }
   } else if (func == "finishconversion" || func == "finish") {
-    return converter.FinishConversion(segments);
+    Table table;
+    Composer composer(&table, &request);
+    ConversionRequest conversion_request(&composer, &request);
+    return converter.FinishConversion(conversion_request, segments);
   } else if (func == "resetconversion" || func == "reset") {
     return converter.ResetConversion(segments);
   } else if (func == "cancelconversion" || func == "cancel") {
@@ -324,7 +327,10 @@ bool ExecCommand(const ConverterInterface &converter,
         if (!(converter.CommitSegmentValue(segments, i, 0))) return false;
       }
     }
-    return converter.FinishConversion(segments);
+    Table table;
+    Composer composer(&table, &request);
+    ConversionRequest conversion_request(&composer, &request);
+    return converter.FinishConversion(conversion_request, segments);
   } else if (func == "focussegmentvalue" || func == "focus") {
     CHECK_FIELDS_LENGTH(3);
     return converter.FocusSegmentValue(segments,

@@ -53,6 +53,13 @@
       '../../usage_stats/usage_stats_base.gyp:usage_stats',
     ],
     'conditions': [
+      ['target_platform=="ChromeOS"', {
+        'ibus_mozc_icon_path': '/usr/share/ibus-mozc/product_icon.png',
+        'ibus_mozc_path': '/usr/libexec/ibus-engine-mozc',
+      }, { # else
+        'ibus_mozc_icon_path%': '/usr/share/ibus-mozc/product_icon.png',
+        'ibus_mozc_path%': '/usr/lib/ibus-mozc/ibus-engine-mozc',
+      }],
       # enable_x11_selection_monitor represents if ibus_mozc uses X11 selection
       # monitor or not.
       ['target_platform=="Linux" and language=="japanese"', {
@@ -114,6 +121,8 @@
                 '--platform=ChromeOS',
                 '--branding=GoogleJapaneseInput',
                 '--pkg_config_command=<(pkg_config_command)',
+                '--ibus_mozc_path=<(ibus_mozc_path)',
+                '--ibus_mozc_icon_path=<(ibus_mozc_icon_path)',
               ],
             }],
             ['target_platform=="ChromeOS" and branding!="GoogleJapaneseInput"', {
@@ -124,6 +133,8 @@
                 '--platform=ChromeOS',
                 '--branding=Mozc',
                 '--pkg_config_command=<(pkg_config_command)',
+                '--ibus_mozc_path=<(ibus_mozc_path)',
+                '--ibus_mozc_icon_path=<(ibus_mozc_icon_path)',
               ],
             }],
             ['target_platform!="ChromeOS"', {
@@ -135,6 +146,8 @@
                 '--branding=Mozc',
                 '--server_dir=<(server_dir)',
                 '--pkg_config_command=<(pkg_config_command)',
+                '--ibus_mozc_path=<(ibus_mozc_path)',
+                '--ibus_mozc_icon_path=<(ibus_mozc_icon_path)',
               ],
             }],
           ],
@@ -255,7 +268,9 @@
                 './gen_mozc_xml.py',
                 '--platform=ChromeOS',
                 '--branding=GoogleJapaneseInput',
-                '--output_cpp'
+                '--output_cpp',
+                '--ibus_mozc_path=<(ibus_mozc_path)',
+                '--ibus_mozc_icon_path=<(ibus_mozc_icon_path)',
               ],
             }],
             ['target_platform=="ChromeOS" and branding!="GoogleJapaneseInput"', {
@@ -265,7 +280,9 @@
                 './gen_mozc_xml.py',
                 '--platform=ChromeOS',
                 '--branding=Mozc',
-                '--output_cpp'
+                '--output_cpp',
+                '--ibus_mozc_path=<(ibus_mozc_path)',
+                '--ibus_mozc_icon_path=<(ibus_mozc_icon_path)',
               ],
             }],
             ['target_platform!="ChromeOS"', {
@@ -275,7 +292,9 @@
                 './gen_mozc_xml.py',
                 '--platform=Linux',
                 '--branding=Mozc',
-                '--output_cpp'
+                '--output_cpp',
+                '--ibus_mozc_path=<(ibus_mozc_path)',
+                '--ibus_mozc_icon_path=<(ibus_mozc_icon_path)',
               ],
             }],
           ],

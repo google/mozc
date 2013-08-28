@@ -451,7 +451,7 @@ class UserDictionaryUtil {
   }
 
   /**
-   * Returns a new instance for Dictioanry Name Dialog.
+   * Returns a new instance for Dictionary Name Dialog.
    */
   static DictionaryNameDialog createDictionaryNameDialog(
       Context context, int titleResourceId, DictionaryNameDialogListener listener,
