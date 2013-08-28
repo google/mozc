@@ -83,6 +83,7 @@ public:
     void reset();
     void init();
     void focus_out();
+    bool paging(bool prev);
 
     // Functions called by the MozcResponseParser class to update UI.
 

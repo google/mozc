@@ -243,9 +243,17 @@ void MozcResponseParser::ParseResult(const mozc::commands::Result &result,
     }
 }
 
+static boolean FcitxMozcPaging(void* arg, boolean prev)
+{
+    FcitxMozc* mozc = static_cast<FcitxMozc*>(arg);
+    return mozc->paging(prev);
+}
+
 void MozcResponseParser::ParseCandidates(
     const mozc::commands::Candidates &candidates, FcitxMozc *fcitx_mozc) const {
     const commands::Footer &footer = candidates.footer();
+    bool hasPrev = false;
+    bool hasNext = false;
     if (candidates.has_footer()) {
         string auxString;
         if (footer.has_label()) {
@@ -269,6 +277,16 @@ void MozcResponseParser::ParseCandidates(
                                         candidates.size());
             DCHECK_GE(result, 0) << "snprintf in ComposeAuxiliaryText failed";
             auxString += index_buf;
+
+            if (candidates.candidate_size() > 0) {
+
+                if (candidates.candidate(0).index() > 0) {
+                    hasPrev = true;
+                }
+                if (candidates.candidate(candidates.candidate_size() - 1).index() + 1 < candidates.size()) {
+                    hasNext = true;
+                }
+            }
         }
         fcitx_mozc->SetAuxString(auxString);
     }
@@ -276,7 +294,12 @@ void MozcResponseParser::ParseCandidates(
     FcitxCandidateWordList* candList = FcitxInputStateGetCandidateList(fcitx_mozc->GetInputState());
     FcitxCandidateWordReset(candList);
     FcitxCandidateWordSetPageSize(candList, 9);
-    FcitxCandidateWordSetLayoutHint(candList, CLH_Vertical);
+    if (candidates.has_direction() &&
+        candidates.direction() == commands::Candidates::HORIZONTAL) {
+        FcitxCandidateWordSetLayoutHint(candList, CLH_Horizontal);
+    } else {
+        FcitxCandidateWordSetLayoutHint(candList, CLH_Vertical);
+    }
 
     map<int32, pair<string, string> > usage_map;
     if (candidates.has_usages()) {
@@ -380,6 +403,7 @@ void MozcResponseParser::ParseCandidates(
     else
         FcitxCandidateWordSetChoose(candList, EMPTY_STR_CHOOSE);
     FcitxCandidateWordSetFocus(candList, local_index);
+    FcitxCandidateWordSetOverridePaging(candList, hasPrev, hasNext, FcitxMozcPaging, fcitx_mozc, NULL);
 }
 
 static int GetRawCursorPos(const char * str, int upos)

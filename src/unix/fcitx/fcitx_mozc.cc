@@ -219,6 +219,22 @@ void FcitxMozc::reset()
     }
 }
 
+bool FcitxMozc::paging(bool prev)
+{
+    VLOG ( 1 ) << "paging";
+    string error;
+    mozc::commands::SessionCommand::CommandType command =
+        prev ? mozc::commands::SessionCommand::CONVERT_PREV_PAGE
+             : mozc::commands::SessionCommand::CONVERT_NEXT_PAGE;
+    mozc::commands::Output raw_response;
+    if ( connection_->TrySendCommand (
+        command, &raw_response, &error ) )
+    {
+        parser_->ParseResponse ( raw_response, this );
+        return true;
+    }
+    return false;
+}
 
 // This function is called from SCIM framework when the ic gets focus.
 void FcitxMozc::init()
