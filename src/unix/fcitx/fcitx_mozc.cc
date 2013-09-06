@@ -436,12 +436,7 @@ FcitxMozc::FcitxMozc(const mozc::fcitx::FcitxMozc& )
 boolean CompositionMenuAction(struct _FcitxUIMenu *menu, int index)
 {
     FcitxMozc* mozc = (FcitxMozc*) menu->priv;
-    if (index == mozc::commands::DIRECT) {
-        FcitxInstanceCloseIM(mozc->GetInstance(), FcitxInstanceGetCurrentIC(mozc->GetInstance()));
-    }
-    else {
-        mozc->SendCompositionMode((mozc::commands::CompositionMode) index);
-    }
+    mozc->SendCompositionMode((mozc::commands::CompositionMode) index);
     return true;
 }
 
