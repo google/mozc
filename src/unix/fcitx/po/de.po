@@ -3,13 +3,14 @@
 # This file is distributed under the same license as the PACKAGE package.
 #
 # Translators:
+# Seneca, 2013
 # mar well <marwell.1980@freenet.de>, 2013
 msgid ""
 msgstr ""
 "Project-Id-Version: fcitx\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2013-08-25 18:02-0400\n"
-"PO-Revision-Date: 2013-08-25 10:07+0000\n"
+"POT-Creation-Date: 2013-10-17 06:00-0400\n"
+"PO-Revision-Date: 2013-10-17 09:18+0000\n"
 "Last-Translator: Xuetian Weng <wengxt@gmail.com>\n"
 "Language-Team: German (http://www.transifex.com/projects/p/fcitx/language/"
 "de/)\n"
@@ -37,52 +38,52 @@ msgstr "Normalbreite Katakana"
 
 #: ../fcitx_mozc.cc:83
 msgid "Half ASCII"
-msgstr ""
+msgstr "6-Bit ASCII (Half ASCII)"
 
 #: ../fcitx_mozc.cc:88
 msgid "Full ASCII"
-msgstr ""
+msgstr "7-Bit ASCII (Full ASCII)"
 
 #: ../fcitx_mozc.cc:93
 msgid "Half Katakana"
 msgstr "Halbbreite Katakana"
 
-#: ../fcitx_mozc.cc:394 ../fcitx_mozc.cc:395 ../fcitx_mozc.cc:473
+#: ../fcitx_mozc.cc:410 ../fcitx_mozc.cc:411 ../fcitx_mozc.cc:484
 msgid "Composition Mode"
 msgstr "Kompositionsmodus"
 
-#: ../fcitx_mozc.cc:405 ../fcitx_mozc.cc:406
+#: ../fcitx_mozc.cc:421 ../fcitx_mozc.cc:422
 msgid "Tool"
 msgstr "Werkzeug"
 
-#: ../fcitx_mozc.cc:486
+#: ../fcitx_mozc.cc:497
 msgid "Mozc Tool"
 msgstr "Mozc Werkzeug"
 
-#: ../fcitx_mozc.cc:492
+#: ../fcitx_mozc.cc:503
 msgid "Configuration Tool"
 msgstr "Konfigurationswerkzeug"
 
-#: ../fcitx_mozc.cc:493
+#: ../fcitx_mozc.cc:504
 msgid "Dictionary Tool"
 msgstr "Wörterbuchwerkzeug"
 
-#: ../fcitx_mozc.cc:494
+#: ../fcitx_mozc.cc:505
 msgid "Hand Writing"
 msgstr "Eingabe Handschrift"
 
-#: ../fcitx_mozc.cc:495
+#: ../fcitx_mozc.cc:506
 msgid "Character Palette"
 msgstr "Palette Symbole"
 
-#: ../fcitx_mozc.cc:496
+#: ../fcitx_mozc.cc:507
 msgid "Add Word"
 msgstr "Wort hinzufügen"
 
-#: ../fcitx_mozc.cc:497
+#: ../fcitx_mozc.cc:508
 msgid "About Mozc"
 msgstr "Über Mozc"
 
-#: ../mozc_response_parser.cc:351
+#: ../mozc_response_parser.cc:374
 msgid "Press Ctrl+Alt+H to show usages."
 msgstr ""
