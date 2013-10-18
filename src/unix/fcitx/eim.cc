@@ -90,6 +90,7 @@ static void* FcitxMozcCreate(FcitxInstance* instance)
 {
     FcitxMozcState* mozcState = (FcitxMozcState*) fcitx_utils_malloc0(sizeof(FcitxMozcState));
     bindtextdomain("fcitx-mozc", LOCALEDIR);
+    bind_textdomain_codest("fcitx-mozc", "UTF-8");
 
     mozcState->mozc = new mozc::fcitx::FcitxMozc(
         instance,
