@@ -1,7 +1,7 @@
 #!/bin/sh
 curdir=`pwd`
 
-rm -rf protobuf/files
-svn co --ignore-externals http://protobuf.googlecode.com/svn/trunk@486 protobuf/files
+rm -rf third_party/protobuf
+svn co --ignore-externals http://protobuf.googlecode.com/svn/trunk@486 third_party/protobuf
 
 python build_mozc.py gyp --gypdir="$curdir/../gyp" --channel_dev=0

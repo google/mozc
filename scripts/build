@@ -2,5 +2,5 @@
 
 TARGETS="server/server.gyp:mozc_server gui/gui.gyp:mozc_tool unix/fcitx/fcitx.gyp:fcitx-mozc"
 
-python build_mozc.py build_tools -c Debug --jobs=1
-python build_mozc.py build ${TARGETS} -c Debug --jobs=1
+python build_mozc.py build_tools -c Debug --jobs=5
+python build_mozc.py build ${TARGETS} -c Debug --jobs=5
