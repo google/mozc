@@ -114,7 +114,7 @@ def GetBuildBaseName(options, target_platform):
     build_base = 'out_win'
   elif target_platform == 'Mac':
     build_base = 'out_mac'
-  elif target_platform == 'Linux' or target_platform == 'ChromeOS':
+  elif target_platform == 'Linux':
     build_base = 'out_linux'
   elif target_platform == 'Android':
     build_base = 'out_android'
@@ -172,22 +172,11 @@ def PkgExists(*packages):
   return False
 
 
-
-
 def GetGypFileNames(options):
   """Gets the list of gyp file names."""
   gyp_file_names = []
+  exclude_top_dirs = []
   mozc_top_level_names = glob.glob('%s/*' % SRC_DIR)
-
-  if not options.language == 'japanese':
-    language_path = '%s/languages/%s' % (SRC_DIR, options.language)
-    if not os.path.exists(language_path):
-      PrintErrorAndExit('Can not find language directory: %s ' % language_path)
-    mozc_top_level_names.append(language_path)
-
-  # Exclude the gyp directory where we have special gyp files like
-  # breakpad.gyp that we should exclude.
-  exclude_top_dirs = ['gyp']
 
   # Exclude gyp files for Android unless the target platform is Android so as
   # not to generate unnecessary files under android directory when you are
@@ -201,8 +190,6 @@ def GetGypFileNames(options):
   for name in mozc_top_level_names:
     gyp_file_names.extend(glob.glob(name + '/*.gyp'))
   gyp_file_names.extend(glob.glob('%s/build_tools/*/*.gyp' % SRC_DIR))
-  # Include tests gyp
-  gyp_file_names.append('%s/gyp/tests.gyp' % SRC_DIR)
   # Include subdirectories of data/test/session/scenario
   gyp_file_names.extend(glob.glob('%s/data/test/session/scenario/*.gyp' %
                                   SRC_DIR))
@@ -217,20 +204,15 @@ def GetGypFileNames(options):
   # Include subdirectory of win32 and breakpad for Windows
   if options.target_platform == 'Windows':
     gyp_file_names.extend(glob.glob('%s/win32/*/*.gyp' % SRC_DIR))
-    gyp_file_names.extend(glob.glob('third_party/breakpad/*.gyp'))
   elif options.target_platform == 'Linux':
     gyp_file_names.extend(glob.glob('%s/unix/*/*.gyp' % SRC_DIR))
     # Add ibus.gyp if ibus version is >=1.4.1.
     if not PkgExists('ibus-1.0 >= 1.4.1'):
       logging.info('removing ibus.gyp.')
       gyp_file_names.remove('%s/unix/ibus/ibus.gyp' % SRC_DIR)
-  elif options.target_platform == 'ChromeOS':
-    gyp_file_names.extend(glob.glob('%s/unix/ibus/*.gyp' % SRC_DIR))
   elif options.target_platform == 'NaCl':
     # Add chrome NaCl Mozc gyp scripts.
     gyp_file_names.append('%s/chrome/nacl/nacl_extension.gyp' % SRC_DIR)
-    gyp_file_names.extend(glob.glob('third_party/zlib/v1_2_3/zlib.gyp'))
-  gyp_file_names.extend(glob.glob('third_party/jsoncpp/*.gyp'))
   gyp_file_names.sort()
   return gyp_file_names
 
@@ -242,6 +224,8 @@ def GetTopLevelSourceDirectoryName():
     return script_file_directory_name
   num_components = len(SRC_DIR.split('/'))
   return os.path.join(script_file_directory_name, *(['..'] * num_components))
+
+
 
 
 def MoveToTopLevelSourceDirectory():
@@ -258,15 +242,13 @@ def AddCommonOptions(parser):
   """Adds the options common among the commands."""
   parser.add_option('--build_base', dest='build_base',
                     help='Specifies the base directory of the built binaries.')
-  parser.add_option('--language', dest='language', default='japanese',
-                    help='Specify the target language to build.')
   return parser
 
 
 def AddGeneratorOption(parser):
   """Generator option is used by gyp and clean."""
   options = {'dest': 'gyp_generator',
-             'help': 'Specifies the generator for GYP.' }
+             'help': 'Specifies the generator for GYP.'}
   if IsWindows():
     options['default'] = 'ninja'
   parser.add_option('--gyp_generator', **options)
@@ -274,9 +256,9 @@ def AddGeneratorOption(parser):
 
 
 def AddTargetPlatformOption(parser):
-  # Linux environment can build for Linux, Android and ChromeOS.
+  # Linux environment can build for Linux, Android and NaCl.
   # --target_platform option enables this script to know which build
-  # should be done. If you want ChromeOS build, specify "ChromeOS".
+  # should be done. If you want NaCl build, specify "NaCl".
   # If you want Android build, specify "Android".
   if IsLinux():
     default_target = 'Linux'
@@ -287,10 +269,10 @@ def AddTargetPlatformOption(parser):
   parser.add_option('--target_platform', dest='target_platform',
                     default=default_target,
                     help=('Linux environment can build for Linux, Android  and '
-                          'ChromeOS. This option enables this script to know '
+                          'NaCl. This option enables this script to know '
                           'which build should be done. '
                           'If you want Android build, specify "Android". '
-                          'If you want ChromeOS build, specify "ChromeOS".'))
+                          'If you want NaCl build, specify "NaCl".'))
 
 
 def GetDefaultWixPath():
@@ -322,10 +304,7 @@ def ParseGypOptions(args=None, values=None):
   parser.add_option('--version_file', dest='version_file',
                     help='use the specified version template file',
                     default='mozc_version_template.txt')
-  parser.add_option('--rsync', dest='rsync', default=False, action='store_true',
-                    help='use rsync to copy files instead of builtin function')
   AddTargetPlatformOption(parser)
-
 
   # Mac and Linux
   warn_as_error_default = False
@@ -352,10 +331,10 @@ def ParseGypOptions(args=None, values=None):
                     help='Arndoid abi list. e.g. "armeabi x86".')
   parser.add_option('--android_application_id', dest='android_application_id',
                     default='org.mozc.android.inputmethod.japanese',
-                    help='Android\s application id (==package ID). '
+                    help='Android\'s application id (==package ID). '
                     'If set, On Android2.1 preference screen works '
                     'incorrectly and some Java test cases failes because of '
-                    'test framework\s update.')
+                    'test framework\'s update.')
   parser.add_option('--android_sdk_home', dest='android_sdk_home', default=None,
                     help='[Android build only] A path to the Android SDK Home. '
                     'If not specified, automatically detected from PATH.')
@@ -409,9 +388,6 @@ def ParseGypOptions(args=None, values=None):
                              dest=('enable_%(option_name)s' % params),
                              help=help_template % params)
 
-  AddFeatureOption(parser, feature_name='webservice infolist',
-                   macro_name='ENABLE_WEBSERVICE_INFOLIST',
-                   option_name='webservice_infolist')
   AddFeatureOption(parser, feature_name='cloud sync',
                    macro_name='ENABLE_CLOUD_SYNC',
                    option_name='cloud_sync')
@@ -459,6 +435,7 @@ def ExpandMetaTarget(options, meta_target_name):
   If the specified name is not a meta target name, returns it as a list.
 
   Args:
+    options: option object.
     meta_target_name: meta target name to be expanded.
 
   Returns:
@@ -469,7 +446,6 @@ def ExpandMetaTarget(options, meta_target_name):
 
   target_platform = GetMozcVersion().GetTargetPlatform()
 
-  # Note that ChromeOS does not use this method.
   if target_platform == 'Android':
     targets = [SRC_DIR + '/android/android.gyp:apk']
   elif target_platform == 'Linux':
@@ -478,8 +454,6 @@ def ExpandMetaTarget(options, meta_target_name):
                SRC_DIR + '/gui/gui.gyp:mozc_tool']
     if PkgExists('ibus-1.0 >= 1.4.1'):
       targets.append(SRC_DIR + '/unix/ibus/ibus.gyp:ibus_mozc')
-  elif target_platform == 'ChromeOS':
-    targets.append(SRC_DIR + '/unix/ibus/ibus.gyp:ibus_mozc')
   elif target_platform == 'Mac':
     targets = [SRC_DIR + '/mac/mac.gyp:DiskImage']
   elif target_platform == 'Windows':
@@ -559,9 +533,11 @@ def ParseCleanOptions(args=None, values=None):
 
 def AddPythonPathToEnvironmentFilesForWindows(out_dir):
   """Add PYTHONPATH to environment files for Ninja."""
-  mozc_root = os.path.abspath(GetTopLevelSourceDirectoryName())
-  python_path = os.pathsep.join([os.environ.get('PYTHONPATH', ''), mozc_root])
-
+  python_path_root = GetTopLevelSourceDirectoryName()
+  python_path = os.path.abspath(python_path_root)
+  original_python_paths = os.environ.get('PYTHONPATH', '')
+  if original_python_paths:
+    python_path = os.pathsep.join([original_python_paths, python_path])
   nul = chr(0)
   for d in os.listdir(out_dir):
     abs_dir = os.path.abspath(os.path.join(out_dir, d))
@@ -587,8 +563,8 @@ def GypMain(options, unused_args):
   GenerateVersionFile(template_path, version_path, options.target_platform,
                       options.channel_dev, options.android_application_id)
   version = GetMozcVersion()
+  target_platform = version.GetTargetPlatform()
   logging.info('Version string is %s', version.GetVersionString())
-
 
   # Back up the original 'PYTHONPATH' environment variable in case we change
   # it in this function.
@@ -601,27 +577,27 @@ def GypMain(options, unused_args):
     # their responsibility to make sure if 'gyp' command works well on
     # their environment.
     gyp_dir = os.path.abspath(options.gypdir)
-    gyp_command = os.path.join(gyp_dir, 'gyp')
+    gyp_command = [os.path.join(gyp_dir, 'gyp')]
   else:
-    # Use third_party/gyp/gyp when 'gypdir' option is not specified. This is
+    # Use third_party/gyp/gyp unless 'gypdir' option is specified. This is
     # the default and official way to build Mozc. In this case, you need to
     # consider the case where a Python package named 'gyp' has already been
     # installed in the target machine. So we update PYTHONPATH so that
-    # third_party/gyp/gyp can find its own library modules (they are
+    # third_party/gyp/gyp_main.py can find its own library modules (they are
     # installed under 'third_party/gyp/pylib') rather than system-installed
     # GYP modules.
     gyp_dir = os.path.abspath(os.path.join(
         GetTopLevelSourceDirectoryName(), 'third_party', 'gyp'))
-    gyp_command = os.path.join(gyp_dir, 'gyp')
-    # Make sure if 'third_party/gyp/gyp' exists. Note that Mozc's tarball
-    # package no longer contains 'third_party/gyp/gyp'.
-    if not os.path.exists(gyp_command):
+    gyp_main_file = os.path.join(gyp_dir, 'gyp_main.py')
+    # Make sure |gyp_main_file| exists.
+    if not os.path.exists(gyp_main_file):
       message = (
           'GYP does not exist at %s. Please run "gclient" to download GYP. '
           'If you want to use system-installed GYP, use --gypdir option to '
           'specify its location. e.g., '
-          '"python build_mozc.py gyp --gypdir=/usr/bin"' % gyp_command)
+          '"python build_mozc.py gyp --gypdir=/usr/bin"' % gyp_main_file)
       PrintErrorAndExit(message)
+    gyp_command = [sys.executable, gyp_main_file]
     os.environ['PYTHONPATH'] = os.pathsep.join(
         [os.path.join(gyp_dir, 'pylib'), original_python_path])
     # Following script tests if 'import gyp' is now available and its
@@ -633,16 +609,6 @@ def GypMain(options, unused_args):
     expected_gyp_module_path = os.path.join(gyp_dir, 'pylib', 'gyp')
     RunOrDie([sys.executable, gyp_check_script,
               '--expected=%s' % expected_gyp_module_path])
-
-  # Copy jsoncpp.gyp to the third party directory.
-  CopyFile('%s/gyp/jsoncpp.gyp' % SRC_DIR, 'third_party/jsoncpp/jsoncpp.gyp')
-  if options.target_platform == 'NaCl':
-    # Copy zlib.gyp to the third party directory.
-    CopyFile('%s/gyp/zlib.gyp' % SRC_DIR, 'third_party/zlib/v1_2_3/zlib.gyp')
-  # Copy breakpad.gyp to the third party directory, if necessary.
-  if IsWindows():
-    CopyFile('%s/gyp/breakpad.gyp' % SRC_DIR,
-             'third_party/breakpad/breakpad.gyp')
 
   # Determine the generator name.
   generator = GetGeneratorName(options.gyp_generator)
@@ -657,23 +623,21 @@ def GypMain(options, unused_args):
 
   # Build GYP command line.
   logging.info('Building GYP command line...')
-  command_line = [sys.executable, gyp_command,
-                  '--depth=.',
-                  '--include=%s/gyp/common.gypi' % SRC_DIR]
+  gyp_options = ['--depth=.', '--include=%s/gyp/common.gypi' % SRC_DIR]
 
 
   mozc_root = os.path.abspath(GetTopLevelSourceDirectoryName())
-  command_line.extend(['-D', 'abs_depth=%s' % mozc_root])
+  gyp_options.extend(['-D', 'abs_depth=%s' % mozc_root])
 
-  command_line.extend(['-D', 'python_executable=%s' % sys.executable])
+  gyp_options.extend(['-D', 'python_executable=%s' % sys.executable])
 
-  command_line.extend(gyp_file_names)
+  gyp_options.extend(gyp_file_names)
 
   if options.branding:
-    command_line.extend(['-D', 'branding=%s' % options.branding])
+    gyp_options.extend(['-D', 'branding=%s' % options.branding])
 
-  if options.noqt:
-    command_line.extend(['-D', 'use_qt=NO'])
+  if options.noqt or target_platform in ['Android', 'NaCl']:
+    gyp_options.extend(['-D', 'use_qt=NO'])
   else:
     if options.target_platform == 'Linux' and not options.qtdir:
       # Check if Qt libraries are installed.
@@ -682,20 +646,20 @@ def GypMain(options, unused_args):
       if not system_qt_found:
         PrintErrorAndExit('Qt4 is required to build GUI Tool. '
                           'Specify --noqt to skip building GUI Tool.')
-    command_line.extend(['-D', 'use_qt=YES'])
+    gyp_options.extend(['-D', 'use_qt=YES'])
   if options.qtdir:
-    command_line.extend(['-D', 'qt_dir=%s' % os.path.abspath(options.qtdir)])
+    gyp_options.extend(['-D', 'qt_dir=%s' % os.path.abspath(options.qtdir)])
   else:
-    command_line.extend(['-D', 'qt_dir='])
+    gyp_options.extend(['-D', 'qt_dir='])
 
   if options.target_platform == 'Windows' and options.wix_dir:
-    command_line.extend(['-D', 'use_wix=YES'])
-    command_line.extend(['-D', 'wix_dir=%s' % options.wix_dir])
+    gyp_options.extend(['-D', 'use_wix=YES'])
+    gyp_options.extend(['-D', 'wix_dir=%s' % options.wix_dir])
   else:
-    command_line.extend(['-D', 'use_wix=NO'])
+    gyp_options.extend(['-D', 'use_wix=NO'])
 
   android_sdk_home = options.android_sdk_home
-  if version.GetTargetPlatform() == 'Android':
+  if target_platform == 'Android':
     if not android_sdk_home:
       # If --android_sdk_home is not set, find the SDK directory from PATH.
       # Usualy $SDK/tools and/or $SDK/platform-tools is/or in PATH.
@@ -711,12 +675,12 @@ def GypMain(options, unused_args):
           'Android SDK Home was not found. '
           'Use --android_sdk_home option or make the home direcotry '
           'be included in PATH environment variable.')
-  command_line.extend(['-D', 'android_sdk_home=%s' % android_sdk_home])
-  command_line.extend(['-D', 'android_arch_abi=%s' % options.android_arch_abi])
-  command_line.extend(['-D', 'android_application_id=%s' %
+  gyp_options.extend(['-D', 'android_sdk_home=%s' % android_sdk_home])
+  gyp_options.extend(['-D', 'android_arch_abi=%s' % options.android_arch_abi])
+  gyp_options.extend(['-D', 'android_application_id=%s' %
                        options.android_application_id])
-  command_line.extend(['-D', 'build_base=%s' %
-                       GetBuildBaseName(options, version.GetTargetPlatform())])
+  gyp_options.extend(['-D', 'build_base=%s' %
+                       GetBuildBaseName(options, target_platform)])
 
   disable_unittest_if_not_available = True
   if disable_unittest_if_not_available:
@@ -726,14 +690,13 @@ def GypMain(options, unused_args):
           os.path.join(GetTopLevelSourceDirectoryName(), 'third_party', module))
       if not os.path.exists(module_dir):
         logging.warning('%s not found. Disabling unittest.', module)
-        command_line.extend(['-D', 'enable_unittest=0'])
+        gyp_options.extend(['-D', 'enable_unittest=0'])
         break
 
   if options.warn_as_error:
-    command_line.extend(['-D', 'warn_as_error=1'])
+    gyp_options.extend(['-D', 'warn_as_error=1'])
   else:
-    command_line.extend(['-D', 'warn_as_error=0'])
-
+    gyp_options.extend(['-D', 'warn_as_error=0'])
 
   # mac_dir should be started with '<(DEPTH)', otherwise some
   # operations in XCode fails.  So if the mac_dir option is an
@@ -743,7 +706,7 @@ def GypMain(options, unused_args):
     mac_dir = GetRelPath(mac_dir, GetTopLevelSourceDirectoryName())
   mac_dir = os.path.join('<(DEPTH)', mac_dir)
 
-  command_line.extend(['-D', 'mac_dir=%s' % mac_dir])
+  gyp_options.extend(['-D', 'mac_dir=%s' % mac_dir])
 
   # Check the version and determine if the building version is dev-channel or
   # not. Note that if --channel_dev is explicitly set, we don't check the
@@ -751,11 +714,10 @@ def GypMain(options, unused_args):
   if options.channel_dev is None:
     options.channel_dev = version.IsDevChannel()
   if options.channel_dev:
-    command_line.extend(['-D', 'channel_dev=1'])
+    gyp_options.extend(['-D', 'channel_dev=1'])
 
   def SetCommandLineForFeature(option_name, windows=False, mac=False,
-                               linux=False, chromeos=False, android=False,
-                               nacl=False):
+                               linux=False, android=False, nacl=False):
     """Updates an option like '--enable_foober' and add a -D argument for gyp.
 
     This function ensures an option like '--enable_foober' exists and it has a
@@ -773,8 +735,6 @@ def GypMain(options, unused_args):
           on MacOS X platform.
       linux: A boolean which replesents the default value of the target option
           on Linux platform.
-      chromeos: A boolean which replesents the default value of the target
-          option on ChromeOS platform.
       android: A boolean which replesents the default value of the target
           option on Android platform.
       nacl: A boolean which replesents the default value of the target
@@ -790,22 +750,16 @@ def GypMain(options, unused_args):
     default_enabled = {'Windows': windows,
                        'Mac': mac,
                        'Linux': linux,
-                       'ChromeOS': chromeos,
                        'Android': android,
                        'NaCl': nacl}[options.target_platform]
     enable_option_name = 'enable_%s' % option_name
     enabled = options.ensure_value(enable_option_name, default_enabled)
-    command_line.extend(['-D',
-                         '%s=%s' % (enable_option_name, 1 if enabled else 0)])
+    gyp_options.extend(['-D',
+                        '%s=%s' % (enable_option_name, 1 if enabled else 0)])
 
-  is_official = ((options.language == 'japanese') and
-                 (options.branding == 'GoogleJapaneseInput'))
+  is_official = (options.branding == 'GoogleJapaneseInput')
   is_official_dev = (is_official and options.channel_dev)
-  is_official_dev_or_oss = (is_official_dev or
-                            ((options.language == 'japanese') and
-                             (options.branding == 'Mozc')))
 
-  SetCommandLineForFeature(option_name='webservice_infolist')
   SetCommandLineForFeature(option_name='cloud_sync',
                            linux=is_official_dev,
                            windows=is_official_dev,
@@ -816,20 +770,19 @@ def GypMain(options, unused_args):
                            windows=is_official_dev,
                            mac=is_official_dev)
   SetCommandLineForFeature(option_name='http_client',
-                           linux=False,
+                           linux=is_official,
                            windows=is_official,
                            mac=is_official,
-                           chromeos=False,  # not supported.
                            android=is_official,
                            # System dictionary is read with HttpClient in NaCl.
                            nacl=True)
   SetCommandLineForFeature(option_name='mode_indicator',
                            windows=True)
 
-  command_line.extend(['-D', 'target_platform=%s' % options.target_platform])
+  gyp_options.extend(['-D', 'target_platform=%s' % options.target_platform])
 
   if IsWindows():
-    command_line.extend(['-G', 'msvs_version=%s' % options.msvs_version])
+    gyp_options.extend(['-G', 'msvs_version=%s' % options.msvs_version])
 
   # On Windows, we need to determine if <qtdir>/lib/Qt*.lib are import
   # libraries for Qt DLLs or statically-linked libraries. Here we assume that
@@ -846,55 +799,46 @@ def GypMain(options, unused_args):
           break
 
   if use_dynamically_linked_qt:
-    command_line.extend(['-D', 'use_dynamically_linked_qt=1'])
+    gyp_options.extend(['-D', 'use_dynamically_linked_qt=1'])
   else:
-    command_line.extend(['-D', 'use_dynamically_linked_qt=0'])
+    gyp_options.extend(['-D', 'use_dynamically_linked_qt=0'])
 
   if options.use_zinnia:
-    command_line.extend(['-D', 'use_zinnia=YES'])
+    gyp_options.extend(['-D', 'use_zinnia=YES'])
   else:
-    command_line.extend(['-D', 'use_zinnia=NO'])
+    gyp_options.extend(['-D', 'use_zinnia=NO'])
 
-  if ((options.target_platform == 'Linux' or
-       options.target_platform == 'ChromeOS') and
+  if (options.target_platform == 'Linux' and
       '%s/unix/ibus/ibus.gyp' % SRC_DIR in gyp_file_names):
-    command_line.extend(['-D', 'use_libibus=1'])
+    gyp_options.extend(['-D', 'use_libibus=1'])
 
 
   # Generate make rules for Android NDK.
-  if options.target_platform == 'Android':
-    command_line.extend(['-G', 'android_ndk_version=r8'])
+  if target_platform == 'Android':
+    gyp_options.extend(['-G', 'android_ndk_version=r8'])
 
   # Dictionary configuration
-  if options.target_platform == 'ChromeOS':
-    # Note that the OSS version of mozc ignores the dictionary variable.
-    command_line.extend(['-D', 'dictionary=small'])
-    command_line.extend(['-D', 'use_separate_collocation_data=0'])
-    command_line.extend(['-D', 'use_separate_connection_data=0'])
-    command_line.extend(['-D', 'use_separate_dictionary=0'])
-    command_line.extend(['-D', 'use_1byte_cost_for_connection_data=0'])
-    command_line.extend(['-D', 'use_packed_dictionary=0'])
-  elif options.target_platform == 'Android':
-    command_line.extend(['-D', 'dictionary=small'])
-    command_line.extend(['-D', 'use_separate_collocation_data=0'])
-    command_line.extend(['-D', 'use_separate_connection_data=1'])
-    command_line.extend(['-D', 'use_separate_dictionary=1'])
-    command_line.extend(['-D', 'use_1byte_cost_for_connection_data=1'])
-    command_line.extend(['-D', 'use_packed_dictionary=0'])
-  elif options.target_platform == 'NaCl':
-    command_line.extend(['-D', 'dictionary=desktop'])
-    command_line.extend(['-D', 'use_separate_collocation_data=0'])
-    command_line.extend(['-D', 'use_separate_connection_data=0'])
-    command_line.extend(['-D', 'use_separate_dictionary=0'])
-    command_line.extend(['-D', 'use_1byte_cost_for_connection_data=0'])
-    command_line.extend(['-D', 'use_packed_dictionary=1'])
+  if target_platform == 'Android':
+    gyp_options.extend(['-D', 'dictionary=small'])
+    gyp_options.extend(['-D', 'use_separate_collocation_data=0'])
+    gyp_options.extend(['-D', 'use_separate_connection_data=1'])
+    gyp_options.extend(['-D', 'use_separate_dictionary=1'])
+    gyp_options.extend(['-D', 'use_1byte_cost_for_connection_data=1'])
+    gyp_options.extend(['-D', 'use_packed_dictionary=0'])
+  elif target_platform == 'NaCl':
+    gyp_options.extend(['-D', 'dictionary=desktop'])
+    gyp_options.extend(['-D', 'use_separate_collocation_data=0'])
+    gyp_options.extend(['-D', 'use_separate_connection_data=0'])
+    gyp_options.extend(['-D', 'use_separate_dictionary=0'])
+    gyp_options.extend(['-D', 'use_1byte_cost_for_connection_data=0'])
+    gyp_options.extend(['-D', 'use_packed_dictionary=1'])
   else:
-    command_line.extend(['-D', 'dictionary=desktop'])
-    command_line.extend(['-D', 'use_separate_collocation_data=0'])
-    command_line.extend(['-D', 'use_separate_connection_data=0'])
-    command_line.extend(['-D', 'use_separate_dictionary=0'])
-    command_line.extend(['-D', 'use_1byte_cost_for_connection_data=0'])
-    command_line.extend(['-D', 'use_packed_dictionary=0'])
+    gyp_options.extend(['-D', 'dictionary=desktop'])
+    gyp_options.extend(['-D', 'use_separate_collocation_data=0'])
+    gyp_options.extend(['-D', 'use_separate_connection_data=0'])
+    gyp_options.extend(['-D', 'use_separate_dictionary=0'])
+    gyp_options.extend(['-D', 'use_1byte_cost_for_connection_data=0'])
+    gyp_options.extend(['-D', 'use_packed_dictionary=0'])
 
   # Specifying pkg-config command.  Some environment (such like
   # cross-platform ChromeOS build) requires us to call a different
@@ -902,28 +846,26 @@ def GypMain(options, unused_args):
   # and use the specified command instead of actual pkg-config
   # command.
   if IsLinux():
-    command_line.extend(['-D', 'pkg_config_command=%s' % GetPkgConfigCommand()])
+    gyp_options.extend(['-D', 'pkg_config_command=%s' % GetPkgConfigCommand()])
   else:
-    command_line.extend(['-D', 'pkg_config_command='])
+    gyp_options.extend(['-D', 'pkg_config_command='])
 
-  if options.target_platform == 'NaCl':
+  if target_platform == 'NaCl':
     if os.path.isdir(options.nacl_sdk_root):
       nacl_sdk_root = os.path.abspath(options.nacl_sdk_root)
     else:
       PrintErrorAndExit('The directory specified with --nacl_sdk_root does not '
                         'exist: %s' % options.nacl_sdk_root)
-    command_line.extend(['-D', 'nacl_sdk_root=%s' % nacl_sdk_root])
-    command_line.extend(['-D', 'clang=1'])
-
-  command_line.extend(['-D', 'language=%s' % options.language])
+    gyp_options.extend(['-D', 'nacl_sdk_root=%s' % nacl_sdk_root])
+    gyp_options.extend(['-D', 'clang=1'])
 
   if options.server_dir:
-    command_line.extend([
+    gyp_options.extend([
         '-D', 'server_dir=%s' % os.path.abspath(options.server_dir)])
 
   # Run GYP.
   logging.info('Running GYP...')
-  RunOrDie(command_line)
+  RunOrDie(gyp_command + gyp_options)
 
   # Restore PYTHONPATH just in case.
   if not original_python_path:
@@ -950,8 +892,7 @@ def GypMain(options, unused_args):
     abs_qtdir = os.path.abspath(options.qtdir)
     abs_qt_bin_dir = os.path.join(abs_qtdir, 'bin')
     abs_qt_lib_dir = os.path.join(abs_qtdir, 'lib')
-    abs_out_win_dir = GetBuildBaseName(options,
-                                       GetMozcVersion().GetTargetPlatform())
+    abs_out_win_dir = GetBuildBaseName(options, target_platform)
     copy_script = os.path.join(
         GetBuildScriptDirectoryName(), 'build_tools', 'copy_dll_and_symbol.py')
     copy_modes = [
@@ -1007,7 +948,7 @@ def BuildToolsMain(options, unused_args, original_directory_name):
 
 def CanonicalTargetToGypFileAndTargetName(target):
   """Parses the target string."""
-  if not ':' in target:
+  if ':' not in target:
     PrintErrorAndExit('Invalid target: %s' % target)
   (gyp_file_name, target_name) = target.split(':')
   return (gyp_file_name, target_name)
@@ -1091,7 +1032,6 @@ def BuildMain(options, targets, original_directory_name):
   python_path = os.pathsep.join([original_python_path, mozc_root])
   os.environ['PYTHONPATH'] = python_path
 
-
   if IsMac():
     BuildOnMac(options, targets, original_directory_name)
   elif IsLinux():
@@ -1117,7 +1057,7 @@ def RunTests(build_base, configuration, parallel_num):
   Raises:
     RunOrDieError: One or more tests have failed.
   """
-  #TODO(nona): move this function to build_tools/test_tools
+  # TODO(nona): move this function to build_tools/test_tools
   base_path = os.path.join(build_base, configuration)
 
   options = []
@@ -1381,8 +1321,6 @@ def CleanBuildFilesAndDirectories(options, unused_args):
       file_names.extend(glob.glob(os.path.join(gyp_directory_name,
                                                '*/*.Makefile')))
   file_names.append('%s/mozc_version.txt' % SRC_DIR)
-  file_names.append('third_party/jsoncpp/jsoncpp.gyp')
-  file_names.append('third_party/zlib/v1_2_3/zlib.gyp')
   # Collect stuff in the top-level directory.
   directory_names.append('mozc_build_tools')
 
@@ -1394,6 +1332,8 @@ def CleanBuildFilesAndDirectories(options, unused_args):
     file_names.append('Makefile')
     # Remove auto-generated files.
     file_names.append(os.path.join(SRC_DIR, 'android', 'AndroidManifest.xml'))
+    file_names.append(os.path.join(
+        SRC_DIR, 'android', 'tests', 'AndroidManifest.xml'))
     directory_names.append(os.path.join(SRC_DIR, 'android', 'assets'))
     # Delete files/dirs generated by Android SDK/NDK.
     android_library_projects = [
@@ -1407,14 +1347,11 @@ def CleanBuildFilesAndDirectories(options, unused_args):
       for directory in android_generated_dirs:
         directory_names.append(
             os.path.join(SRC_DIR, 'android', project, directory))
-
     # In addition, remove resources/res/raw directory, which contains
     # generated .pic files.
     directory_names.append(
         os.path.join(SRC_DIR, 'android', 'resources', 'res', 'raw'))
 
-  elif IsWindows():
-    file_names.append('third_party/breakpad/breakpad.gyp')
   # Remove files.
   for file_name in file_names:
     RemoveFile(file_name)
@@ -1442,6 +1379,25 @@ def ShowHelpAndExit():
   sys.exit(1)
 
 
+class BuildContextManager(object):
+  """A setting up mechanism for objects that are only required while building.
+
+  Some objects are required to be available only while build_mozc.py is running.
+  This class is useful to manage such temporal object.
+  """
+
+  def __enter__(self):
+    """Sets up build environment with "with" statement."""
+    # TODO(yukawa): Implement this
+    return self
+
+  def __exit__(self, exc_type, exc_value, traceback):
+    """Tears down build environment with "with" statement."""
+    # TODO(yukawa): Implement this
+    return False  # Thrown exception should be handled by the caller side.
+
+
+
 def main():
   logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
   logging.getLogger().addFilter(ColoredLoggingFilter())
@@ -1455,26 +1411,27 @@ def main():
   # affects functions in os.path and that causes troublesome errors.
   MoveToTopLevelSourceDirectory()
 
-  command = sys.argv[1]
-  args = sys.argv[2:]
-  if command == 'gyp':
-    (cmd_opts, cmd_args) = ParseGypOptions(args)
-    GypMain(cmd_opts, cmd_args)
-  elif command == 'build_tools':
-    (cmd_opts, cmd_args) = ParseBuildOptions(args)
-    BuildToolsMain(cmd_opts, cmd_args, original_directory_name)
-  elif command == 'build':
-    (cmd_opts, cmd_args) = ParseBuildOptions(args)
-    BuildMain(cmd_opts, cmd_args, original_directory_name)
-  elif command == 'runtests':
-    (cmd_opts, cmd_args) = ParseRunTestsOptions(args)
-    RunTestsMain(cmd_opts, cmd_args, original_directory_name)
-  elif command == 'clean':
-    (cmd_opts, cmd_args) = ParseCleanOptions(args)
-    CleanMain(cmd_opts, cmd_args)
-  else:
-    logging.error('Unknown command: %s', command)
-    ShowHelpAndExit()
+  with BuildContextManager():
+    command = sys.argv[1]
+    args = sys.argv[2:]
+    if command == 'gyp':
+      (cmd_opts, cmd_args) = ParseGypOptions(args)
+      GypMain(cmd_opts, cmd_args)
+    elif command == 'build_tools':
+      (cmd_opts, cmd_args) = ParseBuildOptions(args)
+      BuildToolsMain(cmd_opts, cmd_args, original_directory_name)
+    elif command == 'build':
+      (cmd_opts, cmd_args) = ParseBuildOptions(args)
+      BuildMain(cmd_opts, cmd_args, original_directory_name)
+    elif command == 'runtests':
+      (cmd_opts, cmd_args) = ParseRunTestsOptions(args)
+      RunTestsMain(cmd_opts, cmd_args, original_directory_name)
+    elif command == 'clean':
+      (cmd_opts, cmd_args) = ParseCleanOptions(args)
+      CleanMain(cmd_opts, cmd_args)
+    else:
+      logging.error('Unknown command: %s', command)
+      ShowHelpAndExit()
 
 if __name__ == '__main__':
   main()

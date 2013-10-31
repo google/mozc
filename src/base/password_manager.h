@@ -32,6 +32,8 @@
 
 #include <string>
 
+#include "base/port.h"
+
 namespace mozc {
 
 extern bool kUseMockPasswordManager;
@@ -44,13 +46,9 @@ class PasswordManagerInterface;
 // PasswordManager uses an OS-provided mechanism
 // to safely save password/passphrase into local disk.
 //
-// Currently, Linux password manager just stores password
-// in plain text but this policy is secure because Chrome
-// OS itself adopts secure mechanism for file managements
-// such like disk encryption.  For environments other than
-// Windows/MacOSX/ChromeOS, you might want to write your
-// own password manager.  See password_manager.cc file
-// for the details.
+// Currently, Linux password manager just stores password in plain text.
+// you might want to write your own password manager.
+// See password_manager.cc file for the details.
 
 class PasswordManager {
  public:
@@ -72,8 +70,7 @@ class PasswordManager {
       PasswordManagerInterface *handler);
 
  private:
-  PasswordManager() {}
-  virtual ~PasswordManager() {}
+  DISALLOW_IMPLICIT_CONSTRUCTORS(PasswordManager);
 };
 
 // Implements PasswordManager implementation.
@@ -88,4 +85,4 @@ class PasswordManagerInterface {
 };
 }  // namespace mozc
 
-#endif // MOZC_BASE_PASSWORD_MANAGER_H_
+#endif  // MOZC_BASE_PASSWORD_MANAGER_H_

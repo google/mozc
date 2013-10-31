@@ -27,19 +27,23 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "base/cpu_stats.h"
+
 #include <string>
 #include <iostream>
-#include "base/base.h"
+#include "base/flags.h"
 #include "base/thread.h"
+#include "base/port.h"
 #include "base/util.h"
-#include "base/cpu_stats.h"
 
 DEFINE_int32(iterations, 1000, "number of iterations");
 DEFINE_int32(polling_duration, 1000, "duration period in msec");
 DEFINE_int32(dummy_threads_size, 0, "number of dummy threads");
 
+namespace {
 class DummyThread : public mozc::Thread {
  public:
+  DummyThread() {}
   void Run() {
     volatile uint64 n = 0;
     while (true) {
@@ -47,12 +51,16 @@ class DummyThread : public mozc::Thread {
       --n;
     }
   }
+
+ private:
+  DISALLOW_COPY_AND_ASSIGN(DummyThread);
 };
+}  // namespace
 
 int main(int argc, char **argv) {
   InitGoogle(argv[0], &argc, &argv, false);
 
-  scoped_array<DummyThread> threads;
+  scoped_ptr<DummyThread[]> threads;
 
   if (FLAGS_dummy_threads_size > 0) {
     threads.reset(new DummyThread[FLAGS_dummy_threads_size]);

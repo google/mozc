@@ -66,6 +66,7 @@ class DataManagerTestBase : public ::testing::Test {
   void SegmenterTest_RNodeTest();
   void SegmenterTest_SameAsInternal();
   void SuggestionFilterTest_IsBadSuggestion();
+  void CounterSuffixTest_ValidateTest();
 
   scoped_ptr<DataManagerInterface> data_manager_;
   const uint16 lsize_;

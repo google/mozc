@@ -309,6 +309,8 @@ SendCommand_GetAsyncResult
 SendCommand_CommitRawText
 SendCommand_ConvertPrevPage
 SendCommand_ConvertNextPage
+SendCommand_TurnOnIme
+SendCommand_TurnOffIme
 
 # The count of revert in Chrome Omnibox or Google search box
 SendCommand_RevertInChromeOmnibox
@@ -393,7 +395,8 @@ HANKAKU
 KANJI
 KATAKANA
 CAPS_LOCK
-HANJA
+# Unsupported keys (e.g. PrtSc, Pause) fall back to UNDEFINED_KEY.
+UNDEFINED_KEY
 # Numpad [,]
 COMMA
 # Numpad [5]
@@ -521,8 +524,6 @@ UserSegmentHistoryEntrySize
 AndroidApiLevel
 # Total memory in MB
 TotalPhysicalMemory
-# Web service entry size of web usage dictionary
-WebServiceEntrySize
 
 # The count of the handwriting tool opened
 HandwritingOpen

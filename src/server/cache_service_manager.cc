@@ -35,16 +35,19 @@
 #include <shlwapi.h>  // for SHLoadIndirectString
 #include <strsafe.h>
 #include <wincrypt.h>
+
+#include <memory>
 #include <string>
 
 #include "base/const.h"
 #include "base/file_util.h"
 #include "base/scoped_handle.h"
-#include "base/scoped_ptr.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "server/mozc_cache_service_resource.h"
 #include "server/win32_service_state.pb.h"
+
+using std::unique_ptr;
 
 namespace mozc {
 namespace {
@@ -128,7 +131,7 @@ bool SerializeToBase64WString(const ::google::protobuf::Message &message,
   }
 
   const int serialized_len = message.ByteSize();
-  scoped_array<BYTE> serialized(new BYTE[serialized_len]);
+  unique_ptr<BYTE[]> serialized(new BYTE[serialized_len]);
   if (!message.SerializeToArray(serialized.get(), serialized_len)) {
     LOG(ERROR) << "SerializeAsArray failed";
     return false;
@@ -141,7 +144,7 @@ bool SerializeToBase64WString(const ::google::protobuf::Message &message,
   if (result == FALSE) {
     return false;
   }
-  scoped_array<wchar_t> base64_string(new wchar_t[base64_string_len]);
+  unique_ptr<wchar_t[]> base64_string(new wchar_t[base64_string_len]);
   result = ::CryptBinaryToString(serialized.get(), serialized_len,
                                  CRYPT_STRING_BASE64, base64_string.get(),
                                  &base64_string_len);
@@ -173,7 +176,7 @@ bool DeserializeFromBase64WString(const wstring &src,
   if (result == FALSE) {
     return false;
   }
-  scoped_array<BYTE> buffer(new BYTE[buffer_len]);
+  unique_ptr<BYTE[]> buffer(new BYTE[buffer_len]);
   result = ::CryptStringToBinary(src.c_str(),
                                  src.size(),
                                  CRYPT_STRING_BASE64,
@@ -251,7 +254,7 @@ bool StartServiceInternal(const ScopedSCHandle &service_handle,
     return true;
   }
 
-  scoped_array<const wchar_t*> args(new const wchar_t*[arguments.size()]);
+  unique_ptr<const wchar_t*[]> args(new const wchar_t*[arguments.size()]);
   for (size_t i = 0; i < arguments.size(); ++i) {
     args[i] = arguments[i].c_str();
   }
@@ -276,7 +279,7 @@ bool SetServiceDescription(const ScopedSCHandle &service_handle,
                            const wstring &description) {
   // +1 for '\0'
   const size_t buffer_length = description.size() + 1;
-  scoped_array<wchar_t> buffer(new wchar_t[buffer_length]);
+  unique_ptr<wchar_t[]> buffer(new wchar_t[buffer_length]);
   description._Copy_s(buffer.get(), buffer_length, description.size());
   buffer[buffer_length - 1] = L'\0';
 
@@ -413,7 +416,7 @@ bool RestoreStateInternal(const cache_service::Win32ServiceState &state) {
 // is successfully retrieved.  Some members of QUERY_SERVICE_CONFIG points
 // memory addresses inside the retrieved byte array.
 bool GetServiceConfig(const ScopedSCHandle &service_handle,
-                      scoped_array<char> *result) {
+                      unique_ptr<char[]> *result) {
   if (NULL == result) {
     return false;
   }
@@ -434,7 +437,7 @@ bool GetServiceConfig(const ScopedSCHandle &service_handle,
     return false;
   }
 
-  scoped_array<char> buf(new char[size]);
+  unique_ptr<char[]> buf(new char[size]);
   LPQUERY_SERVICE_CONFIG service_config =
       reinterpret_cast<LPQUERY_SERVICE_CONFIG>(buf.get());
 
@@ -481,7 +484,7 @@ bool CacheServiceManager::IsEnabled() {
   // string buffers which are reffered by corresponding members of
   // QUERY_SERVICE_CONFIG.  We have to keep the array until we complete
   // all tasks which use the contents of QUERY_SERVICE_CONFIG.
-  scoped_array<char> buffer;
+  unique_ptr<char[]> buffer;
   if (!GetServiceConfig(service_handle, &buffer)) {
     return false;
   }
@@ -614,7 +617,7 @@ bool CacheServiceManager::BackupStateAsString(wstring *result) {
     // string buffers which are reffered by corresponding members of
     // QUERY_SERVICE_CONFIG.  We have to keep the array until we complete
     // all tasks which use the contents of QUERY_SERVICE_CONFIG.
-    scoped_array<char> buffer;
+    unique_ptr<char[]> buffer;
     if (!GetServiceConfig(service_handle, &buffer)) {
       return false;
     }

@@ -48,7 +48,7 @@ TEST(MmapTest, MmapTest) {
   const size_t kFileNameSize[] = { 1, 100, 1024, 8192 };
   for (int i = 0; i < arraysize(kFileNameSize); ++i) {
     FileUtil::Unlink(filename);
-    scoped_array<char> buf(new char[kFileNameSize[i]]);
+    scoped_ptr<char[]> buf(new char[kFileNameSize[i]]);
     memset(buf.get(), 0, kFileNameSize[i]);
 
     {

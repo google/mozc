@@ -35,9 +35,9 @@
 
 #include "base/clock_mock.h"
 #include "base/logging.h"
+#include "base/scheduler.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
-#include "base/thread.h"
 #include "base/util.h"
 #include "client/client.h"
 #include "client/client_interface.h"
@@ -65,8 +65,11 @@ namespace mozc {
 using config::Config;
 using config::ConfigHandler;
 using config::SyncConfig;
+using testing::DoAll;
 using testing::Mock;
 using testing::Return;
+using testing::SetArgPointee;
+using testing::_;
 
 namespace sync {
 
@@ -74,40 +77,8 @@ class GmockSyncer : public SyncerInterface {
  public:
   MOCK_METHOD0(Start, bool());
   MOCK_METHOD0(ClearLocal, bool());
-  MOCK_METHOD0(ClearInternal, bool());
-  MOCK_METHOD0(SyncInternal, bool());
-
-  GmockSyncer() {
-    Reset();
-  }
-
-  virtual bool Sync(bool *reload_required) {
-    Util::Sleep(operation_duration_);
-    *reload_required = reload_required_;
-    return SyncInternal();
-  }
-
-  virtual bool Clear() {
-    Util::Sleep(operation_duration_);
-    return ClearInternal();
-  }
-
-  void SetOperationDuration(int duration) {
-    operation_duration_ = duration;
-  }
-
-  void SetReloadRequired(bool result) {
-    reload_required_ = result;
-  }
-
-  void Reset() {
-    reload_required_  = true;
-    operation_duration_ = 0;
-  }
-
- private:
-  bool reload_required_;
-  int operation_duration_;
+  MOCK_METHOD0(Clear, bool());
+  MOCK_METHOD1(Sync, bool(bool *reload_required));
 };
 
 class SyncHandlerTest : public testing::Test {
@@ -127,6 +98,7 @@ class SyncHandlerTest : public testing::Test {
     Util::SetClockHandler(NULL);
     storage_.reset(mozc::storage::MemoryStorage::New());
     mozc::storage::Registry::SetStorage(storage_.get());
+    Scheduler::RemoveAllJobs();
 
     Config config;
     ConfigHandler::GetDefaultConfig(&config);
@@ -152,6 +124,7 @@ class SyncHandlerTest : public testing::Test {
     syncer_ = NULL;
 
     // Also restores following global state for the subsequent test.
+    Scheduler::RemoveAllJobs();
     HTTPClient::SetHTTPClientHandler(NULL);
     client::ClientFactory::SetClientFactory(NULL);
     Util::SetClockHandler(NULL);
@@ -253,40 +226,75 @@ TEST_F(SyncHandlerTest, SendReloadCommand) {
   MockClientFactory mock_client_factory;
   client::ClientFactory::SetClientFactory(&mock_client_factory);
 
-  ON_CALL(*syncer_, SyncInternal()).WillByDefault(Return(true));
+  ScopedClockMock clock_mock;
 
   {
-    syncer_->Reset();
-
     EXPECT_CALL(*syncer_, Start()).Times(1).WillOnce(Return(true));
-    EXPECT_CALL(*syncer_, SyncInternal()).Times(1).WillOnce(Return(true));
-    EXPECT_CALL(*syncer_, ClearInternal()).Times(0);
+    EXPECT_CALL(*syncer_, Sync(_)).Times(1).WillOnce(DoAll(
+        SetArgPointee<0>(true), Return(true)));
+    EXPECT_CALL(*syncer_, Clear()).Times(0);
 
     g_is_reload_called = false;
-    const uint64 reload_required_timestamp =
-      sync_handler_->GetReloadRequiredTimestamp();
-    Util::Sleep(100);
-    syncer_->SetReloadRequired(true);
+    // GetReloadRequiredTimestamp returns 0 for the first time.
+    EXPECT_EQ(0, sync_handler_->GetReloadRequiredTimestamp());
     sync_handler_->Sync();
     sync_handler_->Wait();
     EXPECT_TRUE(g_is_reload_called);
-    EXPECT_LE(reload_required_timestamp + 100,
+    EXPECT_NE(0, sync_handler_->GetReloadRequiredTimestamp());
+
+    Mock::VerifyAndClearExpectations(syncer_);
+  }
+
+  {
+    EXPECT_CALL(*syncer_, Start()).Times(1).WillOnce(Return(true));
+    EXPECT_CALL(*syncer_, Sync(_)).Times(1).WillOnce(DoAll(
+        SetArgPointee<0>(true), Return(true)));
+    EXPECT_CALL(*syncer_, Clear()).Times(0);
+
+    g_is_reload_called = false;
+    const uint64 reload_required_timestamp =
+        sync_handler_->GetReloadRequiredTimestamp();
+    clock_mock.get()->PutClockForward(123, 0);
+    sync_handler_->Sync();
+    sync_handler_->Wait();
+    EXPECT_TRUE(g_is_reload_called);
+    EXPECT_EQ(reload_required_timestamp + 123,
               sync_handler_->GetReloadRequiredTimestamp());
 
     Mock::VerifyAndClearExpectations(syncer_);
   }
 
   {
-    syncer_->Reset();
-
     EXPECT_CALL(*syncer_, Start()).Times(1).WillOnce(Return(true));
-    EXPECT_CALL(*syncer_, SyncInternal()).Times(1).WillOnce(Return(false));
-    EXPECT_CALL(*syncer_, ClearInternal()).Times(0);
+    EXPECT_CALL(*syncer_, Sync(_)).Times(1).WillOnce(DoAll(
+        SetArgPointee<0>(true), Return(false)));
+    EXPECT_CALL(*syncer_, Clear()).Times(0);
 
     g_is_reload_called = false;
     const uint64 reload_required_timestamp =
-      sync_handler_->GetReloadRequiredTimestamp();
-    syncer_->SetReloadRequired(true);
+        sync_handler_->GetReloadRequiredTimestamp();
+    clock_mock.get()->PutClockForward(234, 0);
+    sync_handler_->Sync();
+    sync_handler_->Wait();
+    EXPECT_TRUE(g_is_reload_called);
+    EXPECT_EQ(reload_required_timestamp + 234,
+              sync_handler_->GetReloadRequiredTimestamp());
+
+    Mock::VerifyAndClearExpectations(syncer_);
+  }
+
+  // Reload required timestamp should NOT be updated by following tests.
+  clock_mock.get()->PutClockForward(100, 0);
+
+  {
+    EXPECT_CALL(*syncer_, Start()).Times(1).WillOnce(Return(true));
+    EXPECT_CALL(*syncer_, Sync(_)).Times(1).WillOnce(DoAll(
+        SetArgPointee<0>(false), Return(true)));
+    EXPECT_CALL(*syncer_, Clear()).Times(0);
+
+    g_is_reload_called = false;
+    const uint64 reload_required_timestamp =
+        sync_handler_->GetReloadRequiredTimestamp();
     sync_handler_->Sync();
     sync_handler_->Wait();
     EXPECT_FALSE(g_is_reload_called);
@@ -297,54 +305,13 @@ TEST_F(SyncHandlerTest, SendReloadCommand) {
   }
 
   {
-    syncer_->Reset();
-
-    EXPECT_CALL(*syncer_, Start()).Times(1).WillOnce(Return(true));
-    EXPECT_CALL(*syncer_, SyncInternal()).Times(1).WillOnce(Return(true));
-    EXPECT_CALL(*syncer_, ClearInternal()).Times(0);
-
-    g_is_reload_called = false;
-    const uint64 reload_required_timestamp =
-      sync_handler_->GetReloadRequiredTimestamp();
-    syncer_->SetReloadRequired(false);
-    sync_handler_->Sync();
-    sync_handler_->Wait();
-    EXPECT_FALSE(g_is_reload_called);
-    EXPECT_EQ(reload_required_timestamp,
-              sync_handler_->GetReloadRequiredTimestamp());
-
-    Mock::VerifyAndClearExpectations(syncer_);
-  }
-
-  {
-    syncer_->Reset();
-
     EXPECT_CALL(*syncer_, Start()).Times(1).WillOnce(Return(false));
+    EXPECT_CALL(*syncer_, Sync(_)).Times(0);
 
     g_is_reload_called = false;
     const uint64 reload_required_timestamp =
-      sync_handler_->GetReloadRequiredTimestamp();
-    syncer_->SetReloadRequired(true);
+        sync_handler_->GetReloadRequiredTimestamp();
     sync_handler_->Sync();
-    sync_handler_->Wait();
-    EXPECT_FALSE(g_is_reload_called);
-    EXPECT_EQ(reload_required_timestamp,
-              sync_handler_->GetReloadRequiredTimestamp());
-
-    Mock::VerifyAndClearExpectations(syncer_);
-  }
-
-  {
-    syncer_->Reset();
-
-    ON_CALL(*syncer_, Start()).WillByDefault(Return(true));
-    ON_CALL(*syncer_, SyncInternal()).WillByDefault(Return(true));
-
-    g_is_reload_called = false;
-    const uint64 reload_required_timestamp =
-      sync_handler_->GetReloadRequiredTimestamp();
-    syncer_->SetReloadRequired(true);
-    sync_handler_->Clear();
     sync_handler_->Wait();
     EXPECT_FALSE(g_is_reload_called);
     EXPECT_EQ(reload_required_timestamp,
@@ -355,104 +322,33 @@ TEST_F(SyncHandlerTest, SendReloadCommand) {
 }
 
 TEST_F(SyncHandlerTest, MinIntervalTest) {
-  ScopedClockMock clock_mock;
-
-  ON_CALL(*syncer_, Start()).WillByDefault(Return(true));
-
+  // We cannot use clock mock since SyncHandler::Run() uses Util::Sleep() to
+  // ensure the min interval.
+  //
   // The resolution of timing calculation in SyncHandler is 1 second.
   // So |FLAGS_min_sync_interval| must be relatively larger than the
   // resolution to stabilize this test.
   FLAGS_min_sync_interval = 5;  // seconds
 
-  {
-    EXPECT_CALL(*syncer_, SyncInternal()).Times(1).WillOnce(Return(true));
+  // Start sync and wait.
+  EXPECT_CALL(*syncer_, Start()).Times(1).WillOnce(Return(true));
+  EXPECT_CALL(*syncer_, Sync(_)).Times(1).WillOnce(Return(true));
+  EXPECT_TRUE(sync_handler_->Sync());
+  Util::Sleep(1000);
+  Mock::VerifyAndClearExpectations(syncer_);
+  sync_handler_->Wait();
 
-    syncer_->Reset();
+  // Start sync. Syncer::Sync() is not called soon since it is blocked.
+  EXPECT_CALL(*syncer_, Start()).Times(1).WillOnce(Return(true));
+  EXPECT_CALL(*syncer_, Sync(_)).Times(0);
+  EXPECT_TRUE(sync_handler_->Sync());
+  Util::Sleep(1000);
+  Mock::VerifyAndClearExpectations(syncer_);
 
-    EXPECT_TRUE(sync_handler_->Sync());
-    sync_handler_->Wait();
-
-    Mock::VerifyAndClearExpectations(syncer_);
-  }
-
-  // Advance the clock 2 seconds.
-  clock_mock.get()->PutClockForward(2, 0);
-  {
-    EXPECT_CALL(*syncer_, SyncInternal()).Times(0);
-
-    syncer_->Reset();
-
-    EXPECT_TRUE(sync_handler_->Sync());
-
-    Mock::VerifyAndClearExpectations(syncer_);
-
-    sync_handler_->Wait();
-  }
-
-  // Advance the clock 2 wait intervals.
-  clock_mock.get()->PutClockForward(FLAGS_min_sync_interval * 2, 0);
-  {
-    EXPECT_CALL(*syncer_, SyncInternal()).Times(1).WillOnce(Return(true));
-
-    syncer_->Reset();
-
-    EXPECT_TRUE(sync_handler_->Sync());
-    sync_handler_->Wait();
-
-    Mock::VerifyAndClearExpectations(syncer_);
-  }
-
-  // Advance the clock 1 second.
-  clock_mock.get()->PutClockForward(1, 0);
-  {
-    EXPECT_CALL(*syncer_, ClearInternal()).Times(1).WillOnce(Return(true));
-
-    syncer_->Reset();
-
-    EXPECT_TRUE(sync_handler_->Clear());
-    sync_handler_->Wait();
-
-    Mock::VerifyAndClearExpectations(syncer_);
-  }
-}
-
-TEST_F(SyncHandlerTest, ClearTest) {
-  FLAGS_min_sync_interval = 0;
-
-  ON_CALL(*syncer_, Start()).WillByDefault(Return(true));
-
-  {
-    syncer_->Reset();
-
-    EXPECT_CALL(*syncer_, ClearInternal()).Times(1).WillOnce(Return(true));
-
-    EXPECT_TRUE(sync_handler_->Clear());
-    sync_handler_->Wait();
-
-    Mock::VerifyAndClearExpectations(syncer_);
-  }
-
-  {
-    syncer_->Reset();
-
-    EXPECT_CALL(*syncer_, ClearInternal()).Times(0);
-
-    EXPECT_TRUE(sync_handler_->Clear());
-    sync_handler_->Wait();
-
-    Mock::VerifyAndClearExpectations(syncer_);
-  }
-
-  {
-    syncer_->Reset();
-
-    EXPECT_CALL(*syncer_, ClearInternal()).Times(0);
-
-    EXPECT_TRUE(sync_handler_->Sync());
-    sync_handler_->Wait();
-
-    Mock::VerifyAndClearExpectations(syncer_);
-  }
+  // Wait.
+  EXPECT_CALL(*syncer_, Sync(_)).Times(1).WillOnce(Return(true));
+  sync_handler_->Wait();
+  Mock::VerifyAndClearExpectations(syncer_);
 }
 
 TEST_F(SyncHandlerTest, AuthorizationFailedTest) {
@@ -465,6 +361,7 @@ TEST_F(SyncHandlerTest, AuthorizationFailedTest) {
 
   // Authorization is expected to succeed.
   {
+    EXPECT_CALL(*syncer_, ClearLocal()).Times(0);
     commands::Input::AuthorizationInfo auth_info;
     auth_info.set_auth_code(kCorrectAuthToken);
     sync_handler_->SetAuthorization(auth_info);
@@ -473,8 +370,9 @@ TEST_F(SyncHandlerTest, AuthorizationFailedTest) {
     EXPECT_EQ(commands::CloudSyncStatus::INSYNC, sync_status.global_status());
   }
 
-  // Authorization is expected to fail.
+  // Authorization is expected to fail with invalid auth token.
   {
+    EXPECT_CALL(*syncer_, ClearLocal()).Times(1).WillOnce(Return(true));
     commands::Input::AuthorizationInfo auth_info;
     auth_info.set_auth_code(kWrongAuthToken);
     sync_handler_->SetAuthorization(auth_info);
@@ -485,6 +383,17 @@ TEST_F(SyncHandlerTest, AuthorizationFailedTest) {
     EXPECT_EQ(1, sync_status.sync_errors_size());
     EXPECT_EQ(commands::CloudSyncStatus::AUTHORIZATION_FAIL,
               sync_status.sync_errors(0).error_code());
+  }
+
+  // Authorization is expected to fail without auth token.
+  {
+    EXPECT_CALL(*syncer_, ClearLocal()).Times(1).WillOnce(Return(true));
+    const commands::Input::AuthorizationInfo auth_info;
+    sync_handler_->SetAuthorization(auth_info);
+    commands::CloudSyncStatus sync_status;
+    sync_handler_->GetCloudSyncStatus(&sync_status);
+    EXPECT_EQ(commands::CloudSyncStatus::NOSYNC,
+              sync_status.global_status());
   }
 }
 
@@ -531,17 +440,19 @@ TEST_F(SyncHandlerTest, AuthorizationRevokeTest) {
   MockClientFactory mock_client_factory;
   client::ClientFactory::SetClientFactory(&mock_client_factory);
 
-  syncer_->Reset();
-
-  ON_CALL(*syncer_, SyncInternal()).WillByDefault(Return(true));
   EXPECT_CALL(*syncer_, Start()).Times(1).WillOnce(Return(true));
-  EXPECT_CALL(*syncer_, SyncInternal()).Times(0);
-  EXPECT_CALL(*syncer_, ClearInternal()).Times(0);
+  EXPECT_CALL(*syncer_, Sync(_)).Times(0);
+  EXPECT_CALL(*syncer_, Clear()).Times(0);
   EXPECT_CALL(*syncer_, ClearLocal()).Times(1).WillOnce(Return(true));
 
-  syncer_->SetReloadRequired(true);
+  Scheduler::AddJob(sync_handler_->GetSchedulerJobSetting());
+
   sync_handler_->Sync();
   sync_handler_->Wait();
+
+  const string &sync_job_name = sync_handler_->GetSchedulerJobSetting().name();
+  // Sync scheduler job should NOT be removed.
+  EXPECT_TRUE(Scheduler::RemoveJob(sync_job_name));
 }
 
 }  // namespace sync

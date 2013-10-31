@@ -42,6 +42,7 @@ namespace renderer {
 namespace win32 {
 
 namespace {
+using ::mozc::commands::RendererCommand;
 
 class SenderThread;
 SenderThread *g_sender_thread = nullptr;
@@ -74,7 +75,7 @@ class SenderThread {
     ::SetEvent(quit_event_.get());
   }
 
-  void UpdateCommand(const commands::RendererCommand &new_command) {
+  void UpdateCommand(const RendererCommand &new_command) {
     scoped_lock lock(&mutex_);
     renderer_command_.CopyFrom(new_command);
     ::SetEvent(command_event_.get());
@@ -116,7 +117,7 @@ class SenderThread {
         break;
       }
       // handles[1], that is, renderer event is signaled.
-      commands::RendererCommand command;
+      RendererCommand command;
       {
         scoped_lock lock(&mutex_);
         command.Swap(&renderer_command_);
@@ -131,7 +132,7 @@ class SenderThread {
  private:
   ScopedHandle command_event_;
   ScopedHandle quit_event_;
-  commands::RendererCommand renderer_command_;
+  RendererCommand renderer_command_;
   Mutex mutex_;
 
   DISALLOW_COPY_AND_ASSIGN(SenderThread);
@@ -180,7 +181,7 @@ SenderThread *CreateSenderThread() {
     return nullptr;
   }
 
-  // Crete shared objects. We use manual reset events for simplicity.
+  // Create shared objects. We use manual reset events for simplicity.
   ScopedHandle command_event(::CreateEventW(nullptr, TRUE, FALSE, nullptr));
   ScopedHandle quit_event(::CreateEventW(nullptr, TRUE, FALSE, nullptr));
   if ((command_event.get() == nullptr) || (quit_event.get() == nullptr)) {
@@ -201,24 +202,24 @@ SenderThread *CreateSenderThread() {
   return thread.release();
 }
 
-}  // namespace
-
-void Win32RendererClient::OnModuleLoaded(HMODULE module_handle) {
-  g_module = module_handle;
-  g_mutex = new Mutex();
-  g_tls_index = ::TlsAlloc();
-}
-
-void Win32RendererClient::OnModuleUnloaded() {
-  if (g_tls_index != TLS_OUT_OF_INDEXES) {
-    ::TlsFree(g_tls_index);
+bool CanIgnoreRequest(const RendererCommand &command) {
+  if (g_module_unloaded) {
+    return true;
   }
-  delete g_mutex;
-  g_module_unloaded = true;
-  g_module = nullptr;
+  if (g_tls_index == TLS_OUT_OF_INDEXES) {
+    return true;
+  }
+  if ((::TlsGetValue(g_tls_index) == nullptr) &&
+      !command.visible()) {
+    // The sender threaed is not initialized and |command| is to hide the
+    // renderer. We are likely to be able to skip this request.
+    return true;
+  }
+  return false;
 }
 
-bool Win32RendererClient::EnsureUIThreadInitialized() {
+// Returns true when the required initialization is finished successfully.
+bool EnsureUIThreadInitialized() {
   if (g_module_unloaded) {
     return false;
   }
@@ -241,11 +242,32 @@ bool Win32RendererClient::EnsureUIThreadInitialized() {
   return true;
 }
 
+}  // namespace
+
+void Win32RendererClient::OnModuleLoaded(HMODULE module_handle) {
+  g_module = module_handle;
+  g_mutex = new Mutex();
+  g_tls_index = ::TlsAlloc();
+}
+
+void Win32RendererClient::OnModuleUnloaded() {
+  if (g_tls_index != TLS_OUT_OF_INDEXES) {
+    ::TlsFree(g_tls_index);
+  }
+  delete g_mutex;
+  g_module_unloaded = true;
+  g_module = nullptr;
+}
+
 void Win32RendererClient::OnUIThreadUninitialized() {
   if (g_module_unloaded) {
     return;
   }
   if (g_tls_index == TLS_OUT_OF_INDEXES) {
+    return;
+  }
+  if (::TlsGetValue(g_tls_index) == nullptr) {
+    // Do nothing because this thread did not increment |g_ui_thread_count|.
     return;
   }
   {
@@ -262,8 +284,8 @@ void Win32RendererClient::OnUIThreadUninitialized() {
   ::TlsSetValue(g_tls_index, nullptr);
 }
 
-void Win32RendererClient::OnUpdated(const commands::RendererCommand &command) {
-  if (g_module_unloaded) {
+void Win32RendererClient::OnUpdated(const RendererCommand &command) {
+  if (CanIgnoreRequest(command)) {
     return;
   }
   if (!EnsureUIThreadInitialized()) {

@@ -29,7 +29,6 @@
 
 #include "dictionary/suffix_dictionary.h"
 
-#include "base/base.h"
 #include "base/trie.h"
 #include "base/util.h"
 #include "converter/node.h"

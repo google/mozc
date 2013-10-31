@@ -30,11 +30,12 @@
 #ifndef MOZC_RENDERER_UNIX_WINDOW_MANAGER_H_
 #define MOZC_RENDERER_UNIX_WINDOW_MANAGER_H_
 #include <gtk/gtk.h>
+
+#include <memory>
 #include <string>
 
 #include "base/mutex.h"
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "client/client_interface.h"
 #include "renderer/renderer_command.pb.h"
 #include "renderer/unix/gtk_window_interface.h"
@@ -93,9 +94,9 @@ class WindowManager : public WindowManagerInterface {
   FRIEND_TEST(WindowManagerTest, UpdateInfolistWindowTest);
   FRIEND_TEST(WindowManagerTest, GetMonitorRectTest);
 
-  scoped_ptr<GtkWindowInterface> candidate_window_;
-  scoped_ptr<GtkWindowInterface> infolist_window_;
-  scoped_ptr<GtkWrapperInterface> gtk_;
+  std::unique_ptr<GtkWindowInterface> candidate_window_;
+  std::unique_ptr<GtkWindowInterface> infolist_window_;
+  std::unique_ptr<GtkWrapperInterface> gtk_;
   client::SendCommandInterface *send_command_interface_;
   string previous_font_description_;
   DISALLOW_COPY_AND_ASSIGN(WindowManager);

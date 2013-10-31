@@ -138,7 +138,6 @@ class Client : public ClientInterface {
   // these methods are expected to be called from
   // the converter process.
   bool StartCloudSync();
-  bool ClearCloudSync();
   bool GetCloudSyncStatus(commands::CloudSyncStatus *cloud_sync_status);
   bool AddAuthCode(const commands::Input::AuthorizationInfo &auth_info);
 
@@ -253,7 +252,7 @@ class Client : public ClientInterface {
   uint64 id_;
   IPCClientFactoryInterface *client_factory_;
   scoped_ptr<ServerLauncherInterface> server_launcher_;
-  scoped_array<char> result_;
+  scoped_ptr<char[]> result_;
   scoped_ptr<config::Config> preferences_;
   int timeout_;
   ServerStatus server_status_;

@@ -27,22 +27,29 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "sync/sync_util.h"
+
 #ifdef OS_WIN
 #include <Windows.h>
 #endif  // OS_WIN
 
 #include <string>
-#include "base/base.h"
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/util.h"
-#include "sync/sync_util.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
 
 namespace mozc {
 namespace sync {
+namespace {
+void CreateTestFile(const string &filename, const string &data) {
+  OutputFileStream ofs(filename.c_str(), ios::binary | ios::trunc);
+  ofs << data;
+  EXPECT_TRUE(ofs.good());
+}
+}  // namespace
 
 TEST(SyncUtil, CopyLastSyncedFile) {
   // just test rename operation works as intended
@@ -53,13 +60,11 @@ TEST(SyncUtil, CopyLastSyncedFile) {
 
   EXPECT_FALSE(SyncUtil::CopyLastSyncedFile(from, to));
 
-  const char kData[] = "This is a test";
+  CreateTestFile(from, "simple test");
+  EXPECT_TRUE(SyncUtil::CopyLastSyncedFile(from, to));
+  EXPECT_TRUE(FileUtil::IsEqualFile(from, to));
 
-  {
-    OutputFileStream ofs(from.c_str(), ios::binary);
-    ofs.write(kData, arraysize(kData));
-  }
-
+  CreateTestFile(from, "overwrite test");
   EXPECT_TRUE(SyncUtil::CopyLastSyncedFile(from, to));
   EXPECT_TRUE(FileUtil::IsEqualFile(from, to));
 

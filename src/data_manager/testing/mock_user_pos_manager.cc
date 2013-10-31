@@ -29,7 +29,6 @@
 
 #include "data_manager/testing/mock_user_pos_manager.h"
 
-#include "base/base.h"
 #include "base/logging.h"
 #include "base/singleton.h"
 #include "dictionary/pos_group.h"

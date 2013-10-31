@@ -148,8 +148,8 @@ bool Process::SpawnProcess(const string &path,
   }
 
   // The |lpCommandLine| parameter of CreateProcessW should be writable
-  // so that we create a scoped_array here.
-  scoped_array<wchar_t> wpath2(new wchar_t[wpath.size() + 1]);
+  // so that we create a scoped_ptr<wchar_t[]> here.
+  scoped_ptr<wchar_t[]> wpath2(new wchar_t[wpath.size() + 1]);
   if (0 != wcscpy_s(wpath2.get(), wpath.size() + 1, wpath.c_str())) {
     return false;
   }
@@ -183,7 +183,7 @@ bool Process::SpawnProcess(const string &path,
 
   vector<string> arg_tmp;
   Util::SplitStringUsing(arg, " ", &arg_tmp);
-  scoped_array<const char*> argv(new const char*[arg_tmp.size() + 2]);
+  scoped_ptr<const char * []> argv(new const char *[arg_tmp.size() + 2]);
   argv[0] = path.c_str();
   for (size_t i = 0; i < arg_tmp.size(); ++i) {
     argv[i + 1] = arg_tmp[i].c_str();

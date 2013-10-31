@@ -36,54 +36,45 @@
 // === Begin version check macro definitions ===
 #if defined(_MSC_VER)
 #define MOZC_MSVC_VERSION_GE(major, minor) (_MSC_VER >= major * 100 + minor)
-#define MOZC_MSVC_VERSION_LE(major, minor) (_MSC_VER <= major * 100 + minor)
+#define MOZC_MSVC_VERSION_LT(major, minor) (_MSC_VER < major * 100 + minor)
 #else   // not _MSC_VER
 #define MOZC_MSVC_VERSION_GE(major, minor) (0)
-#define MOZC_MSVC_VERSION_LE(major, minor) (0)
+#define MOZC_MSVC_VERSION_LT(major, minor) (0)
 #endif  // _MSC_VER
 
 #if defined(__GNUC__)
 #define MOZC_GCC_VERSION_GE(major, minor)                    \
     (__GNUC__ > (major) ||                                   \
      (__GNUC__ == (major) && __GNUC_MINOR__ >= (minor)))
-#define MOZC_GCC_VERSION_LE(major, minor)                    \
+#define MOZC_GCC_VERSION_LT(major, minor)                    \
     (__GNUC__ < (major) ||                                   \
-     (__GNUC__ == (major) && __GNUC_MINOR__ <= (minor)))
+     (__GNUC__ == (major) && __GNUC_MINOR__ < (minor)))
 #else   // not __GNUC__
 #define MOZC_GCC_VERSION_GE(major, minor) (0)
-#define MOZC_GCC_VERSION_LE(major, minor) (0)
+#define MOZC_GCC_VERSION_LT(major, minor) (0)
 #endif  // __GNUC__
 
 #if defined(__clang_major__)
 #define MOZC_CLANG_VERSION_GE(major, minor)                  \
     (__clang_major__ > (major) ||                            \
      (__clang_major__ == (major) && __clang_minor__ >= (minor)))
-#define MOZC_CLANG_VERSION_LE(major, minor)                  \
+#define MOZC_CLANG_VERSION_LT(major, minor)                  \
     (__clang_major__ < (major) ||                            \
-     (__clang_major__ == (major) && __clang_minor__ <= (minor)))
+     (__clang_major__ == (major) && __clang_minor__ < (minor)))
 #else  // not __clang_major__
 #define MOZC_CLANG_VERSION_GE(major, minor) (0)
-#define MOZC_CLANG_VERSION_LE(major, minor) (0)
+#define MOZC_CLANG_VERSION_LT(major, minor) (0)
 #endif  // __clang_major__
 // === End version check macro definitions ===
 
 // === Begin inline pragma macro definitions ===
-namespace mozc {
-namespace compiler_specific_internal {
-class SemicolonEater {};
-}  // namespace compiler_specific_internal
-}  // namespace mozc
-#define MOZC_SWALLOWING_SEMICOLON_HACK              \
-   using mozc::compiler_specific_internal::SemicolonEater
+#define MOZC_SWALLOWING_SEMICOLON_HACK static_assert(true, "")
 #if defined(_MSC_VER)
-#define MOZC_DO_PRAGMA_IMPL(s) __pragma(s)  \
-    MOZC_SWALLOWING_SEMICOLON_HACK
+#define MOZC_DO_PRAGMA_IMPL(s) __pragma(s) MOZC_SWALLOWING_SEMICOLON_HACK
 #elif defined(__clang__) || defined(__GNUC__)
-#define MOZC_DO_PRAGMA_IMPL(s) _Pragma(#s)  \
-    MOZC_SWALLOWING_SEMICOLON_HACK
+#define MOZC_DO_PRAGMA_IMPL(s) _Pragma(#s) MOZC_SWALLOWING_SEMICOLON_HACK
 #else
-#define MOZC_DO_PRAGMA_IMPL(s)              \
-    MOZC_SWALLOWING_SEMICOLON_HACK
+#define MOZC_DO_PRAGMA_IMPL(s)             MOZC_SWALLOWING_SEMICOLON_HACK
 #endif
 // === End inline pragma macro definitions ===
 

@@ -27,12 +27,15 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "base/base.h"
 #include "base/trie.h"
+
 #include "testing/base/public/gunit.h"
 
+namespace mozc {
+namespace {
+
 TEST(TrieTest, Trie) {
-  mozc::Trie<string> trie;
+  Trie<string> trie;
 
   enum TestType {
     LOOKUP,
@@ -90,7 +93,7 @@ TEST(TrieTest, Trie) {
 }
 
 TEST(TrieTest, LookUpPrefix) {
-  mozc::Trie<string> trie;
+  Trie<string> trie;
   trie.AddEntry("abc", "[ABC]");
   trie.AddEntry("abd", "[ABD]");
   trie.AddEntry("a", "[A]");
@@ -124,7 +127,7 @@ TEST(TrieTest, LookUpPrefix) {
 }
 
 TEST(TrieTest, Empty) {
-  mozc::Trie<string> trie;
+  Trie<string> trie;
   {
     vector<string> values;
     trie.LookUpPredictiveAll("a", &values);
@@ -142,7 +145,7 @@ TEST(TrieTest, Empty) {
 }
 
 TEST(TrieTest, UTF8LookUpPrefix) {
-  mozc::Trie<string> trie;
+  Trie<string> trie;
   // "きゃ"
   trie.AddEntry("\xe3\x81\x8d\xe3\x82\x83", "");
   // "きゅ"
@@ -221,7 +224,6 @@ TEST(TrieTest, UTF8LookUpPrefix) {
   }
 }
 
-namespace {
 bool HasData(const vector<string> &values, const string &value) {
   for (size_t i = 0; i < values.size(); ++i) {
     if (values[i] == value) {
@@ -230,10 +232,9 @@ bool HasData(const vector<string> &values, const string &value) {
   }
   return false;
 }
-}  // namespace
 
 TEST(TrieTest, LookUpPredictiveAll) {
-  mozc::Trie<string> trie;
+  Trie<string> trie;
   trie.AddEntry("abc", "[ABC]");
   trie.AddEntry("abd", "[ABD]");
   trie.AddEntry("a", "[A]");
@@ -277,3 +278,6 @@ TEST(TrieTest, LookUpPredictiveAll) {
     EXPECT_EQ(0, values.size());
   }
 }
+
+}  // namespace
+}  // namespace mozc

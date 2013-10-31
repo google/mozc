@@ -35,6 +35,10 @@
 #include <unistd.h>  // for getpid()
 #endif
 
+#ifdef OS_WIN
+#include <memory>  // for std::unique_ptr
+#endif  // OS_WIN
+
 #include "base/file_stream.h"
 #include "base/logging.h"
 #include "base/mutex.h"
@@ -43,6 +47,10 @@
 #include "base/util.h"
 #include "gui/base/win_util.h"
 #include "ipc/window_info.pb.h"
+
+#ifdef OS_WIN
+using std::unique_ptr;
+#endif  // OS_WIN
 
 namespace mozc {
 namespace gui {
@@ -75,7 +83,7 @@ bool ReadWindowInfo(const string &lock_name,
       return false;
     }
 
-    scoped_array<char> buf(new char[size]);
+    unique_ptr<char[]> buf(new char[size]);
 
     DWORD read_size = 0;
     if (!::ReadFile(handle.get(), buf.get(),

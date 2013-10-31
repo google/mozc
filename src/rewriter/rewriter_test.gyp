@@ -52,6 +52,7 @@
         'fortune_rewriter_test.cc',
         'merger_rewriter_test.cc',
         'normalization_rewriter_test.cc',
+        'number_compound_util_test.cc',
         'number_rewriter_test.cc',
         'remove_redundant_candidate_rewriter_test.cc',
         'rewriter_test.cc',
@@ -129,6 +130,43 @@
       },
     },
     {
+      'target_name': 'language_aware_rewriter_test',
+      'type': 'executable',
+      'sources': [
+        'language_aware_rewriter_test.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        '../composer/composer.gyp:composer',
+        '../config/config.gyp:config_handler',
+        '../config/config.gyp:config_protocol',
+        '../converter/converter_base.gyp:conversion_request',
+        '../converter/converter_base.gyp:segments',
+        '../data_manager/data_manager.gyp:user_pos_manager',
+        '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
+        '../dictionary/dictionary.gyp:dictionary_mock',
+        '../dictionary/dictionary_base.gyp:pos_matcher',
+        '../session/session_base.gyp:session_protocol',
+        '../testing/testing.gyp:gtest_main',
+        '../usage_stats/usage_stats_test.gyp:usage_stats_testing_util',
+        'rewriter.gyp:rewriter',
+      ],
+      'conditions': [
+        ['use_packed_dictionary==1', {
+          'dependencies': [
+            '../data_manager/packed/packed_data_manager.gyp:gen_packed_data_header_mock#host',
+          ],
+          'hard_dependency': 1,
+          'export_dependent_settings': [
+            '../data_manager/packed/packed_data_manager.gyp:gen_packed_data_header_mock#host',
+          ],
+        }],
+      ],
+      'variables': {
+        'test_size': 'small',
+      },
+    },
+    {
       'target_name': 'transliteration_rewriter_test',
       'type': 'executable',
       'sources': [
@@ -138,7 +176,6 @@
         '../base/base.gyp:base',
         '../composer/composer.gyp:composer',
         '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
-        '../dictionary/dictionary.gyp:dictionary_mock',
         '../session/session_base.gyp:request_test_util',
         '../session/session_base.gyp:session_protocol',
         '../testing/testing.gyp:gtest_main',
@@ -166,6 +203,7 @@
       'type': 'none',
       'dependencies': [
         'calculator/calculator.gyp:calculator_all_test',
+        'language_aware_rewriter_test',
         'rewriter_test',
         'single_kanji_rewriter_test',
         'transliteration_rewriter_test',

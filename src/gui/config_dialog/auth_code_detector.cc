@@ -114,7 +114,7 @@ string GetAuthCodeForMac() {
     // CFStringGetLength returns the number of UTF-16 code points,
     // so the number of bytes in UTF-8 would be 3x larger at most.
     CFIndex buffer_size = CFStringGetLength(window_name) * 3 + 1;
-    scoped_array<char> buffer(new char[buffer_size]);
+    scoped_ptr<char[]> buffer(new char[buffer_size]);
     if (!CFStringGetCString(
             window_name, buffer.get(), buffer_size, kCFStringEncodingUTF8)) {
       continue;

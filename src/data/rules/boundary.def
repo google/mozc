@@ -29,9 +29,10 @@ PREFIX 名詞,非自立,副詞可能,*,*,*,際 1000
 # want to promote "件"
 PREFIX 名詞,接尾,地域,*,*,*,県       1500
 # user may input 123回 as 123|回
-PREFIX 名詞,接尾,助数詞              1000
+PREFIX 名詞,接尾,助数詞              1200
 PREFIX 名詞,接尾,特殊,               2000
 PREFIX 名詞,接尾,一般,               1000
+PREFIX 名詞,接尾,サ変接続,           2000
 PREFIX 名詞,接尾,                    1000
 PREFIX 助詞,格助詞,引用,*,*,*,と     2000
 PREFIX 助詞,(格助詞|連体化)          3000
@@ -95,10 +96,10 @@ SUFFIX 副詞,一般,	300
 # TODO(noriyukit): This is a hack to fix the following conversion problem:
 # おぼろづき -> おぼろ|づき  (From compound)
 #   lid: 名詞,一般,*,*,*,*,*
-#   rid: 動詞,自立,*,五段・カ行イ音便,連用形,3
+#   rid: 動詞,自立,*,*,五段・カ行イ音便,連用形,3
 # After rebuilding the dictionary with cl/48606719 that registeres おぼろづき
 # (COMPOUND) to manual_filter.def, we should remove this hack.
-SUFFIX 動詞,自立,*,五段・カ行イ音便,連用形,3	2000
+SUFFIX 動詞,自立,*,*,五段・カ行イ音便,連用形,3	2000
 
 # Suppress incomplete X-接続 forms, e.g.:
 #   - かい -> 書い and かい -> 描い   (連用タ接続)
@@ -112,8 +113,8 @@ SUFFIX 動詞,*,*,*,連用タ接続,	7000
 SUFFIX 動詞,*,*,*,*,連用タ接続,	7000
 SUFFIX 形容詞,*,*,*,*,連用タ接続,	7000
 SUFFIX 形容詞,*,*,*,*,ガル接続,	7000
-SUFFIX 動詞,自立,*,五段・カ行イ音便,未然ウ接続,	7000
-SUFFIX 動詞,自立,*,五段・ワ行ウ音便,未然ウ接続,	7000
+SUFFIX 動詞,自立,*,*,五段・カ行イ音便,未然ウ接続,	7000
+SUFFIX 動詞,自立,*,*,五段・ワ行ウ音便,未然ウ接続,	7000
 
 # Manually adjusted POS to prevent some misconversions, e.g.:
 #   - わっず -> 割っ+ず  (連用ニ接続,ぬ)
@@ -125,11 +126,21 @@ SUFFIX 動詞,自立,*,五段・ワ行ウ音便,未然ウ接続,	7000
 # 仮定形 with particles, like すれ+ば.
 PREFIX 動詞,自立,*,*,五段・ワ行促音便,丁寧連用形,*	500
 SUFFIX 助動詞,*,*,*,特殊・ヌ,連用ニ接続,ぬ	300
-SUFFIX 動詞,自立,*,五段・カ行イ音便,仮定形,	3000
-SUFFIX 動詞,自立,*,五段・カ行イ音便,未然形,	2000
-SUFFIX 動詞,自立,*,五段・カ行イ音便,連用形,	1000
-SUFFIX 動詞,自立,*,五段・ワ行ウ音便,連用形,	1000
-SUFFIX 助詞,副助詞／並立助詞／終助詞,*,*,*,*,か	700
+SUFFIX 動詞,自立,*,*,五段・カ行イ音便,仮定形,	3000
+SUFFIX 動詞,自立,*,*,五段・カ行イ音便,未然形,	2000
+SUFFIX 動詞,自立,*,*,五段・カ行イ音便,連用形,	1000
+SUFFIX 動詞,自立,*,*,五段・ワ行ウ音便,連用形,	1000
+SUFFIX 動詞,非自立,*,*,五段・カ行イ音便,仮定形,	3000
+SUFFIX 動詞,非自立,*,*,五段・カ行イ音便,未然形,	3000
+SUFFIX 動詞,非自立,*,*,五段・カ行イ音便,連用形,	1000
+SUFFIX 動詞,非自立,*,*,五段・ワ行ウ音便,連用形,	1000
+SUFFIX 助詞,副助詞／並立助詞／終助詞,*,*,*,*,か	750
+
+PREFIX 助詞,終助詞,*,*,*,*,ね	2000
+
+# Users wouldn't input words/phrases/sentences ending with 連用形 of いる.
+# For instance, かわいい to 河合(noun) + い(連用形 of いる).
+SUFFIX 動詞,自立,*,*,一段,連用形,いる  3000
 
 #####################################################
 # Automatic rules.

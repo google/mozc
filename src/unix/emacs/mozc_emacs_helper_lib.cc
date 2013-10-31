@@ -153,8 +153,11 @@ void ParseInputLine(
           keys.push_back(tokens[i]);
         }
       }
-      if (!mozc::KeyParser::ParseKeyVector(keys, input->mutable_key())) {
-        ErrorExit(kErrWrongTypeArgument, "Unknown key symbol");
+      if (!mozc::KeyParser::ParseKeyVector(keys, input->mutable_key()) &&
+          // If there are any unsupported key symbols, falls back to
+          // mozc::commands::KeyEvent::UNDEFINED_KEY.
+          !mozc::KeyParser::ParseKey("undefinedkey", input->mutable_key())) {
+        DLOG(FATAL);  // Code must not reach here.
       }
       if (!key_string.empty()) {
         input->mutable_key()->set_key_string(key_string);
@@ -427,24 +430,25 @@ void PrintFieldValue(
 
   switch (field.cpp_type()) {
     // Number (integer and floating point)
-#define PRINT_FIELD_VALUE(CPP_TYPE, METHOD_TYPE, FORMAT)              \
-    case protobuf::FieldDescriptor::CPPTYPE_##CPP_TYPE:               \
-        output->push_back(                                            \
-            mozc::Util::StringPrintf(FORMAT,                          \
-                                     GET_FIELD_VALUE(METHOD_TYPE)));  \
-    break;
+#define PRINT_FIELD_VALUE(PROTO_CPP_TYPE, METHOD_TYPE, CPP_TYPE, FORMAT)    \
+    case protobuf::FieldDescriptor::CPPTYPE_##PROTO_CPP_TYPE:               \
+        output->push_back(mozc::Util::StringPrintf(                         \
+            FORMAT, static_cast<CPP_TYPE>(GET_FIELD_VALUE(METHOD_TYPE))));  \
+        break;
 
     // Since Emacs does not support 64-bit integers, it supports only
     // 60-bit integers on 64-bit version, and 28-bit on 32-bit version,
     // we escape it into a string as a workaround.
     // We don't need any 64-bit values on Emacs so far, and 32-bit
     // integer values have never got over 28-bit yet.
-    PRINT_FIELD_VALUE(INT32, Int32, "%d");
-    PRINT_FIELD_VALUE(INT64, Int64, "\"%" GG_LL_FORMAT "d\"");  // as a string
-    PRINT_FIELD_VALUE(UINT32, UInt32, "%u");
-    PRINT_FIELD_VALUE(UINT64, UInt64, "\"%" GG_LL_FORMAT "u\"");  // as a string
-    PRINT_FIELD_VALUE(DOUBLE, Double, "%f");
-    PRINT_FIELD_VALUE(FLOAT, Float, "%f");
+    PRINT_FIELD_VALUE(INT32, Int32, int32, "%d");
+    PRINT_FIELD_VALUE(INT64, Int64, int64,
+                      "\"%" GG_LL_FORMAT "d\"");  // as a string
+    PRINT_FIELD_VALUE(UINT32, UInt32, uint32, "%u");
+    PRINT_FIELD_VALUE(UINT64, UInt64, uint64,
+                      "\"%" GG_LL_FORMAT "u\"");  // as a string
+    PRINT_FIELD_VALUE(DOUBLE, Double, double, "%f");
+    PRINT_FIELD_VALUE(FLOAT, Float, float, "%f");
 #undef PRINT_FIELD_VALUE
 
     case protobuf::FieldDescriptor::CPPTYPE_BOOL:  // bool

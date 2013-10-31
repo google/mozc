@@ -558,8 +558,6 @@ void TipUiHandlerConventional::OnDestroyElement(ITfUIElement *element) {
 }
 
 void TipUiHandlerConventional::OnActivate(TipTextService *text_service) {
-  Win32RendererClient::EnsureUIThreadInitialized();
-
   static bool migrate_checked = false;
   if (!migrate_checked) {
     migrate_checked = true;

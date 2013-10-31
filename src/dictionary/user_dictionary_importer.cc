@@ -42,10 +42,12 @@
 #include <string>
 #include <vector>
 
-#include "base/base.h"
+#include "base/compiler_specific.h"
+#include "base/port.h"
 #include "base/mmap.h"
 #include "base/number_util.h"
-#include "base/singleton.h"
+#include "base/port.h"
+#include "base/system_util.h"
 #include "base/util.h"
 #include "base/win_util.h"
 #include "dictionary/user_dictionary_util.h"
@@ -174,73 +176,41 @@ bool ConvertEntryInternal(
 
 #if defined(OS_WIN) && defined(HAS_MSIME_HEADER)
 namespace {
-typedef BOOL (WINAPI *FPCreateIFEDictionaryInstance)(VOID **);
 
 const size_t kBufferSize = 256;
 
-class IFEDictionaryFactory {
- public:
-  IFEDictionaryFactory()
-      : lib_(NULL), create_ifedictionary_instance_(NULL) {
-    const wchar_t *kIMEJPLibs[] =
-        { L"imjp14k.dll",  // Office 14 / 2010
-          L"imjp12k.dll",  // Office 12 / 2007
-          L"imjp10k.dll",  // Windows NT 6.0, 6.1
-          L"imjp9k.dll",   // Office 11 / 2003
-          // The bottom-of-the-line of our targets is Windows XP
-          // so we should stop looking up IMEs at "imjp81k.dll"
-          // http://b/2440318
-          L"imjp81k.dll"   // Windows NT 5.1, 5.2
-          // L"imjp8k.dll",   // Office 10 / XP / 2002
-        };
+// ProgID of MS-IME Japanese.
+const wchar_t kVersionIndependentProgIdForMSIME[] = L"MSIME.Japan";
 
-    // check imjp dll from newer ones.
-    for (size_t i = 0; i < arraysize(kIMEJPLibs); ++i) {
-      lib_ = WinUtil::LoadSystemLibrary(kIMEJPLibs[i]);
-      if (NULL != lib_) {
-        break;
-      }
-    }
-
-    if (NULL == lib_) {
-      LOG(ERROR) << "LoadSystemLibrary failed";
-      return;
-    }
-
-    create_ifedictionary_instance_ =
-        reinterpret_cast<FPCreateIFEDictionaryInstance>
-        (::GetProcAddress(lib_, "CreateIFEDictionaryInstance"));
-
-    if (NULL == create_ifedictionary_instance_) {
-      LOG(ERROR) << "GetProcAddress failed";
-      return;
-    }
-  }
-
-  IFEDictionary *Create() {
-    if (create_ifedictionary_instance_ == NULL) {
-      LOG(ERROR) << "CreateIFEDictionaryInstance is NULL";
-      return NULL;
-    }
-
-    IFEDictionary *dic = NULL;
-    const HRESULT result = (*create_ifedictionary_instance_)(
-        reinterpret_cast<LPVOID *>(&dic));
-
-    if (S_OK != result) {
-      LOG(ERROR) << "CreateIFEDictionaryInstance() failed: " << result;
-      return NULL;
-    }
-
-    VLOG(1) << "Can create IFEDictionary successfully";
-
-    return dic;
-  }
-
- private:
-  HMODULE lib_;
-  FPCreateIFEDictionaryInstance create_ifedictionary_instance_;
+// {019F7153-E6DB-11d0-83C3-00C04FDDB82E}
+const GUID kIidIFEDictionary = {
+  0x19f7153, 0xe6db, 0x11d0, {0x83, 0xc3, 0x0, 0xc0, 0x4f, 0xdd, 0xb8, 0x2e}
 };
+
+IFEDictionary *CreateIFEDictionary() {
+  CLSID class_id = GUID_NULL;
+  // On Windows 7 and prior, multiple versions of MS-IME can be installed
+  // side-by-side. As far as we've observed, the latest version will be chosen
+  // with version-independent ProgId.
+  HRESULT result = ::CLSIDFromProgID(kVersionIndependentProgIdForMSIME,
+                                     &class_id);
+  if (FAILED(result)) {
+    LOG(ERROR) << "CLSIDFromProgID() failed: " << result;
+    return nullptr;
+  }
+  IFEDictionary *obj = nullptr;
+  result = ::CoCreateInstance(class_id,
+                              nullptr,
+                              CLSCTX_INPROC_SERVER,
+                              kIidIFEDictionary,
+                              reinterpret_cast<void **>(&obj));
+  if (FAILED(result)) {
+    LOG(ERROR) << "CoCreateInstance() failed: " << result;
+    return nullptr;
+  }
+  VLOG(1) << "Can create IFEDictionary successfully";
+  return obj;
+}
 
 class ScopedIFEDictionary {
  public:
@@ -267,7 +237,7 @@ class MSIMEImportIterator
     : public UserDictionaryImporter::InputIteratorInterface {
  public:
   MSIMEImportIterator()
-      : dic_(Singleton<IFEDictionaryFactory>::get()->Create()),
+      : dic_(CreateIFEDictionary()),
         buf_(kBufferSize), result_(E_FAIL), size_(0), index_(0) {
     if (dic_.get() == NULL) {
       LOG(ERROR) << "IFEDictionaryFactory returned NULL";

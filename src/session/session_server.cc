@@ -33,9 +33,10 @@
 
 #include <string>
 
-#include "base/base.h"
 #include "base/logging.h"
+#include "base/port.h"
 #include "base/scheduler.h"
+#include "engine/engine_factory.h"
 #include "ipc/ipc.h"
 #include "ipc/named_event.h"
 #include "session/commands.pb.h"
@@ -50,6 +51,9 @@
 namespace {
 
 #ifdef OS_WIN
+// On Windows, multiple processes can create named pipe objects whose names are
+// the same. To reduce the potential risk of DOS, we limit the maximum number
+// of pipe instances to 1 here.
 const int kNumConnections   = 1;
 #else
 const int kNumConnections   = 10;
@@ -65,8 +69,9 @@ namespace mozc {
 
 SessionServer::SessionServer()
     : IPCServer(kSessionName, kNumConnections, kTimeOut),
+      engine_(EngineFactory::Create()),
       usage_observer_(new session::SessionUsageObserver()),
-      session_handler_(new SessionHandler()) {
+      session_handler_(new SessionHandler(engine_.get())) {
   using usage_stats::UsageStatsUploader;
   // start session watch dog timer
   session_handler_->StartWatchDog();

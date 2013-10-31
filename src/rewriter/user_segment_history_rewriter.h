@@ -34,7 +34,6 @@
 #include <vector>
 
 #include "rewriter/rewriter_interface.h"
-#include "base/base.h"
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
 

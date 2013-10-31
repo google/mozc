@@ -30,7 +30,6 @@
 #ifndef MOZC_REWRITER_SINGLE_KANJI_REWRITER_H_
 #define MOZC_REWRITER_SINGLE_KANJI_REWRITER_H_
 
-#include "base/base.h"
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {

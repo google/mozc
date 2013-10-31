@@ -30,7 +30,7 @@
 #ifndef MOZC_REWRITER_USAGE_REWRITER_DATA_STRUCTS_H_
 #define MOZC_REWRITER_USAGE_REWRITER_DATA_STRUCTS_H_
 
-#include "base/base.h"
+#include "base/port.h"
 
 namespace mozc {
 

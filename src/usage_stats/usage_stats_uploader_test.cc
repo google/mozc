@@ -40,7 +40,9 @@
 #include <vector>
 
 #include "base/port.h"
+#ifdef OS_ANDROID
 #include "base/scoped_ptr.h"
+#endif  // OS_ANDROID
 #include "base/singleton.h"
 #include "base/system_util.h"
 #include "base/util.h"
@@ -670,7 +672,7 @@ class ClientIdTestMockJavaEncryptor : public ::mozc::jni::MockJavaEncryptor {
   }
 
   static string GetRandomAsciiSequence(size_t size) {
-    scoped_array<char> buffer(new char[size]);
+    scoped_ptr<char[]> buffer(new char[size]);
     Util::GetRandomAsciiSequence(buffer.get(), size);
     return string(buffer.get(), size);
   }
@@ -701,7 +703,7 @@ class ClientIdTest : public ::testing::Test {
  private:
 #ifdef OS_ANDROID
   scoped_ptr< ::mozc::jni::MockJavaVM> jvm_;
-#endif
+#endif  // OS_ANDROID
 };
 }  // namespace
 

@@ -67,8 +67,8 @@
         'json_util_test.cc',
       ],
       'dependencies': [
-        '../base/base.gyp:testing_util',
         '../testing/testing.gyp:gtest_main',
+        '../testing/testing.gyp:testing_util',
         'net.gyp:json_util',
         'json_util_test_protocol',
       ],
@@ -109,8 +109,8 @@
         'http_task_manager_test.cc',
       ],
       'dependencies': [
-        '../base/base.gyp:testing_util',
         '../testing/testing.gyp:gtest_main',
+        '../testing/testing.gyp:testing_util',
         'net.gyp:http_client_mock',
         'net.gyp:http_task_manager',
       ],

@@ -32,6 +32,9 @@
 
 #include <gtk/gtk.h>
 
+#include <memory>
+
+#include "base/port.h"
 #include "renderer/unix/font_spec_interface.h"
 #include "renderer/unix/pango_wrapper_interface.h"
 #include "renderer/unix/text_renderer_interface.h"
@@ -79,10 +82,14 @@ class TextRenderer : public TextRendererInterface {
                                      const string &str,
                                      const int width,
                                      PangoLayoutWrapperInterface *layout);
-  scoped_ptr<FontSpecInterface> font_spec_;
-  scoped_ptr<PangoWrapperInterface> pango_;
+  std::unique_ptr<FontSpecInterface> font_spec_;
+  std::unique_ptr<PangoWrapperInterface> pango_;
+
+  DISALLOW_COPY_AND_ASSIGN(TextRenderer);
 };
+
 }  // namespace gtk
 }  // namespace renderer
 }  // namespace mozc
+
 #endif  // MOZC_RENDERER_UNIX_TEXT_RENDERER_H_

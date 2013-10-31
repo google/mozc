@@ -62,8 +62,6 @@
         '../rewriter/rewriter_base.gyp:install_gen_symbol_rewriter_dictionary_main',
         '../rewriter/rewriter_base.gyp:install_gen_usage_rewriter_dictionary_main',
       ],
-      'conditions': [
-      ],
     },
   ],
 }

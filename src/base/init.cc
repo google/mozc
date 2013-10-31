@@ -27,11 +27,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <vector>
-#include "base/base.h"
 #include "base/init.h"
+
+#include <vector>
 #include "base/logging.h"
 #include "base/mutex.h"
+#include "base/port.h"
 #include "base/singleton.h"
 #include "base/util.h"
 
@@ -153,4 +154,5 @@ ShutdownHandlerRegister::ShutdownHandlerRegister(const char *name,
 void RunShutdownHandlers() {
   Singleton<ShutdownHandler>::get()->Call();
 }
+
 }  // mozc

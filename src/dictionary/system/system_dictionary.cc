@@ -29,9 +29,20 @@
 
 // System dictionary maintains following sections
 //  (1) Key trie
+//       Trie containing encoded key. Returns ids for lookup.
+//       We can get the key using the id by performing reverse lookup
+//       against the trie.
 //  (2) Value trie
+//       Trie containing encoded value. Returns ids for lookup.
+//       We can get the value using the id by performing reverse lookup
+//       against the trie.
 //  (3) Token array
+//       Array containing encoded tokens. Array index is the id in key trie.
+//       Token contains cost, POS, the id in key trie, etc.
 //  (4) Table for high frequent POS(left/right ID)
+//       Frequenty appearing POSs are stored as POS ids in token info for
+//       reducing binary size. This table is the map from the id to the
+//       actual ids.
 
 #include "dictionary/system/system_dictionary.h"
 
@@ -347,7 +358,198 @@ Node *CreateNodeFromToken(
   return new_node;
 }
 
+// Iterator for scanning token array.
+// This iterator does not return actual token info but returns
+// id data and the position only.
+// This will be used only for reverse lookup.
+// Forward lookup does not need such iterator because it can access
+// a token directly without linear scan.
+//
+//  Usage:
+//    for (TokenScanIterator iter(codec_, token_array_.get());
+//         !iter.Done(); iter.Next()) {
+//      const TokenScanIterator::Result &result = iter.Get();
+//      // Do something with |result|.
+//    }
+class TokenScanIterator {
+ public:
+  struct Result {
+    // Value id for the current token
+    int value_id;
+    // Index (= key id) for the current token
+    int index;
+    // Offset from the tokens section beginning.
+    // (token_array_->Get(id_in_key_trie) ==
+    //  token_array_->Get(0) + tokens_offset)
+    int tokens_offset;
+  };
+
+  TokenScanIterator(
+      const SystemDictionaryCodecInterface *codec,
+      const storage::louds::BitVectorBasedArray *token_array)
+      : codec_(codec),
+        termination_flag_(codec->GetTokensTerminationFlag()),
+        state_(HAS_NEXT),
+        offset_(0),
+        tokens_offset_(0),
+        index_(0) {
+    size_t dummy_length = 0;
+    encoded_tokens_ptr_ =
+        reinterpret_cast<const uint8*>(token_array->Get(0, &dummy_length));
+    NextInternal();
+  }
+
+  ~TokenScanIterator() {
+  }
+
+  const Result &Get() const { return result_; }
+
+  bool Done() const { return state_ == DONE; }
+
+  void Next() {
+    DCHECK_NE(state_, DONE);
+    NextInternal();
+  }
+
+ private:
+  enum State {
+    HAS_NEXT,
+    DONE,
+  };
+
+  void NextInternal() {
+    if (encoded_tokens_ptr_[offset_] == termination_flag_) {
+      state_ = DONE;
+      return;
+    }
+    int read_bytes;
+    result_.value_id = -1;
+    result_.index = index_;
+    result_.tokens_offset = tokens_offset_;
+    const bool is_last_token =
+        !(codec_->ReadTokenForReverseLookup(encoded_tokens_ptr_ + offset_,
+                                            &result_.value_id, &read_bytes));
+    if (is_last_token) {
+      int tokens_size = offset_ + read_bytes - tokens_offset_;
+      if (tokens_size < kMinRbxBlobSize) {
+        tokens_size = kMinRbxBlobSize;
+      }
+      tokens_offset_ += tokens_size;
+      ++index_;
+      offset_ = tokens_offset_;
+    } else {
+      offset_ += read_bytes;
+    }
+  }
+
+  const SystemDictionaryCodecInterface *codec_;
+  const uint8 *encoded_tokens_ptr_;
+  const uint8 termination_flag_;
+  State state_;
+  Result result_;
+  int offset_;
+  int tokens_offset_;
+  int index_;
+
+ private:
+  DISALLOW_COPY_AND_ASSIGN(TokenScanIterator);
+};
+
 }  // namespace
+
+class ReverseLookupIndex {
+ public:
+  ReverseLookupIndex(
+      const SystemDictionaryCodecInterface *codec,
+      const storage::louds::BitVectorBasedArray *token_array) {
+    // Gets id size.
+    int value_id_max = -1;
+    for (TokenScanIterator iter(codec, token_array);
+         !iter.Done(); iter.Next()) {
+      const TokenScanIterator::Result &result = iter.Get();
+      value_id_max = max(value_id_max, result.value_id);
+    }
+
+    CHECK_GE(value_id_max, 0);
+    index_size_ = value_id_max + 1;
+    index_.reset(new ReverseLookupResultArray[index_size_]);
+
+    // Gets result size for each ids.
+    for (TokenScanIterator iter(codec, token_array);
+         !iter.Done(); iter.Next()) {
+      const TokenScanIterator::Result &result = iter.Get();
+      if (result.value_id != -1) {
+        DCHECK_LT(result.value_id, index_size_);
+        ++(index_[result.value_id].size);
+      }
+    }
+
+    for (size_t i = 0; i < index_size_; ++i) {
+      index_[i].results.reset(
+          new SystemDictionary::ReverseLookupResult[index_[i].size]);
+    }
+
+    // Builds index.
+    for (TokenScanIterator iter(codec, token_array);
+         !iter.Done(); iter.Next()) {
+      const TokenScanIterator::Result &result = iter.Get();
+      if (result.value_id == -1) {
+        continue;
+      }
+
+      DCHECK_LT(result.value_id, index_size_);
+      ReverseLookupResultArray *result_array = &index_[result.value_id];
+
+      // Finds uninitialized result.
+      size_t result_index = 0;
+      for (result_index = 0;
+           result_index < result_array->size;
+           ++result_index) {
+        const SystemDictionary::ReverseLookupResult &lookup_result =
+            result_array->results[result_index];
+        if (lookup_result.tokens_offset == -1 &&
+            lookup_result.id_in_key_trie == -1) {
+          result_array->results[result_index].tokens_offset =
+              result.tokens_offset;
+          result_array->results[result_index].id_in_key_trie = result.index;
+          break;
+        }
+      }
+    }
+
+    CHECK(index_.get() != NULL);
+  }
+
+  ~ReverseLookupIndex() {}
+
+  void FillResultMap(
+      const set<int> &id_set,
+      multimap<int, SystemDictionary::ReverseLookupResult> *result_map) {
+    for (set<int>::const_iterator id_itr  = id_set.begin();
+         id_itr != id_set.end(); ++id_itr) {
+      const ReverseLookupResultArray &result_array = index_[*id_itr];
+      for (size_t i = 0; i < result_array.size; ++i) {
+        result_map->insert(make_pair(*id_itr, result_array.results[i]));
+      }
+    }
+  }
+
+ private:
+  struct ReverseLookupResultArray {
+    ReverseLookupResultArray() : size(0) {}
+    // Use scoped_ptr for reducing memory consumption as possible.
+    // Using vector requires 90 MB even when we call resize explicitly.
+    // On the other hand, scoped_ptr requires 57 MB.
+    scoped_ptr<SystemDictionary::ReverseLookupResult[]> results;
+    size_t size;
+  };
+
+  // Use scoped array for reducing memory consumption as possible.
+  scoped_ptr<ReverseLookupResultArray[]> index_;
+  size_t index_size_;
+
+  DISALLOW_COPY_AND_ASSIGN(ReverseLookupIndex);
+};
 
 SystemDictionary::SystemDictionary()
     : key_trie_(new LoudsTrie),
@@ -362,14 +564,15 @@ SystemDictionary::SystemDictionary()
 SystemDictionary::~SystemDictionary() {}
 
 // static
-SystemDictionary *SystemDictionary::CreateSystemDictionaryFromFile(
-    const string &filename) {
+SystemDictionary *SystemDictionary::CreateSystemDictionaryFromFileWithOptions(
+    const string &filename, Options options) {
   scoped_ptr<SystemDictionary> instance(new SystemDictionary);
   if (!instance->dictionary_file_->OpenFromFile(filename)) {
     LOG(ERROR) << "Failed to open system dictionary file";
     return NULL;
   }
-  if (!instance->OpenDictionaryFile()) {
+  if (!instance->OpenDictionaryFile(
+          (options & ENABLE_REVERSE_LOOKUP_INDEX) != 0)) {
     LOG(ERROR) << "Failed to create system dictionary";
     return NULL;
   }
@@ -378,8 +581,14 @@ SystemDictionary *SystemDictionary::CreateSystemDictionaryFromFile(
 }
 
 // static
-SystemDictionary *SystemDictionary::CreateSystemDictionaryFromImage(
-    const char *ptr, int len) {
+SystemDictionary *SystemDictionary::CreateSystemDictionaryFromFile(
+    const string &filename) {
+  return CreateSystemDictionaryFromFileWithOptions(filename, NONE);
+}
+
+// static
+SystemDictionary *SystemDictionary::CreateSystemDictionaryFromImageWithOptions(
+    const char *ptr, int len, Options options) {
   // Make the dictionary not to be paged out.
   // We don't check the return value because the process doesn't necessarily
   // has the priviledge to mlock.
@@ -391,14 +600,21 @@ SystemDictionary *SystemDictionary::CreateSystemDictionaryFromImage(
     LOG(ERROR) << "Failed to open system dictionary file";
     return NULL;
   }
-  if (!instance->OpenDictionaryFile()) {
+  if (!instance->OpenDictionaryFile(
+          (options & ENABLE_REVERSE_LOOKUP_INDEX) != 0)) {
     LOG(ERROR) << "Failed to create system dictionary";
     return NULL;
   }
   return instance.release();
 }
 
-bool SystemDictionary::OpenDictionaryFile() {
+// static
+SystemDictionary *SystemDictionary::CreateSystemDictionaryFromImage(
+    const char *ptr, int len) {
+  return CreateSystemDictionaryFromImageWithOptions(ptr, len, NONE);
+}
+
+bool SystemDictionary::OpenDictionaryFile(bool enable_reverse_lookup_index) {
   int len;
 
   const uint8 *key_image = reinterpret_cast<const uint8 *>(
@@ -428,7 +644,20 @@ bool SystemDictionary::OpenDictionaryFile() {
     return false;
   }
 
+  if (enable_reverse_lookup_index) {
+    InitReverseLookupIndex();
+  }
+
   return true;
+}
+
+void SystemDictionary::InitReverseLookupIndex() {
+  if (reverse_lookup_index_.get() != NULL) {
+    return;
+  }
+
+  reverse_lookup_index_.reset(
+      new ReverseLookupIndex(codec_, token_array_.get()));
 }
 
 const KeyExpansionTable &SystemDictionary::GetExpansionTableBySetting(
@@ -1077,6 +1306,11 @@ void SystemDictionary::PopulateReverseLookupCache(
   if (allocator == NULL) {
     return;
   }
+  if (reverse_lookup_index_ != NULL) {
+    // We don't need to prepare cache for the current reverse conversion,
+    // as we have already built the index for reverse lookup.
+    return;
+  }
   ReverseLookupCache *cache =
       allocator->mutable_data()->get<ReverseLookupCache>(kReverseLookupCache);
   DCHECK(cache) << "can't get cache data.";
@@ -1160,7 +1394,10 @@ Node *SystemDictionary::GetReverseLookupNodesForValue(
   ReverseLookupCache *cache =
       (has_cache ? allocator->mutable_data()->get<ReverseLookupCache>(
           kReverseLookupCache) : NULL);
-  if (cache != NULL && IsCacheAvailable(id_set, cache->results)) {
+  if (reverse_lookup_index_ != NULL) {
+    reverse_lookup_index_->FillResultMap(id_set, &non_cached_results);
+    results = &non_cached_results;
+  } else if (cache != NULL && IsCacheAvailable(id_set, cache->results)) {
     results = &(cache->results);
   } else {
     // Cache is not available. Get token for each ID.
@@ -1175,36 +1412,15 @@ Node *SystemDictionary::GetReverseLookupNodesForValue(
 void SystemDictionary::ScanTokens(
     const set<int> &id_set,
     multimap<int, ReverseLookupResult> *reverse_results) const {
-  int offset = 0;
-  int tokens_offset = 0;
-  int index = 0;
-  size_t dummy_length = 0;
-  const uint8 *encoded_tokens_ptr =
-      reinterpret_cast<const uint8*>(token_array_->Get(0, &dummy_length));
-  const uint8 termination_flag = codec_->GetTokensTerminationFlag();
-  while (encoded_tokens_ptr[offset] != termination_flag) {
-    int read_bytes;
-    int value_id = -1;
-    const bool is_last_token =
-        !(codec_->ReadTokenForReverseLookup(encoded_tokens_ptr + offset,
-                                            &value_id, &read_bytes));
-    if (value_id != -1 &&
-        id_set.find(value_id) != id_set.end()) {
-      ReverseLookupResult result;
-      result.tokens_offset = tokens_offset;
-      result.id_in_key_trie = index;
-      reverse_results->insert(make_pair(value_id, result));
-    }
-    if (is_last_token) {
-      int tokens_size = offset + read_bytes - tokens_offset;
-      if (tokens_size < kMinRbxBlobSize) {
-        tokens_size = kMinRbxBlobSize;
-      }
-      tokens_offset += tokens_size;
-      ++index;
-      offset = tokens_offset;
-    } else {
-      offset += read_bytes;
+  for (TokenScanIterator iter(codec_, token_array_.get());
+       !iter.Done(); iter.Next()) {
+    const TokenScanIterator::Result &result = iter.Get();
+    if (result.value_id != -1 &&
+        id_set.find(result.value_id) != id_set.end()) {
+      ReverseLookupResult lookup_result;
+      lookup_result.tokens_offset = result.tokens_offset;
+      lookup_result.id_in_key_trie = result.index;
+      reverse_results->insert(make_pair(result.value_id, lookup_result));
     }
   }
 }

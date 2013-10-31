@@ -32,23 +32,49 @@
     'relative_dir': 'base',
     'gen_out_dir': '<(SHARED_INTERMEDIATE_DIR)/<(relative_dir)',
   },
-  'targets': [
-    # This is a mocking library of Java VM for android.
-    {
-      'target_name': 'android_jni_mock',
-      'conditions': [
-        ['target_platform=="Android"', {
+  # Platform-specific targets.
+  'conditions': [
+    ['OS=="win"', {
+      'targets': [
+        {
+          'target_name': 'win_util_test_dll',
+          'type': 'shared_library',
+          'sources': [
+            'win_util_test_dll.cc',
+            'win_util_test_dll.def',
+          ],
+          'dependencies': [
+            'base.gyp:base',
+          ],
+        },
+      ],
+    }],
+    ['target_platform=="Android"', {
+      'targets': [
+        {
+          # This is a mocking library of Java VM for android.
+          'target_name': 'android_jni_mock',
           'type': 'static_library',
           'sources': [
             'android_jni_mock.cc',
           ],
-        }, {  # else
-          # This block is needed because this is an element of 'targets' block.
-          # Gyp assumes that each child element has 'target_name' and 'type'.
-          'type': 'none',
-        }],
+        },
+        {
+          'target_name': 'jni_proxy_test',
+          'type': 'executable',
+          'dependencies': [
+            '../testing/testing.gyp:gtest_main',
+            'android_jni_mock',
+            'base.gyp:jni_proxy',
+          ],
+          'sources': [
+            'android_jni_proxy_test.cc',
+          ],
+        },
       ],
-    },
+    }],
+  ],
+  'targets': [
     {
       'target_name': 'base_test',
       'type': 'executable',
@@ -58,9 +84,7 @@
         'cpu_stats_test.cc',
         'crash_report_util_test.cc',
         'process_mutex_test.cc',
-        'scheduler_test.cc',
         'stopwatch_test.cc',
-        'svm_test.cc',
         'timer_test.cc',
         'unnamed_event_test.cc',
         'update_util_test.cc',
@@ -74,15 +98,19 @@
         }],
         ['OS=="win"', {
           'sources': [
+            'win_api_test_helper_test.cc',
             'win_sandbox_test.cc',
-          ],
-          'dependencies': [
-            '../testing/sidestep/sidestep.gyp:sidestep',
           ],
         }],
         ['target_platform=="NaCl"', {
           'sources!': [
             'process_mutex_test.cc',
+          ],
+        }],
+        ['target_platform=="Android"', {
+          'sources!': [
+            'codegen_bytearray_stream_test.cc',
+            'encryptor_test.cc',
           ],
         }],
       ],
@@ -113,6 +141,11 @@
         'version_test.cc',
       ],
       'conditions': [
+        ['OS=="win"', {
+          'sources': [
+            'win_util_test.cc',
+          ],
+        }],
         ['target_platform=="Android"', {
           'sources': [
             'android_util_test.cc',
@@ -196,6 +229,20 @@
         'test_size': 'small',
       },
     },
+    {  # Extract this test from base_test since it takes too long time.
+      'target_name': 'scheduler_test',
+      'type': 'executable',
+      'sources': [
+        'scheduler_test.cc',
+      ],
+      'dependencies': [
+        '../testing/testing.gyp:gtest_main',
+        'base.gyp:base',
+      ],
+      'variables': {
+        'test_size': 'medium',
+      },
+    },
     {
       'target_name': 'encryptor_test',
       'type': 'executable',
@@ -215,26 +262,6 @@
             # and jni_proxy_test target.
             'encryptor_test.cc',
           ],
-        }],
-      ],
-    },
-    {
-      'target_name': 'jni_proxy_test',
-      'conditions': [
-        ['target_platform=="Android"', {
-          'type': 'executable',
-          'dependencies': [
-            '../testing/testing.gyp:gtest_main',
-            'android_jni_mock',
-            'base.gyp:jni_proxy',
-          ],
-          'sources': [
-            'android_jni_proxy_test.cc',
-          ],
-        }, {  # else
-          # This block is needed because this is an element of 'targets' block.
-          # Gyp assumes that each child element has 'target_name' and 'type'.
-          'type': 'none',
         }],
       ],
     },
@@ -344,10 +371,26 @@
         'file_util_test',
         'number_util_test',
         'multifile_test',
+        'scheduler_test',
         'scheduler_stub_test',
+        'system_util_test',
         'task_test',
         'trie_test',
         'util_test',
+      ],
+      'conditions': [
+        # To work around a link error on Ninja build, we put this target in
+        # 'base_all_test'.
+        ['OS=="win"', {
+          'dependencies': [
+            'win_util_test_dll',
+          ],
+        }],
+        ['target_platform=="Android"', {
+          'dependencies': [
+            'jni_proxy_test',
+          ],
+        }],
       ],
     },
   ],

@@ -29,7 +29,7 @@
 
 #include "base/crash_report_handler.h"
 
-#ifdef OS_WIN
+#if defined(OS_WIN) && defined(GOOGLE_JAPANESE_INPUT_BUILD)
 
 #include <Windows.h>
 #include <ShellAPI.h>  // for CommandLineToArgvW
@@ -44,6 +44,7 @@
 #include "base/process.h"
 #include "base/util.h"
 #include "base/version.h"
+#include "base/win_util.h"
 #include "third_party/breakpad/src/client/windows/handler/exception_handler.h"
 
 namespace {
@@ -82,6 +83,13 @@ int g_reference_count = 0;
 CRITICAL_SECTION *g_critical_section = NULL;
 
 google_breakpad::ExceptionHandler *g_handler = NULL;
+
+struct CrashStateInformation {
+  bool invalid_process_heap_detected;
+  bool loader_lock_detected;
+};
+
+CrashStateInformation g_crash_state_info = { false, false };
 
 // Returns the name of the build mode.
 std::wstring GetBuildMode() {
@@ -231,6 +239,21 @@ bool IsCurrentModuleInStack(PCONTEXT context) {
   return false;
 }
 
+void UpdateCrashStateInformation() {
+  __try {                                              // NOLINT
+    g_crash_state_info.invalid_process_heap_detected =
+        (::HeapValidate(::GetProcessHeap(), 0, NULL) == FALSE);
+  } __except (EXCEPTION_EXECUTE_HANDLER) {             // NOLINT
+                                                       // ignore exception
+  }
+  __try {                                              // NOLINT
+    mozc::WinUtil::IsDLLSynchronizationHeld(
+        &g_crash_state_info.loader_lock_detected);
+  } __except (EXCEPTION_EXECUTE_HANDLER) {             // NOLINT
+                                                       // ignore exception
+  }
+}
+
 bool FilterHandler(void *context, EXCEPTION_POINTERS *exinfo,
                    MDRawAssertionInfo *assertion) {
   if (exinfo == NULL) {
@@ -244,10 +267,12 @@ bool FilterHandler(void *context, EXCEPTION_POINTERS *exinfo,
 
   // Make sure it's our module which cause the crash.
   if (IsAddressInCurrentModule(exinfo->ExceptionRecord->ExceptionAddress)) {
+    UpdateCrashStateInformation();
     return true;
   }
 
   if (IsCurrentModuleInStack(exinfo->ContextRecord)) {
+    UpdateCrashStateInformation();
     return true;
   }
 
@@ -260,7 +285,6 @@ bool FilterHandler(void *context, EXCEPTION_POINTERS *exinfo,
 namespace mozc {
 
 bool CrashReportHandler::Initialize(bool check_address) {
-#if defined(GOOGLE_JAPANESE_INPUT_BUILD)
   ScopedCriticalSection critical_section(g_critical_section);
   DCHECK_GE(g_reference_count, 0);
   ++g_reference_count;
@@ -277,22 +301,24 @@ bool CrashReportHandler::Initialize(bool check_address) {
 
     google_breakpad::ExceptionHandler::FilterCallback filter_callback =
         check_address ? FilterHandler : NULL;
+    const auto kCrashDumpType = static_cast<MINIDUMP_TYPE>(
+        MiniDumpWithUnloadedModules | MiniDumpWithProcessThreadData);
     g_handler = new google_breakpad::ExceptionHandler(
         crashdump_directory.c_str(),
         filter_callback,
         NULL,  // MinidumpCallback
         NULL,  // callback_context
         google_breakpad::ExceptionHandler::HANDLER_ALL,
-        MiniDumpNormal,
+        kCrashDumpType,
         GetCrashHandlerPipeName().c_str(),
         GetCustomInfo());
-
+    g_handler->RegisterAppMemory(&g_crash_state_info,
+                                 sizeof(g_crash_state_info));
 #ifdef DEBUG
     g_handler->set_handle_debug_exceptions(true);
 #endif  // DEBUG
     return true;
   }
-#endif  // GOOGLE_JAPANESE_INPUT_BUILD
   return false;
 }
 
@@ -302,7 +328,6 @@ bool CrashReportHandler::IsInitialized() {
 }
 
 bool CrashReportHandler::Uninitialize() {
-#if defined(GOOGLE_JAPANESE_INPUT_BUILD)
   ScopedCriticalSection critical_section(g_critical_section);
   --g_reference_count;
   DCHECK_GE(g_reference_count, 0);
@@ -311,7 +336,6 @@ bool CrashReportHandler::Uninitialize() {
     g_handler = NULL;
     return true;
   }
-#endif  // GOOGLE_JAPANESE_INPUT_BUILD
   return false;
 }
 
@@ -319,14 +343,15 @@ void CrashReportHandler::SetCriticalSection(
     CRITICAL_SECTION *critical_section) {
   g_critical_section = critical_section;
 }
+
 }  // namespace mozc
 
-#elif defined(OS_LINUX)  // OS_WIN
+#else
 
 namespace mozc {
 
-// Dummy implimentation of CrashReportHandler for Linux.
-// TODO(horo): Impliment this when we support official branding build on Linux.
+// Null implementation for platforms where we do not want to enable breakpad.
+
 bool CrashReportHandler::Initialize(bool check_address) {
   return false;
 }
@@ -339,6 +364,12 @@ bool CrashReportHandler::Uninitialize() {
   return false;
 }
 
+#ifdef OS_WIN
+void CrashReportHandler::SetCriticalSection(
+    CRITICAL_SECTION *critical_section) {
+}
+#endif  // OS_WIN
+
 }  // namespace mozc
 
-#endif  // OS_WIN OS_LINUX
+#endif

@@ -34,8 +34,8 @@
 
 #include "renderer/mac/mac_server.h"
 
-#include "base/base.h"
 #include "base/logging.h"
+#include "base/mutex.h"
 #include "base/util.h"
 #include "session/commands.pb.h"
 #include "renderer/mac/mac_server_send_command.h"

@@ -32,10 +32,59 @@
     'relative_dir': 'testing',
     'gen_out_dir': '<(SHARED_INTERMEDIATE_DIR)/<(relative_dir)',
   },
+  'conditions': [
+    ['target_platform=="NaCl"', {
+      'targets': [
+        {
+          'target_name': 'nacl_mock_module',
+          'type': 'static_library',
+          'sources': [
+            'base/public/nacl_mock_module.cc',
+          ],
+          'link_settings': {
+            'libraries': ['-lppapi', '-lppapi_cpp'],
+          },
+          'dependencies': [
+            '../base/base.gyp:base',
+            '../net/net.gyp:http_client',
+            'googletest_lib',
+          ],
+        },
+      ],
+    }],
+  ],
   'targets': [
     {
       'target_name': 'testing',
       'type': 'static_library',
+      'variables': {
+        'gtest_defines': [
+          'GTEST_HAS_TR1_TUPLE=1',
+        ],
+        'conditions': [
+          ['target_compiler=="msvs2012"', {
+            'gtest_defines': [
+              '_VARIADIC_MAX=10',  # for gtest/gmock on VC++ 2012
+            ],
+          }],
+          ['target_platform!="Windows"', {
+            'gtest_defines': [
+              'GTEST_LANG_CXX11=0',  # non-Windows build is not ready
+            ],
+          }],
+          ['target_platform=="Android"', {
+            'gtest_defines': [
+              'GTEST_HAS_RTTI=0',  # Android NDKr7 requires this.
+              'GTEST_HAS_CLONE=0',
+              'GTEST_HAS_GLOBAL_WSTRING=0',
+              'GTEST_HAS_POSIX_RE=0',
+              'GTEST_HAS_STD_WSTRING=0',
+              'GTEST_OS_LINUX=1',
+              'GTEST_OS_LINUX_ANDROID=1',
+            ],
+          }],
+        ],
+      },
       'sources': [
         '<(DEPTH)/third_party/gmock/src/gmock-cardinalities.cc',
         '<(DEPTH)/third_party/gmock/src/gmock-internal-utils.cc',
@@ -56,9 +105,21 @@
         '<(DEPTH)/third_party/gtest',
         '<(DEPTH)/third_party/gtest/include',
       ],
+      'defines': [
+        '<@(gtest_defines)',
+      ],
+      'all_dependent_settings': {
+        'defines': [
+          '<@(gtest_defines)',
+        ],
+        'include_dirs': [
+          '<(third_party_dir)/gmock/include',
+          '<(third_party_dir)/gtest/include',
+        ],
+      },
       'conditions': [
         ['clang==1', {
-          'cflags+': [
+          'cflags': [
             '-Wno-missing-field-initializers',
             '-Wno-unused-private-field',
           ],
@@ -99,23 +160,6 @@
         '../base/base.gyp:base',
         'gen_mozc_data_dir_header#host',
         'testing',
-      ],
-    },
-    {
-      'target_name': 'nacl_mock_module',
-      'type': 'static_library',
-      'sources': [
-        'base/public/nacl_mock_module.cc',
-      ],
-      'all_dependent_settings': {
-        'link_settings': {
-          'libraries': ['-lppapi', '-lppapi_cpp'],
-        },
-      },
-      'dependencies': [
-        '../base/base.gyp:base',
-        '../net/net.gyp:http_client',
-        'googletest_lib',
       ],
     },
     {
@@ -162,6 +206,18 @@
             'nacl_mock_module',
           ],
         }],
+      ],
+    },
+    {
+      'target_name': 'testing_util',
+      'type': 'static_library',
+      'sources': [
+        'base/public/testing_util.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base_core',
+        '../protobuf/protobuf.gyp:protobuf',
+        'testing',
       ],
     },
   ],

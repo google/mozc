@@ -39,7 +39,6 @@
 #include <memory>
 #include <string>
 
-#include "base/base.h"
 #include "base/logging.h"
 #include "base/scoped_handle.h"
 #include "base/system_util.h"
@@ -269,7 +268,12 @@ wstring WinSandbox::GetSDDL(ObjectSecurityType shareble_object_type,
   wstring sacl;
   switch (shareble_object_type) {
     case WinSandbox::kSharablePipe:
-      // Deny Remote Acccess
+      // Strip implicit owner rights
+      // http://technet.microsoft.com/en-us/library/dd125370.aspx
+      if (is_windows_vista_or_later) {
+        dacl += Allow(L"", SDDL_OWNER_RIGHTS);
+      }
+      // Deny remote acccess
       dacl += Deny(SDDL_GENERIC_ALL, SDDL_NETWORK);
       // Allow general access to LocalSystem
       dacl += Allow(SDDL_GENERIC_ALL, SDDL_LOCAL_SYSTEM);
@@ -287,7 +291,12 @@ wstring WinSandbox::GetSDDL(ObjectSecurityType shareble_object_type,
       }
       break;
     case WinSandbox::kLooseSharablePipe:
-      // Deny Remote Acccess
+      // Strip implicit owner rights
+      // http://technet.microsoft.com/en-us/library/dd125370.aspx
+      if (is_windows_vista_or_later) {
+        dacl += Allow(L"", SDDL_OWNER_RIGHTS);
+      }
+      // Deny remote acccess
       dacl += Deny(SDDL_GENERIC_ALL, SDDL_NETWORK);
       // Allow general access to LocalSystem
       dacl += Allow(SDDL_GENERIC_ALL, SDDL_LOCAL_SYSTEM);
@@ -307,6 +316,11 @@ wstring WinSandbox::GetSDDL(ObjectSecurityType shareble_object_type,
       }
       break;
     case WinSandbox::kSharableEvent:
+      // Strip implicit owner rights
+      // http://technet.microsoft.com/en-us/library/dd125370.aspx
+      if (is_windows_vista_or_later) {
+        dacl += Allow(L"", SDDL_OWNER_RIGHTS);
+      }
       // Allow general access to LocalSystem
       dacl += Allow(SDDL_GENERIC_ALL, SDDL_LOCAL_SYSTEM);
       // Allow general access to Built-in Administorators
@@ -326,6 +340,11 @@ wstring WinSandbox::GetSDDL(ObjectSecurityType shareble_object_type,
       }
       break;
     case WinSandbox::kSharableMutex:
+      // Strip implicit owner rights
+      // http://technet.microsoft.com/en-us/library/dd125370.aspx
+      if (is_windows_vista_or_later) {
+        dacl += Allow(L"", SDDL_OWNER_RIGHTS);
+      }
       // Allow general access to LocalSystem
       dacl += Allow(SDDL_GENERIC_ALL, SDDL_LOCAL_SYSTEM);
       // Allow general access to Built-in Administorators
@@ -345,6 +364,11 @@ wstring WinSandbox::GetSDDL(ObjectSecurityType shareble_object_type,
       }
       break;
     case WinSandbox::kSharableFileForRead:
+      // Strip implicit owner rights
+      // http://technet.microsoft.com/en-us/library/dd125370.aspx
+      if (is_windows_vista_or_later) {
+        dacl += Allow(L"", SDDL_OWNER_RIGHTS);
+      }
       // Allow general access to LocalSystem
       dacl += Allow(SDDL_GENERIC_ALL, SDDL_LOCAL_SYSTEM);
       // Allow general access to Built-in Administorators
@@ -366,6 +390,11 @@ wstring WinSandbox::GetSDDL(ObjectSecurityType shareble_object_type,
       }
       break;
     case WinSandbox::kIPCServerProcess:
+      // Strip implicit owner rights
+      // http://technet.microsoft.com/en-us/library/dd125370.aspx
+      if (is_windows_vista_or_later) {
+        dacl += Allow(L"", SDDL_OWNER_RIGHTS);
+      }
       // Allow general access to LocalSystem
       dacl += Allow(SDDL_GENERIC_ALL, SDDL_LOCAL_SYSTEM);
       // Allow general access to Built-in Administorators
@@ -388,6 +417,11 @@ wstring WinSandbox::GetSDDL(ObjectSecurityType shareble_object_type,
       break;
     case WinSandbox::kPrivateObject:
     default:
+      // Strip implicit owner rights
+      // http://technet.microsoft.com/en-us/library/dd125370.aspx
+      if (is_windows_vista_or_later) {
+        dacl += Allow(L"", SDDL_OWNER_RIGHTS);
+      }
       // Allow general access to LocalSystem
       dacl += Allow(SDDL_GENERIC_ALL, SDDL_LOCAL_SYSTEM);
       // Allow general access to Built-in Administorators

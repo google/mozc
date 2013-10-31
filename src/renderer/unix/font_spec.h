@@ -31,9 +31,9 @@
 #define MOZC_RENDERER_UNIX_FONT_SPEC_H_
 
 #include <vector>
+#include <memory>
 
 #include "base/port.h"
-#include "base/scoped_ptr.h"
 #include "renderer/unix/font_spec_interface.h"
 #include "renderer/unix/gtk_wrapper_interface.h"
 
@@ -59,11 +59,12 @@ class FontSpec : public FontSpecInterface {
   void ReleaseFontSpec();
   vector<FontInfo> fonts_;
   bool is_initialized_;
-  scoped_ptr<GtkWrapperInterface> gtk_;
+  std::unique_ptr<GtkWrapperInterface> gtk_;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(FontSpec);
 };
+
 }  // namespace gtk
 }  // namespace renderer
 }  // namespace mozc

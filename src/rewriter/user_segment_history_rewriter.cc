@@ -35,7 +35,6 @@
 #include <string>
 #include <vector>
 
-#include "base/base.h"
 #include "base/compiler_specific.h"
 #include "base/config_file_stream.h"
 #include "base/file_util.h"
@@ -67,6 +66,10 @@ const uint32 kValueSize = 4;
 const uint32 kLRUSize   = 20000;
 const uint32 kSeedValue = 0xf28defe3;
 const uint32 kMaxCandidatesSize = 255;
+// Size of candidates to be reranked to the top at one sorting operation.
+// Note, if sorting operation is called twice, up to 10 (= 5 * 2) candidates
+// could be reranked in total.
+const size_t kMaxRerankSize = 5;
 
 const char kFileName[] = "user://segment.db";
 
@@ -150,7 +153,10 @@ class ScoreTypeCompare {
 
 // return the first candiadte which has "BEST_CANDIDATE" attribute
 inline int GetDefaultCandidateIndex(const Segment &segment) {
-  const int size = min(static_cast<int>(segment.candidates_size()), 5);
+  // Check up to kMaxRerankSize + 1 candidates because candidate with
+  // BEST_CANDIATE is highly possibly in that range (http://b/9992330).
+  const int size = static_cast<int>(min(segment.candidates_size(),
+                                        kMaxRerankSize + 1));
   for (int i = 0; i < size; ++i) {
     if (segment.candidate(i).attributes &
         Segment::Candidate::BEST_CANDIDATE) {
@@ -437,13 +443,12 @@ bool IsT13NCandidate(const Segment::Candidate &cand) {
 bool UserSegmentHistoryRewriter::SortCandidates(
     const vector<ScoreType> &sorted_scores, Segment *segment) const {
   const uint32 top_score = sorted_scores[0].score;
-  const size_t kMaxRerankSize = min(sorted_scores.size(),
-                                    static_cast<size_t>(5));
+  const size_t size = min(sorted_scores.size(), kMaxRerankSize);
   const uint32 kScoreGap = 20;   // TODO(taku): no justification
   set<string> seen;
 
   size_t next_pos = 0;
-  for (size_t n = 0; n < kMaxRerankSize; ++n) {
+  for (size_t n = 0; n < size; ++n) {
     // Move candidates when the score is close to the top score.
     if (kScoreGap < (top_score - sorted_scores[n].score)) {
       break;

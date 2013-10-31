@@ -60,6 +60,12 @@ message KeyEvent {
   enum SpecialKey {
     NO_SPECIALKEY = 0;
     DIGIT = 1;
+    // On Windows, SpecialKey::On and SpecialKey::OFF are obsolete. Use
+    // TURN_ON_IME session command should be used instead. See b/10216365.
+    // On other platforms, especially on Mac, please note that
+    // client/client.cc still relies on SpecialKey::On for session playback.
+    // We need to fix b/10250883 first.
+    // TODO(team): Unsupport SpecialKey::On and SpecialKey::OFF.
     ON = 2;
     OFF = 3;
     SPACE = 4;
@@ -129,7 +135,8 @@ message KeyEvent {
     KANJI = 66;
     KATAKANA = 67; // VK_DBE_KATAKANA(Win)
     CAPS_LOCK = 68;
-    HANJA = 69;
+    // Unsupported keys (e.g. PrtSc, Pause) fall back to UNDEFINED_KEY.
+    UNDEFINED_KEY = 69;
     COMMA = 70;  // Numpad [,]
     CLEAR = 71;  // Numpad [5] without NUMLOCK
     NUM_SPECIALKEYS = 72;
@@ -410,25 +417,35 @@ message SessionCommand {
     // Commit the raw text of the composed string.
     COMMIT_RAW_TEXT = 19;
 
-    // Calls ConvertPrevPage session command to show the previous page of
+    // Call ConvertPrevPage session command to show the previous page of
     // candidates.
     CONVERT_PREV_PAGE = 20;
 
-    // Calls ConvertNextPage session command to show the next page of
+    // Call ConvertNextPage session command to show the next page of
     // candidates.
     CONVERT_NEXT_PAGE = 21;
+
+    // Make sure IME is turned on. Optionally you can also provide new input
+    // mode in |composition_mode| (but you must not set DIRECT to it).
+    // |composition_mode| is honored even when IME is already turned on.
+    TURN_ON_IME = 22;
+
+    // Make sure IME is turned off. Optionally you can also provide new input
+    // mode in |composition_mode| (but you must not set DIRECT to it). If IME
+    // |composition_mode| is honored even when IME is already turned off.
+    TURN_OFF_IME = 23;
 
     // Number of commands.
     // When new command is added, the command should use below number
     // and NUM_OF_COMMANDS should be incremented.
-    NUM_OF_COMMANDS = 22;
+    NUM_OF_COMMANDS = 24;
   };
   required CommandType type = 1;
 
   // Unique number specifying a candidate word.
   optional int32 id = 2;
 
-  // This is used with SWITCH_INPUT_MODE.
+  // This is used with SWITCH_INPUT_MODE, TURN_ON_IME and TURN_OFF_IME.
   optional CompositionMode composition_mode = 3;
 
   // Text argument.  This is used by CONVERT_REVERSE at this moment.
@@ -717,14 +734,17 @@ message Request {
   // guesses the actual language regardless the input mode.  For example,
   // if user type "てｓｔ" it will be treated as "test".
   enum LanguageAwareInputBehavior {
+    // Performs the default behavior considering the platform and channel.
+    DEFAULT_LANGUAGE_AWARE_BEHAVIOR = 0;
+
     // Does not perform this functionarity.
-    NO_LANGUAGE_AWARE_INPUT = 0;
+    NO_LANGUAGE_AWARE_INPUT = 1;
 
     // Adds a language aware candidate to the suggestion.
-    LANGUAGE_AWARE_SUGGESTION = 1;
+    LANGUAGE_AWARE_SUGGESTION = 2;
   }
   optional LanguageAwareInputBehavior language_aware_input = 14
-      [default = NO_LANGUAGE_AWARE_INPUT];
+      [default = DEFAULT_LANGUAGE_AWARE_BEHAVIOR];
 }
 
 // Note there is another ApplicationInfo inside RendererCommand.
@@ -804,7 +824,6 @@ message Input {
     NO_OPERATION = 14;
 
     START_CLOUD_SYNC = 18;
-    CLEAR_CLOUD_SYNC = 19;
     // Obtains the current cloud sync status.  The converter will fill the
     // 'cloud_sync_status' field in the output.
     GET_CLOUD_SYNC_STATUS = 23;
@@ -826,6 +845,11 @@ message Input {
     // Number of commands.
     // When new command is added, the command should use below number
     // and NUM_OF_COMMANDS should be incremented.
+    //
+    // Note: This enum lack the value for 15 and 19 and it may cause a crash.
+    //       Please reuse these value if you can.
+    //       15 have never been used before, and 19 was used to clear synced
+    //       data on dev channel.
     NUM_OF_COMMANDS = 27;
   };
   required CommandType type = 1;

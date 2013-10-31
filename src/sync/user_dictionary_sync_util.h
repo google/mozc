@@ -32,7 +32,8 @@
 
 #include <string>
 #include <vector>
-#include "base/base.h"
+
+#include "base/port.h"
 #include "dictionary/user_dictionary_storage.pb.h"
 
 namespace mozc {
@@ -50,12 +51,14 @@ class UserDictionarySyncUtil {
   // Return true if |storage1| and |storage2| contain the same entries.
   // Even if the orders of entries are different, this function returns
   // true as long as they have the same entries.
-  // This function is used for unittesting.
   static bool IsEqualStorage(const UserDictionaryStorageBase &storage1,
                              const UserDictionaryStorageBase &storage2);
 
   // Return a fingerprint of |entry|
   static uint64 EntryFingerprint(const UserDictionaryEntry &entry);
+
+  // Remove duplicated dictionary entries.
+  static void RemoveDuplicatedEntries(UserDictionaryStorageBase *storage);
 
   // Return true if number of updates in |update| exceeds
   // some pre-defined threshold.
@@ -94,6 +97,14 @@ class UserDictionarySyncUtil {
   static bool MergeUpdates(
       const vector<UserDictionaryStorageBase *> &updates,
       UserDictionaryStorageBase *storage);
+
+  // Copy the content the of syncable dictionaries. The order of the dictionary
+  // on |to| storage is kept as much as possible.
+  static void CopyDictionaries(const UserDictionaryStorageBase &from,
+                               UserDictionaryStorageBase *to);
+
+  // Remove unsyncable dictionaries from the storage.
+  static void RemoveUnsyncableDictionaries(UserDictionaryStorageBase *storage);
 
   // Get lock and save storage, after verifying the numbers of entries in its
   // sync dictionaries do not exceed the limit.

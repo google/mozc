@@ -30,6 +30,7 @@
 #include "unix/ibus/key_event_handler.h"
 
 #include <map>
+#include <memory>
 
 #include "base/port.h"
 #include "base/util.h"
@@ -37,6 +38,8 @@
 #include "session/commands.pb.h"
 #include "session/key_event_util.h"
 #include "testing/base/public/gunit.h"
+
+using std::unique_ptr;
 
 namespace mozc {
 namespace ibus {
@@ -122,7 +125,7 @@ class KeyEventHandlerTest : public testing::Test {
     }
   }
 
-  scoped_ptr<KeyEventHandler> handler_;
+  unique_ptr<KeyEventHandler> handler_;
   map<guint, commands::KeyEvent::ModifierKey> keyval_to_modifier_;
 };
 

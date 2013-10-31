@@ -254,11 +254,13 @@ void Client::PushHistory(const commands::Input &input,
 // Clear the history and push IMEOn command for initialize session.
 void Client::ResetHistory() {
   history_inputs_.clear();
-#if defined(OS_WIN) || defined(OS_MACOSX)
-  // On Windows/Mac, we should send ON key at the first of each input session
+#if defined(OS_MACOSX)
+  // On Mac, we should send ON key at the first of each input session
   // excepting the very first session, because when the session is restored,
   // its state is direct. On the first session, users should send ON key
   // by themselves.
+  // On Windows, this is not required because now we can send IME On/Off
+  // state with the key event. See b/8601275
   // Note that we are assuming that ResetHistory is called only when the
   // client is ON.
   // TODO(toshiyuki): Make sure that this assuming is reasonable or not.
@@ -592,10 +594,6 @@ bool Client::PingServer() const {
 
 bool Client::StartCloudSync() {
   return CallCommand(commands::Input::START_CLOUD_SYNC);
-}
-
-bool Client::ClearCloudSync() {
-  return CallCommand(commands::Input::CLEAR_CLOUD_SYNC);
 }
 
 bool Client::GetCloudSyncStatus(commands::CloudSyncStatus *cloud_sync_status) {

@@ -40,7 +40,6 @@
 #include <string>
 #include <vector>
 
-#include "base/base.h"
 #include "base/crash_report_handler.h"
 #include "base/init.h"
 #include "base/singleton.h"

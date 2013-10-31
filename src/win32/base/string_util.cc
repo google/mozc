@@ -31,7 +31,6 @@
 
 #include <memory>
 
-#include "base/base.h"
 #include "base/util.h"
 #include "session/commands.pb.h"
 

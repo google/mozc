@@ -31,7 +31,6 @@
 
 #include <string>
 
-#include "base/base.h"
 #include "base/logging.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"

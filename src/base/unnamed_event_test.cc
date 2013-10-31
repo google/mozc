@@ -27,10 +27,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "base/base.h"
-#include "base/logging.h"
-#include "base/thread.h"
 #include "base/unnamed_event.h"
+
+#include "base/logging.h"
+#include "base/port.h"
+#include "base/thread.h"
 #include "base/util.h"
 #include "testing/base/public/gunit.h"
 
@@ -51,6 +52,8 @@ class UnnamedEventNotifierThread: public mozc::Thread {
  private:
   mozc::UnnamedEvent *event_;
   int timeout_;
+
+  DISALLOW_COPY_AND_ASSIGN(UnnamedEventNotifierThread);
 };
 }  // namespace
 

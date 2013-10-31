@@ -33,9 +33,12 @@
 
 #include "base/config_file_stream.h"
 #include "base/logging.h"
+#include "base/scoped_ptr.h"
 #include "base/system_util.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
+#include "storage/memory_storage.h"
+#include "storage/registry.h"
 #include "sync/sync.pb.h"
 #include "testing/base/public/gunit.h"
 
@@ -51,14 +54,17 @@ class ConfigAdapterTest : public testing::Test {
  public:
   virtual void SetUp() {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    storage_.reset(mozc::storage::MemoryStorage::New());
+    mozc::storage::Registry::SetStorage(storage_.get());
 
     ConfigHandler::SetConfigFileName("memory://config");
     adapter_.Clear();
   }
 
   virtual void TearDown() {
-    ConfigFileStream::ClearOnMemoryFiles();
     adapter_.Clear();
+    ConfigFileStream::ClearOnMemoryFiles();
+    mozc::storage::Registry::SetStorage(NULL);
   }
 
   bool StoreConfigToFile(const string &filename, const Config &config) {
@@ -67,6 +73,7 @@ class ConfigAdapterTest : public testing::Test {
 
  protected:
   ConfigAdapter adapter_;
+  scoped_ptr<mozc::storage::StorageInterface> storage_;
 };
 
 TEST_F(ConfigAdapterTest, IsSameConfig) {
@@ -430,5 +437,16 @@ TEST_F(ConfigAdapterTest, ComponentId) {
   EXPECT_EQ(ime_sync::MOZC_SETTING, adapter_.component_id());
 }
 
-}  // namespace mozc::sync
+TEST_F(ConfigAdapterTest, LastDownloadTimestamp) {
+  ConfigAdapter adapter;
+  EXPECT_TRUE(adapter.SetLastDownloadTimestamp(1234));
+  EXPECT_EQ(1234, adapter.GetLastDownloadTimestamp());
+
+  for (int i = 0; i < 100; ++i) {
+    EXPECT_TRUE(adapter.SetLastDownloadTimestamp(i));
+    EXPECT_EQ(i, adapter.GetLastDownloadTimestamp());
+  }
+}
+
+}  // namespace sync
 }  // namespace mozc

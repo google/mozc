@@ -64,6 +64,7 @@ class Version {
   // Get the current build type.
   static BuildType GetMozcBuildType();
 
+
  private:
   DISALLOW_COPY_AND_ASSIGN(Version);
 };

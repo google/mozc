@@ -31,7 +31,7 @@
 #define MOZC_RENDERER_RENDERER_SERVER_H_
 
 #include <string>
-#include "base/base.h"
+#include "base/port.h"
 #include "ipc/ipc.h"
 #include "renderer/renderer_interface.h"
 
@@ -41,7 +41,6 @@ namespace renderer {
 class RendererInterface;
 class RendererServerSendCommand;
 class ParentApplicationWatchDog;
-
 
 // RendererServer base class. Implement Async* method.
 class RendererServer : public IPCServer {
@@ -95,7 +94,9 @@ class RendererServer : public IPCServer {
   scoped_ptr<ParentApplicationWatchDog> watch_dog_;
   scoped_ptr<RendererServerSendCommand> send_command_;
 
+
+  DISALLOW_COPY_AND_ASSIGN(RendererServer);
 };
-}  // renderer
-}  // mozc
+}  // namespace renderer
+}  // namespace mozc
 #endif  // MOZC_RENDERER_RENDERER_SERVER_H_

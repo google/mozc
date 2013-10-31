@@ -45,10 +45,13 @@ namespace mozc {
 namespace win32 {
 namespace {
 
-using msl::utilities::SafeAdd;
-using msl::utilities::SafeCast;
-using msl::utilities::SafeMultiply;
-using msl::utilities::SafeSubtract;
+using ::mozc::commands::CandidateList;
+using ::mozc::commands::Candidates;
+
+using ::msl::utilities::SafeAdd;
+using ::msl::utilities::SafeCast;
+using ::msl::utilities::SafeMultiply;
+using ::msl::utilities::SafeSubtract;
 
 // Since IMM32 uses DWORD rather than size_t for data size in data structures,
 // relevant data size are stored into DWORD constants here.
@@ -201,7 +204,7 @@ bool CandidateInfoUtil::Convert(const mozc::commands::Output &output,
     return true;
   }
 
-  const mozc::commands::Candidates &candidates = output.candidates();
+  const Candidates &candidates = output.candidates();
   if (candidates.has_category() &&
       (candidates.category() == mozc::commands::SUGGESTION)) {
     // If this is a suggest UI popup, we will not update the candidate info.
@@ -217,8 +220,7 @@ bool CandidateInfoUtil::Convert(const mozc::commands::Output &output,
     return false;
   }
 
-  const mozc::commands::CandidateList &candidate_list =
-      output.all_candidate_words();
+  const CandidateList &candidate_list = output.all_candidate_words();
 
   if (!candidate_list.has_focused_index()) {
     return false;

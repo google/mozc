@@ -116,7 +116,7 @@ class KeyParserData {
     keycode_map_["home"] = KeyEvent::HOME;
     keycode_map_["end"] = KeyEvent::END;
     keycode_map_["space"] = KeyEvent::SPACE;
-    keycode_map_["ascii"] = KeyEvent::TEXT_INPUT;    // depricated
+    keycode_map_["ascii"] = KeyEvent::TEXT_INPUT;    // deprecated
     keycode_map_["textinput"] = KeyEvent::TEXT_INPUT;
     keycode_map_["tab"] = KeyEvent::TAB;
     keycode_map_["pageup"] = KeyEvent::PAGE_UP;
@@ -172,6 +172,9 @@ class KeyParserData {
     keycode_map_["equals"] = KeyEvent::EQUALS;
     keycode_map_["comma"] = KeyEvent::COMMA;
     keycode_map_["clear"] = KeyEvent::CLEAR;
+
+    // Meant to be used for any other special keys.
+    keycode_map_["undefinedkey"] = KeyEvent::UNDEFINED_KEY;
   }
 
   SpecialKeysMap keycode_map_;

@@ -29,11 +29,11 @@
 
 #include "sync/syncer.h"
 
-#include <cstddef>
 #include <vector>
 
-#include "base/base.h"
 #include "base/logging.h"
+#include "base/port.h"
+#include "base/protobuf/descriptor.h"
 #include "base/scoped_ptr.h"
 #include "base/system_util.h"
 #include "config/config.pb.h"
@@ -50,9 +50,10 @@
 DECLARE_string(test_tmpdir);
 
 namespace mozc {
-using config::Config;
-using config::ConfigHandler;
-using config::SyncConfig;
+using mozc::config::Config;
+using mozc::config::ConfigHandler;
+using mozc::config::SyncConfig;
+using mozc::protobuf::Descriptor;
 
 namespace sync {
 
@@ -88,8 +89,21 @@ class SyncerTest : public testing::Test {
   scoped_ptr<mozc::storage::StorageInterface> storage_;
 };
 
+class TestableSyncer : public Syncer {
+ public:
+  explicit TestableSyncer(ServiceInterface *service) : Syncer(service) {}
+  virtual ~TestableSyncer() {}
+  using Syncer::Download;
+  using Syncer::Upload;
+  using Syncer::GetLastDownloadTimestamp;
+  using Syncer::SetLastDownloadTimestamp;
+};
+
 class MockService : public ServiceInterface {
  public:
+  MockService()
+      : upload_result_(false), download_result_(false), clear_result_(false) {}
+
   virtual bool Upload(ime_sync::UploadRequest *request,
                       ime_sync::UploadResponse *response) {
     DCHECK(request);
@@ -157,14 +171,20 @@ class MockService : public ServiceInterface {
   bool upload_result_;
   bool download_result_;
   bool clear_result_;
+
+  DISALLOW_COPY_AND_ASSIGN(MockService);
 };
 
 class MockAdapter : public AdapterInterface {
  public:
-  MockAdapter() : component_id_(ime_sync::MOZC_SETTING) {}
+  MockAdapter()
+      : download_result_(false), upload_result_(false), uploaded_(false),
+        mark_uploaded_called_(false), component_id_(ime_sync::MOZC_SETTING),
+        last_download_timestamp_(0) {}
+
   virtual ~MockAdapter() {}
 
-  bool SetDownloadedItems(const ime_sync::SyncItems &items) {
+  virtual bool SetDownloadedItems(const ime_sync::SyncItems &items) {
     return download_result_;
   }
 
@@ -172,7 +192,7 @@ class MockAdapter : public AdapterInterface {
     download_result_ = result;
   }
 
-  bool GetItemsToUpload(ime_sync::SyncItems *items) {
+  virtual bool GetItemsToUpload(ime_sync::SyncItems *items) {
     DCHECK(items);
     // To support multiple adapters, we use MergeFrom() instead of CopyFrom().
     items->MergeFrom(upload_items_);
@@ -185,13 +205,13 @@ class MockAdapter : public AdapterInterface {
     upload_result_ = result;
   }
 
-  bool MarkUploaded(const ime_sync::SyncItem& item, bool uploaded) {
+  virtual bool MarkUploaded(const ime_sync::SyncItem& item, bool uploaded) {
     uploaded_ = uploaded;
     mark_uploaded_called_ = true;
     return true;
   }
 
-  bool Clear() {
+  virtual bool Clear() {
     uploaded_ = false;
     return true;
   }
@@ -216,6 +236,15 @@ class MockAdapter : public AdapterInterface {
     component_id_ = id;
   }
 
+  virtual uint64 GetLastDownloadTimestamp() const {
+    return last_download_timestamp_;
+  }
+
+  virtual bool SetLastDownloadTimestamp(uint64 timestamp) {
+    last_download_timestamp_ = timestamp;
+    return true;
+  }
+
  private:
   ime_sync::SyncItems upload_items_;
   bool download_result_;
@@ -223,25 +252,116 @@ class MockAdapter : public AdapterInterface {
   bool uploaded_;
   bool mark_uploaded_called_;
   ime_sync::Component component_id_;
+  uint64 last_download_timestamp_;
+
+  DISALLOW_COPY_AND_ASSIGN(MockAdapter);
 };
+
+namespace {
+
+const void InitializeSyncItem(ime_sync::Component component_id,
+                              ime_sync::SyncItem *item) {
+  item->set_component(component_id);
+
+  switch (component_id) {
+    case ime_sync::MOZC_SETTING:
+      item->mutable_key()->MutableExtension(sync::ConfigKey::ext);
+      item->mutable_value()->MutableExtension(sync::ConfigValue::ext);
+      break;
+    case ime_sync::MOZC_USER_DICTIONARY:
+      item->mutable_key()->MutableExtension(sync::UserDictionaryKey::ext);
+      item->mutable_value()->MutableExtension(sync::UserDictionaryValue::ext);
+      break;
+    case ime_sync::MOZC_USER_HISTORY_PREDICTION:
+      item->mutable_key()->MutableExtension(sync::UserHistoryKey::ext);
+      item->mutable_value()->MutableExtension(sync::UserHistoryValue::ext);
+      break;
+    case ime_sync::MOZC_LEARNING_PREFERENCE:
+      item->mutable_key()->MutableExtension(sync::LearningPreferenceKey::ext);
+      item->mutable_value()->MutableExtension(
+          sync::LearningPreferenceValue::ext);
+      break;
+    default:
+      FAIL();
+  }
+
+  ASSERT_TRUE(item->IsInitialized());
+}
+
+void SetUpMockAdapter(ime_sync::Component component_id, MockAdapter *adapter) {
+  CHECK(adapter);
+  adapter->set_component_id(component_id);
+  ime_sync::SyncItems sync_items;
+  InitializeSyncItem(component_id, sync_items.Add());
+  adapter->SetItemsToUploadResult(sync_items, true);
+  adapter->SetDownloadedItemsResult(true);
+}
+
+void SetUpMockService(const vector<ime_sync::Component> &component_ids,
+                      uint64 download_timestamp, MockService *service) {
+  CHECK(service);
+  ime_sync::DownloadResponse download_response;
+  download_response.set_error(ime_sync::SYNC_OK);
+  download_response.set_download_timestamp(download_timestamp);
+  for (size_t i = 0; i < component_ids.size(); ++i) {
+    InitializeSyncItem(component_ids[i], download_response.add_items());
+  }
+  service->SetDownload(download_response, true);
+
+  ime_sync::UploadResponse upload_response;
+  upload_response.set_error(ime_sync::SYNC_OK);
+  ASSERT_TRUE(upload_response.IsInitialized());
+  service->SetUpload(upload_response, true);
+
+  ime_sync::ClearResponse clear_response;
+  clear_response.set_error(ime_sync::SYNC_OK);
+  ASSERT_TRUE(clear_response.IsInitialized());
+  service->SetClear(clear_response, true);
+}
+
+}  // namespace
 
 TEST_F(SyncerTest, Timestamp) {
   InprocessService service;
-  Syncer syncer(&service);
+  TestableSyncer syncer(&service);
+
+  // GetLastDownloadTimestamp() should be 0 since there is no adapter.
+  syncer.SetLastDownloadTimestamp(1000);
+  EXPECT_EQ(0, syncer.GetLastDownloadTimestamp());
+
+  MockAdapter config_adapter;
+  config_adapter.set_component_id(ime_sync::MOZC_SETTING);
+  syncer.RegisterAdapter(&config_adapter);
 
   syncer.SetLastDownloadTimestamp(1000);
   EXPECT_EQ(1000, syncer.GetLastDownloadTimestamp());
+  EXPECT_EQ(1000, config_adapter.GetLastDownloadTimestamp());
 
   syncer.SetLastDownloadTimestamp(0);
   EXPECT_EQ(0, syncer.GetLastDownloadTimestamp());
 
   syncer.SetLastDownloadTimestamp(123);
   EXPECT_EQ(123, syncer.GetLastDownloadTimestamp());
+
+  MockAdapter user_dictionary_adapter;
+  user_dictionary_adapter.set_component_id(ime_sync::MOZC_USER_DICTIONARY);
+  syncer.RegisterAdapter(&user_dictionary_adapter);
+
+  // GetLastDownloadTimestamp() returns minimum timestamp.
+  user_dictionary_adapter.SetLastDownloadTimestamp(50);
+  EXPECT_EQ(50, syncer.GetLastDownloadTimestamp());
+  user_dictionary_adapter.SetLastDownloadTimestamp(234);
+  EXPECT_EQ(123, syncer.GetLastDownloadTimestamp());
+
+  syncer.SetLastDownloadTimestamp(500);
+  EXPECT_EQ(500, syncer.GetLastDownloadTimestamp());
+  EXPECT_EQ(500, config_adapter.GetLastDownloadTimestamp());
+  EXPECT_EQ(500, user_dictionary_adapter.GetLastDownloadTimestamp());
 }
 
 TEST_F(SyncerTest, Clear) {
   MockService service;
-  Syncer syncer(&service);
+  TestableSyncer syncer(&service);
 
   MockAdapter adapter;
   syncer.RegisterAdapter(&adapter);
@@ -272,69 +392,67 @@ TEST_F(SyncerTest, Clear) {
 
 TEST_F(SyncerTest, Download) {
   MockService service;
-  Syncer syncer(&service);
+  TestableSyncer syncer(&service);
   bool reload_required = false;
+  uint64 download_timestamp = 0;
+  ime_sync::DownloadResponse download_response;
 
   MockAdapter adapter;
   syncer.RegisterAdapter(&adapter);
 
-  syncer.SetLastDownloadTimestamp(1000);
-
   adapter.SetDownloadedItemsResult(true);
-  ime_sync::DownloadResponse download_response;
   service.SetDownload(download_response, false);
-  EXPECT_FALSE(syncer.Download(&reload_required));
-  EXPECT_EQ(1000, syncer.GetLastDownloadTimestamp());
+  reload_required = true;
+  EXPECT_FALSE(syncer.Download(&download_timestamp, &reload_required));
+  EXPECT_FALSE(reload_required);
 
   download_response.Clear();
-  service.SetDownload(download_response, true);
-  EXPECT_FALSE(syncer.Download(&reload_required));
-  EXPECT_EQ(1000, syncer.GetLastDownloadTimestamp());
-
   download_response.set_error(ime_sync::SYNC_SERVER_ERROR);
+  download_response.set_download_timestamp(1111);
   service.SetDownload(download_response, true);
-  EXPECT_FALSE(syncer.Download(&reload_required));
+  reload_required = true;
+  EXPECT_FALSE(syncer.Download(&download_timestamp, &reload_required));
+  EXPECT_FALSE(reload_required);
+  EXPECT_NE(1111, download_timestamp);
 
   download_response.set_error(ime_sync::SYNC_OK);
   download_response.set_download_timestamp(123);
   adapter.SetDownloadedItemsResult(false);
   service.SetDownload(download_response, true);
-  EXPECT_FALSE(syncer.Download(&reload_required));
-  EXPECT_EQ(1000, syncer.GetLastDownloadTimestamp());
+  reload_required = true;
+  EXPECT_FALSE(syncer.Download(&download_timestamp, &reload_required));
+  EXPECT_FALSE(reload_required);
+  EXPECT_NE(123, syncer.GetLastDownloadTimestamp());
 
+  syncer.SetLastDownloadTimestamp(123);
   download_response.set_error(ime_sync::SYNC_OK);
-  download_response.set_download_timestamp(123);
+  download_response.set_download_timestamp(234);
   service.SetDownload(download_response, true);
   adapter.SetDownloadedItemsResult(true);
-  EXPECT_TRUE(syncer.Download(&reload_required));
-  EXPECT_EQ(1, service.DownloadRequest().version());
-  EXPECT_EQ(1000, service.DownloadRequest().last_download_timestamp());
-  EXPECT_EQ(123, syncer.GetLastDownloadTimestamp());
+  reload_required = true;
+  EXPECT_TRUE(syncer.Download(&download_timestamp, &reload_required));
   EXPECT_FALSE(reload_required);
+  EXPECT_EQ(1, service.DownloadRequest().version());
+  EXPECT_EQ(123, service.DownloadRequest().last_download_timestamp());
+  EXPECT_EQ(234, download_timestamp);
 
   download_response.Clear();
   download_response.set_error(ime_sync::SYNC_OK);
-  download_response.set_download_timestamp(123);
-  ime_sync::SyncItem *item = download_response.mutable_items()->Add();
-  item->set_component(ime_sync::MOZC_SETTING);
-  sync::ConfigKey *key =
-      item->mutable_key()->MutableExtension(sync::ConfigKey::ext);
-  sync::ConfigValue *value =
-      item->mutable_value()->MutableExtension(sync::ConfigValue::ext);
-  CHECK(key);
-  CHECK(value);
-  value->mutable_config()->CopyFrom(config::ConfigHandler::GetConfig());
-  EXPECT_TRUE(download_response.IsInitialized());
+  download_response.set_download_timestamp(345);
+  InitializeSyncItem(ime_sync::MOZC_SETTING,
+                     download_response.mutable_items()->Add());
   service.SetDownload(download_response, true);
   adapter.SetDownloadedItemsResult(true);
-  EXPECT_TRUE(syncer.Download(&reload_required));
-  EXPECT_EQ(1, service.DownloadRequest().version());
+  reload_required = false;
+  EXPECT_TRUE(syncer.Download(&download_timestamp, &reload_required));
   EXPECT_TRUE(reload_required);
+  EXPECT_EQ(1, service.DownloadRequest().version());
+  EXPECT_EQ(345, download_timestamp);
 }
 
 TEST_F(SyncerTest, Upload) {
   MockService service;
-  Syncer syncer(&service);
+  TestableSyncer syncer(&service);
 
   MockAdapter adapter;
   syncer.RegisterAdapter(&adapter);
@@ -349,7 +467,7 @@ TEST_F(SyncerTest, Upload) {
   EXPECT_FALSE(adapter.IsMarkUploadedCalled());
 
   ime_sync::SyncItems non_empty_items;
-  non_empty_items.Add()->set_component(ime_sync::MOZC_SETTING);
+  InitializeSyncItem(ime_sync::MOZC_SETTING, non_empty_items.Add());
 
   adapter.SetItemsToUploadResult(non_empty_items, false);
   adapter.ResetMarkUploadedCalled();
@@ -387,7 +505,7 @@ TEST_F(SyncerTest, Upload) {
 
 TEST_F(SyncerTest, CheckConfig) {
   MockService service;
-  Syncer syncer(&service);
+  TestableSyncer syncer(&service);
 
   vector<ime_sync::Component> component_ids;
   component_ids.push_back(ime_sync::MOZC_SETTING);
@@ -395,30 +513,17 @@ TEST_F(SyncerTest, CheckConfig) {
   component_ids.push_back(ime_sync::MOZC_USER_HISTORY_PREDICTION);
   component_ids.push_back(ime_sync::MOZC_LEARNING_PREFERENCE);
   const int kComponentNum = 4;
-  CHECK(kComponentNum == component_ids.size());
+  CHECK_EQ(kComponentNum, component_ids.size());
 
   // Set up environment.
   MockAdapter adapters[kComponentNum];
   for (int i = 0; i < kComponentNum; ++i) {
-    MockAdapter &adapter = adapters[i];
-    adapter.set_component_id(component_ids[i]);
-    ime_sync::SyncItems sync_items;
-    sync_items.Add()->set_component(component_ids[i]);
-    adapter.SetItemsToUploadResult(sync_items, true);
-    adapter.SetDownloadedItemsResult(true);
-    adapter.SetDownloadedItems(sync_items);
-    syncer.RegisterAdapter(&adapter);
+    MockAdapter *adapter = &adapters[i];
+    SetUpMockAdapter(component_ids[i], adapter);
+    syncer.RegisterAdapter(adapter);
   }
-  ime_sync::UploadResponse upload_response;
-  upload_response.set_error(ime_sync::SYNC_OK);
-  service.SetUpload(upload_response, true);
-  ime_sync::DownloadResponse download_response;
-  download_response.set_error(ime_sync::SYNC_OK);
-  service.SetDownload(download_response, true);
+  SetUpMockService(component_ids, 100, &service);
   syncer.SetLastDownloadTimestamp(1);
-  ime_sync::ClearResponse clear_response;
-  clear_response.set_error(ime_sync::SYNC_OK);
-  service.SetClear(clear_response, true);
 
   // Set config to sync.
   {
@@ -433,11 +538,12 @@ TEST_F(SyncerTest, CheckConfig) {
   }
 
   bool reload_required = false;
-  EXPECT_TRUE(syncer.Upload());
-  ime_sync::DownloadRequest download_request;
-  EXPECT_TRUE(syncer.Download(&reload_required));
-  download_request = service.DownloadRequest();
+  uint64 download_timestamp = 0;
+  EXPECT_TRUE(syncer.Download(&download_timestamp, &reload_required));
+  EXPECT_TRUE(reload_required);
+  ime_sync::DownloadRequest download_request = service.DownloadRequest();
   EXPECT_EQ(kComponentNum, download_request.components_size());
+  EXPECT_TRUE(syncer.Upload());
   for (int i = 0; i < kComponentNum; ++i) {
     EXPECT_TRUE(adapters[i].GetUploaded());
     EXPECT_EQ(component_ids[i], download_request.components(i));
@@ -456,14 +562,99 @@ TEST_F(SyncerTest, CheckConfig) {
     ConfigHandler::SetConfig(config);
   }
 
+  reload_required = false;
+  EXPECT_TRUE(syncer.Download(&download_timestamp, &reload_required));
+  EXPECT_TRUE(reload_required);
   EXPECT_TRUE(syncer.Upload());
-  EXPECT_TRUE(syncer.Download(&reload_required));
   download_request = service.DownloadRequest();
   for (int i = 0; i < kComponentNum; ++i) {
     EXPECT_FALSE(adapters[i].GetUploaded());
   }
   EXPECT_EQ(0, download_request.components_size());
   EXPECT_TRUE(syncer.Clear());
+}
+
+TEST_F(SyncerTest, EnableAndDisableAdapterPartially_b9270307) {
+  MockService service;
+  TestableSyncer syncer(&service);
+
+  vector<ime_sync::Component> component_ids;
+  component_ids.push_back(ime_sync::MOZC_SETTING);
+  component_ids.push_back(ime_sync::MOZC_USER_DICTIONARY);
+  const int kComponentNum = 2;
+  CHECK_EQ(kComponentNum, component_ids.size());
+
+  // Set up environment.
+  MockAdapter adapters[kComponentNum];
+  for (int i = 0; i < kComponentNum; ++i) {
+    MockAdapter *adapter = &adapters[i];
+    SetUpMockAdapter(component_ids[i], adapter);
+    syncer.RegisterAdapter(adapter);
+  }
+  SetUpMockService(component_ids, 100, &service);
+  syncer.SetLastDownloadTimestamp(1);
+
+  // Set config to sync config and user dictionary only.
+  Config config = ConfigHandler::GetConfig();
+  SyncConfig *sync_config = config.mutable_sync_config();
+  sync_config->set_use_config_sync(true);
+  sync_config->set_use_user_dictionary_sync(true);
+  ConfigHandler::SetConfig(config);
+
+  bool reload_required = false;
+  EXPECT_TRUE(syncer.Sync(&reload_required));
+  EXPECT_TRUE(reload_required);
+  EXPECT_EQ(100, syncer.GetLastDownloadTimestamp());
+
+  // Set config to disable user dictionary sync. Config sync is enabled yet.
+  sync_config->set_use_user_dictionary_sync(false);
+  ConfigHandler::SetConfig(config);
+
+  SetUpMockService(component_ids, 200, &service);
+  reload_required = false;
+  EXPECT_TRUE(syncer.Sync(&reload_required));
+  EXPECT_TRUE(reload_required);
+  EXPECT_EQ(200, syncer.GetLastDownloadTimestamp());
+
+  // Set config to enable config and user dictionary sync.
+  // LastDownloadTimestamp() should return 100.
+  sync_config->set_use_config_sync(true);
+  sync_config->set_use_user_dictionary_sync(true);
+  ConfigHandler::SetConfig(config);
+  EXPECT_EQ(100, syncer.GetLastDownloadTimestamp());
+}
+
+TEST_F(SyncerTest, DontUpdateLastDownloadTimestampIfDownloadOrUploadFail) {
+  MockService service;
+  TestableSyncer syncer(&service);
+
+  vector<ime_sync::Component> component_ids(1, ime_sync::MOZC_SETTING);
+  MockAdapter adapter;
+  SetUpMockAdapter(ime_sync::MOZC_SETTING, &adapter);
+  syncer.RegisterAdapter(&adapter);
+  syncer.SetLastDownloadTimestamp(42);
+
+  SetUpMockService(component_ids, 100, &service);
+  ime_sync::DownloadResponse download_response;
+  download_response.set_error(ime_sync::SYNC_INVALID_AUTH);
+  download_response.set_download_timestamp(100);
+  service.SetDownload(download_response, false);
+
+  bool reload_required = false;
+  EXPECT_FALSE(syncer.Sync(&reload_required));
+  EXPECT_FALSE(reload_required);
+  EXPECT_EQ(42, syncer.GetLastDownloadTimestamp());
+
+  SetUpMockService(component_ids, 100, &service);
+  ime_sync::UploadResponse upload_response;
+  upload_response.set_error(ime_sync::SYNC_SERVER_ERROR);
+  service.SetUpload(upload_response, false);
+
+  reload_required = false;
+  EXPECT_FALSE(syncer.Sync(&reload_required));
+  // Reload required since download is succeeds.
+  EXPECT_TRUE(reload_required);
+  EXPECT_EQ(42, syncer.GetLastDownloadTimestamp());
 }
 
 }  // namespace sync

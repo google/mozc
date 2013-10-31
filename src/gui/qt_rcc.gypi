@@ -66,7 +66,6 @@
         '<(subdir)/<(qrc_base_name).qrc',
       ],
       'message': 'Generating Resource file from <(qrc_base_name).qrc',
-      'msvs_cygwin_shell': 0,
     },
   ],
 

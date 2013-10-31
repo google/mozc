@@ -43,6 +43,11 @@ int main(int argc, char **argv) {
   mozc::InitTestFlags();
   testing::InitGoogleTest(&argc, argv);
 
+#ifdef OS_WINDOWS
+  _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_FILE | _CRTDBG_MODE_DEBUG);
+  _CrtSetReportFile(_CRT_ASSERT, _CRTDBG_FILE_STDERR);
+#endif  // OS_WINDOWS
+
   // Without this flag, ::RaiseException makes the job stuck.
   // See b/2805521 for details.
   testing::GTEST_FLAG(catch_exceptions) = true;

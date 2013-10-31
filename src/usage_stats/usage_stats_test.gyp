@@ -42,6 +42,7 @@
       'dependencies': [
         '../base/base.gyp:base_core',
         '../config/config.gyp:stats_config_util',
+        '../testing/testing.gyp:testing',
         'usage_stats_base.gyp:usage_stats',
         'usage_stats_base.gyp:usage_stats_protocol',
       ],

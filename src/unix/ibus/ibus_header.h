@@ -36,5 +36,11 @@
 #error "ibus-mozc now requires IBus>=1.4.1"
 #endif  // libibus (<1.4.1)
 
+#if IBUS_CHECK_VERSION(1, 5, 4)
+#if !defined(MOZC_ENABLE_IBUS_INPUT_PURPOSE)
+#define MOZC_ENABLE_IBUS_INPUT_PURPOSE
+#endif  // !MOZC_ENABLE_IBUS_INPUT_PURPOSE
+#endif  // libibus (>=1.5.4)
+
 
 #endif  // MOZC_UNIX_IBUS_IBUS_HEADER_H_

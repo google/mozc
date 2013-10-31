@@ -35,7 +35,6 @@
 #include <cstdlib>
 #endif  // OS_WIN
 
-#include "base/base.h"
 #include "base/mutex.h"
 
 namespace mozc {
@@ -64,7 +63,7 @@ void ExitWithError() {
   exit(-1);
 #endif
 }
-}  // anonymous namespace
+}  // namespace
 
 void SingletonFinalizer::AddFinalizer(FinalizerFunc func) {
   // When g_finalizers_size is equal to kMaxFinalizersSize,

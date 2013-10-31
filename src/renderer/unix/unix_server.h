@@ -29,6 +29,9 @@
 
 #ifndef MOZC_RENDERER_UNIX_UNIX_SERVER_H_
 #define MOZC_RENDERER_UNIX_UNIX_SERVER_H_
+
+#include <memory>
+
 #include "base/mutex.h"
 #include "renderer/renderer_server.h"
 #include "renderer/unix/gtk_wrapper_interface.h"
@@ -62,7 +65,7 @@ class UnixServer : public RendererServer {
  private:
   string message_;
   Mutex mutex_;
-  scoped_ptr<GtkWrapperInterface> gtk_;
+  std::unique_ptr<GtkWrapperInterface> gtk_;
 
   // Following pipe is used to communicate IPC recieving thread and
   // rendering(gtk-main) thread. The gtk-main loop polls following pipe and IPC

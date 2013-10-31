@@ -32,7 +32,6 @@
 
 #import "CandidateView.h"
 
-#include "base/base.h"
 #include "base/logging.h"
 #include "base/coordinates.h"
 #include "renderer/mac/CandidateWindow.h"

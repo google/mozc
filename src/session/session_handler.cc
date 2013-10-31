@@ -45,11 +45,12 @@
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "dictionary/user_dictionary_session_handler.h"
+#include "dictionary/user_dictionary_storage.pb.h"
+#include "engine/engine_interface.h"
 #include "engine/user_data_manager_interface.h"
 #include "session/commands.pb.h"
 #include "session/generic_storage_manager.h"
-#include "session/session_factory_manager.h"
-#include "session/session_interface.h"
+#include "session/session.h"
 #include "session/session_observer_handler.h"
 #ifndef MOZC_DISABLE_SESSION_WATCHDOG
 #include "session/session_watch_dog.h"
@@ -125,14 +126,13 @@ bool IsApplicationAlive(const session::SessionInterface *session) {
 }
 }  // namespace
 
-SessionHandler::SessionHandler()
+SessionHandler::SessionHandler(EngineInterface *engine)
     : is_available_(false),
       max_session_size_(0),
       last_session_empty_time_(Util::GetTime()),
       last_cleanup_time_(0),
       last_create_session_time_(0),
-      session_factory_(
-          session::SessionFactoryManager::GetSessionFactory()),
+      engine_(engine),
       observer_handler_(new session::SessionObserverHandler()),
       stopwatch_(new Stopwatch),
       user_dictionary_session_handler_(
@@ -169,7 +169,7 @@ SessionHandler::SessionHandler()
   max_session_size_ = max(2, min(FLAGS_max_session_size, 128));
   session_map_.reset(new SessionMap(max_session_size_));
 
-  if (session_factory_ == NULL) {
+  if (engine_ == NULL) {
     return;
   }
 
@@ -235,8 +235,7 @@ void SessionHandler::ReloadConfig() {
 
 bool SessionHandler::SyncData(commands::Command *command) {
   VLOG(1) << "Syncing user data";
-  session_factory_->GetUserDataManager()->Sync();
-  command->mutable_output()->set_id(command->input().id());
+  engine_->GetUserDataManager()->Sync();
   return true;
 }
 
@@ -252,32 +251,28 @@ bool SessionHandler::Shutdown(commands::Command *command) {
 bool SessionHandler::Reload(commands::Command *command) {
   VLOG(1) << "Reloading server";
   ReloadSession();
-  session_factory_->Reload();
+  engine_->Reload();
   RunReloaders();  // call all reloaders defined in .cc file
-  command->mutable_output()->set_id(command->input().id());
   return true;
 }
 
 bool SessionHandler::ClearUserHistory(commands::Command *command) {
   VLOG(1) << "Clearing user history";
-  session_factory_->GetUserDataManager()->ClearUserHistory();
-  command->mutable_output()->set_id(command->input().id());
+  engine_->GetUserDataManager()->ClearUserHistory();
   UsageStats::IncrementCount("ClearUserHistory");
   return true;
 }
 
 bool SessionHandler::ClearUserPrediction(commands::Command *command) {
   VLOG(1) << "Clearing user prediction";
-  session_factory_->GetUserDataManager()->ClearUserPrediction();
-  command->mutable_output()->set_id(command->input().id());
+  engine_->GetUserDataManager()->ClearUserPrediction();
   UsageStats::IncrementCount("ClearUserPrediction");
   return true;
 }
 
 bool SessionHandler::ClearUnusedUserPrediction(commands::Command *command) {
   VLOG(1) << "Clearing unused user prediction";
-  session_factory_->GetUserDataManager()->ClearUnusedUserPrediction();
-  command->mutable_output()->set_id(command->input().id());
+  engine_->GetUserDataManager()->ClearUnusedUserPrediction();
   UsageStats::IncrementCount("ClearUnusedUserPrediction");
   return true;
 }
@@ -296,7 +291,6 @@ bool SessionHandler::GetStoredConfig(commands::Command *command) {
     LOG(WARNING) << "cannot get config";
     return false;
   }
-  command->mutable_output()->set_id(command->input().id());
   return true;
 }
 
@@ -350,25 +344,11 @@ bool SessionHandler::SetRequest(commands::Command *command) {
 
 bool SessionHandler::StartCloudSync(commands::Command *command) {
   VLOG(1) << "Start cloud sync operation";
-  command->mutable_output()->set_id(command->input().id());
 #ifdef ENABLE_CLOUD_SYNC
   if (!sync_handler_) {
     return false;
   }
   return sync_handler_->Sync();
-#else
-  return true;
-#endif  // ENABLE_CLOUD_SYNC
-}
-
-bool SessionHandler::ClearCloudSync(commands::Command *command) {
-  VLOG(1) << "Clear cloud sync";
-  command->mutable_output()->set_id(command->input().id());
-#ifdef ENABLE_CLOUD_SYNC
-  if (!sync_handler_) {
-    return false;
-  }
-  return sync_handler_->Clear();
 #else
   return true;
 #endif  // ENABLE_CLOUD_SYNC
@@ -401,7 +381,6 @@ bool SessionHandler::AddAuthCode(commands::Command *command) {
 
 bool SessionHandler::InsertToStorage(commands::Command *command) {
   VLOG(1) << "Insert to generic storage";
-  command->mutable_output()->set_id(command->input().id());
   if (!command->input().has_storage_entry()) {
     LOG(WARNING) << "No storage_entry";
     return false;
@@ -416,7 +395,7 @@ bool SessionHandler::InsertToStorage(commands::Command *command) {
   }
 
   GenericStorageInterface *storage =
-    GenericStorageManagerFactory::GetStorage(storage_entry.type());
+      GenericStorageManagerFactory::GetStorage(storage_entry.type());
   if (!storage) {
     LOG(WARNING) << "No storage found";
     return false;
@@ -432,7 +411,6 @@ bool SessionHandler::InsertToStorage(commands::Command *command) {
 bool SessionHandler::ReadAllFromStorage(commands::Command *command) {
   VLOG(1) << "Read all from storage";
   commands::Output *output = command->mutable_output();
-  output->set_id(command->input().id());
   if (!command->input().has_storage_entry()) {
     LOG(WARNING) << "No storage_entry";
     return false;
@@ -445,7 +423,7 @@ bool SessionHandler::ReadAllFromStorage(commands::Command *command) {
   commands::GenericStorageEntry::StorageType storage_type =
     command->input().storage_entry().type();
   GenericStorageInterface *storage =
-    GenericStorageManagerFactory::GetStorage(storage_type);
+      GenericStorageManagerFactory::GetStorage(storage_type);
   if (!storage) {
     LOG(WARNING) << "No storage found";
     return false;
@@ -463,7 +441,6 @@ bool SessionHandler::ReadAllFromStorage(commands::Command *command) {
 bool SessionHandler::ClearStorage(commands::Command *command) {
   VLOG(1) << "Clear storage";
   commands::Output *output = command->mutable_output();
-  output->set_id(command->input().id());
   if (!command->input().has_storage_entry()) {
     LOG(WARNING) << "No storage_entry";
     return false;
@@ -476,7 +453,7 @@ bool SessionHandler::ClearStorage(commands::Command *command) {
   commands::GenericStorageEntry::StorageType storage_type =
     command->input().storage_entry().type();
   GenericStorageInterface *storage =
-    GenericStorageManagerFactory::GetStorage(storage_type);
+      GenericStorageManagerFactory::GetStorage(storage_type);
   if (!storage) {
     LOG(WARNING) << "No storage found";
     return false;
@@ -487,6 +464,7 @@ bool SessionHandler::ClearStorage(commands::Command *command) {
 
 bool SessionHandler::EvalCommand(commands::Command *command) {
   if (!is_available_) {
+    LOG(ERROR) << "SessionHandler is not available.";
     return false;
   }
 
@@ -546,9 +524,6 @@ bool SessionHandler::EvalCommand(commands::Command *command) {
     case commands::Input::START_CLOUD_SYNC:
       eval_succeeded = StartCloudSync(command);
       break;
-    case commands::Input::CLEAR_CLOUD_SYNC:
-      eval_succeeded = ClearCloudSync(command);
-      break;
     case commands::Input::GET_CLOUD_SYNC_STATUS:
       eval_succeeded = GetCloudSyncStatus(command);
       break;
@@ -576,6 +551,11 @@ bool SessionHandler::EvalCommand(commands::Command *command) {
 
   if (eval_succeeded) {
     UsageStats::IncrementCount("SessionAllEvent");
+    if (command->input().type() != commands::Input::CREATE_SESSION) {
+      // Fill a session ID even if command->input() doesn't have a id to ensure
+      // that response size should not be 0, which causes disconnection of IPC.
+      command->mutable_output()->set_id(command->input().id());
+    }
   } else {
     command->mutable_output()->set_id(0);
     command->mutable_output()->set_error_code(
@@ -595,7 +575,7 @@ bool SessionHandler::EvalCommand(commands::Command *command) {
 }
 
 session::SessionInterface *SessionHandler::NewSession() {
-  return session_factory_->NewSession();
+  return new session::Session(engine_);
 }
 
 void SessionHandler::AddObserver(session::SessionObserverInterface *observer) {
@@ -610,8 +590,6 @@ void SessionHandler::SetSyncHandler(sync::SyncHandler *sync_handler) {
 
 bool SessionHandler::SendKey(commands::Command *command) {
   const SessionID id = command->input().id();
-  command->mutable_output()->set_id(id);
-
   session::SessionInterface **session = session_map_->MutableLookup(id);
   if (session == NULL || *session == NULL) {
     LOG(WARNING) << "SessionID " << id << " is not available";
@@ -623,7 +601,6 @@ bool SessionHandler::SendKey(commands::Command *command) {
 
 bool SessionHandler::TestSendKey(commands::Command *command) {
   const SessionID id = command->input().id();
-  command->mutable_output()->set_id(id);
   session::SessionInterface **session = session_map_->MutableLookup(id);
   if (session == NULL || *session == NULL) {
     LOG(WARNING) << "SessionID " << id << " is not available";
@@ -635,7 +612,6 @@ bool SessionHandler::TestSendKey(commands::Command *command) {
 
 bool SessionHandler::SendCommand(commands::Command *command) {
   const SessionID id = command->input().id();
-  command->mutable_output()->set_id(id);
   session::SessionInterface **session =
     const_cast<session::SessionInterface **>(session_map_->Lookup(id));
   if (session == NULL || *session == NULL) {
@@ -649,14 +625,13 @@ bool SessionHandler::SendCommand(commands::Command *command) {
 bool SessionHandler::CreateSession(commands::Command *command) {
   // prevent DOS attack
   // don't allow CreateSession in very short period.
-  const int kCreateSessionMinimumInterval =
+  const int create_session_minimum_interval =
       max(0, min(FLAGS_create_session_min_interval, 10));
 
   uint64 current_time = Util::GetTime();
   if (last_create_session_time_ != 0 &&
       (current_time - last_create_session_time_) <
-      kCreateSessionMinimumInterval) {
-    last_create_session_time_ = current_time;
+      create_session_minimum_interval) {
     return false;
   }
 
@@ -675,7 +650,7 @@ bool SessionHandler::CreateSession(commands::Command *command) {
     session_map_->Erase(oldest_element->key);
     VLOG(1) << "Session is FULL, oldest SessionID "
             << oldest_element->key << " is removed";
-  };
+  }
 
   session::SessionInterface *session = NewSession();
   if (session == NULL) {
@@ -712,10 +687,8 @@ bool SessionHandler::CreateSession(commands::Command *command) {
 }
 
 bool SessionHandler::DeleteSession(commands::Command *command) {
-  const SessionID id = command->input().id();
-  command->mutable_output()->set_id(id);
-  DeleteSessionID(id);
-  session_factory_->GetUserDataManager()->Sync();
+  DeleteSessionID(command->input().id());
+  engine_->GetUserDataManager()->Sync();
   return true;
 }
 
@@ -727,9 +700,6 @@ bool SessionHandler::DeleteSession(commands::Command *command) {
 // no active session and client doesn't send any conversion
 // request to the server for FLAGS_timeout sec.
 bool SessionHandler::Cleanup(commands::Command *command) {
-  const SessionID id = command->input().id();
-  command->mutable_output()->set_id(id);
-
   const uint64 current_time = Util::GetTime();
 
   // suspend/hibernation may happen
@@ -751,12 +721,12 @@ bool SessionHandler::Cleanup(commands::Command *command) {
 #endif  // MOZC_DISABLE_SESSION_WATCHDOG
 
   // allow [1..600] sec. default: 300
-  const uint64 kCreateSessionTimeout =
+  const uint64 create_session_timeout =
       suspend_time +
       max(1, min(FLAGS_last_create_session_timeout, 600));
 
   // allow [10..7200] sec. default 3600
-  const uint64 kLastCommandTimeout =
+  const uint64 last_command_timeout =
       suspend_time +
       max(10, min(FLAGS_last_command_timeout, 7200));
 
@@ -771,12 +741,12 @@ bool SessionHandler::Cleanup(commands::Command *command) {
     } else if (session->last_command_time() == 0) {
       // no command is exectuted
       if ((current_time - session->create_session_time()) >=
-          kCreateSessionTimeout) {
+          create_session_timeout) {
         remove_ids.push_back(element->key);
       }
     } else {  // some commands are executed already
       if ((current_time - session->last_command_time()) >=
-          kLastCommandTimeout) {
+          last_command_timeout) {
         remove_ids.push_back(element->key);
       }
     }
@@ -787,9 +757,8 @@ bool SessionHandler::Cleanup(commands::Command *command) {
     VLOG(1) << "Session ID " << remove_ids[i] << " is removed by server";
   }
 
-  // Sync all data.
-  // This is a regression bug fix http://b/issue?id=3033708
-  session_factory_->GetUserDataManager()->Sync();
+  // Sync all data. This is a regression bug fix http://b/3033708
+  engine_->GetUserDataManager()->Sync();
 
   // timeout is enabled.
   if (FLAGS_timeout > 0 &&
@@ -819,8 +788,6 @@ bool SessionHandler::SendUserDictionaryCommand(commands::Command *command) {
 }
 
 bool SessionHandler::NoOperation(commands::Command *command) {
-  const SessionID id = command->input().id();
-  command->mutable_output()->set_id(id);
   return true;
 }
 

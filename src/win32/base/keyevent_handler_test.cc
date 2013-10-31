@@ -41,7 +41,6 @@
 #include "config/config_handler.h"
 #include "ipc/ipc_mock.h"
 #include "session/commands.pb.h"
-#include "session/ime_switch_util.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "win32/base/input_state.h"
@@ -268,37 +267,36 @@ class KeyEventHandlerTest : public testing::Test {
     mozc::config::ConfigHandler::SetConfig(default_config_);
   }
 
-  void UpdateConfigToUseKanaAsPreeditMethod() {
-    config::Config config;
-    CHECK(config::ConfigHandler::GetConfig(&config));
-    config.set_preedit_method(config::Config::KANA);
-    CHECK(config::ConfigHandler::SetConfig(config));
+  vector<KeyInformation> GetDefaultDirectModeKeys() const {
+    return KeyInfoUtil::ExtractSortedDirectModeKeys(default_config_);
   }
 
-  void UpdateConfigToUseCtrlJToEnableIME() {
+  vector<KeyInformation> GetDirectModeKeysCtrlJToEnableIME() const {
     config::Config config;
-    CHECK(config::ConfigHandler::GetConfig(&config));
+    config.CopyFrom(default_config_);
 
-    const string custom_keymap_table =
+    const char custom_keymap_table[] =
         "status\tkey\tcommand\n"
         "DirectInput\tCtrl j\tIMEOn\n";
 
     config.set_session_keymap(mozc::config::Config::CUSTOM);
     config.set_custom_keymap_table(custom_keymap_table);
-    CHECK(mozc::config::ConfigHandler::SetConfig(config));
+
+    return KeyInfoUtil::ExtractSortedDirectModeKeys(config);
   }
 
-  void UpdateConfigToUseCtrlBackslashToEnableIME() {
+  vector<KeyInformation> GetDirectModeKeysCtrlBackslashToEnableIME() const {
     config::Config config;
-    CHECK(config::ConfigHandler::GetConfig(&config));
+    config.CopyFrom(default_config_);
 
-    const string custom_keymap_table =
+    const char custom_keymap_table[] =
         "status\tkey\tcommand\n"
         "DirectInput\tCtrl \\\tIMEOn\n";
 
     config.set_session_keymap(mozc::config::Config::CUSTOM);
     config.set_custom_keymap_table(custom_keymap_table);
-    CHECK(mozc::config::ConfigHandler::SetConfig(config));
+
+    return KeyInfoUtil::ExtractSortedDirectModeKeys(config);
   }
 
   mozc::config::Config default_config_;
@@ -308,11 +306,6 @@ class KeyEventHandlerTest : public testing::Test {
 };
 
 TEST_F(KeyEventHandlerTest, HankakuZenkakuTest) {
-  // Change Kana-lock preference.
-  UpdateConfigToUseKanaAsPreeditMethod();
-
-  // Force ImeSwitchUtil to reflect the config.
-  config::ImeSwitchUtil::Reload();
   const bool kKanaLocked = false;
 
   Output mock_output;
@@ -332,6 +325,7 @@ TEST_F(KeyEventHandlerTest, HankakuZenkakuTest) {
   InputBehavior behavior;
   behavior.prefer_kana_input = kKanaLocked;
   behavior.disabled = false;
+  behavior.direct_mode_keys = GetDefaultDirectModeKeys();
 
   Context context;
 
@@ -388,11 +382,6 @@ TEST_F(KeyEventHandlerTest, ClearKanaLockInAlphanumericMode) {
   // because there might be no chance to unlock an unexpected Kana-Lock except
   // for the key event handler in some tricky cases.
 
-  // Change Kana-lock preference.
-  UpdateConfigToUseKanaAsPreeditMethod();
-
-  // Force ImeSwitchUtil to reflect the config.
-  config::ImeSwitchUtil::Reload();
   const bool kKanaLocked = true;
 
   Output mock_output;
@@ -414,6 +403,7 @@ TEST_F(KeyEventHandlerTest, ClearKanaLockInAlphanumericMode) {
   InputBehavior behavior;
   behavior.prefer_kana_input = kKanaLocked;
   behavior.disabled = false;
+  behavior.direct_mode_keys = GetDefaultDirectModeKeys();
 
   Context context;
 
@@ -457,11 +447,6 @@ TEST_F(KeyEventHandlerTest, ClearKanaLockEvenWhenIMEIsDisabled) {
   // kana-lock in some cases.  This helps users to input their password as
   // expected except that they used half-width katakana for their password.
 
-  // Change Kana-lock preference.
-  UpdateConfigToUseKanaAsPreeditMethod();
-
-  // Force ImeSwitchUtil to reflect the config.
-  config::ImeSwitchUtil::Reload();
   const bool kKanaLocked = true;
 
   Output mock_output;
@@ -482,6 +467,7 @@ TEST_F(KeyEventHandlerTest, ClearKanaLockEvenWhenIMEIsDisabled) {
   InputBehavior behavior;
   behavior.prefer_kana_input = kKanaLocked;
   behavior.disabled = true;
+  behavior.direct_mode_keys = GetDefaultDirectModeKeys();
 
   Context context;
 
@@ -524,11 +510,6 @@ TEST_F(KeyEventHandlerTest, CustomActivationKeyTest) {
   // We might want to allow users to use their preferred key combinations
   // to open/close IME.
 
-  // Add new short-cut
-  UpdateConfigToUseCtrlJToEnableIME();
-
-  // Force ImeSwitchUtil to reflect the config.
-  config::ImeSwitchUtil::Reload();
   const bool kKanaLocked = false;
 
   Output mock_output;
@@ -547,6 +528,8 @@ TEST_F(KeyEventHandlerTest, CustomActivationKeyTest) {
   InputBehavior behavior;
   behavior.prefer_kana_input = kKanaLocked;
   behavior.disabled = false;
+  // Use Ctrl+J to turn on IME.
+  behavior.direct_mode_keys = GetDirectModeKeysCtrlJToEnableIME();
 
   Context context;
 
@@ -605,11 +588,6 @@ TEST_F(KeyEventHandlerTest, Issue3033135_VK_OEM_102) {
   // We might want to allow users to use their preferred key combinations
   // to open/close IME.
 
-  // Add new short-cut
-  UpdateConfigToUseCtrlBackslashToEnableIME();
-
-  // Force ImeSwitchUtil to reflect the config.
-  config::ImeSwitchUtil::Reload();
   const bool kKanaLocked = false;
 
   Output mock_output;
@@ -628,6 +606,7 @@ TEST_F(KeyEventHandlerTest, Issue3033135_VK_OEM_102) {
   InputBehavior behavior;
   behavior.prefer_kana_input = kKanaLocked;
   behavior.disabled = false;
+  behavior.direct_mode_keys = GetDirectModeKeysCtrlBackslashToEnableIME();
 
   Context context;
 
@@ -687,11 +666,6 @@ TEST_F(KeyEventHandlerTest, Issue3033135_VK_OEM_5) {
   // We might want to allow users to use their preferred key combinations
   // to open/close IME.
 
-  // Add new short-cut
-  UpdateConfigToUseCtrlBackslashToEnableIME();
-
-  // Force ImeSwitchUtil to reflect the config.
-  config::ImeSwitchUtil::Reload();
   const bool kKanaLocked = false;
 
   Output mock_output;
@@ -710,6 +684,7 @@ TEST_F(KeyEventHandlerTest, Issue3033135_VK_OEM_5) {
   InputBehavior behavior;
   behavior.prefer_kana_input = kKanaLocked;
   behavior.disabled = false;
+  behavior.direct_mode_keys = GetDirectModeKeysCtrlBackslashToEnableIME();
 
   Context context;
 
@@ -771,8 +746,6 @@ TEST_F(KeyEventHandlerTest, HandleCtrlH) {
   // and one internally-used by the session server, we should decompose a
   // control code into a tuple of an ASCII alphabet and a modifier key.
 
-  // Force ImeSwitchUtil to reflect the config.
-  config::ImeSwitchUtil::Reload();
   const bool kKanaLocked = false;
 
   Output mock_output;
@@ -791,6 +764,7 @@ TEST_F(KeyEventHandlerTest, HandleCtrlH) {
   InputBehavior behavior;
   behavior.prefer_kana_input = kKanaLocked;
   behavior.disabled = false;
+  behavior.direct_mode_keys = GetDefaultDirectModeKeys();
 
   Context context;
 
@@ -851,8 +825,6 @@ TEST_F(KeyEventHandlerTest, HandleCtrlShiftH) {
   // VK_A, ..., or, VK_Z, or other special keys defined in Mozc protocol such as
   // backspace or space.
 
-  // Force ImeSwitchUtil to reflect the config.
-  config::ImeSwitchUtil::Reload();
   const bool kKanaLocked = false;
 
   Output mock_output;
@@ -871,6 +843,7 @@ TEST_F(KeyEventHandlerTest, HandleCtrlShiftH) {
   InputBehavior behavior;
   behavior.prefer_kana_input = kKanaLocked;
   behavior.disabled = false;
+  behavior.direct_mode_keys = GetDefaultDirectModeKeys();
 
   Context context;
 
@@ -928,8 +901,6 @@ TEST_F(KeyEventHandlerTest, HandleCtrlShiftH) {
 }
 
 TEST_F(KeyEventHandlerTest, HandleCapsH) {
-  // Force ImeSwitchUtil to reflect the config.
-  config::ImeSwitchUtil::Reload();
   const bool kKanaLocked = false;
 
   Output mock_output;
@@ -948,6 +919,7 @@ TEST_F(KeyEventHandlerTest, HandleCapsH) {
   InputBehavior behavior;
   behavior.prefer_kana_input = kKanaLocked;
   behavior.disabled = false;
+  behavior.direct_mode_keys = GetDefaultDirectModeKeys();
 
   Context context;
 
@@ -1002,8 +974,6 @@ TEST_F(KeyEventHandlerTest, HandleCapsH) {
 }
 
 TEST_F(KeyEventHandlerTest, HandleCapsShiftH) {
-  // Force ImeSwitchUtil to reflect the config.
-  config::ImeSwitchUtil::Reload();
   const bool kKanaLocked = false;
 
   Output mock_output;
@@ -1022,6 +992,7 @@ TEST_F(KeyEventHandlerTest, HandleCapsShiftH) {
   InputBehavior behavior;
   behavior.prefer_kana_input = kKanaLocked;
   behavior.disabled = false;
+  behavior.direct_mode_keys = GetDefaultDirectModeKeys();
 
   Context context;
 
@@ -1078,8 +1049,6 @@ TEST_F(KeyEventHandlerTest, HandleCapsShiftH) {
 }
 
 TEST_F(KeyEventHandlerTest, HandleCapsCtrlH) {
-  // Force ImeSwitchUtil to reflect the config.
-  config::ImeSwitchUtil::Reload();
   const bool kKanaLocked = false;
 
   Output mock_output;
@@ -1098,6 +1067,7 @@ TEST_F(KeyEventHandlerTest, HandleCapsCtrlH) {
   InputBehavior behavior;
   behavior.prefer_kana_input = kKanaLocked;
   behavior.disabled = false;
+  behavior.direct_mode_keys = GetDefaultDirectModeKeys();
 
   Context context;
 
@@ -1155,8 +1125,6 @@ TEST_F(KeyEventHandlerTest, HandleCapsCtrlH) {
 }
 
 TEST_F(KeyEventHandlerTest, HandleCapsShiftCtrlH) {
-  // Force ImeSwitchUtil to reflect the config.
-  config::ImeSwitchUtil::Reload();
   const bool kKanaLocked = false;
 
   Output mock_output;
@@ -1175,6 +1143,7 @@ TEST_F(KeyEventHandlerTest, HandleCapsShiftCtrlH) {
   InputBehavior behavior;
   behavior.prefer_kana_input = kKanaLocked;
   behavior.disabled = false;
+  behavior.direct_mode_keys = GetDefaultDirectModeKeys();
 
   Context context;
 
@@ -1246,8 +1215,6 @@ TEST_F(KeyEventHandlerTest, HandleCtrlHat) {
   // defined in Mozc protocol such as backspace or space.
   // TODO(komatsu): Clarify the expected algorithm for the client.
 
-  // Force ImeSwitchUtil to reflect the config.
-  config::ImeSwitchUtil::Reload();
   const bool kKanaLocked = false;
 
   Output mock_output;
@@ -1266,6 +1233,7 @@ TEST_F(KeyEventHandlerTest, HandleCtrlHat) {
   InputBehavior behavior;
   behavior.prefer_kana_input = kKanaLocked;
   behavior.disabled = false;
+  behavior.direct_mode_keys = GetDefaultDirectModeKeys();
 
   Context context;
 
@@ -1331,8 +1299,6 @@ TEST_F(KeyEventHandlerTest, HandleCtrlShift7) {
   // Ctrl+'\'' is available on 101/104 English keyboard.
   // TODO(komatsu): Clarify the expected algorithm for the client.
 
-  // Force ImeSwitchUtil to reflect the config.
-  config::ImeSwitchUtil::Reload();
   const bool kKanaLocked = false;
 
   Output mock_output;
@@ -1351,6 +1317,7 @@ TEST_F(KeyEventHandlerTest, HandleCtrlShift7) {
   InputBehavior behavior;
   behavior.prefer_kana_input = kKanaLocked;
   behavior.disabled = false;
+  behavior.direct_mode_keys = GetDefaultDirectModeKeys();
 
   Context context;
 
@@ -1393,8 +1360,6 @@ TEST_F(KeyEventHandlerTest, HandleCtrlShiftSpace) {
   // VK_SHIFT and VK_CONTROL are pressed.  The Windows client expects the
   // server may eat a special key when Control and Shift is pressed.
 
-  // Force ImeSwitchUtil to reflect the config.
-  config::ImeSwitchUtil::Reload();
   const bool kKanaLocked = false;
 
   Output mock_output;
@@ -1413,6 +1378,7 @@ TEST_F(KeyEventHandlerTest, HandleCtrlShiftSpace) {
   InputBehavior behavior;
   behavior.prefer_kana_input = kKanaLocked;
   behavior.disabled = false;
+  behavior.direct_mode_keys = GetDefaultDirectModeKeys();
 
   Context context;
 
@@ -1474,8 +1440,6 @@ TEST_F(KeyEventHandlerTest, HandleCtrlShiftBackspace) {
   // VK_SHIFT and VK_CONTROL are pressed.  The Windows client expects the
   // server may eat a special key when Control and Shift is pressed.
 
-  // Force ImeSwitchUtil to reflect the config.
-  config::ImeSwitchUtil::Reload();
   const bool kKanaLocked = false;
 
   Output mock_output;
@@ -1494,6 +1458,7 @@ TEST_F(KeyEventHandlerTest, HandleCtrlShiftBackspace) {
   InputBehavior behavior;
   behavior.prefer_kana_input = kKanaLocked;
   behavior.disabled = false;
+  behavior.direct_mode_keys = GetDefaultDirectModeKeys();
 
   Context context;
 
@@ -1554,8 +1519,6 @@ TEST_F(KeyEventHandlerTest, Issue2903247_KeyUpShouldNotBeEaten) {
   // In general, key up event should not be eaten by the IME.
   // See b/2903247 for details.
 
-  // Force ImeSwitchUtil to reflect the config.
-  config::ImeSwitchUtil::Reload();
   const bool kKanaLocked = false;
 
   Output mock_output;
@@ -1570,6 +1533,7 @@ TEST_F(KeyEventHandlerTest, Issue2903247_KeyUpShouldNotBeEaten) {
   InputBehavior behavior;
   behavior.prefer_kana_input = kKanaLocked;
   behavior.disabled = false;
+  behavior.direct_mode_keys = GetDefaultDirectModeKeys();
 
   Context context;
 
@@ -1619,8 +1583,6 @@ TEST_F(KeyEventHandlerTest, ProtocolAnomaly_ModiferKeyMayBeSentOnKeyUp) {
   // TODO(yukawa): File this issue as a protocol bug so that we can improve
   // the Mozc protocol later.
 
-  // Force ImeSwitchUtil to reflect the config.
-  config::ImeSwitchUtil::Reload();
   const bool kKanaLocked = false;
 
   Output mock_output;
@@ -1635,6 +1597,7 @@ TEST_F(KeyEventHandlerTest, ProtocolAnomaly_ModiferKeyMayBeSentOnKeyUp) {
   InputBehavior behavior;
   behavior.prefer_kana_input = kKanaLocked;
   behavior.disabled = false;
+  behavior.direct_mode_keys = GetDefaultDirectModeKeys();
 
   Context context;
 
@@ -1735,8 +1698,6 @@ TEST_F(KeyEventHandlerTest,
   // TODO(yukawa): File this issue as a protocol bug so that we can improve
   // the Mozc protocol later.
 
-  // Force ImeSwitchUtil to reflect the config.
-  config::ImeSwitchUtil::Reload();
   const bool kKanaLocked = false;
 
   Output mock_output;
@@ -1751,6 +1712,7 @@ TEST_F(KeyEventHandlerTest,
   InputBehavior behavior;
   behavior.prefer_kana_input = kKanaLocked;
   behavior.disabled = false;
+  behavior.direct_mode_keys = GetDefaultDirectModeKeys();
 
   Context context;
 
@@ -1812,8 +1774,6 @@ TEST_F(KeyEventHandlerTest,
   // Currently, the Mozc server expects the client remove all modifiers as for
   // some special keys such as VK_DBE_KATAKANA.
 
-  // Force ImeSwitchUtil to reflect the config.
-  config::ImeSwitchUtil::Reload();
   const bool kKanaLocked = false;
 
   Output mock_output;
@@ -1833,6 +1793,7 @@ TEST_F(KeyEventHandlerTest,
   InputBehavior behavior;
   behavior.prefer_kana_input = kKanaLocked;
   behavior.disabled = false;
+  behavior.direct_mode_keys = GetDefaultDirectModeKeys();
 
   Context context;
 
@@ -1903,8 +1864,6 @@ TEST_F(KeyEventHandlerTest,
   // TODO(yukawa): File this issue as a protocol bug so that we can improve
   // the Mozc protocol later.
 
-  // Force ImeSwitchUtil to reflect the config.
-  config::ImeSwitchUtil::Reload();
   const bool kKanaLocked = true;
 
   Output mock_output;
@@ -1919,6 +1878,7 @@ TEST_F(KeyEventHandlerTest,
   InputBehavior behavior;
   behavior.prefer_kana_input = kKanaLocked;
   behavior.disabled = false;
+  behavior.direct_mode_keys = GetDefaultDirectModeKeys();
 
   Context context;
 
@@ -1983,8 +1943,6 @@ TEST_F(KeyEventHandlerTest,
   // and one internally-used by the session server, we should decompose a
   // control code into a tuple of an ASCII alphabet and a modifier key.
 
-  // Force ImeSwitchUtil to reflect the config.
-  config::ImeSwitchUtil::Reload();
   const bool kKanaLocked = false;
 
   Output mock_output;
@@ -1999,6 +1957,7 @@ TEST_F(KeyEventHandlerTest,
   InputBehavior behavior;
   behavior.prefer_kana_input = kKanaLocked;
   behavior.disabled = false;
+  behavior.direct_mode_keys = GetDefaultDirectModeKeys();
 
   Context context;
 
@@ -2062,8 +2021,6 @@ TEST_F(KeyEventHandlerTest,
   // server assigns its own code.  This should not be passed to the server
   // as a Kana-input character. See b/9684668.
 
-  // Force ImeSwitchUtil to reflect the config.
-  config::ImeSwitchUtil::Reload();
   const bool kKanaLocked = true;
 
   Output mock_output;
@@ -2078,6 +2035,7 @@ TEST_F(KeyEventHandlerTest,
   InputBehavior behavior;
   behavior.prefer_kana_input = kKanaLocked;
   behavior.disabled = false;
+  behavior.direct_mode_keys = GetDefaultDirectModeKeys();
 
   Context context;
 
@@ -2195,11 +2153,6 @@ TEST_F(KeyEventHandlerTest,
 }
 
 TEST_F(KeyEventHandlerTest, Issue3029665_KanaLocked_WO) {
-  // Change Kana-lock preference.
-  UpdateConfigToUseKanaAsPreeditMethod();
-
-  // Force ImeSwitchUtil to reflect the config.
-  config::ImeSwitchUtil::Reload();
   const bool kKanaLocked = true;
 
   Output mock_output;
@@ -2219,6 +2172,7 @@ TEST_F(KeyEventHandlerTest, Issue3029665_KanaLocked_WO) {
 
   InputBehavior behavior;
   behavior.prefer_kana_input = kKanaLocked;
+  behavior.direct_mode_keys = GetDefaultDirectModeKeys();
 
   Context context;
 
@@ -2738,8 +2692,6 @@ TEST(SimpleImeKeyEventHandlerTest, ToggleInputStyleByRomanKey) {
 TEST_F(KeyEventHandlerTest, Issue3504241_VKPacketAsRawInput) {
   // To fix b/3504241, VK_PACKET must be supported.
 
-  // Force ImeSwitchUtil to reflect the config.
-  config::ImeSwitchUtil::Reload();
   const bool kKanaLocked = false;
 
   Output mock_output;
@@ -2754,6 +2706,7 @@ TEST_F(KeyEventHandlerTest, Issue3504241_VKPacketAsRawInput) {
   InputBehavior behavior;
   behavior.prefer_kana_input = kKanaLocked;
   behavior.disabled = false;
+  behavior.direct_mode_keys = GetDefaultDirectModeKeys();
 
   Context context;
 
@@ -2809,7 +2762,6 @@ TEST_F(KeyEventHandlerTest, Issue3504241_VKPacketAsRawInput) {
 }
 
 TEST_F(KeyEventHandlerTest, CapsLock) {
-  config::ImeSwitchUtil::Reload();
   const bool kKanaLocked = false;
 
   Output mock_output;
@@ -2824,6 +2776,7 @@ TEST_F(KeyEventHandlerTest, CapsLock) {
   InputBehavior behavior;
   behavior.prefer_kana_input = kKanaLocked;
   behavior.disabled = false;
+  behavior.direct_mode_keys = GetDefaultDirectModeKeys();
 
   Context context;
 
@@ -2877,7 +2830,6 @@ TEST_F(KeyEventHandlerTest, CapsLock) {
 // it to the server. Otherwise, IME On/Off flipping happens twice and a user
 // cannot activate IME by VK_KANJI.
 TEST_F(KeyEventHandlerTest, KanjiKey_Issue7970379) {
-  config::ImeSwitchUtil::Reload();
   const bool kKanaLocked = false;
 
   Output mock_output;
@@ -2892,6 +2844,7 @@ TEST_F(KeyEventHandlerTest, KanjiKey_Issue7970379) {
   InputBehavior behavior;
   behavior.prefer_kana_input = kKanaLocked;
   behavior.disabled = false;
+  behavior.direct_mode_keys = GetDefaultDirectModeKeys();
 
   Context context;
 

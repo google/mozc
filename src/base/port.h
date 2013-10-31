@@ -33,7 +33,6 @@
 
 #include <sys/types.h>
 #include <cstddef>
-#include "base/compiler_specific.h"
 
 // basic macros
 typedef signed char         int8;
@@ -55,66 +54,35 @@ typedef long long           int64;
 #define strto32 strtol
 #define strto64 strtoll
 
-#if !defined(COMPILER_MSVC) || MOZC_MSVC_VERSION_GE(16, 0)
-// MSVCs older than VC2010 don't have stdint.h header.
 #include <stdint.h>
-#endif  // !COMPILER_MSVC or MSVC 2010+
 
-#ifdef OS_WIN
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>  // time()
+#ifdef _MSC_VER
 #define snprintf _snprintf_s
 #define strtoull _strtoui64
 #define strtoll  _strtoi64
-
-// va_copy portability definitions
-#ifdef COMPILER_MSVC
-// MSVC doesn't have va_copy yet.
-// This is believed to work for 32-bit msvc.  This may not work at all for
-// other platforms.
-// If va_list uses the single-element-array trick, you will probably get
-// a compiler error here.
-#include <stdarg.h>
-inline void va_copy(va_list& a, va_list& b) {
-  a = b;
-}
-#endif  // COMPILER_MSVC
-#endif  // OS_WIN
+#endif  // _MSC_VER
 
 template <typename T, size_t N>
 char (&ArraySizeHelper(T (&array)[N]))[N];
 
-#ifndef OS_WIN
+#ifndef _MSC_VER
 template <typename T, size_t N>
 char (&ArraySizeHelper(const T (&array)[N]))[N];
-#endif  // !OS_WIN
+#endif  // !_MSC_VER
 
 #define arraysize(array) (sizeof(ArraySizeHelper(array)))
 
-#ifdef OS_WIN
-// I64/UI64 postfixes are equivalent to LL/ULL and "I64" is equivalent to
-// "ll" since Visual C++ 2005, so we no longer need Windows-specific hack
-// for these, but we keep using old hacks.  The reasons are
-// - these hack support wider compilers including Visual C++ 2003 and prior.
-//   (Despite the fact GG_LONGLONG and GG_ULONGLONG work well on Visual C++
-//    2003, supporting Visual C++ 2003 is not a goal of Mozc.  Please test
-//    your code with Visual C++ 2008 in terms of Mozc on Windows.)
-// - despite the names of GG_LONGLONG and GG_LL_FORMAT, what we want are
-//   for type int64, NOT for type long long.  So the name of I64/UI64 should
-//   be much more appropriate and safer against future changes.
-#define GG_LONGLONG(x) x##I64
-#define GG_ULONGLONG(x) x##UI64
+#define GG_LONGLONG(x) x##LL
+#define GG_ULONGLONG(x) x##ULL
+
+#ifdef _MSC_VER
 // Length modifier in printf format string for int64's (e.g. within %d)
 #define GG_LL_FORMAT "I64"  // As in printf("%I64d", ...)
 #define GG_LL_FORMAT_W L"I64"
 #else
-#define GG_LONGLONG(x) x##LL
-#define GG_ULONGLONG(x) x##ULL
 #define GG_LL_FORMAT "ll"  // As in "%lld". Note that "q" is poor form also.
 #define GG_LL_FORMAT_W L"ll"
-#endif  // OS_WIN
+#endif  // _MSC_VER
 
 // INT_MIN, INT_MAX, UINT_MAX family at Google
 static const uint8  kuint8max  = (( uint8) 0xFF);
@@ -142,7 +110,7 @@ static const  int64 kint64max  = (( int64) GG_LONGLONG(0x7FFFFFFFFFFFFFFF));
 // TODO(team): Implement this.
 #define  FALLTHROUGH_INTENDED do { } while (0)
 
-#if (defined(COMPILER_GCC3) || defined(COMPILER_ICC) || defined(OS_MACOSX)) && !defined(SWIG)
+#if (defined(__GNUC__) || defined(__clang__)) && !defined(SWIG)
 // Tell the compiler to do printf format string checking if the
 // compiler supports it; see the 'format' attribute in
 // <http://gcc.gnu.org/onlinedocs/gcc-4.3.0/gcc/Function-Attributes.html>.
@@ -157,16 +125,18 @@ static const  int64 kint64max  = (( int64) GG_LONGLONG(0x7FFFFFFFFFFFFFFF));
 #else
 #define PRINTF_ATTRIBUTE(string_index, first_to_check)
 #define SCANF_ATTRIBUTE(string_index, first_to_check)
-#endif  // (COMPILER_GCC3 || COMPILER_ICC || OS_MACOSX) && !SWIG
+#endif  // (__GNUC__ || __clang__) && !SWIG
 
+// TODO(yukawa): Consider to unsupport SWIG.
 #ifndef SWIG
-# define ABSTRACT = 0
+#define ABSTRACT = 0
 #endif
 
 #define AS_STRING(x)   AS_STRING_INTERNAL(x)
 #define AS_STRING_INTERNAL(x)   #x
 
 
+// TODO(yukawa): Simplify following includes
 #include "base/flags.h"
 #include "base/init.h"
 

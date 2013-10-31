@@ -368,7 +368,7 @@ bool Encryptor::EncryptString(const Encryptor::Key &key, string *data) {
     return false;
   }
   size_t size = data->size();
-  scoped_array<char> buf(new char[key.GetEncryptedSize(data->size())]);
+  scoped_ptr<char[]> buf(new char[key.GetEncryptedSize(data->size())]);
   memcpy(buf.get(), data->data(), data->size());
   if (!Encryptor::EncryptArray(key, buf.get(), &size)) {
     LOG(ERROR) << "EncryptArray() failed";
@@ -384,7 +384,7 @@ bool Encryptor::DecryptString(const Encryptor::Key &key, string *data) {
     return false;
   }
   size_t size = data->size();
-  scoped_array<char> buf(new char[data->size()]);
+  scoped_ptr<char[]> buf(new char[data->size()]);
   memcpy(buf.get(), data->data(), data->size());
   if (!Encryptor::DecryptArray(key, buf.get(), &size)) {
     LOG(ERROR) << "DecryptArray() failed";
@@ -436,7 +436,7 @@ bool Encryptor::EncryptArray(const Encryptor::Key &key,
   }
 
   // iv is used inside AES_cbc_encrypt, so must copy it.
-  scoped_array<uint8> iv(new uint8[key.iv_size()]);
+  scoped_ptr<uint8[]> iv(new uint8[key.iv_size()]);
   memcpy(iv.get(), key.iv(), key.iv_size());  // copy iv
 
   AES_cbc_encrypt(reinterpret_cast<const uint8 *>(buf),
@@ -491,7 +491,7 @@ bool Encryptor::DecryptArray(const Encryptor::Key &key,
 #elif defined(HAVE_OPENSSL)
   size_t size = *buf_size;
   // iv is used inside AES_cbc_encrypt, so must copy it.
-  scoped_array<uint8> iv(new uint8[key.iv_size()]);
+  scoped_ptr<uint8[]> iv(new uint8[key.iv_size()]);
   memcpy(iv.get(), key.iv(), key.iv_size());  // copy iv
 
   AES_cbc_encrypt(reinterpret_cast<const uint8 *>(buf),

@@ -35,9 +35,9 @@
 
 #include "base/win_util.h"
 #include "client/client_interface.h"
-#include "config/config.pb.h"
-#include "config/config_handler.h"
 #include "session/commands.pb.h"
+#include "session/key_info_util.h"
+#include "win32/base/config_snapshot.h"
 #include "win32/base/deleter.h"
 #include "win32/base/input_state.h"
 #include "win32/base/keyboard.h"
@@ -49,58 +49,11 @@ namespace mozc {
 namespace win32 {
 namespace tsf {
 
-namespace {
-
 using ::mozc::client::ClientFactory;
 using ::mozc::client::ClientInterface;
 using ::mozc::commands::Capability;
 using ::mozc::commands::Output;
-using ::mozc::config::Config;
 using ::std::unique_ptr;
-
-struct ConfigSnapshot {
-  bool use_kana_input;
-  bool use_keyboard_to_change_preedit_method;
-  bool use_mode_indicator;
-};
-
-ConfigSnapshot GetDefaultKanaInputStyleImpl(ClientInterface *client) {
-  ConfigSnapshot snapshot = {};
-  bool in_appcontainer = false;
-  if (!WinUtil::IsProcessInAppContainer(::GetCurrentProcess(),
-                                        &in_appcontainer)) {
-    return snapshot;
-  }
-
-  Config config;
-  if (in_appcontainer) {
-    // config1.db is not readable from AppContainer. So retrieve the config
-    // data from the server process.
-    if (!client->CheckVersionOrRestartServer()) {
-      return snapshot;
-    }
-    if (!client->GetConfig(&config)) {
-      return snapshot;
-    }
-  } else {
-    // config1.db should be readable in this case.
-    config.CopyFrom(config::ConfigHandler::GetConfig());
-  }
-
-  snapshot.use_kana_input = (config.preedit_method() == Config::KANA);
-  snapshot.use_keyboard_to_change_preedit_method =
-      config.use_keyboard_to_change_preedit_method();
-  snapshot.use_mode_indicator = config.use_mode_indicator();
-  return snapshot;
-}
-
-ConfigSnapshot GetConfigSnapshot(ClientInterface *client) {
-  // Note: Thread-safety is not required.
-  static ConfigSnapshot default_style = GetDefaultKanaInputStyleImpl(client);
-  return default_style;
-}
-
-}  // namespace
 
 class TipPrivateContext::InternalState {
  public:
@@ -130,11 +83,14 @@ TipPrivateContext::TipPrivateContext(DWORD text_edit_sink_cookie,
   capability.set_text_deletion(Capability::DELETE_PRECEDING_TEXT);
   state_->client_->set_client_capability(capability);
 
-  const ConfigSnapshot &snapshot = GetConfigSnapshot(state_->client_.get());
-  state_->input_behavior_.prefer_kana_input = snapshot.use_kana_input;
-  state_->input_behavior_.use_romaji_key_to_toggle_input_style =
+  // Try to reflect the current config to the IME behavior.
+  const auto &snapshot = ConfigSnapshot::Get(state_->client_.get());
+  auto *behavior = &state_->input_behavior_;
+  behavior->prefer_kana_input = snapshot.use_kana_input;
+  behavior->use_romaji_key_to_toggle_input_style =
       snapshot.use_keyboard_to_change_preedit_method;
-  state_->input_behavior_.use_mode_indicator = snapshot.use_mode_indicator;
+  behavior->use_mode_indicator = snapshot.use_mode_indicator;
+  behavior->direct_mode_keys = snapshot.direct_mode_keys;
 }
 
 TipPrivateContext::~TipPrivateContext() {}

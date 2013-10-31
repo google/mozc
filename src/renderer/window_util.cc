@@ -29,7 +29,6 @@
 
 #include "renderer/window_util.h"
 
-#include "base/base.h"
 #include "base/coordinates.h"
 
 namespace mozc {
@@ -236,5 +235,5 @@ Rect WindowUtil::GetWindowRectForInfolistWindow(
   }
   return Rect(infolist_pos, window_size);
 }
-}  // namespace mozc::renderer
+}  // namespace renderer
 }  // namespace mozc

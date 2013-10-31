@@ -32,7 +32,6 @@
 #include <cctype>
 #include <string>
 
-#include "base/base.h"
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/util.h"

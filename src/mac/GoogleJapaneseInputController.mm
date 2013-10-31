@@ -81,12 +81,16 @@ const set<string> *gNoOpenLinkApps = NULL;
 const map<CompositionMode, NSString *> *gModeIdMap = NULL;
 const set<string> *gNoSelectedRangeApps = NULL;
 const set<string> *gNoDisplayModeSwitchApps = NULL;
+const set<string> *gNoSurroundingTextApps = NULL;
 
 // TODO(horo): This value should be get from system configuration.
 //  DoubleClickInterval can be get from NSEvent (MacOSX ver >= 10.6)
 const NSTimeInterval kDoubleTapInterval = 0.5;
 
 const int kMaxSurroundingLength = 20;
+// In some apllications when the client's text length is large, getting the
+// surrounding text takes too much time. So we set this limitation.
+const int kGetSurroundingTextClientLengthLimit = 1000;
 
 NSString *GetLabelForSuffix(const string &suffix) {
   string label = mozc::MacUtil::GetLabelForSuffix(suffix);
@@ -295,6 +299,14 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
   if (noDisplayModeSwitchApps) {
     noDisplayModeSwitchApps->insert("com.microsoft.Word");
     gNoDisplayModeSwitchApps = noDisplayModeSwitchApps;
+  }
+
+  set<string> *noSurroundingTextApps = new(nothrow) set<string>;
+  if (noSurroundingTextApps) {
+    // Disables the surrounding text feature for the following application
+    // because calling attributedSubstringFromRange to it is very heavy.
+    noSurroundingTextApps->insert("com.evernote.Evernote");
+    gNoSurroundingTextApps = noSurroundingTextApps;
   }
 }
 
@@ -528,10 +540,12 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
     return;
   }
 
-  NSAttributedString *text =
-      [sender attributedSubstringFromRange:selectedRange];
   if (!sending_command.has_text()) {
-    sending_command.set_text([[text string] UTF8String]);
+    NSString *text = [[sender attributedSubstringFromRange:selectedRange] string];
+    if (!text) {
+      return;
+    }
+    sending_command.set_text([text UTF8String]);
   }
 
   if (mozcClient_->SendCommand(sending_command, &output)) {
@@ -853,20 +867,14 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
 
 - (BOOL)fillSurroundingContext:(mozc::commands::Context *)context
                         client:(id<IMKTextInput>)client {
-  NSRange selectedRange;
-  if ([composedString_ length] == 0) {
-    selectedRange = [client selectedRange];
-  } else {
-    // When composed string exists we calls markedRange to get the surrounding
-    // text of the composed string.
-    selectedRange = [client markedRange];
-  }
-  if (selectedRange.location == NSNotFound ||
-      selectedRange.length == NSNotFound) {
+  NSInteger totalLength = [client length];
+  if (totalLength == 0 || totalLength == NSNotFound ||
+      totalLength > kGetSurroundingTextClientLengthLimit) {
     return false;
   }
-  NSInteger totalLength = [client length];
-  if (totalLength == 0 || totalLength == NSNotFound) {
+  NSRange selectedRange = [client selectedRange];
+  if (selectedRange.location == NSNotFound ||
+      selectedRange.length == NSNotFound) {
     return false;
   }
   NSRange precedingRange = NSMakeRange(0, selectedRange.location);
@@ -875,23 +883,11 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
         NSMakeRange(selectedRange.location - kMaxSurroundingLength,
                     kMaxSurroundingLength);
   }
-  NSRange followingRange =
-      NSMakeRange(selectedRange.location + selectedRange.length,
-                  totalLength - selectedRange.location - selectedRange.length);
-  if (followingRange.length > kMaxSurroundingLength) {
-    followingRange.length = kMaxSurroundingLength;
-  }
   NSString *precedingString =
     [[client attributedSubstringFromRange:precedingRange] string];
-  NSString *followingString =
-    [[client attributedSubstringFromRange:followingRange] string];
   if (precedingString) {
     context->set_preceding_text([precedingString UTF8String]);
     DLOG(INFO) << "preceding_text: \"" << context->preceding_text() << "\"";
-  }
-  if (followingString) {
-    context->set_following_text([followingString UTF8String]);
-    DLOG(INFO) << "following_text: \"" << context->following_text() << "\"";
   }
   return true;
 }
@@ -991,7 +987,9 @@ bool IsBannedApplication(const set<string>* bundleIdSet,
   }
   keyEvent.set_mode(mode_);
 
-  if (!IsBannedApplication(gNoSelectedRangeApps, *clientBundle_)) {
+  if ([composedString_ length] == 0 &&
+      !IsBannedApplication(gNoSelectedRangeApps, *clientBundle_) &&
+      !IsBannedApplication(gNoSurroundingTextApps, *clientBundle_)) {
     [self fillSurroundingContext:&context client:sender];
   }
   if (!mozcClient_->SendKeyWithContext(keyEvent, context, &output)) {

@@ -30,7 +30,7 @@
 #ifndef MOZC_DATA_MANAGER_PACKED_PACKED_USER_DATA_MANAGER_H_
 #define MOZC_DATA_MANAGER_PACKED_PACKED_USER_DATA_MANAGER_H_
 
-#include "base/base.h"
+#include "base/port.h"
 #include "base/scoped_ptr.h"
 #include "data_manager/data_manager_interface.h"
 
@@ -76,6 +76,8 @@ class PackedDataManager : public DataManagerInterface {
       const int **conjugation_suffix_data_index,
       const UsageDictItem **usage_data_value) const;
 #endif  // NO_USAGE_REWRITER
+  virtual void GetCounterSuffixSortedArray(const CounterSuffixEntry **array,
+                                           size_t *size) const;
 
  private:
   friend class PackedDataTestBase;

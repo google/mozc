@@ -32,19 +32,11 @@
 
 #include <vector>
 
-#include "base/base.h"
 #include "base/coordinates.h"
+#include "base/port.h"
 #include "renderer/win32/win32_renderer_util.h"
 
-namespace WTL {
-class CRect;
-}
-
 namespace mozc {
-
-namespace commands {
-class RendererCommand;
-}  // namespace commands
 
 namespace renderer {
 namespace win32 {
@@ -64,6 +56,7 @@ class CompositionWindowList {
 
   static CompositionWindowList *CreateInstance();
 
+ private:
   DISALLOW_COPY_AND_ASSIGN(CompositionWindowList);
 };
 }  // namespace win32

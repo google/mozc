@@ -46,7 +46,7 @@
      +===========+===========+===========+
      |           |    '/'    |    '?'    |
      |    '*'    |'+' '0' '-'|',' '#' '!'|
-     |           |           |           |
+     |           |    '<'    |    '>'    |
      +===========+===========+===========+
 
   TODO(hidehiko): Now the key id is inconsistent between keyIcon and flick popup due to
@@ -620,6 +620,16 @@
             <PopUp mozc:popUpIcon="@raw/twelvekeys__kana__keyicon__prolonged_sound_mark" />
           </KeyEntity>
         </Flick>
+        <Flick mozc:direction="down">
+          <!-- flickHighlight is intentionally false because there are no coresponding keyIcon,
+               which is required for rendering flick highlight. -->
+          <KeyEntity mozc:sourceId="67"
+                     mozc:keyCode="@integer/uchar_less_than_sign"
+                     mozc:keyIcon="@raw/qwerty__keyicon__wave_dash"
+                     mozc:flickHighlight="false">
+            <PopUp mozc:popUpIcon="@raw/qwerty__keyicon__wave_dash" />
+          </KeyEntity>
+        </Flick>
       </KeyState>
     </Key>
     <Key>
@@ -656,6 +666,16 @@
             <PopUp mozc:popUpIcon="@raw/twelvekeys__kana__keyicon__exclamation_mark" />
           </KeyEntity>
         </Flick>
+        <Flick mozc:direction="down">
+          <!-- flickHighlight is intentionally false because there are no coresponding keyIcon,
+               which is required for rendering flick highlight. -->
+          <KeyEntity mozc:sourceId="66"
+                     mozc:keyCode="@integer/uchar_greater_than_sign"
+                     mozc:keyIcon="@raw/qwerty__keyicon__horizontal_ellipsis"
+                     mozc:flickHighlight="false">
+            <PopUp mozc:popUpIcon="@raw/qwerty__keyicon__horizontal_ellipsis" />
+          </KeyEntity>
+        </Flick>
       </KeyState>
     </Key>
     <Key mozc:keyBackground="twelvekeysFunction"
@@ -671,5 +691,5 @@
       </KeyState>
     </Key>
   </Row>
-  <!-- Next sourceId: 66 -->
+  <!-- Next sourceId: 68 -->
 </Keyboard>

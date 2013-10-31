@@ -27,6 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#define SYNC_VLOG_MODULENAME "SyncLogging"
+
 #include "sync/logging.h"
 
 #ifdef OS_WIN
@@ -35,7 +37,6 @@
 #include <sys/stat.h>
 #endif
 
-#include <cstddef>
 #include <string>
 
 #include "base/port.h"
@@ -52,6 +53,7 @@ DEFINE_int32(sync_verbose_level, 1,
 
 namespace mozc {
 namespace sync {
+namespace internal {
 
 namespace {
 const char kSyncLogFileName[] = "sync.log";
@@ -65,6 +67,14 @@ class LogStreamImpl {
 
   ostream &stream() {
     return *stream_;
+  }
+
+  void Lock() {
+    mutex_.Lock();
+  }
+
+  void Unlock() {
+    mutex_.Unlock();
   }
 
   void Reset() {
@@ -94,7 +104,7 @@ class LogStreamImpl {
       string line;
       getline(ifs, line);   // skip first line because this may be broken.
       while (getline(ifs, line)) {
-        *(stream_.get()) << line << '\n';
+        *stream_ << line << '\n';
       }
       stream_->flush();
     }
@@ -105,18 +115,26 @@ class LogStreamImpl {
   void Open(const string &filename) {
     stream_.reset(new OutputFileStream(filename.c_str(), ios::app));
     CHECK(stream_.get());
+    CHECK(stream_->good());
 #if !defined(OS_WIN) && !defined(__native_client__)
     ::chmod(filename.c_str(), 0600);
 #endif  // !OS_WIN && !__native_client_
   }
 
   scoped_ptr<ostream> stream_;
+  Mutex mutex_;
 };
 }  // namespace
 
 // static
-ostream &Logging::GetLogStream() {
+ostream &Logging::GetLogStreamWithLock() {
+  Singleton<LogStreamImpl>::get()->Lock();
   return Singleton<LogStreamImpl>::get()->stream();
+}
+
+// static
+void Logging::Unlock() {
+  Singleton<LogStreamImpl>::get()->Unlock();
 }
 
 // static
@@ -136,19 +154,15 @@ void Logging::Reset() {
   Singleton<LogStreamImpl>::get()->Reset();
 }
 
-namespace {
-Mutex g_log_finalizer_mutex;
-}  // namespace
-
 LogFinalizer::LogFinalizer() {
-  g_log_finalizer_mutex.Lock();
 }
 
 LogFinalizer::~LogFinalizer() {
   Singleton<LogStreamImpl>::get()->stream() << endl;
   Singleton<LogStreamImpl>::get()->TruncateStream();
-  g_log_finalizer_mutex.Unlock();
+  Singleton<LogStreamImpl>::get()->Unlock();
 }
 
+}  // namespace internal
 }  // namespace sync
 }  // namespace mozc

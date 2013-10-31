@@ -102,7 +102,7 @@ int RunMozcTool(int argc, char *argv[]) {
 #ifdef OS_MACOSX
   // OSX's app won't accept command line flags.
   // Here we read the flags by using --fromenv option
-  scoped_array<char *> tmp(new char * [2]);
+  scoped_ptr<char *[]> tmp(new char * [2]);
   tmp[0] = strdup_with_new(argv[0]);
   tmp[1] = strdup_with_new(
        "--fromenv=mode,error_type,confirmation_type,register_prelauncher");

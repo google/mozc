@@ -41,6 +41,9 @@ class KeyEvent;
 
 namespace config {
 
+// Caveats: This class tries to load config file internally, which is not
+// stable in a client DLL. Use KeyInfoUtil::ExtractSortedDirectModeKeys and
+// KeyInfoUtil::ContainsKey instead.
 class ImeSwitchUtil {
  public:
   // Returns true if 'key' is assigned for any command in direct mode.

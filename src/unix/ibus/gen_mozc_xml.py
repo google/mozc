@@ -73,7 +73,7 @@ IBUS_1_5_ENGINE_COMMON_PROPS = {
     'symbol': '&#x3042;',
 }
 
-# A dictionary from --platform to engines that are used in the platform. The
+# A dictionary from platform to engines that are used in the platform. The
 # information is used to generate <engines> part of mozc.xml.
 IBUS_ENGINES_PROPS = {
     # On Linux, we provide only one engine for the Japanese keyboard layout.
@@ -92,16 +92,6 @@ IBUS_ENGINES_PROPS = {
         'name': ['mozc-jp'],
         'longname': ['%(product_name)s'],
         'layout': ['default'],
-    },
-    # On Chrome/Chromium OS, we provide three engines.
-    'ChromeOS': {
-        # DO NOT change the engine name 'mozc-jp'. The names is referenced by
-        # unix/ibus/mozc_engine.cc.
-        'name': ['mozc-jp', 'mozc', 'mozc-dv'],
-        'longname': ['%(product_name)s (Japanese keyboard layout)',
-                     '%(product_name)s (US keyboard layout)',
-                     '%(product_name)s (US Dvorak keyboard layout)'],
-        'layout': ['jp', 'us', 'us(dvorak)'],
     },
 }
 
@@ -203,11 +193,8 @@ def main():
                     dest='output_cpp', default=False,
                     help='If specified, output a C++ header. Otherwise, output '
                     'XML.')
-  parser.add_option('--platform', dest='platform', default=None,
-                    help='Platform where ibus-mozc runs. Currently, only two '
-                    'platforms are supported: ChromeOS, Linux.')
   parser.add_option('--branding', dest='branding', default=None,
-                    help='GoogleJapaneseInput for the ChromeOS official build. '
+                    help='GoogleJapaneseInput for the official build. '
                     'Otherwise, Mozc.')
   parser.add_option('--ibus_mozc_path', dest='ibus_mozc_path', default='',
                     help='The absolute path of ibus_mozc executable.')
@@ -222,15 +209,15 @@ def main():
   (options, unused_args) = parser.parse_args()
 
   setup_arg = []
-  platform = options.platform
-  common_props = IBUS_ENGINE_COMMON_PROPS
-  if platform == 'Linux':
-    setup_arg.append(os.path.join(options.server_dir, 'mozc_tool'))
-    setup_arg.append('--mode=config_dialog')
-    if IsIBus15OrGreater(options):
-      # A tentative workaround against IBus 1.5
-      platform = 'Linux-IBus1.5'
-      common_props = IBUS_1_5_ENGINE_COMMON_PROPS
+  setup_arg.append(os.path.join(options.server_dir, 'mozc_tool'))
+  setup_arg.append('--mode=config_dialog')
+  if IsIBus15OrGreater(options):
+    # A tentative workaround against IBus 1.5
+    platform = 'Linux-IBus1.5'
+    common_props = IBUS_1_5_ENGINE_COMMON_PROPS
+  else:
+    platform = 'Linux'
+    common_props = IBUS_ENGINE_COMMON_PROPS
 
   param_dict = {'product_name': PRODUCT_NAMES[options.branding],
                 'ibus_mozc_path': options.ibus_mozc_path,

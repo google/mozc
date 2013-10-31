@@ -65,12 +65,8 @@ def main():
 
   if not opt.pkgproj:
     PrintErrorAndExit('--pkgproj option is mandatory.')
-
-  if not opt.signpkg:
-    PrintErrorAndExit('--signpkg option is mandatory.')
-
   pkgproj = os.path.abspath(opt.pkgproj)
-  signpkg = os.path.abspath(opt.signpkg)
+
 
   # Make sure Packages is installed
   packagesbuild_path = ""

@@ -132,6 +132,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        '../protobuf/protobuf.gyp:protobuf',
         'jsoncpp.gyp:jsoncpp',
       ],
     },

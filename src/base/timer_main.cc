@@ -27,13 +27,15 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "base/timer.h"
+
 #include <iostream>
-#include <vector>
 #include <string>
-#include "base/base.h"
+#include <vector>
+
 #include "base/logging.h"
 #include "base/mutex.h"
-#include "base/timer.h"
+#include "base/port.h"
 #include "base/util.h"
 
 DEFINE_int32(sleep_time, 0, "sleep time in signaled");
@@ -42,15 +44,20 @@ namespace mozc {
 namespace {
 class TestTimer : public Timer {
  public:
+  TestTimer() {}
+
   virtual void Signaled() {
     LOG(INFO) << "Start signaled";
     LOG(INFO) << "Sleeping " << FLAGS_sleep_time << " msec";
     Util::Sleep(FLAGS_sleep_time);
     LOG(INFO) << "Finish signaled";
   }
+
+ private:
+  DISALLOW_COPY_AND_ASSIGN(TestTimer);
 };
-}
-}  // mozc
+}  // namespace
+}  // namespace mozc
 
 // This is a simple command line tool
 int main(int argc, char **argv) {

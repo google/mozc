@@ -54,7 +54,7 @@ class UserDictionaryAdapter;
 class SyncHandler : public Thread {
  public:
   SyncHandler();
-  ~SyncHandler();
+  virtual ~SyncHandler();
 
   // Sync() does the following four steps in sequence.
   // 1. calls SyncerInterface::Start() in the current thread.
@@ -67,11 +67,7 @@ class SyncHandler : public Thread {
   // will signal a event later.
   bool Sync();
 
-  // Creates a new thread and executes SyncerInterface::Clear() method.
-  // Clear operation (network connections) is executed asynchronously.
-  bool Clear();
-
-  // Wait Sync() or Clear() call until they finish.
+  // Wait Sync() call until it finishes.
   void Wait();
 
   // Get the current cloud sync status and set it into the argument.
@@ -90,29 +86,21 @@ class SyncHandler : public Thread {
   // This class takes an ownership of |*oauth2_util|;
   void SetOAuth2UtilForUnittest(OAuth2Util *oauth2_util);
 
-  // Returns reload_required_timestamp_.
+  // Returns reload_required_timestamp_ in sec.
   // This value can be used to reload SessionHandler from the main event loop.
   uint64 GetReloadRequiredTimestamp();
 
  private:
   void InitializeSyncer();
 
-  // This method is executed outside of the
-  // main converter thread.
-  void Run();
-
-  enum CommandType {
-    COMMAND_NONE,
-    SYNC,
-    CLEAR,
-  };
+  // This method is executed outside of the main converter thread.
+  virtual void Run();
 
   const Scheduler::JobSetting cloud_sync_job_setting_;
-  const Scheduler::JobSetting clear_sync_job_setting_;
   scoped_ptr<ConfigAdapter> config_adapter_;
   scoped_ptr<UserDictionaryAdapter> user_dictionary_adapter_;
-  CommandType command_type_;
   Mutex status_mutex_;
+  Mutex sync_mutex_;
   scoped_ptr<OAuth2Util> oauth2_util_;
   uint64 last_sync_timestamp_;
   uint64 reload_required_timestamp_;
@@ -125,4 +113,4 @@ class SyncHandler : public Thread {
 }  // namespace sync
 }  // namespace mozc
 
-#endif  // MOZC_SYNC_SYNCER_H_
+#endif  // MOZC_SYNC_SYNC_HANDLER_H_

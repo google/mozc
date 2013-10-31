@@ -369,6 +369,12 @@ bool Session::SendCommand(commands::Command *command) {
     case commands::SessionCommand::CONVERT_NEXT_PAGE:
       result = ConvertNextPage(command);
       break;
+    case commands::SessionCommand::TURN_ON_IME:
+      result = MakeSureIMEOn(command);
+      break;
+    case commands::SessionCommand::TURN_OFF_IME:
+      result = MakeSureIMEOff(command);
+      break;
     default:
       LOG(WARNING) << "Unknown command" << command->DebugString();
       result = DoNothing(command);
@@ -989,6 +995,53 @@ bool Session::IMEOff(commands::Command *command) {
   context_->mutable_converter()->Reset();
 
   SetSessionState(ImeContext::DIRECT, context_.get());
+  OutputMode(command);
+  return true;
+}
+
+bool Session::MakeSureIMEOn(mozc::commands::Command *command) {
+  if (command->input().has_command() &&
+      command->input().command().has_composition_mode() &&
+      (command->input().command().composition_mode() == commands::DIRECT)) {
+    // This is invalid and unsupported usage.
+    return false;
+  }
+
+  command->mutable_output()->set_consumed(true);
+  if (context_->state() == ImeContext::DIRECT) {
+    ClearUndoContext();
+    SetSessionState(ImeContext::PRECOMPOSITION, context_.get());
+  }
+  if (command->input().has_command() &&
+      command->input().command().has_composition_mode()) {
+    ApplyInputMode(command->input().command().composition_mode(),
+                   context_->mutable_composer());
+  }
+  OutputMode(command);
+  return true;
+}
+
+bool Session::MakeSureIMEOff(mozc::commands::Command *command) {
+  if (command->input().has_command() &&
+      command->input().command().has_composition_mode() &&
+      (command->input().command().composition_mode() == commands::DIRECT)) {
+    // This is invalid and unsupported usage.
+    return false;
+  }
+
+  command->mutable_output()->set_consumed(true);
+  if (context_->state() != ImeContext::DIRECT) {
+    ClearUndoContext();
+    Commit(command);
+    // Reset the context.
+    context_->mutable_converter()->Reset();
+    SetSessionState(ImeContext::DIRECT, context_.get());
+  }
+  if (command->input().has_command() &&
+      command->input().command().has_composition_mode()) {
+    ApplyInputMode(command->input().command().composition_mode(),
+                   context_->mutable_composer());
+  }
   OutputMode(command);
   return true;
 }

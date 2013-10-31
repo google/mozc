@@ -47,15 +47,20 @@
 #include "base/logging.h"
 #include "base/system_util.h"
 #include "base/win_util.h"
+#include "win32/base/text_icon.h"
 #include "win32/ime/ime_impl_imm.h"
 #include "win32/ime/ime_language_bar.h"
+#include "win32/ime/ime_resource.h"
 
 namespace {
 
-using WTL::CBitmap;
-using WTL::CIcon;
-using WTL::CSize;
-using WTL::CDC;
+using ::WTL::CBitmap;
+using ::WTL::CIcon;
+using ::WTL::CSize;
+using ::WTL::CDC;
+
+using ::mozc::WinUtil;
+using ::mozc::win32::TextIcon;
 
 const int kDefaultDPI = 96;
 
@@ -64,6 +69,35 @@ const int kImeLangBarMenuCookie = (('M' << 24) |
                                    ('o' << 16) |
                                    ('z' << 8) |
                                    ('c' << 0));
+
+// "ＭＳ ゴシック"
+const char kTextIconFont[] =
+    "\xEF\xBC\xAD\xEF\xBC\xB3"
+    "\x20\xE3\x82\xB4\xE3\x82\xB7\xE3\x83\x83\xE3\x82\xAF";
+
+// TODO(yukawa): Refactor LangBar code so that we can configure following
+// settings as a part of initialization.
+string GetIconStringIfNecessary(UINT icon_id) {
+  switch (icon_id) {
+    case IDI_DIRECT_NT:
+      return "A";
+    case IDI_HIRAGANA_NT:
+      // "あ"
+      return "\xE3\x81\x82";
+    case IDI_FULL_KATAKANA_NT:
+      // "ア"
+      return "\xE3\x82\xA2";
+    case IDI_HALF_ALPHANUMERIC_NT:
+      return "_A";
+    case IDI_FULL_ALPHANUMERIC_NT:
+      // "Ａ"
+      return "\xEF\xBC\xA1";
+    case IDI_HALF_KATAKANA_NT:
+      // "_ｱ"
+      return "_" "\xEF\xBD\xB1";
+  }
+  return string();
+}
 
 // Loads an icon which is appropriate for the current theme.
 // An icon ID 0 represents "no icon".
@@ -81,7 +115,7 @@ HICON LoadIconFromResource(HINSTANCE instance,
     // TODO(yukawa): Make a wrapper of GetModuleHandleEx to increment a
     // reference count of the theme DLL while we call IsThemeActive API.
     const HMODULE theme_dll =
-        mozc::WinUtil::GetSystemModuleHandleAndIncrementRefCount(kThemeDll);
+        WinUtil::GetSystemModuleHandleAndIncrementRefCount(kThemeDll);
     if (theme_dll != nullptr) {
       FPIsThemeActive is_thread_active = reinterpret_cast<FPIsThemeActive>(
           ::GetProcAddress(theme_dll, "IsThemeActive"));
@@ -98,15 +132,19 @@ HICON LoadIconFromResource(HINSTANCE instance,
     return nullptr;
   }
 
-  CDC desktop_dc(::GetDC(nullptr));
-  const int dpi_x = desktop_dc.GetDeviceCaps(LOGPIXELSX);
-  const int dpi_y = desktop_dc.GetDeviceCaps(LOGPIXELSY);
-  const int icon_width = ::MulDiv(16, dpi_x, kDefaultDPI);
-  const int icon_height = ::MulDiv(16, dpi_y, kDefaultDPI);
+  const auto icon_size = ::GetSystemMetrics(SM_CYSMICON);
+
+  // Replace some text icons with on-the-fly image drawn with MS-Gothic.
+  const auto &icon_text = GetIconStringIfNecessary(id);
+  if (!icon_text.empty()) {
+    const COLORREF text_color = ::GetSysColor(COLOR_WINDOWTEXT);
+    return TextIcon::CreateMonochromeIcon(
+        icon_size, icon_size, icon_text, kTextIconFont, text_color);
+  }
 
   return static_cast<HICON>(::LoadImage(
       instance, MAKEINTRESOURCE(id),
-      IMAGE_ICON, icon_width, icon_height, LR_CREATEDIBSECTION));
+      IMAGE_ICON, icon_size, icon_size, LR_CREATEDIBSECTION));
 }
 
 // Retrieves the bitmap handle loaded by using an icon ID.
@@ -544,25 +582,6 @@ STDAPI ImeIconButtonMenu::GetInfo(TF_LANGBARITEMINFO* item_info) {
 
   // Just copies the cached TF_LANGBARITEMINFO object.
   *item_info = *this->item_info();
-
-  CIcon icon;
-  if (FAILED(GetIcon(&icon.m_hIcon)) || icon.IsNull()) {
-    return S_OK;
-  }
-
-  ICONINFO icon_info = { 0 };
-  const BOOL get_icon_succeeded = icon.GetIconInfo(&icon_info);
-  CBitmap color(icon_info.hbmColor);
-  CBitmap mask(icon_info.hbmMask);
-  if (!get_icon_succeeded) {
-    return S_OK;
-  }
-
-  if (color.IsNull() && !mask.IsNull()) {
-    item_info->dwStyle |= TF_LBI_STYLE_TEXTCOLORICON;
-    return S_OK;
-  }
-
   return S_OK;
 }
 
@@ -571,10 +590,13 @@ STDAPI ImeIconButtonMenu::GetIcon(HICON* icon) {
   if (icon == nullptr) {
     return E_INVALIDARG;
   }
-
-  //  Excerpt: http://msdn.microsoft.com/en-us/library/ms628718.aspx
-  //  The caller must free this icon when it is no longer required by
-  //  calling DestroyIcon.
+  // Excerpt: http://msdn.microsoft.com/en-us/library/ms628718.aspx
+  // The caller must free this icon when it is no longer required by
+  // calling DestroyIcon.
+  // Caveats: ITfLangBarMgr causes GDI handle leak when an icon which consists
+  // only of mask bitmap (AND bitmap) is returned. |*icon| must have color
+  // bitmap (XOR bitmap) as well as mask bitmap (XOR bitmap) to avoid GDI
+  // handle leak.
   *icon = LoadIconFromResource(ImeGetResource(),
                                menu_icon_id_for_non_theme_,
                                menu_icon_id_for_theme_);
@@ -667,25 +689,6 @@ STDAPI ImeToggleButtonMenu::GetInfo(TF_LANGBARITEMINFO* item_info) {
   if (FAILED(result)) {
     return result;
   }
-
-  CIcon icon;
-  if (FAILED(GetIcon(&icon.m_hIcon)) || icon.IsNull()) {
-    return S_OK;
-  }
-
-  ICONINFO icon_info = { 0 };
-  const BOOL get_icon_succeeded = icon.GetIconInfo(&icon_info);
-  CBitmap color(icon_info.hbmColor);
-  CBitmap mask(icon_info.hbmMask);
-  if (!get_icon_succeeded) {
-    return S_OK;
-  }
-
-  if (color.IsNull() && !mask.IsNull()) {
-    item_info->dwStyle |= TF_LBI_STYLE_TEXTCOLORICON;
-    return S_OK;
-  }
-
   return S_OK;
 }
 
@@ -735,9 +738,13 @@ STDAPI ImeToggleButtonMenu::GetIcon(HICON* icon) {
 
   const ImeLangBarMenuData* selected = menu_data(menu_selected_);
 
-  //  Excerpt: http://msdn.microsoft.com/en-us/library/ms628718.aspx
-  //  The caller must free this icon when it is no longer required by
-  //  calling DestroyIcon.
+  // Excerpt: http://msdn.microsoft.com/en-us/library/ms628718.aspx
+  // The caller must free this icon when it is no longer required by
+  // calling DestroyIcon.
+  // Caveats: ITfLangBarMgr causes GDI handle leak when an icon which consists
+  // only of mask bitmap (AND bitmap) is returned. |*icon| must have color
+  // bitmap (XOR bitmap) as well as mask bitmap (XOR bitmap) to avoid GDI
+  // handle leak.
   *icon = LoadIconFromResource(ImeGetResource(),
                                selected->icon_id_for_non_theme_,
                                selected->icon_id_for_theme_);

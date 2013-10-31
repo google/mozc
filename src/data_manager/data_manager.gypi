@@ -85,13 +85,14 @@
         'gen_embedded_collocation_data_for_<(dataset_tag)#host',
         'gen_embedded_collocation_suppression_data_for_<(dataset_tag)#host',
         'gen_embedded_connection_data_for_<(dataset_tag)#host',
+        'gen_embedded_counter_suffix_data_for_<(dataset_tag)#host',
         'gen_embedded_dictionary_data_for_<(dataset_tag)#host',
         'gen_embedded_pos_group_data_for_<(dataset_tag)#host',
         'gen_embedded_reading_correction_data_for_<(dataset_tag)#host',
         'gen_embedded_segmenter_data_for_<(dataset_tag)#host',
         'gen_embedded_suffix_data_for_<(dataset_tag)#host',
         'gen_embedded_suggestion_filter_data_for_<(dataset_tag)#host',
-        'gen_embedded_symbol_rewriter_data_for_<(dataset_tag)#host'
+        'gen_embedded_symbol_rewriter_data_for_<(dataset_tag)#host',
       ],
       'conditions': [
         ['target_platform!="Android"', {
@@ -179,7 +180,7 @@
         {
           'action_name': 'gen_embedded_connection_data_for_<(dataset_tag)',
           'variables': {
-            'text_connection_file': '<(platform_data_dir)/connection.txt',
+            'text_connection_file': '<(platform_data_dir)/connection_single_column.txt',
             'id_file': '<(platform_data_dir)/id.def',
             'special_pos_file': '<(common_data_dir)/rules/special_pos.def',
             'use_1byte_cost_flag': '<(use_1byte_cost_for_connection_data)',
@@ -257,7 +258,7 @@
         {
           'action_name': 'gen_separate_connection_data_for_<(dataset_tag)',
           'variables': {
-            'text_connection_file': '<(platform_data_dir)/connection.txt',
+            'text_connection_file': '<(platform_data_dir)/connection_single_column.txt',
             'id_file': '<(platform_data_dir)/id.def',
             'special_pos_file': '<(common_data_dir)/rules/special_pos.def',
             'use_1byte_cost_flag': '<(use_1byte_cost_for_connection_data)',
@@ -642,6 +643,35 @@
               ],
             }],
           ],
+        },
+      ],
+    },
+    {
+      'target_name': 'gen_embedded_counter_suffix_data_for_<(dataset_tag)',
+      'type': 'none',
+      'toolsets': ['host'],
+      'actions': [
+        {
+          'action_name': 'gen_embedded_counter_suffix_data_for_<(dataset_tag)',
+          'variables': {
+            'id_file': '<(platform_data_dir)/id.def',
+            'input_files%': '<(dictionary_files)',
+          },
+          'inputs': [
+            '<(id_file)',
+            '<@(input_files)',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/counter_suffix_data.h',
+          ],
+          'action': [
+            'python', '<(mozc_dir)/rewriter/gen_counter_suffix_array.py',
+            '--id_file=<(id_file)',
+            '--output=<(gen_out_dir)/counter_suffix_data.h',
+            '<@(input_files)',
+          ],
+          'message': ('[<(dataset_tag)] Generating ' +
+                      '<(gen_out_dir)/counter_suffix_data.h'),
         },
       ],
     },

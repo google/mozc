@@ -27,35 +27,24 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// Omaha is the code name of Google Update, which is not used in
-// OSS version of Mozc.
-#if !defined(GOOGLE_JAPANESE_INPUT_BUILD)
-#error OmahaUtil must be used with Google Japanese Input, not OSS Mozc
-#endif  // !GOOGLE_JAPANESE_INPUT_BUILD
-
-// sidestep seems not to have supported x64 environment yet.
-// TODO(yukawa): Implement DLL hook library which supports x64 code.
-#if defined(_M_IX86)
-
 #include <windows.h>
 #include <strsafe.h>
 
 #include <clocale>
 
-#include "base/base.h"
 #include "base/logging.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
+#include "base/win_api_test_helper.h"
 #include "base/win_util.h"
 #include "testing/base/public/gunit.h"
 #include "win32/base/omaha_util.h"
-#include "shared/opensource/patching/sidestep/cross/auto_testing_hook.h"
 
 namespace mozc {
 namespace win32 {
 namespace {
 // Most of the following codes are very similar to those in
-// config/stats_config_util.test.cc.
+// config/stats_config_util_test.cc.
 // TODO(yukawa): Remove code duplication.
 
 const wchar_t kOmahaUsageKey[] =
@@ -143,19 +132,28 @@ class RegistryEmulator {
   };
 
   typedef PropertySelector<Id> Property;
-  RegistryEmulator()
-    : hook_reg_create_(
-          sidestep::MakeTestingHook(RegCreateKeyExW, TestRegCreateKeyExW)),
-      hook_reg_set_(
-          sidestep::MakeTestingHook(RegSetValueExW, TestRegSetValueExW)),
-      hook_reg_close_(
-          sidestep::MakeTestingHook(RegCloseKey, TestRegCloseKey)),
-      hook_reg_open_(
-          sidestep::MakeTestingHook(RegOpenKeyExW, TestRegOpenKeyExW)),
-      hook_reg_query_(
-          sidestep::MakeTestingHook(RegQueryValueExW, TestRegQueryValueExW)),
-      hook_reg_delete_value_(
-          sidestep::MakeTestingHook(RegDeleteValueW, TestRegDeleteValueW)) {
+
+  RegistryEmulator() {
+    vector<WinAPITestHelper::HookRequest> requests;
+    requests.push_back(
+        DEFINE_HOOK("advapi32.dll", RegCreateKeyExW, TestRegCreateKeyExW));
+    requests.push_back(
+        DEFINE_HOOK("advapi32.dll", RegSetValueExW, TestRegSetValueExW));
+    requests.push_back(
+        DEFINE_HOOK("advapi32.dll", RegCloseKey, TestRegCloseKey));
+    requests.push_back(
+        DEFINE_HOOK("advapi32.dll", RegOpenKeyExW, TestRegOpenKeyExW));
+    requests.push_back(
+        DEFINE_HOOK("advapi32.dll", RegQueryValueExW, TestRegQueryValueExW));
+    requests.push_back(
+        DEFINE_HOOK("advapi32.dll", RegDeleteValueW, TestRegDeleteValueW));
+    restore_info_ = WinAPITestHelper::DoHook(
+        ::GetModuleHandle(nullptr), requests);
+  }
+
+  ~RegistryEmulator() {
+    WinAPITestHelper::RestoreHook(restore_info_);
+    restore_info_ = nullptr;
   }
 
   static Property *property() {
@@ -165,20 +163,6 @@ class RegistryEmulator {
   static HKEY GetClientStateKey(REGSAM regsam) {
     const REGSAM kReadWrite = (KEY_WRITE | KEY_READ);
     const REGSAM kRead = KEY_READ;
-#if defined(_M_X64)
-    // for 64-bit code
-    const bool contain_wow64_32_key =
-        ((regsam & KEY_WOW64_32KEY) == KEY_WOW64_32KEY);
-    if ((regsam & kReadWrite) == kReadWrite) {
-      return contain_wow64_32_key ? kHKLM32_ClientState_ReadWrite
-                                  : kHKLM64_ClientState_ReadWrite;
-    }
-    if ((regsam & KEY_WRITE) == KEY_WRITE) {
-      return contain_wow64_32_key ? kHKLM32_ClientState_Read
-                                  : kHKLM64_ClientState_Read;
-    }
-#else
-    // for 32-bit code
     if (SystemUtil::IsWindowsX64()) {
       // 64-bit OS
       const bool contain_wow64_64_key =
@@ -206,7 +190,6 @@ class RegistryEmulator {
         return kHKLM32_ClientState_Read;
       }
     }
-#endif
     EXPECT_TRUE(false) << "Unexpected combination found.  regsam = " << regsam;
     return KRegKey_NotFound;
   }
@@ -465,33 +448,13 @@ class RegistryEmulator {
     return ERROR_SUCCESS;
   }
 
-  sidestep::AutoTestingHook hook_reg_create_;
-  sidestep::AutoTestingHook hook_reg_set_;
-  sidestep::AutoTestingHook hook_reg_close_;
-  sidestep::AutoTestingHook hook_reg_open_;
-  sidestep::AutoTestingHook hook_reg_query_;
-  sidestep::AutoTestingHook hook_reg_delete_value_;
+  WinAPITestHelper::RestoreInfoHandle restore_info_;
 };
-}  // anonymous namespace
+
+}  // namespace
 
 class OmahaUtilTestOn32bitMachine : public testing::Test {
  protected:
-  static void SetUpTestCase() {
-    // A quick fix of b/2669319.  If mozc::SystemUtil::GetSystemDir is first
-    // called when registry APIs are hooked by sidestep, GetSystemDir fails
-    // unexpectedly because GetSystemDir also depends on registry API
-    // internally.  The second call of mozc::SystemUtil::GetSystemDir works
-    // well because it caches the result of the first call.  So any registry
-    // API access occurs in the second call.  We call
-    // mozc::SystemUtil::GetSystemDir here so that it works even when registry
-    // APIs are hooked.
-    // TODO(yukawa): remove this quick fix as a part of b/2769852.
-    SystemUtil::GetSystemDir();
-
-    // Call IsWindowsX64 in case it internally uses registry.
-    SystemUtil::IsWindowsX64();
-  }
-
   virtual void SetUp() {
     SystemUtil::SetIsWindowsX64ModeForTest(
         SystemUtil::IS_WINDOWS_X64_EMULATE_32BIT_MACHINE);
@@ -505,22 +468,6 @@ class OmahaUtilTestOn32bitMachine : public testing::Test {
 
 class OmahaUtilTestOn64bitMachine : public testing::Test {
  protected:
-  static void SetUpTestCase() {
-    // A quick fix of b/2669319.  If mozc::SystemUtil::GetSystemDir is first
-    // called when registry APIs are hooked by sidestep, GetSystemDir fails
-    // unexpectedly because GetSystemDir also depends on registry API
-    // internally.  The second call of mozc::SystemUtil::GetSystemDir works
-    // well because it caches the result of the first call.  So any registry
-    // API access occurs in the second call.  We call
-    // mozc::SystemUtil::GetSystemDir here so that it works even when registry
-    // APIs are hooked.
-    // TODO(yukawa): remove this quick fix as a part of b/2769852.
-    SystemUtil::GetSystemDir();
-
-    // Call IsWindowsX64 in case it internally uses registry.
-    SystemUtil::IsWindowsX64();
-  }
-
   virtual void SetUp() {
     SystemUtil::SetIsWindowsX64ModeForTest(
         SystemUtil::IS_WINDOWS_X64_EMULATE_64BIT_MACHINE);
@@ -661,7 +608,6 @@ TEST_F(OmahaUtilTestOn64bitMachine, WriteClearOmahaError) {
   EXPECT_EQ(0, test.property()->installer_result());
   EXPECT_EQ(L"", test.property()->installer_result_ui_string());
 }
+
 }  // namespace win32
 }  // namespace mozc
-
-#endif  // _M_IX86

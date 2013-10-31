@@ -30,7 +30,9 @@
 #ifndef MOZC_RENDERER_UNIX_UNIX_RENDERER_H_
 #define MOZC_RENDERER_UNIX_UNIX_RENDERER_H_
 
-#include "base/scoped_ptr.h"
+#include <memory>
+
+#include "base/port.h"
 #include "renderer/renderer_interface.h"
 #include "renderer/unix/gtk_wrapper_interface.h"
 #include "renderer/unix/window_manager.h"
@@ -49,8 +51,11 @@ class UnixRenderer : public RendererInterface {
   virtual void SetSendCommandInterface(
       client::SendCommandInterface *send_command_interface);
   void Initialize();
+
  private:
-  scoped_ptr<WindowManagerInterface> window_manager_;
+  std::unique_ptr<WindowManagerInterface> window_manager_;
+
+  DISALLOW_COPY_AND_ASSIGN(UnixRenderer);
 };
 
 }  // namespace gtk

@@ -46,6 +46,9 @@
 
 #include <cstdlib>
 #include <map>
+#ifdef OS_WIN
+#include <memory>  // for std::unique_ptr
+#endif
 
 #include "base/base.h"
 #include "base/const.h"
@@ -64,6 +67,10 @@
 #include "ipc/ipc.h"
 #include "ipc/ipc.pb.h"
 
+#ifdef OS_WIN
+using std::unique_ptr;
+#endif  // OS_WIn
+
 namespace mozc {
 namespace {
 
@@ -78,17 +85,7 @@ string GetIPCKeyFileName(const string &name) {
 #else
   string basename = ".";    // hidden file
 #endif
-
-  basename.append(name);
-#ifdef MOZC_LANGUAGE_SUFFIX_FOR_LINUX
-  // In order to extend language support of Mozc on Linux, we use additional
-  // suffix except for Japanese so that multiple converter processes can
-  // coexist. Note that Mozc on ChromeOS does not use IPC so this kind of
-  // special treatment is not required.
-  basename.append(MOZC_LANGUAGE_SUFFIX_FOR_LINUX);
-#endif  // MOZC_LANGUAGE_SUFFIX_FOR_LINUX
-  basename.append(".ipc");   // this is the extension part.
-
+  basename += name + ".ipc";
   return FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(), basename);
 }
 
@@ -495,7 +492,7 @@ bool IPCPathManager::LoadPathNameInternal() {
       return false;
     }
 
-    scoped_array<char> buf(new char[size]);
+    unique_ptr<char[]> buf(new char[size]);
 
     DWORD read_size = 0;
     if (!::ReadFile(handle.get(), buf.get(),

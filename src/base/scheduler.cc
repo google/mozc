@@ -35,6 +35,8 @@
 
 #include "base/logging.h"
 #include "base/mutex.h"
+#include "base/port.h"
+#include "base/scoped_ptr.h"
 #include "base/singleton.h"
 #include "base/timer.h"
 #include "base/util.h"
@@ -43,7 +45,7 @@ namespace mozc {
 namespace {
 class QueueTimer : public Timer {
  public:
-  QueueTimer(void (*callback)(void *),
+  QueueTimer(void (*callback)(void *),  // NOLINT
              void *arg,
              uint32 due_time,
              uint32 period)
@@ -52,6 +54,8 @@ class QueueTimer : public Timer {
     due_time_(due_time),
     period_(period) {
   }
+
+  virtual ~QueueTimer() {}
 
   bool Start() {
     return Timer::Start(due_time_, period_);
@@ -66,6 +70,8 @@ class QueueTimer : public Timer {
   void *arg_;
   uint32 due_time_;
   uint32 period_;
+
+  DISALLOW_COPY_AND_ASSIGN(QueueTimer);
 };
 
 class Job {
@@ -77,11 +83,8 @@ class Job {
       timer_(NULL),
       running_(false) {}
 
-  virtual ~Job() {
-    if (timer_ != NULL) {
-      timer_->Stop();
-      delete timer_;
-    }
+  ~Job() {
+    set_timer(NULL);
   }
 
   const Scheduler::JobSetting setting() const {
@@ -105,6 +108,9 @@ class Job {
   }
 
   void set_timer(QueueTimer *timer) {
+    if (timer_ != NULL) {
+      delete timer_;
+    }
     timer_ = timer;
   }
 
@@ -130,6 +136,8 @@ class Job {
   uint32 backoff_count_;
   QueueTimer *timer_;
   bool running_;
+
+  // TODO(hsumita): Use DISALLOW_COPY_AND_ASSIGN(Job).
 };
 
 class SchedulerImpl : public Scheduler::SchedulerInterface {
@@ -142,7 +150,7 @@ class SchedulerImpl : public Scheduler::SchedulerInterface {
     RemoveAllJobs();
   }
 
-  void RemoveAllJobs() {
+  virtual void RemoveAllJobs() {
     scoped_lock l(&mutex_);
     jobs_.clear();
   }
@@ -155,7 +163,7 @@ class SchedulerImpl : public Scheduler::SchedulerInterface {
     DCHECK(job_setting.callback() != NULL);
   }
 
-  bool AddJob(const Scheduler::JobSetting &job_setting) {
+  virtual bool AddJob(const Scheduler::JobSetting &job_setting) {
     scoped_lock l(&mutex_);
 
     ValidateSetting(job_setting);
@@ -174,6 +182,8 @@ class SchedulerImpl : public Scheduler::SchedulerInterface {
     DCHECK(job);
 
     const uint32 delay = CalcDelay(job_setting);
+    // DON'T copy job instance after set_timer() not to delete timer twice.
+    // TODO(hsumita): Make Job class uncopiable.
     job->set_timer(new QueueTimer(&TimerCallback, job, delay,
                                   job_setting.default_interval()));
     if (job->timer() == NULL) {
@@ -184,12 +194,12 @@ class SchedulerImpl : public Scheduler::SchedulerInterface {
     if (started) {
       return true;
     } else {
-      delete job->mutable_timer();
+      job->set_timer(NULL);
       return false;
     }
   }
 
-  bool RemoveJob(const string &name) {
+  virtual bool RemoveJob(const string &name) {
     scoped_lock l(&mutex_);
     if (!HasJob(name)) {
       LOG(WARNING) << "Job " << name << " is not registered";
@@ -236,16 +246,15 @@ class SchedulerImpl : public Scheduler::SchedulerInterface {
   uint32 CalcDelay(const Scheduler::JobSetting &job_setting) {
     uint32 delay = job_setting.delay_start();
     if (job_setting.random_delay() != 0) {
-      const uint64 r = Util::Random(RAND_MAX);
-      const uint64 d = job_setting.random_delay() * r;
-      const uint64 random_delay = d / RAND_MAX;
-      delay += random_delay;
+      delay += Util::Random(job_setting.random_delay());
     }
     return delay;
   }
 
   map<string, Job> jobs_;
   Mutex mutex_;
+
+  DISALLOW_COPY_AND_ASSIGN(SchedulerImpl);
 };
 
 Scheduler::SchedulerInterface *g_scheduler_handler = NULL;

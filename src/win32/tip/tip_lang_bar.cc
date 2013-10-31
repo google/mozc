@@ -147,8 +147,7 @@ TipLangBarCallback::ItemId GetItemId(DWORD composition_mode) {
 TipLangBarCallback::~TipLangBarCallback() {}
 
 TipLangBar::TipLangBar()
-    : input_button_cookie_(TF_INVALID_COOKIE),
-      tool_button_menu_(nullptr),
+    : tool_button_menu_(nullptr),
       help_menu_(nullptr),
       help_menu_cookie_(TF_INVALID_COOKIE) {}
 
@@ -157,6 +156,10 @@ TipLangBar::~TipLangBar() {}
 // Initializes button menus in the language bar.
 HRESULT TipLangBar::InitLangBar(TipLangBarCallback *text_service) {
   HRESULT result = S_OK;
+
+  // TODO(yukawa): Optimize this method. We do not need to obtain an instance of
+  // ITfLangBarItemMgr unless there remains something to be initialized for
+  // LangBar.
 
   // A workaround to satisfy both b/6106437 and b/6641460.
   // On Windows 8, keep the instance into |lang_bar_item_mgr_for_win8_|.

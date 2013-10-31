@@ -32,9 +32,11 @@
 #include <algorithm>
 #include <string>
 
-#include "base/base.h"
+#define SYNC_VLOG_MODULENAME "UserDictionaryAdapter"
+
 #include "base/file_util.h"
 #include "base/logging.h"
+#include "base/port.h"
 #include "base/stl_util.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
@@ -44,12 +46,16 @@
 #include "sync/sync_util.h"
 #include "sync/user_dictionary_sync_util.h"
 
+using mozc::storage::Registry;
+
 namespace mozc {
 namespace sync {
 namespace {
 
 const uint32 kBucketSize = 256;
 const char kLastBucketIdKey[] = "sync.user_dictionary_last_bucket_id";
+const char kLastDownloadTimestampKey[] =
+    "sync.user_dictionary_last_download_timestamp";
 
 class UserDictionaryStorageDeleter {
  public:
@@ -77,12 +83,10 @@ UserDictionaryAdapter::~UserDictionaryAdapter() {}
 
 bool UserDictionaryAdapter::SetDownloadedItems(
     const ime_sync::SyncItems &items) {
-  vector<UserDictionarySyncUtil::UserDictionaryStorageBase *>
-      remote_updates;
+  vector<UserDictionarySyncUtil::UserDictionaryStorageBase *> remote_updates;
   UserDictionaryStorageDeleter deleter(&remote_updates);
 
-  SYNC_VLOG(1) << "Start SetDownloadedItems: "
-               << items.size() << " items";
+  SYNC_VLOG(1) << "Start SetDownloadedItems: " << items.size() << " items";
 
   if (items.size() == 0) {
     SYNC_VLOG(1) << "No items found";
@@ -116,6 +120,8 @@ bool UserDictionaryAdapter::SetDownloadedItems(
     remote_updates.push_back(
         new UserDictionarySyncUtil::UserDictionaryStorageBase(
             value.user_dictionary_storage()));
+    // Ensure that this adapter doesn't merge unsyncable dictionaries data.
+    UserDictionarySyncUtil::RemoveUnsyncableDictionaries(remote_updates.back());
     bucket_id = key.bucket_id();
   }
 
@@ -151,7 +157,7 @@ bool UserDictionaryAdapter::SetDownloadedItems(
     UserDictionarySyncUtil::CreateUpdate(prev_storage, cur_storage,
                                          &local_update);
   }
-  bool do_local_update = (local_update.dictionaries_size() > 0);
+  const bool do_local_update = (local_update.dictionaries_size() > 0);
 
   // Apply the remote updates
   SYNC_VLOG(1) << "merging remote updates";
@@ -161,7 +167,7 @@ bool UserDictionaryAdapter::SetDownloadedItems(
   if (do_local_update) {
     SYNC_VLOG(1) << "merging local_update to prev_storage, "
                     "and copy it to cur_storage";
-    cur_storage.CopyFrom(prev_storage);
+    UserDictionarySyncUtil::CopyDictionaries(prev_storage, &cur_storage);
     UserDictionarySyncUtil::MergeUpdate(local_update, &cur_storage);
   }
 
@@ -259,7 +265,15 @@ bool UserDictionaryAdapter::GetItemsToUpload(ime_sync::SyncItems *items) {
   sync::UserDictionaryValue *value =
       item->mutable_value()->MutableExtension(sync::UserDictionaryValue::ext);
   CHECK(value);
+  // Ensure that this adapter doesn't send unsyncable dictionaries data.
+  UserDictionarySyncUtil::RemoveUnsyncableDictionaries(&local_update);
   value->mutable_user_dictionary_storage()->Swap(&local_update);
+
+  if (!item->IsInitialized()) {
+    LOG(ERROR)
+        << "Upload item of UserDictionaryAdapter is not initialized correctly";
+    return false;
+  }
 
   uint32 next_bucket_id = GetNextBucketId();
 
@@ -313,8 +327,26 @@ bool UserDictionaryAdapter::MarkUploaded(
   return true;
 }
 
+bool UserDictionaryAdapter::SetLastDownloadTimestamp(uint64 value) {
+  if (!Registry::Insert(kLastDownloadTimestampKey, value)) {
+    LOG(ERROR) << "cannot save: " << kLastDownloadTimestampKey << " " << value;
+    return false;
+  }
+  return true;
+}
+
+uint64 UserDictionaryAdapter::GetLastDownloadTimestamp() const {
+  uint64 value = 0;
+  if (!Registry::Lookup(kLastDownloadTimestampKey, &value)) {
+    LOG(ERROR) << "cannot read: " << kLastDownloadTimestampKey;
+    return static_cast<uint64>(0);
+  }
+  return value;
+}
+
 bool UserDictionaryAdapter::Clear() {
   SYNC_VLOG(1) << "start Clear()";
+  Registry::Erase(kLastDownloadTimestampKey);
   FileUtil::Unlink(GetLastSyncedUserDictionaryFileName());
   FileUtil::Unlink(GetTempLastSyncedUserDictionaryFileName());
   return true;
@@ -341,7 +373,6 @@ string UserDictionaryAdapter::GetTempLastSyncedUserDictionaryFileName() const {
   return GetLastSyncedUserDictionaryFileName() + kSuffix;
 }
 
-// static
 uint32 UserDictionaryAdapter::bucket_size() const {
   return kBucketSize;
 }
@@ -350,10 +381,8 @@ bool UserDictionaryAdapter::SetBucketId(uint32 bucket_id) {
   if (bucket_id >= bucket_size()) {
     LOG(ERROR) << "invalid bucket_id is given. reset to default";
   }
-  if (!mozc::storage::Registry::Insert(kLastBucketIdKey, bucket_id) ||
-      !mozc::storage::Registry::Sync()) {
-    LOG(ERROR) << "cannot save: "
-               << kLastBucketIdKey << " " << bucket_id;
+  if (!Registry::Insert(kLastBucketIdKey, bucket_id) || !Registry::Sync()) {
+    LOG(ERROR) << "cannot save: " << kLastBucketIdKey << " " << bucket_id;
     return false;
   }
   return true;
@@ -361,7 +390,7 @@ bool UserDictionaryAdapter::SetBucketId(uint32 bucket_id) {
 
 uint32 UserDictionaryAdapter::GetNextBucketId() const {
   uint32 value = 0;
-  if (!mozc::storage::Registry::Lookup(kLastBucketIdKey, &value)) {
+  if (!Registry::Lookup(kLastBucketIdKey, &value)) {
     LOG(ERROR) << "cannot read: " << kLastBucketIdKey;
     return static_cast<uint32>(0);
   }

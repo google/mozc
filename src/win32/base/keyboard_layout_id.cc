@@ -36,7 +36,6 @@
 #include <sstream>
 #include <string>
 
-#include "base/base.h"
 #include "base/logging.h"
 
 namespace {

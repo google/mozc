@@ -33,7 +33,8 @@
   % python protoc_wrapper.py               \
       --protoc_command=protoc              \
       --protoc_dir=/usr/bin    (optional)  \
-      --proto=my_data.proto                \
+      --proto=../protos/my_data.proto      \
+      --proto_path=../protos   (optional)  \
       --cpp_out=../out/debug/gen           \
       --project_root=../
 """
@@ -53,10 +54,14 @@ def ParseOption():
   parser.add_option('--protoc_dir', dest='protoc_dir',
                     help='directory where protoc is located')
   parser.add_option('--proto', dest='proto', help='path of the *.proto file')
-  parser.add_option('--cpp_out', dest='cpp_out', default='.',
+  parser.add_option('--cpp_out', dest='cpp_out', default='',
                     help='path where cpp files should be generated')
+  parser.add_option('--java_out', dest='java_out', default='',
+                    help='path where java files should be generated')
   parser.add_option('--project_root', dest='project_root', default='.',
                     help='run protoc after moving this directory')
+  parser.add_option('--proto_path', dest='proto_path', default='',
+                    help='directory to be passed to --proto_path option')
 
   (opts, _) = parser.parse_args()
 
@@ -69,21 +74,33 @@ def main():
 
   # Convert to absolute paths before changing the current directory.
   project_root = os.path.abspath(opts.project_root)
+  proto_path = os.path.abspath(opts.proto_path) if opts.proto_path else ''
+  cpp_out = os.path.abspath(opts.cpp_out) if opts.cpp_out else ''
+  java_out = os.path.abspath(opts.java_out) if opts.java_out else ''
+
   protoc_path = opts.protoc_command
   if opts.protoc_dir:
     protoc_path = os.path.join(os.path.abspath(opts.protoc_dir), protoc_path)
-  cpp_out = os.path.abspath(opts.cpp_out)
 
-  # The path of proto file should be recalculated as a relative path from
+  # The path of proto file should be transformed as a relative path from
   # the project root so that correct relative paths should be embedded into
   # generated files.
-  proto = os.path.relpath(os.path.abspath(opts.proto), project_root)
+  proto_files = [os.path.relpath(os.path.abspath(p), project_root)
+                 for p in opts.proto.split(' ')]
 
   # Move to the project root.
   os.chdir(project_root)
 
-  commands = [protoc_path, proto, '--cpp_out=' + cpp_out]
+  commands = [protoc_path] + proto_files
+  if cpp_out:
+    commands += ['--cpp_out=' + cpp_out]
+  if java_out:
+    commands += ['--java_out=' + java_out]
+  if proto_path:
+    rel_proto_path = os.path.relpath(proto_path, project_root)
+    commands += ['--proto_path=' + rel_proto_path]
   sys.exit(subprocess.call(commands))
+
 
 if __name__ == '__main__':
   main()

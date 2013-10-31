@@ -35,7 +35,6 @@
 #include <msctf.h>
 #endif  // OS_WIN
 
-#include "base/base.h"
 #include "base/logging.h"
 
 namespace {

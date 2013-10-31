@@ -40,7 +40,7 @@
 #include "client/client_interface.h"
 #include "config/config_handler.h"
 #include "session/commands.pb.h"
-#include "session/ime_switch_util.h"
+#include "session/key_info_util.h"
 #include "win32/base/conversion_mode_util.h"
 #include "win32/base/input_state.h"
 #include "win32/base/keyboard.h"
@@ -688,7 +688,8 @@ KeyEventHandlerResult KeyEventHandler::HandleKey(
   if (!ime_state.open) {
     // TODO(yukawa): Treat VK_PACKET as a direct mode key.
     const bool is_direct_mode_command =
-        is_key_down && config::ImeSwitchUtil::IsDirectModeCommand(*key);
+        is_key_down &&
+        KeyInfoUtil::ContainsKey(behavior.direct_mode_keys, *key);
     if (!is_direct_mode_command) {
       result.succeeded = true;
       result.should_be_eaten = false;

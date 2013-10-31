@@ -150,7 +150,6 @@
         # input files just for peoper rebiuld condition.
         '<(wxs_file)',
       ],
-      'msvs_cygwin_shell': 0,
       'message': 'candle is generating <@(_outputs)',
     },
     {
@@ -183,7 +182,6 @@
         # input files just for peoper rebiuld condition.
         '<(wixobj_file)',
       ],
-      'msvs_cygwin_shell': 0,
       'message': 'light is generating <@(_outputs)',
     },
   ],

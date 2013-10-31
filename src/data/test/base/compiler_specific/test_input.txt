@@ -2,22 +2,25 @@
 
 #if MOZC_MSVC_VERSION_GE(10, 1)
 class MSVS_GE_10_01;
-#endif  // MSVS>=10.1
-#if MOZC_MSVC_VERSION_LE(10, 1)
-class MSVS_LE_10_01;
-#endif  // MSVS<=10.1
+#endif  // MSVS >= 10.1
+#if MOZC_MSVC_VERSION_LT(10, 0)
+class MSVS_LT_10_00;
+#endif  // MSVS < 10.0
+#if MOZC_MSVC_VERSION_LT(10, 1)
+class MSVS_LT_10_01;
+#endif  // MSVS < 10.0
 #if MOZC_GCC_VERSION_GE(4, 6)
 class GCC_GE_04_06;
-#endif  // GCC>=4.6
-#if MOZC_GCC_VERSION_LE(4, 6)
-class GCC_LE_04_06;
-#endif  // GCC<=4.6
+#endif  // GCC >= 4.6
+#if MOZC_GCC_VERSION_LT(4, 6)
+class GCC_LT_04_06;
+#endif  // GCC < 4.6
 #if MOZC_CLANG_VERSION_GE(2, 8)
 class CLANG_GE_02_08;
-#endif  // Clang<=2.8
-#if MOZC_CLANG_VERSION_LE(2, 8)
-class CLANG_LE_02_08;
-#endif  // Clang<=2.8
+#endif  // Clang >= 2.8
+#if MOZC_CLANG_VERSION_LT(2, 8)
+class CLANG_LT_02_08;
+#endif  // Clang < 2.8
 
 MOZC_MSVC_PUSH_WARNING();
 MOZC_MSVC_DISABLE_WARNING(4001);

@@ -29,7 +29,6 @@
 
 #include "dictionary/suppression_dictionary.h"
 
-#include "base/base.h"
 #include "base/logging.h"
 #include "base/mutex.h"
 #include "converter/node.h"

@@ -27,7 +27,6 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "base/base.h"
 #include "converter/conversion_request.h"
 #include "converter/segments.h"
 #include "rewriter/remove_redundant_candidate_rewriter.h"

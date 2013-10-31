@@ -30,7 +30,9 @@
 #ifndef MOZC_UNIX_IBUS_GTK_CANDIDATE_WINDOW_HANDLER_H_
 #define MOZC_UNIX_IBUS_GTK_CANDIDATE_WINDOW_HANDLER_H_
 
-#include "base/scoped_ptr.h"
+#include <memory>
+
+#include "base/port.h"
 #include "unix/ibus/candidate_window_handler_interface.h"
 
 namespace mozc {
@@ -58,8 +60,8 @@ class GtkCandidateWindowHandler : public CandidateWindowHandlerInterface {
  protected:
   bool SendUpdateCommand(const commands::Output &output, bool visibility) const;
 
-  scoped_ptr<renderer::RendererInterface> renderer_;
-  scoped_ptr<commands::Output> last_update_output_;
+  std::unique_ptr<renderer::RendererInterface> renderer_;
+  std::unique_ptr<commands::Output> last_update_output_;
 
  private:
   string GetFontDescription() const;

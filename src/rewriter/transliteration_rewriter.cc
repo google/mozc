@@ -32,7 +32,6 @@
 #include <string>
 #include <vector>
 
-#include "base/base.h"
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/text_normalizer.h"
@@ -40,7 +39,6 @@
 #include "composer/composer.h"
 #include "converter/conversion_request.h"
 #include "converter/segments.h"
-#include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "session/commands.pb.h"
 // For T13n normalize
@@ -305,22 +303,20 @@ bool TransliterationRewriter::FillT13nsFromKey(Segments *segments) const {
 }
 
 TransliterationRewriter::TransliterationRewriter(
-    const POSMatcher &pos_matcher,
-    const DictionaryInterface *dictionary)
-    : unknown_id_(pos_matcher.GetUnknownId()),
-      dictionary_(dictionary) {}
+    const POSMatcher &pos_matcher)
+    : unknown_id_(pos_matcher.GetUnknownId()) {}
 
 TransliterationRewriter::~TransliterationRewriter() {}
 
 int TransliterationRewriter::capability(
     const ConversionRequest &request) const {
+  // For mobile, mixed conversion is on.  In this case t13n rewrite should be
+  // triggerred anytime.
   if (request.request().mixed_conversion()) {
     return RewriterInterface::ALL;
   }
-  if (request.request().language_aware_input() !=
-      mozc::commands::Request::NO_LANGUAGE_AWARE_INPUT) {
-    return RewriterInterface::ALL;
-  }
+
+  // Otherwise t13n rewrite is triggerred only on conversion.
   return RewriterInterface::CONVERSION;
 }
 
@@ -385,101 +381,14 @@ bool TransliterationRewriter::AddRawNumberT13nCandidates(
   return true;
 }
 
-namespace {
-bool IsRawQuery(const composer::Composer &composer,
-                const DictionaryInterface *dictionary) {
-  string raw_text;
-  composer.GetRawString(&raw_text);
-
-  // Check if the length of text is less than or equal to three.
-  // For example, "cat" is not treated as a raw query so far to avoid
-  // false negative cases.
-  if (raw_text.size() <= 3) {
-    return false;
-  }
-
-  // If alphabet characters are in the middle of the composition, it is
-  // probably a raw query.  For example, "えぁｍｐぇ" (example) contains
-  // "m" and "p" in the middle.  So it is treated as a raw query.  On the
-  // other hand, "くえｒｙ" (query) contains alphabet characters, but they
-  // are at the end of the string, so it cannot be determined here.
-  //
-  // Note, GetQueryForPrediction omits the trailing alphabet characters of
-  // the composition string and returns it.
-  string key;
-  composer.GetQueryForPrediction(&key);
-  if (Util::ContainsScriptType(key, Util::ALPHABET)) {
-    return true;
-  }
-
-  // If the input text is stored in the dictionary, it is perhaps a raw query.
-  // For example, the input characters of "れもヴぇ" (remove) is in the
-  // dictionary, so it is treated as a raw text.  This logic is a little
-  // aggressive because "たけ" (take), "ほうせ" (house) and so forth are also
-  // treated as raw texts.
-  if (dictionary->HasValue(raw_text)) {
-    return true;
-  }
-
-  return false;
-}
-}  // namespace
-
-
-bool TransliterationRewriter::FillRawText(
-    const ConversionRequest &request, Segments *segments) const {
-  if (segments->conversion_segments_size() != 1 || !request.has_composer()) {
-    return false;
-  }
-
-  if (!IsRawQuery(request.composer(), dictionary_)) {
-    return false;
-  }
-
-  Segment *segment = segments->mutable_conversion_segment(0);
-
-  T13nIds ids;
-  GetIds(*segment, &ids);
-
-  // TODO(komatsu): GetRawString is expensive.  Optimize this function or
-  // reuse it for IsRawQuery.
-  string raw_string;
-  request.composer().GetRawString(&raw_string);
-
-  Segment::Candidate *candidate = segment->push_front_candidate();
-  InitT13nCandidate(raw_string, raw_string,
-                    ids.ascii_lid, ids.ascii_rid,
-                    candidate);
-  candidate->attributes |= (Segment::Candidate::NO_VARIANTS_EXPANSION |
-                            Segment::Candidate::NO_EXTRA_DESCRIPTION);
-  candidate->prefix = "\xE2\x86\x92 ";  // "→ "
-  candidate->description =
-    // "もしかして"
-    "\xE3\x82\x82\xE3\x81\x97\xE3\x81\x8B\xE3\x81\x97\xE3\x81\xA6";
-
-  // Set usage stats
-  usage_stats::UsageStats::IncrementCount("LanguageAwareSuggestionTriggered");
-
-  return true;
-}
-
 
 bool TransliterationRewriter::Rewrite(
     const ConversionRequest &request, Segments *segments) const {
-  bool modified = false;
-  // The current default value of language_aware_input is
-  // NO_LANGUAGE_AWARE_INPUT and only unittests set LANGUAGE_AWARE_SUGGESTION
-  // at this moment.  Thus, FillRawText is not performed in the productions
-  // yet.
-  if (request.request().language_aware_input() ==
-      mozc::commands::Request::LANGUAGE_AWARE_SUGGESTION) {
-    modified |= FillRawText(request, segments);
-  }
-
   if (request.skip_slow_rewriters()) {
-    return modified;
+    return false;
   }
 
+  bool modified = false;
   if (IsComposerApplicable(request, segments)) {
     modified |= FillT13nsFromComposer(request, segments);
   } else {
@@ -490,51 +399,6 @@ bool TransliterationRewriter::Rewrite(
   return modified;
 }
 
-namespace {
-bool IsLangaugeAwareInputCandidate(const composer::Composer &composer,
-                                   const Segment::Candidate &candidate) {
-  // Check candidate.prefix to filter if the candidate is probably generated
-  // from LanguangeAwareInput or not.
-  //
-  // "→ "
-  if (candidate.prefix != "\xE2\x86\x92 ") {
-    return false;
-  }
-
-  string raw_string;
-  composer.GetRawString(&raw_string);
-  if (raw_string != candidate.value) {
-    return false;
-  }
-  return true;
-}
-}  // namespace
-
-void TransliterationRewriter::Finish(const ConversionRequest &request,
-                                     Segments *segments) {
-  // Finish is used for Lanaugage aware input only at this moment.
-  if (request.request().language_aware_input() !=
-      mozc::commands::Request::LANGUAGE_AWARE_SUGGESTION) {
-    return;
-  }
-
-  if (segments->conversion_segments_size() != 1 || !request.has_composer()) {
-    return;
-  }
-
-  // Update usage stats
-  const Segment &segment = segments->conversion_segment(0);
-  // Ignores segments which are not converted or not committed.
-  if (segment.candidates_size() == 0 ||
-      segment.segment_type() != Segment::FIXED_VALUE) {
-    return;
-  }
-
-  if (IsLangaugeAwareInputCandidate(request.composer(),
-                                    segment.candidate(0))) {
-    usage_stats::UsageStats::IncrementCount("LanguageAwareSuggestionCommitted");
-  }
-}
 
 void TransliterationRewriter::InitT13nCandidate(
     const string &key,

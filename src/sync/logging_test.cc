@@ -27,13 +27,16 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <cstddef>
+#define SYNC_VLOG_MODULENAME "SyncLoggingTest"
+
+#include "sync/logging.h"
 #include <string>
 
 #include "base/file_stream.h"
+#include "base/port.h"
 #include "base/system_util.h"
+#include "base/thread.h"
 #include "base/util.h"
-#include "sync/logging.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
@@ -41,12 +44,13 @@ DECLARE_int32(sync_verbose_level);
 
 namespace mozc {
 namespace sync {
+namespace internal {
 
 class LoggingTest : public testing::Test {
  public:
   virtual void SetUp() {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    sync::Logging::Reset();
+    Logging::Reset();
   }
 
   virtual void SetVerboseLevel(int vlevel) {
@@ -54,7 +58,7 @@ class LoggingTest : public testing::Test {
   }
 
   virtual size_t GetLines() {
-    const string filename = sync::Logging::GetLogFileName();
+    const string filename = Logging::GetLogFileName();
     InputFileStream ifs(filename.c_str());
     string line;
     size_t lines = 0;
@@ -65,7 +69,7 @@ class LoggingTest : public testing::Test {
   }
 
   virtual string GetLastLogLine() {
-    const string filename = sync::Logging::GetLogFileName();
+    const string filename = Logging::GetLogFileName();
     InputFileStream ifs(filename.c_str());
     string line;
     string result;
@@ -149,7 +153,8 @@ TEST_F(LoggingTest, TruncateTest) {
     // 5 * 1024 * 1024 / 20 =~ 250000 lines will be emitted.
     EXPECT_GT(250000, i);
     SYNC_VLOG(1) << pattern;
-    const size_t cur = sync::Logging::GetLogStream().tellp();
+    const size_t cur = Logging::GetLogStreamWithLock().tellp();
+    Logging::Unlock();
     if (old_cur > cur) {
       EXPECT_TRUE(ContainsInLastLine(pattern));
       break;
@@ -157,5 +162,33 @@ TEST_F(LoggingTest, TruncateTest) {
     old_cur = cur;
   }
 }
+
+namespace {
+class LoggingThread : public Thread {
+ public:
+  LoggingThread() : data_(100, 'a') {}
+
+  virtual void Run() {
+    for (int i = 0; i < 300000; ++i) {
+      SYNC_VLOG(1) << data_;
+    }
+  }
+
+ private:
+  const string data_;
+};
+}  // namespace
+
+TEST_F(LoggingTest, StressTest) {
+  LoggingThread threads[8];
+  for (int i = 0; i < arraysize(threads); ++i) {
+    threads[i].Start();
+  }
+  for (int i = 0; i < arraysize(threads); ++i) {
+    threads[i].Join();
+  }
+}
+
+}  // namespace internal
 }  // namespace sync
 }  // namespace mozc

@@ -27,13 +27,15 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "base/process_mutex.h"
+
 #ifdef OS_WIN
 #include <windows.h>
 #endif  // OS_WIN
 #include <string>
-#include "base/base.h"
+
+#include "base/flags.h"
 #include "base/logging.h"
-#include "base/process_mutex.h"
 
 DEFINE_int32(sleep_time, 30, "sleep 30 sec");
 DEFINE_string(name, "named_event_test", "name for named event");

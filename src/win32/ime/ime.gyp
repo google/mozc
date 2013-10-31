@@ -148,6 +148,7 @@
             '../../ipc/ipc.gyp:ipc',
             '../../session/session_base.gyp:session_protocol',
             '../base/win32_base.gyp:ime_base',
+            '../base/win32_base.gyp:text_icon',
             'gen_mozc_ime_resource_header',
             'ime_core',
           ],

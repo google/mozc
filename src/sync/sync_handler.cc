@@ -31,13 +31,13 @@
 
 #include <string>
 
-#include "base/base.h"
-#include "base/compiler_specific.h"
+#define SYNC_VLOG_MODULENAME "SyncHandler"
+
 #include "base/logging.h"
 #include "base/mutex.h"
+#include "base/port.h"
 #include "base/scheduler.h"
 #include "base/singleton.h"
-#include "base/thread.h"
 #include "base/util.h"
 #include "config/config_handler.h"
 #include "session/commands.pb.h"
@@ -63,21 +63,12 @@ namespace mozc {
 namespace sync {
 namespace {
 
-// TODO(taku) move it to base/const.h
-const char kEventName[] = "sync";
-
 const uint32 kDefaultInterval = 3 * 60 * 60 * 1000;  // 3 hours
 const uint32 kMaxInterval = 3 * 60 * 60 * 1000;  // 3 hours
 const uint32 kDelay = 2 * 60 * 1000;  // 2 minutes
 const uint32 kRandomDelay = 5 * 60 * 1000;  // 5 minutes
 
-const uint32 kDefaultIntervalForClear = 3 * 60 * 1000;  // 3 minutes
-const uint32 kMaxIntervalForClear = 24 * 60 * 60 * 1000;  // 1 day = 24 hours
-const uint32 kDelayForClear = 2 * 60 * 1000;  // 2 minutes
-const uint32 kRandomDelayForClear = 1 * 60 * 1000;  // 1 minute
-
 const char kDefaultSyncName[] = "CloudSync";
-const char kDefaultClearSyncName[] = "ClearCloudSync";
 
 bool SyncFromScheduler(void *data) {
   SyncHandler *sync_handler = static_cast<SyncHandler *>(data);
@@ -90,20 +81,6 @@ bool SyncFromScheduler(void *data) {
   }
   SYNC_VLOG(1) << "SyncHandler::Sync is called by Scheduler";
   return sync_handler->Sync();
-}
-
-// This will block the scheduler thread randomly but not block the
-// main thread.
-bool ClearSyncFromScheduler(void *handler) {
-  SyncHandler *sync_handler = static_cast<SyncHandler *>(handler);
-
-  SYNC_VLOG(1) << "SyncHandler::Clear is called by Scheduler";
-  sync_handler->Clear();
-  sync_handler->Wait();
-  commands::CloudSyncStatus cloud_sync_status;
-  sync_handler->GetCloudSyncStatus(&cloud_sync_status);
-  return cloud_sync_status.global_status() !=
-      commands::CloudSyncStatus::SYNC_FAILURE;
 }
 
 void SendReloadCommand() {
@@ -128,17 +105,8 @@ SyncHandler::SyncHandler()
           kRandomDelay,
           &SyncFromScheduler,
           this)),
-      ALLOW_THIS_IN_INITIALIZER_LIST(clear_sync_job_setting_(
-          kDefaultClearSyncName,
-          kDefaultIntervalForClear,
-          kMaxIntervalForClear,
-          kDelayForClear,
-          kRandomDelayForClear,
-          &ClearSyncFromScheduler,
-          this)),
       config_adapter_(new ConfigAdapter),
       user_dictionary_adapter_(new UserDictionaryAdapter),
-      command_type_(COMMAND_NONE),
       oauth2_util_(new OAuth2Util(OAuth2Client::GetDefaultInstance(),
                                   OAuth2Server::GetDefaultInstance())),
       last_sync_timestamp_(0),
@@ -153,7 +121,6 @@ SyncHandler::SyncHandler()
 SyncHandler::~SyncHandler() {
   Join();
   Scheduler::RemoveJob(kDefaultSyncName);
-  Scheduler::RemoveJob(kDefaultClearSyncName);
 }
 
 void SyncHandler::InitializeSyncer() {
@@ -166,8 +133,8 @@ void SyncHandler::Run() {
   SYNC_VLOG(1) << "current_timestamp: " << current_timestamp
                << " last_sync_timestamp: " << last_sync_timestamp_;
 
-  if (command_type_ == SYNC &&
-      current_timestamp - last_sync_timestamp_ < FLAGS_min_sync_interval) {
+  if (current_timestamp - last_sync_timestamp_ < FLAGS_min_sync_interval) {
+    // TODO(hsumita): Register new scheduler job and exit instead of Sleep().
     SYNC_VLOG(1) << "New Sync command must be executed after "
                  << FLAGS_min_sync_interval << " interval sec.";
     sync_status_manager_->SetSyncGlobalStatus(
@@ -220,92 +187,41 @@ void SyncHandler::Run() {
     commands::Input::AuthorizationInfo dummy_auth;
     SetAuthorization(dummy_auth);
 
-    sync_status_manager_->SetSyncGlobalStatus(
-        commands::CloudSyncStatus::NOSYNC);
-    // Stop sync thread running.
-    Scheduler::RemoveJob(kDefaultClearSyncName);
-
-    // Clear local information around the work of sync.
-    // Synced information is kept as it is.
-    syncer_->ClearLocal();
-
+    // Don't stop scheduler job to re-enable sync feature with valid access
+    // token.
     return;
   }
 
-  switch (command_type_) {
-    case SYNC:
-      {
-        commands::CloudSyncStatus sync_status;
-        sync_status_manager_->GetLastSyncStatus(&sync_status);
-        if (sync_status.global_status() ==
-            commands::CloudSyncStatus::NOSYNC) {
-          break;
-        }
+  commands::CloudSyncStatus sync_status;
+  sync_status_manager_->GetLastSyncStatus(&sync_status);
+  if (sync_status.global_status() != commands::CloudSyncStatus::NOSYNC) {
+    bool reload_required = false;
+    bool sync_succeed = true;
+    if (!syncer_->Sync(&reload_required)) {
+      SYNC_VLOG(1) << "SyncerInterface::Sync() failed";
+      sync_succeed = false;
+    }
+    if (reload_required) {
+      SYNC_VLOG(1) << "sending reload command to the converter.";
+      SendReloadCommand();
+    }
 
-        bool reload_required = false;
-        bool sync_succeed = true;
-        if (syncer_->Sync(&reload_required)) {
-          if (reload_required) {
-            SYNC_VLOG(1) << "sending reload command to the converter.";
-            SendReloadCommand();
-          }
-        } else {
-          SYNC_VLOG(1) << "SyncerInterface::Sync() failed";
-          sync_succeed = false;
-        }
-
-        {
-          scoped_lock lock(&status_mutex_);
-          sync_status_manager_->SetSyncGlobalStatus(
-              sync_succeed ? commands::CloudSyncStatus::SYNC_SUCCESS :
-              commands::CloudSyncStatus::SYNC_FAILURE);
-          if (sync_succeed) {
-            SYNC_VLOG(1) << "Updating last_synced_timestamp "
-                         << "for sync_status_manager";
-            sync_status_manager_->SetLastSyncedTimestamp(current_timestamp);
-          }
-          if (reload_required) {
-            reload_required_timestamp_ = current_timestamp;
-          }
-        }
-        // Update last_sync_timestamp_
-        last_sync_timestamp_ = current_timestamp;
-      }
-      break;
-    case CLEAR:
-      if (!syncer_->Clear()) {
-        SYNC_VLOG(1) << "SyncerInterface::Clear() failed";
-        // Invokes the clear command later in case of failure.
-        // AddJob just ignores if there's already the same job.
-        SYNC_VLOG(1) << "adding clear-job from Scheduler";
-        Scheduler::AddJob(clear_sync_job_setting_);
-        sync_status_manager_->SetSyncGlobalStatus(
-            commands::CloudSyncStatus::SYNC_FAILURE);
-
-        // Set the command type to SYNC to allow the next Clear() method.
-        command_type_ = SYNC;
-        break;
-      }
-
-      {
-        // Dummy auth does not have any specific authorization data,
-        // so it clears the auth info compeletely and sets the sync
-        // status to NOSYNC.
-        SYNC_VLOG(1) << "clearing auth token";
-        commands::Input::AuthorizationInfo dummy_auth;
-        SetAuthorization(dummy_auth);
-      }
-
-      SYNC_VLOG(1) << "removing clear-job from Scheduler";
+    {
+      scoped_lock lock(&status_mutex_);
       sync_status_manager_->SetSyncGlobalStatus(
-          commands::CloudSyncStatus::NOSYNC);
-      Scheduler::RemoveJob(kDefaultClearSyncName);
-      // Update last_sync_timestamp_
-      last_sync_timestamp_ = current_timestamp;
-      break;
-    default:
-      LOG(ERROR) << "Unknown command: " << command_type_;
-      break;
+          sync_succeed ? commands::CloudSyncStatus::SYNC_SUCCESS :
+          commands::CloudSyncStatus::SYNC_FAILURE);
+      if (sync_succeed) {
+        SYNC_VLOG(1) << "Updating last_synced_timestamp "
+                     << "for sync_status_manager";
+        sync_status_manager_->SetLastSyncedTimestamp(current_timestamp);
+      }
+      if (reload_required) {
+        reload_required_timestamp_ = current_timestamp;
+      }
+    }
+    // Update last_sync_timestamp_
+    last_sync_timestamp_ = current_timestamp;
   }
 
   // Save the final sync status in registry
@@ -319,11 +235,16 @@ bool SyncHandler::Sync() {
   SYNC_VLOG(1) << "start Sync";
 
   if (IsRunning()) {
-    LOG(WARNING) << "Sync|Clear command is already running";
+    LOG(WARNING) << "Sync is already running";
     return true;
   }
 
-  command_type_ = SYNC;
+  // Acquire lock since Sync() is called by converter thread and scheduler.
+  scoped_try_lock lock(&sync_mutex_);
+  if (!lock.locked()) {
+    LOG(WARNING) << "Failed to acquire lock. Sync is already running.";
+    return true;
+  }
 
   if (!syncer_->Start()) {
     LOG(ERROR) << "SyncerInterface::Start() failed";
@@ -332,40 +253,6 @@ bool SyncHandler::Sync() {
     return false;
   }
 
-  Start();
-  return true;
-}
-
-bool SyncHandler::Clear() {
-  SYNC_VLOG(1) << "start Clear";
-
-  if (command_type_ == CLEAR) {
-    LOG(WARNING) << "Last command is already CLEAR.";
-    return true;
-  }
-
-  if (IsRunning()) {
-    LOG(INFO) << "SyncThread is running.  Wait for its end.";
-    Wait();
-  }
-
-  commands::CloudSyncStatus cloud_sync_status;
-  GetCloudSyncStatus(&cloud_sync_status);
-  if (cloud_sync_status.global_status() ==
-      commands::CloudSyncStatus::NOSYNC) {
-    LOG(WARNING) << "Sync is not Running.";
-    return true;
-  }
-
-  // Remove the sync config to stop further Sync after Clear.
-  {
-    config::Config config;
-    config::ConfigHandler::GetConfig(&config);
-    config.clear_sync_config();
-    config::ConfigHandler::SetConfig(config);
-  }
-
-  command_type_ = CLEAR;
   Start();
   return true;
 }
@@ -387,6 +274,7 @@ bool SyncHandler::GetCloudSyncStatus(
 
 bool SyncHandler::SetAuthorization(
     const commands::Input::AuthorizationInfo &authorization_info) {
+  SYNC_VLOG(1) << "SetAuthorization is called";
   if (oauth2_util_->GetClientType() == CHROME_APP) {
 #ifdef __native_client__
     if (authorization_info.has_access_token() &&
@@ -400,6 +288,7 @@ bool SyncHandler::SetAuthorization(
       sync_status_manager_->SetSyncGlobalStatus(
           commands::CloudSyncStatus::INSYNC);
     } else {
+      syncer_->ClearLocal();
       sync_status_manager_->SetSyncGlobalStatus(
           commands::CloudSyncStatus::NOSYNC);
     }
@@ -409,7 +298,6 @@ bool SyncHandler::SetAuthorization(
     return false;
 #endif  // __native_client__
   }
-  SYNC_VLOG(1) << "SetAuthorization is called";
   if (authorization_info.has_auth_code() &&
       !authorization_info.auth_code().empty()) {
     SYNC_VLOG(1) << "setting authorization_info";
@@ -422,6 +310,7 @@ bool SyncHandler::SetAuthorization(
           commands::CloudSyncStatus::INSYNC);
     } else {
       SYNC_VLOG(1) << "authorization failed. Error: " << error;
+      syncer_->ClearLocal();
       sync_status_manager_->AddSyncError(
           commands::CloudSyncStatus::AUTHORIZATION_FAIL);
       sync_status_manager_->SetSyncGlobalStatus(
@@ -430,6 +319,7 @@ bool SyncHandler::SetAuthorization(
   } else {
     SYNC_VLOG(1) << "clearing authorization_info";
     oauth2_util_->Clear();
+    syncer_->ClearLocal();
     sync_status_manager_->SetSyncGlobalStatus(
         commands::CloudSyncStatus::NOSYNC);
   }

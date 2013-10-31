@@ -30,13 +30,14 @@
 #include "data_manager/chromeos/chromeos_data_manager.h"
 #include "data_manager/chromeos/chromeos_data_manager_factory.h"
 
-#include "base/base.h"
 #include "base/logging.h"
+#include "base/port.h"
 #include "base/singleton.h"
 #include "converter/boundary_struct.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suffix_dictionary_token.h"
 #include "rewriter/correction_rewriter.h"
+#include "rewriter/counter_suffix.h"
 #ifndef NO_USAGE_REWRITER
 #include "rewriter/usage_rewriter_data_structs.h"
 #endif  // NO_USAGE_REWRITER
@@ -189,6 +190,16 @@ void ChromeOsDataManager::GetUsageRewriterData(
   *usage_data_value = kUsageData_value;
 }
 #endif  // NO_USAGE_REWRITER
+
+namespace {
+#include "data_manager/chromeos/counter_suffix_data.h"
+}  // namespace
+
+void ChromeOsDataManager::GetCounterSuffixSortedArray(
+    const CounterSuffixEntry **array, size_t *size) const {
+  *array = kCounterSuffixes;
+  *size = arraysize(kCounterSuffixes);
+}
 
 }  // namespace chromeos
 }  // namespace mozc

@@ -311,9 +311,6 @@
           'actions': [
             {
               'action_name': 'mozc_installers_win_versioning',
-              'variables': {
-                'python_command': 'python',
-              },
               'inputs': [
                 '../../mozc_version.txt',
                 '../../build_tools/versioning_files.py',
@@ -326,7 +323,7 @@
                 '<(PRODUCT_DIR)/mozc_installers_win_versioning_dummy',
               ],
               'action': [
-                '<(python_command)',
+                'python',
                 '../../build_tools/versioning_files.py',
                 '--version_file', '../../mozc_version.txt',
                 '--configuration', '<(CONFIGURATION_NAME)',
@@ -345,9 +342,6 @@
           'actions': [
             {
               'action_name': 'mozc_installers_win_size_check',
-              'variables': {
-                'python_command': 'python',
-              },
               'inputs': [
                 '<(mozc_32bit_msi)',
                 '<(mozc_64bit_msi)',
@@ -356,7 +350,7 @@
                 '<(PRODUCT_DIR)/mozc_installers_win_size_check_dummy',
               ],
               'action': [
-                '<(python_command)',
+                'python',
                 '../../build_tools/binary_size_checker.py',
                 '--target_filename',
                 '<(mozc_32bit_msi),<(mozc_64bit_msi)',

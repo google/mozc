@@ -33,9 +33,9 @@
 #include <string>
 #include <vector>
 
-#include "base/base.h"
 #include "base/file_util.h"
 #include "base/logging.h"
+#include "base/port.h"
 #include "base/util.h"
 #include "storage/registry.h"
 #include "sync/sync.pb.h"
@@ -149,6 +149,11 @@ bool UserHistoryAdapter::GetItemsToUpload(ime_sync::SyncItems *items) {
           sync::UserHistoryValue::ext);
       DCHECK(key);
       DCHECK(value);
+      if (!item->IsInitialized()) {
+        LOG(ERROR) << "Upload item of UserHistoryAdapter is not initialized"
+                   << " correctly.";
+        return false;
+      }
       key->set_bucket_id(GetNextBucketId());
     }
     DCHECK(value);
@@ -213,8 +218,7 @@ uint32 UserHistoryAdapter::GetNextBucketId() const {
 
 bool UserHistoryAdapter::SetLastDownloadTimestamp(uint64 last_download_time) {
   if (!storage::Registry::Insert(kLastDownloadTimestampKey,
-                                 last_download_time) ||
-      !storage::Registry::Sync()) {
+                                 last_download_time)) {
     LOG(ERROR) << "cannot save: "
                << kLastDownloadTimestampKey << " " << last_download_time;
     return false;

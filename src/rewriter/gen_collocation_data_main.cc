@@ -40,8 +40,8 @@
 #include <iostream>
 #include <vector>
 
-#include "base/base.h"
 #include "base/file_stream.h"
+#include "base/flags.h"
 #include "base/logging.h"
 #include "rewriter/gen_existence_data.h"
 

@@ -29,7 +29,6 @@
 
 #include <Cocoa/Cocoa.h>
 
-#include "base/base.h"
 #include "base/logging.h"
 #include "net/http_client_common.h"
 #include "net/http_client_mac.h"

@@ -28,21 +28,18 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 vars = {
-  "breakpad_revision": "1191",
+  "breakpad_revision": "1217",
   "clang_helper_in_chromium_revision": "171017",
-  "cygwin_in_chromium_revision": "66844",
   "gtest_revision": "645",
   "gmock_revision": "425",
-  "gyp_revision": "1656",
-  "jsoncpp_revision": "249",
-  "memory_watcher_in_chromium_revision": "81926",
+  "gyp_revision": "1732",
+  "jsoncpp_revision": "274",
   "protobuf_revision": "462",
-  "python_in_chromium_revision": "89111",
   "wtl_revision": "459",
   "zinnia_revision": "16",
   "openssl_revision": "164645",
   "jsr305_version": "2.0.2",
-  "zlib_revision": "173801",
+  "zlib_revision": "198222",
 }
 
 deps = {
@@ -55,14 +52,8 @@ deps = {
     "http://googletest.googlecode.com/svn/trunk@" + Var("gtest_revision"),
   "src/third_party/gyp":
     "http://gyp.googlecode.com/svn/trunk@" + Var("gyp_revision"),
-  "src/protobuf/files":
+  "src/third_party/protobuf":
     "http://protobuf.googlecode.com/svn/trunk@" + Var("protobuf_revision"),
-  "src/third_party/findbug":
-    # We need only a jar file so avoiding to sync entire tree.
-    # Findbug project keeps release-jar files in their repository.
-    File("http://findbugs.googlecode.com/"
-         + "svn/repos/release-repository/com/google/code/findbugs/jsr305/"
-         + Var("jsr305_version") + "/jsr305-" + Var("jsr305_version") + ".jar"),
 }
 
 deps_os = {
@@ -70,18 +61,9 @@ deps_os = {
     "src/third_party/breakpad":
       "http://google-breakpad.googlecode.com/svn/trunk@" +
       Var("breakpad_revision"),
-    "src/third_party/cygwin":
-      "http://src.chromium.org/svn/trunk/deps/third_party/cygwin@" +
-      Var("cygwin_in_chromium_revision"),
-    "src/third_party/python_26":
-      "http://src.chromium.org/svn/trunk/tools/third_party/python_26@" +
-      Var("python_in_chromium_revision"),
     "src/third_party/wtl/files/include":
-      "http://svn.code.sf.net/p/wtl/code/trunk@" +
+      "http://svn.code.sf.net/p/wtl/code/trunk/wtl/include@" +
       Var("wtl_revision"),
-    "src/third_party/sidestep":
-      "http://src.chromium.org/svn/trunk/src/tools/memory_watcher@" +
-      Var("memory_watcher_in_chromium_revision"),
     "src/third_party/zinnia/v0_04":
       "http://svn.code.sf.net/p/zinnia/code@" +
       Var("zinnia_revision"),
@@ -98,10 +80,16 @@ deps_os = {
     "src/third_party/clang/scripts":
       "https://src.chromium.org/chrome/trunk/src/tools/clang/scripts@" +
       Var("clang_helper_in_chromium_revision"),
+    "src/third_party/findbug":
+      # We need only a jar file so avoiding to sync entire tree.
+      # Findbug project keeps release-jar files in their repository.
+      File("http://findbugs.googlecode.com/"
+           + "svn/repos/release-repository/com/google/code/findbugs/jsr305/"
+           + Var("jsr305_version") + "/jsr305-" + Var("jsr305_version") + ".jar"),
     "src/third_party/openssl":
       "http://src.chromium.org/svn/trunk/deps/third_party/openssl@" +
       Var("openssl_revision"),
-    "src/third_party/zlib/v1_2_3":
+    "src/third_party/zlib/v1_2_8":
       "https://src.chromium.org/chrome/trunk/src/third_party/zlib@" +
       Var("zlib_revision"),
   },

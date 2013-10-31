@@ -93,13 +93,8 @@ class ScopedReadWriteFile {
       return;
     }
 #ifdef OS_WIN
-    wstring wfilename;
-    Util::UTF8ToWide(filename_.c_str(), &wfilename);
-    if (!::SetFileAttributesW(wfilename.c_str(),
-                              FILE_ATTRIBUTE_HIDDEN |
-                              FILE_ATTRIBUTE_SYSTEM |
-                              FILE_ATTRIBUTE_NOT_CONTENT_INDEXED |
-                              FILE_ATTRIBUTE_READONLY)) {
+    if (!FileUtil::HideFileWithExtraAttributes(filename_,
+                                               FILE_ATTRIBUTE_READONLY)) {
       LOG(ERROR) << "Cannot make readonly: " << filename_;
     }
 #elif !defined(MOZC_USE_PEPPER_FILE_IO)
@@ -266,12 +261,9 @@ bool WinMacPasswordManager::RemovePassword() const {
 }
 #endif  // OS_WIN | OS_MACOSX
 
-// Chrome OS(Linux)
-// We use plain text file for password storage but this is ok
-// because local files are encrypted by ChromeOS.  If you port
-// this module to other Linux distro, you might want to implement
-// a new password manager which adopts some secure mechanism such
-// like gnome-keyring.
+// We use plain text file for password storage on Linux. If you port this module
+// to other Linux distro, you might want to implement a new password manager
+// which adopts some secure mechanism such like gnome-keyring.
 #if defined OS_LINUX
 typedef PlainPasswordManager DefaultPasswordManager;
 #endif

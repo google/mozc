@@ -34,8 +34,8 @@
 #include <climits>
 #include <string>
 
-#include "base/base.h"
 #include "base/config_file_stream.h"
+#include "base/flags.h"
 #include "base/init.h"
 #include "base/logging.h"
 #include "base/thread.h"

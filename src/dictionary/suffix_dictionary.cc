@@ -33,7 +33,6 @@
 #include <cstring>
 #include <string>
 
-#include "base/base.h"
 #include "base/logging.h"
 #include "base/singleton.h"
 #include "base/trie.h"

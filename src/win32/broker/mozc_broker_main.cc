@@ -31,7 +31,6 @@
 #include <windows.h>
 #endif  // OS_WIN
 
-#include "base/base.h"
 #include "base/crash_report_handler.h"
 #include "base/system_util.h"
 #ifdef OS_WIN

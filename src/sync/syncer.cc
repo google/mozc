@@ -29,17 +29,15 @@
 
 #include "sync/syncer.h"
 
-#include "base/base.h"
+#define SYNC_VLOG_MODULENAME "Syncer"
+
 #include "base/logging.h"
-#include "base/singleton.h"
+#include "base/port.h"
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "storage/registry.h"
 #include "sync/adapter_interface.h"
 #include "sync/logging.h"
-#include "sync/mock_syncer.h"
-#include "sync/oauth2_client.h"
-#include "sync/oauth2_util.h"
 #include "sync/service_interface.h"
 
 namespace mozc {
@@ -51,7 +49,6 @@ using config::SyncConfig;
 
 namespace {
 const int kSyncClientVersion = 1;
-const char kLastDownloadTimeStampKey[] = "sync.last_download_timestamp";
 
 bool CheckConfigToSync(const Config &config, const uint32 component_id) {
   if (!config.has_sync_config()) {
@@ -75,7 +72,7 @@ bool CheckConfigToSync(const Config &config, const uint32 component_id) {
   // Do not sync unkown features.
   return false;
 }
-}  // anonymous namespace
+}  // namespace
 
 Syncer::Syncer(ServiceInterface *service) : service_(service) {}
 
@@ -94,16 +91,21 @@ bool Syncer::RegisterAdapter(AdapterInterface *adapter) {
 
 bool Syncer::Sync(bool *reload_required) {
   SYNC_VLOG(1) << "start Syncer::Sync";
-  if (!Download(reload_required)) {
+
+  uint64 download_timestamp = 0;
+  if (!Download(&download_timestamp, reload_required)) {
     SYNC_VLOG(1) << "Download failed";
+    LOG(ERROR) << "Download failed";
     return false;
   }
 
   if (!Upload()) {
     SYNC_VLOG(1)  << "Upload failed";
+    LOG(ERROR)  << "Upload failed";
     return false;
   }
 
+  SetLastDownloadTimestamp(download_timestamp);
   return true;
 }
 
@@ -169,8 +171,9 @@ bool Syncer::ClearLocal() {
   return result;
 }
 
-bool Syncer::Download(bool *reload_required) {
+bool Syncer::Download(uint64 *download_timestamp, bool *reload_required) {
   SYNC_VLOG(1) << "start Syncer::Download";
+  DCHECK(download_timestamp);
   DCHECK(reload_required);
 
   *reload_required = false;
@@ -192,7 +195,7 @@ bool Syncer::Download(bool *reload_required) {
 
   SYNC_VLOG(1) << "setting last_download_timestamp=" << last_download_timestamp;
 
-  Config config = ConfigHandler::GetConfig();
+  const Config &config = ConfigHandler::GetConfig();
 
   for (AdapterMap::const_iterator iter = adapters_.begin();
        iter != adapters_.end();
@@ -205,6 +208,7 @@ bool Syncer::Download(bool *reload_required) {
   SYNC_VLOG(1) << "downloading remote items...";
   if (!service_->Download(&request, &response)) {
     SYNC_VLOG(1) << "RPC error";
+    LOG(ERROR) << "RPC error";
     return false;
   }
 
@@ -213,11 +217,13 @@ bool Syncer::Download(bool *reload_required) {
 
   if (!response.IsInitialized()) {
     SYNC_VLOG(1) << "response is not initialized";
+    LOG(ERROR) << "response is not initialized";
     return false;
   }
 
   if (response.error() != ime_sync::SYNC_OK) {
     SYNC_VLOG(1) << "response header is not SYNC_OK";
+    LOG(ERROR) << "response header is not SYNC_OK";
     return false;
   }
 
@@ -234,13 +240,15 @@ bool Syncer::Download(bool *reload_required) {
     if (!iter->second->SetDownloadedItems(response.items())) {
       SYNC_VLOG(1) << "SetDownloadedItems failed: "
                    << iter->second->component_id();
+      LOG(ERROR) << "SetDownloadedItems failed: "
+                 << iter->second->component_id();
       return false;
     }
   }
 
   SYNC_VLOG(1) << "done. local components are updated";
 
-  // when the size of donloaded items > 0, set *reload_required to be true.
+  // when the size of downloaded items > 0, set *reload_required to be true.
   // TODO(taku): this might not be optimal, as items may contain
   // invalid data.
   *reload_required = response.items().size() > 0;
@@ -250,8 +258,7 @@ bool Syncer::Download(bool *reload_required) {
                << last_download_timestamp << " to "
                << response.download_timestamp();
 
-  SetLastDownloadTimestamp(response.download_timestamp());
-
+  *download_timestamp = response.download_timestamp();
   return true;
 }
 
@@ -290,6 +297,13 @@ bool Syncer::Upload() {
   if (request.items_size() == 0) {
     SYNC_VLOG(1) << "no items should be uploaded";
     return true;
+  }
+
+  for (int i = 0; i < request.items_size(); ++i) {
+    if (!request.items(i).IsInitialized()) {
+      SYNC_VLOG(1) <<"Upload item (" << i << ") is not initialized correctly.";
+      return false;
+    }
   }
 
   if (result) {
@@ -343,18 +357,34 @@ bool Syncer::Start() {
 }
 
 uint64 Syncer::GetLastDownloadTimestamp() const {
-  uint64 value = 0;
-  if (!mozc::storage::Registry::Lookup(kLastDownloadTimeStampKey, &value)) {
-    SYNC_VLOG(1) << "cannot read: " << kLastDownloadTimeStampKey;
+  uint64 value = kuint64max;
+  const Config &config = ConfigHandler::GetConfig();
+  for (AdapterMap::const_iterator iter = adapters_.begin();
+       iter != adapters_.end(); ++iter) {
+    if (!CheckConfigToSync(config, iter->first)) {
+      continue;
+    }
+    value = min(value, iter->second->GetLastDownloadTimestamp());
   }
-  VLOG(1) << "GetLastDownloadTimestamp: " << value;
+  if (value == kuint64max) {
+    SYNC_VLOG(1) << "There is no enabled adapter.";
+    value = 0;
+  }
+  SYNC_VLOG(1) << "GetLastDownloadTimestamp: " << value;
   return value;
 }
 
 void Syncer::SetLastDownloadTimestamp(uint64 value) {
   VLOG(1) << "SetLastDownloadTimestamp: " << value;
-  if (!mozc::storage::Registry::Insert(kLastDownloadTimeStampKey, value)) {
-    SYNC_VLOG(1) << "cannot save: "<< kLastDownloadTimeStampKey;
+  const Config &config = ConfigHandler::GetConfig();
+  for (AdapterMap::const_iterator iter = adapters_.begin();
+       iter != adapters_.end(); ++iter) {
+    if (!CheckConfigToSync(config, iter->first)) {
+      continue;
+    }
+    if (!iter->second->SetLastDownloadTimestamp(value)) {
+      SYNC_VLOG(1) << "cannot save timestamp for : " << iter->first;
+    }
   }
   mozc::storage::Registry::Sync();
 }

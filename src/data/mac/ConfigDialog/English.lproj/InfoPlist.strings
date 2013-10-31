@@ -1,4 +1,4 @@
 /* Localized versions of Info.plist keys */
 
-CFBundleName = "Google Japanese Input Preferences";
+CFBundleName = "${CF_BUNDLE_NAME_EN} Preferences";
 NSHumanReadableCopyright = "© Google Inc., 2010";

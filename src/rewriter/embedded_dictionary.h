@@ -31,7 +31,7 @@
 #define MOZC_REWRITER_EMBEDDED_DICTIONARY_H_
 
 #include <string>
-#include "base/base.h"
+#include "base/port.h"
 
 namespace mozc {
 

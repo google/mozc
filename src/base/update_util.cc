@@ -31,13 +31,7 @@
 
 #ifdef OS_WIN
 #include <windows.h>
-#endif
-#include <algorithm>
-#include <string>
-
-#include "base/base.h"
-#include "base/util.h"
-#include "base/version.h"
+#endif  // OS_WIN
 
 namespace mozc {
 
@@ -72,73 +66,6 @@ bool UpdateUtil::WriteActiveUsageInfo() {
                           sizeof(kDidRunValue));
   RegCloseKey(key);
   return ERROR_SUCCESS == result;
-#else
-  // TODO(mazda): Implement Mac version
-  return true;
-#endif
-}
-
-string UpdateUtil::GetAvailableVersion() {
-#ifndef GOOGLE_JAPANESE_INPUT_BUILD
-  return "";
-#endif  // !GOOGLE_JAPANESE_INPUT_BUILD
-
-#ifdef OS_WIN
-  const wchar_t kOmahaClientsKey[] = L"Software\\Google\\Update\\Clients\\"
-                                     L"{DDCCD2A9-025E-4142-BCEB-F467B88CF830}";
-  HKEY key;
-  LONG result = RegOpenKeyExW(HKEY_LOCAL_MACHINE,
-                              kOmahaClientsKey,
-                              0,
-                              KEY_QUERY_VALUE,
-                              &key);
-  if (ERROR_SUCCESS != result) {
-    return "";
-  }
-  const wchar_t kProductVersionName[] = L"pv";
-  DWORD reg_type;
-  BYTE buf[512];
-  DWORD buf_size = 512;
-  result = RegQueryValueEx(key,
-                           kProductVersionName,
-                           NULL,
-                           &reg_type,
-                           buf,
-                           &buf_size);
-  RegCloseKey(key);
-  if (ERROR_SUCCESS != result || reg_type != REG_SZ) {
-    return "";
-  }
-
-  wstring tmp(reinterpret_cast<wchar_t*>(buf), buf_size / sizeof(wchar_t));
-  string ret;
-  Util::WideToUTF8(tmp.c_str(), &ret);
-  return ret;
-#else
-  // TODO(mazda): Implement Mac version
-  return "Unknown";
-#endif
-}
-
-string UpdateUtil::GetCurrentVersion() {
-  return Version::GetMozcVersion();
-}
-
-bool UpdateUtil::CompareVersion(const string &lhs, const string &rhs) {
-  return Version::CompareVersion(lhs, rhs);
-}
-
-bool UpdateUtil::IsNewVersionAvailable() {
-#ifndef GOOGLE_JAPANESE_INPUT_BUILD
-  return false;
-#endif  // !GOOGLE_JAPANESE_INPUT_BUILD
-
-#ifdef OS_WIN
-  const string available_version = GetAvailableVersion();
-  if (available_version.empty()) {
-    return false;
-  }
-  return CompareVersion(GetCurrentVersion(), available_version);
 #else
   // TODO(mazda): Implement Mac version
   return false;

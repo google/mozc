@@ -29,7 +29,8 @@
 
 #include <string>
 #include <iostream>
-#include "base/base.h"
+
+#include "base/flags.h"
 #include "dictionary/user_dictionary_importer.h"
 #include "dictionary/user_dictionary_storage.pb.h"
 

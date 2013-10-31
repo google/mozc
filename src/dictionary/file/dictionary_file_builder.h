@@ -34,7 +34,7 @@
 #include <string>
 #include <vector>
 
-#include "base/base.h"
+#include "base/port.h"
 #include "dictionary/file/section.h"
 
 namespace mozc {

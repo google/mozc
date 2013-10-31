@@ -48,6 +48,7 @@
         '../engine/engine.gyp:mock_data_engine_factory',
         '../session/session_base.gyp:session_protocol',
         'converter.gyp:converter',
+        'converter_base.gyp:pos_id_printer',
         'converter_base.gyp:segments',
       ],
     },

@@ -31,7 +31,6 @@
 
 #include <memory>
 
-#include "base/base.h"
 #include "base/logging.h"
 
 namespace mozc {

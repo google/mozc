@@ -31,8 +31,8 @@
 
 #include <algorithm>
 
-#include "base/base.h"
 #include "base/logging.h"
+#include "base/port.h"
 #include "base/protobuf/protobuf.h"
 #include "base/protobuf/repeated_field.h"
 #include "dictionary/user_dictionary_importer.h"

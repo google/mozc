@@ -57,7 +57,7 @@
       'type': 'none',
       'variables': {
         'test_data': [
-          '../../<(test_data_subdir)/connection.txt',
+          '../../<(test_data_subdir)/connection_single_column.txt',
           '../../<(test_data_subdir)/dictionary00.txt',
           '../../<(test_data_subdir)/dictionary01.txt',
           '../../<(test_data_subdir)/dictionary02.txt',

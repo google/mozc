@@ -36,7 +36,6 @@
 #include <string>
 #include <vector>
 
-#include "base/base.h"
 #include "base/file_stream.h"
 #include "base/freelist.h"
 #include "base/logging.h"

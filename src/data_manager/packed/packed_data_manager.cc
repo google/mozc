@@ -42,6 +42,7 @@
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suffix_dictionary_token.h"
 #include "rewriter/correction_rewriter.h"
+#include "rewriter/counter_suffix.h"
 #include "rewriter/embedded_dictionary.h"
 #ifndef NO_USAGE_REWRITER
 #include "rewriter/usage_rewriter_data_structs.h"
@@ -56,7 +57,7 @@ using std::unique_ptr;
 namespace mozc {
 namespace packed {
 namespace {
-const int kSystemDictionaryFormatVersion = 1;
+const int kSystemDictionaryFormatVersion = 2;
 // Default value of the total bytes limit defined in protobuf library is 64MB.
 // Our big dictionary size is about 50MB. So we don't need to change it.
 const size_t kDefaultTotalBytesLimit = 64 << 20;
@@ -110,6 +111,8 @@ class PackedDataManager::Impl {
 #endif  // NO_USAGE_REWRITER
   const uint16 *GetRuleIdTableForTest() const;
   const void *GetRangeTablesForTest() const;
+  void GetCounterSuffixSortedArray(const CounterSuffixEntry **array,
+                                   size_t *size) const;
 
  private:
   // Non-const struct of POSMatcher::Range
@@ -142,6 +145,7 @@ class PackedDataManager::Impl {
   unique_ptr<int[]> conjugation_suffix_data_index_;
   unique_ptr<UsageDictItem[]> usage_data_value_;
 #endif  // NO_USAGE_REWRITER
+  unique_ptr<CounterSuffixEntry[]> counter_suffix_data_;
 };
 
 PackedDataManager::Impl::Impl()
@@ -463,6 +467,20 @@ bool PackedDataManager::Impl::InitializeWithSystemDictionaryData() {
   last_item->meaning = NULL;
 #endif  // NO_USAGE_REWRITER
 
+  // Makes counter suffix sorted array.
+  {
+    const size_t size =
+        system_dictionary_data_->counter_suffix_data_size();
+    if (size > 0) {
+      counter_suffix_data_.reset(new CounterSuffixEntry[size]);
+      for (size_t i = 0; i < size; ++i) {
+        counter_suffix_data_[i].suffix =
+            system_dictionary_data_->counter_suffix_data(i).data();
+        counter_suffix_data_[i].size =
+            system_dictionary_data_->counter_suffix_data(i).size();
+      }
+    }
+  }
   return true;
 }
 
@@ -571,6 +589,13 @@ const uint16 *PackedDataManager::Impl::GetRuleIdTableForTest() const {
 const void *PackedDataManager::Impl::GetRangeTablesForTest() const {
   return range_tables_.get();
 }
+
+void PackedDataManager::Impl::GetCounterSuffixSortedArray(
+    const CounterSuffixEntry **array, size_t *size) const {
+  *array = counter_suffix_data_.get();
+  *size = system_dictionary_data_->counter_suffix_data_size();
+}
+
 
 PackedDataManager::PackedDataManager() {
 }
@@ -713,6 +738,10 @@ void PackedDataManager::GetUsageRewriterData(
 }
 #endif  // NO_USAGE_REWRITER
 
+void PackedDataManager::GetCounterSuffixSortedArray(
+    const CounterSuffixEntry **array, size_t *size) const {
+  manager_impl_->GetCounterSuffixSortedArray(array, size);
+}
 
 const uint16 *PackedDataManager::GetRuleIdTableForTest() const {
   return manager_impl_->GetRuleIdTableForTest();

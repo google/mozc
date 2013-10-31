@@ -32,8 +32,9 @@
 
 #include <set>
 #include <string>
-#include "base/base.h"
+
 #include "base/mutex.h"
+#include "base/port.h"
 
 namespace mozc {
 
@@ -85,7 +86,10 @@ class SuppressionDictionary {
   bool has_key_empty_;
   bool has_value_empty_;
   Mutex mutex_;
+
+  DISALLOW_COPY_AND_ASSIGN(SuppressionDictionary);
 };
+
 }  // namespace mozc
 
 #endif  // MOZC_DICTIONARY_SUPPRESSION_DICTIONARY_H_

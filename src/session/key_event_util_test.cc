@@ -207,27 +207,25 @@ TEST(KeyEventUtilTest, NormalizeModifiers) {
   }
 }
 
-namespace {
-const struct NormalizeNumpadKeyTestData {
-  const char *from;
-  const char *to;
-} kNormalizeNumpadKeyTestData[] = {
-  { "a",             "a" },
-  { "Shift",         "Shift" },
-  { "Caps",          "Caps" },
-  { "Enter",         "Enter" },
-  { "Shift Caps a",  "Shift Caps a" },
-  { "NUMPAD0",       "0" },
-  { "NUMPAD9",       "9" },
-  { "MULTIPLY",      "*" },
-  { "SEPARATOR",     "Enter" },
-  { "EQUALS",        "=" },
-  { "Ctrl NUMPAD0",  "Ctrl 0" },
-  { "NUMPAD0 a",     "0" },
-};
-}  // namespace
-
 TEST(KeyEventUtilTest, NormalizeNumpadKey) {
+  const struct NormalizeNumpadKeyTestData {
+    const char *from;
+    const char *to;
+  } kNormalizeNumpadKeyTestData[] = {
+    { "a",             "a" },
+    { "Shift",         "Shift" },
+    { "Caps",          "Caps" },
+    { "Enter",         "Enter" },
+    { "Shift Caps a",  "Shift Caps a" },
+    { "NUMPAD0",       "0" },
+    { "NUMPAD9",       "9" },
+    { "MULTIPLY",      "*" },
+    { "SEPARATOR",     "Enter" },
+    { "EQUALS",        "=" },
+    { "Ctrl NUMPAD0",  "Ctrl 0" },
+    { "NUMPAD0 a",     "0" },
+  };
+
   for (size_t i = 0; i < arraysize(kNormalizeNumpadKeyTestData); ++i) {
     const NormalizeNumpadKeyTestData &data = kNormalizeNumpadKeyTestData[i];
     SCOPED_TRACE(data.from);
@@ -260,37 +258,35 @@ TEST(KeyEventUtilTest, MaybeGetKeyStub) {
   EXPECT_EQ(static_cast<KeyInformation>(KeyEvent::TEXT_INPUT) << 32, key);
 }
 
-namespace {
-const struct RemoveModifiersTestData {
-  const char *input;
-  const char *remove;
-  const char *output;
-} kRemoveModifiersTestData[] = {
-  {
-    "",
-    "",
-    "",
-  }, {
-    "Ctrl Shift LeftAlt Caps",
-    "Ctrl Shift LeftAlt Caps",
-    "",
-  }, {
-    "Ctrl Shift LeftAlt Caps",
-    "Shift Caps",
-    "Ctrl LeftAlt",
-  }, {
-    "Ctrl Shift LeftAlt Caps",
-    "Alt",
-    "Ctrl Shift Caps",
-  }, {
-    "",
-    "Ctrl Shift LeftAlt Caps",
-    "",
-  },
-};
-}  // namespace
-
 TEST(KeyEventUtilTest, RemvoeModifiers) {
+  const struct RemoveModifiersTestData {
+    const char *input;
+    const char *remove;
+    const char *output;
+  } kRemoveModifiersTestData[] = {
+    {
+      "",
+      "",
+      "",
+    }, {
+      "Ctrl Shift LeftAlt Caps",
+      "Ctrl Shift LeftAlt Caps",
+      "",
+    }, {
+      "Ctrl Shift LeftAlt Caps",
+      "Shift Caps",
+      "Ctrl LeftAlt",
+    }, {
+      "Ctrl Shift LeftAlt Caps",
+      "Alt",
+      "Ctrl Shift Caps",
+    }, {
+      "",
+      "Ctrl Shift LeftAlt Caps",
+      "",
+    },
+  };
+
   for (size_t i = 0; i < arraysize(kRemoveModifiersTestData); ++i) {
     SCOPED_TRACE(Util::StringPrintf("index = %d", static_cast<int>(i)));
     const RemoveModifiersTestData &data = kRemoveModifiersTestData[i];
@@ -335,58 +331,56 @@ TEST(KeyEventUtilTest, HasModifiers) {
   EXPECT_FALSE(KeyEventUtil::HasCaps(KeyEvent::CTRL));
 }
 
-namespace {
-const struct IsModifiersTestData {
-  uint32 modifiers;
-  bool is_alt;
-  bool is_ctrl;
-  bool is_shift;
-  bool is_alt_ctrl;
-  bool is_alt_shift;
-  bool is_ctrl_shift;
-  bool is_alt_ctrl_shift;
-} kIsModifiersTestData[] = {
-  {
-    0,
-    false, false, false, false, false, false, false
-  }, {
-    KeyEvent::ALT,
-    true, false, false, false, false, false, false,
-  }, {
-    KeyEvent::CTRL,
-    false, true, false, false, false, false, false,
-  }, {
-    KeyEvent::SHIFT,
-    false, false, true, false, false, false, false,
-  }, {
-    KeyEvent::ALT | KeyEvent::CTRL,
-    false, false, false, true, false, false, false,
-  }, {
-    KeyEvent::ALT | KeyEvent::SHIFT,
-    false, false, false, false, true, false, false,
-  }, {
-    KeyEvent::CTRL | KeyEvent::SHIFT,
-    false, false, false, false, false, true, false,
-  }, {
-    KeyEvent::ALT | KeyEvent::CTRL | KeyEvent::SHIFT,
-    false, false, false, false, false, false, true,
-  }, {
-    KeyEvent::LEFT_ALT,
-    true, false, false, false, false, false, false,
-  }, {
-    KeyEvent::ALT | KeyEvent::LEFT_ALT | KeyEvent::RIGHT_ALT,
-    true, false, false, false, false, false, false,
-  }, {
-    KeyEvent::CAPS,
-    false, false, false, false, false, false, false,
-  }, {
-    KeyEvent::ALT | KeyEvent::CAPS,
-    true, false, false, false, false, false, false,
-  },
-};
-}  // namespace
-
 TEST(KeyEventUtilTest, IsModifiers) {
+  const struct IsModifiersTestData {
+    uint32 modifiers;
+    bool is_alt;
+    bool is_ctrl;
+    bool is_shift;
+    bool is_alt_ctrl;
+    bool is_alt_shift;
+    bool is_ctrl_shift;
+    bool is_alt_ctrl_shift;
+  } kIsModifiersTestData[] = {
+    {
+      0,
+      false, false, false, false, false, false, false
+    }, {
+      KeyEvent::ALT,
+      true, false, false, false, false, false, false,
+    }, {
+      KeyEvent::CTRL,
+      false, true, false, false, false, false, false,
+    }, {
+      KeyEvent::SHIFT,
+      false, false, true, false, false, false, false,
+    }, {
+      KeyEvent::ALT | KeyEvent::CTRL,
+      false, false, false, true, false, false, false,
+    }, {
+      KeyEvent::ALT | KeyEvent::SHIFT,
+      false, false, false, false, true, false, false,
+    }, {
+      KeyEvent::CTRL | KeyEvent::SHIFT,
+      false, false, false, false, false, true, false,
+    }, {
+      KeyEvent::ALT | KeyEvent::CTRL | KeyEvent::SHIFT,
+      false, false, false, false, false, false, true,
+    }, {
+      KeyEvent::LEFT_ALT,
+      true, false, false, false, false, false, false,
+    }, {
+      KeyEvent::ALT | KeyEvent::LEFT_ALT | KeyEvent::RIGHT_ALT,
+      true, false, false, false, false, false, false,
+    }, {
+      KeyEvent::CAPS,
+      false, false, false, false, false, false, false,
+    }, {
+      KeyEvent::ALT | KeyEvent::CAPS,
+      true, false, false, false, false, false, false,
+    },
+  };
+
   for (size_t i = 0; i < arraysize(kIsModifiersTestData); ++i) {
     const IsModifiersTestData &data = kIsModifiersTestData[i];
     SCOPED_TRACE(Util::StringPrintf("index: %d", static_cast<int>(i)));
@@ -402,26 +396,24 @@ TEST(KeyEventUtilTest, IsModifiers) {
   }
 }
 
-namespace {
-const struct IsLowerUpperAlphabetTestData {
-  const char *key;
-  bool is_lower;
-  bool is_upper;
-} kIsLowerUpperAlphabetTestData[] = {
-  { "a",            true,  false },
-  { "A",            false, true },
-  { "Shift a",      false, true },
-  { "Shift A",      true,  false },
-  { "Shift Caps a", true,  false },
-  { "Shift Caps A", false, true },
-  { "0",            false, false },
-  { "Shift",        false, false },
-  { "Caps",         false, false },
-  { "Space",        false, false },
-};
-}  // namespace
-
 TEST(KeyEventUtilTest, IsLowerUpperAlphabet) {
+  const struct IsLowerUpperAlphabetTestData {
+    const char *key;
+    bool is_lower;
+    bool is_upper;
+  } kIsLowerUpperAlphabetTestData[] = {
+    { "a",            true,  false },
+    { "A",            false, true },
+    { "Shift a",      false, true },
+    { "Shift A",      true,  false },
+    { "Shift Caps a", true,  false },
+    { "Shift Caps A", false, true },
+    { "0",            false, false },
+    { "Shift",        false, false },
+    { "Caps",         false, false },
+    { "Space",        false, false },
+  };
+
   for (size_t i = 0; i < arraysize(kIsLowerUpperAlphabetTestData); ++i) {
     const IsLowerUpperAlphabetTestData &data = kIsLowerUpperAlphabetTestData[i];
     SCOPED_TRACE(data.key);
@@ -432,27 +424,25 @@ TEST(KeyEventUtilTest, IsLowerUpperAlphabet) {
   }
 }
 
-namespace {
-const struct IsNumpadKeyTestData {
-  const char *key;
-  bool is_numpad_key;
-} kIsNumpadKeyTestData[] = {
-  { "a",            false },
-  { "A",            false },
-  { "Shift",        false },
-  { "Shift a",      false },
-  { "0",            false },
-  { "EISU",         false },
-  { "NUMPAD0",      true },
-  { "NUMPAD9",      true },
-  { "MULTIPLY",     true },
-  { "EQUALS",       true },
-  { "COMMA",        true },
-  { "TEXTINPUT",    false },
-};
-}  // namespace
-
 TEST(KeyEventUtilTest, IsNumpadKey) {
+  const struct IsNumpadKeyTestData {
+    const char *key;
+    bool is_numpad_key;
+  } kIsNumpadKeyTestData[] = {
+    { "a",            false },
+    { "A",            false },
+    { "Shift",        false },
+    { "Shift a",      false },
+    { "0",            false },
+    { "EISU",         false },
+    { "NUMPAD0",      true },
+    { "NUMPAD9",      true },
+    { "MULTIPLY",     true },
+    { "EQUALS",       true },
+    { "COMMA",        true },
+    { "TEXTINPUT",    false },
+  };
+
   for (size_t i = 0; i < arraysize(kIsNumpadKeyTestData); ++i) {
     const IsNumpadKeyTestData &data = kIsNumpadKeyTestData[i];
     SCOPED_TRACE(data.key);

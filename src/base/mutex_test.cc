@@ -60,17 +60,94 @@ class MutexTestThread : public Thread {
   int sleep_;
 };
 
+class MutexTestSleepThread : public Thread {
+ public:
+  MutexTestSleepThread(Mutex *mutex, int sleep)
+      : mutex_(mutex), sleep_(sleep) {}
+
+  virtual void Run() {
+    scoped_lock l(mutex_);
+    ++g_counter;
+    Util::Sleep(sleep_);
+  }
+
+ private:
+  Mutex *mutex_;
+  int sleep_;
+};
+
 TEST(MutexTest, MutexBasicTest) {
   g_counter = 0;
   Mutex mutex;
   MutexTestThread t(&mutex, 1, 1000);
   t.Start();
 
-  Util::Sleep(100);       // still g_counter is locked
-  scoped_lock l(&mutex);  // get mutex 2nd
+  Util::Sleep(100);  // still g_counter is locked
+  scoped_lock lockA(&mutex);  // get mutex 2nd
   ++g_counter;
   EXPECT_EQ(2, g_counter);
-  t.Join();               // make sure that the thread no longer uses the mutex
+  scoped_lock lockB(&mutex);  // recursive lock
+  ++g_counter;
+  EXPECT_EQ(3, g_counter);
+  t.Join();  // make sure that the thread no longer uses the mutex
+}
+
+TEST(MutexTest, TryLockTest) {
+  {  // Get a lock by TryLock.
+    g_counter = 0;
+    Mutex mutex;
+    MutexTestSleepThread t(&mutex, 1);
+
+    EXPECT_TRUE(mutex.TryLock());
+    t.Start();
+    Util::Sleep(100);
+    EXPECT_EQ(0, g_counter);
+    mutex.Unlock();
+    t.Join();
+    EXPECT_EQ(1, g_counter);
+
+    {
+      scoped_try_lock lock(&mutex);
+      EXPECT_TRUE(lock.locked());
+      t.Start();
+      Util::Sleep(100);
+      EXPECT_EQ(1, g_counter);
+    }
+    t.Join();
+    EXPECT_EQ(2, g_counter);
+
+    {
+      scoped_try_lock lockA(&mutex);
+      EXPECT_TRUE(lockA.locked());
+      scoped_try_lock lockB(&mutex);
+      EXPECT_TRUE(lockB.locked());
+    }
+  }
+
+  {  // Cannot get a lock by TryLock since it is already locked.
+    g_counter = 0;
+    Mutex mutex;
+    MutexTestSleepThread t(&mutex, 1000);
+
+    uint64 start_sec;
+    uint32 start_usec;
+    Util::GetTimeOfDay(&start_sec, &start_usec);
+    t.Start();
+
+    Util::Sleep(100);
+    EXPECT_EQ(1, g_counter);
+    EXPECT_FALSE(mutex.TryLock());
+    scoped_try_lock lock(&mutex);
+    EXPECT_FALSE(lock.locked());
+
+    uint64 end_sec;
+    uint32 end_usec;
+    Util::GetTimeOfDay(&end_sec, &end_usec);
+    const uint64 elapsed_usec =
+      (end_sec - start_sec) * 1000000 + end_usec - start_usec;
+    EXPECT_GE(1000000, elapsed_usec);
+    t.Join();
+  }
 }
 
 TEST(MutexTest, MutexBatchTest) {

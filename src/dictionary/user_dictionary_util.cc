@@ -32,7 +32,6 @@
 #include <string.h>
 #include <algorithm>
 
-#include "base/base.h"
 #include "base/config_file_stream.h"
 #include "base/file_stream.h"
 #include "base/logging.h"

@@ -46,7 +46,7 @@ class OssDataManagerTest : public DataManagerTestBase {
                             kLSize,
                             kRSize,
                             IsBoundaryInternal,
-                            "data/dictionary_oss/connection.txt",
+                            "data/dictionary_oss/connection_single_column.txt",
                             1,
                             "data/dictionary_oss/dictionary00.txt,"
                             "data/dictionary_oss/dictionary01.txt,"

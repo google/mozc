@@ -39,12 +39,12 @@
 #include "base/number_util.h"
 #include "base/protobuf/unknown_field_set.h"
 #include "base/system_util.h"
-#include "base/testing_util.h"
 #include "base/util.h"
 #include "dictionary/user_dictionary_importer.h"
 #include "dictionary/user_dictionary_util.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "testing/base/public/testing_util.h"
 
 DECLARE_string(test_tmpdir);
 
@@ -100,11 +100,21 @@ TEST_F(UserDictionaryStorageTest, FileTest) {
 TEST_F(UserDictionaryStorageTest, LockTest) {
   UserDictionaryStorage storage1(GetUserDictionaryFile());
   UserDictionaryStorage storage2(GetUserDictionaryFile());
+
+  EXPECT_FALSE(storage1.Save());
+  EXPECT_FALSE(storage2.Save());
+
   EXPECT_TRUE(storage1.Lock());
   EXPECT_FALSE(storage2.Lock());
+  EXPECT_TRUE(storage1.Save());
   EXPECT_FALSE(storage2.Save());
+
   EXPECT_TRUE(storage1.UnLock());
+  EXPECT_FALSE(storage1.Save());
+  EXPECT_FALSE(storage2.Save());
+
   EXPECT_TRUE(storage2.Lock());
+  EXPECT_FALSE(storage1.Save());
   EXPECT_TRUE(storage2.Save());
 }
 
@@ -148,6 +158,7 @@ TEST_F(UserDictionaryStorageTest, SyncDictionaryBinarySizeTest) {
   }
   // Such size is unacceptable for sync.
   EXPECT_FALSE(storage.Save());
+  EXPECT_TRUE(storage.SaveWithoutSyncableDictionariesSizeCheck());
 
   EXPECT_TRUE(storage.UnLock());
 }
@@ -462,11 +473,11 @@ TEST_F(UserDictionaryStorageTest, CreateDefaultSyncDictionaryIfNeccesary) {
   UserDictionaryStorage storage(GetUserDictionaryFile());
   EXPECT_FALSE(storage.Load());
 #ifdef ENABLE_CLOUD_SYNC
-  EXPECT_GT(UserDictionaryStorage::CountSyncableDictionaries(&storage), 0) <<
+  EXPECT_GT(UserDictionaryStorage::CountSyncableDictionaries(storage), 0) <<
       "When ENABLE_CLOUD_SYNC is defined, at least one sync dictionary should "
       "exist after |storage.Load() is finished. Currently this is by design.";
 #else
-  EXPECT_EQ(0, UserDictionaryStorage::CountSyncableDictionaries(&storage)) <<
+  EXPECT_EQ(0, UserDictionaryStorage::CountSyncableDictionaries(storage)) <<
       "When ENABLE_CLOUD_SYNC is not defined, there should be no sync "
       "dictionary by default.";
 #endif  // ENABLE_CLOUD_SYNC
@@ -478,7 +489,7 @@ TEST_F(UserDictionaryStorageTest, Issue6004671) {
     UserDictionaryStorage storage(GetUserDictionaryFile());
     EXPECT_FALSE(storage.Load());
     ASSERT_TRUE(storage.EnsureSyncDictionaryExists());
-    ASSERT_GT(UserDictionaryStorage::CountSyncableDictionaries(&storage), 0);
+    ASSERT_GT(UserDictionaryStorage::CountSyncableDictionaries(storage), 0);
     ASSERT_TRUE(storage.Lock());
     ASSERT_TRUE(storage.Save());
     ASSERT_TRUE(storage.UnLock());
@@ -487,7 +498,7 @@ TEST_F(UserDictionaryStorageTest, Issue6004671) {
   {
     UserDictionaryStorage storage(GetUserDictionaryFile());
     ASSERT_TRUE(storage.Load());
-    EXPECT_EQ(0, UserDictionaryStorage::CountSyncableDictionaries(&storage))
+    EXPECT_EQ(0, UserDictionaryStorage::CountSyncableDictionaries(storage))
         << "To work around Issue 6004671, we silently remove an empty sync "
            "dictionary in UserDictionaryStorage::Load() when "
            "ENABLE_CLOUD_SYNC is not defined.";
@@ -551,7 +562,7 @@ TEST_F(UserDictionaryStorageTest, RemoveUnusedSyncDictionariesIfExist) {
       dict->set_syncable(true);
     }
 
-    EXPECT_GT(UserDictionaryStorage::CountSyncableDictionaries(&storage), 0);
+    EXPECT_GT(UserDictionaryStorage::CountSyncableDictionaries(storage), 0);
     EXPECT_TRUE(storage.Lock());
     EXPECT_TRUE(storage.Save());
     EXPECT_TRUE(storage.UnLock());
@@ -565,9 +576,9 @@ TEST_F(UserDictionaryStorageTest, RemoveUnusedSyncDictionariesIfExist) {
     UserDictionaryStorage storage(GetUserDictionaryFile());
     ASSERT_TRUE(storage.LoadWithoutChangingSyncDictionary()) <<
         "Failed to load test user dictionary file.";
-    EXPECT_EQ(2, UserDictionaryStorage::CountSyncableDictionaries(&storage));
+    EXPECT_EQ(2, UserDictionaryStorage::CountSyncableDictionaries(storage));
     storage.RemoveUnusedSyncDictionariesIfExist();
-    EXPECT_EQ(1, UserDictionaryStorage::CountSyncableDictionaries(&storage))
+    EXPECT_EQ(1, UserDictionaryStorage::CountSyncableDictionaries(storage))
         << "One sync dictionary should be removed because if is empty.";
     EXPECT_TRUE(storage.Lock());
     EXPECT_TRUE(storage.Save());
@@ -579,9 +590,9 @@ TEST_F(UserDictionaryStorageTest, RemoveUnusedSyncDictionariesIfExist) {
     UserDictionaryStorage storage(GetUserDictionaryFile());
     ASSERT_TRUE(storage.LoadWithoutChangingSyncDictionary()) <<
         "Failed to load test user dictionary file.";
-    EXPECT_EQ(1, UserDictionaryStorage::CountSyncableDictionaries(&storage));
+    EXPECT_EQ(1, UserDictionaryStorage::CountSyncableDictionaries(storage));
     storage.RemoveUnusedSyncDictionariesIfExist();
-    EXPECT_EQ(1, UserDictionaryStorage::CountSyncableDictionaries(&storage));
+    EXPECT_EQ(1, UserDictionaryStorage::CountSyncableDictionaries(storage));
   }
 }
 

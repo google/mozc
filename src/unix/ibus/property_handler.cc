@@ -51,6 +51,7 @@ namespace mozc {
 namespace ibus {
 
 namespace {
+
 // A key which associates an IBusProperty object with MozcEngineProperty.
 const char kGObjectDataKey[] = "ibus-mozc-aux-data";
 
@@ -61,6 +62,19 @@ const char kMozcToolIconPath[] = "tool.png";
 bool IsMozcToolAvailable() {
   return FileUtil::FileExists(SystemUtil::GetToolPath());
 }
+
+bool GetDisabled(IBusEngine *engine) {
+  bool disabled = false;
+#if defined(MOZC_ENABLE_IBUS_INPUT_PURPOSE)
+  guint purpose = IBUS_INPUT_PURPOSE_FREE_FORM;
+  guint hints = IBUS_INPUT_HINT_NONE;
+  ibus_engine_get_content_type(engine, &purpose, &hints);
+  disabled = (purpose == IBUS_INPUT_PURPOSE_PASSWORD ||
+              purpose == IBUS_INPUT_PURPOSE_PIN);
+#endif  // MOZC_ENABLE_IBUS_INPUT_PURPOSE
+  return disabled;
+}
+
 }  // namespace
 
 PropertyHandler::PropertyHandler(MessageTranslatorInterface *translator,
@@ -71,12 +85,11 @@ PropertyHandler::PropertyHandler(MessageTranslatorInterface *translator,
       client_(client),
       translator_(translator),
       original_composition_mode_(kMozcEngineInitialCompositionMode),
-      is_activated_(true) {
+      is_activated_(true),
+      is_disabled_(false) {
 
   AppendCompositionPropertyToPanel();
-#ifndef OS_CHROMEOS
   AppendToolPropertyToPanel();
-#endif
 
   // We have to sink |prop_root_| as well so ibus_engine_register_properties()
   // in FocusIn() does not destruct it.
@@ -105,6 +118,7 @@ PropertyHandler::~PropertyHandler() {
 
 void PropertyHandler::Register(IBusEngine *engine) {
   ibus_engine_register_properties(engine, prop_root_);
+  UpdateContentType(engine);
 }
 
 // TODO(nona): do not use kMozcEngine*** directory.
@@ -180,6 +194,27 @@ void PropertyHandler::AppendCompositionPropertyToPanel() {
   ibus_prop_list_append(prop_root_, prop_composition_mode_);
 }
 
+void PropertyHandler::UpdateContentTypeImpl(IBusEngine *engine,
+                                            bool disabled) {
+  const bool prev_is_disabled = is_disabled_;
+  is_disabled_ = disabled;
+  if (prev_is_disabled == is_disabled_) {
+    return;
+  }
+  const auto visible_mode = (prev_is_disabled && !is_disabled_ && IsActivated())
+      ? original_composition_mode_ :
+        kMozcEnginePropertyIMEOffState->composition_mode;
+  UpdateCompositionModeIcon(engine, visible_mode);
+}
+
+void PropertyHandler::ResetContentType(IBusEngine *engine) {
+  UpdateContentTypeImpl(engine, false);
+}
+
+void PropertyHandler::UpdateContentType(IBusEngine *engine) {
+  UpdateContentTypeImpl(engine, GetDisabled(engine));
+}
+
 // TODO(nona): do not use kMozcEngine*** directory.
 void PropertyHandler::AppendToolPropertyToPanel() {
   if (kMozcEngineToolProperties == NULL || kMozcEngineToolPropertiesSize == 0 ||
@@ -230,6 +265,10 @@ void PropertyHandler::AppendToolPropertyToPanel() {
 
 void PropertyHandler::Update(IBusEngine *engine,
                              const commands::Output &output) {
+  if (IsDisabled()) {
+    return;
+  }
+
   if (output.has_status() &&
       (output.status().activated() != is_activated_ ||
        output.status().mode() != original_composition_mode_)) {
@@ -324,7 +363,10 @@ void PropertyHandler::SetCompositionMode(
 void PropertyHandler::ProcessPropertyActivate(IBusEngine *engine,
                                               const gchar *property_name,
                                               guint property_state) {
-#ifndef OS_CHROMEOS
+  if (IsDisabled()) {
+    return;
+  }
+
   if (prop_mozc_tool_) {
     for (guint prop_index = 0; ; ++prop_index) {
       IBusProperty *prop = ibus_prop_list_get(
@@ -344,7 +386,6 @@ void PropertyHandler::ProcessPropertyActivate(IBusEngine *engine,
       }
     }
   }
-#endif
 
   if (property_state != PROP_STATE_CHECKED) {
     return;
@@ -372,6 +413,10 @@ void PropertyHandler::ProcessPropertyActivate(IBusEngine *engine,
 
 bool PropertyHandler::IsActivated() const {
   return is_activated_;
+}
+
+bool PropertyHandler::IsDisabled() const {
+  return is_disabled_;
 }
 
 commands::CompositionMode PropertyHandler::GetOriginalCompositionMode() const {

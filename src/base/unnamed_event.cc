@@ -37,8 +37,8 @@
 #include <sys/time.h>
 #endif  // OS_WIN
 
-#include "base/base.h"
 #include "base/logging.h"
+#include "base/port.h"
 
 namespace mozc {
 
@@ -97,8 +97,10 @@ class ScopedPthreadMutexLock {
   ~ScopedPthreadMutexLock() {
     pthread_mutex_unlock(mutex_);
   }
+
  private:
   pthread_mutex_t *mutex_;
+  DISALLOW_COPY_AND_ASSIGN(ScopedPthreadMutexLock);
 };
 }  // namespace
 

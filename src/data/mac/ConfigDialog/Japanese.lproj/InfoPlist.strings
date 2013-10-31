@@ -1,4 +1,4 @@
 /* Localized versions of Info.plist keys */
 
-CFBundleName = "Google 日本語入力 環境設定";
+CFBundleName = "${CF_BUNDLE_NAME_JA} 環境設定";
 NSHumanReadableCopyright = "© Google Inc., 2010";

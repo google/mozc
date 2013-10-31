@@ -30,9 +30,9 @@
 #include <algorithm>
 #include <string>
 
-#include "base/base.h"
 #include "base/codegen_bytearray_stream.h"
 #include "base/file_stream.h"
+#include "base/flags.h"
 #include "base/logging.h"
 #include "base/util.h"
 #include "storage/existence_filter.h"

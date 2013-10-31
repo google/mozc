@@ -46,6 +46,7 @@
 #include "rewriter/english_variants_rewriter.h"
 #include "rewriter/focus_candidate_rewriter.h"
 #include "rewriter/fortune_rewriter.h"
+#include "rewriter/language_aware_rewriter.h"
 #include "rewriter/merger_rewriter.h"
 #include "rewriter/normalization_rewriter.h"
 #include "rewriter/number_rewriter.h"
@@ -92,10 +93,11 @@ RewriterImpl::RewriterImpl(const ConverterInterface *parent_converter,
   // |dictionary| can be NULL
 
   AddRewriter(new UserDictionaryRewriter);
-  AddRewriter(new FocusCandidateRewriter);
-  AddRewriter(new TransliterationRewriter(*pos_matcher, dictionary));
+  AddRewriter(new FocusCandidateRewriter(data_manager));
+  AddRewriter(new LanguageAwareRewriter(*pos_matcher, dictionary));
+  AddRewriter(new TransliterationRewriter(*pos_matcher));
   AddRewriter(new EnglishVariantsRewriter);
-  AddRewriter(new NumberRewriter(pos_matcher));
+  AddRewriter(new NumberRewriter(data_manager));
   AddRewriter(new CollocationRewriter(data_manager));
   AddRewriter(new SingleKanjiRewriter(*pos_matcher));
   AddRewriter(new EmojiRewriter(

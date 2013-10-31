@@ -77,34 +77,30 @@ def GetPosSize(filepath):
 
 def ParseConnectionFile(text_connection_file, pos_size, special_pos_size):
   # The result is a square matrix.
-  row_size = pos_size + special_pos_size
-  col_size = row_size
+  mat_size = pos_size + special_pos_size
 
-  matrix = [[0] * col_size for _ in xrange(row_size)]
+  matrix = [[0] * mat_size for _ in xrange(mat_size)]
   with open(text_connection_file) as stream:
     stream = code_generator_util.SkipLineComment(stream)
-    # The first line contains the rid and lid sizes.
-    rsize, lsize = stream.next().split()
-    assert (int(rsize) == pos_size), '%s != %d' % (rsize, pos_size)
-    assert (int(lsize) == pos_size), '%s != %d' % (lsize, pos_size)
+    # The first line contains the matrix column/row size.
+    size = stream.next().rstrip()
+    assert (int(size) == pos_size), '%s != %d' % (size, pos_size)
 
-    stream = code_generator_util.ParseColumnStream(stream)
-    for rid, lid, cost in stream:
-      rid = int(rid)
-      lid = int(lid)
-      cost = int(cost)
-
+    for array_index, cost in enumerate(stream):
+      cost = int(cost.rstrip())
+      rid = array_index / pos_size
+      lid = array_index % pos_size
       if rid == 0 and lid == 0:
         cost = 0
       matrix[rid][lid] = cost
 
-  # Fill INVALID_COST to matrix.
-  for rid in xrange(pos_size, row_size):
-    for lid in xrange(1, col_size):  # Skip EOS
+  # Fill INVALID_COST in matrix elements for special POS.
+  for rid in xrange(pos_size, mat_size):
+    for lid in xrange(1, mat_size):  # Skip EOS
       matrix[rid][lid] = INVALID_COST
 
-  for lid in xrange(pos_size, col_size):
-    for rid in xrange(1, row_size):  # Skip BOS
+  for lid in xrange(pos_size, mat_size):
+    for rid in xrange(1, mat_size):  # Skip BOS
       matrix[rid][lid] = INVALID_COST
 
   return matrix

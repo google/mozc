@@ -33,7 +33,6 @@
 
 #import "mac/common.h"
 
-#include "base/base.h"
 #include "base/const.h"
 #include "session/commands.pb.h"
 

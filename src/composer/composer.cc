@@ -217,6 +217,7 @@ Composer::~Composer() {}
 void Composer::Reset() {
   EditErase();
   ResetInputMode();
+  SetOutputMode(transliteration::HIRAGANA);
   source_text_.assign("");
   typing_corrector_.Reset();
 }
@@ -414,7 +415,9 @@ void Composer::InsertCharacterPreedit(const string &input) {
   while (begin < end) {
     const size_t mblen = Util::OneCharLen(input.c_str() + begin);
     const string character(input, begin, mblen);
-    InsertCharacterKeyAndPreedit(character, character);
+    if (!InsertCharacterKeyAndPreedit(character, character)) {
+      return;
+    }
     begin += mblen;
   }
   DCHECK_EQ(begin, end);
@@ -442,13 +445,14 @@ bool Composer::InsertCharacterKeyAndPreeditInternal(const string &key,
   return true;
 }
 
-void Composer::InsertCharacterKeyAndPreedit(const string &key,
+bool Composer::InsertCharacterKeyAndPreedit(const string &key,
                                             const string &preedit) {
   if (!InsertCharacterKeyAndPreeditInternal(key, preedit)) {
-    return;
+    return false;
   }
   const ProbableKeyEvents empty_events;
   typing_corrector_.InsertCharacter(key, empty_events);
+  return true;
 }
 
 void Composer::InsertCharacterKeyAndPreeditForProbableKeyEvents(

@@ -33,7 +33,8 @@
 #include <map>
 #include <string>
 #include <vector>
-#include "base/base.h"
+
+#include "base/port.h"
 #include "dictionary/user_pos_interface.h"
 
 namespace mozc {

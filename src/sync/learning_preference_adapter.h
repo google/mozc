@@ -32,7 +32,7 @@
 
 #include <string>
 #include <vector>
-#include "base/base.h"
+#include "base/port.h"
 #include "sync/adapter_interface.h"
 #include "sync/sync.pb.h"
 // for FRIEND_TEST()
@@ -52,9 +52,18 @@ class LearningPreferenceAdapter : public AdapterInterface {
   virtual ~LearningPreferenceAdapter();
   virtual bool Start();
   virtual bool SetDownloadedItems(const ime_sync::SyncItems &items);
+  // The behavior of GetItemToUpload() is little different from other adapters.
+  // It considers last access timestamp in addition to last download timestamp
+  // due to the implementation.
+  // This class access to the storages owned by others and these storages are
+  // not thread-safe, so we shouldn't access them on syncer thread.
+  // TODO(hsumita): Remove last access timestamp from this class.
   virtual bool GetItemsToUpload(ime_sync::SyncItems *items);
   virtual bool MarkUploaded(
       const ime_sync::SyncItem &item, bool uploaded);
+  virtual uint64 GetLastDownloadTimestamp() const;
+  virtual bool SetLastDownloadTimestamp(uint64 last_download_timestamp);
+
   virtual bool Clear();
   virtual ime_sync::Component component_id() const;
 
@@ -96,15 +105,17 @@ class LearningPreferenceAdapter : public AdapterInterface {
   const LearningPreference &local_update() const;
   LearningPreference *mutable_local_update();
 
-  // Return last synced history filename.
-  uint64 GetLastDownloadTimestamp() const;
-  bool SetLastDownloadTimestamp(uint64 last_download_time);
+  // Set/Get last access timestamp of learning preference on last sync time.
+  bool SetLastAccessTimestamp(uint64 last_access_timestamp);
+  uint64 GetLastAccessTimestamp() const;
 
   vector<Storage> storages_;
   LearningPreference local_update_;
   uint64 local_update_time_;
+
+  DISALLOW_COPY_AND_ASSIGN(LearningPreferenceAdapter);
 };
 }  // namespace sync
 }  // namespace mozc
 
-#endif  // MOZC_SYNC_USER_HISTORY_ADAPTER_H_
+#endif  // MOZC_SYNC_LEARNING_PREFERENCE_ADAPTER_H_

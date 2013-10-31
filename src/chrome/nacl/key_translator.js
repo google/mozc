@@ -56,7 +56,7 @@ mozc.FUNCTION_KEY_MAP_ = {
 /**
  * Normal key code mapping table for JP keyboard.
  * @const
- * @type {!Object.<string, Array.<string>>}
+ * @type {!Object.<string, !Array.<string>>}
  * @private
  */
 mozc.KEY_CODE_MAP_JP_ = {
@@ -119,7 +119,7 @@ mozc.KEY_CODE_MAP_JP_ = {
 /**
  * Normal key code mapping table for US keyboard.
  * @const
- * @type {!Object.<string, Array.<string>>}
+ * @type {!Object.<string, !Array.<string>>}
  * @private
  */
 mozc.KEY_CODE_MAP_US_ = {
@@ -188,7 +188,6 @@ mozc.KEY_CODE_MAP_US_ = {
  * @private
  */
 mozc.SPECIAL_KEY_CODE_MAP_JP_ = {
-  'BackQuote': 'HANKAKU',
   'Esc': 'ESCAPE',
   'Backspace': 'BACKSPACE',
   'Tab': 'TAB',
@@ -321,11 +320,11 @@ mozc.KeyTranslator = function() {
 /**
  * Translates modifier key event and returns Mozc's KeyEvent command message.
  * @param {!ChromeKeyboardEvent} keyData key event data.
- * @return {!Object} Mozc's KeyEvent command message.
+ * @return {!mozc.KeyEvent} Mozc's KeyEvent command message.
  * @private
  */
 mozc.KeyTranslator.prototype.translateModifierKeyEvent_ = function(keyData) {
-  var keyEvent = {};
+  var keyEvent = /** @type {!mozc.KeyEvent} */ ({});
   var currentModifierKey =
       ((keyData.shiftKey ? mozc.SHIFT_KEY_MASK_ : 0) +
        (keyData.ctrlKey ? mozc.CTRL_KEY_MASK_ : 0) +
@@ -340,15 +339,15 @@ mozc.KeyTranslator.prototype.translateModifierKeyEvent_ = function(keyData) {
     // We only handle the last modifier key up event.
     return keyEvent;
   }
-  keyEvent['modifier_keys'] = [];
+  keyEvent.modifier_keys = [];
   if (this.modifierKeyFlags_ & mozc.ALT_KEY_MASK_) {
-    keyEvent['modifier_keys'].push('ALT');
+    keyEvent.modifier_keys.push('ALT');
   }
   if (this.modifierKeyFlags_ & mozc.CTRL_KEY_MASK_) {
-    keyEvent['modifier_keys'].push('CTRL');
+    keyEvent.modifier_keys.push('CTRL');
   }
   if (this.modifierKeyFlags_ & mozc.SHIFT_KEY_MASK_) {
-    keyEvent['modifier_keys'].push('SHIFT');
+    keyEvent.modifier_keys.push('SHIFT');
   }
   // Clears modifierKeyFlags_.
   this.modifierKeyFlags_ = 0;
@@ -360,7 +359,7 @@ mozc.KeyTranslator.prototype.translateModifierKeyEvent_ = function(keyData) {
  * @param {!ChromeKeyboardEvent} keyData key event data.
  * @param {boolean} isKanaMode Whether preedit method is KANA mode.
  * @param {string} keyboardLayout current keyboard layout.
- * @return {!Object} Mozc's KeyEvent command message.
+ * @return {!mozc.KeyEvent} Mozc's KeyEvent command message.
  * @private
  */
 mozc.KeyTranslator.prototype.translateKeyDownEvent_ = function(keyData,
@@ -379,9 +378,9 @@ mozc.KeyTranslator.prototype.translateKeyDownEvent_ = function(keyData,
                    mozc.KEY_CODE_MAP_JP_[keyData.code] :
                    mozc.KEY_CODE_MAP_US_[keyData.code];
 
-  var keyEvent = {};
+  var keyEvent = /** @type {!mozc.KeyEvent} */ ({});
   if (specialKey) {
-    keyEvent['special_key'] = specialKey;
+    keyEvent.special_key = specialKey;
   }
 
   if (keyData.shiftKey && !keyData.altKey && !keyData.ctrlKey && keyCodeMap) {
@@ -399,18 +398,17 @@ mozc.KeyTranslator.prototype.translateKeyDownEvent_ = function(keyData,
       modifiersKey.push('SHIFT');
     }
     if (modifiersKey.length) {
-      keyEvent['modifier_keys'] = modifiersKey;
+      keyEvent.modifier_keys = modifiersKey;
     }
   }
 
   if (keyCodeMap) {
-    keyEvent['key_code'] =
+    keyEvent.key_code =
         keyData.shiftKey && !keyData.altKey && !keyData.ctrlKey ?
         keyCodeMap[1].charCodeAt(0) :
         keyCodeMap[0].charCodeAt(0);
     if (isKanaMode) {
-      keyEvent['key_string'] = keyData.shiftKey ?
-                               keyCodeMap[3] : keyCodeMap[2];
+      keyEvent.key_string = keyData.shiftKey ? keyCodeMap[3] : keyCodeMap[2];
     }
   }
   return keyEvent;
@@ -421,18 +419,18 @@ mozc.KeyTranslator.prototype.translateKeyDownEvent_ = function(keyData,
  * @param {!ChromeKeyboardEvent} keyData key event data.
  * @param {boolean} isKanaMode Whether preedit method is KANA mode.
  * @param {string} keyboardLayout current keyboard layout.
- * @return {!Object} Mozc's KeyEvent command message.
+ * @return {!mozc.KeyEvent} Mozc's KeyEvent command message.
  */
 mozc.KeyTranslator.prototype.translateKeyEvent = function(keyData,
                                                           isKanaMode,
                                                           keyboardLayout) {
   // Do not disturb taking screenshot.
   if (keyData.ctrlKey && keyData.key == 'ChromeOSSwitchWindow') {
-    return {};
+    return /** @type {!mozc.KeyEvent} */ ({});
   } else if (mozc.MODIFIER_KEY_CODE_MASK_MAP_[keyData.code]) {
     return this.translateModifierKeyEvent_(keyData);
   } else if (keyData.type == 'keydown') {
     return this.translateKeyDownEvent_(keyData, isKanaMode, keyboardLayout);
   }
-  return {};
+  return /** @type {!mozc.KeyEvent} */ ({});
 };

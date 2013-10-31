@@ -31,7 +31,6 @@
 
 #include <string>
 
-#include "base/base.h"
 #include "base/codegen_bytearray_stream.h"
 #include "base/file_stream.h"
 #include "base/protobuf/gzip_stream.h"
@@ -45,6 +44,7 @@
 #include "dictionary/pos_matcher.h"
 #include "dictionary/user_pos.h"
 #include "rewriter/correction_rewriter.h"
+#include "rewriter/counter_suffix.h"
 #include "rewriter/embedded_dictionary.h"
 #ifndef NO_USAGE_REWRITER
 #include "rewriter/usage_rewriter_data_structs.h"
@@ -53,7 +53,7 @@
 namespace mozc {
 namespace packed {
 namespace {
-const int kSystemDictionaryFormatVersion = 1;
+const int kSystemDictionaryFormatVersion = 2;
 }
 
 SystemDictionaryDataPacker::SystemDictionaryDataPacker(const string &version) {
@@ -315,6 +315,14 @@ void SystemDictionaryDataPacker::SetUsageRewriterData(
   }
 }
 #endif  // NO_USAGE_REWRITER
+
+void SystemDictionaryDataPacker::SetCounterSuffixSortedArray(
+    const CounterSuffixEntry *suffix_array, size_t size) {
+  for (size_t i = 0; i < size; ++i) {
+    const string suffix_str(suffix_array[i].suffix, suffix_array[i].size);
+    system_dictionary_->add_counter_suffix_data(suffix_str);
+  }
+}
 
 bool SystemDictionaryDataPacker::Output(const string &file_path,
                                         bool use_gzip) {

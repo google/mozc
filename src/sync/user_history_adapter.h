@@ -32,7 +32,7 @@
 
 #include <string>
 #include <vector>
-#include "base/base.h"
+#include "base/port.h"
 #include "prediction/user_history_predictor.h"
 #include "sync/adapter_interface.h"
 // for FRIEND_TEST()
@@ -47,8 +47,9 @@ class UserHistoryAdapter : public AdapterInterface {
   virtual ~UserHistoryAdapter();
   virtual bool SetDownloadedItems(const ime_sync::SyncItems &items);
   virtual bool GetItemsToUpload(ime_sync::SyncItems *items);
-  virtual bool MarkUploaded(
-      const ime_sync::SyncItem &item, bool uploaded);
+  virtual bool MarkUploaded(const ime_sync::SyncItem &item, bool uploaded);
+  virtual uint64 GetLastDownloadTimestamp() const;
+  virtual bool SetLastDownloadTimestamp(uint64 last_download_time);
   virtual bool Clear();
   virtual ime_sync::Component component_id() const;
 
@@ -74,12 +75,10 @@ class UserHistoryAdapter : public AdapterInterface {
   void SetUserHistoryFileName(const string &filename);
   string GetUserHistoryFileName() const;
 
-  // Return last synced history filename.
-  uint64 GetLastDownloadTimestamp() const;
-  bool SetLastDownloadTimestamp(uint64 last_download_time);
-
   string user_history_filename_;
   uint64 local_update_time_;
+
+  DISALLOW_COPY_AND_ASSIGN(UserHistoryAdapter);
 };
 }  // namespace sync
 }  // namespace mozc

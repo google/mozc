@@ -70,8 +70,6 @@ const char kScope[] = "https://www.google.com/m8/feeds/";
 const char kAuthToken[] = "4/correct_authorization_token";
 const char kAccessToken[] = "1/first_correct_access_token_bbbbbbbbbbbbbbbb";
 const char kRefreshToken[] = "1/first_correct_refresh_token_ccccccccccccccc";
-const char kAccessToken2[] = "1/second_correct_access_token_bbbbbbbbbbbbbbb";
-const char kRefreshToken2[] = "1/second_correct_refresh_token_cccccccccccccc";
 const char kResourceUri[] =
     "https://www.google.com/m8/feeds/contacts/default/full";
 

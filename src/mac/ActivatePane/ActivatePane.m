@@ -11,12 +11,23 @@
 #import <Carbon/Carbon.h>
 #import <Foundation/Foundation.h>
 
+#ifdef GOOGLE_JAPANESE_INPUT_BUILD
 static const unsigned char kInstalledLocation[] =
     "/Library/Input Methods/GoogleJapaneseInput.app";
 static NSString *kLaunchdPlistFiles[] = {
   @"/Library/LaunchAgents/com.google.inputmethod.Japanese.Converter.plist",
   @"/Library/LaunchAgents/com.google.inputmethod.Japanese.Renderer.plist",
   nil};
+static NSString *const kSourceID = @"com.google.inputmethod.Japanese";
+#else  // GOOGLE_JAPANESE_INPUT_BUILD
+static const unsigned char kInstalledLocation[] =
+    "/Library/Input Methods/Mozc.app";
+static NSString *kLaunchdPlistFiles[] = {
+  @"/Library/LaunchAgents/org.mozc.inputmethod.Japanese.Converter.plist",
+  @"/Library/LaunchAgents/org.mozc.inputmethod.Japanese.Renderer.plist",
+  nil};
+static NSString *const kSourceID = @"org.mozc.inputmethod.Japanese";
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
 // Load the installed Google Japanese Input to the system.
 static void RegisterGoogleJapaneseInput() {
@@ -36,7 +47,7 @@ static void ActivateGoogleJapaneseInput() {
         sourceList, i));
     NSString *sourceID = (NSString *)(TISGetInputSourceProperty(
         inputSource, kTISPropertyInputSourceID));
-    if ([sourceID isEqualToString:@"com.google.inputmethod.Japanese"]) {
+    if ([sourceID isEqualToString:kSourceID]) {
       TISEnableInputSource(inputSource);
       TISSelectInputSource(inputSource);
       break;
@@ -68,7 +79,7 @@ static BOOL IsAlreadyActive() {
         sourceList, i));
     NSString *sourceID = (NSString *)(TISGetInputSourceProperty(
         inputSource, kTISPropertyInputSourceID));
-    if ([sourceID isEqualToString:@"com.google.inputmethod.Japanese"]) {
+    if ([sourceID isEqualToString:kSourceID]) {
       CFBooleanRef isEnabled = (CFBooleanRef)(TISGetInputSourceProperty(
           inputSource, kTISPropertyInputSourceIsEnabled));
       CFBooleanRef isSelected = (CFBooleanRef)(TISGetInputSourceProperty(
@@ -88,7 +99,9 @@ static BOOL HasUsageStatsDB() {
   // If channel is dev, we don't want to show the "turn-on usage
   // stats" button, so the situation is same as that there are already
   // usage stats config file.
-#ifdef CHANNEL_DEV
+#ifndef GOOGLE_JAPANESE_INPUT_BUILD
+  return NO;
+#elif defined(CHANNEL_DEV)
   return YES;
 #endif  // CHANNEL_DEV
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
@@ -117,6 +130,9 @@ static BOOL HasUsageStatsDB() {
 // directory.  This function should be called only if the user checks
 // the |_putUsageStatsDB| button.
 static BOOL StoreDefaultConfigWithSendingUsageStats() {
+#ifndef GOOGLE_JAPANESE_INPUT_BUILD
+  return NO;
+#endif  // !GOOGLE_JAPANESE_INPUT_BUILD
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   NSArray *libraryPaths = NSSearchPathForDirectoriesInDomains(
       NSLibraryDirectory, NSUserDomainMask, YES);
@@ -249,6 +265,10 @@ static BOOL StoreDefaultConfigWithSendingUsageStats() {
   }
 
   // usage stats message
+#ifndef GOOGLE_JAPANESE_INPUT_BUILD
+  [_putUsageStatsDB removeFromSuperview];
+  [_putUsageStatsDBMessage removeFromSuperview];
+#else  // GOOGLE_JAPANESE_INPUT_BUILD
   if (!_hasUsageStatsDB) {
     NSString *usageStatsMessage =
         [self localizedStringForKey:@"usageStatsMessage"];
@@ -259,6 +279,7 @@ static BOOL StoreDefaultConfigWithSendingUsageStats() {
     [_putUsageStatsDB removeFromSuperview];
     [_putUsageStatsDBMessage removeFromSuperview];
   }
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
   if (_alreadyActivated) {
     [_mainMessage setEnabled:NO];
@@ -283,9 +304,11 @@ static BOOL StoreDefaultConfigWithSendingUsageStats() {
       ActivateGoogleJapaneseInput();
       _alreadyActivated = YES;
     }
+#ifdef GOOGLE_JAPANESE_INPUT_BUILD
     if (!_hasUsageStatsDB && [_putUsageStatsDB state] == NSOnState) {
       StoreDefaultConfigWithSendingUsageStats();
     }
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
   }
 }
 

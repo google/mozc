@@ -27,16 +27,17 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_BASE_SYNC_LOGGER_H_
-#define MOZC_BASE_SYNC_LOGGER_H_
+#ifndef MOZC_SYNC_LOGGING_H_
+#define MOZC_SYNC_LOGGING_H_
 
 #include <iostream>
 #include <string>
-#include "base/port.h"
 #include "base/file_util.h"
+#include "base/port.h"
 
 namespace mozc {
 namespace sync {
+namespace internal {
 
 // We provide mozc::sync::Logging module separately from the
 // mozc::Logging module.
@@ -59,8 +60,12 @@ namespace sync {
 
 class Logging {
  public:
-  // Get logging stream. The log message can be written to the stream
-  static ostream &GetLogStream();
+  // Acquire a lock and return the logging stream. Caller should release the
+  // lock by Unlock() after use. The log message can be written to the stream.
+  static ostream &GetLogStreamWithLock();
+
+  // Release a lock for the logging stream.
+  static void Unlock();
 
   // return FLAGS_sync_verbose_level.
   static int GetVerboseLevel();
@@ -76,20 +81,29 @@ class Logging {
   DISALLOW_IMPLICIT_CONSTRUCTORS(Logging);
 };
 
+// Truncate the log file if necessary and release a lock of the logging stream.
 class LogFinalizer {
  public:
   LogFinalizer();
   ~LogFinalizer();
 
-  void operator&(ostream&) {}
+  void operator&(ostream &) {}
 };
+
+}  // namespace internal
 }  // namespace sync
 }  // namespace mozc
 
-#define SYNC_VLOG(verboselevel) \
-  (mozc::sync::Logging::GetVerboseLevel() < (verboselevel)) ? (void) 0 : \
-  mozc::sync::LogFinalizer() & mozc::sync::Logging::GetLogStream() \
-  << mozc::Logging::GetLogMessageHeader() << " " \
-  << mozc::FileUtil::Basename(__FILE__) << "(" << __LINE__ << ") "
+#ifndef SYNC_VLOG_MODULENAME
+#error "define SYNC_VLOG_MODULENAME for logging."
+#endif  // SYNC_VLOG_MODULENAME
 
-#endif  // MOZC_BASE_SYNC_LOGGER_H_
+#define SYNC_VLOG(verboselevel) \
+  (mozc::sync::internal::Logging::GetVerboseLevel() < (verboselevel)) \
+  ? (void) 0 \
+  : mozc::sync::internal::LogFinalizer() & \
+  mozc::sync::internal::Logging::GetLogStreamWithLock() \
+  << mozc::Logging::GetLogMessageHeader() << " " \
+  << SYNC_VLOG_MODULENAME << "(" << __LINE__ << ") "
+
+#endif  // MOZC_SYNC_LOGGING_H_

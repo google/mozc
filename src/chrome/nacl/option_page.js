@@ -121,6 +121,10 @@ mozc.OPTION_TITLES_ = [
     name: chrome.i18n.getMessage('configSyncAdvancedSettings')
   },
   {
+    id: 'sync_advanced_settings_message',
+    name: chrome.i18n.getMessage('configSyncAdvancedSettingsMessage')
+  },
+  {
     id: 'sync_description',
     name: chrome.i18n.getMessage('configSyncDescription')
   },
@@ -131,6 +135,10 @@ mozc.OPTION_TITLES_ = [
   {
     id: 'clear_history_title',
     name: chrome.i18n.getMessage('configClearHistoryTitle')
+  },
+  {
+    id: 'clear_history_message',
+    name: chrome.i18n.getMessage('configClearHistoryMessage')
   },
   {
     id: 'clear_history_conversion_history_label',
@@ -153,6 +161,10 @@ mozc.OPTION_TITLES_ = [
     name: chrome.i18n.getMessage('dictionaryToolPageTitle')
   },
   {
+    id: 'dictionary_tool_dictionary_list_title',
+    name: chrome.i18n.getMessage('dictionaryToolDictionaryListTitle')
+  },
+  {
     id: 'dictionary_tool_reading_title',
     name: chrome.i18n.getMessage('dictionaryToolReadingTitle')
   },
@@ -167,6 +179,10 @@ mozc.OPTION_TITLES_ = [
   {
     id: 'dictionary_tool_comment_title',
     name: chrome.i18n.getMessage('dictionaryToolCommentTitle')
+  },
+  {
+    id: 'dictionary_import_title',
+    name: chrome.i18n.getMessage('dictionaryImportTitle')
   }
 ];
 
@@ -380,20 +396,12 @@ mozc.OPTION_BUTTONS_ = [
     name: chrome.i18n.getMessage('configDictionaryToolButton')
   },
   {
-    id: 'create_dictionary_button',
-    name: chrome.i18n.getMessage('dictionaryToolCreateButton')
-  },
-  {
-    id: 'rename_dictionary_button',
-    name: chrome.i18n.getMessage('dictionaryToolRenameButton')
-  },
-  {
-    id: 'delete_dictionary_button',
-    name: chrome.i18n.getMessage('dictionaryToolDeleteButton')
-  },
-  {
     id: 'export_dictionary_button',
     name: chrome.i18n.getMessage('dictionaryToolExportButton')
+  },
+  {
+    id: 'import_dictionary_button',
+    name: chrome.i18n.getMessage('dictionaryToolImportButton')
   },
   {
     id: 'dictionary_tool_done_button',
@@ -401,6 +409,17 @@ mozc.OPTION_BUTTONS_ = [
   },
   {
     id: 'dictionary_tool_close'
+  },
+  {
+    id: 'dictionary_import_ok',
+    name: chrome.i18n.getMessage('dictionaryImportOk')
+  },
+  {
+    id: 'dictionary_import_cancel',
+    name: chrome.i18n.getMessage('dictionaryImportCancel')
+  },
+  {
+    id: 'dictionary_import_close'
   }
 ];
 
@@ -469,7 +488,9 @@ mozc.DICTIONARY_TOOL_STATUS_ERRORS_ = {
   'IMPORT_INVALID_ENTRIES':
       chrome.i18n.getMessage('dictionaryToolStatuErrorImportInvalidEntries'),
   'NO_UNDO_HISTORY':
-      chrome.i18n.getMessage('dictionaryToolStatuErrorNoUndoHistory')
+      chrome.i18n.getMessage('dictionaryToolStatuErrorNoUndoHistory'),
+  'EMPTY_FILE':
+      chrome.i18n.getMessage('dictionaryToolStatuErrorEmptyFile')
 };
 
 /**
@@ -502,6 +523,8 @@ mozc.ENABLE_SIMPLE_DICTIONARY_TOOL_ = !mozc.VERSION_.DEV &&
  * @param {!mozc.NaclMozc} naclMozc NaCl Mozc.
  * @param {!Window} optionWindow Window object of the option page.
  * @constructor
+ * @struct
+ * @const
  */
 mozc.OptionPage = function(naclMozc, optionWindow) {
   /**
@@ -552,28 +575,6 @@ mozc.OptionPage = function(naclMozc, optionWindow) {
   this.lastSyncedTimestamp_ = 0;
 
   /**
-   * User dictionary session id created in NaCl module. It is set when
-   * dictionary tool is opened.
-   * @type {string}
-   * @private
-   */
-  this.userDictionarySessionId_ = '';
-
-  /**
-   * Pos type list. (example: {type: 'NOUN', name: '名詞'})
-   * @type {!Array.<{type: string, name: string}>}
-   * @private
-   */
-  this.posList_ = [];
-
-  /**
-   * Pos type name to display name map. (example: 'NOUN' -> '名詞')
-   * @type {!Object.<string, string>}
-   * @private
-   */
-  this.posNameMap_ = {};
-
-  /**
    * Whether cloud sync is enabled or not.
    * @type {boolean}
    * @private
@@ -588,12 +589,22 @@ mozc.OptionPage = function(naclMozc, optionWindow) {
    * @private
    */
   this.escapeKeyHandlers_ = [];
+
+  /**
+   * Dictionary tool object.
+   * @type {!mozc.DictionaryTool}
+   * @private
+   */
+  this.dictionaryTool_ = new mozc.DictionaryTool(naclMozc, optionWindow, this);
 };
 
 /**
  * Initializes the option page.
  */
 mozc.OptionPage.prototype.initialize = function() {
+  this.window_.addEventListener('beforeunload',
+                                this.unload_.bind(this),
+                                true);
   if (!this.naclMozc_) {
     console.error('The option page is already unloaded.');
     return;
@@ -601,16 +612,18 @@ mozc.OptionPage.prototype.initialize = function() {
   this.initPages_();
   this.naclMozc_.callWhenInitialized((function() {
     this.naclMozc_.getPosList((function(message) {
-      this.posList_ = message['posList'];
-      var new_category_select =
-        this.document_.getElementById('dictionary_tool_category_new_select');
-      for (var i = 0; i < this.posList_.length; ++i) {
-        this.posNameMap_[this.posList_[i]['type']] = this.posList_[i]['name'];
-        new_category_select.appendChild(
-            this.createOptionElement_(this.posList_[i]['name'],
-                                      this.posList_[i]['type']));
-      }
-      this.naclMozc_.getConfig(this.onConfigLoaded_.bind(this));
+      this.dictionaryTool_.setPosList(message['posList']);
+      this.naclMozc_.getConfig((function(response) {
+        this.onConfigLoaded_(response);
+        if (mozc.ENABLE_CLOUD_SYNC_) {
+          this.naclMozc_.getCloudSyncStatus((function(res) {
+            this.displaySyncStatus_(res);
+            this.document_.body.style.visibility = 'visible';
+          }).bind(this));
+        } else {
+          this.document_.body.style.visibility = 'visible';
+        }
+      }).bind(this));
     }).bind(this));
     if (mozc.ENABLE_CLOUD_SYNC_) {
       this.updateSyncStatus_();
@@ -624,8 +637,9 @@ mozc.OptionPage.prototype.initialize = function() {
 
 /**
  * Unloads the option page.
+ * @private
  */
-mozc.OptionPage.prototype.unload = function() {
+mozc.OptionPage.prototype.unload_ = function() {
   if (this.timeoutID_ != undefined) {
     clearTimeout(this.timeoutID_);
     this.timeoutID_ = undefined;
@@ -649,9 +663,8 @@ mozc.OptionPage.prototype.isUnloaded = function() {
  * @param {string} name Name of the option.
  * @param {string} value Value of the option.
  * @return {!Element} Created Option element.
- * @private
  */
-mozc.OptionPage.prototype.createOptionElement_ = function(name, value) {
+mozc.OptionPage.prototype.createOptionElement = function(name, value) {
   var option = this.document_.createElement('option');
   option.appendChild(this.document_.createTextNode(name));
   option.setAttribute('value', value);
@@ -710,7 +723,7 @@ mozc.OptionPage.prototype.initPages_ = function() {
       selectionElement.removeChild(selectionElement.firstChild);
     }
     for (var j = 0; j < optionSelection.items.length; ++j) {
-      selectionElement.appendChild(this.createOptionElement_(
+      selectionElement.appendChild(this.createOptionElement(
           optionSelection.items[j].name,
           optionSelection.items[j].value));
     }
@@ -737,7 +750,7 @@ mozc.OptionPage.prototype.initPages_ = function() {
       selectionElement.removeChild(selectionElement.firstChild);
     }
     for (var j = optionNumber.min; j <= optionNumber.max; ++j) {
-      selectionElement.appendChild(this.createOptionElement_(j, j));
+      selectionElement.appendChild(this.createOptionElement(j, j));
     }
     selectionElement.addEventListener(
         'change', this.saveConfig_.bind(this), true);
@@ -774,20 +787,47 @@ mozc.OptionPage.prototype.initPages_ = function() {
         optionCheckbox.name;
   }
 
-  this.document_.getElementById('user_dictionary_select').addEventListener(
-      'change', this.onDictionarySelectChanged_.bind(this), true);
+  // Disables clear_history_ok button according to check boxes in Clear History
+  // dialog.
+  this.document_.getElementById('clear_history_conversion_history')
+      .addEventListener('change',
+                        this.updateClearHistoryOkButton_.bind(this),
+                        true);
+  this.document_.getElementById('clear_history_suggestion_history')
+      .addEventListener('change',
+                        this.updateClearHistoryOkButton_.bind(this),
+                        true);
+
+  this.document_.getElementById('dictionary_tool_dictionary_list')
+      .addEventListener(
+          'keydown',
+          this.dictionaryTool_.onDictionaryToolDictionaryListKeyDown.bind(
+              this.dictionaryTool_),
+          true);
   this.document_.getElementById('dictionary_tool_reading_new_input')
       .addEventListener(
-        'blur', this.onDictionaryNewEntryLostFocus_.bind(this), true);
+          'blur',
+          this.dictionaryTool_.onDictionaryNewEntryLostFocus.bind(
+              this.dictionaryTool_),
+          true);
   this.document_.getElementById('dictionary_tool_word_new_input')
       .addEventListener(
-        'blur', this.onDictionaryNewEntryLostFocus_.bind(this), true);
+          'blur',
+          this.dictionaryTool_.onDictionaryNewEntryLostFocus.bind(
+              this.dictionaryTool_),
+          true);
   this.document_.getElementById('dictionary_tool_category_new_select')
       .addEventListener(
-        'blur', this.onDictionaryNewEntryLostFocus_.bind(this), true);
+          'blur',
+          this.dictionaryTool_.onDictionaryNewEntryLostFocus.bind(
+              this.dictionaryTool_),
+          true);
   this.document_.getElementById('dictionary_tool_comment_new_input')
       .addEventListener(
-        'blur', this.onDictionaryNewEntryLostFocus_.bind(this), true);
+          'blur',
+          this.dictionaryTool_.onDictionaryNewEntryLostFocus.bind(
+              this.dictionaryTool_),
+          true);
 
   // Removes cloud_sync_div if cloud sync is not enabled.
   if (!mozc.ENABLE_CLOUD_SYNC_) {
@@ -797,8 +837,11 @@ mozc.OptionPage.prototype.initPages_ = function() {
 
   // Hides menu of user dictionary if simple dictionary tool is enabled.
   if (mozc.ENABLE_SIMPLE_DICTIONARY_TOOL_) {
-    this.document_.getElementById('dictionary_tool_menu_span').style.display =
-        'none';
+    this.document_.getElementById(
+        'dictionary_tool_dictionary_list_area').style.display = 'none';
+    this.document_.getElementById('dictionary_tool_page').style.width = '600px';
+    this.document_.getElementById('dictionary_tool_content_area').style.width =
+        '560px';
   }
 
   this.document_.addEventListener(
@@ -827,7 +870,7 @@ mozc.OptionPage.prototype.onConfigLoaded_ = function(response) {
       this.document_.getElementById('session_keymap_custom');
   if (config['custom_keymap_table'] || config['session_keymap'] == 'CUSTOM') {
     if (!session_keymap_custom) {
-      session_keymap_custom = this.createOptionElement_(
+      session_keymap_custom = this.createOptionElement(
           chrome.i18n.getMessage('configSessionKeymapCustom'),
           'CUSTOM');
       session_keymap_custom.id = 'session_keymap_custom';
@@ -872,8 +915,6 @@ mozc.OptionPage.prototype.onConfigLoaded_ = function(response) {
   }
 
   this.syncEnabled_ = !!config['sync_config'];
-
-  this.document_.body.style.visibility = 'visible';
 };
 
 /**
@@ -935,29 +976,59 @@ mozc.OptionPage.prototype.onKeyDown_ = function(event) {
 };
 
 /**
+ * Pop Esc key handler.
+ */
+mozc.OptionPage.prototype.popEscapeKeyHandler = function() {
+  this.escapeKeyHandlers_.pop();
+};
+
+/**
+ * Push Esc key handler.
+ * @param {!Function} handler Esc key handler.
+ */
+mozc.OptionPage.prototype.pushEscapeKeyHandler = function(handler) {
+  this.escapeKeyHandlers_.push(handler);
+};
+
+/**
  * Enables the dom element which is specified by id in the option page.
  * @param {string} id The element ID.
- * @private
  */
-mozc.OptionPage.prototype.enableElementById_ = function(id) {
+mozc.OptionPage.prototype.enableElementById = function(id) {
   this.document_.getElementById(id).disabled = false;
 };
 
 /**
  * Disables the dom element which is specified by id in the option page.
  * @param {string} id The element ID.
+ */
+mozc.OptionPage.prototype.disableElementById = function(id) {
+  this.document_.getElementById(id).disabled = true;
+};
+
+/**
+ * Shows the dom element which is specified by id in the option page.
+ * @param {string} id The element ID.
  * @private
  */
-mozc.OptionPage.prototype.disableElementById_ = function(id) {
-  this.document_.getElementById(id).disabled = true;
+mozc.OptionPage.prototype.showElementById_ = function(id) {
+  this.document_.getElementById(id).style.display = 'inline';
+};
+
+/**
+ * Hides the dom element which is specified by id in the option page.
+ * @param {string} id The element ID.
+ * @private
+ */
+mozc.OptionPage.prototype.hideElementById_ = function(id) {
+  this.document_.getElementById(id).style.display = 'none';
 };
 
 /**
  * Shows the overlay element which is specified by id in the option page.
  * @param {string} id The element ID.
- * @private
  */
-mozc.OptionPage.prototype.showOverlayElementById_ = function(id) {
+mozc.OptionPage.prototype.showOverlayElementById = function(id) {
   this.freezeMainDiv_();
   this.document_.getElementById(id).style.visibility = 'visible';
 };
@@ -965,9 +1036,8 @@ mozc.OptionPage.prototype.showOverlayElementById_ = function(id) {
 /**
  * Hides the overlay element which is specified by id in the option page.
  * @param {string} id The element ID.
- * @private
  */
-mozc.OptionPage.prototype.hideOverlayElementById_ = function(id) {
+mozc.OptionPage.prototype.hideOverlayElementById = function(id) {
   this.document_.getElementById(id).style.visibility = 'hidden';
   this.unfreezeMainDiv_();
 };
@@ -979,13 +1049,12 @@ mozc.OptionPage.prototype.hideOverlayElementById_ = function(id) {
  * @param {string} title The title of the dialog box.
  * @param {string} message The message in the dialog box.
  * @param {!function(?boolean)} callback Function to be called with the result.
- * @private
  */
-mozc.OptionPage.prototype.showConfirm_ = function(callerPageId,
-                                                  title,
-                                                  message,
-                                                  callback) {
-  this.setChildNodesUnfocusableByTabKeyById_(callerPageId);
+mozc.OptionPage.prototype.showConfirm = function(callerPageId,
+                                                 title,
+                                                 message,
+                                                 callback) {
+  this.setChildNodesUnfocusableByTabKeyById(callerPageId);
   var confirmOverlay = this.document_.createElement('div');
   confirmOverlay.classList.add('overlay', 'confirm_overlay');
 
@@ -1018,8 +1087,8 @@ mozc.OptionPage.prototype.showConfirm_ = function(callerPageId,
   confirmCancelButton.type = 'button';
   confirmCancelButton.value = chrome.i18n.getMessage('configDialogCancel');
 
-  confirmOkCancelDiv.appendChild(confirmCancelButton);
   confirmOkCancelDiv.appendChild(confirmOkButton);
+  confirmOkCancelDiv.appendChild(confirmCancelButton);
   section.appendChild(confirmTitle);
   section.appendChild(confirmMessage);
   section.appendChild(confirmOkCancelDiv);
@@ -1029,22 +1098,22 @@ mozc.OptionPage.prototype.showConfirm_ = function(callerPageId,
 
   var okCallback =
       (function(overlay, pageId, callbackFunc) {
-        this.escapeKeyHandlers_.pop();
+        this.popEscapeKeyHandler();
         this.document_.body.removeChild(overlay);
-        this.setChildNodesFocusableByTabKeyById_(pageId);
+        this.setChildNodesFocusableByTabKeyById(pageId);
         callbackFunc(true);
       }).bind(this, confirmOverlay, callerPageId, callback);
   var cancelCallback =
       (function(overlay, pageId, callbackFunc) {
-        this.escapeKeyHandlers_.pop();
+        this.popEscapeKeyHandler();
         this.document_.body.removeChild(overlay);
-        this.setChildNodesFocusableByTabKeyById_(pageId);
+        this.setChildNodesFocusableByTabKeyById(pageId);
         callbackFunc(false);
       }).bind(this, confirmOverlay, callerPageId, callback);
   closeDiv.addEventListener('click', cancelCallback, true);
   confirmOkButton.addEventListener('click', okCallback, true);
   confirmCancelButton.addEventListener('click', cancelCallback, true);
-  this.escapeKeyHandlers_.push(cancelCallback);
+  this.pushEscapeKeyHandler(cancelCallback);
   this.document_.body.appendChild(confirmOverlay);
   confirmOkButton.focus();
 };
@@ -1058,14 +1127,13 @@ mozc.OptionPage.prototype.showConfirm_ = function(callerPageId,
  * @param {string} defaultValue The default value.
  * @param {!function(?string)} callback Function to be called with the result.
  *     If the user clicks the cancel button the result will be null.
- * @private
  */
-mozc.OptionPage.prototype.showPrompt_ = function(callerPageId,
-                                                 title,
-                                                 message,
-                                                 defaultValue,
-                                                 callback) {
-  this.setChildNodesUnfocusableByTabKeyById_(callerPageId);
+mozc.OptionPage.prototype.showPrompt = function(callerPageId,
+                                                title,
+                                                message,
+                                                defaultValue,
+                                                callback) {
+  this.setChildNodesUnfocusableByTabKeyById(callerPageId);
   var promptOverlay = this.document_.createElement('div');
   promptOverlay.classList.add('overlay', 'prompt_overlay');
 
@@ -1107,8 +1175,8 @@ mozc.OptionPage.prototype.showPrompt_ = function(callerPageId,
   promptCancelButton.type = 'button';
   promptCancelButton.value = chrome.i18n.getMessage('configDialogCancel');
 
-  promptOkCancelDiv.appendChild(promptCancelButton);
   promptOkCancelDiv.appendChild(promptOkButton);
+  promptOkCancelDiv.appendChild(promptCancelButton);
   section.appendChild(promptTitle);
   section.appendChild(promptMessage);
   section.appendChild(promptInputDiv);
@@ -1119,22 +1187,22 @@ mozc.OptionPage.prototype.showPrompt_ = function(callerPageId,
 
   var okCallback =
       (function(overlay, pageId, callbackFunc, input) {
-        this.escapeKeyHandlers_.pop();
+        this.popEscapeKeyHandler();
         this.document_.body.removeChild(overlay);
-        this.setChildNodesFocusableByTabKeyById_(pageId);
+        this.setChildNodesFocusableByTabKeyById(pageId);
         callbackFunc(input.value);
       }).bind(this, promptOverlay, callerPageId, callback, promptInput);
   var cancelCallback =
       (function(overlay, pageId, callbackFunc) {
-        this.escapeKeyHandlers_.pop();
+        this.popEscapeKeyHandler();
         this.document_.body.removeChild(overlay);
-        this.setChildNodesFocusableByTabKeyById_(pageId);
+        this.setChildNodesFocusableByTabKeyById(pageId);
         callbackFunc(null);
       }).bind(this, promptOverlay, callerPageId, callback);
   closeDiv.addEventListener('click', cancelCallback, true);
   promptOkButton.addEventListener('click', okCallback, true);
   promptCancelButton.addEventListener('click', cancelCallback, true);
-  this.escapeKeyHandlers_.push(cancelCallback);
+  this.pushEscapeKeyHandler(cancelCallback);
   this.document_.body.appendChild(promptOverlay);
   promptInput.focus();
 };
@@ -1146,13 +1214,12 @@ mozc.OptionPage.prototype.showPrompt_ = function(callerPageId,
  * @param {string} title The title of the dialog box.
  * @param {string} message The message in the dialog box.
  * @param {!function()=} opt_callback Function to be called when closed.
- * @private
  */
-mozc.OptionPage.prototype.showAlert_ = function(callerPageId,
-                                                title,
-                                                message,
-                                                opt_callback) {
-  this.setChildNodesUnfocusableByTabKeyById_(callerPageId);
+mozc.OptionPage.prototype.showAlert = function(callerPageId,
+                                               title,
+                                               message,
+                                               opt_callback) {
+  this.setChildNodesUnfocusableByTabKeyById(callerPageId);
   var alertOverlay = this.document_.createElement('div');
   alertOverlay.classList.add('overlay', 'alert_overlay');
 
@@ -1190,9 +1257,9 @@ mozc.OptionPage.prototype.showAlert_ = function(callerPageId,
 
   var okCallback =
       (function(overlay, pageId, opt_callbackFunc) {
-        this.escapeKeyHandlers_.pop();
+        this.popEscapeKeyHandler();
         this.document_.body.removeChild(overlay);
-        this.setChildNodesFocusableByTabKeyById_(pageId);
+        this.setChildNodesFocusableByTabKeyById(pageId);
         if (opt_callbackFunc) {
           opt_callbackFunc();
         }
@@ -1200,7 +1267,7 @@ mozc.OptionPage.prototype.showAlert_ = function(callerPageId,
   closeDiv.addEventListener('click', okCallback, true);
   alertOkButton.addEventListener('click', okCallback, true);
 
-  this.escapeKeyHandlers_.push(okCallback);
+  this.pushEscapeKeyHandler(okCallback);
   this.document_.body.appendChild(alertOverlay);
   alertOkButton.focus();
 };
@@ -1230,19 +1297,21 @@ mozc.OptionPage.prototype.onButtonClick_ = function(buttonId) {
   } else if (buttonId == 'sync_customization_button') {
     this.onSyncCustomizationButtonClicked_();
   } else if (buttonId == 'dictionary_tool_open_button') {
-    this.onDictionaryToolOpenButtonClicked_();
+    this.dictionaryTool_.onDictionaryToolOpenButtonClicked();
   } else if (buttonId == 'dictionary_tool_done_button') {
-    this.onDictionaryToolDoneButtonClicked_();
+    this.dictionaryTool_.onDictionaryToolDoneButtonClicked();
   } else if (buttonId == 'dictionary_tool_close') {
-    this.onDictionaryToolDoneButtonClicked_();
-  } else if (buttonId == 'create_dictionary_button') {
-    this.onDictionaryToolCreateButtonClicked_();
-  } else if (buttonId == 'rename_dictionary_button') {
-    this.onDictionaryToolRenameButtonClicked_();
-  } else if (buttonId == 'delete_dictionary_button') {
-    this.onDictionaryToolDeleteButtonClicked_();
+    this.dictionaryTool_.onDictionaryToolDoneButtonClicked();
   } else if (buttonId == 'export_dictionary_button') {
-    this.onDictionaryToolExportButtonClicked_();
+    this.dictionaryTool_.onDictionaryToolExportButtonClicked();
+  } else if (buttonId == 'import_dictionary_button') {
+    this.dictionaryTool_.onDictionaryToolImportButtonClicked();
+  } else if (buttonId == 'dictionary_import_close') {
+    this.dictionaryTool_.onDictionaryImportCancelClicked();
+  } else if (buttonId == 'dictionary_import_ok') {
+    this.dictionaryTool_.onDictionaryImportOkClicked();
+  } else if (buttonId == 'dictionary_import_cancel') {
+    this.dictionaryTool_.onDictionaryImportCancelClicked();
   }
 };
 
@@ -1252,13 +1321,26 @@ mozc.OptionPage.prototype.onButtonClick_ = function(buttonId) {
  * @private
  */
 mozc.OptionPage.prototype.onClearHistoryOpenClicked_ = function() {
-  this.escapeKeyHandlers_.push(this.onClearHistoryCancelClicked_.bind(this));
+  this.pushEscapeKeyHandler(this.onClearHistoryCancelClicked_.bind(this));
   this.document_.getElementById('clear_history_conversion_history').checked =
       true;
   this.document_.getElementById('clear_history_suggestion_history').checked =
       true;
-  this.showOverlayElementById_('clear_history_overlay');
+  this.showOverlayElementById('clear_history_overlay');
   this.document_.getElementById('clear_history_cancel').focus();
+};
+
+/**
+ * Disables clear_history_ok button according to check boxes in Clear History
+ * dialog.
+ * @private
+ */
+mozc.OptionPage.prototype.updateClearHistoryOkButton_ = function() {
+  this.document_.getElementById('clear_history_ok').disabled =
+      !this.document_.getElementById('clear_history_conversion_history')
+          .checked &&
+      !this.document_.getElementById('clear_history_suggestion_history')
+          .checked;
 };
 
 /**
@@ -1277,8 +1359,8 @@ mozc.OptionPage.prototype.onClearHistoryOkClicked_ = function() {
           'clear_history_suggestion_history').checked) {
     this.naclMozc_.clearUserPrediction();
   }
-  this.escapeKeyHandlers_.pop();
-  this.hideOverlayElementById_('clear_history_overlay');
+  this.popEscapeKeyHandler();
+  this.hideOverlayElementById('clear_history_overlay');
   this.document_.getElementById('clear_history_open').focus();
 };
 
@@ -1289,8 +1371,8 @@ mozc.OptionPage.prototype.onClearHistoryOkClicked_ = function() {
  * @private
  */
 mozc.OptionPage.prototype.onClearHistoryCancelClicked_ = function() {
-  this.escapeKeyHandlers_.pop();
-  this.hideOverlayElementById_('clear_history_overlay');
+  this.popEscapeKeyHandler();
+  this.hideOverlayElementById('clear_history_overlay');
   this.document_.getElementById('clear_history_open').focus();
 };
 
@@ -1303,8 +1385,8 @@ mozc.OptionPage.prototype.updateSyncStatusAndCloseSyncDialog_ =
     function(opt_callback) {
   this.naclMozc_.getCloudSyncStatus((function(res) {
     this.displaySyncStatus_(res);
-    this.escapeKeyHandlers_.pop();
-    this.hideOverlayElementById_('sync_config_overlay');
+    this.popEscapeKeyHandler();
+    this.hideOverlayElementById('sync_config_overlay');
     this.document_.getElementById('sync_customization_button').focus();
     if (opt_callback) {
       opt_callback();
@@ -1392,14 +1474,14 @@ mozc.OptionPage.prototype.getAuthTokenAndStartCloudSync_ =
  * @private
  */
 mozc.OptionPage.prototype.onSyncToggleButtonClicked_ = function() {
-  this.disableElementById_('sync_toggle_button');
-  this.disableElementById_('sync_customization_button');
+  this.disableElementById('sync_toggle_button');
+  this.disableElementById('sync_customization_button');
   if (!this.syncEnabled_) {
     // Show sync config dialog.
-    this.escapeKeyHandlers_.push(this.onSyncConfigCancelClicked_.bind(this));
+    this.pushEscapeKeyHandler(this.onSyncConfigCancelClicked_.bind(this));
     this.document_.getElementById('sync_settings').checked = true;
     this.document_.getElementById('sync_user_dictionary').checked = true;
-    this.showOverlayElementById_('sync_config_overlay');
+    this.showOverlayElementById('sync_config_overlay');
     this.document_.getElementById('sync_config_cancel').focus();
   } else {
     // Stop sync.
@@ -1425,782 +1507,17 @@ mozc.OptionPage.prototype.onSyncToggleButtonClicked_ = function() {
  * @private
  */
 mozc.OptionPage.prototype.onSyncCustomizationButtonClicked_ = function() {
-  this.disableElementById_('sync_toggle_button');
-  this.disableElementById_('sync_customization_button');
+  this.disableElementById('sync_toggle_button');
+  this.disableElementById('sync_customization_button');
   this.naclMozc_.getConfig((function(response) {
-    this.escapeKeyHandlers_.push(this.onSyncConfigCancelClicked_.bind(this));
+    this.pushEscapeKeyHandler(this.onSyncConfigCancelClicked_.bind(this));
     var sync_config = response['output']['config']['sync_config'];
     this.document_.getElementById('sync_settings').checked =
         sync_config && sync_config['use_config_sync'];
     this.document_.getElementById('sync_user_dictionary').checked =
         sync_config && sync_config['use_user_dictionary_sync'];
-    this.showOverlayElementById_('sync_config_overlay');
+    this.showOverlayElementById('sync_config_overlay');
     this.document_.getElementById('sync_config_cancel').focus();
-  }).bind(this));
-};
-
-/**
- * Called when dictionary_tool_open_button button is clicked.
- * This method creates a dictionary session and calls LOAD dictionary command
- * and gets the user dictionary storage from NaCl Mozc module and shows a
- * dictionary tool.
- * @private
- */
-mozc.OptionPage.prototype.onDictionaryToolOpenButtonClicked_ = function() {
-  this.disableElementById_('dictionary_tool_open_button');
-  this.sendUserDictionaryCommand_(
-    {'type': 'CREATE_SESSION'},
-    (function(response) {
-      this.userDictionarySessionId_ = response['session_id'];
-      this.sendUserDictionaryCommand_(
-        {
-          'type': 'LOAD',
-          'session_id': this.userDictionarySessionId_,
-          'ensure_non_empty_storage': mozc.ENABLE_SIMPLE_DICTIONARY_TOOL_
-        },
-        this.loadStorage_.bind(
-            this,
-            (function() {
-              this.escapeKeyHandlers_.push(
-                  this.onDictionaryToolDoneButtonClicked_.bind(this));
-              this.showOverlayElementById_('dictionary_tool_overlay');
-              this.document_.getElementById('dictionary_tool_reading_new_input')
-                  .focus();
-            }).bind(this)));
-    }).bind(this));
-};
-
-/**
- * Updates the dictionary list in 'user_dictionary_select' element according to
- * dictionaries_.
- * @private
- */
-mozc.OptionPage.prototype.updateDictionaryList_ = function() {
-  var selectionElement =
-      this.document_.getElementById('user_dictionary_select');
-  selectionElement.disabled = !this.dictionaries_.length;
-  var lastValue = selectionElement.value;
-  while (selectionElement.hasChildNodes()) {
-    selectionElement.removeChild(selectionElement.firstChild);
-  }
-  for (var i = 0; i < this.dictionaries_.length; ++i) {
-    var dictionaryName = this.dictionaries_[i].name;
-    // 'Sync Dictionary' is the default name of sync-able dictionary defined in
-    // user_dictionary_storage.cc.
-    if (dictionaryName == 'Sync Dictionary') {
-      dictionaryName =
-          chrome.i18n.getMessage('dictionaryToolSyncableDictionaryName');
-    }
-    var newOption =
-        this.createOptionElement_(dictionaryName,
-                                  i.toString());
-    if (i == lastValue) {
-      newOption.selected = true;
-    }
-    selectionElement.appendChild(newOption);
-  }
-};
-
-/**
- * Gets the user dictionary storage from NaCl Mozc module and stores it to
- * dictionaries_ and update the dictionary list and content.
- * @param {!function()=} opt_callback Function to be called when finished.
- * @private
- */
-mozc.OptionPage.prototype.loadStorage_ = function(opt_callback) {
-  this.getStorage_((function() {
-    this.updateDictionaryList_();
-    this.updateDictionaryContent_();
-    if (opt_callback) {
-      opt_callback();
-    }
-  }).bind(this));
-};
-
-/**
- * Gets the user dictionary storage from NaCl Mozc module and stores it to
- * dictionaries_.
- * @param {!function()=} opt_callback Function to be called when finished.
- * @private
- */
-mozc.OptionPage.prototype.getStorage_ = function(opt_callback) {
-  this.sendUserDictionaryCommand_(
-    {
-      'type': 'GET_STORAGE',
-      'session_id': this.userDictionarySessionId_
-    },
-    (function(response) {
-      this.dictionaries_ = response['storage']['dictionaries'];
-      if (!this.dictionaries_) {
-        this.dictionaries_ = [];
-      }
-      if (opt_callback) {
-        opt_callback();
-      }
-    }).bind(this));
-};
-
-/**
- * Called when dictionary_tool_done_button button or dictionary_tool_close
- * button is clicked or the user presses Esc key while dictionary tool is
- * opened.
- * This method closes the dictionary tool.
- * @private
- */
-mozc.OptionPage.prototype.onDictionaryToolDoneButtonClicked_ = function() {
-  this.escapeKeyHandlers_.pop();
-  this.enableElementById_('dictionary_tool_open_button');
-  this.hideOverlayElementById_('dictionary_tool_overlay');
-  this.document_.getElementById('dictionary_tool_open_button').focus();
-};
-
-/**
- * Called when create_dictionary_button button is clicked.
- * This method displays a dialog box that prompts the user to input the new
- * dictionary name and creates a dictionary.
- * @private
- */
-mozc.OptionPage.prototype.onDictionaryToolCreateButtonClicked_ = function() {
-  this.showPrompt_(
-      'dictionary_tool_page',
-      chrome.i18n.getMessage('appName'),
-      chrome.i18n.getMessage('dictionaryToolDictionaryName'),
-      '',
-      (function(dictName) {
-        if (!dictName) {
-          return;
-        }
-        this.sendUserDictionaryCommand_(
-          {
-            'type': 'CREATE_DICTIONARY',
-            'session_id': this.userDictionarySessionId_,
-            'dictionary_name': dictName
-          },
-          (function(response) {
-            if (response['status'] != 'USER_DICTIONARY_COMMAND_SUCCESS') {
-              this.showDictionaryToolError_(response['status']);
-            } else {
-              this.sendUserDictionaryCommand_(
-                {'type': 'SAVE', 'session_id': this.userDictionarySessionId_},
-                this.naclMozc_.sendReload.bind(this.naclMozc_, undefined));
-              // TODO(horo): getStorage_ is a heavy operation. We shoud only
-              // update the created dictionary.
-              this.getStorage_((function() {
-                this.updateDictionaryList_();
-                this.document_.getElementById('user_dictionary_select').value =
-                    this.dictionaries_.length - 1;
-                this.updateDictionaryContent_();
-              }).bind(this));
-            }
-          }).bind(this));
-      }).bind(this));
-};
-
-/**
- * Returns the selected dictionary index in user_dictionary_select element.
- * @return {number} The selected dictionary index. The return value is NaN
- *     when there is no dictionary.
- * @private
- */
-mozc.OptionPage.prototype.getSelectedDictionaryIndex_ = function() {
-  return parseInt(
-      this.document_.getElementById('user_dictionary_select').value,
-      10);
-};
-
-/**
- * Called when rename_dictionary_button button is clicked.
- * This method displays a dialog box that prompts the user to input the new
- * dictionary name and renames the selected dictionary.
- * @private
- */
-mozc.OptionPage.prototype.onDictionaryToolRenameButtonClicked_ = function() {
-  var dictIndex = this.getSelectedDictionaryIndex_();
-  if (isNaN(dictIndex)) {
-    return;
-  }
-  var dictionaryId = this.dictionaries_[dictIndex]['id'];
-  this.showPrompt_(
-      'dictionary_tool_page',
-      chrome.i18n.getMessage('appName'),
-      chrome.i18n.getMessage('dictionaryToolDictionaryName'),
-      this.dictionaries_[dictIndex]['name'],
-      (function(dictName) {
-        if (!dictName) {
-          return;
-        }
-        this.sendUserDictionaryCommand_(
-          {
-            'type': 'RENAME_DICTIONARY',
-            'session_id': this.userDictionarySessionId_,
-            'dictionary_id': dictionaryId,
-            'dictionary_name': dictName
-          },
-          (function(response) {
-            if (response['status'] != 'USER_DICTIONARY_COMMAND_SUCCESS') {
-              this.showDictionaryToolError_(response['status']);
-            } else {
-              this.sendUserDictionaryCommand_(
-                {'type': 'SAVE', 'session_id': this.userDictionarySessionId_},
-                this.naclMozc_.sendReload.bind(this.naclMozc_, undefined));
-              // TODO(horo): loadStorage_ is a heavy operation. We shoud only
-              // update the changed dictionary.
-              this.loadStorage_();
-            }
-          }).bind(this));
-      }).bind(this));
-};
-
-/**
- * Called when delete_dictionary_button button is clicked.
- * This method deletes the selecetd dictionary.
- * @private
- */
-mozc.OptionPage.prototype.onDictionaryToolDeleteButtonClicked_ = function() {
-  var dictIndex = this.getSelectedDictionaryIndex_();
-  if (isNaN(dictIndex)) {
-    return;
-  }
-  this.showConfirm_(
-      'dictionary_tool_page',
-      chrome.i18n.getMessage('appName'),
-      chrome.i18n.getMessage('dictionaryToolDeleteDictionaryConfirm',
-                             this.dictionaries_[dictIndex]['name']),
-      (function(result) {
-        if (!result) {
-          return;
-        }
-        var dictionaryId = this.dictionaries_[dictIndex]['id'];
-        this.sendUserDictionaryCommand_(
-          {
-            'type': 'DELETE_DICTIONARY',
-            'session_id': this.userDictionarySessionId_,
-            'dictionary_id': dictionaryId
-          },
-          (function(response) {
-            if (response['status'] != 'USER_DICTIONARY_COMMAND_SUCCESS') {
-              this.showDictionaryToolError_(response['status']);
-            } else {
-              this.sendUserDictionaryCommand_(
-                {'type': 'SAVE', 'session_id': this.userDictionarySessionId_},
-                this.naclMozc_.sendReload.bind(this.naclMozc_, undefined));
-              // TODO(horo): loadStorage_ is a heavy operation. We shoud only
-              // update the deleted dictionary.
-              this.loadStorage_();
-            }
-          }).bind(this));
-      }).bind(this));
-};
-
-/**
- * Called when export_dictionary_button button is clicked.
- * This method exports the selecetd dictionary.
- * @private
- */
-mozc.OptionPage.prototype.onDictionaryToolExportButtonClicked_ = function() {
-  var dictIndex = this.getSelectedDictionaryIndex_();
-  if (isNaN(dictIndex)) {
-    return;
-  }
-  var data = '';
-  var entries = this.dictionaries_[dictIndex]['entries'];
-  for (var i = 0; i < entries.length; ++i) {
-    data += entries[i]['key'] + '\t' +
-            entries[i]['value'] + '\t' +
-            this.posNameMap_[entries[i]['pos']] + '\t' +
-            entries[i]['comment'] + '\n';
-  }
-  var blob = new Blob([data]);
-  var a = this.document_.createElement('a');
-  a.href = this.window_.URL.createObjectURL(blob);
-  a.download = 'user_dict.txt';
-  a.style.display = 'none';
-  this.document_.body.appendChild(a);
-  a.click();
-  this.document_.body.removeChild(a);
-};
-
-/**
- * Called when dictionary entry element is focused.
- * This method shows the input elements for 'reading' and 'word' and 'comment',
- * and the select element for 'category'.
- * @param {string} type Entry type ('reading', 'word', 'category' or 'comment').
- * @param {number} index Index of the entry.
- * @param {Event} event Event object passed from browser.
- * @private
- */
-mozc.OptionPage.prototype.onDictionaryEntryFocus_ = function(type,
-                                                             index,
-                                                             event) {
-  var dictIndex = this.getSelectedDictionaryIndex_();
-  if (isNaN(dictIndex)) {
-    return;
-  }
-  var entryNode =
-      this.document_.getElementById('dictionary_tool_entry_' + index);
-  if (entryNode.classList.contains('dictionary_tool_entry_selected')) {
-    return;
-  }
-  var readingInput =
-    this.document_.getElementById('dictionary_tool_reading_input_' + index);
-  var wordInput =
-    this.document_.getElementById('dictionary_tool_word_input_' + index);
-  var categorySelect =
-    this.document_.getElementById('dictionary_tool_category_input_' + index);
-  var commentInput =
-    this.document_.getElementById('dictionary_tool_comment_input_' + index);
-  while (categorySelect.childNodes.length) {
-    categorySelect.removeChild(categorySelect.firstChild);
-  }
-  for (var i = 0; i < this.posList_.length; ++i) {
-    categorySelect.appendChild(
-        this.createOptionElement_(this.posList_[i]['name'],
-                                  this.posList_[i]['type']));
-  }
-  var entry =
-      this.dictionaries_[dictIndex]['entries'][index];
-  readingInput.value = entry['key'];
-  wordInput.value = entry['value'];
-  categorySelect.value = entry['pos'];
-  commentInput.value = entry['comment'];
-  entryNode.classList.add('dictionary_tool_entry_selected');
-  var focusInput = this.document_.getElementById(
-      'dictionary_tool_' + type + '_input_' + index);
-  focusInput.focus();
-  this.document_.getElementById('dictionary_tool_reading_' + index).tabIndex =
-      -1;
-  this.document_.getElementById('dictionary_tool_word_' + index).tabIndex =
-      -1;
-  this.document_.getElementById('dictionary_tool_category_' + index).tabIndex =
-      -1;
-  this.document_.getElementById('dictionary_tool_comment_' + index).tabIndex =
-      -1;
-};
-
-/**
- * Called when dictionary entry element lost focus.
- * This method hides the input elements for 'reading' and 'word' and 'comment',
- * and the select element for 'category'. And also this method saves the entry.
- * @param {string} type Entry type ('reading', 'word', 'category' or 'comment').
- * @param {number} index Index of the entry.
- * @param {Event} event Event object passed from browser.
- * @private
- */
-mozc.OptionPage.prototype.onDictionaryEntryBlur_ =
-  function(type, index, event) {
-  var dictIndex = this.getSelectedDictionaryIndex_();
-  if (isNaN(dictIndex)) {
-    return;
-  }
-  if (event && event.relatedTarget &&
-      (event.relatedTarget.id == 'dictionary_tool_reading_input_' + index ||
-       event.relatedTarget.id == 'dictionary_tool_word_input_' + index ||
-       event.relatedTarget.id == 'dictionary_tool_category_input_' + index ||
-       event.relatedTarget.id == 'dictionary_tool_comment_input_' + index)) {
-    return;
-  }
-  var entryNode =
-      this.document_.getElementById('dictionary_tool_entry_' + index);
-  if (!entryNode.classList.contains('dictionary_tool_entry_selected')) {
-    return;
-  }
-  var readingInput =
-    this.document_.getElementById('dictionary_tool_reading_input_' + index);
-  var wordInput =
-    this.document_.getElementById('dictionary_tool_word_input_' + index);
-  var categorySelect =
-    this.document_.getElementById('dictionary_tool_category_input_' + index);
-  var commentInput =
-    this.document_.getElementById('dictionary_tool_comment_input_' + index);
-  var readingStatic =
-    this.document_.getElementById('dictionary_tool_reading_static_' + index);
-  var wordStatic =
-    this.document_.getElementById('dictionary_tool_word_static_' + index);
-  var categoryStatic =
-    this.document_.getElementById('dictionary_tool_category_static_' + index);
-  var commentStatic =
-    this.document_.getElementById('dictionary_tool_comment_static_' + index);
-
-  this.document_.getElementById('dictionary_tool_reading_' + index).tabIndex =
-      0;
-  this.document_.getElementById('dictionary_tool_word_' + index).tabIndex =
-      0;
-  this.document_.getElementById('dictionary_tool_category_' + index).tabIndex =
-      0;
-  this.document_.getElementById('dictionary_tool_comment_' + index).tabIndex =
-      0;
-  var oldEntry = this.dictionaries_[dictIndex]['entries'][index];
-  if (readingInput.value == oldEntry['key'] &&
-      wordInput.value == oldEntry['value'] &&
-      commentInput.value == oldEntry['comment'] &&
-      categorySelect.value == oldEntry['pos']) {
-    entryNode.classList.remove('dictionary_tool_entry_selected');
-    return;
-  }
-  this.sendUserDictionaryCommand_(
-    {
-      'type': 'EDIT_ENTRY',
-      'session_id': this.userDictionarySessionId_,
-      'dictionary_id': this.dictionaries_[dictIndex]['id'],
-      'entry_index': [index],
-      'entry': {
-        'key': readingInput.value,
-        'value': wordInput.value,
-        'comment': commentInput.value,
-        'pos': categorySelect.value
-      }
-    },
-    (function(response) {
-      if (response['status'] != 'USER_DICTIONARY_COMMAND_SUCCESS') {
-        this.showDictionaryToolError_(response['status']);
-      }
-      this.sendUserDictionaryCommand_(
-        {'type': 'SAVE', 'session_id': this.userDictionarySessionId_},
-        this.naclMozc_.sendReload.bind(this.naclMozc_, undefined));
-      this.sendUserDictionaryCommand_(
-        {
-          'type': 'GET_ENTRY',
-          'session_id': this.userDictionarySessionId_,
-          'dictionary_id': this.dictionaries_[dictIndex]['id'],
-          'entry_index': [index]
-        },
-        (function(response) {
-          this.dictionaries_[dictIndex]['entries'][index] = response['entry'];
-          var entry =
-              this.dictionaries_[dictIndex]['entries'][index];
-          readingStatic.innerText = entry['key'];
-          wordStatic.innerText = entry['value'];
-          categoryStatic.innerText = this.posNameMap_[entry['pos']];
-          commentStatic.innerText = entry['comment'];
-          entryNode.classList.remove('dictionary_tool_entry_selected');
-        }).bind(this));
-    }).bind(this));
-};
-
-/**
- * Called when dictionary_tool_entry_delete_button is clicked.
- * This method deletes the entry in the dictionary.
- * @param {number} index Index of the dictionary entry.
- * @private
- */
-mozc.OptionPage.prototype.onDictionaryEntryDeleteClick_ = function(index) {
-  var dictIndex = this.getSelectedDictionaryIndex_();
-  if (isNaN(dictIndex)) {
-    return;
-  }
-  this.sendUserDictionaryCommand_(
-    {
-      'type': 'DELETE_ENTRY',
-      'session_id': this.userDictionarySessionId_,
-      'dictionary_id': this.dictionaries_[dictIndex]['id'],
-      'entry_index': [index]
-    },
-    (function(response) {
-      if (response['status'] != 'USER_DICTIONARY_COMMAND_SUCCESS') {
-        this.showDictionaryToolError_(response['status']);
-      } else {
-        this.sendUserDictionaryCommand_(
-          {'type': 'SAVE', 'session_id': this.userDictionarySessionId_},
-          this.naclMozc_.sendReload.bind(this.naclMozc_, undefined));
-        // TODO(horo): loadStorage_ is a heavy operation. We shoud only update
-        // the deleted entry.
-        this.loadStorage_();
-      }
-    }).bind(this));
-};
-
-/**
- * Shows dictionary tool error.
- * @param {string} status Status string of dictionary tool.
- * @private
- */
-mozc.OptionPage.prototype.showDictionaryToolError_ = function(status) {
-  var message = mozc.DICTIONARY_TOOL_STATUS_ERRORS_[status];
-  if (!message) {
-    message = chrome.i18n.getMessage('dictionaryToolStatuErrorGeneral') +
-              '[' + status + ']';
-  }
-  this.showAlert_('dictionary_tool_page',
-                  'Error',
-                  message);
-};
-
-/**
- * Updates the dictionary entry list in 'dictionary_tool_current_area' element
- * according to 'user_dictionary_select' element and dictionaries_.
- * @private
- */
-mozc.OptionPage.prototype.updateDictionaryContent_ = function() {
-  var dictIndex = this.getSelectedDictionaryIndex_();
-  var currentArea =
-      this.document_.getElementById('dictionary_tool_current_area');
-  if (isNaN(dictIndex)) {
-    for (var i = 0;; ++i) {
-      var entryDiv =
-        this.document_.getElementById('dictionary_tool_entry_' + i);
-      if (!entryDiv) {
-        break;
-      }
-      currentArea.removeChild(entryDiv);
-    }
-    this.disableElementById_('rename_dictionary_button');
-    this.disableElementById_('delete_dictionary_button');
-    this.disableElementById_('export_dictionary_button');
-    this.disableElementById_('dictionary_tool_reading_new_input');
-    this.disableElementById_('dictionary_tool_word_new_input');
-    this.disableElementById_('dictionary_tool_category_new_select');
-    this.disableElementById_('dictionary_tool_comment_new_input');
-    return;
-  }
-  var dictionary = this.dictionaries_[dictIndex];
-  if (dictionary['syncable']) {
-    this.disableElementById_('rename_dictionary_button');
-    this.disableElementById_('delete_dictionary_button');
-  } else {
-    this.enableElementById_('rename_dictionary_button');
-    this.enableElementById_('delete_dictionary_button');
-  }
-  this.enableElementById_('export_dictionary_button');
-  this.enableElementById_('dictionary_tool_reading_new_input');
-  this.enableElementById_('dictionary_tool_word_new_input');
-  this.enableElementById_('dictionary_tool_category_new_select');
-  this.enableElementById_('dictionary_tool_comment_new_input');
-  if (!dictionary['entries']) {
-    dictionary['entries'] = [];
-  }
-  for (var i = 0; i < dictionary['entries'].length; ++i) {
-    var entryDiv = this.document_.getElementById('dictionary_tool_entry_' + i);
-    if (!entryDiv) {
-      entryDiv = this.createUserDictionaryEntryDiv_(i);
-    }
-    currentArea.appendChild(entryDiv);
-    this.document_.getElementById(
-        'dictionary_tool_reading_static_' + i).innerText =
-            dictionary['entries'][i]['key'];
-    this.document_.getElementById(
-        'dictionary_tool_word_static_' + i).innerText =
-            dictionary['entries'][i]['value'];
-    this.document_.getElementById(
-        'dictionary_tool_category_static_' + i).innerText =
-            this.posNameMap_[dictionary['entries'][i]['pos']];
-    this.document_.getElementById(
-        'dictionary_tool_comment_static_' + i).innerText =
-            dictionary['entries'][i]['comment'];
-  }
-  for (var i = dictionary['entries'].length;; ++i) {
-    var entryDiv = this.document_.getElementById('dictionary_tool_entry_' + i);
-    if (!entryDiv) {
-      break;
-    }
-    currentArea.removeChild(entryDiv);
-  }
-};
-
-/**
- * Creates a dictionary entry element like the followings.
- * <div id="dictionary_tool_entry_INDEX" class="dictionary_tool_entry">
- *   <div id="dictionary_tool_reading_INDEX" class="dictionary_tool_reading">
- *     <div id="dictionary_tool_reading_static_INDEX" class="static_text"></div>
- *     <input id="dictionary_tool_reading_input_INDEX" type="text"
- *            class="dictionary_tool_entry_input">
- *   </div>
- *   <div id="dictionary_tool_word_INDEX" class="dictionary_tool_word">
- *     <div id="dictionary_tool_word_static_INDEX" class="static_text"></div>
- *     <input id="dictionary_tool_word_input_INDEX" type="text"
- *            class="dictionary_tool_entry_input">
- *   </div>
- *   <div id="dictionary_tool_category_INDEX" class="dictionary_tool_category">
- *     <div id="dictionary_tool_category_static_INDEX" class="static_text">
- *     <select id="dictionary_tool_category_input_INDEX"
- *             class="dictionary_tool_entry_select"></select>
- *   </div>
- *   <div id="dictionary_tool_comment_INDEX" class="dictionary_tool_comment">
- *     <div id="dictionary_tool_comment_static_INDEX" class="static_text"></div>
- *     <input id="dictionary_tool_comment_input_INDEX" type="text"
- *            class="dictionary_tool_entry_input">
- *   </div>
- *   <div class="dictionary_tool_entry_delete_button_div">
- *     <button class="dictionary_tool_entry_delete_button"></button>
- *   </div>
- * </div>
- * @param {number} index Index of the dictionary entry.
- * @return {!Element} Created element.
- * @private
- */
-mozc.OptionPage.prototype.createUserDictionaryEntryDiv_ = function(index) {
-  var entryDiv = this.document_.createElement('div');
-  entryDiv.id = 'dictionary_tool_entry_' + index;
-  entryDiv.classList.add('dictionary_tool_entry');
-  var readingDiv = this.document_.createElement('div');
-  var readingStaticDiv = this.document_.createElement('div');
-  var readingInput = this.document_.createElement('input');
-  readingDiv.id = 'dictionary_tool_reading_' + index;
-  readingDiv.classList.add('dictionary_tool_reading');
-  readingDiv.tabIndex = 0;
-  readingDiv.addEventListener(
-      'focus',
-      this.onDictionaryEntryFocus_.bind(this, 'reading', index),
-      true);
-  readingStaticDiv.id = 'dictionary_tool_reading_static_' + index;
-  readingStaticDiv.classList.add('static_text');
-  readingInput.id = 'dictionary_tool_reading_input_' + index;
-  readingInput.type = 'text';
-  readingInput.classList.add('dictionary_tool_entry_input');
-  readingInput.addEventListener(
-      'blur',
-      this.onDictionaryEntryBlur_.bind(this, 'reading', index),
-      true);
-  readingDiv.appendChild(readingStaticDiv);
-  readingDiv.appendChild(readingInput);
-  entryDiv.appendChild(readingDiv);
-  var wordDiv = this.document_.createElement('div');
-  var wordStaticDiv = this.document_.createElement('div');
-  var wordInput = this.document_.createElement('input');
-  wordDiv.id = 'dictionary_tool_word_' + index;
-  wordDiv.classList.add('dictionary_tool_word');
-  wordDiv.tabIndex = 0;
-  wordDiv.addEventListener(
-      'focus',
-      this.onDictionaryEntryFocus_.bind(this, 'word', index),
-      true);
-  wordStaticDiv.id = 'dictionary_tool_word_static_' + index;
-  wordStaticDiv.classList.add('static_text');
-  wordInput.id = 'dictionary_tool_word_input_' + index;
-  wordInput.type = 'text';
-  wordInput.classList.add('dictionary_tool_entry_input');
-  wordInput.addEventListener(
-      'blur',
-      this.onDictionaryEntryBlur_.bind(this, 'word', index),
-      true);
-  wordDiv.appendChild(wordStaticDiv);
-  wordDiv.appendChild(wordInput);
-  entryDiv.appendChild(wordDiv);
-  var categoryDiv = this.document_.createElement('div');
-  var categoryStaticDiv = this.document_.createElement('div');
-  var categorySelect = this.document_.createElement('select');
-  categoryDiv.id = 'dictionary_tool_category_' + index;
-  categoryDiv.classList.add('dictionary_tool_category');
-  categoryDiv.tabIndex = 0;
-  categoryDiv.addEventListener(
-      'focus',
-      this.onDictionaryEntryFocus_.bind(this, 'category', index),
-      true);
-  categoryStaticDiv.id = 'dictionary_tool_category_static_' + index;
-  categoryStaticDiv.classList.add('static_text');
-  categorySelect.id = 'dictionary_tool_category_input_' + index;
-  categorySelect.classList.add('dictionary_tool_entry_select');
-  categorySelect.addEventListener(
-      'blur',
-      this.onDictionaryEntryBlur_.bind(this, 'category', index),
-      true);
-  categoryDiv.appendChild(categoryStaticDiv);
-  categoryDiv.appendChild(categorySelect);
-  entryDiv.appendChild(categoryDiv);
-  var commentDiv = this.document_.createElement('div');
-  var commentStaticDiv = this.document_.createElement('div');
-  var commentInput = this.document_.createElement('input');
-  commentDiv.id = 'dictionary_tool_comment_' + index;
-  commentDiv.classList.add('dictionary_tool_comment');
-  commentDiv.tabIndex = 0;
-  commentDiv.addEventListener(
-      'focus',
-      this.onDictionaryEntryFocus_.bind(this, 'comment', index),
-      true);
-  commentStaticDiv.id = 'dictionary_tool_comment_static_' + index;
-  commentStaticDiv.classList.add('static_text');
-  commentInput.id = 'dictionary_tool_comment_input_' + index;
-  commentInput.type = 'text';
-  commentInput.classList.add('dictionary_tool_entry_input');
-  commentInput.addEventListener(
-      'blur',
-      this.onDictionaryEntryBlur_.bind(this, 'comment', index),
-      true);
-  commentDiv.appendChild(commentStaticDiv);
-  commentDiv.appendChild(commentInput);
-  entryDiv.appendChild(commentDiv);
-  var deleteDiv = this.document_.createElement('div');
-  var deleteButton = this.document_.createElement('button');
-  deleteDiv.classList.add('dictionary_tool_entry_delete_button_div');
-  deleteButton.classList.add('dictionary_tool_entry_delete_button');
-  deleteButton.addEventListener(
-      'click',
-      this.onDictionaryEntryDeleteClick_.bind(this, index),
-      true);
-  deleteDiv.appendChild(deleteButton);
-  entryDiv.appendChild(deleteDiv);
-  return entryDiv;
-};
-
-/**
- * Called when user_dictionary_select is changed.
- * @private
- */
-mozc.OptionPage.prototype.onDictionarySelectChanged_ = function() {
-  this.updateDictionaryContent_();
-};
-
-/**
- * Called when dictionary tool new entry input element lost focus.
- * If the new reading and the new word are not empty this method creates a new
- * entry in the selected dictionary.
- * @param {Event} event Event object passed from browser.
- * @private
- */
-mozc.OptionPage.prototype.onDictionaryNewEntryLostFocus_ = function(event) {
-  if (event && event.relatedTarget &&
-      (event.relatedTarget.id == 'dictionary_tool_reading_new_input' ||
-       event.relatedTarget.id == 'dictionary_tool_word_new_input' ||
-       event.relatedTarget.id == 'dictionary_tool_category_new_select' ||
-       event.relatedTarget.id == 'dictionary_tool_comment_new_input')) {
-    return;
-  }
-  var dictIndex = this.getSelectedDictionaryIndex_();
-  if (isNaN(dictIndex)) {
-    return;
-  }
-  var dictionaryId = this.dictionaries_[dictIndex]['id'];
-  var newReadingInput =
-      this.document_.getElementById('dictionary_tool_reading_new_input');
-  var newWordInput =
-      this.document_.getElementById('dictionary_tool_word_new_input');
-  var newCategorySelect =
-      this.document_.getElementById('dictionary_tool_category_new_select');
-  var newCommentInput =
-      this.document_.getElementById('dictionary_tool_comment_new_input');
-  var newReading = newReadingInput.value;
-  var newWord = newWordInput.value;
-  var newCategory = newCategorySelect.value;
-  var newComment = newCommentInput.value;
-  if (newReading == '' || newWord == '') {
-    return;
-  }
-  // We don't reset the value of dictionary_tool_category_new_select to help the
-  // user who want to add the same category entries.
-  newReadingInput.value = '';
-  newWordInput.value = '';
-  newCommentInput.value = '';
-  this.sendUserDictionaryCommand_({
-    'type': 'ADD_ENTRY',
-    'session_id': this.userDictionarySessionId_,
-    'dictionary_id': dictionaryId,
-    'entry': {
-      'key': newReading,
-      'value': newWord,
-      'comment': newComment,
-      'pos': newCategory
-    }
-  },
-  (function(response) {
-    if (response['status'] != 'USER_DICTIONARY_COMMAND_SUCCESS') {
-      this.showDictionaryToolError_(response['status']);
-    } else {
-      this.sendUserDictionaryCommand_(
-        {'type': 'SAVE', 'session_id': this.userDictionarySessionId_},
-        this.naclMozc_.sendReload.bind(this.naclMozc_, undefined));
-      // TODO(horo): loadStorage_ is a heavy operation. We shoud only update
-      // the added entry.
-      this.loadStorage_(newReadingInput.focus.bind(newReadingInput));
-    }
   }).bind(this));
 };
 
@@ -2264,33 +1581,36 @@ mozc.OptionPage.prototype.displaySyncStatus_ = function(response) {
       chrome.i18n.getMessage('configSyncStopSync') :
       chrome.i18n.getMessage('configSyncStartSync');
   if (!this.syncEnabled_ || sync_global_status == 'NOSYNC') {
-    sync_message += chrome.i18n.getMessage('configSyncNoSync');
-    this.enableElementById_('sync_toggle_button');
-    this.disableElementById_('sync_customization_button');
-  } else if (sync_global_status == 'SYNC_SUCCESS' ||
-      sync_global_status == 'SYNC_FAILURE') {
-    var lastSyncedTimestamp = cloud_sync_status['last_synced_timestamp'];
-    if (!lastSyncedTimestamp) {
-      sync_message += chrome.i18n.getMessage('configSyncNotSyncedYet');
-    } else {
-      sync_message += chrome.i18n.getMessage('configSyncLastSyncedTime');
-      sync_message += this.getFormattedDateTimeString_(
-          new Date(lastSyncedTimestamp * 1000));
+    this.enableElementById('sync_toggle_button');
+    this.disableElementById('sync_customization_button');
+    this.hideElementById_('sync_customization_button');
+  } else {
+    this.showElementById_('sync_customization_button');
+    if (sync_global_status == 'SYNC_SUCCESS' ||
+        sync_global_status == 'SYNC_FAILURE') {
+      var lastSyncedTimestamp = cloud_sync_status['last_synced_timestamp'];
+      if (!lastSyncedTimestamp) {
+        sync_message += chrome.i18n.getMessage('configSyncNotSyncedYet');
+      } else {
+        sync_message += chrome.i18n.getMessage('configSyncLastSyncedTime');
+        sync_message += this.getFormattedDateTimeString_(
+            new Date(lastSyncedTimestamp * 1000));
+      }
+      if (this.lastSyncedTimestamp_ != lastSyncedTimestamp) {
+        this.lastSyncedTimestamp_ = lastSyncedTimestamp;
+        this.naclMozc_.getConfig(this.onConfigLoaded_.bind(this));
+      }
+      this.enableElementById('sync_toggle_button');
+      this.enableElementById('sync_customization_button');
+    } else if (sync_global_status == 'WAITSYNC') {
+      sync_message += chrome.i18n.getMessage('configSyncWaiting');
+      this.disableElementById('sync_toggle_button');
+      this.disableElementById('sync_customization_button');
+    } else if (sync_global_status == 'INSYNC') {
+      sync_message += chrome.i18n.getMessage('configSyncDuringSync');
+      this.disableElementById('sync_toggle_button');
+      this.disableElementById('sync_customization_button');
     }
-    if (this.lastSyncedTimestamp_ != lastSyncedTimestamp) {
-      this.lastSyncedTimestamp_ = lastSyncedTimestamp;
-      this.naclMozc_.getConfig(this.onConfigLoaded_.bind(this));
-    }
-    this.enableElementById_('sync_toggle_button');
-    this.enableElementById_('sync_customization_button');
-  } else if (sync_global_status == 'WAITSYNC') {
-    sync_message += chrome.i18n.getMessage('configSyncWaiting');
-    this.disableElementById_('sync_toggle_button');
-    this.disableElementById_('sync_customization_button');
-  } else if (sync_global_status == 'INSYNC') {
-    sync_message += chrome.i18n.getMessage('configSyncDuringSync');
-    this.disableElementById_('sync_toggle_button');
-    this.disableElementById_('sync_customization_button');
   }
   var tooltip = '';
   if (cloud_sync_status['sync_errors'] &&
@@ -2338,9 +1658,8 @@ mozc.OptionPage.prototype.displaySyncStatus_ = function(response) {
  * Sets the tabIndex of the all focusable elements (tabIndex >= 0) in the target
  * element -1 to make them unfocusable with tab key.
  * @param {string} elementId The ID of target element.
- * @private
  */
-mozc.OptionPage.prototype.setChildNodesUnfocusableByTabKeyById_ =
+mozc.OptionPage.prototype.setChildNodesUnfocusableByTabKeyById =
     function(elementId) {
   var element = this.document_.getElementById(elementId);
   if (!element) {
@@ -2351,11 +1670,10 @@ mozc.OptionPage.prototype.setChildNodesUnfocusableByTabKeyById_ =
 
 /**
  * Resets the tabIndex of the all focusable elements in the target element which
- * was set to -1 with setChildNodesUnfocusableByTabKeyById_().
+ * was set to -1 with setChildNodesUnfocusableByTabKeyById().
  * @param {string} elementId The ID of target element.
- * @private
  */
-mozc.OptionPage.prototype.setChildNodesFocusableByTabKeyById_ =
+mozc.OptionPage.prototype.setChildNodesFocusableByTabKeyById =
     function(elementId) {
   var element = this.document_.getElementById(elementId);
   if (!element) {
@@ -2433,24 +1751,7 @@ mozc.OptionPage.prototype.unfreezeMainDiv_ = function() {
   this.setChildNodesFocusableByTabKey_(mainDiv);
   mainDiv.classList.remove('frozen');
   mainDiv.style.top = '';
-  mainDiv.style.left = '';
-  mainDiv.style.right = '';
-  mainDiv.style.width = '';
   var scrollTop = mainDiv.oldScrollTop || 0;
   mainDiv.oldScrollTop = undefined;
   this.window_.scroll(0, scrollTop);
 };
-
-/**
- * Sends user dictionary command to NaCl module.
- * @param {!Object} command User dictionary command object to be sent.
- * @param {!function(Object)=} opt_callback Function to be called with results
- *     from NaCl module.
- * @private
- */
-mozc.OptionPage.prototype.sendUserDictionaryCommand_ =
-  function(command, opt_callback) {
-  this.naclMozc_.sendUserDictionaryCommand(
-      command, opt_callback);
-};
-

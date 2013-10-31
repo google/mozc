@@ -33,7 +33,6 @@
 #include <map>
 #include <string>
 
-#include "base/base.h"
 #include "base/string_piece.h"
 #include "base/logging.h"
 #include "base/singleton.h"

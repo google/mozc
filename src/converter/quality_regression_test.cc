@@ -149,6 +149,8 @@ class QualityRegressionTest : public testing::Test {
             LOG(INFO) << "PASSED (DISABLED): "
                       << it->first << ": " << value.second;
           } else {
+            LOG(INFO) << "FAILED (DISABLED): "
+                      << it->first << ": " << value.second;
             all_passed = false;
           }
         }

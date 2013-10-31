@@ -59,9 +59,8 @@ static const char kCustomKeyMapFile[] = "user://keymap.tsv";
 static const char kMobileKeyMapFile[] = "system://mobile.tsv";
 
 // TODO(team): Investigate if "InputModeX" commands should be
-//     functional on ChromeOS and/or Android or not. Remove the
-//     condition if available.
-#if defined(OS_MACOSX) || defined(OS_CHROMEOS) || defined(OS_ANDROID)
+//     functional on Android or not. Remove the condition if available.
+#if defined(OS_MACOSX) || defined(OS_ANDROID)
 const bool kInputModeXCommandSupported = false;
 #else
 const bool kInputModeXCommandSupported = true;

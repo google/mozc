@@ -30,9 +30,9 @@
 #ifndef MOZC_ENGINE_PACKED_ENGINE_FACTORY_H_
 #define MOZC_ENGINE_PACKED_ENGINE_FACTORY_H_
 
-namespace mozc {
+#include "engine/engine_interface.h"
 
-class EngineInterface;
+namespace mozc {
 
 // Provides the factory method that creates an instance of Engine.
 // You have to register a PackedDataManager with RegisterPackedDataManager()

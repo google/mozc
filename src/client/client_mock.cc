@@ -90,7 +90,6 @@ MockVoidImplementation(set_client_capability,
 MockBoolImplementation(LaunchToolWithProtoBuf, const commands::Output &output);
 MockBoolImplementation(OpenBrowser, const string &url);
 MockBoolImplementation(StartCloudSync, void);
-MockBoolImplementation(ClearCloudSync, void);
 
 #undef MockConstImplementation
 #undef MockBoolImplementation

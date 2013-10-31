@@ -65,6 +65,7 @@ class LOCKABLE Mutex {
   Mutex();
   ~Mutex();
   void Lock() EXCLUSIVE_LOCK_FUNCTION();
+  bool TryLock() EXCLUSIVE_TRYLOCK_FUNCTION(true);
   void Unlock() UNLOCK_FUNCTION();
 
 #ifdef MOZC_USE_PEPPER_FILE_IO
@@ -122,6 +123,30 @@ class SCOPED_LOCKABLE scoped_lock {
   Mutex *mutex_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(scoped_lock);
+};
+
+// Implementation of this class is left in header for poor compilers where link
+// time code generation has not been proven well.
+class SCOPED_LOCKABLE scoped_try_lock {
+ public:
+  explicit scoped_try_lock(Mutex *mutex) EXCLUSIVE_TRYLOCK_FUNCTION(true, mutex)
+      : mutex_(mutex) {
+    locked_ = mutex_->TryLock();
+  }
+  ~scoped_try_lock() UNLOCK_FUNCTION() {
+    if (locked_) {
+      mutex_->Unlock();
+    }
+  }
+  bool locked() const {
+    return locked_;
+  }
+
+ private:
+  Mutex *mutex_;
+  bool locked_;
+
+  DISALLOW_IMPLICIT_CONSTRUCTORS(scoped_try_lock);
 };
 
 // Implementation of this class is left in header for poor compilers where link
@@ -190,6 +215,6 @@ void CallOnce(once_t *once, void (*func)());
 // reset once_t
 void ResetOnce(once_t *once);
 
-}  // mozc
+}  // namespace mozc
 
 #endif  // MOZC_BASE_MUTEX_H_

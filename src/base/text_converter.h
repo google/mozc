@@ -31,7 +31,8 @@
 #define MOZC_BASE_TEXT_CONVERTER_H_
 
 #include <string>
-#include "base/base.h"
+
+#include "base/port.h"
 #include "base/string_piece.h"
 
 namespace mozc {
@@ -49,9 +50,7 @@ class TextConverter {
                       string *output);
 
  private:
-  // Should never be allocated.
-  TextConverter();
-  ~TextConverter();
+  DISALLOW_IMPLICIT_CONSTRUCTORS(TextConverter);
 };
 
 }  // namespace mozc

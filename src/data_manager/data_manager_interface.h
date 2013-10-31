@@ -38,13 +38,13 @@ namespace mozc {
 
 class POSMatcher;
 struct BoundaryData;
+struct CounterSuffixEntry;
 struct ReadingCorrectionItem;
 struct SuffixToken;
 #ifndef NO_USAGE_REWRITER
 struct ConjugationSuffix;
 struct UsageDictItem;
 #endif  // NO_USAGE_REWRITER
-
 
 // Builds those objects that depend on a set of embedded data generated from
 // files in data/dictionary, such as dictionary.txt, id.def, etc.
@@ -106,6 +106,10 @@ class DataManagerInterface {
       const int **conjugation_suffix_data_index,
       const UsageDictItem **usage_data_value) const = 0;
 #endif  // NO_USAGE_REWRITER
+
+  // Gets the address and size of a sorted array of counter suffix values.
+  virtual void GetCounterSuffixSortedArray(const CounterSuffixEntry **array,
+                                           size_t *size) const = 0;
 
  protected:
   DataManagerInterface() {}

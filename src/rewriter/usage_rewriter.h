@@ -35,7 +35,6 @@
 #include <string>
 #include <utility>
 
-#include "base/base.h"
 #include "converter/segments.h"
 #include "rewriter/rewriter_interface.h"
 #include "rewriter/usage_rewriter_data_structs.h"

@@ -31,7 +31,6 @@
 
 #import <Cocoa/Cocoa.h>
 
-#include "base/base.h"
 #include "base/const.h"
 #include "base/logging.h"
 #include "base/mac_util.h"

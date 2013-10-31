@@ -307,11 +307,11 @@ bool ImeCore::OpenIME(mozc::client::ClientInterface *client, DWORD next_mode) {
     return false;
   }
 
-  mozc::commands::KeyEvent key;
-  key.set_special_key(mozc::commands::KeyEvent::ON);
-  key.set_mode(mode);
+  SessionCommand command;
+  command.set_type(commands::SessionCommand::TURN_ON_IME);
+  command.set_composition_mode(mode);
   commands::Output output;
-  if (!client->SendKey(key, &output)) {
+  if (!client->SendCommand(command, &output)) {
     return false;
   }
   if (!output.consumed()) {
@@ -320,12 +320,18 @@ bool ImeCore::OpenIME(mozc::client::ClientInterface *client, DWORD next_mode) {
   return true;
 }
 
-bool ImeCore::CloseIME(
-    mozc::client::ClientInterface *client,
-    commands::Output *output) {
-  mozc::commands::KeyEvent key;
-  key.set_special_key(mozc::commands::KeyEvent::OFF);
-  if (!client->SendKey(key, output)) {
+bool ImeCore::CloseIME(mozc::client::ClientInterface *client,
+                       DWORD next_mode, commands::Output *output) {
+  commands::CompositionMode mode = commands::DIRECT;
+  if (!ConversionModeUtil::GetMozcModeFromNativeMode(next_mode, &mode)) {
+    return false;
+  }
+
+  SessionCommand command;
+  command.set_type(commands::SessionCommand::TURN_OFF_IME);
+  command.set_composition_mode(mode);
+
+  if (!client->SendCommand(command, output)) {
     return false;
   }
   return true;
@@ -698,8 +704,15 @@ BOOL ImeCore::IMEOff(HIMC himc, bool generate_message) {
   }
 
   mozc::win32::UIContext context(himc);
+
+  DWORD logical_conversion_mode = 0;
+  if (!context.GetLogicalConversionMode(&logical_conversion_mode)) {
+    return FALSE;
+  }
+
   commands::Output output;
-  if (!ImeCore::CloseIME(context.client(), &output)) {
+  if (!ImeCore::CloseIME(context.client(), logical_conversion_mode,
+                         &output)) {
     return FALSE;
   }
   bool next_open_status = false;

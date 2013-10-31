@@ -31,14 +31,11 @@
 
 #include <string>
 
-#include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/mmap.h"
-#include "base/number_util.h"
 #include "base/scoped_ptr.h"
-#include "base/util.h"
-#include "converter/connector_interface.h"
+#include "data_manager/connection_file_reader.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_srcdir);
@@ -48,11 +45,12 @@ namespace mozc {
 namespace {
 const char kTestConnectionDataImagePath[] =
     "converter/test_connection_data.data";
-const char kTestConnectionFilePath[] = "data/test/dictionary/connection.txt";
+const char kTestConnectionFilePath[] =
+    "data/test/dictionary/connection_single_column.txt";
 }  // namespace
 
 TEST(SarseConnectorTest, SparseConnectorTest) {
-  string path = FileUtil::JoinPath(
+  const string path = FileUtil::JoinPath(
       FLAGS_test_srcdir, kTestConnectionDataImagePath);
   Mmap cmmap;
   CHECK(cmmap.Open(path.c_str())) << "Failed to open image: " << path;
@@ -60,20 +58,13 @@ TEST(SarseConnectorTest, SparseConnectorTest) {
       new SparseConnector(cmmap.begin(), cmmap.size()));
   ASSERT_EQ(1, connector->GetResolution());
 
-  string connection_text_path =
+  const string connection_text_path =
       FileUtil::JoinPath(FLAGS_test_srcdir, kTestConnectionFilePath);
-  InputFileStream input(connection_text_path.c_str());
-  string line;
-  getline(input, line);  // Discard the first line.
-  vector<string> fields;
-  while (!getline(input, line).fail()) {
-    fields.clear();
-    Util::SplitStringUsing(line, "\t ", &fields);
-    CHECK_GE(fields.size(), 3) << line;
-    uint16 rid = static_cast<uint16>(NumberUtil::SimpleAtoi(fields[0]));
-    uint16 lid = static_cast<uint16>(NumberUtil::SimpleAtoi(fields[1]));
-    uint16 cost = static_cast<uint16>(NumberUtil::SimpleAtoi(fields[2]));
-
+  for (ConnectionFileReader reader(connection_text_path);
+       !reader.done(); reader.Next()) {
+    const uint16 rid = reader.rid_of_left_node();
+    const uint16 lid = reader.lid_of_right_node();
+    const int cost = reader.cost();
     EXPECT_EQ(cost, connector->GetTransitionCost(rid, lid));
   }
 }

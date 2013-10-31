@@ -54,5 +54,16 @@
         }],
       ],
     },
+    {
+      'target_name': 'connection_file_reader',
+      'type': 'static_library',
+      'toolsets': [ 'target', 'host' ],
+      'sources': [
+        'connection_file_reader.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+      ],
+    },
   ],
 }

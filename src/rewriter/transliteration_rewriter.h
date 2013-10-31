@@ -39,15 +39,13 @@
 namespace mozc {
 
 class ConversionRequest;
-class DictionaryInterface;
 class POSMatcher;
 class Segments;
 class Segment;
 
 class TransliterationRewriter : public RewriterInterface  {
  public:
-  explicit TransliterationRewriter(const POSMatcher &pos_matcher,
-                                   const DictionaryInterface *dictionary);
+  explicit TransliterationRewriter(const POSMatcher &pos_matcher);
   virtual ~TransliterationRewriter();
 
   virtual int capability(const ConversionRequest &request) const;
@@ -55,7 +53,7 @@ class TransliterationRewriter : public RewriterInterface  {
   virtual bool Rewrite(const ConversionRequest &request,
                        Segments *segments) const;
 
-  virtual void Finish(const ConversionRequest &request, Segments *segments);
+  virtual void Finish(const ConversionRequest &request, Segments *segments) {}
 
  private:
   void InitT13nCandidate(const string &key,
@@ -68,9 +66,6 @@ class TransliterationRewriter : public RewriterInterface  {
   bool SetTransliterations(const vector<string> &t13ns,
                            const string &key,
                            Segment *segment) const;
-  // Fills the raw text if the query does not look like Japanese.
-  bool FillRawText(const ConversionRequest &request,
-                   Segments *segments) const;
   bool FillT13nsFromComposer(const ConversionRequest &request,
                              Segments *segments) const;
   bool FillT13nsFromKey(Segments *segments) const;
@@ -78,7 +73,6 @@ class TransliterationRewriter : public RewriterInterface  {
                                   Segments *segments) const;
 
   const uint16 unknown_id_;
-  const DictionaryInterface *dictionary_;
 };
 
 }  // namespace mozc

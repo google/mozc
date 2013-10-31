@@ -34,7 +34,6 @@
 #include "config/config.pb.h"
 #include "config/config_handler.h"
 #include "session/commands.pb.h"
-#include "session/japanese_session_factory.h"
 #include "session/random_keyevents_generator.h"
 #include "session/session_handler.h"
 #include "session/session_handler_test_util.h"
@@ -47,11 +46,11 @@ namespace mozc {
 
 using mozc::session::testing::TestSessionClient;
 
-using mozc::session::testing::JapaneseSessionHandlerTestBase;
-class SessionHandlerStressTestMain : public JapaneseSessionHandlerTestBase {
+using mozc::session::testing::SessionHandlerTestBase;
+class SessionHandlerStressTestMain : public SessionHandlerTestBase {
  protected:
   virtual void SetUp() {
-    JapaneseSessionHandlerTestBase::SetUp();
+    SessionHandlerTestBase::SetUp();
     FLAGS_last_command_timeout = 10;  // 10 sec
   }
 };
@@ -99,4 +98,4 @@ TEST_F(SessionHandlerStressTestMain, BasicStressTest) {
 
   EXPECT_TRUE(client.DeleteSession());
 }
-}  // namespae mozc
+}  // namespace mozc

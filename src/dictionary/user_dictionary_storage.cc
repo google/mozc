@@ -78,8 +78,10 @@ using ::mozc::user_dictionary::UserDictionaryCommandStatus;
 
 UserDictionaryStorage::UserDictionaryStorage(const string &file_name)
     : file_name_(file_name),
+      locked_(false),
       last_error_type_(USER_DICTIONARY_STORAGE_NO_ERROR),
-      mutex_(new ProcessMutex(FileUtil::Basename(file_name).c_str())) {}
+      local_mutex_(new Mutex),
+      process_mutex_(new ProcessMutex(FileUtil::Basename(file_name).c_str())) {}
 
 UserDictionaryStorage::~UserDictionaryStorage() {
   UnLock();
@@ -138,7 +140,6 @@ bool UserDictionaryStorage::LoadInternal(bool run_migration) {
 
   return true;
 }
-
 
 bool UserDictionaryStorage::LoadAndUpdateSyncDictionaries(
     bool ensure_one_sync_dictionary_exists,
@@ -212,34 +213,11 @@ bool UserDictionaryStorage::LoadWithoutChangingSyncDictionary() {
 }
 
 bool UserDictionaryStorage::Save() {
-  last_error_type_ = USER_DICTIONARY_STORAGE_NO_ERROR;
+  return SaveImpl(true);
+}
 
-  if (!locked_) {
-    LOG(ERROR) << "Dictionary is not locked. "
-               << "Call Lock() before saving the dictionary";
-    last_error_type_ = SYNC_FAILURE;
-    return false;
-  }
-
-  size_t sync_binary_size_total = 0;
-  for (size_t i = 0; i < dictionaries_size(); ++i) {
-    const UserDictionary &dict = dictionaries(i);
-    if (!dict.syncable()) {
-      continue;
-    }
-    if (dict.entries_size() > UserDictionaryUtil::max_sync_entry_size()) {
-      LOG(ERROR) << "Sync dictionary has too many entries";
-      return false;
-    }
-
-    sync_binary_size_total += dict.SerializeAsString().size();
-    if (sync_binary_size_total > kCloudSyncBytesLimit) {
-      LOG(ERROR) << "Sync dictionary is too large";
-      return false;
-    }
-  }
-
-  return SaveCore();
+bool UserDictionaryStorage::SaveWithoutSyncableDictionariesSizeCheck() {
+  return SaveImpl(false);
 }
 
 namespace {
@@ -264,8 +242,38 @@ bool SerializeUserDictionaryStorageToOstream(
 
 }  // namespace
 
-bool UserDictionaryStorage::SaveCore() {
+bool UserDictionaryStorage::SaveImpl(bool checkSyncableDictionariesSize) {
   last_error_type_ = USER_DICTIONARY_STORAGE_NO_ERROR;
+
+  {
+    scoped_lock l(local_mutex_.get());
+    if (!locked_) {
+      LOG(ERROR) << "Dictionary is not locked. "
+                 << "Call Lock() before saving the dictionary";
+      last_error_type_ = SYNC_FAILURE;
+      return false;
+    }
+  }
+
+  if (checkSyncableDictionariesSize) {
+    size_t sync_binary_size_total = 0;
+    for (size_t i = 0; i < dictionaries_size(); ++i) {
+      const UserDictionary &dict = dictionaries(i);
+      if (!dict.syncable()) {
+        continue;
+      }
+      if (dict.entries_size() > UserDictionaryUtil::max_sync_entry_size()) {
+        LOG(ERROR) << "Sync dictionary has too many entries";
+        return false;
+      }
+
+      sync_binary_size_total += dict.SerializeAsString().size();
+      if (sync_binary_size_total > kCloudSyncBytesLimit) {
+        LOG(ERROR) << "Sync dictionary is too large";
+        return false;
+      }
+    }
+  }
 
   const string tmp_file_name = file_name_ + ".tmp";
   {
@@ -304,13 +312,15 @@ bool UserDictionaryStorage::SaveCore() {
 }
 
 bool UserDictionaryStorage::Lock() {
-  locked_ = mutex_->Lock();
+  scoped_lock l(local_mutex_.get());
+  locked_ = process_mutex_->Lock();
   LOG_IF(ERROR, !locked_) << "Lock() failed";
   return locked_;
 }
 
 bool UserDictionaryStorage::UnLock() {
-  mutex_->UnLock();
+  scoped_lock l(local_mutex_.get());
+  process_mutex_->UnLock();
   locked_ = false;
   return true;
 }
@@ -498,7 +508,7 @@ UserDictionaryStorage::GetLastError() const {
 }
 
 bool UserDictionaryStorage::EnsureSyncDictionaryExists() {
-  if (CountSyncableDictionaries(this) > 0) {
+  if (CountSyncableDictionaries(*this) > 0) {
     VLOG(1) << "storage already has a sync dictionary.";
     return true;
   }
@@ -516,7 +526,7 @@ bool UserDictionaryStorage::EnsureSyncDictionaryExists() {
 }
 
 void UserDictionaryStorage::RemoveUnusedSyncDictionariesIfExist() {
-  if (CountSyncableDictionaries(this) == 0) {
+  if (CountSyncableDictionaries(*this) == 0) {
     // Nothing to do.
     return;
   }
@@ -605,10 +615,10 @@ bool UserDictionaryStorage::AddToAutoRegisteredDictionary(
 
 // static
 int UserDictionaryStorage::CountSyncableDictionaries(
-    const user_dictionary::UserDictionaryStorage *storage) {
+    const user_dictionary::UserDictionaryStorage &storage) {
   int num_syncable_dictionaries = 0;
-  for (int i = 0; i < storage->dictionaries_size(); ++i) {
-    const UserDictionary &dict = storage->dictionaries(i);
+  for (int i = 0; i < storage.dictionaries_size(); ++i) {
+    const UserDictionary &dict = storage.dictionaries(i);
     if (dict.syncable()) {
       ++num_syncable_dictionaries;
     }

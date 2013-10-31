@@ -32,8 +32,6 @@
 
 #include <string>
 
-#include "base/base.h"
-
 namespace mozc {
 struct DictionaryFileSection {
   const char *ptr;

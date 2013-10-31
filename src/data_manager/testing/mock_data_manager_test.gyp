@@ -44,6 +44,7 @@
       'dependencies': [
         '../../testing/testing.gyp:gtest_main',
         '../data_manager_test.gyp:data_manager_test_base',
+        'install_test_connection_txt',
         'mock_data_manager.gyp:mock_data_manager',
         'mock_data_manager.gyp:gen_mock_segmenter_inl_header#host',
       ],
@@ -53,10 +54,21 @@
       'copies': [
         {
           'destination': '<(mozc_data_dir)/data/test/dictionary/',
-          'files': [ '../../data/test/dictionary/connection.txt',
-                     '../../data/test/dictionary/dictionary.txt',
+          'files': [ '../../data/test/dictionary/dictionary.txt',
                      '../../data/test/dictionary/suggestion_filter.txt', ],
         },
+      ],
+    },
+    {
+      'target_name': 'install_test_connection_txt',
+      'type': 'none',
+      'copies': [
+        {
+          'destination': '<(mozc_data_dir)/data/test/dictionary/',
+          'files': [
+            '../../data/test/dictionary/connection_single_column.txt',
+          ],
+        }
       ],
     },
   ],

@@ -85,6 +85,7 @@
           'target_name': 'ime_impl_base',
           'type': 'static_library',
           'sources': [
+            'config_snapshot.cc',
             'conversion_mode_util.cc',
             'deleter.cc',
             'indicator_visibility_tracker.cc',
@@ -99,8 +100,8 @@
             '../../base/base.gyp:base',
             '../../config/config.gyp:config_handler',
             '../../config/config.gyp:config_protocol',
+            '../../session/session_base.gyp:key_info_util',
             '../../session/session_base.gyp:session_protocol',
-            '../../session/session_base.gyp:ime_switch_util',
             '../../session/session_base.gyp:output_util',
           ],
         },
@@ -158,14 +159,33 @@
               'sources': [
                 'omaha_util_test.cc',
               ],
-              'dependencies': [
-                '../../testing/sidestep/sidestep.gyp:sidestep',
-              ],
             }],
           ],
           'variables': {
             'test_size': 'small',
           },
+        },
+        {
+          'target_name': 'text_icon',
+          'type': 'static_library',
+          'sources': [
+            'text_icon.cc',
+          ],
+          'dependencies': [
+            '../../base/base.gyp:base',
+          ],
+        },
+        {
+          'target_name': 'text_icon_test',
+          'type': 'executable',
+          'sources': [
+            'text_icon_test.cc',
+          ],
+          'dependencies': [
+            '../../base/base.gyp:win_font_test_helper',
+            '../../testing/testing.gyp:gtest_main',
+            'text_icon',
+          ],
         },
         {
           'target_name': 'win32_file_verifier',

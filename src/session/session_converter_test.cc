@@ -42,7 +42,6 @@
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/system_util.h"
-#include "base/testing_util.h"
 #include "base/util.h"
 #include "composer/composer.h"
 #include "composer/table.h"
@@ -57,6 +56,7 @@
 #include "session/request_test_util.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "testing/base/public/testing_util.h"
 #include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
@@ -3548,38 +3548,6 @@ TEST_F(SessionConverterTest, PropageteConfigToRenderer) {
     output.Clear();
     converter.FillOutput(*composer_, &output);
     EXPECT_FALSE(output.has_config());
-  }
-
-  // Enable information_list_config()
-  {
-    config::Config config;
-    config.mutable_information_list_config()
-        ->set_use_web_usage_dictionary(true);
-    config.mutable_information_list_config()
-        ->add_web_service_entries();
-    config::ConfigHandler::SetConfig(config);
-
-    SessionConverter converter(
-        convertermock_.get(), &default_request_);
-    Segments segments;
-    SetAiueo(&segments);
-    FillT13Ns(&segments, composer_.get());
-    convertermock_->SetStartConversionForRequest(&segments, true);
-
-    commands::Output output;
-    composer_->InsertCharacterPreedit(kChars_Aiueo);
-    converter.Convert(*composer_);
-
-    EXPECT_FALSE(IsCandidateListVisible(converter));
-    output.Clear();
-    converter.FillOutput(*composer_, &output);
-    EXPECT_FALSE(output.has_config());
-
-    converter.CandidateNext(*composer_);
-    EXPECT_TRUE(IsCandidateListVisible(converter));
-    output.Clear();
-    converter.FillOutput(*composer_, &output);
-    EXPECT_TRUE(output.has_config());
   }
 }
 

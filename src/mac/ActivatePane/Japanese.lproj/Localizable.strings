@@ -5,9 +5,9 @@
    Created by Jun Mukai on 09/10/22.
    Copyright 2009 Google Inc. All rights reserved.
  */
-"Title" = "Google 日本語入力の有効化";
-"mainMessage" = "インストール後、Google 日本語入力を有効にしますか？";
+"Title" = "${CF_BUNDLE_NAME_JA}の有効化";
+"mainMessage" = "インストール後、${CF_BUNDLE_NAME_JA}を有効にしますか？";
 "activateLabel" = "有効にする";
 "doNotActivateLabel" = "自分で有効化の設定をする";
-"upgradeMessage" = "Google 日本語入力が新しいバージョンに更新されました。一部の機能については、再ログイン後に有効になります。";
-"usageStatsMessage" = "使用状況データと障害レポートを Google に自動送信して Google日本語入力の機能向上に役立てる。";
+"upgradeMessage" = "${CF_BUNDLE_NAME_JA}が新しいバージョンに更新されました。一部の機能については、再ログイン後に有効になります。";
+"usageStatsMessage" = "使用状況データと障害レポートを Google に自動送信して ${CF_BUNDLE_NAME_JA}の機能向上に役立てる。";

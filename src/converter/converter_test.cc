@@ -1525,6 +1525,28 @@ TEST_F(ConverterTest, StartReverseConversion) {
     EXPECT_EQ(kMuryouHiragana,
               segments.conversion_segment(2).candidate(0).value);
   }
+  {
+    // Test for math expressions; see b/9398304.
+    const string &kInputHalf = "365*24*60*60*1000=";
+    Segments segments;
+    EXPECT_TRUE(converter->StartReverseConversion(&segments, kInputHalf));
+    ASSERT_EQ(1, segments.segments_size());
+    ASSERT_EQ(1, segments.conversion_segment(0).candidates_size());
+    EXPECT_EQ(kInputHalf, segments.conversion_segment(0).candidate(0).value);
+
+    // Test for full-width characters.
+    segments.Clear();
+    // "３６５＊２４＊６０＊６０＊１０００＝"
+    const string &kInputFull =
+        "\xEF\xBC\x93\xEF\xBC\x96\xEF\xBC\x95\xEF\xBC\x8A\xEF\xBC\x92"
+        "\xEF\xBC\x94\xEF\xBC\x8A\xEF\xBC\x96\xEF\xBC\x90\xEF\xBC\x8A"
+        "\xEF\xBC\x96\xEF\xBC\x90\xEF\xBC\x8A\xEF\xBC\x91\xEF\xBC\x90"
+        "\xEF\xBC\x90\xEF\xBC\x90\xEF\xBC\x9D";
+    EXPECT_TRUE(converter->StartReverseConversion(&segments, kInputFull));
+    ASSERT_EQ(1, segments.segments_size());
+    ASSERT_EQ(1, segments.conversion_segment(0).candidates_size());
+    EXPECT_EQ(kInputHalf, segments.conversion_segment(0).candidate(0).value);
+  }
 }
 
 TEST_F(ConverterTest, GetLastConnectivePart) {

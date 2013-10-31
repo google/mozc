@@ -35,10 +35,8 @@
 #include "base/file_util.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
+#include "base/win_api_test_helper.h"
 #include "testing/base/public/gunit.h"
-#if defined(OS_WIN) && defined(GOOGLE_JAPANESE_INPUT_BUILD)
-#include "shared/opensource/patching/sidestep/cross/auto_testing_hook.h"
-#endif
 
 #ifdef OS_ANDROID
 #include "config/config_handler.h"
@@ -139,19 +137,27 @@ class RegistryEmulator {
     int              run_level_;
   };
   typedef PropertySelector<Id> Property;
-  RegistryEmulator()
-    : hook_reg_create_(
-          sidestep::MakeTestingHook(RegCreateKeyExW, TestRegCreateKeyExW)),
-      hook_reg_set_(
-          sidestep::MakeTestingHook(RegSetValueExW, TestRegSetValueExW)),
-      hook_reg_close_(
-          sidestep::MakeTestingHook(RegCloseKey, TestRegCloseKey)),
-      hook_reg_open_(
-          sidestep::MakeTestingHook(RegOpenKeyExW, TestRegOpenKeyExW)),
-      hook_reg_query_(
-          sidestep::MakeTestingHook(RegQueryValueExW, TestRegQueryValueExW)),
-      hook_reg_delete_value_(
-          sidestep::MakeTestingHook(RegDeleteValueW, TestRegDeleteValueW)) {
+  RegistryEmulator() {
+    vector<WinAPITestHelper::HookRequest> requests;
+    requests.push_back(
+        DEFINE_HOOK("advapi32.dll", RegCreateKeyExW, TestRegCreateKeyExW));
+    requests.push_back(
+        DEFINE_HOOK("advapi32.dll", RegSetValueExW, TestRegSetValueExW));
+    requests.push_back(
+        DEFINE_HOOK("advapi32.dll", RegCloseKey, TestRegCloseKey));
+    requests.push_back(
+        DEFINE_HOOK("advapi32.dll", RegOpenKeyExW, TestRegOpenKeyExW));
+    requests.push_back(
+        DEFINE_HOOK("advapi32.dll", RegQueryValueExW, TestRegQueryValueExW));
+    requests.push_back(
+        DEFINE_HOOK("advapi32.dll", RegDeleteValueW, TestRegDeleteValueW));
+    restore_info_ = WinAPITestHelper::DoHook(
+        ::GetModuleHandle(nullptr), requests);
+  }
+
+  ~RegistryEmulator() {
+    WinAPITestHelper::RestoreHook(restore_info_);
+    restore_info_ = nullptr;
   }
   static void SetRunLevel(int run_level) {
     mozc::Singleton<Property>::get()->set_run_level(run_level);
@@ -266,32 +272,12 @@ class RegistryEmulator {
     DeleteUsagestatsValue(key);
     return ERROR_SUCCESS;
   }
-  sidestep::AutoTestingHook hook_reg_create_;
-  sidestep::AutoTestingHook hook_reg_set_;
-  sidestep::AutoTestingHook hook_reg_close_;
-  sidestep::AutoTestingHook hook_reg_open_;
-  sidestep::AutoTestingHook hook_reg_query_;
-  sidestep::AutoTestingHook hook_reg_delete_value_;
-};
-
-class StatsConfigUtilTestWin : public testing::Test {
- protected:
-  static void SetUpTestCase() {
-    // A quick fix of b/2669319.  If SystemUtil::GetSystemDir is first called
-    // when registry APIs are hooked by sidestep, GetSystemDir fails
-    // unexpectedly because GetSystemDir also depends on registry API
-    // internally.  The second call of SystemUtil::GetSystemDir works well
-    // because it caches the result of the first call.  So any registry API
-    // access occurs in the second call.  We call SystemUtil::GetSystemDir here
-    // so that it works even when registry APIs are hooked.
-    // TODO(yukawa): remove this quick fix as a part of b/2769852.
-    SystemUtil::GetSystemDir();
-  }
+  WinAPITestHelper::RestoreInfoHandle restore_info_;
 };
 }  // namespace
 
 #if defined(CHANNEL_DEV)
-TEST_F(StatsConfigUtilTestWin, IsEnabledIgnoresRegistrySettings) {
+TEST(StatsConfigUtilTestWin, IsEnabledIgnoresRegistrySettings) {
   // In dev channel, settings in the registry are simply ignored and
   // StatsConfigUtil::IsEnabled always returns true.
   RegistryEmulator<__COUNTER__> test;
@@ -346,7 +332,7 @@ TEST_F(StatsConfigUtilTestWin, IsEnabledIgnoresRegistrySettings) {
   EXPECT_TRUE(StatsConfigUtil::IsEnabled());
 }
 
-TEST_F(StatsConfigUtilTestWin, SetEnabledForRunLevelHighInDevChannel) {
+TEST(StatsConfigUtilTestWin, SetEnabledForRunLevelHighInDevChannel) {
   // In dev channel, StatsConfigUtil::SetEnabled always returns true.
   RegistryEmulator<__COUNTER__> test;
   test.SetRunLevel(kRunLevelHigh);
@@ -369,7 +355,7 @@ TEST_F(StatsConfigUtilTestWin, SetEnabledForRunLevelHighInDevChannel) {
   EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
 }
 
-TEST_F(StatsConfigUtilTestWin, SetEnabledForRunLevelMediumInDevChannel) {
+TEST(StatsConfigUtilTestWin, SetEnabledForRunLevelMediumInDevChannel) {
   // In dev channel, StatsConfigUtil::SetEnabled always returns true.
   RegistryEmulator<__COUNTER__> test;
   test.SetRunLevel(kRunLevelMedium);
@@ -424,7 +410,7 @@ TEST_F(StatsConfigUtilTestWin, SetEnabledForRunLevelMediumInDevChannel) {
   EXPECT_EQ(0, value);
 }
 
-TEST_F(StatsConfigUtilTestWin, SetEnabledForRunLevelLowInDevChannel) {
+TEST(StatsConfigUtilTestWin, SetEnabledForRunLevelLowInDevChannel) {
   // In dev channel, StatsConfigUtil::SetEnabled always returns true.
   RegistryEmulator<__COUNTER__> test;
   test.SetRunLevel(kRunLevelLow);
@@ -479,7 +465,7 @@ TEST_F(StatsConfigUtilTestWin, SetEnabledForRunLevelLowInDevChannel) {
   EXPECT_EQ(0, value);
 }
 
-TEST_F(StatsConfigUtilTestWin, SetEnabledNeverFailsForRunLevelMedium) {
+TEST(StatsConfigUtilTestWin, SetEnabledNeverFailsForRunLevelMedium) {
   // In dev channel, StatsConfigUtil::SetEnabled does not update the
   // the registry but always returns true.
   RegistryEmulator<__COUNTER__> test;
@@ -488,7 +474,7 @@ TEST_F(StatsConfigUtilTestWin, SetEnabledNeverFailsForRunLevelMedium) {
   EXPECT_TRUE(StatsConfigUtil::SetEnabled(false));
 }
 
-TEST_F(StatsConfigUtilTestWin, SetEnabledNeverFailsForRunLevelLow) {
+TEST(StatsConfigUtilTestWin, SetEnabledNeverFailsForRunLevelLow) {
   // In dev channel, StatsConfigUtil::SetEnabled does not update the
   // the registry but always returns true.
   RegistryEmulator<__COUNTER__> test;
@@ -499,7 +485,7 @@ TEST_F(StatsConfigUtilTestWin, SetEnabledNeverFailsForRunLevelLow) {
 #endif  // CHANNEL_DEV
 
 #if !defined(CHANNEL_DEV)
-TEST_F(StatsConfigUtilTestWin, SetEnabledForRunLevelHigh) {
+TEST(StatsConfigUtilTestWin, SetEnabledForRunLevelHigh) {
   // In beta and stable channel, StatsConfigUtil::SetEnabled requires
   // sufficient rights.
   RegistryEmulator<__COUNTER__> test;
@@ -525,7 +511,7 @@ TEST_F(StatsConfigUtilTestWin, SetEnabledForRunLevelHigh) {
   EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
 }
 
-TEST_F(StatsConfigUtilTestWin, SetEnabledForRunLevelMedium) {
+TEST(StatsConfigUtilTestWin, SetEnabledForRunLevelMedium) {
   // In beta and stable channels, StatsConfigUtil::SetEnabled requires
   // sufficient rights.
   RegistryEmulator<__COUNTER__> test;
@@ -581,7 +567,7 @@ TEST_F(StatsConfigUtilTestWin, SetEnabledForRunLevelMedium) {
   EXPECT_EQ(0, value);
 }
 
-TEST_F(StatsConfigUtilTestWin, SetEnabledForRunLevelLow) {
+TEST(StatsConfigUtilTestWin, SetEnabledForRunLevelLow) {
   // In beta and stable channels, StatsConfigUtil::SetEnabled requires
   // sufficient rights.
   RegistryEmulator<__COUNTER__> test;
@@ -639,7 +625,7 @@ TEST_F(StatsConfigUtilTestWin, SetEnabledForRunLevelLow) {
   EXPECT_EQ(0, value);
 }
 
-TEST_F(StatsConfigUtilTestWin, IsEnabled) {
+TEST(StatsConfigUtilTestWin, IsEnabled) {
   RegistryEmulator<__COUNTER__> test;
   test.SetRunLevel(kRunLevelHigh);
 

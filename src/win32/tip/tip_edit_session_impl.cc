@@ -606,7 +606,7 @@ HRESULT OnEndEditImpl(TipTextService *text_service,
     // the application and Mozc server because we are already in
     // ITfTextEditSink::OnEndEdit and some operations (e.g.,
     // ITfComposition::EndComposition) result in failure in this edit session.
-    result = TipEditSession::CanceleCompositionAsync(text_service, context);
+    result = TipEditSession::CancelCompositionAsync(text_service, context);
     *update_ui = false;
     if (FAILED(result)) {
       return result;

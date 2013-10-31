@@ -29,7 +29,7 @@
 
 #include <string>
 
-#include "base/base.h"
+#include "base/flags.h"
 #include "base/logging.h"
 #include "base/version.h"
 #include "converter/boundary_struct.h"
@@ -39,12 +39,14 @@
 #include "dictionary/pos_matcher.h"
 #include "dictionary/user_pos.h"
 #include "rewriter/correction_rewriter.h"
+#include "rewriter/counter_suffix.h"
 #include "rewriter/embedded_dictionary.h"
 #ifndef NO_USAGE_REWRITER
 #include "rewriter/usage_rewriter_data_structs.h"
 #endif  // NO_USAGE_REWRITER
 
 DEFINE_string(output, "", "Output data file name");
+DEFINE_string(dictionary_version, "", "dictionary version");
 DEFINE_bool(make_header, false, "make header mode");
 DEFINE_bool(use_gzip, false, "use gzip");
 
@@ -67,11 +69,16 @@ namespace {
 #ifndef NO_USAGE_REWRITER
 #include "rewriter/usage_rewriter_data.h"
 #endif  // NO_USAGE_REWRITER
+#include "data_manager/@DIR@/counter_suffix_data.h"
 
 }  // namespace
 
 bool OutputData(const string &file_path) {
-  packed::SystemDictionaryDataPacker packer(Version::GetMozcVersion());
+  string dictionary_version = Version::GetMozcVersion();
+  if (!FLAGS_dictionary_version.empty()) {
+    dictionary_version = FLAGS_dictionary_version;
+  }
+  packed::SystemDictionaryDataPacker packer(dictionary_version);
   packer.SetPosTokens(kPOSToken, arraysize(kPOSToken));
   packer.SetPosMatcherData(kRuleIdTable, arraysize(kRuleIdTable),
                            kRangeTables, arraysize(kRangeTables));
@@ -106,6 +113,8 @@ bool OutputData(const string &file_path) {
                               kUsageDataSize,
                               kUsageData_value);
 #endif  // NO_USAGE_REWRITER
+  packer.SetCounterSuffixSortedArray(kCounterSuffixes,
+                                     arraysize(kCounterSuffixes));
   if (FLAGS_make_header) {
     return packer.OutputHeader(file_path, FLAGS_use_gzip);
   } else {

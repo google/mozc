@@ -45,8 +45,8 @@
 #include <memory>
 
 #include "base/logging.h"
+#include "base/mutex.h"
 #include "base/scoped_handle.h"
-#include "base/singleton.h"
 #include "base/system_util.h"
 #include "base/util.h"
 
@@ -55,29 +55,11 @@ using std::unique_ptr;
 namespace mozc {
 namespace {
 
-class AuxLibInitializer {
- public:
-  AuxLibInitializer() {
-    ::AuxUlibInitialize();
-  }
-  bool IsDLLSynchronizationHeld(bool *lock_status) const {
-    if (lock_status == nullptr) {
-      return false;
-    }
+once_t g_aux_lib_initialized = MOZC_ONCE_INIT;
 
-    BOOL synchronization_held = FALSE;
-    const BOOL result =
-        ::AuxUlibIsDLLSynchronizationHeld(&synchronization_held);
-    if (!result) {
-      const int error = ::GetLastError();
-      DLOG(ERROR) << "AuxUlibIsDLLSynchronizationHeld failed. error = "
-                  << error;
-      return false;
-    }
-    *lock_status = (synchronization_held != FALSE);
-    return true;
-  }
-};
+void CallAuxUlibInitialize() {
+  ::AuxUlibInitialize();
+}
 
 // Adjusts privileges in the process token to be able to shutdown the machine.
 // Returns true if the operation finishes without error.
@@ -217,8 +199,23 @@ HMODULE WinUtil::GetSystemModuleHandleAndIncrementRefCount(
 }
 
 bool WinUtil::IsDLLSynchronizationHeld(bool *lock_status) {
-  return Singleton<AuxLibInitializer>::get()->IsDLLSynchronizationHeld(
-      lock_status);
+  mozc::CallOnce(&g_aux_lib_initialized, &CallAuxUlibInitialize);
+
+  if (lock_status == nullptr) {
+    return false;
+  }
+
+  BOOL synchronization_held = FALSE;
+  const BOOL result =
+      ::AuxUlibIsDLLSynchronizationHeld(&synchronization_held);
+  if (!result) {
+    const int error = ::GetLastError();
+    DLOG(ERROR) << "AuxUlibIsDLLSynchronizationHeld failed. error = "
+                << error;
+    return false;
+  }
+  *lock_status = (synchronization_held != FALSE);
+  return true;
 }
 
 bool WinUtil::Logoff() {
@@ -502,6 +499,30 @@ bool WinUtil::IsProcessImmersive(HANDLE process_handle,
   }
 
   *is_immersive = !!is_immersive_process(process_handle);
+  return true;
+}
+
+bool WinUtil::IsProcessRestricted(HANDLE process_handle, bool *is_restricted) {
+  if (is_restricted == nullptr) {
+    return false;
+  }
+  *is_restricted = false;
+
+  HANDLE token = nullptr;
+  if (!::OpenProcessToken(process_handle, TOKEN_QUERY, &token)) {
+    return false;
+  }
+
+  ScopedHandle process_token(token);
+  ::SetLastError(NOERROR);
+  if (::IsTokenRestricted(process_token.get()) == FALSE) {
+    const DWORD error = ::GetLastError();
+    if (error != NOERROR) {
+      return false;
+    }
+  } else {
+    *is_restricted = true;
+  }
   return true;
 }
 

@@ -102,10 +102,6 @@ class ConversionRequest {
   // Input request.
   const commands::Request *request_;
 
-  // Optional fields
-  // If nonempty, utilizes this preceding text for conversion.
-  string preceding_text_;
-
   // If true, insert a top candidate from the actual (non-immutable) converter
   // to realtime conversion results. Note that setting this true causes a big
   // performance loss (3 times slower).

@@ -140,50 +140,9 @@ bool IBusCandidateWindowHandler::UpdateCandidates(
     ibus_lookup_table_set_orientation(table, IBUS_ORIENTATION_HORIZONTAL);
   }
 
-#if defined(OS_CHROMEOS)
-  map<int32, pair<string, string> > usage_map;
-  if (candidates.has_usages()) {
-    const commands::InformationList& usages = candidates.usages();
-    for (size_t i = 0; i < usages.information().size(); ++i) {
-      const commands::Information& information = usages.information(i);
-      if (!information.has_id() || !information.has_description())
-        continue;
-      usage_map[information.id()].first = information.title();
-      usage_map[information.id()].second = information.description();
-    }
-  }
-#endif  // OS_CHROMEOS
-
   for (int i = 0; i < candidates.candidate_size(); ++i) {
     const commands::Candidates::Candidate &candidate = candidates.candidate(i);
     IBusText *text = ibus_text_new_from_string(candidate.value().c_str());
-#if defined(OS_CHROMEOS) && IBUS_CHECK_VERSION(1, 4, 2)
-    // IBus < 1.4.2 has a refcount related bug, so we don't use attachment.
-    // https://codereview.appspot.com/6445057
-    // Not to build this code on Linux for ChromeOS with old IBus, we should
-    // check both OS and IBus version.
-    if (candidate.has_annotation() &&
-        candidate.annotation().has_description()) {
-      ibus_serializable_set_attachment(
-          IBUS_SERIALIZABLE(text),
-          "annotation",
-          g_variant_new_string(candidate.annotation().description().c_str()));
-    }
-    if (candidate.has_information_id()) {
-      map<int32, pair<string, string> >::iterator it =
-          usage_map.find(candidate.information_id());
-      if (it != usage_map.end()) {
-        ibus_serializable_set_attachment(
-            IBUS_SERIALIZABLE(text),
-            "description_title",
-            g_variant_new_string(it->second.first.c_str()));
-        ibus_serializable_set_attachment(
-            IBUS_SERIALIZABLE(text),
-            "description_body",
-            g_variant_new_string(it->second.second.c_str()));
-      }
-    }
-#endif  // OS_CHROMEOS && IBUS_CHECK_VERSION(1, 4, 2)
     ibus_lookup_table_append_candidate(table, text);
     // |text| is released by ibus_engine_update_lookup_table along with |table|.
 
@@ -191,8 +150,6 @@ bool IBusCandidateWindowHandler::UpdateCandidates(
         candidate.annotation().has_shortcut();
     // Need to append an empty string when the candidate does not have a
     // shortcut. Otherwise the ibus lookup table shows numeric labels.
-    // NOTE: Since the candidate window for Chrome OS does not support custom
-    // labels, it always shows numeric labels.
     IBusText *label =
         ibus_text_new_from_string(has_label ?
                                   candidate.annotation().shortcut().c_str() :
@@ -201,19 +158,6 @@ bool IBusCandidateWindowHandler::UpdateCandidates(
     // |label| is released by ibus_engine_update_lookup_table along with
     // |table|.
   }
-
-#if defined(OS_CHROMEOS) && IBUS_CHECK_VERSION(1, 4, 2)
-  // IBus < 1.4.2 has a refcount related bug, so we don't use attachment.
-  // https://codereview.appspot.com/6445057
-  // Not to build this code on Linux for ChromeOS with old IBus, we should check
-  // both OS and IBus version.
-  if (candidates.has_category()) {
-    ibus_serializable_set_attachment(
-        IBUS_SERIALIZABLE(table),
-        "show_window_at_composition",
-        g_variant_new_boolean(candidates.category() == commands::SUGGESTION));
-  }
-#endif  // OS_CHROMEOS && IBUS_CHECK_VERSION(1, 4, 2)
 
   ibus_engine_update_lookup_table(engine, table, TRUE);
   // |table| is released by ibus_engine_update_lookup_table.

@@ -36,9 +36,9 @@
 
 #include <string>
 
-#include "base/base.h"
 #include "base/logging.h"
 #include "base/mutex.h"
+#include "base/port.h"
 #include "base/scoped_ptr.h"
 #include "base/unnamed_event.h"
 #include "net/jsoncpp.h"
@@ -59,6 +59,8 @@ class NaclJsProxyImpl : public NaclJsProxyImplInterface {
   scoped_ptr<Json::Value> result_;
   mozc::Mutex mutex_;
   UnnamedEvent event_;
+
+  DISALLOW_COPY_AND_ASSIGN(NaclJsProxyImpl);
 };
 
 NaclJsProxyImpl::NaclJsProxyImpl(pp::Instance *instance)

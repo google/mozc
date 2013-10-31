@@ -35,7 +35,7 @@
 #include <string>
 #include <vector>
 
-#include "base/base.h"
+#include "base/port.h"
 #include "testing/base/public/gunit_prod.h"
 // for FRIEND_TEST()
 #include "win32/base/immdev.h"
@@ -103,6 +103,7 @@ class ImeCore {
   // This function sends IME close message to the server w/o generating any UI
   // messages.
   static bool CloseIME(mozc::client::ClientInterface *client,
+                       DWORD next_mode,
                        commands::Output *output);
 
   // Some of the following functions have a flag named |generate_message| in

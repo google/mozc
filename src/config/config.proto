@@ -290,22 +290,6 @@ message Config {
 
   message InformationListConfig {
     optional bool use_local_usage_dictionary = 1 [ default = true ];
-    optional bool use_web_usage_dictionary = 2 [ default = false ];
-    message WebServiceEntry {
-      enum FormatType {
-        AUTO_DETECT = 0;      // detect automatically.
-        // We won't allow user to choose format type via config dialog now.
-        GENERIC_XML = 1;      // XML/XHTML
-        GENERIC_JSON = 2;     // JSON
-        PREDEFINED_XML = 3;   // not supported for now.
-        PREDEFINED_JSON = 4;  // not supported for now.
-      };
-      optional string name = 1 [ default = "" ];
-      optional FormatType type = 2 [ default = AUTO_DETECT ];
-      optional string url = 3 [ default = "" ];
-      optional string xpath = 4 [ default = "" ];  // Xpath or JsonPath
-    };
-    repeated WebServiceEntry web_service_entries = 10;
   };
   optional InformationListConfig information_list_config = 90;
 
@@ -345,28 +329,4 @@ message Config {
   // NOTE: OSS version does not handle this field.
   optional bool allow_cloud_handwriting = 301 [ default = false ];
 
-
-  // Multilingual config.  It resides here for historical reason.
-  // TODO(mukai): apply extension for multilingual config.
-  optional HangulConfig hangul_config = 998;
-};
-
-
-// Config for Korean hangul input.
-message HangulConfig {
-  enum KeyboardTypes {
-    KEYBOARD_Dubeolsik = 0;
-    KEYBOARD_DubeolsikYetgeul = 1;
-    KEYBOARD_SebeolsikDubeol = 2;
-    KEYBOARD_Sebeolsik390 = 3;
-    KEYBOARD_SebeolsikFinal = 4;
-    KEYBOARD_SebeolsikNoshift = 5;
-    KEYBOARD_SebeolsikYetgeul = 6;
-    KEYBOARD_Romaja = 7;
-    KEYBOARD_Ahnmatae = 8;
-  };
-  optional KeyboardTypes  keyboard_type = 1 [ default = KEYBOARD_Dubeolsik ];
-
-  // custom hanja keymap
-  repeated bytes hanja_keys = 2;
 };

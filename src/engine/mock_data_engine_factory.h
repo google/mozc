@@ -30,9 +30,9 @@
 #ifndef MOZC_ENGINE_MOCK_DATA_ENGINE_FACTORY_H_
 #define MOZC_ENGINE_MOCK_DATA_ENGINE_FACTORY_H_
 
-namespace mozc {
+#include "engine/engine_interface.h"
 
-class EngineInterface;
+namespace mozc {
 
 // Provides the factory method that creates an instance of Engine that is
 // equipped with the data set for testing (i.e., mozc/data/test/dictionary).

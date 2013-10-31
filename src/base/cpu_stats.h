@@ -30,7 +30,7 @@
 #ifndef MOZC_BASE_CPU_STATS_H_
 #define MOZC_BASE_CPU_STATS_H_
 
-#include "base/base.h"
+#include "base/port.h"
 
 namespace mozc {
 

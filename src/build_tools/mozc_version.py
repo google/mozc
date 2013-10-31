@@ -62,7 +62,6 @@ TARGET_PLATFORM_TO_DIGIT = {
     'Windows': '0',
     'Mac': '1',
     'Linux': '2',
-    'ChromeOS': '2',
     'Android': '3',
     'NaCl': '4',
     }
@@ -77,6 +76,7 @@ VERSION_PROPERTIES = [
     'TARGET_PLATFORM',
     'ANDROID_APPLICATION_ID',
     'ANDROID_SERVICE_NAME',
+    'NACL_DICTIONARY_VERSION',
     ]
 
 MOZC_EPOCH = datetime.date(2009, 5, 24)
@@ -88,10 +88,6 @@ def _GetRevisionForPlatform(revision, target_platform, is_channel_dev):
     logging.critical('REVISION property in template file or channel_dev '
                      'parameter is mandatory')
     sys.exit(1)
-  # ChromeOS build uses a tar ball of OSS version named in the manner
-  # of 'mozc-1.1.773.102.tar.bz2' and depends on the revision number,
-  # so we'd like to use the same revision number between ChromeOS and
-  # OSS GNU/Linux version.
   last_digit = TARGET_PLATFORM_TO_DIGIT.get(target_platform, None)
   if last_digit is None:
     logging.critical('target_platform %s is invalid. Accetable ones are %s',
@@ -155,7 +151,7 @@ def _ParseVersionTemplateFile(template_path, target_platform, is_channel_dev,
   template_dict['TARGET_PLATFORM'] = target_platform
   template_dict['ANDROID_APPLICATION_ID'] = android_application_id
   template_dict['ANDROID_SERVICE_NAME'] = (
-        'org.mozc.android.inputmethod.japanese.MozcService')
+      'org.mozc.android.inputmethod.japanese.MozcService')
   return template_dict
 
 
@@ -236,15 +232,18 @@ def GenerateVersionFile(version_template_path, version_path, target_platform,
     android_application_id: [Android Only] application id
       (e.g. org.mozc.android).
   """
-  version_format = ('MAJOR=@MAJOR@\n'
-                    'MINOR=@MINOR@\n'
-                    'BUILD=@BUILD@\n'
-                    'REVISION=@REVISION@\n'
-                    'ANDROID_VERSION_CODE=@ANDROID_VERSION_CODE@\n'
-                    'FLAG=@FLAG@\n'
-                    'TARGET_PLATFORM=@TARGET_PLATFORM@\n'
-                    'ANDROID_APPLICATION_ID=@ANDROID_APPLICATION_ID@\n'
-                    'ANDROID_SERVICE_NAME=@ANDROID_SERVICE_NAME@\n')
+  version_format = '\n'.join([
+      'MAJOR=@MAJOR@',
+      'MINOR=@MINOR@',
+      'BUILD=@BUILD@',
+      'REVISION=@REVISION@',
+      'ANDROID_VERSION_CODE=@ANDROID_VERSION_CODE@',
+      'FLAG=@FLAG@',
+      'TARGET_PLATFORM=@TARGET_PLATFORM@',
+      'ANDROID_APPLICATION_ID=@ANDROID_APPLICATION_ID@',
+      'ANDROID_SERVICE_NAME=@ANDROID_SERVICE_NAME@',
+      'NACL_DICTIONARY_VERSION=@NACL_DICTIONARY_VERSION@'
+  ]) + '\n'
   GenerateVersionFileFromTemplate(
       version_template_path,
       version_path,

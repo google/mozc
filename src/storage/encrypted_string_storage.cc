@@ -154,11 +154,7 @@ bool EncryptedStringStorage::Save(const string &input) const {
   }
 
 #ifdef OS_WIN
-  wstring wfilename;
-  Util::UTF8ToWide(filename_.c_str(), &wfilename);
-  if (!::SetFileAttributes(wfilename.c_str(),
-                           FILE_ATTRIBUTE_HIDDEN |
-                           FILE_ATTRIBUTE_SYSTEM)) {
+  if (!FileUtil::HideFile(filename_)) {
     LOG(ERROR) << "Cannot make hidden: " << filename_
                << " " << ::GetLastError();
   }

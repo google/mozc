@@ -37,7 +37,7 @@
 // Workaround against KB813540
 #include <atlbase_mozc.h>
 
-#include "base/base.h"
+#include "base/port.h"
 #include "session/commands.pb.h"
 
 class ImeSystemLangBarMenu;

@@ -45,6 +45,7 @@
 #include "converter/conversion_request.h"
 #include "converter/converter_interface.h"
 #include "converter/lattice.h"
+#include "converter/pos_id_printer.h"
 #include "converter/segments.h"
 #include "engine/engine_factory.h"
 #include "engine/engine_interface.h"
@@ -69,42 +70,31 @@ using mozc::config::Config;
 namespace mozc {
 namespace {
 
-class PosIdPrinter {
+// Wrapper class for pos id printing
+class PosIdPrintUtil {
  public:
   static string IdToString(int id) {
-    const PosIdPrinter *printer = Singleton<PosIdPrinter>::get();
-    return printer->IdToStringInternal(id);
+    return Singleton<PosIdPrintUtil>::get()->IdToStringInternal(id);
   }
 
  private:
-  PosIdPrinter() {
-    if (FLAGS_id_def.empty()) {
-      return;
-    }
-    InputFileStream stream(FLAGS_id_def.c_str());
-    string line;
-    vector<string> columns;
-    while (getline(stream, line)) {
-      columns.clear();
-      Util::SplitStringUsing(line, " ", &columns);
-      CHECK_EQ(2, columns.size());
-      const int id = NumberUtil::SimpleAtoi(columns[0]);
-      id_to_pos_map_[id] = columns[1] + " (" + columns[0] + ")";
-    }
-  }
+  PosIdPrintUtil() :
+      pos_id_(new InputFileStream(FLAGS_id_def.c_str())),
+      pos_id_printer_(new internal::PosIdPrinter(pos_id_.get())) {}
 
   string IdToStringInternal(int id) const {
-    map<int, string>::const_iterator iter = id_to_pos_map_.find(id);
-    if (iter == id_to_pos_map_.end()) {
+    const string &pos_string = pos_id_printer_->IdToString(id);
+    if (pos_string.empty()) {
       return NumberUtil::SimpleItoa(id);
     }
-    return iter->second;
+    return Util::StringPrintf("%s (%d)", pos_string.c_str(), id);
   }
 
-  map<int, string> id_to_pos_map_;
+  scoped_ptr<InputFileStream> pos_id_;
+  scoped_ptr<internal::PosIdPrinter> pos_id_printer_;
 
-  friend class Singleton<PosIdPrinter>;
-  DISALLOW_COPY_AND_ASSIGN(PosIdPrinter);
+  friend class Singleton<PosIdPrintUtil>;
+  DISALLOW_COPY_AND_ASSIGN(PosIdPrintUtil);
 };
 
 string SegmentTypeToString(Segment::SegmentType type) {
@@ -206,8 +196,8 @@ void PrintCandidate(const Segment &parent, int num,
   lines.push_back(Util::StringPrintf(
       "cost: %d  scost: %d  wcost: %d",
       cand.cost, cand.structure_cost, cand.wcost));
-  lines.push_back("lid: " + PosIdPrinter::IdToString(cand.lid));
-  lines.push_back("rid: " + PosIdPrinter::IdToString(cand.rid));
+  lines.push_back("lid: " + PosIdPrintUtil::IdToString(cand.lid));
+  lines.push_back("rid: " + PosIdPrintUtil::IdToString(cand.rid));
   lines.push_back("attr: " + CandidateAttributesToString(cand.attributes));
   lines.push_back("num_style: " + NumberStyleToString(cand.style));
   const string &segbdd_str = InnerSegmentBoundaryToString(cand);

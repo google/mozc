@@ -37,7 +37,7 @@ const char kProductNameInEnglish[] = "Google Japanese Input";
 const char kProductNameLocalized[]
     = "Google \xE6\x97\xA5\xE6\x9C\xAC\xE8\xAA\x9E\xE5\x85\xA5\xE5\x8A\x9B";
 #define kProductPrefix "GoogleJapaneseInput"
-#else
+#else  // GOOGLE_JAPANESE_INPUT_BUILD
 const char kProductNameInEnglish[] = "Mozc";
 const char kProductNameLocalized[] = "Mozc";
 #define kProductPrefix "Mozc"
@@ -140,16 +140,11 @@ const char kMozcRenderer[] = kProductPrefix "Renderer.app";
 const char kMozcTool[] = kProductPrefix "Tool.app";
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
 const char kEventPathPrefix[] = "GoogleJapaneseInput.event.";
-#else
+#else  // GOOGLE_JAPANESE_INPUT_BUILD
 const char kEventPathPrefix[] = "Mozc.event.";
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
-#else  // OS_LINUX including OS_CHROMEOS and OS_ANDROID
-#ifdef MOZC_LANGUAGE_SUFFIX_FOR_LINUX
-const char kMozcServerName[] =
-    "mozc_server" MOZC_LANGUAGE_SUFFIX_FOR_LINUX;
-#else
-const char kMozcServerName[] = "mozc_server";  // Japanese
-#endif
+#else  // OS_LINUX including OS_ANDROID
+const char kMozcServerName[] = "mozc_server";
 const char kMozcRenderer[] = "mozc_renderer";
 const char kEventPathPrefix[] = "mozc.event.";
 const char kMozcTool[] = "mozc_tool";

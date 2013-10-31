@@ -288,7 +288,7 @@ class BasicCodeGenByteArrayStreamBuf
 #endif
 
   size_t internal_output_buffer_size_;
-  scoped_array<char_type> internal_output_buffer_;
+  scoped_ptr<char_type[]> internal_output_buffer_;
 
   std::basic_ostream<char> *output_stream_;
   codegenstream::StreamOwner own_output_stream_;

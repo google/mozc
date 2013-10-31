@@ -32,7 +32,6 @@
 #include <sstream>
 #include <vector>
 
-#include "base/base.h"
 #include "base/const.h"
 #include "base/logging.h"
 #include "base/process_mutex.h"

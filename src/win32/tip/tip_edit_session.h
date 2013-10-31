@@ -87,7 +87,7 @@ class TipEditSession {
   // Begins an async edit session to submit the current candidate.
   static bool SubmitAsync(TipTextService *text_service, ITfContext *context);
   // Begins an async edit session to cancel the current composition.
-  static bool CanceleCompositionAsync(TipTextService *text_service,
+  static bool CancelCompositionAsync(TipTextService *text_service,
                                       ITfContext *context);
   // Begins an async edit session to highlight the candidate specified by
   // |candidate_id|.

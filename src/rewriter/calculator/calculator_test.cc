@@ -32,7 +32,6 @@
 #include <fstream>
 #include <string>
 
-#include "base/base.h"
 #include "base/compiler_specific.h"
 #include "base/file_util.h"
 #include "base/logging.h"

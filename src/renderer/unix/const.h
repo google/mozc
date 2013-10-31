@@ -30,9 +30,7 @@
 #ifndef MOZC_RENDERER_UNIX_CONST_H_
 #define MOZC_RENDERER_UNIX_CONST_H_
 
-#include <string>
-
-#include "base/base.h"
+#include "base/port.h"
 
 namespace mozc {
 namespace renderer {

@@ -90,7 +90,7 @@ class Encryptor {
 
    private:
     scoped_ptr<KeyData> data_;
-    scoped_array<uint8> iv_;
+    scoped_ptr<uint8[]> iv_;
     bool is_available_;
   };
 

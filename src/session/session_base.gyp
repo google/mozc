@@ -95,12 +95,9 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        '../base/base.gyp:config_file_stream',
         '../config/config.gyp:config_handler',
         '../config/config.gyp:config_protocol',
-        'key_event_util',
-        'key_parser',
-        'keymap',
+        'key_info_util',
         'session_protocol',
       ],
     },
@@ -112,6 +109,23 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        'session_protocol',
+      ],
+    },
+    {
+      'target_name': 'key_info_util',
+      'type': 'static_library',
+      'sources': [
+        'key_info_util.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        '../base/base.gyp:config_file_stream',
+        '../config/config.gyp:config_handler',
+        '../config/config.gyp:config_protocol',
+        'key_event_util',
+        'key_parser',
+        'keymap',
         'session_protocol',
       ],
     },

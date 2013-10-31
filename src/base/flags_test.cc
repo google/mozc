@@ -27,8 +27,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "base/flags.h"
+
 #include <string.h>
-#include "base/base.h"
+
 #include "base/util.h"
 #include "testing/base/public/gunit.h"
 
@@ -40,8 +42,8 @@ DEFINE_bool(test_bool, false, "test_bool");
 DEFINE_double(test_double, 0.5, "test_double");
 
 namespace mozc {
-
 namespace {
+
 char *strdup_with_new(const char *str) {
   char *result = new char [strlen(str) + 1];
   strcpy(result, str);
@@ -59,9 +61,7 @@ class FlagsTest : public testing::Test {
     FLAGS_test_double = 0.5;
   }
 };
-}   // namespace
 
-namespace {
 TEST_F(FlagsTest, FlagsBasicTest) {
   EXPECT_FALSE(FLAGS_test_bool);
   EXPECT_EQ(20, FLAGS_test_int32);

@@ -280,7 +280,6 @@ ConfigDialog::ConfigDialog()
                    SIGNAL(clicked()),
                    this,
                    SLOT(LaunchAdministrationDialog()));
-
 #ifdef ENABLE_CLOUD_SYNC
   QObject::connect(syncToggleButton,
                    SIGNAL(clicked()),
@@ -359,9 +358,6 @@ ConfigDialog::ConfigDialog()
   usageStatsCheckBox->setVisible(false);
 #endif  // OS_LINUX
 
-  webUsageDictionaryCheckBox->setVisible(false);
-  editWebServiceEntryButton->setVisible(false);
-
 #ifdef ENABLE_CLOUD_SYNC
   sync_customize_dialog_.reset(new SyncCustomizeDialog(this));
   sync_running_ = false;
@@ -381,9 +377,6 @@ ConfigDialog::ConfigDialog()
 #endif  // ENABLE_CLOUD_SYNC
 
   Reload();
-
-  editWebServiceEntryButton->setEnabled(
-      webUsageDictionaryCheckBox->isChecked());
 
 #ifdef OS_WIN
   IMEHotKeyDisabledCheckBox->setChecked(WinUtil::GetIMEHotKeyDisabled());
@@ -913,9 +906,6 @@ void ConfigDialog::EditRomanTable() {
   }
 }
 
-void ConfigDialog::EditInforlistConfig() {
-}
-
 void ConfigDialog::SelectInputModeSetting(int index) {
   // enable "EDIT" button if roman mode is selected
   editRomanTableButton->setEnabled((index == 0));
@@ -935,29 +925,6 @@ void ConfigDialog::SelectSuggestionSetting(int state) {
     presentationModeCheckBox->setEnabled(true);
   } else {
     presentationModeCheckBox->setEnabled(false);
-  }
-}
-
-void ConfigDialog::SelectWebUsageDictionarySetting(bool checked) {
-  if (checked) {
-    if (QMessageBox::question(
-            this,
-            windowTitle(),
-            tr("Web Service extension enables Mozc "
-               "to display third party usage dictionaries provided as an "
-               "Web service API, e.g. REST (POX/JSON over HTTP). "
-               "Note that candidate/preedit strings are "
-               "sent to the Web service when this feature is enabled. "
-               "Do you want to use Web Service extension?"),
-            QMessageBox::Yes | QMessageBox::No, QMessageBox::No)
-        == QMessageBox::Yes) {
-      editWebServiceEntryButton->setEnabled(true);
-    } else {
-      webUsageDictionaryCheckBox->setChecked(false);
-      editWebServiceEntryButton->setEnabled(false);
-    }
-  } else {
-    editWebServiceEntryButton->setEnabled(false);
   }
 }
 

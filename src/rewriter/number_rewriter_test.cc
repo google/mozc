@@ -44,12 +44,20 @@
 #include "data_manager/packed/packed_data_manager.h"
 #include "data_manager/packed/packed_data_mock.h"
 #endif  // MOZC_USE_PACKED_DICTIONARY
-#include "data_manager/user_pos_manager.h"
+#include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "session/commands.pb.h"
 #include "testing/base/public/gunit.h"
 
 DECLARE_string(test_tmpdir);
+
+// To show the value of size_t, 'z' speficier should be used.
+// But MSVC doesn't support it yet so use 'l' instead.
+#ifdef _MSC_VER
+#define SIZE_T_PRINTF_FORMAT "%lu"
+#else  // _MSC_VER
+#define SIZE_T_PRINTF_FORMAT "%zu"
+#endif  // _MSC_VER
 
 namespace mozc {
 
@@ -81,13 +89,12 @@ bool FindValue(const Segment &segment, const string &value) {
   return false;
 }
 
-Segment *SetupSegments(const string &candidate_value, Segments *segments) {
+Segment *SetupSegments(const POSMatcher* pos_matcher,
+                       const string &candidate_value, Segments *segments) {
   segments->Clear();
   Segment *segment = segments->push_back_segment();
   Segment::Candidate *candidate = segment->add_candidate();
   candidate->Init();
-  const POSMatcher *pos_matcher =
-      UserPosManager::GetUserPosManager()->GetPOSMatcher();
   candidate->lid = pos_matcher->GetNumberId();
   candidate->rid = pos_matcher->GetNumberId();
   candidate->value = candidate_value;
@@ -116,7 +123,7 @@ bool FindCandidateId(const Segment &segment, const string &value, int *id) {
 }
 }  // namespace
 
-class NumberRewriterTest : public testing::Test {
+class NumberRewriterTest : public ::testing::Test {
  protected:
   // Explicitly define constructor to prevent Visual C++ from
   // considering this class as POD.
@@ -124,6 +131,8 @@ class NumberRewriterTest : public testing::Test {
 
   virtual void SetUp() {
 #ifdef MOZC_USE_PACKED_DICTIONARY
+    // TODO(noriyukit): Currently this test uses mock data manager.  Check if we
+    // can remove this registration of packed data manager.
     // Registers mocked PackedDataManager.
     scoped_ptr<packed::PackedDataManager>
         data_manager(new packed::PackedDataManager());
@@ -136,8 +145,9 @@ class NumberRewriterTest : public testing::Test {
     config::Config default_config;
     config::ConfigHandler::GetDefaultConfig(&default_config);
     config::ConfigHandler::SetConfig(default_config);
-    pos_matcher_ = UserPosManager::GetUserPosManager()->GetPOSMatcher();
+    pos_matcher_ = mock_data_manager_.GetPOSMatcher();
   }
+
   virtual void TearDown() {
 #ifdef MOZC_USE_PACKED_DICTIONARY
     // Unregisters mocked PackedDataManager.
@@ -146,9 +156,10 @@ class NumberRewriterTest : public testing::Test {
   }
 
   NumberRewriter *CreateNumberRewriter() {
-    return new NumberRewriter(pos_matcher_);
+    return new NumberRewriter(&mock_data_manager_);
   }
 
+  const testing::MockDataManager mock_data_manager_;
   const POSMatcher *pos_matcher_;
   const ConversionRequest default_request_;
 };
@@ -207,7 +218,7 @@ TEST_F(NumberRewriterTest, BasicTest) {
   EXPECT_EQ(kExpectResultSize, seg->candidates_size());
 
   for (size_t i = 0; i < kExpectResultSize; ++i) {
-    SCOPED_TRACE(Util::StringPrintf("i = %lu", i));
+    SCOPED_TRACE(Util::StringPrintf("i = " SIZE_T_PRINTF_FORMAT, i));
     EXPECT_EQ(kExpectResults[i].value, seg->candidate(i).value);
     EXPECT_EQ(kExpectResults[i].content_value,
               seg->candidate(i).content_value);
@@ -299,7 +310,7 @@ TEST_F(NumberRewriterTest, BasicTestWithSuffix) {
   EXPECT_EQ(kExpectResultSize, seg->candidates_size());
 
   for (size_t i = 0; i < kExpectResultSize; ++i) {
-    SCOPED_TRACE(Util::StringPrintf("i = %lu", i));
+    SCOPED_TRACE(Util::StringPrintf("i = " SIZE_T_PRINTF_FORMAT, i));
     EXPECT_EQ(kExpectResults[i].value, seg->candidate(i).value);
     EXPECT_EQ(kExpectResults[i].content_value,
               seg->candidate(i).content_value);
@@ -391,42 +402,42 @@ TEST_F(NumberRewriterTest, SpecialFormBoundaries) {
   Segments segments;
 
   // Special forms doesn't have zeros.
-  Segment *seg = SetupSegments("0", &segments);
+  Segment *seg = SetupSegments(pos_matcher_, "0", &segments);
   EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
   EXPECT_FALSE(HasDescription(*seg, kMaruNumberDescription));
   EXPECT_FALSE(HasDescription(*seg, kRomanCapitalDescription));
   EXPECT_FALSE(HasDescription(*seg, kRomanNoCapitalDescription));
 
   // "1" has special forms.
-  seg = SetupSegments("1", &segments);
+  seg = SetupSegments(pos_matcher_, "1", &segments);
   EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
   EXPECT_TRUE(HasDescription(*seg, kMaruNumberDescription));
   EXPECT_TRUE(HasDescription(*seg, kRomanCapitalDescription));
   EXPECT_TRUE(HasDescription(*seg, kRomanNoCapitalDescription));
 
   // "12" has every special forms.
-  seg = SetupSegments("12", &segments);
+  seg = SetupSegments(pos_matcher_, "12", &segments);
   EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
   EXPECT_TRUE(HasDescription(*seg, kMaruNumberDescription));
   EXPECT_TRUE(HasDescription(*seg, kRomanCapitalDescription));
   EXPECT_TRUE(HasDescription(*seg, kRomanNoCapitalDescription));
 
   // "13" doesn't have roman forms.
-  seg = SetupSegments("13", &segments);
+  seg = SetupSegments(pos_matcher_, "13", &segments);
   EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
   EXPECT_TRUE(HasDescription(*seg, kMaruNumberDescription));
   EXPECT_FALSE(HasDescription(*seg, kRomanCapitalDescription));
   EXPECT_FALSE(HasDescription(*seg, kRomanNoCapitalDescription));
 
   // "50" has circled numerics.
-  seg = SetupSegments("50", &segments);
+  seg = SetupSegments(pos_matcher_, "50", &segments);
   EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
   EXPECT_TRUE(HasDescription(*seg, kMaruNumberDescription));
   EXPECT_FALSE(HasDescription(*seg, kRomanCapitalDescription));
   EXPECT_FALSE(HasDescription(*seg, kRomanNoCapitalDescription));
 
   // "51" doesn't have special forms.
-  seg = SetupSegments("51", &segments);
+  seg = SetupSegments(pos_matcher_, "51", &segments);
   EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
   EXPECT_FALSE(HasDescription(*seg, kMaruNumberDescription));
   EXPECT_FALSE(HasDescription(*seg, kRomanCapitalDescription));
@@ -661,7 +672,7 @@ TEST_F(NumberRewriterTest, NumberIs19Digit) {
   EXPECT_EQ(kExpectResultSize, seg->candidates_size());
 
   for (size_t i = 0; i < kExpectResultSize; ++i) {
-    SCOPED_TRACE(Util::StringPrintf("i = %lu", i));
+    SCOPED_TRACE(Util::StringPrintf("i = " SIZE_T_PRINTF_FORMAT, i));
     EXPECT_EQ(kExpectResults[i].value, seg->candidate(i).value);
     EXPECT_EQ(kExpectResults[i].content_value,
               seg->candidate(i).content_value);
@@ -766,7 +777,7 @@ TEST_F(NumberRewriterTest, NumberIsGreaterThanUInt64Max) {
   EXPECT_EQ(kExpectResultSize, seg->candidates_size());
 
   for (size_t i = 0; i < kExpectResultSize; ++i) {
-    SCOPED_TRACE(Util::StringPrintf("i = %lu", i));
+    SCOPED_TRACE(Util::StringPrintf("i = " SIZE_T_PRINTF_FORMAT, i));
     EXPECT_EQ(kExpectResults[i].value, seg->candidate(i).value);
     EXPECT_EQ(kExpectResults[i].content_value,
               seg->candidate(i).content_value);
@@ -1149,6 +1160,23 @@ TEST_F(NumberRewriterTest, MobileEnvironmentTest) {
     const ConversionRequest request(NULL, &input);
     EXPECT_EQ(RewriterInterface::CONVERSION, rewriter->capability(request));
   }
+}
+
+TEST_F(NumberRewriterTest, NonNumberNounTest) {
+  // Test if "百舌鳥" is not rewritten to "100舌鳥", etc.
+  scoped_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+  Segments segments;
+  Segment *segment = segments.push_back_segment();
+  segment->set_key("\xE3\x82\x82\xE3\x81\x9A");  // "もず"
+  Segment::Candidate *cand = segment->add_candidate();
+  cand->Init();
+  cand->key = "\xE3\x82\x82\xE3\x81\x9A";  // "もず"
+  cand->content_key = cand->key;
+  cand->value = "\xE7\x99\xBE\xE8\x88\x8C\xE9\xB3\xA5";  // "百舌鳥"
+  cand->content_value = cand->value;
+  cand->lid = pos_matcher_->GetGeneralNounId();
+  cand->rid = pos_matcher_->GetGeneralNounId();
+  EXPECT_FALSE(number_rewriter->Rewrite(default_request_, &segments));
 }
 
 }  // namespace mozc

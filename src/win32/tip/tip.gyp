@@ -109,6 +109,7 @@
             '../base/win32_base.gyp:ime_base',
             '../base/win32_base.gyp:ime_impl_base',
             '../base/win32_base.gyp:imframework_util',
+            '../base/win32_base.gyp:text_icon',
           ],
         },
         {
