@@ -5,14 +5,15 @@
 # Translators:
 # Xuetian Weng <wengxt@gmail.com>, 2013
 # Xuetian Weng <wengxt@gmail.com>, 2012
+# wwj402 <wwj402@gmail.com>, 2013
 # Xuetian Weng <wengxt@gmail.com>, 2012-2013
 msgid ""
 msgstr ""
 "Project-Id-Version: fcitx\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2013-10-10 12:00-0400\n"
-"PO-Revision-Date: 2013-10-10 10:06+0000\n"
-"Last-Translator: Xuetian Weng <wengxt@gmail.com>\n"
+"POT-Creation-Date: 2013-11-10 00:02-0500\n"
+"PO-Revision-Date: 2013-11-10 02:35+0000\n"
+"Last-Translator: wwj402 <wwj402@gmail.com>\n"
 "Language-Team: Chinese (China) (http://www.transifex.com/projects/p/fcitx/"
 "language/zh_CN/)\n"
 "Language: zh_CN\n"
@@ -21,9 +22,9 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: ../eim.cc:183
+#: ../eim.cc:184
 msgid "Press Escape to go back"
-msgstr ""
+msgstr "按下 Escape 返回"
 
 #: ../fcitx_mozc.cc:68
 msgid "Direct"
@@ -87,4 +88,4 @@ msgstr "关于 Mozc"
 
 #: ../mozc_response_parser.cc:374
 msgid "Press Ctrl+Alt+H to show usages."
-msgstr ""
+msgstr "按下 Ctrl+Alt+H 显示用法。"
